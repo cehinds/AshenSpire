@@ -18,6 +18,8 @@
 //   - css: components cssClasses are selector classes in styles/*.css; a
 //     catalog row lists them exactly when its notes do not say css:unresolved
 //   - duplicates: no presentation table holds two identical rows
+//   - strings migration: every hardcoded row has a dotted proposedKey and a
+//     migrateTo; one proposedKey names one text and one text has one proposedKey
 //   - references: tags parent (id), school and related (keys), variables (values
 //     or formulas keys); objects tags, skill, exp, cardType, stance, rarity,
 //     costResource (keys) and grants (object ids); ranks object (object id) and
@@ -29,11 +31,15 @@
 //     is blank, an assets id, or an svg:<Module>.<NAME>.<key> reference whose
 //     module, NAME and key all appear in its source file (svg-source.mjs); a
 //     combat-symbols row is status missing exactly when assignedAssetRef is blank
-//   - vocabularies: tags status; layouts and styles band; settings scope;
+//     combat-symbols artBrief and priority (P1-P3) are set on every placeholder row and nowhere else
+//   - vocabularies: tags status; layouts and styles band; settings scope and deviceScope;
 //     combat-symbols status
 //   - tag status: liveId only on a live-tag, resolves to a nodes.csv id, and a
 //     nodes.csv id claimed by two tags must be listed in SHARED_LIVE; the
 //     "Moved: re-homed" note appears at most once per description
+//   - release: the tables still compile into the release constants (release.mjs):
+//     every [key] resolves, no formula loops, every argument count is right. The
+//     generated module is not committed (RELEASE.md, Size and commit decision).
 
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -41,12 +47,15 @@ import { fileURLToPath } from 'node:url';
 import { readTable, parseCsv } from './csv.mjs';
 import { SHARED_LIVE } from './live-map.mjs';
 import { svgRefProblem } from './svg-source.mjs';
+import { renderTree, TREE_PATH } from './tree.mjs';
+import { compileRelease } from './release.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const TM = join(HERE, '..');
 const TABLES = join(TM, 'tables');
 const PRES = join(TABLES, 'presentation');
 const NODES = join(TM, '..', '..', 'content', 'source', 'nodes.csv');
+const UI_TABLE = join(TM, '..', '..', 'content', 'source', 'uiStrings.csv');
 
 const errors = [];
 const fail = msg => errors.push(msg);
@@ -209,7 +218,7 @@ if (need('relations', relations, ['source', 'relation', 'target'])) {
 }
 
 // [rank] is the object's own rank from ranks.csv, supplied at evaluation time
-// (dodgeRoll.block uses it). It is not a values key, so it is allowed here only.
+// (a formula row may read it). It is not a values key, so it is allowed here only.
 const RUNTIME_VARS = new Set(['rank']);
 if (formulasOk) {
   for (const r of formulas.rows) {
@@ -225,7 +234,9 @@ if (need('assets', assetsTop, ['id'])) checkUnique('assets', assetsTop, ['id']);
 // ------------------------------------------------------ presentation tables
 const BAND_OK = new Set(['mobile', 'tablet', 'desktop', 'wide', 'state', 'other', 'all']);
 const SCOPE_OK = new Set(['player', 'tuning']);
+const DEVICE_SCOPE_OK = new Set(['device', 'global']);
 const COMBAT_STATUS = new Set(['has symbol', 'placeholder', 'missing']);
+const PRIORITY_OK = new Set(['P1', 'P2', 'P3']);
 
 // name -> key columns (unique together) and the columns the checks read.
 const PRES_SPEC = {
@@ -238,10 +249,10 @@ const PRES_SPEC = {
   animations: { key: ['id'], cols: ['id', 'tag', 'liveRef'] },
   effects: { key: ['id'], cols: ['id', 'kind', 'tag', 'liveRef'] },
   resolutions: { key: ['tier'], cols: ['tier', 'tag', 'liveRef'] },
-  settings: { key: ['key'], cols: ['key', 'scope', 'tag', 'liveRef'] },
+  settings: { key: ['key'], cols: ['key', 'scope', 'deviceScope', 'tag', 'liveRef'] },
   symbols: { key: ['id'], cols: ['id', 'tag', 'liveRef'] },
-  'combat-symbols': { key: ['tagKey'], cols: ['tagKey', 'status', 'assignedAssetRef', 'tag', 'liveRef'] },
-  strings: { key: ['key'], cols: ['key', 'tooltip', 'file', 'tag', 'liveRef'] },
+  'combat-symbols': { key: ['tagKey'], cols: ['tagKey', 'status', 'assignedAssetRef', 'tag', 'liveRef', 'artBrief', 'priority'] },
+  strings: { key: ['key'], cols: ['key', 'text', 'context', 'tooltip', 'file', 'tag', 'liveRef', 'proposedKey', 'migrateTo'] },
 };
 const presOk = {};
 for (const [name, spec] of Object.entries(PRES_SPEC)) {
@@ -260,6 +271,43 @@ for (const [name, spec] of Object.entries(PRES_SPEC)) {
   });
 }
 
+// hardcoded UI strings (STRINGS-MIGRATION.md): every hardcoded row carries a
+// proposedKey and a migrateTo. Rows that repeat a text share one key, so the key
+// is unique per text: one key never names two texts, and one text never has two keys.
+if (presOk.strings) {
+  const st = P('strings');
+  const hard = st.rows.filter(r => at(st, r, 'context') === 'hardcoded');
+  const keyTexts = new Map();
+  const textKeys = new Map();
+  hard.forEach((r, i) => {
+    const key = at(st, r, 'proposedKey');
+    const text = at(st, r, 'text');
+    if (!/^[A-Za-z][A-Za-z0-9]*(\.[A-Za-z0-9]+)+$/.test(key)) fail(`presentation/strings: hardcoded row "${at(st, r, 'key')}" proposedKey "${key}" is not a dotted key`);
+    if (!at(st, r, 'migrateTo')) fail(`presentation/strings: hardcoded row "${at(st, r, 'key')}" has no migrateTo`);
+    if (!keyTexts.has(key)) keyTexts.set(key, new Set());
+    keyTexts.get(key).add(text);
+    if (!textKeys.has(text)) textKeys.set(text, new Set());
+    textKeys.get(text).add(key);
+  });
+  // A reused id must be a uiStrings row whose short, full or tip cell is the text;
+  // any other key must not be a uiStrings id (it would name a different row).
+  const uiRows = parseCsv(readFileSync(UI_TABLE, 'utf8').split('\n').filter(l => l && !l.startsWith('#')).join('\n') + '\n');
+  const uiHead = uiRows.shift();
+  const uiCell = (r, c) => r[uiHead.indexOf(c)];
+  const uiById = new Map(uiRows.map(r => [uiCell(r, 'id'), r]));
+  for (const [key, texts] of keyTexts) {
+    const row = uiById.get(key);
+    const [text] = [...texts];
+    if (row && !['short', 'full', 'tip'].some(c => uiCell(row, c) === text)) fail(`presentation/strings: proposedKey "${key}" is a uiStrings id but its cells do not hold "${text.slice(0, 60)}"`);
+  }
+  for (const [key, texts] of keyTexts) {
+    if (texts.size > 1) fail(`presentation/strings: proposedKey "${key}" names ${texts.size} different texts`);
+  }
+  for (const [text, keys] of textKeys) {
+    if (keys.size > 1) fail(`presentation/strings: text "${text.slice(0, 60)}" has ${keys.size} proposedKeys (${[...keys].join(', ')})`);
+  }
+}
+
 // vocabularies
 for (const name of ['layouts', 'styles']) {
   if (presOk[name]) P(name).rows.forEach((r, i) => {
@@ -268,6 +316,7 @@ for (const name of ['layouts', 'styles']) {
 }
 if (presOk.settings) P('settings').rows.forEach((r, i) => {
   if (!SCOPE_OK.has(at(P('settings'), r, 'scope'))) fail(`presentation/settings: row ${i + 2} scope "${at(P('settings'), r, 'scope')}" not in vocabulary`);
+  if (!DEVICE_SCOPE_OK.has(at(P('settings'), r, 'deviceScope'))) fail(`presentation/settings: row ${i + 2} deviceScope "${at(P('settings'), r, 'deviceScope')}" is not device or global`);
 });
 
 // components: parent and id; layouts and styles componentId
@@ -434,8 +483,28 @@ if (presOk['combat-symbols'] && presOk.assets) {
       fail(`presentation/combat-symbols: row ${i + 2} (${at(cs, r, 'tagKey')}) assignedAssetRef "${tok}" is not an assets id, an svg: reference, a pattern with a match, or blank`);
     }
     if (!COMBAT_STATUS.has(status)) fail(`presentation/combat-symbols: row ${i + 2} status "${status}" not in vocabulary`);
+    const prio = at(cs, r, 'priority');
+    if (status === 'placeholder' && (!at(cs, r, 'artBrief') || !PRIORITY_OK.has(prio))) fail(`presentation/combat-symbols: row ${i + 2} (${at(cs, r, 'tagKey')}) is a placeholder with no artBrief or a priority outside P1-P3`);
+    if (status !== 'placeholder' && (at(cs, r, 'artBrief') || prio)) fail(`presentation/combat-symbols: row ${i + 2} (${at(cs, r, 'tagKey')}) has an artBrief or priority but is not a placeholder`);
     if ((status === 'missing') !== (tok === '')) fail(`presentation/combat-symbols: row ${i + 2} (${at(cs, r, 'tagKey')}) status "${status}" does not match assignedAssetRef "${tok}"`);
   });
+}
+
+// ------------------------------------------------------------------ tag tree
+// tag-tree.txt is generated from tags.csv by tree.mjs (build.mjs writes it).
+// A stale file means the outline no longer matches the tags.
+{
+  const want = renderTree(T('tags'));
+  let have = null;
+  try { have = readFileSync(TREE_PATH, 'utf8'); } catch { /* missing */ }
+  if (have !== want) fail('tag-tree.txt does not match the tree generated from tables/tags.csv; run tools/build.mjs');
+}
+
+// ------------------------------------------------------------- release build
+// The release compile must still succeed on the tables. It is not committed,
+// so the guard is the compile itself; a failure lists each problem.
+{
+  try { compileRelease(); } catch (e) { fail(`release build: ${e.message}`); }
 }
 
 // ----------------------------------------------------------------- report

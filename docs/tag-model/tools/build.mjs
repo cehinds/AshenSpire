@@ -3,9 +3,11 @@
 //   node docs/tag-model/tools/build.mjs --inv <dir-with-inventory-csvs>
 //   node docs/tag-model/tools/build.mjs            (re-run from tables/presentation/)
 //
-// --inv copies the raw inventory CSVs into tables/presentation/ first. Without
-// it the script reads the copies there and strips the derived columns, so the
-// run is repeatable: a second run over its own output is byte-identical. It then:
+// --inv copies the raw inventory CSVs into tables/presentation/ first. Columns
+// listed in AUTHORED (combat-symbols artBrief and priority) are not in the raw
+// files, so the copy keeps their values from the existing CSV, matched by key.
+// Without --inv the script reads the copies there and strips the derived columns,
+// so the run is repeatable: a second run over its own output is byte-identical. It then:
 //   0. cleans the inventory: id/name columns that repeat get a -2, -3 suffix
 //      (effects.id, breakpoints.name); exact duplicate rows are dropped
 //      (layouts, styles); components.assetRefs keeps only tokens that resolve
@@ -19,6 +21,8 @@
 //   2. rebuilds the meta.presentation nodes in tables/tags.csv;
 //   3. sets status (live-tag / game-concept / new) and liveId on every tag. The
 //      "Moved: re-homed" note is written once, never appended again;
+//   3b. strings: proposedKey and migrateTo for every hardcoded row (one key per
+//      distinct text; see docs/tag-model/STRINGS-MIGRATION.md)
 //   4. recomputes every key as the shortest unique id suffix and rewrites the
 //      references to keys that changed (tags school/related, objects, relations).
 // Run tools/check.mjs afterwards.
@@ -28,6 +32,7 @@ import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readTable, parseCsv, toCsv } from './csv.mjs';
 import { bandOf } from './bands.mjs';
+import { renderTree, TREE_PATH } from './tree.mjs';
 import { LIVE, GAME, SHARED_LIVE } from './live-map.mjs';
 import { svgRefFromText, svgRefProblem } from './svg-source.mjs';
 
@@ -49,8 +54,8 @@ const DERIVED = {
   components: ['tag', 'liveRef', 'cssClasses'], layouts: ['band', 'tag', 'liveRef'], styles: ['band', 'tag', 'liveRef', 'cssComponentId'],
   tokens: ['tag', 'liveRef'], breakpoints: ['tag', 'liveRef'], assets: ['tag', 'liveRef'],
   animations: ['tag', 'liveRef'], effects: ['tag', 'liveRef'], resolutions: ['tag', 'liveRef'],
-  settings: ['scope', 'tag', 'liveRef'], symbols: ['tag', 'liveRef'],
-  'combat-symbols': ['assignedAssetRef', 'tag', 'liveRef'], strings: ['tag', 'liveRef'],
+  settings: ['scope', 'deviceScope', 'tag', 'liveRef'], symbols: ['tag', 'liveRef'],
+  'combat-symbols': ['assignedAssetRef', 'tag', 'liveRef'], strings: ['tag', 'liveRef', 'proposedKey', 'migrateTo'],
 };
 const DERIVED_ALL = new Set(Object.values(DERIVED).flat());
 
@@ -61,12 +66,37 @@ const MOVED_NOTE = 'Moved: re-homed in the proposal (tag-tree.txt [m]).';
 const MOVED_PREFIX = /^(Moved: re-homed in the proposal \(tag-tree\.txt \[m\]\)\.\s*)+/;
 
 // ---------------------------------------------------------------- inventory
+// Authored columns: values typed into tables/presentation/<name>.csv that the raw
+// inventory does not carry. A re-extraction (--inv) keeps them, matched by the
+// raw file's first column (the row's key).
+const AUTHORED = { 'combat-symbols': ['artBrief', 'priority'] };
+function extractInventory(name, src) {
+  const dst = join(PRES, name + '.csv');
+  const raw = readTable(src);
+  const keep = (AUTHORED[name] || []).filter(c => !raw.header.includes(c));
+  if (!keep.length) { copyFileSync(src, dst); return; }
+  const prev = existsSync(dst) ? readTable(dst) : null;
+  const authored = new Map();
+  if (prev) {
+    const kc = prev.header.indexOf(raw.header[0]);
+    for (const c of keep) {
+      const ci = prev.header.indexOf(c);
+      if (ci < 0) continue;
+      prev.rows.forEach(r => {
+        if (!authored.has(r[kc])) authored.set(r[kc], {});
+        authored.get(r[kc])[c] = r[ci];
+      });
+    }
+  }
+  const rows = raw.rows.map(r => [...r, ...keep.map(c => (authored.get(r[0]) || {})[c] ?? '')]);
+  writeFileSync(dst, toCsv([...raw.header, ...keep], rows));
+}
 function readInventory(name) {
   if (INV) {
     const src = join(INV, name + '.csv');
     if (!existsSync(src)) throw new Error('missing inventory file ' + src);
     mkdirSync(PRES, { recursive: true });
-    copyFileSync(src, join(PRES, name + '.csv'));
+    extractInventory(name, src);
   }
   const t = readTable(join(PRES, name + '.csv'));
   // styles: an earlier run re-pointed componentId to a catalog component and kept
@@ -175,6 +205,37 @@ function scopeOf(r) {
   if (/Advanced config/i.test(storage)) return 'tuning';
   if (/src\/ui\/screens\/settings\.js/.test(file) || /localStorage/i.test(storage)) return 'player';
   return 'tuning';
+}
+
+// Device or global (DECISIONS.md, decision 1). Device rows are layout, text size,
+// UI scale, reduced motion, touch, haptics, performance or quality, and anything
+// else display-related: whole display, text, accessibility and wireframe groups,
+// the formation and presentation tuning rows, and the listed keys below. Every
+// other row is global, including all tuning rows. Rows that are unclear are
+// global and listed in DECISIONS.md.
+const DEVICE_GROUPS = new Set(['Accessibility', 'Display', 'Text', 'Wireframes']);
+const DEVICE_KEYS = new Set([
+  'haptics', 'useSprites', 'performanceMode', 'screenShake', 'armamentsPresentation',
+  'armamentsPhonePlacement', 'showPlayedCard', 'manaRing', 'walkedFade', 'cardMotif',
+  'cardMotifStrength', 'ambient', 'controlHints', 'mapFreePan', 'mapHeaderDensity',
+  'mapHeaderRelics', 'mapHeaderSeed', 'uprightGate', 'classicAppearance',
+]);
+// Global even though their group is a device group: resetAllSettings resets both
+// kinds, mapMode is gameplay knowledge (fog or path reveal), and the co-op
+// identity (sote_lan_tint, sote_lan_style) must not split per device. Presentation
+// rows that govern input or movement rules are global.
+const GLOBAL_KEYS = new Set([
+  'resetAllSettings', 'mapMode', 'sote_lan_tint', 'sote_lan_style',
+  'movementEnabled', 'movementNeedsSelection', 'movementCostsAction',
+  'tileActivation', 'moveActivation',
+]);
+function deviceScopeOf(r) {
+  const key = get(inv.settings, r, 'key');
+  const group = get(inv.settings, r, 'group');
+  if (GLOBAL_KEYS.has(key)) return 'global';
+  if (DEVICE_GROUPS.has(group) || DEVICE_KEYS.has(key)) return 'device';
+  if (key.startsWith('gameConfig.presentation.')) return 'device';
+  return 'global';
 }
 
 function styleKind(prop) {
@@ -661,6 +722,73 @@ const assignedAssetRef = combatRows.rows.map((r) => {
 tagIds.strings = rowMap('strings', r => presId('text', textKind(r)));
 liveRefs.strings = rowMap('strings', r => get(inv.strings, r, 'file'));
 
+// Migration plan for the hardcoded UI strings (docs/tag-model/STRINGS-MIGRATION.md).
+// One proposedKey per distinct text: rows that repeat a text share its key, and
+// no two texts share one. The area is the file's base name (src/ui/screens/combat.js
+// -> combat), or common when the text sits in more than one file. The words are
+// the first six of the text, camel-cased; a clash in one area gets .2, .3 ... in
+// table order. migrateTo is the shared table the text moves to.
+const SHARED_STRINGS = 'content/source/uiStrings.csv';
+const hcIdx = inv.strings.rows.map((r, i) => (textKind(r) === 'hardcoded' ? i : -1)).filter(i => i >= 0);
+const textOfRow = i => get(inv.strings, inv.strings.rows[i], 'text');
+const fileOfRow = i => get(inv.strings, inv.strings.rows[i], 'file').replace(/:\d+$/, '');
+const areaOfFile = file => {
+  const base = file.replace(/^.*\//, '').replace(/\.[^.]+$/, '');
+  return base.replace(/[^A-Za-z0-9]+(.)?/g, (_, c) => (c ? c.toUpperCase() : '')).replace(/^./, c => c.toLowerCase());
+};
+const wordsOfText = text => {
+  const w = String(text).normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9 ]+/g, ' ')
+    .trim().split(/\s+/).filter(Boolean).slice(0, 6);
+  return w.length ? w.map((x, i) => (i === 0 ? x.toLowerCase() : x[0].toUpperCase() + x.slice(1).toLowerCase())) : ['text'];
+};
+const filesByText = new Map();
+for (const i of hcIdx) {
+  const t = textOfRow(i);
+  if (!filesByText.has(t)) filesByText.set(t, new Set());
+  filesByText.get(t).add(fileOfRow(i));
+}
+const proposedKeyOf = inv.strings.rows.map(() => '');
+const migrateToOf = inv.strings.rows.map(() => '');
+// A text the shared table already says (its short, full or tip cell) reuses that
+// row's id instead of a new key. Comment lines are skipped, as in the table reader.
+const UI_TABLE = join(TM, '..', '..', 'content', 'source', 'uiStrings.csv');
+const uiRows = parseCsv(readFileSync(UI_TABLE, 'utf8').split('\n').filter(l => l && !l.startsWith('#')).join('\n') + '\n');
+const uiHeader = uiRows.shift();
+const uiCol = c => uiHeader.indexOf(c);
+const uiIds = new Set();
+const uiIdByText = new Map();
+for (const r of uiRows) {
+  const id = r[uiCol('id')];
+  if (!id) continue;
+  uiIds.add(id);
+  for (const c of ['short', 'full', 'tip']) {
+    const v = r[uiCol(c)];
+    if (v && !uiIdByText.has(v)) uiIdByText.set(v, id);
+  }
+}
+const keyOfText = new Map();
+const textOfKey = new Map();
+for (const i of hcIdx) {
+  const text = textOfRow(i);
+  if (!keyOfText.has(text)) {
+    let key;
+    if (uiIdByText.has(text)) {
+      key = uiIdByText.get(text);
+      if (textOfKey.has(key) && textOfKey.get(key) !== text) throw new Error('strings: id ' + key + ' already names another text');
+    } else {
+      const files = filesByText.get(text);
+      const area = files.size > 1 ? 'common' : areaOfFile(fileOfRow(i));
+      const base = `${area}.${wordsOfText(text).join('')}`;
+      key = base;
+      for (let n = 2; textOfKey.has(key) || uiIds.has(key); n++) key = `${base}.${n}`;
+    }
+    keyOfText.set(text, key);
+    textOfKey.set(key, text);
+  }
+  proposedKeyOf[i] = keyOfText.get(text);
+  migrateToOf[i] = SHARED_STRINGS;
+}
+
 // ------------------------------------------------------- tags.csv (legacy rows)
 const TAG_HEAD = ['id', 'key', 'label', 'parent', 'erd', 'school', 'description', 'effect', 'variables', 'duration', 'stacking', 'related', 'status', 'glyph', 'color'];
 const tagsPath = join(TABLES, 'tags.csv');
@@ -750,6 +878,8 @@ const rewriteKeys = value => String(value).split(/\s+/).filter(Boolean)
 
 const tagOut = [...legacyOut, ...presRows].map(({ id, row }) => ({ ...row, key: keyOf[id], school: rewriteKeys(row.school), related: rewriteKeys(row.related) }));
 writeFileSync(tagsPath, toCsv([...TAG_HEAD, 'liveId'], tagOut.map(r => [...TAG_HEAD, 'liveId'].map(h => r[h]))));
+// The tag tree is derived from tags.csv, so it is written here and cannot go stale.
+writeFileSync(TREE_PATH, renderTree(readTable(tagsPath)));
 
 // Every table is LF with a final newline (CONTRIBUTING: CSVs are LF). Only the
 // line endings of the existing tables change; their cells are untouched.
@@ -796,9 +926,12 @@ for (const name of INVENTORY) {
       liveRef: liveRefs[name] ? liveRefs[name][i] : undefined,
       band: bandCols[name] ? bandCols[name][i] : undefined,
       scope: scopeCols[name] ? scopeCols[name][i] : undefined,
+      deviceScope: name === 'settings' ? deviceScopeOf(inv.settings.rows[i]) : undefined,
       assignedAssetRef: name === 'combat-symbols' ? assignedAssetRef[i] : undefined,
       cssClasses: name === 'components' ? cssClassesOf[i] : undefined,
       cssComponentId: name === 'styles' ? styleCssIds[i] : undefined,
+      proposedKey: name === 'strings' ? proposedKeyOf[i] : undefined,
+      migrateTo: name === 'strings' ? migrateToOf[i] : undefined,
     };
     if (name === 'combat-symbols') b[t.header.indexOf('status')] = combatStatus[i];
     return [...b, ...extra.map(c => vals[c])];

@@ -61,7 +61,7 @@ td.c-expr input{font-family:var(--mono);font-size:.76rem}
 td.bad input{box-shadow:inset 0 -2px 0 var(--bad)}
 td.warn input{box-shadow:inset 0 -2px 0 var(--warn)}
 td.out{padding:6px 8px;font:.76rem var(--mono);white-space:nowrap;color:var(--teal)}
-td.out.bad{color:var(--bad)} td.out.warn{color:var(--warn)}
+td.out.bad{color:var(--bad)} td.out.warn{color:var(--warn)} td.out.note{color:var(--muted)}
 .x{border:0;background:none;color:var(--muted);padding:2px 6px;font-size:.9rem}
 .x:hover{color:var(--bad)}
 .more{padding:10px;text-align:center}
@@ -118,48 +118,53 @@ dialog .row{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;margin-
 
 <script>
 "use strict";
+/* formula-columns:begin */
+const FORMULA_COLUMNS=['key','expr','scope','description','status']; /* status: 'proposed' rows have no expression yet */
+/* formula-columns:end */
 const TABLES = {
   tags:{label:'Tags', key:'id', help:'One row per tag. <b>id</b> is the full path, <b>key</b> the short unique name formulas use. <b>erd</b> names the model it belongs to, <b>school</b> its magic class, <b>related</b> other tag keys (space separated). Text in <b>effect</b> can cite <code>[key]</code>; <b>variables</b> lists the value keys the tag reads, so its numbers live in Values, never in the tag.',
     columns:['id','key','label','parent','erd','school','description','effect','variables','duration','stacking','related','status','liveId','glyph','color'],
     refs:{parent:'tag', school:'tag', related:'tags', variables:'values'}},
-  objects:{label:'Objects', key:'id', help:'Cards, weapons, armor and anything else that carries tags. <b>tags</b>, <b>exp</b> are tag keys; <b>grants</b> are object ids; <b>art</b> and <b>artDefault</b> are game asset ids from the Assets table; <b>cost</b> and <b>description</b> can cite <code>[key]</code>. <b>rankMode</b> is <code>list</code> (use the Ranks table) or <code>formula</code> (formulas read <code>[rank]</code>).',
+  objects:{label:'Objects', key:'id', help:'Cards, weapons, armor and anything else that carries tags. <b>tags</b>, <b>exp</b> are tag keys; <b>grants</b> are object ids; <b>art</b> and <b>artDefault</b> are game asset ids from the Assets table; <b>cost</b> and <b>description</b> can cite <code>[key]</code>. <b>rankMode</b> is <code>list</code> (use the Ranks table) or <code>formula</code> (formulas read <code>[rank]</code>). <code>rankMode=list</code> with <b>maxRank</b> 1 means no rank progression (Dodge).',
     columns:['id','kind','name','erd','cardType','stance','rarity','costResource','cost','tags','skill','exp','grants','art','artDefault','placement','rankMode','maxRank','description'],
     refs:{cardType:'tag', stance:'tag', rarity:'tag', costResource:'tag', skill:'tag', tags:'tags', exp:'tags', grants:'objects', art:'asset', artDefault:'asset'}},
   values:{label:'Values', key:'key', help:'Plain numbers. A value whose key matches a tag key is that tag\'s preview number (for example <code>ar</code> = 24), used when formulas are previewed. <b>scope</b> is the object or area it belongs to.',
     columns:['key','value','unit','scope','description'], refs:{}},
   formulas:{label:'Formulas', key:'key', help:'Expressions over <code>[key]</code> references to values, other formulas, tags with a preview value, and <code>[rank]</code>. Operators <code>+ - * / % ^</code>, comparisons, and <code>min max floor ceil round abs clamp(x,lo,hi) if(cond,a,b)</code>. The result column previews at rank 1.',
-    columns:['key','expr','scope','description'], refs:{}},
+    columns:FORMULA_COLUMNS, refs:{}},
   ranks:{label:'Ranks', key:null, help:'Rank progression as a list. Each row changes a value key from that rank on: <code>+1</code>, <code>-0.5</code>, <code>=8</code> or <code>×1.25</code> (also <code>*1.25</code>). Changes add up rank by rank.',
     columns:['object','rank','key','change','note'], refs:{object:'object', key:'value'}},
   assets:{label:'Assets', key:'id', help:'Game art ids, exactly as the game names them (<code>assets/cards/extended/card-strike-512.webp</code>). The game resolves them through <code>assetUrl()</code>. This page cannot load the game\'s art, so <b>preview</b> holds an image you upload here to see it on the Object sheet.',
     columns:['id','category','subcategory','lightPath','lightW','lightH','highPath','highW','highH','bytesHigh','usedBy','preview','tag','liveRef'], refs:{tag:'tag'}, group:'presentation'},
   components:{label:'Components', key:'id', group:'presentation', help:'Every screen, region, component, button, modal, menu and card layer. <b>parent</b> is the containing component, <b>tag</b> its Presentation tag, <b>assetRefs</b> and <b>textKeys</b> what it shows, <b>symbol</b> its icon.',
-    columns:['id','label','group','parent','kind','file','selector','wireframe','assetRefs','symbol','textKeys','zLayer','notes','tag','liveRef'], refs:{parent:'component', tag:'tag'}},
-  layouts:{label:'Layouts', key:null, group:'presentation', help:'Position and size per device band. <b>band</b> is mobile, tablet, desktop, all, state or other; <b>breakpoint</b> keeps the original condition. <b>source</b> names the CSS line or the function that computes it.',
+    columns:['id','label','group','parent','kind','file','selector','wireframe','assetRefs','symbol','textKeys','zLayer','notes','tag','liveRef','cssClasses'], refs:{parent:'component', tag:'tag'}},
+  layouts:{label:'Layouts', key:null, group:'presentation', help:'Position and size per device band. <b>band</b> is mobile (phone, up to 600px), tablet (601–1023px), desktop (1024–1439px), wide (1440px and up), all, state or other; <b>breakpoint</b> keeps the original condition. <b>source</b> names the CSS line or the function that computes it.',
     columns:['componentId','breakpoint','band','x','y','w','h','anchor','unit','source','tag','liveRef'], refs:{componentId:'component', tag:'tag'}},
-  styles:{label:'Styles', key:null, group:'presentation', help:'One row per styling value: colour, size, font, spacing, radius, shadow, z-order, transition. Edit <b>value</b>; <b>selector</b> and <b>source</b> say where it lives.',
-    columns:['componentId','selector','property','value','breakpoint','band','source','tag','liveRef'], refs:{componentId:'component', tag:'tag'}},
+  styles:{label:'Styles', key:null, group:'presentation', help:'One row per styling value: colour, size, font, spacing, radius, shadow, z-order, transition. Edit <b>value</b>; <b>selector</b> and <b>source</b> say where it lives. <b>band</b> is mobile (phone, up to 600px), tablet (601–1023px), desktop (1024–1439px), wide (1440px and up), all, state or other.',
+    columns:['componentId','selector','property','value','breakpoint','band','source','tag','liveRef','cssComponentId'], refs:{componentId:'component', tag:'tag'}},
   tokens:{label:'Tokens', key:null, group:'presentation', help:'Shared style variables (CSS custom properties) and their values per theme or scope.', columns:['token','value','theme','file','tag','liveRef'], refs:{tag:'tag'}},
   breakpoints:{label:'Breakpoints', key:'name', group:'presentation', help:'Every size or state condition the layout switches on, and the band it maps to.', columns:['name','condition','file','usedBy','tag','liveRef'], refs:{tag:'tag'}},
   animations:{label:'Animations', key:'id', group:'presentation', help:'Sprite sequences and CSS or scripted animations: frames, fps, duration, loop, anchor, offset, scale.', columns:['id','owner','action','framePattern','frameCount','fps','durationMs','loop','anchor','offsetX','offsetY','scale','flip','source','tag','liveRef'], refs:{tag:'tag'}},
   effects:{label:'Effects', key:'id', group:'presentation', help:'Sprite effects, auras, shadows, glows, floating text, flashes, tints and particles, with anchor, offset, blend and colour.', columns:['id','kind','assetRefs','trigger','anchor','offsetX','offsetY','scale','blend','opacity','color','durationMs','source','tag','liveRef'], refs:{tag:'tag'}},
   resolutions:{label:'Resolutions', key:'tier', group:'presentation', help:'Art tiers and image sizes, and when each is used.', columns:['tier','description','maxWidth','format','usedWhen','source','tag','liveRef'], refs:{tag:'tag'}},
   symbols:{label:'Symbols', key:'id', group:'presentation', help:'Every icon and glyph, its asset and colour, and what it is used for.', columns:['id','glyph','assetRef','shape','color','usedFor','file','tag','liveRef'], refs:{tag:'tag'}},
-  combatSymbols:{label:'Combat symbols', key:'tagKey', group:'presentation', help:'One icon per combat concept. <b>placeholder</b> rows borrow the closest existing icon until art is made.', columns:['tagKey','label','currentSymbol','currentAssetRef','suggestedAssetRef','status','tag','liveRef'], refs:{tag:'tag'}},
-  settings:{label:'Settings', key:'key', group:'presentation', help:'Player settings (<b>scope</b> player) and game tuning values (<b>scope</b> tuning), with defaults, ranges and where they are read.', columns:['key','label','group','type','default','options','min','max','step','storage','readBy','file','scope','tag','liveRef'], refs:{tag:'tag'}},
-  strings:{label:'Strings', key:'key', group:'presentation', help:'Every label and tooltip. <b>context</b> hardcoded marks text written directly in UI code instead of the shared strings file.', columns:['key','text','tooltip','context','file','tag','liveRef'], refs:{tag:'tag'}},
+  combatSymbols:{label:'Combat symbols', key:'tagKey', group:'presentation', help:'One icon per combat concept. <b>placeholder</b> rows borrow the closest existing icon until art is made.', columns:['tagKey','label','currentSymbol','currentAssetRef','suggestedAssetRef','status','assignedAssetRef','tag','liveRef','artBrief','priority'], refs:{tag:'tag'}},
+  settings:{label:'Settings', key:'key', group:'presentation', help:'Player settings and game tuning values, with defaults, ranges and where they are read. <b>scope</b> is player or tuning; <b>deviceScope</b> is device (per device: layout, text size, display) or global.', columns:['key','label','group','type','default','options','min','max','step','storage','readBy','file','scope','deviceScope','tag','liveRef'], refs:{tag:'tag'}},
+  strings:{label:'Strings', key:'key', group:'presentation', help:'Every label and tooltip. <b>context</b> hardcoded marks text written directly in UI code instead of the shared strings file.', columns:['key','text','tooltip','context','file','tag','liveRef','proposedKey','migrateTo'], refs:{tag:'tag'}},
+  artSizes:{label:'Art sizes', key:'id', help:'Pixel size of each game asset id the tables point at, with its <b>kind</b> (card art, card icon and so on). Sizes come from the game\'s art files. <b>preview</b> names a preview image, if there is one; <b>note</b> says anything unusual about the file.',
+    columns:['id','kind','width','height','preview','note'], refs:{}},
   relations:{label:'Relations', key:null, help:'Typed links between tags: STRONG_VS, WEAK_VS, BYPASSES, APPLIES, CLEARS, REQUIRES, CONFLICTS_WITH, REFERENCES. <b>value</b> is the multiplier or amount when there is one.',
     columns:['source','relation','target','value','note'], refs:{source:'tag', target:'tag'}},
 };
-const ORDER = ['tags','objects','values','formulas','ranks','relations','components','layouts','styles','tokens','breakpoints','assets','animations','effects','resolutions','symbols','combatSymbols','settings','strings'];
-const CORE = new Set(['tags','objects','values','formulas','ranks','relations']);
+const ORDER = ['tags','objects','values','formulas','ranks','relations','artSizes','components','layouts','styles','tokens','breakpoints','assets','animations','effects','resolutions','symbols','combatSymbols','settings','strings'];
+const CORE = new Set(['tags','objects','values','formulas','ranks','relations','artSizes']);
 const loaded = new Set(); const pending = new Set();
 const PAGE = 150;
 
 const state = { data:{}, view:'tags', filter:{}, shown:{}, sheet:null, sheetRank:1 };
 for (const t of ORDER) { state.data[t] = {columns:[...TABLES[t].columns], rows:[]}; state.shown[t]=PAGE; }
 let db=null, canWrite=true, downloads=null, assetsCap=null, localMode=false;
-const dirty=new Set(), saving=new Set(), timers={};
+const dirty=new Set(), saving=new Set(), timers={}, editGen={}; /* editGen[t] counts the edits to table t; a save remembers the count it started with */
 /* storage:begin */
 /* content-addressed blobs: a blob is {rows} as JSON, named by hashText of that JSON */
 const BLOB_MAX=170000, BLOB_ROW_MAX=250000, BLOB_CUT=64, BLOB_FALLBACK=8, GC_AGE_MS=120000;
@@ -206,6 +211,9 @@ function blobPath(t,h){ return 'tables/'+t+'/blobs/'+h; }
 /* a blob head's rev; a legacy head gets an identity derived from its JSON, so a later legacy write is a change; absent is '' */
 function revOf(h){ if(!h) return ''; if(h.format==='blobs') return h.rev||''; return 'legacy:'+hashText(JSON.stringify(h)); }
 function headCols(h,t){ return Array.isArray(h.columns)&&h.columns.length? h.columns : TABLES[t].columns; }
+/* positional rows need the head's own column list: the defaults could shift their cells, so such a head is blocked */
+const NO_COLUMNS='This table is stored as positional rows with no column list, so this page cannot tell which cell is which. It is blocked and cannot be saved over. Reload later.';
+function positionalWithoutColumns(h, rows){ return !(Array.isArray(h.columns)&&h.columns.length) && rows.some(r=>Array.isArray(r)); }
 function objectRows(hc, arrs){ return arrs.map(a=>{ const o={}; hc.forEach((c,j)=>{ o[c]=a[j]??''; }); return o; }); }
 function adoptRows(t, hc, objs){
   if(dirty.has(t)||saving.has(t)) return;
@@ -242,6 +250,7 @@ function legacyAssemble(t){
     ids.push(p.id); arrs.push(...p.rows);
   }
   ts.legacyDocs=ids;
+  if(positionalWithoutColumns(h,arrs)){ blockTable(t,NO_COLUMNS); return; }
   adoptRows(t, hc, arrs.map(r=>Array.isArray(r)? objectRows(hc,[r])[0] : r));
 }
 function ensureParts(t){
@@ -266,12 +275,14 @@ async function applyHead(t,h){
        The user's choice (Load theirs or Keep mine) resolves it, and it cannot silently lose rows. */
     if(ts.lastSaveAt&&Date.now()-ts.lastSaveAt<10000&&revOf(h)!==ts.base&&(h.base||'')!==ts.base){ ts.conflict={theirRev:revOf(h)}; dirty.add(t); setStatus('warn','Someone else saved this table while you were editing.'); render(); return; }
     const arrs=[]; for(const x of h.blobs||[]) arrs.push(...r.got.get(x));
+    if(positionalWithoutColumns(h,arrs)){ blockTable(t,NO_COLUMNS); return; }
     ts.incomplete=null; ts.base=revOf(h); ts.blobs=r.got; ts.legacyDocs=[];
     adoptRows(t, headCols(h,t), objectRows(headCols(h,t), arrs));
     return;
   }
   if(h.format!==undefined&&h.format!=='arrays'&&h.format!=='blobs'){ blockTable(t,UNKNOWN_FORMAT); return; }
   if(Array.isArray(h.rows)){ /* oldest inline format: the rows are in the head itself */
+    if(positionalWithoutColumns(h,h.rows)){ blockTable(t,NO_COLUMNS); return; }
     stopParts(t); ts.legacy=null; ts.base=revOf(h); ts.blobs=new Map(); ts.incomplete=null; ts.legacyDocs=[];
     const hc=headCols(h,t); adoptRows(t, hc, h.rows.map(r=>Array.isArray(r)? objectRows(hc,[r])[0] : r)); return;
   }
@@ -327,12 +338,29 @@ async function acquireHead(t){
   }
 }
 /* a conflict keeps local edits dirty and waits for the user; opts.overwrite writes the head on top of their rev */
+/* an edit marks its table dirty and arms a save 900 ms later; a save already waiting is not replaced by a retry (see retryFlush) */
+function markDirty(t){
+  editGen[t]=(editGen[t]||0)+1; /* every edit bumps the generation, so a save that began earlier knows its rows are stale */
+  if(!localMode && !loaded.has(t)){ setStatus('warn','Still loading '+t+'; that edit was not saved.'); return; }
+  dirty.add(t); rebuild(); setStatus();
+  if(localMode||!db||!canWrite){ saveLocal(); return; }
+  clearTimeout(timers[t]); timers[t]=setTimeout(()=>flush(t),900);
+}
+/* arms a retry of a save. If an edit happened since this save began, the retry starts fresh (new deadline, nothing written yet)
+   but keeps the save's write intent, so a Keep mine stays a Keep mine. Otherwise the retry keeps the save's own budget. */
+function retryFlush(t,opts,ms){
+  clearTimeout(timers[t]);
+  const stale=opts.gen!==(editGen[t]||0);
+  const next=stale? {overwrite:opts.overwrite} : opts;
+  timers[t]=setTimeout(()=>flush(t,next),ms);
+}
 /* the set of blob hashes a head names (empty for a missing head or another format) */
 function headBlobs(h){ return new Set(h&&h.format==='blobs'&&Array.isArray(h.blobs)? h.blobs : []); }
 async function flush(t, opts){
   opts=opts||{};
+  if(opts.gen===undefined) opts.gen=editGen[t]||0; /* the edit generation this save started with */
   const ts=TS(t);
-  if(saving.has(t)){ clearTimeout(timers[t]); timers[t]=setTimeout(()=>flush(t,opts),500); return; }
+  if(saving.has(t)){ retryFlush(t,opts,500); return; }
   if(!dirty.has(t)) return;
   if(ts.pinned) return; /* a rejected table is never saved again from this view, Keep mine included */
   if(ts.conflict&&!opts.overwrite) return;
@@ -375,13 +403,14 @@ async function flush(t, opts){
     /* the leased head must need no blob we have neither written nor seen: if a peer changed it under us, retry the save.
        Fencing: if the get took most of the lease, another tab may hold it by now, so do not write under it. Both retry. */
     const verified=new Set([...written, ...headBlobs(curHead)]);
-    if(hashes.some(h=>!verified.has(h)) || Date.now()-lease.acquiredAt>lease.ttlMs-300){ dirty.add(t); clearTimeout(timers[t]); timers[t]=setTimeout(()=>flush(t,opts),50); return; }
+    if(hashes.some(h=>!verified.has(h)) || Date.now()-lease.acquiredAt>lease.ttlMs-300){ dirty.add(t); retryFlush(t,opts,50); return; }
     const rev=Date.now().toString(36)+Math.random().toString(36).slice(2,7);
     const base=opts.overwrite? curRev : ts.base, prevBase=ts.base;
     await db.doc(headPath(t)).set({format:'blobs', columns:cols, blobs:hashes, rev, base, savedAt:now});
     /* GC may have deleted a blob this save wrote, between its write and the head landing: re-check each one and write any that are gone */
     const rowsOf=new Map(built.map(b=>[b.hash,b.rows]));
     for(const h of written){
+      if(!rowsOf.has(h)) continue; /* a hash from an earlier attempt's rows: this build has no rows for it, so there is nothing to write */
       const g=await db.doc(blobPath(t,h)).get();
       if(!g.exists) await db.doc(blobPath(t,h)).set({rows:rowsOf.get(h), createdAt:Date.now()});
     }
@@ -400,7 +429,7 @@ async function flush(t, opts){
   catch(e){
     /* rejected: the edits stay on screen, pinned and unsaved; no peer head replaces them until the user chooses */
     if(e&&e.code==='invalid_argument'){ dirty.add(t); ts.pinned=true; ts.conflict=null; canWrite=false; setStatus('warn','This view can read but not save. Your edits are shown here, not saved; export them as CSV.'); saveLocal(); render(); }
-    else { dirty.add(t); setStatus('bad','Save failed ('+(e&&e.code||'error')+'). Retrying.'); timers[t]=setTimeout(()=>flush(t,opts),3000); }
+    else { dirty.add(t); setStatus('bad','Save failed ('+(e&&e.code||'error')+'). Retrying.'); retryFlush(t,opts,3000); }
   }
   finally{ saving.delete(t); setStatus(); }
   if(newer==='conflict'){ ts.conflict={theirRev:revOf(ts.latest)}; dirty.add(t); setStatus('warn','Someone else saved this table while you were editing.'); render(); }
@@ -531,7 +560,8 @@ function rankedValues(objectId, rank){
   }
   return m;
 }
-function evalExpr(expr, rank=1, objectId=null){
+function evalExpr(expr, rank=1, objectId=null, status){
+  if(!String(expr??'').trim() && status==='proposed') return {err:'proposed, no formula yet', soft:true, note:true};
   try{ const v=evalNode(parse(String(expr||'')), makeEnv(rank,objectId)); return {v}; }
   catch(e){ return {err:e.message, soft:!!e.soft}; }
 }
@@ -557,8 +587,17 @@ function cellIssue(table, col, raw){
   return missing.length? 'Unknown: '+missing.join(', ') : null;
 }
 let ISSUES=null;
-function issuesCount(){ return ISSUES? ISSUES.length : null; }
+function issuesCount(){ return ISSUES? ISSUES.filter(x=>!x.note).length : null; } /* notes are shown in the list but are not problems */
 function allIssues(){ if(ISSUES) return ISSUES; ISSUES=computeIssues(); return ISSUES; }
+/* formula-issues:begin */
+/* one formula row's issue: a proposed formula with no expression is a note ("proposed, no formula yet"), not a problem */
+function formulaRowIssue(row, evalExpr){
+  if(!String(row.expr??'').trim() && row.status==='proposed') return {note:true, msg:'proposed, no formula yet'};
+  const e=evalExpr(row.expr); return e.err && !e.soft ? {msg:e.err} : null;
+}
+/* a formula cell's style for a result that is not a value: a note is muted, a soft error warns, anything else is an error */
+function formulaCellClass(e){ return e.note? 'note' : e.soft? 'warn' : 'bad'; }
+/* formula-issues:end */
 function computeIssues(){
   const out=[];
   for(const t of ORDER){
@@ -570,11 +609,12 @@ function computeIssues(){
     });
   }
   const tk=new Map(); state.data.tags.rows.forEach((r,i)=>{ const k=String(r.key||''); if(k){ if(tk.has(k)) out.push({t:'tags',i,c:'key',msg:'Duplicate key "'+k+'"',row:r}); tk.set(k,1);} });
-  for(const r of state.data.formulas.rows){ const e=evalExpr(r.expr); if(e.err && !e.soft) out.push({t:'formulas',i:state.data.formulas.rows.indexOf(r),c:'expr',msg:e.err,row:r}); }
+  for(const r of state.data.formulas.rows){ const fi=formulaRowIssue(r, evalExpr); if(fi) out.push({t:'formulas',i:state.data.formulas.rows.indexOf(r),c:'expr',msg:fi.msg,row:r,note:!!fi.note}); }
   return out;
 }
 
 /* ---------- CSV ---------- */
+/* csv:begin */
 function toCSV(cols, rows){
   const esc=v=>{ v=v==null?'':String(v); return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
   return [cols.map(esc).join(','), ...rows.map(r=>cols.map(c=>esc(r[c])).join(','))].join('\n')+'\n';
@@ -597,18 +637,19 @@ function parseCSV(text){
   return {columns:cols, rows:nonEmpty.slice(1).map(r=>{ const o={}; cols.forEach((c,j)=>{ o[c]=coerce(r[j]??''); }); return o; })};
 }
 function coerce(s){ const raw=String(s), t=raw.trim(); return (/^-?\d+(\.\d+)?$/.test(t) && String(Number(t))===t)? Number(t) : raw; }
+/* merges parsed CSV into a table: columns the CSV names are added; merge updates rows by key and adds new ones; replace swaps the rows */
+function importRows(tbl, key, parsed, mode){
+  for(const c of parsed.columns) if(!tbl.columns.includes(c)) tbl.columns.push(c);
+  if(mode==='replace'||!key){ if(mode==='replace') tbl.rows=parsed.rows; else tbl.rows.push(...parsed.rows); }
+  else { const at=new Map(tbl.rows.map((r,i)=>[String(r[key]),i])); for(const r of parsed.rows){ const k=String(r[key]??''); if(k&&at.has(k)) Object.assign(tbl.rows[at.get(k)],r); else tbl.rows.push(r); } }
+}
+/* csv:end */
 
 /* ---------- persistence ---------- */
 const LS='ashen-tag-workbench-v1';
 function saveLocal(){ try{ localStorage.setItem(LS, JSON.stringify(state.data)); }catch(e){ setStatus('bad','Browser storage is full or blocked, so this edit is only in this tab. Export CSV now.'); } }
-function loadLocal(){ try{ const s=localStorage.getItem(LS); if(s){ const d=JSON.parse(s); for(const t of ORDER) if(d[t]&&Array.isArray(d[t].rows)) state.data[t]=d[t]; } }catch(e){} }
+function loadLocal(){ try{ const s=localStorage.getItem(LS); if(s){ const d=JSON.parse(s); for(const t of ORDER) if(d[t]&&Array.isArray(d[t].rows)){ const cols=Array.isArray(d[t].columns)? d[t].columns.slice() : []; for(const c of TABLES[t].columns) if(!cols.includes(c)) cols.push(c); state.data[t]={columns:cols, rows:d[t].rows}; } } }catch(e){} }
 function editable(t){ return localMode || (!!db && canWrite && loaded.has(t)); }
-function markDirty(t){
-  if(!localMode && !loaded.has(t)){ setStatus('warn','Still loading '+t+'; that edit was not saved.'); return; }
-  dirty.add(t); rebuild(); setStatus();
-  if(localMode||!db||!canWrite){ saveLocal(); return; }
-  clearTimeout(timers[t]); timers[t]=setTimeout(()=>flush(t),900);
-}
 function setStatus(level,msg){
   const el=document.getElementById('status');
   const pend=dirty.size+saving.size;
@@ -694,7 +735,7 @@ function renderTable(p,t){
         inp.addEventListener('change',()=>{ r[c]=coerce(inp.value); markDirty(t); const is=cellIssue(t,c,r[c]); td.classList.toggle('bad',!!is); inp.title=is||''; if(t==='formulas') draw(); renderTabs(); });
         td.appendChild(inp); tr.appendChild(td);
       }
-      if(t==='formulas'){ const td=document.createElement('td'); td.className='out'; const e=evalExpr(r.expr); if('v' in e) td.textContent=fmt(e.v); else { td.textContent=e.err; td.classList.add(e.soft?'warn':'bad'); } tr.appendChild(td); }
+      if(t==='formulas'){ const td=document.createElement('td'); td.className='out'; const e=evalExpr(r.expr,1,null,r.status); if('v' in e) td.textContent=fmt(e.v); else { td.textContent=e.err; td.classList.add(formulaCellClass(e)); } tr.appendChild(td); }
       body.appendChild(tr);
     }
     table.appendChild(body); grid.appendChild(table);
@@ -764,7 +805,7 @@ function renderSheet(p){
   const rowsHtml=[];
   const env=makeEnv(rank,id);
   for(const r of vrows){ let v; try{ v=fmt(env(String(r.key))); }catch(e){ v=e.message; } rowsHtml.push(['value',r.key,v,r.unit,r.description]); }
-  for(const r of frows){ const e=evalExpr(r.expr,rank,id); rowsHtml.push(['formula',r.key,'v' in e?fmt(e.v):e.err,'',r.expr]); }
+  for(const r of frows){ const e=evalExpr(r.expr,rank,id,r.status); rowsHtml.push(['formula',r.key,'v' in e?fmt(e.v):e.err,'',r.expr]); }
   for(const k of outside){ const kind=refKind(k)||'unknown'; let v='—'; try{ v=fmt(env(k)); }catch(e){ v=e.soft?'runtime':e.message; } rowsHtml.push(['uses '+kind,k,v,'',(IX.val.get(k)||IX.frm.get(k))?.description||findTag(k)?.label||'']); }
   vt.innerHTML='<table><thead><tr><th>kind</th><th>key</th><th>value</th><th>unit</th><th>detail</th></tr></thead><tbody>'+rowsHtml.map(r=>'<tr><td>'+escapeHtml(r[0])+'</td><td class="mono">'+escapeHtml(r[1])+'</td><td class="num">'+escapeHtml(r[2])+'</td><td>'+escapeHtml(r[3]||'')+'</td><td class="mono">'+escapeHtml(r[4]||'')+'</td></tr>').join('')+'</tbody></table>';
   vb.appendChild(vt); right.appendChild(vb);
@@ -798,7 +839,8 @@ function renderCheck(p){
   const notLoaded=ORDER.filter(t=>!localMode&&!loaded.has(t));
   if(notLoaded.length){ const w=document.createElement('div'); w.className='toolbar'; const m=document.createElement('p'); m.className='help'; m.textContent='Not checked yet, because these tables are not loaded: '+notLoaded.map(t=>TABLES[t].label).join(', ')+'.'; w.append(m, btn('Load all tables',()=>{ notLoaded.forEach(ensure); render(); })); p.appendChild(w); }
   const iss=allIssues();
-  const h=document.createElement('p'); h.className='help'; h.textContent= iss.length? iss.length+' problems across all tables. Click one to jump to its table.' : 'No problems: every reference resolves and every formula computes.';
+  const probs=iss.filter(x=>!x.note).length;
+  const h=document.createElement('p'); h.className='help'; h.textContent= probs? probs+' problems across all tables. Click one to jump to its table.' : 'No problems: every reference resolves and every formula computes.';
   p.appendChild(h);
   const ul=document.createElement('ul'); ul.className='issues';
   for(const it of iss.slice(0,400)){ const li=document.createElement('li'); const b=document.createElement('button'); b.className='x'; b.style.color='var(--fg)'; b.type='button';
@@ -825,10 +867,7 @@ function importDialog(t){
 function applyImport(t,text,mode){
   if(!editable(t)){ setStatus('warn','This table is not loaded or not editable yet.'); return; }
   const parsed=parseCSV(text); if(!parsed.columns.length){ setStatus('bad','That CSV has no header row.'); return; }
-  const tbl=state.data[t], key=TABLES[t].key;
-  for(const c of parsed.columns) if(!tbl.columns.includes(c)) tbl.columns.push(c);
-  if(mode==='replace'||!key){ if(mode==='replace') tbl.rows=parsed.rows; else tbl.rows.push(...parsed.rows); }
-  else { const at=new Map(tbl.rows.map((r,i)=>[String(r[key]),i])); for(const r of parsed.rows){ const k=String(r[key]??''); if(k&&at.has(k)) Object.assign(tbl.rows[at.get(k)],r); else tbl.rows.push(r); } }
+  importRows(state.data[t], TABLES[t].key, parsed, mode);
   markDirty(t); setStatus('ok','Imported '+parsed.rows.length+' rows into '+TABLES[t].label+' ('+mode+')'); render();
 }
 function openText(title,help,text,actions,keepOpen){

@@ -899,7 +899,7 @@ environment-backdrop,.environment-backdrop > svg,width,100%,,styles/combat.css:4
 environment-backdrop,.environment-backdrop > svg,height,100%,,styles/combat.css:44,all,spacing,styles/combat.css:44,environment-backdrop
 environment-backdrop,.environment-backdrop > svg,transform,scale(1.06),,styles/combat.css:44,all,motion,styles/combat.css:44,environment-backdrop
 environment-backdrop,.environment-backdrop > svg,transform-origin,center,,styles/combat.css:44,all,motion,styles/combat.css:44,environment-backdrop
-environment-backdrop,.environment-backdrop > svg,transform,scale(1.02),(max-width:600px),styles/combat.css:45,other,motion,styles/combat.css:45,environment-backdrop
+environment-backdrop,.environment-backdrop > svg,transform,scale(1.02),(max-width:600px),styles/combat.css:45,mobile,motion,styles/combat.css:45,environment-backdrop
 environment-backdrop,.environment-backdrop[data-scene-fit] > svg,transform,none,,styles/combat.css:49,all,motion,styles/combat.css:49,environment-backdrop
 environment-backdrop,.environment-backdrop[data-skyline='off'] > svg,display,none,,styles/combat.css:50,all,style.other,styles/combat.css:50,environment-backdrop
 illustrated-background,.environment-backdrop::after,display,none,,styles/combat.css:51,all,style.other,styles/combat.css:51,environment-backdrop
@@ -1817,7 +1817,7 @@ card-hold-progress,.combat .hand .card > .card-hold-progress::before,height,100%
 card-hold-progress,.combat .hand .card > .card-hold-progress::before,background,"repeating-linear-gradient(135deg, #ffe3a0 0 8px, #917025 8px 16px)",,styles/combat.css:1157,all,color,styles/combat.css:1157,card-hold-progress
 card-hold-progress,.combat .hand .card > .card-hold-progress::before,transform,"scaleX(var(--hold, 0))",,styles/combat.css:1157,all,motion,styles/combat.css:1157,card-hold-progress
 card-hold-progress,.combat .hand .card > .card-hold-progress::before,transform-origin,left,,styles/combat.css:1157,all,motion,styles/combat.css:1157,card-hold-progress
-equipment-animation-reference,.combat:not(.coop) .player .defeated-frame,left,100% !important,(max-width: 600px),styles/combat.css:1165,other,spacing,styles/combat.css:1165,defeated-frame
+equipment-animation-reference,.combat:not(.coop) .player .defeated-frame,left,100% !important,(max-width: 600px),styles/combat.css:1165,mobile,spacing,styles/combat.css:1165,defeated-frame
 combat,:root .combat[data-layout='formation'],flex,none,,styles/combat.css:1170,all,style.other,styles/combat.css:1170,combat
 combat,:root .combat[data-layout='formation'],height,"calc(100dvh / var(--ui-zoom, 1))",,styles/combat.css:1170,all,spacing,styles/combat.css:1170,combat
 combat,:root .combat[data-layout='formation'],min-height,0,,styles/combat.css:1170,all,spacing,styles/combat.css:1170,combat
@@ -5276,12 +5276,12 @@ shop-book-offer,#shop-skillBooks > .shop-book-offer,padding,var(--book-compact-p
 skill-book-offer,.shop-book-details,padding-left,var(--book-compact-gap),@container (max-width: 460px),styles/kit.css:1282,other,spacing,styles/kit.css:1282,shop-book-details
 skill-book-offer,.shop-book-details > .shop-book-name,font-size,1.5rem,@container (max-width: 460px),styles/kit.css:1283,other,typography,styles/kit.css:1283,shop-book-name
 shop-book-details,.shop-book-details > p,font-size,1.2rem,@container (max-width: 460px),styles/kit.css:1284,other,typography,styles/kit.css:1284,shop-book-details
-shop-book-offer,#shop-skillBooks > .shop-book-offer,grid-template-columns,"max(var(--book-compact-art-width), calc(var(--book-compact-art-width) / var(--ui-zoom, 1))) minmax(0, 1fr) max(var(--book-compact-action-width), calc(var(--book-compact-action-width) / var(--ui-zoom, 1)))",(max-width: 600px),styles/kit.css:1289,other,style.other,styles/kit.css:1289,shop-book-offer
-skill-book-offer,.shop-book-details > .shop-book-name,font-size,"max(1.5rem, calc(1.5rem / var(--ui-zoom, 1)))",(max-width: 600px),styles/kit.css:1295,other,typography,styles/kit.css:1295,shop-book-name
-shop-book-details,.shop-book-details > p,font-size,"max(1.2rem, calc(1.2rem / var(--ui-zoom, 1)))",(max-width: 600px),styles/kit.css:1296,other,typography,styles/kit.css:1296,shop-book-details
-skill-book-offer,.shop-book-price,font-size,"max(1.1rem, calc(1.1rem / var(--ui-zoom, 1)))",(max-width: 600px),styles/kit.css:1297,other,typography,styles/kit.css:1297,shop-book-price
-skill-book-offer,.shop-book-buy.as-btn,min-height,"max(4.4rem, calc(44px / var(--ui-zoom, 1)))",(max-width: 600px),styles/kit.css:1298,other,spacing,styles/kit.css:1298,shop-book-buy
-skill-book-offer,.shop-book-buy.as-btn,font-size,"max(1.7rem, calc(1.7rem / var(--ui-zoom, 1)))",(max-width: 600px),styles/kit.css:1298,other,typography,styles/kit.css:1298,shop-book-buy
+shop-book-offer,#shop-skillBooks > .shop-book-offer,grid-template-columns,"max(var(--book-compact-art-width), calc(var(--book-compact-art-width) / var(--ui-zoom, 1))) minmax(0, 1fr) max(var(--book-compact-action-width), calc(var(--book-compact-action-width) / var(--ui-zoom, 1)))",(max-width: 600px),styles/kit.css:1289,mobile,style.other,styles/kit.css:1289,shop-book-offer
+skill-book-offer,.shop-book-details > .shop-book-name,font-size,"max(1.5rem, calc(1.5rem / var(--ui-zoom, 1)))",(max-width: 600px),styles/kit.css:1295,mobile,typography,styles/kit.css:1295,shop-book-name
+shop-book-details,.shop-book-details > p,font-size,"max(1.2rem, calc(1.2rem / var(--ui-zoom, 1)))",(max-width: 600px),styles/kit.css:1296,mobile,typography,styles/kit.css:1296,shop-book-details
+skill-book-offer,.shop-book-price,font-size,"max(1.1rem, calc(1.1rem / var(--ui-zoom, 1)))",(max-width: 600px),styles/kit.css:1297,mobile,typography,styles/kit.css:1297,shop-book-price
+skill-book-offer,.shop-book-buy.as-btn,min-height,"max(4.4rem, calc(44px / var(--ui-zoom, 1)))",(max-width: 600px),styles/kit.css:1298,mobile,spacing,styles/kit.css:1298,shop-book-buy
+skill-book-offer,.shop-book-buy.as-btn,font-size,"max(1.7rem, calc(1.7rem / var(--ui-zoom, 1)))",(max-width: 600px),styles/kit.css:1298,mobile,typography,styles/kit.css:1298,shop-book-buy
 card-shelf,.card-shelf .card,--card-w,100%,,styles/kit.css:1309,all,token,styles/kit.css:1309,card-shelf
 card-shelf,.card-shelf .card,width,100%,,styles/kit.css:1309,all,spacing,styles/kit.css:1309,card-shelf
 card-shelf,.card-shelf .card,flex-shrink,1,,styles/kit.css:1309,all,style.other,styles/kit.css:1309,card-shelf
@@ -8657,16 +8657,16 @@ inventory-detail-card,.inventory-tags,display,flex,,styles/kit.css:3381,all,styl
 inventory-detail-card,.inventory-tags,flex-wrap,wrap,,styles/kit.css:3381,all,style.other,styles/kit.css:3381,inventory-tags
 inventory-detail-card,.inventory-tags,gap,.4rem,,styles/kit.css:3381,all,spacing,styles/kit.css:3381,inventory-tags
 inventory-detail-card,.inventory-tags,margin-top,1rem,,styles/kit.css:3381,all,spacing,styles/kit.css:3381,inventory-tags
-inventory-face,.inventory-face,gap,.65rem,(max-width: 600px),styles/kit.css:3383,other,spacing,styles/kit.css:3383,inventory-face
-inventory-face,.inventory-face,flex-wrap,wrap,(max-width: 600px),styles/kit.css:3383,other,style.other,styles/kit.css:3383,inventory-face
-inventory-item-card,.inventory-face > .inventory-item-art,width,3.6rem,(max-width: 600px),styles/kit.css:3384,other,spacing,styles/kit.css:3384,inventory-item-art
-inventory-item-card,.inventory-face > .inventory-item-art,height,3.6rem,(max-width: 600px),styles/kit.css:3384,other,spacing,styles/kit.css:3384,inventory-item-art
-inventory-face,.inventory-face > .r-trail,width,100%,(max-width: 600px),styles/kit.css:3385,other,spacing,styles/kit.css:3385,inventory-face
-inventory-face,.inventory-face > .r-trail,justify-content,flex-start,(max-width: 600px),styles/kit.css:3385,other,style.other,styles/kit.css:3385,inventory-face
-inventory-detail-card,.inventory-detail,grid-template-columns,"minmax(0, 1fr)",(max-width: 600px),styles/kit.css:3386,other,style.other,styles/kit.css:3386,inventory-detail
-inventory-detail-card,.inventory-detail,padding,1rem,(max-width: 600px),styles/kit.css:3386,other,spacing,styles/kit.css:3386,inventory-detail
-inventory-detail-card,.inventory-detail > .inventory-model,width,"min(100%, 13rem)",(max-width: 600px),styles/kit.css:3387,other,spacing,styles/kit.css:3387,inventory-model
-inventory-detail-card,.inventory-detail > .inventory-model,justify-self,center,(max-width: 600px),styles/kit.css:3387,other,style.other,styles/kit.css:3387,inventory-model
+inventory-face,.inventory-face,gap,.65rem,(max-width: 600px),styles/kit.css:3383,mobile,spacing,styles/kit.css:3383,inventory-face
+inventory-face,.inventory-face,flex-wrap,wrap,(max-width: 600px),styles/kit.css:3383,mobile,style.other,styles/kit.css:3383,inventory-face
+inventory-item-card,.inventory-face > .inventory-item-art,width,3.6rem,(max-width: 600px),styles/kit.css:3384,mobile,spacing,styles/kit.css:3384,inventory-item-art
+inventory-item-card,.inventory-face > .inventory-item-art,height,3.6rem,(max-width: 600px),styles/kit.css:3384,mobile,spacing,styles/kit.css:3384,inventory-item-art
+inventory-face,.inventory-face > .r-trail,width,100%,(max-width: 600px),styles/kit.css:3385,mobile,spacing,styles/kit.css:3385,inventory-face
+inventory-face,.inventory-face > .r-trail,justify-content,flex-start,(max-width: 600px),styles/kit.css:3385,mobile,style.other,styles/kit.css:3385,inventory-face
+inventory-detail-card,.inventory-detail,grid-template-columns,"minmax(0, 1fr)",(max-width: 600px),styles/kit.css:3386,mobile,style.other,styles/kit.css:3386,inventory-detail
+inventory-detail-card,.inventory-detail,padding,1rem,(max-width: 600px),styles/kit.css:3386,mobile,spacing,styles/kit.css:3386,inventory-detail
+inventory-detail-card,.inventory-detail > .inventory-model,width,"min(100%, 13rem)",(max-width: 600px),styles/kit.css:3387,mobile,spacing,styles/kit.css:3387,inventory-model
+inventory-detail-card,.inventory-detail > .inventory-model,justify-self,center,(max-width: 600px),styles/kit.css:3387,mobile,style.other,styles/kit.css:3387,inventory-model
 inventory-item-card,.inventory-face.as-face,display,grid,,styles/kit.css:3390,all,style.other,styles/kit.css:3390,as-face
 inventory-item-card,.inventory-face.as-face,grid-template-columns,"auto minmax(0, 1fr)",,styles/kit.css:3390,all,style.other,styles/kit.css:3390,as-face
 inventory-item-card,.inventory-face.as-face,align-items,center,,styles/kit.css:3390,all,style.other,styles/kit.css:3390,as-face
@@ -9569,29 +9569,29 @@ ctext,.as-tip .ctext,white-space,normal,,styles/kit.css:3882,all,typography,styl
 ctext,.as-tip .ctext,max-height,none,,styles/kit.css:3882,all,spacing,styles/kit.css:3882,ctext
 ctext,.as-tip .ctext,overflow,visible,,styles/kit.css:3882,all,style.other,styles/kit.css:3882,ctext
 inspection-tags,.as-tip .inspection-tags,gap,5px,,styles/kit.css:3883,all,spacing,styles/kit.css:3883,inspection-tags
-card-inspection-layout,.card-inspection-modal .card-inspection-layout,grid-template-columns,"minmax(0,1fr)",(max-width:600px),styles/kit.css:3885,other,style.other,styles/kit.css:3885,card-inspection-layout
-card-inspection-layout,.card-inspection-modal .card-inspection-layout,gap,16px,(max-width:600px),styles/kit.css:3885,other,spacing,styles/kit.css:3885,card-inspection-layout
-card-inspection-layout,.card-inspection-modal .card-inspection-layout,padding,16px,(max-width:600px),styles/kit.css:3885,other,spacing,styles/kit.css:3885,card-inspection-layout
-card-inspection-layout,.card-inspection-layout,grid-template-columns,"minmax(0,1fr)",(max-width:600px),styles/kit.css:3885,other,style.other,styles/kit.css:3885,card-inspection-layout
-card-inspection-layout,.card-inspection-layout,gap,16px,(max-width:600px),styles/kit.css:3885,other,spacing,styles/kit.css:3885,card-inspection-layout
-card-inspection-layout,.card-inspection-layout,padding,16px,(max-width:600px),styles/kit.css:3885,other,spacing,styles/kit.css:3885,card-inspection-layout
-ctext,.playing-card-details .ctext,font-size,16px,(max-width:600px),styles/kit.css:3886,other,typography,styles/kit.css:3886,ctext
-card-inspection-art,.card-inspection-art,width,100%,(max-width:600px),styles/kit.css:3887,other,spacing,styles/kit.css:3887,card-inspection-art
-card-inspection-art,.card-inspection-art,max-width,100%,(max-width:600px),styles/kit.css:3887,other,spacing,styles/kit.css:3887,card-inspection-art
-card-inspection-art,.card-inspection-art,margin-inline,auto,(max-width:600px),styles/kit.css:3887,other,spacing,styles/kit.css:3887,card-inspection-art
-card-inspection-art,.card-inspection-layout > .card-inspection-art,flex-basis,100%,(max-width:600px),styles/kit.css:3888,other,style.other,styles/kit.css:3888,card-inspection-art
-card-inspection-art,.card-inspection-art > .card,width,160px,(max-width:600px),styles/kit.css:3889,other,spacing,styles/kit.css:3889,card-inspection-art
-card-inspection-art,.card-inspection-art > .card,height,auto,(max-width:600px),styles/kit.css:3889,other,spacing,styles/kit.css:3889,card-inspection-art
-card-inspection-art,.card-inspection-art > .card,aspect-ratio,var(--card-ratio),(max-width:600px),styles/kit.css:3889,other,style.other,styles/kit.css:3889,card-inspection-art
-card-inspection-art,.card-inspection-art > .card,margin-inline,auto,(max-width:600px),styles/kit.css:3889,other,spacing,styles/kit.css:3889,card-inspection-art
-equipment-poker-card,.card-inspection-art > .equipment-poker-card,width,100%,(max-width:600px),styles/kit.css:3890,other,spacing,styles/kit.css:3890,equipment-poker-card
-equipment-poker-card,.card-inspection-art > .equipment-poker-card,height,auto,(max-width:600px),styles/kit.css:3890,other,spacing,styles/kit.css:3890,equipment-poker-card
-equipment-poker-card,.card-inspection-art > .equipment-poker-card,margin-inline,auto,(max-width:600px),styles/kit.css:3890,other,spacing,styles/kit.css:3890,equipment-poker-card
-inspection-tags,.card-inspection-art > .inspection-tags,justify-content,center,(max-width:600px),styles/kit.css:3891,other,style.other,styles/kit.css:3891,inspection-tags
-inspection-effect,.inspection-effect,font-size,16px,(max-width:600px),styles/kit.css:3892,other,typography,styles/kit.css:3892,inspection-effect
-inspection-tag,.inspection-tag,min-height,32px,(max-width:600px),styles/kit.css:3893,other,spacing,styles/kit.css:3893,inspection-tag
-inspection-tag,.inspection-tag,display,inline-flex,(max-width:600px),styles/kit.css:3893,other,style.other,styles/kit.css:3893,inspection-tag
-inspection-tag,.inspection-tag,align-items,center,(max-width:600px),styles/kit.css:3893,other,style.other,styles/kit.css:3893,inspection-tag
+card-inspection-layout,.card-inspection-modal .card-inspection-layout,grid-template-columns,"minmax(0,1fr)",(max-width:600px),styles/kit.css:3885,mobile,style.other,styles/kit.css:3885,card-inspection-layout
+card-inspection-layout,.card-inspection-modal .card-inspection-layout,gap,16px,(max-width:600px),styles/kit.css:3885,mobile,spacing,styles/kit.css:3885,card-inspection-layout
+card-inspection-layout,.card-inspection-modal .card-inspection-layout,padding,16px,(max-width:600px),styles/kit.css:3885,mobile,spacing,styles/kit.css:3885,card-inspection-layout
+card-inspection-layout,.card-inspection-layout,grid-template-columns,"minmax(0,1fr)",(max-width:600px),styles/kit.css:3885,mobile,style.other,styles/kit.css:3885,card-inspection-layout
+card-inspection-layout,.card-inspection-layout,gap,16px,(max-width:600px),styles/kit.css:3885,mobile,spacing,styles/kit.css:3885,card-inspection-layout
+card-inspection-layout,.card-inspection-layout,padding,16px,(max-width:600px),styles/kit.css:3885,mobile,spacing,styles/kit.css:3885,card-inspection-layout
+ctext,.playing-card-details .ctext,font-size,16px,(max-width:600px),styles/kit.css:3886,mobile,typography,styles/kit.css:3886,ctext
+card-inspection-art,.card-inspection-art,width,100%,(max-width:600px),styles/kit.css:3887,mobile,spacing,styles/kit.css:3887,card-inspection-art
+card-inspection-art,.card-inspection-art,max-width,100%,(max-width:600px),styles/kit.css:3887,mobile,spacing,styles/kit.css:3887,card-inspection-art
+card-inspection-art,.card-inspection-art,margin-inline,auto,(max-width:600px),styles/kit.css:3887,mobile,spacing,styles/kit.css:3887,card-inspection-art
+card-inspection-art,.card-inspection-layout > .card-inspection-art,flex-basis,100%,(max-width:600px),styles/kit.css:3888,mobile,style.other,styles/kit.css:3888,card-inspection-art
+card-inspection-art,.card-inspection-art > .card,width,160px,(max-width:600px),styles/kit.css:3889,mobile,spacing,styles/kit.css:3889,card-inspection-art
+card-inspection-art,.card-inspection-art > .card,height,auto,(max-width:600px),styles/kit.css:3889,mobile,spacing,styles/kit.css:3889,card-inspection-art
+card-inspection-art,.card-inspection-art > .card,aspect-ratio,var(--card-ratio),(max-width:600px),styles/kit.css:3889,mobile,style.other,styles/kit.css:3889,card-inspection-art
+card-inspection-art,.card-inspection-art > .card,margin-inline,auto,(max-width:600px),styles/kit.css:3889,mobile,spacing,styles/kit.css:3889,card-inspection-art
+equipment-poker-card,.card-inspection-art > .equipment-poker-card,width,100%,(max-width:600px),styles/kit.css:3890,mobile,spacing,styles/kit.css:3890,equipment-poker-card
+equipment-poker-card,.card-inspection-art > .equipment-poker-card,height,auto,(max-width:600px),styles/kit.css:3890,mobile,spacing,styles/kit.css:3890,equipment-poker-card
+equipment-poker-card,.card-inspection-art > .equipment-poker-card,margin-inline,auto,(max-width:600px),styles/kit.css:3890,mobile,spacing,styles/kit.css:3890,equipment-poker-card
+inspection-tags,.card-inspection-art > .inspection-tags,justify-content,center,(max-width:600px),styles/kit.css:3891,mobile,style.other,styles/kit.css:3891,inspection-tags
+inspection-effect,.inspection-effect,font-size,16px,(max-width:600px),styles/kit.css:3892,mobile,typography,styles/kit.css:3892,inspection-effect
+inspection-tag,.inspection-tag,min-height,32px,(max-width:600px),styles/kit.css:3893,mobile,spacing,styles/kit.css:3893,inspection-tag
+inspection-tag,.inspection-tag,display,inline-flex,(max-width:600px),styles/kit.css:3893,mobile,style.other,styles/kit.css:3893,inspection-tag
+inspection-tag,.inspection-tag,align-items,center,(max-width:600px),styles/kit.css:3893,mobile,style.other,styles/kit.css:3893,inspection-tag
 equipment-choice-card,.equipment-choose,width,100%,,styles/kit.css:3895,all,spacing,styles/kit.css:3895,equipment-choose
 equipment-choice-card,.equipment-choose,margin-top,10px,,styles/kit.css:3895,all,spacing,styles/kit.css:3895,equipment-choose
 equipment-choice-card,.equipment-choose,min-height,var(--tap-floor),,styles/kit.css:3895,all,spacing,styles/kit.css:3895,equipment-choose
@@ -10196,9 +10196,9 @@ ctext,.card-inspection-art > .card .ctext,display,block,,styles/kit.css:4591,all
 ctext,.card-inspection-art > .card .ctext,flex,0 0 auto,,styles/kit.css:4591,all,style.other,styles/kit.css:4591,ctext
 ctext,.card-inspection-art > .card .ctext,overflow,visible,,styles/kit.css:4591,all,style.other,styles/kit.css:4591,ctext
 ctext,.card-inspection-art > .card .ctext,-webkit-line-clamp,unset,,styles/kit.css:4591,all,style.other,styles/kit.css:4591,ctext
-card-inspection-layout,.card-inspection-modal .card-inspection-layout,grid-template-columns,"minmax(0,1fr)",(max-width:600px),styles/kit.css:4593,other,style.other,styles/kit.css:4593,card-inspection-layout
-card-inspection-art,.card-inspection-modal .card-inspection-art,width,100%,(max-width:600px),styles/kit.css:4594,other,spacing,styles/kit.css:4594,card-inspection-art
-card-inspection-art,.card-inspection-modal .card-inspection-art,max-width,"var(--card-w-inspect, 320px)",(max-width:600px),styles/kit.css:4594,other,spacing,styles/kit.css:4594,card-inspection-art
+card-inspection-layout,.card-inspection-modal .card-inspection-layout,grid-template-columns,"minmax(0,1fr)",(max-width:600px),styles/kit.css:4593,mobile,style.other,styles/kit.css:4593,card-inspection-layout
+card-inspection-art,.card-inspection-modal .card-inspection-art,width,100%,(max-width:600px),styles/kit.css:4594,mobile,spacing,styles/kit.css:4594,card-inspection-art
+card-inspection-art,.card-inspection-modal .card-inspection-art,max-width,"var(--card-w-inspect, 320px)",(max-width:600px),styles/kit.css:4594,mobile,spacing,styles/kit.css:4594,card-inspection-art
 global,:root,--control-positive-fill,#255c39,,styles/kit.css:4604,all,token,styles/kit.css:4604,global
 global,:root,--control-positive-border,#6fb580,,styles/kit.css:4604,all,token,styles/kit.css:4604,global
 global,:root,--control-positive-text,#f0fff3,,styles/kit.css:4604,all,token,styles/kit.css:4604,global
@@ -11896,8 +11896,8 @@ cz-menu-button,.customize .cz-menu-button,min-height,var(--tap-floor),,styles/ki
 cz-menu-button,.customize .cz-menu-button,font,"24px/1 Arial, sans-serif",,styles/kit.css:5764,all,typography,styles/kit.css:5764,cz-menu-button
 cz-menu-button,.customize .cz-menu-button,padding,0,,styles/kit.css:5764,all,spacing,styles/kit.css:5764,cz-menu-button
 cz-head-view-tools,.customize .cz-head-view-tools,flex,0 0 auto,,styles/kit.css:5765,all,style.other,styles/kit.css:5765,cz-head-view-tools
-view-mode-toggle,.customize .cz-head-view-tools .cc-view-option,padding-inline,6px,(max-width: 600px),styles/kit.css:5767,other,spacing,styles/kit.css:5767,cc-view-option
-view-mode-toggle,.customize .cz-head-view-tools .cc-view-option,min-width,var(--tap-floor),(max-width: 600px),styles/kit.css:5767,other,spacing,styles/kit.css:5767,cc-view-option
+view-mode-toggle,.customize .cz-head-view-tools .cc-view-option,padding-inline,6px,(max-width: 600px),styles/kit.css:5767,mobile,spacing,styles/kit.css:5767,cc-view-option
+view-mode-toggle,.customize .cz-head-view-tools .cc-view-option,min-width,var(--tap-floor),(max-width: 600px),styles/kit.css:5767,mobile,spacing,styles/kit.css:5767,cc-view-option
 cz-header-menu,.customize .cz-head-tools.cz-header-menu,--place-gap,8px,,styles/kit.css:5772,all,token,styles/kit.css:5772,cz-header-menu
 cz-header-menu,.customize .cz-head-tools.cz-header-menu,display,none,,styles/kit.css:5772,all,style.other,styles/kit.css:5772,cz-header-menu
 cz-header-menu,.customize .cz-head-tools.cz-header-menu,position,fixed,,styles/kit.css:5772,all,style.other,styles/kit.css:5772,cz-header-menu
@@ -11999,10 +11999,10 @@ book-learning,.book-lesson-detail,align-content,start,,styles/kit.css:5805,all,s
 book-learning,.book-lesson-detail,gap,1rem,,styles/kit.css:5805,all,spacing,styles/kit.css:5805,book-lesson-detail
 book-lesson-detail,.book-lesson-detail > p,width,100%,,styles/kit.css:5806,all,spacing,styles/kit.css:5806,book-lesson-detail
 book-learning,.book-learning-status,color,var(--gold),,styles/kit.css:5807,all,color,styles/kit.css:5807,book-learning-status
-book-learning,.book-learning-panel,font-size,14px,(max-width: 600px),styles/kit.css:5809,other,typography,styles/kit.css:5809,book-learning-panel
-book-learning,.book-lesson-columns,grid-template-columns,"minmax(0, 1fr)",(max-width: 600px),styles/kit.css:5810,other,style.other,styles/kit.css:5810,book-lesson-columns
-book-learning,.book-lesson-list,max-height,25dvh,(max-width: 600px),styles/kit.css:5811,other,spacing,styles/kit.css:5811,book-lesson-list
-book-learning,.book-learning-rarity,font-size,12px,(max-width: 600px),styles/kit.css:5812,other,typography,styles/kit.css:5812,book-learning-rarity
+book-learning,.book-learning-panel,font-size,14px,(max-width: 600px),styles/kit.css:5809,mobile,typography,styles/kit.css:5809,book-learning-panel
+book-learning,.book-lesson-columns,grid-template-columns,"minmax(0, 1fr)",(max-width: 600px),styles/kit.css:5810,mobile,style.other,styles/kit.css:5810,book-lesson-columns
+book-learning,.book-lesson-list,max-height,25dvh,(max-width: 600px),styles/kit.css:5811,mobile,spacing,styles/kit.css:5811,book-lesson-list
+book-learning,.book-learning-rarity,font-size,12px,(max-width: 600px),styles/kit.css:5812,mobile,typography,styles/kit.css:5812,book-learning-rarity
 book-art,.book-art,display,inline-block,,styles/kit.css:5814,all,style.other,styles/kit.css:5814,book-art
 book-art,.book-art,position,relative,,styles/kit.css:5814,all,style.other,styles/kit.css:5814,book-art
 book-art,.book-art,isolation,isolate,,styles/kit.css:5814,all,style.other,styles/kit.css:5814,book-art
@@ -12111,9 +12111,9 @@ combat-health-row,:root body.cb-safe .combat .combatant .combat-health-row,--hea
 m-value,:root .combat .combatant .combat-health-meter .m-value,font-size,0 !important,@container combat-health (max-width: 4em),styles/kit.css:5870,other,typography,styles/kit.css:5870,m-value
 m-value,:root .combat .combatant .combat-health-meter .m-value::after,content,attr(data-current-hp),@container combat-health (max-width: 4em),styles/kit.css:5871,other,style.other,styles/kit.css:5871,m-value
 m-value,:root .combat .combatant .combat-health-meter .m-value::after,font-size,"var(--combatant-value-text, calc(12px / var(--ui-zoom, 1)))",@container combat-health (max-width: 4em),styles/kit.css:5871,other,typography,styles/kit.css:5871,m-value
-combat-health-row,:root .combat .combatant .combat-health-row,min-width,"calc(70px / var(--ui-zoom, 1))",(max-width: 600px),styles/kit.css:5876,other,spacing,styles/kit.css:5876,combat-health-row
-combat-health-row,:root .combat .combatant .combat-health-row,gap,"calc(2px / var(--ui-zoom, 1))",(max-width: 600px),styles/kit.css:5876,other,spacing,styles/kit.css:5876,combat-health-row
-combat-health-badge,:root .combat .combatant .combat-health-badge,flex-basis,"calc(16px / var(--ui-zoom, 1))",(max-width: 600px),styles/kit.css:5877,other,style.other,styles/kit.css:5877,combat-health-badge
+combat-health-row,:root .combat .combatant .combat-health-row,min-width,"calc(70px / var(--ui-zoom, 1))",(max-width: 600px),styles/kit.css:5876,mobile,spacing,styles/kit.css:5876,combat-health-row
+combat-health-row,:root .combat .combatant .combat-health-row,gap,"calc(2px / var(--ui-zoom, 1))",(max-width: 600px),styles/kit.css:5876,mobile,spacing,styles/kit.css:5876,combat-health-row
+combat-health-badge,:root .combat .combatant .combat-health-badge,flex-basis,"calc(16px / var(--ui-zoom, 1))",(max-width: 600px),styles/kit.css:5877,mobile,style.other,styles/kit.css:5877,combat-health-badge
 character-level-action,.character-level-action,min-height,44px,,styles/kit.css:5880,all,spacing,styles/kit.css:5880,character-level-action
 character-level-action,.character-level-action,width,100%,,styles/kit.css:5880,all,spacing,styles/kit.css:5880,character-level-action
 character-level-action,.character-level-action,margin-top,.65rem,,styles/kit.css:5880,all,spacing,styles/kit.css:5880,character-level-action
@@ -12280,15 +12280,15 @@ merchant-offer-price,.merchant-offer-price.as-status,overflow-wrap,anywhere,,sty
 class-row,.merchant-workspace .shop-services .class-row,display,grid,,styles/kit.css:5971,all,style.other,styles/kit.css:5971,class-row
 class-row,.merchant-workspace .shop-services .class-row,grid-template-columns,"minmax(0, 1fr)",,styles/kit.css:5971,all,style.other,styles/kit.css:5971,class-row
 class-row,.merchant-workspace .shop-services .class-row,grid-auto-rows,1fr,,styles/kit.css:5971,all,style.other,styles/kit.css:5971,class-row
-merchant-offer,:root .shop-workspace .shop-shelf .merchant-offer,grid-template-columns,"minmax(0, 9rem) minmax(0, 1fr)",(max-width: 600px),styles/kit.css:5973,other,style.other,styles/kit.css:5973,merchant-offer
-merchant-offer,:root .shop-workspace .shop-shelf .merchant-offer,gap,var(--book-compact-gap),(max-width: 600px),styles/kit.css:5973,other,spacing,styles/kit.css:5973,merchant-offer
-merchant-offer,:root .shop-workspace .shop-shelf .merchant-offer,padding,var(--book-compact-padding),(max-width: 600px),styles/kit.css:5973,other,spacing,styles/kit.css:5973,merchant-offer
-merchant-offer-actions,.merchant-offer-actions,grid-column,2,(max-width: 600px),styles/kit.css:5974,other,style.other,styles/kit.css:5974,merchant-offer-actions
-merchant-offer-actions,.merchant-offer-actions,grid-template-columns,"minmax(0, 1fr)",(max-width: 600px),styles/kit.css:5974,other,style.other,styles/kit.css:5974,merchant-offer-actions
-merchant-offer-media,.merchant-offer-media,grid-row,1 / span 2,(max-width: 600px),styles/kit.css:5975,other,style.other,styles/kit.css:5975,merchant-offer-media
-merchant-offer-details,.merchant-offer-details,padding-left,var(--book-compact-gap),(max-width: 600px),styles/kit.css:5976,other,spacing,styles/kit.css:5976,merchant-offer-details
-merchant-offer-details,.merchant-offer-details > h3,font-size,1.5rem,(max-width: 600px),styles/kit.css:5977,other,typography,styles/kit.css:5977,merchant-offer-details
-merchant-offer-details,.merchant-offer-details > p,font-size,1.2rem,(max-width: 600px),styles/kit.css:5978,other,typography,styles/kit.css:5978,merchant-offer-details
+merchant-offer,:root .shop-workspace .shop-shelf .merchant-offer,grid-template-columns,"minmax(0, 9rem) minmax(0, 1fr)",(max-width: 600px),styles/kit.css:5973,mobile,style.other,styles/kit.css:5973,merchant-offer
+merchant-offer,:root .shop-workspace .shop-shelf .merchant-offer,gap,var(--book-compact-gap),(max-width: 600px),styles/kit.css:5973,mobile,spacing,styles/kit.css:5973,merchant-offer
+merchant-offer,:root .shop-workspace .shop-shelf .merchant-offer,padding,var(--book-compact-padding),(max-width: 600px),styles/kit.css:5973,mobile,spacing,styles/kit.css:5973,merchant-offer
+merchant-offer-actions,.merchant-offer-actions,grid-column,2,(max-width: 600px),styles/kit.css:5974,mobile,style.other,styles/kit.css:5974,merchant-offer-actions
+merchant-offer-actions,.merchant-offer-actions,grid-template-columns,"minmax(0, 1fr)",(max-width: 600px),styles/kit.css:5974,mobile,style.other,styles/kit.css:5974,merchant-offer-actions
+merchant-offer-media,.merchant-offer-media,grid-row,1 / span 2,(max-width: 600px),styles/kit.css:5975,mobile,style.other,styles/kit.css:5975,merchant-offer-media
+merchant-offer-details,.merchant-offer-details,padding-left,var(--book-compact-gap),(max-width: 600px),styles/kit.css:5976,mobile,spacing,styles/kit.css:5976,merchant-offer-details
+merchant-offer-details,.merchant-offer-details > h3,font-size,1.5rem,(max-width: 600px),styles/kit.css:5977,mobile,typography,styles/kit.css:5977,merchant-offer-details
+merchant-offer-details,.merchant-offer-details > p,font-size,1.2rem,(max-width: 600px),styles/kit.css:5978,mobile,typography,styles/kit.css:5978,merchant-offer-details
 reward-menu,.reward-door .reward-claim-layout > .reward-menu:empty,display,none,,styles/kit.css:5982,all,style.other,styles/kit.css:5982,reward-menu
 reward-side,.reward-door .reward-claim-layout:has(> .reward-menu:empty) .reward-side,grid-column,1 / -1,,styles/kit.css:5983,all,style.other,styles/kit.css:5983,reward-side
 reward-level-offer,.reward-door .reward-claim-layout[aria-busy='true'] .reward-level-offer,visibility,hidden,,styles/kit.css:5984,all,style.other,styles/kit.css:5984,reward-level-offer
@@ -12610,20 +12610,20 @@ combat-recovery-controls,.combat-recovery-controls button,flex,1 1 100px,,styles
 combat-recovery-controls,.combat-recovery-controls button,min-height,36px,,styles/kit.css:6107,all,spacing,styles/kit.css:6107,combat-recovery-controls
 combat-recovery-controls,.combat-recovery-controls button,font-size,12px,,styles/kit.css:6107,all,typography,styles/kit.css:6107,combat-recovery-controls
 combat-recovery-controls,.combat-recovery-controls button,white-space,normal,,styles/kit.css:6107,all,typography,styles/kit.css:6107,combat-recovery-controls
-combat-expansion-controls,.combat-expansion-controls,width,"min(220px,46%)",(max-width:600px),styles/kit.css:6108,other,spacing,styles/kit.css:6108,combat-expansion-controls
-combat-recovery-controls,.combat-recovery-controls button,min-height,44px,(max-width:600px),styles/kit.css:6108,other,spacing,styles/kit.css:6108,combat-recovery-controls
+combat-expansion-controls,.combat-expansion-controls,width,"min(220px,46%)",(max-width:600px),styles/kit.css:6108,mobile,spacing,styles/kit.css:6108,combat-expansion-controls
+combat-recovery-controls,.combat-recovery-controls button,min-height,44px,(max-width:600px),styles/kit.css:6108,mobile,spacing,styles/kit.css:6108,combat-recovery-controls
 combat-coop-upcast-control,:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > .card-upcast-controls,pointer-events,auto,,styles/kit.css:6109,all,style.other,styles/kit.css:6109,card-upcast-controls
 card-upcast-controls,:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > .card-upcast-controls :is(button,pointer-events,auto,,styles/kit.css:6109,all,style.other,styles/kit.css:6109,card-upcast-controls
 tag:select,select),pointer-events,auto,,styles/kit.css:6109,all,style.other,styles/kit.css:6109,tag:select
-card-upcast-controls,.card-upcast-controls :is(button,min-height,"max(44px, var(--tap-floor))",(max-width:600px),styles/kit.css:6111,other,spacing,styles/kit.css:6111,card-upcast-controls
-tag:select,select),min-height,"max(44px, var(--tap-floor))",(max-width:600px),styles/kit.css:6111,other,spacing,styles/kit.css:6111,tag:select
+card-upcast-controls,.card-upcast-controls :is(button,min-height,"max(44px, var(--tap-floor))",(max-width:600px),styles/kit.css:6111,mobile,spacing,styles/kit.css:6111,card-upcast-controls
+tag:select,select),min-height,"max(44px, var(--tap-floor))",(max-width:600px),styles/kit.css:6111,mobile,spacing,styles/kit.css:6111,tag:select
 combat-expansion-controls,.field > .combat-expansion-controls,position,absolute,,styles/kit.css:6114,all,style.other,styles/kit.css:6114,combat-expansion-controls
 combat-expansion-controls,.field > .combat-expansion-controls,left,8px,,styles/kit.css:6114,all,spacing,styles/kit.css:6114,combat-expansion-controls
 combat-expansion-controls,.field > .combat-expansion-controls,right,auto,,styles/kit.css:6114,all,spacing,styles/kit.css:6114,combat-expansion-controls
 combat-expansion-controls,.field > .combat-expansion-controls,top,8px,,styles/kit.css:6114,all,spacing,styles/kit.css:6114,combat-expansion-controls
 combat-expansion-controls,.field > .combat-expansion-controls,bottom,auto,,styles/kit.css:6114,all,spacing,styles/kit.css:6114,combat-expansion-controls
 combat-expansion-controls,.field > .combat-expansion-controls,z-index,2600,,styles/kit.css:6114,all,z-index,styles/kit.css:6114,combat-expansion-controls
-combat-expansion-controls,.field > .combat-expansion-controls,top,48px,(max-width:600px),styles/kit.css:6115,other,spacing,styles/kit.css:6115,combat-expansion-controls
+combat-expansion-controls,.field > .combat-expansion-controls,top,48px,(max-width:600px),styles/kit.css:6115,mobile,spacing,styles/kit.css:6115,combat-expansion-controls
 combat-blight-hud,.combat-hud > .combat-blight-hud,position,absolute,,styles/kit.css:6119,all,style.other,styles/kit.css:6119,combat-blight-hud
 combat-blight-hud,.combat-hud > .combat-blight-hud,top,"calc(6px / var(--ui-zoom, 1))",,styles/kit.css:6119,all,spacing,styles/kit.css:6119,combat-blight-hud
 combat-blight-hud,.combat-hud > .combat-blight-hud,left,50%,,styles/kit.css:6119,all,spacing,styles/kit.css:6119,combat-blight-hud
@@ -13434,9 +13434,9 @@ atlas-node-label,.atlas-node-label,max-width,130px,,styles/map.css:546,all,spaci
 atlas-node-label,.atlas-node-label,white-space,normal,,styles/map.css:546,all,typography,styles/map.css:546,atlas-node-label
 atlas-node-label,.atlas-node-label,text-align,center,,styles/map.css:546,all,typography,styles/map.css:546,atlas-node-label
 atlas-node-label,.atlas-node-label,pointer-events,none,,styles/map.css:546,all,style.other,styles/map.css:546,atlas-node-label
-atlas-node-label,.atlas-node-label,display,none,(max-width:600px),styles/map.css:548,other,style.other,styles/map.css:548,atlas-node-label
-atlas-scrollport,.atlas-scrollport,box-shadow,none,(max-width:600px),styles/map.css:549,other,style.shadow,styles/map.css:549,atlas-scrollport
-atlas-world,.atlas-world,min-width,0,(max-width:600px),styles/map.css:550,other,spacing,styles/map.css:550,atlas-world
+atlas-node-label,.atlas-node-label,display,none,(max-width:600px),styles/map.css:548,mobile,style.other,styles/map.css:548,atlas-node-label
+atlas-scrollport,.atlas-scrollport,box-shadow,none,(max-width:600px),styles/map.css:549,mobile,style.shadow,styles/map.css:549,atlas-scrollport
+atlas-world,.atlas-world,min-width,0,(max-width:600px),styles/map.css:550,mobile,spacing,styles/map.css:550,atlas-world
 atlas-scrollport,.atlas-scrollport,background,#c4af85,,styles/map.css:554,all,color,styles/map.css:554,atlas-scrollport
 atlas-node,.atlas-node,width,"calc(var(--atlas-node-size) * var(--atlas-face-scale,1))",,styles/map.css:555,all,spacing,styles/map.css:555,atlas-node
 atlas-node,.atlas-node,height,"calc(var(--atlas-node-size) * var(--atlas-face-scale,1))",,styles/map.css:555,all,spacing,styles/map.css:555,atlas-node
@@ -16908,11 +16908,11 @@ set-general-pickers,.set-general-pickers,display,flex,,styles/ui.css:1084,all,st
 set-general-pickers,.set-general-pickers,gap,.5rem,,styles/ui.css:1084,all,spacing,styles/ui.css:1084,set-general-pickers
 set-general-pickers,.set-general-pickers select,flex,1 1 0,,styles/ui.css:1085,all,style.other,styles/ui.css:1085,set-general-pickers
 set-general-pickers,.set-general-pickers select,min-width,0,,styles/ui.css:1085,all,spacing,styles/ui.css:1085,set-general-pickers
-modal-head,.settings-modal .modal-head,flex-wrap,wrap,(max-width: 600px),styles/ui.css:1087,other,style.other,styles/ui.css:1087,modal-head
-modal-head-actions,.settings-modal .modal-head-actions,flex-basis,100%,(max-width: 600px),styles/ui.css:1088,other,style.other,styles/ui.css:1088,modal-head-actions
-set-inline-bar,[data-settings-host] > .set-inline-bar,flex-wrap,wrap,(max-width: 600px),styles/ui.css:1089,other,style.other,styles/ui.css:1089,set-inline-bar
-modal-head-id,.settings-modal .modal-head:has(.set-header-tools.search-open) .modal-head-id,display,none,(max-width: 600px),styles/ui.css:1090,other,style.other,styles/ui.css:1090,modal-head-id
-set-header-tools,.settings-modal .modal-head:has(.set-header-tools.search-open) .set-header-tools,width,100%,(max-width: 600px),styles/ui.css:1091,other,spacing,styles/ui.css:1091,set-header-tools
+modal-head,.settings-modal .modal-head,flex-wrap,wrap,(max-width: 600px),styles/ui.css:1087,mobile,style.other,styles/ui.css:1087,modal-head
+modal-head-actions,.settings-modal .modal-head-actions,flex-basis,100%,(max-width: 600px),styles/ui.css:1088,mobile,style.other,styles/ui.css:1088,modal-head-actions
+set-inline-bar,[data-settings-host] > .set-inline-bar,flex-wrap,wrap,(max-width: 600px),styles/ui.css:1089,mobile,style.other,styles/ui.css:1089,set-inline-bar
+modal-head-id,.settings-modal .modal-head:has(.set-header-tools.search-open) .modal-head-id,display,none,(max-width: 600px),styles/ui.css:1090,mobile,style.other,styles/ui.css:1090,modal-head-id
+set-header-tools,.settings-modal .modal-head:has(.set-header-tools.search-open) .set-header-tools,width,100%,(max-width: 600px),styles/ui.css:1091,mobile,spacing,styles/ui.css:1091,set-header-tools
 set-topic-panel,[data-settings-host] .set-advanced-group[data-advanced-panel='Classes'] .set-topic-panel:not([hidden]),display,grid,(min-width: 800px),styles/ui.css:1094,other,style.other,styles/ui.css:1094,set-topic-panel
 set-topic-panel,[data-settings-host] .set-advanced-group[data-advanced-panel='Classes'] .set-topic-panel:not([hidden]),grid-template-columns,"repeat(2, minmax(0, 1fr))",(min-width: 800px),styles/ui.css:1094,other,style.other,styles/ui.css:1094,set-topic-panel
 set-topic-panel,[data-settings-host] .set-advanced-group[data-advanced-panel='Classes'] .set-topic-panel:not([hidden]),column-gap,1.5rem,(min-width: 800px),styles/ui.css:1094,other,spacing,styles/ui.css:1094,set-topic-panel
@@ -17111,30 +17111,30 @@ set-config-count,.set-config-count,flex,0 0 100%,,styles/ui.css:1160,all,style.o
 set-config-count,.set-config-count,min-height,1em,,styles/ui.css:1160,all,spacing,styles/ui.css:1160,set-config-count
 set-config-count,.set-config-count,color,var(--muted),,styles/ui.css:1160,all,color,styles/ui.css:1160,set-config-count
 set-config-count,.set-config-count,font-size,1.05rem,,styles/ui.css:1160,all,typography,styles/ui.css:1160,set-config-count
-settings-modal,.modal.settings-modal[data-authored-size='lg'],width,100%,(max-width: 600px),styles/ui.css:1162,other,spacing,styles/ui.css:1162,settings-modal
-settings-modal,.modal.settings-modal[data-authored-size='lg'],border-radius,var(--r-3),(max-width: 600px),styles/ui.css:1162,other,radius,styles/ui.css:1162,settings-modal
-set-subtabs,[data-settings-host] .set-subtabs,display,grid,(max-width: 600px),styles/ui.css:1163,other,style.other,styles/ui.css:1163,set-subtabs
-set-subtabs,[data-settings-host] .set-subtabs,grid-template-columns,"repeat(2, minmax(0, 1fr))",(max-width: 600px),styles/ui.css:1163,other,style.other,styles/ui.css:1163,set-subtabs
-set-subtabs,[data-settings-host] .set-subtabs,width,100%,(max-width: 600px),styles/ui.css:1163,other,spacing,styles/ui.css:1163,set-subtabs
-set-subtabs,[data-settings-host] .set-subtabs,border,0,(max-width: 600px),styles/ui.css:1163,other,style.other,styles/ui.css:1163,set-subtabs
-set-subtabs,[data-settings-host] .set-subtabs,gap,.4rem,(max-width: 600px),styles/ui.css:1163,other,spacing,styles/ui.css:1163,set-subtabs
-set-subtabs,[data-settings-host] .set-subtabs > button,border,1px solid var(--line-soft),(max-width: 600px),styles/ui.css:1164,other,style.other,styles/ui.css:1164,set-subtabs
-set-subtabs,[data-settings-host] .set-subtabs > button,border-radius,var(--r-2),(max-width: 600px),styles/ui.css:1164,other,radius,styles/ui.css:1164,set-subtabs
-set-subtabs,[data-settings-host] .set-subtabs > button,min-width,0,(max-width: 600px),styles/ui.css:1164,other,spacing,styles/ui.css:1164,set-subtabs
-set-panel,.modal .set-panel .r-trail:has(> .choice-group),flex-basis,100%,(max-width: 600px),styles/ui.css:1171,other,style.other,styles/ui.css:1171,set-panel
-set-panel,.modal .set-panel .r-trail:has(> .choice-group),width,100%,(max-width: 600px),styles/ui.css:1171,other,spacing,styles/ui.css:1171,set-panel
-set-panel,.modal .set-panel .r-trail:has(> .choice-group),max-width,100%,(max-width: 600px),styles/ui.css:1171,other,spacing,styles/ui.css:1171,set-panel
-choice-group,.modal .set-panel .choice-group,display,grid,(max-width: 600px),styles/ui.css:1174,other,style.other,styles/ui.css:1174,choice-group
-choice-group,.modal .set-panel .choice-group,grid-template-columns,"repeat(auto-fit, minmax(7rem, 1fr))",(max-width: 600px),styles/ui.css:1174,other,style.other,styles/ui.css:1174,choice-group
-choice-group,.modal .set-panel .choice-group,width,100%,(max-width: 600px),styles/ui.css:1174,other,spacing,styles/ui.css:1174,choice-group
-choice-group,.modal .set-panel .choice-group,gap,.4rem,(max-width: 600px),styles/ui.css:1174,other,spacing,styles/ui.css:1174,choice-group
-choice-group,.modal .set-panel .choice-group,border,0,(max-width: 600px),styles/ui.css:1174,other,style.other,styles/ui.css:1174,choice-group
-choice-group,.modal .set-panel .choice-group,overflow,visible,(max-width: 600px),styles/ui.css:1174,other,style.other,styles/ui.css:1174,choice-group
-choice-group,.modal .set-panel .choice-group > button,margin,0,(max-width: 600px),styles/ui.css:1178,other,spacing,styles/ui.css:1178,choice-group
-choice-group,.modal .set-panel .choice-group > button,border,1px solid var(--line-soft),(max-width: 600px),styles/ui.css:1178,other,style.other,styles/ui.css:1178,choice-group
-choice-group,.modal .set-panel .choice-group > button,border-radius,var(--r-2),(max-width: 600px),styles/ui.css:1178,other,radius,styles/ui.css:1178,choice-group
-choice-group,.modal .set-panel .choice-group > button,min-width,0,(max-width: 600px),styles/ui.css:1178,other,spacing,styles/ui.css:1178,choice-group
-choice-group,.modal .set-panel .choice-group > button,padding-inline,.6rem,(max-width: 600px),styles/ui.css:1178,other,spacing,styles/ui.css:1178,choice-group
+settings-modal,.modal.settings-modal[data-authored-size='lg'],width,100%,(max-width: 600px),styles/ui.css:1162,mobile,spacing,styles/ui.css:1162,settings-modal
+settings-modal,.modal.settings-modal[data-authored-size='lg'],border-radius,var(--r-3),(max-width: 600px),styles/ui.css:1162,mobile,radius,styles/ui.css:1162,settings-modal
+set-subtabs,[data-settings-host] .set-subtabs,display,grid,(max-width: 600px),styles/ui.css:1163,mobile,style.other,styles/ui.css:1163,set-subtabs
+set-subtabs,[data-settings-host] .set-subtabs,grid-template-columns,"repeat(2, minmax(0, 1fr))",(max-width: 600px),styles/ui.css:1163,mobile,style.other,styles/ui.css:1163,set-subtabs
+set-subtabs,[data-settings-host] .set-subtabs,width,100%,(max-width: 600px),styles/ui.css:1163,mobile,spacing,styles/ui.css:1163,set-subtabs
+set-subtabs,[data-settings-host] .set-subtabs,border,0,(max-width: 600px),styles/ui.css:1163,mobile,style.other,styles/ui.css:1163,set-subtabs
+set-subtabs,[data-settings-host] .set-subtabs,gap,.4rem,(max-width: 600px),styles/ui.css:1163,mobile,spacing,styles/ui.css:1163,set-subtabs
+set-subtabs,[data-settings-host] .set-subtabs > button,border,1px solid var(--line-soft),(max-width: 600px),styles/ui.css:1164,mobile,style.other,styles/ui.css:1164,set-subtabs
+set-subtabs,[data-settings-host] .set-subtabs > button,border-radius,var(--r-2),(max-width: 600px),styles/ui.css:1164,mobile,radius,styles/ui.css:1164,set-subtabs
+set-subtabs,[data-settings-host] .set-subtabs > button,min-width,0,(max-width: 600px),styles/ui.css:1164,mobile,spacing,styles/ui.css:1164,set-subtabs
+set-panel,.modal .set-panel .r-trail:has(> .choice-group),flex-basis,100%,(max-width: 600px),styles/ui.css:1171,mobile,style.other,styles/ui.css:1171,set-panel
+set-panel,.modal .set-panel .r-trail:has(> .choice-group),width,100%,(max-width: 600px),styles/ui.css:1171,mobile,spacing,styles/ui.css:1171,set-panel
+set-panel,.modal .set-panel .r-trail:has(> .choice-group),max-width,100%,(max-width: 600px),styles/ui.css:1171,mobile,spacing,styles/ui.css:1171,set-panel
+choice-group,.modal .set-panel .choice-group,display,grid,(max-width: 600px),styles/ui.css:1174,mobile,style.other,styles/ui.css:1174,choice-group
+choice-group,.modal .set-panel .choice-group,grid-template-columns,"repeat(auto-fit, minmax(7rem, 1fr))",(max-width: 600px),styles/ui.css:1174,mobile,style.other,styles/ui.css:1174,choice-group
+choice-group,.modal .set-panel .choice-group,width,100%,(max-width: 600px),styles/ui.css:1174,mobile,spacing,styles/ui.css:1174,choice-group
+choice-group,.modal .set-panel .choice-group,gap,.4rem,(max-width: 600px),styles/ui.css:1174,mobile,spacing,styles/ui.css:1174,choice-group
+choice-group,.modal .set-panel .choice-group,border,0,(max-width: 600px),styles/ui.css:1174,mobile,style.other,styles/ui.css:1174,choice-group
+choice-group,.modal .set-panel .choice-group,overflow,visible,(max-width: 600px),styles/ui.css:1174,mobile,style.other,styles/ui.css:1174,choice-group
+choice-group,.modal .set-panel .choice-group > button,margin,0,(max-width: 600px),styles/ui.css:1178,mobile,spacing,styles/ui.css:1178,choice-group
+choice-group,.modal .set-panel .choice-group > button,border,1px solid var(--line-soft),(max-width: 600px),styles/ui.css:1178,mobile,style.other,styles/ui.css:1178,choice-group
+choice-group,.modal .set-panel .choice-group > button,border-radius,var(--r-2),(max-width: 600px),styles/ui.css:1178,mobile,radius,styles/ui.css:1178,choice-group
+choice-group,.modal .set-panel .choice-group > button,min-width,0,(max-width: 600px),styles/ui.css:1178,mobile,spacing,styles/ui.css:1178,choice-group
+choice-group,.modal .set-panel .choice-group > button,padding-inline,.6rem,(max-width: 600px),styles/ui.css:1178,mobile,spacing,styles/ui.css:1178,choice-group
 set-panel,.modal .set-panel .r-trail:has(> .choice-group > button:nth-child(5)),flex-basis,100%,(min-width: 601px),styles/ui.css:1184,other,style.other,styles/ui.css:1184,set-panel
 set-panel,.modal .set-panel .r-trail:has(> .choice-group > button:nth-child(5)),width,100%,(min-width: 601px),styles/ui.css:1184,other,spacing,styles/ui.css:1184,set-panel
 set-panel,.modal .set-panel .r-trail:has(> .choice-group > button:nth-child(5)),max-width,100%,(min-width: 601px),styles/ui.css:1184,other,spacing,styles/ui.css:1184,set-panel
@@ -17301,22 +17301,22 @@ set-sync-fields,.set-sync-fields label,gap,.2rem,,styles/ui.css:1267,all,spacing
 set-sync-fields,.set-sync-fields label,color,var(--muted),,styles/ui.css:1267,all,color,styles/ui.css:1267,set-sync-fields
 set-text,.set-sync-fields .set-text,width,100%,,styles/ui.css:1268,all,spacing,styles/ui.css:1268,set-text
 set-text,.set-sync-fields .set-text,min-height,var(--tap-floor),,styles/ui.css:1268,all,spacing,styles/ui.css:1268,set-text
-as-row,[data-settings-host] .set-panel .as-row.setting,flex-direction,column,(max-width: 600px),styles/ui.css:1271,other,style.other,styles/ui.css:1271,as-row
-as-row,[data-settings-host] .set-panel .as-row.setting,align-items,stretch,(max-width: 600px),styles/ui.css:1271,other,style.other,styles/ui.css:1271,as-row
-as-labelstack,[data-settings-host] .set-panel .as-row.setting > .as-labelstack,flex,0 0 auto,(max-width: 600px),styles/ui.css:1272,other,style.other,styles/ui.css:1272,as-labelstack
-as-row,[data-settings-host] .set-panel .as-row.setting > .r-trail,max-width,100%,(max-width: 600px),styles/ui.css:1273,other,spacing,styles/ui.css:1273,as-row
-as-row,[data-settings-host] .set-panel .as-row.setting > .r-trail,margin-left,0,(max-width: 600px),styles/ui.css:1273,other,spacing,styles/ui.css:1273,as-row
-as-row,[data-settings-host] .set-panel .as-row.setting > .r-trail,justify-content,flex-start,(max-width: 600px),styles/ui.css:1273,other,style.other,styles/ui.css:1273,as-row
-as-row,[data-settings-host] .set-panel .as-row.setting > .r-trail,flex-wrap,wrap,(max-width: 600px),styles/ui.css:1273,other,style.other,styles/ui.css:1273,as-row
-as-row,[data-settings-host] .set-panel .as-row.setting:has(> .r-trail > .as-toggle),flex-direction,row,(max-width: 600px),styles/ui.css:1274,other,style.other,styles/ui.css:1274,as-row
-as-row,[data-settings-host] .set-panel .as-row.setting:has(> .r-trail > .as-toggle),align-items,center,(max-width: 600px),styles/ui.css:1274,other,style.other,styles/ui.css:1274,as-row
-as-row,[data-settings-host] .set-panel .as-row.setting:has(> .r-trail > .as-toggle) > .r-trail,margin-left,auto,(max-width: 600px),styles/ui.css:1275,other,spacing,styles/ui.css:1275,as-row
-as-labelstack,[data-settings-host] .set-panel .as-row.setting:has(> .r-trail > .as-toggle) > .as-labelstack,flex,1 1 0,(max-width: 600px),styles/ui.css:1278,other,style.other,styles/ui.css:1278,as-labelstack
-as-labelstack,[data-settings-host] .set-panel .as-row.setting:has(> .r-trail > .as-toggle) > .as-labelstack,min-width,0,(max-width: 600px),styles/ui.css:1278,other,spacing,styles/ui.css:1278,as-labelstack
-choice-group,[data-settings-host] .set-panel .choice-group,flex-wrap,wrap,(max-width: 600px),styles/ui.css:1279,other,style.other,styles/ui.css:1279,choice-group
-set-stepper,:root [data-settings-host] .set-stepper > input[type='number'],flex-basis,4.6rem,(max-width: 600px),styles/ui.css:1280,other,style.other,styles/ui.css:1280,set-stepper
-set-stepper,:root [data-settings-host] .set-stepper > input[type='number'],width,4.6rem,(max-width: 600px),styles/ui.css:1280,other,spacing,styles/ui.css:1280,set-stepper
-set-row-dropdown,:root [data-settings-host] .set-row-dropdown,grid-template-columns,1fr,(max-width: 600px),styles/ui.css:1281,other,style.other,styles/ui.css:1281,set-row-dropdown
+as-row,[data-settings-host] .set-panel .as-row.setting,flex-direction,column,(max-width: 600px),styles/ui.css:1271,mobile,style.other,styles/ui.css:1271,as-row
+as-row,[data-settings-host] .set-panel .as-row.setting,align-items,stretch,(max-width: 600px),styles/ui.css:1271,mobile,style.other,styles/ui.css:1271,as-row
+as-labelstack,[data-settings-host] .set-panel .as-row.setting > .as-labelstack,flex,0 0 auto,(max-width: 600px),styles/ui.css:1272,mobile,style.other,styles/ui.css:1272,as-labelstack
+as-row,[data-settings-host] .set-panel .as-row.setting > .r-trail,max-width,100%,(max-width: 600px),styles/ui.css:1273,mobile,spacing,styles/ui.css:1273,as-row
+as-row,[data-settings-host] .set-panel .as-row.setting > .r-trail,margin-left,0,(max-width: 600px),styles/ui.css:1273,mobile,spacing,styles/ui.css:1273,as-row
+as-row,[data-settings-host] .set-panel .as-row.setting > .r-trail,justify-content,flex-start,(max-width: 600px),styles/ui.css:1273,mobile,style.other,styles/ui.css:1273,as-row
+as-row,[data-settings-host] .set-panel .as-row.setting > .r-trail,flex-wrap,wrap,(max-width: 600px),styles/ui.css:1273,mobile,style.other,styles/ui.css:1273,as-row
+as-row,[data-settings-host] .set-panel .as-row.setting:has(> .r-trail > .as-toggle),flex-direction,row,(max-width: 600px),styles/ui.css:1274,mobile,style.other,styles/ui.css:1274,as-row
+as-row,[data-settings-host] .set-panel .as-row.setting:has(> .r-trail > .as-toggle),align-items,center,(max-width: 600px),styles/ui.css:1274,mobile,style.other,styles/ui.css:1274,as-row
+as-row,[data-settings-host] .set-panel .as-row.setting:has(> .r-trail > .as-toggle) > .r-trail,margin-left,auto,(max-width: 600px),styles/ui.css:1275,mobile,spacing,styles/ui.css:1275,as-row
+as-labelstack,[data-settings-host] .set-panel .as-row.setting:has(> .r-trail > .as-toggle) > .as-labelstack,flex,1 1 0,(max-width: 600px),styles/ui.css:1278,mobile,style.other,styles/ui.css:1278,as-labelstack
+as-labelstack,[data-settings-host] .set-panel .as-row.setting:has(> .r-trail > .as-toggle) > .as-labelstack,min-width,0,(max-width: 600px),styles/ui.css:1278,mobile,spacing,styles/ui.css:1278,as-labelstack
+choice-group,[data-settings-host] .set-panel .choice-group,flex-wrap,wrap,(max-width: 600px),styles/ui.css:1279,mobile,style.other,styles/ui.css:1279,choice-group
+set-stepper,:root [data-settings-host] .set-stepper > input[type='number'],flex-basis,4.6rem,(max-width: 600px),styles/ui.css:1280,mobile,style.other,styles/ui.css:1280,set-stepper
+set-stepper,:root [data-settings-host] .set-stepper > input[type='number'],width,4.6rem,(max-width: 600px),styles/ui.css:1280,mobile,spacing,styles/ui.css:1280,set-stepper
+set-row-dropdown,:root [data-settings-host] .set-row-dropdown,grid-template-columns,1fr,(max-width: 600px),styles/ui.css:1281,mobile,style.other,styles/ui.css:1281,set-row-dropdown
 set-preview,[data-settings-host] .set-preview,margin,.6rem 0,,styles/ui.css:1286,all,spacing,styles/ui.css:1286,set-preview
 set-preview,[data-settings-host] .set-preview,border,1px solid var(--line),,styles/ui.css:1286,all,style.other,styles/ui.css:1286,set-preview
 set-preview,[data-settings-host] .set-preview,border-radius,"var(--r-2, 8px)",,styles/ui.css:1286,all,radius,styles/ui.css:1286,set-preview
@@ -17361,8 +17361,8 @@ set-preview-card,[data-settings-host] .set-preview-card,min-width,0,,styles/ui.c
 set-preview-card,[data-settings-host] .set-preview-card > .card,width,100%,,styles/ui.css:1294,all,spacing,styles/ui.css:1294,set-preview-card
 set-preview-card,[data-settings-host] .set-preview-card > .card,max-width,100%,,styles/ui.css:1294,all,spacing,styles/ui.css:1294,set-preview-card
 set-preview-card,[data-settings-host] .set-preview-card > .card,margin,0,,styles/ui.css:1294,all,spacing,styles/ui.css:1294,set-preview-card
-set-preview-body,[data-settings-host] .set-preview > .set-preview-body,padding,0 .7rem .7rem,(max-width: 600px),styles/ui.css:1296,other,spacing,styles/ui.css:1296,set-preview-body
-set-preview-body,[data-settings-host] .set-preview > .set-preview-body,gap,.7rem,(max-width: 600px),styles/ui.css:1296,other,spacing,styles/ui.css:1296,set-preview-body
+set-preview-body,[data-settings-host] .set-preview > .set-preview-body,padding,0 .7rem .7rem,(max-width: 600px),styles/ui.css:1296,mobile,spacing,styles/ui.css:1296,set-preview-body
+set-preview-body,[data-settings-host] .set-preview > .set-preview-body,gap,.7rem,(max-width: 600px),styles/ui.css:1296,mobile,spacing,styles/ui.css:1296,set-preview-body
 set-color,.set-color,width,64px,,styles/ui.css:1298,all,spacing,styles/ui.css:1298,set-color
 set-color,.set-color,min-height,"var(--tap-floor, 44px)",,styles/ui.css:1298,all,spacing,styles/ui.css:1298,set-color
 set-color,.set-color,padding,3px,,styles/ui.css:1298,all,spacing,styles/ui.css:1298,set-color
@@ -18577,10 +18577,10 @@ class-respec,.class-respec-changes,padding-left,24px,,styles/ui.css:1821,all,spa
 class-respec,.class-respec-changes,display,grid,,styles/ui.css:1821,all,style.other,styles/ui.css:1821,class-respec-changes
 class-respec,.class-respec-changes,gap,8px,,styles/ui.css:1821,all,spacing,styles/ui.css:1821,class-respec-changes
 class-respec,.class-respec-problems,color,"var(--danger,#f0a08c)",,styles/ui.css:1822,all,color,styles/ui.css:1822,class-respec-problems
-class-respec-slots,.class-respec-slots label,align-items,stretch,(max-width:600px),styles/ui.css:1823,other,style.other,styles/ui.css:1823,class-respec-slots
-class-respec-slots,.class-respec-slots label,flex-direction,column,(max-width:600px),styles/ui.css:1823,other,style.other,styles/ui.css:1823,class-respec-slots
-class-respec-slots,.class-respec-slots select,max-width,100%,(max-width:600px),styles/ui.css:1823,other,spacing,styles/ui.css:1823,class-respec-slots
-class-respec-slots,.class-respec-slots select,width,100%,(max-width:600px),styles/ui.css:1823,other,spacing,styles/ui.css:1823,class-respec-slots
+class-respec-slots,.class-respec-slots label,align-items,stretch,(max-width:600px),styles/ui.css:1823,mobile,style.other,styles/ui.css:1823,class-respec-slots
+class-respec-slots,.class-respec-slots label,flex-direction,column,(max-width:600px),styles/ui.css:1823,mobile,style.other,styles/ui.css:1823,class-respec-slots
+class-respec-slots,.class-respec-slots select,max-width,100%,(max-width:600px),styles/ui.css:1823,mobile,spacing,styles/ui.css:1823,class-respec-slots
+class-respec-slots,.class-respec-slots select,width,100%,(max-width:600px),styles/ui.css:1823,mobile,spacing,styles/ui.css:1823,class-respec-slots
 tag:html,html:has(.weapon-preview),height,auto,,styles/weapon-cards-preview.css:1,all,spacing,styles/weapon-cards-preview.css:1,tag:html
 tag:html,html:has(.weapon-preview),overflow,auto,,styles/weapon-cards-preview.css:1,all,style.other,styles/weapon-cards-preview.css:1,tag:html
 weapon-preview,body.weapon-preview,display,block,,styles/weapon-cards-preview.css:2,all,style.other,styles/weapon-cards-preview.css:2,weapon-preview
@@ -18660,12 +18660,12 @@ weapon-enlarge,.weapon-preview .weapon-enlarge,width,100%,,styles/weapon-cards-p
 weapon-enlarge,.weapon-preview .weapon-enlarge,min-height,44px,,styles/weapon-cards-preview.css:21,all,spacing,styles/weapon-cards-preview.css:21,weapon-enlarge
 weapon-enlarge,.weapon-preview .weapon-enlarge,font-size,14px,,styles/weapon-cards-preview.css:21,all,typography,styles/weapon-cards-preview.css:21,weapon-enlarge
 id:weapon-gallery,#weapon-gallery,grid-template-columns,"repeat(2,minmax(0,1fr))",(max-width:1000px),styles/weapon-cards-preview.css:22,other,style.other,styles/weapon-cards-preview.css:22,id:weapon-gallery
-weapon-preview,.weapon-preview main,padding,24px 16px,(max-width:600px),styles/weapon-cards-preview.css:23,other,spacing,styles/weapon-cards-preview.css:23,weapon-preview
-weapon-preview,.weapon-preview h1,font-size,28px,(max-width:600px),styles/weapon-cards-preview.css:23,other,typography,styles/weapon-cards-preview.css:23,weapon-preview
-id:weapon-gallery,#weapon-gallery,grid-template-columns,"minmax(0,1fr)",(max-width:600px),styles/weapon-cards-preview.css:23,other,style.other,styles/weapon-cards-preview.css:23,id:weapon-gallery
-id:weapon-gallery,#weapon-gallery,max-width,360px,(max-width:600px),styles/weapon-cards-preview.css:23,other,spacing,styles/weapon-cards-preview.css:23,id:weapon-gallery
-id:weapon-gallery,#weapon-gallery,margin,auto,(max-width:600px),styles/weapon-cards-preview.css:23,other,spacing,styles/weapon-cards-preview.css:23,id:weapon-gallery
-weapon-preview,.weapon-preview form > label:first-child,width,100%,(max-width:600px),styles/weapon-cards-preview.css:23,other,spacing,styles/weapon-cards-preview.css:23,weapon-preview
+weapon-preview,.weapon-preview main,padding,24px 16px,(max-width:600px),styles/weapon-cards-preview.css:23,mobile,spacing,styles/weapon-cards-preview.css:23,weapon-preview
+weapon-preview,.weapon-preview h1,font-size,28px,(max-width:600px),styles/weapon-cards-preview.css:23,mobile,typography,styles/weapon-cards-preview.css:23,weapon-preview
+id:weapon-gallery,#weapon-gallery,grid-template-columns,"minmax(0,1fr)",(max-width:600px),styles/weapon-cards-preview.css:23,mobile,style.other,styles/weapon-cards-preview.css:23,id:weapon-gallery
+id:weapon-gallery,#weapon-gallery,max-width,360px,(max-width:600px),styles/weapon-cards-preview.css:23,mobile,spacing,styles/weapon-cards-preview.css:23,id:weapon-gallery
+id:weapon-gallery,#weapon-gallery,margin,auto,(max-width:600px),styles/weapon-cards-preview.css:23,mobile,spacing,styles/weapon-cards-preview.css:23,id:weapon-gallery
+weapon-preview,.weapon-preview form > label:first-child,width,100%,(max-width:600px),styles/weapon-cards-preview.css:23,mobile,spacing,styles/weapon-cards-preview.css:23,weapon-preview
 equipment-poker-card,#weapon-gallery .equipment-poker-inspection > .equipment-poker-card,width,100%,,styles/weapon-cards-preview.css:25,all,spacing,styles/weapon-cards-preview.css:25,equipment-poker-card
 id:weapon-gallery,#weapon-gallery,grid-template-columns,"repeat(auto-fit,minmax(0,280px))",(max-width:1000px),styles/weapon-cards-preview.css:26,other,style.other,styles/weapon-cards-preview.css:26,id:weapon-gallery
-id:weapon-gallery,#weapon-gallery,grid-template-columns,"minmax(0,280px)",(max-width:600px),styles/weapon-cards-preview.css:27,other,style.other,styles/weapon-cards-preview.css:27,id:weapon-gallery
+id:weapon-gallery,#weapon-gallery,grid-template-columns,"minmax(0,280px)",(max-width:600px),styles/weapon-cards-preview.css:27,mobile,style.other,styles/weapon-cards-preview.css:27,id:weapon-gallery

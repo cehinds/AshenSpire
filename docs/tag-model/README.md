@@ -99,7 +99,7 @@ tree (`tag`, a key from `tables/tags.csv` under `meta.presentation`).
 | `animations.csv` | Sprite and motion sequences by group (the id prefix) |
 | `effects.csv` | Visual effects by kind (sprite effect, aura, shadow, glow, float text, screen shake, flash, tint, particle) |
 | `resolutions.csv` | Art tiers (light, high, local high-res) and card sizes, with max width and format |
-| `settings.csv` | Every settings row, with `scope` (player or tuning) |
+| `settings.csv` | Every settings row, with `scope` (player or tuning) and `deviceScope` (device or global) |
 | `symbols.csv` | Icons and sigils by group (the id prefix) |
 | `combat-symbols.csv` | Every combat concept and its icon: `assignedAssetRef` is an `assets.id` or blank. See *Icons* below for the statuses |
 | `strings.csv` | Player-facing strings with their use: label, tooltip, or hardcoded in source |
@@ -107,10 +107,10 @@ tree (`tag`, a key from `tables/tags.csv` under `meta.presentation`).
 **Proposed named bands** (`tools/bands.mjs`). `band` is derived from the raw
 `breakpoint` or `condition`; the raw text is kept.
 
-- `mobile`: phone, max-width at or below 599px, or pointer:coarse with orientation:portrait
-- `tablet`: 600px to 1023px
-- `desktop`: 1024px to 1439px
-- `wide`: 1440px and up (owner decision 2, 2026-10-11; see `DECISIONS.md`)
+- `mobile`: phone, max-width at or below 600px, or pointer:coarse with orientation:portrait
+- `tablet`: above 600px up to 1023px
+- `desktop`: above 1023px up to 1439px
+- `wide`: above 1439px (owner decision 2, 2026-10-11; see `DECISIONS.md`)
 - `all`: no condition
 - `state`: `data-*` or `body.*` hooks, which are not viewport conditions
 - `other`: anything else. A condition goes to a band only when its whole width range lies inside that band, so `max-width: 640px` and `max-width: 900px` are `other` (they straddle a band edge)
@@ -122,6 +122,14 @@ Where a row matches both rules, `tuning` wins. Today that gives 44 player rows
 and 4,424 tuning rows: almost every settings row reads from the advanced-config
 module, so the split is mostly a list of tuning knobs. Confirm the precedence
 before the split is used.
+
+**Device or global** (`deviceScope` in `settings.csv`, DECISIONS.md decision 1).
+`device` is a setting that belongs to the screen or device: layout, text size,
+UI scale, reduced motion, touch, haptics, performance or quality, and the other
+display-related rows. `global` is everything else, including every tuning row.
+The rule is in `deviceScopeOf` in `tools/build.mjs`. `scope` is unchanged. Today
+107 rows are `device` and 4,361 are `global`. `tools/check.mjs` fails a row that
+is neither.
 
 **Icons.** `combat-symbols.csv` has one `status` per concept. `assignedAssetRef`
 is an `assets.id`, an inline SVG reference, or blank:
@@ -288,7 +296,7 @@ here, because the extracted inventory is not on this branch.
   presentation `tag` against a presentation node;
 - assets: `assetRefs` and `assignedAssetRef` are blank, an `assets.id`, or a
   `*` pattern with a match;
-- vocabularies: tag `status`, `band` (layouts, styles), `scope` (settings),
+- vocabularies: tag `status`, `band` (layouts, styles), `scope` and `deviceScope` (settings),
   combat-symbols `status`;
 - live tags: `liveId` only on a `live-tag`, and it names a `nodes.csv` id; an id
   claimed by two tags must be listed in `SHARED_LIVE` with a reason (none is
@@ -332,8 +340,9 @@ exactly one tag, and no live id is mapped by two tags. Parity and reverse
 differences are listed but do not change the verdict. Tests:
 `node --test docs/tag-model/tools/compile.test.mjs`.
 
-**Current result:** NOT lossless. 250 used live ids unmapped, 0 collisions,
-71 of 448 live ids mapped. This line is copied by hand from
+**Current result:** lossless. 448 of 448 live ids mapped, 0 collisions, 73
+parity differences (listed under *Open: round-trip differences* in
+`DECISIONS.md`). This line is copied by hand from
 `docs/tag-model/compile-report.md` at the commit that last changed it. The
 report is the source of truth; if the two disagree, the report wins and this
 line is stale.
@@ -348,3 +357,13 @@ line is stale.
   `nodes.csv` is the one vocabulary. Before any code reads these tables, a
   SPEC pull request has to adopt the model (or the parts of it that survive
   review).
+
+## Release constants
+
+`tools/release.mjs` compiles every table into one data-only module,
+`release/tag-constants.js` (not committed; it is over 1 MB). Strings are
+interned, tag references are numeric ids, and formulas are RPN with resolved
+references. Run `node docs/tag-model/tools/release.mjs` to build it, and
+`node --test docs/tag-model/tools/release.test.mjs` to check that it decodes
+back to the tables and matches the workbench engine. Design and encoding are in
+[RELEASE.md](RELEASE.md). Nothing in the game reads it yet.

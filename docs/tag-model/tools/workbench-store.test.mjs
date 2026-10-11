@@ -2,12 +2,13 @@
 // docs/tag-model/workbench.html into a node vm context with a fake db.
 //
 //   node --test docs/tag-model/tools/workbench-store.test.mjs
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import vm from 'node:vm';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readTable, parseCsv } from './csv.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const PAGE = path.join(HERE, '..', 'workbench.html');
@@ -203,13 +204,13 @@ export function makeFakeDb() {
   return fake;
 }
 
-const EXPOSE = '({ subscribeTable, applyHead, onHead, flush, loadTheirs, keepMine, tableBanners, runBanner, renderBanners, tstate, chunkRows, hashText, headPath, blobPath })';
+const EXPOSE = '({ subscribeTable, applyHead, onHead, flush, markDirty, loadTheirs, keepMine, tableBanners, runBanner, renderBanners, tstate, chunkRows, hashText, headPath, blobPath })';
 
 // One browser tab: its own state, sharing only the fake db with other tabs.
 export function makePage(db, tables, edit) {
   const page = {
     db, canWrite: true, localMode: false,
-    state: { data: {} }, dirty: new Set(), saving: new Set(), timers: {},
+    state: { data: {} }, dirty: new Set(), saving: new Set(), timers: {}, editGen: {},
     loaded: new Set(), pending: new Set(), TABLES: tables,
     renders: 0, statuses: [],
     setTimeout, clearTimeout, setImmediate,
@@ -576,6 +577,182 @@ test('a blob GC deletes after this save wrote it, before the head lands, is writ
   assert.ok(head && head.blobs.length > 0);
   assert.ok(head.blobs.every((h) => db.has(W.api.blobPath('t', h))), 'every blob the head names exists');
   assert.equal(await storedRows(db), JSON.stringify(rows));
+});
+
+test('the re-check writes back only blobs this save built, never a stale hash carried in from an earlier attempt', async () => {
+  const db = makeFakeDb();
+  const W = makePage(db, T);
+  editTable(W.page, sample(3, 's'));
+  await W.api.flush('t', { written: new Set(['stalehash']) });
+  assert.equal(db.has(W.api.blobPath('t', 'stalehash')), false, 'no blob is written for a hash this save did not build');
+  assert.equal(await storedRows(db), JSON.stringify(sample(3, 's')));
+});
+
+// The first head get after a lease is granted takes 1.3 s, once: that lease is past its fence, so the save retries.
+function slowGetAfterLease(db) {
+  let justAcquired = false, slowed = false;
+  db.delay = async (op, p) => {
+    if (op === 'acquire') justAcquired = true;
+    if (op === 'get' && p === 'tables/t' && justAcquired) {
+      justAcquired = false;
+      if (!slowed) { slowed = true; await settle(1300); }
+    }
+  };
+}
+
+test('an edit that lands while a save is in flight: the save retries with the edit rows and a fresh budget', async () => {
+  const db = makeFakeDb();
+  const W = makePage(db, T);
+  W.page.loaded.add('t');
+  W.page.dirty.add('t');
+  W.page.state.data.t.rows = sample(3, 'a');
+  slowGetAfterLease(db);
+  const S1 =W.api.flush('t', { deadline: Date.now() + 1000 }); // a save with a 1 s budget, slow at its lease get
+  await settle(300);
+  const rows2 = sample(3, 'b');
+  W.page.state.data.t.rows = rows2;
+  W.api.markDirty('t'); // an edit lands while S1 is in flight; its own timer fires during S1
+  await S1;
+  await settle(2500);
+  assert.equal(await storedRows(db), JSON.stringify(rows2));
+  assert.equal(W.api.tstate.t.conflict, null, 'no false "could not save in time"');
+});
+
+test('a Keep mine retried after an edit still overwrites: the retry keeps its write intent', async () => {
+  const db = makeFakeDb();
+  const A = makePage(db, T), B = makePage(db, T);
+  B.page.loaded.add('t'); // B has the table loaded, so its edits arm the save timer
+  editTable(A.page, sample(3, 'a'));
+  await A.api.flush('t');
+  editTable(B.page, sample(3, 'y'));
+  await B.api.flush('t'); // B is in conflict with A's head
+  assert.ok(B.api.tstate.t.conflict);
+  await settle(1600); // the conflict save's lease lapses (1.5 s), so the Keep mine acquires at once
+  slowGetAfterLease(db);
+  const K =B.api.keepMine('t'); // an overwrite, slow at its lease get, so it retries
+  await settle(500);
+  const rows2 = sample(3, 'z');
+  B.page.state.data.t.rows = rows2;
+  B.api.markDirty('t'); // an edit lands while the overwrite is in flight; its timer is still pending when the retry fires
+  await K;
+  await settle(2500);
+  assert.equal(await storedRows(db), JSON.stringify(rows2));
+  assert.equal(B.api.tstate.t.conflict, null);
+});
+
+// The formula-row issue rule (formulaRowIssue) between its markers in workbench.html.
+function formulaIssueSource() {
+  const html = readFileSync(PAGE, 'utf8');
+  const a = html.indexOf('/* formula-issues:begin */');
+  const b = html.indexOf('/* formula-issues:end */');
+  if (a < 0 || b < 0 || b < a) throw new Error('formula-issues markers missing in workbench.html');
+  return html.slice(a, b + '/* formula-issues:end */'.length);
+}
+
+test('a proposed formula with no expression is a note, not a problem', () => {
+  const { formulaRowIssue } = vm.runInNewContext(formulaIssueSource() + '\n;({ formulaRowIssue })', {});
+  const evalExpr = (e) => (String(e || '').trim() ? { v: 1 } : { err: 'empty expression', soft: false });
+  const note = formulaRowIssue({ key: 'x', expr: '', status: 'proposed' }, evalExpr);
+  assert.equal(note.note, true);
+  assert.equal(note.msg, 'proposed, no formula yet');
+  assert.equal(formulaRowIssue({ key: 'y', expr: '   ', status: 'proposed' }, evalExpr).note, true, 'blank counts as empty');
+  const problem = formulaRowIssue({ key: 'z', expr: '', status: '' }, evalExpr);
+  assert.equal(problem.msg, 'empty expression', 'an empty expression that is not proposed is still a problem');
+  assert.ok(!problem.note);
+  assert.equal(formulaRowIssue({ key: 'w', expr: '1+1', status: 'proposed' }, evalExpr), null, 'a formula with an expression is not an issue');
+});
+
+// Loads one marked block of workbench.html in its own context and returns what `expose` names.
+function loadBlock(name, expose) {
+  const html = readFileSync(PAGE, 'utf8');
+  const end = '/* ' + name + ':end */';
+  const a = html.indexOf('/* ' + name + ':begin */');
+  const b = html.indexOf(end);
+  if (a < 0 || b < 0 || b < a) throw new Error(name + ' markers missing in workbench.html');
+  return vm.runInNewContext(html.slice(a, b + end.length) + '\n;(' + expose + ')', {});
+}
+const evalStub = (e) => (String(e || '').trim() ? { v: 1 } : { err: 'empty expression', soft: false });
+const TT_FORMULAS = (cols) => ({ t: { label: 'Formulas', key: 'key', columns: [...cols], refs: {} } });
+
+// The workbench formula engine (findTag to the validation section), over the real tables.
+function workbenchPreviewEval() {
+  const html = readFileSync(PAGE, 'utf8');
+  const start = html.indexOf('function findTag(k)');
+  const end = html.indexOf('/* ---------- validation ---------- */');
+  if (!(start > 0 && end > start)) throw new Error('workbench.html formula engine markers moved');
+  const rowsOf = name => {
+    const [header, ...body] = parseCsv(readFileSync(path.join(HERE, '..', 'tables', name), 'utf8'));
+    return body.filter(r => !(r.length === 1 && r[0] === '')).map(r => Object.fromEntries(header.map((h, i) => [h, r[i]])));
+  };
+  const tags = rowsOf('tags.csv');
+  const IX = {
+    tagByKey: new Map(tags.filter(r => r.key).map(r => [r.key, r])),
+    tagById: new Map(tags.filter(r => r.id).map(r => [r.id, r])),
+    val: new Map(rowsOf('values.csv').filter(r => r.key).map(r => [r.key, r])),
+    frm: new Map(rowsOf('formulas.csv').filter(r => r.key).map(r => [r.key, r])),
+    obj: new Map(), ast: new Map(), cmp: new Map(),
+  };
+  const state = { data: { ranks: { rows: [] } } };
+  return new Function('IX', 'state', html.slice(start, end) + '\nreturn { evalExpr };')(IX, state).evalExpr;
+}
+
+test('the real formulas.csv imports, saves, loads and exports with its status column; a proposed placeholder is a note, and evasion.rating computes at rank 1', async () => {
+  const { FORMULA_COLUMNS } = loadBlock('formula-columns', '({ FORMULA_COLUMNS })');
+  const { parseCSV, importRows, toCSV } = loadBlock('csv', '({ parseCSV, importRows, toCSV })');
+  const { formulaRowIssue } = loadBlock('formula-issues', '({ formulaRowIssue })');
+  const csv = readFileSync(path.join(HERE, '..', 'tables', 'formulas.csv'), 'utf8');
+  const tbl = { columns: [...FORMULA_COLUMNS], rows: [] };
+  const parsed = parseCSV(csv);
+  // A synthetic proposed placeholder, so the note rule is tested without a placeholder in the real table.
+  parsed.rows.push(Object.fromEntries(FORMULA_COLUMNS.map(c => [c, ''])));
+  Object.assign(parsed.rows[parsed.rows.length - 1], { key: 'proposed.placeholder', status: 'proposed' });
+  importRows(tbl, 'key', parsed, 'replace');
+  const db = makeFakeDb();
+  const W = makePage(db, TT_FORMULAS(FORMULA_COLUMNS));
+  W.page.loaded.add('t');
+  W.page.state.data.t = tbl;
+  W.page.dirty.add('t');
+  await W.api.flush('t');
+  const R = makePage(db, TT_FORMULAS(FORMULA_COLUMNS));
+  R.api.subscribeTable('t');
+  await waitFor(() => R.page.loaded.has('t'));
+  const loaded = R.page.state.data.t;
+  const placeholder = loaded.rows.find((r) => r.key === 'proposed.placeholder');
+  assert.ok(placeholder, 'the fixture row loads');
+  assert.equal(placeholder.status, 'proposed');
+  assert.equal(formulaRowIssue(placeholder, evalStub).note, true, 'the fixture row is shown as a note, not a problem');
+  const row = loaded.rows.find((r) => r.key === 'evasion.rating');
+  assert.ok(row, 'evasion.rating loads');
+  assert.equal(row.status, 'proposed');
+  // At rank 1 with the preview values: armour base 0 + DEX term min(10 - 1, 0) + shield 0 + card 0 = 0.
+  const evalPreview = workbenchPreviewEval();
+  const computed = evalPreview(row.expr, 1, null, '');
+  assert.ok('v' in computed, 'evasion.rating computes a number at rank 1');
+  assert.equal(typeof computed.v, 'number');
+  assert.equal(computed.v, 0, 'evasion.rating at rank 1 with preview values');
+  assert.equal(formulaRowIssue(row, evalPreview), null, 'a formula with an expression is no issue');
+  assert.match(toCSV(loaded.columns, loaded.rows).split('\n')[0], /,status$/, 'export keeps the status column');
+});
+
+test('a formulas head that names its columns keeps status: the table default columns include it', async () => {
+  const { FORMULA_COLUMNS } = loadBlock('formula-columns', '({ FORMULA_COLUMNS })');
+  const { formulaRowIssue } = loadBlock('formula-issues', '({ formulaRowIssue })');
+  const db = makeFakeDb();
+  // positional rows need their own column list; a columnless head is blocked (see the test below)
+  db.put('tables/t', { columns: FORMULA_COLUMNS, rows: [['evasion.rating', '', 'character', 'TBD', 'proposed']] });
+  const R = makePage(db, TT_FORMULAS(FORMULA_COLUMNS));
+  R.api.subscribeTable('t');
+  await waitFor(() => R.page.loaded.has('t'));
+  const row = R.page.state.data.t.rows[0];
+  assert.equal(row.status, 'proposed', 'status survives the load');
+  assert.equal(formulaRowIssue(row, evalStub).note, true);
+});
+
+test('a blank proposed formula is styled as a muted note, not as an error', () => {
+  const { formulaCellClass } = vm.runInNewContext(formulaIssueSource() + '\n;({ formulaCellClass })', {});
+  assert.equal(formulaCellClass({ err: 'proposed, no formula yet', soft: true, note: true }), 'note');
+  assert.equal(formulaCellClass({ err: 'unexpected end', soft: false }), 'bad', 'a real parse error stays red');
+  assert.equal(formulaCellClass({ err: 'unknown ref', soft: true }), 'warn', 'a soft error warns');
 });
 
 test('a second banner that appears while another is up is announced as an alert', async () => {
@@ -1080,4 +1257,115 @@ test('(c) inserting one row at the top rewrites at most two blobs', async () => 
   const blobWrites = db.log.sets.slice(mark).filter((p) => p.includes('/blobs/'));
   assert.ok(blobWrites.length <= 2, 'blob writes: ' + blobWrites.length);
   assert.equal(await storedRows(db), JSON.stringify([{ id: 'top', name: 'new', qty: 0 }, ...objs]));
+});
+
+// Column drift: every workbench table's default columns must contain the whole header
+// of its CSV in docs/tag-model/tables, so a column added to a CSV cannot go missing here.
+const CSV_DIR = path.join(HERE, '..', 'tables');
+const CSV_FOR = {
+  tags: 'tags.csv', objects: 'objects.csv', values: 'values.csv', formulas: 'formulas.csv',
+  ranks: 'ranks.csv', relations: 'relations.csv', artSizes: 'assets.csv',
+  assets: 'presentation/assets.csv', components: 'presentation/components.csv', layouts: 'presentation/layouts.csv',
+  styles: 'presentation/styles.csv', tokens: 'presentation/tokens.csv', breakpoints: 'presentation/breakpoints.csv',
+  animations: 'presentation/animations.csv', effects: 'presentation/effects.csv', resolutions: 'presentation/resolutions.csv',
+  symbols: 'presentation/symbols.csv', combatSymbols: 'presentation/combat-symbols.csv',
+  settings: 'presentation/settings.csv', strings: 'presentation/strings.csv',
+};
+
+function workbenchTableDefaults() {
+  const html = readFileSync(PAGE, 'utf8');
+  const fa = html.indexOf('/* formula-columns:begin */');
+  const fb = html.indexOf('/* formula-columns:end */');
+  const ta = html.indexOf('const TABLES = {');
+  const tb = html.indexOf('\n};', ta);
+  if (fa < 0 || fb < fa || ta < 0 || tb < ta) throw new Error('TABLES or formula-columns markers missing in workbench.html');
+  const src = html.slice(fa, fb + '/* formula-columns:end */'.length) + '\n' + html.slice(ta, tb + 3) + '\n;TABLES';
+  return vm.runInNewContext(src, {});
+}
+
+test('every workbench table has a CSV mapping, and every mapped CSV exists', () => {
+  const tables = workbenchTableDefaults();
+  assert.deepEqual(Object.keys(CSV_FOR).sort(), Object.keys(tables).sort());
+  for (const file of Object.values(CSV_FOR)) {
+    assert.ok(existsSync(path.join(CSV_DIR, file)), 'missing CSV: ' + file);
+  }
+});
+
+test('workbench default columns contain every column in the matching CSV header', () => {
+  const tables = workbenchTableDefaults();
+  for (const [table, file] of Object.entries(CSV_FOR)) {
+    const { header } = readTable(path.join(CSV_DIR, file));
+    const missing = header.filter((c) => !tables[table].columns.includes(c));
+    assert.deepEqual(missing, [], table + ' (' + file + ') is missing CSV columns in the workbench');
+  }
+});
+
+// One named function of the page, read from its single source line (loadLocal is one line).
+function pageFunctionLine(name) {
+  const line = readFileSync(PAGE, 'utf8').split('\n').find((l) => l.startsWith('function ' + name + '('));
+  if (!line) throw new Error('function ' + name + ' missing from workbench.html');
+  return line;
+}
+
+test('a local save from an older page gains the default columns that are new', () => {
+  const tables = workbenchTableDefaults();
+  const order = vm.runInNewContext(readFileSync(PAGE, 'utf8').split('\n').find((l) => l.startsWith('const ORDER = ')) + '\n;ORDER', {});
+  const saved = { objects: { columns: ['id', 'name'], rows: [{ id: 'o1', name: 'Dagger' }] } };
+  const ctx = {
+    localStorage: { getItem: () => JSON.stringify(saved) },
+    state: { data: {} }, TABLES: tables, ORDER: order, LS: 'ashen-tag-workbench-v1',
+  };
+  vm.runInNewContext(pageFunctionLine('loadLocal') + '\n;loadLocal();', ctx);
+  const got = ctx.state.data.objects;
+  assert.equal(JSON.stringify(got.columns.slice(0, 2)), JSON.stringify(['id', 'name']), 'saved columns keep their order');
+  for (const c of tables.objects.columns) assert.ok(got.columns.includes(c), 'default column kept: ' + c);
+  assert.equal(JSON.stringify(got.rows), JSON.stringify([{ id: 'o1', name: 'Dagger' }]), 'saved rows are kept as they were');
+});
+
+test('a columnless head of positional rows is blocked, not read with the default columns', async () => {
+  const db = makeFakeDb();
+  const { page, api } = makePage(db, T);
+  db.put('tables/t', { rows: [['x1', 'n', 1]] });
+  api.subscribeTable('t');
+  await settle(30);
+  assert.equal(page.loaded.has('t'), false, 'the table is not loaded');
+  assert.equal(page.state.data.t.rows.length, 0, 'no row is adopted');
+  assert.ok(page.statuses.some((s) => s.level === 'bad' && /positional rows with no column list/.test(s.msg)), 'the block is shown');
+});
+
+test('a columnless legacy head whose parts are positional rows is blocked too', async () => {
+  const db = makeFakeDb();
+  const { page, api } = makePage(db, T);
+  db.put('tables/t', { parts: 1, format: 'arrays' });
+  db.put('tables/t/parts/p0', { index: 0, rows: [['a1', 'n', 1]] });
+  api.subscribeTable('t');
+  await settle(30);
+  assert.equal(page.loaded.has('t'), false, 'the table is not loaded');
+  assert.equal(page.state.data.t.rows.length, 0, 'no row is adopted');
+});
+
+test('a columnless head whose rows are objects still loads with the defaults', async () => {
+  const db = makeFakeDb();
+  const { page, api } = makePage(db, T);
+  db.put('tables/t', { rows: [{ id: 'o1', name: 'n', qty: 2 }] });
+  api.subscribeTable('t');
+  await waitFor(() => page.loaded.has('t'));
+  assert.equal(JSON.stringify(page.state.data.t.rows), JSON.stringify([{ id: 'o1', name: 'n', qty: 2 }]));
+});
+
+// CSVs under tables/ and tables/presentation/ that no workbench table edits. Empty on purpose:
+// a new CSV must get a workbench table, or be added here with the reason in a comment.
+const EXCLUDED_CSV = new Set([]);
+
+test('every CSV under tables/ and tables/presentation/ is edited by a workbench table or excluded', () => {
+  const mapped = new Set(Object.values(CSV_FOR));
+  const found = [];
+  for (const dir of ['', 'presentation']) {
+    for (const f of readdirSync(path.join(CSV_DIR, dir))) {
+      if (f.endsWith('.csv')) found.push(path.posix.join(dir, f));
+    }
+  }
+  const unmapped = found.filter((f) => !mapped.has(f) && !EXCLUDED_CSV.has(f));
+  assert.deepEqual(unmapped, [], 'CSV with no workbench table and not excluded');
+  for (const f of EXCLUDED_CSV) assert.ok(found.includes(f) && !mapped.has(f), 'stale exclusion: ' + f);
 });

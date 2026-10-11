@@ -5,7 +5,7 @@ css-max-width-320px,(max-width: 320px),styles/combat-layers.css,combatant-leadin
 css-prefers-reduced-motion-reduce-2,(prefers-reduced-motion: reduce),styles/combat-poses.css,combat-pose-aura; pose-frame [2 uses],breakpoint.other,styles/combat-poses.css
 css-max-width-640px,(max-width: 640px),styles/combat-poses.css,readiness-outfit; player-zone; coop-seat; painted-outfit [6 uses],breakpoint.other,styles/combat-poses.css
 css-max-width-640px-2,(max-width: 640px),styles/combat-test.css,test-build-grid; test-build-choice; test-options; combat-test-setup [5 uses],breakpoint.other,styles/combat-test.css
-css-max-width-600px,(max-width: 600px),styles/combat.css,environment-backdrop; defeated-frame [2 uses],breakpoint.other,styles/combat.css
+css-max-width-600px,(max-width: 600px),styles/combat.css,environment-backdrop; defeated-frame [2 uses],mobile,styles/combat.css
 css-prefers-reduced-motion-reduce-3,(prefers-reduced-motion: reduce),styles/combat.css,act-attack; act-move; card-drawn; pile-received; combat-potion-tray [3 uses],breakpoint.other,styles/combat.css
 css-max-width-480px,(max-width: 480px),styles/combat.css,hand-area; combat-action-row; hand; card [4 uses],mobile,styles/combat.css
 css-max-width-640px-3,(max-width: 640px),styles/combat.css,sprite; combatant-card; meters; field; enemy-row [9 uses],breakpoint.other,styles/combat.css
@@ -24,7 +24,7 @@ css-container-max-width-51rem,@container (max-width: 51rem),styles/kit.css,as-sp
 css-max-width-640px-4,(max-width: 640px),styles/kit.css,as-modal; modal; modal-foot; as-foot; modal-foot-note; as-foot-note; modal-foot-actions; as-foot-actions; modal-btnrow; as-btnrow; as-railed; startup-gate (+11) [19 uses],breakpoint.other,styles/kit.css
 css-pointer-coarse,(pointer: coarse),styles/kit.css,tooltip-keyword; inspection-tag; attr:data-tip; tag:a; tag:button; as-keycap; equipment-poker-card; inspection-info-visible; footer-art-face [5 uses],breakpoint.other,styles/kit.css
 css-container-max-width-460px,@container (max-width: 460px),styles/kit.css,shop-book-offer; shop-book-details; shop-book-name [4 uses],breakpoint.other,styles/kit.css
-css-max-width-600px-2,(max-width: 600px),styles/kit.css,shop-book-offer; shop-book-name; shop-book-details; shop-book-price; shop-book-buy; inventory-face; inventory-item-art; inventory-detail; inventory-model; card-inspection-layout; ctext; card-inspection-art (+19) [38 uses],breakpoint.other,styles/kit.css
+css-max-width-600px-2,(max-width: 600px),styles/kit.css,shop-book-offer; shop-book-name; shop-book-details; shop-book-price; shop-book-buy; inventory-face; inventory-item-art; inventory-detail; inventory-model; card-inspection-layout; ctext; card-inspection-art (+19) [38 uses],mobile,styles/kit.css
 css-supports-grid-template-columns-subgrid,@supports (grid-template-columns: subgrid),styles/kit.css,reward-progress-list; reward-progress-row [2 uses],breakpoint.other,styles/kit.css
 css-container-max-width-64rem,@container (max-width: 64rem),styles/kit.css,as-split; as-split-handle; cc-class-preview-host [3 uses],breakpoint.other,styles/kit.css
 css-max-width-900px,(max-width: 900px),styles/kit.css,cc-character-grid; cc-preview-side; cz-portrait [3 uses],breakpoint.other,styles/kit.css
@@ -46,7 +46,7 @@ css-max-width-480px-3,(max-width: 480px),styles/map.css,atlas-header; atlas-head
 css-prefers-reduced-motion-reduce-5,(prefers-reduced-motion: reduce),styles/map.css,atlas-landmark [1 use],breakpoint.other,styles/map.css
 css-max-width-700px-2,(max-width: 700px),styles/map.css,atlas-dialog; atlas-location-body; atlas-dialog-head; atlas-dialog-foot; atlas-local-wrap; atlas-location-detail; atlas-local-help; atlas-local-tools; atlas-local-zoom-tools; atlas-local-pan-tools [14 uses],breakpoint.other,styles/map.css
 css-max-height-500px-and-min-width-701px,(max-height: 500px) and (min-width: 701px),styles/map.css,atlas-dialog-head; atlas-dialog-foot; atlas-local-wrap; atlas-local-help; atlas-local-port; atlas-location-body; atlas-location-detail; atlas-local-tools [9 uses],breakpoint.other,styles/map.css
-css-max-width-600px-3,(max-width: 600px),styles/map.css,atlas-node-label; atlas-scrollport; atlas-world [3 uses],breakpoint.other,styles/map.css
+css-max-width-600px-3,(max-width: 600px),styles/map.css,atlas-node-label; atlas-scrollport; atlas-world [3 uses],mobile,styles/map.css
 css-prefers-reduced-motion-reduce-6,(prefers-reduced-motion: reduce),styles/player-polish.css,ember; screen; tm-entry; as-btn; as-iconbtn; as-option; as-tab; as-railitem; cp-cell; shop-pane; rest-traveler-foreground [4 uses],breakpoint.other,styles/player-polish.css
 css-max-width-359px,(max-width: 359px),styles/player-polish.css,combat-tools; reaction-switch [2 uses],mobile,styles/player-polish.css
 css-max-height-500px-3,(max-height: 500px),styles/player-polish.css,merchant-workspace; merchant-category-dock [2 uses],breakpoint.other,styles/player-polish.css
@@ -63,7 +63,7 @@ css-max-width-30rem,(max-width: 30rem),styles/ui.css,title-screen; cc-preview-si
 css-min-width-701px-2,(min-width: 701px),styles/ui.css,as-row [1 use],breakpoint.other,styles/ui.css
 css-max-width-1000px,(max-width: 1000px),styles/ui.css,armoury-equipment-receipts; equip-role-receipts; character-info-label; deck-editor; deck-editor-title; deck-editor-subtitle; deck-editor-curve; deck-editor-keys; deck-editor-counter; deck-editor-toolbar; deck-editor-mobile-tabs; deck-editor-tools (+13) [36 uses],breakpoint.other,styles/ui.css
 css-max-width-720px,(max-width: 720px),styles/ui.css,overlay-settings-actions; ov-quick-action; ov-qa-label; set-action-status [4 uses],breakpoint.other,styles/ui.css
-css-max-width-600px-4,(max-width: 600px),styles/ui.css,modal-head; modal-head-actions; set-inline-bar; modal-head-id; set-header-tools; settings-modal; set-subtabs; set-panel; choice-group; as-row; as-labelstack; set-stepper (+3) [23 uses],breakpoint.other,styles/ui.css
+css-max-width-600px-4,(max-width: 600px),styles/ui.css,modal-head; modal-head-actions; set-inline-bar; modal-head-id; set-header-tools; settings-modal; set-subtabs; set-panel; choice-group; as-row; as-labelstack; set-stepper (+3) [23 uses],mobile,styles/ui.css
 css-min-width-800px,(min-width: 800px),styles/ui.css,set-topic-panel; settings-modal [3 uses],breakpoint.other,styles/ui.css
 css-max-width-520px,(max-width: 520px),styles/ui.css,set-example-lines [1 use],mobile,styles/ui.css
 css-min-width-601px,(min-width: 601px),styles/ui.css,set-panel; choice-group [3 uses],breakpoint.other,styles/ui.css
@@ -75,7 +75,7 @@ css-max-width-1100px-and-min-width-1001px,(max-width: 1100px) and (min-width: 10
 css-min-width-1001px,(min-width: 1001px),styles/ui.css,deck-editor; deck-editor-head; deck-editor-title; deck-editor-subtitle; deck-editor-counter; deck-editor-curve; deck-editor-curve-fill; deck-editor-panes; deck-editor-pane-title; deck-editor-searchbar; deck-editor-list; deck-editor-inline-inspect (+13) [26 uses],breakpoint.other,styles/ui.css
 css-prefers-reduced-motion-reduce-7,(prefers-reduced-motion: reduce),styles/ui.css,deck-editor-main [1 use],breakpoint.other,styles/ui.css
 css-max-width-1000px-2,(max-width: 1000px),styles/weapon-cards-preview.css,id:weapon-gallery [2 uses],breakpoint.other,styles/weapon-cards-preview.css
-css-max-width-600px-5,(max-width: 600px),styles/weapon-cards-preview.css,weapon-preview; id:weapon-gallery [5 uses],breakpoint.other,styles/weapon-cards-preview.css
+css-max-width-600px-5,(max-width: 600px),styles/weapon-cards-preview.css,weapon-preview; id:weapon-gallery [5 uses],mobile,styles/weapon-cards-preview.css
 js-pointer-coarse,(pointer: coarse),src/main.js:702,main [1 use],breakpoint.other,src/main.js:702
 js-prefers-reduced-motion-reduce,(prefers-reduced-motion: reduce),src/ui/alternativeArt.js:149,alternativeArt [1 use],breakpoint.other,src/ui/alternativeArt.js:149
 js-prefers-reduced-motion-reduce-2,(prefers-reduced-motion: reduce),src/ui/components/battlefieldStage.js:943,battlefieldStage [1 use],breakpoint.other,src/ui/components/battlefieldStage.js:943

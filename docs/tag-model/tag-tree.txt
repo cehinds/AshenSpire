@@ -25,35 +25,36 @@ Meta
         Skill EXP
       Currency
         Cinders
-        Gold [n] {later}
+        Gold {later}
     Offensive stats [n]
-      AR [n] {attack rating, scales physical}
+      AR {attack rating, scales physical}
       PR {potency rating, scales magic}
       Crit chance
       Crit damage [n]
       Accuracy [n]
     Defensive stats
       DR {defense rating}
-      Evasion [n] {dodge chance}
+      Evasion {dodge chance}
+      Accuracy [n] {Defense-side Accuracy (owner decision 11, 2026-10-11). The offensive Accuracy tag under offensive-stats is unchanged}
       Block {stops physical}
-      Barrier [n] {stops magic}
+      Barrier {stops magic}
       Poise {physical impact → Staggered}
       Ward {magic impact → Disrupted}
     Perception {intent reveal}
     Weapon
       One-handed
         Sword
-        Katana [n]
+        Katana
         Dagger
-        Axe [n]
-        Hammer [n]
+        Axe
+        Hammer
         Spear
         Scepter
         Tome
       Two-handed
         Great sword
         Halberd
-        Twinblade [n]
+        Twinblade
         Staff
         Bow
       Off-hand
@@ -68,19 +69,19 @@ Meta
         Light
         Medium
         Heavy
-      Material [n]
-        Cloth [n] {light, no resistances}
-        Leather [n] {light, + evasion}
+      Material
+        Cloth {light, no resistances}
+        Leather {light, + evasion}
         Studded [n] {leather + physical Block}
-        Chain [n] {medium, resists slashing}
-        Scale [n] {medium, resists piercing}
-        Plated [n] {heavy, high DR, resists blunt less}
+        Chain {medium, resists slashing}
+        Scale {medium, resists piercing}
+        Plated {heavy, high DR, resists blunt less}
       Defensive property [n]
         Absorption [n] {converts part of damage taken to Block or Ward}
         Siphon [m] {drains HP or MP when hit or when breaking}
-        Thorns [n] {returns damage to melee attackers}
+        Thorns {returns damage to melee attackers}
         Padded [n] {+ Poise, resists Stagger}
-        Warded [n] {+ Ward, resists magic impact}
+        Warded {+ Ward, resists magic impact}
         Insulated [m] {resists lightning, no conduction}
         Grounded [m] {clears Paralysis pressure}
         Fireproof [n] {resists Burn}
@@ -89,34 +90,34 @@ Meta
         Mindguard [n] {resists Insanity and Confused}
         Lightweight [n] {−SP cost, + Evade}
         Reinforced [n] {Block not lost on Stagger}
-      Slot [n]
-        Head [n]
-        Body [n]
-        Hands [n]
-        Feet [n]
-        Talisman [n]
+      Slot
+        Head
+        Body
+        Hands
+        Feet
+        Talisman
     Relic
-      Rarity [n]
-        Starter [n]
-        Common [n]
-        Uncommon [n]
-        Rare [n]
-        Boss [n]
-        Event [n]
-      Trigger [n]
-        Combat start [n]
-        Turn start [n]
-        On play [n]
+      Rarity
+        Starter
+        Common
+        Uncommon
+        Rare
+        Boss
+        Event
+      Trigger
+        Combat start
+        Turn start
+        On play
         On hit [n]
         On kill [n]
-        Passive [n]
+        Passive
     Feat
-      Class feat [n]
-      Skill feat [n]
-      Ability [n]
+      Class feat
+      Skill feat
+      Ability
     Consumable
-      Flask [n] {HP, MP}
-      Potion [n]
+      Flask {HP, MP}
+      Potion
       Throwable [n]
       Buff item [n]
       Key item [n]
@@ -127,22 +128,22 @@ Meta
         Undead
         Construct
         Spirit
-        Dragon [n]
+        Dragon
         Demon [n]
-        Elemental [n]
-        Plant [n]
-      Rank [n]
+        Elemental
+        Plant
+      Rank
         Minion [n]
-        Elite [n]
-        Boss [n]
+        Elite
+        Boss
     Other
-      Location [n]
-        Shrine [n]
-        Camp [n]
-        Inn [n]
-        Chapel [n]
-        Event [n]
-        Encounter [n]
+      Location
+        Shrine
+        Camp
+        Inn
+        Chapel
+        Event
+        Encounter
   Combat
     Skill
       Weapon skill {deals physical damage}
@@ -151,15 +152,15 @@ Meta
         Twinblades
         Blade
         Blunt
-        Axe [n]
+        Axe
         Polearm [n]
         Staff
         Marksman
         Bow
         Shield
-        Unarmed [n]
+        Unarmed
         Two-handed
-        Dual-wield [n]
+        Dual-wield
       Armor skill
         Light
         Medium
@@ -173,17 +174,69 @@ Meta
         Guile [m] {rogue trickery}
         Blood [m] {pay HP for power}
         Venom [m] {poison craft}
+        Counter {Categorized Counter identity; effects are authored separately.}
+        Searing Edge {A direct hit carries an authored Bleed buildup rider; the tag supplies no extra damage by itself.}
+        Guarded Strike {Tests whether the acting player currently has positive Block before an attack resolves.}
+        Bloodstep {Tests whether the selected enemy has positive Bleed buildup before the card resolves.}
+        Hammerfall {Marks an attack with an explicit Break-damage rider; HP damage and Break damage remain separate values.}
+        Forgewake {Tests whether the acting player has already played a Guard card during this turn.}
+        Crimson Reprisal {Tests whether the acting player lost HP since their previous turn began; paying HP counts, losing Block does not.}
+        Last Stand {Tests whether current HP is at or below 50% of current maximum HP before resolution.}
+        War Tempo {Tests whether at least two Heavy cards have already been played by the acting player during this turn.}
+        Wide Cleave {Marks one authored attack effect that independently hits every living enemy; it is not a separate hit per tag.}
+        Ember Crown {Marks a one-charge bonus to the next direct attack this turn; the charge expires at turn end and cannot stack with itself.}
+        Dreadweight {Tests whether the selected enemy is currently Staggered before a direct hit.}
+        Oathscar {Identifies the first Guard card after the acting player has lost HP since their previous turn began; at most once per turn.}
+        Wound Harvest {Identifies a credited kill of an enemy that had positive Bleed buildup immediately before the killing hit.}
+        Cinder Orbit {Tests whether the immediately preceding card played this turn by the same player was a spell.}
+        Lunar Guard {Tests whether the acting player has already spent at least 2 Mana this turn; refunded Mana does not erase spending.}
+        Comet Mark {Marks an attack that applies an authored Vulnerable rider after its direct damage.}
+        Rime Mirror {Marks a defensive spell with an authored Frost buildup rider against one selected enemy.}
+        Constellation {Tests how many distinct Starstone card IDs the acting player has played this turn; two copies of one ID count once.}
+        Mana Weave {Marks an authored Mana restoration rider, capped at one activation per owning player per turn.}
+        Gravity Snare {Marks a spell with an authored Weak rider after its direct damage.}
+        Nightglass {Marks a one-charge direct-spell-damage bonus to the next spell this turn; no stacking and no carry into the next turn.}
+        Eclipse Window {Tests whether the selected enemy has positive Frost buildup or is Frost-exposed before resolution.}
+        Warded Casting {Marks a one-charge Mana discount for the next spell this turn; cost cannot fall below zero and the charge expires at turn end.}
+        Celestial Echo {Identifies the second play of the same Starstone card ID in a turn; the condition can activate once per turn.}
+        Cold Memory {Marks an authored amount of Block retained into the next turn; retention sources use the largest allowance, not their sum.}
+        Astral Convergence {Identifies the third distinct Starstone card ID played by the same player in a turn; once per turn.}
+        Ash Opener {Tests whether this is the acting player's first card played this turn.}
+        Discard Weave {Tests whether the acting player has discarded a card this turn; Exhaust and a spent card entering discard do not count.}
+        Crooked Guard {Marks a direct attack with an authored Weak rider; the rider resolves after damage.}
+        Exposed Flank {Tests whether the selected enemy has exactly zero Block immediately before the hit.}
+        Sleight of Hand {Marks an authored draw-then-discard sequence; the player chooses the discarded card and ordinary hand limits apply.}
+        Tether Cut {Tests whether the selected enemy currently has Weak or Vulnerable before damage resolves.}
+        Smoke Edge {Marks a one-charge bonus to the next Blade attack this turn; the charge expires at turn end and cannot stack with itself.}
+        Carrion Finish {Tests whether the selected enemy is at or below 50% maximum HP before the attack.}
+        Paired Strikes {Marks an attack with exactly two authored direct hits; rank bonuses are divided across the hits.}
+        Trapdoor {Tests whether the acting player has already played at least one Guile card and one Guard card this turn.}
+        Clean Escape {Identifies the first Guard card played before any attack this turn; once per turn.}
+        Razor Debt {Identifies the first Blade attack after an explicit discard this turn; once per turn.}
+        Mercy in Ash {Marks a defensive card with an authored healing rider; healing cannot exceed maximum HP.}
+        Blood Censer {Marks a card with an explicit HP offering paid before its benefits; the offering cannot reduce HP below 1.}
+        Blight Seed {Marks a direct hit with an authored Crimson Blight buildup rider; this is not Poison.}
+        Funeral Guard {Tests whether the acting player has HP at or below 50% maximum HP before a Guard card resolves.}
+        Ember Tithe {Marks an explicit, nonlethal HP offering that buys an authored regenerative benefit.}
+        Bone Chorus {Tests whether at least one living enemy has positive Crimson Blight buildup before resolution.}
+        Requiem Brand {Tests whether the selected enemy has positive Crimson Blight buildup before the hit.}
+        Pilgrim Shelter {Tests whether the acting player began this turn at or below 50% maximum HP; later healing does not change that turn's result.}
+        Scarred Rite {Tests whether the acting player paid an HP offering earlier this turn, before this card's own payment; ordinary enemy damage does not count.}
+        Dawn Rite {Marks an authored removal of a specific negative status; it never removes every status implicitly.}
+        Burden Bearer {Identifies the first new negative status application from an enemy to this player in a turn; self-applied statuses do not count.}
+        Sepulchral Pact {Identifies a credited kill of an enemy with positive Crimson Blight buildup immediately before the killing hit.}
       Class stance [m] {card skill; holds a stance until changed}
         Gorefire Stance
         Bulwark Stance
         Brace
+      Prepare [n] {Prepare. Available to players as well as enemies (owner decision 4, 2026-10-11); sets Prepared}
       Spellcraft {each school deals its damage type}
         Fire
           Gorefire [m] {fire fed by blood}
           Ash [m]
         Frost
         Lightning
-        Earth [n]
+        Earth
         Force
           Starstone [m] {astral force}
         Divine
@@ -203,12 +256,16 @@ Meta
         Fire {→ Burned}
         Frost {→ Frostbitten}
         Lightning {→ Paralyzed}
-        Earth [n]
+        Earth
         Divine {cleanses}
         Necrotic {→ Blighted}
         Psychic [n] {→ Confused}
-      Hybrid [n]
+      Hybrid
         Force {Block or Barrier stops it}
+      arcane {Arcane damage. Builds Arcane Exposure on enemies that track it.}
+      blade {Damage dealt with an edge.}
+      blunt {Damage dealt with mass and impact.}
+      piercing {Damage dealt with a point.}
     Stance
       Offensive
         Attack {44 cards}
@@ -231,7 +288,7 @@ Meta
           Shield {Shieldwall, Shield Guard, Shield Bastion, Set the Shield}
           Ward {Starstone Ward, Vesper Ward, Blightward, Frost Veil, Crystal Barrier}
           Endure {Last Stand, Iron Resolve, Unbreakable, Iron Vow, Penance}
-        Evade [n] {about 15 cards, tagged Defend today}
+        Evade {about 15 cards, tagged Defend today}
           Dodge {Dodge Roll, Evasive Guard, Backstep, Quickstep, Acrobatics}
           Vanish {Shadowstep, Vanish, Nightstep, Misdirect}
           Obscure {Smoke Bomb, Smoke Pellet, Smoke Veil, Pocket Sand}
@@ -241,6 +298,7 @@ Meta
         Ranged counter {Nock and Wait, Barrage Counter}
         Ward counter {Umbral Ward, Warding Star, Rime Mirror, Crimson Reprisal}
     Delivery
+      Melee {Melee delivery; the default for the Attack, Smash and Sweep stances (owner decision 3, 2026-10-11)}
       Ranged {9 cards, was a stance}
         Shot {Aimed Shot, Barbed Arrow, Pinning Shot, Crawling Shot}
         Volley {Arrow Volley, Toxic Volley, Fan of Knives, Ricochet}
@@ -248,13 +306,14 @@ Meta
         Bolt {Ember Dart, Rime Needle, Static Needle, Holy Spark, Force Nudge}
         Mote {Drowsing Mote, Rot Mote}
       Multi-hit [n]
-      Area [n]
+      Area
+      Projectile {Categorized Projectile identity; effects are authored separately.}
     Magic
       Offensive magic
       Defensive magic
-    Recovery [n]
-      Heal [n]
-      Cleanse [n]
+    Recovery
+      Heal
+      Cleanse
       Restore SP [n]
       Restore MP [n]
     Status effect
@@ -276,7 +335,7 @@ Meta
           Frost-Exposed {+ vs Starstone}
           Unraveled {+ vs Ritual, Blight}
           Chilled {next Blunt hit +25%}
-          Aged [n]
+          Aged
           Slowed [n]
           Silenced [n]
           Disarmed [n]
@@ -347,32 +406,150 @@ Meta
         Weathered {vs Frost}
         Resolute {vs Insanity}
     Deck manipulation
-      Draw [n]
-      Discard [n]
-      Create [n]
-      Upgrade [n]
+      Draw
+      Discard
+      Create
+      Upgrade
       Cost change [n]
     Rule manipulation
       Extra action [n]
       Turn skip [n]
       Stance change [n]
       Intent reveal / conceal [n]
+  Presentation [n] {Presentation layer: how the game looks and reads. Carries no gameplay identity.}
+    Scene [n] {Scene art and frame.}
+    Battlefield [n] {Enemy and player stage.}
+    Card structure [n] {Card frame parts.}
+    HUD header [n] {Top bar HUD.}
+    Footer [n] {Bottom bar.}
+    Button [n] {Buttons and icon buttons.}
+    Modal [n] {Dialogs and sheets.}
+    Menu [n] {Menus and navigation.}
+    Background art [n] {Backdrops and environment art.}
+    Map [n] {Run map.}
+    Overlay [n] {Full-screen overlays.}
+    Wireframe [n] {Wireframe (grey-box) layouts.}
+    Other (component) [n] {Components whose inventory group is other.}
+    Layout [n] {Positions and sizes of components.}
+      Breakpoint [n] {Layout condition, normalised to a band.}
+        Mobile [n] {Band mobile.}
+        Tablet [n] {Band tablet.}
+        Desktop [n] {Band desktop.}
+        Wide [n] {Band wide.}
+        State [n] {Band state.}
+        All [n] {Band all.}
+        Other [n] {Band other.}
+      Anchor [n] {Anchor and transform rules.}
+      Z-layer [n] {Stacking layers.}
+    Resolution [n] {Art tiers and card sizes.}
+      light [n] {Tier light.}
+      high [n] {Tier high.}
+      common [n] {Tier common.}
+      placeholder [n] {Tier placeholder.}
+      local-high-res [n] {Tier local-high-res.}
+      setting [n] {Tier setting.}
+      auto-thresholds [n] {Tier auto-thresholds.}
+      card-512 [n] {Tier card-512.}
+      card-1024 [n] {Tier card-1024.}
+      map-levels [n] {Tier map-levels.}
+      environment-atlas [n] {Tier environment-atlas.}
+      mobile-variants [n] {Tier mobile-variants.}
+      pose-canvas [n] {Tier pose-canvas.}
+      enemy-canvas [n] {Tier enemy-canvas.}
+      svg-vector [n] {Tier svg-vector.}
+    Animation [n] {Sprite and motion sequences.}
+      pas [n] {Animation group pas.}
+      pcs [n] {Animation group pcs.}
+      aca [n] {Animation group aca.}
+      reaver [n] {Animation group reaver.}
+      eq [n] {Animation group eq.}
+      pose [n] {Animation group pose.}
+      painted [n] {Animation group painted.}
+      readiness [n] {Animation group readiness.}
+      defeated [n] {Animation group defeated.}
+      enemypose [n] {Animation group enemypose.}
+      enemystate [n] {Animation group enemystate.}
+      combatfx [n] {Animation group combatfx.}
+      poseeffect [n] {Animation group poseeffect.}
+      action [n] {Animation group action.}
+      presseq [n] {Animation group presseq.}
+      posepl [n] {Animation group posepl.}
+      waapi [n] {Animation group waapi.}
+      css [n] {Animation group css.}
+    Effect [n] {Visual effects by kind.}
+      sprite-effect [n] {Effect kind sprite-effect.}
+      aura [n] {Effect kind aura.}
+      glow [n] {Effect kind glow.}
+      tint [n] {Effect kind tint.}
+      screen-shake [n] {Effect kind screen-shake.}
+      flash [n] {Effect kind flash.}
+      float-text [n] {Effect kind float-text.}
+      shadow [n] {Effect kind shadow.}
+      particle [n] {Effect kind particle.}
+    Text [n] {Player-facing strings by use.}
+      label [n] {String kind label.}
+      tooltip [n] {String kind tooltip.}
+      hardcoded [n] {String kind hardcoded.}
+    Symbol [n] {Icons and sigils.}
+      cardtag [n] {Symbol group cardtag.}
+      cardtag-alias [n] {Symbol group cardtag-alias.}
+      action [n] {Symbol group action.}
+      school [n] {Symbol group school.}
+      intent [n] {Symbol group intent.}
+      card-icon [n] {Symbol group card-icon.}
+      ui-icon [n] {Symbol group ui-icon.}
+      glyph [n] {Symbol group glyph.}
+      ui-alias [n] {Symbol group ui-alias.}
+      status [n] {Symbol group status.}
+      resource [n] {Symbol group resource.}
+      stance [n] {Symbol group stance.}
+      tag [n] {Symbol group tag.}
+      keyword [n] {Symbol group keyword.}
+      uistring-glyph [n] {Symbol group uistring-glyph.}
+    Setting [n] {Settings rows by scope.}
+      Player [n] {Settings scope player.}
+        Combat [n] {player settings group Combat.}
+        Accessibility [n] {player settings group Accessibility.}
+        Display [n] {player settings group Display.}
+        Audio [n] {player settings group Audio.}
+        Lobby [n] {player settings group Lobby.}
+        Debug [n] {player settings group Debug.}
+        Pose studio [n] {player settings group Pose studio.}
+      Tuning [n] {Settings scope tuning.}
+        Accessibility [n] {tuning settings group Accessibility.}
+        World [n] {tuning settings group World.}
+        Progression [n] {tuning settings group Progression.}
+        Rewards [n] {tuning settings group Rewards.}
+        Interface [n] {tuning settings group Interface.}
+        Display [n] {tuning settings group Display.}
+        Text [n] {tuning settings group Text.}
+        Export [n] {tuning settings group Export.}
+        Equipment [n] {tuning settings group Equipment.}
+        Wireframes [n] {tuning settings group Wireframes.}
+        Deck [n] {tuning settings group Deck.}
+        Recovery [n] {tuning settings group Recovery.}
+        Stats [n] {tuning settings group Stats.}
+        Opening [n] {tuning settings group Opening.}
+        Shops [n] {tuning settings group Shops.}
+        Combat [n] {tuning settings group Combat.}
+    Style [n] {CSS properties and tokens.}
+      token [n] {Style kind token.}
+      color [n] {Style kind color.}
+      typography [n] {Style kind typography.}
+      spacing [n] {Style kind spacing.}
+      radius [n] {Style kind radius.}
+      shadow [n] {Style kind shadow.}
+      motion [n] {Style kind motion.}
+      z-index [n] {Style kind z-index.}
+      other [n] {Style kind other.}
 Card
   Type
-    Stance {matches Combat › Stance}
-      Offensive
-        Attack
-        Smash
-        Sweep
-      Defensive
-        Block
-        Evade
-      Counter
+    Stance {A card whose type is a stance; the stance itself lives under Combat › Stance}
     Skill
     Power
     Curse
     Status
-    Consumable [n]
+    Consumable
   Rarity
     Starter
     Common
@@ -387,7 +564,7 @@ Card
   Cost
     Stamina {physical cards}
     Mana {spells}
-    Free [n]
+    Free
   Source
     Class
     Weapon
@@ -398,3 +575,319 @@ Card
     Base
     Upgraded
   Character card {class-bound}
+  Flourish {Finesse — footwork and multi-hit.}
+  Heavy {Slow, committed, and hard to stop.}
+  Basic {Everybody's — on the shelf without being found.}
+  Ranged {Authored ranged presentation; no position system.}
+  Precision {Deliberate aim and finesse; presentation only.}
+  Extractable {A smith can lift this card out of the item that lends it, and seat it in another item's mount. Strikes and defends do not carry it — today.}
+Attack source {Source profile supplying an attack; separate from damage type.}
+  Weapon {Categorized Weapon identity; effects are authored separately.}
+  Spell {Categorized Spell identity; effects are authored separately.}
+  Unarmed {Categorized Unarmed identity; effects are authored separately.}
+classification {Grouping node for classification in nodes.csv.}
+  attack {Grouping node for attack in nodes.csv.}
+  strike {Grouping node for strike in nodes.csv.}
+  guard {Grouping node for guard in nodes.csv.}
+  weaponArt {Grouping node for weaponArt in nodes.csv.}
+  class {What a class is. Every object in the class collection carries this, and nothing outside it may.}
+  relic {What a relic is. Every object in the relic collection carries this, and nothing outside it may.}
+  flask {What a flask is. Every object in the flask collection carries this, and nothing outside it may.}
+  keepsake {What a keepsake is. Every object in the keepsake collection carries this, and nothing outside it may.}
+  event {What a event is. Every object in the event collection carries this, and nothing outside it may.}
+  encounter {What a encounter is. Every object in the encounter collection carries this, and nothing outside it may.}
+  enemy {What a enemy is. Every object in the enemy collection carries this, and nothing outside it may.}
+  armament {What a armament is. Every object in the armament collection carries this, and nothing outside it may.}
+  armour {What a armour is. Every object in the armour collection carries this, and nothing outside it may.}
+  basicCardProfile {What a basicCardProfile is. Every object in the basicCardProfile collection carries this, and nothing outside it may.}
+  slot {What a slot is. Every object in the slot collection carries this, and nothing outside it may.}
+  startingKit {What a startingKit is. Every object in the startingKit collection carries this, and nothing outside it may.}
+  unlock {What a unlock is. Every object in the unlock collection carries this, and nothing outside it may.}
+  companion {What a companion is. Every object in the companion collection carries this, and nothing outside it may.}
+  sigil {What a sigil is. Every object in the sigil collection carries this, and nothing outside it may.}
+  feat {A selected class progression feat.}
+  enemyMove {A scoped action in an enemy move table.}
+Combat camp {Authored combat identity shared by cards and enemy moves.}
+  Physical {Selects physical Guard or magical Ward combat rules.}
+  Spell {Selects physical Guard or magical Ward combat rules.}
+Combat presentation {Sprite selection only; never damage or resistance identity.}
+  blade {blade visual identity; no combat modifier.}
+  guard {guard visual identity; no combat modifier.}
+  blood {blood visual identity; no combat modifier.}
+  gorefire {gorefire visual identity; no combat modifier.}
+  starstone {starstone visual identity; no combat modifier.}
+  ritual {ritual visual identity; no combat modifier.}
+  blight {blight visual identity; no combat modifier.}
+  oath {oath visual identity; no combat modifier.}
+  flourish {flourish visual identity; no combat modifier.}
+  ash {ash visual identity; no combat modifier.}
+  heavy {heavy visual identity; no combat modifier.}
+  pierce {pierce visual identity; no combat modifier.}
+  ranged {ranged visual identity; no combat modifier.}
+  precision {precision visual identity; no combat modifier.}
+  guile {guile visual identity; no combat modifier.}
+  venom {venom visual identity; no combat modifier.}
+  shield {shield visual identity; no combat modifier.}
+  barrier {barrier visual identity; no combat modifier.}
+  ward {ward visual identity; no combat modifier.}
+  magic {magic visual identity; no combat modifier.}
+  arcane {arcane visual identity; no combat modifier.}
+  dodge {dodge visual identity; no combat modifier.}
+  riposte {riposte visual identity; no combat modifier.}
+  heal {heal visual identity; no combat modifier.}
+  cleanse {cleanse visual identity; no combat modifier.}
+  bind {bind visual identity; no combat modifier.}
+  frost {frost visual identity; no combat modifier.}
+  bulwark {bulwark visual identity; no combat modifier.}
+  utility {utility visual identity; no combat modifier.}
+Theme {Build synergies; tags alone grant no effects.}
+  Blood {Categorized Blood identity; effects are authored separately.}
+  Blight {Categorized Blight identity; effects are authored separately.}
+  Astral {Categorized Astral identity; effects are authored separately.}
+  Oath {Categorized Oath identity; effects are authored separately.}
+Property {What a holder CONFERS while it is held. Each property node has exactly one entry in nodeEffects.json; the holder grants it, and it leaves when the holder does. EVERY family may carry one — what the mount path can hold (worn, owned, chosen) is the engine's narrower list, engine/properties.js MOUNTABLE_KINDS.}
+  Overcharge {A focus that pushes harder: each hit builds more Arcane Exposure.}
+  Stagger Break {A focus that breaks harder: breaking a foe's Arcane Exposure batters its Poise. Effects in nodeEffects.json: triggers on arcaneBreak; ops poiseDamage.}
+  Resonance {A focus that rings out: breaking a foe's Arcane Exposure builds it on every other foe. Effects in nodeEffects.json: triggers on arcaneBreak; ops arcaneBuildup.}
+  Forsaken Medallion {What Forsaken Medallion does when the fight gives it its moment. Effects in nodeEffects.json: triggers on damageDealt; ops poiseDamage.}
+  Starstone Shard {What Starstone Shard does when the fight gives it its moment. Effects in nodeEffects.json: triggers on combatStart; ops applyStatus, restoreMana.}
+  Cutpurse's Coin {What Cutpurse's Coin does when the fight gives it its moment. Effects in nodeEffects.json: triggers on combatStart, damageDealt; ops applyStatus.}
+  Gold Figurine {What Gold Figurine does when the fight gives it its moment. Effects in nodeEffects.json: triggers on healed; ops block.}
+  Golden Sprout {What Golden Sprout does when the fight gives it its moment. Effects in nodeEffects.json: triggers on combatStart; ops heal.}
+  Whetstone Fragment {What Whetstone Fragment does when the fight gives it its moment. Effects in nodeEffects.json: triggers on damageDealt; ops damage.}
+  Kindling Charm {What Kindling Charm does when the fight gives it its moment. Effects in nodeEffects.json: triggers on combatStart; ops draw.}
+  Goldleaf Charm {What Goldleaf Charm does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart; ops block.}
+  Cracked Lantern {What Cracked Lantern does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart; ops gainEnergy.}
+  Sacrificial Knife {What Sacrificial Knife does when the fight gives it its moment. Effects in nodeEffects.json: triggers on damageDealt; ops applyStatus.}
+  Cured Hide {What Cured Hide does when the fight gives it its moment. Effects in nodeEffects.json: triggers on hpLost; ops block.}
+  Ivory Comb {What Ivory Comb does when the fight gives it its moment. Effects in nodeEffects.json: triggers on cardPlayed; ops draw.}
+  Fell Warden Brand {What Fell Warden Brand does when the fight gives it its moment. Effects in nodeEffects.json: triggers on enemyStaggered; ops draw.}
+  Bloodied Talisman {What Bloodied Talisman does when the fight gives it its moment. Effects in nodeEffects.json: triggers on meterFilled; ops loseHp.}
+  Twinned Armor {What Twinned Armor does when the fight gives it its moment. Effects in nodeEffects.json: triggers on cardPlayed; ops block.}
+  Blight-Touched Idol {What Blight-Touched Idol does when the fight gives it its moment. Effects in nodeEffects.json: triggers on damageDealt; ops applyStatus.}
+  Warhorn {What Warhorn does when the fight gives it its moment. Effects in nodeEffects.json: triggers on combatStart; ops applyStatus.}
+  Vow of Vengeance {What Vow of Vengeance does when the fight gives it its moment. Effects in nodeEffects.json: triggers on enemyDied; ops applyStatus.}
+  Pearl of Sagacity {What Pearl of Sagacity does when the fight gives it its moment. Effects in nodeEffects.json: triggers on cardPlayed; ops gainEnergy.}
+  Blessed Dew {What Blessed Dew does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart; ops heal.}
+  Azure Sigil {What Azure Sigil does when the fight gives it its moment. Effects in nodeEffects.json: triggers on cardPlayed; ops gainEnergy.}
+  Bloodstained Chalice {What Bloodstained Chalice does when the fight gives it its moment. Effects in nodeEffects.json: triggers on meterFilled; ops block.}
+  Goldbough Sapling {What Goldbough Sapling does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart; ops block.}
+  Wyrm Heart {What Wyrm Heart does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart; ops gainEnergy.}
+  Titan's Cinder {What Titan's Cinder does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart; ops applyStatus.}
+  Radiant Aegis {What Radiant Aegis does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart; ops block.}
+  Flayer's Censer {What Flayer's Censer does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart; ops applyStatus.}
+  Vigilant Halo {What Vigilant Halo does when the fight gives it its moment. Effects in nodeEffects.json: triggers on enemyStaggered; ops heal.}
+  Carrion Talon {What Carrion Talon does when the fight gives it its moment. Effects in nodeEffects.json: triggers on enemyDied; ops damage.}
+  Ember Idol {What Ember Idol does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart; ops damage.}
+  Crown of Stitches {What Crown of Stitches does when the fight gives it its moment. Effects in nodeEffects.json: triggers on combatStart; ops applyStatus.}
+  Warden Horn {What Warden Horn does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart, combatStart; ops draw, loseHp.}
+  Ash of Remembrance {What Ash of Remembrance does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart, combatStart; ops gainEnergy, applyStatus.}
+  Cinder of the Fallen {What Cinder of the Fallen does when the fight gives it its moment. Effects in nodeEffects.json: triggers on combatStart, enemyDied; ops applyStatus, gainEnergy.}
+  Crimson Covenant {What Crimson Covenant does when the fight gives it its moment. Effects in nodeEffects.json: triggers on combatStart, damageDealt; ops loseHp, applyStatus.}
+  Traveler's Whetstone {What Traveler's Whetstone does when the fight gives it its moment. Effects in nodeEffects.json: triggers on combatStart; ops applyStatus.}
+  Moonlit Vial {What Moonlit Vial does when the fight gives it its moment. Effects in nodeEffects.json: triggers on combatStart; ops block.}
+  Warden's Lantern {What Warden's Lantern does when the fight gives it its moment. Effects in nodeEffects.json: triggers on hpLost; ops draw.}
+  Hollowed Horn {What Hollowed Horn does when the fight gives it its moment. Effects in nodeEffects.json: triggers on enemyStaggered; ops applyStatus.}
+  Gilded Tear {What Gilded Tear does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart; ops heal.}
+  Watchman's Badge {What Watchman's Badge does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart; ops applyStatus.}
+  Howling Standard {What Howling Standard does when the fight gives it its moment. Effects in nodeEffects.json: triggers on enemyStaggered; ops applyStatus.}
+  Emberwick Charm {What Emberwick Charm does when the fight gives it its moment. Effects in nodeEffects.json: triggers on hpLost; ops gainEnergy.}
+  Carrion Morsel {What Carrion Morsel does when the fight gives it its moment. Effects in nodeEffects.json: triggers on enemyDied; ops heal.}
+  Gravetender's Bell {What Gravetender's Bell does when the fight gives it its moment. Effects in nodeEffects.json: triggers on enemyDied; ops draw.}
+  Sentinel's Oath {What Sentinel's Oath does when the fight gives it its moment. Effects in nodeEffects.json: triggers on cardPlayed; ops applyStatus.}
+  Forsaken Warflag {What Forsaken Warflag does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart; ops applyStatus.}
+  Wrath Coil {What Wrath Coil does when the fight gives it its moment. Effects in nodeEffects.json: triggers on hpLost; ops damage.}
+  Favored {A class card's leaning: skill XP in the weapon groups the card also names (its item-type tags) is multiplied. Scoped by the carrier's own tags, never by a second table.}
+  Ashen Grip {What Ashen Grip does when the fight gives it its moment. Effects in nodeEffects.json: triggers on stanceEntered; ops restoreStamina.}
+  Lodestar Shard {What Lodestar Shard does when the fight gives it its moment. Effects in nodeEffects.json: triggers on combatStart; ops restoreMana.}
+  Waxen Seal {What Waxen Seal does when the fight gives it its moment. Effects in nodeEffects.json: triggers on healed; ops heal.}
+  Whetstone Pouch {What Whetstone Pouch does when the fight gives it its moment. Effects in nodeEffects.json: triggers on damageDealt; ops applyStatus.}
+  Iron Footing {Every stance you enter braces you. Effects in nodeEffects.json: triggers on stanceEntered; ops block.}
+  Blood Tempo {A change of footing is a breath. Effects in nodeEffects.json: triggers on stanceEntered; ops draw.}
+  Ashen Reserve {The grip gives back a little more. Effects in nodeEffects.json: triggers on playerTurnStart; ops restoreStamina.}
+  Grim Harvest {What falls feeds you. Effects in nodeEffects.json: triggers on enemyDied; ops heal.}
+  Small rest {A rough camp's rest: a small share of your max HP back. Effects in nodeEffects.json: triggers on rested; ops heal.}
+  Partial rest {A shrine's rest: part of your max HP back. Effects in nodeEffects.json: triggers on rested; ops heal.}
+  Full rest {A town's bed: HP to full. Effects in nodeEffects.json: triggers on rested; ops heal.}
+  Mana rest {Mana back by the configured mode (balance.rest.mana.mode) — the door resolves this tag to the mode's own tag, so a place that wants another amount carries restManaFlat, restManaFloor or restManaFull instead.}
+  Flat mana rest {Mana back by a fixed amount. Effects in nodeEffects.json: triggers on rested; ops restoreMana.}
+  Mana rest to a floor {Mana back to a floor of max, or to full when already there. Effects in nodeEffects.json: triggers on rested; ops restoreMana.}
+  Full mana rest {Mana to full. Effects in nodeEffects.json: triggers on rested; ops restoreMana.}
+  Flask refill {Arriving refills your flask charges (the grace refill). Effects in nodeEffects.json: triggers on arrived; ops refillFlasks.}
+  Smith {The place offers a smith: upgrade, extract, install (balance.smithing.services says which).}
+  Level-up {The place is where waiting attribute points are assigned.}
+  Quest board {The place keeps a quest board: the quests offered in this town, and a journal of the run's quests.}
+  Deck editing {Under Rest sites only (Settings → Advanced → Deck), the deck editor opens from this place's Rest screen. A service marker, with no rule.}
+  Warlord {The subclass that opens every fight already swinging. Effects in nodeEffects.json: triggers on combatStart; ops applyStatus.}
+  Bulwark King {The subclass that is never caught open. Effects in nodeEffects.json: triggers on playerTurnStart; ops block.}
+  Attuned Mind {Mana found is a card found. Effects in nodeEffects.json: triggers on manaRestored; ops draw.}
+  Starlit Focus {The charge is there before the first cast. Effects in nodeEffects.json: triggers on combatStart; ops applyStatus.}
+  Lodestar Cap {The shard opens the fight wider. Effects in nodeEffects.json: triggers on combatStart; ops restoreMana.}
+  Arcane Draw {The first break each combat is a hand. Effects in nodeEffects.json: triggers on arcaneBreak; ops draw.}
+  Conduit {The subclass whose casts cost breath, not blood. Effects in nodeEffects.json: triggers on playerTurnStart; ops restoreStamina.}
+  Reservoir {The subclass that never runs dry. Effects in nodeEffects.json: triggers on playerTurnStart; ops restoreMana.}
+  Warmth {Every heal braces you. Effects in nodeEffects.json: triggers on healed; ops block.}
+  Vigil {The litany never quite stops. Effects in nodeEffects.json: triggers on playerTurnStart; ops heal.}
+  Seal of Plenty {The first heal pays for the next cast. Effects in nodeEffects.json: triggers on healed; ops restoreMana.}
+  Waking Rot {Your blows carry the blight. Effects in nodeEffects.json: triggers on damageDealt; ops applyStatus.}
+  Martyr {The subclass that turns every wound to a wall. Effects in nodeEffects.json: triggers on hpLost; ops block.}
+  Saint {The subclass that walks in whole. Effects in nodeEffects.json: triggers on combatStart; ops heal.}
+  Quick Hands {Prepared before the first card. Effects in nodeEffects.json: triggers on combatStart; ops applyStatus.}
+  Second Wind {What you burn, you draw. Effects in nodeEffects.json: triggers on cardExhausted; ops draw.}
+  Honed Edge {Every prepared cut opens a vein. Effects in nodeEffects.json: triggers on damageDealt; ops applyStatus.}
+  Poisoned Pouch {The whetstone is not the only thing in the pouch. Effects in nodeEffects.json: triggers on damageDealt; ops applyStatus.}
+  Assassin {The subclass that reads a stagger as an opening. Effects in nodeEffects.json: triggers on enemyStaggered; ops applyStatus, draw.}
+  Shadow {The subclass nothing quite reaches. Effects in nodeEffects.json: triggers on playerTurnStart; ops block.}
+  Parting Blow {Every step out of a stance is a cut. Effects in nodeEffects.json: triggers on stanceExited; ops damage.}
+  Iron Rebuke {Brace answers every wound it cannot stop. Effects in nodeEffects.json: triggers on hpLost; ops damage.}
+  Cinder Grip {The grip leaves ash in every wound. Effects in nodeEffects.json: triggers on stanceEntered; ops applyStatus.}
+  Mending Grip {The grip closes the wound it opened. Effects in nodeEffects.json: triggers on stanceEntered; ops heal.}
+  Spent Stars {What burns out, burns once more. Effects in nodeEffects.json: triggers on cardExhausted; ops restoreMana.}
+  Falling Star {The mana comes down somewhere. Effects in nodeEffects.json: triggers on manaRestored; ops damage.}
+  Lodestar Pull {The shard drags the foe off its footing. Effects in nodeEffects.json: triggers on combatStart; ops applyStatus.}
+  Shard Hunger {The shard drinks from a staggering foe. Effects in nodeEffects.json: triggers on enemyStaggered; ops restoreMana.}
+  Burning Grace {The warmth spills over, and scalds. Effects in nodeEffects.json: triggers on healed; ops damage.}
+  Dazzling Light {The litany is hard to look at. Effects in nodeEffects.json: triggers on healed; ops applyStatus.}
+  Anointed Blade {The seal breaks over the edge. Effects in nodeEffects.json: triggers on healed; ops applyStatus.}
+  Unsealed Scroll {Under the wax, the next verse. Effects in nodeEffects.json: triggers on healed; ops draw.}
+  Low Profile {Ready, and hard to find. Effects in nodeEffects.json: triggers on statusApplied; ops block.}
+  Baiting Feint {The first move is never the real one. Effects in nodeEffects.json: triggers on statusApplied; ops poiseDamage.}
+  Spare Whetstone {A second stone, for the second cut. Effects in nodeEffects.json: triggers on damageDealt; ops gainEnergy.}
+  Whetted Guard {The edge that cuts also turns a blade. Effects in nodeEffects.json: triggers on damageDealt; ops block.}
+  Coal on Steel {The first Blade hit each turn applies +1 Bleed buildup. Effects in nodeEffects.json: triggers on damageDealt; ops applyStatus.}
+  Brace and Bite {The first Blade attack each turn played while you have Block deals +3 damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Red Footwork {The first Guard card each turn targeting an enemy with Bleed buildup draws 1 card. Effects in nodeEffects.json: triggers on cardPreparing; ops draw.}
+  Anvil Discipline {The first Heavy attack each turn deals +2 Break damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Forge Momentum {Your first Blade attack after a Guard card each turn deals +4 damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Paid in Blood {The first Blood attack after you have lost HP since your previous turn began deals +4 damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Last Rampart {At half HP or lower, your first Guard card each turn grants +4 Block. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  War Cadence {After your second Heavy card in a turn, gain 4 Block, once per turn. Effects in nodeEffects.json: triggers on cardResolved; ops block.}
+  Broad Sentence {Your first attack that hits all living enemies each turn deals +2 damage to each target. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Ember Sovereign {Once per turn, a Crown of Cinders charge gains +2 damage before it is consumed. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Dread of the Hammer {Your first Heavy attack against a Staggered target each turn deals +4 damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Scarred Oath {Your first Guard card after losing HP since your previous turn began grants +3 Block, once per turn. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Harvest the Wound {Your first credited kill of an enemy with Bleed buildup heals 3 HP, once per combat. Effects in nodeEffects.json: triggers on enemyDied; ops heal.}
+  Orbit Keeper {Your first Starstone spell following another spell each turn deals +3 direct damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Moonward Scholar {The first Guard spell played after you spent at least 2 Mana this turn grants +3 Block. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Comet Reader {The first Comet Mark attack each turn applies +1 Vulnerable after damage. Effects in nodeEffects.json: triggers on cardResolved; ops applyStatus.}
+  Mirror of Rime {Your first Rime Mirror each turn applies +2 Frost buildup. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Constellation Keeper {Your first Starstone attack after two distinct Starstone card IDs this turn deals +3 damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Patient Wellspring {The first Mana Weave restoration each turn also grants 3 Block. Effects in nodeEffects.json: triggers on manaRestored; ops block.}
+  Weight of the Void {The first Gravity Snare each turn applies +1 Weak after damage. Effects in nodeEffects.json: triggers on cardResolved; ops applyStatus.}
+  Nightglass Scholar {Once per turn, your Nightglass charge grants +2 additional damage when consumed. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Eclipse Hunter {Your first Starstone attack against a Frost-built-up or Frost-exposed target each turn deals +4 damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Firmament Keeper {Once per turn, consuming a Warded Casting charge also grants 4 Block. Effects in nodeEffects.json: triggers on cardChargeConsumed; ops block.}
+  Celestial Refrain {The second play of the same Starstone card ID in a turn grants 4 Block, once per turn. Effects in nodeEffects.json: triggers on cardResolved; ops block.}
+  Memory of Winter {Retain up to 4 Block into your next turn; use the highest retention allowance if another source also retains Block.}
+  Threefold Sky {Playing your third distinct Starstone card ID in a turn draws 1 card, once per turn. Effects in nodeEffects.json: triggers on cardResolved; ops draw.}
+  First Knife {If your first card this turn is a Blade attack, it deals +3 damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Pocket Method {Your first Guard card after an explicit discard each turn grants +3 Block. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Crooked Measure {Your first Crooked Guard hit each turn applies +1 Weak after damage. Effects in nodeEffects.json: triggers on cardResolved; ops applyStatus.}
+  Open Flank {Your first Blade attack against an enemy with zero Block each turn deals +3 damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Hidden Palm {The first Sleight of Hand sequence each turn grants 3 Block after the discard. Effects in nodeEffects.json: triggers on cardResolved; ops block.}
+  Tighten the Wire {Your first Tether Cut attack each turn against a Weak or Vulnerable enemy deals +3 damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Smoke Dancer {Once per turn, a Smoke Edge charge adds +2 damage before it is consumed. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Carrion Measure {Your first Blade attack against an enemy at half HP or lower each turn deals +4 damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Two Quiet Knives {Your first Paired Strikes attack each turn deals +1 damage on each of its two hits. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Trapdoor Smile {Your first Blade attack after both a Guile card and a Guard card this turn deals +4 damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Clean Exit {Your first Guard card played before any attack this turn restores 1 Stamina, once per turn. Effects in nodeEffects.json: triggers on cardPreparing; ops restoreStamina.}
+  Razor Ledger {Your first Blade attack after an explicit discard each turn deals +3 damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Ashen Mercy {The first Mercy in Ash card each turn heals +2 HP. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Censer Keeper {The first Blood Censer offering each turn grants +3 Block after its HP payment. Effects in nodeEffects.json: triggers on hpOfferingPaid; ops block.}
+  Sower of Blight {The first Blight Seed hit each turn applies +2 Crimson Blight buildup. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Funeral Watch {At half HP or lower, your first Guard card each turn grants +3 Block. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Ember Almoner {Your first Ember Tithe each turn grants +1 Regen after the HP payment. Effects in nodeEffects.json: triggers on hpOfferingPaid; ops applyStatus.}
+  Choir of Bone {The first Guard card you play while any living enemy has Crimson Blight buildup restores 1 Stamina, once per turn. Effects in nodeEffects.json: triggers on cardPreparing; ops restoreStamina.}
+  Requiem Reader {The first Ritual hit against an enemy with Crimson Blight buildup each turn deals +3 damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Pilgrim of Scars {If you began the turn at half HP or lower, your first Guard card that turn heals 3 HP. Effects in nodeEffects.json: triggers on cardPreparing; ops heal.}
+  Crowned Offering {The first Ritual attack after an earlier HP offering this turn deals +4 damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Dawn Cantor {The first Dawn Rite removal each turn also grants 3 Block. Effects in nodeEffects.json: triggers on statusRemoved; ops block.}
+  Bearer of Burdens {The first negative status newly applied to you by an enemy each turn restores 1 Mana. Effects in nodeEffects.json: triggers on statusApplied; ops restoreMana.}
+  Sepulchral Promise {Your first credited kill of an enemy with Crimson Blight buildup heals 3 HP, once per combat. Effects in nodeEffects.json: triggers on enemyDied; ops heal.}
+  Emberjaw Token {What Emberjaw Token confers when the fight gives it its moment. Effects in nodeEffects.json: triggers on damageDealt; ops applyStatus.}
+  Cracked War Anvil {What Cracked War Anvil confers when the fight gives it its moment. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Cinderbound Crown {What Cinderbound Crown confers when the fight gives it its moment. Effects in nodeEffects.json: triggers on enemyDied; ops heal.}
+  Moonwell Lens {What Moonwell Lens confers when the fight gives it its moment. Effects in nodeEffects.json: triggers on cardPlayed; ops block.}
+  Nightglass Rosary {What Nightglass Rosary confers when the fight gives it its moment. Effects in nodeEffects.json: triggers on cardPlayed; ops restoreMana.}
+  Fragment of the Third Sky {What Fragment of the Third Sky confers when the fight gives it its moment. Effects in nodeEffects.json: triggers on cardPlayed; ops block.}
+  Whisperglass Die {What Whisperglass Die confers when the fight gives it its moment. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.}
+  Purse of Borrowed Shadows {What Purse of Borrowed Shadows confers when the fight gives it its moment. Effects in nodeEffects.json: triggers on cardDiscarded; ops block.}
+  Ember Alms Bowl {What Ember Alms Bowl confers when the fight gives it its moment. Effects in nodeEffects.json: triggers on hpOfferingPaid; ops block.}
+  Ossuary Prayer Wheel {What Ossuary Prayer Wheel confers when the fight gives it its moment. Effects in nodeEffects.json: triggers on enemyDied; ops restoreMana.}
+  Companion {What a companion confers while it travels with you: a branch, not a tag; each companion's own node sits under it.}
+    Hollow Squire {A squire without a knight raises a shield before you. Effects in nodeEffects.json: triggers on combatStart; ops block.}
+    Ember Hound {A hound of banked coals bites at your foes. Effects in nodeEffects.json: triggers on playerTurnStart; ops damage.}
+  Sigil {What a sigil confers while it sits in a slot of an equipped armament: a branch, not a tag; each sigil's own node sits under it.}
+    Ember Sigil {An ember set in steel warms a guard before the first blow. Effects in nodeEffects.json: triggers on combatStart; ops block.}
+    Thorn Sigil {A thorn set in steel opens the first wound of a fight. Effects in nodeEffects.json: triggers on damageDealt; ops applyStatus.}
+    Tide Sigil {A tide set in steel brings a card back with every fifth one played. Effects in nodeEffects.json: triggers on cardPlayed; ops draw.}
+    Hearth Sigil {A hearth set in steel turns every mending into a guard. Effects in nodeEffects.json: triggers on healed; ops block.}
+    Sigil of the Last Vigil {A legendary vigil: a guard rises at the start of a fight you enter already wounded. Effects in nodeEffects.json: triggers on combatStart; ops block.}
+    Pyre Sigil {A legendary pyre: every card you burn away raises a guard. Effects in nodeEffects.json: triggers on cardExhausted; ops block.}
+    Gravelight Sigil {A legendary gravelight: a fallen foe mends you while you stand wounded. Effects in nodeEffects.json: triggers on enemyDied; ops heal.}
+targeting {Target selection: the rules an action uses to choose the creature it hits. Grouping node for the targeting vocabulary.}
+  self {Targets the acting creature itself.}
+  enemy {Targets one enemy the player chooses.}
+  allEnemies {Targets every living enemy at once.}
+  randomEnemy {Targets one enemy chosen at random.}
+  ally {Targets an ally of the acting player.}
+  Single {One direct target.}
+  Area {An area action; most Counters do not cover it.}
+equipment {Grip and hand slots: which hands a weapon or shield occupies. Grouping node for the equipment vocabulary.}
+  bound {Equipment that must be bound (worn or carried) before a hand slot applies. mainHand and offHand require it (nodeRelations.csv REQUIRES).}
+  mainHand {A weapon held in the main hand. Requires bound (nodeRelations.csv).}
+  offHand {An item held in the off hand. Requires bound, and conflicts with twoHanded (nodeRelations.csv).}
+  twoHanded {A weapon held in both hands. Conflicts with offHand (nodeRelations.csv); loadout.js GRIP_TAGS 'two'.}
+  shield {A shield held in the off hand.}
+  parryTool {An off-hand tool held to parry.}
+  dualWield {One one-handed weapon in each hand; loadout.js GRIP_TAGS 'dual'.}
+scaling {Which attribute a card's effect scales with. Grouping node for the scaling vocabulary.}
+  strength {This card scales with Strength.}
+  dexterity {This card scales with Dexterity.}
+  constitution {This card scales with Constitution.}
+  intelligence {This card scales with Intelligence.}
+  wisdom {This card scales with Wisdom.}
+cost {How a card is paid for. Grouping node for the cost vocabulary.}
+  action {Costs Stamina to play.}
+  alternative {May be paid with a complete alternative option instead of its listed cost.}
+utility {Action roles a card or flask can take outside its damage: evasion, conduit and mana charge. Grouping node for the utility vocabulary.}
+  evasion {Contributes to Dodge Rolls and avoiding damage.}
+  conduit {Channels magic through an equipped armament.}
+  manaCharge {Recovers the stated amount of Mana.}
+lifecycle {Where a card goes after it is played or resolved: recalled to hand, sealed away, or exhausted. Grouping node for the lifecycle vocabulary.}
+  recall {Returns to your hand after the named moment instead of being discarded.}
+    afterUse {Returns to your hand after being played. A forced discard is not a use.}
+    afterTurnDraw {Returns to your hand after your turn's draw.}
+    afterCardPlay {Returns to your hand after you play another card.}
+  seal {Set aside in the Sealed zone when its seal condition is met.}
+Reach {Inspection details for combat techniques.}
+  Contact {At melee reach.}
+  Near {Normal ranged reach.}
+  Far {Extended ranged reach.}
+Counter reach {Counter reach: which kind of incoming attack a counter can answer. Grouping node for the counter reach vocabulary.}
+  Melee counter {Replies to eligible melee Attack or Smash. Sweep, Force, Piercing and Ranged bypass this reaction.}
+  Spell counter {Intercepts incoming physical ranged moves or spells. Against physical ranged moves, strips Ward without Health retaliation. Against spellcasters, can retaliate against Health.}
+Item {What a piece of gear DOES beyond its numbers, and what a run pickup is.}
+  Bound {Carries its own cards — they arrive with the piece and are named in equipmentGrants.csv.}
+Item type {What a piece of equipment IS, as the Armoury and the smith name it. Distinct from the card domain: a Blade item type and a Blade card school are different facts about the same sword.}
+  Blade {What this piece IS: the Armoury and the smith name it Blade.}
+  Magic Focus {What this piece IS: the Armoury and the smith name it Magic Focus.}
+Grant source {Where a starting card came from. The composed deck deals bound cards in this vocabulary's authored order, so adding a source is a row here rather than a code change. Nothing WEARS these — the `grant` family exists to declare them, the way `effect` declares which words a damage effect may carry.}
+  Global {Dealt to every class whatever it wears — balance.equipment.startingDeck.global.grants.}
+  Relic {Carried in by the starting relic.}
+  Armor {Bound to the outfit the run begins wearing.}
+  Weapon {Bound to an armament in hand at creation.}
+  Class {The class signature card.}
+Damage type {Identity of a typed HP damage component.}
+Run {Run structure — what an event, an encounter or an unlock is about.}
+internal {Engine-internal state tags, never shown to the player (visibility INTERNAL in nodes.csv). Grouping node for the internal vocabulary.}
+Combat traits {Combat traits: properties of an attack or a target that matchups and rules refer to. Grouping node for the trait vocabulary.}
+  Adequatereach {Combat trait for adequate reach. No engine or content reads it yet.}
+  Closing {Combat trait for closing in. No engine or content reads it yet.}
+  Conductive {Combat trait that lightning is strong against (src/content/combatMatchups.js, lightning strongTraits).}
+  Mental {Combat trait named mental. No trait reference found; 'mental' is also a recovery profile in src/model/combatStatusState.js.}
+  Projectile {Combat trait for projectile attacks. The projectile delivery (delivery:projectile) is read in src/model/attackTags.js; this trait is not read yet.}
+  Reveal {Combat trait for reveal. No engine or content reads it yet.}
+  Shattering {Combat trait that frost is weak against (src/content/combatMatchups.js, frost weakTraits).}
+  Unavoidable {Combat trait for unavoidable attacks. No engine or content reads it yet.}
+  Unreflectable {Combat trait given to the meteorite and starfallBeam cards (src/content/combatExpansionCards.js).}

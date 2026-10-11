@@ -1,10 +1,10 @@
 source,relation,target,value,note
 smash,STRONG_VS,defensive.block,1.5,
-attack,STRONG_VS,smash,1.25,
+offensive.attack,STRONG_VS,smash,1.25,
 sweep,WEAK_VS,defensive.block,0.75,
-physical.pierce,BYPASSES,counter,,melee only
-hybrid.force,BYPASSES,counter,,melee only
-sweep,BYPASSES,counter,,melee only
+physical.pierce,BYPASSES,stance.counter,,melee only
+hybrid.force,BYPASSES,stance.counter,,melee only
+sweep,BYPASSES,stance.counter,,melee only
 magic.fire,APPLIES,burned,1,
 slashing,APPLIES,bleeding,1,
 magic.frost,APPLIES,build-up.frost,1,
@@ -14,14 +14,14 @@ magic.psychic,APPLIES,confused,1,
 magic.fire,CLEARS,frozen,,thaws
 physical.blunt,CLEARS,frozen,,shatters
 type.stance,REFERENCES,combat.stance,,
-gorefire,REQUIRES,blood,,
-attack,DEFAULT_DELIVERY,melee,,Default delivery of the Attack stance (owner decision 3)
-smash,DEFAULT_DELIVERY,melee,,Default delivery of the Smash stance
-sweep,DEFAULT_DELIVERY,melee,,Default delivery of the Sweep stance
-parry,DEFAULT_DELIVERY,melee,,Parry counter is a melee delivery
+fire.gorefire,REQUIRES,technique.blood,,
+offensive.attack,DEFAULT_DELIVERY,delivery.melee,,Default delivery of the Attack stance (owner decision 3)
+smash,DEFAULT_DELIVERY,delivery.melee,,Default delivery of the Smash stance
+sweep,DEFAULT_DELIVERY,delivery.melee,,Default delivery of the Sweep stance
+parry,DEFAULT_DELIVERY,delivery.melee,,Parry counter is a melee delivery
 school-counter,DEFAULT_DELIVERY,casting,,One per spell school; cast delivery (to confirm)
 ward-counter,DEFAULT_DELIVERY,casting,,Ward counter cast delivery (to confirm)
-ranged-counter,DEFAULT_DELIVERY,ranged,,Ranged counter is a ranged delivery
+ranged-counter,DEFAULT_DELIVERY,delivery.ranged,,Ranged counter is a ranged delivery
 prepare,APPLIES,prepared,,Prepare sets Prepared (available to players and enemies)
 character.consumable,CREATES_CARD,type.consumable,,Using a consumable item can create a one-shot card; the item is also a Consumable card (owner decision 7)
 defensive-stats.block,SEPARATE_POOL,poise,,Block and Poise are separate pools (owner decision 10)
