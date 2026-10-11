@@ -360,6 +360,16 @@ test('wiring: an unpaired attack uses playerDefense armor and DEX (Plated DEX 5 
   assert.equal(events.find((e) => e.type === 'hit').hit, false, 'evasion 1 needs 9, so d20 8 misses');
 });
 
+test('unpaired attack: playerDefense.attrs.DEX counts as Cloth evasion, the same as dex (DEX 4 gives 3, needs 11)', () => {
+  const unpaired = [{ id: 'e', speed: 1, kind: 'attack' }];
+  const viaAttrs = resolveRound([], unpaired, 3, d20Face(10), { playerDefense: { attrs: { DEX: 4 } } });
+  assert.equal(find(viaAttrs.events, 'hit').hit, false, 'Cloth 0 + min(3, 4) = 3, needs 11, so d20 10 misses');
+  const viaAttrsHit = resolveRound([], unpaired, 3, d20Face(11), { playerDefense: { attrs: { DEX: 4 } } });
+  assert.equal(find(viaAttrsHit.events, 'hit').hit, true, 'd20 11 meets 11');
+  const viaDex = resolveRound([], unpaired, 3, d20Face(10), { playerDefense: { dex: 4 } });
+  assert.equal(find(viaDex.events, 'hit').hit, false, 'explicit dex 4 gives the same miss');
+});
+
 // Speed-table ids: an action's `card` (e.g. 'strike') and `armor` (e.g. 'heavy') are
 // speed-table keys, not evasion inputs. They must not add evasion or throw.
 test('speed ids: a card or armor on an action is not an evasion input (no throw, same hit as evasion 0)', () => {
