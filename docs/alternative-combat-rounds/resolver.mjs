@@ -554,15 +554,18 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
   // player, one per enemy. Each starts from options.charges, else from the
   // largest intangibleCharges of that side's cards (or of that enemy's queued
   // actions), and is spent in place.
+  // Every side in options.charges is kept, even one with no queued action this
+  // round, so its charges carry over. Sides not given take the queue defaults.
   const largestCharges = (entries) => Math.max(0, ...entries.map((e) => chargeCount(e.intangibleCharges)));
-  const charges = { player: 0 };
-  charges.player = chargeCount(chargeIn.player ?? largestCharges(playerCards));
+  const charges = {};
+  for (const [key, v] of Object.entries(chargeIn)) charges[key] = chargeCount(v);
+  if (!('player' in charges)) charges.player = largestCharges(playerCards);
   for (const enemy of enemyQueue) {
     const k = enemyKey(enemy);
     if (k === 'player') throw new TypeError('an enemy id cannot be "player"');
     if (!(k in charges)) {
       const own = enemyQueue.filter((e) => enemyKey(e) === k);
-      charges[k] = chargeCount(chargeIn[k] ?? largestCharges(own));
+      charges[k] = largestCharges(own);
     }
   }
 

@@ -886,6 +886,15 @@ test('resolvePair partial pool: a side missing from options.charges falls back t
   });
 });
 
+test('intangible pool: an enemy in options.charges with no action this round keeps its charges', () => {
+  // G has no queued action this round, but its 3 charges must come back for the next round.
+  const cards = [{ id: 'a', slot: 0, speed: 4, kind: 'attack' }];
+  const queue = [{ id: 'h0', enemyId: 'H', speed: 1, kind: 'other' }];
+  const { charges } = resolveRound(cards, queue, 1, () => 0.99, { charges: { player: 0, G: 3 } });
+  assert.equal(charges.G, 3, 'G is carried over unchanged');
+  assert.equal(charges.player, 0);
+});
+
 test('intangible pool: a side with no charges option takes the largest intangibleCharges of its cards', () => {
   // The first player card has no charges. The shield, second, has 1. The pool is 1, so the shield avoids one hit.
   const cards = [

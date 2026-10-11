@@ -276,7 +276,8 @@ Card-tag bonuses are passed on the side as `evadeBonuses`.
 - Charges are not carried between rounds. The pools are an input (from
   `options.charges` or the sides' `intangibleCharges`), and `resolveRound`
   returns what is left in `charges`. The caller stores that for the next
-  round. Whether a charge refills over time is not decided.
+  round. Every side in `options.charges` is returned, even an enemy with no
+  queued action this round, so its charges carry over. Whether a charge refills over time is not decided.
 - The values in `evade-bonus.csv` are TBD.
 
 ## Resolver placeholder rules (prototype)
