@@ -19,12 +19,12 @@ test('every module id loads and default-exports a mount()', async () => {
   }
 });
 
-test('a placeholder module shows the coming-in-this-branch empty state and lists what it replaces', async () => {
-  const motion = (await MODULES.find((m) => m.id === 'motion').load()).default;
-  const el = { innerHTML: '' };
-  const instance = motion.mount(el, {});
-  assert.match(el.innerHTML, /Coming in this branch: /);
-  assert.equal(typeof instance, 'object');
+test('Motion Studio is a real module: a library, a game-rendered stage and an inspector, not the placeholder', async () => {
+  const src = await import('node:fs/promises').then((fs) => fs.readFile(new URL('../modules/motion/index.mjs', import.meta.url), 'utf8'));
+  assert.doesNotMatch(src, /placeholder\.mjs/);
+  assert.match(src, /class="mo-lib"/);
+  assert.match(src, /render\.html/);
+  assert.match(src, /class="mo-insp"/);
 });
 
 test('Data Studio is a real module, not the placeholder', async () => {
