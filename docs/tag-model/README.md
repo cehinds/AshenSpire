@@ -224,6 +224,28 @@ magic damage types map to the damage nodes (`damage:fire`, `damage:frost`,
 label-level only and need a review. Today 71 tags are `live-tag` and no node
 is claimed by two tags, so `SHARED_LIVE` is empty.
 
+## Round-trip check
+
+Does the proposed model (`tables/tags.csv`) stand in for the live tag
+vocabulary (`content/source/nodes.csv`) without loss? Run:
+
+```
+node docs/tag-model/tools/compile.mjs
+```
+
+It prints the report to stdout and writes `docs/tag-model/compile-report.md`.
+It always exits 0 when the report is produced; a NOT lossless verdict is the
+finding, not a failure. The report covers coverage by root domain (with the
+unmapped live ids, most used first, from `content/source/tagging.csv`),
+collisions (one live id mapped by two tags), field parity (label, parent or
+ancestor, glyph, color), and reverse gaps (a `live-tag` whose `liveId` is not
+a live node).
+
+**Lossless** means: every live id with carriers in `tagging.csv` is mapped by
+exactly one tag, and no live id is mapped by two tags. Parity and reverse
+differences are listed but do not change the verdict. Tests:
+`node --test docs/tag-model/tools/compile.test.mjs`.
+
 ## Open questions
 
 - **Mapping the current tags.** The game's live tag tree
