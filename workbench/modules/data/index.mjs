@@ -91,7 +91,7 @@ export default {
     function ensureGrid() {
       if (state.grid) return state.grid;
       gridEl.innerHTML = '';
-      state.grid = createGrid(gridEl, { columns: [], rows: [], rules: [], onChange: () => onGridChange() });
+      state.grid = createGrid(gridEl, { columns: [], rows: [], rules: [], onChange: (ev) => onGridChange(ev) });
       state.grid.subscribe(() => syncActiveRow());
       createCheckPanel(checkPanel, state.grid);
       return state.grid;
@@ -100,10 +100,40 @@ export default {
       const active = gridEl.querySelector('.gk-active');
       if (active && active.dataset.r !== undefined) { state.activeRow = Number(active.dataset.r); renderRow(); }
     }
-    function onGridChange() {
-      if (state.selected) state.drafts.set(state.selected, state.grid.getData());
-      renderRow(); renderList();
+    // Every edit the grid commits is one History step; undo and redo put the snapshot back for its own table.
+    function onGridChange(ev) {
+      const path = state.selected;
+      if (!path) return;
+      state.drafts.set(path, state.grid.getData());
+      if (ev.change) ctx.history.pushChange(ev.change, (snap) => applyDoc(path, snap));
+      refresh();
     }
+    function applyDoc(path, snap) {
+      const doc = { columns: snap.columns, rows: snap.rows };
+      state.drafts.set(path, doc);
+      if (path === state.selected) { state.grid.setRules(tableRules(doc.columns)); state.grid.setData(doc); }
+      refresh();
+    }
+    function refresh() { renderList(); showFile(); renderRow(); }
+    function showFile() {
+      if (!state.selected) return;
+      const doc = state.drafts.get(state.selected) ?? { rows: [] };
+      fileEl.textContent = `${state.selected} · ${doc.rows.length} rows${dirtyOf(state.selected) ? ' · unsaved changes' : ''}`;
+    }
+    // The grid's own Undo, Redo and keys go through the module's History instead, so one stack covers every table.
+    gridEl.addEventListener('keydown', (ev) => {
+      if (ev.target.tagName === 'INPUT') return;
+      const mod = ev.ctrlKey || ev.metaKey, k = ev.key.toLowerCase();
+      if (!mod || !['z', 'y'].includes(k)) return;
+      ev.preventDefault(); ev.stopPropagation();
+      if (k === 'y' || ev.shiftKey) ctx.history.redo(); else ctx.history.undo();
+    }, true);
+    gridEl.addEventListener('click', (ev) => {
+      const b = ev.target.closest('.gk-undo, .gk-redo');
+      if (!b) return;
+      ev.preventDefault(); ev.stopPropagation();
+      if (b.classList.contains('gk-redo')) ctx.history.redo(); else ctx.history.undo();
+    }, true);
 
     async function select(path) {
       const table = await parsedOf(path).catch((e) => { ctx.toast({ kind: 'error', title: `Cannot open ${basename(path)}`, detail: e.message }); return null; });
@@ -115,8 +145,7 @@ export default {
       state.activeRow = null;
       grid.setRules(tableRules(doc.columns));
       grid.setData({ columns: doc.columns, rows: doc.rows });
-      fileEl.textContent = `${path} · ${doc.rows.length} rows`;
-      renderRow(); renderList();
+      refresh();
     }
 
     // ---------- the Row form ----------
