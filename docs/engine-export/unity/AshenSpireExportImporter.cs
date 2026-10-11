@@ -159,8 +159,15 @@ namespace AshenSpire.EngineExport
                 else if (previous != null)
                 {
                     foreach (var stale in previous)
-                        if (stale.StartsWith(Root + "/") && !imported.Contains(stale))
-                            AssetDatabase.DeleteAsset(stale);
+                    {
+                        if (imported.Contains(stale)) continue;
+                        if (!IsPrunable(stale))
+                        {
+                            Debug.LogWarning("AshenSpire: not pruning recorded path '" + stale + "' (not a file under the import folders)");
+                            continue;
+                        }
+                        AssetDatabase.DeleteAsset(stale);
+                    }
                 }
             }
             finally
@@ -186,6 +193,17 @@ namespace AshenSpire.EngineExport
             {
                 return null;
             }
+        }
+
+        // A recorded path may be pruned only if it is a file under one of the import's
+        // folders: no ".." segment, no backslash, and an extension (a folder is not a file).
+        private static readonly string[] PrunableRoots = { Root + "/Tables/", Root + "/Config/", Root + "/Art/" };
+        private static bool IsPrunable(string path)
+        {
+            if (string.IsNullOrEmpty(path) || path.IndexOf('\\') >= 0) return false;
+            if (Array.Exists(path.Split('/'), segment => segment == "..")) return false;
+            if (!Array.Exists(PrunableRoots, root => path.StartsWith(root, StringComparison.Ordinal) && path.Length > root.Length)) return false;
+            return Path.HasExtension(path) && !path.EndsWith("/", StringComparison.Ordinal);
         }
 
         private static void WriteRecord(HashSet<string> imported)
