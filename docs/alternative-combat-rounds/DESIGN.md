@@ -577,8 +577,8 @@ value.
   - Evade: adds its evade bonus to the next incoming attack's evadePct roll. The
     card is spent on the next attack, whether or not that attack hits.
   - Counter: fires on the next attack from its chosen foe, or from any foe when
-    its target is `self`. A counter faster than the attack (strictly higher total
-    speed) cancels it (`countered`), and deals its damage to the attacker. Otherwise
+    its target is `self`. A counter faster than the attack (strictly higher effective
+    speed, the capped speed the merge uses, not the raw total) cancels it (`countered`), and deals its damage to the attacker. Otherwise
     the attack resolves, and the counter fires after it (`counterFired`), dealing
     its damage. A tie does not cancel.
 - Reaction (in hand). A player may play an unplayed defensive card from `hand` as a

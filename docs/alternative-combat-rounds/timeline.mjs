@@ -533,7 +533,7 @@ function applyEntry(cur, entry, events, options, run) {
     const counterCard = counter ? { momentumGain: counter.gain, stance: counter.stance } : null;
     const credited = new Set();
     const sideOf = (id) => cur.combatants[id].side;
-    if (ownerAlive() && !counter.reaction && counter.speed > entry.speed.total) {
+    if (ownerAlive() && !counter.reaction && counter.speed > entry.speed.effective) {
       // A faster counter cancels the attack. A tie or a slower counter does not.
       events.push({ type: 'countered', by: counter.owner, target: entry.actor, cardId: counter.cardId, cancelled: true });
       applyDamage(cur, entry.actor, counter.damage, events);
@@ -560,7 +560,7 @@ function applyEntry(cur, entry, events, options, run) {
       foe: null,
       events,
       reaction: false,
-      speed: entry.speed.total,
+      speed: entry.speed.effective,
     });
   }
 }

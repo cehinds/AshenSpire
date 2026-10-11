@@ -668,6 +668,24 @@ test('a reaction counter of a player defeated by the attack does not fire', () =
   assert.equal(out.events.some((e) => e.type === 'momentum' && e.by === 'player'), false);
 });
 
+test('a counter cancels on its effective speed (the capped one), not its raw total', () => {
+  // d4 1 each (u 0). Player queue: jab (speed 0, total 1), counter (speed 9, total 9 + 1 + 1 = 11).
+  // The counter's effective speed is capped at jab's 1. Goblin stab total 0 + 1 = 1: a tie.
+  const out = createRound(duo({}, { hp: 20 }), {
+    queues: {
+      player: [atk('jab', 'goblin', 0), card('counter', 'counter', 'goblin', 9)],
+      goblin: [stab(0, 1)],
+    },
+    rng: seqRng([0, 0, 0.45, 0.45]),
+  }).resolveAll();
+  assert.equal(out.events.some((e) => e.type === 'countered'), false);
+  const order = out.events.filter((e) => e.type === 'action').map((e) => e.cardId);
+  assert.deepEqual(order, ['jab', 'counter', 'stab']);
+  const fired = out.events.find((e) => e.type === 'counterFired');
+  assert.deepEqual([fired.by, fired.cardId], ['player', 'counter']);
+  assert.equal(out.state.combatants.player.hp, 19);
+});
+
 // ---- Momentum: per enemy, summed per exchange, settled once at round end ----
 
 const momentumOf = (out, id) => out.state.momentum[id];
