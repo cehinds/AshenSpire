@@ -1462,7 +1462,7 @@ and recovery notices outrank the gate. After reveal, focus lands on Title's firs
 slot action, and every later return to Title in that boot bypasses the gate. Reduced-motion mode
 keeps the same state and focus contract without meaningful animation.
 
-### 7.2 Shared run HUD and combat layout (1280×720 reference)
+### 7.2 Shared run HUD and combat layout (1280×800 reference)
 
 - **.NET-inspired application and Component Model contract.** Architecture follows Clean
   Architecture with an MVVM-shaped presentation layer. Domain Models own pure game state and rules;
@@ -1473,8 +1473,7 @@ keeps the same state and focus contract without meaningful animation.
   are reusable renderers; Behaviors bind interactions and lifecycle; and `main.js` trends toward a
   composition root. The existing paths migrate incrementally: `src/model/` is Domain,
   `src/ui/models/` and `src/ui/viewModels/` are Presentation models and projections,
-  `src/ui/screens/` is Views, and `src/ui/components/` plus `src/ui/behaviors/` are reusable
-  presentation implementation. Every reusable UI component receives an immutable Component
+  `src/ui/screens/` is Views, and `src/ui/components/` is reusable presentation implementation. Every reusable UI component receives an immutable Component
   Model that names its semantic component id and variant, owns only serializable presentation
   properties, declares named behaviors, and recursively composes child Component Models. Screen
   ViewModels compose those records; renderers translate them to DOM, and behavior adapters connect
@@ -1706,10 +1705,10 @@ keeps the same state and focus contract without meaningful animation.
   right trail progressively hides Source, then Seed, then Build before it may touch centred Cinders. There is no duplicate Act/Floor
   line beneath the character name. Neither screen hand-writes a second HUD.
 - **Primary and inventory geometry.** `vitals-panel` is one outer card containing the unchanged
-  HP/MP/SP stack. `quick-access-panel` is one outer square containing a 2×2 grid: Armoury/Menu,
-  then HP/Mana flasks. Its visible tiles are 18 px inside at least 44 px accessible hit areas.
-  The two panels have equal outer height and the flask row aligns with the bottom of SP within
-  one CSS pixel. `inventory-belt` places Relics beneath Vitals and utility Potions beneath Quick
+  HP/MP stack; Stamina is the Stamina orb (below). `quick-access-panel` is one outer square
+  holding the Armoury and Menu controls. Its visible tiles are 18 px inside at least 44 px
+  accessible hit areas. The two panels have equal outer height. The HP/Mana flasks are not in
+  this panel; they belong to the Potions projection. `inventory-belt` places Relics beneath Vitals and utility Potions beneath Quick
   Access on the same row. Utility potions form one right-anchored horizontal tray that grows or
   scrolls left. Relic and Potion trays share one vertically centred baseline and one data-owned
   narrow item gap (default 2 px); utility potion tiles remain the same size as relic tiles.
@@ -1729,10 +1728,10 @@ keeps the same state and focus contract without meaningful animation.
   MP 20, SP 20. A bar's fill remains `current / maximum`; its visual length compares that
   maximum with the data-owned reference and obeys the shared viewport cap. A character may
   exceed a reference—it lengthens only to the layout cap and never clamps gameplay state.
-- **Enemy row (upper right 60%):** up to 5 enemies; each shows sprite/placeholder, name, HP bar, **Poise meter** (thin amber bar under HP), **Bleed meter** (thin red bar, only when >0), status icon row, and **intent icon + number above the head**.
+- **Enemy row (upper right 60%):** up to 5 enemies; each shows sprite/placeholder, name, HP bar, **Poise meter** (thin amber bar under HP), **Bleed meter** (thin red generic threshold-proc bar, only when >0), status icon row, and **intent icon + number above the head**.
 - **Player zone (lower left):** stance icon, status row, Block shield badge overlapping HP.
-- **Hand:** bottom center, fanned, max 10; hover raises card ×1.5 with full text.
-- **Energy orb:** bottom left, `n/3`. **End Turn** button bottom right — pulses if energy remains and any card is playable; confirm-free.
+- **Hand:** bottom center, fanned, up to the derived `handSize` (base 7, max 20; `src/content/derivedStats.js`); hover raises card ×1.5 with full text.
+- **Stamina orb:** bottom left, current Stamina only (no maximum), with a Mana ring unless the `manaRing` setting is off (`src/ui/components/staminaOrb.js`). **End Turn** button bottom right — pulses if Stamina remains and any card is playable; confirm-free.
 - **Piles:** draw (bottom-left corner, count) / discard (bottom-right, count) / exhaust (small, appears once non-empty). Click opens a scrollable modal grid (draw pile view is order-shuffled for display, like StS).
 
 #### 7.2.1 Advanced game configuration
