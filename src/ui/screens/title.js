@@ -205,7 +205,7 @@ export function mountTitle(app, {
     modal = kind;
     activatedSlot = null;
     selectedSlot = saveSlotSelectionModel(slots, { kind }).properties.selectedSlot;
-    render();
+    renderModal();
     focusModal(selectedSlot == null ? undefined : `[data-slot-pick="${selectedSlot}"]`);
   };
 
@@ -226,13 +226,13 @@ export function mountTitle(app, {
   const openNewReview = (slot) => {
     if (slot == null) return;
     newReviewSlot = slot;
-    render();
+    renderModal();
     focusModal('[data-title-action="review-new"]');
   };
   const closeNewReview = () => {
     const slot = newReviewSlot;
     newReviewSlot = null;
-    render();
+    renderModal();
     focusModal(`[data-slot-pick="${slot}"]`);
   };
   const closeModal = () => {
@@ -240,7 +240,7 @@ export function mountTitle(app, {
     selectedSlot = null;
     newReviewSlot = null;
     activatedSlot = null;
-    render();
+    renderModal();
     focusTitleDefault(app, { showCursor: false });
   };
 
@@ -251,7 +251,7 @@ export function mountTitle(app, {
     selectedSlot = slot;
     activatedSlot = slot;
     if (repeat) { openNewReview(slot); return; }
-    render();
+    renderModal();
     focusModal(`[data-slot-pick="${selectedSlot}"]`);
   };
 
@@ -268,7 +268,40 @@ export function mountTitle(app, {
     });
   };
 
+  // Redraws only the New Game modal layer. The modal's own handlers call this
+  // instead of render(), so a click inside the modal never rebuilds the Title
+  // screen (no intro replay, no new embers, no HUD re-wire).
+  function renderModal() {
+    const layer = app.querySelector('[data-title-modal-layer]');
+    if (!layer) return;
+    layer.innerHTML = modalHtml();
+    layer.querySelector('[data-title-modal-scrim]')?.addEventListener('click', (event) => {
+      if (event.target === event.currentTarget) closeModal();
+    });
+    layer.querySelectorAll('[data-slot-pick]').forEach((button) => {
+      button.addEventListener('click', () => {
+        activateSlot(+button.dataset.slotPick);
+      });
+    });
+    wireDelete(layer);
+    layer.querySelectorAll('[data-title-action]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const action = button.dataset.titleAction;
+        if (action === 'close-modal' || action === 'back') closeModal();
+        else if (action === 'modal-continue') openNewReview(selectionModel().properties.actionSlot);
+        else if (action === 'review-back') closeNewReview();
+        else if (action === 'review-new') {
+          if (newReviewSlot == null) return;
+          onNew(newReviewSlot);
+        }
+      });
+    });
+  }
+
   function render() {
+    // The modal layer is display:contents on purpose: `.title-screen > *` (ui.css)
+    // makes a direct child a z-index:1 stacking context, which would trap the
+    // modal veil under the menu panel.
     app.innerHTML = `
       <div class="screen title-screen">
         <div class="title-landscape" aria-hidden="true"></div>
@@ -279,7 +312,7 @@ export function mountTitle(app, {
         ${menuHtml()}
         ${buildStampHtml('title')}
         <button type="button" class="tower-preview-replay">Replay scene</button>
-        ${modalHtml()}
+        <div class="title-modal-layer" data-title-modal-layer style="display:contents">${modalHtml()}</div>
       </div>`;
 
     wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
@@ -311,6 +344,7 @@ export function mountTitle(app, {
       }
     });
     root.querySelectorAll('[data-title-action]').forEach((button) => {
+      if (button.closest('[data-title-modal-layer]')) return; // wired by renderModal()
       button.addEventListener('click', () => {
         const action = button.dataset.titleAction;
         if (action === 'continue') onContinue(occupied[0].slot);
@@ -326,24 +360,9 @@ export function mountTitle(app, {
         else if (action === 'settings') onSettings();
         else if (action === 'offline') onOffline?.();
         else if (action === 'quit' && onQuit) onQuit();
-        else if (action === 'close-modal' || action === 'back') closeModal();
-        else if (action === 'modal-continue') openNewReview(selectionModel().properties.actionSlot);
-        else if (action === 'review-back') closeNewReview();
-        else if (action === 'review-new') {
-          if (newReviewSlot == null) return;
-          onNew(newReviewSlot);
-        }
       });
     });
-    root.querySelector('[data-title-modal-scrim]')?.addEventListener('click', (event) => {
-      if (event.target === event.currentTarget) closeModal();
-    });
-    root.querySelectorAll('[data-slot-pick]').forEach((button) => {
-      button.addEventListener('click', () => {
-        activateSlot(+button.dataset.slotPick);
-      });
-    });
-    wireDelete(root);
+    renderModal();
     artNotice?.(root);
   }
 
