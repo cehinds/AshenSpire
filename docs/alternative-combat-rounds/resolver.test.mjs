@@ -649,6 +649,13 @@ test('cardHint: yellow when only the stance is in the card\'s favour', () => {
   assert.equal(hint.border, 'yellow');
 });
 
+test('cardHint: a stance row with bonus 0 is not a stance advantage (same rule as momentum)', () => {
+  // Faster (3 vs 1) and smash is listed over block, but with bonus 0 it gives no advantage.
+  const zero = parseStanceAdvantage('attacker_stance,defender_stance,bonus\nsmash,block,0');
+  const hint = cardHint({ card: 'three', stance: 'smash' }, { card: 'one', stance: 'block' }, hintCtx({ stanceAdvantage: zero }));
+  assert.equal(hint.border, 'yellow', 'speed only, so yellow and not green');
+});
+
 test('cardHint: equal speed is not a speed advantage, so smash over block is yellow', () => {
   // Both total 2. Only the stance (smash beats block) is in the card's favour.
   const hint = cardHint({ card: 'two', stance: 'smash' }, { card: 'two', stance: 'block' }, hintCtx());

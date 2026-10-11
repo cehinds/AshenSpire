@@ -292,10 +292,8 @@ export function cardHint(card, enemyAction, ctx = {}) {
     return { border: 'blue', speedDelta, arrow: null, breakdown };
   }
   const speedAdv = player.total > enemy.total;
-  const table = ctx.stanceAdvantage ?? null;
-  const stanceAdv = Boolean(
-    table && card.stance && enemyAction.stance && table.has(`${card.stance}>${enemyAction.stance}`),
-  );
+  // Same rule as momentum: an advantage is a stance bonus above 0.
+  const stanceAdv = stanceBonus(ctx.stanceAdvantage ?? null, card.stance, enemyAction.stance) > 0;
   let border = 'red';
   if (speedAdv && stanceAdv) border = 'green';
   else if (speedAdv || stanceAdv) border = 'yellow';
