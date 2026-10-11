@@ -75,7 +75,7 @@ import { resolveActionAnimation } from '../../model/actionAnimation.js';
 import { resolveCombatAnimation, combatRestAfterEvent } from '../../model/combatAnimation.js';
 import { resolveCoopPlayedCombatCard } from '../models/PlayedCombatCard.js';
 import { combatToolsModel, COMBAT_LOG_DEFAULT_SIZE } from '../models/CombatToolsModel.js';
-import { mountCombatTools } from '../components/combatTools.js';
+import { mountCombatTools, closeCombatFullLog } from '../components/combatTools.js';
 import { createReactionNote, latestReactionNote } from '../components/reactionNote.js';
 import { resolveCombatPose, readinessAfterEvent, bloodRiteReaction } from '../../model/combatPose.js';
 import { equippedPieces, figureSpec } from '../../model/loadout.js';
@@ -742,6 +742,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (mapBoard) { mapBoard.teardown(); mapBoard = null; }
     if (handStrip) { handStrip.teardown(); handStrip = null; }
     if (combatLayout) { combatLayout.release(); combatLayout = null; }
+    closeCombatFullLog(combatToolsState);
     if (combatTools) { combatTools.release(); combatTools = null; }
     reactionNote.clear();
     if (typeof window !== 'undefined' && window.__guardCoopTool === guardCoopTool) delete window.__guardCoopTool;
@@ -816,6 +817,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     // (#1449 review, Codex P2; tools/coop-hud-top.mjs vowChoiceProbe).
     if (snap.scene.kind !== 'combat') {
       combatLayoutState = {};
+      // The fight is over for this seat: its full log door ends with it.
+      closeCombatFullLog(combatToolsState);
       closeCardChoice();
       closeCoopPotions();
       if (potionTray) { disposeCombatPotionTray(potionTray); potionTray = null; }

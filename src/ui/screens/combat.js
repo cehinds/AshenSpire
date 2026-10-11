@@ -24,7 +24,7 @@ import { playCardEffectLayers } from '../cardEffectLayers.js';
 import { dispatch, previewCard, previewIntent, getEntity, cardChoicePlan } from '../../engine/combat.js';
 import { combatLogEntries } from '../../model/combatLog.js';
 import { combatToolsModel, COMBAT_LOG_DEFAULT_SIZE } from '../models/CombatToolsModel.js';
-import { mountCombatTools } from '../components/combatTools.js';
+import { mountCombatTools, closeCombatFullLog } from '../components/combatTools.js';
 import { createReactionNote, latestReactionNote } from '../components/reactionNote.js';
 import { projectEnemyKnowledge } from '../../model/enemyKnowledgeView.js';
 import { knowledgePredictionModel } from '../../engine/enemyKnowledge.js';
@@ -2866,6 +2866,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         battlefieldStage.release();
         formationMovement?.release();
         combatLayout.release();
+        closeCombatFullLog(combatToolsState);
         combatTools.release();
         reactionNote.clear();
         aimObserver?.disconnect();

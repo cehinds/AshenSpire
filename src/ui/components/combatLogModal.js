@@ -37,11 +37,21 @@ export function openCombatLogModal({ entries = [], opener = document.activeEleme
   const list = el('div', { class: 'combat-log-modal-entries', tabindex: '0', role: 'region', 'aria-label': t('combat.log.actions') });
   renderCombatLogEntries(list, entries);
   const closeButton = button({ label: t('common.close'), role: 'exit', attrs: { 'data-back': '' } });
+  // The shell reads the opener only at close, so hand it a live reference that
+  // setOpener can repoint when the Full log button it came from is replaced.
+  let currentOpener = opener;
+  const openerRef = {
+    get isConnected() { return !!currentOpener?.isConnected; },
+    focus(options) { currentOpener?.focus?.(options); },
+  };
   const modal = openModal({
     name: 'combat-log', size: 'xl', className: 'combat-log-modal', title: t('combat.log.title'),
-    titleId: 'combat-log-modal-title', body: list, secondary: [closeButton], opener, onClose,
+    titleId: 'combat-log-modal-title', body: list, secondary: [closeButton], opener: openerRef, onClose,
   });
   markUiComponent(modal.panel, UI.combatLogModal);
+  // Reading the log must not skip the attack that is playing: fx.js's
+  // click-to-skip ignores anything under [data-combat-read-only].
+  modal.veil.setAttribute('data-combat-read-only', '');
   closeButton.addEventListener('click', () => modal.close());
   modal.body.scrollTop = modal.body.scrollHeight;
   return Object.freeze({
@@ -52,6 +62,8 @@ export function openCombatLogModal({ entries = [], opener = document.activeEleme
       renderCombatLogEntries(list, next);
       if (atEnd) body.scrollTop = body.scrollHeight;
     },
+    /** Closing returns focus to `node` from now on (the button a remount just drew). */
+    setOpener(node) { currentOpener = node; },
     close: () => modal.close(),
   });
 }

@@ -175,7 +175,7 @@ test('a form-factor change re-measures the tools row at once and refits the stag
   current = 'desktop';
   callback([{ oldValue: 'tablet' }]);
   assert.equal(flushes, 1, 'a real change flushes the tools geometry synchronously');
-  assert.match(tools, /release\(\) \{ released = true; fullLogModal\?\.close\(\); observer\.disconnect\(\); formFactorObserver\.disconnect\(\);/);
+  assert.match(tools, /release\(\) \{ released = true; observer\.disconnect\(\); formFactorObserver\.disconnect\(\);/);
 });
 
 test('index.html loads the generated sheet after the stylesheets it styles', () => {
