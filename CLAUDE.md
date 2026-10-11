@@ -59,7 +59,11 @@ other worktree; ask the owner before discarding unmerged work. Worker branches
 are named `worker/<parent-topic>/<task>` (for example `worker/CdCiPipelines/branch-cleanup`
 for `chore/CdCiPipelines`). Local worker worktrees and branches are removed once
 the parent branch merges into `dev`; origin worker branches are deleted by
-`worker-branch-cleanup.yml` after `dev` is promoted to `test`. The loop, brief
+`worker-branch-cleanup.yml` after `dev` is promoted to `test`. Before handing
+work to Haiku, split it the way docs/ai/AI-ROUTING.md §3a says: survey, verify
+the key lines yourself, measure before tuning, one owner per file per wave,
+numbered steps with the design already decided, named traps, an acceptance
+Haiku can run, and orchestrator QA of every diff in a real browser. The loop, brief
 template and escalation rules are in [docs/ai/AI-ROUTING.md](docs/ai/AI-ROUTING.md); the owner's Forge working mode
 (guided learning vs. builder mode, context and memory handling) is in
 [docs/ai/FORGE-OPERATING-INSTRUCTIONS.md](docs/ai/FORGE-OPERATING-INSTRUCTIONS.md).

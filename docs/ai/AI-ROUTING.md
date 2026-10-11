@@ -37,7 +37,7 @@ files, runs a suite, or repeats an edit goes to a worker.
 
 ```text
 1. Understand   orchestrator: read the request, the SPEC section and the contract; decide what "done" means
-2. Split        orchestrator: one task per branch (CONTRIBUTING); disjoint file sets per wave
+2. Split        orchestrator: survey, verify, measure, then one task per brief with disjoint file sets per wave (§3a)
 3. Brief        orchestrator: one brief per task (§3)
 4. Execute      workers (Haiku): in parallel, isolation "worktree", in the background
 5. Verify       orchestrator: read the diff (not the transcript), re-run the key test, check the acceptance line
@@ -96,6 +96,60 @@ worker/<topic>/<task> (local) ──► worker/<topic>/<task> (origin) ──►
   Ask the owner about anything unmerged.
 - Origin worker branches stay until `dev` is promoted to `test`. Then `worker-branch-cleanup.yml`
   deletes every origin `worker/**` branch whose tip is an ancestor of `origin/test`.
+## 3a. Splitting a request into steps Haiku can finish
+
+Haiku succeeds when each brief is a short recipe with the thinking already done.
+The orchestrator does the thinking in phases, and only the last phase is handed
+to Haiku as edits. Recorded from the FixModal session (2026-10-11), where every
+Haiku brief written this way landed first time.
+
+1. **Survey before you split.** When the cause is unknown, first send a read-only
+   survey (`Explore`, Opus when the question spans subsystems) that returns
+   file:line facts, not fixes. One survey per symptom, run in parallel.
+2. **Verify the key lines yourself.** Read the few lines the survey points at
+   (the render call, the handler, the config value). A brief quotes only what the
+   orchestrator has seen.
+3. **Measure before you tune.** For "slow" reports, the first Haiku task is a
+   probe that prints numbers (`MEASURE <name> median= max=`), with no `src/`
+   edits. Fix tasks come in the next wave and carry a numeric target.
+4. **One owner per file per wave.** List each task's files. Two tasks that touch
+   the same file are sequential waves, or one task. Shared derived files
+   (receipts, `buildordinal.json`, generated modules) stay with the orchestrator.
+5. **Write the brief as numbered steps**, each naming the function to change and
+   the exact before/after shape: "replace `${modalHtml()}` with …", "call
+   `renderModal()` instead of `render()` in these five functions". Hand over the
+   design decisions already made; leave Haiku only the mechanics.
+6. **Name the traps.** Pin the strings other tools match (selftest `find:`
+   plants: "keep this line character for character"). Name pre-existing
+   failures so they are not "fixed" or blamed (for example "the final UNKNOWN line
+   predates this change; ignore it"). Name the files another worker owns.
+7. **Give an acceptance that Haiku can run.** Name the test commands and the
+   new test's assertions, and always add the repository-wide guards:
+   `node tests/run-node.mjs --no-selftests --no-discovered` (core) and the
+   discovered shard that holds the touched files. Named tests alone missed four
+   guards in the FixModal run (zoom units, module URL paths, a component
+   contract that pins a renamed line, and the page-listener registry), so they
+   surfaced only at the orchestrator's full run. A change to `src/` also runs
+   `node tools/launch.mjs --build-only` (the bundler rejects things no test
+   loads, such as a comment reading "import (") and `node tools/plantsites.mjs
+   --check` (other tools' selftest plants match exact source lines), plus the
+   real-browser gates for the screens it touches (map: `map-two-axis-pan`,
+   `map-camera-persistence`). Run `git checkout -- buildordinal.json` after the build. When the fake DOM in `tests/helpers/` cannot mount the
+   screen, ask for a source test plus the existing real-browser tool.
+8. **Worker branches, orchestrator merges.** Workers commit on
+   `worker/<parent-topic>/<task>` in their worktree (§3 *Branch lifecycle*), push
+   it to origin, and never open a PR or merge. Worktrees
+   lack the art cache: the brief says `ln -s <main checkout>/.art-cache .art-cache`
+   (never committed). Each worktree is a full checkout (about 2 GB here), so
+   remove it as soon as its branch is merged into the feature branch
+   (`git merge-base --is-ancestor`, then `git worktree remove`), not at the end of
+   the session. Nine open worktrees filled the session's disk in the FixModal run.
+9. **QA every diff, not the report.** Read the diff against the brief and look
+   for the edge case the brief did not name (for example a registry entry whose
+   element is removed without its close path). Fix small gaps directly and larger
+   ones with a follow-up brief. Then prove the user-visible behaviour in a real
+   browser. A new check counts only once a planted copy of the old bug turns it red
+   (`--selftest`).
 
 ## 4. What a worker reports
 
