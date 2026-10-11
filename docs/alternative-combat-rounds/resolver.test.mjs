@@ -1983,3 +1983,25 @@ test('per-enemy keys: enemy ids that name Object.prototype members keep their ow
     assert.equal(typeof out.charges[k], 'number', `${k} charges is a number`);
   }
 });
+
+test('resolveRound: accepted pairings resolve in slot order, not input order', () => {
+  // Two intangible player cards (slots 0 and 1) share one player charge. Both enemy
+  // attacks would land. Slot 0 must spend the charge whichever order the cards are listed in.
+  const cards = [
+    { id: 'shield0', slot: 0, speed: 1, kind: 'other', tags: ['intangible'], intangibleCharges: 1 },
+    { id: 'shield1', slot: 1, speed: 1, kind: 'other', tags: ['intangible'], intangibleCharges: 1 },
+  ];
+  const enemies = [
+    { id: 'e0', enemyId: 'G', speed: 4, kind: 'attack' },
+    { id: 'e1', enemyId: 'H', speed: 4, kind: 'attack' },
+  ];
+  const summary = (playerCards) => {
+    const out = resolveRound(playerCards, enemies, 2, () => 0.99, { momentum: { G: 0, H: 0 } });
+    const evaded = out.events.filter((e) => e.type === 'evaded').map((e) => ({ slot: e.slot, by: e.by, reason: e.reason }));
+    return { evaded, momentum: out.momentum, charges: out.charges };
+  };
+  const forward = summary([cards[0], cards[1]]);
+  const reversed = summary([cards[1], cards[0]]);
+  assert.deepEqual(forward.evaded, [{ slot: 0, by: 'player', reason: 'intangible' }], 'slot 0 spends the charge');
+  assert.deepEqual(reversed, forward, 'input order does not change evaded slot, momentum or charges');
+});

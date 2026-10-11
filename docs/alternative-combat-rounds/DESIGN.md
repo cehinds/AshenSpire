@@ -78,6 +78,16 @@ Flagged: at stage 1 and 2 the card hint cannot show a speed advantage.
 - A counter resolves against a slower attack. It does not stop a faster one.
 - One player card per enemy action (owner, 2026-10-11). A second card on an
   already paired enemy action is rejected ('rejected' event).
+- Duplicate slots are decided in the order the cards are listed: the first card
+  on a slot wins, and the rest are rejected. Rejected events come first, in
+  input order, and move nothing.
+- Accepted pairings then resolve in slot order, ascending, whatever order the
+  cards were listed in. Shared state (the player's intangible pool, the poise
+  flag, RNG draws) therefore never depends on the caller's array order.
+- Unpaired enemy actions resolve after all pairings, also in slot order. This
+  is not interleaved by slot: an unpaired slot 0 still resolves after a
+  paired slot 2. Interleaving was not chosen because it would reorder the
+  events of every mixed round.
 
 ## Ties and tie tags
 

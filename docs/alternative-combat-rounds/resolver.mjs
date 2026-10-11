@@ -693,7 +693,9 @@ const enemyKey = (enemy) => enemy.enemyId ?? enemy.id;
 // - Pair events carry `momentum`: that enemy's starting M_e. A 'momentum'
 //   event marks each slot win and each counter stagger (`delta`).
 //   'momentumApplied' marks each round-end change.
-// - A second player card on an already paired slot is rejected ('rejected').
+// - A second player card on an already paired slot is rejected ('rejected'). The first
+//   card on a slot in input order wins. Accepted pairings resolve in slot order, so
+//   input order changes nothing else.
 // - An enemy slot with no player card is 'unpaired'. Its events carry unpaired: true.
 //   An unpaired enemy attack rolls its hit against options.playerDefense. A landed
 //   hit wins the slot for that enemy. A miss or an avoid gives the player no credit
@@ -763,14 +765,20 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
   const largestCharges = (entries) => Math.max(0, ...entries.map((e) => chargeCount(e.intangibleCharges)));
   // Only cards that will be accepted fund the default player pool: a valid slot,
   // and the first card on that slot. A rejected duplicate adds no charges.
+  // Duplicate slots are decided in input order: the first card on a slot wins, and
+  // later ones are rejected. Accepted cards then resolve in slot order (below).
   const acceptedPlayer = [];
+  const rejectedPlayer = [];
   const claimedSlots = new Set();
   playerCards.forEach((pc, i) => {
     const slot = pc.slot;
     if (!Number.isInteger(slot) || slot < 0 || slot >= enemyQueue.length) {
       throw new RangeError(`playerCards[${i}].slot must be an integer in 0..${enemyQueue.length - 1}`);
     }
-    if (claimedSlots.has(slot)) return;
+    if (claimedSlots.has(slot)) {
+      rejectedPlayer.push(pc);
+      return;
+    }
     claimedSlots.add(slot);
     acceptedPlayer.push(pc);
   });
@@ -855,15 +863,17 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
     }
   };
 
-  playerCards.forEach((pc, i) => {
+  // Rejected duplicates first, in input order. They move nothing.
+  for (const pc of rejectedPlayer) {
+    push({ type: 'rejected', reason: 'slot taken', slot: pc.slot, cardId: pc.id });
+  }
+
+  // Accepted pairings resolve in slot order (owner, 2026-10-11; DESIGN.md, Pairing and
+  // resolution order), so shared state (player pool, poise flag, RNG draws) does not
+  // depend on the order the caller listed the cards in.
+  const bySlot = [...acceptedPlayer].sort((a, b) => a.slot - b.slot);
+  bySlot.forEach((pc) => {
     const slot = pc.slot;
-    if (!Number.isInteger(slot) || slot < 0 || slot >= enemyQueue.length) {
-      throw new RangeError(`playerCards[${i}].slot must be an integer in 0..${enemyQueue.length - 1}`);
-    }
-    if (paired.has(slot)) {
-      push({ type: 'rejected', reason: 'slot taken', slot, cardId: pc.id });
-      return;
-    }
     paired.add(slot);
 
     const enemy = enemyQueue[slot];
