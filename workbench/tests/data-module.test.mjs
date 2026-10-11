@@ -472,3 +472,17 @@ test('tagging.csv: sorting its rows by objectId keeps every comment above the sa
   assert.deepEqual(now.pairs, order.map((i) => was.pairs[i]));
   assert.deepEqual(now.tail, was.tail);
 });
+
+test('an import read is dropped when the selected table changed while the file was read', () => {
+  const gate = D.selectionGate();
+  gate.begin(); // the table the import started on
+  const started = gate.latest();
+  assert.equal(D.importStillTargets(gate, { generation: started, path: 'content/source/a.csv' }, 'content/source/a.csv'), true,
+    'the same table, still selected: the import lands');
+  gate.begin(); // the reader clicks another table while file.text() is pending
+  assert.equal(D.importStillTargets(gate, { generation: started, path: 'content/source/a.csv' }, 'content/source/b.csv'), false,
+    'a newer click drops the import');
+  assert.equal(D.importStillTargets(gate, { generation: gate.latest(), path: 'content/source/a.csv' }, 'content/source/a.csv'), true);
+  assert.equal(D.importStillTargets(gate, { generation: gate.latest(), path: 'content/source/a.csv' }, 'content/source/b.csv'), false,
+    'the grid now shows another table, so the old table key must not apply');
+});

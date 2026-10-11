@@ -10,7 +10,7 @@ import * as G from '../../ui/kit/grid-model.mjs';
 import { icon } from '../../ui/icons.mjs';
 import { saveFailure } from '../../ui/logic.mjs';
 import { hashFor } from '../host.mjs';
-import { listTables, parseTable, serializeTable, isDirty, tableRules, keyColumnOf, rebaseChanges, findRow, selectionGate, reviewableChanges, isMissingFile, withoutTable } from './model.mjs';
+import { listTables, parseTable, serializeTable, isDirty, tableRules, keyColumnOf, rebaseChanges, findRow, selectionGate, reviewableChanges, isMissingFile, withoutTable, importStillTargets } from './model.mjs';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const basename = (p) => p.split('/').pop();
@@ -345,9 +345,15 @@ export default {
     fileIn.addEventListener('change', async () => {
       const file = fileIn.files?.[0]; fileIn.value = '';
       if (!file || !needTable()) return;
+      // The table and its key are taken before the read; the text lands only if that table is still selected.
+      const read = { generation: gate.latest(), path: state.selected };
+      const key = keyColumnOf(state.grid.getData().columns);
       try {
-        const key = keyColumnOf(state.grid.getData().columns);
-        state.grid.importText(await file.text(), { format: 'auto', mode: key ? 'merge' : 'append', key: key ? key.key : null });
+        const text = await file.text();
+        if (!importStillTargets(gate, read, state.selected)) {
+          return ctx.toast({ kind: 'warn', title: 'Import dropped', detail: `The table changed while ${basename(file.name)} was read. Pick the table and import again.` });
+        }
+        state.grid.importText(text, { format: 'auto', mode: key ? 'merge' : 'append', key: key ? key.key : null });
         ctx.toast({ kind: 'success', title: `Imported ${basename(file.name)}`, detail: key ? `Merged by ${key.key}.` : 'Rows appended.' });
       } catch (e) { ctx.toast({ kind: 'error', title: 'Import refused', detail: e.message }); }
     });
