@@ -10,7 +10,7 @@ import * as G from '../../ui/kit/grid-model.mjs';
 import { icon } from '../../ui/icons.mjs';
 import { saveFailure } from '../../ui/logic.mjs';
 import { hashFor } from '../host.mjs';
-import { listTables, parseTable, serializeTable, isDirty, tableRules, keyColumnOf, rebaseChanges, findRow, selectionGate, reviewableChanges, isMissingFile, withoutTable, importStillTargets, savedTable } from './model.mjs';
+import { refocusesGrid, listTables, parseTable, serializeTable, isDirty, tableRules, keyColumnOf, rebaseChanges, findRow, selectionGate, reviewableChanges, isMissingFile, withoutTable, importStillTargets, savedTable } from './model.mjs';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const basename = (p) => p.split('/').pop();
@@ -234,7 +234,8 @@ export default {
       fileEl.textContent = `${state.selected} · ${doc.rows.length} rows${dirtyOf(state.selected) ? ' · unsaved changes' : ''}`;
     }
     // The grid redraws its rows on mousedown, which takes focus off the clicked cell; focus the grid again so its keys work.
-    gridEl.addEventListener('mousedown', () => setTimeout(() => gridEl.querySelector('.gk-scroll')?.focus({ preventScroll: true }), 0));
+    // A click in the search box keeps its focus (refocusesGrid), so the user can type there.
+    gridEl.addEventListener('mousedown', (ev) => { if (refocusesGrid(ev.target?.tagName)) setTimeout(() => gridEl.querySelector('.gk-scroll')?.focus({ preventScroll: true }), 0); });
     gridEl.addEventListener('mousedown', () => { pointerPick = true; setTimeout(() => { pointerPick = false; }, 0); }, true);
     // The grid's own Undo, Redo and keys go through the module's History instead, so one stack covers every table.
     gridEl.addEventListener('keydown', (ev) => {

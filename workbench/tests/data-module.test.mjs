@@ -16,6 +16,16 @@ const REAL = ['content/source/weapons.csv', 'content/source/speakers.csv', 'cont
 
 const docOf = (table) => ({ columns: table.columns, rows: table.rows.map((r) => ({ ...r })) });
 
+test('a mousedown on the search box or a select keeps its focus; other grid targets hand focus back', () => {
+  assert.equal(D.refocusesGrid('INPUT'), false);
+  assert.equal(D.refocusesGrid('input'), false);
+  assert.equal(D.refocusesGrid('SELECT'), false);
+  assert.equal(D.refocusesGrid('TEXTAREA'), false);
+  assert.equal(D.refocusesGrid('TD'), true);
+  assert.equal(D.refocusesGrid('DIV'), true);
+  assert.equal(D.refocusesGrid(undefined), true);
+});
+
 test('listTables groups Source csv and json, Framework json only, and skips other paths', () => {
   const out = D.listTables([
     'content/framework/terms.json',

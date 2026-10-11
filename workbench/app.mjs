@@ -1,7 +1,7 @@
 // workbench/app.mjs — the Workbench page: rail, tool frames, preview dock,
 // library, engine export, jobs, settings, palette, toasts and shortcuts.
 // Talks to workbench/server.mjs; DOM-free helpers live in ui/logic.mjs.
-import { fuzzyFilter, DEVICES, fitDevice, clamp, duration, ago, manifestTables, manifestSummary, EXPORT_FORMAT, apiError, toolCameUp } from './ui/logic.mjs';
+import { fuzzyFilter, DEVICES, deviceById, dockDevice, fitDevice, clamp, duration, ago, manifestTables, manifestSummary, EXPORT_FORMAT, apiError, toolCameUp } from './ui/logic.mjs';
 import { icon } from './ui/icons.mjs';
 import { MODULES } from './modules/index.mjs';
 import { createModulePrefs, parseHash, hashFor, withPreviewOverrides, createReloadWaiter, buildAction } from './modules/host.mjs';
@@ -579,7 +579,7 @@ function renderDock() {
 }
 function fitDock() {
   if (!dockFrame) return;
-  const stage = $('#dock-stage'); const d = DEVICES.find((x) => x.id === state.device);
+  const stage = $('#dock-stage'); const d = dockDevice(state.device);
   const fit = fitDevice(d, { width: stage.clientWidth, height: stage.clientHeight });
   stage.classList.toggle('is-device', Boolean(d.width));
   Object.assign(dockFrame.style, { width: `${fit.width}px`, height: `${fit.height}px`, left: `${fit.left}px`, top: `${fit.top}px`, transform: d.width ? `scale(${fit.scale})` : 'none' });
@@ -910,7 +910,8 @@ function onClick(ev) {
   if (d.open) return openEntry(findEntry(d.open), 'here');
   if (d.pane) return openEntry(findEntry(d.pane), 'pane');
   if (d.newwin) return openEntry(findEntry(d.newwin), 'window');
-  if (d.device) return setDevice(d.device);
+  // Only the preview bar's own buttons change the dock device; other modules' data-device buttons (Visual Review) do not.
+  if (d.device && b.closest('#devices') && deviceById(d.device)) return setDevice(d.device);
   if (d.doc) return openDoc(d.doc);
   if (d.palette !== undefined) return openPalette();
   if (d.folder) return api('open-folder', { which: d.folder }).then((r) => toast({ title: 'Opened folder', detail: r.dir, record: false }), (e) => toast({ kind: 'error', title: 'Could not open the folder', detail: e.message }));
