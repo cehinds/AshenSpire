@@ -413,6 +413,19 @@ test('switching files keeps every dirty draft, and drops clean ones except the f
   assert.deepEqual([...withOpen.keys()], [clean.path], 'the open file stays even when clean');
 });
 
+test('a save bases the draft on the submitted text, so an edit made while it ran stays unsaved', () => {
+  const text = readFixture('pose-studio/renewal/base-attack.pose.json');
+  const a = recordOf('pose-studio/renewal/a.pose.json', text, (p) => renamePose(p, 0, 'one'));
+  const [sent] = saveChangesOf([a], []);
+  assert.equal(isDirty(sent.text, a.project), false, 'the submitted edit reads clean against its base');
+  // The save is in flight; the user moves an anchor in the same file before the server answers.
+  const later = setAnchor(a.project, 'hand', [0.41, 0.5]);
+  assert.equal(isDirty(sent.text, later), true, 'the edit made after submitting is still unsaved');
+  assert.deepEqual(JSON.parse(serializePoseFile(later, sent.text)), later, 'the file it would save is the later project');
+  const src = fs.readFileSync(new URL('../modules/motion/index.mjs', import.meta.url), 'utf8');
+  assert.match(src, /draft\.original = sent\.get\(saved\.path\);/, 'the save takes the base from the submitted text');
+});
+
 test('the save changes are the dirty drafts only, each on its own base hash, rebased on any conflict', () => {
   const text = readFixture('pose-studio/renewal/attack.pose.json');
   const a = recordOf('pose-studio/renewal/a.pose.json', text, (p) => renamePose(p, 0, 'one'));
