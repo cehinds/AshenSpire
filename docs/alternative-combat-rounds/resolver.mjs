@@ -871,18 +871,19 @@ export function resolveRound(playerCards, enemyQueue, perception, rng, options =
     // A tie gives a counter no 'countered' event, so it would win nothing from the
     // events above. A counter that ties does not cancel the attack, and still wins
     // its slot as in the timeline model (DESIGN.md, Counter stagger). Once per side.
+    // A counter answers only an attack: it wins nothing against 'other' or another counter.
+    const cardOf = (side) => (side === 'player' ? (pc ?? {}) : enemy);
+    const answersAttack = (side) => cardOf(side).kind === 'counter' && cardOf(other(side)).kind === 'attack';
     if (slotEvents.some((e) => e.type === 'order' && e.simultaneous)) {
       for (const side of SIDES) {
-        const card = side === 'player' ? (pc ?? {}) : enemy;
-        if (card.kind === 'counter') credit(side);
+        if (answersAttack(side)) credit(side);
       }
     }
     // A counter that staggers its target adds +-3 to its side's summed delta, on
     // top of the slot win above (owner, 2026-10-11). A counter that cancels the
     // attack (countered) and a counter that ties it both count. Clamped once at round end.
     for (const side of SIDES) {
-      const card = side === 'player' ? (pc ?? {}) : enemy;
-      if (card.kind !== 'counter') continue;
+      if (!answersAttack(side)) continue;
       if (!slotEvents.some((e) => e.type === 'status' && e.status === 'stagger' && e.target === other(side))) continue;
       const delta = (side === 'player' ? 1 : -1) * MOMENTUM_MAX;
       pending[k] = (pending[k] ?? 0) + delta;

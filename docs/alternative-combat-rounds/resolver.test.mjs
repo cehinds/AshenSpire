@@ -980,15 +980,15 @@ test('counter stagger: a tied counter that meets hyper armor is resisted, so no 
   assert.equal(momentum.foe, 0, 'the enemy hit slot win (-1) and the tied counter slot win (+1) net to 0');
 });
 
-test('counter stagger: two tied counters that both stagger each get their +-3, and net to 0', () => {
+test('counter stagger: two tied counters answer no attack, so neither gets +-3', () => {
   const { events, momentum } = resolveRound(
     [{ id: 'counter', slot: 0, speed: 3, kind: 'counter', tags: ['stagger'] }],
     [{ id: 'foe', speed: 3, kind: 'counter', tags: ['stagger'] }],
     1,
     d20Face(20),
   );
-  const deltas = events.filter((e) => e.reason === 'counterStagger').map((e) => e.delta).sort((a, b) => a - b);
-  assert.deepEqual(deltas, [-3, 3]);
+  // A counter answers only an attack (DESIGN.md, Counter stagger).
+  assert.equal(events.some((e) => e.reason === 'counterStagger'), false);
   assert.equal(momentum.foe, 0);
 });
 
@@ -1037,6 +1037,27 @@ test('tied counter without stagger still wins its slot: credited gain plus stanc
   assert.equal(playerWins[0].delta, 3);
   assert.equal(events.some((e) => e.reason === 'counterStagger'), false);
   assert.equal(momentum.foe, 2);
+});
+
+test('tied counter: a counter that ties a non-attack wins nothing and adds no +-3', () => {
+  // Nothing triggers the counter: the enemy plays 'other', and an enemy counter faces a tied
+  // player counter. No success credit and no counterStagger for either side.
+  for (const foe of [
+    { id: 'foe', speed: 3, kind: 'other', stance: 'other' },
+    { id: 'foe', speed: 3, kind: 'counter', stance: 'counter', tags: ['stagger'] },
+  ]) {
+    const { events, momentum } = resolveRound(
+      [{ id: 'counter', slot: 0, speed: 3, kind: 'counter', stance: 'counter', momentumGain: 2, tags: ['stagger'] }],
+      [foe],
+      1,
+      d20Face(20),
+      { stanceAdvantage: stanceTable() },
+    );
+    assert.equal(successesBy(events, 'player').length, 0, `${foe.kind}: no player credit`);
+    assert.equal(successesBy(events, 'enemy').length, 0, `${foe.kind}: no enemy credit`);
+    assert.equal(events.some((e) => e.reason === 'counterStagger'), false, `${foe.kind}: no +-3`);
+    assert.equal(momentum.foe, 0);
+  }
 });
 
 test('tied counter: an enemy counter that ties a landed player attack wins the slot (gain 2 plus stance 1), so -3', () => {
