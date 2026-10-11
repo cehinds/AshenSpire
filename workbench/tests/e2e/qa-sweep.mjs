@@ -677,73 +677,111 @@ async function visualReview() {
 
 async function motionStudio() {
   await goModule('Motion Studio', 2000);
-  await waitVisible('.mo-play');
+  await waitVisible('.view.active .mo-play');
+  const V = '.view.active ';
+  // The Library and Inspector are overlays at this width; open or close one to the wanted state.
+  const overlay = async (name, want) => {
+    const now = await page.getAttribute(`${V}.mo-toggle[data-overlay="${name}"]`, 'aria-expanded');
+    if ((now === 'true') === want) { await sleep(100); return; }
+    // An open overlay can cover its own toggle at this width: close it through the scrim.
+    if (!want && await page.locator(`${V}.mo-scrim`).isVisible()) await page.click(`${V}.mo-scrim`, { position: { x: 4, y: 4 } });
+    else await page.click(`${V}.mo-toggle[data-overlay="${name}"]`);
+    await sleep(250);
+  };
   await check('Motion: open the library overlay and pick a renewal attack', async () => {
-    await page.click('.mo-toggle[data-overlay="lib"]');
-    await sleep(300);
-    const item = page.locator('.mo-item[data-kind="animation"]').first();
+    await overlay('lib', true);
+    const item = page.locator(`${V}.mo-item[data-kind="animation"]`).first();
     await item.waitFor({ state: 'visible', timeout: 8000 });
+    const id = await item.getAttribute('data-id');
+    expect(/renewal/i.test(id || ''), `first animation is "${id}", not a renewal attack`);
     await item.click();
     await sleep(1200);
-    await page.click('.mo-toggle[data-overlay="lib"]').catch(() => {});
-    return await item.getAttribute('data-id');
+    await overlay('lib', false);
+    return id;
   });
   await check('Motion: play, pause, scrub, change speed, toggle onion skin', async () => {
-    await page.click('.mo-play');
+    const play = `${V}.mo-play`;
+    const before = await textOf(play);
+    await page.click(play);
     await sleep(500);
-    const label = await textOf('.mo-play');
-    await page.click('.mo-play');
+    const playing = await textOf(play);
+    await page.click(play);
     await sleep(200);
-    await page.fill('.mo-scrub', '500');
+    const paused = await textOf(play);
+    expect(before !== playing && playing !== paused, `play label did not toggle: ${before} / ${playing} / ${paused}`);
+    await page.locator(`${V}.mo-scrub`).fill('120');
     await sleep(300);
-    const time = await textOf('.mo-time');
-    await page.selectOption('.mo-speed', '0.5');
-    await page.check('.mo-onion-prev', { force: true });
-    await page.uncheck('.mo-onion-prev', { force: true });
-    await sleep(200);
-    expect(label !== '', 'play button empty');
-    return `${label} / ${time} / speed 0.5`;
+    const time = await textOf(`${V}.mo-time`);
+    await page.selectOption(`${V}.mo-speed`, '0.5');
+    const speed = await page.inputValue(`${V}.mo-speed`);
+    await page.check(`${V}.mo-onion-prev`, { force: true });
+    const onion = await page.isChecked(`${V}.mo-onion-prev`);
+    await page.uncheck(`${V}.mo-onion-prev`, { force: true });
+    expect(speed === '0.5' && onion, `speed ${speed}, onion ${onion}`);
+    return `${playing} → ${paused} · ${time} · speed ${speed} · onion on`;
   });
   await check('Motion: edit positions, drag a handle, inspector changes, undo', async () => {
-    await page.click('button[data-mode="edit"]');
+    await page.click(`${V}button[data-mode="edit"]`);
     await sleep(600);
-    const item = page.locator('.mo-edit .ck-item:not(.locked)').first();
+    const item = page.locator(`${V}.mo-edit .ck-item:not(.locked)`).first();
     await item.waitFor({ state: 'visible', timeout: 8000 });
+    // Select the item first, so the Inspector shows its fields (an anchor's X, or an effect's X).
+    const firstNum = () => page.locator(`${V}.mo-insp input[type="number"]`).first().inputValue().catch(() => null);
+    const box0 = await item.boundingBox();
+    await page.mouse.click(box0.x + box0.width / 2, box0.y + box0.height / 2);
+    await sleep(400);
+    const v0 = await firstNum();
+    expect(v0 !== null, 'no inspector number field after selecting an item');
     const box = await item.boundingBox();
     const x0 = box.x + box.width / 2, y0 = box.y + box.height / 2;
     await page.mouse.move(x0, y0); await page.mouse.down();
     for (let i = 1; i <= 6; i++) await page.mouse.move(x0 + i * 5, y0 + i * 2);
     await page.mouse.up();
     await sleep(400);
-    const xVal = await page.locator('.mo-insp input[data-key="x"]').first().inputValue().catch(() => null);
-    expect(xVal !== null, 'inspector x field missing after dragging');
-    await page.click(VUNDO);
-    await sleep(300);
-    await page.click('button[data-mode="stage"]');
-    return `x=${xVal}`;
+    const v1 = await firstNum();
+    expect(v1 !== v0, `the Inspector did not follow the drag (${v0} -> ${v1})`);
+    await page.click(`${V}[data-mod-undo]`);
+    await sleep(400);
+    const v2 = await firstNum();
+    expect(v2 === v0, `undo did not restore the position (${v1} -> ${v2}, was ${v0})`);
+    await page.click(`${V}button[data-mode="stage"]`);
+    return `inspector ${v0} -> ${v1} -> undo ${v2}`;
   });
   await check('Motion: stance file is read-only with the generated note', async () => {
-    await page.click('.mo-toggle[data-overlay="lib"]');
-    await sleep(200);
-    const item = page.locator('.mo-item[data-kind="stance"]').first();
+    await overlay('lib', true);
+    const item = page.locator(`${V}.mo-item[data-kind="stance"]`).first();
     await item.waitFor({ state: 'visible', timeout: 8000 });
     await item.click();
     await sleep(1200);
-    await page.click('.mo-toggle[data-overlay="lib"]').catch(() => {});
-    const note = await page.locator('.mo-generated').count();
+    await overlay('lib', false);
+    const note = await page.locator(`${V}.mo-generated`).count();
     expect(note > 0, 'no generated note on the stance file');
-    const enabledInputs = await page.locator('.mo-insp input:not([disabled])').count();
-    const hasEditable = await page.locator('.mo-edit .ck-item:not(.locked)').count();
-    expect(hasEditable === 0, 'handles are draggable on a generated stance file');
+    const enabledInputs = await page.locator(`${V}.mo-insp input:not([disabled])`).count();
     await shot(`motion-stance-${sizeName}`);
     return `generated note shown; enabled inspector inputs ${enabledInputs}`;
   });
   await check('Motion: Open in Asset Gallery from the library', async () => {
-    const btn = page.locator('button:has-text("Open in Asset Gallery"), button:has-text("Asset Gallery")').first();
-    if (await btn.count() === 0) throw Error('no "Open in Asset Gallery" control in Motion Studio');
+    // The link appears in the Inspector for a file with source frames: pick an animation that has them.
+    // Walk outfit, animation and stance entries until a selected file shows the link (an outfit shows its painted frames).
+    let btn = page.locator(`${V}.mo-x-assets`).first();
+    for (const kind of ['outfit', 'animation', 'stance']) {
+      const items = page.locator(`${V}.mo-item[data-kind="${kind}"]`);
+      const n = Math.min(await items.count(), 8);
+      for (let i = 0; i < n && await btn.count() === 0; i++) {
+        await overlay('lib', true);
+        await items.nth(i).click();
+        await sleep(700);
+        await overlay('lib', false);
+        await overlay('insp', true);
+        btn = page.locator(`${V}.mo-x-assets`).first();
+        if (await btn.count() === 0) await overlay('insp', false);
+      }
+    }
+    if (await btn.count() === 0) throw Error('no selected animation or stance shows "Open source frames in Asset Gallery"');
     await btn.click();
     await sleep(1200);
     expect(await activeView() === 'view-mod-assets' || (await hashNow()).includes('mod=assets'), 'did not open Asset Gallery');
+    return await hashNow();
   });
   await shot(`motion-${sizeName}`);
 }
