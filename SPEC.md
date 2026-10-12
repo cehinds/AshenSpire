@@ -1115,6 +1115,8 @@ These Power destinations do not change version-1 fights or saved snapshots.
 
 ### 4.9 Enemy knowledge, Perception and hidden-intent clues
 
+**Intent box follow-ups** (owner decision, 2026-10-12). When the multi-action preview is on (Advanced → Combat, §4.11), an enemy's intent box shows its planned follow-up actions after the current one, as smaller symbols in the same box. The first 1 + Perception follow-ups show their icon when today's intent read is exact; the rest, and every follow-up while the read is hidden, show `?`. The read is the one §4.9 already rolls for the enemy; Perception adds no roll. With the toggle off, the box shows no follow-ups.
+
 [docs/enemy-knowledge-contract.md](docs/enemy-knowledge-contract.md) defines the
 separately versioned extension to §4.8: three saved visibility outcomes, a 30%
 base exact identification chance improved by Wisdom, Intelligence, character
@@ -1165,10 +1167,29 @@ When the Combat Rounds Preview is on, see §4.11.
 
 **Setting**
 
-- Advanced → Combat holds one opt-in row, *Combat rounds preview*. It is shown on dev and test builds only and is hidden on release builds.
-- The row is read at New Run and frozen into the run, as the other Advanced rows are. A saved fight keeps the rules it started with; a later change applies to new runs only.
-- The preview covers solo and co-op/LAN. Co-op parity is part of the contract, not a later step.
-- With the row off, fights, saves and RNG rolls are unchanged, and no preview field is written.
+- Advanced → Combat holds three independent opt-in rows, all **off by default** (owner decision, 2026-10-12): *Combat rounds preview* (the rounds mode, its own key, unchanged), *Momentum*, and *Multi-action preview*. They are shown on dev and test builds only, because the Combat group is not in `RELEASE_ADVANCED_GROUP_IDS` and a release build never draws it.
+- Each row is read at New Run and frozen into the run, as the other Advanced rows are. A saved fight keeps the rules it started with; a later change applies to new runs only.
+- The preview covers solo and co-op/LAN. Co-op parity is part of the contract, not a later step. The two toggles in normal combat are solo-only until P6 wires them into co-op (see *Normal combat* below).
+- With all three off, fights, saves and RNG rolls are unchanged, and no preview field is written: a fight carries no `combatRounds` or `normalPreview`.
+
+**Momentum and follow-ups in rounds mode**
+
+- Momentum follows its own toggle. With Momentum off, the rounds engine runs with momentum frozen at 0: every enemy is at 0 at each round start, no momentum is kept and no overflow flag is set. With it on, the rules below apply as written.
+- The multi-action toggle sets whether the intent box shows follow-up actions (§4.9). With it off, the rounds queue still runs, but no follow-up symbols show.
+
+**Normal combat (rounds mode off)**
+
+- *Momentum* (owner decision, 2026-10-12) keeps a value per enemy, −3..+3, by the rounds rules: each enemy's value moves one step toward 0 when the player's turn starts (a turn is a round). Each exchange credits its winner once: a landed attack to the player, an enemy hit that lands to the enemy, an attack fully blocked or evaded to the defender, and a counter that fires to its owner. The gain is 1 (normal cards have no `momentumGain`) plus the stance bonus from `stance-advantage.csv`. The summed deltas settle once, at the end of the enemy phase, are clamped to −3..+3, and a raw total past the cap sets the overflow flag.
+- Normal combat has no speed order and no hit roll, so momentum has **no mechanical effect** here: it is tracked and shown, and nothing else reads it. Two rounds rules are not mapped and change nothing: the ±3 counter stagger (normal Counters carry no stagger tag) and the poise double (normal combat models no poise damage to double).
+- The turn banner shows the targeted enemy's momentum tab (`++` for +2/+3, `+-` for ±1, `--` for −2/−3, none at 0), from its stored value, already decayed for the turn.
+- *Multi-action preview* (owner decision, 2026-10-12): each enemy plans its moves ahead with the same weighted pick, from the `enemyAI` stream, filling a plan to the rounds enemy SP pool (3 at 1 SP per move, the default). The head of the plan is the intent played this roll; the rest are its planned follow-ups. The plan is the moves the enemy plays, in that order. A staggered or held enemy keeps its plan. The intent box shows the follow-ups as §4.9 describes. The enemy SP pool itself is a separate change, so the plan size is the rounds default for now.
+
+**Always on, in every fight** (owner decision, 2026-10-12; `styles/combat-visuals.css`)
+
+- The blue selection and playable outline (`--selection-color` is blue on the combat screen), so green only means advantage.
+- A soft dark drop-shadow on each intent glyph and on each character sprite.
+- The thin target outline: a dark shadow first, hugging the sprite, then the coloured 1px ring outermost, with no glow or halo. The colour is drawn while a card is aimed at an enemy. With rounds mode off it is stance alone: green when the card's stance beats the enemy's revealed stance, red when it loses, none when neutral or unrevealed. With rounds mode on it also uses speed (see *Screen* in `docs/alternative-combat-rounds/PREVIEW-PLAN.md`).
+- With every toggle off, the outline and these visuals are the only writes: no element is added to the combat screen.
 
 **Live rules that stay**
 
