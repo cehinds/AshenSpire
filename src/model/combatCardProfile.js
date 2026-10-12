@@ -1,5 +1,6 @@
 import { objectTagIds, resolve } from '../content/tags.js';
 import { tagService } from './tagService.js';
+import { dominantDamageType } from './attackTags.js';
 
 const CAMP = new Set(['physical', 'spell']);
 const MANEUVER = new Set(['attack', 'defend', 'counter', 'sweep', 'ranged', 'smash', 'casting']);
@@ -36,6 +37,11 @@ export function combatProfileFor(carrier = {}) {
     || (carrier.attack?.damageType ? [carrier.attack.damageType] : tags.filter(tag => tag.startsWith('damage:')).map(tag => tag.slice(7))))
     .filter(Boolean))];
   const profile = { camp, maneuver, school, damageType: types.length === 1 ? types[0] : null, counterMode };
+  // A mixed hit keeps its weighted parts; its label is the heaviest part.
+  if (components && types.length > 1) {
+    profile.damageType = dominantDamageType(components);
+    profile.damageComponents = components.map(({ type, weight }) => ({ type, weight }));
+  }
   const reach = identity(tags, 'reach:', REACH, id);
   const targeting = identity(tags, 'targeting:', TARGETING, id);
   if (reach) profile.reach = reach;

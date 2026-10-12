@@ -17,6 +17,17 @@ export function attackDescriptor(carrier = {}) {
 }
 
 /**
+ * The type a mixed-damage hit is labelled by where one type must stand for
+ * the whole hit (Counter coverage, the hit's event label): the heaviest
+ * component, the first listed on a tie (owner #23/#24).
+ */
+export function dominantDamageType(components) {
+  let best = null;
+  for (const c of components || []) if (!best || c.weight > best.weight) best = c;
+  return best?.type || null;
+}
+
+/**
  * The damage type a weapon-typed card deals through a piece of `family` whose
  * own type is `damageType`. A card with `attack.weaponDamage` ({ families,
  * types }) keeps the piece's type only when the piece is of one of those

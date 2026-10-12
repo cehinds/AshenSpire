@@ -278,13 +278,19 @@ export function restoreExpandedWard(ctx, entity, nominal, options = {}) {
 export function prepareExpandedDefense(ctx, target, receipt, carrier) {
   if (receipt.defendedAmounts) return;
   const sums = {}, indices = {};
+  const aliases = { pierce: 'piercing', slash: 'slashing', cold: 'frost', force: 'arcane', holy: 'sacred', necrotic: 'decay' };
   receipt.amounts.forEach((amount, index) => {
     const profile = receipt.profiles[index];
-    const aliases = { pierce: 'piercing', slash: 'slashing', cold: 'frost', force: 'arcane', holy: 'sacred', necrotic: 'decay' };
-    const type = aliases[profile.damageType] || profile.damageType || 'blunt';
-    const key = `${profile.camp}:${type}`;
-    sums[key] = (sums[key] || 0) + amount;
-    (indices[key] ||= []).push(index);
+    // A mixed hit meets each type's defense with its weighted share (owner #23/#24).
+    const parts = profile.damageComponents?.length > 1
+      ? allocateInteger(amount, profile.damageComponents.map(c => c.weight)).map((share, i) => [profile.damageComponents[i].type, share])
+      : [[profile.damageType, amount]];
+    for (const [partType, share] of parts) {
+      const type = aliases[partType] || partType || 'blunt';
+      const key = `${profile.camp}:${type}`;
+      sums[key] = (sums[key] || 0) + share;
+      (indices[key] ||= []).push([index, share]);
+    }
   });
   receipt.defendedAmounts = receipt.amounts.map(() => 0);
   for (const [key, total] of Object.entries(sums)) {
@@ -302,8 +308,8 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
         * (Number.isFinite(resistance) ? Math.max(0, 1 - resistance / 100) : 1)));
     }
     amount = typedDefenseAmount(target, type, amount);
-    const shares = total > 0 ? allocateInteger(amount, indices[key].map(index => receipt.amounts[index])) : indices[key].map(() => 0);
-    indices[key].forEach((index, i) => { receipt.defendedAmounts[index] = shares[i]; });
+    const shares = total > 0 ? allocateInteger(amount, indices[key].map(([, share]) => share)) : indices[key].map(() => 0);
+    indices[key].forEach(([index], i) => { receipt.defendedAmounts[index] += shares[i]; });
   }
   const magical = receipt.profiles.map((profile, index) => profile.camp === 'spell' ? index : -1).filter(index => index >= 0);
   const total = magical.reduce((sum, index) => sum + receipt.defendedAmounts[index], 0);

@@ -17,6 +17,8 @@ export function effectCarrier(carrier, effect) {
   // (tacticalCarrier); a tagless re-read must not erase it (owner #19).
   if (!typed.damageType && carrier?.combatProfile?.damageType) delete typed.damageType;
   merged.combatProfile = { ...carrier?.combatProfile, ...typed, ...effect.combatProfile };
+  // An effect retyped to a single damage type is no longer the card's mixed hit.
+  if (effect.attack && !typed.damageComponents) delete merged.combatProfile.damageComponents;
   // The action stance belongs to the card; an effect can override its delivery/type.
   merged.combatProfile.maneuver = effect.combatProfile?.maneuver || carrier?.combatProfile?.maneuver || merged.combatProfile.maneuver;
   return merged;

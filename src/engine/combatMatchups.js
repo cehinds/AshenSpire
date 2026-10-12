@@ -91,7 +91,10 @@ export function tagRidersFor(cfg, carrier) {
 
 /** Damage-type and technique riders of one hit, in resolution order. */
 export function hitRiders(cfg, damageType, carrier) {
-  return [cfg?.damageRiders?.[damageType], ...tagRidersFor(cfg, carrier)].filter(Boolean);
+  // A mixed-damage hit carries the rider of every type it deals (owner #23/#24).
+  const parts = (carrier?.combatProfile?.damageComponents || []).map(c => cfg?.damageAliases?.[c.type] || c.type);
+  return [...new Set([damageType, ...parts])].map(type => cfg?.damageRiders?.[type])
+    .concat(tagRidersFor(cfg, carrier)).filter(Boolean);
 }
 
 /** The larger guard bypass of the hit's riders; never their sum. */

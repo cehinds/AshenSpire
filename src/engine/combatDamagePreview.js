@@ -40,11 +40,11 @@ export function previewDamageHits(ctx, source, target, base, tags, carrier, hits
     // Mirrors matchupRiderEffects: damage-type and technique riders share
     // one once-per-target budget, spent when any of them applies.
     const riders = hitRiders(rules, type, attack).filter(row => !row.requiresHpLoss || receipt.amount > blocked);
-    const rider = rules.damageRiders?.[type];
     if (!attack.combatReaction && receipt.profile && receipt.amount > 0 && riders.length
       && !local.combatRiderTargets.includes(targetKey)) {
       local.combatRiderTargets.push(targetKey);
-      if (riders.includes(rider) && rider.wardDrain > 0) {
+      // Every rider of a mixed hit drains, as matchupRiderEffects does.
+      for (const rider of riders) if (rider.wardDrain > 0) {
         const ward = Math.max(0, Math.min(defender.block, defender.wardBlock || 0));
         const loss = Math.min(ward, rider.wardDrain);
         defender.block -= loss;

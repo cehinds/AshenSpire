@@ -11,6 +11,8 @@ import { foundationSource } from '../src/engine/combatRules.js';
 import { combatRules } from '../src/content/combatRules.js';
 import { createRng } from '../src/engine/rng.js';
 import { applyCombatExpansionMartial } from '../src/content/combatExpansionMartial.js';
+import { combatProfileFor } from '../src/model/combatCardProfile.js';
+import { hitRiders } from '../src/engine/combatMatchups.js';
 
 const regs = createRegistries(contentBundle);
 // blade (slashing), blade (piercing), blunt, bow, bare hands.
@@ -102,6 +104,18 @@ test('the rules-foundation source applies the same Blood Tithe restriction', () 
     assert.equal(foundationSource(c, c.player, { tags: def.tags, attack: def.attack }).damageType, EXPECTED.bloodTithe[label], label);
     assert.equal(foundationSource(c, c.player, { tags: regs.cards.get('strike').tags }).damageType, WEAPON_TYPED[label], `strike ${label}`);
   }
+});
+
+test('a mixed-damage profile keeps its weighted parts, labelled by the heaviest (first on a tie)', () => {
+  const profile = (components) => combatProfileFor({ tags: ['camp:physical'], attack: { components } });
+  const heavy = profile([{ type: 'blunt', weight: 40 }, { type: 'arcane', weight: 60 }]);
+  assert.equal(heavy.damageType, 'arcane');
+  assert.deepEqual(heavy.damageComponents, [{ type: 'blunt', weight: 40 }, { type: 'arcane', weight: 60 }]);
+  assert.equal(profile([{ type: 'piercing', weight: 50 }, { type: 'decay', weight: 50 }]).damageType, 'piercing');
+  assert.equal(profile([{ type: 'blunt', weight: 1 }]).damageComponents, undefined);
+  // Each part brings its own rider, once.
+  const cfg = { damageRiders: { blunt: { poise: 2 }, arcane: { wardDrain: 2 } } };
+  assert.deepEqual(hitRiders(cfg, 'arcane', { combatProfile: heavy }), [{ wardDrain: 2 }, { poise: 2 }]);
 });
 
 // Owner decision #22: Lethal Dose is a thrown vial at Reach, never a Ranged maneuver.
