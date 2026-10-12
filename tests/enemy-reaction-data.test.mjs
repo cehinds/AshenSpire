@@ -5,6 +5,7 @@ import { STREAM_NAMES } from '../src/engine/rng.js';
 import { contentBundle } from '../src/content/index.js';
 import { validateContent } from '../src/model/validate.js';
 import { createHash } from 'node:crypto';
+import { combatProfileFor } from '../src/model/combatCardProfile.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
@@ -83,6 +84,19 @@ test('reaction bounds: non-empty on, a weight-free move, minIncoming >= 1, chanc
   assert.ok(errorsFor({ intent: 'block', block: 6, reaction: { on: ['playerReaction'], chance: 0 } }).some(path => /chance/.test(path)));
   assert.ok(errorsFor({ intent: 'block', block: 6, reaction: { on: ['playerReaction'], chance: 1.5 } }).some(path => /chance/.test(path)));
   assert.ok(errorsFor({ intent: 'block', block: 6, reaction: { on: ['onKill'] } }).length > 0);
+});
+
+test('the first reaction carriers validate, carry trait:reaction, and are never rolled', () => {
+  assert.deepEqual(validateContent(contentBundle).errors, []);
+  const knight = contentBundle.enemies.find(enemy => enemy.id === 'gildedKnight');
+  const duelist = contentBundle.enemies.find(enemy => enemy.id === 'courtDuelist');
+  assert.deepEqual(knight.moves.gildedGuard.reaction, { on: ['playerAction'], minIncoming: 8 });
+  assert.equal(knight.moves.gildedGuard.weight, undefined);
+  assert.deepEqual(duelist.moves.bindingRiposte.reaction, { on: ['playerReaction'], chance: 0.5 });
+  assert.equal(duelist.moves.bindingRiposte.weight, undefined);
+  assert.ok(combatProfileFor({ enemyId: 'gildedKnight', moveId: 'gildedGuard' }).traits.includes('reaction'));
+  assert.ok(combatProfileFor({ enemyId: 'courtDuelist', moveId: 'bindingRiposte' }).traits.includes('reaction'));
+  assert.ok(!(combatProfileFor({ enemyId: 'gildedKnight', moveId: 'thrust' }).traits || []).includes('reaction'));
 });
 
 test('the enemyReaction stream is appended last', () => {

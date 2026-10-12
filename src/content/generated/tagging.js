@@ -18820,6 +18820,42 @@ export const tagging = [
   },
   {
     "family": "enemyMove",
+    "scope": "gildedKnight",
+    "objectId": "gildedGuard",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "gildedKnight",
+    "objectId": "gildedGuard",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "gildedKnight",
+    "objectId": "gildedGuard",
+    "tagId": "reach:contact"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "gildedKnight",
+    "objectId": "gildedGuard",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "gildedKnight",
+    "objectId": "gildedGuard",
+    "tagId": "trait:reaction"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "gildedKnight",
+    "objectId": "gildedGuard",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
     "scope": "courtSurgeon",
     "objectId": "scalpel",
     "tagId": "camp:physical"
@@ -19254,6 +19290,42 @@ export const tagging = [
     "family": "enemyMove",
     "scope": "courtDuelist",
     "objectId": "riposte",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtDuelist",
+    "objectId": "bindingRiposte",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtDuelist",
+    "objectId": "bindingRiposte",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtDuelist",
+    "objectId": "bindingRiposte",
+    "tagId": "reach:contact"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtDuelist",
+    "objectId": "bindingRiposte",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtDuelist",
+    "objectId": "bindingRiposte",
+    "tagId": "trait:reaction"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtDuelist",
+    "objectId": "bindingRiposte",
     "tagId": "classification.enemyMove"
   },
   {
