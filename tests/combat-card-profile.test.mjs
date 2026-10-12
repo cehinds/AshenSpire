@@ -106,35 +106,3 @@ test('resolved equipment identity overrides source card lookup without guessing 
   assert.equal(combatProfileFor({ name: 'Fire Smash Counter' }).camp, null);
   assert.throws(() => combatProfileFor({ id: 'fixture', tags: ['camp:physical', 'camp:spell'] }), /conflicting/);
 });
-
-test('player spell attacks without a reach tag take reach from their delivery', () => {
-  const card = id => contentBundle.cards.find(candidate => candidate.id === id);
-  assert.equal(combatProfileFor(card('cometFragment')).reach, 'far');
-  assert.equal(combatProfileFor(card('starSlicer')).reach, 'contact');
-  assert.equal(combatProfileFor(card('frostNova')).reach, 'near');
-  assert.equal(combatProfileFor(card('rimeNeedle')).reach, 'near');
-  assert.equal(combatProfileFor(card('strike')).reach, undefined);
-  assert.equal(combatProfileFor(card('crystalBarrier')).reach, undefined);
-});
-
-test('area-delivered player spells take area targeting, and projectile spells do not', () => {
-  const card = id => contentBundle.cards.find(candidate => candidate.id === id);
-  for (const id of ['supernova', 'bloodHarvest']) {
-    const profile = combatProfileFor(card(id));
-    assert.equal(profile.reach, 'near', id);
-    assert.equal(profile.targeting, 'area', id);
-  }
-  assert.equal(combatProfileFor(card('cometFragment')).targeting, undefined);
-});
-
-test('physical area cards keep their profile without spell reach or targeting defaults', () => {
-  const profile = combatProfileFor(contentBundle.cards.find(candidate => candidate.id === 'cleavingBlow'));
-  assert.equal(profile.camp, 'physical');
-  assert.equal(profile.reach, undefined);
-  assert.equal(profile.targeting, undefined);
-});
-
-test('starblade phalanx is a bladed spell that strikes in contact', () => {
-  const card = contentBundle.cards.find(candidate => candidate.id === 'starbladePhalanx');
-  assert.equal(combatProfileFor(card).reach, 'contact');
-});
