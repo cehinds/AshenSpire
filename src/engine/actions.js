@@ -422,8 +422,9 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
   receipt.defendedAmounts = hits.map((hit, index) => physicalTyped[index] + magicLeft[index]);
   receipt.barrierSpentAmounts = barrierSpent;
   receipt.wardSpentAmounts = wardSpent;
-  // What Barrier and Ward kept of the magic part. A physical part's own reduction (its rating's mitigation, a resistance) is not Ward's.
-  receipt.resistedAmounts = hits.map((hit, index) => Math.max(0, hit.magic - magicLeft[index]));
+  // resistedAmounts is the whole protection a hit met; magicResistedAmounts is what Barrier and Ward kept of the magic part alone.
+  receipt.resistedAmounts = receipt.amounts.map((amount, index) => Math.max(0, amount - receipt.defendedAmounts[index]));
+  receipt.magicResistedAmounts = hits.map((hit, index) => Math.max(0, hit.magic - magicLeft[index]));
   receipt.magicAmounts = magicTyped;
   receipt.physicalAmounts = physicalTyped;
   receipt.blockableAmounts = blockable;
@@ -461,7 +462,9 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
   const type = ctx.combatExpansionRules.matchups.damageAliases[profile.damageType] || profile.damageType;
   // A foundation immunity zeroes this hit's amount; the event says so, so the screen can show IMMUNE.
   const immune = !!ctx.foundation && (F.foundationProfile(ctx, target).immunities || []).includes(type);
-  const ward = tactical.resistedAmounts[contactIndex] || 0;
+  // The whole protection a hit met (Block, Poise, Barrier, Ward) decides whether a counter returns; the Ward figure reports only the magic part.
+  const resisted = tactical.resistedAmounts[contactIndex] || 0;
+  const ward = tactical.magicResistedAmounts?.[contactIndex] || 0;
   // The plan was made for the whole action. A status rider may have spent Barrier or
   // Ward between hits: what the live pool no longer holds is not absorbed for free,
   // so it goes back into this hit before Block.
@@ -512,7 +515,7 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
   // From here `amount` is what the hit did after Poise, as it is after Ward; the log adds each layer back.
   amount -= poiseAbsorbed;
   creditKnowledgeImpact(ctx, target, amount, tactical.knowledgeBonus > 0);
-  Matchups.recordTacticalContact(tactical, { hpLoss, blocked, wardResisted: ward });
+  Matchups.recordTacticalContact(tactical, { hpLoss, blocked, wardResisted: resisted });
   ctx.emit('damageDealt', { sourceId: source?.id, targetId: target.id, amount, blocked, wardResisted: ward,
     ...(barrierSpent ? { barrierAbsorbed: barrierSpent } : {}),
     ...(wardSpent ? { wardAbsorbed: wardSpent, wardRemaining: target.persistentWard?.value || 0 } : {}),
