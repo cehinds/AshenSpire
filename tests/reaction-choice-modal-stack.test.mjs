@@ -149,7 +149,8 @@ class FakeDocument extends FakeNode {
 const STACK = [{ name: 'Second Strike' }, { name: 'Guard Counter' }];
 const OPTIONS = [{ id: 'opt-a', name: 'Riposte', staminaCost: 1, play: {} }];
 
-async function openWith(extra) {
+// Installs the fake DOM for the modal; the returned restore puts globals back.
+function installDom() {
   const saved = { document: globalThis.document, window: globalThis.window, HTMLElement: globalThis.HTMLElement, addEventListener: globalThis.addEventListener };
   const document = new FakeDocument();
   globalThis.document = document;
@@ -157,6 +158,17 @@ async function openWith(extra) {
   globalThis.HTMLElement = FakeNode;
   // tooltip.js wires a window resize listener when it loads.
   globalThis.addEventListener = () => {};
+  const restore = () => {
+    for (const [key, value] of Object.entries(saved)) {
+      if (value === undefined) delete globalThis[key];
+      else globalThis[key] = value;
+    }
+  };
+  return { document, restore };
+}
+
+async function openWith(extra) {
+  const { document, restore } = installDom();
   try {
     const { openReactionChoiceModal } = await import('../src/ui/components/reactionChoiceModal.js');
     const answers = [];
@@ -165,20 +177,26 @@ async function openWith(extra) {
       onAnswer: (intent) => answers.push(intent),
       ...extra,
     });
-    return { document, shell, answers, restore: () => {
-      for (const [key, value] of Object.entries(saved)) {
-        if (value === undefined) delete globalThis[key];
-        else globalThis[key] = value;
-      }
-    } };
+    return { document, shell, answers, restore };
   } catch (error) {
-    for (const [key, value] of Object.entries(saved)) {
-      if (value === undefined) delete globalThis[key];
-      else globalThis[key] = value;
-    }
+    restore();
     throw error;
   }
 }
+
+test('committedReactionStack returns this root\'s entries, top first', async () => {
+  const { restore } = installDom();
+  try {
+    const { committedReactionStack } = await import('../src/ui/components/reactionChoiceModal.js');
+    const reactionStack = { groupKey: 'root-1', entries: [{ cardInstanceId: 'a' }, { cardInstanceId: 'b' }] };
+    assert.deepEqual(committedReactionStack(reactionStack, 'root-1').map((entry) => entry.cardInstanceId), ['b', 'a']);
+    assert.deepEqual(committedReactionStack(reactionStack, 'root-2'), [], 'another root has no stack to show');
+    assert.deepEqual(committedReactionStack(undefined, 'root-1'), []);
+    assert.deepEqual(committedReactionStack(reactionStack, undefined), [], 'no pending offer, no stack');
+  } finally {
+    restore();
+  }
+});
 
 test('no stack renders the version 1 modal with a Back button', async () => {
   const opened = await openWith({});
