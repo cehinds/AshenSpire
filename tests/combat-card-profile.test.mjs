@@ -116,3 +116,8 @@ test('player spell attacks without a reach tag take reach from their delivery', 
   assert.equal(combatProfileFor(card('strike')).reach, undefined);
   assert.equal(combatProfileFor(card('crystalBarrier')).reach, undefined);
 });
+
+test('starblade phalanx is a bladed spell that strikes in contact', () => {
+  const card = contentBundle.cards.find(candidate => candidate.id === 'starbladePhalanx');
+  assert.equal(combatProfileFor(card).reach, 'contact');
+});
