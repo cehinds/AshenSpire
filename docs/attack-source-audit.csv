@@ -184,7 +184,7 @@
 "card","","executionWindow","skill","false","false","","","physical","","","","","",""
 "card","","perfectHeist","skill","false","false","weapon","","physical","","","","","",""
 "card","","deathblow","attack","true","false","weapon","equipped source","physical","attack","","","delivery:melee","technique:precision",""
-"card","","lethalDose","attack","true","false","weapon","poison","physical","attack","","","delivery:projectile","",""
+"card","","lethalDose","attack","true","false","weapon","poison","physical","attack","","","delivery:projectile","technique:precision",""
 "card","","prepare","skill","false","false","","","physical","","","","","",""
 "card","","pinningShot","attack","true","false","weapon","piercing","physical","ranged","","","delivery:projectile","",""
 "card","","arrowVolley","attack","true","false","weapon","piercing","physical","ranged","","","delivery:projectile|delivery:area","",""

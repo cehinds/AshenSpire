@@ -23021,6 +23021,18 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
+    "objectId": "lethalDose",
+    "tagId": "precision"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lethalDose",
+    "tagId": "technique:precision"
+  },
+  {
+    "family": "card",
+    "scope": "",
     "objectId": "mindSpike",
     "tagId": "classification.attack"
   },

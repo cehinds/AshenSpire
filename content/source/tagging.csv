@@ -3944,6 +3944,8 @@ card,,lethalDose,camp:physical
 card,,lethalDose,maneuver:attack
 card,,lethalDose,damage:poison
 card,,lethalDose,reach:near
+card,,lethalDose,precision
+card,,lethalDose,technique:precision
 card,,mindSpike,classification.attack
 card,,mindSpike,camp:spell
 card,,mindSpike,school:illusion
