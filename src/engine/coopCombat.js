@@ -567,6 +567,8 @@ function startPlayerPhase(C) {
     setActive(C, P);
     const e = P.entity;
     delete e.combatRetainedCards;
+    // Barrier lasts until its owner's next turn starts (solo clears it at the same point).
+    if (C.combatExpansionVersion === 2) e.barrier = 0;
     const tacticalProtection = startTacticalTurn(C, e);
     if (C.combatExpansionVersion === 2) beginAshenBlightCycle(C, e, String(e.combatOwnerCycle));
     R.beginAbilityTurn(e);
@@ -1098,7 +1100,7 @@ function enemyPhase(C) {
     Reactions.revealActor(C, enemy);
     setActive(C, firstLiving(C));
     let tacticalProtection = { block: 0, barrier: 0 };
-    if (C.sharedExpansionVersion === 2) { C.combatExpansionVersion = 2; tacticalProtection = startTacticalTurn(C, enemy); }
+    if (C.sharedExpansionVersion === 2) { C.combatExpansionVersion = 2; enemy.barrier = 0; tacticalProtection = startTacticalTurn(C, enemy); }
     fireOwnerHooks(C, enemy, 'ownerTurnStart');
     drainQueue(C);
     if (C.result || !enemy.alive) continue;
