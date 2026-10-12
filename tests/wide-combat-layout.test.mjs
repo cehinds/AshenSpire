@@ -64,7 +64,8 @@ for (const count of [1, 2, 3]) {
 // The footer must never grow on a wide screen: at every window height the
 // wide footer is no taller than the base footer. The design height (730 local
 // px) is fitted by the zoom, so a taller window only zooms the same layout.
-import { allocateCombatBands, combatBandConfig } from '../src/ui/models/CombatLayout.js';
+import { allocateCombatBands } from '../src/ui/models/CombatLayout.js';
+import { combatBandConfig } from '../src/ui/models/CombatBandConfigModel.js';
 import { footerArtHeight } from '../src/ui/models/FooterLayoutModel.js';
 
 for (const windowHeight of [720, 1080, 1440, 2160]) {

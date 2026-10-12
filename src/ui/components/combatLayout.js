@@ -1,4 +1,5 @@
-import { allocateCombatBands, combatBandConfig, packCombatFooter } from '../models/CombatLayout.js';
+import { allocateCombatBands, packCombatFooter } from '../models/CombatLayout.js';
+import { combatBandConfig } from '../models/CombatBandConfigModel.js';
 import { footerArtHeight, footerArtWidth } from '../models/FooterLayoutModel.js';
 import { isWideFormFactor } from '../models/FormFactorModel.js';
 import { combatantMeterGeometry } from '../models/CombatantMeterModel.js';
