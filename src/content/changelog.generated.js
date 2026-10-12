@@ -7,8 +7,8 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-10-12",
     "group": "2026-10-12",
     "summary": "Ward now wears away, and it shows on every fighter",
-    "detail": "Spells no longer bounce off a full Ward forever: Ward takes the first part of every hit, spell or physical, each hit still lets at least 1 damage through, and Ward is spent by what it absorbs. Whatever gets past it then hits Block, then Health. Every fighter starts each fight with full Ward, and Ward doesn't come back during a fight unless a card, feat, class feature or relic restores it. A card that adds Ward refills it first and adds the rest as bonus Ward. Ward shows as the purple circle beside each fighter's health. A creature resistant to a damage school takes three quarters of the hit, and its bestiary entry shows that 25%. Both are settings under Advanced → Stats → Resistance.",
-    "build": "0.7.1.1423",
+    "detail": "Spells no longer bounce off a full Ward forever. Ward and Barrier guard against magic: a magic hit meets Barrier first, which soaks it completely, then Ward, which lets at least 1 damage through per hit and is spent by what it absorbs, then Block, then Health. A Ward break costs Stamina next turn. Every fighter starts each fight with full Ward; it only comes back through a card, feat, class feature or relic, and Ward added past full becomes Barrier, shown as a gold rim on the purple Ward circle until your next turn. Hits now show where they landed (Barrier gold, Ward purple, Block blue, Poise orange, Health red, a white MISS for evasion), and the combat log lists each layer's share and the roll behind a miss. A creature resistant to a damage school takes three quarters of the hit.",
+    "build": "0.7.1.1425",
     "pullRequest": 1896,
     "url": "https://github.com/cehinds/AshenSpire/pull/1896"
   },
