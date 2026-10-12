@@ -426,7 +426,7 @@
 .float-num.small { font-size: 2rem; }
 .float-num.heavy { font-size: 3.4rem; }
 .float-num.crit { font-size: 4.4rem; color: #ff4a4a; }
-/* Where a hit landed: Barrier gold, Ward purple, Block blue, Poise orange,
+/* Where a hit landed: Barrier blue, Ward purple, Block silver, Poise gold,
    Health red (owner, 2026-10-12). */
 .float-num.barrier { color: #5fa8ff; }
 .float-num.ward { color: #b38ae8; }

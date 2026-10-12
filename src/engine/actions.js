@@ -254,7 +254,7 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
 
 /**
  * Barrier is Ward added past full: gaining it refills Ward first and only the
- * rest becomes Barrier, the gold layer that lasts until the owner's next turn.
+ * rest becomes Barrier, the blue layer that lasts until the owner's next turn.
  */
 export function gainBarrier(ctx, entity, base, card = null) {
   if (!entity?.alive) return 0;
@@ -312,8 +312,8 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
     const shares = total > 0 ? allocateInteger(amount, indices[key].map(index => receipt.amounts[index])) : indices[key].map(() => 0);
     indices[key].forEach((index, i) => { receipt.defendedAmounts[index] = shares[i]; });
   }
-  // Magic hits meet Barrier, then Ward, once per action (Poise is physical's
-  // and is not a pool yet). Barrier soaks fully. Ward's budget is shared over
+  // Magic hits meet Barrier, then Ward, once per action (Poise is the physical
+  // pool and never meets magic). Barrier soaks fully. Ward's budget is shared over
   // the hits; each hit it meets still lets at least 1 through, and Ward is
   // spent by what it absorbs. What passes meets Block, then Health.
   syncWardMaximum(ctx, target);
