@@ -199,9 +199,9 @@ export function openEnemyWindow(ctx, group, window, pushed, hooks) {
     const stacked = ctx.reactionStack?.groupKey === group.key ? ctx.reactionStack.entries : [];
     if (stacked.filter(entry => entry.side === 'enemy').length >= cap) break;
     const incoming = window === 'playerAction' ? incomingAgainst(group, enemy.id) : pushed.incoming?.[enemy.id] || 0;
-    // The window opens for enemies the root card targets, or (playerReaction) that own
-    // the root or are targeted by the push; the decision then qualifies on `incoming`.
-    if (window === 'playerAction' ? !(incoming > 0) : group.sourceId !== enemy.id && !(incoming > 0)) continue;
+    // The window opens for enemies the root card targets, or (playerReaction) that own the
+    // root or that the root card targets (contract); the decision then qualifies on `incoming`.
+    if (window === 'playerAction' ? !(incoming > 0) : group.sourceId !== enemy.id && !(incomingAgainst(group, enemy.id) > 0)) continue;
     const moveId = decideEnemyReaction(ctx, enemy, window, { groupKey: group.key, windowIndex: index, incoming });
     if (moveId) pushedEntries.push(pushEnemyReaction(ctx, group, enemy, moveId, targetPlayerId, hooks));
   }

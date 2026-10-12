@@ -4,7 +4,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
-import { createCoopCombat, playCard as coopPlay, chooseReaction as coopChoose, endTurn as coopEnd, leaveCombat } from '../src/engine/coopCombat.js';
+import { createCoopCombat, playCard as coopPlay, chooseReaction as coopChoose, endTurn as coopEnd, leaveCombat, joinCombat } from '../src/engine/coopCombat.js';
 import { serializeCoopCombatSnapshot, decodeCoopCombatSnapshot } from '../src/engine/coopCombatSnapshot.js';
 import { combatLogEntries } from '../src/model/combatLog.js';
 import { createRng } from '../src/engine/rng.js';
@@ -434,4 +434,31 @@ test('co-op: the acting seat leaving during its window cancels the root', () => 
   // The guard fizzles (its target left) and the root is cancelled: nothing hits the Knight.
   assert.ok(C.eventLog.some(event => event.type === 'combatReactionFizzled' && event.side === 'enemy'));
   assert.equal(hits(), before);
+});
+
+test('co-op: the last connected seat leaving mid-window resumes its root on rejoin, with the card discarded once', () => {
+  const { C, players } = coop({ hands: { a: ['heavyStrike', 'strike'], b: ['strike'] } });
+  const knight = C.enemies[0];
+  leaveCombat(C, 'b');
+  coopPlay(C, 'a', 'a:0', knight.id);
+  assert.equal(C.pendingReaction.ownerId, 'a');
+  leaveCombat(C, 'a');
+  assert.equal(C.phase, 'suspended');
+  joinCombat(C, players.find(player => player.id === 'a'));
+  assert.equal(C.reactionStack, undefined);
+  assert.equal(C.reactionRootPlay, undefined);
+  const seat = C.players.get('a');
+  const copies = [...seat.piles.hand, ...seat.piles.discard, ...seat.piles.draw].filter(inst => inst.instanceId === 'a:0');
+  assert.equal(copies.length, 1, 'the root card sits in exactly one pile');
+  assert.doesNotThrow(() => decodeCoopCombatSnapshot(serializeCoopCombatSnapshot(C)));
+});
+
+test('a playerReaction window opens only for the root owner or enemies the root card targets', () => {
+  const { C } = coop({ enemyIds: ['gildedKnight', 'courtDuelist'] });
+  const [knight, duelist] = C.enemies;
+  const group = { key: 'g', sourceId: knight.id, targets: {}, enemyWindows: 1 };
+  // The pushed reaction hits the Duelist, but the Duelist neither owns the root nor is its target.
+  const opened = openEnemyWindow(C, group, 'playerReaction', { ownerId: 'a', incoming: { [duelist.id]: 9 } }, {});
+  assert.deepEqual(opened, []);
+  assert.equal(C.rng.getCounters().enemyReaction || 0, 0, 'no window, so no draw');
 });

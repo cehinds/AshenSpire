@@ -452,7 +452,8 @@ export function joinCombat(C, player) {
     }
     rescaleEnemies(C);
     if (C.phase === 'suspended') {
-      if (C.pendingReaction || C.reactionCursor) {
+      // A player-card root left mid-window (its stack or deferred root card) resumes like a reaction.
+      if (C.pendingReaction || C.reactionCursor || C.reactionStack || C.reactionRootPlay) {
         C.phase = C.reactionCursor ? 'enemy' : 'player';
         if (!C.pendingReaction) resumeReaction(C);
         return existing;
