@@ -287,15 +287,16 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
     indices[key].forEach((index, i) => { receipt.defendedAmounts[index] = shares[i]; });
   }
   // Ward meets every hit first (Spell and physical alike), once per action:
-  // it absorbs what it can but always lets at least 1 through, and is spent by
-  // the whole hit it meets, so it wears away instead of resisting forever.
-  // What passes then meets Block (physical) or Barrier (Spell), then Health.
+  // its budget is shared over the hits, each hit it meets still lets at least
+  // 1 through, and Ward is spent by its whole share, so it wears away instead
+  // of resisting forever. What passes then meets Block (physical) or Barrier
+  // (Spell), then Health.
   const total = receipt.defendedAmounts.reduce((sum, amount) => sum + amount, 0);
   const pool = Math.max(0, target.persistentWard?.value || 0);
-  const passing = total > 0 && pool > 0 ? Math.max(1, total - pool) : total;
   const defended = [...receipt.defendedAmounts];
-  receipt.defendedAmounts = total > 0 ? allocateInteger(passing, defended) : defended.map(() => 0);
   receipt.wardSpentAmounts = total > 0 ? allocateInteger(Math.min(pool, total), defended) : defended.map(() => 0);
+  receipt.defendedAmounts = defended.map((amount, index) => amount > 0 && receipt.wardSpentAmounts[index] > 0
+    ? Math.max(1, amount - receipt.wardSpentAmounts[index]) : amount);
   receipt.resistedAmounts = receipt.amounts.map((amount, index) => Math.max(0, amount - receipt.defendedAmounts[index]));
   receipt.guardBypassRemaining = receipt.guardBypass || 0;
 }

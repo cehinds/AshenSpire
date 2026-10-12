@@ -132,3 +132,14 @@ test('a combatant starts with half its Ward rating as its Ward pool', () => {
   assert.equal(persistentWardMaximum({}, { ratings: { ward: 25 } }), 12);
   assert.equal(persistentWardMaximum({ ratingsRules: { resistance: { wardPool: 1 } } }, { ratings: { ward: 25 } }), 25);
 });
+
+test('each hit Ward meets still lets at least 1 damage through', () => {
+  const { combat, enemy } = fixture();
+  enemy.persistentWard.value = enemy.persistentWard.max = 20;
+  const before = enemy.hp;
+  const out = dispatch(combat, { type: 'playCard', cardInstanceId: 'paired', targetId: enemy.id });
+  const damage = out.events.filter(event => event.type === 'damageDealt' && event.targetId === enemy.id);
+  assert.deepEqual(damage.map(event => event.amount), [1, 1]);
+  assert.equal(before - enemy.hp, 2);
+  assert.equal(enemy.persistentWard.value, 10);
+});
