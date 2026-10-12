@@ -19,6 +19,9 @@ import { combatProfileFor } from '../src/model/combatCardProfile.js';
 import { kindForCard, stanceForCard } from '../src/model/alternativeStance.js';
 import { resolveCombatAnimation } from '../src/model/combatAnimation.js';
 import { isPureDodge } from '../src/framework/importer.js';
+import { readFileSync } from 'node:fs';
+import { runInNewContext } from 'node:vm';
+import * as animationPace from '../src/ui/animationPace.js';
 
 const card = (maneuver, extra = {}) => ({ cardTags: ['camp:physical', 'maneuver:'+maneuver], ...extra });
 
@@ -115,6 +118,37 @@ test('finite reactions accept only confirmed player guard breaks and genuine eva
   }
   assert.equal(selectedWeaponReactionFor({type:'combatGuardBroken',targetId:'e1'},pilot),null);
   assert.equal(selectedWeaponReactionFor({type:'attackEvaded',targetId:'player'},null),null);
+});
+
+test('the solo screen reaction hook imports its timing helpers and calls the current target stage', () => {
+  const source=readFileSync(new URL('../src/ui/screens/combat.js',import.meta.url),'utf8');
+  const imports=source.match(/import \{([^}]+)\} from '\.\.\/animationPace\.js';/);
+  assert.ok(imports,'the screen imports its animation timing dependencies');
+  const bindings=Object.fromEntries(imports[1].split(',').map(name=>name.trim()).map(name=>[name,animationPace[name]]));
+  const begin=source.indexOf('    reactionForReceipt: event => {'),end=source.indexOf('\n    combatEl,',begin);
+  assert.ok(begin>0&&end>begin);
+  const calls=[],anchor={};
+  let current={reactionPoses:['guard-break','evade'],reactPose:(...args)=>calls.push(args)};
+  const fxCtx={anchorFor:id=>{assert.equal(id,'player');return anchor;}};
+  const combat={player:{alive:true}};
+  const factory=runInNewContext('({'+source.slice(begin,end)+'}).reactionForReceipt',{
+    ...bindings,selectedWeaponReactionFor,selectedProfile:()=>pilot,combat,fxCtx,stageFor:element=>{assert.equal(element,anchor);return current;},
+  });
+  try {
+    for(const speed of ['normal','slow','instant']) {
+      animationPace.setAnimSpeed(speed);
+      for(const event of [{type:'combatGuardBroken',targetId:'player'},
+        {type:'combatAvoidanceResolved',targetId:'player',avoided:true,evade:{success:true}}]) {
+        const callback=factory(event);assert.equal(typeof callback,'function');
+        callback();assert.deepEqual(calls.at(-1),[event.type==='combatGuardBroken'?'guard-break':'evade',animationPace.ANIM_SPEEDS[speed]?.reactionMs||280]);
+      }
+    }
+    const callback=factory({type:'combatGuardBroken',targetId:'player'});
+    current={reactionPoses:['guard-break'],reactPose:()=>calls.push(['replacement'])};callback();
+    assert.deepEqual(calls.at(-1),['replacement'],'a repaint routes to the replacement stage');
+    combat.player.alive=false;assert.equal(factory({type:'combatGuardBroken',targetId:'player'}),null);
+    assert.equal(factory({type:'combatAvoidanceResolved',targetId:'player',avoided:false,evade:{success:false}}),null);
+  } finally { animationPace.setAnimSpeed('normal'); }
 });
 
 test('selected holds preserve existing returns and finite reactions restore the live action or newest hold', async () => {
