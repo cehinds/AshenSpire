@@ -574,15 +574,21 @@ const resolveCache = new WeakMap();
 // The action-cost step (owner decision, 2026-10-12; model/actionCosts.js) runs once per resolved card, after the
 // upgrade and before the equipment and status mods, so a mod's flat bonus lands on the derived number (not scaled).
 // Cached per input object, so every surface reads the same derived card.
+// Keyed by the input object and the rank, since one base face is priced at every rank it is played at.
 const actionCostCards = new WeakMap();
-function derivedActionCost(def, authored) {
+function derivedActionCost(def, authored, rank = 0) {
   if (!def || typeof def !== 'object') return def;
-  const hit = actionCostCards.get(def);
+  let byRank = actionCostCards.get(def);
+  if (!byRank) actionCostCards.set(def, (byRank = new Map()));
+  const hit = byRank.get(rank);
   if (hit) return hit;
-  const derived = applyActionCosts(def, authored);
-  actionCostCards.set(def, derived);
+  const derived = applyActionCosts(def, authored, { rank });
+  byRank.set(rank, derived);
   return derived;
 }
+// The rank the cost formula reads (SPEC §4.3a): an authored ability grade is its own rank (0..5); a legacy instance
+// rank counts from 1, so its rank above the base is rank − 1.
+const costRankOf = (usesAbilityGrade, base, rank) => (usesAbilityGrade ? Math.max(0, Number(base.abilityRank) || 0) : Math.max(0, rank - 1));
 
 export function resolveCard(registries, instanceOrRef, breakMeterVersion = instanceOrRef.breakMeterVersion ?? registries.breakMeterVersion) {
   return resolveCardAuthored(registries, instanceOrRef, breakMeterVersion);
@@ -606,7 +612,7 @@ function resolveCardAuthored(registries, instanceOrRef, breakMeterVersion = inst
   const rank = cardRank(instanceOrRef);
   const skillBonus = cardSkillBonus(instanceOrRef);
   const passiveBlock = cardPassiveBlock(instanceOrRef);
-  if (!instanceOrRef.upgraded && !(mods && mods.length) && !profileId && !hasCarrier && smithingLevel === 0 && rank === 1 && skillBonus === 0 && passiveBlock === 0) return derivedActionCost(base, definition);
+  if (!instanceOrRef.upgraded && !(mods && mods.length) && !profileId && !hasCarrier && smithingLevel === 0 && rank === 1 && skillBonus === 0 && passiveBlock === 0) return derivedActionCost(base, definition, costRankOf(usesAbilityGrade, base, rank));
 
   let cache = resolveCache.get(registries);
   if (!cache) {
@@ -631,7 +637,7 @@ function resolveCardAuthored(registries, instanceOrRef, breakMeterVersion = inst
   let result = usesAbilityGrade ? base : cardForSchool(base, school);
   if (result !== base) result = deepFreeze(result);
   if (instanceOrRef.upgraded && !usesAbilityGrade) result = mergeUpgrade(result);
-  result = derivedActionCost(result, definition);
+  result = derivedActionCost(result, definition, costRankOf(usesAbilityGrade, base, rank));
   if (profileId) result = applyBasicCardProfile(result, profile);
   if (mods && mods.length) {
     const eq = registries.equipment || {};
