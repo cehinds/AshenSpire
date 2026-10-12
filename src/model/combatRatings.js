@@ -671,13 +671,17 @@ export function techniqueMagicShare(config) {
   return Number.isFinite(value) ? value : damageTypeRules.magicSplit.technique;
 }
 
+/** magicDamageTypeOf(profile) → the Ward type a hit's magic part deals: its school's, else its damage type when that is magic. */
+export function magicDamageTypeOf(profile) {
+  const row = damageTypeRules.schools?.[schoolOf(profile)];
+  if (row?.magicType) return row.magicType;
+  const type = canonicalDamageType(profile?.damageType);
+  return isMagicDamageType(type) ? type : null;
+}
+
 /** splitDamageTypesOf(profile) → the magic and physical damage types of a split hit. */
 export function splitDamageTypesOf(profile) {
-  const type = canonicalDamageType(profile?.damageType);
-  return {
-    magic: isMagicDamageType(type) ? type : 'arcane',
-    physical: profile?.physicalDamageType || (isPhysicalDamageType(type) ? type : 'blunt'),
-  };
+  return { magic: magicDamageTypeOf(profile) || 'arcane', physical: physicalTypeOf(profile) || 'blunt' };
 }
 
 export function ratingDamageMultiplier(ctx, target, magical) {

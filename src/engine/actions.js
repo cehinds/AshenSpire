@@ -40,7 +40,7 @@ import { commitSmithing, smithingPlan } from '../model/smithing.js';
 import * as Properties from './properties.js';
 import * as Ratings from './combatRatings.js';
 import { isMagicalAttack, ratingDamageMultiplier, attackImpact, schoolResistanceMultiplier, persistentWardMaximum, persistentPoiseMaximum,
-  canonicalDamageType, magicShareOf, splitDamageTypesOf } from '../model/combatRatings.js';
+  canonicalDamageType, magicShareOf, magicDamageTypeOf, splitDamageTypesOf } from '../model/combatRatings.js';
 import { swapRunClass } from '../model/classSwap.js';
 import { applyGraceRefill } from './encounters.js';
 import { orderedReturn } from '../model/deckRules.js';
@@ -308,7 +308,7 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
     const legacy = canonicalDamageType(profile.damageType) || 'blunt';
     // A weapon's authored physical type types the physical part whether or not the hit splits.
     const physical = profile.physicalDamageType || legacy;
-    return { amount, split, magic, physical: amount - magic, types: split ? splitDamageTypesOf(profile) : { magic: legacy, physical } };
+    return { amount, split, magic, physical: amount - magic, types: split ? splitDamageTypesOf(profile) : { magic: magicDamageTypeOf(profile) || legacy, physical } };
   });
   // Typed defence, once per (camp, type) group of parts.
   const parts = [];
