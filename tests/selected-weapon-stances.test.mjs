@@ -10,8 +10,57 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { figureSpec, gripOf } from '../src/model/loadout.js';
+import { createRunCombat } from '../src/engine/runCombat.js';
+import { createRng } from '../src/engine/rng.js';
+import { resolveCombatCard } from '../src/engine/combatExpansion.js';
+import { dispatch } from '../src/engine/combat.js';
+import { resolvePlayedCombatCard } from '../src/ui/models/PlayedCombatCard.js';
+import { combatProfileFor } from '../src/model/combatCardProfile.js';
+import { kindForCard, stanceForCard } from '../src/model/alternativeStance.js';
+import { resolveCombatAnimation } from '../src/model/combatAnimation.js';
+import { isPureDodge } from '../src/framework/importer.js';
 
 const card = (maneuver, extra = {}) => ({ cardTags: ['camp:physical', 'maneuver:'+maneuver], ...extra });
+
+function resolvedDodgeCards() {
+  const registries=createRegistries(contentBundle);
+  const run=createRunState({registries,classId:'reaver',seed:11,combatExpansionVersion:2,
+    startingHands:{rightHand:'greatsword',leftHand:null}});
+  const dodge=run.deck.find(entry=>entry.cardId==='dodgeRoll');
+  assert.ok(dodge,'the actual empty-offhand starter grants Dodge');
+  // Evasive Guard is a production card, resolved in the same real startup kit.
+  const evasive={instanceId:'regression:evasiveGuard',cardId:'evasiveGuard'};
+  run.deck=[dodge,evasive,...run.deck.filter(entry=>entry!==dodge)];
+  const combat=createRunCombat({registries,run,rng:createRng(11),enemyIds:['wanderingSoldier'],settings:{playInDeckOrder:true}});
+  return {combat,instances:[dodge,evasive],definitions:[dodge,evasive].map(instance=>resolveCombatCard(combat,instance))};
+}
+
+test('resolved starter Dodge chooses Evade preparation while mixed Evasive Guard keeps its authored Counter', () => {
+  const {combat,instances,definitions}=resolvedDodgeCards();
+  for(const [index,definition] of definitions.entries()) {
+    const expected=index===0?'evade':'counter';
+    assert.equal(combatProfileFor(definition).maneuver,'counter');
+    assert.equal(kindForCard(definition).maneuver,'counter','the intent glyph retains authored identity');
+    assert.equal(isPureDodge(definition),index===0);
+    const before=structuredClone(definition);
+    const stance=selectedWeaponStanceFor({profile:pilot,stance:stanceForCard(definition),card:definition,entity:combat.player});
+    assert.equal(stance,expected);
+    assert.deepEqual(definition,before,'selecting a painting does not mutate mechanics or payloads');
+    const plan=resolveCombatAnimation(definition,[],{classId:'reaver',appearance:'alternative',combatExpansionVersion:2});
+    assert.deepEqual([plan.technique,plan.rest],['counterPrepare','counter']);
+    assert.equal(resolveCombatAnimation(definition,[],{classId:'reaver',appearance:'alternative',combatExpansionVersion:2,counterTriggered:true}).technique,'counter');
+    combat.player.energy=combat.player.stamina=combat.player.mana=20;
+    const out=dispatch(combat,{type:'playCard',cardInstanceId:instances[index].instanceId,targetId:combat.player.id});
+    const receipt=out.events.find(event=>event.type==='cardPlayed');
+    assert.ok(receipt,'use a real paid card receipt');
+    const snapshot=resolvePlayedCombatCard(combat,receipt);
+    assert.deepEqual(snapshot.cardTags,receipt.cardTags);
+    assert.deepEqual(snapshot.effects,definition.effects);
+    assert.deepEqual(snapshot.counterPayload,definition.counterPayload);
+    assert.equal(kindForCard(snapshot).maneuver,'counter');
+    assert.equal(selectedWeaponStanceFor({profile:pilot,stance:stanceForCard(snapshot),card:snapshot,entity:combat.player}),expected);
+  }
+});
 
 test('the pilot requires the actual sole greatsword in either hand and its reviewed default wearer', () => {
   const base = { classId:'reaver', armourId:'default', grip:{mode:'two',right:'greatsword',left:null} };
@@ -46,6 +95,7 @@ test('evade art uses authored preparation/readiness, without changing other type
   assert.equal(resolve('offensive',card('ranged',{evade:{charges:1,whileStatus:'prone'}}),{combatEvade:{charges:1}}),'offensive');
   assert.equal(resolve('smash',card('smash'),{evade:1}),'smash','a newer confirmed/armed Smash wins over leftover charges');
   assert.equal(resolve('counter',card('counter'),{combatEvade:{charges:1}}),'counter');
+  assert.equal(resolve('casting',{cardTags:['camp:spell','maneuver:counter'],weightClassPriced:true}),'casting','the pure-dodge override remains physical');
   assert.equal(resolve(null,null,{evade:1}),'evade');
   assert.equal(resolve(null,null,{combatEvade:{charges:1,whileStatus:'prone'},statuses:{}}),null);
   assert.equal(resolve(null,null,{combatEvade:{charges:1,whileStatus:'prone'},statuses:{prone:{stacks:1,duration:1}}}),'evade');
@@ -95,6 +145,18 @@ test('selected holds preserve existing returns and finite reactions restore the 
     assert.equal(stage.pose,'pilot-counter','payment uses the selected held preparation');
     stage.play('counter',260);advance(60);
     assert.equal(stage.pose,'reaver.counter.contact','actual retaliation retains its existing contact painting');
+    for(const [index,definition] of resolvedDodgeCards().definitions.entries()) {
+      stage.settle();
+      stage.setStance(selectedWeaponStanceFor({profile:pilot,stance:stanceForCard(definition),card:definition}));
+      const timing=stage.actionTiming('counterPrepare');
+      stage.play('counterPrepare',260);advance(100);
+      assert.equal(stage.pose,index===0?'pilot-evade':'pilot-counter','resolved preparation uses the selected held painting');
+      assert.deepEqual(stage.actionTiming('counterPrepare'),timing,'painting does not change pacing');
+      stage.play('counter',260);advance(60);
+      assert.equal(stage.pose,'reaver.counter.contact','both cards retain the full Counter retaliation');
+      advance(210);
+      assert.equal(stage.pose,index===0?'stance-evade':'stance-counter','retaliation restores the current selected hold');
+    }
     stage.settle();stage.setStance('smash');stage.play('smash',500);advance(150);
     assert.equal(stage.pose,'smash-load');assert.match(stage.currentArt.image.url,/pilot-smash\.webp$/);
     assert.equal(stage.reactPose('guard-break',180),true);assert.equal(stage.pose,'pilot-guard-break');
@@ -114,7 +176,10 @@ test('selected holds preserve existing returns and finite reactions restore the 
     assert.equal(fallback.pose,'stance-counter');assert.doesNotMatch(fallback.currentArt.image.url,/pilot/);
     for(const mode of ['reduced','still','instant']){
       reduced=mode==='reduced';setAnimSpeed(mode==='instant'?'instant':'normal');
-      const staticStage=await make({weaponProfile:pilot,still:mode==='still'});staticStage.setStance('smash');
+      const staticStage=await make({weaponProfile:pilot,still:mode==='still'});
+      staticStage.setStance('evade');staticStage.play('counterPrepare',mode==='instant'?0:260);
+      assert.equal(staticStage.pose,'stance-evade',mode+' preparation keeps the selected static Evade hold');
+      staticStage.setStance('smash');
       assert.equal(staticStage.reactPose('evade',180),true,mode+' displays the chosen static pose');
       assert.equal(staticStage.pose,'pilot-evade');advance(190);assert.equal(staticStage.pose,'stance-smash',mode+' restores the hold within its bounded lifetime');
     }
