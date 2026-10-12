@@ -109,7 +109,20 @@ export function alternativeCardFadeHtml() {
 // Fit the art canvas to the actual battlefield, keeping its measured ground
 // aligned with the current formation. HUD/cards/footer and actor slots stay owned
 // by their existing models. Never stretch a layer independently of its canvas.
-export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground, standGround, narrow, coverFloor = false }) {
+// Share of a landmark art's height at which its floor meets the buildings
+// (the horizon), measured on the phone art. TODO(config): move to the scene data.
+export const LANDMARK_HORIZON_SHARE = .458;
+
+// The field-relative camera ground that puts the art's horizon `share` of the
+// way down the field (0 = top edge). Undefined when the device has no landmark.
+export function horizonCameraGround(device, { height, scale, share }) {
+  const landmark = device.layers?.find(layer => /landmark/.test(layer.id));
+  if (!landmark || !(height > 0) || !(scale > 0) || !Number.isFinite(share)) return undefined;
+  const horizon = landmark.y + LANDMARK_HORIZON_SHARE * landmark.height;
+  return share * height + (device.groundAnchor * device.height - horizon) * scale;
+}
+
+export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground, standGround, narrow, horizonShare, coverFloor = false }) {
   const backdrop = combat.querySelector('.alternative-backdrop');
   const scene = alternativeArtCatalog.scenes[backdrop?.dataset.scene];
   if (!scene || width <= 0 || height <= 0) return;
@@ -117,6 +130,10 @@ export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground
   const device = scene.devices[key];
   const svg = backdrop.querySelector('svg');
   const scale = Math.max(width / device.width, height / device.height);
+  // A desktop camera may frame the horizon on a fixed share of the field instead
+  // of the enemies' ground; the phone never passes horizonShare.
+  const horizonGround = key === 'desktop' ? horizonCameraGround(device, { height, scale, share: horizonShare }) : undefined;
+  if (Number.isFinite(horizonGround)) ground = horizonGround;
   // Combat follows the fitted enemies while keeping the floor canvas beneath
   // the entire battlefield; moving it farther up exposes its lower edge.
   // Other callers (dialogue) keep their own floor line.

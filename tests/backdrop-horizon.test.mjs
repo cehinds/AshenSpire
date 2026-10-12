@@ -48,3 +48,20 @@ test('the backdrop never frames so low that the back-row feet leave its standing
   const stage = readFileSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url), 'utf8');
   assert.match(stage, /standGround: combatStandingGround\(sizes, actors, plan\.ground\) \/ zoom/);
 });
+
+// Owner (2026-10-12): the desktop camera frames the landmark's horizon in the
+// top band of the field, like the phone (about 13%), not above it.
+test('a desktop camera puts the landmark horizon a set share of the way down the field', async () => {
+  const { alternativeArtCatalog } = await import('../src/ui/alternativeArtCatalog.js');
+  const { horizonCameraGround, LANDMARK_HORIZON_SHARE } = await import('../src/ui/alternativeArt.js');
+  const device = alternativeArtCatalog.scenes['pale-marches-2'].devices.desktop;
+  const height = 347.5, width = 1200;
+  const scale = Math.max(width / device.width, height / device.height);
+  const ground = horizonCameraGround(device, { height, scale, share: .2 });
+  const landmark = device.layers.find(layer => /landmark/.test(layer.id));
+  const horizonCanvas = landmark.y + LANDMARK_HORIZON_SHARE * landmark.height;
+  // The canvas top sits at fieldTop + ground - groundAnchor * device.height * scale.
+  const horizonOnField = ground - device.groundAnchor * device.height * scale + horizonCanvas * scale;
+  assert.ok(Math.abs(horizonOnField - .2 * height) < 1e-9, `horizon at ${horizonOnField / height} of the field`);
+  assert.equal(horizonCameraGround({ layers: [], height: 1024, width: 1536, groundAnchor: .82 }, { height, scale, share: .2 }), undefined);
+});
