@@ -1,0 +1,55 @@
+{
+  "generated_at_utc": "2026-10-12T16:21:00Z",
+  "tool": "tools.image_gen__imagegen",
+  "exact_prompt_file": "sheet-a-revision.prompt.txt",
+  "requested_dimensions": [1024, 1536],
+  "actual_dimensions": [1024, 1536],
+  "mode": "RGBA",
+  "alpha_extrema": [0, 254],
+  "transparent_background": true,
+  "input_images": [
+    {
+      "path": "pose-studio/stances/update-stances/greatsword-sweep/sheet-a.png",
+      "sha256": "1d17d81b813d247b89e53ea4f6fa6919679ab96512087a343fc5e5641a32def1",
+      "use": "revise pose sheet while retaining pose ideas"
+    },
+    {
+      "path": "docs/design/class-armor-rear-2026-10-06/masters/reaver-default.png",
+      "sha256": "013f46c2d92303243da8527fcf9a15bd7c31f41e3add503e3fdd6ebc8f9950cd",
+      "use": "costume identity"
+    },
+    {
+      "path": "assets-display/alternative/reaver-greatsword-pilot-sweep.webp",
+      "sha256": "d34545f9058599fa53380e732aea7013bfbc18c38daacbf085b3222c9932a35b",
+      "use": "selected Sweep camera, body scale, and greatsword proportions"
+    },
+    {
+      "path": "assets-display/alternative/reaver-greatsword-pilot-smash.webp",
+      "sha256": "9abfefe7258a3bfa2238e7c0516396c61baa5ca009a649b8408183b91fcdf6e2",
+      "use": "selected Smash camera, body scale, and greatsword proportions"
+    }
+  ],
+  "original_tool_output": "/workspace/generated_images/exec-34f6dc5a-da33-4aaa-b640-42e0f6e28c18.png",
+  "preserved_canonical_file": "sheet-a-revision.original.png",
+  "sha256": "774f170b629b8b11b212702a0bd10a776afc34863d198316d7d26c54a63f09fd",
+  "additional_tool_outputs": [
+    {
+      "path": "/workspace/generated_images/exec-b972a1bd-dda1-4251-a1a0-cbc22dad56f7.png",
+      "preserved_file": "sheet-a-revision-variation.original.png",
+      "sha256": "a072fe00348d8a904f2fd2ceef37bdf38b23d1c518e8b17a4a065613a2553919"
+    },
+    {
+      "path": "/workspace/generated_images/exec-b397e393-6061-44f1-9067-56f6a87a1e7f.png",
+      "preserved_file": "sheet-a-revision-variation2.original.png",
+      "sha256": "ac43c85c1a98463114b4b94c8490316663adcd46db553a4796ea70fbb6a0b1f8"
+    }
+  ],
+  "raw_output_preserved": true,
+  "review_status": "pending art director review",
+  "production_status": "concept only; not selected or runtime art",
+  "observed_deviations": [
+    "All revised outputs still exceed the centered 368x368 safe boxes; the first two include silhouettes crossing cell boundaries.",
+    "The scale revision improved separation on variation2, whose five threshold-alpha bboxes remain within their respective 512px cells, but its silhouettes still exceed the safe-box target.",
+    "SW11/SW13 visual similarity and two-hand grip readability remain for director review; no sheet is marked approved."
+  ]
+}

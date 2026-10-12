@@ -1,0 +1,53 @@
+{
+  "generated_at_utc": "2026-10-12T16:18:00Z",
+  "tool": "tools.image_gen__imagegen",
+  "exact_prompt_file": "sheet-b.prompt.txt",
+  "requested_dimensions": [
+    1024,
+    1536
+  ],
+  "actual_dimensions": [
+    1024,
+    1536
+  ],
+  "mode": "RGBA",
+  "alpha_extrema": [
+    0,
+    254
+  ],
+  "transparent_background": true,
+  "original_tool_output": "/workspace/generated_images/exec-2b84653a-2ff3-4851-9bc3-3fab49a00306.png",
+  "preserved_canonical_file": "sheet-b.png",
+  "sha256": "d397a0dee7fbab250838e5385a47e7e9f54b342ca7896292cb7d78abc04ed8dd",
+  "additional_tool_output": {
+    "path": "/workspace/generated_images/exec-7fb1ee8e-8438-414a-a759-25cff29e34fe.png",
+    "preserved_file": "sheet-b-variation.original.png",
+    "sha256": "cbdc645cdc8efa0c7b8d586e911f866014ac9182f402733e2a27189ed3e6ce27"
+  },
+  "referenced_images": [
+    {
+      "path": "docs/design/class-armor-rear-2026-10-06/masters/reaver-default.png",
+      "sha256": "013f46c2d92303243da8527fcf9a15bd7c31f41e3add503e3fdd6ebc8f9950cd",
+      "use": "Reaver costume identity"
+    },
+    {
+      "path": "assets-display/alternative/reaver-greatsword-pilot-sweep.webp",
+      "sha256": "d34545f9058599fa53380e732aea7013bfbc18c38daacbf085b3222c9932a35b",
+      "use": "selected Sweep camera, body scale, and greatsword proportions"
+    },
+    {
+      "path": "assets-display/alternative/reaver-greatsword-pilot-smash.webp",
+      "sha256": "9abfefe7258a3bfa2238e7c0516396c61baa5ca009a649b8408183b91fcdf6e2",
+      "use": "selected Smash camera, body scale, and greatsword proportions"
+    }
+  ],
+  "raw_output_preserved": true,
+  "review_status": "pending art director review",
+  "production_status": "concept only; not selected or runtime art",
+  "observed_deviations": [
+    "Both returned image outputs are much larger than the requested 368x368 centered content boxes and cross or reach the cell bounds.",
+    "Canonical output bboxes at alpha > 32 are [81,180,495,512], [621,81,955,512], [71,632,515,965], [613,658,944,966], and [89,1141,532,1390], so multiple components cross into neighboring slot regions.",
+    "The visible concepts are cutlass/short-sword-like rather than the required long greatsword, and the grips do not consistently read as two clearly separated hands on a single two-handed hilt.",
+    "Direct view_image display shows hidden-RGB haze, but neutral compositing over white shows transparent background and clearly visible figure pixels; this is a viewer hidden-RGB issue rather than a visible background defect."
+  ]
+}
