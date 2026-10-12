@@ -1314,7 +1314,10 @@ export function mountRewards(app, {
         tile.after(inspection);
       }
     }
-    if (isRelic) strip.classList.add('reward-choice-grid');
+    if (isRelic) {
+      strip.classList.add('reward-choice-grid');
+      strip.style.setProperty('--choice-count', String(ids.length));
+    }
     for (const id of isRelic ? ids : []) {
       const option = relicOption(id);
       // One column per relic: the card face on top at glance (no inspection door,
@@ -1402,8 +1405,10 @@ export function mountRewards(app, {
     }
     for (const choiceId of isNodeRow || isLevelChoice || isRankUp || isRelic || (isMilestone && row.rewardKind !== 'cards') ? [] : ids) {
       const cardId = (row.cardIds || row.options)[ids.indexOf(choiceId)];
-      // Card choices share the relic chooser's grid: one row of option columns.
+      // Card choices share the relic chooser's grid: one row of option columns,
+      // sized to the offer (kit.css reads --choice-count).
       strip.classList.add('reward-choice-grid');
+      strip.style.setProperty('--choice-count', String(ids.length));
       // This face only selects; collection belongs to Confirm. Inspection must
       // not consume the touch tap before selection enables that button.
       // THE DOOR OFFERS THE VERB THE PLAYER CAME FOR. Opening a card here used
