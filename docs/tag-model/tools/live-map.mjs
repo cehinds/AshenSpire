@@ -26,6 +26,7 @@ export const LIVE = {
   'meta.combat.damage.magic.lightning': 'damage:lightning',
   'meta.combat.damage.magic.divine': 'damage:sacred',
   'meta.combat.damage.magic.necrotic': 'damage:decay',
+  'meta.combat.damage.hybrid': 'damage.arcane',
   'meta.combat.damage.hybrid.force': 'damage:arcane',
   // spellcraft (one school per element; the school nodes, not the damage types)
   'meta.combat.skill.spellcraft.fire': 'school:fire',
@@ -463,7 +464,6 @@ export const LIVE = {
   'grantSource.weapon': 'from:weapon',
   'grantSource.class': 'from:class',
   // proposed live mapping (domain pass)
-  'meta.combat.damage.arcane': 'damage.arcane',
   'meta.combat.damage.blade': 'damage.blade',
   'meta.combat.damage.blunt': 'damage.blunt',
   'meta.combat.damage.piercing': 'damage.piercing',
@@ -560,7 +560,6 @@ export const GAME = new Set([
   'meta.combat.skill.weapon-skill.dual-wield',
   'meta.combat.skill.spellcraft.earth',
   'meta.combat.damage.magic.earth',
-  'meta.combat.damage.hybrid',
   'meta.combat.stance.defensive.evade',
   'meta.combat.delivery.area',
   'meta.combat.recovery',

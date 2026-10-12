@@ -210,7 +210,7 @@ meta.combat.damage.magic.earth,magic.earth,Earth,meta.combat.damage.magic,Damage
 meta.combat.damage.magic.divine,magic.divine,Divine,meta.combat.damage.magic,DamageType,spellcraft.divine,cleanses,On hit: cleanse one debuff from the attacker,,,,,live-tag,◇,9FC3E8,damage:sacred
 meta.combat.damage.magic.necrotic,magic.necrotic,Necrotic,meta.combat.damage.magic,DamageType,spellcraft.necrotic,→ Blighted,On hit: apply [blighted],,,,,live-tag,◇,9FC3E8,damage:decay
 meta.combat.damage.magic.psychic,magic.psychic,Psychic,meta.combat.damage.magic,DamageType,spellcraft.psychic,→ Confused,On hit: apply [confused],,,,,new,,,
-meta.combat.damage.hybrid,hybrid,Hybrid,meta.combat.damage,DamageType,,,,,,,,game-concept,,,
+meta.combat.damage.hybrid,hybrid,Hybrid,meta.combat.damage,DamageType,,,,,,,,live-tag,,,damage.arcane
 meta.combat.damage.hybrid.force,hybrid.force,Force,meta.combat.damage.hybrid,DamageType,spellcraft.force,Block or Barrier stops it,Drains 2 [defensive-stats.ward]; slips past melee Counter,,,,,live-tag,◇,9FC3E8,damage:arcane
 meta.combat.stance,combat.stance,Stance,meta.combat,Stance,,,,,,,,live-tag,,,maneuver
 meta.combat.stance.offensive,offensive,Offensive,meta.combat.stance,Stance,,,,,,,,game-concept,,,
@@ -445,7 +445,7 @@ meta.presentation.fx.shield,fx.shield,shield,meta.presentation.fx,TagNode,,shiel
 meta.presentation.fx.barrier,fx.barrier,barrier,meta.presentation.fx,TagNode,,barrier visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:barrier
 meta.presentation.fx.ward,fx.ward,ward,meta.presentation.fx,TagNode,,ward visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:ward
 meta.presentation.fx.magic,fx.magic,magic,meta.presentation.fx,TagNode,,magic visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:magic
-meta.presentation.fx.arcane,fx.arcane,arcane,meta.presentation.fx,TagNode,,arcane visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:arcane
+meta.presentation.fx.arcane,arcane,arcane,meta.presentation.fx,TagNode,,arcane visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:arcane
 meta.presentation.fx.dodge,fx.dodge,dodge,meta.presentation.fx,TagNode,,dodge visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:dodge
 meta.presentation.fx.riposte,riposte,riposte,meta.presentation.fx,TagNode,,riposte visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:riposte
 meta.presentation.fx.heal,fx.heal,heal,meta.presentation.fx,TagNode,,heal visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:heal
@@ -743,7 +743,6 @@ grantSource.relic,grantSource.relic,Relic,grantSource,TagNode,,Carried in by the
 grantSource.armor,grantSource.armor,Armor,grantSource,TagNode,,Bound to the outfit the run begins wearing.,,,,,,live-tag,▣,7FA8C9,from:armor
 grantSource.weapon,grantSource.weapon,Weapon,grantSource,TagNode,,Bound to an armament in hand at creation.,,,,,,live-tag,⚔,C9502E,from:weapon
 grantSource.class,grantSource.class,Class,grantSource,TagNode,,The class signature card.,,,,,,live-tag,✦,9FC3E8,from:class
-meta.combat.damage.arcane,damage.arcane,arcane,meta.combat.damage,DamageType,,Arcane damage. Builds Arcane Exposure on enemies that track it.,,,,,,live-tag,,,damage.arcane
 meta.combat.damage.blade,damage.blade,blade,meta.combat.damage,DamageType,,Damage dealt with an edge.,,,,,,live-tag,,,damage.blade
 meta.combat.damage.blunt,damage.blunt,blunt,meta.combat.damage,DamageType,,Damage dealt with mass and impact.,,,,,,live-tag,,,damage.blunt
 meta.combat.damage.piercing,piercing,piercing,meta.combat.damage,DamageType,,Damage dealt with a point.,,,,,,live-tag,,,damage.piercing

@@ -52,7 +52,7 @@ None: every live id is mapped by at most one tag.
 
 ## 3. Field parity
 
-78 differences.
+79 differences.
 
 | Model tag | Live id | Field | Model | Live |
 |---|---|---|---|---|
@@ -95,6 +95,7 @@ None: every live id is mapped by at most one tag.
 | meta.combat.damage.magic.divine | damage:sacred | label | Divine | Holy |
 | meta.combat.damage.magic.divine | damage:sacred | parent | meta.combat.damage.magic | damageType (mapped to damageType) |
 | meta.combat.damage.magic.necrotic | damage:decay | parent | meta.combat.damage.magic | damageType (mapped to damageType) |
+| meta.combat.damage.hybrid | damage.arcane | label | Hybrid | arcane |
 | meta.combat.damage.hybrid.force | damage:arcane | parent | meta.combat.damage.hybrid | damageType (mapped to damageType) |
 | meta.combat.stance | maneuver | label | Stance | Combat maneuver |
 | meta.combat.stance | maneuver | parent | meta.combat | (live root) |

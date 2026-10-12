@@ -262,7 +262,6 @@ Meta
         Psychic [n] {→ Confused}
       Hybrid
         Force {Block or Barrier stops it}
-      arcane {Arcane damage. Builds Arcane Exposure on enemies that track it.}
       blade {Damage dealt with an edge.}
       blunt {Damage dealt with mass and impact.}
       piercing {Damage dealt with a point.}
