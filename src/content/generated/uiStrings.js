@@ -9192,5 +9192,159 @@ export const uiStrings = [
     "short": "{stance} ?",
     "full": "",
     "tip": ""
+  },
+  {
+    "id": "creation.category.attributes",
+    "extends": "",
+    "short": "Attributes",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.category.keepsake",
+    "extends": "",
+    "short": "Keepsake",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.category.feats",
+    "extends": "",
+    "short": "Feats",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.category.spells",
+    "extends": "",
+    "short": "Spells",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.section.attributes",
+    "extends": "",
+    "short": "ATTRIBUTES",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.section.feats",
+    "extends": "",
+    "short": "FEATS",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.section.spells",
+    "extends": "",
+    "short": "SPELLS",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.eyebrow",
+    "extends": "",
+    "short": "CHARACTER TRAITS",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.title",
+    "extends": "",
+    "short": "Explore feats",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.description",
+    "extends": "",
+    "short": "Learn how permanent feats shape your journey.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.availability",
+    "extends": "",
+    "short": "Earn feats as you level up. Browsing here does not grant a starting feat.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.detailLabel",
+    "extends": "",
+    "short": "Feat details",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.none",
+    "extends": "",
+    "short": "No starting feats",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.spells.eyebrow",
+    "extends": "",
+    "short": "STARTING MAGIC",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.spells.title",
+    "extends": "",
+    "short": "Choose your spells",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.spells.description",
+    "extends": "",
+    "short": "Choose your starting Rank {rank} spells before beginning the journey.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.spells.unavailable",
+    "extends": "",
+    "short": "This class has no starting spell choices.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.review.edit",
+    "extends": "",
+    "short": "Edit {category}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.continueTo",
+    "extends": "",
+    "short": "Continue to {category}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.step.progress",
+    "extends": "",
+    "short": "{index} of {count} · {category}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.nav.allSteps",
+    "extends": "",
+    "short": "All steps",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.nav.allStepsLabel",
+    "extends": "",
+    "short": "Open all character creation steps.",
+    "full": "",
+    "tip": ""
   }
 ];
