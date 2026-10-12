@@ -153,7 +153,7 @@ export function createCreationFeatBrowser({ feats = [], groups = null, selectedI
     if (notify) {
       node.dataset.detailOpen = 'true';
       onInspect?.(row.id, row);
-      if (globalThis.matchMedia?.('(max-width: 960px)').matches) requestAnimationFrame(() => detail.scrollIntoView({ block: 'nearest', behavior: 'smooth' }));
+      if (globalThis.matchMedia?.('(max-width: 960px)').matches) requestAnimationFrame(() => detail.scrollIntoView({ block: 'nearest', behavior: globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }));
     }
     return true;
   }
@@ -164,7 +164,7 @@ export function createCreationFeatBrowser({ feats = [], groups = null, selectedI
     for (const row of group?.rows || []) {
       const key = keyOf(row, group);
       const tile = creationChoiceTile({ id: row.id, title: row.name,
-        description: labels.shortDescriptions?.[row.id] || (FEAT_ICONS[row.id] ? t(`creation.feats.summary.${row.id}`) : row.description.split(/(?<=[.!?])\s/)[0]),
+        description: labels.shortDescriptions?.[row.id] || (FEAT_ICONS[row.id] ? t(`creation.feats.summary.${row.id}`) : String(row.description || '').split(/(?<=[.!?])\s/)[0]),
         art: creationFeatEmblem(row.id), onChoose: () => inspect(key),
         attrs: { 'aria-controls': labels.detailId || null, dataset: { feat: row.id, featKey: key, featGroup: group.id, locked: String(!!row.locked) } },
       });
