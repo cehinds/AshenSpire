@@ -1,4 +1,5 @@
 import * as Actions from './actions.js';
+import * as Statuses from './statuses.js';
 import { combatStatusRules } from '../content/combatStatusRules.js';
 import { syncWardMaximum, syncPoiseMaximum } from './combatPools.js';
 import { persistentPoiseMaximum } from '../model/combatRatings.js';
@@ -211,7 +212,12 @@ export function restorePersistentPoise(ctx, entity, nominal, options = {}) {
   const room = missingMode ? Math.max(0, poise.missing) : poise.max - poise.value;
   const whole = Math.floor(credit + 1e-9);
   const restored = Math.min(room, whole);
-  const block = overflow ? whole - restored : 0;
+  let block = overflow ? whole - restored : 0;
+  // The overflow is Block, so it honors the entity's blockCap as gainBlock does.
+  if (block > 0) {
+    const cap = Statuses.getCap(ctx, entity, 'blockCap');
+    if (cap != null) block = Math.min(block, Math.max(0, cap - (entity.block || 0)));
+  }
   if (missingMode) {
     const missingAfter = room - restored;
     poise.value = Math.max(0, Math.min(poise.max, poise.max - missingAfter));
