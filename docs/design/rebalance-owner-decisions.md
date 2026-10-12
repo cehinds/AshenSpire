@@ -23,3 +23,4 @@ Detail and rationale: `docs/design/elements-and-tag-mechanics.md`.
 14. Poison immunity: constructs halve its build-up; undead take it normally.
 15. Silenced exists: add the `spellDamageDealtMult` modifier.
 16. Weapon attack cards get a fixed `damage:*` tag (owner override of the weapon-derived reading in SPEC §4.7; SPEC to be updated).
+17. Codex P2 findings on the unwired Combat Rounds preview (PR #1888) after `8086a5a` are answered and deferred to the wiring phase, not chased in the port.
