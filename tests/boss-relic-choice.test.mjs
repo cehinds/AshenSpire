@@ -15,6 +15,8 @@ import { rollRelicChoices, rollRelicReward } from '../src/engine/encounters.js';
 import { configuredRewardOffer, pendingRewardCheckpoint } from '../src/model/rewardSourcePolicy.js';
 import { resolveContinue, rewardClaimStatus, rewardPlan } from '../src/model/rewardplan.js';
 import { createRunState, validateRunShape } from '../src/model/state.js';
+import { mountRewards } from '../src/ui/screens/reward.js';
+import { withKitDom } from './helpers/kit-dom.mjs';
 
 const REG = createRegistries(contentBundle);
 const BOSS_POOL = REG.relics.all().filter((r) => r.rarity === 'boss' && relicInRewardPool(r)).map((r) => r.id);
@@ -145,4 +147,63 @@ test('the run-state validator refuses duplicate or empty relicChoices', () => {
   assert.ok(pendingProblems(run).some((p) => p.includes('relicChoices must be an array of distinct')));
   run.pendingReward = bossPending({ rewards: { relicChoices: ['wardenHorn', ''] } });
   assert.ok(pendingProblems(run).some((p) => p.includes('relicChoices must be an array of distinct')));
+});
+
+// ---- the reward screen: the chooser, the apply path and the checkpoint ----
+// Mounts the production reward screen on the kit stub DOM (tests/helpers/kit-dom.mjs),
+// the fixture the other reward-screen tests use.
+function mountBossReward(dom, { relicChoices, run, checkpoint = pendingRewardCheckpoint({ relicChoices }, { source: 'boss', after: 'advanceAct' }) }) {
+  // The card door's shape watcher reads document.documentElement.dataset; the
+  // stub has no <html>, so the body stands in for it (the door reads no more).
+  dom.document.documentElement ??= dom.document.body;
+  const app = dom.document.createElement('main');
+  dom.document.body.replaceChildren(app);
+  mountRewards(app, {
+    registries: REG, run, onDone() {}, checkpoint,
+    onPersist: () => true,
+    saves: { loadMeta: () => ({ settings: { levelUpRefillSeconds: 0 } }), saveMeta() {} },
+    rewards: { relicChoices },
+  });
+  return { app, checkpoint };
+}
+const pickButtons = (app) => app.querySelectorAll('.reward-row .reward-pick').filter((el) => el.tagName === 'BUTTON');
+const CHOICES = ['crownOfStitches', 'wardenHorn', 'ashOfRemembrance'];
+
+test('the boss relic choice opens a chooser with one tile per offered relic', () => {
+  withKitDom((dom) => {
+    const run = createRunState({ seed: 0x10a5, classId: 'reaver', registries: REG });
+    run.relics = [];
+    const { app } = mountBossReward(dom, { relicChoices: CHOICES, run });
+    app.querySelector('.reward-kind[data-kind="relic"]').click();
+    assert.deepEqual(pickButtons(app).map((el) => el.dataset.pickId), CHOICES, 'three relic options, in offer order');
+    assert.equal(app.querySelector('#reward-card-confirm').disabled, true, 'nothing picked, nothing to confirm');
+  });
+});
+
+test('confirming one boss relic adds exactly that relic and checkpoints the pick', () => {
+  withKitDom((dom) => {
+    const run = createRunState({ seed: 0x10a5, classId: 'reaver', registries: REG });
+    run.relics = [];
+    const { app, checkpoint } = mountBossReward(dom, { relicChoices: CHOICES, run });
+    app.querySelector('.reward-kind[data-kind="relic"]').click();
+    pickButtons(app)[1].click();
+    app.querySelector('#reward-card-confirm').click();
+    assert.deepEqual(run.relics, ['wardenHorn'], 'exactly the picked relic is held');
+    assert.equal(checkpoint.chosenRelicId, 'wardenHorn', 'the pick is checkpointed');
+    assert.equal(checkpoint.states.relic, 'taken');
+  });
+});
+
+test('a boss relic pick the run already holds lands nothing', () => {
+  withKitDom((dom) => {
+    const run = createRunState({ seed: 0x10a5, classId: 'reaver', registries: REG });
+    run.relics = ['wardenHorn'];
+    const { app, checkpoint } = mountBossReward(dom, { relicChoices: CHOICES, run });
+    app.querySelector('.reward-kind[data-kind="relic"]').click();
+    pickButtons(app)[1].click();
+    app.querySelector('#reward-card-confirm').click();
+    assert.deepEqual(run.relics, ['wardenHorn'], 'no second copy');
+    assert.equal(checkpoint.states.relic, undefined, 'the row is not Taken');
+    assert.equal(checkpoint.chosenRelicId, null);
+  });
 });
