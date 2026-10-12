@@ -12,7 +12,8 @@ const spec = JSON.parse(readFileSync(resolve(out,'sources.json'),'utf8'));
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 mkdirSync(resolve(out,'frames'),{recursive:true});
 const inputs = spec.sources.map(source => {
-  const bytes=readFileSync(resolve(root,source.source));
+  const local=resolve(root,source.source);
+  const bytes=readFileSync(existsSync(local)?local:resolve(process.env.PREVIEW_INPUT_ROOT||root,source.source));
   if(sha(bytes)!==source.sha256) throw new Error('Source hash changed: '+source.id);
   return {source,dataUrl:'data:image/'+(source.preserveBytes?'webp':'png')+';base64,'+bytes.toString('base64')};
 });
@@ -82,9 +83,10 @@ for(const item of generated){
 for(const source of spec.sources.filter(s=>s.preserveBytes)){
   const bytes=readFileSync(resolve(root,source.source)),imagePath='frames/'+source.id+'.webp';
   writeFileSync(resolve(out,imagePath),bytes);
-  frames[source.id]={id:source.id,label:source.label,imagePath,size:source.size,drawOffset:[spec.canvas.bodyX-source.sourceAnchor[0],spec.canvas.floorY-source.sourceAnchor[1]],anchor:[spec.canvas.bodyX,spec.canvas.floorY],sha256:sha(bytes),source,bytesUnchanged:true};
+  const displaySize=source.displaySize||source.size,renderScale=displaySize[0]/source.size[0];
+  frames[source.id]={id:source.id,label:source.label,imagePath,size:displaySize,rasterSize:source.size,drawOffset:[spec.canvas.bodyX-source.sourceAnchor[0]*renderScale,spec.canvas.floorY-source.sourceAnchor[1]*renderScale],anchor:[spec.canvas.bodyX,spec.canvas.floorY],sha256:sha(bytes),source,bytesUnchanged:true};
 }
-const contract={schemaVersion:1,status:'sequence-order review only; no shipped runtime, catalogs, rigs or selections changed',canvas:spec.canvas,anchorMethod:'manual pelvis projection on common floor; swords/capes do not select horizontal anchor',frames,attack:{status:'pending six owner-selected source figures',frameIds:[]}};
+for(const [id,alias] of Object.entries(spec.aliases||{}))frames[id]={...frames[alias.sourceId],id,label:alias.label,aliasOf:alias.sourceId};
+const contract={schemaVersion:1,status:'sequence-order review only; no shipped runtime, catalogs, rigs or selections changed',canvas:spec.canvas,anchorMethod:'manual pelvis projection on common floor; swords/capes do not select horizontal anchor',frames,origins:spec.origins,attack:spec.attack,evade:spec.evade};
 writeFileSync(resolve(out,'preview-assets.json'),JSON.stringify(contract,null,2)+'\n');
-console.log('Wrote preview-only frames: '+Object.keys(frames).join(', ')+'; existing S bytes unchanged; attack preview pending.');
-
+console.log('Wrote preview-only frames: '+Object.keys(frames).join(', ')+'; canonical S/Attack/Smash06 raster bytes unchanged.');
