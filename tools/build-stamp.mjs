@@ -39,7 +39,10 @@
 // buildversion --check. Bounded by MAX_ROUNDS; it never loops unbounded.
 //
 // Usage
-//   node tools/build-stamp.mjs --stamp --range <before>..<after>   the whole stamp, for a push
+//   node tools/build-stamp.mjs --stamp --since-last-stamp          the whole stamp, for a push: the
+//                                                                  landings since the last [build-stamp]
+//                                                                  commit (GITHUB_EVENT_BEFORE without one)
+//   node tools/build-stamp.mjs --stamp --range <before>..<after>   the same, for a range named by hand
 //   node tools/build-stamp.mjs --stamp --prs 1884                  the same, named by hand
 //   node tools/build-stamp.mjs --range <before>..<after>   the PRs that landed in a push
 //                                                           (after must be HEAD)
@@ -142,13 +145,54 @@ function headEntries(cwd = ROOT) {
 // zeros or not in this checkout. about-changelog.mjs --pending auto reads it, so
 // the pending set and the re-point set can never disagree about what landed.
 export function landedSince(before, { cwd = ROOT } = {}) {
-  let known = false;
-  if (!isNullSha(before)) {
-    try { execFileSync('git', ['cat-file', '-e', `${before}^{commit}`], { cwd, stdio: 'ignore' }); known = true; }
-    catch { known = false; }
-  }
-  if (!known) return landedInSubjects(headEntries(cwd));
-  return landedInSubjects(rangeSubjects(before, { cwd }));
+  const { base } = stampBaseIn(cwd, before);
+  if (!base) return landedInSubjects(headEntries(cwd));
+  return landedInSubjects(rangeSubjects(base, { cwd }));
+}
+
+// THE BASE OF A LANDING RANGE. A run that was cancelled (GitHub keeps one pending
+// run per group, so a newer push replaces a queued one) or that failed never
+// stamped its pushes, so the next run's event.before would skip their merges.
+// The base is therefore the LAST STAMP: the newest first-parent commit on HEAD
+// whose subject carries [build-stamp]. Only without one does the event's before
+// serve, and only without that, HEAD's own subject.
+export const STAMP_MARK = '[build-stamp]';
+
+// PURE. `commits` is the first-parent line of HEAD, newest first, as {sha, subject}.
+// `before` is a usable commit sha or null. Returns { base, source }, base null
+// meaning HEAD's own subject only.
+export function pickStampBase(commits, before) {
+  const hit = commits.find((c) => c.subject.includes(STAMP_MARK));
+  if (hit) return { base: hit.sha, source: 'last-stamp' };
+  if (before) return { base: before, source: 'before' };
+  return { base: null, source: 'head-only' };
+}
+
+// PURE. The landed pull requests of the commits above `base` on the first-parent
+// line, newest first. A squash `(#N)` and a merge subject both count, as in
+// receipts.mjs. With base null or absent, every commit counts.
+export function landedAfterBase(commits, base) {
+  const i = base ? commits.findIndex((c) => c.sha === base) : -1;
+  const above = i >= 0 ? commits.slice(0, i) : commits;
+  return landedInSubjects(above.map((c) => ({ subject: c.subject, firstParent: true })));
+}
+
+// Git's view of the same rule. The before is used only when it is a commit of this
+// checkout and an ancestor of HEAD; otherwise it cannot bound a range.
+function usableBefore(before, cwd) {
+  if (isNullSha(before)) return null;
+  try {
+    execFileSync('git', ['cat-file', '-e', `${before}^{commit}`], { cwd, stdio: 'ignore' });
+    execFileSync('git', ['merge-base', '--is-ancestor', before, 'HEAD'], { cwd, stdio: 'ignore' });
+    return before;
+  } catch { return null; }
+}
+
+export function stampBaseIn(cwd, before) {
+  const lines = execFileSync('git', ['log', '--first-parent', '--format=%H%x09%s', 'HEAD'], { cwd, encoding: 'utf8' })
+    .split('\n').filter(Boolean);
+  const commits = lines.map((l) => { const i = l.indexOf('\t'); return { sha: l.slice(0, i), subject: l.slice(i + 1) }; });
+  return pickStampBase(commits, usableBefore(before, cwd));
 }
 
 function readBox() {
@@ -252,8 +296,11 @@ function prsFromArgs(argv) {
     if (!list.length || !list.every((s) => /^\d+$/.test(s))) throw new Error(`--prs wants pull request numbers, got '${argv[p + 1] ?? ''}'`);
     return { prs: [...new Set(list)], bound: '--prs' };
   }
+  if (argv.includes('--since-last-stamp')) {
+    return { prs: landedSince(process.env.GITHUB_EVENT_BEFORE || '', { cwd: ROOT }), bound: 'since the last [build-stamp] commit' };
+  }
   if (r >= 0) return prsFromRange(argv[r + 1]);
-  throw new Error('--stamp wants --range <before>..<after> or --prs <N,N,…>');
+  throw new Error('--stamp wants --since-last-stamp, --range <before>..<after>, or --prs <N,N,…>');
 }
 
 function stampMode(argv) {
@@ -405,6 +452,25 @@ function selftest() {
   try { parseRange('nope'); } catch { threw = true; }
   check('parseRange refuses a malformed range', threw);
   check('an all-zero before is a null sha', isNullSha('0000000000000000000000000000000000000000') && isNullSha(''));
+
+  // THE BASE OF A LANDING RANGE (first-parent line, newest first).
+  const line = [
+    { sha: 'm3', subject: 'Merge pull request #7 from a/b' },
+    { sha: 's2', subject: 'Add a thing (#8)' },
+    { sha: 'st1', subject: 'build: stamp 0.7.1.1400 [build-stamp]' },
+    { sha: 'm0', subject: 'Merge pull request #5 from x/y' },
+  ];
+  const noStamp = line.filter((c) => !c.subject.includes(STAMP_MARK));
+  check('base: the last stamp commit wins over the event before',
+    JSON.stringify(pickStampBase(line, 'm0')) === JSON.stringify({ base: 'st1', source: 'last-stamp' }));
+  check('base: without a stamp, the event before serves',
+    JSON.stringify(pickStampBase(noStamp, 'm0')) === JSON.stringify({ base: 'm0', source: 'before' }));
+  check('base: without a stamp or a before, HEAD only',
+    JSON.stringify(pickStampBase(noStamp, null)) === JSON.stringify({ base: null, source: 'head-only' }));
+  check('landed after the stamp: a merge and a squash count, the stamp does not',
+    landedAfterBase(line, 'st1').join() === '7,8', `got ${landedAfterBase(line, 'st1')}`);
+  check('landed with no base: every commit counts',
+    landedAfterBase(line, null).join() === '7,8,5', `got ${landedAfterBase(line, null)}`);
 
   // THE CONVERGENCE LOOP, against a scripted world. `builds` is what each build
   // reports, in order; `bytes` is derived from the box so an unchanged box reads

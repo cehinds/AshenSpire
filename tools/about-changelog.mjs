@@ -1005,6 +1005,18 @@ function realCalendarDate(date) {
 // landed between GITHUB_EVENT_BEFORE and HEAD (build-stamp's landedSince, the
 // rule build-stamp itself re-points by). A list is taken as given. No flag means
 // no exemption: the strict ordering, as before.
+// Whether a stamp's release names the box's release, compared numerically the way
+// buildversion orders them (leading zeros are the same release; a `-tag` must
+// match the box's tag). Falls back to the raw spelling only when a side cannot be
+// ordered at all.
+export function sameRelease(release, current) {
+  const got = versionTuple(release, 0);
+  const want = versionTuple(current, 0);
+  if (got === null || want === null) return release === current;
+  return compareVersions(got.slice(0, -1), want.slice(0, -1)) === 0
+    && release.includes('-') === current.includes('-');
+}
+
 export function pendingPulls(spec, env = process.env, cwd = ROOT) {
   if (spec === null || spec === undefined) return [];
   if (spec === 'auto') {
@@ -1106,7 +1118,9 @@ export function checkOrder(markdown, { currentOrdinal, currentRelease, pending =
     if (!m || stampKey(m[1], Number(m[2])) === null) {
       throw new Error(`check-order: pending #${e.pullRequest} is stamped \`${e.build}\`, not a build — a pending receipt is still shape-checked`);
     }
-    if (m[1] !== currentRelease) {
+    // Compared as versions, as stampVerdict and the ordering compare them: a leading
+    // zero (`00.7.1`) is the same release, and a pre-release tag must match the box's.
+    if (!sameRelease(m[1], currentRelease)) {
       throw new Error(`check-order: pending #${e.pullRequest} is stamped release ${m[1]}; buildordinal.json is ${currentRelease} — a pending receipt is still shape-checked`);
     }
     exempt.push(e);
@@ -1325,6 +1339,7 @@ async function orderCorpus(ordinalFile) {
     ['pending receipt past buildordinal.json passes with --pending (exempt from the ceiling)', top(`## 2099-01-01\n\n${r(990001, n + 2)}\n`), PEND, null],
     ['pending receipt with a malformed stamp still fails', top(`## 2099-01-01\n\n${rv(990001, 'evidence-only')}\n${r(990002, n)}\n`), PEND, 'a pending receipt is still shape-checked'],
     ['pending receipt citing another release still fails', top(`## 2099-01-01\n\n${r(990001, 0, next)}\n`), PEND, 'a pending receipt is still shape-checked'],
+    ['pending receipt with a leading zero on the same release passes with --pending', top(`## 2099-01-01\n\n${r(990001, n, `0${rel}`)}\n${r(990002, n + 1)}\n`), PEND, null],
     ['a non-pending rise still fails while another receipt is pending', top(`## 2099-01-01\n\n${r(990001, n)}\n${r(990003, n)}\n${r(990002, n + 1)}\n`), PEND, 'build rises within 2099-01-01'],
   ];
   for (const [name, markdown, args, expect] of pendingPlants) {

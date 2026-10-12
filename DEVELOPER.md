@@ -701,8 +701,8 @@ receipt of its own is the author's to fix, before merge.
 The tool checks **coverage**, not truth: whether an entry exists naming each
 merged pull request. Whether the prose is accurate is not machine-checkable.
 The one stamp it does check is the `--pr` pull request's own: its receipt must
-name a build of the release in `buildordinal.json`. A stamp one build below or
-above the tree's box passes with a note, since build-stamp re-points it after the
+name a build of the release in `buildordinal.json`. A stamp of any build in the release, below or
+above the tree's box, passes with a note, since build-stamp re-points it after the
 merge; no stamp, prose, a malformed stamp or another release fails (#1315 merged
 with `0.7.1.518` on a box of 519, and nothing caught it). Older receipts' ordinals belong to
 `tools/about-changelog.mjs`, which owns the file's shape. If CHANGELOG.md ever

@@ -10,7 +10,24 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { isNullSha, landedInSubjects, parseRange, restamp } from '../tools/build-stamp.mjs';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { STAMP_MARK, isNullSha, landedAfterBase, landedInSubjects, landedSince, parseRange, pickStampBase, restamp } from '../tools/build-stamp.mjs';
+
+// A throwaway repository whose first-parent line is the given commit subjects,
+// oldest first. Each entry is a subject; an empty commit carries it.
+function repoWith(subjects) {
+  const dir = mkdtempSync(join(tmpdir(), 'build-stamp-base-'));
+  const git = (...args) => execFileSync('git', args, {
+    cwd: dir, encoding: 'utf8',
+    env: { ...process.env, GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@example.invalid', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@example.invalid' },
+  }).trim();
+  git('init', '-q', '-b', 'main');
+  const shas = subjects.map((s) => { git('commit', '-q', '--allow-empty', '-m', s); return git('rev-parse', 'HEAD'); });
+  return { dir, shas, cleanup: () => rmSync(dir, { recursive: true, force: true }) };
+}
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const TOOL = fileURLToPath(new URL('../tools/build-stamp.mjs', import.meta.url));
@@ -152,9 +169,10 @@ test('build-stamp.yml runs the whole stamp as one --stamp step, before anything 
   assert.doesNotMatch(WORKFLOW, /tools\/launch\.mjs/);
   assert.doesNotMatch(WORKFLOW, /about-changelog\.mjs --write/);
   const at = (s) => WORKFLOW.indexOf(s);
-  assert.ok(at('node tools/build-stamp.mjs --stamp --range') > 0 && at('node tools/build-stamp.mjs --stamp --prs') > 0);
-  assert.ok(at('node tools/build-stamp.mjs --stamp --range') < at('git add --'));
+  assert.ok(at('build-stamp.mjs --stamp --since-last-stamp') > 0 && at('node tools/build-stamp.mjs --stamp --prs') > 0);
+  assert.ok(at('build-stamp.mjs --stamp --since-last-stamp') < at('git add --'));
   assert.ok(at('node tools/build-stamp.mjs --stamp --prs') < at('git add --'));
+  assert.match(WORKFLOW, /GITHUB_EVENT_BEFORE="\$BEFORE" node tools\/build-stamp\.mjs --stamp --since-last-stamp/, 'the base falls back to the event before, via env');
 });
 
 test('build-stamp.yml adds exactly the three derived files, never the built HTML or everything', () => {
@@ -177,8 +195,10 @@ test('build-stamp.yml retries the push four times with 2, 4 and 8 second backoff
   assert.match(WORKFLOW, /git push -q origin "HEAD:\$REF_NAME"/);
 });
 
-test('build-stamp.yml is never cancelled while queued and names its promotion dependency', () => {
+test('build-stamp.yml never kills a running stamp, and states that a later run covers a missed one', () => {
   assert.match(WORKFLOW, /group: build-stamp-\$\{\{ github\.ref \}\}\n {2}cancel-in-progress: false/);
+  assert.match(WORKFLOW, /ONE pending run per group/, 'the workflow names GitHub\'s one-pending-run rule');
+  assert.match(WORKFLOW, /A later run covers what an earlier cancelled or\n# failed run missed/);
   assert.match(WORKFLOW, /PROMOTION WAITS FOR THIS RUN/);
   assert.match(WORKFLOW, /A push made with GITHUB_TOKEN does not\n# start other workflows/);
 });
@@ -189,4 +209,22 @@ test('dev-preview ignores only the two derived files on PRs and dev, and stays s
   assert.match(body, /pull_request:\*\|push:dev\|push:alternative\/dev\|push:alternative\/\*\/dev\)/);
   assert.match(body, /grep -Ev '\^\(buildordinal\\\.json\|src\/content\/changelog\\\.generated\\\.js\)\$'/);
   assert.match(body, /\*\)\n {14}test -z "\$\(git status --porcelain\)" ;;/, 'every other ref keeps the strict check');
+});
+
+// The base is git's, not only the pure core's: the same rule, run on a real history.
+test('landedSince starts after the last [build-stamp] commit, even when the event before is later', () => {
+  const r = repoWith(['base', `build: stamp 0.7.1.1 ${STAMP_MARK}`, 'Merge pull request #7 from a/b', 'Add a thing (#8)']);
+  try {
+    // A run whose before is the #7 merge (a later point) must still count #7: the
+    // stamp is the base, so nothing a cancelled run missed is skipped.
+    assert.deepEqual(landedSince(r.shas[2], { cwd: r.dir }).sort(), ['7', '8']);
+  } finally { r.cleanup(); }
+});
+
+test('landedSince with no stamp counts from the event before, and with neither, HEAD only', () => {
+  const r = repoWith(['base', 'Merge pull request #7 from a/b', 'Add a thing (#8)']);
+  try {
+    assert.deepEqual(landedSince(r.shas[0], { cwd: r.dir }).sort(), ['7', '8']);
+    assert.deepEqual(landedSince('0000000000000000000000000000000000000000', { cwd: r.dir }), ['8'], 'an all-zero before is HEAD only');
+  } finally { r.cleanup(); }
 });

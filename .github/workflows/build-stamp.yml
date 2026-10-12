@@ -21,9 +21,13 @@ name: build-stamp
 # clean-rebuild check ("The rebuild changed nothing committed"), so a promotion
 # that raced this run would be refused there, not silently shipped.
 #
-# Own group per ref, and never cancelled: a run replaced while queued would
-# leave one push's receipts unstamped. A concurrent push is handled by the
-# retry loop below, which starts each try from the current origin tip.
+# One group per ref. cancel-in-progress is false, so a running stamp is never
+# killed; but GitHub keeps ONE pending run per group, so a newer push replaces a
+# queued one, and a run that fails stamps nothing. The guarantee is therefore not
+# "every push gets its own run", it is this: each run stamps everything landed
+# since the LAST [build-stamp] commit on HEAD (build-stamp.mjs --since-last-stamp),
+# not just its own event's range. A later run covers what an earlier cancelled or
+# failed run missed. The retry loop below starts each try from the current origin tip.
 
 on:
   push:
@@ -97,10 +101,11 @@ jobs:
             # (the module is inside the build digest, so writing it moves the box). It
             # exits 1 when no fixed point is reached in its round bound, and then nothing
             # is pushed: `set -e` stops this step before the commit below.
+            # The base is the last [build-stamp] commit on HEAD; BEFORE serves only without one.
             if [ -n "$PRS" ]; then
               node tools/build-stamp.mjs --stamp --prs "$PRS"
             else
-              node tools/build-stamp.mjs --stamp --range "$BEFORE..$(git rev-parse HEAD)"
+              GITHUB_EVENT_BEFORE="$BEFORE" node tools/build-stamp.mjs --stamp --since-last-stamp
             fi
 
             # Only the three derived files, never the built HTML or anything else the build wrote.

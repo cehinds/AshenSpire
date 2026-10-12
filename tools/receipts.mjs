@@ -44,7 +44,7 @@
 // its merge commit shipped box 519, and every gate was green. The stamp is
 // judged by its kind (stampVerdict below):
 //   · exact: the receipt carries this tree's release and ordinal. PASS.
-//   · this release, one build BELOW or ABOVE the box. PASS with a NOTE. A pull
+//   · any build in this release, BELOW or ABOVE the box. PASS with a NOTE. A pull
 //     request cannot know the box it will merge at (every merge into dev moves
 //     it), so the build-stamp workflow re-points its stamp to the real build
 //     right after the merge (tools/build-stamp.mjs). Skew is expected here.
@@ -152,7 +152,7 @@ const STAMP = /^(\d+\.\d+\.\d+(?:-[A-Za-z]+\.\d+)?)\.(\d+)$/;
 // Whether `pull`'s receipt names the box this tree ships. `box` is the parsed
 // buildordinal.json ({ release, ordinal }). Returns null when the stamp is
 // exact; { kind: 'repoint', reason } when it is a well-formed stamp of this
-// release one build BELOW or ABOVE the box (build-stamp re-points it after the
+// release, any build BELOW or ABOVE the box (build-stamp re-points it after the
 // merge); and { kind: 'fail', reason } for everything else: no stamp, prose, a
 // malformed stamp, or another release, none of which the merge would fix.
 export function stampVerdict(pull, changelogText, box) {
