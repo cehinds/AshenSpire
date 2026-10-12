@@ -283,3 +283,24 @@ test('the queued dim outranks the illustrated card rule that hides every ::after
   assert.ok(outranks(specificityOf(selector.trim()), hiddenSpec),
     `the dim (${specificityOf(selector.trim())}) outranks the hidden ::after (${hiddenSpec})`);
 });
+
+// Review item 4: the decorator reads layout (getClientRects, getComputedStyle) before it writes the DOM, and the
+// engine tables are built once per rules, not on every forecast.
+test('the engine tables a forecast reads are built once and reused, not rebuilt per call', () => {
+  const c = fight();
+  const enemy = liveEnemy(c);
+  const first = Rounds.screenForecast(c, enemy.id, null).stanceTable;
+  const second = Rounds.screenForecast(c, enemy.id, null).stanceTable;
+  assert.ok(first instanceof Map);
+  assert.equal(second, first, 'the same Map serves every forecast of one rules object');
+});
+
+test('the decorator reads layout before its first DOM write (one layout pass, not one per enemy)', () => {
+  const screen = readFileSync(new URL('../src/ui/components/combatRoundsScreen.js', import.meta.url), 'utf8');
+  const body = screen.slice(screen.indexOf('export function decorateCombatRoundsScreen'));
+  const reads = [body.indexOf('getClientRects('), body.indexOf('getComputedStyle(')];
+  assert.ok(reads.every((i) => i >= 0), 'the decorator measures the outline art');
+  const write = body.search(/\.remove\(\)|\.append\(|\.dataset\.\w+ =|\.classList\.toggle\(|\.textContent =/);
+  assert.ok(write >= 0);
+  assert.ok(Math.max(...reads) < write, 'every layout read comes before the first write');
+});

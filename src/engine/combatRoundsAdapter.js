@@ -188,14 +188,20 @@ export function timelineCardFor(record) {
 
 // Plain-object tables from the rules, as the Maps the engine reads (built on the fly, so the rules
 // stay plain and JSON-safe).
+// Built once per rules object (the engine only reads these Maps), so a forecast does not rebuild them.
+const tablesByRules = new WeakMap();
 function engineTables(rules) {
+  const cached = tablesByRules.get(rules);
+  if (cached) return cached;
   const t = rules.tables;
-  return {
+  const built = {
     evadeTable: new Map(Object.entries(t.evadeBonus)),
     stanceAdvantage: new Map(Object.entries(t.stanceAdvantage)),
     armor: new Map(Object.entries(t.evasionArmor)),
     cards: new Map(Object.entries(t.evasionCards)),
   };
+  tablesByRules.set(rules, built);
+  return built;
 }
 
 // The player's timeline combatant. `sp` is the SP pool (the queued cards' SP plus the Stamina left, so a

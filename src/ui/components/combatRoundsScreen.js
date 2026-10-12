@@ -14,27 +14,48 @@ const CLEAN = ['.cr-followups', '.cr-speed', '.cr-queue', '.cr-momentum'];
 // decorateCombatRoundsScreen(root, combat, { armedCardId, targetedId }) → void.
 // root: the .combat element. armedCardId: the hand card being aimed (null when none). targetedId: the enemy the
 // banner and the hand hints read (the caller's last target, else the first living enemy).
+// Two passes (review item 4): every read (the boxes, the forecasts and the outline art's layout) happens first, then
+// every write. The browser lays the page out once for the whole decoration, not once per enemy.
 export function decorateCombatRoundsScreen(root, combat, { armedCardId = null, targetedId = null } = {}) {
   if (!root) return;
-  for (const selector of CLEAN) root.querySelectorAll(selector).forEach((node) => node.remove());
-  root.querySelectorAll('[data-target-outline]').forEach((node) => delete node.dataset.targetOutline);
-  if (!combat?.combatRounds) { delete root.dataset.combatRounds; return; }
-  root.dataset.combatRounds = 'preview';
-  const cr = combat.combatRounds;
-  const perception = perceptionLevel(combat);
+  const on = Boolean(combat?.combatRounds);
+  const perception = on ? perceptionLevel(combat) : 0;
 
-  for (const enemy of combat.enemies) {
+  // Pass 1, reads only. The art is measured as the previous decoration left it: the follow-up symbols are added to
+  // the intent box, which the sprite art does not depend on.
+  const rows = [];
+  for (const enemy of on ? combat.enemies : []) {
     const box = root.querySelector(`.combatant.enemy[data-eid="${CSS.escape(enemy.id)}"]`);
     if (!box || !enemy.alive) continue;
     const intent = previewIntent(combat, enemy.id);
-    const stage = readStage(intent);
-    const actions = enemyActions(combat, enemy.id);
-    const intentEl = box.querySelector('.intent');
-    if (intentEl && actions.length > 1) {
+    const row = { box, intentEl: box.querySelector('.intent'), actions: enemyActions(combat, enemy.id), stage: readStage(intent), colour: null, art: [] };
+    // The target outline: only while a card is aimed, and only the visible art and the intent glyphs.
+    if (armedCardId) {
+      const card = roundCardForecast(combat, armedCardId, enemy.id);
+      const forecast = card ? screenForecast(combat, enemy.id, card) : null;
+      row.colour = forecast?.foe ? targetOutline({ card, foe: forecast.foe, cardSpeed: forecast.cardSpeed,
+        foeSpeed: forecast.foeSpeed, stage: row.stage, stanceTable: forecast.stanceTable }) : null;
+      // The visible art only: not the hidden aim copy, and not the foot shadow (which is not an image).
+      if (row.colour) row.art = [...box.querySelectorAll('.sprite img')].filter((node) => !node.closest('.aim-silho') && node.getClientRects().length > 0
+        && getComputedStyle(node).visibility !== 'hidden');
+    }
+    rows.push(row);
+  }
+
+  // Pass 2, writes only.
+  for (const selector of CLEAN) root.querySelectorAll(selector).forEach((node) => node.remove());
+  root.querySelectorAll('[data-target-outline]').forEach((node) => delete node.dataset.targetOutline);
+  if (!on) { delete root.dataset.combatRounds; return; }
+  root.dataset.combatRounds = 'preview';
+  const cr = combat.combatRounds;
+
+  for (const row of rows) {
+    const { intentEl } = row;
+    if (intentEl && row.actions.length > 1) {
       const wrap = document.createElement('span');
       wrap.className = 'cr-followups';
       wrap.setAttribute('aria-hidden', 'true');
-      for (const symbol of followUpSymbols(actions, perception, stage)) {
+      for (const symbol of followUpSymbols(row.actions, perception, row.stage)) {
         const item = document.createElement('span');
         item.className = 'cr-followup';
         if (symbol.kind === 'action') item.append(intentIcon(symbol.icon));
@@ -43,19 +64,9 @@ export function decorateCombatRoundsScreen(root, combat, { armedCardId = null, t
       }
       intentEl.append(wrap);
     }
-    // The target outline: only while a card is aimed, and only the visible art and the intent glyphs.
-    if (armedCardId) {
-      const card = roundCardForecast(combat, armedCardId, enemy.id);
-      const forecast = card ? screenForecast(combat, enemy.id, card) : null;
-      const colour = forecast?.foe ? targetOutline({ card, foe: forecast.foe, cardSpeed: forecast.cardSpeed,
-        foeSpeed: forecast.foeSpeed, stage, stanceTable: forecast.stanceTable }) : null;
-      if (colour) {
-        // The visible art only: not the hidden aim copy, and not the foot shadow (which is not an image).
-        const art = [...box.querySelectorAll('.sprite img')].filter((node) => !node.closest('.aim-silho') && node.getClientRects().length > 0
-          && getComputedStyle(node).visibility !== 'hidden');
-        const glyphs = intentEl ? [...intentEl.querySelectorAll('.intent-icon')] : [];
-        for (const node of [...art, ...glyphs]) node.dataset.targetOutline = colour;
-      }
+    if (row.colour) {
+      const glyphs = intentEl ? [...intentEl.querySelectorAll('.intent-icon')] : [];
+      for (const node of [...row.art, ...glyphs]) node.dataset.targetOutline = row.colour;
     }
   }
 
@@ -85,10 +96,9 @@ export function decorateCombatRoundsScreen(root, combat, { armedCardId = null, t
     card.append(arrow);
   }
 
-  // Momentum on the turn banner, for the targeted enemy.
+  // Momentum on the turn banner, for the targeted enemy: the decayed value, what applies to this round's order.
   const ribbon = root.querySelector('.turn-ribbon');
   if (ribbon) {
-    // The decayed value: what applies to this round's order, the same one the forecast uses.
     const tab = targetedId ? momentumTab(roundMomentum(combat)[targetedId] ?? 0) : null;
     if (tab) {
       ribbon.dataset.momentum = tab.tone;
