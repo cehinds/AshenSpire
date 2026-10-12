@@ -35,4 +35,12 @@ export function reactionRulesProblems(rules) {
   return problems;
 }
 
+// Unfrozen deep copy of the rules a fight or run carries; absent rules mean the shipped tuning.
+export function reactionRulesSnapshot(rules = null) {
+  const copy = structuredClone(rules || CARD_TRAIT_RULES);
+  const problems = reactionRulesProblems(copy);
+  if (problems.length) throw new Error(`Invalid reaction rules: ${problems.join('; ')}`);
+  return copy;
+}
+
 // ---- Card-trait projection (applyCardTraits) is added here by a later change. ----
