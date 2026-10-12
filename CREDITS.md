@@ -662,12 +662,3 @@ OpenAI image generation. Separate steel, arcane staff, gold palm and paired dagg
 effects follow the attack and recovery. The pinned art release ships
 `assets/animations/player-counter-sweep/`. No third-party artwork was downloaded
 and no third-party license is claimed.
-
-### Original character-creation feat emblems (2026-10-12)
-
-The layered ornate feat emblems are reused first-party OpenAI-generated artwork
-from the approved [Character Creation concept](https://github.com/cehinds/AshenSpire/tree/7602ec929/tools/hud-component-studio/projects/character-creation/assets).
-No new generation, third-party artwork or Creative Commons license is introduced.
-Separate transparent PNG layers, exact geometry and reproducible 420×468 composites
-are staged for intake into cehinds/AshenSpire-art and preserved on branch
-`worker/updateCharacterCreation/ornate-art-preview`. The game release pin remains unchanged.
