@@ -72,3 +72,13 @@ test('a versionless snapshot restores with no reaction rules', () => {
   assert.equal(restored.reactionRulesVersion, undefined);
   assert.equal('reactionRules' in restored, false);
 });
+
+test('reaction tuning magnitudes are capped so Impact and Flux stay small', async () => {
+  const { CARD_TRAIT_RULES, reactionRulesProblems } = await import('../src/content/combatCardTraits.js');
+  const rules = structuredClone(CARD_TRAIT_RULES);
+  assert.deepEqual(reactionRulesProblems(rules), []);
+  for (const edit of [r => { r.impact.base.smash = Number.MAX_SAFE_INTEGER; }, r => { r.flux.perTwoTiers = 21; }, r => { r.stack.maxDepth = 1000; }]) {
+    const bad = structuredClone(CARD_TRAIT_RULES); edit(bad);
+    assert.ok(reactionRulesProblems(bad).length > 0);
+  }
+});

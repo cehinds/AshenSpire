@@ -148,6 +148,8 @@ export function prepareTacticalCard(ctx, source, target, carrier, effects, meta 
           payload[key] = base + rating;
           // Counterstrike scales the authored base, then re-derives the rating bonus from it (contract).
           if (key === 'hp' && ctx.reactionRulesVersion === 2 && carrier.traitValues?.counterstrike) Object.assign(payload, { hpBase: base, hpRating: rating });
+          // Counterstrike scales only the authored Poise; charge and conditional Poise ride on top unscaled.
+          if (key === 'poise' && ctx.reactionRulesVersion === 2 && carrier.traitValues?.counterstrike) payload.poiseBase = base;
         }
         if (authored.hp !== undefined) payload.hp += Math.max(0, Number(damageBonus) || 0);
         if (authored.poise !== undefined) payload.poise += Math.max(0, Number(poiseBonus) || 0);
@@ -167,6 +169,7 @@ export function prepareTacticalCard(ctx, source, target, carrier, effects, meta 
           const base = Math.max(0, Math.floor(evaluate(damaging[0].effect.amount ?? 0, counterFormulaContext(ctx, source, target, meta))));
           Object.assign(payload, { hpBase: base, hpRating: damaging[0].preview.value - base });
         }
+        payload.poiseBase = Math.max(0, numbers.poiseDamage - Math.max(0, Number(poiseBonus) || 0));
       }
       armCombatCounter(ctx, source, carrier, { ...numbers, payload });
     } else armCombatCounter(ctx, source, carrier, numbers);

@@ -4,6 +4,9 @@
 const record = value => !!value && typeof value === 'object' && !Array.isArray(value);
 const pct = value => typeof value === 'number' && Number.isFinite(value) && value > 0 && value <= 1;
 const count = value => Number.isSafeInteger(value) && value >= 0;
+// Trait magnitudes stay small: tier 5 at the caps still yields at most 20 + 20 × 2 = 60 (< the 99 a saved carrier may hold).
+const TUNING_MAX = 20;
+const tuned = value => count(value) && value <= TUNING_MAX;
 
 export const CARD_TRAIT_RULES = Object.freeze({
   counterstrike: Object.freeze({ pct: 0.5, advantagedPct: 0.75 }),
@@ -30,9 +33,9 @@ export function reactionRulesProblems(rules) {
   if (!record(rules)) return ['Reaction rules must be an object'];
   const { counterstrike, impact, flux, stack, advantage } = rules;
   if (!record(counterstrike) || !pct(counterstrike.pct) || !pct(counterstrike.advantagedPct)) problems.push('Counterstrike percentages must be numbers in (0, 1]');
-  if (!record(impact) || !record(impact.base) || !count(impact.base.smash) || !count(impact.base.default) || !count(impact.perTwoTiers)) problems.push('Impact tuning must be non-negative integers');
-  if (!record(flux) || !count(flux.base) || !count(flux.perTwoTiers)) problems.push('Flux tuning must be non-negative integers');
-  if (!record(stack) || !Number.isSafeInteger(stack.maxDepth) || stack.maxDepth < 1) problems.push('Reaction stack maxDepth must be a positive integer');
+  if (!record(impact) || !record(impact.base) || !tuned(impact.base.smash) || !tuned(impact.base.default) || !tuned(impact.perTwoTiers)) problems.push(`Impact tuning must be integers from 0 to ${TUNING_MAX}`);
+  if (!record(flux) || !tuned(flux.base) || !tuned(flux.perTwoTiers)) problems.push(`Flux tuning must be integers from 0 to ${TUNING_MAX}`);
+  if (!record(stack) || !Number.isSafeInteger(stack.maxDepth) || stack.maxDepth < 1 || stack.maxDepth > TUNING_MAX) problems.push(`Reaction stack maxDepth must be an integer from 1 to ${TUNING_MAX}`);
   if (record(stack) && (!Number.isSafeInteger(stack.counterReturnMaxDepth) || stack.counterReturnMaxDepth < 1)) problems.push('Counter return maxDepth must be a positive integer');
   if (!record(advantage) || Object.values(advantage).some(list => !Array.isArray(list) || list.some(item => typeof item !== 'string'))) problems.push('Advantage map must map maneuvers to arrays of maneuvers');
   if (rules.enemyReactions !== undefined && typeof rules.enemyReactions !== 'boolean') problems.push('Enemy reactions flag must be a boolean when present');

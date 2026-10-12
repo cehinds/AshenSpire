@@ -302,7 +302,8 @@ function armExpansionCounter(ctx, entity, carrier, options) {
     payload: authored ? { hp: Math.floor(number(authored.hp)), poise: Math.floor(number(authored.poise)), ward: Math.floor(number(authored.ward)),
       ...(authored.smashPoiseBonus !== undefined ? { smashPoiseBonus: Math.floor(number(authored.smashPoiseBonus)) } : {}),
       ...(authored.hpAgainstNonCaster !== undefined ? { hpAgainstNonCaster: authored.hpAgainstNonCaster } : {}),
-      ...(authored.hpBase !== undefined ? { hpBase: Math.floor(number(authored.hpBase)), hpRating: Math.floor(number(authored.hpRating)) } : {}) } : { hp: number(options.damage) + number(options.bonus),
+      ...(authored.hpBase !== undefined ? { hpBase: Math.floor(number(authored.hpBase)), hpRating: Math.floor(number(authored.hpRating)) } : {}),
+      ...(authored.poiseBase !== undefined ? { poiseBase: Math.floor(number(authored.poiseBase)) } : {}) } : { hp: number(options.damage) + number(options.bonus),
       poise: number(options.poiseDamage), ward: number(options.wardDamage) },
     expiresOnOwnerCycle: (entity.combatOwnerCycle || 0) + 1,
     ...(profile.schoolEffect ? { schoolEffect: profile.schoolEffect } : {}),
@@ -505,6 +506,10 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
   const strike = trait.counterstrike ? counterstrikePct(ctx, 'counter', stanceManeuverOf(source, receipt.profile?.maneuver)) : null;
   const scale = value => strike === null ? value : counterstrikeAmount(value, strike);
   const payload = { hp: scale(number(counter.payload.hp)), poise: scale(number(counter.payload.poise)), ward: scale(number(counter.payload.ward)) };
+  if (strike !== null && counter.payload.poiseBase !== undefined) {
+    const base = number(counter.payload.poiseBase);
+    payload.poise = scale(base) + Math.max(0, number(counter.payload.poise) - base);
+  }
   if (strike !== null && counter.payload.hpBase !== undefined) {
     // Scale the authored base, then derive the rating bonus from the scaled base; other bonuses carry over unscaled.
     const base = number(counter.payload.hpBase), rating = number(counter.payload.hpRating);
