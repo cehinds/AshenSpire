@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1901",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "The link check's self-test covers the Combat Rounds docs",
+    "detail": "Nothing changes in the game. The link checker's self-test now copies the Combat Rounds docs folder, so a test that imports from it no longer marks the self-test untestable.",
+    "build": "0.7.1.1423",
+    "pullRequest": 1901,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1901"
+  },
+  {
+    "id": "pr-1895",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Development builds get their build number from a pipeline",
+    "detail": "Nothing changes in the game. Pull requests no longer commit a build number; after a merge lands, a bot rebuilds and stamps each receipt with the build it actually shipped in.",
+    "build": "0.7.1.1421",
+    "pullRequest": 1895,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1895"
+  },
+  {
     "id": "pr-1888",
     "date": "2026-10-12",
     "group": "2026-10-12",
