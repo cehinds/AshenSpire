@@ -65,6 +65,7 @@ export const balanceWords = Object.freeze({
     bleed: 'how many stacks of Bleed it applies',
     venom: 'how many stacks of Venom it applies',
     crimsonBlight: 'how many stacks of Crimson Blight it applies',
+    necroticBlight: 'how many stacks of Necrotic Blight it applies',
     prepared: 'how many stacks of Prepared it grants',
     madness: 'how many stacks of Madness it costs you',
     frail: 'how many stacks of Frail it costs you',
@@ -126,6 +127,7 @@ const cardValueStatusMultipliers = {
   frostExposed: 1,
   insanityExposed: 1,
   crimsonBlight: 1,
+  necroticBlight: 1,
   burn: 1,
   regen: 1,
   madness: 1,
@@ -164,6 +166,7 @@ const cardValueStatusMultipliers = {
   magicVulnerable: 1,
   silenced: 1,
   stanceShifted: 1,
+  stoneskin: 1,
 };
 
 const cardValueRule = () => ({
