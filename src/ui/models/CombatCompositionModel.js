@@ -70,14 +70,34 @@ export function combatComposition({ sizes, actors, width, height, handTop, solo 
 // the turn ribbon (the headroom clamp), so the lift shortens the figure-to-plate gap.
 export const SHORT_PHONE_ENEMY_LIFT = .05;
 
+// Desktop-sized fields (height > 300) stand their enemies in one back row on a
+// shared foot line, centred on SPACIOUS_ROW_CENTRE of the width and kept left of
+// SPACIOUS_ROW_MAX_X. TODO(config): move these to the combat layout config.
+export const SPACIOUS_ROW_CENTRE = .66;
+export const SPACIOUS_ROW_MAX_X = .8;
+const SPACIOUS_SPREAD = 1.3;
+// Room the intent and HP plates need under the turn ribbon, above each figure.
+export const SPACIOUS_RIBBON_RESERVE = 30;
+
 export function alternativeCombatComposition({ sizes, actors, width, height, handTop, handLeft = 0, solo = true }) {
   const enemies = actors.filter(actor => actor.side === 'enemy');
   const enemyFits = sizes.filter(size => enemies.some(actor => actor.slot.id === size.id));
   const center = enemyFits.length ? (Math.min(...enemyFits.map(f => f.x)) + Math.max(...enemyFits.map(f => f.x))) / 2 : width * .55;
+  const spacious = height > 300;
+  // One foot line for the whole back row: the tallest enemy's headroom, never
+  // higher than the floor's standing share of the field.
+  const spaciousRow = spacious ? Math.max(height * .48, ...enemyFits.map(size => {
+    const actor = actors.find(actor => actor.slot.id === size.id);
+    return Math.min(size.visibleHeight, height * .7) + actor.leading + SPACIOUS_RIBBON_RESERVE;
+  })) : 0;
+  // Spread the row about its centre by the desktop factor, and shrink it only
+  // when its far enemy would pass SPACIOUS_ROW_MAX_X of the width.
+  const maxOffset = Math.max(0, ...enemyFits.map(f => Math.abs(f.x - center)));
+  const spread = spacious && maxOffset > 0
+    ? Math.min(SPACIOUS_SPREAD, (SPACIOUS_ROW_MAX_X - SPACIOUS_ROW_CENTRE) * width / maxOffset) : 1;
   const fitted = sizes.map(size => {
     const actor = actors.find(actor => actor.slot.id === size.id);
     const player = actor.side === 'player';
-    const spacious = height > 300;
     const factor = player ? (solo ? 1.28 : 1) : spacious ? 1 : .8;
     const availablePlayerHeight = player && solo && Number.isFinite(handTop)
       ? Math.max(1, handTop - actor.leading - 32) : Infinity;
@@ -85,7 +105,7 @@ export function alternativeCombatComposition({ sizes, actors, width, height, han
     const ratio = visibleHeight / size.visibleHeight;
     const halfWidth = actor.visibleWidth * size.scale * ratio / 2;
     const proposedX = player ? (solo ? Math.max(size.x + width * .035, handLeft + halfWidth) : size.x)
-      : (size.x - center) * (spacious ? 1.3 : 1) + width * (spacious ? .66 : .68);
+      : (size.x - center) * (spacious ? spread : 1) + width * (spacious ? SPACIOUS_ROW_CENTRE : .68);
     const x = Math.max(halfWidth + 6, Math.min(width - halfWidth - 6, proposedX));
     // Enemies stand back on the floor, about half-way up the field. A short
     // portrait field (a phone with browser bars) keeps that depth too, rather
