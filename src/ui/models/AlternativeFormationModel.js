@@ -82,7 +82,12 @@ export function fitAlternativeSprites({ width, height, actors, narrow }) {
     const requested = height * (narrow ? .46 : .73) * ratio * a.slot.depth;
     const widthLimit = Math.min(width * (narrow ? (sideCount > 2 ? .24 : .34) : (sideCount > 2 ? .20 : .31)),
       a.slot.artWidth ? a.slot.artWidth * .96 : Infinity);
-    const visibleHeight = Math.max(1, Math.min(requested * Math.min(1.25, a.multiplier || 1),
+    // A 130px landscape field can leave less headroom than the measured
+    // Inspect/intent union. Keep one cell-height of readable silhouette in
+    // that impossible case; the controls are packed independently, so they
+    // must not collapse the body and make composition move its foot anchor.
+    const shortFloor = height < GRID.shortBelowPx ? Math.min(a.slot.box?.height ?? 1, requested) : 1;
+    const visibleHeight = Math.max(shortFloor, Math.min(requested * Math.min(1.25, a.multiplier || 1),
       a.slot.ground - a.leading - 6, widthLimit * a.visibleHeight / a.visibleWidth,
       2 * Math.min(a.slot.x - 5, width - a.slot.x - 5) * a.visibleHeight / a.visibleWidth));
     return { id:a.slot.id, scale:visibleHeight/a.visibleHeight, visibleHeight, multiplier:1, x:a.slot.x };
