@@ -1,0 +1,122 @@
+name: build-stamp
+
+# THE BUILD NUMBER IS PRODUCED HERE, AFTER A MERGE LANDS ON dev.
+#
+# A pull request no longer commits a bumped buildordinal.json or a receipt
+# matched to it: any other merge into dev moves the box, so a matched receipt
+# went stale the moment a neighbour landed (CONTRIBUTING.md, *Keep it mergeable*).
+# Instead, this workflow runs after each push to dev. It rebuilds the merged
+# tree (which writes the box), re-points the receipts of the pull requests that
+# landed in that push (tools/build-stamp.mjs), regenerates the changelog module,
+# and pushes the three files back to dev.
+#
+# THE STAMPED COMMIT GETS NO NEW dev CI. A push made with GITHUB_TOKEN does not
+# start other workflows, exactly as architecture-sync's commit does not. So the
+# bot's commit is not built by dev-preview or the smoke suite. That is accepted:
+# the commit only moves three derived files, all of them produced by a build
+# that ran in this workflow on the commit just before it.
+#
+# PROMOTION WAITS FOR THIS RUN. Promoting dev to test must not start until this
+# run has finished and its commit is on dev. test's ci.yml keeps the strict
+# clean-rebuild check ("The rebuild changed nothing committed"), so a promotion
+# that raced this run would be refused there, not silently shipped.
+#
+# Own group per ref, and never cancelled: a run replaced while queued would
+# leave one push's receipts unstamped. A concurrent push is handled by the
+# retry loop below, which starts each try from the current origin tip.
+
+on:
+  push:
+    branches: [dev, alternative/dev, 'alternative/**/dev']
+  workflow_dispatch:
+    inputs:
+      prs:
+        description: 'Comma-separated pull request numbers to re-point by hand (empty: the pushed range)'
+        required: false
+        default: ''
+
+concurrency:
+  group: build-stamp-${{ github.ref }}
+  cancel-in-progress: false
+
+# The routine commits only buildordinal.json, CHANGELOG.md and the generated
+# changelog module. A GITHUB_TOKEN push cannot retrigger workflows.
+permissions:
+  contents: write
+
+jobs:
+  stamp:
+    # Skip the bot's own commit (it carries [build-stamp]), and any push that is
+    # not a dev branch. A dispatch always runs.
+    if: github.ref_name != 'alternative/dev' && (github.ref_name == 'dev' || (startsWith(github.ref_name, 'alternative/') && endsWith(github.ref_name, '/dev'))) && (github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[build-stamp]'))
+    runs-on: ubuntu-latest
+    env:
+      # The art packs the build reads, as dev-preview's preview job fetches them.
+      # The digest does not depend on the art tier, so the light build is enough.
+      ART_PACKS: all
+      ASHEN_ART_SOURCE: cache
+    steps:
+      - name: Check out the merged dev tree with its history
+        uses: actions/checkout@v5
+        with:
+          # The range walk needs every commit between the push's before and after.
+          fetch-depth: 0
+          lfs: false
+
+      - name: Set up Node
+        uses: ./.github/actions/setup-node
+
+      - name: Fetch the art packs the build reads
+        uses: ./.github/actions/fetch-art
+        env:
+          # Same rule as dev-preview.yml: only a push to a protected branch passes the token.
+          ART_REPO_TOKEN: ${{ github.event_name != 'pull_request' && contains(fromJSON('["refs/heads/dev","refs/heads/test","refs/heads/release","refs/heads/main"]'), github.ref) && secrets.ART_REPO_TOKEN || '' }}
+        with:
+          packs: ${{ env.ART_PACKS }}
+
+      - name: Rebuild, re-point the landed receipts, regenerate the changelog, and push
+        # Four tries with 2, 4 and 8 seconds of backoff, as architecture-sync does. Each
+        # try starts from the current origin tip, so a push that landed meanwhile is
+        # rebuilt and stamped again rather than overwritten. The range is the one this push
+        # moved (BEFORE..HEAD), taken from the event, never interpolated into the script.
+        shell: bash
+        env:
+          REF_NAME: ${{ github.ref_name }}
+          BEFORE: ${{ github.event.before }}
+          PRS: ${{ github.event.inputs.prs }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          delays=(2 4 8)
+          for attempt in 1 2 3 4; do
+            git fetch -q origin "+refs/heads/$REF_NAME:refs/remotes/origin/$REF_NAME"
+            git reset -q --hard "origin/$REF_NAME"
+            # The build writes buildordinal.json (and the ignored HTML, which is never added).
+            node tools/launch.mjs --build-only
+            if [ -n "$PRS" ]; then
+              node tools/build-stamp.mjs --prs "$PRS"
+            else
+              node tools/build-stamp.mjs --range "$BEFORE..$(git rev-parse HEAD)"
+            fi
+            node tools/about-changelog.mjs --write
+
+            # Only the three derived files, never the built HTML or anything else the build wrote.
+            git add -- buildordinal.json CHANGELOG.md src/content/changelog.generated.js
+            if git diff --cached --quiet; then
+              echo "origin/$REF_NAME already carries the stamp for this build."
+              exit 0
+            fi
+            box="$(node -p 'const b = require("./buildordinal.json"); b.release + "." + b.ordinal')"
+            git commit -q -m "build: stamp $box [build-stamp]"
+            if git push -q origin "HEAD:$REF_NAME"; then
+              echo "Pushed the build stamp $box to $REF_NAME (attempt $attempt)."
+              exit 0
+            fi
+            echo "Push to $REF_NAME rejected (attempt $attempt)."
+            if [ "$attempt" -lt 4 ]; then
+              sleep "${delays[$((attempt - 1))]}"
+            fi
+          done
+          echo "::error::The build stamp could not be pushed to $REF_NAME after 4 attempts."
+          exit 1

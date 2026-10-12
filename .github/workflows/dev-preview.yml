@@ -195,13 +195,32 @@ jobs:
         run: node tools/release-series.mjs --selftest
 
       # A clean tree after the build (first step of this job) is what used to be
-      # "the committed bundle is this source": if the rebuild had to bump
-      # buildordinal.json, the commit's receipt and its box disagree.
+      # "the committed bundle is this source". The build's own two outputs are the
+      # exception on PRs and on dev, because the build-stamp workflow owns them there:
+      # a pull request does not commit buildordinal.json (another merge moves it), and
+      # after a push to dev build-stamp rebuilds, re-points the landed receipts, and
+      # commits both the box and the generated changelog module (build-stamp.yml).
+      # On test, release, main and the alternative test branches the strict check
+      # stays: a promoted tree must already carry the box it ships.
       - name: The rebuild changed nothing committed
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
           set -euo pipefail
           git status --porcelain
-          test -z "$(git status --porcelain)"
+          case "$EVENT_NAME:$REF_NAME" in
+            pull_request:*|push:dev|push:alternative/dev|push:alternative/*/dev)
+              unexpected="$(git status --porcelain --untracked-files=all | cut -c4- | grep -Ev '^(buildordinal\.json|src/content/changelog\.generated\.js)$' || true)"
+              if [ -n "$unexpected" ]; then
+                echo "::error::The rebuild changed files other than the build's own outputs:"
+                echo "$unexpected"
+                exit 1
+              fi
+              echo "The rebuild changed only buildordinal.json and the generated changelog module, which build-stamp owns here." ;;
+            *)
+              test -z "$(git status --porcelain)" ;;
+          esac
 
       # #498: 28 plant sites had drifted and only one gate went red — the rest
       # stayed green while unable to fail. This cheap static detector (no

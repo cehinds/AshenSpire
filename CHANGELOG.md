@@ -8,7 +8,7 @@ These are **development builds**, not releases. Release status is governed separ
 
 **Where the ordinal comes from.** `buildordinal.json` as committed at that merge on `dev` — never typed from memory. Two merges can share an ordinal when one shipped docs or evidence only and rebuilt nothing.
 
-**Writing a receipt in the PR that makes the change** (DEVELOPER.md asks this of Armoury contract changes): rebuild, write the receipt at that ordinal **plus one**, run `node tools/about-changelog.mjs --write` (which allows exactly that one build ahead while projecting), rebuild again — and the ordinal on the box equals the receipt. Any later rebuild on the branch moves the box, so re-point the receipt the same way before merging.
+**Writing a receipt in the PR that makes the change**: stamp it with `buildordinal.json` as it stands on your branch, and do not commit `buildordinal.json`. No rebuild loop is needed. After the merge lands on `dev`, the build-stamp workflow rebuilds `dev`, re-points the receipt to the build it actually shipped in, and pushes that to `dev` (DEVELOPER.md, *Receipts*).
 
 <details>
 <summary><strong>History and known gaps</strong> — renumbering, start date, and three landings no receipt can name</summary>

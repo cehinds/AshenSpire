@@ -105,13 +105,14 @@ review, into `dev`, then promoted to `test` (rule 6). The owner merges only to
    files with the tooling, never by hand, in the order the CHANGELOG.md
    header gives. The *receipt* is the PR's CHANGELOG.md entry, which names
    the build it shipped in; the *box* is `buildordinal.json`, which the
-   rebuild writes. So: `node tools/launch.mjs --build-only`, re-point the
-   receipt to the box's ordinal plus one, `node tools/about-changelog.mjs
-   --write`, rebuild again — the box and the receipt now agree — and push.
-   Commit `buildordinal.json` and the generated changelog module, **never
-   the built HTML**: it is ignored on `dev`, CI builds it and publishes it as
-   the `dev-standalone-<commit>` workflow artifact, and CI fails the PR if its
-   own rebuild would move `buildordinal.json`. The owner never resolves a
+   build writes. Stamp the receipt with the box as it stands on your branch,
+   and do not commit `buildordinal.json`: another merge moves it, so a
+   matched stamp goes stale the moment a neighbour lands. After your merge,
+   the build-stamp workflow rebuilds `dev`, re-points your receipt to the
+   build it actually shipped in, and pushes that to `dev`. Commit the source,
+   the receipt and the generated changelog module, **never the built HTML**:
+   it is ignored on `dev`, and CI builds it and publishes it as the
+   `dev-standalone-<commit>` workflow artifact. The owner never resolves a
    conflict.
 4. **Keep it green.** A failing test or gate is yours to root-cause and fix;
    "flake" is not a diagnosis. Never skip or quarantine a test to get green.
