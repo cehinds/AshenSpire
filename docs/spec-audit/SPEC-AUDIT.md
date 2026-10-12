@@ -380,9 +380,9 @@ SPEC.md was corrected in this PR, one section range per commit wave, following t
 - [ ] **stale** SPEC L1439: "Merchant prices: cards 45–160 runes, relics 140–300, flasks 50–80, card removal 75 (+25)"
   - Code: src/content/balance.js:624-627 cardCost 135–480, relicCost 420–900, flaskCost 150–240, removeBase 225, removeStep 75 (the ×3 faucet factor, balance.js:612-617)
   - Fix: restate in cinders at ×3.
-- [ ] **unclear** SPEC L1439: "bosses drop a boss-relic choice of 3"
+- [x] **unclear** SPEC L1439: "bosses drop a boss-relic choice of 3"
   - Code: src/main.js:3182 `relicId: rollRelicReward(…, { rarities: ['boss'] })` builds one relic id, not a set of three
-  - Fix: owner to confirm whether the reward screen (src/ui/screens/reward.js) builds a choice of three from that path, or change the spec to one boss relic.
+  - Resolved: built by #1907 (owner decision 2026-10-12, choice of 3); SPEC §6 describes it (`rollRelicChoices`, `balance.rewards.bossRelicChoices`).
 
 ### §7.1 Screens & flow (L1445-1464)
 
