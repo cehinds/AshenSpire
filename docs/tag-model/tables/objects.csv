@@ -3,3 +3,62 @@ strike,card,Strike,Card,type.stance,offensive.attack,card.rarity.starter,sp,[str
 dodgeRoll,card,Dodge Roll,Card,type.stance,evade,card.rarity.starter,sp,[dodgeRoll.cost],evade dr defensive-stats.block poise defensive-stats.ward,armor-skill.light,skill-exp,,assets/cards/extended/card-dodgeRoll-512.webp,assets/cards/default-outline/icons/dodge.svg,hand,list,1,"Gain [dodgeRoll.block] Block, Poise and Ward."
 straightSword,weapon,Straight Sword,Weapon,,,,,,one-handed.sword weapon-skill.sword weapon-skill.blade slashing physical.pierce ar,weapon-skill.blade,skill-exp,strike,assets/equipment/weapon_straightSword.webp,assets/cards/default-outline/icons/sword.svg,rightHand leftHand,list,3,A plain sword. Grants Strike.
 wayfarerPlate,armor,Wayfarer Plate,Armor,,,,,,weight.heavy plated padded body dr poise,armor-skill.heavy,skill-exp,,assets/equipment/icon_wayfarerPlate.webp,assets/cards/default-outline/icons/shield.svg,body,list,3,"The armour you were buried in. DR [wayfarerPlate.dr], Poise [wayfarerPlate.poise]."
+forsakenMedallion,relic,Forsaken Medallion,Relic,,,,,,classification.relic forsakenMedallion,,,,,,,,,Max HP +{hpFlat}. Your first attack each combat also deals {poiseDamage} Poise damage.
+starstoneShard,relic,Starstone Shard,Relic,,,,,,classification.relic starstoneShard,,,,,,,,,Max HP +{hpFlat}. Mana +{manaFlat}. Magic damage +{magicDamageFlat}. Begin each combat with Starstone Charge and restore {restoreMana} Mana.
+cutpursesCoin,relic,Cutpurse's Coin,Relic,,,,,,classification.relic cutpursesCoin,,,,,,,,,Begin each combat Prepared. Your first attack each combat applies {venom} Venom.
+goldFigurine,relic,Gold Figurine,Relic,,,,,,classification.relic goldFigurine,,,,,,,,,"Whenever you heal, gain {block} Block (even at full HP)."
+goldenSprout,relic,Golden Sprout,Relic,,,,,,classification.relic goldenSprout,,,,,,,,,"At the start of each combat, heal {heal} HP."
+whetstoneFragment,relic,Whetstone Fragment,Relic,,,,,,classification.relic whetstoneFragment,,,,,,,,,Your first attack each combat deals {damage} extra damage.
+crackedLantern,relic,Cracked Lantern,Relic,,,,,,classification.relic crackedLantern,,,,,,,,,"On your first turn each combat, gain {gainEnergy} Stamina."
+sacrificialKnife,relic,Sacrificial Knife,Relic,,,,,,classification.relic sacrificialKnife,,,,,,,,,Your first attack each combat applies {bleed} Bleed.
+curedHide,relic,Cured Hide,Relic,,,,,,classification.relic curedHide,,,,,,,,,"The first time you lose HP each combat, gain {block} Block. Poise threshold +2 (no current consumer)."
+ivoryComb,relic,Ivory Comb,Relic,,,,,,classification.relic ivoryComb,,,,,,,,,Every 8th card you play each combat: draw {draw} card.
+fellWardenBrand,relic,Fell Warden Brand,Relic,,,,,,classification.relic fellWardenBrand,,,,,,,,,"Whenever an enemy Staggers, draw {draw} cards."
+bloodiedTalisman,relic,Bloodied Talisman,Relic,,,,,,classification.relic bloodiedTalisman,,,,,,,,,"Whenever Bleed bursts, the victim loses {loseHp} additional HP."
+twinnedArmor,relic,Twinned Armor,Relic,,,,,,classification.relic twinnedArmor,,,,,,,,,Every 10th card you play each combat: gain {block} Block.
+blightTouchedIdol,relic,Blight-Touched Idol,Relic,,,,,,classification.relic blightTouchedIdol,,,,,,,,,Your first attack each combat applies {crimsonBlight} Crimson Blight.
+warhorn,relic,Warhorn,Relic,,,,,,classification.relic warhorn,,,,,,,,,"At the start of each combat, gain {strength} Strength."
+vowOfVengeance,relic,Vow of Vengeance,Relic,,,,,,classification.relic vowOfVengeance,,,,,,,,,"Whenever an enemy dies, gain {strength} Strength."
+pearlOfSagacity,relic,Pearl of Sagacity,Relic,,,,,,classification.relic pearlOfSagacity,,,,,,,,,Every 6th card you play each combat: gain {gainEnergy} Stamina.
+blessedDew,relic,Blessed Dew,Relic,,,,,,classification.relic blessedDew,,,,,,,,,"At the start of each turn, heal {heal} HP."
+azureSigil,relic,Azure Sigil,Relic,,,,,,classification.relic azureSigil,,,,,,,,,The first Skill you play each combat: gain {gainEnergy} Stamina.
+bloodstainedChalice,relic,Bloodstained Chalice,Relic,,,,,,classification.relic bloodstainedChalice,,,,,,,,,"Whenever Bleed bursts on an enemy, gain {block} Block."
+goldboughSapling,relic,Goldbough Sapling,Relic,,,,,,classification.relic goldboughSapling,,,,,,,,,"At the start of your turn, if you have no Block: gain {block} Block."
+wyrmHeart,relic,Wyrm Heart,Relic,,,,,,classification.relic wyrmHeart,,,,,,,,,Gain {gainEnergy} extra Stamina each turn. Shrines and chapels no longer offer Rest.
+titansCinder,relic,Titan's Cinder,Relic,,,,,,classification.relic titansCinder,,,,,,,,,"At the start of each turn, gain {strength} Strength."
+radiantAegis,relic,Radiant Aegis,Relic,,,,,,classification.relic radiantAegis,,,,,,,,,"At the start of each turn, if you have Block: gain {block} Block."
+flayersCenser,relic,Flayer's Censer,Relic,,,,,,classification.relic flayersCenser,,,,,,,,,"At the start of each turn, apply {crimsonBlight} Crimson Blight to ALL enemies."
+vigilantHalo,relic,Vigilant Halo,Relic,,,,,,classification.relic vigilantHalo,,,,,,,,,"Whenever an enemy Staggers, heal {heal} HP."
+carrionTalon,relic,Carrion Talon,Relic,,,,,,classification.relic carrionTalon,,,,,,,,,"Whenever an enemy dies, deal {damage} damage to a random enemy."
+emberIdol,relic,Ember Idol,Relic,,,,,,classification.relic emberIdol,,,,,,,,,"At the start of each turn, deal {damage} damage to ALL enemies."
+crownOfStitches,relic,Crown of Stitches,Relic,,,,,,classification.relic crownOfStitches,,,,,,,,,Begin each combat with {strength} Strength — and {frail} Frail. New limbs are heavy.
+wardenHorn,relic,Warden Horn,Relic,,,,,,classification.relic wardenHorn,,,,,,,,,"Draw {draw} extra card each turn. At the start of each combat, lose {loseHp} HP."
+ashOfRemembrance,relic,Ash of Remembrance,Relic,,,,,,classification.relic ashOfRemembrance,,,,,,,,,"Gain {gainEnergy} extra Stamina each turn. At the start of each combat, gain {madness} Madness."
+cinderOfTheFallen,relic,Cinder of the Fallen,Relic,,,,,,classification.relic cinderOfTheFallen,,,,,,,,,"Whenever an enemy dies, gain {gainEnergy} Stamina. At the start of each combat, gain {madness} Madness."
+crimsonCovenant,relic,Crimson Covenant,Relic,,,,,,classification.relic crimsonCovenant,,,,,,,,,"Your attacks apply {bleed} Bleed. At the start of each combat, lose {loseHp} HP."
+travelersWhetstone,relic,Traveler's Whetstone,Relic,,,,,,classification.relic travelersWhetstone,,,,,,,,,"At the start of each combat, gain {strength} Strength."
+moonlitVial,relic,Moonlit Vial,Relic,,,,,,classification.relic moonlitVial,,,,,,,,,"At the start of each combat, gain {block} Block."
+wardensLantern,relic,Warden's Lantern,Relic,,,,,,classification.relic wardensLantern,,,,,,,,,"The first time you lose HP each combat, draw {draw} card."
+hollowedHorn,relic,Hollowed Horn,Relic,,,,,,classification.relic hollowedHorn,,,,,,,,,"Whenever an enemy Staggers, apply {vulnerable} Vulnerable to ALL enemies."
+gildedTear,relic,Gilded Tear,Relic,,,,,,classification.relic gildedTear,,,,,,,,,"On your first turn each combat, heal {heal} HP."
+watchmansBadge,relic,Watchman's Badge,Relic,,,,,,classification.relic watchmansBadge,,,,,,,,,"At the start of each turn, if you are not Weak: gain {strength} Strength."
+howlingStandard,relic,Howling Standard,Relic,,,,,,classification.relic howlingStandard,,,,,,,,,"Whenever an enemy Staggers, gain {strength} Strength."
+carrionMorsel,relic,Carrion Morsel,Relic,,,,,,classification.relic carrionMorsel,,,,,,,,,"Whenever an enemy dies, heal {heal} HP."
+gravetendersBell,relic,Gravetender's Bell,Relic,,,,,,classification.relic gravetendersBell,,,,,,,,,"Whenever an enemy dies, draw {draw} card."
+sentinelsOath,relic,Sentinel's Oath,Relic,,,,,,classification.relic sentinelsOath,,,,,,,,,Every 12th card you play each combat: gain {strength} Strength.
+forsakenWarflag,relic,Forsaken Warflag,Relic,,,,,,classification.relic forsakenWarflag,,,,,,,,,"At the start of each turn, apply {weak} Weak to ALL enemies."
+wrathCoil,relic,Wrath Coil,Relic,,,,,,classification.relic wrathCoil,,,,,,,,,"Whenever you lose HP, deal {damage} damage to a random enemy."
+ashenGrip,relic,Ashen Grip,Relic,,,,,,classification.relic ashenGrip,,,,,,,,,The first stance you enter each turn refunds {restoreStamina} Stamina.
+lodestarShard,relic,Lodestar Shard,Relic,,,,,,classification.relic lodestarShard,,,,,,,,,Begin each combat with {restoreMana} extra Mana.
+waxenSeal,relic,Waxen Seal,Relic,,,,,,classification.relic waxenSeal,,,,,,,,,"The first time you heal each combat, heal {heal} more."
+whetstonePouch,relic,Whetstone Pouch,Relic,,,,,,classification.relic whetstonePouch,,,,,,,,,Your first attack while Prepared each combat applies {bleed} Bleed.
+progression-emberjaw-token,relic,Emberjaw Token,Relic,,,,,,classification.relic progression-emberjaw-token,,,,,,,,,Your first Blade hit each combat applies {bleed} additional Bleed buildup.
+progression-cracked-war-anvil,relic,Cracked War Anvil,Relic,,,,,,classification.relic progression-cracked-war-anvil,,,,,,,,,Your first Heavy attack each turn deals {poiseDamage} additional Break damage.
+progression-cinderbound-crown,relic,Cinderbound Crown,Relic,,,,,,classification.relic progression-cinderbound-crown,,,,,,,,,Your first credited kill of an enemy with Bleed buildup each combat heals {heal} HP.
+progression-moonwell-lens,relic,Moonwell Lens,Relic,,,,,,classification.relic progression-moonwell-lens,,,,,,,,,Your first Starstone spell each turn played after spending at least 2 Mana grants {block} Block.
+progression-nightglass-rosary,relic,Nightglass Rosary,Relic,,,,,,classification.relic progression-nightglass-rosary,,,,,,,,,"The second play of the same Starstone card ID in a turn restores {restoreMana} Mana, once per turn."
+progression-fragment-of-the-third-sky,relic,Fragment of the Third Sky,Relic,,,,,,classification.relic progression-fragment-of-the-third-sky,,,,,,,,,"Your third distinct Starstone card ID played in a turn grants {block} Block, once per turn."
+progression-whisperglass-die,relic,Whisperglass Die,Relic,,,,,,classification.relic progression-whisperglass-die,,,,,,,,,"If your first card in combat is a Blade attack, it deals +{chargeDamage} damage."
+progression-purse-of-borrowed-shadows,relic,Purse of Borrowed Shadows,Relic,,,,,,classification.relic progression-purse-of-borrowed-shadows,,,,,,,,,"After your first explicit discard each turn, gain {block} Block."
+progression-ember-alms-bowl,relic,Ember Alms Bowl,Relic,,,,,,classification.relic progression-ember-alms-bowl,,,,,,,,,Your first nonlethal HP offering each turn grants {block} Block after its payment.
+progression-ossuary-prayer-wheel,relic,Ossuary Prayer Wheel,Relic,,,,,,classification.relic progression-ossuary-prayer-wheel,,,,,,,,,Your first credited kill of an enemy with Crimson Blight buildup each combat restores {restoreMana} Mana.
