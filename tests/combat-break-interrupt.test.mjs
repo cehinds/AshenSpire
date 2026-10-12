@@ -44,7 +44,7 @@ test('an enemy whose Ward breaks to a Spell loses its prepared move and pays 1 S
   applyAttackDamage(combat, combat.player, enemy, 3, [], magicCarrier());
   assert.equal(enemy.persistentWard.value, 0, 'the Spell broke Ward');
   assert.equal(enemy.pendingMove, null, 'the prepared move is cancelled');
-  assert.equal(enemy.pendingActionLoss, 1, 'the enemy pays 1 Stamina');
+  assert.equal(enemy.pendingActionLoss, undefined, 'an enemy has no Stamina to pay');
   assert.equal(enemy.skipNextTurn, true, 'the enemy is interrupted');
   const broke = events.find(event => event.type === 'wardBroken');
   assert.equal(broke.interrupted, true);
@@ -58,7 +58,7 @@ test('an enemy whose Poise breaks to a physical hit loses its prepared move and 
   applyAttackDamage(combat, combat.player, enemy, 5, [], physicalCarrier());
   assert.equal(enemy.persistentPoise.value, 0, 'the physical hit broke Poise');
   assert.equal(enemy.pendingMove, null, 'the prepared move is cancelled');
-  assert.equal(enemy.pendingActionLoss, 1, 'the enemy pays 1 Stamina');
+  assert.equal(enemy.pendingActionLoss, undefined, 'an enemy has no Stamina to pay');
   assert.equal(events.find(event => event.type === 'enemyStaggered').cause, 'poiseBreak');
   assert.equal(events.find(event => event.type === 'poiseBroken').interrupted, true);
 });

@@ -82,9 +82,9 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
         break;
       }
       case 'barrierBroken': text = `${target}'s Barrier broke.`; break;
-      case 'wardBroken': text = event.interrupted ? `${target}'s Ward broke (interrupted, −${event.staminaLoss} Stamina).` : `${target}'s Ward broke${event.staminaLoss ? ` (−${event.staminaLoss} Stamina next turn)` : ''}.`; break;
+      case 'wardBroken': text = event.interrupted ? `${target}'s Ward broke (interrupted).` : `${target}'s Ward broke${event.staminaLoss ? ` (−${event.staminaLoss} Stamina next turn)` : ''}.`; break;
       case 'persistentWardChanged': if (event.restored > 0) text = `${target} restored ${event.restored} Ward (${event.value - event.restored} → ${event.value}).`; break;
-      case 'poiseBroken': text = event.interrupted ? `${target}'s Poise broke (interrupted, −${event.staminaLoss} Stamina).` : `${target}'s Poise broke${Number.isFinite(event.staminaLoss) ? (event.staminaLoss ? ` (−${event.staminaLoss} Stamina next turn)` : '') : ' (staggered)'}.`; break;
+      case 'poiseBroken': text = event.interrupted ? `${target}'s Poise broke (interrupted).` : `${target}'s Poise broke${Number.isFinite(event.staminaLoss) ? (event.staminaLoss ? ` (−${event.staminaLoss} Stamina next turn)` : '') : ' (staggered)'}.`; break;
       case 'barrierGained': text = `${target} gained ${event.amount} Barrier.`; break;
       case 'ratingImpact': if (event.meter === 'poise' && event.amount > 0) text = `${target}'s stagger meter took ${event.amount} (${event.value}/${event.max}).`; break;
       case 'blockGained': text = `${target} gained ${event.amount} Block.`; break;

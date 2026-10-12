@@ -48,13 +48,14 @@ export function initializePersistentPoise(entity, maximum) {
 
 /**
  * THE ONE WARD BREAK. A player pays breaks.wardActionLoss Stamina next turn; an
- * enemy has none to lose. Every path that takes Ward to 0 comes here (spending
- * it, a status pressure, a matchup's strip). `deferBreak` returns the payload
- * without emitting, so a caller can emit after its damageDealt.
+ * enemy has no Stamina and pays nothing. Every path that takes Ward to 0 comes
+ * here (spending it, a status pressure, a matchup's strip). `deferBreak` returns
+ * the payload without emitting, so a caller can emit after its damageDealt.
  */
 export function breakPersistentWard(ctx, entity, meta = {}) {
-  const staminaLoss = Math.max(0, ctx?.ratingsRules?.breaks?.wardActionLoss ?? 1);
-  if (entity.kind === 'player' && staminaLoss) entity.pendingActionLoss = (entity.pendingActionLoss || 0) + staminaLoss;
+  const cost = Math.max(0, ctx?.ratingsRules?.breaks?.wardActionLoss ?? 1);
+  const staminaLoss = entity.kind === 'player' ? cost : 0;
+  if (staminaLoss) entity.pendingActionLoss = (entity.pendingActionLoss || 0) + staminaLoss;
   const interrupted = entity.kind === 'enemy';
   const payload = { targetId: entity.id, sourceId: meta.sourceId, staminaLoss, ...(interrupted ? { interrupted: true } : {}),
     ...(ctx?.playerIdForEntity && entity.kind === 'player' ? { targetPlayerId: ctx.playerIdForEntity(entity) } : {}) };
@@ -67,19 +68,17 @@ export function breakPersistentWard(ctx, entity, meta = {}) {
 
 /**
  * A Ward or Poise break INTERRUPTS an enemy: its prepared action is cancelled
- * (staggerEnemy) and it pays 1 Stamina (breaks.<cause>ActionLoss). Enemies have
- * no Stamina pool (createEnemyCombatEntity sets none), so the cost is recorded
- * on pendingActionLoss, as a player's is. A player is not interrupted here.
+ * (staggerEnemy). An enemy has no Stamina pool (createEnemyCombatEntity sets
+ * none), so the break costs it nothing; only a player pays Stamina next turn.
+ * A dead enemy, or one at 0 HP, is not interrupted, and a refused stagger
+ * (impact protection) interrupts nothing.
  */
 export function interruptForBreak(ctx, entity, cause) {
   // A killing hit breaks nothing that can act again: no INTERRUPTED for a dead enemy.
   if (entity?.kind !== 'enemy' || !entity.alive || !(entity.hp > 0)) return;
-  const loss = Math.max(0, ctx?.ratingsRules?.breaks?.[cause === 'poiseBreak' ? 'poiseActionLoss' : 'wardActionLoss'] ?? 1);
   const cancelledMove = entity.pendingMove ? entity.pendingMove.moveId : null;
-  // Only a stagger that really happened interrupts (impact protection refuses it).
   if (!Actions.staggerEnemy(ctx, entity, { cause })) return;
-  entity.pendingActionLoss = (entity.pendingActionLoss || 0) + loss;
-  ctx?.emit?.('enemyInterrupted', { targetId: entity.id, cancelledMove, cause, staminaLoss: loss });
+  ctx?.emit?.('enemyInterrupted', { targetId: entity.id, cancelledMove, cause });
 }
 
 /**

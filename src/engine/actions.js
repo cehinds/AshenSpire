@@ -345,9 +345,10 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
  * more than the one Stamina a Poise break costs.
  */
 function breakPoise(ctx, source, target) {
-  const loss = Math.max(0, ctx.ratingsRules?.breaks?.poiseActionLoss ?? 1);
-  // An enemy is interrupted (and pays its Stamina) by interruptForBreak, after the hit's log; a player pays here.
-  if (target.kind === 'player' && loss) target.pendingActionLoss = (target.pendingActionLoss || 0) + loss;
+  const cost = Math.max(0, ctx.ratingsRules?.breaks?.poiseActionLoss ?? 1);
+  // An enemy is interrupted by interruptForBreak, after the hit's log, and has no Stamina to lose; a player pays here.
+  const loss = target.kind === 'player' ? cost : 0;
+  if (loss) target.pendingActionLoss = (target.pendingActionLoss || 0) + loss;
   return ['poiseBroken', { targetId: target.id, sourceId: source?.id, staminaLoss: loss, ...(target.kind === 'enemy' ? { interrupted: true } : {}), ...seatOf(ctx, target) }];
 }
 
