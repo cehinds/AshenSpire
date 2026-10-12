@@ -1286,13 +1286,13 @@
     },
     "assets-display/alternative/reaver-greatsword-pilot-guard-break-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "89be0ed60e28ae81ffc78e2363669466110c4147847f51cdabe94dd926ec6288",
-      "bytes": 14076
+      "sha256": "d9bc33e53b598710b46150efd22fdf9103ce48149a4c6cefecda58c65433f6d5",
+      "bytes": 14038
     },
     "assets-display/alternative/reaver-greatsword-pilot-guard-break.webp": {
       "source": "reviewed-export",
-      "sha256": "10e29a61ead2cf2ccf7a7cf7b1f829f3fe835597eab0ffd040ea7e8facab93ce",
-      "bytes": 49260
+      "sha256": "74957dcadbbdcc3565168c32edc43bacd08f0ade78519233c6bbc6c2d8032deb",
+      "bytes": 49556
     },
     "assets-display/alternative/reaver-greatsword-pilot-smash-mobile.webp": {
       "source": "reviewed-export",

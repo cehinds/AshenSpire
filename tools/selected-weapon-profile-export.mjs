@@ -106,10 +106,15 @@ try {
       const { choice, image, alphaBounds } = item;
       const [cropX0, cropY0] = item.cropOrigin;
       const [x0, y0, x1, y1] = alphaBounds;
-      const width = Math.round((x1 - x0) * scale);
-      const height = Math.round((y1 - y0) * scale);
+      const supportAnchor = choice.supportAnchor ?? { kind: 'alpha-bottom', sourceY: y1 };
+      const supportY = supportAnchor.sourceY;
+      if (!Number.isFinite(supportY) || supportY < y0 || supportY > y1) {
+        throw new Error(`Invalid support anchor for ${choice.id}: ${supportY}`);
+      }
       const left = Math.round(256 - ((x0 + x1) / 2 - cropX0) * scale);
-      const top = Math.round(464 - (y1 - cropY0) * scale);
+      const top = choice.supportAnchor
+        ? 464 - (supportY - cropY0) * scale
+        : Math.round(464 - (y1 - cropY0) * scale);
 
       const full = document.createElement('canvas');
       full.width = full.height = 512;
@@ -129,7 +134,10 @@ try {
           bx1 = Math.max(bx1, x + 1); by1 = Math.max(by1, y + 1);
         }
       }
-      if (Math.abs(by1 - 464) > 1) throw new Error(`Floor registration drift for ${choice.id}: ${by1}`);
+      const expectedBottom = Math.round(464 + (y1 - supportY) * scale);
+      if (Math.abs(by1 - expectedBottom) > 1) {
+        throw new Error(`Support registration drift for ${choice.id}: bottom ${by1}, expected ${expectedBottom}`);
+      }
       if (bx0 < 0 || by0 < 0 || bx1 > 512 || by1 > 512) throw new Error(`Output escaped frame for ${choice.id}`);
       const mobile = document.createElement('canvas');
       mobile.width = mobile.height = 256;
@@ -139,6 +147,7 @@ try {
       mobileCtx.drawImage(full, 0, 0, 256, 256);
       return {
         choice, scale, sourceBounds: alphaBounds, excludedStrong: item.excludedStrong,
+        supportAnchor: choice.supportAnchor,
         bounds: [bx0, by0, bx1, by1],
         full: full.toDataURL('image/webp', .9).split(',')[1],
         mobile: mobile.toDataURL('image/webp', .84).split(',')[1],
@@ -184,6 +193,7 @@ try {
       source: { path: choice.sourcePath, width: 1536, height: 1024,
         sha256: manifest.sourceSheets.find(sheet => sheet.path === choice.sourcePath).sha256 },
       sourceBounds: item.sourceBounds, cropBounds: choice.cropBounds, scale: item.scale,
+      supportAnchor: item.supportAnchor,
     };
   }
   catalog.weaponProfiles[manifest.id] = {
