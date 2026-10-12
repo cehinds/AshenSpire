@@ -285,6 +285,8 @@ export function advanceStatusClock(ctx, entity, clock) {
     if (!rule || rule.duration == null || (rule.clock || 'ownerTurnEnd') !== clock) continue;
     inst.applications = (inst.applications || []).map((a) => ({ ...a, expires: a.expires - 1 })).filter((a) => a.expires > 0);
     inst.stacks = stackMagnitude(inst.applications, rule.mode, rule.cap);
+    // One expiring application can drop a Ward or Poise bonus while others survive: the pool follows at once.
+    syncPoolsAfterStatus(ctx, entity);
     if (!inst.applications.length) removeStatus(ctx, entity, id, { reason: 'expired' });
   }
 }
