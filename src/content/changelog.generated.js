@@ -23,16 +23,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1900"
   },
   {
-    "id": "pr-1901",
-    "date": "2026-10-12",
-    "group": "2026-10-12",
-    "summary": "The link check's self-test covers the Combat Rounds docs",
-    "detail": "Nothing changes in the game. The link checker's self-test now copies the Combat Rounds docs folder, so a test that imports from it no longer marks the self-test untestable.",
-    "build": "0.7.1.1423",
-    "pullRequest": 1901,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1901"
-  },
-  {
     "id": "pr-1897",
     "date": "2026-10-12",
     "group": "2026-10-12",
@@ -41,6 +31,26 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1425",
     "pullRequest": 1897,
     "url": "https://github.com/cehinds/AshenSpire/pull/1897"
+  },
+  {
+    "id": "pr-1902",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Rules written for chained reactions and three new card traits",
+    "detail": "Nothing changes in the game yet. The specification now describes playing several Reaction cards against one enemy action, resolving last played first, and the Counterstrike, Impact and Flux card traits that will follow.",
+    "build": "0.7.1.1423",
+    "pullRequest": 1902,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1902"
+  },
+  {
+    "id": "pr-1901",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "The link check's self-test covers the Combat Rounds docs",
+    "detail": "Nothing changes in the game. The link checker's self-test now copies the Combat Rounds docs folder, so a test that imports from it no longer marks the self-test untestable.",
+    "build": "0.7.1.1423",
+    "pullRequest": 1901,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1901"
   },
   {
     "id": "pr-1895",
