@@ -2,6 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { applyCardTraits, cardTier } from '../src/content/traitProjection.js';
+import { CARD_TRAIT_RULES } from '../src/content/combatCardTraits.js';
 import { armamentCards } from '../src/content/cards/armaments.js';
 import { colorlessCards } from '../src/content/cards/colorless.js';
 import { coopCards } from '../src/content/cards/coop.js';
@@ -123,4 +124,17 @@ test('per-tag card counts at tier 0 across every card', () => {
   }
   console.log(`trait card counts (tier from rank, all ${allDefs.length} defs): ${JSON.stringify(counts)}`);
   assert.deepEqual(counts, { reaction: 31, counterstrike: 22, impact: 60, flux: 70 });
+});
+
+test('applyCardTraits reads Impact and Flux magnitudes from the fight rules', () => {
+  const smash = allDefs.find(def => combatProfileFor(expanded(def)).maneuver === 'smash' && (def.rank ?? 0) < 2);
+  assert.ok(smash, 'a T0 smash card');
+  const tuned = { ...CARD_TRAIT_RULES, impact: { base: { smash: 3, default: 1 }, perTwoTiers: 1 } };
+  assert.equal(applyCardTraits(expanded(smash), tuned).traitValues.impact, 3);
+  assert.equal(applyCardTraits(expanded(smash)).traitValues.impact, 2);
+  const flux = allDefs.map(expanded).find(def => applyCardTraits(def).traitValues?.flux === 1);
+  assert.ok(flux, 'a flux card at T0');
+  const fluxTuned = { ...CARD_TRAIT_RULES, flux: { base: 4, perTwoTiers: 2 } };
+  assert.equal(applyCardTraits(flux, fluxTuned).traitValues.flux, 4);
+  assert.equal(applyCardTraits({ ...flux, rank: 4 }, fluxTuned).traitValues?.flux, 6);
 });

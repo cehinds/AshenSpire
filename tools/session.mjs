@@ -808,6 +808,8 @@ export function createSession({ registries, seedString, endless = false, restore
       combatExpansionVersion: c.sharedExpansionVersion || 1,
       reactionRulesVersion: c.reactionRulesVersion,
       reactionWaiting: c.pendingReaction ? { id: c.pendingReaction.id, ownerId: c.pendingReaction.ownerId } : null,
+      // Public: every seat sees what is already committed to the open root's stack.
+      ...(c.reactionStack ? { reactionStack: structuredClone(c.reactionStack) } : {}),
       combatExpansionRules: c.combatExpansionRules, combatStatusRules: c.combatStatusRules,
       ...([1, 2].includes(c.breakMeterVersion) ? { breakMeterVersion: c.breakMeterVersion } : {}),
       ...(c.combatMatchupRules ? { combatMatchupRules: structuredClone(c.combatMatchupRules) } : {}),

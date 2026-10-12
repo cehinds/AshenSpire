@@ -1285,7 +1285,8 @@ function rollIntents(C, isFirstTurn = false) {
 }
 
 function weightedMovePick(C, enemy, def) {
-  const entries = Object.entries(def.moves).filter(([id, mv]) => !mv.locked || enemy.unlockedMoves.includes(id));
+  // Reaction moves are never rolled (docs/combat-card-traits-contract.md, "Enemy reactions").
+  const entries = Object.entries(def.moves).filter(([id, mv]) => !mv.reaction && (!mv.locked || enemy.unlockedMoves.includes(id)));
   if (!entries.length) return null;
   const eligible = entries.filter(([id, mv]) => {
     if (mv.maxConsecutive == null) return true;

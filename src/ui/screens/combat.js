@@ -30,7 +30,7 @@ import { knowledgePredictionModel } from '../../engine/enemyKnowledge.js';
 import { openCardChoiceModal } from '../components/cardChoiceModal.js';
 import { openUpcastChoice, upcastChoicePlan } from '../components/upcastChoice.js';
 import { openDiscardChoiceModal } from '../components/discardChoiceModal.js';
-import { openReactionChoiceModal } from '../components/reactionChoiceModal.js';
+import { openReactionChoiceModal, committedReactionStack } from '../components/reactionChoiceModal.js';
 import { combatIntentStance } from '../../model/combatIntentVisibility.js';
 import { assertFoundationPlayable } from '../../engine/combatRules.js';
 import { resolveCard } from '../../model/registries.js';
@@ -1673,8 +1673,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     $('.hand').inert = busy || enemyPlayback || !!combat.pendingReaction || !!combat.result;
     $('.hand').setAttribute('aria-disabled', String(busy || enemyPlayback || !!combat.pendingReaction || !!combat.result));
     if (heldTurnHand) return; // Preserve the exact last hand face, fan and input focus during playback.
+    const stackedIds = new Set((combat.reactionStack?.entries || []).map(entry => entry.cardInstanceId));
     const key = JSON.stringify([handList, combat.player, combat.enemies, combat.loadout, combat.attributes,
-      combat.turn, combat.phase, combat.result, selected, selfArm, readSettings()]);
+      combat.turn, combat.phase, combat.result, selected, selfArm, [...stackedIds], readSettings()]);
     if (handRenderKey === key) { syncHandPager(handList); return; }
     handStrip.render({
       cards: handList.map((inst) => {
@@ -1691,6 +1692,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         }
         const affordable = !!pv && combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && combat.player.mana >= pv.manaCost && combat.player.stamina >= (pv.staminaCost || 0) && !isUnplayable(inst);
         return { inst, preview: pv, affordable, selected: inst.instanceId === selected || inst.instanceId === selfArm,
+          stacked: stackedIds.has(inst.instanceId),
           // The surface names itself and hands over its own commit; the
           // verb and its availability sentence come from the service.
           surface: 'combat',
@@ -2379,7 +2381,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function showPendingReaction() {
     const pending = combat.pendingReaction;
     if (!pending || reactionShell || busy || combat.pendingAbilityDiscard) return;
-    reactionShell = openReactionChoiceModal({ pending,
+    const stack = committedReactionStack(combat.reactionStack, pending.groupKey)
+      .map(entry => ({ name: registries.cards.get(entry.cardId)?.name || entry.cardId, cardInstanceId: entry.cardInstanceId }));
+    reactionShell = openReactionChoiceModal({ pending, stack,
       onClosed: () => { reactionShell = null; },
       onAnswer: intent => {
         if (!combatEl.isConnected || combat.pendingReaction?.id !== intent.offerId) return;

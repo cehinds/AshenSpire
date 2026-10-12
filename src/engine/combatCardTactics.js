@@ -143,8 +143,11 @@ export function prepareTacticalCard(ctx, source, target, carrier, effects, meta 
         const formulas = counterFormulaContext(ctx, source, target, meta);
         for (const key of ['hp', 'poise', 'ward', 'smashPoiseBonus']) if (authored[key] !== undefined) {
           const base = Math.max(0, evaluate(authored[key], formulas));
-          payload[key] = base + (key === 'hp' && base > 0 && authored.hpRating !== false
-            ? cardRatingBonus(ctx, source, { ...carrier, ratingId: undefined }, 'damage', base) : 0);
+          const rating = key === 'hp' && base > 0 && authored.hpRating !== false
+            ? cardRatingBonus(ctx, source, { ...carrier, ratingId: undefined }, 'damage', base) : 0;
+          payload[key] = base + rating;
+          // Counterstrike scales the authored base, then re-derives the rating bonus from it (contract).
+          if (key === 'hp' && ctx.reactionRulesVersion === 2 && carrier.traitValues?.counterstrike) Object.assign(payload, { hpBase: base, hpRating: rating });
         }
         if (authored.hp !== undefined) payload.hp += Math.max(0, Number(damageBonus) || 0);
         if (authored.poise !== undefined) payload.poise += Math.max(0, Number(poiseBonus) || 0);

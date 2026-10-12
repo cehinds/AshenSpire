@@ -3,6 +3,7 @@
 // only when reaction rules version 2 is active; version 1 never sees these tags.
 import { combatProfileFor } from '../model/combatCardProfile.js';
 import { objectTagIds } from './tags.js';
+import { CARD_TRAIT_RULES } from './combatCardTraits.js';
 
 // Tier T: the authored ability rank for graded (progression) cards, otherwise
 // min(5, floor(rank / 2)) of the card's resolved rank (1 when unranked, so T 0).
@@ -36,7 +37,7 @@ function hasEffect(def, ops, targets = null) {
 
 // Pick rules. Returns { reaction, counterstrike, impact, flux } where impact and
 // flux are the N values (undefined when the card does not carry them).
-function picks(def, profile, tier) {
+function picks(def, profile, tier, rules) {
   const id = def.id;
   const maneuver = profile.maneuver;
   const camp = profile.camp;
@@ -53,15 +54,15 @@ function picks(def, profile, tier) {
   if (SWEEP_STRIKE_T4.has(id) && tier >= 4) out.counterstrike = true;
 
   // Impact
-  let impactBase = 0;
-  if (maneuver === 'smash') impactBase = 2;
+  let impactBase = 0; // a flag: the base comes from the rules (smash or default)
+  if (maneuver === 'smash') impactBase = 1;
   else if (maneuver === 'counter' && camp === 'physical' && !COUNTER_IMPACT_EXCLUDED.has(id)) impactBase = 1;
   else if (COUNTER_IMPACT_SPELL.has(id)) impactBase = 1;
   else if (maneuver === 'attack' && camp === 'physical' && tier >= 3) impactBase = 1;
   else if (maneuver === 'sweep' && tier >= 2) impactBase = 1;
   else if (maneuver === 'defend' && camp === 'spell' && hasEffect(def, DEFEND_BARRIER_EFFECTS)) impactBase = 1;
   else if (maneuver === 'defend' && DEFEND_IMPACT_T4.has(id) && tier >= 4) impactBase = 1;
-  if (impactBase) out.impact = impactBase + Math.floor(tier / 2);
+  if (impactBase) out.impact = rules.impact.base[maneuver === 'smash' ? 'smash' : 'default'] + Math.floor(tier / 2) * rules.impact.perTwoTiers;
 
   // Flux
   let flux = false;
@@ -70,7 +71,7 @@ function picks(def, profile, tier) {
   if (FLUX_T2.has(id) && tier >= 2) flux = true;
   if (maneuver === 'attack' && camp === 'physical' && tier >= 3 && ['fire', 'arcane'].includes(profile.damageType)) flux = true;
   if (camp === 'spell' && type === 'power' && tier >= 4) flux = true;
-  if (flux) out.flux = 1 + Math.floor(tier / 2);
+  if (flux) out.flux = rules.flux.base + Math.floor(tier / 2) * rules.flux.perTwoTiers;
 
   return out;
 }
@@ -81,9 +82,9 @@ const TRAIT_TAG = { reaction: 'trait:reaction', counterstrike: 'trait:counterstr
  * applyCardTraits(def) -> def with the trait tags and values, or def unchanged
  * when no trait applies. The input is never mutated.
  */
-export function applyCardTraits(def) {
+export function applyCardTraits(def, rules = CARD_TRAIT_RULES) {
   const profile = combatProfileFor(def);
-  const found = picks(def, profile, cardTier(def));
+  const found = picks(def, profile, cardTier(def), rules);
   const keys = Object.keys(TRAIT_TAG).filter(key => found[key] !== undefined && found[key] !== false);
   if (!keys.length) return def;
   const ids = keys.map(key => TRAIT_TAG[key]);
