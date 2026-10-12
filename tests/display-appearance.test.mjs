@@ -1,11 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { resolveDisplayAppearance } from '../src/model/displayAppearance.js';
 import { applyDisplayAppearance, displayAppearance, onDisplayAppearanceChange, publishDisplayAppearanceChange } from '../src/ui/displayAppearance.js';
 import { settingsRow, settingsSearchHits } from '../src/ui/screens/settings.js';
 import { alternativeSprite, alternativeBackdropHtml, alternativeCardFadeHtml } from '../src/ui/alternativeArt.js';
 import { combatBackdropHtml } from '../src/ui/components/environmentArt.js';
 import { resolveCombatAnimation } from '../src/model/combatAnimation.js';
+
+const combatScreen = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
 
 test('alternative is the default and the saved classic choice is independent of debug visibility', () => {
   assert.equal(resolveDisplayAppearance(), 'alternative');
@@ -79,4 +82,14 @@ test('a remounted screen subscribes for the next appearance publication', () => 
     publishDisplayAppearanceChange();
     assert.equal(replacement, 1);
   } finally { release(); releaseReplacement(); }
+});
+
+test('combat normalizes a saved player lane before the appearance redraw', () => {
+  const start = combatScreen.indexOf('onDisplayAppearanceChange(combatEl');
+  const end = combatScreen.indexOf('\n  });', start);
+  const subscription = combatScreen.slice(start, end);
+  assert.ok(start >= 0 && end > start, 'combat appearance subscription exists');
+  assert.match(subscription, /normalizeClassicPlayerFormationCell\(combat, readSettings\(\)\)/);
+  assert.ok(subscription.indexOf('normalizeClassicPlayerFormationCell') < subscription.indexOf('render()'),
+    'state normalization precedes redraw');
 });
