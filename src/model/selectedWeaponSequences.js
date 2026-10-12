@@ -13,11 +13,12 @@ export function selectedWeaponSequence(kind) {
   else if (kind === 'counter-guard') { poses=[...impact,'smash',...attack];weights=[...impactWeights,1,1,1,1,1,1,1];contact=9; }
   else if (kind === 'counter-evade') { poses=[...evade,...attack];weights=[1,1,1,1,1,1,1,1,1];contact=5; }
   else return null;
-  return {poses:poses.map(p=>'pilot-'+p),durations:weights,impact:contact,travel:poses.map(()=>0),hold:false,pilot:true};
+  return {poses:poses.map(p=>'pilot-'+p),durations:weights,impact:contact,travel:poses.map(()=>0),hold:false,pilot:true,reaction:kind === 'defend' || kind === 'guard-break'};
 }
 
 export function selectedWeaponSequenceTiming(sequence, speed) {
   if (!speed || !sequence) return {totalMs:0,impactMs:0};
+  if(sequence.reaction)return {totalMs:speed.reactionMs,impactMs:0};
   const unit = speed.lungeMs / 6;
   return {totalMs:sequence.durations.reduce((a,b)=>a+b,0)*unit,
     impactMs:sequence.durations.slice(0,sequence.impact).reduce((a,b)=>a+b,0)*unit};

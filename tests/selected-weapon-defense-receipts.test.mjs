@@ -3,6 +3,12 @@ import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { combatRules } from '../src/content/combatRules.js';
 import { createRegistries } from '../src/model/registries.js';
+import { createRunState } from '../src/model/state.js';
+import { createRunCombat } from '../src/engine/runCombat.js';
+import { dispatch } from '../src/engine/combat.js';
+import { resolvePlayedCombatCard } from '../src/ui/models/PlayedCombatCard.js';
+import {selectedWeaponCounterOrigins} from '../src/model/selectedWeaponSequences.js';
+import {selectedWeaponCounterFor} from '../src/model/selectedWeaponStances.js';
 import { createCombat } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { applyAttackDamage, executeAction } from '../src/engine/actions.js';
@@ -54,4 +60,34 @@ test('real Invulnerability and successful Evade remain distinct from Decoy and s
   const {combat}=contact({statuses:{invulnerability:{stacks:1}}}),start=combat.eventLog.length;
   executeAction(combat,{effect:{op:'loseHp',amount:1},source:combat.enemies[0],target:combat.player});
   assert.equal(combat.player.hp,99);assert.deepEqual(reactions(combat.eventLog.slice(start)),[]);
+});
+
+
+test('paid production Guard and Evasion counters associate only their actual absorbed incoming action',()=>{
+  for(const [cardId,kind]of [['guardCounter','counter-guard'],['dodgeRoll','counter-evade'],['evasiveGuard','counter-guard']])for(const seed of [6,11]) {
+    const run=createRunState({registries,classId:'reaver',seed,combatExpansionVersion:2,startingHands:{rightHand:'greatsword',leftHand:null}});
+    const guard=run.deck.find(row=>row.equipmentRole==='guard');
+    const counter=run.deck.find(row=>row.cardId===cardId)||{cardId,instanceId:'actual:'+cardId};
+    run.deck=[guard,counter,...run.deck.filter(row=>row!==guard&&row!==counter)];
+    const combat=createRunCombat({registries,run,rng:createRng(seed),enemyIds:['wanderingSoldier'],settings:{playInDeckOrder:true}});
+    dispatch(combat,{type:'setReactions',enabled:false});
+    for(const inst of [guard,counter])assert.ok(dispatch(combat,{type:'playCard',cardInstanceId:inst.instanceId,targetId:'player'}).events.some(row=>row.type==='cardPlayed'));
+    const before=combat.player.hp,{events}=dispatch(combat,{type:'endTurn'});
+    assert.equal(combat.player.hp,before);
+    const returned=events.find(row=>row.type==='combatCounterTriggered');
+    const avoided=events.find(row=>row.type==='combatAvoidanceResolved'&&row.avoided);
+    if(cardId!=='guardCounter'&&seed===6) {
+      assert.ok(avoided?.evade?.success);assert.equal(returned,undefined);
+      assert.equal(selectedWeaponCounterOrigins(events).size,0,'an actual successful evade never invents a Counter');
+      assert.deepEqual(reactions(events),['evade']);
+    } else {
+      assert.ok(returned);
+      const snapshot=resolvePlayedCombatCard(combat,returned,returned.cardInstance);
+      assert.equal(selectedWeaponCounterFor(snapshot,pilot,registries.cards.get(cardId)),kind);
+      const origins=selectedWeaponCounterOrigins(events);
+      const defended=events.find(row=>selectedWeaponReactionFor(row,pilot)==='fully-defended');
+      assert.ok(origins.has(defended),'the incoming impact belongs to the combo and is not replayed separately');
+      assert.ok(events.every(event=>combat.eventLog.includes(event)),'dispatch retains receipt identity');
+    }
+  }
 });

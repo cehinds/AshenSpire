@@ -8,6 +8,8 @@ import {createRegistries} from '../src/model/registries.js';
 import {ANIM_SPEEDS} from '../src/ui/animationPace.js';
 
 test('review ratios keep the existing six-phase attack cadence and whole counter paths',()=>{
+  assert.deepEqual(timing(clip('guard-break'),ANIM_SPEEDS.normal),{totalMs:180,impactMs:0});
+  assert.deepEqual(timing(clip('defend'),ANIM_SPEEDS.fast),{totalMs:81,impactMs:0});
   assert.deepEqual(clip('fully-defended').durations,[2,3,1,2,3,2]);
   assert.equal(timing(clip('attack'),ANIM_SPEEDS.normal).totalMs,195);
   assert.equal(timing(clip('fully-defended'),ANIM_SPEEDS.normal).totalMs,422.5);
