@@ -1370,7 +1370,7 @@ Boss — **The Fell Warden** (Margit-inspired, HP 120, Poise 30):
 - **Phase 1 (>50% HP):** pattern cycle with a signature **delay** mechanic: move *Held Blade* shows "Attack 14 — Delayed"; on its turn it does nothing (gains 8 Block instead); the **following** turn it attacks for 14 regardless of newly rolled intents. Teaches intent-reading. Other moves: Cane Strike 8 (repeatable ×2), Hammer Toss 5×2.
 - **Phase 2 (≤50% HP, `phases` trigger, once):** roars — apply 1 Frail + 1 Weak to player, gains +2 Strength, unlocks *Twin Daggers 3×4*.
 - Staggering him cancels a Held Blade in progress (satisfying counterplay).
-- Reward: 225–270 cinders, rare relic choice, card reward with rare upgrade odds boosted.
+- Reward: 225–270 cinders, one boss relic (the boss-relic choice of 3 is **TO BUILD**, §6), card reward with rare upgrade odds boosted.
 
 (Act 2/3 rosters — including the Grafted-King-inspired phase boss and the final Malenia-inspired boss that heals for 3 per hit landed on you and inflicts Bleed on the *player* — are designed in M3; their signature mechanics are listed in §10 so engine hooks exist.)
 
