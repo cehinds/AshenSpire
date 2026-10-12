@@ -819,8 +819,7 @@ scope and verification.
 **Pools between fights (2026-09-24, plan A2).** Every fight opens with Stamina
 at its maximum (`mechanics.stamina.combatStartRefill: "full"`; `"carry"` keeps
 the old rule, but it currently has no effect: every player turn start refills Stamina to its
-maximum less any Stagger loss, `src/engine/combat.js` ~L503, `p.energy = Math.max(0, p.energyMax -
-(p.pendingActionLoss || 0))`); a restored fight keeps the Stamina it was saved with. HP and
+maximum less any Stagger loss, in `src/engine/combat.js`'s player turn start); a restored fight keeps the Stamina it was saved with. HP and
 Mana carry from one fight to the next, and only rests, flasks and effects
 restore them. The refill also clears the Stamina deficit an equipment swap
 carried, so the next swap cannot take the refilled points back. Rules text:
