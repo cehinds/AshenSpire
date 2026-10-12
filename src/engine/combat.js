@@ -149,6 +149,9 @@ export function createCombat({
   // null — the preview is off — stamps nothing, so a normal fight and its save
   // are unchanged. Nothing reads the rounds state yet (P3 wires the adapter).
   combatRounds = null,
+  // SPEC §4.11 (owner, 2026-10-12): the normal fight's momentum and multi-action toggles, frozen at New Run
+  // (model/combatRounds.js normalPreviewFor). null — both off, or rounds mode on — stamps nothing.
+  normalPreview = null,
   combatExpansionVersion = 1, combatExpansionRules = null, combatKey = 'headless',
 }) {
   // Run creation owns derived Mana. Older headless fixtures without a Mana
@@ -193,6 +196,8 @@ export function createCombat({
     ...(handRules ? { handRules: structuredClone(handRules), pendingDiscardDraw: 0 } : {}),
     ...(recoveryRules ? { recovery: newRecoveryState(recoveryRules) } : {}),
     ...(combatRounds ? { combatRounds: { rules: structuredClone(combatRounds), momentum: {}, poiseDouble: {}, charges: {} } } : {}),
+    ...(normalPreview ? { normalPreview: { momentum: normalPreview.momentum === true, multiAction: normalPreview.multiAction === true,
+      state: { momentum: {}, poiseDouble: {}, pending: {} } } } : {}),
     foundation: F.createFoundation(ruleset, combatProfiles, registries),
     ...(reactionRulesVersion === 1 && combatExpansionVersion === 2 ? { reactionRulesVersion: 1 } : {}),
     registries,

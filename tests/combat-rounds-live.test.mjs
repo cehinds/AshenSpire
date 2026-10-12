@@ -10,7 +10,7 @@ import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch, cardPlayCosts } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { cardKind } from '../src/model/tree.js';
-import { COMBAT_ROUNDS_KEY } from '../src/model/combatRounds.js';
+import { COMBAT_ROUNDS_KEY, MOMENTUM_KEY } from '../src/model/combatRounds.js';
 import * as Rounds from '../src/engine/combatRoundsAdapter.js';
 import { handRow, scaledCards } from '../src/model/handRules.js';
 import { applyStatus } from '../src/engine/statuses.js';
@@ -33,8 +33,9 @@ function registriesWithMoveSpeeds(speeds) {
 
 // Expanded (v2) runs route endTurn through a foundation transaction, which rebuilds the RNG from its
 // counters, so the roll fixtures below use the legacy (v1) expansion. The adapter is the same for both.
-function fight({ preview = true, seed = SEED, classId = 'reaver', reg = registries, expansion = 1 } = {}) {
-  const run = createRunState({ seed, classId, registries: reg, combatExpansionVersion: expansion, profileMeta: { settings: { [COMBAT_ROUNDS_KEY]: preview } } });
+function fight({ preview = true, seed = SEED, classId = 'reaver', reg = registries, expansion = 1, momentum = false } = {}) {
+  // Momentum is its own toggle (SPEC §4.11), off by default: a fight that tests momentum turns it on.
+  const run = createRunState({ seed, classId, registries: reg, combatExpansionVersion: expansion, profileMeta: { settings: { [COMBAT_ROUNDS_KEY]: preview, [MOMENTUM_KEY]: momentum } } });
   return createRunCombat({ registries: reg, rng: createRng(seed), run, enemyIds: [ENEMY], settings: {} });
 }
 
@@ -247,7 +248,7 @@ test('a default (expanded) fight commits a round and hands the turn back to the 
 });
 
 test('the round state is written back: momentum is kept per enemy and stays within -3..3', () => {
-  const c = fixRoundRoll(fight(), 0.999);
+  const c = fixRoundRoll(fight({ momentum: true }), 0.999);
   dispatch(c, { type: 'playCard', cardInstanceId: attackCard(c).instanceId, targetId: liveEnemy(c).id });
   dispatch(c, { type: 'endTurn' });
   const momentum = c.combatRounds.momentum[ENEMY_ID_OF(c)];

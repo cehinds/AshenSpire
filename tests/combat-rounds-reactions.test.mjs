@@ -73,7 +73,7 @@ import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch, cardPlayCosts } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
-import { COMBAT_ROUNDS_KEY } from '../src/model/combatRounds.js';
+import { COMBAT_ROUNDS_KEY, MOMENTUM_KEY } from '../src/model/combatRounds.js';
 import * as Rounds from '../src/engine/combatRoundsAdapter.js';
 
 const registries = createRegistries(contentBundle);
@@ -328,7 +328,7 @@ function attackMoveOf(enemyId) {
 function counterRound({ aim = false, expanded = false, seed = SEED, enemies = [FAST, SLOW] } = {}) {
   const reg = speedRegistries({ [enemies[0]]: { [attackMoveOf(enemies[0])]: -5 }, [enemies[1]]: { [attackMoveOf(enemies[1])]: -9 } });
   const run = createRunState({ seed, classId: 'reaver', registries: reg, combatExpansionVersion: expanded ? 2 : 1,
-    profileMeta: { settings: { [COMBAT_ROUNDS_KEY]: true } } });
+    profileMeta: { settings: { [COMBAT_ROUNDS_KEY]: true, [MOMENTUM_KEY]: true } } });
   const c = createRunCombat({ registries: reg, rng: createRng(seed), run, enemyIds: enemies, settings: {} });
   if (expanded) dispatch(c, { type: 'setReactions', enabled: false }); // a legacy fight has no reactions to switch
   for (const enemy of c.enemies.filter((e) => e.alive)) {

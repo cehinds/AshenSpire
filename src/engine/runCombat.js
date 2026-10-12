@@ -16,7 +16,7 @@
 import { createCombat } from './combat.js';
 import { runHandRules } from '../model/handRules.js';
 import { playInDeckOrder } from '../model/deckRules.js';
-import { combatRoundsFor } from '../model/combatRounds.js';
+import { combatRoundsFor, normalPreviewFor } from '../model/combatRounds.js';
 import { recoveryRulesFor } from '../model/recoveryRules.js';
 import { ratingsConfigFor } from '../model/statRows.js';
 import { runMods, resolveSwapCostRule } from '../model/loadout.js';
@@ -150,6 +150,8 @@ export function createRunCombat({
     // never the live settings, so a run keeps the preview it was born with.
     // null (off) leaves the fight without a combatRounds field.
     combatRounds: combatRoundsFor(run.advancedConfigSnapshot?.overrides),
+    // SPEC §4.11: the normal fight's momentum and multi-action toggles (null when both are off or rounds mode is on).
+    normalPreview: normalPreviewFor(run.advancedConfigSnapshot?.overrides),
     registries,
     rng,
     player: { ...runCombatPlayer(run), ...player },

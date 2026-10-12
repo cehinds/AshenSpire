@@ -333,8 +333,10 @@ function runRound(combat, ops) {
   // The round's unspent Counters are cleared (settleRound), so the live Counter armed for them is cleared too.
   delete combat.player.combatCounter;
   delete cr.enemyActed;
-  cr.momentum = after.momentum;
-  cr.poiseDouble = after.poiseDouble;
+  // Momentum is a rules toggle (SPEC §4.11). Off, it is frozen at 0: nothing is kept from the round.
+  const kept = cr.rules?.momentum === true;
+  cr.momentum = kept ? after.momentum : {};
+  cr.poiseDouble = kept ? after.poiseDouble : {};
   cr.charges = after.charges;
   delete cr.round;
   delete cr.discardIds;
