@@ -66,9 +66,12 @@ import * as Blight from './ashenBlight.js';
  */
 export function spellDamageDealtMultiplier(ctx, source, carrier) {
   if (!source) return 1;
+  // Read the modifier first: with none active the hit's camp never matters.
+  const mult = statuses.getMult(ctx, source, 'spellDamageDealtMult');
+  if (mult === 1) return 1;
   const profile = Matchups.combatProfileOf(carrier);
   const spell = profile ? ['spell', 'spells', 'magic', 'magical'].includes(profile.camp) : !!carrier && isMagicalAttack(ctx, carrier);
-  return spell ? statuses.getMult(ctx, source, 'spellDamageDealtMult') : 1;
+  return spell ? mult : 1;
 }
 
 /**
