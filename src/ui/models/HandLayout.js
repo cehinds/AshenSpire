@@ -5,6 +5,10 @@ import { uiConfig } from '../../config/generated/ui.js';
 // separation before card geometry begins. Keep the band allocator and the
 // renderer on the same physical floor.
 export const COMBAT_TOOLS_HEIGHT_PX = 34;
+// The desktop tool row is 36 physical px (styles/combat-layers.css), so its
+// reserve is that row plus the same four px. hand.js measures the live row and
+// uses this only when the row cannot be measured.
+export const COMBAT_TOOLS_DESKTOP_HEIGHT_PX = 40;
 // Desktop fan: the resting top sits this far below the plan origin, which is
 // already four physical pixels under the tool row (so the gap reads 10px).
 export const DESKTOP_FAN_GAP_PX = 6;
