@@ -220,7 +220,7 @@ export const statuses = [
     name: 'Crimson Blight',
     icon: '❀',
     stackMode: 'add',
-    decay: { duration: 3 },
+    decay: 'none', // owner, 2026-10-12 (#4): lasts the whole fight; cleanses still remove it
     hooks: [
       {
         on: 'ownerTurnStart',
@@ -234,7 +234,7 @@ export const statuses = [
       },
     ],
     tooltip:
-      'At the start of its turn, loses HP equal to Blight stacks (ignores Block). Stacks do not tick down; the Blight expires entirely after 3 turns. Re-applying adds stacks and refreshes the duration.',
+      'At the start of its turn, loses HP equal to Blight stacks (ignores Block). Stacks do not tick down and the Blight lasts the whole fight. Re-applying adds stacks.',
   },
   // Burn and Regen exist for equipment to point at: a torch has to be able to
   // set something alight, and a warm habit has to be able to give a little

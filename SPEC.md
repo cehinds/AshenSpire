@@ -976,7 +976,7 @@ node -e "import('./src/content/statuses.js').then(m=>m.statuses.filter(s=>s.proc
 | **Bleed (threshold-proc)** | The build-up the Reaver's kit is written around; fleshy targets (beast/humanoid) gain a bleed-resist status after a burst. Adds Poise damage per proc. |
 | **Frost (threshold-proc)** | Deliberately the smallest burst of the three; the proc leaves **Weak** plus a tag-scoped exposure that raises `starstone`-tagged damage. |
 | **Insanity (threshold-proc)** | The largest burst and the hardest to fill; adds Poise damage **and a direct Stagger** that bypasses the meter (neither fills nor grows it) but is otherwise the same Stagger a full meter is — the skipped turn and the `staggered` status, so every Staggered-gated rider fires (owner, 2026-10-12) — and leaves an exposure on `ritual`/`blight`-tagged damage. **Not** the player-side Madness below — two words, two mechanics, on purpose. |
-| **Crimson Blight** *(`crimsonBlight`; "Scarlet Rot" pre-scrub)* | DoT on enemy: take N `loseHp` at its turn start. Unlike StS Poison, stacks **do not tick down** — instead it has a duration of **3 of its turns**, then expires entirely. Re-applying adds stacks and refreshes duration. Ignores block. |
+| **Crimson Blight** *(`crimsonBlight`; "Scarlet Rot" pre-scrub)* | DoT on enemy: take N `loseHp` at its turn start. Unlike StS Poison, stacks **do not tick down** and it **lasts the whole fight** (decay `none`; owner, 2026-10-12 — formerly 3 turns) — only a cleanse removes it. Re-applying adds stacks. Ignores block. It is the status the Necrotic damage type applies (§4.7). |
 | **Burn** *(`burn`)* | The third damage-over-time row, applied by `burn`-tagged effects and by equipment mods (`equipMods.csv`). |
 | ~~Frostbite~~ | **CUT — describes nothing.** No `frostbite` status ships; the frost identity is carried by the **Frost** threshold-proc row above and its `frostExposed` exposure. Falsify: `node -e "import('./src/content/statuses.js').then(m=>console.log(m.statuses.some(s=>s.id==='frostbite')))"` → `false`. |
 | **Madness** | On player (from enemies/curses): at turn start, lose 2 HP per stack but gain 1 energy per stack, then Madness clears. Risk/reward, mostly enemy-inflicted. |
@@ -1066,7 +1066,7 @@ Riders resolve once per committed root action (player card or enemy move) and ta
 | Lightning | Apply 1 Weak, presented as Sap, after HP loss |
 | Force | Strip up to 2 Ward; bypass melee Counter. Ward drain never spills into HP or ordinary Guard |
 | Holy | After HP loss, cleanse one stack from the attacker's first eligible hostile status in configured priority order |
-| Necrotic | Apply 1 Crimson Blight after HP loss. This is combat status buildup, not persistent run corruption |
+| Necrotic | Apply 1 Crimson Blight after HP loss; it lasts the rest of the fight (§4.4). This is combat status buildup, not persistent run corruption |
 
 All tactical numbers remain authored/configurable; their defaults above establish the initial balance. Existing status thresholds, resistances and decay remain unchanged. Existing damage, source, delivery and theme tags retain their separate identities.
 

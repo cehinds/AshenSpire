@@ -776,23 +776,23 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(S.getStacks(e1, 'frostExposed'), 1, 'frost\'s exposure landed through the collision');
   });
 
-  // ---- 8. Crimson Blight: tick / expire after 3 / refresh ---------------------------
-  test('8. Blight ticks at enemy turn start, expires entirely after 3 turns, re-apply refreshes', () => {
+  // ---- 8. Crimson Blight: tick / lasts the fight / re-apply adds ----------------------
+  // Owner, 2026-10-12 (#4): the Necrotic status is permanent for the fight —
+  // its row's decay is 'none', so no expiry after any number of turns.
+  test('8. Blight ticks at enemy turn start, never expires during the fight, re-apply adds stacks', () => {
     const c = makeCombat({ deck: Array(5).fill('defend') });
     const e1 = getEntity(c, 'e1');
-    S.applyStatus(c, e1, 'crimsonBlight', 4);
+    S.applyStatus(c, e1, 'crimsonBlight', 1);
     dispatch(c, { type: 'endTurn' }); // enemy turn 1
     let ticks = logOf(c, 'hpLost').filter((e) => e.targetId === 'e1');
     eq(ticks.length, 1, 'one tick');
-    eq(ticks[0].amount, 4, 'tick = stacks');
-    S.applyStatus(c, e1, 'crimsonBlight', 2); // 6 stacks, duration refreshed to 3
-    dispatch(c, { type: 'endTurn' }); // tick 6 (duration 3→2)
-    dispatch(c, { type: 'endTurn' }); // tick 6 (2→1)
-    dispatch(c, { type: 'endTurn' }); // tick 6 (1→0 → expired)
+    eq(ticks[0].amount, 1, 'tick = stacks');
+    S.applyStatus(c, e1, 'crimsonBlight', 1); // 2 stacks
+    for (let i = 0; i < 5; i++) dispatch(c, { type: 'endTurn' }); // enemy turns 2-6
     ticks = logOf(c, 'hpLost').filter((e) => e.targetId === 'e1');
-    eq(ticks.map((t) => t.amount).join(','), '4,6,6,6', 'tick sequence');
-    assert(!e1.statuses.crimsonBlight, 'blight expired entirely');
-    assert(logOf(c, 'statusExpired').some((e) => e.status === 'crimsonBlight' && e.reason === 'expired'), 'expired event');
+    eq(ticks.map((t) => t.amount).join(','), '1,2,2,2,2,2', 'tick sequence — no expiry after 3 turns');
+    eq(S.getStacks(e1, 'crimsonBlight'), 2, 'blight still present after 6 enemy turns');
+    assert(!logOf(c, 'statusExpired').some((e) => e.status === 'crimsonBlight'), 'no expired event');
   });
 
   // ---- 9. Poise: fill → Stagger (skip + 1.5× window + growth + cancel delayed) ----
