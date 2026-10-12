@@ -7,7 +7,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-10-12",
     "group": "2026-10-12",
     "summary": "Cards use the new simple artwork, with elemental and status accents",
-    "detail": "Existing attack, smash, counter, evade, sweep and defend cards use the approved artwork by default. Display settings can switch back to Legacy. Spells use a single diamond marker. Magical cards compose colors, backgrounds and small effects from their element and status tags; no new playable cards are added.",
+    "detail": "Existing attack, smash, counter, evade, sweep and defend cards use the approved artwork by default. Display settings can switch back to Legacy. Spells use an outlined diamond marker. Side icons put Magic or Physical first, then damage or effect type and up to three status effects, with stack counts where known and at most five icons. Magical cards compose colors, backgrounds and small effects from their element and status tags; no new playable cards are added.",
     "build": "0.7.1.1427",
     "pullRequest": 1909,
     "url": "https://github.com/cehinds/AshenSpire/pull/1909"
