@@ -7,7 +7,7 @@ import { tacticalCarrier, prepareTacticalCard, enqueueCounterWard, enemyMoveCarr
 import { clearCombatCounter, startTacticalTurn, setCombatStance } from './combatMatchups.js';
 import { resolveCombatCard } from './combatExpansion.js';
 import { enqueueExpandedAction } from './combatExpansionActions.js';
-import { controlGate, controlRestrictions, initializePersistentWard, recoverStatusesAtOwnerStart, sleepRestoration,
+import { controlGate, controlRestrictions, initializePersistentWard, initializePersistentPoise, recoverStatusesAtOwnerStart, sleepRestoration,
   consumeControlActionLoss, endControlTurn, manualRecovery, recoveryControls } from './combatStatusControl.js';
 import { payAshenBlight, rollAshenBlightEncounter, chooseAshenBlightFeat, beginAshenBlightCycle, ashenBlightRestorationPercent,
   effectiveAshenBlightAttributes, ashenBlightBonuses } from './ashenBlight.js';
@@ -69,7 +69,7 @@ import { gripOf, gripTags } from '../model/loadout.js';
 import { attachSkillXp } from './skillXp.js';
 import { createPlayerCombatEntity, createEnemyCombatEntity, enemyMoveDamage } from '../model/state.js';
 import { refreshCombatRatings, clearMeterGuards } from './combatRatings.js';
-import { persistentWardMaximum } from '../model/combatRatings.js';
+import { persistentWardMaximum, persistentPoiseMaximum } from '../model/combatRatings.js';
 import { resolveHandRules, handRow, scaledCards } from '../model/handRules.js';
 import { handStatRows, ratingStatRows, readsLegacyStatHomes, LEGACY_HAND_MAX } from '../model/statRows.js';
 import { turnDrawCount, endTurnCardFate, returnUnplayedCards } from './handRules.js';
@@ -208,7 +208,7 @@ export function createCoopCombat({ registries, rng, players, enemyIds, enemyLeve
       for (const id of C.breakMeterVersion === 1 ? ['poise'] : ['poise', 'ward']) enemy[id + 'Meter'] = { value: 0, max: Math.max(1, values[id]), growths: 0 };
     }
   }
-  if (C.sharedExpansionVersion === 2) for (const enemy of C.enemies) initializePersistentWard(enemy, persistentWardMaximum(C, enemy));
+  if (C.sharedExpansionVersion === 2) for (const enemy of C.enemies) { initializePersistentWard(enemy, persistentWardMaximum(C, enemy)); initializePersistentPoise(enemy, persistentPoiseMaximum(C, enemy)); }
 
   // Players — each an entity + own shuffled piles (Innate on top).
   for (const p of players) addPlayerState(C, p, { initial: true });
@@ -232,7 +232,7 @@ export function createCoopCombat({ registries, rng, players, enemyIds, enemyLeve
     syncFeatProperties(C, P.entity, P.skillFeats);
     syncSigilProperties(C, P.entity, P.attunedSigils); // SPEC §15.4: the seat's own attuned legendaries
     if (C.ratingsRules) refreshCombatRatings(C);
-    if (P.entity.combatExpansionVersion === 2) initializePersistentWard(P.entity, persistentWardMaximum(C, P.entity));
+    if (P.entity.combatExpansionVersion === 2) { initializePersistentWard(P.entity, persistentWardMaximum(C, P.entity)); initializePersistentPoise(P.entity, persistentPoiseMaximum(C, P.entity)); }
     C.emit('combatStart', {});
   }
   for (const enemy of C.enemies) {
@@ -358,7 +358,7 @@ function addPlayerState(C, p, { initial = false } = {}) {
     setActive(C, P);
     settleExpandedPools(C, entity, { allocatedAttributes: P.allocatedAttributes });
     refreshExpandedLoadout(C, entity);
-    if (!initial || !entity.alive) initializePersistentWard(entity, persistentWardMaximum(C, entity));
+    if (!initial || !entity.alive) { initializePersistentWard(entity, persistentWardMaximum(C, entity)); initializePersistentPoise(entity, persistentPoiseMaximum(C, entity)); }
   }
   if (!C.order.includes(p.id)) C.order.push(p.id);
   if (!initial && entity.alive) {
@@ -377,7 +377,7 @@ function addPlayerState(C, p, { initial = false } = {}) {
     syncSigilProperties(C, P.entity, P.attunedSigils); // SPEC §15.4: the seat's own attuned legendaries
     if (C.ratingsRules) refreshCombatRatings(C);
     // The joiner's Ward rating exists only after the refresh: fill the pool now.
-    if (P.entity.combatExpansionVersion === 2) initializePersistentWard(P.entity, persistentWardMaximum(C, P.entity));
+    if (P.entity.combatExpansionVersion === 2) { initializePersistentWard(P.entity, persistentWardMaximum(C, P.entity)); initializePersistentPoise(P.entity, persistentPoiseMaximum(C, P.entity)); }
     setActive(C, wasActive || null);
     // …and the fresh hand, which is the player phase's business only.
     if (C.phase === 'player') {

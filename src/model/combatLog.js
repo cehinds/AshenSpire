@@ -56,14 +56,15 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
       case 'damageDealt': {
         const lost = Math.max(0, event.amount - (event.blocked || 0));
         // Each layer's share, with what is left of it: Barrier, Ward, Block, then the damage actually inflicted.
-        const barrier = event.barrierAbsorbed || 0, ward = event.wardAbsorbed || 0;
+        const barrier = event.barrierAbsorbed || 0, ward = event.wardAbsorbed || 0, poise = event.poiseAbsorbed || 0;
         const layers = [
           ...(barrier ? [`Barrier absorbed ${barrier} (${(event.barrierRemaining || 0) + barrier} → ${event.barrierRemaining || 0})`] : []),
           ...(ward ? [`Ward absorbed ${ward} (${(event.wardRemaining || 0) + ward} → ${event.wardRemaining || 0})`] : []),
           ...(event.blocked ? [`Block absorbed ${event.blocked} (${(event.blockRemaining || 0) + event.blocked} → ${event.blockRemaining || 0})`] : []),
+          ...(poise ? [`Poise absorbed ${poise} (${(event.poiseRemaining || 0) + poise} → ${event.poiseRemaining || 0})`] : []),
         ];
-        if (barrier || ward) {
-          text = lost ? `${source} hit ${target} for ${event.amount + barrier + ward}: ${layers.join(', ')}; ${lost} damage dealt.`
+        if (barrier || ward || poise) {
+          text = lost ? `${source} hit ${target} for ${event.amount + barrier + ward + poise}: ${layers.join(', ')}; ${lost} damage dealt.`
             : `${target} resisted the attack: ${layers.join(', ')}.`;
         } else {
           text = lost ? `${source} dealt ${lost} damage to ${target}${event.blocked ? ` (${event.blocked} blocked)` : ''}.`
@@ -82,6 +83,8 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
       }
       case 'barrierBroken': text = `${target}'s Barrier broke.`; break;
       case 'wardBroken': text = `${target}'s Ward broke${event.staminaLoss ? ` (−${event.staminaLoss} Stamina next turn)` : ''}.`; break;
+      case 'persistentWardChanged': if (event.restored > 0) text = `${target} restored ${event.restored} Ward (${event.value - event.restored} → ${event.value}).`; break;
+      case 'poiseBroken': text = `${target}'s Poise broke${Number.isFinite(event.staminaLoss) ? (event.staminaLoss ? ` (−${event.staminaLoss} Stamina next turn)` : '') : ' (staggered)'}.`; break;
       case 'barrierGained': text = `${target} gained ${event.amount} Barrier.`; break;
       case 'ratingImpact': if (event.meter === 'poise' && event.amount > 0) text = `${target}'s Poise took ${event.amount} (${event.value}/${event.max}).`; break;
       case 'blockGained': text = `${target} gained ${event.amount} Block.`; break;

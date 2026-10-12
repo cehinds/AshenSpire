@@ -85,6 +85,8 @@ test('expanded critical hits multiply once and still announce the original multi
   const { combat, enemy } = fixture([{ op: 'damage', target: 'enemy', amount: 5, tags: ['testCritical'] }]);
   combat.player.critRules = [{ tags: ['testCritical'], base: 1, cap: 1, multiplier: 2 }];
   enemy.persistentWard.value = 0;
+  // A physical hit meets Poise now; this test is about the multiplier, so the enemy has none.
+  enemy.ratings.poise = 0; enemy.persistentPoise = { max: 0, value: 0 };
   const before = enemy.hp;
   const out = dispatch(combat, { type: 'playCard', cardInstanceId: 'paired', targetId: enemy.id });
   assert.equal(before - enemy.hp, 10);
@@ -107,7 +109,7 @@ test('un-aimed card faces show offense while target inspection shows Ward mitiga
 test('a physical hit skips Ward: Block soaks, then Health', () => {
   const { combat, enemy } = fixture([{ op: 'damage', target: 'enemy', amount: 10 }]);
   enemy.ratings.ward = enemy.persistentWard.value = enemy.persistentWard.max = 4;
-  enemy.ratings.poise = 0; enemy.block = 3; enemy.barrier = 5;
+  enemy.ratings.poise = 0; enemy.persistentPoise = { max: 0, value: 0 }; enemy.block = 3; enemy.barrier = 5;
   const carrier = { cardId: 'strike', damageSchool: 'physical', tags: ['camp:physical', 'maneuver:attack'],
     combatProfile: { camp: 'physical', maneuver: 'attack', school: 'physical', damageType: 'slashing', reach: 'contact', targeting: 'single' } };
   const before = enemy.hp;

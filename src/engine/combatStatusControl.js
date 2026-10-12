@@ -39,6 +39,13 @@ export function initializePersistentWard(entity, maximum) {
   return entity.persistentWard;
 }
 
+/** Poise is the physical twin of Ward: full at every fight start, never regenerates on its own. */
+export function initializePersistentPoise(entity, maximum) {
+  const max = whole(maximum);
+  entity.persistentPoise = { max, value: max };
+  return entity.persistentPoise;
+}
+
 /** Fractional explicit pressure shares one carried budget, not one per hit. */
 export function spendPersistentWard(ctx, entity, amount, meta = {}) {
   if (!enabled(ctx) || !entity?.persistentWard || amount <= 0) return { spent: 0, carry: 0 };

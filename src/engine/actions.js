@@ -39,7 +39,7 @@ import { passiveMult } from '../model/registries.js';
 import { commitSmithing, smithingPlan } from '../model/smithing.js';
 import * as Properties from './properties.js';
 import * as Ratings from './combatRatings.js';
-import { isMagicalAttack, ratingDamageMultiplier, attackImpact, schoolResistanceMultiplier, persistentWardMaximum } from '../model/combatRatings.js';
+import { isMagicalAttack, ratingDamageMultiplier, attackImpact, schoolResistanceMultiplier, persistentWardMaximum, persistentPoiseMaximum } from '../model/combatRatings.js';
 import { swapRunClass } from '../model/classSwap.js';
 import { applyGraceRefill } from './encounters.js';
 import { orderedReturn } from '../model/deckRules.js';
@@ -284,6 +284,21 @@ export function syncWardMaximum(ctx, entity) {
   ctx.emit('persistentWardChanged', { targetId: entity.id, value: ward.value, max: ward.max, source: 'rating', ...seatOf(ctx, entity) });
 }
 
+/**
+ * The Poise maximum follows the live Poise rating, exactly as Ward does: a rise
+ * adds the same to current Poise, a fall clamps.
+ */
+export function syncPoiseMaximum(ctx, entity) {
+  const poise = entity?.persistentPoise;
+  if (!poise || ctx.combatExpansionVersion !== 2) return;
+  const max = persistentPoiseMaximum(ctx, entity);
+  if (max === poise.max) return;
+  const rise = Math.max(0, max - poise.max);
+  poise.max = max;
+  poise.value = Math.min(max, poise.value + rise);
+  ctx.emit('persistentPoiseChanged', { targetId: entity.id, value: poise.value, max: poise.max, source: 'rating', ...seatOf(ctx, entity) });
+}
+
 export function restoreExpandedWard(ctx, entity, nominal, options = {}) {
   syncWardMaximum(ctx, entity);
   return Control.restorePersistentWard(ctx, entity, nominal, { source: 'card', ...options });
@@ -341,11 +356,28 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
   receipt.guardBypassRemaining = receipt.guardBypass || 0;
 }
 
-/** A Ward break costs a player Stamina next turn (breaks.wardActionLoss). */
+/**
+ * A Ward break costs a player Stamina next turn (breaks.wardActionLoss). The
+ * stamina is charged now; the event is returned so the caller emits it after
+ * damageDealt, where the log reads it.
+ */
 function breakWard(ctx, source, target) {
   const loss = target.kind === 'player' ? Math.max(0, ctx.ratingsRules?.breaks?.wardActionLoss ?? 1) : 0;
   if (loss) target.pendingActionLoss = (target.pendingActionLoss || 0) + loss;
-  ctx.emit('wardBroken', { targetId: target.id, sourceId: source?.id, staminaLoss: loss, ...seatOf(ctx, target) });
+  return ['wardBroken', { targetId: target.id, sourceId: source?.id, staminaLoss: loss, ...seatOf(ctx, target) }];
+}
+
+/**
+ * A Poise break staggers an enemy (staggerEnemy, called by the caller after the
+ * log has the hit) and costs a player Stamina next turn (breaks.poiseActionLoss,
+ * 1 by default). A player is never staggered by Poise: staggerPlayer can apply
+ * more than the one Stamina a Poise break costs.
+ */
+function breakPoise(ctx, source, target) {
+  if (target.kind === 'enemy') return ['poiseBroken', { targetId: target.id, sourceId: source?.id, ...seatOf(ctx, target) }];
+  const loss = Math.max(0, ctx.ratingsRules?.breaks?.poiseActionLoss ?? 1);
+  if (loss) target.pendingActionLoss = (target.pendingActionLoss || 0) + loss;
+  return ['poiseBroken', { targetId: target.id, sourceId: source?.id, staminaLoss: loss, ...seatOf(ctx, target) }];
 }
 
 function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
@@ -365,30 +397,52 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
   const ward = tactical.resistedAmounts[contactIndex] || 0;
   void spell;
   const barrierSpent = Math.min(Math.max(0, target.barrier || 0), tactical.barrierSpentAmounts?.[contactIndex] || 0);
+  // Break events are collected here and emitted after damageDealt, so the log reads the hit first.
+  const breaks = [];
   if (barrierSpent > 0) {
     target.barrier -= barrierSpent;
-    if (target.barrier === 0) ctx.emit('barrierBroken', { targetId: target.id, sourceId: source?.id, ...seatOf(ctx, target) });
+    if (target.barrier === 0) breaks.push(['barrierBroken', { targetId: target.id, sourceId: source?.id, ...seatOf(ctx, target) }]);
   }
   const wardSpent = tactical.wardSpentAmounts?.[contactIndex] || 0;
   if (wardSpent > 0 && target.persistentWard?.value > 0) {
     Control.spendPersistentWard(ctx, target, wardSpent, { cause: 'damage' });
-    if (target.persistentWard.value === 0) breakWard(ctx, source, target);
+    if (target.persistentWard.value === 0) breaks.push(breakWard(ctx, source, target));
   }
   const pool = 'block';
   const bypass = Math.min(amount, tactical.guardBypassRemaining || 0);
   tactical.guardBypassRemaining -= bypass;
   const blocked = Math.min(Math.max(0, target[pool] || 0), Math.max(0, amount - bypass));
   target[pool] = Math.max(0, (target[pool] || 0) - blocked);
-  const hpLoss = amount - blocked;
+  // Poise is the physical twin of Ward and sits after Block: a magical contact never meets it.
+  // Each physical hit it meets still lets at least 1 through; what it absorbs is spent.
+  let hpLoss = amount - blocked;
+  let poiseAbsorbed = 0;
+  let poiseBroke = false;
+  if (!spell && hpLoss > 0 && target.persistentPoise) {
+    syncPoiseMaximum(ctx, target);
+    const poise = target.persistentPoise;
+    if (poise.value > 0) {
+      const passing = Math.max(1, hpLoss - poise.value);
+      poiseAbsorbed = hpLoss - passing;
+      poise.value -= poiseAbsorbed;
+      hpLoss = passing;
+      if (poise.value === 0) { poiseBroke = true; breaks.push(breakPoise(ctx, source, target)); }
+    }
+  }
   if (hpLoss) target.hp -= hpLoss;
+  // From here `amount` is what the hit did after Poise, as it is after Ward; the log adds each layer back.
+  amount -= poiseAbsorbed;
   creditKnowledgeImpact(ctx, target, amount, tactical.knowledgeBonus > 0);
   Matchups.recordTacticalContact(tactical, { hpLoss, blocked, wardResisted: ward });
   ctx.emit('damageDealt', { sourceId: source?.id, targetId: target.id, amount, blocked, wardResisted: ward,
     ...(barrierSpent ? { barrierAbsorbed: barrierSpent } : {}),
     ...(wardSpent ? { wardAbsorbed: wardSpent, wardRemaining: target.persistentWard?.value || 0 } : {}),
+    ...(poiseAbsorbed ? { poiseAbsorbed, poiseRemaining: target.persistentPoise?.value || 0 } : {}),
     damageType: type, blockRemaining: target.block || 0, barrierRemaining: target.barrier || 0,
     ...seatOf(ctx, target), ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source) } : {}),
     ...(carrier.instanceId ? { cardInstanceId: carrier.instanceId, sourceHand: carrier.sourceHand, grantedBy: carrier.grantedBy } : {}), isAttack: true });
+  for (const [type, payload] of breaks) ctx.emit(type, payload);
+  if (poiseBroke && target.kind === 'enemy') staggerEnemy(ctx, target);
   if (hpLoss) ctx.emit('hpLost', { targetId: target.id, amount: hpLoss, cause: 'attack', ...seatOf(ctx, target) });
   if (!carrier.combatReaction && !tactical.avoided && target.alive && ctx.ratingsRules) Ratings.applyRatingImpact(ctx, source, target, carrier);
   // Independent pressure resolves even when all direct damage met protection.
