@@ -122,8 +122,12 @@ version-2 snapshot without the key has no enemy reactions.
   in authored order; a move qualifies when the incoming damage **against this
   enemy** is at least `minIncoming`: the largest positive contact of the root
   card (`playerAction`) or of the pushed reaction (`playerReaction`) whose target
-  is this enemy. A window opened by a push the enemy is not targeted by, on a
-  root it does not own, gives it nothing to qualify on. A qualifying move with `chance`
+  is this enemy. `minIncoming: 0` means no incoming damage is required: the move
+  qualifies on any push in its window, whatever the pushed card does to the
+  enemy (a pure Block or Evade included). The window itself still opens only as
+  described above. A window opened by a push the enemy is not targeted by, on a
+  root it does not own, gives a move with `minIncoming` 1 or more nothing to
+  qualify on. A qualifying move with `chance`
   1 is taken and one with 0 is not, without a draw; otherwise one draw on the new
   `enemyReaction` RNG stream (appended last) decides it. A move that is not taken
   passes to the enemy's next qualifying move in authored order; the first move
@@ -171,7 +175,8 @@ version-2 snapshot without the key has no enemy reactions.
   `enemyMoveStarted { reaction: true }` and the log line "X reacts with Move."
 - **First carriers.** Gilded Knight gains *Gilded Guard* (block 6, damage 3,
   `on: ['playerAction']`, `minIncoming: 8`); Court Duelist gains *Binding
-  Riposte* (damage 4, `on: ['playerReaction']`, `chance: 0.5`).
+  Riposte* (damage 4, `on: ['playerReaction']`, `minIncoming: 0`, `chance: 0.5`),
+  which answers any player reaction, including a pure Block.
 
 ## Counterstrike
 
@@ -301,7 +306,7 @@ and `src/content/combatExpansionCards.js`. T is the tier above.
   co-op seat order, per-seat cap, one Counter per seat, a co-op fizzle, and
   stale/foreign offers rejected; enemy reactions: Gilded Guard pushes before a
   heavy player hit and resolves first, the acting seat can answer it (and only
-  that seat in co-op), Binding Riposte answers a player reaction at its chance,
+  that seat in co-op), Binding Riposte answers any player reaction, a pure Block included, at its chance,
   no window on Counter-return roots or reaction plays, one reaction per enemy
   per turn, a memoised roll and a committed plan survive save/restore, offer
   checks never draw, a fight without reaction moves keeps its RNG counters and
