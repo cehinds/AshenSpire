@@ -638,9 +638,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const inst = active && findInst(active);
     const def = inst && resolveCombatCard(combat, inst, { upcastRanks: upcastRanksByCard.get(inst.instanceId) });
     player?.classList.toggle('skill-selected', cardKind(def) === 'skill');
-    syncPlayerActionIntent(player, inst, heldKinds.get());
-    // The figure previews the selected card's stance; deselecting returns it to the held stance.
-    stageFor(player?.querySelector('.sprite'))?.setStance?.(def ? stanceForCard(def) : heldStances.get());
+    // The figure and its glyph preview the selected card; deselecting returns them to the held
+    // stance. While a play's receipt is pending (hand frozen), keep the preview: the held ledgers
+    // still name the stance before the play until its cardPlayed beat lands.
+    if (def || !$('.hand')?.inert) {
+      syncPlayerActionIntent(player, inst, heldKinds.get());
+      stageFor(player?.querySelector('.sprite'))?.setStance?.(def ? stanceForCard(def) : heldStances.get());
+    }
     applyTargetLayer();
     setHintMode(active ? 'targeting' : null);
     hideTooltip();
@@ -1416,7 +1420,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const animation = equipmentAnimationForLoadout(registries, run.loadout, run.class);
     const artKey = JSON.stringify([run.class, run.customization, figure.armourId, animation?.setId, animation?.grip, spritesAreEnabled(), document.documentElement.dataset.performance, displayAppearance()]);
     const existing = artKey === playerArtKey ? zone.querySelector('.combatant.player') : null;
-    const renderKey = JSON.stringify([artKey, p, dv(p), run.attributes, run.loadout, selfArm, playerRest, heldStances.get(), heldKinds.get(), readinessOrder, readSettings()]);
+    const renderKey = JSON.stringify([artKey, p, dv(p), run.attributes, run.loadout, selected, selfArm, playerRest, heldStances.get(), heldKinds.get(), readinessOrder, readSettings()]);
     if (existing && playerRenderKey === renderKey) return;
     if (!existing) { stageFor(zone)?.dispose?.(); zone.replaceChildren(); }
     playerArtKey = artKey;
@@ -2167,6 +2171,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       selectedFlask = null;
       selfArm = null;
       render();
+      // Same as Esc: the one writer of selection presentation clears the card and the stance preview.
+      syncCardSelection();
     }
   });
   // Keyboard shortcuts (SPEC §7.3): Esc cancels targeting; 1–9 select/play the

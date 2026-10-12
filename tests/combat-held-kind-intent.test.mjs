@@ -160,3 +160,11 @@ test('an untagged attack card reads as attack for both the glyph and the stance'
   assert.equal(kindForCard(card).maneuver, 'attack');
   assert.equal(kindForCard({ id: 'untaggedSkill', type: 'skill', cardTags: [] }).maneuver ?? null, null);
 });
+
+// Review (2026-10-12): paths that change `selected` and only call render()
+// (right-click cancel, flask arm, inspection) must repaint the figure's stance.
+test('the player render key tracks the selected card so the stance preview repaints', () => {
+  const source = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
+  const line = source.split('\n').find(l => l.includes('const renderKey = JSON.stringify([artKey'));
+  assert.match(line, /\bselected, selfArm\b/);
+});
