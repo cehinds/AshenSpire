@@ -56,6 +56,7 @@ export function mountCreationPartSpecimens({ host, registries }) {
     onSelect: id => navigation.update(id),
   });
   // A standalone navigation needs the vertical room the live page gives it.
+  navigation.classList.add('cz-railed');
   navigation.style.minHeight = '300px';
   const detail = featBrowser(groups).querySelector('[data-ui-component="creation-feat-detail"]');
   const specimens = [
