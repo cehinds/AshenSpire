@@ -168,3 +168,14 @@ test('the player render key tracks the selected card so the stance preview repai
   const line = source.split('\n').find(l => l.includes('const renderKey = JSON.stringify([artKey'));
   assert.match(line, /\bselected, selfArm\b/);
 });
+
+// Codex review (2026-10-12): a spell with an offensive maneuver is held as
+// casting, so its glyph is prepare, not attack/sweep/smash.
+test('a spell with an offensive maneuver shows the prepare glyph to match its casting stance', () => {
+  for (const m of ['attack', 'smash', 'sweep', 'ranged']) {
+    const card = { id: 'spellX', type: 'attack', cardTags: ['camp:spell', `maneuver:${m}`] };
+    assert.equal(stanceForCard(card), 'casting', m);
+    assert.equal(kindForCard(card).maneuver, null, m);
+  }
+  assert.equal(kindForCard({ id: 'c', cardTags: ['camp:spell', 'maneuver:counter'] }).maneuver, 'counter');
+});

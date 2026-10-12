@@ -14,10 +14,16 @@ function withTagIds(card = {}) {
 export function kindForCard(card = {}) {
   card = withTagIds(card);
   const profile = combatProfileFor(card);
-  if (profile.maneuver || profile.camp === 'spell') return profile;
-  // Untagged cards take the figure's fallback so the glyph and the stance agree.
-  const fallback = { offensive: 'attack', defensive: 'defend' }[stanceForCard(card)];
-  return fallback ? { ...profile, maneuver: fallback } : profile;
+  // The glyph follows the figure's stance, so the two always agree: a spell with
+  // an offensive maneuver is held as casting and shows prepare, and an untagged
+  // attack or block card takes the figure's fallback.
+  const stance = stanceForCard(card);
+  // Casting (prepare) carries no maneuver: the glyph's own fallback is prepare.
+  const maneuver = stance === 'casting' ? null
+    : stance === 'defensive' ? 'defend'
+    : stance === 'offensive' ? (['attack', 'smash', 'ranged'].includes(profile.maneuver) ? profile.maneuver : 'attack')
+    : stance || profile.maneuver;
+  return maneuver === profile.maneuver ? profile : { ...profile, maneuver };
 }
 
 /** Presentation only. The resolved card, including equipment-projected tags, owns identity. */
