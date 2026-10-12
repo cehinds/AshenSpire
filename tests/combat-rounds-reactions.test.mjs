@@ -250,3 +250,46 @@ test('a control status that lands while a Counter is on offer makes the offer st
   assert.equal(c.player.energy, energy, 'nothing is paid');
   assert.equal(playedCount(c, 'gc1'), 0, 'nothing is played');
 });
+
+// --- P3b fix 2 (SPEC §4.10, §4.11): a reaction is offered only when live would offer it -----------------
+
+// The distinct card ids a fight offers at End Turn, with the preview on or off (live is the reference).
+function offeredIds(enemyId, cardIds, { preview }) {
+  const run = createRunState({ seed: SEED, classId: 'reaver', registries, profileMeta: { settings: preview ? { [COMBAT_ROUNDS_KEY]: true } : {} } });
+  const c = createRunCombat({ registries, rng: createRng(SEED), run, enemyIds: [enemyId], settings: {} });
+  cardIds.forEach((cardId, i) => addToHand(c, cardId, `${cardId}-${i}`));
+  c.player.mana = 9;
+  c.player.energy = 9;
+  dispatch(c, { type: 'endTurn' });
+  assert.ok(c.pendingReaction, `fixture: ${enemyId} offers a reaction at End Turn (preview ${preview ? 'on' : 'off'})`);
+  return [...new Set(c.pendingReaction.options.map((o) => o.cardId))].sort();
+}
+
+test('a Counter whose coverage does not reach the attack is not offered (melee Counter vs a spell attack)', () => {
+  // graveWisp's Drain is a spell attack at Near reach: the melee guardCounter does not cover it (SPEC §4.10).
+  const ids = offeredIds('graveWisp', ['guardCounter', 'fireCounter'], { preview: true });
+  assert.ok(!ids.includes('guardCounter'), 'the melee Counter is not on offer against a spell');
+  assert.ok(ids.includes('fireCounter'), 'the spell Counter covers it');
+});
+
+test('a spell Counter is not offered against a melee attack', () => {
+  // blightHound's Smash is a physical melee attack: fireCounter (spell coverage) does not cover it.
+  const ids = offeredIds('blightHound', ['guardCounter', 'fireCounter'], { preview: true });
+  assert.ok(ids.includes('guardCounter'), 'the melee Counter covers a melee attack');
+  assert.ok(!ids.includes('fireCounter'), 'the spell Counter does not cover a melee attack');
+});
+
+test('the preview offers the same Counter and Evade cards as live, against a melee and a spell attack', () => {
+  const cards = ['guardCounter', 'fireCounter', 'evasiveGuard', 'dodgeRoll'];
+  for (const enemyId of ['blightHound', 'graveWisp']) {
+    assert.deepEqual(offeredIds(enemyId, cards, { preview: true }), offeredIds(enemyId, cards, { preview: false }), `${enemyId}: preview matches live`);
+  }
+});
+
+test('Evade is offered as a reaction only where live offers it: as a melee Counter (its resolved maneuver is counter)', () => {
+  // Live v2 resolves evasiveGuard and dodgeRoll as maneuver:counter, melee coverage, so they answer a melee attack only.
+  assert.ok(offeredIds('blightHound', ['evasiveGuard'], { preview: false }).includes('evasiveGuard'), 'live: an Evade answers a melee attack');
+  assert.ok(!offeredIds('graveWisp', ['guardCounter', 'fireCounter', 'evasiveGuard'], { preview: false }).includes('evasiveGuard'), 'live: an Evade does not answer a spell');
+  const onMelee = offeredIds('blightHound', ['evasiveGuard'], { preview: true });
+  assert.ok(onMelee.includes('evasiveGuard'), 'preview: the Evade answers a melee attack, as live does');
+});

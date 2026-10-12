@@ -41,6 +41,7 @@ import { LEGACY_HAND_MAX } from '../model/statRows.js';
 import { refreshCombatRatings, recoverRatingMeters, cardRatingBonus, clearMeterGuards } from './combatRatings.js';
 import * as F from './combatRules.js';
 import * as Reactions from './combatReactions.js';
+import { combatProfileFor } from '../model/combatCardProfile.js';
 import * as Rounds from './combatRoundsAdapter.js';
 import { emitEvent, fireOwnerHooks, findEntity, hasEventTriggers } from './triggers.js';
 import { attachSkillXp } from './skillXp.js';
@@ -1724,11 +1725,21 @@ function roundReactionRefusal(combat, instanceId, entry = null) {
   const kind = Rounds.playerKind({ isAttack: false, effects: def.effects ?? [], maneuver: maneuverOf(def) });
   if (kind !== 'counter' && kind !== 'evade') return `'${def.name ?? inst.cardId}' is not a reaction card`;
   if (def.cost === 'X' || combat.registries.framework.isUnplayable(def)) return `'${def.name ?? inst.cardId}' cannot be played as a reaction`;
+  if (entry && !Reactions.counterCoversAttack(combat, def, enemyAttackProfile(combat, entry))) return `'${def.name ?? inst.cardId}' does not cover this attack`;
   if (!Control.controlGate(combat, p, def).allowed) return `'${def.name ?? inst.cardId}' can no longer be played as a reaction: recover from the active control statuses first`;
   const costs = playCosts(combat, def, claimedCharges(combat, instanceId));
   if (costs.energy > p.energy) return `Not enough Stamina to play '${def.name ?? inst.cardId}' as a reaction`;
   if (costs.mana > p.mana) return `Not enough Mana to play '${def.name ?? inst.cardId}' as a reaction`;
   return null;
+}
+
+// The combat profile of the enemy attack a reaction answers, read as its live contact reads it (reach and
+// targeting from expandedEnemyMove, camp, maneuver and school from the move's tags).
+function enemyAttackProfile(combat, entry) {
+  const enemy = combat.enemies.find(e => e.id === entry.actor);
+  const move = combat.registries.enemies.get(enemy.enemyId).moves[entry.cardId];
+  const expanded = expandedEnemyMove(enemy, move, entry.cardId, combat);
+  return { ...combatProfileFor({ ...move, enemyId: enemy.enemyId, moveId: entry.cardId }), reach: expanded.reach, targeting: expanded.targeting };
 }
 
 // The reaction record of a card in hand, priced now, or null when it cannot be played as a reaction now.

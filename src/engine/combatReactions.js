@@ -18,11 +18,19 @@ export function setReactionsEnabled(ctx, entity, enabled) {
   entity.reactionsEnabled = enabled;
 }
 
+// A Counter (a card whose resolved maneuver is counter) answers an attack its coverage reaches (SPEC §4.10).
+// Shared by the live offer and the Combat Rounds Preview's offer (SPEC §4.11), so both answer the same attacks.
+export function counterCoversAttack(ctx, def, profile, effect = 'damage') {
+  const tags = def.cardTags || def.tags || [];
+  if (!tags.includes('maneuver:counter')) return false;
+  const coverage = def.counterCoverage || ctx.combatExpansionRules.matchups.counter.defaultCoverage[
+    tags.includes('counter:spell') ? 'spell' : tags.includes('counter:ranged') ? 'ranged' : 'melee'];
+  return counterCoverageMatches(coverage, profile, effect);
+}
+
 function eligible(ctx, def, row) {
   const tags = def.cardTags || def.tags || [];
-  if (tags.includes('maneuver:counter')) return row.contacts.some(contact =>
-    counterCoverageMatches(def.counterCoverage || ctx.combatExpansionRules.matchups.counter.defaultCoverage[
-      tags.includes('counter:spell') ? 'spell' : tags.includes('counter:ranged') ? 'ranged' : 'melee'], contact, contact.effect || 'damage'));
+  if (tags.includes('maneuver:counter')) return row.contacts.some(contact => counterCoversAttack(ctx, def, contact, contact.effect || 'damage'));
   return tags.includes('maneuver:sweep') && def.defensiveReaction === true;
 }
 
