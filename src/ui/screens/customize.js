@@ -4,7 +4,7 @@ import { renderCollectibleCard } from '../components/collectibleCard.js';
 import { renderEquipmentCard, equipmentDetails } from '../components/equipmentCard.js';
 import { EMPTY_HAND_PRESENTATION } from '../components/emptyHandCard.js';
 import { startingEquipmentPreview } from '../../model/startingEquipmentPreview.js';
-import { feats as characterFeats } from '../../content/feats.js';
+import { creationFeatBrowserGroups } from '../models/CreationFeatBrowserModel.js';
 import { createCreationFeatBrowser, creationPageHeading, decorateCreationWorkspace } from '../components/creationPageParts.js';
 import { mountCreationPartSpecimens } from '../catalog/creationSpecimens.js';
 import { startingAbilityPlan, startingAbilityProblem } from '../../model/startingAbilities.js';
@@ -246,13 +246,7 @@ export function mountCustomize(app, {
         spriteSide === 'left' ? [previewSide, statsSide] : [statsSide, previewSide]),
     ]),
     keepsake: el('section', { id: 'cz-keepsake-panel', class: 'as-pane flush cz-stage' }, keepsakeGroup),
-    feats: el('section', { id: 'cz-feats-panel', class: 'as-pane flush cz-stage' }, createCreationFeatBrowser({
-      feats: characterFeats, allowance: 0, labels: {
-        eyebrow: t('creation.feats.eyebrow'), title: t('creation.feats.title'),
-        description: t('creation.feats.description'), availability: t('creation.feats.availability'),
-        detailLabel: t('creation.feats.detailLabel'),
-      },
-    })),
+    feats: el('section', { id: 'cz-feats-panel', class: 'as-pane flush cz-stage' }, el('div', { id: 'cz-feat-browser-host' })),
     spells: el('section', { id: 'cz-spells-panel', class: 'as-pane flush cz-stage' }, [
       el('div', { id: 'cz-spells-heading' }),
       el('div', { id: 'cz-starting-spells', class: 'cc-equip-group', dataset: { creationPart: 'starting-spells' } }),
@@ -620,6 +614,32 @@ export function mountCustomize(app, {
       profileMeta: meta,
     });
   }
+  let featBrowser = null;
+  function renderFeats(run = previewRun()) {
+    const groups = creationFeatBrowserGroups(registries, run);
+    if (featBrowser) {
+      featBrowser.setGroups(groups);
+      return;
+    }
+    const requirement = row => row.requiredLevel == null
+      ? t('creation.feats.noOffers', { track: row.trackLabel })
+      : t(row.locked ? 'creation.feats.lockedRequirement' : 'creation.feats.availableRequirement', {
+        track: row.trackLabel, required: row.requiredLevel, current: row.currentLevel,
+      });
+    featBrowser = createCreationFeatBrowser({ groups, allowance: 0, labels: {
+      eyebrow: t('creation.feats.eyebrow'), title: t('creation.feats.title'),
+      description: t('creation.feats.description'), availability: t('creation.feats.availability'),
+      detailLabel: t('creation.feats.detailLabel'),
+      groups: Object.fromEntries(['character', 'class', 'skill'].map(id => [id, t(`creation.feats.group.${id}`)])),
+      locked: t('creation.feats.locked'), available: t('creation.feats.available'),
+      emptyGroup: t('creation.feats.emptyGroup'), lockedRequirement: requirement,
+      availableRequirement: row => row.unlockedByProfile ? t('creation.feats.profileUnlocked') : requirement(row),
+      profileUnlocked: t('creation.feats.profileUnlocked'),
+      profileUnlockedRequirement: () => t('creation.feats.profileUnlocked'),
+      unavailable: t('creation.feats.locked'), unavailableRequirement: requirement,
+    } });
+    $('#cz-feat-browser-host').replaceChildren(featBrowser);
+  }
   function renderCharacterPreview() {
     refreshAbilitySelection();
     // The tint is the player's own choice, so the well's edge wears it.
@@ -636,6 +656,7 @@ export function mountCustomize(app, {
     portrait.replaceChildren(sprite || state.glyph);
 
     const run = previewRun();
+    renderFeats(run);
     const projection = statProjection(registries, run);
     $('#cz-primary-stats').replaceChildren(...primaryStatCards(attributeCardModels(registries, run.attributes, {
       projection,
@@ -1852,6 +1873,7 @@ export function mountCustomize(app, {
     selectRailItem(member);
     if (id === 'attributes') characterFold.open('primary');
     if (id === 'spells') renderSpells();
+    if (id === 'feats') renderFeats();
     const plan = creationFooterPlan({ categories, current: id });
     next.hidden = plan.primary !== 'next';
     start.hidden = plan.primary !== 'begin';
