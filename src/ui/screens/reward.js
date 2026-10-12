@@ -1395,6 +1395,8 @@ export function mountRewards(app, {
     }
     for (const choiceId of isNodeRow || isLevelChoice || isRankUp || isRelic || (isMilestone && row.rewardKind !== 'cards') ? [] : ids) {
       const cardId = (row.cardIds || row.options)[ids.indexOf(choiceId)];
+      // Card choices share the relic chooser's grid: one row of option columns.
+      strip.classList.add('reward-choice-grid');
       // This face only selects; collection belongs to Confirm. Inspection must
       // not consume the touch tap before selection enables that button.
       // THE DOOR OFFERS THE VERB THE PLAYER CAME FOR. Opening a card here used
