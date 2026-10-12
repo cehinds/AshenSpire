@@ -17,6 +17,6 @@ test('regular combat routes the default stage through the approved alternative p
     { side: 'enemy', visibleWidth: 60, leading: 40, slot: { id: 'e', x: 195, ground: 220 } }];
   const sizes = [{ id: 'p', visibleHeight: 150, scale: 1.5, multiplier: 1 },
     { id: 'e', visibleHeight: 150, scale: 1.5, multiplier: 1 }];
-  const fit = alternativeCombatComposition({ actors, sizes, width: 390, height: 460 });
+  const fit = alternativeCombatComposition({ actors, sizes, width: 390, height: 460, perspectiveGrid: true });
   assert.deepEqual(fit.map(f => [f.x, f.ground]), [[65, 400], [195, 220]]);
 });
