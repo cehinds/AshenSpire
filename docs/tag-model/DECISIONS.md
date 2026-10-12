@@ -313,7 +313,7 @@ Formula, relation and value keys follow the README conventions.
 ## Open: round-trip differences
 
 Every live node in `content/source/nodes.csv` (448) now maps to exactly one tag
-through `liveId`, with no collisions. The compile report still lists 81 field
+through `liveId`, with no collisions. The compile report still lists 92 field
 differences (section 3 of `compile-report.md`), down from 181: 108 were chip
 fields the model left empty, and they now carry the live glyph and colour. The
 rest are real disagreements between the live tree and the model. The model
@@ -337,7 +337,7 @@ or keep display case.
 - `meta.combat.damage.physical.pierce` (model Pierce, live Piercing; `damage:piercing`).
 - `meta.combat.skill.spellcraft.necrotic` (model Necrotic, live Decay; `school:decay`).
 - `meta.combat.delivery.casting` (model Casting, live Spell; `maneuver:casting`).
-- `meta.combat.skill.class-stance` (model Class stance, live Stance; `theme:stance`).
+- `theme.stance` (model Class stance, live Stance; `theme:stance`).
 - `meta.combat.skill.spellcraft` (model Spellcraft, live Magic school; `school`).
 - `meta.combat.stance` (model Stance, live Combat maneuver; `maneuver`).
 - `meta.combat.stance.defensive` (model Defensive, live Defend; `maneuver:defend`).
@@ -379,13 +379,11 @@ to confirm decision 3 against the live tree. Rows: `meta.combat.delivery.ranged`
 `meta.combat.stance.counter.ranged-counter` under `counterMode`, not under the
 counter stance.
 
-**Placement: technique, school, class stance and roots under meta (7).**
+**Placement: technique, school and roots under meta (6).**
 - `meta.combat.technique` sits under Combat in the model, in its own group
   (moved from Skill, owner 2026-10-12). The live `technique` root has no parent.
 - `meta.combat.skill.spellcraft` sits under Skill. The live `school` root has no
   parent.
-- `meta.combat.skill.class-stance` sits under Skill. Live `theme:stance` is under
-  the `theme` root.
 - `meta.combat.damage`, `meta.combat.delivery` and `meta.combat.stance` sit under
   Combat, and `meta.character.creature` under Character. Their live roots have no
   parent. Owner to say whether the model's `meta` grouping stays.
@@ -401,9 +399,9 @@ counter stance.
 
 **Placement: collection ids and former roots (owner, 2026-10-12, accepted) (10).** Parent: `meta.character.{class,relic,feat}`, `meta.character.consumable.flask`, `meta.character.other.location.{event,encounter}` (live `classification`); `card.type.attack` (live `classification`); `meta.combat.camp`, `meta.combat.attack-source`, `meta.presentation.fx` (live roots have no parent).
 
-**Not counted here.** Five live roots have a bare name that is also the last
+**Not counted here.** Three live roots have a bare name that is also the last
 segment of another id, so no bare id has a unique key. They are new top-level
-tags with the suffix `Root`: `campRoot` (camp), `presentationRoot` (presentation),
-`costRoot` (cost), `equipmentRoot` (equipment) and `utilityRoot` (utility). Their
+tags with the suffix `Root`: `costRoot` (cost), `equipmentRoot` (equipment) and
+`utilityRoot` (utility). Their
 children sit under them. This keeps every key unique without adding a parity
 difference.
