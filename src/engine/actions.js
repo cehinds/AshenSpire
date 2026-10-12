@@ -51,6 +51,8 @@ import { creditKnowledgeImpact } from './enemyKnowledge.js';
 
 import * as Expanded from './combatExpansionActions.js';
 import * as Control from './combatStatusControl.js';
+import { syncWardMaximum, syncPoiseMaximum } from './combatPools.js';
+export { syncWardMaximum, syncPoiseMaximum };
 import * as Blight from './ashenBlight.js';
 
 // ---------------------------------------------------------------------------
@@ -269,42 +271,6 @@ export function gainBarrier(ctx, entity, base, card = null) {
  * The Ward maximum follows the live Ward rating (a power or status that raises
  * Ward raises it). A rise adds the same amount to current Ward; a fall clamps.
  */
-/**
- * A rating swing keeps the MISSING amount fixed (owner's rule). A rise of N
- * from full gives +N; a dip clamps the value but remembers the missing amount
- * in `missing`, so a recovery cannot refill a pool the fight already emptied.
- * `missing` is stored only while the clamp has lost some of it.
- */
-function resizePool(pool, max) {
-  const missing = Math.max(0, pool.missing !== undefined && pool.value === 0 ? pool.missing : pool.max - pool.value);
-  pool.max = max;
-  pool.value = Math.max(0, max - missing);
-  if (missing > max) pool.missing = missing;
-  else delete pool.missing;
-}
-
-export function syncWardMaximum(ctx, entity) {
-  const ward = entity?.persistentWard;
-  if (!ward || ctx.combatExpansionVersion !== 2) return;
-  const max = persistentWardMaximum(ctx, entity);
-  if (max === ward.max) return;
-  resizePool(ward, max);
-  ctx.emit('persistentWardChanged', { targetId: entity.id, value: ward.value, max: ward.max, source: 'rating', ...seatOf(ctx, entity) });
-}
-
-/**
- * The Poise maximum follows the live Poise rating, exactly as Ward does: a rise
- * adds the same to current Poise, a fall clamps.
- */
-export function syncPoiseMaximum(ctx, entity) {
-  const poise = entity?.persistentPoise;
-  if (!poise || ctx.combatExpansionVersion !== 2) return;
-  const max = persistentPoiseMaximum(ctx, entity);
-  if (max === poise.max) return;
-  resizePool(poise, max);
-  ctx.emit('persistentPoiseChanged', { targetId: entity.id, value: poise.value, max: poise.max, source: 'rating', ...seatOf(ctx, entity) });
-}
-
 export function restoreExpandedWard(ctx, entity, nominal, options = {}) {
   syncWardMaximum(ctx, entity);
   return Control.restorePersistentWard(ctx, entity, nominal, { source: 'card', ...options });

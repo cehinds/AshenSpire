@@ -8,6 +8,7 @@ import { enqueueExpandedAction } from '../src/engine/combatExpansionActions.js';
 import { executeAction, applyAttackDamage, restoreExpandedWard, gainBarrier, syncWardMaximum } from '../src/engine/actions.js';
 import { schoolResistanceMultiplier, persistentWardMaximum } from '../src/model/combatRatings.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
+import { applyStatus } from '../src/engine/statuses.js';
 
 const drainQueue = combat => { while (combat.queue.length) executeAction(combat, combat.queue.shift()); };
 
@@ -228,6 +229,15 @@ test('a planned Spell hit does not absorb Ward a rider spent before it lands', (
   assert.equal(hits[1].wardAbsorbed ?? 0, 0, 'the second hit absorbs no Ward that is not there');
   assert.equal(hits[1].amount, 5, 'its planned Ward share goes back into the hit');
   assert.equal(before - enemy.hp, 3 + 5, 'the first hit loses 3 and the second loses all 5');
+});
+
+test('a status with a Ward bonus moves the Ward pool as soon as it is applied', () => {
+  const { combat, enemy } = fixture();
+  combat.ratingsRules = { bonuses: { 'status:bleeding': { ward: 2 } } };
+  enemy.ratings.ward = 3; enemy.persistentWard = { max: 3, value: 3 };
+  applyStatus(combat, enemy, 'bleeding', 1, null);
+
+  assert.deepEqual({ ...enemy.persistentWard }, { max: 5, value: 5 }, 'the pool follows the status without a later sync');
 });
 
 test('a rise from a full Ward pool adds the same amount to current Ward', () => {

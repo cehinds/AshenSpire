@@ -21,6 +21,7 @@ import { MODIFIER_KEYS } from '../model/schemas.js';
 import { resolveStackApplications, stackMagnitude } from '../model/combatRules.js';
 import { ratingValue } from '../model/combatRatings.js';
 import * as Control from './combatStatusControl.js';
+import { syncWardMaximum, syncPoiseMaximum } from './combatPools.js';
 
 export function getStatusInstance(entity, statusId) {
   return (entity && entity.statuses && entity.statuses[statusId]) || null;
@@ -36,12 +37,25 @@ export function hasStatus(entity, statusId) {
   return getStacks(entity, statusId) > 0;
 }
 
+// A status can carry a Ward or Poise bonus (bonuses['status:<id>']): the pools follow it at once.
+function syncPoolsAfterStatus(ctx, target) {
+  if (ctx?.combatExpansionVersion !== 2 || !target) return;
+  syncWardMaximum(ctx, target);
+  syncPoiseMaximum(ctx, target);
+}
+
 /**
  * applyStatus(ctx, target, statusId, stacks, source?) — the applyStatus opcode
  * body. Interprets stackMode; feeds meters; refreshes durations; fires
  * meter onFill (SPEC §3.7). Emits statusApplied (and meterFilled on fill).
  */
 export function applyStatus(ctx, target, statusId, stacks = 1, source = null) {
+  const result = applyStatusRaw(ctx, target, statusId, stacks, source);
+  syncPoolsAfterStatus(ctx, target);
+  return result;
+}
+
+function applyStatusRaw(ctx, target, statusId, stacks = 1, source = null) {
   if (Control.applyExpansionActiveStatus(ctx, target, statusId, stacks, source)) return;
   const def = ctx.registries.statuses.get(statusId);
   if (!target || !target.alive) return;
@@ -200,6 +214,12 @@ function checkMeterFill(ctx, entity, statusId, def, inst) {
 }
 
 export function removeStatus(ctx, target, statusId, opts = {}) {
+  const result = removeStatusRaw(ctx, target, statusId, opts);
+  syncPoolsAfterStatus(ctx, target);
+  return result;
+}
+
+function removeStatusRaw(ctx, target, statusId, opts = {}) {
   if (!target.statuses[statusId]) return;
   const before = getStacks(target, statusId);
   if (opts.amount !== undefined) {
