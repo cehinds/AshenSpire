@@ -72,3 +72,10 @@ test('fitted sprites stay inside their lane and above their foot anchor', () => 
     }
   }
 });
+
+test('the party keeps room for its name and meters below the feet on short fields', () => {
+  for (const height of [130, 160, 183, 420]) {
+    const formation = alternativeFormation(plan(3), 844, height, false);
+    for (const cell of formation.cells.filter(c => c.side === 'player')) assert(cell.ground <= height - 32 + 1e-9);
+  }
+});

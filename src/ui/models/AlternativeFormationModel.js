@@ -30,7 +30,10 @@ export function alternativeFormation(plan, width, height, narrow) {
     const rowHeight = height * (enemy ? profile.enemyRowHeight : profile.playerRowHeight);
     const top = height * (enemy ? profile.enemyTop : profile.playerTop) + rank * rowHeight;
     const left = width * profile.left + lane * laneWidth;
-    const ground = top + rowHeight * (enemy ? GRID.footFraction.enemy : GRID.footFraction.player);
+    // The player's name and meters sit below the feet; on a short field the
+    // party's foot line rises so they stay inside the battlefield.
+    const ground = enemy ? top + rowHeight * GRID.footFraction.enemy
+      : Math.max(top, Math.min(top + rowHeight * GRID.footFraction.player, height - GRID.playerBelowFootPx));
     return { ...cell, side: enemy ? 'enemy' : 'player', lane, rank,
       formationRow: enemy && rank === 0 ? 'back-row' : 'front-row',
       x: left + laneWidth / 2, ground, fitGround: ground,
