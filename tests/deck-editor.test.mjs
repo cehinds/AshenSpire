@@ -1348,9 +1348,9 @@ test('DOM: range follows the expanded combat delivery; the mark follows the camp
     // A ranged maneuver's stance already reads Ranged, so it shows no separate range.
     assert.deepEqual(read('ricochet'), [undefined, 'physical'], 'a ranged maneuver shows no separate range');
     assert.equal(row('ricochet').querySelector('.deck-editor-stance')?.dataset.stance, 'ranged');
-    // Physical marks carry the Smash sigil; magical marks carry the Spell sigil.
+    // Physical marks carry the approved shield; magical marks carry the Spell sparkle.
     const mark = (cardId) => row(cardId).querySelector('.deck-editor-camp .combat-sigil')?.dataset.sigil;
-    assert.equal(mark('ricochet'), 'smash');
+    assert.equal(mark('ricochet'), 'physical');
     assert.equal(mark('cometFragment'), 'spell');
     const spellMark = row('cometFragment').querySelector('.deck-editor-camp .combat-sigil');
     assert.equal(spellMark.querySelectorAll('path').length, 1);

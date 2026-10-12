@@ -35,7 +35,7 @@ import { renderCard, staticTokens } from '../components/card.js';
 import { resolveCard } from '../../model/registries.js';
 import { applyCombatExpansionCard } from '../../content/combatExpansionCards.js';
 import { combatProfileFor } from '../../model/combatCardProfile.js';
-import { sigilHtml } from '../components/combatSigilView.js';
+import { cardCategorySigilHtml } from '../components/cardTagSymbols.js';
 import { playingCardModel } from '../../model/playingCard.js';
 import { playingCardArt, cardArtFallbacks } from '../cardArtwork.js';
 import { cardArtLayersHtml } from '../cardArtLayers.js';
@@ -429,12 +429,12 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     const range = RANGE_BY_REACH[reach];
     return range ? el('span', { class: 'deck-editor-range', dataset: { range }, text: t(`deckEditor.range.${range}`) }) : null;
   };
-  // Physical or magical, as an icon before the costs: the Smash sigil in silver
+  // Physical or magical, as an icon before the costs: the Physical shield in gold
   // for physical cards, the outlined Spell sparkle in gold for magical ones.
   const campNode = (row) => {
     const camp = combatProfileFor(combatDef(row)).camp === 'spell' ? 'magical' : 'physical';
     const node = el('span', { class: 'deck-editor-camp', dataset: { camp }, role: 'img', title: tFull(`deckEditor.camp.${camp}`), 'aria-label': t(`deckEditor.camp.${camp}`) });
-    node.innerHTML = sigilHtml(camp === 'magical' ? 'spell' : 'smash', 'action', { tooltip: false });
+    node.innerHTML = cardCategorySigilHtml(camp === 'magical' ? 'spell' : 'physical');
     return node;
   };
   const tileCosts = (row) => rowCosts(row, [campNode(row)]);

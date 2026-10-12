@@ -124,24 +124,25 @@ test('long rank effects keep their Starstone condition, values and draw limit', 
   assert.equal(compactCardRules('If you have starstoneCharge: Deal 4 damage to every living enemy. Apply <span class="val">1</span> starstoneCharge to yourself. Draw <span class="val">1</span> card(s), once per turn from this family.'), 'With Starstone: 4 damage to all enemies. Gain <span class="val">1</span> Starstone. Draw <span class="val">1</span>, once per turn per family.');
 });
 
-test('Ritual Ward keeps Defend below and Ritual, Spell, Divine on the right', () => {
+test('Ritual Ward keeps Defend below and category followed by effect type on the right', () => {
   const reg=createRegistries(contentBundle),ref={cardId:'defend',profileId:'sceptreGuard'};
   const model=playingCardModel(reg,ref),def=resolveCard(reg,ref);
   assert.equal(model.sigils.action,'defend');
-  assert.deepEqual(cardSideTags(model,def,reg).map(t=>t.label),['Ritual','Spell','Divine']);
+  assert.deepEqual(cardSideTags(model,def,reg).map(t=>t.label),['Spell','Divine']);
 });
 
-test('three primary symbols prioritize element, status and main skill without mutating full tags', () => {
+test('five primary symbols prioritize category, damage and statuses without mutating full tags', () => {
   const reg=createRegistries(contentBundle),ref={cardId:'gorefireSlash'};
   const model=playingCardModel(reg,ref),def=resolveCard(reg,ref),before=JSON.stringify(model.tags);
   const chosen=cardSideTags(model,def,reg);
   assert.ok(chosen.some(t=>t.id==='status:bleed'));
-  assert.ok(chosen.length<=3);
-  assert.ok(chosen.every(t=>t.label.toLowerCase()!==model.sigils.action));
+  assert.ok(chosen.length<=5);
+  assert.match(chosen[0].id,/^camp:/);
+  assert.ok(chosen.every(t=>/^(camp|damage|school|status):/.test(t.id)));
   assert.equal(JSON.stringify(model.tags),before);
   const html=cardTagRailHtml(chosen);
   assert.equal((html.match(/class="card-tag-symbol"/g)||[]).length,chosen.length);
   assert.doesNotMatch(html,/tabindex=|title=/);
-  for(const tag of chosen)assert.ok(html.includes('aria-label="'+tag.label+'"'));
+  for(const tag of chosen)assert.ok(html.includes('aria-label="'+tag.label+(tag.count===undefined?'':' '+tag.count)+'"'));
   assert.equal(cardTagRailHtml([]),'');
 });

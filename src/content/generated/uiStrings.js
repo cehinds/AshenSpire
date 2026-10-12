@@ -9402,5 +9402,12 @@ export const uiStrings = [
     "short": "{stance} ?",
     "full": "",
     "tip": ""
+  },
+  {
+    "id": "card.tags.evade",
+    "extends": "",
+    "short": "Evade",
+    "full": "Evade or dodge an incoming action.",
+    "tip": ""
   }
 ];
