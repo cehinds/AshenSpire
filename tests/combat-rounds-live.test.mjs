@@ -341,3 +341,42 @@ test('a commit that throws part way leaves the fight exactly as it was before En
   assert.throws(() => dispatch(c, { type: 'endTurn' }), /injected mid-commit/);
   assert.equal(state(), before, 'a throw restores the pre-commit combat state, queues and RNG included');
 });
+
+// Review finding 2: one Mana-discount charge is consumed only at commit, so each queued card read it at queue
+// time and every queued card got the discount. A charge a queued card claims is not offered to a later card.
+function manaCardFixture() {
+  for (const classId of ['starseer', 'reaver', 'rogue', 'herald']) {
+    for (let seed = 1; seed <= 20; seed++) {
+      const c = fight({ classId, seed, expansion: 2 });
+      const card = c.piles.hand.find((x) => cardPlayCosts(c, x.instanceId).mana >= 1);
+      if (card) return { classId, seed, cardId: card.cardId };
+    }
+  }
+  return null;
+}
+
+test('two queued cards cannot both use one Mana-discount charge; unqueueing hands the claim back', () => {
+  const found = manaCardFixture();
+  assert.ok(found, 'fixture: a Mana card is in some opening hand');
+  const c = fight({ classId: found.classId, seed: found.seed, expansion: 2 });
+  const first = c.piles.hand.find((x) => x.cardId === found.cardId);
+  c.piles.hand = [first, { ...first, instanceId: 'second' }];
+  const targetId = c.enemies.find((e) => e.alive)?.id;
+  const base = cardPlayCosts(c, first.instanceId).mana;
+  assert.ok(base >= 1, 'fixture: the Mana card costs Mana');
+  c.player.abilityRiders = { ...(c.player.abilityRiders || {}), charges: { ...(c.player.abilityRiders?.charges || {}), discount: { manaDiscount: 1 } } };
+  assert.equal(cardPlayCosts(c, first.instanceId).mana, base - 1, 'fixture: the charge discounts the first card');
+
+  const mana0 = c.player.mana;
+  dispatch(c, { type: 'playCard', cardInstanceId: first.instanceId, targetId });
+  assert.equal(c.player.mana, mana0 - (base - 1), 'the first queued card pays the discounted Mana');
+  assert.equal(cardPlayCosts(c, 'second').mana, base, 'the charge is claimed: the second card prices at full Mana');
+  dispatch(c, { type: 'playCard', cardInstanceId: 'second', targetId });
+  assert.equal(c.player.mana, mana0 - (base - 1) - base, 'the second queued card pays full Mana');
+
+  dispatch(c, { type: 'unqueueCard', cardInstanceId: first.instanceId });
+  assert.equal(c.player.mana, mana0 - base, 'unqueueing the first refunds its discounted Mana');
+  assert.equal(cardPlayCosts(c, first.instanceId).mana, base - 1, 'the released charge is offered again');
+  dispatch(c, { type: 'playCard', cardInstanceId: first.instanceId, targetId });
+  assert.equal(c.player.mana, mana0 - base - (base - 1), 'requeued, the first card takes the discount again');
+});

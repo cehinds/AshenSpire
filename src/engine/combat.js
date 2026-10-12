@@ -1231,20 +1231,23 @@ function effectiveCost(combat, def) {
 // What playing this card costs right now, in every pool: Actions (X spends
 // them all), Mana and Stamina, weight class and relic reductions applied. The
 // one pricing doPlayCard pays, exported so a bot can ask before it plays.
-export function resolvedCardPlayCosts(combat, def) {
+// `claimed` (preview only) is the set of charge keys queued cards already hold: they are not offered again.
+export function resolvedCardPlayCosts(combat, def, claimed = null) {
   const weightClass = playerWeightClass(combat).weightClass;
   const pools = F.foundationCosts(combat, def, weightClass, combat.registries.framework.costProfile(def, { weightClass }));
   const stamina = (def.cost === 'X' ? combat.player.stamina : effectiveCost(combat, def)) + (def.upcastSurcharge || 0);
-  return { energy: stamina, mana: Math.max(0, pools.mana + (def.upcastSurcharge || 0) - R.matchingAbilityCharges(combat.player, { ...def, type: cardKind(def), authoredTags: def.cardTags || def.tags }).manaDiscount), stamina };
+  const player = withoutClaims(combat.player, claimed);
+  return { energy: stamina, mana: Math.max(0, pools.mana + (def.upcastSurcharge || 0) - R.matchingAbilityCharges(player, { ...def, type: cardKind(def), authoredTags: def.cardTags || def.tags }).manaDiscount), stamina };
 }
 
-function playCosts(combat, def) { return resolvedCardPlayCosts(combat, def); }
+function playCosts(combat, def, claimed = null) { return resolvedCardPlayCosts(combat, def, claimed); }
 
 /** cardPlayCosts(combat, cardInstanceId) → { energy, mana, stamina } for a card in hand. */
 export function cardPlayCosts(combat, cardInstanceId, upcastRanks) {
   const inst = combat.piles.hand.find((c) => c.instanceId === cardInstanceId);
   if (!inst) throw new Error(`Card '${cardInstanceId}' is not in hand`);
   const def = resolveCombatCard(combat, inst, { upcastRanks });
+  const claimed = claimedCharges(combat, cardInstanceId);
   // cardPreparing has no ledger side effect in recordAbilityEvent/skill XP.
   // With no listener or queued work it cannot change any input to playCosts.
   // Custom buses, paused/resolving actions and all hook sources keep the exact
@@ -1254,8 +1257,34 @@ export function cardPlayCosts(combat, cardInstanceId, upcastRanks) {
     && combat._emitEvent === emitEvent && Array.isArray(combat.queue) && combat.queue.length === 0
     && !combat.pendingAbilityDiscard && !combat._abilityAction && !combat._emitDepth
     && !combat._foundationTransaction && !combat._foundationAncestry?.length
-    && !hasEventTriggers(combat, 'cardPreparing')) return playCosts(combat, def);
-  return playCosts(preparingPreview(combat, inst, def), def);
+    && !hasEventTriggers(combat, 'cardPreparing')) return playCosts(combat, def, claimed);
+  return playCosts(preparingPreview(combat, inst, def), def, claimed);
+}
+
+// Preview only (SPEC §4.11): the Mana-discount charges the queued cards hold, except the card named.
+// A queued card claims the discount charges it priced with; unqueuing or resolving it releases them.
+function claimedCharges(combat, exceptInstanceId = null) {
+  if (!combat.combatRounds) return null;
+  const claimed = new Set();
+  for (const record of Rounds.queuedCards(combat)) {
+    if (record.instanceId !== exceptInstanceId) for (const key of record.claims || []) claimed.add(key);
+  }
+  return claimed;
+}
+
+// The player as the pricing reads it, with the claimed charges taken out of its ability charges.
+function withoutClaims(player, claimed) {
+  if (!claimed?.size) return player;
+  const charges = Object.fromEntries(Object.entries(player.abilityRiders?.charges || {}).filter(([key]) => !claimed.has(key)));
+  return { ...player, abilityRiders: { ...(player.abilityRiders || {}), charges } };
+}
+
+// The charge keys this card's Mana discount comes from, net of the claimed ones.
+function manaDiscountClaims(combat, def, claimed) {
+  const player = withoutClaims(combat.player, claimed);
+  const charges = player.abilityRiders?.charges || {};
+  const { keys } = R.matchingAbilityCharges(player, { ...def, type: cardKind(def), authoredTags: def.cardTags || def.tags });
+  return keys.filter((key) => (charges[key]?.manaDiscount || 0) > 0);
 }
 
 /** Read only whether temporary buildup turns this card into an enemy aim.
@@ -1514,7 +1543,9 @@ function queueRoundCard(combat, { cardInstanceId, targetId, choice, upcastTier, 
   }
 
   const isX = def.cost === 'X';
-  const { energy: cost, mana: manaCost, stamina: staminaCost } = playCosts(combat, def);
+  const claimed = claimedCharges(combat, cardInstanceId);
+  const { energy: cost, mana: manaCost, stamina: staminaCost } = playCosts(combat, def, claimed);
+  const claims = manaDiscountClaims(combat, def, claimed);
   if (p.energy < cost) throw new Error('Not enough Actions (Stamina) to play this card');
   if (p.mana < manaCost) throw new Error('Not enough mana to play this card');
   p.energy -= cost;
@@ -1540,6 +1571,7 @@ function queueRoundCard(combat, { cardInstanceId, targetId, choice, upcastTier, 
     ...(upcastTier !== undefined ? { upcastTier } : {}),
     ...(upcastRanks !== undefined ? { upcastRanks } : {}),
     paid: { energy: cost, mana: manaCost, stamina: staminaCost },
+    claims,
     tl: {
       id: inst.cardId, instanceId: cardInstanceId, kind, speed: Rounds.cardSpeed(def, inst.cardId),
       stance: Rounds.stanceFor(kind, tags), target: tlTarget, sp: cost, tags,
