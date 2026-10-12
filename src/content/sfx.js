@@ -140,6 +140,12 @@ export const SFX_RECIPES = {
     { kind: 'tone', type: 'sine', freq: 320, to: 520, dur: 0.14, peak: 0.4 },
     { kind: 'noise', dur: 0.08, peak: 0.2, hp: 2000 },
   ],
+  // Ward absorbing magic / the Ward pool dropping (ui/fx.js).
+  wardResist: [
+    { kind: 'tone', type: 'triangle', freq: 880, to: 1320, dur: 0.18, peak: 0.22 },
+    { kind: 'tone', type: 'sine', freq: 660, to: 990, dur: 0.22, peak: 0.16, t0: 0.04 },
+    { kind: 'noise', dur: 0.06, peak: 0.08, hp: 4000 },
+  ],
   // ---- the proc-burst family (#66/D16) -------------------------------------
   // `procBurst` is the FAMILY row: any status that procs and has no row of its
   // own sounds like a burst, not like a missing sound. The three per-status

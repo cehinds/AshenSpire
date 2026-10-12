@@ -427,6 +427,7 @@
 .float-num.heavy { font-size: 3.4rem; }
 .float-num.crit { font-size: 4.4rem; color: #ffc861; text-shadow: 0 0 4px #000, 0 0 10px rgba(201, 162, 39, 0.7), 0 2px 6px #000; }
 .float-num.blk { color: var(--frost); }
+.float-num.ward { color: #c3a6ff; text-shadow: 0 0 4px #000, 0 0 10px rgba(150, 110, 255, 0.75), 0 2px 6px #000; }
 .float-num.heal { color: var(--green); }
 .float-num.burst { color: var(--ember); font-size: 3.6rem; }
 /* Reduced motion: a plain rise, no bounce/overshoot. */

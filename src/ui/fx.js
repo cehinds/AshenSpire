@@ -485,6 +485,18 @@ export function guardHitFloatParts(event) {
   };
 }
 
+/** Magic the Ward absorbed on a hit (`damageDealt.wardResisted`), or null. */
+export function wardResistFloat(event) {
+  const n = Math.max(0, Math.floor(Number(event && event.wardResisted) || 0));
+  return n > 0 ? { text: `🛡 ${n} RESISTED`, cls: 'ward small' } : null;
+}
+
+/** The Ward pool dropping (`persistentWardChanged.spent`, `combatWardStripped.amount`), or null. */
+export function wardDropFloat(event) {
+  const n = Math.max(0, Math.floor(Number(event && (event.type === 'combatWardStripped' ? event.amount : event.spent)) || 0));
+  return n > 0 ? { text: `WARD −${n}`, cls: 'ward small' } : null;
+}
+
 // Damage magnitude → size tier: crit (big hits pop hardest), heavy, normal, chip.
 function dmgClass(amount) {
   if (amount >= 25) return 'dmg crit';
@@ -1387,10 +1399,12 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
       // only the HP residual as damage. Paired results sit side-by-side without
       // relying on random jitter, so phone and desktop read the same grammar.
       const parts = guardHitFloatParts(e);
+      const ward = wardResistFloat(e);
       const paired = !!(parts.guard && parts.damage);
       const heavy = parts.residual >= 15;
       const hitSounds = () => {
         if (parts.guard) sfx.play('block');
+        if (ward) sfx.play('wardResist');
         if (parts.damage) playHitSound(e);
       };
       return {
@@ -1398,13 +1412,14 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
           const anchor = ctx.anchorFor(e.targetId);
           if (!sequential) hitSounds();
           if (parts.guard) spawnFx(ctx.layer, anchor, 'fx-spark', 320, '✦');
+          if (ward && !parts.damage) spawnFx(ctx.layer, anchor, 'fx-spark', 320, '✦');
           if (!parts.damage) return; // fully guarded: no flinch, slash, or shake
           // Attack impacts slash at the contact.
           if (beatKind === 'attack') spawnFx(ctx.layer, anchor, 'fx-slash', 300);
         },
         reaction: (ctx) => {
           const anchor = ctx.anchorFor(e.targetId);
-          if (parts.guard && !parts.damage && anchor?.closest('.enemy')) playPoseOn(anchor, 'guardHit', 220);
+          if ((parts.guard || ward) && !parts.damage && anchor?.closest('.enemy')) playPoseOn(anchor, 'guardHit', 220);
           if (!parts.damage) return;
           // The victim flashes + recoils (CSS); heavy hits recoil further
           // (hit-heavy) and kick the screen. A held hit (hit-stop) starts the
@@ -1427,6 +1442,8 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
             { x: paired ? -26 : 0, jitter: false });
           if (parts.damage) floatNum(ctx.layer, anchor, parts.damage.text, parts.damage.cls, null,
             { x: paired ? 26 : 0, jitter: !paired });
+          if (ward) floatNum(ctx.layer, anchor, ward.text, ward.cls, null,
+            { x: (parts.guard || parts.damage) ? -60 : 0, y: -28, jitter: false });
         },
       };
     }
@@ -1441,6 +1458,19 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
             },
           }
         : null;
+    case 'persistentWardChanged':
+    case 'combatWardStripped': {
+      const drop = wardDropFloat(e);
+      return drop
+        ? {
+            reaction: () => { if (!sequential) sfx.play('wardResist'); },
+            numbers: (ctx) => {
+              if (sequential) sfx.play('wardResist');
+              floatNum(ctx.layer, ctx.anchorFor(e.targetId), drop.text, drop.cls);
+            },
+          }
+        : null;
+    }
     case 'hpLost': {
       // #61 M2a: a proc burst's number is ITS OWN float, in the row's tint,
       // with the row's glyph — separate from and after the hit that tipped it.
