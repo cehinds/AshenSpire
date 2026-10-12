@@ -33,7 +33,7 @@ Numbers in this spec are the **initial balance targets**. They will move during 
 | 8 | Testing | **built** | `tests/run-node.mjs`. |
 | 9 | Milestones M1–M4 | M1, M2 **built**; M3 **partly built**; M4 **partly built** | M3: 7 cards have no route in (`tools/contentreach.mjs`) and there is no balance gate (D1). M4: the feel, performance and asset-pass items are in FINISH §5, §7 and §10. |
 | 10 | Forward hooks | **seams built**, features **planned** | By design: v1 keeps them empty. |
-| 11 | Non-goals | — | LAN co-op, the narrow layout and audio have shipped (the section says so). |
+| 11 | Non-goals | — | The narrow layout and audio have shipped (the section says so). LAN co-op is built but **planned for a later release**, not part of the current release set (owner, 2026-10-12). |
 | 12 | Expansion (dodge, trader arts, HUD piles, branching bosses, roster, animation) | **built**, two items open | P6: 1–5 elites per seat averaging 3 (3 ship, one per seat). P8b: the Power resting stance (`resolveCombatPose` returns `idle`). |
 | 13 | Seats, zones, skill tracks, class card and tree, levels, recovery, Mana, attributes, quest board | **partly built** | Phase 0 of [proposal-seat-adventure](docs/proposal-seat-adventure.md); plan phases 1–10 of [plan-progression-and-property-system](docs/plan-progression-and-property-system.md), phase 2 only as 2a (2b, relic passives as property rules, is unscheduled). Open, as each subsection's *Not in this phase* line states: the smithing re-point (4b-ii, §13.4e); co-op offers no skill or class draft (§13.4e, §13.4g); no tree screen (§13.4g); four ability-card sentences are approximated (§13.4f); quest XP is unpaid and the co-op host has no quest board (§13.4n). **Post-1.0** (owner decision, 2026-09-27): 3b-ii (equipment rows joining the deck), the class-swap boss-reward door (§13.4h) and quest XP. The tower, city and later seat phases are **planned** in that proposal, with no SPEC section yet; companions are owned by §14.3, not the proposal's phase 5 (owner decision, 2026-09-27). |
 | — | World Journey, shared armour sets, legacy dungeons, the opening prologue, configurable stat pools | **built**, one boundary | `ui/screens/worldAtlas.js`, `legacyDungeon.js`, `prologue.js`; `src/content/derivedStats.js`. The stat-pool rules apply to the solo path only; the combat workshop and LAN paths keep their existing rules until given a rating context (that section's last line). |
@@ -191,8 +191,10 @@ node tools/dirorder.mjs --selftest                             # the shape check
 
 **The one rule that makes the table enforceable:** imports point *inward* — `ui` may import
 `engine`, `model` and `content`; `engine` may import `model` and `content`; `model` may import
-`content`; **`content` imports nothing.** A content file that imports from `engine` is the
-defect this layering exists to catch.
+`content`; **`content` never imports `ui`.** It may import `model/` schemas and helpers (and the
+`config/` and `framework/` data modules). The one exception is `src/content/prototypes/`, where
+`combatBuilds.js` imports `engine/combat.js` and `engine/rng.js`. A content file outside
+`prototypes/` that imports from `engine` is the defect this layering exists to catch.
 
 ### 3.3 Domain model, registries, and state
 
@@ -240,7 +242,7 @@ effects: [
 **Opcode list** (closed set; extending it is an engine PR):
 
 - Combat: `damage {hits?}`, `block`, `applyStatus`, `removeStatus`, `draw`, `discard {random?}`, `exhaust`, `addCard {card, pile, position}`, `gainEnergy` (adds Stamina; the id is a retired alias), `restoreStamina`, `restoreMana`, `loseHp` (ignores block), `heal`, `shuffleDiscardIntoDraw`, `enterStance`, `poiseDamage`, `stagger`, `buildup`, `arcaneBuildup`, `gainBarrier`, `wardDamage`, `grantCardCharge`, `grantRollMode`, `retain`, `gainPoise` / `gainWard` (`amount` plus the card's Block rating bonus — DR on a physical skill, PR on a magical card — held as the target's Poise or Ward guard, which absorbs physical or magical impact before the matching meter fills and clears at the start of its owner's turn with Block; emits `meterGuardGained`), `dodgeRoll` (player only; no fields — the die, the Dexterity + Weight Class check, the difficulty and the temporary guard are the framework's `dodgeRoll` rule over `mechanics.json`; rolls on stream `misc`; success lands the guard as Block through the block door; emits `dodgeRolled`). Internal (not content-authorable): `completeCombatAction`, which `executeAction` runs to close a combat action (`src/engine/actions.js`).
-- Run-level (events, shops, rewards reuse the same DSL): `addRunes`, `addCardToDeck {card}`, `removeCardFromDeck`, `upgradeCard {random?}`, `addRelic {random? | id}`, `addFlask`, `addFlaskCapacity`, `refillFlasks`, `loseMaxHpPct`, `startCombat {encounterId}`, `swapClass {classId | random}` (§13.4h).
+- Run-level (events, shops, rewards reuse the same DSL): `addCinders` (older name `addRunes`), `addCardToDeck {card}`, `removeCardFromDeck`, `upgradeCard {random?}`, `addRelic {random? | id}`, `addFlask`, `addFlaskCapacity`, `refillFlasks`, `loseMaxHpPct`, `startCombat {encounterId}`, `swapClass {classId | random}` (§13.4h).
 
 Common fields on any opcode: `target: self | enemy | allEnemies | randomEnemy` (cards with an `enemy` target require UI targeting), `amount: number | Formula` (§3.5), `if: Predicate` (§3.6) to gate the opcode, `repeat: n` for multi-hit.
 
@@ -536,7 +538,8 @@ its mounts, and **seat** a run-owned card in an emptied or open mount.
 - **Not in a Sealed or Draft run** (owner, 2026-10-02). A pool-built deck is never dealt the
   equipment's lent cards (`isPoolDeckRun`, `model/cardRemoval.js`), and extracting one would
   hand the run a free copy of what those modes exclude. `extractionRefusal` answers `poolDeck`
-  from the run's own Custom Climb rules every time, never from a stored field: `extractionPlan`
+  from the run's own Custom Climb rules, or from a stored `run.poolDeck === true` flag on a fight's
+  synthetic run (`isPoolDeckRun`): `extractionPlan`
   lists no candidate and carries that `refusal`, `commitExtraction` refuses it by name (a free
   grant too) before touching the run, and every smith door — the Shrine, a merchant's rolled
   smith, the blacksmith's `extractArt` — shows the service unavailable with the
@@ -815,7 +818,9 @@ scope and verification.
 
 **Pools between fights (2026-09-24, plan A2).** Every fight opens with Stamina
 at its maximum (`mechanics.stamina.combatStartRefill: "full"`; `"carry"` keeps
-the old rule); a restored fight keeps the Stamina it was saved with. HP and
+the old rule, but it currently has no effect: every player turn start refills Stamina to its
+maximum less any Stagger loss, `src/engine/combat.js` ~L503, `p.energy = Math.max(0, p.energyMax -
+(p.pendingActionLoss || 0))`); a restored fight keeps the Stamina it was saved with. HP and
 Mana carry from one fight to the next, and only rests, flasks and effects
 restore them. The refill also clears the Stamina deficit an equipment swap
 carried, so the next swap cannot take the refilled points back. Rules text:
@@ -1237,8 +1242,9 @@ warned when not the stock value.
   starts with an 11-card deck, signature and ability card included (`balance.startingDeckSize`
   is the home of that number);
 - one class signature card and one starter relic, both reachable in a new Rogue run;
-- two starting equipment kits and four Rogue outfits/armour sets, including one free baseline
-  of each required kind and the same unlock/discovery rules as the existing classes;
+- two starting equipment kits and five Rogue-specific outfits/armour sets, plus the four `sharedSet` rows
+  every class can wear (`content/source/outfits.csv` has nine rows with `classId` `rogue`),
+  including one free baseline of each required kind and the same unlock/discovery rules as the existing classes;
 - five stage/tint class sprites plus the equipment/body/armament art needed for every authored
   Rogue kit and outfit, with ordinary missing-art refusal/fallback behavior;
 - class presets, flask allocation, rewards, draft/custom-run, history, co-op and compendium
@@ -1263,7 +1269,7 @@ Rarity: S = starter, C = common, U = uncommon, R = rare. Cost in Stamina (engine
 | Crimson Cleave | C | 2 | Attack | Deal 8 to ALL enemies. Apply 2 Bleed to ALL. | 11 dmg |
 | Shield Bash | C | 1 | Attack | Deal 5. 4 Poise damage. | 8 dmg, 5 Poise |
 | Quickstep | C | 1 | Skill | Gain 6 Block. Draw 1. | 8 Block |
-| Guard Counter | C | 1 | Attack | Deal 4. If you have Block: deal 10 instead. | 6 / 14 |
+| Guard Counter | C | 1 | Attack | Prepare Melee Counter with 4 reply damage. If you have Block: prepare 10 instead. | 6 / 14 |
 | Iron Resolve | C | 1 | Skill | Gain 5 Block. If in Bulwark Stance: gain 9 instead. | 7 / 12 |
 | Serrated Blade | C | 1 | Attack | Deal 7. If target has any Bleed: apply 3 Bleed. | 9 dmg, 4 Bleed |
 | Enter: Gorefire | C | 1 | Skill | Enter Gorefire Stance. Draw 1. | cost 0 |
@@ -1447,7 +1453,7 @@ Faithful to StS's published algorithm, simplified where invisible to the player.
 - **Map camera movement.** The map opens with the current decision framed and supports grab-dragging on both axes with mouse, touch, and pen. **Settings → Advanced → Interface → Two-axis map dragging** is on by default; turning it off restores vertical-only map travel and keeps the horizontal camera centred. Zoom reset recentres the current decision in either mode, and the saved run camera preserves both axes.
 - Acts 2/3 reuse the generator with different encounter tables and elite/boss pools (data only).
 
-Rewards after combat: cinders (Monster 45–75, Elite 105–150, Boss 225–270) + a card reward at the §15.1 schedule (shipped: a 10% chance per won fight, `balance.rewards.cardRewards.chancePct`; choose 1 of 3 at the default odds common 60% / uncommon 35% / rare 5%, Elite 45/40/15, which a class's own reward weights may override) + flask roll (§5.5). Elites additionally drop a relic; bosses drop a boss-relic choice of 3. Merchant prices, in cinders (the old rune prices ×3): cards 135–480 by rarity, relics 420–900, flasks 150–240, card removal 225 (+75 per purchase). All numbers: `balance.js`.
+Rewards after combat: cinders (Monster 45–75, Elite 105–150, Boss 225–270) + a card reward at the §15.1 schedule (shipped: a 10% chance per won fight, `balance.rewards.cardRewards.chancePct`; choose 1 of 3 at the default odds common 60% / uncommon 35% / rare 5%, Elite 45/40/15, which a class's own reward weights may override) + flask roll (§5.5). Elites additionally drop a relic; bosses drop a boss-relic choice of 3. **TO BUILD:** today a boss drops one boss relic (`src/main.js`, `rollRelicReward(... { rarities: ['boss'] })`). Merchant prices, in cinders (the old rune prices ×3): cards 135–480 by rarity, relics 420–900, flasks 150–240, card removal 225 (+75 per purchase). All numbers: `balance.js`.
 
 ---
 
@@ -1739,7 +1745,7 @@ keeps the same state and focus contract without meaningful animation.
   MP 20, SP 20. A bar's fill remains `current / maximum`; its visual length compares that
   maximum with the data-owned reference and obeys the shared viewport cap. A character may
   exceed a reference—it lengthens only to the layout cap and never clamps gameplay state.
-- **Enemy row (upper right 60%):** up to 5 enemies; each shows sprite/placeholder, name, HP bar, **Poise meter** (thin amber bar under HP), **threshold-proc bars** (up to two active proc statuses such as Bleed or Frost, each drawn with its status's own glyph and `tint`, only when >0; `src/ui/screens/combat.js`), status icon row, and **intent icon + number above the head**.
+- **Enemy row (upper right 60%):** up to 5 enemies today. **TO BUILD** (owner, 2026-10-12): the enemy cap becomes a setting, default 3. Each shows sprite/placeholder, name, HP bar, **Poise meter** (thin amber bar under HP), **threshold-proc bars** (up to two active proc statuses such as Bleed or Frost, each drawn with its status's own glyph and `tint`, only when >0; `src/ui/screens/combat.js`), status icon row, and **intent icon + number above the head**.
 - **Player zone (lower left):** stance icon, status row, Block shield badge overlapping HP.
 - **Hand:** bottom center, fanned, up to the derived `handSize` (base 7, max 20; `src/content/derivedStats.js`); hover raises card ×1.5 with full text.
 - **Stamina orb:** bottom left, current Stamina only (no maximum), with a Mana ring unless the `manaRing` setting is off (`src/ui/components/staminaOrb.js`). **End Turn** button bottom right — pulses if Stamina remains and any card is playable; confirm-free.
@@ -1836,7 +1842,7 @@ by deriving the historical shipped defaults required by their version. Profile s
 only overrides, so changing a shipped default remains meaningful and Reset never writes a stale
 copy of that default.
 
-**Portable export.** Advanced Settings has one Export configuration action that serializes a
+**Portable export.** Advanced Settings has one Export configuration action, shown on debug pages only (`pageDebug()`, `src/ui/screens/settings.js`; owner, 2026-10-12), that serializes a
 versioned JSON document containing the schema/version marker, build/source information, explicit
 overrides and their resolved values. It never includes run saves, profile progress, unlocks,
 history, user file paths, or quarantine/archive data. Where the File System Access API is
@@ -2008,7 +2014,7 @@ thing broke.
 promise: `node tools/verify-shipped.mjs` (the bundle matches source), `node tools/mapplan.mjs`
 (map distributions at the current shape), `node tools/content-build.mjs --selftest --mutate`
 (§3.14), `node tools/contrast-audit.mjs` (palette targets), `node tools/release-shots.mjs` (the release
-capture set — see above), `node tools/ai-disclosure.mjs --check` (§2.1),
+capture set — see above; it is run by hand before a release, and no CI job runs it), `node tools/ai-disclosure.mjs --check` (§2.1),
 `node tools/screenreach.mjs`, `tools/zoomplace.mjs`, `tools/mapreach.mjs`,
 `tools/sfx-loudness.mjs`.
 
@@ -2051,7 +2057,7 @@ Build: fx pass (floating numbers, shake, transitions), run-history screen, keybo
 
 Still non-goals: accounts, monetization, localization (strings live in content files, so l10n is possible later), a mod loader, Steam-style achievements, and audio bundled into the game file: the rendered score is loaded at runtime (pack files through the common index in the web edition, since EXTERNAL-ASSETS-PLAN step 3c; the `music/` folder beside the page in source and single-file builds), with the synth bed as its fallback, and SFX stay synthesized (§7.4; `SFX_MANIFEST` accepts real files).
 
-Three things this list once excluded have since shipped and are no longer non-goals: **multiplayer** (Forsaken Together LAN co-op — `docs/MULTIPLAYER.md`, `src/net/lan.js`, served by the launcher's own Node server; the feature hides itself when no launcher is behind the page, so a `file://`-opened dist stays single-player), a **narrow/mobile layout** (`data-layout`, `balance.ui.uiScale`), and **audio** (§7.4).
+Two things this list once excluded have since shipped and are no longer non-goals: a **narrow/mobile layout** (`data-layout`, `balance.ui.uiScale`), and **audio** (§7.4). **Multiplayer** (Forsaken Together LAN co-op — `docs/MULTIPLAYER.md`, `src/net/lan.js`, served by the launcher's own Node server; the feature hides itself when no launcher is behind the page, so a `file://`-opened dist stays single-player) is built but **planned for a later release**, not part of the current release set (owner, 2026-10-12).
 
 ## 12. Planned game expansion — proposed mechanics and acceptance
 
@@ -2434,7 +2440,7 @@ This amendment takes precedence over the class rotation in §13.4q, the ability-
 - **Overlapping class milestones.** Cards occur at class levels 2, 4, 6, 8, 10, 12, 14, 16, 18 and 20; feats at 1, 4, 8, 12, 16 and 20; armory at 3, 6, 9, 12, 15 and 18; relics at 5, 8, 11, 14, 17 and 20; +1 class attribute choice at 5, 10, 15 and 20. Each milestone receives its guaranteed choice even if no new definition unlocks there. Multiple categories coexist at one level. A newly claimed class level gives a configurable flat 25 XP to each of its four favored skills, once. No reward or XP is replayed at run start, swap, reload or respec.
   - Reaver favors Combat Maneuvers, Blade, Shield and Heavy Armor; Starseer favors Spellcraft, Blade, Light Armor and Medium Armor; Rogue favors Combat Maneuvers, Blade, Dual Wield and Light Armor; Herald favors Spellcraft, Blade, Shield and Medium Armor. Other skills remain trainable.
   - Persistent mastery and the current mastery XP curve/pay remain. Per-run feat slots and attribute budgets use reached milestones, up to six slots and four points; selections are chosen anew for a new run. Class-tree choices keep their own earned budget. Combined reward doors preserve individually pending choices and replace conflicting old random class bonus rolls.
-- **One action resource.** Actions, Stamina and SP name one pool. Each card charges its action cost once, plus separately authored Mana or HP costs. Remove the earlier separate Stamina surcharge rather than adding it to Actions. Recovery, discounts, maximum capacity, eligibility, save validation and respec use the shared pool. Preserve the existing runtime action/Stamina binding where it already supplies that identity.
+- **One action resource.** Actions, Stamina and SP name one pool. Each card charges its action cost once, plus separately authored Mana or HP costs. The upcast surcharge (`def.upcastSurcharge`) is still paid: `resolvedCardPlayCosts` (`src/engine/combat.js` ~L1213) adds it to both the Stamina and the Mana cost, and this rule does not remove it. Recovery, discounts, maximum capacity, eligibility, save validation and respec use the shared pool. Preserve the existing runtime action/Stamina binding where it already supplies that identity.
 - **Ability identity and grades.** Magic cards are Spells; rank-zero Spells are Cantrips. Physical Mana-costing cards are Combat Maneuvers; weapon-bound components are Weapon Arts. Rank-zero physical actions are Techniques. Spellcraft broadens the existing Magic Focus skill while retaining a stable internal identity. Combat Maneuvers is its physical counterpart. Source identity, equipped carrier and armor/grip checks determine skill XP; matching a shared school tag alone is insufficient.
   - Six authored grade profiles, 0–5, replace the proposed 1–10 potency overlay for these families. Normal skill-level ceilings are rank 0 at level 1, then ranks 1–5 at levels 2, 4, 6, 8 and 10. Class-level family unlocks and skill-level grade ceilings remain separate. Legacy ranks and blacksmith tiers are not applied a second time to an ability profile.
   - Base grade costs are rank 0: 1–3 Actions, 0 Mana; rank 1: 1 Action, 1 Mana; rank 2: 1–2 Actions, 2 Mana; rank 3: 1–3 Actions, 3 Mana; rank 4: 1–4 Actions, 4 Mana; rank 5: 1–5 Actions, 5 Mana. A family authors an exact cost within its range. Grade effects increase damage, defense or utility and enable named riders; they are data, not per-card imperative code. Cantrips and Techniques retain weaker Action-only fallbacks.

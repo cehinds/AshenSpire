@@ -8,23 +8,16 @@ Owner decisions (2026-10-11): SPEC follows the code. Actions and Stamina are one
 
 SPEC.md was corrected in this PR, one section range per commit wave, following the owner's decisions above. These items were left unchanged because each needs an owner decision:
 
-- §3.2 L192-194: "content imports nothing", but `src/content/prototypes/combatBuilds.js` imports engine modules, and content imports `framework/` and `config/`.
-- §3.8 L536-538: `extractionRefusal` also honours a stored `run.poolDeck` flag; SPEC says it never reads a stored field.
-- §4 L810-813: the `"carry"` Stamina rule has no effect on turn 1 (`src/engine/combat.js:503-504` refills).
 - §5.1: is `classDef.maxHp` a live HP input or a dead seed?
-- §5.1: four Rogue outfits in SPEC, eight rows in `outfits.csv`.
-- §5.2: Guard Counter is a direct hit in SPEC, a prepared counter in its card text.
-- §6: bosses drop a boss-relic choice of 3 in SPEC, one relic in `src/main.js`.
-- §7.2: enemy cap, 5 (UI `maxRows`) or 6 (formation rows)?
 - §7.2: which gate checks the five named viewports, and the settings door geometry?
-- §7.2.1: Export configuration shows only on debug pages; expose it on release pages?
-- §8: release-shots has no CI runner; name one or mark it manual.
-- §11: is LAN co-op in the current release set?
 - §12.5: the resting-stance animation rules need a browser check.
-- §13.4p: new runs stamp `breakMeterVersion` 2, so the one-break-meter rule is not live.
-- §13.4r: cards still pay `upcastSurcharge` (`src/engine/combat.js:1213`).
-- §3.4 L242: `addRunes` is `addCinders` in code (left per the preamble's vocabulary rule).
 - §3.6 L391-392: are `staggerBreak` and `resonance` live, and does §13.4k gate them?
+
+- **Owner decisions (2026-10-12)**
+  - §6: a boss keeps its choice of 3 boss relics; today it drops one (TO BUILD in SPEC §6).
+  - §7.2: the enemy cap becomes a setting, default 3 (TO BUILD in SPEC §7.2).
+  - §7.2.1: Export configuration stays debug-only.
+  - §11: LAN co-op is built but not part of the current release; planned for a later release.
 
 ## Headline: Actions and Stamina are one resource
 
