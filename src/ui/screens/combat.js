@@ -22,6 +22,8 @@ import { playCardEffectLayers } from '../cardEffectLayers.js';
 // number displayed comes from previewCard / previewIntent — no math here.
 
 import { dispatch, previewCard, previewIntent, getEntity, cardChoicePlan } from '../../engine/combat.js';
+import { decorateCombatRoundsScreen } from '../components/combatRoundsScreen.js';
+import { targetedEnemyId } from '../models/CombatRoundsScreenModel.js';
 import { combatLogEntries } from '../../model/combatLog.js';
 import { combatToolsModel } from '../models/CombatToolsModel.js';
 import { mountCombatTools } from '../components/combatTools.js';
@@ -1064,8 +1066,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     formationMovement?.refresh();
     applyTargetLayer();
     refreshAim(); // re-apply the target glow after the board rebuilds
+    decorateRoundsScreen();
     // Hint bar context: while aiming, show Confirm/Cancel instead of zone keys.
     setHintMode(selected || selectedFlask != null || selfArm ? 'targeting' : null);
+  }
+  // The Combat Rounds Preview's additions (SPEC §4.11). A no-op unless combat.combatRounds is set.
+  function decorateRoundsScreen() {
+    decorateCombatRoundsScreen(combatEl, combat, { armedCardId: selected || null, targetedId: targetedEnemyId(combat, lastTargetId) });
   }
   if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('shot')) {
     window.__renderCombatForShot = render;
@@ -1660,6 +1667,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (!combatEl.isConnected) return unavailable('This combat is no longer active.');
     if (combat.result) return unavailable('Combat has ended.');
     if (busy || combat.phase !== 'player') return unavailable('Wait for your turn.');
+    // A queued card (Combat Rounds Preview) is answered by its unqueue: a click takes it back and refunds it.
+    if (combat.combatRounds?.playerQueue?.some(record => record.instanceId === instanceId)) return { enabled: true, needsTarget: false, play: () => unqueueCard(instanceId) };
     const inst = combat.piles.hand.find(card => card.instanceId === instanceId);
     if (!inst) return unavailable('This card is no longer in your hand.');
     const reason = unplayableReason(inst);
@@ -2377,6 +2386,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       // the capped wind-up could even start in the compiled game.
       combatEl.dataset.turn = enemyPlayback ? 'enemy' : 'player';
       $('.turn-ribbon').textContent = enemyPlayback ? 'Enemy Turn' : 'Player Turn';
+      decorateRoundsScreen();
       $('.hand').inert = true;
       $('.hand').setAttribute('aria-disabled', 'true');
       $('.end-turn').disabled = true;
@@ -2535,8 +2545,19 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     animation.oncancel = remove;
   }
 
+  // Takes a queued card back (SPEC §4.11): the engine refunds exactly what it paid.
+  function unqueueCard(instanceId) {
+    if (busy || combat.result || combat.phase !== 'player') return;
+    selected = null; selectedFlask = null; selfArm = null; clearAim(); hideTooltip();
+    try { dispatch(combat, { type: 'unqueueCard', cardInstanceId: instanceId }); }
+    catch (err) { console.warn('[combat] unqueue rejected:', err && err.message); }
+    handRenderKey = null;
+    render();
+  }
+
   function playCard(instanceId, targetId, choice, chosenUpcastRanks = null) {
     if (combat.pendingAbilityDiscard) { showPendingDiscard(); return; }
+    if (combat.combatRounds?.playerQueue?.some(record => record.instanceId === instanceId)) { unqueueCard(instanceId); return; }
     if (targetId && !getEntity(combat, targetId)?.alive) return;
     if (targetId && !cardTargets(instanceId).legalIds.includes(targetId)) return;
     if (busy || combat.result) {
