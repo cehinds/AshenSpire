@@ -377,12 +377,14 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     return el('span', { class: 'deck-editor-rank', dataset: { rank }, text });
   };
   // Range (owner, 2026-10-11): Melee / Reach / Ranged from the card's reach
-  // (contact / near / far). An untagged attacking card takes the player
-  // card's combat default (engine/combatMatchups.js normalizedProfile):
-  // projectiles and ranged maneuvers reach near, the rest contact. A card that attacks nothing shows no range.
+  // (contact / near / far). An untagged spell attack takes its delivery
+  // (projectile Ranged, melee Melee, else Reach) through the player card's
+  // combat default (combatCardProfile.js). Ranged maneuvers show no separate
+  // range: their stance already reads Ranged. A card that attacks nothing shows no range.
   const RANGE_BY_REACH = { contact: 'melee', near: 'reach', far: 'ranged' };
   const ATTACKING = ['attack', 'smash', 'sweep', 'ranged', 'counter'];
   const rangeNode = (row) => {
+    if (stanceKey(row) === 'ranged') return null;
     const def = resolveCard(registries, row.ref);
     const profile = combatProfileFor(def);
     const attacking = ATTACKING.includes(profile.maneuver) || (profile.camp === 'spell' && def.type === 'attack');
@@ -391,12 +393,12 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     const range = RANGE_BY_REACH[reach];
     return range ? el('span', { class: 'deck-editor-range', dataset: { range }, text: t(`deckEditor.range.${range}`) }) : null;
   };
-  // Physical or magical, as an icon before the costs. Magical reuses the Spell
-  // sigil; physical borrows the crossed blades until it has its own mark.
+  // Physical or magical, as an icon before the costs: the Smash sigil in silver
+  // for physical cards, the Spell flame in blue for magical ones.
   const campNode = (row) => {
     const camp = combatProfileFor(resolveCard(registries, row.ref)).camp === 'spell' ? 'magical' : 'physical';
     const node = el('span', { class: 'deck-editor-camp', dataset: { camp }, role: 'img', title: tFull(`deckEditor.camp.${camp}`), 'aria-label': t(`deckEditor.camp.${camp}`) });
-    node.innerHTML = sigilHtml(camp === 'magical' ? 'spell' : 'attack', 'action', { tooltip: false });
+    node.innerHTML = sigilHtml(camp === 'magical' ? 'spell' : 'smash', 'action', { tooltip: false });
     return node;
   };
   const tileCosts = (row) => rowCosts(row, [campNode(row)]);

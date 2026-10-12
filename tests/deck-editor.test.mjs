@@ -1316,9 +1316,15 @@ test('DOM: range follows the player card combat default; the mark follows the ca
     const editor = mountDeckEditor(document.body, { registries: REG, run, settings: {} });
     const row = (cardId) => [...editor.root.querySelectorAll('.deck-editor-tile')].find(t => t.dataset.key?.startsWith(`card:${cardId}~`));
     const read = (cardId) => { const r = row(cardId); return [r?.querySelector('.deck-editor-range')?.dataset.range, r?.querySelector('.deck-editor-camp')?.dataset.camp]; };
-    // An untagged spell resolves at contact in combat (combatMatchups.js), so it reads Melee.
-    assert.deepEqual(read('cometFragment'), ['melee', 'magical']);
-    assert.deepEqual(read('ricochet'), ['reach', 'physical'], 'a ranged maneuver reaches near');
+    // An untagged spell takes its delivery as reach: a projectile reads Ranged.
+    assert.deepEqual(read('cometFragment'), ['ranged', 'magical']);
+    // A ranged maneuver's stance already reads Ranged, so it shows no separate range.
+    assert.deepEqual(read('ricochet'), [undefined, 'physical'], 'a ranged maneuver shows no separate range');
+    assert.equal(row('ricochet').querySelector('.deck-editor-stance')?.dataset.stance, 'ranged');
+    // Physical marks carry the Smash sigil; magical marks carry the Spell sigil.
+    const mark = (cardId) => row(cardId).querySelector('.deck-editor-camp .combat-sigil')?.dataset.sigil;
+    assert.equal(mark('ricochet'), 'smash');
+    assert.equal(mark('cometFragment'), 'spell');
     // Phase Ward carries reach:contact but attacks nothing: no range.
     assert.equal(read('phaseWard')[0], undefined, 'a card that attacks nothing shows no range');
     // A magical Power is a Power, with no Cantrip badge.
