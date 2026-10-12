@@ -17,11 +17,6 @@ import { decayMomentum } from './combatRounds/resolver.js';
 import { stanceFor, playerKind, moveKind } from './combatRounds/stance.js';
 import { enemyMoveSpOf, enemyPoolOf } from '../model/actionCosts.js';
 import { SPEED_MODS_CSV } from '../content/combatRounds.js';
-import { ENEMY_SP_POOL } from '../content/actionCosts.js';
-
-// Enemy SP per turn (SPEC §4.11; owner decision, 2026-10-12): the default pool, 2. A per-enemy `spPool` overrides it
-// (enemyPoolOf). ENEMY_SP is the default kept for the export the tests read.
-export const ENEMY_SP = ENEMY_SP_POOL;
 // A move with no stance costs 1 SP unless the move defines its own `sp` (SPEC §4.11).
 export const MOVE_SP = 1;
 // Guard for zero-cost moves, which would otherwise never run the SP pool out.
@@ -45,8 +40,9 @@ export function moveSp(move) {
 }
 export const enemyMoveSp = moveSp;
 
-// The enemy's SP pool per turn (enemyPoolOf: its own spPool, else ENEMY_SP_POOL).
-export const enemyPool = enemyPoolOf;
+// The enemy's SP pool per turn (SPEC §4.6a, owner 2026-10-12): stat-driven, the stamina row read on the enemy's
+// `attributes` plus its `equipmentSp` (model/actionCosts.js enemyPoolOf). An enemy with no authored stats has 3.
+export const enemyPool = (def) => enemyPoolOf(def);
 
 // One enemy's hidden queue. `pick(enemy, def, maxSp)` is the live weighted pick (enemyAI stream), offered only the
 // moves that cost at most `maxSp` SP left in the pool; each pick is recorded in movesHistory at once, so maxConsecutive
@@ -60,7 +56,7 @@ export function buildEnemyQueue(enemy, def, { isFirstTurn = false, pick }) {
 // nothing fits the pool, the first pick is offered no limit (Infinity). A queue that already holds moves keeps them,
 // and the SP they spend counts against the pool.
 export function extendEnemyQueue(enemy, def, queue, { isFirstTurn = false, pick }) {
-  const pool = enemyPoolOf(def);
+  const pool = enemyPool(def);
   let spent = queue.reduce((sum, entry) => sum + entry.sp, 0);
   while (queue.length < QUEUE_MAX) {
     if (queue.length > 0 && spent >= pool) break;
@@ -221,7 +217,7 @@ function playerSpec(combat, sp, hand) {
 function enemySpec(enemy, def) {
   return {
     id: enemy.id, side: 'enemy', name: enemy.name ?? enemy.enemyId, attrs: {},
-    level: Number(enemy.level ?? 0) || 0, hp: Math.max(0, Number(enemy.hp) || 0), sp: enemyPoolOf(def),
+    level: Number(enemy.level ?? 0) || 0, hp: Math.max(0, Number(enemy.hp) || 0), sp: enemyPool(def),
     wis: 0, tags: [], stance: null, hand: [],
   };
 }

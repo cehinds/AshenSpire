@@ -618,6 +618,8 @@ const modifiersSchema = obj(Object.fromEntries(
 ));
 
 const enemyMoveSchema = obj({
+  // The move's SP price (SPEC §4.6a): replaces the stance table's. A boss move's price is authored here.
+  sp: opt(int),
   counterDamage: opt(int),
   counterPoiseDamage: opt(int),
   damageSchool: opt(en(...DAMAGE_SCHOOLS)),
@@ -997,6 +999,9 @@ export const SCHEMAS = Object.freeze({
     poiseMax: int,
     levelProfile: levelBandSchema,
     equipmentPower: opt(num), // small additive XP weight for authored enemy gear
+    // The enemy's stats for its SP pool (SPEC §4.6a): the stamina row read on these attributes, plus equipment SP.
+    attributes: opt(mapOf(int)),
+    equipmentSp: opt(int),
     moves: mapOf(enemyMoveSchema),
     firstMove: opt(str), // checked against own moves in validate.js
     phases: opt(arr(enemyPhaseSchema)),
