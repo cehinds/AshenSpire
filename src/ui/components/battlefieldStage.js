@@ -582,6 +582,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         handTop: handAnchor?.key === handLayoutKey ? handAnchor.top : null,
         handLeft: handAnchor?.key === handLayoutKey ? handAnchor.left : 0,
         solo: solo && window.innerHeight > 480,
+        desktop: document.documentElement.dataset.formFactor === 'desktop',
         sizes: classicAppearance()
           ? fitCombatSprites({ width: fieldRect.width, height: fieldRect.height, actors,
             minHeight: narrow ? fieldRect.height * NARROW_MIN_HEIGHT_FRACTION : 0 })

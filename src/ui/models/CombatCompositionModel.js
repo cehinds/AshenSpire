@@ -79,22 +79,25 @@ const SPACIOUS_SPREAD = 1.3;
 // Room the intent and HP plates need under the turn ribbon, above each figure.
 export const SPACIOUS_RIBBON_RESERVE = 30;
 
-export function alternativeCombatComposition({ sizes, actors, width, height, handTop, handLeft = 0, solo = true }) {
+// `desktop` (the desktop form factor only) turns on the shared back row below;
+// tablets and phones keep the spacious path they had.
+export function alternativeCombatComposition({ sizes, actors, width, height, handTop, handLeft = 0, solo = true, desktop = false }) {
   const enemies = actors.filter(actor => actor.side === 'enemy');
   const enemyFits = sizes.filter(size => enemies.some(actor => actor.slot.id === size.id));
   const center = enemyFits.length ? (Math.min(...enemyFits.map(f => f.x)) + Math.max(...enemyFits.map(f => f.x))) / 2 : width * .55;
   const spacious = height > 300;
+  const sharedRow = spacious && desktop;
   // One foot line for the whole back row: the tallest enemy's headroom, never
   // higher than the floor's standing share of the field.
-  const spaciousRow = spacious ? Math.max(height * .48, ...enemyFits.map(size => {
+  const spaciousRow = sharedRow ? Math.max(height * .48, ...enemyFits.map(size => {
     const actor = actors.find(actor => actor.slot.id === size.id);
     return Math.min(size.visibleHeight, height * .7) + actor.leading + SPACIOUS_RIBBON_RESERVE;
   })) : 0;
-  // Spread the row about its centre by the desktop factor, and shrink it only
-  // when its far enemy would pass SPACIOUS_ROW_MAX_X of the width.
+  // Spread the row about its centre by the spacious factor; on desktop, shrink
+  // it only when its far enemy would pass SPACIOUS_ROW_MAX_X of the width.
   const maxOffset = Math.max(0, ...enemyFits.map(f => Math.abs(f.x - center)));
-  const spread = spacious && maxOffset > 0
-    ? Math.min(SPACIOUS_SPREAD, (SPACIOUS_ROW_MAX_X - SPACIOUS_ROW_CENTRE) * width / maxOffset) : 1;
+  const spread = !spacious ? 1 : !sharedRow || maxOffset === 0 ? SPACIOUS_SPREAD
+    : Math.min(SPACIOUS_SPREAD, (SPACIOUS_ROW_MAX_X - SPACIOUS_ROW_CENTRE) * width / maxOffset);
   const fitted = sizes.map(size => {
     const actor = actors.find(actor => actor.slot.id === size.id);
     const player = actor.side === 'player';
@@ -105,7 +108,7 @@ export function alternativeCombatComposition({ sizes, actors, width, height, han
     const ratio = visibleHeight / size.visibleHeight;
     const halfWidth = actor.visibleWidth * size.scale * ratio / 2;
     const proposedX = player ? (solo ? Math.max(size.x + width * .035, handLeft + halfWidth) : size.x)
-      : (size.x - center) * (spacious ? spread : 1) + width * (spacious ? SPACIOUS_ROW_CENTRE : .68);
+      : (size.x - center) * spread + width * (spacious ? SPACIOUS_ROW_CENTRE : .68);
     const x = Math.max(halfWidth + 6, Math.min(width - halfWidth - 6, proposedX));
     // Enemies stand back on the floor, about half-way up the field. A short
     // portrait field (a phone with browser bars) keeps that depth too, rather
@@ -121,16 +124,19 @@ export function alternativeCombatComposition({ sizes, actors, width, height, han
     const lift = !player && backRow && !spacious ? height * SHORT_PHONE_ENEMY_LIFT : 0;
     const ground = player && solo && Number.isFinite(handTop)
       ? Math.max(visibleHeight + actor.leading + 6, handTop - 26)
+      : !player && sharedRow ? spaciousRow
       : Math.max(visibleHeight + actor.leading + 6 - lift, player ? (size.ground ?? actor.slot.ground)
         : backRow ? backGround - lift
           : nearRow);
     // A short portrait field frames its backdrop on the near row, as it did
     // before its enemies moved back, so the horizon and landmark stay in view;
-    // the backdrop then keeps the back-row feet on its floor.
-    const sceneryGround = !player && backRow && !spacious ? nearRow : undefined;
+    // the backdrop then keeps the back-row feet on its floor. A desktop field
+    // frames the same way.
+    const sceneryGround = !player && backRow && (!spacious || sharedRow) ? nearRow : undefined;
+    const standingGround = !player && sharedRow ? spaciousRow : lift ? backGround : undefined;
     return { ...size, x, ground, visibleHeight, scale: size.scale * ratio, multiplier: size.multiplier * ratio,
       ...(sceneryGround === undefined ? {} : { sceneryGround }),
-      ...(lift ? { standingGround: backGround } : {}),
+      ...(standingGround === undefined ? {} : { standingGround }),
       separationHalf: halfWidth, separationSide: player ? 'player' : 'enemy' };
   });
   // A short landscape strip has no room above the row for spread overheads;
