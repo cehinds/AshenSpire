@@ -179,3 +179,12 @@ test('a spell with an offensive maneuver shows the prepare glyph to match its ca
   }
   assert.equal(kindForCard({ id: 'c', cardTags: ['camp:spell', 'maneuver:counter'] }).maneuver, 'counter');
 });
+
+// Owner (2026-10-12): a smash card holds the smash wind-up frame of its class,
+// and a swing leaves from and returns to the held stance, not the ready frame.
+test('the card stage holds smash on the smash wind-up and swings from the held stance', () => {
+  const source = readFileSync(new URL('../src/ui/alternativeCardStage.js', import.meta.url), 'utf8');
+  assert.match(source, /smash: family\.frames\['smash-load'\]/);
+  assert.match(source, /if \(pose==='ready' && stance\) pose='stance-'\+stance;/);
+  assert.equal(kindForCard({ id: 'm', cardTags: ['camp:physical', 'maneuver:smash'] }).maneuver, 'smash');
+});

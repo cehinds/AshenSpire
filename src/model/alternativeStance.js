@@ -35,6 +35,8 @@ export function stanceForCard(card = {}) {
   if (defensive.has(profile.maneuver)) return 'defensive';
   if (profile.camp === 'spell') return 'casting';
   if (profile.maneuver === 'sweep') return 'sweep';
+  // Owner (2026-10-12): smash holds its own painted wind-up, not the offensive frame.
+  if (profile.maneuver === 'smash') return 'smash';
   if (offensive.has(profile.maneuver)) return 'offensive';
   const tags = new Set(card.cardTags ?? card.tags ?? []);
   if (tags.has('source:spell') || card.abilityKind === 'spell' || card.type === 'spell') return 'casting';
