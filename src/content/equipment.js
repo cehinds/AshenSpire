@@ -99,6 +99,21 @@ export function armamentById(id) {
   return ARMAMENT_BY_ID.get(id) || null;
 }
 
+/** The closed range vocabulary every weapons.csv row states (tools/content-build.mjs refuses any other). */
+export const WEAPON_RANGES = Object.freeze(['melee', 'reach', 'ranged']);
+
+/**
+ * A weapon's default range, `melee` | `reach` | `ranged`. Read off the def the
+ * build compiled; an unstated or unknown range throws rather than defaulting.
+ */
+export function weaponRangeOf(weaponDef) {
+  const range = weaponDef?.range;
+  if (!WEAPON_RANGES.includes(range)) {
+    throw new Error(`weaponRangeOf: '${weaponDef?.id}' states range '${range ?? ''}', not one of ${WEAPON_RANGES.join('|')}`);
+  }
+  return range;
+}
+
 export function slotById(id) {
   return SLOT_BY_ID.get(id) || null;
 }
