@@ -3712,7 +3712,7 @@ card,,alterationCounter,source:spell
 card,,illusionCounter,classification.skill
 card,,illusionCounter,camp:spell
 card,,illusionCounter,school:illusion
-card,,illusionCounter,damage:arcane
+card,,illusionCounter,damage:psychic
 card,,illusionCounter,maneuver:counter
 card,,illusionCounter,counter:spell
 card,,illusionCounter,reach:near
@@ -3780,7 +3780,7 @@ card,,forceNudge,source:spell
 card,,drowsingMote,classification.attack
 card,,drowsingMote,camp:spell
 card,,drowsingMote,school:illusion
-card,,drowsingMote,damage:arcane
+card,,drowsingMote,damage:psychic
 card,,drowsingMote,maneuver:casting
 card,,drowsingMote,reach:near
 card,,drowsingMote,targeting:single
@@ -3812,7 +3812,7 @@ card,,earthGrounding,source:spell
 card,,restfulDream,classification.skill
 card,,restfulDream,camp:spell
 card,,restfulDream,school:illusion
-card,,restfulDream,damage:arcane
+card,,restfulDream,damage:psychic
 card,,restfulDream,reach:contact
 card,,restfulDream,targeting:single
 card,,restfulDream,source:spell
@@ -3897,7 +3897,7 @@ card,,phaseWard,source:spell
 card,,illusionDecoy,classification.skill
 card,,illusionDecoy,camp:spell
 card,,illusionDecoy,school:illusion
-card,,illusionDecoy,damage:arcane
+card,,illusionDecoy,damage:psychic
 card,,illusionDecoy,reach:contact
 card,,illusionDecoy,targeting:single
 card,,illusionDecoy,source:spell

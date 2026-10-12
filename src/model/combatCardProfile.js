@@ -3,7 +3,7 @@ import { tagService } from './tagService.js';
 
 const CAMP = new Set(['physical', 'spell']);
 const MANEUVER = new Set(['attack', 'defend', 'counter', 'sweep', 'ranged', 'smash', 'casting']);
-const SCHOOL = new Set(['frost', 'fire', 'lightning', 'force', 'alteration', 'illusion', 'divine', 'decay']);
+const SCHOOL = new Set(['frost', 'fire', 'lightning', 'force', 'alteration', 'illusion', 'divine', 'decay', 'earth']);
 const COUNTER = new Set(['melee', 'ranged', 'spell']);
 const REACH = new Set(['contact', 'near', 'far']);
 const TARGETING = new Set(['single', 'area']);

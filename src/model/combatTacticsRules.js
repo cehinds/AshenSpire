@@ -71,7 +71,7 @@ const CAMPS = ['physical', 'spell'];
 const REACHES = ['contact', 'near', 'far'];
 const TARGETING = ['single', 'area'];
 const MANEUVERS = ['attack', 'defend', 'counter', 'sweep', 'ranged', 'smash', 'casting'];
-const SCHOOLS = ['frost', 'fire', 'lightning', 'force', 'alteration', 'illusion', 'divine', 'decay'];
+const SCHOOLS = ['frost', 'fire', 'lightning', 'force', 'alteration', 'illusion', 'divine', 'decay', 'earth'];
 
 function stringsProblems(value, path, allowed = null, required = false) {
   if (value === undefined && !required) return [];

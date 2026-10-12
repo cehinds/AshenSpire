@@ -714,6 +714,24 @@ export const tags = [
     "blurb": "Applies 1 Venom on a Health hit unless the card already prints a Venom effect. Not reduced by armour class; constructs halve its build-up."
   },
   {
+    "id": "damage:psychic",
+    "domain": "damageType",
+    "label": "Psychic",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "Applies 1 Confused on a Health hit unless the card already prints a Confused effect. Not reduced by armour class."
+  },
+  {
+    "id": "damage:earth",
+    "domain": "damageType",
+    "label": "Earth",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "Applies 1 Slowed on a Health hit unless the card already prints a Slowed effect. Not reduced by armour class; absorbed by Ward."
+  },
+  {
     "id": "technique:heavy",
     "domain": "technique",
     "label": "Heavy",
@@ -3601,6 +3619,15 @@ export const tags = [
     "glyph": "☣",
     "visibility": "",
     "blurb": "Attrition and offerings: Crimson Blight, life transfer and pay-health combos."
+  },
+  {
+    "id": "school:earth",
+    "domain": "school",
+    "label": "Earth",
+    "color": "8A7B5C",
+    "glyph": "⛰",
+    "visibility": "",
+    "blurb": "Grounding and weight: Slowed and Entombed slow or stop enemy turns; Stoneskin keeps Block."
   },
   {
     "id": "counter:melee",

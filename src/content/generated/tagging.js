@@ -21648,7 +21648,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "illusionCounter",
-    "tagId": "damage:arcane"
+    "tagId": "damage:psychic"
   },
   {
     "family": "card",
@@ -22056,7 +22056,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "drowsingMote",
-    "tagId": "damage:arcane"
+    "tagId": "damage:psychic"
   },
   {
     "family": "card",
@@ -22248,7 +22248,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "restfulDream",
-    "tagId": "damage:arcane"
+    "tagId": "damage:psychic"
   },
   {
     "family": "card",
@@ -22758,7 +22758,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "illusionDecoy",
-    "tagId": "damage:arcane"
+    "tagId": "damage:psychic"
   },
   {
     "family": "card",
