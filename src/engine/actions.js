@@ -543,11 +543,12 @@ function afterHpChange(ctx, target, death = {}) {
  * itself; callers decide HOW it was earned — the poise bar filling
  * (dealPoiseDamage) or a direct proc (the 'stagger' opcode, insanity's row).
  * The direct path deliberately bypasses the bar: a guaranteed break that
- * neither consumes nor grows the poise meter.
+ * neither consumes nor grows the poise meter. Returns whether it broke.
+ * Callers that mean a full Stagger go through breakEnemy below.
  */
 export function staggerEnemy(ctx, enemy) {
-  if (!enemy || enemy.kind !== 'enemy' || !enemy.alive) return;
-  if (ctx.foundation && enemy.impactProtectedUntil >= ctx.turn) return;
+  if (!enemy || enemy.kind !== 'enemy' || !enemy.alive) return false;
+  if (ctx.foundation && enemy.impactProtectedUntil >= ctx.turn) return false;
   Matchups.clearCombatCounter(enemy, ctx);
   const cancelled = enemy.pendingMove ? enemy.pendingMove.moveId : null;
   enemy.pendingMove = null;
@@ -555,6 +556,27 @@ export function staggerEnemy(ctx, enemy) {
   if (ctx.foundation) enemy.impactProtectedUntil = ctx.turn + ctx.foundation.rules.impact.protectionTurns;
   enemy.intent = { kind: 'staggered', moveId: null };
   ctx.emit('enemyStaggered', { targetId: enemy.id, enemyId: enemy.enemyId, cancelledMove: cancelled });
+  return true;
+}
+
+/**
+ * breakEnemy(ctx, enemy) — the ONE path to a full enemy Stagger (owner
+ * decision 2026-10-12, #1): staggerEnemy, then balance.poise.onFill's
+ * content effects (the `staggered` status: +50% damage taken, and every
+ * card rider gated on it). Both the poise bar filling (dealPoiseDamage) and a
+ * direct proc stagger (the 'stagger' opcode, insanity's row) land here, so an
+ * Insanity break is the same Stagger a full meter is. Meter growth stays with
+ * the bar: the direct path neither consumes nor grows it (SPEC §4.4). Under
+ * combat ratings a break is the skipped turn alone (no onFill), on both paths.
+ */
+export function breakEnemy(ctx, enemy) {
+  if (!staggerEnemy(ctx, enemy)) return false;
+  if (ctx.ratingsRules) return true;
+  const cfg = (ctx.registries.balance && ctx.registries.balance.poise) || {};
+  for (const eff of cfg.onFill || []) {
+    ctx.enqueue({ effect: eff, source: enemy, owner: enemy, target: enemy, meta: {} });
+  }
+  return true;
 }
 
 /**
@@ -608,10 +630,7 @@ export function dealPoiseDamage(ctx, entity, amount, { knowledgeMatchup = false 
     entity.poiseMeter.value -= entity.poiseMeter.max;
     ctx.emit('meterFilled', { targetId: entity.id, meter: 'poise', threshold: entity.poiseMeter.max, ...(!isEnemy && ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(entity) } : {}) });
     if (isEnemy) {
-      staggerEnemy(ctx, entity);
-      for (const eff of cfg.onFill || []) {
-        ctx.enqueue({ effect: eff, source: entity, owner: entity, target: entity, meta: {} });
-      }
+      breakEnemy(ctx, entity);
     } else {
       staggerPlayer(ctx, entity);
     }
@@ -1180,7 +1199,7 @@ function runOpcode(ctx, action, eff) {
     }
     case 'stagger': {
       for (const t of resolveTargets(ctx, action, eff.target)) {
-        staggerEnemy(ctx, t);
+        breakEnemy(ctx, t);
       }
       break;
     }

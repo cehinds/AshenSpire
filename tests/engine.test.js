@@ -574,6 +574,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(e1.skipNextTurn, 'staggered DIRECTLY — poiseMax 99 bar nowhere near full');
     assert(logOf(c, 'enemyStaggered').some((e) => e.targetId === 'e1'), 'enemyStaggered emitted');
     eq(e1.intent.kind, 'staggered', 'intent shows the break');
+    assert(S.getStacks(e1, 'staggered') > 0, 'the direct break applies Staggered, as a full bar does (owner, 2026-10-12)');
     eq(S.getStacks(e1, 'insanityExposed'), 1, 'proc left Unraveled (tag-scoped vulnerability)');
   });
 
