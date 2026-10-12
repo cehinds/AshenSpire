@@ -81,9 +81,9 @@ const ENEMY = 'wanderingSoldier';
 const SEED = 5;
 
 // A preview fight (expanded rules, so reactions are on). The enemy's round is fixed to one attack on the player.
-function fight({ reactions = true, enemyIds = [ENEMY] } = {}) {
-  const run = createRunState({ seed: SEED, classId: 'reaver', registries, profileMeta: { settings: { [COMBAT_ROUNDS_KEY]: true } } });
-  const c = createRunCombat({ registries, rng: createRng(SEED), run, enemyIds, settings: {} });
+function fight({ reactions = true, enemyIds = [ENEMY], reg = registries } = {}) {
+  const run = createRunState({ seed: SEED, classId: 'reaver', registries: reg, profileMeta: { settings: { [COMBAT_ROUNDS_KEY]: true } } });
+  const c = createRunCombat({ registries: reg, rng: createRng(SEED), run, enemyIds, settings: {} });
   for (const enemy of c.enemies.filter((e) => e.alive)) {
     const def = registries.enemies.get(enemy.enemyId);
     const attackMove = Object.keys(def.moves).find((id) => def.moves[id].damage != null || def.moves[id].intent === 'attack');
@@ -293,3 +293,98 @@ test('Evade is offered as a reaction only where live offers it: as a melee Count
   const onMelee = offeredIds('blightHound', ['evasiveGuard'], { preview: true });
   assert.ok(onMelee.includes('evasiveGuard'), 'preview: the Evade answers a melee attack, as live does');
 });
+
+// --- P3b fix 3 (SPEC §4.7, §4.11): a queued Counter answers only the next covered attack, and only once ----
+
+// Both are physical melee attacks that a melee Counter covers in v1 and v2 (v1 bypasses piercing and force).
+const FAST = 'wanderingSoldier'; // Slash: acts first, at speed -5
+const SLOW = 'huskBrute';        // Club: acts last, at speed -9
+
+// The registries with some enemy moves' speeds overridden (the shared content is frozen, so it is wrapped, not edited).
+function speedRegistries(speeds) {
+  const enemies = {
+    ...registries.enemies,
+    has: (id) => registries.enemies.has(id),
+    get: (id) => {
+      const def = registries.enemies.get(id);
+      const over = speeds[id];
+      if (!over) return def;
+      return { ...def, moves: Object.fromEntries(Object.entries(def.moves).map(([m, move]) => [m, over[m] !== undefined ? { ...move, speed: over[m] } : move])) };
+    },
+  };
+  return { ...registries, enemies };
+}
+
+function attackMoveOf(enemyId) {
+  const def = registries.enemies.get(enemyId);
+  return Object.keys(def.moves).find((id) => def.moves[id].damage != null || def.moves[id].intent === 'attack');
+}
+
+// Runs one End Turn with two attackers: enemies[0] acts at speed -5 and enemies[1] at speed -9, so a Counter the
+// player queues (speed 0 plus a d4) is armed after the first and before the second. Reactions are off.
+// `aim` queues a guardCounter with no target (a queued Counter is never aimed at a foe, SPEC §4.11). The seed picks
+// the hit and miss rolls; `expanded` picks the v2 fight, else the legacy v1 fight. Returns the fight, the enemy ids
+// by definition id, and the round's momentum per enemy id.
+function counterRound({ aim = false, expanded = false, seed = SEED, enemies = [FAST, SLOW] } = {}) {
+  const reg = speedRegistries({ [enemies[0]]: { [attackMoveOf(enemies[0])]: -5 }, [enemies[1]]: { [attackMoveOf(enemies[1])]: -9 } });
+  const run = createRunState({ seed, classId: 'reaver', registries: reg, combatExpansionVersion: expanded ? 2 : 1,
+    profileMeta: { settings: { [COMBAT_ROUNDS_KEY]: true } } });
+  const c = createRunCombat({ registries: reg, rng: createRng(seed), run, enemyIds: enemies, settings: {} });
+  if (expanded) dispatch(c, { type: 'setReactions', enabled: false }); // a legacy fight has no reactions to switch
+  for (const enemy of c.enemies.filter((e) => e.alive)) {
+    c.combatRounds.enemyQueues[enemy.id] = [{ moveId: attackMoveOf(enemy.enemyId), sp: 1 }];
+  }
+  const ids = Object.fromEntries(c.enemies.map((e) => [e.enemyId, e.id]));
+  if (aim) {
+    addToHand(c, 'guardCounter', 'cx');
+    dispatch(c, { type: 'playCard', cardInstanceId: 'cx' });
+  }
+  dispatch(c, { type: 'endTurn' });
+  return { c, ids, momentum: c.combatRounds.momentum ?? {} };
+}
+
+const consumedBy = (c) => c.eventLog.filter((e) => e.type === 'combatCounterConsumed').map((e) => e.targetId);
+// The enemies whose attacks landed (damageDealt names its attacker), from the no-Counter run of a seed.
+const landedBy = (c) => new Set(c.eventLog.filter((e) => e.type === 'damageDealt').map((e) => e.sourceId));
+
+// The first seed whose no-Counter round has the attack pattern `pick(landed, ids)` wants (hit rolls are the seed's).
+function seedWhere(expanded, enemies, pick) {
+  for (let seed = 1; seed < 200; seed += 1) {
+    const { c, ids } = counterRound({ expanded, seed, enemies });
+    if (pick(landedBy(c), ids)) return seed;
+  }
+  throw new Error('fixture: no seed gives the wanted attack pattern');
+}
+
+for (const expanded of [false, true]) {
+  const tag = expanded ? 'v2' : 'v1';
+
+  test(`${tag}: a queued Counter answers the next covered attack, once, and only that enemy is credited`, () => {
+    const seed = seedWhere(expanded, [FAST, SLOW], (landed, ids) => landed.has(ids[FAST]));
+    const base = counterRound({ expanded, seed });
+    const queued = counterRound({ expanded, seed, aim: true });
+    assert.deepEqual(consumedBy(queued.c), [queued.ids[FAST]], 'the first covered attack, from the first enemy to act, takes it');
+    assert.equal(queued.c.player.combatCounter, undefined, 'and it is spent');
+    assert.equal(queued.momentum[queued.ids[SLOW]] ?? 0, base.momentum[base.ids[SLOW]] ?? 0, 'the later attack is not countered or credited');
+    assert.notEqual(queued.momentum[queued.ids[FAST]] ?? 0, base.momentum[base.ids[FAST]] ?? 0, 'the enemy it answers is credited');
+  });
+
+  test(`${tag}: a Counter whose attack misses is spent, not left armed for the next attack`, () => {
+    // The first attack misses and the second lands: a Counter left armed would be consumed by the second.
+    const seed = seedWhere(expanded, [FAST, SLOW], (landed, ids) => landed.size === 1 && landed.has(ids[SLOW]));
+    const queued = counterRound({ expanded, seed, aim: true });
+    assert.deepEqual(consumedBy(queued.c), [], 'the landed attack that comes after the miss does not consume a spent Counter');
+    assert.equal(queued.c.player.combatCounter, undefined, 'the Counter is not left armed after the miss');
+  });
+
+  test(`${tag}: a Counter does not answer an attack its coverage does not reach, nor is it credited for it`, () => {
+    // graveWisp's Drain is a spell at Near reach, and it acts first: the melee guardCounter does not cover it (SPEC §4.10).
+    const enemies = ['graveWisp', SLOW]; // the spell acts first (FAST's place), so it is not covered at all
+    const seed = seedWhere(expanded, enemies, (landed, ids) => landed.has(ids[SLOW]));
+    const base = counterRound({ expanded, seed, enemies });
+    const queued = counterRound({ expanded, seed, enemies, aim: true });
+    assert.deepEqual(consumedBy(queued.c), [queued.ids[SLOW]], 'the covered melee attack takes it; the spell does not');
+    assert.equal(queued.c.player.combatCounter, undefined, 'the Counter is not left armed');
+    assert.equal(queued.momentum[queued.ids.graveWisp] ?? 0, base.momentum[base.ids.graveWisp] ?? 0, 'the uncovered attack earns no Counter credit');
+  });
+}

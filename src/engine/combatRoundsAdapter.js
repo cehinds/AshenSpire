@@ -228,6 +228,7 @@ function enemySpec(enemy) {
 //   findEntity(combat, id)          the live lookup
 //   reactionHand(combat)            the reaction candidates the player may play this commit (timeline records)
 //   reactionAvailable(combat, entry, eligible)  the candidates still playable at a pause, priced now (SPEC §4.11)
+//   liveCounterCovers(combat, entry)  whether the player's armed Counter would answer this enemy attack live
 //   playReaction(combat, instanceId, entry)  pays and plays a chosen reaction card, live; refuses a card that is not playable now
 // Returns { paused, offer }. A paused commit (SPEC §4.11) waits for the player's reaction: `offer` is the
 // round's { attack, eligible }, and resumeRound() continues it. Otherwise the caller runs the live turn end.
@@ -282,7 +283,7 @@ export function resumeRound(combat, ops, pick) {
   const rules = cr.rules;
   const hooks = roundHooks(combat, rules);
   const entry = round.timeline.entries[round.awaiting.index];
-  const answer = answerReaction(round, pick, hooks);
+  const answer = withLiveCounterGate(combat, round, entry, ops, () => answerReaction(round, pick, hooks));
   const events = [...cr.paused.events, ...answer.events];
   const played = events.find((e) => e.type === 'reaction');
   if (played) ops.playReaction(combat, played.instanceId, entry);
@@ -304,7 +305,7 @@ function runRound(combat, ops) {
   const hooks = roundHooks(combat, cr.rules);
   while (round.idx < round.timeline.entries.length) {
     const entry = round.timeline.entries[round.idx];
-    const step = stepRound(round, hooks);
+    const step = withLiveCounterGate(combat, round, entry, ops, () => stepRound(round, hooks));
     if (step.awaitingReaction) {
       // Each pause re-checks the offer: a card that left hand, a closed control gate or a cost the player
       // can no longer pay is not a choice any more (SPEC §4.10, §4.11). Costs are the live ones.
@@ -314,7 +315,7 @@ function runRound(combat, ops) {
         return { paused: true, offer: { attack: { ...round.awaiting.attack }, eligible: round.awaiting.eligible.map((c) => ({ ...c })) } };
       }
       // Nothing left to offer: the attack resolves with no reaction.
-      const events = [...step.events, ...answerReaction(round, null, hooks).events];
+      const events = [...step.events, ...withLiveCounterGate(combat, round, entry, ops, () => answerReaction(round, null, hooks)).events];
       settleEntry(combat, entry, events, ops);
     } else {
       settleEntry(combat, entry, step.events, ops);
@@ -322,6 +323,8 @@ function runRound(combat, ops) {
     if (combat.result) return { paused: false, offer: null };
   }
   const { state: after } = finishRound(round);
+  // The round's unspent Counters are cleared (settleRound), so the live Counter armed for them is cleared too.
+  delete combat.player.combatCounter;
   delete cr.enemyActed;
   cr.momentum = after.momentum;
   cr.poiseDouble = after.poiseDouble;
@@ -336,7 +339,21 @@ function settleEntry(combat, entry, events, ops) {
   const hit = events.find((e) => e.type === 'hit');
   const landed = hit ? hit.hit === true : true;
   if (entry.side === 'player') applyPlayerEntry(combat, entry, landed, ops);
-  else applyEnemyEntry(combat, entry, landed, ops);
+  else applyEnemyEntry(combat, entry, events, landed, ops);
+}
+
+// SPEC §4.11: a queued Counter is spent by the timeline on the attack it fires on, and only on an attack its live
+// coverage reaches. For any other enemy attack the timeline does not see the Counter, so it neither spends nor
+// credits it. Runs `fn` with the player's timeline Counters hidden when the live Counter would not answer this attack.
+function withLiveCounterGate(combat, round, entry, ops, fn) {
+  if (entry.side !== 'enemy' || ops.liveCounterCovers(combat, entry)) return fn();
+  const counters = round.cur.active.player.counters;
+  round.cur.active.player.counters = [];
+  try {
+    return fn();
+  } finally {
+    round.cur.active.player.counters = counters;
+  }
 }
 
 // True while a commit waits for the player's reaction (SPEC §4.11).
@@ -376,11 +393,22 @@ function applyPlayerEntry(combat, entry, landed, ops) {
   ops.drain(combat);
 }
 
-function applyEnemyEntry(combat, entry, landed, ops) {
-  const enemy = combat.enemies.find((e) => e.id === entry.actor);
-  if (!enemy || !landed || !enemy.alive || enemy.hp <= 0) return;
-  ops.enemyMove(combat, enemy, entry.cardId);
-  ops.drain(combat);
+// The live move runs only for a landed attack. The live Counter is kept out of the move unless the timeline
+// spent it on this attack (counterFired), and it is cleared after the move when the timeline spent it, so a
+// Counter the timeline did not fire never answers this attack live, and a spent one never answers another.
+function applyEnemyEntry(combat, entry, events, landed, ops) {
+  const fired = events.some((e) => e.type === 'counterFired' && e.by === 'player');
+  const armed = combat.player.combatCounter;
+  if (!fired) delete combat.player.combatCounter;
+  try {
+    const enemy = combat.enemies.find((e) => e.id === entry.actor);
+    if (!enemy || !landed || !enemy.alive || enemy.hp <= 0) return;
+    ops.enemyMove(combat, enemy, entry.cardId);
+    ops.drain(combat);
+  } finally {
+    if (fired) delete combat.player.combatCounter;
+    else if (armed) combat.player.combatCounter = armed;
+  }
 }
 
 // --- Unqueue ----------------------------------------------------------------------------------

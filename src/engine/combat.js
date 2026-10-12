@@ -10,7 +10,7 @@ import { combatExpansionEquipment } from '../content/combatExpansionEquipment.js
 import { expandedEquipmentProjection, expandedEnemyProjection } from './combatExpansionEquipment.js';
 import { settleExpandedPools, refreshExpandedLoadout } from './combatExpansionProjection.js';
 import { tacticalCarrier, counterEffectPreview, prepareTacticalCard, enqueueCounterWard, enemyMoveCarrier, expandedEnemyMove, primeEnemyCounter, enemyCounterDefensePrimed } from './combatCardTactics.js';
-import { clearCombatCounter, startTacticalTurn, setCombatStance, prepareCombatEvade } from './combatMatchups.js';
+import { clearCombatCounter, startTacticalTurn, setCombatStance, prepareCombatEvade, liveCounterCovers } from './combatMatchups.js';
 import { damagePreviewState, previewDamageHits } from './combatDamagePreview.js';
 import { hiddenIntentChance, concealIntent, combatIntentStance } from '../model/combatIntentVisibility.js';
 import { initializeCombatKnowledge, rollEnemyKnowledge, knowledgeIntentProjection, predictEnemyIntent, cancelKnowledgeAction } from './enemyKnowledge.js';
@@ -1699,6 +1699,7 @@ function previewRoundOps(hand = []) {
     findEntity,
     reactionHand: () => hand,
     reactionAvailable: (c, entry, eligible) => eligible.map(rec => roundReactionOffer(c, rec.instanceId, entry)).filter(Boolean),
+    liveCounterCovers: (c, entry) => liveCounterCovers(c, c.player, enemyAttackProfile(c, entry)),
     playReaction: playRoundReaction,
   };
 }
