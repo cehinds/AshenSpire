@@ -990,7 +990,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // Gap between the intent and the badge row, in layout px (anchorLocalBox
     // measures in the frame's own layout space, so no zoom arithmetic here).
     const INTENT_BAR_GAP = 5;
-    const intentMoves = placed.map(({ frame }) => {
+    // A selected (targeted) enemy's HP bar sits below its figure, so its intent goes above the
+    // figure's head instead: centred on the bar, its bottom a few px above the painted art's top.
+    const INTENT_ART_GAP = 4;
+    const intentMoves = placed.map(({ frame, sprite }) => {
       if (!frame.classList.contains('enemy') || frame.classList.contains('dead')) return null;
       const leadingHost = frame.querySelector('.combatant-leading');
       const intent = leadingHost?.querySelector(':scope > .intent');
@@ -998,11 +1001,18 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       const track = row?.querySelector('.combat-health-meter .m-track');
       if (!leadingHost || !intent || !track) return null;
       const intentBox = anchorLocalBox(frame, intent), trackBox = anchorLocalBox(frame, track);
-      const topOfRow = Math.min(anchorLocalBox(frame, row).top, ...[...row.querySelectorAll('.combat-health-badge')]
-        .map(badge => anchorLocalBox(frame, badge).top));
+      let bottomLimit;
+      if (frame.classList.contains('context-selected') && sprite) {
+        const artTop = anchorLocalBox(frame, { left: 0, top: currentSpriteArtBounds(sprite, refresh).top, width: 0, height: 0 }).top;
+        bottomLimit = artTop - INTENT_ART_GAP;
+      } else {
+        const topOfRow = Math.min(anchorLocalBox(frame, row).top, ...[...row.querySelectorAll('.combat-health-badge')]
+          .map(badge => anchorLocalBox(frame, badge).top));
+        bottomLimit = topOfRow - INTENT_BAR_GAP;
+      }
       return { leadingHost,
         dx: (trackBox.left + trackBox.width / 2) - (intentBox.left + intentBox.width / 2),
-        dy: (topOfRow - INTENT_BAR_GAP) - (intentBox.top + intentBox.height) };
+        dy: bottomLimit - (intentBox.top + intentBox.height) };
     });
     for (const move of intentMoves) {
       if (!move || (Math.abs(move.dx) < 0.01 && Math.abs(move.dy) < 0.01)) continue;
