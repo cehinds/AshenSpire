@@ -115,8 +115,10 @@ export function cardSpeed(card, cardId) {
 // wide attack; otherwise the kind decides.
 const KIND_STANCE = Object.freeze({ attack: 'attack', guard: 'block', evade: 'evade', counter: 'counter' });
 export function stanceFor(kind, tags = []) {
-  if (kind === 'attack' && tags.includes('smash')) return 'smash';
-  if (kind === 'attack' && tags.includes('sweep')) return 'sweep';
+  // The content tags a heavy or wide attack as maneuver:smash / maneuver:sweep (cards and enemy moves alike); a bare
+  // smash or sweep tag counts too.
+  if (kind === 'attack' && (tags.includes('smash') || tags.includes('maneuver:smash'))) return 'smash';
+  if (kind === 'attack' && (tags.includes('sweep') || tags.includes('maneuver:sweep'))) return 'sweep';
   return KIND_STANCE[kind] ?? null;
 }
 

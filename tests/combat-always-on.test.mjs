@@ -112,3 +112,16 @@ test('the always-on rules are not scoped to the preview attribute, and the shado
   assert.ok(visuals > 0, 'the always-on stylesheet is linked');
   assert.ok(visuals < html.indexOf('styles/combat-rounds-preview.css'), 'and loads before the preview stylesheet');
 });
+
+// The timeline stance of a smash or sweep comes from the content's maneuver tags (`maneuver:smash`, `maneuver:sweep`),
+// as cards and enemy moves carry them. A bare `smash` tag still counts. Without this the stance table never sees a
+// smash or a sweep, and the outline and the stance bonus miss them.
+import { stanceFor } from '../src/engine/combatRoundsAdapter.js';
+test('a smash or a sweep is its stance whichever tag form the content carries', () => {
+  assert.equal(stanceFor('attack', ['maneuver:smash']), 'smash', 'the content form');
+  assert.equal(stanceFor('attack', ['smash']), 'smash', 'the bare form');
+  assert.equal(stanceFor('attack', ['maneuver:sweep']), 'sweep');
+  assert.equal(stanceFor('attack', ['sweep']), 'sweep');
+  assert.equal(stanceFor('attack', ['maneuver:attack']), 'attack', 'a plain attack stays attack');
+  assert.equal(stanceFor('guard', ['maneuver:smash']), 'block', 'only an attack can be a smash');
+});
