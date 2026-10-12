@@ -178,6 +178,13 @@ test('Counterstrike scales the authored return before Impact and Flux double it'
   assert.equal(traited.ward, 6);
 });
 
+test('Counterstrike scales the authored hp base, not its rating bonus or other bonuses', () => {
+  // hp 13 = base 10 + rating 1 + flat bonus 2. 75%: base 10 -> 17, rating re-derived from 17 (0 in this
+  // fixture, which carries no damage rating), flat bonus 2 unscaled -> 19; scaling all 13 would give 22.
+  const traited = counterReturn({ traitValues: { counterstrike: true }, payload: { hp: 13, poise: 0, ward: 0, hpBase: 10, hpRating: 1 } });
+  assert.equal(traited.hp, 19);
+});
+
 test('Impact gives N reply Poise to a Counter whose return has none', () => {
   const traited = counterReturn({ traitValues: { impact: 2, flux: 1 }, payload: { hp: 10, poise: 0, ward: 0 } });
   assert.equal(traited.poise, 2);

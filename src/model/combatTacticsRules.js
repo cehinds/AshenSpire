@@ -108,7 +108,8 @@ export function expansionCounterProblems(counter, path = 'combatCounter') {
     for (const key of ['hp', 'poise', 'ward']) if (!whole(counter.payload[key])) problems.push(`${path}.payload.${key} must be a non-negative whole number`);
     if (counter.payload.smashPoiseBonus !== undefined && !whole(counter.payload.smashPoiseBonus)) problems.push(`${path}.payload.smashPoiseBonus must be a non-negative whole number`);
     if (counter.payload.hpAgainstNonCaster !== undefined && typeof counter.payload.hpAgainstNonCaster !== 'boolean') problems.push(`${path}.payload.hpAgainstNonCaster must be boolean`);
-    for (const key of Object.keys(counter.payload)) if (!['hp', 'poise', 'ward', 'hpAgainstNonCaster', 'smashPoiseBonus'].includes(key)) problems.push(`${path}.payload.${key} is unknown`);
+    for (const key of ['hpBase', 'hpRating']) if (counter.payload[key] !== undefined && !whole(counter.payload[key])) problems.push(`${path}.payload.${key} must be a non-negative whole number`);
+    for (const key of Object.keys(counter.payload)) if (!['hp', 'poise', 'ward', 'hpAgainstNonCaster', 'smashPoiseBonus', 'hpBase', 'hpRating'].includes(key)) problems.push(`${path}.payload.${key} is unknown`);
   }
   if (counter.schoolEffect !== undefined && !['hp', 'poise', 'ward'].includes(counter.schoolEffect)) problems.push(`${path}.schoolEffect must name one return effect`);
   if (!record(counter.carrier) || !record(counter.carrier.combatProfile)) problems.push(`${path}.carrier must preserve its combat profile`);
