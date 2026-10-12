@@ -2078,10 +2078,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const select = () => {
       lastConfirmTap = 0;
       selectedFlask = null;
+      // A queued card (Combat Rounds Preview) is taken back by its tap, not armed again.
+      if (isRoundQueued(inst.instanceId)) { unqueueCard(inst.instanceId); return; }
       if (pv.needsTarget || dragTargetMode === 'all') { selected = inst.instanceId; selfArm = null; syncCardSelection(); }
       else armSelf(inst.instanceId);
     };
     const confirm = () => {
+      if (isRoundQueued(inst.instanceId)) { unqueueCard(inst.instanceId); return; }
       if (busy || !affordable || dragging) return;
       if (selected !== inst.instanceId && selfArm !== inst.instanceId) { select(); return; }
       if (!pv.needsTarget) playCard(inst.instanceId, null);
@@ -2545,6 +2548,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const remove = () => { stopLayers();flight.remove();cardFlights.delete(animation); };
     animation.onfinish = remove;
     animation.oncancel = remove;
+  }
+
+  function isRoundQueued(instanceId) {
+    return Boolean(combat.combatRounds?.playerQueue?.some(record => record.instanceId === instanceId));
   }
 
   // Takes a queued card back (SPEC §4.11): the engine refunds exactly what it paid.
