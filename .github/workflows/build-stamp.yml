@@ -47,6 +47,9 @@ concurrency:
 # changelog module. A GITHUB_TOKEN push cannot retrigger workflows.
 permissions:
   contents: write
+  # Dispatching dev-preview for the stamped tip (below). GITHUB_TOKEN may start a
+  # workflow_dispatch run, though it may not start a push-triggered one.
+  actions: write
 
 jobs:
   stamp:
@@ -88,6 +91,8 @@ jobs:
           REF_NAME: ${{ github.ref_name }}
           BEFORE: ${{ github.event.before }}
           PRS: ${{ github.event.inputs.prs }}
+          # For the dev-preview dispatch after a successful push (gh workflow run).
+          GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -118,6 +123,21 @@ jobs:
             git commit -q -m "build: stamp $box [build-stamp]"
             if git push -q origin "HEAD:$REF_NAME"; then
               echo "Pushed the build stamp $box to $REF_NAME (attempt $attempt)."
+              # THE STAMPED TIP NEEDS ITS OWN PREVIEW. A GITHUB_TOKEN push starts no
+              # push-triggered workflow, so dev-preview never builds this commit and
+              # its dev-standalone-<sha> artifact would describe the pre-stamp merge.
+              # A workflow_dispatch is allowed from GITHUB_TOKEN, so this builds the
+              # tip. dev-preview's clean-rebuild check runs STRICT on a dispatch, which
+              # is right: the stamped tip is a fixed point, so its rebuild moves nothing.
+              # Only after a successful push, so a rejected push dispatches nothing.
+              gh workflow run dev-preview.yml --repo "$GITHUB_REPOSITORY" --ref "$REF_NAME"
+              echo "Dispatched dev-preview on $REF_NAME for the stamped tip."
+              # THE PAGES SITE IS NOT REPUBLISHED HERE, AND THAT IS DELIBERATE. pages-builds
+              # deploys dev on a push to dev, and on a dispatch only when the actor is the
+              # repository owner who typed PUBLISH. GITHUB_TOKEN is neither, so this step
+              # cannot publish the stamped tip. Until the next push to dev, or the owner's
+              # own pages-builds dispatch, the dev site shows the pre-stamp build. The
+              # artifact above is the playable build for the stamped commit.
               exit 0
             fi
             echo "Push to $REF_NAME rejected (attempt $attempt)."

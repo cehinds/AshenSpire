@@ -42,8 +42,12 @@ commits those three files to `dev` as `build: stamp <release>.<ordinal>
 [build-stamp]`. On a pull request and on `dev`, `dev-preview.yml` tolerates a
 rebuild that changes only those two derived files; test, release and main still
 require the rebuild to change nothing. Promotion from `dev` to `test` waits for
-the build-stamp run to finish, since `test`'s strict check would otherwise refuse
-the promotion.
+the build-stamp run on the `dev` tip to succeed, and for that tip to be the stamp
+commit or a later docs-only bot commit, since `test`'s strict check would otherwise
+refuse the promotion. After a successful stamp push, build-stamp dispatches
+`dev-preview` for the stamped tip, so its `dev-standalone-<sha>` artifact is that
+commit's build. The Pages site's dev channel is not republished by the bot; see the
+comment in `build-stamp.yml`.
 
 **Which checks gate a pull request** (owner, 2026-10-11, the stage rules). Every
 check runs in one of four stages, and this table is the only list of them. Each
@@ -66,7 +70,7 @@ Any workflow can be started by hand on any branch (Actions → *Run workflow*).
 | `worker-check.yml` → sanity: receipts self-test (`tools/receipts.mjs --selftest`) | yes | — | — | — |
 | `receipts.yml` → receipts: selftest; a PR runs `--check --pr auto`, a push to `dev` the range to `origin/test` | — | yes | — | — |
 | `dev-preview.yml` → preview: build, standalone artifact, fast gates | — | yes | yes (the build runs again) | yes (the build runs again) |
-| `build-stamp.yml` → stamp: rebuild the merged tree, re-point the landed receipts, commit `buildordinal.json`, `CHANGELOG.md` and the generated module as `[build-stamp]` | — | yes (push to `dev` only; not on a pull request) | — | — |
+| `build-stamp.yml` → stamp: rebuild the merged tree, re-point the landed receipts, commit `buildordinal.json`, `CHANGELOG.md` and the generated module as `[build-stamp]`, then dispatch `dev-preview` for that commit | — | yes (push to `dev` only; not on a pull request) | — | — |
 | `tests.yml` → core: engine suite, each tool's verdict, CHANGELOG order (no browser) | — | yes | — | — |
 | `tests.yml` → discovered tests, four shards, `--no-slow` (`SLOW_DISCOVERED` in `tests/run-node-lanes.mjs`; this includes `tests/readme-sync.test.mjs`) | — | yes | — | — |
 | `quick-start.yml` → Quick start to the first card play within 6 inputs; click to contact ≤ 400 ms and click to first number ≤ 750 ms (medians) at Normal pacing (`tools/click-impact-probe.mjs`: contact is the effects layer's `data-contact` counter, which `src/ui/fx.js` bumps at each impact frame; the number is the first `.float-num` damage or guard float, which under the default `sequential` beat order follows the defender's reaction) | — | yes | yes | only when release differs from test |

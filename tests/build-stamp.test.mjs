@@ -228,3 +228,20 @@ test('landedSince with no stamp counts from the event before, and with neither, 
     assert.deepEqual(landedSince('0000000000000000000000000000000000000000', { cwd: r.dir }), ['8'], 'an all-zero before is HEAD only');
   } finally { r.cleanup(); }
 });
+
+// The stamped tip gets its own dev-preview build: GITHUB_TOKEN starts no push-triggered
+// run, so build-stamp dispatches dev-preview itself, and only after the push succeeded.
+test('build-stamp.yml dispatches dev-preview for the stamped tip only after a successful push', () => {
+  const perms = WORKFLOW.slice(WORKFLOW.indexOf('\npermissions:'), WORKFLOW.indexOf('\njobs:'));
+  assert.match(perms, /\n {2}contents: write\n/);
+  assert.match(perms, /\n {2}actions: write\n/, 'the dispatch needs actions: write');
+  assert.doesNotMatch(perms, /pull-requests|packages|id-token/, 'no other write scope');
+  const dispatch = 'gh workflow run dev-preview.yml --repo "$GITHUB_REPOSITORY" --ref "$REF_NAME"';
+  const push = WORKFLOW.indexOf('if git push -q origin "HEAD:$REF_NAME"; then');
+  const at = WORKFLOW.indexOf(dispatch);
+  assert.ok(push > 0 && at > push, 'the dispatch comes after the push, inside its success branch');
+  const success = WORKFLOW.slice(push, WORKFLOW.indexOf('exit 0', at));
+  assert.ok(success.includes(dispatch), 'the dispatch sits inside the push-success branch, before its exit 0');
+  assert.match(WORKFLOW, /GH_TOKEN: \$\{\{ github\.token \}\}/);
+  assert.match(DEV_PREVIEW, /\n {2}workflow_dispatch:/, 'dev-preview can be dispatched');
+});

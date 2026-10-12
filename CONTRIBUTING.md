@@ -159,11 +159,19 @@ review, into `dev`, then promoted to `test` (rule 6). The owner merges only to
      run that commits a refreshed `docs/ARCHITECTURE-CURRENT-DEV.md` back to
      `dev`, and a newer push cancels the older run. Promote only when the
      latest run on `dev` has succeeded and `dev`'s tip is the commit it
-     covered or its own bot commit. Then open a PR from `dev` into `test` and
+     covered or its own bot commit.
+   - Wait for `build-stamp` on the same tip, too. Every push to `dev` starts a
+     `build-stamp` run that rebuilds `dev`, re-points the landed receipts and
+     commits the box as `build: stamp <release>.<ordinal> [build-stamp]`. Promote
+     only when that run has succeeded and `dev`'s tip is that stamp commit, or a
+     later docs-only bot commit. Its dispatched `dev-preview` run on the stamped tip
+     must also have succeeded, since that artifact is the playable build for it.
+     Then open a PR from `dev` into `test` and
      merge it yourself, with a merge commit. Immediately before merging,
-     check again: the PR's head must still be the `dev` tip and that tip's
-     latest `architecture-sync` run must have succeeded. If `dev` moved,
-     wait for its sync to settle and check again. That push to `test` runs the heavy suites. If one is
+     check again: the PR's head must still be the `dev` tip, that tip's
+     latest `architecture-sync` run must have succeeded, and its `build-stamp`
+     run must have succeeded. If `dev` moved,
+     wait for its syncs to settle and check again. That push to `test` runs the heavy suites. If one is
      already open, merge that one rather than opening another. Each
      promotion runs the full 3-OS matrix, so when several of your PRs land
      together, promote once after the last.
