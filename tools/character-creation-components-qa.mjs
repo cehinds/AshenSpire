@@ -69,23 +69,39 @@ try {
     assert.ok((await page.locator('.component-catalog').textContent()).length > 100, 'meaningful production catalog rendered');
     assert.equal(await page.locator('nextjs-portal, #webpack-dev-server-client-overlay, vite-error-overlay').count(), 0);
     const featBrowser = page.locator('#folio-creation-feat-browser .cc-feat-browser');
-    await featBrowser.locator('[data-feat="weaponDrill"].cc-choice-tile').click();
+    const weaponTile = featBrowser.locator('[data-feat="weaponDrill"].cc-choice-tile');
+    if (width < 700) await weaponTile.tap(); else await weaponTile.click();
     assert.equal(await featBrowser.getAttribute('data-inspected-feat'), 'weaponDrill');
     assert.equal(await featBrowser.getAttribute('data-birth-feat-allowance'), '0');
     assert.equal(await featBrowser.locator('.cc-feat-detail-title').textContent(), 'Weapon Drill');
     assert.equal(await featBrowser.locator('.cc-feat-detail').getAttribute('data-locked'), 'true');
+    if (width < 700) {
+      assert.equal(await featBrowser.getAttribute('data-detail-open'), 'true', 'tap reveals the mobile inspector');
+      await page.waitForFunction(selector => {
+        const requirement = document.querySelector(selector);
+        if (!requirement) return false;
+        const rect = requirement.getBoundingClientRect();
+        const footer = document.querySelector('.modal-foot');
+        const bottom = Math.min(innerHeight, footer?.getBoundingClientRect().top || innerHeight);
+        return rect.top >= 0 && rect.bottom <= bottom + 1;
+      }, '#folio-creation-feat-browser .cc-feat-detail .cc-feat-level-copy', { timeout: 10000 });
+      await featBrowser.locator('.cc-feat-return').tap();
+      assert.equal(await featBrowser.getAttribute('data-detail-open'), 'false', 'return collapses the mobile inspector');
+    }
     for (const groupId of ['class', 'skill']) {
       const filter = featBrowser.locator(`.cc-feat-group-filter[data-feat-group="${groupId}"]`);
       if (width < 700) await filter.tap(); else await filter.click();
       assert.equal(await featBrowser.getAttribute('data-feat-group'), groupId);
-      assert.ok(await featBrowser.locator('.cc-feat-choices button .cc-feat-level-requirement').count(), `${groupId} rows show existing progression requirements`);
-      const inspect = featBrowser.locator('.cc-feat-choices button').first();
+      assert.ok(await featBrowser.locator('.cc-feat-choices .cc-choice-tile .cc-feat-tile-status').count(), `${groupId} rows retain compact progression status`);
+      assert.equal(await featBrowser.locator('.cc-feat-choices .cc-choice-tile .cc-feat-level-requirement').count(), 0, 'full requirements are confined to the inspector');
+      const inspect = featBrowser.locator('.cc-feat-choices .cc-choice-tile').first();
       assert.ok(await inspect.isEnabled(), 'locked feats remain inspectable');
-      await inspect.click();
+      if (width < 700) await inspect.tap(); else await inspect.click();
       assert.ok(await featBrowser.locator('.cc-feat-detail .cc-feat-level-requirement').count());
     }
-    await featBrowser.locator('.cc-feat-group-filter[data-feat-group="character"]').click();
-    await featBrowser.locator('[data-feat="weaponDrill"].cc-choice-tile').click();
+    const characterFilter = featBrowser.locator('.cc-feat-group-filter[data-feat-group="character"]');
+    if (width < 700) await characterFilter.tap(); else await characterFilter.click();
+    if (width < 700) await weaponTile.tap(); else await weaponTile.click();
     const choice = page.locator('#folio-creation-choice-tile button');
     await choice.click();
     assert.equal(await page.locator('#folio-creation-choice-tile button').getAttribute('aria-pressed'), 'true');
@@ -139,10 +155,17 @@ try {
           .every(node => { const rect = node.getBoundingClientRect(); return rect.left >= -1 && rect.right <= innerWidth + 1; });
       }), `${stage} rendered controls fit the ${width}px viewport`);
       if (stage === 'feats') {
-        await live.locator('#cz-feats-panel [data-feat="weaponDrill"].cc-choice-tile').click();
+        const liveWeaponTile = live.locator('#cz-feats-panel [data-feat="weaponDrill"].cc-choice-tile');
+        if (width < 700) await liveWeaponTile.tap(); else await liveWeaponTile.click();
         assert.equal(await live.locator('#cz-feats-panel .cc-feat-detail-title').textContent(), 'Weapon Drill');
         assert.equal(await live.locator('#cz-feats-panel .cc-feat-detail').getAttribute('data-locked'), 'true');
         assert.ok(await live.locator('#cz-feats-panel .cc-feat-detail .cc-feat-level-requirement').count(), 'real creation page shows canonical level requirement');
+        if (width < 700) {
+          assert.equal(await live.locator('#cz-feats-panel .cc-feat-browser').getAttribute('data-detail-open'), 'true');
+          await live.locator('#cz-feats-panel .cc-feat-detail').waitFor({ state: 'visible' });
+          await live.locator('#cz-feats-panel .cc-feat-return').tap();
+          assert.equal(await live.locator('#cz-feats-panel .cc-feat-browser').getAttribute('data-detail-open'), 'false');
+        }
       }
       await live.locator('.cz-stage img').evaluateAll(async images => {
         const shown = images.filter(image => image.getClientRects().length);
