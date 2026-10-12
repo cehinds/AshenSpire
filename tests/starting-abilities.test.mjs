@@ -82,3 +82,62 @@ test('configured copy limits allow an already-granted spell as a starting abilit
   const started = birth('herald', { profileMeta, startingAbilityIds: ['blightTouch', 'penance'] });
   assert.equal(started.deck.filter(inst => inst.cardId === 'blightTouch').length, 2);
 });
+
+// ---- Owner decision 13: Psychic/Earth spells as a selectable starting spell ----
+const ELEMENT_STARTERS = ['mindSpike', 'mindFracture', 'drowsingMote', 'stoneSling', 'rockfall'];
+
+test('element starting spells are offered to herald and starseer only', () => {
+  for (const classId of ['herald', 'starseer']) {
+    const plan = startingAbilityPlan(registries, birth(classId, { combatExpansionVersion: 2 }));
+    assert.deepEqual([...plan.elementIds].sort(), [...ELEMENT_STARTERS].sort(), classId);
+    assert.equal(plan.maxElementPicks, 1);
+    // Skills and rares are not starting spells.
+    for (const id of ['stoneskin', 'dissonance', 'wakingNightmare', 'entomb']) assert.ok(!plan.choices.some(card => card.id === id), id);
+  }
+  for (const classId of ['reaver', 'rogue']) {
+    const plan = startingAbilityPlan(registries, birth(classId, { combatExpansionVersion: 2 }));
+    assert.deepEqual(plan.elementIds, []);
+    assert.ok(!plan.choices.some(card => ELEMENT_STARTERS.includes(card.id)));
+  }
+  // The expanded card is unavailable to a legacy run.
+  assert.deepEqual(startingAbilityPlan(registries, birth('herald')).elementIds, []);
+});
+
+test('a chosen element spell lands in the starting deck as a plain card and survives save and load', () => {
+  for (const classId of ['herald', 'starseer']) {
+    const base = birth(classId, { combatExpansionVersion: 2 });
+    const plan = startingAbilityPlan(registries, base);
+    const spell = plan.choices.find(card => !plan.elementIds.includes(card.id)).id;
+    const ids = [spell, 'mindSpike'];
+    assert.equal(startingAbilityProblem(registries, base, ids), null);
+    const run = birth(classId, { combatExpansionVersion: 2, startingAbilityIds: ids });
+    assert.ok(run.deck.length <= registries.balance.startingDeckSize);
+    const element = run.deck.find(inst => inst.cardId === 'mindSpike');
+    assert.ok(element);
+    assert.ok(!element.abilityRank, 'plain card, no ability grade');
+    assert.equal(run.deck.filter(inst => inst.cardId === spell && inst.abilityRank === 1).length, 1);
+    stampDeck(registries, run);
+    const restored = deserializeRun(serializeRun(run));
+    assert.ok(restored.deck.some(inst => inst.cardId === 'mindSpike' && !inst.abilityRank));
+    assert.deepEqual(validateRunShape(restored), []);
+  }
+});
+
+test('at most one element spell may be picked, and other classes cannot pick one', () => {
+  const run = birth('herald', { combatExpansionVersion: 2 });
+  assert.ok(startingAbilityProblem(registries, run, ['mindSpike', 'stoneSling']));
+  assert.throws(() => birth('herald', { combatExpansionVersion: 2, startingAbilityIds: ['mindSpike', 'stoneSling'] }));
+  const reaver = birth('reaver', { combatExpansionVersion: 2 });
+  assert.ok(startingAbilityProblem(registries, reaver, ['mindSpike']));
+});
+
+test('births that do not choose an element spell are unchanged', () => {
+  const off = createRegistries({ ...contentBundle, balance: { ...contentBundle.balance, rewards: { ...contentBundle.balance.rewards, elementAffinity: undefined } } });
+  for (const classId of ['herald', 'starseer', 'reaver', 'rogue']) {
+    const plan = startingAbilityPlan(registries, birth(classId, { combatExpansionVersion: 2 }));
+    const ids = plan.choices.filter(card => !plan.elementIds.includes(card.id)).slice(0, plan.count).map(card => card.id);
+    const withOption = birth(classId, { combatExpansionVersion: 2, startingAbilityIds: ids });
+    const without = createRunState({ seed: 42, classId, registries: off, combatExpansionVersion: 2, startingAbilityIds: ids });
+    assert.deepEqual(withOption.deck, without.deck, classId);
+  }
+});
