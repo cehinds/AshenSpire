@@ -1,7 +1,8 @@
 // Enemy reactions (docs/combat-card-traits-contract.md, "Enemy reactions").
 // A reaction move is an enemy move with `reaction: { on, minIncoming, chance }`.
-// These helpers decide nothing on their own: the window code asks decideEnemyReaction
-// for each enemy in roster order. Pure data reads apart from the memoised roll.
+// openEnemyWindow asks decideEnemyReaction for each enemy in roster order and commits
+// a taken move's plan at push (pushEnemyReaction); runEnemyPlan plays it when the stack
+// (engine/combatReactions.js) reaches it.
 import { controlRestrictions } from './combatStatusControl.js';
 import { enqueueExpandedAction } from './combatExpansionActions.js';
 
