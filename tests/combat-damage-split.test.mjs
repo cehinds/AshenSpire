@@ -361,6 +361,19 @@ test('briarCast (alteration, piercing) is all physical', () => {
   assert.equal(r.preview, r.committed, 'preview equals committed');
 });
 
+// Briar Cast under the Ward and Poise rules (damageTypeShares: {} turns the rating rules on, so the
+// meters and their impacts run). A fully physical hit takes Block and Poise and never Ward or a Ward rating impact.
+test('briarCast with Block 2, Ward 3, Poise 5 takes no Ward and no Ward rating impact', () => {
+  const r = strike(enemyMoveCarrier('briarHermit', 'briarCast'), 5, { ward: 3, block: 2, poise: 5, damageTypeShares: {} });
+  const d = hitOf(r);
+  assert.equal(d.magicAmount, 0);
+  assert.equal(d.wardAbsorbed, undefined, 'Ward is not spent');
+  assert.equal(r.enemy.persistentWard.value, 3, 'Ward stays 3');
+  const wardImpacts = r.events.filter(e => e.type === 'ratingImpact' && e.meter === 'ward');
+  assert.equal(wardImpacts.length, 0, 'no Ward rating impact on a physical hit');
+  assert.equal(r.preview, r.committed, 'preview equals committed');
+});
+
 test('entwiningRoots (alteration, blunt) is all physical', () => {
   const r = strike(enemyMoveCarrier('thornMatriarch', 'entwiningRoots'), 6, { ward: 10 });
   assert.equal(hitOf(r).magicAmount, 0);

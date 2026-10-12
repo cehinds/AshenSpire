@@ -580,6 +580,20 @@ export function isMagicalAttack(ctx, carrier) {
 }
 
 /**
+ * isMagicalHit(ctx, carrier) → whether a hit has any magic part, so its impact
+ * lands on the Ward meter. A carrier with a combat profile is read by the same
+ * routing that splits its damage (magicShareOf), so a spell-camp alteration hit
+ * with a physical type is all physical here, as it is in the split. A carrier
+ * without a profile keeps the card reading.
+ */
+export function isMagicalHit(ctx, carrier) {
+  if (ctx.combatExpansionVersion === 2 && carrier?.combatProfile) {
+    return magicShareOf({ ...carrier.combatProfile, ...(Number.isFinite(carrier.magicShare) ? { magicShare: carrier.magicShare } : {}) }, ctx.ratingsRules) > 0;
+  }
+  return isMagicalAttack(ctx, carrier);
+}
+
+/**
  * damageTypeMagicShare(config, type) → the magic share a damage type carries
  * when no card or weapon overrides it: the Advanced row if the run has one,
  * else the content default. Null for a type the rules do not name.
@@ -745,12 +759,11 @@ export function persistentPoiseMaximum(ctx, entity) {
   return Math.max(0, Math.floor(ratingValue(ctx, entity, 'poise') * (Number.isFinite(share) ? share : combatRatingDefaults.resistance.poisePool)));
 }
 
-export function attackImpact(ctx, source, carrier) {
+export function attackImpact(ctx, source, carrier, magical = isMagicalAttack(ctx, carrier)) {
   const config = ctx.ratingsRules;
   if (!config) return 0;
   const explicit = config.attackImpact?.[carrier?.cardId];
   if (Number.isFinite(explicit) && explicit >= 0) return explicit;
-  const magical = isMagicalAttack(ctx, carrier);
   // A PHYSICAL HIT A WEAPON LENDS IS AS HEAVY AS THE WEAPON (SPEC §13.4): the
   // weight category, and the per-enemy override, come before any card value,
   // or every weapon's Strike would land with the same cost-derived number and

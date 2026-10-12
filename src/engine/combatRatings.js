@@ -1,4 +1,4 @@
-import { ratingReceipt, ratingValue, sourceRatingValue, attackImpact, isMagicalAttack } from '../model/combatRatings.js';
+import { ratingReceipt, ratingValue, sourceRatingValue, attackImpact, isMagicalAttack, isMagicalHit } from '../model/combatRatings.js';
 import * as Properties from './properties.js';
 import { passiveMult, passiveSum } from '../model/registries.js';
 import { usesSingleBreakMeter, breakMeterIds } from '../model/breakMeter.js';
@@ -42,12 +42,13 @@ export function refreshCombatRatings(ctx) {
 
 export function applyRatingImpact(ctx, source, target, carrier, explicitAmount = null, { triggerHit = true, knowledgeMatchup = false } = {}) {
   if (!ctx.ratingsRules || !target?.alive) return;
-  const magical = isMagicalAttack(ctx, carrier);
+  // The meter follows the hit's magic part: a hit with none (alteration, or a physical type on a spell) is Poise's.
+  const magical = isMagicalHit(ctx, carrier);
   const single = usesSingleBreakMeter(ctx);
   const meterName = magical && !single ? 'ward' : 'poise';
   const meter = target[meterName + 'Meter'];
   if (!meter || meter.max <= 0) return;
-  let amount = explicitAmount === null ? attackImpact(ctx, source, carrier) : Math.max(0, Math.floor(explicitAmount));
+  let amount = explicitAmount === null ? attackImpact(ctx, source, carrier, magical) : Math.max(0, Math.floor(explicitAmount));
   if (single && magical && explicitAmount === null) amount = foldedMagicImpact(ctx, source, target, carrier, amount);
   const label = magical && !single ? 'Disruption' : 'Stagger';
   const seats = ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source), targetPlayerId: ctx.playerIdForEntity(target) } : {};
