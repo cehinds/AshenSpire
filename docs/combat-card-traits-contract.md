@@ -75,15 +75,62 @@ summary read "Impact N" / "Flux N".
   whole stack, a solo run cannot reach this; it is a guard for co-op, where a
   later seat's entries resolve first and can change state an earlier seat's
   check assumed. The acceptance test reaches it that way.
-- Entries carry a side (`player` or `enemy`). Only player entries exist in this
-  version; an enemy entry is rejected. Enemy reactions are a separate future
-  change on the same stack.
+- Entries carry a side (`player` or `enemy`). Enemy entries follow *Enemy
+  reactions* below.
 - Eligibility in version 2: a hand card needs `trait:reaction`. A
   `maneuver:counter` card also needs matching coverage; other cards need a
   positive incoming contact. Version 1 keeps its Counter / `defensiveReaction`
   Sweep rule.
 - The stack, the pending offer's depth and the resolution cursor are saved and
   resume exactly, solo and co-op.
+
+## Enemy reactions
+
+Owner request, 2026-10-12: enemies react too, on the same stack. Enabled by
+`reactionRules.enemyReactions: true`, which new version-2 rules carry; a
+version-2 snapshot without the key has no enemy reactions.
+
+- **Opt-in moves.** An enemy move with a `reaction` field is a *reaction move*:
+  `reaction: { on: ['playerAction' | 'playerReaction', …], minIncoming = 1,
+  chance = 1 }`. It carries `trait:reaction` in `tagging.csv` and is never rolled
+  as an intent.
+- **Windows.**
+  - `playerAction`: a player card's action group is about to begin against this
+    enemy (the enemy is a target with a positive contact). The window opens
+    before the first action of the group, on the player's turn.
+  - `playerReaction`: a player reaction was just pushed onto a stack whose root
+    is this enemy's own action, or which targets this enemy.
+- **Decision.** In a window, each living enemy that is targeted (or owns the
+  root), is not staggered or control-locked, and has an unused reaction move whose
+  `on` lists the window, considers its moves in authored order. A move qualifies
+  when the incoming contact's damage is at least `minIncoming`; it is taken when
+  a roll on the new `enemyReaction` RNG stream (appended last) is below `chance`.
+  The roll is memoised per (group key, enemy id, move id), so previews, saves and
+  replays draw it once. An enemy with no reaction moves draws nothing, so fights
+  without them keep every RNG counter unchanged.
+- **Budget.** Each enemy takes at most one reaction per its owner cycle
+  (`combatReactionCycle`), and the per-side depth cap applies (`maxDepth` counts
+  each side's entries; Counter-return roots 1).
+- **Push and answer.** The enemy entry `{ side: 'enemy', ownerId: <enemy id>,
+  moveId, targetPlayerId }` is pushed and announced (`combatEnemyReactionStacked`).
+  On the player's turn the acting seat is then offered its Reaction cards against
+  the enemy reaction's contacts, with the ordinary offer rules; during an enemy
+  turn, an enemy may answer a player reaction once and the seat may answer that
+  in turn, within the caps.
+- **Resolution.** Entries still resolve last pushed first. An enemy entry runs
+  the move's payload through the ordinary enemy executor against
+  `targetPlayerId` (the seat whose card opened the window), as a
+  `combatReaction` carrier at the stack's depth: no riders, crits or automatic
+  Counter returns chain from it. It pays nothing. It fizzles
+  (`combatReactionFizzled`) when its enemy is dead, staggered or control-locked
+  when reached, or its target seat is gone.
+- **Cancellation.** If the stack's resolution kills the acting player card's
+  targets, that card's actions follow the ordinary cancellation rules.
+- **Presentation.** An enemy reaction announces itself with
+  `enemyMoveStarted { reaction: true }` and the log line "X reacts with Move."
+- **First carriers.** Gilded Knight gains *Gilded Guard* (block 6,
+  `on: ['playerAction']`, `minIncoming: 8`); Court Duelist gains *Binding
+  Riposte* (damage 4, `on: ['playerReaction']`, `chance: 0.5`).
 
 ## Counterstrike
 
@@ -209,5 +256,9 @@ and `src/content/combatExpansionCards.js`. T is the tier above.
   are not re-offered; the LIFO affordability check; depth cap; fizzle pays
   nothing; save/restore mid-offer and mid-resolution with identical RNG counters;
   co-op seat order, per-seat cap, one Counter per seat, a co-op fizzle, and
-  stale/foreign offers rejected; an enemy entry is rejected;
+  stale/foreign offers rejected; enemy reactions: Gilded Guard pushes before a
+  heavy player hit and resolves first, the player can answer it, Binding Riposte
+  answers a player reaction at its chance, one reaction per enemy cycle, a
+  memoised roll survives save/restore, a fight without reaction moves keeps its
+  RNG counters, and `enemyReactions` absent disables them;
   a version-1 snapshot replays unchanged.
