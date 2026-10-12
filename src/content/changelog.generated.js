@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1868",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Deck editor: (i) centred under the art, grey Basic/Cantrip badge, vertical grip",
+    "detail": "The inspect (i) sits centred on the bottom edge of the card art, the rank badge sits higher and reads grey at rank 0 (Basic, Cantrip), and the phone grip is vertical again.",
+    "build": "0.7.1.1359",
+    "pullRequest": 1868,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1868"
+  },
+  {
     "id": "pr-1872",
     "date": "2026-10-12",
     "group": "2026-10-12",
