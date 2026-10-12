@@ -4,9 +4,12 @@ import { renderCollectibleCard } from '../components/collectibleCard.js';
 import { renderEquipmentCard, equipmentDetails } from '../components/equipmentCard.js';
 import { EMPTY_HAND_PRESENTATION } from '../components/emptyHandCard.js';
 import { startingEquipmentPreview } from '../../model/startingEquipmentPreview.js';
+import { creationFeatBrowserGroups } from '../models/CreationFeatBrowserModel.js';
+import { createCreationFeatBrowser, creationPageHeading, decorateCreationWorkspace } from '../components/creationPageParts.js';
+import { mountCreationPartSpecimens } from '../catalog/creationSpecimens.js';
 import { startingAbilityPlan, startingAbilityProblem, startingAbilityRef } from '../../model/startingAbilities.js';
 import { paintedPresentation } from '../paintedOutfits.js';
-// Character creation: four progressive sections backed by validated content.
+// Character creation: authored progressive pages backed by validated content.
 //
 // ON THE KIT. The screen is a page door (§05 without the veil): the head
 // names it, the body scrolls, the foot carries Back and Begin on the button
@@ -58,7 +61,7 @@ import {
   button, buttonRow, modalHead, modalFooter, pane, statPair, railItem, categoryNav,
 } from '../kit/index.js';
 import {
-  creationCategories, creationStep, creationFooterPlan, creationRailItems, creationAttributeColumns, creationCssProperties, creationFitsChoices, creationClassPreview,
+  creationCategories, creationFlowCategories, creationHasSpells, creationAbilitySelection, creationStep, creationFooterPlan, creationRailItems, creationAttributeColumns, creationCssProperties, creationFitsChoices, creationClassPreview,
 } from '../models/CreationWorkspaceModel.js';
 // The fold's own sentence is a row in content/source/uiStrings.csv, which is
 // where #991 put the words this game says. This screen still carries plenty of
@@ -177,7 +180,9 @@ export function mountCustomize(app, {
   // call site per state change, and the gates cannot fall behind Begin.
   const gateRefreshers = [];
   let equipmentGateRefreshers = [];
-  const refreshGates = () => { for (const refresh of [...gateRefreshers, ...equipmentGateRefreshers]) refresh(); };
+  let spellGateRefreshers = [];
+  let refreshCreationNavigation = () => {};
+  const refreshGates = () => { for (const refresh of [...gateRefreshers, ...equipmentGateRefreshers, ...spellGateRefreshers]) refresh(); };
   let updateStartRefusal = () => { refreshGates(); };
 
   // ---- the page door -------------------------------------------------------
@@ -194,6 +199,7 @@ export function mountCustomize(app, {
       el('section', { id: 'cz-tint-group', class: 'cc-character-picker' }, el('div', { id: 'cz-tints', class: 'as-swatches cz-opts' })),
     ]),
   ]);
+  const keepsakeGroup = el('section', { id: 'cz-keepsake-group', class: 'cc-character-picker' }, options([], { id: 'cz-keepsakes', class: 'cz-keepsakes' }));
   const statsSide = el('div', { class: 'as-stack cc-stats-side' }, [
     nameRow,
     el('div', { id: 'cz-character-fold', class: 'cc-character-fold cz-disc' }, [
@@ -207,7 +213,7 @@ export function mountCustomize(app, {
           ] }),
         ]),
       ]),
-      el('section', { id: 'cz-keepsake-group', class: 'cc-character-picker' }, options([], { id: 'cz-keepsakes', class: 'cz-keepsakes' })),
+
     ]),
   ]);
   const previewSide = el('div', { class: 'as-pane flush cc-preview-side' }, [
@@ -235,9 +241,15 @@ export function mountCustomize(app, {
 
   const stages = {
     class: el('section', { id: 'cz-class-panel', class: 'as-pane flush cz-stage' }, split),
-    character: el('section', { id: 'cz-character-panel', class: 'as-pane flush cz-stage' }, [
+    attributes: el('section', { id: 'cz-character-panel', class: 'as-pane flush cz-stage' }, [
       el('div', { class: 'as-splitbody cc-character-grid', dataset: { spriteSide: spriteSide } },
         spriteSide === 'left' ? [previewSide, statsSide] : [statsSide, previewSide]),
+    ]),
+    keepsake: el('section', { id: 'cz-keepsake-panel', class: 'as-pane flush cz-stage' }, keepsakeGroup),
+    feats: el('section', { id: 'cz-feats-panel', class: 'as-pane flush cz-stage' }, el('div', { id: 'cz-feat-browser-host' })),
+    spells: el('section', { id: 'cz-spells-panel', class: 'as-pane flush cz-stage' }, [
+      el('div', { id: 'cz-spells-heading' }),
+      el('div', { id: 'cz-starting-spells', class: 'cc-equip-group', dataset: { creationPart: 'starting-spells' } }),
     ]),
     equipment: el('section', { id: 'cz-equipment-panel', class: 'as-pane flush cz-stage' }, [
       el('div', { class: 'cc-equipment-header' }, [el('b', {}, 'Equipment'), el('select', { id: 'cz-equipment-section', 'aria-label': 'Equipment section' }), el('span', { id: 'cz-equipment-count' })]),
@@ -251,26 +263,31 @@ export function mountCustomize(app, {
       journeyRow, seedRow,
       slot == null ? null : row({ tag: 'div', setting: true, className: 'cc-destination-row', labelNode: labelStack({ label: t('creation.review.destination'), hint: t('creation.review.destination.hint') }), trail: el('span', { class: 'as-status cc-destination', text: t('creation.review.slot', { slot }) }) }),
       el('div', { id: 'cz-review-summary', class: 'as-stack cc-review' }),
+      el('p', { class: 'cc-review-feats', text: t('creation.feats.none') }),
+      el('div', { id: 'cz-review-edit', class: 'as-stack cc-review-edit' }),
     ]),
   };
   // The catalogue still lays every stage out in one column; the screen shows
   // one at a time inside the W1 pane below.
   const flow = el('div', { class: 'cz-flow cz-disc' }, catalog ? Object.values(stages) : []);
-  const categories = creationCategories();
-  for (const id of categories) {
+  const authoredCategories = creationCategories();
+  let categories = creationFlowCategories(registries, state.classId);
+  for (const id of authoredCategories) {
     if (!stages[id]) throw new Error(`creation behavior.categories names '${id}', which is not a stage this screen draws (${Object.keys(stages).join(', ')})`);
   }
   const railItems = creationRailItems({
-    categories, current: categories[0],
-    labels: Object.fromEntries(categories.map((id) => [id, t(`creation.category.${id}`)])),
-  }).flatMap((entry) => entry.id === 'character'
-    ? [{ ...entry, label: t('creation.primaryAttributes') }, { id: 'keepsake', label: t('creation.section.keepsake') }]
-    : [entry]).map((entry) => {
+    categories: authoredCategories, current: authoredCategories[0],
+    labels: Object.fromEntries(authoredCategories.map((id) => [id, t(`creation.category.${id}`)])),
+  }).map((entry) => {
     const item = railItem({ label: entry.label, member: entry.id, id: `cz-tab-${entry.id}`, className: 'cz-tab', attrs: { 'aria-controls': 'cz-pane' } });
     item.replaceChildren(el('span', { class: 'rail-label', text: entry.label }), el('span', { class: 'cz-tab-value as-status' }));
     return item;
   });
   const rail = el('div', { class: 'as-rail cz-rail', role: 'tablist', 'aria-label': t('creation.categories'), 'aria-orientation': 'vertical', dataset: { surface: 'creationCategory' } }, railItems);
+  for (const item of railItems) showNode(item, categories.includes(item.dataset.member));
+  const categoryNavItems = [...railItems];
+  let categoryNavigation = null;
+  const currentStepIndicator = el('p', { id: 'cz-current-step', class: 'cc-creation-current-step', 'aria-live': 'polite' });
   const paneHost = el('div', { id: 'cz-pane', class: 'as-pane flush cz-pane', role: 'tabpanel' });
   const railed = el('div', { class: 'as-railed cz-railed', dataset: { classPreview: creationClassPreview() } }, [rail, paneHost]);
 
@@ -388,6 +405,7 @@ export function mountCustomize(app, {
     || Object.values(stages).map((stage) => (stage.matches(selector) ? stage : stage.querySelector(selector))).find(Boolean)
     || null;
   const customizeScreen = $('.screen.customize');
+  decorateCreationWorkspace(customizeScreen);
   mountCreationInfoLayer(customizeScreen);
   // Every --creation-* the W1c CSS reads, from the model (uiConfig.screens.creation); kit.css names no number for this screen.
   for (const [property, value] of Object.entries(creationCssProperties())) customizeScreen.style.setProperty(property, value);
@@ -530,8 +548,16 @@ export function mountCustomize(app, {
   function statsStepProblem() { return modeProblem() || allocationProblem(); }
   function characterProblem() { return statsStepProblem() || keepsakeProblem(); }
   function abilitiesProblem() { return startingAbilityProblem(registries, previewRun(), state.startingAbilityIds, meta.settings || {}); }
-  function equipmentProblem() { return armourProblem() || handsProblem() || abilitiesProblem(); }
-  function flowProblem() { return classProblem() || characterProblem() || equipmentProblem(); }
+  function equipmentProblem() { return armourProblem() || handsProblem() || (startingAbilityPlan(registries, previewRun(), meta.settings || {})?.skillId === 'combatManeuvers' ? abilitiesProblem() : null); }
+  function spellsProblem() { return startingAbilityPlan(registries, previewRun(), meta.settings || {})?.skillId === 'item:magic-focus' ? abilitiesProblem() : null; }
+  function flowProblem() { return classProblem() || characterProblem() || equipmentProblem() || abilitiesProblem(); }
+  function refreshAbilitySelection() {
+    const plan = startingAbilityPlan(registries, previewRun(), meta.settings || {});
+    // A point-allocation draft is not committed: Cancel must retain the
+    // previously legal picks. Its close handler rechecks after apply/restore.
+    if (!pointBuy) state.startingAbilityIds = creationAbilitySelection(state.startingAbilityIds, plan);
+    return plan;
+  }
 
   function pointbuyMode() { return creationMode(registries, state.attributeMode || EDITABLE); }
   function remainingPoints() {
@@ -588,7 +614,34 @@ export function mountCustomize(app, {
       profileMeta: meta,
     });
   }
+  let featBrowser = null;
+  function renderFeats(run = previewRun()) {
+    const groups = creationFeatBrowserGroups(registries, run);
+    if (featBrowser) {
+      featBrowser.setGroups(groups);
+      return;
+    }
+    const requirement = row => row.requiredLevel == null
+      ? t('creation.feats.noOffers', { track: row.trackLabel })
+      : t(row.locked ? 'creation.feats.lockedRequirement' : 'creation.feats.availableRequirement', {
+        track: row.trackLabel, required: row.requiredLevel, current: row.currentLevel,
+      });
+    featBrowser = createCreationFeatBrowser({ groups, allowance: 0, labels: {
+      eyebrow: t('creation.feats.eyebrow'), title: t('creation.feats.title'),
+      description: t('creation.feats.description'), availability: t('creation.feats.availability'),
+      detailLabel: t('creation.feats.detailLabel'),
+      groups: Object.fromEntries(['character', 'class', 'skill'].map(id => [id, t(`creation.feats.group.${id}`)])),
+      locked: t('creation.feats.locked'), available: t('creation.feats.available'),
+      emptyGroup: t('creation.feats.emptyGroup'), lockedRequirement: requirement,
+      availableRequirement: row => row.unlockedByProfile ? t('creation.feats.profileUnlocked') : requirement(row),
+      profileUnlocked: t('creation.feats.profileUnlocked'),
+      profileUnlockedRequirement: () => t('creation.feats.profileUnlocked'),
+      unavailable: t('creation.feats.locked'), unavailableRequirement: requirement,
+    } });
+    $('#cz-feat-browser-host').replaceChildren(featBrowser);
+  }
   function renderCharacterPreview() {
+    refreshAbilitySelection();
     // The tint is the player's own choice, so the well's edge wears it.
     portrait.style.borderColor = tintCss(state.tint);
     portrait.style.boxShadow = `0 0 34px color-mix(in srgb, ${tintCss(state.tint)} 35%, transparent)`;
@@ -603,6 +656,7 @@ export function mountCustomize(app, {
     portrait.replaceChildren(sprite || state.glyph);
 
     const run = previewRun();
+    renderFeats(run);
     const projection = statProjection(registries, run);
     $('#cz-primary-stats').replaceChildren(...primaryStatCards(attributeCardModels(registries, run.attributes, {
       projection,
@@ -732,9 +786,8 @@ export function mountCustomize(app, {
 
   /** Stats settled: fold Primary Stats, unfold Keepsake, put the cursor there. */
   function advanceToKeepsake({ focus = true } = {}) {
-    characterFold.open('keepsake');
-    if (!catalog) selectRailItem('keepsake');
-    if (focus) seatFace('keepsake', $('#cz-keepsakes .cz-keepsake'));
+    if (!catalog) activate('keepsake');
+    if (focus) queueMicrotask(() => focusElement($('#cz-keepsakes .cz-keepsake')));
   }
 
   // THE POINT-BUY IS A DOOR. Opened by the one door-opener (through the shared
@@ -941,7 +994,7 @@ export function mountCustomize(app, {
       onChoose: () => {
         if (state.classChosen && state.classId === cls.id) return;
         state.classId = cls.id; state.classChosen = true; resetClassChoices();
-        renderClasses(); renderEquipment(); renderModes(); renderCharacterPreview(); refreshFaces(); updateStartRefusal();
+        renderClasses(); renderEquipment(); renderModes(); renderCharacterPreview(); refreshCreationNavigation(); refreshFaces(); updateStartRefusal();
         fitStage();
         // The selected choice is now an article hosting detail controls.
         // Keep keyboard focus on its replacement after the button is rebuilt.
@@ -982,10 +1035,68 @@ export function mountCustomize(app, {
     })));
   }
 
+  function renderStartingAbility(section, { stage, next = null } = {}) {
+    const box = options([], { id: stage === 'spells' ? 'cz-spell-choices' : 'cz-startingAbilities', class: 'cc-card-selectors cc-choice-collection', dataset: { view: state.equipmentChoiceView } });
+    const node = el('section', { class: 'cc-equip-group cc-starting-abilities', dataset: { abilityStep: stage, ...(stage === 'equipment' ? { equipmentSection: section.id } : {}) } }, box);
+    const progress = el('p', { class: 'cc-ability-progress', 'aria-live': 'polite' });
+    node.prepend(progress);
+    const refresh = () => {
+      progress.textContent = t('creation.abilities.progress', { chosen: state.startingAbilityIds.length, count: section.count, rank: section.rank });
+      for (const entry of box.children) {
+        const picked = state.startingAbilityIds.includes(entry.dataset.cardId);
+        entry.querySelector('.card').classList.toggle('selected', picked);
+        const choose = entry.querySelector('.cc-ability-choose');
+        choose.textContent = t(picked ? 'creation.abilities.remove' : 'creation.abilities.choose');
+        choose.setAttribute('aria-pressed', String(picked));
+        choose.disabled = !picked && section.count > 1 && state.startingAbilityIds.length >= section.count;
+      }
+    };
+    // Requirements can change while an earlier equipment fold is open.
+    state.startingAbilityIds = creationAbilitySelection(state.startingAbilityIds, section);
+    for (const card of section.choices) {
+      const face = renderCard(registries, startingAbilityRef(section, card.id));
+      const choose = button({ label: t('creation.abilities.choose'), weight: 'secondary', className: 'cc-ability-choose' });
+      choose.setAttribute('aria-label', t('creation.abilities.chooseLabel', { name: card.name }));
+      const select = () => {
+        const picked = state.startingAbilityIds.includes(card.id);
+        if (picked) state.startingAbilityIds = state.startingAbilityIds.filter(id => id !== card.id);
+        else if (section.count === 1) state.startingAbilityIds = [card.id];
+        else if (state.startingAbilityIds.length < section.count) state.startingAbilityIds.push(card.id);
+        refresh(); renderEquipmentSummary(); refreshFaces(); updateStartRefusal();
+      };
+      choose.addEventListener('click', select);
+      face.addEventListener('cardinspectionselect', () => { if (!state.startingAbilityIds.includes(card.id)) select(); });
+      box.append(el('div', { class: 'cc-ability-choice', dataset: { cardId: card.id } }, [face, choose]));
+    }
+    refresh();
+    if (stage === 'equipment') {
+      const continueButton = button({ label: t('common.continue'), weight: 'primary', className: 'cc-equipment-continue' });
+      equipmentGateRefreshers.push(refusesWhen(continueButton, abilitiesProblem));
+      continueButton.addEventListener('click', () => {
+        if (abilitiesProblem()) return;
+        if (next) openEquipmentSection(next.id); else advanceFrom(stage);
+      });
+      node.append(continueButton);
+    }
+
+    return node;
+  }
+
+  function renderSpells() {
+    spellGateRefreshers = [];
+    const plan = refreshAbilitySelection();
+    $('#cz-spells-heading').replaceChildren(creationPageHeading({ eyebrow: t('creation.spells.eyebrow'), title: t('creation.spells.title'), description: t('creation.spells.description', { rank: plan?.rank || 1 }) }));
+    const host = $('#cz-starting-spells');
+    host.replaceChildren(plan?.skillId === 'item:magic-focus'
+      ? renderStartingAbility(plan, { stage: 'spells' })
+      : flavour(t('creation.spells.unavailable')));
+    scheduleCardFits(host.querySelectorAll('.card'));
+  }
+
   function renderEquipment(preferredOpenId = null) {
     equipmentSectionViews = creationEquipmentSectionViews(registries, state.classId, { armourChoices: armourChoices(), meta });
-    const ability = startingAbilityPlan(registries, previewRun(), meta.settings || {});
-    if (ability) {
+    const ability = refreshAbilitySelection();
+    if (ability?.skillId === 'combatManeuvers') {
       const sections = [...equipmentSectionViews];
       const lastHand = sections.findLastIndex(section => section.kind === 'hand');
       sections.splice(lastHand + 1, 0, { ...ability, label: t(ability.skillId === 'combatManeuvers' ? 'creation.abilities.maneuvers' : 'creation.abilities.spells') });
@@ -1004,45 +1115,7 @@ export function mountCustomize(app, {
       const node = el('section', { class: 'cc-equip-group', dataset: { equipmentSection: section.id } }, box);
       equipmentNodes.set(section.id, node);
       if (section.kind === 'ability') {
-        const progress = el('p', { class: 'cc-ability-progress', 'aria-live': 'polite' });
-        node.prepend(progress);
-        const refresh = () => {
-          progress.textContent = t('creation.abilities.progress', { chosen: state.startingAbilityIds.length, count: section.count, rank: section.rank });
-          for (const entry of box.children) {
-            const picked = state.startingAbilityIds.includes(entry.dataset.cardId);
-            entry.querySelector('.card').classList.toggle('selected', picked);
-            const choose = entry.querySelector('.cc-ability-choose');
-            choose.textContent = t(picked ? 'creation.abilities.remove' : 'creation.abilities.choose');
-            choose.setAttribute('aria-pressed', String(picked));
-            choose.disabled = !picked && section.count > 1 && state.startingAbilityIds.length >= section.count;
-          }
-        };
-        // Requirements can change while an earlier equipment fold is open.
-        state.startingAbilityIds = state.startingAbilityIds.filter(id => section.choices.some(card => card.id === id));
-        for (const card of section.choices) {
-          const face = renderCard(registries, startingAbilityRef(section, card.id));
-          const choose = button({ label: t('creation.abilities.choose'), weight: 'secondary', className: 'cc-ability-choose' });
-          choose.setAttribute('aria-label', t('creation.abilities.chooseLabel', { name: card.name }));
-          const select = () => {
-            const picked = state.startingAbilityIds.includes(card.id);
-            if (picked) state.startingAbilityIds = state.startingAbilityIds.filter(id => id !== card.id);
-            else if (section.count === 1) state.startingAbilityIds = [card.id];
-            else if (state.startingAbilityIds.length < section.count) state.startingAbilityIds.push(card.id);
-            refresh(); renderEquipmentSummary(); refreshFaces(); updateStartRefusal();
-          };
-          choose.addEventListener('click', select);
-          face.addEventListener('cardinspectionselect', () => { if (!state.startingAbilityIds.includes(card.id)) select(); });
-          box.append(el('div', { class: 'cc-ability-choice', dataset: { cardId: card.id } }, [face, choose]));
-        }
-        refresh();
-        const next = equipmentSectionViews.find(row => row.id === section.nextId);
-        const continueButton = button({ label: t('common.continue'), weight: 'primary', className: 'cc-equipment-continue' });
-        equipmentGateRefreshers.push(refusesWhen(continueButton, abilitiesProblem));
-        continueButton.addEventListener('click', () => {
-          if (abilitiesProblem()) return;
-          if (next) openEquipmentSection(next.id); else advanceFrom('equipment');
-        });
-        node.append(continueButton);
+        equipmentNodes.set(section.id, renderStartingAbility(section, { stage: 'equipment', next: equipmentSectionViews.find(row => row.id === section.nextId) }));
         continue;
       }
       const detailPane = el('div', { class: 'cc-equipment-details card-inspection-details', 'aria-live': 'polite' });
@@ -1225,12 +1298,12 @@ export function mountCustomize(app, {
       };
       refreshers.push(refresh); refresh();
       const next = equipmentSectionViews.find(row => row.id === section.nextId);
-      const nextLabel = next ? next.label.toLowerCase().replace(/\b\w/g, letter => letter.toUpperCase()) : 'Seed';
+      const nextLabel = next ? next.label.toLowerCase().replace(/\b\w/g, letter => letter.toUpperCase()) : t('creation.category.feats');
       // Armour waits for a pick; a hand waits for a weapon the stats can
       // wield; the last section's button is plain — Begin is what goes green.
       const sectionProblem = () => !next ? equipmentProblem() : (section.kind === 'armour' ? armourProblem()
         : section.kind === 'hand' ? handProblem(section.slot) : null);
-      const continueButton = button({ label: `Continue to ${nextLabel}`, weight: next ? 'primary' : 'secondary', className: 'cc-equipment-continue' });
+      const continueButton = button({ label: t('creation.continueTo', { category: nextLabel }), weight: next ? 'primary' : 'secondary', className: 'cc-equipment-continue' });
       equipmentGateRefreshers.push(refusesWhen(continueButton, sectionProblem, `On to ${nextLabel.toLowerCase()}.`));
       continueButton.addEventListener('click', () => {
         if (sectionProblem()) return;
@@ -1382,6 +1455,7 @@ export function mountCustomize(app, {
     return card;
   }
   function fillSummary(host = summaryBody) {
+    refreshAbilitySelection();
     const run = previewRun();
     const projection = statProjection(registries, run);
     const surface = equipmentSurfaceReceipt(registries, run);
@@ -1494,9 +1568,6 @@ export function mountCustomize(app, {
     { key: 'primary', label: t('creation.section.primary'), node: $('#cz-primary-group'), value: () => (
       selectedRow(state.attributeMode, visibleModes)?.label || UNCHOSEN
     ) },
-    { key: 'keepsake', label: t('creation.section.keepsake'), node: $('#cz-keepsake-group'), value: () => (
-      selectedRow(state.keepsakeId, registries.characterCreation.keepsakes)?.name || UNCHOSEN
-    ) },
   ];
   const characterFold = mountDisclosure($('#cz-character-fold'), characterRows.map((row) => ({
     key: row.key, kind: 'pick', disclosure: 'face',
@@ -1504,9 +1575,9 @@ export function mountCustomize(app, {
     reveal: { node: row.node, sense: `Edit ${row.label.toLowerCase()}.` },
   })), { structure: 'details' });
   markUiComponent($('#cz-character-fold'), UI.characterDisclosure);
-  for (const key of ['primary', 'keepsake']) {
+  for (const key of ['primary']) {
     $('#cz-character-fold').querySelector(`[data-face="${key}"]`).addEventListener('click', () => {
-      if (!catalog) selectRailItem(key === 'keepsake' ? 'keepsake' : 'character');
+      if (!catalog) selectRailItem('attributes');
     });
   }
   refreshCharacterFaces = () => {
@@ -1535,17 +1606,20 @@ export function mountCustomize(app, {
     return registries.equipment.armaments.find((row) => row.id === id)?.name || 'Empty Hand';
   };
   resetClassChoices();
-  renderClasses(); renderModes(); renderAppearance(); renderEquipment(); renderCharacterPreview(); renderViewToggles(); refreshFaces();
+  renderClasses(); renderModes(); renderAppearance(); renderEquipment(); renderSpells(); renderCharacterPreview(); renderViewToggles(); refreshFaces();
 
   const panels = stages;
   const selectedName = (id, rows, fallback = '—') => (rows.find((row) => row.id === id) || {}).name || fallback;
   const sectionRows = [
     { key: 'class', label: t('creation.section.class'), node: panels.class, value: () => (state.classChosen ? registries.classes.get(state.classId).name : UNCHOSEN) },
-    { key: 'character', label: t('creation.section.character'), node: panels.character, value: () => state.name || 'Forsaken' },
+    { key: 'attributes', label: t('creation.section.attributes'), node: panels.attributes, value: () => state.name || 'Forsaken' },
     { key: 'equipment', label: t('creation.section.equipment'), node: panels.equipment, value: () => {
       const arms = registries.equipment.armaments;
       return `${selectedName(state.startingHands.leftHand, arms, 'Empty Hand')} / ${selectedName(state.startingHands.rightHand, arms, 'Empty Hand')}`;
     } },
+    { key: 'keepsake', label: t('creation.section.keepsake'), node: panels.keepsake, value: () => selectedRow(state.keepsakeId, registries.characterCreation.keepsakes)?.name || UNCHOSEN },
+    { key: 'feats', label: t('creation.section.feats'), node: panels.feats, value: () => t('creation.feats.none') },
+    { key: 'spells', label: t('creation.section.spells'), node: panels.spells, value: () => state.startingAbilityIds.map(id => registries.cards.get(id).name).join(' / ') || UNCHOSEN },
     { key: 'review', label: t('creation.section.review'), node: panels.review, value: () => seedInput.value.trim() || '—' },
   ];
   let fold = null;
@@ -1722,6 +1796,7 @@ export function mountCustomize(app, {
     ];
     for (const row of specimens) appendCatalogItem(row, 'Reusable component');
     flow.replaceChildren(fragment);
+    mountCreationPartSpecimens({ host: flow, registries });
   } else {
     // W1c: the rail names each category and what it holds; the pane shows one.
     refreshSectionFaces = () => {
@@ -1730,14 +1805,16 @@ export function mountCustomize(app, {
         item.querySelector('.cz-tab-value').textContent = ['class', 'equipment'].includes(item.dataset.member) && rowFor ? rowFor.value() : '';
       }
     };
-    const nav = categoryNav({
-      items: railItems, rail, ariaLabel: t('creation.categories'),
+    categoryNavigation = categoryNav({
+      items: categoryNavItems, rail, ariaLabel: t('creation.categories'),
       choose: (id) => activate(id),
-      face: (item) => [item.querySelector('.rail-label')?.textContent || item.firstChild?.textContent, item.querySelector('.cz-tab-value')?.textContent].filter(Boolean).join(' · '),
+      face: () => t('creation.nav.allSteps'),
+      label: () => t('creation.nav.allStepsLabel'),
       toggleClass: 'cz-cat-select', toggleId: 'cz-cat-select',
       onChange: ({ mode, open }) => { railed.dataset.creationNav = mode; railed.toggleAttribute('data-nav-open', open); },
     });
-    nav.attach(railed);
+    categoryNavigation.attach(railed);
+    railed.insertBefore(currentStepIndicator, categoryNavigation.toggle);
     // The model owns the authored column count at each pane width.
     const applyColumns = () => {
       const rootStyle = getComputedStyle(document.documentElement);
@@ -1752,24 +1829,34 @@ export function mountCustomize(app, {
   // THE WAY ON, per step: what it waits for, and what it opens inside the next
   // section so the player lands on the next question rather than a shut fold.
   const openInside = {
-    character: () => {
+    attributes: () => {
       characterFold.open('primary');
       seatFace('primary', statBox.querySelector('.cc-mode-select'));
       return null; // seatFace seats the cursor itself
     },
+    keepsake: () => $('#cz-keepsakes .cz-keepsake'),
+    spells: () => $('#cz-spell-choices .cc-ability-choose'),
     equipment: () => {
       openEquipmentSection(equipmentSectionViews[0]?.id);
-      return null; // openEquipmentSection seats the cursor itself
+      return app.querySelector(`[data-face="${equipmentSectionViews[0]?.id}"]`);
     },
   };
   // W1c: one persistent footer. Back leaves on the first category and steps
   // back otherwise; Next refuses with the current category's unmet step and
   // lands the cursor on the next question; Begin takes over on Review.
   const activeEquipmentProblem = () => { const section = equipmentSectionViews.find(row => row.id === equipmentFold?.openKey); return !section?.nextId ? equipmentProblem() : section?.kind === 'ability' ? abilitiesProblem() : section?.kind === 'armour' ? armourProblem() : section?.kind === 'hand' ? handProblem(section.slot) : null; };
-  const stageProblems = { class: classProblem, character: characterProblem, equipment: activeEquipmentProblem, review: () => null };
+  const stageProblems = { class: classProblem, attributes: statsStepProblem, keepsake: keepsakeProblem, equipment: activeEquipmentProblem, feats: () => null, spells: spellsProblem, review: () => null };
   let current = categories[0];
   const categoryLabel = (id) => t(`creation.category.${id}`);
+  refreshCreationNavigation = () => {
+    categories = creationFlowCategories(registries, state.classId);
+    for (const item of railItems) showNode(item, categories.includes(item.dataset.member));
+    categoryNavItems.splice(0, categoryNavItems.length, ...railItems.filter(item => categories.includes(item.dataset.member)));
+    if (!catalog) activate(categories.includes(current) ? current : 'feats');
+    categoryNavigation?.sync(); categoryNavigation?.plan();
+  };
   function selectRailItem(member) {
+    currentStepIndicator.textContent = t('creation.step.progress', { index: categories.indexOf(member) + 1, count: categories.length, category: categoryLabel(member) });
     paneHost.setAttribute('aria-labelledby', `cz-tab-${member}`);
     for (const item of railItems) {
       const on = item.dataset.member === member;
@@ -1779,21 +1866,35 @@ export function mountCustomize(app, {
     }
   }
   function activate(id) {
+    if (id === 'character') id = 'attributes';
     const member = id;
-    if (id === 'keepsake') id = 'character';
     if (catalog || !categories.includes(id)) return;
     current = id;
     paneHost.replaceChildren(stages[id]);
     paneHost.scrollTop = 0;
     selectRailItem(member);
-    if (id === 'character') characterFold.open(member === 'keepsake' ? 'keepsake' : 'primary');
+    if (id === 'attributes') characterFold.open('primary');
+    if (id === 'equipment' && !equipmentFold?.openKey) openEquipmentSection(equipmentSectionViews[0]?.id);
+    if (id === 'spells') renderSpells();
+    if (id === 'feats') renderFeats();
     const plan = creationFooterPlan({ categories, current: id });
     next.hidden = plan.primary !== 'next';
     start.hidden = plan.primary !== 'begin';
     railed.dataset.creationStage = id;
+    railed.dataset.creationStepIndex = String(categories.indexOf(id) + 1);
+    railed.dataset.creationStepCount = String(categories.length);
+    decorateCreationWorkspace(customizeScreen);
     classTools.hidden = id !== 'class';
     equipmentTools.hidden = id !== 'equipment';
-    if (id === 'review') fillSummary($('#cz-review-summary'));
+    if (id === 'review') {
+      fillSummary($('#cz-review-summary'));
+      $('#cz-review-edit').replaceChildren(...categories.filter(category => category !== 'review').map(category => {
+        const edit = button({ label: t('creation.review.edit', { category: categoryLabel(category) }), weight: 'secondary' });
+        edit.dataset.creationEdit = category;
+        edit.addEventListener('click', () => { activate(category); const target = openInside[category]?.() || paneHost.querySelector('button:not([disabled]), input, select'); if (target) queueMicrotask(() => focusElement(target)); });
+        return edit;
+      }));
+    }
     // Begin's refresh too: its visible reason follows it in and out of view.
     updateStartRefusal();
     fitStage();
@@ -1838,6 +1939,7 @@ export function mountCustomize(app, {
       if (current === 'equipment') { equipmentNodes.get(equipmentFold?.openKey)?.querySelector('.cc-equipment-continue')?.click(); return; }
       advanceFrom(current);
     });
+    refreshCreationNavigation();
     activate(categories[0]);
   }
   const primaryContinue = $('.cc-primary-continue');

@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "title": "Spell Card 2 Artwork",
+  "canvas": {
+    "width": 210,
+    "height": 296,
+    "background": "transparent"
+  },
+  "defaultState": "spells",
+  "states": [
+    {
+      "id": "spells",
+      "name": "Spells"
+    }
+  ],
+  "assets": {
+    "crystal-barrier": {
+      "src": "assets/crystal-barrier.png",
+      "width": 480,
+      "height": 720
+    }
+  },
+  "nodes": [
+    {
+      "id": "spell-card-2-art",
+      "name": "Spell Card 2 Art",
+      "type": "image",
+      "parent": "spell-card-2-artwork",
+      "x": 0,
+      "y": 0,
+      "width": 210,
+      "height": 296,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "asset": "crystal-barrier",
+      "fit": "cover"
+    },
+    {
+      "id": "spell-card-2-artwork",
+      "name": "Spell Card 2 Artwork",
+      "type": "group",
+      "parent": null,
+      "x": 0,
+      "y": 0,
+      "width": 210,
+      "height": 296,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "fill": "none"
+    }
+  ],
+  "metadata": {
+    "componentSource": "spell-card-2-artwork",
+    "sourceState": "spells",
+    "designOnly": true
+  }
+}
