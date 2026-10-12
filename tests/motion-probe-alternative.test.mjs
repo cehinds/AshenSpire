@@ -189,6 +189,9 @@ test('every same-door variant plant still changes the current real source', asyn
       `${plant.name}: bob defects exercise the real Classic appearance; Default canvas defects retain Default`);
   }
   assert.ok(corpus.extraCopy.includes('assets-display'), 'clean and planted copies must contain the same variant artwork');
+  const blankCanvas = corpus.plants.find(plant=>plant.name === 'the class canvas paints no character pixels');
+  assert.equal(blankCanvas.find, '    auraRenderer.draw(ctx,source,filterFor(pose,playing?.sequence.action || playing?.action),left,top,width,height,{materialize});ctx.restore();');
+  assert.equal(blankCanvas.replace, '    ctx.restore();', 'the plant removes character painting while preserving canvas state cleanup');
   for (const plant of corpus.plants) {
     for (const edit of plant.edits || [plant]) {
       const current = readFileSync(new URL(`../${edit.file}`, import.meta.url), 'utf8').replace(/\r\n/g, '\n');
