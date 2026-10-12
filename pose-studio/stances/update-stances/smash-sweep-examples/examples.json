@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "status": "Twenty revised sequences are ready for review. SM03 \u00b7 Twisting aerial slam is owner-selected and implemented; compiled gameplay validation is pending. Other Smash examples remain references. Sweep selection is pending.",
+  "status": "SM03 \u00b7 Twisting aerial slam is owner-selected and implemented; compiled gameplay validation is pending. SW09 \u00b7 Two-direction unwind is owner-selected for Sweep with a straight sword-arm correction in progress. Other examples remain references.",
   "reviewSlotMs": 350,
   "families": {
     "sweep": {
@@ -190,7 +190,9 @@
       "sourceGif": "sweep/iai-whirlwind-v2/Sweep09/preview.gif",
       "provenance": "sweep/iai-whirlwind-v2/Sweep09/provenance.json",
       "storyboard": "sweep/iai-whirlwind-v2/Sweep09/strip.png",
-      "caveat": null
+      "caveat": "The owner selected SW09 with a straight sword arm instead of the bent elbow and a clearer low iai hold. This current depiction is preserved review history; the corrected source and runtime integration are in preparation.",
+      "ownerSelectedRole": "Sweep",
+      "runtimeStatus": "Revision in progress \u00b7 straight sword arm requested"
     },
     {
       "id": "SW10",
@@ -377,6 +379,7 @@
     "smash": "smash/index.json"
   },
   "ownerSelections": {
-    "smash": "SM03"
+    "smash": "SM03",
+    "sweep": "SW09"
   }
 }
