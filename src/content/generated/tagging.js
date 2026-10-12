@@ -509,12 +509,6 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
-    "objectId": "executionWindow",
-    "tagId": "precision"
-  },
-  {
-    "family": "card",
-    "scope": "",
     "objectId": "perfectHeist",
     "tagId": "guile"
   },
@@ -649,12 +643,6 @@ export const tagging = [
     "scope": "",
     "objectId": "serratedBlade",
     "tagId": "blood"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "enterGorefire",
-    "tagId": "gorefire"
   },
   {
     "family": "card",
@@ -5209,12 +5197,6 @@ export const tagging = [
     "scope": "",
     "objectId": "envenomCard",
     "tagId": "theme:oath"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "executionWindow",
-    "tagId": "technique:precision"
   },
   {
     "family": "card",
@@ -11149,18 +11131,6 @@ export const tagging = [
     "scope": "",
     "objectId": "nockAndWait",
     "tagId": "ranged"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "nockAndWait",
-    "tagId": "precision"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "nockAndWait",
-    "tagId": "technique:precision"
   },
   {
     "family": "card",

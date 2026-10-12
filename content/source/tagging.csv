@@ -115,7 +115,6 @@ card,,toxicVolley,ranged
 card,,smokeBomb,guile
 card,,smokeBomb,ash
 card,,executionWindow,blade
-card,,executionWindow,precision
 card,,perfectHeist,guile
 card,,deathblow,blade
 card,,deathblow,precision
@@ -139,7 +138,6 @@ card,,guardCounter,flourish
 card,,ironResolve,guard
 card,,serratedBlade,blade
 card,,serratedBlade,blood
-card,,enterGorefire,gorefire
 card,,enterGorefire,oath
 card,,enterBulwark,guard
 card,,enterBulwark,oath
@@ -920,7 +918,6 @@ card,,deadlyTempoCard,technique:flourish
 card,,deadlyTempoCard,theme:oath
 card,,opportunistCard,theme:oath
 card,,envenomCard,theme:oath
-card,,executionWindow,technique:precision
 card,,deathblow,technique:precision
 card,,gorefireSlash,theme:blood
 card,,crimsonCleave,theme:blood
@@ -1955,8 +1952,6 @@ card,,arrowVolley,damage:piercing
 card,,arrowVolley,delivery:area
 card,,arrowVolley,classification.attack
 card,,nockAndWait,ranged
-card,,nockAndWait,precision
-card,,nockAndWait,technique:precision
 card,,nockAndWait,classification.skill
 card,,aimedShot,pierce
 card,,aimedShot,ranged
