@@ -185,73 +185,73 @@ SPEC.md was corrected in this PR, one section range per commit wave, following t
 ### Reward-card cost tuning and Actions wording (SPEC L800-808)
 
 - [ ] **stale** SPEC L801: "Resource costs remain explicit card data, paid together with Actions"
-  - Code: /home/user/AshenSpire/src/model/turnStamina.js:3-12 binds legacy `energy` as an accessor on `stamina` (and `energyMax` on `maxStamina`); /home/user/AshenSpire/src/engine/combat.js:1387 `p.energy -= cost` pays from that one pool, /home/user/AshenSpire/src/engine/combat.js:1392 only counts `staminaSpentThisTurn`; there is no second Actions pool
+  - Code: src/model/turnStamina.js:3-12 binds legacy `energy` as an accessor on `stamina` (and `energyMax` on `maxStamina`); src/engine/combat.js:1387 `p.energy -= cost` pays from that one pool, src/engine/combat.js:1392 only counts `staminaSpentThisTurn`; there is no second Actions pool
   - Fix: say card costs are paid from the single Stamina pool (`energy` is an alias), not "together with" a separate Actions pool.
 
 ### Recovery settings (SPEC L817-834)
 
 - [ ] **stale** SPEC L828-829: "Stamina recovers `mechanics.stamina.idleRecoveryPerTurn` after an idle turn"
-  - Code: /home/user/AshenSpire/src/engine/combat.js:113 `for (const pool of RECOVERY_POOLS.filter((id) => id !== 'stamina'))` excludes Stamina from idle recovery; /home/user/AshenSpire/src/engine/combat.js:73 comment "Stamina refills at turn start" and combat.js:503 refills it anyway; the stamina rows are hidden under `full` (/home/user/AshenSpire/src/model/recoveryRules.js:93, /home/user/AshenSpire/src/ui/screens/settings.js:310)
+  - Code: src/engine/combat.js:113 `for (const pool of RECOVERY_POOLS.filter((id) => id !== 'stamina'))` excludes Stamina from idle recovery; src/engine/combat.js:73 comment "Stamina refills at turn start" and combat.js:503 refills it anyway; the stamina rows are hidden under `full` (src/model/recoveryRules.js:93, src/ui/screens/settings.js:310)
   - Fix: say Stamina idle recovery is not applied because the turn-start refill supersedes it, or remove the filter at combat.js:113 and wire it.
 
 ### 4.1 Turn loop: numbered sequence (SPEC L886-894)
 
 - [ ] **stale** SPEC L889: "2. Player turn start: lose all block (unless modified), set energy to 3 (base), draw 5"
-  - Code: /home/user/AshenSpire/src/engine/combat.js:503 sets energy to `energyMax` (the Stamina row, base 3 plus Strength/Dexterity/Constitution/Wisdom/Intelligence/level terms, /home/user/AshenSpire/src/content/derivedStats.js:98), and /home/user/AshenSpire/src/engine/combat.js:509 draws `turnDrawCount` (Draw row, base 4 plus Intelligence, /home/user/AshenSpire/src/content/derivedStats.js:91), not a fixed 5
+  - Code: src/engine/combat.js:503 sets energy to `energyMax` (the Stamina row, base 3 plus Strength/Dexterity/Constitution/Wisdom/Intelligence/level terms, src/content/derivedStats.js:98), and src/engine/combat.js:509 draws `turnDrawCount` (Draw row, base 4 plus Intelligence, src/content/derivedStats.js:91), not a fixed 5
   - Fix: "set Stamina to its maximum (Stamina row) and draw the Draw / turn row".
 - [ ] **stale** SPEC L890: "excess drawn cards go to discard with a 'hand full' toast"
-  - Code: /home/user/AshenSpire/src/engine/actions.js:636 `if (ctx.handRules && hand >= handMax) return;` stops the draw without consuming the draw pile for every run with hand rules (the default); the discard branch at /home/user/AshenSpire/src/engine/actions.js:646-648 is reached only without hand rules (legacy)
+  - Code: src/engine/actions.js:636 `if (ctx.handRules && hand >= handMax) return;` stops the draw without consuming the draw pile for every run with hand rules (the default); the discard branch at src/engine/actions.js:646-648 is reached only without hand rules (legacy)
   - Fix: default runs stop drawing at Hand size; keep the discard wording for legacy fights only (the later paragraph at L858-860 already says this).
 - [ ] **stale** SPEC L891: "discard hand except `Retain` cards" as the turn-end rule
-  - Code: /home/user/AshenSpire/src/engine/combat.js:586 `returnUnplayedCards` hands unplayed cards to /home/user/AshenSpire/src/engine/handRules.js:6-10, which shuffles them into the draw pile when `shuffleHand` is set (default true, /home/user/AshenSpire/src/content/handRules.js:14)
+  - Code: src/engine/combat.js:586 `returnUnplayedCards` hands unplayed cards to src/engine/handRules.js:6-10, which shuffles them into the draw pile when `shuffleHand` is set (default true, src/content/handRules.js:14)
   - Fix: label the discard wording as the legacy baseline and state that the default shuffles unplayed cards into the draw pile (L852-854).
 
 ### 4.2 Damage math (SPEC L896-926)
 
 - [ ] **stale** SPEC L900-907 (the contractual order block: base, + Strength, × Weak, × Vulnerable, × Staggered, floor)
-  - Code: /home/user/AshenSpire/src/engine/actions.js:65 applies the card rating bonus before anything else; actions.js:73-75 adds `damageBySchoolAdd` before Strength; actions.js:77-79 is Strength, Weak, Vulnerable; actions.js:80 multiplies by the Poise/Ward resistance (`ratingDamageMultiplier`); actions.js:89-99 tag-scoped vulnerability; actions.js:101-108 school resistance and school vulnerability; actions.js:111 floor; the tactical matchup multipliers run after the floor (§4.7)
+  - Code: src/engine/actions.js:65 applies the card rating bonus before anything else; actions.js:73-75 adds `damageBySchoolAdd` before Strength; actions.js:77-79 is Strength, Weak, Vulnerable; actions.js:80 multiplies by the Poise/Ward resistance (`ratingDamageMultiplier`); actions.js:89-99 tag-scoped vulnerability; actions.js:101-108 school resistance and school vulnerability; actions.js:111 floor; the tactical matchup multipliers run after the floor (§4.7)
   - Fix: add those steps in order to the block, or state that the block is abbreviated and name actions.js:64-111 as the authority.
 - [ ] **stale** SPEC L905: "dmg = dmg * (defender is Staggered ? 1.5 : 1)"
-  - Code: the ×1.5 lives only in the `staggered` status row, /home/user/AshenSpire/src/content/statuses.js:314, and that row is applied only by the legacy poise path (/home/user/AshenSpire/src/content/balance.js:355 `onFill`, /home/user/AshenSpire/src/engine/actions.js:604-606). Under the default ratings-on configuration (/home/user/AshenSpire/src/model/combatRatings.js:12 `enabled: true`; /home/user/AshenSpire/src/model/advancedConfig.js:1179 disables it only with `legacyRatings`), a break goes through /home/user/AshenSpire/src/engine/combatRatings.js:64-68, which sets `skipNextTurn` and the intent and applies no status, so the ×1.5 never happens
+  - Code: the ×1.5 lives only in the `staggered` status row, src/content/statuses.js:314, and that row is applied only by the legacy poise path (src/content/balance.js:355 `onFill`, src/engine/actions.js:604-606). Under the default ratings-on configuration (src/model/combatRatings.js:12 `enabled: true`; src/model/advancedConfig.js:1179 disables it only with `legacyRatings`), a break goes through src/engine/combatRatings.js:64-68, which sets `skipNextTurn` and the intent and applies no status, so the ×1.5 never happens
   - Fix: say the Staggered ×1.5 applies only under legacy ratings, or wire `staggered` into the ratings break path.
 - [ ] **stale** SPEC L926: "Card preview numbers ... computed by the same engine function (`previewDamage(card, source, target)`)"
-  - Code: no function named `previewDamage` exists; the preview is /home/user/AshenSpire/src/engine/combat.js:1552 `previewCard(combat, cardInstanceId, targetId, upcastRanks)` and /home/user/AshenSpire/src/engine/combatDamagePreview.js:22 `previewDamageHits`, both of which call `computeAttackDamage` (combatDamagePreview.js:29, actions.js:64)
+  - Code: no function named `previewDamage` exists; the preview is src/engine/combat.js:1552 `previewCard(combat, cardInstanceId, targetId, upcastRanks)` and src/engine/combatDamagePreview.js:22 `previewDamageHits`, both of which call `computeAttackDamage` (combatDamagePreview.js:29, actions.js:64)
   - Fix: rename to `previewCard` / `computeAttackDamage` in the spec.
 
 ### Status effects (SPEC L936-984)
 
 - [ ] **stale** SPEC L983: "Every enemy has `poiseMax` (8–40 by enemy)"
-  - Code: literal `poiseMax` values run from 4 (/home/user/AshenSpire/src/content/enemies/act1.js:82) to 36 (/home/user/AshenSpire/src/content/enemies/act3.js:140)
-  - Fix: state the range as 4–36, or drop the number and point to the enemy rows.
+  - Code: `poiseMax` values run from 4 (`src/content/enemies/act1.js:82`) to 40 (Furnace Saint, `src/content/enemies/act3.js:280`)
+  - Fix: state the range as 4–40, or drop the number and point to the enemy rows.
 - [ ] **stale** SPEC L983: "When full: enemy becomes Staggered ... takes +50% attack damage until the end of the player's next turn, then meter empties and poiseMax ×1.25 (rounded up)"
-  - Code: default ratings-on break at /home/user/AshenSpire/src/engine/combatRatings.js:61-68 keeps only the overflow (`meter.value -= meter.max` at combatRatings.js:61), grows the threshold by `thresholdGrowth` 1.25 with `Math.ceil` (combatRatings.js:~70, default at /home/user/AshenSpire/src/model/combatRatings.js:21), and sets skip plus intent; no +50% status is applied. The legacy path (/home/user/AshenSpire/src/engine/actions.js:602 `value -= max`, loop) also keeps overflow rather than emptying it
+  - Code: default ratings-on break at src/engine/combatRatings.js:61-68 keeps only the overflow (`meter.value -= meter.max` at combatRatings.js:61), grows the threshold by `thresholdGrowth` 1.25 with `Math.ceil` (combatRatings.js:~70, default at src/model/combatRatings.js:21), and sets skip plus intent; no +50% status is applied. The legacy path (src/engine/actions.js:602 `value -= max`, loop) also keeps overflow rather than emptying it
   - Fix: say the break skips the next turn and grows the threshold; +50% applies only under legacy ratings; the meter keeps overflow.
 - [ ] **stale** SPEC L983: "The player has one too ... a fill applies `balance.stagger.player`'s statuses (2 Vulnerable, 2 Weak) and opens the next turn one action short"
-  - Code: default ratings-on player break at /home/user/AshenSpire/src/engine/combatRatings.js:64 adds only `pendingActionLoss`; no statuses. The balance note at /home/user/AshenSpire/src/content/balance.js:376-380 says the same ("with ratings on, a break costs actions and applies no status")
+  - Code: default ratings-on player break at src/engine/combatRatings.js:64 adds only `pendingActionLoss`; no statuses. The balance note at src/content/balance.js:376-380 says the same ("with ratings on, a break costs actions and applies no status")
   - Fix: state that the 2 Vulnerable / 2 Weak apply only under legacy ratings.
 
 ### Stances (SPEC L987-993)
 
 - [ ] **stale** SPEC L987: "4.5 Stances (Vagabond mechanic)"
-  - Code: /home/user/AshenSpire/src/content/stances.js:11, 28, 46 use `class: 'reaver'`; the rename is recorded at /home/user/AshenSpire/docs/IP-SCRUB.md:56 ("Vagabond → Reaver")
+  - Code: src/content/stances.js:11, 28, 46 use `class: 'reaver'`; the rename is recorded at docs/IP-SCRUB.md:56 ("Vagabond → Reaver")
   - Fix: "(Reaver mechanic)".
 - [ ] **stale** SPEC L991: "**Bloodflame Stance:**"
-  - Code: /home/user/AshenSpire/src/content/stances.js:10-11 `id: 'gorefire'`, `name: 'Gorefire Stance'`; rename recorded at /home/user/AshenSpire/docs/IP-SCRUB.md:45 ("Bloodflame → Gorefire")
+  - Code: src/content/stances.js:10-11 `id: 'gorefire'`, `name: 'Gorefire Stance'`; rename recorded at docs/IP-SCRUB.md:45 ("Bloodflame → Gorefire")
   - Fix: rename to Gorefire Stance in §4.5 (the mechanic matches).
 - [ ] **stale** SPEC L987-993 (two stances listed)
-  - Code: a third stance, Brace, at /home/user/AshenSpire/src/content/stances.js:41-55 (gain 4 Block on enter, Damage taken ×0.75, +1 Strength on exit) is not in the spec
+  - Code: a third stance, Brace, at src/content/stances.js:41-55 (gain 4 Block on enter, Damage taken ×0.75, +1 Strength on exit) is not in the spec
   - Fix: add a Brace row.
 
 ### Tagged combat cards and readable stances (SPEC L1020-1083)
 
 - [ ] **stale** SPEC L1024: "**Contract status: planned.** This section must land in its own specification PR before the implementation PR"
-  - Code: the rules are implemented: /home/user/AshenSpire/src/content/combatMatchups.js:19-55 (counter, smash, attack, riders), /home/user/AshenSpire/src/engine/combatMatchups.js:166 (retaliation), /home/user/AshenSpire/src/engine/combatReactions.js:1-24
+  - Code: the rules are implemented: src/content/combatMatchups.js:19-55 (counter, smash, attack, riders), src/engine/combatMatchups.js:166 (retaliation), src/engine/combatReactions.js:1-24
   - Fix: replace the status line with "implemented; version-1 table, see §4.8 for version 2".
 - [ ] **stale** SPEC L1076: "Always show a stance: Attacking, Defending, Countering, Sweeping, Ranged, Smashing, Casting, Preparing or Staggered"
-  - Code: /home/user/AshenSpire/src/model/enemyIntentKnowledge.js:12-24 emits Attack, Defend, Counter, Smash, Sweep, Ranged, Casting, Spell, Preparing, Staggered; the list lacks `Spell` and uses different words
+  - Code: src/model/enemyIntentKnowledge.js:12-24 emits Attack, Defend, Counter, Smash, Sweep, Ranged, Casting, Spell, Preparing, Staggered; the list lacks `Spell` and uses different words
   - Fix: align the list to the code labels and add Spell.
 - [ ] **stale** SPEC L1061-1071 (damage rider table)
-  - Code: /home/user/AshenSpire/src/content/combatMatchups.js:54 has a Poison rider (`poison: { status: 'venom', stacks: 1, requiresHpLoss: true }`) that the table does not list
+  - Code: src/content/combatMatchups.js:54 has a Poison rider (`poison: { status: 'venom', stacks: 1, requiresHpLoss: true }`) that the table does not list
   - Fix: add a Poison → Venom row.
 
 ### 5.1 Classes, creation presets, and levels (SPEC L1155-1241)
@@ -619,7 +619,7 @@ SPEC.md was corrected in this PR, one section range per commit wave, following t
 ### Pools between fights (SPEC L809-816)
 
 - [ ] **unclear** SPEC L810-813: "Every fight opens with Stamina at its maximum ... `\"carry\"` keeps the old rule (Stamina where the last fight left it)"
-  - Code: /home/user/AshenSpire/src/engine/runCombat.js:52 reads `staminaAtCombatStart` (carry honoured here), but /home/user/AshenSpire/src/engine/combat.js:416 starts turn 1 through `startPlayerTurn`, which at /home/user/AshenSpire/src/engine/combat.js:503-504 sets `p.energy = energyMax` and `equipmentPoolDeficits.stamina = 0` on every turn including turn 1; so under `carry` the carried value is overwritten before anything reads it. The measured carry-vs-full win counts in /home/user/AshenSpire/src/framework/data/mechanics.js:16 therefore cannot come from this path (not run here)
+  - Code: src/engine/runCombat.js:52 reads `staminaAtCombatStart` (carry honoured here), but src/engine/combat.js:416 starts turn 1 through `startPlayerTurn`, which at src/engine/combat.js:503-504 sets `p.energy = energyMax` and `equipmentPoolDeficits.stamina = 0` on every turn including turn 1; so under `carry` the carried value is overwritten before anything reads it. The measured carry-vs-full win counts in src/framework/data/mechanics.js:16 therefore cannot come from this path (not run here)
   - Fix: owner or orchestrator to decide whether `carry` should affect turn 1 (then startPlayerTurn must not overwrite it) or whether the rule is inert and the note should say so.
 
 ### §11 Non-goals (L2038-2043)
@@ -714,24 +714,24 @@ SPEC.md was corrected in this PR, one section range per commit wave, following t
 
 ### 4.1 Turn loop: hand rules (SPEC L835-884)
 
-- Evidence: /home/user/AshenSpire/src/content/derivedStats.js:82-92 (opening and draw base 4, +0.2 per Intelligence over baseline 4, max 10; hand size base 7, max 20); /home/user/AshenSpire/src/model/handRules.js:192-198 (`value = min(room, wanted)`, room = capacity − hand size, retained cards count against capacity); /home/user/AshenSpire/src/engine/handRules.js:20-35 (shuffleHand join rule when the draw pile is shorter than the next draw); /home/user/AshenSpire/src/content/handRules.js:12-21 (defaults, discardLimit 10, overflow discard, drawMode fixed).
+- Evidence: src/content/derivedStats.js:82-92 (opening and draw base 4, +0.2 per Intelligence over baseline 4, max 10; hand size base 7, max 20); src/model/handRules.js:192-198 (`value = min(room, wanted)`, room = capacity − hand size, retained cards count against capacity); src/engine/handRules.js:20-35 (shuffleHand join rule when the draw pile is shorter than the next draw); src/content/handRules.js:12-21 (defaults, discardLimit 10, overflow discard, drawMode fixed).
 
 ### Card rules (SPEC L928-934)
 
-- Evidence: Power leaves play, /home/user/AshenSpire/src/framework/lifecycle.js:21 `REMOVED_FROM_PLAY`; engine honours it at /home/user/AshenSpire/src/engine/combat.js:1466; Innate to top, /home/user/AshenSpire/src/engine/combat.js:389-395; empty draw pile reshuffles discard on stream `shuffle`, /home/user/AshenSpire/src/engine/actions.js:637-643; Smithing rewards elite 1 and boss 1, normal and treasure 0, /home/user/AshenSpire/src/content/balance.js:690-694; tier-1 cost 1 stone, /home/user/AshenSpire/content/source/itemUpgradeChanges.csv:7 and 12; tier cap 1 (110 armament tier-1 rows, 0 tier-2 rows).
+- Evidence: Power leaves play, src/framework/lifecycle.js:21 `REMOVED_FROM_PLAY`; engine honours it at src/engine/combat.js:1466; Innate to top, src/engine/combat.js:389-395; empty draw pile reshuffles discard on stream `shuffle`, src/engine/actions.js:637-643; Smithing rewards elite 1 and boss 1, normal and treasure 0, src/content/balance.js:690-694; tier-1 cost 1 stone, content/source/itemUpgradeChanges.csv:7 and 12; tier cap 1 (110 armament tier-1 rows, 0 tier-2 rows).
 
 ### Enemy intents (SPEC L996-1018)
 
-- Evidence: intent kinds from authored moves (`attack`, `block`, `buff`, `debuff`, /home/user/AshenSpire/src/content/enemies/act1.js:30-66) and engine `unknown` and `staggered` (/home/user/AshenSpire/src/engine/combat.js:765, 776); `maxConsecutive` gate at /home/user/AshenSpire/src/engine/combat.js:800-807; scripted opener `firstMove` at combat.js:770; HP-threshold phases at /home/user/AshenSpire/src/engine/triggers.js:114, 198.
+- Evidence: intent kinds from authored moves (`attack`, `block`, `buff`, `debuff`, src/content/enemies/act1.js:30-66) and engine `unknown` and `staggered` (src/engine/combat.js:765, 776); `maxConsecutive` gate at src/engine/combat.js:800-807; scripted opener `firstMove` at combat.js:770; HP-threshold phases at src/engine/triggers.js:114, 198.
 - UNVERIFIED: "revealed Attack values show exact total damage (n×m) including modifiers" (not traced).
 
 ### Martial and Spell expansion v2 (SPEC L1085-1107)
 
-- Evidence: new runs default to version 2, /home/user/AshenSpire/src/model/state.js:138; paid Powers get the `exhaust` keyword, /home/user/AshenSpire/src/content/combatExpansionCards.js:76-79; Exhaust destination honoured at /home/user/AshenSpire/src/engine/combat.js:1457-1462.
+- Evidence: new runs default to version 2, src/model/state.js:138; paid Powers get the `exhaust` keyword, src/content/combatExpansionCards.js:76-79; Exhaust destination honoured at src/engine/combat.js:1457-1462.
 
 ### Enemy knowledge, Perception and hidden-intent clues (SPEC L1109-1120)
 
-- Evidence: base exact chance 0.30 with Wisdom, Intelligence, level and Perception terms, /home/user/AshenSpire/src/content/enemyKnowledge.js:6-7; three outcomes exact / clue / unknown, /home/user/AshenSpire/src/model/enemyIntentKnowledge.js:33-35; five bestiary stages, /home/user/AshenSpire/src/model/enemyKnowledgeProfile.js:15-17; contract version 1 default, /home/user/AshenSpire/src/model/state.js:139.
+- Evidence: base exact chance 0.30 with Wisdom, Intelligence, level and Perception terms, src/content/enemyKnowledge.js:6-7; three outcomes exact / clue / unknown, src/model/enemyIntentKnowledge.js:33-35; five bestiary stages, src/model/enemyKnowledgeProfile.js:15-17; contract version 1 default, src/model/state.js:139.
 
 ### 5.5.1 The grace refill (SPEC L1336-1360)
 
