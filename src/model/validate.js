@@ -2740,8 +2740,8 @@ export function validatePredicate(pred, path, vctx) {
 }
 
 const FORMULA_FIELDS = {
-  add: ['args'],
-  mul: ['args'],
+  add: ['args', 'min', 'max'], // evaluateRaw clamps any node; a graded sum (Reclamation) caps the total
+  mul: ['args', 'min', 'max'],
   percentMaxHp: ['of', 'pct', 'min', 'max'],
   missingHp: ['of', 'min', 'max'],
   missingMana: ['of', 'min', 'max'],

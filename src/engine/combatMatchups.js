@@ -202,7 +202,9 @@ export function matchupRiderEffects(ctx, source, target, carrier, { amount = 0, 
   if (target.alive && rider.wardDrain) stripCombatWard(ctx, source, target, rider.wardDrain);
   if (target.alive && rider.status && !carrier.appliedStatuses?.includes(rider.status) && ctx.registries?.statuses?.has(rider.status)) {
     if (combatExpansionEnabled(ctx)) {
-      if (!carrier.appliedBuildupStatuses?.includes(rider.status)) effects.push({ op: 'buildup', status: rider.status,
+      // A printed Crimson Blight replaces the automatic Necrotic Blight, as the card rider does.
+      const printed = carrier.appliedBuildupStatuses || [];
+      if (!printed.includes(rider.status) && !(rider.status === 'necroticBlight' && printed.includes('crimsonBlight'))) effects.push({ op: 'buildup', status: rider.status,
         amount: rider.pressure, camp: profile.camp, recoveryProfile: rider.recoveryProfile });
     } else effects.push({ op: 'applyStatus', status: rider.status, stacks: rider.stacks });
   }
