@@ -65,3 +65,8 @@ test('a desktop camera puts the landmark horizon a set share of the way down the
   assert.ok(Math.abs(horizonOnField - .2 * height) < 1e-9, `horizon at ${horizonOnField / height} of the field`);
   assert.equal(horizonCameraGround({ layers: [], height: 1024, width: 1536, groundAnchor: .82 }, { height, scale, share: .2 }), undefined);
 });
+
+test('the stage frames the desktop camera on the horizon share and nothing else', () => {
+  const stage = readFileSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url), 'utf8');
+  assert.match(stage, /horizonShare: document\.documentElement\.dataset\.formFactor === 'desktop' \? DESKTOP_HORIZON_SHARE : undefined/);
+});

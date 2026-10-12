@@ -76,6 +76,9 @@ export const SHORT_PHONE_ENEMY_LIFT = .05;
 export const SPACIOUS_ROW_CENTRE = .66;
 export const SPACIOUS_ROW_MAX_X = .8;
 const SPACIOUS_SPREAD = 1.3;
+// Desktop backdrop camera: the landmark horizon sits this share of the field
+// down from its top edge (the phone's sits near 13%). TODO(config).
+export const DESKTOP_HORIZON_SHARE = .2;
 // Room the intent and HP plates need under the turn ribbon, above each figure.
 export const SPACIOUS_RIBBON_RESERVE = 30;
 
