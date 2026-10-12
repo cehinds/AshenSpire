@@ -1004,7 +1004,7 @@ node -e "import('./src/content/statuses.js').then(m=>m.statuses.filter(s=>s.proc
 | **Burn** *(`burn`)* | The third damage-over-time row, applied by `burn`-tagged effects and by equipment mods (`equipMods.csv`). |
 | ~~Frostbite~~ | **CUT — describes nothing.** No `frostbite` status ships; the frost identity is carried by the **Frost** threshold-proc row above and its `frostExposed` exposure. Falsify: `node -e "import('./src/content/statuses.js').then(m=>console.log(m.statuses.some(s=>s.id==='frostbite')))"` → `false`. |
 | **Madness** | On player (from enemies/curses): at turn start, lose 2 HP per stack but gain 1 Stamina per stack, then Madness clears. Risk/reward, mostly enemy-inflicted. |
-| **Poise / Stagger** | Every enemy has an authored `poiseMax` (4–36 by enemy). Physical impact fills the Poise meter (shown under HP). When full: the enemy becomes **Staggered** — its next turn is skipped (intent replaced by "Staggered"), the meter keeps any overflow, and its threshold grows ×1.25 (rounded up). A direct Stagger (Insanity's proc) uses the same break path but neither consumes nor grows the meter. With combat ratings enabled, a break is the skipped turn alone; under the legacy meter rules it also applies the `staggered` status (+50% attack damage taken until the end of the *player's* next turn). Poise does not decay by default. **The player has one too** (§13.4k): its max is the one `poise` stat row (§3.5, §13.4l) + body armour + relics, impact fills it, and a fill opens the next turn one Stamina short. Under the legacy meter rules a fill also applies `balance.stagger.player`'s statuses (2 Vulnerable, 2 Weak). |
+| **Poise / Stagger** | Every enemy has an authored `poiseMax` (4–40 by enemy). Physical impact fills the Poise meter (shown under HP). When full: the enemy becomes **Staggered** — its next turn is skipped (intent replaced by "Staggered"), the meter keeps any overflow, and its threshold grows ×1.25 (rounded up). A direct Stagger (Insanity's proc) uses the same break path but neither consumes nor grows the meter. With combat ratings enabled, a break is the skipped turn alone; under the legacy meter rules it also applies the `staggered` status (+50% attack damage taken until the end of the *player's* next turn). Poise does not decay by default. **The player has one too** (§13.4k): its max is the one `poise` stat row (§3.5, §13.4l) + body armour + relics, impact fills it, and a fill opens the next turn one Stamina short. Under the legacy meter rules a fill also applies `balance.stagger.player`'s statuses (2 Vulnerable, 2 Weak). |
 
 All of the above — including the whole Elden Ring layer — are data objects in `content/statuses.js` over the generic status model (§3.7); none has engine-side special cases.
 
@@ -1352,21 +1352,21 @@ Rarity: S = starter, C = common, U = uncommon, R = rare. Cost in Stamina (engine
 | Strike | S | 1 | Attack | Deal 6. | Deal 9 |
 | Defend | S | 1 | Skill | Gain 5 Block. | Gain 8 |
 | Gorefire Slash | S | 1 + 1 Mana | Attack | Deal 5. Apply 3 Bleed. | 5 dmg, 5 Bleed |
-| Crimson Cleave | C | 2 | Attack | Deal 8 to ALL enemies. Apply 2 Bleed to ALL. | 11 dmg |
-| Shield Bash | C | 1 | Attack | Deal 5. 4 Poise damage. | 8 dmg, 5 Poise |
-| Quickstep | C | 1 | Skill | Gain 6 Block. Draw 1. | 8 Block |
-| Guard Counter | C | 1 | Attack | Prepare Melee Counter with 4 reply damage. If you have Block: prepare 10 instead. | 6 / 14 |
+| Crimson Cleave | C | 2 | Attack | Deal 5 to the selected enemy. | none; rank-up (§13.4o) |
+| Shield Bash | C | 1 | Attack | Deal 3 to the selected enemy. | none; rank-up (§13.4o) |
+| Quickstep | C | 1 | Skill | Gain 4 Block. | none; rank-up (§13.4o) |
+| Guard Counter | C | 1 | Attack | Prepare Melee Counter. Prepare 3 base reply damage. | none; rank-up (§13.4o) |
 | Iron Resolve | C | 1 | Skill | Gain 5 Block. If in Bulwark Stance: gain 9 instead. | 7 / 12 |
 | Serrated Blade | C | 1 | Attack | Deal 7. If target has any Bleed: apply 3 Bleed. | 9 dmg, 4 Bleed |
 | Enter: Gorefire | C | 1 | Skill | Enter Gorefire Stance. Draw 1. | cost 0 |
-| Enter: Bulwark | C | 1 | Skill | Enter Bulwark Stance. Gain 3 Block. | +6 Block total |
-| Stomp | U | 2 | Attack | Deal 12. 8 Poise damage. | 16 dmg, 10 Poise |
+| Enter: Bulwark | C | 1 | Skill | Enter Bulwark Stance. | Gain 3 extra Block |
+| Stomp | U | 1 + 1 Mana | Attack | Deal 9 to the selected enemy. | none; rank-up (§13.4o) |
 | Rallying Standard | U | 1 | Power | At the start of your turn, gain 1 Strength. Take 1 damage. | no self-damage |
 | War Surgeon | U | 1 | Skill | Exhaust. Heal 2 HP for every 4 Bleed on all enemies. | every 3 |
 | Hemorrhage | U | 1 | Skill | Double the target's Bleed. Exhaust. | don't Exhaust |
 | Twinblade Flurry | U | 1 | Attack | Deal 3×3. Gorefire applies per hit. | 4×3 |
 | Shieldwall | U | 2 | Skill | Gain 12 Block. If in Bulwark: gain 4 Block next turn. | 16 Block |
-| Kick Off | U | 0 | Attack | Deal 4. 3 Poise damage. Exhaust. | 7 dmg, don't Exhaust |
+| Kick Off | U | 1 + 1 Mana | Attack | Deal 3 to the selected enemy. Exhaust. | none; rank-up (§13.4o) |
 | Executioner | R | 2 | Attack | Deal 10. If target is Staggered: deal 25 instead. | 14 / 32 |
 | Goreblood | R | 3 | Power | Poise thresholds no longer increase after filling. | cost 2 |
 | Unbreakable | R | 2 | Power | Block no longer expires at the start of your turn. (Cap 30.) | cap 40 |
