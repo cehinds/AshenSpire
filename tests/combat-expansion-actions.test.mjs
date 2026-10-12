@@ -12,7 +12,8 @@ const drainQueue = combat => { while (combat.queue.length) executeAction(combat,
 
 function fixture(effects = [{ op: 'damage', target: 'enemy', amount: 5, hits: 2 }]) {
   const registries = createRegistries({ ...contentBundle, cards: contentBundle.cards.map(card => card.id === 'starstonePebble'
-    ? { ...card, effects, cost: 0, manaCost: 0, upgrade: undefined } : card) });
+    // costRule 'fixed': the fixture pins its own free 5-damage card (SPEC action costs, 2026-10-12).
+    ? { ...card, effects, cost: 0, costRule: 'fixed', manaCost: 0, upgrade: undefined } : card) });
   const combat = createCombat({ registries, rng: createRng(801), combatExpansionVersion: 2,
     enemyIds: ['wanderingSoldier'], player: { classId: 'starseer', maxHp: 100, hp: 100,
       maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1,

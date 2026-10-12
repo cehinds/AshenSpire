@@ -21,7 +21,8 @@ const ref = { instanceId: 'paid-tier-instance', cardId: id };
 const tiers = { baseTier: 2, unlockedTiers: [3, 5], maximumTier: 5, blockPerRank: 1 };
 function registry({ cost = 1, manaCost = 1, upcast = tiers } = {}) {
   return createRegistries({ ...contentBundle, cards: [...contentBundle.cards, {
-    id, name: 'Paid Tier Fixture', type: 'skill', kindIds: ['classification.skill'], cost, manaCost,
+    // costRule 'fixed': this fixture prices its own cost (SPEC action costs, 2026-10-12); the stance table does not apply.
+    id, name: 'Paid Tier Fixture', type: 'skill', kindIds: ['classification.skill'], cost, manaCost, costRule: 'fixed',
     tags: ['camp:physical', 'maneuver:defend', 'reach:contact', 'targeting:single'],
     effects: [{ op: 'block', target: 'self', amount: 2 }], textTemplate: 'Gain {block} Block.',
     ...(upcast ? { upcast } : {}),
@@ -157,7 +158,7 @@ for (const version of [1, 2]) test(`version ${version} fixed and X card prices p
   assert.equal(variable.combat.player.energy, 0);
 });
 
-for (const coop of [false, true]) test(`${coop ? 'co-op' : 'solo'} authored Shield Bash tier 2 badge is three SP, matching payment`, () => {
+for (const coop of [false, true]) test(`${coop ? 'co-op' : 'solo'} authored Shield Bash tier 2 badge is four SP, matching payment`, () => {
   const registries = createRegistries(contentBundle);
   const shield = { instanceId: 'shield-price-probe', cardId: 'shieldBash' };
   const input = { id: 'a', classId: 'reaver', combatExpansionVersion: 2, hp: 80, maxHp: 80,
@@ -169,14 +170,15 @@ for (const coop of [false, true]) test(`${coop ? 'co-op' : 'solo'} authored Shie
   const owner = coop ? combat.players.get('a').entity : combat.player;
   const receipt = coop ? previewCoopCard(combat, 'a', shield.instanceId, 'a', 2)
     : previewCard(combat, shield.instanceId, 'player', 2);
-  assert.deepEqual([receipt.cost, receipt.staminaCost, receipt.manaCost], [3, 3, 2]);
+  // Shield Bash is a smash (2 SP by the action-cost table, SPEC action costs) plus the tier-2 surcharge of 2.
+  assert.deepEqual([receipt.cost, receipt.staminaCost, receipt.manaCost], [4, 4, 2]);
   const html = renderCard(registries, shield, { preview: receipt, tooltip: false, inspection: false }).innerHTML;
-  assert.match(html, /data-card-binding="stamina"[^>]*>3<\/div>/);
+  assert.match(html, /data-card-binding="stamina"[^>]*>4<\/div>/);
   assert.match(html, /data-card-binding="mana"[^>]*>2<\/div>/);
   if (coop) playCard(combat, 'a', shield.instanceId, 'a', undefined, 2);
   else dispatch(combat, { type: 'playCard', cardInstanceId: shield.instanceId, targetId: 'player', upcastTier: 2 });
   const paid = coop ? combat.players.get('a').entity : combat.player;
-  assert.deepEqual([paid.energy, paid.stamina, paid.mana], [7, 7, 8]);
+  assert.deepEqual([paid.energy, paid.stamina, paid.mana], [6, 6, 8]);
   assert.equal(paid.combatCounter.charges, 1);
 });
 

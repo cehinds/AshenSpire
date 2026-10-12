@@ -56,7 +56,8 @@ for (const version of [1, 2]) test(`equipped Shield Bash solo target projection 
 test('selected upcast tier changes the same target plan committed by the engine', () => {
   const id = 'target-tier-fixture';
   const local = createRegistries({ ...contentBundle, cards: [...contentBundle.cards, {
-    id, name: 'Target Tier Fixture', type: 'skill', kindIds: ['classification.skill'], cost: 0, manaCost: 0,
+    // costRule 'fixed': the fixture prices its own 0-SP base; the upcast tier surcharge is what it tests (SPEC action costs).
+    id, name: 'Target Tier Fixture', type: 'skill', kindIds: ['classification.skill'], cost: 0, costRule: 'fixed', manaCost: 0,
     tags: ['camp:physical', 'maneuver:defend', 'reach:contact', 'targeting:single'],
     effects: [{ op: 'block', target: 'self', amount: 2 }], textTemplate: 'Gain {block} Block.',
     upcast: { baseTier: 2, unlockedTiers: [3, 5], maximumTier: 5, blockPerRank: 1,

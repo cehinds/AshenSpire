@@ -52,7 +52,7 @@ export const colorlessCards = [
     upgrade: { effects: [{ op: 'heal', target: 'self', amount: 12 }] },
   },
   {
-    id: 'hex', name: 'Hex', class: 'colorless', rarity: 'uncommon', cost: 0, type: 'skill',
+    id: 'hex', name: 'Hex', class: 'colorless', rarity: 'uncommon', cost: 0, costRule: 'fixed', type: 'skill',
     flavor: "Sign scratched upon a door.\n\nThe hamlets mark it on houses where someone marked burns slowly within, to keep it from coming out. They learned the sign from the Chapel, which set it upon the houses of the unmarked before the Decree.\n\nThe hamlets call it fair to use it the other way round.",
     keywords: ['exhaust'], icon: '🕯',
     effects: [
@@ -94,7 +94,7 @@ export const colorlessCards = [
     upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 6, hits: 2 }] },
   },
   {
-    id: 'blindingSand', name: 'Blinding Sand', class: 'colorless', rarity: 'common', cost: 0, type: 'skill',
+    id: 'blindingSand', name: 'Blinding Sand', class: 'colorless', rarity: 'common', cost: 0, costRule: 'fixed', type: 'skill',
     flavor: "Ash thrown in the eyes.\n\nThe hamlets learned in the first winter that what came out of the weald flinched from ash as the living do. Some took this as proof the corrupted could be saved.\n\nMarl's Hollow took it as proof they could be blinded. Marl's Hollow endures.",
     keywords: ['exhaust'], icon: '🌪',
     effects: [{ op: 'applyStatus', target: 'allEnemies', status: 'weak', stacks: 2 }],
@@ -102,7 +102,7 @@ export const colorlessCards = [
     upgrade: { effects: [{ op: 'applyStatus', target: 'allEnemies', status: 'weak', stacks: 3 }] },
   },
   {
-    id: 'hamstring', name: 'Hamstring', class: 'colorless', rarity: 'uncommon', cost: 0, type: 'skill',
+    id: 'hamstring', name: 'Hamstring', class: 'colorless', rarity: 'uncommon', cost: 0, costRule: 'fixed', type: 'skill',
     flavor: "Cut at the back of the leg.\n\nTaught upon the road with a single instruction: all things of the ring walk, so go for the legs. The saying is scratched on cairns from the weald to the coast, weeks apart.\n\nIt is cut in the same hand on every one.",
     keywords: ['exhaust'], icon: '🦵',
     effects: [{ op: 'applyStatus', target: 'allEnemies', status: 'vulnerable', stacks: 2 }],
@@ -110,7 +110,7 @@ export const colorlessCards = [
     upgrade: { effects: [{ op: 'applyStatus', target: 'allEnemies', status: 'vulnerable', stacks: 3 }] },
   },
   {
-    id: 'masterOfStrategy', name: 'Master of Strategy', class: 'colorless', rarity: 'rare', cost: 0, type: 'skill',
+    id: 'masterOfStrategy', name: 'Master of Strategy', class: 'colorless', rarity: 'rare', cost: 0, costRule: 'fixed', type: 'skill',
     flavor: "Maps scratched upon cairn stones.\n\nLeft by climbers who came back down, or meant to. The hamlet councils copy the true ones and burn the rest, and each winter argue which were which.\n\nThe oldest shows a fourth road leading off the ring toward the coast. It has not been burned.",
     keywords: ['exhaust'], icon: '📜',
     effects: [{ op: 'draw', amount: 3 }],

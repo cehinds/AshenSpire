@@ -46,7 +46,7 @@ test('live Riposte defers damage, grants immediate Guard/Ward, then retaliates e
   assert.equal(c.player.combatCounter.poiseDamage, 1, 'displayed Poise badge is listed impact');
   dispatch(c, { type: 'endTurn' });
   assert.equal(c.player.hp, 200);
-  assert.equal(enemy.hp, hp - 11);
+  assert.equal(enemy.hp, hp - 15, 'Riposte is a 2-SP counter now: 7 damage and 2 poise (SPEC action costs), its return 15');
   assert.equal(counterEvents(c).length, 1);
   assert.equal(counterEvents(c)[0].poiseDamage, 1);
   assert.equal(counterEvents(c)[0].sourceKind, 'player');
@@ -81,10 +81,10 @@ test('live Smash gets guarded bonus and adds Poise only after actual Guard break
   enemy.block = 9;
   dispatch(c, { type: 'playCard', cardInstanceId: 'card1', targetId: enemy.id });
   const hit = c.eventLog.find(event => event.type === 'damageDealt' && event.sourceId === 'player');
-  assert.equal(hit.amount, 15);
+  assert.equal(hit.amount, 27, 'kilnCleave is a 2-SP smash now: its 10 damage scales to 18 (SPEC action costs)');
   assert.equal(hit.blocked, 9);
-  assert.equal(enemy.hp, hp - 6);
-  assert.equal(enemy.poiseMeter.value, 6, 'printed3 plus actual-break3');
+  assert.equal(enemy.hp, hp - 18, 'the 18 through the 9 Block: kilnCleave 10 scales to 18 (SPEC action costs)');
+  assert.equal(enemy.poiseMeter.value, 8, 'printed 3 scaled to 5 (2-SP smash) plus actual-break 3 (SPEC action costs)');
   assert.equal(getStacks(enemy, 'burn'), 4, 'printed Burn not duplicated by rider');
 });
 
@@ -126,9 +126,9 @@ for (const isCoop of [false, true]) test(`${isCoop ? 'co-op' : 'solo'} Counter p
   applyStatus(c, enemy, 'vulnerable', 1);
   const preview = isCoop ? previewCoopCard(c, 'p1', 'card1', enemy.id) : previewCard(c, 'card1', enemy.id);
   const damage = preview.values.find(value => value.op === 'damage');
-  assert.equal(damage.value, 4);
-  assert.equal(damage.perTarget[enemy.id], 4);
-  assert.deepEqual(damage.hitDamages, [4]);
+  assert.equal(damage.value, 7, 'spikedReprisal is a 2-SP counter now: 4 damage scales to 7 (SPEC action costs)');
+  assert.equal(damage.perTarget[enemy.id], 7);
+  assert.deepEqual(damage.hitDamages, [7], 'scaled from 4 (SPEC action costs)');
   if (isCoop) playCard(c, 'p1', 'card1', enemy.id);
   else dispatch(c, { type: 'playCard', cardInstanceId: 'card1', targetId: enemy.id });
   const actor = isCoop ? c.players.get('p1').entity : c.player;
@@ -156,12 +156,13 @@ for (const isCoop of [false, true]) for (const inactive of ['condition', 'zeroHi
     const preview = isCoop ? previewCoopCard(c, 'p1', 'card1', c.enemies[0].id) : previewCard(c, 'card1', c.enemies[0].id);
     const damage = preview.values.filter(value => value.op === 'damage');
     assert.deepEqual(actor.abilityRiders, before, 'preview leaves both one-use charges intact');
-    assert.deepEqual(damage.map(value => value.hitDamages), inactive === 'allInactive' ? [[7]] : [inactive === 'condition' ? [4] : [], [7, 4]]);
+    // Riposte is a 2-SP counter: its 4 scales to 7, the one-use charge adds a flat 3 (SPEC action costs).
+    assert.deepEqual(damage.map(value => value.hitDamages), inactive === 'allInactive' ? [[10]] : [inactive === 'condition' ? [7] : [], [10, 7]]);
     if (isCoop) playCard(c, 'p1', 'card1');
     else dispatch(c, { type: 'playCard', cardInstanceId: 'card1' });
     if (inactive !== 'condition' && inactive !== 'allInactive')
       assert.equal(actor.combatCounter.damage, damage.reduce((total, value) => total + value.totalDamage, 0));
-    assert.equal(actor.combatCounter.damage, inactive === 'allInactive' ? 3 : 11);
+    assert.equal(actor.combatCounter.damage, inactive === 'allInactive' ? 3 : 17, 'Riposte scaled: 7 damage plus the 3 charge plus the counter return (was 11)');
   });
 }
 
@@ -179,20 +180,20 @@ test('two co-op seats keep independent Counter charges and retaliation owners', 
 test('legacy conditional Counter takes exactly one eligible damage branch before gaining Guard', () => {
   const unguarded = solo('guardCounter', legacyRegistry);
   dispatch(unguarded, { type: 'playCard', cardInstanceId: 'card1' });
-  assert.equal(unguarded.player.combatCounter.damage, 4);
+  assert.equal(unguarded.player.combatCounter.damage, 7, 'guardCounter is a 2-SP counter now: 4 scales to 7');
   const guarded = solo('guardCounter', legacyRegistry); guarded.player.block = 2;
   dispatch(guarded, { type: 'playCard', cardInstanceId: 'card1' });
-  assert.equal(guarded.player.combatCounter.damage, 10, 'conditional branches must not sum to14');
+  assert.equal(guarded.player.combatCounter.damage, 18, 'conditional branches must not sum; the 10 branch scales to 18');
 });
 
 for (const isCoop of [false, true]) test(`${isCoop ? 'co-op' : 'solo'} Crimson Reprisal prints its inactive conditional clause`, () => {
   const c = isCoop ? coop('progression-crimson-reprisal') : solo('progression-crimson-reprisal');
   const actor = isCoop ? c.players.get('p1').entity : c.player;
   const preview = isCoop ? previewCoopCard(c, 'p1', 'card1') : previewCard(c, 'card1');
-  assert.deepEqual(preview.values.filter(value => value.op === 'damage').map(value => value.value), [8, 4]);
+  assert.deepEqual(preview.values.filter(value => value.op === 'damage').map(value => value.value), [14, 7], 'Crimson Reprisal is a 2-SP counter: 8 and 4 scale to 14 and 7');
   if (isCoop) playCard(c, 'p1', 'card1');
   else dispatch(c, { type: 'playCard', cardInstanceId: 'card1' });
-  assert.equal(actor.combatCounter.damage, 8, 'the inactive clause remains unarmed');
+  assert.equal(actor.combatCounter.damage, 14, 'the inactive clause remains unarmed');
 });
 
 for (const isCoop of [false, true]) for (const hasBlock of [false, true]) {
@@ -203,10 +204,10 @@ for (const isCoop of [false, true]) for (const hasBlock of [false, true]) {
     const actor = isCoop ? c.players.get('p1').entity : c.player;
     if (hasBlock) actor.block = 2;
     const preview = isCoop ? previewCoopCard(c, 'p1', 'card1') : previewCard(c, 'card1');
-    assert.deepEqual(preview.values.filter(value => value.op === 'damage').map(value => value.value), [4, 10]);
+    assert.deepEqual(preview.values.filter(value => value.op === 'damage').map(value => value.value), [7, 18], 'scaled: 4 and 10 are 7 and 18');
     if (isCoop) playCard(c, 'p1', 'card1');
     else dispatch(c, { type: 'playCard', cardInstanceId: 'card1' });
-    assert.equal(actor.combatCounter.damage, hasBlock ? 10 : 4, 'only the eligible branch is armed');
+    assert.equal(actor.combatCounter.damage, hasBlock ? 18 : 7, 'only the eligible branch is armed');
   });
 }
 
@@ -261,11 +262,11 @@ test('Counter preserves one-use damage and Break charges in deferred payload', (
     const c = solo('riposte');
     grantAbilityCharge(c.player, { key: 'counter-combo', cardType: 'attack', damage: 3, break: 2, damageScope });
     dispatch(c, { type: 'playCard', cardInstanceId: 'card1' });
-    assert.equal(c.player.combatCounter.damage, 7);
+    assert.equal(c.player.combatCounter.damage, 10, 'Riposte scaled: the 4-damage return with its 3-point one-use damage is 10 (was 7)');
     assert.equal(c.player.combatCounter.poiseDamage, 3);
     assert.deepEqual(c.player.abilityRiders.charges, {});
     dispatch(c, { type: 'endTurn' });
-    assert.equal(counterEvents(c)[0].amount, 15);
+    assert.equal(counterEvents(c)[0].amount, 20, 'Riposte scaled return (was 15): the 2-SP counter scales its 4 damage to 7 before the 3 charge');
     assert.equal(counterEvents(c)[0].poiseDamage, 4);
   }
 });

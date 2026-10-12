@@ -25,7 +25,8 @@ test('Counter client and engine plans agree on immediate self support', () => {
 
 test('expanded Shield Bash targets its defender, not the deferred reply enemy', () => {
   const def = resolveCombatCard({ registries, combatExpansionVersion: 2 }, { cardId: 'shieldBash' });
-  assert.equal(def.counterPayload.poise, 4);
+  // The reply is 4 plus the scaled damage gain: Shield Bash's base damage 3 scales to 5 at 2 SP, so the reply is 6.
+  assert.equal(def.counterPayload.poise, 6);
   assert.deepEqual(immediateCardEffects(def).map(effect => effect.op), ['block']);
   assert.deepEqual(cardTargetPlan(def, 'a', enemies, players), { mode: 'friendly', legalIds: ['a'] });
 });

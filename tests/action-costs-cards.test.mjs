@@ -49,7 +49,7 @@ test('card text shows the scaled number, because the text reads the same resolve
 });
 
 test('the opt-outs keep their authored cost and their numbers: 0-cost, curses, statuses, X, the dodge, unclassified', () => {
-  assert.equal(cardOf('warcry').cost, 0, 'an explicit 0-cost opt-out');
+  assert.equal(cardOf('warriorsVow').cost, 0, 'an explicit 0-cost opt-out');
   assert.equal(cardOf('guilt').cost, 0, 'a curse');
   assert.equal(cardOf('stitchedArms').cost, 'X', 'an X cost is variable');
   assert.equal(cardOf('dodgeRoll').cost, authoredOf('dodgeRoll').cost, 'evade has no table price');
@@ -75,6 +75,10 @@ test('a derived cost layers the authored upgrade delta under the stance, and man
   const plainUpgrade = applyActionCosts({ ...base, cost: 0, effects: [{ op: 'damage', target: 'enemy', amount: 10 }] }, base);
   assert.equal(plainUpgrade.cost, 1, 'a delta below the stance floors at 0');
   assert.equal(applyActionCosts({ ...base, costRule: 'fixed' }, base).cost, 1, 'the opt-out ignores the stance');
+});
+
+test('costRule is the only opt-out value content may write', () => {
+  for (const card of registries.cards.all()) if (card.costRule !== undefined) assert.equal(card.costRule, 'fixed', `${card.id} carries an unknown costRule`);
 });
 
 test('the derived step is one function, so every surface reads the same cost (the framework cost profile too)', () => {

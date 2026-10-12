@@ -44,7 +44,8 @@ for (const coop of [false, true]) for (const split of [false, true]) for (const 
     const shown = f.preview();
     const values = shown.values.filter(value => value.op === 'damage');
     const hits = values.flatMap(value => value.hitDamages);
-    assert.deepEqual(hits, smash ? [4, 3, 3] : [1, 3, 3]);
+    // A smash is a 2-SP stance now (SPEC action costs): its 4 and 3 scale to 7 and 5; a plain counter-attack keeps 1 and 3.
+    assert.deepEqual(hits, smash ? [7, 5, 5] : [1, 3, 3]);
     if (!split) {
       const summary = combatCardSummary(shown.resolvedDefinition, shown, f.registries);
       assert.ok(summary.includes(`${hits.join(' + ')} damage (${hits.reduce((sum, amount) => sum + amount, 0)} total across 3 hits)`), summary);

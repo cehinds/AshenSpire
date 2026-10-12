@@ -16,7 +16,7 @@ const base=createRegistries(contentBundle);
 const charge={op:'grantCardCharge',target:'self',key:'cost-probe',manaDiscount:2};
 const mount=triggers=>({kind:'feat',id:'cost-probe',instanceId:'cost-probe',rules:[{tag:'probe',triggers}]});
 function fixture(coop=false){
-  const def={...base.cards.get('stigmataCard'),cost:3,manaCost:4,effects:[{op:'block',target:'self',amount:1}],upgrade:{}};
+  const def={...base.cards.get('stigmataCard'),cost:3,costRule:'fixed',manaCost:4,effects:[{op:'block',target:'self',amount:1}],upgrade:{}};
   const registries={...base,cards:{...base.cards,get:id=>id==='stigmataCard'?def:base.cards.get(id)}};
   const player={id:'a',classId:'herald',hp:80,maxHp:80,mana:10,maxMana:10,stamina:10,maxStamina:10,energyMax:10,drawPerTurn:1,relicIds:[],deck:[{instanceId:'probe',cardId:'stigmataCard',upgraded:false}]};
   return coop?createCoopCombat({registries,rng:createRng(11),players:[player,{...player,id:'b'}],enemyIds:['wanderingSoldier']}):createCombat({registries,rng:createRng(11),player,enemyIds:['wanderingSoldier']});

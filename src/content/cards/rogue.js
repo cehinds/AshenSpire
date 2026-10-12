@@ -36,7 +36,7 @@ export const rogueCards = [
     },
   },
   {
-    id: 'rogueShiv', name: 'Shiv', class: 'rogue', rarity: 'special', cost: 0, type: 'attack',
+    id: 'rogueShiv', name: 'Shiv', class: 'rogue', rarity: 'special', cost: 0, costRule: 'fixed', type: 'attack',
     flavor: "Sliver of iron from the rail of the Fourth Bridge.\n\nThe ironwork froze brittle the night the Court Flame died. Dock children say the railings were cast from the Court's melted oath-tokens, and so are worth more than any blade in the right hands.\n\nWhose hands are right, the children will not tell.",
     keywords: ['exhaust'], icon: '🔪',
     effects: [{ op: 'damage', target: 'enemy', amount: 4 }],
@@ -44,7 +44,7 @@ export const rogueCards = [
     upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 6 }] },
   },
   {
-    id: 'smokePellet', name: 'Smoke Pellet', class: 'rogue', rarity: 'special', cost: 0, type: 'skill',
+    id: 'smokePellet', name: 'Smoke Pellet', class: 'rogue', rarity: 'special', cost: 0, costRule: 'fixed', type: 'skill',
     flavor: "Tallow and ash, rolled in a back room on the Chandlers' Stair.\n\nSold as lamp-starters. The chandler says the recipe was his grandmother's, taken from a Court surgeon, though in his telling the surgeon is sometimes a knight.\n\nThe docks buy more of them each winter.",
     keywords: ['exhaust'], icon: '🌫',
     effects: [{ op: 'block', target: 'self', amount: 3 }, prepare()],
@@ -168,7 +168,7 @@ export const rogueCards = [
     upgrade: { effects: [{ op: 'damage', target: 'allEnemies', amount: 7 }, { op: 'draw', amount: 1 }] },
   },
   {
-    id: 'setupRogue', name: 'Setup', class: 'rogue', rarity: 'uncommon', cost: 0, type: 'skill', keywords: ['exhaust'], icon: '⚙',
+    id: 'setupRogue', name: 'Setup', class: 'rogue', rarity: 'uncommon', cost: 0, costRule: 'fixed', type: 'skill', keywords: ['exhaust'], icon: '⚙',
     flavor: "Preparation of a dock job.\n\nA window left open on the Lantern Bridge, a lamp turned low, a guard paid to cough. The method is credited to a thief called the Wick, who planned the first robbery of the Regent's hall in the years of the Mark Trade.\n\nIt is said the Court itself paid her to rob it.",
     effects: [prepare(), { op: 'gainEnergy', amount: 1 }, { op: 'addCard', card: 'rogueShiv', pile: 'hand' }],
     textTemplate: 'Become Prepared. Gain {gainEnergy} Stamina. Add a Shiv to your hand. Exhaust.',
@@ -316,7 +316,7 @@ export const rogueCards = [
   // ---- The class ability card (plan phase 5a, proposal §4) -----------------
   // Prepare: the Rogue's loop is setup then payoff; the cheapest way in.
   {
-    id: 'prepare', name: 'Prepare', class: 'rogue', rarity: 'starter', cost: 0, type: 'skill',
+    id: 'prepare', name: 'Prepare', class: 'rogue', rarity: 'starter', cost: 0, costRule: 'fixed', type: 'skill',
     flavor: "Hands warmed before the work.\n\nCold hands drop knives. Dock children learn to warm their hands before they learn to steal, and never at a fire another has lit. A borrowed fire is a debt, and the docks collect.\n\nThe fires on the Citadel side burn more than wood.",
     keywords: ['exhaust'], icon: '◈',
     effects: [{ op: 'applyStatus', target: 'self', status: 'prepared', stacks: one }],

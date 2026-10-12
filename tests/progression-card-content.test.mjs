@@ -1,5 +1,6 @@
 import { botCardTargetId } from '../tools/simbot.mjs';
 import test from 'node:test';
+import { cardActionStance, stanceCost } from '../src/model/actionCosts.js';
 import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
@@ -200,13 +201,22 @@ test('assembled content validates every normalized card, feat and relic rule', (
   assert.deepEqual(validation.errors, []);
 });
 
+
+// The grade's authored Action cost is the base for its derived SP (SPEC action costs, owner 2026-10-12): a stanced
+// family card pays its stance's table price plus the grade's own delta over the card's base cost; a fixed or unstanced
+// card keeps the authored number.
+export function gradeActionCost(card, profile) {
+  const stance = card.costRule === 'fixed' || typeof card.cost !== 'number' ? null : cardActionStance(card);
+  const price = stance ? stanceCost(stance) : null;
+  return price === null ? profile.actionCost : Math.max(0, price + profile.actionCost - card.cost);
+}
 test('every authored family grade completes a paid real play in the assembled engine', () => {
   for (const card of progressionCards) for (const profile of card.gradeProfiles) {
     const combat = fixture();
     const instance = { instanceId: 'graded-play', cardId: card.id, upgraded: false, abilityRank: profile.rank };
     combat.piles.hand.push(instance);
     const face = resolveCard(combat.registries, instance);
-    assert.equal(face.cost, profile.actionCost, `${card.name}/${profile.rank}`);
+    assert.equal(face.cost, gradeActionCost(card, profile), `${card.name}/${profile.rank}`);
     assert.equal(face.manaCost, profile.rank, `${card.name}/${profile.rank}`);
     const preview = previewCard(combat, instance.instanceId);
     assert.equal(preview.manaCost, profile.rank);

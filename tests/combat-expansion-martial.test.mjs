@@ -117,7 +117,8 @@ test('authored impact Counter is especially punishing only to its covered Smash 
     const receipt = beginTacticalAction(f.ctx, f.source, f.target, incoming, [{ amount: 8 }]);
     recordTacticalContact(receipt, { blocked: 4 });
     completeTacticalAction(f.ctx, f.source, f.target, incoming, receipt);
-    assert.deepEqual(f.queue.map(action => [action.effect.op, action.effect.amount]), [['poiseDamage', maneuver === 'smash' ? 6 : 4]]);
+    // Riposte is a 2-SP counter: its 4 poise return scales to 7, and a smash contact adds the +2 bonus (SPEC action costs).
+    assert.deepEqual(f.queue.map(action => [action.effect.op, action.effect.amount]), [['poiseDamage', maneuver === 'smash' ? 9 : 7]]);
   }
 });
 
@@ -126,7 +127,8 @@ test('Shield Bash is Counter with authored Block and Poise instead of immediate 
   const carrier = tacticalCarrier(def, { cardId: def.id, type: def.type });
   const support = prepareTacticalCard(f.ctx, f.target, f.source, carrier, def.effects);
   assert.equal(combatProfileFor(def).maneuver, 'counter');
-  assert.deepEqual(f.target.combatCounter.payload, { hp: 0, poise: 4, ward: 0, smashPoiseBonus: 2 });
+  // Shield Bash's reply is 4 plus the 2 its scaled damage gains at 2 SP (3 to 5), so 6 (SPEC action costs).
+  assert.deepEqual(f.target.combatCounter.payload, { hp: 0, poise: 6, ward: 0, smashPoiseBonus: 2 });
   assert.deepEqual(support, [{ op: 'block', target: 'self', amount: 5 }]);
   assert.equal(def.ratingId, 'dr');
 });
@@ -180,9 +182,10 @@ test('player action carriers expose actual electrical equipment traits to an ene
 
 test('permanent grades retain Quickstep Block, bonus draws and once-per-turn support', () => {
   const card = applyCombatExpansionMartial(resolveCard(registries, { cardId: 'quickstep', abilityRank: 5 }, 2));
-  assert.equal(card.effects.find(effect => effect.op === 'block' && !effect.oncePerTurn).amount, 17);
+  // Quickstep is a 2-SP stance now: its 16 Block scales to 29, and the rank's +1 makes 30 (was 17 at 1.0x).
+  assert.equal(card.effects.find(effect => effect.op === 'block' && !effect.oncePerTurn).amount, 30);
   assert.equal(card.effects.filter(effect => effect.op === 'draw' && !effect.oncePerTurn).reduce((sum, effect) => sum + effect.amount, 0), 2);
-  assert.ok(card.effects.some(effect => effect.op === 'block' && effect.oncePerTurn === 'grade-block' && effect.amount === 2));
+  assert.ok(card.effects.some(effect => effect.op === 'block' && effect.oncePerTurn === 'grade-block' && effect.amount === 4), 'the once-per-turn support block scales 2 to 4');
   assert.ok(card.effects.some(effect => effect.op === 'draw' && effect.oncePerTurn === 'grade-draw' && effect.amount === 1));
 });
 

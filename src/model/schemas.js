@@ -780,6 +780,8 @@ export const SCHEMAS = Object.freeze({
   }),
   card: obj({
     minCombatExpansionVersion: opt(int),
+    // Action costs (owner decision, 2026-10-12): 'fixed' keeps a 0-cost card's authored cost and numbers (model/actionCosts.js).
+    costRule: opt(str),
     corrupted: opt(bool),
     ashenBlightCost: opt(int),
     counterCoverage: opt(any),

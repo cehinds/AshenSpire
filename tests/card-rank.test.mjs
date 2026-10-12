@@ -105,14 +105,16 @@ const amountAt = (cardId, rank, index) => resolveCard(registries, { cardId, rank
 
 test('the primary number is what the card is for, never a cost or tempo', () => {
   // A blood price stays the price: the damage ranks, the HP cost does not.
-  assert.deepEqual([amountAt('bloodOfferingRite', 5, 0).amount, amountAt('bloodOfferingRite', 5, 1).amount], [6, 28]);
+  // The HP price is not scaled; the second damage is a 2-SP cast (SPEC action costs), so its 26 scales to 47.
+  assert.deepEqual([amountAt('bloodOfferingRite', 5, 0).amount, amountAt('bloodOfferingRite', 5, 1).amount], [6, 47]);
   // Pure tempo (energy, draw) has no primary number, so nothing moves.
   assert.equal(primaryEffectIndex(resolveCard(registries, { cardId: 'timeDilation' })), -1);
   assert.deepEqual(resolveCard(registries, { cardId: 'timeDilation', rank: 10 }).effects.map((e) => e.amount), [2, 3, undefined]);
   // A status card ranks its stacks, not its rider draw.
   assert.deepEqual([amountAt('warcry', 3, 0).stacks, amountAt('warcry', 3, 1).amount], [3, 1]);
   // Block outranks nothing but damage: a formula-damage attack ranks its Block.
-  assert.equal(amountAt('shieldCrash', 4, 0).amount, 8);
+  // shieldCrash is a 2-SP smash now (SPEC action costs): its rank block scales with the card, 8 becomes 12.
+  assert.equal(amountAt('shieldCrash', 4, 0).amount, 12);
 });
 
 test('a multi-hit effect splits its rank across its hits, rounded up', () => {

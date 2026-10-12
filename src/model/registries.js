@@ -7,6 +7,7 @@ import { applyAbilityGrade } from './abilityGrades.js';
 //
 // Headless: no document/window/localStorage/timers.
 
+import { applyActionCosts } from './actionCosts.js';
 import { REGISTRY_TYPES, PASSIVE_KEYS } from './schemas.js';
 import { tagIndex } from './tags.js';
 import { nodeTree } from './tree.js';
@@ -570,7 +571,24 @@ const resolveCache = new WeakMap();
  *     full upgraded set — this is what lets an upgrade remove Exhaust)
  *   - `name` defaults to base name + '+'
  */
+// The action-cost step (owner decision, 2026-10-12; model/actionCosts.js) runs once per resolved card, after the
+// upgrade and before the equipment and status mods, so a mod's flat bonus lands on the derived number (not scaled).
+// Cached per input object, so every surface reads the same derived card.
+const actionCostCards = new WeakMap();
+function derivedActionCost(def, authored) {
+  if (!def || typeof def !== 'object') return def;
+  const hit = actionCostCards.get(def);
+  if (hit) return hit;
+  const derived = applyActionCosts(def, authored);
+  actionCostCards.set(def, derived);
+  return derived;
+}
+
 export function resolveCard(registries, instanceOrRef, breakMeterVersion = instanceOrRef.breakMeterVersion ?? registries.breakMeterVersion) {
+  return resolveCardAuthored(registries, instanceOrRef, breakMeterVersion);
+}
+
+function resolveCardAuthored(registries, instanceOrRef, breakMeterVersion = instanceOrRef.breakMeterVersion ?? registries.breakMeterVersion) {
   const cardId = instanceOrRef.cardId;
   const legacyCards = registries.legacyProgressionSource?.cards;
   const definition = instanceOrRef.legacyAbility && legacyCards?.has(cardId)
@@ -588,7 +606,7 @@ export function resolveCard(registries, instanceOrRef, breakMeterVersion = insta
   const rank = cardRank(instanceOrRef);
   const skillBonus = cardSkillBonus(instanceOrRef);
   const passiveBlock = cardPassiveBlock(instanceOrRef);
-  if (!instanceOrRef.upgraded && !(mods && mods.length) && !profileId && !hasCarrier && smithingLevel === 0 && rank === 1 && skillBonus === 0 && passiveBlock === 0) return base;
+  if (!instanceOrRef.upgraded && !(mods && mods.length) && !profileId && !hasCarrier && smithingLevel === 0 && rank === 1 && skillBonus === 0 && passiveBlock === 0) return derivedActionCost(base, definition);
 
   let cache = resolveCache.get(registries);
   if (!cache) {
@@ -613,6 +631,7 @@ export function resolveCard(registries, instanceOrRef, breakMeterVersion = insta
   let result = usesAbilityGrade ? base : cardForSchool(base, school);
   if (result !== base) result = deepFreeze(result);
   if (instanceOrRef.upgraded && !usesAbilityGrade) result = mergeUpgrade(result);
+  result = derivedActionCost(result, definition);
   if (profileId) result = applyBasicCardProfile(result, profile);
   if (mods && mods.length) {
     const eq = registries.equipment || {};

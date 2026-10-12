@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { cardActionStance, stanceCost } from '../src/model/actionCosts.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
@@ -24,6 +25,15 @@ test('preserved legacy reward cards retain their pinned Mana rarity shares and o
   }
 });
 
+
+// The grade's authored Action cost is the base for its derived SP (SPEC action costs, owner 2026-10-12): a stanced
+// family card pays its stance's table price plus the grade's own delta over the card's base cost; a fixed or unstanced
+// card keeps the authored number.
+export function gradeActionCost(card, profile) {
+  const stance = card.costRule === 'fixed' || typeof card.cost !== 'number' ? null : cardActionStance(card);
+  const price = stance ? stanceCost(stance) : null;
+  return price === null ? profile.actionCost : Math.max(0, price + profile.actionCost - card.cost);
+}
 test('every expanded ability grade pays its authored Action cost and Mana equal to rank', () => {
   const families = reg.cards.all().filter(card => card.gradeProfiles);
   assert.equal(families.length, 82, 'forty new families and forty-two retuned existing abilities');
@@ -35,8 +45,8 @@ test('every expanded ability grade pays its authored Action cost and Mana equal 
       const cost = reg.framework.costProfile(def);
       assert.equal(profile.rank, rank, card.id);
       assert.equal(def.manaCost || 0, rank, `${card.id} grade ${rank}: printed Mana`);
-      assert.equal(def.cost, profile.actionCost, `${card.id} grade ${rank}: authored Actions`);
-      assert.ok(def.cost >= 1 && def.cost <= (rank === 0 ? 3 : rank));
+      assert.equal(def.cost, gradeActionCost(card, profile), `${card.id} grade ${rank}: the action cost of its stance`);
+      assert.ok(Number.isInteger(def.cost) && def.cost >= 0 && def.cost <= 5, `${card.id} grade ${rank}: a whole SP cost, ${def.cost}`);
       assert.equal(cost.stamina, def.cost, 'Actions and Stamina are the same resource');
       assert.equal(def.staminaCost || 0, 0, 'no additional Stamina charge');
     }

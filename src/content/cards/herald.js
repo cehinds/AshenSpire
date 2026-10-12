@@ -36,7 +36,7 @@ export const heraldCards = [
     upgrade: { keywords: [], textTemplate: 'Restore {restoreMana} Mana. Heal {heal} HP.' },
   },
   {
-    id: 'bloodPact', name: 'Blood Pact', class: 'herald', rarity: 'common', cost: 0, type: 'skill',
+    id: 'bloodPact', name: 'Blood Pact', class: 'herald', rarity: 'common', cost: 0, costRule: 'fixed', type: 'skill',
     flavor: "Second office of the birth-rite.\n\nThe flame-mark was pressed into the newborn's wrist, and the parents answered in the child's stead. The Chapel called it a promise and a privilege.\n\nIn the birth-roll of the crown-born wards, beside the Herald's name, one word is struck through.",
     keywords: [], icon: '🩸',
     effects: [
@@ -150,7 +150,7 @@ export const heraldCards = [
     },
   },
   {
-    id: 'bloodletting', name: 'Bloodletting', class: 'herald', rarity: 'common', cost: 0, type: 'skill',
+    id: 'bloodletting', name: 'Bloodletting', class: 'herald', rarity: 'common', cost: 0, costRule: 'fixed', type: 'skill',
     flavor: "Bleeding before the blessing of bread.\n\nThe Saints bled into the bowl first, that nothing be taken from the congregation the Saint had not first given. The Chapel taught it as humility.\n\nOn the days of the rite, the bread ran short, and the Saints ate first.",
     keywords: [], icon: '🩸',
     effects: [
@@ -478,7 +478,7 @@ export const heraldCards = [
   // uncommons (an HP-gated finisher and a heal-fed power), two rares (a heavy
   // HP-for-damage attack and a Blight-fed power) — rounding the pool to 36.
   {
-    id: 'painOffering', name: 'Pain Offering', class: 'herald', rarity: 'common', cost: 0, type: 'attack',
+    id: 'painOffering', name: 'Pain Offering', class: 'herald', rarity: 'common', cost: 0, costRule: 'fixed', type: 'attack',
     flavor: "Small pain, offered in advance.\n\nTaught to crown-born children as good citizenship; the children called it paying early. The habit outlived the Chapel among the Forsaken hamlets, learned from refugees after the Burning.\n\nThey keep it without knowing whom they pay.",
     keywords: [], icon: '🩸',
     effects: [
