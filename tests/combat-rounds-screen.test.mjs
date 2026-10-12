@@ -194,3 +194,63 @@ test('the hotkey on a queued card takes it back before the affordable guard', ()
   assert.ok(queued < hotkey.indexOf('if (!affordable) return;'), 'before the affordable guard');
   assert.match(hotkey.slice(queued, queued + 120), /unqueueCard\(inst\.instanceId\)/);
 });
+
+// Review item 2: the round decays each enemy's momentum by one step before it orders anything (startRound, decay
+// from the rules), so the forecast and the banner must read the decayed value too.
+import { makeFight, plannedQueueSpeeds } from '../src/engine/combatRounds/timeline.js';
+import { startRound } from '../src/engine/combatRounds/round.js';
+import { momentumSpeed } from '../src/engine/combatRounds/resolver.js';
+
+// The real round's speeds, built as commitRound builds them: the stored momentum goes in, and startRound decays it.
+function realRoundEntries(c, enemyId) {
+  const cr = c.combatRounds;
+  const tables = { armor: new Map(Object.entries(cr.rules.tables.evasionArmor)), cards: new Map(Object.entries(cr.rules.tables.evasionCards)) };
+  const enemy = c.enemies.find((e) => e.id === enemyId);
+  const specs = [
+    { id: 'player', side: 'player', name: 'player', attrs: {}, level: 0, hp: c.player.hp, sp: 99, wis: 0, tags: [], stance: null, hand: [] },
+    ...c.enemies.map((e) => ({ id: e.id, side: 'enemy', name: e.name ?? e.enemyId, attrs: {}, level: 0, hp: e.hp, sp: 3, wis: 0, tags: [], stance: null, hand: [] })),
+  ];
+  const state = makeFight(specs, tables);
+  Object.assign(state.momentum, cr.momentum ?? {});
+  const queues = { player: cr.playerQueue.map((r) => ({ ...r.tl })) };
+  queues[enemy.id] = Rounds.enemyActions(c, enemy.id);
+  const round = startRound(state, { queues, rng: () => 0.5, merge: cr.rules.merge, decay: cr.rules.decay, liveDefence: true });
+  return round.timeline.entries;
+}
+
+for (const stored of [2, -2]) {
+  test(`momentum ${stored}: the forecast speeds equal the speeds the real round orders by (decay first)`, () => {
+    const c = fight();
+    const enemy = liveEnemy(c);
+    c.combatRounds.momentum = { [enemy.id]: stored };
+    Rounds.buildEnemyQueues(c, { isFirstTurn: true, pick: (_e, def) => Object.keys(def.moves)[0], held: () => false });
+    const card = attackCard(c);
+    dispatch(c, { type: 'playCard', cardInstanceId: card.instanceId, targetId: enemy.id });
+    const entries = realRoundEntries(c, enemy.id);
+    const foeEntry = entries.find((e) => e.actor === enemy.id);
+    const playerEntry = entries.find((e) => e.card?.instanceId === card.instanceId);
+    assert.ok(foeEntry && playerEntry, 'both the foe and the player act in the real round');
+    const realFoe = foeEntry.speed.effective - foeEntry.speed.d4;
+    const realCard = playerEntry.speed.effective - playerEntry.speed.d4;
+    const forecast = Rounds.screenForecast(c, enemy.id, roundCardForecast(c, card.instanceId, enemy.id));
+    assert.equal(forecast.foeSpeed, realFoe, 'the foe forecast uses the decayed momentum the round uses');
+    assert.equal(forecast.cardSpeed, realCard, 'the card forecast uses the decayed momentum the round uses');
+  });
+}
+
+test('the banner momentum is the decayed value that applies this round', () => {
+  const c = fight();
+  const enemy = liveEnemy(c);
+  c.combatRounds.momentum = { [enemy.id]: 2 };
+  assert.equal(Rounds.roundMomentum(c)[enemy.id], 1, 'M=+2 decays to +1 for this round');
+  c.combatRounds.momentum = { [enemy.id]: -3 };
+  assert.equal(Rounds.roundMomentum(c)[enemy.id], -2, 'M=-3 decays to -2 for this round');
+  assert.equal(c.combatRounds.momentum[enemy.id], -3, 'the stored value is not changed by the read');
+  assert.equal(momentumSpeed(Rounds.roundMomentum(c)[enemy.id]), -1);
+});
+
+test('the banner tab reads the decayed momentum, not the stored one', () => {
+  const screen = readFileSync(new URL('../src/ui/components/combatRoundsScreen.js', import.meta.url), 'utf8');
+  assert.match(screen, /momentumTab\(roundMomentum\(combat\)\[targetedId\]/, 'the banner reads roundMomentum');
+  assert.doesNotMatch(screen, /momentumTab\(cr\.momentum/, 'the banner no longer reads the stored momentum');
+});

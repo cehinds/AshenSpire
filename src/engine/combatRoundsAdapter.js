@@ -13,6 +13,7 @@
 // this file never imports combat.js (no cycle).
 import { startRound, stepRound, answerReaction, finishRound } from './combatRounds/round.js';
 import { makeFight, makeCombatant, plannedQueueSpeeds } from './combatRounds/timeline.js';
+import { decayMomentum } from './combatRounds/resolver.js';
 import { DEFAULT_SP, SPEED_MODS_CSV } from '../content/combatRounds.js';
 
 // Enemy SP per round (SPEC §4.11: stat-driven, base 3). One constant, used for every enemy in P3a.
@@ -420,6 +421,15 @@ export function unqueueCard(combat, instanceId) {
 
 // --- Preview screen forecast ------------------------------------------------------------------
 
+// roundMomentum(combat) → { [enemyId]: M } as the round being planned uses it: each stored M after the rules'
+// decay step, which startRound applies before it orders anything. The forecast and the turn banner read this, so
+// they show what applies this round. The stored momentum is not changed.
+export function roundMomentum(combat) {
+  const cr = roundState(combat);
+  const step = cr.rules?.decay === undefined ? 1 : Number(cr.rules.decay);
+  return Object.fromEntries(Object.entries(cr.momentum ?? {}).map(([id, m]) => [id, decayMomentum(m, step)]));
+}
+
 // screenForecast(combat, enemyId, candidate) → the plan-time speeds the preview screen compares (PREVIEW-PLAN,
 // Screen; timeline plannedQueueSpeeds). `candidate` is a hand card's timeline view (roundCardForecast) or null.
 // cardSpeed is the candidate's effective speed at the end of the player's queue, with the candidate placed last
@@ -428,7 +438,7 @@ export function unqueueCard(combat, instanceId) {
 export function screenForecast(combat, enemyId, candidate = null) {
   const cr = roundState(combat);
   const tables = engineTables(cr.rules);
-  const momentum = cr.momentum ?? {};
+  const momentum = roundMomentum(combat);
   const player = makeCombatant(playerSpec(combat, 0, []), tables);
   // A card already in the queue keeps its place; any other candidate is placed last.
   const queued = queuedCards(combat).map(timelineCardFor);

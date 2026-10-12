@@ -5,7 +5,7 @@
 // each render. With combat.combatRounds absent it adds nothing (the DOM and CSS stay as they are).
 import { intentIcon } from './intentIcon.js';
 import { previewIntent, roundCardForecast } from '../../engine/combat.js';
-import { screenForecast, enemyActions } from '../../engine/combatRoundsAdapter.js';
+import { screenForecast, enemyActions, roundMomentum } from '../../engine/combatRoundsAdapter.js';
 import { targetOutline } from '../../engine/combatRounds/resolver.js';
 import { followUpSymbols, momentumTab, perceptionLevel, readStage, speedHint, READ_EXACT } from '../models/CombatRoundsScreenModel.js';
 
@@ -88,7 +88,8 @@ export function decorateCombatRoundsScreen(root, combat, { armedCardId = null, t
   // Momentum on the turn banner, for the targeted enemy.
   const ribbon = root.querySelector('.turn-ribbon');
   if (ribbon) {
-    const tab = targetedId ? momentumTab(cr.momentum?.[targetedId] ?? 0) : null;
+    // The decayed value: what applies to this round's order, the same one the forecast uses.
+    const tab = targetedId ? momentumTab(roundMomentum(combat)[targetedId] ?? 0) : null;
     if (tab) {
       ribbon.dataset.momentum = tab.tone;
       const node = document.createElement('span');
