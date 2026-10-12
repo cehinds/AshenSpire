@@ -21,6 +21,7 @@ const build = JSON.parse(readFileSync(resolve(root, 'buildordinal.json'), 'utf8'
 const metadata = { capturedAt: new Date().toISOString(), sourceCommit: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(),
   buildVersion: `${build.release}.${build.ordinal}`, sourceDigest: build.digest, entry, browser: 'Chromium via Playwright/CDP',
   browserPlugin: 'not available', posedPages: 'Rail navigation into a fresh Starseer creation preview; no completed playthrough claimed.' };
+metadata.fullNodeSuite = { status: 'incomplete', reason: 'Manager reported the discovered full Node suite reached its 15-minute cap; focused checks and browser validation are reported separately.' };
 const componentIds = [
   'creation-page-heading', 'creation-panel', 'creation-choice-tile',
   'creation-part-material', 'creation-part-trim', 'creation-part-body',
@@ -58,6 +59,19 @@ try {
     assert.equal(await featBrowser.getAttribute('data-inspected-feat'), 'weaponDrill');
     assert.equal(await featBrowser.getAttribute('data-birth-feat-allowance'), '0');
     assert.equal(await featBrowser.locator('.cc-feat-detail-title').textContent(), 'Weapon Drill');
+    assert.equal(await featBrowser.locator('.cc-feat-detail').getAttribute('data-locked'), 'true');
+    for (const groupId of ['class', 'skill']) {
+      const filter = featBrowser.locator(`.cc-feat-group-filter[data-feat-group="${groupId}"]`);
+      if (width < 700) await filter.tap(); else await filter.click();
+      assert.equal(await featBrowser.getAttribute('data-feat-group'), groupId);
+      assert.ok(await featBrowser.locator('.cc-feat-choices button .cc-feat-level-requirement').count(), `${groupId} rows show existing progression requirements`);
+      const inspect = featBrowser.locator('.cc-feat-choices button').first();
+      assert.ok(await inspect.isEnabled(), 'locked feats remain inspectable');
+      await inspect.click();
+      assert.ok(await featBrowser.locator('.cc-feat-detail .cc-feat-level-requirement').count());
+    }
+    await featBrowser.locator('.cc-feat-group-filter[data-feat-group="character"]').click();
+    await featBrowser.locator('[data-feat="weaponDrill"].cc-choice-tile').click();
     const choice = page.locator('#folio-creation-choice-tile button');
     await choice.click();
     assert.equal(await page.locator('#folio-creation-choice-tile button').getAttribute('aria-pressed'), 'true');
@@ -113,6 +127,8 @@ try {
       if (stage === 'feats') {
         await live.locator('#cz-feats-panel [data-feat="weaponDrill"].cc-choice-tile').click();
         assert.equal(await live.locator('#cz-feats-panel .cc-feat-detail-title').textContent(), 'Weapon Drill');
+        assert.equal(await live.locator('#cz-feats-panel .cc-feat-detail').getAttribute('data-locked'), 'true');
+        assert.ok(await live.locator('#cz-feats-panel .cc-feat-detail .cc-feat-level-requirement').count(), 'real creation page shows canonical level requirement');
       }
       await live.locator('.cz-stage img').evaluateAll(async images => {
         const shown = images.filter(image => image.getClientRects().length);

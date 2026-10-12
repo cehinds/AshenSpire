@@ -2,13 +2,16 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { el } from '../src/ui/kit/index.js';
 import { feats } from '../src/content/feats.js';
+import { contentBundle } from '../src/content/index.js';
+import { createRegistries } from '../src/model/registries.js';
 import { mountCreationPartSpecimens } from '../src/ui/catalog/creationSpecimens.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 
 test('catalog mounts all new registered production specimens with working inspection and local choice state', () => withKitDom(dom => {
   const host = el('div');
   dom.document.body.append(host);
-  const catalog = mountCreationPartSpecimens({ host });
+  const registries = createRegistries(contentBundle);
+  const catalog = mountCreationPartSpecimens({ host, registries });
   const folios = host.querySelectorAll('[data-catalog-component]');
   assert.equal(folios.length, 13);
   for (const folio of folios) {
@@ -25,6 +28,14 @@ test('catalog mounts all new registered production specimens with working inspec
   assert.equal(browser.querySelector('.cc-feat-detail-title').textContent, feats.at(-1).name);
   assert.equal(browser.querySelector('.cc-feat-detail-description').textContent, feats.at(-1).description);
   assert.equal(buttons.at(-1).getAttribute('aria-pressed'), 'true');
+  assert.equal(browser.querySelector('.cc-feat-detail').dataset.locked, 'true', 'locked birth feats remain inspectable');
+  assert.match(browser.querySelector('.cc-feat-detail .cc-feat-level-copy').textContent, /2/);
+  for (const groupId of ['class', 'skill']) {
+    browser.querySelector(`.cc-feat-group-filter[data-feat-group="${groupId}"]`).click();
+    assert.equal(browser.dataset.featGroup, groupId);
+    assert.ok(browser.querySelectorAll('.cc-feat-choices button').length > 0);
+    assert.ok(browser.querySelector('.cc-feat-level-requirement'), `${groupId} uses the real progression requirement`);
+  }
   const tileFolio = host.querySelector('#folio-creation-choice-tile');
   tileFolio.querySelector('button').click();
   assert.equal(tileFolio.querySelector('button').getAttribute('aria-pressed'), 'true');
