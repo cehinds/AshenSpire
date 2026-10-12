@@ -35,10 +35,11 @@ try {
     await page.goto(`${base}?shot=combat`, { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => window.__renderCombatForShot);
     await page.waitForTimeout(1800);
-    // Every living combatant shows its Inspect control; selection only changes its state.
-    const living = () => page.locator('.combatant:not(.dead) .combatant-info');
+    // Owner decision (2026-10-11): no Inspect at rest. A combatant's Inspect shows only
+    // while that combatant is selected, and it is placed on its first paint.
     const visibleInfo = () => page.locator('.combatant-info:visible').count();
-    assert.equal(await visibleInfo(), await living().count(), 'every living combatant shows Information at rest');
+    const selectedInfo = () => page.locator('.combatant.context-selected .combatant-info').count();
+    assert.equal(await visibleInfo(), 0, 'no combatant shows Information at rest');
     const geometry = () => page.locator('.combatant').evaluateAll(es => es.map(e => ({
       id:e.dataset.eid, height:e.dataset.spriteVisibleHeight,
       feet:e.querySelector('.sprite').getBoundingClientRect().bottom,
@@ -47,7 +48,8 @@ try {
     const initialGeometry = await geometry();
     const enemy = page.locator('.combatant.enemy').first();
     await tapCombatant(enemy);
-    assert.equal(await visibleInfo(), await living().count(), 'selecting a combatant keeps every Information visible');
+    assert.equal(await visibleInfo(), 1, 'selecting a combatant shows exactly its Information');
+    assert.equal(await page.locator('.enemy.context-selected .combatant-info').getAttribute('data-placed'), 'true', 'the selected Information is placed on first paint');
     await page.evaluate(() => window.__renderCombatForShot());
     await page.waitForTimeout(400);
     assert.deepEqual(await geometry(), initialGeometry, 'selection and rerender preserve sprite size and ground');
@@ -91,14 +93,14 @@ try {
     await page.keyboard.press('Escape');
     assert.equal(await isOpen(), false);
     await page.keyboard.press('Escape');
-    assert.equal(await visibleInfo(), await living().count(), 'Escape keeps every Information visible');
+    assert.equal(await visibleInfo(), await selectedInfo(), 'Escape leaves only the selected Information showing');
     await page.mouse.move(0, height - 1);
     await tapCombatant(enemy);
     await page.screenshot({ path: resolve(out, `combat-${width}.png`) });
     await tapCombatant(page.locator('.combatant.player').first());
-    assert.equal(await visibleInfo(), await living().count());
+    assert.equal(await visibleInfo(), await selectedInfo(), 'only the selected combatant shows Information');
     assert(await page.locator('.player .combatant-info').isVisible(), 'player selection uses the same Information control');
-    assert(await page.locator('.enemy .combatant-info').first().isVisible(), 'enemy Information is visible without selection');
+    assert.equal(await page.locator('.enemy .combatant-info').first().isVisible(), false, 'an unselected enemy shows no Information');
     await enemy.focus();
     await enemy.dispatchEvent('gpfocus');
     assert(await info.isVisible(), 'keyboard/controller selection reveals Information');
@@ -112,7 +114,7 @@ try {
     const card = page.locator(`.hand .card[data-instance-id="${attackId}"]`);
     await page.keyboard.press('Tab');
     await card.focus();
-    assert.equal(await visibleInfo(), await living().count(), 'card selection keeps every combatant Information visible');
+    assert.equal(await visibleInfo(), await selectedInfo(), 'card selection shows only the selected combatant Information');
     const motif = el => {
       const s=getComputedStyle(el);
       // CSS zoom can round computed lengths by a fraction of a pixel.
@@ -151,10 +153,10 @@ try {
     await page.goto(`${base}?shot=coop`, { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => window.__coopSnapshotForShot);
     await page.waitForTimeout(1200);
-    assert.equal(await visibleInfo(), await living().count(), 'co-op Information is visible on every living combatant');
+    assert.equal(await visibleInfo(), 0, 'co-op shows no Information at rest');
     for (const role of ['player','enemy']) {
       await tapCombatant(page.locator(`.combatant.${role}`).first());
-      assert.equal(await visibleInfo(), await living().count(), `co-op ${role} selection keeps every Information visible`);
+      assert.equal(await visibleInfo(), 1, `co-op ${role} selection shows exactly its Information`);
       assert(await page.locator(`.${role} .combatant-info`).first().isVisible(), 'the tapped combatant owns Information');
       await page.locator(`.${role} .combatant-info`).first().click();
       await page.locator('.combatant-door').waitFor();

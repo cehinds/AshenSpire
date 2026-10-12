@@ -5,10 +5,11 @@
 > **KNOWN DEBT, stated once here rather than apologised for per section: this spec's in-game
 > vocabulary is still largely pre-scrub.** It says runes/Vagabond/Astrologer/Prophet/Erdtree
 > where the tree ships cinders/Reaver/Starseer/Herald/Goldbough. **`docs/IP-SCRUB.md` is the
-> authoritative old→new map** and every name in it is a shipped fact. **The rename act once
-> proposed here is dropped: the owner does not want it (owner decision, 2026-09-27).** Read the
-> old names through that map; do not rename them per section either, which would leave the spec
-> disagreeing with itself mid-document. The count of old names:
+> authoritative old→new map** and every name in it is a shipped fact. **The broad mechanical
+> rename act once proposed here is dropped: the owner does not want it (owner decision,
+> 2026-09-27).** Read historical prose through that map rather than sweeping it piecemeal. When
+> an audited section describes current shipped definitions, however, it uses the canonical names
+> consistently throughout that section and records the reconciliation in its audit. The count of old names:
 > `grep -cE "runes|Vagabond|Astrologer|Prophet|Erdtree|Scarlet Rot" SPEC.md`.
 
 A single-player roguelike deckbuilder for the browser. Mechanically faithful to Slay the Spire; thematically inspired by (but legally distinct from) Elden Ring. Companion documents: [PROMPT.md](PROMPT.md) (the brief this spec expands), and — once implementation starts — `DEVELOPER.md` (how to extend) and `CREDITS.md` (asset licenses).
@@ -26,7 +27,7 @@ Numbers in this spec are the **initial balance targets**. They will move during 
 | 2 | Legal and asset constraints | **partly built** | Attribution: `tools/credits-check.mjs`, 40 checks, 33/33 asset directories (FINISH §10). Open: §2.4 asset indirection. 138 literal `url('../assets/…)` references in six `styles/` files (`grep -rc "url('../assets" styles`; for example `styles/combat.css`, `styles/ui.css`) still bypass `assetUrl()` and its fallback (DEVELOPER.md, *high-res release*). |
 | 3 | Architecture, DSLs, procedural systems, saves, validation | **built** | Run schema 23 (`RUN_SCHEMA_VERSION` in `src/model/state.js`; `tests/save-migration.test.mjs`); `validateContent` 0 errors. |
 | 4 | Combat rules | **built** | §4.7 shared player/enemy tags, deferred Counters, typed riders and persisted stance reads ship in #1705, with solo/co-op engine and browser regressions. Ashen Blight remains a separate proposal. Warrior's Vow enters the chosen stance. |
-| 5 | Content | **built** | Warrior's Vow (§5.2) offers every stance of the player's class and enters the chosen one. 5.2–5.4 are the historical M1/M2 sets under pre-scrub names. Live counts: 195 cards (40 per class, 35 colorless), 73 relics (63 base plus 10 class-mastery), 25 events, 7 flasks, 33 enemies (20 regular, 10 boss, 3 elite). |
+| 5 | Content | **built** | Warrior's Vow (§5.2) offers every stance of the player's class and enters the chosen one. 5.2–5.4 are the historical M1/M2 sets reconciled to the canonical names and values of their current shipped definitions; older prose elsewhere remains readable through `docs/IP-SCRUB.md`. Live counts: 195 cards (40 per class, 35 colorless), 73 relics (63 base plus 10 class-mastery), 25 events, 7 flasks, 33 enemies (20 regular, 10 boss, 3 elite). |
 | 6 | Map generation | **built** | `engine/mapgen.js`, `tools/mapplan.mjs`. |
 | 7 | UI/UX, HUD, input, feedback, visual style | **partly built** | Screens, HUD, input and feedback ship. Open: §7.5 interface fonts are **TO BUILD** (Cinzel/Inter are named with system fallbacks and do not ship yet; they will load as pack files through the pack loader, EXTERNAL-ASSETS-PLAN step 3b, but wiring them is not yet a plan step; only the "AS Lore" copies ship), and the release proofs for contrast, reduced motion, target size and Back-everywhere (FINISH §5–§9). |
 | 8 | Testing | **built** | `tests/run-node.mjs`. |
@@ -656,6 +657,8 @@ energyGained, energySpent   // legacy names: `energy` is the retired alias of St
 flaskUsed, relicTriggered(relicId)
 equipmentChanged(reason,beforeLoadoutSignature,afterLoadoutSignature,changedPositions)
 combatReactionOffered, combatReactionChosen
+combatReactionUnavailable(ownerId,sourceId,reason,cardId,cardIds,attackKind)
+combatGuardBroken(targetId,sourceId,poise,sourcePlayerId?,targetPlayerId?)
 ```
 
 ### 3.11 Seeded RNG
@@ -2647,12 +2650,12 @@ The shipped solo combat path adopts these rules. The independent foundation/comb
   - The co-op path (`coopCombat.js`) reads each seat's owner's setting when it builds that seat's pile, and carries it per seat.
 
 **UX.** The component is `DeckEditorModel` plus `mountDeckEditor`, with an entry in `docs/component-catalog.html`.
-- **Layout.** The Reading Desk has the collection on the left, persistent card inspection in the middle and the deck on the right. Phones switch between collection, inspection and deck views; Back returns to the pane that opened inspection. Collection offers All/In Deck and text search; the deck has its own search, List/Cards presentation and collapsible type groups. Ordered decks retain their exact sequence instead of type groups. Copy counts remain visible for single copies as well as grouped copies.
+- **Layout.** The Reading Desk has the collection on the left, persistent card inspection in the middle and the deck on the right. Phones show one list, the collection, whose rows carry － count ＋ steppers; inspection opens over it and Back returns to the list; an ordered deck adds a Draw order view for reordering. A selected card shows a round (i) on its art; the (i), or pressing the selected card's art again, opens the inspector, and no row reserves room for it (owner, 2026-10-11). Each row and the inspector name the card's stance: its maneuver (Attack, Defend, Counter, Smash, Sweep or Ranged), otherwise Spell, Power, Consumable or Skill. A row also shows its rank as a badge on the art (Rank N; rank 0 or unranked reads Cantrip for a magical card and Basic for the rest; powers, skills and consumables without a rank show none), its range after the stance for a card that attacks (Melee, Reach or Ranged from its contact, near or far reach, untagged cards taking the player card's combat default: projectiles and ranged maneuvers near, the rest contact), and a physical or magical mark before its costs. Phone rows read grip, art, then name, stance and range, and rules, with the mark and MP/SP sprites at the top right and the stepper at the bottom right, the same at every phone width, smaller phones shrinking the art, costs and stepper rather than moving them (owner, 2026-10-11). Collection offers All/In Deck on its title row; the deck offers List/Cards presentation and collapsible type groups. Text search is off for now (owner, 2026-10-11). Ordered decks retain their exact sequence instead of type groups. Copy counts remain visible for single copies as well as grouped copies.
 - **Undo.** Undo reverses the last successful add, removal or reorder, restoring the same complete editing state as Cancel (including allocation and card mint counters). Failed and unchanged actions do not create history. Cancel still restores the state from when the editor opened; Done confirms the current valid state.
 - **Header.** It shows the live counter "N / min–max", which turns red and shows the refusal sentence when out of bounds. Beside it is a compact cost-curve histogram.
 - **Filters and sort.** Filter chips cover type, cost, source (basic / weapon art / technique / reward / item-owned) and upgraded. Sort chips cover cost, name, type and source.
-- **Every drag has two twins.** A tap on a collection tile or deck row inspects the card without changing the run. The Reading Desk inspector carries an explicit Add to deck or Remove from deck action; rows also carry explicit ＋ and － buttons. Reordering is a drag on the handle or the row's ▲ and ▼ buttons.
-- **Gamepad.** The D-pad moves focus in a grid, and LB and RB switch panes. A inspects a focused card or activates the focused explicit Add/Remove control. X picks up the focused deck row, the D-pad moves it, and X or A drops it. Y cycles the filters. B cancels, and Start confirms (§7.3).
+- **Every drag has two twins.** A tap on a collection tile or deck row inspects the card without changing the run. The Reading Desk inspector carries explicit Add to deck and Remove from deck actions; rows also carry explicit ＋ and － buttons. Reordering is a drag on the handle or the row's ▲ and ▼ buttons.
+- **Gamepad.** The D-pad moves focus in a grid, and LB and RB switch panes (on a phone, only between the list and Draw order). A inspects a focused card or activates the focused explicit Add/Remove control. X picks up the focused deck row, the D-pad moves it, and X or A drops it. Y cycles the filters. B cancels, and Start confirms (§7.3).
 - **Target size.** Every target is at least 48 CSS px on a coarse pointer and at least 44 px otherwise, and text is at least 11 px at 360×640 (FINISH §8).
 
 *Falsify:*
@@ -2880,7 +2883,7 @@ Inscryption, and Slay the Spire's deck-view / "Deck Builder" mods.
 | Deck list collapsed to one row per card variant (id + upgrade + mods; for a locked card, also its owner) with a ×N count | Hearthstone, Arena, LoR | **Yes**, except while **Play in deck order** is on | Counts are the scan-friendly view; in ordered mode each copy is its own row so it can be placed. A Strike and a Strike+ stay two rows: merging them would hide the upgrade and make ＋/－ ambiguous, and the collection tiles use the same variant key. |
 | Live size counter "N / min–max", red when out of bounds, Done disabled with a sentence | Hearthstone (30/30), Snap (12/12), Arena (60+) | **Yes** | The invalid state must be explained, not just coloured (SPEC §7.5, FINISH §6). |
 | Copy limit shown on the collection tile ("2 owned, 1 in deck") and greyed when exhausted | Hearthstone, LoR, Arena | **Yes** | Weapon arts and techniques are limited to owned copies; basics show ∞. |
-| Filters (type, cost, source) and sort (cost, name, type, source) as chips above the collection | Hearthstone (mana crystals), Arena, LoR | **Yes**, chips not a hidden menu | One tap each; the Reading Desk also offers a text search over collection names and resolved rules. |
+| Filters (type, cost, source) and sort (cost, name, type, source) as chips above the collection | Hearthstone (mana crystals), Arena, LoR | **Yes**, chips not a hidden menu | One tap each; the Reading Desk also offers a text search over collection names and resolved rules (currently off). |
 | Mana/cost curve histogram | Hearthstone, Arena, LoR | **Yes, compact** | Cheap to derive; the one analytic players ask for. |
 | Undo / "revert to deck on entry" | Snap (discard changes), Arena | **Yes** — Cancel restores the entry deck | Editing is out of combat, so a whole-session revert is simple and safe. |
 | Deck edited mid-run only at rest or through removals | Slay the Spire, Monster Train, Inscryption | **As an option** (`Rest sites only`) | The owner wants to compare it with Free editing; roguelike tension comes from this restriction. |

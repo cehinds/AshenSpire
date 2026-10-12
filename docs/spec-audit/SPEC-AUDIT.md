@@ -150,7 +150,7 @@ SPEC.md was corrected in this PR, one section range per commit wave, following t
   - Fix: SPEC follows code: say `EVENTS` lists the catalogued events and that `equipmentChanged` and `equipmentRearmed` are emitted outside it.
 - [ ] **unclear** SPEC L653 "energyGained, energySpent" (engine id `energy`): the spec never says what `energy` is; it is the retired alias of `stamina` (src/model/turnStamina.js:3-12), shown to the player as Actions/Stamina (combat.js:1383 "Not enough Actions (Stamina)")
   - Fix: write "(legacy event names: `energy` is the retired alias of Stamina, the one cost pool)".
-- [ ] **aspirational** (both marked † in SPEC L657-658): `combatReactionUnavailable` and `combatGuardBroken` appear nowhere in src/ or tests/ (grep). Consistent with the spec's own † rule.
+- [x] **built after this audit**: #1849 added `combatReactionUnavailable` and `combatGuardBroken` to the engine and tests, so the merged SPEC retains both event receipts.
 
 ### §3.11 Seeded RNG (SPEC L661-667)
 
@@ -681,9 +681,7 @@ SPEC.md was corrected in this PR, one section range per commit wave, following t
 
 ### Defensive reactions and actor-turn presentation (SPEC L1122-1150)
 
-- [ ] **aspirational** SPEC L1145-1150: "the engine emits `combatReactionUnavailable` once per root and seat ... (`switchOff`, `attackerStaggered`, `attackerControlled`, `notCovered`, `cost`, `controlled`, `unplayable`, `alreadyAnswered` or `other`)" and "`combatGuardBroken` once per break"
-  - Code: neither event name nor the reason enum appears anywhere in src/ or tests/ (grep, no hits)
-  - Fix: mark both as planned, or implement them.
+- [x] **built after this audit**: #1849 implemented `combatReactionUnavailable` with the documented reason vocabulary and `combatGuardBroken` once per break, with solo/co-op regression coverage.
 
 ### 12.4 Branching destinations and roster (SPEC L2076-2087)
 

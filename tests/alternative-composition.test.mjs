@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { alternativeCombatComposition } from '../src/ui/models/CombatCompositionModel.js';
+import { alternativeCombatComposition, combatStandingGround, SHORT_PHONE_ENEMY_LIFT } from '../src/ui/models/CombatCompositionModel.js';
 import { alternativeEnemyTargetGrid } from '../src/ui/models/AlternativeEnemyTargetGridModel.js';
 
 test('alternative labeled targets keep their original 88 pixel cells', () => {
@@ -71,4 +71,38 @@ test('a crowded narrow row shares overlap among enemies instead of crossing the 
     assert(enemy.x - half >= player.x - 1e-9, `${enemy.id} stays right of the player's centre line`);
     assert(enemy.x + half <= 320 - 6 + 1e-9, `${enemy.id} stays on stage`);
   }
+});
+
+test('a short portrait field keeps its enemies back on the floor, clear of the player', () => {
+  // Owner's phone (2026-10-11): a 360x620 game viewport leaves a ~267px field
+  // (under 300, so not "spacious"). Enemies used to drop to ~83% of the field,
+  // almost on the player's foot line.
+  const height = 267, width = 360;
+  const actors = ['p', 'a', 'b'].map((id, i) => ({ side: i ? 'enemy' : 'player',
+    visibleWidth: 60, leading: 40, slot: { id, ground: 240 } }));
+  const sizes = actors.map((a, i) => ({ id: a.slot.id, x: [80, 220, 300][i], visibleHeight: 80, scale: 1, multiplier: 1 }));
+  const fit = alternativeCombatComposition({ actors, sizes, width, height, handTop: height });
+  const [player, ...enemies] = fit;
+  for (const enemy of enemies) {
+    assert.ok(enemy.ground <= height * .6, `enemy feet at ${enemy.ground}`);
+    assert.ok(enemy.ground >= enemy.visibleHeight + 40 + 6, 'intent and HP keep their headroom');
+    assert.ok(player.ground - enemy.ground >= height * .25, 'depth between the player and the enemy row');
+  }
+});
+
+test('a short portrait phone lifts its enemies a little; the camera keeps the unlifted standing line', () => {
+  // Owner (2026-10-11): at 360x620 the enemy figures stand higher, their intent
+  // and HP still clear of the ribbon. The backdrop frames the standing line,
+  // which must not move with the lift, so the horizon stays where it was.
+  const height = 267, width = 360;
+  const actors = ['p', 'a', 'b'].map((id, i) => ({ side: i ? 'enemy' : 'player',
+    visibleWidth: 60, leading: 40, slot: { id, ground: 240 } }));
+  const sizes = actors.map((a, i) => ({ id: a.slot.id, x: [80, 220, 300][i], visibleHeight: 80, scale: 1, multiplier: 1 }));
+  const fit = alternativeCombatComposition({ actors, sizes, width, height, handTop: height });
+  const backRow = height * .48 + (240 - height * .9) * .25;
+  const [, ...enemies] = fit;
+  assert.equal(SHORT_PHONE_ENEMY_LIFT, .05);
+  for (const enemy of enemies) assert.ok(Math.abs(enemy.ground - (backRow - height * SHORT_PHONE_ENEMY_LIFT)) < 1e-9,
+    `enemy feet at ${enemy.ground}, expected the back row lifted by 5% of the field`);
+  assert.ok(Math.abs(combatStandingGround(fit, actors, 0) - backRow) < 1e-9, 'standing line is the unlifted back row');
 });
