@@ -199,6 +199,27 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "combat.reaction.stack",
+    "extends": "",
+    "short": "On the stack",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.reaction.resolve",
+    "extends": "",
+    "short": "Resolve",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.reaction.helpStack",
+    "extends": "",
+    "short": "",
+    "full": "Choose another card to add on top, or Resolve to play the stack, last card first.",
+    "tip": ""
+  },
+  {
     "id": "combat.callout.staggered",
     "extends": "",
     "short": "STAGGERED",
