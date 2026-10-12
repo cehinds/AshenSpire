@@ -15,6 +15,12 @@ const GATE = ":root[data-form-factor='desktop']";
 const DESKTOP_RULES = [
   ['combat-layers.css', ".combat-tools > button"],
   ['combat-layers.css', ".combat-tools .reaction-switch-value"],
+  ['combat-layers.css', ".enemy .combatant-leading .intent"],
+  ['combat-layers.css', ".combatant:not(.context-selected) .intent"],
+  ['combat-layers.css', ".intent .intent-icon"],
+  ['combat-layers.css', ".intent-stance"],
+  ['combat-layers.css', ".stance-chip[data-meter-row='stance']"],
+  ['combat-layers.css', ".stance-chip[data-meter-row='stance'] > .as-glyph"],
 ];
 
 // Split a stylesheet into selector-list + body chunks at top-level braces.
@@ -46,4 +52,16 @@ test('desktop tools row sets the approved label, row and reaction sizes', () => 
   const value = rules(text).find(r => r.selector.startsWith(GATE) && r.selector.endsWith('.reaction-switch-value'));
   assert.ok(value, 'reaction value rule');
   assert.match(value.body, /font-size:\s*calc\(12px \/ var\(--ui-zoom,1\)\)/);
+});
+
+test('desktop intent badge and stance glyph are 1.25x and match each other', () => {
+  const text = css('combat-layers.css');
+  const glyph = rules(text).find(r => r.selector.startsWith(GATE) && r.selector.includes("stance-chip[data-meter-row='stance'] > .as-glyph"));
+  assert.ok(glyph, 'stance glyph rule');
+  assert.match(glyph.body, /width:\s*calc\(26px \/ var\(--ui-zoom,1\)\)/);
+  const icon = rules(text).find(r => r.selector.startsWith(GATE) && r.selector.endsWith('.intent .intent-icon'));
+  assert.ok(icon, 'intent icon rule');
+  assert.match(icon.body, /width:\s*calc\(26px \/ var\(--ui-zoom,1\)\)/);
+  const value = rules(text).find(r => r.selector.startsWith(GATE) && r.selector.endsWith(':not(.context-selected) .intent'));
+  assert.match(value.body, /font-size:\s*calc\(20px \/ var\(--ui-zoom,1\)\)/);
 });

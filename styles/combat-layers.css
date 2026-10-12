@@ -442,3 +442,18 @@
 }
 :root[data-form-factor='desktop'] .combat[data-layout='formation'] .combat-tools .reaction-switch-value { font-size: calc(12px / var(--ui-zoom,1)); }
 :root[data-form-factor='desktop'] .combat[data-layout='formation'] .combat-tools .reaction-switch-thumb { width: calc(17px / var(--ui-zoom,1)); height: calc(17px / var(--ui-zoom,1)); }
+/* Desktop only: intent badges, their value and glyph, and the player's stance
+   chip read about 1.25x larger. The stance glyph is the enemy intent glyph's size
+   (26 px physical), so the two marks match. Phone, tablet and widescreen are unchanged. */
+:root[data-form-factor='desktop'] .combat[data-layout='formation'] .enemy .combatant-leading .intent { width: calc(130px / var(--ui-zoom,1)); min-width: calc(130px / var(--ui-zoom,1)); }
+:root[data-form-factor='desktop'] .combat[data-layout='formation'] .combatant:not(.context-selected) .intent {
+  min-height: calc(32px / var(--ui-zoom,1)); height: calc(32px / var(--ui-zoom,1)); font-size: calc(20px / var(--ui-zoom,1));
+}
+:root[data-form-factor='desktop'] .combat[data-layout='formation'] .intent .intent-icon { width: calc(26px / var(--ui-zoom,1)); height: calc(26px / var(--ui-zoom,1)); }
+:root[data-form-factor='desktop'] .combat[data-layout='formation'] .combatant-leading .intent-stance { font-size: calc(15px / var(--ui-zoom,1)); }
+:root[data-form-factor='desktop'] .combat[data-layout='formation'] .combatant .stance-chip[data-meter-row='stance'] {
+  height: calc(28px / var(--ui-zoom,1)); font-size: calc(14px / var(--ui-zoom,1));
+}
+:root[data-form-factor='desktop'] .combat[data-layout='formation'] .combatant .stance-chip[data-meter-row='stance'] > .as-glyph {
+  width: calc(26px / var(--ui-zoom,1)); height: calc(26px / var(--ui-zoom,1));
+}
