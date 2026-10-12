@@ -43,7 +43,7 @@ import * as F from './combatRules.js';
 import * as Reactions from './combatReactions.js';
 import { combatProfileFor } from '../model/combatCardProfile.js';
 import * as Rounds from './combatRoundsAdapter.js';
-import { decayNormalMomentum, settleNormalMomentum } from './normalPreview.js';
+import { decayNormalMomentum, settleNormalMomentum, multiActionOn } from './normalPreview.js';
 import { emitEvent, fireOwnerHooks, findEntity, hasEventTriggers } from './triggers.js';
 import { attachSkillXp } from './skillXp.js';
 import * as S from '../framework/statusSemantics.js';
@@ -801,6 +801,8 @@ function rollIntents(combat, isFirstTurn = false) {
     pick: (enemy, def) => weightedMovePick(combat, enemy, def),
     held: (enemy) => Boolean(enemy.pendingMove) || enemy.skipNextTurn || S.getFlag(combat, enemy, 'skipTurn'),
   }) : null;
+  // Normal combat with the multi-action toggle (SPEC §4.11): the moves are planned ahead, one at a time.
+  const planned = !queues && multiActionOn(combat);
   for (const enemy of combat.enemies) {
     delete enemy.actorIntentRevealed;
     if (!enemy.alive) continue;
@@ -817,6 +819,9 @@ function rollIntents(combat, isFirstTurn = false) {
     let moveId;
     if (queues) {
       moveId = queues[enemy.id]?.[0]?.moveId ?? null; // the queue's slot 0, already recorded in movesHistory
+    } else if (planned) {
+      // SPEC §4.11 multi-action preview: the head of the plan is played now; its picks were recorded when planned.
+      moveId = Rounds.takePlannedMove(combat, enemy, def, { isFirstTurn, pick: (e, d) => weightedMovePick(combat, e, d) });
     } else if (isFirstTurn && def.firstMove) {
       moveId = def.firstMove; // optional scripted opener
     } else {
@@ -826,7 +831,7 @@ function rollIntents(combat, isFirstTurn = false) {
       enemy.intent = { kind: 'unknown', moveId: null };
       continue;
     }
-    if (!queues) enemy.movesHistory.push(moveId);
+    if (!queues && !planned) enemy.movesHistory.push(moveId);
     clearCombatCounter(enemy);
     enemy.intent = buildIntent(def.moves[moveId], moveId, enemy, combat);
     setCombatStance(combat, enemy, enemyMoveCarrier(enemy, def.moves[moveId], moveId, combat));

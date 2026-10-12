@@ -39,8 +39,7 @@
 }
 
 /* Intent box follow-ups: smaller symbols in the same box, shown whatever the layout's compact rule says. */
-:root .combat[data-combat-rounds='preview'] .combatant .intent > .cr-followups { display: inline-flex !important; }
-.cr-followups { align-items: center; gap: calc(2px / var(--ui-zoom,1)); margin-inline-start: calc(4px / var(--ui-zoom,1)); }
+.cr-followups { display: inline-flex !important; align-items: center; gap: calc(2px / var(--ui-zoom,1)); margin-inline-start: calc(4px / var(--ui-zoom,1)); }
 .cr-followup { display: inline-flex; align-items: center; justify-content: center; width: calc(13px / var(--ui-zoom,1)); height: calc(13px / var(--ui-zoom,1)); font: bold calc(11px / var(--ui-zoom,1))/1 Georgia, serif; opacity: .85; }
 .cr-followup .intent-icon { width: 100%; height: 100%; }
 .cr-followup[data-unknown='true'] { color: #c88aeb; }

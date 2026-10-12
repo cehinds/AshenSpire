@@ -16,7 +16,7 @@
 // turn start, the enemy phase's end and the play of a card (its stance).
 import { creditExchange } from './combatRounds/timeline.js';
 import { clampMomentum, decayMomentum, MOMENTUM_MAX, MOMENTUM_MIN, parseStanceAdvantage } from './combatRounds/resolver.js';
-import { moveKind, stanceFor } from './combatRoundsAdapter.js';
+import { enemyTimelineCard, moveKind, stanceFor } from './combatRoundsAdapter.js';
 import { STANCE_ADVANTAGE_CSV } from '../content/combatRounds.js';
 
 const STANCE_TABLE = parseStanceAdvantage(STANCE_ADVANTAGE_CSV);
@@ -28,6 +28,24 @@ export function momentumOn(combat) {
 
 function stateOf(combat) {
   return combat.normalPreview.state;
+}
+
+/** True when the fight carries the multi-action toggle in normal combat (combat.normalPreview.multiAction). */
+export function multiActionOn(combat) {
+  return combat?.normalPreview?.multiAction === true;
+}
+
+/**
+ * The enemy's planned actions as timeline cards, in play order: the current action first, then its planned
+ * follow-ups (combat.enemies[].plannedMoves). [] when the toggle is off, or the enemy has no action to play.
+ */
+export function enemyPlanActions(combat, enemy) {
+  if (!multiActionOn(combat) || !enemy?.alive) return [];
+  const intent = enemy.intent;
+  if (!intent?.moveId || intent.kind === 'staggered') return [];
+  const def = combat.registries.enemies.get(enemy.enemyId);
+  const head = { moveId: intent.moveId, sp: 1 };
+  return [head, ...(enemy.plannedMoves ?? [])].map((entry, i) => enemyTimelineCard(enemy, entry, i, def));
 }
 
 /** Turn start: each enemy's stored M moves one step toward 0 (the rounds decay, DESIGN.md). */

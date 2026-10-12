@@ -44,8 +44,14 @@ export function moveSp(move) {
 // fight is the scripted opener when the move set has one. The queue ends when the next pick would
 // spend more SP than is left.
 export function buildEnemyQueue(enemy, def, { isFirstTurn = false, pick }) {
-  const queue = [];
-  let spent = 0;
+  return extendEnemyQueue(enemy, def, [], { isFirstTurn, pick });
+}
+
+// Appends picks to `queue` (in place) until the enemy's SP pool is spent, and returns it. A queue that already
+// holds moves keeps them: the SP they spend counts against the pool. Normal combat's multi-action plan (SPEC §4.11)
+// tops its plan up with this, so the planned moves are the ones picked, in the order they are played.
+export function extendEnemyQueue(enemy, def, queue, { isFirstTurn = false, pick }) {
+  let spent = queue.reduce((sum, entry) => sum + entry.sp, 0);
   while (queue.length < QUEUE_MAX) {
     const opener = isFirstTurn && queue.length === 0 && def.firstMove ? def.firstMove : null;
     const moveId = opener ?? pick(enemy, def);
@@ -71,6 +77,15 @@ export function buildEnemyQueues(combat, { isFirstTurn = false, pick, held }) {
   }
   cr.enemyQueues = queues;
   return queues;
+}
+
+// Normal combat's multi-action plan (SPEC §4.11). Tops enemy.plannedMoves up to the SP pool with the same weighted pick
+// (each pick is recorded in movesHistory when it is made), then takes its head: the move this roll plays. The plan
+// is the moves the enemy plays, in order, so a planned follow-up is the action it does next. null when nothing picks.
+export function takePlannedMove(combat, enemy, def, { isFirstTurn = false, pick }) {
+  const plan = enemy.plannedMoves ?? (enemy.plannedMoves = []);
+  extendEnemyQueue(enemy, def, plan, { isFirstTurn, pick });
+  return plan.shift()?.moveId ?? null;
 }
 
 // --- Timeline mapping ------------------------------------------------------------------------

@@ -7,7 +7,7 @@ import { intentIcon } from './intentIcon.js';
 import { previewIntent, roundCardForecast } from '../../engine/combat.js';
 import { screenForecast, enemyActions, roundMomentum } from '../../engine/combatRoundsAdapter.js';
 import { targetOutline } from '../../engine/combatRounds/resolver.js';
-import { displayedMomentum, momentumOn } from '../../engine/normalPreview.js';
+import { displayedMomentum, enemyPlanActions, momentumOn, multiActionOn } from '../../engine/normalPreview.js';
 import { followUpSymbols, momentumTab, perceptionLevel, readStage, speedHint, READ_EXACT } from '../models/CombatRoundsScreenModel.js';
 
 const CLEAN = ['.cr-followups', '.cr-speed', '.cr-queue', '.cr-momentum'];
@@ -23,16 +23,19 @@ export function decorateCombatRoundsScreen(root, combat, { armedCardId = null, t
   // normal fight whose momentum toggle is on (SPEC §4.11), and reads that fight's own stored value.
   const on = Boolean(combat?.combatRounds);
   const showTab = on || momentumOn(combat);
-  const perception = on ? perceptionLevel(combat) : 0;
+  // Follow-ups show in the intent box when the multi-action toggle is on: in rounds mode the rounds rules carry it.
+  const followUpsOn = on ? combat.combatRounds.rules?.followUps === true : multiActionOn(combat);
+  const perception = on || followUpsOn ? perceptionLevel(combat) : 0;
 
   // Pass 1, reads only. The art is measured as the previous decoration left it: the follow-up symbols are added to
   // the intent box, which the sprite art does not depend on.
   const rows = [];
-  for (const enemy of on ? combat.enemies : []) {
+  for (const enemy of on || followUpsOn ? combat.enemies : []) {
     const box = root.querySelector(`.combatant.enemy[data-eid="${CSS.escape(enemy.id)}"]`);
     if (!box || !enemy.alive) continue;
     const intent = previewIntent(combat, enemy.id);
-    const row = { box, intentEl: box.querySelector('.intent'), actions: enemyActions(combat, enemy.id), stage: readStage(intent), colour: null, art: [] };
+    const actions = on ? enemyActions(combat, enemy.id) : enemyPlanActions(combat, enemy);
+    const row = { box, intentEl: box.querySelector('.intent'), actions: followUpsOn ? actions : [], stage: readStage(intent), colour: null, art: [] };
     // The target outline: only while a card is aimed, and only the visible art and the intent glyphs.
     if (armedCardId) {
       const card = roundCardForecast(combat, armedCardId, enemy.id);
@@ -51,28 +54,18 @@ export function decorateCombatRoundsScreen(root, combat, { armedCardId = null, t
   root.querySelectorAll('[data-target-outline]').forEach((node) => delete node.dataset.targetOutline);
   root.querySelectorAll('[data-cr-outline]').forEach((node) => delete node.dataset.crOutline);
   if (!on) {
+    // A normal fight: the follow-ups (multi-action toggle) and the banner tab (momentum toggle) only.
     delete root.dataset.combatRounds;
+    decorateFollowUps(rows, perception);
     if (showTab) decorateMomentumTab(root, combat, targetedId);
     return;
   }
   root.dataset.combatRounds = 'preview';
   const cr = combat.combatRounds;
 
+  decorateFollowUps(rows, perception);
   for (const row of rows) {
     const { intentEl } = row;
-    if (intentEl && row.actions.length > 1) {
-      const wrap = document.createElement('span');
-      wrap.className = 'cr-followups';
-      wrap.setAttribute('aria-hidden', 'true');
-      for (const symbol of followUpSymbols(row.actions, perception, row.stage)) {
-        const item = document.createElement('span');
-        item.className = 'cr-followup';
-        if (symbol.kind === 'action') item.append(intentIcon(symbol.icon));
-        else { item.dataset.unknown = 'true'; item.textContent = '?'; }
-        wrap.append(item);
-      }
-      intentEl.append(wrap);
-    }
     if (row.colour) {
       // Marks the enemy box, so the CSS hides the live aim halo only here (a drawn outline replaces it).
       row.box.dataset.crOutline = row.colour;
@@ -82,6 +75,7 @@ export function decorateCombatRoundsScreen(root, combat, { armedCardId = null, t
   }
 
   // Hand: the queue order on a queued card, and the speed hint against the targeted enemy when its speed is read.
+  // (Rounds mode only; the follow-ups and the outline were drawn above.)
   const targetedRead = targetedId && combat.enemies.some((e) => e.id === targetedId && e.alive)
     ? readStage(previewIntent(combat, targetedId)) : 0;
   for (const card of root.querySelectorAll('.hand .card[data-instance-id]')) {
@@ -108,6 +102,25 @@ export function decorateCombatRoundsScreen(root, combat, { armedCardId = null, t
   }
 
   decorateMomentumTab(root, combat, targetedId);
+}
+
+// The follow-up symbols of each enemy's intent box, in play order after the current action (SPEC §4.9, §4.11).
+function decorateFollowUps(rows, perception = 0) {
+  for (const row of rows) {
+    const { intentEl } = row;
+    if (!intentEl || row.actions.length < 2) continue;
+    const wrap = document.createElement('span');
+    wrap.className = 'cr-followups';
+    wrap.setAttribute('aria-hidden', 'true');
+    for (const symbol of followUpSymbols(row.actions, perception, row.stage)) {
+      const item = document.createElement('span');
+      item.className = 'cr-followup';
+      if (symbol.kind === 'action') item.append(intentIcon(symbol.icon));
+      else { item.dataset.unknown = 'true'; item.textContent = '?'; }
+      wrap.append(item);
+    }
+    intentEl.append(wrap);
+  }
 }
 
 // Momentum on the turn banner, for the targeted enemy: the decayed value, what applies to this round's order. Rounds
