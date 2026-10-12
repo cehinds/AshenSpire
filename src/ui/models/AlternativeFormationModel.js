@@ -68,7 +68,9 @@ export function alternativeFormation(plan, width, height, narrow) {
   const friendLanes = [lead, ...Array.from({ length: lanes }, (_, i) => i).filter(i => i !== lead)];
   plan.slots = [
     ...friends.map((slot, i) => ({ ...cellAt('player', 0, friendLanes[i % lanes]), id: slot.id })),
-    ...enemies.map((slot, i) => ({ ...enemyCells[i], id: slot.id })),
+    // Past the grid's capacity (12 enemy cells at six lanes) an enemy shares an
+    // occupied cell rather than losing its geometry.
+    ...enemies.map((slot, i) => ({ ...(enemyCells[i] ?? enemyCells[i % enemyCells.length]), id: slot.id })),
   ];
   plan.ground = Math.max(...plan.cells.map(c => c.ground));
   return plan;

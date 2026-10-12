@@ -104,3 +104,10 @@ test('every member of a four-player party gets a lane of their own', () => {
   assert.equal(new Set(party.map(s => s.cell)).size, 4);
   assert.equal(new Set(party.map(s => Math.round(s.x))).size, 4);
 });
+
+test('an encounter past the grid capacity keeps every enemy placed', () => {
+  const formation = alternativeFormation(plan(15), 1000, 500, false);
+  const enemies = formation.slots.filter(s => s.side === 'enemy');
+  assert.equal(enemies.length, 15);
+  assert(enemies.every(s => Number.isFinite(s.x) && Number.isFinite(s.ground) && s.box), 'no enemy loses its geometry');
+});
