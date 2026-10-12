@@ -53,6 +53,11 @@
       "SW17": "rear-weighted backward lean, long front leg, bent rear leg; shoulder-high lateral blade",
       "SW18": "narrow feet, upright torso, hands low at ribs/waist, horizontal blade left below shoulders"
     },
-    "visual_check": "SW17 has a visibly extended front leg and bent rear leg with the blade at shoulder height. SW18 is narrow and upright with low horizontal blade. The source board is preserved; this generated output redraws the sheet, so exact pixel identity of SW16/SW19/SW20 is not asserted."
+    "visual_check": "SW17 has a visibly extended front leg and bent rear leg with the blade at shoulder height. SW18 is narrow and upright with low horizontal blade. The source board is preserved; this generated output redraws the sheet, so exact pixel identity of SW16/SW19/SW20 is not asserted.",
+    "SW17_supersession": {
+      "previous_board_pose": "sheet-b.png SW17 slot has cropped right boot and lifted left rear heel; root rejected this board pose.",
+      "replacement": "sw17-replacement.png, standalone same-ID concept; gallery should use it in place of the board SW17.",
+      "replacement_sha256": "36e1eaea0b21ef33fd2f02e926c5d1819b779443bd11c964ff31665d0387b18a"
+    }
   }
 }
