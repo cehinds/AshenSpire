@@ -6231,3 +6231,14 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 /* Nine-slice the shipped vector frame: corners stay crisp while the middle
    edges stretch across any panel ratio, without SVG image letterboxing. */
 .cc-page-parts.cc-part > .cc-part-trim { display:block; box-sizing:border-box; border:12px solid transparent; border-image-slice:28; border-image-width:12px; border-image-repeat:stretch; }
+/* Native creation fields retain the same soot/brass palette as kit rows. */
+.cc-design-workspace select { color-scheme:dark; color:var(--cc-copy); background-color:var(--bg-raise,#1b1710); border:1px solid var(--line,#786443); border-radius:var(--r-2,4px); padding:10px 12px; }
+.cc-design-workspace select option { color:var(--cc-copy); background-color:var(--bg-raise,#1b1710); }
+.cc-choice-title { white-space:normal; overflow-wrap:break-word; }
+@media(max-width:600px) {
+ .customize.cc-design-workspace .cz-actions { min-width:0; max-width:100%; }
+ .customize.cc-design-workspace .cz-actions > .modal-foot-actions { display:grid!important; grid-template-columns:repeat(2,minmax(0,1fr))!important; grid-auto-flow:row; grid-auto-columns:minmax(0,1fr); width:100%!important; min-width:0!important; max-width:100%; margin:0!important; gap:8px; }
+ .customize.cc-design-workspace .cz-actions > .modal-foot-actions > button { width:100%!important; min-width:0!important; max-width:100%; white-space:normal; }
+}
+.cc-design-workspace #cz-feats-panel, .cc-design-workspace #cz-spells-panel { padding:16px; }
+@media(max-width:600px) { .cc-design-workspace #cz-feats-panel, .cc-design-workspace #cz-spells-panel { padding:12px; } }
