@@ -251,17 +251,13 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
 export function gainBarrier(ctx, entity, base, card = null) {
   if (!entity?.alive) return 0;
   const amount = computeBlockGain(ctx, entity, base, card);
-  if (entity.persistentWard && ctx.combatExpansionVersion === 2) {
+  // A MAGICAL source refills Ward first; only the overflow becomes Barrier.
+  // Every other source (a non-magic move, turn-start protection) adds Barrier alone.
+  const magical = card && (isMagicalAttack(ctx, card) || card.combatProfile?.camp === 'spell' || card.tags?.includes('camp:spell'));
+  if (entity.persistentWard && ctx.combatExpansionVersion === 2 && magical) {
     syncWardMaximum(ctx, entity);
-    const room = Math.max(0, entity.persistentWard.max - entity.persistentWard.value);
-    const refill = Math.min(room, amount);
-    if (refill > 0) {
-      entity.persistentWard.value += refill;
-      ctx.emit('persistentWardChanged', { targetId: entity.id, restored: refill, value: entity.persistentWard.value, max: entity.persistentWard.max, source: 'barrier', ...seatOf(ctx, entity) });
-    }
-    if (amount - refill <= 0) return amount;
-    entity.barrier = (entity.barrier || 0) + amount - refill;
-    ctx.emit('barrierGained', { targetId: entity.id, amount: amount - refill, total: entity.barrier, ...seatOf(ctx, entity) });
+    // restorePersistentWard refills Ward and emits the Barrier overflow itself.
+    Control.restorePersistentWard(ctx, entity, amount, { source: 'card' });
     return amount;
   }
   entity.barrier = (entity.barrier || 0) + amount;

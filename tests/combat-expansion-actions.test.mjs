@@ -185,6 +185,24 @@ test('a rating swing keeps the missing Ward fixed: a dip and recovery cannot ref
   assert.deepEqual({ ...enemy.persistentWard }, { max: 10, value: 2 }, 'recovery restores the same missing, not a full pool');
 });
 
+test('a magical Barrier gain refills Ward first and only the overflow becomes Barrier', () => {
+  const { combat, enemy } = fixture();
+  enemy.persistentWard = { max: 3, value: 1 }; enemy.barrier = 0;
+  const spell = { cardId: 'starstonePebble', damageSchool: 'fire', tags: ['camp:spell', 'maneuver:casting'],
+    combatProfile: { camp: 'spell', maneuver: 'casting', school: 'fire', damageType: 'fire', reach: 'near', targeting: 'single' } };
+  gainBarrier(combat, enemy, 6, spell);
+  assert.equal(enemy.persistentWard.value, 3, 'Ward is refilled to full first');
+  assert.equal(enemy.barrier, 4, 'the other 4 become Barrier');
+});
+
+test('a non-magical Barrier gain adds Barrier alone and leaves Ward alone', () => {
+  const { combat, enemy } = fixture();
+  enemy.persistentWard = { max: 3, value: 1 }; enemy.barrier = 0;
+  gainBarrier(combat, enemy, 6, { skipRatingBonus: true });
+  assert.equal(enemy.persistentWard.value, 1, 'a non-magic source does not refill Ward');
+  assert.equal(enemy.barrier, 6);
+});
+
 test('a rise from a full Ward pool adds the same amount to current Ward', () => {
   const { combat, enemy } = fixture();
   enemy.ratings.ward = 10; enemy.persistentWard = { max: 10, value: 10 };
