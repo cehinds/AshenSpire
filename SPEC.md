@@ -288,7 +288,7 @@ Every dynamic number is a JSON formula object evaluated by `model/formulas.js`. 
 { f: 'add', args: [ 3, { f: 'stacks', status: 'strength', of: 'self' } ] }
 ```
 
-Op set (closed): `add`, `mul` (nestable), `percentMaxHp {of, pct, min?, max?}`, `missingHp {of, max?}`, `missingMana {of, max?}`, `stacks {status, of, per?}`, `energySpent {per}`, `blockOf {of}`, `hpOf {of}`, `cardsPlayedThisTurn {per}`. Every evaluation floors its final result (StS integer math). The **same evaluator** computes card-preview numbers for the UI (§3.13, §4.2).
+Op set (closed): `add`, `mul` (nestable), `percentMaxHp {of, pct, min?, max?}`, `missingHp {of, max?}`, `missingMana {of, max?}`, `stacks {status, of, per?}`, `energySpent {per}`, `blockOf {of}`, `hpOf {of}`, `cardsPlayedThisTurn {per}`, `traitBonus {base, pct}` (Counterstrike: `base + max(floor(base × pct), 1)` for a positive base; [combat-card-traits-contract.md](docs/combat-card-traits-contract.md)). Every evaluation floors its final result (StS integer math). The **same evaluator** computes card-preview numbers for the UI (§3.13, §4.2).
 
 **Approved configurable character defaults.** These are the shipped defaults, not engine
 constants. Every base, coefficient, divisor, rounding rule, reference maximum and flat-bonus
@@ -958,7 +958,11 @@ the resist row, duration in its decay, gate in the proc row). Declared per row:
 `threshold, burstPercent (of target max HP), burstMin/burstMax, poiseDamage (per proc),
 stagger (direct), effects, resistance {status, tags}`. Schema + validator enforce every
 knob (`model/schemas.js`, `model/validate.js`); tag-scoped extra vulnerability composes
-by a declared `stacking` rule (closed enum: additive | multiplicative).
+by a declared `stacking` rule (closed enum: additive | multiplicative). **Its bonus rounds
+up** (owner, 2026-10-12): the hit's damage without the exposure floors as usual, and the
+exposure's share of it is added rounded up (`taggedBonusFloor`, `model/combatRules.js`), so a
+base-3 tagged card still gains a point; preview and hit share the one derivation. Every other
+multiplier, plain Vulnerable included, keeps its floor.
 
 **The numbers are deliberately NOT restated in this spec.** Every knob above is marked
 PROVISIONAL in its own row and is expected to move — Bleed's threshold was picked against the
@@ -975,12 +979,13 @@ node -e "import('./src/content/statuses.js').then(m=>m.statuses.filter(s=>s.proc
 |---|---|
 | **Bleed (threshold-proc)** | The build-up the Reaver's kit is written around; fleshy targets (beast/humanoid) gain a bleed-resist status after a burst. Adds Poise damage per proc. |
 | **Frost (threshold-proc)** | Deliberately the smallest burst of the three; the proc leaves **Weak** plus a tag-scoped exposure that raises `starstone`-tagged damage. |
-| **Insanity (threshold-proc)** | The largest burst and the hardest to fill; adds Poise damage **and a direct Stagger** that bypasses the meter, and leaves an exposure on `ritual`/`blight`-tagged damage. **Not** the player-side Madness below — two words, two mechanics, on purpose. |
+| **Insanity (threshold-proc)** | The largest burst and the hardest to fill; adds Poise damage **and a direct Stagger** that bypasses the meter (neither fills nor grows it) but is otherwise the same Stagger a full meter is — the skipped turn and the `staggered` status, so every Staggered-gated rider fires (owner, 2026-10-12) — and leaves an exposure on `ritual`/`blight`-tagged damage. **Not** the player-side Madness below — two words, two mechanics, on purpose. |
 | **Crimson Blight** *(`crimsonBlight`; "Scarlet Rot" pre-scrub)* | DoT on enemy: take N `loseHp` at its turn start. Unlike StS Poison, stacks **do not tick down** — instead it has a duration of **3 of its turns**, then expires entirely. Re-applying adds stacks and refreshes duration. Ignores block. |
+| **Necrotic Blight** *(`necroticBlight`)* | The status the **Necrotic** damage type applies (§4.7), and nothing else. Same tick as Crimson Blight (N `loseHp` at its turn start, ignores block, stacks do not tick down), but it **lasts the whole fight** (decay `none`; owner, 2026-10-12) — only a cleanse removes it. All other Crimson Blight (enemy moves, Herald cards, relics, flasks, equipment mods) keeps the 3-turn duration above. Herald payoffs that read Blight stacks count both rows. |
 | **Burn** *(`burn`)* | The third damage-over-time row, applied by `burn`-tagged effects and by equipment mods (`equipMods.csv`). |
 | ~~Frostbite~~ | **CUT — describes nothing.** No `frostbite` status ships; the frost identity is carried by the **Frost** threshold-proc row above and its `frostExposed` exposure. Falsify: `node -e "import('./src/content/statuses.js').then(m=>console.log(m.statuses.some(s=>s.id==='frostbite')))"` → `false`. |
 | **Madness** | On player (from enemies/curses): at turn start, lose 2 HP per stack but gain 1 energy per stack, then Madness clears. Risk/reward, mostly enemy-inflicted. |
-| **Poise / Stagger** | Every enemy has `poiseMax` (8–40 by enemy). `poiseDamage` fills the meter (shown under HP). When full: enemy becomes **Staggered** — its next turn is skipped (intent replaced by "Staggered"), it takes +50% attack damage until the end of the *player's* next turn, then meter empties and `poiseMax` ×1.25 (rounded up). Poise meter does not decay. **The player has one too** (§13.4k): its max is the one `poise` stat row (§3.5, §13.4l) + body armour + relics, impact fills it, and a fill applies `balance.stagger.player`'s statuses (2 Vulnerable, 2 Weak) and opens the next turn one action short. |
+| **Poise / Stagger** | Every enemy has `poiseMax` (8–40 by enemy). `poiseDamage` fills the meter (shown under HP). When full: enemy becomes **Staggered** — its next turn is skipped (intent replaced by "Staggered"), it takes +50% attack damage until the end of the *player's* next turn, then meter empties and `poiseMax` ×1.25 (rounded up). A direct Stagger (Insanity's proc) is the same break by the same engine path (`breakEnemy`), minus the meter step. Poise meter does not decay. **The player has one too** (§13.4k): its max is the one `poise` stat row (§3.5, §13.4l) + body armour + relics, impact fills it, and a fill applies `balance.stagger.player`'s statuses (2 Vulnerable, 2 Weak) and opens the next turn one action short. |
 
 All of the above — including the whole Elden Ring layer — are data objects in `content/statuses.js` over the generic status model (§3.7); none has engine-side special cases.
 
@@ -1029,7 +1034,7 @@ Enemy definition shape (content file):
 - Spell schools are `frost`, `fire`, `lightning`, `force`, `alteration`, `illusion`, `divine`, `decay`. School describes an authored ability family. It does not silently create a status, refund, draw or defensive effect; those remain printed effect recipes. Damage identity is independent: a physical weapon can inflict Cold, and an Alteration spell can inflict Piercing.
 - `content/source/nodes.csv`, `familyNodes.csv`, `tagFamilies.csv` and `tagging.csv` remain the only authored tag source. Namespaces `camp:*`, `maneuver:*`, `school:*` and `counter:*` prevent collisions with `classification.attack` and class stances. Each carrier has one camp, at most one maneuver and one school; a spell has one school. Counter reach is `melee`, `ranged` or `spell` and appears only on Counter carriers.
 - Enemy actions are family `enemyMove`, source `enemyMoves`, scoped by `enemyId`; their whole key is `(enemyId, moveId)`. Flattening the authored move tables for validation does not create a second move definition. Registered enemy moves receive their own joined tags; they never inherit creature identity as an attack profile.
-- Runtime `combatProfile` contains `{ camp, maneuver, school, damageType, counterMode }`. Unassigned values are `null`. Weapon-dependent cards resolve damage from equipped attack source and explicit components rather than inventing a fixed type from a card name. Active registry tags and equipment `cardTags`, including explicit empty arrays, are authoritative. Global shipped associations are not a fallback inside engine resolution for custom content. Under expanded combat (v2), a spell's reach follows its delivery (`delivery:projectile` far, `delivery:melee` contact, otherwise near) unless its expansion row or the far list sets it; legacy v1 runs are unchanged.
+- Runtime `combatProfile` contains `{ camp, maneuver, school, damageType, counterMode }`. Unassigned values are `null`. Weapon attack cards carry a fixed `damage:*` tag in `tagging.csv` that sets their damage type (owner, 2026-10-12); the equipped weapon still supplies the attack source and identity otherwise. Active registry tags and equipment `cardTags`, including explicit empty arrays, are authoritative. Global shipped associations are not a fallback inside engine resolution for custom content. Under expanded combat (v2), a spell's reach follows its delivery (`delivery:projectile` far, `delivery:melee` contact, otherwise near) unless its expansion row or the far list sets it; legacy v1 runs are unchanged.
 - Stable damage IDs remain `blunt`, `piercing`, `slashing`, `frost`, `fire`, `lightning`, `arcane`, `sacred`, `decay`. Player-facing labels for the last four renamed categories are Cold (`frost`), Force (`arcane`), Holy (`sacred`) and Necrotic (`decay`). Accepted input aliases do not create duplicate tag identities or damage components.
 
 **Physical matchups and timing**
@@ -1066,7 +1071,7 @@ Riders resolve once per committed root action (player card or enemy move) and ta
 | Lightning | Apply 1 Weak, presented as Sap, after HP loss |
 | Force | Strip up to 2 Ward; bypass melee Counter. Ward drain never spills into HP or ordinary Guard |
 | Holy | After HP loss, cleanse one stack from the attacker's first eligible hostile status in configured priority order |
-| Necrotic | Apply 1 Crimson Blight after HP loss. This is combat status buildup, not persistent run corruption |
+| Necrotic | Apply 1 Necrotic Blight after HP loss; unlike Crimson Blight (3 turns) it lasts the rest of the fight (§4.4), and Holy cleanses remove it. This is combat status buildup, not persistent run corruption |
 
 All tactical numbers remain authored/configurable; their defaults above establish the initial balance. Existing status thresholds, resistances and decay remain unchanged. Existing damage, source, delivery and theme tags retain their separate identities.
 
@@ -1105,6 +1110,15 @@ Another owned copy or a legal Replica pays for its own cast unless an authored
 family limit applies. Skills normally remain reusable; deck-added Status
 cards remain distinct from entity statuses and built-in recovery controls.
 These Power destinations do not change version-1 fights or saved snapshots.
+
+**Card traits (reaction rules version 2).** [docs/combat-card-traits-contract.md](docs/combat-card-traits-contract.md)
+defines four rank-scaled card traits, applied at runtime to new expanded runs:
+Reaction (playable during the opponent's turn), Counterstrike (+50% effectiveness,
++75% with stance advantage, each bonus at least 1), Impact N (N Poise on hit, or
+double the card's own Poise damage) and Flux N (the same for Ward). The contract
+holds the formulas, the stance-advantage table, tiers and card picks. Runs and
+snapshots on reaction rules version 1 carry no traits. This specification
+precedes the implementation.
 
 ### 4.9 Enemy knowledge, Perception and hidden-intent clues
 
@@ -1149,6 +1163,16 @@ seat, naming the first failing check (`switchOff`, `attackerStaggered`,
 disconnected seat get none. A Smash that breaks physical Guard emits
 `combatGuardBroken` once per break. Both are informational receipts and change
 no rule.
+
+**Reaction stack (reaction rules version 2).** New expanded runs snapshot
+reaction rules version 2. A seat may then answer one incoming root with several
+Reaction cards: each choice is pushed without payment and the seat is offered
+again until it passes, runs out of options or reaches the depth cap; the stack
+then resolves last played first, and the paused action last. An entry that can
+no longer be played fizzles (`combatReactionFizzled`) and pays nothing. Entries
+carry a side so enemies can react later; none do yet. The rules are in
+[docs/combat-card-traits-contract.md](docs/combat-card-traits-contract.md);
+version 1 keeps one reaction per root.
 
 ### 4.11 Combat Rounds Preview
 
