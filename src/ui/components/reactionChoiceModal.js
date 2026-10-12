@@ -11,6 +11,23 @@ export function committedReactionStack(reactionStack, groupKey) {
   return [...(reactionStack.entries || [])].reverse();
 }
 
+// What one stack entry is called in the list: the card for a player entry, or for an
+// enemy entry (docs/combat-card-traits-contract.md, "Enemy reactions") the enemy and its
+// reaction move, e.g. "Gilded Knight: Gilded Guard".
+const words = value => String(value || '').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, letter => letter.toUpperCase());
+export function reactionStackEntryName(entry, registries) {
+  if (entry?.side === 'enemy') {
+    const enemy = registries?.enemies?.get(entry.enemyId);
+    const move = enemy?.moves?.[entry.moveId]?.name || words(entry.moveId);
+    return enemy?.name ? `${enemy.name}: ${move}` : move;
+  }
+  return registries?.cards?.get(entry?.cardId)?.name || entry?.cardId || '';
+}
+
+// The card instances a seat already stacked (enemy entries hold no card).
+export const stackedCardIds = reactionStack => new Set((reactionStack?.entries || [])
+  .filter(entry => entry.side !== 'enemy').map(entry => entry.cardInstanceId));
+
 export function openReactionChoiceModal({ pending, onAnswer, onClosed, stack = [] }) {
   const stacked = Array.isArray(stack) && stack.length > 0;
   let selected = null;

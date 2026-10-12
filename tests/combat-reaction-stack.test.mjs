@@ -116,7 +116,7 @@ test('a saved stack is validated: side, owner and the offer depth must match', (
   assert.throws(() => restore(badSide), /Invalid reaction stack/);
   const enemySide = structuredClone(saved);
   enemySide.reactionStack.entries[0].side = 'enemy';
-  assert.throws(() => restore(enemySide), /Invalid reaction stack/, 'enemy entries are rejected until enemy reactions exist');
+  assert.throws(() => restore(enemySide), /Invalid reaction stack/, 'an enemy entry needs its committed plan');
   const overCap = structuredClone(saved);
   overCap.reactionRules.stack.maxDepth = 0;
   assert.throws(() => restore(overCap), /exceeds its per-seat limits/);
@@ -130,12 +130,16 @@ test('a saved stack is validated: side, owner and the offer depth must match', (
   assert.throws(() => restore(badDepth), /does not match its stack depth/);
 });
 
-test('an enemy-side stack entry is rejected', () => {
-  const { combat } = fixture({ cardIds: ['sweepingBlow', 'whirlingGuard'] });
+test('an enemy-side stack entry whose enemy is down fizzles and runs nothing', () => {
+  const { combat } = fixture({ cardIds: ['sweepingBlow', 'whirlingGuard'], enemyCount: 2 });
   dispatch(combat, { type: 'endTurn' });
   answer(combat, pick(combat, 'r0'));
-  combat.reactionStack.entries.push({ ...combat.reactionStack.entries[0], side: 'enemy' });
-  assert.throws(() => answer(combat), /Enemy reactions are not implemented/);
+  const down = combat.enemies.find(enemy => enemy.id !== combat.reactionStack.groupKey && enemy.id !== combat.pendingReaction.sourceId);
+  down.alive = false; down.hp = 0;
+  combat.reactionStack.entries.push({ side: 'enemy', ownerId: down.id, enemyId: down.enemyId, moveId: 'slash', targetPlayerId: 'player', plan: { group: {}, actions: [] } });
+  const out = answer(combat);
+  assert.ok(out.events.some(event => event.type === 'combatReactionFizzled' && event.side === 'enemy' && event.reason === 'enemyHalted'));
+  assert.equal(out.events.some(event => event.type === 'enemyMoveStarted' && event.reaction), false);
 });
 
 test('a saved stack with a depth 1 offer resumes to the same state as an unsaved run', () => {
