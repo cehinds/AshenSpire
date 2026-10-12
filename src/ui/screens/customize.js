@@ -1069,13 +1069,15 @@ export function mountCustomize(app, {
       box.append(el('div', { class: 'cc-ability-choice', dataset: { cardId: card.id } }, [face, choose]));
     }
     refresh();
-    const continueButton = button({ label: t('common.continue'), weight: 'primary', className: stage === 'spells' ? 'cc-spells-continue' : 'cc-equipment-continue' });
-    (stage === 'spells' ? spellGateRefreshers : equipmentGateRefreshers).push(refusesWhen(continueButton, abilitiesProblem));
-    continueButton.addEventListener('click', () => {
-      if (abilitiesProblem()) return;
-      if (next) openEquipmentSection(next.id); else advanceFrom(stage);
-    });
-    node.append(continueButton);
+    if (stage === 'equipment') {
+      const continueButton = button({ label: t('common.continue'), weight: 'primary', className: 'cc-equipment-continue' });
+      equipmentGateRefreshers.push(refusesWhen(continueButton, abilitiesProblem));
+      continueButton.addEventListener('click', () => {
+        if (abilitiesProblem()) return;
+        if (next) openEquipmentSection(next.id); else advanceFrom(stage);
+      });
+      node.append(continueButton);
+    }
 
     return node;
   }
@@ -1872,6 +1874,7 @@ export function mountCustomize(app, {
     paneHost.scrollTop = 0;
     selectRailItem(member);
     if (id === 'attributes') characterFold.open('primary');
+    if (id === 'equipment' && !equipmentFold?.openKey) openEquipmentSection(equipmentSectionViews[0]?.id);
     if (id === 'spells') renderSpells();
     if (id === 'feats') renderFeats();
     const plan = creationFooterPlan({ categories, current: id });
