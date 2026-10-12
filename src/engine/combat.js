@@ -1616,12 +1616,16 @@ function unqueueRoundCard(combat, { cardInstanceId }) {
 }
 
 // A card the round did not let land leaves the hand as played (its costs were paid when queued),
-// with no effects.
-function discardUnplayedCard(combat, instanceId) {
-  const idx = combat.piles.hand.findIndex((c) => c.instanceId === instanceId);
+// with no effects. It paid the discounted Mana, so the Mana-discount charges it claimed are spent with it.
+function discardUnplayedCard(combat, record) {
+  const p = combat.player;
+  if (record.claims?.length) {
+    R.consumeAbilityCharges(p, record.claims);
+    combat.emit('cardChargeConsumed', { keys: record.claims, cardId: record.cardId, sourceId: p.id });
+  }
+  const idx = combat.piles.hand.findIndex((c) => c.instanceId === record.instanceId);
   if (idx < 0) return;
   const [inst] = combat.piles.hand.splice(idx, 1);
-  const p = combat.player;
   p.counters.cardsPlayedThisTurn += 1;
   p.counters.cardsPlayedThisCombat += 1;
   const destination = combat.registries.framework.afterPlayDestination(resolveCombatCard(combat, inst));

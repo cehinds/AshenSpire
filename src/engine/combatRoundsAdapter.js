@@ -217,7 +217,7 @@ function enemySpec(enemy) {
 //   enemyTurnStart(combat)          the enemy turn start: the event and the block reset
 //   enemyOwnerTurnStart(combat, enemy)  one enemy's turn-start hooks (its DoT ticks)
 //   playCard(combat, intent, paid)  the live card effects, with no second payment
-//   discardUnplayed(combat, instanceId)  a missed card leaves the hand
+//   discardUnplayed(combat, record)  a missed card leaves the hand and spends the charges it claimed
 //   refund(combat, record)          pays back a queued card's SP and MP (it never resolved)
 //   enemyMove(combat, enemy, moveId)  the live move (or its delayed charge)
 //   drain(combat)                   drainQueue
@@ -293,7 +293,7 @@ function applyPlayerEntry(combat, entry, landed, ops) {
   const target = record.targetId == null ? null : ops.findEntity(combat, record.targetId);
   const targetLive = !record.targetId || (target && target.alive && target.hp > 0);
   if (!landed || !player.alive || player.hp <= 0 || !targetLive) {
-    ops.discardUnplayed(combat, record.instanceId);
+    ops.discardUnplayed(combat, record);
     return;
   }
   ops.playCard(combat, {
