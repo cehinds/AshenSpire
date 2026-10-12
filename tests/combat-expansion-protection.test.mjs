@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
+import { combatProfileFor } from '../src/model/combatCardProfile.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createCombat } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
@@ -32,4 +33,11 @@ test('Decoy protects ranged Single delivery but Contact and Area actions connect
   const {combat,enemy}=make();enemy.statuses.decoy={stacks:2};const hp=enemy.hp;play(combat,enemy,{reach,targeting,pressure:false});
   assert.equal(enemy.hp===hp,avoided,reach+'/'+targeting);assert.equal(enemy.statuses.decoy?.stacks,avoided?1:2,'bypassed Decoy stays until consumed or revealed');
  }
+});
+test('Decoy does not cancel Supernova, whose resolved profile is near area',()=>{
+ const supernova=contentBundle.cards.find(card=>card.id==='supernova');
+ const {combat,enemy}=make();enemy.statuses.decoy={stacks:2};const hp=enemy.hp;
+ const carrier={cardId:'supernova',tags:['camp:spell'],damageSchool:'magic',attack:{source:'spell',damageType:'arcane'},combatProfile:combatProfileFor(supernova)};
+ enqueueExpandedAction(combat,[{effect:{op:'damage',target:'enemy',amount:5,hits:3},source:combat.player,owner:combat.player,target:enemy,card:carrier,meta:{}}],{source:combat.player,target:enemy,carrier});drain(combat);
+ assert.equal(enemy.hp<hp,true,'area spell connects past Decoy');assert.equal(enemy.statuses.decoy?.stacks,2,'Decoy is not spent by an area spell');
 });

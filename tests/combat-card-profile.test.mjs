@@ -117,6 +117,23 @@ test('player spell attacks without a reach tag take reach from their delivery', 
   assert.equal(combatProfileFor(card('crystalBarrier')).reach, undefined);
 });
 
+test('area-delivered player spells take area targeting, and projectile spells do not', () => {
+  const card = id => contentBundle.cards.find(candidate => candidate.id === id);
+  for (const id of ['supernova', 'bloodHarvest']) {
+    const profile = combatProfileFor(card(id));
+    assert.equal(profile.reach, 'near', id);
+    assert.equal(profile.targeting, 'area', id);
+  }
+  assert.equal(combatProfileFor(card('cometFragment')).targeting, undefined);
+});
+
+test('physical area cards keep their profile without spell reach or targeting defaults', () => {
+  const profile = combatProfileFor(contentBundle.cards.find(candidate => candidate.id === 'cleavingBlow'));
+  assert.equal(profile.camp, 'physical');
+  assert.equal(profile.reach, undefined);
+  assert.equal(profile.targeting, undefined);
+});
+
 test('starblade phalanx is a bladed spell that strikes in contact', () => {
   const card = contentBundle.cards.find(candidate => candidate.id === 'starbladePhalanx');
   assert.equal(combatProfileFor(card).reach, 'contact');

@@ -44,6 +44,8 @@ export function combatProfileFor(carrier = {}) {
   if (!enemyId && camp === 'spell' && !reach && attacks) {
     profile.reach = tags.includes('delivery:projectile') ? 'far'
       : tags.includes('delivery:melee') ? 'contact' : 'near';
+    // An area-delivered spell strikes everything in reach, so it is area targeting too.
+    if (!targeting && tags.includes('delivery:area')) profile.targeting = 'area';
   }
   if (targeting) profile.targeting = targeting;
   const traits = [...new Set(tags.filter(tag => tag.startsWith('trait:')).map(tag => tag.slice(6)))];
