@@ -930,13 +930,26 @@ export function createRound(state, options = {}) {
   const started = beginRound(state, options);
   const entries = started.timeline.entries;
   // All the mutable round state lives in one frame, so atomically() can put it all back.
+  // Keep the resolution RNG cursor there too. The caller's injected RNG cannot generally be
+  // rewound, so values already drawn by a failed transaction stay in this private replay buffer;
+  // restoring rngIndex makes the retry consume those exact values before drawing anything new.
   const frame = {
     cur: started.cur,
     run: started.run,
     idx: 0,
     settled: false,
     pendingEvents: started.startEvents,
+    rngIndex: 0,
   };
+  const rngValues = [];
+  const replayableRng = () => {
+    const index = frame.rngIndex;
+    const value = index < rngValues.length ? rngValues[index] : options.rng();
+    if (index === rngValues.length) rngValues.push(value);
+    frame.rngIndex += 1;
+    return value;
+  };
+  const resolutionOptions = { ...options, rng: replayableRng };
   const snapshot = () => structuredClone(frame.cur);
 
   const next = () => atomically(frame, () => {
@@ -946,7 +959,7 @@ export function createRound(state, options = {}) {
     let entry = null;
     if (frame.idx < entries.length) {
       entry = entries[frame.idx];
-      applyEntry(frame.cur, entry, events, options, frame.run);
+      applyEntry(frame.cur, entry, events, resolutionOptions, frame.run);
       // The cursor moves only once this entry has resolved, so a throw leaves it on this entry.
       frame.idx += 1;
     }

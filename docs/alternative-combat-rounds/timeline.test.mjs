@@ -1524,7 +1524,13 @@ for (const [label, badPick] of [['throws', 'throw'], ['returns an ineligible car
 }
 
 test('createRound resolveAll() is atomic: a throw midway leaves the round unchanged and a retry matches a clean run', () => {
-  const twoAttacks = () => ({ queues: { goblin: [stab(1, 4), atk('stab2', 'player', 2, { damage: 2 })] }, rng: HIT_RNG });
+  // Two initiative draws, then distinct d20 rolls. The second reaction throws after the first
+  // attack has advanced the injected RNG, so the retry only matches when resolveAll also rolls
+  // its RNG cursor back and replays the first attack's draw.
+  const twoAttacks = () => ({
+    queues: { goblin: [stab(1, 4), atk('stab2', 'player', 2, { damage: 2 })] },
+    rng: seqRng([0, 0.75, 0.05, 0.95]),
+  });
   const clean = createRound(reactionFight(), { ...twoAttacks(), onReaction: () => null }).resolveAll();
   let calls = 0;
   const round = createRound(reactionFight(), {
