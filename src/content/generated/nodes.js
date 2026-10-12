@@ -5343,6 +5343,30 @@ export const nodes = [
     "blurb": "Conductive combat interaction."
   },
   {
+    "id": "trait:counterstrike",
+    "parentId": "trait",
+    "label": "Counterstrike",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "+50% effectiveness; +75% when the player's stance has advantage over the target's."
+  },
+  {
+    "id": "trait:flux",
+    "parentId": "trait",
+    "label": "Flux",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "On hit: N Ward damage, or double the Ward damage the card already deals."
+  },
+  {
     "id": "trait:grounded",
     "parentId": "trait",
     "label": "Grounded",
@@ -5353,6 +5377,18 @@ export const nodes = [
     "domain": "",
     "aside": "",
     "blurb": "Grounded combat interaction."
+  },
+  {
+    "id": "trait:impact",
+    "parentId": "trait",
+    "label": "Impact",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "On hit: N Poise damage, or double the Poise damage the card already deals."
   },
   {
     "id": "trait:insulated",
@@ -5389,6 +5425,18 @@ export const nodes = [
     "domain": "",
     "aside": "",
     "blurb": "Projectile combat interaction."
+  },
+  {
+    "id": "trait:reaction",
+    "parentId": "trait",
+    "label": "Reaction",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "Playable from hand during the opponent's turn, before the pending action resolves."
   },
   {
     "id": "trait:reveal",

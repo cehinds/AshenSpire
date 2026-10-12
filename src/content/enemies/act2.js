@@ -29,6 +29,8 @@ export const act2Enemies = [
         intent: 'buff', weight: 20, maxConsecutive: 1,
         effects: [{ op: 'applyStatus', target: 'self', status: 'strength', stacks: 2 }],
       },
+      // Enemy reaction (docs/combat-card-traits-contract.md, "Enemy reactions"): never rolled as an intent.
+      gildedGuard: { intent: 'attack', block: 6, damage: 3, reaction: { on: ['playerAction'], minIncoming: 8 } },
     },
   },
   {
@@ -148,6 +150,8 @@ export const act2Enemies = [
       flurry: { intent: 'attack', damage: 5, hits: 3, weight: 40, maxConsecutive: 2 },
       lunge: { intent: 'attack', damage: 14, weight: 30, maxConsecutive: 1 },
       riposte: { intent: 'block', counterDamage: 6, block: 10, weight: 20, maxConsecutive: 1 },
+      // Enemy reaction (docs/combat-card-traits-contract.md, "Enemy reactions"): never rolled as an intent.
+      bindingRiposte: { intent: 'attack', damage: 4, reaction: { on: ['playerReaction'], minIncoming: 0, chance: 0.5 } },
     },
   },
 

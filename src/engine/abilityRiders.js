@@ -161,8 +161,22 @@ export function priorAbilityEntity(ctx, entity, meta) {
   return meta?.abilityEntities?.[abilityEntityKey(ctx, entity)] || entity;
 }
 
+// Cards this seat already committed to the reaction stack wait to resolve; they are not discard fodder.
+function stackedInstanceIds(ctx) {
+  const seat = ctx.playerKey || 'player';
+  return new Set((ctx.reactionStack?.entries || []).filter(entry => entry.side === 'player' && entry.ownerId === seat)
+    .map(entry => entry.play?.cardInstanceId));
+}
+
+// The hand cards the choosing seat may discard: its stacked cards wait to resolve, so they are excluded.
+export function discardCandidates(ctx) {
+  const stacked = stackedInstanceIds(ctx);
+  return ctx.piles.hand.filter(card => !stacked.has(card.instanceId));
+}
+
 export function requestAbilityDiscard(ctx, action, amount) {
-  const count = Math.min(Math.max(0, amount), ctx.piles.hand.length);
+  const stacked = stackedInstanceIds(ctx);
+  const count = Math.min(Math.max(0, amount), ctx.piles.hand.filter(c => !stacked.has(c.instanceId)).length);
   if (!count) return;
   if (!ctx.pendingAbilityPlay) throw new Error('Chosen discard requires a resolving card');
   ctx.pendingAbilityDiscard = { count, playerId: ctx.playerKey || null, cardId: ctx.pendingAbilityPlay.instance.cardId };
@@ -171,7 +185,8 @@ export function requestAbilityDiscard(ctx, action, amount) {
 export function chooseAbilityDiscard(ctx, ids) {
   const pending = ctx.pendingAbilityDiscard;
   if (!pending) throw new Error('No discard choice is pending');
-  if (!Array.isArray(ids) || ids.length !== pending.count || new Set(ids).size !== ids.length || ids.some(id => !ctx.piles.hand.some(c => c.instanceId === id))) throw new Error(`Choose exactly ${pending.count} distinct cards from your hand`);
+  const stacked = stackedInstanceIds(ctx);
+  if (!Array.isArray(ids) || ids.length !== pending.count || new Set(ids).size !== ids.length || ids.some(id => stacked.has(id) || !ctx.piles.hand.some(c => c.instanceId === id))) throw new Error(`Choose exactly ${pending.count} distinct cards from your hand`);
   for (const id of ids) {
     const index = ctx.piles.hand.findIndex(c => c.instanceId === id);
     const card = ctx.piles.hand.splice(index, 1)[0];

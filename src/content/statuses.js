@@ -216,6 +216,7 @@ export const statuses = [
   },
   {
     id: 'crimsonBlight',
+    fluxPerTurn: 1,
     tint: 'var(--rot)',
     name: 'Crimson Blight',
     icon: '❀',
@@ -268,6 +269,7 @@ export const statuses = [
   // they are the ones armaments reach for (content/source/equipMods.csv does).
   {
     id: 'burn',
+    fluxPerTurn: 1,
     tint: 'var(--ember)',
     name: 'Burn',
     icon: '🔥',

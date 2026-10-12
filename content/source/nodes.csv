@@ -478,10 +478,14 @@ targeting:area,targeting,Area,9FC3E8,◇,,,,,An area action; most Counters do no
 trait:adequateReach,trait,Adequatereach,9FC3E8,◇,,,,,Adequatereach combat interaction.
 trait:closing,trait,Closing,9FC3E8,◇,,,,,Closing combat interaction.
 trait:conductive,trait,Conductive,9FC3E8,◇,,,,,Conductive combat interaction.
+trait:counterstrike,trait,Counterstrike,9FC3E8,◇,,,,,"+50% effectiveness; +75% when the player's stance has advantage over the target's."
+trait:flux,trait,Flux,9FC3E8,◇,,,,,"On hit: N Ward damage, or double the Ward damage the card already deals."
 trait:grounded,trait,Grounded,9FC3E8,◇,,,,,Grounded combat interaction.
+trait:impact,trait,Impact,9FC3E8,◇,,,,,"On hit: N Poise damage, or double the Poise damage the card already deals."
 trait:insulated,trait,Insulated,9FC3E8,◇,,,,,Insulated combat interaction.
 trait:mental,trait,Mental,9FC3E8,◇,,,,,Mental combat interaction.
 trait:projectile,trait,Projectile,9FC3E8,◇,,,,,Projectile combat interaction.
+trait:reaction,trait,Reaction,9FC3E8,◇,,,,,"Playable from hand during the opponent's turn, before the pending action resolves."
 trait:reveal,trait,Reveal,9FC3E8,◇,,,,,Reveal combat interaction.
 trait:shattering,trait,Shattering,9FC3E8,◇,,,,,Shattering combat interaction.
 trait:unavoidable,trait,Unavoidable,9FC3E8,◇,,,,,Unavoidable combat interaction.

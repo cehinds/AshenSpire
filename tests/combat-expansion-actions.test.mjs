@@ -10,10 +10,10 @@ import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/co
 
 const drainQueue = combat => { while (combat.queue.length) executeAction(combat, combat.queue.shift()); };
 
-function fixture(effects = [{ op: 'damage', target: 'enemy', amount: 5, hits: 2 }]) {
+function fixture(effects = [{ op: 'damage', target: 'enemy', amount: 5, hits: 2 }], options = {}) {
   const registries = createRegistries({ ...contentBundle, cards: contentBundle.cards.map(card => card.id === 'starstonePebble'
     ? { ...card, effects, cost: 0, manaCost: 0, upgrade: undefined } : card) });
-  const combat = createCombat({ registries, rng: createRng(801), combatExpansionVersion: 2,
+  const combat = createCombat({ registries, rng: createRng(801), combatExpansionVersion: 2, ...options,
     enemyIds: ['wanderingSoldier'], player: { classId: 'starseer', maxHp: 100, hp: 100,
       maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1,
       deck: [{ cardId: 'starstonePebble', instanceId: 'paired', upgraded: false }] } });
@@ -25,8 +25,9 @@ function fixture(effects = [{ op: 'damage', target: 'enemy', amount: 5, hits: 2 
   return { combat, enemy, registries };
 }
 
+// Pinned to reaction rules version 1: version 2 adds the spell's Flux Ward (combat-impact-flux tests).
 test('whole Spell action applies persistent Ward once across hits and preview matches the committed budget', () => {
-  const { combat, enemy } = fixture();
+  const { combat, enemy } = fixture(undefined, { reactionRulesVersion: 1 });
   const counters = combat.rng.getCounters();
   const preview = previewCard(combat, 'paired', enemy.id);
   assert.deepEqual(combat.rng.getCounters(), counters, 'preview consumes no streams');
