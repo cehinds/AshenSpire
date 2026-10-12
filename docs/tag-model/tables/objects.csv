@@ -124,3 +124,14 @@ progression-sepulchral-promise,feat,Sepulchral Promise,Feat,,,,,,feat sepulchral
 kindlingCharm,relic,Kindling Charm,Relic,,,,,,character.relic kindlingCharm,,,,,,,,,"At the start of each combat, draw {draw} extra card."
 goldleafCharm,relic,Goldleaf Charm,Relic,,,,,,character.relic goldleafCharm,,,,,,,,,"At the start of your first turn, gain {block} Block."
 emberwickCharm,relic,Emberwick Charm,Relic,,,,,,character.relic emberwickCharm,,,,,,,,,"The first time you lose HP each combat, gain {gainEnergy} Stamina."
+cinderPouch,relic,Cinder Pouch,Relic,,,,,,character.relic,,,,,,,,,Gain 25% more Cinders from combats.
+feralEye,relic,Feral Eye,Relic,,,,,,character.relic,,,,,,,,,Elites offer an extra card reward choice.
+crackedTear,relic,Cracked Tear,Relic,,,,,,character.relic,,,,,,,,,Flasks are 50% stronger (rounded up).
+sealstoneKey,relic,Sealstone Key,Relic,,,,,,character.relic,,,,,,,,,Unknown (?) locations on the map are revealed.
+emberFragment,relic,Ember Fragment,Relic,,,,,,character.relic,,,,,,,,,Resting heals 15% more.
+ancestralHorn,relic,Ancestral Horn,Relic,,,,,,character.relic,,,,,,,,,Power cards cost 1 less.
+saltedRelic,relic,Salted Relic,Relic,,,,,,character.relic,,,,,,,,,Gain 20% more Cinders from combats.
+wayfarersKnot,relic,Wayfarer's Knot,Relic,,,,,,character.relic,,,,,,,,,Gain 10% more Cinders from combats. Resting heals 10% more.
+prismaticThorn,relic,Prismatic Thorn,Relic,,,,,,character.relic,,,,,,,,,Your hits build 25% more Arcane Exposure. Flasks are 25% weaker (rounded up).
+restlessClasp,relic,Restless Clasp,Relic,,,,,,character.relic,,,,,,,,,Flasks are 100% stronger. Resting heals 50% less.
+paupersDiadem,relic,Pauper's Diadem,Relic,,,,,,character.relic,,,,,,,,,Power cards cost 1 less (minimum 0). Gain 35% fewer Cinders from combats.
