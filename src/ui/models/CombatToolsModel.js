@@ -3,6 +3,8 @@ import { behaviorModel } from './BehaviorModel.js';
 import { UI_COMPONENTS as UI } from './UiComponentId.js';
 
 export const COMBAT_LOG_SIZES = Object.freeze(['Small', 'Medium', 'Large']);
+// The size the log opens at. Small showed one line on a phone; Medium shows several.
+export const COMBAT_LOG_DEFAULT_SIZE = 'Medium';
 export function combatLogHeight({ size = 'Small', cardHeight, viewportHeight, dockTop, menuBottom, gap = 8 }) {
   const available = Math.max(0, dockTop - menuBottom - gap);
   let small = Math.min(available, cardHeight / 2);
@@ -23,7 +25,7 @@ export function combatLogDragScale({ heights, viewportHeight, handleBottom }) {
   const travel = Math.max(24, Math.min(120, viewportHeight - handleBottom - 8));
   return Math.max(1, (heights.Large - heights.Small) / travel);
 }
-export function combatToolsModel({ supported, enabled, disabled = false, open = false, size = 'Small', entries = [] }) {
+export function combatToolsModel({ supported, enabled, disabled = false, open = false, size = COMBAT_LOG_DEFAULT_SIZE, entries = [] }) {
   return componentModel(UI.combatTools, { children: [
     componentModel(UI.combatLogDrawer, { properties: { open, size, entries }, behaviors: [
       behaviorModel('toggleLog', { event: 'activate', policy: 'Read-only public receipts, grouped by round' }),

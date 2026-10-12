@@ -414,3 +414,47 @@ test('main.js gives sfx and haptics separate sinks', () => {
   assert.match(main, /haptic\.sink\s*=\s*createHaptics\(\{\s*getSettings:/, 'main.js plugs the device cue into the haptic seam');
   assert.match(main, /sfx\.sink\s*=\s*\(id\)\s*=>\s*audio\.sfx\(id\);/, 'sound ids reach audio only');
 });
+
+// Codex P2 on #1849 (a73b9fd): the paced co-op timeline's beat haptics were not
+// scoped to this screen's seats, so a teammate's self-wound (Flagellation, Grave
+// Offering) or turn start buzzed every device. ctx.isLocalPlayer scopes them;
+// absent (solo) every player receipt is local, as before.
+test('a paced co-op timeline buzzes only for its own seats; solo unchanged', async () => {
+  const { setAnimSpeed, getAnimSpeed } = await import('../src/ui/animationPace.js');
+  const { coopLocalSeat } = await import('../src/ui/screens/coop.js');
+  const listeners = {};
+  const saved = { add: globalThis.addEventListener, remove: globalThis.removeEventListener };
+  globalThis.addEventListener = (type, fn) => { (listeners[type] = listeners[type] || []).push(fn); };
+  globalThis.removeEventListener = (type, fn) => { listeners[type] = (listeners[type] || []).filter((f) => f !== fn); };
+  const fire = (type) => { for (const fn of (listeners[type] || []).splice(0)) fn(); };
+  // p2 plays a self-wounding card, then p2's turn starts.
+  const events = [
+    { type: 'cardPlayed', playerId: 'p2', sourcePlayerId: 'p2', sourceId: 'p2', cardType: 'skill', cardId: 'flagellation' },
+    { type: 'hpLost', targetId: 'p2', targetPlayerId: 'p2', amount: 3, cause: 'effect' },
+    { type: 'playerTurnStart', playerId: 'p2', turn: 2 },
+  ];
+  const run = async (speed, isLocalPlayer, skip) => {
+    const ids = [];
+    const before = haptic.sink; const was = getAnimSpeed();
+    haptic.sink = (id) => ids.push(id);
+    setAnimSpeed(speed);
+    try {
+      const ctx = { layer: { closest: () => null }, anchorFor: () => null, onFlush: () => {}, onBeatApplied: () => {}, ...(isLocalPlayer ? { isLocalPlayer } : {}) };
+      await new Promise((resolve) => {
+        playTimeline(events, ctx, resolve);
+        if (skip) { fire('pointerdown'); fire('pointerup'); }
+      });
+    } finally { haptic.sink = before; setAnimSpeed(was); }
+    return ids.filter((id) => id !== 'cardPlay').sort();
+  };
+  try {
+    for (const [speed, skip] of [['instant', false], ['normal', true], ['normal', false]]) {
+      const label = `${speed}${skip ? ' (skipped)' : ''}`;
+      assert.deepEqual(await run(speed, coopLocalSeat(['p1']), skip), [], `${label}: a teammate's wound and turn do not buzz`);
+      assert.deepEqual(await run(speed, coopLocalSeat(['p2']), skip), ['damageTaken', 'turnStart'], `${label}: the local seat's do`);
+      assert.deepEqual(await run(speed, undefined, skip), ['damageTaken', 'turnStart'], `${label}: solo (no predicate) is unchanged`);
+    }
+  } finally {
+    globalThis.addEventListener = saved.add; globalThis.removeEventListener = saved.remove;
+  }
+});

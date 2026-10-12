@@ -48,6 +48,7 @@
     "verticalInsetRem": 0.25,
     "fanAngleDegrees": 2.5,
     "arcRem": 0.6,
+    "compactDropRem": 0.3,
     "dragThresholdPx": 12
   },
   "combat": {
