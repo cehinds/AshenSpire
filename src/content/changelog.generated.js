@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1913",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Every enemy break now staggers under combat ratings",
+    "detail": "With ratings on, a break of the Poise or Ward meter, by weapon or spell, and an Insanity break now apply Staggered as well as the skipped turn, so Executioner and other Staggered payoffs fire in normal runs. Spell breaks no longer add Magic Vulnerable on top; Staggered already raises damage of every type.",
+    "build": "0.7.1.1437",
+    "pullRequest": 1913,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1913"
+  },
+  {
     "id": "pr-1918",
     "date": "2026-10-12",
     "group": "2026-10-12",
@@ -11,16 +21,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1435",
     "pullRequest": 1918,
     "url": "https://github.com/cehinds/AshenSpire/pull/1918"
-  },
-  {
-    "id": "pr-1913",
-    "date": "2026-10-12",
-    "group": "2026-10-12",
-    "summary": "Every enemy break now staggers under combat ratings",
-    "detail": "With ratings on, a break of the Poise or Ward meter, by weapon or spell, and an Insanity break now apply Staggered as well as the skipped turn, so Executioner and other Staggered payoffs fire in normal runs. Spell breaks no longer add Magic Vulnerable on top; Staggered already raises damage of every type.",
-    "build": "0.7.1.1435",
-    "pullRequest": 1913,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1913"
   },
   {
     "id": "pr-1906",
