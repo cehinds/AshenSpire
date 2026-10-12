@@ -9,9 +9,15 @@ import { createCoopCombat, endTurn, chooseReaction, chooseDiscard, playCard } fr
 import { serializeCoopCombatSnapshot, decodeCoopCombatSnapshot } from '../src/engine/coopCombatSnapshot.js';
 
 // `strike` is tagged `trait:reaction` in this bundle only (the real projection is separate work).
+// `chooseStrike` is a Strike that also makes its player discard a card, a play that pauses.
+const strikeDef = contentBundle.cards.find(card => card.id === 'strike');
+const chooseStrike = { ...strikeDef, id: 'chooseStrike', name: 'Choose Strike', effects: [...strikeDef.effects, { op: 'discard', amount: 1, choose: true }] };
+const strikeTagging = contentBundle.tagging.filter(row => row.family === 'card' && row.objectId === 'strike');
 function fixture({ version = 2, cardIds = ['guardCounter', 'sweepingBlow'], enemyCount = 1 } = {}) {
   const registries = createRegistries({ ...contentBundle,
-    tagging: [...contentBundle.tagging, { family: 'card', scope: '', objectId: 'strike', tagId: 'trait:reaction' }],
+    cards: [...contentBundle.cards, chooseStrike],
+    tagging: [...contentBundle.tagging, { family: 'card', scope: '', objectId: 'strike', tagId: 'trait:reaction' },
+      ...strikeTagging.map(row => ({ ...row, objectId: 'chooseStrike' })), { family: 'card', scope: '', objectId: 'chooseStrike', tagId: 'trait:reaction' }],
     enemies: contentBundle.enemies.map(enemy => enemy.id === 'wanderingSoldier'
       ? { ...enemy, firstMove: 'slash', moves: { slash: { intent: 'attack', damage: 1, hits: 2, weight: 1,
         tags: ['camp:physical', 'maneuver:attack', 'reach:contact', 'targeting:single'] } } } : enemy) });
@@ -135,6 +141,79 @@ test('a saved stack with a depth 1 offer resumes to the same state as an unsaved
   assert.deepEqual(json(outs[0].map(out => out.events)), json(outs[1].map(out => out.events)));
   assert.deepEqual(json(serializeCombatSnapshot(restored)), json(serializeCombatSnapshot(combat)));
   assert.deepEqual(restored.rng.getCounters(), combat.rng.getCounters());
+});
+
+test('co-op seats answer in order and the whole stack resolves last pushed first across seats', () => {
+  const { registries } = fixture();
+  const players = ['a', 'b'].map(id => ({ id, classId: 'reaver', maxHp: 100, hp: 100,
+    maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 2, combatExpansionVersion: 2,
+    deck: [{ cardId: 'sweepingBlow', instanceId: `${id}:sweep`, upgraded: false }, { cardId: 'whirlingGuard', instanceId: `${id}:guard`, upgraded: false }] }));
+  const C = createCoopCombat({ registries, rng: createRng(709), players, enemyIds: ['wanderingSoldier'], reactionRulesVersion: 2 });
+  for (const P of C.players.values()) P.entity.block = 100;
+  endTurn(C, 'a'); endTurn(C, 'b');
+  const pick = (id, instanceId) => C.pendingReaction.options.find(row => row.play.cardInstanceId === instanceId).id;
+  chooseReaction(C, 'a', { offerId: C.pendingReaction.id, optionId: pick('a', 'a:sweep') });
+  assert.equal(C.pendingReaction.ownerId, 'a');
+  // Seat a has no option left after its second push, so seat b is offered next.
+  chooseReaction(C, 'a', { offerId: C.pendingReaction.id, optionId: pick('a', 'a:guard') });
+  assert.equal(C.pendingReaction.ownerId, 'b');
+  assert.equal(C.reactionStack.entries.length, 2);
+  chooseReaction(C, 'b', { offerId: C.pendingReaction.id, optionId: pick('b', 'b:sweep') });
+  assert.equal(C.pendingReaction.ownerId, 'b');
+  const out = chooseReaction(C, 'b', { offerId: C.pendingReaction.id, optionId: pick('b', 'b:guard') });
+  const played = out.events.filter(event => event.type === 'cardPlayed').map(event => event.cardInstanceId);
+  assert.deepEqual(played, ['b:guard', 'b:sweep', 'a:guard', 'a:sweep']);
+  assert.equal(C.reactionStack, undefined);
+  assert.equal(C.pendingReaction, undefined);
+});
+
+test('a stacked play that pauses for its own discard resumes the rest of the stack', () => {
+  // Pushed: a Sweep (r0), then the discarding Strike (r1). The Strike resolves first and pauses,
+  // leaving the Sweep on the stack; the discard choice then resumes the Sweep and the attack.
+  const { combat, registries } = fixture({ cardIds: ['sweepingBlow', 'chooseStrike', 'strike'] });
+  dispatch(combat, { type: 'endTurn' });
+  answer(combat, pick(combat, 'r0'));
+  answer(combat, pick(combat, 'r1'));
+  const out = answer(combat);
+  assert.deepEqual(out.events.filter(event => event.type === 'cardPlayed').map(event => event.cardInstanceId), ['r1']);
+  assert.ok(combat.pendingAbilityDiscard);
+  assert.ok(combat.reactionResume);
+  assert.deepEqual(combat.reactionStack.entries.map(entry => entry.cardInstanceId), ['r0']);
+  const json = value => JSON.parse(JSON.stringify(value));
+  const saved = json(serializeCombatSnapshot(combat));
+  const restored = restoreCombatSnapshot({ registries, rng: createRng(combat.rng.seed, combat.rng.getCounters()), snapshot: saved });
+  const resumed = [combat, restored].map(state => dispatch(state, { type: 'chooseDiscard', cardInstanceIds: ['r2'] }));
+  assert.deepEqual(resumed[0].events.filter(event => event.type === 'cardPlayed').map(event => event.cardInstanceId), ['r0']);
+  assert.deepEqual(json(resumed[0].events), json(resumed[1].events));
+  assert.equal(combat.pendingAbilityDiscard, undefined);
+  assert.equal(combat.reactionResume, undefined);
+  assert.equal(combat.reactionStack, undefined);
+  assert.equal(combat.turn, 2);
+});
+
+test('a co-op stack saved at a depth 1 offer resumes to the same state as an unsaved run', () => {
+  const { registries } = fixture();
+  const players = ['a', 'b'].map(id => ({ id, classId: 'reaver', maxHp: 100, hp: 100,
+    maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 2, combatExpansionVersion: 2,
+    deck: [{ cardId: 'sweepingBlow', instanceId: `${id}:sweep`, upgraded: false }, { cardId: 'whirlingGuard', instanceId: `${id}:guard`, upgraded: false }] }));
+  const C = createCoopCombat({ registries, rng: createRng(709), players, enemyIds: ['wanderingSoldier'], reactionRulesVersion: 2 });
+  for (const P of C.players.values()) P.entity.block = 100;
+  endTurn(C, 'a'); endTurn(C, 'b');
+  const pick = (state, instanceId) => state.pendingReaction.options.find(row => row.play.cardInstanceId === instanceId).id;
+  chooseReaction(C, 'a', { offerId: C.pendingReaction.id, optionId: pick(C, 'a:sweep') });
+  const json = value => JSON.parse(JSON.stringify(value));
+  const saved = json(serializeCoopCombatSnapshot(C));
+  const restored = createCoopCombat({ registries, rng: createRng(709, C.rng.getCounters()), players, enemyIds: [], snapshot: json(saved) });
+  const decoded = state => decodeCoopCombatSnapshot(serializeCoopCombatSnapshot(state));
+  assert.deepEqual(decoded(restored), decoded(C));
+  const outs = [C, restored].map(state => {
+    chooseReaction(state, 'a', { offerId: state.pendingReaction.id, optionId: pick(state, 'a:guard') });
+    chooseReaction(state, 'b', { offerId: state.pendingReaction.id, optionId: pick(state, 'b:sweep') });
+    return chooseReaction(state, 'b', { offerId: state.pendingReaction.id, optionId: pick(state, 'b:guard') });
+  });
+  assert.deepEqual(json(outs[0].events), json(outs[1].events));
+  assert.deepEqual(decoded(restored), decoded(C));
+  assert.deepEqual(restored.rng.getCounters(), C.rng.getCounters());
 });
 
 test('a seat stops at maxDepth, so the fifth copy is never offered', () => {
