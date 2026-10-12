@@ -1567,9 +1567,8 @@
 .formation-grid[data-perspective='true'] .formation-grid-cell { transform: none; }
 .formation-grid[data-perspective='true'] .formation-grid-outline { display: none; }
 .formation-grid[data-perspective='true'] .formation-grid-cell span { display: none; }
-.formation-grid[data-perspective='true'] .formation-grid-cell {
-  border: 1px solid color-mix(in srgb, var(--grid-stroke) 35%, transparent);
-}
+/* Owner (2026-10-12): no grid lines; only the foot shadows mark the cells. */
+.formation-grid[data-perspective='true'] .formation-grid-cell { border: 0; }
 .formation-grid[data-perspective='true'] .formation-grid-cell::before {
   content: ''; position: absolute; left: 50%; top: var(--foot-y, 70%);
   width: min(58%, 112px); aspect-ratio: 4 / 1; translate: -50% -50%; border-radius: 50%;
