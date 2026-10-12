@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "id": "VK-G",
+  "tool": "image_gen.imagegen",
+  "rawSha256": "b2aa2e1f60bd82f922914ecfbaff4a2e97bdc0f68ecf101c85dc3f5a33f47fb0",
+  "rawDimensions": [
+    2172,
+    724
+  ],
+  "alphaExtrema": [
+    0,
+    255
+  ],
+  "seedPath": "pose-studio/stances/update-stances/sequence-review/frames/S.webp",
+  "seedSha256": "9abfefe7258a3bfa2238e7c0516396c61baa5ca009a649b8408183b91fcdf6e2",
+  "frameCount": 5,
+  "frameSize": [
+    768,
+    768
+  ],
+  "sharedActionScale": 1.1002949852507375,
+  "groundY": 658,
+  "seedPlacement": [
+    128,
+    192
+  ],
+  "extraction": [
+    {
+      "frame": 2,
+      "bounds": [
+        443,
+        239,
+        762,
+        550
+      ],
+      "rawGround": 549,
+      "placement": [
+        208,
+        317
+      ]
+    },
+    {
+      "frame": 3,
+      "bounds": [
+        964,
+        205,
+        1303,
+        541
+      ],
+      "rawGround": 539,
+      "placement": [
+        198,
+        291
+      ]
+    },
+    {
+      "frame": 4,
+      "bounds": [
+        1352,
+        256,
+        1769,
+        553
+      ],
+      "rawGround": 548,
+      "placement": [
+        154,
+        337
+      ]
+    }
+  ],
+  "bookends": "Original S decoded RGBA pixels padded without resize; identical 01/05 containers, different from source S container",
+  "normalizationNotes": "Alpha-connected whole-figure extraction; one action scale per strip; grounded contacts calibrated; airborne frame3 preserves height above landing raw ground, not independently floored",
+  "status": "director_accepted_for_option_review",
+  "runtimeChanged": false,
+  "catalogId": "SM07",
+  "motif": "Lateral pole-vault",
+  "frameSlots": [
+    "S",
+    "action-2",
+    "action-3",
+    "action-4",
+    "S"
+  ],
+  "uniqueActionPaintings": 3,
+  "unchangedGeneratedOriginal": "/workspace/generated_images/exec-041e1427-88b9-417e-8158-023b18c94999.png",
+  "initialGeneration": "/workspace/generated_images/exec-c09605c4-ed4f-4de2-b5e1-43e47bd8e31e.png",
+  "promptFiles": [
+    "orientation-repair.prompt.txt",
+    "prompt.txt"
+  ],
+  "inputCanvasSha256": "c284d5b4b8c9f97b162dd1530c027510d4d32dfe3b1ecb7fe8a89e7d5cbdfb3b",
+  "reviewScope": "Animation option concepts only; not runtime adoption",
+  "normalizationAlphaHandling": "Isolate each large alpha-connected figure and nearby fringe within5pixels; omit disconnected far specks; do not alter original S bookends",
+  "qa": "Independent read-only agent: fifty768RGBA frames, ten5frameGIFs, exactSbookends, fullbodyweapon margins, airbornefeet aboveground; repaired G orientation checked separately",
+  "fileSha256": {
+    "frames/01.png": "45e710d9e001eb9f7e1b1b0f42296564c30a5b556169e4000cb7eb0194a0ae41",
+    "frames/02.png": "e4455381335c35c34631cc4d0d6175d2ba6f5756e9de124ca79ed3840772f45a",
+    "frames/03.png": "03c4de25165c079e7749772d464d56507e5742a0ee38be64b6bcbb9f49936ae0",
+    "frames/04.png": "545f34d47e4d6b6b81265e93e3a7cda75ee639b5a029a7fd2cd7aa21c5f61602",
+    "frames/05.png": "45e710d9e001eb9f7e1b1b0f42296564c30a5b556169e4000cb7eb0194a0ae41",
+    "orientation-repair.prompt.txt": "7fcd071a2bdbd0da6f5c8271db6f296b6045b68fc135f228a810ac544753586b",
+    "preview.gif": "1a4e57f9a9ae4d22b66d6c59016fa3dfec8cce2b9cfe5be88bce24155b92381e",
+    "preview.png": "f0187f9c5feba1ab7b8bbe4da8b4e219fe18e642a8fde6dd947d1607ad84929a",
+    "prompt.txt": "f2e289b890d904fece7fa8689cccce1aad725339581f6d61d41558395596310a",
+    "raw-before-orientation-repair.png": "af3061325b8a51fa1546b12e879fa7fb38ca6a877279954c2813d777b9c6c0c5",
+    "raw.png": "b2aa2e1f60bd82f922914ecfbaff4a2e97bdc0f68ecf101c85dc3f5a33f47fb0"
+  }
+}
