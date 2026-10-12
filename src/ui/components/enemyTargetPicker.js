@@ -47,8 +47,11 @@ function watchTargetPlacement(host, picker) {
       // The stage trims .sprite to the painted ink (its marginTop drops the
       // transparent canvas); the img inside keeps that padding, so centre on .sprite.
       const rect = (figure?.querySelector('.sprite') || figure)?.getBoundingClientRect();
+      // The box's bottom sits on the foe's ground anchor (its shadow point, groundY).
+      const groundY = parseFloat(figure?.dataset.groundY);
       return { id: button.dataset.eid, x: rect ? rect.left + rect.width / 2 - box.left : box.width / 2,
-        y: rect ? rect.top + rect.height / 2 - box.top : box.height / 2 };
+        y: rect ? rect.top + rect.height / 2 - box.top : box.height / 2,
+        ...(Number.isFinite(groundY) ? { ground: groundY - box.top } : {}) };
     });
     const placements = enemyTargetGrid({ width: box.width, height: box.height, targets, obstacles, hardObstacles });
     const placed = new Set(placements.map(placement => placement.id));
