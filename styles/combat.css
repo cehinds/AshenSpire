@@ -445,7 +445,9 @@
   position: absolute; translate: -50% -100%; z-index: 0; white-space: nowrap;
   font-family: var(--font-display); font-weight: 800; font-size: 2.8rem; letter-spacing: 0.08em;
   color: var(--gold); pointer-events: none;
-  text-shadow: var(--hud-text-shadow, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000);
+  text-shadow: var(--hud-text-shadow, 0 0 3px #000, 0 2px 5px #000);
+  /* A 1px outline under the HUD shadow (owner, 2026-10-12). */
+  -webkit-text-stroke: 1px #000; paint-order: stroke fill;
   animation: callout-rise var(--fx-callout-ms, 900ms) ease-out forwards,
     callout-glow var(--fx-callout-ms, 900ms) ease-out forwards;
 }
