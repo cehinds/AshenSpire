@@ -148,7 +148,7 @@ test('the paced frames move the Barrier, Ward and Poise badges with each hit, no
   assert.match(pace, /if \(event\.wardRemaining !== undefined && target\.persistentWard\) target\.persistentWard\.value = event\.wardRemaining;/);
   assert.match(pace, /if \(event\.poiseRemaining !== undefined && target\.persistentPoise\) target\.persistentPoise\.value = event\.poiseRemaining;/);
   assert.match(pace, /if \(event\.type === 'barrierGained' && target && event\.total !== undefined\) target\.barrier = event\.total;/);
-  assert.match(pace, /if \(event\.type === 'persistentWardChanged' && target\?\.persistentWard\)/);
+  assert.match(pace, /if \(\(event\.type === 'persistentWardChanged' \|\| event\.type === 'combatWardStripped'\) && target\?\.persistentWard && Number\.isFinite\(event\.value\)\)/);
   assert.match(pace, /if \(event\.type === 'persistentPoiseChanged' && target\?\.persistentPoise\)/);
 });
 

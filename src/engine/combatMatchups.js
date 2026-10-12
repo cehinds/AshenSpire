@@ -128,7 +128,8 @@ export function stripCombatWard(ctx, source, target, amount) {
     if (!ward) return 0;
     const stripped = Math.min(Math.max(0, ward.value), Math.max(0, Math.floor(amount)));
     ward.value -= stripped;
-    if (stripped) ctx.emit?.('combatWardStripped', { ...seats(ctx, source, target), sourceId: source?.id, sourceKind: source?.kind, targetId: target.id, amount: stripped });
+    // value and max carry the remaining Ward, so the paced reducers can move the badge as the hit does.
+    if (stripped) ctx.emit?.('combatWardStripped', { ...seats(ctx, source, target), sourceId: source?.id, sourceKind: source?.kind, targetId: target.id, amount: stripped, value: ward.value, max: ward.max });
     if (stripped && ward.value === 0) breakPersistentWard(ctx, target, { sourceId: source?.id });
     return stripped;
   }

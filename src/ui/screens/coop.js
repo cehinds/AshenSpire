@@ -2166,7 +2166,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           if (event.poiseRemaining !== undefined && target.persistentPoise) target.persistentPoise.value = event.poiseRemaining;
         }
         if (event.type === 'barrierGained' && target && event.total !== undefined) target.barrier = event.total;
-        if (event.type === 'persistentWardChanged' && target?.persistentWard) {
+        if ((event.type === 'persistentWardChanged' || event.type === 'combatWardStripped') && target?.persistentWard && Number.isFinite(event.value)) {
           target.persistentWard.value = event.value;
           if (Number.isFinite(event.max)) target.persistentWard.max = event.max;
         }
