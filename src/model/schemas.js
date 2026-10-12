@@ -786,6 +786,7 @@ export const SCHEMAS = Object.freeze({
     defensiveReaction: opt(bool),
     counterPayload: opt(any),
     evade: opt(any),
+    traitValues: opt(any),
     upcast: opt(any),
     usableWhile: opt(arr(str)),
     projectile: opt(bool),
@@ -896,6 +897,7 @@ export const SCHEMAS = Object.freeze({
     name: str,
     icon: opt(str),
     tint: opt(str), // status-pip accent CSS color (display; proc bars tint from this too)
+    fluxPerTurn: opt(int), // reaction rules v2: Ward damage at the owner's turn start (combat effect not wired yet)
     stackMode: en(...STACK_MODES),
     stacking: opt(obj({ mode: en('add', 'refresh', 'replace', 'strongest', 'independent', 'unique'), cap: int,
       duration: opt(int), clock: opt(en('ownerTurnStart', 'ownerTurnEnd')), refresh: opt(bool) })),
