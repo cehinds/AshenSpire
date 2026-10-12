@@ -54,7 +54,7 @@
     "briefedBaseConcepts": 20,
     "generatedConceptsAtDefinitionTime": 20,
     "reviewedConceptsAtDefinitionTime": 20,
-    "selectedConceptsAtDefinitionTime": 0,
+    "selectedConceptsAtDefinitionTime": 5,
     "registeredSequencesAtDefinitionTime": 0,
     "frameCount": "Unspecified until selected concepts receive per-action phase and in-between plans; a storyboard panel is not a registered frame.",
     "coreRequestedHeldMagicConceptsPlanned": 200,
@@ -67,8 +67,10 @@
     "conceptDirectorReviewed": 20,
     "conceptSelectable": 19,
     "conceptNeedsRevision": 1,
-    "userSelected": 0,
-    "productionApproved": 0
+    "userSelected": 5,
+    "productionApproved": 0,
+    "selectedRoleAssignments": 5,
+    "productionApprovalMeaning": "Technical export/runtime acceptance, distinct from explicit user authorization to use selected poses."
   },
   "normalization": {
     "dagger": "single_dagger",
@@ -443,7 +445,7 @@
       "conceptDirectorReviewed": 20,
       "conceptSelectable": 19,
       "conceptNeedsRevision": 1,
-      "userSelected": 0,
+      "userSelected": 5,
       "productionApproved": 0
     },
     {
@@ -523,7 +525,7 @@
       "conceptCountBriefed": 10,
       "conceptCountGenerated": 10,
       "conceptCountReviewed": 10,
-      "conceptCountSelected": 0,
+      "conceptCountSelected": 1,
       "registeredSpriteSequenceCount": 0,
       "classAdapters": [
         "reaver",
@@ -536,7 +538,7 @@
         "magic"
       ],
       "feasibilityStatus": "existing_action_reference",
-      "status": "director_reviewed_concept_set_with_one_revision",
+      "status": "contains_user_selected_poses_pending_delivery",
       "optionSpecifications": [
         {
           "id": "greatsword-guard_break-01",
@@ -666,7 +668,7 @@
           "artistOptionNumber": 6,
           "sheet": "B",
           "rowMajorOccupiedCell": 1,
-          "status": "director_reviewed_selectable_concept",
+          "status": "user_selected_authorized_for_use_pending_delivery_validation",
           "artPaths": [
             "pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-b.png"
           ],
@@ -679,9 +681,10 @@
           },
           "conceptDirectorReviewed": true,
           "selectableForUserComparison": true,
-          "userSelected": false,
+          "userSelected": true,
           "productionApproved": false,
-          "canonicalGenerationPrompt": "pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-b-prompt.md"
+          "canonicalGenerationPrompt": "pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-b-prompt.md",
+          "selectedTargetRole": "guard_break"
         },
         {
           "id": "greatsword-guard_break-07",
@@ -786,7 +789,7 @@
       "conceptDirectorReviewed": 10,
       "conceptSelectable": 9,
       "conceptNeedsRevision": 1,
-      "userSelected": 0,
+      "userSelected": 1,
       "productionApproved": 0,
       "provenancePath": "pose-studio/stances/update-stances/guard-break/provenance.json"
     },
@@ -1033,7 +1036,7 @@
       "conceptCountBriefed": 10,
       "conceptCountGenerated": 10,
       "conceptCountReviewed": 10,
-      "conceptCountSelected": 0,
+      "conceptCountSelected": 4,
       "registeredSpriteSequenceCount": 0,
       "classAdapters": [
         "reaver",
@@ -1046,7 +1049,7 @@
         "magic"
       ],
       "feasibilityStatus": "existing_action_reference",
-      "status": "director_reviewed_concept_candidates",
+      "status": "contains_user_selected_poses_pending_delivery",
       "optionSpecifications": [
         {
           "id": "greatsword-smash_stance-01",
@@ -1124,7 +1127,7 @@
           "artistOptionNumber": 4,
           "sheet": "A",
           "rowMajorOccupiedCell": 4,
-          "status": "director_reviewed_selectable_concept",
+          "status": "user_selected_authorized_for_use_pending_delivery_validation",
           "artPaths": [
             "pose-studio/stances/update-stances/greatsword-smash/sheet-a.png"
           ],
@@ -1137,8 +1140,9 @@
           },
           "conceptDirectorReviewed": true,
           "selectableForUserComparison": true,
-          "userSelected": false,
-          "productionApproved": false
+          "userSelected": true,
+          "productionApproved": false,
+          "selectedTargetRole": "sweep"
         },
         {
           "id": "greatsword-smash_stance-05",
@@ -1147,7 +1151,7 @@
           "artistOptionNumber": 5,
           "sheet": "A",
           "rowMajorOccupiedCell": 5,
-          "status": "director_reviewed_selectable_concept",
+          "status": "user_selected_authorized_for_use_pending_delivery_validation",
           "artPaths": [
             "pose-studio/stances/update-stances/greatsword-smash/sheet-a.png"
           ],
@@ -1160,8 +1164,9 @@
           },
           "conceptDirectorReviewed": true,
           "selectableForUserComparison": true,
-          "userSelected": false,
-          "productionApproved": false
+          "userSelected": true,
+          "productionApproved": false,
+          "selectedTargetRole": "smash"
         },
         {
           "id": "greatsword-smash_stance-06",
@@ -1170,7 +1175,7 @@
           "artistOptionNumber": 6,
           "sheet": "B",
           "rowMajorOccupiedCell": 1,
-          "status": "director_reviewed_selectable_concept",
+          "status": "user_selected_authorized_for_use_pending_delivery_validation",
           "artPaths": [
             "pose-studio/stances/update-stances/greatsword-smash/sheet-b.png"
           ],
@@ -1183,8 +1188,9 @@
           },
           "conceptDirectorReviewed": true,
           "selectableForUserComparison": true,
-          "userSelected": false,
-          "productionApproved": false
+          "userSelected": true,
+          "productionApproved": false,
+          "selectedTargetRole": "counter"
         },
         {
           "id": "greatsword-smash_stance-07",
@@ -1216,7 +1222,7 @@
           "artistOptionNumber": 8,
           "sheet": "B",
           "rowMajorOccupiedCell": 3,
-          "status": "director_reviewed_selectable_concept",
+          "status": "user_selected_authorized_for_use_pending_delivery_validation",
           "artPaths": [
             "pose-studio/stances/update-stances/greatsword-smash/sheet-b.png"
           ],
@@ -1229,8 +1235,9 @@
           },
           "conceptDirectorReviewed": true,
           "selectableForUserComparison": true,
-          "userSelected": false,
-          "productionApproved": false
+          "userSelected": true,
+          "productionApproved": false,
+          "selectedTargetRole": "evade"
         },
         {
           "id": "greatsword-smash_stance-09",
@@ -1285,7 +1292,7 @@
       "conceptDirectorReviewed": 10,
       "conceptSelectable": 10,
       "conceptNeedsRevision": 0,
-      "userSelected": 0,
+      "userSelected": 4,
       "productionApproved": 0
     },
     {
@@ -3307,6 +3314,83 @@
       "magicTreatmentScopeStatus": "proposed_backfill"
     }
   ],
-  "snapshotStatus": "frozen_concept_review_snapshot:20_generated,20_director_reviewed,19_selectable,1_needs_revision,0_user_selected,0_production_approved,0_registered",
-  "artReviewPath": "docs/design/update-stances/art-review.md"
+  "snapshotStatus": "20_generated,20_director_reviewed,19_selectable,1_needs_revision,5_user_selected_role_assignments; runtime_delivery_and_merge_pending_confirmation",
+  "artReviewPath": "docs/design/update-stances/art-review.md",
+  "userDecisions": {
+    "status": "explicit_numeric_selections_authorized_for_use_and_merge",
+    "scope": "Reaver greatsword held/reaction poses; no full animation sequence or four-class coverage implied.",
+    "canonicalCropManifest": "pose-studio/stances/update-stances/selections.json",
+    "assignments": [
+      {
+        "targetRole": "sweep",
+        "sourceGalleryFamily": "smash",
+        "sourceOptionNumber": 4,
+        "sourceGalleryId": "reaver-greatsword-smash-04",
+        "sourceMatrixId": "greatsword-smash_stance-04",
+        "authorizedForUse": true
+      },
+      {
+        "targetRole": "counter",
+        "sourceGalleryFamily": "smash",
+        "sourceOptionNumber": 6,
+        "sourceGalleryId": "reaver-greatsword-smash-06",
+        "sourceMatrixId": "greatsword-smash_stance-06",
+        "authorizedForUse": true
+      },
+      {
+        "targetRole": "guard_break",
+        "sourceGalleryFamily": "guard-break",
+        "sourceOptionNumber": 6,
+        "sourceGalleryId": "reaver-greatsword-guard-break-06",
+        "sourceMatrixId": "greatsword-guard_break-06",
+        "authorizedForUse": true
+      },
+      {
+        "targetRole": "evade",
+        "sourceGalleryFamily": "smash",
+        "sourceOptionNumber": 8,
+        "sourceGalleryId": "reaver-greatsword-smash-08",
+        "sourceMatrixId": "greatsword-smash_stance-08",
+        "authorizedForUse": true
+      },
+      {
+        "targetRole": "smash",
+        "sourceGalleryFamily": "smash",
+        "sourceOptionNumber": 5,
+        "sourceGalleryId": "reaver-greatsword-smash-05",
+        "sourceMatrixId": "greatsword-smash_stance-05",
+        "authorizedForUse": true
+      }
+    ],
+    "contextImages": "Image1 showing guard-break03 is reference context only, not an extra explicit numeric selection.",
+    "mergeAuthorization": "User explicitly requested use and merge; implementation/merge work is handled separately.",
+    "runtimeStatus": "pending_parent_confirmation",
+    "soloGameplayValidation": "not_yet_confirmed"
+  },
+  "nextExpansion": {
+    "status": "authorized_separate_pass_after_selected_delivery_merge",
+    "weaponGroup": "greatsword",
+    "classPilot": "reaver",
+    "families": [
+      {
+        "id": "sweep",
+        "conceptCountPlanned": 10,
+        "conceptCountGenerated": 0
+      },
+      {
+        "id": "counter",
+        "conceptCountPlanned": 10,
+        "conceptCountGenerated": 0
+      },
+      {
+        "id": "evade",
+        "conceptCountPlanned": 10,
+        "conceptCountGenerated": 0
+      }
+    ],
+    "conceptCountPlanned": 30,
+    "conceptCountGenerated": 0,
+    "relationshipToBaseline": "Separate requested follow-up exploration; does not complete or replace the 600-option baseline or all counter delivery modes.",
+    "requiresAdditionalApprovalBeforeBeginning": false
+  }
 }

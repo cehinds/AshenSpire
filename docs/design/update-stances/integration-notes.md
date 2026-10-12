@@ -1,5 +1,11 @@
 # Update Stances — implementation audit and future integration
 
+> Historical audit of `d2ca46813`, superseded in part by `dev` through
+> `5b3a005f0`. The newer runtime previews armed cards on the body, provides a
+> Smash wind-up hold, and retains the last confirmed stance across turn starts.
+> Preserve those newer contracts. See [delivery-status.md](delivery-status.md)
+> for the owner's October 12 selections and the current integration status.
+
 Read-only runtime audit on `Feature/UpdateStances`, baseline `d2ca46813`, 2026-10-11 (America/Anchorage). This document is the only implementation-audit output; it does not install art or change gameplay.
 
 The current task is art exploration first: ten shared concepts **per weapon group per requested family**, followed by adaptations for Reaver, Rogue, Starseer and Herald. The weapon groups are sword and shield, greatsword, staff, bow, dagger, dual daggers, single sword, spear, halberd and unarmed. The six-family baseline (guard break, Smash stance, Smash attack sequence, melee Counter, ranged Counter, magic Counter) is **10 concepts × 10 weapon groups × 6 families = 600 shared concepts**; adapting every concept to all four classes would produce 2,400 class-specific cells. Magic stance variants are additional coverage. These are planned coverage counts, not claims that artwork is complete. Weapon choice determines the physical choreography; class determines the character appearance. A class's historical reference weapon is not an authorization to substitute it for the equipped weapon.

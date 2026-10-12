@@ -14,8 +14,16 @@ const families = [
     names: ['Collapsed sword-point support', 'Ground drag + thigh catch', 'Palm catch + rear drag', 'Sideways open guard / crossing blade', 'Dropped greatsword / slack arms', 'Thigh-clutch / chest blow', 'Recoiled hanging blade', 'Slumped shoulder carry', 'Hanging rear drag', 'Backward heel collapse / floor drag'],
   },
 ];
+// Confirmed decisions persist in the repository; browser favorites do not replace them.
+const confirmedRoles = new Map([
+  ['reaver-greatsword-smash-04', 'Sweep'],
+  ['reaver-greatsword-smash-06', 'Counter'],
+  ['reaver-greatsword-guard-break-06', 'Guard-break'],
+  ['reaver-greatsword-smash-08', 'Evade'],
+  ['reaver-greatsword-smash-05', 'Smash'],
+]);
 const STORAGE_KEY = 'ashenspire.update-stances.review.v1';
-const selections = new Set();
+const selections = new Set(confirmedRoles.keys());
 const sheetStates = new Map();
 const cards = new Map();
 const allOptions = families.flatMap(family => family.names.map((name, index) => ({
@@ -27,8 +35,11 @@ const validIds = new Set(allOptions.map(option => option.id));
 const status = document.querySelector('#review-status');
 let storageAvailable = true;
 try {
-  const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-  if (Array.isArray(saved)) for (const id of saved) if (validIds.has(id)) selections.add(id);
+  const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+  if (Array.isArray(saved)) {
+    selections.clear();
+    for (const id of saved) if (validIds.has(id)) selections.add(id);
+  }
 } catch { storageAvailable = false; }
 
 function node(tag, className, text) {
@@ -53,10 +64,13 @@ function makeCard(option) {
   card.type = 'button'; card.disabled = true;
   card.dataset.optionId = option.id;
   card.setAttribute('aria-pressed', String(selections.has(option.id)));
-  card.setAttribute('aria-label', `${option.number}. ${option.name}, Reaver, greatsword, ${option.family}. ${option.revision ? 'Needs revision. ' + option.revision : 'Select favorite.'}`);
+  const confirmedRole = confirmedRoles.get(option.id);
+  if (confirmedRole) card.dataset.confirmedRole = confirmedRole.toLowerCase();
+  card.setAttribute('aria-label', `${option.number}. ${option.name}, Reaver, greatsword, ${option.family}. ${confirmedRole ? 'User selected for ' + confirmedRole + '. ' : ''}${option.revision ? 'Needs revision. ' + option.revision : 'Toggle browser favorite.'}`);
   const label = node('span', 'concept-label');
   label.append(node('span', 'concept-number', String(option.number).padStart(2, '0')), node('span', 'concept-name', option.name));
   card.append(label, node('span', 'pick-mark', '✓'));
+  if (confirmedRole) card.append(node('span', 'concept-note', 'User selected for ' + confirmedRole));
   if (option.note) card.append(node('span', 'concept-note', option.note));
   if (option.revision) { card.classList.add('needs-revision'); card.append(node('span', 'revision-note', 'Needs revision · ' + option.revision)); }
   card.addEventListener('click', () => {
@@ -116,7 +130,7 @@ function loadSheets() {
     image.onload = () => {
       state.loaded = true; state.ready = state.reviewStatus !== 'needs-review';
       state.button.disabled = false;
-      state.status.textContent = state.ready ? 'Concept candidate · not registered or cropped' : 'Candidate awaiting art review · selection paused';
+      state.status.textContent = state.ready ? 'Director-reviewed concepts · selected delivery evidence tracked separately' : 'Candidate awaiting art review · selection paused';
       image.alt = `Reaver greatsword ${state.family.toLowerCase()}, options ${state.sheetIndex * 5 + 1}–${state.sheetIndex * 5 + 5} in reading order. Full unchanged source sheet.`;
       image.className = 'source-image'; state.view.replaceChildren(image);
       for (const option of allOptions.filter(option => option.sheet === path)) {
@@ -138,10 +152,10 @@ for (const filter of document.querySelectorAll('.filters select')) filter.addEve
   for (const section of document.querySelectorAll('.family')) section.hidden = family !== 'all' && section.dataset.family !== family;
 });
 document.querySelector('#clear-choices').addEventListener('click', () => {
-  selections.clear(); saveChoices(); updateChoices(); announce('Favorites cleared.');
+  selections.clear(); saveChoices(); updateChoices(); announce('Browser favorites cleared. The five confirmed role selections remain recorded.');
 });
 document.querySelector('#copy-choices').addEventListener('click', async () => {
-  const payload = JSON.stringify({ review: 'update-stances', stage: 'pose-exploration', choices: allOptions.filter(option => selections.has(option.id)).map(option => ({ ...option, sourceStatus: option.revision ? 'needs-revision' : sheetStates.get(option.sheet)?.ready ? 'concept-candidate' : 'unavailable-or-awaiting-review' })) }, null, 2);
+  const payload = JSON.stringify({ review: 'update-stances', stage: 'selected-delivery', confirmedRoleSelections: [...confirmedRoles].map(([sourceId, targetRole]) => ({ sourceId, targetRole })), selectionManifest: 'selections.json', browserFavorites: allOptions.filter(option => selections.has(option.id)).map(option => ({ ...option, sourceStatus: option.revision ? 'needs-revision' : sheetStates.get(option.sheet)?.ready ? 'concept-candidate' : 'unavailable-or-awaiting-review' })) }, null, 2);
   let copyTimeout;
   try {
     await Promise.race([navigator.clipboard.writeText(payload), new Promise((_, reject) => { copyTimeout = setTimeout(() => reject(new Error('Clipboard did not respond')), 1500); })]);

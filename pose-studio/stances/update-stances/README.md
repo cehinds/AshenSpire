@@ -2,11 +2,23 @@
 
 Art exploration on `Feature/UpdateStances`, October 11, 2026 (America/Anchorage).
 
-This first review contains **20 drafted greatsword pose concepts for Reaver**, with **19 selectable candidates**: ten Smash loading stances and ten guard-break reactions. The full baseline remains **600 shared concepts planned**: ten options per weapon group per family, across ten weapon groups and six families. Class adaptations to Reaver, Rogue, Starseer and Herald follow selected directions; those four appearances are not four additional choices. Magic stance variations are additional scope. These are concept candidates, not cropped/registered game sprites or animation sequences.
+This review contains **20 generated and director-reviewed greatsword pose concepts for Reaver**, with **19 selectable candidates**: ten Smash loading stances and ten guard-break reactions. The user selected five role mappings and authorized their use and merge. The full baseline remains **600 weapon-specific concepts planned**: ten options per weapon group per family, across ten weapon groups and six families. Class adaptations and magic stance variations remain planned.
 
-Open [the interactive review gallery](index.html) in the Workbench/static preview to select favorites, inspect each unchanged source sheet, and copy the choices. Favorites are saved in that browser only; copied JSON contains stable option IDs. On this rendered page, refer to a family plus its number (for example `smash 04`, `guard-break 02`). Numbers below follow reading order: the first three figures on the top row, then the two below. No source images are destructively cropped.
+| Target role | Confirmed source |
+| --- | --- |
+| Sweep | Smash04 |
+| Counter | Smash06 |
+| Guard-break | Guard-break06 |
+| Evade | Smash08 |
+| Smash | Smash05 |
 
-The core families are guard break, Smash stance, Smash attack sequence, melee Counter, ranged Counter and magic Counter. The ten weapon groups are sword + shield, greatsword, staff, bow, dagger, dual daggers, single sword, spear, halberd and unarmed. Class appearance and actual equipped weapon remain separate. Co-op development is paused; this review changes no game code.
+Numeric choices are authoritative; the extra image of guard-break03 is context, not a sixth selection. Exact source crops and export provenance are in [selections.json](selections.json), owned by the art exporter. Runtime registration, solo validation and merge completion are tracked in [delivery-status.md](../../../docs/design/update-stances/delivery-status.md); no completion is inferred from concept selection.
+
+After the selected delivery is merged, the next authorized pass is **ten new greatsword options each for Sweep, Counter and Evade**, thirty total. That separate pass is planned and has zero generated concepts in this snapshot; it does not complete the 600-option baseline.
+
+Open [the interactive review gallery](index.html) to inspect each preserved source sheet and the confirmed role labels. Browser favorites remain editable comparison choices and do not change the recorded five selections. Copied JSON includes both confirmed roles and browser favorites. Refer to a family plus its number (for example `smash04`, `guard-break02`). Numbers follow reading order: the first three figures above, then the two below.
+
+The core baseline families are guard break, Smash stance, Smash attack sequence, melee Counter, ranged Counter and magic Counter. Sweep and Evade are now authorized selected roles and next-pass families. The ten weapon groups are sword + shield, greatsword, staff, bow, dagger, dual daggers, single sword, spear, halberd and unarmed. Class appearance and actual equipped weapon remain separate. Co-op development is paused.
 
 ## Smash loading stance — options 01–05
 
@@ -40,7 +52,7 @@ All ten are selectable concept candidates. The source sheets establish readable 
 4. **Sideways open guard / crossing blade** — needs revision: the longer blade intersects option 05’s rear boot. Isolate/repaint before export and review greatsword length. Selection paused.
 5. **Dropped greatsword / slack arms** — the actual picture has dropped weapon weight and slack arms, superseding the original thigh/chest prompt.
 
-Options 01, 02, 03 and 05 are selectable concept candidates. The pilot is frozen for owner review with option 04 explicitly requiring revision. This status is anatomy/concept review only; it is not runtime approval.
+Options 01, 02, 03 and 05 remain available for comparison, with option 04 explicitly requiring revision. The user chose option06 from sheet B for the Guard-break role. This status is anatomy/concept review only; it is not runtime approval.
 
 ## Guard break — options 06–10
 
@@ -62,4 +74,4 @@ All five are selectable concept candidates. These labels describe the actual gen
 - [Director's art-review notes](../../../docs/design/update-stances/art-review.md)
 - [Existing runtime behavior and future integration boundaries](../../../docs/design/update-stances/integration-notes.md)
 
-After concept choice, adapt the selected choreography to the four class appearances and review weapon/hand consistency, rear orientation, anatomy, cape continuity and full silhouette bounds. Then author the selected attack/reaction phases and runtime registrations. Current source sheets remain preserved as provenance.
+Deliver the five chosen Reaver/greatsword role mappings, then merge as authorized and begin the separate Sweep/Counter/Evade exploration pass. Further class adaptations and full sequences require their own production evidence. Current source sheets remain preserved as provenance.

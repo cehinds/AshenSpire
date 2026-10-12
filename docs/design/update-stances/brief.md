@@ -43,13 +43,29 @@ The first production wave establishes the art grammar with ten dedicated smash h
 
 [production-matrix.json](production-matrix.json) references those artist authorities by option number and records existing board paths. It intentionally does not repeat a second, potentially conflicting set of pose descriptions. Magic and other-class adapters remain planned rather than inferred from the physical Reaver pilot.
 
-All four canonical A/B boards now exist, carrying twenty generated physical Reaver/greatsword candidates: ten smash holds and ten guard-break poses. The matrix records twenty generated options; the broader 600-option request remains planned. All twenty have received art-director concept review: nineteen are selectable for user comparison, and guard-break option04 needs revision because its blade reads short and touches the neighboring A05 boot. There are zero user-selected poses, production-approved assets or registered sequences. Preliminary or repair passes are not additional options. See [art-review.md](art-review.md) and artist provenance for visual review notes, superseded candidates, anatomy concerns and crop/viewport limitations. A generated concept is not a selected pose, approved cutout or registered sprite sequence.
+All four canonical A/B boards now exist, carrying twenty generated physical Reaver/greatsword candidates: ten smash holds and ten guard-break poses. The matrix records twenty generated options; the broader 600-option request remains planned. All twenty have received art-director concept review: nineteen are selectable for user comparison, and guard-break option04 needs revision because its blade reads short and touches the neighboring A05 boot. Five numeric choices are now user-selected and authorized for use and merge; production/export acceptance and runtime registration remain pending confirmation. Preliminary or repair passes are not additional options. See [art-review.md](art-review.md) and artist provenance for visual review notes, superseded candidates, anatomy concerns and crop/viewport limitations. A generated concept is not a selected pose, approved cutout or registered sprite sequence.
 
 The remaining weapon/family work packages request ten options each but have no invented completed specifications. They stay `planned_not_briefed` until an artist develops and records distinct silhouettes and choreography.
 
+## Confirmed choices and next pass
+
+The user's numeric choices are authoritative:
+
+| Target role | Source family and option |
+| --- | --- |
+| Sweep | Smash04 |
+| Counter | Smash06 |
+| Guard-break | Guard-break06 |
+| Evade | Smash08 |
+| Smash | Smash05 |
+
+The extra image showing guard-break03 is reference context, not a sixth selection. Exact unchanged source sheets, crop coordinates and export provenance belong to the artist-owned `pose-studio/stances/update-stances/selections.json`. The user explicitly authorized these five poses for use and merge; no repeat approval is needed. Delivery and gameplay evidence are tracked in [delivery-status.md](delivery-status.md), and are not implied by concept selection.
+
+After that selected delivery is merged, create a separate pass of **ten new greatsword options each for Sweep, Counter and Evade**, thirty total. This follow-up is planned/authorized and has zero generated options in this snapshot. It does not complete the 600-option baseline, other weapons, all four classes or all melee/ranged/magic counter sequences.
+
 ## Subsequent production and acceptance
 
-1. Review the twenty greatsword pilot candidates at actual combat scale, resolve the recorded defects and choose poses before class/magic adaptation. Preserve the existing board paths, exact prompts and generation provenance.
+1. Deliver the five selected role mappings, preserving source boards, exact prompts and export provenance. Runtime registration, solo validation and the authorized merge are handled by the implementation workstream; record their evidence in delivery-status.md.
 2. Apply the selected pose grammar across weapon groups, then all four class appearances. Resolve bow heavy-action and non-bow ranged interpretation before those sequences.
 3. Develop ten weapon-specific storyboards for smash attack and each counter family. A counter preparation hold and a triggered retaliation are separate states. At minimum, show load/preparation, defense or commitment, contact/aim, follow-through/release, recovery and matching equipped rest; assign actual timing after selection.
 4. Author requested magic held stances and review proposed magic-sequence/backfill extensions. Preserve existing spell/card identity rather than assigning new schools or gear through art.
