@@ -123,7 +123,8 @@ export function combatCardSummary(def, preview = null, registries = null) {
         text = `${p.maneuver === 'counter' ? 'Return' : 'Deal'} ${damage}${area}`; break;
       }
       case 'block': text = `${effect.target === 'ally' ? 'Ally gains' : 'Gain'} ${n} Block`; break;
-      case 'gainBarrier': text = `Gain ${n} Barrier`; break;
+      // A Spell's gain refills Ward first and only the overflow is Barrier, so it reads Ward.
+      case 'gainBarrier': text = `Gain ${n} ${p.camp === 'spell' ? 'Ward' : 'Barrier'}`; break;
       case 'gainWard': text = `Restore ${n} Ward${effect.oncePerCombat ? ' once per combat' : ''}`; break;
       case 'gainPoise': text = `Gain ${n} Poise guard`; break;
       case 'buildup': text = `Add ${n} ${title(effect.status)} buildup${area}${effect.chance !== undefined && effect.chance < 100 ? ` (${effect.chance}%)` : ''}`; break;
