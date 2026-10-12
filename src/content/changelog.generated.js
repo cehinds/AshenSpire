@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-12",
     "summary": "Ward now wears away, and it shows on every fighter",
     "detail": "Spells no longer bounce off a full Ward forever: Ward takes the first part of every hit, spell or physical, always lets at least 1 damage through, and is spent by each hit it meets. Whatever gets past it then hits Block, then Health. Every fighter starts a fight with half as much Ward as before, and its Ward shows as the purple circle beside its health. A creature resistant to a damage school takes three quarters of the hit, and its bestiary entry shows that 25%. Both shares are settings under Advanced → Stats → Resistance.",
-    "build": "0.7.1.1419",
+    "build": "0.7.1.1421",
     "pullRequest": 1896,
     "url": "https://github.com/cehinds/AshenSpire/pull/1896"
   },
