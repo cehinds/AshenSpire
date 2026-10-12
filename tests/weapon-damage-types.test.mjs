@@ -13,6 +13,8 @@ import { createRng } from '../src/engine/rng.js';
 import { applyCombatExpansionMartial } from '../src/content/combatExpansionMartial.js';
 import { combatProfileFor } from '../src/model/combatCardProfile.js';
 import { hitRiders } from '../src/engine/combatMatchups.js';
+import { validateAttack } from '../src/model/combatRules.js';
+import { weaponDamageComponents } from '../src/model/attackTags.js';
 
 const regs = createRegistries(contentBundle);
 // blade (slashing), blade (piercing), blunt, bow, bare hands.
@@ -152,6 +154,16 @@ test('a mixed-damage profile keeps its weighted parts, labelled by the heaviest 
   // Each part brings its own rider, once.
   const cfg = { damageRiders: { blunt: { poise: 2 }, arcane: { wardDrain: 2 } } };
   assert.deepEqual(hitRiders(cfg, 'arcane', { combatProfile: heavy }), [{ wardDrain: 2 }, { poise: 2 }]);
+});
+
+test('a weapon part can sit beside fixed components: exactly one part follows the weapon', () => {
+  const attack = { weaponDamage: { families: ['blade'], types: ['slashing', 'piercing'] },
+    components: [{ type: 'slashing', weight: 50 }, { type: 'decay', weight: 50 }] };
+  validateAttack(attack, combatRules);
+  assert.deepEqual(weaponDamageComponents(attack, 'blade', 'piercing'), [{ type: 'piercing', weight: 50 }, { type: 'decay', weight: 50 }]);
+  assert.deepEqual(weaponDamageComponents(attack, 'hammer', 'blunt'), attack.components);
+  assert.throws(() => validateAttack({ ...attack, components: [{ type: 'decay', weight: 1 }] }, combatRules), /exactly one component/);
+  assert.throws(() => validateAttack({ ...attack, damageType: 'slashing', components: undefined }, combatRules), /fixed damageType/);
 });
 
 // Owner decision #22: Lethal Dose is a thrown vial at Reach, never a Ranged maneuver.

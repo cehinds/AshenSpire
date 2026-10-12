@@ -62,7 +62,11 @@ export function validateAttack(attack, rules = null) {
     if (Object.keys(rest).length) throw new Error(`unknown attack.weaponDamage field '${Object.keys(rest)[0]}'`);
     if (!Array.isArray(families) || !families.length || families.some((f) => typeof f !== 'string' || (rules && !(f in rules.impact.family)))) throw new Error('attack.weaponDamage.families must name known source families');
     if (!Array.isArray(types) || !types.length || types.some((t) => typeof t !== 'string' || (rules && !rules.damageTypes[t]))) throw new Error('attack.weaponDamage.types must name known damage types');
-    if (attack.damageType || attack.components) throw new Error('attack.weaponDamage cannot sit beside a fixed damageType or components');
+    if (attack.damageType) throw new Error('attack.weaponDamage cannot sit beside a fixed damageType');
+    // Beside components, exactly one component is the weapon's part (owner #24).
+    if (attack.components && attack.components.filter((c) => types.includes(c.type)).length !== 1) {
+      throw new Error('attack.weaponDamage beside components needs exactly one component of its types');
+    }
   }
   if (attack.hitWeights !== undefined) {
     if (!Array.isArray(attack.hitWeights) || !attack.hitWeights.length) throw new Error('hitWeights must be nonempty');

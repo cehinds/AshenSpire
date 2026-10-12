@@ -32,12 +32,25 @@ export function dominantDamageType(components) {
  * own type is `damageType`. A card with `attack.weaponDamage` ({ families,
  * types }) keeps the piece's type only when the piece is of one of those
  * families and its type is one of those types; otherwise it deals types[0]
- * (Blood Tithe: a blade's slashing or piercing, else slashing — owner #19).
+ * (Blood Tithe: a blade's slashing or piercing, a piercing shield or bow's
+ * piercing, else slashing — owner #19, #24).
  */
 export function weaponDamageType(attack, family, damageType) {
   const rule = attack?.weaponDamage;
   if (!rule || !damageType) return damageType;
   return rule.families.includes(family) && rule.types.includes(damageType) ? damageType : rule.types[0];
+}
+
+/**
+ * A mixed card's components with its weapon part (the one component whose
+ * type is a weaponDamage type) dealt as weaponDamageType resolves it; the
+ * other parts are fixed (Blood Tithe: weapon part + Necrotic, owner #24).
+ */
+export function weaponDamageComponents(attack, family, damageType) {
+  if (!attack?.components || !attack.weaponDamage) return attack?.components;
+  const type = weaponDamageType(attack, family, damageType);
+  if (!type) return attack.components;
+  return attack.components.map((c) => (attack.weaponDamage.types.includes(c.type) ? { ...c, type } : c));
 }
 
 /** Effective tags belong to this resolved attack, never the stored card row. */

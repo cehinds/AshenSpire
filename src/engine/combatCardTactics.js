@@ -3,7 +3,7 @@ import { evaluate } from '../model/formulas.js';
 import { evalPredicate } from './triggers.js';
 import { cardRatingBonus } from './combatRatings.js';
 import { armCombatCounter, matchupRules, combatExpansionEnabled, setCombatStance, prepareCombatEvade } from './combatMatchups.js';
-import { attackDescriptor, weaponDamageType } from '../model/attackTags.js';
+import { attackDescriptor, weaponDamageType, weaponDamageComponents, dominantDamageType } from '../model/attackTags.js';
 import { combatRules } from '../content/combatRules.js';
 import { equippedIn, slotHand } from '../model/loadout.js';
 import { enemyMoveDamage } from '../model/state.js';
@@ -23,7 +23,9 @@ export function tacticalCarrier(def, extra = {}, ctx = null, source = null) {
     combatRiderTargets: [] };
   if (combatExpansionEnabled(ctx) && extra.ratingId === undefined && def.ratingId !== undefined) carrier.ratingId = def.ratingId;
   carrier.combatProfile = { ...combatProfileFor(carrier), ...(def.combatProfile || {}), ...(extra.combatProfile || {}) };
-  if (!carrier.combatProfile.damageType && carrier.combatProfile.camp && ctx?.registries && source?.kind !== 'enemy' && !source?.enemyId) {
+  // A mixed card's weapon part is resolved like an untagged card's whole type.
+  const weaponPart = !!(carrier.attack?.weaponDamage && carrier.attack.components);
+  if ((!carrier.combatProfile.damageType || weaponPart) && carrier.combatProfile.camp && ctx?.registries && source?.kind !== 'enemy' && !source?.enemyId) {
     const attack = attackDescriptor(carrier);
     const kind = attack.source || (carrier.combatProfile.camp === 'spell' ? 'spell' : 'weapon');
     const pieces = ctx.registries.equipment?.armaments || [];
@@ -46,8 +48,15 @@ export function tacticalCarrier(def, extra = {}, ctx = null, source = null) {
       : (unarmed && attackDescriptor(unarmed).damageType) || rules.fallbackSource.damageType;
     const family = piece ? rules.equipmentSources?.itemFamilies?.[piece.id] || rules.equipmentSources?.profileFamilies?.[piece.attackProfile]
       : rules.fallbackSource.family;
-    const damageType = weaponDamageType(attack, family, (piece && attackDescriptor(piece).damageType) || bare);
-    carrier.combatProfile.damageType = damageType || null;
+    const pieceType = (piece && attackDescriptor(piece).damageType) || bare;
+    if (weaponPart) {
+      // The resolved parts travel on the carrier, so every effect and the
+      // rules foundation read the same split as this profile.
+      const components = weaponDamageComponents(attack, family, pieceType);
+      carrier.attack = { ...carrier.attack, components };
+      carrier.combatProfile.damageComponents = components.map(({ type, weight }) => ({ type, weight }));
+      carrier.combatProfile.damageType = dominantDamageType(components);
+    } else carrier.combatProfile.damageType = weaponDamageType(attack, family, pieceType) || null;
   }
   return combatExpansionEnabled(ctx) ? expansionCarrierTraits(carrier, source) : carrier;
 }
