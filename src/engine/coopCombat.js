@@ -61,6 +61,7 @@ import * as SoloCombatCosts from './combat.js';
 import { previewCard as soloPreviewCard, previewIntent as soloPreviewIntent, cardNeedsEnemyTargetNow } from './combat.js';
 import * as F from './combatRules.js';
 import * as Reactions from './combatReactions.js';
+import { clearEnemyReactionRolls } from './enemyReactions.js';
 import { playerWeightClass } from './combat.js';
 import * as S from '../framework/statusSemantics.js';
 import { emitEvent, fireOwnerHooks, findEntity } from './triggers.js';
@@ -560,6 +561,7 @@ function finish(C, result) {
 // ---- player phase -----------------------------------------------------------
 function startPlayerPhase(C) {
   C.turn += 1;
+  clearEnemyReactionRolls(C);
   C.phase = 'player';
   for (const P of livingPlayers(C)) {
     setActive(C, P);

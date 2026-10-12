@@ -42,6 +42,7 @@ import { LEGACY_HAND_MAX } from '../model/statRows.js';
 import { refreshCombatRatings, recoverRatingMeters, cardRatingBonus, clearMeterGuards } from './combatRatings.js';
 import * as F from './combatRules.js';
 import * as Reactions from './combatReactions.js';
+import { clearEnemyReactionRolls } from './enemyReactions.js';
 import { emitEvent, fireOwnerHooks, findEntity, hasEventTriggers } from './triggers.js';
 import { attachSkillXp } from './skillXp.js';
 import * as S from '../framework/statusSemantics.js';
@@ -471,6 +472,7 @@ function finishCombat(combat, result) {
 
 function startPlayerTurn(combat) {
   combat.turn += 1;
+  clearEnemyReactionRolls(combat);
   combat.phase = 'player';
   const p = combat.player;
   R.beginAbilityTurn(p);
