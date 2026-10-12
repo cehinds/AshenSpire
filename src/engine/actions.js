@@ -1174,7 +1174,8 @@ function runOpcode(ctx, action, eff) {
     case 'gainWard': {
       const meter = eff.op === 'gainPoise' ? 'poise' : 'ward';
       for (const t of resolveTargets(ctx, action, eff.target)) {
-        if (ctx.combatExpansionVersion === 2 && meter === 'ward') restoreExpandedWard(ctx, t, evalNum(ctx, action, eff.amount, 0, t), { onceKey: eff.oncePerCombat });
+        // The same amount the preview shows: the base plus the card's rating bonus (computeMeterGuardGain).
+        if (ctx.combatExpansionVersion === 2 && meter === 'ward') restoreExpandedWard(ctx, t, computeMeterGuardGain(ctx, t, evalNum(ctx, action, eff.amount, 0, t), action.card), { onceKey: eff.oncePerCombat });
         else gainMeterGuard(ctx, t, meter, evalNum(ctx, action, eff.amount, 0, t), action.card);
       }
       break;

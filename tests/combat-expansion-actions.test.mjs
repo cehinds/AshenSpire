@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
+import { resolveCombatRatings } from '../src/model/combatRatings.js';
 import { createRng } from '../src/engine/rng.js';
 import { enqueueExpandedAction } from '../src/engine/combatExpansionActions.js';
 import { executeAction, applyAttackDamage, restoreExpandedWard, gainBarrier, syncWardMaximum } from '../src/engine/actions.js';
@@ -509,4 +510,23 @@ test('a spell status pressure that spends the last Ward point breaks Ward: one e
   const broke = events.filter(event => event.type === 'wardBroken');
   assert.equal(broke.length, 1);
   assert.equal(broke[0].staminaLoss, 1);
+});
+
+// A gainWard card restores the same amount it previews: the base plus the card's rating bonus (Attune, PR 10: 1 + 10).
+test('an expanded gainWard restores exactly the Ward its preview shows, rating bonus included', () => {
+  const registries = createRegistries(contentBundle);
+  const ratingsRules = { ...resolveCombatRatings({}, contentBundle), enabled: true };
+  const combat = createCombat({ registries, rng: createRng(811), combatExpansionVersion: 2, ratingsRules,
+    enemyIds: ['wanderingSoldier'], player: { classId: 'starseer', maxHp: 100, hp: 100,
+      maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1,
+      deck: [{ cardId: 'attune', instanceId: 'attune-1', upgraded: false }] } });
+  const player = combat.player;
+  player.ratings = { ar: 0, dr: 0, pr: 10, poise: 0, ward: 30 };
+  player.persistentWard = { max: 30, value: 0 };
+  const preview = previewCard(combat, 'attune-1', player.id);
+  const gain = preview.values.find(row => row.op === 'gainWard');
+  assert.ok(gain, 'Attune previews a Ward gain');
+  assert.equal(gain.value, 11, 'the preview shows the base 1 plus PR 10');
+  const out = dispatch(combat, { type: 'playCard', cardInstanceId: 'attune-1', targetId: player.id });
+  assert.equal(player.persistentWard.value, gain.value, 'Ward restored equals the previewed amount');
 });
