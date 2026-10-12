@@ -85,8 +85,12 @@ export function simpleCardArt(def, { ref, registries = null, large = false, vari
   const camp = uniqueIdentity(tags, 'camp:');
   if (!['physical', 'spell'].includes(camp)) return null;
   let maneuver = uniqueIdentity(tags, 'maneuver:');
+  // Legacy attacks sometimes author their camp and type without a maneuver.
+  // An unsupported/conflicting explicit maneuver must still fall back safely.
+  if (!tags.some(tag => tag.startsWith('maneuver:')) && def.type === 'attack') maneuver = 'attack';
   // Evade is an explicit authored payload in the current combat schema.
-  if (def.evade && (def.evade === true || typeof def.evade === 'object')) maneuver = 'evade';
+  if ((def.evade && (def.evade === true || typeof def.evade === 'object'))
+    || (Array.isArray(def.effects) && def.effects.some(effect => effect?.op === 'dodgeRoll'))) maneuver = 'evade';
   if (['casting', 'ranged'].includes(maneuver)) maneuver = 'attack';
   if (!CARD_ART_MANEUVERS.includes(maneuver)) return null;
   const category = camp === 'spell' ? 'magical' : 'physical';

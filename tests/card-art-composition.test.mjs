@@ -74,6 +74,22 @@ test('shipped resolved cards retain their authored family', () => {
     const composition = simpleCardArt(def, { registries });
     assert.ok(composition, cardId);
   }
+  const pebble = simpleCardArt(resolveCard(registries, { cardId: 'starstonePebble' }), { registries });
+  assert.equal(pebble.category, 'magical');
+  assert.equal(pebble.maneuver, 'attack');
+  assert.equal(pebble.element, 'force');
+  assert.match(pebble.path, /magical-attack-04-512\.webp$/);
+  assert.equal(simpleCardArt(resolveCard(registries, { cardId: 'evasiveGuard' }), { registries }).maneuver, 'evade');
+  assert.equal(simpleCardArt(resolveCard(registries, { cardId: 'defend' }), { registries }).maneuver, 'defend');
+});
+test('legacy attack fallback requires an authored camp and no explicit maneuver', () => {
+  assert.equal(simpleCardArt(face(['camp:spell'], { type: 'attack' })).maneuver, 'attack');
+  assert.equal(simpleCardArt(face([], { type: 'attack' })), null);
+  assert.equal(simpleCardArt(face(['camp:spell'], { type: 'skill' })), null);
+  assert.equal(simpleCardArt(face(['camp:spell', 'maneuver:unknown'], { type: 'attack' })), null);
+  assert.equal(simpleCardArt(face(['camp:spell', 'maneuver:attack', 'maneuver:smash'], { type: 'attack' })), null);
+  assert.equal(simpleCardArt(face(['camp:physical'], { type: 'skill', effects: [{ op: 'block' }] })), null);
+  assert.equal(simpleCardArt(face(['camp:physical', 'maneuver:defend'], { type: 'skill', effects: [{ op: 'dodgeRoll' }] })).maneuver, 'evade');
 });
 test('physical palette selection is stable by card/profile, independent of instance and order', () => {
   const def = face(['camp:physical', 'maneuver:attack']);
