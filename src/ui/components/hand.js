@@ -15,7 +15,7 @@ import { isWideFormFactor } from '../models/FormFactorModel.js';
 // surface enters as parameters, never as a second template:
 //
 //   cards     — the viewer's list: { inst, preview?, affordable, reason?,
-//               name?, selected? }. Solo passes live previewCard numbers off
+//               name?, selected?, stacked? }. Solo passes live previewCard numbers off
 //               the paced snapshot; co-op passes the host snapshot's hand
 //               with a spelled-out unavailability reason (its player cannot
 //               hover the engine for one).
@@ -298,6 +298,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       if (record && record.signature !== signature) { record.release?.(); record.el.remove(); renderedCards.delete(id); record = null; }
       if (record) {
         record.el.classList.toggle('selected', !!entry.selected);
+        record.el.classList.toggle('is-stacked', !!entry.stacked);
         if (handEl.children[i] !== record.el) handEl.insertBefore(record.el, handEl.children[i] || null);
         return;
       }
@@ -354,6 +355,8 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
         });
       }
       if (entry.selected) el.classList.add('selected');
+      // Already committed to an open reaction stack: muted until it resolves.
+      if (entry.stacked) el.classList.add('is-stacked');
       // The spelled-out unavailability reason is VIEWER data (co-op supplies
       // it; solo's player reads live previews and the hint bar instead). When
       // present it rides the card as a badge and as assistive text.

@@ -140,7 +140,7 @@ test('registered tags retain identity, approved tactical metadata changes are ex
     school: ['school:frost', 'school:fire', 'school:lightning', 'school:force', 'school:alteration', 'school:illusion', 'school:divine', 'school:decay'],
     counterMode: ['counter:melee', 'counter:ranged', 'counter:spell'],
     reach: ['reach:contact', 'reach:near', 'reach:far'],
-    trait: ['trait:adequateReach', 'trait:closing', 'trait:conductive', 'trait:grounded', 'trait:insulated', 'trait:mental', 'trait:projectile', 'trait:reveal', 'trait:shattering', 'trait:unavoidable', 'trait:unreflectable'],
+    trait: ['trait:adequateReach', 'trait:closing', 'trait:conductive', 'trait:counterstrike', 'trait:flux', 'trait:grounded', 'trait:impact', 'trait:insulated', 'trait:mental', 'trait:projectile', 'trait:reaction', 'trait:reveal', 'trait:shattering', 'trait:unavoidable', 'trait:unreflectable'],
   };
   for (const [domain, ids] of Object.entries(TACTICAL_TAGS)) {
     assert.deepEqual(TAGS.filter(tag => tag.domain === domain).map(tag => tag.id).sort(), [...ids].sort(), `${domain} holds exactly its approved tactical identities`);
