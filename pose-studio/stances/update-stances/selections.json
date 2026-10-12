@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "id": "reaver-greatsword-pilot",
+  "classId": "reaver",
+  "weaponFamily": "greatsword",
+  "sourceSheets": [
+    {
+      "path": "pose-studio/stances/update-stances/greatsword-smash/sheet-a.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "49b039cef183a248562763695d44dd2221124a801dbdc0edb8123d660d2487f7",
+      "note": "Owner-selected source art; original image-generation bytes retained."
+    },
+    {
+      "path": "pose-studio/stances/update-stances/greatsword-smash/sheet-b.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "9bfd8c7b13ae42ae55d06718d03cec89c47947c4fc017b1ba61b8e8a50bf0bda",
+      "note": "Owner-selected source art; original image-generation bytes retained."
+    },
+    {
+      "path": "pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-b.png",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "f3243a6cb1418800c28788f7f975e6fed6ce18953d172e7fa863370b90f6ed68",
+      "note": "Owner-selected source art; guard-break 06, not the separately attached guard-break 03."
+    }
+  ],
+  "choices": [
+    {
+      "id": "reaver-greatsword-sweep-smash04",
+      "role": "sweep",
+      "sourceOption": "greatsword-smash-04",
+      "label": "Low rising load",
+      "sourcePath": "pose-studio/stances/update-stances/greatsword-smash/sheet-a.png",
+      "sourceBounds": [21, 666, 553, 968],
+      "cropBounds": [18, 663, 556, 971]
+    },
+    {
+      "id": "reaver-greatsword-counter-smash06",
+      "role": "counter",
+      "sourceOption": "greatsword-smash-06",
+      "label": "Raised counter load",
+      "sourcePath": "pose-studio/stances/update-stances/greatsword-smash/sheet-b.png",
+      "sourceBounds": [40, 15, 431, 506],
+      "cropBounds": [37, 12, 434, 509]
+    },
+    {
+      "id": "reaver-greatsword-smash-smash05",
+      "role": "smash",
+      "sourceOption": "greatsword-smash-05",
+      "label": "Rear-head heavy load",
+      "sourcePath": "pose-studio/stances/update-stances/greatsword-smash/sheet-a.png",
+      "sourceBounds": [584, 546, 1071, 978],
+      "cropBounds": [581, 543, 1074, 981]
+    },
+    {
+      "id": "reaver-greatsword-evade-smash08",
+      "role": "evade",
+      "sourceOption": "greatsword-smash-08",
+      "label": "Compact chest-high load",
+      "sourcePath": "pose-studio/stances/update-stances/greatsword-smash/sheet-b.png",
+      "sourceBounds": [1115, 60, 1496, 505],
+      "cropBounds": [1112, 57, 1499, 508]
+    },
+    {
+      "id": "reaver-greatsword-guardbreak-guard06",
+      "role": "guard-break",
+      "sourceOption": "greatsword-guard-break-06",
+      "label": "Thigh-clutch plus chest blow",
+      "sourcePath": "pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-b.png",
+      "sourceBounds": [49, 99, 559, 518],
+      "cropBounds": [46, 96, 562, 521]
+    }
+  ]
+}
