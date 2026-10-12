@@ -2750,6 +2750,7 @@ const FORMULA_FIELDS = {
   blockOf: ['of', 'min', 'max'],
   hpOf: ['of', 'min', 'max'],
   cardsPlayedThisTurn: ['per', 'min', 'max'],
+  traitBonus: ['base', 'pct', 'min', 'max'],
 };
 
 export function validateFormula(value, path, vctx) {
@@ -2785,6 +2786,11 @@ export function validateFormula(value, path, vctx) {
   }
   if (['percentMaxHp', 'missingHp', 'missingMana', 'blockOf', 'hpOf'].includes(value.f) && value.of === undefined) {
     err(`${path}.of`, `'${value.f}' requires 'of'`);
+  }
+  if (value.f === 'traitBonus') {
+    if (value.base === undefined) err(`${path}.base`, "'traitBonus' requires a base");
+    else validateFormula(value.base, `${path}.base`, vctx);
+    if (typeof value.pct !== 'number') err(`${path}.pct`, "'traitBonus' requires a numeric pct");
   }
   if (value.f === 'percentMaxHp' && typeof value.pct !== 'number') {
     err(`${path}.pct`, "'percentMaxHp' requires a numeric pct");

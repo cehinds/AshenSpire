@@ -12,6 +12,8 @@
 //
 // Headless: no document/window/localStorage/timers.
 
+import { counterstrikeAmount } from '../engine/combatCardTraitMath.js';
+
 export const FORMULA_OPS = Object.freeze([
   'add',
   'mul',
@@ -23,6 +25,7 @@ export const FORMULA_OPS = Object.freeze([
   'blockOf',
   'hpOf',
   'cardsPlayedThisTurn',
+  'traitBonus',
 ]);
 
 // Entity references usable in a formula's `of` field.
@@ -165,6 +168,12 @@ function evalNode(node, ctx) {
     case 'cardsPlayedThisTurn': {
       const n = ctx.cardsPlayedThisTurn != null ? ctx.cardsPlayedThisTurn : 0;
       v = n * (node.per != null ? node.per : 1);
+      break;
+    }
+    case 'traitBonus': {
+      // Counterstrike on a formula amount (docs/combat-card-traits-contract.md):
+      // the base is floored, then a + max(floor(a × pct), 1) for a > 0.
+      v = counterstrikeAmount(evaluate(node.base, ctx), numField(node, 'pct'));
       break;
     }
     default:
