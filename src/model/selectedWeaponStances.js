@@ -1,4 +1,6 @@
 import { combatProfileFor } from './combatCardProfile.js';
+import { entities as frameworkEntities } from '../framework/data/entities.js';
+import { cardPropertyInstances } from '../framework/importer.js';
 import { isPureDodge } from '../framework/importer.js';
 
 export const REAVER_GREATSWORD_PILOT = 'reaver-greatsword-pilot';
@@ -55,5 +57,16 @@ export function selectedWeaponReactionFor(event, profile) {
     if ([amount, blocked, wardResisted].every(value => Number.isFinite(value) && value >= 0)
       && amount === blocked && amount + wardResisted > 0) return 'fully-defended';
   }
+  return null;
+}
+
+/** Canonical authored Guard wins for the mixed guard+evasion fallback. */
+export function selectedWeaponCounterFor(card, profile, authoredCard = card) {
+  if (profile !== REAVER_GREATSWORD_PILOT || combatProfileFor(card).camp !== 'physical') return null;
+  const tags = new Set(card?.cardTags ?? card?.tags ?? []);
+  const canonical = frameworkEntities.entities.find(row=>row.id === 'framework.'+(authoredCard?.id || card?.cardId));
+  const properties = new Set((canonical?.properties || (authoredCard?.id && authoredCard?.type ? cardPropertyInstances(authoredCard) : [])).map(row=>row.propertyId));
+  if (tags.has('guard') || tags.has('classification.guard') || properties.has('classification.guard')) return 'counter-guard';
+  if (tags.has('utility.evasion') || properties.has('utility.evasion')) return 'counter-evade';
   return null;
 }
