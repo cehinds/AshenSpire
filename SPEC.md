@@ -1167,6 +1167,60 @@ disconnected seat get none. A Smash that breaks physical Guard emits
 `combatGuardBroken` once per break. Both are informational receipts and change
 no rule.
 
+### 4.11 Combat Rounds Preview
+
+**Contract status: planned.** An opt-in preview that runs real fights on the speed-ordered rounds specified in [docs/alternative-combat-rounds/DESIGN.md](docs/alternative-combat-rounds/DESIGN.md), with the owner's decisions in [docs/alternative-combat-rounds/PREVIEW-PLAN.md](docs/alternative-combat-rounds/PREVIEW-PLAN.md). Formulas stay in DESIGN.md and are not restated here. Until its phases ship, combat follows §4.1 to §4.10 unchanged.
+
+**Setting**
+
+- Advanced → Combat holds one opt-in row, *Combat rounds preview*. It is shown on dev and test builds only and is hidden on release builds.
+- The row is read at New Run and frozen into the run, as the other Advanced rows are. A saved fight keeps the rules it started with; a later change applies to new runs only.
+- The preview covers solo and co-op/LAN. Co-op parity is part of the contract, not a later step.
+- With the row off, fights, saves and RNG rolls are unchanged, and no preview field is written.
+
+**Live rules that stay**
+
+- The hand is the live hand: draw, hand size, Retain, Ethereal, reshuffle and the `handRules` settings of §4.1 apply unchanged.
+- Resources are live. Stamina is SP and Mana is MP.
+- A landed card or enemy move runs its live effects: damage (§4.2), statuses (§4.4), draws, relics and triggers. The timeline decides order and whether an action lands; it does not compute effects.
+- Counter and Evade keep their live rules (§4.7, §4.8). Each has a speed value and takes its place in the order. The timeline's own Counter-cancel and evade-percent rules are not used.
+- A reaction from hand uses the reaction choice of §4.10 (Back, Play).
+
+**Queue and End Turn**
+
+- Playing a card queues it and pays its SP, and its MP if it has an MP cost, at queue time. Unqueuing refunds it.
+- Enemies queue cards and moves from their own SP pool, stat-driven with a base of 3. A move costs 1 SP unless the move says otherwise.
+- End Turn keeps its label and look. In the preview it commits the round: it adapts the enemy queues, steps the round through the timeline, pauses for a reaction when a player-targeted attack needs one, then runs the live turn-end hand rules.
+
+**Order and hits**
+
+- Initiative is base, plus momentum, plus a d4. Each combatant rolls its own d4 once per round, in combatant order (the player first, then the others in key order), and that roll is used for all of its actions that round. The preview uses the `speed` merge of DESIGN.md: each action's speed is card speed plus the preemptive buff plus initiative, actions act highest speed first, a later card in a queue never acts before an earlier one, and ties go to higher initiative, then the player. The d4 draws on the preview's own RNG stream, appended to the closed stream set of §3.11, so every existing stream and seed keeps its rolls. Its counter is saved only when it is non-zero and reads as 0 when missing, so a run with the preview off saves exactly as before.
+- Hit or miss uses the hit roll of DESIGN.md. A missed action applies no effects.
+- A reaction pause keeps the round's cursor. A save taken during a pause resumes at that cursor (§3.12).
+
+**Momentum**
+
+- Momentum is kept per enemy, between −3 and +3, and decays as DESIGN.md states.
+- A success at the cap sets an overflow flag. The side's next landed hit carries doubled poise damage, and the flag clears when that hit spends it.
+
+**Perception**
+
+- For each enemy, the player reads the first 1 + Perception actions of that enemy's own queue, in its play order (the queue prefix of DESIGN.md), where Perception is the §4.9 stat. Actions beyond that count show as `?` symbols in that enemy's intent box, at their place in its play order (owner, 2026-10-11).
+- A visible action shows at stage 3 when its §4.9 read is exact, and as `?` when it is not. The read is the §4.9 roll; perception adds no roll of its own.
+- The intent box shows the enemy's current action at today's size and its follow-up actions as smaller symbols. There is no separate initiative track or queue strip (owner, 2026-10-11).
+
+**Co-op and LAN**
+
+- Each seat keeps its own queue, momentum and perception reads. Each living observer records its own read (§4.9).
+- A LAN peer receives a concealed action only as the projection that §4.7 and §4.9 allow. The host never sends a concealed action's full queue entry.
+
+**Resolved (owner, 2026-10-11)**
+
+- A queued card pays only its Stamina cost as SP (and Mana as MP). A live Actions cost is not paid in the preview.
+- Enemy actions beyond the read count show as `?` in the enemy's intent box (see Perception).
+- A queued Counter answers only the next attack from its target, then is spent. The §4.7 grant and expiry timing does not apply in the preview.
+- In co-op, momentum is per seat: each seat has its own −3..+3 against each enemy.
+
 ## 5. Content specification
 
 ### 5.1 Classes, creation presets, and levels
