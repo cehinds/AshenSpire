@@ -230,3 +230,33 @@ test('a seat stops at maxDepth, so the fifth copy is never offered', () => {
   assert.equal(combat.piles.hand.some(inst => inst.instanceId === 'r4'), true);
   assert.equal(combat.turn, 2);
 });
+
+// One enemy at 3 HP: a Strike is lethal, so a second Strike stacked on top kills the root's attacker.
+function lowHpFixture(cardIds) {
+  const built = fixture({ cardIds });
+  for (const enemy of built.combat.enemies) enemy.hp = 3;
+  dispatch(built.combat, { type: 'endTurn' });
+  return built;
+}
+
+test('a lethal entry ends the root: the entry beneath it fizzles rootEnded and pays nothing', () => {
+  const { combat } = lowHpFixture(['bindingParry', 'strike']);
+  answer(combat, pick(combat, 'r0'));
+  assert.ok(offeredInstances(combat).includes('r1'));
+  const out = answer(combat, pick(combat, 'r1'));
+  const fizzled = out.events.filter(event => event.type === 'combatReactionFizzled');
+  assert.deepEqual(fizzled.map(event => [event.cardInstanceId, event.reason]), [['r0', 'rootEnded']]);
+  assert.ok(out.events.some(event => event.type === 'enemyDied'));
+  assert.equal(out.events.some(event => event.type === 'cardPlayed' && event.cardInstanceId === 'r0'), false);
+  assert.equal(combat.reactionStack, undefined);
+  // Stamina is only what the lethal Strike itself costs, as if it were played alone.
+  const alone = lowHpFixture(['strike']);
+  answer(alone.combat, pick(alone.combat, 'r0'));
+  assert.equal(combat.player.stamina, alone.combat.player.stamina);
+});
+
+test('a second Strike is still offered after the first is stacked, though it would kill the attacker', () => {
+  const { combat } = lowHpFixture(['strike', 'strike']);
+  answer(combat, pick(combat, 'r0'));
+  assert.ok(offeredInstances(combat).includes('r1'), 'r1 is offered on top of r0');
+});
