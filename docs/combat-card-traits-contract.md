@@ -53,9 +53,16 @@ summary read "Impact N" / "Flux N".
 - An incoming enemy root opens a reaction window for each affected seat, in saved
   seat order, exactly where version 1 offers one (§4.10).
 - Choosing a card **pushes** it onto the stack; nothing is paid yet. The same seat
-  is offered again until it passes (Back), has no option left, or the stack
-  reaches `maxDepth` (4). A Counter-return root keeps depth 1, preserving the
-  anti-chain rule. Then the next seat is offered.
+  is offered again until it passes (Back), has no option left, or holds
+  `maxDepth` (4) entries. Then the next seat is offered.
+- **One stack per root, shared by the seats.** The cap counts each seat's own
+  entries, so one seat cannot use up another's offers. Seats answer in saved seat
+  order; the whole stack then resolves last pushed first, across seats.
+- **Counter-return roots:** `maxDepth = 1` (one entry per seat, no re-offer),
+  preserving the reaction contract's anti-chain rule.
+- **At most one `maneuver:counter` card per seat on a stack.** SPEC §4.8 lets a
+  new Counter replace the previous one and never stacks charges, so once a seat
+  has pushed a Counter, its further Counter cards are not offered.
 - When every seat has answered, the stack resolves **top first** (last played
   first). Each entry pays and resolves with today's single-reaction mechanics,
   then the next entry, and finally the paused enemy action.
@@ -64,7 +71,10 @@ summary read "Impact N" / "Flux N".
   offered again.
 - An entry that can no longer be played when it is reached (the instance left
   the hand, the payment no longer fits) **fizzles**: it emits
-  `combatReactionFizzled` and pays nothing.
+  `combatReactionFizzled` and pays nothing. Because the offer check replays the
+  whole stack, a solo run cannot reach this; it is a guard for co-op, where a
+  later seat's entries resolve first and can change state an earlier seat's
+  check assumed. The acceptance test reaches it that way.
 - Entries carry a side (`player` or `enemy`). Only player entries exist in this
   version; an enemy entry is rejected. Enemy reactions are a separate future
   change on the same stack.
@@ -77,11 +87,16 @@ summary read "Impact N" / "Flux N".
 
 ## Counterstrike
 
-- Applied when the card is prepared, after its stance is set.
+- Applied when the card is prepared, after its stance is set. On a Counter card
+  it applies to the return payload when the return is built, against the
+  attacker the return answers.
 - **Advantage.** The player's stance is the card's maneuver when the card sets a
   stance, otherwise the current tactical stance. The target is the chosen enemy;
-  during a reaction, the incoming attacker; otherwise none. Advantage holds when
-  the target's stance is in the player stance's row:
+  during a reaction, the incoming attacker; for a Counter return, the attacker it
+  answers; otherwise none (50%). An enemy's stance is the maneuver of the move it
+  is resolving, else its current tactical stance, else its shown intent's
+  maneuver. Advantage holds when the target's stance is in the player stance's
+  row:
 
   | Player stance | Has advantage over |
   |---|---|
@@ -107,18 +122,28 @@ summary read "Impact N" / "Flux N".
 ## Impact and Flux
 
 - Applied once per action per target, when the action completes. A **hit** is a
-  receipt that was not avoided and dealt direct damage greater than 0.
+  contact that was not avoided (Evade, miss, cancelled) and whose damage before
+  Block, Barrier and Ward was greater than 0. A fully blocked hit still counts.
+- **Cards that deal no damage** (status-only skills, Powers) apply Flux/Impact
+  once to each enemy they successfully affected (a status applied, a debuff
+  landed); a Power with Flux deals N Ward damage to every enemy when it is
+  played.
 - Let P be the Poise the action's own `poiseDamage` effects dealt to that target.
   If P > 0 the target takes P more Poise damage (doubling); otherwise N. Flux does
   the same for Ward with the action's own `wardDamage` effects.
 - Implicit riders (blunt +2 Poise, Smash guard-break bonus) are not doubled.
-- **Counter cards.** The hit is the return: the return's Poise payload becomes
-  `2 × poise` if positive, otherwise N; Ward likewise with Flux. Counterstrike
-  scales the payload first, then Impact doubles it.
+- **Counter cards.** The hit is the return. For trait carriers this overrides
+  SPEC §4.8's "an absent listed Poise value does not create reply Poise damage":
+  the return's Poise becomes `2 × poise` if positive, otherwise N; Ward likewise
+  with Flux. SPEC §4.8's explicit exclusions still win (a Spell Counter against a
+  physical projectile deals no reply Poise). Order: Counterstrike scales the
+  authored payload, then SPEC §4.8's return formulas run (`× 1.5` and the like),
+  then Impact/Flux double the final Poise/Ward.
 - **Defend cards.** Playing one arms a trait guard `{ poise: N, ward: F }`
-  (max-merged, not stacked) until the owner's next turn start. The first enemy
-  direct-damage action whose receipt blocked or Ward-resisted something deals N
-  Poise and F Ward to the attacker; the guard is then consumed.
+  (max-merged, not stacked), saved on the player entity as `combatTraitGuard`,
+  until the owner's next turn start. The first enemy direct-damage action whose
+  receipt was reduced by Block, Barrier or Ward deals N Poise and F Ward to the
+  attacker; the guard is then consumed.
 - **Statuses.** A status may carry `fluxPerTurn`; at its owner's turn start it
   deals that much Ward damage (version 2 only). Burn and Crimson Blight carry 1.
 
@@ -168,7 +193,7 @@ and `src/content/combatExpansionCards.js`. T is the tier above.
 - At T ≥ 2: hex, contagion, butterflyPlague, gravityWell, blightBloom.
 - Physical attacks whose resolved damage type is fire or arcane, at T ≥ 3.
 - Statuses: burn, crimsonBlight.
-- Powers: none in this version.
+- Powers: `camp:spell` Powers at T ≥ 4.
 
 ## Acceptance
 
@@ -183,5 +208,6 @@ and `src/content/combatExpansionCards.js`. T is the tier above.
   contact; Back with an empty stack equals version 1's Back; stacked instances
   are not re-offered; the LIFO affordability check; depth cap; fizzle pays
   nothing; save/restore mid-offer and mid-resolution with identical RNG counters;
-  co-op seat order and stale/foreign offers rejected; an enemy entry is rejected;
+  co-op seat order, per-seat cap, one Counter per seat, a co-op fizzle, and
+  stale/foreign offers rejected; an enemy entry is rejected;
   a version-1 snapshot replays unchanged.
