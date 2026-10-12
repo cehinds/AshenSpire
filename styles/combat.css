@@ -351,6 +351,8 @@
 }
 /* The selected card's glow is the shared WCF3 filter (kit.css); no second outline. */
 .hand .card.selected { border-color: var(--gold); }
+/* A card already on the reaction stack: muted until the stack resolves. */
+.hand .card.is-stacked { opacity: .55; filter: saturate(.4); }
 
 /* #198: drag aiming deliberately reuses the click-selected `.aim-silho`
    visual above. The ghost names whether the current point can commit; enemies
