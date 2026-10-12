@@ -126,3 +126,9 @@ test('the perspective grid is three lanes of one player rank; its front column i
   assert.deepEqual(formationDimensions({ perspectiveGrid: true }, 3), { columns: 2, rows: 3, perspective: true });
   assert.deepEqual(formationDimensions({ perspectiveGrid: true }, 8), { columns: 2, rows: 4, perspective: true });
 });
+
+test('a saved spawn column outside the perspective rank still starts the player on it', () => {
+  const dimensions = formationDimensions({ perspectiveGrid: true }, 1);
+  assert.equal(formationSpawn({ playerSpawnColumn: '2' }, 'player', dimensions), 'C1');
+  assert.equal(formationSpawn({ playerSpawnColumn: '2', playerSpawnRow: 'A' }, 'player', dimensions), 'A1');
+});

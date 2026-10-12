@@ -1073,7 +1073,10 @@ function wireGridTargeting(field) {
   }, true);
   let hovered = null;
   field.addEventListener('pointermove', event => {
-    const frame = passive(event.target) ? null : enemyFrameAtCell(field, event.clientX, event.clientY);
+    // Over a body or control, that element's own pointer events own the
+    // highlight; forget the cell hover without clearing it.
+    if (passive(event.target)) { hovered = null; field.classList.remove('grid-target-hover'); return; }
+    const frame = enemyFrameAtCell(field, event.clientX, event.clientY);
     if (frame === hovered) return;
     hovered?.dispatchEvent(new PointerEvent('pointerleave'));
     hovered = frame;

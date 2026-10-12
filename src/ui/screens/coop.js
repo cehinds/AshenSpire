@@ -101,6 +101,7 @@ import { mountMapBoard } from '../components/mapboard.js';
 import { combatBackdropHtml } from '../components/environmentArt.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { wireBattlefieldStage } from '../components/battlefieldStage.js';
+import { formationGridHtml } from '../components/formationGrid.js';
 import { wireCombatLayout } from '../components/combatLayout.js';
 import { actionsTipHtml, drawTipHtml, spentTipHtml, POTIONS_TIP_HTML, combatActionRowHtml, combatPotionRows, disposeCombatPotionTray, openCombatPotions, paintCombatActionCounts, renderCombatPotionTray, setPotionRevealTiming } from '../components/combatActionRow.js';
 import { resolveTooltipSettings } from '../../model/tooltipSettings.js';
@@ -1072,7 +1073,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         ${progressionError ? `<p class="combat-error" role="status">${esc(progressionError)}</p>` : ''}
         ${meP?.ashenBlight?.milestones.some(row => row.path === null) ? '<button class="primary" id="coop-blight-feat">Choose Blight feat</button>' : ''}
         ${combatBackdropHtml(snap)}
-        <div class="field"><div class="turn-ribbon" role="status" aria-live="polite">${pacing || sc.phase === 'enemy' ? 'Enemy Turn' : 'Player Turn'}</div>
+        <div class="field">${formationGridHtml()}<div class="turn-ribbon" role="status" aria-live="polite">${pacing || sc.phase === 'enemy' ? 'Enemy Turn' : 'Player Turn'}</div>
           <div class="player-zone"></div>
           <div class="enemy-row"></div>
         </div>

@@ -60,6 +60,8 @@ export function formationSpawn(values, side, dimensions = formationDimensions(va
   const low = side === 'player' ? 1 : columns + 1;
   const high = side === 'player' ? columns : columns * 2;
   const raw = Number(values[`${side}SpawnColumn`] ?? (side === 'player' ? low : high));
-  const column = Math.min(high, Math.max(low, Number.isFinite(raw) ? raw : low));
+  // The perspective's player rank is the outer column only.
+  const column = dimensions.perspective && side === 'player' ? low
+    : Math.min(high, Math.max(low, Number.isFinite(raw) ? raw : low));
   return `${FORMATION_ROWS[row]}${column}`;
 }
