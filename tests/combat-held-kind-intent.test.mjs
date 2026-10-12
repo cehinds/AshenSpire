@@ -66,3 +66,63 @@ test('with nothing confirmed or armed, the figure shows the neutral resting mark
   assert.match(overhead, /ready: 'prepare'/, 'the resting mark draws the neutral prepare sigil');
   assert.match(overhead, /export const RESTING_PLAYER_ACTION = Object\.freeze\(\{ maneuver: 'ready' \}\);/);
 });
+
+// A spell-only card (camp:spell, no maneuver, e.g. Scholar's Insight) shows the
+// cast glyph, both armed and as the held kind after it is confirmed.
+const overheadSource = readFileSync(new URL('../src/ui/components/combatantOverhead.js', import.meta.url), 'utf8');
+const overheadBegin = overheadSource.indexOf('export function playerActionIntent(');
+const overheadEnd = overheadSource.indexOf('\n}\n', overheadBegin) + 3;
+function loadPlayerActionIntent() {
+  const fakeDocument = { createElement: tag => ({
+    tag, type: '', className: '', attrs: {}, children: [], listeners: {},
+    setAttribute(key, value) { this.attrs[key] = value; },
+    append(...nodes) { this.children.push(...nodes); },
+    addEventListener(type, fn) { this.listeners[type] = fn; },
+  }) };
+  const body = overheadSource.slice(overheadBegin, overheadEnd).replace(/^export /, '');
+  return runInNewContext(`${body}\nplayerActionIntent`, { document: fakeDocument, intentIcon: id => ({ icon: id }) });
+}
+function loadSyncPlayerActionIntent(playerActionIntent, resolved) {
+  const source = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
+  const begin = source.indexOf('  function syncPlayerActionIntent('), end = source.indexOf('  function armSelf(', begin);
+  const actions = [];
+  const leading = { querySelector: () => null, append: action => actions.push(action) };
+  const context = {
+    combat: {}, upcastRanksByCard: new Map(), resolveCombatCard: () => resolved, combatProfileFor, selfArm: null,
+    RESTING_PLAYER_ACTION: { maneuver: 'ready' }, playerActionIntent, playCard() {}, selectCombatant() {},
+    combatEl: { dispatchEvent() {} }, CustomEvent: class { constructor(type) { this.type = type; } },
+  };
+  const sync = runInNewContext(`${source.slice(begin, end)}\nsyncPlayerActionIntent`, context);
+  return { actions, sync: (inst, held) => sync({ querySelector: () => ({ querySelector: () => null, append: leading.append }) }, inst, held) };
+}
+
+test('a spell-only profile shows the cast glyph, a physical one with no maneuver shows none', () => {
+  const playerActionIntent = loadPlayerActionIntent();
+  const spellOnly = combatProfileFor({ id: 'scholarsInsight' });
+  assert.equal(spellOnly.camp, 'spell');
+  assert.equal(spellOnly.maneuver, null);
+  const node = playerActionIntent(spellOnly, () => {});
+  assert.ok(node, 'a spell-only profile is not dropped');
+  assert.equal(node.attrs['aria-label'], 'Selected action: cast');
+  assert.equal(node.children[0].icon, 'cast');
+  assert.equal(playerActionIntent({ camp: 'physical', maneuver: null }, () => {}), null);
+});
+
+test('an armed spell-only card wins over the held kind', () => {
+  const { actions, sync } = loadSyncPlayerActionIntent(profile => ({ profile }), { id: 'scholarsInsight' });
+  sync({ instanceId: 'x', cardId: 'scholarsInsight' }, kindForCard({ id: 'defend' }));
+  assert.equal(actions.at(-1).profile.camp, 'spell', 'the armed spell-only profile is not replaced by the held kind');
+  assert.equal(actions.at(-1).profile.maneuver, null);
+});
+
+test('after confirming a spell-only card, the held glyph becomes cast', () => {
+  const kinds = createStanceLedger(kindForCard);
+  kinds.accept({ type: 'cardPlayed', cardId: 'defend' });
+  kinds.accept({ type: 'cardPlayed', cardId: 'scholarsInsight' });
+  assert.equal(kinds.get().camp, 'spell', 'the ledger keeps the spell-only profile');
+  const { actions, sync } = loadSyncPlayerActionIntent(loadPlayerActionIntent(), null);
+  sync(null, kinds.get());
+  assert.equal(actions.length, 1, 'the held spell-only kind shows a glyph');
+  assert.equal(actions[0].attrs['aria-label'], 'Selected action: cast');
+  assert.equal(actions[0].children[0].icon, 'cast');
+});

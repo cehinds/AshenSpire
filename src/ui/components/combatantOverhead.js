@@ -99,13 +99,13 @@ export const RESTING_PLAYER_ACTION = Object.freeze({ maneuver: 'ready' });
 
 // Selected card previews use authored action identity, never card-name guesses.
 export function playerActionIntent(profile, onTarget) {
-  if (!profile?.maneuver) return null;
+  if (!profile?.maneuver && profile?.camp !== 'spell') return null;
   const icon = ({ defend: 'defend', counter: 'counter', smash: 'smash', attack: 'attack', sweep: 'attack', ranged: 'attack', casting: 'cast', ready: 'prepare' })[profile.maneuver]
     || (profile.camp === 'spell' ? 'cast' : null);
   if (!icon) return null;
   const node = document.createElement('button');
   node.type = 'button'; node.className = 'player-action-intent overhead-control';
-  node.setAttribute('aria-label', `Selected action: ${profile.maneuver}`);
+  node.setAttribute('aria-label', `Selected action: ${profile.maneuver || 'cast'}`);
   node.append(intentIcon(icon));
   node.addEventListener('click', event => { event.stopPropagation(); onTarget(); });
   return node;
