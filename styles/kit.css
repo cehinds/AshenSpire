@@ -6268,3 +6268,67 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 .cc-design-workspace #cz-spell-choices { grid-auto-flow:row; grid-auto-columns:minmax(0,1fr); overflow:visible; scroll-snap-type:none; }
 .cc-design-workspace #cz-spell-choices > .cc-ability-choice { grid-column:auto; grid-row:auto; min-width:0; }
 .cc-design-workspace .cz-actions button[aria-disabled="true"] { background:var(--bg-raise,#1b1710); color:var(--cc-copy-muted); border-color:var(--line,#786443); animation:none; }
+
+/* Compact creation study: short benefits on the cards, complete rules in the
+   inspector. Physical desktop sizes compensate the game's UI zoom. */
+@media(min-width:601px) {
+ .cc-design-workspace, .cc-page-parts { --cc-body-font:calc(16px / var(--ui-zoom,1)); --cc-control-floor:calc(36px / var(--ui-zoom,1)); }
+ .cc-design-workspace .as-railitem { min-height:var(--cc-control-floor); padding:8px 12px; font-size:var(--cc-body-font); }
+ .cc-design-workspace .cz-actions button { padding:8px 20px; font-size:var(--cc-body-font); }
+}
+.cc-feat-browser .cc-page-heading { gap:16px; margin-bottom:14px; }
+.cc-feat-browser .cc-page-title { font-size:calc(30px / var(--ui-zoom,1)); margin:4px 0 6px; }
+.cc-feat-browser .cc-page-eyebrow { font-size:calc(11px / var(--ui-zoom,1)); }
+.cc-feat-browser .cc-page-description { line-height:1.35; }
+.cc-feat-availability { max-width:250px; font-size:calc(13px / var(--ui-zoom,1)); margin-top:4px; }
+.cc-feat-groups { gap:8px; margin-bottom:14px; }
+.cc-feat-group-filter { padding:6px 14px; }
+.cc-feat-layout { grid-template-columns:minmax(0,1fr) minmax(240px,30%); gap:18px; }
+.cc-feat-choices { gap:12px; }
+.cc-feat-browser .cc-choice-tile { min-height:112px; padding:12px; }
+.cc-feat-browser .cc-choice-body { grid-template-columns:64px minmax(0,1fr) 16px; gap:10px; }
+.cc-feat-browser .cc-feat-emblem { width:64px; height:64px; }
+.cc-feat-browser .cc-choice-copy { gap:6px; }
+.cc-feat-browser .cc-choice-title { font-size:calc(20px / var(--ui-zoom,1)); }
+.cc-feat-browser .cc-choice-description { font-size:calc(14px / var(--ui-zoom,1)); line-height:1.35; }
+.cc-feat-tile-status { display:flex; align-items:center; justify-content:center; color:var(--cc-copy-muted); }
+.cc-feat-tile-status .engraved-icon { width:16px; height:16px; }
+.cc-feat-detail { padding:18px; }
+.cc-feat-detail .cc-feat-emblem { width:108px; height:108px; margin:2px 0 14px; }
+.cc-feat-detail-title { font-size:calc(24px / var(--ui-zoom,1)); }
+.cc-feat-detail-divider { margin:16px 0; }
+.cc-feat-detail-description { line-height:1.45; margin-bottom:14px; }
+.cc-feat-detail .cc-feat-level-requirement { font-size:calc(14px / var(--ui-zoom,1)); padding-bottom:0; gap:6px; }
+.cc-feat-return { display:none; }
+@media(max-width:960px) {
+ .cc-feat-layout { grid-template-columns:minmax(0,1fr); }
+ .cc-feat-choices { display:contents; }
+ .cc-feat-browser .cc-choice-tile { order:var(--cc-choice-order); }
+ .cc-feat-detail { order:var(--cc-inspector-order); }
+ .cc-feat-detail .cc-part-body { min-height:0; }
+ .cc-feat-return { display:block; margin-top:14px; min-height:var(--cc-control-floor); padding:8px 18px; font-size:var(--cc-body-font); }
+}
+@media(max-width:600px) {
+ .cc-feat-browser .cc-page-title { font-size:calc(26px / var(--ui-zoom,1)); }
+ .cc-feat-browser .cc-page-eyebrow { font-size:calc(12px / var(--ui-zoom,1)); }
+ .cc-feat-browser .cc-page-heading { margin-bottom:12px; }
+ .cc-feat-availability { max-width:none; font-size:calc(14px / var(--ui-zoom,1)); }
+ .cc-feat-layout { gap:12px; }
+ .cc-feat-browser .cc-choice-tile { min-height:100px; padding:12px; }
+ .cc-feat-browser .cc-choice-body { grid-template-columns:60px minmax(0,1fr) 18px; gap:10px; }
+ .cc-feat-browser .cc-feat-emblem { width:60px; height:60px; }
+ .cc-feat-browser .cc-choice-title { font-size:calc(20px / var(--ui-zoom,1)); }
+ .cc-feat-browser .cc-choice-description { font-size:calc(16px / var(--ui-zoom,1)); }
+ .cc-feat-detail .cc-feat-emblem { width:96px; height:96px; }
+ .cc-feat-detail .cc-feat-level-requirement { font-size:calc(16px / var(--ui-zoom,1)); }
+}
+@media(min-width:601px) {
+ .customize.cc-design-workspace .cz-actions > .modal-foot-actions { grid-template-columns:repeat(2,160px)!important; width:auto!important; }
+ .customize.cc-design-workspace .cz-actions > .modal-foot-actions > button { width:160px!important; min-width:0!important; }
+}
+@media(max-width:960px) {
+ .cc-feat-browser:not([data-detail-open="true"]) .cc-feat-detail { display:none; }
+}
+@media(min-width:601px) {
+ .customize.cc-design-workspace .cz-actions > .modal-foot-actions { width:100%!important; justify-content:space-between!important; }
+}

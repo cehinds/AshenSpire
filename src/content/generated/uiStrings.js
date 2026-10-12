@@ -9416,5 +9416,54 @@ export const uiStrings = [
     "short": "No feat offers are currently earned on the {track} track.",
     "full": "",
     "tip": ""
+  },
+  {
+    "id": "creation.feats.return",
+    "extends": "",
+    "short": "Back to feats",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.summary.fieldStudy",
+    "extends": "",
+    "short": "More character XP.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.summary.weaponDrill",
+    "extends": "",
+    "short": "More weapon XP.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.summary.armourPractice",
+    "extends": "",
+    "short": "More armour XP.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.summary.classInsight",
+    "extends": "",
+    "short": "More class XP.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.summary.spoilsInstinct",
+    "extends": "",
+    "short": "More Cinders from victory.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.summary.vitalRenewal",
+    "extends": "",
+    "short": "Recover HP after victory.",
+    "full": "",
+    "tip": ""
   }
 ];
