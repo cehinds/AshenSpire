@@ -5870,7 +5870,12 @@ button[data-button-size] {
   position: relative; flex: 1 1 0; min-width: 0; --meter-tone: var(--health-red) !important;
   container-type: inline-size; container-name: combat-health;
 }
-:root .combat .combatant .combat-health-row > .combat-health-meter[data-protected='true'] { --meter-tone: var(--block-silver) !important; }
+/* The fill takes the highest layer still standing: Barrier > Block > Ward > Health red (healthGuardTone). */
+:root .combat .combatant .combat-health-row > .combat-health-meter[data-guard='barrier'] { --meter-tone: var(--barrier-blue) !important; }
+:root .combat .combatant .combat-health-row > .combat-health-meter[data-guard='block'] { --meter-tone: var(--block-silver) !important; }
+:root .combat .combatant .combat-health-row > .combat-health-meter[data-guard='ward'] { --meter-tone: var(--ward-purple) !important; }
+/* Poise still standing: a gold trim around the whole health bar (its gold badge keeps the number). */
+:root .combat .combatant .combat-health-row > .combat-health-meter[data-poised='true'] { border-radius: 6px; box-shadow: 0 0 0 max(1px, calc(1.5px / var(--ui-zoom, 1))) #ffd34d, 0 0 6px 1px #ffd34d88; }
 :root .combat .combatant .combat-health-meter .m-track { height: var(--health-row-h); border-radius: 5px; background: #0d1412; }
 :root .combat .combatant .combat-health-meter[data-warded='true'] .m-track {
   outline: max(1px, calc(2px / var(--ui-zoom, 1))) solid var(--ward-purple); outline-offset: 1px;

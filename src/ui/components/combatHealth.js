@@ -21,6 +21,9 @@ export function combatHealthRow(hp, values, { tooltips = true, blockHelp = tFull
   hp.classList.add('combat-health-meter');
   hp.dataset.protected = String(model.protected);
   hp.dataset.warded = String(model.warded);
+  // The fill's colour: the highest layer still standing (see healthGuardTone). Poise trims the bar in gold while it lasts.
+  hp.dataset.guard = model.guard;
+  hp.dataset.poised = String(model.poise > 0);
   const healthValue = hp.querySelector('.m-value');
   if (healthValue) {
     // Narrow phone lanes show current HP; the full fraction remains the

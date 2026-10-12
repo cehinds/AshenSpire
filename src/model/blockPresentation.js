@@ -21,5 +21,17 @@ export function protectionPresentation(entity) {
   const whole = value => Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
   // Barrier is Ward charged past full: it counts in the badge and gilds it.
   const barrier = whole(entity?.barrier);
-  return { defense, ward: ward + whole(entity?.persistentWard?.value) + barrier, barrier, poise: whole(entity?.persistentPoise?.value) };
+  // wardPool is the Ward that is not Barrier: the magical Block share plus the persistent pool.
+  const wardPool = ward + whole(entity?.persistentWard?.value);
+  return { defense, ward: wardPool + barrier, wardPool, barrier, poise: whole(entity?.persistentPoise?.value) };
+}
+
+// Which layer colours the HP bar's fill: the highest defence still standing,
+// Barrier (blue) > Block (silver) > Ward (purple) > none (the Health red).
+// Only the colour changes; the fill's length still means HP.
+export function healthGuardTone({ barrier = 0, defense = 0, wardPool = 0 } = {}) {
+  if (barrier > 0) return 'barrier';
+  if (defense > 0) return 'block';
+  if (wardPool > 0) return 'ward';
+  return 'none';
 }
