@@ -193,6 +193,7 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
     if (disposed) return;
     if (playing) {
       elapsed=Math.min(playing.duration,elapsed+Math.max(0,now-Math.max(last,holdUntil)));
+      if(playing.awaitContact&&!reducedMotionRequested())elapsed=Math.min(elapsed,playing.contactMs);
       if (elapsed>=playing.duration || reducedMotionRequested()) { playing=null;resources=[];pose=restPose(); }
     }
     if (flashAt!==null) {
@@ -286,6 +287,25 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
       // even when a preceding hurt effect already has a queued animation frame.
       resources=aura||[];elapsed=0;holdUntil=0;playing={action:key,sequence,duration:ms};
       paint(performance.now(),true);last=performance.now();wake();return true;
+    },
+    contactCue(){
+      if(!playing?.sequence.contactCue||still||reducedMotionRequested())return null;
+      const action=playing;
+      const sequence=action.sequence;
+      action.contactMs=sequence.durations.slice(0,sequence.impact).reduce((a,b)=>a+b,0)
+        /sequence.durations.reduce((a,b)=>a+b,0)*action.duration;
+      action.awaitContact=true;
+      return {
+        contact(){
+          if(disposed||rest==='defeated'||playing!==action||!action.awaitContact)return false;
+          action.awaitContact=false;elapsed=Math.max(elapsed,action.contactMs);
+          paint(performance.now(),true);last=performance.now();wake();return true;
+        },
+        remainingMs(){
+          if(disposed||playing!==action)return 0;
+          return Math.max(0,action.duration-elapsed)+Math.max(0,holdUntil-performance.now());
+        },
+      };
     },
     hold(ms){
       if(!(playing||flashAt!==null||bodyReaction)||!(ms>0))return false;
