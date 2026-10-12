@@ -10,6 +10,9 @@ export const COMBAT_TOOLS_HEIGHT_PX = 34;
 export const DESKTOP_FAN_GAP_PX = 6;
 // Desktop cards fill the band down to this gap under the lowest resting corner.
 export const DESKTOP_FAN_BOTTOM_GAP_PX = 12;
+// Desktop cards spread so the fan spans this share of the hand's width (the
+// cards keep at least their own width between centres: they never overlap).
+export const DESKTOP_FAN_SPAN = 0.55;
 const compactCard = uiConfig.scenes.w4a.sizing.compactCombat;
 
 // Presentation order is local, keyed by instance, and never mutates a pile.
@@ -76,7 +79,10 @@ export function handLayout({ width, height, count, rem = 16, zoom = 1, compact =
   const touch = config.exposedTargetPx / zoom;
   const capacity = Math.max(1, Math.min(requested, Math.floor(Math.max(0, width - cardWidth) / touch) + 1));
   const visible = Math.max(1, Math.min(count, capacity));
-  const step = visible > 1 ? Math.max(touch, Math.min(cardWidth, (width - cardWidth - side * 2) / (visible - 1))) : count > 1 ? touch : 0;
+  // A desktop fan spreads to DESKTOP_FAN_SPAN of the width; a phone or tablet
+  // fan keeps its cards at their own width (overlapping) as before.
+  const spreadStep = fan ? Math.max(cardWidth, (DESKTOP_FAN_SPAN * width - cardWidth) / Math.max(1, visible - 1)) : cardWidth;
+  const step = visible > 1 ? Math.max(touch, Math.min(spreadStep, (width - cardWidth - side * 2) / (visible - 1))) : count > 1 ? touch : 0;
   const span = count ? cardWidth + Math.max(0, count - 1) * step : 0;
   const start = Math.max(side, (width - span) / 2);
   const middle = (count - 1) / 2;

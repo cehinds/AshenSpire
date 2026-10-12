@@ -69,3 +69,21 @@ test('desktop cards fill the band height down to the authored bottom gap', () =>
       assert.ok(Math.abs(bottomGapPx - 12) <= 1, `${width} ${count} cards, ${controlsPx}px chooser: ${bottomGapPx}px below`);
     }
 });
+
+test('desktop fan spreads 4 and 5 cards across at least half the width without overlap', () => {
+  for (const [width, zoom, bandPx] of [[1280, .99, 274], [1440, 1.2, 342], [1920, 1.48, 411]]) for (const count of [4, 5]) {
+    const { plan, zoom: z } = desktop({ width, zoom, bandPx, count });
+    const spanShare = (plan.cards.at(-1).x + plan.cardWidth - plan.cards[0].x) * z / width;
+    assert.ok(spanShare >= 0.5, `${width} ${count} cards span ${(spanShare * 100).toFixed(1)}%`);
+    assert.ok(plan.step >= plan.cardWidth - 1e-9, 'neighbouring cards never overlap less than their own width');
+  }
+});
+
+test('a seven-card desktop hand still fits the width', () => {
+  for (const [width, zoom, bandPx] of [[1280, .99, 274], [1440, 1.2, 342], [1920, 1.48, 411]]) {
+    const { plan, zoom: z } = desktop({ width, zoom, bandPx, count: 7 });
+    assert.equal(plan.cards.length, 7);
+    assert.ok(plan.cards[0].x * z >= 0, `${width}: left edge inside`);
+    assert.ok((plan.cards.at(-1).x + plan.cardWidth) * z <= width + 1e-6, `${width}: right edge inside`);
+  }
+});
