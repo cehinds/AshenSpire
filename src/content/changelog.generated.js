@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1897",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Thirty new greatsword concepts are available for review",
+    "detail": "Pose Studio now offers ten new Reaver greatsword choices each for Sweep, Counter and Evade, with labeled replacement figures where the original grip or boot needed repair. These are art-review concepts awaiting owner selection and runtime production.",
+    "build": "0.7.1.1420",
+    "pullRequest": 1897,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1897"
+  },
+  {
     "id": "pr-1888",
     "date": "2026-10-12",
     "group": "2026-10-12",

@@ -3502,7 +3502,17 @@
     "conceptCountSelectable": 30,
     "conceptCountNeedsRevision": 0,
     "registeredPoseExports": 0,
-    "reviewRecord": "docs/design/update-stances/followup-art-review.md"
+    "reviewRecord": "docs/design/update-stances/followup-art-review.md",
+    "pullRequest": {
+      "number": 1897,
+      "url": "https://github.com/cehinds/AshenSpire/pull/1897",
+      "mergeStatus": "open_ready_for_concept_review"
+    },
+    "build": "0.7.1.1420",
+    "buildDigest": "9393e58e56",
+    "galleryQA": "passed_final50IDs_49totalSelectable_30followup_3replacements",
+    "independentReview": "approved_39general_and23SW17_browser_assertions",
+    "portablePreview": "docs/preview/update-stances-options-20261012/README.md"
   },
   "selectedDelivery": {
     "status": "export_runtime_browser_QA_complete_merged_to_dev",
