@@ -690,12 +690,17 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const placeLeading = ({ actor, frame, leadingHost, id, x, ground, visibleHeight }, anchors) => {
       const anchor = anchors.find(overhead => overhead.id === id);
       if (hudBelow(actor)) {
-        // A front-rank enemy's readout hangs just below its feet, centred on
-        // the body: above its head is the back-rank enemy of the same lane.
-        leadingHost.style.left = '0px';
+        // A front-rank enemy's readout hangs below its feet. Keep its preferred
+        // centre on the body, but honour the packer's bounded displacement when
+        // four or more perspective lanes make neighbouring readouts collide.
+        const overheadX = anchor?.x ?? x;
+        const overheadLocal = anchorLocalBox(VIEWPORT_ORIGIN,
+          { left: overheadX - x, top: 0, width: 0, height: 0 }, { zoom });
+        leadingHost.style.left = `${overheadLocal.left}px`;
         const above = ground - visibleHeight - overheadGap - actor.leadingHeight * zoom;
-        leadingHost.style.translate = `0 ${(ground + overheadGap - above) / zoom}px`;
-        delete frame.dataset.overheadObstructed;
+        leadingHost.style.translate = `0 ${(ground + overheadGap - above + (anchor?.offsetY ?? 0)) / zoom}px`;
+        if (anchor?.obstructed) frame.dataset.overheadObstructed = 'true';
+        else delete frame.dataset.overheadObstructed;
         frame.dataset.hudBelow = 'true';
         return;
       }
