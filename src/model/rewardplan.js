@@ -118,6 +118,20 @@ export const CARD_CHOICE_KINDS = Object.freeze(['card', 'levelCard', 'skillDraft
 export const isRelicChoice = (row) => row.kind === 'relic' && Array.isArray(row.relicIds);
 
 /**
+ * unownedRelicChoices(rows, owned) → the rows with each boss relic choice
+ * narrowed to the ids the run does not already hold. A choice left with no
+ * unowned id is dropped: it lands nothing, so auto-collect never picks an
+ * owned relic (a relic gained earlier on the same screen can be in the offer).
+ */
+export function unownedRelicChoices(rows, owned = []) {
+  return rows.flatMap((row) => {
+    if (!isRelicChoice(row)) return [row];
+    const relicIds = row.relicIds.filter((id) => !owned.includes(id));
+    return relicIds.length ? [{ ...row, relicIds }] : [];
+  });
+}
+
+/**
  * The one-line notes the menu prints beside its rows, as tokens: today only
  * `cardMissed`, the card reward schedule's missed chance (SPEC §15.1: "No
  * card this time."). An offer written before the schedule carries none.

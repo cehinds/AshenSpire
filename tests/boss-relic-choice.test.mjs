@@ -13,7 +13,7 @@ import { relicInRewardPool } from '../src/model/schemas.js';
 import { createRng } from '../src/engine/rng.js';
 import { rollRelicChoices, rollRelicReward } from '../src/engine/encounters.js';
 import { configuredRewardOffer, pendingRewardCheckpoint } from '../src/model/rewardSourcePolicy.js';
-import { resolveContinue, rewardClaimStatus, rewardPlan } from '../src/model/rewardplan.js';
+import { resolveContinue, rewardClaimStatus, rewardPlan, unownedRelicChoices } from '../src/model/rewardplan.js';
 import { createRunState, validateRunShape } from '../src/model/state.js';
 import { mountRewards } from '../src/ui/screens/reward.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
@@ -105,6 +105,28 @@ test('a boss relic choice row is a required pick, auto-collected one-of-offer li
   assert.ok(!manual.take.some((r) => r.kind === 'relic'), 'auto-collect OFF takes no relic');
   assert.ok(manual.leave.some((r) => r.kind === 'relic'), 'the unpicked choice is left');
   assert.equal(rewardClaimStatus(plan, { [row.key]: 'skipped' }).requiredChoice, null, 'a skipped choice no longer blocks');
+});
+
+test('auto-collect with an owned relic in the offer takes a or c, never the owned b, never nothing', () => {
+  const plan = rewardPlan({ relicChoices: ['relicA', 'relicB', 'relicC'] });
+  const owned = ['relicB'];
+  const narrowed = { ...plan, rows: unownedRelicChoices(plan.rows, owned) };
+  const seen = new Set();
+  for (let n = 0; n < 3; n++) {
+    const { take } = resolveContinue(narrowed, {}, 'auto', (count) => n % count);
+    const picked = take.filter((r) => r.kind === 'relic');
+    assert.equal(picked.length, 1, `pick ${n}: one relic taken`);
+    assert.ok(!owned.includes(picked[0].chosenRelicId), `pick ${n}: never the owned relic`);
+    seen.add(picked[0].chosenRelicId);
+  }
+  assert.deepEqual([...seen].sort(), ['relicA', 'relicC'], 'both unowned options are reachable');
+});
+
+test('a boss relic choice whose every id is owned is dropped, so nothing is taken from it', () => {
+  const plan = rewardPlan({ relicChoices: ['relicA', 'relicB'] });
+  const rows = unownedRelicChoices(plan.rows, ['relicA', 'relicB']);
+  assert.ok(!rows.some((r) => r.kind === 'relic'), 'no relic row remains');
+  assert.deepEqual(resolveContinue({ rows }, {}, 'auto', () => 0).take, [], 'auto-collect takes nothing');
 });
 
 test('a single boss relic (relicId) keeps the one-relic row shape', () => {
