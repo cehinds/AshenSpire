@@ -239,9 +239,17 @@ export const heraldCards = [
     keywords: ['exhaust', 'retain'], icon: '🌺',
     effects: [
       { op: 'applyStatus', target: 'enemy', status: 'crimsonBlight', stacks: { f: 'stacks', status: 'crimsonBlight', of: 'target' } },
+      { op: 'applyStatus', target: 'enemy', status: 'necroticBlight', stacks: { f: 'stacks', status: 'necroticBlight', of: 'target' }, if: { p: 'hasStatus', of: 'target', status: 'necroticBlight' } },
     ],
-    textTemplate: "Double the target's Crimson Blight. Exhaust.",
-    upgrade: { keywords: ['retain'], textTemplate: "Double the target's Crimson Blight." },
+    textTemplate: "Double the target's Blight (Crimson and Necrotic). Exhaust.",
+    upgrade: {
+      keywords: ['retain'],
+      effects: [
+        { op: 'applyStatus', target: 'enemy', status: 'crimsonBlight', stacks: { f: 'stacks', status: 'crimsonBlight', of: 'target' } },
+        { op: 'applyStatus', target: 'enemy', status: 'necroticBlight', stacks: { f: 'stacks', status: 'necroticBlight', of: 'target' }, if: { p: 'hasStatus', of: 'target', status: 'necroticBlight' } },
+      ],
+      textTemplate: "Double the target's Blight (Crimson and Necrotic).",
+    },
   },
   {
     id: 'sacredHarvest', name: 'Sacred Harvest', class: 'herald', rarity: 'uncommon', cost: 1, manaCost: 1, type: 'attack',
