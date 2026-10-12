@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "status": "SM03 is owner-selected and implemented; final compiled validation is pending after its cold-contact correction. SW09 is owner-selected with its straight-arm iai source approved; production and runtime integration are pending. Other examples remain references.",
+  "status": "Owner-selected SM03 Smash and corrected straight-arm SW09 Sweep are implemented in the runtime candidate; combined compiled gameplay validation is pending. Other examples remain reference options.",
   "reviewSlotMs": 350,
   "families": {
     "sweep": {
@@ -192,7 +192,7 @@
       "storyboard": "sweep/selected-sweep-sw09/SW09/strip.png",
       "caveat": null,
       "ownerSelectedRole": "Sweep",
-      "runtimeStatus": "Corrected source approved \u00b7 production integration pending",
+      "runtimeStatus": "Implemented \u00b7 combined compiled gameplay validation pending",
       "supersededSourceManifest": "sweep/iai-whirlwind-v2/manifest.json"
     },
     {
@@ -260,7 +260,7 @@
       "storyboard": "smash/ground-slam-revision-2/SM03/preview.png",
       "caveat": null,
       "ownerSelectedRole": "Smash",
-      "runtimeStatus": "Implemented \u00b7 compiled gameplay validation pending"
+      "runtimeStatus": "Implemented \u00b7 combined compiled gameplay validation pending"
     },
     {
       "id": "SM04",
