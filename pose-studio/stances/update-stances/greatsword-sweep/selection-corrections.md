@@ -11,3 +11,4 @@ The worker initially selected files by sorting `/workspace/generated_images` by 
 This was a worker file-selection error. The image generation tool was not the cause.
 
 - Targeted Sweep B edit: `sheet-b.png`, SHA-256 `8b9deed36436a27db6e884d7009350b1698ddd6f61339383bf3dffea4bcc3dcc`, returned path `exec-532fb87d-d92c-4b85-959a-deca98504da6.png`. This edit targeted only SW17 and SW18; root review is pending.
+- Standalone SW17 replacement: `sw17-replacement.png`, SHA-256 `36e1eaea0b21ef33fd2f02e926c5d1819b779443bd11c964ff31665d0387b18a`, returned path `exec-45790d79-4560-4788-aa70-c1863c89bbf0.png`. Root requested it replace only the rejected SW17 board slot. Tool returned 1254x1254 despite the 1024x1024 request; source bytes are unchanged.
