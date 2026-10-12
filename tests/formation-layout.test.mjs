@@ -139,4 +139,6 @@ test('a player cell saved in a front column stands in the same lane on the persp
   assert.equal(formationMovePlan(combat, 'B1', settings).current, 'A1');
   assert.equal(formationMovePlan(combat, 'A1', settings).ok, false, 'already standing there');
   assert.equal(formationMovePlan(combat, 'A1', { ...settings, classicAppearance: true }).current, 'A2', 'Classic keeps the saved cell');
+  assert.equal(formationMovePlan({ ...combat, player: { ...combat.player, formationCell: 'B3' } }, 'A1', settings).current, 'B1',
+    'a third Classic column collapses too');
 });

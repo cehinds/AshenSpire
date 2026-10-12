@@ -55,3 +55,8 @@ test('co-op grid cells and intents share the selected-card target action', () =>
   assert.match(coop, /intentEl\(readEnemyIntent\(e, def\), \(\) => activateEnemyTarget\(e\.id\)\)/);
   assert.match(coop, /box\.addEventListener\('click', \(\) => \{[\s\S]*?if \(!activateEnemyTarget\(e\.id\)\) render\(\);/);
 });
+
+test('co-op enemy frames mark a readied hostile card\'s hover target, as solo does', () => {
+  assert.match(coop, /box\.addEventListener\('pointerenter', \(\) => \{[\s\S]*?cardNeedsEnemyTarget\(cardDef\(selected\)\)\) box\.classList\.add\('hover-target'\);/);
+  assert.match(coop, /box\.addEventListener\('pointerleave', \(\) => box\.classList\.remove\('hover-target'\)\);/);
+});

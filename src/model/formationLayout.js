@@ -61,7 +61,8 @@ export function isFormationCell(cell, { columns, rows, perspective = false }, si
 // older save) stands in the same lane of the one player rank.
 export function playerFormationCell(cell, dimensions) {
   if (isFormationCell(cell, dimensions)) return cell;
-  if (dimensions.perspective && isFormationCell(cell, { ...dimensions, perspective: false })) return `${cell[0]}1`;
+  // Classic allows up to three player columns; each collapses into column 1.
+  if (dimensions.perspective && isFormationCell(cell, { columns: 3, rows: dimensions.rows }, 'player')) return `${cell[0]}1`;
   return null;
 }
 

@@ -1362,6 +1362,13 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           if (armedFriendlyCard) return;
           if (!activateEnemyTarget(e.id)) render();
         });
+        // Body and perspective-cell hovers (battlefieldStage) mark a readied
+        // hostile card's target, as solo combat does.
+        box.addEventListener('pointerenter', () => {
+          const selected = meP?.hand.find(card => card.instanceId === litCard());
+          if (!armedFriendlyCard && selected && cardNeedsEnemyTarget(cardDef(selected))) box.classList.add('hover-target');
+        });
+        box.addEventListener('pointerleave', () => box.classList.remove('hover-target'));
       }
       adoptCombatantFrame(box);
       box.inert = dead || !!targetPlan;
