@@ -642,3 +642,70 @@ test('a failed stepRound saved as JSON resumes from the copy with the same resul
   assert.deepEqual(got.events, expected.events);
   assert.deepEqual(got.state, expected.state);
 });
+
+// The first seed whose opening round pauses for a reaction, and whose answer draws at least two rng
+// values: a second draw is where a failing answer can throw.
+function pausedAt(seed) {
+  const fight = FIGHTS[0];
+  const base = rng(seed);
+  const round = startRound(makeFight(fight.specs, TABLES), { queues: makeQueues(fight, rng(seed + 1000)), rng: base, merge: fight.merge });
+  let res = stepRound(round, hooks(base));
+  while (!res.awaitingReaction && !res.done) res = stepRound(round, hooks(base));
+  return res.awaitingReaction ? { round, base, eligible: res.awaitingReaction.eligible } : null;
+}
+// Returns { seed, cardId } for the first pause and eligible card whose answer draws at least twice.
+function pausedWithTwoAnswerDraws() {
+  for (let seed = 1; seed <= 200; seed += 1) {
+    const probe = pausedAt(seed);
+    if (!probe) continue;
+    for (const card of probe.eligible) {
+      const p = pausedAt(seed);
+      let calls = 0;
+      answerReaction(p.round, card.id, hooks(() => {
+        calls += 1;
+        return p.base();
+      }));
+      if (calls >= 2) return { seed, cardId: card.id };
+    }
+  }
+  return null;
+}
+
+test('an answerReaction that throws on an rng draw retries with the drawn values: same result as a clean run', () => {
+  const found = pausedWithTwoAnswerDraws();
+  assert.ok(found, "some seed must pause, and an eligible answer must draw twice");
+  const { seed, cardId } = found;
+
+  const clean = pausedAt(seed);
+  const cleanAnswer = answerReaction(clean.round, cardId, hooks(clean.base));
+  const cleanRest = drive(clean.round, clean.base);
+
+  const again = pausedAt(seed);
+  const flaky = throwingRng(again.base);
+  assert.throws(() => answerReaction(again.round, cardId, hooks(flaky.rng)), new RegExp(RNG_FAILURE));
+  assert.equal(flaky.thrown, true);
+  assert.ok(again.round.awaiting, 'a failed answer leaves the round waiting');
+  const answer = answerReaction(again.round, cardId, hooks(flaky.rng));
+  const rest = drive(again.round, flaky.rng);
+  assert.deepEqual([...answer.events, ...rest.events], [...cleanAnswer.events, ...cleanRest.events]);
+  assert.deepEqual(rest.state, cleanRest.state);
+});
+
+test('a failed answerReaction saved as JSON resumes from the copy with the same result', () => {
+  const found = pausedWithTwoAnswerDraws();
+  assert.ok(found, "some seed must pause, and an eligible answer must draw twice");
+  const { seed, cardId } = found;
+
+  const clean = pausedAt(seed);
+  const cleanAnswer = answerReaction(clean.round, cardId, hooks(clean.base));
+  const cleanRest = drive(clean.round, clean.base);
+
+  const again = pausedAt(seed);
+  const flaky = throwingRng(again.base);
+  assert.throws(() => answerReaction(again.round, cardId, hooks(flaky.rng)), new RegExp(RNG_FAILURE));
+  const saved = JSON.parse(JSON.stringify(again.round));
+  const answer = answerReaction(saved, cardId, hooks(flaky.rng));
+  const rest = drive(saved, flaky.rng);
+  assert.deepEqual([...answer.events, ...rest.events], [...cleanAnswer.events, ...cleanRest.events]);
+  assert.deepEqual(rest.state, cleanRest.state);
+});

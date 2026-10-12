@@ -155,7 +155,7 @@ export function answerReaction(round, cardId, hooks = {}) {
   // Validate every field resolution reads before the pause is cleared, so a bad card throws and the
   // round still waits. atomically() also restores the round if anything after this throws.
   if (chosen) assertReactionCard(chosen);
-  return atomically(round, () => {
+  return transact(round, ctx.fresh, () => {
     const entry = round.timeline.entries[index];
     round.awaiting = null;
     const events = [];
