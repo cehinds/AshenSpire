@@ -105,13 +105,14 @@ review, into `dev`, then promoted to `test` (rule 6). The owner merges only to
    files with the tooling, never by hand, in the order the CHANGELOG.md
    header gives. The *receipt* is the PR's CHANGELOG.md entry, which names
    the build it shipped in; the *box* is `buildordinal.json`, which the
-   rebuild writes. So: `node tools/launch.mjs --build-only`, re-point the
-   receipt to the box's ordinal plus one, `node tools/about-changelog.mjs
-   --write`, rebuild again — the box and the receipt now agree — and push.
-   Commit `buildordinal.json` and the generated changelog module, **never
-   the built HTML**: it is ignored on `dev`, CI builds it and publishes it as
-   the `dev-standalone-<commit>` workflow artifact, and CI fails the PR if its
-   own rebuild would move `buildordinal.json`. The owner never resolves a
+   build writes. Stamp the receipt with the box as it stands on your branch,
+   and do not commit `buildordinal.json`: another merge moves it, so a
+   matched stamp goes stale the moment a neighbour lands. After your merge,
+   the build-stamp workflow rebuilds `dev`, re-points your receipt to the
+   build it actually shipped in, and pushes that to `dev`. Commit the source,
+   the receipt and the generated changelog module, **never the built HTML**:
+   it is ignored on `dev`, and CI builds it and publishes it as the
+   `dev-standalone-<commit>` workflow artifact. The owner never resolves a
    conflict.
 4. **Keep it green.** A failing test or gate is yours to root-cause and fix;
    "flake" is not a diagnosis. Never skip or quarantine a test to get green.
@@ -158,11 +159,19 @@ review, into `dev`, then promoted to `test` (rule 6). The owner merges only to
      run that commits a refreshed `docs/ARCHITECTURE-CURRENT-DEV.md` back to
      `dev`, and a newer push cancels the older run. Promote only when the
      latest run on `dev` has succeeded and `dev`'s tip is the commit it
-     covered or its own bot commit. Then open a PR from `dev` into `test` and
+     covered or its own bot commit.
+   - Wait for `build-stamp` on the same tip, too. Every push to `dev` starts a
+     `build-stamp` run that rebuilds `dev`, re-points the landed receipts and
+     commits the box as `build: stamp <release>.<ordinal> [build-stamp]`. Promote
+     only when that run has succeeded and `dev`'s tip is that stamp commit, or a
+     later docs-only bot commit. Its dispatched `dev-preview` run on the stamped tip
+     must also have succeeded, since that artifact is the playable build for it.
+     Then open a PR from `dev` into `test` and
      merge it yourself, with a merge commit. Immediately before merging,
-     check again: the PR's head must still be the `dev` tip and that tip's
-     latest `architecture-sync` run must have succeeded. If `dev` moved,
-     wait for its sync to settle and check again. That push to `test` runs the heavy suites. If one is
+     check again: the PR's head must still be the `dev` tip, that tip's
+     latest `architecture-sync` run must have succeeded, and its `build-stamp`
+     run must have succeeded. If `dev` moved,
+     wait for its syncs to settle and check again. That push to `test` runs the heavy suites. If one is
      already open, merge that one rather than opening another. Each
      promotion runs the full 3-OS matrix, so when several of your PRs land
      together, promote once after the last.
