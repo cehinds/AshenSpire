@@ -5,6 +5,7 @@ import { applyCardAppearance } from '../src/ui/components/cardAppearance.js';
 import { CARD_COMPONENTS } from '../src/content/cardComponents.generated.js';
 import { ACTION_SIGILS } from '../src/content/combatSigils.js';
 import { contentBundle } from '../src/content/index.js';
+import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { playingCardModel } from '../src/model/playingCard.js';
 import { withModalDom } from './helpers/modal-dom.mjs';
@@ -14,7 +15,7 @@ const model=(...ids)=>({tags:ids.map(id=>({id,label:id.split(':').at(-1)}))});
 const effect=(status,stacks=2,extra={})=>({op:'applyStatus',status,stacks,target:'enemy',...extra});
 test('rail orders category, actual damage types and up to three statuses, capped at five',()=>{
   const m=model('ability:foo','damage:fire','camp:spell','damage:slashing','school:force');
-  const def={effects:[effect('bleed'),effect('weak'),effect('frost'),effect('venom')]};
+  const def={effects:[{op:'damage',amount:5},effect('bleed'),effect('weak'),effect('frost'),effect('venom')]};
   const rows=cardSideTags(m,def,reg);
   assert.deepEqual(rows.map(row=>row.id),['camp:spell','damage:fire','damage:slashing','status:bleed','status:weak']);
   assert.deepEqual(rows.slice(-2).map(row=>row.count),[2,2]);
@@ -22,6 +23,26 @@ test('rail orders category, actual damage types and up to three statuses, capped
   assert.deepEqual(cardSideTags(model('ability:foo'),{},reg),[]);
   assert.deepEqual(cardSideTags(model(),{cardTags:[]},reg),[]);
   assert.deepEqual(cardSideTags(model(),def,{statuses:new Map()}),[]);
+});
+test('utility school metadata is not shown as damage while actual damage and HP counters retain it',()=>{
+  for(const id of ['attune','crystalBarrier','starstoneWard','astralArmorCard']){
+    const def=applyCombatExpansionCard(resolveCard(reg,{cardId:id}));
+    assert.ok(def.cardTags.includes('damage:blunt'));
+    const rows=cardSideTags(model(...def.cardTags),def,reg);
+    assert.equal(rows[1].id,'school:alteration',id);
+    assert.ok(!rows.some(row=>row.id.startsWith('damage:')),id);
+  }
+  const tags=model('camp:spell','damage:fire','school:fire');
+  for(const def of [
+    {effects:[{op:'damage',amount:3}]},
+    {effects:[{op:'conditional',then:[{op:'damage',amount:3}]}]},
+    {effects:[{op:'damage',amount:{f:'stat',key:'strength'}}]},
+    {counterPayload:{hp:2,ward:0,poise:0}},
+    {counterPayload:{effects:[{op:'damage',amount:2}]}},
+  ])assert.equal(cardSideTags(tags,def,reg)[1].id,'damage:fire');
+  for(const def of [{attack:{damageType:'fire'}},{effects:[{op:'damage',amount:0}]},{counterPayload:{hp:0,ward:2,poise:4}}]){
+    assert.equal(cardSideTags(tags,def,reg)[1].id,'school:fire');
+  }
 });
 test('stack badges never invent sums, conditional results, pressure or unknown formula values',()=>{
   for(const effects of [

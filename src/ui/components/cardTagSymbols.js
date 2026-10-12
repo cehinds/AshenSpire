@@ -33,13 +33,31 @@ function shapeFor(tag) {
   return ACTION_SIGILS[id]?.solid ? ACTION_SIGILS[id].shape : SHAPES[id] || SHAPES.skill;
 }
 
+function carriesHealthDamage(def) {
+  const visited = new Set();
+  const positiveOrVariable = amount => {
+    const value = constantFormulaValue(amount);
+    return amount !== undefined && (value === undefined || value > 0);
+  };
+  function walk(value, depth = 0) {
+    if (!value || typeof value !== 'object' || depth > 12 || visited.has(value)) return false;
+    visited.add(value);
+    if (value.op === 'damage' && positiveOrVariable(value.amount)) return true;
+    return Object.values(value).some(child => child && typeof child === 'object' && walk(child, depth + 1));
+  }
+  // A school may stamp damage metadata onto a healing or defensive card.
+  // Only actual HP damage uses a damage-type badge; Ward/Poise returns do not.
+  return positiveOrVariable(def.counterPayload?.hp)
+    || ['effects', 'counterPayload', 'upcast', 'schoolEffect'].some(key => walk(def[key]));
+}
+
 // Category, damage/effect identity, then authored statuses. No filler tags.
 export function cardSideTags(model, def = {}, registries = null, preview = null) {
   const tags = Array.isArray(model?.tags) ? model.tags : [];
   const selected = [];
   const camp = tags.find(tag => ['camp:physical', 'camp:spell'].includes(tag.id));
   if (camp) selected.push(camp);
-  const damage = tags.filter(tag => tag.id.startsWith('damage:'));
+  const damage = carriesHealthDamage(def) ? tags.filter(tag => tag.id.startsWith('damage:')) : [];
   const evasion = Boolean(def.evade) || def.effects?.some(effect => effect?.op === 'dodgeRoll')
     || tags.some(tag => ['maneuver:evade', 'effect:evade', 'utility.evasion'].includes(tag.id));
   const effects = damage.length ? damage : evasion ? [{ id: 'effect:evade', label: t('card.tags.evade'), blurb: tFull('card.tags.evade') }]
