@@ -3349,7 +3349,7 @@
       "magicTreatmentScopeStatus": "proposed_backfill"
     }
   ],
-  "snapshotStatus": "selected_pilot_merged_PR1890;50_total_concept_options_generated_reviewed;48_total_selectable,2_total_revision_flags;CT15_and_EV20_standalone_replacements_same_option_ids;no_new_followup_runtime_assets",
+  "snapshotStatus": "selected_pilot_merged_PR1890;50_total_concept_options_generated_reviewed;49_total_selectable,1_original_guardbreak04_revision;SW17_CT15_EV20_standalone_replacements_same_option_ids;no_new_followup_runtime_assets",
   "artReviewPath": "docs/design/update-stances/art-review.md",
   "userDecisions": {
     "status": "explicit_numeric_selections_authorized_for_use_and_merge",
@@ -3403,7 +3403,7 @@
     "soloGameplayValidation": "confirmed_for_selected_pilot_scope"
   },
   "nextExpansion": {
-    "status": "all_concept_boards_integrated_two_approved_replacements_one_sweep_revision",
+    "status": "all_thirty_director_approved_concepts_three_standalone_replacements",
     "weaponGroup": "greatsword",
     "classPilot": "reaver",
     "families": [
@@ -3411,21 +3411,27 @@
         "id": "sweep",
         "conceptCountPlanned": 10,
         "conceptCountGenerated": 10,
-        "status": "director_reviewed_nine_candidates_option17_revision",
+        "status": "director_reviewed_ten_candidates_with_standalone_replacement",
         "conceptCountReviewed": 10,
-        "conceptCountSelectable": 9,
-        "conceptCountNeedsRevision": 1,
+        "conceptCountSelectable": 10,
+        "conceptCountNeedsRevision": 0,
         "canonicalArtistBrief": "pose-studio/stances/update-stances/greatsword-sweep/README.md",
         "sourceSheets": [
           "pose-studio/stances/update-stances/greatsword-sweep/sheet-a.png",
           "pose-studio/stances/update-stances/greatsword-sweep/sheet-b.png"
         ],
-        "integratedArtistCommit": "9cf143db0",
-        "revisionOptions": [
+        "integratedArtistCommit": "0b9073a48",
+        "revisionOptions": [],
+        "replacementOptions": [
           {
             "number": 17,
-            "reason": "cropped_right_boot_and_lifted_rear_heel",
-            "clearOnlyOnDirectorApproval": true
+            "name": "Two-hand high diagonal side coil",
+            "imagePath": "pose-studio/stances/update-stances/greatsword-sweep/sw17-replacement.png",
+            "sha256": "36e1eaea0b21ef33fd2f02e926c5d1819b779443bd11c964ff31665d0387b18a",
+            "directorApproved": true,
+            "selectionRequiresImageLoad": true,
+            "supersedesOriginalBoardFigure": true,
+            "countsAsSameOption": true
           }
         ]
       },
@@ -3443,7 +3449,7 @@
           "pose-studio/stances/update-stances/greatsword-counter/sheet-b.png"
         ],
         "revisionOptions": [],
-        "integratedArtistCommit": "2d022f2cb",
+        "integratedArtistCommit": "66edccac1",
         "replacementOptions": [
           {
             "number": 15,
@@ -3493,8 +3499,8 @@
     "generatedCountBoundary": "Count only landed canonical option boards; generation requests in flight are not generated assets.",
     "brief": "docs/design/update-stances/followup-reference-brief.md",
     "conceptCountReviewed": 30,
-    "conceptCountSelectable": 29,
-    "conceptCountNeedsRevision": 1,
+    "conceptCountSelectable": 30,
+    "conceptCountNeedsRevision": 0,
     "registeredPoseExports": 0,
     "reviewRecord": "docs/design/update-stances/followup-art-review.md"
   },

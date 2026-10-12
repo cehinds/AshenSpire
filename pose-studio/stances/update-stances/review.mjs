@@ -18,11 +18,15 @@ const families = [
     names: ['Collapsed sword-point support', 'Ground drag + thigh catch', 'Palm catch + rear drag', 'Sideways open guard / crossing blade', 'Dropped greatsword / slack arms', 'Thigh-clutch / chest blow', 'Recoiled hanging blade', 'Slumped shoulder carry', 'Hanging rear drag', 'Backward heel collapse / floor drag'],
   },
   {
-    id: 'sweep', title: 'Sweep follow-up', description: "Ten generated lateral or rising readiness concepts, numbered 11–20. Sweep17’s board figure has a cropped boot and lifted heel; selection remains paused for its replacement.",
+    id: 'sweep', title: 'Sweep follow-up', description: "Ten generated lateral or rising readiness concepts, numbered 11–20. Sweep17 uses an approved standalone high diagonal side-coil replacement; the original board figure is superseded.",
     numberOffset: 10, layout: PORTRAIT_LAYOUT, followup: true,
     sheets: ['greatsword-sweep/sheet-a.png', 'greatsword-sweep/sheet-b.png'],
     reviewStatuses: ['candidate', 'candidate'],
-    revisions: { 17: 'Right boot is cropped and rear heel is lifted; selection paused pending an approved standalone replacement.' },
+    replacements: { 17: {
+      imagePath: 'greatsword-sweep/sw17-replacement.png', name: 'Two-hand high diagonal side coil', reviewStatus: 'candidate',
+      sha256: '36e1eaea0b21ef33fd2f02e926c5d1819b779443bd11c964ff31665d0387b18a',
+      supersededReason: 'The original board17 has a cropped right boot and lifted rear heel. This approved single-figure source replaces only option17.',
+    } },
     names: ["Upright forward-horizontal side coil", "Shoulder-height lateral coil", "Forward-extended downward gate", "Upright low-side trail", "Wide lateral hip transfer", "Low forward downward hold", "Shoulder-high coil / lifted rear heel", "Compact low-waist cross coil", "Very wide low-forward sweep", "High-arc extended lunge"],
   },
   {
