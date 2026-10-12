@@ -32,7 +32,8 @@ test('expanded combat panels and selected details stay in the correct layer', ()
 test('compact geometry reserves the measured controls and overhead gaps', () => {
   assert.match(battlefield, /setProperty\('--overhead-top', `\$\{-overheadGap \/ zoom\}px`\)/);
   const reserve = COMBAT_TOOLS_HEIGHT_PX;
-  assert.match(hand, /const toolsHeight = COMBAT_TOOLS_HEIGHT_PX \/ zoom;/);
+  assert.match(hand, /const toolsHeight = toolsPhysical \/ zoom;/);
+  assert.match(hand, /!desktop \? COMBAT_TOOLS_HEIGHT_PX/, 'only the desktop form factor measures its tool row');
   const dockOffset = Number(tools.match(/top: \(handBox\?\.top \|\| 0\) \+ (\d+)/)?.[1] ?? (tools.includes('top: handBox?.top || 0') || tools.includes('const dockTop = handBox?.top || 0;') ? 0 : NaN));
   const toolHeight = Number(css.match(/\.combat-tools > button\s*\{[^}]*height:\s*calc\((\d+)px \/ var\(--ui-zoom,1\)\)/s)?.[1]);
   assert([reserve, dockOffset, toolHeight].every(Number.isFinite), 'all toolbar dimensions must be accounted for');
