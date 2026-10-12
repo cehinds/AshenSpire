@@ -427,6 +427,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // WCO1 headroom: the HUD band's bottom edge, in the field's local px.
     const hudBand = combat.querySelector(':scope > .topbar');
     const overheadGap = combat.dataset.compactCombat === 'true' ? 4 : 14;
+    // Owner (2026-10-12): a readout sits directly above or below its fighter,
+    // never beside it. On the perspective grid a front-rank enemy's readout
+    // goes below its feet; above its head stands the back rank's.
+    const hudBelow = actor => !classicAppearance() && actor.side === 'enemy' && actor.slot.rank === 1;
     const ceiling = hudBand ? Math.max(0, (hudBand.getBoundingClientRect().bottom - fieldRect.top) / zoom) : 0;
     const vitality = hudBand?.querySelector('.resbars-host');
     if (vitality) combat.style.setProperty('--combat-header-opaque-end',
@@ -571,6 +575,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         // Reading controls do not change the unselected fitting envelope.
         leading: Math.max(Math.min(66, fieldRect.height * .25), leadingHeight * zoom + ceiling * zoom + overheadGap) };
     });
+    // A readout below the feet needs no headroom above the head.
+    for (const actor of actors) if (hudBelow(actor)) actor.leading = 6;
     const narrow = document.documentElement.dataset.layout === 'narrow';
     const hand = combat.querySelector('.hand');
     const handRect = hand?.getBoundingClientRect();
@@ -648,7 +654,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
           if (!fitted || ribbonLeading(actor) <= actor.leading) return false;
           const artWidth = fitted.visibleHeight * growthFor(actor, fitted) * actor.visibleWidth / actor.visibleHeight;
           const overheadX = overheads.find(overhead => overhead.id === actor.slot.id)?.x ?? fitted.x;
-          return crosses(fitted.x, artWidth) || crosses(overheadX, actor.leadingWidth * zoom);
+          return crosses(fitted.x, artWidth) || (!hudBelow(actor) && crosses(overheadX, actor.leadingWidth * zoom));
         });
         if (!moved.length) break;
         for (const actor of moved) actor.leading = ribbonLeading(actor);
@@ -662,7 +668,13 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // but their changing headroom cannot resize or move the settled artwork.
     const overheadControls = actors.filter(actor => actor.leadingWidth > 0 && sizes.some(size => size.id === actor.slot.id)).map(actor => {
       const fitted = sizes.find(size => size.id === actor.slot.id);
-      const bottom = (fitted.ground ?? actor.slot.ground) - fitted.visibleHeight - overheadGap;
+      const ground = fitted.ground ?? actor.slot.ground;
+      if (hudBelow(actor)) {
+        const top = ground + overheadGap;
+        return { id: actor.slot.id, side: actor.side, row: 'below', x: fitted.x,
+          width: actor.leadingWidth * zoom, top, bottom: top + actor.leadingHeight * zoom };
+      }
+      const bottom = ground - fitted.visibleHeight - overheadGap;
       return { id: actor.slot.id, side: actor.side, row: actor.slot.row, x: fitted.x,
         width: actor.leadingWidth * zoom, top: bottom - actor.leadingHeight * zoom, bottom };
     });
@@ -673,6 +685,15 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // player's settled art and controls are measured (see below).
     const placeLeading = ({ actor, frame, leadingHost, id, x, ground, visibleHeight }, anchors) => {
       const anchor = anchors.find(overhead => overhead.id === id);
+      if (hudBelow(actor)) {
+        // A front-rank enemy's readout hangs just below its feet, centred on
+        // the body: above its head is the back-rank enemy of the same lane.
+        leadingHost.style.left = '0px';
+        const above = ground - visibleHeight - overheadGap - actor.leadingHeight * zoom;
+        leadingHost.style.translate = `0 ${(ground + overheadGap - above) / zoom}px`;
+        delete frame.dataset.overheadObstructed;
+        return;
+      }
       const overheadX = anchor?.x ?? x;
       const overheadLocal = anchorLocalBox(VIEWPORT_ORIGIN,
         { left: overheadX - x, top: 0, width: 0, height: 0 }, { zoom });

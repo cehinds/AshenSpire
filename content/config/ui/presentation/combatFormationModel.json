@@ -39,8 +39,8 @@
     ],
     "perspectiveGrid": {
       "wide": {
-        "left": 0.08,
-        "right": 0.92,
+        "left": 0.15,
+        "right": 0.85,
         "enemyTop": 0.45,
         "enemyRowHeight": 0.11,
         "playerTop": 0.68,
