@@ -132,3 +132,9 @@ aspDart,physical,0
 viperStrike,physical,0
 septicBlade,physical,0
 lethalDose,physical,0
+mindSpike,magic,0
+mindFracture,magic,5
+wakingNightmare,magic,5
+stoneSling,magic,0
+rockfall,magic,5
+entomb,magic,5

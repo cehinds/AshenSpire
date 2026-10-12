@@ -903,5 +903,18 @@ export const statuses = [
     modifiers: { spellDamageDealtMult: 0.5 },
     tooltip: 'Spell-camp moves deal 50% less damage for 2 turns.',
   },
+  {
+    // Earth family (design elements-and-tag-mechanics 2.2). Applied by the
+    // Stoneskin card. Ticks down at the owner's turn end, so two ticks carry its
+    // Block through exactly one turn start.
+    id: 'stoneskin',
+    name: 'Stoneskin',
+    icon: '◆',
+    tint: '#8a7b5c',
+    stackMode: 'unique',
+    decay: { duration: 2 }, // PROVISIONAL
+    modifiers: { retainBlock: true },
+    tooltip: 'Your Block is not removed at the start of your next turn.',
+  },
   ...expansionStatuses,
 ];

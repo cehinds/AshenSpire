@@ -23011,5 +23011,353 @@ export const tagging = [
     "scope": "",
     "objectId": "lethalDose",
     "tagId": "damage:poison"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "mindSpike",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "mindSpike",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "mindSpike",
+    "tagId": "school:illusion"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "mindSpike",
+    "tagId": "damage:psychic"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "mindSpike",
+    "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "mindSpike",
+    "tagId": "reach:near"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "mindSpike",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "mindSpike",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "dissonance",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "dissonance",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "dissonance",
+    "tagId": "school:illusion"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "dissonance",
+    "tagId": "damage:psychic"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "dissonance",
+    "tagId": "reach:contact"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "dissonance",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "dissonance",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "mindFracture",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "mindFracture",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "mindFracture",
+    "tagId": "school:illusion"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "mindFracture",
+    "tagId": "damage:psychic"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "mindFracture",
+    "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "mindFracture",
+    "tagId": "reach:near"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "mindFracture",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "mindFracture",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "wakingNightmare",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "wakingNightmare",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "wakingNightmare",
+    "tagId": "school:illusion"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "wakingNightmare",
+    "tagId": "damage:psychic"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "wakingNightmare",
+    "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "wakingNightmare",
+    "tagId": "reach:near"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "wakingNightmare",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "wakingNightmare",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stoneSling",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stoneSling",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stoneSling",
+    "tagId": "school:earth"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stoneSling",
+    "tagId": "damage:earth"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stoneSling",
+    "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stoneSling",
+    "tagId": "reach:near"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stoneSling",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stoneSling",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rockfall",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rockfall",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rockfall",
+    "tagId": "school:earth"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rockfall",
+    "tagId": "damage:earth"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rockfall",
+    "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rockfall",
+    "tagId": "reach:near"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rockfall",
+    "tagId": "targeting:area"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rockfall",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stoneskin",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stoneskin",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stoneskin",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "entomb",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "entomb",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "entomb",
+    "tagId": "school:earth"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "entomb",
+    "tagId": "damage:earth"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "entomb",
+    "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "entomb",
+    "tagId": "reach:near"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "entomb",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "entomb",
+    "tagId": "source:spell"
   }
 ];

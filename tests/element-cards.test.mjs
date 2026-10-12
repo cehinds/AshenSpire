@@ -1,5 +1,5 @@
-// The Rebalance element cards: each one plays in an expanded run and puts its
-// stated status where the card says it goes.
+// The twelve Rebalance element cards (poison, psychic, earth): each one plays in
+// an expanded run and puts its stated status where the card says it goes.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -12,24 +12,25 @@ const registries = createRegistries(contentBundle);
 
 // Poison cards belong to the Rogue; Psychic and Earth belong to no class (owner #13).
 const ROGUE = ['aspDart', 'viperStrike', 'septicBlade', 'lethalDose'];
-const CLASSLESS = [];
+const SELF = ['stoneskin'];
+const CLASSLESS = ['mindSpike', 'dissonance', 'mindFracture', 'wakingNightmare', 'stoneSling', 'rockfall', 'stoneskin', 'entomb'];
 
-function play(cardId, { upgraded = false, enemyId = 'wanderingSoldier', setup } = {}) {
+function play(cardId, { upgraded = false, enemyId = 'wanderingSoldier', setup, seed = 4107 } = {}) {
   const classId = ROGUE.includes(cardId) ? 'rogue' : 'reaver';
-  const combat = createCombat({ registries, rng: createRng(4107), combatExpansionVersion: 2, enemyIds: [enemyId],
+  const combat = createCombat({ registries, rng: createRng(seed), combatExpansionVersion: 2, enemyIds: [enemyId],
     player: { classId, maxHp: 100, hp: 100, maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1,
-      deck: [{ cardId, instanceId: 'p', upgraded }, { cardId: 'strike', instanceId: 'filler', upgraded: false }] } });
+      deck: [{ cardId, instanceId: 'p', upgraded }] } });
   const enemy = combat.enemies[0];
   enemy.block = enemy.barrier = 0;
   if (setup) setup(combat, enemy);
   const hp = enemy.hp;
-  const out = dispatch(combat, { type: 'playCard', cardInstanceId: 'p', targetId: enemy.id });
+  const out = dispatch(combat, { type: 'playCard', cardInstanceId: 'p', ...(SELF.includes(cardId) ? {} : { targetId: enemy.id }) });
   const landed = id => out.events.some(event => ['statusApplied', 'statusPressure'].includes(event.type) && event.status === id
     && (event.targetId === undefined || event.targetId === enemy.id));
   return { combat, enemy, out, hp, landed };
 }
 
-test('the element cards exist with a face, a flavor, an icon and an upgrade', () => {
+test('the twelve cards exist with a face, a flavor, an icon and an upgrade', () => {
   for (const id of [...ROGUE, ...CLASSLESS]) {
     const card = contentBundle.cards.find(row => row.id === id);
     assert(card, id);
@@ -38,6 +39,10 @@ test('the element cards exist with a face, a flavor, an icon and an upgrade', ()
   }
   const pool = contentBundle.classes.find(cls => cls.id === 'rogue').cardPool;
   for (const id of ROGUE) assert(pool.includes(id), `${id} is in the Rogue pool`);
+});
+
+test('Psychic and Earth cards are in no class pool', () => {
+  for (const cls of contentBundle.classes) for (const id of CLASSLESS) assert(!cls.cardPool.includes(id), `${cls.id} / ${id}`);
 });
 
 test('the Poison attacks put Venom on the target', () => {
@@ -56,8 +61,38 @@ test('Septic Blade hits harder on a target already carrying 3 Venom', () => {
 
 test('Lethal Dose cashes the target\'s Venom out as damage and removes it', () => {
   const { enemy, hp } = play('lethalDose', { setup: (combat, target) => applyStatus(combat, target, 'venom', 3) });
-  assert.equal(hp - enemy.hp, 12, '4 damage per Venom stack (v2 caps Venom at 3)');
+  assert.equal(hp - enemy.hp, 12, '4 damage per Venom stack, v2 caps Venom at 3');
   assert.equal(getStacks(enemy, 'venom'), 0);
+});
+
+test('Psychic cards confuse; Dissonance also silences', () => {
+  for (const id of ['mindSpike', 'dissonance', 'mindFracture', 'wakingNightmare']) {
+    const { landed } = play(id);
+    assert(landed('confused'), `${id} applies Confused`);
+  }
+  assert(play('dissonance').landed('silenced'), 'Dissonance applies Silenced');
+  const sleeps = [1, 2, 3, 4, 5, 6, 7, 8].filter(seed => play('wakingNightmare', { seed }).landed('sleep')).length;
+  assert(sleeps > 0 && sleeps < 8, `Waking Nightmare builds Sleep up on a coin flip (${sleeps}/8)`);
+});
+
+test('Earth attacks slow; Entomb entombs', () => {
+  for (const id of ['stoneSling', 'rockfall']) {
+    const { enemy, hp, landed } = play(id);
+    assert(enemy.hp < hp, `${id} deals damage`);
+    assert(landed('slowed'), `${id} applies Slowed`);
+  }
+  const entomb = play('entomb');
+  assert(entomb.landed('entombed'));
+  assert.equal(getStacks(entomb.enemy, 'entombed'), 1);
+});
+
+test('Stoneskin gives Block that survives the next turn start', () => {
+  const { combat } = play('stoneskin');
+  assert(getStacks(combat.player, 'stoneskin') >= 1);
+  const block = combat.player.block;
+  assert(block >= 6);
+  dispatch(combat, { type: 'endTurn' });
+  assert.equal(combat.player.block >= block, true, 'Block was kept into the next turn');
 });
 
 test('upgraded faces play too', () => {
