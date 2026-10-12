@@ -10,6 +10,31 @@ export function createCombatExpansionRuleSnapshot() {
     ashenBlight: ASHEN_BLIGHT_RULES, equipment: combatExpansionEquipment });
 }
 
+/**
+ * Bring the one released pre-Necrotic-Blight v2 snapshot forward. This is a
+ * narrow signature migration: other missing or altered frozen rules still
+ * fail validation instead of being silently replaced with today's tuning.
+ */
+export function bringCombatExpansionRulesForward(value) {
+  const rider = value?.matchups?.damageRiders?.necrotic;
+  const cleanses = value?.matchups?.cleanseStatuses;
+  const statuses = value?.statuses?.statuses;
+  const resistance = value?.equipment?.armour?.['herald:ossuary']?.traits?.buildupResistance;
+  if (!record(rider) || !Array.isArray(cleanses) || !record(statuses) || !record(resistance)
+    || Object.hasOwn(statuses, 'necroticBlight')
+    || rider.status !== 'crimsonBlight'
+    || cleanses.includes('necroticBlight')
+    || resistance.crimsonBlight !== 15
+    || resistance.necroticBlight !== undefined) return false;
+
+  rider.status = combatExpansionMatchups.damageRiders.necrotic.status;
+  const crimsonIndex = cleanses.indexOf('crimsonBlight');
+  cleanses.splice(crimsonIndex < 0 ? cleanses.length : crimsonIndex + 1, 0, 'necroticBlight');
+  statuses.necroticBlight = structuredClone(combatStatusRules.statuses.necroticBlight);
+  resistance.necroticBlight = combatExpansionEquipment.armour['herald:ossuary'].traits.buildupResistance.necroticBlight;
+  return true;
+}
+
 /** Carried tuning is data, never executable callbacks or a live-table fallback. */
 export function combatExpansionRulesProblems(value, path = 'combatExpansionRules') {
   if (!record(value)) return [`${path} must contain the run's frozen combat rules`];
