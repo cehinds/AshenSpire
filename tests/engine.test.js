@@ -908,7 +908,15 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(c.player.stanceId, 'gorefire', 'entered gorefire');
     eq(c.player.hp, 76, 'entering Gorefire cost 2 HP (ignores block)');
     playFromHand(c, 'twinbladeFlurry');
-    eq(S.getStacks(getEntity(c, 'e1'), 'bleed'), 6, '3 hits × 2 Bleed per hit');
+    // The stance rides every hit: three Gorefire applications of 2. Twinblade
+    // Flurry is a fixed damage:slashing card (owner decision 16), and the
+    // slashing rider adds 1 Bleed once per action; 6 + 1 reaches the Bleed
+    // threshold (7), so the meter bursts and resets. Count the applications,
+    // not the leftover meter.
+    const gorefireBleeds = logOf(c, 'statusApplied').filter((e) => e.status === 'bleed' && e.stacks === 2);
+    eq(gorefireBleeds.length, 3, '3 hits × 2 Bleed per hit from the stance');
+    eq(logOf(c, 'statusApplied').filter((e) => e.status === 'bleed').reduce((n, e) => n + e.stacks, 0), 7, 'stance 6 + slashing rider 1');
+    assert(logOf(c, 'procBurst').some((e) => e.status === 'bleed'), 'the fixed slashing type feeds the Bleed meter to its burst');
     playFromHand(c, 'enterBulwark');
     eq(c.player.stanceId, 'bulwark', 'stance switched (exclusive)');
     assert(logOf(c, 'stanceExited').some((e) => e.stance === 'gorefire'), 'exited event');
@@ -2142,7 +2150,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       assert(row.scope === '', `card rows carry no scope ('${row.objectId}')`);
     }
     // The lookups the UI and any future synergy predicate depend on.
-    eq(tagsFor('gorefireSlash').map((tag) => tag.id).join('|'), 'blade|blood|gorefire|source:weapon|delivery:melee|theme:blood|camp:physical|maneuver:attack', 'Gorefire Slash separates legacy school, source, delivery and theme');
+    eq(tagsFor('gorefireSlash').map((tag) => tag.id).join('|'), 'blade|blood|gorefire|source:weapon|damage:slashing|delivery:melee|theme:blood|camp:physical|maneuver:attack', 'Gorefire Slash separates legacy school, source, fixed damage type, delivery and theme');
     eq(tagsFor('strike')[0].label, 'Blade', 'strike resolves to the Blade tag');
     eq(tagsFor('nonexistentCard').length, 0, 'an untagged card resolves to no tags');
     assert(Array.isArray(tagIdsFor('strike')), 'tag ids always come back as an array');
