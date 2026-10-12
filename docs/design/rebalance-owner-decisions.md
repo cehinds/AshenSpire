@@ -25,3 +25,10 @@ Detail and rationale: `docs/design/elements-and-tag-mechanics.md`.
 16. Weapon attack cards get a fixed `damage:*` tag (owner override of the weapon-derived reading in SPEC §4.7; SPEC to be updated).
 17. Codex P2 findings on the unwired Combat Rounds preview (PR #1888) after `8086a5a` are answered and deferred to the wiring phase, not chased in the port.
 18. The fixed weapon `damage:*` tags apply to old (v1) saved runs as well as new (v2) runs.
+19. Weapon damage-type rules (owner, 2026-10-12, answering Codex on #1900):
+    - `strike`, `cheapShot`, `bloodhuntersStrike`, `guardCounter` deal the **equipped weapon's** damage type (no fixed tag).
+    - Weapon families: blades deal Slashing and/or Piercing; blunt weapons deal Blunt and/or Force; projectiles (throwing daggers, bows, javelins — only bows exist today) deal Piercing.
+    - `ruinousBlow`, `deathblow`: Blunt and/or Force.
+    - `bloodTithe`: Slashing or Piercing, following the equipped blade.
+    - Untagged weapon cards must resolve to the weapon family's type in v1 and v2 (today v2 falls back to Blunt).
+20. PR #1901 (link self-test fix) approved to merge once CI is green.

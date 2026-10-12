@@ -87,12 +87,14 @@ export const reaverCards = [
     effects: [
       { op: 'damage', target: 'enemy', amount: 5 },
       { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 3 },
+      { op: 'applyStatus', target: 'enemy', status: 'burn', stacks: 1 },
     ],
-    textTemplate: 'Deal {damage} damage. Apply {bleed} Bleed.',
+    textTemplate: 'Deal {damage} damage. Apply {bleed} Bleed and {burn} Burn.',
     upgrade: {
       effects: [
         { op: 'damage', target: 'enemy', amount: 5 },
         { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 5 },
+        { op: 'applyStatus', target: 'enemy', status: 'burn', stacks: 1 },
       ],
     },
   },
