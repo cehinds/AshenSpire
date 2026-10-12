@@ -9,6 +9,8 @@ import { executeAction, applyAttackDamage, restoreExpandedWard, gainBarrier, syn
 import { schoolResistanceMultiplier, persistentWardMaximum } from '../src/model/combatRatings.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { applyStatus } from '../src/engine/statuses.js';
+import { restorePersistentPoise } from '../src/engine/combatStatusControl.js';
+import { syncPoiseMaximum } from '../src/engine/combatPools.js';
 
 const drainQueue = combat => { while (combat.queue.length) executeAction(combat, combat.queue.shift()); };
 
@@ -359,6 +361,32 @@ test('a physical Poise break costs a player one Stamina next turn and staggers n
   const broke = events.find(event => event.type === 'poiseBroken');
   assert.equal(broke.staminaLoss, 1);
   assert.equal(events.some(event => event.type === 'playerStaggered'), false, 'a player is not staggered by Poise');
+});
+
+test('a restorePoise op refills a clamped Poise pool against its missing amount, with no Barrier overflow', () => {
+  const { combat, enemy } = fixture();
+  enemy.ratings.poise = 10; enemy.persistentPoise = { max: 10, value: 2 }; enemy.barrier = 0;
+  enemy.ratings.poise = 3; syncPoiseMaximum(combat, enemy);
+  assert.deepEqual({ ...enemy.persistentPoise }, { max: 3, value: 0, missing: 8 });
+  executeAction(combat, { effect: { op: 'restorePoise', target: 'enemy', amount: 2 }, source: combat.player, owner: combat.player, target: enemy, card: null, meta: {} });
+  assert.deepEqual({ ...enemy.persistentPoise }, { max: 3, value: 0, missing: 6 }, 'the restore closes 2 of the 8 missing, not up to max');
+  enemy.ratings.poise = 10; syncPoiseMaximum(combat, enemy);
+  assert.deepEqual({ ...enemy.persistentPoise }, { max: 10, value: 4 }, 'recovery returns the pool to 4 of 10');
+  executeAction(combat, { effect: { op: 'restorePoise', target: 'enemy', amount: 8 }, source: combat.player, owner: combat.player, target: enemy, card: null, meta: {} });
+  assert.deepEqual({ ...enemy.persistentPoise }, { max: 10, value: 10 }, 'the restore fills to max');
+  assert.equal(enemy.barrier, 0, 'Poise never overflows into Barrier');
+});
+
+test('restorePersistentPoise honours a once-per-combat key and never restores a full pool', () => {
+  const { combat, enemy } = fixture();
+  enemy.persistentPoise = { max: 4, value: 1 };
+  const first = restorePersistentPoise(combat, enemy, 2, { onceKey: 'rite' });
+  assert.equal(first.restored, 2); assert.equal(enemy.persistentPoise.value, 3);
+  const again = restorePersistentPoise(combat, enemy, 2, { onceKey: 'rite' });
+  assert.equal(again.restored, 0, 'the once key is spent for the fight');
+  restorePersistentPoise(combat, enemy, 5, { modifierPercent: 0 });
+  assert.deepEqual({ ...enemy.persistentPoise }, { max: 4, value: 4 });
+  assert.equal(restorePersistentPoise(combat, enemy, 3).restored, 0, 'a full pool takes nothing');
 });
 
 test('a magical hit leaves Poise untouched', () => {

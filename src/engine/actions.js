@@ -1077,6 +1077,15 @@ function runOpcode(ctx, action, eff) {
       }
       break;
     }
+    // Poise is refilled (never guarded by this op): the twin of gainWard's restore.
+    case 'restorePoise': {
+      for (const t of resolveTargets(ctx, action, eff.target)) {
+        if (ctx.combatExpansionVersion !== 2 || !t.persistentPoise) continue;
+        syncPoiseMaximum(ctx, t);
+        Control.restorePersistentPoise(ctx, t, evalNum(ctx, action, eff.amount, 0, t), { onceKey: eff.oncePerCombat, source: 'card' });
+      }
+      break;
+    }
     case 'dodgeRoll': {
       if (ctx.combatExpansionVersion === 2) { Matchups.prepareCombatEvade(ctx, action.source, action.card?.combatProfile?.evade || {}); break; }
       if (ctx.foundation) { F.grantFoundationEvade(ctx, action.source); break; }

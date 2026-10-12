@@ -150,6 +150,34 @@ export function restorePersistentWard(ctx, entity, nominal, options = {}) {
   return { restored, barrier, credited: credit, carry: s.wardRestoreCarry };
 }
 
+/**
+ * The Poise twin of restorePersistentWard: the same missing rule (a clamped pool
+ * refills against `missing`), but no Barrier overflow. Poise is whole, so a
+ * fraction of the credit is floored; no Sleep and no Ashen Blight percent apply.
+ */
+export function restorePersistentPoise(ctx, entity, nominal, options = {}) {
+  if (!enabled(ctx) || !entity?.alive || !entity.persistentPoise) return { restored: 0, credited: 0 };
+  const s = state(entity), poise = entity.persistentPoise;
+  const onceKey = options.onceKey ? `poise:${options.onceKey}` : null;
+  if (onceKey && s.wardAllowances[onceKey]) return { restored: 0, credited: 0 };
+  if (!(nominal > 0)) return { restored: 0, credited: 0 };
+  const missingMode = poise.missing !== undefined;
+  if (!missingMode && poise.value >= poise.max) return { restored: 0, credited: 0 };
+  if (onceKey) s.wardAllowances[onceKey] = true;
+  let credit = Math.max(0, nominal * (1 + finite(options.modifierPercent) / 100));
+  if (options.cap !== undefined) credit = Math.min(credit, Math.max(0, options.cap));
+  const room = missingMode ? Math.max(0, poise.missing) : poise.max - poise.value;
+  const restored = Math.min(room, Math.floor(credit + 1e-9));
+  if (missingMode) {
+    const missingAfter = room - restored;
+    poise.value = Math.max(0, Math.min(poise.max, poise.max - missingAfter));
+    if (missingAfter <= poise.max) delete poise.missing;
+    else poise.missing = missingAfter;
+  } else poise.value += restored;
+  emit(ctx, 'persistentPoiseChanged', entity, { restored, credited: credit, value: poise.value, max: poise.max, source: options.source || 'card' });
+  return { restored, credited: credit };
+}
+
 /** Active grants are separate from explicit buildup; no implicit proc meter. */
 export function applyExpansionActiveStatus(ctx, target, id, amount, source = null) {
   if (!enabled(ctx)) return false;
