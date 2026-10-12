@@ -55,8 +55,13 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
       case 'combatCounterTriggered': text = `${source} counterattacked ${target}.`; break;
       case 'damageDealt': {
         const lost = Math.max(0, event.amount - (event.blocked || 0));
-        text = lost ? `${source} dealt ${lost} damage to ${target}${event.blocked ? ` (${event.blocked} blocked)` : ''}.`
-          : `${target} ${event.blocked ? `blocked ${event.blocked} damage` : 'resisted the attack'}.`;
+        const blocked = event.blocked || 0;
+        const ward = Math.max(0, event.wardResisted || 0);
+        const parts = [blocked && `${blocked} blocked`, ward && `${ward} resisted by Ward`].filter(Boolean);
+        if (lost) text = `${source} dealt ${lost} damage to ${target}${parts.length ? ` (${parts.join(', ')})` : ''}.`;
+        else if (ward && blocked) text = `${target} blocked ${blocked} damage and Ward resisted ${ward}.`;
+        else if (ward) text = `${target}'s Ward resisted ${ward} damage.`;
+        else text = `${target} ${blocked ? `blocked ${blocked} damage` : 'resisted the attack'}.`;
         break;
       }
       case 'blockGained': text = `${target} gained ${event.amount} Block.`; break;
@@ -76,6 +81,8 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
       // `poise` is the nominal break bonus before Poise Guard absorbs any of it: pressure, not damage taken.
       case 'combatGuardBroken': text = event.poise > 0 ? `Guard broken! (+${event.poise} Poise pressure)` : 'Guard broken!'; break;
       case 'impactDealt': if (event.poiseDamage || event.wardDamage) text = `${source} dealt ${event.poiseDamage || 0} Poise and ${event.wardDamage || 0} Ward pressure to ${target}.`; break;
+      case 'persistentWardChanged': if (event.spent > 0) text = `${target}'s Ward fell by ${event.spent} (${event.value}/${event.max}).`; break;
+      case 'combatWardStripped': text = `${source} stripped ${event.amount} Ward from ${target}.`; break;
       default: break;
     }
     if (text) rows.push({ id, round, text });
