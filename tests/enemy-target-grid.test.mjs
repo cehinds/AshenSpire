@@ -234,3 +234,21 @@ for (const [label, grid, fullSize, firstFit] of [['Classic', enemyTargetGrid, 64
     assert.equal(slot.top + slot.height, target.ground);
   });
 }
+
+// Codex's field (320x150): a's owned controls cover the right of the lattice and
+// hard obstacles cover x>=190 and y>=104. A complete assignment exists (a takes the
+// owned cell, b the free one); greedy nearest-first stranded b and fell through to
+// a hard-only pass that put b over a's controls.
+for (const [label, grid, size] of [['Classic', enemyTargetGrid, 64], ['Alternative', alternativeEnemyTargetGrid, 72]]) {
+  test(`${label} grid places both foes in a complete lattice assignment, clear of a's controls`, () => {
+    const owned = { left: 96, top: 0, width: 94, height: 104, owner: 'a' };
+    const hardObstacles = [{ left: 190, top: 0, width: 130, height: 150 }, { left: 0, top: 104, width: 320, height: 46 }];
+    const placements = grid({ width: 320, height: 150, size, targets: [
+      { id: 'a', x: 52, y: 52 }, { id: 'b', x: 95, y: 52 }], obstacles: [owned], hardObstacles });
+    assert.equal(placements.length, 2, 'both foes are placed');
+    const [a, b] = ['a', 'b'].map(id => placements.find(slot => slot.id === id));
+    assert.ok(a && b, 'foes a and b are placed');
+    assert.ok(!overlaps(b, owned), 'b never sits on a\'s controls (gap 0)');
+    assert.ok(!overlaps(a, b), 'the two cells are distinct');
+  });
+}
