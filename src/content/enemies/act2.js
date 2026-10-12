@@ -151,7 +151,7 @@ export const act2Enemies = [
       lunge: { intent: 'attack', damage: 14, weight: 30, maxConsecutive: 1 },
       riposte: { intent: 'block', counterDamage: 6, block: 10, weight: 20, maxConsecutive: 1 },
       // Enemy reaction (docs/combat-card-traits-contract.md, "Enemy reactions"): never rolled as an intent.
-      bindingRiposte: { intent: 'attack', damage: 4, reaction: { on: ['playerReaction'], chance: 0.5 } },
+      bindingRiposte: { intent: 'attack', damage: 4, reaction: { on: ['playerReaction'], minIncoming: 0, chance: 0.5 } },
     },
   },
 

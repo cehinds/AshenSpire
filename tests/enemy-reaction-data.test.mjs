@@ -97,7 +97,7 @@ test('the first reaction carriers validate, carry trait:reaction, and are never 
   const duelist = contentBundle.enemies.find(enemy => enemy.id === 'courtDuelist');
   assert.deepEqual(knight.moves.gildedGuard.reaction, { on: ['playerAction'], minIncoming: 8 });
   assert.equal(knight.moves.gildedGuard.weight, undefined);
-  assert.deepEqual(duelist.moves.bindingRiposte.reaction, { on: ['playerReaction'], chance: 0.5 });
+  assert.deepEqual(duelist.moves.bindingRiposte.reaction, { on: ['playerReaction'], minIncoming: 0, chance: 0.5 });
   assert.equal(duelist.moves.bindingRiposte.weight, undefined);
   assert.ok(combatProfileFor({ enemyId: 'gildedKnight', moveId: 'gildedGuard' }).traits.includes('reaction'));
   assert.ok(combatProfileFor({ enemyId: 'courtDuelist', moveId: 'bindingRiposte' }).traits.includes('reaction'));
