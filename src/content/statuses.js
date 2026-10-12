@@ -882,6 +882,16 @@ export const statuses = [
     tooltip: 'Magic-school HP damage is increased while this lasts.',
   },
   {
+    // Fight-long marker for the Oath rule (oathKept): set when its owner
+    // enters a stance, it never decays, so Oath stays broken for the fight.
+    id: 'stanceShifted',
+    name: 'Stance Shifted',
+    icon: '⇄',
+    stackMode: 'unique',
+    decay: 'none',
+    tooltip: 'You have entered a stance this fight: Oath cards no longer grant Block.',
+  },
+  {
     // Psychic family (design elements-and-tag-mechanics §2.1). Spell-camp
     // damage only; physical moves are untouched.
     id: 'silenced',
