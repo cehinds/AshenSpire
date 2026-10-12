@@ -91,6 +91,48 @@ test('restamp leaves a receipt with no stamp after its link alone, and says so',
   assert.deepEqual(r.unstamped, ['20']);
 });
 
+// A re-pointed receipt keeps its date group newest build first. #1902 sat at the
+// bottom of 2026-10-12 with a stale stamp; re-pointing it to 0.7.1.1429 must lift it
+// above the older builds (#1900 at 1427, #1897 at 1425) and never past the heading.
+const ABOUT = fileURLToPath(new URL('../tools/about-changelog.mjs', import.meta.url));
+const receipt = (n, s) => `${link(n, s)}. Nothing changes in the game.`;
+const ORDER_BOX = { release: '0.7.1', ordinal: 1429 };
+// The checker pins the old within-date rises of the real history, so a fixture is
+// checked on top of the real file's 2026-10-11 group and older, as the selftest does.
+// Its builds stay below 1425, so the fixture's own group is the only one under test.
+const REAL = readFileSync(new URL('../CHANGELOG.md', import.meta.url), 'utf8');
+const HISTORY = REAL.slice(REAL.indexOf('## 2026-10-11'));
+const FIXTURE_HEAD = ['# Changelog', '', '## 2026-10-12', ''];
+// The receipts of the fixture's own date group, in file order (history excluded).
+const groupPrs = (text) => [...text.slice(0, text.indexOf('## 2026-10-11')).matchAll(/^- .*\/pull\/(\d+)\)/gm)].map((m) => m[1]);
+const checkOrderOf = (markdown, box) => {
+  const dir = mkdtempSync(join(tmpdir(), 'build-stamp-order-'));
+  try {
+    writeFileSync(join(dir, 'CHANGELOG.md'), markdown);
+    writeFileSync(join(dir, 'buildordinal.json'), JSON.stringify(box));
+    const r = spawnSync(process.execPath, [ABOUT, '--root', dir, '--check-order'], { encoding: 'utf8' });
+    return { status: r.status, out: `${r.stdout}${r.stderr}` };
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+};
+
+test('restamp moves a re-pointed receipt to the top of its date group, and the strict order check passes', () => {
+  const md = [...FIXTURE_HEAD, receipt(1900, '0.7.1.1427'), receipt(1897, '0.7.1.1425'), receipt(1902, '0.7.1.1400'), '', HISTORY].join('\n');
+  const r = restamp(md, ['1902'], ORDER_BOX);
+  assert.deepEqual(r.changed, [{ pr: '1902', from: '0.7.1.1400', to: '0.7.1.1429' }]);
+  assert.deepEqual(groupPrs(r.text), ['1902', '1900', '1897'], 'the receipt moved above #1900, inside its own date');
+  assert.deepEqual(r.text.split('\n').filter((l) => /^## /.test(l)), md.split('\n').filter((l) => /^## /.test(l)), 'no heading moved');
+  const checked = checkOrderOf(r.text, ORDER_BOX);
+  assert.equal(checked.status, 0, checked.out);
+});
+
+test('restamp leaves the order of a date group alone when the re-pointed receipt is already in place', () => {
+  const md = [...FIXTURE_HEAD, receipt(1900, '0.7.1.1429'), receipt(1902, '0.7.1.1400'), receipt(1897, '0.7.1.1425'), '', HISTORY].join('\n');
+  const r = restamp(md, ['1902'], ORDER_BOX);
+  assert.equal(r.text, md.replace(receipt(1902, '0.7.1.1400'), receipt(1902, '0.7.1.1429')), 'only the stamp changes; no line moves');
+  assert.deepEqual(groupPrs(r.text), ['1900', '1902', '1897']);
+  assert.equal(checkOrderOf(r.text, ORDER_BOX).status, 0);
+});
+
 test('landedInSubjects: merge commits anywhere, a squash suffix on the first-parent line only, each number once', () => {
   assert.deepEqual(landedInSubjects([
     'Merge pull request #5 from a/b',
