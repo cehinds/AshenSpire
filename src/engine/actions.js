@@ -482,9 +482,12 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
     magicAmount: tactical.magicAmounts?.[contactIndex] || 0, physicalAmount: tactical.physicalAmounts?.[contactIndex] || 0,
     ...seatOf(ctx, target), ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source) } : {}),
     ...(carrier.instanceId ? { cardInstanceId: carrier.instanceId, sourceHand: carrier.sourceHand, grantedBy: carrier.grantedBy } : {}), isAttack: true });
-  for (const [type, payload] of breaks) ctx.emit(type, payload);
-  // A Ward or Poise break interrupts an enemy: its prepared action is cancelled and it pays 1 Stamina.
-  for (const [type, payload] of breaks) if (payload.interrupted) Control.interruptForBreak(ctx, target, type === 'poiseBroken' ? 'poiseBreak' : 'wardBreak');
+  // A Ward or Poise break interrupts an enemy: its prepared action is cancelled. emitBreak settles
+  // whether it really did (a killing hit or a refused stagger does not) before the break is logged.
+  for (const [type, payload] of breaks) {
+    if (type === 'wardBroken' || type === 'poiseBroken') Control.emitBreak(ctx, target, type, payload, type === 'poiseBroken' ? 'poiseBreak' : 'wardBreak');
+    else ctx.emit(type, payload);
+  }
   if (hpLoss) ctx.emit('hpLost', { targetId: target.id, amount: hpLoss, cause: 'attack', ...seatOf(ctx, target) });
   if (!carrier.combatReaction && !tactical.avoided && target.alive && ctx.ratingsRules) Ratings.applyRatingImpact(ctx, source, target, carrier);
   // Independent pressure resolves even when all direct damage met protection.

@@ -120,3 +120,38 @@ test('a scepter defend of 5 gives Barrier 2 and Block 3 on full Ward, and Ward 2
     assert.equal(player.barrier, barrier, `Barrier ${barrier}`);
   }
 });
+
+import { combatLogEntries } from '../src/model/combatLog.js';
+
+// Commit a fire strike of `amount` at an enemy with `hp`, and return its events.
+function breakingStrike({ hp, ward, amount }) {
+  const { combat, enemy } = fixture({ ward });
+  enemy.hp = hp;
+  const fire = { tags: ['camp:spell', 'damage:fire'], skipRatingBonus: true, combatProfile: { camp: 'spell', damageType: 'fire', maneuver: 'casting', reach: 'near', targeting: 'single' } };
+  const events = [];
+  const emit = combat.emit;
+  combat.emit = (type, payload) => { events.push({ type, ...payload }); return emit(type, payload); };
+  enqueueExpandedAction(combat, [{ effect: { op: 'damage', target: 'enemy', amount }, source: combat.player, owner: combat.player, target: enemy, card: fire, meta: {} }],
+    { source: combat.player, target: enemy, carrier: fire });
+  while (combat.queue.length) executeAction(combat, combat.queue.shift());
+  return { events, enemy };
+}
+
+test('a hit that breaks Ward and kills the enemy logs the break without "(interrupted)"', () => {
+  const { events, enemy } = breakingStrike({ hp: 2, ward: 1, amount: 5 });
+  assert.equal(enemy.alive, false, 'the hit kills');
+  const ward = events.find(e => e.type === 'wardBroken');
+  assert.ok(ward, 'Ward broke');
+  assert.ok(!ward.interrupted, 'a killed enemy is not interrupted');
+  assert.equal(events.some(e => e.type === 'enemyInterrupted'), false);
+  const line = combatLogEntries(events, { enemies: [enemy] }).map(row => row.text).find(text => /Ward broke/.test(text));
+  assert.match(line, /Ward broke/);
+  assert.doesNotMatch(line, /interrupted/);
+});
+
+test('a Ward break on a living enemy is interrupted exactly when the enemy is interrupted', () => {
+  const { events } = breakingStrike({ hp: 100, ward: 1, amount: 5 });
+  const ward = events.find(e => e.type === 'wardBroken');
+  assert.ok(ward, 'Ward broke');
+  assert.equal(Boolean(ward.interrupted), events.some(e => e.type === 'enemyInterrupted'));
+});
