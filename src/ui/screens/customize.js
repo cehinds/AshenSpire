@@ -4,7 +4,7 @@ import { renderCollectibleCard } from '../components/collectibleCard.js';
 import { renderEquipmentCard, equipmentDetails } from '../components/equipmentCard.js';
 import { EMPTY_HAND_PRESENTATION } from '../components/emptyHandCard.js';
 import { startingEquipmentPreview } from '../../model/startingEquipmentPreview.js';
-import { startingAbilityPlan, startingAbilityProblem } from '../../model/startingAbilities.js';
+import { startingAbilityPlan, startingAbilityProblem, startingAbilityRef } from '../../model/startingAbilities.js';
 import { paintedPresentation } from '../paintedOutfits.js';
 // Character creation: four progressive sections backed by validated content.
 //
@@ -1020,7 +1020,7 @@ export function mountCustomize(app, {
         // Requirements can change while an earlier equipment fold is open.
         state.startingAbilityIds = state.startingAbilityIds.filter(id => section.choices.some(card => card.id === id));
         for (const card of section.choices) {
-          const face = renderCard(registries, section.elementIds.includes(card.id) ? { cardId: card.id } : { cardId: card.id, abilityRank: section.rank });
+          const face = renderCard(registries, startingAbilityRef(section, card.id));
           const choose = button({ label: t('creation.abilities.choose'), weight: 'secondary', className: 'cc-ability-choose' });
           choose.setAttribute('aria-label', t('creation.abilities.chooseLabel', { name: card.name }));
           const select = () => {
@@ -1417,7 +1417,7 @@ export function mountCustomize(app, {
       : null, empty: 'None' });
     const ability = startingAbilityPlan(registries, run, meta.settings || {});
     for (const cardId of state.startingAbilityIds) slots.push({ key: `ability:${cardId}`, label: t('creation.abilities.summary'),
-      node: renderCard(registries, { cardId, abilityRank: ability.rank }) });
+      node: renderCard(registries, startingAbilityRef(ability, cardId)) });
     const cards = el('div', { class: 'cc-summary-cards', role: 'list' }, slots.map((slot) => el('div', {
       class: `cc-summary-slot${slot.unmet ? ' unmet' : ''}`, role: 'listitem', dataset: { summarySlot: slot.key },
     }, [

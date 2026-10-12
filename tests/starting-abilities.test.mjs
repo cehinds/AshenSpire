@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -136,6 +137,15 @@ test('the summary and the save share one ref rule: element spells carry no abili
       { cardId: spell, abilityRank: plan.rank }, { cardId: element },
     ]);
   }
+});
+
+test('the creation picker and summary render starting spells through the shared ref rule', () => {
+  // mountCustomize draws the summary inline (no model to call), so guard the wiring:
+  // every starting-spell card goes through startingAbilityRef, never a bare abilityRank.
+  const screen = readFileSync(new URL('../src/ui/screens/customize.js', import.meta.url), 'utf8');
+  assert.match(screen, /renderCard\(registries, startingAbilityRef\(ability, cardId\)\)/);
+  assert.match(screen, /renderCard\(registries, startingAbilityRef\(section, card\.id\)\)/);
+  assert.doesNotMatch(screen, /abilityRank: (ability|section)\.rank/);
 });
 
 test('at most one element spell may be picked, and other classes cannot pick one', () => {
