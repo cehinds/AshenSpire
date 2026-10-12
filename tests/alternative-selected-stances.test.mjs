@@ -26,7 +26,7 @@ test('all twelve runtime stances preserve the owner-selected sources and package
   assert.deepEqual(frame.anchor,[256,464]);assert.equal(frame.bounds[3],464);
   count++;
  }
- assert.equal(count,12);assert.equal(Object.keys(catalog.hashes).length,54);
+ assert.equal(count,12);assert.equal(Object.keys(catalog.hashes).length,60);
 });
 
 test('the approved Reaver greatsword profile ships the exact preview art and preserves native geometry',()=>{
@@ -34,7 +34,7 @@ test('the approved Reaver greatsword profile ships the exact preview art and pre
  assert.equal(profile.classId,'reaver');assert.equal(profile.weaponFamily,'greatsword');
  const manifest=JSON.parse(readFileSync(new URL('../'+profile.selections,import.meta.url)));
  const review=JSON.parse(readFileSync(new URL('../'+manifest.reviewManifest,import.meta.url)));
- const expected=['counter','defend','evade','sweep','smash','guard-break','impact-v','impact-g','impact-h','evade-1','evade-2','evade-3','attack-1','attack-2','attack-3','attack-4','attack-5','attack-6'];
+ const expected=['counter','defend','evade','sweep','smash','guard-break','impact-v','impact-g','impact-h','evade-1','evade-2','evade-3','attack-1','attack-2','attack-3','attack-4','attack-5','attack-6','smash-takeoff','smash-airborne','smash-impact'];
  assert.deepEqual(Object.keys(profile.frames).sort(),expected.sort());
  assert.deepEqual(profile.canvas,[768,512]);assert.deepEqual(profile.stageAnchor,[384,464]);
  const packed=withAlternativeArt({assets:{}});
@@ -64,7 +64,7 @@ test('the approved Reaver greatsword profile ships the exact preview art and pre
    assert.ok(Math.abs(frame.stageBounds[3]-464)<=1,'standing support remains on the common floor');
   }
  }
- assert.equal(new Set(Object.values(profile.frames).map(frame=>frame.path)).size,15);
+ assert.equal(new Set(Object.values(profile.frames).map(frame=>frame.path)).size,18);
  assert.equal(profile.frames.smash.sha256,'9abfefe7258a3bfa2238e7c0516396c61baa5ca009a649b8408183b91fcdf6e2');
  assert.equal(profile.frames.smash.liteSha256,'7d96cbc87ccb1159befa85a192f4cdf72cea0170f7dd00b34af26074ad70a182');
  assert.equal(profile.frames['guard-break'].sha256,'74957dcadbbdcc3565168c32edc43bacd08f0ade78519233c6bbc6c2d8032deb');
