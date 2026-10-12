@@ -24,3 +24,4 @@ Detail and rationale: `docs/design/elements-and-tag-mechanics.md`.
 15. Silenced exists: add the `spellDamageDealtMult` modifier.
 16. Weapon attack cards get a fixed `damage:*` tag (owner override of the weapon-derived reading in SPEC §4.7; SPEC to be updated).
 17. Codex P2 findings on the unwired Combat Rounds preview (PR #1888) after `8086a5a` are answered and deferred to the wiring phase, not chased in the port.
+18. The fixed weapon `damage:*` tags apply to old (v1) saved runs as well as new (v2) runs.
