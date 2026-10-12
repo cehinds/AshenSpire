@@ -57,7 +57,9 @@ export function combatReactionProblems(state, { ownerIds = new Set(['player']), 
     else if (!record(stack) || !text(stack.groupKey) || typeof stack.resolving !== 'boolean' || !Array.isArray(stack.entries)
       || !stack.entries.length || stack.entries.some(entry => !record(entry) || !['player', 'enemy'].includes(entry.side)
         || (entry.side === 'player' ? !playerEntry(entry, ownerIds) : !enemyEntry(entry, state, ownerIds, stack)))
-      || !incoming.some(action => action.meta?.expansionGroup?.key === stack.groupKey)) problems.push('Invalid reaction stack');
+      || !incoming.some(action => action.meta?.expansionGroup?.key === stack.groupKey)
+      || (stack.counterSeats !== undefined && (!Array.isArray(stack.counterSeats) || new Set(stack.counterSeats).size !== stack.counterSeats.length
+        || stack.counterSeats.some(seatId => !ownerIds.has(seatId))))) problems.push('Invalid reaction stack');
     else if ((() => {
       // The live engine never builds these; a saved stack must not bypass them either.
       const group = incoming.find(action => action.meta?.expansionGroup?.key === stack.groupKey).meta.expansionGroup;
