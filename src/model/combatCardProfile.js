@@ -50,6 +50,21 @@ export function combatProfileFor(carrier = {}) {
   return profile;
 }
 
+/** Reaction rules v2: the Impact and Flux chips read "Impact 2" and "Flux 1". */
+export function numberedTraitRow(row, traitValues = null) {
+  const values = traitValues || {};
+  const n = row.id === 'trait:impact' ? values.impact : row.id === 'trait:flux' ? values.flux : undefined;
+  return n ? { ...row, label: `${row.label} ${n}` } : row;
+}
+
+/** The face's trait line, e.g. "Reaction. Counterstrike. Impact 2." ('' when no trait applies). */
+export function traitLine(traitValues = null) {
+  const values = traitValues || {};
+  const parts = [values.reaction && 'Reaction', values.counterstrike && 'Counterstrike',
+    values.impact && `Impact ${values.impact}`, values.flux && `Flux ${values.flux}`].filter(Boolean);
+  return parts.length ? `${parts.join('. ')}.` : '';
+}
+
 /** Registry labels and blurbs stay shared across card chips and enemy intents. */
 export function combatProfileTags(carrier = {}, registries = null) {
   carrier ??= {};
@@ -66,5 +81,6 @@ export function combatProfileTags(carrier = {}, registries = null) {
   ].filter(Boolean);
   // Runtime surfaces must describe the active bundle, including intentionally
   // absent metadata. Static authoring callers can still use shipped labels.
-  return registries ? tagService(registries).resolve(ids) : resolve(ids);
+  const rows = registries ? tagService(registries).resolve(ids) : resolve(ids);
+  return rows.map(row => numberedTraitRow(row, profile.traitValues));
 }
