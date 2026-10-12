@@ -259,9 +259,65 @@ function beforeStackedReaction(ctx, action, group, hooks) {
     ctx.emit('combatReactionOffered', { offerId: ctx.pendingReaction.id, ownerId: id, sourceId: group.sourceId });
     return true;
   }
-  // Resolution of the committed stack arrives in the next change.
-  if (stack?.entries.length) throw new Error('Reaction stack resolution is not implemented yet');
+  return stack?.entries.length ? resolveReactionStack(ctx, hooks) : false;
+}
+
+// Resolves the committed stack top first; returns true while a paid entry's own choice
+// pauses it. The remaining entries stay on the stack and resume when restoreReactionQueue
+// hands the paused action back, through the same beforeReactionAction call.
+export function resolveReactionStack(ctx, hooks) {
+  const stack = ctx.reactionStack;
+  if (!stack?.entries.length) return false;
+  const group = ctx.queue.find(action => action.meta?.expansionGroup?.key === stack.groupKey)?.meta.expansionGroup;
+  if (!group) throw new Error('The reaction stack has no incoming action');
+  stack.resolving = true;
+  while (stack.entries.length) {
+    const entry = stack.entries[stack.entries.length - 1];
+    if (entry.side !== 'player') throw new Error('Enemy reactions are not implemented');
+    stack.entries.pop();
+    if (playStackEntry(ctx, group, entry, hooks)) return true;
+  }
+  delete ctx.reactionStack;
   return false;
+}
+
+// One entry under today's single-reaction mechanics. An entry whose card has left the hand,
+// or whose play is refused, fizzles and pays nothing. Returns true when it paused.
+function playStackEntry(ctx, group, entry, hooks) {
+  const { ownerId, play } = entry;
+  hooks.setOwner?.(ctx, ownerId);
+  const hand = (ctx.players ? ctx.players.get(ownerId)?.piles.hand : ctx.piles.hand) || [];
+  if (!hand.some(inst => inst.instanceId === play.cardInstanceId)) {
+    ctx.emit('combatReactionFizzled', { ownerId, cardInstanceId: play.cardInstanceId, reason: 'notInHand' });
+    reportRestOfRoot(ctx, group, ownerId, hooks);
+    return false;
+  }
+  ctx.reactionResume = { queue: ctx.queue, foundation: ctx.foundation ? {
+    actionSerial: ctx.foundation.actionSerial, eventCount: ctx.foundation.eventCount,
+    rolls: ctx.foundation.rolls, counts: ctx.foundation.counts } : null };
+  ctx.queue = [];
+  if (ctx.foundation) {
+    ctx.foundation.actionSerial = Math.max(ctx.foundation.actionSerial, ctx.foundationNextSerial || 0) + 1;
+    ctx.foundationNextSerial = ctx.foundation.actionSerial;
+    ctx.foundation.eventCount = 0; ctx.foundation.rolls = {}; ctx.foundation.counts = {};
+  }
+  ctx._reactionPlaying = true;
+  ctx._reactionSourceId = group.sourceId;
+  let refusal = null;
+  try { hooks.play(ctx, { ...play }); }
+  catch (error) { if (!error?.playRefusal) throw error; refusal = error.playRefusal; }
+  finally { delete ctx._reactionPlaying; delete ctx._reactionSourceId; }
+  if (refusal) {
+    restoreReactionQueue(ctx);
+    ctx.emit('combatReactionFizzled', { ownerId, cardInstanceId: play.cardInstanceId, reason: refusal.reason || 'other' });
+    reportRestOfRoot(ctx, group, ownerId, hooks);
+    return false;
+  }
+  if (ctx.player.combatCounter && play.cardInstanceId === ctx.player.combatCounter.carrier?.instanceId) {
+    (group.manualCounterSerials ||= {})[ownerId] = ctx.player.combatCounter.serial;
+  }
+  reportRestOfRoot(ctx, group, ownerId, hooks);
+  return !restoreReactionQueue(ctx);
 }
 
 export function finishReactions(ctx) {

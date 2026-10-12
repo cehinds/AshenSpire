@@ -70,3 +70,69 @@ test('a stacked instance and a second Counter are not offered again', () => {
   assert.deepEqual(offeredInstances(combat), ['r2']);
   assert.ok(combat.pendingReaction.id.endsWith(':player:2'));
 });
+
+test('two stacked reactions resolve last pushed first, both before the enemy hits', () => {
+  const { combat } = fixture({ cardIds: ['sweepingBlow', 'whirlingGuard'] });
+  dispatch(combat, { type: 'endTurn' });
+  answer(combat, pick(combat, 'r0'));
+  const out = answer(combat, pick(combat, 'r1'));
+  const played = out.events.map((event, index) => ({ event, index })).filter(({ event }) => event.type === 'cardPlayed');
+  assert.deepEqual(played.map(({ event }) => event.cardInstanceId), ['r1', 'r0']);
+  const hits = out.events.map((event, index) => ({ event, index })).filter(({ event }) => event.type === 'damageDealt' && event.targetId === 'player');
+  assert.ok(hits.length > 0 && hits.every(({ index }) => index > played.at(-1).index));
+  assert.equal(combat.reactionStack, undefined);
+  assert.equal(combat.pendingReaction, undefined);
+});
+
+test('a stack entry that is no longer in hand fizzles and pays nothing', () => {
+  const { combat } = fixture({ cardIds: ['sweepingBlow', 'whirlingGuard'] });
+  dispatch(combat, { type: 'endTurn' });
+  answer(combat, pick(combat, 'r0'));
+  combat.piles.hand = combat.piles.hand.filter(inst => inst.instanceId !== 'r0');
+  const before = resources(combat);
+  const out = answer(combat);
+  assert.ok(out.events.some(event => event.type === 'combatReactionFizzled' && event.cardInstanceId === 'r0' && event.reason === 'notInHand'));
+  assert.equal(out.events.filter(event => event.type === 'cardPlayed').length, 0);
+  assert.equal(combat.reactionStack, undefined);
+  assert.equal(combat.turn, 2);
+  assert.deepEqual(resources(combat), before);
+});
+
+test('an enemy-side stack entry is rejected', () => {
+  const { combat } = fixture({ cardIds: ['sweepingBlow', 'whirlingGuard'] });
+  dispatch(combat, { type: 'endTurn' });
+  answer(combat, pick(combat, 'r0'));
+  combat.reactionStack.entries.push({ ...combat.reactionStack.entries[0], side: 'enemy' });
+  assert.throws(() => answer(combat), /Enemy reactions are not implemented/);
+});
+
+test('a saved stack with a depth 1 offer resumes to the same state as an unsaved run', () => {
+  const { combat, registries } = fixture({ cardIds: ['sweepingBlow', 'whirlingGuard'] });
+  dispatch(combat, { type: 'endTurn' });
+  answer(combat, pick(combat, 'r0'));
+  assert.ok(combat.pendingReaction.id.endsWith(':player:1'));
+  const snapshot = JSON.parse(JSON.stringify(serializeCombatSnapshot(combat)));
+  const restored = restoreCombatSnapshot({ registries, rng: createRng(combat.rng.seed, combat.rng.getCounters()), snapshot });
+  const json = value => JSON.parse(JSON.stringify(value));
+  assert.deepEqual(json(serializeCombatSnapshot(restored)), json(serializeCombatSnapshot(combat)));
+  // The second push leaves the seat with nothing to offer, so the stack resolves in that call.
+  const outs = [combat, restored].map(state => [answer(state, pick(state, 'r1'))]);
+  assert.deepEqual(json(outs[0].map(out => out.events)), json(outs[1].map(out => out.events)));
+  assert.deepEqual(json(serializeCombatSnapshot(restored)), json(serializeCombatSnapshot(combat)));
+  assert.deepEqual(restored.rng.getCounters(), combat.rng.getCounters());
+});
+
+test('a seat stops at maxDepth, so the fifth copy is never offered', () => {
+  const { combat } = fixture({ cardIds: ['strike', 'strike', 'strike', 'strike', 'strike'] });
+  for (const enemy of combat.enemies) { enemy.hp = 500; enemy.maxHp = 500; }
+  dispatch(combat, { type: 'endTurn' });
+  for (const id of ['r0', 'r1', 'r2']) answer(combat, pick(combat, id));
+  assert.ok(combat.pendingReaction.id.endsWith(':player:3'));
+  // The fourth push reaches maxDepth, so the seat is done and the four entries resolve at once.
+  const out = answer(combat, pick(combat, 'r3'));
+  assert.equal(combat.pendingReaction, undefined);
+  assert.equal(out.events.filter(event => event.type === 'combatReactionStacked' && event.depth === 4).length, 1);
+  assert.equal(out.events.filter(event => event.type === 'cardPlayed').length, 4);
+  assert.equal(combat.piles.hand.some(inst => inst.instanceId === 'r4'), true);
+  assert.equal(combat.turn, 2);
+});
