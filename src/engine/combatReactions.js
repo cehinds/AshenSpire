@@ -43,6 +43,8 @@ const candidateByManeuver = (ctx, def) => {
   if (cardTraitsActive(ctx) && tags.includes('trait:reaction')) return true;
   return tags.includes('maneuver:counter') || (tags.includes('maneuver:sweep') && def.defensiveReaction === true);
 };
+// The committed reaction stack of this incoming root (version 2 only).
+const stackOf = (ctx, group) => (stackedReactions(ctx) && ctx.reactionStack?.groupKey === group.key ? ctx.reactionStack : null);
 // The reported reason is the first failing check of the candidate that got furthest.
 const REASON_RANK = { notCovered: 0, other: 1, controlled: 2, unplayable: 3, cost: 4 };
 const handOf = (ctx, row) => (ctx.players ? ctx.players.get(row.playerId)?.piles.hand : ctx.piles.hand) || [];
@@ -76,8 +78,16 @@ function optionsFor(ctx, row, group, hooks, refusal = null) {
       Object.assign(refusal, { reason, ...extra, cardId: inst.cardId });
     }
   };
+  // Version 2: stacked instances are not offered again, and a seat holding a Counter
+  // entry is offered no further Counter. Each option is tried on top of the stack.
+  const stack = stackOf(ctx, group);
+  const entries = stack?.entries || [];
+  const seat = ctx.players ? row.playerId : 'player';
+  const counterStacked = entries.some(entry => entry.ownerId === seat && entry.maneuver === 'counter');
   for (inst of handOf(ctx, row)) {
+    if (entries.some(entry => entry.play.cardInstanceId === inst.instanceId)) continue;
     const base = resolveCombatCard(ctx, inst);
+    if (counterStacked && (base.cardTags || base.tags || []).includes('maneuver:counter')) continue;
     if (!eligible(ctx, base, row)) { if (candidateByManeuver(ctx, base)) note('notCovered'); continue; }
     const choices = cardChoice(ctx.registries, base, ctx.player.classId)?.options || [null];
     for (const tier of [0, ...upcastOptions(base).map(option => option.ranks)]) for (const choice of choices) {
@@ -97,6 +107,13 @@ function optionsFor(ctx, row, group, hooks, refusal = null) {
         hooks.play(candidate, play);
         const paid = candidate.eventLog.slice(paymentStart).find(event => event.type === 'cardPlayed');
         if (!paid || !candidate.player.alive) { note('other'); continue; }
+        // The stacked entries resolve after this option, last pushed first; all must play.
+        for (const entry of [...entries].reverse()) {
+          hooks.setOwner?.(candidate, entry.ownerId);
+          const start = candidate.eventLog.length;
+          hooks.play(candidate, { ...entry.play });
+          if (!candidate.eventLog.slice(start).some(event => event.type === 'cardPlayed')) throw new Error('Stacked reaction did not play');
+        }
         options.push({ id: `${inst.instanceId}:${tier}:${choice?.id || 'default'}`, name: base.name,
           cardId: inst.cardId, play, staminaCost: paid.staminaSpent ?? paid.energySpent ?? 0,
           manaCost: paid.manaSpent || 0, choiceName: choice?.label || choice?.name || null });
