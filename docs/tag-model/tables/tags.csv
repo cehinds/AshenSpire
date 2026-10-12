@@ -693,12 +693,12 @@ targeting.ally,ally,ally,targeting,TagNode,,Targets an ally of the acting player
 targeting.single,single,Single,targeting,TagNode,,One direct target.,,,,,,live-tag,◇,9FC3E8,targeting:single
 targeting.area,targeting.area,Area,targeting,TagNode,,An area action; most Counters do not cover it.,,,,,,live-tag,◇,9FC3E8,targeting:area
 equipmentRoot,equipmentRoot,equipment,,TagNode,,Grip and hand slots: which hands a weapon or shield occupies. Grouping node for the equipment vocabulary.,,,,,,live-tag,,,equipment
-equipmentRoot.bound,equipmentRoot.bound,bound,equipmentRoot,TagNode,,Equipment that must be bound (worn or carried) before a hand slot applies. mainHand and offHand require it (nodeRelations.csv REQUIRES).,,,,,,live-tag,,,equipment.bound
-equipmentRoot.mainHand,mainHand,mainHand,equipmentRoot,TagNode,,A weapon held in the main hand. Requires bound (nodeRelations.csv).,,,,,,live-tag,,,equipment.mainHand
-equipmentRoot.offHand,offHand,offHand,equipmentRoot,TagNode,,"An item held in the off hand. Requires bound, and conflicts with twoHanded (nodeRelations.csv).",,,,,,live-tag,,,equipment.offHand
-equipmentRoot.twoHanded,twoHanded,twoHanded,equipmentRoot,TagNode,,A weapon held in both hands. Conflicts with offHand (nodeRelations.csv); loadout.js GRIP_TAGS 'two'.,,,,,,live-tag,,,equipment.twoHanded
-equipmentRoot.shield,equipmentRoot.shield,shield,equipmentRoot,TagNode,,A shield held in the off hand.,,,,,,live-tag,,,equipment.shield
-equipmentRoot.parryTool,parryTool,parryTool,equipmentRoot,TagNode,,An off-hand tool held to parry.,,,,,,live-tag,,,equipment.parryTool
+equipmentRoot.bound,equipmentRoot.bound,bound,equipmentRoot,TagNode,,Granted by an equipped armament. It leaves your deck when the armament does.,,,,,,live-tag,,,equipment.bound
+equipmentRoot.mainHand,mainHand,mainHand,equipmentRoot,TagNode,,Bound to the armament in your main hand.,,,,,,live-tag,,,equipment.mainHand
+equipmentRoot.offHand,offHand,offHand,equipmentRoot,TagNode,,Bound to the armament in your off hand.,,,,,,live-tag,,,equipment.offHand
+equipmentRoot.twoHanded,twoHanded,twoHanded,equipmentRoot,TagNode,,Bound to an armament held in both hands.,,,,,,live-tag,,,equipment.twoHanded
+equipmentRoot.shield,equipmentRoot.shield,shield,equipmentRoot,TagNode,,Bound to an equipped shield.,,,,,,live-tag,,,equipment.shield
+equipmentRoot.parryTool,parryTool,parryTool,equipmentRoot,TagNode,,Bound to an equipped parry tool.,,,,,,live-tag,,,equipment.parryTool
 equipmentRoot.dualWield,dualWield,dualWield,equipmentRoot,TagNode,,One one-handed weapon in each hand; loadout.js GRIP_TAGS 'dual'.,,,,,,live-tag,,,equipment.dualWield
 scaling,scaling,scaling,,TagNode,,Which attribute a card's effect scales with. Grouping node for the scaling vocabulary.,,,,,,live-tag,,,scaling
 scaling.strength,scaling.strength,strength,scaling,TagNode,,This card scales with Strength.,,,,,,live-tag,,,scaling.strength

@@ -829,12 +829,12 @@ targeting {Target selection: the rules an action uses to choose the creature it 
   Single {One direct target.}
   Area {An area action; most Counters do not cover it.}
 equipment {Grip and hand slots: which hands a weapon or shield occupies. Grouping node for the equipment vocabulary.}
-  bound {Equipment that must be bound (worn or carried) before a hand slot applies. mainHand and offHand require it (nodeRelations.csv REQUIRES).}
-  mainHand {A weapon held in the main hand. Requires bound (nodeRelations.csv).}
-  offHand {An item held in the off hand. Requires bound, and conflicts with twoHanded (nodeRelations.csv).}
-  twoHanded {A weapon held in both hands. Conflicts with offHand (nodeRelations.csv); loadout.js GRIP_TAGS 'two'.}
-  shield {A shield held in the off hand.}
-  parryTool {An off-hand tool held to parry.}
+  bound {Granted by an equipped armament. It leaves your deck when the armament does.}
+  mainHand {Bound to the armament in your main hand.}
+  offHand {Bound to the armament in your off hand.}
+  twoHanded {Bound to an armament held in both hands.}
+  shield {Bound to an equipped shield.}
+  parryTool {Bound to an equipped parry tool.}
   dualWield {One one-handed weapon in each hand; loadout.js GRIP_TAGS 'dual'.}
 scaling {Which attribute a card's effect scales with. Grouping node for the scaling vocabulary.}
   strength {This card scales with Strength.}
