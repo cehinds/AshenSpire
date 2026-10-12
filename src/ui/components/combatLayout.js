@@ -1,8 +1,6 @@
-import { allocateCombatBands, packCombatFooter } from '../models/CombatLayout.js';
+import { allocateCombatBands, combatBandConfig, packCombatFooter } from '../models/CombatLayout.js';
 import { footerArtHeight, footerArtWidth } from '../models/FooterLayoutModel.js';
 import { isWideFormFactor } from '../models/FormFactorModel.js';
-import { wireframeUi } from '../../content/wireframeUi.js';
-import { uiConfig } from '../../config/generated/ui.js';
 import { combatantMeterGeometry } from '../models/CombatantMeterModel.js';
 import { overlayGeometry, OVERLAY_ROLES } from '../models/CombatOverlayModel.js';
 import { fitFooterCompactLabels } from './footerArt.js';
@@ -13,13 +11,6 @@ function inlinePadding(el) {
   if (!el) return 0;
   const style = getComputedStyle(el);
   return (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0);
-}
-
-// The wide band shares, in the hud / scene / context / footer order the band
-// allocator reads (content/config/ui/scenes/w4a-combat.json sizing.wideBands).
-function wideBandShares() {
-  const { hud, scene, context, footer } = uiConfig.scenes.w4a.sizing.wideBands;
-  return [hud, scene, context, footer];
 }
 
 // Measures the combat root once per frame and writes the band and footer plans
@@ -44,7 +35,7 @@ export function wireCombatLayout(combatEl) {
     // sizing.wideBands): a taller hand band and a shorter footer. The
     // form factor is the one decider, written by applyUiScale.
     const wide = !compact && isWideFormFactor(document.documentElement.dataset.formFactor);
-    const bandConfig = wide ? { ...wireframeUi, combat: { ...wireframeUi.combat, bands: wideBandShares() } } : wireframeUi;
+    const bandConfig = combatBandConfig(wide);
     const bands = allocateCombatBands({ width, height: combatEl.clientHeight, zoom, rem, compact, footerArtPx: footerArtHeight(width, zoom, wide) * zoom }, bandConfig);
     // The W4 parent's bands (kit.css, shared with the quest dialogue): the
     // battlefield is the scene band, the grid's flexible row; the hand is the

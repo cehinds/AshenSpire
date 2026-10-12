@@ -4,7 +4,7 @@
   },
   "sizing": {
     "bands": { "hud": 10, "scene": 55, "context": 30, "footer": 5 },
-    "wideBands": { "hud": 10, "scene": 38, "context": 40, "footer": 12 },
+    "wideBands": { "hud": 10, "scene": 45, "context": 40, "footer": 5 },
     "floorPercent": 80,
     "compactCombat": {
       "maxWidthPx": 600,

@@ -60,3 +60,20 @@ for (const count of [1, 2, 3]) {
     }
   });
 }
+
+// The footer must never grow on a wide screen: at every window height the
+// wide footer is no taller than the base footer. The design height (730 local
+// px) is fitted by the zoom, so a taller window only zooms the same layout.
+import { allocateCombatBands, combatBandConfig } from '../src/ui/models/CombatLayout.js';
+import { footerArtHeight } from '../src/ui/models/FooterLayoutModel.js';
+
+for (const windowHeight of [720, 1080, 1440, 2160]) {
+  test(`wide footer is never taller than the base footer at a ${windowHeight}px window`, () => {
+    const zoom = windowHeight / 730, localHeight = 730, width = 1920 / zoom;
+    const base = allocateCombatBands({ width, height: localHeight, zoom, footerArtPx: footerArtHeight(width, zoom, false) * zoom }, combatBandConfig(false));
+    const wide = allocateCombatBands({ width, height: localHeight, zoom, footerArtPx: footerArtHeight(width, zoom, true) * zoom }, combatBandConfig(true));
+    assert.ok(wide.footer * zoom <= base.footer * zoom + .5,
+      `wide footer ${wide.footer * zoom}px vs base ${base.footer * zoom}px`);
+    assert.ok(wide.hand > base.hand, 'the hand band is taller on a wide screen');
+  });
+}
