@@ -109,3 +109,28 @@ test('a split card reads the configured magic share the way combat does, not the
   assert.match(combatCardSummary(guard, null, registries), /Gain 1 Block and 4 Ward/);
   assert.match(combatCardSummary(guard), /Gain 3 Block and 2 Ward/, 'the block split follows the configured share too');
 });
+
+test('the melee spell and technique magic shares are data, and each is an Advanced row 0 to 1 in steps of 0.05', () => {
+  const rows = combatRatingRows(contentBundle);
+  const expected = { meleeSpell: ['Melee spell magic share', 0.7], technique: ['Technique magic share', 0.3] };
+  for (const [id, [label, def]] of Object.entries(expected)) {
+    const row = rows.find(r => r.key === `gameConfig.combatRatings.magicSplit.${id}`);
+    assert.ok(row, `${id} row exists`);
+    assert.equal(row.label, label);
+    assert.equal(row.def, def);
+    assert.equal(row.min, 0);
+    assert.equal(row.max, 1);
+    assert.equal(row.step, 0.05);
+  }
+  const config = resolveCombatRatings({}, contentBundle);
+  assert.deepEqual(config.magicSplit, { meleeSpell: 0.7, technique: 0.3 });
+  assert.deepEqual(combatRatingProblems({ ...config, magicSplit: { ...config.magicSplit, technique: 1.2 } }), ['Invalid split magic share']);
+});
+
+test('the school shares are data: force and alteration split at half, the magic schools are all magic', () => {
+  assert.equal(combatRules.schools.force.magicShare, 0.5);
+  assert.equal(combatRules.schools.alteration.magicShare, 0.5);
+  assert.equal(combatRules.schools.force.physicalType, 'blunt');
+  for (const school of ['lightning', 'fire', 'frost', 'divine', 'decay']) assert.equal(combatRules.schools[school].magicShare, 1, school);
+  assert.equal(combatRules.schools.divine.magicType, 'sacred');
+});

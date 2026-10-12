@@ -17,6 +17,23 @@ export const combatRules = {
     sacred: { tag: 'damage:sacred', physical: false, magicShare: 1 },
     decay: { tag: 'damage:decay', physical: false, magicShare: 1 },
   },
+  // The magic share of a MAGIC SCHOOL (a school:<id> tag or a Spell's school).
+  // A school whose share is strictly between 0 and 1 splits: its physical part is
+  // the physicalType. A school not listed here (illusion) is all magic of its
+  // damage type. magicType is the Ward/Barrier type the school's magic part deals.
+  schools: {
+    force: { magicShare: 0.5, magicType: 'arcane', physicalType: 'blunt' },
+    alteration: { magicShare: 0.5, magicType: 'arcane', physicalType: 'blunt' },
+    lightning: { magicShare: 1, magicType: 'lightning' },
+    fire: { magicShare: 1, magicType: 'fire' },
+    frost: { magicShare: 1, magicType: 'frost' },
+    divine: { magicShare: 1, magicType: 'sacred' },
+    decay: { magicShare: 1, magicType: 'decay' },
+  },
+  // Melee spell (reach contact or melee, with physical damage) and martial
+  // technique (a physical-camp maneuver with spell effects) splits. The shares
+  // are the magic part of the card's own damage; the rest is physical.
+  magicSplit: { meleeSpell: 0.7, technique: 0.3 },
   armor: { scale: 100, cap: 0.60 },
   resistanceCap: 0.75,
   vulnerabilityCap: 3,

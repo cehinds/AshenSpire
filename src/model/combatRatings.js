@@ -30,6 +30,8 @@ export const combatRatingDefaults = {
   // default): the share of a hit that is Barrier/Ward rather than Block. A
   // card or weapon may still override it for its own hits.
   damageTypes: Object.fromEntries(Object.entries(damageTypeRules.damageTypes).map(([id, type]) => [id, type.magicShare])),
+  // The magic share of a melee spell and of a martial technique with spell effects (content/combatRules.js).
+  magicSplit: { ...damageTypeRules.magicSplit },
   statuses: {
     bleed: { poise: 1, ward: 0 }, frost: { poise: 0.5, ward: 0.5 },
     insanity: { poise: 0, ward: 1 }, madness: { poise: 0, ward: 1 },
@@ -293,6 +295,13 @@ export function combatRatingRows(bundle) {
       min: 0, max: 1, step: 0.05,
       note: 'The share of a hit of this damage type that is magic: Barrier and Ward take it, Block takes the rest. 0 is all physical, 1 is all magic. A card or weapon with its own magic share overrides this for its hits.',
     });
+  const splitRows = { meleeSpell: 'Melee spell magic share', technique: 'Technique magic share' };
+  for (const [id, label] of Object.entries(splitRows)) add(`magicSplit.${id}`, combatRatingDefaults.magicSplit[id], label, 'Damage types', {
+    min: 0, max: 1, step: 0.05,
+    note: id === 'meleeSpell'
+      ? 'A spell that hits in melee with a physical damage type deals this share of its damage as magic (Barrier and Ward) and the rest as physical (Block, then Poise). A school with its own share (force, alteration: half) is used instead when it splits.'
+      : 'A martial technique with spell effects (a magic school, a magic damage type, or a spell rider) deals this share of its damage as magic and the rest as physical.',
+  });
   for (const status of bundle.statuses) {
     for (const id of ['poise', 'ward']) add(`statuses.${status.id}.${id}`, combatRatingDefaults.statuses[status.id]?.[id] || 0,
       `${status.name} — ${ratingLabel(id)} weight`, 'Status resistance', {
@@ -457,6 +466,7 @@ export function combatRatingProblems(config) {
   if (config.resistance?.wardPool !== undefined && !(config.resistance.wardPool >= 0 && config.resistance.wardPool <= 1)) problems.push('Invalid Ward pool share');
   // Absent on fights saved before the damage-type rows existed; they read the content defaults.
   if (config.damageTypes !== undefined && Object.values(config.damageTypes).some(v => !(Number.isFinite(v) && v >= 0 && v <= 1))) problems.push('Invalid damage type magic share');
+  if (config.magicSplit !== undefined && Object.values(config.magicSplit).some(v => !(Number.isFinite(v) && v >= 0 && v <= 1))) problems.push('Invalid split magic share');
   if (config.resistance?.poisePool !== undefined && !(config.resistance.poisePool >= 0 && config.resistance.poisePool <= 1)) problems.push('Invalid Poise pool share');
   const impact = config.impact;
   if (!impact || !(impact.lightMaxWeight <= impact.mediumMaxWeight && impact.mediumMaxWeight <= impact.heavyMaxWeight)) problems.push('Weapon weight thresholds must be ordered');
