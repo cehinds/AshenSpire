@@ -8,7 +8,7 @@ import { createCombat } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { enqueueExpandedAction, previewExpandedActions } from '../src/engine/combatExpansionActions.js';
 import { executeAction, gainBlock } from '../src/engine/actions.js';
-import { resolveCombatRatings, magicShareOf } from '../src/model/combatRatings.js';
+import { resolveCombatRatings, magicShareOf, splitDamageTypesOf } from '../src/model/combatRatings.js';
 import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
 import { combatProfileFor } from '../src/model/combatCardProfile.js';
 
@@ -332,6 +332,15 @@ test('a 10-damage fire-tagged smash technique deals 3 fire and 7 physical', () =
   assert.equal(d.magicAmount, 3, 'the Technique magic share (0.3) of 10 is magic');
   assert.equal(d.physicalAmount, 7);
   assert.equal(r.preview, r.committed, 'preview equals committed');
+});
+
+test('physical type: the card tag wins, else the school (force and alteration: blunt), magic-only schools keep their card tag', () => {
+  const type = profile => splitDamageTypesOf(profile);
+  assert.deepEqual(type({ camp: 'spell', school: 'force', damageType: 'arcane' }), { magic: 'arcane', physical: 'blunt' }, 'force with no physical tag is blunt');
+  assert.deepEqual(type({ camp: 'spell', school: 'force', damageType: 'arcane', physicalDamageType: 'piercing' }), { magic: 'arcane', physical: 'piercing' }, 'a weapon physical type wins');
+  assert.deepEqual(type({ camp: 'spell', school: 'alteration', damageType: 'piercing' }), { magic: 'arcane', physical: 'piercing' }, 'an alteration card tag wins');
+  assert.deepEqual(type({ camp: 'spell', school: 'alteration' }), { magic: 'arcane', physical: 'blunt' }, 'alteration with no tag is blunt');
+  assert.deepEqual(type({ camp: 'spell', school: 'lightning', damageType: 'piercing' }), { magic: 'lightning', physical: 'piercing' }, 'a lightning spell with a piercing tag keeps its physical tag');
 });
 
 test('a plain physical technique is all physical', () => {

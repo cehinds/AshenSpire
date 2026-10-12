@@ -18,12 +18,14 @@ export const combatRules = {
     decay: { tag: 'damage:decay', physical: false, magicShare: 1 },
   },
   // The magic share of a MAGIC SCHOOL (a school:<id> tag or a Spell's school).
-  // A school whose share is strictly between 0 and 1 splits: its physical part is
-  // the physicalType. A school not listed here (illusion) is all magic of its
-  // damage type. magicType is the Ward/Barrier type the school's magic part deals.
+  // Force splits (0.5): its physical part is the card's physical tag, else the
+  // physicalType. Alteration is a spell whose damage is all physical (0): it still
+  // carries the spell tags, but deals no magic damage. A school not listed here
+  // (illusion) is all magic of its damage type. magicType is the Ward/Barrier type
+  // the school's magic part deals.
   schools: {
     force: { magicShare: 0.5, magicType: 'arcane', physicalType: 'blunt' },
-    alteration: { magicShare: 0.5, magicType: 'arcane', physicalType: 'blunt' },
+    alteration: { magicShare: 0, magicType: 'arcane', physicalType: 'blunt' },
     lightning: { magicShare: 1, magicType: 'lightning' },
     fire: { magicShare: 1, magicType: 'fire' },
     frost: { magicShare: 1, magicType: 'frost' },

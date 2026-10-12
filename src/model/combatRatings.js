@@ -618,10 +618,12 @@ export function schoolMagicShare(school) {
   return row && Number.isFinite(row.magicShare) ? row.magicShare : 1;
 }
 
-// The physical damage type of a hit: the source weapon's, else the card's own physical type.
+// The physical damage type of a hit: the source weapon's, else the card's own physical tag,
+// else its school's physicalType (force and alteration: blunt).
 function physicalTypeOf(profile) {
   const type = canonicalDamageType(profile?.damageType);
-  return profile?.physicalDamageType || (isPhysicalDamageType(type) ? type : null);
+  const school = damageTypeRules.schools?.[schoolOf(profile)];
+  return profile?.physicalDamageType || (isPhysicalDamageType(type) ? type : null) || school?.physicalType || null;
 }
 
 const MELEE_REACHES = new Set(['contact', 'melee']);
