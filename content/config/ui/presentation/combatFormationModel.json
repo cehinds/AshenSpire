@@ -38,8 +38,6 @@
       1.125
     ],
     "perspectiveGrid": {
-      "lanes": 3,
-      "enemyRows": 2,
       "wide": {
         "left": 0.08,
         "right": 0.92,
