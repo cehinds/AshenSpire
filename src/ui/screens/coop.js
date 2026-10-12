@@ -1022,7 +1022,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (ent.combatExpansionVersion === 2) {
       const protection = document.createElement('div'); protection.className = 'combat-expansion-protection';
       const stance = ent.combatStance?.maneuver;
-      protection.textContent = [`Ward ${ent.persistentWard?.value || 0}/${ent.persistentWard?.max || 0}${ent.persistentWard?.bonus ? ` +${ent.persistentWard.bonus}` : ''}`,
+      protection.textContent = [`Ward ${ent.persistentWard?.value || 0}/${ent.persistentWard?.max || 0}`,
         `Barrier ${ent.barrier || 0}`, stance ? stance[0].toUpperCase() + stance.slice(1) : ''].filter(Boolean).join(' · ');
       wrap.appendChild(protection);
     }

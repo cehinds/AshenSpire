@@ -41,8 +41,15 @@ export const uiStrings = [
     "id": "combat.protection.ward",
     "extends": "",
     "short": "Arcane Ward",
-    "full": "Ward pool: full at the start of every fight, absorbs each hit before Block (each hit still lets at least 1 damage through) and is spent by what it absorbs. It does not regenerate unless a card, feat, class feature or relic restores it; a card that adds Ward refills the pool first and adds the rest as bonus Ward. Ward from magical guards is part of Block and absorbs after ordinary Block.",
+    "full": "Ward guards against magic. Full at the start of every fight, it absorbs each magic hit after Barrier and before Block (each hit still lets at least 1 damage through) and is spent by what it absorbs; a Ward break costs Stamina next turn. It does not regenerate unless a card, feat, class feature or relic restores it. Ward from magical guards is part of Block and absorbs after ordinary Block.",
     "tip": "Arcane Ward"
+  },
+  {
+    "id": "combat.protection.barrier",
+    "extends": "",
+    "short": "Barrier",
+    "full": "Ward charged past full (gold rim). Ward added while Ward is full becomes Barrier, which soaks magic hits completely before Ward and lasts until the start of its owner's next turn.",
+    "tip": "Barrier"
   },
   {
     "id": "combat.protection.poiseGuard",
@@ -222,7 +229,7 @@ export const uiStrings = [
   {
     "id": "combat.callout.evaded",
     "extends": "",
-    "short": "EVADED",
+    "short": "MISS",
     "full": "",
     "tip": ""
   },
@@ -237,6 +244,20 @@ export const uiStrings = [
     "id": "combat.callout.guardBreak",
     "extends": "",
     "short": "GUARD BREAK",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.callout.wardBreak",
+    "extends": "",
+    "short": "WARD BREAK",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.callout.barrierBreak",
+    "extends": "",
+    "short": "BARRIER BREAK",
     "full": "",
     "tip": ""
   },

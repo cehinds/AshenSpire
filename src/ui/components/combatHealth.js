@@ -1,5 +1,5 @@
 import { combatHealthModel } from '../models/CombatHealthModel.js';
-import { tFull } from '../strings.js';
+import { t, tFull } from '../strings.js';
 import { attachTooltip, esc } from './tooltip.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 
@@ -30,7 +30,8 @@ export function combatHealthRow(hp, values, { tooltips = true, blockHelp = tFull
   }
   for (const badge of model.badges) {
     const node = document.createElement('span');
-    node.className = `combat-health-badge combat-health-${badge.kind}`;
+    node.className = `combat-health-badge combat-health-${badge.kind}${badge.barrier > 0 ? ' combat-health-ward-barrier' : ''}`;
+    if (badge.barrier > 0) node.dataset.barrier = String(badge.barrier);
     node.dataset.defenseKind = badge.kind;
     node.setAttribute('aria-label', `${badge.label} ${badge.value}`);
     const value = document.createElement('span');
@@ -40,7 +41,7 @@ export function combatHealthRow(hp, values, { tooltips = true, blockHelp = tFull
     markUiComponent(node, UI.blockBadge, badge.kind);
     if (tooltips) {
       node.tabIndex = 0;
-      attachTooltip(node, () => `<div class="tt-title">${esc(badge.label)} ${badge.value}</div>${esc(badge.kind === 'shield' ? blockHelp : wardHelp)}`);
+      attachTooltip(node, () => `<div class="tt-title">${esc(badge.label)} ${badge.value}${badge.barrier > 0 ? ` (${esc(t('combat.protection.barrier'))} ${badge.barrier})` : ''}</div>${esc(badge.kind === 'shield' ? blockHelp : wardHelp)}${badge.barrier > 0 ? `<br>${esc(tFull('combat.protection.barrier'))}` : ''}`);
     }
     row.append(node);
   }

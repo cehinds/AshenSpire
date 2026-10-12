@@ -7,8 +7,7 @@ export function statusControlProblems(entity, path, { required = false, rules = 
   const ward = entity?.persistentWard;
   if (ward !== undefined || required) {
     if (!record(ward) || !whole(ward.max) || !whole(ward.value) || ward.value > ward.max) problems.push(`${path}.persistentWard must contain whole max/value with 0 <= value <= max`);
-    else if (ward.bonus !== undefined && !whole(ward.bonus)) problems.push(`${path}.persistentWard.bonus must be a whole number`);
-    else if (Object.keys(ward).some(key => !['max', 'value', 'bonus'].includes(key))) problems.push(`${path}.persistentWard contains unknown fields`);
+    else if (Object.keys(ward).some(key => !['max', 'value'].includes(key))) problems.push(`${path}.persistentWard contains unknown fields`);
   }
   const s = entity?.statusControl;
   if (s === undefined && !required) return problems;

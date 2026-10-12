@@ -386,9 +386,11 @@ export const CALLOUT_KINDS = {
   staggered: { string: 'combat.callout.staggered', tone: 'gold' },
   disrupted: { string: 'combat.callout.disrupted', tone: 'gold' },
   countered: { string: 'combat.callout.countered', tone: 'gold' },
-  evaded: { string: 'combat.callout.evaded', tone: 'gold' },
+  evaded: { string: 'combat.callout.evaded', tone: 'white' },
   critical: { string: 'combat.callout.critical', tone: 'red' },
   guardBreak: { string: 'combat.callout.guardBreak', tone: 'red' },
+  wardBreak: { string: 'combat.callout.wardBreak', tone: 'ward' },
+  barrierBreak: { string: 'combat.callout.barrierBreak', tone: 'gold' },
 };
 export const CALLOUT_MS = 900;
 export const CALLOUT_INSTANT_MS = 500;
@@ -476,10 +478,17 @@ export function guardHitFloatParts(event) {
   const amount = Math.max(0, Number(event && event.amount) || 0);
   const blocked = Math.min(amount, Math.max(0, Number(event && event.blocked) || 0));
   const residual = amount - blocked;
+  // What Barrier (gold) and Ward (purple) absorbed before the hit reached
+  // Block (blue) and Health (red), each its own unsigned number.
+  const barrier = Math.max(0, Number(event && event.barrierAbsorbed) || 0);
+  const ward = Math.max(0, Number(event && event.wardAbsorbed) || 0);
   return {
     amount,
     blocked,
     residual,
+    // A hit Barrier stopped outright reads RESISTED.
+    barrier: barrier > 0 ? { text: amount === 0 && ward === 0 ? `${barrier} RESISTED` : String(barrier), cls: 'barrier small' } : null,
+    ward: ward > 0 ? { text: String(ward), cls: 'ward small' } : null,
     guard: blocked > 0 ? { text: String(blocked), cls: 'blk small' } : null,
     damage: residual > 0 ? { text: `-${residual}`, cls: dmgClass(residual) } : null,
   };
@@ -1362,6 +1371,8 @@ export function calloutForEvent(e = {}) {
     case 'combatAvoidanceResolved': if (e.avoided && e.evade?.success) kind = 'evaded'; break;
     case 'critHit': kind = 'critical'; break;
     case 'combatGuardBroken': kind = 'guardBreak'; break;
+    case 'wardBroken': kind = 'wardBreak'; break;
+    case 'barrierBroken': kind = 'barrierBreak'; break;
     default: break;
   }
   return kind && e.targetId != null ? { kind, targetId: e.targetId } : null;
@@ -1435,6 +1446,9 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
         numbers: (ctx) => {
           if (sequential) hitSounds();
           const anchor = ctx.anchorFor(e.targetId);
+          // Barrier and Ward stack above the Block / Health pair.
+          if (parts.barrier) floatNum(ctx.layer, anchor, parts.barrier.text, parts.barrier.cls, null, { x: -52, y: -34, jitter: false });
+          if (parts.ward) floatNum(ctx.layer, anchor, parts.ward.text, parts.ward.cls, null, { x: parts.barrier ? 0 : -26, y: -34, jitter: false });
           if (parts.guard) floatNum(ctx.layer, anchor, parts.guard.text, parts.guard.cls, null,
             { x: paired ? -26 : 0, jitter: false });
           if (parts.damage) floatNum(ctx.layer, anchor, parts.damage.text, parts.damage.cls, null,
@@ -1531,11 +1545,11 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
       };
       // A Poise / Ward guard (the Dodge Roll) took some of the impact.
       return e.guarded > 0
-        ? { numbers: (ctx) => floatNum(ctx.layer, ctx.anchorFor(e.targetId), `${e.guarded} ${e.meter === 'ward' ? 'WARD' : 'POISE'} GUARDED`, 'blk small') }
+        ? { numbers: (ctx) => floatNum(ctx.layer, ctx.anchorFor(e.targetId), `${e.guarded} ${e.meter === 'ward' ? 'WARD' : 'POISE'} GUARDED`, `${e.meter === 'ward' ? 'ward' : 'poise'} small`) }
         : null;
     case 'meterGuardGained':
       return e.amount > 0
-        ? { numbers: (ctx) => floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount} ${e.meter === 'ward' ? 'WARD' : 'POISE'}`, 'blk small') }
+        ? { numbers: (ctx) => floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount} ${e.meter === 'ward' ? 'WARD' : 'POISE'}`, `${e.meter === 'ward' ? 'ward' : 'poise'} small`) }
         : null;
     case 'enemyStaggered':
       return {

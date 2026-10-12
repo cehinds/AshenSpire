@@ -125,11 +125,8 @@ export function stripCombatWard(ctx, source, target, amount) {
   if (combatExpansionEnabled(ctx)) {
     const ward = target.persistentWard;
     if (!ward) return 0;
-    const stripped = Math.min(Math.max(0, ward.value) + Math.max(0, ward.bonus || 0), Math.max(0, Math.floor(amount)));
-    const fromBonus = Math.min(Math.max(0, ward.bonus || 0), stripped);
-    if (fromBonus) ward.bonus -= fromBonus;
-    if (ward.bonus === 0) delete ward.bonus;
-    ward.value -= stripped - fromBonus;
+    const stripped = Math.min(Math.max(0, ward.value), Math.max(0, Math.floor(amount)));
+    ward.value -= stripped;
     if (stripped) ctx.emit?.('combatWardStripped', { ...seats(ctx, source, target), sourceId: source?.id, sourceKind: source?.kind, targetId: target.id, amount: stripped });
     return stripped;
   }

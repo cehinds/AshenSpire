@@ -967,7 +967,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           for (const enemy of combat.enemies) if (disp.ents[enemy.id]) disp.ents[enemy.id].intentPreview = previewIntent(combat, enemy.id);
           break;
         case 'persistentWardChanged':
-          if (t?.persistentWard) { t.persistentWard.value = e.value; if (e.bonus) t.persistentWard.bonus = e.bonus; else delete t.persistentWard.bonus; }
+          if (t?.persistentWard) { t.persistentWard.value = e.value; if (Number.isFinite(e.max)) t.persistentWard.max = e.max; }
           break;
         case 'barrierGained':
           if (t) t.barrier = e.total;

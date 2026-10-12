@@ -55,10 +55,35 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
       case 'combatCounterTriggered': text = `${source} counterattacked ${target}.`; break;
       case 'damageDealt': {
         const lost = Math.max(0, event.amount - (event.blocked || 0));
-        text = lost ? `${source} dealt ${lost} damage to ${target}${event.blocked ? ` (${event.blocked} blocked)` : ''}.`
-          : `${target} ${event.blocked ? `blocked ${event.blocked} damage` : 'resisted the attack'}.`;
+        // Each layer's share, with what is left of it: Barrier, Ward, Block, then the damage actually inflicted.
+        const barrier = event.barrierAbsorbed || 0, ward = event.wardAbsorbed || 0;
+        const layers = [
+          ...(barrier ? [`Barrier absorbed ${barrier} (${(event.barrierRemaining || 0) + barrier} → ${event.barrierRemaining || 0})`] : []),
+          ...(ward ? [`Ward absorbed ${ward} (${(event.wardRemaining || 0) + ward} → ${event.wardRemaining || 0})`] : []),
+          ...(event.blocked ? [`Block absorbed ${event.blocked} (${(event.blockRemaining || 0) + event.blocked} → ${event.blockRemaining || 0})`] : []),
+        ];
+        if (barrier || ward) {
+          text = lost ? `${source} hit ${target} for ${event.amount + barrier + ward}: ${layers.join(', ')}; ${lost} damage dealt.`
+            : `${target} resisted the attack: ${layers.join(', ')}.`;
+        } else {
+          text = lost ? `${source} dealt ${lost} damage to ${target}${event.blocked ? ` (${event.blocked} blocked)` : ''}.`
+            : `${target} ${event.blocked ? `blocked ${event.blocked} damage` : 'resisted the attack'}.`;
+        }
         break;
       }
+      // A miss shows the roll and what it needed (white MISS on the fighter).
+      case 'combatAvoidanceResolved': {
+        if (!event.avoided) break;
+        const e = event.evade, d = event.distance;
+        if (e?.success) text = `${source} missed ${target}: Evade rolled ${e.roll}${e.total !== e.roll ? ` + ${e.total - e.roll} bonus = ${e.total}` : ''}, needed more than ${e.difficulty}.`;
+        else if (d?.success) text = `${source} missed ${target}: distance rolled ${d.roll}, needed ${d.chance} or less.`;
+        else if (event.prevention) text = `${source} missed ${target} (${word(event.prevention)}).`;
+        break;
+      }
+      case 'barrierBroken': text = `${target}'s Barrier broke.`; break;
+      case 'wardBroken': text = `${target}'s Ward broke${event.staminaLoss ? ` (−${event.staminaLoss} Stamina next turn)` : ''}.`; break;
+      case 'barrierGained': text = `${target} gained ${event.amount} Barrier.`; break;
+      case 'ratingImpact': if (event.meter === 'poise' && event.amount > 0) text = `${target}'s Poise took ${event.amount} (${event.value}/${event.max}).`; break;
       case 'blockGained': text = `${target} gained ${event.amount} Block.`; break;
       case 'healed': text = `${target} recovered ${event.amount} HP.`; break;
       case 'hpLost': if (event.cause !== 'attack') text = `${target} lost ${event.amount} HP.`; break;

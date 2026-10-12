@@ -575,7 +575,7 @@ export function schoolResistanceMultiplier(ctx, target, school) {
 /** persistentWardMaximum(ctx, entity) → the Ward pool a combatant starts a fight with. */
 export function persistentWardMaximum(ctx, entity) {
   const share = ctx?.ratingsRules?.resistance?.wardPool;
-  return Math.max(0, Math.floor((entity?.ratings?.ward || 0) * (Number.isFinite(share) ? share : combatRatingDefaults.resistance.wardPool)));
+  return Math.max(0, Math.floor(ratingValue(ctx, entity, 'ward') * (Number.isFinite(share) ? share : combatRatingDefaults.resistance.wardPool)));
 }
 
 export function attackImpact(ctx, source, carrier) {

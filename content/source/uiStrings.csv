@@ -33,7 +33,8 @@ combat.poise.shared,,Poise,"Poise resists physical attacks{resistance} and confi
 combat.poise.actionLoss,,Actions,{amount} fewer Actions next turn,Actions lost after Stagger
 combat.poise.enemyLoss,,Move,lose the next move,Stagger cancels the next move
 combat.protection.block,,Block,Absorbs attack damage.,Block
-combat.protection.ward,,Arcane Ward,"Ward pool: full at the start of every fight, absorbs each hit before Block (each hit still lets at least 1 damage through) and is spent by what it absorbs. It does not regenerate unless a card, feat, class feature or relic restores it; a card that adds Ward refills the pool first and adds the rest as bonus Ward. Ward from magical guards is part of Block and absorbs after ordinary Block.",Arcane Ward
+combat.protection.ward,,Arcane Ward,"Ward guards against magic. Full at the start of every fight, it absorbs each magic hit after Barrier and before Block (each hit still lets at least 1 damage through) and is spent by what it absorbs; a Ward break costs Stamina next turn. It does not regenerate unless a card, feat, class feature or relic restores it. Ward from magical guards is part of Block and absorbs after ordinary Block.",Arcane Ward
+combat.protection.barrier,,Barrier,"Ward charged past full (gold rim). Ward added while Ward is full becomes Barrier, which soaks magic hits completely before Ward and lasts until the start of its owner's next turn.",Barrier
 combat.protection.poiseGuard,,Poise guard,Absorbs physical impact before the Poise bar fills. Expires at the start of your next turn.,Poise guard
 combat.protection.wardGuard,,Ward guard,Absorbs magical impact before the Ward bar fills. Expires at the start of your next turn.,Ward guard
 # ---- optional defensive reactions and public combat receipts --------------
@@ -61,9 +62,11 @@ combat.reaction.mp,,{amount} MP,,
 combat.callout.staggered,,STAGGERED,,
 combat.callout.disrupted,,DISRUPTED,,
 combat.callout.countered,,COUNTERED,,
-combat.callout.evaded,,EVADED,,
+combat.callout.evaded,,MISS,,
 combat.callout.critical,,CRITICAL,,
 combat.callout.guardBreak,,GUARD BREAK,,
+combat.callout.wardBreak,,WARD BREAK,,
+combat.callout.barrierBreak,,BARRIER BREAK,,
 # ---- the house vocabulary — the words every screen shares ------------------
 common.back,,Back,Return to the screen before this one.,Back
 common.continue,,Continue,Move on from this screen.,Continue

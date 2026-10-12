@@ -5,7 +5,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { enqueueExpandedAction } from '../src/engine/combatExpansionActions.js';
-import { executeAction, applyAttackDamage, restoreExpandedWard } from '../src/engine/actions.js';
+import { executeAction, applyAttackDamage, restoreExpandedWard, gainBarrier, syncWardMaximum } from '../src/engine/actions.js';
 import { schoolResistanceMultiplier, persistentWardMaximum } from '../src/model/combatRatings.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 
@@ -95,7 +95,7 @@ test('expanded critical hits multiply once and still announce the original multi
 
 test('un-aimed card faces show offense while target inspection shows Ward mitigation down to 1', () => {
   const { combat, enemy } = fixture([{ op: 'damage', target: 'enemy', amount: 5 }]);
-  enemy.persistentWard.value = enemy.persistentWard.max = 20;
+  enemy.ratings.ward = enemy.persistentWard.value = enemy.persistentWard.max = 20;
   const unAimed = previewCard(combat, 'paired');
   const aimed = previewCard(combat, 'paired', enemy.id);
   const row = unAimed.values.find(value => value.op === 'damage');
@@ -104,18 +104,41 @@ test('un-aimed card faces show offense while target inspection shows Ward mitiga
   assert.equal(aimed.tokens[row.token], 1);
 });
 
-test('Ward reduces a physical hit, Block soaks the rest, then Health', () => {
+test('a physical hit skips Ward: Block soaks, then Health', () => {
   const { combat, enemy } = fixture([{ op: 'damage', target: 'enemy', amount: 10 }]);
-  enemy.persistentWard.value = enemy.persistentWard.max = 4;
-  enemy.ratings.poise = 0; enemy.block = 3;
+  enemy.ratings.ward = enemy.persistentWard.value = enemy.persistentWard.max = 4;
+  enemy.ratings.poise = 0; enemy.block = 3; enemy.barrier = 5;
   const carrier = { cardId: 'strike', damageSchool: 'physical', tags: ['camp:physical', 'maneuver:attack'],
     combatProfile: { camp: 'physical', maneuver: 'attack', school: 'physical', damageType: 'slashing', reach: 'contact', targeting: 'single' } };
   const before = enemy.hp;
   const amount = applyAttackDamage(combat, combat.player, enemy, 10, [], carrier);
-  assert.equal(amount, 6, 'Ward absorbs 4 of 10');
-  assert.equal(enemy.persistentWard.value, 0);
-  assert.equal(enemy.block, 0, 'Block soaks 3');
-  assert.equal(before - enemy.hp, 3);
+  assert.equal(amount, 10);
+  assert.equal(enemy.persistentWard.value, 4, 'Ward guards against magic only');
+  assert.equal(enemy.barrier, 5, 'Barrier guards against magic only');
+  assert.equal(enemy.block, 0);
+  assert.equal(before - enemy.hp, 7);
+});
+
+test("owner's example: Barrier soaks first and breaks, Ward lets max(5 - 3, 1) through and breaks", () => {
+  const { combat } = fixture();
+  const mage = combat.player;
+  mage.ratings = { ...mage.ratings, ward: 3 };
+  mage.persistentWard.max = mage.persistentWard.value = 3;
+  mage.block = 0; mage.barrier = 0;
+  gainBarrier(combat, mage, 6, { skipRatingBonus: true });
+  assert.equal(mage.persistentWard.value, 3); assert.equal(mage.barrier, 6, 'Ward was full: all 6 become Barrier (9 total)');
+  const events = []; const emit = combat.emit; combat.emit = (type, payload) => { events.push({ type, ...payload }); return emit.call(combat, type, payload); };
+  const loss = mage.pendingActionLoss || 0;
+  const spell = { cardId: 'starstonePebble', damageSchool: 'fire', tags: ['camp:spell', 'maneuver:casting'],
+    combatProfile: { camp: 'spell', maneuver: 'casting', school: 'fire', damageType: 'fire', reach: 'near', targeting: 'single' } };
+  const before = mage.hp;
+  applyAttackDamage(combat, combat.enemies[0], mage, 11, [], spell);
+  assert.equal(mage.barrier, 0); assert.equal(mage.persistentWard.value, 0);
+  assert.equal(before - mage.hp, 2);
+  assert.ok(events.some(e => e.type === 'barrierBroken')); assert.ok(events.some(e => e.type === 'wardBroken'));
+  const hit = events.find(e => e.type === 'damageDealt');
+  assert.equal(hit.barrierAbsorbed, 6); assert.equal(hit.wardAbsorbed, 3);
+  assert.equal(mage.pendingActionLoss, loss + 1, 'a Ward break costs Stamina next turn');
 });
 
 test('a resistant creature takes floor(0.75 × damage) by default, configurable down to 0.5', () => {
@@ -133,19 +156,27 @@ test('a combatant starts every fight with its full Ward (configurable share)', (
   assert.equal(persistentWardMaximum({ ratingsRules: { resistance: { wardPool: 0.5 } } }, { ratings: { ward: 25 } }), 12);
 });
 
-test('a card that adds Ward refills the pool first, then adds the rest as bonus Ward spent first', () => {
+test('a card that adds Ward refills it first; the rest becomes Barrier', () => {
   const { combat, enemy } = fixture([{ op: 'damage', target: 'enemy', amount: 5 }]);
-  enemy.persistentWard.max = 10; enemy.persistentWard.value = 7;
-  assert.equal(restoreExpandedWard(combat, enemy, 5).restored, 5);
-  assert.deepEqual({ ...enemy.persistentWard }, { max: 10, value: 10, bonus: 2 });
-  const out = dispatch(combat, { type: 'playCard', cardInstanceId: 'paired', targetId: enemy.id });
-  assert.equal(out.events.find(event => event.type === 'damageDealt' && event.targetId === enemy.id).amount, 1);
-  assert.deepEqual({ ...enemy.persistentWard }, { max: 10, value: 8 }, 'bonus spent first, then the pool, by the 4 absorbed');
+  enemy.ratings.ward = enemy.persistentWard.max = 10; enemy.persistentWard.value = 7; enemy.barrier = 0;
+  assert.equal(restoreExpandedWard(combat, enemy, 5).barrier, 2);
+  assert.deepEqual({ ...enemy.persistentWard }, { max: 10, value: 10 });
+  assert.equal(enemy.barrier, 2);
+});
+
+test('a buff that raises the Ward rating raises the Ward maximum and current Ward with it', () => {
+  const { combat, enemy } = fixture();
+  enemy.ratings.ward = 6;
+  syncWardMaximum(combat, enemy);
+  assert.deepEqual({ ...enemy.persistentWard }, { max: 6, value: 6 });
+  enemy.ratings.ward = 2;
+  syncWardMaximum(combat, enemy);
+  assert.deepEqual({ ...enemy.persistentWard }, { max: 2, value: 2 });
 });
 
 test('each hit Ward meets still lets at least 1 damage through', () => {
   const { combat, enemy } = fixture();
-  enemy.persistentWard.value = enemy.persistentWard.max = 20;
+  enemy.ratings.ward = enemy.persistentWard.value = enemy.persistentWard.max = 20;
   const before = enemy.hp;
   const out = dispatch(combat, { type: 'playCard', cardInstanceId: 'paired', targetId: enemy.id });
   const damage = out.events.filter(event => event.type === 'damageDealt' && event.targetId === enemy.id);

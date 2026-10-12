@@ -39,7 +39,7 @@ import { passiveMult } from '../model/registries.js';
 import { commitSmithing, smithingPlan } from '../model/smithing.js';
 import * as Properties from './properties.js';
 import * as Ratings from './combatRatings.js';
-import { isMagicalAttack, ratingDamageMultiplier, attackImpact, schoolResistanceMultiplier } from '../model/combatRatings.js';
+import { isMagicalAttack, ratingDamageMultiplier, attackImpact, schoolResistanceMultiplier, persistentWardMaximum } from '../model/combatRatings.js';
 import { swapRunClass } from '../model/classSwap.js';
 import { applyGraceRefill } from './encounters.js';
 import { orderedReturn } from '../model/deckRules.js';
@@ -244,15 +244,48 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
   return dmg;
 }
 
+/**
+ * Barrier is Ward added past full: gaining it refills Ward first and only the
+ * rest becomes Barrier, the gold layer that lasts until the owner's next turn.
+ */
 export function gainBarrier(ctx, entity, base, card = null) {
   if (!entity?.alive) return 0;
   const amount = computeBlockGain(ctx, entity, base, card);
+  if (entity.persistentWard && ctx.combatExpansionVersion === 2) {
+    syncWardMaximum(ctx, entity);
+    const room = Math.max(0, entity.persistentWard.max - entity.persistentWard.value);
+    const refill = Math.min(room, amount);
+    if (refill > 0) {
+      entity.persistentWard.value += refill;
+      ctx.emit('persistentWardChanged', { targetId: entity.id, restored: refill, value: entity.persistentWard.value, max: entity.persistentWard.max, source: 'barrier', ...seatOf(ctx, entity) });
+    }
+    if (amount - refill <= 0) return amount;
+    entity.barrier = (entity.barrier || 0) + amount - refill;
+    ctx.emit('barrierGained', { targetId: entity.id, amount: amount - refill, total: entity.barrier, ...seatOf(ctx, entity) });
+    return amount;
+  }
   entity.barrier = (entity.barrier || 0) + amount;
   ctx.emit('barrierGained', { targetId: entity.id, amount, total: entity.barrier, ...seatOf(ctx, entity) });
   return amount;
 }
 
+/**
+ * The Ward maximum follows the live Ward rating (a power or status that raises
+ * Ward raises it). A rise adds the same amount to current Ward; a fall clamps.
+ */
+export function syncWardMaximum(ctx, entity) {
+  const ward = entity?.persistentWard;
+  if (!ward || ctx.combatExpansionVersion !== 2) return;
+  const max = persistentWardMaximum(ctx, entity);
+  if (max === ward.max) return;
+  const rise = Math.max(0, max - ward.max);
+  ward.max = max;
+  ward.value = Math.min(max, ward.value + rise);
+  ctx.emit('persistentWardChanged', { targetId: entity.id, value: ward.value, max: ward.max, source: 'rating', ...seatOf(ctx, entity) });
+}
+
 export function restoreExpandedWard(ctx, entity, nominal, options = {}) {
+  syncWardMaximum(ctx, entity);
   return Control.restorePersistentWard(ctx, entity, nominal, { source: 'card', ...options });
 }
 
@@ -286,19 +319,33 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
     const shares = total > 0 ? allocateInteger(amount, indices[key].map(index => receipt.amounts[index])) : indices[key].map(() => 0);
     indices[key].forEach((index, i) => { receipt.defendedAmounts[index] = shares[i]; });
   }
-  // Ward meets every hit first (Spell and physical alike), once per action:
-  // its budget is shared over the hits, each hit it meets still lets at least
-  // 1 through, and Ward is spent by what it absorbs, so it wears away instead
-  // of resisting forever. What passes then meets Block (physical) or Barrier
-  // (Spell), then Health.
-  const total = receipt.defendedAmounts.reduce((sum, amount) => sum + amount, 0);
-  const pool = Control.wardTotal(target);
+  // Magic hits meet Barrier, then Ward, once per action (Poise is physical's
+  // and is not a pool yet). Barrier soaks fully. Ward's budget is shared over
+  // the hits; each hit it meets still lets at least 1 through, and Ward is
+  // spent by what it absorbs. What passes meets Block, then Health.
+  syncWardMaximum(ctx, target);
   const defended = [...receipt.defendedAmounts];
-  const shares = total > 0 ? allocateInteger(Math.min(pool, total), defended) : defended.map(() => 0);
-  receipt.defendedAmounts = defended.map((amount, index) => amount > 0 && shares[index] > 0 ? Math.max(1, amount - shares[index]) : amount);
-  receipt.wardSpentAmounts = defended.map((amount, index) => amount - receipt.defendedAmounts[index]);
+  const magic = receipt.profiles.map(profile => profile.camp === 'spell');
+  const share = (budget, weights) => {
+    const total = weights.reduce((sum, weight, index) => sum + (magic[index] ? weight : 0), 0);
+    if (!(total > 0) || !(budget > 0)) return weights.map(() => 0);
+    const parts = allocateInteger(Math.min(budget, total), weights.map((weight, index) => magic[index] ? weight : 0));
+    return parts;
+  };
+  receipt.barrierSpentAmounts = share(Math.max(0, target.barrier || 0), defended);
+  const afterBarrier = defended.map((amount, index) => amount - receipt.barrierSpentAmounts[index]);
+  const wardShares = share(Math.max(0, target.persistentWard?.value || 0), afterBarrier);
+  receipt.defendedAmounts = afterBarrier.map((amount, index) => amount > 0 && wardShares[index] > 0 ? Math.max(1, amount - wardShares[index]) : amount);
+  receipt.wardSpentAmounts = afterBarrier.map((amount, index) => amount - receipt.defendedAmounts[index]);
   receipt.resistedAmounts = receipt.amounts.map((amount, index) => Math.max(0, amount - receipt.defendedAmounts[index]));
   receipt.guardBypassRemaining = receipt.guardBypass || 0;
+}
+
+/** A Ward break costs a player Stamina next turn (breaks.wardActionLoss). */
+function breakWard(ctx, source, target) {
+  const loss = target.kind === 'player' ? Math.max(0, ctx.ratingsRules?.breaks?.wardActionLoss ?? 1) : 0;
+  if (loss) target.pendingActionLoss = (target.pendingActionLoss || 0) + loss;
+  ctx.emit('wardBroken', { targetId: target.id, sourceId: source?.id, staminaLoss: loss, ...seatOf(ctx, target) });
 }
 
 function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
@@ -316,18 +363,29 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
   // Matchup and control vulnerabilities precede typed defenses and Ward.
   const type = ctx.combatExpansionRules.matchups.damageAliases[profile.damageType] || profile.damageType;
   const ward = tactical.resistedAmounts[contactIndex] || 0;
-  const pool = spell ? 'barrier' : 'block';
+  void spell;
+  const barrierSpent = Math.min(Math.max(0, target.barrier || 0), tactical.barrierSpentAmounts?.[contactIndex] || 0);
+  if (barrierSpent > 0) {
+    target.barrier -= barrierSpent;
+    if (target.barrier === 0) ctx.emit('barrierBroken', { targetId: target.id, sourceId: source?.id, ...seatOf(ctx, target) });
+  }
+  const wardSpent = tactical.wardSpentAmounts?.[contactIndex] || 0;
+  if (wardSpent > 0 && target.persistentWard?.value > 0) {
+    Control.spendPersistentWard(ctx, target, wardSpent, { cause: 'damage' });
+    if (target.persistentWard.value === 0) breakWard(ctx, source, target);
+  }
+  const pool = 'block';
   const bypass = Math.min(amount, tactical.guardBypassRemaining || 0);
   tactical.guardBypassRemaining -= bypass;
   const blocked = Math.min(Math.max(0, target[pool] || 0), Math.max(0, amount - bypass));
   target[pool] = Math.max(0, (target[pool] || 0) - blocked);
   const hpLoss = amount - blocked;
   if (hpLoss) target.hp -= hpLoss;
-  const wardSpent = tactical.wardSpentAmounts?.[contactIndex] || 0;
-  if (wardSpent > 0) Control.spendPersistentWard(ctx, target, wardSpent, { cause: 'damage' });
   creditKnowledgeImpact(ctx, target, amount, tactical.knowledgeBonus > 0);
   Matchups.recordTacticalContact(tactical, { hpLoss, blocked, wardResisted: ward });
   ctx.emit('damageDealt', { sourceId: source?.id, targetId: target.id, amount, blocked, wardResisted: ward,
+    ...(barrierSpent ? { barrierAbsorbed: barrierSpent } : {}),
+    ...(wardSpent ? { wardAbsorbed: wardSpent, wardRemaining: target.persistentWard?.value || 0 } : {}),
     damageType: type, blockRemaining: target.block || 0, barrierRemaining: target.barrier || 0,
     ...seatOf(ctx, target), ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source) } : {}),
     ...(carrier.instanceId ? { cardInstanceId: carrier.instanceId, sourceHand: carrier.sourceHand, grantedBy: carrier.grantedBy } : {}), isAttack: true });

@@ -19,6 +19,7 @@ export function wardBlockReceipt(entity) {
 export function protectionPresentation(entity) {
   const { defense, ward } = blockPresentation(entity);
   const whole = value => Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
-  const pool = whole(entity?.persistentWard?.value) + whole(entity?.persistentWard?.bonus);
-  return { defense, ward: ward + pool };
+  // Barrier is Ward charged past full: it counts in the badge and gilds it.
+  const barrier = whole(entity?.barrier);
+  return { defense, ward: ward + whole(entity?.persistentWard?.value) + barrier, barrier };
 }
