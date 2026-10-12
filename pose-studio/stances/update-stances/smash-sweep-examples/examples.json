@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "status": "Revised ground-slam Smash: ten director-approved review examples. Revised iai Sweep: ten examples pending source completion; publication paused.",
+  "status": "SM03 \u00b7 Twisting aerial slam is owner-selected for Smash; runtime implementation is pending. Other Smash examples remain references. Revised iai Sweep completion and selection are pending.",
   "reviewSlotMs": 350,
   "families": {
     "sweep": {
@@ -85,7 +85,9 @@
       "sourceGif": "smash/ground-slam-revision-2/SM03/preview.gif",
       "provenance": "smash/ground-slam-revision-2/SM03/provenance.json",
       "storyboard": "smash/ground-slam-revision-2/SM03/preview.png",
-      "caveat": null
+      "caveat": null,
+      "ownerSelectedRole": "Smash",
+      "runtimeStatus": "Implementation pending"
     },
     {
       "id": "SM04",
@@ -203,5 +205,8 @@
   "archive": {
     "sweep": "sweep/manifest.json",
     "smash": "smash/index.json"
+  },
+  "ownerSelections": {
+    "smash": "SM03"
   }
 }

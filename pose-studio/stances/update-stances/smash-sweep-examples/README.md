@@ -1,6 +1,6 @@
 # Revised Sweep and Smash sequence options
 
-**Integration in progress; publication paused.** Ten heavy jumping ground-slam Smash examples are director-approved review candidates. The ten revised iai-inspired Sweep examples are still being completed. None of these options is selected or registered for gameplay.
+**Integration in progress; publication paused.** Ten heavy jumping ground-slam Smash examples are director-approved review candidates. The ten revised iai-inspired Sweep examples are still being completed. **SM03 · Twisting aerial slam is owner-selected for the Smash runtime sequence; implementation and production export are pending.** The other nine Smash examples remain references. Sweep selection is pending.
 
 Each example has **five total slots**: approved starting stance → three action images → the exact same stance. The [interactive viewer](index.html) provides play/pause, speed, numbered stepping and a copyable example ID. Our labeled GIFs use uniform **350 ms review exposures**, hard cuts and no synthesized in-between poses. Artist source GIFs retain their separately recorded review timing.
 
@@ -18,7 +18,7 @@ The five numbered Smash slots are **Start stance → Takeoff → Airborne load �
 | --- | --- | --- | --- | --- |
 | SM01 | Forward plunge slam | [GIF](renders/SM01.gif) | [Storyboard](renders/SM01-storyboard.png) | [Provenance](smash/ground-slam-revision-2/SM01/provenance.json) |
 | SM02 | Power-hop cleave slam | [GIF](renders/SM02.gif) | [Storyboard](renders/SM02-storyboard.png) | [Provenance](smash/ground-slam-revision-2/SM02/provenance.json) |
-| SM03 | Twisting aerial slam | [GIF](renders/SM03.gif) | [Storyboard](renders/SM03-storyboard.png) | [Provenance](smash/ground-slam-revision-2/SM03/provenance.json) |
+| **SM03 · Selected Smash** | Twisting aerial slam | [GIF](renders/SM03.gif) | [Storyboard](renders/SM03-storyboard.png) | [Provenance](smash/ground-slam-revision-2/SM03/provenance.json) |
 | SM04 | High vertical hammer | [GIF](renders/SM04.gif) | [Storyboard](renders/SM04-storyboard.png) | [Provenance](smash/ground-slam-revision-2/SM04/provenance.json) |
 | SM05 | Lateral bound slam | [GIF](renders/SM05.gif) | [Storyboard](renders/SM05-storyboard.png) | [Provenance](smash/ground-slam-revision-2/SM05/provenance.json) |
 | SM06 | Long-leap crater slam | [GIF](renders/SM06.gif) | [Storyboard](renders/SM06-storyboard.png) | [Provenance](smash/ground-slam-revision-2/SM06/provenance.json) |

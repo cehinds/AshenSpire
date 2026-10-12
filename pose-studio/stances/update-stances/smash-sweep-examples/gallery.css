@@ -2,3 +2,6 @@
 /* Keep the content width stable when full-page capture or short content removes
    a classic scrollbar; this reserves space, rather than clipping overflow. */
 html{scrollbar-gutter:stable}main,.player,.families,.examples,.example{min-width:0}.families button{flex:1;min-width:0}
+
+.selection-badge{display:block;margin-top:6px;font-size:.75rem;font-weight:700;color:#d7e3ba}
+.example[aria-pressed="true"] .selection-badge{color:#354029}
