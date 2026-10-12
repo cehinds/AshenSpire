@@ -1697,44 +1697,63 @@ function previewRoundOps(hand = []) {
     drain: drainQueue,
     findEntity,
     reactionHand: () => hand,
+    reactionAvailable: (c, entry, eligible) => eligible.map(rec => roundReactionOffer(c, rec.instanceId, entry)).filter(Boolean),
     playReaction: playRoundReaction,
   };
 }
 
 // The Counter and Evade cards in hand the player may play as a reaction to an enemy attack in this commit
 // (SPEC §4.10, §4.11). Each is a timeline record: its speed, its Stamina as SP, and its Mana. A card that is
-// queued is not a reaction, and nothing is offered while reactions are off.
+// queued is not a reaction, and nothing is offered while reactions are off. Costs are read now, so the
+// commit's first offer and each later pause see what the player can still pay (SPEC §4.11).
 function roundReactionHand(combat) {
   const p = combat.player;
   if (!Reactions.usesReactions(combat) || p.reactionsEnabled === false || !p.alive || p.hp <= 0) return [];
-  const queued = new Set(Rounds.queuedCards(combat).map((r) => r.instanceId));
-  const claimed = claimedCharges(combat);
-  const offers = [];
-  for (const inst of combat.piles.hand) {
-    if (queued.has(inst.instanceId)) continue;
-    const def = resolveCombatCard(combat, inst);
-    const kind = Rounds.playerKind({ isAttack: false, effects: def.effects ?? [], maneuver: maneuverOf(def) });
-    if (kind !== 'counter' && kind !== 'evade') continue;
-    if (def.cost === 'X' || combat.registries.framework.isUnplayable(def)) continue;
-    if (!Control.controlGate(combat, p, def).allowed) continue;
-    const costs = playCosts(combat, def, claimed);
-    if (costs.energy > p.energy || costs.mana > p.mana) continue;
-    const tags = Array.isArray(def.cardTags ?? def.tags) ? [...(def.cardTags ?? def.tags)] : [];
-    offers.push({
-      id: inst.cardId, instanceId: inst.instanceId, name: def.name ?? inst.cardId, kind,
-      speed: Rounds.cardSpeed(def, inst.cardId), target: 'self', sp: costs.stamina, mana: costs.mana,
-      tags, stance: Rounds.stanceFor(kind, tags),
-    });
-  }
-  return offers;
+  return combat.piles.hand.map(inst => roundReactionOffer(combat, inst.instanceId)).filter(Boolean);
+}
+
+// Why a card in hand cannot be played as a reaction right now, or null when it can. `entry` is the attack
+// being answered (its coverage is checked by later steps); the commit's first offer has none.
+function roundReactionRefusal(combat, instanceId, entry = null) {
+  const p = combat.player;
+  if (!p.alive || p.hp <= 0) return 'The player cannot react';
+  if (Rounds.isQueued(combat, instanceId)) return `Card '${instanceId}' is queued, not a reaction`;
+  const inst = combat.piles.hand.find(c => c.instanceId === instanceId);
+  if (!inst) return `Card '${instanceId}' is not in hand`;
+  const def = resolveCombatCard(combat, inst);
+  const kind = Rounds.playerKind({ isAttack: false, effects: def.effects ?? [], maneuver: maneuverOf(def) });
+  if (kind !== 'counter' && kind !== 'evade') return `'${def.name ?? inst.cardId}' is not a reaction card`;
+  if (def.cost === 'X' || combat.registries.framework.isUnplayable(def)) return `'${def.name ?? inst.cardId}' cannot be played as a reaction`;
+  if (!Control.controlGate(combat, p, def).allowed) return `'${def.name ?? inst.cardId}' can no longer be played as a reaction: recover from the active control statuses first`;
+  const costs = playCosts(combat, def, claimedCharges(combat, instanceId));
+  if (costs.energy > p.energy) return `Not enough Stamina to play '${def.name ?? inst.cardId}' as a reaction`;
+  if (costs.mana > p.mana) return `Not enough Mana to play '${def.name ?? inst.cardId}' as a reaction`;
+  return null;
+}
+
+// The reaction record of a card in hand, priced now, or null when it cannot be played as a reaction now.
+function roundReactionOffer(combat, instanceId, entry = null) {
+  if (roundReactionRefusal(combat, instanceId, entry)) return null;
+  const inst = combat.piles.hand.find(c => c.instanceId === instanceId);
+  const def = resolveCombatCard(combat, inst);
+  const kind = Rounds.playerKind({ isAttack: false, effects: def.effects ?? [], maneuver: maneuverOf(def) });
+  const costs = playCosts(combat, def, claimedCharges(combat, instanceId));
+  const tags = Array.isArray(def.cardTags ?? def.tags) ? [...(def.cardTags ?? def.tags)] : [];
+  return {
+    id: inst.cardId, instanceId: inst.instanceId, name: def.name ?? inst.cardId, kind,
+    speed: Rounds.cardSpeed(def, inst.cardId), target: 'self', sp: costs.stamina, mana: costs.mana,
+    tags, stance: Rounds.stanceFor(kind, tags),
+  };
 }
 
 // Plays a reaction card the player chose in a paused commit (SPEC §4.10 Play): its Stamina and Mana are
 // paid now, as a queued card's are at queue time, and its live effects run before the attack resolves.
-function playRoundReaction(combat, instanceId, attackerId) {
+// A card that can no longer be paid for or played is refused before anything is paid.
+function playRoundReaction(combat, instanceId, entry) {
   const p = combat.player;
+  const refusal = roundReactionRefusal(combat, instanceId, entry);
+  if (refusal) throw new Error(refusal);
   const inst = combat.piles.hand.find((c) => c.instanceId === instanceId);
-  if (!inst) throw new Error(`Card '${instanceId}' is not in hand`);
   const def = resolveCombatCard(combat, inst);
   const costs = playCosts(combat, def, claimedCharges(combat, instanceId));
   p.energy -= costs.energy;
@@ -1745,6 +1764,7 @@ function playRoundReaction(combat, instanceId, attackerId) {
     p.counters.staminaSpentThisTurn = (p.counters.staminaSpentThisTurn || 0) + costs.stamina;
     combat.emit('staminaSpent', { amount: costs.stamina });
   }
+  const attackerId = entry.actor;
   const targetId = needsEnemyTarget(def) ? attackerId : undefined;
   combat._reactionPlaying = true;
   try {

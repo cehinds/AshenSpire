@@ -227,7 +227,8 @@ function enemySpec(enemy) {
 //   drain(combat)                   drainQueue
 //   findEntity(combat, id)          the live lookup
 //   reactionHand(combat)            the reaction candidates the player may play this commit (timeline records)
-//   playReaction(combat, instanceId, attackerId)  pays and plays a chosen reaction card, live
+//   reactionAvailable(combat, entry, eligible)  the candidates still playable at a pause, priced now (SPEC §4.11)
+//   playReaction(combat, instanceId, entry)  pays and plays a chosen reaction card, live; refuses a card that is not playable now
 // Returns { paused, offer }. A paused commit (SPEC §4.11) waits for the player's reaction: `offer` is the
 // round's { attack, eligible }, and resumeRound() continues it. Otherwise the caller runs the live turn end.
 export function commitRound(combat, ops, discardIds = []) {
@@ -284,7 +285,7 @@ export function resumeRound(combat, ops, pick) {
   const answer = answerReaction(round, pick, hooks);
   const events = [...cr.paused.events, ...answer.events];
   const played = events.find((e) => e.type === 'reaction');
-  if (played) ops.playReaction(combat, played.instanceId, entry.actor);
+  if (played) ops.playReaction(combat, played.instanceId, entry);
   delete cr.paused;
   settleEntry(combat, entry, events, ops);
   if (combat.result) return { paused: false, offer: null };
@@ -305,8 +306,9 @@ function runRound(combat, ops) {
     const entry = round.timeline.entries[round.idx];
     const step = stepRound(round, hooks);
     if (step.awaitingReaction) {
-      // A card that left hand after the commit began is not a choice any more (a queued card discarded it).
-      round.awaiting.eligible = round.awaiting.eligible.filter((c) => combat.piles.hand.some((h) => h.instanceId === c.instanceId));
+      // Each pause re-checks the offer: a card that left hand, a closed control gate or a cost the player
+      // can no longer pay is not a choice any more (SPEC §4.10, §4.11). Costs are the live ones.
+      round.awaiting.eligible = ops.reactionAvailable(combat, entry, round.awaiting.eligible);
       if (round.awaiting.eligible.length) {
         cr.paused = { events: step.events };
         return { paused: true, offer: { attack: { ...round.awaiting.attack }, eligible: round.awaiting.eligible.map((c) => ({ ...c })) } };

@@ -81,13 +81,15 @@ const ENEMY = 'wanderingSoldier';
 const SEED = 5;
 
 // A preview fight (expanded rules, so reactions are on). The enemy's round is fixed to one attack on the player.
-function fight({ reactions = true } = {}) {
+function fight({ reactions = true, enemyIds = [ENEMY] } = {}) {
   const run = createRunState({ seed: SEED, classId: 'reaver', registries, profileMeta: { settings: { [COMBAT_ROUNDS_KEY]: true } } });
-  const c = createRunCombat({ registries, rng: createRng(SEED), run, enemyIds: [ENEMY], settings: {} });
-  const def = registries.enemies.get(ENEMY);
-  const attackMove = Object.keys(def.moves).find((id) => def.moves[id].damage != null || def.moves[id].intent === 'attack');
-  assert.ok(attackMove, 'fixture: the enemy has an attack move');
-  for (const enemy of c.enemies.filter((e) => e.alive)) c.combatRounds.enemyQueues[enemy.id] = [{ moveId: attackMove, sp: 1 }];
+  const c = createRunCombat({ registries, rng: createRng(SEED), run, enemyIds, settings: {} });
+  for (const enemy of c.enemies.filter((e) => e.alive)) {
+    const def = registries.enemies.get(enemy.enemyId);
+    const attackMove = Object.keys(def.moves).find((id) => def.moves[id].damage != null || def.moves[id].intent === 'attack');
+    assert.ok(attackMove, 'fixture: the enemy has an attack move');
+    c.combatRounds.enemyQueues[enemy.id] = [{ moveId: attackMove, sp: 1 }];
+  }
   if (!reactions) dispatch(c, { type: 'setReactions', enabled: false });
   return c;
 }
@@ -202,4 +204,49 @@ test('a card queued this turn is not offered as a reaction, and it resolves once
   assert.equal(pile, 1, 'the queued card leaves hand once, whether it landed or missed');
   assert.ok(playedCount(c, attack.instanceId) <= 1, 'its effects run at most once');
   assert.equal(c.combatRounds.playerQueue.length, 0, 'the queue is empty after the commit');
+});
+
+// --- P3b fix 1 (SPEC §4.10, §4.11): the Mana of each reaction is paid from what is left at its pause --------
+
+test('two pauses cannot overspend Mana: the second Counter is not offered once the first has used the Mana', () => {
+  const c = fight({ enemyIds: [ENEMY, 'blightHound'] });
+  addToHand(c, 'frostCounter', 'fc1');
+  addToHand(c, 'frostCounter', 'fc2');
+  c.player.mana = 1;
+  assert.equal(cardPlayCosts(c, 'fc1').mana, 1, 'fixture: a frostCounter costs 1 Mana');
+  dispatch(c, { type: 'endTurn' });
+  assert.ok(c.pendingReaction.options.some((o) => o.id === 'fc1') && c.pendingReaction.options.some((o) => o.id === 'fc2'), 'fixture: both Counters are on offer at the first pause');
+  dispatch(c, { type: 'chooseReaction', offerId: c.pendingReaction.id, optionId: 'fc1' });
+  assert.equal(c.player.mana, 0, 'the first Counter is paid');
+  if (c.pendingReaction) {
+    assert.ok(!c.pendingReaction.options.some((o) => o.id === 'fc2'), 'the second pause no longer offers a Counter the Mana cannot pay for');
+    assert.throws(() => dispatch(c, { type: 'chooseReaction', offerId: c.pendingReaction.id, optionId: 'fc2' }), /available reaction/);
+  }
+  assert.ok(c.player.mana >= 0, 'Mana never goes negative');
+  assert.equal(playedCount(c, 'fc2'), 0, 'the unaffordable Counter is not played');
+});
+
+test('a stale offer is refused by playRoundReaction with a clear error, and nothing is paid', () => {
+  const c = fight({ enemyIds: [ENEMY, 'blightHound'] });
+  addToHand(c, 'frostCounter', 'fc1');
+  c.player.mana = 1;
+  dispatch(c, { type: 'endTurn' });
+  assert.ok(c.pendingReaction.options.some((o) => o.id === 'fc1'), 'fixture: the Counter is on offer');
+  c.player.mana = 0; // the Mana is gone since the offer was made
+  assert.throws(() => dispatch(c, { type: 'chooseReaction', offerId: c.pendingReaction.id, optionId: 'fc1' }), /Mana/);
+  assert.equal(c.player.mana, 0, 'nothing is paid');
+  assert.equal(playedCount(c, 'fc1'), 0, 'nothing is played');
+});
+
+test('a control status that lands while a Counter is on offer makes the offer stale: playRoundReaction refuses it', () => {
+  const c = fight();
+  addToHand(c, 'guardCounter', 'gc1');
+  dispatch(c, { type: 'endTurn' });
+  assert.ok(c.pendingReaction.options.some((o) => o.id === 'gc1'), 'fixture: the Counter is on offer');
+  // A lock (Paralysis) lands on the player after the offer was made: the Counter is no longer playable.
+  c.player.statuses = { ...(c.player.statuses || {}), paralysis: { stacks: 1 } };
+  const energy = c.player.energy;
+  assert.throws(() => dispatch(c, { type: 'chooseReaction', offerId: c.pendingReaction.id, optionId: 'gc1' }), /no longer be played as a reaction/);
+  assert.equal(c.player.energy, energy, 'nothing is paid');
+  assert.equal(playedCount(c, 'gc1'), 0, 'nothing is played');
 });
