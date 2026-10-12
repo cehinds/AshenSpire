@@ -585,6 +585,21 @@ export const balance = {
         '{classId}.{kind}.{rarity}': 'The {className}\'s own reward odds: how often {pool} offers {a rarity} card, weighed against the other rarities in its row.',
       },
     },
+    // Owner decision #13: Psychic and Earth cards belong to no class, but the
+    // Herald and Starseer meet them more naturally. Within a rarity, a card
+    // tagged damage:<element> for one of the class's elements weighs
+    // offerWeightMult times a plain card in that class's card rewards.
+    // startingSpellChance is the chance a new run swaps one starting card for
+    // such a card (read by model/loadout.js when a seed is supplied).
+    elementAffinity: {
+      classes: { herald: ['psychic', 'earth'], starseer: ['psychic', 'earth'] },
+      offerWeightMult: 2,
+      startingSpellChance: 0.25,
+      [NOTE]: {
+        offerWeightMult: 'How many times likelier an affinity-element card is to be picked, within its rarity, in this class\'s card rewards.',
+        startingSpellChance: 'Chance (0 to 1) that a new run for an affinity class starts with one element spell in place of a basic card.',
+      },
+    },
     // Decaying flask drop (StS potion rule): −step on drop, +step on miss.
     flaskDropBasePct: 35,
     flaskDropStepPct: 10,
