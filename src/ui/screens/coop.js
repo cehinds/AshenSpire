@@ -1178,6 +1178,23 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (armedFlask != null || armedFriendlyCard) selectedCombatantId = null;
     if (selectedEnemy == null || !living.find((e) => e.id === selectedEnemy)) selectedEnemy = living[0] ? living[0].id : null;
     const meP = sc.players.find((p) => p.id === me);
+    // Intent controls and perspective-grid cells are two hit surfaces for the
+    // same enemy target. Keep their action in one door so a selected attack
+    // card plays whether the press lands on the intent or elsewhere in the
+    // occupied cell.
+    const activateEnemyTarget = enemyId => {
+      if (armedFriendlyCard) return false;
+      selectedEnemy = enemyId;
+      const selected = meP?.hand.find(card => card.instanceId === litCard());
+      const selectedDef = selected && cardDef(selected);
+      if (!busy() && selectedDef && cardNeedsEnemyTarget(selectedDef) && cardAffordableFromSnapshot(selectedDef, meP)) {
+        clearSelection();
+        send({ t: 'playCard', cardInstanceId: selected.instanceId, targetId: enemyId });
+        return true;
+      }
+      selectCombatant(enemyId);
+      return false;
+    };
     let armedCardDef = armedFriendlyCard && meP ? (() => { const c = meP.hand.find((h) => h.instanceId === armedFriendlyCard); return c ? cardDef(c) : null; })() : null;
     if (armedFriendlyCard && !armedCardDef) armedFriendlyCard = null; // card left the hand
     let targetPlan = armedCardDef ? friendlyTargetPlan(armedCardDef, me, sc.players) : null;
@@ -1329,20 +1346,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       box.className = `combatant enemy${dead ? ' dead' : ''}${!dead && e.id === selectedEnemy ? ' selected-target' : ''}`;
       box.dataset.eid = e.id;
       box.dataset.stature = statureFor(registries, def.id);
-      if (!dead) box.append(infoEl(e, def.name, def), intentEl(readEnemyIntent(e, def), () => {
-        if (armedFriendlyCard) return false;
-        selectedEnemy = e.id;
-        const selected = meP?.hand.find(card => card.instanceId === litCard());
-        const selectedDef = selected && cardDef(selected);
-        if (!busy() && selectedDef && cardNeedsEnemyTarget(selectedDef) && cardAffordableFromSnapshot(selectedDef, meP)) {
-          clearSelection();
-          send({ t: 'playCard', cardInstanceId: selected.instanceId, targetId: e.id });
-          return true;
-        }
-        selectCombatant(e.id);
-        // Leave unarmed taps to the intent's selection-first tooltip.
-        return false;
-      }));
+      if (!dead) box.append(infoEl(e, def.name, def), intentEl(readEnemyIntent(e, def), () => activateEnemyTarget(e.id)));
       const sprite = document.createElement('div');
       sprite.className = 'sprite';
       sprite.appendChild(enemySprite(def, e));
@@ -1356,7 +1360,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         wireCombatantContext(box, def.name);
         box.addEventListener('click', () => {
           if (armedFriendlyCard) return;
-          selectedEnemy = e.id; selectCombatant(e.id); render();
+          if (!activateEnemyTarget(e.id)) render();
         });
       }
       adoptCombatantFrame(box);
