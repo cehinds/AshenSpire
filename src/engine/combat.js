@@ -1729,6 +1729,10 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
         if (combat.combatExpansionVersion === 2 && !targetId && !isCounterReply) {
           const printedBase = evalPreview(combat, action, eff.amount, null) + (action.meta.abilityChargeDamage || 0) + (action.meta.abilityChargeDamageEffect || 0);
           entry.faceValue = A.computeAttackDamage(combat, p, null, printedBase, attackTags, carrier, { matchups: false, beforeDefense: true });
+          // The face splits its amount as the contacts do: the card's own damage, then its rating bonus by category.
+          entry.splitBase = Math.max(0, Math.floor(evalPreview(combat, action, eff.amount, null)));
+          entry.ratingBonus = A.cardRatingDamage(combat, p, carrier, printedBase);
+          entry.ratingPart = A.ratingBonusPart(combat, carrier);
         }
         // #61 M5: when the aimed target's tag-scoped vulnerability matches
         // this hit's tags, name the matched row's tint so the hand can accent
