@@ -6,6 +6,10 @@ import { createAlternativeCardStage } from '../src/ui/alternativeCardStage.js';
 import { alternativeSelectedStances } from '../src/content/alternativeSelectedStances.js';
 import { applyDisplayAppearance } from '../src/ui/displayAppearance.js';
 import { setAnimSpeed } from '../src/ui/animationPace.js';
+import { contentBundle } from '../src/content/index.js';
+import { createRegistries } from '../src/model/registries.js';
+import { createRunState } from '../src/model/state.js';
+import { figureSpec, gripOf } from '../src/model/loadout.js';
 
 const card = (maneuver, extra = {}) => ({ cardTags: ['camp:physical', 'maneuver:'+maneuver], ...extra });
 
@@ -13,10 +17,25 @@ test('the pilot requires the actual sole greatsword in either hand and its revie
   const base = { classId:'reaver', armourId:'default', grip:{mode:'two',right:'greatsword',left:null} };
   assert.equal(selectedWeaponProfileFor(base), pilot);
   assert.equal(selectedWeaponProfileFor({...base,grip:{mode:'two',right:null,left:'greatsword'}}), pilot);
-  for (const other of [{classId:'rogue'},{armourId:'vigil'},{grip:{mode:'one',right:'greatsword',left:null}},
+  for (const other of [{classId:'rogue'},{armourId:'vigil'},{grip:{mode:'dual',right:'greatsword',left:null}},
     {grip:{mode:'two',right:'greatsword',left:'shortbow'}},{grip:{mode:'two',right:'straightSword',left:null}}]) {
     assert.equal(selectedWeaponProfileFor({...base,...other}),null);
   }
+});
+
+test('real starting-kit projection enables the sole greatsword without inventing a two-handed package', () => {
+  const registries=createRegistries(contentBundle);
+  const start=startingHands=>createRunState({registries,classId:'reaver',seed:11,...(startingHands?{startingHands}:{})});
+  const profile=run=>selectedWeaponProfileFor({classId:run.class,
+    armourId:figureSpec(registries,run.loadout,run.class).armourId,grip:gripOf(registries,run.loadout,run.class)});
+  for(const hands of [{rightHand:'greatsword',leftHand:null},{rightHand:null,leftHand:'greatsword'}]){
+    const run=start(hands);
+    assert.equal(figureSpec(registries,run.loadout,run.class).armourId,'default','the real starter Wayfarer Plate is the default body id');
+    assert.equal(profile(run),pilot);
+  }
+  assert.equal(profile(start()),null,'the real baseline sword and shield is not a greatsword');
+  assert.equal(profile(start({rightHand:'straightSword',leftHand:null})),null);
+  assert.equal(profile(start({rightHand:'greatsword',leftHand:'roundShield'})),null,'an actual occupied offhand excludes the selected painting');
 });
 
 test('evade art uses authored preparation/readiness, without changing other typed actions', () => {
