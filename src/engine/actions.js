@@ -319,7 +319,14 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
     const parts = allocateInteger(Math.min(budget, total), weights.map((weight, index) => magic[index] ? weight : 0));
     return parts;
   };
-  receipt.barrierSpentAmounts = share(Math.max(0, target.barrier || 0), defended);
+  // Barrier is consumed in hit order: the first magic contact is fully stopped before the next gets any.
+  let barrierLeft = Math.max(0, target.barrier || 0);
+  receipt.barrierSpentAmounts = defended.map((amount, index) => {
+    if (!magic[index] || barrierLeft <= 0) return 0;
+    const take = Math.min(barrierLeft, Math.max(0, amount));
+    barrierLeft -= take;
+    return take;
+  });
   const afterBarrier = defended.map((amount, index) => amount - receipt.barrierSpentAmounts[index]);
   const wardShares = share(Math.max(0, target.persistentWard?.value || 0), afterBarrier);
   receipt.defendedAmounts = afterBarrier.map((amount, index) => amount > 0 && wardShares[index] > 0 ? Math.max(1, amount - wardShares[index]) : amount);
