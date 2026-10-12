@@ -52,6 +52,9 @@ test('desktop tools row sets the approved label, row and reaction sizes', () => 
   const value = rules(text).find(r => r.selector.startsWith(GATE) && r.selector.endsWith('.reaction-switch-value'));
   assert.ok(value, 'reaction value rule');
   assert.match(value.body, /font-size:\s*calc\(12px \/ var\(--ui-zoom,1\)\)/);
+  const track = rules(text).find(r => r.selector.startsWith(GATE) && r.selector.endsWith('.reaction-switch-track'));
+  assert.ok(track, 'reaction track rule');
+  assert.match(track.body, /width:\s*calc\(84px \/ var\(--ui-zoom,1\)\)/, 'track wide enough for the 12px value');
 });
 
 test('desktop intent badge and stance glyph are 1.25x and match each other', () => {

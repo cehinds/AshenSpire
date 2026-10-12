@@ -438,7 +438,7 @@
   font-size: calc(14px / var(--ui-zoom,1));
 }
 :root[data-form-factor='desktop'] .combat[data-layout='formation'] .combat-tools .reaction-switch-track {
-  width: calc(72px / var(--ui-zoom,1)); height: calc(23px / var(--ui-zoom,1));
+  width: calc(84px / var(--ui-zoom,1)); height: calc(23px / var(--ui-zoom,1));
 }
 :root[data-form-factor='desktop'] .combat[data-layout='formation'] .combat-tools .reaction-switch-value { font-size: calc(12px / var(--ui-zoom,1)); }
 :root[data-form-factor='desktop'] .combat[data-layout='formation'] .combat-tools .reaction-switch-thumb { width: calc(17px / var(--ui-zoom,1)); height: calc(17px / var(--ui-zoom,1)); }
