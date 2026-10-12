@@ -436,6 +436,8 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
   const spell = profile.camp === 'spell';
   // Matchup and control vulnerabilities precede typed defenses and Ward.
   const type = ctx.combatExpansionRules.matchups.damageAliases[profile.damageType] || profile.damageType;
+  // A foundation immunity zeroes this hit's amount; the event says so, so the screen can show IMMUNE.
+  const immune = !!ctx.foundation && (F.foundationProfile(ctx, target).immunities || []).includes(type);
   const ward = tactical.resistedAmounts[contactIndex] || 0;
   // The plan was made for the whole action. A status rider may have spent Barrier or
   // Ward between hits: what the live pool no longer holds is not absorbed for free,
@@ -492,6 +494,7 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
     ...(barrierSpent ? { barrierAbsorbed: barrierSpent } : {}),
     ...(wardSpent ? { wardAbsorbed: wardSpent, wardRemaining: target.persistentWard?.value || 0 } : {}),
     ...(poiseAbsorbed ? { poiseAbsorbed, poiseRemaining: target.persistentPoise?.value || 0 } : {}),
+    ...(immune && amount === 0 ? { immune: true } : {}),
     damageType: type, blockRemaining: target.block || 0, barrierRemaining: target.barrier || 0,
     // The hit's typed parts before Barrier and Ward: magicAmount + physicalAmount is the hit.
     magicAmount: tactical.magicAmounts?.[contactIndex] || 0, physicalAmount: tactical.physicalAmounts?.[contactIndex] || 0,

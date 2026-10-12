@@ -267,7 +267,7 @@ export function applyStatusPressure(ctx, target, id, units, source = null, optio
   const camp = options.camp || row.camp;
   if (!['physical', 'spell'].includes(camp)) throw new Error(`Unknown status source camp '${camp}'`);
   const traits = options.traits || target.combatTraits || {};
-  if (traits.immuneStatuses?.includes(id)) { receipt.resisted = units; return receipt; }
+  if (traits.immuneStatuses?.includes(id)) { receipt.resisted = units; emit(ctx, 'statusImmune', target, { status: id, units }); return receipt; }
   const percent = Math.min(100, Math.max(0, finite(options.resistancePercent ?? traits.buildupResistance?.[id])));
   const accepted = Math.max(0, units * (1 - percent / 100));
   receipt.resisted = units - accepted;

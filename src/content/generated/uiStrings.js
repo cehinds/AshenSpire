@@ -304,6 +304,181 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "combat.callout.resisted",
+    "extends": "",
+    "short": "RESISTED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.callout.blocked",
+    "extends": "",
+    "short": "BLOCKED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.callout.immune",
+    "extends": "",
+    "short": "IMMUNE",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.venom",
+    "extends": "",
+    "short": "POISONED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.burn",
+    "extends": "",
+    "short": "BURNED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.bleed",
+    "extends": "",
+    "short": "BLEEDING",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.bleeding",
+    "extends": "",
+    "short": "BLEEDING",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.frost",
+    "extends": "",
+    "short": "FROSTED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.frozen",
+    "extends": "",
+    "short": "FROZEN",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.chilled",
+    "extends": "",
+    "short": "CHILLED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.paralysis",
+    "extends": "",
+    "short": "PARALYZED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.sleep",
+    "extends": "",
+    "short": "ASLEEP",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.weak",
+    "extends": "",
+    "short": "WEAKENED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.vulnerable",
+    "extends": "",
+    "short": "VULNERABLE",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.magicVulnerable",
+    "extends": "",
+    "short": "VULNERABLE",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.frail",
+    "extends": "",
+    "short": "BRITTLED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.dazed",
+    "extends": "",
+    "short": "DAZED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.offBalance",
+    "extends": "",
+    "short": "UNBALANCED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.prone",
+    "extends": "",
+    "short": "KNOCKED DOWN",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.grounded",
+    "extends": "",
+    "short": "GROUNDED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.insanity",
+    "extends": "",
+    "short": "MADDENED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.madness",
+    "extends": "",
+    "short": "MADDENED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.crimsonBlight",
+    "extends": "",
+    "short": "BLIGHTED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.frostExposed",
+    "extends": "",
+    "short": "EXPOSED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.insanityExposed",
+    "extends": "",
+    "short": "EXPOSED",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "common.back",
     "extends": "",
     "short": "Back",

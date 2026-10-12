@@ -455,6 +455,7 @@
 .fx-callout.ward { color: #b38ae8; }
 .fx-callout.barrier { color: #5fa8ff; }
 .fx-callout.block { color: #d8dde3; }
+.fx-callout.immune { color: #cfd3d8; }
 .fx-callout.interrupt { color: #ff9a3c; }
 /* A break's shatter ring, in its tone: silver Block, blue Barrier, purple Ward, gold Poise, orange INTERRUPTED. */
 .fx-shatter { position: absolute; width: 46px; height: 46px; border-radius: 50%; border: 3px solid var(--shatter, #fff);

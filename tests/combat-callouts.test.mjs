@@ -21,32 +21,32 @@ test('every callout kind has a localized word', () => {
   assert.equal(t(CALLOUT_KINDS.guardBreak.string), 'GUARD BREAK');
 });
 
-test('a callout names its fighter, stacks a second, keeps at most two, and skips a repeat', (t2) => {
-  t2.mock.timers.enable({ apis: ['setTimeout'] });
+test('a callout names its fighter, shows three in lanes, queues the rest, and skips a repeat', (t2) => {
+  t2.mock.timers.enable({ apis: ['setTimeout', 'Date'] });
   withKitDom((dom) => {
     const layer = dom.document.createElement('div');
     const anchor = dom.document.createElement('div');
     const first = callout(layer, anchor, 'e1', 'staggered');
     assert.equal(first.textContent, 'STAGGERED');
     assert.equal(first.dataset.calloutFor, 'e1');
-    assert.equal(first.dataset.calloutSlot, '0');
+    assert.equal(first.dataset.calloutSlot, '2', 'lane 0 is the top slot');
     assert.match(first.className, /\bfx-callout\b.*\bgold\b/);
     assert.equal(callout(layer, anchor, 'e1', 'staggered'), null, 'the same word is not repeated on one fighter');
     const second = callout(layer, anchor, 'e1', 'critical');
-    assert.equal(second.dataset.calloutSlot, '1', 'the second stacks above the first');
+    assert.equal(second.dataset.calloutSlot, '1', 'lane 1 sits under lane 0');
     assert.match(second.className, /\bred\b/);
     const other = callout(layer, anchor, 'player', 'evaded');
-    assert.equal(other.dataset.calloutSlot, '0', 'another fighter has its own stack');
-    callout(layer, anchor, 'e1', 'guardBreak');
-    const e1 = callouts(layer).filter((node) => node.dataset.calloutFor === 'e1');
-    assert.equal(e1.length, 2, 'at most two per fighter');
-    assert.deepEqual(e1.map((node) => node.dataset.calloutKind).sort(), ['critical', 'guardBreak'], 'the oldest gives way');
-    assert.deepEqual(e1.map((node) => node.dataset.calloutSlot).sort(), ['0', '1'], 'no two share a slot');
-    t2.mock.timers.tick(900);
-    assert.equal(callouts(layer).length, 0, 'each fades out after its life');
-    callout(layer, anchor, 'e1', 'countered');
+    assert.equal(other.dataset.calloutSlot, '2', 'another fighter has its own stack');
+    const third = callout(layer, anchor, 'e1', 'guardBreak');
+    assert.equal(third.dataset.calloutSlot, '0', 'lane 2 is the bottom slot');
+    const fourth = callout(layer, anchor, 'e1', 'countered');
+    const starts = [first, second, third].map((node) => Number.parseInt(node.style.animationDelay || '0', 10));
+    assert.deepEqual(starts, [0, 150, 300], 'each word starts one step after the one before');
+    const delayMs = Number.parseInt(fourth.style.animationDelay, 10);
+    assert.ok(delayMs >= 890 && delayMs <= 900, 'the fourth waits for the earliest visible word to finish');
+    assert.equal(callouts(layer).length, 5, 'nothing is dropped: the fourth is queued');
     clearCallouts(layer);
-    assert.equal(callouts(layer).length, 0, 'a skip ends them');
+    assert.equal(callouts(layer).length, 0, 'a skip ends the visible words and the queue');
   });
 });
 
