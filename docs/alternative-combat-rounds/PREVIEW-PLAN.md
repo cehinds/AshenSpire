@@ -101,3 +101,13 @@ The preview screen is the live combat screen with only these additions:
 - The live green outline for the player's selection and playable cards becomes
   blue in the preview, so green only means advantage.
 - No queue strip, no initiative track; End Turn stays as it is.
+
+## Owner decisions (2026-10-12)
+
+- The combat rounds mode stays a settings toggle, off by default.
+- Momentum is its own toggle, off by default. It also works in normal combat, using the rounds rules: momentum shifts on the same hits, counters and stance wins.
+- Multi-action preview is its own toggle, off by default. It also works in normal combat, showing the enemy's planned upcoming moves.
+- Always on in every fight, even with rounds mode off: the new soft shadows on intent icons and sprites; the blue selection/playable outline; target outlines (stance advantage only when rounds mode is off, since speed needs rounds); enemy action costs.
+- Action costs apply to everyone, player and enemies: attack 1 SP, defend/block 1 SP, smash 2, counter 2, cast/spell 2, sweep 2.
+- The enemy SP pool is configurable, default 2 per turn. Enemies spend until the pool is empty.
+- Buff player cards that cost 2; cost-1 cards are much weaker.
