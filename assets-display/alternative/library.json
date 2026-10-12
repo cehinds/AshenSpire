@@ -1,68 +1,68 @@
 {
   "schema": 1,
   "library": "alternative",
-  "pinnedRelease": "hd-assets-v15",
+  "pinnedRelease": "hd-assets-v19",
   "note": "Display-specific exports stored beside this index.",
   "assets": {
     "assets-display/alternative/ashheartDragon-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "0a88786a00e158633a2f550b84caf6074f8436ff4eac67f63784ea83b63733e2",
-      "bytes": 11668
+      "sha256": "fc90e9e9a2e8df6120c84b38e4fa3d7b51d9fa7779df566073fff3b614fe5ed1",
+      "bytes": 4412
     },
     "assets-display/alternative/ashheartDragon.webp": {
       "source": "reviewed-export",
-      "sha256": "0a88786a00e158633a2f550b84caf6074f8436ff4eac67f63784ea83b63733e2",
-      "bytes": 11668
+      "sha256": "fc90e9e9a2e8df6120c84b38e4fa3d7b51d9fa7779df566073fff3b614fe5ed1",
+      "bytes": 4412
     },
     "assets-display/alternative/ashRevenant-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "a470e1c9392aa55f4f0fc85d908c65eb6a4aba5700a62d642790093023ac4620",
-      "bytes": 7448
+      "sha256": "09ba73056631d6931e73a7f66d700ca95b33aa26252f715ecd2f979f7e842ea1",
+      "bytes": 2964
     },
     "assets-display/alternative/ashRevenant.webp": {
       "source": "reviewed-export",
-      "sha256": "a470e1c9392aa55f4f0fc85d908c65eb6a4aba5700a62d642790093023ac4620",
-      "bytes": 7448
+      "sha256": "09ba73056631d6931e73a7f66d700ca95b33aa26252f715ecd2f979f7e842ea1",
+      "bytes": 2964
     },
     "assets-display/alternative/bellKeeper-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "ebcbf13bb9ea595b4b16e9b963838eceedb408a25cefad7dde4b4d324113fdf8",
-      "bytes": 7410
+      "sha256": "3fc569aa85109dee13d68d625fa4821e01a2068cf9214f6a4d83d3a1e4514696",
+      "bytes": 2868
     },
     "assets-display/alternative/bellKeeper.webp": {
       "source": "reviewed-export",
-      "sha256": "ebcbf13bb9ea595b4b16e9b963838eceedb408a25cefad7dde4b4d324113fdf8",
-      "bytes": 7410
+      "sha256": "3fc569aa85109dee13d68d625fa4821e01a2068cf9214f6a4d83d3a1e4514696",
+      "bytes": 2868
     },
     "assets-display/alternative/blightedValkyrie-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "18e6fb2b4a81376cc3e11597a8932bdcf87062bf993b90d215290d4b5c665831",
-      "bytes": 11794
+      "sha256": "e1884a0c28654e06c191d479e3d63512651d2b0c005a3655d2afd8851dd79dae",
+      "bytes": 4510
     },
     "assets-display/alternative/blightedValkyrie.webp": {
       "source": "reviewed-export",
-      "sha256": "18e6fb2b4a81376cc3e11597a8932bdcf87062bf993b90d215290d4b5c665831",
-      "bytes": 11794
+      "sha256": "e1884a0c28654e06c191d479e3d63512651d2b0c005a3655d2afd8851dd79dae",
+      "bytes": 4510
     },
     "assets-display/alternative/blightHound-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "84bc5e4af4193222a0a75bdfea6d9eed5ef9ac033e6bb50c68bfe5da79d43a9d",
-      "bytes": 9432
+      "sha256": "0be162227936a3911d457ee46cd5f9dec77972f55e4b7afbe092d4a759caf12a",
+      "bytes": 3450
     },
     "assets-display/alternative/blightHound.webp": {
       "source": "reviewed-export",
-      "sha256": "84bc5e4af4193222a0a75bdfea6d9eed5ef9ac033e6bb50c68bfe5da79d43a9d",
-      "bytes": 9432
+      "sha256": "0be162227936a3911d457ee46cd5f9dec77972f55e4b7afbe092d4a759caf12a",
+      "bytes": 3450
     },
     "assets-display/alternative/briarHermit-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "8cb9060942142353a3eec26a470a73bf4f2ee2b2c2b64420ea9111c420f032b7",
-      "bytes": 10440
+      "sha256": "d7c059cd1876d868ec2bb300ec9705e5f010a872503e36f7a790ecf69af95c03",
+      "bytes": 3856
     },
     "assets-display/alternative/briarHermit.webp": {
       "source": "reviewed-export",
-      "sha256": "8cb9060942142353a3eec26a470a73bf4f2ee2b2c2b64420ea9111c420f032b7",
-      "bytes": 10440
+      "sha256": "d7c059cd1876d868ec2bb300ec9705e5f010a872503e36f7a790ecf69af95c03",
+      "bytes": 3856
     },
     "assets-display/alternative/card-herald-attack-contact-mobile.webp": {
       "source": "reviewed-export",
@@ -71,8 +71,8 @@
     },
     "assets-display/alternative/card-herald-attack-contact.webp": {
       "source": "reviewed-export",
-      "sha256": "e19b894c25edd7291a03cae50b9d72ebed8123bba52201ce1455caae25f390cb",
-      "bytes": 36552
+      "sha256": "120670a08cdc5572e9a7de0f218abdfed033a86531eca1255ef1455688725f78",
+      "bytes": 10102
     },
     "assets-display/alternative/card-herald-attack-load-mobile.webp": {
       "source": "reviewed-export",
@@ -81,8 +81,8 @@
     },
     "assets-display/alternative/card-herald-attack-load.webp": {
       "source": "reviewed-export",
-      "sha256": "5f92a1cc248f8dea0d9deb1bb302c9aaf1ad0c4e21e5875882f62a74804b7bbf",
-      "bytes": 33328
+      "sha256": "f3a86a332e0b87536e6be3038d553cb4cfec5d73d49d828011e2db90d5bb694c",
+      "bytes": 9050
     },
     "assets-display/alternative/card-herald-counter-contact-mobile.webp": {
       "source": "reviewed-export",
@@ -91,8 +91,8 @@
     },
     "assets-display/alternative/card-herald-counter-contact.webp": {
       "source": "reviewed-export",
-      "sha256": "871f869adaece393505002dfa448eaa7d93b7e0e858d2c53c3d7b89c3a1a4ef1",
-      "bytes": 33978
+      "sha256": "0b1c92fde00ebe941c2907e5eb256ffd939cd82035d68ce36f99df49100c5f7e",
+      "bytes": 9704
     },
     "assets-display/alternative/card-herald-counter-load-mobile.webp": {
       "source": "reviewed-export",
@@ -101,8 +101,8 @@
     },
     "assets-display/alternative/card-herald-counter-load.webp": {
       "source": "reviewed-export",
-      "sha256": "a2d288925de35c2248ca41290cc2d1b82b352b78a65c1eb4ed062711b558d058",
-      "bytes": 32350
+      "sha256": "73b9425f6d6768cfda86d8304329912cce6af4dc76a48399e5fc5018ab2e045f",
+      "bytes": 9220
     },
     "assets-display/alternative/card-herald-counter-parry-mobile.webp": {
       "source": "reviewed-export",
@@ -111,8 +111,8 @@
     },
     "assets-display/alternative/card-herald-counter-parry.webp": {
       "source": "reviewed-export",
-      "sha256": "200fb086e801516be10e5a6c394b82e3c31610eb183810fee4fee59c07b7b41e",
-      "bytes": 34164
+      "sha256": "76353778fb362e59bc3d53c5c9b34d046e85154feefa2de146d0c0b0c957fcf0",
+      "bytes": 9758
     },
     "assets-display/alternative/card-herald-guard-brace-mobile.webp": {
       "source": "reviewed-export",
@@ -121,8 +121,8 @@
     },
     "assets-display/alternative/card-herald-guard-brace.webp": {
       "source": "reviewed-export",
-      "sha256": "bdbb51aff5894cea08266cdce7f2c4b3be88463ce230781b489b3b51da6680cd",
-      "bytes": 32538
+      "sha256": "b1a7177b22ac34a00269593bb5f2b8f43fc4d2c20b7a2da268a071315f3f6e52",
+      "bytes": 9374
     },
     "assets-display/alternative/card-herald-guard-return-mobile.webp": {
       "source": "reviewed-export",
@@ -131,8 +131,8 @@
     },
     "assets-display/alternative/card-herald-guard-return.webp": {
       "source": "reviewed-export",
-      "sha256": "011fc2c4696d45f31fb8499c49d8b8cec8ac7dfd55d005efa29999ca9c877bdf",
-      "bytes": 33056
+      "sha256": "236e58546561bb91eb1bdd8a52ab8ccc9f12a1cac448191053b26c1190d4dba9",
+      "bytes": 9586
     },
     "assets-display/alternative/card-herald-guard-rise-mobile.webp": {
       "source": "reviewed-export",
@@ -141,8 +141,8 @@
     },
     "assets-display/alternative/card-herald-guard-rise.webp": {
       "source": "reviewed-export",
-      "sha256": "ba1c1d1cc8e0552163c3082580423b60f37f1005400f3aae5fdbd90f93b10035",
-      "bytes": 33906
+      "sha256": "0b3522328e13d29563314b3d25d77e80a11c0657782c9f047dca61f4e65d63c3",
+      "bytes": 9596
     },
     "assets-display/alternative/card-herald-ranged-aim-mobile.webp": {
       "source": "reviewed-export",
@@ -151,8 +151,8 @@
     },
     "assets-display/alternative/card-herald-ranged-aim.webp": {
       "source": "reviewed-export",
-      "sha256": "73bcc8dd6d88b0a2cd9abe96202775827c538b62dda6c9cc1b33eab6b9aa26e0",
-      "bytes": 37496
+      "sha256": "c2b2ca1c0aca2246f9613ca124884f12d7be52689d35ebb4f18ee3afb6e04ba5",
+      "bytes": 10568
     },
     "assets-display/alternative/card-herald-ranged-load-mobile.webp": {
       "source": "reviewed-export",
@@ -161,8 +161,8 @@
     },
     "assets-display/alternative/card-herald-ranged-load.webp": {
       "source": "reviewed-export",
-      "sha256": "03df56514e2bd160b580f3afd2e27a15c47896a732d164ddaca0d4f331b59a54",
-      "bytes": 35816
+      "sha256": "b00debfc817c2bcbf969b918990e70c5d74dbd36274fabc57a43d7b7a76ca748",
+      "bytes": 10112
     },
     "assets-display/alternative/card-herald-ranged-release-mobile.webp": {
       "source": "reviewed-export",
@@ -171,8 +171,8 @@
     },
     "assets-display/alternative/card-herald-ranged-release.webp": {
       "source": "reviewed-export",
-      "sha256": "43720a83dcb282226b0fb420accdf0dca00fd83c663fd2bd6cd754522dc8a960",
-      "bytes": 35376
+      "sha256": "63d8ca7d7ee20702c3072fe79086fbcbcda91c03f92ba6a093529e07f18fbb0a",
+      "bytes": 9868
     },
     "assets-display/alternative/card-herald-ready-mobile.webp": {
       "source": "reviewed-export",
@@ -181,8 +181,8 @@
     },
     "assets-display/alternative/card-herald-ready.webp": {
       "source": "reviewed-export",
-      "sha256": "81f7ea4c26fa3795e8747b332ceec16a7ae4b9323765e68a60edfc285d36d787",
-      "bytes": 33222
+      "sha256": "bff8a93491651ce5f103871170e7e85245eaae6665e01eed6f4024af132e4e29",
+      "bytes": 9002
     },
     "assets-display/alternative/card-herald-smash-contact-mobile.webp": {
       "source": "reviewed-export",
@@ -191,8 +191,8 @@
     },
     "assets-display/alternative/card-herald-smash-contact.webp": {
       "source": "reviewed-export",
-      "sha256": "de9e97601631000d050ab84e113e6a8ec34149aa69d1370f14c2a3f3222affe6",
-      "bytes": 33292
+      "sha256": "4c45a5db2773a4d46ceff4ebae3aec6c41aed9ce67e4f38011457dcf4d582a3c",
+      "bytes": 9064
     },
     "assets-display/alternative/card-herald-smash-load-mobile.webp": {
       "source": "reviewed-export",
@@ -201,8 +201,8 @@
     },
     "assets-display/alternative/card-herald-smash-load.webp": {
       "source": "reviewed-export",
-      "sha256": "d9801bfd2b1c872098d31cf3c0d98e6eecd5f53a30263bd9ed631566e423aed9",
-      "bytes": 35122
+      "sha256": "f38131ed6af96e460dc83ab9893a7344d53d5e03f43f02a2ad942a8c241f7865",
+      "bytes": 9494
     },
     "assets-display/alternative/card-herald-smash-return-mobile.webp": {
       "source": "reviewed-export",
@@ -211,8 +211,8 @@
     },
     "assets-display/alternative/card-herald-smash-return.webp": {
       "source": "reviewed-export",
-      "sha256": "1d61e7c69813dc99311dfe14fdcd860ff49567dceb7a8b2a5bb2dbab0e26e8a1",
-      "bytes": 32376
+      "sha256": "ac1a4355d1916887268eb1d2752b1eec4883fae772ba7cf675822ee636eb92c0",
+      "bytes": 8854
     },
     "assets-display/alternative/card-herald-spell-load-mobile.webp": {
       "source": "reviewed-export",
@@ -221,8 +221,8 @@
     },
     "assets-display/alternative/card-herald-spell-load.webp": {
       "source": "reviewed-export",
-      "sha256": "1ce92f86bb6e5dafb2ac8e5871fead5e88381cec3bcae037f8b62c28c3ead519",
-      "bytes": 35120
+      "sha256": "bbc453955d393a38af11124634afc31b3a87653ed04cb83ba9afa87d78bc2581",
+      "bytes": 9918
     },
     "assets-display/alternative/card-herald-spell-release-mobile.webp": {
       "source": "reviewed-export",
@@ -231,8 +231,8 @@
     },
     "assets-display/alternative/card-herald-spell-release.webp": {
       "source": "reviewed-export",
-      "sha256": "c18a01dcc81520eb7f2ef4e213dddb9c1ffa8e51039e324310a9002d1a4572b6",
-      "bytes": 37326
+      "sha256": "07c967bd55d11eb343c6d6a563ed7a2e2fb4ce8557795fb8b2137736804dd474",
+      "bytes": 10576
     },
     "assets-display/alternative/card-herald-spell-return-mobile.webp": {
       "source": "reviewed-export",
@@ -241,8 +241,8 @@
     },
     "assets-display/alternative/card-herald-spell-return.webp": {
       "source": "reviewed-export",
-      "sha256": "61f31060f95e29e01405777969dc4f045719b503e02663b63e3413771bd2ef96",
-      "bytes": 34676
+      "sha256": "4b444d05f532e74ef3e1f9508a0ff0a9aa87060fa1d826f6b2252c6c1a4e983f",
+      "bytes": 9762
     },
     "assets-display/alternative/card-herald-sweep-contact-mobile.webp": {
       "source": "reviewed-export",
@@ -251,8 +251,8 @@
     },
     "assets-display/alternative/card-herald-sweep-contact.webp": {
       "source": "reviewed-export",
-      "sha256": "49988fc9f477d062c178ffee7a862c1cae30846c50a9391223e5f77a3aedb2ac",
-      "bytes": 33532
+      "sha256": "2397401d64677f042a306979edc2e9ee03fd479e847659381183896d462f3cb9",
+      "bytes": 9312
     },
     "assets-display/alternative/card-herald-sweep-load-mobile.webp": {
       "source": "reviewed-export",
@@ -261,8 +261,8 @@
     },
     "assets-display/alternative/card-herald-sweep-load.webp": {
       "source": "reviewed-export",
-      "sha256": "e43790fbd497f7c8765cb1049cbc5bba84f353fb6e537b702c0b03a338b33197",
-      "bytes": 29518
+      "sha256": "d3fc1afa54d656adcd5a322af5438a69c65b708f0b043dab70b0e8ecdcbd8742",
+      "bytes": 8090
     },
     "assets-display/alternative/card-herald-sweep-return-mobile.webp": {
       "source": "reviewed-export",
@@ -271,8 +271,8 @@
     },
     "assets-display/alternative/card-herald-sweep-return.webp": {
       "source": "reviewed-export",
-      "sha256": "f6022ea80af62d0f08a3b9cf0797d2d403c8f838bb1069179dfe47f4f7f09893",
-      "bytes": 31360
+      "sha256": "c6ad61c8e3d6603a895771e01241e3a2e7a347f8908678ba606194a28f948118",
+      "bytes": 8546
     },
     "assets-display/alternative/card-reaver-attack-contact-mobile.webp": {
       "source": "reviewed-export",
@@ -281,8 +281,8 @@
     },
     "assets-display/alternative/card-reaver-attack-contact.webp": {
       "source": "reviewed-export",
-      "sha256": "f9c81b34f8b2a51a696d9b8e560dd059f1fb1e4078f0cbc38d8cd6d07f7b29d6",
-      "bytes": 28522
+      "sha256": "b251f607c9bbd05659964babe1494a101441fcd9d762c76e866593f75842227c",
+      "bytes": 8052
     },
     "assets-display/alternative/card-reaver-attack-load-mobile.webp": {
       "source": "reviewed-export",
@@ -291,8 +291,8 @@
     },
     "assets-display/alternative/card-reaver-attack-load.webp": {
       "source": "reviewed-export",
-      "sha256": "f6a997a77f312f008ee69376bc45ea55012e2710f448402da55eb292de56b4b3",
-      "bytes": 27178
+      "sha256": "cc4b77ca51d02300db188b38c927051269f4b349e3228e6453d13a88599fe48b",
+      "bytes": 7684
     },
     "assets-display/alternative/card-reaver-counter-contact-mobile.webp": {
       "source": "reviewed-export",
@@ -301,8 +301,8 @@
     },
     "assets-display/alternative/card-reaver-counter-contact.webp": {
       "source": "reviewed-export",
-      "sha256": "7d21e5d92b32f178d6454c9e15ab66a9d39fdf22ff6dae0a32fdfe780474655c",
-      "bytes": 20244
+      "sha256": "47c74885177c3bac05b4e54de8d93989e621dd7b896b036382584fd75802c084",
+      "bytes": 6458
     },
     "assets-display/alternative/card-reaver-counter-load-mobile.webp": {
       "source": "reviewed-export",
@@ -311,8 +311,8 @@
     },
     "assets-display/alternative/card-reaver-counter-load.webp": {
       "source": "reviewed-export",
-      "sha256": "de7fe644776a54ba84431c0016cf125f8e08a3f10129d4215402d414d6c27183",
-      "bytes": 21322
+      "sha256": "cdfb79dd4d5756fc51a07df207d31cdc10d83309e20666a81d4081b99c07135c",
+      "bytes": 6456
     },
     "assets-display/alternative/card-reaver-counter-parry-mobile.webp": {
       "source": "reviewed-export",
@@ -321,8 +321,8 @@
     },
     "assets-display/alternative/card-reaver-counter-parry.webp": {
       "source": "reviewed-export",
-      "sha256": "ebefabeafefeeb3a3efac3447d852080c494fad4b46548893e93828d4af82c4b",
-      "bytes": 23108
+      "sha256": "28b0741df4ba0c3f8c8f54427f671b3944f6fe77b1f7f13d3e131d997ece0bee",
+      "bytes": 7064
     },
     "assets-display/alternative/card-reaver-guard-brace-mobile.webp": {
       "source": "reviewed-export",
@@ -331,8 +331,8 @@
     },
     "assets-display/alternative/card-reaver-guard-brace.webp": {
       "source": "reviewed-export",
-      "sha256": "91df648df90a4ed76613d621245bddfb4fd9bad9a654687617f11a852d0c5b96",
-      "bytes": 23930
+      "sha256": "63d4bfb21cec147b78b67dc216fdef0244b517c11042586c6cab94d8edaec223",
+      "bytes": 7366
     },
     "assets-display/alternative/card-reaver-guard-return-mobile.webp": {
       "source": "reviewed-export",
@@ -341,8 +341,8 @@
     },
     "assets-display/alternative/card-reaver-guard-return.webp": {
       "source": "reviewed-export",
-      "sha256": "fe21bbe98afcac88dd3d25e2313b76b39a81e8c00f3c4b2552a822ad9c2528c0",
-      "bytes": 23286
+      "sha256": "3390fa60fbc24639f6ec3ffffd55ca6d764986790b18f8452f266eb2ed533e81",
+      "bytes": 7118
     },
     "assets-display/alternative/card-reaver-guard-rise-mobile.webp": {
       "source": "reviewed-export",
@@ -351,8 +351,8 @@
     },
     "assets-display/alternative/card-reaver-guard-rise.webp": {
       "source": "reviewed-export",
-      "sha256": "3de5f117b4e2772e4f096b395bed3baf40ff9327b0bc6dbc60e5db9d82f79b3e",
-      "bytes": 24168
+      "sha256": "33a5e317f2bae5a6208e697c1af9655109f2b814697d6c6798157377292f2c16",
+      "bytes": 7438
     },
     "assets-display/alternative/card-reaver-magic-load-mobile.webp": {
       "source": "reviewed-export",
@@ -361,8 +361,8 @@
     },
     "assets-display/alternative/card-reaver-magic-load.webp": {
       "source": "reviewed-export",
-      "sha256": "5dcc4357fc9195b9921bb8854cbc30af38de442e171912e69ed9760019e9962e",
-      "bytes": 21860
+      "sha256": "37be5d5b40b2a2cb35f9e2e4c574c1916a9e5d11b12be901f016db21877de337",
+      "bytes": 6288
     },
     "assets-display/alternative/card-reaver-magic-release-mobile.webp": {
       "source": "reviewed-export",
@@ -371,8 +371,8 @@
     },
     "assets-display/alternative/card-reaver-magic-release.webp": {
       "source": "reviewed-export",
-      "sha256": "e72c8b6024fcd0cabc56bd1670be9d1b0fbe4620b7ae70fc5c47e9fdae41de62",
-      "bytes": 22078
+      "sha256": "67212b098d72c26c26f87f5085add60cf6d6a668a292e0a55daed24760a68da8",
+      "bytes": 6336
     },
     "assets-display/alternative/card-reaver-magic-return-mobile.webp": {
       "source": "reviewed-export",
@@ -381,8 +381,8 @@
     },
     "assets-display/alternative/card-reaver-magic-return.webp": {
       "source": "reviewed-export",
-      "sha256": "19e77e9898166cbc9e544d979e283e3c1b348fd01df3dd653edec471ad7054d6",
-      "bytes": 20224
+      "sha256": "8d1c07b091ad59ae5b7d8a8bcfae9d842b72cbf767bf99b3f1c6f4fc9284caa2",
+      "bytes": 5808
     },
     "assets-display/alternative/card-reaver-ranged-aim-mobile.webp": {
       "source": "reviewed-export",
@@ -391,8 +391,8 @@
     },
     "assets-display/alternative/card-reaver-ranged-aim.webp": {
       "source": "reviewed-export",
-      "sha256": "ad50dcb0562353c5879fe38d05f91fec2c606cb1323679abd56005d0ec301a53",
-      "bytes": 22452
+      "sha256": "d6617a41928870746a4d7b809f160ead1d14d48349cd72bcd413183f4aedcd26",
+      "bytes": 6530
     },
     "assets-display/alternative/card-reaver-ranged-load-mobile.webp": {
       "source": "reviewed-export",
@@ -401,8 +401,8 @@
     },
     "assets-display/alternative/card-reaver-ranged-load.webp": {
       "source": "reviewed-export",
-      "sha256": "522141caaf5fd2a5bcfd2f15ecbf58d8e1b26ccc4c0ed947bf9e87aafa9c1944",
-      "bytes": 22320
+      "sha256": "2da0f6ddaf81ab2aa3f20ccf86c75405c6ed347bffb59680f72ae7f1cb8ee4e5",
+      "bytes": 6368
     },
     "assets-display/alternative/card-reaver-ranged-release-mobile.webp": {
       "source": "reviewed-export",
@@ -411,8 +411,8 @@
     },
     "assets-display/alternative/card-reaver-ranged-release.webp": {
       "source": "reviewed-export",
-      "sha256": "1900820b67c732b7309cc6136d1a438ba8902300ebd0d8ae36483dd25f1c8340",
-      "bytes": 22412
+      "sha256": "83abdba242208c9d66f79b4f3afbf79091ab2c5d67c70e97688c90356b06cac6",
+      "bytes": 6484
     },
     "assets-display/alternative/card-reaver-ready-mobile.webp": {
       "source": "reviewed-export",
@@ -421,8 +421,8 @@
     },
     "assets-display/alternative/card-reaver-ready.webp": {
       "source": "reviewed-export",
-      "sha256": "31fd67608185090de2f838a1872c2043f08a451e9eff9b7a7671b829b558a350",
-      "bytes": 24822
+      "sha256": "2bacbe2b5f1ee3fc418a0f6754fefd6d50e8db861b3e1fb764c103c18de88e17",
+      "bytes": 6980
     },
     "assets-display/alternative/card-reaver-smash-contact-mobile.webp": {
       "source": "reviewed-export",
@@ -431,8 +431,8 @@
     },
     "assets-display/alternative/card-reaver-smash-contact.webp": {
       "source": "reviewed-export",
-      "sha256": "2329858858eb09ee413bc4c169e1fa208eff23f3c238d2503cbd6e38ce6ec8a5",
-      "bytes": 27874
+      "sha256": "871155250e2a85a2c8f70d03a98c9ddeeaf533f2877fe8446c4a7f095ad91253",
+      "bytes": 7600
     },
     "assets-display/alternative/card-reaver-smash-load-mobile.webp": {
       "source": "reviewed-export",
@@ -441,8 +441,8 @@
     },
     "assets-display/alternative/card-reaver-smash-load.webp": {
       "source": "reviewed-export",
-      "sha256": "853b8dfcf429e7b3c6d6fa6c01427727e2f143d958febe28ae2cd90e862e3d4d",
-      "bytes": 31300
+      "sha256": "3534450d8b0a5683aef06b003b0b839e9e1041cc76822532b2fa8c3a2ea7b153",
+      "bytes": 8632
     },
     "assets-display/alternative/card-reaver-smash-return-mobile.webp": {
       "source": "reviewed-export",
@@ -451,8 +451,8 @@
     },
     "assets-display/alternative/card-reaver-smash-return.webp": {
       "source": "reviewed-export",
-      "sha256": "0b1a9e0f1cc5d3085d83d3fea0a7c71d59025e0260045c3db794e757aae01ebf",
-      "bytes": 25406
+      "sha256": "52d1a2fdd41673705fb441bcc24c377070fdaadb12c362d6cd72ad62c7a24357",
+      "bytes": 7104
     },
     "assets-display/alternative/card-reaver-spell-load-mobile.webp": {
       "source": "reviewed-export",
@@ -461,8 +461,8 @@
     },
     "assets-display/alternative/card-reaver-spell-load.webp": {
       "source": "reviewed-export",
-      "sha256": "4e33b102962660591e3ee34caf918f39ba9fc77900ca4b3ff89e24eb84db222d",
-      "bytes": 19610
+      "sha256": "19a3095b85fdfe8dc35c76303de56cf187c4d59b3fcbda3c12a832bf8e71bac3",
+      "bytes": 5678
     },
     "assets-display/alternative/card-reaver-spell-release-mobile.webp": {
       "source": "reviewed-export",
@@ -471,8 +471,8 @@
     },
     "assets-display/alternative/card-reaver-spell-release.webp": {
       "source": "reviewed-export",
-      "sha256": "296288db6ea2cbdeba0f9c6cd799c5ef3390eac4a8e8030110e1c49c33f17d47",
-      "bytes": 20868
+      "sha256": "b8824026bdc2e2e1e7e49c37b973a6168e56352dd21c8067028bd01f2a528a60",
+      "bytes": 6052
     },
     "assets-display/alternative/card-reaver-spell-return-mobile.webp": {
       "source": "reviewed-export",
@@ -481,8 +481,8 @@
     },
     "assets-display/alternative/card-reaver-spell-return.webp": {
       "source": "reviewed-export",
-      "sha256": "55367796e53c341245dc76a0e81084c55548e20c8e12598bb00cf721676d9a52",
-      "bytes": 21286
+      "sha256": "890e59095dab560eca88beb0ca8b86e6d364d30a3edd5d9e6aca12d465f50e99",
+      "bytes": 6080
     },
     "assets-display/alternative/card-reaver-sweep-contact-mobile.webp": {
       "source": "reviewed-export",
@@ -491,8 +491,8 @@
     },
     "assets-display/alternative/card-reaver-sweep-contact.webp": {
       "source": "reviewed-export",
-      "sha256": "25648c500702f6199135fc10d70b53c9c3fa876153d2db63f94a4392e09b168c",
-      "bytes": 27622
+      "sha256": "3ee0c773d944b625ce0584e97e4b00c7fc88f8fe277660e8de75766690488dee",
+      "bytes": 7482
     },
     "assets-display/alternative/card-reaver-sweep-load-mobile.webp": {
       "source": "reviewed-export",
@@ -501,8 +501,8 @@
     },
     "assets-display/alternative/card-reaver-sweep-load.webp": {
       "source": "reviewed-export",
-      "sha256": "7cb208d539950a04858ef4370d6bf79355ee87723daac8e1266ebad6f5f05cf8",
-      "bytes": 26294
+      "sha256": "7114bbd4685185ef14b72e04389e84038d66741d4d1e4ce1197dc7dc0b649d4f",
+      "bytes": 7272
     },
     "assets-display/alternative/card-reaver-sweep-return-mobile.webp": {
       "source": "reviewed-export",
@@ -511,8 +511,8 @@
     },
     "assets-display/alternative/card-reaver-sweep-return.webp": {
       "source": "reviewed-export",
-      "sha256": "df069a1dcc5714fe7e1c762c308ea668938ee8c36ea2e968aa3dc197111f7413",
-      "bytes": 22894
+      "sha256": "7a2bf10ff116f9966547893a821a8d6abb96328df0f55e3490aa4090aa1eb340",
+      "bytes": 6376
     },
     "assets-display/alternative/card-rogue-attack-contact-mobile.webp": {
       "source": "reviewed-export",
@@ -521,8 +521,8 @@
     },
     "assets-display/alternative/card-rogue-attack-contact.webp": {
       "source": "reviewed-export",
-      "sha256": "45595656289516762ee4099101c7b04d91029b90b3fa9525aec351c39a448b53",
-      "bytes": 44430
+      "sha256": "8da06d05a7668010063c8a3ec27d397daf1a05c85c4cf2bb762be7641f04e08b",
+      "bytes": 12450
     },
     "assets-display/alternative/card-rogue-attack-load-mobile.webp": {
       "source": "reviewed-export",
@@ -531,8 +531,8 @@
     },
     "assets-display/alternative/card-rogue-attack-load.webp": {
       "source": "reviewed-export",
-      "sha256": "6675366b330c2f385de432ca517103bc343eff9c25326eda578feb55cb5d111d",
-      "bytes": 41954
+      "sha256": "5815819d1dc9682000b922be3a9435db3ed7da6c64193c316c4fad2d1dba1d8f",
+      "bytes": 11686
     },
     "assets-display/alternative/card-rogue-counter-contact-mobile.webp": {
       "source": "reviewed-export",
@@ -541,8 +541,8 @@
     },
     "assets-display/alternative/card-rogue-counter-contact.webp": {
       "source": "reviewed-export",
-      "sha256": "f46eb15d86de4acaeb1e73bb496aac2c200c2ca46ea911e6c6a678c14e96ed33",
-      "bytes": 40190
+      "sha256": "02357da4752f47b8f184c97c095e14eacbf56d533c77d84632a6ae97ed19457e",
+      "bytes": 11534
     },
     "assets-display/alternative/card-rogue-counter-load-mobile.webp": {
       "source": "reviewed-export",
@@ -551,8 +551,8 @@
     },
     "assets-display/alternative/card-rogue-counter-load.webp": {
       "source": "reviewed-export",
-      "sha256": "8f917b6c351caa176acd0c9b263a99011a1d9c151cf37d5ecd2c9e82983108cd",
-      "bytes": 37356
+      "sha256": "47ae410a4766d26dd85179e6a26757345d9f2d61340a039959e0eda82373a78b",
+      "bytes": 10666
     },
     "assets-display/alternative/card-rogue-counter-parry-mobile.webp": {
       "source": "reviewed-export",
@@ -561,8 +561,8 @@
     },
     "assets-display/alternative/card-rogue-counter-parry.webp": {
       "source": "reviewed-export",
-      "sha256": "a06e44fa2429d4d58c0488b4156555612e60b57fe141a908c8b8fa33eb90b37c",
-      "bytes": 40144
+      "sha256": "8b07fe538433480704e7b966f1359c0a266228aa8f575e88b99222216bcb67b1",
+      "bytes": 11660
     },
     "assets-display/alternative/card-rogue-guard-brace-mobile.webp": {
       "source": "reviewed-export",
@@ -571,8 +571,8 @@
     },
     "assets-display/alternative/card-rogue-guard-brace.webp": {
       "source": "reviewed-export",
-      "sha256": "131e66bfd5bac7dd9cf4dec75dfbd67d6f81959ea11b4df93dfcc5d44260a598",
-      "bytes": 36986
+      "sha256": "246275a9ce3a99d12e7aee1c78ff14d50c6ec2ff6392f4106b993c307a579158",
+      "bytes": 10754
     },
     "assets-display/alternative/card-rogue-guard-return-mobile.webp": {
       "source": "reviewed-export",
@@ -581,8 +581,8 @@
     },
     "assets-display/alternative/card-rogue-guard-return.webp": {
       "source": "reviewed-export",
-      "sha256": "94b7c769f9286f9f6d42be15d06510f6dc38f5ac38c51d9bc9ad31ffb35c67f6",
-      "bytes": 41198
+      "sha256": "79255402e030edec472b72047543c6819483f62fbb141e46b81cb745f81222ed",
+      "bytes": 11806
     },
     "assets-display/alternative/card-rogue-guard-rise-mobile.webp": {
       "source": "reviewed-export",
@@ -591,8 +591,8 @@
     },
     "assets-display/alternative/card-rogue-guard-rise.webp": {
       "source": "reviewed-export",
-      "sha256": "2d9b448a90eb289239330b2842bf734e3b1e96ebc4d743e987258a662b4ca342",
-      "bytes": 40568
+      "sha256": "ab77f004cc5987c1d05097c919123e12324ef87cdab60744fcfecbd15de8c871",
+      "bytes": 11796
     },
     "assets-display/alternative/card-rogue-magic-load-mobile.webp": {
       "source": "reviewed-export",
@@ -601,8 +601,8 @@
     },
     "assets-display/alternative/card-rogue-magic-load.webp": {
       "source": "reviewed-export",
-      "sha256": "0aea260bb0df464d0806082da13fdc15a84865f8b5ffdf74edf5d31eee855d72",
-      "bytes": 40524
+      "sha256": "0c197dcddce86fe6006e653f288354a245ec44391eb6be0c4e852da39575160a",
+      "bytes": 11102
     },
     "assets-display/alternative/card-rogue-magic-release-mobile.webp": {
       "source": "reviewed-export",
@@ -611,8 +611,8 @@
     },
     "assets-display/alternative/card-rogue-magic-release.webp": {
       "source": "reviewed-export",
-      "sha256": "87a6e3974555a788a80e90923d19165c5f3881e7a017994eee040e38e325b01d",
-      "bytes": 42146
+      "sha256": "abba45a1b225fb4624bb9b7ac8d96315f5211f8868aea5d2efbd9e2d32b4f229",
+      "bytes": 11534
     },
     "assets-display/alternative/card-rogue-magic-return-mobile.webp": {
       "source": "reviewed-export",
@@ -621,8 +621,8 @@
     },
     "assets-display/alternative/card-rogue-magic-return.webp": {
       "source": "reviewed-export",
-      "sha256": "ee86c56cdc273f3cc39b9c05666ff14171314b9d8120ac54e6b2145b111d4115",
-      "bytes": 38204
+      "sha256": "59429656c07ef70f60d897db5837c5658aea36dbd271ef0080ccd275b8014c21",
+      "bytes": 10482
     },
     "assets-display/alternative/card-rogue-ranged-aim-mobile.webp": {
       "source": "reviewed-export",
@@ -631,8 +631,8 @@
     },
     "assets-display/alternative/card-rogue-ranged-aim.webp": {
       "source": "reviewed-export",
-      "sha256": "5f6e583b11057f795b52bc895bd41aa05d0fd8844d0df4e0c38e16c710f98b71",
-      "bytes": 48414
+      "sha256": "2143929cc6d2ff73da5dc9fd152b878606b6d50a3999c20329dcc21b13541ce4",
+      "bytes": 13458
     },
     "assets-display/alternative/card-rogue-ranged-load-mobile.webp": {
       "source": "reviewed-export",
@@ -641,8 +641,8 @@
     },
     "assets-display/alternative/card-rogue-ranged-load.webp": {
       "source": "reviewed-export",
-      "sha256": "23ef26853273262432c69dafa4b8ea7aab21ee72ce4c65ddf00ca5b62205326e",
-      "bytes": 47840
+      "sha256": "feb23ed771e5501d34e6f44865fba4ae4d2b8d02a3a508bb8da8982d129c4efd",
+      "bytes": 13328
     },
     "assets-display/alternative/card-rogue-ranged-release-mobile.webp": {
       "source": "reviewed-export",
@@ -651,8 +651,8 @@
     },
     "assets-display/alternative/card-rogue-ranged-release.webp": {
       "source": "reviewed-export",
-      "sha256": "85486a4b78c17e39cc4bc8b9d148a017f95dec463e5551977c7c5b2c53a670f4",
-      "bytes": 46094
+      "sha256": "f2f5ad521dcbcc578dec1281e80ffedef96e53554780d6ae16d299bf7d4ded0e",
+      "bytes": 12852
     },
     "assets-display/alternative/card-rogue-ready-mobile.webp": {
       "source": "reviewed-export",
@@ -661,8 +661,8 @@
     },
     "assets-display/alternative/card-rogue-ready.webp": {
       "source": "reviewed-export",
-      "sha256": "da1887f6b90bd2b2fdce24596c5602783c73ee95f4fdb143c77dd717da828e5d",
-      "bytes": 40906
+      "sha256": "689dd8d9f6f4b938a55d99ecfca450bdb73bf43df76cf8120a89ac41c8ed3b00",
+      "bytes": 11324
     },
     "assets-display/alternative/card-rogue-smash-contact-mobile.webp": {
       "source": "reviewed-export",
@@ -671,8 +671,8 @@
     },
     "assets-display/alternative/card-rogue-smash-contact.webp": {
       "source": "reviewed-export",
-      "sha256": "6b76824f449903c0ba0609e775f1ef0f6018e723ddde28092b756ed92a8129e4",
-      "bytes": 44096
+      "sha256": "5dcd4961b249b7518a0d28a81277dc21f4ad7e085686b69947a6c50748dac470",
+      "bytes": 12150
     },
     "assets-display/alternative/card-rogue-smash-load-mobile.webp": {
       "source": "reviewed-export",
@@ -681,8 +681,8 @@
     },
     "assets-display/alternative/card-rogue-smash-load.webp": {
       "source": "reviewed-export",
-      "sha256": "c473f0894129208a4c14e514fa7cdd779441710f64981b2237af6462d31653bb",
-      "bytes": 48414
+      "sha256": "dcf86eab9b7d55aacc628517439b4e8dcaa3a0622f09c73e1808a75a4c027f7e",
+      "bytes": 13422
     },
     "assets-display/alternative/card-rogue-smash-return-mobile.webp": {
       "source": "reviewed-export",
@@ -691,8 +691,8 @@
     },
     "assets-display/alternative/card-rogue-smash-return.webp": {
       "source": "reviewed-export",
-      "sha256": "163145dd10b902d08183ac998b0d143100d4fcf929b7b03ff6a8cd762f73c48c",
-      "bytes": 43480
+      "sha256": "20120cf7183ca5a5bd182bca770b2ff7dc7463fc24929364ae9e884c41a72c2f",
+      "bytes": 12062
     },
     "assets-display/alternative/card-rogue-spell-load-mobile.webp": {
       "source": "reviewed-export",
@@ -701,8 +701,8 @@
     },
     "assets-display/alternative/card-rogue-spell-load.webp": {
       "source": "reviewed-export",
-      "sha256": "217492ca1abb3dae93aa499f4804a0f7201aff8f5ce49280f77711683de50538",
-      "bytes": 38204
+      "sha256": "463882eb88295a4acc2dcf632174998f138fc12ae21197c50739eb2da57e48b6",
+      "bytes": 10372
     },
     "assets-display/alternative/card-rogue-spell-release-mobile.webp": {
       "source": "reviewed-export",
@@ -711,8 +711,8 @@
     },
     "assets-display/alternative/card-rogue-spell-release.webp": {
       "source": "reviewed-export",
-      "sha256": "24147ea05118f89319b5da3a225ad244604e4dfbba61e864b57b9ac403bfe698",
-      "bytes": 40834
+      "sha256": "885fbf016a6be847d331c17cd0c742f6f99b3645ec80fb0a9a784dfd56e3bb0d",
+      "bytes": 11262
     },
     "assets-display/alternative/card-rogue-spell-return-mobile.webp": {
       "source": "reviewed-export",
@@ -721,8 +721,8 @@
     },
     "assets-display/alternative/card-rogue-spell-return.webp": {
       "source": "reviewed-export",
-      "sha256": "99877ea083b1da2326488ad3c54087fde0b9d58d37e89a41e17d5eaab3b12373",
-      "bytes": 40634
+      "sha256": "6a6003cb18bce1a433b0c43e7f1c0382c7e2958bda83eab8355b3f2aca83046e",
+      "bytes": 11136
     },
     "assets-display/alternative/card-rogue-sweep-contact-mobile.webp": {
       "source": "reviewed-export",
@@ -731,8 +731,8 @@
     },
     "assets-display/alternative/card-rogue-sweep-contact.webp": {
       "source": "reviewed-export",
-      "sha256": "f1b90852bc65eadcd91b3c526fc0e46e9e41f95988bc41ad1bb36fc513b29f37",
-      "bytes": 48944
+      "sha256": "76c5aed33a60347266ae99c17f60b558eaad56562bae90ea975e8f075132627b",
+      "bytes": 13504
     },
     "assets-display/alternative/card-rogue-sweep-load-mobile.webp": {
       "source": "reviewed-export",
@@ -741,8 +741,8 @@
     },
     "assets-display/alternative/card-rogue-sweep-load.webp": {
       "source": "reviewed-export",
-      "sha256": "627ebaca2850141eaee2b0ad61bcab4cff88fe82e4d8e3994fb78cf0de9c8be3",
-      "bytes": 40026
+      "sha256": "75290481b0e33fc14bec009b157613b0d0bb8ae446eea13562b10aaec607ebae",
+      "bytes": 11016
     },
     "assets-display/alternative/card-rogue-sweep-return-mobile.webp": {
       "source": "reviewed-export",
@@ -751,18 +751,18 @@
     },
     "assets-display/alternative/card-rogue-sweep-return.webp": {
       "source": "reviewed-export",
-      "sha256": "0ccc616f785204658b1030676f2cfb1a25d56c748c4d35632eb36aafc72db806",
-      "bytes": 41094
+      "sha256": "434b4bf8c6e6429d9d14c6dba8da4eb18e2a580854643d8e2796d6f943e016ce",
+      "bytes": 11410
     },
     "assets-display/alternative/card-section-texture-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "e7924c6fa91148f022c78c13acc934c94a591777bfa4a82635c560bd3583a312",
-      "bytes": 14472
+      "sha256": "336fe89d57d375ecc85c36a59e6f426e7a56c7bbf89a8cf1cfdc182036fa9468",
+      "bytes": 976
     },
     "assets-display/alternative/card-section-texture.webp": {
       "source": "reviewed-export",
-      "sha256": "e7924c6fa91148f022c78c13acc934c94a591777bfa4a82635c560bd3583a312",
-      "bytes": 14472
+      "sha256": "336fe89d57d375ecc85c36a59e6f426e7a56c7bbf89a8cf1cfdc182036fa9468",
+      "bytes": 976
     },
     "assets-display/alternative/card-starseer-attack-contact-mobile.webp": {
       "source": "reviewed-export",
@@ -771,8 +771,8 @@
     },
     "assets-display/alternative/card-starseer-attack-contact.webp": {
       "source": "reviewed-export",
-      "sha256": "715c70afcd38e3e6dd5fb8c27122a6f95a1e3110d2da10b843980b2189040766",
-      "bytes": 37364
+      "sha256": "8e0213cc5fbc53ddb91d3c25f8666256497b0ebd4e42de25a05dbf331066c11b",
+      "bytes": 10354
     },
     "assets-display/alternative/card-starseer-attack-load-mobile.webp": {
       "source": "reviewed-export",
@@ -781,8 +781,8 @@
     },
     "assets-display/alternative/card-starseer-attack-load.webp": {
       "source": "reviewed-export",
-      "sha256": "7cf25807d46a6a7b11e198967a75fdfaae7346488a82ec545613426a2ad9ab27",
-      "bytes": 34450
+      "sha256": "eeb3af71eff027382503f9fec71db5005a58f5d9eba5c92bdca109fa5bdbf040",
+      "bytes": 9618
     },
     "assets-display/alternative/card-starseer-counter-contact-mobile.webp": {
       "source": "reviewed-export",
@@ -791,8 +791,8 @@
     },
     "assets-display/alternative/card-starseer-counter-contact.webp": {
       "source": "reviewed-export",
-      "sha256": "95cd64cab9800fb2f15a455ee28e0ee7bb32aa383a1f3c63a437b1ea49790bf5",
-      "bytes": 38944
+      "sha256": "e0a8671d85ac59c0f503c8447c9d74d135b3e2d436843d3f9b5a40bd193428a4",
+      "bytes": 11028
     },
     "assets-display/alternative/card-starseer-counter-load-mobile.webp": {
       "source": "reviewed-export",
@@ -801,8 +801,8 @@
     },
     "assets-display/alternative/card-starseer-counter-load.webp": {
       "source": "reviewed-export",
-      "sha256": "a66e9602a2786664d65bcb8a0628003c7f08e3d5a7ef1da3d71a9299e444545b",
-      "bytes": 38622
+      "sha256": "ba5b70ab4f5ef52c71597e86fa75d45a137e965fc608831747e39fe3f83fa252",
+      "bytes": 10810
     },
     "assets-display/alternative/card-starseer-counter-parry-mobile.webp": {
       "source": "reviewed-export",
@@ -811,8 +811,8 @@
     },
     "assets-display/alternative/card-starseer-counter-parry.webp": {
       "source": "reviewed-export",
-      "sha256": "d00aa054886148b0f8ced325279f06d3f7ddb5acc147d352b9bd3f10b8177eaf",
-      "bytes": 37464
+      "sha256": "f230bbf794be0793dc37ad2b25d00b053c43e1865e698f2ef13a5d109225b8d9",
+      "bytes": 10630
     },
     "assets-display/alternative/card-starseer-guard-brace-mobile.webp": {
       "source": "reviewed-export",
@@ -821,8 +821,8 @@
     },
     "assets-display/alternative/card-starseer-guard-brace.webp": {
       "source": "reviewed-export",
-      "sha256": "f4369207d194abedc20929092de5f13ed651387aae528556e7fd0bc32c377b8c",
-      "bytes": 38988
+      "sha256": "f03a74fbe5fd061fccaac6f109ae7ce88e108b782ef328b5c97837e438122cce",
+      "bytes": 11002
     },
     "assets-display/alternative/card-starseer-guard-return-mobile.webp": {
       "source": "reviewed-export",
@@ -831,8 +831,8 @@
     },
     "assets-display/alternative/card-starseer-guard-return.webp": {
       "source": "reviewed-export",
-      "sha256": "9485250bf9c31ea8e27824e7103d33eb83485cfe7427183f19ee4b92b034c0f3",
-      "bytes": 38730
+      "sha256": "769f9749a1caac46224bd2ef9456cdbfa60633178d852c5a5fe1583385e10855",
+      "bytes": 10864
     },
     "assets-display/alternative/card-starseer-guard-rise-mobile.webp": {
       "source": "reviewed-export",
@@ -841,8 +841,8 @@
     },
     "assets-display/alternative/card-starseer-guard-rise.webp": {
       "source": "reviewed-export",
-      "sha256": "2496e0c21c9e6df3cc6e2bab13212d3b416107c38fc3b70689bfbca3f6b158a5",
-      "bytes": 41650
+      "sha256": "c60bf79fc2295d411f29c8f9d3029a448e42f9ec99b469314d8135213a47401d",
+      "bytes": 11746
     },
     "assets-display/alternative/card-starseer-ranged-aim-mobile.webp": {
       "source": "reviewed-export",
@@ -851,8 +851,8 @@
     },
     "assets-display/alternative/card-starseer-ranged-aim.webp": {
       "source": "reviewed-export",
-      "sha256": "baf0ee45e3c2b67ed977637f8fd51dd3ab3392553ae7f758394900bb8affddb2",
-      "bytes": 35198
+      "sha256": "b20186c2f60f70ce233e8aaa07e626f4a115a62b46a567a1d2a24ad7e36aaac9",
+      "bytes": 10342
     },
     "assets-display/alternative/card-starseer-ranged-load-mobile.webp": {
       "source": "reviewed-export",
@@ -861,8 +861,8 @@
     },
     "assets-display/alternative/card-starseer-ranged-load.webp": {
       "source": "reviewed-export",
-      "sha256": "c1d3816a20d021d37c68b15d8921f4dbb824fef22b189889c23f602f077e63ba",
-      "bytes": 33226
+      "sha256": "7291b049a83500bc7b076c2443674df8fa517427aa2367fdce751d0c45594826",
+      "bytes": 9684
     },
     "assets-display/alternative/card-starseer-ranged-release-mobile.webp": {
       "source": "reviewed-export",
@@ -871,8 +871,8 @@
     },
     "assets-display/alternative/card-starseer-ranged-release.webp": {
       "source": "reviewed-export",
-      "sha256": "8987679408038d1e44f4fa420a58e950021d0051428036cc087740fadf223b17",
-      "bytes": 33962
+      "sha256": "2bcf88a5c01de2c6386aedbd6dafd85a147aeab18d0de79a648490d7d19ee632",
+      "bytes": 9726
     },
     "assets-display/alternative/card-starseer-ready-mobile.webp": {
       "source": "reviewed-export",
@@ -881,8 +881,8 @@
     },
     "assets-display/alternative/card-starseer-ready.webp": {
       "source": "reviewed-export",
-      "sha256": "efde15de855d95c7b24132647b5ac1fa82028ae385aa1f9fbf7b2df9e94c94e7",
-      "bytes": 33196
+      "sha256": "33f34a784254ca1494d793c3d9c806f63f96620ae002359d82ac1246c3c7972c",
+      "bytes": 9316
     },
     "assets-display/alternative/card-starseer-smash-contact-mobile.webp": {
       "source": "reviewed-export",
@@ -891,8 +891,8 @@
     },
     "assets-display/alternative/card-starseer-smash-contact.webp": {
       "source": "reviewed-export",
-      "sha256": "217d9ba5443caef1b197a145b39d5022a8c0a7af951524a988b6e4729115d8cc",
-      "bytes": 33302
+      "sha256": "cf60ae3028f3f2447bc17faa34021d8b91bc88c7e7b1bb2f70e6b244c72ac67e",
+      "bytes": 9204
     },
     "assets-display/alternative/card-starseer-smash-load-mobile.webp": {
       "source": "reviewed-export",
@@ -901,8 +901,8 @@
     },
     "assets-display/alternative/card-starseer-smash-load.webp": {
       "source": "reviewed-export",
-      "sha256": "3c9d322e64867550c01b39ac45d107fa4a10db45d4994d25466cec44a4b8d016",
-      "bytes": 36712
+      "sha256": "eb033e39fae14d2d991f5b1c7b6a8c1c5a9780d00476ceb3d087a1c90149791a",
+      "bytes": 10306
     },
     "assets-display/alternative/card-starseer-smash-return-mobile.webp": {
       "source": "reviewed-export",
@@ -911,8 +911,8 @@
     },
     "assets-display/alternative/card-starseer-smash-return.webp": {
       "source": "reviewed-export",
-      "sha256": "2ae4b70fd07e39403093298afcf0c1cc819f9dd648fb92bb04a101826221e934",
-      "bytes": 32274
+      "sha256": "8f8635181b709644bfd98d2cac86da2504e77a6dcb8f0d48f643e5c3b2645b7c",
+      "bytes": 9034
     },
     "assets-display/alternative/card-starseer-spell-load-mobile.webp": {
       "source": "reviewed-export",
@@ -921,8 +921,8 @@
     },
     "assets-display/alternative/card-starseer-spell-load.webp": {
       "source": "reviewed-export",
-      "sha256": "4743e89d12ca43868d5b901d963c930cd7f3a8a7e880be0da711036b62a0c2bf",
-      "bytes": 33492
+      "sha256": "cbfff06077f94687031cc97058601d1aed2c8c999eb240a182035e1b04fd7138",
+      "bytes": 9794
     },
     "assets-display/alternative/card-starseer-spell-release-mobile.webp": {
       "source": "reviewed-export",
@@ -931,8 +931,8 @@
     },
     "assets-display/alternative/card-starseer-spell-release.webp": {
       "source": "reviewed-export",
-      "sha256": "1dc79983219a1690545bda182d565a39cfbdd65d37e040d6db7a338ddf7e8465",
-      "bytes": 34238
+      "sha256": "f369c513f4f48d97e0d643bd7e3a0abdc9c8de6f70ec8577bfba5f4996cbd8b9",
+      "bytes": 10018
     },
     "assets-display/alternative/card-starseer-spell-return-mobile.webp": {
       "source": "reviewed-export",
@@ -941,8 +941,8 @@
     },
     "assets-display/alternative/card-starseer-spell-return.webp": {
       "source": "reviewed-export",
-      "sha256": "666afc6c0e069b24a57e60e2535b2fecce790d1b593b2efef04b2e148b2541a4",
-      "bytes": 33778
+      "sha256": "45f0bdb3c4cd91904aef3777e2e13e227815f6ad782e9fc562fabd1ede6f0513",
+      "bytes": 9780
     },
     "assets-display/alternative/card-starseer-sweep-contact-mobile.webp": {
       "source": "reviewed-export",
@@ -951,8 +951,8 @@
     },
     "assets-display/alternative/card-starseer-sweep-contact.webp": {
       "source": "reviewed-export",
-      "sha256": "a4a68720a6587c9e9e558ff15275907460355e22a70382478ea9e225f5cd9135",
-      "bytes": 34074
+      "sha256": "b212c0405ec07f2451ab37523cfbb4a7b628474c127227329d2cec62b62ab553",
+      "bytes": 9454
     },
     "assets-display/alternative/card-starseer-sweep-load-mobile.webp": {
       "source": "reviewed-export",
@@ -961,8 +961,8 @@
     },
     "assets-display/alternative/card-starseer-sweep-load.webp": {
       "source": "reviewed-export",
-      "sha256": "4e262765b5d15f05c4461e732003e14371ff4eb4593dc2bab4aa47f951790fbc",
-      "bytes": 29870
+      "sha256": "b1debbdce5bc3d823535b3f635a98a098e32611ae7020f43e23be5186c51999b",
+      "bytes": 8418
     },
     "assets-display/alternative/card-starseer-sweep-return-mobile.webp": {
       "source": "reviewed-export",
@@ -971,1088 +971,1138 @@
     },
     "assets-display/alternative/card-starseer-sweep-return.webp": {
       "source": "reviewed-export",
-      "sha256": "3eadb8526cc48ee826d006d0ff0dbcdc9e0eae07594e9201d4899f89e90fef24",
-      "bytes": 31130
+      "sha256": "502cf13afd0e6bf51fa3509faa74a5718a12ea7dbdc1f5e9b9763da6462de32c",
+      "bytes": 8714
     },
     "assets-display/alternative/chainScavenger-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "751d653eb55b7ae69ae043bb4c3ae5d07241942af2e8471f97fc92ee18187928",
-      "bytes": 8028
+      "sha256": "945462fe6912a952634bdc1c190ccc5b48eb1e380bff747b32ba8027495e0730",
+      "bytes": 3082
     },
     "assets-display/alternative/chainScavenger.webp": {
       "source": "reviewed-export",
-      "sha256": "751d653eb55b7ae69ae043bb4c3ae5d07241942af2e8471f97fc92ee18187928",
-      "bytes": 8028
+      "sha256": "945462fe6912a952634bdc1c190ccc5b48eb1e380bff747b32ba8027495e0730",
+      "bytes": 3082
     },
     "assets-display/alternative/charredColossus-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "c4dc0b8dbb023a26606adb2115c8be3b7d5cbd8a9d1950d6517fa6bce81d0db2",
-      "bytes": 9736
+      "sha256": "93d01ca18b48488b9253b8e4443d0b8ea4d4b348af12947c7493707e22fe7199",
+      "bytes": 3470
     },
     "assets-display/alternative/charredColossus.webp": {
       "source": "reviewed-export",
-      "sha256": "c4dc0b8dbb023a26606adb2115c8be3b7d5cbd8a9d1950d6517fa6bce81d0db2",
-      "bytes": 9736
+      "sha256": "93d01ca18b48488b9253b8e4443d0b8ea4d4b348af12947c7493707e22fe7199",
+      "bytes": 3470
     },
     "assets-display/alternative/cinderMantis-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "0ed882e815a61244a9e2a67252ffe99d9730b52a756a44d45db9376c30ecb61c",
-      "bytes": 9116
+      "sha256": "bba2b57ddcdf0a846d093f70d399fa95d498aeffc849b67dc865ab470e400431",
+      "bytes": 3692
     },
     "assets-display/alternative/cinderMantis.webp": {
       "source": "reviewed-export",
-      "sha256": "0ed882e815a61244a9e2a67252ffe99d9730b52a756a44d45db9376c30ecb61c",
-      "bytes": 9116
+      "sha256": "bba2b57ddcdf0a846d093f70d399fa95d498aeffc849b67dc865ab470e400431",
+      "bytes": 3692
     },
     "assets-display/alternative/courtDuelist-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "5ed0867ab2e0680004d982cd7e8bb8cdc13e38a09aee85eb9055afd83c7ca3e4",
-      "bytes": 7122
+      "sha256": "ce7927b2c64f1995cb8bb02277a5132faa13a216a4a3642e77937be3a970187a",
+      "bytes": 2884
     },
     "assets-display/alternative/courtDuelist.webp": {
       "source": "reviewed-export",
-      "sha256": "5ed0867ab2e0680004d982cd7e8bb8cdc13e38a09aee85eb9055afd83c7ca3e4",
-      "bytes": 7122
+      "sha256": "ce7927b2c64f1995cb8bb02277a5132faa13a216a4a3642e77937be3a970187a",
+      "bytes": 2884
     },
     "assets-display/alternative/courtMarionette-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "5b5784b44960fc6bef4a867e959efe1a8238b5b4165f556e618ef405993af619",
-      "bytes": 8314
+      "sha256": "1b3cf5324894e077ebf1d2b528e46cfe7fd84b95f004c472bee845a48f7cce62",
+      "bytes": 3386
     },
     "assets-display/alternative/courtMarionette.webp": {
       "source": "reviewed-export",
-      "sha256": "5b5784b44960fc6bef4a867e959efe1a8238b5b4165f556e618ef405993af619",
-      "bytes": 8314
+      "sha256": "1b3cf5324894e077ebf1d2b528e46cfe7fd84b95f004c472bee845a48f7cce62",
+      "bytes": 3386
     },
     "assets-display/alternative/courtSurgeon-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "5eee30e8026a290b30a8d0e154c2e90b344ca635e8676ac63769f224320398f3",
-      "bytes": 8934
+      "sha256": "9a036e103b495674575f635987953b5b8c2b431f17f8bd7070d2dc361d5aef0e",
+      "bytes": 3436
     },
     "assets-display/alternative/courtSurgeon.webp": {
       "source": "reviewed-export",
-      "sha256": "5eee30e8026a290b30a8d0e154c2e90b344ca635e8676ac63769f224320398f3",
-      "bytes": 8934
+      "sha256": "9a036e103b495674575f635987953b5b8c2b431f17f8bd7070d2dc361d5aef0e",
+      "bytes": 3436
     },
     "assets-display/alternative/eclipseCantor-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "9865aaef1b59576de0572a781312028e6f8d89c5305b00d6fc16158c4a45329d",
-      "bytes": 13020
+      "sha256": "5e1bded4753a657ea47b84492ad3acef1198d76fa93385c1c2a5479aaee0e1cb",
+      "bytes": 4942
     },
     "assets-display/alternative/eclipseCantor.webp": {
       "source": "reviewed-export",
-      "sha256": "9865aaef1b59576de0572a781312028e6f8d89c5305b00d6fc16158c4a45329d",
-      "bytes": 13020
+      "sha256": "5e1bded4753a657ea47b84492ad3acef1198d76fa93385c1c2a5479aaee0e1cb",
+      "bytes": 4942
     },
     "assets-display/alternative/emberStarvedPilgrim-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "342fe1c8bedf8b7e1f38957723c4708e2988ee71b9e6271ffa84f46bb3261c17",
-      "bytes": 5106
+      "sha256": "24fcfd24b8c9badc335b2c443d3dadc24e9feb2cab672dfae5a74aa511bf5f9c",
+      "bytes": 2112
     },
     "assets-display/alternative/emberStarvedPilgrim.webp": {
       "source": "reviewed-export",
-      "sha256": "342fe1c8bedf8b7e1f38957723c4708e2988ee71b9e6271ffa84f46bb3261c17",
-      "bytes": 5106
+      "sha256": "24fcfd24b8c9badc335b2c443d3dadc24e9feb2cab672dfae5a74aa511bf5f9c",
+      "bytes": 2112
     },
     "assets-display/alternative/far-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "66c87ad0969b97f7db2a8ef149d5e7f605e918cf476d7c7e2b7316ad83d5d527",
-      "bytes": 31670
+      "sha256": "d65e6a99832f884f7bf1744701604a30a9f0dd0b3a8618dd0b863b8c183cda98",
+      "bytes": 2802
     },
     "assets-display/alternative/far.webp": {
       "source": "reviewed-export",
-      "sha256": "66c87ad0969b97f7db2a8ef149d5e7f605e918cf476d7c7e2b7316ad83d5d527",
-      "bytes": 31670
+      "sha256": "d65e6a99832f884f7bf1744701604a30a9f0dd0b3a8618dd0b863b8c183cda98",
+      "bytes": 2802
     },
     "assets-display/alternative/fellWarden-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "9244fbbd428a4a63a3d222eeaa7b4da02848d3e712a2bf7d41192f49b2b80a05",
-      "bytes": 6370
+      "sha256": "e453c15cf412538fb915051d2a42a49d225ba7d8acd6b7b82a94ea18700e5d09",
+      "bytes": 2498
     },
     "assets-display/alternative/fellWarden.webp": {
       "source": "reviewed-export",
-      "sha256": "9244fbbd428a4a63a3d222eeaa7b4da02848d3e712a2bf7d41192f49b2b80a05",
-      "bytes": 6370
+      "sha256": "e453c15cf412538fb915051d2a42a49d225ba7d8acd6b7b82a94ea18700e5d09",
+      "bytes": 2498
     },
     "assets-display/alternative/foreground-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "f431770ec2a60c6c0addccd63612fca2edbeaba91b70978fb586c529c39faea6",
-      "bytes": 138988
+      "sha256": "aec5c50c51dc3cf265942db18121fb5fde5ad6a6b12106530cd726998a77372a",
+      "bytes": 8464
     },
     "assets-display/alternative/foreground.webp": {
       "source": "reviewed-export",
-      "sha256": "f431770ec2a60c6c0addccd63612fca2edbeaba91b70978fb586c529c39faea6",
-      "bytes": 138988
+      "sha256": "aec5c50c51dc3cf265942db18121fb5fde5ad6a6b12106530cd726998a77372a",
+      "bytes": 8464
     },
     "assets-display/alternative/furnaceSaint-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "5cad93eaf39a21ef5468c7c81297ab51f5373f53e8f39e638e659ab3b209329c",
-      "bytes": 11706
+      "sha256": "7430c810313e66cd7608c52c1c1438bc09913e56d7a2c69b6de23ff408727a8f",
+      "bytes": 4444
     },
     "assets-display/alternative/furnaceSaint.webp": {
       "source": "reviewed-export",
-      "sha256": "5cad93eaf39a21ef5468c7c81297ab51f5373f53e8f39e638e659ab3b209329c",
-      "bytes": 11706
+      "sha256": "7430c810313e66cd7608c52c1c1438bc09913e56d7a2c69b6de23ff408727a8f",
+      "bytes": 4444
     },
     "assets-display/alternative/gildedKnight-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "cc1a56f5d562487600a822c2620e2b98e695ca994944d0a1eab83a61a5ea5b1c",
-      "bytes": 11654
+      "sha256": "b22d8f98feb654bf7ace553675981d26ea09c82ebfee04714f4b5bd9252e6e7b",
+      "bytes": 4304
     },
     "assets-display/alternative/gildedKnight.webp": {
       "source": "reviewed-export",
-      "sha256": "cc1a56f5d562487600a822c2620e2b98e695ca994944d0a1eab83a61a5ea5b1c",
-      "bytes": 11654
+      "sha256": "b22d8f98feb654bf7ace553675981d26ea09c82ebfee04714f4b5bd9252e6e7b",
+      "bytes": 4304
     },
     "assets-display/alternative/glassRegent-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "ab529f0829c0e32cba23ced137cd94be7d7bc5b02741c08749d1629454b931cd",
-      "bytes": 15086
+      "sha256": "a79dc1d6440fb8c76d2f776f7baeb4d828551310eba6f659d5fb76ff1fab6cb3",
+      "bytes": 5938
     },
     "assets-display/alternative/glassRegent.webp": {
       "source": "reviewed-export",
-      "sha256": "ab529f0829c0e32cba23ced137cd94be7d7bc5b02741c08749d1629454b931cd",
-      "bytes": 15086
+      "sha256": "a79dc1d6440fb8c76d2f776f7baeb4d828551310eba6f659d5fb76ff1fab6cb3",
+      "bytes": 5938
     },
     "assets-display/alternative/graveWisp-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "9743eef98db363072948d9f37a9c145b22e5ca316e3e31c09f7492378aba99b4",
-      "bytes": 9832
+      "sha256": "4e041c0f99c845587157e90207082bdcd0d734eddecdc16ada7a808193243581",
+      "bytes": 3822
     },
     "assets-display/alternative/graveWisp.webp": {
       "source": "reviewed-export",
-      "sha256": "9743eef98db363072948d9f37a9c145b22e5ca316e3e31c09f7492378aba99b4",
-      "bytes": 9832
+      "sha256": "4e041c0f99c845587157e90207082bdcd0d734eddecdc16ada7a808193243581",
+      "bytes": 3822
     },
     "assets-display/alternative/ground-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "50c42a74b6bcea4c4731eec00cde6b610196374563be493ea14da137a0dc34f0",
-      "bytes": 139846
+      "sha256": "954ef39b6d87f8c57a6cf55489ea30b93a34846bb4ca7c0a47b4f37ad4ce1038",
+      "bytes": 7898
     },
     "assets-display/alternative/ground.webp": {
       "source": "reviewed-export",
-      "sha256": "50c42a74b6bcea4c4731eec00cde6b610196374563be493ea14da137a0dc34f0",
-      "bytes": 139846
+      "sha256": "954ef39b6d87f8c57a6cf55489ea30b93a34846bb4ca7c0a47b4f37ad4ce1038",
+      "bytes": 7898
     },
     "assets-display/alternative/herald-default-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "6af0340e5ea13994798fd1fce5aec5c42b15c3d9ccd1532f44c59367f9e7368e",
-      "bytes": 11314
+      "sha256": "f9961ec2cfd81683bf30ce60de0bb8d365e1672298213f200cf2e7b89c278bd6",
+      "bytes": 4206
     },
     "assets-display/alternative/herald-default.webp": {
       "source": "reviewed-export",
-      "sha256": "6af0340e5ea13994798fd1fce5aec5c42b15c3d9ccd1532f44c59367f9e7368e",
-      "bytes": 11314
+      "sha256": "f9961ec2cfd81683bf30ce60de0bb8d365e1672298213f200cf2e7b89c278bd6",
+      "bytes": 4206
     },
     "assets-display/alternative/herald-emberhabit-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "8cd1c96d4e3242ccfc06665eec2d25c6ddb4dbe3ea87abec31c231459a28d01c",
-      "bytes": 12608
+      "sha256": "9dea3990e611cc5fb1829d7a81d331f9768b421853f79b7cef597be804210c64",
+      "bytes": 4768
     },
     "assets-display/alternative/herald-emberhabit.webp": {
       "source": "reviewed-export",
-      "sha256": "8cd1c96d4e3242ccfc06665eec2d25c6ddb4dbe3ea87abec31c231459a28d01c",
-      "bytes": 12608
+      "sha256": "9dea3990e611cc5fb1829d7a81d331f9768b421853f79b7cef597be804210c64",
+      "bytes": 4768
     },
     "assets-display/alternative/herald-ossuary-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "5cfb57bbb04c5829b18595f45a5bb40426c4052bd1651128534b0945b01ca167",
-      "bytes": 12452
+      "sha256": "b9748151a65c0c0d86d3adec62e45ef72b5eabe33a729cc29ccdbe22a7ac2cfd",
+      "bytes": 4696
     },
     "assets-display/alternative/herald-ossuary.webp": {
       "source": "reviewed-export",
-      "sha256": "5cfb57bbb04c5829b18595f45a5bb40426c4052bd1651128534b0945b01ca167",
-      "bytes": 12452
+      "sha256": "b9748151a65c0c0d86d3adec62e45ef72b5eabe33a729cc29ccdbe22a7ac2cfd",
+      "bytes": 4696
     },
     "assets-display/alternative/herald-pilgrim-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "992c18b69dd7a86e7a9ec083bc15f0305f18037483383084c6b289c461b75481",
-      "bytes": 11498
+      "sha256": "e42aeb5d14e4dec0f15aa81324933359b58b0ae8646d4a6b9eb39376fd99399f",
+      "bytes": 4378
     },
     "assets-display/alternative/herald-pilgrim.webp": {
       "source": "reviewed-export",
-      "sha256": "992c18b69dd7a86e7a9ec083bc15f0305f18037483383084c6b289c461b75481",
-      "bytes": 11498
+      "sha256": "e42aeb5d14e4dec0f15aa81324933359b58b0ae8646d4a6b9eb39376fd99399f",
+      "bytes": 4378
     },
     "assets-display/alternative/hollowAstronomer-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "c14a3bf207ad50c07c81597da6e913edb075c92a0bdae2668776063eec0091ed",
-      "bytes": 7238
+      "sha256": "894a91667a6cf3f83d974eecd0200ce8c89cc4fa93211044b22420a70107f1ef",
+      "bytes": 2744
     },
     "assets-display/alternative/hollowAstronomer.webp": {
       "source": "reviewed-export",
-      "sha256": "c14a3bf207ad50c07c81597da6e913edb075c92a0bdae2668776063eec0091ed",
-      "bytes": 7238
+      "sha256": "894a91667a6cf3f83d974eecd0200ce8c89cc4fa93211044b22420a70107f1ef",
+      "bytes": 2744
     },
     "assets-display/alternative/huskBrute-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "20c26242e270844a9db5af3aca34d696700fb86676a340e3a9801126c5c1da9b",
-      "bytes": 9242
+      "sha256": "4d1c33b1bcb08e63cdeb4489d0d813babff9b837963e8072eee0096746946adc",
+      "bytes": 3494
     },
     "assets-display/alternative/huskBrute.webp": {
       "source": "reviewed-export",
-      "sha256": "20c26242e270844a9db5af3aca34d696700fb86676a340e3a9801126c5c1da9b",
-      "bytes": 9242
+      "sha256": "4d1c33b1bcb08e63cdeb4489d0d813babff9b837963e8072eee0096746946adc",
+      "bytes": 3494
     },
     "assets-display/alternative/keeperOfTheNameless-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "7dd253432ab1373fd54e89b1cc5a8c61a3c1925ee0721741bd1a677f175b73bb",
-      "bytes": 9516
+      "sha256": "cb186433beec8046fdc044e951b229ec432106ddec9c2ac8edd7f8bddcf624df",
+      "bytes": 3632
     },
     "assets-display/alternative/keeperOfTheNameless.webp": {
       "source": "reviewed-export",
-      "sha256": "7dd253432ab1373fd54e89b1cc5a8c61a3c1925ee0721741bd1a677f175b73bb",
-      "bytes": 9516
+      "sha256": "cb186433beec8046fdc044e951b229ec432106ddec9c2ac8edd7f8bddcf624df",
+      "bytes": 3632
     },
     "assets-display/alternative/lanternMoth-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "fa7b9af5650b944d98ef69506d5c0e5b5d743a513cb403dfdb9530c06e529e78",
-      "bytes": 11006
+      "sha256": "444c2e64f9ae25aaa040e0fa8c3cefc6d901645f624c6c06b0fa4d797dd9148d",
+      "bytes": 4252
     },
     "assets-display/alternative/lanternMoth.webp": {
       "source": "reviewed-export",
-      "sha256": "fa7b9af5650b944d98ef69506d5c0e5b5d743a513cb403dfdb9530c06e529e78",
-      "bytes": 11006
+      "sha256": "444c2e64f9ae25aaa040e0fa8c3cefc6d901645f624c6c06b0fa4d797dd9148d",
+      "bytes": 4252
     },
     "assets-display/alternative/livingArmor-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "5a63eee64db59676b9018aa9369ea45532fdf4e7a0fdbb2d267270ecd6f82d4c",
-      "bytes": 7278
+      "sha256": "ada6cf1bac4d7232245202450c877d5ffff0eb1d11485012203580c849d90b2a",
+      "bytes": 2852
     },
     "assets-display/alternative/livingArmor.webp": {
       "source": "reviewed-export",
-      "sha256": "5a63eee64db59676b9018aa9369ea45532fdf4e7a0fdbb2d267270ecd6f82d4c",
-      "bytes": 7278
+      "sha256": "ada6cf1bac4d7232245202450c877d5ffff0eb1d11485012203580c849d90b2a",
+      "bytes": 2852
     },
     "assets-display/alternative/marrowOrganist-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "d017847d6b6966c3aba3ac1cac2835200c3714338dd2dfd2f7b445e6fc87406b",
-      "bytes": 6848
+      "sha256": "0abb03eceea0c181bdbf52abd2b6d95a237d21c624574061cb9e716a7445520d",
+      "bytes": 2592
     },
     "assets-display/alternative/marrowOrganist.webp": {
       "source": "reviewed-export",
-      "sha256": "d017847d6b6966c3aba3ac1cac2835200c3714338dd2dfd2f7b445e6fc87406b",
-      "bytes": 6848
+      "sha256": "0abb03eceea0c181bdbf52abd2b6d95a237d21c624574061cb9e716a7445520d",
+      "bytes": 2592
     },
     "assets-display/alternative/mirrorScribe-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "f800ff2869b929821a2db8c1211c437c00bad505f49d419b75046b9a71ed3d81",
-      "bytes": 5148
+      "sha256": "a8d6cfa3a1fb11c343e390c5d5143d7092bcd90dd4884c799cd4781ed0030d1c",
+      "bytes": 2110
     },
     "assets-display/alternative/mirrorScribe.webp": {
       "source": "reviewed-export",
-      "sha256": "f800ff2869b929821a2db8c1211c437c00bad505f49d419b75046b9a71ed3d81",
-      "bytes": 5148
+      "sha256": "a8d6cfa3a1fb11c343e390c5d5143d7092bcd90dd4884c799cd4781ed0030d1c",
+      "bytes": 2110
     },
     "assets-display/alternative/reaver-bastion-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "1a066998e273cccfc5fad9e0521ebba096c530f5d532a1f6addd3b2269926f41",
-      "bytes": 10702
+      "sha256": "ccd32019dd25f381f007bc2042c34c8085e741770e51d3da78d663b3f88ec6ae",
+      "bytes": 4162
     },
     "assets-display/alternative/reaver-bastion.webp": {
       "source": "reviewed-export",
-      "sha256": "1a066998e273cccfc5fad9e0521ebba096c530f5d532a1f6addd3b2269926f41",
-      "bytes": 10702
+      "sha256": "ccd32019dd25f381f007bc2042c34c8085e741770e51d3da78d663b3f88ec6ae",
+      "bytes": 4162
     },
     "assets-display/alternative/reaver-default-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382127",
-      "bytes": 11302
+      "sha256": "b5225caa2ad8da15fb8221a0b16322abf6140b2a0999a1c8f8446bb1b65fb5c3",
+      "bytes": 4344
     },
     "assets-display/alternative/reaver-default.webp": {
       "source": "reviewed-export",
-      "sha256": "820544b1b34dbc22ea6c6b0c285a548988126db5d84b5476d2bbdfe0a9382127",
-      "bytes": 11302
+      "sha256": "b5225caa2ad8da15fb8221a0b16322abf6140b2a0999a1c8f8446bb1b65fb5c3",
+      "bytes": 4344
+    },
+    "assets-display/alternative/reaver-greatsword-pilot-counter-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "d0eb208e788f86e90283fdeb4dfb9bbd96ea8fb22909d167d7f81cddb1e8dc33",
+      "bytes": 15018
+    },
+    "assets-display/alternative/reaver-greatsword-pilot-counter.webp": {
+      "source": "reviewed-export",
+      "sha256": "fba5777cc513b41e7c714d635ff1231cb9282b6f9e070e255ceb89df8ab1a05d",
+      "bytes": 53278
+    },
+    "assets-display/alternative/reaver-greatsword-pilot-evade-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "656eb8db35cdad8e145c561706ef4cf787712c8f83161b71ccf0312d5110af5c",
+      "bytes": 13366
+    },
+    "assets-display/alternative/reaver-greatsword-pilot-evade.webp": {
+      "source": "reviewed-export",
+      "sha256": "862539c836a090b7965f1db448647e73c0bedb3b12d88a5e917d0ebe105c9196",
+      "bytes": 45544
+    },
+    "assets-display/alternative/reaver-greatsword-pilot-guard-break-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "d9bc33e53b598710b46150efd22fdf9103ce48149a4c6cefecda58c65433f6d5",
+      "bytes": 14038
+    },
+    "assets-display/alternative/reaver-greatsword-pilot-guard-break.webp": {
+      "source": "reviewed-export",
+      "sha256": "74957dcadbbdcc3565168c32edc43bacd08f0ade78519233c6bbc6c2d8032deb",
+      "bytes": 49556
+    },
+    "assets-display/alternative/reaver-greatsword-pilot-smash-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "7d96cbc87ccb1159befa85a192f4cdf72cea0170f7dd00b34af26074ad70a182",
+      "bytes": 15464
+    },
+    "assets-display/alternative/reaver-greatsword-pilot-smash.webp": {
+      "source": "reviewed-export",
+      "sha256": "9abfefe7258a3bfa2238e7c0516396c61baa5ca009a649b8408183b91fcdf6e2",
+      "bytes": 53668
+    },
+    "assets-display/alternative/reaver-greatsword-pilot-sweep-mobile.webp": {
+      "source": "reviewed-export",
+      "sha256": "a1fe07aa3ffc1c694082f9b1bf3754b024d0975f82a4d8672220e975439f6834",
+      "bytes": 12066
+    },
+    "assets-display/alternative/reaver-greatsword-pilot-sweep.webp": {
+      "source": "reviewed-export",
+      "sha256": "d34545f9058599fa53380e732aea7013bfbc18c38daacbf085b3222c9932a35b",
+      "bytes": 42072
     },
     "assets-display/alternative/reaver-oathsworn-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "48dc4c86cd0428c8fb7de4a9ea06331b538581c282d4ecbc5795a0b0cf6a42f9",
-      "bytes": 11308
+      "sha256": "f4feee78f6990f8080b813afa073dda2dc65b908debef5c744256844e2f2d92d",
+      "bytes": 4344
     },
     "assets-display/alternative/reaver-oathsworn.webp": {
       "source": "reviewed-export",
-      "sha256": "48dc4c86cd0428c8fb7de4a9ea06331b538581c282d4ecbc5795a0b0cf6a42f9",
-      "bytes": 11308
+      "sha256": "f4feee78f6990f8080b813afa073dda2dc65b908debef5c744256844e2f2d92d",
+      "bytes": 4344
     },
     "assets-display/alternative/reaver-vigil-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "3f383008b60555bb0bb0aacdb950940b9388d6ec4899dd46b482180093110306",
-      "bytes": 9536
+      "sha256": "84801644aec412c9ec23b12672e46dc85d2e3e771096a63bb45248d639fde5df",
+      "bytes": 3698
     },
     "assets-display/alternative/reaver-vigil.webp": {
       "source": "reviewed-export",
-      "sha256": "3f383008b60555bb0bb0aacdb950940b9388d6ec4899dd46b482180093110306",
-      "bytes": 9536
+      "sha256": "84801644aec412c9ec23b12672e46dc85d2e3e771096a63bb45248d639fde5df",
+      "bytes": 3698
     },
     "assets-display/alternative/reaver-warden-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "87d9172863817031e241eaaf49f81edc0468d5210a0e87df0a5cf2ba6797426f",
-      "bytes": 9990
+      "sha256": "bcfc2b92c43cb8aab8fa9d9dca3e910f72b82e1c7a25c4f1cb3816b5c9dd6f38",
+      "bytes": 3888
     },
     "assets-display/alternative/reaver-warden.webp": {
       "source": "reviewed-export",
-      "sha256": "87d9172863817031e241eaaf49f81edc0468d5210a0e87df0a5cf2ba6797426f",
-      "bytes": 9990
+      "sha256": "bcfc2b92c43cb8aab8fa9d9dca3e910f72b82e1c7a25c4f1cb3816b5c9dd6f38",
+      "bytes": 3888
     },
     "assets-display/alternative/roadWarden-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "0dbfea233b6bc8774f690bda0d7c4a4022ed0343398c6d7851b29f007976b9c6",
-      "bytes": 9032
+      "sha256": "5111fd0b62ead4218d800f2bbd699ac37aae0a848284a1b4551993c62858fe1e",
+      "bytes": 3468
     },
     "assets-display/alternative/roadWarden.webp": {
       "source": "reviewed-export",
-      "sha256": "0dbfea233b6bc8774f690bda0d7c4a4022ed0343398c6d7851b29f007976b9c6",
-      "bytes": 9032
+      "sha256": "5111fd0b62ead4218d800f2bbd699ac37aae0a848284a1b4551993c62858fe1e",
+      "bytes": 3468
     },
     "assets-display/alternative/rogue-default-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "b0e0603c06b85f12896e049010c3d7d6b60a27149d9ed4badfc48cc6059be1b5",
-      "bytes": 10018
+      "sha256": "7db87a26dc128cca32e19d6f49f6259f6beec88774ef2a01c1d0d97f643dbf08",
+      "bytes": 3842
     },
     "assets-display/alternative/rogue-default.webp": {
       "source": "reviewed-export",
-      "sha256": "b0e0603c06b85f12896e049010c3d7d6b60a27149d9ed4badfc48cc6059be1b5",
-      "bytes": 10018
+      "sha256": "7db87a26dc128cca32e19d6f49f6259f6beec88774ef2a01c1d0d97f643dbf08",
+      "bytes": 3842
     },
     "assets-display/alternative/rogue-duelist-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "f3baad77b4c8cbb47a0b5e25036f49e3cd4b25c6d85284e9ba77b3c367da3531",
-      "bytes": 10220
+      "sha256": "54ad31947579141b82b17a5a65aeb4f5e3b87579162867f0e1fe8af3ee6b4952",
+      "bytes": 3964
     },
     "assets-display/alternative/rogue-duelist.webp": {
       "source": "reviewed-export",
-      "sha256": "f3baad77b4c8cbb47a0b5e25036f49e3cd4b25c6d85284e9ba77b3c367da3531",
-      "bytes": 10220
+      "sha256": "54ad31947579141b82b17a5a65aeb4f5e3b87579162867f0e1fe8af3ee6b4952",
+      "bytes": 3964
     },
     "assets-display/alternative/rogue-nightveil-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "d6f477bbcc98b5ea55dc3e832e34f25389effffe2b15890bfedc78244c6122bf",
-      "bytes": 10224
+      "sha256": "c5cd69f25df662ee2053a938b59dfddfda1a6c538504794b4b9736a80ee01067",
+      "bytes": 3956
     },
     "assets-display/alternative/rogue-nightveil.webp": {
       "source": "reviewed-export",
-      "sha256": "d6f477bbcc98b5ea55dc3e832e34f25389effffe2b15890bfedc78244c6122bf",
-      "bytes": 10224
+      "sha256": "c5cd69f25df662ee2053a938b59dfddfda1a6c538504794b4b9736a80ee01067",
+      "bytes": 3956
     },
     "assets-display/alternative/rogue-shadow-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "c4fbf72a0655399dce54470add70abf26ed41c50ed89ecc188e36f67224f7ce6",
-      "bytes": 11126
+      "sha256": "d98023e3436642246c1c16fe1fa5381bcf2b78bbe326ced0c37733e70f377659",
+      "bytes": 4228
     },
     "assets-display/alternative/rogue-shadow.webp": {
       "source": "reviewed-export",
-      "sha256": "c4fbf72a0655399dce54470add70abf26ed41c50ed89ecc188e36f67224f7ce6",
-      "bytes": 11126
+      "sha256": "d98023e3436642246c1c16fe1fa5381bcf2b78bbe326ced0c37733e70f377659",
+      "bytes": 4228
     },
     "assets-display/alternative/rogue-waywatcher-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "f015762a0784c18a6a5f22b895f49e30189f14789bb2dc23bce8b7125ad7c8a0",
-      "bytes": 10014
+      "sha256": "16a61051cc78b0e764c8515ed0f89abfa2a50270d1c2f16c0c5b1d88c2e911f7",
+      "bytes": 3816
     },
     "assets-display/alternative/rogue-waywatcher.webp": {
       "source": "reviewed-export",
-      "sha256": "f015762a0784c18a6a5f22b895f49e30189f14789bb2dc23bce8b7125ad7c8a0",
-      "bytes": 10014
+      "sha256": "16a61051cc78b0e764c8515ed0f89abfa2a50270d1c2f16c0c5b1d88c2e911f7",
+      "bytes": 3816
     },
     "assets-display/alternative/ruins-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "314e0df59bd6f0914a64d9f267cce061f0c23986334e2ed917c753687c122d2f",
-      "bytes": 140666
+      "sha256": "bd08250601c653407652a0ea1ead2fe590a51809af6a3e41fb44a95c74bfcc39",
+      "bytes": 8786
     },
     "assets-display/alternative/ruins.webp": {
       "source": "reviewed-export",
-      "sha256": "314e0df59bd6f0914a64d9f267cce061f0c23986334e2ed917c753687c122d2f",
-      "bytes": 140666
+      "sha256": "bd08250601c653407652a0ea1ead2fe590a51809af6a3e41fb44a95c74bfcc39",
+      "bytes": 8786
     },
     "assets-display/alternative/scene-ashen-crown-1-landmark-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "3cc1b04323121ab9cb2ade97577b2dab505f9ca31b50e65467655c866139b0fb",
-      "bytes": 129318
+      "sha256": "5ecbec5c54baa84b14e06b4a0d82454362a31b4b28052de4118cf39a7e8459d6",
+      "bytes": 11008
     },
     "assets-display/alternative/scene-ashen-crown-1-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "3cc1b04323121ab9cb2ade97577b2dab505f9ca31b50e65467655c866139b0fb",
-      "bytes": 129318
+      "sha256": "5ecbec5c54baa84b14e06b4a0d82454362a31b4b28052de4118cf39a7e8459d6",
+      "bytes": 11008
     },
     "assets-display/alternative/scene-ashen-crown-2-landmark-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "334a9e8f3a3db01b30a24d5f5dcde92b40c039105afd9f78175a0bead97ea39e",
-      "bytes": 131492
+      "sha256": "712532a46a34483d4833eeca97e5d9878cd12d96616e7771ca96adf650b16e5e",
+      "bytes": 11062
     },
     "assets-display/alternative/scene-ashen-crown-2-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "334a9e8f3a3db01b30a24d5f5dcde92b40c039105afd9f78175a0bead97ea39e",
-      "bytes": 131492
+      "sha256": "712532a46a34483d4833eeca97e5d9878cd12d96616e7771ca96adf650b16e5e",
+      "bytes": 11062
     },
     "assets-display/alternative/scene-ashen-crown-3-landmark-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "ff611e485d23f5f5cc749dd4542f03e252caec5b9bd4f455d612eb05b7a4c895",
-      "bytes": 125446
+      "sha256": "18ac30f31f4b4a5900169725a6db573071de698985a70847f96cb973f04c7039",
+      "bytes": 10184
     },
     "assets-display/alternative/scene-ashen-crown-3-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "ff611e485d23f5f5cc749dd4542f03e252caec5b9bd4f455d612eb05b7a4c895",
-      "bytes": 125446
+      "sha256": "18ac30f31f4b4a5900169725a6db573071de698985a70847f96cb973f04c7039",
+      "bytes": 10184
     },
     "assets-display/alternative/scene-ashen-crown-4-landmark-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "09486cb297693d3b1818af7930877f9c8b3e62dd0a99c283f96031e1336e6d3a",
-      "bytes": 109916
+      "sha256": "52a66c988bdf56bc66c728c867c85135a15a8393b98653d17d6f2fea57dfd176",
+      "bytes": 9684
     },
     "assets-display/alternative/scene-ashen-crown-4-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "09486cb297693d3b1818af7930877f9c8b3e62dd0a99c283f96031e1336e6d3a",
-      "bytes": 109916
+      "sha256": "52a66c988bdf56bc66c728c867c85135a15a8393b98653d17d6f2fea57dfd176",
+      "bytes": 9684
     },
     "assets-display/alternative/scene-ashen-crown-far-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "a147074138672067f3e90900131649dd39f730a7d3ec17fd4488fa72673766e7",
-      "bytes": 34236
+      "sha256": "a385a3b3a0b92881a3d1256fc3b9540b098aca2b9e92b1fe150906688c3f265f",
+      "bytes": 3810
     },
     "assets-display/alternative/scene-ashen-crown-far.webp": {
       "source": "reviewed-export",
-      "sha256": "a147074138672067f3e90900131649dd39f730a7d3ec17fd4488fa72673766e7",
-      "bytes": 34236
+      "sha256": "a385a3b3a0b92881a3d1256fc3b9540b098aca2b9e92b1fe150906688c3f265f",
+      "bytes": 3810
     },
     "assets-display/alternative/scene-ashen-crown-foreground-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "f036099f207c90b082fdb28ecf1b836721a4e13c5f5d4a19538f09352b28594c",
-      "bytes": 92296
+      "sha256": "6ecc96f062198e54db05e97f4a2d2cb6e18ec464b07304893543ca23e49441d9",
+      "bytes": 7952
     },
     "assets-display/alternative/scene-ashen-crown-foreground.webp": {
       "source": "reviewed-export",
-      "sha256": "f036099f207c90b082fdb28ecf1b836721a4e13c5f5d4a19538f09352b28594c",
-      "bytes": 92296
+      "sha256": "6ecc96f062198e54db05e97f4a2d2cb6e18ec464b07304893543ca23e49441d9",
+      "bytes": 7952
     },
     "assets-display/alternative/scene-ashen-crown-ground-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "38e7c5a220506c456bea2e1d158848e659e65dd807d5a71e077dcdfb06a943a1",
-      "bytes": 133350
+      "sha256": "fb6db31fd8109a70246b41facaf9d730881c14a479e65cbd213db2f2bf4498f3",
+      "bytes": 8562
     },
     "assets-display/alternative/scene-ashen-crown-ground.webp": {
       "source": "reviewed-export",
-      "sha256": "38e7c5a220506c456bea2e1d158848e659e65dd807d5a71e077dcdfb06a943a1",
-      "bytes": 133350
+      "sha256": "fb6db31fd8109a70246b41facaf9d730881c14a479e65cbd213db2f2bf4498f3",
+      "bytes": 8562
     },
     "assets-display/alternative/scene-ashen-crown-phone-foreground-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "72f318f66220548adadb38f173c8ffb17edafd5484faa6cd1be1019fef21ca73",
-      "bytes": 53726
+      "sha256": "1adb596169109c7681b8512a689d4b8138d76365992d0c653c673a430a96ef83",
+      "bytes": 9568
     },
     "assets-display/alternative/scene-ashen-crown-phone-foreground.webp": {
       "source": "reviewed-export",
-      "sha256": "72f318f66220548adadb38f173c8ffb17edafd5484faa6cd1be1019fef21ca73",
-      "bytes": 53726
+      "sha256": "1adb596169109c7681b8512a689d4b8138d76365992d0c653c673a430a96ef83",
+      "bytes": 9568
     },
     "assets-display/alternative/scene-BS-ENV-01-landmark-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "00919a7182b8beec6c4a5f082a42a472a97ec6750f45c464e18b2ccba1d79f70",
-      "bytes": 144178
+      "sha256": "118791471b79a9d6db18d389afcec51ddf46437f9072752887403178120b49db",
+      "bytes": 12056
     },
     "assets-display/alternative/scene-BS-ENV-01-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "00919a7182b8beec6c4a5f082a42a472a97ec6750f45c464e18b2ccba1d79f70",
-      "bytes": 144178
+      "sha256": "118791471b79a9d6db18d389afcec51ddf46437f9072752887403178120b49db",
+      "bytes": 12056
     },
     "assets-display/alternative/scene-BS-ENV-02-landmark-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "466d72f5a7a61b3b35d984e666363e7af73c074c459fdcfcbd6031b93f865cf3",
-      "bytes": 161578
+      "sha256": "a9fdf5be594a1204e501564f65c8e162468f5d16beb924534565769a7ea6755b",
+      "bytes": 13122
     },
     "assets-display/alternative/scene-BS-ENV-02-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "466d72f5a7a61b3b35d984e666363e7af73c074c459fdcfcbd6031b93f865cf3",
-      "bytes": 161578
+      "sha256": "a9fdf5be594a1204e501564f65c8e162468f5d16beb924534565769a7ea6755b",
+      "bytes": 13122
     },
     "assets-display/alternative/scene-BS-ENV-03-landmark-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "5212247b35f66c88c104096c6c6b05ce88eb6177b790a3de70fdfcd1680958c5",
-      "bytes": 148110
+      "sha256": "6904479b9e63ba33fcf8f490bbc15f8a094aac568193e67ee5e0bc9fe24ccc61",
+      "bytes": 12514
     },
     "assets-display/alternative/scene-BS-ENV-03-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "5212247b35f66c88c104096c6c6b05ce88eb6177b790a3de70fdfcd1680958c5",
-      "bytes": 148110
+      "sha256": "6904479b9e63ba33fcf8f490bbc15f8a094aac568193e67ee5e0bc9fe24ccc61",
+      "bytes": 12514
     },
     "assets-display/alternative/scene-BS-ENV-04-landmark-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "d317051183511f09e38ef434b176076693b2dfdd187d3b68377d48f7ec1c74fd",
-      "bytes": 134772
+      "sha256": "5ecb21b55c7c5f6ffe8bcd51983817387b7e2846fb4d8ce225c071addb200716",
+      "bytes": 11544
     },
     "assets-display/alternative/scene-BS-ENV-04-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "d317051183511f09e38ef434b176076693b2dfdd187d3b68377d48f7ec1c74fd",
-      "bytes": 134772
+      "sha256": "5ecb21b55c7c5f6ffe8bcd51983817387b7e2846fb4d8ce225c071addb200716",
+      "bytes": 11544
     },
     "assets-display/alternative/scene-BS-far-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "5db1d52c52a910599f689a1a4aad824c96591f5f67b34398bfa10f347d24328e",
-      "bytes": 70728
+      "sha256": "a6a924bcfb4fa832681756c5930e0f35185f8e7bbaa34b9605ab67b5f4356b22",
+      "bytes": 5024
     },
     "assets-display/alternative/scene-BS-far.webp": {
       "source": "reviewed-export",
-      "sha256": "5db1d52c52a910599f689a1a4aad824c96591f5f67b34398bfa10f347d24328e",
-      "bytes": 70728
+      "sha256": "a6a924bcfb4fa832681756c5930e0f35185f8e7bbaa34b9605ab67b5f4356b22",
+      "bytes": 5024
     },
     "assets-display/alternative/scene-BS-foreground-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "ca10b5e0d223417a032831befade7b341ab697db2b889a84b3e8fb262810df7b",
-      "bytes": 92840
+      "sha256": "aa7d026152d1f80ee93159a17bf643b4560de7026460e9fa4a0f76fb3d75ba51",
+      "bytes": 8244
     },
     "assets-display/alternative/scene-BS-foreground.webp": {
       "source": "reviewed-export",
-      "sha256": "ca10b5e0d223417a032831befade7b341ab697db2b889a84b3e8fb262810df7b",
-      "bytes": 92840
+      "sha256": "aa7d026152d1f80ee93159a17bf643b4560de7026460e9fa4a0f76fb3d75ba51",
+      "bytes": 8244
     },
     "assets-display/alternative/scene-BS-ground-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "05d2c60837ff815a9dcebdfda7691cb28fc52bbc8654545d0b26ebd161e9b766",
-      "bytes": 120918
+      "sha256": "e0bf99778373d89a3e0a935556dd487bcd62f426c0381d498aa10649a3333184",
+      "bytes": 9800
     },
     "assets-display/alternative/scene-BS-ground.webp": {
       "source": "reviewed-export",
-      "sha256": "05d2c60837ff815a9dcebdfda7691cb28fc52bbc8654545d0b26ebd161e9b766",
-      "bytes": 120918
+      "sha256": "e0bf99778373d89a3e0a935556dd487bcd62f426c0381d498aa10649a3333184",
+      "bytes": 9800
     },
     "assets-display/alternative/scene-BS-phone-foreground-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "8d4aa0161247aadb5e7b4841a4a741023e161ad25d961d78a90a49b03e9bdbda",
-      "bytes": 46944
+      "sha256": "843a51030a62ea948421d7be64ca5c985e4c6d3e25a4e9523a62f4ca037fe386",
+      "bytes": 8512
     },
     "assets-display/alternative/scene-BS-phone-foreground.webp": {
       "source": "reviewed-export",
-      "sha256": "8d4aa0161247aadb5e7b4841a4a741023e161ad25d961d78a90a49b03e9bdbda",
-      "bytes": 46944
+      "sha256": "843a51030a62ea948421d7be64ca5c985e4c6d3e25a4e9523a62f4ca037fe386",
+      "bytes": 8512
     },
     "assets-display/alternative/scene-cinder-reach-1-landmark-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "08a122eab3fd5f6f5a5ca88a96b8dced73b68cc5822c598788ab39544aed0dd0",
-      "bytes": 103184
+      "sha256": "50bda24c84be5713632791288976d23d95dd65176b5ffc9c8ef70ae650d0b517",
+      "bytes": 8900
     },
     "assets-display/alternative/scene-cinder-reach-1-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "08a122eab3fd5f6f5a5ca88a96b8dced73b68cc5822c598788ab39544aed0dd0",
-      "bytes": 103184
+      "sha256": "50bda24c84be5713632791288976d23d95dd65176b5ffc9c8ef70ae650d0b517",
+      "bytes": 8900
     },
     "assets-display/alternative/scene-cinder-reach-2-landmark-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "38ceb909327ac907c2aa8044538b5c82406ae5ed53338d7b894e29f193da2b84",
-      "bytes": 126572
+      "sha256": "e0fe782a8fb84017491983ec993173884ba2afd182680fb43b44a22d641ef448",
+      "bytes": 11144
     },
     "assets-display/alternative/scene-cinder-reach-2-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "38ceb909327ac907c2aa8044538b5c82406ae5ed53338d7b894e29f193da2b84",
-      "bytes": 126572
+      "sha256": "e0fe782a8fb84017491983ec993173884ba2afd182680fb43b44a22d641ef448",
+      "bytes": 11144
     },
     "assets-display/alternative/scene-cinder-reach-3-landmark-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "29517324cb8828236d13f83adef990489c71b2d6109b21fbefbe5b2677f1823d",
-      "bytes": 101946
+      "sha256": "7671818fe2e73184837337ed68bdf8422b5fa6ab49f7dfa108a0c03724c88bef",
+      "bytes": 9366
     },
     "assets-display/alternative/scene-cinder-reach-3-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "29517324cb8828236d13f83adef990489c71b2d6109b21fbefbe5b2677f1823d",
-      "bytes": 101946
+      "sha256": "7671818fe2e73184837337ed68bdf8422b5fa6ab49f7dfa108a0c03724c88bef",
+      "bytes": 9366
     },
     "assets-display/alternative/scene-cinder-reach-4-landmark-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "80181e26b295c250790a7a61014ce431c7401dcd5bc2d0c3bbf0b22587bbc495",
-      "bytes": 106232
+      "sha256": "a37a6e5f527e0dd7dc024405e4cd6253c23faa99829eaf18ee63628d335db8e4",
+      "bytes": 8970
     },
     "assets-display/alternative/scene-cinder-reach-4-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "80181e26b295c250790a7a61014ce431c7401dcd5bc2d0c3bbf0b22587bbc495",
-      "bytes": 106232
+      "sha256": "a37a6e5f527e0dd7dc024405e4cd6253c23faa99829eaf18ee63628d335db8e4",
+      "bytes": 8970
     },
     "assets-display/alternative/scene-cinder-reach-far-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "316e7df5c9967e7bf4289d919560070d2d3b41766ae581d6eb0c04139f0aba1a",
-      "bytes": 40998
+      "sha256": "1c8fabfd5280887f1cb823f1d828b19e69e3ee5a2b49cce49e27249379c80bcb",
+      "bytes": 3728
     },
     "assets-display/alternative/scene-cinder-reach-far.webp": {
       "source": "reviewed-export",
-      "sha256": "316e7df5c9967e7bf4289d919560070d2d3b41766ae581d6eb0c04139f0aba1a",
-      "bytes": 40998
+      "sha256": "1c8fabfd5280887f1cb823f1d828b19e69e3ee5a2b49cce49e27249379c80bcb",
+      "bytes": 3728
     },
     "assets-display/alternative/scene-cinder-reach-foreground-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "05bfc6b10978ed0fcba0d06e6a2f542937c75d9fdbd30b957bc67042388385fb",
-      "bytes": 82394
+      "sha256": "34f021dfcd7c7e0bd307e9926973efd93be7de0052188592341dea93e0cdce5b",
+      "bytes": 7140
     },
     "assets-display/alternative/scene-cinder-reach-foreground.webp": {
       "source": "reviewed-export",
-      "sha256": "05bfc6b10978ed0fcba0d06e6a2f542937c75d9fdbd30b957bc67042388385fb",
-      "bytes": 82394
+      "sha256": "34f021dfcd7c7e0bd307e9926973efd93be7de0052188592341dea93e0cdce5b",
+      "bytes": 7140
     },
     "assets-display/alternative/scene-cinder-reach-ground-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "a51a8d08986640168616db3f87d643bea515779af1cc8a33f60d44947928bb69",
-      "bytes": 118818
+      "sha256": "79c3cb6f0caf06daae69435ab8e8712f6bbc28b1a9d30f7fd638025ddbe47b1e",
+      "bytes": 8092
     },
     "assets-display/alternative/scene-cinder-reach-ground.webp": {
       "source": "reviewed-export",
-      "sha256": "a51a8d08986640168616db3f87d643bea515779af1cc8a33f60d44947928bb69",
-      "bytes": 118818
+      "sha256": "79c3cb6f0caf06daae69435ab8e8712f6bbc28b1a9d30f7fd638025ddbe47b1e",
+      "bytes": 8092
     },
     "assets-display/alternative/scene-cinder-reach-phone-foreground-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "4b202dd539d3ef3e1460f0773fbf5c7bd6b016f93d881b93b965b374108cbb17",
-      "bytes": 37682
+      "sha256": "0de65c466d2ae4d3145d67a07b732eba09cf3bcd13da7992ad18ca1123e163a1",
+      "bytes": 6816
     },
     "assets-display/alternative/scene-cinder-reach-phone-foreground.webp": {
       "source": "reviewed-export",
-      "sha256": "4b202dd539d3ef3e1460f0773fbf5c7bd6b016f93d881b93b965b374108cbb17",
-      "bytes": 37682
+      "sha256": "0de65c466d2ae4d3145d67a07b732eba09cf3bcd13da7992ad18ca1123e163a1",
+      "bytes": 6816
     },
     "assets-display/alternative/scene-drowned-coast-1-landmark-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "e6593a2568fc59cb24b6dc37191357a1acbd1e6bd4b9c06c4c7a39d82e01985c",
-      "bytes": 120000
+      "sha256": "c167d85c984301148895686444cea6b7ca771dacc3af812b96a1a8209248942b",
+      "bytes": 10092
     },
     "assets-display/alternative/scene-drowned-coast-1-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "e6593a2568fc59cb24b6dc37191357a1acbd1e6bd4b9c06c4c7a39d82e01985c",
-      "bytes": 120000
+      "sha256": "c167d85c984301148895686444cea6b7ca771dacc3af812b96a1a8209248942b",
+      "bytes": 10092
     },
     "assets-display/alternative/scene-drowned-coast-2-landmark-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "c0b6fca43274abfca03349106f4d8f4206c62440c31843ff95dc7aa6720ae8ae",
-      "bytes": 119608
+      "sha256": "cd3083b96284c2440e593f75140c454f390a23657a0a9081c901d07c8a229a1c",
+      "bytes": 10026
     },
     "assets-display/alternative/scene-drowned-coast-2-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "c0b6fca43274abfca03349106f4d8f4206c62440c31843ff95dc7aa6720ae8ae",
-      "bytes": 119608
+      "sha256": "cd3083b96284c2440e593f75140c454f390a23657a0a9081c901d07c8a229a1c",
+      "bytes": 10026
     },
     "assets-display/alternative/scene-drowned-coast-3-landmark-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "77818cdef73ec3461b241574d037c6f0302895d6a0b7aadd06caa247649a25cf",
-      "bytes": 112188
+      "sha256": "72f953be03d98857b2932679bfd2889181c2189e37fa968fae1b9598b31a7433",
+      "bytes": 10430
     },
     "assets-display/alternative/scene-drowned-coast-3-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "77818cdef73ec3461b241574d037c6f0302895d6a0b7aadd06caa247649a25cf",
-      "bytes": 112188
+      "sha256": "72f953be03d98857b2932679bfd2889181c2189e37fa968fae1b9598b31a7433",
+      "bytes": 10430
     },
     "assets-display/alternative/scene-drowned-coast-4-landmark-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "2576c5d556d1b8cee0d7fbc448897d0aaf78316bff4c4fe63813e388f365bcd7",
-      "bytes": 128770
+      "sha256": "62a3967efbd1462a60a5a7be0ee7d8cc8438e01fb49236e51ab0d43b3d0eda42",
+      "bytes": 11020
     },
     "assets-display/alternative/scene-drowned-coast-4-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "2576c5d556d1b8cee0d7fbc448897d0aaf78316bff4c4fe63813e388f365bcd7",
-      "bytes": 128770
+      "sha256": "62a3967efbd1462a60a5a7be0ee7d8cc8438e01fb49236e51ab0d43b3d0eda42",
+      "bytes": 11020
     },
     "assets-display/alternative/scene-drowned-coast-far-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "885c63c0272ca5501b5e79bb014bc4c6c54726ad0dd844f8442c4caf4fddc06d",
-      "bytes": 70266
+      "sha256": "5341805848a112f18107d44cdff1effe2571ef6783b48664c76a43a0cffa03b5",
+      "bytes": 6380
     },
     "assets-display/alternative/scene-drowned-coast-far.webp": {
       "source": "reviewed-export",
-      "sha256": "885c63c0272ca5501b5e79bb014bc4c6c54726ad0dd844f8442c4caf4fddc06d",
-      "bytes": 70266
+      "sha256": "5341805848a112f18107d44cdff1effe2571ef6783b48664c76a43a0cffa03b5",
+      "bytes": 6380
     },
     "assets-display/alternative/scene-drowned-coast-foreground-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "59ae6e9c2b58978c797345c83419ccfbe1e99c74661d1d0da0107f0de55e532b",
-      "bytes": 81862
+      "sha256": "c4a5db4c907c6723ffd05cf0ef4e1c8cfbdb541c6831f069a71eb27cd23363e5",
+      "bytes": 7586
     },
     "assets-display/alternative/scene-drowned-coast-foreground.webp": {
       "source": "reviewed-export",
-      "sha256": "59ae6e9c2b58978c797345c83419ccfbe1e99c74661d1d0da0107f0de55e532b",
-      "bytes": 81862
+      "sha256": "c4a5db4c907c6723ffd05cf0ef4e1c8cfbdb541c6831f069a71eb27cd23363e5",
+      "bytes": 7586
     },
     "assets-display/alternative/scene-drowned-coast-ground-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "f3c234277e82755b4c48763b47157a2e1edcfec99c2f9a58b87e1db5d8bb0ba5",
-      "bytes": 119980
+      "sha256": "90e7822cc74a65fdfa9f2867220b908f244e8f593702f2ce1a1aa8800a033881",
+      "bytes": 8430
     },
     "assets-display/alternative/scene-drowned-coast-ground.webp": {
       "source": "reviewed-export",
-      "sha256": "f3c234277e82755b4c48763b47157a2e1edcfec99c2f9a58b87e1db5d8bb0ba5",
-      "bytes": 119980
+      "sha256": "90e7822cc74a65fdfa9f2867220b908f244e8f593702f2ce1a1aa8800a033881",
+      "bytes": 8430
     },
     "assets-display/alternative/scene-drowned-coast-phone-foreground-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "5895671b5014f9726f98549e2ec74d5f49c127c1aca2d77ceab5066e4ef394cf",
-      "bytes": 48276
+      "sha256": "7472d7858307bc5db6e0433f1bcd648363e6311135907ebeeafc8c29ac2f6e2c",
+      "bytes": 8456
     },
     "assets-display/alternative/scene-drowned-coast-phone-foreground.webp": {
       "source": "reviewed-export",
-      "sha256": "5895671b5014f9726f98549e2ec74d5f49c127c1aca2d77ceab5066e4ef394cf",
-      "bytes": 48276
+      "sha256": "7472d7858307bc5db6e0433f1bcd648363e6311135907ebeeafc8c29ac2f6e2c",
+      "bytes": 8456
     },
     "assets-display/alternative/scene-FC-ENV-01-landmark-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "0c9388f80dc809e7e8dc443fdf1b0f3ab4ac6bddcd06737c098ce3d96d57e5ee",
-      "bytes": 106764
+      "sha256": "df394c945080cdef7454893d7a960ab7dadd9d8956b9b4b498341216665b8a3d",
+      "bytes": 9766
     },
     "assets-display/alternative/scene-FC-ENV-01-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "0c9388f80dc809e7e8dc443fdf1b0f3ab4ac6bddcd06737c098ce3d96d57e5ee",
-      "bytes": 106764
+      "sha256": "df394c945080cdef7454893d7a960ab7dadd9d8956b9b4b498341216665b8a3d",
+      "bytes": 9766
     },
     "assets-display/alternative/scene-FC-ENV-02-landmark-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "f2b20e5e9adf7c2f12dd43e109134a1c1b4d719708b3a383e8c51e85786e3122",
-      "bytes": 130954
+      "sha256": "669946d32abc97fd9918b0c43e20f9bcf65c3360699eeee74df8172189418ebc",
+      "bytes": 11402
     },
     "assets-display/alternative/scene-FC-ENV-02-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "f2b20e5e9adf7c2f12dd43e109134a1c1b4d719708b3a383e8c51e85786e3122",
-      "bytes": 130954
+      "sha256": "669946d32abc97fd9918b0c43e20f9bcf65c3360699eeee74df8172189418ebc",
+      "bytes": 11402
     },
     "assets-display/alternative/scene-FC-ENV-03-landmark-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "ec5d75f0455888c6b174831fd1efa2215a5b28b79c69ed9c970107091e99ad45",
-      "bytes": 115552
+      "sha256": "3a9bc72f5d7ab319bbfa52374e94511ba1336e172407804d12a56727ca5146a7",
+      "bytes": 9966
     },
     "assets-display/alternative/scene-FC-ENV-03-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "ec5d75f0455888c6b174831fd1efa2215a5b28b79c69ed9c970107091e99ad45",
-      "bytes": 115552
+      "sha256": "3a9bc72f5d7ab319bbfa52374e94511ba1336e172407804d12a56727ca5146a7",
+      "bytes": 9966
     },
     "assets-display/alternative/scene-FC-ENV-04-landmark-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "b8a5f5d7c4c0eb9ce614352e761be93c214247c8e0f4c17db90b480d0da1dcc5",
-      "bytes": 136440
+      "sha256": "5c2ee23e6414a570b5d16ea4078cab726a7d25ed58286b0ea4c58d88ef991e2f",
+      "bytes": 10934
     },
     "assets-display/alternative/scene-FC-ENV-04-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "b8a5f5d7c4c0eb9ce614352e761be93c214247c8e0f4c17db90b480d0da1dcc5",
-      "bytes": 136440
+      "sha256": "5c2ee23e6414a570b5d16ea4078cab726a7d25ed58286b0ea4c58d88ef991e2f",
+      "bytes": 10934
     },
     "assets-display/alternative/scene-FC-far-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "4e040815c624586c2268533bfb4e7794445313d7bfa630c6fcc6088b39f4c698",
-      "bytes": 32886
+      "sha256": "d2c75e670ae92ecb9eebdb32b15cd210ebcb6aec5d6455b063996276e299923b",
+      "bytes": 3846
     },
     "assets-display/alternative/scene-FC-far.webp": {
       "source": "reviewed-export",
-      "sha256": "4e040815c624586c2268533bfb4e7794445313d7bfa630c6fcc6088b39f4c698",
-      "bytes": 32886
+      "sha256": "d2c75e670ae92ecb9eebdb32b15cd210ebcb6aec5d6455b063996276e299923b",
+      "bytes": 3846
     },
     "assets-display/alternative/scene-FC-foreground-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "01bb6743d3c4fb48a9615c4f6ed4200fbdba8008011f3d1c384eafb424136ae5",
-      "bytes": 88876
+      "sha256": "83262716a8f6052afbb70433bb5bd2547cb3607306e518f2153ed79d7351bfe3",
+      "bytes": 7650
     },
     "assets-display/alternative/scene-FC-foreground.webp": {
       "source": "reviewed-export",
-      "sha256": "01bb6743d3c4fb48a9615c4f6ed4200fbdba8008011f3d1c384eafb424136ae5",
-      "bytes": 88876
+      "sha256": "83262716a8f6052afbb70433bb5bd2547cb3607306e518f2153ed79d7351bfe3",
+      "bytes": 7650
     },
     "assets-display/alternative/scene-FC-ground-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "a37ef244d95ae4753b1b9076b13158ff1e36c4102aaf25c3ffd2422cfd291ea4",
-      "bytes": 138492
+      "sha256": "95f0c9166a910d503e0b3f2b9853a7bc277c6c393f288992dce816c222ff26a8",
+      "bytes": 9974
     },
     "assets-display/alternative/scene-FC-ground.webp": {
       "source": "reviewed-export",
-      "sha256": "a37ef244d95ae4753b1b9076b13158ff1e36c4102aaf25c3ffd2422cfd291ea4",
-      "bytes": 138492
+      "sha256": "95f0c9166a910d503e0b3f2b9853a7bc277c6c393f288992dce816c222ff26a8",
+      "bytes": 9974
     },
     "assets-display/alternative/scene-FC-phone-foreground-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "3397e13266393d42520f2f1c5eb2698b448bb4ac15ac2090be9307d7ccdc647e",
-      "bytes": 43094
+      "sha256": "1a5558b002847d3f499e0cff474d8489c7ab7abf26ccadda14894b65839d2586",
+      "bytes": 8062
     },
     "assets-display/alternative/scene-FC-phone-foreground.webp": {
       "source": "reviewed-export",
-      "sha256": "3397e13266393d42520f2f1c5eb2698b448bb4ac15ac2090be9307d7ccdc647e",
-      "bytes": 43094
+      "sha256": "1a5558b002847d3f499e0cff474d8489c7ab7abf26ccadda14894b65839d2586",
+      "bytes": 8062
     },
     "assets-display/alternative/scene-glass-lake-ground-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "260899fdf29538b75c99c065d7c198d9e0e982935447a109841f939719a00695",
-      "bytes": 121174
+      "sha256": "fb9d7663f52e06a0665d1a4399ac373aef1011d5666c2c8cce3f59be93b89748",
+      "bytes": 8242
     },
     "assets-display/alternative/scene-glass-lake-ground.webp": {
       "source": "reviewed-export",
-      "sha256": "260899fdf29538b75c99c065d7c198d9e0e982935447a109841f939719a00695",
-      "bytes": 121174
+      "sha256": "fb9d7663f52e06a0665d1a4399ac373aef1011d5666c2c8cce3f59be93b89748",
+      "bytes": 8242
     },
     "assets-display/alternative/scene-grave-ships-ground-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "608c369a91054ae644b68c5653cca32b835f191f5e0e410cf1a6a544ba8e2cce",
-      "bytes": 101132
+      "sha256": "e80f05083bb17280a92791453a2fad46ed56e66be5264b33582250ca84cf2ac0",
+      "bytes": 7250
     },
     "assets-display/alternative/scene-grave-ships-ground.webp": {
       "source": "reviewed-export",
-      "sha256": "608c369a91054ae644b68c5653cca32b835f191f5e0e410cf1a6a544ba8e2cce",
-      "bytes": 101132
+      "sha256": "e80f05083bb17280a92791453a2fad46ed56e66be5264b33582250ca84cf2ac0",
+      "bytes": 7250
     },
     "assets-display/alternative/scene-HM-ENV-01-landmark-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "12bc07b09a90fea884538d2ac249fc4be1dd129b2281369e20847ab233eed740",
-      "bytes": 138724
+      "sha256": "f5a3bd3f15072d80d4616bb1138edbb68d529663ad38067646782d052a54e083",
+      "bytes": 12548
     },
     "assets-display/alternative/scene-HM-ENV-01-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "12bc07b09a90fea884538d2ac249fc4be1dd129b2281369e20847ab233eed740",
-      "bytes": 138724
+      "sha256": "f5a3bd3f15072d80d4616bb1138edbb68d529663ad38067646782d052a54e083",
+      "bytes": 12548
     },
     "assets-display/alternative/scene-HM-ENV-02-landmark-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "c97b55fe959f391065ecb8aa402f5c9d2e448ef729d8143b87a0d4f96cbcaebd",
-      "bytes": 165058
+      "sha256": "2ab0c5ff0a76fd257fcd7c8e4d4e9498d5d92a09fcbfa6a1cc35d5fe0fcc808e",
+      "bytes": 14158
     },
     "assets-display/alternative/scene-HM-ENV-02-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "c97b55fe959f391065ecb8aa402f5c9d2e448ef729d8143b87a0d4f96cbcaebd",
-      "bytes": 165058
+      "sha256": "2ab0c5ff0a76fd257fcd7c8e4d4e9498d5d92a09fcbfa6a1cc35d5fe0fcc808e",
+      "bytes": 14158
     },
     "assets-display/alternative/scene-HM-ENV-03-landmark-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "e80784c4176e37cba099bb93326c91a5139651e4017658d4bdff8b195862c9e2",
-      "bytes": 140390
+      "sha256": "5b8aabcedf0fe1d1a2dfdaf00e31ae899d4513292c9dee4df69b84c2187f4d3b",
+      "bytes": 11894
     },
     "assets-display/alternative/scene-HM-ENV-03-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "e80784c4176e37cba099bb93326c91a5139651e4017658d4bdff8b195862c9e2",
-      "bytes": 140390
+      "sha256": "5b8aabcedf0fe1d1a2dfdaf00e31ae899d4513292c9dee4df69b84c2187f4d3b",
+      "bytes": 11894
     },
     "assets-display/alternative/scene-HM-ENV-04-landmark-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "8c2cd8f8b439fb9a932a9323041ff18f9ef1f280238eea71e3e899f027596d03",
-      "bytes": 135474
+      "sha256": "a6a9cda0f311c47b163f19d4628ae99065482bca923fd62949b38c13b6ddecf4",
+      "bytes": 10930
     },
     "assets-display/alternative/scene-HM-ENV-04-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "8c2cd8f8b439fb9a932a9323041ff18f9ef1f280238eea71e3e899f027596d03",
-      "bytes": 135474
+      "sha256": "a6a9cda0f311c47b163f19d4628ae99065482bca923fd62949b38c13b6ddecf4",
+      "bytes": 10930
     },
     "assets-display/alternative/scene-HM-far-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "dcb5ffb0dfe85dc0b125a6e6b0edef774c38108f72fa67bf6a33c82004398d04",
-      "bytes": 92034
+      "sha256": "321e012b4abfb4d65c98a9a7486eacf3f7febe0412631ba29a0538509d1af521",
+      "bytes": 7002
     },
     "assets-display/alternative/scene-HM-far.webp": {
       "source": "reviewed-export",
-      "sha256": "dcb5ffb0dfe85dc0b125a6e6b0edef774c38108f72fa67bf6a33c82004398d04",
-      "bytes": 92034
+      "sha256": "321e012b4abfb4d65c98a9a7486eacf3f7febe0412631ba29a0538509d1af521",
+      "bytes": 7002
     },
     "assets-display/alternative/scene-HM-foreground-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "ce469f629ada316cd1b97b1d8d10775fa1845ee8136ff2a9e2b7314fc5478f93",
-      "bytes": 103482
+      "sha256": "9276bc987948c96ac18b64ed319de8bd03966f0b716020ae5e61900e0b974f55",
+      "bytes": 8958
     },
     "assets-display/alternative/scene-HM-foreground.webp": {
       "source": "reviewed-export",
-      "sha256": "ce469f629ada316cd1b97b1d8d10775fa1845ee8136ff2a9e2b7314fc5478f93",
-      "bytes": 103482
+      "sha256": "9276bc987948c96ac18b64ed319de8bd03966f0b716020ae5e61900e0b974f55",
+      "bytes": 8958
     },
     "assets-display/alternative/scene-HM-ground-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "445cb1e698f32f6798466f5f151d838ccc5d8402185aa01f6c65ca66f9426c78",
-      "bytes": 112452
+      "sha256": "b8ec95c5d8b14716d6edd858ab51e022f3084fb0c247fa78de44ff5b54993cac",
+      "bytes": 8142
     },
     "assets-display/alternative/scene-HM-ground.webp": {
       "source": "reviewed-export",
-      "sha256": "445cb1e698f32f6798466f5f151d838ccc5d8402185aa01f6c65ca66f9426c78",
-      "bytes": 112452
+      "sha256": "b8ec95c5d8b14716d6edd858ab51e022f3084fb0c247fa78de44ff5b54993cac",
+      "bytes": 8142
     },
     "assets-display/alternative/scene-HM-phone-foreground-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "088f05406ee82fbdcbb8040e02996692f796a0a95aa0d7d97c72658b7e88eda4",
-      "bytes": 61554
+      "sha256": "30dda5df50053fc3557c1fd1ec59681165ced05042db77a2ee4a06537562c60d",
+      "bytes": 11098
     },
     "assets-display/alternative/scene-HM-phone-foreground.webp": {
       "source": "reviewed-export",
-      "sha256": "088f05406ee82fbdcbb8040e02996692f796a0a95aa0d7d97c72658b7e88eda4",
-      "bytes": 61554
+      "sha256": "30dda5df50053fc3557c1fd1ec59681165ced05042db77a2ee4a06537562c60d",
+      "bytes": 11098
     },
     "assets-display/alternative/scene-hollow-night-far-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "efbb28c7dc84b3334a1793a110479bf7243ec88259a77de19b312e053b9c17ca",
-      "bytes": 33236
+      "sha256": "68cafc6e4e927bd3a45e48984d4770b1e0ed4d791b49c343b5235ebeb5194e86",
+      "bytes": 3500
     },
     "assets-display/alternative/scene-hollow-night-far.webp": {
       "source": "reviewed-export",
-      "sha256": "efbb28c7dc84b3334a1793a110479bf7243ec88259a77de19b312e053b9c17ca",
-      "bytes": 33236
+      "sha256": "68cafc6e4e927bd3a45e48984d4770b1e0ed4d791b49c343b5235ebeb5194e86",
+      "bytes": 3500
     },
     "assets-display/alternative/scene-hollow-weald-1-landmark-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "93868f1d4e7b037749a333689b328d89ec31bb77695c6b5822519094fb31bccf",
-      "bytes": 160642
+      "sha256": "23e7cfe50ac10587800c7e1e24b8dd274c09b12e947fc19237235a0f18d77e55",
+      "bytes": 13522
     },
     "assets-display/alternative/scene-hollow-weald-1-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "93868f1d4e7b037749a333689b328d89ec31bb77695c6b5822519094fb31bccf",
-      "bytes": 160642
+      "sha256": "23e7cfe50ac10587800c7e1e24b8dd274c09b12e947fc19237235a0f18d77e55",
+      "bytes": 13522
     },
     "assets-display/alternative/scene-hollow-weald-2-landmark-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "4e6af11f5caf715e89233f870fb97d39a889aefb653e1091779d4f1f6a15c2ce",
-      "bytes": 103282
+      "sha256": "29a33f9e90c41d939727cacb43dad7eac7ac1de56e3b8a2ff1167e72ba4dc78c",
+      "bytes": 9336
     },
     "assets-display/alternative/scene-hollow-weald-2-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "4e6af11f5caf715e89233f870fb97d39a889aefb653e1091779d4f1f6a15c2ce",
-      "bytes": 103282
+      "sha256": "29a33f9e90c41d939727cacb43dad7eac7ac1de56e3b8a2ff1167e72ba4dc78c",
+      "bytes": 9336
     },
     "assets-display/alternative/scene-hollow-weald-3-landmark-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "28df1be1a1466988a4bd2a3eb963566200f86798038a3788cd36bb5562664a3d",
-      "bytes": 135112
+      "sha256": "5d8ceacd65dabed2b04ae4edf4822a00c0d85b6cf50de71749130cb3904c8937",
+      "bytes": 11490
     },
     "assets-display/alternative/scene-hollow-weald-3-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "28df1be1a1466988a4bd2a3eb963566200f86798038a3788cd36bb5562664a3d",
-      "bytes": 135112
+      "sha256": "5d8ceacd65dabed2b04ae4edf4822a00c0d85b6cf50de71749130cb3904c8937",
+      "bytes": 11490
     },
     "assets-display/alternative/scene-hollow-weald-4-landmark-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "3cf5824c175608371e07b1594ccecacb2a9599f6dd8da8a9f721812b3039e966",
-      "bytes": 126820
+      "sha256": "9df96c8f7f9ca58eab32434c8f883364a724cbf2fda4e39a01c546752ca31c47",
+      "bytes": 10608
     },
     "assets-display/alternative/scene-hollow-weald-4-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "3cf5824c175608371e07b1594ccecacb2a9599f6dd8da8a9f721812b3039e966",
-      "bytes": 126820
+      "sha256": "9df96c8f7f9ca58eab32434c8f883364a724cbf2fda4e39a01c546752ca31c47",
+      "bytes": 10608
     },
     "assets-display/alternative/scene-hollow-weald-far-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "66c87ad0969b97f7db2a8ef149d5e7f605e918cf476d7c7e2b7316ad83d5d527",
-      "bytes": 31670
+      "sha256": "d65e6a99832f884f7bf1744701604a30a9f0dd0b3a8618dd0b863b8c183cda98",
+      "bytes": 2802
     },
     "assets-display/alternative/scene-hollow-weald-far.webp": {
       "source": "reviewed-export",
-      "sha256": "66c87ad0969b97f7db2a8ef149d5e7f605e918cf476d7c7e2b7316ad83d5d527",
-      "bytes": 31670
+      "sha256": "d65e6a99832f884f7bf1744701604a30a9f0dd0b3a8618dd0b863b8c183cda98",
+      "bytes": 2802
     },
     "assets-display/alternative/scene-hollow-weald-foreground-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "f431770ec2a60c6c0addccd63612fca2edbeaba91b70978fb586c529c39faea6",
-      "bytes": 138988
+      "sha256": "aec5c50c51dc3cf265942db18121fb5fde5ad6a6b12106530cd726998a77372a",
+      "bytes": 8464
     },
     "assets-display/alternative/scene-hollow-weald-foreground.webp": {
       "source": "reviewed-export",
-      "sha256": "f431770ec2a60c6c0addccd63612fca2edbeaba91b70978fb586c529c39faea6",
-      "bytes": 138988
+      "sha256": "aec5c50c51dc3cf265942db18121fb5fde5ad6a6b12106530cd726998a77372a",
+      "bytes": 8464
     },
     "assets-display/alternative/scene-hollow-weald-ground-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "50c42a74b6bcea4c4731eec00cde6b610196374563be493ea14da137a0dc34f0",
-      "bytes": 139846
+      "sha256": "954ef39b6d87f8c57a6cf55489ea30b93a34846bb4ca7c0a47b4f37ad4ce1038",
+      "bytes": 7898
     },
     "assets-display/alternative/scene-hollow-weald-ground.webp": {
       "source": "reviewed-export",
-      "sha256": "50c42a74b6bcea4c4731eec00cde6b610196374563be493ea14da137a0dc34f0",
-      "bytes": 139846
+      "sha256": "954ef39b6d87f8c57a6cf55489ea30b93a34846bb4ca7c0a47b4f37ad4ce1038",
+      "bytes": 7898
     },
     "assets-display/alternative/scene-hollow-weald-phone-foreground-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "6ec01506ed43f3823f143bdef2731adbfdfb57e1bc7b50cae8691d948abf8836",
-      "bytes": 57360
+      "sha256": "01c952164b5beb942cdff682635751f306057789fb4781c2c39faabb9700e688",
+      "bytes": 10332
     },
     "assets-display/alternative/scene-hollow-weald-phone-foreground.webp": {
       "source": "reviewed-export",
-      "sha256": "6ec01506ed43f3823f143bdef2731adbfdfb57e1bc7b50cae8691d948abf8836",
-      "bytes": 57360
+      "sha256": "01c952164b5beb942cdff682635751f306057789fb4781c2c39faabb9700e688",
+      "bytes": 10332
     },
     "assets-display/alternative/scene-pale-marches-1-landmark-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "12ff63b430171f5b0975227db8ee6e613231a19f39e77a240e24cdb4af7da64b",
-      "bytes": 112864
+      "sha256": "a25733ff3eca9b033a6bb61d7a824f46bfa8381716facc1d71d87bb61b375ef5",
+      "bytes": 9126
     },
     "assets-display/alternative/scene-pale-marches-1-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "12ff63b430171f5b0975227db8ee6e613231a19f39e77a240e24cdb4af7da64b",
-      "bytes": 112864
+      "sha256": "a25733ff3eca9b033a6bb61d7a824f46bfa8381716facc1d71d87bb61b375ef5",
+      "bytes": 9126
     },
     "assets-display/alternative/scene-pale-marches-2-landmark-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "32e442e288ace3e2224b3daf3f033d2b6057c0da0e3ce98b1896fa651f84d564",
-      "bytes": 132154
+      "sha256": "5ac0b277f57c9b9693d4edaee8ab7e3ad7f5ac4afd3d0dff29484309e3b74b4d",
+      "bytes": 11728
     },
     "assets-display/alternative/scene-pale-marches-2-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "32e442e288ace3e2224b3daf3f033d2b6057c0da0e3ce98b1896fa651f84d564",
-      "bytes": 132154
+      "sha256": "5ac0b277f57c9b9693d4edaee8ab7e3ad7f5ac4afd3d0dff29484309e3b74b4d",
+      "bytes": 11728
     },
     "assets-display/alternative/scene-pale-marches-3-landmark-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "df55aad8371eb3dc7eb68bea2db83280dd7ac89e731d6f3161b99be255342358",
-      "bytes": 142792
+      "sha256": "dc3db5c97a1f9b1f2fa46d0b523059280b99786e70b9a6e4ba579c863f66aa52",
+      "bytes": 12680
     },
     "assets-display/alternative/scene-pale-marches-3-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "df55aad8371eb3dc7eb68bea2db83280dd7ac89e731d6f3161b99be255342358",
-      "bytes": 142792
+      "sha256": "dc3db5c97a1f9b1f2fa46d0b523059280b99786e70b9a6e4ba579c863f66aa52",
+      "bytes": 12680
     },
     "assets-display/alternative/scene-pale-marches-4-landmark-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "353da5ce44f053d69e1bc014a9ddc9e0a7746e0e9c8a88d12f026b2b839930b5",
-      "bytes": 113700
+      "sha256": "cfcb57ea58416e79c7341178932bb45f38d6702ace0455d6a1365a2fe89b1112",
+      "bytes": 10266
     },
     "assets-display/alternative/scene-pale-marches-4-landmark.webp": {
       "source": "reviewed-export",
-      "sha256": "353da5ce44f053d69e1bc014a9ddc9e0a7746e0e9c8a88d12f026b2b839930b5",
-      "bytes": 113700
+      "sha256": "cfcb57ea58416e79c7341178932bb45f38d6702ace0455d6a1365a2fe89b1112",
+      "bytes": 10266
     },
     "assets-display/alternative/scene-pale-marches-far-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "222a581eeb0bc8641bb4b0b2c7c4c38dbce73d4c354c769acb23d871da5c77e9",
-      "bytes": 41538
+      "sha256": "c714091df19dfe2845dc6a4e038afbd468a53e78936209156971b1d1b5af02d6",
+      "bytes": 4366
     },
     "assets-display/alternative/scene-pale-marches-far.webp": {
       "source": "reviewed-export",
-      "sha256": "222a581eeb0bc8641bb4b0b2c7c4c38dbce73d4c354c769acb23d871da5c77e9",
-      "bytes": 41538
+      "sha256": "c714091df19dfe2845dc6a4e038afbd468a53e78936209156971b1d1b5af02d6",
+      "bytes": 4366
     },
     "assets-display/alternative/scene-pale-marches-foreground-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "22dada40d6f0a096e8227fe8afb27d48ccddfe2f3f5d855fc44abad2187c2c6e",
-      "bytes": 129774
+      "sha256": "d540f5bd166c741117ce5515620439e8c095ea14600f4623cbdf8ab1f6bcf036",
+      "bytes": 11182
     },
     "assets-display/alternative/scene-pale-marches-foreground.webp": {
       "source": "reviewed-export",
-      "sha256": "22dada40d6f0a096e8227fe8afb27d48ccddfe2f3f5d855fc44abad2187c2c6e",
-      "bytes": 129774
+      "sha256": "d540f5bd166c741117ce5515620439e8c095ea14600f4623cbdf8ab1f6bcf036",
+      "bytes": 11182
     },
     "assets-display/alternative/scene-pale-marches-ground-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "c89440a4e1c96c6f8872f8d803bdb26bb2e491e42dcbeb4a00e9ee3f120891c5",
-      "bytes": 130092
+      "sha256": "e9e83de57244ac25116da7741a077585606d4daf33bc14d2620d067d46447d20",
+      "bytes": 10190
     },
     "assets-display/alternative/scene-pale-marches-ground.webp": {
       "source": "reviewed-export",
-      "sha256": "c89440a4e1c96c6f8872f8d803bdb26bb2e491e42dcbeb4a00e9ee3f120891c5",
-      "bytes": 130092
+      "sha256": "e9e83de57244ac25116da7741a077585606d4daf33bc14d2620d067d46447d20",
+      "bytes": 10190
     },
     "assets-display/alternative/scene-pale-marches-phone-foreground-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "782bec9946e3047fc359dc9d309ae59284528fc6f9d15df0e45ad9aa49faeb62",
-      "bytes": 61762
+      "sha256": "0775454c0b6eddc5c551dbf143d4f34f3c6cf52eada89e2a14cefc440c922c86",
+      "bytes": 11346
     },
     "assets-display/alternative/scene-pale-marches-phone-foreground.webp": {
       "source": "reviewed-export",
-      "sha256": "782bec9946e3047fc359dc9d309ae59284528fc6f9d15df0e45ad9aa49faeb62",
-      "bytes": 61762
+      "sha256": "0775454c0b6eddc5c551dbf143d4f34f3c6cf52eada89e2a14cefc440c922c86",
+      "bytes": 11346
     },
     "assets-display/alternative/scene-starwatch-far-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "c9f95a42e5ddb78f87874d675607718b8aaaf9156d151b118faebb2e91712edb",
-      "bytes": 53374
+      "sha256": "add5c666c1606aa795336f3139cbf1b8e2d9c802b07c6a92a3eecdb8406fd34f",
+      "bytes": 4014
     },
     "assets-display/alternative/scene-starwatch-far.webp": {
       "source": "reviewed-export",
-      "sha256": "c9f95a42e5ddb78f87874d675607718b8aaaf9156d151b118faebb2e91712edb",
-      "bytes": 53374
+      "sha256": "add5c666c1606aa795336f3139cbf1b8e2d9c802b07c6a92a3eecdb8406fd34f",
+      "bytes": 4014
     },
     "assets-display/alternative/scene-undercroft-far-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "f859588245284352c2ff08baaa42b19b92f554f69f796b84b655d6e69be79e0e",
-      "bytes": 23446
+      "sha256": "264d39171ac42f737fd91c2d6c530c70e0ecc56c19e2ee8b4299b51adcf9461e",
+      "bytes": 1886
     },
     "assets-display/alternative/scene-undercroft-far.webp": {
       "source": "reviewed-export",
-      "sha256": "f859588245284352c2ff08baaa42b19b92f554f69f796b84b655d6e69be79e0e",
-      "bytes": 23446
+      "sha256": "264d39171ac42f737fd91c2d6c530c70e0ecc56c19e2ee8b4299b51adcf9461e",
+      "bytes": 1886
     },
     "assets-display/alternative/stances/herald/casting-mobile.webp": {
       "source": "reviewed-export",
@@ -2061,8 +2111,8 @@
     },
     "assets-display/alternative/stances/herald/casting.webp": {
       "source": "reviewed-export",
-      "sha256": "6085fd6b2d5e050ee73c274ef8f01e6529b640cad752c4428de356d8610e2691",
-      "bytes": 64790
+      "sha256": "9e07fb484c03998ce69ebabb3bb5f60ca47c9f6ea4d4224e11359a0e0491682a",
+      "bytes": 18784
     },
     "assets-display/alternative/stances/herald/defensive-mobile.webp": {
       "source": "reviewed-export",
@@ -2071,8 +2121,8 @@
     },
     "assets-display/alternative/stances/herald/defensive.webp": {
       "source": "reviewed-export",
-      "sha256": "1ec67936d9187df8963294d058141025234881670ab3f694fe9abb12876c7ce4",
-      "bytes": 55262
+      "sha256": "90550d3667cbfbf786054230e39449c030aa68b1f4c5f29930837de6c7d20737",
+      "bytes": 15082
     },
     "assets-display/alternative/stances/herald/offensive-mobile.webp": {
       "source": "reviewed-export",
@@ -2081,8 +2131,8 @@
     },
     "assets-display/alternative/stances/herald/offensive.webp": {
       "source": "reviewed-export",
-      "sha256": "642ad3ed8784c7b67d1e89211a6a761c909d9d269b536152d38eb35d504751fc",
-      "bytes": 57364
+      "sha256": "8bc808afae8a43deb4bbec908c02ad37bc9ddf6462755332399df81d88564a0f",
+      "bytes": 16094
     },
     "assets-display/alternative/stances/reaver/casting-mobile.webp": {
       "source": "reviewed-export",
@@ -2091,8 +2141,8 @@
     },
     "assets-display/alternative/stances/reaver/casting.webp": {
       "source": "reviewed-export",
-      "sha256": "af3e75e953f0d394bd8a8a205d712cd85180bc13e51e4f2b101702b83318d742",
-      "bytes": 53430
+      "sha256": "9a6b8295963ff65e06f525cd81d83cb306d92da9962f07d841caa3c7c72d4b41",
+      "bytes": 14826
     },
     "assets-display/alternative/stances/reaver/defensive-mobile.webp": {
       "source": "reviewed-export",
@@ -2101,8 +2151,8 @@
     },
     "assets-display/alternative/stances/reaver/defensive.webp": {
       "source": "reviewed-export",
-      "sha256": "d544d5694d5d8a62ab8235b2c119b7e1f1157e8765d8c9d4c973dadd839dcb8a",
-      "bytes": 33662
+      "sha256": "06cb45583fdc525df8e15d5c7e887794e31d03cb0ba5ba6b1b9e0005cde936c1",
+      "bytes": 10172
     },
     "assets-display/alternative/stances/reaver/offensive-mobile.webp": {
       "source": "reviewed-export",
@@ -2111,8 +2161,8 @@
     },
     "assets-display/alternative/stances/reaver/offensive.webp": {
       "source": "reviewed-export",
-      "sha256": "d6ea45ecf1ef9019c5562f20371abaff35e6882932cce235f1674b550b05389e",
-      "bytes": 38240
+      "sha256": "7ab6090bdab58ffed228cad90f466189a147ca44d810d37c2b80b7873f9de832",
+      "bytes": 11230
     },
     "assets-display/alternative/stances/rogue/casting-mobile.webp": {
       "source": "reviewed-export",
@@ -2121,8 +2171,8 @@
     },
     "assets-display/alternative/stances/rogue/casting.webp": {
       "source": "reviewed-export",
-      "sha256": "c77fb4589d559b630cad4aea54ee2cbbe8d393c24965eec0057adcc2b54dbbc8",
-      "bytes": 43756
+      "sha256": "6cce8547c352aa76d135c88bc2663d197a340d4e4f25f166227e620ffac02ad2",
+      "bytes": 11938
     },
     "assets-display/alternative/stances/rogue/defensive-mobile.webp": {
       "source": "reviewed-export",
@@ -2131,8 +2181,8 @@
     },
     "assets-display/alternative/stances/rogue/defensive.webp": {
       "source": "reviewed-export",
-      "sha256": "a326fdc07dd649377bdf140772473949aa60e625d320edda02e13e7abda6e562",
-      "bytes": 70248
+      "sha256": "301fab06270f119fe2fea2227e3ad9ebfaa7ab672b327413446281bb19d6644a",
+      "bytes": 19458
     },
     "assets-display/alternative/stances/rogue/offensive-mobile.webp": {
       "source": "reviewed-export",
@@ -2141,8 +2191,8 @@
     },
     "assets-display/alternative/stances/rogue/offensive.webp": {
       "source": "reviewed-export",
-      "sha256": "005a0e0f6ef9c1f39aaf6a31c959770c39070b2642857357a6644b26718ce153",
-      "bytes": 44258
+      "sha256": "3d4e79805e4afc3c23452fda14ef5e31c16d12fe4ead8e14c27e41cce6586657",
+      "bytes": 12386
     },
     "assets-display/alternative/stances/starseer/casting-mobile.webp": {
       "source": "reviewed-export",
@@ -2151,8 +2201,8 @@
     },
     "assets-display/alternative/stances/starseer/casting.webp": {
       "source": "reviewed-export",
-      "sha256": "2210af298280fe4d4782685966242a6b6a3cf766e65ae620af0b43e6462191f0",
-      "bytes": 51184
+      "sha256": "088cf317a421d51936625df8277cc21ffbe58f39b863d9dd9d02c9ef087c10ed",
+      "bytes": 13916
     },
     "assets-display/alternative/stances/starseer/defensive-mobile.webp": {
       "source": "reviewed-export",
@@ -2161,8 +2211,8 @@
     },
     "assets-display/alternative/stances/starseer/defensive.webp": {
       "source": "reviewed-export",
-      "sha256": "f3af722405890ece52159ec2af3b8caadd61270062f76985bf48059eec4b876c",
-      "bytes": 62210
+      "sha256": "cc022196050cf017c7663ace9dd5cdd13f383c0bdca616320ab575db801898a8",
+      "bytes": 16668
     },
     "assets-display/alternative/stances/starseer/offensive-mobile.webp": {
       "source": "reviewed-export",
@@ -2171,168 +2221,168 @@
     },
     "assets-display/alternative/stances/starseer/offensive.webp": {
       "source": "reviewed-export",
-      "sha256": "9271db910ee7485b2f613e0aa8af45ec75364da3e2936f0db585456ada0fc39f",
-      "bytes": 61334
+      "sha256": "ed77fe06fe5c8624410005f9cd2aae73afa9a26be21794383a2bc8580ddfdaf0",
+      "bytes": 16488
     },
     "assets-display/alternative/starReader-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "0f65152b523af3d5a1afa862974d67b18ad99ce4a4948abb664bc45ba0a15475",
-      "bytes": 9526
+      "sha256": "ecaca4f69c7120c527ee08a30cd8f9e4d763f3cb5e4a64635841d3b4b6bdc4a9",
+      "bytes": 3554
     },
     "assets-display/alternative/starReader.webp": {
       "source": "reviewed-export",
-      "sha256": "0f65152b523af3d5a1afa862974d67b18ad99ce4a4948abb664bc45ba0a15475",
-      "bytes": 9526
+      "sha256": "ecaca4f69c7120c527ee08a30cd8f9e4d763f3cb5e4a64635841d3b4b6bdc4a9",
+      "bytes": 3554
     },
     "assets-display/alternative/starseer-astral-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "5c7e7965cb7a32186693ede83f9a12cf3f151d0b240ba2637ec42a68bb798c17",
-      "bytes": 12266
+      "sha256": "30c557cddb4e830f3872a0e4df585ac2913d814e7ea77e42705d62e846e665f8",
+      "bytes": 4634
     },
     "assets-display/alternative/starseer-astral.webp": {
       "source": "reviewed-export",
-      "sha256": "5c7e7965cb7a32186693ede83f9a12cf3f151d0b240ba2637ec42a68bb798c17",
-      "bytes": 12266
+      "sha256": "30c557cddb4e830f3872a0e4df585ac2913d814e7ea77e42705d62e846e665f8",
+      "bytes": 4634
     },
     "assets-display/alternative/starseer-default-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "9cbdcb92b707372573664bb3791fb78500f748b830ce6250d2da27cc6f9c1e6e",
-      "bytes": 11330
+      "sha256": "1bece783fe2d712fd33b72c465342231ae666f07cfdc71bdab85d70e5da5fb12",
+      "bytes": 4362
     },
     "assets-display/alternative/starseer-default.webp": {
       "source": "reviewed-export",
-      "sha256": "9cbdcb92b707372573664bb3791fb78500f748b830ce6250d2da27cc6f9c1e6e",
-      "bytes": 11330
+      "sha256": "1bece783fe2d712fd33b72c465342231ae666f07cfdc71bdab85d70e5da5fb12",
+      "bytes": 4362
     },
     "assets-display/alternative/starseer-eclipse-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "58c3cb781f77dc8a9976a75ecc53357b1283dc7c79a5f1c84377b829c2841641",
-      "bytes": 12360
+      "sha256": "6390d23ff8db3da6463c902c93fd3c059ec90ad3ff17513986e861b56720adcb",
+      "bytes": 4796
     },
     "assets-display/alternative/starseer-eclipse.webp": {
       "source": "reviewed-export",
-      "sha256": "58c3cb781f77dc8a9976a75ecc53357b1283dc7c79a5f1c84377b829c2841641",
-      "bytes": 12360
+      "sha256": "6390d23ff8db3da6463c902c93fd3c059ec90ad3ff17513986e861b56720adcb",
+      "bytes": 4796
     },
     "assets-display/alternative/starseer-rimeweave-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "a49ea47d2e365a129d363a7ef610a48a17da2a2f090e5197152e0b2b17479f68",
-      "bytes": 13088
+      "sha256": "791c200dd8d84bccdfd7e3dafb8e0f29c062b4957c10bbeadfc727d5912f6b85",
+      "bytes": 5124
     },
     "assets-display/alternative/starseer-rimeweave.webp": {
       "source": "reviewed-export",
-      "sha256": "a49ea47d2e365a129d363a7ef610a48a17da2a2f090e5197152e0b2b17479f68",
-      "bytes": 13088
+      "sha256": "791c200dd8d84bccdfd7e3dafb8e0f29c062b4957c10bbeadfc727d5912f6b85",
+      "bytes": 5124
     },
     "assets-display/alternative/starseer-starlit-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "78b053c4b1b5a5f812ce0647f58daa2758a025d3431f707cbb330c2b18a613a3",
-      "bytes": 12480
+      "sha256": "4479631c50e3877e1fc0a007a47a016a16edd71488a7df8c87f4f3ea533092be",
+      "bytes": 4752
     },
     "assets-display/alternative/starseer-starlit.webp": {
       "source": "reviewed-export",
-      "sha256": "78b053c4b1b5a5f812ce0647f58daa2758a025d3431f707cbb330c2b18a613a3",
-      "bytes": 12480
+      "sha256": "4479631c50e3877e1fc0a007a47a016a16edd71488a7df8c87f4f3ea533092be",
+      "bytes": 4752
     },
     "assets-display/alternative/stitchCrab-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "1bba05cd91b856c894a933d8308db70083bb442b5e4b64c9d249dfd447bcfdbf",
-      "bytes": 9498
+      "sha256": "e517ffb54ec4c2be12be4ec39d4f0dfd25fcc86f6b56b36178de25ebcb946862",
+      "bytes": 3818
     },
     "assets-display/alternative/stitchCrab.webp": {
       "source": "reviewed-export",
-      "sha256": "1bba05cd91b856c894a933d8308db70083bb442b5e4b64c9d249dfd447bcfdbf",
-      "bytes": 9498
+      "sha256": "e517ffb54ec4c2be12be4ec39d4f0dfd25fcc86f6b56b36178de25ebcb946862",
+      "bytes": 3818
     },
     "assets-display/alternative/stitchedHound-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba275cc",
-      "bytes": 9908
+      "sha256": "31ac0b8887791c11e8f6417fd7dee722322ae7060e2c58d9e5baf5d8ce420828",
+      "bytes": 3920
     },
     "assets-display/alternative/stitchedHound.webp": {
       "source": "reviewed-export",
-      "sha256": "2dbf079119f39a4db67f98a786e19538341d0db0400a76222764029e0ba275cc",
-      "bytes": 9908
+      "sha256": "31ac0b8887791c11e8f6417fd7dee722322ae7060e2c58d9e5baf5d8ce420828",
+      "bytes": 3920
     },
     "assets-display/alternative/stitchedKing-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "01b996c92c60e77afbfc1c485eb3f1cd2dc77abc273d94cbf2acb448228ff7d2",
-      "bytes": 8584
+      "sha256": "ddb7ef0ca0cd059b99bcfc02ce0be943bf6ec1b69ab0be82201fd761e0b6970e",
+      "bytes": 3240
     },
     "assets-display/alternative/stitchedKing.webp": {
       "source": "reviewed-export",
-      "sha256": "01b996c92c60e77afbfc1c485eb3f1cd2dc77abc273d94cbf2acb448228ff7d2",
-      "bytes": 8584
+      "sha256": "ddb7ef0ca0cd059b99bcfc02ce0be943bf6ec1b69ab0be82201fd761e0b6970e",
+      "bytes": 3240
     },
     "assets-display/alternative/swordSaint-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "4d4ad0d103221c0acb04b0e69ce17e2fde9014ac592966542cffc07544333209",
-      "bytes": 9242
+      "sha256": "fb76aaee724ad37044f0d3bfec40243c4830eeb58bcec6a33fa1221f3ba101f4",
+      "bytes": 3502
     },
     "assets-display/alternative/swordSaint.webp": {
       "source": "reviewed-export",
-      "sha256": "4d4ad0d103221c0acb04b0e69ce17e2fde9014ac592966542cffc07544333209",
-      "bytes": 9242
+      "sha256": "fb76aaee724ad37044f0d3bfec40243c4830eeb58bcec6a33fa1221f3ba101f4",
+      "bytes": 3502
     },
     "assets-display/alternative/theNameless-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "a0925ed73e9156706f8a2c7fca53b1df41a949633a10312da508be15ac5ef857",
-      "bytes": 10170
+      "sha256": "53f0123c84e77c5ef23a92b75805acecc38f5cf2e3552c310f3371695bd93330",
+      "bytes": 3950
     },
     "assets-display/alternative/theNameless.webp": {
       "source": "reviewed-export",
-      "sha256": "a0925ed73e9156706f8a2c7fca53b1df41a949633a10312da508be15ac5ef857",
-      "bytes": 10170
+      "sha256": "53f0123c84e77c5ef23a92b75805acecc38f5cf2e3552c310f3371695bd93330",
+      "bytes": 3950
     },
     "assets-display/alternative/thornMatriarch-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "e63d6820c44a15acb60bb10cb192a6760d33bd96f43acc0e9f60abde24c353fa",
-      "bytes": 8842
+      "sha256": "0b3309757336d08052ab4c6379a88757685923650478b099a01db3f77a615724",
+      "bytes": 3356
     },
     "assets-display/alternative/thornMatriarch.webp": {
       "source": "reviewed-export",
-      "sha256": "e63d6820c44a15acb60bb10cb192a6760d33bd96f43acc0e9f60abde24c353fa",
-      "bytes": 8842
+      "sha256": "0b3309757336d08052ab4c6379a88757685923650478b099a01db3f77a615724",
+      "bytes": 3356
     },
     "assets-display/alternative/valkyrieShade-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "c3f06c3ede511a587484d180c1bdf9d7a85dfb5e03524ee98f900a0c5a95f5a3",
-      "bytes": 9126
+      "sha256": "643061e0fd1d2e091473ec7d8d1c894d745ef2e338a830afadce833850d12b95",
+      "bytes": 3640
     },
     "assets-display/alternative/valkyrieShade.webp": {
       "source": "reviewed-export",
-      "sha256": "c3f06c3ede511a587484d180c1bdf9d7a85dfb5e03524ee98f900a0c5a95f5a3",
-      "bytes": 9126
+      "sha256": "643061e0fd1d2e091473ec7d8d1c894d745ef2e338a830afadce833850d12b95",
+      "bytes": 3640
     },
     "assets-display/alternative/wanderingSoldier-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "aa45b02f734d793ef71a883c99cceda8a306c826c2d5ad1cfa07ade16a9645e7",
-      "bytes": 6048
+      "sha256": "dd141ae459d9f3d2fc938d2deced5eb475a2d302f47de3e1102b495a520ce0fe",
+      "bytes": 2436
     },
     "assets-display/alternative/wanderingSoldier.webp": {
       "source": "reviewed-export",
-      "sha256": "aa45b02f734d793ef71a883c99cceda8a306c826c2d5ad1cfa07ade16a9645e7",
-      "bytes": 6048
+      "sha256": "dd141ae459d9f3d2fc938d2deced5eb475a2d302f47de3e1102b495a520ce0fe",
+      "bytes": 2436
     },
     "assets-display/alternative/wyrmAspirant-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "0b822c2201517ab84664dc216e553b0cde0a2c2a2a15f9f516bc7b28bd288905",
-      "bytes": 8072
+      "sha256": "f019203be0f5b4b36e9505ea757423ad359c4b47a7e720320c3b3c0fcb574908",
+      "bytes": 3152
     },
     "assets-display/alternative/wyrmAspirant.webp": {
       "source": "reviewed-export",
-      "sha256": "0b822c2201517ab84664dc216e553b0cde0a2c2a2a15f9f516bc7b28bd288905",
-      "bytes": 8072
+      "sha256": "f019203be0f5b4b36e9505ea757423ad359c4b47a7e720320c3b3c0fcb574908",
+      "bytes": 3152
     },
     "assets-display/alternative/wyrmLord-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "43b26f9cb456f4cb7aedda0f9af95d22267adffe9b48ccb365683c521055c7a0",
-      "bytes": 11642
+      "sha256": "fa3d0d4ea1c7f1a5cdccb70c6e3678db128c9b4587721d1cbdb21f24e1bc98bd",
+      "bytes": 4304
     },
     "assets-display/alternative/wyrmLord.webp": {
       "source": "reviewed-export",
-      "sha256": "43b26f9cb456f4cb7aedda0f9af95d22267adffe9b48ccb365683c521055c7a0",
-      "bytes": 11642
+      "sha256": "fa3d0d4ea1c7f1a5cdccb70c6e3678db128c9b4587721d1cbdb21f24e1bc98bd",
+      "bytes": 4304
     }
   }
 }

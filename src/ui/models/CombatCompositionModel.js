@@ -13,7 +13,7 @@ export function combatArtworkKey({ width, height, zoom, wide = false, presentati
   return JSON.stringify([width, height, zoom, wide, presentation, appearance, handAnchor, actors.map(actor => [
     actor.slot.id, actor.slot.cell, actor.slot.x, actor.slot.ground, actor.slot.fitGround,
     actor.slot.depth, actor.slot.artWidth, actor.ratio, actor.multiplier, actor.art,
-    actor.boxHeight, actor.visibleHeight, actor.visibleWidth, actor.footOffset,
+    actor.boxHeight, actor.visibleHeight, actor.visibleWidth, actor.edgeWidth, actor.footOffset,
   ])], (_key, value) => typeof value === 'number' ? Math.round(value * 1000) / 1000 : value);
 }
 
@@ -98,7 +98,9 @@ export function alternativeCombatComposition(options) {
 function perspectiveGridComposition({ sizes, actors, width }) {
   return sizes.map(size => {
     const actor = actors.find(actor => actor.slot.id === size.id);
-    const halfWidth = actor.visibleWidth * size.scale / 2;
+    // The selected pilot's wide blade/cape uses the existing screen-edge clamp.
+    // Keep idle fitting, uniform pose scale, and domain cell addresses intact.
+    const halfWidth = Math.max(actor.visibleWidth, actor.edgeWidth || 0) * size.scale / 2;
     const x = Math.max(halfWidth + 6, Math.min(width - halfWidth - 6, actor.slot.x));
     return { ...size, x, ground: actor.slot.ground };
   });
