@@ -212,8 +212,9 @@ export function coopCallouts(events = []) {
 /**
  * Which paced timeline a combat snapshot's receipts play through, or null for
  * a plain render. 'enemy': an enemy acts or a counter fires (the Enemy Turn
- * ribbon shows). 'player': a seat's own attack lands (damageDealt with isAttack,
- * or impactDealt, from a player source), so it plays stance → swing → reaction →
+ * ribbon shows). 'player': a seat's own attack (damageDealt with isAttack or
+ * impactDealt from a player source, or a seat's attack card played: a fully
+ * avoided swing, dodged, evaded, decoyed or invulnerable, lands neither), so it plays stance → swing → reaction →
  * numbers → bars, as solo does (SPEC §7.4, beatOrder 'sequential'). A snapshot
  * with both goes through the enemy timeline once.
  */
@@ -223,7 +224,8 @@ export function coopTimelineRoute(events = [], seatIds = []) {
   if (list.some(event => ENEMY_TIMELINE_EVENTS.includes(event.type))) return 'enemy';
   const fromPlayer = event => !!event.sourcePlayerId || event.sourceId === 'player' || seatIds.includes(event.sourceId);
   const attack = event => (event.type === 'damageDealt' && event.isAttack) || event.type === 'impactDealt';
-  return list.some(event => attack(event) && fromPlayer(event)) ? 'player' : null;
+  const attackCard = event => event.type === 'cardPlayed' && event.cardType === 'attack' && (!!event.playerId || fromPlayer(event));
+  return list.some(event => (attack(event) && fromPlayer(event)) || attackCard(event)) ? 'player' : null;
 }
 
 /** The receipt overlays ({ kind, targetId }) a batch of decorated co-op receipts earns. */

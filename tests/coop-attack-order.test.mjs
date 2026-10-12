@@ -228,3 +228,33 @@ test('the blow that ends a fight is paced once, on the board, before its reward 
   assert.match(timeline, /snap = land;\s*render\(\);/);
   assert.match(timeline, /if \(land === next\) \{ snap = next; render\(\); \}/, 'a skip does not redraw the ended fight');
 });
+
+test('a fully avoided player attack still plays through the player timeline', () => {
+  // Synthetic: a dodged, evaded, decoyed or invulnerable swing lands no damage or impact.
+  for (const outcome of [{ type: 'attackEvaded', targetId: 'e1', charges: 0 }, { type: 'combatAvoidanceResolved', targetId: 'e1', avoided: true }]) {
+    assert.equal(coopTimelineRoute([{ type: 'cardPlayed', playerId: 'p1', sourcePlayerId: 'p1', sourceId: 'player', cardType: 'attack', cardId: 'strike' }, outcome], ['p1']), 'player', outcome.type);
+  }
+  // An enemy's attack card is not a seat's; a seat's skill still renders plainly.
+  assert.equal(coopTimelineRoute([{ type: 'cardPlayed', playerId: 'p1', cardType: 'skill' }], ['p1']), null);
+  // Real session: the digest's cardPlayed names its cardType, so the swing routes on it
+  // alone once the hit receipts are gone (as when the target avoids it outright).
+  const host = createSession({ registries, seedString: 'ATTACKORDER' });
+  host.addMember({ id: 'p1', name: 'One', classId: 'reaver' });
+  host.addMember({ id: 'p2', name: 'Two', classId: 'rogue' });
+  host.start();
+  for (const member of host.session.members.values()) {
+    while (member.run.classMasteryState?.initialTreeTiers.length) {
+      const choices = initialClassTreeChoices(registriesForClassMastery(registries, member.run), member.run);
+      assert.equal(host.chooseMasteryNode(member.id, choices[0]).ok, true);
+    }
+  }
+  for (const id of ['p1', 'p2']) assert.equal(host.chooseNode(id, host.session.mapGraph.startIds[0]).ok, true);
+  const board = host.snapshot().scene;
+  const target = host.live.combat.enemies.find(enemy => enemy.alive);
+  const attack = board.players.find(player => player.id === 'p1').hand.find(card => registries.cards.get(card.cardId)?.type === 'attack');
+  assert.equal(host.combatPlay('p1', attack.instanceId, target.id).ok, true);
+  const events = host.snapshot().scene.events;
+  assert.equal(events.find(event => event.type === 'cardPlayed')?.cardType, 'attack', 'the digest projects cardType');
+  const avoided = events.filter(event => !['damageDealt', 'impactDealt', 'hpLost'].includes(event.type)).concat({ type: 'attackEvaded', targetId: target.id, charges: 0 });
+  assert.equal(coopTimelineRoute(avoided, ['p1', 'p2']), 'player', avoided.map(event => event.type).join(' '));
+});
