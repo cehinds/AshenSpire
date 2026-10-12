@@ -35,7 +35,7 @@ const UPCAST = {
 };
 const CHANCE_PRESSURE = new Set(['ashenMote', 'cinderSigil', 'starSpark', 'blightTouch', 'witheringTouch', 'hex']);
 const STATUS = { frost: 'frost', burn: 'burn', crimsonBlight: 'crimsonBlight', weak: 'weak', vulnerable: 'vulnerable', bleed: 'bleed', insanity: 'dazed' };
-const PROFILE = { frost: 'elemental', burn: 'elemental', crimsonBlight: 'curse', weak: 'mental', vulnerable: 'curse', bleed: 'bodily', insanity: 'mental' };
+const PROFILE = { frost: 'elemental', burn: 'elemental', crimsonBlight: 'curse', necroticBlight: 'curse', weak: 'mental', vulnerable: 'curse', bleed: 'bodily', insanity: 'mental' };
 function pressureValue(stacks, id) {
   // Frost's old units are retuned as units; other old stack grants become four
   // pressure units per stack instead of bypassing the new gauges/defenses.
@@ -101,7 +101,7 @@ export function applyCombatExpansionCard(def) {
     attack: { ...def.attack, source: 'spell', damageType: row.damageType }, effects: effectsFor(def.effects, row.school), textTemplate: barrierText(def.textTemplate) };
   if (def.upgrade) card.upgrade = { ...def.upgrade, ...(def.upgrade.effects ? { effects: effectsFor(def.upgrade.effects, row.school) } : {}), ...(def.upgrade.textTemplate ? { textTemplate: barrierText(def.upgrade.textTemplate) } : {}) };
   const damaging = card.effects.some(effect => effect.op === 'damage');
-  const rider = { frost: 'frost', fire: 'burn', lightning: 'paralysis', decay: 'crimsonBlight' }[row.school];
+  const rider = { frost: 'frost', fire: 'burn', lightning: 'paralysis', decay: 'necroticBlight' }[row.school];
   if (damaging && rider && !card.effects.some(effect => effect.op === 'buildup' && effect.status === rider)) {
     const target = AREA.has(def.id) ? 'allEnemies' : 'enemy';
     card.effects.push({ op: 'buildup', target, status: rider, amount: row.school === 'fire' ? 4 : 3, camp: 'spell', recoveryProfile: PROFILE[rider] || 'elemental' });
