@@ -15,3 +15,5 @@
 .concept-grid[data-columns="2"]{grid-template-columns:repeat(2,minmax(0,1fr));max-width:768px;margin-left:auto;margin-right:auto}
 .sheet-scroll[data-orientation="portrait"] img{max-width:768px;margin-left:auto;margin-right:auto}
 @media(max-width:600px){.source-sheet[data-orientation="portrait"] .source-image{min-width:0}.source-sheet[data-orientation="portrait"]::after{content:none}}
+
+.replacement-source{max-width:768px;margin:16px auto 24px}.replacement-source figcaption,.superseded-note{font-size:12px;line-height:1.6;color:#d2c29e}.replacement-source .source-sheet{max-width:512px}.replacement-source .sheet-status{margin-top:8px}

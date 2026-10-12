@@ -2,7 +2,7 @@
 
 Initial pilot: October 11, 2026 (America/Anchorage). Follow-up concepts are integrated on `Feature/UpdateStancesOptions`.
 
-This review contains **40 generated and director-reviewed greatsword pose concepts for Reaver**, with **37 selectable candidates**: twenty original Smash/guard-break concepts and twenty new Counter/Evade concepts. Guard-break04, Counter15 and Evade20 require revision. The user selected five role mappings and authorized their use and merge. The full baseline remains **600 weapon-specific concepts planned**: ten options per weapon group per family, across ten weapon groups and six families. Class adaptations and magic stance variations remain planned.
+This review contains **50 generated and director-reviewed greatsword pose concepts for Reaver**, with **48 selectable candidates**: twenty original Smash/guard-break concepts and thirty new Sweep/Counter/Evade concepts. Guard-break04 and Sweep17 require revision. The user selected five role mappings and authorized their use and merge. The full baseline remains **600 weapon-specific concepts planned**: ten options per weapon group per family, across ten weapon groups and six families. Class adaptations and magic stance variations remain planned.
 
 | Target role | Confirmed source |
 | --- | --- |
@@ -14,17 +14,17 @@ This review contains **40 generated and director-reviewed greatsword pose concep
 
 Numeric choices are authoritative; the extra image of guard-break03 is context, not a sixth selection. Exact source crops and export provenance are in [selections.json](selections.json), owned by the art exporter. The selected pilot is registered, browser-validated and merged in PR #1890; evidence is in [delivery-status.md](../../../docs/design/update-stances/delivery-status.md). New follow-up boards remain concept comparisons, with no new runtime registration.
 
-The next authorized pass requests **ten new greatsword options each for Sweep, Counter and Evade**, thirty total. Twenty Counter/Evade concepts have landed; Sweep’s final boards are pending. This separate pass does not complete the 600-option baseline.
+The next authorized pass requests **ten new greatsword options each for Sweep, Counter and Evade**, thirty total. All thirty concepts have landed. Counter15 and Evade20 have approved standalone replacement figures; Sweep17 remains disabled for a cropped boot and lifted rear heel. This separate pass does not complete the 600-option baseline.
 
 | Follow-up family | Stable option IDs | Canonical sources | Director review |
 | --- | --- | --- | --- |
-| Sweep | `reaver-greatsword-sweep-11` through `-20` | Final `greatsword-sweep/sheet-a.png` and `sheet-b.png` pending integration | No selectable options yet |
-| Counter | `reaver-greatsword-counter-11` through `-20` | [Actual painter descriptions and provenance](greatsword-counter/README.md) | Nine selectable; CT15 second hand needs clarification |
-| Evade | `reaver-greatsword-evade-11` through `-20` | [Actual painter descriptions and provenance](greatsword-evade/README.md) | Nine selectable; EV20 second hand needs clarification |
+| Sweep | `reaver-greatsword-sweep-11` through `-20` | [Actual sources and provenance](greatsword-sweep/README.md) | Nine selectable; SW17 replacement pending |
+| Counter | `reaver-greatsword-counter-11` through `-20` | [Actual painter descriptions and provenance](greatsword-counter/README.md) | Ten selectable; CT15 standalone replacement supersedes old board figure |
+| Evade | `reaver-greatsword-evade-11` through `-20` | [Actual painter descriptions and provenance](greatsword-evade/README.md) | Ten selectable; EV20 standalone replacement supersedes old board figure |
 
 Follow-up sheets are portrait, two columns by three rows: A contains 11–15 and B contains 16–20, in reading order with the bottom-right empty. The original Smash/Guard-break sheets remain landscape, three columns by two rows and numbered 01–10. **The gallery displays intact source boards.** Cell layout labels locate concepts; they are not crop instructions or runtime atlas registration. In particular, Evade sword/boot/cape bounds can cross nominal cell boundaries, so fixed 512px crops would truncate art.
 
-Counter and Evade names below describe the actual paintings; remaining Sweep names are provisional movement briefs. The [director review record](../../../docs/design/update-stances/followup-art-review.md) governs the current flags and supersedes stale review-pending statements in the artist snapshots. Missing, unreviewed or flagged options cannot be favorited. The two follow-up flags may clear only after explicit director approval of their repaired sources.
+Names below describe the actual paintings, including the approved replacement figures. The [director review record](../../../docs/design/update-stances/followup-art-review.md) governs the current flags and supersedes stale review-pending statements in the artist snapshots. Missing, unreviewed or flagged options cannot be favorited. Counter15 and Evade20 retain their original IDs, but their favorites and copied source paths refer to the approved single-figure replacements shown below the boards. If a replacement cannot load, its option stays disabled; the superseded board figure cannot serve as a fallback. Replacements do not add extra option counts. Sweep17 may clear only after explicit director approval and successful loading of its replacement.
 
 The original five confirmed roles remain immutable records separate from editable browser favorites. Clear and reload preserve those labels. Copied JSON distinguishes actual source availability, concept review and selectable counts; new concept favorites do not modify runtime selections.
 
@@ -90,7 +90,7 @@ All five are selectable concept candidates. These labels describe the actual gen
 | CT12 | Low forward plough, up-right blade | Concept candidate |
 | CT13 | High point-forward horizontal side cover | Concept candidate |
 | CT14 | Lower wide chest-centered inclined barrier | Concept candidate |
-| CT15 | Rear-weighted low hanging | Needs clearer second hand; selection disabled |
+| CT15 | Two-hand low hanging cover | Approved standalone replacement; old board figure superseded |
 | CT16 | Compact crown roof, horizontal blade | Concept candidate |
 | CT17 | Forward outside hanging cover, withdrawn torso | Repaired forward grip; director approved |
 | CT18 | Withdrawn point-on-line, sternum hilt | Concept candidate |
@@ -114,9 +114,42 @@ All five are selectable concept candidates. These labels describe the actual gen
 | EV17 | Narrow upright collected recovery | Concept candidate |
 | EV18 | Wide planted low trailing carry | Repaired hip grip; director approved |
 | EV19 | Compact forward horizontal carry | Concept candidate |
-| EV20 | Upright low forward carry | Needs clearer second hand; selection disabled |
+| EV20 | Upright two-hand recovery carry | Approved standalone replacement; old board figure superseded |
 
-These actual silhouettes do not fulfill every original motion label. EV12 is not clearly retreating backward, and EV20 is not a pronounced shoulder slip. Concept approval does not assert that exact body scale/gutters were achieved or that these are ready runtime frames.
+The superseded EV20 board figure is not a pronounced shoulder slip. Its fresh replacement is an upright two-hand recovery carry. EV12 is not clearly retreating backward. Concept approval does not assert that exact body scale/gutters were achieved or that these are ready runtime frames.
+
+## Approved standalone replacements — same option IDs
+
+The original board depictions of **CT15 and EV20 are superseded**. Keep their intact boards as context for the other four poses; compare these unchanged replacement sources for options15 and20.
+
+![Counter15 replacement: Two-hand low hanging cover](greatsword-counter/ct15-replacement.png)
+
+**CT15 — Two-hand low hanging cover.** Two separated gauntlets on the hilt, planted rear-left figure, low down-right blade cover. SHA-256 `7a332139be986d3642ec72a2f99b51cc075ed8f41e926ea050c7c4188aae66ea`.
+
+![Evade20 replacement: Upright two-hand recovery carry](greatsword-evade/ev20-replacement.png)
+
+**EV20 — Upright two-hand recovery carry.** Two readable gauntlets separated by visible hilt leather. SHA-256 `0c48fafcd4069a16dfe2e2794681bcd4c1751bd3ad4565932f1e9c8054a22243`.
+
+Both are director-approved **concepts**, not newly selected runtime art. Their original option IDs/counts stay unchanged. Exact prompts and provenance sit beside each replacement.
+
+## Sweep follow-up — options 11–20
+
+![Sweep concepts11–15, intact board](greatsword-sweep/sheet-a.png)
+
+![Sweep concepts16–20, intact board](greatsword-sweep/sheet-b.png)
+
+| Option | Actual painting | Status |
+| --- | --- | --- |
+| SW11 | Upright forward-horizontal side coil | Concept candidate |
+| SW12 | Shoulder-height lateral coil | Concept candidate |
+| SW13 | Forward-extended downward gate | Concept candidate |
+| SW14 | Upright low-side trail | Concept candidate |
+| SW15 | Wide lateral hip transfer | Concept candidate |
+| SW16 | Low forward downward hold | Concept candidate |
+| SW17 | Shoulder-high coil / lifted rear heel | Right boot cropped; selection disabled pending approved replacement |
+| SW18 | Compact low-waist cross coil | Targeted body edit approved |
+| SW19 | Very wide low-forward sweep | Concept candidate |
+| SW20 | High-arc extended lunge | Concept candidate |
 
 ## References and next stage
 
@@ -126,4 +159,4 @@ These actual silhouettes do not fulfill every original motion label. EV12 is not
 - [Director's art-review notes](../../../docs/design/update-stances/art-review.md)
 - [Existing runtime behavior and future integration boundaries](../../../docs/design/update-stances/integration-notes.md)
 
-The five chosen Reaver/greatsword role mappings are delivered and merged. Finish the separate Sweep/Counter/Evade concept pass and review the outstanding grip repairs. Further class adaptations and full sequences require their own production evidence. Current source sheets remain preserved as provenance.
+The five chosen Reaver/greatsword role mappings are delivered and merged. Finish the separate Sweep17 replacement and review the complete thirty-option gallery. Further class adaptations and full sequences require their own production evidence. Current source sheets remain preserved as provenance.

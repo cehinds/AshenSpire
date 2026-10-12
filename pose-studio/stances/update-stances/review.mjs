@@ -18,26 +18,35 @@ const families = [
     names: ['Collapsed sword-point support', 'Ground drag + thigh catch', 'Palm catch + rear drag', 'Sideways open guard / crossing blade', 'Dropped greatsword / slack arms', 'Thigh-clutch / chest blow', 'Recoiled hanging blade', 'Slumped shoulder carry', 'Hanging rear drag', 'Backward heel collapse / floor drag'],
   },
   {
-    id: 'sweep', title: 'Sweep follow-up', description: "Ten planned lateral or rising readiness holds, numbered 11\u201320. Final source boards and director review are pending.",
+    id: 'sweep', title: 'Sweep follow-up', description: "Ten generated lateral or rising readiness concepts, numbered 11–20. Sweep17’s board figure has a cropped boot and lifted heel; selection remains paused for its replacement.",
     numberOffset: 10, layout: PORTRAIT_LAYOUT, followup: true,
     sheets: ['greatsword-sweep/sheet-a.png', 'greatsword-sweep/sheet-b.png'],
-    reviewStatuses: ['needs-review', 'needs-review'],
-    names: ["Upright middle-height side coil", "Shoulder-height lateral coil", "Forward extended sweep gate", "Upright low side trail", "Wide lateral hip transfer", "Narrow stance, forward rising load", "Rear-weighted high coil", "Chest-level compact cross load", "Low point-forward wide gate", "High side coil with long rear leg"],
+    reviewStatuses: ['candidate', 'candidate'],
+    revisions: { 17: 'Right boot is cropped and rear heel is lifted; selection paused pending an approved standalone replacement.' },
+    names: ["Upright forward-horizontal side coil", "Shoulder-height lateral coil", "Forward-extended downward gate", "Upright low-side trail", "Wide lateral hip transfer", "Low forward downward hold", "Shoulder-high coil / lifted rear heel", "Compact low-waist cross coil", "Very wide low-forward sweep", "High-arc extended lunge"],
   },
   {
-    id: 'counter', title: 'Counter follow-up', description: "Ten generated interception-and-reply readiness concepts, numbered 11–20. Counter15 needs a clearer second hand; the other nine are available for concept comparison.",
+    id: 'counter', title: 'Counter follow-up', description: "Ten generated interception-and-reply readiness concepts, numbered 11–20. Counter15 now uses an approved standalone two-hand replacement; the original board depiction is superseded.",
     numberOffset: 10, layout: PORTRAIT_LAYOUT, followup: true,
     sheets: ['greatsword-counter/sheet-a.png', 'greatsword-counter/sheet-b.png'],
     reviewStatuses: ['candidate', 'candidate'],
-    revisions: { 15: 'Second hand on the greatsword hilt needs clearer anatomy; selection paused until the director approves a repair.' },
+    replacements: { 15: {
+      imagePath: 'greatsword-counter/ct15-replacement.png', name: 'Two-hand low hanging cover', reviewStatus: 'candidate',
+      sha256: '7a332139be986d3642ec72a2f99b51cc075ed8f41e926ea050c7c4188aae66ea',
+      supersededReason: 'The original board15 grip remains unclear. This approved single-figure source replaces only option15.',
+    } },
     names: ["High hanging, down-right blade", "Low forward plough, up-right blade", "High point-forward horizontal side cover", "Lower wide chest-centered inclined barrier", "Rear-weighted low hanging", "Compact crown roof, horizontal blade", "Forward outside hanging cover, withdrawn torso", "Withdrawn point-on-line, sternum hilt", "Lower wide high hanging cover", "Outside diagonal cut-ready cover"],
   },
   {
-    id: 'evade', title: 'Evade follow-up', description: "Ten generated escape-readiness or recovery concepts, numbered 11–20. Evade20 needs a clearer second hand; the other nine are available for concept comparison.",
+    id: 'evade', title: 'Evade follow-up', description: "Ten generated escape-readiness or recovery concepts, numbered 11–20. Evade20 now uses an approved standalone two-hand replacement; the original board depiction is superseded.",
     numberOffset: 10, layout: PORTRAIT_LAYOUT, followup: true,
     sheets: ['greatsword-evade/sheet-a.png', 'greatsword-evade/sheet-b.png'],
     reviewStatuses: ['candidate', 'candidate'],
-    revisions: { 20: 'Second hand on the greatsword hilt needs clearer anatomy; selection paused until the director approves a repair.' },
+    replacements: { 20: {
+      imagePath: 'greatsword-evade/ev20-replacement.png', name: 'Upright two-hand recovery carry', reviewStatus: 'candidate',
+      sha256: '0c48fafcd4069a16dfe2e2794681bcd4c1751bd3ad4565932f1e9c8054a22243',
+      supersededReason: 'The original board20 grip remains unclear. This approved single-figure source replaces only option20.',
+    } },
     names: ["Rear-weighted low blade", "Deep planted landing with upright blade", "Tall wide low carry", "Long lateral high carry", "Deep forward duck", "Deep planted landing with upright blade", "Narrow upright collected recovery", "Wide planted low trailing carry, repaired hip grip", "Compact forward horizontal carry", "Upright low forward carry"],
   },
 ];
@@ -52,17 +61,20 @@ const confirmedRoles = new Map([
 const STORAGE_KEY = 'ashenspire.update-stances.review.v1';
 const selections = new Set(confirmedRoles.keys());
 const sheetStates = new Map();
+const replacementStates = new Map();
 const cards = new Map();
 const allOptions = families.flatMap(family => family.names.map((name, index) => {
   const number = family.numberOffset + index + 1;
   const cell = index % 5;
+  const replacement = family.replacements?.[number] || null;
   return {
     id: `reaver-greatsword-${family.id}-${String(number).padStart(2, '0')}`,
-    family: family.id, class: 'reaver', weapon: 'greatsword', number, name,
+    family: family.id, class: 'reaver', weapon: 'greatsword', number, name: replacement?.name || name,
     sheet: family.sheets[Math.floor(index / 5)], cell,
     column: cell % family.layout.columns, row: Math.floor(cell / family.layout.columns),
     layout: family.layout, followup: !!family.followup,
-    reviewStatus: family.reviewStatuses?.[Math.floor(index / 5)] || 'candidate',
+    reviewStatus: replacement?.reviewStatus || family.reviewStatuses?.[Math.floor(index / 5)] || 'candidate',
+    replacement, imagePath: replacement?.imagePath || family.sheets[Math.floor(index / 5)],
     revision: family.revisions?.[number] || null, note: family.notes?.[number] || null,
   };
 }));
@@ -88,16 +100,35 @@ function saveChoices() {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify([...selections])); }
   catch { storageAvailable = false; }
 }
-function availableFavorites() {
-  return allOptions.filter(option => selections.has(option.id) && !option.revision && sheetStates.get(option.sheet)?.ready);
+function optionSourceState(option) {
+  return option.replacement ? replacementStates.get(option.id) : sheetStates.get(option.sheet);
 }
+function optionReady(option) { return !!optionSourceState(option)?.ready && !option.revision; }
+function availableFavorites() {
+  return allOptions.filter(option => selections.has(option.id) && optionReady(option));
+}
+function updateOptionAvailability(option) {
+  const card = cards.get(option.id), ready = optionReady(option);
+  card.disabled = !ready;
+  const label = card.querySelector('.followup-state');
+  if (label) label.textContent = option.replacement
+    ? ready ? 'Director-approved replacement concept' : 'Replacement unavailable · selection paused'
+    : optionSourceState(option)?.ready ? 'Director-reviewed follow-up' : 'NEEDS REVIEW · source unavailable or unreviewed';
+  if (option.replacement) {
+    card.classList.toggle('needs-revision', !ready);
+    card.setAttribute('aria-label', `${option.number}. ${option.name}, Reaver, greatsword, ${option.family}. ${ready ? 'Approved replacement concept. Toggle browser favorite.' : 'Replacement unavailable. Selection paused.'}`);
+  }
+}
+
 function followupCoverage() {
   const states = [...sheetStates.values()].filter(state => state.followup);
   return {
     plannedConcepts: 30,
     sourceSheetsAvailable: states.filter(state => state.loaded).length,
     sourceSheetsPlanned: states.length,
-    directorReviewedConcepts: states.filter(state => state.ready).length * 5,
+    directorReviewedConcepts: allOptions.filter(option => option.followup && option.reviewStatus === 'candidate' && optionSourceState(option)?.loaded).length,
+    replacementImagesAvailable: [...replacementStates.values()].filter(state => state.loaded).length,
+    replacementImagesPlanned: replacementStates.size,
     selectableConcepts: allOptions.filter(option => option.followup && !cards.get(option.id)?.disabled).length,
   };
 }
@@ -122,7 +153,8 @@ function makeCard(option) {
   const label = node('span', 'concept-label');
   label.append(node('span', 'concept-number', String(option.number).padStart(2, '0')), node('span', 'concept-name', option.name));
   card.append(label, node('span', 'pick-mark', '✓'));
-  if (option.followup) card.append(node('span', 'concept-note followup-state', 'Planned follow-up · NEEDS REVIEW'));
+  if (option.followup) card.append(node('span', 'concept-note followup-state', option.replacement ? 'Replacement loading · selection paused' : 'Planned follow-up · NEEDS REVIEW'));
+  if (option.replacement) card.classList.add('needs-revision');
   if (confirmedRole) card.append(node('span', 'concept-note', 'User selected for ' + confirmedRole));
   if (option.note) card.append(node('span', 'concept-note', option.note));
   if (option.revision) { card.classList.add('needs-revision'); card.append(node('span', 'revision-note', 'Needs revision · ' + option.revision)); }
@@ -179,6 +211,18 @@ function render() {
       sheetView.dataset.orientation = family.layout.orientation;
       const placeholder = node('p', 'source-placeholder', family.followup ? 'Source board not integrated yet · generation in progress.' : 'Source artwork is loading.');
       sheetView.append(placeholder); section.append(sheetView);
+      for (const option of allOptions.filter(option => option.sheet === path && option.replacement)) {
+        section.append(node('p', 'superseded-note', `Original board option${option.number} is superseded. ${option.replacement.supersededReason}`));
+        const figure = node('figure', 'replacement-source');
+        const view = node('div', 'source-sheet'); view.dataset.orientation = 'portrait';
+        view.append(node('p', 'source-placeholder', 'Approved replacement is loading. Selection remains paused.'));
+        const caption = node('figcaption', '', `Option${option.number} replacement · ${option.name}. Full unchanged source figure; same option ID.`);
+        const link = node('a', '', 'Open replacement original'); link.href = option.replacement.imagePath; link.target = '_blank'; link.rel = 'noopener';
+        caption.append(document.createTextNode(' '), link);
+        const sourceStatus = node('p', 'sheet-status', 'Replacement loading · selection paused');
+        figure.append(view, caption, sourceStatus); section.append(figure);
+        replacementStates.set(option.id, { loaded: false, ready: false, view, status: sourceStatus });
+      }
       const grid = node('div', 'concept-grid');
       grid.dataset.columns = family.layout.columns;
       allOptions.filter(option => option.sheet === path).forEach(option => grid.append(makeCard(option)));
@@ -199,10 +243,8 @@ function loadSheets() {
       image.alt = sheetDescription(state.family, state.sheetIndex);
       image.className = 'source-image'; state.view.replaceChildren(image);
       for (const option of allOptions.filter(option => option.sheet === path)) {
-        cards.get(option.id).disabled = !state.ready || !!option.revision;
-        const followupState = cards.get(option.id).querySelector('.followup-state');
-        if (followupState) followupState.textContent = state.ready ? 'Director-reviewed follow-up' : 'NEEDS REVIEW · source available';
-        if (option.revision || !state.ready) selections.delete(option.id);
+        updateOptionAvailability(option);
+        if (!option.replacement && (option.revision || !state.ready)) selections.delete(option.id);
       }
       saveChoices(); updateChoices();
 
@@ -211,10 +253,34 @@ function loadSheets() {
       state.loaded = false; state.ready = false;
       state.status.textContent = 'Planned · no source artwork yet';
       state.view.querySelector('.source-placeholder').textContent = 'Artwork is pending. These numbered slots are planned concepts.';
-      for (const option of allOptions.filter(option => option.sheet === path)) selections.delete(option.id);
+      for (const option of allOptions.filter(option => option.sheet === path)) {
+        updateOptionAvailability(option);
+        if (!option.replacement) selections.delete(option.id);
+      }
       saveChoices(); updateChoices();
     };
     image.src = path;
+  }
+}
+function loadReplacements() {
+  for (const option of allOptions.filter(option => option.replacement)) {
+    const state = replacementStates.get(option.id), image = new Image();
+    image.onload = () => {
+      state.loaded = true; state.ready = option.replacement.reviewStatus === 'candidate';
+      image.className = 'source-image'; image.alt = `${option.name}, option${option.number}. Approved replacement for the superseded board figure.`;
+      state.view.replaceChildren(image);
+      state.status.textContent = state.ready ? 'Director-approved replacement concept · original board figure superseded' : 'Replacement source available · director review pending';
+      updateOptionAvailability(option);
+      if (!state.ready) selections.delete(option.id);
+      saveChoices(); updateChoices();
+    };
+    image.onerror = () => {
+      state.loaded = false; state.ready = false;
+      state.status.textContent = 'Replacement source unavailable · selection paused';
+      state.view.querySelector('.source-placeholder').textContent = 'The approved replacement could not load. Original board depiction remains superseded.';
+      updateOptionAvailability(option); selections.delete(option.id); saveChoices(); updateChoices();
+    };
+    image.src = option.replacement.imagePath;
   }
 }
 for (const filter of document.querySelectorAll('.filters select')) filter.addEventListener('change', () => {
@@ -225,7 +291,7 @@ document.querySelector('#clear-choices').addEventListener('click', () => {
   selections.clear(); saveChoices(); updateChoices(); announce('Browser favorites cleared. The five confirmed role selections remain recorded.');
 });
 document.querySelector('#copy-choices').addEventListener('click', async () => {
-  const payload = JSON.stringify({ review: 'update-stances', stage: 'merged-selected-pilot-and-followup-concept-review', followup: followupCoverage(), confirmedRoleSelections: [...confirmedRoles].map(([sourceId, targetRole]) => ({ sourceId, targetRole })), selectionManifest: 'selections.json', browserFavorites: availableFavorites().map(option => ({ ...option, sourceStatus: option.revision ? 'needs-revision' : sheetStates.get(option.sheet)?.ready ? 'concept-candidate' : 'unavailable-or-awaiting-review' })) }, null, 2);
+  const payload = JSON.stringify({ review: 'update-stances', stage: 'merged-selected-pilot-and-followup-concept-review', followup: followupCoverage(), confirmedRoleSelections: [...confirmedRoles].map(([sourceId, targetRole]) => ({ sourceId, targetRole })), selectionManifest: 'selections.json', browserFavorites: availableFavorites().map(option => ({ ...option, sourceStatus: option.replacement ? 'director-approved-replacement-concept' : 'concept-candidate', sourceLayout: option.replacement ? 'standalone-figure; sheet/cell fields describe superseded context only' : 'five-concept-board' })) }, null, 2);
   let copyTimeout;
   try {
     await Promise.race([navigator.clipboard.writeText(payload), new Promise((_, reject) => { copyTimeout = setTimeout(() => reject(new Error('Clipboard did not respond')), 1500); })]);
@@ -247,5 +313,5 @@ document.querySelector('#sheet-dialog').addEventListener('click', event => {
   const bounds = event.currentTarget.getBoundingClientRect();
   if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) event.currentTarget.close();
 });
-render(); loadSheets();
+render(); loadSheets(); loadReplacements();
 if (!storageAvailable) announce('Browser storage is unavailable; copy your choices before leaving.');

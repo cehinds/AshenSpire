@@ -3349,7 +3349,7 @@
       "magicTreatmentScopeStatus": "proposed_backfill"
     }
   ],
-  "snapshotStatus": "selected_pilot_merged_PR1890;20_original_concepts_plus20_followup_concepts_generated_reviewed;37_total_selectable,3_total_revision_flags;10_sweep_followup_pending;no_new_followup_runtime_assets",
+  "snapshotStatus": "selected_pilot_merged_PR1890;50_total_concept_options_generated_reviewed;48_total_selectable,2_total_revision_flags;CT15_and_EV20_standalone_replacements_same_option_ids;no_new_followup_runtime_assets",
   "artReviewPath": "docs/design/update-stances/art-review.md",
   "userDecisions": {
     "status": "explicit_numeric_selections_authorized_for_use_and_merge",
@@ -3403,70 +3403,98 @@
     "soloGameplayValidation": "confirmed_for_selected_pilot_scope"
   },
   "nextExpansion": {
-    "status": "partial_concept_boards_integrated_director_reviewed_with_grip_flags",
+    "status": "all_concept_boards_integrated_two_approved_replacements_one_sweep_revision",
     "weaponGroup": "greatsword",
     "classPilot": "reaver",
     "families": [
       {
         "id": "sweep",
         "conceptCountPlanned": 10,
-        "conceptCountGenerated": 0,
-        "status": "generation_in_progress_zero_landed"
+        "conceptCountGenerated": 10,
+        "status": "director_reviewed_nine_candidates_option17_revision",
+        "conceptCountReviewed": 10,
+        "conceptCountSelectable": 9,
+        "conceptCountNeedsRevision": 1,
+        "canonicalArtistBrief": "pose-studio/stances/update-stances/greatsword-sweep/README.md",
+        "sourceSheets": [
+          "pose-studio/stances/update-stances/greatsword-sweep/sheet-a.png",
+          "pose-studio/stances/update-stances/greatsword-sweep/sheet-b.png"
+        ],
+        "integratedArtistCommit": "9cf143db0",
+        "revisionOptions": [
+          {
+            "number": 17,
+            "reason": "cropped_right_boot_and_lifted_rear_heel",
+            "clearOnlyOnDirectorApproval": true
+          }
+        ]
       },
       {
         "id": "counter",
         "conceptCountPlanned": 10,
         "conceptCountGenerated": 10,
-        "status": "director_reviewed_concept_candidates_one_grip_revision",
+        "status": "director_reviewed_ten_candidates_with_standalone_replacement",
         "conceptCountReviewed": 10,
-        "conceptCountSelectable": 9,
-        "conceptCountNeedsRevision": 1,
+        "conceptCountSelectable": 10,
+        "conceptCountNeedsRevision": 0,
         "canonicalArtistBrief": "pose-studio/stances/update-stances/greatsword-counter/README.md",
         "sourceSheets": [
           "pose-studio/stances/update-stances/greatsword-counter/sheet-a.png",
           "pose-studio/stances/update-stances/greatsword-counter/sheet-b.png"
         ],
-        "revisionOptions": [
+        "revisionOptions": [],
+        "integratedArtistCommit": "2d022f2cb",
+        "replacementOptions": [
           {
             "number": 15,
-            "reason": "second_hand_readability",
-            "clearOnlyOnDirectorApproval": true
+            "name": "Two-hand low hanging cover",
+            "imagePath": "pose-studio/stances/update-stances/greatsword-counter/ct15-replacement.png",
+            "sha256": "7a332139be986d3642ec72a2f99b51cc075ed8f41e926ea050c7c4188aae66ea",
+            "directorApproved": true,
+            "selectionRequiresImageLoad": true,
+            "supersedesOriginalBoardFigure": true,
+            "countsAsSameOption": true
           }
-        ],
-        "integratedArtistCommit": "4928c4c47"
+        ]
       },
       {
         "id": "evade",
         "conceptCountPlanned": 10,
         "conceptCountGenerated": 10,
-        "status": "director_reviewed_concept_candidates_one_grip_revision",
+        "status": "director_reviewed_ten_candidates_with_standalone_replacement",
         "conceptCountReviewed": 10,
-        "conceptCountSelectable": 9,
-        "conceptCountNeedsRevision": 1,
+        "conceptCountSelectable": 10,
+        "conceptCountNeedsRevision": 0,
         "canonicalArtistBrief": "pose-studio/stances/update-stances/greatsword-evade/README.md",
         "sourceSheets": [
           "pose-studio/stances/update-stances/greatsword-evade/sheet-a.png",
           "pose-studio/stances/update-stances/greatsword-evade/sheet-b.png"
         ],
-        "revisionOptions": [
+        "revisionOptions": [],
+        "integratedArtistCommit": "371f6c8c4",
+        "replacementOptions": [
           {
             "number": 20,
-            "reason": "second_hand_readability",
-            "clearOnlyOnDirectorApproval": true
+            "name": "Upright two-hand recovery carry",
+            "imagePath": "pose-studio/stances/update-stances/greatsword-evade/ev20-replacement.png",
+            "sha256": "0c48fafcd4069a16dfe2e2794681bcd4c1751bd3ad4565932f1e9c8054a22243",
+            "directorApproved": true,
+            "selectionRequiresImageLoad": true,
+            "supersedesOriginalBoardFigure": true,
+            "countsAsSameOption": true
           }
-        ],
-        "integratedArtistCommit": "d40dc1ecb"
+        ]
       }
     ],
     "conceptCountPlanned": 30,
-    "conceptCountGenerated": 20,
+    "conceptCountGenerated": 30,
     "relationshipToBaseline": "Separate requested follow-up exploration; does not complete or replace the 600-option baseline or all counter delivery modes.",
     "requiresAdditionalApprovalBeforeBeginning": false,
     "generatedCountBoundary": "Count only landed canonical option boards; generation requests in flight are not generated assets.",
     "brief": "docs/design/update-stances/followup-reference-brief.md",
-    "conceptCountReviewed": 20,
-    "conceptCountSelectable": 18,
-    "conceptCountNeedsRevision": 2,
+    "conceptCountReviewed": 30,
+    "conceptCountSelectable": 29,
+    "conceptCountNeedsRevision": 1,
     "registeredPoseExports": 0,
     "reviewRecord": "docs/design/update-stances/followup-art-review.md"
   },
