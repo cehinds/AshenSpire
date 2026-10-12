@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { enemyTargetGrid } from '../src/ui/models/EnemyTargetGridModel.js';
+import { alternativeEnemyTargetGrid } from '../src/ui/models/AlternativeEnemyTargetGridModel.js';
 
 const overlaps = (a, b) => a.left < b.left + b.width && a.left + a.width > b.left
   && a.top < b.top + b.height && a.top + a.height > b.top;
@@ -77,4 +79,57 @@ test('crowded fallback keeps the player sprite clear', () => {
   assert.equal(slots.length, 3);
   assert.ok(slots.every((slot, index) => !overlaps(slot, player)
     && !slots.slice(index + 1).some(other => overlaps(slot, other))));
+});
+
+// A small foe's intent, Inspect, HP bar and armor sit directly above its art.
+// The picker used to pass them as obstacles, which pushed the target box below
+// the foe's feet. The box now centres on the visible art (the `.sprite` rect,
+// which the stage trims to the ink) and the overhead controls stay clickable
+// above it through their combat-layers.css z-index.
+const pickerSource = readFileSync(new URL('../src/ui/components/enemyTargetPicker.js', import.meta.url), 'utf8');
+const layerCss = readFileSync(new URL('../styles/combat-layers.css', import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+
+test('picker does not treat a foe\'s overhead controls as target-placement obstacles', () => {
+  const obstacleList = pickerSource.match(/const obstacles = \[([^\]]*)\]/);
+  assert.ok(obstacleList, 'picker builds its soft obstacle list');
+  assert.match(obstacleList[1], /\.combat-hud/);
+  assert.match(obstacleList[1], /\.turn-ribbon/);
+  assert.doesNotMatch(obstacleList[1], /combatant-leading|meters/);
+  assert.match(pickerSource, /hardObstacles/, 'hard obstacles stay in place');
+});
+
+for (const [label, grid] of [['Classic', enemyTargetGrid], ['Alternative', alternativeEnemyTargetGrid]]) {
+  test(`${label} grid centres an isolated small foe's box on its art with overhead controls above it`, () => {
+    // 320x568 phone geometry measured in Chromium: a 42px foe under its HP row
+    // and intent/Inspect row, with the HUD and turn ribbon along the top.
+    const target = { id: 'e1', x: 182, y: 176 };
+    const meters = { left: 138, top: 132, width: 88, height: 19 };
+    const leading = { left: 92, top: 103, width: 180, height: 54 };
+    const obstacles = [{ left: 0, top: 0, width: 320, height: 60 }, { left: 110, top: 64, width: 100, height: 22 }];
+    const width = 320, height = 420;
+    const [slot] = grid({ width, height, targets: [target], obstacles });
+    assert.ok(slot, 'the foe gets a box');
+    assert.ok(Math.abs(slot.left + slot.width / 2 - target.x) <= 0.5, `box centre x ${slot.left + slot.width / 2} = ${target.x}`);
+    assert.ok(Math.abs(slot.top + slot.height / 2 - target.y) <= 0.5, `box centre y ${slot.top + slot.height / 2} = ${target.y}`);
+    assert.ok(overlaps(slot, meters), 'the box may now cover the HP row, which stays clickable above it');
+    // The defect: with the overhead controls as obstacles the box sank below
+    // the art centre (Alternative: under the feet; Classic: shrunk to 48px).
+    const [old] = grid({ width, height, targets: [target], obstacles: [...obstacles, meters, leading] });
+    assert.ok(old.top + old.height / 2 - target.y > 4, 'old obstacle list dropped the box below the art centre');
+  });
+}
+
+test('overhead controls paint above the target picker in the formation stacking context', () => {
+  const z = selector => {
+    const rule = [...layerCss.matchAll(/([^{}]+)\{([^{}]*)\}/g)].find(([, sel, body]) => sel.trim().endsWith(selector) && /z-index/.test(body));
+    assert.ok(rule, `rule for ${selector}`);
+    const value = rule[2].match(/z-index:\s*([^;]+)/)?.[1].trim();
+    assert.ok(value, `${selector} sets z-index`);
+    return value;
+  };
+  assert.equal(z('.enemy-target-picker'), 'var(--combat-layer-selection)');
+  // !important beats the inline z-index (the selection layer itself) that the
+  // stage writes on a packed footer; without it the later picker would win.
+  assert.equal(z('.combatant :is(.nm,.meters,.statuses)'), 'calc(var(--combat-layer-selection) + 1) !important');
+  assert.equal(z('.combatant .combatant-leading'), 'calc(var(--combat-layer-selection) + 3) !important');
 });

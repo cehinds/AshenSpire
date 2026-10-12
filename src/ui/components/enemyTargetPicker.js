@@ -25,8 +25,14 @@ function watchTargetPlacement(host, picker) {
     const zoom = uiZoom();
     const combat = host.closest('.combat');
     const localRect = rect => ({ left: rect.left - box.left, top: rect.top - box.top, width: rect.width, height: rect.height });
-    const obstacles = [combat?.querySelector('.combat-hud'), host.querySelector('.turn-ribbon'),
-      ...host.querySelectorAll('.combatant-leading, .meters')]
+    // Each foe's overhead controls (intent, Inspect, HP, armor) sit directly
+    // above its art. As obstacles they pushed a small foe's box below its feet,
+    // so the box centres on the art and may cover them. They stay clickable
+    // through CSS alone: combat-layers.css gives .meters and .combatant-leading
+    // z-index above --combat-layer-selection in the same formation stacking
+    // context as the picker, so elementFromPoint over them still hits the
+    // control (checked in Chromium), and no pointer forwarding is needed.
+    const obstacles = [combat?.querySelector('.combat-hud'), host.querySelector('.turn-ribbon')]
       .filter(Boolean).map(node => node.getBoundingClientRect()).filter(rect => rect.width && rect.height).map(localRect);
     const playerRect = host.querySelector('.combatant.player .sprite')?.getBoundingClientRect();
     // Cards, combat tools and action buttons paint above the picker: never place a target under them.
@@ -37,6 +43,8 @@ function watchTargetPlacement(host, picker) {
     const enemyTargetGrid = classicAppearance() ? classicEnemyTargetGrid : alternativeEnemyTargetGrid;
     const targets = [...picker.children].map(button => {
       const figure = [...host.querySelectorAll('.combatant.enemy')].find(node => node.dataset.eid === button.dataset.eid);
+      // The stage trims .sprite to the painted ink (its marginTop drops the
+      // transparent canvas); the img inside keeps that padding, so centre on .sprite.
       const rect = (figure?.querySelector('.sprite') || figure)?.getBoundingClientRect();
       return { id: button.dataset.eid, x: rect ? rect.left + rect.width / 2 - box.left : box.width / 2,
         y: rect ? rect.top + rect.height / 2 - box.top : box.height / 2 };
