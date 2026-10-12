@@ -545,7 +545,7 @@ export const heraldCards = [
     upgrade: {
       effects: [
         { op: 'loseHp', target: 'self', amount: 6 },
-        { op: 'damage', target: 'enemy', amount: 30 },
+        { op: 'damage', target: 'enemy', amount: 26 },
       ],
     },
   },
