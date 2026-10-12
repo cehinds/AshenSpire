@@ -1562,6 +1562,31 @@
   font: 500 max(1rem, calc(11px / var(--ui-zoom, 1)))/1.2 var(--font-ui, sans-serif); padding: .1rem .25rem;
   border-radius: .2rem;
 }
+/* Perspective grid: uniform cells; the shadow is each body's foot anchor. */
+:root:not([data-display-appearance='classic']) .formation-grid[data-perspective='true'] { display: grid; }
+.formation-grid[data-perspective='true'] .formation-grid-cell { transform: none; }
+.formation-grid[data-perspective='true'] .formation-grid-outline { display: none; }
+.formation-grid[data-perspective='true'] .formation-grid-cell span { display: none; }
+/* Owner (2026-10-12): no grid lines; only the foot shadows mark the cells. */
+.formation-grid[data-perspective='true'] .formation-grid-cell { border: 0; }
+.formation-grid[data-perspective='true'] .formation-grid-cell::before {
+  content: ''; position: absolute; left: 50%; top: var(--foot-y, 70%);
+  width: min(58%, 112px); aspect-ratio: 4 / 1; translate: -50% -50%; border-radius: 50%;
+  transform: skewX(var(--cell-unskew, 0rad));
+  border: 2px solid color-mix(in srgb, var(--grid-stroke) 55%, transparent);
+  background: radial-gradient(closest-side, #0008, #0000);
+}
+.formation-grid[data-perspective='true'] .formation-grid-cell[data-occupied='true']::before {
+  border-color: var(--grid-stroke);
+}
+/* Owner (2026-10-12): plain dark shadows. Each fighter's own floor shadow
+   (.sprite::before) marks where it stands; the cell rings show only as move
+   destinations while formation movement is on. */
+.formation-grid[data-perspective='true'] .formation-grid-cell::before { display: none; }
+:root[data-formation-movement='true'] .formation-grid[data-perspective='true'] .formation-grid-cell:not(:disabled)::before,
+.formation-grid[data-perspective='true'] .formation-grid-cell.formation-selected::before { display: block; }
+.formation-grid[data-perspective='true'] .formation-grid-cell.formation-selected::before { border-width: 3px; }
+.field.grid-target-hover { cursor: pointer; }
 :root .combat .combatant .sprite { scale: none; translate: none; }
 
 /* Overhead controls are screen-sized, independent of sprite zoom and animation. */
