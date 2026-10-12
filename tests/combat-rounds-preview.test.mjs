@@ -99,8 +99,10 @@ test('a preview-off save is byte-identical to the save before the preview saved 
   }
   const all = out.join('\n');
   assert.ok(!all.includes('"combatRounds"'), 'no preview key is written');
-  assert.equal(createHash('sha256').update(all).digest('hex'), '91fc2d33f166afad258c3d5ecc2892e1fbd739b976c8d4e22e1fcc062fcd2d02');
-  assert.equal(all.length, 120661);
+  // Re-recorded for the cost formula and the 3-SP stat enemy pool (SPEC §4.3a, §4.6a; owner 2026-10-12): the saved
+  // costs and the enemy's planned moves changed. The previous hash came from the replaced stance-table rule.
+  assert.equal(createHash('sha256').update(all).digest('hex'), 'f0e10c6e1fbe173f053fbc4bf8f1b82ea97f1fa24d03759fa6039930c9de69f8');
+  assert.equal(all.length, 127329);
 });
 
 test('a preview fight with queued cards saves and restores: queues and paid SP intact, End Turn works after restore', () => {

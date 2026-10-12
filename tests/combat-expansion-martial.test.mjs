@@ -117,8 +117,8 @@ test('authored impact Counter is especially punishing only to its covered Smash 
     const receipt = beginTacticalAction(f.ctx, f.source, f.target, incoming, [{ amount: 8 }]);
     recordTacticalContact(receipt, { blocked: 4 });
     completeTacticalAction(f.ctx, f.source, f.target, incoming, receipt);
-    // Riposte is a 2-SP counter: its 4 poise return scales to 7, and a smash contact adds the +2 bonus (SPEC action costs).
-    assert.deepEqual(f.queue.map(action => [action.effect.op, action.effect.amount]), [['poiseDamage', maneuver === 'smash' ? 9 : 7]]);
+    // Riposte costs 1 SP at grade 0 under the cost formula (SPEC §4.3a): its authored 4 poise return, +2 on a smash contact.
+    assert.deepEqual(f.queue.map(action => [action.effect.op, action.effect.amount]), [['poiseDamage', maneuver === 'smash' ? 6 : 4]]);
   }
 });
 
@@ -182,15 +182,17 @@ test('player action carriers expose actual electrical equipment traits to an ene
 
 test('permanent grades retain Quickstep Block, bonus draws and once-per-turn support', () => {
   const card = applyCombatExpansionMartial(resolveCard(registries, { cardId: 'quickstep', abilityRank: 5 }, 2));
-  // Quickstep is a 2-SP stance now: its 16 Block scales to 29, and the rank's +1 makes 30 (was 17 at 1.0x).
-  assert.equal(card.effects.find(effect => effect.op === 'block' && !effect.oncePerTurn).amount, 30);
+  // Quickstep costs 1 SP at grade 5 under the cost formula (SPEC §4.3a), so its numbers are the authored ones.
+  assert.equal(card.effects.find(effect => effect.op === 'block' && !effect.oncePerTurn).amount, 17);
   assert.equal(card.effects.filter(effect => effect.op === 'draw' && !effect.oncePerTurn).reduce((sum, effect) => sum + effect.amount, 0), 2);
-  assert.ok(card.effects.some(effect => effect.op === 'block' && effect.oncePerTurn === 'grade-block' && effect.amount === 4), 'the once-per-turn support block scales 2 to 4');
+  assert.ok(card.effects.some(effect => effect.op === 'block' && effect.oncePerTurn === 'grade-block' && effect.amount === 2));
   assert.ok(card.effects.some(effect => effect.op === 'draw' && effect.oncePerTurn === 'grade-draw' && effect.amount === 1));
 });
 
 test('zero-HP Counter grades move earned primary damage to Poise and preserve conditional reply bonuses', () => {
-  for (const [id, expected] of [['shieldBash', 20], ['riposte', 16], ['progression-crimson-reprisal', 18]]) {
+  // At grade 5 these counters cost 3 SP under the cost formula (SPEC §4.3a), so their amounts carry the 1.8 multiplier
+  // (were 20, 16, 18 and 20 below at 1.0x).
+  for (const [id, expected] of [['shieldBash', 35], ['riposte', 29], ['progression-crimson-reprisal', 32]]) {
     const f = fixture(), def = applyCombatExpansionMartial(resolveCard(registries, { cardId: id, abilityRank: 5 }, 2));
     const carrier = tacticalCarrier(def);
     const support = prepareTacticalCard(f.ctx, f.target, f.source, carrier, def.effects);
@@ -201,7 +203,7 @@ test('zero-HP Counter grades move earned primary damage to Poise and preserve co
   const f = fixture(); f.target.block = 1;
   const def = applyCombatExpansionMartial(resolveCard(registries, { cardId: 'riposte', abilityRank: 5 }, 2));
   prepareTacticalCard(f.ctx, f.target, f.source, tacticalCarrier(def), def.effects);
-  assert.equal(f.target.combatCounter.payload.poise, 20);
+  assert.equal(f.target.combatCounter.payload.poise, 36);
 });
 
 test('Prone combo impact is conditional on a successful Contact return, while conditional Evade needs Prone', () => {

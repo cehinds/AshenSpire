@@ -24,8 +24,13 @@ const registries = createRegistries(contentBundle);
 const CLASSES = registries.classes.all().map((c) => c.id);
 const ENEMY = 'wanderingSoldier';
 const ids = (cards) => cards.map((card) => card.instanceId);
-const fightFor = (run, settings = {}, reg = registries) =>
-  createRunCombat({ registries: reg, rng: createRng(4242), run, enemyIds: [ENEMY], settings });
+// Reactions off: the soldier's 3-SP pool (SPEC §4.6a) can plan an attack the player could react to, and these checks
+// read the hand after a whole End Turn.
+const fightFor = (run, settings = {}, reg = registries) => {
+  const c = createRunCombat({ registries: reg, rng: createRng(4242), run, enemyIds: [ENEMY], settings });
+  dispatch(c, { type: 'setReactions', enabled: false });
+  return c;
+};
 const capacityOf = (c, run) => scaledCards(handRow(c.handRules, 'handSize'), run.attributes, 1);
 const endsTurnAsDiscard = (c, card) => c.registries.framework.endTurnFate(resolveCard(c.registries, card)) === 'discard';
 

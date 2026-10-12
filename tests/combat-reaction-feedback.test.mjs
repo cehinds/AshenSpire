@@ -64,9 +64,9 @@ test('a melee Counter facing a Sweep reports notCovered with the attack kind', (
 test('a Counter the seat cannot pay for reports cost with need and have', () => {
   const combat = solo();
   combat.player.energy = 0;
-  // guardCounter is a counter: 2 SP by the action-cost table (owner 2026-10-12), so the refusal needs 2.
+  // guardCounter costs 1 SP under the cost formula (SPEC §4.3a), so the refusal needs 1.
   assert.deepEqual(unavailable(soloEnd(combat)), [{ ownerId: 'player', sourceId: 'e1', reason: 'cost',
-    cardId: 'guardCounter', cardIds: ['guardCounter'], attackKind: 'attack', resource: 'stamina', need: 2, have: 0 }]);
+    cardId: 'guardCounter', cardIds: ['guardCounter'], attackKind: 'attack', resource: 'stamina', need: 1, have: 0 }]);
 });
 
 test('a Counter whose HP offering would leave the seat dead reports cost with resource hp', () => {
@@ -223,7 +223,7 @@ test('co-op reports the same reasons through the same offer door', () => {
   cost.players.get('a').entity.energy = 0;
   endTurn(cost, 'a');
   assert.deepEqual(unavailable(cost.eventLog), [{ ownerId: 'a', sourceId: 'e1', reason: 'cost',
-    cardId: 'guardCounter', cardIds: ['guardCounter'], attackKind: 'attack', resource: 'stamina', need: 2, have: 0 }]);
+    cardId: 'guardCounter', cardIds: ['guardCounter'], attackKind: 'attack', resource: 'stamina', need: 1, have: 0 }]);
   const sweep = coop({ move: { cardTags: SWEEP } });
   endTurn(sweep, 'a');
   assert.deepEqual(unavailable(sweep.eventLog).map(row => [row.ownerId, row.reason, row.attackKind]), [['a', 'notCovered', 'sweep']]);
@@ -258,7 +258,7 @@ test('mixed-version co-op reports an expanded seat reaction using that seat\'s c
   endTurn(combat, 'expanded');
   endTurn(combat, 'legacy');
   assert.deepEqual(unavailable(combat.eventLog), [{ ownerId: 'expanded', sourceId: 'e1', reason: 'cost',
-    cardId: 'whirlingGuard', cardIds: ['whirlingGuard'], attackKind: 'sweep', resource: 'stamina', need: 2, have: 0 }]);
+    cardId: 'whirlingGuard', cardIds: ['whirlingGuard'], attackKind: 'sweep', resource: 'stamina', need: 1, have: 0 }]);
 });
 
 const guardBroken = events => events.filter(event => event.type === 'combatGuardBroken').map(({ type, ...payload }) => payload);

@@ -116,8 +116,10 @@ test('expanded effects retain paid card motifs and action-only profile fallbacks
 
 test('an authored magic attack that spends nothing keeps its spell look (plan A2)',()=>{
  const reg=createRegistries(contentBundle);
- for(const id of ['starstonePebble','cometFragment','starSpark']){
+ // Under the cost formula (SPEC §4.3a) these three spells pay 1 Mana, so they animate as resource casts; Shooting Shard,
+ // a fixed 0-cost spell, is the magic attack that spends nothing. Replaced fixture: the three spent nothing before.
+ for(const [id,activation] of [['shootingShard',/^mundane/],['starstonePebble',/^resource/],['cometFragment',/^resource/],['starSpark',/^resource/]]){
   const card=resolveCard(reg,{cardId:id});const tagged={...card,cardTags:combatEffectTags(reg,card)};
-  assert.equal(effect(tagged,card.class).kind,'starbolt',id);assert.match(combatEffectPlan(tagged).activation,/^mundane/,id);
+  assert.equal(effect(tagged,card.class).kind,'starbolt',id);assert.match(combatEffectPlan(tagged).activation,activation,id);
  }
 });

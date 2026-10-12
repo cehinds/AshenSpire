@@ -102,10 +102,9 @@ test('solo and co-op capture conditional Counter values after payment, before th
     if (coop) playCard(combat, 'seat', 'counter');
     else dispatch(combat, { type: 'playCard', cardInstanceId: 'counter' });
     const label = `${coop ? 'co-op' : 'solo'} ${cardId} Block${block}`;
-    // Both counters are 2-SP now (SPEC action costs): guardCounter's 4 scales to 7, and its 10 branch to 18; riposte's
-    // 4 scales to 7, and its return is 11 (was 6) whatever the Block (its poise branch is checked below).
-    assert.equal(entity.combatCounter.damage, cardId === 'guardCounter' ? (block ? 18 : 7) : 11, label);
-    assert.equal(entity.combatCounter.poiseDamage, cardId === 'riposte' ? (block ? 7 : 0) : 1, label);
+    // Both counters cost 1 SP under the cost formula (SPEC §4.3a), so their numbers are the authored ones.
+    assert.equal(entity.combatCounter.damage, cardId === 'guardCounter' ? (block ? 10 : 4) : 6, label);
+    assert.equal(entity.combatCounter.poiseDamage, cardId === 'riposte' ? (block ? 4 : 0) : 1, label);
     assert.equal(entity.energy, actionsBefore - resolveCard(registries, { cardId }).cost, label);
     assert.equal(entity.block, block + 6, `${label}: protection resolves after conditional capture`);
     const paid = combat.eventLog.findIndex(event => event.type === 'energySpent');

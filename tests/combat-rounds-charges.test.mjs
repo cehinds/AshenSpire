@@ -57,10 +57,11 @@ test('(a) a Mana card still claims the discount it prices with', () => {
 const pricedMana = (c, instanceId) => cardPlayCosts(c, instanceId).mana;
 
 test('(b) a charge keyed to an ability kind the price does not read is not claimed, and the card pays full Mana', () => {
-  // The probe: a Mana card with no authored abilityKind (it prices as a plain card) and a charge keyed to 'spell'.
+  // The probe: a Mana card with no authored abilityKind (it prices as a plain card) and a charge keyed to 'spell'. It pins
+  // its own 2 Mana (costRule 'fixed' opts it out of the cost formula, SPEC §4.3a).
   // The price (resolvedCardPlayCosts) never reads abilityKind, so the discount does not apply and nothing is claimed.
   const base = createRegistries(contentBundle);
-  const card = { ...base.cards.get('defend'), gradeProfiles: undefined, abilityRank: undefined, legacyFace: undefined, name: 'Kind fixture', cost: 1, manaCost: 2, effects: [{ op: 'block', target: 'self', amount: 4 }], upgrade: {}, abilityKind: undefined, cardTags: ['kind.skill', 'source:spell'] };
+  const card = { ...base.cards.get('defend'), gradeProfiles: undefined, abilityRank: undefined, legacyFace: undefined, name: 'Kind fixture', costRule: 'fixed', cost: 1, manaCost: 2, effects: [{ op: 'block', target: 'self', amount: 4 }], upgrade: {}, abilityKind: undefined, cardTags: ['kind.skill', 'source:spell'] };
   const registries = { ...base, cards: { ...base.cards, get: (id) => (id === 'defend' ? card : base.cards.get(id)) } };
   const player = { id: 'p1', classId: 'herald', maxHp: 80, hp: 50, maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 2, relicIds: [], deck: Array.from({ length: 20 }, (_, i) => ({ instanceId: `d${i}`, cardId: 'defend', upgraded: false })) };
   const c = createCombat({ registries, rng: createRng(9), player, enemyIds: [ENEMY], combatRounds: combatRoundsFor({ [COMBAT_ROUNDS_KEY]: true }) });

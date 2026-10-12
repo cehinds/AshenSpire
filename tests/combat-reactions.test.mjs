@@ -40,18 +40,21 @@ test('incoming plans pause before hits, reveal only the actor, and decline resum
   assert.throws(() => dispatch(combat, { type: 'chooseReaction', offerId: 'stale' }));
   assert.deepEqual(serializeCombatSnapshot(combat), before);
   assert.deepEqual(combat.rng.getCounters(), rng);
-  // Owner 2026-10-12: each enemy spends its 2-SP pool, so a 1-SP slash is played twice per enemy turn, and each
-  // planned move pauses for its own reaction, in roster order: e1, e1, e2, e2.
+  // Owner 2026-10-12: each enemy spends its 3-SP stat pool (SPEC §4.6a), so a 1-SP slash is played three times per
+  // enemy turn, and each planned move pauses for its own reaction, in roster order: e1 ×3, then e2 ×3.
   const first = answer(combat);
   assert.deepEqual(first.events.filter(event => event.type === 'enemyMoveStarted').map(event => event.sourceId), ['e1']);
   assert.equal(combat.pendingReaction.sourceId, 'e1', "e1's second planned slash pauses next");
   answer(combat);
+  assert.equal(combat.pendingReaction.sourceId, 'e1', "and its third");
+  answer(combat);
   assert.equal(combat.pendingReaction.sourceId, 'e2');
+  answer(combat);
   answer(combat);
   answer(combat);
   assert.equal(combat.turn, 2);
   assert.equal(combat.phase, 'player');
-  assert.deepEqual(combat.enemies.map(enemy => enemy.performedMoves), [['slash', 'slash'], ['slash', 'slash']]);
+  assert.deepEqual(combat.enemies.map(enemy => enemy.performedMoves), [['slash', 'slash', 'slash'], ['slash', 'slash', 'slash']]);
 });
 
 test('headless bot resolves optional offers before trying ordinary player actions', () => {
@@ -63,7 +66,7 @@ test('headless bot resolves optional offers before trying ordinary player action
     assert.equal(action.type, 'chooseReaction'); assert.equal(action.optionId, null);
     dispatch(combat, action); choices++;
   }
-  assert.equal(choices, 4, 'two enemies, two planned slashes each (2-SP pool, 1 SP per slash)'); assert.equal(combat.turn, 2); assert.equal(combat.phase, 'player');
+  assert.equal(choices, 6, 'two enemies, three planned slashes each (3-SP pool, 1 SP per slash)'); assert.equal(combat.turn, 2); assert.equal(combat.phase, 'player');
   assert.equal(combat.eventLog.filter(event => event.type === 'cardPlayed').length, 0);
 });
 
@@ -83,7 +86,9 @@ test('one selected Counter pays once and successful multi-hit return follows the
   assert.ok(contacts.every(({ index }) => index < trigger));
   assert.equal(combat.pendingReaction?.sourceId, 'e1', "the enemy's second planned slash is offered next");
   answer(combat);
-  assert.equal(combat.eventLog.filter(event => event.type === 'damageDealt' && event.targetId === 'player').length >= 4, true, 'the second slash lands its two hits after its own reaction');
+  assert.equal(combat.pendingReaction?.sourceId, 'e1', 'and its third (a 3-SP pool)');
+  answer(combat);
+  assert.equal(combat.eventLog.filter(event => event.type === 'damageDealt' && event.targetId === 'player').length >= 6, true, 'the later slashes land their hits after their own reactions');
   assert.equal(combat.pendingReaction, undefined);
 });
 

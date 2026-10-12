@@ -125,9 +125,10 @@ test('co-op mounts each seat selection under its own identity',()=>{
  const a=propertyMountsOf(c,c.players.get('a').entity),b=propertyMountsOf(c,c.players.get('b').entity);assert.ok(a['feat:'+id('coal-on-steel')]);assert.ok(!a['feat:'+id('brace-and-bite')]);assert.ok(b['feat:'+id('brace-and-bite')]);
 });
 
+// The enemy's planned follow-ups (its 3-SP pool, SPEC §4.6a) are cleared with its intent, so no blow eats the Block.
 test('Memory of Winter retains at most four Block on a real turn, with highest allowance',()=>{
- const c=fight([id('memory-of-winter')]);c.player.block=10;c.enemies[0].intent=null;dispatch(c,{type:'endTurn'});assert.equal(c.player.block,4);assert.equal(passiveMax(reg,[],'retainBlockUpTo',propertyMountsOf(c,c.player)),4);
- c.skillFeats=[];syncFeatProperties(c);c.player.block=10;c.enemies[0].intent=null;dispatch(c,{type:'endTurn'});assert.equal(c.player.block,0);
+ const c=fight([id('memory-of-winter')]);c.player.block=10;c.enemies[0].intent=null;c.enemies[0].plannedMoves=[];dispatch(c,{type:'endTurn'});assert.equal(c.player.block,4);assert.equal(passiveMax(reg,[],'retainBlockUpTo',propertyMountsOf(c,c.player)),4);
+ c.skillFeats=[];syncFeatProperties(c);c.player.block=10;c.enemies[0].intent=null;c.enemies[0].plannedMoves=[];dispatch(c,{type:'endTurn'});assert.equal(c.player.block,0);
  assert.equal(passiveMax(reg,[],'retainBlockUpTo',{a:{rules:[{passives:{retainBlockUpTo:4}}]},b:{rules:[{passives:{retainBlockUpTo:6}}]}}),6);
 });
 

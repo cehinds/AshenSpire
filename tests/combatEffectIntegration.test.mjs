@@ -92,8 +92,10 @@ test('every authored playable card and equipment profile resolves to existing ar
  assert.equal(new Set(COMBAT_EFFECT_RULES.map(r=>r.id)).size,COMBAT_EFFECT_RULES.length);
  for(const rule of COMBAT_EFFECT_RULES)assert.ok(COMBAT_EFFECT_ART[rule.kind],rule.id);
 });
+// Gorefire Slash spends no Mana under the cost formula (SPEC §4.3a), so its mundane blade attack reads as a slash; it was
+// a Mana-paying bloodSlash before.
 test('specific combinations beat generic schools and defensive tags',()=>{
- for(const [id,kind]of [['shieldBash','shieldBash'],['gorefireSlash','bloodSlash'],['riposte','riposte'],['guardCounter','riposte'],['crystalBarrier','barrier'],['enterBulwark','ward'],['starstoneArc','starbolt']])assert.equal(plan(id).kind,kind,id);
+ for(const [id,kind]of [['shieldBash','shieldBash'],['gorefireSlash','slash'],['riposte','riposte'],['guardCounter','riposte'],['crystalBarrier','barrier'],['enterBulwark','ward'],['starstoneArc','starbolt']])assert.equal(plan(id).kind,kind,id);
  assert.equal(plan('strike','shieldAttack').kind,'shieldBash');
  assert.equal(plan('defend','staffGuard').kind,'magicGuard');
  assert.equal(plan('defend','sceptreGuard').kind,'arcaneWard');

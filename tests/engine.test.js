@@ -663,10 +663,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(tagIdsFor('starstonePebble').includes('starstone'), 'CSV index names Starstone Pebble as starstone');
     S.applyStatus(c, e1, 'frostExposed', 1);
     const pv = previewCard(c, c.piles.hand[0].instanceId, 'e1');
-    // starstonePebble is a 2-SP cast now (SPEC action costs): its 6 scales to 11, then Frost-Exposed's ×1.25 floors to 13.
-    eq(pv.values.find((v) => v.op === 'damage').value, 13, 'preview derives starstone: floor(11 × 1.25) (was floor(6 × 1.25) = 7)');
+    // starstonePebble costs 1 SP + 1 MP under the cost formula (SPEC §4.3a), so its 6 is not scaled.
+    eq(pv.values.find((v) => v.op === 'damage').value, 7, 'preview derives starstone: floor(6 × 1.25)');
     playFromHand(c, 'starstonePebble');
-    eq(logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop().amount, 13, 'execution derives the same starstone hit (scaled, see the preview)');
+    eq(logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop().amount, 7, 'execution derives the same starstone hit');
   });
 
   test('7e3. Unraveled changes a real Blight hit through tagging.csv', () => {
@@ -679,10 +679,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(tagIdsFor('blightTouch').includes('blight'), 'CSV index names Blight Touch as blight');
     S.applyStatus(c, e1, 'insanityExposed', 1);
     const pv = previewCard(c, c.piles.hand[0].instanceId, 'e1');
-    // blightTouch is a 2-SP cast now: its 5 scales to 9, then Insanity-Exposed's ×1.3 floors to 11 (was 6).
-    eq(pv.values.find((v) => v.op === 'damage').value, 11, 'preview derives blight: floor(9 × 1.3)');
+    // blightTouch costs 1 SP + 1 MP under the cost formula (SPEC §4.3a), so its 5 is not scaled.
+    eq(pv.values.find((v) => v.op === 'damage').value, 6, 'preview derives blight: floor(5 × 1.3)');
     playFromHand(c, 'blightTouch');
-    eq(logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop().amount, 11, 'execution derives the same blight hit');
+    eq(logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop().amount, 6, 'execution derives the same blight hit');
   });
 
   // ---- 7f. Known-bads through the REAL bundle (#61): each red names its row --
@@ -1632,14 +1632,14 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const a = makeCombat({ deck: Array(5).fill('starstonePebble'), enemies: ['tGiant'], mana: 6, maxMana: 6, stamina: 6 });
     playFromHand(a, 'starstonePebble');
     let hits = logOf(a, 'damageDealt').map((e) => e.amount);
-    eq(hits.join(','), '11', 'first spell: no bonus (starstonePebble is a 2-SP cast: 6 scales to 11)');
+    eq(hits.join(','), '6', 'first spell: no bonus');
     playFromHand(a, 'starstonePebble');
     hits = logOf(a, 'damageDealt').map((e) => e.amount);
-    eq(hits.join(','), '11,11,5', 'second spell: Starstone bonus fired (the bonus scales with the 2-SP card: 3 to 5)');
+    eq(hits.join(','), '6,6,3', 'second spell: Starstone bonus fired');
     dispatch(a, { type: 'endTurn' });
     eq(S.getStacks(a.player, 'starstoneCharge'), 0, 'charge fades at turn end');
     playFromHand(a, 'starstonePebble');
-    eq(logOf(a, 'damageDealt').map((e) => e.amount).join(','), '11,11,5,11', 'new turn: no bonus again');
+    eq(logOf(a, 'damageDealt').map((e) => e.amount).join(','), '6,6,3,6', 'new turn: no bonus again');
 
     // The starting relic's structured school modifier is host-stamped once and
     // feeds the same attack math used by preview, solo execution, and co-op.
@@ -1653,12 +1653,14 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       enemyIds: ['tGiant'],
     });
     eq(soloMagic.player.mana, Math.min(starRun.maxMana, REG.balance.powers.starstoneShard.restoreMana + REG.balance.powers.lodestarShard.restoreMana), 'Starstone combatStart recovery restores Mana through its trigger row — and the kit relic Lodestar Shard (plan phase 5a) more');
+    // Read before the play: Starstone Pebble pays 1 Mana under the cost formula (SPEC §4.3a).
+    const soloStartMana = soloMagic.player.mana;
     const soloSpell = soloMagic.piles.hand.find((card) => card.cardId === 'starstonePebble');
     const soloPreview = previewCard(soloMagic, soloSpell.instanceId, 'e1').values.find((value) => value.op === 'damage');
     // A2: Starstone Shard's magic damage is +2 (was +1).
-    eq(soloPreview.value, 13, 'solo preview includes the stamped +2 magic damage, added to the scaled 11 (a 2-SP spell)');
+    eq(soloPreview.value, 8, 'solo preview includes the stamped +2 magic damage');
     dispatch(soloMagic, { type: 'playCard', cardInstanceId: soloSpell.instanceId, targetId: 'e1' });
-    eq(logOf(soloMagic, 'damageDealt')[0].amount, 13, 'solo live primary damage matches preview (scaled 11, plus the stamped 2)');
+    eq(logOf(soloMagic, 'damageDealt')[0].amount, 8, 'solo live primary damage matches preview');
 
     const coopMagic = createCoopCombat({
       registries: REG, rng: createRng(0xc002),
@@ -1671,16 +1673,16 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       ],
       enemyIds: ['tGiant'],
     });
-    eq(coopMagic.players.get('p1').entity.mana, soloMagic.player.mana, 'co-op combatStart uses the same Mana recovery row — and Lodestar Shard\'s (plan phase 5a)');
+    eq(coopMagic.players.get('p1').entity.mana, soloStartMana, 'co-op combatStart uses the same Mana recovery row — and Lodestar Shard\'s (plan phase 5a)');
     const coopSpell = coopMagic.players.get('p1').piles.hand.find((card) => card.cardId === 'starstonePebble');
     const coopEvents = playCoopCard(coopMagic, 'p1', coopSpell.instanceId, 'e1').events;
-    eq(coopEvents.filter((event) => event.type === 'damageDealt')[0].amount, 13,
-      'co-op live magic damage uses the same host-stamped +2, on the scaled 11 (a 2-SP spell)');
+    eq(coopEvents.filter((event) => event.type === 'damageDealt')[0].amount, 8,
+      'co-op live magic damage uses the same host-stamped +2');
 
     // Starstone Shard: combat starts pre-charged → the FIRST spell combos.
     const s = makeCombat({ deck: Array(5).fill('starstonePebble'), enemies: ['tGiant'], relicIds: ['starstoneShard'], stamina: 2 });
     playFromHand(s, 'starstonePebble');
-    eq(logOf(s, 'damageDealt').map((e) => e.amount).join(','), '11,5', 'Shard pre-charges the opener (the 2-SP spell scales 6,3 to 11,5)');
+    eq(logOf(s, 'damageDealt').map((e) => e.amount).join(','), '6,3', 'Shard pre-charges the opener');
 
     // Herald blood economy: Blood Pact pays HP for energy + draw.
     const p = makeCombat({ deck: ['bloodPact', 'strike', 'strike', 'strike', 'strike', 'strike'] });
@@ -1780,15 +1782,16 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     });
     assert(!badCost.ok && badCost.errors.some((e) => e.path === 'cards.gorefireSlash.manaCost'), 'negative manaCost cannot mint mana');
 
-    const spend = makeCombat({ deck: Array(5).fill('gorefireSlash'), enemies: ['tGiant'], mana: 2, maxMana: 2, stamina: 2 });
+    // A spell the cost formula prices at 1 MP (SPEC §4.3a). Gorefire Slash, the old fixture, is physical now: 0 MP.
+    const spend = makeCombat({ deck: Array(5).fill('starstonePebble'), enemies: ['tGiant'], mana: 2, maxMana: 2, stamina: 2 });
     const sig = spend.piles.hand[0];
     const pv = previewCard(spend, sig.instanceId);
     eq(pv.manaCost, 1, 'preview exposes the same mana cost execution charges');
     dispatch(spend, { type: 'playCard', cardInstanceId: sig.instanceId, targetId: 'e1' });
-    eq(spend.player.mana, 1, 'signature starter spends 1 mana');
+    eq(spend.player.mana, 1, 'a 1-MP spell spends 1 mana');
     assert(logOf(spend, 'manaSpent').some((e) => e.amount === 1), 'mana spend emits a receipt');
 
-    const empty = makeCombat({ deck: Array(5).fill('gorefireSlash'), enemies: ['tGiant'], mana: 0, maxMana: 3, stamina: 3 });
+    const empty = makeCombat({ deck: Array(5).fill('starstonePebble'), enemies: ['tGiant'], mana: 0, maxMana: 3, stamina: 3 });
     empty.player.mana = 0;
     const beforeHand = empty.piles.hand.length;
     let refused = '';
@@ -9065,12 +9068,11 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(logOf(c2, 'relicTriggered').filter((e) => e.relicId === 'whetstonePouch').length, 1);
     // Waxen Seal: the first heal each combat heals more, once.
     const c3 = makeCombat({ deck: ['warmLitany', 'warmLitany', 'warmLitany', 'warmLitany', 'warmLitany'], relicIds: ['waxenSeal'], hp: 40 });
-    c3.player.maxStamina = 5; c3.player.stamina = 5; c3.player.energyMax = 5; c3.player.energy = 5; // two 2-SP casts (SPEC action costs)
+    c3.player.maxStamina = 3; c3.player.stamina = 3; c3.player.energyMax = 3; c3.player.energy = 3; // warmLitany: 1 SP + 1 MP (SPEC §4.3a)
     playFromHand(c3, 'warmLitany');
-    // warmLitany is a 2-SP cast now: its 3 heal scales to 5 (SPEC action costs).
-    eq(c3.player.hp, 40 + 5 + REG.balance.powers.waxenSeal.heal, 'Litany heals, and the seal heals more');
+    eq(c3.player.hp, 40 + 3 + REG.balance.powers.waxenSeal.heal, 'Litany heals, and the seal heals more');
     playFromHand(c3, 'warmLitany');
-    eq(c3.player.hp, 40 + 5 + REG.balance.powers.waxenSeal.heal + 5, 'the second heal is its own');
+    eq(c3.player.hp, 40 + 3 + REG.balance.powers.waxenSeal.heal + 3, 'the second heal is its own');
     // A heal at full HP heals nothing and spends nothing (healPositive):
     // Golden Sprout's opening heal on a healthy Herald leaves the seal for the
     // first real heal.
@@ -9078,7 +9080,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(logOf(c3b, 'relicTriggered').filter((e) => e.relicId === 'waxenSeal').length, 0, 'a zero heal does not spend the seal');
     c3b.player.maxStamina = 3; c3b.player.stamina = 3; c3b.player.energyMax = 3; c3b.player.energy = 3; c3b.player.hp = 40;
     playFromHand(c3b, 'warmLitany');
-    eq(c3b.player.hp, 40 + 5 + REG.balance.powers.waxenSeal.heal, 'the first real heal does (warmLitany heals 5 at 2 SP)');
+    eq(c3b.player.hp, 40 + 3 + REG.balance.powers.waxenSeal.heal, 'the first real heal does');
     // Co-op: a heal is the HEALED seat's — an ally healed by A fires the ally's
     // seal on the ally, and A's seal stays whole.
     const hA = createRunState({ seed: 0x5a5c, classId: 'herald', registries: REG });
@@ -9101,10 +9103,12 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const c4 = makeCombat({ deck: ['strike'], relicIds: ['lodestarShard'], mana: 1, maxMana: 1 + REG.balance.powers.lodestarShard.restoreMana });
     eq(c4.player.mana, 1 + REG.balance.powers.lodestarShard.restoreMana, 'the shard restores Mana as the fight opens');
     // Attune restores Mana and exhausts; upgraded it stays.
-    const c5 = makeCombat({ deck: ['attune', { id: 'attune', up: true }, 'strike', 'strike', 'strike'], mana: 0, maxMana: 3 });
-    c5.player.maxStamina = 5; c5.player.stamina = 5; c5.player.energyMax = 5; c5.player.energy = 5; // attune is a 2-SP cast now
+    // Attune is a spell the cost formula prices at 1 SP + 1 MP (SPEC §4.3a), so it opens with 1 Mana and each cast nets 0
+    // (it restored +1 from 0 before; an open owner question).
+    const c5 = makeCombat({ deck: ['attune', { id: 'attune', up: true }, 'strike', 'strike', 'strike'], mana: 1, maxMana: 3 });
+    c5.player.maxStamina = 5; c5.player.stamina = 5; c5.player.energyMax = 5; c5.player.energy = 5;
     playFromHand(c5, 'attune'); eq(c5.player.mana, 1); eq(c5.piles.exhaust.filter((c) => c.cardId === 'attune').length, 1, 'Attune exhausts');
-    playFromHand(c5, 'attune'); eq(c5.player.mana, 2); eq(c5.piles.exhaust.filter((c) => c.cardId === 'attune').length, 1, 'Attune+ does not');
+    playFromHand(c5, 'attune'); eq(c5.player.mana, 1); eq(c5.piles.exhaust.filter((c) => c.cardId === 'attune').length, 1, 'Attune+ does not');
     // VALIDATION, by name.
     const said = (v) => v.errors.map((e) => `${e.path}: ${e.msg}`);
     const noGroup = validateContent({ ...testBundle(), tagging: testBundle().tagging.filter((r) => !(r.family === 'class' && r.objectId === 'reaver' && r.tagId === 'item:blade')) });
