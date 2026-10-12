@@ -429,7 +429,7 @@ frost:      { stackMode: 'add', decay: 'none',
     effects: [ /* leaves the target Weak and Frost-Exposed */ ] } },
 ```
 
-Poise/Stagger uses its own break meter (`src/model/breakMeter.js`), fed by `poiseDamage`. Under legacy ratings a full meter applies the `staggered` status (skipped turn, ×1.5 damage taken); with ratings on (the default) a break applies no status (§4.4). After a break the threshold grows by `balance.poise.growthMult` (1.25). Stances (`src/content/stances.js`) reuse `modifiers` + `hooks` + `onEnter` effects; exclusivity is handled by the `enterStance` primitive.
+Poise/Stagger uses its own break meter (`src/model/breakMeter.js`), fed by `poiseDamage`. Under legacy ratings a full meter applies the `staggered` status (skipped turn, ×1.5 damage taken); with ratings on (the default) a break applies no status (§4.4). After a break the threshold grows: with ratings on (the default) by `breaks.thresholdGrowth` (1.25) in the combat ratings rules (`applyRatingImpact`, `src/engine/combatRatings.js`); under legacy ratings by `balance.poise.growthMult` (1.25, `dealPoiseDamage`). Stances (`src/content/stances.js`) reuse `modifiers` + `hooks` + `onEnter` effects; exclusivity is handled by the `enterStance` primitive.
 
 **Engine-primitive exceptions:** card-zone/turn semantics that genuinely can't be data — **Exhaust, Ethereal, Innate, Retain, Unplayable, X-cost** — are fixed engine behaviors. `src/content/keywords.js` supplies only their display names and tooltip text.
 
@@ -916,9 +916,9 @@ dmg = dmg * (attacker has Weak      ? 0.75 : 1)
 dmg = dmg * (defender has Vulnerable? 1.5  : 1)
 dmg = dmg * (defender is Staggered  ? 1.5  : 1)  // legacy ratings only (see below)
 dmg = dmg * defender's Poise or Ward resistance  // ratings on; Ward for magical hits
-dmg = dmg * (tag-scoped vulnerability, §3.7)
 dmg = dmg * (school resistance, then school vulnerability)
-dmg = floor(dmg); if dmg < 0 → 0
+dmg = floor(dmg) + ceil(dmg × (tagged − 1))      // tag-scoped vulnerability, §3.7 (taggedBonusFloor); plain floor(dmg) when no tag applies
+if dmg < 0 → 0
 ```
 
 The tactical matchup multipliers (§4.7) run after the floor. Staggered's ×1.5 is
