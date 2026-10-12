@@ -45,6 +45,20 @@ export const uiStrings = [
     "tip": "Arcane Ward"
   },
   {
+    "id": "combat.card.splitDamage",
+    "extends": "",
+    "short": "{amount} damage ({physical} {physicalType}, {magic} {magicType})",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.card.splitBlock",
+    "extends": "",
+    "short": "{verb} {block} Block and {ward} Ward",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "combat.protection.poise",
     "extends": "",
     "short": "Poise",

@@ -32,6 +32,8 @@ import { tagService } from './tagService.js';
 import { computeTokenBindings, cardTokenEffects } from './validate.js';
 import { balance } from '../content/balance.js';
 import { combatProfileFor, isSpellCard } from './combatCardProfile.js';
+import { uiStrings } from '../content/generated/uiStrings.js';
+import { magicShareOf, splitDamageTypesOf } from './combatRatings.js';
 import { cardSigilIdentity } from '../content/combatSigils.js';
 import { resolve as resolveTags } from '../content/tags.js';
 import { constantFormulaValue, describeFormula } from './formulas.js';
@@ -39,6 +41,23 @@ import { constantFormulaValue, describeFormula } from './formulas.js';
 const freeze = (value) => Object.freeze(value);
 
 /** Actual damage labels; a spell's school never substitutes for its damage. */
+// A uiStrings row with its {tokens} filled in. The row is the only copy of the sentence.
+function uiText(id, tokens) {
+  const row = uiStrings.find(entry => entry.id === id);
+  if (!row || !row.short) throw new Error(`uiStrings row '${id}' has no short form`);
+  return row.short.replace(/\{(\w+)\}/g, (match, key) => (key in tokens ? String(tokens[key]) : match));
+}
+
+// The split of a hit of `amount` from this card, or null when the card is whole magic or whole physical:
+// its magic share strictly between 0 and 1 (a carrier's own, else the damage type's, else its camp).
+function splitOf(def, profile, amount) {
+  const carrier = { ...profile, magicShare: def.magicShare, physicalDamageType: def.physicalDamageType };
+  const share = magicShareOf(carrier);
+  if (!(share > 0 && share < 1) || !Number.isFinite(amount)) return null;
+  const magic = Math.floor(amount * share + 1e-9);
+  return { magic, physical: amount - magic, types: splitDamageTypesOf(carrier) };
+}
+
 export function combatCardDamageLabel(def, preview = null, registries = null, index = null) {
   const service = registries && tagService(registries);
   let contacts = index === null ? (def.effects || []).flatMap((effect, at) =>
@@ -118,11 +137,19 @@ export function combatCardSummary(def, preview = null, registries = null) {
         const unequal = sequence?.length > 1 && sequence.some(amount => amount !== sequence[0]);
         const type = combatCardDamageLabel(def, preview, registries, index);
         const word = `${type ? `${type} ` : ''}damage`;
-        const damage = unequal ? `${sequence.join(' + ')} ${word} (${live.totalDamage} total across ${sequence.length} hits)`
+        // A hit part magic and part physical reads both parts, the physical first.
+        const split = !unequal && hits === 1 ? splitOf(def, p, n) : null;
+        const damage = split ? uiText('combat.card.splitDamage', { amount: n, physical: split.physical, physicalType: split.types.physical, magic: split.magic, magicType: split.types.magic })
+          : unequal ? `${sequence.join(' + ')} ${word} (${live.totalDamage} total across ${sequence.length} hits)`
           : `${n} ${word}${hits !== 1 ? ` ×${hits}` : ''}`;
         text = `${p.maneuver === 'counter' ? 'Return' : 'Deal'} ${damage}${area}`; break;
       }
-      case 'block': text = `${effect.target === 'ally' ? 'Ally gains' : 'Gain'} ${n} Block`; break;
+      case 'block': {
+        const verb = effect.target === 'ally' ? 'Ally gains' : 'Gain';
+        const split = splitOf(def, p, n);
+        text = split ? uiText('combat.card.splitBlock', { verb, block: split.physical, ward: split.magic }) : `${verb} ${n} Block`;
+        break;
+      }
       // A Spell's gain refills Ward first and only the overflow is Barrier, so it reads Ward.
       case 'gainBarrier': text = `Gain ${n} ${isSpellCard({ combatProfile: p, tags: def.tags }) ? 'Ward' : 'Barrier'}`; break;
       case 'gainWard': text = `Restore ${n} Ward${effect.oncePerCombat ? ' once per combat' : ''}`; break;

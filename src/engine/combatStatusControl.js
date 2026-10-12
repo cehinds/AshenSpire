@@ -71,13 +71,10 @@ export function breakPersistentWard(ctx, entity, meta = {}) {
   const cost = Math.max(0, ctx?.ratingsRules?.breaks?.wardActionLoss ?? 1);
   const staminaLoss = entity.kind === 'player' ? cost : 0;
   if (staminaLoss) entity.pendingActionLoss = (entity.pendingActionLoss || 0) + staminaLoss;
-  const interrupted = entity.kind === 'enemy';
-  const payload = { targetId: entity.id, sourceId: meta.sourceId, staminaLoss, ...(interrupted ? { interrupted: true } : {}),
+  // An enemy's break is TENTATIVELY interrupting; emitBreak settles the flag from what the stagger does.
+  const payload = { targetId: entity.id, sourceId: meta.sourceId, staminaLoss, ...(entity.kind === 'enemy' ? { interrupted: true } : {}),
     ...(ctx?.playerIdForEntity && entity.kind === 'player' ? { targetPlayerId: ctx.playerIdForEntity(entity) } : {}) };
-  if (!meta.deferBreak) {
-    ctx?.emit?.('wardBroken', payload);
-    if (interrupted) interruptForBreak(ctx, entity, 'wardBreak');
-  }
+  if (!meta.deferBreak) emitBreak(ctx, entity, 'wardBroken', payload, 'wardBreak');
   return payload;
 }
 
@@ -89,11 +86,37 @@ export function breakPersistentWard(ctx, entity, meta = {}) {
  * (impact protection) interrupts nothing.
  */
 export function interruptForBreak(ctx, entity, cause) {
+  const event = prepareBreakInterrupt(ctx, entity, cause);
+  if (event) ctx?.emit?.(...event);
+}
+
+/**
+ * prepareBreakInterrupt(ctx, entity, cause) → the enemyInterrupted event this break
+ * causes, or null when it cannot: the stagger is tried here, and a refused stagger
+ * (a dead enemy, one at 0 HP, stagger protection) interrupts nothing. Nothing is emitted.
+ */
+export function prepareBreakInterrupt(ctx, entity, cause) {
   // A killing hit breaks nothing that can act again: no INTERRUPTED for a dead enemy.
-  if (entity?.kind !== 'enemy' || !entity.alive || !(entity.hp > 0)) return;
+  if (entity?.kind !== 'enemy' || !entity.alive || !(entity.hp > 0)) return null;
   const cancelledMove = entity.pendingMove ? entity.pendingMove.moveId : null;
-  if (!Actions.staggerEnemy(ctx, entity, { cause })) return;
-  ctx?.emit?.('enemyInterrupted', { targetId: entity.id, cancelledMove, cause });
+  if (!Actions.staggerEnemy(ctx, entity, { cause })) return null;
+  return ['enemyInterrupted', { targetId: entity.id, cancelledMove, cause }];
+}
+
+/**
+ * emitBreak(ctx, entity, type, payload, cause) → emits a Ward or Poise break. A payload
+ * marked `interrupted` (a break on an enemy) keeps the flag only if the stagger really
+ * interrupts; the flag is set before the break is emitted, and the interruption follows it.
+ */
+export function emitBreak(ctx, entity, type, payload, cause) {
+  if (payload.interrupted) {
+    const event = prepareBreakInterrupt(ctx, entity, cause);
+    if (event) payload.interrupted = true; else delete payload.interrupted;
+    ctx?.emit?.(type, payload);
+    if (event) ctx?.emit?.(...event);
+    return;
+  }
+  ctx?.emit?.(type, payload);
 }
 
 /**

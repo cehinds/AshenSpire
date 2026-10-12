@@ -732,6 +732,7 @@ export const SCHEMAS = Object.freeze({
     baseValue: num,
     ratingId: en('ar', 'dr', 'pr', 'poise', 'ward'),
     cap: union(num, str),
+    magicShare: union(num, str),
     flavor: str,
     mods: arr(str),
     compatibility: en('attack-v1', 'guard-v1', 'technique-v1'),

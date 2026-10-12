@@ -373,6 +373,8 @@ export function createCombat({
     // or every card would come back to its bare-handed self at combat start.
     ...(c.mods && c.mods.length ? { mods: [...c.mods] } : {}),
     ...(typeof c.damageSchool === 'string' ? { damageSchool: c.damageSchool } : {}),
+    ...(Number.isFinite(c.magicShare) ? { magicShare: c.magicShare } : {}),
+    ...(typeof c.physicalDamageType === 'string' ? { physicalDamageType: c.physicalDamageType } : {}),
     ...(Number.isInteger(c.exposureBuildupPerHit) ? { exposureBuildupPerHit: c.exposureBuildupPerHit } : {}),
     ...(c.equipmentRole ? { equipmentRole: c.equipmentRole, profileId: c.profileId, profileReceipt: c.profileReceipt } : {}),
     ...(c.ratingId ? { ratingId: c.ratingId } : {}),
@@ -1345,6 +1347,8 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
     // Which piece lent this card, for the skill hooks (engine/skillXp.js).
     ...(inst.grantedBy ? { grantedBy: inst.grantedBy } : {}),
     damageSchool: inst.damageSchool ?? def.damageSchool,
+    ...(Number.isFinite(inst.magicShare ?? def.magicShare) ? { magicShare: inst.magicShare ?? def.magicShare } : {}),
+    ...(typeof (inst.physicalDamageType ?? def.physicalDamageType) === 'string' ? { physicalDamageType: inst.physicalDamageType ?? def.physicalDamageType } : {}),
     exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
     // The resolved face's Poise/Ward values: a staff's Strike resolves
     // magical and carries Ward, which the registry def cannot (attackImpact).
@@ -1602,6 +1606,8 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
       derivedTags: gripTags(gripOf(combat.registries, combat.loadout, combat.player.classId)),
       authoredTags: def.cardTags ?? (def.tags?.length ? def.tags : []),
       damageSchool: inst.damageSchool ?? def.damageSchool,
+      ...(Number.isFinite(inst.magicShare ?? def.magicShare) ? { magicShare: inst.magicShare ?? def.magicShare } : {}),
+      ...(typeof (inst.physicalDamageType ?? def.physicalDamageType) === 'string' ? { physicalDamageType: inst.physicalDamageType ?? def.physicalDamageType } : {}),
       exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
       ...(def.cardRatingValues ? { cardRatingValues: def.cardRatingValues } : {}),
     },

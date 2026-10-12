@@ -69,7 +69,9 @@ test('a killing hit that breaks Ward does not interrupt the dead enemy: no INTER
   const events = captureEvents(combat);
   applyAttackDamage(combat, combat.player, enemy, 3, [], magicCarrier());
   assert.equal(enemy.alive, false, 'the hit kills the enemy');
-  assert.equal(events.find(event => event.type === 'wardBroken').interrupted, true, 'the Ward still broke');
+  const broke = events.find(event => event.type === 'wardBroken');
+  assert.ok(broke, 'the Ward still broke');
+  assert.ok(!broke.interrupted, 'a dead enemy is not reported as interrupted');
   assert.equal(events.some(event => event.type === 'enemyInterrupted'), false, 'a killing hit shows no INTERRUPTED');
   assert.equal(events.some(event => event.type === 'enemyStaggered'), false);
   assert.equal(enemy.pendingActionLoss, undefined, 'a dead enemy pays nothing');

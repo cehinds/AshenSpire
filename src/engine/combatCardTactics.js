@@ -16,6 +16,8 @@ export function tacticalCarrier(def, extra = {}, ctx = null, source = null) {
   }
   const carrier = { ...metadata, ...extra, tags: def.cardTags ?? def.tags ?? extra.tags, attack: extra.attack ?? def.attack,
     damageSchool: extra.damageSchool ?? def.damageSchool,
+    ...(Number.isFinite(extra.magicShare ?? def.magicShare) ? { magicShare: extra.magicShare ?? def.magicShare } : {}),
+    ...(typeof (extra.physicalDamageType ?? def.physicalDamageType) === 'string' ? { physicalDamageType: extra.physicalDamageType ?? def.physicalDamageType } : {}),
     appliedStatuses: (def.effects || []).filter(effect => effect.op === 'applyStatus').map(effect => effect.status),
     appliedStatusEffects: (def.effects || []).filter(effect => effect.op === 'applyStatus'),
     appliedBuildupStatuses: (def.effects || []).filter(effect => effect.op === 'buildup').map(effect => effect.status),

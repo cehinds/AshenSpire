@@ -72,7 +72,7 @@ export function enqueueExpandedAction(ctx, actions, { source, target, carrier } 
         tags, contactCarrier, { matchups: false, beforeDefense: true }) : 0;
         if (crit) amount = Math.floor(amount * crit);
         const index = row.contacts.length;
-        row.contacts.push({ ...profile, amount, ...(eff.op !== 'damage' ? { effect: ['poiseDamage', 'wardDamage'].includes(eff.op) ? 'impact' : 'status', pressure: base } : {}) });
+        row.contacts.push({ ...profile, amount, ...(Number.isFinite(contactCarrier.magicShare) ? { magicShare: contactCarrier.magicShare } : {}), ...(contactCarrier.physicalDamageType ? { physicalDamageType: contactCarrier.physicalDamageType } : {}), ...(eff.op !== 'damage' ? { effect: ['poiseDamage', 'wardDamage'].includes(eff.op) ? 'impact' : 'status', pressure: base } : {}) });
         contacts.push({ key, index, id: entity.id, playerId: ctx.playerIdForEntity?.(entity), ...(crit ? { crit } : {}) });
       }
       action.meta.expansionContacts.push(contacts);
@@ -135,7 +135,7 @@ export function previewExpandedActions(ctx, actions, options) {
   const group = enqueueExpandedAction(local, copied, { ...options, source: entity(options.source), target: entity(options.target) });
   beginExpandedAction(local, group, entity(options.source));
   return copied.map(action => (action.meta.expansionContacts || []).flat().map(contact => ({ ...contact,
-    amount: group.targets[contact.key].receipt.defendedAmounts[contact.index] || 0,
+    amount: group.targets[contact.key].receipt.hpAmounts?.[contact.index] || 0,
     receipt: group.targets[contact.key].receipt })));
 }
 
