@@ -1,0 +1,104 @@
+// Owner decision #19 (docs/design/rebalance-owner-decisions.md): weapon cards
+// with no fixed damage tag deal the equipped weapon's type, in v1 and v2.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { contentBundle } from '../src/content/index.js';
+import { createRegistries } from '../src/model/registries.js';
+import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
+import { tacticalCarrier } from '../src/engine/combatCardTactics.js';
+import { effectCarrier } from '../src/engine/combatExpansionActions.js';
+import { foundationSource } from '../src/engine/combatRules.js';
+import { combatRules } from '../src/content/combatRules.js';
+import { createRng } from '../src/engine/rng.js';
+
+const regs = createRegistries(contentBundle);
+// blade (slashing), blade (piercing), blunt, bow, bare hands.
+const WEAPONS = { blade: 'straightSword', dagger: 'dagger', blunt: 'warhammer', bow: 'shortbow', unarmed: null };
+const WEAPON_TYPED = { blade: 'slashing', dagger: 'piercing', blunt: 'blunt', bow: 'piercing', unarmed: 'blunt' };
+const EXPECTED = {
+  strike: WEAPON_TYPED,
+  cheapShot: WEAPON_TYPED,
+  bloodhuntersStrike: WEAPON_TYPED,
+  guardCounter: WEAPON_TYPED,
+  bloodTithe: { blade: 'slashing', dagger: 'piercing', blunt: 'slashing', bow: 'slashing', unarmed: 'slashing' },
+  ruinousBlow: { blade: 'blunt', dagger: 'blunt', blunt: 'blunt', bow: 'blunt', unarmed: 'blunt' },
+  deathblow: { blade: 'blunt', dagger: 'blunt', blunt: 'blunt', bow: 'blunt', unarmed: 'blunt' },
+};
+
+function fight(cardId, weapon, version, extra = {}) {
+  const player = { classId: 'reaver', maxHp: 200, hp: 200, maxMana: 50, mana: 50, energyMax: 10, drawPerTurn: 5,
+    deck: [{ instanceId: 'card1', cardId }], relicIds: [],
+    loadout: { sets: { rightHand: [weapon], leftHand: [null], armor: ['default'] }, active: { rightHand: 0, leftHand: 0, armor: 0 } } };
+  const c = createCombat({ registries: regs, rng: createRng(5), player, enemyIds: ['wanderingSoldier'], combatExpansionVersion: version, ...extra });
+  const enemy = c.enemies[0];
+  enemy.hp = enemy.maxHp = 500;
+  return { c, enemy };
+}
+
+test('the listed cards carry no fixed damage tag except Ruinous Blow and Deathblow (Blunt)', () => {
+  for (const cardId of Object.keys(EXPECTED)) {
+    const tags = regs.cards.get(cardId).tags.filter(tag => tag.startsWith('damage:'));
+    assert.deepEqual(tags, ['ruinousBlow', 'deathblow'].includes(cardId) ? ['damage:blunt'] : [], cardId);
+  }
+});
+
+for (const version of [1, 2]) {
+  test(`v${version}: each card resolves the expected damage type per weapon`, () => {
+    for (const [cardId, byWeapon] of Object.entries(EXPECTED)) for (const [label, weapon] of Object.entries(WEAPONS)) {
+      const { c } = fight(cardId, weapon, version);
+      const def = regs.cards.get(cardId);
+      const carrier = tacticalCarrier(def, {}, c, c.player);
+      const where = `v${version} ${cardId} with ${label}`;
+      assert.equal(carrier.combatProfile.damageType, byWeapon[label], where);
+      if (version === 2) for (const effect of def.effects.filter(row => row.op === 'damage')) {
+        assert.equal(effectCarrier(carrier, effect).combatProfile.damageType, byWeapon[label], `${where} (effect)`);
+      }
+    }
+  });
+
+  test(`v${version}: preview and live damage agree for every card and weapon`, () => {
+    for (const cardId of Object.keys(EXPECTED).filter(id => id !== 'guardCounter')) for (const [label, weapon] of Object.entries(WEAPONS)) {
+      const { c, enemy } = fight(cardId, weapon, version);
+      // A conditional effect previews its potential value; none of them fire here.
+      const effects = regs.cards.get(cardId).effects;
+      const shown = previewCard(c, 'card1', enemy.id).values
+        .filter((row, index) => row.op === 'damage' && !effects[index].if)
+        .reduce((sum, row) => sum + (row.perTarget?.[enemy.id] ?? row.value ?? 0), 0);
+      const hits = dispatch(c, { type: 'playCard', cardInstanceId: 'card1', targetId: enemy.id }).events
+        .filter(event => event.type === 'damageDealt' && event.sourceId === 'player');
+      assert.equal(hits.reduce((sum, event) => sum + event.amount, 0), shown, `v${version} ${cardId} with ${label}`);
+      // v2 names the type on the hit; v1 shows it through its matchup rider.
+      if (version === 2) for (const hit of hits) assert.equal(hit.damageType, EXPECTED[cardId][label], `v2 ${cardId} with ${label}`);
+      else {
+        const type = EXPECTED[cardId][label];
+        assert.equal(!!enemy.statuses.bleed, type === 'slashing', `v1 ${cardId} with ${label}: Bleed rider`);
+        if (type === 'blunt') assert(enemy.poiseMeter.value >= 2, `v1 ${cardId} with ${label}: Blunt Poise rider`);
+      }
+    }
+  });
+}
+
+test('v2: an untagged Strike pays the enemy blunt weakness only with a blunt weapon or bare hands', () => {
+  const dealt = (weapon) => dispatch(fight('strike', weapon, 2).c, { type: 'playCard', cardInstanceId: 'card1', targetId: 'e1' })
+    .events.find(event => event.type === 'damageDealt').amount;
+  assert(dealt('warhammer') > dealt('straightSword'));
+  assert.equal(dealt(null), dealt('warhammer'));
+  assert.equal(dealt('shortbow'), dealt('straightSword'));
+});
+
+test('a prepared Guard Counter replies with the equipped weapon type', () => {
+  for (const version of [1, 2]) for (const [label, weapon] of Object.entries(WEAPONS)) {
+    const { c } = fight('guardCounter', weapon, version);
+    dispatch(c, { type: 'playCard', cardInstanceId: 'card1' });
+    assert.equal(c.player.combatCounter.carrier.combatProfile.damageType, WEAPON_TYPED[label], `v${version} ${label}`);
+  }
+});
+
+test('the rules-foundation source applies the same Blood Tithe restriction', () => {
+  for (const [label, weapon] of Object.entries(WEAPONS)) {
+    const { c } = fight('bloodTithe', weapon, 1, { ruleset: combatRules });
+    const def = regs.cards.get('bloodTithe');
+    assert.equal(foundationSource(c, c.player, { tags: def.tags, attack: def.attack }).damageType, EXPECTED.bloodTithe[label], label);
+    assert.equal(foundationSource(c, c.player, { tags: regs.cards.get('strike').tags }).damageType, WEAPON_TYPED[label], `strike ${label}`);
+  }
+});

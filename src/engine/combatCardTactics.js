@@ -3,7 +3,8 @@ import { evaluate } from '../model/formulas.js';
 import { evalPredicate } from './triggers.js';
 import { cardRatingBonus } from './combatRatings.js';
 import { armCombatCounter, matchupRules, combatExpansionEnabled, setCombatStance, prepareCombatEvade } from './combatMatchups.js';
-import { attackDescriptor } from '../model/attackTags.js';
+import { attackDescriptor, weaponDamageType } from '../model/attackTags.js';
+import { combatRules } from '../content/combatRules.js';
 import { equippedIn, slotHand } from '../model/loadout.js';
 import { enemyMoveDamage } from '../model/state.js';
 import { expansionCarrierTraits } from './combatExpansionEquipment.js';
@@ -35,8 +36,18 @@ export function tacticalCarrier(def, extra = {}, ctx = null, source = null) {
         if (equipped && attackDescriptor(equipped).source === kind) { piece = equipped; break; }
       }
     }
-    const identity = piece && attackDescriptor(piece);
-    carrier.combatProfile.damageType = identity?.damageType || (kind === 'unarmed' ? 'blunt' : null);
+    // No piece of that kind in hand: a physical weapon card is thrown with bare hands
+    // and deals the unarmed profile's type (owner #19), as foundationSource does.
+    const rules = ctx.foundation?.rules || combatRules;
+    const unarmed = (ctx.registries.equipment?.basicCardProfiles || []).find(row => row.id === 'unarmedAttack');
+    // A magical face (a staff's Strike, lent with a magic school) is never a bare-handed blow.
+    const magical = carrier.combatProfile.camp === 'spell' || (carrier.damageSchool && carrier.damageSchool !== 'physical');
+    const bare = piece || !['weapon', 'unarmed'].includes(kind) || magical ? null
+      : (unarmed && attackDescriptor(unarmed).damageType) || rules.fallbackSource.damageType;
+    const family = piece ? rules.equipmentSources?.itemFamilies?.[piece.id] || rules.equipmentSources?.profileFamilies?.[piece.attackProfile]
+      : rules.fallbackSource.family;
+    const damageType = weaponDamageType(attack, family, (piece && attackDescriptor(piece).damageType) || bare);
+    carrier.combatProfile.damageType = damageType || null;
   }
   return combatExpansionEnabled(ctx) ? expansionCarrierTraits(carrier, source) : carrier;
 }

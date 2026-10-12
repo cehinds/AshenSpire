@@ -777,6 +777,10 @@ card,,riposte,damage:piercing
 card,,stomp,damage:blunt
 card,,stomp,delivery:melee
 card,,kickOff,damage:blunt
+# Ruinous Blow and Deathblow are Blunt (owner #19 says Blunt and/or Force; a
+# second Force tag needs authored component weights, so Blunt alone for now).
+card,,ruinousBlow,damage:blunt
+card,,deathblow,damage:blunt
 card,,kickOff,delivery:melee
 card,,starstonePebble,source:spell
 card,,starstonePebble,damage:arcane

@@ -355,7 +355,9 @@ test('Holy lethal hit cleanses its attacker before the card ends combat', () => 
 
 test('Deathblow shares one Slashing rider across its separately queued damage effects', () => {
   const registries = createRegistries({ ...legacyContentBundle,
-    tagging: [...legacyContentBundle.tagging, { family: 'card', scope: '', objectId: 'deathblow', tagId: 'damage:slashing' }],
+    // Deathblow ships Blunt (owner #19); this fixture swaps in Slashing.
+    tagging: [...legacyContentBundle.tagging.filter(row => !(row.objectId === 'deathblow' && row.tagId.startsWith('damage:'))),
+      { family: 'card', scope: '', objectId: 'deathblow', tagId: 'damage:slashing' }],
   });
   for (const foundation of [false, true]) for (const coopMode of [false, true]) {
     const options = { registries, rng: createRng(50), enemyIds: ['wanderingSoldier'],

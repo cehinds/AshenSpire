@@ -7,7 +7,7 @@ import { createRng } from './rng.js';
 import { attachSkillXp } from './skillXp.js';
 import * as S from '../framework/statusSemantics.js';
 import { equippedIn, slotHand } from '../model/loadout.js';
-import { attackDescriptor, resolvedAttackTags } from '../model/attackTags.js';
+import { attackDescriptor, resolvedAttackTags, weaponDamageType } from '../model/attackTags.js';
 import { combatProfileFor } from '../model/combatCardProfile.js';
 import * as Control from './combatStatusControl.js';
 import { ashenBlightRestorationPercent } from './ashenBlight.js';
@@ -90,6 +90,12 @@ export function foundationProfile(ctx, entity) {
 
 export function foundationSource(ctx, entity, carrier = null) {
   if (carrier?.resolvedSource) return carrier.resolvedSource;
+  const source = equippedFoundationSource(ctx, entity, carrier);
+  const damageType = weaponDamageType(attackDescriptor(carrier || {}), source.family, source.damageType);
+  return damageType === source.damageType ? source : { ...source, damageType };
+}
+
+function equippedFoundationSource(ctx, entity, carrier) {
   const state = ctx.foundation;
   const profile = foundationProfile(ctx, entity);
   const attack = attackDescriptor(carrier || {});

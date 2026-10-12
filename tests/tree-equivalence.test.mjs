@@ -138,7 +138,7 @@ test('registered tags retain identity, approved tactical metadata changes are ex
   const TACTICAL_TAGS = {
     camp: ['camp:physical', 'camp:spell'],
     maneuver: ['maneuver:attack', 'maneuver:defend', 'maneuver:counter', 'maneuver:sweep', 'maneuver:ranged', 'maneuver:smash', 'maneuver:casting'],
-    school: ['school:frost', 'school:fire', 'school:lightning', 'school:force', 'school:alteration', 'school:illusion', 'school:divine', 'school:decay'],
+    school: ['school:frost', 'school:fire', 'school:lightning', 'school:force', 'school:alteration', 'school:illusion', 'school:divine', 'school:decay', 'school:earth'], // Earth: owner decision 5, 2026-10-12
     counterMode: ['counter:melee', 'counter:ranged', 'counter:spell'],
     reach: ['reach:contact', 'reach:near', 'reach:far'],
     trait: ['trait:adequateReach', 'trait:closing', 'trait:conductive', 'trait:grounded', 'trait:insulated', 'trait:mental', 'trait:projectile', 'trait:reveal', 'trait:shattering', 'trait:unavoidable', 'trait:unreflectable'],
@@ -146,7 +146,9 @@ test('registered tags retain identity, approved tactical metadata changes are ex
   for (const [domain, ids] of Object.entries(TACTICAL_TAGS)) {
     assert.deepEqual(TAGS.filter(tag => tag.domain === domain).map(tag => tag.id).sort(), [...ids].sort(), `${domain} holds exactly its approved tactical identities`);
   }
-  const tacticalIds = [...Object.values(TACTICAL_TAGS).flat(), 'targeting:single', 'targeting:area'];
+  // The damage types the owner added on 2026-10-12: Poison (decision 2), Psychic and Earth (decision 5).
+  const ADDED_DAMAGE_TYPES = ['damage:poison', 'damage:psychic', 'damage:earth'];
+  const tacticalIds = [...Object.values(TACTICAL_TAGS).flat(), 'targeting:single', 'targeting:area', ...ADDED_DAMAGE_TYPES];
   assert.deepEqual(TAGS.filter(t => t.id.startsWith('ability:')).map(t => t.id).sort(), [...ABILITY_TAGS].sort(), 'the fifty approved ability identities are exact');
   for (const id of ABILITY_TAGS) {
     const tag = tags.get(id);
@@ -178,7 +180,8 @@ test('every object states exactly one kind, the one its collection and type name
   // twenty existing mastery feats now participating in the kind registry.
   assert.equal(contentBundle.classSkillFeats.length, 70);
   assert.equal(contentBundle.enemyMoves.length, 103, 'the scoped enemy move collection contains all 103 authored actions');
-  assert.equal(counted, 513 + 40 + 10 + 70 + 103 + 32, 'all 768 objects, including class feats and scoped enemy move kinds');
+  // Plus the twelve Poison, Psychic and Earth cards (owner decisions 2 and 5, 2026-10-12).
+  assert.equal(counted, 513 + 40 + 10 + 70 + 103 + 32 + 12, 'all 780 objects, including class feats and scoped enemy move kinds');
 });
 
 test('a node carries no numbers: every variable resolves through a binding to a balance row, and the ladder reads highest scope first', () => {
