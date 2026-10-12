@@ -559,7 +559,9 @@ export function mountCustomize(app, {
   function flowProblem() { return classProblem() || characterProblem() || equipmentProblem() || abilitiesProblem(); }
   function refreshAbilitySelection() {
     const plan = startingAbilityPlan(registries, previewRun(), meta.settings || {});
-    state.startingAbilityIds = creationAbilitySelection(state.startingAbilityIds, plan);
+    // A point-allocation draft is not committed: Cancel must retain the
+    // previously legal picks. Its close handler rechecks after apply/restore.
+    if (!pointBuy) state.startingAbilityIds = creationAbilitySelection(state.startingAbilityIds, plan);
     return plan;
   }
 
@@ -1014,7 +1016,7 @@ export function mountCustomize(app, {
 
   function renderStartingAbility(section, { stage, next = null } = {}) {
     const box = options([], { id: stage === 'spells' ? 'cz-spell-choices' : 'cz-startingAbilities', class: 'cc-card-selectors cc-choice-collection', dataset: { view: state.equipmentChoiceView } });
-    const node = el('section', { class: 'cc-equip-group cc-starting-abilities', dataset: { abilityStep: stage } }, box);
+    const node = el('section', { class: 'cc-equip-group cc-starting-abilities', dataset: { abilityStep: stage, ...(stage === 'equipment' ? { equipmentSection: section.id } : {}) } }, box);
     const progress = el('p', { class: 'cc-ability-progress', 'aria-live': 'polite' });
     node.prepend(progress);
     const refresh = () => {
