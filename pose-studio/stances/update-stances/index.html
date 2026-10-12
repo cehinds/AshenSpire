@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Update Stances · Art review</title>
+  <link rel="stylesheet" href="review.css">
+  <script src="review.mjs" type="module"></script>
+</head>
+<body>
+  <a class="skip-link" href="#options">Skip to concepts</a>
+  <main>
+    <header class="masthead">
+      <a class="wordmark" href="../../../README.md">ASHENSPIRE <span>POSE STUDIO</span></a>
+      <span class="phase">ART EXPLORATION · 11 OCT 2026</span>
+    </header>
+    <section class="intro" aria-labelledby="title">
+      <p class="eyebrow">UPDATE STANCES / FIRST REVIEW</p>
+      <h1 id="title">Weight. Balance. Impact.</h1>
+      <p class="lead">Explore greatsword loading stances and broken guards. Choose the silhouettes that read clearly from behind.</p>
+      <div class="scope-note">Reaver is the first appearance pilot. These are pose concepts. Selected directions will be adapted to all four classes before animation and game integration.</div>
+    </section>
+    <section class="coverage" aria-label="Exploration coverage">
+      <div><strong id="ready-count">0</strong><span>concepts available</span><small>20 concepts in this first review</small></div>
+      <div><strong>600</strong><span>shared concepts planned</span><small>10 options × 10 weapons × 6 families</small></div>
+      <div><strong>4</strong><span>class appearances planned</span><small>Reaver · Rogue · Starseer · Herald</small></div>
+      <div class="coverage-detail"><span>Weapon groups</span><p>Sword + shield, greatsword, staff, bow, dagger, dual daggers, single sword, spear, halberd, unarmed.</p><small>Full scope is planned; the first review covers greatsword only.</small></div>
+    </section>
+    <div class="review-toolbar">
+      <div class="filters">
+        <label>Family<select id="family-filter"><option value="all">All families in this review</option><option value="smash">Smash stance</option><option value="guard-break">Guard break</option></select></label>
+        <label>Weapon<select id="weapon-filter"><option value="all">All available weapons</option><option value="greatsword">Greatsword</option></select></label>
+        <label>Appearance<select id="class-filter"><option value="all">All available classes</option><option value="reaver">Reaver</option></select></label>
+      </div>
+      <div class="choice-tools"><button id="copy-choices" class="primary" type="button">Copy choices <span id="choice-count">0</span></button><button id="clear-choices" type="button">Clear</button></div>
+    </div>
+    <p class="review-help">Select any favorites. Choices stay in this browser. Each source sheet shows five concepts in reading order: 1–3 across the top, 4–5 below (then 6–10 on sheet B). Use the numbered buttons under each full source sheet. These concepts are not cropped or registered for runtime.</p>
+    <p id="review-status" role="status" aria-live="polite"></p>
+    <div id="options" tabindex="-1"></div>
+    <section id="copy-fallback" class="copy-fallback" hidden aria-label="Copy selected choices">
+      <label for="choices-text">Copy these choices</label><textarea id="choices-text" readonly rows="8"></textarea><button id="close-copy" type="button">Close</button>
+    </section>
+    <footer>
+      <span>Source sheets are preserved. Full-sheet presentation keeps feet, capes and weapon tips visible.</span>
+      <nav aria-label="Review references"><a href="../../../docs/design/update-stances/current-art.md">Current art inventory</a><a href="../../../docs/design/update-stances/references.md">Pose references</a><a href="../../../docs/design/update-stances/integration-notes.md">Integration notes</a></nav>
+      <p>Remaining baseline families: Smash attack sequence, melee Counter, ranged Counter and magic Counter. Magic stance variants are additional coverage. Co-op development is paused.</p>
+    </footer>
+  </main>
+  <dialog id="sheet-dialog" aria-labelledby="sheet-title">
+    <div class="dialog-toolbar"><h2 id="sheet-title">Original source sheet</h2><button id="close-sheet" type="button" aria-label="Close source sheet">Close ×</button></div>
+    <div class="sheet-scroll"><img id="sheet-image" alt=""></div>
+    <p id="sheet-description"></p>
+    <a id="sheet-link" href="#" target="_blank" rel="noopener">Open original image</a>
+  </dialog>
+</body>
+</html>

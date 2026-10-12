@@ -4,6 +4,16 @@
 
 The standalone [HUD Component Studio](tools/hud-component-studio/README.md) reuses existing game/review artwork without changing its bytes. Its [asset manifest](tools/hud-component-studio/assets.manifest.json) records source repository paths, the `hd-assets-v18` art release where applicable, and SHA-256 receipts. Original authorship and licence records remain those documented here. The four simple SVG UI shapes and editor code were authored with Codex under human direction; they are recorded separately from copied source art. The packaged IM Fell English and Libre Baskerville font files retain their original notices and SIL OFL 1.1 in [FONT-LICENSE.txt](tools/hud-component-studio/FONT-LICENSE.txt).
 
+## Weapon stance exploration (2026-10-11)
+
+The [Update Stances pilot](pose-studio/stances/update-stances/README.md) contains
+original OpenAI ImageGen comparison paintings made from this project's existing
+Reaver references under human direction. Exact prompts, source hashes and revision
+records accompany the paintings. These are review concepts, not registered game
+assets. The [external reference ledger](docs/design/update-stances/references.md)
+records research links and evidence limits; no external reference artwork was
+imported. First-party generated artwork; no third-party asset license is claimed.
+
 ## Molten River Blight meter (2026-10-08)
 
 Original texture generated for AshenSpire with OpenAI image generation from the owner-selected Molten River concept. Runtime ID: `assets/ui/ashen-blight-molten-river.webp`; high and generated light twins ship through [AshenSpire-art](https://github.com/cehinds/AshenSpire-art), with the master and prompt in `art/molten-river-blight-20261008/`. No third-party artwork or license is claimed.

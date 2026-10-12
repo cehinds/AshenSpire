@@ -32,7 +32,7 @@ The art catalog declares class-specific, weapon-first action art at `assets/anim
 | Staff | `ashStaff`, `starstoneStaff`, and named staff/sceptre items; `staff-casting` | Direct staff/casting reference; distinguish staff melee from channeling/casting poses. Staff IDs include `boneSceptre`, `emberlightSceptre`, `goldboughBranch`, `blightRod`, `gorefireBrand`, `wyrmhornStaff`, and `duskChime`. |
 | Bow | `shortbow`; `bow` | Direct match; aim/release silhouettes should retain bowstring, arrow and hand clearance. |
 | Dagger | `dagger`; `single-dagger` | Direct match for one dagger. |
-| Dual daggers | two `dagger` items; `dual-daggers` | Direct match; Rogue selected idle/attack source is also a useful class identity reference. Dual daggers are a two-hand loadout, not a separate canonical weapon ID. |
+| Dual daggers | `dagger` + `parryDagger`; `dual-daggers` | The current action resolver requires this exact pair; two generic dagger items do not establish the same route. Rogue selected idle/attack is also a class identity reference. Dual daggers are a two-hand loadout, not a separate canonical weapon ID. |
 | Single sword | `straightSword` or `katana`; `single-sword` | Direct match. This differs from the two-hand greatsword pose. |
 | Spear | `frostSpear`; no `spear` family | `halberd`/polearm item refs are closest, but are not a canonical spear action family. Don't claim an exact existing spear animation. |
 | Halberd | `halberd`; no `halberd` family | `greatsword` or `single-sword` is not a reliable silhouette substitute. The closest weapon-specific item references are in the rear weapon package and weapon catalog. |
