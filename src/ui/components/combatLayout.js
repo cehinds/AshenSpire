@@ -21,6 +21,7 @@ export function wireCombatLayout(combatEl) {
   const handArea = combatEl.querySelector(':scope > .hand-area');
   let frame = 0;
   let observer = null;
+  let formFactorObserver = null;
 
   function apply() {
     frame = 0;
@@ -92,12 +93,21 @@ export function wireCombatLayout(combatEl) {
     frame = 0;
     observer?.disconnect();
     observer = null;
+    formFactorObserver?.disconnect();
+    formFactorObserver = null;
   }
   if (typeof ResizeObserver !== 'undefined') {
     observer = new ResizeObserver(schedule);
     observer.observe(combatEl);
     // Its content box narrows when the safe-area padding arrives or changes.
     if (handArea) observer.observe(handArea);
+  }
+  // main.js writes data-form-factor after its 150ms resize debounce, so a fight
+  // that stays mounted across the 1100px boundary can measure with the old
+  // form factor. Re-plan when the attribute changes.
+  if (typeof MutationObserver !== 'undefined') {
+    formFactorObserver = new MutationObserver(schedule);
+    formFactorObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-form-factor'] });
   }
   apply();
   return { apply, release };
