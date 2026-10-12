@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
 import {combatProfileFor} from '../src/model/combatCardProfile.js';
+import {kindForCard} from '../src/model/alternativeStance.js';
 
 const source=readFileSync(new URL('../src/ui/screens/combat.js',import.meta.url),'utf8');
 const begin=source.indexOf('  function syncPlayerActionIntent('),end=source.indexOf('  function armSelf(',begin);
@@ -12,7 +13,7 @@ test('the actual selected action resolves effective equipment tags and the chose
   const calls=[],actions=[],events=[];
   const leading={querySelector:()=>({remove:()=>calls.push('remove')}),append:action=>actions.push(action)};
   const player={querySelector:()=>leading};
-  const context={combat:{},upcastRanksByCard:new Map([[inst.instanceId,ranks]]),combatProfileFor,
+  const context={combat:{},upcastRanksByCard:new Map([[inst.instanceId,ranks]]),combatProfileFor,kindForCard,
     resolveCombatCard:(combat,instance,options)=>{
       assert.equal(combat,context.combat);assert.equal(instance,inst);assert.equal(options.upcastRanks,ranks);
       calls.push('resolve');
@@ -35,7 +36,7 @@ test('both real selection/render callers pass the instance and clear removes the
   const player={querySelector:()=>({querySelector:()=>({remove:()=>calls.push('removed')}),append:()=>assert.fail('no selected action')})};
   const shown=[];
   const context={upcastRanksByCard:new Map(),resolveCombatCard:()=>assert.fail('no carrier to resolve'),
-    combatProfileFor,RESTING_PLAYER_ACTION:{maneuver:'ready'},
+    combatProfileFor,kindForCard,RESTING_PLAYER_ACTION:{maneuver:'ready'},
     playerActionIntent:profile=>{shown.push(profile);return null;},
     combatEl:{dispatchEvent:()=>calls.push('refit')},CustomEvent:class{}};
   runInNewContext(source.slice(begin,end)+'\nsyncPlayerActionIntent',context)(player,null);

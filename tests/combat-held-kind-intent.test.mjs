@@ -34,7 +34,7 @@ test('an unarmed player shows the last confirmed kind, an armed card its own', (
   const actions = [];
   const leading = { querySelector: () => null, append: action => actions.push(action) };
   const context = {
-    combat: {}, upcastRanksByCard: new Map(), resolveCombatCard: () => ({ id: 'shieldBash' }), combatProfileFor, selfArm: null,
+    combat: {}, upcastRanksByCard: new Map(), resolveCombatCard: () => ({ id: 'shieldBash' }), combatProfileFor, kindForCard, selfArm: null,
     playerActionIntent: profile => ({ profile }), playCard() {}, selectCombatant() {},
     combatEl: { dispatchEvent() {} }, CustomEvent: class { constructor(type) { this.type = type; } },
   };
@@ -53,7 +53,7 @@ test('with nothing confirmed or armed, the figure shows the neutral resting mark
   const actions = [];
   const leading = { querySelector: () => null, append: action => actions.push(action) };
   const context = {
-    combat: {}, upcastRanksByCard: new Map(), resolveCombatCard: () => ({ id: 'shieldBash' }), combatProfileFor, selfArm: null,
+    combat: {}, upcastRanksByCard: new Map(), resolveCombatCard: () => ({ id: 'shieldBash' }), combatProfileFor, kindForCard, selfArm: null,
     RESTING_PLAYER_ACTION: { maneuver: 'ready' },
     playerActionIntent: profile => ({ profile }), playCard() {}, selectCombatant() {},
     combatEl: { dispatchEvent() {} }, CustomEvent: class { constructor(type) { this.type = type; } },
@@ -90,7 +90,7 @@ function loadSyncPlayerActionIntent(playerActionIntent, resolved) {
   const actions = [];
   const leading = { querySelector: () => null, append: action => actions.push(action) };
   const context = {
-    combat: {}, upcastRanksByCard: new Map(), resolveCombatCard: () => resolved, combatProfileFor, selfArm: null,
+    combat: {}, upcastRanksByCard: new Map(), resolveCombatCard: () => resolved, combatProfileFor, kindForCard, selfArm: null,
     RESTING_PLAYER_ACTION: { maneuver: 'ready' }, playerActionIntent, playCard() {}, selectCombatant() {},
     combatEl: { dispatchEvent() {} }, CustomEvent: class { constructor(type) { this.type = type; } },
   };
@@ -150,4 +150,13 @@ test('selection previews the card stance on the figure sprite; deselect returns 
   const source = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
   assert.match(source, /stageFor\(player\?\.querySelector\('\.sprite'\)\)\?\.setStance\?\.\(def \? stanceForCard\(def\) : heldStances\.get\(\)\);/);
   assert.match(source, /stageFor\(box\)\?\.setStance\?\.\(activeDef \? stanceForCard\(activeDef\) : heldStances\.get\(\)\);/);
+});
+
+// Owner (2026-10-12): the glyph and the figure's stance agree, even for a card
+// with no authored maneuver — an untagged attack shows attack, not prepare.
+test('an untagged attack card reads as attack for both the glyph and the stance', () => {
+  const card = { id: 'untaggedStrike', type: 'attack', cardTags: [] };
+  assert.equal(stanceForCard(card), 'offensive');
+  assert.equal(kindForCard(card).maneuver, 'attack');
+  assert.equal(kindForCard({ id: 'untaggedSkill', type: 'skill', cardTags: [] }).maneuver ?? null, null);
 });

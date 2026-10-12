@@ -12,7 +12,12 @@ function withTagIds(card = {}) {
 
 /** The player's authored action profile (maneuver and camp) for a confirmed card. */
 export function kindForCard(card = {}) {
-  return combatProfileFor(withTagIds(card));
+  card = withTagIds(card);
+  const profile = combatProfileFor(card);
+  if (profile.maneuver || profile.camp === 'spell') return profile;
+  // Untagged cards take the figure's fallback so the glyph and the stance agree.
+  const fallback = { offensive: 'attack', defensive: 'defend' }[stanceForCard(card)];
+  return fallback ? { ...profile, maneuver: fallback } : profile;
 }
 
 /** Presentation only. The resolved card, including equipment-projected tags, owns identity. */
