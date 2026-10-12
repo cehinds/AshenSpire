@@ -3,6 +3,7 @@ import { combatMatchups, combatExpansionMatchups } from '../content/combatMatchu
 import * as Avoidance from './combatAvoidance.js';
 import { creditKnowledgeBenefit } from './enemyKnowledge.js';
 import { enqueueExpandedAction } from './combatExpansionActions.js';
+import { counterstrikeAmount, counterstrikePct, stanceManeuverOf } from './combatCardTraitMath.js';
 
 export function matchupRules(ctx) {
   return ctx?.combatMatchupRules || ctx?.registries?.balance?.combatMatchups || combatMatchups;
@@ -476,9 +477,13 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
     || !target?.alive || !source?.alive || receipt.hpLoss > 0 || receipt.statusAccepted > 0 || !resistedPayload
     || target.combatCounterReturnedCycle === (target.combatOwnerCycle || 0)) return queue;
   target.combatCounterReturnedCycle = target.combatOwnerCycle || 0;
-  const payload = { hp: number(counter.payload.hp), poise: number(counter.payload.poise), ward: number(counter.payload.ward) };
+  // Reaction rules version 2: Counterstrike scales the authored payload first; SPEC §4.8's return formulas run after.
+  const trait = ctx.reactionRulesVersion === 2 ? counter.carrier?.traitValues || {} : {};
+  const strike = trait.counterstrike ? counterstrikePct(ctx, 'counter', stanceManeuverOf(source, receipt.profile?.maneuver)) : null;
+  const scale = value => strike === null ? value : counterstrikeAmount(value, strike);
+  const payload = { hp: scale(number(counter.payload.hp)), poise: scale(number(counter.payload.poise)), ward: scale(number(counter.payload.ward)) };
   if (receipt.profiles.some((profile, index) => receipt.covered[index] && profile.effect !== 'status' && profile.maneuver === 'smash')) {
-    payload.poise += number(counter.payload.smashPoiseBonus);
+    payload.poise += scale(number(counter.payload.smashPoiseBonus));
   }
   if (target.statuses?.prone?.stacks > 0 && receipt.profiles.some((profile, index) => receipt.covered[index] && profile.reach === 'contact')) {
     payload.poise += number(counter.carrier.combatProfile?.pronePoiseBonus);
@@ -496,6 +501,12 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
   const pierceWard = magical && counter.carrier.combatProfile?.damageType === 'piercing';
   const wardEdge = schoolEffect === 'ward' && schoolEdge !== 1 ? schoolEdge : pierceWard ? 1.25 : 1;
   payload.ward *= wardEdge;
+  // Impact and Flux double the final return, or give N when it has none. A Spell Counter
+  // against a physical projectile keeps SPEC §4.8's no-reply-Poise exclusion.
+  if (trait.impact > 0 && !(magical && receipt.profiles.some((profile, index) => receipt.covered[index] && physicalProjectile(profile)))) {
+    payload.poise = payload.poise > 0 ? 2 * payload.poise : trait.impact;
+  }
+  if (trait.flux > 0) payload.ward = payload.ward > 0 ? 2 * payload.ward : trait.flux;
   const event = { ...eventCarrier(target, counter.carrier), ...seats(ctx, target, source),
     sourceId: target.id, targetId: source.id, amount: payload.hp, poiseDamage: payload.poise, wardDamage: payload.ward, wardOnly: magical && payload.hp === 0 };
   if (payload.hp > 0) enqueue({ op: 'damage', amount: payload.hp });
