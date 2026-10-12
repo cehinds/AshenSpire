@@ -19,10 +19,27 @@ test('a short portrait field frames its backdrop on the near row while its enemi
   assert.ok(combatStandingGround(fit, actors, 0) < combatSceneryGround(fit, actors, 0) - 40);
 });
 
-test('a spacious field frames its backdrop on the enemy ground as before', () => {
+test('a tablet spacious field frames its backdrop on the enemy ground as before', () => {
   const tall = alternativeCombatComposition({ actors, sizes, width, height: 376, handTop: 376 });
   assert.equal(combatSceneryGround(tall, actors, 0), combatStandingGround(tall, actors, 0));
   assert.ok(tall.every(fit => fit.sceneryGround === undefined));
+});
+
+// Owner (2026-10-12): desktop looks like the approved phone. Its camera frames
+// the near row, so the horizon and landmark stay in view, and its shared back
+// row stays on the floor, above the near row.
+test('a desktop field frames its backdrop on the near row and keeps the back row on its floor', () => {
+  const desktopWidth = 1280, height = 417;
+  const deskActors = ['p', 'a', 'b'].map((id, i) => ({ side: i ? 'enemy' : 'player',
+    visibleWidth: 60, leading: 40, slot: { id, ground: 360 } }));
+  const deskSizes = deskActors.map((a, i) => ({ id: a.slot.id, x: [260, 560, 900][i], visibleHeight: 200, scale: 1, multiplier: 1 }));
+  const fit = alternativeCombatComposition({ actors: deskActors, sizes: deskSizes, width: desktopWidth, height, handTop: height, desktop: true });
+  const nearRow = 360 - height * .07;
+  assert.ok(Math.abs(combatSceneryGround(fit, deskActors, 0) - nearRow) < 1e-9, 'camera frames the near row');
+  const standing = combatStandingGround(fit, deskActors, 0);
+  assert.ok(Math.abs(standing - fit[1].ground) < 1e-9, 'standing line is the shared back-row foot line');
+  assert.ok(standing >= height * .48 - 1e-9 && standing <= height * .8, 'back row stands on the floor, not in the sky');
+  assert.ok(standing < combatSceneryGround(fit, deskActors, 0) - 40, 'the horizon sits above the back row');
 });
 
 test('the backdrop never frames so low that the back-row feet leave its standing area', () => {
