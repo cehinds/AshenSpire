@@ -3349,7 +3349,7 @@
       "magicTreatmentScopeStatus": "proposed_backfill"
     }
   ],
-  "snapshotStatus": "20_generated,20_director_reviewed,19_selectable,1_needs_revision,5_user_selected;selected_exports_runtime_and_browser_QA_complete,merged_PR1890;30_followup_options_generating_zero_landed",
+  "snapshotStatus": "selected_pilot_merged_PR1890;20_original_concepts_plus20_followup_concepts_generated_reviewed;37_total_selectable,3_total_revision_flags;10_sweep_followup_pending;no_new_followup_runtime_assets",
   "artReviewPath": "docs/design/update-stances/art-review.md",
   "userDecisions": {
     "status": "explicit_numeric_selections_authorized_for_use_and_merge",
@@ -3403,7 +3403,7 @@
     "soloGameplayValidation": "confirmed_for_selected_pilot_scope"
   },
   "nextExpansion": {
-    "status": "generation_in_progress_on_dedicated_family_branches",
+    "status": "partial_concept_boards_integrated_director_reviewed_with_grip_flags",
     "weaponGroup": "greatsword",
     "classPilot": "reaver",
     "families": [
@@ -3416,22 +3416,59 @@
       {
         "id": "counter",
         "conceptCountPlanned": 10,
-        "conceptCountGenerated": 0,
-        "status": "generation_in_progress_zero_landed"
+        "conceptCountGenerated": 10,
+        "status": "director_reviewed_concept_candidates_one_grip_revision",
+        "conceptCountReviewed": 10,
+        "conceptCountSelectable": 9,
+        "conceptCountNeedsRevision": 1,
+        "canonicalArtistBrief": "pose-studio/stances/update-stances/greatsword-counter/README.md",
+        "sourceSheets": [
+          "pose-studio/stances/update-stances/greatsword-counter/sheet-a.png",
+          "pose-studio/stances/update-stances/greatsword-counter/sheet-b.png"
+        ],
+        "revisionOptions": [
+          {
+            "number": 15,
+            "reason": "second_hand_readability",
+            "clearOnlyOnDirectorApproval": true
+          }
+        ],
+        "integratedArtistCommit": "4928c4c47"
       },
       {
         "id": "evade",
         "conceptCountPlanned": 10,
-        "conceptCountGenerated": 0,
-        "status": "generation_in_progress_zero_landed"
+        "conceptCountGenerated": 10,
+        "status": "director_reviewed_concept_candidates_one_grip_revision",
+        "conceptCountReviewed": 10,
+        "conceptCountSelectable": 9,
+        "conceptCountNeedsRevision": 1,
+        "canonicalArtistBrief": "pose-studio/stances/update-stances/greatsword-evade/README.md",
+        "sourceSheets": [
+          "pose-studio/stances/update-stances/greatsword-evade/sheet-a.png",
+          "pose-studio/stances/update-stances/greatsword-evade/sheet-b.png"
+        ],
+        "revisionOptions": [
+          {
+            "number": 20,
+            "reason": "second_hand_readability",
+            "clearOnlyOnDirectorApproval": true
+          }
+        ],
+        "integratedArtistCommit": "d40dc1ecb"
       }
     ],
     "conceptCountPlanned": 30,
-    "conceptCountGenerated": 0,
+    "conceptCountGenerated": 20,
     "relationshipToBaseline": "Separate requested follow-up exploration; does not complete or replace the 600-option baseline or all counter delivery modes.",
     "requiresAdditionalApprovalBeforeBeginning": false,
     "generatedCountBoundary": "Count only landed canonical option boards; generation requests in flight are not generated assets.",
-    "brief": "docs/design/update-stances/followup-reference-brief.md"
+    "brief": "docs/design/update-stances/followup-reference-brief.md",
+    "conceptCountReviewed": 20,
+    "conceptCountSelectable": 18,
+    "conceptCountNeedsRevision": 2,
+    "registeredPoseExports": 0,
+    "reviewRecord": "docs/design/update-stances/followup-art-review.md"
   },
   "selectedDelivery": {
     "status": "export_runtime_browser_QA_complete_merged_to_dev",

@@ -18,25 +18,27 @@ const families = [
     names: ['Collapsed sword-point support', 'Ground drag + thigh catch', 'Palm catch + rear drag', 'Sideways open guard / crossing blade', 'Dropped greatsword / slack arms', 'Thigh-clutch / chest blow', 'Recoiled hanging blade', 'Slumped shoulder carry', 'Hanging rear drag', 'Backward heel collapse / floor drag'],
   },
   {
-    id: 'sweep', title: 'Sweep follow-up', description: "Ten planned lateral or rising readiness holds, numbered 11\u201320. Artwork and director review are pending.",
+    id: 'sweep', title: 'Sweep follow-up', description: "Ten planned lateral or rising readiness holds, numbered 11\u201320. Final source boards and director review are pending.",
     numberOffset: 10, layout: PORTRAIT_LAYOUT, followup: true,
     sheets: ['greatsword-sweep/sheet-a.png', 'greatsword-sweep/sheet-b.png'],
     reviewStatuses: ['needs-review', 'needs-review'],
     names: ["Upright middle-height side coil", "Shoulder-height lateral coil", "Forward extended sweep gate", "Upright low side trail", "Wide lateral hip transfer", "Narrow stance, forward rising load", "Rear-weighted high coil", "Chest-level compact cross load", "Low point-forward wide gate", "High side coil with long rear leg"],
   },
   {
-    id: 'counter', title: 'Counter follow-up', description: "Ten planned grounded interception-and-reply readiness holds, numbered 11\u201320. Artwork and director review are pending.",
+    id: 'counter', title: 'Counter follow-up', description: "Ten generated interception-and-reply readiness concepts, numbered 11–20. Counter15 needs a clearer second hand; the other nine are available for concept comparison.",
     numberOffset: 10, layout: PORTRAIT_LAYOUT, followup: true,
     sheets: ['greatsword-counter/sheet-a.png', 'greatsword-counter/sheet-b.png'],
-    reviewStatuses: ['needs-review', 'needs-review'],
-    names: ["High hanging cover", "Low forward plough", "High point-forward side guard", "Centered angled barrier", "Low outside hanging trap", "Compact crown shield", "High outside inclined cover", "Withdrawn point-on-line", "Deep planted high cover", "Diagonal outside cut-ready guard"],
+    reviewStatuses: ['candidate', 'candidate'],
+    revisions: { 15: 'Second hand on the greatsword hilt needs clearer anatomy; selection paused until the director approves a repair.' },
+    names: ["High hanging, down-right blade", "Low forward plough, up-right blade", "High point-forward horizontal side cover", "Lower wide chest-centered inclined barrier", "Rear-weighted low hanging", "Compact crown roof, horizontal blade", "Forward outside hanging cover, withdrawn torso", "Withdrawn point-on-line, sternum hilt", "Lower wide high hanging cover", "Outside diagonal cut-ready cover"],
   },
   {
-    id: 'evade', title: 'Evade follow-up', description: "Ten planned escape readiness or settled recovery holds, numbered 11\u201320. Artwork and director review are pending.",
+    id: 'evade', title: 'Evade follow-up', description: "Ten generated escape-readiness or recovery concepts, numbered 11–20. Evade20 needs a clearer second hand; the other nine are available for concept comparison.",
     numberOffset: 10, layout: PORTRAIT_LAYOUT, followup: true,
     sheets: ['greatsword-evade/sheet-a.png', 'greatsword-evade/sheet-b.png'],
-    reviewStatuses: ['needs-review', 'needs-review'],
-    names: ["Rear-weighted lean-away", "Planted retreat landing", "Near-side lateral slip", "Far-side lateral recovery", "Forward duck with front low carry", "Backward duck with tall blade", "Narrow collected recovery", "Wide hip withdrawal, low head", "Off-line forward settlement", "Upright shoulder slip"],
+    reviewStatuses: ['candidate', 'candidate'],
+    revisions: { 20: 'Second hand on the greatsword hilt needs clearer anatomy; selection paused until the director approves a repair.' },
+    names: ["Rear-weighted low blade", "Deep planted landing with upright blade", "Tall wide low carry", "Long lateral high carry", "Deep forward duck", "Deep planted landing with upright blade", "Narrow upright collected recovery", "Wide planted low trailing carry, repaired hip grip", "Compact forward horizontal carry", "Upright low forward carry"],
   },
 ];
 // Confirmed decisions persist in the repository; browser favorites do not replace them.
@@ -175,7 +177,7 @@ function render() {
       row.append(fullSheet, loadStatus); section.append(row);
       const sheetView = node('div', 'source-sheet');
       sheetView.dataset.orientation = family.layout.orientation;
-      const placeholder = node('p', 'source-placeholder', family.followup ? 'Planned portrait sheet · generation starts after the selected merge.' : 'Source artwork is loading.');
+      const placeholder = node('p', 'source-placeholder', family.followup ? 'Source board not integrated yet · generation in progress.' : 'Source artwork is loading.');
       sheetView.append(placeholder); section.append(sheetView);
       const grid = node('div', 'concept-grid');
       grid.dataset.columns = family.layout.columns;
@@ -223,7 +225,7 @@ document.querySelector('#clear-choices').addEventListener('click', () => {
   selections.clear(); saveChoices(); updateChoices(); announce('Browser favorites cleared. The five confirmed role selections remain recorded.');
 });
 document.querySelector('#copy-choices').addEventListener('click', async () => {
-  const payload = JSON.stringify({ review: 'update-stances', stage: 'selected-pilot-and-planned-followup', followup: followupCoverage(), confirmedRoleSelections: [...confirmedRoles].map(([sourceId, targetRole]) => ({ sourceId, targetRole })), selectionManifest: 'selections.json', browserFavorites: availableFavorites().map(option => ({ ...option, sourceStatus: option.revision ? 'needs-revision' : sheetStates.get(option.sheet)?.ready ? 'concept-candidate' : 'unavailable-or-awaiting-review' })) }, null, 2);
+  const payload = JSON.stringify({ review: 'update-stances', stage: 'merged-selected-pilot-and-followup-concept-review', followup: followupCoverage(), confirmedRoleSelections: [...confirmedRoles].map(([sourceId, targetRole]) => ({ sourceId, targetRole })), selectionManifest: 'selections.json', browserFavorites: availableFavorites().map(option => ({ ...option, sourceStatus: option.revision ? 'needs-revision' : sheetStates.get(option.sheet)?.ready ? 'concept-candidate' : 'unavailable-or-awaiting-review' })) }, null, 2);
   let copyTimeout;
   try {
     await Promise.race([navigator.clipboard.writeText(payload), new Promise((_, reject) => { copyTimeout = setTimeout(() => reject(new Error('Clipboard did not respond')), 1500); })]);

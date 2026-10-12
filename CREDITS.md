@@ -27,6 +27,10 @@ The [external reference ledger](docs/design/update-stances/references.md)
 records research links and evidence limits; no external reference artwork was
 imported. First-party generated artwork; no third-party asset license is claimed.
 
+### Greatsword follow-up concepts (2026-10-12)
+
+The Counter and Evade boards under `pose-studio/stances/update-stances/greatsword-counter/` and `greatsword-evade/` are first-party paintings generated with OpenAI image generation from this project's Reaver references under human art direction. Exact prompts, original outputs, superseded repairs and SHA-256 provenance accompany each family. The gallery displays the intact source files; these comparison boards are not runtime cutouts. The [director review record](docs/design/update-stances/followup-art-review.md) distinguishes concept approval from outstanding grip repairs. No external reference artwork or third-party licence is asserted for these generated boards.
+
 ## Molten River Blight meter (2026-10-08)
 
 Original texture generated for AshenSpire with OpenAI image generation from the owner-selected Molten River concept. Runtime ID: `assets/ui/ashen-blight-molten-river.webp`; high and generated light twins ship through [AshenSpire-art](https://github.com/cehinds/AshenSpire-art), with the master and prompt in `art/molten-river-blight-20261008/`. No third-party artwork or license is claimed.
