@@ -3,7 +3,7 @@ import { anchorLocalBox, uiZoom, VIEWPORT_ORIGIN } from '../fx.js';
 import { combatFormation } from '../models/CombatFormationModel.js';
 import { COMBAT_TARGET_HIT_PX, combatOverheadAnchors, combatOverheadRibbonShift, combatTargetAnchors, combatTargetPackSize } from '../models/CombatOverheadModel.js';
 import { formationTileGeometry } from '../models/FormationGridModel.js';
-import { FORMATION_ROWS, formationDimensions, isFormationCell } from '../../model/formationLayout.js';
+import { FORMATION_ROWS, formationDimensions, playerFormationCell } from '../../model/formationLayout.js';
 import { fitIconTray } from './iconTray.js';
 import { combatSpriteRatio, fitCombatSprites, NARROW_MIN_HEIGHT_FRACTION } from '../models/CombatSpriteScaleModel.js';
 import { combatSpriteGeometry, currentSpriteArtBounds } from './combatSpriteGeometry.js';
@@ -459,9 +459,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       perspectiveGrid: !classicAppearance() };
     const partySize = frames.filter(f => f.classList.contains('player')).length;
     const dimensions = formationDimensions(presentation, Math.max(partySize, frames.filter(f => f.classList.contains('enemy')).length), partySize);
-    if (isFormationCell(field.dataset.playerCell, dimensions)) {
-      presentation.playerSpawnRow = field.dataset.playerCell[0];
-      presentation.playerSpawnColumn = field.dataset.playerCell[1];
+    const playerCell = playerFormationCell(field.dataset.playerCell, dimensions);
+    if (playerCell) {
+      presentation.playerSpawnRow = playerCell[0];
+      presentation.playerSpawnColumn = playerCell[1];
     }
     const plan = combatFormation({ width: fieldRect.width, height: fieldRect.height,
       presentation,

@@ -56,6 +56,15 @@ export function isFormationCell(cell, { columns, rows, perspective = false }, si
     ? column >= 1 && column <= playerColumns : column > columns && column <= columns * 2);
 }
 
+// A saved player cell read on the given grid. The perspective keeps only the
+// outer column, so a cell saved in a front column (the Classic grid, or an
+// older save) stands in the same lane of the one player rank.
+export function playerFormationCell(cell, dimensions) {
+  if (isFormationCell(cell, dimensions)) return cell;
+  if (dimensions.perspective && isFormationCell(cell, { ...dimensions, perspective: false })) return `${cell[0]}1`;
+  return null;
+}
+
 export function formationSpawn(values, side, dimensions = formationDimensions(values)) {
   const { columns, rows } = dimensions;
   const row = Math.min(rows - 1, Math.max(0, FORMATION_ROWS.indexOf(values[`${side}SpawnRow`] || 'F')));

@@ -132,3 +132,11 @@ test('a saved spawn column outside the perspective rank still starts the player 
   assert.equal(formationSpawn({ playerSpawnColumn: '2' }, 'player', dimensions), 'C1');
   assert.equal(formationSpawn({ playerSpawnColumn: '2', playerSpawnRow: 'A' }, 'player', dimensions), 'A1');
 });
+
+test('a player cell saved in a front column stands in the same lane on the perspective grid', () => {
+  const settings = { 'gameConfig.presentation.movementEnabled': true };
+  const combat = { player: { energy: 3, formationCell: 'A2' }, phase: 'player', enemies: [] };
+  assert.equal(formationMovePlan(combat, 'B1', settings).current, 'A1');
+  assert.equal(formationMovePlan(combat, 'A1', settings).ok, false, 'already standing there');
+  assert.equal(formationMovePlan(combat, 'A1', { ...settings, classicAppearance: true }).current, 'A2', 'Classic keeps the saved cell');
+});
