@@ -66,6 +66,13 @@ export const uiStrings = [
     "tip": "Poise"
   },
   {
+    "id": "combat.protection.poiseValue",
+    "extends": "",
+    "short": "Poise {value}/{max}",
+    "full": "{value} of {max} Poise still stands. The gold trim on the HP bar shows it while any is left.",
+    "tip": "Poise {value}/{max}"
+  },
+  {
     "id": "combat.protection.barrier",
     "extends": "",
     "short": "Barrier",

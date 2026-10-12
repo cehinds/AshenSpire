@@ -5874,7 +5874,7 @@ button[data-button-size] {
 :root .combat .combatant .combat-health-row > .combat-health-meter[data-guard='barrier'] { --meter-tone: var(--barrier-blue) !important; }
 :root .combat .combatant .combat-health-row > .combat-health-meter[data-guard='block'] { --meter-tone: var(--block-silver) !important; }
 :root .combat .combatant .combat-health-row > .combat-health-meter[data-guard='ward'] { --meter-tone: var(--ward-purple) !important; }
-/* Poise still standing: a gold trim around the whole health bar (its gold badge keeps the number). */
+/* Poise still standing: a gold trim around the whole health bar. Poise has no badge; its value is in the bar's tooltip and aria-label. */
 :root .combat .combatant .combat-health-row > .combat-health-meter[data-poised='true'] { border-radius: 6px; box-shadow: 0 0 0 max(1px, calc(1.5px / var(--ui-zoom, 1))) #ffd34d, 0 0 6px 1px #ffd34d88; }
 :root .combat .combatant .combat-health-meter .m-track { height: var(--health-row-h); border-radius: 5px; background: #0d1412; }
 :root .combat .combatant .combat-health-meter[data-warded='true'] .m-track {
@@ -5894,8 +5894,6 @@ button[data-button-size] {
 :root .combat .combatant .combat-health-shield .combat-health-badge-value { transform: translateY(-.23em); color: var(--block-silver); text-shadow: none; -webkit-text-stroke: 1px #000; paint-order: stroke fill; }
 :root .combat .combatant .combat-health-ward::before { border-radius: 50%; background: linear-gradient(135deg, #b38ae8, var(--ward-purple), #4d316b); }
 :root .combat .combatant .combat-health-ward { filter: drop-shadow(0 0 4px #b38ae966); }
-:root .combat .combatant .combat-health-poise::before { border-radius: 50%; background: linear-gradient(135deg, #ffe08a, #ffd34d, #8a6a12); }
-:root .combat .combatant .combat-health-poise { filter: drop-shadow(0 0 4px #ffd34d66); }
 /* Barrier: Ward charged past full until the owner's next turn — a blue rim. */
 :root .combat .combatant .combat-health-ward-barrier::before { box-shadow: 0 0 0 max(2px, calc(3px / var(--ui-zoom, 1))) #5fa8ff, 0 0 8px 2px #5fa8ffaa; }
 :root .combat .combatant .combat-health-badge:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
