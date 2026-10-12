@@ -1,5 +1,7 @@
 # Update Stances — greatsword pilot review
 
+**Latest: [labeled sequence-order previews](sequence-review/README.md)** — all six starting stances, exact six-slot defense order, six supplied attack images and three Evade images. Review only; no gameplay change.
+
 **[Review the thirty new Sweep, Counter and Evade concepts](#new-greatsword-options).** All thirty are director-approved comparison options; they are not new runtime selections.
 
 Initial pilot: October 11, 2026 (America/Anchorage). Follow-up concepts are integrated on `Feature/UpdateStancesOptions`.

@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "reviewOnly": true,
+  "defenseSlotMs": 350,
+  "primaryVariant": "P",
+  "modes": {
+    "guard": "Guard / Parry / Resisted",
+    "counter": "Counter extension",
+    "attack": "Attack sequence",
+    "smash": "Smash sequence",
+    "evade": "Evade sequence"
+  },
+  "variants": [
+    {
+      "id": "P",
+      "name": "Your latest order",
+      "status": "Latest user-provided order; preview only",
+      "order": [
+        "D",
+        "V",
+        "G",
+        "H",
+        "C",
+        "D"
+      ]
+    },
+    {
+      "id": "A",
+      "name": "Earlier counter-start alternative",
+      "status": "Unselected comparison",
+      "order": [
+        "C",
+        "V",
+        "D",
+        "H",
+        "G",
+        "C"
+      ]
+    },
+    {
+      "id": "B",
+      "name": "High-parry-first alternative",
+      "status": "Unselected comparison",
+      "order": [
+        "C",
+        "V",
+        "H",
+        "D",
+        "G",
+        "C"
+      ]
+    }
+  ],
+  "labels": {
+    "C": "Counter",
+    "D": "Defend",
+    "V": "Vertical Guard",
+    "G": "Guarded",
+    "H": "High Parry",
+    "S": "Smash",
+    "T": "Attack",
+    "E": "Evade starting stance",
+    "W": "Sweep"
+  },
+  "sourceChoices": {
+    "C": "Original Counter15, sheet A bottom-left; not the two-hand replacement",
+    "D": "Counter12, sheet A top-right",
+    "V": "Evade12, sheet A top-right",
+    "G": "Counter20, sheet B bottom-left; not Counter14",
+    "H": "Counter16, sheet B top-left",
+    "S": "Existing selected Smash05",
+    "T": "Current in-game Attack starting stance; asset contract records exact source",
+    "E": "Chosen Evade15; starts and returns the Evade preview",
+    "W": "Chosen Sweep18, sheet B middle-left"
+  },
+  "counterExtension": [
+    "S",
+    "AT1",
+    "AT2",
+    "AT3",
+    "AT4",
+    "AT5",
+    "AT6",
+    "C"
+  ],
+  "timingNote": "All defense, attack and return slots use 350 ms review timing at 1\u00d7. The six user-supplied attack images replace the earlier four-phase comparison. Speed scales the whole preview. Hard cuts only: no invented in-between poses. Evade shows the selected starting stance, EV1\u2013EV3, then the same starting stance."
+}

@@ -54,7 +54,7 @@ const families = [
     names: ["Rear-weighted low blade", "Deep planted landing with upright blade", "Tall wide low carry", "Long lateral high carry", "Deep forward duck", "Deep planted landing with upright blade", "Narrow upright collected recovery", "Wide planted low trailing carry, repaired hip grip", "Compact forward horizontal carry", "Upright low forward carry"],
   },
 ];
-// Confirmed decisions persist in the repository; browser favorites do not replace them.
+// Historical delivered decisions persist in the repository; browser favorites do not replace them.
 const confirmedRoles = new Map([
   ['reaver-greatsword-smash-04', 'Sweep'],
   ['reaver-greatsword-smash-06', 'Counter'],
@@ -153,13 +153,13 @@ function makeCard(option) {
   card.setAttribute('aria-pressed', String(selections.has(option.id)));
   const confirmedRole = confirmedRoles.get(option.id);
   if (confirmedRole) card.dataset.confirmedRole = confirmedRole.toLowerCase();
-  card.setAttribute('aria-label', `${option.number}. ${option.name}, Reaver, greatsword, ${option.family}. ${confirmedRole ? 'User selected for ' + confirmedRole + '. ' : ''}${option.revision ? 'Needs revision. ' + option.revision : option.reviewStatus === 'needs-review' ? 'Planned follow-up; artwork and director review pending.' : 'Toggle browser favorite.'}`);
+  card.setAttribute('aria-label', `${option.number}. ${option.name}, Reaver, greatsword, ${option.family}. ${confirmedRole ? 'Delivered in PR #1890 for ' + confirmedRole + '. ' : ''}${option.revision ? 'Needs revision. ' + option.revision : option.reviewStatus === 'needs-review' ? 'Planned follow-up; artwork and director review pending.' : 'Toggle browser favorite.'}`);
   const label = node('span', 'concept-label');
   label.append(node('span', 'concept-number', String(option.number).padStart(2, '0')), node('span', 'concept-name', option.name));
   card.append(label, node('span', 'pick-mark', '✓'));
   if (option.followup) card.append(node('span', 'concept-note followup-state', option.replacement ? 'Replacement loading · selection paused' : 'Planned follow-up · NEEDS REVIEW'));
   if (option.replacement) card.classList.add('needs-revision');
-  if (confirmedRole) card.append(node('span', 'concept-note', 'User selected for ' + confirmedRole));
+  if (confirmedRole) card.append(node('span', 'concept-note', 'Delivered in PR #1890 for ' + confirmedRole));
   if (option.note) card.append(node('span', 'concept-note', option.note));
   if (option.revision) { card.classList.add('needs-revision'); card.append(node('span', 'revision-note', 'Needs revision · ' + option.revision)); }
   card.addEventListener('click', () => {
@@ -292,15 +292,15 @@ for (const filter of document.querySelectorAll('.filters select')) filter.addEve
   for (const section of document.querySelectorAll('.family')) section.hidden = family !== 'all' && section.dataset.family !== family;
 });
 document.querySelector('#clear-choices').addEventListener('click', () => {
-  selections.clear(); saveChoices(); updateChoices(); announce('Browser favorites cleared. The five confirmed role selections remain recorded.');
+  selections.clear(); saveChoices(); updateChoices(); announce('Browser favorites cleared. The five original delivered role selections remain recorded.');
 });
 document.querySelector('#copy-choices').addEventListener('click', async () => {
-  const payload = JSON.stringify({ review: 'update-stances', stage: 'merged-selected-pilot-and-followup-concept-review', followup: followupCoverage(), confirmedRoleSelections: [...confirmedRoles].map(([sourceId, targetRole]) => ({ sourceId, targetRole })), selectionManifest: 'selections.json', browserFavorites: availableFavorites().map(option => ({ ...option, sourceStatus: option.replacement ? 'director-approved-replacement-concept' : 'concept-candidate', sourceLayout: option.replacement ? 'standalone-figure; sheet/cell fields describe superseded context only' : 'five-concept-board' })) }, null, 2);
+  const payload = JSON.stringify({ review: 'update-stances', stage: 'merged-selected-pilot-and-followup-concept-review', followup: followupCoverage(), confirmedRoleScope: 'Historical original five, delivered in PR #1890; latest sequence sources are in sequence-review/sequences.json', confirmedRoleSelections: [...confirmedRoles].map(([sourceId, targetRole]) => ({ sourceId, targetRole })), selectionManifest: 'selections.json', browserFavorites: availableFavorites().map(option => ({ ...option, sourceStatus: option.replacement ? 'director-approved-replacement-concept' : 'concept-candidate', sourceLayout: option.replacement ? 'standalone-figure; sheet/cell fields describe superseded context only' : 'five-concept-board' })) }, null, 2);
   let copyTimeout;
   try {
     await Promise.race([navigator.clipboard.writeText(payload), new Promise((_, reject) => { copyTimeout = setTimeout(() => reject(new Error('Clipboard did not respond')), 1500); })]);
     const count = availableFavorites().length;
-    announce(`${count} browser favorite${count === 1 ? '' : 's'} and the five confirmed roles copied. Follow-up availability and pending review are included.`);
+    announce(`${count} browser favorite${count === 1 ? '' : 's'} and the five original delivered roles copied. Follow-up availability and pending review are included.`);
   }
   catch {
     const fallback = document.querySelector('#copy-fallback'); fallback.hidden = false;
