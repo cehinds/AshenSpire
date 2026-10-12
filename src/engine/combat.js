@@ -1320,13 +1320,14 @@ function withoutClaims(player, claimed) {
   return { ...player, abilityRiders: { ...(player.abilityRiders || {}), charges } };
 }
 
-// The charge keys this card's Mana discount comes from, net of the claimed ones.
+// The charge keys this card's Mana discount comes from, net of the claimed ones. It matches the charges the
+// price (resolvedCardPlayCosts) discounts, so a card claims a charge only when the price would discount it (SPEC §4.11).
 function manaDiscountClaims(combat, def, claimed) {
   // A card with no Mana to discount holds no discount: it would take a charge a Mana card can use.
   if (!(baseManaCost(combat, def) > 0)) return [];
   const player = withoutClaims(combat.player, claimed);
   const charges = player.abilityRiders?.charges || {};
-  const { keys } = R.matchingAbilityCharges(player, { ...def, type: cardKind(def), authoredTags: def.cardTags || def.tags, abilityKind: abilityKindOf(def) });
+  const { keys } = R.matchingAbilityCharges(player, { ...def, type: cardKind(def), authoredTags: def.cardTags || def.tags });
   return keys.filter((key) => (charges[key]?.manaDiscount || 0) > 0);
 }
 

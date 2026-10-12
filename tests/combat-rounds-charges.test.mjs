@@ -1,6 +1,6 @@
 // Combat Rounds Preview (SPEC §4.11), P3b fixes: the Mana-discount charges a queued card claims.
 //   (a) a card that costs no Mana claims no Mana-discount charge;
-//   (b) queue-time charge matching reads the same ability kind as play-time (cardRef).
+//   (b) a card claims a Mana-discount charge only when the price would discount it (claim follows price, SPEC §4.11).
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -53,8 +53,12 @@ test('(a) a Mana card still claims the discount it prices with', () => {
   assert.deepEqual(c.combatRounds.playerQueue[0].claims, ['discount']);
 });
 
-test('(b) queue-time matching reads the same ability kind a card plays with', () => {
-  // A Mana card that authors no abilityKind: it plays as a spell (source:spell), and the charge is keyed to that.
+// The Mana a card is priced at right now, with no queued claim taken out (the price doPlayCard pays).
+const pricedMana = (c, instanceId) => cardPlayCosts(c, instanceId).mana;
+
+test('(b) a charge keyed to an ability kind the price does not read is not claimed, and the card pays full Mana', () => {
+  // The probe: a Mana card with no authored abilityKind (it prices as a plain card) and a charge keyed to 'spell'.
+  // The price (resolvedCardPlayCosts) never reads abilityKind, so the discount does not apply and nothing is claimed.
   const base = createRegistries(contentBundle);
   const card = { ...base.cards.get('defend'), gradeProfiles: undefined, abilityRank: undefined, legacyFace: undefined, name: 'Kind fixture', cost: 1, manaCost: 2, effects: [{ op: 'block', target: 'self', amount: 4 }], upgrade: {}, abilityKind: undefined, cardTags: ['kind.skill', 'source:spell'] };
   const registries = { ...base, cards: { ...base.cards, get: (id) => (id === 'defend' ? card : base.cards.get(id)) } };
@@ -62,7 +66,29 @@ test('(b) queue-time matching reads the same ability kind a card plays with', ()
   const c = createCombat({ registries, rng: createRng(9), player, enemyIds: [ENEMY], combatRounds: combatRoundsFor({ [COMBAT_ROUNDS_KEY]: true }) });
   const inHand = c.piles.hand[0];
   assert.equal(resolveCard(registries, inHand).abilityKind, undefined, 'fixture: the card authors no abilityKind');
+  const full = pricedMana(c, inHand.instanceId);
+  assert.equal(full, 2, 'fixture: the card costs 2 Mana before any charge');
   grantAbilityCharge(c.player, { key: 'kind', block: 1, manaDiscount: 1, abilityKind: 'spell' });
+  assert.equal(pricedMana(c, inHand.instanceId), full, 'the price does not discount it');
+  const before = c.player.mana;
   queue(c, inHand);
-  assert.deepEqual(c.combatRounds.playerQueue[0].claims, ['kind'], 'queue-time pricing reads the play-time kind (spell)');
+  const [record] = c.combatRounds.playerQueue;
+  assert.deepEqual(record.claims, [], 'so the card claims no charge');
+  assert.ok(c.player.abilityRiders.charges.kind, 'the charge stays free for a card the price does discount');
+  assert.equal(before - c.player.mana, full, 'and the card pays the full Mana it was priced at');
+});
+
+test('the claim agrees with the price for a charge the price does discount', () => {
+  // The same card keyed to no kind: the price discounts it, so the queued card claims the charge and pays less.
+  const c = fight();
+  const costed = c.piles.hand.find((card) => pricedMana(c, card.instanceId) > 0 && cardPlayCosts(c, card.instanceId).energy <= c.player.energy);
+  if (!costed) return;
+  const full = pricedMana(c, costed.instanceId);
+  grantAbilityCharge(c.player, { key: 'discount', damage: 2, manaDiscount: 1 });
+  const discounted = pricedMana(c, costed.instanceId);
+  assert.equal(discounted, Math.max(0, full - 1), 'the price discounts the charge');
+  const before = c.player.mana;
+  queue(c, costed);
+  assert.deepEqual(c.combatRounds.playerQueue[0].claims, ['discount'], 'the card claims the charge the price used');
+  assert.equal(before - c.player.mana, discounted, 'and pays the discounted Mana');
 });
