@@ -183,6 +183,32 @@ test('build-stamp.yml runs the whole stamp as one --stamp step, before anything 
   assert.doesNotMatch(WORKFLOW, /github\.event\.before|GITHUB_EVENT_BEFORE/, 'the base is the stamp base, never the event before');
 });
 
+test('build-stamp.yml refuses unordered restamped receipts before staging or dispatch', () => {
+  const guard = WORKFLOW.indexOf('node tools/about-changelog.mjs --check-order');
+  assert.ok(guard > WORKFLOW.indexOf('build-stamp.mjs --stamp --since-last-stamp'));
+  assert.ok(guard > WORKFLOW.indexOf('build-stamp.mjs --stamp --prs'));
+  assert.ok(guard < WORKFLOW.indexOf('git add --'));
+  const command = WORKFLOW.slice(guard).split('\n')[0];
+  assert.equal(command, 'node tools/about-changelog.mjs --check-order', 'strict guard, without pending exemptions or ignored failures');
+});
+
+test('the strict guard catches a same-date rise caused by restamping a lower receipt', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'build-stamp-order-'));
+  try {
+    const box = JSON.parse(readFileSync(join(ROOT, 'buildordinal.json'), 'utf8'));
+    const actual = readFileSync(join(ROOT, 'CHANGELOG.md'), 'utf8');
+    // Reproduce #1897's failure class: a receipt below an older build is
+    // moved to the current box while its original line position stays fixed.
+    const changed = restamp(actual, [1901], box);
+    assert.equal(changed.changed.length, 1);
+    writeFileSync(join(dir, 'CHANGELOG.md'), changed.text);
+    writeFileSync(join(dir, 'buildordinal.json'), JSON.stringify(box));
+    const r = spawnSync(process.execPath, [join(ROOT, 'tools/about-changelog.mjs'), '--root', dir, '--check-order'], {encoding:'utf8', timeout:60000});
+    assert.equal(r.status, 1, r.stdout + r.stderr);
+    assert.match(r.stdout + r.stderr, /RED — .*build rises within/);
+  } finally { rmSync(dir, {recursive:true, force:true}); }
+});
+
 test('build-stamp.yml adds exactly the three derived files, never the built HTML or everything', () => {
   assert.match(WORKFLOW, /git add -- buildordinal\.json CHANGELOG\.md src\/content\/changelog\.generated\.js/);
   assert.doesNotMatch(WORKFLOW, /git add (-A|\.|--all)\b/);
