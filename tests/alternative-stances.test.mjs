@@ -23,7 +23,7 @@ test('resolved card tags own identity; damage colour and equipped weapons cannot
   assert.equal(stanceForCard({type:'attack',cardTags:['camp:physical','maneuver:smash'],damageSchool:'frost',weaponId:'staff'}),'offensive');
   assert.equal(stanceForCard({type:'skill',cardTags:[],tags:['camp:spell']}),'casting');
 });
-test('only confirmed plays replace the latest stance; new turn clears the same actor',()=>{
+test('only confirmed plays replace the latest stance; a new turn keeps it until the next play',()=>{
   const ledger=createStanceLedger();
   ledger.accept({type:'cardPlayed',sourceId:'player'},card('attack'));
   ledger.accept({type:'cardPlayed',sourceId:'player'},card('defend'));
@@ -35,14 +35,14 @@ test('only confirmed plays replace the latest stance; new turn clears the same a
   assert.equal(ledger.get(),'casting');
   ledger.accept({type:'enemyTurnStart'});
   assert.equal(ledger.get(),'casting');
-  ledger.accept({type:'playerTurnStart'});assert.equal(ledger.get(),null);
+  ledger.accept({type:'playerTurnStart'});assert.equal(ledger.get(),'casting');
 });
 test('co-op seats are independent and a new combat clears both',()=>{
   const ledger=createStanceLedger();
   ledger.accept({type:'cardPlayed',playerId:'a'},card('defend'));
   ledger.accept({type:'cardPlayed',playerId:'b'},card('smash'));
   ledger.accept({type:'playerTurnStart',playerId:'a'});
-  assert.equal(ledger.get('a'),null);assert.equal(ledger.get('b'),'offensive');
+  assert.equal(ledger.get('a'),'defensive');assert.equal(ledger.get('b'),'offensive');
   ledger.accept({type:'combatStarted'});assert.deepEqual(ledger.snapshot(),{});
 });
 test('an untyped latest card is prepare (casting) and replaces a previous defensive stance',()=>{

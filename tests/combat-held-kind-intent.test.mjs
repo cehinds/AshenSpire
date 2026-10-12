@@ -7,7 +7,7 @@ import { createStanceLedger, kindForCard, stanceForCard } from '../src/model/alt
 
 // The player's at-rest intent glyph reads the last confirmed card's authored
 // kind (smash, counter, defend, sweep, spell), not the broad stance family.
-test('a confirmed card keeps its authored kind until the next player turn', () => {
+test('a confirmed card keeps its authored kind across player turns until the next confirmed card', () => {
   const kinds = createStanceLedger(kindForCard);
   assert.equal(kinds.get(), null);
   assert.equal(kinds.accept({ type: 'cardPlayed', cardId: 'defend' }).maneuver, 'defend');
@@ -15,7 +15,9 @@ test('a confirmed card keeps its authored kind until the next player turn', () =
   kinds.accept({ type: 'cardPlayed', cardId: 'shieldBash' });
   assert.equal(kinds.get().maneuver, 'smash', 'the later confirmed card replaces the kind');
   kinds.accept({ type: 'playerTurnStart' });
-  assert.equal(kinds.get(), null);
+  assert.equal(kinds.get().maneuver, 'smash', 'a new player turn keeps the held kind');
+  kinds.accept({ type: 'combatStarted' });
+  assert.equal(kinds.get(), null, 'a new combat clears it');
 });
 
 test('the default ledger still records the broad stance family', () => {

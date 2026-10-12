@@ -44,16 +44,13 @@ export function stanceForPublicIntent(intent = {}) {
   return null;
 }
 
-/** Each seat keeps its last confirmed card until its next turn. Failed/preparing plays do nothing. */
+/** Each seat keeps its last confirmed card until its next confirmed card (only combatStarted clears). Failed/preparing plays do nothing. */
 export function createStanceLedger(classify = stanceForCard) {
   const actors = new Map();
   return Object.freeze({
     accept(receipt, resolvedCard) {
       const actorId = receipt?.playerId || receipt?.sourceId || 'player';
       if (receipt?.type === 'combatStarted') { actors.clear(); return null; }
-      if (receipt?.type === 'playerTurnStart') {
-        actors.delete(actorId); return null;
-      }
       if (receipt?.type !== 'cardPlayed') return actors.get(actorId) ?? null;
       const stance = classify(resolvedCard || { id: receipt.cardId, type: receipt.cardType, cardTags: receipt.cardTags });
       actors.set(actorId, stance); return stance;
