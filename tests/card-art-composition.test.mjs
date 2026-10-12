@@ -75,3 +75,28 @@ test('shipped resolved cards retain their authored family', () => {
     assert.ok(composition, cardId);
   }
 });
+test('physical palette selection is stable by card/profile, independent of instance and order', () => {
+  const def = face(['camp:physical', 'maneuver:attack']);
+  const variants = new Set(Array.from({ length: 40 }, (_, i) => simpleCardArt({ ...def, id: `card-${i}` }).variant));
+  assert.equal(variants.size, 5);
+  assert.equal(simpleCardArt(def, { ref: { profileId: 'blade', instanceId: 'one' } }).variant,
+    simpleCardArt(def, { ref: { profileId: 'blade', instanceId: 'two' } }).variant);
+  assert.equal(simpleCardArt({ ...def, art: { variant: 4 } }).variant, 4);
+  assert.equal(simpleCardArt(def, { variant: 3 }).variant, 3);
+});
+test('element precedence respects explicit element, school and single authored damage identity', () => {
+  const art = (tags, extra) => simpleCardArt(face(['camp:physical', 'maneuver:attack', ...tags], extra));
+  assert.equal(art(['damage:fire']).element, 'fire');
+  assert.equal(art(['school:frost', 'damage:fire']).element, 'frost');
+  assert.equal(art(['element:earth', 'school:frost', 'damage:fire']).element, 'earth');
+  assert.equal(art(['damage:fire', 'damage:slashing']).element, null);
+  assert.equal(art(['damage:fire'], { attack: { damageType: 'frost' } }).element, 'frost');
+  assert.equal(art([], { attack: { components: [{ type: 'fire' }, { type: 'slashing' }] } }).element, null);
+  assert.equal(art([], { attack: { components: [{ type: 'fire' }, { type: 'fire' }] } }).element, 'fire');
+});
+test('explicit auxiliary payloads contribute statuses while unrelated authored data does not', () => {
+  const def = { counterPayload: { effects: [{ op: 'applyStatus', status: 'frozen' }] }, upcast: [{ op: 'buildup', status: 'bleeding' }], schoolEffect: { op: 'applyStatus', status: 'weak' }, flavor: { op: 'applyStatus', status: 'dazed' } };
+  assert.deepEqual(cardArtStatuses(def).map(row => row.id), ['bleeding', 'frozen', 'weak']);
+  const registry = { statuses: new Map([['custom', { tint: '#12345' }]]) };
+  assert.equal(cardArtStatuses({ effects: [{ op: 'applyStatus', status: 'custom' }] }, [], registry)[0].color, '#d9c8ec');
+});
