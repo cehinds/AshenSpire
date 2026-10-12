@@ -997,7 +997,7 @@ export function mountRewards(app, {
             : state === 'skipped' ? `<span class="chip">${esc(t('reward.state.skipped'))}</span>`
             : ''}
         </div>
-        ${state === 'blocked' || (state === 'pending' && isRelicChoice(row)) ? `<button class="subtle reward-skip" data-skip="${esc(row.key)}" data-focusable="true" aria-label="${esc(t('reward.skip.aria', { kind: title }))}">${esc(t('reward.skip'))}</button>` : ''}
+        ${state === 'blocked' ? `<button class="subtle reward-skip" data-skip="${esc(row.key)}" data-focusable="true" aria-label="${esc(t('reward.skip.aria', { kind: title }))}">${esc(t('reward.skip'))}</button>` : ''}
       </div>`;
   }
 
