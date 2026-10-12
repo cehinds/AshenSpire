@@ -5,14 +5,22 @@ const overlaps = (a, b, gap) => a.left < b.left + b.width + gap && a.left + a.wi
 export function enemyTargetGrid({ width, height, targets, obstacles = [], hardObstacles = [], size = 64, gap = 4, inset = 8 }) {
   if (!targets.length || width <= 0 || height <= 0) return [];
   let cells = [], best = Infinity;
+  // A cell over an owned obstacle (a foe's own controls) is reserved for that foe only.
+  const eligible = (cell, target) => !cell.owners?.length || cell.owners.every(id => id === target.id);
+  const plain = ({ owners, ...cell }) => cell;
   const match = grid => {
     const available = [...grid];
     const ordered = [...targets].sort((a,b) => a.x-b.x || a.y-b.y);
-    const chosen = ordered.map(target => {
-      available.sort((a,b) => distance(target,a)-distance(target,b));
-      return available.shift();
-    });
-    return ordered.map((target,i) => ({id:target.id,...chosen[i]}));
+    const chosen = [];
+    for (const target of ordered) {
+      const options = available.filter(cell => eligible(cell, target));
+      if (!options.length) return null;
+      options.sort((a,b) => distance(target,a)-distance(target,b));
+      const pick = options[0];
+      available.splice(available.indexOf(pick), 1);
+      chosen.push(pick);
+    }
+    return ordered.map((target,i)=>({id:target.id,...chosen[i]}));
   };
   const distance = (target,cell) => (cell.left+cell.width/2-target.x)**2+(cell.top+cell.height/2-target.y)**2;
   // Shift the entire lattice when an intent row leaves a narrow free band.
@@ -31,11 +39,15 @@ export function enemyTargetGrid({ width, height, targets, obstacles = [], hardOb
       for (let top = startY; top + edge <= height - inset; top += pitch) {
         for (let left = startX; left + edge <= width - inset; left += pitch) {
           const cell = { left, top, width: edge, height: edge };
-          if (!blocks.some(rect => overlaps(cell, rect, gap))) grid.push(cell);
+          const hits = blocks.filter(rect => overlaps(cell, rect, gap));
+          // Hard and unowned obstacles block the cell; owned ones only claim it.
+          if (hits.some(rect => !rect.owner)) continue;
+          grid.push({ ...cell, owners: [...new Set(hits.map(rect => rect.owner))] });
         }
       }
       if (grid.length < targets.length) continue;
       const assigned = match(grid);
+      if (!assigned) continue;
       const score = assigned.reduce((sum,cell) => sum + distance(targets.find(t=>t.id===cell.id),cell),0)
         + targets.length * (size-edge)**2 * .15;
       if (score < best) { best = score; cells = assigned; }
@@ -55,7 +67,7 @@ export function enemyTargetGrid({ width, height, targets, obstacles = [], hardOb
       const grid = [];
       for (let top = inset; top + edge <= height - inset; top += edge + gap) {
         for (let left = inset; left + edge <= width - inset; left += edge + gap) {
-          const cell = { left, top, width: edge, height: edge };
+          const cell = { left, top, width: edge, height: edge, owners: [] };
           if (!hardObstacles.some(rect => overlaps(cell, rect, gap))) grid.push(cell);
         }
       }
@@ -64,15 +76,15 @@ export function enemyTargetGrid({ width, height, targets, obstacles = [], hardOb
     }
     cells = fallback;
   }
-  if (cells.length && cells[0].id !== undefined) return targets.map(t=>cells.find(c=>c.id===t.id));
+  if (cells.length && cells[0].id !== undefined) return targets.map(t=>plain(cells.find(c=>c.id===t.id)));
   // Match closest pairs first so an already-centered foe keeps its own cell.
-  const pairs = targets.flatMap((target, index) => cells.map((cell, slot) => ({ index, slot,
+  const pairs = targets.flatMap((target, index) => cells.flatMap((cell, slot) => eligible(cell, target) ? [{ index, slot,
     distance: (cell.left + cell.width / 2 - target.x) ** 2 + (cell.top + cell.height / 2 - target.y) ** 2,
-  }))).sort((a, b) => a.distance - b.distance || a.index - b.index || a.slot - b.slot);
+  }] : [])).sort((a, b) => a.distance - b.distance || a.index - b.index || a.slot - b.slot);
   const used = new Set(), placed = new Map();
   for (const pair of pairs) {
     if (placed.has(pair.index) || used.has(pair.slot)) continue;
-    placed.set(pair.index, { id: targets[pair.index].id, ...cells[pair.slot] });
+    placed.set(pair.index, { id: targets[pair.index].id, ...plain(cells[pair.slot]) });
     used.add(pair.slot);
   }
   return targets.flatMap((_, index) => placed.has(index) ? [placed.get(index)] : []);

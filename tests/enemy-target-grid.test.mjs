@@ -81,6 +81,31 @@ test('crowded fallback keeps the player sprite clear', () => {
     && !slots.slice(index + 1).some(other => overlaps(slot, other))));
 });
 
+test('Classic grid centres a lone foe even when its own controls cover the centre', () => {
+  const target = { id: 'a', x: 200, y: 200 };
+  const [slot] = enemyTargetGrid({ width: 420, height: 420, targets: [target],
+    obstacles: [{ left: 170, top: 170, width: 60, height: 60, owner: 'a' }] });
+  assert.equal(slot.left + slot.width / 2, target.x);
+  assert.equal(slot.top + slot.height / 2, target.y);
+});
+
+test('Classic grid keeps a foe off a neighbour\'s controls', () => {
+  const neighbour = { left: 170, top: 170, width: 60, height: 60, owner: 'b' };
+  const placements = enemyTargetGrid({ width: 420, height: 420, targets: [
+    { id: 'a', x: 200, y: 200 }, { id: 'b', x: 300, y: 200 }], obstacles: [neighbour] });
+  assert.equal(placements.length, 2);
+  const a = placements.find(slot => slot.id === 'a');
+  assert.ok(a, 'foe a is placed');
+  assert.ok(!overlaps(a, neighbour, 0), 'a box never covers b\'s controls');
+});
+
+test('Classic grid still pushes a foe off unowned obstacles', () => {
+  const blocker = { left: 170, top: 170, width: 60, height: 60 };
+  const [slot] = enemyTargetGrid({ width: 420, height: 420, targets: [{ id: 'a', x: 200, y: 200 }], obstacles: [blocker] });
+  assert.ok(slot, 'foe a is placed');
+  assert.ok(!overlaps(slot, blocker, 0));
+});
+
 // A small foe's intent, Inspect, HP bar and armor sit directly above its art.
 // The picker used to pass them as obstacles, which pushed the target box below
 // the foe's feet. The box now centres on the visible art (the `.sprite` rect,
