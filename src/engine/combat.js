@@ -1635,10 +1635,15 @@ function discardUnplayedCard(combat, instanceId) {
   }
 }
 
-// One queued enemy move, as the round commit runs it. A move that is skipped this round does nothing;
-// the enemy phase clears its skip flag as it always did.
+// One queued enemy move, as the round commit runs it. A move that is skipped this round does nothing.
 function enemyMoveAt(combat, enemy, moveId) {
-  if (enemy.skipNextTurn || S.getFlag(combat, enemy, 'skipTurn') || Control.controlRestrictions(combat, enemy).locked) return;
+  if (enemy.skipNextTurn || S.getFlag(combat, enemy, 'skipTurn') || Control.controlRestrictions(combat, enemy).locked) {
+    // A stagger that landed before the enemy's first move spends its round: dropping the queue makes
+    // enemyPhase take its clearing branch. One that landed after the enemy acted keeps its flag for the next turn.
+    if (!Rounds.enemyActedThisRound(combat, enemy.id)) delete combat.combatRounds.enemyQueues[enemy.id];
+    return;
+  }
+  Rounds.markEnemyActed(combat, enemy.id);
   const def = combat.registries.enemies.get(enemy.enemyId);
   const move = expandedEnemyMove(enemy, def.moves[moveId], moveId, combat);
   if (move.delay) startDelayedMove(combat, enemy, move, moveId);

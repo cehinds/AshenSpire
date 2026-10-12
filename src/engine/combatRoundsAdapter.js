@@ -150,6 +150,16 @@ export function enemyQueued(combat, enemyId) {
   return Boolean(roundState(combat).enemyQueues[enemyId]);
 }
 
+// True once one of the enemy's moves has started in the round being committed (cleared when the commit ends).
+// A stagger that lands before that point spends its round; one that lands after persists (SPEC §4.11).
+export function enemyActedThisRound(combat, enemyId) {
+  return Boolean(combat.combatRounds.enemyActed?.[enemyId]);
+}
+
+export function markEnemyActed(combat, enemyId) {
+  combat.combatRounds.enemyActed = { ...(combat.combatRounds.enemyActed || {}), [enemyId]: true };
+}
+
 export function isQueued(combat, instanceId) {
   return queuedCards(combat).some((r) => r.instanceId === instanceId);
 }
@@ -218,6 +228,7 @@ export function commitRound(combat, ops) {
   const rules = cr.rules;
   const tables = engineTables(rules);
   const rng = () => combat.rng.float('combatRounds');
+  delete cr.enemyActed;
 
   // SPEC §4.1 order: each enemy's turn start (its DoT ticks, the block reset) comes before its moves.
   ops.enemyTurnStart(combat);
@@ -262,6 +273,7 @@ export function commitRound(combat, ops) {
   }
 
   const { state: after } = finishRound(round);
+  delete cr.enemyActed;
   cr.momentum = after.momentum;
   cr.poiseDouble = after.poiseDouble;
   cr.charges = after.charges;

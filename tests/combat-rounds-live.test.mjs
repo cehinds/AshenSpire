@@ -461,6 +461,21 @@ test('a stagger that lands after an enemy has acted persists into its next turn,
   assert.equal(c.phase, 'player');
 });
 
+// Review finding 1: a stagger that lands before the enemy's first entry skips its moves for the round. The
+// flag must be spent with that round, not carried into the next one: exactly one round is lost.
+test('a stagger that lands before the enemy acts costs that enemy exactly one round', () => {
+  const c = fixRoundRoll(fight({ seed: 7 }), 0.999);
+  const enemy = liveEnemy(c);
+  enemy.skipNextTurn = true;
+  const acted = [];
+  for (let round = 0; round < 4 && c.phase === 'player'; round++) {
+    const { events } = dispatch(c, { type: 'endTurn' });
+    acted.push(events.some((e) => e.type === 'enemyMoveStarted' && e.sourceId === enemy.id));
+  }
+  assert.deepEqual(acted, [false, true, true, true], 'round 1 is lost, and only round 1');
+  assert.equal(enemy.skipNextTurn, false, 'the stagger is spent');
+});
+
 // Review nit: unqueuing with the preview off names the cause, not a TypeError from a missing record.
 test('unqueueing with the preview off throws a clear error, not a TypeError', () => {
   const c = fight({ preview: false });
