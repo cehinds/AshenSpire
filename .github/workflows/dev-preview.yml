@@ -200,8 +200,12 @@ jobs:
       # a pull request does not commit buildordinal.json (another merge moves it), and
       # after a push to dev build-stamp rebuilds, re-points the landed receipts, and
       # commits both the box and the generated changelog module (build-stamp.yml).
-      # On test, release, main and the alternative test branches the strict check
-      # stays: a promoted tree must already carry the box it ships.
+      # A DISPATCH ON dev TAKES THE RELAXED BRANCH TOO. A dispatch names its ref, which is
+      # mutable: a merge can land between build-stamp's push and this run, and that newer
+      # tip is unstamped, so the strict check would go red on a commit that is correct.
+      # That merge's own push starts build-stamp, which re-dispatches this workflow for its
+      # stamp, so the artifact for the final tip still appears. The strict guarantee stays
+      # at test, where a promoted tree must already carry the box it ships.
       - name: The rebuild changed nothing committed
         env:
           EVENT_NAME: ${{ github.event_name }}
@@ -210,7 +214,7 @@ jobs:
           set -euo pipefail
           git status --porcelain
           case "$EVENT_NAME:$REF_NAME" in
-            pull_request:*|push:dev|push:alternative/dev|push:alternative/*/dev)
+            pull_request:*|push:dev|push:alternative/dev|push:alternative/*/dev|workflow_dispatch:dev|workflow_dispatch:alternative/dev|workflow_dispatch:alternative/*/dev)
               unexpected="$(git status --porcelain --untracked-files=all | cut -c4- | grep -Ev '^(buildordinal\.json|src/content/changelog\.generated\.js)$' || true)"
               if [ -n "$unexpected" ]; then
                 echo "::error::The rebuild changed files other than the build's own outputs:"

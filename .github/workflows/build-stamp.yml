@@ -126,9 +126,11 @@ jobs:
               # THE STAMPED TIP NEEDS ITS OWN PREVIEW. A GITHUB_TOKEN push starts no
               # push-triggered workflow, so dev-preview never builds this commit and
               # its dev-standalone-<sha> artifact would describe the pre-stamp merge.
-              # A workflow_dispatch is allowed from GITHUB_TOKEN, so this builds the
-              # tip. dev-preview's clean-rebuild check runs STRICT on a dispatch, which
-              # is right: the stamped tip is a fixed point, so its rebuild moves nothing.
+              # A workflow_dispatch is allowed from GITHUB_TOKEN, so this builds the ref.
+              # A dispatch on dev takes dev-preview's relaxed clean-rebuild branch, as a dev
+              # push does: --ref names a mutable branch, so a merge landing after this push
+              # would otherwise go red on an unstamped tip. That merge's own build-stamp run
+              # re-dispatches for its stamp, so the final tip still gets its artifact.
               # Only after a successful push, so a rejected push dispatches nothing.
               gh workflow run dev-preview.yml --repo "$GITHUB_REPOSITORY" --ref "$REF_NAME"
               echo "Dispatched dev-preview on $REF_NAME for the stamped tip."

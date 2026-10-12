@@ -206,7 +206,7 @@ test('build-stamp.yml never kills a running stamp, and states that a later run c
 test('dev-preview ignores only the two derived files on PRs and dev, and stays strict on promoted branches', () => {
   const step = DEV_PREVIEW.slice(DEV_PREVIEW.indexOf('- name: The rebuild changed nothing committed'));
   const body = step.slice(0, step.indexOf('\n      # #498'));
-  assert.match(body, /pull_request:\*\|push:dev\|push:alternative\/dev\|push:alternative\/\*\/dev\)/);
+  assert.match(body, /pull_request:\*\|push:dev\|push:alternative\/dev\|push:alternative\/\*\/dev\|workflow_dispatch:dev\|workflow_dispatch:alternative\/dev\|workflow_dispatch:alternative\/\*\/dev\)/, 'a dispatch on dev takes the relaxed branch too');
   assert.match(body, /grep -Ev '\^\(buildordinal\\\.json\|src\/content\/changelog\\\.generated\\\.js\)\$'/);
   assert.match(body, /\*\)\n {14}test -z "\$\(git status --porcelain\)" ;;/, 'every other ref keeps the strict check');
 });
@@ -244,4 +244,8 @@ test('build-stamp.yml dispatches dev-preview for the stamped tip only after a su
   assert.ok(success.includes(dispatch), 'the dispatch sits inside the push-success branch, before its exit 0');
   assert.match(WORKFLOW, /GH_TOKEN: \$\{\{ github\.token \}\}/);
   assert.match(DEV_PREVIEW, /\n {2}workflow_dispatch:/, 'dev-preview can be dispatched');
+  // The dispatch on dev is relaxed like a push (a merge may land after the stamp push), and
+  // the strict check stays on every other ref.
+  assert.match(DEV_PREVIEW, /workflow_dispatch:dev\|workflow_dispatch:alternative/, 'the dispatch takes the relaxed branch');
+  assert.doesNotMatch(WORKFLOW, /dispatch[^\n]*STRICT/, 'the build-stamp comment no longer says a dispatch is strict');
 });
