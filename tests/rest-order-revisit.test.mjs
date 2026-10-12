@@ -117,3 +117,14 @@ test('DOM: a single-use Shrine with no revisit has no Leave foot (behaviour pres
     app.remove();
   });
 });
+
+test('DOM: a reopened single-use Shrine whose choice is spent, but not left, still has a way out', () => {
+  withDom(() => {
+    const { app, done } = mount({ revisit: { rested: false, spent: true, left: false } });
+    const leave = app.querySelector('#shrine-leave');
+    assert.ok(leave, 'a spent choice on a reopened visit has a way out');
+    leave.click();
+    assert.equal(done.length, 1, 'Leave ends the visit');
+    app.remove();
+  });
+});
