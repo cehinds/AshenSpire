@@ -4,6 +4,7 @@ import { skillTracks, skillLevel, trackSkillFeats } from '../../model/skills.js'
 import { getFeatDescription } from '../../model/classSkillFeatDescription.js';
 import { hasClassMastery, masteryProfileFor } from '../../model/classMasteryRun.js';
 import { masteryRowId } from '../../model/classMastery.js';
+import { t } from '../strings.js';
 
 export function creationFeatBrowserGroups(registries, run) {
   const source = registries.masterySource || registries;
@@ -16,7 +17,7 @@ export function creationFeatBrowserGroups(registries, run) {
     const currentLevel = trackId === 'character' ? characterLevel : skillLevel(run, trackId);
     return { id: feat.id, name: feat.name,
       description: group === 'class' ? getFeatDescription(source, feat) : feat.description,
-      group, trackId, trackLabel: trackId === 'character' ? 'Character' : labels.get(trackId) || trackId,
+      group, trackId, trackLabel: trackId === 'character' ? t('progression.tab.character') : labels.get(trackId) || trackId,
       currentLevel, requiredLevel, unlockedByProfile: unlocked, locked: !unlocked && currentLevel < requiredLevel };
   };
   // main.rollLevelChoices offers the general catalogue at each earned

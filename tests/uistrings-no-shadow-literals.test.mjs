@@ -126,6 +126,9 @@ const ALLOWED = [
   ['src/ui/screens/coop.js', 'Poise', 'the stat meter names the Poise stat, not the Stats preview line'],
   ['src/ui/screens/customize.js', 'Poise', 'character creation\'s Poise stat card, not the Stats preview line'],
   ['src/ui/components/creationCards.js', 'Poise', 'character creation\'s Poise chip, not the Stats preview line'],
+  ['src/ui/components/equipmentCard.js', 'Requires', 'parses an attribute requirement string prefix from the card model; not the creation feat lock copy'],
+  ['src/ui/screens/customize.js', 'Edit', 'sprite disclosure accessibility sense for a portrait field; not the review step edit label'],
+  ['src/ui/screens/settings.js', 'Edit', 'scene editor button accessible name; not the creation review edit label'],
 ];
 
 const stripComments = (src) => src
