@@ -4,6 +4,8 @@ import * as Avoidance from './combatAvoidance.js';
 import { creditKnowledgeBenefit } from './enemyKnowledge.js';
 import { enqueueExpandedAction } from './combatExpansionActions.js';
 import { counterstrikeAmount, counterstrikePct, stanceManeuverOf } from './combatCardTraitMath.js';
+import { dealPoiseDamage } from './actions.js';
+import { spendPersistentWard } from './combatStatusControl.js';
 
 export function matchupRules(ctx) {
   return ctx?.combatMatchupRules || ctx?.registries?.balance?.combatMatchups || combatMatchups;
@@ -250,6 +252,12 @@ export function setCombatStance(ctx, entity, carrier) {
     reach: profile.reach, ...(profile.school ? { school: profile.school } : {}),
     ...(Number.isInteger(profile.stanceExpiry) ? { expiresOnOwnerCycle: (entity.combatOwnerCycle || 0) + profile.stanceExpiry } : {}),
   };
+  // Reaction rules version 2: a Defend card with Impact/Flux arms the trait guard (max-merged).
+  const trait = ctx.reactionRulesVersion === 2 && profile.maneuver === 'defend' ? carrier?.traitValues : null;
+  if (trait && (trait.impact > 0 || trait.flux > 0)) {
+    const armed = entity.combatTraitGuard || { poise: 0, ward: 0 };
+    entity.combatTraitGuard = { poise: Math.max(armed.poise, trait.impact || 0), ward: Math.max(armed.ward, trait.flux || 0) };
+  }
   ctx.emit?.('combatStanceChanged', { sourceId: entity.id,
     ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(entity) } : {}), ...entity.combatStance });
   return entity.combatStance;
@@ -261,6 +269,7 @@ export function startTacticalTurn(ctx, entity) {
   entity.combatOwnerCycle = (entity.combatOwnerCycle || 0) + 1;
   clearCombatCounter(entity, ctx);
   delete entity.combatEvade;
+  delete entity.combatTraitGuard;
   if (entity.combatStance?.expiresOnOwnerCycle != null
     && entity.combatOwnerCycle >= entity.combatStance.expiresOnOwnerCycle) delete entity.combatStance;
   const stance = entity.combatStance;
@@ -454,10 +463,22 @@ export function completeGuardBreak(ctx, source, target, carrier, receipt) {
   }
 }
 
+// Reaction rules version 2: a Defend guard answers the first enemy hit that Block, Barrier or Ward reduced.
+function completeTraitGuard(ctx, source, target, receipt) {
+  const guard = target?.combatTraitGuard;
+  if (!guard || ctx.reactionRulesVersion !== 2 || source?.kind !== 'enemy' || receipt.avoided) return;
+  if (!(receipt.amount > 0) || !(receipt.blocked + receipt.wardResisted > 0)) return;
+  delete target.combatTraitGuard;
+  if (!source.alive) return;
+  if (guard.poise > 0) dealPoiseDamage(ctx, source, guard.poise);
+  if (guard.ward > 0) spendPersistentWard(ctx, source, guard.ward, { sourceId: target.id });
+}
+
 /** Root finalizes only after all direct contacts, pressure, and impact. */
 export function completeTacticalAction(ctx, source, target, carrier, receipt, options = {}) {
   if (!receipt || receipt.completed) return [];
   receipt.completed = true;
+  completeTraitGuard(ctx, source, target, receipt);
   const queue = [];
   const enqueue = effect => {
     const action = { effect, source: target, owner: target, target: source,
