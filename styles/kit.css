@@ -6242,3 +6242,21 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 }
 .cc-design-workspace #cz-feats-panel, .cc-design-workspace #cz-spells-panel { padding:16px; }
 @media(max-width:600px) { .cc-design-workspace #cz-feats-panel, .cc-design-workspace #cz-spells-panel { padding:12px; } }
+.cc-feat-groups { display:flex; flex-wrap:wrap; gap:10px; margin:0 0 20px; }
+.cc-feat-group-filter { min-height:var(--cc-control-floor); padding:10px 18px; font-size:var(--cc-body-font); color:var(--cc-copy); }
+.cc-feat-group-filter.on { color:var(--cc-emerald); border-color:var(--cc-emerald); }
+.cc-feat-level-requirement { display:flex; flex-direction:column; gap:7px; margin-top:5px; font-size:max(14px,calc(14px / var(--ui-zoom,1))); line-height:1.45; white-space:normal; }
+.cc-feat-lock-status { display:flex; align-items:center; gap:7px; color:var(--cc-copy-muted); }
+.cc-feat-lock-status .engraved-icon { width:18px; height:18px; flex:none; }
+.cc-feat-lock-status.available { color:var(--cc-emerald); }
+.cc-feat-level-copy { color:var(--cc-copy-muted); }
+.cc-feat-detail .cc-feat-level-requirement { align-items:center; padding-bottom:24px; }
+.cc-feat-detail-description { margin-bottom:22px; }
+@media(max-width:600px) {
+ .cc-feat-groups { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+ .cc-feat-group-filter { padding:10px 6px; white-space:normal; }
+}
+/* Equipment's former compact layout suppressed the whole category rail.
+   Opening the shared selector must expose its real tabs on every page. */
+.customize.cc-design-workspace .cz-railed[data-cat-nav="selector"][data-cat-open="true"] > .as-rail { display:flex!important; }
+@media(max-width:600px) { .customize.cc-design-workspace .cz-railed[data-cat-nav="selector"] { display:grid!important; } }
