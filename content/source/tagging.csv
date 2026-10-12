@@ -3934,11 +3934,12 @@ card,,septicBlade,damage:poison
 card,,lethalDose,venom
 card,,lethalDose,fx:venom
 card,,lethalDose,source:weapon
-card,,lethalDose,delivery:melee
+card,,lethalDose,delivery:projectile
 card,,lethalDose,classification.attack
 card,,lethalDose,camp:physical
 card,,lethalDose,maneuver:attack
 card,,lethalDose,damage:poison
+card,,lethalDose,reach:near
 card,,mindSpike,classification.attack
 card,,mindSpike,camp:spell
 card,,mindSpike,school:illusion

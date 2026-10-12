@@ -10,6 +10,7 @@ import { effectCarrier } from '../src/engine/combatExpansionActions.js';
 import { foundationSource } from '../src/engine/combatRules.js';
 import { combatRules } from '../src/content/combatRules.js';
 import { createRng } from '../src/engine/rng.js';
+import { applyCombatExpansionMartial } from '../src/content/combatExpansionMartial.js';
 
 const regs = createRegistries(contentBundle);
 // blade (slashing), blade (piercing), blunt, bow, bare hands.
@@ -101,4 +102,19 @@ test('the rules-foundation source applies the same Blood Tithe restriction', () 
     assert.equal(foundationSource(c, c.player, { tags: def.tags, attack: def.attack }).damageType, EXPECTED.bloodTithe[label], label);
     assert.equal(foundationSource(c, c.player, { tags: regs.cards.get('strike').tags }).damageType, WEAPON_TYPED[label], `strike ${label}`);
   }
+});
+
+// Owner decision #22: Lethal Dose is a thrown vial at Reach, never a Ranged maneuver.
+test('Lethal Dose is thrown (projectile) at Reach, not Ranged, in v1 and v2', () => {
+  const v1 = regs.cards.get('lethalDose');
+  const v2 = applyCombatExpansionMartial(v1);
+  for (const [label, def] of [['v1', v1], ['v2', v2]]) {
+    assert.ok(def.tags.includes('delivery:projectile'), `${label} delivery`);
+    assert.ok(!def.tags.includes('delivery:melee'), `${label} no melee delivery`);
+    assert.ok(def.tags.includes('reach:near'), `${label} reach`);
+    assert.ok(def.tags.includes('maneuver:attack') && !def.tags.includes('maneuver:ranged'), `${label} maneuver`);
+    assert.ok(def.tags.includes('damage:poison'), `${label} damage`);
+  }
+  assert.equal(v2.reach, 'near');
+  assert.equal(v2.projectile, true);
 });

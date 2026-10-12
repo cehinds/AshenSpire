@@ -13,7 +13,9 @@ const groups = {
 };
 export const combatExpansionMartialOverlay = Object.fromEntries(Object.entries(groups)
   .flatMap(([maneuver, ids]) => ids.split(' ').map(id => [id, { maneuver }])));
-combatExpansionMartialOverlay.nockAndWait = { maneuver: 'counter', reach: 'near', counterMode: 'ranged' };
+// Lethal Dose is a thrown vial: a projectile at Reach, never a Ranged maneuver (owner #22).
+combatExpansionMartialOverlay.lethalDose = { maneuver: 'attack', reach: 'near', projectile: true };
+combatExpansionMartialOverlay.nockAndWait ={ maneuver: 'counter', reach: 'near', counterMode: 'ranged' };
 // Defensive use still pays and resolves the card's printed effects.
 combatExpansionMartialOverlay.whirlingGuard.defensiveReaction = true;
 combatExpansionMartialOverlay.sweepingBlow.defensiveReaction = true;
@@ -102,7 +104,7 @@ export function applyCombatExpansionMartial(def) {
     }
   }
   if (role.maneuver === 'smash') card.breakPoiseBonus = 3;
-  if (role.maneuver === 'ranged') card.projectile = true;
+  if (role.maneuver === 'ranged' || row.projectile) card.projectile = true;
   if (role.maneuver === 'counter') {
     if (def.id === 'shieldBash') {
       card.effects.unshift({ op: 'block', target: 'self', amount: 5 });

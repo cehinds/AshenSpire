@@ -22968,7 +22968,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "lethalDose",
-    "tagId": "delivery:melee"
+    "tagId": "delivery:projectile"
   },
   {
     "family": "card",
@@ -22993,6 +22993,12 @@ export const tagging = [
     "scope": "",
     "objectId": "lethalDose",
     "tagId": "damage:poison"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lethalDose",
+    "tagId": "reach:near"
   },
   {
     "family": "card",
