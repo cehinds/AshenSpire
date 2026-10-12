@@ -33,7 +33,7 @@ import { computeTokenBindings, cardTokenEffects } from './validate.js';
 import { balance } from '../content/balance.js';
 import { combatProfileFor, isSpellCard } from './combatCardProfile.js';
 import { uiStrings } from '../content/generated/uiStrings.js';
-import { magicShareOf, splitContactParts, splitDamageTypesOf } from './combatRatings.js';
+import { canonicalDamageType, isMagicDamageType, isPhysicalDamageType, magicDamageTypeOf, magicShareOf, splitContactParts, splitDamageTypesOf } from './combatRatings.js';
 import { cardSigilIdentity } from '../content/combatSigils.js';
 import { resolve as resolveTags } from '../content/tags.js';
 import { constantFormulaValue, describeFormula } from './formulas.js';
@@ -78,7 +78,17 @@ export function combatCardDamageLabel(def, preview = null, registries = null, in
       : attack?.damageType ? [`damage:${attack.damageType}`] : authored;
   });
   const ids = [...new Set(tags.filter(tag => tag.startsWith('damage:')))];
-  return (service ? service.resolve(ids) : resolveTags(ids)).map(tag => tag.label).join('/');
+  const resolve = list => (service ? service.resolve(list) : resolveTags(list)).map(tag => tag.label);
+  // A hit that is all magic but carries a physical damage tag (lightning with piercing) names both: its magic type, then the physical.
+  const carrier = { ...combatProfileFor(def), magicShare: def.magicShare, physicalDamageType: def.physicalDamageType };
+  const magicType = magicDamageTypeOf(carrier);
+  const typeOf = id => canonicalDamageType(id.slice('damage:'.length));
+  const physical = ids.filter(id => isPhysicalDamageType(typeOf(id)));
+  if (magicType && physical.length && !ids.some(id => isMagicDamageType(typeOf(id)))
+    && magicShareOf(carrier, registries?.balance?.combatRatings ?? null) >= 1) {
+    return uiText('combat.card.magicPhysicalDamage', { magic: resolve([`damage:${magicType}`]).join(''), physical: resolve(physical).join('/') });
+  }
+  return resolve(ids).join('/');
 }
 
 export function combatCardType(def) {
