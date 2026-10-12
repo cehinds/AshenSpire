@@ -12,9 +12,9 @@
   ],
   "tool": "image_gen.imagegen",
   "transparentBackgroundRequested": true,
-  "unchangedOriginal": "/workspace/generated_images/exec-2b84653a-2ff3-4851-9bc3-3fab49a00306.png",
+  "unchangedOriginal": "/workspace/generated_images/exec-569348b9-df5c-4b7a-843e-4fc2821edb12.png",
   "output": "sheet-a.png",
-  "sha256": "d397a0dee7fbab250838e5385a47e7e9f54b342ca7896292cb7d78abc04ed8dd",
+  "sha256": "e19fe59da17dfb2b52b07cddcd3f2400bd70145aeb6c647322ef821894665c75",
   "dimensions": [
     1024,
     1536
@@ -24,19 +24,21 @@
     0,
     254
   ],
-  "createdUtc": "2026-10-12T16:18:46.661171+00:00",
+  "createdUtc": "2026-10-12T16:22:40.015578+00:00",
   "references": [
     {
-      "path": "sheet-a.original.png",
-      "sha256": "cea867d8c18519a15b1d3c42f6ac000d149742c551d301537e25b133f0dcac15"
+      "path": "sheet-a.revision-1.png",
+      "sha256": "d397a0dee7fbab250838e5385a47e7e9f54b342ca7896292cb7d78abc04ed8dd"
     }
   ],
-  "prompt": "sheet-a.repair.prompt.txt",
+  "prompt": "sheet-a.repair-2.prompt.txt",
   "status": "revised_pending_director_review",
   "initialConcerns": [
-    "Figures reduced but still larger than requested210px;some72px margins still not met.",
-    "Backward withdrawal and lateral-slip corrections remain visually understated."
+    "11rearweight and13taller body differentiation improved.12deepkneeload still not clearrear support.",
+    "Generator enlargedfiguresagain;leftcolumnboots/swordtips cross512cellborderandrowboundaries.",
+    "No automatic approval;directorreviewrequested."
   ],
-  "revision": 1,
-  "supersededOriginal": "sheet-a.original.png"
+  "revision": 2,
+  "supersededOriginal": "sheet-a.original.png",
+  "supersededRevision": "sheet-a.revision-1.png"
 }
