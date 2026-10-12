@@ -138,14 +138,17 @@ version-2 snapshot without the key has no enemy reactions.
   enemy entries on one stack are capped at `maxDepth` in total.
 - **Commit at push.** An enemy entry `{ side: 'enemy', ownerId: <enemy id>,
   moveId, targetPlayerId, plan }` commits its contact plan when pushed: the
-  ordinary expanded planning (`enqueueExpandedAction`, including its crit draws)
+  ordinary expanded planning (`enqueueExpandedAction`, as a `combatReaction`
+  carrier, so it draws no crit, like every reaction plan today)
   runs into the entry's `plan` (its actions and group) instead of the queue, and
   is saved with the stack. `targetPlayerId` is the seat whose card or reaction
   opened the window. It is announced as `combatEnemyReactionStacked`. The seat is
   offered against **every** enemy entry on the stack, with the ordinary offer
   rules: a card is eligible when it answers at least one of those plans' positive
   contacts against the seat (a Counter's coverage matching any one of them). No
-  enemy entry with a positive contact against the seat offers nothing.
+  enemy entry with a positive contact against the seat offers nothing. A card
+  that targets an enemy gets one option per eligible enemy entry, aimed at that
+  entry's enemy, listed top of the stack first; other cards get one option.
 - **Offer checks.** The LIFO replay of an offer check executes each enemy entry's
   committed plan in the candidate state in its stack position. An enemy entry
   that fizzles in the replay (its enemy dead, staggered or locked by an earlier
@@ -153,7 +156,8 @@ version-2 snapshot without the key has no enemy reactions.
   because it would neutralise an enemy's reaction.
 - **Resolution.** Entries still resolve last pushed first. An enemy entry
   enqueues its committed plan's actions, as a `combatReaction` carrier at the
-  stack's depth: no riders, crits, automatic Counter returns or reaction windows
+  stack's depth, exactly as committed: no riders, new rolls, automatic Counter
+  returns or reaction windows
   chain from it. It pays nothing. It fizzles (`combatReactionFizzled`) when its
   enemy is dead, staggered or control-locked when reached, or its target seat is
   gone.
