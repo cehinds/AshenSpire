@@ -820,7 +820,7 @@ Property {What a holder CONFERS while it is held. Each property node has exactly
     Sigil of the Last Vigil {A legendary vigil: a guard rises at the start of a fight you enter already wounded. Effects in nodeEffects.json: triggers on combatStart; ops block.}
     Pyre Sigil {A legendary pyre: every card you burn away raises a guard. Effects in nodeEffects.json: triggers on cardExhausted; ops block.}
     Gravelight Sigil {A legendary gravelight: a fallen foe mends you while you stand wounded. Effects in nodeEffects.json: triggers on enemyDied; ops heal.}
-targeting {Target selection: the rules an action uses to choose the creature it hits. Grouping node for the targeting vocabulary.}
+targeting
   self {Targets the acting creature itself.}
   enemy {Targets one enemy the player chooses.}
   allEnemies {Targets every living enemy at once.}
@@ -828,7 +828,7 @@ targeting {Target selection: the rules an action uses to choose the creature it 
   ally {Targets an ally of the acting player.}
   Single {One direct target.}
   Area {An area action; most Counters do not cover it.}
-equipment {Grip and hand slots: which hands a weapon or shield occupies. Grouping node for the equipment vocabulary.}
+equipment
   bound {Granted by an equipped armament. It leaves your deck when the armament does.}
   mainHand {Bound to the armament in your main hand.}
   offHand {Bound to the armament in your off hand.}
@@ -836,20 +836,20 @@ equipment {Grip and hand slots: which hands a weapon or shield occupies. Groupin
   shield {Bound to an equipped shield.}
   parryTool {Bound to an equipped parry tool.}
   dualWield {One one-handed weapon in each hand; loadout.js GRIP_TAGS 'dual'.}
-scaling {Which attribute a card's effect scales with. Grouping node for the scaling vocabulary.}
+scaling
   strength {This card scales with Strength.}
   dexterity {This card scales with Dexterity.}
   constitution {This card scales with Constitution.}
   intelligence {This card scales with Intelligence.}
   wisdom {This card scales with Wisdom.}
-cost {How a card is paid for. Grouping node for the cost vocabulary.}
+cost
   action {Costs Stamina to play.}
   alternative {May be paid with a complete alternative option instead of its listed cost.}
-utility {Action roles a card or flask can take outside its damage: evasion, conduit and mana charge. Grouping node for the utility vocabulary.}
+utility
   evasion {Contributes to Dodge Rolls and avoiding damage.}
   conduit {Channels magic through an equipped armament.}
   manaCharge {Recovers the stated amount of Mana.}
-lifecycle {Where a card goes after it is played or resolved: recalled to hand, sealed away, or exhausted. Grouping node for the lifecycle vocabulary.}
+lifecycle
   recall {Returns to your hand after the named moment instead of being discarded.}
     afterUse {Returns to your hand after being played. A forced discard is not a use.}
     afterTurnDraw {Returns to your hand after your turn's draw.}
@@ -859,7 +859,7 @@ Reach {Inspection details for combat techniques.}
   Contact {At melee reach.}
   Near {Normal ranged reach.}
   Far {Extended ranged reach.}
-Counter reach {Counter reach: which kind of incoming attack a counter can answer. Grouping node for the counter reach vocabulary.}
+Counter reach
 Item {What a piece of gear DOES beyond its numbers, and what a run pickup is.}
   Bound {Carries its own cards — they arrive with the piece and are named in equipmentGrants.csv.}
 Item type {What a piece of equipment IS, as the Armoury and the smith name it. Distinct from the card domain: a Blade item type and a Blade card school are different facts about the same sword.}
@@ -873,8 +873,8 @@ Grant source {Where a starting card came from. The composed deck deals bound car
   Class {The class signature card.}
 Damage type {Identity of a typed HP damage component.}
 Run {Run structure — what an event, an encounter or an unlock is about.}
-internal {Engine-internal state tags, never shown to the player (visibility INTERNAL in nodes.csv). Grouping node for the internal vocabulary.}
-Combat traits {Combat traits: properties of an attack or a target that matchups and rules refer to. Grouping node for the trait vocabulary.}
+internal
+Combat traits
   Adequatereach {Combat trait for adequate reach. Read in src/engine/combatAvoidance.js:68: a ranged counter cannot answer it.}
   Closing {Combat trait for closing in. Read in src/engine/combatAvoidance.js:67: a ranged counter cannot answer it.}
   Conductive {Combat trait that lightning is strong against (src/content/combatMatchups.js, lightning strongTraits).}

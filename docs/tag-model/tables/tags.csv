@@ -684,7 +684,7 @@ meta.combat.technique.scarred-rite,scarred-rite,Scarred Rite,meta.combat.techniq
 meta.combat.technique.dawn-rite,dawn-rite,Dawn Rite,meta.combat.technique,Skill,,Marks an authored removal of a specific negative status; it never removes every status implicitly.,,,,,,live-tag,✦,D7B36B,ability:dawn-rite
 meta.combat.technique.burden-bearer,burden-bearer,Burden Bearer,meta.combat.technique,Skill,,Identifies the first new negative status application from an enemy to this player in a turn; self-applied statuses do not count.,,,,,,live-tag,✦,D7B36B,ability:burden-bearer
 meta.combat.technique.sepulchral-pact,sepulchral-pact,Sepulchral Pact,meta.combat.technique,Skill,,Identifies a credited kill of an enemy with positive Crimson Blight buildup immediately before the killing hit.,,,,,,live-tag,✦,D7B36B,ability:sepulchral-pact
-targeting,targeting,targeting,,TagNode,,Target selection: the rules an action uses to choose the creature it hits. Grouping node for the targeting vocabulary.,,,,,,live-tag,,,targeting
+targeting,targeting,targeting,,TagNode,,,,,,,,live-tag,,,targeting
 targeting.self,self,self,targeting,TagNode,,Targets the acting creature itself.,,,,,,live-tag,,,targeting.self
 targeting.enemy,targeting.enemy,enemy,targeting,TagNode,,Targets one enemy the player chooses.,,,,,,live-tag,,,targeting.enemy
 targeting.allEnemies,allEnemies,allEnemies,targeting,TagNode,,Targets every living enemy at once.,,,,,,live-tag,,,targeting.allEnemies
@@ -692,7 +692,7 @@ targeting.randomEnemy,randomEnemy,randomEnemy,targeting,TagNode,,Targets one ene
 targeting.ally,ally,ally,targeting,TagNode,,Targets an ally of the acting player.,,,,,,live-tag,,,targeting.ally
 targeting.single,single,Single,targeting,TagNode,,One direct target.,,,,,,live-tag,◇,9FC3E8,targeting:single
 targeting.area,targeting.area,Area,targeting,TagNode,,An area action; most Counters do not cover it.,,,,,,live-tag,◇,9FC3E8,targeting:area
-equipmentRoot,equipmentRoot,equipment,,TagNode,,Grip and hand slots: which hands a weapon or shield occupies. Grouping node for the equipment vocabulary.,,,,,,live-tag,,,equipment
+equipmentRoot,equipmentRoot,equipment,,TagNode,,,,,,,,live-tag,,,equipment
 equipmentRoot.bound,equipmentRoot.bound,bound,equipmentRoot,TagNode,,Granted by an equipped armament. It leaves your deck when the armament does.,,,,,,live-tag,,,equipment.bound
 equipmentRoot.mainHand,mainHand,mainHand,equipmentRoot,TagNode,,Bound to the armament in your main hand.,,,,,,live-tag,,,equipment.mainHand
 equipmentRoot.offHand,offHand,offHand,equipmentRoot,TagNode,,Bound to the armament in your off hand.,,,,,,live-tag,,,equipment.offHand
@@ -700,20 +700,20 @@ equipmentRoot.twoHanded,twoHanded,twoHanded,equipmentRoot,TagNode,,Bound to an a
 equipmentRoot.shield,equipmentRoot.shield,shield,equipmentRoot,TagNode,,Bound to an equipped shield.,,,,,,live-tag,,,equipment.shield
 equipmentRoot.parryTool,parryTool,parryTool,equipmentRoot,TagNode,,Bound to an equipped parry tool.,,,,,,live-tag,,,equipment.parryTool
 equipmentRoot.dualWield,dualWield,dualWield,equipmentRoot,TagNode,,One one-handed weapon in each hand; loadout.js GRIP_TAGS 'dual'.,,,,,,live-tag,,,equipment.dualWield
-scaling,scaling,scaling,,TagNode,,Which attribute a card's effect scales with. Grouping node for the scaling vocabulary.,,,,,,live-tag,,,scaling
+scaling,scaling,scaling,,TagNode,,,,,,,,live-tag,,,scaling
 scaling.strength,scaling.strength,strength,scaling,TagNode,,This card scales with Strength.,,,,,,live-tag,,,scaling.strength
 scaling.dexterity,scaling.dexterity,dexterity,scaling,TagNode,,This card scales with Dexterity.,,,,,,live-tag,,,scaling.dexterity
 scaling.constitution,scaling.constitution,constitution,scaling,TagNode,,This card scales with Constitution.,,,,,,live-tag,,,scaling.constitution
 scaling.intelligence,scaling.intelligence,intelligence,scaling,TagNode,,This card scales with Intelligence.,,,,,,live-tag,,,scaling.intelligence
 scaling.wisdom,scaling.wisdom,wisdom,scaling,TagNode,,This card scales with Wisdom.,,,,,,live-tag,,,scaling.wisdom
-costRoot,costRoot,cost,,TagNode,,How a card is paid for. Grouping node for the cost vocabulary.,,,,,,live-tag,,,cost
+costRoot,costRoot,cost,,TagNode,,,,,,,,live-tag,,,cost
 costRoot.action,costRoot.action,action,costRoot,TagNode,,Costs Stamina to play.,,,,,,live-tag,,,cost.action
 costRoot.alternative,alternative,alternative,costRoot,TagNode,,May be paid with a complete alternative option instead of its listed cost.,,,,,,live-tag,,,cost.alternative
-utilityRoot,utilityRoot,utility,,TagNode,,"Action roles a card or flask can take outside its damage: evasion, conduit and mana charge. Grouping node for the utility vocabulary.",,,,,,live-tag,,,utility
+utilityRoot,utilityRoot,utility,,TagNode,,,,,,,,live-tag,,,utility
 utilityRoot.evasion,utilityRoot.evasion,evasion,utilityRoot,TagNode,,Contributes to Dodge Rolls and avoiding damage.,,,,,,live-tag,,,utility.evasion
 utilityRoot.conduit,utilityRoot.conduit,conduit,utilityRoot,TagNode,,Channels magic through an equipped armament.,,,,,,live-tag,,,utility.conduit
 utilityRoot.manaCharge,manaCharge,manaCharge,utilityRoot,TagNode,,Recovers the stated amount of Mana.,,,,,,live-tag,,,utility.manaCharge
-lifecycle,lifecycle,lifecycle,,TagNode,,"Where a card goes after it is played or resolved: recalled to hand, sealed away, or exhausted. Grouping node for the lifecycle vocabulary.",,,,,,live-tag,,,lifecycle
+lifecycle,lifecycle,lifecycle,,TagNode,,,,,,,,live-tag,,,lifecycle
 lifecycle.recall,recall,recall,lifecycle,TagNode,,Returns to your hand after the named moment instead of being discarded.,,,,,,live-tag,,,lifecycle.recall
 lifecycle.recall.afterUse,afterUse,afterUse,lifecycle.recall,TagNode,,Returns to your hand after being played. A forced discard is not a use.,,,,,,live-tag,,,lifecycle.recall.afterUse
 lifecycle.recall.afterTurnDraw,afterTurnDraw,afterTurnDraw,lifecycle.recall,TagNode,,Returns to your hand after your turn's draw.,,,,,,live-tag,,,lifecycle.recall.afterTurnDraw
@@ -723,7 +723,7 @@ reach,reach,Reach,,TagNode,,Inspection details for combat techniques.,,,,,,live-
 reach.contact,contact,Contact,reach,TagNode,,At melee reach.,,,,,,live-tag,◇,9FC3E8,reach:contact
 reach.near,near,Near,reach,TagNode,,Normal ranged reach.,,,,,,live-tag,◇,9FC3E8,reach:near
 reach.far,far,Far,reach,TagNode,,Extended ranged reach.,,,,,,live-tag,◇,9FC3E8,reach:far
-counterMode,counterMode,Counter reach,,TagNode,,Counter reach: which kind of incoming attack a counter can answer. Grouping node for the counter reach vocabulary.,,,,,,live-tag,,,counterMode
+counterMode,counterMode,Counter reach,,TagNode,,,,,,,,live-tag,,,counterMode
 meta.combat.stance.counter.melee-counter,melee-counter,Melee counter,meta.combat.stance.counter,TagNode,,"Replies to eligible melee Attack or Smash. Sweep, Force, Piercing and Ranged bypass this reaction.",,,,,,live-tag,◇,D7B36B,counter:melee
 meta.combat.stance.counter.spell-counter,spell-counter,Spell counter,meta.combat.stance.counter,TagNode,,"Intercepts incoming physical ranged moves or spells. Against physical ranged moves, strips Ward without Health retaliation. Against spellcasters, can retaliate against Health.",,,,,,live-tag,◇,D7B36B,counter:spell
 item,item,Item,,TagNode,,"What a piece of gear DOES beyond its numbers, and what a run pickup is.",,,,,,live-tag,,,item
@@ -742,14 +742,14 @@ meta.combat.damage.physical.weapon-blunt,weapon-blunt,blunt,meta.combat.damage.p
 meta.combat.damage.physical.weapon-piercing,weapon-piercing,piercing,meta.combat.damage.physical,DamageType,,Damage dealt with a point.,,,,,physical.pierce,live-tag,,,damage.piercing
 damageType,damageType,Damage type,,TagNode,,Identity of a typed HP damage component.,,,,,,live-tag,,,damageType
 run,run,Run,,TagNode,,"Run structure — what an event, an encounter or an unlock is about.",,,,,,live-tag,,,run
-internal,internal,internal,,TagNode,,"Engine-internal state tags, never shown to the player (visibility INTERNAL in nodes.csv). Grouping node for the internal vocabulary.",,,,,,live-tag,,,internal
+internal,internal,internal,,TagNode,,,,,,,,live-tag,,,internal
 card.flourish,card.flourish,Flourish,card,Card,,Finesse — footwork and multi-hit.,,,,,,live-tag,✧,9FC3E8,flourish
 card.heavy,card.heavy,Heavy,card,Card,,"Slow, committed, and hard to stop.",,,,,,live-tag,◆,C9A227,heavy
 card.basic,basic,Basic,card,Card,,Everybody's — on the shelf without being found.,,,,,,live-tag,○,7A6F5A,basic
 card.ranged,card.ranged,Ranged,card,Card,,Authored ranged presentation; no position system.,,,,,,live-tag,➶,7FA8C9,ranged
 card.precision,card.precision,Precision,card,Card,,Deliberate aim and finesse; presentation only.,,,,,,live-tag,◎,C9A227,precision
 card.extractable,extractable,Extractable,card,Card,,"A smith can lift this card out of the item that lends it, and seat it in another item's mount. Strikes and defends do not carry it — today.",,,,,,live-tag,⚙,C9A227,extractable
-trait,trait,Combat traits,,TagNode,,Combat traits: properties of an attack or a target that matchups and rules refer to. Grouping node for the trait vocabulary.,,,,,,live-tag,,,trait
+trait,trait,Combat traits,,TagNode,,,,,,,,live-tag,,,trait
 trait.adequateReach,adequateReach,Adequatereach,trait,TagNode,,Combat trait for adequate reach. Read in src/engine/combatAvoidance.js:68: a ranged counter cannot answer it.,,,,,,live-tag,◇,9FC3E8,trait:adequateReach
 trait.closing,closing,Closing,trait,TagNode,,Combat trait for closing in. Read in src/engine/combatAvoidance.js:67: a ranged counter cannot answer it.,,,,,,live-tag,◇,9FC3E8,trait:closing
 trait.conductive,conductive,Conductive,trait,TagNode,,"Combat trait that lightning is strong against (src/content/combatMatchups.js, lightning strongTraits).",,,,,,live-tag,◇,9FC3E8,trait:conductive
