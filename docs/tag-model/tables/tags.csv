@@ -750,14 +750,14 @@ card.ranged,card.ranged,Ranged,card,Card,,Authored ranged presentation; no posit
 card.precision,card.precision,Precision,card,Card,,Deliberate aim and finesse; presentation only.,,,,,,live-tag,◎,C9A227,precision
 card.extractable,extractable,Extractable,card,Card,,"A smith can lift this card out of the item that lends it, and seat it in another item's mount. Strikes and defends do not carry it — today.",,,,,,live-tag,⚙,C9A227,extractable
 trait,trait,Combat traits,,TagNode,,,,,,,,live-tag,,,trait
-trait.adequateReach,adequateReach,Adequatereach,trait,TagNode,,Combat trait for adequate reach. Read in src/engine/combatAvoidance.js:68: a ranged counter cannot answer it.,,,,,,live-tag,◇,9FC3E8,trait:adequateReach
-trait.closing,closing,Closing,trait,TagNode,,Combat trait for closing in. Read in src/engine/combatAvoidance.js:67: a ranged counter cannot answer it.,,,,,,live-tag,◇,9FC3E8,trait:closing
+trait.adequateReach,adequateReach,Adequatereach,trait,TagNode,,Combat trait for adequate reach. Read in src/engine/combatAvoidance.js:67: a ranged-stance defender cannot avoid it by distance.,,,,,,live-tag,◇,9FC3E8,trait:adequateReach
+trait.closing,closing,Closing,trait,TagNode,,Combat trait for closing in. Read in src/engine/combatAvoidance.js:67: a ranged-stance defender cannot avoid it by distance.,,,,,,live-tag,◇,9FC3E8,trait:closing
 trait.conductive,conductive,Conductive,trait,TagNode,,"Combat trait that lightning is strong against (src/content/combatMatchups.js, lightning strongTraits).",,,,,,live-tag,◇,9FC3E8,trait:conductive
 trait.mental,mental,Mental,trait,TagNode,,Combat trait named mental. Read in src/content/combatMatchups.js:87: Force is weak against it. 'mental' is also a recovery profile in src/model/combatStatusState.js.,,,,,,live-tag,◇,9FC3E8,trait:mental
 trait.projectile,trait.projectile,Projectile,trait,TagNode,,Combat trait for projectile attacks. The projectile delivery (delivery:projectile) is read in src/model/attackTags.js. This trait is read in src/content/combatMatchups.js:87: Force is strong against it.,,,,,,live-tag,◇,9FC3E8,trait:projectile
 trait.reveal,reveal,Reveal,trait,TagNode,,Combat trait for reveal. Read in src/content/combatMatchups.js:89: Illusion is weak against it.,,,,,,live-tag,◇,9FC3E8,trait:reveal
 trait.shattering,shattering,Shattering,trait,TagNode,,"Combat trait that frost is weak against (src/content/combatMatchups.js, frost weakTraits).",,,,,,live-tag,◇,9FC3E8,trait:shattering
-trait.unavoidable,unavoidable,Unavoidable,trait,TagNode,,Combat trait for unavoidable attacks. Read in src/engine/combatAvoidance.js:52 (no evade roll) and :68 (no ranged counter).,,,,,,live-tag,◇,9FC3E8,trait:unavoidable
+trait.unavoidable,unavoidable,Unavoidable,trait,TagNode,,Combat trait for unavoidable attacks. Read in src/engine/combatAvoidance.js:52 (no evade roll) and :68 (no distance avoidance).,,,,,,live-tag,◇,9FC3E8,trait:unavoidable
 trait.unreflectable,unreflectable,Unreflectable,trait,TagNode,,Combat trait given to the meteorite and starfallBeam cards (src/content/combatExpansionCards.js).,,,,,,live-tag,◇,9FC3E8,trait:unreflectable
 meta.presentation,presentation,Presentation,meta,TagNode,,Presentation layer: how the game looks and reads. Carries no gameplay identity.,,,,,,new,,,
 meta.presentation.scene,scene,Scene,meta.presentation,Component,,Scene art and frame.,,,,,,new,,,
