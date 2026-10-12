@@ -194,10 +194,10 @@ Read the enemy's stance, choose a response, and build openings through protectio
 
 - **Ward at battle start**
   - Start with the character's base Ward plus equipped Ward bonuses.
-  - Suggested readable damage rule: reduce each magical action's direct damage by remaining Ward, to a minimum of 0.
-  - Share that reduction across the action's hits; do not apply it again to every projectile.
-  - Direct damage does not also spend Ward.
-  - Ward is spent by explicit Ward damage and resisted magical status pressure.
+  - Ward absorbs up to half (configurable `combatStatusRules.ward.resistMaxShare`) of each magical action's direct damage, never more than remaining Ward, and every point absorbed is spent (owner, 2026-10-11).
+  - Share that absorption across the action's hits; do not apply it again to every projectile.
+  - At 0 Ward is broken and absorbs nothing until an explicit restoration (owner, 2026-10-11).
+  - Ward is spent by what it absorbs and by resisted magical status pressure.
   - Turns and stance changes never refill it.
   - A new battle restores starting Ward.
   - An explicit restoration card can restore Ward within its stated cap.

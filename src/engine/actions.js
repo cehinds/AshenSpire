@@ -290,9 +290,13 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
   }
   const magical = receipt.profiles.map((profile, index) => profile.camp === 'spell' ? index : -1).filter(index => index >= 0);
   const total = magical.reduce((sum, index) => sum + receipt.defendedAmounts[index], 0);
-  const ward = Math.min(total, target.persistentWard?.value || 0);
-  const shares = total > 0 ? allocateInteger(total - ward, magical.map(index => receipt.defendedAmounts[index])) : magical.map(() => 0);
-  magical.forEach((index, i) => { receipt.defendedAmounts[index] = shares[i] || 0; });
+  // Ward's share is planned here and spent only on commit (applyExpandedDamage); previews never spend it.
+  const weights = magical.map(index => receipt.defendedAmounts[index]);
+  const ward = Math.min(target.persistentWard?.value || 0, Math.floor(total * Control.wardResistShare(ctx)));
+  const shares = total > 0 ? allocateInteger(total - ward, weights) : magical.map(() => 0);
+  const absorbed = ward > 0 ? allocateInteger(ward, weights) : magical.map(() => 0);
+  receipt.wardAbsorbed = receipt.amounts.map(() => 0);
+  magical.forEach((index, i) => { receipt.defendedAmounts[index] = shares[i] || 0; receipt.wardAbsorbed[index] = absorbed[i] || 0; });
   receipt.resistedAmounts = receipt.amounts.map((amount, index) => Math.max(0, amount - receipt.defendedAmounts[index]));
   receipt.guardBypassRemaining = receipt.guardBypass || 0;
 }
@@ -312,6 +316,7 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
   // Matchup and control vulnerabilities precede typed defenses and Ward.
   const type = ctx.combatExpansionRules.matchups.damageAliases[profile.damageType] || profile.damageType;
   const ward = tactical.resistedAmounts[contactIndex] || 0;
+  const wardAbsorbed = tactical.wardAbsorbed?.[contactIndex] || 0;
   const pool = spell ? 'barrier' : 'block';
   const bypass = Math.min(amount, tactical.guardBypassRemaining || 0);
   tactical.guardBypassRemaining -= bypass;
@@ -325,6 +330,8 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
     damageType: type, blockRemaining: target.block || 0, barrierRemaining: target.barrier || 0,
     ...seatOf(ctx, target), ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source) } : {}),
     ...(carrier.instanceId ? { cardInstanceId: carrier.instanceId, sourceHand: carrier.sourceHand, grantedBy: carrier.grantedBy } : {}), isAttack: true });
+  // Ward is spent by what it absorbed, after RESISTED is shown; the UI reads WARD after it.
+  if (wardAbsorbed > 0) Control.absorbWithPersistentWard(ctx, target, wardAbsorbed, { sourceId: source?.id });
   if (hpLoss) ctx.emit('hpLost', { targetId: target.id, amount: hpLoss, cause: 'attack', ...seatOf(ctx, target) });
   if (!carrier.combatReaction && !tactical.avoided && target.alive && ctx.ratingsRules) Ratings.applyRatingImpact(ctx, source, target, carrier);
   // Independent pressure resolves even when all direct damage met protection.

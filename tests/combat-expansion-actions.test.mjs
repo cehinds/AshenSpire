@@ -36,7 +36,8 @@ test('whole Spell action applies persistent Ward once across hits and preview ma
   const damage = out.events.filter(event => event.type === 'damageDealt' && event.targetId === enemy.id);
   assert.equal(before - enemy.hp, value);
   assert.equal(damage.reduce((sum, event) => sum + event.wardResisted, 0), 3);
-  assert.equal(enemy.persistentWard.value, 3, 'direct damage reduces damage without spending persistent Ward');
+  // Owner ruling 2026-10-11: Ward is spent by what it absorbs. Ward 3 absorbs min(3, floor(10 * 0.5)) = 3 and breaks.
+  assert.equal(enemy.persistentWard.value, 0, 'Ward is spent by what it absorbs and breaks at 0 (owner ruling 2026-10-11)');
 });
 
 test('paused action receipts are interned after JSON restore and finish without repeating a charge or roll', () => {
@@ -99,6 +100,7 @@ test('un-aimed card faces show offense while target inspection preserves Ward mi
   const aimed = previewCard(combat, 'paired', enemy.id);
   const row = unAimed.values.find(value => value.op === 'damage');
   assert.equal(unAimed.tokens[row.token], 5);
-  assert.equal(row.perTarget[enemy.id], 0);
-  assert.equal(aimed.tokens[row.token], 0);
+  // Owner ruling 2026-10-11: Ward absorbs at most half of a spell's damage (floor(5 * 0.5) = 2), not all of it.
+  assert.equal(row.perTarget[enemy.id], 3);
+  assert.equal(aimed.tokens[row.token], 3);
 });
