@@ -61,6 +61,7 @@ import * as SoloCombatCosts from './combat.js';
 import { previewCard as soloPreviewCard, previewIntent as soloPreviewIntent, cardNeedsEnemyTargetNow } from './combat.js';
 import * as F from './combatRules.js';
 import * as Reactions from './combatReactions.js';
+import { clearEnemyReactionRolls } from './enemyReactions.js';
 import { playerWeightClass } from './combat.js';
 import * as S from '../framework/statusSemantics.js';
 import { emitEvent, fireOwnerHooks, findEntity } from './triggers.js';
@@ -451,7 +452,8 @@ export function joinCombat(C, player) {
     }
     rescaleEnemies(C);
     if (C.phase === 'suspended') {
-      if (C.pendingReaction || C.reactionCursor) {
+      // A player-card root left mid-window (its stack or deferred root card) resumes like a reaction.
+      if (C.pendingReaction || C.reactionCursor || C.reactionStack || C.reactionRootPlay) {
         C.phase = C.reactionCursor ? 'enemy' : 'player';
         if (!C.pendingReaction) resumeReaction(C);
         return existing;
@@ -560,6 +562,7 @@ function finish(C, result) {
 // ---- player phase -----------------------------------------------------------
 function startPlayerPhase(C) {
   C.turn += 1;
+  clearEnemyReactionRolls(C);
   C.phase = 'player';
   for (const P of livingPlayers(C)) {
     setActive(C, P);
@@ -860,11 +863,15 @@ function doPlayCard(C, { cardInstanceId, targetId, choice, upcastTier, selectedB
     ordinalThisCombat: meta.ordinalThisCombat, energySpent: cost, manaSpent: manaCost, staminaSpent: staminaCost,
   });
   drainQueue(C);
+  // An enemy reaction window on this card's own root: it resolves when the root resumes.
+  if (Reactions.deferRootPlay(C)) return;
 
   finishAbilityPlay(C);
 }
 
 function finishAbilityPlay(C) {
+  // A deferred root card completes in its own seat, whoever acted last.
+  if (C.pendingAbilityPlay?.deferredRoot && C.players.has(C.pendingAbilityPlay.playerId)) setActive(C, C.players.get(C.pendingAbilityPlay.playerId));
   const play = R.abilityResolved(C);
   if (!play) return;
   const inst = play.instance;
@@ -952,7 +959,34 @@ export function endTurn(C, playerId) {
 const reactionHooks = {
   setOwner(C, id) { if (C.players.has(id)) setActive(C, C.players.get(id)); },
   play: doPlayCard,
+  drain: drainQueue,
+  planEnemyReaction: planEnemyReactionMove,
 };
+
+// Enemy reactions: the reaction move aimed at one seat (its player-targeted parts) plus
+// its self parts, planned by the stack (engine/enemyReactions.js) instead of the queue.
+function planEnemyReactionMove(C, enemy, moveId, targetPlayerId) {
+  const P = C.players.get(targetPlayerId);
+  setActive(C, P);
+  C.combatExpansionVersion = 2;
+  const move = expandedEnemyMove(enemy, C.registries.enemies.get(enemy.enemyId).moves[moveId], moveId, C);
+  const carrier = enemyMoveCarrier(enemy, move, moveId, C);
+  // A Counter move delivers its damage through the Counter mechanism, never as a direct
+  // hit: the same guards as the ordinary payload (executeExpandedEnemyPayload) and the
+  // solo planner (combat.js enemyMoveActions).
+  const counter = carrier.combatProfile.maneuver === 'counter';
+  const defensePrimed = counter && enemyCounterDefensePrimed(enemy, moveId);
+  const effects = (move.effects || []).filter(effect => (effect.target === 'player' || SEAT_PILE_OPS.has(effect.op))
+    && !(counter && ['damage', 'poiseDamage', 'wardDamage'].includes(effect.op)));
+  if (move.damage != null && !counter) effects.unshift({ op: 'damage', target: 'player', amount: enemyMoveDamage(enemy, move), hits: move.hits ?? 1 });
+  const actions = effects.map(effect => ({ effect: { ...effect, ...(effect.target === 'player' ? { target: undefined } : {}) },
+    source: enemy, owner: enemy, target: P.entity, card: carrier, meta: { moveId, activePlayerId: P.id } }));
+  const self = (move.effects || []).filter(effect => effect.target !== 'player' && !SEAT_PILE_OPS.has(effect.op));
+  if (move.block != null && !defensePrimed) self.unshift({ op: 'block', target: 'self', amount: move.block });
+  if (move.barrier != null && !defensePrimed) self.unshift({ op: 'gainBarrier', target: 'self', amount: move.barrier });
+  actions.unshift(...self.map(effect => ({ effect, source: enemy, owner: enemy, target: enemy, card: carrier, meta: { moveId } })));
+  return { actions, carrier, target: P.entity, kind: move.intent };
+}
 
 export function setReactions(C, playerId, enabled) {
   const owner = C.players.get(playerId);
@@ -1285,7 +1319,8 @@ function rollIntents(C, isFirstTurn = false) {
 }
 
 function weightedMovePick(C, enemy, def) {
-  const entries = Object.entries(def.moves).filter(([id, mv]) => !mv.locked || enemy.unlockedMoves.includes(id));
+  // Reaction moves are never rolled (docs/combat-card-traits-contract.md, "Enemy reactions").
+  const entries = Object.entries(def.moves).filter(([id, mv]) => !mv.reaction && (!mv.locked || enemy.unlockedMoves.includes(id)));
   if (!entries.length) return null;
   const eligible = entries.filter(([id, mv]) => {
     if (mv.maxConsecutive == null) return true;
