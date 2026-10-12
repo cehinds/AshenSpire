@@ -37,7 +37,7 @@ function watchTargetPlacement(host, picker) {
     const playerRect = host.querySelector('.combatant.player .sprite')?.getBoundingClientRect();
     // The player's overhead controls and the cards, combat tools and action buttons
     // paint above the picker: never place a target under them.
-    const playerControls = [...host.querySelectorAll('.combatant.player :is(.combatant-leading, .meters)')];
+    const playerControls = [...host.querySelectorAll('.combatant.player :is(.combatant-leading, .meters, .player-action-intent)')];
     const hardNodes = [playerRect, ...playerControls, ...(combat?.querySelectorAll('.combat-tools, .combat-action-row button, .hand .card') ?? [])];
     const hardObstacles = hardNodes.filter(Boolean)
       .map(node => (node.getBoundingClientRect ? node.getBoundingClientRect() : node))

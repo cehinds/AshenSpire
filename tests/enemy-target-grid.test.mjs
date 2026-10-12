@@ -133,7 +133,7 @@ const layerCss = readFileSync(new URL('../styles/combat-layers.css', import.meta
 test('picker tags each foe\'s controls with its owner and keeps player controls as plain obstacles', () => {
   assert.match(pickerSource, /\.combat-hud/);
   assert.match(pickerSource, /\.turn-ribbon/);
-  assert.match(pickerSource, /\.combatant\.player :is\(\.combatant-leading, \.meters\)/, 'player controls are obstacles');
+  assert.match(pickerSource, /\.combatant\.player :is\(\.combatant-leading, \.meters, \.player-action-intent\)/, 'player controls, including the placed action intent, are hard obstacles');
   assert.match(pickerSource, /\.combatant\.enemy/);
   assert.match(pickerSource, /:is\(\.combatant-leading, \.meters, \.nm\)/, 'foe controls include the name plate');
   assert.match(pickerSource, /owner:\s*figure\.dataset\.eid/, 'foe controls carry their owner');
