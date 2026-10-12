@@ -27,7 +27,7 @@ Numbers in this spec are the **initial balance targets**. They will move during 
 | 2 | Legal and asset constraints | **partly built** | Attribution: `tools/credits-check.mjs`, 40 checks, 33/33 asset directories (FINISH §10). Open: §2.4 asset indirection. 138 literal `url('../assets/…)` references in six `styles/` files (`grep -rc "url('../assets" styles`; for example `styles/combat.css`, `styles/ui.css`) still bypass `assetUrl()` and its fallback (DEVELOPER.md, *high-res release*). |
 | 3 | Architecture, DSLs, procedural systems, saves, validation | **built** | Run schema at `RUN_SCHEMA_VERSION` (`src/model/state.js`; `tests/save-migration.test.mjs`); `validateContent` 0 errors. |
 | 4 | Combat rules | **built** | §4.7 shared player/enemy tags, deferred Counters, typed riders and persisted stance reads ship in #1705, with solo/co-op engine and browser regressions. Ashen Blight remains a separate proposal. Warrior's Vow enters the chosen stance. |
-| 5 | Content | **built** | Warrior's Vow (§5.2) offers every stance of the player's class and enters the chosen one. 5.2–5.4 are the historical M1/M2 sets reconciled to the canonical names and values of their current shipped definitions; older prose elsewhere remains readable through `docs/IP-SCRUB.md`. Live counts: 292 card definitions in the composed bundle (class reward pools after class-mastery composition: Reaver 53, Starseer 59, Rogue 53, Herald 49), 73 relics (63 base plus 10 class-mastery), 25 events, 7 flasks, 33 enemies (20 regular, 10 boss, 3 elite). |
+| 5 | Content | **built** | Warrior's Vow (§5.2) offers every stance of the player's class and enters the chosen one. 5.2–5.4 are the historical M1/M2 sets reconciled to the canonical names and values of their current shipped definitions; older prose elsewhere remains readable through `docs/IP-SCRUB.md`. Live counts: 292 card definitions in the composed bundle (class reward pools after class-mastery composition: Reaver 53, Starseer 59, Rogue 57, Herald 49), 73 relics (63 base plus 10 class-mastery), 25 events, 7 flasks, 33 enemies (20 regular, 10 boss, 3 elite). |
 | 6 | Map generation | **built** | `engine/mapgen.js`, `tools/mapplan.mjs`. |
 | 7 | UI/UX, HUD, input, feedback, visual style | **partly built** | Screens, HUD, input and feedback ship. Open: §7.5 interface fonts are **TO BUILD** (Cinzel/Inter are named with system fallbacks and do not ship yet; they will load as pack files through the pack loader, EXTERNAL-ASSETS-PLAN step 3b, but wiring them is not yet a plan step; only the "AS Lore" copies ship), and the release proofs for contrast, reduced motion, target size and Back-everywhere (FINISH §5–§9). |
 | 8 | Testing | **built** | `tests/run-node.mjs`. |
@@ -1333,9 +1333,10 @@ warned when not the stock value.
 
 **Rogue full parity slice.** Rogue ships as a complete fourth class, not a selectable shell:
 
-- 47 authored Rogue cards (`src/content/cards/rogue.js`), all with upgrades and
-  validation-clean player text: exactly 43 in its ordinary reward pool (the class row's
-  `cardPool`), the signature card Ambush, the class ability card Prepare (§13.4f), and the
+- 61 authored Rogue cards (`src/content/cards/rogue.js`), all with upgrades and
+  validation-clean player text: exactly 57 in its ordinary reward pool (the class row's
+  `cardPool`: the 47 legacy cards, the original 43 plus the four poison cards, and the ten
+  expanded families), the signature card Ambush, the class ability card Prepare (§13.4f), and the
   two generated cards other Rogue cards add to the hand (Shiv, Smoke Pellet). A new Rogue
   starts with an 11-card deck, signature and ability card included (`balance.startingDeckSize`
   is the home of that number);
