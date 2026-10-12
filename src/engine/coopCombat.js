@@ -7,7 +7,7 @@ import { tacticalCarrier, prepareTacticalCard, enqueueCounterWard, enemyMoveCarr
 import { clearCombatCounter, startTacticalTurn, setCombatStance } from './combatMatchups.js';
 import { resolveCombatCard } from './combatExpansion.js';
 import { enqueueExpandedAction } from './combatExpansionActions.js';
-import { controlGate, controlRestrictions, initializePersistentWard, initializePersistentPoise, recoverStatusesAtOwnerStart, sleepRestoration,
+import { controlGate, controlRestrictions, initializePersistentWard, initializePersistentPoise, backfillPersistentPoise, recoverStatusesAtOwnerStart, sleepRestoration,
   consumeControlActionLoss, endControlTurn, manualRecovery, recoveryControls } from './combatStatusControl.js';
 import { payAshenBlight, rollAshenBlightEncounter, chooseAshenBlightFeat, beginAshenBlightCycle, ashenBlightRestorationPercent,
   effectiveAshenBlightAttributes, ashenBlightBonuses } from './ashenBlight.js';
@@ -177,6 +177,9 @@ export function createCoopCombat({ registries, rng, players, enemyIds, enemyLeve
         'equipmentProfileRuleSnapshot', 'equipmentAttackSlotCount', 'removedAttackSlotIds', 'itemMounts', 'poolDeck',
       ]) if (P[key] === undefined && member[key] !== undefined) P[key] = structuredClone(member[key]);
     }
+    // An older expanded save has Ward and no Poise: each restored combatant gets a full Poise pool.
+    for (const P of C.players.values()) backfillPersistentPoise(C, P.entity);
+    for (const enemy of C.enemies) backfillPersistentPoise(C, enemy);
     setActive(C, C.players.get(saved.playerKey) || firstLiving(C));
     return C;
   }

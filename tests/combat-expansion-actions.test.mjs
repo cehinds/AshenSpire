@@ -6,7 +6,7 @@ import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { enqueueExpandedAction } from '../src/engine/combatExpansionActions.js';
 import { executeAction, applyAttackDamage, restoreExpandedWard, gainBarrier, syncWardMaximum } from '../src/engine/actions.js';
-import { schoolResistanceMultiplier, persistentWardMaximum } from '../src/model/combatRatings.js';
+import { schoolResistanceMultiplier, persistentWardMaximum, persistentPoiseMaximum } from '../src/model/combatRatings.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { applyStatus, decayAtTurnEnd } from '../src/engine/statuses.js';
 import { restorePersistentPoise } from '../src/engine/combatStatusControl.js';
@@ -435,6 +435,22 @@ test('restorePersistentPoise honours a once-per-combat key and never restores a 
   restorePersistentPoise(combat, enemy, 5, { modifierPercent: 0 });
   assert.deepEqual({ ...enemy.persistentPoise }, { max: 4, value: 4 });
   assert.equal(restorePersistentPoise(combat, enemy, 3).restored, 0, 'a full pool takes nothing');
+});
+
+test('an older save with Ward and no Poise restores with a full Poise pool; a newer save keeps its Poise', () => {
+  const { combat, enemy, registries } = fixture();
+  enemy.ratings.poise = 4; enemy.persistentPoise = { max: 4, value: 1 };
+  const restore = saved => restoreCombatSnapshot({ registries, rng: createRng(combat.rng.seed, combat.rng.getCounters()), snapshot: saved });
+  const kept = restore(JSON.parse(JSON.stringify(serializeCombatSnapshot(combat))));
+  assert.equal(kept.enemies[0].persistentPoise.value, 1, 'a save that has Poise keeps its value');
+  const old = JSON.parse(JSON.stringify(serializeCombatSnapshot(combat)));
+  delete old.enemies[0].persistentPoise;
+  const restored = restore(old);
+  const back = restored.enemies[0];
+  assert.ok(back.persistentWard, 'the combatant is still expanded');
+  assert.deepEqual({ ...back.persistentPoise }, { max: persistentPoiseMaximum(restored, back), value: persistentPoiseMaximum(restored, back) },
+    'the missing Poise pool starts full at the Poise maximum');
+  assert.ok(back.persistentPoise.max > 0);
 });
 
 test('a magical hit leaves Poise untouched', () => {

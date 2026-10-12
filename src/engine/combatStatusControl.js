@@ -1,6 +1,7 @@
 import * as Actions from './actions.js';
 import { combatStatusRules } from '../content/combatStatusRules.js';
 import { syncWardMaximum, syncPoiseMaximum } from './combatPools.js';
+import { persistentPoiseMaximum } from '../model/combatRatings.js';
 
 const finite = value => Number.isFinite(value) ? value : 0;
 const whole = value => Math.max(0, Math.floor(finite(value)));
@@ -48,6 +49,16 @@ export function initializePersistentPoise(entity, maximum) {
   const max = whole(maximum);
   entity.persistentPoise = { max, value: max };
   return entity.persistentPoise;
+}
+
+/**
+ * A save written before Poise had its own pool carries a Ward and no Poise. The
+ * restored fight gives that combatant a full Poise pool, as a fresh fight would.
+ * Only an expanded combatant (one with a Ward pool) is touched.
+ */
+export function backfillPersistentPoise(ctx, entity) {
+  if (!entity?.persistentWard || entity.persistentPoise) return entity?.persistentPoise;
+  return initializePersistentPoise(entity, persistentPoiseMaximum(ctx, entity));
 }
 
 /**
