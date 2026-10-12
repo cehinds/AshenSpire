@@ -295,9 +295,11 @@ Computed by `cardHint()` in `resolver.mjs`. Terse spec, not final UI.
 
 Target outline (`targetOutline()` in `resolver.mjs`, separate from the border above,
 which it does not change). It colours the target while a card is being chosen.
-Its speed is the plan-time timeline speed: `plannedSpeed()` in `timeline.mjs`, which is
-the timeline speed without the round's d4 (card speed, preemptive buff, DEX initiative
-base and momentum term, counted once). The caller passes both speeds in, so the outline
+Its speed is the plan-time EFFECTIVE timeline speed: `plannedQueueSpeeds()` in `timeline.mjs`
+gives each card's speed without the round's d4 (card speed, preemptive buff, DEX initiative
+base and momentum term, counted once), capped by the previous card in the same queue as
+`buildTimeline` caps it. A later card cannot forecast faster than an earlier one in its queue.
+The caller passes both speeds in, so the outline
 is a forecast: the d4 is rolled at round start, so the real order can differ by the d4
 gap. Each revealed dimension is an advantage, a disadvantage or neither: speed from
 stage 3 (the card's plan-time speed is higher, or lower), stance from stage 2 (the stance

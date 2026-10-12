@@ -660,8 +660,9 @@ export function cardHint(card, enemyAction, ctx = {}) {
 //
 // input: { card, foe, cardSpeed, foeSpeed, stage, stanceTable }. card and foe are the
 // action objects (stance, target). cardSpeed and foeSpeed are PLAN-TIME speeds: the
-// timeline speed without the round's d4, from timeline.js plannedSpeed() (card speed +
-// preemptive buff + DEX initiative base + momentum term, counted once). They are a
+// timeline speed without the round's d4, from timeline.js plannedQueueSpeeds() (card speed +
+// preemptive buff + DEX initiative base + momentum term, counted once, capped by the card's
+// place in its queue). They are a
 // forecast, not the real order: the d4 is rolled at round start (SPEC 4.11), so the
 // real order can differ by the d4 gap. stanceTable is from parseStanceAdvantage.
 // Speeds are required at stage 3 and ignored below it.

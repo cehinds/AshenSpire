@@ -14,7 +14,7 @@ import {
   adaptChance,
   MERGE_MODES,
 } from './timeline.mjs';
-import { parseStanceAdvantage, parseEvasionCards } from './resolver.mjs';
+import { parseStanceAdvantage, parseEvasionCards, targetOutline } from './resolver.mjs';
 
 // Rng helpers. d4 = floor(u*4)+1: u 0 -> 1, 0.3 -> 2, 0.5 -> 3, 0.75 -> 4.
 const constRng = (u) => () => u;
@@ -1374,7 +1374,7 @@ test('a reaction evade card in the table adds its Evasion to the attack it answe
   assert.equal(out.events.some((e) => e.type === 'evadeRoll'), false);
 });
 
-test('plannedSpeed is the buildTimeline entry speed minus its d4, for every entry of seeded fights', () => {
+test('plannedSpeed is the uncapped buildTimeline entry total minus its d4, for every entry of seeded fights', () => {
   // Seeded LCG: each seed draws a different set of d4s, so the check covers many rolls.
   const lcg = (seed) => () => {
     seed = (seed * 1103515245 + 12345) % 2147483648;
@@ -1411,5 +1411,72 @@ test('plannedSpeed has no d4 input and counts the preemptive buff only for a pre
   assert.equal(plannedSpeed({ combatant: player, card: brace, preemptive: true, momentum: {}, foeId: 'goblin' }), 2 + 1 + 2);
   assert.equal(plannedSpeed({ combatant: player, card: brace, preemptive: false, momentum: {}, foeId: 'goblin' }), 2 + 2);
   assert.equal(plannedSpeed({ combatant: player, card: card('heal', 'other', 'self', 2), preemptive: false, momentum: { goblin: 3 }, foeId: 'self' }), 2 + 2, 'self-target: no momentum term');
+});
+
+test('plannedQueueSpeeds caps a card at the previous card in its queue (Codex example)', () => {
+  // DEX 1 gives base 0, so the speeds are the card speeds. Player queue [speed 1, speed 5]
+  // against a goblin speed-3 action: the 5 is effectively 1, so it is behind the goblin.
+  const player = makeCombatant({ id: 'player', attrs: { DEX: 1 }, hp: 10 });
+  const goblin = makeCombatant({ id: 'goblin', attrs: { DEX: 1 }, hp: 10 });
+  const queue = [atk('jab', 'goblin', 1), atk('slash', 'goblin', 5)];
+  assert.equal(timeline.plannedSpeed({ combatant: player, card: queue[1], preemptive: false, momentum: {}, foeId: 'goblin' }), 5, 'uncapped total');
+  const [first, second] = timeline.plannedQueueSpeeds({ combatant: player, queue, momentum: {} });
+  assert.equal(first, 1);
+  assert.equal(second, 1, 'capped at the previous card');
+  const [foe] = timeline.plannedQueueSpeeds({ combatant: goblin, queue: [atk('stab', 'player', 3)], momentum: {} });
+  assert.equal(foe, 3);
+  assert.ok(second < foe, 'the second card forecasts behind the goblin');
+  // Stance: the card's block is beaten by the goblin's smash, so the card is at a stance
+  // disadvantage. With the speed disadvantage too, the outline is red. The uncapped 5 would
+  // have read as a speed advantage, which gives yellow.
+  const stanceTable = parseStanceAdvantage('attacker_stance,defender_stance,bonus\nsmash,block,2\n');
+  const outline = targetOutline({
+    card: { stance: 'block', target: 'goblin' }, foe: { stance: 'smash' }, cardSpeed: second, foeSpeed: foe, stage: 3, stanceTable,
+  });
+  assert.equal(outline, 'red', 'speed disadvantage counts for the capped card');
+});
+
+test('plannedQueueSpeeds is the buildTimeline entry effective speed minus its d4, for every combatant and entry of seeded fights', () => {
+  // Seeded LCG: each seed draws a different set of d4s. The queues include capped cards
+  // (wolf claw after bite; goblin parry after stab), so the cap is exercised.
+  const lcg = (seed) => () => {
+    seed = (seed * 1103515245 + 12345) % 2147483648;
+    return seed / 2147483648;
+  };
+  const momentum = { goblin: 2, wolf: -3 };
+  let checked = 0;
+  let capped = 0;
+  for (let seed = 1; seed <= 25; seed += 1) {
+    const combatants = {
+      player: makeCombatant({ id: 'player', attrs: { DEX: 7 }, hp: 20, sp: 4 }),
+      goblin: makeCombatant({ id: 'goblin', attrs: { DEX: 5 }, hp: 10, sp: 3 }),
+      wolf: makeCombatant({ id: 'wolf', attrs: { DEX: 2 }, hp: 8, sp: 3 }),
+    };
+    const queues = {
+      player: [atk('jab', 'goblin', 6), card('brace', 'counter', 'goblin', 2), card('ward', 'guard', 'self', 1), card('heal', 'other', 'self', 2)],
+      goblin: [atk('stab', 'player', 2), card('parry', 'counter', 'player', 3)],
+      wolf: [atk('bite', 'player', 1), atk('claw', 'player', 2)],
+    };
+    const tl = buildTimeline(queues, { combatants, rng: lcg(seed), momentum });
+    for (const id of Object.keys(combatants)) {
+      const planned = timeline.plannedQueueSpeeds({ combatant: combatants[id], queue: queues[id], momentum });
+      assert.equal(planned.length, queues[id].length, `seed ${seed}, ${id}: one speed per card`);
+      for (const entry of tl.entries.filter((e) => e.actor === id)) {
+        assert.equal(planned[entry.cardIndex], entry.speed.effective - entry.speed.d4, `seed ${seed}, ${entry.cardId}`);
+        if (entry.speed.effective !== entry.speed.total) capped += 1;
+        checked += 1;
+      }
+    }
+  }
+  assert.equal(checked, 25 * 8, 'every entry of every seed');
+  assert.ok(capped >= 25, `the cap changed ${capped} entries`);
+});
+
+test('plannedQueueSpeeds: a single card is its plannedSpeed, and an empty or missing queue is []', () => {
+  const player = makeCombatant({ id: 'player', attrs: { DEX: 4 }, hp: 10 });
+  const brace = card('brace', 'counter', 'goblin', 2);
+  assert.deepEqual(timeline.plannedQueueSpeeds({ combatant: player, queue: [brace], momentum: {} }), [2 + 1 + 2]);
+  assert.deepEqual(timeline.plannedQueueSpeeds({ combatant: player, queue: [], momentum: {} }), []);
+  assert.deepEqual(timeline.plannedQueueSpeeds({ combatant: player, momentum: {} }), []);
 });
 

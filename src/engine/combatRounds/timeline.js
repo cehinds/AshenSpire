@@ -256,6 +256,30 @@ export function plannedSpeed(input) {
   return planParts(input).known;
 }
 
+// The queue-order cap (owner, 2026-10-11): each action's effective speed is its total capped
+// by the previous action's effective speed in the same queue. buildTimeline and
+// plannedQueueSpeeds both use this, so the forecast and the real order share one rule.
+function capQueue(speeds) {
+  let running = Infinity;
+  return speeds.map((s) => {
+    running = Math.min(s, running);
+    return running;
+  });
+}
+
+// plannedQueueSpeeds({ combatant, queue, momentum, id? }): the plan-time EFFECTIVE speed of
+// each card in one combatant's queue, in queue order: plannedSpeed for the card, capped by the
+// previous card's effective speed exactly as buildTimeline caps. The d4 is excluded. It is one
+// roll per combatant per round and is added to every card in the queue, so the cap commutes
+// with it: min(a + d4, b + d4) = min(a, b) + d4. Entry i equals buildTimeline's
+// speed.effective[i] - speed.d4. targetOutline takes these as its speeds.
+export function plannedQueueSpeeds({ combatant, queue = [], momentum = {}, id = combatant.id }) {
+  const cards = Array.isArray(queue) ? queue : [];
+  return capQueue(cards.map((card) => plannedSpeed({
+    combatant, id, card, preemptive: DEFENSIVE_KINDS.includes(card.kind), momentum, foeId: card.target,
+  })));
+}
+
 // Orders the queued actions for one round (owner, 2026-10-11). Returns
 // { merge, initiative: { [id]: { base, d4, lead } }, entries }.
 //
@@ -361,13 +385,11 @@ export function buildTimeline(queues, ctx = {}) {
   } else {
     // Speed: a k-way merge over the queue heads. Each queue's effective speeds never
     // rise, so taking the best head keeps every queue in its own order.
-    let running = Infinity;
     for (const lane of lanes) {
-      running = Infinity;
-      for (const e of lane) {
-        e.speed.effective = Math.min(e.speed.total, running);
-        running = e.speed.effective;
-      }
+      const capped = capQueue(lane.map((e) => e.speed.total));
+      lane.forEach((e, i) => {
+        e.speed.effective = capped[i];
+      });
     }
     const heads = lanes.map(() => 0);
     entries = [];
