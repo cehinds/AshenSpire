@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1920",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "The architecture check passes on dev again",
+    "detail": "The enemy-reaction code named a parameter window, which the engine's browser-free check read as a browser reference; it is now reactionWindow. No gameplay change.",
+    "build": "0.7.1.1437",
+    "pullRequest": 1920,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1920"
+  },
+  {
     "id": "pr-1913",
     "date": "2026-10-12",
     "group": "2026-10-12",
