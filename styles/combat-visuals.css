@@ -1,0 +1,44 @@
+/* Always-on combat visuals (SPEC §4.11; owner decision 2026-10-12). These apply in every fight, with the rounds
+   mode or the momentum and multi-action toggles on or off:
+   - the blue selection and playable outline (--selection-color), so green only means advantage;
+   - a soft dark shadow on each intent glyph and each character sprite;
+   - the thin target outline: a dark shadow first, the coloured 1px ring outermost, drawn by combatRoundsScreen.js
+     from the stance advantage (rounds mode: stance and speed; normal combat: stance only).
+   Every rule is scoped to .combat (the combat screen) or to the attributes the screen sets. Lengths divide by
+   --ui-zoom, so a 1px line stays 1px on screen at any UI zoom. No glow or halo. */
+
+/* Selection colour: the live green (--selection-color) becomes blue, so green only means advantage. */
+.combat { --selection-color: #4f8fff; }
+
+/* Shadows: a soft dark drop-shadow on each intent glyph and on character art (the outline rule below takes
+   precedence on a targeted sprite, so the target outline and the shadow never fight). */
+.combat .intent-icon {
+  filter: drop-shadow(0 calc(2px / var(--ui-zoom,1)) calc(3px / var(--ui-zoom,1)) rgba(0,0,0,.6));
+}
+.combat .combatant .sprite img:not([data-target-outline]) {
+  filter: drop-shadow(0 calc(4px / var(--ui-zoom,1)) calc(5px / var(--ui-zoom,1)) rgba(0,0,0,.45));
+}
+
+/* The live blur halo behind an enemy being aimed at is replaced by the thin outline below (no glow or halo, owner
+   2026-10-12). Player-side aim glows are unchanged. */
+/* Only where the screen has drawn a preview outline on the enemy (data-cr-outline); an enemy with none keeps the live cue. */
+.combat .enemy[data-cr-outline] .aim-silho { display: none; }
+
+/* Target outline (PREVIEW-PLAN, Screen): 1px, solid, hugging the sprite edge; no glow or halo. The filter lists
+   a tight dark shadow first, hugging the sprite (owner, 2026-10-12), then the four coloured 1px edges outermost. */
+.combat [data-target-outline='green'] {
+  filter: drop-shadow(0 0 calc(1px / var(--ui-zoom,1)) #000) drop-shadow(0 0 calc(1.5px / var(--ui-zoom,1)) rgba(0,0,0,.9))
+    drop-shadow(calc(1px / var(--ui-zoom,1)) 0 0 #5ccf6a) drop-shadow(calc(-1px / var(--ui-zoom,1)) 0 0 #5ccf6a)
+    drop-shadow(0 calc(1px / var(--ui-zoom,1)) 0 #5ccf6a) drop-shadow(0 calc(-1px / var(--ui-zoom,1)) 0 #5ccf6a);
+}
+.combat [data-target-outline='yellow'] {
+  filter: drop-shadow(0 0 calc(1px / var(--ui-zoom,1)) #000) drop-shadow(0 0 calc(1.5px / var(--ui-zoom,1)) rgba(0,0,0,.9))
+    drop-shadow(calc(1px / var(--ui-zoom,1)) 0 0 #e7c65c) drop-shadow(calc(-1px / var(--ui-zoom,1)) 0 0 #e7c65c)
+    drop-shadow(0 calc(1px / var(--ui-zoom,1)) 0 #e7c65c) drop-shadow(0 calc(-1px / var(--ui-zoom,1)) 0 #e7c65c);
+}
+.combat [data-target-outline='red'] {
+  filter: drop-shadow(0 0 calc(1px / var(--ui-zoom,1)) #000) drop-shadow(0 0 calc(1.5px / var(--ui-zoom,1)) rgba(0,0,0,.9))
+    drop-shadow(calc(1px / var(--ui-zoom,1)) 0 0 #ef4949) drop-shadow(calc(-1px / var(--ui-zoom,1)) 0 0 #ef4949)
+    drop-shadow(0 calc(1px / var(--ui-zoom,1)) 0 #ef4949) drop-shadow(0 calc(-1px / var(--ui-zoom,1)) 0 #ef4949);
+}
+

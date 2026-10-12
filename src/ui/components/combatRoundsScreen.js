@@ -4,10 +4,10 @@
 // on a targeted sprite. Every call first removes what an earlier call added, so the layer is safe to re-run on
 // each render. With combat.combatRounds absent it adds nothing (the DOM and CSS stay as they are).
 import { intentIcon } from './intentIcon.js';
-import { previewIntent, roundCardForecast } from '../../engine/combat.js';
+import { cardTimelineViewFor, previewIntent, roundCardForecast } from '../../engine/combat.js';
 import { screenForecast, enemyActions, roundMomentum } from '../../engine/combatRoundsAdapter.js';
-import { targetOutline } from '../../engine/combatRounds/resolver.js';
-import { displayedMomentum, enemyPlanActions, momentumOn, multiActionOn } from '../../engine/normalPreview.js';
+import { stanceOutline, targetOutline } from '../../engine/combatRounds/resolver.js';
+import { displayedMomentum, enemyIntentStance, enemyPlanActions, momentumOn, multiActionOn, normalStanceTable } from '../../engine/normalPreview.js';
 import { followUpSymbols, momentumTab, perceptionLevel, readStage, speedHint, READ_EXACT } from '../models/CombatRoundsScreenModel.js';
 
 const CLEAN = ['.cr-followups', '.cr-speed', '.cr-queue', '.cr-momentum'];
@@ -30,18 +30,25 @@ export function decorateCombatRoundsScreen(root, combat, { armedCardId = null, t
   // Pass 1, reads only. The art is measured as the previous decoration left it: the follow-up symbols are added to
   // the intent box, which the sprite art does not depend on.
   const rows = [];
-  for (const enemy of on || followUpsOn ? combat.enemies : []) {
+  for (const enemy of on || followUpsOn || armedCardId ? combat.enemies : []) {
     const box = root.querySelector(`.combatant.enemy[data-eid="${CSS.escape(enemy.id)}"]`);
     if (!box || !enemy.alive) continue;
     const intent = previewIntent(combat, enemy.id);
     const actions = on ? enemyActions(combat, enemy.id) : enemyPlanActions(combat, enemy);
     const row = { box, intentEl: box.querySelector('.intent'), actions: followUpsOn ? actions : [], stage: readStage(intent), colour: null, art: [] };
-    // The target outline: only while a card is aimed, and only the visible art and the intent glyphs.
+    // The target outline (every fight, SPEC §4.11): only while a card is aimed, and only the visible art and the
+    // intent glyphs. Rounds mode reads stance and speed; a normal fight reads the stance alone.
     if (armedCardId) {
-      const card = roundCardForecast(combat, armedCardId, enemy.id);
-      const forecast = card ? screenForecast(combat, enemy.id, card) : null;
-      row.colour = forecast?.foe ? targetOutline({ card, foe: forecast.foe, cardSpeed: forecast.cardSpeed,
-        foeSpeed: forecast.foeSpeed, stage: row.stage, stanceTable: forecast.stanceTable }) : null;
+      if (on) {
+        const card = roundCardForecast(combat, armedCardId, enemy.id);
+        const forecast = card ? screenForecast(combat, enemy.id, card) : null;
+        row.colour = forecast?.foe ? targetOutline({ card, foe: forecast.foe, cardSpeed: forecast.cardSpeed,
+          foeSpeed: forecast.foeSpeed, stage: row.stage, stanceTable: forecast.stanceTable }) : null;
+      } else {
+        const card = cardTimelineViewFor(combat, armedCardId, enemy.id);
+        row.colour = card ? stanceOutline({ card, foe: { stance: enemyIntentStance(combat, enemy) }, stage: row.stage,
+          stanceTable: normalStanceTable() }) : null;
+      }
       // The visible art only: not the hidden aim copy, and not the foot shadow (which is not an image).
       if (row.colour) row.art = [...box.querySelectorAll('.sprite img')].filter((node) => !node.closest('.aim-silho') && node.getClientRects().length > 0
         && getComputedStyle(node).visibility !== 'hidden');
@@ -53,26 +60,23 @@ export function decorateCombatRoundsScreen(root, combat, { armedCardId = null, t
   for (const selector of CLEAN) root.querySelectorAll(selector).forEach((node) => node.remove());
   root.querySelectorAll('[data-target-outline]').forEach((node) => delete node.dataset.targetOutline);
   root.querySelectorAll('[data-cr-outline]').forEach((node) => delete node.dataset.crOutline);
+  // The target outline is drawn in every fight (SPEC §4.11): it marks the enemy box, so the CSS hides the live aim halo
+  // only there, and the visible art and intent glyphs carry the colour.
+  decorateFollowUps(rows, perception);
+  for (const row of rows) {
+    if (!row.colour) continue;
+    row.box.dataset.crOutline = row.colour;
+    const glyphs = row.intentEl ? [...row.intentEl.querySelectorAll('.intent-icon')] : [];
+    for (const node of [...row.art, ...glyphs]) node.dataset.targetOutline = row.colour;
+  }
   if (!on) {
     // A normal fight: the follow-ups (multi-action toggle) and the banner tab (momentum toggle) only.
     delete root.dataset.combatRounds;
-    decorateFollowUps(rows, perception);
     if (showTab) decorateMomentumTab(root, combat, targetedId);
     return;
   }
   root.dataset.combatRounds = 'preview';
   const cr = combat.combatRounds;
-
-  decorateFollowUps(rows, perception);
-  for (const row of rows) {
-    const { intentEl } = row;
-    if (row.colour) {
-      // Marks the enemy box, so the CSS hides the live aim halo only here (a drawn outline replaces it).
-      row.box.dataset.crOutline = row.colour;
-      const glyphs = intentEl ? [...intentEl.querySelectorAll('.intent-icon')] : [];
-      for (const node of [...row.art, ...glyphs]) node.dataset.targetOutline = row.colour;
-    }
-  }
 
   // Hand: the queue order on a queued card, and the speed hint against the targeted enemy when its speed is read.
   // (Rounds mode only; the follow-ups and the outline were drawn above.)

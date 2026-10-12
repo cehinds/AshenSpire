@@ -119,7 +119,7 @@ test('the queue order is the record index, and an unqueue refunds the card and d
   assert.deepEqual(c.combatRounds.playerQueue.map((r) => r.instanceId), [cards[1].instanceId], 'the second card moves up to order 1');
 });
 
-test('the decorator adds nothing to a fight with the preview off', () => {
+test('with the preview off, the decorator creates no element: the outline is its only write, and only while a card is aimed', () => {
   const c = fight({ preview: false });
   const writes = [];
   const root = {
@@ -128,12 +128,15 @@ test('the decorator adds nothing to a fight with the preview off', () => {
     querySelector: () => null,
   };
   const previous = globalThis.document;
+  const previousCss = globalThis.CSS;
   // Any element creation would reach here: the preview-off path must not build one.
   globalThis.document = { createElement: () => { writes.push('created'); throw new Error('no element when off'); } };
+  globalThis.CSS = { escape: String }; // the browser's CSS.escape, for the enemy-box selector the outline pass builds
   try {
     decorateCombatRoundsScreen(root, c, { armedCardId: attackCard(c).instanceId, targetedId: liveEnemy(c).id });
   } finally {
     globalThis.document = previous;
+    globalThis.CSS = previousCss;
   }
   assert.deepEqual(writes, []);
   assert.equal('combatRounds' in root.dataset, false, 'no preview marker when off');
@@ -159,7 +162,8 @@ test('owner 2026-10-12: a targeted attack, faster than a revealed smash or sweep
 });
 
 test('owner 2026-10-12: the target outline lists the dark shadow first, then the coloured 1px rings outermost', () => {
-  const css = readFileSync(new URL('../styles/combat-rounds-preview.css', import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  // The outline is on in every fight now, so it lives in the always-on stylesheet (combat-visuals.css).
+  const css = readFileSync(new URL('../styles/combat-visuals.css', import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
   for (const [tone, colour] of [['green', '#5ccf6a'], ['yellow', '#e7c65c'], ['red', '#ef4949']]) {
     const rule = css.match(new RegExp(`data-target-outline='${tone}'\\] \\{\\s*filter: ([^;]+);`));
     assert.ok(rule, `${tone} outline rule exists`);
@@ -185,7 +189,14 @@ test('the preview stylesheet scopes every rule to the preview or to the classes 
     const scoped = /^(:root )?\.combat\[data-combat-rounds='preview'\]/.test(selector) || /^\.cr-/.test(selector);
     assert.ok(scoped, `unscoped selector: ${selector}`);
   }
-  assert.match(css, /--selection-color: #4f8fff/, 'the selection is blue in the preview');
+  assert.doesNotMatch(css, /data-target-outline|--selection-color/, 'the always-on outline and selection colour are not in the preview file');
+});
+
+test('the always-on stylesheet: the blue selection, the thin coloured outline and no glow or halo', () => {
+  const css = readFileSync(new URL('../styles/combat-visuals.css', import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  const selectors = [...css.matchAll(/([^{}]+)\{/g)].map(m => m[1].trim()).filter(Boolean);
+  for (const selector of selectors) assert.match(selector, /^\.combat\b/, `always-on rules are scoped to the combat screen: ${selector}`);
+  assert.match(css, /\.combat \{ --selection-color: #4f8fff; \}/, 'the selection is blue in every fight');
   for (const hex of ['#5ccf6a', '#e7c65c', '#ef4949']) assert.match(css, new RegExp(hex));
   assert.doesNotMatch(css, /blur\(|glow/, 'the outline has no glow or halo');
 });
@@ -372,10 +383,10 @@ test('a queue whose slot 0 no longer matches the live intent is not shown either
 });
 
 // Review item 6: the preview's thin outline replaces the live aim halo only on an enemy that has an outline drawn.
-test('the aim halo is hidden only on an enemy whose preview outline is drawn', () => {
-  const css = readFileSync(new URL('../styles/combat-rounds-preview.css', import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+test('the aim halo is hidden only on an enemy whose outline is drawn', () => {
+  const css = readFileSync(new URL('../styles/combat-visuals.css', import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
   assert.doesNotMatch(css, /\.enemy \.aim-silho\s*\{\s*display:\s*none/, 'no unconditional hide of the aim halo');
-  assert.match(css, /\.combat\[data-combat-rounds='preview'\] \.enemy\[data-cr-outline\] \.aim-silho\s*\{\s*display:\s*none/,
+  assert.match(css, /\.combat \.enemy\[data-cr-outline\] \.aim-silho\s*\{\s*display:\s*none/,
     'the halo is hidden only where the screen marks a drawn outline');
 });
 

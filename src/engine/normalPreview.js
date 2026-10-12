@@ -21,6 +21,11 @@ import { STANCE_ADVANTAGE_CSV } from '../content/combatRounds.js';
 
 const STANCE_TABLE = parseStanceAdvantage(STANCE_ADVANTAGE_CSV);
 
+/** The stance-advantage table (stance-advantage.csv) the normal-combat momentum and outline read. */
+export function normalStanceTable() {
+  return STANCE_TABLE;
+}
+
 /** True when the fight carries the normal-combat momentum toggle (combat.normalPreview.momentum). */
 export function momentumOn(combat) {
   return combat?.normalPreview?.momentum === true;
