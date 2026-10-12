@@ -28,7 +28,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-12",
     "summary": "The enemy reaction code passes the architecture check",
     "detail": "Nothing changes in the game. A setting in the enemy reaction code used a name the architecture check reserves for the browser, so it was renamed.",
-    "build": "0.7.1.1435",
+    "build": "0.7.1.1441",
     "pullRequest": 1918,
     "url": "https://github.com/cehinds/AshenSpire/pull/1918"
   },
