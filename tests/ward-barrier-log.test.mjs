@@ -50,3 +50,8 @@ test('a Poise break staggers an enemy and costs a player Stamina next turn', () 
   assert.match(lines[0], /'s Poise broke \(staggered\)\.$/);
   assert.match(lines[1], /^Forsaken's Poise broke \(−1 Stamina next turn\)\.$/);
 });
+
+test('the stagger meter (ratingImpact poise) is named apart from the Poise pool', () => {
+  const [line] = log([{ type: 'ratingImpact', targetId: 'e1', meter: 'poise', amount: 3, value: 5, max: 12 }]);
+  assert.match(line, /stagger meter took 3 \(5\/12\)\.$/);
+});

@@ -86,7 +86,7 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
       case 'persistentWardChanged': if (event.restored > 0) text = `${target} restored ${event.restored} Ward (${event.value - event.restored} → ${event.value}).`; break;
       case 'poiseBroken': text = `${target}'s Poise broke${Number.isFinite(event.staminaLoss) ? (event.staminaLoss ? ` (−${event.staminaLoss} Stamina next turn)` : '') : ' (staggered)'}.`; break;
       case 'barrierGained': text = `${target} gained ${event.amount} Barrier.`; break;
-      case 'ratingImpact': if (event.meter === 'poise' && event.amount > 0) text = `${target}'s Poise took ${event.amount} (${event.value}/${event.max}).`; break;
+      case 'ratingImpact': if (event.meter === 'poise' && event.amount > 0) text = `${target}'s stagger meter took ${event.amount} (${event.value}/${event.max}).`; break;
       case 'blockGained': text = `${target} gained ${event.amount} Block.`; break;
       case 'healed': text = `${target} recovered ${event.amount} HP.`; break;
       case 'hpLost': if (event.cause !== 'attack') text = `${target} lost ${event.amount} HP.`; break;
