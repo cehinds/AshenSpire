@@ -165,7 +165,7 @@ test('owner 2026-10-12: the target outline lists the dark shadow first, then the
   // The outline is on in every fight now, so it lives in the always-on stylesheet (combat-visuals.css).
   const css = readFileSync(new URL('../styles/combat-visuals.css', import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
   for (const [tone, colour] of [['green', '#5ccf6a'], ['yellow', '#e7c65c'], ['red', '#ef4949']]) {
-    const rule = css.match(new RegExp(`data-target-outline='${tone}'\\] \\{\\s*filter: ([^;]+);`));
+    const rule = css.match(new RegExp(`data-target-outline='${tone}'\\] \\{\\s*filter: ([^;]+?)(?: !important)?;`));
     assert.ok(rule, `${tone} outline rule exists`);
     const shadows = rule[1].split('drop-shadow(').slice(1).map((chunk) => chunk.trim().replace(/\)$/, ''));
     const dark = shadows.filter((args) => /#000\b|rgba\(0,0,0/.test(args));

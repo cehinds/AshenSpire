@@ -105,7 +105,7 @@ test('a plain fight draws no outline against a neutral (attack) intent, and none
 test('the always-on rules are not scoped to the preview attribute, and the shadow sits on intent icons and sprites', () => {
   const css = readFileSync(new URL('../styles/combat-visuals.css', import.meta.url), 'utf8');
   assert.match(css, /\.combat \.intent-icon \{\s*filter: drop-shadow\(/, 'a shadow on each intent glyph in every fight');
-  assert.match(css, /\.combat \.combatant \.sprite img:not\(\[data-target-outline\]\) \{\s*filter: drop-shadow\(/, 'a shadow on each sprite in every fight');
+  assert.match(css, /\.combat \.combatant \.sprite \{\s*filter: drop-shadow\(/, 'a shadow on each sprite host in every fight');
   assert.doesNotMatch(css, /combat-rounds|data-combat-rounds/, 'no rounds scope in the always-on file');
   const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   const visuals = html.indexOf('styles/combat-visuals.css');
