@@ -151,7 +151,7 @@ async function exercise(width, height, screenshotName) {
   const noOverflow = () => evaluate(`(() => {
     const root=document.querySelector('.screen.customize');
     const scrollers=[root,...root.querySelectorAll('*')].filter(e=>['auto','scroll'].includes(getComputedStyle(e).overflowX));
-    return root.scrollWidth<=root.clientWidth+1 && scrollers.every(e=>e.scrollWidth<=e.clientWidth+1);
+    return document.documentElement.scrollWidth<=window.innerWidth+1 && root.scrollWidth<=root.clientWidth+1 && scrollers.every(e=>e.scrollWidth<=e.clientWidth+1);
   })()`);
   const at = `${width}x${height}`;
 
@@ -227,6 +227,10 @@ async function exercise(width, height, screenshotName) {
     for (let i = 0; i < left; i += 1) await click(`.cc-stat-overlay .se-step[data-stat-id="constitution"][data-stat-action="increase"]`);
     await click('.cc-stat-overlay .modal-foot .as-btn.primary');
     await until(`!document.querySelector('.cc-stat-overlay')`, `${classId}: the Assign points dialog closes on Continue`);
+    // Confirming the allocation advances to the separate Keepsake page.
+    // Return through the real footer before reading the committed stat cards.
+    if (!(await evaluate(`!!document.querySelector('#cz-primary-stats .cc-attribute-card')`))) await click('#cz-back');
+    await until(`!!document.querySelector('#cz-primary-stats .cc-attribute-card')`, `${classId}: committed Attributes return`);
     const spent = Object.fromEntries(orderedAttributes(registries).map((def) => [def.id, assign.baseline]));
     spent[primaryStat] += spend;
     spent.constitution += left;
@@ -248,6 +252,7 @@ try {
   await exercise(1440, 1024, 'character-creation-desktop.png');
   await exercise(390, 844, 'character-creation-mobile.png');
 } catch (error) {
+  checks += 1;
   failures += 1;
   console.error(`FAIL browser harness: ${error.stack || error.message}`);
 } finally {

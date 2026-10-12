@@ -1188,7 +1188,7 @@ production renderers. Feat inspection grants nothing with the current allowance
 of zero. `node tools/character-creation-components-qa.mjs --out /tmp/creation-components`
 captures each registered specimen at desktop and phone widths and checks DOM
 identity, layout fit, runtime errors, and interaction state. Add `--artifact`
-to check the frozen `download/AshenSpire.html` build after integration.
+to check the frozen `build/download/AshenSpire.html` build after integration.
 
 ## Shared Load / Quit confirmation
 
