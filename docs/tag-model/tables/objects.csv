@@ -71,56 +71,56 @@ hearthSigil,sigil,Hearth Sigil,Sigil,,,,,,classification.sigil hearthSigil,,,,,,
 vigilSigil,sigil,Sigil of the Last Vigil,Sigil,,,,,,classification.sigil vigilSigil,,,,,,,,,"A candle that never gutters: when you enter a fight already wounded, it raises a guard."
 pyreSigil,sigil,Pyre Sigil,Sigil,,,,,,classification.sigil pyreSigil,,,,,,,,,An ember of the old pyres: every card you burn away raises a guard.
 gravelightSigil,sigil,Gravelight Sigil,Sigil,,,,,,classification.sigil gravelightSigil,,,,,,,,,"A cold light over the barrows: while you stand wounded, each foe that falls mends you."
-progression-coal-on-steel,feat,Coal on Steel,Feat,,,,,,feat coal-on-steel,,,,,,,,,The first Blade hit each turn applies +1 Bleed buildup.
-progression-brace-and-bite,feat,Brace and Bite,Feat,,,,,,feat brace-and-bite,,,,,,,,,The first Blade attack each turn played while you have Block deals +3 damage.
-progression-red-footwork,feat,Red Footwork,Feat,,,,,,feat red-footwork,,,,,,,,,The first Guard card each turn targeting an enemy with Bleed buildup draws 1 card.
-progression-anvil-discipline,feat,Anvil Discipline,Feat,,,,,,feat anvil-discipline,,,,,,,,,The first Heavy attack each turn deals +2 Break damage.
-progression-forge-momentum,feat,Forge Momentum,Feat,,,,,,feat forge-momentum,,,,,,,,,Your first Blade attack after a Guard card each turn deals +4 damage.
-progression-paid-in-blood,feat,Paid in Blood,Feat,,,,,,feat paid-in-blood,,,,,,,,,The first Blood attack after you have lost HP since your previous turn began deals +4 damage.
-progression-last-rampart,feat,Last Rampart,Feat,,,,,,feat last-rampart,,,,,,,,,"At half HP or lower, your first Guard card each turn grants +4 Block."
-progression-war-cadence,feat,War Cadence,Feat,,,,,,feat war-cadence,,,,,,,,,"After your second Heavy card in a turn, gain 4 Block, once per turn."
-progression-broad-sentence,feat,Broad Sentence,Feat,,,,,,feat broad-sentence,,,,,,,,,Your first attack that hits all living enemies each turn deals +2 damage to each target.
-progression-ember-sovereign,feat,Ember Sovereign,Feat,,,,,,feat ember-sovereign,,,,,,,,,"Once per turn, a Crown of Cinders charge gains +2 damage before it is consumed."
-progression-dread-of-the-hammer,feat,Dread of the Hammer,Feat,,,,,,feat dread-of-the-hammer,,,,,,,,,Your first Heavy attack against a Staggered target each turn deals +4 damage.
-progression-scarred-oath,feat,Scarred Oath,Feat,,,,,,feat scarred-oath,,,,,,,,,"Your first Guard card after losing HP since your previous turn began grants +3 Block, once per turn."
-progression-harvest-the-wound,feat,Harvest the Wound,Feat,,,,,,feat harvest-the-wound,,,,,,,,,"Your first credited kill of an enemy with Bleed buildup heals 3 HP, once per combat."
-progression-orbit-keeper,feat,Orbit Keeper,Feat,,,,,,feat orbit-keeper,,,,,,,,,Your first Starstone spell following another spell each turn deals +3 direct damage.
-progression-moonward-scholar,feat,Moonward Scholar,Feat,,,,,,feat moonward-scholar,,,,,,,,,The first Guard spell played after you spent at least 2 Mana this turn grants +3 Block.
-progression-comet-reader,feat,Comet Reader,Feat,,,,,,feat comet-reader,,,,,,,,,The first Comet Mark attack each turn applies +1 Vulnerable after damage.
-progression-mirror-of-rime,feat,Mirror of Rime,Feat,,,,,,feat mirror-of-rime,,,,,,,,,Your first Rime Mirror each turn applies +2 Frost buildup.
-progression-constellation-keeper,feat,Constellation Keeper,Feat,,,,,,feat constellation-keeper,,,,,,,,,Your first Starstone attack after two distinct Starstone card IDs this turn deals +3 damage.
-progression-patient-wellspring,feat,Patient Wellspring,Feat,,,,,,feat patient-wellspring,,,,,,,,,The first Mana Weave restoration each turn also grants 3 Block.
-progression-weight-of-the-void,feat,Weight of the Void,Feat,,,,,,feat weight-of-the-void,,,,,,,,,The first Gravity Snare each turn applies +1 Weak after damage.
-progression-nightglass-scholar,feat,Nightglass Scholar,Feat,,,,,,feat nightglass-scholar,,,,,,,,,"Once per turn, your Nightglass charge grants +2 additional damage when consumed."
-progression-eclipse-hunter,feat,Eclipse Hunter,Feat,,,,,,feat eclipse-hunter,,,,,,,,,Your first Starstone attack against a Frost-built-up or Frost-exposed target each turn deals +4 damage.
-progression-firmament-keeper,feat,Firmament Keeper,Feat,,,,,,feat firmament-keeper,,,,,,,,,"Once per turn, consuming a Warded Casting charge also grants 4 Block."
-progression-celestial-refrain,feat,Celestial Refrain,Feat,,,,,,feat celestial-refrain,,,,,,,,,"The second play of the same Starstone card ID in a turn grants 4 Block, once per turn."
-progression-memory-of-winter,feat,Memory of Winter,Feat,,,,,,feat memory-of-winter,,,,,,,,,Retain up to 4 Block into your next turn; use the highest retention allowance if another source also retains Block.
-progression-threefold-sky,feat,Threefold Sky,Feat,,,,,,feat threefold-sky,,,,,,,,,"Playing your third distinct Starstone card ID in a turn draws 1 card, once per turn."
-progression-first-knife,feat,First Knife,Feat,,,,,,feat first-knife,,,,,,,,,"If your first card this turn is a Blade attack, it deals +3 damage."
-progression-pocket-method,feat,Pocket Method,Feat,,,,,,feat pocket-method,,,,,,,,,Your first Guard card after an explicit discard each turn grants +3 Block.
-progression-crooked-measure,feat,Crooked Measure,Feat,,,,,,feat crooked-measure,,,,,,,,,Your first Crooked Guard hit each turn applies +1 Weak after damage.
-progression-open-flank,feat,Open Flank,Feat,,,,,,feat open-flank,,,,,,,,,Your first Blade attack against an enemy with zero Block each turn deals +3 damage.
-progression-hidden-palm,feat,Hidden Palm,Feat,,,,,,feat hidden-palm,,,,,,,,,The first Sleight of Hand sequence each turn grants 3 Block after the discard.
-progression-tighten-the-wire,feat,Tighten the Wire,Feat,,,,,,feat tighten-the-wire,,,,,,,,,Your first Tether Cut attack each turn against a Weak or Vulnerable enemy deals +3 damage.
-progression-smoke-dancer,feat,Smoke Dancer,Feat,,,,,,feat smoke-dancer,,,,,,,,,"Once per turn, a Smoke Edge charge adds +2 damage before it is consumed."
-progression-carrion-measure,feat,Carrion Measure,Feat,,,,,,feat carrion-measure,,,,,,,,,Your first Blade attack against an enemy at half HP or lower each turn deals +4 damage.
-progression-two-quiet-knives,feat,Two Quiet Knives,Feat,,,,,,feat two-quiet-knives,,,,,,,,,Your first Paired Strikes attack each turn deals +1 damage on each of its two hits.
-progression-trapdoor-smile,feat,Trapdoor Smile,Feat,,,,,,feat trapdoor-smile,,,,,,,,,Your first Blade attack after both a Guile card and a Guard card this turn deals +4 damage.
-progression-clean-exit,feat,Clean Exit,Feat,,,,,,feat clean-exit,,,,,,,,,"Your first Guard card played before any attack this turn restores 1 Stamina, once per turn."
-progression-razor-ledger,feat,Razor Ledger,Feat,,,,,,feat razor-ledger,,,,,,,,,Your first Blade attack after an explicit discard each turn deals +3 damage.
-progression-ashen-mercy,feat,Ashen Mercy,Feat,,,,,,feat ashen-mercy,,,,,,,,,The first Mercy in Ash card each turn heals +2 HP.
-progression-censer-keeper,feat,Censer Keeper,Feat,,,,,,feat censer-keeper,,,,,,,,,The first Blood Censer offering each turn grants +3 Block after its HP payment.
-progression-sower-of-blight,feat,Sower of Blight,Feat,,,,,,feat sower-of-blight,,,,,,,,,The first Blight Seed hit each turn applies +2 Crimson Blight buildup.
-progression-funeral-watch,feat,Funeral Watch,Feat,,,,,,feat funeral-watch,,,,,,,,,"At half HP or lower, your first Guard card each turn grants +3 Block."
-progression-ember-almoner,feat,Ember Almoner,Feat,,,,,,feat ember-almoner,,,,,,,,,Your first Ember Tithe each turn grants +1 Regen after the HP payment.
-progression-choir-of-bone,feat,Choir of Bone,Feat,,,,,,feat choir-of-bone,,,,,,,,,"The first Guard card you play while any living enemy has Crimson Blight buildup restores 1 Stamina, once per turn."
-progression-requiem-reader,feat,Requiem Reader,Feat,,,,,,feat requiem-reader,,,,,,,,,The first Ritual hit against an enemy with Crimson Blight buildup each turn deals +3 damage.
-progression-pilgrim-of-scars,feat,Pilgrim of Scars,Feat,,,,,,feat pilgrim-of-scars,,,,,,,,,"If you began the turn at half HP or lower, your first Guard card that turn heals 3 HP."
-progression-crowned-offering,feat,Crowned Offering,Feat,,,,,,feat crowned-offering,,,,,,,,,The first Ritual attack after an earlier HP offering this turn deals +4 damage.
-progression-dawn-cantor,feat,Dawn Cantor,Feat,,,,,,feat dawn-cantor,,,,,,,,,The first Dawn Rite removal each turn also grants 3 Block.
-progression-bearer-of-burdens,feat,Bearer of Burdens,Feat,,,,,,feat bearer-of-burdens,,,,,,,,,The first negative status newly applied to you by an enemy each turn restores 1 Mana.
-progression-sepulchral-promise,feat,Sepulchral Promise,Feat,,,,,,feat sepulchral-promise,,,,,,,,,"Your first credited kill of an enemy with Crimson Blight buildup heals 3 HP, once per combat."
+progression-coal-on-steel,feat,Coal on Steel,Feat,,,,,,feat coal-on-steel,,,,,,,,,The first Blade hit each turn applies +{bleed} Bleed buildup.
+progression-brace-and-bite,feat,Brace and Bite,Feat,,,,,,feat brace-and-bite,,,,,,,,,The first Blade attack each turn played while you have Block deals +{damage} damage.
+progression-red-footwork,feat,Red Footwork,Feat,,,,,,feat red-footwork,,,,,,,,,The first Guard card each turn targeting an enemy with Bleed buildup draws {draw} card.
+progression-anvil-discipline,feat,Anvil Discipline,Feat,,,,,,feat anvil-discipline,,,,,,,,,The first Heavy attack each turn deals +{break} Break damage.
+progression-forge-momentum,feat,Forge Momentum,Feat,,,,,,feat forge-momentum,,,,,,,,,Your first Blade attack after a Guard card each turn deals +{damage} damage.
+progression-paid-in-blood,feat,Paid in Blood,Feat,,,,,,feat paid-in-blood,,,,,,,,,The first Blood attack after you have lost HP since your previous turn began deals +{damage} damage.
+progression-last-rampart,feat,Last Rampart,Feat,,,,,,feat last-rampart,,,,,,,,,"At {hpPct}% HP or lower, your first Guard card each turn grants +{block} Block."
+progression-war-cadence,feat,War Cadence,Feat,,,,,,feat war-cadence,,,,,,,,,"After your second Heavy card in a turn, gain {block} Block, once per turn."
+progression-broad-sentence,feat,Broad Sentence,Feat,,,,,,feat broad-sentence,,,,,,,,,Your first attack that hits all living enemies each turn deals +{damage} damage to each target.
+progression-ember-sovereign,feat,Ember Sovereign,Feat,,,,,,feat ember-sovereign,,,,,,,,,"Once per turn, a Crown of Cinders charge gains +{damage} damage before it is consumed."
+progression-dread-of-the-hammer,feat,Dread of the Hammer,Feat,,,,,,feat dread-of-the-hammer,,,,,,,,,Your first Heavy attack against a Staggered target each turn deals +{damage} damage.
+progression-scarred-oath,feat,Scarred Oath,Feat,,,,,,feat scarred-oath,,,,,,,,,"Your first Guard card after losing HP since your previous turn began grants +{block} Block, once per turn."
+progression-harvest-the-wound,feat,Harvest the Wound,Feat,,,,,,feat harvest-the-wound,,,,,,,,,"Your first credited kill of an enemy with Bleed buildup heals {heal} HP, once per combat."
+progression-orbit-keeper,feat,Orbit Keeper,Feat,,,,,,feat orbit-keeper,,,,,,,,,Your first Starstone spell following another spell each turn deals +{damage} direct damage.
+progression-moonward-scholar,feat,Moonward Scholar,Feat,,,,,,feat moonward-scholar,,,,,,,,,The first Guard spell played after you spent at least {manaSpent} Mana this turn grants +{block} Block.
+progression-comet-reader,feat,Comet Reader,Feat,,,,,,feat comet-reader,,,,,,,,,The first Comet Mark attack each turn applies +{vulnerable} Vulnerable after damage.
+progression-mirror-of-rime,feat,Mirror of Rime,Feat,,,,,,feat mirror-of-rime,,,,,,,,,Your first Rime Mirror each turn applies +{buildup} Frost buildup.
+progression-constellation-keeper,feat,Constellation Keeper,Feat,,,,,,feat constellation-keeper,,,,,,,,,Your first Starstone attack after two distinct Starstone card IDs this turn deals +{damage} damage.
+progression-patient-wellspring,feat,Patient Wellspring,Feat,,,,,,feat patient-wellspring,,,,,,,,,The first Mana Weave restoration each turn also grants {block} Block.
+progression-weight-of-the-void,feat,Weight of the Void,Feat,,,,,,feat weight-of-the-void,,,,,,,,,The first Gravity Snare each turn applies +{weak} Weak after damage.
+progression-nightglass-scholar,feat,Nightglass Scholar,Feat,,,,,,feat nightglass-scholar,,,,,,,,,"Once per turn, your Nightglass charge grants +{damage} additional damage when consumed."
+progression-eclipse-hunter,feat,Eclipse Hunter,Feat,,,,,,feat eclipse-hunter,,,,,,,,,Your first Starstone attack against a Frost-built-up or Frost-exposed target each turn deals +{damage} damage.
+progression-firmament-keeper,feat,Firmament Keeper,Feat,,,,,,feat firmament-keeper,,,,,,,,,"Once per turn, consuming a Warded Casting charge also grants {block} Block."
+progression-celestial-refrain,feat,Celestial Refrain,Feat,,,,,,feat celestial-refrain,,,,,,,,,"The second play of the same Starstone card ID in a turn grants {block} Block, once per turn."
+progression-memory-of-winter,feat,Memory of Winter,Feat,,,,,,feat memory-of-winter,,,,,,,,,Retain up to {retainBlockUpTo} Block into your next turn; use the highest retention allowance if another source also retains Block.
+progression-threefold-sky,feat,Threefold Sky,Feat,,,,,,feat threefold-sky,,,,,,,,,"Playing your third distinct Starstone card ID in a turn draws {draw} card, once per turn."
+progression-first-knife,feat,First Knife,Feat,,,,,,feat first-knife,,,,,,,,,"If your first card this turn is a Blade attack, it deals +{damage} damage."
+progression-pocket-method,feat,Pocket Method,Feat,,,,,,feat pocket-method,,,,,,,,,Your first Guard card after an explicit discard each turn grants +{block} Block.
+progression-crooked-measure,feat,Crooked Measure,Feat,,,,,,feat crooked-measure,,,,,,,,,Your first Crooked Guard hit each turn applies +{weak} Weak after damage.
+progression-open-flank,feat,Open Flank,Feat,,,,,,feat open-flank,,,,,,,,,Your first Blade attack against an enemy with zero Block each turn deals +{damage} damage.
+progression-hidden-palm,feat,Hidden Palm,Feat,,,,,,feat hidden-palm,,,,,,,,,The first Sleight of Hand sequence each turn grants {block} Block after the discard.
+progression-tighten-the-wire,feat,Tighten the Wire,Feat,,,,,,feat tighten-the-wire,,,,,,,,,Your first Tether Cut attack each turn against a Weak or Vulnerable enemy deals +{damage} damage.
+progression-smoke-dancer,feat,Smoke Dancer,Feat,,,,,,feat smoke-dancer,,,,,,,,,"Once per turn, a Smoke Edge charge adds +{damage} damage before it is consumed."
+progression-carrion-measure,feat,Carrion Measure,Feat,,,,,,feat carrion-measure,,,,,,,,,Your first Blade attack against an enemy at {hpPct}% HP or lower each turn deals +{damage} damage.
+progression-two-quiet-knives,feat,Two Quiet Knives,Feat,,,,,,feat two-quiet-knives,,,,,,,,,Your first Paired Strikes attack each turn deals +{damage} damage on each of its two hits.
+progression-trapdoor-smile,feat,Trapdoor Smile,Feat,,,,,,feat trapdoor-smile,,,,,,,,,Your first Blade attack after both a Guile card and a Guard card this turn deals +{damage} damage.
+progression-clean-exit,feat,Clean Exit,Feat,,,,,,feat clean-exit,,,,,,,,,"Your first Guard card played before any attack this turn restores {restoreStamina} Stamina, once per turn."
+progression-razor-ledger,feat,Razor Ledger,Feat,,,,,,feat razor-ledger,,,,,,,,,Your first Blade attack after an explicit discard each turn deals +{damage} damage.
+progression-ashen-mercy,feat,Ashen Mercy,Feat,,,,,,feat ashen-mercy,,,,,,,,,The first Mercy in Ash card each turn heals +{heal} HP.
+progression-censer-keeper,feat,Censer Keeper,Feat,,,,,,feat censer-keeper,,,,,,,,,The first Blood Censer offering each turn grants +{block} Block after its HP payment.
+progression-sower-of-blight,feat,Sower of Blight,Feat,,,,,,feat sower-of-blight,,,,,,,,,The first Blight Seed hit each turn applies +{buildup} Crimson Blight buildup.
+progression-funeral-watch,feat,Funeral Watch,Feat,,,,,,feat funeral-watch,,,,,,,,,"At {hpPct}% HP or lower, your first Guard card each turn grants +{block} Block."
+progression-ember-almoner,feat,Ember Almoner,Feat,,,,,,feat ember-almoner,,,,,,,,,Your first Ember Tithe each turn grants +{regen} Regen after the HP payment.
+progression-choir-of-bone,feat,Choir of Bone,Feat,,,,,,feat choir-of-bone,,,,,,,,,"The first Guard card you play while any living enemy has Crimson Blight buildup restores {restoreStamina} Stamina, once per turn."
+progression-requiem-reader,feat,Requiem Reader,Feat,,,,,,feat requiem-reader,,,,,,,,,The first Ritual hit against an enemy with Crimson Blight buildup each turn deals +{damage} damage.
+progression-pilgrim-of-scars,feat,Pilgrim of Scars,Feat,,,,,,feat pilgrim-of-scars,,,,,,,,,"If you began the turn at {hpPct}% HP or lower, your first Guard card that turn heals {heal} HP."
+progression-crowned-offering,feat,Crowned Offering,Feat,,,,,,feat crowned-offering,,,,,,,,,The first Ritual attack after an earlier HP offering this turn deals +{damage} damage.
+progression-dawn-cantor,feat,Dawn Cantor,Feat,,,,,,feat dawn-cantor,,,,,,,,,The first Dawn Rite removal each turn also grants {block} Block.
+progression-bearer-of-burdens,feat,Bearer of Burdens,Feat,,,,,,feat bearer-of-burdens,,,,,,,,,The first negative status newly applied to you by an enemy each turn restores {restoreMana} Mana.
+progression-sepulchral-promise,feat,Sepulchral Promise,Feat,,,,,,feat sepulchral-promise,,,,,,,,,"Your first credited kill of an enemy with Crimson Blight buildup heals {heal} HP, once per combat."
 kindlingCharm,relic,Kindling Charm,Relic,,,,,,character.relic kindlingCharm,,,,,,,,,"At the start of each combat, draw {draw} extra card."
 goldleafCharm,relic,Goldleaf Charm,Relic,,,,,,character.relic goldleafCharm,,,,,,,,,"At the start of your first turn, gain {block} Block."
 emberwickCharm,relic,Emberwick Charm,Relic,,,,,,character.relic emberwickCharm,,,,,,,,,"The first time you lose HP each combat, gain {gainEnergy} Stamina."
