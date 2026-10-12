@@ -2,7 +2,6 @@ import { ratingReceipt, ratingValue, sourceRatingValue, attackImpact, isMagicalA
 import * as Properties from './properties.js';
 import { passiveMult, passiveSum } from '../model/registries.js';
 import { usesSingleBreakMeter, breakMeterIds } from '../model/breakMeter.js';
-import * as statuses from '../framework/statusSemantics.js';
 import * as Matchups from './combatMatchups.js';
 import { creditKnowledgeImpact } from './enemyKnowledge.js';
 
@@ -71,15 +70,15 @@ export function applyRatingImpact(ctx, source, target, carrier, explicitAmount =
     meter.growths = (meter.growths || 0) + 1;
     ctx.emit('meterFilled', { ...seats, targetId: target.id, meter: meterName, threshold: meter.max });
   }
-  // Every enemy break is a full Stagger (owner, 2026-10-12: "any break"):
-  // Poise or Ward, physical or magical, the content's balance.poise.onFill
-  // (the `staggered` status) runs once per impact that breaks, however many
-  // thresholds it crossed.
+  // Every enemy break is a full Stagger (owner, 2026-10-12: "any break but
+  // vulnerable to any damage type"): Poise or Ward, physical or magical, the
+  // content's balance.poise.onFill (the `staggered` status) runs once per
+  // impact that breaks, however many thresholds it crossed. A magical break
+  // adds no school-only payoff on top: Staggered already covers every type.
   if (target.kind === 'enemy' && breaks > 0) enqueueStaggerOnFill(ctx, target);
-  if (single && magical && breaks > 0) {
-    if (triggerHit) ctx.emit('arcaneStagger', { ...seats, targetId: target.id, sourceId: source?.id ?? null,
+  if (single && magical && breaks > 0 && triggerHit) {
+    ctx.emit('arcaneStagger', { ...seats, targetId: target.id, sourceId: source?.id ?? null,
       school: carrier?.damageSchool, threshold: thresholdBeforeGrowth });
-    applyMagicalStaggerPayoff(ctx, source, target);
   }
   ctx.emit('ratingImpact', { ...seats, targetId: target.id, sourceId: source?.id, meter: meterName, amount,
     ...(guarded ? { guarded, ...meterGuardReceipt(target, meterName) } : {}),
@@ -112,15 +111,6 @@ function foldedMagicImpact(ctx, source, target, carrier, baseImpact) {
   if (buildup > 0) ctx.emit('arcaneImpact', { sourceId: source?.id, targetId: target.id, amount: Math.floor(buildup),
     ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source) } : {}) });
   return amount;
-}
-
-function applyMagicalStaggerPayoff(ctx, source, target) {
-  if (target.kind !== 'enemy') return;
-  const authored = ctx.registries.enemies.get(target.enemyId).arcaneExposure;
-  if (authored?.mode === 'immune') return;
-  const payoff = authored?.onBreak || ctx.registries.balance.exposure.defaultPayoff;
-  statuses.applyStatus(ctx, target, payoff.status, payoff.value, source);
-  if (target.statuses[payoff.status]) target.statuses[payoff.status].duration = payoff.duration;
 }
 
 /**

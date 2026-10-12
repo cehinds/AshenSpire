@@ -3,7 +3,7 @@
 // full Stagger. Besides the skipped turn it runs balance.poise.onFill (the
 // `staggered` status), so Executioner and every other rider gated on
 // Staggered fires: Poise or Ward in two-meter fights, physical or magical on
-// the single break meter.
+// the single break meter, where a spell break no longer adds magicVulnerable.
 // With ratings off nothing changes (SPEC §4.4).
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -88,6 +88,19 @@ test('ratings, single break meter: a physical break applies Staggered', () => {
   assert.equal(queuedStaggered(c), 1);
   drain(c);
   assert.equal(getStacks(enemy, 'staggered'), onFillStacks);
+});
+
+test('ratings, single break meter: a spell break applies Staggered and no magicVulnerable', () => {
+  const c = fight({ breakMeterVersion: 1 });
+  const enemy = c.enemies[0];
+  enemy.poiseMeter = { value: 0, max: 1, growths: 0 };
+  applyRatingImpact(c, c.player, enemy, magical, 5);
+  assert.ok(enemy.skipNextTurn);
+  assert.equal(c.eventLog.filter((e) => e.type === 'arcaneStagger').length, 1, 'the arcaneStagger event still fires');
+  assert.equal(queuedStaggered(c), 1);
+  drain(c);
+  assert.equal(getStacks(enemy, 'staggered'), onFillStacks);
+  assert.equal(getStacks(enemy, 'magicVulnerable'), 0);
 });
 
 test('ratings: a player Poise break applies no enemy onFill', () => {
