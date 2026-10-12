@@ -241,14 +241,14 @@ export const heraldCards = [
       { op: 'applyStatus', target: 'enemy', status: 'crimsonBlight', stacks: { f: 'stacks', status: 'crimsonBlight', of: 'target' } },
       { op: 'applyStatus', target: 'enemy', status: 'necroticBlight', stacks: { f: 'stacks', status: 'necroticBlight', of: 'target' }, if: { p: 'hasStatus', of: 'target', status: 'necroticBlight' } },
     ],
-    textTemplate: "Double the target's Blight (Crimson and Necrotic). Exhaust.",
+    textTemplate: "Double the target's Blight (Crimson and Necrotic). In expanded combat, stops at 3 stacks each. Exhaust.",
     upgrade: {
       keywords: ['retain'],
       effects: [
         { op: 'applyStatus', target: 'enemy', status: 'crimsonBlight', stacks: { f: 'stacks', status: 'crimsonBlight', of: 'target' } },
         { op: 'applyStatus', target: 'enemy', status: 'necroticBlight', stacks: { f: 'stacks', status: 'necroticBlight', of: 'target' }, if: { p: 'hasStatus', of: 'target', status: 'necroticBlight' } },
       ],
-      textTemplate: "Double the target's Blight (Crimson and Necrotic).",
+      textTemplate: "Double the target's Blight (Crimson and Necrotic). In expanded combat, stops at 3 stacks each.",
     },
   },
   {
