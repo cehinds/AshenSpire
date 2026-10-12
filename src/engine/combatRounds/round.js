@@ -124,13 +124,15 @@ export function stepRound(round, hooks = {}) {
       if (enterEntry(round.cur, entry, events) === 'attack') {
         const offer = reactionOffer(round.cur, entry, ctx.run);
         if (offer) {
-          const eligible = offer.eligible.map((c) => ({ ...c }));
-          const attack = { ...offer.attack };
+          // Deep copies: the offer must be a snapshot, so a caller editing a returned card's tags
+          // cannot change the paused round or the hand it came from.
+          const eligible = offer.eligible.map((c) => structuredClone(c));
+          const attack = structuredClone(offer.attack);
           round.awaiting = { index, attack, eligible };
           round.idx += 1;
           return {
             events,
-            awaitingReaction: { attack: { ...attack }, eligible: eligible.map((c) => ({ ...c })) },
+            awaitingReaction: { attack: structuredClone(attack), eligible: eligible.map((c) => structuredClone(c)) },
             done: false,
           };
         }

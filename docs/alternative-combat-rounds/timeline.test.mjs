@@ -1548,3 +1548,13 @@ test('createRound resolveAll() is atomic: a throw midway leaves the round unchan
   assert.deepEqual(retried.events, clean.events);
   assert.deepEqual(retried.state, clean.state);
 });
+
+test('a non-finite attack damage counts as 0, the same before and after a JSON round-trip of the queues', () => {
+  const queues = () => ({ goblin: [stab(1, Infinity)] });
+  const live = createRound(reactionFight(), { queues: queues(), rng: HIT_RNG, onReaction: () => null }).resolveAll();
+  const saved = createRound(reactionFight(), {
+    queues: JSON.parse(JSON.stringify(queues())), rng: HIT_RNG, onReaction: () => null,
+  }).resolveAll();
+  assert.deepEqual(live.state, saved.state);
+  assert.equal(live.state.combatants.player.hp, reactionFight().combatants.player.hp);
+});

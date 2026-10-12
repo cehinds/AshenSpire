@@ -469,7 +469,9 @@ function resolveAttack(cur, entry, events, rng, options, reactionEvade = null, r
   const attacker = cur.combatants[entry.actor];
   const target = cur.combatants[entry.target];
   const card = entry.card;
-  const dmg = Math.max(0, Number(card.damage ?? 0) || 0);
+  // Non-finite damage counts as 0, so a saved round (JSON turns Infinity into null) resolves the same.
+  const rawDmg = Number(card.damage ?? 0);
+  const dmg = Number.isFinite(rawDmg) ? Math.max(0, rawDmg) : 0;
   // An evade card is spent on the next attack, whether or not that attack hits. A reaction
   // evade belongs to this attack and is used first; queued evades wait for later attacks. When any
   // reaction answers this attack, a queued evade is not spent on it (Codex review on PR #1838).

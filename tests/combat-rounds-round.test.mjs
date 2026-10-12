@@ -328,6 +328,23 @@ function pausedRound() {
   assert.fail('some seed must pause for a reaction');
 }
 
+test('a reaction offer is a snapshot: editing a returned card does not change the paused round or the hand', () => {
+  for (let seed = 1; seed <= 60; seed += 1) {
+    const fight = FIGHTS[0];
+    const combatRng = rng(seed);
+    const round = startRound(makeFight(fight.specs, TABLES), { queues: makeQueues(fight, rng(seed + 1000)), rng: combatRng, merge: fight.merge });
+    let res = stepRound(round, hooks(combatRng));
+    while (!res.awaitingReaction && !res.done) res = stepRound(round, hooks(combatRng));
+    if (!res.awaitingReaction) continue;
+    const before = JSON.stringify(round);
+    for (const c of res.awaitingReaction.eligible) (c.tags ??= []).push('stagger', 'display-only');
+    res.awaitingReaction.attack.tags = ['edited'];
+    assert.equal(JSON.stringify(round), before);
+    return;
+  }
+  assert.fail('some seed must pause for a reaction');
+});
+
 for (const [label, bad] of [['x', 'x'], ['NaN', NaN]]) {
   test(`a reaction card with momentumGain ${label} throws before the pause clears and leaves the round unchanged`, () => {
     const { round, combatRng } = pausedRound();
