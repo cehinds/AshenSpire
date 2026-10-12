@@ -28,7 +28,7 @@ function matchesPlace(run, record) {
 // The record for the place the run stands on, created when none matches it.
 export function openRestRecord(run) {
   if (matchesPlace(run, run.restRevisit)) return run.restRevisit;
-  run.restRevisit = { act: run.actNumber, nodeId: run.mapNodeId, rested: false, spent: false, left: false };
+  run.restRevisit = { act: run.actNumber, nodeId: run.mapNodeId, rested: false, spent: false, left: false, refilled: false };
   return run.restRevisit;
 }
 
