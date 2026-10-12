@@ -717,6 +717,14 @@ receipt for already-landed work keeps the ordinal **as committed at that merge**
 which build-stamp does not change except for the pull requests in the push it
 handles.
 
+**Pending receipts in the order check.** `tools/about-changelog.mjs --check-order`
+runs with `--pending auto` on a pull request into `dev` and on a push to `dev`
+(`tests.yml`). A pending receipt is one whose pull request is the event's own, or
+landed in the push, and whose stamp build-stamp has not yet re-pointed. Its shape is
+still checked, a bullet, a link and a well-formed stamp of this release, but it is
+left out of the order comparisons, and each one prints a NOTE. On `test`, `release`
+and `main` the order is strict.
+
 ## The four layers (dependencies point down only)
 
 ```

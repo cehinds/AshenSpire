@@ -122,9 +122,23 @@ function revOf(rev) {
 
 // HEAD's own landing, for a push that has no usable `before`. A squash or a
 // merge commit at HEAD is the only landing such a push can carry.
-function headEntries() {
-  const subject = git(['log', '-1', '--format=%s', 'HEAD']).trim();
+function headEntries(cwd = ROOT) {
+  const subject = execFileSync('git', ['log', '-1', '--format=%s', 'HEAD'], { cwd, encoding: 'utf8' }).trim();
   return [{ subject, firstParent: true }];
+}
+
+// THE LANDED PULL REQUESTS OF A PUSH, by the same rule as the stamp itself:
+// the commits from `before` to HEAD, or HEAD's own subject when `before` is all
+// zeros or not in this checkout. about-changelog.mjs --pending auto reads it, so
+// the pending set and the re-point set can never disagree about what landed.
+export function landedSince(before, { cwd = ROOT } = {}) {
+  let known = false;
+  if (!isNullSha(before)) {
+    try { execFileSync('git', ['cat-file', '-e', `${before}^{commit}`], { cwd, stdio: 'ignore' }); known = true; }
+    catch { known = false; }
+  }
+  if (!known) return landedInSubjects(headEntries(cwd));
+  return landedInSubjects(rangeSubjects(before, { cwd }));
 }
 
 function readBox() {
