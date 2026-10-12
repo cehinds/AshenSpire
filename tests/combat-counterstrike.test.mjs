@@ -154,3 +154,16 @@ test('a Counterstrike Counter played from the reaction stack vs an attacking ene
   assert.equal(applied[0].advantaged, true);
   assert.ok(types.indexOf('combatReactionStacked') < types.indexOf('combatCounterstrikeApplied'));
 });
+
+test('a Counterstrike Counter without an authored payload records its damage base and rating for the return', () => {
+  const combat = createCombat({ registries: plain, rng: createRng(913), combatExpansionVersion: 2, reactionRulesVersion: 2,
+    enemyIds: ['wanderingSoldier'], player: { classId: 'reaver', maxHp: 100, hp: 100, maxMana: 20, mana: 20,
+      maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 0, deck: [] } });
+  const enemy = combat.enemies[0];
+  const carrier = { cardId: 'guardCounter', traitValues: CS, combatProfile: { maneuver: 'counter', camp: 'physical', reach: 'contact', targeting: 'single', counterMode: 'melee' } };
+  prepareTacticalCard(combat, combat.player, enemy, carrier, [{ op: 'damage', target: 'enemy', amount: 5 }], {}, { arm: true });
+  assert.ok(combat.player.combatCounter, 'the Counter armed');
+  const payload = combat.player.combatCounter.payload;
+  assert.equal(payload.hpBase, 5);
+  assert.equal(payload.hp, payload.hpBase + payload.hpRating, 'hp is the base plus its rating, before any other bonus');
+});

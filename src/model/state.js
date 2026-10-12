@@ -963,6 +963,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     if (run.combatExpansionVersion !== 2 || !typeOk(snapshot, 'object')) return;
     if (snapshot.combatExpansionVersion !== 2) problems.push(`${path}.combatExpansionVersion must match the run`);
     if (snapshot.reactionRulesVersion !== run.reactionRulesVersion) problems.push(`${path}.reactionRulesVersion must match the run`);
+    else if (run.reactionRulesVersion === 2 && JSON.stringify(snapshot.reactionRules) !== JSON.stringify(run.reactionRules)) problems.push(`${path}.reactionRules must match the run`);
     problems.push(...ashenBlightProblems(snapshot.player?.ashenBlight, `${path}.player.ashenBlight`));
     const saved = snapshot.player?.ashenBlight, prior = run.ashenBlight;
     if (saved && prior && ['payments', 'entries'].some(field => Array.isArray(prior[field]) && Array.isArray(saved[field])
