@@ -76,11 +76,11 @@ None: every live id is mapped by at most one tag.
 | meta.character.other.location.encounter | classification.encounter | parent | meta.character.other.location | classification (mapped to classification) |
 | meta.combat.skill.weapon-skill.blade | blade | parent | meta.combat.skill.weapon-skill | card (mapped to card) |
 | meta.combat.skill.weapon-skill.bow | bow | parent | meta.combat.skill.weapon-skill | card (mapped to card) |
-| meta.combat.skill.technique | technique | parent | meta.combat.skill | (live root) |
-| meta.combat.skill.technique.pierce | pierce | parent | meta.combat.skill.technique | card (mapped to card) |
-| meta.combat.skill.technique.guile | guile | parent | meta.combat.skill.technique | card (mapped to card) |
-| meta.combat.skill.technique.blood | blood | parent | meta.combat.skill.technique | card (mapped to card) |
-| meta.combat.skill.technique.venom | venom | parent | meta.combat.skill.technique | card (mapped to card) |
+| meta.combat.technique | technique | parent | meta.combat | (live root) |
+| meta.combat.technique.pierce | pierce | parent | meta.combat.technique | card (mapped to card) |
+| meta.combat.technique.guile | guile | parent | meta.combat.technique | card (mapped to card) |
+| meta.combat.technique.blood | blood | parent | meta.combat.technique | card (mapped to card) |
+| meta.combat.technique.venom | venom | parent | meta.combat.technique | card (mapped to card) |
 | theme.stance | theme:stance | label | Class stance | Stance |
 | meta.combat.skill.spellcraft | school | label | Spellcraft | Magic school |
 | meta.combat.skill.spellcraft | school | parent | meta.combat.skill | (live root) |

@@ -347,7 +347,7 @@ and which one keeps the id.
 **Placement: card schools (13).** The live tree lists these under the `card`
 root. The model puts each under a technique, spellcraft, weapon-skill or stance
 tag. Owner to say whether a school is a card identity, a technique, or both.
-- Under technique: `meta.combat.skill.technique.{blood,guile,pierce,venom}`.
+- Under technique: `meta.combat.technique.{blood,guile,pierce,venom}`.
 - Under spellcraft: `meta.combat.skill.spellcraft.{divine.oath,fire.ash,fire.gorefire,force.starstone,necrotic.blight,psychic.ritual}`.
 - Under weapon-skill: `meta.combat.skill.weapon-skill.{blade,bow}`.
 - Under stance: `meta.combat.stance.defensive.block.guard`.
@@ -368,8 +368,8 @@ to confirm decision 3 against the live tree. Rows: `meta.combat.delivery.ranged`
 counter stance.
 
 **Placement: technique, school, class stance and roots under meta (7).**
-- `meta.combat.skill.technique` sits under Skill in the model. The live
-  `technique` root has no parent.
+- `meta.combat.technique` sits under Combat in the model, in its own group
+  (moved from Skill, owner 2026-10-12). The live `technique` root has no parent.
 - `meta.combat.skill.spellcraft` sits under Skill. The live `school` root has no
   parent.
 - `meta.combat.skill.class-stance` sits under Skill. Live `theme:stance` is under
