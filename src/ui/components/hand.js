@@ -127,6 +127,9 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       const fontSize = getComputedStyle(document.documentElement).fontSize;
       const rem = Math.max(16 / zoom, parseFloat(fontSize) || 16);
       const compact = handEl.closest('.combat')?.dataset.compactCombat === 'true';
+      // The HUD form factor main.js writes to <html> (combatLayout mirrors it on the combat root).
+      const formFactor = handEl.closest('.combat')?.dataset.formFactor || document.documentElement.dataset.formFactor || null;
+      const desktop = formFactor === 'desktop';
       // The compact toolbar occupies a 30px compact row at the top of the hand.
       // Keep four physical pixels between that row and the resting card fan.
       const toolsHeight = COMBAT_TOOLS_HEIGHT_PX / zoom;
@@ -146,7 +149,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // On a phone the selected card's lift rises over the tool row (it paints
       // above the row), so no empty lift band separates the row from the fan.
       const plan = handLayout({ width: handEl.clientWidth, height: handEl.clientHeight - toolsHeight,
-        count: cards.length, rem, zoom, compact, controlsHeight, controlled, headroom: compact ? toolsHeight : 0 });
+        count: cards.length, rem, zoom, compact, controlsHeight, controlled, headroom: compact ? toolsHeight : 0, desktop });
       handEl.dataset.wireframeHand = 'true';
       handEl.style.setProperty('--hand-card-zoom', '1');
       handEl.style.setProperty('--hand-span', plan.span + 'px');

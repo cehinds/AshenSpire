@@ -25,7 +25,9 @@ export function moveHandInstance(order, id, slot) {
 // only where they exceed that headroom, so the resting fan sits right under
 // the row instead of under an empty band, and the reclaimed height goes to
 // the cards.
-export function handLayout({ width, height, count, rem = 16, zoom = 1, compact = false, controlsHeight = 0, controlled = null, headroom = 0 }, config = wireframeUi.hand) {
+// `desktop` (data-form-factor === 'desktop') anchors the resting fan under the
+// tool row and fills the band with it; every other form factor is unchanged.
+export function handLayout({ width, height, count, rem = 16, zoom = 1, compact = false, controlsHeight = 0, controlled = null, headroom = 0, desktop = false }, config = wireframeUi.hand) {
   let inset = config.verticalInsetRem * rem;
   const lift = config.selectedLiftRem * rem;
   const liftReserve = Math.max(0, lift - headroom);
