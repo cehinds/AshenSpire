@@ -389,7 +389,8 @@ test('a stepRound that throws mid-round leaves the round exactly as it was', () 
 test('the rng is passed per call and never stored in the round', () => {
   const fight = FIGHTS[0];
   const round = startRound(makeFight(fight.specs, TABLES), { queues: makeQueues(fight, rng(3)), rng: rng(4), merge: 'speed' });
-  assert.equal(JSON.stringify(round).includes('rng'), false);
+  // The key is exact: rngReplay (the values a failed call drew) is plain data and may be stored.
+  assert.equal(JSON.stringify(round).includes('"rng"'), false);
   assert.throws(() => stepRound(round, {}), TypeError);
 });
 
@@ -546,4 +547,98 @@ test('regression: two copies without instanceId are tracked by id, as before', (
   const reaction = events.find((e) => e.type === 'reaction');
   assert.equal(reaction.cardId, 'defend');
   assert.equal(Object.hasOwn(reaction, 'instanceId'), false, 'no instanceId field for a card without one');
+});
+
+// rng replay (Codex P1 on PR #1888): a throw inside one call must not lose the rng values that call
+// drew. The retry has to see the same sequence a clean run sees.
+const RNG_FAILURE = 'rng failed on purpose';
+
+// An rng that throws once, on its 2nd call. The throwing call takes no value from `base`.
+function throwingRng(base) {
+  const f = { calls: 0, thrown: false };
+  f.rng = () => {
+    f.calls += 1;
+    if (f.calls === 2 && !f.thrown) {
+      f.thrown = true;
+      throw new Error(RNG_FAILURE);
+    }
+    return base();
+  };
+  return f;
+}
+
+// No reaction is offered (the player has no hand), so each goblin attack draws its d20 and then its
+// evade roll inside stepRound() itself.
+const QUIET_SPECS = () => [
+  player({ hand: [], evadeBasePct: 40, stance: 'block' }),
+  { id: 'goblin', hp: 14, sp: 3, attrs: { DEX: 3 }, level: 1, wis: 2, stance: 'smash' },
+];
+const QUIET_QUEUES = () => ({
+  player: [],
+  goblin: [
+    card('GoblinHit', 'attack', 'player', { speed: 1, damage: 3, accuracy: 10 }),
+    card('GoblinJab', 'attack', 'player', { speed: 2, damage: 2, accuracy: 10 }),
+  ],
+});
+
+// Starts the quiet fight from one rng; `base` is the same object the steps then draw from.
+function startQuiet(seed) {
+  const base = rng(seed);
+  const round = startRound(makeFight(QUIET_SPECS(), TABLES), { queues: QUIET_QUEUES(), rng: base, merge: 'speed' });
+  return { round, base };
+}
+
+// Steps a round to the end and settles it. A call that throws RNG_FAILURE is retried once, as the
+// caller would retry it: the same call again, with the same rng object. `pick` chooses the reaction.
+function drive(round, rngFn, pick = () => null) {
+  const events = [];
+  let retries = 0;
+  const once = (fn) => {
+    try {
+      return fn();
+    } catch (err) {
+      if (err.message !== RNG_FAILURE) throw err;
+      retries += 1;
+      return fn();
+    }
+  };
+  for (;;) {
+    const res = round.awaiting
+      ? once(() => answerReaction(round, pick(round.awaiting.attack, round.awaiting.eligible), hooks(rngFn)))
+      : once(() => stepRound(round, hooks(rngFn)));
+    events.push(...res.events);
+    if (res.done) break;
+  }
+  const fin = finishRound(round);
+  return { events: [...events, ...fin.events], state: fin.state, retries };
+}
+
+test('a stepRound that throws on an rng draw retries with the drawn values: same result as a clean run', () => {
+  const seed = 11;
+  const clean = startQuiet(seed);
+  const expected = drive(clean.round, clean.base);
+  assert.equal(expected.retries, 0);
+
+  const start = startQuiet(seed);
+  const flaky = throwingRng(start.base);
+  const got = drive(start.round, flaky.rng);
+  assert.equal(flaky.thrown, true, 'the rng must throw during a step');
+  assert.equal(got.retries, 1, 'the throw is retried once');
+  assert.deepEqual(got.events, expected.events);
+  assert.deepEqual(got.state, expected.state);
+});
+
+test('a failed stepRound saved as JSON resumes from the copy with the same result', () => {
+  const seed = 11;
+  const clean = startQuiet(seed);
+  const expected = drive(clean.round, clean.base);
+
+  const start = startQuiet(seed);
+  const flaky = throwingRng(start.base);
+  // The first step draws the goblin's d20 and its evade roll, so the 2nd draw throws inside it.
+  assert.throws(() => stepRound(start.round, hooks(flaky.rng)), new RegExp(RNG_FAILURE));
+  const saved = JSON.parse(JSON.stringify(start.round));
+  const got = drive(saved, flaky.rng);
+  assert.deepEqual(got.events, expected.events);
+  assert.deepEqual(got.state, expected.state);
 });
