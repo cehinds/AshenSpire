@@ -53,9 +53,11 @@ permissions:
 
 jobs:
   stamp:
-    # Skip the bot's own commit (it carries [build-stamp]), and any push that is
-    # not a dev branch. A dispatch always runs.
-    if: github.ref_name != 'alternative/dev' && (github.ref_name == 'dev' || (startsWith(github.ref_name, 'alternative/') && endsWith(github.ref_name, '/dev'))) && (github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[build-stamp]'))
+    # Skip the bot's own stamp commit, and any push that is not a dev branch. A dispatch
+    # always runs. The skip is by AUTHOR and SUBJECT PREFIX here, and build-stamp.mjs
+    # --is-stamp-head checks the exact subject: a human squash that merely mentions
+    # [build-stamp] is not skipped, so its own pull request is stamped and counted.
+    if: "github.ref_name != 'alternative/dev' && (github.ref_name == 'dev' || (startsWith(github.ref_name, 'alternative/') && endsWith(github.ref_name, '/dev'))) && (github.event_name == 'workflow_dispatch' || !(github.event.head_commit.author.name == 'github-actions[bot]' && startsWith(github.event.head_commit.message, 'build: stamp ') && contains(github.event.head_commit.message, '[build-stamp]')))"
     runs-on: ubuntu-latest
     env:
       # The art packs the build reads, as dev-preview's preview job fetches them.
@@ -97,6 +99,23 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+          # dev-preview for the tip, with three tries (2 and 4 seconds of backoff). A
+          # failure after all three fails the job: the stamp is pushed, so a rerun takes
+          # the no-diff branch and dispatches again from there.
+          dispatch_preview() {
+            local try
+            for try in 1 2 3; do
+              if gh workflow run dev-preview.yml --repo "$GITHUB_REPOSITORY" --ref "$REF_NAME"; then
+                echo "Dispatched dev-preview on $REF_NAME (try $try)."
+                return 0
+              fi
+              echo "dev-preview dispatch failed (try $try)."
+              if [ "$try" -lt 3 ]; then sleep $((2 ** try)); fi
+            done
+            echo "::error::dev-preview could not be dispatched for $REF_NAME after 3 tries. Rerun this workflow to dispatch it."
+            return 1
+          }
+
           delays=(2 4 8)
           for attempt in 1 2 3 4; do
             git fetch -q origin "+refs/heads/$REF_NAME:refs/remotes/origin/$REF_NAME"
@@ -117,6 +136,18 @@ jobs:
             git add -- buildordinal.json CHANGELOG.md src/content/changelog.generated.js
             if git diff --cached --quiet; then
               echo "origin/$REF_NAME already carries the stamp for this build."
+              # A RERUN OF A RUN WHOSE PUSH SUCCEEDED BUT WHOSE DISPATCH FAILED lands here:
+              # the stamp is already on the tip, so only the preview is left to do. An
+              # ordinary no-diff run (a docs-only push) is not a stamp commit and dispatches
+              # nothing. The exit status tells "not a stamp" (1) from a harness fault (2).
+              stamp_head=0
+              node tools/build-stamp.mjs --is-stamp-head || stamp_head=$?
+              if [ "$stamp_head" -eq 0 ]; then
+                if ! dispatch_preview; then exit 1; fi
+              elif [ "$stamp_head" -ne 1 ]; then
+                echo "::error::build-stamp --is-stamp-head could not run."
+                exit 1
+              fi
               exit 0
             fi
             box="$(node -p 'const b = require("./buildordinal.json"); b.release + "." + b.ordinal')"
@@ -132,8 +163,7 @@ jobs:
               # would otherwise go red on an unstamped tip. That merge's own build-stamp run
               # re-dispatches for its stamp, so the final tip still gets its artifact.
               # Only after a successful push, so a rejected push dispatches nothing.
-              gh workflow run dev-preview.yml --repo "$GITHUB_REPOSITORY" --ref "$REF_NAME"
-              echo "Dispatched dev-preview on $REF_NAME for the stamped tip."
+              if ! dispatch_preview; then exit 1; fi
               # THE PAGES SITE IS NOT REPUBLISHED HERE, AND THAT IS DELIBERATE. pages-builds
               # deploys dev on a push to dev, and on a dispatch only when the actor is the
               # repository owner who typed PUBLISH. GITHUB_TOKEN is neither, so this step

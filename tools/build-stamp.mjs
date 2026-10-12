@@ -156,13 +156,22 @@ export function landedSince(before, { cwd = ROOT } = {}) {
 // The base is therefore the LAST STAMP: the newest first-parent commit on HEAD
 // whose subject carries [build-stamp]. Only without one does the event's before
 // serve, and only without that, HEAD's own subject.
-export const STAMP_MARK = '[build-stamp]';
+// A BOT STAMP COMMIT, EXACTLY. A substring marker is not enough: a human squash
+// whose title mentions [build-stamp] would otherwise become the base and drop its
+// own pull request from every later range. Both the author and the whole subject
+// must match what build-stamp writes. The workflow's `if:` checks the author and
+// the prefix; this predicate is the exact check, and every use goes through it.
+export const BOT_AUTHOR = 'github-actions[bot]';
+export const STAMP_SUBJECT = /^build: stamp \d+\.\d+\.\d+(?:-[A-Za-z]+\.\d+)?\.\d+ \[build-stamp\]$/;
+export function isStampCommit(author, subject) {
+  return author === BOT_AUTHOR && STAMP_SUBJECT.test(subject);
+}
 
-// PURE. `commits` is the first-parent line of HEAD, newest first, as {sha, subject}.
+// PURE. `commits` is the first-parent line of HEAD, newest first, as {sha, author, subject}.
 // `before` is a usable commit sha or null. Returns { base, source }, base null
 // meaning HEAD's own subject only.
 export function pickStampBase(commits, before) {
-  const hit = commits.find((c) => c.subject.includes(STAMP_MARK));
+  const hit = commits.find((c) => isStampCommit(c.author, c.subject));
   if (hit) return { base: hit.sha, source: 'last-stamp' };
   if (before) return { base: before, source: 'before' };
   return { base: null, source: 'head-only' };
@@ -189,9 +198,12 @@ function usableBefore(before, cwd) {
 }
 
 export function stampBaseIn(cwd, before) {
-  const lines = execFileSync('git', ['log', '--first-parent', '--format=%H%x09%s', 'HEAD'], { cwd, encoding: 'utf8' })
+  const lines = execFileSync('git', ['log', '--first-parent', '--format=%H%x09%an%x09%s', 'HEAD'], { cwd, encoding: 'utf8' })
     .split('\n').filter(Boolean);
-  const commits = lines.map((l) => { const i = l.indexOf('\t'); return { sha: l.slice(0, i), subject: l.slice(i + 1) }; });
+  const commits = lines.map((l) => {
+    const [sha, author, ...rest] = l.split('\t');
+    return { sha, author, subject: rest.join('\t') };
+  });
   return pickStampBase(commits, usableBefore(before, cwd));
 }
 
@@ -288,6 +300,16 @@ function realIo() {
   };
 }
 
+// Exit 0 when HEAD is a bot stamp commit, 1 when it is not. The workflow's no-diff
+// branch uses it to re-dispatch the preview for a stamped tip, and only for one:
+// an ordinary no-diff run (a docs-only push) must not dispatch anything.
+function isStampHead() {
+  const [author, ...rest] = git(['log', '-1', '--format=%an%x09%s', 'HEAD']).trimEnd().split('\t');
+  const stamp = isStampCommit(author, rest.join('\t'));
+  console.log(stamp ? 'HEAD is a build stamp commit' : 'HEAD is not a build stamp commit');
+  return stamp ? 0 : 1;
+}
+
 function prsFromArgs(argv) {
   const p = argv.indexOf('--prs');
   const r = argv.indexOf('--range');
@@ -335,6 +357,7 @@ function stampMode(argv) {
 function main(argv) {
   if (argv.includes('--selftest')) return selftest();
   if (argv.includes('--stamp')) return stampMode(argv);
+  if (argv.includes('--is-stamp-head')) return isStampHead();
   const r = argv.indexOf('--range');
   const p = argv.indexOf('--prs');
   if (r < 0 && p < 0) {
@@ -455,12 +478,21 @@ function selftest() {
 
   // THE BASE OF A LANDING RANGE (first-parent line, newest first).
   const line = [
-    { sha: 'm3', subject: 'Merge pull request #7 from a/b' },
-    { sha: 's2', subject: 'Add a thing (#8)' },
-    { sha: 'st1', subject: 'build: stamp 0.7.1.1400 [build-stamp]' },
-    { sha: 'm0', subject: 'Merge pull request #5 from x/y' },
+    { sha: 'm3', author: 'dev', subject: 'Merge pull request #7 from a/b' },
+    { sha: 's2', author: 'dev', subject: 'Add a thing (#8)' },
+    { sha: 'st1', author: BOT_AUTHOR, subject: 'build: stamp 0.7.1.1400 [build-stamp]' },
+    { sha: 'm0', author: 'dev', subject: 'Merge pull request #5 from x/y' },
   ];
-  const noStamp = line.filter((c) => !c.subject.includes(STAMP_MARK));
+  // A human squash that merely mentions the marker is not a base, and its PR still counts.
+  const squash = [
+    { sha: 'h2', author: 'dev', subject: 'Explain the [build-stamp] marker (#9)' },
+    { sha: 'h1', author: 'dev', subject: 'Merge pull request #4 from a/b' },
+  ];
+  check('base: a human squash mentioning [build-stamp] is not a base', pickStampBase(squash, null).source === 'head-only');
+  check('base: a bot commit with a wrong subject is not a base', pickStampBase([{ sha: 'b', author: BOT_AUTHOR, subject: 'build: stamp [build-stamp] oops' }], null).source === 'head-only');
+  check('base: a human author with the exact stamp subject is not a base', pickStampBase([{ sha: 'b', author: 'dev', subject: 'build: stamp 0.7.1.1 [build-stamp]' }], null).source === 'head-only');
+  check('landed: the human squash is counted, its PR is not dropped', landedAfterBase(squash, null).join() === '9,4', `got ${landedAfterBase(squash, null)}`);
+  const noStamp = line.filter((c) => !isStampCommit(c.author, c.subject));
   check('base: the last stamp commit wins over the event before',
     JSON.stringify(pickStampBase(line, 'm0')) === JSON.stringify({ base: 'st1', source: 'last-stamp' }));
   check('base: without a stamp, the event before serves',

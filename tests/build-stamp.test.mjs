@@ -14,18 +14,24 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { STAMP_MARK, isNullSha, landedAfterBase, landedInSubjects, landedSince, parseRange, pickStampBase, restamp } from '../tools/build-stamp.mjs';
+import { BOT_AUTHOR as BOT, isNullSha, landedAfterBase, landedInSubjects, landedSince, parseRange, pickStampBase, restamp } from '../tools/build-stamp.mjs';
 
 // A throwaway repository whose first-parent line is the given commit subjects,
 // oldest first. Each entry is a subject; an empty commit carries it.
-function repoWith(subjects) {
+// Each entry is a subject (authored by "dev") or { subject, author }.
+function repoWith(entries) {
   const dir = mkdtempSync(join(tmpdir(), 'build-stamp-base-'));
-  const git = (...args) => execFileSync('git', args, {
+  const run = (author, ...args) => execFileSync('git', args, {
     cwd: dir, encoding: 'utf8',
-    env: { ...process.env, GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@example.invalid', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@example.invalid' },
+    env: { ...process.env, GIT_AUTHOR_NAME: author, GIT_AUTHOR_EMAIL: 't@example.invalid', GIT_COMMITTER_NAME: author, GIT_COMMITTER_EMAIL: 't@example.invalid' },
   }).trim();
+  const git = (...args) => run('dev', ...args);
   git('init', '-q', '-b', 'main');
-  const shas = subjects.map((s) => { git('commit', '-q', '--allow-empty', '-m', s); return git('rev-parse', 'HEAD'); });
+  const shas = entries.map((e) => {
+    const { subject, author = 'dev' } = typeof e === 'string' ? { subject: e } : e;
+    run(author, 'commit', '-q', '--allow-empty', '-m', subject);
+    return git('rev-parse', 'HEAD');
+  });
   return { dir, shas, cleanup: () => rmSync(dir, { recursive: true, force: true }) };
 }
 
@@ -145,7 +151,8 @@ test('build-stamp.yml grants contents: write, and no more', () => {
 
 test('build-stamp.yml skips the bot\'s own commit and any non-dev ref', () => {
   const guard = /if: (.*)/.exec(WORKFLOW)?.[1] || '';
-  assert.match(guard, /!contains\(github\.event\.head_commit\.message, '\[build-stamp\]'\)/);
+  assert.match(guard, /!\(github\.event\.head_commit\.author\.name == 'github-actions\[bot\]' && startsWith\(github\.event\.head_commit\.message, 'build: stamp '\) && contains\(github\.event\.head_commit\.message, '\[build-stamp\]'\)\)/, 'the skip is the bot author and the stamp prefix, not a substring');
+  assert.match(guard, /\(github\.event_name == 'workflow_dispatch' \|\|/);
   assert.match(guard, /github\.ref_name == 'dev'/);
   assert.match(guard, /startsWith\(github\.ref_name, 'alternative\/'\) && endsWith\(github\.ref_name, '\/dev'\)/);
   assert.match(guard, /github\.ref_name != 'alternative\/dev'/);
@@ -213,7 +220,7 @@ test('dev-preview ignores only the two derived files on PRs and dev, and stays s
 
 // The base is git's, not only the pure core's: the same rule, run on a real history.
 test('landedSince starts after the last [build-stamp] commit, even when the event before is later', () => {
-  const r = repoWith(['base', `build: stamp 0.7.1.1 ${STAMP_MARK}`, 'Merge pull request #7 from a/b', 'Add a thing (#8)']);
+  const r = repoWith(['base', { subject: 'build: stamp 0.7.1.1 [build-stamp]', author: BOT }, 'Merge pull request #7 from a/b', 'Add a thing (#8)']);
   try {
     // A run whose before is the #7 merge (a later point) must still count #7: the
     // stamp is the base, so nothing a cancelled run missed is skipped.
@@ -229,23 +236,49 @@ test('landedSince with no stamp counts from the event before, and with neither, 
   } finally { r.cleanup(); }
 });
 
-// The stamped tip gets its own dev-preview build: GITHUB_TOKEN starts no push-triggered
-// run, so build-stamp dispatches dev-preview itself, and only after the push succeeded.
-test('build-stamp.yml dispatches dev-preview for the stamped tip only after a successful push', () => {
+// The stamped tip gets its own dev-preview build. GITHUB_TOKEN starts no push-triggered run,
+// so build-stamp dispatches dev-preview itself. A failed dispatch is retried, and a rerun
+// whose push already landed (the no-diff branch) re-dispatches for a stamp commit only.
+test('build-stamp.yml dispatches dev-preview after a successful push, with retries, and re-dispatches on a rerun of a stamp', () => {
   const perms = WORKFLOW.slice(WORKFLOW.indexOf('\npermissions:'), WORKFLOW.indexOf('\njobs:'));
   assert.match(perms, /\n {2}contents: write\n/);
   assert.match(perms, /\n {2}actions: write\n/, 'the dispatch needs actions: write');
   assert.doesNotMatch(perms, /pull-requests|packages|id-token/, 'no other write scope');
-  const dispatch = 'gh workflow run dev-preview.yml --repo "$GITHUB_REPOSITORY" --ref "$REF_NAME"';
-  const push = WORKFLOW.indexOf('if git push -q origin "HEAD:$REF_NAME"; then');
-  const at = WORKFLOW.indexOf(dispatch);
-  assert.ok(push > 0 && at > push, 'the dispatch comes after the push, inside its success branch');
-  const success = WORKFLOW.slice(push, WORKFLOW.indexOf('exit 0', at));
-  assert.ok(success.includes(dispatch), 'the dispatch sits inside the push-success branch, before its exit 0');
   assert.match(WORKFLOW, /GH_TOKEN: \$\{\{ github\.token \}\}/);
   assert.match(DEV_PREVIEW, /\n {2}workflow_dispatch:/, 'dev-preview can be dispatched');
-  // The dispatch on dev is relaxed like a push (a merge may land after the stamp push), and
-  // the strict check stays on every other ref.
-  assert.match(DEV_PREVIEW, /workflow_dispatch:dev\|workflow_dispatch:alternative/, 'the dispatch takes the relaxed branch');
-  assert.doesNotMatch(WORKFLOW, /dispatch[^\n]*STRICT/, 'the build-stamp comment no longer says a dispatch is strict');
+
+  // The dispatch is one function with three tries and 2 and 4 seconds of backoff.
+  const fn = WORKFLOW.slice(WORKFLOW.indexOf('dispatch_preview() {'), WORKFLOW.indexOf('delays=(2 4 8)'));
+  assert.match(fn, /gh workflow run dev-preview\.yml --repo "\$GITHUB_REPOSITORY" --ref "\$REF_NAME"/);
+  assert.match(fn, /for try in 1 2 3; do/);
+  assert.match(fn, /sleep \$\(\(2 \*\* try\)\)/, 'backoff is 2 then 4 seconds');
+  assert.match(fn, /return 1/, 'a dispatch that fails all three tries fails the job');
+
+  // After a successful push, and only then, it is called and a failure stops the job.
+  const push = WORKFLOW.indexOf('if git push -q origin "HEAD:$REF_NAME"; then');
+  const exit0 = WORKFLOW.indexOf('exit 0', push);
+  const success = WORKFLOW.slice(push, exit0);
+  assert.ok(push > 0 && success.includes('if ! dispatch_preview; then exit 1; fi'), 'the dispatch sits in the push-success branch');
+
+  // The no-diff branch: a stamp HEAD re-dispatches; an ordinary no-diff run does not.
+  const nodiff = WORKFLOW.slice(WORKFLOW.indexOf('if git diff --cached --quiet; then'), WORKFLOW.indexOf('box="$(node -p'));
+  assert.match(nodiff, /node tools\/build-stamp\.mjs --is-stamp-head/);
+  assert.match(nodiff, /if \[ "\$stamp_head" -eq 0 \]; then\s+if ! dispatch_preview; then exit 1; fi/, 'only a stamp HEAD dispatches');
+  assert.match(nodiff, /elif \[ "\$stamp_head" -ne 1 \]/, 'a harness fault is not read as "not a stamp"');
+  assert.ok(nodiff.indexOf('dispatch_preview') < nodiff.lastIndexOf('exit 0'), 'the dispatch comes before the no-diff exit 0');
+});
+
+// THE STAMP IS THE BOT'S, EXACTLY. A human squash that mentions the marker is neither a base nor a skip.
+test('a human squash that mentions [build-stamp] is not a base, and its pull request is still counted', () => {
+  const r = repoWith(['base', 'Explain the [build-stamp] marker (#9)', 'Merge pull request #4 from a/b']);
+  try {
+    assert.deepEqual(landedSince(r.shas[0], { cwd: r.dir }).sort(), ['4', '9'], 'the human squash is no stamp, and #9 counts');
+  } finally { r.cleanup(); }
+});
+
+test('a bot commit with a wrong subject is not a base', () => {
+  const r = repoWith(['base', { subject: 'build: stamp [build-stamp] by hand', author: BOT }, 'Add a thing (#8)']);
+  try {
+    assert.deepEqual(landedSince(r.shas[0], { cwd: r.dir }).sort(), ['8'], 'the wrong subject is not a base, so #8 counts from before');
+  } finally { r.cleanup(); }
 });
