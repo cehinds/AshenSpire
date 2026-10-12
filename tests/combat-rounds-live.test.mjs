@@ -12,6 +12,7 @@ import { createRng } from '../src/engine/rng.js';
 import { cardKind } from '../src/model/tree.js';
 import { COMBAT_ROUNDS_KEY } from '../src/model/combatRounds.js';
 import * as Rounds from '../src/engine/combatRoundsAdapter.js';
+import { handRow, scaledCards } from '../src/model/handRules.js';
 
 const registries = createRegistries(contentBundle);
 const ENEMY = 'wanderingSoldier';
@@ -379,4 +380,32 @@ test('two queued cards cannot both use one Mana-discount charge; unqueueing hand
   assert.equal(cardPlayCosts(c, first.instanceId).mana, base - 1, 'the released charge is offered again');
   dispatch(c, { type: 'playCard', cardInstanceId: first.instanceId, targetId });
   assert.equal(c.player.mana, mana0 - base - (base - 1), 'requeued, the first card takes the discount again');
+});
+
+// Review finding 4: the hand-size discard check ran before the commit, so queued cards counted toward
+// overflow. A queued card leaves the hand in the commit (it resolves or is discarded), so it must not count.
+test('queued cards do not count toward hand-size overflow; a full unqueued hand still has to discard', () => {
+  const retaining = (c) => { c.handRules = { ...c.handRules, retain: true }; return c; };
+  const padded = (c) => {
+    const cap = scaledCards(handRow(c.handRules, 'handSize'), c.attributes, c.characterLevel);
+    for (let i = 0; c.piles.hand.length < cap + 1; i++) c.piles.hand.push({ ...c.piles.hand[0], instanceId: `pad${i}` });
+    return c;
+  };
+  const c = padded(retaining(fight({ expansion: 1 })));
+  let queued = 0;
+  for (const card of [...c.piles.hand]) {
+    if (queued === 2) break;
+    const targetId = liveEnemy(c).id;
+    for (const attempt of [{ targetId }, {}]) {
+      try { dispatch(c, { type: 'playCard', cardInstanceId: card.instanceId, ...attempt }); queued++; break; } catch { /* not playable this way */ }
+    }
+  }
+  assert.equal(queued, 2, 'fixture: two cards are queued');
+  const hand = c.piles.hand.length;
+  dispatch(c, { type: 'endTurn' });
+  assert.equal(c.phase, 'player', 'the queued cards leave the hand in the commit, so no discard is owed');
+  assert.ok(hand > scaledCards(handRow(c.handRules, 'handSize'), c.attributes, c.characterLevel) - 1);
+
+  const unqueued = padded(retaining(fight({ expansion: 1 })));
+  assert.throws(() => dispatch(unqueued, { type: 'endTurn' }), /Select 1/, 'without queued cards the overflow is still owed');
 });
