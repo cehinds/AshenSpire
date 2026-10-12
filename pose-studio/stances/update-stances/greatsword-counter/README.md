@@ -2,7 +2,7 @@
 
 Canonical review boards: `sheet-a.png` (CT11–15) and `sheet-b.png` (CT16–20), row-major across two columns and three rows, bottom-right empty. Transparent 1024×1536 original imagegen output bytes; no programmatic image edits, resizing or alpha repair.
 
-The art director accepted CT11–14 as concept poses. CT15 still reads one-handed: its targeted repair failed and is preserved as `sheet-a-ct15-failed.png`. A retains the earlier canonical board. B now moves CT17's two hilt grips in front of the helmet; final director review is pending. These are concept candidates, not selected or registered runtime assets.
+The art director accepted CT11–14 as concept poses. CT15 still reads one-handed: both targeted grip repairs failed and are preserved as `sheet-a-ct15-failed.png` and `sheet-a-ct15-navel-failed.png`. A retains the earlier canonical board. B now moves CT17's two hilt grips in front of the helmet; final director review is pending. These are concept candidates, not selected or registered runtime assets.
 
 | ID | Held cover |
 |---|---|
