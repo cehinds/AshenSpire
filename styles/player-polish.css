@@ -344,7 +344,6 @@ body.reduced-motion :is(.ember,.title-glow) { animation:none; }
    services and consequences occupy the lower reading tray. */
 .rest-screen { position:relative; isolation:isolate; justify-content:flex-end; padding:12rem 3rem 3rem; }
 .rest-screen .polish-scene-painting { position:absolute; inset:0; width:100%; height:100%; max-height:none; z-index:-1; }
-.rest-screen .polish-scene-painting img { object-position:center 42%; }
 .rest-screen .rest-door { margin:0; width:100%; max-width:none; max-height:54%; min-height:0; flex:0 1 auto; }
 :root main:has(> .rest-screen) > .shared-hud { position:absolute; inset:0 0 auto; z-index:20; background:none; border:0; pointer-events:none; }
 main:has(> .rest-screen) > .shared-hud :is(.hud-info-row,.hud-vitals-panel,.hud-control-grid,.hud-bottom) { pointer-events:auto; }
@@ -357,7 +356,6 @@ main:has(> .rest-screen) > .shared-hud .hud-vitals-panel { max-width:28rem; padd
 :root[data-layout='narrow'] .rest-screen { padding:12rem 1rem 1rem; }
 :root[data-layout='narrow'] .rest-screen .rest-door { max-height:62%; }
 :root[data-layout='narrow'] .rest-screen .polish-scene-painting { position:absolute; aspect-ratio:auto; max-height:none; height:100%; }
-:root[data-layout='narrow'] .rest-screen .polish-scene-painting img { object-position:42% 32%; }
 :root[data-composition='short-wide'] .rest-screen .polish-scene-painting { display:block; }
 :root[data-composition='short-wide'] .rest-screen { padding:1rem; }
 :root[data-composition='short-wide'] .rest-screen .rest-door { max-height:100%; }
@@ -489,10 +487,18 @@ body.reduced-motion .shop-workspace .shop-pane { animation:none; }
 :root[data-composition='short-wide'] .rest-screen.choice-screen { padding:2rem 1rem 1rem; }
 :root[data-composition='short-wide'] .rest-screen.choice-screen .rest-door { flex-basis:88%; max-height:88%; }
 
-/* The chapel's foreground and recovery ledger share the live rest plan. */
-.rest-screen .polish-scene-painting > img:first-child { width:100%; height:100%; object-fit:cover; }
-.rest-screen .polish-scene-painting > .rest-traveler-foreground {
- position:absolute; left:6%; bottom:39%; width:49%; height:46%; object-fit:contain; object-position:center bottom;
+/* The chapel's foreground and recovery ledger share the live rest plan.
+   The backdrop and traveler sit on a square stage in the backdrop's own
+   coordinates (emulating object-fit:cover), so the foreground stays on the
+   painted floor at every viewport aspect. */
+.rest-screen .polish-scene-painting { container-type:size; --rest-focus-x:.5; --rest-focus-y:1; --rest-floor-y:70%; }
+.rest-screen .rest-scene-stage { position:absolute; aspect-ratio:1 / 1;
+ width:max(100cqw, 100cqh); height:max(100cqw, 100cqh);
+ left:calc((100cqw - max(100cqw, 100cqh)) * var(--rest-focus-x)); top:calc((100cqh - max(100cqw, 100cqh)) * var(--rest-focus-y)); }
+.rest-screen .rest-scene-stage > img:first-child { position:absolute; inset:0; width:100%; height:100%; object-fit:fill; }
+.rest-screen .rest-scene-stage > .rest-traveler-foreground {
+ position:absolute; left:15%; width:44%; height:auto; aspect-ratio:720 / 480; object-fit:contain;
+ bottom:calc(100% - var(--rest-floor-y) - 44% * 31 / 720 * 1);
  animation:playerSceneReveal 700ms ease-out; filter:drop-shadow(0 7px 12px #100a08a0); pointer-events:none;
 }
 .rest-recovery { margin-bottom:1.2rem; }
@@ -502,7 +508,7 @@ body.reduced-motion .shop-workspace .shop-pane { animation:none; }
 .rest-screen .choice-body-columns { grid-template-columns:minmax(0,1fr) minmax(0,1.6fr); }
 .rest-availability summary { cursor:pointer; padding:.5rem 0; color:var(--ink-dim); }
 .rest-screen .class-pick > .glyph .engraved-icon { width:30px; height:30px; color:var(--gold); }
-:root[data-layout='narrow'] .rest-screen .polish-scene-painting > .rest-traveler-foreground { left:4%; bottom:49%; width:92%; height:34%; }
+:root[data-layout='narrow'] .rest-screen .polish-scene-painting { --rest-focus-x:.42; --rest-focus-y:.32; }
 :root[data-layout='narrow'] .rest-screen .choice-body-columns { grid-template-columns:minmax(0,1fr); }
 :root[data-layout='narrow'] .rest-recovery { margin-bottom:0; }
 body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
