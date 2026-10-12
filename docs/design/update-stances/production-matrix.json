@@ -70,7 +70,9 @@
     "userSelected": 5,
     "productionApproved": 0,
     "selectedRoleAssignments": 5,
-    "productionApprovalMeaning": "Technical export/runtime acceptance, distinct from explicit user authorization to use selected poses."
+    "productionApprovalMeaning": "Final visual/gameplay delivery acceptance; export completion, registration, focused tests and independent code review do not establish browser validation.",
+    "registeredPoseExports": 5,
+    "newFullAnimationSequences": 0
   },
   "normalization": {
     "dagger": "single_dagger",
@@ -538,7 +540,7 @@
         "magic"
       ],
       "feasibilityStatus": "existing_action_reference",
-      "status": "contains_user_selected_poses_pending_delivery",
+      "status": "selected_poses_exported_registered_browser_validation_pending",
       "optionSpecifications": [
         {
           "id": "greatsword-guard_break-01",
@@ -668,13 +670,13 @@
           "artistOptionNumber": 6,
           "sheet": "B",
           "rowMajorOccupiedCell": 1,
-          "status": "user_selected_authorized_for_use_pending_delivery_validation",
+          "status": "exported_registered_pose_browser_validation_pending",
           "artPaths": [
             "pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-b.png"
           ],
           "magicAdaptationStatus": "planned_not_briefed",
           "classAdaptationStatus": {
-            "reaver": "pilot_director_reviewed_concept",
+            "reaver": "selected_export_and_runtime_complete_browser_validation_pending",
             "rogue": "planned",
             "starseer": "planned",
             "herald": "planned"
@@ -684,7 +686,13 @@
           "userSelected": true,
           "productionApproved": false,
           "canonicalGenerationPrompt": "pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-b-prompt.md",
-          "selectedTargetRole": "guard_break"
+          "selectedTargetRole": "guard_break",
+          "registeredPoseRole": "guard-break",
+          "exportPaths": {
+            "full": "assets-display/alternative/reaver-greatsword-pilot-guard-break.webp",
+            "mobile": "assets-display/alternative/reaver-greatsword-pilot-guard-break-mobile.webp"
+          },
+          "browserValidated": false
         },
         {
           "id": "greatsword-guard_break-07",
@@ -791,7 +799,8 @@
       "conceptNeedsRevision": 1,
       "userSelected": 1,
       "productionApproved": 0,
-      "provenancePath": "pose-studio/stances/update-stances/guard-break/provenance.json"
+      "provenancePath": "pose-studio/stances/update-stances/guard-break/provenance.json",
+      "registeredPoseCount": 1
     },
     {
       "id": "staff--guard_break",
@@ -1049,7 +1058,7 @@
         "magic"
       ],
       "feasibilityStatus": "existing_action_reference",
-      "status": "contains_user_selected_poses_pending_delivery",
+      "status": "selected_poses_exported_registered_browser_validation_pending",
       "optionSpecifications": [
         {
           "id": "greatsword-smash_stance-01",
@@ -1127,13 +1136,13 @@
           "artistOptionNumber": 4,
           "sheet": "A",
           "rowMajorOccupiedCell": 4,
-          "status": "user_selected_authorized_for_use_pending_delivery_validation",
+          "status": "exported_registered_pose_browser_validation_pending",
           "artPaths": [
             "pose-studio/stances/update-stances/greatsword-smash/sheet-a.png"
           ],
           "magicAdaptationStatus": "planned_not_briefed",
           "classAdaptationStatus": {
-            "reaver": "pilot_director_reviewed_concept",
+            "reaver": "selected_export_and_runtime_complete_browser_validation_pending",
             "rogue": "planned",
             "starseer": "planned",
             "herald": "planned"
@@ -1142,7 +1151,13 @@
           "selectableForUserComparison": true,
           "userSelected": true,
           "productionApproved": false,
-          "selectedTargetRole": "sweep"
+          "selectedTargetRole": "sweep",
+          "registeredPoseRole": "sweep",
+          "exportPaths": {
+            "full": "assets-display/alternative/reaver-greatsword-pilot-sweep.webp",
+            "mobile": "assets-display/alternative/reaver-greatsword-pilot-sweep-mobile.webp"
+          },
+          "browserValidated": false
         },
         {
           "id": "greatsword-smash_stance-05",
@@ -1151,13 +1166,13 @@
           "artistOptionNumber": 5,
           "sheet": "A",
           "rowMajorOccupiedCell": 5,
-          "status": "user_selected_authorized_for_use_pending_delivery_validation",
+          "status": "exported_registered_pose_browser_validation_pending",
           "artPaths": [
             "pose-studio/stances/update-stances/greatsword-smash/sheet-a.png"
           ],
           "magicAdaptationStatus": "planned_not_briefed",
           "classAdaptationStatus": {
-            "reaver": "pilot_director_reviewed_concept",
+            "reaver": "selected_export_and_runtime_complete_browser_validation_pending",
             "rogue": "planned",
             "starseer": "planned",
             "herald": "planned"
@@ -1166,7 +1181,13 @@
           "selectableForUserComparison": true,
           "userSelected": true,
           "productionApproved": false,
-          "selectedTargetRole": "smash"
+          "selectedTargetRole": "smash",
+          "registeredPoseRole": "smash",
+          "exportPaths": {
+            "full": "assets-display/alternative/reaver-greatsword-pilot-smash.webp",
+            "mobile": "assets-display/alternative/reaver-greatsword-pilot-smash-mobile.webp"
+          },
+          "browserValidated": false
         },
         {
           "id": "greatsword-smash_stance-06",
@@ -1175,13 +1196,13 @@
           "artistOptionNumber": 6,
           "sheet": "B",
           "rowMajorOccupiedCell": 1,
-          "status": "user_selected_authorized_for_use_pending_delivery_validation",
+          "status": "exported_registered_pose_browser_validation_pending",
           "artPaths": [
             "pose-studio/stances/update-stances/greatsword-smash/sheet-b.png"
           ],
           "magicAdaptationStatus": "planned_not_briefed",
           "classAdaptationStatus": {
-            "reaver": "pilot_director_reviewed_concept",
+            "reaver": "selected_export_and_runtime_complete_browser_validation_pending",
             "rogue": "planned",
             "starseer": "planned",
             "herald": "planned"
@@ -1190,7 +1211,13 @@
           "selectableForUserComparison": true,
           "userSelected": true,
           "productionApproved": false,
-          "selectedTargetRole": "counter"
+          "selectedTargetRole": "counter",
+          "registeredPoseRole": "counter",
+          "exportPaths": {
+            "full": "assets-display/alternative/reaver-greatsword-pilot-counter.webp",
+            "mobile": "assets-display/alternative/reaver-greatsword-pilot-counter-mobile.webp"
+          },
+          "browserValidated": false
         },
         {
           "id": "greatsword-smash_stance-07",
@@ -1222,13 +1249,13 @@
           "artistOptionNumber": 8,
           "sheet": "B",
           "rowMajorOccupiedCell": 3,
-          "status": "user_selected_authorized_for_use_pending_delivery_validation",
+          "status": "exported_registered_pose_browser_validation_pending",
           "artPaths": [
             "pose-studio/stances/update-stances/greatsword-smash/sheet-b.png"
           ],
           "magicAdaptationStatus": "planned_not_briefed",
           "classAdaptationStatus": {
-            "reaver": "pilot_director_reviewed_concept",
+            "reaver": "selected_export_and_runtime_complete_browser_validation_pending",
             "rogue": "planned",
             "starseer": "planned",
             "herald": "planned"
@@ -1237,7 +1264,13 @@
           "selectableForUserComparison": true,
           "userSelected": true,
           "productionApproved": false,
-          "selectedTargetRole": "evade"
+          "selectedTargetRole": "evade",
+          "registeredPoseRole": "evade",
+          "exportPaths": {
+            "full": "assets-display/alternative/reaver-greatsword-pilot-evade.webp",
+            "mobile": "assets-display/alternative/reaver-greatsword-pilot-evade-mobile.webp"
+          },
+          "browserValidated": false
         },
         {
           "id": "greatsword-smash_stance-09",
@@ -1293,7 +1326,8 @@
       "conceptSelectable": 10,
       "conceptNeedsRevision": 0,
       "userSelected": 4,
-      "productionApproved": 0
+      "productionApproved": 0,
+      "registeredPoseCount": 4
     },
     {
       "id": "staff--smash_stance",
@@ -3314,7 +3348,7 @@
       "magicTreatmentScopeStatus": "proposed_backfill"
     }
   ],
-  "snapshotStatus": "20_generated,20_director_reviewed,19_selectable,1_needs_revision,5_user_selected_role_assignments; runtime_delivery_and_merge_pending_confirmation",
+  "snapshotStatus": "20_generated,20_director_reviewed,19_selectable,1_needs_revision,5_user_selected;selected_exports_and_runtime_complete,independent_code_review_approved;browser_QA_and_merge_pending",
   "artReviewPath": "docs/design/update-stances/art-review.md",
   "userDecisions": {
     "status": "explicit_numeric_selections_authorized_for_use_and_merge",
@@ -3364,7 +3398,7 @@
     ],
     "contextImages": "Image1 showing guard-break03 is reference context only, not an extra explicit numeric selection.",
     "mergeAuthorization": "User explicitly requested use and merge; implementation/merge work is handled separately.",
-    "runtimeStatus": "pending_parent_confirmation",
+    "runtimeStatus": "complete_browser_validation_pending",
     "soloGameplayValidation": "not_yet_confirmed"
   },
   "nextExpansion": {
@@ -3392,5 +3426,71 @@
     "conceptCountGenerated": 0,
     "relationshipToBaseline": "Separate requested follow-up exploration; does not complete or replace the 600-option baseline or all counter delivery modes.",
     "requiresAdditionalApprovalBeforeBeginning": false
+  },
+  "selectedDelivery": {
+    "status": "export_and_runtime_complete_browser_QA_and_merge_pending",
+    "classId": "reaver",
+    "armourId": "default",
+    "eligibility": "Sole actual greatsword in either active hand, other hand empty; canonical single-weapon mode may be one or two. This is not a class-default weapon assumption or mechanical two-hand-only predicate.",
+    "eligibilityCorrectionCommit": "44496130",
+    "selectionManifest": "pose-studio/stances/update-stances/selections.json",
+    "exporter": "tools/selected-weapon-profile-export.mjs",
+    "runtimeCatalog": "src/content/alternativeSelectedStances.js",
+    "runtimeProfileKey": "reaver-greatsword-pilot",
+    "selectedProject": "pose-studio/stances/selected-projects/reaver-greatsword-pilot.rig.json",
+    "registeredPoseExports": 5,
+    "registeredNewFullSequences": 0,
+    "exports": {
+      "sweep": {
+        "full": "assets-display/alternative/reaver-greatsword-pilot-sweep.webp",
+        "mobile": "assets-display/alternative/reaver-greatsword-pilot-sweep-mobile.webp"
+      },
+      "counter": {
+        "full": "assets-display/alternative/reaver-greatsword-pilot-counter.webp",
+        "mobile": "assets-display/alternative/reaver-greatsword-pilot-counter-mobile.webp"
+      },
+      "smash": {
+        "full": "assets-display/alternative/reaver-greatsword-pilot-smash.webp",
+        "mobile": "assets-display/alternative/reaver-greatsword-pilot-smash-mobile.webp"
+      },
+      "evade": {
+        "full": "assets-display/alternative/reaver-greatsword-pilot-evade.webp",
+        "mobile": "assets-display/alternative/reaver-greatsword-pilot-evade-mobile.webp"
+      },
+      "guard-break": {
+        "full": "assets-display/alternative/reaver-greatsword-pilot-guard-break.webp",
+        "mobile": "assets-display/alternative/reaver-greatsword-pilot-guard-break-mobile.webp"
+      }
+    },
+    "routingModel": "src/model/selectedWeaponStances.js",
+    "runtimeStage": "src/ui/alternativeCardStage.js",
+    "behavior": "Selected Sweep, Counter and Smash holds; Evade hold for pure-dodge preparation/readiness; finite player-target Guard-break and successful Evade reactions restore the current action or newest held pose. Existing full action/retaliation clips remain.",
+    "coop": "paused_no_pilot_opt_in",
+    "independentCodeReview": "approved",
+    "testEvidence": [
+      {
+        "scope": "initial focused runtime/animation tests",
+        "passed": 97,
+        "evidenceSource": "implementation workstream report; before the final real-loadout eligibility correction"
+      },
+      {
+        "scope": "final selected-weapon registry/routing/reaction tests including real starting-kit projection",
+        "file": "tests/selected-weapon-stances.test.mjs",
+        "passed": 5,
+        "evidenceSource": "parent validation report after correction44496130"
+      }
+    ],
+    "pullRequest": {
+      "number": 1890,
+      "url": "https://github.com/cehinds/AshenSpire/pull/1890",
+      "mergeStatus": "pending"
+    },
+    "build": "0.7.1.1406",
+    "buildDigest": "35ae0d901e",
+    "receiptSourceCommit": "06b073d14",
+    "browserQA": "pending",
+    "soloGameplayValidation": "pending",
+    "mergedToDev": false,
+    "reviewBoundary": "Independent review approval and focused tests are code/source evidence; browser and gameplay acceptance remain pending."
   }
 }
