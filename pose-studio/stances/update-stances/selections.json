@@ -70,7 +70,11 @@
       "label": "Thigh-clutch plus chest blow",
       "sourcePath": "pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-b.png",
       "sourceBounds": [49, 99, 559, 518],
-      "cropBounds": [46, 96, 562, 521]
+      "cropBounds": [46, 96, 562, 521],
+      "supportAnchor": {
+        "kind": "grounded-knee-and-planted-boot-contact",
+        "sourceY": 480
+      }
     }
   ]
 }

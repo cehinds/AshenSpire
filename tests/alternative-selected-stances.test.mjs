@@ -51,6 +51,10 @@ test('the selected Reaver greatsword pilot keeps the five chosen sources and bot
    assert.equal(packed.assets[path].common.sha256,expected);
   }
   assert.deepEqual(frame.anchor,[256,464]);
-  assert.ok(Math.abs(frame.bounds[3]-464)<=1);
+  const supportY=choice.supportAnchor?.sourceY??choice.sourceBounds[3];
+  assert.deepEqual(frame.supportAnchor,choice.supportAnchor);
+  const expectedBottom=Math.round(464+(choice.sourceBounds[3]-supportY)*frame.scale);
+  assert.ok(Math.abs(frame.bounds[3]-expectedBottom)<=1);
+  assert.ok(frame.bounds[3]<=512);
  }
 });
