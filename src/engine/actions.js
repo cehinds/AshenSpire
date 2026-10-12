@@ -16,7 +16,8 @@
 // Damage math (SPEC §4.2, order contractual, floor ONCE at the end):
 //   dmg = base
 //   dmg += attacker per-stack 'attackDamageAdd' modifiers
-//   dmg *= attacker 'damageDealtMult' modifiers
+//   dmg *= attacker 'damageDealtMult' modifiers (and 'spellDamageDealtMult'
+//          when the carrier is spell-camp)
 //   dmg *= defender 'damageTakenMult' modifiers
 //   dmg = floor(dmg); below 0 → 0
 // The engine consults the generic status model only — never a named status.
@@ -47,6 +48,7 @@ import { reviveTokenFor, reviveHp, adjustCount } from '../model/consumables.js';
 import { reconcileWardBlock, wardBlockReceipt } from '../model/blockPresentation.js';
 import { allowAbilityOnce, grantAbilityCharge, recordAbilityOffering, requestAbilityDiscard } from './abilityRiders.js';
 import * as Matchups from './combatMatchups.js';
+import { typedDefenseAmount } from './combatExpansionEquipment.js';
 import { creditKnowledgeImpact } from './enemyKnowledge.js';
 
 import * as Expanded from './combatExpansionActions.js';
@@ -56,6 +58,18 @@ import * as Blight from './ashenBlight.js';
 // ---------------------------------------------------------------------------
 // Shared math (also used by combat.js previews — no duplicated math in the UI)
 // ---------------------------------------------------------------------------
+
+/**
+ * Silenced and its kin: `spellDamageDealtMult` scales only a spell-camp
+ * carrier's damage for its owner (authored profile camp; an unprofiled carrier
+ * falls back to the magical-attack reading). Physical damage is untouched.
+ */
+export function spellDamageDealtMultiplier(ctx, source, carrier) {
+  if (!source) return 1;
+  const profile = Matchups.combatProfileOf(carrier);
+  const spell = profile ? ['spell', 'spells', 'magic', 'magical'].includes(profile.camp) : !!carrier && isMagicalAttack(ctx, carrier);
+  return spell ? statuses.getMult(ctx, source, 'spellDamageDealtMult') : 1;
+}
 
 /**
  * computeAttackDamage(ctx, source, target|null, base) → final integer damage.
@@ -75,7 +89,7 @@ export function computeAttackDamage(ctx, source, target, base, attackTags, carri
       : 0;
   }
   dmg += statuses.getAdd(ctx, source, 'attackDamageAdd');
-  dmg *= statuses.getMult(ctx, source, 'damageDealtMult');
+  dmg *= statuses.getMult(ctx, source, 'damageDealtMult') * spellDamageDealtMultiplier(ctx, source, carrier);
   if (target) dmg *= statuses.getMult(ctx, target, 'damageTakenMult');
   if (target && !beforeDefense) dmg *= ratingDamageMultiplier(ctx, target, isMagicalAttack(ctx, carrier));
   // Tag-scoped extra vulnerability (#61): statuses whose taggedVulnerability
@@ -287,8 +301,7 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
       amount = Math.max(0, Math.floor(total * (camp === 'spell' ? 1 : ratingDamageMultiplier(ctx, target, false))
         * (Number.isFinite(resistance) ? Math.max(0, 1 - resistance / 100) : 1)));
     }
-    amount = Math.max(0, Math.ceil(amount * (1 + Math.max(0, target.damageWeaknessPercent?.[type] || 0) / 100))
-      - Math.max(0, target.damageResistanceFlat?.[type] || 0));
+    amount = typedDefenseAmount(target, type, amount);
     const shares = total > 0 ? allocateInteger(amount, indices[key].map(index => receipt.amounts[index])) : indices[key].map(() => 0);
     indices[key].forEach((index, i) => { receipt.defendedAmounts[index] = shares[i]; });
   }

@@ -66,6 +66,12 @@ export const tagging = [
     "family": "class",
     "scope": "",
     "objectId": "reaver",
+    "tagId": "oathKept"
+  },
+  {
+    "family": "class",
+    "scope": "",
+    "objectId": "reaver",
     "tagId": "item:blade"
   },
   {
@@ -73,6 +79,12 @@ export const tagging = [
     "scope": "",
     "objectId": "starseer",
     "tagId": "favored"
+  },
+  {
+    "family": "class",
+    "scope": "",
+    "objectId": "starseer",
+    "tagId": "oathKept"
   },
   {
     "family": "class",
@@ -90,6 +102,12 @@ export const tagging = [
     "family": "class",
     "scope": "",
     "objectId": "rogue",
+    "tagId": "oathKept"
+  },
+  {
+    "family": "class",
+    "scope": "",
+    "objectId": "rogue",
     "tagId": "item:blade"
   },
   {
@@ -97,6 +115,12 @@ export const tagging = [
     "scope": "",
     "objectId": "herald",
     "tagId": "favored"
+  },
+  {
+    "family": "class",
+    "scope": "",
+    "objectId": "herald",
+    "tagId": "oathKept"
   },
   {
     "family": "class",

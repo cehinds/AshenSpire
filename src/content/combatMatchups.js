@@ -71,6 +71,18 @@ export const combatMatchups = {
     },
   },
   damageAliases: { frost: 'cold', arcane: 'force', sacred: 'holy', decay: 'necrotic', pierce: 'piercing', bludgeoning: 'blunt' },
+  // Technique riders (owner decision 11, 2026-10-12): keyed by a carrier's
+  // authored card tag, resolved with the damage rider once per action and
+  // target. A guard bypass takes the larger of this and the damage type's.
+  tagRiders: {
+    precision: { guardBypass: 4 },
+    gorefire: { status: 'burn', stacks: 1, requiresHpLoss: true },
+    [NOTE]: {
+      'precision.guardBypass': 'Ordinary Guard a Precision-tagged attack bypasses once per action and target; the larger of this and a Piercing bypass applies, never the sum.',
+      'gorefire.stacks': 'Burn stacks a Gorefire-tagged attack applies once per action and target after HP loss, unless the card prints Burn.',
+      '{tag}.requiresHpLoss': 'Requires actual HP loss before the {tag} rider applies its status.',
+    },
+  },
   cleanseStatuses: ['weak', 'frail', 'vulnerable', 'crimsonBlight', 'burn'],
 };
 
@@ -117,6 +129,11 @@ export const combatExpansionMatchups = {
     poison: { status: 'venom', pressure: 4, recoveryProfile: 'bodily', requiresHpLoss: true },
     psychic: { status: 'confused', pressure: 3, recoveryProfile: 'mental', requiresHpLoss: true },
     earth: { status: 'slowed', pressure: 4, recoveryProfile: 'elemental', requiresHpLoss: true },
+  },
+  // Technique riders: the version-1 rows above, with status pressure for gauges.
+  tagRiders: {
+    precision: { guardBypass: 4 },
+    gorefire: { status: 'burn', pressure: 4, recoveryProfile: 'elemental', requiresHpLoss: true },
   },
   cleanseStatuses: ['weak', 'frail', 'vulnerable', 'crimsonBlight', 'necroticBlight', 'burn'],
 };

@@ -162,6 +162,8 @@ const cardValueStatusMultipliers = {
   envenom: 1,
   glassCannon: 1,
   magicVulnerable: 1,
+  silenced: 1,
+  stanceShifted: 1,
 };
 
 const cardValueRule = () => ({
@@ -517,6 +519,17 @@ export const balance = {
       flatEvery: 'Every this many levels of a weapon, focus or dual-wield skill adds 1 to the main number of every card of that skill.',
       rankMax: 'A card\'s highest rank. Each rank past 1 adds 1 to its main number; a skill draft offers ranks up to the skill\'s level.',
       favoredXpMult: 'Multiplies skill XP in the weapon groups your class card leans toward.',
+    },
+  },
+
+  // Technique tag mechanics (owner decision 11, 2026-10-12). Oath is a class
+  // property rule (oathKept, nodeEffects.json) bound to this number.
+  tagMechanics: {
+    oath: {
+      block: 2,
+      [NOTE]: {
+        block: 'Block each Oath card grants while you have not entered a stance this fight.',
+      },
     },
   },
 

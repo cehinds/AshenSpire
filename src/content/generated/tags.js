@@ -1398,6 +1398,15 @@ export const tags = [
     "blurb": "A class card's leaning: skill XP in the weapon groups the card also names (its item-type tags) is multiplied. Scoped by the carrier's own tags, never by a second table."
   },
   {
+    "id": "oathKept",
+    "domain": "property",
+    "label": "Oath Kept",
+    "color": "C9A227",
+    "glyph": "✚",
+    "visibility": "",
+    "blurb": "While you have not entered a stance this fight, each Oath card you play grants Block. Every class card carries it; entering a stance breaks it for the rest of the fight."
+  },
+  {
     "id": "ashenGrip",
     "domain": "property",
     "label": "Ashen Grip",

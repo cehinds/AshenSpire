@@ -152,7 +152,7 @@ export function foundationDamage(ctx, source, target, base, carrier = null, atta
   attackTags = resolvedAttackTags(attackTags, weapon, attack, rules.damageTypes);
   const totalWeight = weights.reduce((sum, c) => sum + c.weight, 0);
   if (!(totalWeight > 0)) throw new Error('attack components need positive weight');
-  const attackerMultiplier = source ? S.getMult(ctx, source, 'damageDealtMult') : 1;
+  const attackerMultiplier = source ? S.getMult(ctx, source, 'damageDealtMult') * Actions.spellDamageDealtMultiplier(ctx, source, carrier) : 1;
   let multiplier = target ? S.getMult(ctx, target, 'damageTakenMult') : 1;
   let tagged = 1;
   let vulnerability = 0;

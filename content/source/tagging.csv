@@ -39,12 +39,16 @@ class,,rogue,flourish
 class,,herald,ritual
 class,,herald,oath
 class,,reaver,favored
+class,,reaver,oathKept
 class,,reaver,item:blade
 class,,starseer,favored
+class,,starseer,oathKept
 class,,starseer,item:magic-focus
 class,,rogue,favored
+class,,rogue,oathKept
 class,,rogue,item:blade
 class,,herald,favored
+class,,herald,oathKept
 class,,herald,item:magic-focus
 # ---- card ----------------------------------------------------------------------
 # Card schools. What KIND of attack, which school a skill belongs to.
