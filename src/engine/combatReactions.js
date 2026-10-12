@@ -321,7 +321,7 @@ function playStackEntry(ctx, group, entry, hooks) {
 }
 
 export function finishReactions(ctx) {
-  for (const field of ['reactionCursor', 'pendingReaction', 'reactionResume', 'reactionHandCleanup']) delete ctx[field];
+  for (const field of ['reactionCursor', 'pendingReaction', 'reactionResume', 'reactionHandCleanup', 'reactionStack']) delete ctx[field];
   for (const seat of ctx.players?.values() || []) delete seat.reactionHandCleanup;
   ctx.pendingExpansionActions = 0;
   ctx.queue.length = 0;

@@ -98,6 +98,21 @@ test('a stack entry that is no longer in hand fizzles and pays nothing', () => {
   assert.deepEqual(resources(combat), before);
 });
 
+test('a saved stack is validated: side, owner and the offer depth must match', () => {
+  const { combat, registries } = fixture({ cardIds: ['sweepingBlow', 'whirlingGuard'] });
+  dispatch(combat, { type: 'endTurn' });
+  answer(combat, pick(combat, 'r0'));
+  const saved = JSON.parse(JSON.stringify(serializeCombatSnapshot(combat)));
+  const restore = snapshot => restoreCombatSnapshot({ registries, rng: createRng(701), snapshot: JSON.parse(JSON.stringify(snapshot)) });
+  assert.equal(restore(saved).reactionStack.entries.length, 1);
+  const badSide = structuredClone(saved);
+  badSide.reactionStack.entries[0].side = 'bogus';
+  assert.throws(() => restore(badSide), /Invalid reaction stack/);
+  const badDepth = structuredClone(saved);
+  badDepth.pendingReaction.id = badDepth.pendingReaction.id.replace(/:1$/, ':0');
+  assert.throws(() => restore(badDepth), /does not match its stack depth/);
+});
+
 test('an enemy-side stack entry is rejected', () => {
   const { combat } = fixture({ cardIds: ['sweepingBlow', 'whirlingGuard'] });
   dispatch(combat, { type: 'endTurn' });
