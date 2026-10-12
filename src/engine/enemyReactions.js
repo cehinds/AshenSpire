@@ -31,7 +31,8 @@ export function incomingAgainst(source, id) {
 // The move this enemy takes for one window, or null. Eligibility first (alive, not
 // staggered, not control-locked, one reaction per combat turn). Then each reaction move
 // in authored order: it qualifies when the incoming damage against this enemy is positive
-// and at least minIncoming (default 1). chance 1 is taken and 0 is not, without a draw;
+// and at least minIncoming (default 1). minIncoming 0 needs no incoming damage: it qualifies
+// on any push in its window, a pure Block included. chance 1 is taken and 0 is not, without a draw;
 // otherwise one draw on the enemyReaction stream decides it, memoised per window in
 // ctx.enemyReactionRolls. A candidate state (ctx._reactionPlaying) reads the memo only:
 // an unmemoised roll there is "does not react" and never draws.
@@ -41,7 +42,7 @@ export function decideEnemyReaction(ctx, enemy, window, { groupKey, windowIndex,
   if (controlRestrictions(ctx, enemy).locked) return null;
   for (const [moveId, move] of reactionMovesOf(ctx, enemy, window)) {
     const { minIncoming = 1, chance = 1 } = move.reaction;
-    if (!(incoming > 0) || incoming < minIncoming) continue;
+    if (minIncoming !== 0 && !(incoming > 0 && incoming >= minIncoming)) continue;
     if (chance >= 1) return moveId;
     if (chance <= 0) continue;
     const key = `${groupKey}:${windowIndex}:${enemy.id}:${moveId}`;

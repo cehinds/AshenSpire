@@ -84,6 +84,17 @@ test('a chance-0 move is never taken and the decision passes to the next move', 
   assert.equal(draws(combat), before);
 });
 
+test('minIncoming 0 qualifies on any push, a pure Block included; the default needs positive incoming', () => {
+  const riposte = reaction => fixture({ moves: { riposteZ: { intent: 'attack', damage: 4, reaction } } });
+  const zero = riposte({ on: ['playerReaction'], minIncoming: 0, chance: 1 });
+  const before = draws(zero);
+  assert.equal(decideEnemyReaction(zero, first, 'playerReaction', { groupKey: 'g', windowIndex: 1, incoming: 0 }), 'riposteZ');
+  assert.equal(draws(zero), before, 'chance 1 takes the move without a draw');
+  const dflt = riposte({ on: ['playerReaction'], chance: 1 });
+  assert.equal(decideEnemyReaction(dflt, first, 'playerReaction', { groupKey: 'g', windowIndex: 1, incoming: 0 }), null);
+  assert.equal(decideEnemyReaction(dflt, first, 'playerReaction', { groupKey: 'g', windowIndex: 1, incoming: 1 }), 'riposteZ');
+});
+
 test('a locked reaction move is offered only once its id is unlocked', () => {
   const moves = { guardL: { intent: 'attack', damage: 2, locked: true, reaction: { on: ['playerAction'], chance: 1 } } };
   const combat = fixture({ moves });
@@ -171,20 +182,28 @@ const strikeDef = contentBundle.cards.find(card => card.id === 'strike');
 const heavyDef = { ...strikeDef, id: 'heavyStrike', name: 'Heavy Strike', effects: [{ op: 'damage', target: 'enemy', amount: 12 }] };
 const heavyReactDef = { ...heavyDef, id: 'heavyReact', name: 'Heavy React' };
 const strikeTags = contentBundle.tagging.filter(row => row.family === 'card' && row.objectId === 'strike');
+// blockReact: Defend tagged trait:reaction. A pure Block answer that deals the attacker no damage.
+const blockReactDef = { ...contentBundle.cards.find(card => card.id === 'defend'), id: 'blockReact', name: 'Block React' };
+const defendTags = contentBundle.tagging.filter(row => row.family === 'card' && row.objectId === 'defend');
 // counterGuard: Gilded Guard's carrier resolves to maneuver:counter instead of defend.
 const retagGuard = row => row.family === 'enemyMove' && row.objectId === 'gildedGuard' && row.tagId === 'maneuver:defend'
   ? { ...row, tagId: 'maneuver:counter' } : row;
-function engineRegistries({ firstMoves = {}, counterGuard = false } = {}) {
-  return createRegistries({ ...contentBundle, cards: [...contentBundle.cards, heavyDef, heavyReactDef],
+function engineRegistries({ firstMoves = {}, counterGuard = false, enemyMoves = {} } = {}) {
+  return createRegistries({ ...contentBundle, cards: [...contentBundle.cards, heavyDef, heavyReactDef, blockReactDef],
     tagging: [...(counterGuard ? contentBundle.tagging.map(retagGuard) : contentBundle.tagging), ...strikeTags.map(row => ({ ...row, objectId: 'heavyStrike' })),
       ...strikeTags.map(row => ({ ...row, objectId: 'heavyReact' })),
+      ...defendTags.map(row => ({ ...row, objectId: 'blockReact' })),
       { family: 'card', scope: '', objectId: 'strike', tagId: 'trait:reaction' },
-      { family: 'card', scope: '', objectId: 'heavyReact', tagId: 'trait:reaction' }],
-    enemies: contentBundle.enemies.map(enemy => firstMoves[enemy.id] ? { ...enemy, firstMove: firstMoves[enemy.id] } : enemy) });
+      { family: 'card', scope: '', objectId: 'heavyReact', tagId: 'trait:reaction' },
+      { family: 'card', scope: '', objectId: 'blockReact', tagId: 'trait:reaction' }],
+    enemies: contentBundle.enemies.map(enemy => {
+      const moves = enemyMoves[enemy.id] ? { ...enemy.moves, ...enemyMoves[enemy.id] } : enemy.moves;
+      return firstMoves[enemy.id] || enemyMoves[enemy.id] ? { ...enemy, moves, ...(firstMoves[enemy.id] ? { firstMove: firstMoves[enemy.id] } : {}) } : enemy;
+    }) });
 }
 const seatStats = { classId: 'reaver', maxHp: 100, hp: 100, maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20 };
-function solo({ enemyIds = ['gildedKnight'], cards = ['heavyStrike', 'strike'], seed = 5, flag = true, version = 2, firstMoves, counterGuard } = {}) {
-  const registries = engineRegistries({ firstMoves, counterGuard });
+function solo({ enemyIds = ['gildedKnight'], cards = ['heavyStrike', 'strike'], seed = 5, flag = true, version = 2, firstMoves, counterGuard, enemyMoves } = {}) {
+  const registries = engineRegistries({ firstMoves, counterGuard, enemyMoves });
   const combat = createCombat({ registries, rng: createRng(seed), combatExpansionVersion: 2, reactionRulesVersion: version, enemyIds,
     player: { ...seatStats, drawPerTurn: cards.length, deck: cards.map((cardId, index) => ({ cardId, instanceId: `c${index}`, upgraded: false })) } });
   if (!flag && combat.reactionRules) delete combat.reactionRules.enemyReactions;
@@ -316,6 +335,38 @@ function duelistReacting() {
   }
   throw new Error('no seed reacts');
 }
+
+// The Duelist's Binding Riposte with the given reaction block; the seat pushes a pure Block.
+function pureBlock(reaction) {
+  const built = solo({ enemyIds: ['courtDuelist'], cards: ['blockReact', 'strike'], seed: 3, firstMoves: { courtDuelist: 'lunge' },
+    enemyMoves: { courtDuelist: { bindingRiposte: { intent: 'attack', damage: 4, reaction } } } });
+  dispatch(built.combat, { type: 'endTurn' });
+  return built;
+}
+// Replies (passing when no option is given) until the stack resolves; returns every event.
+function drain(combat, out) {
+  const outs = [out];
+  for (let i = 0; i < 10 && combat.pendingReaction; i++) outs.push(reply(combat));
+  return outs.flatMap(row => row.events);
+}
+
+test('minIncoming 0: a pure Block push opens the Duelist\'s Binding Riposte (no incoming damage needed)', () => {
+  const { combat } = pureBlock({ on: ['playerReaction'], minIncoming: 0, chance: 1 });
+  assert.ok(combat.pendingReaction, 'the Lunge offers the seat a reaction');
+  const events = drain(combat, reply(combat, optionFor(combat, 'c0')));
+  assert.ok(events.some(event => event.type === 'combatEnemyReactionStacked'), 'the Duelist answers the Block');
+  assert.ok(events.some(event => event.type === 'enemyMoveStarted' && event.reaction && event.moveId === 'bindingRiposte'));
+  assert.equal(combat.rng.getCounters().enemyReaction || 0, 0, 'chance 1 draws nothing');
+});
+
+test('default minIncoming: the same pure Block push does not open Binding Riposte', () => {
+  const { combat } = pureBlock({ on: ['playerReaction'], chance: 1 });
+  assert.ok(combat.pendingReaction, 'the Lunge offers the seat a reaction');
+  const events = drain(combat, reply(combat, optionFor(combat, 'c0')));
+  assert.equal(events.some(event => event.type === 'combatEnemyReactionStacked'), false);
+  assert.equal(events.some(event => event.type === 'enemyMoveStarted' && event.reaction), false);
+  assert.equal(combat.rng.getCounters().enemyReaction || 0, 0);
+});
 
 test('a memoised roll and a committed plan survive save/restore with identical state and RNG counters', () => {
   const { combat, registries } = duelistReacting();
