@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
@@ -281,4 +281,29 @@ test('a bot commit with a wrong subject is not a base', () => {
   try {
     assert.deepEqual(landedSince(r.shas[0], { cwd: r.dir }).sort(), ['8'], 'the wrong subject is not a base, so #8 counts from before');
   } finally { r.cleanup(); }
+});
+
+// The REAL write, not a fake. about-changelog --write refuses a stale landed receipt that sits
+// above an older, newer-built group; once that receipt is re-pointed to the committed box, the
+// same write goes through. This is why converge() re-points before its first about().
+test('the real about-changelog --write refuses a stale landed receipt across a newer group, and accepts it re-pointed', () => {
+  const ABOUT = fileURLToPath(new URL('../tools/about-changelog.mjs', import.meta.url));
+  const dir = mkdtempSync(join(tmpdir(), 'build-stamp-write-'));
+  try {
+    const box = { release: '0.5.5', ordinal: 5 };
+    const bt = '\x60';
+    const stale = `# Changelog\n\n## 2026-10-12\n\n- **Today** ([#12](https://github.com/cehinds/AshenSpire/pull/12), ${bt}0.5.5.1${bt}).\n\n## 2026-10-11\n\n- **Yesterday** ([#13](https://github.com/cehinds/AshenSpire/pull/13), ${bt}0.5.5.5${bt}).\n`;
+    writeFileSync(join(dir, 'CHANGELOG.md'), stale);
+    writeFileSync(join(dir, 'buildordinal.json'), JSON.stringify(box));
+    mkdirSync(join(dir, 'src', 'content'), { recursive: true });
+    const write = () => spawnSync(process.execPath, [ABOUT, '--root', dir, '--write'], { encoding: 'utf8' });
+
+    const refused = write();
+    assert.notEqual(refused.status, 0, 'the stale text is refused by the real write');
+    assert.match(refused.stderr + refused.stdout, /build runs backward/);
+
+    writeFileSync(join(dir, 'CHANGELOG.md'), restamp(readFileSync(join(dir, 'CHANGELOG.md'), 'utf8'), ['12'], box).text);
+    const accepted = write();
+    assert.equal(accepted.status, 0, accepted.stdout + accepted.stderr);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
 });

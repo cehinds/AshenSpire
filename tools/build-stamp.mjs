@@ -248,13 +248,23 @@ export function converge(io, prs, { maxRounds = MAX_ROUNDS } = {}) {
   // stale against CHANGELOG.md (a docs-only receipt that already matches). The
   // generated module is in the digest, so the box that build reports is only right
   // once the module is current; repairing it must not wait for a receipt to move.
+  // THE LANDED RECEIPTS TO THE COMMITTED BOX FIRST. about-changelog --write refuses a
+  // receipt that is out of order with the groups around it: a stale landed receipt of
+  // today sits above yesterday's build, so the write cannot run on the stale text. The
+  // box read from buildordinal.json is the ceiling, and re-pointing the landed receipts
+  // to it makes the order hold. The normal path below then re-points them off that box.
+  const committed = io.readBox();
+  const text0 = io.readChangelog();
+  const pre = restamp(text0, prs, committed);
+  if (pre.text !== text0) io.writeChangelog(pre.text);
+  const repointed = pre.text !== text0;
   const wrote = io.about();
   const first = io.build();
   const log = [];
   let target;
   if (restamp(io.readChangelog(), prs, first.box).changed.length) {
     target = { release: first.box.release, ordinal: first.box.ordinal + 1 };
-  } else if (!wrote) {
+  } else if (!wrote && !repointed) {
     return { status: 'nothing', box: first.box, rounds: 0, log };
   } else {
     // The module was repaired and no landed receipt is off the box. The box that
@@ -308,6 +318,11 @@ function realIo() {
       const bytes = readFileSync(BUILDORDINAL, 'utf8');
       const b = JSON.parse(bytes);
       return { box: { release: b.release, ordinal: b.ordinal }, bytes };
+    },
+    // The box the tree was committed with, before this run's build changes it.
+    readBox() {
+      const b = JSON.parse(readFileSync(BUILDORDINAL, 'utf8'));
+      return { release: b.release, ordinal: b.ordinal };
     },
     readChangelog: () => readFileSync(CHANGELOG, 'utf8'),
     writeChangelog: (text) => writeFileSync(CHANGELOG, text),
@@ -532,7 +547,7 @@ function selftest() {
   // THE CONVERGENCE LOOP, against a scripted world. `builds` is what each build
   // reports, in order; `bytes` is derived from the box so an unchanged box reads
   // as an unchanged buildordinal.json.
-  const fake = (builds, { verify = null, text = `${MD}\n`, aboutChanges = false } = {}) => {
+  const fake = (builds, { verify = null, text = `${MD}\n`, aboutChanges = false, box = B(2) } = {}) => {
     const state = { text, writes: 0, about: 0, built: 0 };
     const io = {
       build() {
@@ -540,9 +555,19 @@ function selftest() {
         state.built += 1;
         return { box, bytes: `${box.release}.${box.ordinal}` };
       },
+      readBox: () => box,
       readChangelog: () => state.text,
       writeChangelog(t) { state.text = t; state.writes += 1; },
-      about() { state.about += 1; return aboutChanges; },
+      // about-changelog --write refuses an order it cannot project: a receipt citing a newer
+      // build than the one above it. The stamps read in file order must never rise downward.
+      about() {
+        state.about += 1;
+        const stamps = [...state.text.matchAll(/\/pull\/\d+\), `0\.5\.5\.(\d+)`/g)].map((m) => Number(m[1]));
+        for (let i = 1; i < stamps.length; i += 1) {
+          if (stamps[i] > stamps[i - 1]) throw new Error('build runs backward: a receipt cites a newer build than the group above it');
+        }
+        return aboutChanges;
+      },
       verify: () => verify,
     };
     return { io, state };
@@ -550,7 +575,7 @@ function selftest() {
   const B = (n) => ({ release: '0.5.5', ordinal: n });
   {
     // Nothing landed on an older box: no write, no rebuild after the first.
-    const { io, state } = fake([B(3)], { text: MD.replace(/0\.5\.5\.1/g, '0.5.5.3') });
+    const { io, state } = fake([B(3)], { box: B(3), text: MD.replace(/0\.5\.5\.1/g, '0.5.5.3') });
     const r = converge(io, ['12'], { maxRounds: 3 });
     check('converge: a receipt already on the box, a current module, stops at the first build', r.status === 'nothing' && state.writes === 0 && state.about === 1 && state.built === 1, JSON.stringify(r));
   }
@@ -558,7 +583,7 @@ function selftest() {
     // A STALE MODULE UNDER A RECEIPT ALREADY ON THE BOX. The module write runs first and
     // repairs it (aboutChanges). That moves the box (3 → 4), so the receipt is off it and
     // is re-pointed to 5, the box plus one; the rebuild confirms, and the fixed point is 5.
-    const { io, state } = fake([B(4), B(5), B(5)], { aboutChanges: true, text: MD.replace(/0\.5\.5\.1/g, '0.5.5.3') });
+    const { io, state } = fake([B(4), B(5), B(5)], { aboutChanges: true, box: B(3), text: MD.replace(/0\.5\.5\.1/g, '0.5.5.3') });
     const r = converge(io, ['12'], { maxRounds: 3 });
     const first = state.about === 2 && r.status === 'converged' && r.box.ordinal === 5 && r.rounds === 1;
     check('converge: a stale module under a receipt already on the box is repaired first, then the receipt follows the bump to a fixed point', first, JSON.stringify(r) + ` about=${state.about}`);
@@ -571,11 +596,24 @@ function selftest() {
     check('converge: a repaired module with no receipt off the box settles without re-pointing anything', r.status === 'converged' && r.box.ordinal === 4 && r.rounds === 0 && state.writes === 0, JSON.stringify(r));
   }
   {
+    // THE CROSS-GROUP STALE CASE. Today's landed receipt (#12) sits above yesterday's group at 5
+    // and is stale at 1. The real write refuses that order (the fake's about() throws on it), so
+    // the landed receipt must be re-pointed to the committed box 5 BEFORE the first write. The
+    // module write then changes the module, the build bumps to 6, and the receipt follows the
+    // bump to 7: a fixed point. If about() ran first, the stale text would throw.
+    const stale = '## 2026-10-12\n\n- **Today** ([#12](https://github.com/cehinds/AshenSpire/pull/12), ' + '\x60' + '0.5.5.1' + '\x60' + ').\n\n## 2026-10-11\n\n- **Yesterday** ([#13](https://github.com/cehinds/AshenSpire/pull/13), ' + '\x60' + '0.5.5.5' + '\x60' + ').\n';
+    const { io, state } = fake([B(6), B(7), B(7)], { aboutChanges: true, box: B(5), text: stale });
+    let r;
+    try { r = converge(io, ['12'], { maxRounds: 3 }); } catch (error) { r = { status: 'threw', reason: error.message }; }
+    const ok = r.status === 'converged' && r.box.ordinal === 7 && state.text.includes('\x60' + '0.5.5.7' + '\x60') && state.about === 2;
+    check('converge: a stale landed receipt across a newer group is re-pointed to the committed box before the write, then to a fixed point', ok, JSON.stringify(r) + ' about=' + state.about);
+  }
+  {
     // The box moves to 3 after the first build; the receipt goes to 4 (ordinal+1),
     // the write lands, the rebuild reports 4, and one more build is stable.
     const { io, state } = fake([B(3), B(4), B(4)]);
     const r = converge(io, ['12'], { maxRounds: 3 });
-    check('converge: the one-round fixed point is ordinal+1, written and rebuilt', r.status === 'converged' && r.box.ordinal === 4 && r.rounds === 1 && state.writes === 1 && state.text.includes('`0.5.5.4`'), JSON.stringify(r));
+    check('converge: the one-round fixed point is ordinal+1, written and rebuilt', r.status === 'converged' && r.box.ordinal === 4 && r.rounds === 1 && state.writes === 2 && state.text.includes('`0.5.5.4`'), JSON.stringify(r));
   }
   {
     // The module was already current, so the write changes nothing and the box
