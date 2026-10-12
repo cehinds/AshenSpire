@@ -296,11 +296,13 @@ Formula, relation and value keys follow the README conventions.
     `starseer*`, `rogue*`, `herald*`).
 - **Descriptions:** the game's own text, not written here.
   - Relics: the `textTemplate`, with its `{token}` placeholders left in.
-  - Progression feats: the `feat:*` propertyRule `textTemplate`, which the game
-    renders with numbers filled in from balance (`classSkillFeatDescription.js`).
-    The `nodes.csv` blurb is a different wording for the same effect, so it is
-    not used. All fifty feat rows carry the template, with `{token}` placeholders
-    left in.
+  - Progression feats: the feat's `feat:*` textTemplate, which is what the game
+    shows (`src/content/progression/feats.js:313` → `getFeatDescription` in
+    `src/model/classSkillFeatDescription.js`). It differs from the `nodes.csv`
+    blurb only by its `{token}` placeholders, and by "half HP" becoming "50% HP"
+    in 4 feats: last-rampart, carrion-measure, funeral-watch and
+    pilgrim-of-scars. All fifty feat rows carry the template, with `{token}`
+    placeholders left in.
   - Companions and sigils: their `blurb`.
   - Class skill feats: their `description`.
 - **Tables changed:** `tables/objects.csv` gains 152 rows: 62 relic with a property tag (59
