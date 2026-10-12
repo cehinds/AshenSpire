@@ -9,9 +9,9 @@ export function selectedWeaponSequence(kind) {
   if (kind === 'fully-defended') { poses=impact;weights=impactWeights; }
   else if (kind === 'evade') { poses=evade;weights=[1,1,1]; }
   else if (kind === 'defend' || kind === 'guard-break') { poses=[kind];weights=[6]; }
-  else if (kind === 'attack' || kind === 'smash') { poses=attack;weights=[1,1,1,1,1,1];contact=2; }
-  else if (kind === 'counter-guard') { poses=[...impact,'smash',...attack];weights=[...impactWeights,1,1,1,1,1,1,1];contact=9; }
-  else if (kind === 'counter-evade') { poses=[...evade,...attack];weights=[1,1,1,1,1,1,1,1,1];contact=5; }
+  else if (kind === 'attack' || kind === 'smash') { poses=attack;weights=[1,1,1,1,1,1];contact=3; }
+  else if (kind === 'counter-guard') { poses=[...impact,'smash',...attack];weights=[...impactWeights,1,1,1,1,1,1,1];contact=10; }
+  else if (kind === 'counter-evade') { poses=[...evade,...attack];weights=[1,1,1,1,1,1,1,1,1];contact=6; }
   else return null;
   return {poses:poses.map(p=>'pilot-'+p),durations:weights,impact:contact,travel:poses.map(()=>0),hold:false,pilot:true,reaction:kind === 'defend' || kind === 'guard-break'};
 }

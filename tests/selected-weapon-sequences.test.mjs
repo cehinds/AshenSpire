@@ -14,9 +14,11 @@ test('review ratios keep the existing six-phase attack cadence and whole counter
   assert.equal(timing(clip('attack'),ANIM_SPEEDS.normal).totalMs,195);
   assert.equal(timing(clip('fully-defended'),ANIM_SPEEDS.normal).totalMs,422.5);
   assert.equal(timing(clip('counter-guard'),ANIM_SPEEDS.normal).totalMs,650);
-  assert.equal(timing(clip('counter-guard'),ANIM_SPEEDS.normal).impactMs,520);
-  assert.equal(clip('counter-guard').poses[clip('counter-guard').impact],'pilot-attack-3');
+  assert.equal(timing(clip('counter-guard'),ANIM_SPEEDS.normal).impactMs,552.5);
+  assert.equal(clip('counter-guard').poses[clip('counter-guard').impact],'pilot-attack-4');
   assert.equal(timing(clip('counter-evade'),ANIM_SPEEDS.normal).totalMs,292.5);
+  assert.equal(timing(clip('counter-evade'),ANIM_SPEEDS.normal).impactMs,195);
+  assert.equal(timing(clip('attack'),ANIM_SPEEDS.normal).impactMs,97.5);
   assert.deepEqual(clip('counter-evade').poses,[...clip('evade').poses,...clip('attack').poses]);
   assert.deepEqual(clip('counter-guard').poses,[...clip('fully-defended').poses,'pilot-smash',...clip('attack').poses]);
   for(const speed of Object.values(ANIM_SPEEDS))assert.equal(timing(clip('attack'),speed).totalMs,speed?.lungeMs||0);
