@@ -18,10 +18,10 @@
 
 ## Next work: finish the reference artwork
 
-1. Resolve write access to **cehinds/AshenSpire-art**. Its push returned HTTP 403; do not assume an art PR or release exists.
+1. Resolve write access to **cehinds/AshenSpire-art**. Its push returned HTTP 403; do not assume an art PR or release exists. The owner will push `8803331f` from the Codex task; until then it exists only there.
 2. Ready art-repository branch: `worker/updateCharacterCreation/feat-art`, local commit `8803331f2afc84efb60409f278410674e88596a7`, checkout `/workspace/scratch/character-feat-art-repo`. It contains six ornate composites, ten separate original PNG layers, light twins, generated manifest/provenance, and credits. Publish/review through the official art workflow; respect the owner-only release boundary in CONTRIBUTING.md.
 3. After the art release exists, update the game's release pin and regenerate its manifest using the official tools. Do not hand-edit derived manifests or weaken asset validation.
-4. Integrate the prepared runtime artwork from game origin branch `worker/updateCharacterCreation/ornate-art-preview`, commit `fc44b6157`. This branch currently includes staged art and is **not merged into the feature**. Review its diff and reconcile asset intake before merging; don't blindly merge its pending assets into production.
+4. **Done as a preview (owner's call, 2026-10-12):** `worker/updateCharacterCreation/ornate-art-preview` (`fc44b6157`) is merged into this feature with its staged PNGs. Once the art release and pin land, swap the staged assets for the released ones and drop the staged copies.
 5. Rebuild and verify desktop/mobile against the user's reference. Keep concise tiles and full details in inspection. Further visual refinement still needs user review; do not describe the current build as an exact artwork match.
 
 The game origin also preserves `worker/updateCharacterCreation/feat-art` (`28bc1f439`), containing intake source assets/geometry. Production build 1322 deliberately retains registered glyph artwork. The ornate integration uses normal asset IDs and separate material/trim/symbol/prop image layers, and currently runs as a source authoring preview through `serve --editor-write`.
