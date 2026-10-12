@@ -131,3 +131,17 @@ test('after confirming a spell-only card, the held glyph becomes prepare', () =>
   assert.equal(actions[0].attrs['aria-label'], 'Selected action: prepare');
   assert.equal(actions[0].children[0].icon, 'prepare');
 });
+
+test('a sweep profile renders the sweep icon, not the attack icon', () => {
+  const playerActionIntent = loadPlayerActionIntent();
+  const node = playerActionIntent({ camp: 'physical', maneuver: 'sweep' }, () => {});
+  assert.equal(node.children[0].icon, 'sweep');
+  assert.equal(node.attrs['aria-label'], 'Selected action: sweep');
+});
+
+test('an armed untyped card shows the prepare glyph over a held defend', () => {
+  const { actions, sync } = loadSyncPlayerActionIntent(loadPlayerActionIntent(), { id: 'untypedSkill', type: 'skill', cardTags: [] });
+  sync({ instanceId: 'x', cardId: 'untypedSkill' }, kindForCard({ id: 'defend' }));
+  assert.equal(actions.at(-1).attrs['aria-label'], 'Selected action: prepare', 'the armed profile is always used when present');
+  assert.equal(actions.at(-1).children[0].icon, 'prepare');
+});
