@@ -3,6 +3,7 @@ import { esc } from './tooltip.js';
 
 // Original solid silhouettes, matching the approved B footer treatment.
 const SHAPES = Object.freeze({
+  fire: '<path d="M18 1c4 9-5 11-1 16 4-2 6-6 6-10 12 14 9 24-7 24C1 31-2 19 9 10c-1 6 1 9 4 9-4-9 3-13 5-18ZM16 21c-7 7-3 9 0 9s8-4 0-9Z"/>',
   ritual: '<path d="M16 2 31 28H1Zm0 7L7 25h18Z"/><circle cx="16" cy="19" r="4"/>',
   skill: '<path d="m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z"/>',
   bleed: '<path d="M16 1C13 8 5 15 5 21a11 11 0 0 0 22 0C27 15 19 8 16 1ZM9 21h3c0 4 2 5 5 5v3c-5 0-8-3-8-8Z"/>',
@@ -20,7 +21,7 @@ const SHAPES = Object.freeze({
   guile: '<path d="M2 7q14 8 28 0v12L19 30l-3-9-3 9L2 19Zm4 6v5l6 1v-4Zm20 0-6 2v4l6-1Z"/>',
 });
 
-const ALIASES = Object.freeze({ fire:'spell', burn:'spell', cold:'frost', arcane:'force', sacred:'divine', holy:'divine', necrotic:'decay', crimsonBlight:'decay', necroticBlight:'decay', blight:'decay', blood:'bleed', gorefire:'spell', blade:'slashing', pierce:'piercing', heavy:'blunt', starstone:'force', astral:'force', venom:'decay', oath:'divine', weak:'lightning', vulnerable:'guard', staggered:'blunt', poise:'blunt', precision:'ranged', cleave:'attack', counter:'counter', flourish:'skill', prepared:'guile', concealed:'guile', ash:'guile' });
+const ALIASES = Object.freeze({ fire:'fire', burn:'fire', cold:'frost', arcane:'force', sacred:'divine', holy:'divine', necrotic:'decay', crimsonBlight:'decay', necroticBlight:'decay', blight:'decay', blood:'bleed', gorefire:'fire', blade:'slashing', pierce:'piercing', heavy:'blunt', starstone:'force', astral:'force', venom:'decay', oath:'divine', weak:'lightning', vulnerable:'guard', staggered:'blunt', poise:'blunt', precision:'ranged', cleave:'attack', counter:'counter', flourish:'skill', prepared:'guile', concealed:'guile', ash:'guile' });
 
 function shapeFor(tag) {
   const key = tag.id.split(':').at(-1);

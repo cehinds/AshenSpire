@@ -583,7 +583,7 @@ export const tags = [
     "domain": "attackSource",
     "label": "Spell",
     "color": "9FC3E8",
-    "glyph": "◇",
+    "glyph": "◆",
     "visibility": "",
     "blurb": "Categorized Spell identity; effects are authored separately."
   },
@@ -3463,7 +3463,7 @@ export const tags = [
     "domain": "camp",
     "label": "Spell",
     "color": "9FC3E8",
-    "glyph": "✦",
+    "glyph": "◆",
     "visibility": "",
     "blurb": "Selects physical Guard or magical Ward combat rules."
   },
@@ -3634,7 +3634,7 @@ export const tags = [
     "domain": "maneuver",
     "label": "Spell",
     "color": "9FC3E8",
-    "glyph": "◇",
+    "glyph": "◆",
     "visibility": "",
     "blurb": "A spell stance. Counter coverage depends on school and delivery."
   },

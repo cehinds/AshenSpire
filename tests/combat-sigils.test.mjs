@@ -62,6 +62,25 @@ test('card footer icons and corresponding intents use the same approved geometry
   }
 });
 
+test('Spell identity uses one diamond while Fire, Burn and Gorefire retain flames', () => {
+  const diamond = '<path d="M16 2 29 16 16 30 3 16Z"/>';
+  assert.equal(ACTION_SIGILS.spell.shape, diamond);
+  assert.ok(cardSigilsHtml({ action: 'spell' }).includes(diamond));
+  for (const id of ['camp:spell', 'source:spell']) {
+    assert.ok(cardTagRailHtml([{ id, label: 'Spell' }]).includes(diamond));
+  }
+  for (const id of ['school:fire', 'damage:fire', 'status:burn', 'gorefire']) {
+    const html = cardTagRailHtml([{ id, label: 'Fire' }]);
+    assert.ok(html.includes('M18 1c4 9-5 11-1 16'), id);
+    assert.ok(!html.includes(diamond), id);
+  }
+  assert.ok(SCHOOL_SIGILS.fire.shape.includes('M17 3c3 8'));
+  for (const id of ['camp:spell', 'source:spell', 'maneuver:casting']) {
+    assert.equal(contentBundle.tags.find(tag => tag.id === id).glyph, '◆');
+  }
+  assert.equal(contentBundle.tags.find(tag => tag.id === 'school:fire').glyph, '🔥');
+});
+
 test('short damage wording retains numbers, types, timing, targets and conditions', () => {
   const original = 'Deal <span class="val">9</span> Piercing damage to all enemies.\nGain 4 Guard until next turn. If Guard breaks, deal 3 Cold damage.';
   assert.equal(compactCardRules(original), '<span class="val">9</span> Piercing damage to all enemies. Gain 4 Guard until next turn. If Guard breaks, deal 3 Cold damage.');

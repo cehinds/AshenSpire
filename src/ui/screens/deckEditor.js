@@ -430,7 +430,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     return range ? el('span', { class: 'deck-editor-range', dataset: { range }, text: t(`deckEditor.range.${range}`) }) : null;
   };
   // Physical or magical, as an icon before the costs: the Smash sigil in silver
-  // for physical cards, the Spell flame in blue for magical ones.
+  // for physical cards, the Spell diamond in blue for magical ones.
   const campNode = (row) => {
     const camp = combatProfileFor(combatDef(row)).camp === 'spell' ? 'magical' : 'physical';
     const node = el('span', { class: 'deck-editor-camp', dataset: { camp }, role: 'img', title: tFull(`deckEditor.camp.${camp}`), 'aria-label': t(`deckEditor.camp.${camp}`) });

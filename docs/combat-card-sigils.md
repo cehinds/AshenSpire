@@ -17,7 +17,7 @@
 - Sweep: a broad arc with a horizontal arrow.
 - Ranged: a bow and arrow.
 - Smash: a hammer with impact marks.
-- Spell: a wand with an arcane orb.
+- Spell: a single diamond, shared by current card footers, Spell/source tags, spell intents, and the deck editor's magical marker. Fire school and Fire/Burn/Gorefire tags retain flame symbols.
 - Power: an upward buff arrow with sparks; cast once and keep its buff for the combat. Expanded Powers Exhaust after casting.
 - Skill: an open hand; reusable utility or buffs. Information includes any authored lifecycle exception.
 - Status: a warning triangle; injected status-effect cards, usually harmful.

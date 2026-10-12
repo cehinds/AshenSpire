@@ -1352,6 +1352,9 @@ test('DOM: range follows the expanded combat delivery; the mark follows the camp
     const mark = (cardId) => row(cardId).querySelector('.deck-editor-camp .combat-sigil')?.dataset.sigil;
     assert.equal(mark('ricochet'), 'smash');
     assert.equal(mark('cometFragment'), 'spell');
+    const spellMark = row('cometFragment').querySelector('.deck-editor-camp .combat-sigil');
+    assert.equal(spellMark.querySelectorAll('path').length, 1);
+    assert.equal(spellMark.querySelector('path').getAttribute('d'), 'M16 2 29 16 16 30 3 16Z');
     // Phase Ward carries reach:contact but attacks nothing: no range.
     assert.equal(read('phaseWard')[0], undefined, 'a card that attacks nothing shows no range');
     // A magical Power is a Power, with no Cantrip badge.
