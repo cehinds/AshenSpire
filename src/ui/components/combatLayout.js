@@ -1,5 +1,7 @@
 import { allocateCombatBands, packCombatFooter } from '../models/CombatLayout.js';
 import { footerArtHeight, footerArtWidth } from '../models/FooterLayoutModel.js';
+import { footerSizing } from '../../content/footerLayout.js';
+import { uiConfig } from '../../config/generated/ui.js';
 import { combatantMeterGeometry } from '../models/CombatantMeterModel.js';
 import { overlayGeometry, OVERLAY_ROLES } from '../models/CombatOverlayModel.js';
 import { fitFooterCompactLabels } from './footerArt.js';
@@ -28,7 +30,7 @@ export function wireCombatLayout(combatEl) {
     // The plan gets the width between the safe-area insets, so the rails and
     // the hand they wrap stay clear of a notch.
     const width = combatEl.clientWidth - inlinePadding(handArea);
-    const compact = width * zoom <= 600;
+    const compact = width * zoom <= uiConfig.scenes.w4a.sizing.compactCombat.maxWidthPx;
     combatEl.dataset.compactCombat = String(compact);
     const bands = allocateCombatBands({ width, height: combatEl.clientHeight, zoom, rem, compact, footerArtPx: footerArtHeight(width, zoom) * zoom });
     // The W4 parent's bands (kit.css, shared with the quest dialogue): the
@@ -75,7 +77,7 @@ export function wireCombatLayout(combatEl) {
     row.style.setProperty('--footer-pile-height', footer.pileHeight + 'px');
     row.style.setProperty('--footer-end-width', footer.endWidth + 'px');
     row.dataset.footerGeometry = footer.supported ? 'supported' : 'unsupported';
-    row.dataset.footerCompact = String(bands.arrangement === 'rails' || width * zoom < 680);
+    row.dataset.footerCompact = String(bands.arrangement === 'rails' || width * zoom < footerSizing.compactBelowPx);
     fitFooterCompactLabels(row);
   }
 
