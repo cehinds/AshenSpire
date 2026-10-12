@@ -326,7 +326,7 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
   if (hpLoss) target.hp -= hpLoss;
   creditKnowledgeImpact(ctx, target, amount, tactical.knowledgeBonus > 0);
   Matchups.recordTacticalContact(tactical, { hpLoss, blocked, wardResisted: ward });
-  ctx.emit('damageDealt', { sourceId: source?.id, targetId: target.id, amount, blocked, wardResisted: ward,
+  ctx.emit('damageDealt', { sourceId: source?.id, targetId: target.id, amount, blocked, wardResisted: wardAbsorbed,
     damageType: type, blockRemaining: target.block || 0, barrierRemaining: target.barrier || 0,
     ...seatOf(ctx, target), ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source) } : {}),
     ...(carrier.instanceId ? { cardInstanceId: carrier.instanceId, sourceHand: carrier.sourceHand, grantedBy: carrier.grantedBy } : {}), isAttack: true });
