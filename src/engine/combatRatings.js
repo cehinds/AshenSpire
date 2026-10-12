@@ -71,6 +71,11 @@ export function applyRatingImpact(ctx, source, target, carrier, explicitAmount =
     meter.growths = (meter.growths || 0) + 1;
     ctx.emit('meterFilled', { ...seats, targetId: target.id, meter: meterName, threshold: meter.max });
   }
+  // A Poise break on an enemy is a full Stagger (owner, 2026-10-12): the
+  // content's balance.poise.onFill (the `staggered` status) runs once per
+  // impact that breaks, however many thresholds it crossed. Ward breaks keep
+  // only the skipped turn.
+  if (meterName === 'poise' && target.kind === 'enemy' && breaks > 0) enqueuePoiseOnFill(ctx, target);
   if (single && magical && breaks > 0) {
     if (triggerHit) ctx.emit('arcaneStagger', { ...seats, targetId: target.id, sourceId: source?.id ?? null,
       school: carrier?.damageSchool, threshold: thresholdBeforeGrowth });
@@ -79,6 +84,18 @@ export function applyRatingImpact(ctx, source, target, carrier, explicitAmount =
   ctx.emit('ratingImpact', { ...seats, targetId: target.id, sourceId: source?.id, meter: meterName, amount,
     ...(guarded ? { guarded, ...meterGuardReceipt(target, meterName) } : {}),
     value: meter.value, max: meter.max, breaks, label });
+}
+
+/**
+ * enqueuePoiseOnFill(ctx, enemy) — queue balance.poise.onFill's content
+ * effects (owner = the enemy) for a Poise break: the one home for what
+ * "Staggered" means, shared by the rating meter and breakEnemy.
+ */
+export function enqueuePoiseOnFill(ctx, enemy) {
+  const cfg = (ctx.registries.balance && ctx.registries.balance.poise) || {};
+  for (const eff of cfg.onFill || []) {
+    ctx.enqueue({ effect: eff, source: enemy, owner: enemy, target: enemy, meta: {} });
+  }
 }
 
 function foldedMagicImpact(ctx, source, target, carrier, baseImpact) {

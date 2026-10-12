@@ -573,8 +573,10 @@ export function staggerEnemy(ctx, enemy) {
  * card rider gated on it). Both the poise bar filling (dealPoiseDamage) and a
  * direct proc stagger (the 'stagger' opcode, insanity's row) land here, so an
  * Insanity break is the same Stagger a full meter is. Meter growth stays with
- * the bar: the direct path neither consumes nor grows it (SPEC §4.4). Under
- * combat ratings a break is the skipped turn alone (no onFill), on both paths.
+ * the bar: the direct path neither consumes nor grows it (SPEC §4.4). Combat
+ * ratings change nothing here (owner, 2026-10-12): a Poise break is a full
+ * Stagger with onFill on every path, and the rating meter's own Poise fill
+ * (combatRatings.applyRatingImpact) runs the same onFill. Ward breaks do not.
  */
 /**
  * growPoiseMeter(ctx, entity) — after a full Poise fill, the meter's max grows
@@ -597,11 +599,7 @@ export function growPoiseMeter(ctx, entity) {
 
 export function breakEnemy(ctx, enemy) {
   if (!staggerEnemy(ctx, enemy)) return false;
-  if (ctx.ratingsRules) return true;
-  const cfg = (ctx.registries.balance && ctx.registries.balance.poise) || {};
-  for (const eff of cfg.onFill || []) {
-    ctx.enqueue({ effect: eff, source: enemy, owner: enemy, target: enemy, meta: {} });
-  }
+  Ratings.enqueuePoiseOnFill(ctx, enemy);
   return true;
 }
 
