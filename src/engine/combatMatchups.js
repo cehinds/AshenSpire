@@ -3,6 +3,7 @@ import { combatMatchups, combatExpansionMatchups } from '../content/combatMatchu
 import * as Avoidance from './combatAvoidance.js';
 import { creditKnowledgeBenefit } from './enemyKnowledge.js';
 import { enqueueExpandedAction } from './combatExpansionActions.js';
+import { breakPersistentWard } from './combatStatusControl.js';
 
 export function matchupRules(ctx) {
   return ctx?.combatMatchupRules || ctx?.registries?.balance?.combatMatchups || combatMatchups;
@@ -128,6 +129,7 @@ export function stripCombatWard(ctx, source, target, amount) {
     const stripped = Math.min(Math.max(0, ward.value), Math.max(0, Math.floor(amount)));
     ward.value -= stripped;
     if (stripped) ctx.emit?.('combatWardStripped', { ...seats(ctx, source, target), sourceId: source?.id, sourceKind: source?.kind, targetId: target.id, amount: stripped });
+    if (stripped && ward.value === 0) breakPersistentWard(ctx, target, { sourceId: source?.id });
     return stripped;
   }
   let remaining = Math.max(0, Math.floor(amount));

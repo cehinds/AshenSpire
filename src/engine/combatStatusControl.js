@@ -46,17 +46,37 @@ export function initializePersistentPoise(entity, maximum) {
   return entity.persistentPoise;
 }
 
-/** Fractional explicit pressure shares one carried budget, not one per hit. */
+/**
+ * THE ONE WARD BREAK. A player pays breaks.wardActionLoss Stamina next turn; an
+ * enemy has none to lose. Every path that takes Ward to 0 comes here (spending
+ * it, a status pressure, a matchup's strip). `deferBreak` returns the payload
+ * without emitting, so a caller can emit after its damageDealt.
+ */
+export function breakPersistentWard(ctx, entity, meta = {}) {
+  const staminaLoss = entity.kind === 'player' ? Math.max(0, ctx?.ratingsRules?.breaks?.wardActionLoss ?? 1) : 0;
+  if (staminaLoss) entity.pendingActionLoss = (entity.pendingActionLoss || 0) + staminaLoss;
+  const payload = { targetId: entity.id, sourceId: meta.sourceId, staminaLoss,
+    ...(ctx?.playerIdForEntity && entity.kind === 'player' ? { targetPlayerId: ctx.playerIdForEntity(entity) } : {}) };
+  if (!meta.deferBreak) ctx?.emit?.('wardBroken', payload);
+  return payload;
+}
+
+/**
+ * Fractional explicit pressure shares one carried budget, not one per hit.
+ * `broke` names a Ward taken from above zero to zero: `breakEvent` is its
+ * wardBroken payload (already emitted unless `deferBreak`).
+ */
 export function spendPersistentWard(ctx, entity, amount, meta = {}) {
-  if (!enabled(ctx) || !entity?.persistentWard || amount <= 0) return { spent: 0, carry: 0 };
+  if (!enabled(ctx) || !entity?.persistentWard || amount <= 0) return { spent: 0, carry: 0, broke: false, breakEvent: null };
   const s = state(entity), ward = entity.persistentWard;
-  if (ward.value <= 0) { s.wardDamageCarry = 0; return { spent: 0, carry: 0 }; }
+  if (ward.value <= 0) { s.wardDamageCarry = 0; return { spent: 0, carry: 0, broke: false, breakEvent: null }; }
   const exact = Math.max(0, finite(amount)) + s.wardDamageCarry;
   const spent = Math.min(ward.value, Math.floor(exact + 1e-9));
   ward.value -= spent;
   s.wardDamageCarry = ward.value > 0 ? exact - Math.floor(exact + 1e-9) : 0;
   emit(ctx, 'persistentWardChanged', entity, { spent, value: ward.value, max: ward.max, ...meta });
-  return { spent, carry: s.wardDamageCarry };
+  const breakEvent = ward.value === 0 && spent > 0 ? breakPersistentWard(ctx, entity, meta) : null;
+  return { spent, carry: s.wardDamageCarry, broke: breakEvent !== null, breakEvent };
 }
 
 /** One authority for additive modifiers, caps, once allowances and carry. */
@@ -153,7 +173,7 @@ export function applyStatusPressure(ctx, target, id, units, source = null, optio
     gauge.value -= threshold;
     let admitted = true;
     if (camp === 'spell' && target.persistentWard?.value > 0) {
-      const spent = spendPersistentWard(ctx, target, 1, { status: id, actionKey: options.actionKey });
+      const spent = spendPersistentWard(ctx, target, 1, { status: id, actionKey: options.actionKey, sourceId: source?.id });
       receipt.wardSpent += spent.spent;
       admitted = target.persistentWard.value === 0;
     } else if (camp === 'physical' && target.poiseMeter?.max > 0) {

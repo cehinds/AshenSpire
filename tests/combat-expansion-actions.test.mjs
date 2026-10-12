@@ -251,3 +251,18 @@ test('a magical hit leaves Poise untouched', () => {
   applyAttackDamage(combat, combat.player, enemy, 10, [], magicCarrier());
   assert.equal(enemy.persistentPoise.value, 4, 'Poise guards against physical hits only');
 });
+
+test('a spell status pressure that spends the last Ward point breaks Ward: one event, one Stamina for a player', async () => {
+  const Control = await import('../src/engine/combatStatusControl.js');
+  const { combat, enemy } = fixture();
+  const mage = combat.player;
+  mage.persistentWard = { max: 1, value: 1 }; mage.pendingActionLoss = 0;
+  const events = captureEvents(combat);
+  // frost is a Spell status: its buildup spends Ward before it can land.
+  Control.applyStatusPressure(combat, mage, 'frost', 10, enemy, { camp: 'spell' });
+  assert.equal(mage.persistentWard.value, 0);
+  assert.equal(mage.pendingActionLoss, 1, 'a player pays one Stamina next turn');
+  const broke = events.filter(event => event.type === 'wardBroken');
+  assert.equal(broke.length, 1);
+  assert.equal(broke[0].staminaLoss, 1);
+});

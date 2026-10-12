@@ -357,17 +357,6 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
 }
 
 /**
- * A Ward break costs a player Stamina next turn (breaks.wardActionLoss). The
- * stamina is charged now; the event is returned so the caller emits it after
- * damageDealt, where the log reads it.
- */
-function breakWard(ctx, source, target) {
-  const loss = target.kind === 'player' ? Math.max(0, ctx.ratingsRules?.breaks?.wardActionLoss ?? 1) : 0;
-  if (loss) target.pendingActionLoss = (target.pendingActionLoss || 0) + loss;
-  return ['wardBroken', { targetId: target.id, sourceId: source?.id, staminaLoss: loss, ...seatOf(ctx, target) }];
-}
-
-/**
  * A Poise break staggers an enemy (staggerEnemy, called by the caller after the
  * log has the hit) and costs a player Stamina next turn (breaks.poiseActionLoss,
  * 1 by default). A player is never staggered by Poise: staggerPlayer can apply
@@ -405,8 +394,8 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
   }
   const wardSpent = tactical.wardSpentAmounts?.[contactIndex] || 0;
   if (wardSpent > 0 && target.persistentWard?.value > 0) {
-    Control.spendPersistentWard(ctx, target, wardSpent, { cause: 'damage' });
-    if (target.persistentWard.value === 0) breaks.push(breakWard(ctx, source, target));
+    const spend = Control.spendPersistentWard(ctx, target, wardSpent, { cause: 'damage', sourceId: source?.id, deferBreak: true });
+    if (spend.breakEvent) breaks.push(['wardBroken', spend.breakEvent]);
   }
   const pool = 'block';
   const bypass = Math.min(amount, tactical.guardBypassRemaining || 0);
