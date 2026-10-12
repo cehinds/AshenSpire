@@ -363,6 +363,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         // misses the mark still selects this same enemy.
         ['below', { left: centre - size / 2, top: box.bottom + gap }],
       ].map(([side, at]) => [side, at, combatInspectTapBox({ ...at, width: size })]);
+      // A readout hung below the feet keeps Inspect below or beside its
+      // intent: a spot above it would put the tap area over the fighter.
+      if (info.closest('.combatant')?.dataset.hudBelow) spots.splice(0, spots.length, ...['below', 'left', 'right'].map(side => spots.find(([s]) => s === side)));
       // Our own intent is the anchor; every tap pad must clear everything else,
       // including the Inspect marks already planned this pass.
       const others = [...controls.filter(({ node }) => !(node.matches('.intent') && node.parentElement === anchor)).map(({ rect }) => rect),
@@ -693,8 +696,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         const above = ground - visibleHeight - overheadGap - actor.leadingHeight * zoom;
         leadingHost.style.translate = `0 ${(ground + overheadGap - above) / zoom}px`;
         delete frame.dataset.overheadObstructed;
+        frame.dataset.hudBelow = 'true';
         return;
       }
+      delete frame.dataset.hudBelow;
       const overheadX = anchor?.x ?? x;
       const overheadLocal = anchorLocalBox(VIEWPORT_ORIGIN,
         { left: overheadX - x, top: 0, width: 0, height: 0 }, { zoom });
