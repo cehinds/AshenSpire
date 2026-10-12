@@ -43,8 +43,8 @@
       "wide": {
         "left": 0.08,
         "right": 0.92,
-        "enemyTop": 0.3,
-        "enemyRowHeight": 0.15,
+        "enemyTop": 0.37,
+        "enemyRowHeight": 0.13,
         "playerTop": 0.64,
         "playerRowHeight": 0.3,
         "skew": 0.45
@@ -52,8 +52,8 @@
       "narrow": {
         "left": 0.0,
         "right": 1.0,
-        "enemyTop": 0.26,
-        "enemyRowHeight": 0.16,
+        "enemyTop": 0.31,
+        "enemyRowHeight": 0.15,
         "playerTop": 0.68,
         "playerRowHeight": 0.28,
         "skew": 0.18
