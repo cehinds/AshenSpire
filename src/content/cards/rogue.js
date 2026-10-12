@@ -21,7 +21,7 @@ export const rogueCards = [
     keywords: [], icon: '🗡',
     effects: [
       { op: 'damage', target: 'enemy', amount: 5 },
-      { op: 'damage', target: 'enemy', amount: 5, if: PREPARED },
+      { op: 'damage', target: 'enemy', amount: 8, if: PREPARED },
       { op: 'applyStatus', target: 'enemy', status: 'vulnerable', stacks: 1 },
       spendPrepared(),
     ],
@@ -29,7 +29,7 @@ export const rogueCards = [
     upgrade: {
       effects: [
         { op: 'damage', target: 'enemy', amount: 7 },
-        { op: 'damage', target: 'enemy', amount: 7, if: PREPARED },
+        { op: 'damage', target: 'enemy', amount: 10, if: PREPARED },
         { op: 'applyStatus', target: 'enemy', status: 'vulnerable', stacks: 2 },
         spendPrepared(),
       ],

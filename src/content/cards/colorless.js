@@ -89,9 +89,9 @@ export const colorlessCards = [
     id: 'twinFang', name: 'Twin Fang', class: 'colorless', rarity: 'common', cost: 1, type: 'attack',
     flavor: "Two knives, worn crosswise.\n\nOne for the hound, one for its handler. The weald's blight-hounds were the Wardens' before the Burning, and run yet with Bastion kennelmen who turned with the pack.\n\nA handler may be reasoned with, briefly. Never twice.",
     keywords: [], icon: '🗡',
-    effects: [{ op: 'damage', target: 'enemy', amount: 3, hits: 2 }],
+    effects: [{ op: 'damage', target: 'enemy', amount: 4, hits: 2 }],
     textTemplate: 'Deal {damage} damage {hits} times.',
-    upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 5, hits: 2 }] },
+    upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 6, hits: 2 }] },
   },
   {
     id: 'blindingSand', name: 'Blinding Sand', class: 'colorless', rarity: 'common', cost: 0, type: 'skill',
