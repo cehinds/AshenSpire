@@ -1,0 +1,138 @@
+{
+  "version": 1,
+  "title": "Attributes Name Field",
+  "canvas": {
+    "width": 730,
+    "height": 78,
+    "background": "transparent"
+  },
+  "defaultState": "attributes",
+  "states": [
+    {
+      "id": "attributes",
+      "name": "Attributes"
+    }
+  ],
+  "assets": {
+    "panel-frame": {
+      "src": "assets/panel-frame.png",
+      "width": 1080,
+      "height": 720
+    },
+    "soot-material": {
+      "src": "assets/soot-material.png",
+      "width": 256,
+      "height": 256
+    }
+  },
+  "nodes": [
+    {
+      "id": "attributes-name-field",
+      "name": "Attributes Name Field",
+      "type": "group",
+      "parent": null,
+      "x": 0,
+      "y": 0,
+      "width": 730,
+      "height": 78,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "fill": "none"
+    },
+    {
+      "id": "attributes-name-field-label",
+      "name": "Attributes Name Field Label",
+      "type": "text",
+      "parent": "attributes-name-field",
+      "x": 0,
+      "y": 0,
+      "width": 730,
+      "height": 40,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "text": "Name \u00b7 up to 16 characters",
+      "fontSize": 13,
+      "fontFamily": "Arial",
+      "fill": "#b8aa87",
+      "lineHeight": 1.3
+    },
+    {
+      "id": "attributes-name-field-material",
+      "name": "Attributes Name Field Material",
+      "type": "image",
+      "parent": "attributes-name-field",
+      "x": 0,
+      "y": 23,
+      "width": 730,
+      "height": 47,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "asset": "soot-material"
+    },
+    {
+      "id": "attributes-name-field-trim",
+      "name": "Attributes Name Field Trim",
+      "type": "image",
+      "parent": "attributes-name-field",
+      "x": 0,
+      "y": 23,
+      "width": 730,
+      "height": 47,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "asset": "panel-frame"
+    },
+    {
+      "id": "attributes-name-field-value",
+      "name": "Attributes Name Field Value",
+      "type": "text",
+      "parent": "attributes-name-field",
+      "x": 15,
+      "y": 36,
+      "width": 702,
+      "height": 40,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "text": "Forsaken",
+      "fontSize": 16,
+      "fontFamily": "Arial",
+      "fill": "#e7dec8",
+      "lineHeight": 1.3
+    }
+  ],
+  "metadata": {
+    "componentSource": "attributes-name-field",
+    "sourceState": "attributes",
+    "designOnly": true
+  }
+}

@@ -31,7 +31,7 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const csvIds = (text) => new Set(text.split('\n').filter((line) => line && !line.startsWith('#')).map((line) => line.split(',')[0]).filter((id) => id && id !== 'id'));
 
 const frozenMigrationIds = (number) => JSON.parse(readFileSync(join(ROOT, `tests/fixtures/uistrings-migrated-${number}.json`), 'utf8')).ids;
-const permanentMigratedIds = () => new Set([1489, 1535, 1578, 1651, 1671, 1767, 1850].flatMap(frozenMigrationIds));
+const permanentMigratedIds = () => new Set([1489, 1535, 1578, 1651, 1671, 1767, 1850, 1915].flatMap(frozenMigrationIds));
 
 function migratedIds() {
   // Merged rows must remain protected when origin/dev advances or is absent.
@@ -126,6 +126,9 @@ const ALLOWED = [
   ['src/ui/screens/coop.js', 'Poise', 'the stat meter names the Poise stat, not the Stats preview line'],
   ['src/ui/screens/customize.js', 'Poise', 'character creation\'s Poise stat card, not the Stats preview line'],
   ['src/ui/components/creationCards.js', 'Poise', 'character creation\'s Poise chip, not the Stats preview line'],
+  ['src/ui/components/equipmentCard.js', 'Requires', 'parses an attribute requirement string prefix from the card model; not the creation feat lock copy'],
+  ['src/ui/screens/customize.js', 'Edit', 'sprite disclosure accessibility sense for a portrait field; not the review step edit label'],
+  ['src/ui/screens/settings.js', 'Edit', 'scene editor button accessible name; not the creation review edit label'],
 ];
 
 const stripComments = (src) => src
