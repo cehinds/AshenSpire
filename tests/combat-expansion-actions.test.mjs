@@ -176,6 +176,22 @@ test('a buff that raises the Ward rating raises the Ward maximum and current War
   assert.deepEqual({ ...enemy.persistentWard }, { max: 2, value: 2 });
 });
 
+test('a rating swing keeps the missing Ward fixed: a dip and recovery cannot refill a damaged pool', () => {
+  const { combat, enemy } = fixture();
+  enemy.ratings.ward = 10; enemy.persistentWard = { max: 10, value: 2 };
+  enemy.ratings.ward = 3; syncWardMaximum(combat, enemy);
+  assert.deepEqual({ ...enemy.persistentWard }, { max: 3, value: 0, missing: 8 }, 'the dip clamps the value and keeps the 8 missing');
+  enemy.ratings.ward = 10; syncWardMaximum(combat, enemy);
+  assert.deepEqual({ ...enemy.persistentWard }, { max: 10, value: 2 }, 'recovery restores the same missing, not a full pool');
+});
+
+test('a rise from a full Ward pool adds the same amount to current Ward', () => {
+  const { combat, enemy } = fixture();
+  enemy.ratings.ward = 10; enemy.persistentWard = { max: 10, value: 10 };
+  enemy.ratings.ward = 13; syncWardMaximum(combat, enemy);
+  assert.deepEqual({ ...enemy.persistentWard }, { max: 13, value: 13 });
+});
+
 test('each hit Ward meets still lets at least 1 damage through', () => {
   const { combat, enemy } = fixture();
   enemy.ratings.ward = enemy.persistentWard.value = enemy.persistentWard.max = 20;

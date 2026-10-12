@@ -108,6 +108,8 @@ export function restorePersistentWard(ctx, entity, nominal, options = {}) {
   const restored = Math.min(room, whole);
   const barrier = overflow ? whole - restored : 0;
   ward.value += restored;
+  // A pool that is no longer empty keeps no clamped missing amount; its missing is max - value again.
+  if (ward.value > 0) delete ward.missing;
   s.wardRestoreCarry = overflow || ward.value < ward.max ? Math.max(0, exact - whole) : 0;
   emit(ctx, 'persistentWardChanged', entity, { restored, credited: credit, value: ward.value, max: ward.max, source });
   if (barrier > 0) {
