@@ -61,9 +61,24 @@ function conditionFor(value) {
   if (result.p === 'hasStatus' || result.f === 'stacks') result.status = { frost: 'frozen', frostExposed: 'chilled', bleed: 'bleeding' }[result.status] || result.status;
   return result;
 }
+// A spell reaches by its explicit row, then its own authored reach, then the far
+// list, then its delivery: projectile is far, melee is contact, anything else is near.
+function spellReach(def, row) {
+  if (row.reach) return row.reach;
+  // Read before rewriteTags strips the reach tags.
+  const REACHES = ['contact', 'near', 'far'];
+  if (REACHES.includes(def.reach)) return def.reach;
+  const tags = def.cardTags || def.tags || [];
+  const authored = tags.find(tag => tag.startsWith('reach:'))?.slice(6);
+  if (REACHES.includes(authored)) return authored;
+  if (FAR.has(def.id)) return 'far';
+  if (tags.includes('delivery:projectile')) return 'far';
+  if (tags.includes('delivery:melee')) return 'contact';
+  return 'near';
+}
 function rewriteTags(def, row, maneuver) {
   const tags = (def.cardTags || def.tags || []).filter(tag => !['camp:', 'school:', 'damage:', 'maneuver:', 'reach:', 'targeting:', 'counter:'].some(prefix => tag.startsWith(prefix)));
-  tags.push('camp:spell', `school:${row.school}`, `damage:${row.damageType}`, `reach:${row.reach || (FAR.has(def.id) ? 'far' : 'near')}`, `targeting:${AREA.has(def.id) ? 'area' : 'single'}`);
+  tags.push('camp:spell', `school:${row.school}`, `damage:${row.damageType}`, `reach:${spellReach(def, row)}`, `targeting:${AREA.has(def.id) ? 'area' : 'single'}`);
   if (maneuver) tags.push(`maneuver:${maneuver}`);
   if (COUNTERS[def.id]) tags.push('counter:spell');
   return tags;
@@ -82,7 +97,7 @@ export function applyCombatExpansionCard(def) {
   const maneuver = row.maneuver || (COUNTERS[def.id] ? 'counter' : originalTags.find(tag => tag.startsWith('maneuver:'))?.slice(9)
     || (def.type === 'attack' ? 'casting' : null));
   const card = { ...def, tags: rewriteTags(def, row, maneuver), cardTags: rewriteTags(def, row, maneuver),
-    damageSchool: 'magic', reach: row.reach || (FAR.has(def.id) ? 'far' : 'near'), targeting: AREA.has(def.id) ? 'area' : 'single',
+    damageSchool: 'magic', reach: spellReach(def, row), targeting: AREA.has(def.id) ? 'area' : 'single',
     attack: { ...def.attack, source: 'spell', damageType: row.damageType }, effects: effectsFor(def.effects, row.school), textTemplate: barrierText(def.textTemplate) };
   if (def.upgrade) card.upgrade = { ...def.upgrade, ...(def.upgrade.effects ? { effects: effectsFor(def.upgrade.effects, row.school) } : {}), ...(def.upgrade.textTemplate ? { textTemplate: barrierText(def.upgrade.textTemplate) } : {}) };
   const damaging = card.effects.some(effect => effect.op === 'damage');

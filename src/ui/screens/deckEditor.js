@@ -33,6 +33,7 @@ import { DECK_PANES, deckEditorModel, deckEditorView, deckVariantKey, nextFilter
 import { t, tFull } from '../strings.js';
 import { renderCard, staticTokens } from '../components/card.js';
 import { resolveCard } from '../../model/registries.js';
+import { applyCombatExpansionCard } from '../../content/combatExpansionCards.js';
 import { combatProfileFor } from '../../model/combatCardProfile.js';
 import { sigilHtml } from '../components/combatSigilView.js';
 import { playingCardModel } from '../../model/playingCard.js';
@@ -347,8 +348,21 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   // of the six; otherwise what the card is: Spell, Power, Consumable or Skill.
   // Every card names one.
   const MANEUVER_STANCES = ['attack', 'defend', 'counter', 'smash', 'sweep', 'ranged'];
+  // The definition combat resolves: under expanded combat (v2) a run's spell
+  // reach and targeting come from applyCombatExpansionCard, so the editor shows them.
+  // One draw resolves each row's definition once: the cache is keyed by the
+  // row's ref (what resolveCard reads) and cleared at the start of draw().
+  const combatDefCache = new Map();
+  const combatDef = (row) => {
+    const key = JSON.stringify(row.ref);
+    if (!combatDefCache.has(key)) {
+      const def = resolveCard(registries, row.ref);
+      combatDefCache.set(key, run?.combatExpansionVersion === 2 ? applyCombatExpansionCard(def) : def);
+    }
+    return combatDefCache.get(key);
+  };
   const stanceKey = (row) => {
-    const def = resolveCard(registries, row.ref);
+    const def = combatDef(row);
     const profile = combatProfileFor(def);
     if (MANEUVER_STANCES.includes(profile.maneuver)) return profile.maneuver;
     // Power and Consumable come before the spell camp: a magical Power is a Power.
@@ -365,7 +379,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   // The rank the card face prints (its ability rank, else its rank badge). Rank 0
   // has a name: a spell's is Cantrip, a combat maneuver's is Basic.
   const rankNode = (row) => {
-    const def = resolveCard(registries, row.ref);
+    const def = combatDef(row);
     const card = playingCardModel(registries, row.ref);
     // An unranked maneuver or spell (the starter Strike and Defend) is rank 0.
     const ranked = card.abilityRank ?? (card.rankBadge ? Number(String(card.rankBadge).replace(/\D+/g, '')) : null);
@@ -377,26 +391,32 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     return el('span', { class: 'deck-editor-rank', dataset: { rank }, text });
   };
   // Range (owner, 2026-10-11): Melee / Reach / Ranged from the card's reach
-  // (contact / near / far). An untagged attacking card takes the player
-  // card's combat default (engine/combatMatchups.js normalizedProfile):
-  // projectiles and ranged maneuvers reach near, the rest contact. A card that attacks nothing shows no range.
+  // (contact / near / far). An untagged spell attack takes its delivery
+  // (projectile Ranged, melee Melee, else Reach) through the player card's
+  // combat default (combatCardProfile.js). Ranged maneuvers show no separate
+  // range: their stance already reads Ranged. A card that deals no damage shows no
+  // range, so a Counter that only gains Poise (an evasion) reads no range either;
+  // a Counter whose reply deals damage (hp or Ward) does.
   const RANGE_BY_REACH = { contact: 'melee', near: 'reach', far: 'ranged' };
   const ATTACKING = ['attack', 'smash', 'sweep', 'ranged', 'counter'];
+  const dealsDamage = (def) => (def.effects || []).some(effect => effect.op === 'damage')
+    || (def.counterPayload?.hp > 0 || def.counterPayload?.ward > 0);
   const rangeNode = (row) => {
-    const def = resolveCard(registries, row.ref);
+    if (stanceKey(row) === 'ranged') return null;
+    const def = combatDef(row);
     const profile = combatProfileFor(def);
     const attacking = ATTACKING.includes(profile.maneuver) || (profile.camp === 'spell' && def.type === 'attack');
-    if (!attacking) return null;
+    if (!attacking || !dealsDamage(def)) return null;
     const reach = profile.reach || (profile.delivery === 'projectile' || profile.maneuver === 'ranged' ? 'near' : 'contact');
     const range = RANGE_BY_REACH[reach];
     return range ? el('span', { class: 'deck-editor-range', dataset: { range }, text: t(`deckEditor.range.${range}`) }) : null;
   };
-  // Physical or magical, as an icon before the costs. Magical reuses the Spell
-  // sigil; physical borrows the crossed blades until it has its own mark.
+  // Physical or magical, as an icon before the costs: the Smash sigil in silver
+  // for physical cards, the Spell flame in blue for magical ones.
   const campNode = (row) => {
-    const camp = combatProfileFor(resolveCard(registries, row.ref)).camp === 'spell' ? 'magical' : 'physical';
+    const camp = combatProfileFor(combatDef(row)).camp === 'spell' ? 'magical' : 'physical';
     const node = el('span', { class: 'deck-editor-camp', dataset: { camp }, role: 'img', title: tFull(`deckEditor.camp.${camp}`), 'aria-label': t(`deckEditor.camp.${camp}`) });
-    node.innerHTML = sigilHtml(camp === 'magical' ? 'spell' : 'attack', 'action', { tooltip: false });
+    node.innerHTML = sigilHtml(camp === 'magical' ? 'spell' : 'smash', 'action', { tooltip: false });
     return node;
   };
   const tileCosts = (row) => rowCosts(row, [campNode(row)]);
@@ -751,6 +771,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   }
 
   function draw() {
+    combatDefCache.clear();
     model = deckEditorModel({ registries, run, settings, view });
     if (!model.ordered && mobileView === 'deck') mobileView = 'collection';
     const rows = selected?.source === 'deck' ? model.deck : model.collection;
