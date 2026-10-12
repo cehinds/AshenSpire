@@ -72,11 +72,13 @@ export function breakPersistentWard(ctx, entity, meta = {}) {
  * on pendingActionLoss, as a player's is. A player is not interrupted here.
  */
 export function interruptForBreak(ctx, entity, cause) {
-  if (entity?.kind !== 'enemy') return;
+  // A killing hit breaks nothing that can act again: no INTERRUPTED for a dead enemy.
+  if (entity?.kind !== 'enemy' || !entity.alive || !(entity.hp > 0)) return;
   const loss = Math.max(0, ctx?.ratingsRules?.breaks?.[cause === 'poiseBreak' ? 'poiseActionLoss' : 'wardActionLoss'] ?? 1);
   const cancelledMove = entity.pendingMove ? entity.pendingMove.moveId : null;
+  // Only a stagger that really happened interrupts (impact protection refuses it).
+  if (!Actions.staggerEnemy(ctx, entity, { cause })) return;
   entity.pendingActionLoss = (entity.pendingActionLoss || 0) + loss;
-  Actions.staggerEnemy(ctx, entity, { cause });
   ctx?.emit?.('enemyInterrupted', { targetId: entity.id, cancelledMove, cause, staminaLoss: loss });
 }
 

@@ -643,11 +643,12 @@ function afterHpChange(ctx, target, death = {}) {
  * itself; callers decide HOW it was earned — the poise bar filling
  * (dealPoiseDamage) or a direct proc (the 'stagger' opcode, insanity's row).
  * The direct path deliberately bypasses the bar: a guaranteed break that
- * neither consumes nor grows the poise meter.
+ * neither consumes nor grows the poise meter. Returns true when it staggered,
+ * false when it refused (dead, or impact-protected).
  */
 export function staggerEnemy(ctx, enemy, options = {}) {
-  if (!enemy || enemy.kind !== 'enemy' || !enemy.alive) return;
-  if (ctx.foundation && enemy.impactProtectedUntil >= ctx.turn) return;
+  if (!enemy || enemy.kind !== 'enemy' || !enemy.alive) return false;
+  if (ctx.foundation && enemy.impactProtectedUntil >= ctx.turn) return false;
   Matchups.clearCombatCounter(enemy, ctx);
   const cancelled = enemy.pendingMove ? enemy.pendingMove.moveId : null;
   enemy.pendingMove = null;
@@ -655,6 +656,7 @@ export function staggerEnemy(ctx, enemy, options = {}) {
   if (ctx.foundation) enemy.impactProtectedUntil = ctx.turn + ctx.foundation.rules.impact.protectionTurns;
   enemy.intent = { kind: 'staggered', moveId: null };
   ctx.emit('enemyStaggered', { targetId: enemy.id, enemyId: enemy.enemyId, cancelledMove: cancelled, ...(options.cause ? { cause: options.cause } : {}) });
+  return true;
 }
 
 /**

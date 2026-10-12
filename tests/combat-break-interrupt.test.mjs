@@ -4,7 +4,8 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createCombat } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
-import { applyAttackDamage } from '../src/engine/actions.js';
+import { applyAttackDamage, staggerEnemy } from '../src/engine/actions.js';
+import { interruptForBreak } from '../src/engine/combatStatusControl.js';
 
 // The same expanded fight as combat-expansion-actions.test.mjs, one enemy.
 function fixture() {
@@ -60,4 +61,44 @@ test('an enemy whose Poise breaks to a physical hit loses its prepared move and 
   assert.equal(enemy.pendingActionLoss, 1, 'the enemy pays 1 Stamina');
   assert.equal(events.find(event => event.type === 'enemyStaggered').cause, 'poiseBreak');
   assert.equal(events.find(event => event.type === 'poiseBroken').interrupted, true);
+});
+
+test('a killing hit that breaks Ward does not interrupt the dead enemy: no INTERRUPTED, no stagger, no Stamina', () => {
+  const { combat, enemy } = fixture();
+  enemy.ratings.ward = 1; enemy.persistentWard = { max: 1, value: 1 }; enemy.hp = 1;
+  const events = captureEvents(combat);
+  applyAttackDamage(combat, combat.player, enemy, 3, [], magicCarrier());
+  assert.equal(enemy.alive, false, 'the hit kills the enemy');
+  assert.equal(events.find(event => event.type === 'wardBroken').interrupted, true, 'the Ward still broke');
+  assert.equal(events.some(event => event.type === 'enemyInterrupted'), false, 'a killing hit shows no INTERRUPTED');
+  assert.equal(events.some(event => event.type === 'enemyStaggered'), false);
+  assert.equal(enemy.pendingActionLoss, undefined, 'a dead enemy pays nothing');
+  assert.ok(enemy.pendingMove, 'the prepared move is left alone');
+});
+
+test('interruptForBreak does nothing for an enemy at 0 HP even when it is still flagged alive', () => {
+  const { combat, enemy } = fixture();
+  const events = captureEvents(combat);
+  enemy.hp = 0;
+  interruptForBreak(combat, enemy, 'wardBreak');
+  assert.equal(events.length, 0);
+  assert.ok(enemy.pendingMove);
+});
+
+test('staggerEnemy reports whether it staggered; impact protection refuses and interrupts nothing', () => {
+  const { combat, enemy } = fixture();
+  combat.turn = 3;
+  combat.foundation = { rules: { impact: { protectionTurns: 2 } } };
+  enemy.impactProtectedUntil = 3;
+  // A plain recorder: the foundation's own event rules are not under test here.
+  const events = [];
+  combat.emit = (type, payload) => { events.push({ type, ...payload }); };
+  assert.equal(staggerEnemy(combat, enemy, { cause: 'poiseBreak' }), false, 'a protected enemy is not staggered');
+  assert.ok(enemy.pendingMove, 'its move is not cancelled');
+  interruptForBreak(combat, enemy, 'poiseBreak');
+  assert.equal(events.some(event => event.type === 'enemyInterrupted'), false, 'no INTERRUPTED for a refused stagger');
+  assert.equal(enemy.pendingActionLoss, undefined, 'and no Stamina is charged');
+  enemy.impactProtectedUntil = 0;
+  assert.equal(staggerEnemy(combat, enemy, { cause: 'wardBreak' }), true, 'an unprotected enemy is staggered');
+  assert.equal(enemy.pendingMove, null);
 });
