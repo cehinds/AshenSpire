@@ -1425,6 +1425,22 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       if (pending.chosenCardId && pending.states?.card !== 'taken') {
         problems.push('pendingReward chosenCardId requires card Taken state');
       }
+      // A boss victory's relic choice (SPEC §15.4): `relicChoices` is the
+      // distinct relics offered, pick ONE; `chosenRelicId` is null or one of them.
+      if (pending.rewards?.relicChoices !== undefined) {
+        const ids = pending.rewards.relicChoices;
+        if (!Array.isArray(ids) || ids.some((id) => typeof id !== 'string' || !id) || new Set(ids).size !== ids.length) {
+          problems.push('pendingReward.rewards.relicChoices must be an array of distinct non-empty relic ids');
+        }
+      }
+      if (pending.chosenRelicId !== null && pending.chosenRelicId !== undefined
+          && (typeof pending.chosenRelicId !== 'string' || !pending.chosenRelicId)) {
+        problems.push('pendingReward.chosenRelicId must be null or a non-empty string');
+      }
+      const relicChoices = Array.isArray(pending.rewards?.relicChoices) ? pending.rewards.relicChoices : [];
+      if (pending.chosenRelicId && !relicChoices.includes(pending.chosenRelicId)) {
+        problems.push('pendingReward.chosenRelicId must belong to pendingReward.rewards.relicChoices');
+      }
     }
   }
   // Deck entries are the ids the run is rebuilt from — the one nested shape
