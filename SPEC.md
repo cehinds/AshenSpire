@@ -1342,7 +1342,7 @@ Rarity: S = starter, C = common, U = uncommon, R = rare. Cost in Stamina (engine
 | Hemorrhage | U | 1 | Skill | Double the target's Bleed. Exhaust. | don't Exhaust |
 | Twinblade Flurry | U | 1 | Attack | Deal 3×3. Gorefire applies per hit. | 4×3 |
 | Shieldwall | U | 2 | Skill | Gain 12 Block. If in Bulwark: gain 4 Block next turn. | 16 Block |
-| Kick Off | U | 0 | Attack | Deal 4. 3 Poise damage. Exhaust. | 7 dmg, don't Exhaust |
+| Kick Off | U | 1 + 1 Mana | Attack | Deal 3 to the selected enemy. Exhaust. | none; rank-up (§13.4o) |
 | Executioner | R | 2 | Attack | Deal 10. If target is Staggered: deal 25 instead. | 14 / 32 |
 | Goreblood | R | 3 | Power | Poise thresholds no longer increase after filling. | cost 2 |
 | Unbreakable | R | 2 | Power | Block no longer expires at the start of your turn. (Cap 30.) | cap 40 |
