@@ -1242,9 +1242,9 @@ warned when not the stock value.
   starts with an 11-card deck, signature and ability card included (`balance.startingDeckSize`
   is the home of that number);
 - one class signature card and one starter relic, both reachable in a new Rogue run;
-- two starting equipment kits and five Rogue-specific outfits/armour sets (`content/source/outfits.csv`
-  rows with `classId` `rogue`, plus the four `sharedSet` rows every class can wear), including one free baseline
-  of each required kind and the same unlock/discovery rules as the existing classes;
+- two starting equipment kits and five Rogue-specific outfits/armour sets, plus the four `sharedSet` rows
+  every class can wear (`content/source/outfits.csv` has nine rows with `classId` `rogue`),
+  including one free baseline of each required kind and the same unlock/discovery rules as the existing classes;
 - five stage/tint class sprites plus the equipment/body/armament art needed for every authored
   Rogue kit and outfit, with ordinary missing-art refusal/fallback behavior;
 - class presets, flask allocation, rewards, draft/custom-run, history, co-op and compendium
