@@ -8,6 +8,13 @@ contract. Nothing in the game reads these files. The tag tree in
 *PropertyRule*, §4.7) stay authoritative until a SPEC change lands in its own
 pull request (CONTRIBUTING.md, ground rule 1).
 
+**Branch scope.** This branch carries the gameplay tables, the tools and the
+tests only. `tables/presentation/` (the generated presentation inventory, about
+11.6 MB) is not on this branch, so the presentation checks in `check.mjs` and the
+presentation cases in the tests skip, and `build.mjs` without `--inv` exits 0
+with nothing to rebuild. The presentation sections below describe that folder as
+it exists on `feature/TagRefactor`.
+
 ## What is here
 
 | File | What it is |
