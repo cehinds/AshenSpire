@@ -1693,10 +1693,11 @@ function commitCombatRound(combat) {
   }
 }
 
-// Runs fn; if it throws, puts the fight's plain data back exactly as it was. Objects and arrays keep
-// their identity (the player, each enemy and the piles are restored in place), the RNG is rolled back
-// by its counters, and functions, registries and the RNG object itself are not touched. The same
-// structuredClone pattern as atomically() in combatRounds/timeline.js, on the whole fight.
+// Runs fn; if it throws, puts the fight's plain data back as it was. Identity is restored per position
+// only: an object or array at the same key or index is refilled in place (the player, each enemy and the
+// piles), anything else is put back as a copy, and triggerState (a Map) is replaced with a copy. The RNG
+// is rolled back by its counters; functions, registries and the RNG object itself are not touched. The
+// same structuredClone pattern as atomically() in combatRounds/timeline.js, on the whole fight.
 function atomicCommit(combat, fn) {
   const isData = (k, v) => typeof v !== 'function' && k !== 'registries' && k !== 'rng';
   const saved = structuredClone(Object.fromEntries(Object.entries(combat).filter(([k, v]) => isData(k, v))));
