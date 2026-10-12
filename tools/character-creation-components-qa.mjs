@@ -50,7 +50,7 @@ let browser;
 const results = [];
 try {
   browser = await chromium.connectOverCDP(launched.wsUrl);
-  for (const [width, height] of [[1440, 900], [390, 844]]) {
+  for (const [width, height] of [[390, 844], [1440, 900]]) {
     const context = await browser.newContext({ viewport: { width, height }, hasTouch: width < 700, reducedMotion: 'reduce' });
     const page = await context.newPage();
     page.setDefaultNavigationTimeout(120000);
