@@ -460,3 +460,13 @@ test('a stagger that lands after an enemy has acted persists into its next turn,
   assert.equal(enemy.skipNextTurn, false, 'the stagger is spent on that turn');
   assert.equal(c.phase, 'player');
 });
+
+// Review nit: unqueuing with the preview off names the cause, not a TypeError from a missing record.
+test('unqueueing with the preview off throws a clear error, not a TypeError', () => {
+  const c = fight({ preview: false });
+  assert.throws(() => dispatch(c, { type: 'unqueueCard', cardInstanceId: attackCard(c).instanceId }), (err) => {
+    assert.ok(!(err instanceof TypeError), 'not a TypeError');
+    assert.match(err.message, /combat rounds preview is not on/);
+    return true;
+  });
+});

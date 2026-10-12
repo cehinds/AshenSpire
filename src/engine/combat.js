@@ -1608,6 +1608,7 @@ function refundQueuedCard(combat, rec) {
 
 // Takes a queued card back out of the round and refunds exactly what it paid.
 function unqueueRoundCard(combat, { cardInstanceId }) {
+  if (!combat.combatRounds) throw new Error('combat rounds preview is not on');
   if (combat.phase !== 'player') throw new Error('Cards can only be unqueued on the player turn');
   const rec = Rounds.unqueueCard(combat, cardInstanceId);
   if (!rec) throw new Error(`Card '${cardInstanceId}' is not queued`);
