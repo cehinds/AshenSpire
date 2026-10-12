@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-12",
     "summary": "Each fighter's readout sits above or below it, and the battlefield is narrower on wide screens",
     "detail": "A front-row enemy's health and intent now hang just below its feet instead of drifting off to one side, so every readout stays with its own fighter. On wide screens the fighters stand closer to the middle, and the enemies' back row steps a little to the right so it stands clear of the front row. Switching back to the Classic look mid-fight keeps you in a row Classic has.",
-    "build": "0.7.1.1402",
+    "build": "0.7.1.1404",
     "pullRequest": 1884,
     "url": "https://github.com/cehinds/AshenSpire/pull/1884"
+  },
+  {
+    "id": "pr-1886",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Picking a card shows its stance before you play it",
+    "detail": "Selecting a card in hand puts your fighter in that card's stance, and the stance mark above their head changes to match; click through your hand and both follow each card, and cancelling returns them to your last stance. Playing the card swings from that stance, and afterwards your fighter holds it — into the next turn too — until you play another card. The stances are attack, smash, sweep, defend, counter and prepare: spells and cards that are none of the others show prepare, and sweep now has its own mark. Smash holds each class's painted wind-up, and every swing now leaves from your stance and returns to it instead of snapping to a neutral pose. Co-op seats hold their stance across turns but do not show a preview while selecting.",
+    "build": "0.7.1.1401",
+    "pullRequest": 1886,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1886"
   },
   {
     "id": "pr-1875",

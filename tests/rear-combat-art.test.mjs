@@ -36,7 +36,7 @@ test('rear class choreography follows resolved cards with stationary guard and r
   setAnimSpeed('invalid'); assert.equal(getAnimSpeed(), 'normal');
 });
 
-test('confirmed card stances persist per player until their next turn', () => {
+test('confirmed card stances persist per player until their next confirmed card', () => {
   const ledger = createStanceLedger();
   ledger.accept({ type: 'cardPlayed', playerId: 'one' }, { cardTags: ['maneuver:attack', 'camp:physical'] });
   ledger.accept({ type: 'cardPlayed', playerId: 'two' }, { cardTags: ['maneuver:defend', 'camp:physical'] });
@@ -44,7 +44,7 @@ test('confirmed card stances persist per player until their next turn', () => {
   ledger.accept({ type: 'hpLost', targetId: 'one' });
   assert.equal(ledger.get('one'), 'offensive');
   ledger.accept({ type: 'playerTurnStart', playerId: 'one' });
-  assert.equal(ledger.get('one'), null);
+  assert.equal(ledger.get('one'), 'offensive', 'a new turn keeps the held stance');
   assert.equal(ledger.get('two'), 'defensive');
   ledger.accept({ type: 'combatStarted' });
   assert.deepEqual(ledger.snapshot(), {});
