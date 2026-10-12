@@ -356,8 +356,8 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
         resistances: groupedResistance(rules, defense.resistanceSources || [], defense.resistances || {}),
         immunities: defense.immunities || [], multiplier: 1, flatBonus: 0 }).reduce((sum, part) => sum + part.amount, 0);
     } else {
-      amount = Math.max(0, Math.floor(total * (camp === 'spell' ? 1 : ratingDamageMultiplier(ctx, target, false))
-        * schoolResistanceMultiplier(ctx, target, carrier?.damageSchool)));
+      // Pools only: no Poise or Ward rating cut. Only school resistance shapes a typed part before Block and Poise.
+      amount = Math.max(0, Math.floor(total * schoolResistanceMultiplier(ctx, target, carrier?.damageSchool)));
     }
     amount = Math.max(0, Math.ceil(amount * (1 + Math.max(0, target.damageWeaknessPercent?.[type] || 0) / 100))
       - Math.max(0, target.damageResistanceFlat?.[type] || 0));

@@ -495,3 +495,14 @@ test('an enemy physical hit with no card or weapon impact adds 1 to the Poise me
   assert.equal(ctx.ratingsRules.impact.enemyPhysical, 1, 'the default rating impact of an enemy physical hit');
   assert.equal(attackImpact(ctx, { kind: 'enemy' }, {}, false), 1, 'the impact the Poise meter takes');
 });
+
+// Pools only (owner decision, 2026-10-12): Poise protects as a pool. A physical hit takes no rating cut;
+// Block takes its share, Poise soaks what Block left (at least 1 gets through) and is spent by it.
+test('briarCast into Block 2 and Poise 5 takes 1 HP, Poise absorbs 2 and drops to 3, and no Ward is resisted', () => {
+  const r = strike(enemyMoveCarrier('briarHermit', 'briarCast'), 5, { ward: 3, block: 2, poise: 5, damageTypeShares: {} });
+  const d = hitOf(r);
+  assert.equal(r.hpLost(r.hpBefore), 1, 'Block takes 2 of 5, Poise takes 2 of the 3 left, 1 HP');
+  assert.equal(r.enemy.persistentPoise.value, 3, 'Poise 5 is spent by the 2 it absorbs');
+  assert.equal(d.wardResisted, 0, 'no Ward is resisted by a physical hit');
+  assert.equal(r.preview, r.committed, 'preview equals committed');
+});
