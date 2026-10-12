@@ -111,10 +111,11 @@ test('a short portrait phone lifts its enemies a little; the camera keeps the un
   assert.ok(Math.abs(combatStandingGround(fit, actors, 0) - backRow) < 1e-9, 'standing line is the unlifted back row');
 });
 
-// Widescreen back row (the owner's 1920x1080 window). The enemies' feet stand on
-// the back-row ground line (height x .48 here, since the stage slots sit at .9
-// of the field), and their art is scaled down to fit the headroom above it. The
-// feet must never drop below that line to make room for a tall figure.
+// Widescreen back row (the owner's 1920x1080 window). The back-row ground line
+// is height x .48 here (the stage slots sit at .9 of the field). A wide enemy's
+// art is capped midway between its uncapped height and the headroom above that
+// line (owner's "middle ground", 2026-10-12), so its feet land between the old
+// position and the line: below the line, above where they were uncapped.
 function wideStage1080() {
   const zoom = 1080 / 730, width = 1920 / zoom;
   const bands = allocateCombatBands({ width, height: 730, zoom, footerArtPx: footerArtHeight(width, zoom, true) * zoom }, combatBandConfig(true));
@@ -137,15 +138,19 @@ const wideCases = [
 ];
 
 for (const [label, enemies] of wideCases) {
-  test(`wide 1920x1080 ${label}: feet stand on the back row and the art fits the headroom`, () => {
+  test(`wide 1920x1080 ${label}: art is midway between uncapped and the back-row fit, feet between the line and their old place`, () => {
     const { width, height } = wideStage1080();
     const actors = wideEncounter({ width, height, enemies });
     const sizes = fitAlternativeSprites({ width, height, actors, narrow: false });
     const fits = alternativeCombatComposition({ sizes, actors, width, height, handLeft: width * .35, solo: enemies.length === 1, wide: true });
     const backGround = height * .48;
     for (const enemy of fits.filter(fit => fit.id.startsWith('e'))) {
-      assert.ok(enemy.ground <= backGround + 1e-9, `enemy ${enemy.id} feet at ${enemy.ground}, back row at ${backGround}`);
-      assert.ok(enemy.visibleHeight > 0, `enemy ${enemy.id} keeps a visible figure`);
+      const uncapped = Math.min(sizes.find(size => size.id === enemy.id).visibleHeight, height * .7);
+      const backRowFit = backGround - 66 - 6;
+      assert.ok(enemy.visibleHeight > backRowFit + 1e-9 && enemy.visibleHeight < uncapped - 1e-9,
+        `enemy ${enemy.id} art ${enemy.visibleHeight} is not between the back-row fit ${backRowFit} and uncapped ${uncapped}`);
+      assert.ok(enemy.ground > backGround + 1e-9, `enemy ${enemy.id} feet at ${enemy.ground} are not below the back row ${backGround}`);
+      assert.ok(enemy.ground < uncapped + 66 + 6 - 1e-9, `enemy ${enemy.id} feet at ${enemy.ground} did not rise from ${uncapped + 72}`);
       assert.ok(enemy.visibleHeight + 66 + 6 <= enemy.ground + 1e-9,
         `enemy ${enemy.id} art ${enemy.visibleHeight} plus headroom overruns its feet at ${enemy.ground}`);
     }

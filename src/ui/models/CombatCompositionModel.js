@@ -9,8 +9,8 @@ export function stableHandAnchor(previous, layoutKey, { left, top } = {}) {
 // Text, selection and intent changes can repack controls without refitting the
 // artwork. Only layout, presentation settings, art geometry or formation changes
 // invalidate the settled body sizes and foot positions.
-export function combatArtworkKey({ width, height, zoom, presentation, appearance, handAnchor, actors }) {
-  return JSON.stringify([width, height, zoom, presentation, appearance, handAnchor, actors.map(actor => [
+export function combatArtworkKey({ width, height, zoom, wide = false, presentation, appearance, handAnchor, actors }) {
+  return JSON.stringify([width, height, zoom, wide, presentation, appearance, handAnchor, actors.map(actor => [
     actor.slot.id, actor.slot.cell, actor.slot.x, actor.slot.ground, actor.slot.fitGround,
     actor.slot.depth, actor.slot.artWidth, actor.ratio, actor.multiplier, actor.art,
     actor.boxHeight, actor.visibleHeight, actor.visibleWidth, actor.footOffset,
@@ -87,11 +87,13 @@ export function alternativeCombatComposition({ sizes, actors, width, height, han
     const factor = player ? (solo ? 1.28 : 1) : spacious ? 1 : .8;
     const availablePlayerHeight = player && solo && Number.isFinite(handTop)
       ? Math.max(1, handTop - actor.leading - 32) : Infinity;
-    // A wide enemy's art must fit the headroom above its back-row feet, so the
-    // feet stay on that line rather than dropping for a tall figure.
     const backGround = height * .48 + ((size.ground ?? actor.slot.ground) - height * .9) * .25;
-    const headroom = wide && !player ? Math.max(1, backGround - actor.leading - 6) : Infinity;
-    const visibleHeight = Math.min(size.visibleHeight * factor, height * (player ? .8 : .7), availablePlayerHeight, headroom);
+    // Owner's choice, 2026-10-12 ("middle ground"): a wide enemy's art is capped
+    // halfway between its uncapped height and the headroom above its back-row
+    // feet, so its feet sit a little below that line rather than on it.
+    const uncapped = Math.min(size.visibleHeight * factor, height * (player ? .8 : .7), availablePlayerHeight);
+    const headroom = wide && !player ? (uncapped + Math.max(1, backGround - actor.leading - 6)) / 2 : Infinity;
+    const visibleHeight = Math.min(uncapped, headroom);
     const ratio = visibleHeight / size.visibleHeight;
     const halfWidth = actor.visibleWidth * size.scale * ratio / 2;
     const proposedX = player ? (solo ? Math.max(size.x + width * .035, handLeft + halfWidth) : size.x)
