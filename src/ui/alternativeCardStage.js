@@ -58,7 +58,7 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
     family.sequences.counterPrepare = { ...family.sequences.counterPrepare, poses: ['pilot-counter'] };
     for (const kind of ['attack','smash','counter-guard','counter-evade']) {
       const clip=selectedWeaponSequence(kind);
-      if(clip.poses.every(pose=>family.frames[pose])) family.sequences[kind]=clip;
+      if(clip.poses.every(pose=>pose==='origin'||family.frames[pose])) family.sequences[kind]=clip;
     }
     for(const key of Object.keys(family.sequences)) if(key==='weapon:attack:greatsword'&&family.sequences.attack?.pilot)family.sequences[key]=family.sequences.attack;
   }
@@ -77,7 +77,7 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
   el.dataset.poseCoverage = 'card-actions';
   el.dataset.idleHeightRatio = '1';
   const height = 464-family.frames.ready.bounds[1], scale = 190/height;
-  el.dataset.maximumHeightRatio = String((464-Math.min(...Object.values(frames).map(frame=>frame.bounds[1])))/height);
+  el.dataset.maximumHeightRatio = String((464-Math.min(...Object.values(frames).map(frame=>(frame.stageBounds || frame.bounds)[1])))/height);
   const width = Math.max(256-family.frames.ready.bounds[0], family.frames.ready.bounds[2]-256)*2*scale;
   el.dataset.idleWidthRatio = String(width/190);
   // Selected poses share one canvas scale and floor. Reserve their full reach
@@ -87,9 +87,10 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
   el.style.cssText = `position:relative;width:${width}px;height:190px;flex:none;overflow:visible;`;
   // Room to either side keeps the authored dash and aura inside the canvas.
   const canvas = document.createElement('canvas');
-  canvas.width = 768; canvas.height = 544;
+  const topPadding=Math.max(0,-Math.min(...Object.values(frames).map(frame=>(frame.stageBounds || frame.bounds)[1])));
+  canvas.width = 768; canvas.height = 544+topPadding;
   canvas.setAttribute('aria-label', classId+' base armour character');
-  canvas.style.cssText = `position:absolute;max-width:none;width:${768*scale}px;height:${544*scale}px;left:calc(50% - ${384*scale}px);top:${190-480*scale}px;pointer-events:none;`;
+  canvas.style.cssText = `position:absolute;max-width:none;width:${768*scale}px;height:${canvas.height*scale}px;left:calc(50% - ${384*scale}px);top:${190-(480+topPadding)*scale}px;pointer-events:none;`;
   el.append(canvas);
   if (typeof canvas.getContext !== 'function') return null;
   // Action preparation deliberately materializes visible pixels before its clock.
@@ -98,7 +99,7 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
   const mask = document.createElement('canvas'); mask.width = mask.height = 512;
   const maskCtx = mask.getContext('2d');
   const images = new Map();
-  const auraRenderer = createAlternativeAuraRenderer();
+  const auraRenderer = createAlternativeAuraRenderer({canvasHeight:canvas.height});
   const placeholder=document.createElement('span');placeholder.textContent='⚔';placeholder.hidden=true;
   placeholder.setAttribute('role','img');placeholder.setAttribute('aria-label',classId+' character');
   placeholder.style.cssText='position:absolute;inset:0;text-align:center;font-size:64px;';el.append(placeholder);
@@ -134,7 +135,7 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
     auraFilter(action === 'spell' ? 'power2' : frame, ['defend','counter'].includes(rest) ? 'guard' : rest, paid, active);
   function paint(now=performance.now(), materialize=false) {
     if (disposed) return;
-    ctx.clearRect(0,0,768,544);
+    ctx.clearRect(0,0,canvas.width,canvas.height);
     currentArt=null;
     let x=0, effect=null;
     el.dataset.effect='';
@@ -142,6 +143,7 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
       const sampled=sampleSequence(playing.sequence,elapsed,playing.duration,{reduced:reducedMotionRequested()});
       pose=playing.sequence.poses[sampled.index];
       // A swing leaves from and returns to the held stance, not the neutral ready frame.
+      if(pose==='origin')pose=restPose();
       if (pose==='ready' && stance) pose='stance-'+stance;
       effect=playing.sequence.effects?.[sampled.index];
       x=['attack','smash','sweep'].includes(playing.action)?sampled.x:0;
@@ -151,7 +153,7 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
       pose=bodyReaction.sequence.poses[sampled.index];
     }
     el.dataset.pose=pose;
-    if (pose==='defeated' && down) { currentArt={canvas,image:down,left:128,top:16,width:512,height:512};ctx.drawImage(down,128,16,512,512); return; }
+    if (pose==='defeated' && down) { currentArt={canvas,image:down,left:128,top:16+topPadding,width:512,height:512};ctx.drawImage(down,128,16+topPadding,512,512); return; }
     const image=images.get(pose) || images.get('ready');
     // The canvas owns the hit reaction: the body (and its red mask) knocks back
     // left while the reaction runs; the effects overlay stays on its own registration.
@@ -166,14 +168,14 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
     const bodyX=x+(reacting?hitRecoilX(flashElapsed/flashMs):0);
     const offset=!clipping&&frame?.drawOffset ? frame.drawOffset : [128,0];
     const dimensions=!clipping&&frame?.drawOffset ? frame.size : [512,512];
-    const left=offset[0]+bodyX+place.dx, top=16+offset[1]+place.dy, width=dimensions[0]*place.scale,height=dimensions[1]*place.scale;
+    const left=offset[0]+bodyX+place.dx, top=16+topPadding+offset[1]+place.dy, width=dimensions[0]*place.scale,height=dimensions[1]*place.scale;
     currentArt={canvas,image:source,left,top,width,height};
     ctx.save();
     auraRenderer.draw(ctx,source,filterFor(pose,playing?.sequence.action || playing?.action),left,top,width,height,{materialize});ctx.restore();
     // Trails share body registration, but never enter its aura or hit mask.
     if(effect && !still && !reducedMotionRequested() && !document.body.classList.contains('reduce-flashes')) {
       const overlay=images.get(effect);
-      if(overlay){ctx.drawImage(overlay,128+x,16,512,512);el.dataset.effect=effect;}
+      if(overlay){ctx.drawImage(overlay,128+x,16+topPadding,512,512);el.dataset.effect=effect;}
     }
     // Reduce flashes suppresses the red tint (SPEC §7.4); the knock-back stays.
     const flash=flashAt===null||document.body.classList.contains('reduce-flashes')?0:hitFlashOpacity('hurt',flashElapsed,{reduced,duration:flashMs});

@@ -212,13 +212,27 @@ test('selected holds preserve existing returns and finite reactions restore the 
         const {totalMs,impactMs}=stage.actionTiming(action);
         assert.ok(impactMs<totalMs);
         stage.play(action,totalMs);
-        if(action==='counter-guard'){assert.equal(stage.pose,'pilot-defend');advance(impactMs+1);assert.equal(stage.pose,'pilot-attack-4');}
+        if(action==='smash'){assert.equal(stage.pose,'stance-'+origin);advance(impactMs+1);assert.equal(stage.pose,'pilot-smash-impact');}
+        else if(action==='counter-guard'){assert.equal(stage.pose,'pilot-defend');advance(impactMs+1);assert.equal(stage.pose,'pilot-attack-4');}
         else if(action==='counter-evade'){assert.equal(stage.pose,'pilot-evade-1');advance(impactMs+1);assert.equal(stage.pose,'pilot-attack-4');}
         else {assert.equal(stage.pose,'pilot-attack-1');advance(impactMs+1);assert.equal(stage.pose,'pilot-attack-4');}
         advance(totalMs);
         assert.equal(stage.pose,'stance-'+origin,'the actual active '+origin+' survives '+action);
       }
     }
+    stage.settle();stage.setStance('smash');
+    const smashTiming=stage.actionTiming('smash'),originalHold=stage.currentArt;
+    stage.play('smash',smashTiming.totalMs);
+    assert.equal(stage.currentArt.image,originalHold.image,'SM03 starts with the byte-exact active held stance');
+    assert.deepEqual([stage.currentArt.left,stage.currentArt.top],[originalHold.left,originalHold.top],'the first bookend never shifts the body');
+    advance(79);assert.equal(stage.pose,'pilot-smash-airborne');
+    assert.equal(stage.currentArt.canvas.height,625,'airborne blade has the required 81 pixel top margin');
+    const css=stage.currentArt.canvas.style.cssText,cssTop=Number(css.match(/top:([-\d.]+)px/)[1]),cssWidth=Number(css.match(/width:([\d.]+)px/)[1]),scale=cssWidth/768;
+    assert.ok(Math.abs(cssTop+(originalHold.top+464)*scale-190)<1e-8,'expanded canvas compensation preserves the original held floor in CSS pixels');
+    assert.equal(stage.currentArt.top,-95,'source S padding maps to the original unchanged stance registration');
+    stage.hold(60);assert.equal(stage.pose,'pilot-smash-impact','timer contact freezes the ground-impact painting');
+    advance(160);assert.equal(stage.pose,'stance-smash');
+    assert.deepEqual([stage.currentArt.left,stage.currentArt.top],[originalHold.left,originalHold.top],'the final bookend returns without a body jump');
     stage.settle();stage.setStance('counter');
     const attackTiming=stage.actionTiming('attack');
     stage.play('attack',attackTiming.totalMs);advance(75);
@@ -241,7 +255,7 @@ test('selected holds preserve existing returns and finite reactions restore the 
     advance(100);assert.equal(stage.pose,'pilot-impact-g');
     advance(260);assert.equal(stage.pose,'stance-counter');
     stage.settle();stage.setStance('smash');stage.play('smash',500);advance(150);
-    assert.equal(stage.pose,'pilot-attack-2');
+    assert.equal(stage.pose,'pilot-smash-takeoff');
     assert.equal(stage.reactPose('guard-break',180),true);assert.equal(stage.pose,'pilot-guard-break');
     assert.equal(stage.presentation.action,'smash','a reaction never replaces the live action');
     stage.setRestPose(stage.rest);assert.equal(stage.pose,'pilot-guard-break','routine renders retain the reaction');
@@ -267,6 +281,9 @@ test('selected holds preserve existing returns and finite reactions restore the 
       staticStage.setStance('evade');staticStage.play('counterPrepare',mode==='instant'?0:260);
       assert.equal(staticStage.pose,'stance-evade',mode+' preparation keeps the selected static Evade hold');
       staticStage.setStance('smash');
+      staticStage.play('smash',mode==='instant'?0:195);
+      assert.equal(staticStage.pose,'stance-smash',mode+' Smash immediately retains its origin');
+      assert.equal(staticStage.presentation.action,undefined,mode+' Smash leaves no action clock');
       assert.equal(staticStage.reactPose('evade',180),true,mode+' displays the chosen static pose');
       assert.equal(staticStage.pose,'pilot-evade-1');advance(190);assert.equal(staticStage.pose,'stance-smash',mode+' restores the hold within its bounded lifetime');
     }
