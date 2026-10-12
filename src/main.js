@@ -2665,7 +2665,8 @@ function finishWorldService() {
 }
 
 function enterNode(nodeId) {
-  sfx.play('nodeTravel');
+  // Re-entering the node the player stands on is not travel, so no travel sound.
+  if (nodeId !== run.mapNodeId) sfx.play('nodeTravel');
   const node = run.mapGraph.nodes[nodeId];
   // Travelling to another node ends a left rest site's re-entry (restRevisit.js).
   clearRestRevisitOnTravel(run, nodeId);
