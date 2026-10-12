@@ -1,4 +1,5 @@
 import { combatProfileFor } from './combatCardProfile.js';
+import { isPureDodge } from '../framework/importer.js';
 
 export const REAVER_GREATSWORD_PILOT = 'reaver-greatsword-pilot';
 
@@ -14,10 +15,11 @@ export function selectedWeaponProfileFor({ classId, armourId, grip } = {}) {
 
 function preparesEvade(card) {
   const profile = combatProfileFor(card);
-  // utility.evasion's authored pure-dodge marker survives the no-roll guard rewrite.
-  // A ranged attack with an evade rider keeps its ranged action identity.
-  return profile.camp === 'physical' && profile.maneuver === 'defend'
-    && (card.weightClassPriced === true || card.effects?.some(effect => effect.op === 'dodgeRoll') || !!profile.evade);
+  if (profile.camp !== 'physical') return false;
+  // Expanded pure Dodge is typed Counter; its canonical authored marker still
+  // chooses this preparation painting. Mixed counters keep their Counter pose.
+  return isPureDodge(card) || (profile.maneuver === 'defend'
+    && (card.effects?.some(effect => effect.op === 'dodgeRoll') || !!profile.evade));
 }
 
 function evadeReady(entity) {

@@ -251,8 +251,10 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
       if(action==='hit'||action==='hurt')return hit(ms);
       ms??=260;
       if(action==='defeated'){rest='defeated';bodyReaction=null;flashAt=null;settle();return true;}
-      const key=aliases[action]||action, sequence=family.sequences[key];
+      const key=aliases[action]||action;
+      let sequence=family.sequences[key];
       if(!sequence)return false;
+      if(pilotFrames&&key==='counterPrepare'&&stance==='evade')sequence={...sequence,poses:['pilot-evade']};
       bodyReaction=null;
       if(still||reducedMotionRequested()||ms<=0){settle();return true;}
       // Materialize the first independent aura before the unchanged action clock,
