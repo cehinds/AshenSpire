@@ -6,6 +6,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
+import { prepareTacticalCard } from '../src/engine/combatCardTactics.js';
 
 // Variants of the basic `strike` (an Attack; authored effect damage 6 to the enemy).
 // Each registry swaps the one card's fields; the id stays put so its classification rows resolve.
@@ -46,8 +47,7 @@ function play({ version = 2, stance = null, registries = counter } = {}) {
 test('an unbeaten Counterstrike attack deals what a 9-damage Attack deals against Defend', () => {
   // Defend is not in Attack's advantage row, so pct = 50%: 6 + floor(6 × 0.5) = 9.
   // Attack vs Defend has no stance multiplier. The card rating adds ceil(9 / 4) = 3 on the
-  // scaled amount (the same as an authored 9), so 9 + 3 = 12 total. The task brief's
-  // "9" omitted that rating term.
+  // scaled amount (the same as an authored 9), so 9 + 3 = 12 total.
   const scaled = play({ stance: 'defend' });
   assert.equal(scaled.dealt, 12);
   assert.equal(scaled.dealt, play({ stance: 'defend', registries: authored(9), version: 2 }).dealt);
@@ -100,4 +100,57 @@ test('playing a Counterstrike card leaves its registry definition unchanged', ()
   play({ stance: 'smash' });
   assert.equal(JSON.stringify(counter.cards.get('strike')), before);
   assert.deepEqual(counter.cards.get('strike').effects, strike.effects);
+});
+
+// Counter cards: their own played effects (Block here) scale; their return payload does not
+// go through this path. Checked on the prepared effect list, the same list the card executes.
+test('a Counterstrike Counter scales its own Block: 6 → 9 against Defend, unscaled without the trait', () => {
+  const counterCarrier = { cardId: 'guardCounter', traitValues: CS, combatProfile: { maneuver: 'counter' } };
+  const prepare = (carrier, enemyStance) => {
+    const combat = createCombat({ registries: plain, rng: createRng(913), combatExpansionVersion: 2, reactionRulesVersion: 2,
+      enemyIds: ['wanderingSoldier'], player: { classId: 'reaver', maxHp: 100, hp: 100, maxMana: 20, mana: 20,
+        maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 0, deck: [] } });
+    const enemy = combat.enemies[0];
+    enemy.combatStance = { maneuver: enemyStance, camp: 'physical', reach: 'contact' };
+    const effects = [{ op: 'block', target: 'self', amount: 6 }];
+    // arm: false keeps the Counter from arming, so only the played effects are prepared.
+    return { combat, support: prepareTacticalCard(combat, combat.player, enemy, { ...carrier }, effects, {}, { arm: false }) };
+  };
+  const scaled = prepare(counterCarrier, 'defend');
+  assert.equal(scaled.support.find(effect => effect.op === 'block').amount, 9);
+  const event = scaled.combat.eventLog.find(entry => entry.type === 'combatCounterstrikeApplied');
+  assert.equal(event.cardId, 'guardCounter');
+  assert.equal(event.pct, 0.5);
+  const untraited = prepare({ cardId: 'guardCounter', combatProfile: { maneuver: 'counter' } }, 'defend');
+  assert.equal(untraited.support.find(effect => effect.op === 'block').amount, 6);
+});
+
+// A Counterstrike Counter played as a reaction from the stack: Counter beats Attack, and the
+// attacking enemy's stance is its resolving Attack move, so pct = 75%.
+test('a Counterstrike Counter played from the reaction stack vs an attacking enemy gets 75%', () => {
+  const registries = createRegistries({ ...contentBundle,
+    enemies: contentBundle.enemies.map(enemy => enemy.id === 'wanderingSoldier'
+      ? { ...enemy, firstMove: 'slash', moves: { slash: { intent: 'attack', damage: 20, hits: 1, weight: 1,
+        tags: ['camp:physical', 'maneuver:attack', 'reach:contact', 'targeting:single'] } } } : enemy) });
+  const combat = createCombat({ registries, rng: createRng(701), combatExpansionVersion: 2, reactionRulesVersion: 2,
+    enemyIds: ['wanderingSoldier'], player: { classId: 'reaver', maxHp: 100, hp: 100, maxMana: 20, mana: 20,
+      maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 1,
+      deck: [{ cardId: 'guardCounter', instanceId: 'r0', upgraded: false }] } });
+  combat.player.block = 0;
+  for (const enemy of combat.enemies) { enemy.intentRevealed = false; enemy.ratings = { ar: 0, dr: 0, pr: 0, poise: 100, ward: 0 }; }
+  dispatch(combat, { type: 'endTurn' });
+  const offer = combat.pendingReaction;
+  const option = offer.options.find(row => row.play.cardInstanceId === 'r0');
+  assert.ok(option, 'the Counter is offered as a reaction');
+  dispatch(combat, { type: 'chooseReaction', offerId: offer.id, optionId: option.id });
+  for (let i = 0; i < 5 && combat.pendingReaction; i++) {
+    dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
+  }
+  const types = combat.eventLog.map(event => event.type);
+  const applied = combat.eventLog.filter(event => event.type === 'combatCounterstrikeApplied');
+  assert.equal(applied.length, 1);
+  assert.equal(applied[0].cardId, 'guardCounter');
+  assert.equal(applied[0].pct, 0.75);
+  assert.equal(applied[0].advantaged, true);
+  assert.ok(types.indexOf('combatReactionStacked') < types.indexOf('combatCounterstrikeApplied'));
 });

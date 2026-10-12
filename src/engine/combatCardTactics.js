@@ -164,7 +164,7 @@ export function prepareTacticalCard(ctx, source, target, carrier, effects, meta 
   const payloadOps = combatExpansionEnabled(ctx) ? ['damage', 'poiseDamage', 'wardDamage'] : ['damage', 'poiseDamage'];
   const support = effects.filter(effect => !payloadOps.includes(effect.op));
   if (!combatExpansionEnabled(ctx) && !support.some(effect => effect.op === 'block')) support.unshift({ op: 'block', target: 'self', amount: rules.guard });
-  return support;
+  return counterstrikeEffects(ctx, source, target, carrier, support, arm);
 }
 
 /** Ward is provenance within Block; buildup protection remains gainWard. */
