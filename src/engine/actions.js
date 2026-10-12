@@ -16,7 +16,8 @@
 // Damage math (SPEC §4.2, order contractual, floor ONCE at the end):
 //   dmg = base
 //   dmg += attacker per-stack 'attackDamageAdd' modifiers
-//   dmg *= attacker 'damageDealtMult' modifiers
+//   dmg *= attacker 'damageDealtMult' modifiers (and 'spellDamageDealtMult'
+//          when the carrier is spell-camp)
 //   dmg *= defender 'damageTakenMult' modifiers
 //   dmg = floor(dmg); below 0 → 0
 // The engine consults the generic status model only — never a named status.
@@ -59,6 +60,18 @@ import * as Blight from './ashenBlight.js';
 // ---------------------------------------------------------------------------
 
 /**
+ * Silenced and its kin: `spellDamageDealtMult` scales only a spell-camp
+ * carrier's damage for its owner (authored profile camp; an unprofiled carrier
+ * falls back to the magical-attack reading). Physical damage is untouched.
+ */
+export function spellDamageDealtMultiplier(ctx, source, carrier) {
+  if (!source) return 1;
+  const profile = Matchups.combatProfileOf(carrier);
+  const spell = profile ? ['spell', 'spells', 'magic', 'magical'].includes(profile.camp) : !!carrier && isMagicalAttack(ctx, carrier);
+  return spell ? statuses.getMult(ctx, source, 'spellDamageDealtMult') : 1;
+}
+
+/**
  * computeAttackDamage(ctx, source, target|null, base) → final integer damage.
  * Pure (no mutation). Pass target = null to preview without defender mods.
  */
@@ -76,7 +89,7 @@ export function computeAttackDamage(ctx, source, target, base, attackTags, carri
       : 0;
   }
   dmg += statuses.getAdd(ctx, source, 'attackDamageAdd');
-  dmg *= statuses.getMult(ctx, source, 'damageDealtMult');
+  dmg *= statuses.getMult(ctx, source, 'damageDealtMult') * spellDamageDealtMultiplier(ctx, source, carrier);
   if (target) dmg *= statuses.getMult(ctx, target, 'damageTakenMult');
   if (target && !beforeDefense) dmg *= ratingDamageMultiplier(ctx, target, isMagicalAttack(ctx, carrier));
   // Tag-scoped extra vulnerability (#61): statuses whose taggedVulnerability

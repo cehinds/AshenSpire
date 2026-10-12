@@ -382,6 +382,8 @@ const passiveFields = Object.freeze(Object.fromEntries(
 // disagree about what exists.
 export const MODIFIER_TYPES = Object.freeze({
   damageDealtMult: 'num',
+  // Scales only spell-camp damage its owner deals (Silenced, design §2.4).
+  spellDamageDealtMult: 'num',
   damageTakenMult: 'num',
   blockGainedMult: 'num',
   attackDamageAdd: 'num',
