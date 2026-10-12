@@ -260,6 +260,23 @@ export function rollRelicReward(registries, rng, ownedIds, { rarities = ['common
 }
 
 /**
+ * rollRelicChoices(registries, rng, ownedIds, { rarities, count }) → relic ids.
+ * Up to `count` DISTINCT relics the run does not own, drawn one at a time with
+ * rollRelicReward on 'relicRewards' (each pick is excluded from the next). The
+ * list is shorter when the pool runs low, and [] when nothing is left to give.
+ * Used for a boss victory's choice of relics; elite drops still roll one.
+ */
+export function rollRelicChoices(registries, rng, ownedIds, { rarities = ['boss'], count = 3 } = {}) {
+  const picks = [];
+  while (picks.length < count) {
+    const id = rollRelicReward(registries, rng, [...ownedIds, ...picks], { rarities });
+    if (id === null) break;
+    picks.push(id);
+  }
+  return picks;
+}
+
+/**
  * rollArmamentDrop(registries, rng, { source, found, carried }) → id | null.
  *
  * Deterministic on stream 'armaments', like every other reward roll, so a seed

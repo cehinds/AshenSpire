@@ -253,8 +253,10 @@ const KINDS = {
     blocked: (r, facts) => (facts.armamentSlotsFree > 0 ? null : 'storage'),
   },
   relic: {
-    present: (r) => !!r.relicId,
-    row: (r) => ({ relicId: r.relicId }),
+    present: (r) => !!r.relicId || (Array.isArray(r.relicChoices) && r.relicChoices.length > 0),
+    // A boss victory's relic choice (relicChoices) is one row of several ids:
+    // pick ONE. A lone relicId keeps the single-relic shape.
+    row: (r) => (r.relicChoices?.length ? { relicIds: [...r.relicChoices], choice: r.relicChoices.length > 1 } : { relicId: r.relicId }),
     blocked: () => null,
   },
   // A dropped legendary sigil (SPEC §15.4): a take, carried unattuned.
@@ -405,7 +407,7 @@ export function unseenIds(rewards = {}, possessions = {}) {
   const draftIds = [...(rewards.skillDrafts || []), ...(Array.isArray(rewards.levelCards) ? rewards.levelCards : [])].flatMap((d) => (d && d.cardIds) || []);
   return {
     cards: [...new Set([...(rewards.cardIds || []), ...draftIds])].filter((id) => !holds(possessions.cards, id)),
-    relics: rewards.relicId && !holds(possessions.relics, rewards.relicId) ? [rewards.relicId] : [],
+    relics: [...new Set([...(rewards.relicId ? [rewards.relicId] : []), ...(Array.isArray(rewards.relicChoices) ? rewards.relicChoices : [])])].filter((id) => !holds(possessions.relics, id)),
     flasks: rewards.flaskId && !holds(possessions.flasks, rewards.flaskId) ? [rewards.flaskId] : [],
     armaments: rewards.armamentId && !holds(possessions.armaments, rewards.armamentId) ? [rewards.armamentId] : [],
   };
