@@ -1600,12 +1600,7 @@ function queueRoundCard(combat, { cardInstanceId, targetId, choice, upcastTier, 
     combat.emit('staminaSpent', { amount: staminaCost });
   }
 
-  // The timeline's view of the card (SPEC §4.11): an attack aims at its foe; a defensive card is for its owner.
-  const aimsAtFoe = needsEnemyTarget(def) || chargedEnemyTarget;
-  const isAttack = cardKind(def) === 'attack' && Boolean(target);
-  const kind = Rounds.playerKind({ isAttack, effects: def.effects ?? [], maneuver: maneuverOf(def) });
-  const tlTarget = kind === 'attack' || aimsAtFoe ? (target ? target.id : 'self') : 'self';
-  const tags = Array.isArray(def.cardTags ?? def.tags) ? [...(def.cardTags ?? def.tags)] : [];
+  const tl = roundTimelineView(def, inst, cardInstanceId, target, needsEnemyTarget(def) || chargedEnemyTarget, cost);
   Rounds.addQueuedCard(combat, {
     instanceId: cardInstanceId,
     cardId: inst.cardId,
@@ -1615,11 +1610,37 @@ function queueRoundCard(combat, { cardInstanceId, targetId, choice, upcastTier, 
     ...(upcastRanks !== undefined ? { upcastRanks } : {}),
     paid: { energy: cost, mana: manaCost, stamina: staminaCost },
     claims,
-    tl: {
-      id: inst.cardId, instanceId: cardInstanceId, kind, speed: Rounds.cardSpeed(def, inst.cardId),
-      stance: Rounds.stanceFor(kind, tags), target: tlTarget, sp: cost, tags,
-    },
+    tl,
   });
+}
+
+// The timeline's view of a card (SPEC §4.11): an attack aims at its foe; a defensive card is for its owner.
+// Shared by the queue and roundCardForecast, so the screen's speed hint reads the card the commit will run.
+function roundTimelineView(def, inst, cardInstanceId, target, aimsAtFoe, sp) {
+  const isAttack = cardKind(def) === 'attack' && Boolean(target);
+  const kind = Rounds.playerKind({ isAttack, effects: def.effects ?? [], maneuver: maneuverOf(def) });
+  const tlTarget = kind === 'attack' || aimsAtFoe ? (target ? target.id : 'self') : 'self';
+  const tags = Array.isArray(def.cardTags ?? def.tags) ? [...(def.cardTags ?? def.tags)] : [];
+  return {
+    id: inst.cardId, instanceId: cardInstanceId, kind, speed: Rounds.cardSpeed(def, inst.cardId),
+    stance: Rounds.stanceFor(kind, tags), target: tlTarget, sp, tags,
+  };
+}
+
+// roundCardForecast(combat, instanceId, targetId) → the timeline view a hand card would be queued with, aimed at
+// targetId, or null when the card is not in hand. Pays and queues nothing: the preview screen reads it for the
+// plan-time speed hint (PREVIEW-PLAN, Screen).
+export function roundCardForecast(combat, instanceId, targetId = null) {
+  if (!combat.combatRounds) return null;
+  const p = combat.player;
+  const inst = combat.piles.hand.find((c) => c.instanceId === instanceId);
+  if (!inst) return null;
+  const def = resolveCombatCard(combat, inst);
+  const players = [{ id: p.id, alive: p.alive, connected: true }];
+  const targetPlan = cardTargetPlan(def, p.id, combat.enemies, players, { solo: true });
+  const chargedEnemyTarget = targetPlan.mode === 'friendly' && cardNeedsEnemyTargetNow(combat, instanceId);
+  const target = targetId == null ? null : findEntity(combat, targetId);
+  return roundTimelineView(def, inst, instanceId, target && target.alive ? target : null, needsEnemyTarget(def) || chargedEnemyTarget, 0);
 }
 
 // Pays a queued card's SP and MP back: the unqueue refund, and the refund of a card that never resolved.
