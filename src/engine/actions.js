@@ -202,6 +202,7 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
   if (critical > computed) ctx.emit('critHit', { sourceId: source?.id, targetId: target.id, ...critSeats(ctx, source, target), multiplier: carrier.critMultiplier, amount: critical });
   const tactical = Matchups.prepareMatchupHit(ctx, source, target, carrier, critical);
   const dmg = tactical.amount;
+  const blockBefore = target.block;
   const blocked = Math.min(target.block, Math.max(0, dmg - tactical.guardBypass));
   target.block -= blocked;
   reconcileWardBlock(target);
@@ -229,6 +230,8 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
       tags: receipt.tags } : {}),
     isAttack: true,
   });
+  // Block going from above zero to zero by this hit is a break (never double-counted with GUARD BREAK: see fx.js).
+  if (blockBefore > 0 && !(target.block > 0)) ctx.emit('blockBroken', { targetId: target.id, sourceId: source?.id, ...seatOf(ctx, target) });
   if (hpLoss > 0) {
     if (ctx.ratingsRules && !carrier?.combatReaction) {
       const multiplier = Matchups.matchupPoiseMultiplier(ctx, source, target, carrier);
@@ -342,10 +345,10 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
  * more than the one Stamina a Poise break costs.
  */
 function breakPoise(ctx, source, target) {
-  if (target.kind === 'enemy') return ['poiseBroken', { targetId: target.id, sourceId: source?.id, ...seatOf(ctx, target) }];
   const loss = Math.max(0, ctx.ratingsRules?.breaks?.poiseActionLoss ?? 1);
-  if (loss) target.pendingActionLoss = (target.pendingActionLoss || 0) + loss;
-  return ['poiseBroken', { targetId: target.id, sourceId: source?.id, staminaLoss: loss, ...seatOf(ctx, target) }];
+  // An enemy is interrupted (and pays its Stamina) by interruptForBreak, after the hit's log; a player pays here.
+  if (target.kind === 'player' && loss) target.pendingActionLoss = (target.pendingActionLoss || 0) + loss;
+  return ['poiseBroken', { targetId: target.id, sourceId: source?.id, staminaLoss: loss, ...(target.kind === 'enemy' ? { interrupted: true } : {}), ...seatOf(ctx, target) }];
 }
 
 function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
@@ -387,8 +390,10 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
   const pool = 'block';
   const bypass = spell ? 0 : Math.min(amount, tactical.guardBypassRemaining || 0);
   tactical.guardBypassRemaining -= bypass;
+  const blockBefore = target[pool] || 0;
   const blocked = spell ? 0 : Math.min(Math.max(0, target[pool] || 0), Math.max(0, amount - bypass));
   target[pool] = Math.max(0, (target[pool] || 0) - blocked);
+  if (blockBefore > 0 && !(target[pool] > 0)) breaks.push(['blockBroken', { targetId: target.id, sourceId: source?.id, ...seatOf(ctx, target) }]);
   // Poise is the physical twin of Ward and sits after Block: a magical contact never meets it.
   // Each physical hit it meets still lets at least 1 through; what it absorbs is spent.
   let hpLoss = amount - blocked;
@@ -418,7 +423,8 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
     ...seatOf(ctx, target), ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source) } : {}),
     ...(carrier.instanceId ? { cardInstanceId: carrier.instanceId, sourceHand: carrier.sourceHand, grantedBy: carrier.grantedBy } : {}), isAttack: true });
   for (const [type, payload] of breaks) ctx.emit(type, payload);
-  if (poiseBroke && target.kind === 'enemy') staggerEnemy(ctx, target);
+  // A Ward or Poise break interrupts an enemy: its prepared action is cancelled and it pays 1 Stamina.
+  for (const [type, payload] of breaks) if (payload.interrupted) Control.interruptForBreak(ctx, target, type === 'poiseBroken' ? 'poiseBreak' : 'wardBreak');
   if (hpLoss) ctx.emit('hpLost', { targetId: target.id, amount: hpLoss, cause: 'attack', ...seatOf(ctx, target) });
   if (!carrier.combatReaction && !tactical.avoided && target.alive && ctx.ratingsRules) Ratings.applyRatingImpact(ctx, source, target, carrier);
   // Independent pressure resolves even when all direct damage met protection.
@@ -639,7 +645,7 @@ function afterHpChange(ctx, target, death = {}) {
  * The direct path deliberately bypasses the bar: a guaranteed break that
  * neither consumes nor grows the poise meter.
  */
-export function staggerEnemy(ctx, enemy) {
+export function staggerEnemy(ctx, enemy, options = {}) {
   if (!enemy || enemy.kind !== 'enemy' || !enemy.alive) return;
   if (ctx.foundation && enemy.impactProtectedUntil >= ctx.turn) return;
   Matchups.clearCombatCounter(enemy, ctx);
@@ -648,7 +654,7 @@ export function staggerEnemy(ctx, enemy) {
   enemy.skipNextTurn = true;
   if (ctx.foundation) enemy.impactProtectedUntil = ctx.turn + ctx.foundation.rules.impact.protectionTurns;
   enemy.intent = { kind: 'staggered', moveId: null };
-  ctx.emit('enemyStaggered', { targetId: enemy.id, enemyId: enemy.enemyId, cancelledMove: cancelled });
+  ctx.emit('enemyStaggered', { targetId: enemy.id, enemyId: enemy.enemyId, cancelledMove: cancelled, ...(options.cause ? { cause: options.cause } : {}) });
 }
 
 /**

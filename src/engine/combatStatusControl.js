@@ -53,12 +53,31 @@ export function initializePersistentPoise(entity, maximum) {
  * without emitting, so a caller can emit after its damageDealt.
  */
 export function breakPersistentWard(ctx, entity, meta = {}) {
-  const staminaLoss = entity.kind === 'player' ? Math.max(0, ctx?.ratingsRules?.breaks?.wardActionLoss ?? 1) : 0;
-  if (staminaLoss) entity.pendingActionLoss = (entity.pendingActionLoss || 0) + staminaLoss;
-  const payload = { targetId: entity.id, sourceId: meta.sourceId, staminaLoss,
+  const staminaLoss = Math.max(0, ctx?.ratingsRules?.breaks?.wardActionLoss ?? 1);
+  if (entity.kind === 'player' && staminaLoss) entity.pendingActionLoss = (entity.pendingActionLoss || 0) + staminaLoss;
+  const interrupted = entity.kind === 'enemy';
+  const payload = { targetId: entity.id, sourceId: meta.sourceId, staminaLoss, ...(interrupted ? { interrupted: true } : {}),
     ...(ctx?.playerIdForEntity && entity.kind === 'player' ? { targetPlayerId: ctx.playerIdForEntity(entity) } : {}) };
-  if (!meta.deferBreak) ctx?.emit?.('wardBroken', payload);
+  if (!meta.deferBreak) {
+    ctx?.emit?.('wardBroken', payload);
+    if (interrupted) interruptForBreak(ctx, entity, 'wardBreak');
+  }
   return payload;
+}
+
+/**
+ * A Ward or Poise break INTERRUPTS an enemy: its prepared action is cancelled
+ * (staggerEnemy) and it pays 1 Stamina (breaks.<cause>ActionLoss). Enemies have
+ * no Stamina pool (createEnemyCombatEntity sets none), so the cost is recorded
+ * on pendingActionLoss, as a player's is. A player is not interrupted here.
+ */
+export function interruptForBreak(ctx, entity, cause) {
+  if (entity?.kind !== 'enemy') return;
+  const loss = Math.max(0, ctx?.ratingsRules?.breaks?.[cause === 'poiseBreak' ? 'poiseActionLoss' : 'wardActionLoss'] ?? 1);
+  const cancelledMove = entity.pendingMove ? entity.pendingMove.moveId : null;
+  entity.pendingActionLoss = (entity.pendingActionLoss || 0) + loss;
+  Actions.staggerEnemy(ctx, entity, { cause });
+  ctx?.emit?.('enemyInterrupted', { targetId: entity.id, cancelledMove, cause, staminaLoss: loss });
 }
 
 /**

@@ -46,8 +46,9 @@ test('Poise shows as its own layer after Block, and the total includes what it a
 });
 
 test('a Poise break staggers an enemy and costs a player Stamina next turn', () => {
-  const lines = log([{ type: 'poiseBroken', targetId: 'e1' }, { type: 'poiseBroken', targetId: 'player', staminaLoss: 1 }]);
-  assert.match(lines[0], /'s Poise broke \(staggered\)\.$/);
+  const lines = log([{ type: 'poiseBroken', targetId: 'e1', interrupted: true, staminaLoss: 1 }, { type: 'poiseBroken', targetId: 'player', staminaLoss: 1 }]);
+  assert.match(lines[0], /'s Poise broke \(interrupted, −1 Stamina\)\.$/);
+  assert.equal(log([{ type: 'wardBroken', targetId: 'e1', interrupted: true, staminaLoss: 1 }])[0].endsWith("'s Ward broke (interrupted, −1 Stamina)."), true);
   assert.match(lines[1], /^Forsaken's Poise broke \(−1 Stamina next turn\)\.$/);
 });
 
