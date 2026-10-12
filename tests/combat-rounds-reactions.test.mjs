@@ -414,3 +414,19 @@ test('under liveDefence a played Evade adds no evasion-cards.csv bonus to the at
   const timelineWith = attackNeed({ player: [card('Backstep', 'evade', 'self', { speed: 9 })], e1: attack }, false);
   assert.ok(timelineWith.need > withEvade.need, 'without liveDefence the table bonus lowers the attacker\'s need');
 });
+
+// --- P3b fix 6 (SPEC §3.12, §4.11): the save check skips the contact-plan rule only for a real round pause -------
+
+import { combatReactionProblems } from '../src/model/combatReactionState.js';
+
+test('a paused round with no awaiting reaction still needs a contact plan in its save check', () => {
+  const c = fight();
+  addToHand(c, 'guardCounter', 'rx-counter');
+  dispatch(c, { type: 'endTurn' });
+  assert.ok(c.combatRounds.paused && c.combatRounds.round.awaiting, 'fixture: the round is waiting for a reaction');
+  const real = combatReactionProblems(c);
+  assert.ok(!real.some((p) => /contact plan/.test(p)), 'a real round pause passes the check');
+  // The same pause with no awaiting reaction in the round: the rule the round pause exempts no longer applies.
+  const broken = { ...c, combatRounds: { ...c.combatRounds, round: { ...c.combatRounds.round, awaiting: null } } };
+  assert.ok(combatReactionProblems(broken).some((p) => /contact plan/.test(p)), 'the check reports the pending choice without its round');
+});
