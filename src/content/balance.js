@@ -162,6 +162,7 @@ const cardValueStatusMultipliers = {
   envenom: 1,
   glassCannon: 1,
   magicVulnerable: 1,
+  silenced: 1,
 };
 
 const cardValueRule = () => ({
