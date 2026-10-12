@@ -135,9 +135,12 @@ test('selected holds preserve existing returns and finite reactions restore the 
     applyDisplayAppearance({});
     assert.ok(alternativeSelectedStances.weaponProfiles?.[pilot]?.frames,'the actual selected catalog must be present');
     const stage=await make({weaponProfile:pilot});
+    const edgeWidthRatio = stage.el.dataset.maximumWidthRatio;
+    assert.ok(Number(edgeWidthRatio) > Number(stage.el.dataset.idleWidthRatio), 'the selected wide blade has its own viewport envelope');
     for(const stance of ['smash','sweep','counter','evade']){
       assert.equal(stage.setStance(stance),true);
       assert.match(stage.currentArt.image.url,new RegExp('reaver-greatsword-pilot-'+stance+'\\.webp$'));
+      assert.equal(stage.el.dataset.maximumWidthRatio, edgeWidthRatio, 'all selected poses share one stable edge envelope');
     }
     stage.setStance(null);stage.setRestPose('counter');
     assert.equal(stage.pose,'pilot-counter','counter rest without a ledger already uses the selected art');
@@ -173,6 +176,7 @@ test('selected holds preserve existing returns and finite reactions restore the 
     stage.reactPose('guard-break',280);stage.setRestPose('defeated');assert.equal(stage.pose,'defeated');
     assert.equal(stage.reactPose('evade',280),false,'defeat wins over a later reaction');
     const fallback=await make({});assert.equal(fallback.reactPose('evade'),false);fallback.setStance('counter');
+    assert.equal(fallback.el.dataset.maximumWidthRatio,undefined,'the edge envelope is scoped to the selected weapon profile');
     assert.equal(fallback.pose,'stance-counter');assert.doesNotMatch(fallback.currentArt.image.url,/pilot/);
     for(const mode of ['reduced','still','instant']){
       reduced=mode==='reduced';setAnimSpeed(mode==='instant'?'instant':'normal');
