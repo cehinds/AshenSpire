@@ -21,7 +21,21 @@ const build = JSON.parse(readFileSync(resolve(root, 'buildordinal.json'), 'utf8'
 const metadata = { capturedAt: new Date().toISOString(), sourceCommit: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(),
   buildVersion: `${build.release}.${build.ordinal}`, sourceDigest: build.digest, entry, browser: 'Chromium via Playwright/CDP',
   browserPlugin: 'not available', posedPages: 'Rail navigation into a fresh Starseer creation preview; no completed playthrough claimed.' };
-metadata.fullNodeSuite = { status: 'incomplete', reason: 'Manager reported the discovered full Node suite reached its 15-minute cap; focused checks and browser validation are reported separately.' };
+metadata.fullNodeSuite = { status: 'not-run-by-this-tool' };
+metadata.expectedNetworkFallbacks = [];
+function checkConsole(message, errors) {
+  if (message.type() !== 'error') return;
+  const url = message.location().url || '';
+  // content/music.js explicitly gives an HTTP single file a neighboring
+  // score folder, falling back to procedural music when it is absent.
+  const optionalScore = args.includes('--artifact') && /server responded with a status of 404/.test(message.text())
+    && (() => { try { return new URL(url).pathname === '/build/download/music/manifest.json'; } catch { return false; } })();
+  if (optionalScore) {
+    metadata.expectedNetworkFallbacks.push({ url, status: 404, fallback: 'Built-in procedural score; documented in src/content/music.js.' });
+    return;
+  }
+  errors.push(`${message.text()} (${url.slice(0, 250) || 'no source URL'})`);
+}
 const componentIds = [
   'creation-page-heading', 'creation-panel', 'creation-choice-tile',
   'creation-part-material', 'creation-part-trim', 'creation-part-body',
@@ -42,7 +56,7 @@ try {
     page.setDefaultNavigationTimeout(120000);
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
-    page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
+    page.on('console', message => checkConsole(message, errors));
     const url = `http://127.0.0.1:${serving.port}/${entry}?shot=components#folio-creation-feat-browser`;
     await page.goto(url, { waitUntil: 'domcontentloaded' });
     try {
@@ -107,7 +121,7 @@ try {
     live.setDefaultNavigationTimeout(120000);
     const liveErrors = [];
     live.on('pageerror', error => liveErrors.push(error.message));
-    live.on('console', message => { if (message.type() === 'error') liveErrors.push(message.text()); });
+    live.on('console', message => checkConsole(message, liveErrors));
     const liveUrl = `http://127.0.0.1:${serving.port}/${entry}?shot=customize&shotClass=starseer`;
     await live.goto(liveUrl, { waitUntil: 'domcontentloaded' });
     await live.locator('#cz-tab-class').waitFor({ state: 'attached', timeout: 60000 });
