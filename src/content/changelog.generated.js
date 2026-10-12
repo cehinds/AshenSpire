@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1886",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Picking a card shows its stance before you play it",
+    "detail": "Selecting a card in hand puts your fighter in that card's stance, and the stance mark above their head changes to match; click through your hand and both follow each card, and cancelling returns them to your last stance. Playing the card swings from that stance, and afterwards your fighter holds it — into the next turn too — until you play another card. The stances are attack, smash, sweep, defend, counter and prepare: spells and cards that are none of the others show prepare, and sweep now has its own mark. Smash uses the attack pose on the fighter for now, with its own mark above. Co-op seats hold their stance across turns but do not show a preview while selecting.",
+    "build": "0.7.1.1391",
+    "pullRequest": 1886,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1886"
+  },
+  {
     "id": "pr-1881",
     "date": "2026-10-12",
     "group": "2026-10-12",
