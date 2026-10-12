@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-12",
     "summary": "Reaver greatsword combat stances now use selected artwork",
     "detail": "A Reaver in the default armor carrying only a greatsword now shows selected poses for Sweep, Counter and Smash, holds its Evade pose when ready, and shows its Guard Break reaction when an enemy breaks its guard. These reactions use the five selected greatsword paintings.",
-    "build": "0.7.1.1415",
+    "build": "0.7.1.1417",
     "pullRequest": 1890,
     "url": "https://github.com/cehinds/AshenSpire/pull/1890"
   },

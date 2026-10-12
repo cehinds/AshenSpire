@@ -209,10 +209,13 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
     get currentArt(){return currentArt;},
     get rest(){return rest;},
     get stance(){return stance;},
-    get reactionPoses(){return pilotFrames ? ['evade','guard-break'].filter(kind=>images.has('pilot-'+kind)) : [];},
+    // Capability belongs to the selected profile, not transient bitmap readiness.
+    // The receipt callback is chosen before its paced reaction runs, so an image
+    // that finishes loading during the wind-up must still be eligible to play.
+    get reactionPoses(){return pilotFrames ? ['evade','guard-break'].filter(kind=>pilotFrames[kind]) : [];},
     reactPose(kind, ms=280){
       if(disposed || rest==='defeated' || !pilotFrames || !['evade','guard-break'].includes(kind) || !images.has('pilot-'+kind))return false;
-      bodyReaction={kind,elapsed:0,last:performance.now(),duration:Math.max(180,Math.min(600,Number.isFinite(ms)&&ms>0?ms:280))};
+      bodyReaction={kind,elapsed:0,last:performance.now(),duration:Math.min(600,Number.isFinite(ms)&&ms>0?ms:280)};
       paint();bodyReaction.last=performance.now();wake();return true;
     },
     get presentation(){return {rest,pose,stance,action:playing?.action,elapsed,duration:playing?.duration,resources,savedAt:Date.now()};},
