@@ -95,6 +95,12 @@ dialog .row{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;margin-
 .empty{padding:28px;text-align:center;color:var(--muted);line-height:1.6}
 .legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.76rem;color:var(--muted)}
 .legend i{display:inline-block;width:14px;height:2px;vertical-align:middle;margin-right:4px}
+.filters{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px}
+.fcol{display:flex;flex-direction:column;gap:2px;font-size:.72rem;color:var(--muted);min-width:0}
+.fcol input,.fcol select{width:100%;min-width:0;box-sizing:border-box;font-size:.8rem}
+.fcol.check{flex-direction:row;align-items:center;gap:6px;color:var(--fg)}
+.fbar{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.count{font:.76rem var(--mono);color:var(--muted)}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
 </style>
 
@@ -161,7 +167,7 @@ const CORE = new Set(['tags','objects','values','formulas','ranks','relations','
 const loaded = new Set(); const pending = new Set();
 const PAGE = 150;
 
-const state = { data:{}, view:'tags', filter:{}, shown:{}, sheet:null, sheetRank:1 };
+const state = { data:{}, view:'tags', filter:{}, shown:{}, sheet:null, sheetRank:1, colf:{}, tagf:{}, fopen:{} }; /* colf: per-column text filters; tagf: tags status / subtree / emptyDesc; fopen: filter panel open */
 for (const t of ORDER) { state.data[t] = {columns:[...TABLES[t].columns], rows:[]}; state.shown[t]=PAGE; }
 let db=null, canWrite=true, downloads=null, assetsCap=null, localMode=false;
 const dirty=new Set(), saving=new Set(), timers={}, editGen={}; /* editGen[t] counts the edits to table t; a save remembers the count it started with */
@@ -658,6 +664,31 @@ function setStatus(level,msg){
 }
 function escapeHtml(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
+/* view:begin */
+/* Pure helpers for the table view: filters, changed rows, tag links and keyboard moves. They take rows and
+   arguments only (no page globals), so workbench-view.test.mjs can load this block on its own. */
+const TAG_STATUS=['live-tag','game-concept','new'];
+function containsText(v,q){ return String(v??'').toLowerCase().includes(q); }
+/* true when `row` is `root` or sits under it: following parent links from row reaches root. lookup(v) gives the tag row for a key or id */
+function underTag(row, root, lookup){
+  let cur=row;
+  for(let n=0;cur&&n<1000;n++){ if(cur===root) return true; const p=String(cur.parent??'').trim(); if(!p) return false; cur=lookup(p); }
+  return false;
+}
+/* the filter spec: text (any column), cols ({column: text}); for tags also status, subtree (a tag id or key) and emptyDesc */
+function rowPasses(t, row, f, columns, lookup){
+  const q=String(f.text??'').trim().toLowerCase();
+  if(q && !columns.some(c=>containsText(row[c],q))) return false;
+  for(const c of Object.keys(f.cols||{})){ const v=String(f.cols[c]??'').trim().toLowerCase(); if(v && !containsText(row[c],v)) return false; }
+  if(t==='tags'){
+    if(f.status && String(row.status??'')!==f.status) return false;
+    if(f.emptyDesc && String(row.description??'').trim()!=='') return false;
+    if(f.subtree){ const root=lookup(f.subtree); if(!root||!underTag(row,root,lookup)) return false; }
+  }
+  return true;
+}
+/* view:end */
+
 /* ---------- rendering ---------- */
 function renderTabs(){
   const el=document.getElementById('tabs'); el.textContent='';
@@ -697,21 +728,27 @@ function renderTable(p,t){
   const def=TABLES[t], tbl=state.data[t];
   renderBanners(p,t);
   const tools=document.createElement('div'); tools.className='toolbar';
-  tools.innerHTML=`<input type="search" id="q-${t}" placeholder="Filter rows" aria-label="Filter rows"><span class="grow"></span>`;
+  const q=document.createElement('input'); q.type='search'; q.id='q-'+t; q.placeholder='Filter rows'; q.setAttribute('aria-label','Filter rows');
+  const count=document.createElement('span'); count.className='count'; count.setAttribute('aria-live','polite');
   const add=btn('Add row',()=>{ const r={}; tbl.columns.forEach(c=>r[c]=''); tbl.rows.unshift(r); state.filter[t]=''; markDirty(t); render(); },'primary');
   const col=btn('Add column',()=>openText('Add a column to '+def.label,'Type the new column name.','',[['Add',v=>{ v=v.trim(); if(v&&!tbl.columns.includes(v)){ tbl.columns.push(v); markDirty(t); render(); } }]],true));
   const exp=btn('Export CSV',()=>exportCSV(t));
   const imp=btn('Import CSV',()=>importDialog(t));
-  tools.append(add,col,imp,exp); if(!editable(t)){ add.disabled=col.disabled=imp.disabled=true; }
+  const nActive=activeFilters(t);
+  const fb=btn('Filters'+(nActive? ' ('+nActive+')' : ''),()=>{ state.fopen[t]=!state.fopen[t]; render(); });
+  fb.setAttribute('aria-expanded', String(!!(state.fopen[t]||nActive)));
+  tools.append(q,fb,count,add,col,imp,exp); if(!editable(t)){ add.disabled=col.disabled=imp.disabled=true; }
   p.appendChild(tools);
   const help=document.createElement('p'); help.className='help'; help.style.margin='8px 0'; help.innerHTML=def.help; p.appendChild(help);
   if(t==='formulas'||t==='objects'||t==='tags'){ const lg=document.createElement('div'); lg.className='legend'; lg.innerHTML='<span><i style="background:var(--bad)"></i>unknown reference</span><span><i style="background:var(--warn)"></i>tag has no preview value</span>'; p.appendChild(lg); }
-  const q=p.querySelector('input[type=search]'); q.value=state.filter[t]||'';
+  if(state.fopen[t]||nActive) p.appendChild(filterPanel(t,()=>draw()));
+  q.value=state.filter[t]||'';
   const grid=document.createElement('div'); grid.className='grid'; p.appendChild(grid);
   const draw=()=>{
     grid.textContent='';
-    const f=(state.filter[t]||'').toLowerCase();
-    const rows=tbl.rows.map((r,i)=>[r,i]).filter(([r])=>!f||tbl.columns.some(c=>String(r[c]??'').toLowerCase().includes(f)));
+    const spec=filterSpec(t), lookup=findTag;
+    const rows=tbl.rows.map((r,i)=>[r,i]).filter(([r])=>rowPasses(t,r,spec,tbl.columns,lookup));
+    count.textContent= rows.length===tbl.rows.length? '' : 'Showing '+rows.length+' of '+tbl.rows.length;
     if(!tbl.rows.length && !localMode && !loaded.has(t)){ grid.innerHTML='<div class="empty">Loading '+escapeHtml(def.label)+'…</div>'; return; }
     if(!tbl.rows.length){ grid.innerHTML='<div class="empty">No rows yet. Add a row, or import a CSV whose first line names the columns:<br><code class="mono">'+escapeHtml(tbl.columns.join(','))+'</code></div>'; return; }
     const table=document.createElement('table');
@@ -743,6 +780,46 @@ function renderTable(p,t){
   };
   let tmr; q.addEventListener('input',()=>{ clearTimeout(tmr); tmr=setTimeout(()=>{ state.filter[t]=q.value; state.shown[t]=PAGE; draw(); },150); });
   draw();
+}
+/* the active column and tag filters of a table (the search box is counted separately) */
+function activeFilters(t){
+  const tf=state.tagf[t]||{};
+  return Object.values(state.colf[t]||{}).filter(v=>String(v||'').trim()).length + (t==='tags'? (tf.status?1:0)+(tf.subtree?1:0)+(tf.emptyDesc?1:0) : 0);
+}
+function filterSpec(t){
+  const tf=state.tagf[t]||{};
+  return {text:state.filter[t]||'', cols:state.colf[t]||{}, status:tf.status||'', subtree:tf.subtree||'', emptyDesc:!!tf.emptyDesc};
+}
+/* the filter panel: one box per column, and for tags a status, a parent subtree and an empty-description switch */
+function filterPanel(t, onChange){
+  const tbl=state.data[t], cf=state.colf[t]||(state.colf[t]={}), tf=state.tagf[t]||(state.tagf[t]={});
+  const box=document.createElement('div'); box.className='filters'; box.setAttribute('role','group'); box.setAttribute('aria-label','Column filters');
+  const field=(label,control,cls)=>{ const l=document.createElement('label'); l.className='fcol'+(cls? ' '+cls : ''); const s=document.createElement('span'); s.textContent=label; l.append(cls==='check'? control : s, cls==='check'? s : control); return l; };
+  let tmr;
+  const schedule=()=>{ clearTimeout(tmr); tmr=setTimeout(()=>{ state.shown[t]=PAGE; onChange(); },120); };
+  if(t==='tags'){
+    const st=document.createElement('select'); st.setAttribute('aria-label','Status');
+    for(const [v,l] of [['','Any status'],...TAG_STATUS.map(s=>[s,s])]){ const o=document.createElement('option'); o.value=v; o.textContent=l; if(v===(tf.status||'')) o.selected=true; st.appendChild(o); }
+    st.onchange=()=>{ tf.status=st.value; state.shown[t]=PAGE; onChange(); };
+    box.appendChild(field('status',st));
+    const sub=document.createElement('select'); sub.setAttribute('aria-label','Parent subtree');
+    const none=document.createElement('option'); none.value=''; none.textContent='Any parent'; sub.appendChild(none);
+    for(const r of [...tbl.rows].filter(r=>r.id).sort((a,b)=>String(a.id)<String(b.id)?-1:1)){ const o=document.createElement('option'); o.value=String(r.id); o.textContent=String(r.id); if(String(r.id)===(tf.subtree||'')) o.selected=true; sub.appendChild(o); }
+    sub.onchange=()=>{ tf.subtree=sub.value; state.shown[t]=PAGE; onChange(); };
+    box.appendChild(field('parent subtree',sub));
+    const ed=document.createElement('input'); ed.type='checkbox'; ed.checked=!!tf.emptyDesc; ed.setAttribute('aria-label','Empty description only');
+    ed.onchange=()=>{ tf.emptyDesc=ed.checked; state.shown[t]=PAGE; onChange(); };
+    box.appendChild(field('empty description only',ed,'check'));
+  }
+  for(const c of tbl.columns){
+    const inp=document.createElement('input'); inp.type='search'; inp.value=cf[c]||''; inp.placeholder=c; inp.setAttribute('aria-label','Filter '+c);
+    inp.addEventListener('input',()=>{ cf[c]=inp.value; schedule(); });
+    box.appendChild(field(c,inp));
+  }
+  const bar=document.createElement('div'); bar.className='fbar';
+  bar.appendChild(btn('Clear filters',()=>{ state.colf[t]={}; state.tagf[t]={}; state.filter[t]=''; state.shown[t]=PAGE; render(); }));
+  box.appendChild(bar);
+  return box;
 }
 function uploadPreview(row){
   const f=document.getElementById('file'); f.accept='image/*'; f.value='';
