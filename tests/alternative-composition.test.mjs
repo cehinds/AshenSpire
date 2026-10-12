@@ -149,3 +149,28 @@ test('a tablet spacious field keeps its own depth rows (no shared desktop line)'
   const fit = alternativeCombatComposition({ actors, sizes, width, height, handTop: height });
   assert.notEqual(fit[1].ground, fit[2].ground, 'tablet enemies keep their slot depth');
 });
+
+// Owner (2026-10-12): at 1280x720 the desktop bands leave the field near 297px,
+// under the spacious threshold. The desktop shared back row, its centring and
+// the 0.80 cap still apply there.
+test('a 1280x720 desktop field (about 297px high) still shares the back row and caps it', () => {
+  const width = 1280, height = 297;
+  const actors = ['p', 'a', 'b'].map((id, i) => ({ side: i ? 'enemy' : 'player',
+    visibleWidth: 60, leading: 40, slot: { id, ground: [250, 280, 265][i] } }));
+  // Far-apart formation columns: an uncapped 1.3 spread would push the far enemy past 0.8.
+  const sizes = actors.map((a, i) => ({ id: a.slot.id, x: [200, 560, 1100][i],
+    visibleHeight: 110, scale: 1, multiplier: 1 }));
+  const fit = alternativeCombatComposition({ actors, sizes, width, height, handTop: height, desktop: true });
+  const enemies = fit.slice(1);
+  assert.equal(new Set(enemies.map(e => e.ground)).size, 1, 'one shared foot line at 297px');
+  assert.ok(enemies[0].ground <= height * .8, 'the row stays on the floor');
+  const left = Math.min(...enemies.map(e => e.x)), right = Math.max(...enemies.map(e => e.x));
+  assert.ok(Math.abs((left + right) / 2 - width * .66) < 1e-6, `centre at ${(left + right) / 2 / width}`);
+  assert.ok(right <= width * .8 + 1e-9, `far enemy at ${right / width}`);
+  for (const enemy of enemies) {
+    const headroom = enemy.ground - enemy.visibleHeight - actors[1].leading;
+    assert.ok(headroom >= SPACIOUS_RIBBON_RESERVE - 1e-9, `intent and HP at ${headroom} clear the ribbon`);
+  }
+  // Horizon framing: the backdrop frames the near row, as on the spacious desktop.
+  assert.ok(enemies.every(e => e.sceneryGround !== undefined), 'desktop enemies carry the horizon framing');
+});

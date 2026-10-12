@@ -89,7 +89,9 @@ export function alternativeCombatComposition({ sizes, actors, width, height, han
   const enemyFits = sizes.filter(size => enemies.some(actor => actor.slot.id === size.id));
   const center = enemyFits.length ? (Math.min(...enemyFits.map(f => f.x)) + Math.max(...enemyFits.map(f => f.x))) / 2 : width * .55;
   const spacious = height > 300;
-  const sharedRow = spacious && desktop;
+  // The desktop form factor shares the row at any field height: a 1280x720
+  // window leaves its field near 297px, under the spacious threshold.
+  const sharedRow = desktop;
   // One foot line for the whole back row: the tallest enemy's headroom, never
   // higher than the floor's standing share of the field.
   const spaciousRow = sharedRow ? Math.max(height * .48, ...enemyFits.map(size => {
@@ -99,7 +101,7 @@ export function alternativeCombatComposition({ sizes, actors, width, height, han
   // Spread the row about its centre by the spacious factor; on desktop, shrink
   // it only when its far enemy would pass SPACIOUS_ROW_MAX_X of the width.
   const maxOffset = Math.max(0, ...enemyFits.map(f => Math.abs(f.x - center)));
-  const spread = !spacious ? 1 : !sharedRow || maxOffset === 0 ? SPACIOUS_SPREAD
+  const spread = !spacious && !sharedRow ? 1 : !sharedRow || maxOffset === 0 ? SPACIOUS_SPREAD
     : Math.min(SPACIOUS_SPREAD, (SPACIOUS_ROW_MAX_X - SPACIOUS_ROW_CENTRE) * width / maxOffset);
   const fitted = sizes.map(size => {
     const actor = actors.find(actor => actor.slot.id === size.id);
@@ -111,7 +113,7 @@ export function alternativeCombatComposition({ sizes, actors, width, height, han
     const ratio = visibleHeight / size.visibleHeight;
     const halfWidth = actor.visibleWidth * size.scale * ratio / 2;
     const proposedX = player ? (solo ? Math.max(size.x + width * .035, handLeft + halfWidth) : size.x)
-      : (size.x - center) * spread + width * (spacious ? SPACIOUS_ROW_CENTRE : .68);
+      : (size.x - center) * spread + width * (spacious || sharedRow ? SPACIOUS_ROW_CENTRE : .68);
     const x = Math.max(halfWidth + 6, Math.min(width - halfWidth - 6, proposedX));
     // Enemies stand back on the floor, about half-way up the field. A short
     // portrait field (a phone with browser bars) keeps that depth too, rather
@@ -135,7 +137,7 @@ export function alternativeCombatComposition({ sizes, actors, width, height, han
     // before its enemies moved back, so the horizon and landmark stay in view;
     // the backdrop then keeps the back-row feet on its floor. A desktop field
     // frames the same way.
-    const sceneryGround = !player && backRow && (!spacious || sharedRow) ? nearRow : undefined;
+    const sceneryGround = !player && (sharedRow || (backRow && !spacious)) ? nearRow : undefined;
     const standingGround = !player && sharedRow ? spaciousRow : lift ? backGround : undefined;
     return { ...size, x, ground, visibleHeight, scale: size.scale * ratio, multiplier: size.multiplier * ratio,
       ...(sceneryGround === undefined ? {} : { sceneryGround }),
