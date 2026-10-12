@@ -86,6 +86,7 @@ import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { attachTooltip, hideTooltip, showTooltipFor, esc } from '../components/tooltip.js';
 import { iconTray, trayIcon } from '../components/iconTray.js';
 import { t } from '../strings.js';
+import { haptic } from '../haptics.js';
 import { ANIM_SPEEDS, getAnimSpeed, anchorLocalBox, callout, calloutForEvent, clampBox, guardHitFloatParts, playReceiptHaptics, playReceiptSounds, playTimeline } from '../fx.js';
 import { combatIntentStance } from '../../model/combatIntentVisibility.js';
 import { nodeName, nodeBlurb, actTitle, intentTooltip, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
@@ -242,6 +243,17 @@ export function coopPacedRoute(scene, lastSeq = 0, seatIds = []) {
   const receipts = scene?.kind === 'combat' ? scene : scene?.combatReceipts;
   if (!receipts || !((Number(receipts.receiptSeq) || 0) > lastSeq)) return null;
   return coopTimelineRoute(receipts.events, scene.kind === 'combat' ? (scene.players || []).map(player => player.id) : seatIds);
+}
+
+/**
+ * The card-play buzz for a batch of receipts: once per card a seat this screen
+ * plays put down (playReceiptSounds' rule) → the number of buzzes.
+ */
+export function coopCardPlayBuzz(events = [], localSeats = null) {
+  const local = seat => !Array.isArray(localSeats) || !localSeats.length || seat == null || localSeats.includes(seat);
+  let n = 0;
+  for (const event of events || []) if (event?.type === 'cardPlayed' && local(event.playerId)) { haptic.play('cardPlay'); n++; }
+  return n;
 }
 
 export function coopReceiptSounds(scene, lastSeq = 0, localSeats = null, { hapticsOnly = false } = {}) {
@@ -2150,6 +2162,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       snap = working; render();
     };
     snap = working; render();
+    // The timeline plays each beat's sounds and damage/turn haptics; the
+    // card-play buzz is coopReceiptSounds' alone, which this path skips (it
+    // marks lastSoundSeq), so it plays here, once, as the receipts land.
+    if ((Number(next.scene.receiptSeq) || 0) > lastSoundSeq) coopCardPlayBuzz(next.scene.events, seats);
     playTimeline(events, {
       get layer() { return app.querySelector('.fx-layer'); },
       get combatEl() { return app.querySelector('.combat'); }, anchorFor,

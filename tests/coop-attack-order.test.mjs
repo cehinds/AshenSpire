@@ -9,7 +9,8 @@ import { createRegistries } from '../src/model/registries.js';
 import { initialClassTreeChoices } from '../src/model/classTree.js';
 import { registriesForClassMastery } from '../src/model/classMasteryRun.js';
 import { createSession } from '../tools/session.mjs';
-import { coopTimelineRoute, coopPacedRoute, coopReceiptOverlays } from '../src/ui/screens/coop.js';
+import { coopTimelineRoute, coopPacedRoute, coopReceiptOverlays, coopCardPlayBuzz, coopReceiptSounds } from '../src/ui/screens/coop.js';
+import { haptic } from '../src/ui/haptics.js';
 import { decorateCombatEffects, combatEffectReceipt } from '../src/model/combatEffectEvents.js';
 import { resolveCoopPlayedCombatCard } from '../src/ui/models/PlayedCombatCard.js';
 
@@ -257,4 +258,21 @@ test('a fully avoided player attack still plays through the player timeline', ()
   assert.equal(events.find(event => event.type === 'cardPlayed')?.cardType, 'attack', 'the digest projects cardType');
   const avoided = events.filter(event => !['damageDealt', 'impactDealt', 'hpLost'].includes(event.type)).concat({ type: 'attackEvaded', targetId: target.id, charges: 0 });
   assert.equal(coopTimelineRoute(avoided, ['p1', 'p2']), 'player', avoided.map(event => event.type).join(' '));
+});
+
+test('a paced attack still buzzes its card play once, for a local seat only, and the final render adds none', () => {
+  const felt = (fn) => { const before = haptic.sink; const ids = []; haptic.sink = id => ids.push(id); try { fn(); } finally { haptic.sink = before; } return ids; };
+  const events = [{ type: 'cardPlayed', playerId: 'p1', cardType: 'attack' }, { type: 'damageDealt', sourcePlayerId: 'p1', targetId: 'e1', amount: 5, isAttack: true }];
+  assert.deepEqual(felt(() => coopCardPlayBuzz(events, ['p1'])), ['cardPlay'], 'the local seat feels its card');
+  assert.deepEqual(felt(() => coopCardPlayBuzz(events, ['p2'])), [], 'a teammate card does not buzz this screen');
+  // After the paced run marks lastSoundSeq, the final render (and a fight's
+  // reward scene carrying the same receipts) buzzes nothing more.
+  const scene = { kind: 'combat', receiptSeq: 5, events };
+  assert.deepEqual(felt(() => coopReceiptSounds(scene, 5, ['p1'])), []);
+  assert.deepEqual(felt(() => coopReceiptSounds({ kind: 'reward', combatReceipts: { receiptSeq: 5, events } }, 5, ['p1'])), []);
+  // Wiring: once per new receipt batch, before the timeline marks lastSoundSeq.
+  const timeline = body('playPacedReceipts');
+  const buzz = timeline.indexOf('if ((Number(next.scene.receiptSeq) || 0) > lastSoundSeq) coopCardPlayBuzz(next.scene.events, seats);');
+  assert.ok(buzz > 0 && buzz < timeline.indexOf('playTimeline(events,'), 'at the start of the paced run');
+  assert.ok(buzz < timeline.indexOf('lastSoundSeq = Math.max'), 'before lastSoundSeq is marked');
 });
