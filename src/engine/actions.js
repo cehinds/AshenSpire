@@ -521,6 +521,8 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
   creditKnowledgeImpact(ctx, target, amount, tactical.knowledgeBonus > 0);
   Matchups.recordTacticalContact(tactical, { hpLoss, blocked, wardResisted: resisted });
   ctx.emit('damageDealt', { sourceId: source?.id, targetId: target.id, amount, blocked, wardResisted: ward,
+    // The whole protection before Block (typed reduction, immunity, Barrier, Ward), when it differs from the Ward figure.
+    ...(resisted !== ward ? { resisted } : {}),
     ...(barrierSpent ? { barrierAbsorbed: barrierSpent } : {}),
     ...(wardSpent ? { wardAbsorbed: wardSpent, wardRemaining: target.persistentWard?.value || 0 } : {}),
     ...(poiseAbsorbed ? { poiseAbsorbed, poiseRemaining: target.persistentPoise?.value || 0 } : {}),
