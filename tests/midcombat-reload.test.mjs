@@ -20,7 +20,7 @@ import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { createRunState } from '../src/model/state.js';
+import { createRunState, validateRunShape } from '../src/model/state.js';
 import { seatAtTier, seatTierHpMult } from '../src/model/seats.js';
 import { createRng, seedToString } from '../src/engine/rng.js';
 import { dispatch } from '../src/engine/combat.js';
@@ -360,4 +360,17 @@ test('M2 parity: main.js still orders entry persist, snapshot guard and reload r
   const reenterAt = resume.indexOf('enterCombat(run.combatEntered.nodeId, run.combatEntered.encounterId, { resuming: true');
   assert.ok(rngAt >= 0, 'resumeRun still rebuilds the rng from the saved stream counters');
   assert.ok(reenterAt > rngAt, 'resumeRun still re-enters the fight after rebuilding the rng');
+});
+
+test('a saved entry snapshot must carry the run\'s own reaction tuning', () => {
+  const storage = createMemoryStorage();
+  const saves = createSaveManager(storage);
+  const { run, rng } = newSeededRun(saves);
+  startNormalFight(saves, run, rng);
+  const reloaded = saves.loadRun(registries);
+  assert.equal(reloaded.reactionRulesVersion, 2);
+  assert.deepEqual(validateRunShape(reloaded).filter(problem => /reactionRules/.test(problem)), []);
+  const edited = structuredClone(reloaded);
+  edited.combatEntered.snapshot.reactionRules.impact.base.smash += 1;
+  assert.ok(validateRunShape(edited).includes('combatEntered.snapshot.reactionRules must match the run'));
 });

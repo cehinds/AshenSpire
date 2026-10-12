@@ -158,6 +158,15 @@ export function prepareTacticalCard(ctx, source, target, carrier, effects, meta 
           payload.poise += counterEffectPreview(ctx, source, target, carrier, effect, meta)?.total || 0;
         }
         if (authored.hpAgainstNonCaster !== undefined) payload.hpAgainstNonCaster = authored.hpAgainstNonCaster;
+      } else if (ctx.reactionRulesVersion === 2 && carrier.traitValues?.counterstrike) {
+        // A reply derived from the card's own damage effect: record its base and rating so
+        // Counterstrike scales the base and re-derives the rating (one single-hit damage effect).
+        const damaging = effects.map(effect => ({ effect, preview: effect.op === 'damage' ? counterEffectPreview(ctx, source, target, carrier, effect, meta) : null }))
+          .filter(row => row.preview);
+        if (damaging.length === 1 && damaging[0].preview.hits === 1) {
+          const base = Math.max(0, Math.floor(evaluate(damaging[0].effect.amount ?? 0, counterFormulaContext(ctx, source, target, meta))));
+          Object.assign(payload, { hpBase: base, hpRating: damaging[0].preview.value - base });
+        }
       }
       armCombatCounter(ctx, source, carrier, { ...numbers, payload });
     } else armCombatCounter(ctx, source, carrier, numbers);
