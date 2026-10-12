@@ -3,6 +3,56 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1886",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Picking a card shows its stance before you play it",
+    "detail": "Selecting a card in hand puts your fighter in that card's stance, and the stance mark above their head changes to match; click through your hand and both follow each card, and cancelling returns them to your last stance. Playing the card swings from that stance, and afterwards your fighter holds it — into the next turn too — until you play another card. The stances are attack, smash, sweep, defend, counter and prepare: spells and cards that are none of the others show prepare, and sweep now has its own mark. Smash holds each class's painted wind-up, and every swing now leaves from your stance and returns to it instead of snapping to a neutral pose. Co-op seats hold their stance across turns but do not show a preview while selecting.",
+    "build": "0.7.1.1401",
+    "pullRequest": 1886,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1886"
+  },
+  {
+    "id": "pr-1875",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Widescreen combat uses the desktop layout",
+    "detail": "On widescreen monitors the combat screen now uses the same band sizes as desktop: a taller hand with the larger desktop cards in a row under the Combat log and the compact 450px footer. Turning a tablet into a desktop-width window now redraws the battlefield for the new layout. Phone and tablet layouts are unchanged.",
+    "build": "0.7.1.1393",
+    "pullRequest": 1875,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1875"
+  },
+  {
+    "id": "pr-1881",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Co-op is set aside for now",
+    "detail": "The title menu no longer offers Forsaken Together while co-op is reworked. Nothing else changes, and solo play is untouched.",
+    "build": "0.7.1.1389",
+    "pullRequest": 1881,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1881"
+  },
+  {
+    "id": "pr-1870",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Combatants stand on an even grid, and any part of an enemy's square targets it",
+    "detail": "In the default view the battlefield is now one even grid of three lanes, leaning on a diagonal into the distance: enemies in a back row and a front row, your party in one row nearest you, with open ground between you and them. Each square has a shadow where its fighter's feet stand. Enemies fill the back row first (one in the middle, two on the outer lanes, three across), then the front row, up to six. You start in the left lane. Tapping anywhere in an occupied enemy square selects that enemy, or plays your readied card or flask on it. Moving now picks one of the three lanes in your row. The Classic look is unchanged.",
+    "build": "0.7.1.1387",
+    "pullRequest": 1870,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1870"
+  },
+  {
+    "id": "pr-1878",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Desktop combat looks like the phone",
+    "detail": "On desktop the hand is taller and its cards are much larger. They sit in a tight row just under the Combat log / Reaction row, and the footer is compact. Enemies stand together on one ground line, and the castle and trees of the horizon show along the top of the battlefield. The Combat log row, intent badges, stance mark and footer words are larger. Phone, tablet and widescreen layouts are unchanged.",
+    "build": "0.7.1.1363",
+    "pullRequest": 1878,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1878"
+  },
+  {
     "id": "pr-1879",
     "date": "2026-10-12",
     "group": "2026-10-12",

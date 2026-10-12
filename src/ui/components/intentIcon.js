@@ -6,6 +6,7 @@ export const INTENT_ICON_SHAPES = Object.freeze({
   defend: ACTION_SIGILS.defend.shape,
   counter: ACTION_SIGILS.counter.shape,
   smash: ACTION_SIGILS.smash.shape,
+  sweep: ACTION_SIGILS.sweep.shape,
   prepare: '<path d="M7 3h18M7 29h18M9 3v6l14 14v6M23 3v6L9 23v6M9 8h14M9 25h14"/>',
   cast: ACTION_SIGILS.spell.shape,
   buff: ACTION_SIGILS.power.shape,
