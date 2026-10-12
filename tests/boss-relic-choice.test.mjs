@@ -90,18 +90,20 @@ test('a 3-choice boss relic offer is one relic row with relicIds and choice true
   assert.equal(rows[0].choice, true);
 });
 
-test('a boss relic choice row is a required pick that is never auto-collected', () => {
+test('a boss relic choice row is a required pick, auto-collected one-of-offer like a card choice', () => {
   const choices = ['crownOfStitches', 'wardenHorn', 'ashOfRemembrance'];
   const plan = rewardPlan({ relicChoices: choices, cinders: 5 });
   const row = plan.rows.find((r) => r.kind === 'relic');
   const waiting = rewardClaimStatus(plan, {});
-  assert.equal(waiting.requiredChoice?.kind, 'relic', 'Continue waits on the relic pick');
+  assert.equal(waiting.requiredChoice?.kind, 'relic', 'the side column names the pick');
   assert.equal(waiting.requiredChoice.count, 3);
-  for (const mode of ['auto', 'manual']) {
-    const { take, leave } = resolveContinue(plan, {}, mode, () => 0);
-    assert.ok(!take.some((r) => r.kind === 'relic'), `${mode}: the relic choice is not auto-collected`);
-    assert.ok(leave.some((r) => r.kind === 'relic'), `${mode}: the relic choice is left for the player`);
-  }
+  const auto = resolveContinue(plan, {}, 'auto', (n) => n - 1);
+  const taken = auto.take.filter((r) => r.kind === 'relic');
+  assert.equal(taken.length, 1, 'auto-collect ON takes exactly one relic');
+  assert.equal(taken[0].chosenRelicId, 'ashOfRemembrance', 'the seeded pick indexes the offer');
+  const manual = resolveContinue(plan, {}, 'manual', () => 0);
+  assert.ok(!manual.take.some((r) => r.kind === 'relic'), 'auto-collect OFF takes no relic');
+  assert.ok(manual.leave.some((r) => r.kind === 'relic'), 'the unpicked choice is left');
   assert.equal(rewardClaimStatus(plan, { [row.key]: 'skipped' }).requiredChoice, null, 'a skipped choice no longer blocks');
 });
 

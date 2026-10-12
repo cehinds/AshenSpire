@@ -357,14 +357,12 @@ export function resolveContinue(plan, states = {}, mode = 'auto', pick = () => 0
     const state = states[row.key];
     if (state === 'taken') continue; // applied at tap time; nothing left to do
     if (row.blockedBy) { leave.push(row); continue; }
-    // A boss relic choice waits for the player's pick in every mode: it is
-    // never auto-collected, so it is left here and Continue waits on it.
-    if (isRelicChoice(row)) { leave.push(row); continue; }
     if (mode === 'auto' && state !== 'skipped') {
-      if (CARD_CHOICE_KINDS.includes(row.kind) || row.kind === 'classDraft' || row.kind === 'levelChoice' || row.kind === 'classMilestone') {
+      if (CARD_CHOICE_KINDS.includes(row.kind) || row.kind === 'classDraft' || row.kind === 'levelChoice' || row.kind === 'classMilestone' || isRelicChoice(row)) {
         const ids = pickIds(row);
         const id = row.choice ? ids[pick(ids.length) % ids.length] : ids[0];
         take.push({ ...row, ...(row.kind === 'classDraft' ? { nodeId: id }
+          : isRelicChoice(row) ? { chosenRelicId: id }
           : row.kind === 'levelChoice' || row.kind === 'classMilestone' ? { choiceId: id } : row.choiceIds ? { cardId:row.cardIds[ids.indexOf(id)], choiceId:id } : { cardId: id }) });
       } else {
         take.push(row);
