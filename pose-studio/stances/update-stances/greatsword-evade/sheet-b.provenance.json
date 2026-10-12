@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "family": "evade",
+  "actor": "reaver",
+  "weapon": "greatsword",
+  "optionIds": [
+    "EV16",
+    "EV17",
+    "EV18",
+    "EV19",
+    "EV20"
+  ],
+  "tool": "image_gen.imagegen",
+  "transparentBackgroundRequested": true,
+  "unchangedOriginal": "/workspace/generated_images/exec-369274aa-8914-4bd0-978a-42b589480f25.png",
+  "output": "sheet-b.png",
+  "sha256": "0ff07cf6885c79f97e1668d51e8e1f5165e3316191345ac6af366a790918c35b",
+  "dimensions": [
+    1024,
+    1536
+  ],
+  "mode": "RGBA",
+  "alphaExtrema": [
+    0,
+    254
+  ],
+  "createdUtc": "2026-10-12T16:16:46.842963+00:00",
+  "references": [
+    {
+      "path": "/workspace/AshenSpire/docs/design/class-armor-rear-2026-10-06/references/reaver-default-rear.png",
+      "sha256": "013f46c2d92303243da8527fcf9a15bd7c31f41e3add503e3fdd6ebc8f9950cd"
+    },
+    {
+      "path": "/workspace/AshenSpire/assets-display/alternative/reaver-greatsword-pilot-smash.webp",
+      "sha256": "9abfefe7258a3bfa2238e7c0516396c61baa5ca009a649b8408183b91fcdf6e2"
+    },
+    {
+      "path": "/workspace/AshenSpire/assets-display/alternative/reaver-greatsword-pilot-evade.webp",
+      "sha256": "862539c836a090b7965f1db448647e73c0bedb3b12d88a5e917d0ebe105c9196"
+    }
+  ],
+  "prompt": "sheet-b.prompt.txt",
+  "status": "generated_pending_director_review",
+  "initialConcerns": [
+    "Figures remain larger than requested210px and72px margins are not met.",
+    "EV16 remains forward-weighted rather than backward duck;EV20 lateral shoulder-slip intention weak.",
+    "EV18 rearhip hands need director anatomy review."
+  ]
+}
