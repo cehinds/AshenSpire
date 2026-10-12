@@ -987,7 +987,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // and sits just above its badges and bar, never over them. The footer was
     // packed above, so the overhead (intent and Inspect together) moves by the
     // measured difference. Reads first, then writes: one layout serves all.
-    const INTENT_BAR_GAP = 5; // physical px, the same at every UI zoom
+    // Gap between the intent and the badge row, in layout px (anchorLocalBox
+    // measures in the frame's own layout space, so no zoom arithmetic here).
+    const INTENT_BAR_GAP = 5;
     const intentMoves = placed.map(({ frame }) => {
       if (!frame.classList.contains('enemy') || frame.classList.contains('dead')) return null;
       const leadingHost = frame.querySelector('.combatant-leading');
@@ -995,20 +997,21 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       const row = frame.querySelector('.combat-health-row');
       const track = row?.querySelector('.combat-health-meter .m-track');
       if (!leadingHost || !intent || !track) return null;
-      const intentRect = intent.getBoundingClientRect(), trackRect = track.getBoundingClientRect();
-      const topOfRow = Math.min(row.getBoundingClientRect().top, ...[...row.querySelectorAll('.combat-health-badge')]
-        .map(badge => badge.getBoundingClientRect().top));
+      const intentBox = anchorLocalBox(frame, intent), trackBox = anchorLocalBox(frame, track);
+      const topOfRow = Math.min(anchorLocalBox(frame, row).top, ...[...row.querySelectorAll('.combat-health-badge')]
+        .map(badge => anchorLocalBox(frame, badge).top));
       return { leadingHost,
-        dx: (trackRect.left + trackRect.width / 2) - (intentRect.left + intentRect.width / 2),
-        dy: (topOfRow - INTENT_BAR_GAP) - intentRect.bottom };
+        dx: (trackBox.left + trackBox.width / 2) - (intentBox.left + intentBox.width / 2),
+        dy: (topOfRow - INTENT_BAR_GAP) - (intentBox.top + intentBox.height) };
     });
     for (const move of intentMoves) {
       if (!move || (Math.abs(move.dx) < 0.01 && Math.abs(move.dy) < 0.01)) continue;
       const { leadingHost, dx, dy } = move;
-      const left = parseFloat(leadingHost.style.left) || 0;
-      const top = parseFloat(leadingHost.style.translate.split(' ')[1]) || 0;
-      leadingHost.style.left = `${left + dx / zoom}px`;
-      leadingHost.style.translate = `0 ${top + dy / zoom}px`;
+      // The host's current place in its own containing block, in layout px.
+      const hostBox = anchorLocalBox(leadingHost.offsetParent || leadingHost.parentElement, leadingHost);
+      const hostShiftY = parseFloat(leadingHost.style.translate.split(' ')[1]) || 0;
+      leadingHost.style.left = `${hostBox.left + dx}px`;
+      leadingHost.style.translate = `0 ${hostShiftY + dy}px`;
     }
     // Idle names do not reserve footer rows, but their independent tap cores
     // still need separate space when two formation rows meet on a short field.
