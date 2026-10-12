@@ -70,7 +70,7 @@ test('with nothing confirmed or armed, the figure shows the neutral resting mark
 });
 
 // A spell-only card (camp:spell, no maneuver, e.g. Scholar's Insight) shows the
-// cast glyph, both armed and as the held kind after it is confirmed.
+// prepare glyph, both armed and as the held kind after it is confirmed.
 const overheadSource = readFileSync(new URL('../src/ui/components/combatantOverhead.js', import.meta.url), 'utf8');
 const overheadBegin = overheadSource.indexOf('export function playerActionIntent(');
 const overheadEnd = overheadSource.indexOf('\n}\n', overheadBegin) + 3;
@@ -98,16 +98,19 @@ function loadSyncPlayerActionIntent(playerActionIntent, resolved) {
   return { actions, sync: (inst, held) => sync({ querySelector: () => ({ querySelector: () => null, append: leading.append }) }, inst, held) };
 }
 
-test('a spell-only profile shows the cast glyph, a physical one with no maneuver shows none', () => {
+test('a spell-only profile shows the prepare glyph, and an untyped one too', () => {
   const playerActionIntent = loadPlayerActionIntent();
   const spellOnly = combatProfileFor({ id: 'scholarsInsight' });
   assert.equal(spellOnly.camp, 'spell');
   assert.equal(spellOnly.maneuver, null);
   const node = playerActionIntent(spellOnly, () => {});
   assert.ok(node, 'a spell-only profile is not dropped');
-  assert.equal(node.attrs['aria-label'], 'Selected action: cast');
-  assert.equal(node.children[0].icon, 'cast');
-  assert.equal(playerActionIntent({ camp: 'physical', maneuver: null }, () => {}), null);
+  assert.equal(node.attrs['aria-label'], 'Selected action: prepare');
+  assert.equal(node.children[0].icon, 'prepare');
+  const untyped = playerActionIntent({ camp: 'physical', maneuver: null }, () => {});
+  assert.ok(untyped, 'an untyped profile still shows a glyph');
+  assert.equal(untyped.children[0].icon, 'prepare', 'an untyped profile renders the prepare icon');
+  assert.equal(playerActionIntent(null, () => {}), null);
 });
 
 test('an armed spell-only card wins over the held kind', () => {
@@ -117,7 +120,7 @@ test('an armed spell-only card wins over the held kind', () => {
   assert.equal(actions.at(-1).profile.maneuver, null);
 });
 
-test('after confirming a spell-only card, the held glyph becomes cast', () => {
+test('after confirming a spell-only card, the held glyph becomes prepare', () => {
   const kinds = createStanceLedger(kindForCard);
   kinds.accept({ type: 'cardPlayed', cardId: 'defend' });
   kinds.accept({ type: 'cardPlayed', cardId: 'scholarsInsight' });
@@ -125,6 +128,6 @@ test('after confirming a spell-only card, the held glyph becomes cast', () => {
   const { actions, sync } = loadSyncPlayerActionIntent(loadPlayerActionIntent(), null);
   sync(null, kinds.get());
   assert.equal(actions.length, 1, 'the held spell-only kind shows a glyph');
-  assert.equal(actions[0].attrs['aria-label'], 'Selected action: cast');
-  assert.equal(actions[0].children[0].icon, 'cast');
+  assert.equal(actions[0].attrs['aria-label'], 'Selected action: prepare');
+  assert.equal(actions[0].children[0].icon, 'prepare');
 });
