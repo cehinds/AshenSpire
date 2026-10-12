@@ -20,6 +20,7 @@ export function wireCombatLayout(combatEl) {
   const handArea = combatEl.querySelector(':scope > .hand-area');
   let frame = 0;
   let observer = null;
+  let formFactorObserver = null;
 
   function apply() {
     frame = 0;
@@ -92,12 +93,23 @@ export function wireCombatLayout(combatEl) {
     frame = 0;
     observer?.disconnect();
     observer = null;
+    formFactorObserver?.disconnect();
+    formFactorObserver = null;
   }
   if (typeof ResizeObserver !== 'undefined') {
     observer = new ResizeObserver(schedule);
     observer.observe(combatEl);
     // Its content box narrows when the safe-area padding arrives or changes.
     if (handArea) observer.observe(handArea);
+  }
+  // applyUiScale writes data-form-factor after its debounced resize, so the
+  // resize above can plan with the old form factor's band shares. Re-plan as
+  // soon as the attribute actually changes.
+  if (typeof MutationObserver !== 'undefined') {
+    formFactorObserver = new MutationObserver(records => {
+      if (records.some(record => record.oldValue !== document.documentElement.getAttribute('data-form-factor'))) schedule();
+    });
+    formFactorObserver.observe(document.documentElement, { attributes: true, attributeOldValue: true, attributeFilter: ['data-form-factor'] });
   }
   apply();
   return { apply, release };

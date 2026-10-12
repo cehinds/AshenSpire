@@ -77,3 +77,16 @@ for (const windowHeight of [720, 1080, 1440, 2160]) {
     assert.ok(wide.hand > base.hand, 'the hand band is taller on a wide screen');
   });
 }
+
+// applyUiScale writes data-form-factor after its debounced resize, so a band
+// plan that only re-runs on ResizeObserver can keep the old form factor's
+// shares. The combat layout must re-plan on that attribute's change, and let go
+// of the observer when it releases.
+import { readFileSync } from 'node:fs';
+const combatLayoutSource = readFileSync(new URL('../src/ui/components/combatLayout.js', import.meta.url), 'utf8');
+
+test('the combat layout re-plans when data-form-factor changes', () => {
+  assert.match(combatLayoutSource, /formFactorObserver = new MutationObserver\(records => \{[\s\S]*?data-form-factor[\s\S]*?schedule\(\);/);
+  assert.match(combatLayoutSource, /formFactorObserver\.observe\(document\.documentElement, \{ attributes: true, attributeOldValue: true, attributeFilter: \['data-form-factor'\] \}\);/);
+  assert.match(combatLayoutSource, /function release\(\) \{[\s\S]*?formFactorObserver\?\.disconnect\(\);/);
+});
