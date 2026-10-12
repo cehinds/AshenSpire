@@ -3016,8 +3016,17 @@
               "p": "eventSourceIsOwner"
             },
             {
-              "p": "enemyKilledWithStatus",
-              "status": "crimsonBlight"
+              "p": "any",
+              "preds": [
+                {
+                  "p": "enemyKilledWithStatus",
+                  "status": "crimsonBlight"
+                },
+                {
+                  "p": "enemyKilledWithStatus",
+                  "status": "necroticBlight"
+                }
+              ]
             }
           ]
         },
@@ -4165,10 +4174,21 @@
                   "tag": "guard"
                 },
                 {
-                  "p": "hasStatus",
-                  "of": "allEnemies",
-                  "status": "crimsonBlight",
-                  "snapshot": "beforePlay"
+                  "p": "any",
+                  "preds": [
+                    {
+                      "p": "hasStatus",
+                      "of": "allEnemies",
+                      "status": "crimsonBlight",
+                      "snapshot": "beforePlay"
+                    },
+                    {
+                      "p": "hasStatus",
+                      "of": "allEnemies",
+                      "status": "necroticBlight",
+                      "snapshot": "beforePlay"
+                    }
+                  ]
                 }
               ]
             }
@@ -4214,10 +4234,21 @@
                   ]
                 },
                 {
-                  "p": "hasStatus",
-                  "of": "target",
-                  "status": "crimsonBlight",
-                  "snapshot": "beforePlay"
+                  "p": "any",
+                  "preds": [
+                    {
+                      "p": "hasStatus",
+                      "of": "target",
+                      "status": "crimsonBlight",
+                      "snapshot": "beforePlay"
+                    },
+                    {
+                      "p": "hasStatus",
+                      "of": "target",
+                      "status": "necroticBlight",
+                      "snapshot": "beforePlay"
+                    }
+                  ]
                 }
               ]
             }
@@ -4374,6 +4405,7 @@
             "frostExposed",
             "insanityExposed",
             "crimsonBlight",
+            "necroticBlight",
             "burn",
             "madness",
             "staggered",
@@ -4713,8 +4745,17 @@
               "p": "eventSourceIsOwner"
             },
             {
-              "p": "enemyKilledWithStatus",
-              "status": "crimsonBlight"
+              "p": "any",
+              "preds": [
+                {
+                  "p": "enemyKilledWithStatus",
+                  "status": "crimsonBlight"
+                },
+                {
+                  "p": "enemyKilledWithStatus",
+                  "status": "necroticBlight"
+                }
+              ]
             }
           ]
         },

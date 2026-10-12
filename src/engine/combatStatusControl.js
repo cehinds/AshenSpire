@@ -142,8 +142,13 @@ export function applyStatusPressure(ctx, target, id, units, source = null, optio
         meter.value %= meter.max;
         emit(ctx, 'statusPoiseBreak', target, { status: id, actionKey: options.actionKey });
         if (ctx.onStatusPoiseBreak) ctx.onStatusPoiseBreak(target, source, options);
-        else if (target.kind === 'enemy') Actions.staggerEnemy(ctx, target);
-        else Actions.staggerPlayer(ctx, target);
+        else if (target.kind === 'enemy') {
+          // The ONE enemy break path (owner, 2026-10-12, #1): the same Stagger
+          // and `staggered` status a full bar from dealPoiseDamage gives.
+          ctx.emit?.('meterFilled', { targetId: target.id, meter: 'poise', threshold: meter.max });
+          Actions.breakEnemy(ctx, target);
+          Actions.growPoiseMeter(ctx, target);
+        } else { Actions.staggerPlayer(ctx, target); Actions.growPoiseMeter(ctx, target); }
       }
     }
     if (admitted) {

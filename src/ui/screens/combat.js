@@ -56,7 +56,8 @@ import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
 import { relicText, renderCard } from '../components/card.js';
 import { enemySprite, playerSprite, spritesAreEnabled } from '../assets.js';
 import { createStanceLedger, kindForCard, stanceForCard } from '../../model/alternativeStance.js';
-import { selectedWeaponProfileFor, selectedWeaponStanceFor, selectedWeaponReactionFor } from '../../model/selectedWeaponStances.js';
+import { selectedWeaponCounterOrigins, selectedWeaponSequence, selectedWeaponSequenceTiming } from '../../model/selectedWeaponSequences.js';
+import { selectedWeaponProfileFor, selectedWeaponStanceFor, selectedWeaponReactionFor, selectedWeaponCounterFor } from '../../model/selectedWeaponStances.js';
 import { animateEvents, playEventCues, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } from '../fx.js';
 import { ANIM_SPEEDS, COMBAT_TIMING, getAnimSpeed } from '../animationPace.js';
 import { figureSpec, equippedPieces, gripOf } from '../../model/loadout.js';
@@ -273,25 +274,43 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }
   }
   if (typeof window !== 'undefined') window.__combat = combat; // debug handle
+  let playbackEvents = [], playbackCounterOrigins = new Set();
+  function selectedCounterOrigins(events) {
+    if(!selectedProfile())return new Set();
+    return selectedWeaponCounterOrigins(events,event=>{
+      if(event.sourceId!=='player' || !event.cardId)return false;
+      const card=resolvePlayedCombatCard(combat,event,event.cardInstance || {cardId:event.cardId});
+      const kind=selectedWeaponCounterFor(card,selectedProfile(),registries.cards.get(event.cardId));
+      return kind && stageFor(fxCtx.anchorFor(event.sourceId))?.poses?.includes(kind);
+    });
+  }
   const fxCtx = {
     layer: $('.fx-layer'),
     reactionForReceipt: event => {
       const kind = selectedWeaponReactionFor(event, selectedProfile());
+      if (playbackCounterOrigins.has(event) && ['fully-defended','evade'].includes(kind)) return null;
       const stage = kind && stageFor(fxCtx.anchorFor(event.targetId));
       // dispatch(endTurn) resolves the whole enemy batch before its receipts are
       // played. Final model state therefore cannot suppress an earlier evade or
       // guard break. Only the reaction emitted after the batch's lethal HP loss
-      // belongs to the defeated beat; eventLog and the dispatch buffer share the
-      // same event objects, so their relative order is unambiguous.
-      const eventIndex = combat.eventLog.indexOf(event);
+      // belongs to the defeated beat. Use the decorated playback batch: defense
+      // presentation may clone a receipt without changing its resolved outcome.
+      const eventIndex = playbackEvents.indexOf(event);
       const lethalLossIndex = combat.player.alive === false
-        ? combat.eventLog.findLastIndex(row => row.type === 'hpLost' && row.targetId === event.targetId)
+        ? playbackEvents.findLastIndex(row => row.type === 'hpLost' && row.targetId === event.targetId)
         : -1;
       const defeatedBeat = kind === 'guard-break' && lethalLossIndex >= 0 && eventIndex > lethalLossIndex;
       if (!kind || defeatedBeat || !stage?.reactionPoses?.includes(kind)) return null;
       return () => {
-        stageFor(fxCtx.anchorFor(event.targetId))?.reactPose?.(kind, ANIM_SPEEDS[getAnimSpeed()]?.reactionMs || 280);
+        const current=stageFor(fxCtx.anchorFor(event.targetId));
+        current?.reactPose?.(kind, current.reactionTiming?.(kind,ANIM_SPEEDS[getAnimSpeed()])?.totalMs || 280);
       };
+    },
+    reactionTimingForReceipt: (event,speed) => {
+      const kind=selectedWeaponReactionFor(event,selectedProfile());
+      if(!kind || playbackCounterOrigins.has(event))return speed.reactionMs;
+      const stage=stageFor(fxCtx.anchorFor(event.targetId));
+      return stage?.reactionPoses?.includes(kind) ? stage.reactionTiming?.(kind,speed)?.totalMs || speed.reactionMs : speed.reactionMs;
     },
     combatEl,
     anchorFor: (id) => app.querySelector(`[data-eid="${id}"] .sprite`) || app.querySelector(`[data-eid="${id}"]`),
@@ -302,6 +321,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // resolved through the framework term overlay.
     statusInfo: (sid) => registries.frameworkTerms.withStatusWords(registries.statuses.get(sid)),
     maxActorAnimationMs: (speed) => {
+      if (selectedProfile()) return selectedWeaponSequenceTiming(selectedWeaponSequence('counter-guard'),speed).totalMs;
       if (CARD_ACTION_CLASSES.includes(run.class)) return speed.lungeMs;
       const animation = equipmentAnimationForLoadout(registries, run.loadout, run.class);
       return Math.max(reaverAttackTiming(speed).totalMs, ...Object.keys(animation?.references || {}).map(role => animationTiming(animation, role, speed)?.totalMs || 0));
@@ -318,6 +338,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         || findInst(played.cardInstanceId) || { cardId: played.cardId });
       let definition = played ? resolvePlayedCombatCard(combat, played, playedInstance)
         : registries.enemies.get(moved.enemyId)?.moves?.[moved.moveId];
+      const selectedCounter = returned?.sourceKind === 'player' && definition
+        ? selectedWeaponCounterFor(definition,selectedProfile(),registries.cards.get(played.cardId)) : null;
       if (returned && definition) {
         const attackTags = (definition.cardTags || definition.tags || []).filter(tag => !tag.startsWith('kind:') && !tag.startsWith('maneuver:'));
         attackTags.push('maneuver:attack');
@@ -335,7 +357,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       });
       if (played && definition) {
         const grouped = (!returned && visualPlans.get(played.cardInstanceId)) || resolveCombatAnimation({ ...definition, cardTags: tags, animationTags: combatEffectTags(registries, definition) }, equippedPieces(registries, run.loadout, run.class), { animation: equipmentAnimationForLoadout(registries, run.loadout, run.class), classId: run.class, appearance: displayAppearance(), combatExpansionVersion: combat.combatExpansionVersion, counterTriggered: !!returned, action: plan });
-        const pose = stage?.setRestPose ? grouped.technique : grouped.group === 'attack' ? 'attack1' : grouped.group === 'defend' ? 'guard' : 'idle';
+        const pose = selectedCounter && stage?.poses?.includes(selectedCounter) ? selectedCounter : stage?.setRestPose ? grouped.technique : grouped.group === 'attack' ? 'attack1' : grouped.group === 'defend' ? 'guard' : 'idle';
         plan = { ...plan, ...grouped, pose, spriteEffect: combatEffectPlan({ ...definition, cardTags: combatEffectTags(registries,definition) },played), effectEvents: beat.events, targetId: played.targetId || beat.events.find(e=>e.type==='damageDealt')?.targetId };
         actorEl.dataset.actionGroup = grouped.group;
       }
@@ -2410,6 +2432,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   function afterDispatch(events) {
     events = decorateCombatEffects(events, registries, barrierVisuals);
+    playbackEvents = events;
+    playbackCounterOrigins = selectedCounterOrigins(events);
     // Capture definitions while disp still holds consumed Powers and equipment
     // profile instances. Reduce the SAME events on paced and skipped paths.
     appliedVisualEvents = new Set();

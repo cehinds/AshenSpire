@@ -1,6 +1,6 @@
 # Reaver greatsword smash: ten concept candidates
 
-Two transparent 1536×1024 sheets show ten alternative **held smash loading stances**. They are reviewable concept candidates, not selected poses, registered game assets, runtime cutouts, or a completed weapon/class rollout.
+Two transparent 1536×1024 sheets show ten alternative **held smash loading stances**. The intact sheets are concept sources, not runtime strips or a completed weapon/class rollout. The owner selected Smash05; its extracted, registered runtime pose was delivered in PR #1890.
 
 - `sheet-a.png`: concepts 1–5, row-major, bottom-right empty. This is the anatomy-corrected first sheet.
 - `sheet-b.png`: concepts 6–10, row-major, bottom-right empty.
@@ -14,8 +14,8 @@ The PNG alpha is valid in browser rendering. Some image-tool previews show the h
 
 View each complete sheet. Despite requested cell margins, some silhouettes extend past nominal 512×512 boundaries; rigid grid crops can clip swords or boots. These sheets must not be used as fixed-size runtime strips. Production extraction, anatomical cleanup, scale/anchor normalization and in-engine review remain necessary after a choice.
 
-The art director recommends **4 (low rising load), 7 (broad lateral shoulder load), and 10 (upright rear-hip pendulum)** for closer comparison. No selection is recorded.
+The art director recommends **4 (low rising load), 7 (broad lateral shoulder load), and 10 (upright rear-hip pendulum)** for closer comparison. The later owner choice is **5**, delivered as the selected Smash pose in PR #1890 and reused unchanged as S in the sequence-order review. These earlier recommendations are retained as source history.
 
 Specific review caveats: 1 and 5 share a similar body base but different blade loads. Concept 3's rear side-waist grip still needs shoulder/wrist scrutiny. Concept 6 is best read as a poised forward step/stomp load; it raises the front foot and its generated blade points up-left, rather than the requested up-right. Concept 8 uses a low narrow crouch and shoulder compression; its blade/hands depart from the requested chest-crossed load. Concept 9's heel and torso coil are readable, but its arm/hilt connection needs full-resolution review. Concept 10 intends a heavy pendulum upswing load; an independent reviewer found it closer to carry/recovery, so its smash readability needs closer comparison.
 
-This pilot preserves one Reaver costume, continuous crimson cape, greatsword and two-handed grip without effects. No runtime files or asset registrations were changed.
+This pilot preserves one Reaver costume, continuous crimson cape, greatsword and two-handed grip without effects. The sheet-generation step changed no runtime files. The later selected extraction and registration are recorded separately in `../selections.json` and the delivery-status document.

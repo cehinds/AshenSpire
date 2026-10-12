@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "family": "evade",
+  "actor": "reaver",
+  "weapon": "greatsword",
+  "targetOption": "EV20",
+  "tool": "image_gen.imagegen",
+  "transparentBackgroundRequested": true,
+  "unchangedOriginal": "/workspace/generated_images/exec-34bd4e8e-c2f2-4fb7-b0c5-94440ff216c4.png",
+  "output": "sheet-b.failed-ev20-grip.png",
+  "sha256": "7f7cd9161e0e967545a5252bf463b7e506a4ce5423041ecc030a0212f8c5f7d4",
+  "dimensions": [
+    1024,
+    1536
+  ],
+  "mode": "RGBA",
+  "alphaExtrema": [
+    2,
+    253
+  ],
+  "createdUtc": "2026-10-12T16:38:20.674689+00:00",
+  "references": [
+    {
+      "path": "sheet-b.revision-2.png",
+      "sha256": "1b94177b045816f325153be36fafa37fe96c6e708f1b0b9cc1ac99d1ee043c81"
+    }
+  ],
+  "prompt": "sheet-b.failed-ev20-grip.prompt.txt",
+  "status": "failed_to_clearly_expose_second_hand_not_current_candidate",
+  "actualObservation": "EV20hilt remainslow;onlyonegauntletclearlyreadsinfullsheet. Requestednavelhiltandseparatedfarhanddidnottake.",
+  "currentCandidatePreserved": "sheet-b.png",
+  "currentCandidateSha256": "1b94177b045816f325153be36fafa37fe96c6e708f1b0b9cc1ac99d1ee043c81",
+  "runtimeChanged": false,
+  "nextAction": "No repeat calls. Root may choose standalone replacement under new serial grant."
+}
