@@ -1766,6 +1766,16 @@ The editor groups the complete inventory into stable nested sections:
   placing player and enemy starts farthest apart. Fill each row from outside toward
   the centre, then move upward. For two columns and three rows, player rows read
   `5 6 / 3 4 / 1 2` from top to bottom; enemy rows mirror them as `6 5 / 4 3 / 2 1`.
+  The default (alternative) perspective instead draws one uniform grid (owner, 2026-10-12):
+  three lanes of equal width, an enemy back rank and front rank, and one player rank nearest
+  the camera. Each cell's shadow is its foot anchor, where the sprite's feet stand. Enemies
+  fill the back rank first, spread across the lanes (one in the middle, two on the outer lanes),
+  then the front rank, up to six; the party (up to three) shares its rank and the player starts
+  in the left lane. Gameplay cells keep their addresses: a column is depth (outer = back), a row
+  is a lane, and the player's front column is not a perspective destination. Pressing anywhere
+  in an occupied enemy cell acts on that enemy (select, or play the armed card or flask). Lane
+  span, rank tops and heights, and foot fractions per phone/desktop are data
+  (`combatFormationModel.positioning.perspectiveGrid`). Classic keeps the grid below.
   The owner's October 3 positioning exports define separate supplied 1×1 and 2×2 layouts.
   Measurements remain responsive percentages; reference anchors at 1641×526 are checked
   against the exports. Explicit saved group edits take precedence.

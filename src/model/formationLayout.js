@@ -28,7 +28,15 @@ export function formationLayoutConfig(values = {}) {
   return config;
 }
 
+// The default (alternative) perspective draws one uniform grid: enemies in a
+// back and a front rank across three lanes, the player's party in one rank of
+// the same lanes. Gameplay columns are depth (outer = back), rows are lanes.
+export const PERSPECTIVE_LANES = 3;
+
 export function formationDimensions(values = {}, actorsPerSide = 0) {
+  if (values.perspectiveGrid) {
+    return { columns: 2, rows: Math.min(6, Math.max(PERSPECTIVE_LANES, Math.ceil(actorsPerSide / 2))), perspective: true };
+  }
   const config = formationLayoutConfig(values);
   let columns = config.formationColumns, rows = config.formationRows;
   // A small saved layout must never stack or hide existing encounter actors.
@@ -37,11 +45,13 @@ export function formationDimensions(values = {}, actorsPerSide = 0) {
   return { columns, rows };
 }
 
-export function isFormationCell(cell, { columns, rows }, side = 'player') {
+export function isFormationCell(cell, { columns, rows, perspective = false }, side = 'player') {
   if (typeof cell !== 'string' || !/^[A-F][1-6]$/.test(cell)) return false;
   const column = Number(cell[1]);
+  // The perspective's player rank is the outer column only.
+  const playerColumns = perspective ? 1 : columns;
   return FORMATION_ROWS.indexOf(cell[0]) < rows && (side === 'player'
-    ? column >= 1 && column <= columns : column > columns && column <= columns * 2);
+    ? column >= 1 && column <= playerColumns : column > columns && column <= columns * 2);
 }
 
 export function formationSpawn(values, side, dimensions = formationDimensions(values)) {

@@ -11,17 +11,12 @@ test('regular combat routes the default stage through the approved alternative p
   assert.match(stage, /const combatComposition = classicAppearance\(\) \? classicCombatComposition : alternativeCombatComposition;/);
   assert.match(stage, /const sizes = combatComposition\(/);
   assert.equal(resolveDisplayAppearance({}), 'alternative');
-  const actors = [{ side: 'player', visibleWidth: 60, leading: 40, slot: { id: 'p', ground: 300 } },
-    { side: 'enemy', visibleWidth: 60, leading: 40, slot: { id: 'e', ground: 300 } }];
-  const sizes = [{ id: 'p', x: 80, visibleHeight: 150, scale: 1.5, multiplier: 1 },
-    { id: 'e', x: 270, visibleHeight: 150, scale: 1.5, multiplier: 1 }];
-  const fit = alternativeCombatComposition({ actors, sizes, width: 390, height: 400, handTop: 440 });
-  assert.equal(fit[0].visibleHeight, 192);
-  // 2a54a780: the solo player's feet rest on the battlefield edge just above
-  // the card band (handTop - 26), not half its height behind the cards.
-  assert.equal(fit[0].ground, 440 - 26);
-  // A spacious (>300px) field keeps enemy stature and centers them at .66
-  // (tests/alternative-composition.test.mjs pins the same formation).
-  assert.equal(fit[1].x, 390 * .66);
-  assert.equal(fit[1].visibleHeight, 150);
+  // 2026-10-12: the default perspective is a uniform grid; feet stand on the
+  // cell anchors (tests/alternative-formation.test.mjs pins the grid).
+  const actors = [{ side: 'player', visibleWidth: 60, leading: 40, slot: { id: 'p', x: 65, ground: 400 } },
+    { side: 'enemy', visibleWidth: 60, leading: 40, slot: { id: 'e', x: 195, ground: 220 } }];
+  const sizes = [{ id: 'p', visibleHeight: 150, scale: 1.5, multiplier: 1 },
+    { id: 'e', visibleHeight: 150, scale: 1.5, multiplier: 1 }];
+  const fit = alternativeCombatComposition({ actors, sizes, width: 390, height: 460 });
+  assert.deepEqual(fit.map(f => [f.x, f.ground]), [[65, 400], [195, 220]]);
 });

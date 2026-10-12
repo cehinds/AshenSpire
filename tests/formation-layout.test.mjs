@@ -86,7 +86,7 @@ test('small saved grids expand uniformly when needed, without stacking or losing
 });
 
 test('movement accepts the whole selected player grid and rejects enemy or hidden cells', () => {
-  const settings = { 'gameConfig.presentation.movementEnabled': true, 'gameConfig.presentation.formationColumns': 3, 'gameConfig.presentation.formationRows': 6 };
+  const settings = { classicAppearance: true, 'gameConfig.presentation.movementEnabled': true, 'gameConfig.presentation.formationColumns': 3, 'gameConfig.presentation.formationRows': 6 };
   const combat = { player: { energy: 3, formationCell: 'F3' }, phase: 'player', enemies: [] };
   assert.equal(formationMovePlan(combat, 'F2', settings).ok, true);
   for (const cell of ['F3', 'F4', 'G1', 'A0', 'A7']) assert.equal(formationMovePlan(combat, cell, settings).ok, false);
@@ -116,4 +116,13 @@ test('ground projection leaves position anchors and character geometry upright',
   assert.notEqual(formationTileGeometry(a.cells[0], a, flat).transform, formationTileGeometry(b.cells[0], b, angled).transform);
   assert.deepEqual(formationDimensions(config({ formationColumns: 3, formationRows: 6 })), { columns: 3, rows: 6 });
   assert.equal(formationSpawn(config({ formationColumns: 1, formationRows: 1 }), 'enemy'), 'A2');
+});
+
+test('the perspective grid is three lanes of one player rank; its front column is not a destination', () => {
+  const settings = { 'gameConfig.presentation.movementEnabled': true };
+  const combat = { player: { energy: 3, formationCell: 'C1' }, phase: 'player', enemies: [] };
+  for (const cell of ['A1', 'B1']) assert.equal(formationMovePlan(combat, cell, settings).ok, true);
+  for (const cell of ['A2', 'C2', 'A3', 'D1']) assert.equal(formationMovePlan(combat, cell, settings).ok, false);
+  assert.deepEqual(formationDimensions({ perspectiveGrid: true }, 3), { columns: 2, rows: 3, perspective: true });
+  assert.deepEqual(formationDimensions({ perspectiveGrid: true }, 8), { columns: 2, rows: 4, perspective: true });
 });

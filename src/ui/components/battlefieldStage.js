@@ -399,7 +399,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // as computed style when not handed it, and per tile and per combatant, each
     // after a style write, that was a style flush apiece (36 tiles).
     const pageZoom = uiZoom();
-    const presentation = { ...presentationConfig(), ...JSON.parse(document.documentElement.dataset.formationSettings || '{}') };
+    const presentation = { ...presentationConfig(), ...JSON.parse(document.documentElement.dataset.formationSettings || '{}'),
+      perspectiveGrid: !classicAppearance() };
     const dimensions = formationDimensions(presentation, Math.max(frames.filter(f => f.classList.contains('player')).length, frames.filter(f => f.classList.contains('enemy')).length));
     if (isFormationCell(field.dataset.playerCell, dimensions)) {
       presentation.playerSpawnRow = field.dataset.playerCell[0];
@@ -415,6 +416,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const grid = field.querySelector('.formation-grid');
     if (grid) {
       grid.dataset.shape = presentation.gridShape;
+      grid.dataset.perspective = String(!classicAppearance());
       grid.style.zIndex = presentation.gridLayer === 'above'
         ? 'var(--combat-layer-selection)' : 'calc(var(--combat-layer-shadows) - 1)';
       grid.style.setProperty('--player-grid-color', presentation.playerGridColor);
@@ -426,11 +428,15 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       for (const cell of plan.cells) {
         const tile = grid.querySelector(`[data-cell="${cell.cell}"]`);
         if (!tile) continue;
-        const geometry = formationTileGeometry(cell, plan, presentation);
-        const localTile = anchorLocalBox(VIEWPORT_ORIGIN, {
+        // A perspective cell is drawn whole, its shadow at the foot anchor.
+        const geometry = cell.box ? { width: cell.box.width, height: cell.box.height, transform: 'none' }
+          : formationTileGeometry(cell, plan, presentation);
+        const localTile = anchorLocalBox(VIEWPORT_ORIGIN, cell.box ?? {
           left: cell.x - geometry.width / 2, top: cell.ground,
           width: geometry.width, height: geometry.height,
         }, { zoom: pageZoom });
+        if (cell.box) tile.style.setProperty('--foot-y', `${(cell.ground - cell.box.top) / cell.box.height * 100}%`);
+        else tile.style.removeProperty('--foot-y');
         tile.style.left = `${localTile.left}px`;
         tile.style.top = `${localTile.top}px`;
         tile.style.width = `${localTile.width}px`;
@@ -442,6 +448,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         tile.dataset.anchorY = String(cell.ground);
       }
       field.formationPlan = { plan, width: fieldRect.width, height: fieldRect.height };
+      wireGridTargeting(field);
       field.dispatchEvent(new Event('formationlayoutchange'));
     }
     // Writes first, then reads: resetting each sprite's zoom immediately before
@@ -1034,4 +1041,48 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   releaseActiveStage = release;
   refresh();
   return Object.freeze({ refresh, release });
+}
+
+// In the perspective grid the whole cell is the enemy's target: a press
+// anywhere in an occupied enemy cell acts as a press on that enemy (select it,
+// or play the armed card or flask on it). Bodies and controls keep their own
+// handlers; a vacant or disabled cell passes the press through unchanged.
+const gridTargetingFields = new WeakSet();
+function enemyFrameAtCell(field, x, y) {
+  const grid = field.querySelector('.formation-grid[data-perspective="true"]');
+  if (!grid) return null;
+  for (const tile of grid.querySelectorAll('.formation-grid-cell[data-side="enemy"][data-occupied="true"]:not([hidden])')) {
+    const rect = tile.getBoundingClientRect();
+    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) continue;
+    const frame = field.querySelector(`.combatant.enemy[data-formation-cell="${CSS.escape(tile.dataset.cell)}"]`);
+    return frame && !frame.inert && !frame.classList.contains('dead') ? frame : null;
+  }
+  return null;
+}
+function wireGridTargeting(field) {
+  if (gridTargetingFields.has(field)) return;
+  gridTargetingFields.add(field);
+  const passive = target => target.closest('.combatant, button:not(.formation-grid-cell), .hand, .card, .modal, input, a, [role="button"]');
+  field.addEventListener('click', event => {
+    if (passive(event.target)) return;
+    const frame = enemyFrameAtCell(field, event.clientX, event.clientY);
+    if (!frame) return;
+    event.stopPropagation();
+    event.preventDefault();
+    frame.click();
+  }, true);
+  let hovered = null;
+  field.addEventListener('pointermove', event => {
+    const frame = passive(event.target) ? null : enemyFrameAtCell(field, event.clientX, event.clientY);
+    if (frame === hovered) return;
+    hovered?.dispatchEvent(new PointerEvent('pointerleave'));
+    hovered = frame;
+    frame?.dispatchEvent(new PointerEvent('pointerenter'));
+    field.classList.toggle('grid-target-hover', !!frame);
+  });
+  field.addEventListener('pointerleave', () => {
+    hovered?.dispatchEvent(new PointerEvent('pointerleave'));
+    hovered = null;
+    field.classList.remove('grid-target-hover');
+  });
 }

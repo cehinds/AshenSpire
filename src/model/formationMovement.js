@@ -1,8 +1,9 @@
 import { presentationConfig } from './advancedConfig.js';
+import { resolveDisplayAppearance } from './displayAppearance.js';
 import { formationDimensions, formationSpawn, isFormationCell } from './formationLayout.js';
 
 export function formationMovePlan(combat, cell, settings = {}) {
-  const config = presentationConfig(settings);
+  const config = { ...presentationConfig(settings), perspectiveGrid: resolveDisplayAppearance(settings) === 'alternative' };
   const dimensions = formationDimensions(config, Math.max(1, combat.enemies?.length || 0));
   const current = isFormationCell(combat.player.formationCell, dimensions) ? combat.player.formationCell : formationSpawn(config, 'player', dimensions);
   const cost = config.movementCostsAction ? 1 : 0;

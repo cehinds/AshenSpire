@@ -51,63 +51,15 @@ export function combatComposition({ sizes, actors, width, height, handTop, solo 
   });
 }
 
-// Attach the foreground player's feet to the battlefield edge, above the
-// health strip and card-band tools. Selection never changes this resting fit.
-export function alternativeCombatComposition({ sizes, actors, width, height, handTop, handLeft = 0, solo = true }) {
-  const enemies = actors.filter(actor => actor.side === 'enemy');
-  const enemyFits = sizes.filter(size => enemies.some(actor => actor.slot.id === size.id));
-  const center = enemyFits.length ? (Math.min(...enemyFits.map(f => f.x)) + Math.max(...enemyFits.map(f => f.x))) / 2 : width * .55;
-  const fitted = sizes.map(size => {
+// The perspective grid places every body on its cell's foot anchor: the
+// sprite's feet stand on the cell's shadow. The shared fit already sized each
+// body to its lane and its headroom; composition only keeps it in the field.
+export function alternativeCombatComposition({ sizes, actors, width }) {
+  return sizes.map(size => {
     const actor = actors.find(actor => actor.slot.id === size.id);
-    const player = actor.side === 'player';
-    const spacious = height > 300;
-    const factor = player ? (solo ? 1.28 : 1) : spacious ? 1 : .8;
-    const availablePlayerHeight = player && solo && Number.isFinite(handTop)
-      ? Math.max(1, handTop - actor.leading - 32) : Infinity;
-    const visibleHeight = Math.min(size.visibleHeight * factor, height * (player ? .8 : .7), availablePlayerHeight);
-    const ratio = visibleHeight / size.visibleHeight;
-    const halfWidth = actor.visibleWidth * size.scale * ratio / 2;
-    const proposedX = player ? (solo ? Math.max(size.x + width * .035, handLeft + halfWidth) : size.x)
-      : (size.x - center) * (spacious ? 1.3 : 1) + width * (spacious ? .66 : .68);
-    const x = Math.max(halfWidth + 6, Math.min(width - halfWidth - 6, proposedX));
-    const ground = player && solo && Number.isFinite(handTop)
-      ? Math.max(visibleHeight + actor.leading + 6, handTop - 26)
-      : Math.max(visibleHeight + actor.leading + 6, player ? (size.ground ?? actor.slot.ground)
-        : spacious ? height * .48 + ((size.ground ?? actor.slot.ground) - height * .9) * .25
-          : (size.ground ?? actor.slot.ground) - height * .07);
-    return { ...size, x, ground, visibleHeight, scale: size.scale * ratio, multiplier: size.multiplier * ratio,
-      separationHalf: halfWidth, separationSide: player ? 'player' : 'enemy' };
+    const halfWidth = actor.visibleWidth * size.scale / 2;
+    const x = Math.max(halfWidth + 6, Math.min(width - halfWidth - 6, actor.slot.x));
+    const ground = Math.max(size.visibleHeight + actor.leading + 6, actor.slot.ground);
+    return { ...size, x, ground };
   });
-  // A short landscape strip has no room above the row for spread overheads;
-  // its depth ranks keep their packed overhead lanes instead.
-  return width <= height * 2 ? separateEnemies(fitted, width) : fitted.map(({ separationHalf, separationSide, ...fit }) => fit);
-}
-
-// Depth ranks share a formation column, so a phone can stack one enemy
-// wholly behind another. Sweep enemies apart in x order until their art no
-// longer overlaps (their overhead intent and HP need the room); enemies
-// already apart never move. The row stays between the player's centre line
-// and the stage edge; when it cannot fit there, the enemies share the
-// overlap evenly rather than crowding onto the player.
-function separateEnemies(fits, width) {
-  const enemies = fits.filter(fit => fit.separationSide === 'enemy').sort((a, b) => a.x - b.x);
-  const players = fits.filter(fit => fit.separationSide === 'player');
-  const left = Math.max(6, ...players.map(fit => fit.x));
-  const right = width - 6;
-  if (enemies.length) {
-    const pairs = enemies.slice(1).reduce((sum, cur, i) => sum + enemies[i].separationHalf + cur.separationHalf, 0);
-    const room = right - left - enemies[0].separationHalf - enemies.at(-1).separationHalf;
-    const spacing = pairs > 0 && room < pairs ? Math.max(.4, room / pairs) : 1;
-    enemies[0].x = Math.max(enemies[0].x, left + enemies[0].separationHalf);
-    for (let i = 1; i < enemies.length; i++) {
-      const prev = enemies[i - 1], cur = enemies[i];
-      cur.x = Math.max(cur.x, prev.x + (prev.separationHalf + cur.separationHalf) * spacing);
-    }
-    for (let i = enemies.length - 1; i >= 0; i--) {
-      const next = enemies[i + 1];
-      const limit = next ? next.x - (next.separationHalf + enemies[i].separationHalf) * spacing : right - enemies[i].separationHalf;
-      enemies[i].x = Math.min(enemies[i].x, limit);
-    }
-  }
-  return fits.map(({ separationHalf, separationSide, ...fit }) => fit);
 }

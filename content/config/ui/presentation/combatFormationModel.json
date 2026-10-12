@@ -36,6 +36,37 @@
     "footSteps": [
       0.25,
       1.125
-    ]
+    ],
+    "perspectiveGrid": {
+      "lanes": 3,
+      "enemyRows": 2,
+      "wide": {
+        "left": 0.2,
+        "right": 0.8,
+        "enemyTop": 0.42,
+        "enemyRowHeight": 0.16,
+        "playerTop": 0.74,
+        "playerRowHeight": 0.26
+      },
+      "narrow": {
+        "left": 0.0,
+        "right": 1.0,
+        "enemyTop": 0.34,
+        "enemyRowHeight": 0.18,
+        "playerTop": 0.72,
+        "playerRowHeight": 0.27
+      },
+      "footFraction": {
+        "enemy": 0.62,
+        "player": 0.7
+      },
+      "depth": {
+        "back": 0.84,
+        "front": 0.92,
+        "player": 1
+      },
+      "bodyWidthFraction": 0.8,
+      "bodyWidthMaxPx": 180
+    }
   }
 }

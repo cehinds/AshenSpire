@@ -1536,6 +1536,25 @@
   font: 500 max(1rem, calc(11px / var(--ui-zoom, 1)))/1.2 var(--font-ui, sans-serif); padding: .1rem .25rem;
   border-radius: .2rem;
 }
+/* Perspective grid: uniform cells; the shadow is each body's foot anchor. */
+:root:not([data-display-appearance='classic']) .formation-grid[data-perspective='true'] { display: grid; }
+.formation-grid[data-perspective='true'] .formation-grid-cell { transform: none; }
+.formation-grid[data-perspective='true'] .formation-grid-outline { display: none; }
+.formation-grid[data-perspective='true'] .formation-grid-cell span { display: none; }
+.formation-grid[data-perspective='true'] .formation-grid-cell {
+  border: 1px solid color-mix(in srgb, var(--grid-stroke) 22%, transparent);
+}
+.formation-grid[data-perspective='true'] .formation-grid-cell::before {
+  content: ''; position: absolute; left: 50%; top: var(--foot-y, 70%);
+  width: min(58%, 150px); aspect-ratio: 5 / 1; translate: -50% -50%; border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--grid-stroke) 55%, transparent);
+  background: radial-gradient(closest-side, #0008, #0000);
+}
+.formation-grid[data-perspective='true'] .formation-grid-cell[data-occupied='true']::before {
+  border-color: var(--grid-stroke);
+}
+.formation-grid[data-perspective='true'] .formation-grid-cell.formation-selected::before { border-width: 3px; }
+.field.grid-target-hover { cursor: pointer; }
 :root .combat .combatant .sprite { scale: none; translate: none; }
 
 /* Overhead controls are screen-sized, independent of sprite zoom and animation. */
