@@ -1,10 +1,10 @@
 # Selected Reaver greatsword browser QA
 
-Final unpatched build **0.7.1.1415**, source digest **04a5dbdc03**, convergence commit [`c893f2462`](https://github.com/cehinds/AshenSpire/commit/c893f2462). Captures came from the served `AshenSpire.html`; the harness checked ordinal 1415 and digest 04a5dbdc03 before capture.
+Final unpatched build **0.7.1.1415**, source digest **04a5dbdc03**, convergence commit [`c893f2462`](https://github.com/cehinds/AshenSpire/commit/c893f2462). Captures came from the served `AshenSpire.html`; the served artifact was verified as ordinal 1415 with digest 04a5dbdc03.
 
 ## Selected held poses
 
-All five were selected through keyboard input in the actual `shotKit` starter: Reaver, default armour, sole right-hand greatsword. For each screenshot, the hand was replaced with that authored card so the corresponding selected pose could be checked. Dodge Roll selects Evade; mixed Evasive Guard stays Counter.
+All listed card inputs were selected through keyboard input in the actual `shotKit` starter: Reaver, default armour, sole right-hand greatsword. For each screenshot, the hand was replaced with that authored card so the corresponding selected pose could be checked. Dodge Roll selects Evade; mixed Evasive Guard stays Counter.
 
 | Role / input | Capture |
 | --- | --- |
