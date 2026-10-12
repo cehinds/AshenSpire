@@ -5,10 +5,11 @@
   "primaryVariant": "P",
   "modes": {
     "guard": "Guard / Parry / Resisted",
-    "counter": "Counter extension",
+    "counter": "Counter \u00b7 Guard tag",
     "attack": "Attack sequence",
     "smash": "Smash sequence",
-    "evade": "Evade sequence"
+    "evade": "Evade sequence",
+    "counter-evasion": "Counter \u00b7 Evasion tag"
   },
   "variants": [
     {
@@ -83,7 +84,7 @@
     "AT6",
     "C"
   ],
-  "timingNote": "Impact reaction holds use the requested frame exposures: D\u00d72, V\u00d73, G\u00d71, H\u00d72, C\u00d73. P has six pose slots and 13 review frame units (350 ms/unit at 1\u00d7); A/B each have14. Origin context, S, AT and EV slots each use one350ms review unit. These are review timings, not new paintings or authored gameplay timings. Hard cuts only.",
+  "timingNote": "Impact reaction holds use the requested frame exposures: D\u00d72, V\u00d73, G\u00d71, H\u00d72, C\u00d73. P has six pose slots and 13 review frame units (350 ms/unit at 1\u00d7); A/B each have14. Origin context, S, AT and EV slots each use one350ms review unit. These are review timings, not new paintings or authored gameplay timings. Hard cuts only. Guard-tag Counter uses the impact holds before S and attack; Evasion-tag Counter uses one Evade sequence then attack, all one-unit holds, with no intermediate stance return.",
   "defenseHoldFrames": {
     "D": 2,
     "V": 3,
@@ -103,5 +104,37 @@
     "Landing \u00b7 Evade16",
     "Sword-front lean \u00b7 Evade11",
     "Recovery \u00b7 Evade13"
-  ]
+  ],
+  "counterTags": {
+    "guard": {
+      "mode": "counter",
+      "origin": "C",
+      "interior": "Selected impact order \u2192 S \u2192 AT1\u2026AT6",
+      "return": "origin",
+      "impactHoldFrames": {
+        "D": 2,
+        "V": 3,
+        "G": 1,
+        "H": 2,
+        "C": 3
+      }
+    },
+    "evasion": {
+      "mode": "counter-evasion",
+      "origin": "C",
+      "interior": [
+        "EV1",
+        "EV2",
+        "EV3",
+        "AT1",
+        "AT2",
+        "AT3",
+        "AT4",
+        "AT5",
+        "AT6"
+      ],
+      "return": "origin",
+      "intermediateReturn": false
+    }
+  }
 }

@@ -8,7 +8,7 @@ Impact reaction slots hold for **D×2, V×3, G×1, H×2, C×3, D×2**: six pose 
 
 ## All six starting stances
 
-Each cell names its origin and returns to that exact origin. The grids add origin context around the unchanged sequence interior. Counter’s canonical originating stance is C; the other cells demonstrate restoration for comparison.
+Each cell names its origin and returns to that exact origin. The grids add origin context around the unchanged sequence interior. Both Counter modes default to originating stance C; the other cells demonstrate restoration for comparison. These are tag-specific previews, with no runtime tag-priority rule.
 
 Guard / Parry / Resisted — primary interior **D → V → G → H → C → D**:
 
@@ -22,9 +22,15 @@ Evade — **origin → EV1 → EV2 → EV3 → origin**:
 
 ![Evade from all six origins](renders/all-origins-evade.gif)
 
-Counter — **origin → D → V → G → H → C → D → S → AT1 → AT2 → AT3 → AT4 → AT5 → AT6 → origin**:
+Guard-tag Counter — **origin → D → V → G → H → C → D → S → AT1 → AT2 → AT3 → AT4 → AT5 → AT6 → origin**:
 
-![Counter from all six origins](renders/all-origins-counter.gif)
+![Guard-tag Counter from all six origins](renders/all-origins-counter-guard.gif)
+
+Evasion-tag Counter — **origin → EV1 → EV2 → EV3 → AT1 → AT2 → AT3 → AT4 → AT5 → AT6 → origin**:
+
+![Evasion-tag Counter from all six origins](renders/all-origins-counter-evasion.gif)
+
+Evasion-tag Counter plays one Evade sequence, then attacks without an intermediate stance return or additional S load. The six-source attack begins with AT1 (the same painting as S), which remains a distinct attack step. Every slot in this route holds one350ms review unit.
 
 ## Primary order and alternatives
 
@@ -40,11 +46,13 @@ Guard, Parry and Resisted share one interior order; they are not separately conf
 
 ![P numbered storyboard](renders/p-guard-storyboard.png)
 
-The Counter extension preserves the chosen six-slot interior, then adds **S → AT1…AT6 → C**. The canonical Counter preview also starts in C.
+The Guard-tag Counter extension preserves the chosen six-slot interior, then adds **S → AT1…AT6 → C**. The canonical Counter preview also starts in C.
 
 ![P Counter extension](renders/p-counter.gif)
 
 [Counter storyboard](renders/p-counter-storyboard.png) · [A defense GIF](renders/a-guard.gif) · [A Counter GIF](renders/a-counter.gif) · [B defense GIF](renders/b-guard.gif) · [B Counter GIF](renders/b-counter.gif)
+
+[Evasion-tag Counter GIF](renders/p-counter-evasion.gif) · [Evasion-tag Counter storyboard](renders/p-counter-evasion-storyboard.png)
 
 [Standalone Attack GIF](renders/attack.gif) · [Standalone Smash GIF](renders/smash.gif) · [Standalone Evade GIF](renders/evade.gif)
 
@@ -69,5 +77,7 @@ EV1 uses an explicitly recorded ImageGen background/alpha repair of Evade16, pre
 The earlier native four-phase attack comparison is superseded by the six supplied images. No native timing is assigned to these new six images.
 
 [Asset contract](ASSET-CONTRACT.md), [source records](sources.json) and [preview asset manifest](preview-assets.json) preserve hashes, crops, body anchors, floor, sizes and drawing offsets. Registration uses body/pelvis landmarks and a common floor; swords and capes do not recenter the body. This is preview normalization, not runtime approval.
+
+The original `all-origins-counter.gif` path is retained as the Guard-tag Counter alias.
 
 Regenerate labeled GIFs and storyboards with `CHROME=/path/to/chromium node pose-studio/stances/update-stances/sequence-review/render-previews.mjs` (Playwright and Pillow required). [Render manifest](renders/manifest.json) records exact slot order, decoded frame counts and durations. GIFs loop for inspection; the interactive player stops on return unless Loop is enabled.

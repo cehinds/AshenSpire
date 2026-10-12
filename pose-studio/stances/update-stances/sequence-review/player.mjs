@@ -10,7 +10,9 @@ function steps(options = {}) {
   const context = options.context ?? $('context').checked;
   const attack = assets.attack.frameIds.map((assetId, i) => ({code: `AT${i + 1}`, assetId, name: config.attackLabels[i], holdFrames:1, duration: config.defenseSlotMs, timing: 'Review timing'}));
   if (mode === 'guard') return context ? [stance(origin), ...defense, stance(origin)] : defense;
-  if (mode === 'evade') return [stance(origin), ...assets.evade.frameIds.map((assetId,i)=>({code:`EV${i+1}`,assetId,name:config.evadeLabels[i],holdFrames:1,duration:config.defenseSlotMs,timing:'Review timing'})), stance(origin)];
+  const evade = assets.evade.frameIds.map((assetId,i)=>({code:`EV${i+1}`,assetId,name:config.evadeLabels[i],holdFrames:1,duration:config.defenseSlotMs,timing:'Review timing'}));
+  if (mode === 'evade') return [stance(origin), ...evade, stance(origin)];
+  if (mode === 'counter-evasion') return [stance(origin), ...evade, ...attack, stance(origin)];
   if (mode === 'attack' || mode === 'smash') return [stance(origin), ...attack, stance(origin)];
   const response = [...defense, stance('S'), ...attack, stance(origin)];
   return context ? [stance(origin), ...response] : response;
@@ -30,14 +32,15 @@ function render() {
   $('current').textContent = `${index + 1}/${list.length} · ${step.code}×${step.holdFrames} — ${step.name} · Next: ${next?.code ?? 'End'}`;
   $('timeline').innerHTML = '';
   list.forEach((item,i) => {const button=document.createElement('button');button.className='slot';button.type='button';button.setAttribute('aria-label',`Slot ${i+1}: ${item.code}, ${item.name}`);if(i===index)button.setAttribute('aria-current','step');button.innerHTML=`${i+1}<strong>${item.code}×${item.holdFrames}</strong>${item.duration} ms`;button.addEventListener('click',()=>seek(i));$('timeline').append(button);});
-  document.querySelectorAll('.variant').forEach(button=>{button.setAttribute('aria-pressed',String(button.dataset.id===variant));button.disabled=['attack','smash','evade'].includes(mode);});
+  document.querySelectorAll('.variant').forEach(button=>{button.setAttribute('aria-pressed',String(button.dataset.id===variant));button.disabled=['attack','smash','evade','counter-evasion'].includes(mode);});
+  $('context').disabled=['attack','smash','evade','counter-evasion'].includes(mode);
   $('play').textContent=playing?'Pause':'Play';
   canvas.setAttribute('aria-label',`${numberedOrder()}. Current slot ${index+1}: ${step.name}`);
 }
 function pause(){playing=false;clearTimeout(timer);if(config&&assets)render();}
 function schedule(){clearTimeout(timer);timer=setTimeout(()=>{const list=steps();if(index+1<list.length){index++;render();schedule();}else if($('loop').checked){index=0;render();schedule();}else{pause();}},steps()[index].duration / Number($('speed').value));}
 function seek(value){playing=false;clearTimeout(timer);index=Math.max(0,Math.min(steps().length-1,value));render();}
-function select(nextVariant,nextMode,origin){playing=false;clearTimeout(timer);if(nextMode!==mode&&!origin){$('context').checked=nextMode==='counter';$('origin').value=({guard:'D',counter:'C',attack:'T',smash:'S',evade:'E'})[nextMode];}if(origin){$('origin').value=origin;$('context').checked=true;}variant=nextVariant;mode=nextMode;$('mode').value=mode;index=0;render();}
+function select(nextVariant,nextMode,origin){playing=false;clearTimeout(timer);if(nextMode!==mode&&!origin){$('context').checked=['counter','counter-evasion'].includes(nextMode);$('origin').value=({guard:'D',counter:'C','counter-evasion':'C',attack:'T',smash:'S',evade:'E'})[nextMode];}if(origin){$('origin').value=origin;$('context').checked=true;}variant=nextVariant;mode=nextMode;$('mode').value=mode;index=0;render();}
 async function init(){
   document.querySelectorAll('button,select,input').forEach(item=>item.disabled=true);
   [config,assets]=await Promise.all(['sequences.json','preview-assets.json'].map(async path=>{const response=await fetch(path);if(!response.ok)throw Error(`${path}: ${response.status}`);return response.json();}));

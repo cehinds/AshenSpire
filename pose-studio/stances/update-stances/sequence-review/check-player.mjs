@@ -19,8 +19,13 @@ try{
     await page.locator('#context').check();await page.evaluate(()=>window.__sequenceReview.seek(window.__sequenceReview.steps().length-2));await page.locator('#play').click();await page.locator('#context').uncheck();assert.equal((await state()).state.playing,false);checks++;
   }
   if(!process.env.ONLY_GUARD){
-    for(const mode of ['guard','attack','smash','evade','counter'])for(const origin of ['T','S','C','D','E','W']){
+    for(const mode of ['guard','attack','smash','evade','counter','counter-evasion'])for(const origin of ['T','S','C','D','E','W']){
       await page.evaluate(({mode,origin})=>window.__sequenceReview.select('P',mode,origin),{mode,origin});const {codes}=await state();assert.equal(codes[0],origin);assert.equal(codes.at(-1),origin);checks+=2;
+    }
+    for(const origin of ['T','S','C','D','E','W']) {
+      await page.evaluate(origin=>window.__sequenceReview.select('P','counter-evasion',origin),origin);
+      const {codes}=await state();assert.deepEqual(codes,[origin,'EV1','EV2','EV3','AT1','AT2','AT3','AT4','AT5','AT6',origin]);checks++;
+      assert.deepEqual(await page.evaluate(()=>window.__sequenceReview.steps().map(step=>step.duration)),Array(11).fill(350));checks++;
     }
     for(const [variant,order]of[['P',['D','V','G','H','C','D']],['A',['C','V','D','H','G','C']],['B',['C','V','H','D','G','C']]]){
       await page.evaluate(v=>{window.__sequenceReview.select(v,'guard');document.getElementById('context').checked=false;window.__sequenceReview.seek(0);},variant);assert.deepEqual((await state()).codes,order);checks++;

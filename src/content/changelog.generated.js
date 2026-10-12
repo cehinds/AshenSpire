@@ -17,7 +17,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-10-12",
     "group": "2026-10-12",
     "summary": "Greatsword sequence orders can be compared before gameplay wiring",
-    "detail": "Labeled previews show the shared Guard / Parry / Resisted order, six supplied attack images, Counter extension and Evade from six starting stances, with pause/step controls, review timing, portable animations and exact source provenance. Thirty additional stance concepts remain available for review; no new gameplay sequence is registered.",
+    "detail": "Labeled previews show the shared Guard / Parry / Resisted order, six supplied attack images, separate Guard-tag and Evasion-tag Counter routes, and Evade from six starting stances, with pause/step controls, review timing, portable animations and exact source provenance. Thirty additional stance concepts remain available for review; no new gameplay sequence is registered.",
     "build": "0.7.1.1423",
     "pullRequest": 1897,
     "url": "https://github.com/cehinds/AshenSpire/pull/1897"

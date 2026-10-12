@@ -1,10 +1,12 @@
 """Encode discrete labeled existing-art frames; never generate in-between poses."""
 import json
+from shutil import copyfile
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 root=Path(__file__).resolve().parent/'renders'
 manifest=json.loads((root/'manifest.json').read_text())
 for output in manifest['outputs']:
+    if 'frames' not in output:continue
     images=[Image.open(root/name).convert('RGB') for name in output['frames']]
     # Each numbered slot remains its own GIF frame even when the pose repeats.
     width,height=images[0].size
@@ -13,6 +15,7 @@ for output in manifest['outputs']:
     palette=palette.quantize(colors=256)
     encoded=[image.quantize(palette=palette,dither=Image.Dither.FLOYDSTEINBERG) for image in images]
     encoded[0].save(root/output['gif'],save_all=True,append_images=encoded[1:],duration=output['durations'],loop=0,optimize=False,disposal=2)
+    for alias in output.get('gifAliases',[]):copyfile(root/output['gif'],root/alias)
     gif=Image.open(root/output['gif'])
     assert gif.n_frames==len(images),(output['key'],gif.n_frames,len(images))
     durations=[]
