@@ -19,6 +19,9 @@ export const CARD_TRAIT_RULES = Object.freeze({
     counter: Object.freeze(['attack', 'smash']),
     casting: Object.freeze([]),
   }),
+  // Enemy reaction moves (docs/combat-card-traits-contract.md, "Enemy reactions").
+  // Absent in a snapshot means false: a version-2 snapshot without the key has none.
+  enemyReactions: true,
 });
 
 // Returns a list of human-readable problems; an empty list means the rules are valid.
@@ -32,6 +35,7 @@ export function reactionRulesProblems(rules) {
   if (!record(stack) || !Number.isSafeInteger(stack.maxDepth) || stack.maxDepth < 1) problems.push('Reaction stack maxDepth must be a positive integer');
   if (record(stack) && (!Number.isSafeInteger(stack.counterReturnMaxDepth) || stack.counterReturnMaxDepth < 1)) problems.push('Counter return maxDepth must be a positive integer');
   if (!record(advantage) || Object.values(advantage).some(list => !Array.isArray(list) || list.some(item => typeof item !== 'string'))) problems.push('Advantage map must map maneuvers to arrays of maneuvers');
+  if (rules.enemyReactions !== undefined && typeof rules.enemyReactions !== 'boolean') problems.push('Enemy reactions flag must be a boolean when present');
   return problems;
 }
 
