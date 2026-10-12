@@ -745,6 +745,22 @@ card,,twinFang,source:weapon
 card,,bashingBlow,source:weapon
 card,,sweepingBlow,source:weapon
 card,,colossusSmash,source:weapon
+# Weapon attack cards: fixed damage type (owner, 2026-10-12). Blade cards are slashing.
+card,,gorefireSlash,damage:slashing
+card,,crimsonCleave,damage:slashing
+card,,serratedBlade,damage:slashing
+card,,rend,damage:slashing
+card,,cleavingBlow,damage:slashing
+card,,twinbladeFlurry,damage:slashing
+card,,goreslash,damage:slashing
+card,,hewingArc,damage:slashing
+card,,flameToBlade,damage:slashing
+card,,kilnCleave,damage:slashing
+card,,quickCut,damage:slashing
+card,,hamstringRogue,damage:slashing
+card,,bladeDanceRogue,damage:slashing
+card,,thousandCutsRogue,damage:slashing
+card,,sweepingBlow,damage:slashing
 card,,stomp,damage:blunt
 card,,stomp,delivery:melee
 card,,kickOff,damage:blunt

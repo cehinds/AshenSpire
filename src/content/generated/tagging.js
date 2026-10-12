@@ -4169,6 +4169,96 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
+    "objectId": "gorefireSlash",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "crimsonCleave",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "serratedBlade",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rend",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cleavingBlow",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "twinbladeFlurry",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "goreslash",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "hewingArc",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "flameToBlade",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "kilnCleave",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "quickCut",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "hamstringRogue",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bladeDanceRogue",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "thousandCutsRogue",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sweepingBlow",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "card",
+    "scope": "",
     "objectId": "stomp",
     "tagId": "damage:blunt"
   },
