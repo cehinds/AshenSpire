@@ -36,13 +36,25 @@
     }
   ],
   "prompt": "ev20-replacement.prompt.txt",
-  "status": "fresh_replacement_pending_director_review",
-  "actualName": "Upright planted two-handed low forward carry",
+  "status": "director_concept_approved_not_user_selected",
+  "actualName": "Upright two-hand recovery carry",
   "actualObservations": [
     "Two distinctgauntlets separated byvisiblebrownleather ononehilt.",
     "Nearforearm fullyvisible;farhand/wrist emerges infrontabdomen.",
     "Fullcape/boots/swordtipvisible withsame rearleft/rightfacingidentity.",
     "Bodybase wider andleftslip lesspronounced thanrequested;directionsdescribe actualresult."
   ],
-  "runtimeChanged": false
+  "runtimeChanged": false,
+  "directorReview": {
+    "decision": "approved",
+    "observations": [
+      "Two distinct grips with leather gap.",
+      "Fullfigure/cape/sword visible.",
+      "Rearleftcamera and upright low recovery carry readable."
+    ],
+    "limits": [
+      "Not strong lateral slip or narrow stance.",
+      "Concept approval only;no runtimecutouts or animations implied."
+    ]
+  }
 }

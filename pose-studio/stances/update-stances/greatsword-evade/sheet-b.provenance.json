@@ -32,7 +32,7 @@
     }
   ],
   "prompt": "sheet-b.repair-2.prompt.txt",
-  "status": "EV16_EV17_EV18_EV19_concept_approved_old_EV20_superseded_by_pending_single_replacement",
+  "status": "director_concept_approved_EV16_EV19_board_EV20_external_single_replacement",
   "initialConcerns": [
     "EV18hipgripmovedforward/side;twohanded anatomy requiresdirectorverification.",
     "Fixed512cropscantruncateart;directorwillpresentintactboardswithperoptioncontrols.Noextrareflows."
@@ -49,16 +49,17 @@
   },
   "runtimeChanged": false,
   "reviewNotes": [
-    "EV18two gauntlets and natural forearms independently confirmed by rootdirector.",
-    "EV20bodyconceptapproved but secondgrippinghand insufficientlyclear;targetedrepairprepared awaitingrootgrant.",
-    "Attributionissuewasanotherworkerlatestfilecopyerror;notestablishedimagegentoolbug."
+    "EV16 throughEV19 accepted afterEV18hipgriprepair.",
+    "Old boardEV20 superseded by approved freshsingle ev20-replacement.png,sameID/count.",
+    "No runtimecutouts/animations/userselection implied."
   ],
   "replacementOptions": {
     "EV20": {
       "path": "ev20-replacement.png",
       "sha256": "0c48fafcd4069a16dfe2e2794681bcd4c1751bd3ad4565932f1e9c8054a22243",
-      "status": "fresh_replacement_pending_director_review",
-      "optionCountChange": 0
+      "status": "director_concept_approved_not_user_selected",
+      "optionCountChange": 0,
+      "actualName": "Upright two-hand recovery carry"
     }
   }
 }
