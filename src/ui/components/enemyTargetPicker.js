@@ -25,15 +25,16 @@ function watchTargetPlacement(host, picker) {
     const zoom = uiZoom();
     const combat = host.closest('.combat');
     const localRect = rect => ({ left: rect.left - box.left, top: rect.top - box.top, width: rect.width, height: rect.height });
-    // Each foe's overhead controls (intent, Inspect, HP, armor) sit directly
-    // above its art. As obstacles they pushed a small foe's box below its feet,
-    // so the box centres on the art and may cover them. They stay clickable
-    // through CSS alone: combat-layers.css gives .meters and .combatant-leading
-    // z-index above --combat-layer-selection in the same formation stacking
-    // context as the picker, so elementFromPoint over them still hits the
-    // control (checked in Chromium), and no pointer forwarding is needed.
-    const obstacles = [combat?.querySelector('.combat-hud'), host.querySelector('.turn-ribbon')]
-      .filter(Boolean).map(node => node.getBoundingClientRect()).filter(rect => rect.width && rect.height).map(localRect);
+    // A box may cover its own foe's controls (intent, Inspect, HP, armor), which
+    // stay clickable above it through combat-layers.css z-index. It never covers
+    // another foe's or the player's controls, so those are obstacles without an owner.
+    const visibleRects = nodes => nodes.map(node => node.getBoundingClientRect()).filter(rect => rect.width && rect.height);
+    const obstacles = [
+      ...visibleRects([combat?.querySelector('.combat-hud'), host.querySelector('.turn-ribbon')].filter(Boolean)).map(localRect),
+      ...visibleRects([...host.querySelectorAll('.combatant.player :is(.combatant-leading, .meters)')]).map(localRect),
+      ...[...host.querySelectorAll('.combatant.enemy')].flatMap(figure => visibleRects([...figure.querySelectorAll(':is(.combatant-leading, .meters, .nm)')])
+        .map(rect => ({ ...localRect(rect), owner: figure.dataset.eid }))),
+    ];
     const playerRect = host.querySelector('.combatant.player .sprite')?.getBoundingClientRect();
     // Cards, combat tools and action buttons paint above the picker: never place a target under them.
     const hardNodes = [playerRect, ...(combat?.querySelectorAll('.combat-tools, .combat-action-row button, .hand .card') ?? [])];

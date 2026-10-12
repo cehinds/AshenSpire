@@ -116,12 +116,13 @@ for (const [label, grid] of [['Classic', enemyTargetGrid], ['Alternative', alter
 const pickerSource = readFileSync(new URL('../src/ui/components/enemyTargetPicker.js', import.meta.url), 'utf8');
 const layerCss = readFileSync(new URL('../styles/combat-layers.css', import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
 
-test('picker does not treat a foe\'s overhead controls as target-placement obstacles', () => {
-  const obstacleList = pickerSource.match(/const obstacles = \[([^\]]*)\]/);
-  assert.ok(obstacleList, 'picker builds its soft obstacle list');
-  assert.match(obstacleList[1], /\.combat-hud/);
-  assert.match(obstacleList[1], /\.turn-ribbon/);
-  assert.doesNotMatch(obstacleList[1], /combatant-leading|meters/);
+test('picker tags each foe\'s controls with its owner and keeps player controls as plain obstacles', () => {
+  assert.match(pickerSource, /\.combat-hud/);
+  assert.match(pickerSource, /\.turn-ribbon/);
+  assert.match(pickerSource, /\.combatant\.player :is\(\.combatant-leading, \.meters\)/, 'player controls are obstacles');
+  assert.match(pickerSource, /\.combatant\.enemy/);
+  assert.match(pickerSource, /:is\(\.combatant-leading, \.meters, \.nm\)/, 'foe controls include the name plate');
+  assert.match(pickerSource, /owner:\s*figure\.dataset\.eid/, 'foe controls carry their owner');
   assert.match(pickerSource, /hardObstacles/, 'hard obstacles stay in place');
 });
 
