@@ -8,7 +8,7 @@ These are **development builds**, not releases. Release status is governed separ
 
 **Where the ordinal comes from.** `buildordinal.json` as committed at that merge on `dev` — never typed from memory. Two merges can share an ordinal when one shipped docs or evidence only and rebuilt nothing.
 
-**Writing a receipt in the PR that makes the change** (DEVELOPER.md asks this of Armoury contract changes): rebuild, write the receipt at that ordinal **plus one**, run `node tools/about-changelog.mjs --write` (which allows exactly that one build ahead while projecting), rebuild again — and the ordinal on the box equals the receipt. Any later rebuild on the branch moves the box, so re-point the receipt the same way before merging.
+**Writing a receipt in the PR that makes the change**: stamp it with `buildordinal.json` as it stands on your branch, and do not commit `buildordinal.json`. No rebuild loop is needed. After the merge lands on `dev`, the build-stamp workflow rebuilds `dev`, re-points the receipt to the build it actually shipped in, and pushes that to `dev` (DEVELOPER.md, *Receipts*).
 
 <details>
 <summary><strong>History and known gaps</strong> — renumbering, start date, and three landings no receipt can name</summary>
@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-12
 
+- **Development builds get their build number from a pipeline** ([#1895](https://github.com/cehinds/AshenSpire/pull/1895), `0.7.1.1421`). Nothing changes in the game. Pull requests no longer commit a build number; after a merge lands, a bot rebuilds and stamps each receipt with the build it actually shipped in.
 - **Combat Rounds preview is now in the codebase** ([#1888](https://github.com/cehinds/AshenSpire/pull/1888), `0.7.1.1419`). The alternative round-based combat design and its rules engine are brought over as a preview with its own tests and SPEC section. Nothing in play changes: live combat does not use it yet.
 - **Reaver greatsword combat stances now use selected artwork** ([#1890](https://github.com/cehinds/AshenSpire/pull/1890), `0.7.1.1417`). A Reaver in the default armor carrying only a greatsword now shows selected poses for Sweep, Counter and Smash, holds its Evade pose when ready, and shows its Guard Break reaction when an enemy breaks its guard. These reactions use the five selected greatsword paintings.
 - **On desktop, the Combat log and Reaction sit in the bottom corners** ([#1885](https://github.com/cehinds/AshenSpire/pull/1885), `0.7.1.1406`). The Combat log button now sits in the bottom-left corner and the Reaction toggle in the bottom-right, so the strip above your cards is gone and the hand sits lower on the screen with more room for the battlefield. Phone and tablet are unchanged.
