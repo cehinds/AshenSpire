@@ -109,6 +109,8 @@ function optionsFor(ctx, row, group, hooks, refusal = null) {
         if (!paid || !candidate.player.alive) { note('other'); continue; }
         // The stacked entries resolve after this option, last pushed first; all must play.
         for (const entry of [...entries].reverse()) {
+          // Once the root has ended the rest fizzle and pay nothing, so the option stands.
+          if (rootEnded(candidate, group)) break;
           hooks.setOwner?.(candidate, entry.ownerId);
           const start = candidate.eventLog.length;
           hooks.play(candidate, { ...entry.play });
@@ -143,7 +145,16 @@ function reportUnavailable(ctx, group, id, row, reason, extra = {}, hooks = null
     attackKind: attackKind(row), ...rest });
 }
 
-const rowFor = (ctx, group, id) => Object.values(group.targets).find(target => ctx.players ? target.playerId === id : target.id === ctx.player.id);
+// Version 2 root ended: the attacker is dead, or (a player-sourced root) its acting seat is
+// dead or disconnected. Every entry still stacked then fizzles.
+function rootEnded(ctx, group) {
+  const source = (ctx.enemies || []).find(enemy => enemy.id === group.sourceId);
+  if (source) return !source.alive;
+  const seat = group.sourcePlayerId ? ctx.players?.get(group.sourcePlayerId) : null;
+  return !!seat && (!seat.entity?.alive || seat.connected !== true);
+}
+
+const rowFor = (ctx, group, id) =>Object.values(group.targets).find(target => ctx.players ? target.playerId === id : target.id === ctx.player.id);
 function seatPresent(ctx, id) {
   const seat = ctx.players?.get(id);
   return !!(seat?.entity || ctx.player)?.alive && (!seat || seat.connected === true);
@@ -272,6 +283,16 @@ export function resolveReactionStack(ctx, hooks) {
   if (!group) throw new Error('The reaction stack has no incoming action');
   stack.resolving = true;
   while (stack.entries.length) {
+    // Checked after every resolved entry: a root that has ended fizzles what is left.
+    if (rootEnded(ctx, group)) {
+      while (stack.entries.length) {
+        const entry = stack.entries.pop();
+        hooks.setOwner?.(ctx, entry.ownerId);
+        ctx.emit('combatReactionFizzled', { ownerId: entry.ownerId, cardInstanceId: entry.play.cardInstanceId, reason: 'rootEnded' });
+      }
+      delete ctx.reactionStack;
+      return false;
+    }
     const entry = stack.entries[stack.entries.length - 1];
     if (entry.side !== 'player') throw new Error('Enemy reactions are not implemented');
     stack.entries.pop();
