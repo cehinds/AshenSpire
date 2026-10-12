@@ -485,20 +485,23 @@ function queueFor(layer, forId) {
   return byFighter.get(key);
 }
 
-/** Lay out one fighter's words: plan every word that has not started yet, then place each in its lane. */
-function layoutCallouts(layer, anchor, q, now) {
+/**
+ * Lay out one fighter's words: plan every word that has not started yet, then place each in its lane.
+ * `lifeMs` is the lifetime callout() selected (instant speed is shorter); lanes, starts and removal all use it.
+ */
+function layoutCallouts(layer, anchor, q, now, lifeMs = CALLOUT_MS) {
   const active = q.items.filter((it) => it.start <= now);
   const pending = q.items.filter((it) => it.start > now);
   const lanes = [0, 1, 2].map((lane) => Math.max(0, ...active.filter((it) => it.lane === lane).map((it) => it.end - now)));
   // The stagger counts from the last word that has started, never from one still waiting (it is re-planned).
   const started = active.map((it) => it.start);
   const after = started.length ? Math.max(...started) - now : null;
-  const plan = planWordQueue(pending.map((it) => ({ id: it.arrival, kind: it.kind })), { lanes, lifeMs: CALLOUT_MS, after });
+  const plan = planWordQueue(pending.map((it) => ({ id: it.arrival, kind: it.kind })), { lanes, lifeMs, after });
   for (const row of plan) {
     const it = pending.find((p) => p.arrival === row.id);
     it.start = now + row.start;
     it.lane = row.lane;
-    it.end = it.start + CALLOUT_MS;
+    it.end = it.start + lifeMs;
     it.el.style.animationDelay = row.start > 0 ? `${row.start}ms` : '';
     clearTimeout(it.timer);
     it.timer = setTimeout(() => it.el.remove(), it.end - now);
@@ -547,7 +550,7 @@ export function callout(layer, anchor, forId, kind) {
   const item = { el, kind, arrival: calloutArrival++, start: Infinity, end: undefined, lane: 0, timer: null };
   q.items.push(item);
   layer.appendChild(el);
-  layoutCallouts(layer, anchor, q, now);
+  layoutCallouts(layer, anchor, q, now, ms);
   return el;
 }
 

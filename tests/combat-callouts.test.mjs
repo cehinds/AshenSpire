@@ -50,6 +50,27 @@ test('a callout names its fighter, shows three in lanes, queues the rest, and sk
   });
 });
 
+test('instant speed: the lanes and removal use the 500ms lifetime callout() actually picked', (t2) => {
+  t2.mock.timers.enable({ apis: ['setTimeout', 'Date'] });
+  try {
+    withKitDom((dom) => {
+      setAnimSpeed('instant');
+      const layer = dom.document.createElement('div');
+      const anchor = dom.document.createElement('div');
+      const kinds = ['staggered', 'disrupted', 'countered', 'critical', 'guardBreak', 'wardBreak'];
+      const nodes = kinds.map((kind) => callout(layer, anchor, 'e1', kind));
+      const starts = nodes.map((node) => Number.parseInt(node.style.animationDelay || '0', 10));
+      assert.deepEqual(starts, [0, 150, 300, 500, 650, 800], 'the fourth word waits for the first 500ms word, not a 900ms one');
+      t2.mock.timers.tick(499);
+      assert.ok(layer.children.includes(nodes[0]), 'the first word is still up at 499ms');
+      t2.mock.timers.tick(1);
+      assert.ok(!layer.children.includes(nodes[0]), 'the first word is removed at its 500ms lifetime');
+    });
+  } finally {
+    setAnimSpeed('normal');
+  }
+});
+
 test('callout CSS: larger than a float, HUD text shadow, reduced motion and Reduce flashes', () => {
   const css = readFileSync(new URL('../styles/combat.css', import.meta.url), 'utf8');
   assert.match(css, /\.fx-callout \{[^}]*text-shadow: var\(--hud-text-shadow/s);

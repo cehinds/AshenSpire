@@ -83,6 +83,12 @@ test('six words start at 0, d, 2d, T, T+d, T+2d in priority order, and none is d
   assert.deepEqual([...new Set(plan.map((row) => row.lane))].sort(), [0, 1, 2], 'three lanes in use');
 });
 
+test('instant speed lifetime (500ms) spaces six words on that lifetime, not 900ms', () => {
+  const items = [1, 2, 3, 4, 5, 6].map((n) => ({ id: `w${n}`, kind: 'staggered' }));
+  const plan = planWordQueue(items, { lanes: [0, 0, 0], lifeMs: 500 });
+  assert.deepEqual(plan.map((row) => row.start), [0, 150, 300, 500, 650, 800]);
+});
+
 test('the queue waits for the earliest visible word, not for all of them', () => {
   const plan = planWordQueue([{ id: 'a', kind: 'evaded' }, { id: 'b', kind: 'immune' }, { id: 'c', kind: 'blocked' },
     { id: 'd', kind: 'blocked' }], { lanes: [300, 0, 0], stepMs: 150, lifeMs: 900 });
