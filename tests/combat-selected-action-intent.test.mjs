@@ -42,3 +42,10 @@ test('both real selection/render callers pass the instance and clear removes the
   assert.deepEqual(calls,['removed','refit']);
   assert.deepEqual(shown,[{maneuver:'ready'}],'with nothing armed or held, the resting mark is what the figure shows');
 });
+
+test('the sweep intent icon uses the sweep sigil, not the attack sigil', async () => {
+  const { INTENT_ICON_SHAPES } = await import('../src/ui/components/intentIcon.js');
+  const { ACTION_SIGILS } = await import('../src/content/combatSigils.js');
+  assert.equal(INTENT_ICON_SHAPES.sweep, ACTION_SIGILS.sweep.shape);
+  assert.notEqual(INTENT_ICON_SHAPES.sweep, ACTION_SIGILS.attack.shape);
+});
