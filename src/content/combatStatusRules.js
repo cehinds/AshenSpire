@@ -27,6 +27,8 @@ export const combatStatusRules = {
   frozen: { status: 'frozen', actionLoss: 1 },
   interactions: { frostGauge: 'frost', frozen: 'frozen', chilled: 'chilled', grounded: 'grounded', paralysis: 'paralysis', offBalance: 'offBalance', decoy: 'decoy', concealment: 'concealed', chilledBluntPercent: 25 },
   restoration: { alterationCombatCap: 1 },
+  // owner 2026-10-11: Ward absorbs at most this share of an action's spell damage and is spent by what it absorbs.
+  ward: { resistMaxShare: 0.5 },
 };
 
 // Existing Burn/Crimson Blight hooks continue to own their ongoing damage.

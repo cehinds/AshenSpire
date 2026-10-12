@@ -20,7 +20,11 @@ export function combatExpansionRulesProblems(value, path = 'combatExpansionRules
     if (record(template)) {
       if (!record(actual)) { problems.push(`${at} must be an object`); return; }
       for (const key of Object.keys(actual)) if (!(key in template)) problems.push(`${at}.${key} is unknown`);
-      for (const [key, expected] of Object.entries(template)) check(actual[key], expected, `${at}.${key}`);
+      for (const [key, expected] of Object.entries(template)) {
+        // Saves written before Ward resist share omit statuses.ward; they stay valid and use the default share.
+        if (key === 'ward' && at === `${path}.statuses` && actual[key] === undefined) continue;
+        check(actual[key], expected, `${at}.${key}`);
+      }
     } else if (typeof template === 'number') {
       if (!Number.isFinite(actual) || (template >= 0 && actual < 0)) problems.push(`${at} must be finite${template >= 0 ? ' and non-negative' : ''}`);
     } else if (typeof actual !== typeof template || (typeof template === 'string' && actual !== template)) problems.push(`${at} has invalid rule data`);
@@ -31,6 +35,8 @@ export function combatExpansionRulesProblems(value, path = 'combatExpansionRules
     if (!Number.isSafeInteger(row?.cap) || row.cap < 1 || !(row.initialThreshold > 0) || !(row.activeThreshold > 0)) problems.push(`${path}.statuses.statuses.${id} requires positive thresholds and a whole cap`);
   }
   const recovery = value.statuses?.recovery;
+  const wardShare = value.statuses?.ward?.resistMaxShare;
+  if (wardShare !== undefined && !(Number.isFinite(wardShare) && wardShare >= 0 && wardShare <= 1)) problems.push(`${path}.statuses.ward.resistMaxShare must be between 0 and 1`);
   if (recovery && (recovery.maximum > 100 || recovery.minimum > recovery.maximum || recovery.pendingRemoval > 1)) problems.push(`${path}.statuses.recovery has invalid chance or removal bounds`);
   // The requested severe contract is fixed: a save may not redefine its risk.
   if (!record(value.ashenBlight) || Object.keys(value.ashenBlight).length !== Object.keys(ASHEN_BLIGHT_RULES).length
