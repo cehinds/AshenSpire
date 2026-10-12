@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 const stage = readFileSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url), 'utf8');
+const coop = readFileSync(new URL('../src/ui/screens/coop.js', import.meta.url), 'utf8');
 const qa = readFileSync(new URL('../tools/combat-layer-qa.mjs', import.meta.url), 'utf8');
 const css = readFileSync(new URL('../styles/combat-layers.css', import.meta.url), 'utf8');
 
@@ -47,4 +48,15 @@ test('dead combat-ground-shadow rules are removed from combat-layers.css', () =>
 
 test('enemy Inspect expands to a complete 44px target while stopping at the intent', () => {
   assert.match(css, /\.enemy \.combatant-leading > \.combatant-info::before\s*\{[\s\S]*?inset:\s*calc\(-18px \/ var\(--ui-zoom,1\)\) calc\(-11px \/ var\(--ui-zoom,1\)\) calc\(-4px \/ var\(--ui-zoom,1\)\);/);
+});
+
+test('co-op grid cells and intents share the selected-card target action', () => {
+  assert.match(coop, /const activateEnemyTarget = enemyId => \{[\s\S]*?t: 'playCard'[\s\S]*?targetId: enemyId/);
+  assert.match(coop, /intentEl\(readEnemyIntent\(e, def\), \(\) => activateEnemyTarget\(e\.id\)\)/);
+  assert.match(coop, /box\.addEventListener\('click', \(\) => \{[\s\S]*?if \(!activateEnemyTarget\(e\.id\)\) render\(\);/);
+});
+
+test('co-op enemy frames mark a readied hostile card\'s hover target, as solo does', () => {
+  assert.match(coop, /box\.addEventListener\('pointerenter', \(\) => \{[\s\S]*?cardNeedsEnemyTarget\(cardDef\(selected\)\)\) box\.classList\.add\('hover-target'\);/);
+  assert.match(coop, /box\.addEventListener\('pointerleave', \(\) => box\.classList\.remove\('hover-target'\)\);/);
 });
