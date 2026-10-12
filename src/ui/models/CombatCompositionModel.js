@@ -82,7 +82,8 @@ export function alternativeCombatComposition({ sizes, actors, width, height, han
   const fitted = sizes.map(size => {
     const actor = actors.find(actor => actor.slot.id === size.id);
     const player = actor.side === 'player';
-    const spacious = height > 300;
+    // A wide screen is never a short portrait phone, whatever its field height.
+    const spacious = wide || height > 300;
     const factor = player ? (solo ? 1.28 : 1) : spacious ? 1 : .8;
     const availablePlayerHeight = player && solo && Number.isFinite(handTop)
       ? Math.max(1, handTop - actor.leading - 32) : Infinity;
@@ -151,4 +152,12 @@ function separateEnemies(fits, width) {
     }
   }
   return fits.map(({ separationHalf, separationSide, ...fit }) => fit);
+}
+
+// The cells whose grounds set the backdrop's floor line. The wide alternative
+// composition stands the enemies on the back row, so their placed feet (the
+// fitted sizes) are the floor. The classic composition ignores `wide`, so it
+// keeps the formation grid.
+export function floorCellsFor({ wide, classic, sizes, cells }) {
+  return wide && !classic ? sizes.map(size => ({ ground: size.ground })) : cells;
 }

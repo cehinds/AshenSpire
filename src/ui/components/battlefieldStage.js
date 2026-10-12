@@ -1,6 +1,7 @@
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { anchorLocalBox, uiZoom, VIEWPORT_ORIGIN } from '../fx.js';
 import { combatFormation } from '../models/CombatFormationModel.js';
+import { floorCellsFor } from '../models/CombatCompositionModel.js';
 import { isWideFormFactor } from '../models/FormFactorModel.js';
 import { COMBAT_TARGET_HIT_PX, combatOverheadAnchors, combatOverheadRibbonShift, combatTargetAnchors, combatTargetPackSize } from '../models/CombatOverheadModel.js';
 import { formationTileGeometry } from '../models/FormationGridModel.js';
@@ -1015,7 +1016,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         fieldTop, fieldHeight: fieldRect.height / zoom,
         // Desktop and widescreen stand the enemies on the back row, so the
         // floor line is their feet (the lowest placed figure), not the grid.
-        formation: { cells: (isWideFormFactor(document.documentElement.dataset.formFactor) ? sizes.map(size => ({ ground: size.ground })) : plan.cells).map(cell => ({ ground: cell.ground / zoom })), rowSpacing: plan.rowSpacing / zoom } }),
+        formation: { cells: floorCellsFor({ wide: isWideFormFactor(document.documentElement.dataset.formFactor), classic: classicAppearance(), sizes, cells: plan.cells })
+          .map(cell => ({ ground: cell.ground / zoom })), rowSpacing: plan.rowSpacing / zoom } }),
     });
     field.dataset.groundY = String(fieldRect.top + plan.ground);
   };

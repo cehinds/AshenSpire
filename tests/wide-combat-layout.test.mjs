@@ -90,3 +90,33 @@ test('the combat layout re-plans when data-form-factor changes', () => {
   assert.match(combatLayoutSource, /formFactorObserver\.observe\(document\.documentElement, \{ attributes: true, attributeOldValue: true, attributeFilter: \['data-form-factor'\] \}\);/);
   assert.match(combatLayoutSource, /function release\(\) \{[\s\S]*?formFactorObserver\?\.disconnect\(\);/);
 });
+
+// The wide floor follows the enemies' feet only in the alternative composition.
+// The classic composition ignores `wide`, so its floor stays on the grid.
+import { floorCellsFor } from '../src/ui/models/CombatCompositionModel.js';
+
+test('the wide floor follows placed feet only in the alternative composition', () => {
+  const cells = [{ ground: 250 }, { ground: 270 }];
+  const sizes = [{ ground: 140 }, { ground: 160 }];
+  assert.deepEqual(floorCellsFor({ wide: true, classic: false, sizes, cells }), [{ ground: 140 }, { ground: 160 }]);
+  assert.deepEqual(floorCellsFor({ wide: true, classic: true, sizes, cells }), cells);
+  assert.deepEqual(floorCellsFor({ wide: false, classic: false, sizes, cells }), cells);
+});
+
+// A wide field at 720 to 768 px is 300 px or less, which the shared rules read
+// as a short portrait phone (enemies at 0.8 scale, lifted, on the near row).
+// A wide screen is never a short phone: its enemies keep the back-row rules at
+// every field height.
+for (const height of [280, 300, 320]) {
+  test(`a wide ${height}px field keeps its enemies on the back row, unlifted and full-size`, () => {
+    const width = 1293;
+    const actors = fight(2, width, height);
+    const sizes = fitAlternativeSprites({ width, height, actors, narrow: false });
+    const fits = alternativeCombatComposition({ sizes, actors, width, height, handLeft: width * .35, solo: false, wide: true });
+    for (const enemy of fits.filter(fit => fit.id.startsWith('e'))) {
+      assert.equal(enemy.standingGround, undefined, `enemy ${enemy.id} is not lifted`);
+      assert.equal(enemy.sceneryGround, undefined, `enemy ${enemy.id} has no near-row scenery ground`);
+      assert.ok(enemy.ground - enemy.visibleHeight >= 0, `enemy ${enemy.id} top stays on the field`);
+    }
+  });
+}
