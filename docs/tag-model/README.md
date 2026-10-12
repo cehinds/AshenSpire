@@ -40,6 +40,15 @@ job:
 
 Plus **assets**, the art each object can show.
 
+## Objects
+
+`tables/objects.csv` holds one row per carrier. Relics, companions, sigils and
+progression class feats each have a row, with `kind` set to their family. The
+`tags` column holds the classification tag key and the property tag key; the
+property tag is the handle that `content/source/nodeEffects.json` keys. Charms,
+eleven relics and the twenty `classSkillFeats` entries are not rows yet
+(`DECISIONS.md`, decision 14).
+
 ## Conventions
 
 - A tag's `id` is its full dotted path (`card.upgrade.base`).

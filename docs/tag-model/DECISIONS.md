@@ -272,6 +272,34 @@ Formula, relation and value keys follow the README conventions.
 - **Couldn't place:** the damage-type placement question below still stands.
   It concerns which tree holds damage types as a whole, not these two sets.
 
+## 14. Relics, companions, sigils and feats are objects
+
+- **Date:** 2026-10-12 (owner).
+- **Decision:** each relic, companion, sigil and progression class feat is a row
+  in `tables/objects.csv`. Its `kind` is the object's family, and its `tags`
+  hold the classification tag key (`classification.relic`, `.companion`,
+  `.sigil` or `.feat`) and its property tag key. The property tags stay as the
+  effect handles, because the game keys effects by them. Ids and names are the
+  game's own (`relics.js`, `progression/relics.js`, `companions.js`,
+  `sigils.js`, `progression/feats.js`). Descriptions are the game's text, not
+  written here: relic text is its `textTemplate` with its `{token}` placeholders
+  left as they are, companion and sigil text is its `blurb`, and feat text is
+  the `feat:*` blurb in `nodes.csv`.
+- **Tables changed:** `tables/objects.csv` gains 118 rows: 59 relic, 2
+  companion, 7 sigil and 50 feat, one commit per kind. `tags.csv` is not
+  touched.
+- **Couldn't place:**
+  - Charms (`kindlingCharm`, `goldleafCharm`, `emberwickCharm`). No
+    `classification.charm` exists in `nodes.csv`, and `tagging.csv` classes them
+    as relics. Not added. Owner to say whether charm is a kind with its own
+    classification tag, or a relic.
+  - Eleven relics with no property node in `nodes.csv`: `cinderPouch`,
+    `feralEye`, `crackedTear`, `sealstoneKey`, `emberFragment`,
+    `ancestralHorn`, `saltedRelic`, `wayfarersKnot`, `prismaticThorn`,
+    `restlessClasp`, `paupersDiadem`. Not added.
+  - Twenty class feats in `classSkillFeats.js` (`reaver*`, `starseer*`,
+    `rogue*`, `herald*`). They carry no property tag in `tagging.csv`. Not added.
+
 ## Open: round-trip differences
 
 Every live node in `content/source/nodes.csv` (448) now maps to exactly one tag
