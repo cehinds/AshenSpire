@@ -2,6 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { alternativeCombatComposition, combatStandingGround, SHORT_PHONE_ENEMY_LIFT } from '../src/ui/models/CombatCompositionModel.js';
 import { alternativeEnemyTargetGrid } from '../src/ui/models/AlternativeEnemyTargetGridModel.js';
+import { fitAlternativeSprites } from '../src/ui/models/AlternativeFormationModel.js';
+import { allocateCombatBands } from '../src/ui/models/CombatLayout.js';
+import { combatBandConfig } from '../src/ui/models/CombatBandConfigModel.js';
+import { footerArtHeight } from '../src/ui/models/FooterLayoutModel.js';
 
 test('alternative labeled targets keep their original 88 pixel cells', () => {
   const targets = [{ id: 'a', x: 280, y: 190 }, { id: 'b', x: 350, y: 190 }];
@@ -105,4 +109,55 @@ test('a short portrait phone lifts its enemies a little; the camera keeps the un
   for (const enemy of enemies) assert.ok(Math.abs(enemy.ground - (backRow - height * SHORT_PHONE_ENEMY_LIFT)) < 1e-9,
     `enemy feet at ${enemy.ground}, expected the back row lifted by 5% of the field`);
   assert.ok(Math.abs(combatStandingGround(fit, actors, 0) - backRow) < 1e-9, 'standing line is the unlifted back row');
+});
+
+// Widescreen back row (the owner's 1920x1080 window). The enemies' feet stand on
+// the back-row ground line (height x .48 here, since the stage slots sit at .9
+// of the field), and their art is scaled down to fit the headroom above it. The
+// feet must never drop below that line to make room for a tall figure.
+function wideStage1080() {
+  const zoom = 1080 / 730, width = 1920 / zoom;
+  const bands = allocateCombatBands({ width, height: 730, zoom, footerArtPx: footerArtHeight(width, zoom, true) * zoom }, combatBandConfig(true));
+  return { width, height: bands.battlefield };
+}
+
+function wideEncounter({ width, height, enemies, leading = 66 }) {
+  const player = { slot: { id: 'p', x: width * .3, ground: height * .9, depth: 1, side: 'player' }, side: 'player',
+    ratio: 1, multiplier: 1, leading: 20, visibleWidth: 90, visibleHeight: 200, footOffset: 0, enemyId: 'reaver' };
+  const foes = enemies.map((e, i) => ({ slot: { id: `e${i}`, x: width * .8, ground: height * .9, depth: 1, side: 'enemy' },
+    side: 'enemy', ratio: e.ratio, multiplier: e.multiplier ?? 1, leading, visibleWidth: 110, visibleHeight: e.visibleHeight,
+    footOffset: 0, enemyId: e.enemyId ?? 'bloodHound' }));
+  return [player, ...foes];
+}
+
+const wideCases = [
+  ['one normal enemy', [{ ratio: .9, visibleHeight: 150 }]],
+  ['three normal enemies', [{ ratio: .9, visibleHeight: 150 }, { ratio: .9, visibleHeight: 150 }, { ratio: .9, visibleHeight: 150 }]],
+  ['one boss', [{ ratio: 1.3, multiplier: 1.25, visibleHeight: 300, enemyId: 'boss' }]],
+];
+
+for (const [label, enemies] of wideCases) {
+  test(`wide 1920x1080 ${label}: feet stand on the back row and the art fits the headroom`, () => {
+    const { width, height } = wideStage1080();
+    const actors = wideEncounter({ width, height, enemies });
+    const sizes = fitAlternativeSprites({ width, height, actors, narrow: false });
+    const fits = alternativeCombatComposition({ sizes, actors, width, height, handLeft: width * .35, solo: enemies.length === 1, wide: true });
+    const backGround = height * .48;
+    for (const enemy of fits.filter(fit => fit.id.startsWith('e'))) {
+      assert.ok(enemy.ground <= backGround + 1e-9, `enemy ${enemy.id} feet at ${enemy.ground}, back row at ${backGround}`);
+      assert.ok(enemy.visibleHeight > 0, `enemy ${enemy.id} keeps a visible figure`);
+      assert.ok(enemy.visibleHeight + 66 + 6 <= enemy.ground + 1e-9,
+        `enemy ${enemy.id} art ${enemy.visibleHeight} plus headroom overruns its feet at ${enemy.ground}`);
+    }
+  });
+}
+
+test('the classic (non-wide) 1920x1080 composition keeps its unscaled figure and descending feet', () => {
+  const { width, height } = wideStage1080();
+  const actors = wideEncounter({ width, height, enemies: [{ ratio: .9, visibleHeight: 150 }] });
+  const sizes = fitAlternativeSprites({ width, height, actors, narrow: false });
+  const [, enemy] = alternativeCombatComposition({ sizes, actors, width, height, handLeft: width * .35, solo: true, wide: false });
+  const fitted = sizes.find(size => size.id === 'e0').visibleHeight;
+  assert.equal(enemy.visibleHeight, fitted, 'the figure is not scaled down outside the wide layout');
+  assert.equal(enemy.ground, Math.max(fitted + 66 + 6, height * .48), 'feet keep the unchanged non-wide placement');
 });

@@ -87,7 +87,11 @@ export function alternativeCombatComposition({ sizes, actors, width, height, han
     const factor = player ? (solo ? 1.28 : 1) : spacious ? 1 : .8;
     const availablePlayerHeight = player && solo && Number.isFinite(handTop)
       ? Math.max(1, handTop - actor.leading - 32) : Infinity;
-    const visibleHeight = Math.min(size.visibleHeight * factor, height * (player ? .8 : .7), availablePlayerHeight);
+    // A wide enemy's art must fit the headroom above its back-row feet, so the
+    // feet stay on that line rather than dropping for a tall figure.
+    const backGround = height * .48 + ((size.ground ?? actor.slot.ground) - height * .9) * .25;
+    const headroom = wide && !player ? Math.max(1, backGround - actor.leading - 6) : Infinity;
+    const visibleHeight = Math.min(size.visibleHeight * factor, height * (player ? .8 : .7), availablePlayerHeight, headroom);
     const ratio = visibleHeight / size.visibleHeight;
     const halfWidth = actor.visibleWidth * size.scale * ratio / 2;
     const proposedX = player ? (solo ? Math.max(size.x + width * .035, handLeft + halfWidth) : size.x)
@@ -104,7 +108,6 @@ export function alternativeCombatComposition({ sizes, actors, width, height, han
     // A short portrait phone lifts its back row a little more (SHORT_PHONE_ENEMY_LIFT,
     // a share of the field height). Its standing line stays on the unlifted
     // depth, so the backdrop camera frames the same horizon as before.
-    const backGround = height * .48 + ((size.ground ?? actor.slot.ground) - height * .9) * .25;
     const lift = !player && backRow && !spacious ? height * SHORT_PHONE_ENEMY_LIFT : 0;
     const ground = player && solo && Number.isFinite(handTop)
       ? Math.max(visibleHeight + actor.leading + 6, handTop - 26)
