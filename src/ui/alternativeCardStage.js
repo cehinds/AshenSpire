@@ -31,11 +31,13 @@ function load(url) {
 }
 
 /** Base armour actions with explicitly selected reviewed weapon attacks. */
-export function createAlternativeCardStage(classId, { still = false } = {}) {
+export function createAlternativeCardStage(classId, { still = false, weaponProfile = null } = {}) {
   if (classicAppearance()) return null;
   const base = alternativeCardAnimations.classes[classId];
   if (!base) return null;
   const selected = playerCounterSweepSprites[classId];
+  const pilot = alternativeSelectedStances.weaponProfiles?.[weaponProfile];
+  const pilotFrames = pilot?.classId === classId ? pilot.frames : null;
   const attacks = Object.entries(playerAttackSprites[classId] || {});
   const family = { ...base,
     frames: { ...base.frames, ...selected.frames, ...Object.assign({}, ...attacks.map(([, entry]) => entry.frames)) },
@@ -48,11 +50,18 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
       ...Object.fromEntries(attacks.flatMap(([name, entry]) =>
       ['attack', 'spell', 'ranged', 'rangedMagic'].map(action => [`weapon:${action}:${name}`, { ...entry.sequence, action }]))) },
   };
+  if (pilotFrames) {
+    for (const [action, frame] of Object.entries(pilotFrames)) family.frames['pilot-'+action] = frame;
+    family.frames['smash-load'] = pilotFrames.smash;
+    family.sequences.sweep = { ...family.sequences.sweep, poses: ['pilot-sweep', ...family.sequences.sweep.poses.slice(1)] };
+    family.sequences.counterPrepare = { ...family.sequences.counterPrepare, poses: ['pilot-counter'] };
+  }
   // Smash holds the first painted frame of its own swing (owner, 2026-10-12),
   // the way counter and sweep hold theirs.
   const heldFrames = { ...alternativeSelectedStances.classes[classId]?.frames,
     ...Object.fromEntries(Object.entries(selected.stances).map(([action, pose]) => [action, selected.frames[pose]])),
-    ...(family.frames['smash-load'] ? { smash: family.frames['smash-load'] } : {}) };
+    ...(family.frames['smash-load'] ? { smash: family.frames['smash-load'] } : {}),
+    ...(pilotFrames ? { sweep: pilotFrames.sweep, counter: pilotFrames.counter, smash: pilotFrames.smash, evade: pilotFrames.evade } : {}) };
   const frames = { ...family.frames, ...Object.fromEntries(Object.entries(heldFrames).map(([stance, frame]) => ['stance-'+stance, frame])) };
   const el = document.createElement('div');
   el.className = 'pose-stage painted-stage alternative-card-stage';
@@ -65,6 +74,10 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
   el.dataset.maximumHeightRatio = String((464-Math.min(...Object.values(frames).map(frame=>frame.bounds[1])))/height);
   const width = Math.max(256-family.frames.ready.bounds[0], family.frames.ready.bounds[2]-256)*2*scale;
   el.dataset.idleWidthRatio = String(width/190);
+  // Selected poses share one canvas scale and floor. Reserve their full reach
+  // for the viewport edge clamp without shrinking the readable idle body.
+  if (pilotFrames) el.dataset.maximumWidthRatio = String(Math.max(...Object.values(pilotFrames)
+    .map(frame => Math.max(256-frame.bounds[0], frame.bounds[2]-256)*2))/height);
   el.style.cssText = `position:relative;width:${width}px;height:190px;flex:none;overflow:visible;`;
   // Room to either side keeps the authored dash and aura inside the canvas.
   const canvas = document.createElement('canvas');
@@ -107,8 +120,10 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
   // A hit reaction (red tint + knock-back) has its own clock: flashElapsed ms of
   // flashMs, advanced only outside hold-stop. flashAt is non-null while it runs.
   let pose='ready', rest='idle', stance=null, playing=null, elapsed=0, last=0, request=null, holdUntil=0, flashAt=null, flashMs=220, flashElapsed=0, disposed=false;
-  let resources=[], reactionTimer=null, currentArt=null;
-  const restPose = () => rest === 'defeated' ? 'defeated' : stance ? 'stance-'+stance : rest === 'counter' ? selected.stances.counter : ['defend','guard'].includes(rest) ? 'guard-brace' : 'ready';
+  // A selected target reaction shares the RAF, but starts its own finite clock.
+  // It overlays the body without replacing the action or last confirmed stance.
+  let resources=[], reactionTimer=null, currentArt=null, bodyReaction=null;
+  const restPose = () => rest === 'defeated' ? 'defeated' : stance ? 'stance-'+stance : rest === 'counter' ? (pilotFrames ? 'pilot-counter' : selected.stances.counter) : ['defend','guard'].includes(rest) ? 'guard-brace' : 'ready';
   const filterFor = (frame, action, paid = resources, active = !!action) =>
     auraFilter(action === 'spell' ? 'power2' : frame, ['defend','counter'].includes(rest) ? 'guard' : rest, paid, active);
   function paint(now=performance.now(), materialize=false) {
@@ -125,6 +140,7 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
       effect=playing.sequence.effects?.[sampled.index];
       x=['attack','smash','sweep'].includes(playing.action)?sampled.x:0;
     }
+    if (rest !== 'defeated' && bodyReaction) pose='pilot-'+bodyReaction.kind;
     el.dataset.pose=pose;
     if (pose==='defeated' && down) { currentArt={canvas,image:down,left:128,top:16,width:512,height:512};ctx.drawImage(down,128,16,512,512); return; }
     const image=images.get(pose) || images.get('ready');
@@ -133,7 +149,7 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
     const reduced=reducedMotionRequested();
     const reacting=flashAt!==null && !reduced;
     // The hurt clip replaces the pose while it runs, registered onto the ready figure.
-    const clipping=reacting && hurt && hurtPlacement;
+    const clipping=!bodyReaction && reacting && hurt && hurtPlacement;
     const source=clipping?hurt:image;
     if (!source) return;
     const place=clipping?hurtPlacement:{dx:0,dy:0,scale:1};
@@ -168,17 +184,22 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
       flashElapsed+=Math.max(0,now-Math.max(last,holdUntil));
       if (flashElapsed>=flashMs) flashAt=null;
     }
+    if (bodyReaction) {
+      bodyReaction.elapsed += Math.max(0,now-Math.max(bodyReaction.last,holdUntil));
+      bodyReaction.last=Math.max(bodyReaction.last,now);
+      if (bodyReaction.elapsed >= bodyReaction.duration) { bodyReaction=null; if (!playing) pose=restPose(); }
+    }
     // A queued RAF can carry a timestamp from before synchronous first-paint
     // work. Never move the action clock backwards and count that work twice.
     last=Math.max(last,now);paint(now);
-    if (playing || flashAt!==null) request=requestAnimationFrame(tick);
+    if (playing || flashAt!==null || bodyReaction) request=requestAnimationFrame(tick);
   }
   const wake=()=>{ if (request===null && !disposed) {last=performance.now();request=requestAnimationFrame(tick);} };
   function settle() { playing=null;resources=[];elapsed=0;pose=restPose();paint(); }
   // Routine renders (setRestPose) settle the action only; a running hit reaction
   // keeps its own clock. A click-skip passes { reaction:true } to end it too.
-  function endReaction() { if(flashAt===null)return false;flashAt=null;flashElapsed=0;holdUntil=0;paint();return true; }
-  function settleStage({reaction=false}={}) { if(reaction){flashAt=null;flashElapsed=0;holdUntil=0;} settle(); }
+  function endReaction() { if(flashAt===null&&!bodyReaction)return false;flashAt=null;bodyReaction=null;flashElapsed=0;holdUntil=0;if(!playing)pose=restPose();paint();return true; }
+  function settleStage({reaction=false}={}) { if(reaction){flashAt=null;bodyReaction=null;flashElapsed=0;holdUntil=0;} settle(); }
   // Instant drops pacing and hit-stop but keeps fixed-duration effects, so the hurt clip still plays.
   function hit(ms=220) { if (reducedMotionRequested() || still) return false;flashAt=performance.now();flashMs=Math.max(HURT_CLIP_MIN_MS,ms>0?ms:220);flashElapsed=0;wake();return true; }
   const ready=preload();
@@ -188,6 +209,15 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
     get currentArt(){return currentArt;},
     get rest(){return rest;},
     get stance(){return stance;},
+    // Capability belongs to the selected profile, not transient bitmap readiness.
+    // The receipt callback is chosen before its paced reaction runs, so an image
+    // that finishes loading during the wind-up must still be eligible to play.
+    get reactionPoses(){return pilotFrames ? ['evade','guard-break'].filter(kind=>pilotFrames[kind]) : [];},
+    reactPose(kind, ms=280){
+      if(disposed || rest==='defeated' || !pilotFrames || !['evade','guard-break'].includes(kind) || !images.has('pilot-'+kind))return false;
+      bodyReaction={kind,elapsed:0,last:performance.now(),duration:Math.min(600,Number.isFinite(ms)&&ms>0?ms:280)};
+      paint();bodyReaction.last=performance.now();wake();return true;
+    },
     get presentation(){return {rest,pose,stance,action:playing?.action,elapsed,duration:playing?.duration,resources,savedAt:Date.now()};},
     setStance(next){
       stance=Object.hasOwn(heldFrames,next)?next:null;
@@ -203,7 +233,7 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
     },
     setRestPose(next='idle',{resume,immediate=false}={}){
       if(next===rest&&playing&&!resume)return;
-      rest=next;el.dataset.rest=next;
+      rest=next;el.dataset.rest=next;if(next==='defeated'){bodyReaction=null;flashAt=null;}
       if(resume?.action&&resume.rest===next&&!immediate&&!still&&!reducedMotionRequested()){
         const sequence=family.sequences[resume.action];
         // A saved action remains wall-clock based: render work may legitimately
@@ -227,17 +257,20 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
       if(disposed || (rest==='defeated'&&action!=='defeated'))return false;
       if(action==='hit'||action==='hurt')return hit(ms);
       ms??=260;
-      if(action==='defeated'){rest='defeated';settle();return true;}
-      const key=aliases[action]||action, sequence=family.sequences[key];
+      if(action==='defeated'){rest='defeated';bodyReaction=null;flashAt=null;settle();return true;}
+      const key=aliases[action]||action;
+      let sequence=family.sequences[key];
       if(!sequence)return false;
+      if(pilotFrames&&key==='counterPrepare'&&stance==='evade')sequence={...sequence,poses:['pilot-evade']};
+      bodyReaction=null;
       if(still||reducedMotionRequested()||ms<=0){settle();return true;}
       // Materialize the first independent aura before the unchanged action clock,
       // even when a preceding hurt effect already has a queued animation frame.
       resources=aura||[];elapsed=0;holdUntil=0;playing={action:key,sequence,duration:ms};
       paint(performance.now(),true);last=performance.now();wake();return true;
     },
-    hold(ms){if(!(playing||flashAt!==null)||!(ms>0))return false;holdUntil=Math.max(performance.now(),holdUntil)+ms;return true;},
+    hold(ms){if(!(playing||flashAt!==null||bodyReaction)||!(ms>0))return false;holdUntil=Math.max(performance.now(),holdUntil)+ms;return true;},
     react(resource){clearTimeout(reactionTimer);el.dataset.poseReaction=resource;reactionTimer=setTimeout(()=>{el.dataset.poseReaction='';},180);},settle:settleStage,endReaction,
-    dispose(){disposed=true;clearTimeout(reactionTimer);if(request!==null)cancelAnimationFrame(request);request=null;playing=null;images.clear();down=null;hurt=null;auraRenderer.dispose();}
+    dispose(){disposed=true;clearTimeout(reactionTimer);if(request!==null)cancelAnimationFrame(request);request=null;playing=null;bodyReaction=null;images.clear();down=null;hurt=null;auraRenderer.dispose();}
   });
 }
