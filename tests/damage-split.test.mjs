@@ -91,3 +91,21 @@ test('a split strike reads "5 damage (3 blunt, 2 arcane)" and a split defend "Ga
   const whole = { ...scepterStrike, magicShare: undefined, combatProfile: { camp: 'spell', damageType: 'fire' }, tags: ['camp:spell', 'damage:fire'] };
   assert.match(combatCardSummary(whole), /Deal 5 Fire damage/, 'a whole-magic card keeps its plain line');
 });
+
+test('a split card reads the configured magic share the way combat does, not the content default', () => {
+  const configured = resolveCombatRatings({ 'gameConfig.combatRatings.damageTypes.arcane': 0.8 }, contentBundle);
+  const registries = createRegistries({ ...contentBundle, balance: { ...contentBundle.balance, combatRatings: configured } });
+  const strike = { id: 'scepterStrike', name: 'Scepter Strike', type: 'attack', cost: 1,
+    tags: ['camp:spell', 'maneuver:casting', 'damage:arcane'], physicalDamageType: 'blunt',
+    combatProfile: { camp: 'spell', maneuver: 'casting', damageType: 'arcane', school: 'force' },
+    effects: [{ op: 'damage', target: 'enemy', amount: 5 }] };
+  assert.match(combatCardSummary(strike, null, registries), /Deal 5 damage \(1 blunt, 4 arcane\)/);
+  assert.match(combatCardSummary(strike), /Deal 5 damage \(3 blunt, 2 arcane\)/, 'a config-less read keeps the content default');
+  assert.match(combatCardSummary({ ...strike, magicShare: 0.4 }, null, registries), /Deal 5 damage \(3 blunt, 2 arcane\)/, 'a card\'s own magic share still wins');
+  const guard = { id: 'scepterGuard', name: 'Ritual Ward', type: 'skill', cost: 1,
+    tags: ['camp:spell', 'maneuver:defend', 'damage:arcane'],
+    combatProfile: { camp: 'spell', maneuver: 'defend', damageType: 'arcane' },
+    effects: [{ op: 'block', target: 'self', amount: 5 }] };
+  assert.match(combatCardSummary(guard, null, registries), /Gain 1 Block and 4 Ward/);
+  assert.match(combatCardSummary(guard), /Gain 3 Block and 2 Ward/, 'the block split follows the configured share too');
+});
