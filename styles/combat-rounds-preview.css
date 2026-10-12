@@ -17,7 +17,8 @@
 
 /* The live blur halo behind an enemy being aimed at is replaced by the thin outline below (no glow or halo, owner
    2026-10-12). Player-side aim glows are unchanged. */
-.combat[data-combat-rounds='preview'] .enemy .aim-silho { display: none; }
+/* Only where the screen has drawn a preview outline on the enemy (data-cr-outline); an enemy with none keeps the live cue. */
+.combat[data-combat-rounds='preview'] .enemy[data-cr-outline] .aim-silho { display: none; }
 
 /* Target outline (PREVIEW-PLAN, Screen): 1px, solid, hugging the sprite edge; no glow or halo beyond the
    wireframe's dark rim. The filter lists the four 1px edges, then the wireframe's dark rim. */

@@ -7,7 +7,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
-import { dispatch, roundCardForecast } from '../src/engine/combat.js';
+import { dispatch, previewIntent, roundCardForecast } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { cardKind } from '../src/model/tree.js';
 import { COMBAT_ROUNDS_KEY } from '../src/model/combatRounds.js';
@@ -334,4 +334,61 @@ test('a queue whose slot 0 no longer matches the live intent is not shown either
   assert.deepEqual(Rounds.enemyActions(c, enemy.id), [], 'a mismatched slot 0 shows no queue');
   enemy.intent = { kind: 'attack', moveId: queue[0].id };
   assert.equal(Rounds.enemyActions(c, enemy.id).length, queue.length, 'a matching slot 0 shows the queue');
+});
+
+// Review item 6: the preview's thin outline replaces the live aim halo only on an enemy that has an outline drawn.
+test('the aim halo is hidden only on an enemy whose preview outline is drawn', () => {
+  const css = readFileSync(new URL('../styles/combat-rounds-preview.css', import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  assert.doesNotMatch(css, /\.enemy \.aim-silho\s*\{\s*display:\s*none/, 'no unconditional hide of the aim halo');
+  assert.match(css, /\.combat\[data-combat-rounds='preview'\] \.enemy\[data-cr-outline\] \.aim-silho\s*\{\s*display:\s*none/,
+    'the halo is hidden only where the screen marks a drawn outline');
+});
+
+// A stub DOM with one enemy box, just enough for the decorator's reads and writes.
+function decorateWithStubbedBox(combat, armedCardId, targetedId) {
+  const img = { getClientRects: () => [{}], closest: () => null, dataset: {} };
+  const box = {
+    dataset: {},
+    querySelector: (sel) => (sel === '.intent' ? null : null),
+    querySelectorAll: (sel) => (sel === '.sprite img' ? [img] : []),
+  };
+  const root = {
+    dataset: {},
+    querySelector: (sel) => (sel.startsWith('.combatant.enemy') ? box : null),
+    querySelectorAll: () => [],
+  };
+  const previous = { CSS: globalThis.CSS, getComputedStyle: globalThis.getComputedStyle, document: globalThis.document };
+  globalThis.CSS = { escape: (s) => String(s) };
+  globalThis.getComputedStyle = () => ({ visibility: 'visible' });
+  globalThis.document = { createElement: () => { throw new Error('no follow-up symbols in this fixture'); } };
+  try {
+    decorateCombatRoundsScreen(root, combat, { armedCardId, targetedId });
+  } finally {
+    Object.assign(globalThis, { CSS: previous.CSS, getComputedStyle: previous.getComputedStyle, document: previous.document });
+    if (previous.CSS === undefined) delete globalThis.CSS;
+    if (previous.getComputedStyle === undefined) delete globalThis.getComputedStyle;
+    if (previous.document === undefined) delete globalThis.document;
+  }
+  return { box, img };
+}
+
+test('the decorator marks an enemy only when it draws a preview outline on it', () => {
+  // Find a fight where the aimed card draws an outline on the enemy (the forecast needs a stage-3 read).
+  let found = null;
+  for (let seed = 1; seed < 300 && !found; seed++) {
+    const c = fight({ seed });
+    const enemy = liveEnemy(c);
+    const card = attackCard(c);
+    const forecast = roundCardForecast(c, card.instanceId, enemy.id);
+    const screen = forecast ? Rounds.screenForecast(c, enemy.id, forecast) : null;
+    const colour = screen?.foe ? targetOutline({ card: forecast, foe: screen.foe, cardSpeed: screen.cardSpeed,
+      foeSpeed: screen.foeSpeed, stage: Screen.readStage(previewIntent(c, enemy.id)), stanceTable: screen.stanceTable }) : null;
+    if (colour) found = { c, card, enemy };
+  }
+  assert.ok(found, 'a fixture with a drawn outline exists');
+  const drawn = decorateWithStubbedBox(found.c, found.card.instanceId, found.enemy.id);
+  assert.ok(drawn.box.dataset.crOutline, 'an enemy with a drawn outline is marked');
+  const idle = decorateWithStubbedBox(found.c, null, found.enemy.id);
+  assert.equal(idle.box.dataset.crOutline, undefined, 'with no card aimed, nothing is marked');
+  assert.equal(idle.img.dataset.targetOutline, undefined, 'and the art is left unpainted');
 });

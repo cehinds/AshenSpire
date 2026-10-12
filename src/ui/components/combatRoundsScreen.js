@@ -45,6 +45,7 @@ export function decorateCombatRoundsScreen(root, combat, { armedCardId = null, t
   // Pass 2, writes only.
   for (const selector of CLEAN) root.querySelectorAll(selector).forEach((node) => node.remove());
   root.querySelectorAll('[data-target-outline]').forEach((node) => delete node.dataset.targetOutline);
+  root.querySelectorAll('[data-cr-outline]').forEach((node) => delete node.dataset.crOutline);
   if (!on) { delete root.dataset.combatRounds; return; }
   root.dataset.combatRounds = 'preview';
   const cr = combat.combatRounds;
@@ -65,6 +66,8 @@ export function decorateCombatRoundsScreen(root, combat, { armedCardId = null, t
       intentEl.append(wrap);
     }
     if (row.colour) {
+      // Marks the enemy box, so the CSS hides the live aim halo only here (a drawn outline replaces it).
+      row.box.dataset.crOutline = row.colour;
       const glyphs = intentEl ? [...intentEl.querySelectorAll('.intent-icon')] : [];
       for (const node of [...row.art, ...glyphs]) node.dataset.targetOutline = row.colour;
     }
