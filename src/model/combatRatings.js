@@ -671,6 +671,33 @@ export function techniqueMagicShare(config) {
   return Number.isFinite(value) ? value : damageTypeRules.magicSplit.technique;
 }
 
+/**
+ * splitContactParts({ amount, base, ratingBonus, ratingPart, share, primary })
+ * → { magic, physical }: one hit's amount, split by the CARD'S OWN damage. `base`
+ * is the card's damage after its procedural generation and scaling (upgrades,
+ * levels); the share applies to it alone. A rating bonus is added on top: typed
+ * 'magic' or 'physical' when its rating has a category, else untyped and joined
+ * to the `primary` part. Every other bonus or multiplier (statuses, relics,
+ * matchups, crits) is what the amount holds beyond base and the rating, and it
+ * also joins the primary part. Parts never go negative: a shortfall moves to the
+ * other part, so the two always sum to the amount.
+ */
+export function splitContactParts({ amount, base = amount, ratingBonus = 0, ratingPart = null, share = 0, primary = 'physical' }) {
+  const total = Math.max(0, Math.floor(Number(amount) || 0));
+  const card = Math.max(0, Math.floor(Number(base) || 0));
+  const rating = Math.max(0, Math.floor(Number(ratingBonus) || 0));
+  const cardMagic = share >= 1 ? card : share > 0 ? Math.floor(card * share + 1e-9) : 0;
+  let magic = cardMagic, physical = card - cardMagic;
+  if (ratingPart === 'magic') magic += rating;
+  else if (ratingPart === 'physical') physical += rating;
+  // The rest of the hit: everything beyond the card and its typed rating, and an untyped rating too.
+  const rest = total - card - (ratingPart ? rating : 0);
+  if (primary === 'magic') magic += rest; else physical += rest;
+  if (magic < 0) { physical += magic; magic = 0; }
+  if (physical < 0) { magic += physical; physical = 0; }
+  return { magic, physical };
+}
+
 /** magicDamageTypeOf(profile) → the Ward type a hit's magic part deals: its school's, else its damage type when that is magic. */
 export function magicDamageTypeOf(profile) {
   const row = damageTypeRules.schools?.[schoolOf(profile)];

@@ -40,7 +40,7 @@ import { commitSmithing, smithingPlan } from '../model/smithing.js';
 import * as Properties from './properties.js';
 import * as Ratings from './combatRatings.js';
 import { isMagicalAttack, ratingDamageMultiplier, attackImpact, schoolResistanceMultiplier, persistentWardMaximum, persistentPoiseMaximum,
-  canonicalDamageType, magicShareOf, magicDamageTypeOf, splitDamageTypesOf } from '../model/combatRatings.js';
+  canonicalDamageType, magicShareOf, magicDamageTypeOf, splitDamageTypesOf, splitContactParts } from '../model/combatRatings.js';
 import { swapRunClass } from '../model/classSwap.js';
 import { applyGraceRefill } from './encounters.js';
 import { orderedReturn } from '../model/deckRules.js';
@@ -298,17 +298,35 @@ export function contactMagicShare(ctx, profile) {
   return magicShareOf(profile, ctx.ratingsRules);
 }
 
+// The part a contact's rating bonus lands in: a spell's Power ('pr') is magic, a weapon's Attack ('ar') physical.
+// Another rating, or none, is untyped and joins the card's primary part.
+export function ratingBonusPart(ctx, carrier) {
+  if (carrier?.ratingId === 'pr') return 'magic';
+  if (carrier?.ratingId === 'ar') return 'physical';
+  if (carrier?.ratingId) return null;
+  return isMagicalAttack(ctx, carrier) ? 'magic' : 'physical';
+}
+
+// The damage a carrier's rating adds on top of its card damage: the same figure computeAttackDamage adds to the base.
+export function cardRatingDamage(ctx, source, carrier, base) {
+  if (carrier?.skipRatingBonus) return 0;
+  return Math.max(0, Math.floor(Ratings.cardRatingBonus(ctx, source, carrier, 'damage', base) || 0));
+}
+
 export function prepareExpandedDefense(ctx, target, receipt, carrier) {
   if (receipt.defendedAmounts) return;
   const hits = receipt.amounts.map((amount, index) => {
     const profile = receipt.profiles[index];
     const share = contactMagicShare(ctx, profile);
     const split = share > 0 && share < 1;
-    const magic = share >= 1 ? amount : split ? Math.floor(amount * share + 1e-9) : 0;
+    // The split is the card's own damage (profile.splitBase, defaulting to the whole hit for a caller without one). Combat-time bonuses join after it.
+    const primary = share >= 1 ? 'magic' : share <= 0 ? 'physical' : profile.camp === 'spell' ? 'magic' : 'physical';
+    const parts = splitContactParts({ amount, base: profile.splitBase ?? amount, ratingBonus: profile.ratingBonus || 0,
+      ratingPart: profile.ratingPart ?? null, share, primary });
     const legacy = canonicalDamageType(profile.damageType) || 'blunt';
     // A weapon's authored physical type types the physical part whether or not the hit splits.
     const physical = profile.physicalDamageType || legacy;
-    return { amount, split, magic, physical: amount - magic, types: split ? splitDamageTypesOf(profile) : { magic: magicDamageTypeOf(profile) || legacy, physical } };
+    return { amount, split, magic: parts.magic, physical: parts.physical, types: split ? splitDamageTypesOf(profile) : { magic: magicDamageTypeOf(profile) || legacy, physical } };
   });
   // Typed defence, once per (camp, type) group of parts.
   const parts = [];
@@ -429,7 +447,8 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
   const planned = carrier.expansionContact;
   const profile = { ...carrier.combatProfile, reach: carrier.combatProfile?.reach || 'contact', targeting: carrier.combatProfile?.targeting || 'single' };
   const raw = planned ? planned.receipt.amounts[planned.index] : Math.floor(computeAttackDamage(ctx, source, target, base, tags, carrier, { matchups: false, beforeDefense: true }) * (carrier.critMultiplier || 1));
-  const tactical = planned?.receipt || Matchups.beginTacticalAction(ctx, source, target, carrier, [{ ...profile, amount: raw }],
+  const split = { splitBase: Math.max(0, Math.floor(base)), ratingBonus: cardRatingDamage(ctx, source, carrier, base), ratingPart: ratingBonusPart(ctx, carrier) };
+  const tactical = planned?.receipt || Matchups.beginTacticalAction(ctx, source, target, carrier, [{ ...profile, ...split, amount: raw }],
     { ...Control.statusIncomingModifier(ctx, target, profile), restrictions: Control.controlRestrictions(ctx, target) });
   if (tactical.avoided) return 0;
   if (carrier.critMultiplier > 1) ctx.emit('critHit', { sourceId: source?.id, targetId: target.id, ...critSeats(ctx, source, target), multiplier: carrier.critMultiplier, amount: raw });
