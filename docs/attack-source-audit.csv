@@ -51,7 +51,7 @@
 "card","","shieldCrash","attack","true","false","weapon","blunt","physical","smash","","","delivery:melee","",""
 "card","","starstonePebble","attack","true","false","spell","arcane","spell","","force","","delivery:projectile","","theme:astral"
 "card","","cometFragment","attack","true","false","spell","arcane","spell","","force","","delivery:projectile","","theme:astral"
-"card","","starbladePhalanx","attack","true","false","spell","arcane","spell","","force","","delivery:projectile","","theme:astral"
+"card","","starbladePhalanx","attack","true","false","spell","arcane","spell","","force","","delivery:melee","","theme:astral"
 "card","","crystalBarrier","skill","false","false","spell","","spell","defend","alteration","","","","theme:astral"
 "card","","starShower","attack","true","false","spell","arcane","spell","","force","","delivery:projectile","","theme:astral"
 "card","","scholarsInsight","skill","false","false","spell","","spell","","illusion","","","","theme:astral"
