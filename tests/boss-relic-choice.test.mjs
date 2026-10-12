@@ -13,7 +13,7 @@ import { relicInRewardPool } from '../src/model/schemas.js';
 import { createRng } from '../src/engine/rng.js';
 import { rollRelicChoices, rollRelicReward } from '../src/engine/encounters.js';
 import { configuredRewardOffer, pendingRewardCheckpoint } from '../src/model/rewardSourcePolicy.js';
-import { rewardPlan } from '../src/model/rewardplan.js';
+import { resolveContinue, rewardClaimStatus, rewardPlan } from '../src/model/rewardplan.js';
 import { createRunState, validateRunShape } from '../src/model/state.js';
 
 const REG = createRegistries(contentBundle);
@@ -86,6 +86,21 @@ test('a 3-choice boss relic offer is one relic row with relicIds and choice true
   assert.equal(rows.length, 1, 'one relic row');
   assert.deepEqual(rows[0].relicIds, choices);
   assert.equal(rows[0].choice, true);
+});
+
+test('a boss relic choice row is a required pick that is never auto-collected', () => {
+  const choices = ['crownOfStitches', 'wardenHorn', 'ashOfRemembrance'];
+  const plan = rewardPlan({ relicChoices: choices, cinders: 5 });
+  const row = plan.rows.find((r) => r.kind === 'relic');
+  const waiting = rewardClaimStatus(plan, {});
+  assert.equal(waiting.requiredChoice?.kind, 'relic', 'Continue waits on the relic pick');
+  assert.equal(waiting.requiredChoice.count, 3);
+  for (const mode of ['auto', 'manual']) {
+    const { take, leave } = resolveContinue(plan, {}, mode, () => 0);
+    assert.ok(!take.some((r) => r.kind === 'relic'), `${mode}: the relic choice is not auto-collected`);
+    assert.ok(leave.some((r) => r.kind === 'relic'), `${mode}: the relic choice is left for the player`);
+  }
+  assert.equal(rewardClaimStatus(plan, { [row.key]: 'skipped' }).requiredChoice, null, 'a skipped choice no longer blocks');
 });
 
 test('a single boss relic (relicId) keeps the one-relic row shape', () => {

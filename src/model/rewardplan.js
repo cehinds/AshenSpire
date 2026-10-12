@@ -111,6 +111,13 @@ export const rowKey = (kind, row = {}) => (kind === 'skillDraft' && row.offerId 
 export const CARD_CHOICE_KINDS = Object.freeze(['card', 'levelCard', 'skillDraft']);
 
 /**
+ * A boss victory's relic choice (SPEC §6): a relic row carrying `relicIds`
+ * is one required pick among them. It is never auto-collected, and its pick
+ * is the row's `chosenRelicId`. A lone `relicId` row is not a choice.
+ */
+export const isRelicChoice = (row) => row.kind === 'relic' && Array.isArray(row.relicIds);
+
+/**
  * The one-line notes the menu prints beside its rows, as tokens: today only
  * `cardMissed`, the card reward schedule's missed chance (SPEC §15.1: "No
  * card this time."). An offer written before the schedule carries none.
@@ -118,7 +125,7 @@ export const CARD_CHOICE_KINDS = Object.freeze(['card', 'levelCard', 'skillDraft
 export const rewardNotes = (rewards = {}) => (rewards && rewards.cardMissed === true ? ['cardMissed'] : []);
 
 /** The ids a choice row picks among: a card draft's cards, a class draft's nodes. */
-export const pickIds = (row) => (Array.isArray(row.choiceIds) ? row.choiceIds : row.kind === 'classMilestone' ? row.options || [] : Array.isArray(row.options)
+export const pickIds = (row) => (Array.isArray(row.choiceIds) ? row.choiceIds : Array.isArray(row.relicIds) ? row.relicIds : row.kind === 'classMilestone' ? row.options || [] : Array.isArray(row.options)
   ? row.options.map((option) => `${option.kind}:${option.id}`)
   : Array.isArray(row.nodeIds) ? row.nodeIds : row.cardIds || []);
 
@@ -256,7 +263,7 @@ const KINDS = {
     present: (r) => !!r.relicId || (Array.isArray(r.relicChoices) && r.relicChoices.length > 0),
     // A boss victory's relic choice (relicChoices) is one row of several ids:
     // pick ONE. A lone relicId keeps the single-relic shape.
-    row: (r) => (r.relicChoices?.length ? { relicIds: [...r.relicChoices], choice: r.relicChoices.length > 1 } : { relicId: r.relicId }),
+    row: (r) => (r.relicChoices?.length ? { relicIds: [...r.relicChoices], choice: true } : { relicId: r.relicId }),
     blocked: () => null,
   },
   // A dropped legendary sigil (SPEC §15.4): a take, carried unattuned.
@@ -350,6 +357,9 @@ export function resolveContinue(plan, states = {}, mode = 'auto', pick = () => 0
     const state = states[row.key];
     if (state === 'taken') continue; // applied at tap time; nothing left to do
     if (row.blockedBy) { leave.push(row); continue; }
+    // A boss relic choice waits for the player's pick in every mode: it is
+    // never auto-collected, so it is left here and Continue waits on it.
+    if (isRelicChoice(row)) { leave.push(row); continue; }
     if (mode === 'auto' && state !== 'skipped') {
       if (CARD_CHOICE_KINDS.includes(row.kind) || row.kind === 'classDraft' || row.kind === 'levelChoice' || row.kind === 'classMilestone') {
         const ids = pickIds(row);
