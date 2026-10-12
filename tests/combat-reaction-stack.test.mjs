@@ -137,6 +137,23 @@ test('a saved stack is validated: side, owner and the offer depth must match', (
   assert.throws(() => restore(badDepth), /does not match its stack depth/);
 });
 
+test('a saved pending offer is refused once its owner already holds the depth cap', () => {
+  const { combat, registries } = fixture({ cardIds: ['strike', 'strike', 'strike', 'strike', 'strike'] });
+  for (const enemy of combat.enemies) { enemy.hp = 500; enemy.maxHp = 500; }
+  dispatch(combat, { type: 'endTurn' });
+  for (const id of ['r0', 'r1', 'r2']) answer(combat, pick(combat, id));
+  const restore = snapshot => restoreCombatSnapshot({ registries, rng: createRng(701), snapshot: JSON.parse(JSON.stringify(snapshot)) });
+  const below = JSON.parse(JSON.stringify(serializeCombatSnapshot(combat)));
+  assert.equal(below.reactionRules.stack.maxDepth, 4);
+  assert.ok(restore(below).pendingReaction.id.endsWith(':player:3'), 'owner at maxDepth - 1 keeps its offer');
+  // Owner holds exactly maxDepth entries, yet the saved offer would push entry maxDepth + 1.
+  const atCap = structuredClone(below);
+  const top = atCap.reactionStack.entries[2];
+  atCap.reactionStack.entries.push({ ...top, cardInstanceId: 'r3', play: { ...top.play, cardInstanceId: 'r3' } });
+  atCap.pendingReaction.id = atCap.pendingReaction.id.replace(/:3$/, ':4');
+  assert.throws(() => restore(atCap), /Reaction choice is past its seat limit/);
+});
+
 test('an enemy-side stack entry is rejected', () => {
   const { combat } = fixture({ cardIds: ['sweepingBlow', 'whirlingGuard'] });
   dispatch(combat, { type: 'endTurn' });
