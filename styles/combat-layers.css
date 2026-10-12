@@ -429,3 +429,16 @@
   text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 :root .combat .combatant:not(.context-selected) .combat-expansion-protection { display: none; }
+
+/* Desktop only (1280-1920 wide): the tools row reads at the approved phone size.
+   Physical px: a 14px label on a 36px row, a 12px reaction value, and the switch
+   scaled with it. Phone, tablet and widescreen keep the rules above. */
+:root[data-form-factor='desktop'] .combat[data-layout='formation'] .combat-tools > button {
+  min-height: calc(36px / var(--ui-zoom,1)); height: calc(36px / var(--ui-zoom,1));
+  font-size: calc(14px / var(--ui-zoom,1));
+}
+:root[data-form-factor='desktop'] .combat[data-layout='formation'] .combat-tools .reaction-switch-track {
+  width: calc(72px / var(--ui-zoom,1)); height: calc(23px / var(--ui-zoom,1));
+}
+:root[data-form-factor='desktop'] .combat[data-layout='formation'] .combat-tools .reaction-switch-value { font-size: calc(12px / var(--ui-zoom,1)); }
+:root[data-form-factor='desktop'] .combat[data-layout='formation'] .combat-tools .reaction-switch-thumb { width: calc(17px / var(--ui-zoom,1)); height: calc(17px / var(--ui-zoom,1)); }
