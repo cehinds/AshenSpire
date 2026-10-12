@@ -5,6 +5,9 @@ import { uiConfig } from '../../config/generated/ui.js';
 // separation before card geometry begins. Keep the band allocator and the
 // renderer on the same physical floor.
 export const COMBAT_TOOLS_HEIGHT_PX = 34;
+// Desktop fan: the resting top sits this far below the plan origin, which is
+// already four physical pixels under the tool row (so the gap reads 10px).
+export const DESKTOP_FAN_GAP_PX = 6;
 const compactCard = uiConfig.scenes.w4a.sizing.compactCombat;
 
 // Presentation order is local, keyed by instance, and never mutates a pile.
@@ -30,6 +33,8 @@ export function moveHandInstance(order, id, slot) {
 export function handLayout({ width, height, count, rem = 16, zoom = 1, compact = false, controlsHeight = 0, controlled = null, headroom = 0, desktop = false }, config = wireframeUi.hand) {
   let inset = config.verticalInsetRem * rem;
   const lift = config.selectedLiftRem * rem;
+  const fan = desktop && !compact;
+  const gapLocal = fan ? DESKTOP_FAN_GAP_PX / zoom : 0;
   const liftReserve = Math.max(0, lift - headroom);
   // The selected face already rises by lift, and the chooser's correction
   // (handInspectionOverlay) may raise it on through the headroom. Reserve only
@@ -98,7 +103,13 @@ export function handLayout({ width, height, count, rem = 16, zoom = 1, compact =
     const reserve = !controlled || controlled.includes(index) ? controlsReserve : 0;
     return card.y + cardHeight / 2 + (Math.abs(Math.sin(radians)) * cardWidth + Math.abs(Math.cos(radians)) * cardHeight) / 2 + reserve;
   }), 0);
-  const top = drop > 0
+  const restOffset = cards.length && fan ? Math.min(...cards.map(card => {
+    const radians = card.angle * Math.PI / 180;
+    return card.y + cardHeight / 2 - (Math.abs(Math.sin(radians)) * cardWidth
+      + Math.abs(Math.cos(radians)) * cardHeight) / 2;
+  })) : 0;
+  const top = fan ? Math.max(0, Math.min(bottomLimit, gapLocal - restOffset))
+    : drop > 0
     ? Math.max(0, Math.min(Math.max(bottomLimit, height - 1 / zoom - reach), base + drop))
     : Math.max(0, Math.min(bottomLimit, base));
   const restTop = cards.length ? Math.min(...cards.map(card => {

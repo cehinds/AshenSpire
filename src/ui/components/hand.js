@@ -149,7 +149,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // On a phone the selected card's lift rises over the tool row (it paints
       // above the row), so no empty lift band separates the row from the fan.
       const plan = handLayout({ width: handEl.clientWidth, height: handEl.clientHeight - toolsHeight,
-        count: cards.length, rem, zoom, compact, controlsHeight, controlled, headroom: compact ? toolsHeight : 0, desktop });
+        count: cards.length, rem, zoom, compact, controlsHeight, controlled, headroom: compact || desktop ? toolsHeight : 0, desktop });
       handEl.dataset.wireframeHand = 'true';
       handEl.style.setProperty('--hand-card-zoom', '1');
       handEl.style.setProperty('--hand-span', plan.span + 'px');
