@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-12",
     "summary": "Wide screens: bigger hand cards, enemies further back, a shorter footer",
     "detail": "On desktop and widescreen windows the hand cards are about half as big again, the enemies stand on the back row and are spread so none overlaps another or you, the footer is about a third shorter, and the battle floor sits higher. Phones and tablets are unchanged.",
-    "build": "0.7.1.1361",
+    "build": "0.7.1.1362",
     "pullRequest": 1875,
     "url": "https://github.com/cehinds/AshenSpire/pull/1875"
+  },
+  {
+    "id": "pr-1868",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Deck editor: (i) centred under the art, grey Basic/Cantrip badge, vertical grip",
+    "detail": "The inspect (i) sits centred on the bottom edge of the card art, the rank badge sits higher and reads grey at rank 0 (Basic, Cantrip), and the phone grip is vertical again.",
+    "build": "0.7.1.1359",
+    "pullRequest": 1868,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1868"
+  },
+  {
+    "id": "pr-1872",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Co-op: the blow that ends a fight reaches the combat log",
+    "detail": "When your attack killed the last enemy in co-op, the combat log and the Full log missed that turn's card, damage and death entries before the reward screen closed them. They now appear.",
+    "build": "0.7.1.1357",
+    "pullRequest": 1872,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1872"
   },
   {
     "id": "pr-1849",
