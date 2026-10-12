@@ -233,6 +233,24 @@ test('selected holds preserve existing returns and finite reactions restore the 
     stage.hold(60);assert.equal(stage.pose,'pilot-smash-impact','timer contact freezes the ground-impact painting');
     advance(160);assert.equal(stage.pose,'stance-smash');
     assert.deepEqual([stage.currentArt.left,stage.currentArt.top],[originalHold.left,originalHold.top],'the final bookend returns without a body jump');
+    stage.settle();stage.setStance('smash');stage.play('smash',195);
+    const coldCue=stage.contactCue();advance(208);
+    assert.equal(stage.pose,'pilot-smash-impact','a cold late receipt cannot skip the unacknowledged impact');
+    assert.equal(stage.presentation.elapsed,117);
+    assert.equal(stage.presentation.duration,195,'waiting for the cue never changes nominal cadence');
+    assert.equal(coldCue.contact(),true);assert.equal(coldCue.remainingMs(),78,'recovery accounts for the real remaining clip after a late cue');assert.equal(coldCue.contact(),false,'one play accepts its contact once');
+    advance(39);assert.equal(stage.pose,'stance-smash');
+    advance(40);assert.equal(stage.presentation.action,undefined);assert.equal(coldCue.remainingMs(),0);
+    stage.play('smash',195);const staleCue=stage.contactCue();advance(50);
+    stage.play('attack',195);assert.equal(stage.contactCue(),null,'ordinary Attack never opts into the new gate');assert.equal(staleCue.contact(),false,'an old receipt never rewinds a newer action');
+    assert.equal(stage.pose,'pilot-attack-1');stage.settle();
+    stage.play('smash',195);const cancelledCue=stage.contactCue();stage.settle({reaction:true});
+    assert.equal(cancelledCue.contact(),false);assert.equal(cancelledCue.remainingMs(),0);
+    stage.play('smash',195);const defeatedCue=stage.contactCue();stage.setRestPose('defeated');
+    assert.equal(defeatedCue.contact(),false);assert.equal(stage.pose,'defeated');stage.setRestPose('idle');
+    stage.play('smash',195);const reducedCue=stage.contactCue();reduced=true;advance(250);
+    assert.equal(stage.presentation.action,undefined,'turning on reduced motion cancels a pending contact without a hang');
+    assert.equal(reducedCue.contact(),false);reduced=false;
     stage.settle();stage.setStance('counter');
     const attackTiming=stage.actionTiming('attack');
     stage.play('attack',attackTiming.totalMs);advance(75);
@@ -284,6 +302,7 @@ test('selected holds preserve existing returns and finite reactions restore the 
       staticStage.play('smash',mode==='instant'?0:195);
       assert.equal(staticStage.pose,'stance-smash',mode+' Smash immediately retains its origin');
       assert.equal(staticStage.presentation.action,undefined,mode+' Smash leaves no action clock');
+      assert.equal(staticStage.contactCue(),null,mode+' never waits for a contact acknowledgement');
       assert.equal(staticStage.reactPose('evade',180),true,mode+' displays the chosen static pose');
       assert.equal(staticStage.pose,'pilot-evade-1');advance(190);assert.equal(staticStage.pose,'stance-smash',mode+' restores the hold within its bounded lifetime');
     }
