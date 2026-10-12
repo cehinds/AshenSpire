@@ -1,4 +1,4 @@
-// Original native PNG layers, projected from art/creation-feats-2026-10-12/layers.json.
+// Original native PNG layers, projected from art/creation-feats-2026-10-12/layers.json (now staged for the AshenSpire-art intake).
 export const CREATION_FEAT_ART = {
   "fieldStudy": {
     "canvas": {

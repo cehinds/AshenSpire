@@ -1,7 +1,0 @@
-import fs from 'node:fs/promises';import path from 'node:path';import {createRequire} from 'node:module';import {fileURLToPath} from 'node:url';
-const {chromium}=createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE||'playwright');
-const dir=path.dirname(fileURLToPath(import.meta.url));const root=path.resolve(process.argv[2]||path.join(dir,'../..'));const geometry=JSON.parse(await fs.readFile(path.join(dir,'layers.json'),'utf8'));
-const browser=await chromium.launch({headless:true,...(process.env.CHROME?{executablePath:process.env.CHROME}:{})});const page=await browser.newPage();
-for(const [id,scene] of Object.entries(geometry)){const layers=[];for(const layer of scene.layers)layers.push({...layer,data:'data:image/png;base64,'+(await fs.readFile(path.join(root,layer.src))).toString('base64')});
-const data=await page.evaluate(async({layers,canvas})=>{const scale=4,ctx=document.createElement('canvas').getContext('2d');ctx.canvas.width=canvas.width*scale;ctx.canvas.height=canvas.height*scale;ctx.scale(scale,scale);for(const n of layers){const img=new Image();img.src=n.data;await img.decode();const s=Math.min(n.width/img.width,n.height/img.height),w=img.width*s,h=img.height*s;ctx.drawImage(img,n.x+(n.width-w)/2,n.y+(n.height-h)/2,w,h);}return ctx.canvas.toDataURL('image/webp',1);},{layers,canvas:scene.canvas});await fs.writeFile(path.join(root,'assets/player-polish/ui/creation',`feat-${id}.webp`),Buffer.from(data.split(',')[1],'base64'));}
-await browser.close();
