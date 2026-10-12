@@ -2014,7 +2014,7 @@ thing broke.
 promise: `node tools/verify-shipped.mjs` (the bundle matches source), `node tools/mapplan.mjs`
 (map distributions at the current shape), `node tools/content-build.mjs --selftest --mutate`
 (§3.14), `node tools/contrast-audit.mjs` (palette targets), `node tools/release-shots.mjs` (the release
-capture set — see above), `node tools/ai-disclosure.mjs --check` (§2.1),
+capture set — see above; it is run by hand before a release, and no CI job runs it), `node tools/ai-disclosure.mjs --check` (§2.1),
 `node tools/screenreach.mjs`, `tools/zoomplace.mjs`, `tools/mapreach.mjs`,
 `tools/sfx-loudness.mjs`.
 
