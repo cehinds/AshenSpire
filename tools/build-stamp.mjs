@@ -175,6 +175,7 @@ export function restamp(changelogText, prs, box) {
     const froms = hits.map((h) => h[2]);
     if (froms.every((f) => f === stamp)) { current.push(pr); continue; }
     text = text.replace(re, (_, before, _old, after) => `${before}${stamp}${after}`);
+    text = reorderReceipt(text, pr, stamp);
     changed.push({ pr, from: froms[0], to: stamp });
   }
   return { text, changed, current, missing, unstamped };
