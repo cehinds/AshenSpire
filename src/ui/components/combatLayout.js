@@ -30,9 +30,13 @@ export function wireCombatLayout(combatEl) {
     // The plan gets the width between the safe-area insets, so the rails and
     // the hand they wrap stay clear of a notch.
     const width = combatEl.clientWidth - inlinePadding(handArea);
+    // The HUD form factor main.js writes to <html> (widescreen | mobile | tablet
+    // | desktop). The plan reads it; it is mirrored on the combat root for CSS.
+    const formFactor = document.documentElement.dataset.formFactor || null;
+    combatEl.dataset.formFactor = formFactor || '';
     const compact = width * zoom <= uiConfig.scenes.w4a.sizing.compactCombat.maxWidthPx;
     combatEl.dataset.compactCombat = String(compact);
-    const bands = allocateCombatBands({ width, height: combatEl.clientHeight, zoom, rem, compact, footerArtPx: footerArtHeight(width, zoom) * zoom });
+    const bands = allocateCombatBands({ width, height: combatEl.clientHeight, zoom, rem, compact, footerArtPx: footerArtHeight(width, zoom, formFactor) * zoom });
     // The W4 parent's bands (kit.css, shared with the quest dialogue): the
     // battlefield is the scene band, the grid's flexible row; the hand is the
     // context band.
@@ -65,7 +69,7 @@ export function wireCombatLayout(combatEl) {
       combatEl.style.setProperty('--wireframe-rail-gap', bands.rails.gap + 'px');
     }
     if (!row) return;
-    row.style.setProperty('--footer-art-width', footerArtWidth(width, zoom) + 'px');
+    row.style.setProperty('--footer-art-width', footerArtWidth(width, zoom, formFactor) + 'px');
     // Measure the band's host, not the row: the row's own width is what this
     // plan sets, and a pre-plan cap on it would otherwise feed back.
     const host = row.parentElement || combatEl;
