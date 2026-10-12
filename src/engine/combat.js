@@ -1648,6 +1648,13 @@ function enemyMoveAt(combat, enemy, moveId) {
     if (!Rounds.enemyActedThisRound(combat, enemy.id)) delete combat.combatRounds.enemyQueues[enemy.id];
     return;
   }
+  // Control action loss (Frozen, v2) is taken at the enemy's entry, as the live enemy phase takes it: one stack
+  // per round. The enemy is then staggered for the round, so its later entries skip and its flag is spent.
+  if (Control.consumeControlActionLoss(combat, enemy)) {
+    enemy.skipNextTurn = true;
+    delete combat.combatRounds.enemyQueues[enemy.id];
+    return;
+  }
   Rounds.markEnemyActed(combat, enemy.id);
   const def = combat.registries.enemies.get(enemy.enemyId);
   const move = expandedEnemyMove(enemy, def.moves[moveId], moveId, combat);

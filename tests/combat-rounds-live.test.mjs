@@ -522,6 +522,35 @@ test('an earlier queued card cannot take a Mana-discount charge that a later que
   assert.ok(events.some((e) => e.type === 'cardChargeConsumed' && e.cardId === found.manaCardId), 'the later card consumes its own claimed charge');
 });
 
+// Review finding 3: in an expanded (v2) fight a queued enemy honours control action loss as live does: one
+// Frozen stack takes the enemy's action at its entry, once per round. Baseline first: the seed's enemy acts.
+test('in an expanded fight, a Frozen stack takes a queued enemy\'s action at its entry, once per round', () => {
+  let seed = null;
+  for (let s = 1; s <= 40 && seed === null; s++) {
+    const c = fight({ seed: s, expansion: 2 });
+    const enemy = liveEnemy(c);
+    const { events } = dispatch(c, { type: 'endTurn' });
+    if (events.some((e) => e.type === 'enemyMoveStarted' && e.sourceId === enemy.id)) seed = s;
+  }
+  assert.ok(seed !== null, 'fixture: the enemy acts in an expanded fight');
+
+  const c = fight({ seed, expansion: 2 });
+  const enemy = liveEnemy(c);
+  applyStatus(c, enemy, 'frozen', 2, c.player);
+  const acted = (events) => events.some((e) => e.type === 'enemyMoveStarted' && e.sourceId === enemy.id);
+  const first = dispatch(c, { type: 'endTurn' });
+  assert.equal(acted(first.events), false, 'the frozen enemy loses its action this round');
+  const lost = first.events.filter((e) => e.type === 'statusRemoved' && e.targetId === enemy.id && e.reason === 'actionDenied');
+  assert.equal(lost.length, 1, 'one action is lost, and only one');
+  assert.equal(enemy.statuses?.frozen?.stacks, 1, 'one stack is spent, the other remains');
+
+  const second = dispatch(c, { type: 'endTurn' });
+  assert.equal(second.events.filter((e) => e.type === 'statusRemoved' && e.targetId === enemy.id && e.reason === 'actionDenied').length, 1, 'the second stack takes the next round');
+  assert.equal(acted(second.events), false, 'the next round is lost to the second stack');
+  const third = dispatch(c, { type: 'endTurn' });
+  assert.equal(acted(third.events), true, 'with no stack left the enemy acts again');
+});
+
 // Review finding 1: a stagger that lands before the enemy's first entry skips its moves for the round. The
 // flag must be spent with that round, not carried into the next one: exactly one round is lost.
 test('a stagger that lands before the enemy acts costs that enemy exactly one round', () => {
