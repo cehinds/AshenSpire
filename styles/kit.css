@@ -6130,3 +6130,104 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
   .combat.coop > .combat-hud { flex-wrap:wrap; }
   .combat.coop > .combat-hud > .combat-blight-hud { flex:0 0 100%; }
 }
+
+/* Character creation component study: production DOM parts, scoped to this
+   workspace (or an independently mounted specimen). Existing screens retain
+   their kit layout and appearance. Touch/text floors compensate CSS UI zoom. */
+.cc-design-workspace, .cc-page-parts {
+ --cc-body-font:max(16px,calc(16px / var(--ui-zoom,1)));
+ --cc-control-floor:max(48px,calc(48px / var(--ui-zoom,1)));
+ --cc-copy:#e7dec8;
+ --cc-copy-muted:#c0b394;
+ --cc-brass:#bea368;
+ --cc-emerald:#70cb91;
+ color:var(--cc-copy);
+ font-size:var(--cc-body-font);
+}
+.cc-design-workspace { --tap-floor:var(--cc-control-floor); }
+.cc-page-parts { min-width:0; }
+.cc-page-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:24px; margin:0 0 24px; }
+.cc-page-heading-copy { min-width:0; }
+.cc-page-heading .cc-page-eyebrow { color:var(--cc-brass); font-size:max(14px,calc(14px / var(--ui-zoom,1))); letter-spacing:.1em; }
+.cc-page-heading .cc-page-title { margin:8px 0 12px; color:#d7b45f; font-family:Georgia,serif; font-size:clamp(28px,2.5vw,38px); line-height:1.2; }
+.cc-page-heading .cc-page-description { margin:0; font-size:var(--cc-body-font); line-height:1.5; color:var(--cc-copy); }
+.cc-part { position:relative; isolation:isolate; overflow:visible; background:#11100c; border:0; min-width:0; }
+.cc-part-material { position:absolute; inset:0; z-index:-2; pointer-events:none; background-image:var(--cc-part-material-url); background-color:#15120e; background-size:360px; opacity:.45; border-radius:4px; }
+.cc-part-trim { position:absolute; inset:0; width:100%; height:100%; z-index:-1; object-fit:fill; pointer-events:none; }
+.cc-part-body { position:relative; min-width:0; }
+.cc-panel { padding:24px; }
+.cc-panel-heading { margin-bottom:20px; }
+.cc-panel-heading .as-title-m { margin:0 0 10px; color:#d7b45f; font-family:Georgia,serif; }
+.cc-panel-heading .as-subtitle { font-size:var(--cc-body-font); line-height:1.5; margin:0; }
+.cc-choice-tile { display:block; width:100%; padding:20px; min-height:164px; color:var(--cc-copy); text-align:left; cursor:pointer; box-shadow:none; }
+.cc-choice-tile .cc-choice-body { display:grid; grid-template-columns:100px minmax(0,1fr); align-items:center; gap:20px; }
+.cc-choice-art { display:flex; align-items:center; justify-content:center; min-width:0; }
+.cc-choice-art > img { max-width:100%; max-height:124px; object-fit:contain; }
+.cc-choice-copy { display:flex; flex-direction:column; gap:10px; min-width:0; }
+.cc-choice-title { color:#d7b45f; font-family:Georgia,serif; font-size:24px; line-height:1.25; }
+.cc-choice-description { color:var(--cc-copy); font-size:var(--cc-body-font); line-height:1.4; white-space:normal; overflow-wrap:break-word; }
+.cc-choice-tile.chosen { outline:2px solid var(--cc-emerald); outline-offset:-2px; }
+.cc-choice-tile.chosen .cc-part-material { background-color:#163e2b; }
+.cc-choice-tile:focus-visible { outline:3px solid var(--cc-emerald); outline-offset:3px; }
+.cc-feat-layout { display:grid; grid-template-columns:minmax(0,1fr) minmax(280px,360px); gap:24px; align-items:start; }
+.cc-feat-choices { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; min-width:0; }
+.cc-feat-availability { margin:8px 0 0; max-width:340px; font-size:var(--cc-body-font); line-height:1.45; color:var(--cc-copy-muted); }
+.cc-feat-emblem { position:relative; display:inline-flex; align-items:center; justify-content:center; width:100px; height:100px; flex:none; isolation:isolate; }
+.cc-feat-medallion-material { position:absolute; inset:12%; z-index:-2; border-radius:50%; background:radial-gradient(circle at 40% 30%,#294434,#102018 72%); box-shadow:inset 0 0 16px #080c08; }
+.cc-feat-medallion-trim { position:absolute; inset:4%; z-index:-1; border:2px solid var(--cc-brass); border-radius:50%; box-shadow:0 0 0 4px #19140d,inset 0 0 0 4px #19140d,inset 0 0 0 5px #8f7544; }
+.cc-feat-emblem .engraved-icon { width:54%; height:54%; color:#d7b45f; }
+.cc-feat-detail .cc-part-body { display:flex; flex-direction:column; align-items:center; text-align:center; }
+.cc-feat-detail .cc-feat-emblem { width:218px; height:218px; max-width:100%; margin:12px 0 24px; }
+.cc-feat-detail-title { color:#d7b45f; font-family:Georgia,serif; font-size:30px; line-height:1.25; margin:0; }
+.cc-feat-detail-divider { width:85%; margin:26px 0; }
+.cc-feat-detail-description { font-size:var(--cc-body-font); line-height:1.6; margin:0 0 36px; }
+.cc-step-navigation .as-railitem, .cc-design-workspace .as-railitem,
+.cc-design-workspace button, .cc-design-workspace input, .cc-design-workspace select { min-height:var(--cc-control-floor); }
+.cc-design-workspace input, .cc-design-workspace select, .cc-design-workspace .ls-label,
+.cc-design-workspace .as-optioncard .as-subtitle { font-size:var(--cc-body-font); }
+.cc-design-workspace .cc-ability-progress { font-size:var(--cc-body-font); color:var(--cc-copy-muted); }
+.cc-design-workspace .cc-equip-group[data-equipment-section="startingAbilities"] > .cc-card-selectors { grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr)); }
+.cc-design-workspace .cc-ability-choice > .card { width:100%; max-width:300px; }
+.cc-design-workspace .cc-ability-choose { max-width:300px; min-height:var(--cc-control-floor); font-size:var(--cc-body-font); }
+.cc-design-workspace .cc-review { font-size:var(--cc-body-font); }
+.cc-design-workspace .cc-review .card { max-width:300px; }
+@media(max-width:960px) {
+ .cc-feat-layout { grid-template-columns:minmax(0,1fr); }
+ .cc-feat-detail .cc-part-body { min-height:300px; }
+ .cc-feat-detail .cc-feat-emblem { width:168px; height:168px; }
+}
+@media(max-width:600px) {
+ .cc-page-heading { flex-direction:column; gap:8px; margin-bottom:20px; }
+ .cc-page-heading .cc-page-title { font-size:max(28px,calc(26px / var(--ui-zoom,1))); }
+ .cc-page-heading .cc-page-description, .cc-feat-availability { max-width:none; }
+ .cc-feat-choices { grid-template-columns:minmax(0,1fr); gap:16px; }
+ .cc-choice-tile { padding:18px; }
+ .cc-choice-tile .cc-choice-body { grid-template-columns:88px minmax(0,1fr); gap:16px; }
+ .cc-feat-emblem { width:88px; height:88px; }
+ .cc-choice-title { font-size:max(22px,calc(22px / var(--ui-zoom,1))); }
+ .cc-panel { padding:22px; }
+ .cc-design-workspace .cz-scroll { padding:16px; }
+ .cc-design-workspace .cc-equip-group[data-equipment-section="startingAbilities"] > .cc-card-selectors { grid-template-columns:minmax(0,1fr); }
+ .cc-design-workspace .cc-ability-choice { width:100%; }
+ .cc-design-workspace .cc-ability-choice > .card { max-width:300px; }
+ /* Older equipment-fit rules hid its stage picker. The shared navigation
+    must remain reachable on every page, including Equipment and Spells. */
+ .customize.cc-design-workspace:has(#cz-equipment-panel) .as-railed[data-cat-nav="selector"] > .as-catnav-toggle,
+ .customize.cc-design-workspace .as-railed[data-cat-nav="selector"] > .as-catnav-toggle { display:flex!important; min-height:var(--cc-control-floor); }
+ .cc-design-workspace .as-catnav-toggle .as-catnav-face { white-space:normal; font-size:var(--cc-body-font); }
+}
+/* The compact kit selector and its current-step status share one row. */
+.cc-design-workspace .cc-creation-current-step { display:none; }
+.customize.cc-design-workspace .as-railed.as-railed[data-cat-nav="selector"] { grid-template-columns:minmax(0,1.25fr) minmax(128px,1fr); grid-template-rows:auto minmax(0,1fr); gap:0 12px; }
+.customize.cc-design-workspace .as-railed[data-cat-nav="selector"] > .cc-creation-current-step { display:flex; align-items:center; grid-column:1; grid-row:1; min-height:var(--cc-control-floor); margin:10px 0 10px var(--modal-inset); padding:8px 12px; color:var(--cc-copy); background:#163e2b; border:1px solid var(--cc-emerald); border-radius:4px; font-size:var(--cc-body-font); line-height:1.35; visibility:visible; }
+.customize.cc-design-workspace .as-railed[data-cat-nav="selector"] > .as-catnav-toggle { grid-column:2; grid-row:1; margin:10px var(--modal-inset) 10px 0; min-height:var(--cc-control-floor); }
+.customize.cc-design-workspace .as-railed[data-cat-nav="selector"] > .cz-pane { grid-column:1 / -1; grid-row:2; }
+.customize.cc-design-workspace .as-railed[data-cat-nav="selector"][data-cat-open="true"] > .as-rail { grid-column:1 / -1; }
+.cc-design-workspace .cc-review-edit { min-width:var(--cc-control-floor); min-height:var(--cc-control-floor); }
+/* OptionCard image rules reserve a small illustration slot; decorative kit
+   trim belongs to the complete surface and must never inherit that slot. */
+.cc-page-parts.cc-part > .cc-part-trim { inset:0; width:100%; height:100%; max-width:none; max-height:none; margin:0; object-fit:fill; }
+.cc-design-workspace .cc-choice-tile { min-height:164px; }
+/* Nine-slice the shipped vector frame: corners stay crisp while the middle
+   edges stretch across any panel ratio, without SVG image letterboxing. */
+.cc-page-parts.cc-part > .cc-part-trim { display:block; box-sizing:border-box; border:12px solid transparent; border-image-slice:28; border-image-width:12px; border-image-repeat:stretch; }
