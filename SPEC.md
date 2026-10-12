@@ -1331,7 +1331,7 @@ Rarity: S = starter, C = common, U = uncommon, R = rare. Cost in Stamina (engine
 | Crimson Cleave | C | 2 | Attack | Deal 5 to the selected enemy. | none; rank-up (§13.4o) |
 | Shield Bash | C | 1 | Attack | Deal 3 to the selected enemy. | none; rank-up (§13.4o) |
 | Quickstep | C | 1 | Skill | Gain 4 Block. | none; rank-up (§13.4o) |
-| Guard Counter | C | 1 | Attack | Deal 4. If you have Block: deal 10 instead. | 6 / 14 |
+| Guard Counter | C | 1 | Attack | Prepare Melee Counter. Prepare 3 base reply damage. | none; rank-up (§13.4o) |
 | Iron Resolve | C | 1 | Skill | Gain 5 Block. If in Bulwark Stance: gain 9 instead. | 7 / 12 |
 | Serrated Blade | C | 1 | Attack | Deal 7. If target has any Bleed: apply 3 Bleed. | 9 dmg, 4 Bleed |
 | Enter: Gorefire | C | 1 | Skill | Enter Gorefire Stance. Draw 1. | cost 0 |
