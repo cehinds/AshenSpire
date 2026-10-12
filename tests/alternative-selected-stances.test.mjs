@@ -73,3 +73,18 @@ test('the approved Reaver greatsword profile ships the exact preview art and pre
  assert.deepEqual(profile.approvedSequences.attack.previewIds,['AT1','AT2','AT3','AT4','AT5','AT6']);
  assert.deepEqual(profile.approvedSequences.evade.previewIds,['EV1','EV2','EV3']);
 });
+
+
+test('preview sources remain reproducible after held Counter replaces its historical runtime asset',()=>{
+ const spec=JSON.parse(readFileSync(new URL('../pose-studio/stances/update-stances/sequence-review/sources.json',import.meta.url)));
+ for(const source of spec.sources){
+  const bytes=readFileSync(new URL('../'+source.source,import.meta.url));
+  assert.equal(hash(bytes),source.sha256,'preview input '+source.id+' must remain available at its recorded hash');
+ }
+ const attack3=spec.sources.find(source=>source.id==='AT3');
+ const currentCounter=catalog.weaponProfiles['reaver-greatsword-pilot'].frames.counter;
+ assert.notEqual(attack3.source,currentCounter.path);
+ assert.notEqual(attack3.sha256,currentCounter.sha256);
+ assert.equal(attack3.sha256,catalog.weaponProfiles['reaver-greatsword-pilot'].frames['attack-3'].sha256);
+ assert.equal(hash(readFileSync(new URL('../'+attack3.originalSheetRecipe.path,import.meta.url))),attack3.originalSheetRecipe.sha256);
+});

@@ -410,7 +410,7 @@
     {
       "id": "AT3",
       "label": "Attack3 \u00b7 Smash06",
-      "source": "assets-display/alternative/reaver-greatsword-pilot-counter.webp",
+      "source": "pose-studio/stances/update-stances/sequence-review/source-cache/smash06-selected.webp",
       "sha256": "fba5777cc513b41e7c714d635ff1231cb9282b6f9e070e255ceb89df8ab1a05d",
       "size": [
         512,
@@ -426,7 +426,27 @@
         338
       ],
       "sourceOption": "greatsword-smash-06",
-      "sourceTreatment": "Exact existing selected export of original Smash06; raster bytes unchanged"
+      "sourceTreatment": "Exact archived selected export of original Smash06; raster bytes unchanged; former runtime Counter path now contains the new held Counter15",
+      "historicalRuntimePath": "assets-display/alternative/reaver-greatsword-pilot-counter.webp",
+      "originalSheetRecipe": {
+        "path": "pose-studio/stances/update-stances/greatsword-smash/sheet-b.png",
+        "width": 1536,
+        "height": 1024,
+        "sha256": "9bfd8c7b13ae42ae55d06718d03cec89c47947c4fc017b1ba61b8e8a50bf0bda",
+        "sourceBounds": [
+          40,
+          15,
+          431,
+          506
+        ],
+        "cropBounds": [
+          37,
+          12,
+          434,
+          509
+        ],
+        "scale": 0.8553971486761711
+      }
     },
     {
       "id": "T",

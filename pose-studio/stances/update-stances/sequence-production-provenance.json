@@ -4,7 +4,7 @@
   "recipe": "pose-studio/stances/update-stances/sequence-production.json",
   "recipeSha256": "fc911aad11d4917fea915b94663298fefd1cecfdd18a0e31028abba6771d6136",
   "approvedReview": "pose-studio/stances/update-stances/sequence-review/preview-assets.json",
-  "approvedReviewSha256": "944a0d80ae7a45e37ce1e61a4935a05e944f4aba60659900aaa0da539f0156b6",
+  "approvedReviewSha256": "7d863b6a724cbdbd8a2df31c781be4d60f459c7e542d10a10741a46fb266729d",
   "geometry": {
     "canvas": [
       768,
