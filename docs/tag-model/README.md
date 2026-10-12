@@ -12,7 +12,7 @@ pull request (CONTRIBUTING.md, ground rule 1).
 
 | File | What it is |
 |---|---|
-| `tables/tags.csv` | 521 nodes: 395 proposed tags plus 126 `meta.presentation` nodes. The game has 448 tag nodes today (`content/source/nodes.csv`). Columns: id, key, label, parent, erd, school, description, effect, variables, duration, stacking, related, status, glyph, color, liveId |
+| `tables/tags.csv` | 893 nodes: 737 proposed tags, 30 `meta.presentation.fx` tags, plus 126 generated `meta.presentation` nodes. The game has 448 tag nodes today (`content/source/nodes.csv`). Columns: id, key, label, parent, erd, school, description, effect, variables, duration, stacking, related, status, glyph, color, liveId |
 | `tables/presentation/*.csv` | The presentation inventory: 13 tables of how the game looks (components, layouts, styles, tokens, breakpoints, assets, animations, effects, resolutions, settings, symbols, combat symbols, strings). See *Presentation layer* |
 | `tools/` | Node scripts. `build.mjs` regenerates the presentation tables and the tag changes; `check.mjs` validates the tables; `live-map.mjs` (with `SHARED_LIVE`) and `legacy-status.json` hold the reviewed live-tag map; `bands.mjs` normalises breakpoints; `csv.mjs` reads and writes the CSVs |
 | `tables/objects.csv` | Carriers: cards, weapons, armour, and the tags each one carries |
@@ -313,7 +313,7 @@ Lightning, Force, Divine and Necrotic to `school:fire`, `school:frost`,
 magic damage types map to the damage nodes (`damage:fire`, `damage:frost`,
 `damage:lightning`, `damage:arcane` for Force, `damage:sacred` for Divine,
 `damage:decay` for Necrotic). The matches marked *probable* there are
-label-level only and need a review. Today 71 tags are `live-tag` and no node
+label-level only and need a review. Today 448 tags are `live-tag` and no node
 is claimed by two tags, so `SHARED_LIVE` is empty.
 
 ## Round-trip check
@@ -340,7 +340,7 @@ exactly one tag, and no live id is mapped by two tags. Parity and reverse
 differences are listed but do not change the verdict. Tests:
 `node --test docs/tag-model/tools/compile.test.mjs`.
 
-**Current result:** lossless. 448 of 448 live ids mapped, 0 collisions, 73
+**Current result:** lossless. 448 of 448 live ids mapped, 0 collisions, 78
 parity differences (listed under *Open: round-trip differences* in
 `DECISIONS.md`). This line is copied by hand from
 `docs/tag-model/compile-report.md` at the commit that last changed it. The
