@@ -641,7 +641,7 @@ Rule: **nothing mutates HP/block/piles/statuses except an executed action.** Tri
 
 ### 3.10 Event bus
 
-Events emitted by executed actions (closed list; `DEVELOPER.md` documents payloads):
+Events emitted by executed actions (closed list; the authoritative set is `EVENTS` in `src/model/schemas.js`, payloads in `docs/ENGINE-API.md`; an event marked † is specified ahead of its implementation and joins `EVENTS` when it lands). The core events are (not exhaustive; `EVENTS` is):
 
 ```
 combatStart, combatEnd(victory)
@@ -654,6 +654,9 @@ enemySpawned, enemyDied, enemyStaggered
 energyGained, energySpent
 flaskUsed, relicTriggered(relicId)
 equipmentChanged(reason,beforeLoadoutSignature,afterLoadoutSignature,changedPositions)
+combatReactionOffered, combatReactionChosen
+combatReactionUnavailable(ownerId,sourceId,reason,cardId,cardIds,attackKind)
+combatGuardBroken(targetId,sourceId,poise,sourcePlayerId?,targetPlayerId?)
 ```
 
 ### 3.11 Seeded RNG
@@ -841,22 +844,27 @@ discard limit, replacement draws, overflow, reshuffle, shuffleHand and draw mode
 The opening hand is also bounded by the hand size.
 
 **Default (owner, 2026-10-03): draw the full turn amount, retaining tagged cards,
-up to an absolute hand limit of 15.** The opening and turn draw rows start at
+up to an absolute hand limit set by the Hand size row.** The opening and turn draw rows start at
 4 and use the existing Draw scaling: +1 per five Intelligence above 4, capped
-at 10 by default. The Hand size row is a separate flat 15; it does not grow
-with attributes. All three rows remain configurable, including per-class
+at 10 by default. The Hand size row starts at 7 and grows with Intelligence like Draw (+1 per
+five points above 4), capped at 20. All three rows remain configurable, including per-class
 opening overrides. New runs snapshot those rows; existing runs keep theirs.
 
 At turn end, keep cards carrying Retain, resolve Ethereal and other explicit
 lifecycle rules, and shuffle ordinary unplayed cards directly into the draw
-pile (`shuffleHand: true`). Played cards and forced or chosen discards stay in
-the discard pile until its normal reshuffle. Retain does not change a played
-card's destination. The authored Herald and Starseer pools give Retain to
+pile (`shuffleHand: true`). Played cards and forced or chosen discards go to the
+discard pile and return with its next reshuffle. When the draw pile holds fewer
+cards than the next turn's draw, the whole discard pile joins the returned
+cards in that one shuffle (in deck order under Play in deck order), so a held
+hand never starves the discard of its reshuffle. Retain does not change a
+played card's destination. The authored Herald and Starseer pools give Retain to
 selected healing, ward, setup and costly spells, including their upgrades.
 At the next turn draw `min(Draw / turn, max(0, Hand size - retained count))`:
-two retained cards plus a draw of four produces six cards; twelve retained
-cards draw only three under the default limit of fifteen. A full hand draws
+two retained cards plus a draw of four produces six cards; five retained
+cards draw only two under the default limit of seven. A full hand draws
 nothing and consumes no draw-pile cards. A depleted deck can supply fewer.
+When the cards kept at turn end already fill the hand, the turn-end discard
+prompt offers to discard any number of them before the next draw.
 
 Solo and co-op use the same refresh rule and each seat's own piles and rows.
 The explicit Play in deck order option returns the unplayed cards to the
@@ -1139,6 +1147,15 @@ refresh at player-turn start. The player mini HUD sits above visible artwork
 with a fixed 10 screen-pixel bottom-to-art-top gap, including selection growth.
 This specification precedes the runtime implementation and does not claim that
 the new reaction system has shipped.
+
+When a seat holds a Counter or defensive Sweep but no reaction is offered for
+an incoming root, the engine emits `combatReactionUnavailable` once per root and
+seat, naming the first failing check (`switchOff`, `attackerStaggered`,
+`attackerControlled`, `notCovered`, `cost`, `controlled`, `unplayable`,
+`alreadyAnswered` or `other`); a seat with no such card, a dead seat and a
+disconnected seat get none. A Smash that breaks physical Guard emits
+`combatGuardBroken` once per break. Both are informational receipts and change
+no rule.
 
 When the Combat Rounds Preview is on, see §4.11.
 
@@ -1818,6 +1835,19 @@ The editor groups the complete inventory into stable nested sections:
   placing player and enemy starts farthest apart. Fill each row from outside toward
   the centre, then move upward. For two columns and three rows, player rows read
   `5 6 / 3 4 / 1 2` from top to bottom; enemy rows mirror them as `6 5 / 4 3 / 2 1`.
+  The default (alternative) perspective instead draws one uniform grid (owner, 2026-10-12):
+  three lanes, an enemy back rank and front rank, and one player rank nearest the camera,
+  with a band of open ground between the party and the enemies. The grid is sheared: each
+  row slides right in proportion to its depth, so lanes run on a diagonal and every cell is
+  the same parallelogram. The top of the field is sky; the grid stands on the ground below it. Each cell's shadow is its foot anchor, where the sprite's feet stand. Enemies
+  fill the back rank first, spread across the lanes (one in the middle, two on the outer lanes),
+  then the front rank, up to six; the party shares its rank and the player starts in the left
+  lane. A four-player co-op party, or more than six enemies, widens the grid to more lanes
+  rather than stacking two bodies on one anchor. Gameplay cells keep their addresses: a column is depth (outer = back), a row
+  is a lane, and the player's front column is not a perspective destination. Pressing anywhere
+  in an occupied enemy cell acts on that enemy (select, or play the armed card or flask). Lane
+  span, rank tops and heights, shear and foot fractions per phone, desktop and short strip are data
+  (`combatFormationModel.positioning.perspectiveGrid`). Classic keeps the grid below.
   The owner's October 3 positioning exports define separate supplied 1×1 and 2×2 layouts.
   Measurements remain responsive percentages; reference anchors at 1641×526 are checked
   against the exports. Explicit saved group edits take precedence.
@@ -1954,7 +1984,7 @@ together.
 
 ### 7.4 Feedback & animation rules
 
-- Floating damage/heal/block numbers; brief target flash on hit; a screen shake on **every** hit that costs its target HP, scaled by the HP it cost (after Block) and never over 4 px (owner, 2026-10-05: "Combat latency + juice"; the amplitude steps and their floors are a data row, defaulting to 1 px from 1 HP, 2 px from 6, 3 px from 10 and 4 px from 15, so the old rule, 4 px for hits of 15 or more, is the top step); and a **hit-stop**: on a hit that costs 6 HP or more, the attacker's impact frame and the target's recoil hold for 60 ms (a data row; 0 turns it off) before the swing recovers. The hit-stop pauses only those two figures' animation: the damage number, sound and haptic fire at impact, and a click skips it with the rest. It sits inside the hit's own beat, so on a multi-hit attack it lengthens that hit's step, not the ≤80 ms queue interval between events. Animation speed Instant (and Reduced motion) drops the hit-stop; slow, normal and fast keep 60 ms, as they keep every fixed effect duration. Reduced motion drops the shake too, and the Screen shake setting drops the shake alone. **No animation blocks input, and a click always skips to end-state.** At the default animation speed, most effects run ≤300 ms and queued events play out at ≤80 ms intervals — but a few big-moment effects are hardcoded past that bound (heavy hit flash 380 ms, cast glyph 450 ms, Stagger wobble 600 ms) and the Animation speed setting (slow / normal / fast / instant) scales the *pacing* (beat, step, lunge), never those fixed effect durations. The Screen shake, Reduced motion, and Reduce flashes settings each suppress their effect entirely (`src/ui/fx.js`).
+- Floating damage/heal/block numbers; brief target flash on hit; a screen shake on **every** hit that costs its target HP, scaled by the HP it cost (after Block) and never over 4 px (owner, 2026-10-05: "Combat latency + juice"; the amplitude steps and their floors are a data row, defaulting to 1 px from 1 HP, 2 px from 6, 3 px from 10 and 4 px from 15, so the old rule, 4 px for hits of 15 or more, is the top step); and a **hit-stop**: on a hit that costs 6 HP or more, the attacker's impact frame and the target's recoil hold for 60 ms (a data row; 0 turns it off) before the swing recovers. Under the sequential beat order below, the hit-stop holds the attacker's impact frame alone; the target stays in its rest pose until its reaction starts. The hit-stop pauses only those two figures' animation, and a click skips it with the rest. **Beat order** (owner, 2026-10-11, presentation `beatOrder`, default `sequential`): an attack beat plays the attacker's stance, its attack clip and its return to stance first; then the target's reaction starts (hurt pose and flash, shake, evade, block or Stagger wobble); `reactionMs` after it starts (a data row, default 180 ms at Normal), the damage/guard/heal numbers fire with their sound and haptic, and then the HP, Poise and Block bars update. The numbers wait only for that `reactionMs`, never for a long fixed effect: the heavy hit flash and the Stagger wobble keep running underneath them. The contact spark and the attacker's hit-stop stay at the impact frame. `beatOrder: impact` keeps the earlier order, where the reaction, number, sound and haptic fire at impact. Counter return beats keep the impact order. The click-to-impact budget is measured to the contact effect (≤400 ms at Normal pacing), and on a plain single hit the first number lands ≤750 ms after the click. It sits inside the hit's own beat, so on a multi-hit attack it lengthens that hit's step, not the ≤80 ms queue interval between events. Animation speed Instant (and Reduced motion) drops the hit-stop; slow, normal and fast keep 60 ms, as they keep every fixed effect duration. Reduced motion drops the shake too, and the Screen shake setting drops the shake alone. **No animation blocks input, and a click always skips to end-state.** At the default animation speed, most effects run ≤300 ms and queued events play out at ≤80 ms intervals — but a few big-moment effects are hardcoded past that bound (heavy hit flash 380 ms, cast glyph 450 ms, Stagger wobble 600 ms) and the Animation speed setting (slow / normal / fast / instant) scales the *pacing* (beat, step, lunge), never those fixed effect durations. The Screen shake, Reduced motion, and Reduce flashes settings each suppress their effect entirely (`src/ui/fx.js`).
 - Bleed burst and Stagger get distinct, slightly bigger effects (they're the theme).
 - "YOU PERISHED" screen: dark fade, gold serif text, then stats card. Victory: "EMBER RESTORED". (Renamed from the pre-scrub strings in `95c3b87` — `docs/IP-SCRUB.md`.)
 - Sound: shipped, and procedural. `sfx.js` is the hook bus — every feedback moment calls `sfx.play(id)` (card play, hit, stagger, death, buy, shrine, …) — and `main.js` wires its sink to `src/ui/audio.js`, a WebAudio engine that synthesizes every SFX and per-context music bed (title/map/combat/elite/boss/shop/rest/victory). What the sound *is* lives as content in two files, one home each: **`src/content/music.js`** (scales, per-context beds, `MUSIC_MANIFEST`) and **`src/content/sfx.js`** (`SFX_RECIPES` plus `SFX_MANIFEST`). A recipe is a list of layers in the engine's **two-word closed vocabulary, `tone` and `noise`** (schema `SFX_LAYER_SCHEMAS`, `model/schemas.js`), so retuning a sound is a table edit and never an engine edit, and a malformed layer fails validation **naming its recipe id**.
@@ -2704,12 +2734,12 @@ The shipped solo combat path adopts these rules. The independent foundation/comb
   - The co-op path (`coopCombat.js`) reads each seat's owner's setting when it builds that seat's pile, and carries it per seat.
 
 **UX.** The component is `DeckEditorModel` plus `mountDeckEditor`, with an entry in `docs/component-catalog.html`.
-- **Layout.** The Reading Desk has the collection on the left, persistent card inspection in the middle and the deck on the right. Phones switch between collection, inspection and deck views; Back returns to the pane that opened inspection. Collection offers All/In Deck and text search; the deck has its own search, List/Cards presentation and collapsible type groups. Ordered decks retain their exact sequence instead of type groups. Copy counts remain visible for single copies as well as grouped copies.
+- **Layout.** The Reading Desk has the collection on the left, persistent card inspection in the middle and the deck on the right. Phones show one list, the collection, whose rows carry － count ＋ steppers; inspection opens over it and Back returns to the list; an ordered deck adds a Draw order view for reordering. A selected card shows a round (i) on its art; the (i), or pressing the selected card's art again, opens the inspector, and no row reserves room for it (owner, 2026-10-11). Each row and the inspector name the card's stance: its maneuver (Attack, Defend, Counter, Smash, Sweep or Ranged), otherwise Spell, Power, Consumable or Skill. A row also shows its rank as a badge on the art (Rank N; rank 0 or unranked reads Cantrip for a magical card and Basic for the rest; powers, skills and consumables without a rank show none), its range after the stance for a card that attacks (Melee, Reach or Ranged from its contact, near or far reach, untagged cards taking the player card's combat default: projectiles and ranged maneuvers near, the rest contact), and a physical or magical mark before its costs. Phone rows read grip, art, then name, stance and range, and rules, with the mark and MP/SP sprites at the top right and the stepper at the bottom right, the same at every phone width, smaller phones shrinking the art, costs and stepper rather than moving them (owner, 2026-10-11). Collection offers All/In Deck on its title row; the deck offers List/Cards presentation and collapsible type groups. Text search is off for now (owner, 2026-10-11). Ordered decks retain their exact sequence instead of type groups. Copy counts remain visible for single copies as well as grouped copies.
 - **Undo.** Undo reverses the last successful add, removal or reorder, restoring the same complete editing state as Cancel (including allocation and card mint counters). Failed and unchanged actions do not create history. Cancel still restores the state from when the editor opened; Done confirms the current valid state.
 - **Header.** It shows the live counter "N / min–max", which turns red and shows the refusal sentence when out of bounds. Beside it is a compact cost-curve histogram.
 - **Filters and sort.** Filter chips cover type, cost, source (basic / weapon art / technique / reward / item-owned) and upgraded. Sort chips cover cost, name, type and source.
-- **Every drag has two twins.** A tap on a collection tile or deck row inspects the card without changing the run. The Reading Desk inspector carries an explicit Add to deck or Remove from deck action; rows also carry explicit ＋ and － buttons. Reordering is a drag on the handle or the row's ▲ and ▼ buttons.
-- **Gamepad.** The D-pad moves focus in a grid, and LB and RB switch panes. A inspects a focused card or activates the focused explicit Add/Remove control. X picks up the focused deck row, the D-pad moves it, and X or A drops it. Y cycles the filters. B cancels, and Start confirms (§7.3).
+- **Every drag has two twins.** A tap on a collection tile or deck row inspects the card without changing the run. The Reading Desk inspector carries explicit Add to deck and Remove from deck actions; rows also carry explicit ＋ and － buttons. Reordering is a drag on the handle or the row's ▲ and ▼ buttons.
+- **Gamepad.** The D-pad moves focus in a grid, and LB and RB switch panes (on a phone, only between the list and Draw order). A inspects a focused card or activates the focused explicit Add/Remove control. X picks up the focused deck row, the D-pad moves it, and X or A drops it. Y cycles the filters. B cancels, and Start confirms (§7.3).
 - **Target size.** Every target is at least 48 CSS px on a coarse pointer and at least 44 px otherwise, and text is at least 11 px at 360×640 (FINISH §8).
 
 *Falsify:*
@@ -2936,7 +2966,7 @@ Inscryption, and Slay the Spire's deck-view / "Deck Builder" mods.
 | Deck list collapsed to one row per card variant (id + upgrade + mods; for a locked card, also its owner) with a ×N count | Hearthstone, Arena, LoR | **Yes**, except while **Play in deck order** is on | Counts are the scan-friendly view; in ordered mode each copy is its own row so it can be placed. A Strike and a Strike+ stay two rows: merging them would hide the upgrade and make ＋/－ ambiguous, and the collection tiles use the same variant key. |
 | Live size counter "N / min–max", red when out of bounds, Done disabled with a sentence | Hearthstone (30/30), Snap (12/12), Arena (60+) | **Yes** | The invalid state must be explained, not just coloured (SPEC §7.5, FINISH §6). |
 | Copy limit shown on the collection tile ("2 owned, 1 in deck") and greyed when exhausted | Hearthstone, LoR, Arena | **Yes** | Weapon arts and techniques are limited to owned copies; basics show ∞. |
-| Filters (type, cost, source) and sort (cost, name, type, source) as chips above the collection | Hearthstone (mana crystals), Arena, LoR | **Yes**, chips not a hidden menu | One tap each; the Reading Desk also offers a text search over collection names and resolved rules. |
+| Filters (type, cost, source) and sort (cost, name, type, source) as chips above the collection | Hearthstone (mana crystals), Arena, LoR | **Yes**, chips not a hidden menu | One tap each; the Reading Desk also offers a text search over collection names and resolved rules (currently off). |
 | Mana/cost curve histogram | Hearthstone, Arena, LoR | **Yes, compact** | Cheap to derive; the one analytic players ask for. |
 | Undo / "revert to deck on entry" | Snap (discard changes), Arena | **Yes** — Cancel restores the entry deck | Editing is out of combat, so a whole-session revert is simple and safe. |
 | Deck edited mid-run only at rest or through removals | Slay the Spire, Monster Train, Inscryption | **As an option** (`Rest sites only`) | The owner wants to compare it with Free editing; roguelike tension comes from this restriction. |

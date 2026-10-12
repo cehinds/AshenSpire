@@ -1,0 +1,6 @@
+/* Layout Studio · Card layers render page (served by the game server). The card fills the frame. */
+html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; }
+body.card-layers-render { min-height: 100%; }
+#stage { width: 100%; height: 100%; box-sizing: border-box; display: block; }
+#stage > .card { width: 100%; height: 100%; }
+.cl-note { margin: 12px; color: #9aa1ad; font: 13px/1.4 system-ui, sans-serif; }

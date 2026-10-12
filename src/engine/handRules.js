@@ -4,22 +4,34 @@ import { orderedReturn } from '../model/deckRules.js';
 
 /** Return only ordinary unplayed cards; played/forced discards stay discarded. */
 export function returnUnplayedCards(ctx, cards) {
-  if (!cards.length) return;
   if (ctx.handRules?.shuffleHand) {
-    // The explicit Play in deck order mode keeps its no-randomness contract.
-    ctx.piles.draw.push(...(ctx.orderedDraw ? orderedReturn(cards, ctx.orderedDraw.order) : cards));
-    if (!ctx.orderedDraw) ctx.piles.draw = ctx.rng.shuffle('shuffle', ctx.piles.draw);
-    ctx.emit('deckShuffled', {
-      size: ctx.piles.draw.length, reason: 'handRefresh',
-      cardInstanceIds: cards.map(card => card.instanceId),
-      ...(ctx.orderedDraw ? { ordered: true } : {}),
-    });
-  } else {
-    for (const card of cards) {
-      ctx.piles.discard.push(card);
-      ctx.emit('cardDiscarded', { cardInstanceId: card.instanceId, cardId: card.cardId, reason: 'turnEnd' });
-    }
+    refreshHandIntoDraw(ctx, cards);
+    return;
   }
+  for (const card of cards) {
+    ctx.piles.discard.push(card);
+    ctx.emit('cardDiscarded', { cardInstanceId: card.instanceId, cardId: card.cardId, reason: 'turnEnd' });
+  }
+}
+
+// The turn-end refresh (shuffleHand). When the draw pile holds fewer cards than
+// the next turn will draw, the discard joins the returned cards in this same
+// shuffle, so a held hand cannot starve the discard of its reshuffle.
+function refreshHandIntoDraw(ctx, cards) {
+  const next = handDrawCount(ctx.handRules, ctx.attributes, { handSize: ctx.piles.hand.length, replacements: ctx.pendingDiscardDraw || 0, level: ctx.characterLevel }).value;
+  const joins = ctx.handRules.reshuffle !== false && ctx.piles.discard.length > 0 && ctx.piles.draw.length < next;
+  if (!cards.length && !joins) return;
+  const moved = joins ? [...cards, ...ctx.piles.discard] : cards;
+  if (joins) ctx.piles.discard.length = 0;
+  // The explicit Play in deck order mode keeps its no-randomness contract.
+  ctx.piles.draw.push(...(ctx.orderedDraw ? orderedReturn(moved, ctx.orderedDraw.order) : moved));
+  if (!ctx.orderedDraw) ctx.piles.draw = ctx.rng.shuffle('shuffle', ctx.piles.draw);
+  ctx.emit('deckShuffled', {
+    size: ctx.piles.draw.length, reason: 'handRefresh',
+    cardInstanceIds: moved.map(card => card.instanceId),
+    ...(ctx.orderedDraw ? { ordered: true } : {}),
+    ...(joins ? { reshuffledDiscard: true } : {}),
+  });
 }
 
 export function turnDrawCount(ctx, opening = ctx.turn === 1) {
@@ -47,8 +59,11 @@ export function discardChoicePlan(ctx) {
   const capacity = scaledCards(handRow(ctx.handRules, 'handSize'), ctx.attributes, ctx.characterLevel);
   const minimum = ctx.handRules.overflow === 'discard' ? Math.max(0, cards.length - capacity) : 0;
   const optional = ctx.handRules.retain && ctx.handRules.promptDiscard;
-  const maximum = Math.min(cards.length, Math.max(minimum, optional ? ctx.handRules.discardLimit : 0));
-  return { cards, minimum, maximum, prompt: minimum > 0 || (optional && maximum > 0) };
+  // A kept hand that already fills capacity draws nothing next turn, so the
+  // prompt offers a free discard of any number; the next draw refills the room.
+  const full = cards.length > 0 && cards.length >= capacity;
+  const maximum = full ? cards.length : Math.min(cards.length, Math.max(minimum, optional ? ctx.handRules.discardLimit : 0));
+  return { cards, minimum, maximum, prompt: minimum > 0 || full || (optional && maximum > 0) };
 }
 
 export function validateDiscardChoice(ctx, ids = []) {

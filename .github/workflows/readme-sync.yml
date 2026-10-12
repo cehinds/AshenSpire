@@ -1,0 +1,94 @@
+# readme-sync — refresh the generated parts of README.md after every push to dev.
+#
+# Owner, 2026-10-11: README is verified on every PR into dev (the fast gate is
+# tests/readme-sync.test.mjs, discovered by the PR → dev test run) and its
+# generated regions (<!-- readme-sync:<name> -->) are refreshed automatically
+# on every push to dev. This workflow runs `tools/readme-sync.mjs --write`,
+# and commits back only README.md when a region changed.
+#
+# Mirrors architecture-sync.yml: bot commit, its own concurrency group, and a loop
+# guard that skips the bot's own commit (its message carries [readme-sync]).
+# Nothing outside the marked regions is rewritten.
+
+name: readme-sync
+
+on:
+  push:
+    branches: [dev]
+  workflow_dispatch:
+
+# Own group, per workflow. A shared group would let one pending run replace the
+# other (GitHub keeps one pending run per group). A run that has started is never
+# cancelled (cancel-in-progress: false); the rebase-and-retry push loop below
+# handles the race with architecture-sync.yml.
+concurrency:
+  group: readme-sync-${{ github.ref_name }}
+  cancel-in-progress: false
+
+# The routine commits only README.md.
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    if: github.ref_name == 'dev' && (github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[readme-sync]'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out the merged dev tree
+        uses: actions/checkout@v5
+
+      - name: Set up Node
+        uses: ./.github/actions/setup-node
+
+      - name: Refresh the generated README regions
+        run: node tools/readme-sync.mjs --write
+
+      - name: Commit only README.md when a region changed, and push it behind dev
+        # architecture-sync.yml pushes to dev on the same push. The two run in
+        # separate concurrency groups, so the rebase-and-retry loop below handles
+        # the race, and a GITHUB_TOKEN push does not retrigger a workflow. Before
+        # each push, rebase onto origin/dev. If the
+        # README rebase conflicts, abort it, reset to origin/dev, regenerate
+        # the regions there and recommit. A rejected push retries up to three
+        # times, with 2, 4 and 8 seconds of backoff.
+        shell: bash
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          if git diff --quiet -- README.md; then
+            echo "README generated regions already current."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- README.md
+          git diff --cached --name-only
+          git commit -q -m "docs: refresh README [readme-sync]"
+
+          delays=(2 4 8)
+          for attempt in 1 2 3 4; do
+            if ! git pull -q --rebase origin dev; then
+              echo "Rebase onto origin/dev conflicted; regenerating README on origin/dev."
+              git rebase --abort 2>/dev/null || true
+              git fetch -q origin dev
+              git reset -q --hard origin/dev
+              node tools/readme-sync.mjs --write
+              if git diff --quiet -- README.md; then
+                echo "origin/dev already carries the current README regions."
+                exit 0
+              fi
+              git add -- README.md
+              git commit -q -m "docs: refresh README [readme-sync]"
+            fi
+            if git push -q origin "HEAD:$REF_NAME"; then
+              echo "Pushed README refresh to $REF_NAME (attempt $attempt)."
+              exit 0
+            fi
+            echo "Push to $REF_NAME rejected (attempt $attempt)."
+            if [ "$attempt" -lt 4 ]; then
+              sleep "${delays[$((attempt - 1))]}"
+            fi
+          done
+          echo "::error::README refresh could not be pushed to $REF_NAME after 4 attempts."
+          exit 1

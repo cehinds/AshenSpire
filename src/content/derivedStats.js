@@ -75,8 +75,9 @@ export const derivedStatRules = {
     //       Herald 59. Only the base moved; CON still pays 4 a point.
     energy: { base: 3, strength: 0.1, dexterity: 0.25, wisdom: 0.01, intelligence: 0.01, perLevel: 0.1 }, // Retired save row; combat reads Stamina.
     // Owner, 2026-10-03: open and draw four, with the existing Draw scaling
-    // (+1 per five INT above 4). Retain adds to the next draw; the absolute
-    // capacity is a separate flat 15. Each row remains configurable, and
+    // (+1 per five INT above 4). Retain adds to the next draw. Owner,
+    // 2026-10-11: the hand size is now 7 + INT scaling (+1 per five INT above
+    // 4, like Draw), capped at 20. Each row remains configurable, and
     // existing runs continue to read their snapshotted rows.
     openingHand: {
       base: 4, intelligence: 0.2, attributeBaseline: 4, min: 2, max: 10,
@@ -88,7 +89,7 @@ export const derivedStatRules = {
       },
     },
     draw: { base: 4, intelligence: 0.2, attributeBaseline: 4, min: 2, max: 10 },
-    handSize: { base: 15, min: 1, max: 15 },
+    handSize: { base: 7, intelligence: 0.2, attributeBaseline: 4, min: 1, max: 20 },
     // Owner, 2026-10-06: each primary attribute has a clear +1 main bonus.
     // Bases, level growth and secondary resource rules stay independently
     // configurable. Existing runs retain their snapshotted coefficients.

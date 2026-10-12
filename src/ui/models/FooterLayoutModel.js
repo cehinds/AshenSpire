@@ -1,4 +1,5 @@
 import { footerLayout, footerSizing } from '../../content/footerLayout.js';
+import { isWideFormFactor } from './FormFactorModel.js';
 
 // Semantic ownership survives the editor's selection/docking groups.
 const assetRoles = { frame: 'sp', orb: 'sp', sigil: 'sp', diamond: 'sp', spent: 'sp', draw: 'draw', plate: 'end', 'spent-cards': 'discard', potions: 'potions' };
@@ -32,16 +33,18 @@ export function footerText(item, values) {
 }
 // The decorated footer gets space without stealing the battlefield's floor.
 // Small hosts retain the existing rails and touch-target geometry.
-export function footerArtHeight(width, zoom = 1) {
+// `formFactor` (data-form-factor) picks the desktop footer width once it is gated.
+export function footerArtHeight(width, zoom = 1, formFactor = null) {
   // Compact controls keep their own artwork faces and readable labels; they
   // do not need the authored desktop rail's full vertical canvas.
-  if (width * zoom < 680) return 64 / zoom;
+  if (width * zoom < footerSizing.compactBelowPx) return 64 / zoom;
   const bounds = footerLayoutModel(footerLayout).bounds;
-  return Math.max(footerSizing.minimumHeightPx / zoom, footerArtWidth(width, zoom) * bounds.h / bounds.w);
+  return Math.max(footerSizing.minimumHeightPx / zoom, footerArtWidth(width, zoom, formFactor) * bounds.h / bounds.w);
 }
 
-export function footerArtWidth(width, zoom = 1) {
-  return Math.min(width, footerSizing.maximumWidthPx / zoom);
+export function footerArtWidth(width, zoom = 1, formFactor = null) {
+  const maximumWidthPx = isWideFormFactor(formFactor) ? footerSizing.desktopMaximumWidthPx : footerSizing.maximumWidthPx;
+  return Math.min(width, maximumWidthPx / zoom);
 }
 
 // Resample the authored ring around its ordered sockets for the live capacity.

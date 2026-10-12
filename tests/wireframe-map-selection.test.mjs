@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { pickMapNode, projectMapContext } from '../src/ui/models/MapSelectionModel.js';
 
 const reachable = new Set(['f1c0', 'f1c2']);
-const at = (now) => ({ now, repeatDelayMs: 400 });
+const at = (now) => ({ now, repeatDelayMs: 0 }); // = w4b-map.json behavior.repeatPickDelayMs
 
 test('a first pick selects; picking the selected node again enters', () => {
   const first = pickMapNode({}, 'f1c0', reachable, at(0));
@@ -14,11 +14,12 @@ test('a first pick selects; picking the selected node again enters', () => {
   assert.deepEqual({ ...again }, { selectedId: 'f1c2', selectedAt: 100, enter: true });
 });
 
-test('a fast double tap selects but does not travel', () => {
+test('a second press on the selected node travels at any interval', () => {
   const first = pickMapNode({}, 'f1c0', reachable, at(1000));
-  const quick = pickMapNode(first, 'f1c0', reachable, at(1200));
-  assert.deepEqual({ ...quick }, { selectedId: 'f1c0', selectedAt: 1000, enter: false });
-  assert.equal(pickMapNode(quick, 'f1c0', reachable, at(1400)).enter, true);
+  const immediate = pickMapNode(first, 'f1c0', reachable, at(1000));
+  assert.deepEqual({ ...immediate }, { selectedId: 'f1c0', selectedAt: 1000, enter: true });
+  const nextMillisecond = pickMapNode(first, 'f1c0', reachable, at(1001));
+  assert.deepEqual({ ...nextMillisecond }, { selectedId: 'f1c0', selectedAt: 1000, enter: true });
 });
 
 test('an unreachable node never becomes the selection or enters', () => {

@@ -101,6 +101,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "combat.log.full",
+    "extends": "",
+    "short": "Full log",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "combat.log.round",
     "extends": "",
     "short": "Round {round}",
@@ -188,6 +195,48 @@ export const uiStrings = [
     "id": "combat.reaction.mp",
     "extends": "",
     "short": "{amount} MP",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.callout.staggered",
+    "extends": "",
+    "short": "STAGGERED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.callout.disrupted",
+    "extends": "",
+    "short": "DISRUPTED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.callout.countered",
+    "extends": "",
+    "short": "COUNTERED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.callout.evaded",
+    "extends": "",
+    "short": "EVADED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.callout.critical",
+    "extends": "",
+    "short": "CRITICAL",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.callout.guardBreak",
+    "extends": "",
+    "short": "GUARD BREAK",
     "full": "",
     "tip": ""
   },
@@ -5225,6 +5274,20 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "deckEditor.stepperCount",
+    "extends": "",
+    "short": "{inDeck}/{owned}",
+    "full": "{inDeck} in deck of {owned} owned.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.stepperCount.unlimited",
+    "extends": "",
+    "short": "{inDeck}/∞",
+    "full": "{inDeck} in deck; unlimited copies.",
+    "tip": ""
+  },
+  {
     "id": "deckEditor.count",
     "extends": "",
     "short": "×{count}",
@@ -5257,6 +5320,132 @@ export const uiStrings = [
     "extends": "",
     "short": "－",
     "full": "Take {name} out of the deck.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.stance.attack",
+    "extends": "",
+    "short": "Attack",
+    "full": "Attack stance card.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.stance.defend",
+    "extends": "",
+    "short": "Defend",
+    "full": "Defend stance card.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.stance.counter",
+    "extends": "",
+    "short": "Counter",
+    "full": "Counter stance card.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.stance.smash",
+    "extends": "",
+    "short": "Smash",
+    "full": "Smash stance card.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.stance.sweep",
+    "extends": "",
+    "short": "Sweep",
+    "full": "Sweep stance card.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.stance.ranged",
+    "extends": "",
+    "short": "Ranged",
+    "full": "Ranged stance card.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.stance.spell",
+    "extends": "",
+    "short": "Spell",
+    "full": "Spell card.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.stance.skill",
+    "extends": "",
+    "short": "Skill",
+    "full": "Skill card.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.stance.power",
+    "extends": "",
+    "short": "Power",
+    "full": "Power card.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.stance.consumable",
+    "extends": "",
+    "short": "Consumable",
+    "full": "Consumable card.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.rank",
+    "extends": "",
+    "short": "Rank {rank}",
+    "full": "Card rank {rank}.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.rank.cantrip",
+    "extends": "",
+    "short": "Cantrip",
+    "full": "Rank 0 spell, a cantrip.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.rank.basic",
+    "extends": "",
+    "short": "Basic",
+    "full": "Rank 0 combat maneuver.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.range.melee",
+    "extends": "",
+    "short": "Melee",
+    "full": "Melee range: reaches the enemy in front.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.range.reach",
+    "extends": "",
+    "short": "Reach",
+    "full": "Reach range: reaches past the front enemy.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.range.ranged",
+    "extends": "",
+    "short": "Ranged",
+    "full": "Ranged: reaches any enemy.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.camp.physical",
+    "extends": "",
+    "short": "Physical",
+    "full": "Physical card.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.camp.magical",
+    "extends": "",
+    "short": "Magical",
+    "full": "Magical card.",
     "tip": ""
   },
   {
@@ -7528,6 +7717,20 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "deckEditor.inspectIcon",
+    "extends": "",
+    "short": "i",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.drawOrder",
+    "extends": "",
+    "short": "Draw order",
+    "full": "Reorder the deck in the order it is drawn.",
+    "tip": ""
+  },
+  {
     "id": "deckEditor.equipmentNotFound",
     "extends": "",
     "short": "Equipment not found",
@@ -7804,6 +8007,125 @@ export const uiStrings = [
     "id": "armoury.action.equipTo",
     "extends": "",
     "short": "Equip to {slot}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.caption",
+    "extends": "",
+    "short": "Items for {slot}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.col.item",
+    "extends": "",
+    "short": "Item",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.col.status",
+    "extends": "",
+    "short": "Status",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.col.actions",
+    "extends": "",
+    "short": "Actions",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.status.here",
+    "extends": "",
+    "short": "Equipped here",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.status.free",
+    "extends": "",
+    "short": "Not equipped",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.status.elsewhere",
+    "extends": "",
+    "short": "{slot} {n}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.status.nofit",
+    "extends": "",
+    "short": "Doesn't fit",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.onlyCopy",
+    "extends": "",
+    "short": "Only copy: moving it empties {slot} {n}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.reason.kind",
+    "extends": "",
+    "short": "Doesn't fit {slot}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.reason.hand",
+    "extends": "",
+    "short": "Only fits the other hand",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.showAll",
+    "extends": "",
+    "short": "Show items that don't fit",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.fitsOnly",
+    "extends": "",
+    "short": "Hide items that don't fit",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.hide",
+    "extends": "",
+    "short": "Hide",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.act.equip",
+    "extends": "",
+    "short": "Equip",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.act.move",
+    "extends": "",
+    "short": "Move here",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.act.unequip",
+    "extends": "",
+    "short": "Unequip",
     "full": "",
     "tip": ""
   },

@@ -160,13 +160,16 @@ export function completeMatchupHit(ctx, source, target, carrier, receipt, { bloc
   if (combatExpansionEnabled(ctx)) return;
   if (!receipt.profile || carrier?.combatReaction) return;
   const cfg = matchupRules(ctx);
-  if (receipt.smash && receipt.guardBefore > 0 && (target.block || 0) - (target.wardBlock || 0) <= 0 && target.alive) {
+  if (receipt.smash && receipt.guardBefore > 0 && (target.block || 0) - (target.wardBlock || 0) <= 0) {
     const amount = Math.max(0, receipt.profile.breakPoiseBonus ?? cfg.smash.guardBreakPoiseBonus);
     // The same hit's Guard-break consequence precedes its retaliation. Resolve
     // through the ordinary Poise implementation so a real stagger can clear
     // Counter before either its queued damage or synchronous Ward reply starts.
-    if (amount && receipt.counterEligible && typeof applySmashBreakPoise === 'function') applySmashBreakPoise(amount);
-    else if (amount) ctx.enqueue({ effect: { op: 'poiseDamage', amount }, source, owner: source, target, card: { ...carrier, combatReaction: true }, meta: { combatSmashBreak: true } });
+    // The break is reported even with no bonus, and even when this hit killed
+    // the target: Guard broke all the same. A dead target takes no bonus Poise.
+    ctx.emit?.('combatGuardBroken', { ...seats(ctx, source, target), targetId: target.id, sourceId: source?.id, poise: amount });
+    if (amount && target.alive && receipt.counterEligible && typeof applySmashBreakPoise === 'function') applySmashBreakPoise(amount);
+    else if (amount && target.alive) ctx.enqueue({ effect: { op: 'poiseDamage', amount }, source, owner: source, target, card: { ...carrier, combatReaction: true }, meta: { combatSmashBreak: true } });
   }
   if (receipt.counterEligible && target?.combatCounter?.charges > 0) {
     const counter = receipt.counter;
@@ -447,6 +450,19 @@ function schoolReturnMultiplier(ctx, counter, incoming) {
   return check('strong') ? cfg.schoolStrongMultiplier : 1;
 }
 
+/** A Smash that breaks the target's last Guard. Reported even when the hit killed the target. */
+export function completeGuardBreak(ctx, source, target, carrier, receipt) {
+  if (!(receipt.smash && receipt.connected && receipt.guardBefore > 0 && number(target?.block) <= 0)) return;
+  const amount = carrier?.combatProfile?.breakPoiseBonus ?? expansionMatchupRules(ctx).smash.guardBreakPoiseBonus;
+  // The break is reported even with no bonus, and even when this hit killed
+  // the target: Guard broke all the same. A dead target takes no bonus Poise.
+  ctx.emit?.('combatGuardBroken', { ...seats(ctx, source, target), targetId: target.id, sourceId: source?.id, poise: Math.max(0, number(amount)) });
+  if (amount > 0 && target?.alive) {
+    ctx.enqueue?.({ effect: { op: 'poiseDamage', amount }, source, owner: source, target,
+      card: { ...carrier, combatReaction: true }, meta: { combatSmashBreak: true } });
+  }
+}
+
 /** Root finalizes only after all direct contacts, pressure, and impact. */
 export function completeTacticalAction(ctx, source, target, carrier, receipt, options = {}) {
   if (!receipt || receipt.completed) return [];
@@ -460,11 +476,7 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
     queue.push(action);
     if (ctx.reactionRulesVersion !== 1) ctx.enqueue?.(action);
   };
-  if (receipt.smash && receipt.connected && receipt.guardBefore > 0 && number(target?.block) <= 0 && target?.alive) {
-    const amount = carrier?.combatProfile?.breakPoiseBonus ?? expansionMatchupRules(ctx).smash.guardBreakPoiseBonus;
-    if (amount > 0) ctx.enqueue?.({ effect: { op: 'poiseDamage', amount }, source, owner: source, target,
-      card: { ...carrier, combatReaction: true }, meta: { combatSmashBreak: true } });
-  }
+  completeGuardBreak(ctx, source, target, carrier, receipt);
   const counter = receipt.counter;
   const stillPrepared = counter && target?.combatCounter?.serial === counter.serial;
   const blocked = restrictions(ctx, target, options).counterDisabled || receipt.counterDisabledAtStart;

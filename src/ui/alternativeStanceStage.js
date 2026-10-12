@@ -82,7 +82,7 @@ export function withAlternativeStance(stage, actorId, options = {}) {
     },
     hold(...args) { return stage.hold?.(...args) ?? false; },
     react(...args) { active = true; show(); return stage.react?.(...args); },
-    settle() { const result = stage.settle?.(); finish(); return result; },
+    settle(options) { const result = stage.settle?.(options); finish(); return result; },
     setRestPose(next, ...args) { dead = next === 'defeated'; const result = stage.setRestPose?.(next, ...args); show(); return result; },
     dispose() { disposed = true; finish(); held.dispose(); held.el.remove(); return stage.dispose?.(); },
   };

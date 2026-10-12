@@ -260,7 +260,8 @@ function ENEMY_ID_OF(c) {
 
 // The preview-off event log is byte-identical to the one recorded before P3a (the same scripted
 // fights as the golden in the P3a commit: three seeds, four turns, each card played on the first
-// living enemy, reactions set off).
+// living enemy, reactions set off). Re-recorded at the dev merge (2026-10-12): dev's combatReactionUnavailable
+// receipts (SPEC §4.10) are in the log now, and this equals origin/dev's own output for the same script.
 function scriptedLog(seed, classId = 'reaver', enemyIds = [ENEMY]) {
   const run = createRunState({ seed, classId, registries });
   const c = createRunCombat({ registries, rng: createRng(seed), run, enemyIds, settings: {} });
@@ -282,8 +283,8 @@ function scriptedLog(seed, classId = 'reaver', enemyIds = [ENEMY]) {
 
 test('with the preview off, a scripted fight event log is byte-identical to the recorded golden', () => {
   const all = [1, 2, 3].map((s) => scriptedLog(s)).join('\n');
-  assert.equal(createHash('sha256').update(all).digest('hex'), 'df909d59130b26ab1523191b0e1386835bcf2ad7c944e32f8de5ffc6addb5d12');
-  assert.equal(all.length, 289603);
+  assert.equal(createHash('sha256').update(all).digest('hex'), 'dd42bcd5a5a13bf63353d54ad40ad7b11befa3b52fc7e886a2f0b681735e9129');
+  assert.equal(all.length, 289925);
 });
 
 // Review finding 1: a queued card that an earlier queued card removed from hand never resolves.

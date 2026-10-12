@@ -3,7 +3,13 @@
 // Serves the project over http://localhost so the ES-module app (index.html →
 // src/main.js) and the optional music/ folder load correctly (file:// blocks
 // module + audio loading in most browsers). Used by tools/launch.mjs, or run
-// directly:  node tools/serve.mjs [--port N] [--no-open] [--root DIR]
+// directly:  node tools/serve.mjs [--port N] [--no-open] [--no-lan] [--host ADDR] [--root DIR]
+//
+// WHERE IT LISTENS. Without --host it listens on every interface, as it always
+// has (LAN play needs that). --host ADDR binds only ADDR; `--host localhost`
+// binds the loopback interfaces 127.0.0.1 and, where the machine has it, ::1,
+// so http://localhost:PORT answers whichever one the browser resolves first.
+// --no-lan only turns off the LAN session layer; it does not change the bind.
 //
 // THE ART COMES FROM THE FETCHED RELEASE (docs/EXTERNAL-ASSETS-PLAN.md steps 12
 // and 13). Serving a checkout (a root with art-release.json), a request under
@@ -18,6 +24,7 @@
 // is served as it is on disk.
 
 import { createServer } from 'node:http';
+import { createServer as createNetServer } from 'node:net';
 import { readFile, stat } from 'node:fs/promises';
 import { resolve, join, extname, normalize } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -67,11 +74,12 @@ export function openBrowser(url) {
 }
 
 /**
- * serve({ root, port, open, lan }) → Promise<{ server, url, port }>
+ * serve({ root, port, open, lan, host }) → Promise<{ server, url, port }>
+ * `host` binds one address ('localhost': 127.0.0.1 and ::1); unset, every interface.
  * Bumps to the next port if the requested one is in use. `lan: true` attaches
  * the Forsaken Together session layer (tools/lan.mjs: discovery + lobby WS).
  */
-export function serve({ root = ROOT_DIR, port = 8080, open = true, lan = false, editorWrite = false, quiet = false } = {}) {
+export function serve({ root = ROOT_DIR, port = 8080, open = true, lan = false, editorWrite = false, quiet = false, host } = {}) {
   const rootResolved = resolve(root);
   const checkout = existsSync(join(rootResolved, 'art-release.json'));
   const notedMissing = new Set(); // one note per missing pack, not one per request
@@ -80,6 +88,15 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, lan = false, 
     try {
       if (lanLayer && (await lanLayer.handleHttp(req, res))) return;
       const urlPath = decodeURIComponent((req.url || '/').split('?')[0]);
+      // Which folder this server serves, so the Workbench reuses it only for
+      // its own project. Loopback only: the path is not for LAN clients.
+      if (urlPath === '/__serve/info') {
+        const local = ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress || '');
+        const ok = local && /^(localhost|127\.0\.0\.1):\d+$/.test(req.headers.host || '');
+        res.writeHead(ok ? 200 : 403, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
+        res.end(JSON.stringify(ok ? { root: rootResolved } : { error: 'Local requests only.' }));
+        return;
+      }
       // Direct edits to the master JSON become native card data on refresh.
       if(editorWrite&&urlPath==='/src/content/cardComponents.generated.js'){
         const {refreshCardLayout}=await import('./card-layout-save.mjs');
@@ -223,15 +240,26 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, lan = false, 
       if (err.code === 'EADDRINUSE') {
         console.error(`serve: port ${port} in use — trying ${port + 1}`);
         port += 1;
-        server.listen(port);
+        listen();
       } else {
         throw err;
       }
     });
-    server.listen(port, async () => {
+    const loopback = host === 'localhost';
+    const listen = () => (host ? server.listen(port, loopback ? '127.0.0.1' : host) : server.listen(port));
+    server.once('listening', async () => {
       // `port` 0 asks the OS for a free one; name the port it gave.
       port = server.address().port;
-      const url = `http://localhost:${port}/`;
+      if (loopback) {
+        // Also answer on ::1, where localhost may resolve first; best-effort
+        // (no IPv6, or the port taken there, leaves 127.0.0.1 alone).
+        const v6 = createNetServer((socket) => server.emit('connection', socket));
+        v6.on('error', () => {});
+        v6.listen(port, '::1');
+        server.on('close', () => v6.close());
+      }
+      const shown = !host || loopback || ['127.0.0.1', '::1', '0.0.0.0', '::'].includes(host) ? 'localhost' : host.includes(':') ? `[${host}]` : host;
+      const url = `http://${shown}:${port}/`;
       const log = quiet ? () => {} : (line) => console.log(line);
       log(`\n  ▸ Ashen Spire is live at ${url}`);
       log(`    Serving ${rootResolved}`);
@@ -245,6 +273,7 @@ export function serve({ root = ROOT_DIR, port = 8080, open = true, lan = false, 
       if (open) openBrowser(url);
       done({ server, url, port });
     });
+    listen();
   });
 }
 
@@ -260,5 +289,6 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
     open: !args.includes('--no-open'),
     lan: !args.includes('--no-lan'),
     editorWrite: args.includes('--editor-write'),
+    host: flag('--host', undefined),
   });
 }

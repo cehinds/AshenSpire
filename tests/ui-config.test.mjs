@@ -52,7 +52,7 @@ test('uiConfig mirrors the folders, holds only resolved values, and is deep-froz
   for (const name of ['card', 'selection', 'inspect', 'identity', 'possession', 'buttons', 'tooltip', 'hud', 'categoryNav', 'workspace', 'choiceBody', 'inspector']) {
     assert.ok(uiConfig.components[name], `components.${name}`);
   }
-  assert.deepEqual(Object.keys(uiConfig.screens).sort(), ['armoury', 'creation', 'prologue', 'shop', 'smith']);
+  assert.deepEqual(Object.keys(uiConfig.screens).sort(), ['armoury', 'creation', 'prologue', 'shop', 'smith', 'title']);
   assertDeepFrozen(uiConfig, 'uiConfig');
   assert.doesNotMatch(JSON.stringify(uiConfig), /"\$|numerator|"vars"/, 'no variable, fraction or vars block survives compilation');
 });
@@ -224,6 +224,16 @@ test('a file outside the known places is refused by name', () => {
 test('scene bands that do not sum to 100 are refused by name', () => {
   refusedWith(planted('ui/scenes/w4c-dialogue.json', (d) => { d.sizing.bands.footer = 20; }),
     'content/config/ui/scenes/w4c-dialogue.json: sizing.bands sum to 105, not 100');
+});
+
+test('desktop-band scene bands with a negative entry are refused by name, even when they sum to 100', () => {
+  refusedWith(planted('ui/scenes/w4a-combat.json', (d) => { d.sizing.desktopBands = { hud: -5, scene: 45, context: 60, footer: 0 }; }),
+    'content/config/ui/scenes/w4a-combat.json: sizing.desktopBands must map each band to a non-negative percent');
+});
+
+test('desktop-band scene bands that do not sum to 100 are refused by name', () => {
+  refusedWith(planted('ui/scenes/w4a-combat.json', (d) => { d.sizing.desktopBands.footer = 10; }),
+    'content/config/ui/scenes/w4a-combat.json: sizing.desktopBands sum to 106, not 100');
 });
 
 test('a floorPercent outside 0–100 is refused by name', () => {

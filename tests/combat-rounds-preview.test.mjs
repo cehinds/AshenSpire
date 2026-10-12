@@ -99,8 +99,8 @@ test('a preview-off save is byte-identical to the save before the preview saved 
   }
   const all = out.join('\n');
   assert.ok(!all.includes('"combatRounds"'), 'no preview key is written');
-  assert.equal(createHash('sha256').update(all).digest('hex'), 'daf25e46b0059112535b0362fdac55841dec4664242a5b9bc5de82e96f873a01');
-  assert.equal(all.length, 118947);
+  assert.equal(createHash('sha256').update(all).digest('hex'), '1940086462feac02ab33381bb753277e996f1ad7c409a100d0fa736a5462cf33');
+  assert.equal(all.length, 119423);
 });
 
 test('a preview fight with queued cards saves and restores: queues and paid SP intact, End Turn works after restore', () => {
