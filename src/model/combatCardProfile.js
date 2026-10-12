@@ -44,7 +44,7 @@ export function combatProfileFor(carrier = {}) {
   if (traits.length) profile.traits = traits;
   // These are authored payloads, not guessed from a card's name or damage type.
   for (const key of ['reach', 'targeting', 'traits', 'projectile', 'counterCoverage', 'counterPayload',
-    'evade', 'upcast', 'stanceTrigger', 'stanceExpiry', 'schoolEffect', 'caster', 'breakPoiseBonus', 'pronePoiseBonus']) {
+    'evade', 'upcast', 'stanceTrigger', 'stanceExpiry', 'schoolEffect', 'caster', 'breakPoiseBonus', 'pronePoiseBonus', 'traitValues']) {
     if (carrier[key] !== undefined) profile[key] = structuredClone(carrier[key]);
   }
   return profile;

@@ -11,7 +11,7 @@ import { expansionCarrierTraits } from './combatExpansionEquipment.js';
 export function tacticalCarrier(def, extra = {}, ctx = null, source = null) {
   const metadata = {};
   for (const key of ['reach', 'targeting', 'traits', 'projectile', 'counterCoverage', 'counterPayload',
-    'evade', 'upcast', 'stanceTrigger', 'stanceExpiry', 'schoolEffect', 'caster', 'breakPoiseBonus', 'pronePoiseBonus', 'comboHook']) {
+    'evade', 'upcast', 'stanceTrigger', 'stanceExpiry', 'schoolEffect', 'caster', 'breakPoiseBonus', 'pronePoiseBonus', 'comboHook', 'traitValues']) {
     if (def[key] !== undefined) metadata[key] = structuredClone(def[key]);
   }
   const carrier = { ...metadata, ...extra, tags: def.cardTags ?? def.tags ?? extra.tags, attack: extra.attack ?? def.attack,
