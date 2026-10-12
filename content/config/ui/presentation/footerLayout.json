@@ -1,6 +1,7 @@
 {
   "sizing": {
     "maximumWidthPx": 600,
+    "desktopMaximumWidthPx": 450,
     "minimumHeightPx": 92,
     "compactBelowPx": 680
   },

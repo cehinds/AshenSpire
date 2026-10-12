@@ -42,7 +42,8 @@ export function footerArtHeight(width, zoom = 1, formFactor = null) {
 }
 
 export function footerArtWidth(width, zoom = 1, formFactor = null) {
-  return Math.min(width, footerSizing.maximumWidthPx / zoom);
+  const maximumWidthPx = formFactor === 'desktop' ? footerSizing.desktopMaximumWidthPx : footerSizing.maximumWidthPx;
+  return Math.min(width, maximumWidthPx / zoom);
 }
 
 // Resample the authored ring around its ordered sockets for the live capacity.

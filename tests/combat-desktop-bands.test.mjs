@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { allocateCombatBands } from '../src/ui/models/CombatLayout.js';
-import { footerArtHeight } from '../src/ui/models/FooterLayoutModel.js';
+import { footerArtHeight, footerArtWidth } from '../src/ui/models/FooterLayoutModel.js';
 import { uiConfig } from '../src/config/generated/ui.js';
 
 const near = (a, b) => Math.abs(a - b) < 1e-6;
@@ -47,4 +47,16 @@ test('tablet, mobile and widescreen keep the nominal stacked shares', () => {
     assert.deepEqual({ ...allocateCombatBands({ width: 1024, height: 768, formFactor }) }, { ...nominal }, `formFactor ${formFactor}`);
   }
   assert.ok(near(nominal.hud, 76.8) && near(nominal.hand, 230.4), 'nominal 10/55/30/5 at 1024x768');
+});
+
+test('desktop footer art is 450 physical px wide, about 92px tall at 1440x900', () => {
+  const zoom = 1.2, width = 1440 / zoom;
+  assert.ok(near(footerArtWidth(width, zoom, 'desktop') * zoom, 450), 'width');
+  assert.ok(Math.abs(footerArtHeight(width, zoom, 'desktop') * zoom - 92) < 0.5, `height ${footerArtHeight(width, zoom, 'desktop') * zoom}`);
+});
+
+test('tablet and phone footer art keeps the 600px maximum', () => {
+  assert.ok(near(footerArtWidth(1024, 1, 'tablet'), 600));
+  assert.ok(near(footerArtWidth(1200, 1, 'mobile'), 600));
+  assert.ok(near(footerArtWidth(1200, 1, null), 600));
 });
