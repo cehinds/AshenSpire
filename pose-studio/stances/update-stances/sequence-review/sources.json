@@ -7,7 +7,7 @@
     "floorY": 464,
     "bodyX": 384
   },
-  "normalization": "Counter A1.18; Counter B1.0 provisional rigid-body calibration; Evade0.75; manual pelvis projection anchors.",
+  "normalization": "Counter A1.18; Counter B1.0 reviewed rigid-body calibration; Evade0.75; manual pelvis projection anchors.",
   "sources": [
     {
       "id": "C",
@@ -102,7 +102,7 @@
         282,
         346
       ],
-      "calibrationStatus": "Counter B rigid helmet/boot size is larger than A; reduced prototype scale pending director alignment review"
+      "calibrationStatus": "Counter B rigid helmet/boot size is larger than A; reduced scale1.0 approved by director for sequence review"
     },
     {
       "id": "G",
@@ -134,7 +134,7 @@
         286,
         1296
       ],
-      "calibrationStatus": "Counter B rigid helmet/boot size is larger than A; reduced prototype scale pending director alignment review"
+      "calibrationStatus": "Counter B rigid helmet/boot size is larger than A; reduced scale1.0 approved by director for sequence review"
     },
     {
       "id": "V",
