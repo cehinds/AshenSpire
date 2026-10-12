@@ -1195,6 +1195,9 @@ When the Combat Rounds Preview is on, see §4.11.
 - Enemy actions beyond the read count show as `?` in the enemy's intent box (see Perception).
 - A queued Counter answers only the next attack from its target, then is spent. The §4.7 grant and expiry timing does not apply in the preview.
 - In co-op, momentum is per seat: each seat has its own −3..+3 against each enemy.
+
+**Provisional (pending owner)**
+
 - Block (player and enemy) lasts one round in the preview: both reset at the start of the round commit (provisional, pending owner confirmation).
 
 ## 5. Content specification
