@@ -94,6 +94,7 @@ function optionsFor(ctx, row, group, hooks, refusal = null) {
       const candidate = candidateState(ctx);
       candidate.queue = []; delete candidate.pendingReaction; delete candidate.reactionResume;
       candidate._reactionPlaying = true; candidate._buffer = null;
+      candidate._reactionSourceId = group.sourceId;
       candidate.pendingExpansionActions = 0;
       if (candidate.foundation) { candidate.foundation.eventCount = 0; candidate.foundation.rolls = {}; candidate.foundation.counts = {}; }
       hooks.setOwner?.(candidate, row.playerId);
@@ -123,6 +124,9 @@ function optionsFor(ctx, row, group, hooks, refusal = null) {
         // Ineligible under the normal card/payment/control rules; the refusal names why.
         const { reason, ...extra } = error?.playRefusal || {};
         note(REASON_RANK[reason] === undefined ? 'other' : reason, extra);
+      } finally {
+        // Counterstrike reads the incoming attacker of this root, as resolution does.
+        delete candidate._reactionSourceId;
       }
     }
   }
