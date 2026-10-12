@@ -15,6 +15,17 @@ function identity(tags, prefix, allowed, name) {
   return values[0] || null;
 }
 
+/**
+ * THE ONE SPELL TEST: a Spell is the spell CAMP, nothing else. Mana cost and
+ * magical school do not make a card a Spell; only its camp does. Gainers of
+ * Barrier (actions.js gainBarrier) and the card face ("Gain N Ward") both read it.
+ */
+export function isSpellCard(card) {
+  if (!card) return false;
+  const tags = card.tags || card.cardTags;
+  return card.combatProfile?.camp === 'spell' || (Array.isArray(tags) && tags.includes('camp:spell'));
+}
+
 /** Resolve authored identity; card names and spell damage never choose a camp. */
 export function combatProfileFor(carrier = {}) {
   carrier ??= {};

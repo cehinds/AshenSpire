@@ -31,7 +31,7 @@ import { resolveCard } from './registries.js';
 import { tagService } from './tagService.js';
 import { computeTokenBindings, cardTokenEffects } from './validate.js';
 import { balance } from '../content/balance.js';
-import { combatProfileFor } from './combatCardProfile.js';
+import { combatProfileFor, isSpellCard } from './combatCardProfile.js';
 import { cardSigilIdentity } from '../content/combatSigils.js';
 import { resolve as resolveTags } from '../content/tags.js';
 import { constantFormulaValue, describeFormula } from './formulas.js';
@@ -124,7 +124,7 @@ export function combatCardSummary(def, preview = null, registries = null) {
       }
       case 'block': text = `${effect.target === 'ally' ? 'Ally gains' : 'Gain'} ${n} Block`; break;
       // A Spell's gain refills Ward first and only the overflow is Barrier, so it reads Ward.
-      case 'gainBarrier': text = `Gain ${n} ${p.camp === 'spell' ? 'Ward' : 'Barrier'}`; break;
+      case 'gainBarrier': text = `Gain ${n} ${isSpellCard({ combatProfile: p, tags: def.tags }) ? 'Ward' : 'Barrier'}`; break;
       case 'gainWard': text = `Restore ${n} Ward${effect.oncePerCombat ? ' once per combat' : ''}`; break;
       case 'gainPoise': text = `Gain ${n} Poise guard`; break;
       case 'buildup': text = `Add ${n} ${title(effect.status)} buildup${area}${effect.chance !== undefined && effect.chance < 100 ? ` (${effect.chance}%)` : ''}`; break;

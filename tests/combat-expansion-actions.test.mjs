@@ -232,6 +232,25 @@ test('a non-magical Barrier gain adds Barrier alone and leaves Ward alone', () =
   assert.equal(enemy.barrier, 6);
 });
 
+test('a mana-costing skill that is not a Spell adds Barrier alone, even though it is magical', () => {
+  const { combat, enemy } = fixture();
+  enemy.persistentWard = { max: 3, value: 1 }; enemy.barrier = 0;
+  const skill = { cardId: 'starstonePebble', manaCost: 2, skipRatingBonus: true, tags: ['maneuver:casting'],
+    combatProfile: { camp: 'physical', maneuver: 'casting', school: 'arcane', damageType: 'blunt', reach: 'near', targeting: 'single' } };
+  assert.equal(gainBarrier(combat, enemy, 6, skill), 6);
+  assert.equal(enemy.persistentWard.value, 1, 'a non-Spell source does not refill Ward');
+  assert.equal(enemy.barrier, 6);
+});
+
+test('a Spell card refills Ward first and gainBarrier returns the Ward refill plus the Barrier overflow', () => {
+  const { combat, enemy } = fixture();
+  enemy.persistentWard = { max: 3, value: 1 }; enemy.barrier = 0;
+  const spellByTag = { cardId: 'starstonePebble', skipRatingBonus: true, tags: ['camp:spell'] };
+  assert.equal(gainBarrier(combat, enemy, 6, spellByTag), 6, 'granted: 2 into Ward, 4 into Barrier');
+  assert.equal(enemy.persistentWard.value, 3);
+  assert.equal(enemy.barrier, 4);
+});
+
 test('Barrier is consumed hit by hit: the first hit is fully stopped, the second meets Ward', () => {
   const { combat, enemy } = fixture();
   enemy.ratings.ward = 5; enemy.persistentWard = { max: 5, value: 5 };

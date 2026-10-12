@@ -51,6 +51,7 @@ import { creditKnowledgeImpact } from './enemyKnowledge.js';
 
 import * as Expanded from './combatExpansionActions.js';
 import * as Control from './combatStatusControl.js';
+import { isSpellCard } from '../model/combatCardProfile.js';
 import { syncWardMaximum, syncPoiseMaximum } from './combatPools.js';
 export { syncWardMaximum, syncPoiseMaximum };
 import * as Blight from './ashenBlight.js';
@@ -256,14 +257,14 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
 export function gainBarrier(ctx, entity, base, card = null) {
   if (!entity?.alive) return 0;
   const amount = computeBlockGain(ctx, entity, base, card);
-  // A MAGICAL source refills Ward first; only the overflow becomes Barrier.
-  // Every other source (a non-magic move, turn-start protection) adds Barrier alone.
-  const magical = card && (isMagicalAttack(ctx, card) || card.combatProfile?.camp === 'spell' || card.tags?.includes('camp:spell'));
-  if (entity.persistentWard && ctx.combatExpansionVersion === 2 && magical) {
+  // A SPELL refills Ward first; only the overflow becomes Barrier. Every other
+  // source (a mana-costing skill, a non-magic move, turn-start protection) adds Barrier alone.
+  if (entity.persistentWard && ctx.combatExpansionVersion === 2 && isSpellCard(card)) {
     syncWardMaximum(ctx, entity);
-    // restorePersistentWard refills Ward and emits the Barrier overflow itself.
-    Control.restorePersistentWard(ctx, entity, amount, { source: 'card' });
-    return amount;
+    // restorePersistentWard refills Ward and emits the Barrier overflow itself. Ashen Blight's
+    // restore percent is already on the gain upstream, so it is not applied a second time here.
+    const granted = Control.restorePersistentWard(ctx, entity, amount, { source: 'card', modifierPercent: 0 });
+    return (granted.restored || 0) + (granted.barrier || 0);
   }
   entity.barrier = (entity.barrier || 0) + amount;
   ctx.emit('barrierGained', { targetId: entity.id, amount, total: entity.barrier, ...seatOf(ctx, entity) });
