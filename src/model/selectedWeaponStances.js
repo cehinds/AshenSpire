@@ -4,7 +4,10 @@ export const REAVER_GREATSWORD_PILOT = 'reaver-greatsword-pilot';
 
 /** A presentation opt-in from the active hands, never the class's starter weapon. */
 export function selectedWeaponProfileFor({ classId, armourId, grip } = {}) {
-  if (classId !== 'reaver' || armourId !== 'default' || grip?.mode !== 'two') return null;
+  // The attack-v1 greatsword package has no handsRequired, so the real starter
+  // projects mode "one". Both canonical single-weapon modes use this reviewed
+  // two-hand painting; an occupied other hand still excludes the pilot.
+  if (classId !== 'reaver' || armourId !== 'default' || !['one', 'two'].includes(grip?.mode)) return null;
   return (grip.right === 'greatsword' && !grip.left) || (grip.left === 'greatsword' && !grip.right)
     ? REAVER_GREATSWORD_PILOT : null;
 }
