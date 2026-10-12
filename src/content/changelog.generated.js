@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-12",
     "summary": "Picking a card shows its stance before you play it",
     "detail": "Selecting a card in hand puts your fighter in that card's stance, and the stance mark above their head changes to match; click through your hand and both follow each card, and cancelling returns them to your last stance. Playing the card swings from that stance, and afterwards your fighter holds it — into the next turn too — until you play another card. The stances are attack, smash, sweep, defend, counter and prepare: spells and cards that are none of the others show prepare, and sweep now has its own mark. Smash uses the attack pose on the fighter for now, with its own mark above. Co-op seats hold their stance across turns but do not show a preview while selecting.",
-    "build": "0.7.1.1391",
+    "build": "0.7.1.1395",
     "pullRequest": 1886,
     "url": "https://github.com/cehinds/AshenSpire/pull/1886"
+  },
+  {
+    "id": "pr-1875",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Widescreen combat uses the desktop layout",
+    "detail": "On widescreen monitors the combat screen now uses the same band sizes as desktop: a taller hand with the larger desktop cards in a row under the Combat log and the compact 450px footer. Turning a tablet into a desktop-width window now redraws the battlefield for the new layout. Phone and tablet layouts are unchanged.",
+    "build": "0.7.1.1393",
+    "pullRequest": 1875,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1875"
   },
   {
     "id": "pr-1881",
