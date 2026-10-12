@@ -105,7 +105,7 @@ export const MAX_CARD_RANK = 99;
 // runs keep their previous class curve and pools; migration never opts them in.
 // 23: new runs carry enemy knowledge rules and their exact learning receipts.
 // Migration preserves absence on historical runs.
-// 24 (SPEC §15.4): a pending reward may carry `relicChoices` (a boss victory's
+// 24 (SPEC §6): a pending reward may carry `relicChoices` (a boss victory's
 // up-to-three relics to pick ONE from) and its checkpoint `chosenRelicId`. The
 // bump is what makes an OLDER build refuse-and-keep such a save rather than
 // read it and drop the choice; a 23 save has no relic choices, so 23 → 24 is a
@@ -1425,7 +1425,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       if (pending.chosenCardId && pending.states?.card !== 'taken') {
         problems.push('pendingReward chosenCardId requires card Taken state');
       }
-      // A boss victory's relic choice (SPEC §15.4): `relicChoices` is the
+      // A boss victory's relic choice (SPEC §6): `relicChoices` is the
       // distinct relics offered, pick ONE; `chosenRelicId` is null or one of them.
       if (pending.rewards?.relicChoices !== undefined) {
         const ids = pending.rewards.relicChoices;
@@ -1440,6 +1440,9 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       const relicChoices = Array.isArray(pending.rewards?.relicChoices) ? pending.rewards.relicChoices : [];
       if (pending.chosenRelicId && !relicChoices.includes(pending.chosenRelicId)) {
         problems.push('pendingReward.chosenRelicId must belong to pendingReward.rewards.relicChoices');
+      }
+      if (pending.rewards?.relicChoices !== undefined && pending.states?.relic === 'taken' && !pending.chosenRelicId) {
+        problems.push('pendingReward relic Taken state requires chosenRelicId');
       }
     }
   }
@@ -1700,7 +1703,7 @@ export function migrateRunSchema(run) {
   // needs the deck's own attack slots, so the load door does it once
   // (engine/save.js, the POOL-BUILT DECK block), reading this version from
   // migratedFromRunSchemaVersion. A Standard run has nothing to migrate.
-  // v23 → v24: no relic choices could be written before (SPEC §15.4); nothing to fill.
+  // v23 → v24: no relic choices could be written before (SPEC §6); nothing to fill.
   if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
     throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: ${Array.from({ length: RUN_SCHEMA_VERSION }, (_, index) => index + 1).join(', ')})`);
   }
