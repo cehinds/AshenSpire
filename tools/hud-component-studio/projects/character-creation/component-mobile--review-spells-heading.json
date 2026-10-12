@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "title": "Review Spells Heading",
+  "canvas": {
+    "width": 262,
+    "height": 40,
+    "background": "transparent"
+  },
+  "defaultState": "review",
+  "states": [
+    {
+      "id": "review",
+      "name": "Review"
+    }
+  ],
+  "assets": {},
+  "nodes": [
+    {
+      "id": "review-spells-label",
+      "name": "Review Spells Label",
+      "type": "text",
+      "parent": "review-spells-heading",
+      "x": 0,
+      "y": 0,
+      "width": 262,
+      "height": 40,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "text": "Spells",
+      "fontSize": 19,
+      "fontFamily": "Georgia",
+      "fill": "#d7b45f",
+      "lineHeight": 1.3
+    },
+    {
+      "id": "review-spells-heading",
+      "name": "Review Spells Heading",
+      "type": "group",
+      "parent": null,
+      "x": 0,
+      "y": 0,
+      "width": 262,
+      "height": 40,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "fill": "none"
+    }
+  ],
+  "metadata": {
+    "componentSource": "review-spells-heading",
+    "sourceState": "review",
+    "designOnly": true
+  }
+}

@@ -1,0 +1,112 @@
+{
+  "version": 1,
+  "title": "Feats / Intro",
+  "canvas": {
+    "width": 354,
+    "height": 125,
+    "background": "transparent"
+  },
+  "defaultState": "feats",
+  "states": [
+    {
+      "id": "feats",
+      "name": "Feats"
+    }
+  ],
+  "assets": {},
+  "nodes": [
+    {
+      "id": "feats-intro",
+      "name": "Feats / Intro",
+      "type": "group",
+      "parent": null,
+      "x": 0,
+      "y": 0,
+      "width": 354,
+      "height": 125,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "fill": "none"
+    },
+    {
+      "id": "feats-eyebrow",
+      "name": "Feats Eyebrow",
+      "type": "text",
+      "parent": "feats-intro",
+      "x": 0,
+      "y": 0,
+      "width": 354,
+      "height": 40,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "text": "CHARACTER TRAITS",
+      "fontSize": 14,
+      "fontFamily": "Arial",
+      "fill": "#b9a36e",
+      "lineHeight": 1.3
+    },
+    {
+      "id": "feats-heading",
+      "name": "Feats Heading",
+      "type": "text",
+      "parent": "feats-intro",
+      "x": 0,
+      "y": 29,
+      "width": 354,
+      "height": 40,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "text": "Choose your feats",
+      "fontSize": 28,
+      "fontFamily": "Georgia",
+      "fill": "#d7b45f",
+      "lineHeight": 1.3
+    },
+    {
+      "id": "feats-subheading",
+      "name": "Feats Subheading",
+      "type": "text",
+      "parent": "feats-intro",
+      "x": 0,
+      "y": 93,
+      "width": 354,
+      "height": 40,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "text": "Shape how your journey unfolds.",
+      "fontSize": 16,
+      "fontFamily": "Arial",
+      "fill": "#e7dec8",
+      "lineHeight": 1.3
+    }
+  ],
+  "metadata": {
+    "componentSource": "feats-intro",
+    "sourceState": "feats",
+    "designOnly": true
+  }
+}

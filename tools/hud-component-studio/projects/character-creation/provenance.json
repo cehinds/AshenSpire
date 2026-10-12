@@ -377,5 +377,14 @@
       "date": "2026-10-11",
       "relationship": "Flattened six emblems retained as visual reference only; never used as editable scene artwork"
     }
-  ]
+  ],
+  "layoutDerivations": {
+    "date": "2026-10-12",
+    "source": "Preserved desktop design scenes and existing asset/provenance bundle",
+    "newArt": false,
+    "mobile": "390px deterministic reflow, compact default step navigator and independent expanded grid",
+    "pagePNGs": "Actual existing Studio full-view PNG exporter",
+    "components": "Deduplicated standalone scene definitions; transparent PNG canvas; true text remains editable",
+    "scope": "Design/editing material only; no gameplay or feat budget change"
+  }
 }

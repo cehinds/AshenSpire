@@ -1,0 +1,108 @@
+{
+  "version": 1,
+  "title": "Attributes Mode Standard",
+  "canvas": {
+    "width": 174,
+    "height": 48,
+    "background": "transparent"
+  },
+  "defaultState": "attributes",
+  "states": [
+    {
+      "id": "attributes",
+      "name": "Attributes"
+    }
+  ],
+  "assets": {},
+  "nodes": [
+    {
+      "id": "attributes-mode-standard",
+      "name": "Attributes Mode Standard",
+      "type": "group",
+      "parent": null,
+      "x": 0,
+      "y": 0,
+      "width": 174,
+      "height": 48,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "fill": "none"
+    },
+    {
+      "id": "attributes-mode-standard-background",
+      "name": "Attributes Mode Standard Background \u00b7 background",
+      "type": "rect",
+      "parent": "attributes-mode-standard",
+      "x": 0,
+      "y": 0,
+      "width": 174,
+      "height": 48,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "fill": "#163e2b",
+      "stroke": "none",
+      "radius": 4
+    },
+    {
+      "id": "attributes-mode-standard-label",
+      "name": "Attributes Mode Standard Label",
+      "type": "text",
+      "parent": "attributes-mode-standard",
+      "x": 20,
+      "y": 15,
+      "width": 139,
+      "height": 40,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "text": "Standard",
+      "fontSize": 16,
+      "fontFamily": "Arial",
+      "fill": "#e7dec8",
+      "lineHeight": 1.3
+    },
+    {
+      "id": "attributes-mode-standard-background-trim",
+      "name": "Attributes Mode Standard Background \u00b7 independent trim",
+      "type": "rect",
+      "parent": "attributes-mode-standard",
+      "x": 0,
+      "y": 0,
+      "width": 174,
+      "height": 48,
+      "z": 1.1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "fill": "none",
+      "stroke": "#72ce94",
+      "radius": 4
+    }
+  ],
+  "metadata": {
+    "componentSource": "attributes-mode-standard",
+    "sourceState": "attributes",
+    "designOnly": true
+  }
+}
