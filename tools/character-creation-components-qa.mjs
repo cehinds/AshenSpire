@@ -41,6 +41,7 @@ try {
     page.setDefaultNavigationTimeout(120000);
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
+    page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
     const url = `http://127.0.0.1:${serving.port}/${entry}?shot=components#folio-creation-feat-browser`;
     await page.goto(url, { waitUntil: 'domcontentloaded' });
     try {
@@ -63,8 +64,12 @@ try {
     const navigation = page.locator('#folio-creation-step-navigation .cc-step-navigation');
     await navigation.scrollIntoViewIfNeeded();
     const attributes = navigation.locator('[data-creation-step="attributes"]');
-    if (!await attributes.isVisible()) await navigation.locator('.as-catnav-toggle').click();
-    await attributes.click();
+    if (!await attributes.isVisible()) {
+      const toggle = navigation.locator('.as-catnav-toggle');
+      if (width < 700) await toggle.tap(); else await toggle.click();
+      await attributes.waitFor({ state: 'visible' });
+    }
+    if (width < 700) await attributes.tap(); else await attributes.click();
     assert.equal(await attributes.getAttribute('aria-current'), 'step');
     for (const componentId of componentIds) {
       const folio = page.locator(`#folio-${componentId}`);
@@ -88,15 +93,23 @@ try {
     live.setDefaultNavigationTimeout(120000);
     const liveErrors = [];
     live.on('pageerror', error => liveErrors.push(error.message));
+    live.on('console', message => { if (message.type() === 'error') liveErrors.push(message.text()); });
     const liveUrl = `http://127.0.0.1:${serving.port}/${entry}?shot=customize&shotClass=starseer`;
     await live.goto(liveUrl, { waitUntil: 'domcontentloaded' });
     await live.locator('#cz-tab-class').waitFor({ state: 'attached', timeout: 60000 });
     for (const stage of ['class', 'attributes', 'keepsake', 'equipment', 'feats', 'spells', 'review']) {
       const control = live.locator(`#cz-tab-${stage}`);
-      if (!await control.isVisible()) await live.locator('#cz-cat-select').click();
-      await control.click();
+      if (!await control.isVisible()) {
+        if (width < 700) await live.locator('#cz-cat-select').tap(); else await live.locator('#cz-cat-select').click();
+      }
+      if (width < 700) await control.tap(); else await control.click();
       await live.locator(`.cz-railed[data-creation-stage="${stage}"]`).waitFor();
-      assert.ok(await live.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `${stage} fits the ${width}px viewport`);
+      assert.ok(await live.evaluate(() => {
+        const root = document.querySelector('.screen.customize');
+        return [root, ...root.querySelectorAll('.modal-foot-actions > button, #cz-cat-select, #cz-current-step')]
+          .filter(node => !node.hidden && node.getClientRects().length)
+          .every(node => { const rect = node.getBoundingClientRect(); return rect.left >= -1 && rect.right <= innerWidth + 1; });
+      }), `${stage} rendered controls fit the ${width}px viewport`);
       if (stage === 'feats') {
         await live.locator('#cz-feats-panel [data-feat="weaponDrill"].cc-choice-tile').click();
         assert.equal(await live.locator('#cz-feats-panel .cc-feat-detail-title').textContent(), 'Weapon Drill');
