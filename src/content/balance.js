@@ -598,10 +598,9 @@ export const balance = {
       classes: { herald: ['psychic', 'earth'], starseer: ['psychic', 'earth'] },
       offerWeightMult: 2,
       startingChoice: { maxPicks: 1, source: 'spell', rarities: ['common', 'uncommon'],
-        [NOTE]: { maxPicks: 'How many element spells an affinity class may take among its starting spells at character creation.' } },
+        [NOTE]: { maxPicks: 'How many element spells (classless spell attacks of the listed rarities) an affinity class may take among its starting spells at character creation.' } },
       [NOTE]: {
         offerWeightMult: 'How many times likelier an affinity-element card is to be picked, within its rarity, in this class\'s card rewards.',
-        startingChoice: 'Element spells an affinity class may pick among its starting spells at character creation: at most maxPicks of them, from classless attack cards of this source and these rarities.',
       },
     },
     // Decaying flask drop (StS potion rule): −step on drop, +step on miss.
