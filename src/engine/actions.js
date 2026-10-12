@@ -259,10 +259,13 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
  */
 export function gainBarrier(ctx, entity, base, card = null) {
   if (!entity?.alive) return 0;
-  const amount = computeBlockGain(ctx, entity, base, card);
-  // A SPELL refills Ward first; only the overflow becomes Barrier. Every other
-  // source (a mana-costing skill, a non-magic move, turn-start protection) adds Barrier alone.
-  if (entity.persistentWard && ctx.combatExpansionVersion === 2 && isSpellCard(card)) {
+  return gainBarrierAmount(ctx, entity, computeBlockGain(ctx, entity, base, card), card);
+}
+
+// A SPELL refills Ward first; only the overflow becomes Barrier. Every other
+// source (a mana-costing skill, a non-magic move, turn-start protection) adds Barrier alone.
+function gainBarrierAmount(ctx, entity, amount, card = null, spell = isSpellCard(card)) {
+  if (entity.persistentWard && ctx.combatExpansionVersion === 2 && spell) {
     syncWardMaximum(ctx, entity);
     // restorePersistentWard refills Ward and emits the Barrier overflow itself. Ashen Blight's
     // restore percent is already on the gain upstream, so it is not applied a second time here.
@@ -618,15 +621,31 @@ export function gainMeterGuard(ctx, entity, meter, base, card = null) {
 /** gainBlock — mutating block gain with 'blockCap' modifier honored. */
 export function gainBlock(ctx, entity, base, card = null) {
   if (!entity.alive) return 0;
-  if (ctx.combatExpansionVersion === 2 && card?.combatProfile?.camp === 'spell') return gainBarrier(ctx, entity, base, card);
-  let amt = computeBlockGain(ctx, entity, base, card);
+  if (ctx.combatExpansionVersion === 2 && card?.combatProfile) {
+    const share = contactMagicShare(ctx, { ...card.combatProfile, ...(Number.isFinite(card.magicShare) ? { magicShare: card.magicShare } : {}) });
+    // A whole magic guard is Barrier (refilling Ward first). A split guard gives its magic share that way and the rest as Block.
+    if (share >= 1) return gainBarrier(ctx, entity, base, card);
+    if (share > 0) {
+      const amount = computeBlockGain(ctx, entity, base, card);
+      const magic = Math.floor(amount * share + 1e-9);
+      if (magic > 0) gainBarrierAmount(ctx, entity, magic, card, true);
+      if (amount - magic > 0) gainBlockAmount(ctx, entity, amount - magic, card, false);
+      return amount;
+    }
+  }
+  return gainBlockAmount(ctx, entity, computeBlockGain(ctx, entity, base, card), card, isMagicalAttack(ctx, card));
+}
+
+// The Block a guard lays down. A magical guard's Block is also Ward-provenance (wardBlock) unless it is a split guard's physical part.
+function gainBlockAmount(ctx, entity, amount, card = null, wardProvenance = false) {
+  let amt = amount;
   const cap = statuses.getCap(ctx, entity, 'blockCap');
   if (cap != null && entity.block + amt > cap) {
     amt = Math.max(0, cap - entity.block);
   }
   reconcileWardBlock(entity);
   entity.block += amt;
-  if (amt > 0 && card && isMagicalAttack(ctx, card)) entity.wardBlock = (entity.wardBlock || 0) + amt;
+  if (amt > 0 && card && wardProvenance) entity.wardBlock = (entity.wardBlock || 0) + amt;
   ctx.emit('blockGained', {
     targetId: entity.id, amount: amt,
     ...wardBlockReceipt(entity),
