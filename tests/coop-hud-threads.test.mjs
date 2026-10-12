@@ -48,6 +48,6 @@ test('co-op player sprites pass view combat, as solo does', () => {
   const seats = coop.slice(coop.indexOf('for (const p of sc.players)'), coop.indexOf('box.appendChild(sprite);'));
   assert.match(seats, /playerSprite\([^;]*\{ animation: equipmentAnimationForLoadout\(registries, m\.loadout, m\.classId\), view: 'combat' \}\)/,
     'the co-op player sprite must request the combat view');
-  assert.match(solo, /playerSprite\(run\.customization \|\| \{\}, run\.class, figure\.armourId, \{ animation, view: 'combat' \}\)/,
-    'solo baseline');
+  assert.match(solo, /playerSprite\(run\.customization \|\| \{\}, run\.class, figure\.armourId, \{ animation, view: 'combat', selectedWeaponProfile: selectedProfile\(\) \}\)/,
+    'solo keeps the combat view alongside its scoped selected-weapon presentation');
 });

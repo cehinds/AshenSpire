@@ -4,6 +4,7 @@
 // and a click-skip ends them.
 
 import test from 'node:test';
+import { selectedWeaponReactionFor, REAVER_GREATSWORD_PILOT } from '../src/model/selectedWeaponStances.js';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { callout, clearCallouts, CALLOUT_KINDS, playTimeline, setAnimSpeed, setBeatOrder, ANIM_SPEEDS, calloutForEvent } from '../src/ui/fx.js';
@@ -96,6 +97,36 @@ const timeOf = (trace, what) => trace.find((e) => e.what === what)?.at;
 const enemyAttack = (...events) => [{ type: 'enemyMoveStarted', sourceId: 'e1', kind: 'attack' }, ...events];
 const playerAttack = (...events) => [{ type: 'cardPlayed', cardType: 'attack', cardId: 'strike', cardInstanceId: 'c1', targetId: 'e1' }, ...events];
 const hit = (sourceId, targetId, amount = 4) => ({ type: 'damageDealt', sourceId, targetId, amount, blocked: 0 });
+
+for (const mode of ['sequential', 'impact', 'instant', 'reduced']) test(`selected player receipt reactions execute once in ${mode} playback`, t2 => {
+  drive(t2, ({dom, run, finish, trace}) => {
+    if (mode === 'instant') setAnimSpeed('instant');
+    if (mode === 'reduced') dom.document.body.classList.add('reduced-motion');
+    const reactions=[];
+    const events=enemyAttack(
+      {type:'attackEvaded',targetId:'player'},
+      {type:'combatAvoidanceResolved',targetId:'player',avoided:false,evade:{success:false}},
+      {type:'combatAvoidanceResolved',targetId:'player',avoided:true,distance:{success:true}},
+      {type:'combatGuardBroken',targetId:'player',poise:0},
+      {type:'combatGuardBroken',targetId:'e1',poise:0});
+    run(events,{beatOrder:mode==='impact'?'impact':'sequential',reactionForReceipt:event=>{
+      const kind=selectedWeaponReactionFor(event,REAVER_GREATSWORD_PILOT);
+      return kind?()=>reactions.push({kind,targetId:event.targetId,at:Date.now()}):null;
+    }});
+    finish();
+    assert.deepEqual(reactions.map(({kind,targetId})=>({kind,targetId})),[
+      {kind:'evade',targetId:'player'},{kind:'guard-break',targetId:'player'}]);
+    if(mode==='sequential')assert.ok(reactions.every(reaction=>reaction.at>=TOTAL),'defender reactions follow the complete swing');
+    assert.ok(trace.some(entry=>entry.what==='callout:evaded@player'),'the existing successful callout remains');
+  });
+});
+
+test('an unsupported receipt reaction hook preserves callout-only pacing',t2=>{
+  drive(t2,({trace,run,finish})=>{
+    run(enemyAttack({type:'attackEvaded',targetId:'player'}),{reactionForReceipt:()=>null});finish();
+    assert.equal(timeOf(trace,'bars'),TOTAL,'no extra reaction wait when the fighter has no selected profile');
+  });
+});
 
 const CASES = [
   ['CRITICAL on the target, with its hurt pose', enemyAttack({ type: 'critHit', sourceId: 'e1', targetId: 'player', multiplier: 2 }, hit('e1', 'player')), 'critical@player'],

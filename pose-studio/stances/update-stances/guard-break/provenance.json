@@ -1,0 +1,40 @@
+{
+  "generated_at_utc": "2026-10-12",
+  "tool": "Codex image_gen",
+  "references": {
+    "reaver_offensive": "/workspace/AshenSpire/assets-display/alternative/stances/reaver/offensive.webp",
+    "reaver_default": "/workspace/AshenSpire/pose-studio/stances/source/reaver-default.png",
+    "pose_research": "/workspace/AshenSpire/docs/design/update-stances/references.md",
+    "external_study": {
+      "url": "https://www.guide-du-perigord.com/fr/experiences/festive/article-medievale-chateau-bourdeilles-613.html",
+      "note": "Research discovery cited by the pose researcher; external pixels were not directly inspected."
+    }
+  },
+  "artifacts": [
+    {
+      "path": "pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-a.png",
+      "generator_source": "/workspace/generated_images/exec-b27d6839-1b40-4ac5-aff5-a1638502c811.png",
+      "sha256": "f106d7acc92fae679f324a6fab3c1d15c6202241350657f1a97400f83373e65a",
+      "prompt": "pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-a-prompt.md",
+      "review": "A01 accepted after targeted revision. A02, A03 and A05 accepted. A04 remains flagged: the greatsword overlaps A05's rear boot and its length is inconsistent."
+    },
+    {
+      "path": "pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-a-original.png",
+      "generator_source": "/workspace/generated_images/exec-ce7f5c03-6c8c-4629-8f66-8ed77cce7e23.png",
+      "sha256": "1fb86d57c18c19bba8348ca2bb84dcadcedc2f10cfce683bcb54573bae7f6dfa",
+      "prompt": "pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-a-original-prompt.md",
+      "review": "Preserved unique pre-revision baseline; not canonical."
+    },
+    {
+      "path": "pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-b.png",
+      "generator_source": "/workspace/generated_images/exec-86f32509-4eb3-498b-b001-7d0772b0d07d.png",
+      "sha256": "f3243a6cb1418800c28788f7f975e6fed6ce18953d172e7fa863370b90f6ed68",
+      "prompt": "pose-studio/stances/update-stances/guard-break/reaver-greatsword-guard-break-sheet-b-prompt.md",
+      "review": "B06-B10 accepted as concept candidates. B08 shoulder carry reads more exhausted/resting than clearly guard-broken."
+    }
+  ],
+  "candidate_count": 10,
+  "selectable_count": 9,
+  "flagged_count": 1,
+  "transparency": "RGBA alpha is valid; browser review confirmed transparent background."
+}
