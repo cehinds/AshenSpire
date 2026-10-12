@@ -63,6 +63,10 @@ export function playerFormationCell(cell, dimensions) {
   if (isFormationCell(cell, dimensions)) return cell;
   // Classic allows up to three player columns; each collapses into column 1.
   if (dimensions.perspective && isFormationCell(cell, { columns: 3, rows: dimensions.rows }, 'player')) return `${cell[0]}1`;
+  // Back on Classic, a perspective lane past Classic's rows stands in its last row.
+  if (!dimensions.perspective && isFormationCell(cell, { columns: dimensions.columns, rows: 6 }, 'player')) {
+    return `${FORMATION_ROWS[Math.min(FORMATION_ROWS.indexOf(cell[0]), dimensions.rows - 1)]}${cell[1]}`;
+  }
   return null;
 }
 
