@@ -1320,20 +1320,24 @@ export function mountRewards(app, {
       // One column per relic: the card face on top at glance (no inspection door,
       // no lore), the text button under it as the accessible radio. Both select.
       // The face binds no door of its own, so a tap on it only selects.
-      const column = el('div', { class: 'reward-choice-option', dataset: { pickId: id } });
+      // A relic the run already holds (one gained earlier on this screen) is
+      // shown but cannot be picked: its face and button are disabled.
+      const owned = run.relics.includes(id);
+      const column = el('div', { class: `reward-choice-option${owned ? ' is-owned' : ''}`, dataset: { pickId: id } });
       if (option.definition) {
         const face = renderCollectibleCard(registries, option.definition, t('reward.kind.relic'), { interactive: false, inspection: false, level: 'glance' }).card;
         face.classList.add('reward-choice-face');
         face.dataset.pickId = id;
-        face.addEventListener('click', () => selectCard(id));
+        if (owned) face.classList.add('is-owned');
+        else face.addEventListener('click', () => selectCard(id));
         column.appendChild(face);
       }
-      const tile = el('button', { class: 'class-pick reward-node reward-pick reward-choice-button', type: 'button', role: 'radio',
+      const tile = el('button', { class: 'class-pick reward-node reward-pick reward-choice-button', type: 'button', role: 'radio', disabled: owned,
         'aria-checked': String(id === selectedCardId), dataset: { pickId: id } }, [
         el('div', { class: 'cp-body' }, [el('h3', { text: option.name }), el('p', { text: option.text })]),
       ]);
       tile.classList.toggle('is-chosen', id === selectedCardId);
-      tile.addEventListener('click', () => selectCard(id));
+      if (!owned) tile.addEventListener('click', () => selectCard(id));
       column.appendChild(tile);
       strip.appendChild(column);
     }
