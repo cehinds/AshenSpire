@@ -79,3 +79,15 @@ Run `node tools/hud-component-studio/qa/bundle-smoke.mjs` to check direct `file:
 If the test machine blocks local-file browsing, set `HUD_STUDIO_BUNDLE_URL=http://127.0.0.1:8361/standalone.html` to test the same generated HTML through one intercepted HTTP response; the test blocks every external asset/script request.
 
 `node --test tools/hud-component-studio/qa/bundle.test.mjs` checks bundle identity separation and explicit identity stability.
+
+## Component Library: start here
+
+Open `library.html` to choose a character context, a Desktop or Mobile page, and then a component. Major sections appear first; click their tiles to explore smaller parts, or use search. Mobile pages stay readable in a scrollable phone frame. Select **Full page** to see the entire long layout. **Wireframe** switches the preview without changing the editable scene.
+
+**Open in editor** uses the same Component Studio. Text, background, trim, symbol and prop layers remain separate. **Save editable JSON** exports just the selected page or component, with its raster assets embedded. In the standalone Library, **Save editor HTML** also creates a self-contained editor for that selection. This is useful when a browser blocks the new editor tab. Individual layer exports preserve ancestor transforms and omit unrelated siblings and assets. These design specimens are independent snapshots, not a gameplay wizard.
+
+Build the one-file entry point with `node tools/hud-component-studio/bundle-library.mjs --manifest projects/character-creation/component-manifest.json --out /path/to/START-HERE-Component-Library.html`. Raster data is shared once across all pages and reusable definitions. The payload carries one copy of the existing studio template; it fills that template only when a selection is opened or saved. Each selection has its own stable editing draft.
+
+Hosted editor URLs can also include `&state=feats&node=feats-choice-art-0-symbol-book` to open a valid existing page and select its nested layer. Unknown IDs are ignored.
+
+Checks: `node --test tools/hud-component-studio/qa/library-model.test.mjs`; run `qa/library-smoke.mjs` with `HUD_LIBRARY_HTML` pointing to the built Library and `HUD_STUDIO_EXECUTABLE` selecting the installed browser. The interaction suite covers all page/context/device combinations, a 390 px preview, nested component exploration, editable symbol/text handoffs, exports and isolated reload persistence.
