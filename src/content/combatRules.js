@@ -2,16 +2,20 @@
 // combats remain on their current rules until the run migration is activated.
 export const combatRules = {
   id: 'combat-foundations-v1',
+  // magicShare: the share of a hit of this type that is MAGIC (Barrier, then
+  // Ward) rather than PHYSICAL (Block). 0 is all physical, 1 all magic, and
+  // arcane (force) is the hybrid. A card or weapon may override it; the
+  // Advanced settings rows read these as their defaults (combatRatings.js).
   damageTypes: {
-    slashing: { tag: 'damage:slashing', physical: true },
-    piercing: { tag: 'damage:piercing', physical: true },
-    blunt: { tag: 'damage:blunt', physical: true },
-    fire: { tag: 'damage:fire', physical: false },
-    frost: { tag: 'damage:frost', physical: false },
-    lightning: { tag: 'damage:lightning', physical: false },
-    arcane: { tag: 'damage:arcane', physical: false },
-    sacred: { tag: 'damage:sacred', physical: false },
-    decay: { tag: 'damage:decay', physical: false },
+    slashing: { tag: 'damage:slashing', physical: true, magicShare: 0 },
+    piercing: { tag: 'damage:piercing', physical: true, magicShare: 0 },
+    blunt: { tag: 'damage:blunt', physical: true, magicShare: 0 },
+    fire: { tag: 'damage:fire', physical: false, magicShare: 1 },
+    frost: { tag: 'damage:frost', physical: false, magicShare: 1 },
+    lightning: { tag: 'damage:lightning', physical: false, magicShare: 1 },
+    arcane: { tag: 'damage:arcane', physical: false, magicShare: 0.5 },
+    sacred: { tag: 'damage:sacred', physical: false, magicShare: 1 },
+    decay: { tag: 'damage:decay', physical: false, magicShare: 1 },
   },
   armor: { scale: 100, cap: 0.60 },
   resistanceCap: 0.75,

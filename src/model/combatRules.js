@@ -9,6 +9,7 @@ export function validateCombatRules(rules, registries = null) {
   if (!rules.damageTypes || !Object.keys(rules.damageTypes).length) throw new Error('combat rules require damage types');
   for (const [id, type] of Object.entries(rules.damageTypes)) {
     if (typeof type.physical !== 'boolean' || typeof type.tag !== 'string') throw new Error(`damageTypes.${id}: invalid metadata`);
+    if (type.magicShare !== undefined && !(Number.isFinite(type.magicShare) && type.magicShare >= 0 && type.magicShare <= 1)) throw new Error(`damageTypes.${id}: magicShare must be 0..1`);
     if (registries && !registries.tags.some((tag) => tag.id === type.tag && tag.domain === 'damageType')) throw new Error(`damageTypes.${id}: unregistered damage tag '${type.tag}'`);
   }
   assertNumber(rules.armor?.scale, 'armor.scale', 1);
