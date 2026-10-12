@@ -3,6 +3,7 @@
 import { el, railItem, categoryNav } from '../kit/index.js';
 import { engravedIcon } from './engravedIcon.js';
 import { assetUrl } from '../assetmap.js';
+import { t } from '../strings.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 
 const MATERIAL = 'assets/player-polish/materials/soot-leather-material.webp';
@@ -82,7 +83,7 @@ export function createCreationFeatBrowser({ feats = [], groups = null, selectedI
   const tiles = new Map();
   const filters = el('div', { class: 'cc-feat-groups', role: 'group', 'aria-label': labels.groupLabel || labels.title || '' });
   const tileList = el('div', { class: 'cc-feat-choices', role: 'group', 'aria-label': labels.listLabel || labels.title || '' });
-  const detail = creationPanel({ kind: 'feat-detail', className: 'cc-feat-detail', attrs: { role: 'region', 'aria-label': labels.detailLabel || labels.title || '' } });
+  const detail = creationPanel({ kind: 'feat-detail', className: 'cc-feat-detail', attrs: { role: 'region', tabindex: '-1', 'aria-label': labels.detailLabel || labels.title || '' } });
   markUiComponent(detail, UI.creationFeatDetail);
   const detailBody = detail.querySelector('.cc-part-body');
   const status = labels.availability ? el('p', { class: 'cc-feat-availability', text: labels.availability, dataset: { creationPart: 'availability' } }) : null;
@@ -145,7 +146,18 @@ export function createCreationFeatBrowser({ feats = [], groups = null, selectedI
     if (requirements) detailBody.append(requirements);
     detail.dataset.feat = row.id;
     detail.dataset.locked = String(!!row.locked);
-    if (notify) onInspect?.(row.id, row);
+    detail.style.setProperty('--cc-inspector-order', String([...tiles.keys()].indexOf(key) * 2 + 1));
+    const returnButton = el('button', { type: 'button', class: 'as-btn cc-feat-return', text: t('creation.feats.return') });
+    returnButton.addEventListener('click', () => { node.dataset.detailOpen = 'false'; const tile = tiles.get(inspectedKey); tile?.scrollIntoView({ block: 'nearest' }); tile?.focus({ preventScroll: true }); });
+    detailBody.append(returnButton);
+    if (notify) {
+      node.dataset.detailOpen = 'true';
+      onInspect?.(row.id, row);
+      if (globalThis.matchMedia?.('(max-width: 960px)').matches) requestAnimationFrame(() => {
+        detail.focus({ preventScroll: true });
+        detail.scrollIntoView({ block: 'nearest', behavior: globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+      });
+    }
     return true;
   }
   function renderTiles() {
@@ -155,13 +167,17 @@ export function createCreationFeatBrowser({ feats = [], groups = null, selectedI
     for (const row of group?.rows || []) {
       const key = keyOf(row, group);
       const tile = creationChoiceTile({ id: row.id, title: row.name,
-        description: labels.shortDescriptions?.[row.id] || row.description,
+        description: labels.shortDescriptions?.[row.id] || (FEAT_ICONS[row.id] ? t(`creation.feats.summary.${row.id}`) : String(row.description || '').split(/(?<=[.!?])\s/)[0]),
         art: creationFeatEmblem(row.id), onChoose: () => inspect(key),
         attrs: { 'aria-controls': labels.detailId || null, dataset: { feat: row.id, featKey: key, featGroup: group.id, locked: String(!!row.locked) } },
       });
       markUiComponent(tile, UI.creationFeatTile);
-      const requirements = levelStatus(row);
-      if (requirements) tile.querySelector('.cc-choice-copy').append(requirements);
+      tile.style.setProperty('--cc-choice-order', String(tiles.size * 2));
+      if (row.requiredLevel !== undefined) {
+        const stateLabel = row.locked ? labels.locked || requirement(row) : row.unlockedByProfile ? labels.profileUnlocked || requirement(row) : labels.available || requirement(row);
+        const icon = engravedIcon(row.locked ? 'lock' : 'check');
+        tile.querySelector('.cc-choice-body').append(el('span', { class: 'cc-feat-tile-status', title: stateLabel, 'aria-label': stateLabel, dataset: { creationPart: 'level-status' } }, icon));
+      }
       tiles.set(key, tile);
       tileList.append(tile);
     }
