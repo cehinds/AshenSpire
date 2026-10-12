@@ -70,7 +70,7 @@ summary read "Impact N" / "Flux N".
   order** succeeds in a candidate state. Instances already on the stack are not
   offered again.
 - An entry that can no longer be played when it is reached (the instance left
-  the hand, the payment no longer fits) **fizzles**: it emits
+  the hand, the payment no longer fits, its seat died or disconnected) **fizzles**: it emits
   `combatReactionFizzled` and pays nothing. Because the offer check replays the
   whole stack, a solo run cannot reach this; it is a guard for co-op, where a
   later seat's entries resolve first and can change state an earlier seat's

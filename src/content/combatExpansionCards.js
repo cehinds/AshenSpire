@@ -34,8 +34,8 @@ const UPCAST = {
   contagion: { pressurePerRank: 1 }, hex: { pressurePerRank: 1 },
 };
 const CHANCE_PRESSURE = new Set(['ashenMote', 'cinderSigil', 'starSpark', 'blightTouch', 'witheringTouch', 'hex']);
-const STATUS = { frost: 'frost', burn: 'burn', crimsonBlight: 'crimsonBlight', weak: 'weak', vulnerable: 'vulnerable', bleed: 'bleed', insanity: 'dazed' };
-const PROFILE = { frost: 'elemental', burn: 'elemental', crimsonBlight: 'curse', weak: 'mental', vulnerable: 'curse', bleed: 'bodily', insanity: 'mental' };
+const STATUS = { frost: 'frost', burn: 'burn', crimsonBlight: 'crimsonBlight', necroticBlight: 'necroticBlight', weak: 'weak', vulnerable: 'vulnerable', bleed: 'bleed', insanity: 'dazed' };
+const PROFILE = { frost: 'elemental', burn: 'elemental', crimsonBlight: 'curse', necroticBlight: 'curse', weak: 'mental', vulnerable: 'curse', bleed: 'bodily', insanity: 'mental' };
 function pressureValue(stacks, id) {
   // Frost's old units are retuned as units; other old stack grants become four
   // pressure units per stack instead of bypassing the new gauges/defenses.
@@ -101,8 +101,10 @@ export function applyCombatExpansionCard(def) {
     attack: { ...def.attack, source: 'spell', damageType: row.damageType }, effects: effectsFor(def.effects, row.school), textTemplate: barrierText(def.textTemplate) };
   if (def.upgrade) card.upgrade = { ...def.upgrade, ...(def.upgrade.effects ? { effects: effectsFor(def.upgrade.effects, row.school) } : {}), ...(def.upgrade.textTemplate ? { textTemplate: barrierText(def.upgrade.textTemplate) } : {}) };
   const damaging = card.effects.some(effect => effect.op === 'damage');
-  const rider = { frost: 'frost', fire: 'burn', lightning: 'paralysis', decay: 'crimsonBlight' }[row.school];
-  if (damaging && rider && !card.effects.some(effect => effect.op === 'buildup' && effect.status === rider)) {
+  const rider = { frost: 'frost', fire: 'burn', lightning: 'paralysis', decay: 'necroticBlight' }[row.school];
+  // A decay card that prints its own Blight (Crimson or Necrotic) keeps only what it prints: one Blight per hit.
+  const printsRider = effect => effect.op === 'buildup' && (effect.status === rider || (row.school === 'decay' && effect.status === 'crimsonBlight'));
+  if (damaging && rider && !card.effects.some(printsRider)) {
     const target = AREA.has(def.id) ? 'allEnemies' : 'enemy';
     card.effects.push({ op: 'buildup', target, status: rider, amount: row.school === 'fire' ? 4 : 3, camp: 'spell', recoveryProfile: PROFILE[rider] || 'elemental' });
     if (card.upgrade?.effects) card.upgrade.effects.push({ op: 'buildup', target, status: rider, amount: row.school === 'fire' ? 5 : 4, camp: 'spell', recoveryProfile: PROFILE[rider] || 'elemental' });

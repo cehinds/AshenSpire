@@ -516,13 +516,13 @@ export const reaverCards = [
     flavor: "Strike of the Bastion kennels.\n\nTaught by the kennelmaster before the hounds turned. The kennel book names them the finest in the three cities, trained upon the scent of blood alone, and never loosed on the weald's own people.\n\nAfter the Burning, the hamlets' dogs were found in those same kennels.",
     keywords: [], icon: '🩸',
     effects: [
-      { op: 'damage', target: 'enemy', amount: 4 },
+      { op: 'damage', target: 'enemy', amount: 6 },
       { op: 'damage', target: 'enemy', amount: { f: 'stacks', status: 'bleed', of: 'target' } },
     ],
     textTemplate: 'Deal {damage} damage, plus 1 for each Bleed on the target.',
     upgrade: {
       effects: [
-        { op: 'damage', target: 'enemy', amount: 6 },
+        { op: 'damage', target: 'enemy', amount: 8 },
         { op: 'damage', target: 'enemy', amount: { f: 'stacks', status: 'bleed', of: 'target' } },
       ],
     },
@@ -756,13 +756,13 @@ export const reaverCards = [
     flavor: "The whole weight of the wall, thrown forward.\n\nA Vanguard shieldman who has held long enough may drive his shield into the line before him. The chronicles of the siege praise it; the surgeons who reset the shieldmen's shoulders afterward do not.\n\nBoth kept their records honestly.",
     keywords: [], icon: '💥',
     effects: [
-      { op: 'block', target: 'self', amount: 5 },
+      { op: 'block', target: 'self', amount: 8 },
       { op: 'damage', target: 'enemy', amount: { f: 'blockOf', of: 'self' } },
     ],
     textTemplate: 'Gain {block} Block. Deal damage equal to your Block.',
     upgrade: {
       effects: [
-        { op: 'block', target: 'self', amount: 9 },
+        { op: 'block', target: 'self', amount: 12 },
         { op: 'damage', target: 'enemy', amount: { f: 'blockOf', of: 'self' } },
       ],
     },
