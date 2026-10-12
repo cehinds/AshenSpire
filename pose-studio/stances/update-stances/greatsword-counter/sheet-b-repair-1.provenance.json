@@ -1,0 +1,95 @@
+{
+  "generated_at_utc": "2026-10-12T16:25:29.316400+00:00",
+  "tool": "tools.image_gen__imagegen",
+  "exact_prompt": "sheet-b-repair.prompt.txt",
+  "prompt_sha256": "71feb0108f4b2b3abd898e073bbf036f72fdc906ad819f746e1547ea40344550",
+  "requested_dimensions": [
+    1024,
+    1536
+  ],
+  "actual_dimensions": [
+    1024,
+    1536
+  ],
+  "mode": "RGBA",
+  "alpha_extrema": [
+    0,
+    254
+  ],
+  "transparent_background": true,
+  "reference_images": [
+    {
+      "path": "pose-studio/stances/update-stances/greatsword-counter/sheet-b.original.png",
+      "sha256": "b143f93e7693efb336de644e54e931f4d9d10c5a5a37126aa764f03dc6571831",
+      "visually_inspected": true
+    }
+  ],
+  "original_tool_path": "/workspace/generated_images/exec-1d5dcb7d-743e-4079-a015-94c3973fe125.png",
+  "preserved_artifact": "sheet-b-repair-1.png",
+  "raw_bytes_preserved": true,
+  "sha256": "995a379e54624fac51431e50c221cb51353165101a15a94e697710a899a52250",
+  "concept_ids": [
+    "CT16",
+    "CT17",
+    "CT18",
+    "CT19",
+    "CT20"
+  ],
+  "layout": "2 columns x 3 rows, row-major; bottom-right empty",
+  "review_status": "superseded anatomy candidate",
+  "observations": [
+    "All figures reduced and fit nominal cells",
+    "CT17 behind-neck grip persisted; requires directed repair"
+  ],
+  "alpha_cell_diagnostics": [
+    {
+      "cell": 1,
+      "alpha_gt_127_bbox_local": [
+        92,
+        144,
+        478,
+        485
+      ]
+    },
+    {
+      "cell": 2,
+      "alpha_gt_127_bbox_local": [
+        64,
+        172,
+        433,
+        485
+      ]
+    },
+    {
+      "cell": 3,
+      "alpha_gt_127_bbox_local": [
+        90,
+        122,
+        493,
+        425
+      ]
+    },
+    {
+      "cell": 4,
+      "alpha_gt_127_bbox_local": [
+        44,
+        124,
+        433,
+        427
+      ]
+    },
+    {
+      "cell": 5,
+      "alpha_gt_127_bbox_local": [
+        83,
+        55,
+        449,
+        423
+      ]
+    },
+    {
+      "cell": 6,
+      "alpha_gt_127_bbox_local": null
+    }
+  ]
+}

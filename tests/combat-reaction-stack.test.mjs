@@ -137,6 +137,23 @@ test('a saved stack is validated: side, owner and the offer depth must match', (
   assert.throws(() => restore(badDepth), /does not match its stack depth/);
 });
 
+test('a saved pending offer is refused once its owner already holds the depth cap', () => {
+  const { combat, registries } = fixture({ cardIds: ['strike', 'strike', 'strike', 'strike', 'strike'] });
+  for (const enemy of combat.enemies) { enemy.hp = 500; enemy.maxHp = 500; }
+  dispatch(combat, { type: 'endTurn' });
+  for (const id of ['r0', 'r1', 'r2']) answer(combat, pick(combat, id));
+  const restore = snapshot => restoreCombatSnapshot({ registries, rng: createRng(701), snapshot: JSON.parse(JSON.stringify(snapshot)) });
+  const below = JSON.parse(JSON.stringify(serializeCombatSnapshot(combat)));
+  assert.equal(below.reactionRules.stack.maxDepth, 4);
+  assert.ok(restore(below).pendingReaction.id.endsWith(':player:3'), 'owner at maxDepth - 1 keeps its offer');
+  // Owner holds exactly maxDepth entries, yet the saved offer would push entry maxDepth + 1.
+  const atCap = structuredClone(below);
+  const top = atCap.reactionStack.entries[2];
+  atCap.reactionStack.entries.push({ ...top, cardInstanceId: 'r3', play: { ...top.play, cardInstanceId: 'r3' } });
+  atCap.pendingReaction.id = atCap.pendingReaction.id.replace(/:3$/, ':4');
+  assert.throws(() => restore(atCap), /Reaction choice is past its seat limit/);
+});
+
 test('an enemy-side stack entry whose enemy is down fizzles and runs nothing', () => {
   const { combat } = fixture({ cardIds: ['sweepingBlow', 'whirlingGuard'], enemyCount: 2 });
   dispatch(combat, { type: 'endTurn' });
@@ -187,6 +204,24 @@ test('co-op seats answer in order and the whole stack resolves last pushed first
   assert.deepEqual(played, ['b:guard', 'b:sweep', 'a:guard', 'a:sweep']);
   assert.equal(C.reactionStack, undefined);
   assert.equal(C.pendingReaction, undefined);
+});
+
+test('co-op instance ids are per seat: seat A stacking rc1 does not hide seat B its own rc1', () => {
+  const { registries } = fixture();
+  const players = ['a', 'b'].map(id => ({ id, classId: 'reaver', maxHp: 100, hp: 100,
+    maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 1, combatExpansionVersion: 2,
+    deck: [{ cardId: 'sweepingBlow', instanceId: 'rc1', upgraded: false }] }));
+  const C = createCoopCombat({ registries, rng: createRng(713), players, enemyIds: ['wanderingSoldier'], reactionRulesVersion: 2 });
+  for (const P of C.players.values()) P.entity.block = 100;
+  endTurn(C, 'a'); endTurn(C, 'b');
+  assert.equal(C.pendingReaction.ownerId, 'a');
+  assert.ok(C.pendingReaction.options.some(row => row.play.cardInstanceId === 'rc1'));
+  chooseReaction(C, 'a', { offerId: C.pendingReaction.id, optionId: C.pendingReaction.options.find(row => row.play.cardInstanceId === 'rc1').id });
+  assert.equal(C.reactionStack.entries.length, 1);
+  assert.equal(C.reactionStack.entries[0].ownerId, 'a');
+  // Seat A has no card left; seat B's own rc1 must still be offered.
+  assert.equal(C.pendingReaction.ownerId, 'b');
+  assert.ok(C.pendingReaction.options.some(row => row.play.cardInstanceId === 'rc1'), 'seat B rc1 is offered');
 });
 
 test('a co-op seat that disconnects after committing fizzles its entries and pays nothing', () => {
@@ -326,4 +361,15 @@ test('a second Counter from one seat fizzles at resolution even if its saved ent
   const out = dispatch(restored, { type: 'chooseReaction', offerId: restored.pendingReaction.id, optionId: null });
   assert.deepEqual(out.events.filter(event => event.type === 'cardPlayed').map(event => event.cardInstanceId), ['r1']);
   assert.ok(out.events.some(event => event.type === 'combatReactionFizzled' && event.cardInstanceId === 'r0' && event.reason === 'secondCounter'));
+});
+
+test('discard candidates leave out only the choosing seat\'s own stacked cards', async () => {
+  const { discardCandidates } = await import('../src/engine/abilityRiders.js');
+  const hand = [{ instanceId: 'x1' }, { instanceId: 'x2' }];
+  const reactionStack = { entries: [{ side: 'player', ownerId: 'a', play: { cardInstanceId: 'x1' } }] };
+  assert.deepEqual(discardCandidates({ playerKey: 'a', piles: { hand }, reactionStack }).map(card => card.instanceId), ['x2']);
+  // Seat b holds its own x1 too: the stack entry belongs to a, so b may still discard it.
+  assert.deepEqual(discardCandidates({ playerKey: 'b', piles: { hand }, reactionStack }).map(card => card.instanceId), ['x1', 'x2']);
+  // Solo play has no playerKey; its entries are owned by 'player'.
+  assert.deepEqual(discardCandidates({ piles: { hand }, reactionStack: { entries: [{ side: 'player', ownerId: 'player', play: { cardInstanceId: 'x2' } }] } }).map(card => card.instanceId), ['x1']);
 });

@@ -85,7 +85,7 @@ test('registered tags retain identity, approved tactical metadata changes are ex
     'damage:lightning': { blurb: 'Applies 1 Weak (Sap) on a Health hit unless the card already prints a Weak effect.' },
     'damage:arcane': { label: 'Force', blurb: 'Strips 2 Ward once per action; bypasses melee Counter.' },
     'damage:sacred': { label: 'Holy', blurb: 'Removes 1 hostile debuff from the attacker after a Health hit.' },
-    'damage:decay': { label: 'Necrotic', blurb: 'Applies 1 Crimson Blight on a Health hit unless the card already prints a Crimson Blight effect.' },
+    'damage:decay': { label: 'Necrotic', blurb: 'Applies Blight on a Health hit (Crimson in classic combat; Necrotic in expanded combat) unless the card already prints a Crimson Blight effect.' },
   };
   for (const old of pre.tags) {
     const t = tags.get(old.id);

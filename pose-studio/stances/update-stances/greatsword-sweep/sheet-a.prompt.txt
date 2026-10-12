@@ -1,0 +1,16 @@
+EDIT the supplied five-pose contact sheet into a correctly scaled, clean transparent contact sheet while preserving its five different stance ideas. This is an image correction request, not a new close-up illustration. Output exactly 1024x1536 pixels, transparent PNG. Preserve 2 columns x 3 rows, each cell exactly 512x512. Keep five figures row-major in top-left, top-right, middle-left, middle-right, bottom-left; leave bottom-right completely empty.
+
+Critical correction: shrink each whole existing Reaver and his complete sword proportionally so its entire silhouette fits inside the centered 368x368 square of its own cell: x=72..439 and y=72..439 relative to that cell. This means 72 pixels of transparent space on all four sides. The armor body from helmet crown to boot soles should be about 210px high. All five bodies must have the same small scale; do not fill the 512px cells. Keep the complete silhouette (cape, full blade, guard, hilt, pommel, helmet, both boots) inside its safe square. There must be no pixels crossing between cells.
+
+Correct hand anatomy: each pose shows exactly two separated hands gripping the same long two-handed greatsword hilt; both forearms must lead visibly from separate shoulders into their own hands. The lower hand is close to the pommel, the upper hand near the guard. Hands must not be hidden by each other, body, cape, hilt, or blade.
+
+Keep the Reaver costume from the references: closed helmet, worn rusty silver/bronze armor, continuous crimson cape. Preserve rear-left three-quarter camera facing screen-right and long greatsword proportions from selected Sweep/Smash reference. Keep natural weapon perspective; do not shorten it or make it a one-handed sword.
+
+Retain and refine these five poses:
+1. Upright mid-height forward-horizontal side coil: hilt in front of abdomen with both hands clear; full blade horizontally forward/right.
+2. Shoulder-height lateral coil: hilt beside right shoulder, blade level behind neck, elbows below crown, not an overhead smash.
+3. Forward-extended gate: both hands at lower ribs forward/right, blade points forward/right on a slight downward diagonal.
+4. Upright low-side trail: hilt in front of low pelvis with both hands clear; full blade angles back/left across body but above ground.
+5. Wide lateral hip-transfer stance: broad grounded base, lead knee bent, rear leg opened sideways, chest higher; sword horizontal at waist and both hands visible.
+
+Both boots are flat on ground. No action blur, motion trail, aura, effects, enemy, props, scenery, text, labels, grid lines, or borders. The corrected sheet must read as five small complete gameplay-scale figures, not five large portraits.

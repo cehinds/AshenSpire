@@ -1137,13 +1137,16 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   let discardShell = null;
   function showPendingDiscard() {
     showPendingReaction();
-    const player = latestWireSnap?.scene?.players?.find(p => p.id === me);
+    const sc = latestWireSnap?.scene;
+    const player = sc?.players?.find(p => p.id === me);
     const pending = player?.pendingAbilityDiscard;
     if (!pending || pending.playerId !== me || discardShell || busy()) return;
     const owner = me;
+    // This viewer's stacked cards wait to resolve: they are not discard fodder (the engine refuses them).
+    const stackedIds = new Set((sc.reactionStack?.entries || []).filter((entry) => entry.ownerId === me).map((entry) => entry.cardInstanceId));
     discardShell = openDiscardChoiceModal({
       count: pending.count, cardName: registries.cards.get(pending.cardId).name,
-      cards: player.hand.map(card => ({ instanceId: card.instanceId, name: resolveCard(registries, card).name })),
+      cards: player.hand.filter((card) => !stackedIds.has(card.instanceId)).map(card => ({ instanceId: card.instanceId, name: resolveCard(registries, card).name })),
       onClosed: () => { discardShell = null; },
       onChoose: cardInstanceIds => { if (me === owner) send({ t: 'chooseDiscard', cardInstanceIds }); },
     });
@@ -1447,7 +1450,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         } else el.addEventListener('click', play);
       },
     });
-    const stackedIds = stackedCardIds(sc.reactionStack);
+    // Only this viewer's own stacked cards are hidden; another seat's rc1 is still playable here.
+    const stackedIds = stackedCardIds(sc.reactionStack, me);
     if (meP && meP.alive && meP.connected) {
       handStrip.render({
         cards: meP.hand.map((c) => {

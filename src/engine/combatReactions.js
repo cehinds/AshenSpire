@@ -111,7 +111,8 @@ function optionsFor(ctx, row, group, hooks, refusal = null, seatId = null) {
   const players = ctx.players ? [...ctx.players.values()].map(row => ({ id: row.id, alive: row.entity.alive, connected: row.connected }))
     : [{ id: ctx.player.id, alive: true, connected: true }];
   for (inst of ctx.players ? ctx.players.get(seat)?.piles.hand || [] : ctx.piles.hand || []) {
-    if (entries.some(entry => entry.side === 'player' && entry.play.cardInstanceId === inst.instanceId)) continue;
+    // Instance ids are unique per seat only (co-op runs each start at rc1), so match the owner too.
+    if (entries.some(entry => entry.side === 'player' && entry.ownerId === seat && entry.play?.cardInstanceId === inst.instanceId)) continue;
     const base = resolveCombatCard(ctx, inst);
     if (counterStacked && (base.cardTags || base.tags || []).includes('maneuver:counter')) continue;
     const answered = threats.filter(threat => eligible(ctx, base, threat.row));

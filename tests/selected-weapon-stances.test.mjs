@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { rewardDom } from './helpers/reward-dom.mjs';
+import {selectedWeaponCounterOrigins,selectedWeaponSequence,selectedWeaponSequenceTiming} from '../src/model/selectedWeaponSequences.js';
 import { selectedWeaponProfileFor, selectedWeaponStanceFor, selectedWeaponReactionFor, REAVER_GREATSWORD_PILOT as pilot } from '../src/model/selectedWeaponStances.js';
 import { createAlternativeCardStage } from '../src/ui/alternativeCardStage.js';
 import { alternativeSelectedStances } from '../src/content/alternativeSelectedStances.js';
@@ -103,7 +104,7 @@ test('evade art uses authored preparation/readiness, without changing other type
   assert.equal(resolve(null,null,{combatEvade:{charges:1,whileStatus:'prone'},statuses:{}}),null);
   assert.equal(resolve(null,null,{combatEvade:{charges:1,whileStatus:'prone'},statuses:{prone:{stacks:1,duration:1}}}),'evade');
   assert.equal(resolve(null,null,{combatOwnerCycle:2,combatEvade:{charges:1,expiresOnOwnerCycle:2}}),null);
-  assert.equal(resolve('defensive',card('defend',{name:'Evade',effects:[]}),{}),'defensive','names do not choose presentation');
+  assert.equal(resolve('defensive',card('defend',{name:'Evade',effects:[]}),{}),'defend','names do not choose presentation');
   assert.equal(selectedWeaponStanceFor({profile:null,stance:'defensive',card:card('defend',{weightClassPriced:true})}),'defensive');
 });
 
@@ -128,11 +129,11 @@ test('the solo screen reaction hook imports its timing helpers and calls the cur
   const begin=source.indexOf('    reactionForReceipt: event => {'),end=source.indexOf('\n    combatEl,',begin);
   assert.ok(begin>0&&end>begin);
   const calls=[],anchor={};
-  let current={reactionPoses:['guard-break','evade'],reactPose:(...args)=>calls.push(args)};
+  let current={reactionPoses:['guard-break','evade'],reactionTiming:(kind,speed)=>selectedWeaponSequenceTiming(selectedWeaponSequence(kind),speed),reactPose:(...args)=>calls.push(args)};
   const fxCtx={anchorFor:id=>{assert.equal(id,'player');return anchor;}};
   const combat={player:{alive:true},eventLog:[]};
   const factory=runInNewContext('({'+source.slice(begin,end)+'}).reactionForReceipt',{
-    ...bindings,selectedWeaponReactionFor,selectedProfile:()=>pilot,combat,fxCtx,stageFor:element=>{assert.equal(element,anchor);return current;},
+    ...bindings,selectedWeaponReactionFor,playbackCounterOrigins:new Set(),selectedProfile:()=>pilot,combat,playbackEvents:combat.eventLog,fxCtx,stageFor:element=>{assert.equal(element,anchor);return current;},
   });
   try {
     for(const speed of ['normal','slow','instant']) {
@@ -140,7 +141,7 @@ test('the solo screen reaction hook imports its timing helpers and calls the cur
       for(const event of [{type:'combatGuardBroken',targetId:'player'},
         {type:'combatAvoidanceResolved',targetId:'player',avoided:true,evade:{success:true}}]) {
         const callback=factory(event);assert.equal(typeof callback,'function');
-        callback();assert.deepEqual(calls.at(-1),[event.type==='combatGuardBroken'?'guard-break':'evade',animationPace.ANIM_SPEEDS[speed]?.reactionMs||280]);
+        callback();assert.deepEqual(calls.at(-1),[event.type==='combatGuardBroken'?'guard-break':'evade',selectedWeaponSequenceTiming(selectedWeaponSequence(event.type==='combatGuardBroken'?'guard-break':'evade'),animationPace.ANIM_SPEEDS[speed]).totalMs||280]);
       }
     }
     const callback=factory({type:'combatGuardBroken',targetId:'player'});
@@ -151,7 +152,7 @@ test('the solo screen reaction hook imports its timing helpers and calls the cur
     const earlyBreak={type:'combatGuardBroken',targetId:'player'};
     const lethalLoss={type:'hpLost',targetId:'player',amount:5};
     const lethalBreak={type:'combatGuardBroken',targetId:'player'};
-    combat.eventLog=[earlyEvade,earlyBreak,lethalLoss,lethalBreak];combat.player.alive=false;
+    combat.eventLog.push(earlyEvade,earlyBreak,lethalLoss,lethalBreak);combat.player.alive=false;
     assert.equal(typeof factory(earlyEvade),'function','final defeat does not hide an earlier evade');
     assert.equal(typeof factory(earlyBreak),'function','final defeat does not hide an earlier guard break');
     assert.equal(factory(lethalBreak),null,'the guard break after the lethal loss yields to defeat');
@@ -177,7 +178,7 @@ test('selected holds preserve existing returns and finite reactions restore the 
     applyDisplayAppearance({});
     assert.ok(alternativeSelectedStances.weaponProfiles?.[pilot]?.frames,'the actual selected catalog must be present');
     const loading=createAlternativeCardStage('reaver',{weaponProfile:pilot});stages.push(loading);
-    assert.deepEqual(loading.reactionPoses,['evade','guard-break'],'reaction capability is known before bitmaps load');
+    assert.deepEqual(loading.reactionPoses,['evade','guard-break','fully-defended','defend'],'reaction capability is known before bitmaps load');
     await loading.ready;
     const stage=await make({weaponProfile:pilot});
     const edgeWidthRatio = stage.el.dataset.maximumWidthRatio;
@@ -205,20 +206,54 @@ test('selected holds preserve existing returns and finite reactions restore the 
       advance(210);
       assert.equal(stage.pose,index===0?'stance-evade':'stance-counter','retaliation restores the current selected hold');
     }
+    for(const origin of ['offensive','defend','counter','smash','sweep','evade']) {
+      stage.settle();stage.setStance(origin);
+      for(const action of ['attack','smash','counter-guard','counter-evade']) {
+        const {totalMs,impactMs}=stage.actionTiming(action);
+        assert.ok(impactMs<totalMs);
+        stage.play(action,totalMs);
+        if(action==='counter-guard'){assert.equal(stage.pose,'pilot-defend');advance(impactMs+1);assert.equal(stage.pose,'pilot-attack-4');}
+        else if(action==='counter-evade'){assert.equal(stage.pose,'pilot-evade-1');advance(impactMs+1);assert.equal(stage.pose,'pilot-attack-4');}
+        else {assert.equal(stage.pose,'pilot-attack-1');advance(impactMs+1);assert.equal(stage.pose,'pilot-attack-4');}
+        advance(totalMs);
+        assert.equal(stage.pose,'stance-'+origin,'the actual active '+origin+' survives '+action);
+      }
+    }
+    stage.settle();stage.setStance('counter');
+    const attackTiming=stage.actionTiming('attack');
+    stage.play('attack',attackTiming.totalMs);advance(75);
+    assert.equal(stage.pose,'pilot-attack-3','a lagging RAF is still in wind-up before timer contact');
+    assert.equal(stage.hold(60),true);
+    assert.equal(stage.pose,'pilot-attack-4','the contact timer paints the reviewed strike before hit-stop');
+    assert.equal(stage.presentation.elapsed,attackTiming.impactMs);
+    assert.equal(stage.presentation.duration,attackTiming.totalMs,'contact synchronization preserves the authored clip duration');
+    advance(30);assert.equal(stage.pose,'pilot-attack-4');
+    advance(31);assert.ok(stage.presentation.elapsed>attackTiming.impactMs,'the action clock resumes after the unchanged hold');
+    advance(100);assert.equal(stage.pose,'stance-counter');
+    stage.play('attack',attackTiming.totalMs);advance(140);
+    const laterElapsed=stage.presentation.elapsed,laterPose=stage.pose;
+    stage.hold(60);assert.equal(stage.pose,laterPose);assert.equal(stage.presentation.elapsed,laterElapsed,'a later phase never rewinds to contact');
+    stage.settle({reaction:true});
+    stage.settle();stage.setStance('counter');
+    const full=stage.reactionTiming('fully-defended');
+    stage.reactPose('fully-defended',full.totalMs);assert.equal(stage.pose,'pilot-defend');
+    advance(66);assert.equal(stage.pose,'pilot-impact-v');
+    advance(100);assert.equal(stage.pose,'pilot-impact-g');
+    advance(260);assert.equal(stage.pose,'stance-counter');
     stage.settle();stage.setStance('smash');stage.play('smash',500);advance(150);
-    assert.equal(stage.pose,'smash-load');assert.match(stage.currentArt.image.url,/pilot-smash\.webp$/);
+    assert.equal(stage.pose,'pilot-attack-2');
     assert.equal(stage.reactPose('guard-break',180),true);assert.equal(stage.pose,'pilot-guard-break');
     assert.equal(stage.presentation.action,'smash','a reaction never replaces the live action');
     stage.setRestPose(stage.rest);assert.equal(stage.pose,'pilot-guard-break','routine renders retain the reaction');
     advance(190);assert.equal(stage.presentation.action,'smash');assert.notEqual(stage.pose,'pilot-guard-break');
     stage.settle();stage.play('hit',380);time+=70;stage.reactPose('evade',180);advance(120);
-    assert.equal(stage.pose,'pilot-evade','an existing hurt RAF cannot charge the reaction for time before it started');
+    assert.equal(stage.pose,'pilot-evade-3','an existing hurt RAF cannot charge the reaction for time before it started');
     advance(70);stage.endReaction();
     stage.settle();stage.reactPose('evade',180);stage.setStance('sweep');advance(190);
     assert.equal(stage.pose,'stance-sweep','the finite reaction returns to the newest hold');
     stage.reactPose('guard-break',280);assert.equal(stage.endReaction(),true);assert.equal(stage.pose,'stance-sweep');
     stage.reactPose('evade',animationPace.ANIM_SPEEDS.fast.reactionMs);advance(animationPace.ANIM_SPEEDS.fast.reactionMs-1);
-    assert.equal(stage.pose,'pilot-evade','Fast keeps the reaction for its requested timeline duration');
+    assert.equal(stage.pose,'pilot-evade-3','Fast keeps the reaction for its requested timeline duration');
     advance(2);assert.equal(stage.pose,'stance-sweep','Fast restores the hold when its 81 ms beat ends');
     stage.reactPose('evade',280);stage.settle({reaction:true});assert.equal(stage.pose,'stance-sweep');
     stage.reactPose('guard-break',280);stage.setRestPose('defeated');assert.equal(stage.pose,'defeated');
@@ -233,7 +268,7 @@ test('selected holds preserve existing returns and finite reactions restore the 
       assert.equal(staticStage.pose,'stance-evade',mode+' preparation keeps the selected static Evade hold');
       staticStage.setStance('smash');
       assert.equal(staticStage.reactPose('evade',180),true,mode+' displays the chosen static pose');
-      assert.equal(staticStage.pose,'pilot-evade');advance(190);assert.equal(staticStage.pose,'stance-smash',mode+' restores the hold within its bounded lifetime');
+      assert.equal(staticStage.pose,'pilot-evade-1');advance(190);assert.equal(staticStage.pose,'stance-smash',mode+' restores the hold within its bounded lifetime');
     }
   } finally {
     for(const stage of stages)stage?.dispose();setAnimSpeed('normal');applyDisplayAppearance({});

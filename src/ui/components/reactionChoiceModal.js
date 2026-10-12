@@ -24,9 +24,10 @@ export function reactionStackEntryName(entry, registries) {
   return registries?.cards?.get(entry?.cardId)?.name || entry?.cardId || '';
 }
 
-// The card instances a seat already stacked (enemy entries hold no card).
-export const stackedCardIds = reactionStack => new Set((reactionStack?.entries || [])
-  .filter(entry => entry.side !== 'enemy').map(entry => entry.cardInstanceId));
+// The card instances a seat already stacked (enemy entries hold no card). With ownerId, only
+// that seat's: instance ids are unique per seat only (co-op runs each start at rc1).
+export const stackedCardIds = (reactionStack, ownerId = null) => new Set((reactionStack?.entries || [])
+  .filter(entry => entry.side !== 'enemy' && (ownerId == null || entry.ownerId === ownerId)).map(entry => entry.cardInstanceId));
 
 export function openReactionChoiceModal({ pending, onAnswer, onClosed, stack = [] }) {
   const stacked = Array.isArray(stack) && stack.length > 0;

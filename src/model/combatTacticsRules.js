@@ -130,11 +130,14 @@ export function traitValuesProblems(values, path) {
   return problems;
 }
 
+// A trait guard holds at most a doubled card amount plus Impact/Flux, far below this; the cap keeps the meter fill loop finite.
+const TRAIT_GUARD_MAX = 999;
+
 /** Reaction rules v2 Defend trait guard: whole, non-negative Impact Poise and Flux Ward (combat-card-traits-contract). */
 export function combatTraitGuardProblems(guard, path) {
   if (!record(guard)) return [`${path} must be an object`];
   const problems = [];
-  for (const key of ['poise', 'ward']) if (!whole(guard[key])) problems.push(`${path}.${key} must be a non-negative whole number`);
+  for (const key of ['poise', 'ward']) if (!whole(guard[key]) || guard[key] > TRAIT_GUARD_MAX) problems.push(`${path}.${key} must be a whole number from 0 to ${TRAIT_GUARD_MAX}`);
   for (const key of Object.keys(guard)) if (!['poise', 'ward'].includes(key)) problems.push(`${path}.${key} is unknown`);
   return problems;
 }

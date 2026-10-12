@@ -702,7 +702,7 @@ export const tags = [
     "color": "9FC3E8",
     "glyph": "◇",
     "visibility": "",
-    "blurb": "Applies 1 Crimson Blight on a Health hit unless the card already prints a Crimson Blight effect."
+    "blurb": "Applies Blight on a Health hit (Crimson in classic combat; Necrotic in expanded combat) unless the card already prints a Crimson Blight effect."
   },
   {
     "id": "technique:heavy",

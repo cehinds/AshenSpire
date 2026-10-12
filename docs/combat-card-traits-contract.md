@@ -59,7 +59,7 @@ summary read "Impact N" / "Flux N".
   entries, so one seat cannot use up another's offers. Seats answer in saved seat
   order; the whole stack then resolves last pushed first, across seats.
 - **Counter-return roots:** `maxDepth = 1` (one entry per seat, no re-offer),
-  preserving the reaction contract's anti-chain rule.
+  preserving the reaction contract's anti-chain rule. `counterReturnMaxDepth` is fixed at 1 and is not tunable.
 - **At most one `maneuver:counter` card per seat on a stack.** SPEC §4.8 lets a
   new Counter replace the previous one and never stacks charges, so once a seat
   has pushed a Counter, its further Counter cards are not offered.

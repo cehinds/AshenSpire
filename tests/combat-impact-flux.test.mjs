@@ -275,6 +275,17 @@ test('a Defend trait guard survives a combat snapshot round trip', () => {
   }
 });
 
+test('a trait guard caps Poise and Ward at 999 so the meter fill loop always terminates', async () => {
+  const { combatTraitGuardProblems } = await import('../src/model/combatTacticsRules.js');
+  for (const value of [0, 1, 999]) {
+    assert.deepEqual(combatTraitGuardProblems({ poise: value, ward: value }, 'g'), [], `accepts ${value}`);
+  }
+  for (const value of [1000, Number.MAX_SAFE_INTEGER]) {
+    assert.ok(combatTraitGuardProblems({ poise: value, ward: 0 }, 'g').some(problem => /poise/.test(problem)), `poise ${value}`);
+    assert.ok(combatTraitGuardProblems({ poise: 0, ward: value }, 'g').some(problem => /ward/.test(problem)), `ward ${value}`);
+  }
+});
+
 test('a saved Counter carrier refuses malformed trait values', async () => {
   const { combatCounterProblems } = await import('../src/model/combatTacticsRules.js');
   const counter = traits => ({ version: 2, charges: 1, serial: 1, mode: 'melee', expiresOnOwnerCycle: 1,
