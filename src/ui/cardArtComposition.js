@@ -25,7 +25,7 @@ const STATUS_MOTIFS = Object.freeze({
   bleed: 'drops', bleeding: 'drops', burn: 'embers', burning: 'embers', frost: 'crystals', frozen: 'crystals', chilled: 'crystals',
   weak: 'fractures', vulnerable: 'fractures', frail: 'fractures', staggered: 'fractures', offBalance: 'fractures', prone: 'fractures',
   paralysis: 'bolts', grounded: 'shards', sleep: 'ripples', dazed: 'stars', insanity: 'ripples', madness: 'ripples',
-  venom: 'wisps', blight: 'wisps', envenom: 'wisps', regen: 'sprouts', strength: 'rays', dexterity: 'orbits',
+  venom: 'wisps', blight: 'wisps', crimsonBlight: 'wisps', necroticBlight: 'wisps', envenom: 'wisps', regen: 'sprouts', strength: 'rays', dexterity: 'orbits',
   invulnerability: 'rings', decoy: 'orbits', concealed: 'wisps', afterimage: 'orbits', prepared: 'rings',
 });
 const STATUS_COLORS = Object.freeze({ drops: '#d87c85', embers: '#e8a06a', crystals: '#a9ddeb', fractures: '#c6ab90', bolts: '#e7d387', shards: '#b4ac82', ripples: '#cba5e3', stars: '#d9c8ec', wisps: '#a3be8e', sprouts: '#afcca0', rays: '#e6cea0', orbits: '#aac5dd', rings: '#c9d2dc' });

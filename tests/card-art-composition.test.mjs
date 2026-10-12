@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { simpleCardArt, cardArtElement, cardArtPreviewFixtures, cardArtStatuses } from '../src/ui/cardArtComposition.js';
 import { cardArtLayersHtml } from '../src/ui/cardArtLayers.js';
 import { contentBundle } from '../src/content/index.js';
+import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 
 const face = (tags, extra = {}) => ({ id: 'custom', cardTags: tags, ...extra });
@@ -115,4 +116,26 @@ test('explicit auxiliary payloads contribute statuses while unrelated authored d
   assert.deepEqual(cardArtStatuses(def).map(row => row.id), ['bleeding', 'frozen', 'weak']);
   const registry = { statuses: new Map([['custom', { tint: '#12345' }]]) };
   assert.equal(cardArtStatuses({ effects: [{ op: 'applyStatus', status: 'custom' }] }, [], registry)[0].color, '#d9c8ec');
+});
+test('rebalanced decay spells keep their distinct Blight identities with wisp art', () => {
+  const registries = createRegistries(contentBundle);
+  for (const [cardId, statusId] of [['flagellation', 'necroticBlight'], ['blightwardLash', 'crimsonBlight']]) {
+    const def = applyCombatExpansionCard(registries.cards.get(cardId));
+    const before = structuredClone(def);
+    const composition = simpleCardArt(def, { registries });
+    assert.equal(composition.element, 'necrotic');
+    assert.equal(composition.statuses.length, 1);
+    assert.equal(composition.statuses[0].id, statusId);
+    assert.equal(composition.statuses[0].motif, 'wisps');
+    assert.equal(composition.statuses[0].color, registries.statuses.get(statusId).tint);
+    assert.match(cardArtLayersHtml(composition), new RegExp(`data-art-status="${statusId}"`));
+    assert.deepEqual(def, before);
+  }
+  // Newly added compatibility tags do not replace the explicit spell school.
+  const flame = applyCombatExpansionCard(registries.cards.get('cinderLance'));
+  assert.ok(flame.cardTags.includes('ritual'));
+  assert.equal(simpleCardArt(flame, { registries }).element, 'fire');
+  const utility = applyCombatExpansionCard(registries.cards.get('blightBloom'));
+  assert.equal(simpleCardArt(utility, { registries }), null);
+  assert.deepEqual(cardArtStatuses(utility, utility.cardTags, registries).map(row => [row.id, row.motif]), [['crimsonBlight', 'wisps'], ['necroticBlight', 'wisps']]);
 });
