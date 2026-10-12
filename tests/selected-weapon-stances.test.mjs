@@ -103,7 +103,10 @@ test('evade art uses authored preparation/readiness, without changing other type
   assert.equal(resolve(null,null,{combatEvade:{charges:1,whileStatus:'prone'},statuses:{}}),null);
   assert.equal(resolve(null,null,{combatEvade:{charges:1,whileStatus:'prone'},statuses:{prone:{stacks:1,duration:1}}}),'evade');
   assert.equal(resolve(null,null,{combatOwnerCycle:2,combatEvade:{charges:1,expiresOnOwnerCycle:2}}),null);
-  assert.equal(resolve('defensive',card('defend',{name:'Evade',effects:[]}),{}),'defensive','names do not choose presentation');
+  assert.equal(resolve('defensive',card('defend',{name:'Evade',effects:[]}),{}),'defend','names do not choose presentation');
+  for (const alias of ['defensive','defend','immune']) assert.equal(resolve(alias,card('defend'),{evade:1}),'defend');
+  assert.equal(resolve('smash',card('smash'),{statuses:{invulnerability:{stacks:1}}}),'smash','a status never replaces the authored hold');
+  assert.equal(resolve(null,null,{statuses:{invulnerability:{stacks:1}}}),null);
   assert.equal(selectedWeaponStanceFor({profile:null,stance:'defensive',card:card('defend',{weightClassPriced:true})}),'defensive');
 });
 
@@ -118,6 +121,26 @@ test('finite reactions accept only confirmed player guard breaks and genuine eva
   }
   assert.equal(selectedWeaponReactionFor({type:'combatGuardBroken',targetId:'e1'},pilot),null);
   assert.equal(selectedWeaponReactionFor({type:'attackEvaded',targetId:'player'},null),null);
+});
+
+test('full protection and immunity reactions require their own confirmed outcomes', () => {
+  const hit={type:'damageDealt',targetId:'player',sourceId:'e1',isAttack:true,amount:5,blocked:5};
+  assert.equal(selectedWeaponReactionFor(hit,pilot),'fully-defended');
+  assert.equal(selectedWeaponReactionFor({...hit,amount:0,blocked:0,wardResisted:5},pilot),'fully-defended');
+  assert.equal(selectedWeaponReactionFor({...hit,wardResisted:3},pilot),'fully-defended');
+  for (const overrides of [{amount:5,blocked:4,wardResisted:10},{amount:0,blocked:0},
+    {isAttack:false},{isAttack:undefined},{sourceId:'player'},{sourceId:null},{targetId:'e1'},
+    {type:'hpLost',cause:'status'},{type:'procResisted'},{amount:NaN},{blocked:Infinity},{wardResisted:-1}]) {
+    assert.equal(selectedWeaponReactionFor({...hit,...overrides},pilot),null,JSON.stringify(overrides));
+  }
+  const prevention={type:'combatAvoidanceResolved',targetId:'player',sourceId:'e1',avoided:true,prevention:'invulnerability'};
+  assert.equal(selectedWeaponReactionFor(prevention,pilot),'defend');
+  for (const overrides of [{avoided:false},{prevention:'decoy'},{prevention:null,distance:{success:true}},
+    {type:'arcaneExposureRefused',reason:'immune'},{type:'statusApplied',status:'invulnerability'},{targetId:'e1'}]) {
+    assert.equal(selectedWeaponReactionFor({...prevention,...overrides},pilot),null);
+  }
+  assert.equal(selectedWeaponReactionFor(hit,null),null);
+  assert.equal(selectedWeaponReactionFor(prevention,null),null);
 });
 
 test('the solo screen reaction hook imports its timing helpers and calls the current target stage', () => {
