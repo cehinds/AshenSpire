@@ -3622,6 +3622,19 @@ function showRest(openPanel = null, locationId = null) {
   }
   const visit = openVisit;
   const refill = visit.refill;
+  // The smith's services are rolled once per classic visit and kept on the
+  // record, so a re-entry shows the same offer. A plain copy saves as JSON.
+  let smithServices = null;
+  if (visit.services.smith) {
+    if (record) {
+      if (!record.smithServices) {
+        const roll = smithServicesAt(registries, 'shrine', rng);
+        record.smithServices = { ...roll, services: [...roll.services] };
+        persist();
+      }
+      smithServices = record.smithServices;
+    } else smithServices = smithServicesAt(registries, 'shrine', rng);
+  }
   mountRest(app, {
     registries,
     run,
@@ -3634,7 +3647,7 @@ function showRest(openPanel = null, locationId = null) {
     // Which smith services this place offers — the table's word, resolved
     // here so the screen reads one answer (a chance of 100 consumes no roll),
     // and only where the place carries the `smith` tag.
-    services: visit.services.smith ? smithServicesAt(registries, 'shrine', rng) : null,
+    services: smithServices,
     // The board is the atlas town's (plan phase 10b): offered where the place
     // carries `questBoard` and the run stands in a town, returning here.
     questBoard: visit.services.questBoard && worldRest ? (() => {
