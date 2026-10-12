@@ -121,3 +121,6 @@ progression-crowned-offering,feat,Crowned Offering,Feat,,,,,,feat crowned-offeri
 progression-dawn-cantor,feat,Dawn Cantor,Feat,,,,,,feat dawn-cantor,,,,,,,,,The first Dawn Rite removal each turn also grants 3 Block.
 progression-bearer-of-burdens,feat,Bearer of Burdens,Feat,,,,,,feat bearer-of-burdens,,,,,,,,,The first negative status newly applied to you by an enemy each turn restores 1 Mana.
 progression-sepulchral-promise,feat,Sepulchral Promise,Feat,,,,,,feat sepulchral-promise,,,,,,,,,"Your first credited kill of an enemy with Crimson Blight buildup heals 3 HP, once per combat."
+kindlingCharm,relic,Kindling Charm,Relic,,,,,,character.relic kindlingCharm,,,,,,,,,"At the start of each combat, draw {draw} extra card."
+goldleafCharm,relic,Goldleaf Charm,Relic,,,,,,character.relic goldleafCharm,,,,,,,,,"At the start of your first turn, gain {block} Block."
+emberwickCharm,relic,Emberwick Charm,Relic,,,,,,character.relic emberwickCharm,,,,,,,,,"The first time you lose HP each combat, gain {gainEnergy} Stamina."
