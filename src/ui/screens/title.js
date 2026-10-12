@@ -9,6 +9,7 @@ import { buildStampHtml } from '../components/buildstamp.js';
 import { hudQuickSettingsHtml, wireHudQuickSettings } from '../components/hudQuickSettings.js';
 import { closeSaveSlotSelector, deleteSlotReview, openSaveSlotSelector, slotFacts, slotOption, slotDoor, slotDecisionDoor } from '../components/saveSlotSelector.js';
 import { el, html, titleMenu } from '../kit/index.js';
+import { uiConfig } from '../../config/generated/ui.js';
 import { t, tFull } from '../strings.js';
 import { hudQuickSettingsModel } from '../models/HudQuickSettingsModel.js';
 import { saveSlotSelectionModel } from '../models/SaveSlotSelectionModel.js';
@@ -128,7 +129,9 @@ export function mountTitle(app, {
         entry('Compendium', 'collection', { id: 'armaments' }),
         ...(onBestiary ? [entry('Bestiary', 'bestiary', { id: 'bestiary' })] : []),
         entry('Settings', 'settings', { id: 'settings' }),
-        ...(onLan ? [entry('Forsaken Together', 'lan', { id: 'lan-play' })] : []),
+        // Co-op is parked (owner, 2026-10-12): content/config/ui/screens/title.json
+        // behavior.coopEnabled hides Forsaken Together until it returns.
+        ...(onLan && uiConfig.screens.title.behavior.coopEnabled ? [entry('Forsaken Together', 'lan', { id: 'lan-play' })] : []),
       ],
       attrs: { 'data-component': UI.titleBrandLockup },
     });
