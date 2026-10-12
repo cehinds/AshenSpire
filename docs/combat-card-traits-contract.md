@@ -110,12 +110,16 @@ version-2 snapshot without the key has no enemy reactions.
   the enemies; this alternation continues until nobody pushes or the caps stop it.
 - **Decision.** An eligible enemy is alive, not staggered or control-locked, and
   has an unused reaction move whose `on` lists the window. It considers its moves
-  in authored order; a move qualifies when the triggering contact's damage
-  (the root card's contact against this enemy, or the pushed reaction's largest
-  positive contact) is at least `minIncoming`. A qualifying move with `chance`
+  in authored order; a move qualifies when the incoming damage **against this
+  enemy** is at least `minIncoming`: the largest positive contact of the root
+  card (`playerAction`) or of the pushed reaction (`playerReaction`) whose target
+  is this enemy. A window opened by a push the enemy is not targeted by, on a
+  root it does not own, gives it nothing to qualify on. A qualifying move with `chance`
   1 is taken and one with 0 is not, without a draw; otherwise one draw on the new
   `enemyReaction` RNG stream (appended last) decides it. Draws are memoised in
-  `combat.enemyReactionRolls["<group key>:<enemy id>:<move id>"]`, which is saved
+  `combat.enemyReactionRolls["<group key>:<window>:<enemy id>:<move id>"]`, where
+  `<window>` counts the windows opened on that root (0 for the first, +1 per
+  push),, which is saved
   with the combat and cleared at each player-turn start. Candidate states
   (previews, offer checks) read the memo and never draw; an unmemoised decision
   counts as "does not react" there. An enemy with no reaction moves draws nothing.
@@ -140,7 +144,9 @@ version-2 snapshot without the key has no enemy reactions.
   enemy is dead, staggered or control-locked when reached, or its target seat is
   gone.
 - **Cancellation.** If the stack's resolution kills the root card's targets,
-  that card's actions follow the ordinary cancellation rules.
+  that card's actions follow the ordinary cancellation rules. If it leaves the
+  root's acting seat dead (or disconnected), the root group is cancelled and none
+  of its actions run.
 - **Presentation.** An enemy reaction announces itself with
   `enemyMoveStarted { reaction: true }` and the log line "X reacts with Move."
 - **First carriers.** Gilded Knight gains *Gilded Guard* (block 6, damage 3,
