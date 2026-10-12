@@ -8,8 +8,6 @@ export const COMBAT_TOOLS_HEIGHT_PX = 34;
 // Desktop fan: the resting top sits this far below the plan origin, which is
 // already four physical pixels under the tool row (so the gap reads 10px).
 export const DESKTOP_FAN_GAP_PX = 6;
-// Desktop cards fill the band down to this gap under the lowest resting corner.
-export const DESKTOP_FAN_BOTTOM_GAP_PX = 12;
 // Desktop cards spread so the fan spans this share of the hand's width (the
 // cards keep at least their own width between centres: they never overlap).
 export const DESKTOP_FAN_SPAN = 0.55;
@@ -40,7 +38,6 @@ export function handLayout({ width, height, count, rem = 16, zoom = 1, compact =
   const lift = config.selectedLiftRem * rem;
   const fan = desktop && !compact;
   const gapLocal = fan ? DESKTOP_FAN_GAP_PX / zoom : 0;
-  const bottomGapLocal = fan ? DESKTOP_FAN_BOTTOM_GAP_PX / zoom : 0;
   const liftReserve = Math.max(0, lift - headroom);
   // The selected face already rises by lift, and the chooser's correction
   // (handInspectionOverlay) may raise it on through the headroom. Reserve only
@@ -48,7 +45,7 @@ export function handLayout({ width, height, count, rem = 16, zoom = 1, compact =
   // touch begins.
   const controlsReserve = Math.max(0, controlsHeight - Math.max(lift, headroom));
   const arc = config.arcRem * rem;
-  const available = fan ? Math.max(0, height - gapLocal - bottomGapLocal - arc - controlsReserve)
+  const available = fan ? Math.max(0, height - gapLocal - arc - controlsReserve)
     : Math.max(0, height - inset * 2 - liftReserve - arc - controlsReserve);
   const progress = Math.max(0, Math.min(1,
     (width / rem - config.narrowWidthRem) / (config.wideWidthRem - config.narrowWidthRem)));
