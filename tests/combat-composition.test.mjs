@@ -15,7 +15,7 @@ test('taller intent and Inspect controls cannot change settled artwork; explicit
   assert.notDeepEqual(fitCombatSprites(tall), first.sizes, 'the regression fixture really would resize under fresh headroom');
   assert.deepEqual(stableCombatArtwork(first, combatArtworkKey(tall), fitCombatSprites(tall)).sizes, first.sizes);
   for (const changed of [
-    { ...layout, width: 390 }, { ...layout, zoom: 1.2 },
+    { ...layout, width: 390 }, { ...layout, zoom: 1.2 }, { ...layout, wide: true },
     { ...layout, presentation: { playerSpriteScale: 1.3 } },
     { ...layout, actors: [{ ...actor, slot: { ...actor.slot, cell: 'B1', ground: 190 } }] },
     { ...layout, actors: [{ ...actor, visibleWidth: 90, art: ['painted', 'rogue'] }] },
