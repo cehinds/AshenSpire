@@ -1,8 +1,15 @@
 // Reaction rules version 2: the card trait projection (docs/combat-card-traits-contract.md).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readdirSync } from 'node:fs';
 import { applyCardTraits, cardTier } from '../src/content/traitProjection.js';
+import { armamentCards } from '../src/content/cards/armaments.js';
+import { colorlessCards } from '../src/content/cards/colorless.js';
+import { coopCards } from '../src/content/cards/coop.js';
+import { corruptedCards } from '../src/content/cards/corrupted.js';
+import { heraldCards } from '../src/content/cards/herald.js';
+import { reaverCards } from '../src/content/cards/reaver.js';
+import { rogueCards } from '../src/content/cards/rogue.js';
+import { starseerCards } from '../src/content/cards/starseer.js';
 import { applyCombatExpansionCard, combatExpansionNewCards } from '../src/content/combatExpansionCards.js';
 import { applyAbilityGrade } from '../src/model/abilityGrades.js';
 import { combatProfileFor, combatProfileTags } from '../src/model/combatCardProfile.js';
@@ -11,12 +18,8 @@ import { progressionCards } from '../src/content/progression/cards.js';
 
 // Every card definition, the way the engine's resolved definition reaches the projection:
 // authored tags attached, then the combat expansion overlay, then the projection.
-const cardDir = new URL('../src/content/cards/', import.meta.url);
-const cardDefs = [];
-for (const file of readdirSync(cardDir).filter(name => name.endsWith('.js')).sort()) {
-  const mod = await import(new URL(file, cardDir).href);
-  for (const list of Object.values(mod)) if (Array.isArray(list)) cardDefs.push(...list.filter(def => def?.id));
-}
+const cardDefs = [armamentCards, colorlessCards, coopCards, corruptedCards, heraldCards, reaverCards, rogueCards, starseerCards]
+  .flat().filter(def => def?.id);
 const withTags = def => def.tags ? def : { ...def, tags: objectTagIds('card', def.id) };
 const expanded = def => applyCombatExpansionCard(withTags(def));
 const projected = def => applyCardTraits(expanded(def));
