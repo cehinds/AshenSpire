@@ -32,7 +32,7 @@
     }
   ],
   "prompt": "sheet-b.repair-2.prompt.txt",
-  "status": "EV16_EV17_EV19_EV20_concept_approved_EV18_repair_pending_director_review",
+  "status": "EV16_EV17_EV18_EV19_concept_approved_EV20_grip_repair_pending",
   "initialConcerns": [
     "EV18hipgripmovedforward/side;twohanded anatomy requiresdirectorverification.",
     "Fixed512cropscantruncateart;directorwillpresentintactboardswithperoptioncontrols.Noextrareflows."
@@ -47,5 +47,10 @@
     "EV19": "Compact forward horizontal carry",
     "EV20": "Upright low forward carry"
   },
-  "runtimeChanged": false
+  "runtimeChanged": false,
+  "reviewNotes": [
+    "EV18two gauntlets and natural forearms independently confirmed by rootdirector.",
+    "EV20bodyconceptapproved but secondgrippinghand insufficientlyclear;targetedrepairprepared awaitingrootgrant.",
+    "Attributionissuewasanotherworkerlatestfilecopyerror;notestablishedimagegentoolbug."
+  ]
 }
