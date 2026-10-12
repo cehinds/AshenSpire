@@ -466,12 +466,15 @@ export function screenForecast(combat, enemyId, candidate = null) {
 }
 
 // enemyActions(combat, enemyId) → the enemy's queued actions as timeline cards, in play order (the first is
-// its current action). [] when the enemy has no queue this round.
+// its current action). [] when the enemy has no queue this round, or its queue is stale (see below).
 export function enemyActions(combat, enemyId) {
   const cr = roundState(combat);
   const enemy = combat.enemies.find((e) => e.id === enemyId);
   const entries = enemy ? cr.enemyQueues[enemy.id] : null;
   if (!enemy || !entries?.length) return [];
+  // A queue shows only while it is the one the enemy will play: a stagger that lands during planning (intent
+  // 'staggered') drops it at commit (enemyMoveAt), and any slot 0 that no longer matches the live intent is stale.
+  if (enemy.intent?.kind === 'staggered' || enemy.intent?.moveId !== entries[0].moveId) return [];
   const def = combat.registries.enemies.get(enemy.enemyId);
   return entries.map((e, i) => enemyTimelineCard(enemy, e, i, def));
 }

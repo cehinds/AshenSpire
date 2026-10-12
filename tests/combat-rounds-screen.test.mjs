@@ -200,6 +200,7 @@ test('the hotkey on a queued card takes it back before the affordable guard', ()
 import { makeFight, plannedQueueSpeeds } from '../src/engine/combatRounds/timeline.js';
 import { startRound } from '../src/engine/combatRounds/round.js';
 import { momentumSpeed } from '../src/engine/combatRounds/resolver.js';
+import { staggerEnemy } from '../src/engine/actions.js';
 
 // The real round's speeds, built as commitRound builds them: the stored momentum goes in, and startRound decays it.
 function realRoundEntries(c, enemyId) {
@@ -224,6 +225,8 @@ for (const stored of [2, -2]) {
     const enemy = liveEnemy(c);
     c.combatRounds.momentum = { [enemy.id]: stored };
     Rounds.buildEnemyQueues(c, { isFirstTurn: true, pick: (_e, def) => Object.keys(def.moves)[0], held: () => false });
+    // As rollIntents does: the live intent is the queue's slot 0.
+    enemy.intent = { kind: 'attack', moveId: c.combatRounds.enemyQueues[enemy.id][0].moveId };
     const card = attackCard(c);
     dispatch(c, { type: 'playCard', cardInstanceId: card.instanceId, targetId: enemy.id });
     const entries = realRoundEntries(c, enemy.id);
@@ -303,4 +306,32 @@ test('the decorator reads layout before its first DOM write (one layout pass, no
   const write = body.search(/\.remove\(\)|\.append\(|\.dataset\.\w+ =|\.classList\.toggle\(|\.textContent =/);
   assert.ok(write >= 0);
   assert.ok(Math.max(...reads) < write, 'every layout read comes before the first write');
+});
+
+// Review item 5: a stagger that lands during planning makes the enemy's intent 'staggered' and its queue will not be
+// played (enemyMoveAt drops it at commit). The preview must not show that queue: no follow-ups, no forecast.
+test('a stagger during planning shows no follow-ups and gives no forecast against that enemy', () => {
+  const c = fight();
+  const enemy = liveEnemy(c);
+  const before = Rounds.enemyActions(c, enemy.id);
+  assert.ok(before.length > 0, 'the enemy has a queue before the stagger');
+  assert.equal(enemy.intent.moveId, before[0].id, 'the live intent is queue slot 0');
+  staggerEnemy(c, enemy);
+  assert.equal(enemy.intent.kind, 'staggered');
+  assert.deepEqual(Rounds.enemyActions(c, enemy.id), [], 'the stale queue is not shown');
+  const card = attackCard(c);
+  const forecast = Rounds.screenForecast(c, enemy.id, roundCardForecast(c, card.instanceId, enemy.id));
+  assert.equal(forecast.foe, null, 'no foe stance to outline against');
+  assert.equal(forecast.foeSpeed, null, 'no foe speed to compare');
+});
+
+test('a queue whose slot 0 no longer matches the live intent is not shown either', () => {
+  const c = fight();
+  const enemy = liveEnemy(c);
+  const queue = Rounds.enemyActions(c, enemy.id);
+  assert.ok(queue.length > 0);
+  enemy.intent = { kind: 'attack', moveId: 'noSuchMove' };
+  assert.deepEqual(Rounds.enemyActions(c, enemy.id), [], 'a mismatched slot 0 shows no queue');
+  enemy.intent = { kind: 'attack', moveId: queue[0].id };
+  assert.equal(Rounds.enemyActions(c, enemy.id).length, queue.length, 'a matching slot 0 shows the queue');
 });
