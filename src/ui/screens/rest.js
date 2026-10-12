@@ -220,6 +220,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   // unchanged. The Shrine's name moves to the head's title, and the flavour
   // subtitle under it goes (FRONTEND-WIREFRAMES §4: no redundant shrine
   // introduction). The refill sentence moves to the second slot, below.
+  // Order (owner, 2026-10-12): Rest, Level up, Upgrade, Flask, then the rest.
   const choicesHtml = `
       <div class="class-row shrine-option-${shrineLayout}" data-option-layout="${shrineLayout}">
         <div class="class-pick${noRest ? ' locked' : nothingToRestore ? ' quiet' : ''}" id="rest-opt" role="button" tabindex="${noRest ? '-1' : '0'}" aria-disabled="${noRest ? 'true' : 'false'}">
@@ -229,62 +230,6 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
             <p>${noRest ? noRestCopy : nothingToRestore ? `Nothing to restore — you stand at ${run.hp}/${run.maxHp} HP${run.mana >= run.maxMana ? ' with full Mana' : ''}. Resting still ${multiUse ? 'takes the rest' : 'ends the visit'}.` : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp})${manaGain > 0 ? ` and restore Mana (${run.mana} → ${manaAfter})` : ''}.`}</p>
           </div>
         </div>
-        ${stay.services.smith ? `<div class="class-pick${canInspectSmithing ? '' : ' locked'}" id="smith-opt"
-             role="button" tabindex="${canInspectSmithing ? '0' : '-1'}"
-             aria-disabled="${canInspectSmithing ? 'false' : 'true'}">
-          <div class="glyph">${engravedIconHtml('equipment')}</div>
-          <div class="cp-body">
-            <h3>Upgrade an Item</h3>
-            <p>${canInspectSmithing
-              ? `${smith.stones} Smithing Stone${smith.stones === 1 ? '' : 's'} · choose one owned armament.`
-              : 'No owned armament has an effective tier remaining.'}</p>
-          </div>
-        </div>` : ''}
-        ${extract ? `<div class="class-pick${extract.available ? '' : ' locked'}" id="extract-opt"
-             role="button" tabindex="${extract.available ? '0' : '-1'}"
-             aria-disabled="${extract.available ? 'false' : 'true'}">
-          <div class="glyph">⚙</div>
-          <div class="cp-body">
-            <h3>Extract a Card</h3>
-            <p>${esc(extract.summary)}</p>
-          </div>
-        </div>` : ''}
-        ${install ? `<div class="class-pick${install.available ? '' : ' locked'}" id="install-opt"
-             role="button" tabindex="${install.available ? '0' : '-1'}"
-             aria-disabled="${install.available ? 'false' : 'true'}">
-          <div class="glyph">⚒</div>
-          <div class="cp-body">
-            <h3>Seat a Card</h3>
-            <p>${esc(install.summary)}</p>
-          </div>
-        </div>` : ''}
-        ${stay.services.flasks ? `<details class="class-pick shrine-fold" id="flask-reallocate"${openPanel === 'flask' ? ' open' : ''}>
-          <summary>
-            <span class="glyph shrine-fold-glyph">⚗</span>
-            <span class="ob shrine-fold-summary"><b class="on">Reallocate Flask Charges</b><small class="om">${charge.assigned}/${charge.capacity} assigned</small></span>
-            <span class="r-trail shrine-fold-caret" aria-hidden="true">${FOLD_GLYPH.collapsed}</span>
-          </summary>
-          <div class="shrine-fold-content">
-          <div class="shrine-fold-detail">
-          <div class="cp-body">
-          <!-- THE PER-FLASK COUNTS LEFT THIS LINE WHEN THE ROWS GAINED THEM.
-               It used to read "Fixed capacity 3: <art> 2 · <art> 1" — the same
-               two numbers the increment rows below now carry, which is Law 1
-               clause 2 (a number a player reads is a copy nothing syncs) and,
-               measured at 390x844, the thing that pushed the `+` button and the
-               count clean off the right edge of the phone. presentation-matrix
-               went red on "relevant controls remain inside the viewport" and
-               that is how I found it, not by looking. The capacity stays,
-               because it is the one number the rows do NOT say. -->
-          ${html(subtitle(`Fixed capacity ${charge.capacity}`))}
-          <div class="flask-increment">
-            ${flaskRowsHtml}
-            ${html(statusText(`${charge.assigned} of ${charge.capacity} assigned`, { class: 'flask-increment-total' }))}
-          </div>
-          </div>
-          </div>
-          </div>
-        </details>` : ''}
         <!-- THE OFFER PREDICATE, PUBLISHED RATHER THAN RE-DERIVED.
              Constantine: "make the flask and the level up collapsible (with
              level up being grayed out or not visible when there isn't enough
@@ -318,6 +263,62 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
             <p>${level.offerable ? `${budget.points} point${budget.points === 1 ? '' : 's'} to assign · Level ${level.level}` : level.capped ? `Level ${level.level} · the level cap` : `Level ${level.level} · ${level.xp} / ${level.xpToNext} XP to the next`}</p>
           </div>
         </div>` : ''}
+        ${stay.services.smith ? `<div class="class-pick${canInspectSmithing ? '' : ' locked'}" id="smith-opt"
+             role="button" tabindex="${canInspectSmithing ? '0' : '-1'}"
+             aria-disabled="${canInspectSmithing ? 'false' : 'true'}">
+          <div class="glyph">${engravedIconHtml('equipment')}</div>
+          <div class="cp-body">
+            <h3>Upgrade an Item</h3>
+            <p>${canInspectSmithing
+              ? `${smith.stones} Smithing Stone${smith.stones === 1 ? '' : 's'} · choose one owned armament.`
+              : 'No owned armament has an effective tier remaining.'}</p>
+          </div>
+        </div>` : ''}
+        ${stay.services.flasks ? `<details class="class-pick shrine-fold" id="flask-reallocate"${openPanel === 'flask' ? ' open' : ''}>
+          <summary>
+            <span class="glyph shrine-fold-glyph">⚗</span>
+            <span class="ob shrine-fold-summary"><b class="on">Reallocate Flask Charges</b><small class="om">${charge.assigned}/${charge.capacity} assigned</small></span>
+            <span class="r-trail shrine-fold-caret" aria-hidden="true">${FOLD_GLYPH.collapsed}</span>
+          </summary>
+          <div class="shrine-fold-content">
+          <div class="shrine-fold-detail">
+          <div class="cp-body">
+          <!-- THE PER-FLASK COUNTS LEFT THIS LINE WHEN THE ROWS GAINED THEM.
+               It used to read "Fixed capacity 3: <art> 2 · <art> 1" — the same
+               two numbers the increment rows below now carry, which is Law 1
+               clause 2 (a number a player reads is a copy nothing syncs) and,
+               measured at 390x844, the thing that pushed the `+` button and the
+               count clean off the right edge of the phone. presentation-matrix
+               went red on "relevant controls remain inside the viewport" and
+               that is how I found it, not by looking. The capacity stays,
+               because it is the one number the rows do NOT say. -->
+          ${html(subtitle(`Fixed capacity ${charge.capacity}`))}
+          <div class="flask-increment">
+            ${flaskRowsHtml}
+            ${html(statusText(`${charge.assigned} of ${charge.capacity} assigned`, { class: 'flask-increment-total' }))}
+          </div>
+          </div>
+          </div>
+          </div>
+        </details>` : ''}
+        ${extract ? `<div class="class-pick${extract.available ? '' : ' locked'}" id="extract-opt"
+             role="button" tabindex="${extract.available ? '0' : '-1'}"
+             aria-disabled="${extract.available ? 'false' : 'true'}">
+          <div class="glyph">⚙</div>
+          <div class="cp-body">
+            <h3>Extract a Card</h3>
+            <p>${esc(extract.summary)}</p>
+          </div>
+        </div>` : ''}
+        ${install ? `<div class="class-pick${install.available ? '' : ' locked'}" id="install-opt"
+             role="button" tabindex="${install.available ? '0' : '-1'}"
+             aria-disabled="${install.available ? 'false' : 'true'}">
+          <div class="glyph">⚒</div>
+          <div class="cp-body">
+            <h3>Seat a Card</h3>
+            <p>${esc(install.summary)}</p>
+          </div>
+        </div>` : ''}
         ${board ? `<div class="class-pick" id="board-opt" role="button" tabindex="0">
           <div class="glyph">✉</div>
           <div class="cp-body">
@@ -342,11 +343,11 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   // same plans that build and wire the cards above — never re-derived.
   const offeredChoices = [
     { id: 'rest', selector: '#rest-opt', available: !noRest, used: !relicNoRest && multiUse && rested },
+    stay.services.levelUp && { id: 'level', selector: '#level-opt', available: level.offerable },
     stay.services.smith && { id: 'smith', selector: '#smith-opt', available: canInspectSmithing },
+    stay.services.flasks && { id: 'flask', selector: '#flask-reallocate', available: charge.rows.some((r) => r.canAdd || r.canSub) },
     extract && { id: 'extract', selector: '#extract-opt', available: extract.available },
     install && { id: 'install', selector: '#install-opt', available: install.available },
-    stay.services.flasks && { id: 'flask', selector: '#flask-reallocate', available: charge.rows.some((r) => r.canAdd || r.canSub) },
-    stay.services.levelUp && { id: 'level', selector: '#level-opt', available: level.offerable },
   ].filter(Boolean);
   const availability = restChoiceStatus(offeredChoices);
   // The foot is Multi-use's continuation (it was LEAVE THE SHRINE under the
