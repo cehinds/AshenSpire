@@ -333,7 +333,7 @@ or keep display case.
   `meta.character.consumable.flask`, `meta.character.other.location.{event,encounter}`,
   `card.type.attack`.
 
-**Labels, different word (10).** Owner to say which name is the game's.
+**Labels, different word (11).** Owner to say which name is the game's.
 - `meta.combat.damage.magic.divine` (model Divine, live Holy; `damage:sacred`).
 - `meta.combat.damage.magic.frost` (model Frost, live Cold; `damage:frost`).
 - `meta.combat.damage.physical.pierce` (model Pierce, live Piercing; `damage:piercing`).
@@ -344,6 +344,7 @@ or keep display case.
 - `meta.combat.stance` (model Stance, live Combat maneuver; `maneuver`).
 - `meta.combat.stance.defensive` (model Defensive, live Defend; `maneuver:defend`).
 - `card.type.status` (model Status, live statusCard).
+- `meta.combat.damage.hybrid` / `damage.arcane` (Hybrid vs arcane; `liveId` `damage.arcane`).
 
 **Placement: damage types (9).** The live tree puts `damage.physical`,
 `damage.magic` and `damage.hybrid` under the `damageType` root. The model puts
@@ -373,12 +374,13 @@ Owner to say which parent each belongs to. Rows: `card.keyword.{ethereal,exhaust
 `card.type.{curse,power,skill,status}`, `card.upgrade.upgraded`,
 `card.cost.{mana,stamina}`.
 
-**Placement: delivery, stance and counter (3).** Owner decision 3 puts Ranged
+**Placement: delivery, stance and counter (5).** Owner decision 3 puts Ranged
 and Casting under delivery. The live tree puts `maneuver:ranged` and
 `maneuver:casting` under the maneuver root, which maps to the stance tag. Owner
 to confirm decision 3 against the live tree. Rows: `meta.combat.delivery.ranged`,
 `meta.combat.delivery.casting`. The live tree also puts
-`meta.combat.stance.counter.ranged-counter` under `counterMode`, not under the
+`meta.combat.stance.counter.ranged-counter`, `meta.combat.stance.counter.melee-counter`
+and `meta.combat.stance.counter.spell-counter` under `counterMode`, not under the
 counter stance.
 
 **Placement: technique, school and roots under meta (6).**
