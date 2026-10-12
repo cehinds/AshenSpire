@@ -33,7 +33,7 @@ import { computeTokenBindings, cardTokenEffects } from './validate.js';
 import { balance } from '../content/balance.js';
 import { combatProfileFor, isSpellCard } from './combatCardProfile.js';
 import { uiStrings } from '../content/generated/uiStrings.js';
-import { magicShareOf, splitDamageTypesOf } from './combatRatings.js';
+import { magicShareOf, splitContactParts, splitDamageTypesOf } from './combatRatings.js';
 import { cardSigilIdentity } from '../content/combatSigils.js';
 import { resolve as resolveTags } from '../content/tags.js';
 import { constantFormulaValue, describeFormula } from './formulas.js';
@@ -51,12 +51,15 @@ function uiText(id, tokens) {
 // The split of a hit of `amount` from this card, or null when the card is whole magic or whole physical:
 // its magic share strictly between 0 and 1 (a carrier's own, else the configured damage type's, else its camp).
 // `ratings` is the run's configured combat ratings (registries.balance.combatRatings), the rules combat reads.
-function splitOf(def, profile, amount, ratings = null) {
+// `live` is the previewed value: its splitBase and ratingBonus split the amount exactly as the contacts do
+// (the card's own damage, then the rating bonus typed by its category). Without them the whole amount splits.
+export function splitOf(def, profile, amount, ratings = null, live = null) {
   const carrier = { ...profile, magicShare: def.magicShare, physicalDamageType: def.physicalDamageType };
   const share = magicShareOf(carrier, ratings);
   if (!(share > 0 && share < 1) || !Number.isFinite(amount)) return null;
-  const magic = Math.floor(amount * share + 1e-9);
-  return { magic, physical: amount - magic, types: splitDamageTypesOf(carrier) };
+  const parts = splitContactParts({ amount, base: live?.splitBase ?? amount, ratingBonus: live?.ratingBonus ?? 0,
+    ratingPart: live?.ratingPart ?? null, share, primary: profile.camp === 'spell' ? 'magic' : 'physical' });
+  return { magic: parts.magic, physical: parts.physical, types: splitDamageTypesOf(carrier) };
 }
 
 export function combatCardDamageLabel(def, preview = null, registries = null, index = null) {
@@ -140,7 +143,7 @@ export function combatCardSummary(def, preview = null, registries = null) {
         const type = combatCardDamageLabel(def, preview, registries, index);
         const word = `${type ? `${type} ` : ''}damage`;
         // A hit part magic and part physical reads both parts, the physical first.
-        const split = !unequal && hits === 1 ? splitOf(def, p, n, ratings) : null;
+        const split = !unequal && hits === 1 ? splitOf(def, p, n, ratings, live) : null;
         const damage = split ? uiText('combat.card.splitDamage', { amount: n, physical: split.physical, physicalType: split.types.physical, magic: split.magic, magicType: split.types.magic })
           : unequal ? `${sequence.join(' + ')} ${word} (${live.totalDamage} total across ${sequence.length} hits)`
           : `${n} ${word}${hits !== 1 ? ` ×${hits}` : ''}`;

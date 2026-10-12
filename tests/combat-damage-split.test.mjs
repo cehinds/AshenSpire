@@ -12,6 +12,8 @@ import { resolveCombatRatings, magicShareOf, splitDamageTypesOf } from '../src/m
 import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
 import { combatProfileFor } from '../src/model/combatCardProfile.js';
 import { objectTagIds } from '../src/content/tags.js';
+import { previewCard } from '../src/engine/combat.js';
+import { splitOf } from '../src/model/playingCard.js';
 
 function fixture({ ward = 3, barrier = 0, block = 0, poise = 0, weakness = {}, flat = {}, damageTypeShares = null } = {}) {
   const registries = createRegistries(contentBundle);
@@ -379,6 +381,38 @@ test('magicShareOf precedence: a listed school below 1 decides at any reach; a m
   assert.equal(magicShareOf({ ...spell, damageType: 'slashing', reach: 'near' }, config), 0, 'a ranged spell with a physical type is physical, not the Melee share');
   assert.equal(magicShareOf({ ...spell, damageType: 'fire', reach: 'contact' }, config), 1, 'a melee spell with a magic type is magic');
   assert.equal(magicShareOf({ camp: 'physical', maneuver: 'smash', damageType: 'fire', reach: 'contact' }, config), 0.3, 'a fire-tagged technique takes the Technique share');
+});
+
+// The card face splits its amount the way the committed hit does: the card's own damage by its share,
+// then the rating bonus by its category. A real previewCard builds the face (no target, so the face is the card's own number).
+function faceOf(cards, cardId, ratingValue) {
+  const registries = createRegistries({ ...contentBundle, cards: contentBundle.cards.map(card => cards[card.id] ? { ...card, ...cards[card.id] } : card) });
+  const combat = createCombat({ registries, rng: createRng(901), combatExpansionVersion: 2, enemyIds: ['wanderingSoldier'],
+    player: { classId: 'starseer', maxHp: 100, hp: 100, maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1, deck: [] } });
+  combat.piles.hand = [{ instanceId: 'face', cardId, upgraded: false, ratingValue }];
+  const preview = previewCard(combat, 'face');
+  const value = preview.values.find(row => row.op === 'damage');
+  return { value, parts: splitOf(preview.resolvedDefinition, combatProfileFor(preview.resolvedDefinition), value.faceValue, null, value) };
+}
+
+test('a spell face with a +4 Power splits as its committed hit: the card base by share, the Power all magic', () => {
+  const face = faceOf({}, 'starstonePebble', 4);
+  assert.equal(face.value.splitBase, 6, 'the card base is 6');
+  assert.equal(face.value.faceValue, 10, 'the face is the base plus the Power');
+  const committed = hitOf(strike({ ...v2Carrier('starstonePebble'), skipRatingBonus: false, ratingValue: 4 }, face.value.splitBase, { ward: 20 }));
+  assert.deepEqual([face.parts.magic, face.parts.physical], [committed.magicAmount, committed.physicalAmount]);
+  assert.deepEqual([face.parts.magic, face.parts.physical], [7, 3]);
+});
+
+test('a technique face with a +4 Attack splits as its committed hit: the Technique share of its base, the Attack all physical', () => {
+  const cards = { stomp: { tags: ['camp:physical', 'maneuver:smash', 'damage:fire'], attack: { damageType: 'fire' } } };
+  const face = faceOf(cards, 'stomp', 4);
+  assert.equal(face.value.splitBase, 9, 'the card base is 9');
+  const carrier = { cardId: 'stomp', tags: ['camp:physical', 'maneuver:smash', 'damage:fire'], skipRatingBonus: false, ratingValue: 4,
+    combatProfile: { camp: 'physical', maneuver: 'smash', damageType: 'fire', reach: 'contact', targeting: 'single' } };
+  const committed = hitOf(strike(carrier, face.value.splitBase, { ward: 20 }));
+  assert.deepEqual([face.parts.magic, face.parts.physical], [committed.magicAmount, committed.physicalAmount]);
+  assert.deepEqual([face.parts.magic, face.parts.physical], [2, 11]);
 });
 
 test('physical type: the card tag wins, else the school (force and alteration: blunt), magic-only schools keep their card tag', () => {
