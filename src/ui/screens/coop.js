@@ -2160,6 +2160,19 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         if (event.type === 'damageDealt' && target) {
           target.hp = Math.max(0, target.hp - Math.max(0, event.amount - (event.blocked || 0)));
           if (event.blockRemaining !== undefined) target.block = event.blockRemaining;
+          // The defence layers move with each hit, so their badges do too.
+          if (event.barrierRemaining !== undefined) target.barrier = event.barrierRemaining;
+          if (event.wardRemaining !== undefined && target.persistentWard) target.persistentWard.value = event.wardRemaining;
+          if (event.poiseRemaining !== undefined && target.persistentPoise) target.persistentPoise.value = event.poiseRemaining;
+        }
+        if (event.type === 'barrierGained' && target && event.total !== undefined) target.barrier = event.total;
+        if (event.type === 'persistentWardChanged' && target?.persistentWard) {
+          target.persistentWard.value = event.value;
+          if (Number.isFinite(event.max)) target.persistentWard.max = event.max;
+        }
+        if (event.type === 'persistentPoiseChanged' && target?.persistentPoise) {
+          target.persistentPoise.value = event.value;
+          if (Number.isFinite(event.max)) target.persistentPoise.max = event.max;
         }
         if (event.type === 'cardPlayed') {
           const owner = entityFor(event.sourcePlayerId || event.playerId);
