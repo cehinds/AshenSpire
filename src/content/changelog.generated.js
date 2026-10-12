@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-12",
     "summary": "Wide screens: bigger hand cards, enemies further back, a shorter footer",
     "detail": "On desktop and widescreen windows the hand cards are about half as big again, the enemies stand on the back row and are spread so none overlaps another or you, the footer is about a third shorter, and the battle floor sits higher. Phones and tablets are unchanged.",
-    "build": "0.7.1.1359",
+    "build": "0.7.1.1361",
     "pullRequest": 1875,
     "url": "https://github.com/cehinds/AshenSpire/pull/1875"
   },
