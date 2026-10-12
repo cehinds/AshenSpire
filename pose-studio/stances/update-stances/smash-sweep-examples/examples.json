@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "status": "SM03 \u00b7 Twisting aerial slam is owner-selected for Smash; runtime implementation is pending. Other Smash examples remain references. Revised iai Sweep completion and selection are pending.",
+  "status": "Twenty revised sequences are ready for review. SM03 \u00b7 Twisting aerial slam is owner-selected and implemented; compiled gameplay validation is pending. Other Smash examples remain references. Sweep selection is pending.",
   "reviewSlotMs": 350,
   "families": {
     "sweep": {
@@ -10,8 +10,8 @@
         1024,
         1024
       ],
-      "sourceManifest": null,
-      "pending": true,
+      "sourceManifest": "sweep/iai-whirlwind-v2/manifest.json",
+      "pending": false,
       "slotLabels": [
         "Start stance",
         "Wind-up",
@@ -39,6 +39,176 @@
     }
   },
   "examples": [
+    {
+      "id": "SW01",
+      "family": "sweep",
+      "name": "Waist whirlwind draw",
+      "description": "Counter-coil, rightward waist crosscut and low forward left-blade finish.",
+      "frames": [
+        "sweep/iai-whirlwind-v2/Sweep01/frame-01.png",
+        "sweep/iai-whirlwind-v2/Sweep01/frame-02.png",
+        "sweep/iai-whirlwind-v2/Sweep01/frame-03.png",
+        "sweep/iai-whirlwind-v2/Sweep01/frame-04.png",
+        "sweep/iai-whirlwind-v2/Sweep01/frame-05.png"
+      ],
+      "sourceGif": "sweep/iai-whirlwind-v2/Sweep01/preview.gif",
+      "provenance": "sweep/iai-whirlwind-v2/Sweep01/provenance.json",
+      "storyboard": "sweep/iai-whirlwind-v2/Sweep01/strip.png",
+      "caveat": null
+    },
+    {
+      "id": "SW02",
+      "family": "sweep",
+      "name": "Reverse half-turn",
+      "description": "Right blade preload, body half-turn into left return cut, then rightward low completion.",
+      "frames": [
+        "sweep/iai-whirlwind-v2/Sweep02/frame-01.png",
+        "sweep/iai-whirlwind-v2/Sweep02/frame-02.png",
+        "sweep/iai-whirlwind-v2/Sweep02/frame-03.png",
+        "sweep/iai-whirlwind-v2/Sweep02/frame-04.png",
+        "sweep/iai-whirlwind-v2/Sweep02/frame-05.png"
+      ],
+      "sourceGif": "sweep/iai-whirlwind-v2/Sweep02/preview.gif",
+      "provenance": "sweep/iai-whirlwind-v2/Sweep02/provenance.json",
+      "storyboard": "sweep/iai-whirlwind-v2/Sweep02/strip.png",
+      "caveat": null
+    },
+    {
+      "id": "SW03",
+      "family": "sweep",
+      "name": "Cross-step whirlwind",
+      "description": "Crossed-foot coil and mid-turn, then uncrossed wide low landing.",
+      "frames": [
+        "sweep/iai-whirlwind-v2/Sweep03/frame-01.png",
+        "sweep/iai-whirlwind-v2/Sweep03/frame-02.png",
+        "sweep/iai-whirlwind-v2/Sweep03/frame-03.png",
+        "sweep/iai-whirlwind-v2/Sweep03/frame-04.png",
+        "sweep/iai-whirlwind-v2/Sweep03/frame-05.png"
+      ],
+      "sourceGif": "sweep/iai-whirlwind-v2/Sweep03/preview.gif",
+      "provenance": "sweep/iai-whirlwind-v2/Sweep03/provenance.json",
+      "storyboard": "sweep/iai-whirlwind-v2/Sweep03/strip.png",
+      "caveat": null
+    },
+    {
+      "id": "SW04",
+      "family": "sweep",
+      "name": "Planted deep pivot",
+      "description": "Wide planted squat with hip pivot and deeper compact finish.",
+      "frames": [
+        "sweep/iai-whirlwind-v2/Sweep04/frame-01.png",
+        "sweep/iai-whirlwind-v2/Sweep04/frame-02.png",
+        "sweep/iai-whirlwind-v2/Sweep04/frame-03.png",
+        "sweep/iai-whirlwind-v2/Sweep04/frame-04.png",
+        "sweep/iai-whirlwind-v2/Sweep04/frame-05.png"
+      ],
+      "sourceGif": "sweep/iai-whirlwind-v2/Sweep04/preview.gif",
+      "provenance": "sweep/iai-whirlwind-v2/Sweep04/provenance.json",
+      "storyboard": "sweep/iai-whirlwind-v2/Sweep04/strip.png",
+      "caveat": null
+    },
+    {
+      "id": "SW05",
+      "family": "sweep",
+      "name": "Rising spiral",
+      "description": "A rising diagonal spiral crosses from waist toward chest before a low recovery.",
+      "frames": [
+        "sweep/iai-whirlwind-v2/Sweep05/frame-01.png",
+        "sweep/iai-whirlwind-v2/Sweep05/frame-02.png",
+        "sweep/iai-whirlwind-v2/Sweep05/frame-03.png",
+        "sweep/iai-whirlwind-v2/Sweep05/frame-04.png",
+        "sweep/iai-whirlwind-v2/Sweep05/frame-05.png"
+      ],
+      "sourceGif": "sweep/iai-whirlwind-v2/Sweep05/preview.gif",
+      "provenance": "sweep/iai-whirlwind-v2/Sweep05/provenance.json",
+      "storyboard": "sweep/iai-whirlwind-v2/Sweep05/strip.png",
+      "caveat": null
+    },
+    {
+      "id": "SW06",
+      "family": "sweep",
+      "name": "Low leg orbit",
+      "description": "The strike and surrounding orbit drop toward knee level with a compressed body.",
+      "frames": [
+        "sweep/iai-whirlwind-v2/Sweep06/frame-01.png",
+        "sweep/iai-whirlwind-v2/Sweep06/frame-02.png",
+        "sweep/iai-whirlwind-v2/Sweep06/frame-03.png",
+        "sweep/iai-whirlwind-v2/Sweep06/frame-04.png",
+        "sweep/iai-whirlwind-v2/Sweep06/frame-05.png"
+      ],
+      "sourceGif": "sweep/iai-whirlwind-v2/Sweep06/preview.gif",
+      "provenance": "sweep/iai-whirlwind-v2/Sweep06/provenance.json",
+      "storyboard": "sweep/iai-whirlwind-v2/Sweep06/strip.png",
+      "caveat": null
+    },
+    {
+      "id": "SW07",
+      "family": "sweep",
+      "name": "Compact low finish",
+      "description": "The turning crosscut settles into a narrower compact low finish; arms extend during contact.",
+      "frames": [
+        "sweep/iai-whirlwind-v2/Sweep07/frame-01.png",
+        "sweep/iai-whirlwind-v2/Sweep07/frame-02.png",
+        "sweep/iai-whirlwind-v2/Sweep07/frame-03.png",
+        "sweep/iai-whirlwind-v2/Sweep07/frame-04.png",
+        "sweep/iai-whirlwind-v2/Sweep07/frame-05.png"
+      ],
+      "sourceGif": "sweep/iai-whirlwind-v2/Sweep07/preview.gif",
+      "provenance": "sweep/iai-whirlwind-v2/Sweep07/provenance.json",
+      "storyboard": "sweep/iai-whirlwind-v2/Sweep07/strip.png",
+      "caveat": null
+    },
+    {
+      "id": "SW08",
+      "family": "sweep",
+      "name": "Broad orbit",
+      "description": "Wide base and broad surrounding arc with an extended waist cut.",
+      "frames": [
+        "sweep/iai-whirlwind-v2/Sweep08/frame-01.png",
+        "sweep/iai-whirlwind-v2/Sweep08/frame-02.png",
+        "sweep/iai-whirlwind-v2/Sweep08/frame-03.png",
+        "sweep/iai-whirlwind-v2/Sweep08/frame-04.png",
+        "sweep/iai-whirlwind-v2/Sweep08/frame-05.png"
+      ],
+      "sourceGif": "sweep/iai-whirlwind-v2/Sweep08/preview.gif",
+      "provenance": "sweep/iai-whirlwind-v2/Sweep08/provenance.json",
+      "storyboard": "sweep/iai-whirlwind-v2/Sweep08/strip.png",
+      "caveat": null
+    },
+    {
+      "id": "SW09",
+      "family": "sweep",
+      "name": "Two-direction unwind",
+      "description": "Rightward preload reverses into a leftward body turn, then a low rightward unwind.",
+      "frames": [
+        "sweep/iai-whirlwind-v2/Sweep09/frame-01.png",
+        "sweep/iai-whirlwind-v2/Sweep09/frame-02.png",
+        "sweep/iai-whirlwind-v2/Sweep09/frame-03.png",
+        "sweep/iai-whirlwind-v2/Sweep09/frame-04.png",
+        "sweep/iai-whirlwind-v2/Sweep09/frame-05.png"
+      ],
+      "sourceGif": "sweep/iai-whirlwind-v2/Sweep09/preview.gif",
+      "provenance": "sweep/iai-whirlwind-v2/Sweep09/provenance.json",
+      "storyboard": "sweep/iai-whirlwind-v2/Sweep09/strip.png",
+      "caveat": null
+    },
+    {
+      "id": "SW10",
+      "family": "sweep",
+      "name": "Advancing low whirlwind",
+      "description": "Lifted front boot starts a forward step; the cut plants and advances into a wide low finish.",
+      "frames": [
+        "sweep/iai-whirlwind-v2/Sweep10/frame-01.png",
+        "sweep/iai-whirlwind-v2/Sweep10/frame-02.png",
+        "sweep/iai-whirlwind-v2/Sweep10/frame-03.png",
+        "sweep/iai-whirlwind-v2/Sweep10/frame-04.png",
+        "sweep/iai-whirlwind-v2/Sweep10/frame-05.png"
+      ],
+      "sourceGif": "sweep/iai-whirlwind-v2/Sweep10/preview.gif",
+      "provenance": "sweep/iai-whirlwind-v2/Sweep10/provenance.json",
+      "storyboard": "sweep/iai-whirlwind-v2/Sweep10/strip.png",
+      "caveat": null
+    },
     {
       "id": "SM01",
       "family": "smash",
@@ -87,7 +257,7 @@
       "storyboard": "smash/ground-slam-revision-2/SM03/preview.png",
       "caveat": null,
       "ownerSelectedRole": "Smash",
-      "runtimeStatus": "Implementation pending"
+      "runtimeStatus": "Implemented \u00b7 compiled gameplay validation pending"
     },
     {
       "id": "SM04",
@@ -203,7 +373,7 @@
     }
   ],
   "archive": {
-    "sweep": "sweep/manifest.json",
+    "sweep": "sweep/legacy-horizontal-v1/manifest.json",
     "smash": "smash/index.json"
   },
   "ownerSelections": {

@@ -2,6 +2,286 @@
   "reviewOnly": true,
   "examples": [
     {
+      "id": "SW01",
+      "slots": 5,
+      "sourcePaths": [
+        "sweep/iai-whirlwind-v2/Sweep01/frame-01.png",
+        "sweep/iai-whirlwind-v2/Sweep01/frame-02.png",
+        "sweep/iai-whirlwind-v2/Sweep01/frame-03.png",
+        "sweep/iai-whirlwind-v2/Sweep01/frame-04.png",
+        "sweep/iai-whirlwind-v2/Sweep01/frame-05.png"
+      ],
+      "slotLabels": [
+        "Start stance",
+        "Wind-up",
+        "Turning slash",
+        "Low finish",
+        "Return stance"
+      ],
+      "durationsMs": [
+        350,
+        350,
+        350,
+        350,
+        350
+      ],
+      "decodedGifFrames": 5,
+      "gif": "SW01.gif",
+      "storyboard": "SW01-storyboard.png"
+    },
+    {
+      "id": "SW02",
+      "slots": 5,
+      "sourcePaths": [
+        "sweep/iai-whirlwind-v2/Sweep02/frame-01.png",
+        "sweep/iai-whirlwind-v2/Sweep02/frame-02.png",
+        "sweep/iai-whirlwind-v2/Sweep02/frame-03.png",
+        "sweep/iai-whirlwind-v2/Sweep02/frame-04.png",
+        "sweep/iai-whirlwind-v2/Sweep02/frame-05.png"
+      ],
+      "slotLabels": [
+        "Start stance",
+        "Wind-up",
+        "Turning slash",
+        "Low finish",
+        "Return stance"
+      ],
+      "durationsMs": [
+        350,
+        350,
+        350,
+        350,
+        350
+      ],
+      "decodedGifFrames": 5,
+      "gif": "SW02.gif",
+      "storyboard": "SW02-storyboard.png"
+    },
+    {
+      "id": "SW03",
+      "slots": 5,
+      "sourcePaths": [
+        "sweep/iai-whirlwind-v2/Sweep03/frame-01.png",
+        "sweep/iai-whirlwind-v2/Sweep03/frame-02.png",
+        "sweep/iai-whirlwind-v2/Sweep03/frame-03.png",
+        "sweep/iai-whirlwind-v2/Sweep03/frame-04.png",
+        "sweep/iai-whirlwind-v2/Sweep03/frame-05.png"
+      ],
+      "slotLabels": [
+        "Start stance",
+        "Wind-up",
+        "Turning slash",
+        "Low finish",
+        "Return stance"
+      ],
+      "durationsMs": [
+        350,
+        350,
+        350,
+        350,
+        350
+      ],
+      "decodedGifFrames": 5,
+      "gif": "SW03.gif",
+      "storyboard": "SW03-storyboard.png"
+    },
+    {
+      "id": "SW04",
+      "slots": 5,
+      "sourcePaths": [
+        "sweep/iai-whirlwind-v2/Sweep04/frame-01.png",
+        "sweep/iai-whirlwind-v2/Sweep04/frame-02.png",
+        "sweep/iai-whirlwind-v2/Sweep04/frame-03.png",
+        "sweep/iai-whirlwind-v2/Sweep04/frame-04.png",
+        "sweep/iai-whirlwind-v2/Sweep04/frame-05.png"
+      ],
+      "slotLabels": [
+        "Start stance",
+        "Wind-up",
+        "Turning slash",
+        "Low finish",
+        "Return stance"
+      ],
+      "durationsMs": [
+        350,
+        350,
+        350,
+        350,
+        350
+      ],
+      "decodedGifFrames": 5,
+      "gif": "SW04.gif",
+      "storyboard": "SW04-storyboard.png"
+    },
+    {
+      "id": "SW05",
+      "slots": 5,
+      "sourcePaths": [
+        "sweep/iai-whirlwind-v2/Sweep05/frame-01.png",
+        "sweep/iai-whirlwind-v2/Sweep05/frame-02.png",
+        "sweep/iai-whirlwind-v2/Sweep05/frame-03.png",
+        "sweep/iai-whirlwind-v2/Sweep05/frame-04.png",
+        "sweep/iai-whirlwind-v2/Sweep05/frame-05.png"
+      ],
+      "slotLabels": [
+        "Start stance",
+        "Wind-up",
+        "Turning slash",
+        "Low finish",
+        "Return stance"
+      ],
+      "durationsMs": [
+        350,
+        350,
+        350,
+        350,
+        350
+      ],
+      "decodedGifFrames": 5,
+      "gif": "SW05.gif",
+      "storyboard": "SW05-storyboard.png"
+    },
+    {
+      "id": "SW06",
+      "slots": 5,
+      "sourcePaths": [
+        "sweep/iai-whirlwind-v2/Sweep06/frame-01.png",
+        "sweep/iai-whirlwind-v2/Sweep06/frame-02.png",
+        "sweep/iai-whirlwind-v2/Sweep06/frame-03.png",
+        "sweep/iai-whirlwind-v2/Sweep06/frame-04.png",
+        "sweep/iai-whirlwind-v2/Sweep06/frame-05.png"
+      ],
+      "slotLabels": [
+        "Start stance",
+        "Wind-up",
+        "Turning slash",
+        "Low finish",
+        "Return stance"
+      ],
+      "durationsMs": [
+        350,
+        350,
+        350,
+        350,
+        350
+      ],
+      "decodedGifFrames": 5,
+      "gif": "SW06.gif",
+      "storyboard": "SW06-storyboard.png"
+    },
+    {
+      "id": "SW07",
+      "slots": 5,
+      "sourcePaths": [
+        "sweep/iai-whirlwind-v2/Sweep07/frame-01.png",
+        "sweep/iai-whirlwind-v2/Sweep07/frame-02.png",
+        "sweep/iai-whirlwind-v2/Sweep07/frame-03.png",
+        "sweep/iai-whirlwind-v2/Sweep07/frame-04.png",
+        "sweep/iai-whirlwind-v2/Sweep07/frame-05.png"
+      ],
+      "slotLabels": [
+        "Start stance",
+        "Wind-up",
+        "Turning slash",
+        "Low finish",
+        "Return stance"
+      ],
+      "durationsMs": [
+        350,
+        350,
+        350,
+        350,
+        350
+      ],
+      "decodedGifFrames": 5,
+      "gif": "SW07.gif",
+      "storyboard": "SW07-storyboard.png"
+    },
+    {
+      "id": "SW08",
+      "slots": 5,
+      "sourcePaths": [
+        "sweep/iai-whirlwind-v2/Sweep08/frame-01.png",
+        "sweep/iai-whirlwind-v2/Sweep08/frame-02.png",
+        "sweep/iai-whirlwind-v2/Sweep08/frame-03.png",
+        "sweep/iai-whirlwind-v2/Sweep08/frame-04.png",
+        "sweep/iai-whirlwind-v2/Sweep08/frame-05.png"
+      ],
+      "slotLabels": [
+        "Start stance",
+        "Wind-up",
+        "Turning slash",
+        "Low finish",
+        "Return stance"
+      ],
+      "durationsMs": [
+        350,
+        350,
+        350,
+        350,
+        350
+      ],
+      "decodedGifFrames": 5,
+      "gif": "SW08.gif",
+      "storyboard": "SW08-storyboard.png"
+    },
+    {
+      "id": "SW09",
+      "slots": 5,
+      "sourcePaths": [
+        "sweep/iai-whirlwind-v2/Sweep09/frame-01.png",
+        "sweep/iai-whirlwind-v2/Sweep09/frame-02.png",
+        "sweep/iai-whirlwind-v2/Sweep09/frame-03.png",
+        "sweep/iai-whirlwind-v2/Sweep09/frame-04.png",
+        "sweep/iai-whirlwind-v2/Sweep09/frame-05.png"
+      ],
+      "slotLabels": [
+        "Start stance",
+        "Wind-up",
+        "Turning slash",
+        "Low finish",
+        "Return stance"
+      ],
+      "durationsMs": [
+        350,
+        350,
+        350,
+        350,
+        350
+      ],
+      "decodedGifFrames": 5,
+      "gif": "SW09.gif",
+      "storyboard": "SW09-storyboard.png"
+    },
+    {
+      "id": "SW10",
+      "slots": 5,
+      "sourcePaths": [
+        "sweep/iai-whirlwind-v2/Sweep10/frame-01.png",
+        "sweep/iai-whirlwind-v2/Sweep10/frame-02.png",
+        "sweep/iai-whirlwind-v2/Sweep10/frame-03.png",
+        "sweep/iai-whirlwind-v2/Sweep10/frame-04.png",
+        "sweep/iai-whirlwind-v2/Sweep10/frame-05.png"
+      ],
+      "slotLabels": [
+        "Start stance",
+        "Wind-up",
+        "Turning slash",
+        "Low finish",
+        "Return stance"
+      ],
+      "durationsMs": [
+        350,
+        350,
+        350,
+        350,
+        350
+      ],
+      "decodedGifFrames": 5,
+      "gif": "SW10.gif",
+      "storyboard": "SW10-storyboard.png"
+    },
+    {
       "id": "SM01",
       "slots": 5,
       "sourcePaths": [
@@ -282,6 +562,6 @@
       "storyboard": "SM10-storyboard.png"
     }
   ],
-  "totalSlots": 50,
+  "totalSlots": 100,
   "timing": "Uniform 350 ms review exposures, not gameplay timing"
 }
