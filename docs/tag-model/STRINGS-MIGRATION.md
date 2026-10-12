@@ -6,6 +6,11 @@ keys and targets are derived there, so this page explains them and the order.
 
 ## Counts
 
+The counts below are the inventory as it was extracted. Steps 9 and 10 have
+since moved their text into `content/source/uiStrings.csv` in code; the
+**Progress** section at the end says which rows, and the extracted inventory is
+not regenerated on this branch, so the 570 rows still read as hardcoded here.
+
 - **570** rows are hardcoded: `context` = `hardcoded` (the tag is `hardcoded` too).
   They come from **109** source files under `src/`, and they are literal text in
   code rather than rows of the shared table.
@@ -133,8 +138,29 @@ Order rules:
 - The debug and combat-test screens' strings migrate (step 10).
 - Evade uses one shared stance sprite for all Evade cards (see ART-LIST.md).
 
+## Progress
+
+Counted in rows of the extracted inventory (the 570 above).
+
+| Step | Rows | Done in code | Left, and why |
+| --- | ---: | ---: | --- |
+| 9 | 5 | 5 | None. The rows are `strings.error.noId`, `duplicateId`, `unknownId`, `extendsCycle` and `noForm`. `strings.js` reads them through `devMessage()`, which never calls `resolve()`, so an unknown id cannot recurse. |
+| 10 | 34 | 30 | `common.seed`, `common.copy`, `common.advanced` are shared with other screens (`settings.js`, `about.js`, `overlay.js`, `saveSlotSelector.js`). Their `common.*` rows would fail `tests/uistrings-no-shadow-literals.test.mjs` until those screens route through `t()`, so they wait for the shared-copy step (1). `Remove` is also in `settings.js` and waits the same way. |
+
+Step 10's 30 done rows are `combatTest.*` (29, in `screens/combatTest.js`) and
+`debugChrome.refresh`. Copy that is in the two files but not in the 34 approved
+rows stays as it is: the finish-screen headlines, the Armor label, the build
+descriptions, the Settings button, the log viewer's flavour sentence, its
+Close button and the clipboard fallback text. The ratchet
+(`tools/uistrings-baseline.json`) records the new counts for both files.
+
+After the moves, the extracted inventory would show 570 − 35 = 535 rows still
+hardcoded. That figure is for the next re-extraction to confirm.
+
 ## Regenerating
 
 `node docs/tag-model/tools/build.mjs` writes both columns from the rows. Run it
 twice; the second run changes nothing. `node docs/tag-model/tools/check.mjs`
-enforces the guard above.
+enforces the guard above. The extraction that feeds `--inv` is not on this
+branch, so a run without `--inv` only refreshes the keys of rows whose text now
+exists in `uiStrings.csv` (for the migrated texts, the real id).
