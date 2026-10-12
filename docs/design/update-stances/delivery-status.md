@@ -1,6 +1,6 @@
 # Selected stance delivery status
 
-The five selected Reaver/greatsword pose exports and runtime integration are complete. Independent code review is approved. [PR #1890](https://github.com/cehinds/AshenSpire/pull/1890) carries build **0.7.1.1408**; browser QA and the authorized merge remain pending.
+The five selected Reaver/greatsword pose exports and runtime integration are complete. The initial integration passed independent code review; review of the final pure-Dodge correction is pending. [PR #1890](https://github.com/cehinds/AshenSpire/pull/1890) carries build **0.7.1.1410**; browser QA and the authorized merge remain pending.
 
 | Target role | Selected source | Decision |
 | --- | --- | --- |
@@ -22,18 +22,19 @@ Exact crop coordinates, unchanged source hashes and export provenance are in the
 | User-selected role mappings | 5 |
 | Selected export manifest and cutouts | Complete: five full/mobile pose exports and selected project |
 | Runtime registration and routing | Complete; eligibility correction `44496130` included |
-| Independent code review | Approved |
+| Independent code review | Initial integration approved; final correction `71d6f4595` pending |
 | Initial focused runtime/animation tests | 97 passed; initial implementation evidence |
 | Final selected-weapon tests | 5 passed, including the real starting-kit registry projection |
-| PR / receipt | #1890 / build 0.7.1.1408, digest `c192e3e401` |
-| Browser QA / solo gameplay validation | Pending |
+| PR / receipt | #1890 / build 0.7.1.1410, digest `08b5c57339` |
+| Final pure-Dodge runtime tests | 36 focused passes after correction `71d6f4595` |
+| Browser QA / solo gameplay validation | Pending; captures must use the current build |
 | Authorized merge | Requested by the user; pending |
 | Co-op | Paused |
 
-The runtime pilot requires default-armour Reaver with the sole actual greatsword in either active hand and the other hand empty. Correction `44496130` includes the real starter's single-weapon grip mode; eligibility is not mechanically restricted to mode `two`. The paintings visually use both hands. Sweep, Counter and Smash use selected holds; pure-dodge preparation/readiness can hold Evade. Confirmed player-target guard-break and successful evasion show finite reactions, then restore the current action or newest held pose. Existing full attack and retaliation clips remain; five registered poses do not imply five new full animation sequences.
+The runtime pilot requires default-armour Reaver with the sole actual greatsword in either active hand and the other hand empty. Correction `44496130` includes the real starter's single-weapon grip mode; eligibility is not mechanically restricted to mode `two`. The paintings visually use both hands. Sweep, Counter and Smash use selected holds; pure-dodge preparation/readiness can hold Evade. Correction `71d6f4595` uses the canonical `isPureDodge` marker even when expanded Dodge is typed Counter; mixed counters keep their Counter pose and the glyph/mechanics remain unchanged. Confirmed player-target guard-break and successful evasion show finite reactions, then restore the current action or newest held pose. Existing full attack and retaliation clips remain; five registered poses do not imply five new full animation sequences.
 
-The 97 initial focused passes and five final tests are separate validation scopes. The final tests are in `tests/selected-weapon-stances.test.mjs` and include actual starting-kit projection after the eligibility correction. Independent review and these source tests do not establish browser/gameplay acceptance.
+The 97 initial focused passes and five final tests are separate validation scopes. The final tests are in `tests/selected-weapon-stances.test.mjs` and include actual starting-kit projection after the eligibility correction. The final correction has 36 focused passes reported by the runtime workstream and still awaits independent review. These source tests do not establish browser/gameplay acceptance.
 
-The user's request authorizes delivery and merge without another approval question. “Pending” means evidence or merge completion remains outstanding, not that authorization is missing. The initial receipt at `06b073d14` used build 0.7.1.1406. After merging Dev `216845621` (#1876), the receipt and both high-art/light builds were regenerated to 0.7.1.1408 (`c192e3e401`). Earlier brief/matrix build references record the pre-refresh snapshot; this delivery record names the current build. Documentation updates do not alter build inputs. The older [integration notes](integration-notes.md) describe the initial investigation; later Dev changes and the selected implementation must be assessed from the current source and implementation evidence.
+The user's request authorizes delivery and merge without another approval question. “Pending” means evidence or merge completion remains outstanding, not that authorization is missing. The initial receipt at `06b073d14` used build 0.7.1.1406. After merging Dev `216845621` (#1876), the receipt and both high-art/light builds were regenerated to 0.7.1.1408 (`c192e3e401`). Earlier brief/matrix build references record the pre-refresh snapshot; this delivery record names the current build. The later pure-Dodge correction `71d6f4595`, merged at `6208dae3f`, is now rebuilt as 0.7.1.1410 (`08b5c57339`). Documentation updates do not alter build inputs. The older [integration notes](integration-notes.md) describe the initial investigation; later Dev changes and the selected implementation must be assessed from the current source and implementation evidence.
 
 After the selected delivery is merged, the authorized next pass is ten **new greatsword options each for Sweep, Counter and Evade**, thirty total. This separate pass has zero generated options in the present snapshot. Other weapons, additional class appearances, magic treatments and the full 600-option baseline remain planned.
