@@ -169,3 +169,17 @@ test('a counter beat keeps the impact order', (t) => {
     assert.deepEqual(order(trace), ['reaction:player', 'float:-3', 'settle', 'bars']);
   });
 });
+
+test('a custom body clip keeps standard numbers but finishes before another reaction in the same beat', (t) => {
+  drive(t,({trace,run,finish})=>{
+    let index=0;
+    run(playerHit(1,1),{
+      reactionTimingForReceipt:()=>422.5,
+      reactionForReceipt:event=>event.type==='damageDealt'?()=>trace.push({what:'pilot:'+ ++index,at:Date.now()}):null,
+    });
+    finish();
+    const first=timeOf(trace,'pilot:1'),second=timeOf(trace,'pilot:2');
+    assert.ok(second-first>=422.5,'the second reaction never replaces an unfinished body clip');
+    assert.equal(trace.find(e=>e.what==='float:-1').at-first,ANIM_SPEEDS.normal.reactionMs,'numbers retain the contractual reaction delay');
+  });
+});

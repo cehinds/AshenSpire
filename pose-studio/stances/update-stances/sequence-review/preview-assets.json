@@ -1,0 +1,1128 @@
+{
+  "schemaVersion": 1,
+  "status": "sequence-order review only; no shipped runtime, catalogs, rigs or selections changed",
+  "canvas": {
+    "width": 768,
+    "height": 512,
+    "floorY": 464,
+    "bodyX": 384
+  },
+  "anchorMethod": "manual pelvis projection on common floor; swords/capes do not select horizontal anchor",
+  "frames": {
+    "C": {
+      "id": "C",
+      "label": "Counter · original Counter15",
+      "imagePath": "frames/C.webp",
+      "size": [
+        768,
+        512
+      ],
+      "drawOffset": [
+        0,
+        0
+      ],
+      "anchor": [
+        384,
+        464
+      ],
+      "sha256": "667464ea845f0af44e2efad3c58c995661f810103c1a07ef39c65b2fdeca670e",
+      "source": {
+        "id": "C",
+        "label": "Counter · original Counter15",
+        "source": "pose-studio/stances/update-stances/greatsword-counter/sheet-a.png",
+        "sha256": "cdf9e317db377a672a6de09af90516bf903246cd5800727f7acf364d353d49cd",
+        "size": [
+          1024,
+          1536
+        ],
+        "sourceBounds": [
+          91,
+          1110,
+          462,
+          1408
+        ],
+        "cropBounds": [
+          87,
+          1101,
+          466,
+          1412
+        ],
+        "scale": 1.18,
+        "sourceAnchor": [
+          264,
+          1408
+        ],
+        "pelvisLandmark": [
+          264,
+          1252
+        ],
+        "selectedDepiction": "original board one-hand low hanging cover; owner choice overrides earlier grip flag"
+      },
+      "drawTransform": {
+        "x": 175.14000000000001,
+        "y": 101.74000000000001,
+        "scale": 1.18
+      },
+      "bounds": [
+        180,
+        112,
+        618,
+        465
+      ],
+      "excludedStrong": 0,
+      "registration": "manual pelvis projection + unchanged source scale + common floor; no alpha-bounds horizontal centering"
+    },
+    "D": {
+      "id": "D",
+      "label": "Defend · Counter12",
+      "imagePath": "frames/D.webp",
+      "size": [
+        768,
+        512
+      ],
+      "drawOffset": [
+        0,
+        0
+      ],
+      "anchor": [
+        384,
+        464
+      ],
+      "sha256": "69ff5522214d93cf6f91390e8ab37df20ceb88533df3b7918be47450c99aff43",
+      "source": {
+        "id": "D",
+        "label": "Defend · Counter12",
+        "source": "pose-studio/stances/update-stances/greatsword-counter/sheet-a.png",
+        "sha256": "cdf9e317db377a672a6de09af90516bf903246cd5800727f7acf364d353d49cd",
+        "size": [
+          1024,
+          1536
+        ],
+        "sourceBounds": [
+          592,
+          196,
+          932,
+          491
+        ],
+        "cropBounds": [
+          589,
+          193,
+          936,
+          498
+        ],
+        "scale": 1.18,
+        "sourceAnchor": [
+          782,
+          491
+        ],
+        "pelvisLandmark": [
+          782,
+          360
+        ]
+      },
+      "drawTransform": {
+        "x": 156.26000000000002,
+        "y": 112.36000000000001,
+        "scale": 1.18
+      },
+      "bounds": [
+        160,
+        116,
+        561,
+        464
+      ],
+      "excludedStrong": 0,
+      "registration": "manual pelvis projection + unchanged source scale + common floor; no alpha-bounds horizontal centering"
+    },
+    "H": {
+      "id": "H",
+      "label": "High Parry · Counter16",
+      "imagePath": "frames/H.webp",
+      "size": [
+        768,
+        512
+      ],
+      "drawOffset": [
+        0,
+        0
+      ],
+      "anchor": [
+        384,
+        464
+      ],
+      "sha256": "91425e5d5cdf1fcb52e84d14d49e8ea1501a2887a9bc5092a8d2536c4c97b7a9",
+      "source": {
+        "id": "H",
+        "label": "High Parry · Counter16",
+        "source": "pose-studio/stances/update-stances/greatsword-counter/sheet-b.png",
+        "sha256": "ce4ee18063bc064c8598da4faac2c46364aef23d4b51d243a247bda270450cdc",
+        "size": [
+          1024,
+          1536
+        ],
+        "sourceBounds": [
+          90,
+          143,
+          481,
+          487
+        ],
+        "cropBounds": [
+          86,
+          139,
+          484,
+          498
+        ],
+        "scale": 1,
+        "sourceAnchor": [
+          282,
+          487
+        ],
+        "pelvisLandmark": [
+          282,
+          346
+        ],
+        "calibrationStatus": "Counter B rigid helmet/boot size is larger than A; reduced scale1.0 approved by director for sequence review"
+      },
+      "drawTransform": {
+        "x": 188,
+        "y": 116,
+        "scale": 1
+      },
+      "bounds": [
+        192,
+        120,
+        583,
+        464
+      ],
+      "excludedStrong": 0,
+      "registration": "manual pelvis projection + unchanged source scale + common floor; no alpha-bounds horizontal centering"
+    },
+    "G": {
+      "id": "G",
+      "label": "Guarded · Counter20",
+      "imagePath": "frames/G.webp",
+      "size": [
+        768,
+        512
+      ],
+      "drawOffset": [
+        0,
+        0
+      ],
+      "anchor": [
+        384,
+        464
+      ],
+      "sha256": "96b7d0dabbf60110d5e3f7a6c5225a231e1e70a6d8da156fa8e90234f7ab8e7e",
+      "source": {
+        "id": "G",
+        "label": "Guarded · Counter20",
+        "source": "pose-studio/stances/update-stances/greatsword-counter/sheet-b.png",
+        "sha256": "ce4ee18063bc064c8598da4faac2c46364aef23d4b51d243a247bda270450cdc",
+        "size": [
+          1024,
+          1536
+        ],
+        "sourceBounds": [
+          82,
+          1075,
+          454,
+          1448
+        ],
+        "cropBounds": [
+          79,
+          1071,
+          458,
+          1458
+        ],
+        "scale": 1,
+        "sourceAnchor": [
+          286,
+          1448
+        ],
+        "pelvisLandmark": [
+          286,
+          1296
+        ],
+        "calibrationStatus": "Counter B rigid helmet/boot size is larger than A; reduced scale1.0 approved by director for sequence review"
+      },
+      "drawTransform": {
+        "x": 177,
+        "y": 87,
+        "scale": 1
+      },
+      "bounds": [
+        180,
+        91,
+        552,
+        464
+      ],
+      "excludedStrong": 0,
+      "registration": "manual pelvis projection + unchanged source scale + common floor; no alpha-bounds horizontal centering"
+    },
+    "V": {
+      "id": "V",
+      "label": "Vertical Guard · Evade12",
+      "imagePath": "frames/V.webp",
+      "size": [
+        768,
+        512
+      ],
+      "drawOffset": [
+        0,
+        0
+      ],
+      "anchor": [
+        384,
+        464
+      ],
+      "sha256": "034649efb97e8fe63368c393ff1843217aac02a83d7bcb7676ad96edecbab593",
+      "source": {
+        "id": "V",
+        "label": "Vertical Guard · Evade12",
+        "source": "pose-studio/stances/update-stances/greatsword-evade/sheet-a.png",
+        "sha256": "e19fe59da17dfb2b52b07cddcd3f2400bd70145aeb6c647322ef821894665c75",
+        "size": [
+          1024,
+          1536
+        ],
+        "sourceBounds": [
+          555,
+          59,
+          1012,
+          542
+        ],
+        "cropBounds": [
+          551,
+          55,
+          1016,
+          546
+        ],
+        "scale": 0.75,
+        "sourceAnchor": [
+          864,
+          542
+        ],
+        "pelvisLandmark": [
+          864,
+          395
+        ]
+      },
+      "drawTransform": {
+        "x": 149.25,
+        "y": 98.75,
+        "scale": 0.75
+      },
+      "bounds": [
+        152,
+        101,
+        495,
+        464
+      ],
+      "excludedStrong": 0,
+      "registration": "manual pelvis projection + unchanged source scale + common floor; no alpha-bounds horizontal centering"
+    },
+    "AT2": {
+      "id": "AT2",
+      "label": "Attack2 · Sweep20",
+      "imagePath": "frames/AT2.webp",
+      "size": [
+        768,
+        512
+      ],
+      "drawOffset": [
+        0,
+        0
+      ],
+      "anchor": [
+        384,
+        464
+      ],
+      "sha256": "186b0ef5763abf0de84c9795be6559c503e3cc598ac7008a5ee8200defe486a1",
+      "source": {
+        "id": "AT2",
+        "label": "Attack2 · Sweep20",
+        "source": "pose-studio/stances/update-stances/greatsword-sweep/sheet-b.png",
+        "sha256": "8b9deed36436a27db6e884d7009350b1698ddd6f61339383bf3dffea4bcc3dcc",
+        "size": [
+          1024,
+          1536
+        ],
+        "sourceBounds": [
+          42,
+          1032,
+          531,
+          1431
+        ],
+        "cropBounds": [
+          37,
+          1023,
+          535,
+          1440
+        ],
+        "scale": 0.78,
+        "sourceAnchor": [
+          380,
+          1431
+        ],
+        "pelvisLandmark": [
+          380,
+          1275
+        ]
+      },
+      "drawTransform": {
+        "x": 116.45999999999998,
+        "y": 145.76,
+        "scale": 0.78
+      },
+      "bounds": [
+        120,
+        153,
+        502,
+        464
+      ],
+      "excludedStrong": 0,
+      "registration": "manual pelvis projection + unchanged source scale + common floor; no alpha-bounds horizontal centering"
+    },
+    "AT4": {
+      "id": "AT4",
+      "label": "Attack4 · Sweep16",
+      "imagePath": "frames/AT4.webp",
+      "size": [
+        768,
+        512
+      ],
+      "drawOffset": [
+        0,
+        0
+      ],
+      "anchor": [
+        384,
+        464
+      ],
+      "sha256": "71e8895ec8fcfa062965e20d67b49b74c7ebc4a89dc443dcf4ffd7bda7e40366",
+      "source": {
+        "id": "AT4",
+        "label": "Attack4 · Sweep16",
+        "source": "pose-studio/stances/update-stances/greatsword-sweep/sheet-b.png",
+        "sha256": "8b9deed36436a27db6e884d7009350b1698ddd6f61339383bf3dffea4bcc3dcc",
+        "size": [
+          1024,
+          1536
+        ],
+        "sourceBounds": [
+          18,
+          97,
+          572,
+          491
+        ],
+        "cropBounds": [
+          15,
+          93,
+          576,
+          498
+        ],
+        "scale": 0.78,
+        "sourceAnchor": [
+          324,
+          491
+        ],
+        "pelvisLandmark": [
+          324,
+          293
+        ]
+      },
+      "drawTransform": {
+        "x": 142.98,
+        "y": 153.56,
+        "scale": 0.78
+      },
+      "bounds": [
+        145,
+        156,
+        577,
+        464
+      ],
+      "excludedStrong": 1068,
+      "registration": "manual pelvis projection + unchanged source scale + common floor; no alpha-bounds horizontal centering"
+    },
+    "AT5": {
+      "id": "AT5",
+      "label": "Attack5 · Evade15",
+      "imagePath": "frames/AT5.webp",
+      "size": [
+        768,
+        512
+      ],
+      "drawOffset": [
+        0,
+        0
+      ],
+      "anchor": [
+        384,
+        464
+      ],
+      "sha256": "eb500ae71c6dee7d71c8040cbf7971cc4b4bd643aedddd26f70442bd1c501f22",
+      "source": {
+        "id": "AT5",
+        "label": "Attack5 · Evade15",
+        "source": "pose-studio/stances/update-stances/greatsword-evade/sheet-a.png",
+        "sha256": "e19fe59da17dfb2b52b07cddcd3f2400bd70145aeb6c647322ef821894665c75",
+        "size": [
+          1024,
+          1536
+        ],
+        "sourceBounds": [
+          20,
+          1139,
+          555,
+          1445
+        ],
+        "cropBounds": [
+          16,
+          1134,
+          560,
+          1456
+        ],
+        "scale": 0.75,
+        "sourceAnchor": [
+          292,
+          1445
+        ],
+        "pelvisLandmark": [
+          292,
+          1342
+        ]
+      },
+      "drawTransform": {
+        "x": 177,
+        "y": 230.75,
+        "scale": 0.75
+      },
+      "bounds": [
+        180,
+        234,
+        582,
+        464
+      ],
+      "excludedStrong": 0,
+      "registration": "manual pelvis projection + unchanged source scale + common floor; no alpha-bounds horizontal centering"
+    },
+    "AT6": {
+      "id": "AT6",
+      "label": "Attack6 · Evade13",
+      "imagePath": "frames/AT6.webp",
+      "size": [
+        768,
+        512
+      ],
+      "drawOffset": [
+        0,
+        0
+      ],
+      "anchor": [
+        384,
+        464
+      ],
+      "sha256": "5afa126afe772c37faad04753d602e43a132652255ce75e26d6ab33bdecb09f6",
+      "source": {
+        "id": "AT6",
+        "label": "Attack6 · Evade13",
+        "source": "pose-studio/stances/update-stances/greatsword-evade/sheet-a.png",
+        "sha256": "e19fe59da17dfb2b52b07cddcd3f2400bd70145aeb6c647322ef821894665c75",
+        "size": [
+          1024,
+          1536
+        ],
+        "sourceBounds": [
+          20,
+          592,
+          545,
+          1012
+        ],
+        "cropBounds": [
+          15,
+          587,
+          549,
+          1018
+        ],
+        "scale": 0.75,
+        "sourceAnchor": [
+          345,
+          1012
+        ],
+        "pelvisLandmark": [
+          345,
+          836
+        ]
+      },
+      "drawTransform": {
+        "x": 136.5,
+        "y": 145.25,
+        "scale": 0.75
+      },
+      "bounds": [
+        140,
+        149,
+        534,
+        464
+      ],
+      "excludedStrong": 0,
+      "registration": "manual pelvis projection + unchanged source scale + common floor; no alpha-bounds horizontal centering"
+    },
+    "W": {
+      "id": "W",
+      "label": "Sweep stance · Sweep18",
+      "imagePath": "frames/W.webp",
+      "size": [
+        768,
+        512
+      ],
+      "drawOffset": [
+        0,
+        0
+      ],
+      "anchor": [
+        384,
+        464
+      ],
+      "sha256": "40f7c5f3a1d988ae99b0764050630f1a00028be50131bd13456db58b4d737865",
+      "source": {
+        "id": "W",
+        "label": "Sweep stance · Sweep18",
+        "source": "pose-studio/stances/update-stances/greatsword-sweep/sheet-b.png",
+        "sha256": "8b9deed36436a27db6e884d7009350b1698ddd6f61339383bf3dffea4bcc3dcc",
+        "size": [
+          1024,
+          1536
+        ],
+        "sourceBounds": [
+          31,
+          526,
+          412,
+          987
+        ],
+        "cropBounds": [
+          28,
+          521,
+          418,
+          993
+        ],
+        "scale": 0.78,
+        "sourceAnchor": [
+          347,
+          987
+        ],
+        "pelvisLandmark": [
+          347,
+          814
+        ]
+      },
+      "drawTransform": {
+        "x": 135.17999999999998,
+        "y": 100.51999999999998,
+        "scale": 0.78
+      },
+      "bounds": [
+        137,
+        104,
+        435,
+        464
+      ],
+      "excludedStrong": 0,
+      "registration": "manual pelvis projection + unchanged source scale + common floor; no alpha-bounds horizontal centering"
+    },
+    "EV1": {
+      "id": "EV1",
+      "label": "Evade1 · Evade16 transparency derivative",
+      "imagePath": "frames/EV1.webp",
+      "size": [
+        768,
+        512
+      ],
+      "drawOffset": [
+        0,
+        0
+      ],
+      "anchor": [
+        384,
+        464
+      ],
+      "sha256": "eb3ea191823f185e726de9fd1d622ee693b77e3f6fec129223ac85482525af51",
+      "source": {
+        "id": "EV1",
+        "label": "Evade1 · Evade16 transparency derivative",
+        "source": "pose-studio/stances/update-stances/greatsword-evade/ev16-transparent.png",
+        "sha256": "b1445d2c0bd15b3630b65ca92bfb1f685e218aa97c19219908eb8663f22b1ca5",
+        "size": [
+          1280,
+          1229
+        ],
+        "sourceBounds": [
+          111,
+          8,
+          1263,
+          1212
+        ],
+        "cropBounds": [
+          108,
+          3,
+          1267,
+          1216
+        ],
+        "scale": 0.35,
+        "sourceAnchor": [
+          823,
+          1212
+        ],
+        "pelvisLandmark": [
+          823,
+          829
+        ],
+        "sourceTreatment": "Director-approved ImageGen transparency derivative; artwork redrawn during extraction, not pixel-exact cutout",
+        "calibration": "Near boot196px ×.35≈69px; rigid helmet150px ×.35≈53px; common anatomy comparison"
+      },
+      "drawTransform": {
+        "x": 133.75000000000003,
+        "y": 40.85000000000002,
+        "scale": 0.35
+      },
+      "bounds": [
+        135,
+        42,
+        538,
+        464
+      ],
+      "excludedStrong": 0,
+      "registration": "manual pelvis projection + unchanged source scale + common floor; no alpha-bounds horizontal centering"
+    },
+    "EV2": {
+      "id": "EV2",
+      "label": "Evade2 · Evade11 front-sword edit",
+      "imagePath": "frames/EV2.webp",
+      "size": [
+        768,
+        512
+      ],
+      "drawOffset": [
+        0,
+        0
+      ],
+      "anchor": [
+        384,
+        464
+      ],
+      "sha256": "ba2a1f889be43fefc0803d85604847edd694190b090161fd2683cdec347929a9",
+      "source": {
+        "id": "EV2",
+        "label": "Evade2 · Evade11 front-sword edit",
+        "source": "pose-studio/stances/update-stances/greatsword-evade/ev11-front-sword.png",
+        "sha256": "a4ded8f5ae88e90665f8bfc19853c955e5d0af60d61f4411743e967e32b8cda1",
+        "size": [
+          1436,
+          1095
+        ],
+        "sourceBounds": [
+          18,
+          88,
+          1423,
+          1018
+        ],
+        "cropBounds": [
+          14,
+          83,
+          1427,
+          1023
+        ],
+        "scale": 0.3,
+        "sourceAnchor": [
+          820,
+          1018
+        ],
+        "pelvisLandmark": [
+          820,
+          556
+        ],
+        "sourceTreatment": "Director-approved ImageGen sword-in-front revision retaining backward lean",
+        "calibration": "Near boot248px ×.30≈74px; rigid helmet≈166px ×.30≈50px; common anatomy comparison"
+      },
+      "drawTransform": {
+        "x": 142.20000000000002,
+        "y": 183.5,
+        "scale": 0.3
+      },
+      "bounds": [
+        143,
+        185,
+        565,
+        464
+      ],
+      "excludedStrong": 0,
+      "registration": "manual pelvis projection + unchanged source scale + common floor; no alpha-bounds horizontal centering"
+    },
+    "S": {
+      "id": "S",
+      "label": "Smash · existing selected Smash05",
+      "imagePath": "frames/S.webp",
+      "size": [
+        512,
+        512
+      ],
+      "rasterSize": [
+        512,
+        512
+      ],
+      "drawOffset": [
+        50,
+        0
+      ],
+      "anchor": [
+        384,
+        464
+      ],
+      "sha256": "9abfefe7258a3bfa2238e7c0516396c61baa5ca009a649b8408183b91fcdf6e2",
+      "source": {
+        "id": "S",
+        "label": "Smash · existing selected Smash05",
+        "source": "assets-display/alternative/reaver-greatsword-pilot-smash.webp",
+        "sha256": "9abfefe7258a3bfa2238e7c0516396c61baa5ca009a649b8408183b91fcdf6e2",
+        "size": [
+          512,
+          512
+        ],
+        "preserveBytes": true,
+        "sourceAnchor": [
+          334,
+          464
+        ],
+        "pelvisLandmark": [
+          334,
+          326
+        ]
+      },
+      "bytesUnchanged": true
+    },
+    "AT3": {
+      "id": "AT3",
+      "label": "Attack3 · Smash06",
+      "imagePath": "frames/AT3.webp",
+      "size": [
+        512,
+        512
+      ],
+      "rasterSize": [
+        512,
+        512
+      ],
+      "drawOffset": [
+        84,
+        0
+      ],
+      "anchor": [
+        384,
+        464
+      ],
+      "sha256": "fba5777cc513b41e7c714d635ff1231cb9282b6f9e070e255ceb89df8ab1a05d",
+      "source": {
+        "id": "AT3",
+        "label": "Attack3 · Smash06",
+        "source": "pose-studio/stances/update-stances/sequence-review/source-cache/smash06-selected.webp",
+        "sha256": "fba5777cc513b41e7c714d635ff1231cb9282b6f9e070e255ceb89df8ab1a05d",
+        "size": [
+          512,
+          512
+        ],
+        "preserveBytes": true,
+        "sourceAnchor": [
+          300,
+          464
+        ],
+        "pelvisLandmark": [
+          300,
+          338
+        ],
+        "sourceOption": "greatsword-smash-06",
+        "sourceTreatment": "Exact archived selected export of original Smash06; raster bytes unchanged; former runtime Counter path now contains the new held Counter15",
+        "historicalRuntimePath": "assets-display/alternative/reaver-greatsword-pilot-counter.webp",
+        "originalSheetRecipe": {
+          "path": "pose-studio/stances/update-stances/greatsword-smash/sheet-b.png",
+          "width": 1536,
+          "height": 1024,
+          "sha256": "9bfd8c7b13ae42ae55d06718d03cec89c47947c4fc017b1ba61b8e8a50bf0bda",
+          "sourceBounds": [
+            40,
+            15,
+            431,
+            506
+          ],
+          "cropBounds": [
+            37,
+            12,
+            434,
+            509
+          ],
+          "scale": 0.8553971486761711
+        }
+      },
+      "bytesUnchanged": true
+    },
+    "T": {
+      "id": "T",
+      "label": "Attack stance · existing Reaver offensive",
+      "imagePath": "frames/T.webp",
+      "size": [
+        512,
+        512
+      ],
+      "rasterSize": [
+        256,
+        256
+      ],
+      "drawOffset": [
+        76,
+        0
+      ],
+      "anchor": [
+        384,
+        464
+      ],
+      "sha256": "7ab6090bdab58ffed228cad90f466189a147ca44d810d37c2b80b7873f9de832",
+      "source": {
+        "id": "T",
+        "label": "Attack stance · existing Reaver offensive",
+        "source": "assets-display/alternative/stances/reaver/offensive.webp",
+        "sha256": "7ab6090bdab58ffed228cad90f466189a147ca44d810d37c2b80b7873f9de832",
+        "size": [
+          256,
+          256
+        ],
+        "displaySize": [
+          512,
+          512
+        ],
+        "preserveBytes": true,
+        "sourceAnchor": [
+          154,
+          232
+        ],
+        "pelvisLandmark": [
+          154,
+          156
+        ],
+        "sourceTreatment": "Exact canonical held offensive raster; rendered in its existing512 logical canvas"
+      },
+      "bytesUnchanged": true
+    },
+    "AT1": {
+      "id": "AT1",
+      "label": "Attack1 · Smash05",
+      "imagePath": "frames/S.webp",
+      "size": [
+        512,
+        512
+      ],
+      "rasterSize": [
+        512,
+        512
+      ],
+      "drawOffset": [
+        50,
+        0
+      ],
+      "anchor": [
+        384,
+        464
+      ],
+      "sha256": "9abfefe7258a3bfa2238e7c0516396c61baa5ca009a649b8408183b91fcdf6e2",
+      "source": {
+        "id": "S",
+        "label": "Smash · existing selected Smash05",
+        "source": "assets-display/alternative/reaver-greatsword-pilot-smash.webp",
+        "sha256": "9abfefe7258a3bfa2238e7c0516396c61baa5ca009a649b8408183b91fcdf6e2",
+        "size": [
+          512,
+          512
+        ],
+        "preserveBytes": true,
+        "sourceAnchor": [
+          334,
+          464
+        ],
+        "pelvisLandmark": [
+          334,
+          326
+        ]
+      },
+      "bytesUnchanged": true,
+      "aliasOf": "S"
+    },
+    "E": {
+      "id": "E",
+      "label": "Evade stance · Evade15",
+      "imagePath": "frames/AT5.webp",
+      "size": [
+        768,
+        512
+      ],
+      "drawOffset": [
+        0,
+        0
+      ],
+      "anchor": [
+        384,
+        464
+      ],
+      "sha256": "eb500ae71c6dee7d71c8040cbf7971cc4b4bd643aedddd26f70442bd1c501f22",
+      "source": {
+        "id": "AT5",
+        "label": "Attack5 · Evade15",
+        "source": "pose-studio/stances/update-stances/greatsword-evade/sheet-a.png",
+        "sha256": "e19fe59da17dfb2b52b07cddcd3f2400bd70145aeb6c647322ef821894665c75",
+        "size": [
+          1024,
+          1536
+        ],
+        "sourceBounds": [
+          20,
+          1139,
+          555,
+          1445
+        ],
+        "cropBounds": [
+          16,
+          1134,
+          560,
+          1456
+        ],
+        "scale": 0.75,
+        "sourceAnchor": [
+          292,
+          1445
+        ],
+        "pelvisLandmark": [
+          292,
+          1342
+        ]
+      },
+      "drawTransform": {
+        "x": 177,
+        "y": 230.75,
+        "scale": 0.75
+      },
+      "bounds": [
+        180,
+        234,
+        582,
+        464
+      ],
+      "excludedStrong": 0,
+      "registration": "manual pelvis projection + unchanged source scale + common floor; no alpha-bounds horizontal centering",
+      "aliasOf": "AT5"
+    },
+    "EV3": {
+      "id": "EV3",
+      "label": "Evade3 · Evade13",
+      "imagePath": "frames/AT6.webp",
+      "size": [
+        768,
+        512
+      ],
+      "drawOffset": [
+        0,
+        0
+      ],
+      "anchor": [
+        384,
+        464
+      ],
+      "sha256": "5afa126afe772c37faad04753d602e43a132652255ce75e26d6ab33bdecb09f6",
+      "source": {
+        "id": "AT6",
+        "label": "Attack6 · Evade13",
+        "source": "pose-studio/stances/update-stances/greatsword-evade/sheet-a.png",
+        "sha256": "e19fe59da17dfb2b52b07cddcd3f2400bd70145aeb6c647322ef821894665c75",
+        "size": [
+          1024,
+          1536
+        ],
+        "sourceBounds": [
+          20,
+          592,
+          545,
+          1012
+        ],
+        "cropBounds": [
+          15,
+          587,
+          549,
+          1018
+        ],
+        "scale": 0.75,
+        "sourceAnchor": [
+          345,
+          1012
+        ],
+        "pelvisLandmark": [
+          345,
+          836
+        ]
+      },
+      "drawTransform": {
+        "x": 136.5,
+        "y": 145.25,
+        "scale": 0.75
+      },
+      "bounds": [
+        140,
+        149,
+        534,
+        464
+      ],
+      "excludedStrong": 0,
+      "registration": "manual pelvis projection + unchanged source scale + common floor; no alpha-bounds horizontal centering",
+      "aliasOf": "AT6"
+    }
+  },
+  "origins": [
+    "T",
+    "S",
+    "C",
+    "D",
+    "E",
+    "W"
+  ],
+  "attack": {
+    "frameIds": [
+      "AT1",
+      "AT2",
+      "AT3",
+      "AT4",
+      "AT5",
+      "AT6"
+    ],
+    "durations": [
+      350,
+      350,
+      350,
+      350,
+      350,
+      350
+    ],
+    "startStanceId": "T",
+    "timingStatus": "Uniform350ms comparison timing, not a shipped engine timing change; preserves the six owner-supplied source order"
+  },
+  "evade": {
+    "frameIds": [
+      "EV1",
+      "EV2",
+      "EV3"
+    ],
+    "durations": [
+      350,
+      350,
+      350
+    ],
+    "startStanceId": "E",
+    "timingStatus": "Uniform350ms sequence-order review timing"
+  }
+}
