@@ -1187,10 +1187,13 @@ function runOpcode(ctx, action, eff) {
         const bonus = ctx.combatExpansionVersion === 2 ? Blight.ashenBlightMartialPoise(ctx, action.source,
           { cycleKey: String(action.source?.combatOwnerCycle || 0), camp: action.card?.combatProfile?.camp, authoredPoise: authored }) : 0;
         const amount = Math.floor((authored + bonus) * multiplier);
+        // Impact doubles only the Poise that passed the target's Poise guard.
+        const guardBefore = Number.isFinite(t?.poiseGuard) ? Math.max(0, Math.floor(t.poiseGuard)) : 0;
         if (ctx.ratingsRules && action.meta?.combatCounterReaction) {
           Ratings.applyRatingImpact(ctx, action.source, t, action.card, amount, { triggerHit: false });
         } else dealPoiseDamage(ctx, t, amount, { knowledgeMatchup: multiplier > 1 });
-        trackOwnPressure(ctx, action, t, 'poiseDealt', amount);
+        const guardAfter = Number.isFinite(t?.poiseGuard) ? Math.max(0, Math.floor(t.poiseGuard)) : 0;
+        trackOwnPressure(ctx, action, t, 'poiseDealt', Math.max(0, amount - (guardBefore - guardAfter)));
       }
       break;
     }

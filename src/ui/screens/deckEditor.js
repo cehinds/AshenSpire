@@ -245,7 +245,9 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     }
     const { row, source } = inspected || selected;
     const def = resolveCard(registries, row.ref);
-    const face = renderCard(registries, row.ref, { inspection: false, level: 'inspect' });
+    // Reaction rules version 2: the face shows the run's projected trait chips and trait line.
+    const face = renderCard(registries, row.ref, { inspection: false, level: 'inspect',
+      ...(run?.reactionRulesVersion === 2 ? { definition: combatDef(row) } : {}) });
     for (const [key, value] of Object.entries(cardShapeCssProperties())) face.style.setProperty(key, value);
     face.style.setProperty('--deck-inspect-width', cardLevelWidthCss('inspect'));
     face.querySelector('.card-costs')?.replaceChildren(rowCosts(row));

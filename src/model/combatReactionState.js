@@ -36,10 +36,18 @@ export function combatReactionProblems(state, { ownerIds = new Set(['player']), 
     const stacked = seatId => stack.entries.filter(entry => entry.ownerId === seatId).length;
     if (state.reactionRulesVersion !== 2) problems.push('Reaction stack requires reaction rules version 2');
     else if (!record(stack) || !text(stack.groupKey) || typeof stack.resolving !== 'boolean' || !Array.isArray(stack.entries)
-      || !stack.entries.length || stack.entries.some(entry => !record(entry) || !['player', 'enemy'].includes(entry.side)
+      || !stack.entries.length || stack.entries.some(entry => !record(entry) || entry.side !== 'player'
         || !ownerIds.has(entry.ownerId) || !text(entry.cardId) || !record(entry.play) || !text(entry.play.cardInstanceId)
         || (entry.maneuver !== null && entry.maneuver !== undefined && typeof entry.maneuver !== 'string'))
       || !incoming.some(action => action.meta?.expansionGroup?.key === stack.groupKey)) problems.push('Invalid reaction stack');
+    else if ((() => {
+      // The live engine never builds these; a saved stack must not bypass them either.
+      const group = incoming.find(action => action.meta?.expansionGroup?.key === stack.groupKey).meta.expansionGroup;
+      const caps = state.reactionRules?.stack || {};
+      const cap = group.counterReturn ? caps.counterReturnMaxDepth : caps.maxDepth;
+      return [...new Set(stack.entries.map(entry => entry.ownerId))].some(seatId => stacked(seatId) > cap
+        || stack.entries.filter(entry => entry.ownerId === seatId && entry.maneuver === 'counter').length > 1);
+    })()) problems.push('Reaction stack exceeds its per-seat limits');
     else if (state.pendingReaction !== undefined && (!record(state.pendingReaction) || state.pendingReaction.groupKey !== stack.groupKey
       || state.pendingReaction.id !== `${stack.groupKey}:${state.pendingReaction.ownerId}:${stacked(state.pendingReaction.ownerId)}`)) {
       problems.push('Reaction choice does not match its stack depth');

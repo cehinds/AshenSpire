@@ -1228,7 +1228,7 @@ function beginPreparedRun({ classId, seedString, customization, keepsakeId, cust
   const shotReactionVersion = shotState === 'combat' ? shotParams.get('shotReactionVersion') : null;
   if (shotReactionVersion !== null && !['0', '1', '2'].includes(shotReactionVersion)) throw new Error('shotReactionVersion must be 0, 1 or 2');
   const reactionRulesVersion = shotReactionVersion === null
-    ? legacyArcaneShot || shotCombatVersion === '1' || shotKnowledgeVersion === '0' ? null : 1
+    ? legacyArcaneShot || shotCombatVersion === '1' || shotKnowledgeVersion === '0' ? null : 2
     : shotReactionVersion === '0' ? null : Number(shotReactionVersion);
   const configSnapshot = { ...advancedConfigSnapshot(saves.loadMeta().settings || {}),
     breakMeterVersion: combatExpansionVersion === 2 ? 2 : 1 };
