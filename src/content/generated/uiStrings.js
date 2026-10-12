@@ -9311,5 +9311,12 @@ export const uiStrings = [
     "short": "Play the new combat rules on the game's battlefield. Break Poise with a heavy weapon, build Bleed with quick hits, or save rare mana for a decisive spell.",
     "full": "",
     "tip": ""
+  },
+  {
+    "id": "debugChrome.refresh",
+    "extends": "",
+    "short": "Refresh",
+    "full": "",
+    "tip": ""
   }
 ];
