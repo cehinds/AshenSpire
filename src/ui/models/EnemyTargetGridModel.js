@@ -1,4 +1,5 @@
 import { directPlacement } from './targetDirectPlacement.js';
+import { assignCells } from './targetCellAssignment.js';
 // Screen-pixel geometry; DOM zoom conversion belongs to the renderer.
 const overlaps = (a, b, gap) => a.left < b.left + b.width + gap && a.left + a.width + gap > b.left
   && a.top < b.top + b.height + gap && a.top + a.height + gap > b.top;
@@ -14,20 +15,6 @@ export function enemyTargetGrid({ width, height, targets, obstacles = [], hardOb
   // A cell over an owned obstacle (a foe's own controls) is reserved for that foe only.
   const eligible = (cell, target) => !cell.owners?.length || cell.owners.every(id => id === target.id);
   const plain = ({ owners, ...cell }) => cell;
-  const match = grid => {
-    const available = [...grid];
-    const ordered = [...targets].sort((a,b) => a.x-b.x || a.y-b.y);
-    const chosen = [];
-    for (const target of ordered) {
-      const options = available.filter(cell => eligible(cell, target));
-      if (!options.length) return null;
-      options.sort((a,b) => distance(target,a)-distance(target,b));
-      const pick = options[0];
-      available.splice(available.indexOf(pick), 1);
-      chosen.push(pick);
-    }
-    return ordered.map((target,i)=>({id:target.id,...chosen[i]}));
-  };
   const distance = (target,cell) => (cell.left+cell.width/2-target.x)**2+(cell.top+cell.height/2-anchorY(target,cell.height))**2;
   // Shift the entire lattice when an intent row leaves a narrow free band.
   // Anchored origins also let a lone target sit exactly on its enemy center.
@@ -52,7 +39,7 @@ export function enemyTargetGrid({ width, height, targets, obstacles = [], hardOb
         }
       }
       if (grid.length < targets.length) continue;
-      const assigned = match(grid);
+      const assigned = assignCells(targets, grid, { eligible, distance });
       if (!assigned) continue;
       const score = assigned.reduce((sum,cell) => sum + distance(targets.find(t=>t.id===cell.id),cell),0)
         + targets.length * (size-edge)**2 * .15;
