@@ -338,6 +338,12 @@ them under Damage. Owner to say which tree holds damage types. Rows:
 `meta.combat.damage.physical.{blunt,pierce,slashing}`,
 `meta.combat.damage.hybrid.force`.
 
+**Duplicate root: damageType.** The model has a `damageType` root (live id
+`damageType`, mapped in commit f30b60a96) with no children. Its damage kinds
+sit under `meta.combat.damage`, which holds physical, magic and hybrid. Both
+roots name the same thing. Owner to say whether to merge them into one root,
+and which one keeps the id.
+
 **Placement: card schools (13).** The live tree lists these under the `card`
 root. The model puts each under a technique, spellcraft, weapon-skill or stance
 tag. Owner to say whether a school is a card identity, a technique, or both.
