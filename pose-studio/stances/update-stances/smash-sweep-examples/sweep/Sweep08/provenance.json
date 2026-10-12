@@ -1,0 +1,31 @@
+{
+  "generator": "image_gen.imagegen",
+  "whole_strip_generation": true,
+  "approved_seed": "pose-studio/stances/update-stances/sequence-review/frames/W.webp",
+  "approved_seed_sha256": "40f7c5f3a1d988ae99b0764050630f1a00028be50131bd13456db58b4d737865",
+  "source_painting": "greatsword-sweep/sheet-b.png middle-left SW18",
+  "active_raw": "raw.png",
+  "raw_files": [
+    {
+      "path": "raw.png",
+      "sha256": "24efb78edb51a7758a3e0e62d149792b243fd577e386866ccf5998212628e34e",
+      "dimensions": [
+        2172,
+        724
+      ]
+    }
+  ],
+  "prompts": [
+    {
+      "path": "prompt.txt",
+      "sha256": "0cbde4b5a719d7e76d872038261ab32bfa5963edff3a88aaf5e5e38088102a0f"
+    }
+  ],
+  "bookends": "frames01/05 exact W bytes; not newly painted assets",
+  "reference_policy": "techniques interpreted from text; no external images imported",
+  "references": [
+    "https://www.hema101.com/post/beginner-s-guide-to-fencing-with-the-longsword",
+    "https://hemapenzance.com/blog/how-to-lunge-with-a-sabre"
+  ],
+  "reference_limitations": "Waist/knee/footwork variations are artistic adaptations, not direct source poses. Sabre footwork cautiously adapted to greatsword."
+}
