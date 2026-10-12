@@ -997,6 +997,7 @@ settings.row.deckMaxUnlimited,,No maximum deck size,"Let the editor confirm a de
 settings.row.deckMaxSize,,Maximum deck size,The most cards the editor lets you confirm. It may not sit below the minimum.,
 settings.row.classSpellPowerCopies,,Copies of a class spell or Power,How many copies of one of your class’s own spells or Powers the editor lets your deck hold. Strike and Defend stay unlimited; weapon arts and techniques stay limited to the copies you own.,
 settings.row.playInDeckOrder,,Play in deck order,"Your draw pile is not shuffled: you draw your cards in the order you arranged them, and a spent pile returns in that order. Card effects that shuffle still shuffle. Applies from the next fight.",
+settings.row.combatRoundsPreview,,Combat rounds preview,"Runs real fights on the speed-ordered combat rounds preview. Off by default. Read at New Run and fixed for that run; a fight already under way keeps the rules it started with. Dev and test builds only.",
 settings.row.promptSettingsExport,,Offer export when done,Ask to export a configuration file after Done and Save.,
 settings.row.gameConfigExport,,Export game configuration,Save every non-default game configuration value. Desktop opens Save As when available; mobile downloads the JSON locally.,
 settings.row.gameConfigImport,,Load game configuration,Choose an exported settings JSON file. Included values replace your current settings; other settings and saved runs are untouched. Presentation changes apply immediately; starting stats and balance apply to new runs.,
