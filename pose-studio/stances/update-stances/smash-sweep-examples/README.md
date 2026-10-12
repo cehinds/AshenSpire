@@ -1,12 +1,12 @@
 # Revised Sweep and Smash sequence options
 
-Twenty revised sequences are ready for review: **ten low iai-inspired Sweep and ten heavy jumping ground-slam Smash examples, five total slots each**. **SM03 · Twisting aerial slam is owner-selected for Smash and implemented in the runtime candidate; compiled gameplay validation is pending.** The other nine Smash examples remain references. **SW09 · Two-direction unwind is selected for Sweep, with a straight sword-arm correction and clearer low iai hold in progress.** Its current frames remain preserved review history; corrected source and runtime integration are pending.
+Twenty revised sequences are ready for review: **ten low iai-inspired Sweep and ten heavy jumping ground-slam Smash examples, five total slots each**. **SM03 · Twisting aerial slam is owner-selected for Smash and implemented in the runtime candidate; compiled gameplay validation is pending.** The other nine Smash examples remain references. **SW09 is selected for Sweep with its corrected straight sword arm and low iai hold now director-approved.** The viewer uses that corrected revision; its production and runtime integration are pending. The original SW09 source remains preserved as history.
 
 Each example has **five total slots**: approved starting stance → three action images → the exact same stance. The [interactive viewer](index.html) provides play/pause, speed, numbered stepping and a copyable example ID. Our labeled GIFs use uniform **350 ms review exposures**, hard cuts and no synthesized in-between poses. Artist source GIFs retain their separately recorded review timing.
 
 ## Revised iai Sweep · SW01–SW10
 
-The five numbered slots are **Start stance → Wind-up → Turning slash → Low finish → Return stance**. The new low draw stance shows the visible near/right inner elbow and an underhand grip: thumb up, knuckles down, palm beneath the hilt. Every example twists into a surrounding whirlwind slash and repeats the exact new approved seed at both ends. Runtime W remains unchanged while the selected SW09 straight-arm correction and dedicated Sweep integration are prepared.
+The five numbered slots are **Start stance → Wind-up → Turning slash → Low finish → Return stance**. The new low draw stance shows the visible near/right inner elbow and an underhand grip: thumb up, knuckles down, palm beneath the hilt. Every example twists into a surrounding whirlwind slash and repeats its exact approved seed at both ends. SW09 now uses the separately approved straight-arm seed; the other nine retain their review seed. Runtime W remains unchanged while the selected SW09 production and dedicated Sweep integration are prepared.
 
 ![Ten revised iai whirlwind Sweep sequences](sweep/iai-whirlwind-v2/comparison-2x5.gif)
 
@@ -20,10 +20,10 @@ The five numbered slots are **Start stance → Wind-up → Turning slash → Low
 | SW06 | Low leg orbit | [GIF](renders/SW06.gif) | [Storyboard](renders/SW06-storyboard.png) | [Provenance](sweep/iai-whirlwind-v2/Sweep06/provenance.json) |
 | SW07 | Compact low finish | [GIF](renders/SW07.gif) | [Storyboard](renders/SW07-storyboard.png) | [Provenance](sweep/iai-whirlwind-v2/Sweep07/provenance.json) |
 | SW08 | Broad orbit | [GIF](renders/SW08.gif) | [Storyboard](renders/SW08-storyboard.png) | [Provenance](sweep/iai-whirlwind-v2/Sweep08/provenance.json) |
-| **SW09 · Selected Sweep / revision pending** | Two-direction unwind | [GIF](renders/SW09.gif) | [Storyboard](renders/SW09-storyboard.png) | [Provenance](sweep/iai-whirlwind-v2/Sweep09/provenance.json) |
+| **SW09 · Selected Sweep** | Selected straight-arm iai two-direction unwind | [GIF](renders/SW09.gif) | [Storyboard](renders/SW09-storyboard.png) | [Provenance](sweep/selected-sweep-sw09/provenance.json) |
 | SW10 | Advancing low whirlwind | [GIF](renders/SW10.gif) | [Storyboard](renders/SW10-storyboard.png) | [Provenance](sweep/iai-whirlwind-v2/Sweep10/provenance.json) |
 
-[Sweep source manifest](sweep/iai-whirlwind-v2/manifest.json) · [New low stance seed](sweep/iai-whirlwind-v2/seed/stance-final.png).
+[Nine reference Sweep examples and original SW09](sweep/iai-whirlwind-v2/manifest.json) · [Selected straight-arm SW09 manifest](sweep/selected-sweep-sw09/manifest.json) · [Selected low stance seed](sweep/selected-sweep-sw09/seed/stance-final.png).
 
 ## Revised ground-slam Smash · SM01–SM10
 
@@ -48,7 +48,7 @@ There are **50 slots per family, 100 total**. Smash has 30 action paintings and 
 
 ## Superseded source history
 
-The earlier horizontal Sweep and jump/vault Smash studies are preserved as history and are not active gallery choices: [earlier Sweep manifest](sweep/legacy-horizontal-v1/manifest.json) and [earlier Smash index](smash/index.json). Stable option IDs are reused for the revised candidates; they do not imply the same painting. SM03 and SW09 are owner-selected; SW09 still requires the requested straight-arm correction. Its [production export provenance](../selected-smash-sm03/production.json) records the Full/Lite derivatives; the runtime candidate still awaits compiled gameplay validation.
+The earlier horizontal Sweep and jump/vault Smash studies are preserved as history and are not active gallery choices: [earlier Sweep manifest](sweep/legacy-horizontal-v1/manifest.json) and [earlier Smash index](smash/index.json). Stable option IDs are reused for the revised candidates; they do not imply the same painting. SM03 and the corrected straight-arm SW09 are owner-selected. The original SW09 depiction remains preserved in the iai-whirlwind-v2 source history. Its [production export provenance](../selected-smash-sm03/production.json) records the Full/Lite derivatives; the runtime candidate still awaits compiled gameplay validation.
 
 [Motion reference history and latest direction](../../../../docs/design/update-stances/smash-sweep-motion-references.md) · [Approved runtime PR #1897 proof](../../../../docs/design/update-stances/runtime-qa/README.md).
 

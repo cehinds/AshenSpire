@@ -229,11 +229,11 @@
       "id": "SW09",
       "slots": 5,
       "sourcePaths": [
-        "sweep/iai-whirlwind-v2/Sweep09/frame-01.png",
-        "sweep/iai-whirlwind-v2/Sweep09/frame-02.png",
-        "sweep/iai-whirlwind-v2/Sweep09/frame-03.png",
-        "sweep/iai-whirlwind-v2/Sweep09/frame-04.png",
-        "sweep/iai-whirlwind-v2/Sweep09/frame-05.png"
+        "sweep/selected-sweep-sw09/SW09/frame-01.png",
+        "sweep/selected-sweep-sw09/SW09/frame-02.png",
+        "sweep/selected-sweep-sw09/SW09/frame-03.png",
+        "sweep/selected-sweep-sw09/SW09/frame-04.png",
+        "sweep/selected-sweep-sw09/SW09/frame-05.png"
       ],
       "slotLabels": [
         "Start stance",

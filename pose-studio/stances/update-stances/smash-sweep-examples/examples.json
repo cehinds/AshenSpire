@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "status": "SM03 \u00b7 Twisting aerial slam is owner-selected and implemented; compiled gameplay validation is pending. SW09 \u00b7 Two-direction unwind is owner-selected for Sweep with a straight sword-arm correction in progress. Other examples remain references.",
+  "status": "SM03 is owner-selected and implemented; final compiled validation is pending after its cold-contact correction. SW09 is owner-selected with its straight-arm iai source approved; production and runtime integration are pending. Other examples remain references.",
   "reviewSlotMs": 350,
   "families": {
     "sweep": {
@@ -178,21 +178,22 @@
     {
       "id": "SW09",
       "family": "sweep",
-      "name": "Two-direction unwind",
-      "description": "Rightward preload reverses into a leftward body turn, then a low rightward unwind.",
+      "name": "Selected straight-arm iai two-direction unwind",
+      "description": "Owner-selected two-direction unwind with corrected straight sword arm and low iai hold.",
       "frames": [
-        "sweep/iai-whirlwind-v2/Sweep09/frame-01.png",
-        "sweep/iai-whirlwind-v2/Sweep09/frame-02.png",
-        "sweep/iai-whirlwind-v2/Sweep09/frame-03.png",
-        "sweep/iai-whirlwind-v2/Sweep09/frame-04.png",
-        "sweep/iai-whirlwind-v2/Sweep09/frame-05.png"
+        "sweep/selected-sweep-sw09/SW09/frame-01.png",
+        "sweep/selected-sweep-sw09/SW09/frame-02.png",
+        "sweep/selected-sweep-sw09/SW09/frame-03.png",
+        "sweep/selected-sweep-sw09/SW09/frame-04.png",
+        "sweep/selected-sweep-sw09/SW09/frame-05.png"
       ],
-      "sourceGif": "sweep/iai-whirlwind-v2/Sweep09/preview.gif",
-      "provenance": "sweep/iai-whirlwind-v2/Sweep09/provenance.json",
-      "storyboard": "sweep/iai-whirlwind-v2/Sweep09/strip.png",
-      "caveat": "The owner selected SW09 with a straight sword arm instead of the bent elbow and a clearer low iai hold. This current depiction is preserved review history; the corrected source and runtime integration are in preparation.",
+      "sourceGif": "sweep/selected-sweep-sw09/SW09/preview.gif",
+      "provenance": "sweep/selected-sweep-sw09/provenance.json",
+      "storyboard": "sweep/selected-sweep-sw09/SW09/strip.png",
+      "caveat": null,
       "ownerSelectedRole": "Sweep",
-      "runtimeStatus": "Revision in progress \u00b7 straight sword arm requested"
+      "runtimeStatus": "Corrected source approved \u00b7 production integration pending",
+      "supersededSourceManifest": "sweep/iai-whirlwind-v2/manifest.json"
     },
     {
       "id": "SW10",
