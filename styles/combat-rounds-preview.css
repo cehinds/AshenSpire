@@ -52,7 +52,9 @@
   text-align: center; background: rgba(12,9,5,.82); font: bold calc(34px / var(--ui-zoom,1))/1 Georgia, serif; text-shadow: 0 1px 2px #000; }
 .cr-speed[data-tone='faster'] { color: #5ccf6a; }
 .cr-speed[data-tone='slower'] { color: #ef4949; }
-.cr-queued::after { content: ''; position: absolute; inset: 0; z-index: 3; border-radius: inherit; background: rgba(0,0,0,.5); pointer-events: none; }
+/* The dim is a pseudo-element; illustrated cards hide every ::after with :root .card.illustrated-card::after (0,3,1), so
+   this rule is scoped to the preview and written with more specificity, and sets its own display. */
+.combat[data-combat-rounds='preview'] .hand .card.cr-queued::after { display: block; content: ''; position: absolute; inset: 0; z-index: 3; border-radius: inherit; background: rgba(0,0,0,.5); pointer-events: none; }
 .cr-queue { position: absolute; right: calc(4px / var(--ui-zoom,1)); top: 42%; z-index: 5; pointer-events: none;
   min-width: calc(26px / var(--ui-zoom,1)); height: calc(26px / var(--ui-zoom,1)); padding: 0 calc(4px / var(--ui-zoom,1)); border-radius: 999px;
   display: inline-flex; align-items: center; justify-content: center; background: #16120b; border: calc(2px / var(--ui-zoom,1)) solid var(--gold);

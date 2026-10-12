@@ -254,3 +254,32 @@ test('the banner tab reads the decayed momentum, not the stored one', () => {
   assert.match(screen, /momentumTab\(roundMomentum\(combat\)\[targetedId\]/, 'the banner reads roundMomentum');
   assert.doesNotMatch(screen, /momentumTab\(cr\.momentum/, 'the banner no longer reads the stored momentum');
 });
+
+// Review item 3: the queued dim is a ::after, and illustrated cards hide every ::after with a higher-specificity rule.
+// The preview's dim must out-rank that rule inside the preview scope and set its own display.
+function specificityOf(selector) {
+  const bare = selector.replace(/\[[^\]]*\]/g, '[]');
+  const a = (selector.match(/#[\w-]+/g) || []).length;
+  const b = (bare.match(/\.[\w-]+|\[\]|(?<!:):[a-z-]+/gi) || []).length;
+  const c = (bare.match(/::[a-z-]+|(?<![.#:\w-])[a-z][\w-]*/gi) || []).length;
+  return [a, b, c];
+}
+const outranks = (x, y) => {
+  for (let i = 0; i < 3; i++) if (x[i] !== y[i]) return x[i] > y[i];
+  return false;
+};
+
+test('the queued dim outranks the illustrated card rule that hides every ::after, and shows itself', () => {
+  const css = readFileSync(new URL('../styles/combat-rounds-preview.css', import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  const illustrated = readFileSync(new URL('../styles/illustrated-cards.css', import.meta.url), 'utf8');
+  const hidden = illustrated.match(/:root \.card\.illustrated-card::before,\s*:root \.card\.illustrated-card::after\s*\{\s*display:\s*none/);
+  assert.ok(hidden, 'the illustrated card still hides its ::after (the rule this test guards against)');
+  const hiddenSpec = specificityOf(':root .card.illustrated-card::after');
+  const rules = [...css.matchAll(/([^{}]+)\{([^}]*)\}/g)].filter((m) => /cr-queued::after/.test(m[1]));
+  assert.equal(rules.length, 1, 'one rule paints the queued dim');
+  const [, selector, body] = rules[0];
+  assert.match(body, /display:\s*block/, 'the dim sets its own display, so the hidden ::after does not win');
+  assert.match(selector.trim(), /^\.combat\[data-combat-rounds='preview'\]/, 'the dim is scoped to the preview');
+  assert.ok(outranks(specificityOf(selector.trim()), hiddenSpec),
+    `the dim (${specificityOf(selector.trim())}) outranks the hidden ::after (${hiddenSpec})`);
+});
