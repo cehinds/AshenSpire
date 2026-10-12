@@ -178,12 +178,17 @@ export function restorePersistentPoise(ctx, entity, nominal, options = {}) {
   if (onceKey && s.wardAllowances[onceKey]) return { restored: 0, credited: 0 };
   if (!(nominal > 0)) return { restored: 0, credited: 0 };
   const missingMode = poise.missing !== undefined;
-  if (!missingMode && poise.value >= poise.max) return { restored: 0, credited: 0 };
+  // A card that restores Poise fills it first; the rest becomes Block (the
+  // ordinary, physical layer), as a card's Ward overflow becomes Barrier.
+  const overflow = options.source === 'card';
+  if (!missingMode && poise.value >= poise.max && !overflow) return { restored: 0, credited: 0 };
   if (onceKey) s.wardAllowances[onceKey] = true;
   let credit = Math.max(0, nominal * (1 + finite(options.modifierPercent) / 100));
   if (options.cap !== undefined) credit = Math.min(credit, Math.max(0, options.cap));
   const room = missingMode ? Math.max(0, poise.missing) : poise.max - poise.value;
-  const restored = Math.min(room, Math.floor(credit + 1e-9));
+  const whole = Math.floor(credit + 1e-9);
+  const restored = Math.min(room, whole);
+  const block = overflow ? whole - restored : 0;
   if (missingMode) {
     const missingAfter = room - restored;
     poise.value = Math.max(0, Math.min(poise.max, poise.max - missingAfter));
@@ -191,7 +196,11 @@ export function restorePersistentPoise(ctx, entity, nominal, options = {}) {
     else poise.missing = missingAfter;
   } else poise.value += restored;
   emit(ctx, 'persistentPoiseChanged', entity, { restored, credited: credit, value: poise.value, max: poise.max, source: options.source || 'card' });
-  return { restored, credited: credit };
+  if (block > 0) {
+    entity.block = (entity.block || 0) + block;
+    emit(ctx, 'blockGained', entity, { amount: block, total: entity.block, source: 'poise' });
+  }
+  return { restored, block, credited: credit };
 }
 
 /** Active grants are separate from explicit buildup; no implicit proc meter. */
