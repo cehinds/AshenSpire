@@ -1,0 +1,20 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {CREATION_FEAT_ART} from '../src/ui/components/creationFeatArt.js';
+import {creationFeatEmblem} from '../src/ui/components/creationPageParts.js';
+import {withKitDom} from './helpers/kit-dom.mjs';
+test('native feat layers preserve staged geometry and separate original art parts',()=>withKitDom(()=>{
+ const staged=JSON.parse(readFileSync(new URL('../art/creation-feats-2026-10-12/layers.json',import.meta.url),'utf8'));
+ assert.deepEqual(CREATION_FEAT_ART,staged);
+ for(const[id,art]of Object.entries(staged)){
+  const node=creationFeatEmblem(id),images=node.querySelectorAll('img');
+  assert.equal(images.length,art.layers.length);
+  for(const[index,image]of [...images].entries()){
+   const layer=art.layers[index];assert.equal(image.dataset.featLayer,layer.asset);
+   assert.equal(image.style.left,`${layer.x/art.canvas.width*100}%`);
+   assert.equal(image.style.top,`${layer.y/art.canvas.height*100}%`);
+   assert.ok(image.getAttribute('src').includes('assets/player-polish/ui/creation/'));
+  }
+ }
+}));
