@@ -447,8 +447,8 @@ export const LIVE = {
   'reach.far': 'reach:far',
   // proposed live mapping (domain pass)
   'counterMode': 'counterMode',
-  'counterMode.melee': 'counter:melee',
-  'counterMode.spell': 'counter:spell',
+  'meta.combat.stance.counter.melee-counter': 'counter:melee',
+  'meta.combat.stance.counter.spell-counter': 'counter:spell',
   // proposed live mapping (domain pass)
   'item': 'item',
   'item.bound': 'bound',

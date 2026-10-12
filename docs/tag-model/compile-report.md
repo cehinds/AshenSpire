@@ -52,7 +52,7 @@ None: every live id is mapped by at most one tag.
 
 ## 3. Field parity
 
-90 differences.
+92 differences.
 
 | Model tag | Live id | Field | Model | Live |
 |---|---|---|---|---|
@@ -146,6 +146,8 @@ None: every live id is mapped by at most one tag.
 | card.type.attack | classification.attack | parent | card.type | classification (mapped to classification) |
 | meta.combat.camp | camp | parent | meta.combat | (live root) |
 | meta.presentation.fx | presentation | parent | meta.presentation | (live root) |
+| meta.combat.stance.counter.melee-counter | counter:melee | parent | meta.combat.stance.counter | counterMode (mapped to counterMode) |
+| meta.combat.stance.counter.spell-counter | counter:spell | parent | meta.combat.stance.counter | counterMode (mapped to counterMode) |
 
 ## 4. Reverse: live-tag with no live node
 
