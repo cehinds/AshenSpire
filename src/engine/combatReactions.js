@@ -21,17 +21,26 @@ export function setReactionsEnabled(ctx, entity, enabled) {
   entity.reactionsEnabled = enabled;
 }
 
+const counterCovered = (ctx, def, row, tags) => row.contacts.some(contact =>
+  counterCoverageMatches(def.counterCoverage || ctx.combatExpansionRules.matchups.counter.defaultCoverage[
+    tags.includes('counter:spell') ? 'spell' : tags.includes('counter:ranged') ? 'ranged' : 'melee'], contact, contact.effect || 'damage'));
+
+// Version 2: a `trait:reaction` card is eligible by tag (a Counter still needs coverage,
+// anything else a positive contact). Untagged cards keep the version 1 rule until the
+// trait projection tags them.
 function eligible(ctx, def, row) {
   const tags = def.cardTags || def.tags || [];
-  if (tags.includes('maneuver:counter')) return row.contacts.some(contact =>
-    counterCoverageMatches(def.counterCoverage || ctx.combatExpansionRules.matchups.counter.defaultCoverage[
-      tags.includes('counter:spell') ? 'spell' : tags.includes('counter:ranged') ? 'ranged' : 'melee'], contact, contact.effect || 'damage'));
+  if (cardTraitsActive(ctx) && tags.includes('trait:reaction')) {
+    return tags.includes('maneuver:counter') ? counterCovered(ctx, def, row, tags) : row.contacts.some(positive);
+  }
+  if (tags.includes('maneuver:counter')) return counterCovered(ctx, def, row, tags);
   return tags.includes('maneuver:sweep') && def.defensiveReaction === true;
 }
 
 // A hand card that could answer some incoming root by its maneuver (SPEC §4.10).
-const candidateByManeuver = def => {
+const candidateByManeuver = (ctx, def) => {
   const tags = def.cardTags || def.tags || [];
+  if (cardTraitsActive(ctx) && tags.includes('trait:reaction')) return true;
   return tags.includes('maneuver:counter') || (tags.includes('maneuver:sweep') && def.defensiveReaction === true);
 };
 // The reported reason is the first failing check of the candidate that got furthest.
@@ -52,7 +61,7 @@ function attackKind(row) {
 function candidateCardIds(ctx, row) {
   const ids = [];
   for (const inst of handOf(ctx, row)) {
-    if (candidateByManeuver(resolveCombatCard(ctx, inst)) && !ids.includes(inst.cardId)) ids.push(inst.cardId);
+    if (candidateByManeuver(ctx, resolveCombatCard(ctx, inst)) && !ids.includes(inst.cardId)) ids.push(inst.cardId);
   }
   return ids;
 }
@@ -69,7 +78,7 @@ function optionsFor(ctx, row, group, hooks, refusal = null) {
   };
   for (inst of handOf(ctx, row)) {
     const base = resolveCombatCard(ctx, inst);
-    if (!eligible(ctx, base, row)) { if (candidateByManeuver(base)) note('notCovered'); continue; }
+    if (!eligible(ctx, base, row)) { if (candidateByManeuver(ctx, base)) note('notCovered'); continue; }
     const choices = cardChoice(ctx.registries, base, ctx.player.classId)?.options || [null];
     for (const tier of [0, ...upcastOptions(base).map(option => option.ranks)]) for (const choice of choices) {
       const candidate = candidateState(ctx);
