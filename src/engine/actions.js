@@ -305,7 +305,9 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
     const split = share > 0 && share < 1;
     const magic = share >= 1 ? amount : split ? Math.floor(amount * share + 1e-9) : 0;
     const legacy = canonicalDamageType(profile.damageType) || 'blunt';
-    return { amount, split, magic, physical: amount - magic, types: split ? splitDamageTypesOf(profile) : { magic: legacy, physical: legacy } };
+    // A weapon's authored physical type types the physical part whether or not the hit splits.
+    const physical = profile.physicalDamageType || legacy;
+    return { amount, split, magic, physical: amount - magic, types: split ? splitDamageTypesOf(profile) : { magic: legacy, physical } };
   });
   // Typed defence, once per (camp, type) group of parts.
   const parts = [];

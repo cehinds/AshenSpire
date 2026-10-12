@@ -9,14 +9,14 @@ import { createRng } from '../src/engine/rng.js';
 import { enqueueExpandedAction, previewExpandedActions } from '../src/engine/combatExpansionActions.js';
 import { executeAction, gainBlock } from '../src/engine/actions.js';
 
-function fixture({ ward = 3, barrier = 0, block = 0, poise = 0 } = {}) {
+function fixture({ ward = 3, barrier = 0, block = 0, poise = 0, weakness = {}, flat = {} } = {}) {
   const registries = createRegistries(contentBundle);
   const combat = createCombat({ registries, rng: createRng(901), combatExpansionVersion: 2,
     enemyIds: ['wanderingSoldier'], player: { classId: 'starseer', maxHp: 100, hp: 100,
       maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1, deck: [] } });
   const enemy = combat.enemies[0];
   enemy.block = block; enemy.barrier = barrier;
-  enemy.damageResistanceFlat = {}; enemy.damageWeaknessPercent = {};
+  enemy.damageResistanceFlat = { ...flat }; enemy.damageWeaknessPercent = { ...weakness };
   enemy.ratings = { ar: 0, dr: 0, pr: 0, poise, ward: 3 };
   if (poise > 0) enemy.persistentPoise = { max: poise, value: poise };
   delete enemy.combatCounter; delete enemy.combatEvade; delete enemy.combatStance;
@@ -187,4 +187,31 @@ test('preview equals committed for physical, magic and split hits, with Block an
     const r = strike(carrier, amount, setup);
     assert.equal(r.preview, r.committed, JSON.stringify(setup));
   }
+});
+
+// A weapon's authored physicalDamageType (content/source/weapons.csv) rides on the carrier and types
+// every physical part, split or not. The shared card profile (bladeAttack) is slashing for all of them.
+const weaponStrike = (physicalDamageType) => ({ tags: ['camp:physical', 'damage:slashing'], skipRatingBonus: true,
+  ...(physicalDamageType ? { physicalDamageType } : {}),
+  combatProfile: { camp: 'physical', damageType: 'slashing', maneuver: 'attack', reach: 'contact', targeting: 'single' } });
+const warhammerStrike = weaponStrike('blunt');
+const frostSpearStrike = weaponStrike('piercing');
+const plainSlashStrike = weaponStrike(null);
+
+test('a Warhammer (blunt) hit takes the blunt weakness; a slashing hit and a Frost Spear (piercing) hit do not', () => {
+  const weakBlunt = { blunt: 50 };
+  assert.equal(strike(warhammerStrike, 4, { ward: 0, weakness: weakBlunt }).damage[0].amount, 6, 'blunt 4 x 1.5');
+  assert.equal(strike(plainSlashStrike, 4, { ward: 0, weakness: weakBlunt }).damage[0].amount, 4, 'slashing 4, no weakness');
+  assert.equal(strike(frostSpearStrike, 4, { ward: 0, weakness: weakBlunt }).damage[0].amount, 4, 'piercing 4, no weakness');
+});
+
+test('a Frost Spear (piercing) hit takes the piercing weakness and a flat piercing resistance', () => {
+  assert.equal(strike(frostSpearStrike, 4, { ward: 0, weakness: { piercing: 50 } }).damage[0].amount, 6);
+  assert.equal(strike(frostSpearStrike, 4, { ward: 0, flat: { piercing: 1 } }).damage[0].amount, 3);
+  assert.equal(strike(plainSlashStrike, 4, { ward: 0, flat: { piercing: 1 } }).damage[0].amount, 4, 'slashing ignores piercing resistance');
+});
+
+test('a Warhammer hit takes a flat blunt resistance, not a slashing one', () => {
+  assert.equal(strike(warhammerStrike, 4, { ward: 0, flat: { blunt: 2 } }).damage[0].amount, 2);
+  assert.equal(strike(warhammerStrike, 4, { ward: 0, flat: { slashing: 2 } }).damage[0].amount, 4);
 });
