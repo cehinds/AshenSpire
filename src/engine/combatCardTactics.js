@@ -36,11 +36,13 @@ export function tacticalCarrier(def, extra = {}, ctx = null, source = null) {
         if (equipped && attackDescriptor(equipped).source === kind) { piece = equipped; break; }
       }
     }
-    // No piece of that kind in hand: a weapon card is thrown with bare hands
+    // No piece of that kind in hand: a physical weapon card is thrown with bare hands
     // and deals the unarmed profile's type (owner #19), as foundationSource does.
     const rules = ctx.foundation?.rules || combatRules;
     const unarmed = (ctx.registries.equipment?.basicCardProfiles || []).find(row => row.id === 'unarmedAttack');
-    const bare = piece || !['weapon', 'unarmed'].includes(kind) ? null
+    // A magical face (a staff's Strike, lent with a magic school) is never a bare-handed blow.
+    const magical = carrier.combatProfile.camp === 'spell' || (carrier.damageSchool && carrier.damageSchool !== 'physical');
+    const bare = piece || !['weapon', 'unarmed'].includes(kind) || magical ? null
       : (unarmed && attackDescriptor(unarmed).damageType) || rules.fallbackSource.damageType;
     const family = piece ? rules.equipmentSources?.itemFamilies?.[piece.id] || rules.equipmentSources?.profileFamilies?.[piece.attackProfile]
       : rules.fallbackSource.family;
