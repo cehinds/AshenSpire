@@ -39,6 +39,7 @@ export function pendingRewardCheckpoint(rewards, { source, after }) {
     rewards: structuredClone(rewards),
     states: rewards.smithingStoneReceipt?.amount > 0 ? { smithingStone: 'taken' } : {},
     chosenCardId: null,
+    chosenRelicId: null,
     chosenDraftCardIds: {},
     chosenDraftNodeIds: {},
   };
