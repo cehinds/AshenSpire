@@ -141,6 +141,11 @@ export function makeCombatant(spec = {}, tables = {}) {
     attrs,
     evasion: spec.evasion,
   }, tables);
+  // The evasion-cards table, when given, is a Map (makeFight). Anything else would silently drop the
+  // card bonuses, so it is rejected here.
+  if (tables?.cards !== undefined && tables?.cards !== null && !(tables.cards instanceof Map)) {
+    throw new TypeError('tables.cards must be a Map from parseEvasionCards()');
+  }
   const base = Number(spec.evadeBasePct ?? spec.evadePct ?? 0);
   const wis = Number(spec.wis ?? 0);
   const charges = Math.trunc(Number(spec.intangibleCharges ?? 0));
@@ -831,7 +836,27 @@ function decayAll(cur, combatants, step, events) {
 // Returns { cur, timeline, startEvents, run }: `cur` is the working fight state, `timeline` holds
 // the ordered entries, `startEvents` are the decay events, and `run` is the round-scoped data:
 // queuedIds { [combatantId]: [cardKey] }, pending { [enemyId]: momentum delta }, stanceTable.
+// Checks every option a round reads, before any rng draw (Codex finding on PR #1867). The caller's
+// rng is not rolled back by atomically(), so a throw after a draw would leave it advanced. A bad
+// option therefore throws here, first. evadeTable and stanceAdvantage are read with .get(), so the
+// check is a get() function (a Map, or any object with a get method). Throws TypeError.
+export function assertRoundOptions(options = {}) {
+  const { rng, evadeTable, stanceAdvantage, onReaction } = options;
+  if (typeof rng !== 'function') throw new TypeError('rng must be a function returning [0, 1)');
+  const hasGet = (t) => t !== null && typeof t === 'object' && typeof t.get === 'function';
+  if (evadeTable !== undefined && evadeTable !== null && !hasGet(evadeTable)) {
+    throw new TypeError('evadeTable must be a Map (or an object with a get method) of stance to evade pct');
+  }
+  if (stanceAdvantage !== undefined && stanceAdvantage !== null && !hasGet(stanceAdvantage)) {
+    throw new TypeError('stanceAdvantage must be a Map (or an object with a get method) from parseStanceAdvantage()');
+  }
+  if (onReaction !== undefined && onReaction !== null && typeof onReaction !== 'function') {
+    throw new TypeError('onReaction must be a function');
+  }
+}
+
 export function beginRound(state, options = {}) {
+  assertRoundOptions(options);
   if (!state || typeof state !== 'object' || !state.combatants) throw new TypeError('state must come from makeFight()');
   const cur = structuredClone(state);
   cur.momentum = { ...(cur.momentum ?? {}) };
@@ -900,6 +925,9 @@ export function settleRound(cur, pending, events) {
 // Runs fn, and if it throws puts `target` back exactly as it was. `target` is plain data or holds
 // plain data and Maps (a fight state from makeFight()); structuredClone keeps both. Shared by
 // createRound() here and by the JSON round in round.js, so a throw never leaves a half-stepped round.
+// NOTE: this restores the round only. The caller's rng is a function and is NOT rolled back: a draw
+// made before a throw stays drawn, so a retry rolls differently. That is why every hook a round reads
+// is validated (assertRoundOptions, and callContext in round.js) before the first draw.
 export function atomically(target, fn) {
   const saved = structuredClone(target);
   try {

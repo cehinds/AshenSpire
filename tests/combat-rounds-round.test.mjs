@@ -455,6 +455,78 @@ test('a non-finite combatant level counts as 0, the same before and after a JSON
   assert.equal(JSON.parse(JSON.stringify(c)).level, 0);
 });
 
+// Round hooks are checked before any rng draw (Codex finding on PR #1867). The caller's rng cannot be
+// rolled back, so a throw after a draw would leave it advanced and a retry would roll differently.
+// `counted(seed)` is a seeded rng that counts its own calls.
+function counted(seed) {
+  const r = rng(seed);
+  const f = () => { f.calls += 1; return r(); };
+  f.calls = 0;
+  return f;
+}
+const BAD_TABLES = [['a string', 'oops'], ['an object with no get', {}], ['a number', 3]];
+
+for (const [label, bad] of BAD_TABLES) {
+  test(`createRound with evadeTable ${label} throws before any rng draw`, () => {
+    const fight = FIGHTS[0];
+    const rngFn = counted(5);
+    const before = rngFn.calls;
+    assert.throws(() => createRound(makeFight(fight.specs, TABLES), {
+      queues: makeQueues(fight, rng(6)), rng: rngFn, merge: fight.merge, evadeTable: bad,
+    }), TypeError);
+    assert.equal(rngFn.calls - before, 0, 'no rng draw happens before the throw');
+  });
+
+  test(`startRound with evadeTable ${label} throws before any rng draw`, () => {
+    const fight = FIGHTS[0];
+    const rngFn = counted(5);
+    assert.throws(() => startRound(makeFight(fight.specs, TABLES), {
+      queues: makeQueues(fight, rng(6)), rng: rngFn, merge: fight.merge, evadeTable: bad,
+    }), TypeError);
+    assert.equal(rngFn.calls, 0);
+  });
+
+  test(`stepRound with evadeTable ${label} throws before any rng draw and changes nothing`, () => {
+    const round = dupFight([plainDefend()]);
+    const before = JSON.stringify(round);
+    const rngFn = counted(2);
+    assert.throws(() => stepRound(round, { rng: rngFn, evadeTable: bad }), TypeError);
+    assert.equal(rngFn.calls, 0);
+    assert.equal(JSON.stringify(round), before);
+  });
+}
+
+test('stepRound with a non-function rng or stanceAdvantage throws before any change', () => {
+  const round = dupFight([plainDefend()]);
+  const before = JSON.stringify(round);
+  assert.throws(() => stepRound(round, { rng: 'x' }), TypeError);
+  assert.throws(() => stepRound(round, { rng: rng(2), stanceAdvantage: 'oops' }), TypeError);
+  assert.equal(JSON.stringify(round), before);
+});
+
+test('answerReaction with a bad evadeTable throws before any draw and the round still waits', () => {
+  const d1 = dupDefend('defend#1');
+  const round = dupFight([d1, dupDefend('defend#2')], [{ ...d1 }]);
+  let res = stepRound(round, hooks(rng(1)));
+  while (!res.awaitingReaction && !res.done) res = stepRound(round, hooks(rng(1)));
+  assert.ok(res.awaitingReaction, 'the first attack pauses for a reaction');
+  const before = JSON.stringify(round);
+  const rngFn = counted(3);
+  assert.throws(() => answerReaction(round, null, { rng: rngFn, evadeTable: 'oops' }), TypeError);
+  assert.equal(rngFn.calls, 0);
+  assert.equal(JSON.stringify(round), before);
+  assert.ok(round.awaiting, 'the round still waits for the reaction');
+});
+
+test('createRound with a non-function onReaction or a non-Map tables.cards throws a TypeError', async () => {
+  const fight = FIGHTS[0];
+  const { makeCombatant } = await import('../src/engine/combatRounds/timeline.js');
+  assert.throws(() => createRound(makeFight(fight.specs, TABLES), {
+    queues: makeQueues(fight, rng(6)), rng: rng(5), merge: fight.merge, onReaction: 'x',
+  }), TypeError);
+  assert.throws(() => makeCombatant({ id: 'player', side: 'player', hp: 10 }, { cards: 'oops' }), TypeError);
+});
+
 // Duplicate copies of one card definition (owner, Codex finding on PR #1867): the same id, told
 // apart by instanceId. A copy is tracked by cardKey(card) = instanceId ?? id.
 const dupDefend = (instanceId) => card('defend', 'guard', 'self', { instanceId, block: 4 });

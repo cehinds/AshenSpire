@@ -9,6 +9,7 @@
 // the ones createRound() in timeline.js applies; this file only splits the same steps across calls.
 // Headless: no DOM, no storage, no timers, no node: imports.
 import {
+  assertRoundOptions,
   atomically,
   beginRound,
   chooseReaction,
@@ -36,7 +37,8 @@ function assertRound(round) {
 function callContext(round, hooks) {
   assertRound(round);
   if (!hooks || typeof hooks !== 'object') throw new TypeError('hooks must be an object');
-  requireRng(hooks.rng);
+  // Checked before any rng draw: the caller's rng is not rolled back on a throw (see atomically()).
+  assertRoundOptions(hooks);
   return {
     options: { rng: hooks.rng, evadeTable: hooks.evadeTable },
     run: { queuedIds: round.queuedIds, pending: round.pending, stanceTable: hooks.stanceAdvantage ?? null },
