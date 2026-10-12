@@ -79,6 +79,15 @@ test('v2: Precision joins Piercing as the larger bypass, Gorefire turns into Bur
     { op: 'buildup', status: 'burn', amount: 4, camp: 'physical', recoveryProfile: 'elemental' }]);
 });
 
+// Owner decision #25: Lethal Dose carries Precision, so it bypasses 4 Block like the other Precision cards.
+test('v1: Lethal Dose carries the Precision tags and bypasses 4 Block', () => {
+  const { combat, enemy } = v1Combat('lethalDose', 'rogue');
+  enemy.block = 10;
+  const def = registries.cards.get('lethalDose');
+  assert.ok(def.tags.includes('precision') && def.tags.includes('technique:precision'), 'Precision tags');
+  assert.equal(prepareMatchupHit(combat, combat.player, enemy, carrier(def.tags, 'poison'), 8).guardBypass, 4);
+});
+
 test('v1 play: a Precision Piercing card into 10 Block puts 4 through (Piercing alone would put 2), preview equals the hit', () => {
   const { combat, enemy } = v1Combat('coupDeGrace', 'rogue');
   enemy.block = 10;
