@@ -127,8 +127,9 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       const fontSize = getComputedStyle(document.documentElement).fontSize;
       const rem = Math.max(16 / zoom, parseFloat(fontSize) || 16);
       const compact = handEl.closest('.combat')?.dataset.compactCombat === 'true';
-      // The HUD form factor main.js writes to <html> (combatLayout mirrors it on the combat root).
-      const formFactor = handEl.closest('.combat')?.dataset.formFactor || document.documentElement.dataset.formFactor || null;
+      // The HUD form factor main.js writes to <html>. Read the live root first: the
+      // combat root's mirror (combatLayout) can lag a debounced change.
+      const formFactor = document.documentElement.dataset.formFactor || handEl.closest('.combat')?.dataset.formFactor || null;
       const desktop = formFactor === 'desktop';
       // The compact toolbar occupies a 30px compact row at the top of the hand.
       // Keep four physical pixels between that row and the resting card fan.
@@ -245,7 +246,8 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     const alive = () => document.body.contains(handEl);
     ro = new ResizeObserver(() => { if (alive()) scheduleHandLayout(); else ro.disconnect(); });
     mo = new MutationObserver(() => { if (alive()) scheduleHandLayout(); else mo.disconnect(); });
-    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-layout'] });
+    // data-form-factor re-lays the fan too: desktop anchors it differently.
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-layout', 'data-form-factor'] });
     ro.observe(handEl);
   }
 

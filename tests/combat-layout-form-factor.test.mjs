@@ -160,3 +160,13 @@ test('release cancels a pending frame so a late apply cannot run', () => withFak
   assert.equal(frames.length, 0, 'the pending frame is cancelled');
   assert.equal(combatEl.dataset.formFactor, 'tablet');
 }));
+
+// hand.js reads the live root form factor first and re-lays the fan when the
+// attribute changes. Pinned in source: its observer needs a real document.
+test('hand.js reads the root form factor first and relays out on data-form-factor', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { fileURLToPath } = await import('node:url');
+  const source = readFileSync(fileURLToPath(new URL('../src/ui/components/hand.js', import.meta.url)), 'utf8');
+  assert.match(source, /const formFactor = document\.documentElement\.dataset\.formFactor \|\| handEl\.closest\('\.combat'\)\?\.dataset\.formFactor/);
+  assert.match(source, /attributeFilter: \['data-layout', 'data-form-factor'\]/);
+});
