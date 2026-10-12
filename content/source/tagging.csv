@@ -2909,6 +2909,7 @@ card,,shadowstep,maneuver:defend
 card,,afterimageCard,camp:physical
 card,,bloodletterRogue,camp:physical
 card,,venomcoat,camp:physical
+card,,venomcoat,damage:poison
 card,,misdirect,camp:physical
 card,,misdirect,maneuver:defend
 card,,assassinate,camp:physical
@@ -2919,6 +2920,7 @@ card,,deadlyTempoCard,camp:physical
 card,,opportunistCard,camp:physical
 card,,envenomCard,camp:physical
 card,,toxicVolley,camp:physical
+card,,toxicVolley,damage:poison
 card,,toxicVolley,maneuver:ranged
 card,,smokeBomb,camp:physical
 card,,smokeBomb,maneuver:defend

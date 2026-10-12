@@ -1095,6 +1095,18 @@ export const nodes = [
     "blurb": "Applies 1 Crimson Blight on a Health hit unless the card already prints a Crimson Blight effect."
   },
   {
+    "id": "damage:poison",
+    "parentId": "damageType",
+    "label": "Poison",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "Applies 1 Venom on a Health hit unless the card already prints a Venom effect. Not reduced by armour class; constructs halve its build-up."
+  },
+  {
     "id": "technique:heavy",
     "parentId": "technique",
     "label": "Heavy",

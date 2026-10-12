@@ -16829,6 +16829,12 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
+    "objectId": "venomcoat",
+    "tagId": "damage:poison"
+  },
+  {
+    "family": "card",
+    "scope": "",
     "objectId": "misdirect",
     "tagId": "camp:physical"
   },
@@ -16885,6 +16891,12 @@ export const tagging = [
     "scope": "",
     "objectId": "toxicVolley",
     "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "toxicVolley",
+    "tagId": "damage:poison"
   },
   {
     "family": "card",

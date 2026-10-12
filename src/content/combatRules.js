@@ -12,6 +12,7 @@ export const combatRules = {
     arcane: { tag: 'damage:arcane', physical: false },
     sacred: { tag: 'damage:sacred', physical: false },
     decay: { tag: 'damage:decay', physical: false },
+    poison: { tag: 'damage:poison', physical: false },
   },
   armor: { scale: 100, cap: 0.60 },
   resistanceCap: 0.75,
