@@ -91,12 +91,18 @@ export function visibleArtBox(host, refresh) {
 }
 
 export function combatSpriteGeometry(sprite, refresh) {
-  const host = sprite.firstElementChild;
+  // A self-target aim outline may precede the directly mounted pilot stage.
+  const host = sprite.querySelector?.(':scope > .painted-stage[data-maximum-width-ratio]') || sprite.firstElementChild;
   const boxHeight = sprite.offsetHeight, boxWidth = sprite.offsetWidth;
-  const stage = host.querySelector('.painted-stage');
+  const stage = host.matches?.('.painted-stage') && host.dataset.maximumWidthRatio
+    ? host : host.querySelector('.painted-stage');
   if (stage && !host.querySelector('.rendered-stage')) {
-    return { boxHeight, visibleHeight: boxHeight * Number(stage.dataset.idleHeightRatio || 1),
-      visibleWidth: boxHeight * Number(stage.dataset.idleWidthRatio || boxWidth / boxHeight), footOffset: 0 };
+    const maximumWidthRatio = Number(stage.dataset.maximumWidthRatio || 0);
+    // A directly mounted pilot previously used its box geometry. Keep those
+    // same dimensions (including DOM rounding), adding only the edge reserve.
+    return { boxHeight, visibleHeight: stage === host ? boxHeight : boxHeight * Number(stage.dataset.idleHeightRatio || 1),
+      visibleWidth: stage === host ? boxWidth : boxHeight * Number(stage.dataset.idleWidthRatio || boxWidth / boxHeight), footOffset: 0,
+      ...(maximumWidthRatio > 0 ? { edgeWidth: boxHeight * maximumWidthRatio } : {}) };
   }
   const img = host.querySelector('.enemy-pose-idle, .painted-presentation, .facing > img');
   const bounds = img && imageBounds(img, refresh);

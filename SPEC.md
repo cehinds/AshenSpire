@@ -1034,7 +1034,7 @@ Enemy definition shape (content file):
 - Spell schools are `frost`, `fire`, `lightning`, `force`, `alteration`, `illusion`, `divine`, `decay`. School describes an authored ability family. It does not silently create a status, refund, draw or defensive effect; those remain printed effect recipes. Damage identity is independent: a physical weapon can inflict Cold, and an Alteration spell can inflict Piercing.
 - `content/source/nodes.csv`, `familyNodes.csv`, `tagFamilies.csv` and `tagging.csv` remain the only authored tag source. Namespaces `camp:*`, `maneuver:*`, `school:*` and `counter:*` prevent collisions with `classification.attack` and class stances. Each carrier has one camp, at most one maneuver and one school; a spell has one school. Counter reach is `melee`, `ranged` or `spell` and appears only on Counter carriers.
 - Enemy actions are family `enemyMove`, source `enemyMoves`, scoped by `enemyId`; their whole key is `(enemyId, moveId)`. Flattening the authored move tables for validation does not create a second move definition. Registered enemy moves receive their own joined tags; they never inherit creature identity as an attack profile.
-- Runtime `combatProfile` contains `{ camp, maneuver, school, damageType, counterMode }`. Unassigned values are `null`. Weapon attack cards carry a fixed `damage:*` tag in `tagging.csv` that sets their damage type (owner, 2026-10-12); the equipped weapon still supplies the attack source and identity otherwise. Active registry tags and equipment `cardTags`, including explicit empty arrays, are authoritative. Global shipped associations are not a fallback inside engine resolution for custom content.
+- Runtime `combatProfile` contains `{ camp, maneuver, school, damageType, counterMode }`. Unassigned values are `null`. Weapon attack cards carry a fixed `damage:*` tag in `tagging.csv` that sets their damage type (owner, 2026-10-12); the equipped weapon still supplies the attack source and identity otherwise. Active registry tags and equipment `cardTags`, including explicit empty arrays, are authoritative. Global shipped associations are not a fallback inside engine resolution for custom content. Under expanded combat (v2), a spell's reach follows its delivery (`delivery:projectile` far, `delivery:melee` contact, otherwise near) unless its expansion row or the far list sets it; legacy v1 runs are unchanged.
 - Stable damage IDs remain `blunt`, `piercing`, `slashing`, `frost`, `fire`, `lightning`, `arcane`, `sacred`, `decay`. Player-facing labels for the last four renamed categories are Cold (`frost`), Force (`arcane`), Holy (`sacred`) and Necrotic (`decay`). Accepted input aliases do not create duplicate tag identities or damage components.
 
 **Physical matchups and timing**
@@ -1154,6 +1154,60 @@ seat, naming the first failing check (`switchOff`, `attackerStaggered`,
 disconnected seat get none. A Smash that breaks physical Guard emits
 `combatGuardBroken` once per break. Both are informational receipts and change
 no rule.
+
+### 4.11 Combat Rounds Preview
+
+**Contract status: planned.** An opt-in preview that runs real fights on the speed-ordered rounds specified in [docs/alternative-combat-rounds/DESIGN.md](docs/alternative-combat-rounds/DESIGN.md), with the owner's decisions in [docs/alternative-combat-rounds/PREVIEW-PLAN.md](docs/alternative-combat-rounds/PREVIEW-PLAN.md). Formulas stay in DESIGN.md and are not restated here. Until its phases ship, combat follows §4.1 to §4.10 unchanged.
+
+**Setting**
+
+- Advanced → Combat holds one opt-in row, *Combat rounds preview*. It is shown on dev and test builds only and is hidden on release builds.
+- The row is read at New Run and frozen into the run, as the other Advanced rows are. A saved fight keeps the rules it started with; a later change applies to new runs only.
+- The preview covers solo and co-op/LAN. Co-op parity is part of the contract, not a later step.
+- With the row off, fights, saves and RNG rolls are unchanged, and no preview field is written.
+
+**Live rules that stay**
+
+- The hand is the live hand: draw, hand size, Retain, Ethereal, reshuffle and the `handRules` settings of §4.1 apply unchanged.
+- Resources are live. Stamina is SP and Mana is MP.
+- A landed card or enemy move runs its live effects: damage (§4.2), statuses (§4.4), draws, relics and triggers. The timeline decides order and whether an action lands; it does not compute effects.
+- Counter and Evade keep their live rules (§4.7, §4.8). Each has a speed value and takes its place in the order. The timeline's own Counter-cancel and evade-percent rules are not used.
+- A reaction from hand uses the reaction choice of §4.10 (Back, Play).
+
+**Queue and End Turn**
+
+- Playing a card queues it and pays its SP, and its MP if it has an MP cost, at queue time. Unqueuing refunds it.
+- Enemies queue cards and moves from their own SP pool, stat-driven with a base of 3. A move costs 1 SP unless the move says otherwise.
+- End Turn keeps its label and look. In the preview it commits the round: it adapts the enemy queues, steps the round through the timeline, pauses for a reaction when a player-targeted attack needs one, then runs the live turn-end hand rules.
+
+**Order and hits**
+
+- Initiative is base, plus momentum, plus a d4. Each combatant rolls its own d4 once per round, in combatant order (the player first, then the others in key order), and that roll is used for all of its actions that round. The preview uses the `speed` merge of DESIGN.md: each action's speed is card speed plus the preemptive buff plus initiative, actions act highest speed first, a later card in a queue never acts before an earlier one, and ties go to higher initiative, then the player. The d4 draws on the preview's own RNG stream, appended to the closed stream set of §3.11, so every existing stream and seed keeps its rolls. Its counter is saved only when it is non-zero and reads as 0 when missing, so a run with the preview off saves exactly as before.
+- Hit or miss uses the hit roll of DESIGN.md. A missed action applies no effects.
+- A reaction pause keeps the round's cursor. A save taken during a pause resumes at that cursor (§3.12).
+
+**Momentum**
+
+- Momentum is kept per enemy, between −3 and +3, and decays as DESIGN.md states.
+- A success at the cap sets an overflow flag. The side's next landed hit carries doubled poise damage, and the flag clears when that hit spends it.
+
+**Perception**
+
+- For each enemy, the player reads the first 1 + Perception actions of that enemy's own queue, in its play order (the queue prefix of DESIGN.md), where Perception is the §4.9 stat. Actions beyond that count show as `?` symbols in that enemy's intent box, at their place in its play order (owner, 2026-10-11).
+- A visible action shows at stage 3 when its §4.9 read is exact, and as `?` when it is not. The read is the §4.9 roll; perception adds no roll of its own.
+- The intent box shows the enemy's current action at today's size and its follow-up actions as smaller symbols. There is no separate initiative track or queue strip (owner, 2026-10-11).
+
+**Co-op and LAN**
+
+- Each seat keeps its own queue, momentum and perception reads. Each living observer records its own read (§4.9).
+- A LAN peer receives a concealed action only as the projection that §4.7 and §4.9 allow. The host never sends a concealed action's full queue entry.
+
+**Resolved (owner, 2026-10-11)**
+
+- A queued card pays only its Stamina cost as SP (and Mana as MP). A live Actions cost is not paid in the preview.
+- Enemy actions beyond the read count show as `?` in the enemy's intent box (see Perception).
+- A queued Counter answers only the next attack from its target, then is spent. The §4.7 grant and expiry timing does not apply in the preview.
+- In co-op, momentum is per seat: each seat has its own −3..+3 against each enemy.
 
 ## 5. Content specification
 
@@ -2670,7 +2724,7 @@ The shipped solo combat path adopts these rules. The independent foundation/comb
   - The co-op path (`coopCombat.js`) reads each seat's owner's setting when it builds that seat's pile, and carries it per seat.
 
 **UX.** The component is `DeckEditorModel` plus `mountDeckEditor`, with an entry in `docs/component-catalog.html`.
-- **Layout.** The Reading Desk has the collection on the left, persistent card inspection in the middle and the deck on the right. Phones show one list, the collection, whose rows carry － count ＋ steppers; inspection opens over it and Back returns to the list; an ordered deck adds a Draw order view for reordering. A selected card shows a round (i) on its art; the (i), or pressing the selected card's art again, opens the inspector, and no row reserves room for it (owner, 2026-10-11). Each row and the inspector name the card's stance: its maneuver (Attack, Defend, Counter, Smash, Sweep or Ranged), otherwise Spell, Power, Consumable or Skill. A row also shows its rank as a badge on the art (Rank N; rank 0 or unranked reads Cantrip for a magical card and Basic for the rest; powers, skills and consumables without a rank show none), its range after the stance for a card that attacks (Melee, Reach or Ranged from its contact, near or far reach, untagged cards taking the player card's combat default: projectiles and ranged maneuvers near, the rest contact), and a physical or magical mark before its costs. Phone rows read grip, art, then name, stance and range, and rules, with the mark and MP/SP sprites at the top right and the stepper at the bottom right, the same at every phone width, smaller phones shrinking the art, costs and stepper rather than moving them (owner, 2026-10-11). Collection offers All/In Deck on its title row; the deck offers List/Cards presentation and collapsible type groups. Text search is off for now (owner, 2026-10-11). Ordered decks retain their exact sequence instead of type groups. Copy counts remain visible for single copies as well as grouped copies.
+- **Layout.** The Reading Desk has the collection on the left, persistent card inspection in the middle and the deck on the right. Phones show one list, the collection, whose rows carry － count ＋ steppers; inspection opens over it and Back returns to the list; an ordered deck adds a Draw order view for reordering. A selected card shows a round (i) on its art; the (i), or pressing the selected card's art again, opens the inspector, and no row reserves room for it (owner, 2026-10-11). Each row and the inspector name the card's stance: its maneuver (Attack, Defend, Counter, Smash, Sweep or Ranged), otherwise Spell, Power, Consumable or Skill. A row also shows its rank as a badge on the art (Rank N; rank 0 or unranked reads Cantrip for a magical card and Basic for the rest; powers, skills and consumables without a rank show none), its range after the stance for a card that attacks (Melee, Reach or Ranged from its contact, near or far reach, under expanded combat an untagged spell takes its delivery as reach: projectile Ranged, melee Melee, otherwise Reach; an untagged physical card takes combat's default, near for projectiles and ranged maneuvers, otherwise contact; a Ranged maneuver shows no separate range, since its stance already reads Ranged), and a mark before its costs: the Smash sigil in silver for physical cards, the Spell flame in blue for magical ones. Phone rows read grip, art, then name, stance and range, and rules, with the mark and MP/SP sprites at the top right and the stepper at the bottom right, the same at every phone width, smaller phones shrinking the art, costs and stepper rather than moving them (owner, 2026-10-11). Collection offers All/In Deck on its title row; the deck offers List/Cards presentation and collapsible type groups. Text search is off for now (owner, 2026-10-11). Ordered decks retain their exact sequence instead of type groups. Copy counts remain visible for single copies as well as grouped copies.
 - **Undo.** Undo reverses the last successful add, removal or reorder, restoring the same complete editing state as Cancel (including allocation and card mint counters). Failed and unchanged actions do not create history. Cancel still restores the state from when the editor opened; Done confirms the current valid state.
 - **Header.** It shows the live counter "N / min–max", which turns red and shows the refusal sentence when out of bounds. Beside it is a compact cost-curve histogram.
 - **Filters and sort.** Filter chips cover type, cost, source (basic / weapon art / technique / reward / item-owned) and upgraded. Sort chips cover cost, name, type and source.

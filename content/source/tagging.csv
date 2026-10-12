@@ -827,7 +827,7 @@ card,,fanOfKnives,delivery:projectile
 card,,fanOfKnives,damage:piercing
 card,,starstonePebble,delivery:projectile
 card,,cometFragment,delivery:projectile
-card,,starbladePhalanx,delivery:projectile
+card,,starbladePhalanx,delivery:melee
 card,,starShower,delivery:projectile
 card,,starlance,delivery:projectile
 card,,starstoneArc,delivery:projectile

@@ -1306,19 +1306,26 @@ test('DOM: every row names a stance and a rank; rank 0 reads Cantrip for magical
   }
 });
 
-test('DOM: range follows the player card combat default; the mark follows the camp', async () => {
+test('DOM: range follows the expanded combat delivery; the mark follows the camp', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
-  const run = createRunState({ seed: 0x5eed, classId: 'starseer', registries: REG, combatExpansionVersion: 1 });
-  for (const cardId of ['cometFragment', 'ricochet', 'strike', 'phaseWard', 'stargazerCard']) {
+  const run = createRunState({ seed: 0x5eed, classId: 'starseer', registries: REG, combatExpansionVersion: 2 });
+  for (const cardId of ['cometFragment', 'starbladePhalanx', 'ricochet', 'strike', 'phaseWard', 'stargazerCard']) {
     if (!run.deck.some(c => c.cardId === cardId)) run.sideboard.push({ instanceId: `probe-${cardId}`, cardId, upgraded: false });
   }
   withDom(() => {
     const editor = mountDeckEditor(document.body, { registries: REG, run, settings: {} });
     const row = (cardId) => [...editor.root.querySelectorAll('.deck-editor-tile')].find(t => t.dataset.key?.startsWith(`card:${cardId}~`));
     const read = (cardId) => { const r = row(cardId); return [r?.querySelector('.deck-editor-range')?.dataset.range, r?.querySelector('.deck-editor-camp')?.dataset.camp]; };
-    // An untagged spell resolves at contact in combat (combatMatchups.js), so it reads Melee.
-    assert.deepEqual(read('cometFragment'), ['melee', 'magical']);
-    assert.deepEqual(read('ricochet'), ['reach', 'physical'], 'a ranged maneuver reaches near');
+    // A v2 spell takes its delivery as reach: a projectile reads Ranged, a melee blade Melee.
+    assert.deepEqual(read('cometFragment'), ['ranged', 'magical']);
+    assert.deepEqual(read('starbladePhalanx'), ['melee', 'magical']);
+    // A ranged maneuver's stance already reads Ranged, so it shows no separate range.
+    assert.deepEqual(read('ricochet'), [undefined, 'physical'], 'a ranged maneuver shows no separate range');
+    assert.equal(row('ricochet').querySelector('.deck-editor-stance')?.dataset.stance, 'ranged');
+    // Physical marks carry the Smash sigil; magical marks carry the Spell sigil.
+    const mark = (cardId) => row(cardId).querySelector('.deck-editor-camp .combat-sigil')?.dataset.sigil;
+    assert.equal(mark('ricochet'), 'smash');
+    assert.equal(mark('cometFragment'), 'spell');
     // Phase Ward carries reach:contact but attacks nothing: no range.
     assert.equal(read('phaseWard')[0], undefined, 'a card that attacks nothing shows no range');
     // A magical Power is a Power, with no Cantrip badge.
@@ -1496,5 +1503,28 @@ test('Hub tabs confirm valid deck edits before navigation and refuse an invalid 
     assert.equal(valid.session.closed, true);
     assert.equal(valid.root.isConnected, false);
     assert.equal(run.deck.length, savedLength);
+  });
+});
+
+test('DOM: a Counter shows a range only when its reply deals damage (v2)', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  const run = createRunState({ seed: 0x5eed, classId: 'reaver', registries: REG, combatExpansionVersion: 2 });
+  const probes = ['evasiveGuard', 'backstep', 'dodgeRoll', 'quickstep', 'guardCounter'];
+  for (const cardId of probes) {
+    if (!run.deck.some(c => c.cardId === cardId)) run.sideboard.push({ instanceId: `probe-${cardId}`, cardId, upgraded: false });
+  }
+  withDom(() => {
+    const editor = mountDeckEditor(document.body, { registries: REG, run, settings: {} });
+    const row = (cardId) => [...editor.root.querySelectorAll('.deck-editor-tile')].find(t => t.dataset.key?.startsWith(`card:${cardId}~`));
+    const rangeOf = (cardId) => row(cardId)?.querySelector('.deck-editor-range')?.dataset.range;
+    // Evasions that only gain Poise on the reply deal no damage: no range.
+    assert.equal(rangeOf('evasiveGuard'), undefined, 'Evasive Guard deals no damage');
+    assert.equal(rangeOf('backstep'), undefined, 'Backstep deals no damage');
+    // Dodge Roll and Quickstep reply with 3 damage (counterPayload hp 3), so they read Melee.
+    assert.equal(rangeOf('dodgeRoll'), 'melee', 'Dodge Roll replies with 3 damage');
+    assert.equal(rangeOf('quickstep'), 'melee', 'Quickstep replies with 3 damage');
+    // Guard Counter's reply is a damage effect, so it keeps its Melee range.
+    assert.equal(rangeOf('guardCounter'), 'melee', 'Guard Counter deals damage');
+    editor.close();
   });
 });

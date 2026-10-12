@@ -3,6 +3,66 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1888",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Combat Rounds preview is now in the codebase",
+    "detail": "The alternative round-based combat design and its rules engine are brought over as a preview with its own tests and SPEC section. Nothing in play changes: live combat does not use it yet.",
+    "build": "0.7.1.1419",
+    "pullRequest": 1888,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1888"
+  },
+  {
+    "id": "pr-1890",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Reaver greatsword combat stances now use selected artwork",
+    "detail": "A Reaver in the default armor carrying only a greatsword now shows selected poses for Sweep, Counter and Smash, holds its Evade pose when ready, and shows its Guard Break reaction when an enemy breaks its guard. These reactions use the five selected greatsword paintings.",
+    "build": "0.7.1.1417",
+    "pullRequest": 1890,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1890"
+  },
+  {
+    "id": "pr-1885",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "On desktop, the Combat log and Reaction sit in the bottom corners",
+    "detail": "The Combat log button now sits in the bottom-left corner and the Reaction toggle in the bottom-right, so the strip above your cards is gone and the hand sits lower on the screen with more room for the battlefield. Phone and tablet are unchanged.",
+    "build": "0.7.1.1406",
+    "pullRequest": 1885,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1885"
+  },
+  {
+    "id": "pr-1884",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Each fighter's readout sits above or below it, and the battlefield is narrower on wide screens",
+    "detail": "A front-row enemy's health and intent now hang just below its feet instead of drifting off to one side, so every readout stays with its own fighter. On wide screens the fighters stand closer to the middle, and the enemies' back row steps a little to the right so it stands clear of the front row. Switching back to the Classic look mid-fight keeps you in a row Classic has.",
+    "build": "0.7.1.1404",
+    "pullRequest": 1884,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1884"
+  },
+  {
+    "id": "pr-1876",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Spell range follows how a spell is delivered; new physical and magical marks in the deck editor",
+    "detail": "In expanded-combat runs a spell's range now follows its delivery: projectile spells such as Comet Fragment reach Ranged, bladed spells such as Starblade Phalanx (now a melee spell) strike at Melee, and the rest stay at Reach (runs from before expanded combat are unchanged). The deck editor shows the same range combat uses, marks physical cards with a silver Smash sigil and spells with a blue flame, and a Ranged card like Ricochet reads just \"Ranged\".",
+    "build": "0.7.1.1402",
+    "pullRequest": 1876,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1876"
+  },
+  {
+    "id": "pr-1886",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Picking a card shows its stance before you play it",
+    "detail": "Selecting a card in hand puts your fighter in that card's stance, and the stance mark above their head changes to match; click through your hand and both follow each card, and cancelling returns them to your last stance. Playing the card swings from that stance, and afterwards your fighter holds it — into the next turn too — until you play another card. The stances are attack, smash, sweep, defend, counter and prepare: spells and cards that are none of the others show prepare, and sweep now has its own mark. Smash holds each class's painted wind-up, and every swing now leaves from your stance and returns to it instead of snapping to a neutral pose. Co-op seats hold their stance across turns but do not show a preview while selecting.",
+    "build": "0.7.1.1401",
+    "pullRequest": 1886,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1886"
+  },
+  {
     "id": "pr-1875",
     "date": "2026-10-12",
     "group": "2026-10-12",

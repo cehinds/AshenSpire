@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { combatSpriteGeometry } from '../src/ui/components/combatSpriteGeometry.js';
+import { combatArtworkKey } from '../src/ui/models/CombatCompositionModel.js';
 import { alternativeCombatComposition, combatStandingGround, SPACIOUS_RIBBON_RESERVE } from '../src/ui/models/CombatCompositionModel.js';
 import { alternativeFormation, fitAlternativeSprites } from '../src/ui/models/AlternativeFormationModel.js';
 import { combatFormation } from '../src/ui/models/CombatFormationModel.js';
@@ -28,6 +30,45 @@ test('a body at the field edge stays on stage', () => {
   const actor = { side: 'enemy', visibleWidth: 100, leading: 40, slot: { id: 'a', x: 10, ground: 300 } };
   const [fit] = alternativeCombatComposition({ actors: [actor], sizes: [{ id: 'a', visibleHeight: 120, scale: 1, multiplier: 1 }], width: 390, perspectiveGrid: true });
   assert.equal(fit.x, 56);
+});
+
+test('selected pose reach clamps mobile artwork without refitting its body or domain cell', () => {
+  const stage = { dataset: { idleHeightRatio: '1', idleWidthRatio: String(246/261), maximumWidthRatio: String(456/261) },
+    matches: selector => selector === '.painted-stage', querySelector: () => null };
+  // The live alternative card stage is the sprite's first child itself,
+  // rather than a painted stage nested inside a separate sprite wrapper.
+  const sprite = { firstElementChild: stage, offsetHeight: 190, offsetWidth: 179 };
+  const geometry = combatSpriteGeometry(sprite, () => {});
+  const aimed = { ...sprite, firstElementChild: { matches: () => false, querySelector: () => null },
+    querySelector: selector => selector === ':scope > .painted-stage[data-maximum-width-ratio]' ? stage : null };
+  assert.deepEqual(combatSpriteGeometry(aimed, () => {}), geometry, 'a preceding self-target outline cannot hide the pilot envelope');
+  const nested = { ...sprite, firstElementChild: { querySelector: selector => selector === '.painted-stage' ? stage : null } };
+  assert.equal(combatSpriteGeometry(nested, () => {}).edgeWidth, geometry.edgeWidth, 'root and nested stages carry the same edge reserve');
+  assert.equal(geometry.visibleWidth, 179, 'fitting preserves the directly mounted body box, including DOM rounding');
+  const actor = { side: 'player', ...geometry, leading: 0,
+    slot: { id: 'player', cell: 'C1', x: 63.13275125, ground: 373.44975 } };
+  const size = { id: 'player', scale: .6080383240223463, visibleHeight: 186.34860359596735, multiplier: 1 };
+  const before = structuredClone(actor);
+  const [fitted] = alternativeCombatComposition({ actors: [actor], sizes: [size], width: 390, perspectiveGrid: true });
+  assert.ok(fitted.x > actor.slot.x, 'the screen edge requires a presentation shift');
+  assert.ok(fitted.x - geometry.edgeWidth*fitted.scale/2 >= 6-1e-9);
+  assert.ok(fitted.x + geometry.edgeWidth*fitted.scale/2 <= 384+1e-9);
+  assert.equal(fitted.scale, size.scale);
+  assert.equal(fitted.visibleHeight, size.visibleHeight);
+  assert.equal(fitted.ground, actor.slot.ground);
+  assert.deepEqual(actor, before, 'the domain cell and its foot anchor remain authoritative');
+  const layout = { width: 390, height: 426, zoom: 1, actors: [actor] };
+  assert.notEqual(combatArtworkKey(layout), combatArtworkKey({ ...layout, actors: [{ ...actor, edgeWidth: undefined }] }),
+    'changing reviewed pose coverage invalidates the cached presentation');
+  for (const width of [390, 1440]) {
+    const centred = { ...actor, slot: { ...actor.slot, x: width/2 } };
+    assert.equal(alternativeCombatComposition({ actors: [centred], sizes: [size], width, perspectiveGrid: true })[0].x,
+      width/2, 'a figure already within the viewport stays at its existing centre');
+  }
+  delete stage.dataset.maximumWidthRatio;
+  const original = { ...geometry }; delete original.edgeWidth;
+  assert.deepEqual(combatSpriteGeometry(sprite, () => {}), original,
+    'other directly mounted profiles retain all their existing geometry');
 });
 
 test('a short portrait field keeps its enemies back on the floor, clear of the player', () => {
