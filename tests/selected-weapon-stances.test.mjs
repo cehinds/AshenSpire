@@ -133,7 +133,7 @@ test('the solo screen reaction hook imports its timing helpers and calls the cur
   const fxCtx={anchorFor:id=>{assert.equal(id,'player');return anchor;}};
   const combat={player:{alive:true},eventLog:[]};
   const factory=runInNewContext('({'+source.slice(begin,end)+'}).reactionForReceipt',{
-    ...bindings,selectedWeaponReactionFor,selectedCounterOrigins:()=>selectedWeaponCounterOrigins(combat.eventLog),selectedProfile:()=>pilot,combat,fxCtx,stageFor:element=>{assert.equal(element,anchor);return current;},
+    ...bindings,selectedWeaponReactionFor,playbackCounterOrigins:new Set(),selectedProfile:()=>pilot,combat,playbackEvents:combat.eventLog,fxCtx,stageFor:element=>{assert.equal(element,anchor);return current;},
   });
   try {
     for(const speed of ['normal','slow','instant']) {
@@ -152,7 +152,7 @@ test('the solo screen reaction hook imports its timing helpers and calls the cur
     const earlyBreak={type:'combatGuardBroken',targetId:'player'};
     const lethalLoss={type:'hpLost',targetId:'player',amount:5};
     const lethalBreak={type:'combatGuardBroken',targetId:'player'};
-    combat.eventLog=[earlyEvade,earlyBreak,lethalLoss,lethalBreak];combat.player.alive=false;
+    combat.eventLog.push(earlyEvade,earlyBreak,lethalLoss,lethalBreak);combat.player.alive=false;
     assert.equal(typeof factory(earlyEvade),'function','final defeat does not hide an earlier evade');
     assert.equal(typeof factory(earlyBreak),'function','final defeat does not hide an earlier guard break');
     assert.equal(factory(lethalBreak),null,'the guard break after the lethal loss yields to defeat');

@@ -1,4 +1,7 @@
 import test from 'node:test';
+import {readFileSync} from 'node:fs';
+import {runInNewContext} from 'node:vm';
+import {decorateCombatEffects} from '../src/model/combatEffectEvents.js';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { combatRules } from '../src/content/combatRules.js';
@@ -87,6 +90,22 @@ test('paid production Guard and Evasion counters associate only their actual abs
       const origins=selectedWeaponCounterOrigins(events);
       const defended=events.find(row=>selectedWeaponReactionFor(row,pilot)==='fully-defended');
       assert.ok(origins.has(defended),'the incoming impact belongs to the combo and is not replayed separately');
+      const decorated=decorateCombatEffects(events,registries);
+      const shown=decorated.find(row=>selectedWeaponReactionFor(row,pilot)==='fully-defended');
+      assert.notEqual(shown,defended,'production defense decoration clones the damage receipt');
+      const source=readFileSync(new URL('../src/ui/screens/combat.js',import.meta.url),'utf8');
+      const helper=source.slice(source.indexOf('  function selectedCounterOrigins(events) {'),source.indexOf('  const fxCtx = {'));
+      const begin=source.indexOf('    reactionForReceipt: event => {'),end=source.indexOf('\n    reactionTimingForReceipt:',begin);
+      const stage={poses:['counter-guard','counter-evade'],reactionPoses:['fully-defended','evade']};
+      const screenHook=runInNewContext(`(()=>{${helper} const playbackCounterOrigins=selectedCounterOrigins(playbackEvents); return ({${source.slice(begin,end)}}).reactionForReceipt;})()`,{
+        selectedWeaponCounterOrigins,selectedWeaponCounterFor,selectedWeaponReactionFor,resolvePlayedCombatCard,
+        playbackEvents:decorated,combat,registries,selectedProfile:()=>pilot,stageFor:()=>stage,
+        fxCtx:{anchorFor:()=>({})},
+      });
+      assert.equal(screenHook(shown),null,'the actual screen hook suppresses the decorated incoming prelude owned by the Counter');
+      assert.equal(decorated.filter(row=>selectedWeaponReactionFor(row,pilot)&&screenHook(row)).length,0,'both returned routes have no separate incoming body prelude');
+      assert.equal(decorated.filter(row=>row.type==='combatCounterTriggered').length,1,'one engine return owns the complete combo');
+
       assert.ok(events.every(event=>combat.eventLog.includes(event)),'dispatch retains receipt identity');
     }
   }
