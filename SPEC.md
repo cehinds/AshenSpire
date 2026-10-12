@@ -1328,7 +1328,7 @@ Rarity: S = starter, C = common, U = uncommon, R = rare. Cost in Stamina (engine
 | Strike | S | 1 | Attack | Deal 6. | Deal 9 |
 | Defend | S | 1 | Skill | Gain 5 Block. | Gain 8 |
 | Gorefire Slash | S | 1 + 1 Mana | Attack | Deal 5. Apply 3 Bleed. | 5 dmg, 5 Bleed |
-| Crimson Cleave | C | 2 | Attack | Deal 8 to ALL enemies. Apply 2 Bleed to ALL. | 11 dmg |
+| Crimson Cleave | C | 2 | Attack | Deal 5 to the selected enemy. | none; rank-up (§13.4o) |
 | Shield Bash | C | 1 | Attack | Deal 5. 4 Poise damage. | 8 dmg, 5 Poise |
 | Quickstep | C | 1 | Skill | Gain 6 Block. Draw 1. | 8 Block |
 | Guard Counter | C | 1 | Attack | Deal 4. If you have Block: deal 10 instead. | 6 / 14 |
