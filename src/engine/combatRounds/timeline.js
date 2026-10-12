@@ -499,7 +499,7 @@ function resolveAttack(cur, entry, events, rng, options, reactionEvade = null, r
     if (target.tags.includes('intangible') && cur.charges[target.id] > 0) {
       avoid = 'intangible';
       cur.charges[target.id] -= 1;
-    } else {
+    } else if (!cur.liveDefence) {
       const stancePct = target.stance && options.evadeTable ? (options.evadeTable.get(target.stance) ?? 0) : 0;
       const bonuses = [];
       if (stancePct) bonuses.push({ source: `stance:${target.stance}`, pct: stancePct, scope: 'exchange' });
@@ -721,7 +721,8 @@ function resolveExchange(cur, entry, events, options, run, reacted) {
   const counterCard = counter ? { momentumGain: counter.gain, stance: counter.stance } : null;
   const credited = [];
   const sideOf = (id) => cur.combatants[id].side;
-  if (ownerAlive() && !counter.reaction && counter.speed > entry.speed.effective) {
+  // liveDefence (SPEC §4.11): the Counter's cancel and its damage are the live rules, applied by combat.js.
+  if (!cur.liveDefence && ownerAlive() && !counter.reaction && counter.speed > entry.speed.effective) {
     // A faster counter cancels the attack. A tie or a slower counter does not.
     events.push({ type: 'countered', by: counter.owner, target: entry.actor, cardId: counter.cardId, cancelled: true });
     applyDamage(cur, entry.actor, counter.damage, events);
@@ -741,7 +742,7 @@ function resolveExchange(cur, entry, events, options, run, reacted) {
   }
   if (ownerAlive()) {
     events.push({ type: 'counterFired', by: counter.owner, target: entry.actor, cardId: counter.cardId, after: true });
-    applyDamage(cur, entry.actor, counter.damage, events);
+    if (!cur.liveDefence) applyDamage(cur, entry.actor, counter.damage, events);
     credit(cur, run, { key, winner: sideOf(counter.owner), winCard: counterCard, foeCard: attackCard, events, seq: entry.seq, credited });
     if (counter.stagger) stagger(run, { key, owner: counter.owner, target: entry.actor, cur, events, seq: entry.seq });
   }
@@ -865,6 +866,8 @@ export function beginRound(state, options = {}) {
   cur.momentum = { ...(cur.momentum ?? {}) };
   cur.poiseDouble = { ...(cur.poiseDouble ?? {}) };
   cur.charges = { ...(cur.charges ?? {}) };
+  // SPEC §4.11: the preview's defences are live. The flag is stored only when set, so a plain round is unchanged.
+  if (options.liveDefence === true) cur.liveDefence = true;
   // Every combatant has a poise flag, false unless an overflow set it.
   for (const id of Object.keys(cur.combatants)) put(cur.poiseDouble, id, get(cur.poiseDouble, id) === true);
   // Round-scoped effects (block, evade, counters) start empty each round.
