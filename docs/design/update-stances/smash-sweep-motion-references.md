@@ -1,64 +1,57 @@
-# Sweep and Smash sequence motion references
+# Greatsword whirlwind and ground-slam motion references
 
-Research for the Reaver greatsword pilots: ten Sweep examples keyed to W = Sweep18 and ten Smash examples keyed to S = Smash05. Each example is **exactly five paintings**: frame 1 is the exact selected stance, frames 2–4 are action, frame 5 is the exact same selected stance image as frame 1. The outer stance images are repeated holds, not newly drawn recovery poses. Keep the rear-left/back camera facing right, default rusty plate, closed helmet, two hands on the greatsword, and continuous crimson cape.
+This brief follows the latest art direction: ten Sweep options use a low, draw-inspired turn into a circular slash around Reaver; ten Smash options are heavy jumping ground slams. Each is five slots total: stance, three action paintings, exact return to the same stance. Sweep gets a newly drawn low stance as its repeated bookend. Keep Reaver's rusty plate, continuous red cape, rear-left/back camera, and threat to screen-right. These are art options, not gameplay selections.
 
-## What the references establish
+## Reference evidence and limits
 
-| Reference | Directly supported observation | Limit |
+| Reference | What its accessible text supports | What it does not support |
 | --- | --- | --- |
-| [HEMA 101, beginner longsword guide, §16](https://www.hema101.com/post/beginner-s-guide-to-fencing-with-the-longsword) | A shoulder-height middle hew travels horizontally from a shoulder guard with hands at shoulder level and a step. A high Zwerch is a bent-arm horizontal cut that ends in an Ox guard. This supplies distinct shoulder-line and head-line variants. | Longsword scale and an unarmored human; adapt the range and shoulder motion to the oversized sword and armored Reaver. The guide also notes the Zwerch is shorter-range than a straight-armed hew. |
-| [HEMA 101, Zwerchau lesson](https://www.hema101.com/post/liechtenauer-s-longsword-101-part-12-zwerchau-lateral-strike-or-thwart-strike) | The instructor describes generating the cut with core rotation, then following it with a step; the cut leads rather than waits for the step. | Instructor's expressed preference for a specific technique, not universal biomechanics. |
-| [HEMA Penzance, sabre lunge](https://hemapenzance.com/blog/how-to-lunge-with-a-sabre) | Arm/blade begin toward target, lead foot travels, hit arrives before landing, rear foot follows; chest stays proud and the free arm counterbalances. | A sabre lunge is not a jumping greatsword attack. Use only the sequencing and balance ideas for thrust studies, not its reach or arm extension. |
-| [Denys Antipenko, Reaver melee animation portfolio](https://umych.com/animations/combat/) | Its described jump attack separates jump start, an airborne loop pose, and the attack at ground contact. Heavy/light variants are shown on the page. | Different Reaver game character, powered jetpack ascent, and proprietary artwork. Use only the clear takeoff / airborne / landing-phase structure; no image or motion design is copied. |
-| [PoseMy.Art, sword jump swing pose](https://posemy.art/sword-poses/sword-jump-swing-pose/102/) | Search preview identifies a simplified mannequin in a suspended overhead-sword jump. | Search result image description only; I could not inspect its pixels in this pass. It is a generic single-pose drawing aid, not a sequence or technical source. |
-| [myArmoury, German longsword](https://myarmoury.com/feature_arms_gls.php) and [ARMA, Mastercuts](https://thearma.org/essays/mastercuts.html) | Accessible articles contextualize historical longsword manuals and the Zwerch / mastercut; ARMA specifically distinguishes the described mastercuts as unarmored techniques. | Their historic references are not proof of plate-armor cutting mechanics or jumping attacks. Avoid presenting the move as a period armored technique. |
+| [Meikyokan Dojo, iai lessons](https://www.meikyokan.org/hawaiikendo_lessons_in_iaido) | Describes iaido as draw-and-strike followed by a finishing cut and readiness; its appendix describes a two-hand full-arc raise/cut and a left-hand pull on the scabbard during the draw (lines 30–45, 325–332). This suggests a clear coil → draw → full-body cut rhythm. | The cut is a katana technique with a saya. Do not put an invented sheath on the greatsword or copy the technique literally. The page embeds instructional photos, but I did not inspect those image pixels. |
+| [North London Budo, sample kata](https://www.northlondonbudo.co.uk/iaido-information/a-sample-iaido-kata-a-sequence-of-moves) | Describes a low tatehiza base, body turning while drawing, a first upward protective motion, and a blade brought around the left as the torso turns right into a rising cut (lines 44–50). This supports low compression, torso-led rotation, and blade path changing around the body. | It is one dojo's description of a katana kata, including its own interpretation; not a universal rule or greatsword biomechanics. Embedded photos were not inspected. |
+| [Fab GreatSword Action RPG animation listing](https://www.fab.com/listings/58dbe678-f46e-41c3-86a1-4389ca77f94b?lang=en) | The listing names a multi-rotation “Hwirind” spin, an “Earthbreaker” ground-shaking slam, and a downward jump attack (lines 43–52). Those are useful action categories for distinguishing a full-body whirl from a jump-to-impact. | I inspected the written listing only, not the embedded preview animation or purchased assets. It supplies no verified pose timing, biomechanics, or permission to reuse its artwork. |
+| [Denys Antipenko's Reaver melee animation page](https://umych.com/animations/combat/) | Its text describes jump start, airborne loop, and attack on ground contact as separate phases (lines 52–59). This supports making takeoff, airborne pose, and ground impact separately readable. | It is a different Reaver character with jetpack propulsion; use only the phase structure, not its art or propulsion. |
 
-External image search returned previews of HEMA diagrams, a historical fencing illustration, and simplified jump-pose mannequins. Those previews were metadata/descriptions, not image files I could directly inspect. I did inspect the repository visuals directly: [approved Sweep18 source](../../../pose-studio/stances/update-stances/greatsword-sweep/sheet-b.png), its documented crop at x=28–418/y=521–993, [approved Smash05](../../../assets-display/alternative/reaver-greatsword-pilot-smash.webp), and the current shipped [Reaver offensive stance](../../../assets-display/alternative/stances/reaver/offensive.webp). Sweep18 reads as a tall, compact right-facing stance with both hands at waist and the blade projecting horizontally to the left. Smash05 reads as a wide low load, bent front/right leg, extended rear/left leg, and sword raised above the helmet. These are first-party project observations, not external references.
+External image-search results surfaced iaido sequences and game/anime spinning-slash illustrations, but the tool returned captions/metadata rather than inspectable image data. I did **not** visually verify those external images or videos. I directly inspected the project's current Reaver art earlier: the current offensive stance and the selected Smash05 hold show the intended back-right orientation, weathered armor, red cape, and two-handed greatsword. This local inspection does not establish the appearance of a new low Sweep stance.
 
-## Sweep proposal menu
+## Sweep motion proposals
 
-Each row names the changed action paintings 2–4 only. In a rear-left/right-facing view, keep the weapon path and both hands visible; a cape trail may reinforce direction but cannot be the only difference between concepts. These are choreography proposals inferred from the cut references above, not poses directly shown by them.
+Every option should visibly compress low, turn or twist through the hips and shoulders, and produce a broad slash trail that arcs around the body. Frames 2–4 are a proposed five-slot rhythm: coil/load, draw-through/whirl, low planted finish. The word “draw” means an iaido-inspired compact extraction from a close-held greatsword position; the weapon remains visible and continuously gripped. Do not invent a scabbard. The trail should describe the blade path without covering the armor, hands, sword, or feet.
 
-| ID | Action beat for frames 2–4 | Distinguishing read |
-| --- | --- | --- |
-| SW-A · waist cleave | 2: compact hip/shoulder coil, blade drawn across behind; 3: level waist cut advances right; 4: blade clears the right silhouette, hips settle and rear heel turns. | Broad torso-led level arc; good baseline for current pilot. |
-| SW-B · head-line thwart | 2: hilt rises near helmet, elbows bent; 3: compact head-height sweep; 4: finish with hilt high and blade carried across. | Shorter, bent-arm line distinct from waist cleave. |
-| SW-C · low thigh sweep | 2: knees lower and blade draws back at thigh height; 3: wide level cut; 4: torso stays above the low blade as stance catches weight. | Low target line; keep sword from clipping legs/cape. |
-| SW-D · advancing passing cut | 2: rear leg begins to pass; 3: hips and blade cross together on level line; 4: new forward foot catches the body. | Visible change of base and forward travel. |
-| SW-E · planted pivot cut | 2: both feet stay planted while torso loads; 3: front foot pivots and hips turn through; 4: weight remains centered with feet separated. | Rotational power with little translation. |
-| SW-F · retreating counter-sweep | 2: torso draws back, lead foot lightens; 3: waist-line blade drives across while body yields; 4: rear foot receives weight. | Backward body displacement against forward weapon arc. |
-| SW-G · rising-to-level cut | 2: sword low behind hip; 3: blade rises into a level rightward sweep; 4: hands finish around chest height. | Curved approach and strong height change; do not turn it into an uppercut. |
-| SW-H · shoulder-to-level cut | 2: blade starts high beside shoulder; 3: shoulders lead it down into the horizontal plane; 4: long follow-through to the right. | High-to-level path; distinct from a pure head-height Zwerch. |
-| SW-I · short close sweep | 2: elbows compress and hilt comes close to torso; 3: compact bent-arm sweep; 4: hilt remains close as blade passes. | Short range and tight silhouette, not a full-body windmill. |
-| SW-J · long-reach sweep | 2: hands extend slightly back/left; 3: long arms and torso rotation carry a broad level arc; 4: front leg braces the extended finish. | Long reach and extended line, distinct from SW-I. |
+| Option | Distinct motion emphasis |
+| --- | --- |
+| SW01 · Wide waist orbit | Deep coil, broad level clockwise turn, low finish with the blade carried past the right silhouette. |
+| SW02 · Reverse half-turn | Blade draws across the body as torso turns back, then a broad reverse waist arc; finish still facing the right threat. |
+| SW03 · Cross-step whirlwind | Rear foot crosses through the turn, making the circular cut travel forward-right before settling low. |
+| SW04 · Planted pivot | Feet stay within a tight base; heels pivot and the hips drive a full broadside orbit. |
+| SW05 · Rising spiral | Begin in a deep low load, draw up through a rising diagonal arc, finish with knees bent and blade circling at chest height. |
+| SW06 · Drop spiral | Begin with hilt close to shoulder, turn downward into a leg-height circular sweep, finish in a deep crouch. |
+| SW07 · Tight-body orbit | Keep elbows and hilt close through a short-radius draw-turn, with a compact ring trail around the torso. |
+| SW08 · Long-radius orbit | Extend the two-hand grip away from the torso through the turn; use a wide circular trail and strong low catch. |
+| SW09 · Two-direction unwind | Draw across one side, rotate through the hips, then let the blade arc around the opposite side before the low stop. |
+| SW10 · Advancing low whirlwind | One clear step carries a near-360-degree torso turn forward-right; end with a grounded low guard, not a fifth action pose. |
 
-The preview cut type must still read as a horizontal arc. Variants may change target height, range, direction of travel, and step/pivot behavior, while frames 1 and 5 remain the selected Sweep18 image exactly.
+Keep the rear-facing silhouette readable across the turn: torso, head, and feet may rotate but should not jump between unrelated camera angles. Differentiate concepts by the drawn stance, orbit direction/radius/height, footwork, rotation amount, and finish. Do not rely on trail color or cape movement alone.
 
-## Smash proposal menu
+## Smash motion proposals
 
-The brief calls for five jump studies and five “stab kickoff” studies. The user clarified “stab kickoff” as **plant the greatsword and vault/kick off it**, not a thrust. J-A–J-E are jump-strike studies; VK-F–VK-J are planted-greatsword vault/kickoff studies. These latter options are choreography proposals, since the web sources above do not document this fantasy move. All rows return to the exact Smash05 source in frame 5.
+All ten Smash options are jumping ground slams. In frames 2–4, show a distinct push/load, an unmistakably airborne pose, then sword-to-ground contact with the body braced into a low landing. Keep both hands on the sword, show believable leg compression and weight transfer, and make impact readable through body mechanics; dust or ground effects stay secondary. Five options may keep the strong vertical overhead line while varying launch, twist, and landing. The other five should vary the approach/impact line while still ending in a forceful sword slam into the ground. Vaults and sword-planted locomotion are superseded.
 
-| ID | Action beat for frames 2–4 | Distinguishing read |
-| --- | --- | --- |
-| J-A · forward plunge | 2: rear leg pushes and lead knee lifts, sword stays loaded high; 3: airborne body travels right with knees tucked; 4: descending vertical chop meets a bent lead-leg landing. | Forward travel and vertical blade line. |
-| J-B · short hop cleave | 2: small grounded compression; 3: low, compact hop with blade loaded across shoulder; 4: horizontal cleave and wide two-foot catch. | Low airtime, horizontal attack, broad landing. |
-| J-C · twisting aerial | 2: hips and shoulders counter-rotate; 3: body turns in air while sword trails high; 4: diagonal downward cut as lead foot lands. | Visible torso twist and diagonal path. |
-| J-D · delayed overhead | 2: strong two-leg takeoff, sword stays behind helmet; 3: peak with knees folded and hands still loaded; 4: overhead release paired with forward foot catch. | Weapon release visibly later than body lift. |
-| J-E · lateral leap | 2: push from one leg into a side-forward bound; 3: airborne body shifts across the frame, blade held level; 4: low lateral chop and wide stabilizing landing. | Lateral displacement rather than straight forward jump. |
-| VK-F · forward plant, direct vault | 2: blade plants point-down ahead/right while both hands hold the hilt; 3: hips lift and lead knee passes over the planted sword line; 4: body travels forward past the hilt into a visible one-foot landing. | Direct vault past the planted weapon, with continuous two-hand contact. |
-| VK-G · lateral pole-vault | 2: sword plants to the right side; 3: torso tilts and legs swing laterally across the braced arms; 4: far foot lands beyond the hilt. | Clear side-to-side displacement; preserve rear-left read. |
-| VK-H · low hurdle kick-off | 2: crouch and plant blade ahead; 3: rear leg pushes off ground as lead knee tucks past the hilt; 4: foot reaches for a low forward landing. | Low, compact vault with obvious ground push. |
-| VK-I · high scissoring vault | 2: set the blade as a fixed support; 3: body rises, legs split fore/aft over the sword line; 4: lead leg reaches down while cape lags. | Highest silhouette and broadest leg separation. |
-| VK-J · short rebound kick-off | 2: blade plants close to the body; 3: compact spring rebounds off the grounded weapon, knees tucked; 4: both feet prepare to land close together. | Minimal travel and compressed airborne shape. |
+| Option | Distinct motion emphasis |
+| --- | --- |
+| SM01 · Forward plunge | Rear-leg drive, body travels forward, steep overhead blade, one-foot lead catch at impact. |
+| SM02 · Short hop cleave | Low, compact hop and short vertical chop; broad two-foot landing absorbs the force. |
+| SM03 · Twisting aerial | Counter-rotate in takeoff, turn toward the target while airborne, diagonal-down blade at contact. |
+| SM04 · Delayed overhead | Rise first with sword held high/back, then release the overhead slam as the lead foot lands. |
+| SM05 · Lateral bound | Side-forward launch, knees tucked in air, overhead ground slam into a wide offset landing. |
+| SM06 · Crouch-to-apex | Strong deep compression, near-vertical jump, highest apex, straight-down impact with symmetrical braced legs. |
+| SM07 · Turning drop | Half-turn during the jump while keeping the target right-facing at impact; cross-body diagonal into ground. |
+| SM08 · Long-leap crater | Longer forward travel, both legs behind in flight, two-handed overhead crash and deep forward catch. |
+| SM09 · Falling hammer | Small takeoff with blade loaded above crown, body drops behind the weapon into a heavy vertical slam. |
+| SM10 · Wide spiral slam | Broad airborne torso turn, sword arcs overhead around the body, then lands point/blade-down in a low wide stance. |
 
-For jump cuts, separate takeoff, airborne phase, and contact/landing in the interior poses. For vault/kickoff studies, keep the sword visibly planted and continuously connected to both gripping hands through the vault; clearly show the body pass the hilt, then a reachable landing. Never depict a weight-bearing edge-only plant or an impossible sword bend. Pose 4 may be a controlled landing painting, but pose 5 is the exact original selected stance, with a cut rather than an invented in-between.
+## Shared checks
 
-## Art and motion guardrails
-
-- Preserve the approved outer frames pixel-for-pixel: Sweep18 on frames 1 and 5 for Sweep; Smash05 on frames 1 and 5 for Smash.
-- Keep the greatsword rigid and continuously gripped with two hands. Do not invent a second weapon or detach blade/hilt between frames.
-- Make the front/right target direction legible from the rear-left view; retain the approved Reaver armor and cape.
-- Give feet believable contacts or a clearly airborne gap. Show a weight transfer or landing catch; avoid floating toe touches.
-- Let the cape lag behind torso motion, but keep enough of the legs and weapon visible to read the action.
-- Do not make a jump or thrust appear historically sourced from armored longsword doctrine. The sources are movement references, and the proposals adapt them to fantasy game readability.
-- No external artwork, game asset, or identifiable franchise design is requested for delivery. These links guide mechanics only; follow the project's asset/provenance rules before any source art is added to the game.
+- Frames 1 and 5 are the exact same stance image. For Sweep this is a new low draw-ready stance; for Smash follow the currently approved S bookend unless the art owner changes it.
+- Keep the screen-right opponent direction legible from the approved rear-left/back view, and retain the same armor and continuous red cape.
+- Show the sword path, two-hand grip, foot contacts, and grounded or airborne state with the body silhouette itself. Trails, dust, and cape motion reinforce the pose but cannot replace it.
+- These sources guide motion vocabulary only. No external artwork, animation, game asset, character design, or trail effect is to be imported or copied.
