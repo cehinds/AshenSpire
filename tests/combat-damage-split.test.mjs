@@ -60,8 +60,18 @@ test('a scepter strike of 5 is 2 arcane and 3 blunt: Ward takes the 2, the 3 is 
   assert.equal(d.wardAbsorbed, 2);
   assert.equal(d.wardRemaining, 1, 'Ward 3 becomes 1');
   assert.equal(r.hpLost(r.hpBefore), 3, 'total HP loss is 3');
-  // A force hit's shipped rider (damageRiders.force) then strips 2 more Ward; the hit's own numbers stay as above.
-  assert.equal(r.events.find(e => e.type === 'combatWardStripped')?.amount, 1);
+  // The flat force Ward rider is gone: the hit's Ward loss is its magic absorption and nothing more, so no strip event.
+  assert.equal(r.events.find(e => e.type === 'combatWardStripped'), undefined, 'no flat Ward strip after the hit');
+});
+
+// The force rider (a flat 2-Ward strip) is gone: a scepter strike changes Ward by exactly its magic absorption.
+test('a scepter strike only changes Ward by what its magic part absorbed (no flat force strip)', () => {
+  for (const ward of [3, 2, 1]) {
+    const r = strike(scepter, 5, { ward });
+    const [d] = r.damage;
+    assert.equal(r.enemy.persistentWard.value, ward - d.wardAbsorbed, `Ward ${ward} changes by ${d.wardAbsorbed}`);
+    assert.equal(r.events.find(e => e.type === 'combatWardStripped'), undefined, `no strip event at Ward ${ward}`);
+  }
 });
 
 test('against Block 3 the physical 3 is blocked, and at least 1 magic gets through from Ward', () => {
