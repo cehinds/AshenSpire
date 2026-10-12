@@ -20,6 +20,14 @@ test('reactionRulesProblems flags a bad maxDepth', () => {
   }
 });
 
+test('reactionRulesProblems fixes the Counter-return stack depth at exactly 1', () => {
+  assert.deepEqual(reactionRulesProblems({ ...CARD_TRAIT_RULES, stack: { ...CARD_TRAIT_RULES.stack, counterReturnMaxDepth: 1 } }), []);
+  for (const counterReturnMaxDepth of [2, 4, 0, -1, 1.5, '1', null]) {
+    const rules = { ...CARD_TRAIT_RULES, stack: { ...CARD_TRAIT_RULES.stack, counterReturnMaxDepth } };
+    assert.ok(reactionRulesProblems(rules).some(problem => /Counter return/.test(problem)), `counterReturnMaxDepth ${counterReturnMaxDepth}`);
+  }
+});
+
 test('reactionRulesProblems flags percentages outside (0, 1] and malformed advantage maps', () => {
   for (const pct of [0, -0.5, 1.2, NaN, '0.5']) {
     const rules = { ...CARD_TRAIT_RULES, counterstrike: { ...CARD_TRAIT_RULES.counterstrike, pct } };
