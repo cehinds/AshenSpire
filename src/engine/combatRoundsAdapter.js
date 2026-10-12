@@ -12,7 +12,7 @@
 // The timeline decides order and hit or miss only. combat.js passes its own helpers in `ops`, so
 // this file never imports combat.js (no cycle).
 import { startRound, stepRound, answerReaction, finishRound } from './combatRounds/round.js';
-import { makeFight } from './combatRounds/timeline.js';
+import { makeFight, makeCombatant, plannedQueueSpeeds } from './combatRounds/timeline.js';
 import { DEFAULT_SP, SPEED_MODS_CSV } from '../content/combatRounds.js';
 
 // Enemy SP per round (SPEC §4.11: stat-driven, base 3). One constant, used for every enemy in P3a.
@@ -416,4 +416,46 @@ function applyEnemyEntry(combat, entry, events, landed, ops) {
 // Removes a queued card and returns its record, so the caller can refund exactly what it paid.
 export function unqueueCard(combat, instanceId) {
   return takeQueuedCard(combat, instanceId);
+}
+
+// --- Preview screen forecast ------------------------------------------------------------------
+
+// screenForecast(combat, enemyId, candidate) → the plan-time speeds the preview screen compares (PREVIEW-PLAN,
+// Screen; timeline plannedQueueSpeeds). `candidate` is a hand card's timeline view (roundCardForecast) or null.
+// cardSpeed is the candidate's effective speed at the end of the player's queue, with the candidate placed last
+// (null without a candidate). foeSpeed and foe are the enemy's first queued action (null when it has no queue).
+// The d4 is excluded, as the forecast requires. stanceTable is the Map targetOutline reads.
+export function screenForecast(combat, enemyId, candidate = null) {
+  const cr = roundState(combat);
+  const tables = engineTables(cr.rules);
+  const momentum = cr.momentum ?? {};
+  const player = makeCombatant(playerSpec(combat, 0, []), tables);
+  // A card already in the queue keeps its place; any other candidate is placed last.
+  const queued = queuedCards(combat).map(timelineCardFor);
+  const at = candidate ? queued.findIndex((c) => c.instanceId === candidate.instanceId) : -1;
+  const playerQueue = !candidate || at >= 0 ? queued : [...queued, candidate];
+  const playerSpeeds = plannedQueueSpeeds({ combatant: player, queue: playerQueue, momentum });
+  const enemy = combat.enemies.find((e) => e.id === enemyId);
+  const cards = enemy ? enemyActions(combat, enemy.id) : [];
+  let foeSpeed = null;
+  let foe = null;
+  if (enemy && cards.length) {
+    const speeds = plannedQueueSpeeds({ combatant: makeCombatant(enemySpec(enemy), tables), queue: cards, momentum });
+    foeSpeed = speeds[0];
+    foe = { stance: cards[0].stance, kind: cards[0].kind };
+  }
+  let cardSpeed = null;
+  if (candidate) cardSpeed = at >= 0 ? playerSpeeds[at] : playerSpeeds[playerSpeeds.length - 1];
+  return { cardSpeed, foeSpeed, foe, stanceTable: tables.stanceAdvantage };
+}
+
+// enemyActions(combat, enemyId) → the enemy's queued actions as timeline cards, in play order (the first is
+// its current action). [] when the enemy has no queue this round.
+export function enemyActions(combat, enemyId) {
+  const cr = roundState(combat);
+  const enemy = combat.enemies.find((e) => e.id === enemyId);
+  const entries = enemy ? cr.enemyQueues[enemy.id] : null;
+  if (!enemy || !entries?.length) return [];
+  const def = combat.registries.enemies.get(enemy.enemyId);
+  return entries.map((e, i) => enemyTimelineCard(enemy, e, i, def));
 }

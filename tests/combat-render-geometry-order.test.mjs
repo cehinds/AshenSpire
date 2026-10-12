@@ -34,6 +34,9 @@ function fixture(code = rendering) {
     battlefieldStage: { refresh() { fits.push({ handWidth, handReceipt, toolsTop, controlsReady, toolsReady }); events.push('fit'); } },
     formationMovement: { refresh: () => events.push('formation') },
     applyTargetLayer: () => events.push('targets'), refreshAim: () => events.push('aim'),
+    // The Combat Rounds Preview's screen layer (SPEC 4.11). It only adds marks and changes no layout, so it is a
+    // no-op here and leaves the recorded order above unchanged.
+    decorateCombatRoundsScreen: () => {}, targetedEnemyId: () => null, lastTargetId: null, combatEl: null,
     setHintMode: () => events.push('hint'),
   };
   const api = runInNewContext(code + '\n({render, renderCombatantStage})', context);
