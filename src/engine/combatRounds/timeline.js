@@ -160,7 +160,8 @@ export function makeCombatant(spec = {}, tables = {}) {
     evasion,
     evadeBasePct: Number.isFinite(base) ? base : 0,
     intangibleCharges: Number.isFinite(charges) && charges > 0 ? charges : 0,
-    accuracyExtra: Number(spec.accuracy ?? 0) || 0,
+    // Non-finite accuracy counts as 0, like level, so a saved round (JSON turns Infinity into null) reads it the same.
+    accuracyExtra: Number.isFinite(Number(spec.accuracy ?? 0)) ? Number(spec.accuracy ?? 0) : 0,
     hand: Array.isArray(spec.hand) ? spec.hand.map((c) => ({ ...c })) : [],
     // The evasion-cards.csv table (owner, 2026-10-11): a played evade card whose name or id is
     // in it adds that bonus to the hit roll of the one attack it answers. Null when no table.

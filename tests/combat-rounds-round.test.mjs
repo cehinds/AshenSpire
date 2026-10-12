@@ -456,6 +456,16 @@ test('a non-finite combatant level counts as 0, the same before and after a JSON
   assert.equal(JSON.parse(JSON.stringify(c)).level, 0);
 });
 
+test('a non-finite combatant accuracy counts as 0, the same before and after a JSON round-trip', async () => {
+  const { makeCombatant } = await import('../src/engine/combatRounds/timeline.js');
+  for (const accuracy of [Infinity, -Infinity, NaN]) {
+    const c = makeCombatant({ id: 'player', side: 'player', accuracy, hp: 10 });
+    assert.equal(c.accuracyExtra, 0, String(accuracy));
+    assert.equal(JSON.parse(JSON.stringify(c)).accuracyExtra, 0, String(accuracy));
+  }
+  assert.equal(makeCombatant({ id: 'player', side: 'player', accuracy: 3, hp: 10 }).accuracyExtra, 3);
+});
+
 // Duplicate copies of one card definition (owner, Codex finding on PR #1867): the same id, told
 // apart by instanceId. A copy is tracked by cardKey(card) = instanceId ?? id.
 const dupDefend = (instanceId) => card('defend', 'guard', 'self', { instanceId, block: 4 });
