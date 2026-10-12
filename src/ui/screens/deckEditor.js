@@ -350,9 +350,16 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   const MANEUVER_STANCES = ['attack', 'defend', 'counter', 'smash', 'sweep', 'ranged'];
   // The definition combat resolves: under expanded combat (v2) a run's spell
   // reach and targeting come from applyCombatExpansionCard, so the editor shows them.
+  // One draw resolves each row's definition once: the cache is keyed by the
+  // row's ref (what resolveCard reads) and cleared at the start of draw().
+  const combatDefCache = new Map();
   const combatDef = (row) => {
-    const def = resolveCard(registries, row.ref);
-    return run?.combatExpansionVersion === 2 ? applyCombatExpansionCard(def) : def;
+    const key = JSON.stringify(row.ref);
+    if (!combatDefCache.has(key)) {
+      const def = resolveCard(registries, row.ref);
+      combatDefCache.set(key, run?.combatExpansionVersion === 2 ? applyCombatExpansionCard(def) : def);
+    }
+    return combatDefCache.get(key);
   };
   const stanceKey = (row) => {
     const def = combatDef(row);
@@ -764,6 +771,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   }
 
   function draw() {
+    combatDefCache.clear();
     model = deckEditorModel({ registries, run, settings, view });
     if (!model.ordered && mobileView === 'deck') mobileView = 'collection';
     const rows = selected?.source === 'deck' ? model.deck : model.collection;
