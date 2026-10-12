@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-12",
     "summary": "Character creation walks you through every step",
     "detail": "Creating a character now goes Class, Attributes, Keepsake, Equipment, Feats, then Spells for classes that cast, then Review. The Feats step lets you browse every character, class and skill feat with the level it unlocks at; you start with none and earn them as you level. On a phone, tapping a feat opens its details right beneath it.",
-    "build": "0.7.1.1435",
+    "build": "0.7.1.1437",
     "pullRequest": 1915,
     "url": "https://github.com/cehinds/AshenSpire/pull/1915"
+  },
+  {
+    "id": "pr-1913",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Every enemy break now staggers under combat ratings",
+    "detail": "With ratings on, a break of the Poise or Ward meter, by weapon or spell, and an Insanity break now apply Staggered as well as the skipped turn, so Executioner and other Staggered payoffs fire in normal runs. Spell breaks no longer add Magic Vulnerable on top; Staggered already raises damage of every type.",
+    "build": "0.7.1.1437",
+    "pullRequest": 1913,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1913"
   },
   {
     "id": "pr-1906",
