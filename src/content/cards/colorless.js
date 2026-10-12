@@ -14,17 +14,17 @@ export const colorlessCards = [
     id: 'katanaDrawCut', name: 'Draw Cut', class: 'colorless', rarity: 'uncommon', cost: 1, type: 'attack',
     flavor: "Single cut from the scabbard, as it is done beyond the marches.\n\nThe curved blades reached the ring in the years of the Mark Trade, borne by foreign lords who paid to be warm there. They burned with the rest of the marked, far from home, and left their swords where they fell.\n\nThe merchant knows whose each one was. He sells that separately.",
     keywords: [], icon: '⚔',
-    effects: [{ op: 'damage', target: 'enemy', amount: 9 }, { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 2 }],
+    effects: [{ op: 'damage', target: 'enemy', amount: 8 }, { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 2 }],
     textTemplate: 'Deal {damage} damage. Apply {bleed} Bleed.',
-    upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 12 }, { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 3 }] },
+    upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 11 }, { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 3 }] },
   },
   {
     id: 'greatswordSunderingHew', name: 'Sundering Hew', class: 'colorless', rarity: 'uncommon', cost: 2, type: 'attack',
     flavor: "Hew of a Court knight's greatsword.\n\nToo heavy to carry far, and too dear to leave. The corrupted knights pause at the sight of one in a Forsaken's hands, unable to believe an unmarked hand holds their steel.\n\nThat pause is worth the weight.",
     keywords: [], icon: '⚒',
-    effects: [{ op: 'damage', target: 'enemy', amount: 16 }, { op: 'poiseDamage', target: 'enemy', amount: 3 }],
-    textTemplate: 'Deal {damage} damage and {poiseDamage} Poise damage.',
-    upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 20 }, { op: 'poiseDamage', target: 'enemy', amount: 4 }] },
+    effects: [{ op: 'damage', target: 'enemy', amount: 12 }, { op: 'poiseDamage', target: 'enemy', amount: 3 }, { op: 'applyStatus', target: 'enemy', status: 'vulnerable', stacks: 1 }],
+    textTemplate: 'Deal {damage} damage and {poiseDamage} Poise damage. Apply {vulnerable} Vulnerable.',
+    upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 16 }, { op: 'poiseDamage', target: 'enemy', amount: 4 }, { op: 'applyStatus', target: 'enemy', status: 'vulnerable', stacks: 1 }] },
   },
   // ---- Neutral playable colorless (Merchant stock, SPEC §1) ------------------
   {
@@ -39,9 +39,9 @@ export const colorlessCards = [
     id: 'ironSkin', name: 'Iron Skin', class: 'colorless', rarity: 'common', cost: 1, type: 'skill',
     flavor: "Plate of cold iron, worn where a flame-mark would lie.\n\nFirst worn by the ice-fishers of the Pale Marches in the year of the Decree, when the Court's brand-men came for the unmarked. Such plates are left upon the Grave of the Nameless for those who climb after.\n\nMost have been worn thin by more than one wearer.",
     keywords: [], icon: '🛡',
-    effects: [{ op: 'block', target: 'self', amount: 8 }],
+    effects: [{ op: 'block', target: 'self', amount: 7 }],
     textTemplate: 'Gain {block} Block.',
-    upgrade: { effects: [{ op: 'block', target: 'self', amount: 11 }] },
+    upgrade: { effects: [{ op: 'block', target: 'self', amount: 10 }] },
   },
   {
     id: 'fieldDressing', name: 'Field Dressing', class: 'colorless', rarity: 'uncommon', cost: 1, type: 'skill',
@@ -89,9 +89,9 @@ export const colorlessCards = [
     id: 'twinFang', name: 'Twin Fang', class: 'colorless', rarity: 'common', cost: 1, type: 'attack',
     flavor: "Two knives, worn crosswise.\n\nOne for the hound, one for its handler. The weald's blight-hounds were the Wardens' before the Burning, and run yet with Bastion kennelmen who turned with the pack.\n\nA handler may be reasoned with, briefly. Never twice.",
     keywords: [], icon: '🗡',
-    effects: [{ op: 'damage', target: 'enemy', amount: 4, hits: 2 }],
+    effects: [{ op: 'damage', target: 'enemy', amount: 3, hits: 2 }],
     textTemplate: 'Deal {damage} damage {hits} times.',
-    upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 6, hits: 2 }] },
+    upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 5, hits: 2 }] },
   },
   {
     id: 'blindingSand', name: 'Blinding Sand', class: 'colorless', rarity: 'common', cost: 0, type: 'skill',
@@ -124,13 +124,13 @@ export const colorlessCards = [
     flavor: "Blow of whatever is heavy.\n\nA cudgel, a mallet, a shovel from a mine camp. The reach's miners swing it at things in the lower galleries that were miners once. Foreman Coll says not to look at their hands, which remember the work.\n\nHis camp has lost fewer than any other.",
     keywords: [], icon: '🔨',
     effects: [
-      { op: 'damage', target: 'enemy', amount: 7 },
+      { op: 'damage', target: 'enemy', amount: 6 },
       { op: 'poiseDamage', target: 'enemy', amount: 4 },
     ],
     textTemplate: 'Deal {damage} damage and {poiseDamage} Poise damage.',
     upgrade: {
       effects: [
-        { op: 'damage', target: 'enemy', amount: 9 },
+        { op: 'damage', target: 'enemy', amount: 8 },
         { op: 'poiseDamage', target: 'enemy', amount: 6 },
       ],
     },
