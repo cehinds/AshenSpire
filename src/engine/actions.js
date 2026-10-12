@@ -39,7 +39,8 @@ import { passiveMult } from '../model/registries.js';
 import { commitSmithing, smithingPlan } from '../model/smithing.js';
 import * as Properties from './properties.js';
 import * as Ratings from './combatRatings.js';
-import { isMagicalAttack, ratingDamageMultiplier, attackImpact, schoolResistanceMultiplier, persistentWardMaximum } from '../model/combatRatings.js';
+import { isMagicalAttack, ratingDamageMultiplier, attackImpact, schoolResistanceMultiplier, persistentWardMaximum,
+  damageTypeMagicShare, isMagicDamageType, isPhysicalDamageType } from '../model/combatRatings.js';
 import { swapRunClass } from '../model/classSwap.js';
 import { applyGraceRefill } from './encounters.js';
 import { orderedReturn } from '../model/deckRules.js';
@@ -289,20 +290,61 @@ export function restoreExpandedWard(ctx, entity, nominal, options = {}) {
   return Control.restorePersistentWard(ctx, entity, nominal, { source: 'card', ...options });
 }
 
+// Damage routing. A hit is split into a MAGIC part, which Barrier and Ward take,
+// and a PHYSICAL part, which Block takes. A contact's magic share says how much
+// of it is magic. A carrier's own share wins. A hybrid damage type (strictly
+// between 0 and 1: arcane, or a tuned row) splits any camp. Otherwise the camp
+// decides, so a spell is all magic and a strike all physical whatever their
+// tags say; the shipped contacts keep the route they always had.
+const DAMAGE_TYPE_ALIASES = { pierce: 'piercing', slash: 'slashing', cold: 'frost', force: 'arcane', holy: 'sacred', necrotic: 'decay' };
+export function canonicalDamageType(type) {
+  return DAMAGE_TYPE_ALIASES[type] || type || null;
+}
+
+export function contactMagicShare(ctx, profile) {
+  if (Number.isFinite(profile?.magicShare)) return Math.min(1, Math.max(0, profile.magicShare));
+  const hybrid = damageTypeMagicShare(ctx.ratingsRules, canonicalDamageType(profile?.damageType));
+  if (hybrid !== null && hybrid > 0 && hybrid < 1) return hybrid;
+  return profile?.camp === 'spell' ? 1 : 0;
+}
+
+// A split hit types each part on its own: the magic part by the damage type
+// (a physical tag, if any, gives way to arcane), the physical part by the
+// weapon that struck it (a magic tag gives way to blunt).
+function splitDamageTypes(profile) {
+  const type = canonicalDamageType(profile.damageType);
+  return {
+    magic: isMagicDamageType(type) ? type : 'arcane',
+    physical: profile.physicalDamageType || (isPhysicalDamageType(type) ? type : 'blunt'),
+  };
+}
+
 export function prepareExpandedDefense(ctx, target, receipt, carrier) {
   if (receipt.defendedAmounts) return;
-  const sums = {}, indices = {};
-  receipt.amounts.forEach((amount, index) => {
+  const hits = receipt.amounts.map((amount, index) => {
     const profile = receipt.profiles[index];
-    const aliases = { pierce: 'piercing', slash: 'slashing', cold: 'frost', force: 'arcane', holy: 'sacred', necrotic: 'decay' };
-    const type = aliases[profile.damageType] || profile.damageType || 'blunt';
-    const key = `${profile.camp}:${type}`;
-    sums[key] = (sums[key] || 0) + amount;
-    (indices[key] ||= []).push(index);
+    const share = contactMagicShare(ctx, profile);
+    const split = share > 0 && share < 1;
+    const magic = share >= 1 ? amount : split ? Math.floor(amount * share + 1e-9) : 0;
+    const legacy = canonicalDamageType(profile.damageType) || 'blunt';
+    return { amount, split, magic, physical: amount - magic, types: split ? splitDamageTypes(profile) : { magic: legacy, physical: legacy } };
   });
-  receipt.defendedAmounts = receipt.amounts.map(() => 0);
-  for (const [key, total] of Object.entries(sums)) {
+  // Typed defence, once per (camp, type) group of parts, as it always was.
+  const parts = [];
+  hits.forEach((hit, index) => {
+    if (hit.magic > 0) parts.push({ index, magic: true, camp: 'spell', type: hit.types.magic, amount: hit.magic });
+    if (hit.physical > 0) parts.push({ index, magic: false, camp: 'physical', type: hit.types.physical, amount: hit.physical });
+  });
+  const groups = new Map();
+  parts.forEach((part, p) => {
+    const key = `${part.camp}:${part.type}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(p);
+  });
+  const typed = parts.map(() => 0);
+  for (const [key, members] of groups) {
     const [camp, type] = key.split(':');
+    const total = members.reduce((sum, p) => sum + parts[p].amount, 0);
     let amount;
     if (ctx.foundation) {
       const defense = F.foundationProfile(ctx, target), rules = ctx.foundation.rules;
@@ -316,28 +358,60 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
     }
     amount = Math.max(0, Math.ceil(amount * (1 + Math.max(0, target.damageWeaknessPercent?.[type] || 0) / 100))
       - Math.max(0, target.damageResistanceFlat?.[type] || 0));
-    const shares = total > 0 ? allocateInteger(amount, indices[key].map(index => receipt.amounts[index])) : indices[key].map(() => 0);
-    indices[key].forEach((index, i) => { receipt.defendedAmounts[index] = shares[i]; });
+    const shares = total > 0 ? allocateInteger(amount, members.map(p => parts[p].amount)) : members.map(() => 0);
+    members.forEach((p, i) => { typed[p] = shares[i]; });
   }
-  // Magic hits meet Barrier, then Ward, once per action (Poise is physical's
-  // and is not a pool yet). Barrier soaks fully. Ward's budget is shared over
-  // the hits; each hit it meets still lets at least 1 through, and Ward is
-  // spent by what it absorbs. What passes meets Block, then Health.
+  const magicTyped = hits.map(() => 0), physicalTyped = hits.map(() => 0), magicParts = [];
+  parts.forEach((part, p) => {
+    if (part.magic) { magicTyped[part.index] = typed[p]; magicParts.push(p); } else physicalTyped[part.index] = typed[p];
+  });
+  // Magic meets Barrier, then Ward. Barrier soaks fully and Ward's budget is shared over the
+  // action's magic parts, spent by what it absorbs.
   syncWardMaximum(ctx, target);
-  const defended = [...receipt.defendedAmounts];
-  const magic = receipt.profiles.map(profile => profile.camp === 'spell');
-  const share = (budget, weights) => {
-    const total = weights.reduce((sum, weight, index) => sum + (magic[index] ? weight : 0), 0);
+  const shareOf = (budget, weights) => {
+    const total = weights.reduce((sum, weight) => sum + weight, 0);
     if (!(total > 0) || !(budget > 0)) return weights.map(() => 0);
-    const parts = allocateInteger(Math.min(budget, total), weights.map((weight, index) => magic[index] ? weight : 0));
-    return parts;
+    return allocateInteger(Math.min(budget, total), weights);
   };
-  receipt.barrierSpentAmounts = share(Math.max(0, target.barrier || 0), defended);
-  const afterBarrier = defended.map((amount, index) => amount - receipt.barrierSpentAmounts[index]);
-  const wardShares = share(Math.max(0, target.persistentWard?.value || 0), afterBarrier);
-  receipt.defendedAmounts = afterBarrier.map((amount, index) => amount > 0 && wardShares[index] > 0 ? Math.max(1, amount - wardShares[index]) : amount);
-  receipt.wardSpentAmounts = afterBarrier.map((amount, index) => amount - receipt.defendedAmounts[index]);
+  const magicWeights = magicParts.map(p => typed[p]);
+  const barrier = shareOf(Math.max(0, target.barrier || 0), magicWeights);
+  const afterBarrier = magicWeights.map((weight, j) => weight - barrier[j]);
+  const ward = shareOf(Math.max(0, target.persistentWard?.value || 0), afterBarrier);
+  const magicLeft = hits.map(() => 0), wardSpent = hits.map(() => 0), barrierSpent = hits.map(() => 0);
+  magicParts.forEach((p, j) => {
+    const index = parts[p].index, after = afterBarrier[j], share = ward[j];
+    // A pure hit lets at least 1 through Ward before Block (as it always has). A split hit's
+    // at-least-1 is decided once it is known what its Block and HP leave, below.
+    const left = !hits[index].split && after > 0 && share > 0 ? Math.max(1, after - share) : after - share;
+    magicLeft[index] = left;
+    wardSpent[index] = after - left;
+    barrierSpent[index] = barrier[j];
+  });
+  // Block takes the physical part of a split hit and whatever a pure hit leaves; a split hit's
+  // magic goes straight to HP. Contacts meet Block in the order they strike. If a split hit
+  // would cost no HP but Ward absorbed some of it, 1 gets through from Ward.
+  const blockable = hits.map(() => 0);
+  let blockLeft = Math.max(0, target.block || 0);
+  let bypassLeft = receipt.guardBypass || 0;
+  hits.forEach((hit, index) => {
+    const pool = hit.split ? physicalTyped[index] : physicalTyped[index] + magicLeft[index];
+    const bypass = Math.min(pool, bypassLeft);
+    bypassLeft -= bypass;
+    const blocked = Math.min(blockLeft, Math.max(0, pool - bypass));
+    blockLeft -= blocked;
+    if (hit.split && physicalTyped[index] - blocked + magicLeft[index] === 0 && wardSpent[index] > 0) {
+      magicLeft[index] += 1;
+      wardSpent[index] -= 1;
+    }
+    blockable[index] = hit.split ? physicalTyped[index] : pool;
+  });
+  receipt.defendedAmounts = hits.map((hit, index) => physicalTyped[index] + magicLeft[index]);
+  receipt.barrierSpentAmounts = barrierSpent;
+  receipt.wardSpentAmounts = wardSpent;
   receipt.resistedAmounts = receipt.amounts.map((amount, index) => Math.max(0, amount - receipt.defendedAmounts[index]));
+  receipt.magicAmounts = magicTyped;
+  receipt.physicalAmounts = physicalTyped;
+  receipt.blockableAmounts = blockable;
   receipt.guardBypassRemaining = receipt.guardBypass || 0;
 }
 
@@ -375,9 +449,11 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
     if (target.persistentWard.value === 0) breakWard(ctx, source, target);
   }
   const pool = 'block';
-  const bypass = Math.min(amount, tactical.guardBypassRemaining || 0);
+  // Block takes what is blockable here: a split hit's physical part, else the whole pass-through.
+  const blockable = tactical.blockableAmounts?.[contactIndex] ?? amount;
+  const bypass = Math.min(blockable, tactical.guardBypassRemaining || 0);
   tactical.guardBypassRemaining -= bypass;
-  const blocked = Math.min(Math.max(0, target[pool] || 0), Math.max(0, amount - bypass));
+  const blocked = Math.min(Math.max(0, target[pool] || 0), Math.max(0, blockable - bypass));
   target[pool] = Math.max(0, (target[pool] || 0) - blocked);
   const hpLoss = amount - blocked;
   if (hpLoss) target.hp -= hpLoss;
@@ -387,6 +463,8 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
     ...(barrierSpent ? { barrierAbsorbed: barrierSpent } : {}),
     ...(wardSpent ? { wardAbsorbed: wardSpent, wardRemaining: target.persistentWard?.value || 0 } : {}),
     damageType: type, blockRemaining: target.block || 0, barrierRemaining: target.barrier || 0,
+    // The hit's whole typed parts, before Barrier and Ward: magicAmount + physicalAmount is the hit.
+    magicAmount: tactical.magicAmounts?.[contactIndex] || 0, physicalAmount: tactical.physicalAmounts?.[contactIndex] || 0,
     ...seatOf(ctx, target), ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source) } : {}),
     ...(carrier.instanceId ? { cardInstanceId: carrier.instanceId, sourceHand: carrier.sourceHand, grantedBy: carrier.grantedBy } : {}), isAttack: true });
   if (hpLoss) ctx.emit('hpLost', { targetId: target.id, amount: hpLoss, cause: 'attack', ...seatOf(ctx, target) });

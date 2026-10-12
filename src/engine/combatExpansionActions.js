@@ -72,7 +72,7 @@ export function enqueueExpandedAction(ctx, actions, { source, target, carrier } 
         tags, contactCarrier, { matchups: false, beforeDefense: true }) : 0;
         if (crit) amount = Math.floor(amount * crit);
         const index = row.contacts.length;
-        row.contacts.push({ ...profile, amount, ...(eff.op !== 'damage' ? { effect: ['poiseDamage', 'wardDamage'].includes(eff.op) ? 'impact' : 'status', pressure: base } : {}) });
+        row.contacts.push({ ...profile, amount, ...(Number.isFinite(contactCarrier.magicShare) ? { magicShare: contactCarrier.magicShare } : {}), ...(contactCarrier.physicalDamageType ? { physicalDamageType: contactCarrier.physicalDamageType } : {}), ...(eff.op !== 'damage' ? { effect: ['poiseDamage', 'wardDamage'].includes(eff.op) ? 'impact' : 'status', pressure: base } : {}) });
         contacts.push({ key, index, id: entity.id, playerId: ctx.playerIdForEntity?.(entity), ...(crit ? { crit } : {}) });
       }
       action.meta.expansionContacts.push(contacts);

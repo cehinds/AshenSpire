@@ -570,6 +570,14 @@ export function isMagicalAttack(ctx, carrier) {
  * when no card or weapon overrides it: the Advanced row if the run has one,
  * else the content default. Null for a type the rules do not name.
  */
+export function isMagicDamageType(type) {
+  return damageTypeRules.damageTypes[type]?.physical === false;
+}
+
+export function isPhysicalDamageType(type) {
+  return damageTypeRules.damageTypes[type]?.physical === true;
+}
+
 export function damageTypeMagicShare(config, type) {
   const value = config?.damageTypes?.[type];
   if (Number.isFinite(value)) return value;
