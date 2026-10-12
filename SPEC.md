@@ -1310,7 +1310,7 @@ Boss — **The Fell Warden** (Margit-inspired, HP 120, Poise 30):
 | Relic | Rarity | Effect |
 |---|---|---|
 | Forsaken Medallion | starter | (class starter, see §5.1) |
-| Golden Sprout | common | At the start of each combat, heal 3 HP and grow the Crimson charge pool by 1. |
+| Golden Sprout | common | At the start of each combat, heal 3 HP. While carried, the Crimson flask pool holds 1 more charge (once, not per combat; `balance.flaskGrowth`). |
 | Whetstone Fragment | common | Your first attack each combat deals +4. |
 | Kindling Charm | common | At the start of each combat, draw 1 extra card. |
 | Cinder Pouch | common | Gain 25% more Cinders from combats. |
