@@ -41,6 +41,7 @@ import { classAttributePreset, creationMode, orderedAttributes } from '../src/mo
 import { statRow } from '../src/model/statRows.js';
 import { ruleWeights, statRowValue } from '../src/model/derivedStats.js';
 import { handResourceRows } from '../src/model/statProjection.js';
+import { creationHasSpells } from '../src/ui/models/CreationWorkspaceModel.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = resolve(process.argv[2] || join(ROOT, 'outputs'));
@@ -155,23 +156,27 @@ async function exercise(width, height, screenshotName) {
   const at = `${width}x${height}`;
 
   await cdp.send('Page.navigate', { url: `http://localhost:${server.port}/?shot=customize` }, sessionId);
-  await until(`document.querySelectorAll('.cz-tab').length===5 && !!document.querySelector('#cz-classes .cz-class')`, 'the creation workspace', 60000);
+  await until(`document.querySelectorAll('.cz-tab').length===7 && !!document.querySelector('#cz-classes .cz-class')`, 'the creation workspace', 60000);
   await wait(250);
 
   const rail = await evaluate(`[...document.querySelectorAll('.cz-tab')].map(e=>e.id)`);
-  assert(JSON.stringify(rail) === JSON.stringify(['cz-tab-class', 'cz-tab-character', 'cz-tab-keepsake', 'cz-tab-equipment', 'cz-tab-review']),
-    `${at}: the rail lists Class, Primary Attributes, Keepsake, Equipment and Review (${JSON.stringify(rail)})`);
+  assert(JSON.stringify(rail) === JSON.stringify(['cz-tab-class', 'cz-tab-attributes', 'cz-tab-keepsake', 'cz-tab-equipment', 'cz-tab-feats', 'cz-tab-spells', 'cz-tab-review']),
+    `${at}: the authored rail lists Class, Attributes, Keepsake, Equipment, Feats, Spells and Review (${JSON.stringify(rail)})`);
   const offered = await evaluate(`[...document.querySelectorAll('#cz-classes .cz-class')].map(e=>e.dataset.class)`);
   assert(CLASSES.every((id) => offered.includes(id)), `${at}: every class is offered (${JSON.stringify(offered)})`);
 
   for (const classId of CLASSES) {
     // Back, not the rail: a phone folds the rail into a category selector,
-    // and the footer's Back steps from Character to Class at every width.
+    // and the footer's Back steps from Attributes to Class at every width.
     if (!(await evaluate(`!!document.querySelector('#cz-classes .cz-class')`))) await click('#cz-back');
     await until(`!!document.querySelector('#cz-classes .cz-class[data-class="${classId}"]')`, `${classId} on the Class stage`);
     await click(`#cz-classes .cz-class[data-class="${classId}"]`);
+    const visibleRail = await evaluate(`[...document.querySelectorAll('.cz-tab')].filter(e=>!e.hidden).map(e=>e.id)`);
+    const expectedRail = rail.filter(id => id !== 'cz-tab-spells' || creationHasSpells(registries, classId));
+    assert(JSON.stringify(visibleRail) === JSON.stringify(expectedRail),
+      `${at} ${classId}: Spells appears only for a class with a spell tag or magic focus (${JSON.stringify(visibleRail)})`);
     await click('#cz-next');
-    await until(`!!document.querySelector('#cz-statedit .cc-mode-select')`, `${classId}: the Character stage`);
+    await until(`!!document.querySelector('#cz-statedit .cc-mode-select')`, `${classId}: the Attributes stage`);
     await openPrimary();
 
     const options = await evaluate(`[...document.querySelectorAll('#cz-statedit .cc-mode-select option')].filter(o=>o.value).map(o=>o.value+':'+o.textContent.trim())`);
