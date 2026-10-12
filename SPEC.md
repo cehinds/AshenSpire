@@ -1401,7 +1401,7 @@ It remains history, not a second implementable mode.
 
 ### 5.6 Events — Unknown nodes (M2: 4 minimum, M3: 10)
 
-Unknown nodes roll on stream `events`: 55% event, 25% normal fight, 12% shrine, 8% treasure (M2 tuning, in `content/mapconfig.js` as `mapConfigs[act].unknownWeights`). Every event is a real trade-off, StS-style. M2 launch set:
+Unknown nodes roll on stream `events`: 55% event, 25% normal fight, 12% shrine, 8% treasure (M2 tuning, in `src/content/mapconfig.js` as `mapConfigs[act].unknownWeights`). Every event is a real trade-off, StS-style. M2 launch set:
 
 1. **Goldbough Avatar** — *Offer a card* (remove 1 card from deck, take 6 damage) / *Pray* (heal 20% max HP, gain 1 Guilt curse) / *Leave*.
 2. **Abandoned Merchant Cart** — *Loot* (gain 75 cinders, 50% chance: fight a Wandering Soldier ambush) / *Leave*.
