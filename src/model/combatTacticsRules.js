@@ -113,6 +113,20 @@ export function expansionCounterProblems(counter, path = 'combatCounter') {
   }
   if (counter.schoolEffect !== undefined && !['hp', 'poise', 'ward'].includes(counter.schoolEffect)) problems.push(`${path}.schoolEffect must name one return effect`);
   if (!record(counter.carrier) || !record(counter.carrier.combatProfile)) problems.push(`${path}.carrier must preserve its combat profile`);
+  else if (counter.carrier.traitValues !== undefined) problems.push(...traitValuesProblems(counter.carrier.traitValues, `${path}.carrier.traitValues`));
+  return problems;
+}
+
+// Card trait values a saved carrier may hold (combat-card-traits-contract); magnitudes stay small.
+const TRAIT_MAGNITUDE_MAX = 99;
+export function traitValuesProblems(values, path) {
+  if (!record(values)) return [`${path} must be an object`];
+  const problems = [];
+  for (const [key, value] of Object.entries(values)) {
+    if (['reaction', 'counterstrike'].includes(key)) { if (value !== true) problems.push(`${path}.${key} must be true when present`); }
+    else if (['impact', 'flux'].includes(key)) { if (!whole(value) || value > TRAIT_MAGNITUDE_MAX) problems.push(`${path}.${key} must be a whole number from 0 to ${TRAIT_MAGNITUDE_MAX}`); }
+    else problems.push(`${path}.${key} is unknown`);
+  }
   return problems;
 }
 
