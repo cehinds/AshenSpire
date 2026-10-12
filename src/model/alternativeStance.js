@@ -29,7 +29,8 @@ export function stanceForCard(card = {}) {
   if (tags.has('source:spell') || card.abilityKind === 'spell' || card.type === 'spell') return 'casting';
   if (tags.has('guard') || tags.has('block')) return 'defensive';
   if (card.type === 'attack') return 'offensive';
-  return null;
+  // Prepare: spells and any card with no attack/smash/sweep/defend/counter maneuver.
+  return 'casting';
 }
 
 /** Accept ONLY previewIntent()/coopEnemyIntent() output, never an enemy or private move. */

@@ -21,7 +21,7 @@ test('resolved card tags own identity; damage colour and equipped weapons cannot
   assert.equal(stanceForCard({type:'attack',cardTags:[{id:'camp:spell'},{id:'maneuver:ranged'}]}),'casting');
   assert.equal(stanceForCard({id:'attack',type:'attack',cardTags:['camp:spell','maneuver:ranged'],damageSchool:'fire'}),'casting');
   assert.equal(stanceForCard({type:'attack',cardTags:['camp:physical','maneuver:smash'],damageSchool:'frost',weaponId:'staff'}),'offensive');
-  assert.equal(stanceForCard({type:'skill',cardTags:[],tags:['camp:spell']}),null);
+  assert.equal(stanceForCard({type:'skill',cardTags:[],tags:['camp:spell']}),'casting');
 });
 test('only confirmed plays replace the latest stance; new turn clears the same actor',()=>{
   const ledger=createStanceLedger();
@@ -45,9 +45,9 @@ test('co-op seats are independent and a new combat clears both',()=>{
   assert.equal(ledger.get('a'),null);assert.equal(ledger.get('b'),'offensive');
   ledger.accept({type:'combatStarted'});assert.deepEqual(ledger.snapshot(),{});
 });
-test('an unclassified latest card clears a previous defensive stance',()=>{
+test('an untyped latest card is prepare (casting) and replaces a previous defensive stance',()=>{
   const ledger=createStanceLedger();ledger.accept({type:'cardPlayed'},card('defend'));
-  ledger.accept({type:'cardPlayed'},{type:'skill',cardTags:[]});assert.equal(ledger.get(),null);
+  ledger.accept({type:'cardPlayed'},{type:'skill',cardTags:[]});assert.equal(ledger.get(),'casting');
 });
 test('hidden and revealed public committed projections choose the same broad family',()=>{
   for(const maneuver of ['attack','smash','sweep','ranged','counter','defend']){
