@@ -53,3 +53,5 @@ The earlier horizontal Sweep and jump/vault Smash studies are preserved as histo
 [Motion reference history and latest direction](../../../../docs/design/update-stances/smash-sweep-motion-references.md) · [Approved runtime PR #1897 proof](../../../../docs/design/update-stances/runtime-qa/README.md).
 
 Regenerate our labeled portable outputs with `python pose-studio/stances/update-stances/smash-sweep-examples/render-options.py` (Pillow required). The renderer adds labels only; it preserves source artwork and camera registration.
+
+[Desktop viewer capture](renders/gallery-desktop.png) · [390 px phone viewer capture](renders/gallery-phone.png). These show the final revised sources and numbered motion labels; gameplay validation is a separate gate.

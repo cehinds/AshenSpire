@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1910",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Smash now jumps into the selected twisting ground slam",
+    "detail": "Default-armour Reaver with a sole greatsword now takes off, loads the blade in the air and lands the selected SM03 ground impact before returning to Smash. Attack keeps its separate six phases. Twenty revised five-slot examples offer low iai-inspired whirlwind Sweeps and heavy jumping ground-slam Smashes in a labeled review player and portable animations; Sweep remains unselected, and other loadouts and co-op keep their existing presentation.",
+    "build": "0.7.1.1427",
+    "pullRequest": 1910,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1910"
+  },
+  {
     "id": "pr-1900",
     "date": "2026-10-12",
     "group": "2026-10-12",
