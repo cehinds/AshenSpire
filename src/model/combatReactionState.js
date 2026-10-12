@@ -31,6 +31,20 @@ export function combatReactionProblems(state, { ownerIds = new Set(['player']), 
       && typeof seat.reactionHandCleanup.locked === 'boolean') : record(state.reactionHandCleanup);
     if (!cleanup) problems.push('Enemy reaction requires its pending hand cleanup');
   }
+  const stack = state.reactionStack;
+  if (stack !== undefined) {
+    const stacked = seatId => stack.entries.filter(entry => entry.ownerId === seatId).length;
+    if (state.reactionRulesVersion !== 2) problems.push('Reaction stack requires reaction rules version 2');
+    else if (!record(stack) || !text(stack.groupKey) || typeof stack.resolving !== 'boolean' || !Array.isArray(stack.entries)
+      || !stack.entries.length || stack.entries.some(entry => !record(entry) || !['player', 'enemy'].includes(entry.side)
+        || !ownerIds.has(entry.ownerId) || !text(entry.cardId) || !record(entry.play) || !text(entry.play.cardInstanceId)
+        || (entry.maneuver !== null && entry.maneuver !== undefined && typeof entry.maneuver !== 'string'))
+      || !incoming.some(action => action.meta?.expansionGroup?.key === stack.groupKey)) problems.push('Invalid reaction stack');
+    else if (state.pendingReaction !== undefined && (!record(state.pendingReaction) || state.pendingReaction.groupKey !== stack.groupKey
+      || state.pendingReaction.id !== `${stack.groupKey}:${state.pendingReaction.ownerId}:${stacked(state.pendingReaction.ownerId)}`)) {
+      problems.push('Reaction choice does not match its stack depth');
+    }
+  }
   const pending = state.pendingReaction;
   if (pending !== undefined) {
     if (!record(pending) || !text(pending.id) || !text(pending.groupKey) || !ownerIds.has(pending.ownerId)
