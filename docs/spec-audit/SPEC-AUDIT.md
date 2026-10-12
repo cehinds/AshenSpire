@@ -23,7 +23,6 @@ SPEC.md was corrected in this PR, one section range per commit wave, following t
 - §12.5: the resting-stance animation rules need a browser check.
 - §13.4p: new runs stamp `breakMeterVersion` 2, so the one-break-meter rule is not live.
 - §13.4r: cards still pay `upcastSurcharge` (`src/engine/combat.js:1213`).
-- Scope table L29: "195 cards (40 per class)" against a 36-card pool; card totals were not counted.
 - §3.4 L242: `addRunes` is `addCinders` in code (left per the preamble's vocabulary rule).
 - §3.6 L391-392: are `staggerBreak` and `resonance` live, and does §13.4k gate them?
 
