@@ -104,6 +104,11 @@ test('--check --pr: this repository\'s CHANGELOG decides the pull request head',
   if (sameRelease) {
     assert.equal(behind.status, 0, behind.stdout + behind.stderr);
     assert.match(behind.stdout, new RegExp(`NOTE  #${offBox}'s receipt is stamped`));
+    // The closing line must be one verdict.mjs recognises (it rejects a trailing "(1 note)" as SILENCE).
+    const door = spawnSync(process.execPath, [join(ROOT, 'tools', 'verdict.mjs'), '--', process.execPath, TOOL, '--check', '--pr', offBox], {
+      cwd: ROOT, encoding: 'utf8', env: { ...process.env, GITHUB_EVENT_PATH: '', GITHUB_REF: '' },
+    });
+    assert.equal(door.status, 0, door.stdout + door.stderr);
   } else {
     assert.equal(behind.status, 1, behind.stdout + behind.stderr);
   }
