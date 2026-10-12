@@ -22,7 +22,16 @@ test('openRestRecord creates a record for the current place', () => {
   const run = classicRun();
   const record = openRestRecord(run);
   assert.equal(run.restRevisit, record);
-  assert.deepEqual(record, { act: run.actNumber, nodeId: 'n1', rested: false, spent: false, left: false, refilled: false });
+  assert.deepEqual(record, { act: run.actNumber, nodeId: 'n1', rested: false, spent: false, left: false, refilled: false, multiUse: false });
+});
+
+test('a record keeps the multi-use setting it was opened with', () => {
+  const run = classicRun();
+  const record = openRestRecord(run, { multiUse: false });
+  assert.equal(record.multiUse, false);
+  const again = openRestRecord(run, { multiUse: true });
+  assert.equal(again, record);
+  assert.equal(again.multiUse, false);
 });
 
 test('restRevisitNodeId is the rest site while its record exists', () => {

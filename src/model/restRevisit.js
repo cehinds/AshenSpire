@@ -13,7 +13,8 @@
 // and is replaced. `rested` is set by a Rest, `spent` by any consumed choice
 // (rest, smith, extract, install), `left` once the player has walked out of
 // the visit. `refilled` marks that the arrival refill has already run, so a
-// re-entry does not refill again.
+// re-entry does not refill again. `multiUse` is the Multi-use setting as the
+// visit opened, frozen per visit.
 //
 // SCOPE. Classic map only (`run.mapGraph`). The atlas (`run.journey`) and the
 // legacy dungeon (`run.legacyDungeon`) keep their own rest state, so every
@@ -26,9 +27,11 @@ function matchesPlace(run, record) {
 }
 
 // The record for the place the run stands on, created when none matches it.
-export function openRestRecord(run) {
+// `multiUse` is frozen on the record at creation (the setting as it stood on
+// arrival), so changing the setting mid-visit does not reshape a visit in progress.
+export function openRestRecord(run, { multiUse = false } = {}) {
   if (matchesPlace(run, run.restRevisit)) return run.restRevisit;
-  run.restRevisit = { act: run.actNumber, nodeId: run.mapNodeId, rested: false, spent: false, left: false, refilled: false };
+  run.restRevisit = { act: run.actNumber, nodeId: run.mapNodeId, rested: false, spent: false, left: false, refilled: false, multiUse: !!multiUse };
   return run.restRevisit;
 }
 
