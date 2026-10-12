@@ -18,7 +18,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-12",
     "summary": "The approved Reaver greatsword sequences now play in solo combat",
     "detail": "Attack and Smash use the six selected phases; Guard, Parry and Resisted share the weighted impact order, while Guard-tag and Evasion-tag counters follow their separate approved routes. Actual combat receipts choose reactions and retaliation, and actions restore the originating stance. Other loadouts and co-op retain their existing presentation. Labeled review animations and thirty additional stance concepts remain available separately.",
-    "build": "0.7.1.1423",
+    "build": "0.7.1.1425",
     "pullRequest": 1897,
     "url": "https://github.com/cehinds/AshenSpire/pull/1897"
   },
