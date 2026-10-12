@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState, serializeRun, deserializeRun, validateRunShape } from '../src/model/state.js';
-import { startingAbilityPlan, startingAbilityProblem } from '../src/model/startingAbilities.js';
+import { startingAbilityPlan, startingAbilityProblem, startingAbilityRef, startingAbilityRefs } from '../src/model/startingAbilities.js';
 import { stampDeck } from '../src/model/loadout.js';
 import { resolveCard } from '../src/model/registries.js';
 
@@ -120,6 +120,21 @@ test('a chosen element spell lands in the starting deck as a plain card and surv
     const restored = deserializeRun(serializeRun(run));
     assert.ok(restored.deck.some(inst => inst.cardId === 'mindSpike' && !inst.abilityRank));
     assert.deepEqual(validateRunShape(restored), []);
+  }
+});
+
+test('the summary and the save share one ref rule: element spells carry no ability rank', () => {
+  for (const classId of ['herald', 'starseer']) {
+    const base = birth(classId, { combatExpansionVersion: 2 });
+    const plan = startingAbilityPlan(registries, base);
+    const spell = plan.choices.find(card => !plan.elementIds.includes(card.id)).id;
+    const element = plan.elementIds[0];
+    // Picker and summary both key the grade off plan.elementIds via startingAbilityRef.
+    assert.deepEqual(startingAbilityRef(plan, element), { cardId: element });
+    assert.deepEqual(startingAbilityRef(plan, spell), { cardId: spell, abilityRank: plan.rank });
+    assert.deepEqual(startingAbilityRefs(registries, base, [spell, element]), [
+      { cardId: spell, abilityRank: plan.rank }, { cardId: element },
+    ]);
   }
 });
 
