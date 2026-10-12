@@ -97,7 +97,7 @@ import { resourceBars } from '../components/resbars.js';
 import { meterRowSelectedOnly } from '../models/CombatantMeterModel.js';
 import { characterLevel } from '../../model/levelup.js';
 import { combatHealthRow } from '../components/combatHealth.js';
-import { blockPresentation } from '../../model/blockPresentation.js';
+import { protectionPresentation } from '../../model/blockPresentation.js';
 import { renderArcaneExposure } from '../components/arcaneExposure.js';
 import { mountMapBoard } from '../components/mapboard.js';
 import { combatBackdropHtml } from '../components/environmentArt.js';
@@ -1008,7 +1008,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     const hp = bars.querySelector('.as-meter[data-res="hp"]');
     if (hp) {
       const next = hp.nextSibling;
-      const health = combatHealthRow(hp, blockPresentation(ent));
+      const health = combatHealthRow(hp, protectionPresentation(ent));
       bars.insertBefore(health, next);
     }
     wrap.classList.add('as-meters', 'tight');

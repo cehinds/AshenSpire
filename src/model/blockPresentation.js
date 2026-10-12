@@ -13,3 +13,11 @@ export function reconcileWardBlock(entity) {
 export function wardBlockReceipt(entity) {
   return entity.wardBlock === undefined ? {} : { wardBlockRemaining: blockPresentation(entity).ward };
 }
+
+// The health row's badges: Block, and every Ward the combatant holds — the
+// magical share of Block plus the persistent Ward pool (expanded combat).
+export function protectionPresentation(entity) {
+  const { defense, ward } = blockPresentation(entity);
+  const pool = Number.isFinite(entity?.persistentWard?.value) ? Math.max(0, Math.floor(entity.persistentWard.value)) : 0;
+  return { defense, ward: ward + pool };
+}
