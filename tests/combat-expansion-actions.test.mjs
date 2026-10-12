@@ -5,7 +5,8 @@ import { createRegistries } from '../src/model/registries.js';
 import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { enqueueExpandedAction } from '../src/engine/combatExpansionActions.js';
-import { executeAction } from '../src/engine/actions.js';
+import { executeAction, applyAttackDamage } from '../src/engine/actions.js';
+import { schoolResistanceMultiplier, persistentWardMaximum } from '../src/model/combatRatings.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 
 const drainQueue = combat => { while (combat.queue.length) executeAction(combat, combat.queue.shift()); };
@@ -25,7 +26,7 @@ function fixture(effects = [{ op: 'damage', target: 'enemy', amount: 5, hits: 2 
   return { combat, enemy, registries };
 }
 
-test('whole Spell action applies persistent Ward once across hits and preview matches the committed budget', () => {
+test('whole Spell action applies persistent Ward once across hits, spends it, and preview matches the committed budget', () => {
   const { combat, enemy } = fixture();
   const counters = combat.rng.getCounters();
   const preview = previewCard(combat, 'paired', enemy.id);
@@ -36,7 +37,7 @@ test('whole Spell action applies persistent Ward once across hits and preview ma
   const damage = out.events.filter(event => event.type === 'damageDealt' && event.targetId === enemy.id);
   assert.equal(before - enemy.hp, value);
   assert.equal(damage.reduce((sum, event) => sum + event.wardResisted, 0), 3);
-  assert.equal(enemy.persistentWard.value, 3, 'direct damage reduces damage without spending persistent Ward');
+  assert.equal(enemy.persistentWard.value, 0, 'Ward is spent by the damage it absorbs');
 });
 
 test('paused action receipts are interned after JSON restore and finish without repeating a charge or roll', () => {
@@ -92,13 +93,42 @@ test('expanded critical hits multiply once and still announce the original multi
 });
 
 
-test('un-aimed card faces show offense while target inspection preserves Ward mitigation', () => {
+test('un-aimed card faces show offense while target inspection shows Ward mitigation down to 1', () => {
   const { combat, enemy } = fixture([{ op: 'damage', target: 'enemy', amount: 5 }]);
   enemy.persistentWard.value = enemy.persistentWard.max = 20;
   const unAimed = previewCard(combat, 'paired');
   const aimed = previewCard(combat, 'paired', enemy.id);
   const row = unAimed.values.find(value => value.op === 'damage');
   assert.equal(unAimed.tokens[row.token], 5);
-  assert.equal(row.perTarget[enemy.id], 0);
-  assert.equal(aimed.tokens[row.token], 0);
+  assert.equal(row.perTarget[enemy.id], 1, 'Ward always lets at least 1 damage through');
+  assert.equal(aimed.tokens[row.token], 1);
+});
+
+test('Ward reduces a physical hit, Block soaks the rest, then Health', () => {
+  const { combat, enemy } = fixture([{ op: 'damage', target: 'enemy', amount: 10 }]);
+  enemy.persistentWard.value = enemy.persistentWard.max = 4;
+  enemy.ratings.poise = 0; enemy.block = 3;
+  const carrier = { cardId: 'strike', damageSchool: 'physical', tags: ['camp:physical', 'maneuver:attack'],
+    combatProfile: { camp: 'physical', maneuver: 'attack', school: 'physical', damageType: 'slashing', reach: 'contact', targeting: 'single' } };
+  const before = enemy.hp;
+  const amount = applyAttackDamage(combat, combat.player, enemy, 10, [], carrier);
+  assert.equal(amount, 6, 'Ward absorbs 4 of 10');
+  assert.equal(enemy.persistentWard.value, 0);
+  assert.equal(enemy.block, 0, 'Block soaks 3');
+  assert.equal(before - enemy.hp, 3);
+});
+
+test('a resistant creature takes floor(0.75 × damage) by default, configurable down to 0.5', () => {
+  const { combat, enemy } = fixture([{ op: 'damage', target: 'enemy', amount: 10 }]);
+  enemy.persistentWard.value = enemy.persistentWard.max = 0;
+  enemy.damageResistanceBySchool = { magic: 10 };
+  assert.equal(schoolResistanceMultiplier(combat, enemy, 'magic'), 0.75);
+  assert.equal(schoolResistanceMultiplier(combat, enemy, 'fire'), 1);
+  assert.equal(schoolResistanceMultiplier({ ratingsRules: { resistance: { schoolTaken: 0.5 } } }, enemy, 'magic'), 0.5);
+  assert.equal(schoolResistanceMultiplier({ ratingsRules: { resistance: { schoolTaken: 0.01 } } }, enemy, 'magic'), 0.1, 'never past 90% resistance');
+});
+
+test('a combatant starts with half its Ward rating as its Ward pool', () => {
+  assert.equal(persistentWardMaximum({}, { ratings: { ward: 25 } }), 12);
+  assert.equal(persistentWardMaximum({ ratingsRules: { resistance: { wardPool: 1 } } }, { ratings: { ward: 25 } }), 25);
 });

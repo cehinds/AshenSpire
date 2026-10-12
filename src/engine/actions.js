@@ -39,7 +39,7 @@ import { passiveMult } from '../model/registries.js';
 import { commitSmithing, smithingPlan } from '../model/smithing.js';
 import * as Properties from './properties.js';
 import * as Ratings from './combatRatings.js';
-import { isMagicalAttack, ratingDamageMultiplier, attackImpact } from '../model/combatRatings.js';
+import { isMagicalAttack, ratingDamageMultiplier, attackImpact, schoolResistanceMultiplier } from '../model/combatRatings.js';
 import { swapRunClass } from '../model/classSwap.js';
 import { applyGraceRefill } from './encounters.js';
 import { orderedReturn } from '../model/deckRules.js';
@@ -98,8 +98,7 @@ export function computeAttackDamage(ctx, source, target, base, attackTags, carri
     if (addPool > 0) dmg *= 1 + addPool;
   }
   if (target && school) {
-    const resistance = target.damageResistanceBySchool && target.damageResistanceBySchool[school];
-    if (!beforeDefense && Number.isFinite(resistance)) dmg *= Math.max(0, 1 - resistance / 100);
+    if (!beforeDefense) dmg *= schoolResistanceMultiplier(ctx, target, school);
     for (const [id, inst] of Object.entries(target.statuses || {})) {
       if (!inst || (inst.meter ? inst.meter.value : inst.stacks) <= 0) continue;
       const def = ctx.registries.statuses.get(id);
@@ -279,20 +278,24 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
         resistances: groupedResistance(rules, defense.resistanceSources || [], defense.resistances || {}),
         immunities: defense.immunities || [], multiplier: 1, flatBonus: 0 }).reduce((sum, part) => sum + part.amount, 0);
     } else {
-      const resistance = target.damageResistanceBySchool?.[carrier?.damageSchool];
       amount = Math.max(0, Math.floor(total * (camp === 'spell' ? 1 : ratingDamageMultiplier(ctx, target, false))
-        * (Number.isFinite(resistance) ? Math.max(0, 1 - resistance / 100) : 1)));
+        * schoolResistanceMultiplier(ctx, target, carrier?.damageSchool)));
     }
     amount = Math.max(0, Math.ceil(amount * (1 + Math.max(0, target.damageWeaknessPercent?.[type] || 0) / 100))
       - Math.max(0, target.damageResistanceFlat?.[type] || 0));
     const shares = total > 0 ? allocateInteger(amount, indices[key].map(index => receipt.amounts[index])) : indices[key].map(() => 0);
     indices[key].forEach((index, i) => { receipt.defendedAmounts[index] = shares[i]; });
   }
-  const magical = receipt.profiles.map((profile, index) => profile.camp === 'spell' ? index : -1).filter(index => index >= 0);
-  const total = magical.reduce((sum, index) => sum + receipt.defendedAmounts[index], 0);
-  const ward = Math.min(total, target.persistentWard?.value || 0);
-  const shares = total > 0 ? allocateInteger(total - ward, magical.map(index => receipt.defendedAmounts[index])) : magical.map(() => 0);
-  magical.forEach((index, i) => { receipt.defendedAmounts[index] = shares[i] || 0; });
+  // Ward meets every hit first (Spell and physical alike), once per action:
+  // it absorbs what it can but always lets at least 1 through, and is spent by
+  // the whole hit it meets, so it wears away instead of resisting forever.
+  // What passes then meets Block (physical) or Barrier (Spell), then Health.
+  const total = receipt.defendedAmounts.reduce((sum, amount) => sum + amount, 0);
+  const pool = Math.max(0, target.persistentWard?.value || 0);
+  const passing = total > 0 && pool > 0 ? Math.max(1, total - pool) : total;
+  const defended = [...receipt.defendedAmounts];
+  receipt.defendedAmounts = total > 0 ? allocateInteger(passing, defended) : defended.map(() => 0);
+  receipt.wardSpentAmounts = total > 0 ? allocateInteger(Math.min(pool, total), defended) : defended.map(() => 0);
   receipt.resistedAmounts = receipt.amounts.map((amount, index) => Math.max(0, amount - receipt.defendedAmounts[index]));
   receipt.guardBypassRemaining = receipt.guardBypass || 0;
 }
@@ -319,6 +322,8 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
   target[pool] = Math.max(0, (target[pool] || 0) - blocked);
   const hpLoss = amount - blocked;
   if (hpLoss) target.hp -= hpLoss;
+  const wardSpent = tactical.wardSpentAmounts?.[contactIndex] || 0;
+  if (wardSpent > 0) Control.spendPersistentWard(ctx, target, wardSpent, { cause: 'damage' });
   creditKnowledgeImpact(ctx, target, amount, tactical.knowledgeBonus > 0);
   Matchups.recordTacticalContact(tactical, { hpLoss, blocked, wardResisted: ward });
   ctx.emit('damageDealt', { sourceId: source?.id, targetId: target.id, amount, blocked, wardResisted: ward,

@@ -15,7 +15,11 @@ export const combatRatingDefaults = {
   // Advanced → Stats with every other stat, and `ratings` is filled with the
   // rows a run reads (model/statRows.js ratingsConfigFor). Equipment, relic
   // and status bonuses are added afterward by their owning receipts.
-  resistance: { physicalK: 100, magicalK: 100, statusK: 100, maximum: 0.8 },
+  // schoolTaken: the share of a hit a creature with an authored school
+  // resistance still takes (0.75 → floor(0.75 × damage); 0.1 is the floor, a
+  // 90% cap). wardPool: the share of the Ward rating that becomes the Ward pool
+  // a combatant starts each fight with.
+  resistance: { physicalK: 100, magicalK: 100, statusK: 100, maximum: 0.8, schoolTaken: 0.75, wardPool: 0.5 },
   impact: { magic: 1, light: 1, medium: 2, heavy: 3, colossal: 4,
     lightMaxWeight: 3, mediumMaxWeight: 6, heavyMaxWeight: 8, unarmed: 1, enemyPhysical: 2 },
   breaks: { poiseActionLoss: 1, wardActionLoss: 1, thresholdGrowth: 1.25, recoveryPerTurn: 0 },
@@ -266,10 +270,12 @@ export function combatRatingRows(bundle) {
   // — Advanced → Stats → AR, DR, PR, Poise, Ward — in ruleset 7. Their old
   // keys convert on import: model/statRows.js migrateLegacyStatSettings.)
   for (const group of ['resistance', 'impact', 'breaks']) {
-    for (const [field, value] of Object.entries(combatRatingDefaults[group])) add(`${group}.${field}`, value, ({ physicalK: 'Poise resistance curve', magicalK: 'Ward resistance curve', statusK: 'Status resistance curve', maximum: 'Resistance cap', magic: 'Magic impact', lightMaxWeight: 'Light weapon weight limit', mediumMaxWeight: 'Medium weapon weight limit', heavyMaxWeight: 'Heavy weapon weight limit', thresholdGrowth: 'Break threshold multiplier' })[field] || phrase(field), words(group), {
-      min: field.endsWith('K') ? 0.01 : field === 'thresholdGrowth' ? 1 : 0,
-      max: field === 'maximum' ? 0.95 : 999,
-      note: field.endsWith('K') ? 'Rating needed for 50% resistance before the cap. A higher value makes resistance weaker.' : field === 'maximum' ? 'Maximum damage or status reduction: 0.8 means 80%.' : field === 'thresholdGrowth' ? 'After a break, multiply the threshold by this amount. 1.25 means 25% higher; 1 disables growth.' : group === 'impact' ? 'Physical hits pressure Poise; magical hits pressure Ward. Only hits that pass Block cause impact.' : 'Applies to new runs.',
+    for (const [field, value] of Object.entries(combatRatingDefaults[group])) add(`${group}.${field}`, value, ({ physicalK: 'Poise resistance curve', magicalK: 'Ward resistance curve', statusK: 'Status resistance curve', maximum: 'Resistance cap', magic: 'Magic impact', lightMaxWeight: 'Light weapon weight limit', mediumMaxWeight: 'Medium weapon weight limit', heavyMaxWeight: 'Heavy weapon weight limit', thresholdGrowth: 'Break threshold multiplier', schoolTaken: 'Resisted school damage taken', wardPool: 'Ward pool share' })[field] || phrase(field), words(group), {
+      min: field.endsWith('K') ? 0.01 : field === 'thresholdGrowth' ? 1 : field === 'schoolTaken' ? 0.1 : 0,
+      max: field === 'maximum' ? 0.95 : field === 'schoolTaken' || field === 'wardPool' ? 1 : 999,
+      note: field === 'schoolTaken' ? 'A creature resistant to a damage school takes this share of the hit, rounded down: 0.75 takes 75%, 0.5 takes half. Never below 0.1 (90% resistance).'
+        : field === 'wardPool' ? 'Each combatant starts a fight with this share of its Ward rating as its Ward pool: 0.5 means half. Ward absorbs hits (always letting at least 1 through) and is spent by what it absorbs.'
+        : field.endsWith('K') ? 'Rating needed for 50% resistance before the cap. A higher value makes resistance weaker.' : field === 'maximum' ? 'Maximum damage or status reduction: 0.8 means 80%.' : field === 'thresholdGrowth' ? 'After a break, multiply the threshold by this amount. 1.25 means 25% higher; 1 disables growth.' : group === 'impact' ? 'Physical hits pressure Poise; magical hits pressure Ward. Only hits that pass Block cause impact.' : 'Applies to new runs.',
       integer: group === 'impact' || field.endsWith('ActionLoss') || field === 'recoveryPerTurn',
       step: group === 'impact' || field.endsWith('ActionLoss') || field === 'recoveryPerTurn' ? 1 : 0.01,
     });
@@ -433,6 +439,9 @@ export function combatRatingProblems(config) {
     if (!r || !Number.isFinite(r.base) || r.base < 0 || attributes.some(k => r[k] !== undefined && (!Number.isFinite(r[k]) || r[k] < 0))) problems.push(`Invalid ${id} formula`);
   }
   if (!config.resistance || ['physicalK', 'magicalK', 'statusK'].some(k => !(config.resistance[k] > 0)) || !(config.resistance.maximum >= 0 && config.resistance.maximum < 1)) problems.push('Invalid resistance curve');
+  // Absent on fights saved before these rows existed; they read the defaults.
+  if (config.resistance?.schoolTaken !== undefined && !(config.resistance.schoolTaken >= 0.1 && config.resistance.schoolTaken <= 1)) problems.push('Invalid resisted school damage share');
+  if (config.resistance?.wardPool !== undefined && !(config.resistance.wardPool >= 0 && config.resistance.wardPool <= 1)) problems.push('Invalid Ward pool share');
   const impact = config.impact;
   if (!impact || !(impact.lightMaxWeight <= impact.mediumMaxWeight && impact.mediumMaxWeight <= impact.heavyMaxWeight)) problems.push('Weapon weight thresholds must be ordered');
   if (!impact || Object.values(impact).some(n => !Number.isInteger(n) || n < 0 || n > 999)) problems.push('Invalid impact values');
@@ -549,6 +558,24 @@ export function ratingDamageMultiplier(ctx, target, magical) {
   const r = ctx.ratingsRules.resistance;
   const rating = ratingValue(ctx, target, magical ? 'ward' : 'poise');
   return 1 - Math.min(r.maximum, rating / (rating + (magical ? r.magicalK : r.physicalK)));
+}
+
+/**
+ * schoolResistanceMultiplier(ctx, target, school) → the share of a hit a
+ * creature with an authored resistance to this school takes. Any positive
+ * resistance means the configured share (default 0.75), never below 0.1.
+ */
+export function schoolResistanceMultiplier(ctx, target, school) {
+  const resistance = school ? target?.damageResistanceBySchool?.[school] : undefined;
+  if (!(Number.isFinite(resistance) && resistance > 0)) return 1;
+  const taken = ctx?.ratingsRules?.resistance?.schoolTaken;
+  return Math.min(1, Math.max(0.1, Number.isFinite(taken) ? taken : combatRatingDefaults.resistance.schoolTaken));
+}
+
+/** persistentWardMaximum(ctx, entity) → the Ward pool a combatant starts a fight with. */
+export function persistentWardMaximum(ctx, entity) {
+  const share = ctx?.ratingsRules?.resistance?.wardPool;
+  return Math.max(0, Math.floor((entity?.ratings?.ward || 0) * (Number.isFinite(share) ? share : combatRatingDefaults.resistance.wardPool)));
 }
 
 export function attackImpact(ctx, source, carrier) {
