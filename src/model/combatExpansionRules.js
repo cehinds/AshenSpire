@@ -16,17 +16,29 @@ export function combatExpansionRulesProblems(value, path = 'combatExpansionRules
   const problems = [];
   for (const key of Object.keys(value)) if (!['matchups', 'statuses', 'ashenBlight', 'equipment'].includes(key)) problems.push(`${path}.${key} is unknown`);
   problems.push(...combatExpansionMatchupRulesProblems(value.matchups, `${path}.matchups`));
+  // A status row added after a run started is absent from its frozen snapshot;
+  // that run keeps its own rules (no backfill). Rows that are present still
+  // match the template, and unknown rows are still refused.
+  const sinceAddedRows = `${path}.statuses.statuses`;
   const check = (actual, template, at) => {
     if (record(template)) {
       if (!record(actual)) { problems.push(`${at} must be an object`); return; }
       for (const key of Object.keys(actual)) if (!(key in template)) problems.push(`${at}.${key} is unknown`);
-      for (const [key, expected] of Object.entries(template)) check(actual[key], expected, `${at}.${key}`);
+      for (const [key, expected] of Object.entries(template)) {
+        if (at === sinceAddedRows && !(key in actual)) continue;
+        check(actual[key], expected, `${at}.${key}`);
+      }
     } else if (typeof template === 'number') {
       if (!Number.isFinite(actual) || (template >= 0 && actual < 0)) problems.push(`${at} must be finite${template >= 0 ? ' and non-negative' : ''}`);
     } else if (typeof actual !== typeof template || (typeof template === 'string' && actual !== template)) problems.push(`${at} has invalid rule data`);
   };
   check(value.statuses, combatStatusRules, `${path}.statuses`);
   if (value.statuses?.version !== 2) problems.push(`${path}.statuses.version must be 2`);
+  // Every status a frozen damage rider applies must have its own row in the
+  // same snapshot; a rider naming an unknown status would have no buildup rule.
+  for (const [riderKey, rider] of Object.entries(value.matchups?.damageRiders || {})) {
+    if (typeof rider?.status === 'string' && !(rider.status in (value.statuses?.statuses || {}))) problems.push(`${path}.matchups.damageRiders.${riderKey}.status ${rider.status} has no status row in this snapshot`);
+  }
   for (const [id, row] of Object.entries(value.statuses?.statuses || {})) {
     if (!Number.isSafeInteger(row?.cap) || row.cap < 1 || !(row.initialThreshold > 0) || !(row.activeThreshold > 0)) problems.push(`${path}.statuses.statuses.${id} requires positive thresholds and a whole cap`);
   }
