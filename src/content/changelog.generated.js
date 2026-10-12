@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-12",
     "summary": "Switching combat views keeps your lane where the grid shows it",
     "detail": "When a fight changes from the perspective view to Classic, your saved lane now moves to the Classic square the screen displays. Moving again or reloading the fight no longer jumps you back to a hidden perspective-only lane.",
-    "build": "0.7.1.1389",
+    "build": "0.7.1.1395",
     "pullRequest": 1883,
     "url": "https://github.com/cehinds/AshenSpire/pull/1883"
+  },
+  {
+    "id": "pr-1875",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Widescreen combat uses the desktop layout",
+    "detail": "On widescreen monitors the combat screen now uses the same band sizes as desktop: a taller hand with the larger desktop cards in a row under the Combat log and the compact 450px footer. Turning a tablet into a desktop-width window now redraws the battlefield for the new layout. Phone and tablet layouts are unchanged.",
+    "build": "0.7.1.1393",
+    "pullRequest": 1875,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1875"
+  },
+  {
+    "id": "pr-1881",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Co-op is set aside for now",
+    "detail": "The title menu no longer offers Forsaken Together while co-op is reworked. Nothing else changes, and solo play is untouched.",
+    "build": "0.7.1.1389",
+    "pullRequest": 1881,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1881"
   },
   {
     "id": "pr-1870",
