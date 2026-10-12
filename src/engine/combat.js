@@ -143,6 +143,10 @@ export function createCombat({
   // SPEC §14.1 Play in deck order: read once by the caller (runCombat.js) and
   // carried on the fight as `orderedDraw`, so a saved fight keeps its rule.
   orderedDraw = false,
+  // SPEC §4.11 Combat Rounds Preview: the frozen rules (model/combatRounds.js).
+  // null — the preview is off — stamps nothing, so a normal fight and its save
+  // are unchanged. Nothing reads the rounds state yet (P3 wires the adapter).
+  combatRounds = null,
   combatExpansionVersion = 1, combatExpansionRules = null, combatKey = 'headless',
 }) {
   // Run creation owns derived Mana. Older headless fixtures without a Mana
@@ -186,6 +190,7 @@ export function createCombat({
     ...(breakMeterVersion === 2 ? { breakMeterVersion: 2 } : ratingsRules?.enabled && breakMeterVersion === 1 ? { breakMeterVersion: 1 } : {}),
     ...(handRules ? { handRules: structuredClone(handRules), pendingDiscardDraw: 0 } : {}),
     ...(recoveryRules ? { recovery: newRecoveryState(recoveryRules) } : {}),
+    ...(combatRounds ? { combatRounds: { rules: structuredClone(combatRounds), momentum: {}, poiseDouble: {}, charges: {} } } : {}),
     foundation: F.createFoundation(ruleset, combatProfiles, registries),
     ...(reactionRulesVersion === 1 && combatExpansionVersion === 2 ? { reactionRulesVersion: 1 } : {}),
     registries,
