@@ -710,7 +710,7 @@ basicCardProfile,,bowTechnique,fx:ranged
 basicCardProfile,,bowTechnique,fx:precision
 basicCardProfile,,staffTechnique,fx:ritual
 
-# Categorized attack identity. Weapon techniques inherit damage from their source.
+# Categorized attack identity. Weapon attack cards carry a fixed damage:* tag (below); the equipped weapon supplies the source otherwise.
 card,,strike,source:weapon
 card,,gorefireSlash,source:weapon
 card,,serratedBlade,source:weapon
@@ -766,6 +766,12 @@ card,,sap,damage:blunt
 card,,poiseBreaker,damage:blunt
 card,,sunderplate,damage:blunt
 card,,sunderingChop,damage:blunt
+card,,executioner,damage:slashing
+card,,stitchedArms,damage:slashing
+card,,ambush,damage:piercing
+card,,assassinate,damage:piercing
+card,,coupDeGrace,damage:piercing
+card,,riposte,damage:piercing
 card,,stomp,damage:blunt
 card,,stomp,delivery:melee
 card,,kickOff,damage:blunt

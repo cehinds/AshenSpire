@@ -4289,6 +4289,42 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
+    "objectId": "executioner",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stitchedArms",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ambush",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "assassinate",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "coupDeGrace",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "riposte",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "card",
+    "scope": "",
     "objectId": "stomp",
     "tagId": "damage:blunt"
   },
