@@ -283,3 +283,61 @@ test('with the preview off, a scripted fight event log is byte-identical to the 
   assert.equal(createHash('sha256').update(all).digest('hex'), 'df909d59130b26ab1523191b0e1386835bcf2ad7c944e32f8de5ffc6addb5d12');
   assert.equal(all.length, 289603);
 });
+
+// Review finding 1: a queued card that an earlier queued card removed from hand never resolves.
+// The hand is replaced with the cards a test names; instances are cloned from the opening hand.
+function handWith(c, cards) {
+  c.piles.hand = cards.map(([instanceId, cardId]) => ({ instanceId, cardId, upgraded: false }));
+  return c;
+}
+
+test('a queued card an earlier queued card discarded is skipped and refunded at commit; End Turn succeeds', () => {
+  // Pilfer draws 2 and discards 1 at random. Over these seeds it discards the queued Low Blow in some
+  // of them; in those the commit must skip Low Blow (refund its SP and MP) instead of throwing.
+  let skipped = 0;
+  for (let seed = 1; seed <= 40; seed++) {
+    const c = fixRoundRoll(fight({ classId: 'rogue', seed }), 0.999);
+    handWith(c, [['pf', 'pilfer'], ['lb', 'lowBlow']]);
+    const enemy = liveEnemy(c);
+    const pilfer = cardPlayCosts(c, 'pf');
+    const lowBlow = cardPlayCosts(c, 'lb');
+    const turn = c.turn;
+    dispatch(c, { type: 'playCard', cardInstanceId: 'pf' });
+    dispatch(c, { type: 'playCard', cardInstanceId: 'lb', targetId: enemy.id });
+    const { events } = dispatch(c, { type: 'endTurn' });
+    assert.equal(c.phase, 'player', `seed ${seed}: the next turn opens`);
+    assert.equal(c.turn, turn + 1, `seed ${seed}: one turn passed`);
+    assert.deepEqual(c.combatRounds.playerQueue, [], `seed ${seed}: the queue is empty after the commit`);
+    const skip = events.find((e) => e.type === 'combatRoundCardSkipped' && e.cardInstanceId === 'lb');
+    if (skip) {
+      skipped++;
+      assert.deepEqual(skip.refund, { energy: lowBlow.energy, mana: lowBlow.mana, stamina: lowBlow.stamina }, `seed ${seed}: the skipped card's SP and MP are refunded`);
+      assert.ok(!events.some((e) => e.type === 'damageDealt' && e.targetId === enemy.id && e.sourceId === c.player.id), `seed ${seed}: the skipped Low Blow deals nothing`);
+    }
+    void pilfer;
+  }
+  assert.ok(skipped > 0, 'fixture: some seed has Pilfer discard the queued Low Blow');
+});
+
+test('a commit that throws part way leaves the fight exactly as it was before End Turn (legacy fight)', () => {
+  const c = fixRoundRoll(fight({ expansion: 1 }), 0.999);
+  handWith(c, [['a1', 'strike'], ['a2', 'strike']]);
+  const enemy = liveEnemy(c);
+  dispatch(c, { type: 'playCard', cardInstanceId: 'a1', targetId: enemy.id });
+  dispatch(c, { type: 'playCard', cardInstanceId: 'a2', targetId: enemy.id });
+  // The second landed card throws after the first has dealt its damage.
+  // Both emit paths are wrapped: the live combat.emit, and the _emitEvent a transaction candidate uses.
+  let played = 0;
+  const failSecond = (type) => { if (type === 'cardPlayed' && ++played === 2) throw new Error('injected mid-commit'); };
+  const realEmit = c.emit;
+  c.emit = (type, payload) => { failSecond(type); return realEmit(type, payload); };
+  const realEventBus = c._emitEvent;
+  c._emitEvent = (ctx, type, payload) => { failSecond(type); return realEventBus(ctx, type, payload); };
+  const state = () => JSON.stringify({
+    enemies: c.enemies, player: c.player, piles: c.piles, phase: c.phase, turn: c.turn, result: c.result ?? null,
+    combatRounds: c.combatRounds, rng: c.rng.getCounters(), eventLog: c.eventLog.length,
+  });
+  const before = state();
+  assert.throws(() => dispatch(c, { type: 'endTurn' }), /injected mid-commit/);
+  assert.equal(state(), before, 'a throw restores the pre-commit combat state, queues and RNG included');
+});

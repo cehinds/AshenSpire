@@ -1547,15 +1547,20 @@ function queueRoundCard(combat, { cardInstanceId, targetId, choice, upcastTier, 
   });
 }
 
+// Pays a queued card's SP and MP back: the unqueue refund, and the refund of a card that never resolved.
+function refundQueuedCard(combat, rec) {
+  const p = combat.player;
+  p.energy += rec.paid.energy;
+  p.mana += rec.paid.mana;
+  if (rec.paid.stamina > 0) p.counters.staminaSpentThisTurn = Math.max(0, (p.counters.staminaSpentThisTurn || 0) - rec.paid.stamina);
+}
+
 // Takes a queued card back out of the round and refunds exactly what it paid.
 function unqueueRoundCard(combat, { cardInstanceId }) {
   if (combat.phase !== 'player') throw new Error('Cards can only be unqueued on the player turn');
   const rec = Rounds.unqueueCard(combat, cardInstanceId);
   if (!rec) throw new Error(`Card '${cardInstanceId}' is not queued`);
-  const p = combat.player;
-  p.energy += rec.paid.energy;
-  p.mana += rec.paid.mana;
-  if (rec.paid.stamina > 0) p.counters.staminaSpentThisTurn = Math.max(0, (p.counters.staminaSpentThisTurn || 0) - rec.paid.stamina);
+  refundQueuedCard(combat, rec);
 }
 
 // A card the round did not let land leaves the hand as played (its costs were paid when queued),
@@ -1593,6 +1598,7 @@ function previewRoundOps() {
   return {
     playCard: (c, intent, paid) => doPlayCard(c, intent, { prepaid: paid }),
     discardUnplayed: discardUnplayedCard,
+    refund: refundQueuedCard,
     enemyMove: enemyMoveAt,
     drain: drainQueue,
     findEntity,
@@ -1606,10 +1612,48 @@ function commitCombatRound(combat) {
   const saved = p.reactionsEnabled;
   p.reactionsEnabled = false;
   try {
-    Rounds.commitRound(combat, previewRoundOps());
+    // An expanded fight already runs this inside dispatch's foundation transaction. A legacy fight is
+    // made atomic here, so a throw part way restores the pre-commit state.
+    if (combat.combatExpansionVersion === 2) Rounds.commitRound(combat, previewRoundOps());
+    else atomicCommit(combat, () => Rounds.commitRound(combat, previewRoundOps()));
   } finally {
     if (saved === undefined) delete p.reactionsEnabled;
     else p.reactionsEnabled = saved;
+  }
+}
+
+// Runs fn; if it throws, puts the fight's plain data back exactly as it was. Objects and arrays keep
+// their identity (the player, each enemy and the piles are restored in place), the RNG is rolled back
+// by its counters, and functions, registries and the RNG object itself are not touched. The same
+// structuredClone pattern as atomically() in combatRounds/timeline.js, on the whole fight.
+function atomicCommit(combat, fn) {
+  const isData = (k, v) => typeof v !== 'function' && k !== 'registries' && k !== 'rng';
+  const saved = structuredClone(Object.fromEntries(Object.entries(combat).filter(([k, v]) => isData(k, v))));
+  const counters = combat.rng.getCounters();
+  try {
+    return fn();
+  } catch (err) {
+    restoreInPlace(combat, saved, isData);
+    combat.rng.restoreCounters(counters);
+    throw err;
+  }
+}
+
+function restoreInPlace(target, source, isData = () => true) {
+  if (Array.isArray(target) && Array.isArray(source)) {
+    for (let i = 0; i < source.length; i++) {
+      const cur = target[i];
+      if (cur && typeof cur === 'object' && source[i] && typeof source[i] === 'object' && Array.isArray(cur) === Array.isArray(source[i]) && !(cur instanceof Map)) restoreInPlace(cur, source[i]);
+      else target[i] = source[i];
+    }
+    target.length = source.length;
+    return;
+  }
+  for (const key of Object.keys(target)) if (isData(key, target[key]) && !(key in source)) delete target[key];
+  for (const [key, value] of Object.entries(source)) {
+    const cur = target[key];
+    if (cur && value && typeof cur === 'object' && typeof value === 'object' && !(cur instanceof Map) && Array.isArray(cur) === Array.isArray(value)) restoreInPlace(cur, value);
+    else target[key] = value;
   }
 }
 

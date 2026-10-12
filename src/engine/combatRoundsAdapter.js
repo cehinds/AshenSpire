@@ -201,6 +201,7 @@ function enemySpec(enemy) {
 // Runs one round. `ops` is combat.js's bundle:
 //   playCard(combat, intent, paid)  the live card effects, with no second payment
 //   discardUnplayed(combat, instanceId)  a missed card leaves the hand
+//   refund(combat, record)          pays back a queued card's SP and MP (it never resolved)
 //   enemyMove(combat, enemy, moveId)  the live move (or its delayed charge)
 //   drain(combat)                   drainQueue
 //   findEntity(combat, id)          the live lookup
@@ -252,6 +253,13 @@ export function commitRound(combat, ops) {
 function applyPlayerEntry(combat, entry, landed, ops) {
   const record = takeQueuedCard(combat, entry.card.instanceId);
   if (!record) return;
+  // An earlier queued card can remove this one from hand (Pilfer discards at random). It never
+  // resolves: its SP and MP come back, and the round goes on.
+  if (!combat.piles.hand.some((c) => c.instanceId === record.instanceId)) {
+    ops.refund(combat, record);
+    combat.emit('combatRoundCardSkipped', { cardInstanceId: record.instanceId, cardId: record.cardId, reason: 'leftHand', refund: { ...record.paid } });
+    return;
+  }
   const player = combat.player;
   const target = record.targetId == null ? null : ops.findEntity(combat, record.targetId);
   const targetLive = !record.targetId || (target && target.alive && target.hp > 0);
