@@ -360,7 +360,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       const def = resolveCard(registries, row.ref);
       // Reaction rules version 2 shows the card's trait tags; version 1 shows the card as before.
       const expanded = run?.combatExpansionVersion === 2 ? applyCombatExpansionCard(def) : def;
-      combatDefCache.set(key, run?.combatExpansionVersion === 2 && run.reactionRulesVersion === 2 ? applyCardTraits(expanded) : expanded);
+      combatDefCache.set(key, run?.combatExpansionVersion === 2 && run.reactionRulesVersion === 2 ? applyCardTraits(expanded, run.reactionRules) : expanded);
     }
     return combatDefCache.get(key);
   };
