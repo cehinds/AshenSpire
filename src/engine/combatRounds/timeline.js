@@ -576,6 +576,13 @@ function stagger(run, { key, owner, target, cur, events, seq }) {
   events.push({ type: 'momentum', reason: 'counterStagger', enemyId: key, by: cur.combatants[owner].side, delta, seq });
 }
 
+// The key that tracks one copy of a card (owner, Codex finding on PR #1867): its instanceId when it
+// has one, else its id. Two copies of one definition share an id, so queued and used cards are keyed
+// by this, and a card without an instanceId keys exactly as before.
+export function cardKey(card) {
+  return card?.instanceId ?? card?.id;
+}
+
 // The player's reaction offer for one attack (owner, 2026-10-11): when an attack targets a player,
 // the player may play an unplayed defensive card from hand, if SP is left. Enemies never react.
 // Returns { attack, eligible } when there is a card to offer, else null. It changes nothing, so a
@@ -589,8 +596,8 @@ export function reactionOffer(cur, entry, run) {
   const foes = foesOf(cur.combatants, id);
   const eligible = defender.hand.filter((c) => DEFENSIVE_KINDS.includes(c.kind)
     && targetOk(c, foes)
-    && !queued.includes(c.id)
-    && !usedIds.includes(c.id)
+    && !queued.includes(cardKey(c))
+    && !usedIds.includes(cardKey(c))
     && cardSp(c) <= cur.spLeft[id]
     && (c.kind !== 'counter' || c.target === 'self' || c.target === entry.actor));
   if (eligible.length === 0) return null;
@@ -609,8 +616,9 @@ export function reactionOffer(cur, entry, run) {
 // A pick that is not eligible throws a TypeError.
 export function chooseReaction(eligible, pick) {
   if (pick === null || pick === undefined) return null;
-  const chosen = eligible.find((c) => c.id === pick?.id);
-  if (!chosen) throw new TypeError(`onReaction returned a card that is not eligible: ${pick?.id}`);
+  const key = cardKey(pick);
+  const chosen = eligible.find((c) => cardKey(c) === key);
+  if (!chosen) throw new TypeError(`onReaction returned a card that is not eligible: ${key}`);
   return chosen;
 }
 
@@ -621,8 +629,10 @@ function playReaction(cur, entry, events, chosen) {
   const id = entry.target;
   const usedIds = get(cur.used, id, []);
   cur.spLeft[id] -= cardSp(chosen);
-  put(cur.used, id, [...usedIds, chosen.id]);
-  events.push({ type: 'reaction', by: id, cardId: chosen.id, kind: chosen.kind, against: entry.actor, seq: entry.seq, sp: cardSp(chosen) });
+  put(cur.used, id, [...usedIds, cardKey(chosen)]);
+  // instanceId names the copy played; a card without one keeps the event it always had.
+  const copy = chosen.instanceId ?? null;
+  events.push({ type: 'reaction', by: id, cardId: chosen.id, kind: chosen.kind, against: entry.actor, seq: entry.seq, sp: cardSp(chosen), ...(copy === null ? {} : { instanceId: copy }) });
   const record = placeDefence(cur, id, chosen, { preemptive: false, foe: entry.actor, events, reaction: true });
   return {
     evade: chosen.kind === 'evade' ? record : null,
@@ -820,7 +830,7 @@ function decayAll(cur, combatants, step, events) {
 // round in round.js, so both start from the same numbers and draw the rng in the same order.
 // Returns { cur, timeline, startEvents, run }: `cur` is the working fight state, `timeline` holds
 // the ordered entries, `startEvents` are the decay events, and `run` is the round-scoped data:
-// queuedIds { [combatantId]: [cardId] }, pending { [enemyId]: momentum delta }, stanceTable.
+// queuedIds { [combatantId]: [cardKey] }, pending { [enemyId]: momentum delta }, stanceTable.
 export function beginRound(state, options = {}) {
   if (!state || typeof state !== 'object' || !state.combatants) throw new TypeError('state must come from makeFight()');
   const cur = structuredClone(state);
@@ -852,12 +862,12 @@ export function beginRound(state, options = {}) {
   cur.spLeft = {};
   for (const id of Object.keys(cur.combatants)) put(cur.spLeft, id, cur.combatants[id].sp - spent[id]);
 
-  // Round-scoped: reactions played (by card id) and each combatant's queued card ids.
+  // Round-scoped: reactions played (by card key) and each combatant's queued card keys.
   cur.used = {};
   const queuedIds = {};
   for (const e of timeline.entries) {
     const list = get(queuedIds, e.actor, []);
-    if (!list.includes(e.card.id)) put(queuedIds, e.actor, [...list, e.card.id]);
+    if (!list.includes(cardKey(e.card))) put(queuedIds, e.actor, [...list, cardKey(e.card)]);
   }
   const run = { queuedIds, pending: {}, stanceTable: options.stanceAdvantage ?? null };
   return { cur, timeline, startEvents, run };

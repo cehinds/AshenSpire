@@ -11,6 +11,7 @@ import { startRound, stepRound, answerReaction, finishRound } from '../src/engin
 import { parseEvasionArmor, parseEvasionCards, parseEvadeBonus, parseStanceAdvantage }
   from '../src/engine/combatRounds/resolver.js';
 import * as content from '../src/content/combatRounds.js';
+import * as timelineModule from '../src/engine/combatRounds/timeline.js';
 import * as docsTimeline from '../docs/alternative-combat-rounds/timeline.mjs';
 
 const TABLE_DIR = fileURLToPath(new URL('../docs/alternative-combat-rounds/', import.meta.url));
@@ -452,4 +453,97 @@ test('a non-finite combatant level counts as 0, the same before and after a JSON
   const c = makeCombatant({ id: 'player', side: 'player', level: 'x', hp: 10 });
   assert.equal(c.level, 0);
   assert.equal(JSON.parse(JSON.stringify(c)).level, 0);
+});
+
+// Duplicate copies of one card definition (owner, Codex finding on PR #1867): the same id, told
+// apart by instanceId. A copy is tracked by cardKey(card) = instanceId ?? id.
+const dupDefend = (instanceId) => card('defend', 'guard', 'self', { instanceId, block: 4 });
+const plainDefend = () => card('defend', 'guard', 'self', { block: 4 });
+const goblinStabs = () => [
+  card('stab1', 'attack', 'player', { speed: 0, damage: 3, sp: 1 }),
+  card('stab2', 'attack', 'player', { speed: 2, damage: 3, sp: 1 }),
+];
+function dupFight(hand, playerQueue = []) {
+  const specs = [player({ hand, sp: 3 }),
+    { id: 'goblin', hp: 14, sp: 3, attrs: { DEX: 3 }, level: 1, wis: 2, stance: 'smash' }];
+  const queues = { player: playerQueue, goblin: goblinStabs() };
+  return startRound(makeFight(specs, TABLES), { queues, rng: rng(1), merge: 'speed' });
+}
+// Steps the round to the end. `pick(eligible)` names the reaction card (or null) for each offer.
+function stepAll(round, pick) {
+  const combatRng = rng(1);
+  const offers = [];
+  const events = [];
+  let res = stepRound(round, hooks(combatRng));
+  for (;;) {
+    events.push(...res.events);
+    if (res.awaitingReaction) {
+      const { eligible } = res.awaitingReaction;
+      offers.push(eligible.map((c) => c.instanceId ?? c.id));
+      const chosen = pick(eligible);
+      res = answerReaction(round, chosen ? keyOf(chosen) : null, hooks(combatRng));
+      continue;
+    }
+    if (res.done) break;
+    res = stepRound(round, hooks(combatRng));
+  }
+  return { offers, events };
+}
+const keyOf = (c) => c.instanceId ?? c.id;
+
+test('cardKey is instanceId when a card has one, and its id otherwise', () => {
+  assert.equal(timelineModule.cardKey({ id: 'defend' }), 'defend');
+  assert.equal(timelineModule.cardKey({ id: 'defend', instanceId: 'defend#2' }), 'defend#2');
+});
+
+test('a queued copy does not make its twin copy ineligible: the other copy is still offered', () => {
+  const d1 = dupDefend('defend#1');
+  const d2 = dupDefend('defend#2');
+  const round = dupFight([d1, d2], [{ ...d1 }]);
+  const { offers } = stepAll(round, () => null);
+  assert.ok(offers.length >= 1, 'an attack on the player must offer the unqueued copy');
+  for (const o of offers) assert.deepStrictEqual(o, ['defend#2'], 'only the unqueued copy is offered');
+});
+
+test('reacting with one copy uses that copy only: its twin is not offered again this round', () => {
+  const d1 = dupDefend('defend#1');
+  const d2 = dupDefend('defend#2');
+  const round = dupFight([d1, d2], [{ ...d1 }]);
+  const { offers, events } = stepAll(round, (eligible) => eligible.find((c) => keyOf(c) === 'defend#2'));
+  // The first attack takes defend#2; the second attack finds defend#1 queued and defend#2 used.
+  assert.equal(offers.length, 1, 'no offer after the copy is used');
+  const reactions = events.filter((e) => e.type === 'reaction');
+  assert.equal(reactions.length, 1);
+  assert.equal(reactions[0].cardId, 'defend', 'cardId stays the card id for display');
+  assert.equal(reactions[0].instanceId, 'defend#2', 'the event names the copy that was played');
+});
+
+test('stepped answerReaction picks the named copy and refuses the queued one', () => {
+  const d1 = dupDefend('defend#1');
+  const d2 = dupDefend('defend#2');
+  const round = dupFight([d1, d2], [{ ...d1 }]);
+  const combatRng = rng(1);
+  let res = stepRound(round, hooks(combatRng));
+  while (!res.awaitingReaction && !res.done) res = stepRound(round, hooks(combatRng));
+  assert.ok(res.awaitingReaction, 'the first attack pauses for a reaction');
+  assert.deepStrictEqual(res.awaitingReaction.eligible.map(keyOf), ['defend#2']);
+  assert.throws(() => answerReaction(round, 'defend#1', hooks(combatRng)), TypeError);
+  assert.ok(round.awaiting, 'a refused copy leaves the round waiting');
+  const next = answerReaction(round, 'defend#2', hooks(combatRng));
+  const reaction = next.events.find((e) => e.type === 'reaction');
+  assert.equal(reaction.instanceId, 'defend#2');
+  assert.equal(reaction.cardId, 'defend');
+});
+
+test('regression: two copies without instanceId are tracked by id, as before', () => {
+  // A queued copy makes every copy with that id ineligible: no offer at all.
+  const queued = dupFight([plainDefend(), plainDefend()], [plainDefend()]);
+  assert.equal(stepAll(queued, () => null).offers.length, 0);
+  // Without a queue, one reaction uses the id, so the second attack gets no offer.
+  const free = dupFight([plainDefend(), plainDefend()]);
+  const { offers, events } = stepAll(free, (eligible) => eligible[0]);
+  assert.deepStrictEqual(offers, [['defend', 'defend']]);
+  const reaction = events.find((e) => e.type === 'reaction');
+  assert.equal(reaction.cardId, 'defend');
+  assert.equal(Object.hasOwn(reaction, 'instanceId'), false, 'no instanceId field for a card without one');
 });

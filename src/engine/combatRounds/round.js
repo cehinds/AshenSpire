@@ -131,8 +131,8 @@ export function stepRound(round, hooks = {}) {
   });
 }
 
-// Answers the reaction that stepRound() paused for. cardId is one of the eligible card ids, or
-// null for no reaction. A card that was not eligible throws and changes nothing.
+// Answers the reaction that stepRound() paused for. cardId is the cardKey (instanceId, or id for a
+// card without one) of one eligible card, or null for no reaction. A card that was not eligible throws and changes nothing.
 // Returns { events, awaitingReaction, done } like stepRound().
 export function answerReaction(round, cardId, hooks = {}) {
   const ctx = callContext(round, hooks);
