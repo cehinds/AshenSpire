@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-12",
     "summary": "Cards rebalanced; Insanity now staggers; Necrotic Blight lasts the fight",
     "detail": "Thirteen cards now match their rarity and cost. Blood Offering, Exsanguinate, Star Slicer, Umbral Ward, Iron Skin, Ash Circle, Vanish, Binding Parry and Draw Cut hit or guard for less. Comet Fragment, Bloodhunter's Strike and Shield Crash got stronger, and Sundering Hew now applies Vulnerable. Weapon attacks now have a fixed damage type: slashing cards apply Bleed. An Insanity break now Staggers, so Executioner and other Staggered bonuses apply. Necrotic damage applies Necrotic Blight, which lasts the whole fight; other Blight still fades after 3 turns. Holy hits now cleanse in new runs. Frost and Insanity exposures now boost even small tagged hits, and Feint applies Prepare at every rank.",
-    "build": "0.7.1.1423",
+    "build": "0.7.1.1427",
     "pullRequest": 1900,
     "url": "https://github.com/cehinds/AshenSpire/pull/1900"
   },
