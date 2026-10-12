@@ -4,9 +4,22 @@ const queued = value => Array.isArray(value) && value.every(action => record(act
 
 import { reactionRulesProblems } from '../content/combatCardTraits.js';
 
+const playerEntry = (entry, ownerIds) => ownerIds.has(entry.ownerId) && text(entry.cardId) && record(entry.play) && text(entry.play.cardInstanceId)
+  && (entry.maneuver === null || entry.maneuver === undefined || typeof entry.maneuver === 'string')
+  && (entry.incoming === undefined || (record(entry.incoming) && Object.values(entry.incoming).every(value => Number.isFinite(value) && value > 0)));
+// An enemy entry: its enemy, move, target seat and the committed plan (id references
+// to entities plus the one planned group they share).
+const ref = value => value === null || (record(value) && text(value.id) && (value.playerId === undefined || text(value.playerId)));
+const enemyEntry = (entry, state, ownerIds, stack) => (state.enemies || []).some(enemy => enemy.id === entry.ownerId)
+  && text(entry.moveId) && ownerIds.has(entry.targetPlayerId) && record(entry.plan) && record(entry.plan.group)
+  && text(entry.plan.group.key) && entry.plan.group.key !== stack.groupKey && record(entry.plan.group.targets)
+  && entry.plan.group.carrier?.combatReaction === true && Array.isArray(entry.plan.actions) && entry.plan.actions.length > 0
+  && entry.plan.actions.every(action => record(action) && record(action.effect) && text(action.effect.op)
+    && !('source' in action) && !('target' in action) && ref(action.sourceRef ?? null) && ref(action.targetRef ?? null) && ref(action.ownerRef ?? null));
+
 export function combatReactionProblems(state, { ownerIds = new Set(['player']), queue = state.abilityQueue || state.queue || [] } = {}) {
   const problems = [];
-  const fields = ['pendingReaction', 'reactionResume', 'reactionCursor', 'reactionHandCleanup', 'reactionStack', 'reactionRules'];
+  const fields = ['pendingReaction', 'reactionResume', 'reactionCursor', 'reactionHandCleanup', 'enemyReactionRolls', 'reactionRootPlay', 'reactionStack', 'reactionRules'];
   if (state.reactionRulesVersion === undefined) {
     if (fields.some(field => state[field] !== undefined)) problems.push('Paused reaction requires its carried rules');
     return problems;
@@ -31,9 +44,16 @@ export function combatReactionProblems(state, { ownerIds = new Set(['player']), 
       && typeof seat.reactionHandCleanup.locked === 'boolean') : record(state.reactionHandCleanup);
     if (!cleanup) problems.push('Enemy reaction requires its pending hand cleanup');
   }
+  // Enemy reactions: the per-turn roll memo, and a player-card root's deferred card.
+  if (state.enemyReactionRolls !== undefined && (state.reactionRulesVersion !== 2 || !record(state.enemyReactionRolls)
+    || Object.values(state.enemyReactionRolls).some(value => typeof value !== 'boolean'))) problems.push('Invalid enemy reaction rolls');
+  if (state.reactionRootPlay !== undefined && (state.reactionRulesVersion !== 2 || !record(state.reactionRootPlay)
+    || !record(state.reactionRootPlay.instance) || !text(state.reactionRootPlay.instance.cardId)
+    || !(state.pendingReaction || state.reactionStack || state.reactionResume))) problems.push('Invalid deferred reaction root card');
   const stack = state.reactionStack;
   if (stack !== undefined) {
-    const stacked = seatId => stack.entries.filter(entry => entry.ownerId === seatId).length;
+    // Enemy entries are keyed by enemy id and never count toward a player seat's cap.
+    const stacked = seatId => stack.entries.filter(entry => entry.side === 'player' && entry.ownerId === seatId).length;
     const stackCap = () => {
       const group = incoming.find(action => action.meta?.expansionGroup?.key === stack.groupKey).meta.expansionGroup;
       const caps = state.reactionRules?.stack || {};
@@ -41,17 +61,21 @@ export function combatReactionProblems(state, { ownerIds = new Set(['player']), 
     };
     if (state.reactionRulesVersion !== 2) problems.push('Reaction stack requires reaction rules version 2');
     else if (!record(stack) || !text(stack.groupKey) || typeof stack.resolving !== 'boolean' || !Array.isArray(stack.entries)
-      || !stack.entries.length || stack.entries.some(entry => !record(entry) || entry.side !== 'player'
-        || !ownerIds.has(entry.ownerId) || !text(entry.cardId) || !record(entry.play) || !text(entry.play.cardInstanceId)
-        || (entry.maneuver !== null && entry.maneuver !== undefined && typeof entry.maneuver !== 'string'))
+      || !stack.entries.length || stack.entries.some(entry => !record(entry) || !['player', 'enemy'].includes(entry.side)
+        || (entry.side === 'player' ? !playerEntry(entry, ownerIds) : !enemyEntry(entry, state, ownerIds, stack)))
       || !incoming.some(action => action.meta?.expansionGroup?.key === stack.groupKey)
       || (stack.counterSeats !== undefined && (!Array.isArray(stack.counterSeats) || new Set(stack.counterSeats).size !== stack.counterSeats.length
         || stack.counterSeats.some(seatId => !ownerIds.has(seatId))))) problems.push('Invalid reaction stack');
     else if ((() => {
       // The live engine never builds these; a saved stack must not bypass them either.
+      const group = incoming.find(action => action.meta?.expansionGroup?.key === stack.groupKey).meta.expansionGroup;
+      const caps = state.reactionRules?.stack || {};
       const cap = stackCap();
-      return [...new Set(stack.entries.map(entry => entry.ownerId))].some(seatId => stacked(seatId) > cap
-        || stack.entries.filter(entry => entry.ownerId === seatId && entry.maneuver === 'counter').length > 1);
+      const players = stack.entries.filter(entry => entry.side === 'player');
+      return [...new Set(players.map(entry => entry.ownerId))].some(seatId => stacked(seatId) > cap
+        || players.filter(entry => entry.ownerId === seatId && entry.maneuver === 'counter').length > 1)
+        // Enemy entries: none on a Counter-return root, at most maxDepth in total otherwise.
+        || stack.entries.filter(entry => entry.side === 'enemy').length > (group.counterReturn ? 0 : caps.maxDepth);
     })()) problems.push('Reaction stack exceeds its per-seat limits');
     else if (state.pendingReaction !== undefined && (!record(state.pendingReaction) || state.pendingReaction.groupKey !== stack.groupKey
       || state.pendingReaction.id !== `${stack.groupKey}:${state.pendingReaction.ownerId}:${stacked(state.pendingReaction.ownerId)}`)) {

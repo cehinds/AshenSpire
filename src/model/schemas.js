@@ -625,7 +625,14 @@ const enemyMoveSchema = obj({
   damage: opt(int),
   hits: opt(int),
   block: opt(int),
-  weight: num,
+  // Required on a rolled move; absent on a reaction move, which is never rolled
+  // (validate.js enforces both). docs/combat-card-traits-contract.md, "Enemy reactions".
+  weight: opt(num),
+  reaction: opt(obj({
+    on: arr(en('playerAction', 'playerReaction')),
+    minIncoming: opt(int),
+    chance: opt(num),
+  })),
   maxConsecutive: opt(int),
   effects: opt(effects),
   locked: opt(bool),

@@ -59,7 +59,8 @@ test('scoped enemy moves resolve through both the tag service and nested combat 
   const meleeCounters = service.withTag('enemyMove', 'counter:melee');
   assert.deepEqual(meleeCounters.map(move => `${move.enemyId}.${move.id}`).sort(),
     ['cinderMantis.foldedBlades', 'courtDuelist.riposte', 'gildedKnight.parry']);
-  assert.equal(service.withTag('enemyMove', 'camp:physical').length, 66);
+  // 66 rolled physical moves plus the two physical reaction moves (gildedGuard, bindingRiposte).
+  assert.equal(service.withTag('enemyMove', 'camp:physical').length, 68);
   assert.equal(service.withTag('enemyMove', 'camp:spell').length, 37);
   for (const move of registries.enemyMoves) {
     const nested = registries.enemies.get(move.enemyId).moves[move.id];
