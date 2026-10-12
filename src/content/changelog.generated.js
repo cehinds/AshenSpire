@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-12",
     "summary": "Spell range follows how a spell is delivered; new physical and magical marks in the deck editor",
     "detail": "In expanded-combat runs a spell's range now follows its delivery: projectile spells such as Comet Fragment reach Ranged, bladed spells such as Starblade Phalanx (now a melee spell) strike at Melee, and the rest stay at Reach (runs from before expanded combat are unchanged). The deck editor shows the same range combat uses, marks physical cards with a silver Smash sigil and spells with a blue flame, and a Ranged card like Ricochet reads just \"Ranged\".",
-    "build": "0.7.1.1395",
+    "build": "0.7.1.1402",
     "pullRequest": 1876,
     "url": "https://github.com/cehinds/AshenSpire/pull/1876"
+  },
+  {
+    "id": "pr-1886",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Picking a card shows its stance before you play it",
+    "detail": "Selecting a card in hand puts your fighter in that card's stance, and the stance mark above their head changes to match; click through your hand and both follow each card, and cancelling returns them to your last stance. Playing the card swings from that stance, and afterwards your fighter holds it — into the next turn too — until you play another card. The stances are attack, smash, sweep, defend, counter and prepare: spells and cards that are none of the others show prepare, and sweep now has its own mark. Smash holds each class's painted wind-up, and every swing now leaves from your stance and returns to it instead of snapping to a neutral pose. Co-op seats hold their stance across turns but do not show a preview while selecting.",
+    "build": "0.7.1.1401",
+    "pullRequest": 1886,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1886"
   },
   {
     "id": "pr-1875",

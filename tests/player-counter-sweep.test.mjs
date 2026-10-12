@@ -51,7 +51,7 @@ test('all eight owner choices use four phases and clear independent effects at o
   }
 });
 
-test('confirmed counter and sweep stances remain independent across co-op seats and turn resets', () => {
+test('confirmed counter and sweep stances remain independent across co-op seats and turn starts', () => {
   const ledger = createStanceLedger();
   for (const [actor, action] of [['a', 'counter'], ['b', 'sweep']]) {
     ledger.accept({ type: 'cardPlayed', playerId: actor }, { cardTags: ['camp:physical', 'maneuver:' + action] });
@@ -60,6 +60,8 @@ test('confirmed counter and sweep stances remain independent across co-op seats 
   ledger.accept({ type: 'cardPlayFailed', playerId: 'a' });
   assert.equal(ledger.get('a'), 'counter');
   ledger.accept({ type: 'playerTurnStart', playerId: 'a' });
-  assert.equal(ledger.get('a'), null);
+  assert.equal(ledger.get('a'), 'counter', 'a new turn keeps the held counter stance');
   assert.equal(ledger.get('b'), 'sweep');
+  ledger.accept({ type: 'combatStarted' });
+  assert.equal(ledger.get('a'), null);
 });
