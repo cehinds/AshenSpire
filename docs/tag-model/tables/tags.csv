@@ -424,36 +424,36 @@ classification.enemyMove,enemyMove,enemyMove,classification,TagNode,,A scoped ac
 campRoot,campRoot,Combat camp,,TagNode,,Authored combat identity shared by cards and enemy moves.,,,,,,live-tag,,,camp
 campRoot.physical,campRoot.physical,Physical,campRoot,TagNode,,Selects physical Guard or magical Ward combat rules.,,,,,,live-tag,⚔,D7B36B,camp:physical
 campRoot.spell,campRoot.spell,Spell,campRoot,TagNode,,Selects physical Guard or magical Ward combat rules.,,,,,,live-tag,✦,9FC3E8,camp:spell
-presentationRoot,presentationRoot,Combat presentation,,TagNode,,Sprite selection only; never damage or resistance identity.,,,,,,live-tag,,,presentation
-presentationRoot.blade,presentationRoot.blade,blade,presentationRoot,TagNode,,blade visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:blade
-presentationRoot.guard,presentationRoot.guard,guard,presentationRoot,TagNode,,guard visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:guard
-presentationRoot.blood,presentationRoot.blood,blood,presentationRoot,TagNode,,blood visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:blood
-presentationRoot.gorefire,presentationRoot.gorefire,gorefire,presentationRoot,TagNode,,gorefire visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:gorefire
-presentationRoot.starstone,presentationRoot.starstone,starstone,presentationRoot,TagNode,,starstone visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:starstone
-presentationRoot.ritual,presentationRoot.ritual,ritual,presentationRoot,TagNode,,ritual visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:ritual
-presentationRoot.blight,presentationRoot.blight,blight,presentationRoot,TagNode,,blight visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:blight
-presentationRoot.oath,presentationRoot.oath,oath,presentationRoot,TagNode,,oath visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:oath
-presentationRoot.flourish,presentationRoot.flourish,flourish,presentationRoot,TagNode,,flourish visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:flourish
-presentationRoot.ash,presentationRoot.ash,ash,presentationRoot,TagNode,,ash visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:ash
-presentationRoot.heavy,presentationRoot.heavy,heavy,presentationRoot,TagNode,,heavy visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:heavy
-presentationRoot.pierce,presentationRoot.pierce,pierce,presentationRoot,TagNode,,pierce visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:pierce
-presentationRoot.ranged,presentationRoot.ranged,ranged,presentationRoot,TagNode,,ranged visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:ranged
-presentationRoot.precision,presentationRoot.precision,precision,presentationRoot,TagNode,,precision visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:precision
-presentationRoot.guile,presentationRoot.guile,guile,presentationRoot,TagNode,,guile visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:guile
-presentationRoot.venom,presentationRoot.venom,venom,presentationRoot,TagNode,,venom visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:venom
-presentationRoot.shield,presentationRoot.shield,shield,presentationRoot,TagNode,,shield visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:shield
-presentationRoot.barrier,presentationRoot.barrier,barrier,presentationRoot,TagNode,,barrier visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:barrier
-presentationRoot.ward,presentationRoot.ward,ward,presentationRoot,TagNode,,ward visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:ward
-presentationRoot.magic,presentationRoot.magic,magic,presentationRoot,TagNode,,magic visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:magic
-presentationRoot.arcane,presentationRoot.arcane,arcane,presentationRoot,TagNode,,arcane visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:arcane
-presentationRoot.dodge,presentationRoot.dodge,dodge,presentationRoot,TagNode,,dodge visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:dodge
-presentationRoot.riposte,riposte,riposte,presentationRoot,TagNode,,riposte visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:riposte
-presentationRoot.heal,presentationRoot.heal,heal,presentationRoot,TagNode,,heal visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:heal
-presentationRoot.cleanse,presentationRoot.cleanse,cleanse,presentationRoot,TagNode,,cleanse visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:cleanse
-presentationRoot.bind,bind,bind,presentationRoot,TagNode,,bind visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:bind
-presentationRoot.frost,presentationRoot.frost,frost,presentationRoot,TagNode,,frost visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:frost
-presentationRoot.bulwark,bulwark,bulwark,presentationRoot,TagNode,,bulwark visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:bulwark
-presentationRoot.utility,utility,utility,presentationRoot,TagNode,,utility visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:utility
+meta.presentation.fx,fx,Combat presentation,meta.presentation,TagNode,,Sprite selection only; never damage or resistance identity.,,,,,,live-tag,,,presentation
+meta.presentation.fx.blade,fx.blade,blade,meta.presentation.fx,TagNode,,blade visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:blade
+meta.presentation.fx.guard,fx.guard,guard,meta.presentation.fx,TagNode,,guard visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:guard
+meta.presentation.fx.blood,fx.blood,blood,meta.presentation.fx,TagNode,,blood visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:blood
+meta.presentation.fx.gorefire,fx.gorefire,gorefire,meta.presentation.fx,TagNode,,gorefire visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:gorefire
+meta.presentation.fx.starstone,fx.starstone,starstone,meta.presentation.fx,TagNode,,starstone visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:starstone
+meta.presentation.fx.ritual,fx.ritual,ritual,meta.presentation.fx,TagNode,,ritual visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:ritual
+meta.presentation.fx.blight,fx.blight,blight,meta.presentation.fx,TagNode,,blight visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:blight
+meta.presentation.fx.oath,fx.oath,oath,meta.presentation.fx,TagNode,,oath visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:oath
+meta.presentation.fx.flourish,fx.flourish,flourish,meta.presentation.fx,TagNode,,flourish visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:flourish
+meta.presentation.fx.ash,fx.ash,ash,meta.presentation.fx,TagNode,,ash visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:ash
+meta.presentation.fx.heavy,fx.heavy,heavy,meta.presentation.fx,TagNode,,heavy visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:heavy
+meta.presentation.fx.pierce,fx.pierce,pierce,meta.presentation.fx,TagNode,,pierce visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:pierce
+meta.presentation.fx.ranged,fx.ranged,ranged,meta.presentation.fx,TagNode,,ranged visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:ranged
+meta.presentation.fx.precision,fx.precision,precision,meta.presentation.fx,TagNode,,precision visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:precision
+meta.presentation.fx.guile,fx.guile,guile,meta.presentation.fx,TagNode,,guile visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:guile
+meta.presentation.fx.venom,fx.venom,venom,meta.presentation.fx,TagNode,,venom visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:venom
+meta.presentation.fx.shield,fx.shield,shield,meta.presentation.fx,TagNode,,shield visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:shield
+meta.presentation.fx.barrier,fx.barrier,barrier,meta.presentation.fx,TagNode,,barrier visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:barrier
+meta.presentation.fx.ward,fx.ward,ward,meta.presentation.fx,TagNode,,ward visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:ward
+meta.presentation.fx.magic,fx.magic,magic,meta.presentation.fx,TagNode,,magic visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:magic
+meta.presentation.fx.arcane,fx.arcane,arcane,meta.presentation.fx,TagNode,,arcane visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:arcane
+meta.presentation.fx.dodge,fx.dodge,dodge,meta.presentation.fx,TagNode,,dodge visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:dodge
+meta.presentation.fx.riposte,riposte,riposte,meta.presentation.fx,TagNode,,riposte visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:riposte
+meta.presentation.fx.heal,fx.heal,heal,meta.presentation.fx,TagNode,,heal visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:heal
+meta.presentation.fx.cleanse,fx.cleanse,cleanse,meta.presentation.fx,TagNode,,cleanse visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:cleanse
+meta.presentation.fx.bind,bind,bind,meta.presentation.fx,TagNode,,bind visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:bind
+meta.presentation.fx.frost,fx.frost,frost,meta.presentation.fx,TagNode,,frost visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:frost
+meta.presentation.fx.bulwark,bulwark,bulwark,meta.presentation.fx,TagNode,,bulwark visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:bulwark
+meta.presentation.fx.utility,utility,utility,meta.presentation.fx,TagNode,,utility visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:utility
 theme,theme,Theme,,TagNode,,Build synergies; tags alone grant no effects.,,,,,,live-tag,,,theme
 theme.blood,theme.blood,Blood,theme,TagNode,,Categorized Blood identity; effects are authored separately.,,,,,,live-tag,◇,9FC3E8,theme:blood
 theme.blight,theme.blight,Blight,theme,TagNode,,Categorized Blight identity; effects are authored separately.,,,,,,live-tag,◇,9FC3E8,theme:blight

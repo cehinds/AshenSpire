@@ -52,7 +52,7 @@ None: every live id is mapped by at most one tag.
 
 ## 3. Field parity
 
-75 differences.
+76 differences.
 
 | Model tag | Live id | Field | Model | Live |
 |---|---|---|---|---|
@@ -131,6 +131,7 @@ None: every live id is mapped by at most one tag.
 | card.upgrade.upgraded | internal.upgraded | parent | card.upgrade | internal (mapped to internal) |
 | card.type.attack | classification.attack | label | Attack | attack |
 | card.type.attack | classification.attack | parent | card.type | classification (mapped to classification) |
+| meta.presentation.fx | presentation | parent | meta.presentation | (live root) |
 
 ## 4. Reverse: live-tag with no live node
 

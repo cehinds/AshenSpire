@@ -794,7 +794,7 @@ const TAG_HEAD = ['id', 'key', 'label', 'parent', 'erd', 'school', 'description'
 const tagsPath = join(TABLES, 'tags.csv');
 const tagsTable = readTable(tagsPath);
 const ci = Object.fromEntries(TAG_HEAD.map(h => [h, tagsTable.header.indexOf(h)]));
-const legacyRows = tagsTable.rows.filter(r => !r[ci.id].startsWith('meta.presentation'));
+const legacyRows = tagsTable.rows.filter(r => !nodes.has(r[ci.id])); // authored rows under meta.presentation (fx) are kept
 const oldKeyById = Object.fromEntries(legacyRows.map(r => [r[ci.id], r[ci.key]]));
 const oldIdByKey = Object.fromEntries(legacyRows.map(r => [r[ci.key], r[ci.id]]));
 

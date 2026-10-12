@@ -417,6 +417,36 @@ Meta
       Stance change [n]
       Intent reveal / conceal [n]
   Presentation [n] {Presentation layer: how the game looks and reads. Carries no gameplay identity.}
+    Combat presentation {Sprite selection only; never damage or resistance identity.}
+      blade {blade visual identity; no combat modifier.}
+      guard {guard visual identity; no combat modifier.}
+      blood {blood visual identity; no combat modifier.}
+      gorefire {gorefire visual identity; no combat modifier.}
+      starstone {starstone visual identity; no combat modifier.}
+      ritual {ritual visual identity; no combat modifier.}
+      blight {blight visual identity; no combat modifier.}
+      oath {oath visual identity; no combat modifier.}
+      flourish {flourish visual identity; no combat modifier.}
+      ash {ash visual identity; no combat modifier.}
+      heavy {heavy visual identity; no combat modifier.}
+      pierce {pierce visual identity; no combat modifier.}
+      ranged {ranged visual identity; no combat modifier.}
+      precision {precision visual identity; no combat modifier.}
+      guile {guile visual identity; no combat modifier.}
+      venom {venom visual identity; no combat modifier.}
+      shield {shield visual identity; no combat modifier.}
+      barrier {barrier visual identity; no combat modifier.}
+      ward {ward visual identity; no combat modifier.}
+      magic {magic visual identity; no combat modifier.}
+      arcane {arcane visual identity; no combat modifier.}
+      dodge {dodge visual identity; no combat modifier.}
+      riposte {riposte visual identity; no combat modifier.}
+      heal {heal visual identity; no combat modifier.}
+      cleanse {cleanse visual identity; no combat modifier.}
+      bind {bind visual identity; no combat modifier.}
+      frost {frost visual identity; no combat modifier.}
+      bulwark {bulwark visual identity; no combat modifier.}
+      utility {utility visual identity; no combat modifier.}
     Scene [n] {Scene art and frame.}
     Battlefield [n] {Enemy and player stage.}
     Card structure [n] {Card frame parts.}
@@ -610,36 +640,6 @@ classification {Grouping node for classification in nodes.csv.}
 Combat camp {Authored combat identity shared by cards and enemy moves.}
   Physical {Selects physical Guard or magical Ward combat rules.}
   Spell {Selects physical Guard or magical Ward combat rules.}
-Combat presentation {Sprite selection only; never damage or resistance identity.}
-  blade {blade visual identity; no combat modifier.}
-  guard {guard visual identity; no combat modifier.}
-  blood {blood visual identity; no combat modifier.}
-  gorefire {gorefire visual identity; no combat modifier.}
-  starstone {starstone visual identity; no combat modifier.}
-  ritual {ritual visual identity; no combat modifier.}
-  blight {blight visual identity; no combat modifier.}
-  oath {oath visual identity; no combat modifier.}
-  flourish {flourish visual identity; no combat modifier.}
-  ash {ash visual identity; no combat modifier.}
-  heavy {heavy visual identity; no combat modifier.}
-  pierce {pierce visual identity; no combat modifier.}
-  ranged {ranged visual identity; no combat modifier.}
-  precision {precision visual identity; no combat modifier.}
-  guile {guile visual identity; no combat modifier.}
-  venom {venom visual identity; no combat modifier.}
-  shield {shield visual identity; no combat modifier.}
-  barrier {barrier visual identity; no combat modifier.}
-  ward {ward visual identity; no combat modifier.}
-  magic {magic visual identity; no combat modifier.}
-  arcane {arcane visual identity; no combat modifier.}
-  dodge {dodge visual identity; no combat modifier.}
-  riposte {riposte visual identity; no combat modifier.}
-  heal {heal visual identity; no combat modifier.}
-  cleanse {cleanse visual identity; no combat modifier.}
-  bind {bind visual identity; no combat modifier.}
-  frost {frost visual identity; no combat modifier.}
-  bulwark {bulwark visual identity; no combat modifier.}
-  utility {utility visual identity; no combat modifier.}
 Theme {Build synergies; tags alone grant no effects.}
   Blood {Categorized Blood identity; effects are authored separately.}
   Blight {Categorized Blight identity; effects are authored separately.}
