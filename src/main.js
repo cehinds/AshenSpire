@@ -3602,7 +3602,9 @@ function showRest(openPanel = null, locationId = null) {
   // stands in for the service state so a re-entry does not refill again.
   const classicRest = !run.journey && !run.legacyDungeon;
   const priorRevisit = run.restRevisit;
-  const record = classicRest ? openRestRecord(run) : null;
+  // The Multi-use setting is read once; a record opened now keeps it for the visit.
+  const multiUseSetting = run.journey ? false : settingOn(saves.loadMeta().settings, 'shrineMultiUse');
+  const record = classicRest ? openRestRecord(run, { multiUse: multiUseSetting }) : null;
   if (record !== priorRevisit) persist();
   const restState = run.legacyDungeon?.activeRest || (worldRest ? run.journey.serviceStates[worldRest.pointId] : null) || record;
   if (!openVisit || openVisit.locationId !== restLocationId || openVisit.ctx.run !== run) {
@@ -3655,7 +3657,7 @@ function showRest(openPanel = null, locationId = null) {
     onLevelUp: () => persist(),
     // E13's toggle: with it on, Rest and Smith re-open the Shrine instead of
     // leaving it, and the screen carries its own LEAVE.
-    multiUse: run.journey ? false : settingOn(saves.loadMeta().settings, 'shrineMultiUse'),
+    multiUse: record && typeof record.multiUse === 'boolean' ? record.multiUse : multiUseSetting,
     onDone: () => {
       leaveLocation(visit);
       openVisit = null;
