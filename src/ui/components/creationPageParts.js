@@ -83,7 +83,7 @@ export function createCreationFeatBrowser({ feats = [], groups = null, selectedI
   const tiles = new Map();
   const filters = el('div', { class: 'cc-feat-groups', role: 'group', 'aria-label': labels.groupLabel || labels.title || '' });
   const tileList = el('div', { class: 'cc-feat-choices', role: 'group', 'aria-label': labels.listLabel || labels.title || '' });
-  const detail = creationPanel({ kind: 'feat-detail', className: 'cc-feat-detail', attrs: { role: 'region', 'aria-label': labels.detailLabel || labels.title || '' } });
+  const detail = creationPanel({ kind: 'feat-detail', className: 'cc-feat-detail', attrs: { role: 'region', tabindex: '-1', 'aria-label': labels.detailLabel || labels.title || '' } });
   markUiComponent(detail, UI.creationFeatDetail);
   const detailBody = detail.querySelector('.cc-part-body');
   const status = labels.availability ? el('p', { class: 'cc-feat-availability', text: labels.availability, dataset: { creationPart: 'availability' } }) : null;
@@ -153,7 +153,10 @@ export function createCreationFeatBrowser({ feats = [], groups = null, selectedI
     if (notify) {
       node.dataset.detailOpen = 'true';
       onInspect?.(row.id, row);
-      if (globalThis.matchMedia?.('(max-width: 960px)').matches) requestAnimationFrame(() => detail.scrollIntoView({ block: 'nearest', behavior: globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }));
+      if (globalThis.matchMedia?.('(max-width: 960px)').matches) requestAnimationFrame(() => {
+        detail.focus({ preventScroll: true });
+        detail.scrollIntoView({ block: 'nearest', behavior: globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+      });
     }
     return true;
   }
