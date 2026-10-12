@@ -36,7 +36,7 @@ export function combatReactionProblems(state, { ownerIds = new Set(['player']), 
     const stacked = seatId => stack.entries.filter(entry => entry.ownerId === seatId).length;
     if (state.reactionRulesVersion !== 2) problems.push('Reaction stack requires reaction rules version 2');
     else if (!record(stack) || !text(stack.groupKey) || typeof stack.resolving !== 'boolean' || !Array.isArray(stack.entries)
-      || !stack.entries.length || stack.entries.some(entry => !record(entry) || !['player', 'enemy'].includes(entry.side)
+      || !stack.entries.length || stack.entries.some(entry => !record(entry) || entry.side !== 'player'
         || !ownerIds.has(entry.ownerId) || !text(entry.cardId) || !record(entry.play) || !text(entry.play.cardInstanceId)
         || (entry.maneuver !== null && entry.maneuver !== undefined && typeof entry.maneuver !== 'string'))
       || !incoming.some(action => action.meta?.expansionGroup?.key === stack.groupKey)) problems.push('Invalid reaction stack');

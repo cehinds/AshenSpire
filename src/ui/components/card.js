@@ -135,11 +135,12 @@ function fillTemplate(def, tokens, baseTokens, damageSequences = []) {
  *   opts — { preview?    (previewCard result → live numbers),
  *            affordable? (bool; greys out when false),
  *            small?      (scale for reward/pile grids),
- *            tooltip?    (false suppresses the shared hover/focus tooltip) }
+ *            tooltip?    (false suppresses the shared hover/focus tooltip),
+ *            definition? (an already projected definition, e.g. the run's trait projection) }
  */
 export function renderCard(registries, ref, opts = {}) {
   configureTooltipGlossary(registries);
-  const def = opts.preview?.resolvedDefinition || resolveCard(registries, ref);
+  const def = opts.preview?.resolvedDefinition || opts.definition || resolveCard(registries, ref);
   // ONE PROJECTION, READ ONCE. Everything this function used to derive on its
   // way to innerHTML — the tag junction, the cost profile, the type row, the
   // class tint — is `model` now (src/model/playingCard.js). Drawing is what is
