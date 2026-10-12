@@ -6,8 +6,8 @@
     "src/ui/screens/shop.js",
     "src/ui/screens/compendium.js"
   ],
-  "sites": 294,
-  "distinct": 248,
+  "sites": 293,
+  "distinct": 247,
   "files": {
     "src/ui/screens/customize.js": 43,
     "src/ui/screens/lobby.js": 23,
@@ -41,7 +41,6 @@
     "src/ui/components/mountServiceModal.js": 2,
     "src/ui/models/QuickAccessPanelModel.js": 2,
     "src/ui/previews/tooltipReviewScene.js": 2,
-    "src/ui/screens/combatTest.js": 2,
     "src/ui/screens/title.js": 2,
     "src/ui/components/arcaneExposure.js": 1,
     "src/ui/components/armamentRadial.js": 1,
@@ -60,6 +59,7 @@
     "src/ui/models/TooltipPlacementModel.js": 1,
     "src/ui/models/VitalsPanelModel.js": 1,
     "src/ui/screens/about.js": 1,
+    "src/ui/screens/combatTest.js": 1,
     "src/ui/screens/map.js": 1
   }
 }

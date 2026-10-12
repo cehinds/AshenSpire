@@ -13,10 +13,11 @@ import { openModal } from '../kit/index.js';
 import { esc, configureTooltipSettings } from '../components/tooltip.js';
 import { openSettings } from './settings.js';
 import { BUILD_VERSION } from '../../buildversion.js';
+import { t } from '../strings.js';
 
 export function mountCombatTest(app, { params, meta }) {
   document.body.classList.add('combat-test');
-  document.title = `AshenSpire ${BUILD_VERSION} — Combat test build`;
+  document.title = t('combatTest.setup.documentTitle', { version: BUILD_VERSION });
   const choice = { build: Object.hasOwn(prototypeBuilds, params.get('build')) ? params.get('build') : 'heavy',
     encounter: Object.hasOwn(prototypeScenarios, params.get('encounter')) ? params.get('encounter') : 'gauntlet', seed: 1, pressure: 1,
     equipment: { armor: '', grip: '', rune: '' } };
@@ -25,19 +26,19 @@ export function mountCombatTest(app, { params, meta }) {
   const testMeta = { ...meta, settings: { ...meta.settings, seenTutorial: true, holdConfirm: 'normal' } };
   const changeSettings = patch => { Object.assign(testMeta.settings, patch); configureTooltipSettings(testMeta.settings); };
   function setup() {
-    app.innerHTML = `<section class="combat-test-setup"><p class="test-eyebrow">ASHENSPIRE ${esc(BUILD_VERSION)} · TEST BUILD</p>
-      <h1>Choose your way through.</h1><p class="test-lead">Play the new combat rules on the game's battlefield. Break Poise with a heavy weapon, build Bleed with quick hits, or save rare mana for a decisive spell.</p>
-      <form id="combat-test-form"><fieldset><legend>Your build</legend><div class="test-build-grid">${Object.entries(prototypeBuilds).map(([id, b]) => `<label class="test-build-choice"><input type="radio" name="build" value="${id}" ${choice.build === id ? 'checked' : ''}><strong>${esc(b.name)}</strong><span>${id === 'heavy' ? 'Greatsword · strong impact · blue guard' : id === 'bleed' ? 'Dagger · Bleed on contact · light Dodge' : 'Staff · low impact · powerful mana spells'}</span><span>${b.maxStamina} stamina · ${b.maxMana} mana</span></label>`).join('')}</div></fieldset>
-      <div class="test-options"><label>Challenge<select name="encounter"><option value="gauntlet">Three-fight route</option>${Object.entries(prototypeScenarios).map(([id, s]) => `<option value="${id}" ${choice.encounter === id ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select></label>
-      <label>Enemy strength<select name="pressure"><option value="1">Standard</option><option value="0.5">Practice — half damage</option><option value="2">Hard — double damage</option></select></label>
+    app.innerHTML = `<section class="combat-test-setup"><p class="test-eyebrow">${t('combatTest.setup.eyebrow', { version: esc(BUILD_VERSION) })}</p>
+      <h1>${t('combatTest.setup.heading')}</h1><p class="test-lead">${t('combatTest.setup.lead')}</p>
+      <form id="combat-test-form"><fieldset><legend>${t('combatTest.build.legend')}</legend><div class="test-build-grid">${Object.entries(prototypeBuilds).map(([id, b]) => `<label class="test-build-choice"><input type="radio" name="build" value="${id}" ${choice.build === id ? 'checked' : ''}><strong>${esc(b.name)}</strong><span>${id === 'heavy' ? 'Greatsword · strong impact · blue guard' : id === 'bleed' ? 'Dagger · Bleed on contact · light Dodge' : 'Staff · low impact · powerful mana spells'}</span><span>${b.maxStamina} stamina · ${b.maxMana} mana</span></label>`).join('')}</div></fieldset>
+      <div class="test-options"><label>${t('combatTest.options.challenge')}<select name="encounter"><option value="gauntlet">${t('combatTest.options.threeFightRoute')}</option>${Object.entries(prototypeScenarios).map(([id, s]) => `<option value="${id}" ${choice.encounter === id ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select></label>
+      <label>${t('combatTest.options.enemyStrength')}<select name="pressure"><option value="1">${t('combatTest.pressure.standard')}</option><option value="0.5">${t('combatTest.pressure.practice')}</option><option value="2">${t('combatTest.pressure.hard')}</option></select></label>
       <label>Seed<input name="seed" type="number" min="1" max="2147483647" step="1" value="${choice.seed}" required></label></div>
-      <fieldset><legend>Try different equipment</legend><div class="test-options">
-      <label>Armor<select name="armor"><option value="">Build default</option>${Object.entries(prototypeEquipmentRules.armor).map(([id, item]) => `<option value="${id}">${esc(item.name)} · ${item.armor} defense · ${item.weight} weight</option>`).join('')}</select></label>
-      <label>Grip<select name="grip"><option value="">Build default</option><option value="oneHand">One handed</option><option value="twoHand">Two handed</option></select></label>
-      <label>Blood Rune<select name="rune"><option value="">Build default</option><option value="on">Install · +${prototypeEquipmentRules.bloodRune.buildup[0].amount} Bleed per contact</option><option value="off">Remove</option></select></label></div>
+      <fieldset><legend>${t('combatTest.equipment.legend')}</legend><div class="test-options">
+      <label>Armor<select name="armor"><option value="">${t('combatTest.equipment.buildDefault')}</option>${Object.entries(prototypeEquipmentRules.armor).map(([id, item]) => `<option value="${id}">${esc(item.name)} · ${item.armor} defense · ${item.weight} weight</option>`).join('')}</select></label>
+      <label>${t('combatTest.equipment.grip')}<select name="grip"><option value="">${t('combatTest.equipment.buildDefault')}</option><option value="oneHand">${t('combatTest.grip.oneHanded')}</option><option value="twoHand">${t('combatTest.grip.twoHanded')}</option></select></label>
+      <label>${t('combatTest.equipment.bloodRune')}<select name="rune"><option value="">${t('combatTest.equipment.buildDefault')}</option><option value="on">${t('combatTest.rune.install', { amount: prototypeEquipmentRules.bloodRune.buildup[0].amount })}</option><option value="off">Remove</option></select></label></div>
       <p id="equipment-preview" aria-live="polite"></p></fieldset>
-      <button class="test-start" type="submit">Begin test run</button><p id="test-error" role="alert"></p></form>
-      <details class="test-help"><summary>What to try</summary><ul><li>Enter a stance, then end your turn. The stance and its glow stay active.</li><li>Keep Dodge Roll in hand or spend stamina to Evade the next hit this turn. It costs no actions.</li><li>Use heavy attacks to stagger; land quick hits to build Bleed.</li><li>Stamina recovers each turn. Mana does not. The route carries all three pools between fights.</li></ul><p>Select a card, then its target. Select a self-targeted card and confirm it on your character. Press E to end your turn.</p></details>
+      <button class="test-start" type="submit">${t('combatTest.setup.begin')}</button><p id="test-error" role="alert"></p></form>
+      <details class="test-help"><summary>${t('combatTest.help.summary')}</summary><ul><li>Enter a stance, then end your turn. The stance and its glow stay active.</li><li>${t('combatTest.help.keepDodge')}</li><li>Use heavy attacks to stagger; land quick hits to build Bleed.</li><li>${t('combatTest.help.staminaRecovers')}</li></ul><p>${t('combatTest.help.select')}</p></details>
       <p class="test-note">Equipment experiment. Armor ratings and load bands are prototype tuning; resource caps are fixed for comparison. Gear changes apply when a fight starts. This uses existing class artwork. Full rune inventory, loot, affinities, and expanded reward decks are still in development. This test does not change your saved runs.</p></section>`;
     app.querySelector('[name=pressure]').value = String(choice.pressure);
     for (const key of ['armor', 'grip', 'rune']) app.querySelector(`[name=${key}]`).value = choice.equipment[key];
@@ -81,15 +82,15 @@ export function mountCombatTest(app, { params, meta }) {
     run.loadout = createLoadout(registries, build.classId, { rightHand: build.itemId, leftHand: null });
     Object.assign(run, input.player, { class: build.classId, seedString: `TEST ${choice.seed} · ${stage + 1}/${route.length}`, floor: stage + 1,
       actNumber: 1, mapGraph: { floors: route.length }, relics: [], deck: input.player.deck, stats: { fightsWon: stage, damageDealt: 0, damageTaken: 0 } });
-    const info = () => openModal({ title: 'Combat test build', size: 'sm', bodyClassName: 'as-pane', body: (host) => {
+    const info = () => openModal({ title: t('combatTest.info.title'), size: 'sm', bodyClassName: 'as-pane', body: (host) => {
       const source = input.combatProfiles.player.sources.mainHand;
       const item = registries.equipment.armaments.find((row) => row.id === build.itemId);
       const profile = input.combatProfiles.player;
-      host.innerHTML = `<p><strong>${esc(build.name)}</strong> · Fight ${stage + 1} of ${route.length}</p><p>${esc(item.name)} · ${esc(source.grip === 'twoHand' ? 'Two handed' : 'One handed')} · ${source.weight} weight · ${weaponImpact(input.ruleset, source, { magical: source.sourceType === 'spell' })} base impact</p>
+      host.innerHTML = `<p><strong>${esc(build.name)}</strong> ${t('combatTest.info.fight', { n: stage + 1, total: route.length })}</p><p>${esc(item.name)} · ${esc(source.grip === 'twoHand' ? t('combatTest.grip.twoHanded') : t('combatTest.grip.oneHanded'))} · ${source.weight} weight · ${weaponImpact(input.ruleset, source, { magical: source.sourceType === 'spell' })} base impact</p>
         <p>Armor: ${profile.armor}. Total weight: ${profile.equipmentReceipt.weight} (${profile.weightClass}). Dodge: ${input.ruleset.dodge.stamina[profile.weightClass]} stamina, no actions. Stamina recovery: ${input.ruleset.recovery.staminaPerTurn}/turn. Mana recovery: ${input.ruleset.recovery.manaPerTurn}/turn.</p>
         <ul>${profile.equipmentReceipt.items.map(row => `<li>${esc(row.name)} · ${esc(row.quality)} · ${row.weight} weight · ${row.value} cinders${row.runes.length ? ` · ${row.runes.map(rune => esc(rune.name)).join(', ')}` : ''}</li>`).join('')}</ul>
         <p>Current health ${combat.player.hp}/${combat.player.maxHp}, stamina ${combat.player.stamina}/${combat.player.maxStamina}, mana ${combat.player.mana}/${combat.player.maxMana}.</p>
-        <p>Equipment is locked for this route. Change armor, grip, or the rune in build selection to compare. Select a card, then confirm its target. Hold a card to inspect it. E ends your turn.</p><button class="test-exit" type="button">Return to build selection</button>`;
+        <p>${t('combatTest.info.locked')}</p><button class="test-exit" type="button">${t('combatTest.info.returnToBuild')}</button>`;
       host.querySelector('button').onclick = () => { const url = new URL(location.href); url.search = '?shot=combat-test'; location.href = url.href; };
       const settings = document.createElement('button'); settings.className = 'test-settings'; settings.textContent = 'Settings';
       settings.onclick = () => openSettings({ meta: testMeta, onChange: changeSettings });
@@ -106,10 +107,10 @@ export function mountCombatTest(app, { params, meta }) {
   }
   function finish(result) {
     const more = result === 'victory' && stage + 1 < route.length;
-    app.innerHTML = `<section class="combat-test-setup"><p class="test-eyebrow">ASHENSPIRE · TEST RUN</p><h1>${result !== 'victory' ? 'Your climb ends here.' : more ? 'One fight closer.' : 'Challenge complete.'}</h1>
+    app.innerHTML = `<section class="combat-test-setup"><p class="test-eyebrow">${t('combatTest.result.eyebrow')}</p><h1>${result !== 'victory' ? 'Your climb ends here.' : more ? 'One fight closer.' : 'Challenge complete.'}</h1>
       <p class="test-lead">${more ? 'Your remaining health, stamina, and mana carry into the next fight. No automatic refill.' : 'Try a different build or repeat the same seed to compare your choices.'}</p>
       <ul class="test-results">${results.map((r) => `<li><strong>${esc(r.name)}</strong> · ${r.result === 'victory' ? 'Victory' : 'Defeat'} in ${r.turn} turns<br>${Math.max(0, r.hp)} health · ${r.stamina} stamina · ${r.mana} mana remaining</li>`).join('')}</ul>
-      ${more ? '<button class="test-start" id="test-next">Continue to next fight</button>' : ''}<button id="test-again">Choose a build</button></section>`;
+      ${more ? '<button class="test-start" id="test-next">Continue to next fight</button>' : ''}<button id="test-again">${t('combatTest.result.chooseABuild')}</button></section>`;
     app.querySelector('#test-next')?.addEventListener('click', () => { stage++; fight(); });
     app.querySelector('#test-again').onclick = setup;
     app.querySelector('h1').tabIndex = -1; app.querySelector('h1').focus();

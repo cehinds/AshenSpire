@@ -9108,5 +9108,208 @@ export const uiStrings = [
     "short": "uiStrings: '{id}' has no {form} form",
     "full": "",
     "tip": ""
+  },
+  {
+    "id": "combatTest.build.legend",
+    "extends": "",
+    "short": "Your build",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combatTest.equipment.bloodRune",
+    "extends": "",
+    "short": "Blood Rune",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combatTest.equipment.buildDefault",
+    "extends": "",
+    "short": "Build default",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combatTest.equipment.grip",
+    "extends": "",
+    "short": "Grip",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combatTest.equipment.legend",
+    "extends": "",
+    "short": "Try different equipment",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combatTest.grip.oneHanded",
+    "extends": "",
+    "short": "One handed",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combatTest.grip.twoHanded",
+    "extends": "",
+    "short": "Two handed",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combatTest.help.keepDodge",
+    "extends": "",
+    "short": "Keep Dodge Roll in hand or spend stamina to Evade the next hit this turn. It costs no actions.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combatTest.help.select",
+    "extends": "",
+    "short": "Select a card, then its target. Select a self-targeted card and confirm it on your character. Press E to end your turn.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combatTest.help.staminaRecovers",
+    "extends": "",
+    "short": "Stamina recovers each turn. Mana does not. The route carries all three pools between fights.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combatTest.help.summary",
+    "extends": "",
+    "short": "What to try",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combatTest.info.fight",
+    "extends": "",
+    "short": "· Fight {n} of {total}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combatTest.info.locked",
+    "extends": "",
+    "short": "Equipment is locked for this route. Change armor, grip, or the rune in build selection to compare. Select a card, then confirm its target. Hold a card to inspect it. E ends your turn.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combatTest.info.returnToBuild",
+    "extends": "",
+    "short": "Return to build selection",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combatTest.info.title",
+    "extends": "",
+    "short": "Combat test build",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combatTest.options.challenge",
+    "extends": "",
+    "short": "Challenge",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combatTest.options.enemyStrength",
+    "extends": "",
+    "short": "Enemy strength",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combatTest.options.threeFightRoute",
+    "extends": "",
+    "short": "Three-fight route",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combatTest.pressure.hard",
+    "extends": "",
+    "short": "Hard — double damage",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combatTest.pressure.practice",
+    "extends": "",
+    "short": "Practice — half damage",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combatTest.pressure.standard",
+    "extends": "",
+    "short": "Standard",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combatTest.result.chooseABuild",
+    "extends": "",
+    "short": "Choose a build",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combatTest.result.eyebrow",
+    "extends": "",
+    "short": "ASHENSPIRE · TEST RUN",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combatTest.rune.install",
+    "extends": "",
+    "short": "Install · +{amount} Bleed per contact",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combatTest.setup.begin",
+    "extends": "",
+    "short": "Begin test run",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combatTest.setup.documentTitle",
+    "extends": "",
+    "short": "AshenSpire {version} — Combat test build",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combatTest.setup.eyebrow",
+    "extends": "",
+    "short": "ASHENSPIRE {version} · TEST BUILD",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combatTest.setup.heading",
+    "extends": "",
+    "short": "Choose your way through.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combatTest.setup.lead",
+    "extends": "",
+    "short": "Play the new combat rules on the game's battlefield. Break Poise with a heavy weapon, build Bleed with quick hits, or save rare mana for a decisive spell.",
+    "full": "",
+    "tip": ""
   }
 ];
