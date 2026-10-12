@@ -36,7 +36,7 @@
     "CT15"
   ],
   "layout": "2 columns x 3 rows, row-major; bottom-right empty",
-  "review_status": "director accepts CT11-14 concept poses; CT15 second hand unresolved; not runtime approved",
+  "review_status": "director concept-approved CT11\u201314 source; old depicted CT15 superseded by approved ct15-replacement.png; not runtime registered",
   "observations": [
     "All five complete silhouettes now appear inside nominal cells, with no overlap",
     "CT14 distinctly lower and wider; CT13 visible hilt grips",
@@ -94,6 +94,20 @@
     {
       "cell": 6,
       "alpha_gt_127_bbox_local": null
+    }
+  ],
+  "approved_concept_ids": [
+    "CT11",
+    "CT12",
+    "CT13",
+    "CT14"
+  ],
+  "superseded_depictions": [
+    {
+      "concept_id": "CT15",
+      "replacement": "ct15-replacement.png",
+      "replacement_label": "Two-hand low hanging cover",
+      "reason": "old sheet depiction lacks a clearly visible second hilt grip"
     }
   ]
 }

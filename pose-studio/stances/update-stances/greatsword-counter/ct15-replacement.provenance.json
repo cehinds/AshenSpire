@@ -38,12 +38,18 @@
     "CT15"
   ],
   "layout": "single full figure, no grid",
-  "review_status": "awaiting director review before gallery use; not selected or runtime approved",
+  "review_status": "director concept-approved CT15 Two-hand low hanging cover; replaces old sheet depiction under same ID; not selected or runtime registered",
   "observations": [
     "Fresh generation from rear costume and selected Smash weapon references only; no previous Counter sheet used",
     "Two separately legible gauntlets grip same long hilt with exposed leather between them; both hands below guard",
     "Broad long blade slopes down-right as low hanging defensive cover; recognizable rear-left costume and planted boots",
     "Complete silhouette appears inside canvas; requested1024 square returned at actual dimensions recorded above",
-    "Supersedes defective sheet CT15 only if director accepts; other four sheet poses unchanged"
-  ]
+    "Director-approved replacement supersedes defective sheet CT15; other four sheet poses unchanged"
+  ],
+  "label": "Two-hand low hanging cover",
+  "supersedes": {
+    "artifact": "sheet-a.png",
+    "concept_id": "CT15",
+    "cell": 5
+  }
 }

@@ -37,12 +37,11 @@
     "CT20"
   ],
   "layout": "2 columns x 3 rows, row-major; bottom-right empty",
-  "review_status": "awaiting final art director review; not selected or runtime approved",
+  "review_status": "director concept-approved CT16\u201320; not selected or runtime registered",
   "observations": [
     "CT17 hilt and both gripping hands moved forward/right of helmet",
     "Other four pose designs retained; all silhouettes inside nominal cells",
-    "Body scale above requested210px; exact72px margin target not met",
-    "Pending director full-resolution anatomy review"
+    "Body scale above requested210px; exact72px margin target not met"
   ],
   "alpha_cell_diagnostics": [
     {
@@ -94,5 +93,12 @@
       "cell": 6,
       "alpha_gt_127_bbox_local": null
     }
+  ],
+  "approved_concept_ids": [
+    "CT16",
+    "CT17",
+    "CT18",
+    "CT19",
+    "CT20"
   ]
 }

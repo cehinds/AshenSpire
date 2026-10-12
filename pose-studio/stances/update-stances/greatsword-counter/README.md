@@ -1,8 +1,8 @@
 # Counter 11–20 held defensive candidates
 
-Canonical review boards: `sheet-a.png` (CT11–15) and `sheet-b.png` (CT16–20), row-major across two columns and three rows, bottom-right empty. Transparent 1024×1536 original imagegen output bytes; no programmatic image edits, resizing or alpha repair.
+Approved concept sources: `sheet-a.png` (CT11–14), `ct15-replacement.png` (CT15), and `sheet-b.png` (CT16–20). The boards use row-major across two columns and three rows, bottom-right empty. Transparent 1024×1536 original imagegen output bytes; no programmatic image edits, resizing or alpha repair.
 
-The art director accepted CT11–14 as concept poses. CT15 still reads one-handed: both targeted grip repairs failed and are preserved as `sheet-a-ct15-failed.png` and `sheet-a-ct15-navel-failed.png`. A retains the earlier canonical board. B now moves CT17's two hilt grips in front of the helmet; final director review is pending. These are concept candidates, not selected or registered runtime assets.
+The art director approved all ten Counter concepts. CT15 is now the standalone **Two-hand low hanging cover**, retaining ID CT15. It supersedes the one-handed depiction still visible in sheet A. That old depiction and the failed grip edits remain historical references, not selectable CT15 artwork. B includes CT17's approved forward hilt grips. Concept approval does not select or register these as runtime assets.
 
 | ID | Held cover |
 |---|---|
@@ -10,7 +10,7 @@ The art director accepted CT11–14 as concept poses. CT15 still reads one-hande
 | CT12 | Low forward plough, up-right blade |
 | CT13 | High point-forward horizontal side cover |
 | CT14 | Lower wide chest-centered inclined barrier |
-| CT15 | Rear-weighted low hanging; second hand unresolved |
+| CT15 | Two-hand low hanging cover; standalone replacement |
 | CT16 | Compact crown roof, horizontal blade |
 | CT17 | Forward outside hanging cover, withdrawn torso |
 | CT18 | Withdrawn point-on-line, sternum hilt |
@@ -21,4 +21,4 @@ Complete silhouettes fit their nominal cells on the current boards. The generato
 
 Each `.provenance.json` records the exact prompt file, inspected local reference hashes, exact returned tool path, actual dimensions, output hash and limitations. `.original.png` boards and numbered repairs preserve the generation history. Outputs were copied from exact returned paths, never selected by a newest-file glob. No external reference pixels were inspected or imported.
 
-A fresh single-figure `ct15-replacement.png` is now available for director review. It was generated from only the costume and selected Smash references, without the previous Counter board. Two separate gauntlets and exposed hilt leather are visibly legible. Gallery use and superseding old CT15 await director acceptance; the four other A concepts remain unchanged. Exact output bytes, actual dimensions and prompt are recorded in its provenance.
+The director-approved single-figure `ct15-replacement.png` is the current CT15 source. It was generated from only the costume and selected Smash references, without the previous Counter board. Two separate gauntlets and exposed hilt leather are visibly legible. It replaces the old sheet depiction under the same ID; the four other A concepts remain unchanged. Exact output bytes, actual dimensions and prompt are recorded in its provenance.
