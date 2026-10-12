@@ -1,0 +1,894 @@
+id,key,label,parent,erd,school,description,effect,variables,duration,stacking,related,status,glyph,color,liveId
+meta,meta,Meta,,TagNode,,,,,,,,game-concept,,,
+meta.character,character,Character,meta,Character,,,,,,,,game-concept,,,
+meta.character.class,character.class,Class,meta.character,Class,,,,,,,,game-concept,,,
+meta.character.class.warrior,warrior,Warrior,meta.character.class,Class,,Reaver,,,,,,game-concept,,,
+meta.character.class.scoundrel,scoundrel,Scoundrel,meta.character.class,Class,,Rogue,,,,,,game-concept,,,
+meta.character.class.monk,monk,Monk,meta.character.class,Class,,Herald,,,,,,game-concept,,,
+meta.character.class.mage,mage,Mage,meta.character.class,Class,,Starseer,,,,,,game-concept,,,
+meta.character.attribute,attribute,Attribute,meta.character,Character,,,,,,,,game-concept,,,
+meta.character.attribute.strength,attribute.strength,Strength,meta.character.attribute,Character,,,,,,,,game-concept,,,
+meta.character.attribute.dexterity,attribute.dexterity,Dexterity,meta.character.attribute,Character,,,,,whole combat,intensity,,game-concept,,,
+meta.character.attribute.constitution,attribute.constitution,Constitution,meta.character.attribute,Character,,,,,,,,game-concept,,,
+meta.character.attribute.intelligence,attribute.intelligence,Intelligence,meta.character.attribute,Character,,,,,,,,game-concept,,,
+meta.character.attribute.wisdom,attribute.wisdom,Wisdom,meta.character.attribute,Character,,,,,,,,game-concept,,,
+meta.character.resource,character.resource,Resource,meta.character,Character,,,,,,,,game-concept,,,
+meta.character.resource.hp,hp,HP,meta.character.resource,Character,,,,,,,,game-concept,,,
+meta.character.resource.sp,sp,SP,meta.character.resource,Character,,Stamina,,,,,,game-concept,,,
+meta.character.resource.mp,mp,MP,meta.character.resource,Character,,Mana,,,,,,game-concept,,,
+meta.character.resource.level,level,Level,meta.character.resource,Character,,,,,,,,game-concept,,,
+meta.character.resource.level.character-level,character-level,Character level,meta.character.resource.level,Character,,,,,,,,game-concept,,,
+meta.character.resource.level.class-level,class-level,Class level,meta.character.resource.level,Character,,,,,,,,game-concept,,,
+meta.character.resource.level.skill-level,skill-level,Skill level,meta.character.resource.level,Character,,,,,,,,game-concept,,,
+meta.character.resource.exp,exp,EXP,meta.character.resource,Character,,,,,,,,game-concept,,,
+meta.character.resource.exp.character-exp,character-exp,Character EXP,meta.character.resource.exp,Character,,,,,,,,game-concept,,,
+meta.character.resource.exp.class-exp,class-exp,Class EXP,meta.character.resource.exp,Character,,,,,,,,game-concept,,,
+meta.character.resource.exp.skill-exp,skill-exp,Skill EXP,meta.character.resource.exp,Character,,,,,,,,game-concept,,,
+meta.character.resource.currency,currency,Currency,meta.character.resource,Currency,,,,,,,,game-concept,,,
+meta.character.resource.currency.cinders,cinders,Cinders,meta.character.resource.currency,Currency,,,,,,,,game-concept,,,
+meta.character.resource.currency.gold,gold,Gold,meta.character.resource.currency,Currency,,later,,,,,,game-concept,,,
+meta.character.offensive-stats,offensive-stats,Offensive stats,meta.character,Character,,,,,,,,new,,,
+meta.character.offensive-stats.ar,ar,AR,meta.character.offensive-stats,Character,,"attack rating, scales physical",Scales physical damage,,,,,game-concept,,,
+meta.character.offensive-stats.pr,pr,PR,meta.character.offensive-stats,Character,,"potency rating, scales magic",Scales magic damage and magic Block,,,,,game-concept,,,
+meta.character.offensive-stats.crit-chance,crit-chance,Crit chance,meta.character.offensive-stats,Character,,,,,,,,game-concept,,,
+meta.character.offensive-stats.crit-damage,crit-damage,Crit damage,meta.character.offensive-stats,Character,,,,,,,,new,,,
+meta.character.offensive-stats.accuracy,offensive-stats.accuracy,Accuracy,meta.character.offensive-stats,Character,,,,,,,,new,,,
+meta.character.defensive-stats,defensive-stats,Defensive stats,meta.character,Character,,,,,,,,game-concept,,,
+meta.character.defensive-stats.dr,dr,DR,meta.character.defensive-stats,Character,,defense rating,Scales physical Block,,,,,game-concept,,,
+meta.character.defensive-stats.evasion,defensive-stats.evasion,Evasion,meta.character.defensive-stats,Character,,dodge chance,,,,,,game-concept,,,
+meta.character.defensive-stats.accuracy,defensive-stats.accuracy,Accuracy,meta.character.defensive-stats,Character,,"Defense-side Accuracy (owner decision 11, 2026-10-11). The offensive Accuracy tag under offensive-stats is unchanged",,,,,,new,,,
+meta.character.defensive-stats.block,defensive-stats.block,Block,meta.character.defensive-stats,Character,,stops physical,,,,,,game-concept,,,
+meta.character.defensive-stats.barrier,defensive-stats.barrier,Barrier,meta.character.defensive-stats,Character,,stops magic,,,,,,game-concept,,,
+meta.character.defensive-stats.poise,poise,Poise,meta.character.defensive-stats,Character,,physical impact → Staggered,,,,,,game-concept,,,
+meta.character.defensive-stats.ward,defensive-stats.ward,Ward,meta.character.defensive-stats,Character,,magic impact → Disrupted,,,,,,game-concept,,,
+meta.character.perception,perception,Perception,meta.character,Character,,intent reveal,,,,,,game-concept,,,
+meta.character.weapon,character.weapon,Weapon,meta.character,Weapon,,,,,,,,game-concept,,,
+meta.character.weapon.one-handed,one-handed,One-handed,meta.character.weapon,Weapon,,,,,,,,game-concept,,,
+meta.character.weapon.one-handed.sword,one-handed.sword,Sword,meta.character.weapon.one-handed,Weapon,,,,,,,,game-concept,,,
+meta.character.weapon.one-handed.katana,katana,Katana,meta.character.weapon.one-handed,Weapon,,,,,,,,game-concept,,,
+meta.character.weapon.one-handed.dagger,one-handed.dagger,Dagger,meta.character.weapon.one-handed,Weapon,,,,,,,,game-concept,,,
+meta.character.weapon.one-handed.axe,one-handed.axe,Axe,meta.character.weapon.one-handed,Weapon,,,,,,,,game-concept,,,
+meta.character.weapon.one-handed.hammer,hammer,Hammer,meta.character.weapon.one-handed,Weapon,,,,,,,,game-concept,,,
+meta.character.weapon.one-handed.spear,spear,Spear,meta.character.weapon.one-handed,Weapon,,,,,,,,game-concept,,,
+meta.character.weapon.one-handed.scepter,scepter,Scepter,meta.character.weapon.one-handed,Weapon,,,,,,,,game-concept,,,
+meta.character.weapon.one-handed.tome,tome,Tome,meta.character.weapon.one-handed,Weapon,,,,,,,,game-concept,,,
+meta.character.weapon.two-handed,weapon.two-handed,Two-handed,meta.character.weapon,Weapon,,,,,,,,game-concept,,,
+meta.character.weapon.two-handed.great-sword,great-sword,Great sword,meta.character.weapon.two-handed,Weapon,,,,,,,,game-concept,,,
+meta.character.weapon.two-handed.halberd,halberd,Halberd,meta.character.weapon.two-handed,Weapon,,,,,,,,game-concept,,,
+meta.character.weapon.two-handed.twinblade,twinblade,Twinblade,meta.character.weapon.two-handed,Weapon,,,,,,,,game-concept,,,
+meta.character.weapon.two-handed.staff,two-handed.staff,Staff,meta.character.weapon.two-handed,Weapon,,,,,,,,game-concept,,,
+meta.character.weapon.two-handed.bow,two-handed.bow,Bow,meta.character.weapon.two-handed,Weapon,,,,,,,,game-concept,,,
+meta.character.weapon.off-hand,off-hand,Off-hand,meta.character.weapon,Weapon,,,,,,,,game-concept,,,
+meta.character.weapon.off-hand.shield,off-hand.shield,Shield,meta.character.weapon.off-hand,Weapon,,,,,,,,live-tag,🛡,7FA8C9,item:shield
+meta.character.weapon.off-hand.parrying-dagger,parrying-dagger,Parrying dagger,meta.character.weapon.off-hand,Weapon,,,,,,,,new,,,
+meta.character.weapon.off-hand.light-source,light-source,Light source,meta.character.weapon.off-hand,Weapon,,"lantern, torch",,,,,,new,,,
+meta.character.weapon.off-hand.catalyst,catalyst,Catalyst,meta.character.weapon.off-hand,Weapon,,"chime, branch, rod",,,,,,new,,,
+meta.character.weapon.unarmed,weapon.unarmed,Unarmed,meta.character.weapon,Weapon,,,,,,,,game-concept,,,
+meta.character.armor,character.armor,Armor,meta.character,Armor,,,,,,,,live-tag,▣,B8B0A0,item:armor
+meta.character.armor.weight,weight,Weight,meta.character.armor,Armor,,,,,,,,game-concept,,,
+meta.character.armor.weight.clothing,clothing,Clothing,meta.character.armor.weight,Armor,,,,,,,,game-concept,,,
+meta.character.armor.weight.light,weight.light,Light,meta.character.armor.weight,Armor,,,,,,,,game-concept,,,
+meta.character.armor.weight.medium,weight.medium,Medium,meta.character.armor.weight,Armor,,,,,,,,game-concept,,,
+meta.character.armor.weight.heavy,weight.heavy,Heavy,meta.character.armor.weight,Armor,,,,,,,,game-concept,,,
+meta.character.armor.material,material,Material,meta.character.armor,Armor,,,,,,,,game-concept,,,
+meta.character.armor.material.cloth,cloth,Cloth,meta.character.armor.material,Armor,,"light, no resistances",,,,,,game-concept,,,
+meta.character.armor.material.leather,leather,Leather,meta.character.armor.material,Armor,,"light, + evasion",,,,,,game-concept,,,
+meta.character.armor.material.studded,studded,Studded,meta.character.armor.material,Armor,,leather + physical Block,,,,,,new,,,
+meta.character.armor.material.chain,chain,Chain,meta.character.armor.material,Armor,,"medium, resists slashing",,,,,,game-concept,,,
+meta.character.armor.material.scale,scale,Scale,meta.character.armor.material,Armor,,"medium, resists piercing",,,,,,game-concept,,,
+meta.character.armor.material.plated,plated,Plated,meta.character.armor.material,Armor,,"heavy, high DR, resists blunt less",,,,,,game-concept,,,
+meta.character.armor.defensive-property,defensive-property,Defensive property,meta.character.armor,Armor,,,,,,,,new,,,
+meta.character.armor.defensive-property.absorption,absorption,Absorption,meta.character.armor.defensive-property,Armor,,converts part of damage taken to Block or Ward,,,,,,new,,,
+meta.character.armor.defensive-property.siphon,siphon,Siphon,meta.character.armor.defensive-property,Armor,,Moved: re-homed in the proposal (tag-tree.txt [m]). drains HP or MP when hit or when breaking,,,,,,live-tag,◈,7FA8C9,siphon
+meta.character.armor.defensive-property.thorns,thorns,Thorns,meta.character.armor.defensive-property,Armor,,returns damage to melee attackers,,,,,,game-concept,,,
+meta.character.armor.defensive-property.padded,padded,Padded,meta.character.armor.defensive-property,Armor,,"+ Poise, resists Stagger",,,,,,new,,,
+meta.character.armor.defensive-property.warded,warded,Warded,meta.character.armor.defensive-property,Armor,,"+ Ward, resists magic impact",,,,,,game-concept,,,
+meta.character.armor.defensive-property.insulated,insulated,Insulated,meta.character.armor.defensive-property,Armor,,"Moved: re-homed in the proposal (tag-tree.txt [m]). resists lightning, no conduction",,,,,,live-tag,◇,9FC3E8,trait:insulated
+meta.character.armor.defensive-property.grounded,defensive-property.grounded,Grounded,meta.character.armor.defensive-property,Armor,,Moved: re-homed in the proposal (tag-tree.txt [m]). clears Paralysis pressure,,,,,,live-tag,◇,9FC3E8,trait:grounded
+meta.character.armor.defensive-property.fireproof,fireproof,Fireproof,meta.character.armor.defensive-property,Armor,,resists Burn,,,,,,new,,,
+meta.character.armor.defensive-property.frostlined,frostlined,Frostlined,meta.character.armor.defensive-property,Armor,,resists Frost build-up,,,,,,new,,,
+meta.character.armor.defensive-property.sanctified,sanctified,Sanctified,meta.character.armor.defensive-property,Armor,,resists necrotic and Blight,,,,,,new,,,
+meta.character.armor.defensive-property.mindguard,mindguard,Mindguard,meta.character.armor.defensive-property,Armor,,resists Insanity and Confused,,,,,,new,,,
+meta.character.armor.defensive-property.lightweight,lightweight,Lightweight,meta.character.armor.defensive-property,Armor,,"−SP cost, + Evade",,,,,,new,,,
+meta.character.armor.defensive-property.reinforced,reinforced,Reinforced,meta.character.armor.defensive-property,Armor,,Block not lost on Stagger,,,,,,new,,,
+meta.character.armor.slot,armor.slot,Slot,meta.character.armor,Armor,,,,,,,,game-concept,,,
+meta.character.armor.slot.head,head,Head,meta.character.armor.slot,Armor,,,,,,,,game-concept,,,
+meta.character.armor.slot.body,body,Body,meta.character.armor.slot,Armor,,,,,,,,game-concept,,,
+meta.character.armor.slot.hands,hands,Hands,meta.character.armor.slot,Armor,,,,,,,,game-concept,,,
+meta.character.armor.slot.feet,feet,Feet,meta.character.armor.slot,Armor,,,,,,,,game-concept,,,
+meta.character.armor.slot.talisman,talisman,Talisman,meta.character.armor.slot,Armor,,,,,,,,game-concept,,,
+meta.character.relic,character.relic,Relic,meta.character,Relic,,,,,,,,game-concept,,,
+meta.character.relic.rarity,relic.rarity,Rarity,meta.character.relic,Relic,,,,,,,,game-concept,,,
+meta.character.relic.rarity.starter,relic.rarity.starter,Starter,meta.character.relic.rarity,Relic,,,,,,,,game-concept,,,
+meta.character.relic.rarity.common,relic.rarity.common,Common,meta.character.relic.rarity,Relic,,,,,,,,game-concept,,,
+meta.character.relic.rarity.uncommon,relic.rarity.uncommon,Uncommon,meta.character.relic.rarity,Relic,,,,,,,,game-concept,,,
+meta.character.relic.rarity.rare,relic.rarity.rare,Rare,meta.character.relic.rarity,Relic,,,,,,,,game-concept,,,
+meta.character.relic.rarity.boss,rarity.boss,Boss,meta.character.relic.rarity,Relic,,,,,,,,game-concept,,,
+meta.character.relic.rarity.event,rarity.event,Event,meta.character.relic.rarity,Relic,,,,,,,,game-concept,,,
+meta.character.relic.trigger,trigger,Trigger,meta.character.relic,Relic,,,,,,,,game-concept,,,
+meta.character.relic.trigger.combat-start,combat-start,Combat start,meta.character.relic.trigger,Relic,,,,,,,,game-concept,,,
+meta.character.relic.trigger.turn-start,turn-start,Turn start,meta.character.relic.trigger,Relic,,,,,,,,game-concept,,,
+meta.character.relic.trigger.on-play,on-play,On play,meta.character.relic.trigger,Relic,,,,,,,,game-concept,,,
+meta.character.relic.trigger.on-hit,on-hit,On hit,meta.character.relic.trigger,Relic,,,,,,,,new,,,
+meta.character.relic.trigger.on-kill,on-kill,On kill,meta.character.relic.trigger,Relic,,,,,,,,new,,,
+meta.character.relic.trigger.passive,passive,Passive,meta.character.relic.trigger,Relic,,,,,,,,game-concept,,,
+meta.character.feat,character.feat,Feat,meta.character,Feat,,,,,,,,game-concept,,,
+meta.character.feat.class-feat,class-feat,Class feat,meta.character.feat,Feat,,,,,,,,game-concept,,,
+meta.character.feat.skill-feat,skill-feat,Skill feat,meta.character.feat,Feat,,,,,,,,game-concept,,,
+meta.character.feat.ability,ability,Ability,meta.character.feat,Feat,,,,,,,,game-concept,,,
+meta.character.consumable,character.consumable,Consumable,meta.character,Consumable,,,,,,,,game-concept,,,
+meta.character.consumable.flask,consumable.flask,Flask,meta.character.consumable,Consumable,,"HP, MP",,,,,,game-concept,,,
+meta.character.consumable.potion,potion,Potion,meta.character.consumable,Consumable,,,,,,,,game-concept,,,
+meta.character.consumable.throwable,throwable,Throwable,meta.character.consumable,Consumable,,,,,,,,new,,,
+meta.character.consumable.buff-item,buff-item,Buff item,meta.character.consumable,Consumable,,,,,,,,new,,,
+meta.character.consumable.key-item,key-item,Key item,meta.character.consumable,Consumable,,,,,,,,new,,,
+meta.character.creature,creature,Creature,meta.character,Creature,,,,,,,,live-tag,,,creature
+meta.character.creature.type,creature.type,Type,meta.character.creature,Creature,,,,,,,,game-concept,,,
+meta.character.creature.type.beast,beast,Beast,meta.character.creature.type,Creature,,,,,,,,live-tag,🐾,7A6F5A,beast
+meta.character.creature.type.humanoid,humanoid,Humanoid,meta.character.creature.type,Creature,,,,,,,,live-tag,👤,B8B0A0,humanoid
+meta.character.creature.type.undead,undead,Undead,meta.character.creature.type,Creature,,,,,,,,live-tag,💀,647B73,undead
+meta.character.creature.type.construct,construct,Construct,meta.character.creature.type,Creature,,,,,,,,live-tag,⚙,9FC3E8,construct
+meta.character.creature.type.spirit,spirit,Spirit,meta.character.creature.type,Creature,,,,,,,,live-tag,👻,7FA8C9,spirit
+meta.character.creature.type.dragon,dragon,Dragon,meta.character.creature.type,Creature,,,,,,,,game-concept,,,
+meta.character.creature.type.demon,demon,Demon,meta.character.creature.type,Creature,,,,,,,,new,,,
+meta.character.creature.type.elemental,elemental,Elemental,meta.character.creature.type,Creature,,,,,,,,game-concept,,,
+meta.character.creature.type.plant,plant,Plant,meta.character.creature.type,Creature,,,,,,,,game-concept,,,
+meta.character.creature.rank,rank,Rank,meta.character.creature,Creature,,,,,,,,game-concept,,,
+meta.character.creature.rank.minion,minion,Minion,meta.character.creature.rank,Creature,,,,,,,,new,,,
+meta.character.creature.rank.elite,elite,Elite,meta.character.creature.rank,Creature,,,,,,,,game-concept,,,
+meta.character.creature.rank.boss,rank.boss,Boss,meta.character.creature.rank,Creature,,,,,,,,game-concept,,,
+meta.character.other,character.other,Other,meta.character,Character,,,,,,,,game-concept,,,
+meta.character.other.location,location,Location,meta.character.other,Location,,,,,,,,game-concept,,,
+meta.character.other.location.shrine,shrine,Shrine,meta.character.other.location,Location,,,,,,,,game-concept,,,
+meta.character.other.location.camp,camp,Camp,meta.character.other.location,Location,,,,,,,,game-concept,,,
+meta.character.other.location.inn,inn,Inn,meta.character.other.location,Location,,,,,,,,game-concept,,,
+meta.character.other.location.chapel,chapel,Chapel,meta.character.other.location,Location,,,,,,,,game-concept,,,
+meta.character.other.location.event,location.event,Event,meta.character.other.location,Location,,,,,,,,game-concept,,,
+meta.character.other.location.encounter,location.encounter,Encounter,meta.character.other.location,Location,,,,,,,,game-concept,,,
+meta.combat,meta.combat,Combat,meta,TagNode,,,,,,,,game-concept,,,
+meta.combat.skill,combat.skill,Skill,meta.combat,Skill,,,,,,,,game-concept,,,
+meta.combat.skill.weapon-skill,weapon-skill,Weapon skill,meta.combat.skill,Skill,,deals physical damage,,,,,,game-concept,,,
+meta.combat.skill.weapon-skill.sword,weapon-skill.sword,Sword,meta.combat.skill.weapon-skill,Skill,,,,,,,,game-concept,,,
+meta.combat.skill.weapon-skill.dagger,weapon-skill.dagger,Dagger,meta.combat.skill.weapon-skill,Skill,,,,,,,,game-concept,,,
+meta.combat.skill.weapon-skill.twinblades,twinblades,Twinblades,meta.combat.skill.weapon-skill,Skill,,,,,,,,game-concept,,,
+meta.combat.skill.weapon-skill.blade,weapon-skill.blade,Blade,meta.combat.skill.weapon-skill,Skill,,,,,,,,live-tag,⚔,C9502E,blade
+meta.combat.skill.weapon-skill.blunt,weapon-skill.blunt,Blunt,meta.combat.skill.weapon-skill,Skill,,,,,,,,game-concept,,,
+meta.combat.skill.weapon-skill.axe,weapon-skill.axe,Axe,meta.combat.skill.weapon-skill,Skill,,,,,,,,game-concept,,,
+meta.combat.skill.weapon-skill.polearm,polearm,Polearm,meta.combat.skill.weapon-skill,Skill,,,,,,,,new,,,
+meta.combat.skill.weapon-skill.staff,weapon-skill.staff,Staff,meta.combat.skill.weapon-skill,Skill,,,,,,,,game-concept,,,
+meta.combat.skill.weapon-skill.marksman,marksman,Marksman,meta.combat.skill.weapon-skill,Skill,,,,,,,,game-concept,,,
+meta.combat.skill.weapon-skill.bow,weapon-skill.bow,Bow,meta.combat.skill.weapon-skill,Skill,,,,,,,,live-tag,➶,7FA8C9,bow
+meta.combat.skill.weapon-skill.shield,weapon-skill.shield,Shield,meta.combat.skill.weapon-skill,Skill,,,,,,,,game-concept,,,
+meta.combat.skill.weapon-skill.unarmed,weapon-skill.unarmed,Unarmed,meta.combat.skill.weapon-skill,Skill,,,,,,,,game-concept,,,
+meta.combat.skill.weapon-skill.two-handed,weapon-skill.two-handed,Two-handed,meta.combat.skill.weapon-skill,Skill,,,,,,,,game-concept,,,
+meta.combat.skill.weapon-skill.dual-wield,dual-wield,Dual-wield,meta.combat.skill.weapon-skill,Skill,,,,,,,,game-concept,,,
+meta.combat.skill.armor-skill,armor-skill,Armor skill,meta.combat.skill,Skill,,,,,,,,game-concept,,,
+meta.combat.skill.armor-skill.light,armor-skill.light,Light,meta.combat.skill.armor-skill,Skill,,,,,,,,game-concept,,,
+meta.combat.skill.armor-skill.medium,armor-skill.medium,Medium,meta.combat.skill.armor-skill,Skill,,,,,,,,game-concept,,,
+meta.combat.skill.armor-skill.heavy,armor-skill.heavy,Heavy,meta.combat.skill.armor-skill,Skill,,,,,,,,game-concept,,,
+meta.combat.skill.technique,technique,Technique,meta.combat.skill,Skill,,,,,,,,live-tag,,,technique
+meta.combat.skill.technique.heavy,technique.heavy,Heavy,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,◇,9FC3E8,technique:heavy
+meta.combat.skill.technique.precision,technique.precision,Precision,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,◇,9FC3E8,technique:precision
+meta.combat.skill.technique.pierce,technique.pierce,Pierce,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,†,9FC3E8,pierce
+meta.combat.skill.technique.cleave,technique.cleave,Cleave,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,◇,9FC3E8,technique:cleave
+meta.combat.skill.technique.flourish,technique.flourish,Flourish,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,◇,9FC3E8,technique:flourish
+meta.combat.skill.technique.guile,technique.guile,Guile,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]). rogue trickery,,,,,,live-tag,◇,647B73,guile
+meta.combat.skill.technique.blood,technique.blood,Blood,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]). pay HP for power,,,,,,live-tag,🩸,8A1A1A,blood
+meta.combat.skill.technique.venom,technique.venom,Venom,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]). poison craft,,,,,,live-tag,☠,7FAF63,venom
+meta.combat.skill.class-stance,class-stance,Class stance,meta.combat.skill,ClassStance,,Moved: re-homed in the proposal (tag-tree.txt [m]). card skill; holds a stance until changed,,,,,,live-tag,◇,9FC3E8,theme:stance
+meta.combat.skill.class-stance.gorefire-stance,gorefire-stance,Gorefire Stance,meta.combat.skill.class-stance,ClassStance,,,,,,,,game-concept,,,
+meta.combat.skill.class-stance.bulwark-stance,bulwark-stance,Bulwark Stance,meta.combat.skill.class-stance,ClassStance,,,,,,,,game-concept,,,
+meta.combat.skill.class-stance.brace,brace,Brace,meta.combat.skill.class-stance,ClassStance,,,,,,,,game-concept,,,
+meta.combat.skill.prepare,prepare,Prepare,meta.combat.skill,Skill,,"Prepare. Available to players as well as enemies (owner decision 4, 2026-10-11); sets Prepared",,,,,,new,,,
+meta.combat.skill.spellcraft,spellcraft,Spellcraft,meta.combat.skill,Skill,,each school deals its damage type,,,,,,live-tag,,,school
+meta.combat.skill.spellcraft.fire,spellcraft.fire,Fire,meta.combat.skill.spellcraft,Skill,spellcraft.fire,,,,,,,live-tag,🔥,E47C43,school:fire
+meta.combat.skill.spellcraft.fire.gorefire,fire.gorefire,Gorefire,meta.combat.skill.spellcraft.fire,Skill,spellcraft.fire,Moved: re-homed in the proposal (tag-tree.txt [m]). fire fed by blood,,,,,,live-tag,🔥,C9502E,gorefire
+meta.combat.skill.spellcraft.fire.ash,fire.ash,Ash,meta.combat.skill.spellcraft.fire,Skill,spellcraft.fire,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,•,7A6F5A,ash
+meta.combat.skill.spellcraft.frost,spellcraft.frost,Frost,meta.combat.skill.spellcraft,Skill,spellcraft.frost,,,,,,,live-tag,❄,A6D8EF,school:frost
+meta.combat.skill.spellcraft.lightning,spellcraft.lightning,Lightning,meta.combat.skill.spellcraft,Skill,spellcraft.lightning,,,,,,,live-tag,ϟ,E8D46A,school:lightning
+meta.combat.skill.spellcraft.earth,spellcraft.earth,Earth,meta.combat.skill.spellcraft,Skill,spellcraft.earth,,,,,,,game-concept,,,
+meta.combat.skill.spellcraft.force,spellcraft.force,Force,meta.combat.skill.spellcraft,Skill,spellcraft.force,,,,,,,live-tag,✦,B99DEC,school:force
+meta.combat.skill.spellcraft.force.starstone,force.starstone,Starstone,meta.combat.skill.spellcraft.force,Skill,spellcraft.force,Moved: re-homed in the proposal (tag-tree.txt [m]). astral force,,,,,,live-tag,✦,7FA8C9,starstone
+meta.combat.skill.spellcraft.divine,spellcraft.divine,Divine,meta.combat.skill.spellcraft,Skill,spellcraft.divine,,,,,,,live-tag,✚,F0D99A,school:divine
+meta.combat.skill.spellcraft.divine.oath,divine.oath,Oath,meta.combat.skill.spellcraft.divine,Skill,spellcraft.divine,"Moved: re-homed in the proposal (tag-tree.txt [m]). vows, holy martial",,,,,,live-tag,✚,C9A227,oath
+meta.combat.skill.spellcraft.necrotic,spellcraft.necrotic,Necrotic,meta.combat.skill.spellcraft,Skill,spellcraft.necrotic,,,,,,,live-tag,☣,A4BD72,school:decay
+meta.combat.skill.spellcraft.necrotic.blight,necrotic.blight,Blight,meta.combat.skill.spellcraft.necrotic,Skill,spellcraft.necrotic,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,☣,B5541C,blight
+meta.combat.skill.spellcraft.psychic,spellcraft.psychic,Psychic,meta.combat.skill.spellcraft,Skill,spellcraft.psychic,,,,,,,new,,,
+meta.combat.skill.spellcraft.psychic.illusion,illusion,Illusion,meta.combat.skill.spellcraft.psychic,Skill,spellcraft.psychic,Moved: re-homed in the proposal (tag-tree.txt [m]). existing school,,,,,,live-tag,◎,C59BD7,school:illusion
+meta.combat.skill.spellcraft.psychic.ritual,psychic.ritual,Ritual,meta.combat.skill.spellcraft.psychic,Skill,spellcraft.psychic,Moved: re-homed in the proposal (tag-tree.txt [m]). madness,,,,,,live-tag,◈,C9A227,ritual
+meta.combat.skill.spellcraft.alteration,alteration,Alteration,meta.combat.skill.spellcraft,Skill,alteration,"Moved: re-homed in the proposal (tag-tree.txt [m]). existing school, non-elemental",,,,,,live-tag,◇,9BC8BE,school:alteration
+meta.combat.damage,damage,Damage,meta.combat,DamageType,,,,,,,,live-tag,,,damage
+meta.combat.damage.physical,damage.physical,Physical,meta.combat.damage,DamageType,,,,,,,,live-tag,,,damage.physical
+meta.combat.damage.physical.slashing,slashing,Slashing,meta.combat.damage.physical,DamageType,,→ Bleeding,On Health hit: apply [bleeding],,,,,live-tag,◇,9FC3E8,damage:slashing
+meta.combat.damage.physical.blunt,physical.blunt,Blunt,meta.combat.damage.physical,DamageType,,→ Poise damage,+2 Poise damage,,,,,live-tag,◇,9FC3E8,damage:blunt
+meta.combat.damage.physical.pierce,physical.pierce,Pierce,meta.combat.damage.physical,DamageType,,ignores Guard,Ignores 2 Guard; slips past melee Counter,,,,,live-tag,◇,9FC3E8,damage:piercing
+meta.combat.damage.magic,damage.magic,Magic,meta.combat.damage,DamageType,,,,,,,,live-tag,,,damage.magic
+meta.combat.damage.magic.fire,magic.fire,Fire,meta.combat.damage.magic,DamageType,spellcraft.fire,→ Burned,On hit: apply [burned],burned,,,,live-tag,◇,9FC3E8,damage:fire
+meta.combat.damage.magic.frost,magic.frost,Frost,meta.combat.damage.magic,DamageType,spellcraft.frost,→ Frostbitten,On hit: apply [build-up.frost],,,,,live-tag,◇,9FC3E8,damage:frost
+meta.combat.damage.magic.lightning,magic.lightning,Lightning,meta.combat.damage.magic,DamageType,spellcraft.lightning,→ Paralyzed,On hit: apply [paralyzed]; breaks an ungrounded Counter,,,,,live-tag,◇,9FC3E8,damage:lightning
+meta.combat.damage.magic.earth,magic.earth,Earth,meta.combat.damage.magic,DamageType,spellcraft.earth,,,,,,,game-concept,,,
+meta.combat.damage.magic.divine,magic.divine,Divine,meta.combat.damage.magic,DamageType,spellcraft.divine,cleanses,On hit: cleanse one debuff from the attacker,,,,,live-tag,◇,9FC3E8,damage:sacred
+meta.combat.damage.magic.necrotic,magic.necrotic,Necrotic,meta.combat.damage.magic,DamageType,spellcraft.necrotic,→ Blighted,On hit: apply [blighted],,,,,live-tag,◇,9FC3E8,damage:decay
+meta.combat.damage.magic.psychic,magic.psychic,Psychic,meta.combat.damage.magic,DamageType,spellcraft.psychic,→ Confused,On hit: apply [confused],,,,,new,,,
+meta.combat.damage.hybrid,hybrid,Hybrid,meta.combat.damage,DamageType,,,,,,,,game-concept,,,
+meta.combat.damage.hybrid.force,hybrid.force,Force,meta.combat.damage.hybrid,DamageType,spellcraft.force,Block or Barrier stops it,Drains 2 [defensive-stats.ward]; slips past melee Counter,,,,,live-tag,◇,9FC3E8,damage:arcane
+meta.combat.stance,combat.stance,Stance,meta.combat,Stance,,,,,,,,live-tag,,,maneuver
+meta.combat.stance.offensive,offensive,Offensive,meta.combat.stance,Stance,,,,,,,,game-concept,,,
+meta.combat.stance.offensive.attack,offensive.attack,Attack,meta.combat.stance.offensive,Stance,,44 cards,×1.25 vs [smash] stance,,,,,live-tag,⚔,D7B36B,maneuver:attack
+meta.combat.stance.offensive.attack.strike,attack.strike,Strike,meta.combat.stance.offensive.attack,Stance,,"Strike, Quick Cut, Katana Draw Cut, weapon attacks",,,,,,game-concept,,,
+meta.combat.stance.offensive.attack.flurry,flurry,Flurry,meta.combat.stance.offensive.attack,Stance,,"Blade Dance, Thousand Cuts, Twin Fang, Twinblade Flurry",,,,,,game-concept,,,
+meta.combat.stance.offensive.attack.bleed-strike,bleed-strike,Bleed strike,meta.combat.stance.offensive.attack,Stance,,"Rend, Serrated Blade, Bloodhunter's Strike, Goreslash",,,,,,game-concept,,,
+meta.combat.stance.offensive.attack.finisher,finisher,Finisher,meta.combat.stance.offensive.attack,Stance,,"Executioner, Deathblow, Coup de Grace, Assassinate",,,,,,game-concept,,,
+meta.combat.stance.offensive.attack.dirty-trick,dirty-trick,Dirty trick,meta.combat.stance.offensive.attack,Stance,,"Cheap Shot, Low Blow, Sap, Garrote, Hamstring, Ambush",,,,,,game-concept,,,
+meta.combat.stance.offensive.attack.elemental-strike,elemental-strike,Elemental strike,meta.combat.stance.offensive.attack,Stance,,"Flame to Blade, Gorefire Slash, Rime Thrust",,,,,,game-concept,,,
+meta.combat.stance.offensive.smash,smash,Smash,meta.combat.stance.offensive,Stance,,13 cards,×1.5 vs [defensive.block] stance; +3 Poise on guard break,,,,,live-tag,⚒,DB9871,maneuver:smash
+meta.combat.stance.offensive.smash.bash,bash,Bash,meta.combat.stance.offensive.smash,Stance,,"Bashing Blow, Shield Bash, Shield Crash, Stomp, Kick Off",,,,,,game-concept,,,
+meta.combat.stance.offensive.smash.sunder,sunder,Sunder,meta.combat.stance.offensive.smash,Stance,,"Sundering Chop, Sunderplate, Ruinous Blow, Colossus Smash",,,,,,game-concept,,,
+meta.combat.stance.offensive.smash.poise-break,poise-break,Poise break,meta.combat.stance.offensive.smash,Stance,,"Poise Breaker, Breaker's Toll, Kiln Cleave",,,,,,game-concept,,,
+meta.combat.stance.offensive.sweep,sweep,Sweep,meta.combat.stance.offensive,Stance,,6 cards,Hits all; slips past melee Counter; ×0.75 vs [defensive.block],,,,,live-tag,🌀,93C9BC,maneuver:sweep
+meta.combat.stance.offensive.sweep.cleave,sweep.cleave,Cleave,meta.combat.stance.offensive.sweep,Stance,,"Cleaving Blow, Crimson Cleave, Hewing Arc, Sweeping Blow",,,,,,game-concept,,,
+meta.combat.stance.offensive.sweep.whirl,whirl,Whirl,meta.combat.stance.offensive.sweep,Stance,,Whirling Guard,,,,,,game-concept,,,
+meta.combat.stance.defensive,defensive,Defensive,meta.combat.stance,Stance,,,,,,,,live-tag,🛡,9FC3E8,maneuver:defend
+meta.combat.stance.defensive.block,defensive.block,Block,meta.combat.stance.defensive,Stance,,"about 45 cards, tagged Defend today",Gain Block or Barrier at turn start,,,,,game-concept,,,
+meta.combat.stance.defensive.block.guard,block.guard,Guard,meta.combat.stance.defensive.block,Stance,,"Defend, Quick Guard, weapon/staff/sceptre Guard, Iron Skin, Brace",,,,,,live-tag,🛡,7FA8C9,guard
+meta.combat.stance.defensive.block.shield,block.shield,Shield,meta.combat.stance.defensive.block,Stance,,"Shieldwall, Shield Guard, Shield Bastion, Set the Shield",,,,,,game-concept,,,
+meta.combat.stance.defensive.block.ward,block.ward,Ward,meta.combat.stance.defensive.block,Stance,,"Starstone Ward, Vesper Ward, Blightward, Frost Veil, Crystal Barrier",,,,,,game-concept,,,
+meta.combat.stance.defensive.block.endure,endure,Endure,meta.combat.stance.defensive.block,Stance,,"Last Stand, Iron Resolve, Unbreakable, Iron Vow, Penance",,,,,,game-concept,,,
+meta.combat.stance.defensive.evade,evade,Evade,meta.combat.stance.defensive,Stance,,"about 15 cards, tagged Defend today",Avoid the next hit on a successful roll,,,,,game-concept,,,
+meta.combat.stance.defensive.evade.dodge,evade.dodge,Dodge,meta.combat.stance.defensive.evade,Stance,,"Dodge Roll, Evasive Guard, Backstep, Quickstep, Acrobatics",,,,,,game-concept,,,
+meta.combat.stance.defensive.evade.vanish,vanish,Vanish,meta.combat.stance.defensive.evade,Stance,,"Shadowstep, Vanish, Nightstep, Misdirect",,,,,,game-concept,,,
+meta.combat.stance.defensive.evade.obscure,obscure,Obscure,meta.combat.stance.defensive.evade,Stance,,"Smoke Bomb, Smoke Pellet, Smoke Veil, Pocket Sand",,,,,,game-concept,,,
+meta.combat.stance.counter,stance.counter,Counter,meta.combat.stance,Stance,,"20 cards, its own stance",Incoming ×0.5; returns damage,,,,,live-tag,↩,C8A3D8,maneuver:counter
+meta.combat.stance.counter.parry,parry,Parry,meta.combat.stance.counter,Stance,,"Riposte, Rondel Parry, Binding Parry, Low Guard Riposte, Spiked Reprisal",,,,,,game-concept,,,
+meta.combat.stance.counter.school-counter,school-counter,School counter,meta.combat.stance.counter,Stance,,"one per spell school: Fire, Frost, Lightning, Force...",,,,,,game-concept,,,
+meta.combat.stance.counter.ranged-counter,ranged-counter,Ranged counter,meta.combat.stance.counter,Stance,,"Nock and Wait, Barrage Counter",,,,,,live-tag,◇,D7B36B,counter:ranged
+meta.combat.stance.counter.ward-counter,ward-counter,Ward counter,meta.combat.stance.counter,Stance,,"Umbral Ward, Warding Star, Rime Mirror, Crimson Reprisal",,,,,,game-concept,,,
+meta.combat.delivery,delivery,Delivery,meta.combat,TagNode,,,,,,,,live-tag,,,delivery
+meta.combat.delivery.melee,delivery.melee,Melee,meta.combat.delivery,TagNode,,"Melee delivery; the default for the Attack, Smash and Sweep stances (owner decision 3, 2026-10-11)",,,,,,live-tag,◇,9FC3E8,delivery:melee
+meta.combat.delivery.ranged,delivery.ranged,Ranged,meta.combat.delivery,TagNode,,"9 cards, was a stance",,,,,,live-tag,➶,AAC88A,maneuver:ranged
+meta.combat.delivery.ranged.shot,shot,Shot,meta.combat.delivery.ranged,TagNode,,"Aimed Shot, Barbed Arrow, Pinning Shot, Crawling Shot",,,,,,game-concept,,,
+meta.combat.delivery.ranged.volley,volley,Volley,meta.combat.delivery.ranged,TagNode,,"Arrow Volley, Toxic Volley, Fan of Knives, Ricochet",,,,,,game-concept,,,
+meta.combat.delivery.casting,casting,Casting,meta.combat.delivery,TagNode,,"7 cards, was a stance",,,,,,live-tag,◇,9FC3E8,maneuver:casting
+meta.combat.delivery.casting.bolt,bolt,Bolt,meta.combat.delivery.casting,TagNode,,"Ember Dart, Rime Needle, Static Needle, Holy Spark, Force Nudge",,,,,,game-concept,,,
+meta.combat.delivery.casting.mote,mote,Mote,meta.combat.delivery.casting,TagNode,,"Drowsing Mote, Rot Mote",,,,,,game-concept,,,
+meta.combat.delivery.multi-hit,multi-hit,Multi-hit,meta.combat.delivery,TagNode,,,,,,,,new,,,
+meta.combat.delivery.area,delivery.area,Area,meta.combat.delivery,TagNode,,,,,,,,live-tag,◇,9FC3E8,delivery:area
+meta.combat.magic,combat.magic,Magic,meta.combat,TagNode,,,,,,,,game-concept,,,
+meta.combat.magic.offensive-magic,offensive-magic,Offensive magic,meta.combat.magic,TagNode,,,,,,,,game-concept,,,
+meta.combat.magic.defensive-magic,defensive-magic,Defensive magic,meta.combat.magic,TagNode,,,,,,,,game-concept,,,
+meta.combat.recovery,combat.recovery,Recovery,meta.combat,TagNode,,,,,,,,game-concept,,,
+meta.combat.recovery.heal,recovery.heal,Heal,meta.combat.recovery,TagNode,,,,,,,,game-concept,,,
+meta.combat.recovery.cleanse,recovery.cleanse,Cleanse,meta.combat.recovery,TagNode,,,,,,,,game-concept,,,
+meta.combat.recovery.restore-sp,restore-sp,Restore SP,meta.combat.recovery,TagNode,,,,,,,,new,,,
+meta.combat.recovery.restore-mp,restore-mp,Restore MP,meta.combat.recovery,TagNode,,,,,,,,new,,,
+meta.combat.status-effect,status-effect,Status effect,meta.combat,StatusEffect,,,,,,,,game-concept,,,
+meta.combat.status-effect.debuff,debuff,Debuff,meta.combat.status-effect,StatusEffect,,,,,,,,game-concept,,,
+meta.combat.status-effect.debuff.damage-over-time,damage-over-time,Damage over time,meta.combat.status-effect.debuff,StatusEffect,,,,,,,,game-concept,,,
+meta.combat.status-effect.debuff.damage-over-time.bleeding,bleeding,Bleeding,meta.combat.status-effect.debuff.damage-over-time,StatusEffect,,lose HP each turn,Turn start: lose 1 HP per stack,,−1 stack per turn,intensity,,game-concept,,,
+meta.combat.status-effect.debuff.damage-over-time.burned,burned,Burned,meta.combat.status-effect.debuff.damage-over-time,StatusEffect,spellcraft.fire,Burn,Turn start: lose [burned.tick] HP (stacks × [burned.tickPerStack]; ignores Block),burned.tickPerStack burned.tick,−1 stack per turn,intensity,,game-concept,,,
+meta.combat.status-effect.debuff.damage-over-time.poisoned,poisoned,Poisoned,meta.combat.status-effect.debuff.damage-over-time,StatusEffect,,Venom,Turn start: lose HP = stacks,,−1 stack per turn,intensity,,game-concept,,,
+meta.combat.status-effect.debuff.damage-over-time.blighted,blighted,Blighted,meta.combat.status-effect.debuff.damage-over-time,StatusEffect,spellcraft.necrotic,"Crimson Blight, never ticks down",Turn start: lose HP = stacks; never ticks down,,permanent this combat,intensity,,game-concept,,,
+meta.combat.status-effect.debuff.build-up,build-up,Build-up,meta.combat.status-effect.debuff,StatusEffect,,meter bursts for % max HP,,,,,,game-concept,,,
+meta.combat.status-effect.debuff.build-up.bleed,bleed,Bleed,meta.combat.status-effect.debuff.build-up,StatusEffect,,,,,,,,game-concept,,,
+meta.combat.status-effect.debuff.build-up.frost,build-up.frost,Frost,meta.combat.status-effect.debuff.build-up,StatusEffect,spellcraft.frost,,,,,,,game-concept,,,
+meta.combat.status-effect.debuff.build-up.insanity,insanity,Insanity,meta.combat.status-effect.debuff.build-up,StatusEffect,spellcraft.psychic,,,,,,,game-concept,,,
+meta.combat.status-effect.debuff.weakened,weakened,Weakened,meta.combat.status-effect.debuff,StatusEffect,,,,,,,,game-concept,,,
+meta.combat.status-effect.debuff.weakened.weak,weak,Weak,meta.combat.status-effect.debuff.weakened,StatusEffect,,−25% attack damage,Deal ×[weak.mult] attack damage,weak.mult,−1 stack per turn,duration,,game-concept,,,
+meta.combat.status-effect.debuff.weakened.vulnerable,vulnerable,Vulnerable,meta.combat.status-effect.debuff.weakened,StatusEffect,,+50% attack damage taken,Take ×[vulnerable.mult] attack damage,vulnerable.mult,−1 stack per turn,duration,,game-concept,,,
+meta.combat.status-effect.debuff.weakened.frail,frail,Frail,meta.combat.status-effect.debuff.weakened,StatusEffect,,−25% Block,Gain ×0.75 Block from cards,,−1 stack per turn,duration,,game-concept,,,
+meta.combat.status-effect.debuff.weakened.magic-vulnerable,magic-vulnerable,Magic Vulnerable,meta.combat.status-effect.debuff.weakened,StatusEffect,,,,,,,,game-concept,,,
+meta.combat.status-effect.debuff.weakened.frost-exposed,frost-exposed,Frost-Exposed,meta.combat.status-effect.debuff.weakened,StatusEffect,spellcraft.frost,+ vs Starstone,,,2 turns,duration,,game-concept,,,
+meta.combat.status-effect.debuff.weakened.unraveled,unraveled,Unraveled,meta.combat.status-effect.debuff.weakened,StatusEffect,spellcraft.psychic,"+ vs Ritual, Blight",,,2 turns,duration,,game-concept,,,
+meta.combat.status-effect.debuff.weakened.chilled,chilled,Chilled,meta.combat.status-effect.debuff.weakened,StatusEffect,spellcraft.frost,next Blunt hit +25%,,,until next Blunt hit,none,,game-concept,,,
+meta.combat.status-effect.debuff.weakened.aged,aged,Aged,meta.combat.status-effect.debuff.weakened,StatusEffect,,,,,,,,game-concept,,,
+meta.combat.status-effect.debuff.weakened.slowed,slowed,Slowed,meta.combat.status-effect.debuff.weakened,StatusEffect,,,,,,,,new,,,
+meta.combat.status-effect.debuff.weakened.silenced,silenced,Silenced,meta.combat.status-effect.debuff.weakened,StatusEffect,,,,,,,,new,,,
+meta.combat.status-effect.debuff.weakened.disarmed,disarmed,Disarmed,meta.combat.status-effect.debuff.weakened,StatusEffect,,,,,,,,new,,,
+meta.combat.status-effect.debuff.immobile,immobile,Immobile,meta.combat.status-effect.debuff,StatusEffect,,lose actions,,,,,,game-concept,,,
+meta.combat.status-effect.debuff.immobile.staggered,staggered,Staggered,meta.combat.status-effect.debuff.immobile,StatusEffect,,"skip turn, +50% damage taken",Skip next turn; take ×1.5 attack damage,,until end of your next turn,none,,game-concept,,,
+meta.combat.status-effect.debuff.immobile.frozen,frozen,Frozen,meta.combat.status-effect.debuff.immobile,StatusEffect,spellcraft.frost,,,,1 action per stack,intensity,,game-concept,,,
+meta.combat.status-effect.debuff.immobile.sleep,sleep,Sleep,meta.combat.status-effect.debuff.immobile,StatusEffect,spellcraft.psychic,,,,until hit or recovered,none,,game-concept,,,
+meta.combat.status-effect.debuff.immobile.paralyzed,paralyzed,Paralyzed,meta.combat.status-effect.debuff.immobile,StatusEffect,spellcraft.lightning,Paralysis,,,until broken (3 SP per stack),intensity,,game-concept,,,
+meta.combat.status-effect.debuff.immobile.dazed,dazed,Dazed,meta.combat.status-effect.debuff.immobile,StatusEffect,,,,,until cleared (1 SP per stack),intensity,,game-concept,,,
+meta.combat.status-effect.debuff.immobile.entombed,entombed,Entombed,meta.combat.status-effect.debuff.immobile,StatusEffect,spellcraft.earth,,,,,,,new,,,
+meta.combat.status-effect.debuff.off-footing,off-footing,Off-footing,meta.combat.status-effect.debuff,StatusEffect,,,,,,,,game-concept,,,
+meta.combat.status-effect.debuff.off-footing.prone,prone,Prone,meta.combat.status-effect.debuff.off-footing,StatusEffect,,,,,until Stand Up (1 SP),none,,game-concept,,,
+meta.combat.status-effect.debuff.off-footing.off-balance,off-balance,Off Balance,meta.combat.status-effect.debuff.off-footing,StatusEffect,,,,,−1 stack at turn end,duration,,game-concept,,,
+meta.combat.status-effect.debuff.mind,mind,Mind,meta.combat.status-effect.debuff,StatusEffect,,,,,,,,game-concept,,,
+meta.combat.status-effect.debuff.mind.maddened,maddened,Maddened,meta.combat.status-effect.debuff.mind,StatusEffect,spellcraft.psychic,"Madness: lose HP, gain Energy",,,clears at your turn start,intensity,,game-concept,,,
+meta.combat.status-effect.debuff.mind.confused,confused,Confused,meta.combat.status-effect.debuff.mind,StatusEffect,spellcraft.psychic,,,,,,,new,,,
+meta.combat.status-effect.debuff.mind.fixated,fixated,Fixated,meta.combat.status-effect.debuff.mind,StatusEffect,spellcraft.psychic,,,,,,,new,,,
+meta.combat.status-effect.buff,buff,Buff,meta.combat.status-effect,StatusEffect,,,,,,,,game-concept,,,
+meta.combat.status-effect.buff.stat,stat,Stat,meta.combat.status-effect.buff,StatusEffect,,,,,,,,game-concept,,,
+meta.combat.status-effect.buff.stat.strengthened,strengthened,Strengthened,meta.combat.status-effect.buff.stat,StatusEffect,,Strength,+1 attack damage per stack,,whole combat,intensity,,game-concept,,,
+meta.combat.status-effect.buff.stat.dexterity,stat.dexterity,Dexterity,meta.combat.status-effect.buff.stat,StatusEffect,,,,,whole combat,intensity,,game-concept,,,
+meta.combat.status-effect.buff.stat.accelerated,accelerated,Accelerated,meta.combat.status-effect.buff.stat,StatusEffect,,,,,,,,new,,,
+meta.combat.status-effect.buff.stat.enlightened,enlightened,Enlightened,meta.combat.status-effect.buff.stat,StatusEffect,,,,,,,,new,,,
+meta.combat.status-effect.buff.stat.hearty,hearty,Hearty,meta.combat.status-effect.buff.stat,StatusEffect,,,,,,,,new,,,
+meta.combat.status-effect.buff.protection,protection,Protection,meta.combat.status-effect.buff,StatusEffect,,,,,,,,game-concept,,,
+meta.combat.status-effect.buff.protection.unbreakable,unbreakable,Unbreakable,meta.combat.status-effect.buff.protection,StatusEffect,,"Block kept, +version",,,,,,game-concept,,,
+meta.combat.status-effect.buff.protection.invulnerability,invulnerability,Invulnerability,meta.combat.status-effect.buff.protection,StatusEffect,,avoid next hit,,,,,,game-concept,,,
+meta.combat.status-effect.buff.protection.decoy,decoy,Decoy,meta.combat.status-effect.buff.protection,StatusEffect,,avoid next single hit,,,,,,game-concept,,,
+meta.combat.status-effect.buff.protection.concealed,concealed,Concealed,meta.combat.status-effect.buff.protection,StatusEffect,,,,,,,,game-concept,,,
+meta.combat.status-effect.buff.protection.grounded,protection.grounded,Grounded,meta.combat.status-effect.buff.protection,StatusEffect,,no lightning backlash,,,,,,game-concept,,,
+meta.combat.status-effect.buff.protection.shielded,shielded,Shielded,meta.combat.status-effect.buff.protection,StatusEffect,,,,,,,,new,,,
+meta.combat.status-effect.buff.recovery,buff.recovery,Recovery,meta.combat.status-effect.buff,StatusEffect,,,,,,,,game-concept,,,
+meta.combat.status-effect.buff.recovery.regenerating,regenerating,Regenerating,meta.combat.status-effect.buff.recovery,StatusEffect,spellcraft.divine,Regen,,,whole combat,intensity,,game-concept,,,
+meta.combat.status-effect.buff.recovery.communion,communion,Communion,meta.combat.status-effect.buff.recovery,StatusEffect,spellcraft.divine,,,,,,,game-concept,,,
+meta.combat.status-effect.buff.recovery.life-tithe,life-tithe,Life Tithe,meta.combat.status-effect.buff.recovery,StatusEffect,,,,,,,,game-concept,,,
+meta.combat.status-effect.buff.recovery.stigmata,stigmata,Stigmata,meta.combat.status-effect.buff.recovery,StatusEffect,,,,,,,,game-concept,,,
+meta.combat.status-effect.buff.recovery.harbinger-of-blight,harbinger-of-blight,Harbinger of Blight,meta.combat.status-effect.buff.recovery,StatusEffect,,,,,,,,game-concept,,,
+meta.combat.status-effect.buff.setup,setup,Setup,meta.combat.status-effect.buff,StatusEffect,,,,,,,,game-concept,,,
+meta.combat.status-effect.buff.setup.prepared,prepared,Prepared,meta.combat.status-effect.buff.setup,StatusEffect,,next payoff empowered,,,until turn end,none,,game-concept,,,
+meta.combat.status-effect.buff.setup.starstone-charge,starstone-charge,Starstone Charge,meta.combat.status-effect.buff.setup,StatusEffect,,,,,until turn end,none,,game-concept,,,
+meta.combat.status-effect.power,status-effect.power,Power,meta.combat.status-effect,StatusEffect,,lasting effect from a Power card,,,,,,game-concept,,,
+meta.combat.status-effect.power.offense,offense,Offense,meta.combat.status-effect.power,StatusEffect,,,,,,,,game-concept,,,
+meta.combat.status-effect.power.offense.rallying-standard,rallying-standard,Rallying Standard,meta.combat.status-effect.power.offense,StatusEffect,,+version,,,,,,game-concept,,,
+meta.combat.status-effect.power.offense.glass-cannon,glass-cannon,Glass Cannon,meta.combat.status-effect.power.offense,StatusEffect,,,,,,,,game-concept,,,
+meta.combat.status-effect.power.offense.blood-unction,blood-unction,Blood Unction,meta.combat.status-effect.power.offense,StatusEffect,,,,,,,,game-concept,,,
+meta.combat.status-effect.power.offense.envenom,envenom,Envenom,meta.combat.status-effect.power.offense,StatusEffect,,,,,,,,game-concept,,,
+meta.combat.status-effect.power.offense.sanguine-pact,sanguine-pact,Sanguine Pact,meta.combat.status-effect.power.offense,StatusEffect,,,,,,,,game-concept,,,
+meta.combat.status-effect.power.offense.zealotry,zealotry,Zealotry,meta.combat.status-effect.power.offense,StatusEffect,,,,,,,,game-concept,,,
+meta.combat.status-effect.power.offense.constellation,offense.constellation,Constellation,meta.combat.status-effect.power.offense,StatusEffect,,,,,,,,game-concept,,,
+meta.combat.status-effect.power.offense.waxing-moon,waxing-moon,Waxing Moon,meta.combat.status-effect.power.offense,StatusEffect,,,,,,,,game-concept,,,
+meta.combat.status-effect.power.offense.thorn-halo,thorn-halo,Thorn Halo,meta.combat.status-effect.power.offense,StatusEffect,,,,,,,,game-concept,,,
+meta.combat.status-effect.power.offense.ember-tide,ember-tide,Ember Tide,meta.combat.status-effect.power.offense,StatusEffect,,,,,,,,game-concept,,,
+meta.combat.status-effect.power.defense,defense,Defense,meta.combat.status-effect.power,StatusEffect,,,,,,,,game-concept,,,
+meta.combat.status-effect.power.defense.astral-armor,astral-armor,Astral Armor,meta.combat.status-effect.power.defense,StatusEffect,,,,,,,,game-concept,,,
+meta.combat.status-effect.power.defense.shieldwall-echo,shieldwall-echo,Shieldwall Echo,meta.combat.status-effect.power.defense,StatusEffect,,,,,,,,game-concept,,,
+meta.combat.status-effect.power.defense.iron-vow,iron-vow,Iron Vow,meta.combat.status-effect.power.defense,StatusEffect,,,,,,,,game-concept,,,
+meta.combat.status-effect.power.defense.azure-coil,azure-coil,Azure Coil,meta.combat.status-effect.power.defense,StatusEffect,,,,,,,,game-concept,,,
+meta.combat.status-effect.power.defense.moonlit-shield,moonlit-shield,Moonlit Shield,meta.combat.status-effect.power.defense,StatusEffect,,,,,,,,game-concept,,,
+meta.combat.status-effect.power.defense.afterimage,afterimage,Afterimage,meta.combat.status-effect.power.defense,StatusEffect,,,,,,,,game-concept,,,
+meta.combat.status-effect.power.defense.goreblood,goreblood,Goreblood,meta.combat.status-effect.power.defense,StatusEffect,,,,,,,,game-concept,,,
+meta.combat.status-effect.power.tempo,tempo,Tempo,meta.combat.status-effect.power,StatusEffect,,,,,,,,game-concept,,,
+meta.combat.status-effect.power.tempo.deadly-tempo,deadly-tempo,Deadly Tempo,meta.combat.status-effect.power.tempo,StatusEffect,,,,,,,,game-concept,,,
+meta.combat.status-effect.power.tempo.opportunist,opportunist,Opportunist,meta.combat.status-effect.power.tempo,StatusEffect,,,,,,,,game-concept,,,
+meta.combat.status-effect.power.tempo.stargazer,stargazer,Stargazer,meta.combat.status-effect.power.tempo,StatusEffect,,,,,,,,game-concept,,,
+meta.combat.status-effect.power.tempo.astromancer,astromancer,Astromancer,meta.combat.status-effect.power.tempo,StatusEffect,,,,,,,,game-concept,,,
+meta.combat.status-effect.resistance,resistance,Resistance,meta.combat.status-effect,StatusEffect,,after a build-up burst,,,,,,game-concept,,,
+meta.combat.status-effect.resistance.clotted,clotted,Clotted,meta.combat.status-effect.resistance,StatusEffect,,vs Bleed,,,2 turns,duration,,game-concept,,,
+meta.combat.status-effect.resistance.weathered,weathered,Weathered,meta.combat.status-effect.resistance,StatusEffect,,vs Frost,,,2 turns,duration,,game-concept,,,
+meta.combat.status-effect.resistance.resolute,resolute,Resolute,meta.combat.status-effect.resistance,StatusEffect,,vs Insanity,,,2 turns,duration,,game-concept,,,
+meta.combat.deck-manipulation,deck-manipulation,Deck manipulation,meta.combat,TagNode,,,,,,,,game-concept,,,
+meta.combat.deck-manipulation.draw,draw,Draw,meta.combat.deck-manipulation,TagNode,,,,,,,,game-concept,,,
+meta.combat.deck-manipulation.discard,discard,Discard,meta.combat.deck-manipulation,TagNode,,,,,,,,game-concept,,,
+meta.combat.deck-manipulation.create,create,Create,meta.combat.deck-manipulation,TagNode,,,,,,,,game-concept,,,
+meta.combat.deck-manipulation.upgrade,deck-manipulation.upgrade,Upgrade,meta.combat.deck-manipulation,TagNode,,,,,,,,game-concept,,,
+meta.combat.deck-manipulation.cost-change,cost-change,Cost change,meta.combat.deck-manipulation,TagNode,,,,,,,,new,,,
+meta.combat.rule-manipulation,rule-manipulation,Rule manipulation,meta.combat,TagNode,,,,,,,,game-concept,,,
+meta.combat.rule-manipulation.extra-action,extra-action,Extra action,meta.combat.rule-manipulation,TagNode,,,,,,,,new,,,
+meta.combat.rule-manipulation.turn-skip,turn-skip,Turn skip,meta.combat.rule-manipulation,TagNode,,,,,,,,new,,,
+meta.combat.rule-manipulation.stance-change,stance-change,Stance change,meta.combat.rule-manipulation,TagNode,,,,,,,,new,,,
+meta.combat.rule-manipulation.intent-reveal-conceal,intent-reveal-conceal,Intent reveal / conceal,meta.combat.rule-manipulation,TagNode,,,,,,,,new,,,
+card,card,Card,,Card,,,,,,,,live-tag,,,card
+card.type,card.type,Type,card,Card,,,,,,,,game-concept,,,
+card.type.stance,type.stance,Stance,card.type,Card,,A card whose type is a stance; the stance itself lives under Combat › Stance,,,,,combat.stance,game-concept,,,
+card.type.skill,type.skill,Skill,card.type,Card,,,,,,,,live-tag,,,classification.skill
+card.type.power,type.power,Power,card.type,Card,,,,,,,,live-tag,,,classification.power
+card.type.curse,curse,Curse,card.type,Card,,,,,,,,live-tag,,,classification.curse
+card.type.status,type.status,Status,card.type,Card,,,,,,,,live-tag,,,classification.statusCard
+card.type.consumable,type.consumable,Consumable,card.type,Card,,,,,,,,game-concept,,,
+card.rarity,card.rarity,Rarity,card,Card,,,,,,,,game-concept,,,
+card.rarity.starter,card.rarity.starter,Starter,card.rarity,Card,,,,,,,,game-concept,,,
+card.rarity.common,card.rarity.common,Common,card.rarity,Card,,,,,,,,game-concept,,,
+card.rarity.uncommon,card.rarity.uncommon,Uncommon,card.rarity,Card,,,,,,,,game-concept,,,
+card.rarity.rare,card.rarity.rare,Rare,card.rarity,Card,,,,,,,,game-concept,,,
+card.keyword,card.keyword,Keyword,card,Card,,,,,,,,game-concept,,,
+card.keyword.exhaust,exhaust,Exhaust,card.keyword,Card,,,,,,,,live-tag,,,lifecycle.exhaust
+card.keyword.retain,retain,Retain,card.keyword,Card,,,,,,,,live-tag,,,lifecycle.retain
+card.keyword.innate,innate,Innate,card.keyword,Card,,,,,,,,live-tag,,,lifecycle.innate
+card.keyword.ethereal,ethereal,Ethereal,card.keyword,Card,,,,,,,,live-tag,,,lifecycle.ethereal
+card.keyword.unplayable,unplayable,Unplayable,card.keyword,Card,,,,,,,,live-tag,,,internal.unplayable
+card.cost,cost,Cost,card,Card,,,,,,,,game-concept,,,
+card.cost.stamina,stamina,Stamina,card.cost,Card,,physical cards,,,,,,live-tag,,,cost.stamina
+card.cost.mana,mana,Mana,card.cost,Card,,spells,,,,,,live-tag,,,cost.mana
+card.cost.free,free,Free,card.cost,Card,,,,,,,,game-concept,,,
+card.source,source,Source,card,Card,,,,,,,,game-concept,,,
+card.source.class,source.class,Class,card.source,Card,,,,,,,,game-concept,,,
+card.source.weapon,source.weapon,Weapon,card.source,Card,,,,,,,,game-concept,,,
+card.source.armor,source.armor,Armor,card.source,Card,,,,,,,,game-concept,,,
+card.source.relic,source.relic,Relic,card.source,Card,,,,,,,,game-concept,,,
+card.source.global,source.global,Global,card.source,Card,,,,,,,,game-concept,,,
+card.upgrade,card.upgrade,Upgrade,card,Card,,,,,,,,game-concept,,,
+card.upgrade.base,base,Base,card.upgrade,Card,,,,,,,,game-concept,,,
+card.upgrade.upgraded,upgraded,Upgraded,card.upgrade,Card,,,,,,,,live-tag,,,internal.upgraded
+card.character-card,character-card,Character card,card,Card,,class-bound,,,,,,game-concept,,,
+attackSource,attackSource,Attack source,,TagNode,,Source profile supplying an attack; separate from damage type.,,,,,,live-tag,,,attackSource
+attackSource.weapon,attackSource.weapon,Weapon,attackSource,TagNode,,Categorized Weapon identity; effects are authored separately.,,,,,,live-tag,◇,9FC3E8,source:weapon
+attackSource.spell,attackSource.spell,Spell,attackSource,TagNode,,Categorized Spell identity; effects are authored separately.,,,,,,live-tag,◇,9FC3E8,source:spell
+attackSource.unarmed,attackSource.unarmed,Unarmed,attackSource,TagNode,,Categorized Unarmed identity; effects are authored separately.,,,,,,live-tag,◇,9FC3E8,source:unarmed
+meta.combat.delivery.projectile,delivery.projectile,Projectile,meta.combat.delivery,TagNode,,Categorized Projectile identity; effects are authored separately.,,,,,,live-tag,◇,9FC3E8,delivery:projectile
+classification,classification,classification,,TagNode,,Grouping node for classification in nodes.csv.,,,,,,live-tag,,,classification
+classification.attack,classification.attack,attack,classification,TagNode,,Grouping node for attack in nodes.csv.,,,,,,live-tag,,,classification.attack
+classification.strike,classification.strike,strike,classification,TagNode,,Grouping node for strike in nodes.csv.,,,,,,live-tag,,,classification.strike
+classification.guard,classification.guard,guard,classification,TagNode,,Grouping node for guard in nodes.csv.,,,,,,live-tag,,,classification.guard
+classification.weaponArt,weaponArt,weaponArt,classification,TagNode,,Grouping node for weaponArt in nodes.csv.,,,,,,live-tag,,,classification.weaponArt
+classification.class,classification.class,class,classification,TagNode,,"What a class is. Every object in the class collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.class
+classification.relic,classification.relic,relic,classification,TagNode,,"What a relic is. Every object in the relic collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.relic
+classification.flask,classification.flask,flask,classification,TagNode,,"What a flask is. Every object in the flask collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.flask
+classification.keepsake,keepsake,keepsake,classification,TagNode,,"What a keepsake is. Every object in the keepsake collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.keepsake
+classification.event,classification.event,event,classification,TagNode,,"What a event is. Every object in the event collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.event
+classification.encounter,classification.encounter,encounter,classification,TagNode,,"What a encounter is. Every object in the encounter collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.encounter
+classification.enemy,classification.enemy,enemy,classification,TagNode,,"What a enemy is. Every object in the enemy collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.enemy
+classification.armament,armament,armament,classification,TagNode,,"What a armament is. Every object in the armament collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.armament
+classification.armour,armour,armour,classification,TagNode,,"What a armour is. Every object in the armour collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.armour
+classification.basicCardProfile,basicCardProfile,basicCardProfile,classification,TagNode,,"What a basicCardProfile is. Every object in the basicCardProfile collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.basicCardProfile
+classification.slot,classification.slot,slot,classification,TagNode,,"What a slot is. Every object in the slot collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.slot
+classification.startingKit,startingKit,startingKit,classification,TagNode,,"What a startingKit is. Every object in the startingKit collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.startingKit
+classification.unlock,unlock,unlock,classification,TagNode,,"What a unlock is. Every object in the unlock collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.unlock
+classification.companion,classification.companion,companion,classification,TagNode,,"What a companion is. Every object in the companion collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.companion
+classification.sigil,classification.sigil,sigil,classification,TagNode,,"What a sigil is. Every object in the sigil collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.sigil
+classification.feat,classification.feat,feat,classification,TagNode,,A selected class progression feat.,,,,,,live-tag,,,classification.feat
+classification.enemyMove,enemyMove,enemyMove,classification,TagNode,,A scoped action in an enemy move table.,,,,,,live-tag,,,classification.enemyMove
+campRoot,campRoot,Combat camp,,TagNode,,Authored combat identity shared by cards and enemy moves.,,,,,,live-tag,,,camp
+campRoot.physical,campRoot.physical,Physical,campRoot,TagNode,,Selects physical Guard or magical Ward combat rules.,,,,,,live-tag,⚔,D7B36B,camp:physical
+campRoot.spell,campRoot.spell,Spell,campRoot,TagNode,,Selects physical Guard or magical Ward combat rules.,,,,,,live-tag,✦,9FC3E8,camp:spell
+presentationRoot,presentationRoot,Combat presentation,,TagNode,,Sprite selection only; never damage or resistance identity.,,,,,,live-tag,,,presentation
+presentationRoot.blade,presentationRoot.blade,blade,presentationRoot,TagNode,,blade visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:blade
+presentationRoot.guard,presentationRoot.guard,guard,presentationRoot,TagNode,,guard visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:guard
+presentationRoot.blood,presentationRoot.blood,blood,presentationRoot,TagNode,,blood visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:blood
+presentationRoot.gorefire,presentationRoot.gorefire,gorefire,presentationRoot,TagNode,,gorefire visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:gorefire
+presentationRoot.starstone,presentationRoot.starstone,starstone,presentationRoot,TagNode,,starstone visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:starstone
+presentationRoot.ritual,presentationRoot.ritual,ritual,presentationRoot,TagNode,,ritual visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:ritual
+presentationRoot.blight,presentationRoot.blight,blight,presentationRoot,TagNode,,blight visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:blight
+presentationRoot.oath,presentationRoot.oath,oath,presentationRoot,TagNode,,oath visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:oath
+presentationRoot.flourish,presentationRoot.flourish,flourish,presentationRoot,TagNode,,flourish visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:flourish
+presentationRoot.ash,presentationRoot.ash,ash,presentationRoot,TagNode,,ash visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:ash
+presentationRoot.heavy,presentationRoot.heavy,heavy,presentationRoot,TagNode,,heavy visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:heavy
+presentationRoot.pierce,presentationRoot.pierce,pierce,presentationRoot,TagNode,,pierce visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:pierce
+presentationRoot.ranged,presentationRoot.ranged,ranged,presentationRoot,TagNode,,ranged visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:ranged
+presentationRoot.precision,presentationRoot.precision,precision,presentationRoot,TagNode,,precision visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:precision
+presentationRoot.guile,presentationRoot.guile,guile,presentationRoot,TagNode,,guile visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:guile
+presentationRoot.venom,presentationRoot.venom,venom,presentationRoot,TagNode,,venom visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:venom
+presentationRoot.shield,presentationRoot.shield,shield,presentationRoot,TagNode,,shield visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:shield
+presentationRoot.barrier,presentationRoot.barrier,barrier,presentationRoot,TagNode,,barrier visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:barrier
+presentationRoot.ward,presentationRoot.ward,ward,presentationRoot,TagNode,,ward visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:ward
+presentationRoot.magic,presentationRoot.magic,magic,presentationRoot,TagNode,,magic visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:magic
+presentationRoot.arcane,presentationRoot.arcane,arcane,presentationRoot,TagNode,,arcane visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:arcane
+presentationRoot.dodge,presentationRoot.dodge,dodge,presentationRoot,TagNode,,dodge visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:dodge
+presentationRoot.riposte,riposte,riposte,presentationRoot,TagNode,,riposte visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:riposte
+presentationRoot.heal,presentationRoot.heal,heal,presentationRoot,TagNode,,heal visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:heal
+presentationRoot.cleanse,presentationRoot.cleanse,cleanse,presentationRoot,TagNode,,cleanse visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:cleanse
+presentationRoot.bind,bind,bind,presentationRoot,TagNode,,bind visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:bind
+presentationRoot.frost,presentationRoot.frost,frost,presentationRoot,TagNode,,frost visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:frost
+presentationRoot.bulwark,bulwark,bulwark,presentationRoot,TagNode,,bulwark visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:bulwark
+presentationRoot.utility,utility,utility,presentationRoot,TagNode,,utility visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:utility
+theme,theme,Theme,,TagNode,,Build synergies; tags alone grant no effects.,,,,,,live-tag,,,theme
+theme.blood,theme.blood,Blood,theme,TagNode,,Categorized Blood identity; effects are authored separately.,,,,,,live-tag,◇,9FC3E8,theme:blood
+theme.blight,theme.blight,Blight,theme,TagNode,,Categorized Blight identity; effects are authored separately.,,,,,,live-tag,◇,9FC3E8,theme:blight
+theme.astral,astral,Astral,theme,TagNode,,Categorized Astral identity; effects are authored separately.,,,,,,live-tag,◇,9FC3E8,theme:astral
+theme.oath,theme.oath,Oath,theme,TagNode,,Categorized Oath identity; effects are authored separately.,,,,,,live-tag,◇,9FC3E8,theme:oath
+property,property,Property,,TagNode,,"What a holder CONFERS while it is held. Each property node has exactly one entry in nodeEffects.json; the holder grants it, and it leaves when the holder does. EVERY family may carry one — what the mount path can hold (worn, owned, chosen) is the engine's narrower list, engine/properties.js MOUNTABLE_KINDS.",,,,,,live-tag,,,property
+property.overcharge,overcharge,Overcharge,property,TagNode,,A focus that pushes harder: each hit builds more Arcane Exposure.,,,,,,live-tag,✧,9FC3E8,overcharge
+property.staggerBreak,staggerBreak,Stagger Break,property,TagNode,,A focus that breaks harder: breaking a foe's Arcane Exposure batters its Poise. Effects in nodeEffects.json: triggers on arcaneBreak; ops poiseDamage.,,,,,,live-tag,✦,C9A96B,staggerBreak
+property.resonance,resonance,Resonance,property,TagNode,,A focus that rings out: breaking a foe's Arcane Exposure builds it on every other foe. Effects in nodeEffects.json: triggers on arcaneBreak; ops arcaneBuildup.,,,,,,live-tag,◎,9FC3E8,resonance
+property.forsakenMedallion,forsakenMedallion,Forsaken Medallion,property,TagNode,,What Forsaken Medallion does when the fight gives it its moment. Effects in nodeEffects.json: triggers on damageDealt; ops poiseDamage.,,,,,,live-tag,🏅,8C7A5B,forsakenMedallion
+property.starstoneShard,starstoneShard,Starstone Shard,property,TagNode,,"What Starstone Shard does when the fight gives it its moment. Effects in nodeEffects.json: triggers on combatStart; ops applyStatus, restoreMana.",,,,,,live-tag,💠,8C7A5B,starstoneShard
+property.cutpursesCoin,cutpursesCoin,Cutpurse's Coin,property,TagNode,,"What Cutpurse's Coin does when the fight gives it its moment. Effects in nodeEffects.json: triggers on combatStart, damageDealt; ops applyStatus.",,,,,,live-tag,🪙,8C7A5B,cutpursesCoin
+property.goldFigurine,goldFigurine,Gold Figurine,property,TagNode,,What Gold Figurine does when the fight gives it its moment. Effects in nodeEffects.json: triggers on healed; ops block.,,,,,,live-tag,🗿,8C7A5B,goldFigurine
+property.goldenSprout,goldenSprout,Golden Sprout,property,TagNode,,What Golden Sprout does when the fight gives it its moment. Effects in nodeEffects.json: triggers on combatStart; ops heal.,,,,,,live-tag,🌰,9A9A9A,goldenSprout
+property.whetstoneFragment,whetstoneFragment,Whetstone Fragment,property,TagNode,,What Whetstone Fragment does when the fight gives it its moment. Effects in nodeEffects.json: triggers on damageDealt; ops damage.,,,,,,live-tag,🪨,9A9A9A,whetstoneFragment
+property.kindlingCharm,kindlingCharm,Kindling Charm,property,TagNode,,What Kindling Charm does when the fight gives it its moment. Effects in nodeEffects.json: triggers on combatStart; ops draw.,,,,,,live-tag,🕯,9A9A9A,kindlingCharm
+property.goldleafCharm,goldleafCharm,Goldleaf Charm,property,TagNode,,What Goldleaf Charm does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart; ops block.,,,,,,live-tag,🍂,9A9A9A,goldleafCharm
+property.crackedLantern,crackedLantern,Cracked Lantern,property,TagNode,,What Cracked Lantern does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart; ops gainEnergy.,,,,,,live-tag,🏮,9A9A9A,crackedLantern
+property.sacrificialKnife,sacrificialKnife,Sacrificial Knife,property,TagNode,,What Sacrificial Knife does when the fight gives it its moment. Effects in nodeEffects.json: triggers on damageDealt; ops applyStatus.,,,,,,live-tag,🔪,9A9A9A,sacrificialKnife
+property.curedHide,curedHide,Cured Hide,property,TagNode,,What Cured Hide does when the fight gives it its moment. Effects in nodeEffects.json: triggers on hpLost; ops block.,,,,,,live-tag,🛡,9A9A9A,curedHide
+property.ivoryComb,ivoryComb,Ivory Comb,property,TagNode,,What Ivory Comb does when the fight gives it its moment. Effects in nodeEffects.json: triggers on cardPlayed; ops draw.,,,,,,live-tag,🪮,9A9A9A,ivoryComb
+property.fellWardenBrand,fellWardenBrand,Fell Warden Brand,property,TagNode,,What Fell Warden Brand does when the fight gives it its moment. Effects in nodeEffects.json: triggers on enemyStaggered; ops draw.,,,,,,live-tag,🔱,6E9C6E,fellWardenBrand
+property.bloodiedTalisman,bloodiedTalisman,Bloodied Talisman,property,TagNode,,What Bloodied Talisman does when the fight gives it its moment. Effects in nodeEffects.json: triggers on meterFilled; ops loseHp.,,,,,,live-tag,🩸,6E9C6E,bloodiedTalisman
+property.twinnedArmor,twinnedArmor,Twinned Armor,property,TagNode,,What Twinned Armor does when the fight gives it its moment. Effects in nodeEffects.json: triggers on cardPlayed; ops block.,,,,,,live-tag,👥,6E9C6E,twinnedArmor
+property.blightTouchedIdol,blightTouchedIdol,Blight-Touched Idol,property,TagNode,,What Blight-Touched Idol does when the fight gives it its moment. Effects in nodeEffects.json: triggers on damageDealt; ops applyStatus.,,,,,,live-tag,☣,6E9C6E,blightTouchedIdol
+property.warhorn,warhorn,Warhorn,property,TagNode,,What Warhorn does when the fight gives it its moment. Effects in nodeEffects.json: triggers on combatStart; ops applyStatus.,,,,,,live-tag,📣,6E9C6E,warhorn
+property.vowOfVengeance,vowOfVengeance,Vow of Vengeance,property,TagNode,,What Vow of Vengeance does when the fight gives it its moment. Effects in nodeEffects.json: triggers on enemyDied; ops applyStatus.,,,,,,live-tag,⚔,6E9C6E,vowOfVengeance
+property.pearlOfSagacity,pearlOfSagacity,Pearl of Sagacity,property,TagNode,,What Pearl of Sagacity does when the fight gives it its moment. Effects in nodeEffects.json: triggers on cardPlayed; ops gainEnergy.,,,,,,live-tag,🔮,6E9C6E,pearlOfSagacity
+property.blessedDew,blessedDew,Blessed Dew,property,TagNode,,What Blessed Dew does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart; ops heal.,,,,,,live-tag,💧,6E9C6E,blessedDew
+property.azureSigil,azureSigil,Azure Sigil,property,TagNode,,What Azure Sigil does when the fight gives it its moment. Effects in nodeEffects.json: triggers on cardPlayed; ops gainEnergy.,,,,,,live-tag,🔵,6E9C6E,azureSigil
+property.bloodstainedChalice,bloodstainedChalice,Bloodstained Chalice,property,TagNode,,What Bloodstained Chalice does when the fight gives it its moment. Effects in nodeEffects.json: triggers on meterFilled; ops block.,,,,,,live-tag,🍷,6E9C6E,bloodstainedChalice
+property.goldboughSapling,goldboughSapling,Goldbough Sapling,property,TagNode,,What Goldbough Sapling does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart; ops block.,,,,,,live-tag,🌱,B08CC9,goldboughSapling
+property.wyrmHeart,wyrmHeart,Wyrm Heart,property,TagNode,,What Wyrm Heart does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart; ops gainEnergy.,,,,,,live-tag,🫀,B08CC9,wyrmHeart
+property.titansCinder,titansCinder,Titan's Cinder,property,TagNode,,What Titan's Cinder does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart; ops applyStatus.,,,,,,live-tag,🌟,B08CC9,titansCinder
+property.radiantAegis,radiantAegis,Radiant Aegis,property,TagNode,,What Radiant Aegis does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart; ops block.,,,,,,live-tag,🛡,B08CC9,radiantAegis
+property.flayersCenser,flayersCenser,Flayer's Censer,property,TagNode,,What Flayer's Censer does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart; ops applyStatus.,,,,,,live-tag,🔥,B08CC9,flayersCenser
+property.vigilantHalo,vigilantHalo,Vigilant Halo,property,TagNode,,What Vigilant Halo does when the fight gives it its moment. Effects in nodeEffects.json: triggers on enemyStaggered; ops heal.,,,,,,live-tag,🌸,B08CC9,vigilantHalo
+property.carrionTalon,carrionTalon,Carrion Talon,property,TagNode,,What Carrion Talon does when the fight gives it its moment. Effects in nodeEffects.json: triggers on enemyDied; ops damage.,,,,,,live-tag,🦅,B08CC9,carrionTalon
+property.emberIdol,emberIdol,Ember Idol,property,TagNode,,What Ember Idol does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart; ops damage.,,,,,,live-tag,🌋,B08CC9,emberIdol
+property.crownOfStitches,crownOfStitches,Crown of Stitches,property,TagNode,,What Crown of Stitches does when the fight gives it its moment. Effects in nodeEffects.json: triggers on combatStart; ops applyStatus.,,,,,,live-tag,👑,C9A227,crownOfStitches
+property.wardenHorn,wardenHorn,Warden Horn,property,TagNode,,"What Warden Horn does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart, combatStart; ops draw, loseHp.",,,,,,live-tag,📯,C9A227,wardenHorn
+property.ashOfRemembrance,ashOfRemembrance,Ash of Remembrance,property,TagNode,,"What Ash of Remembrance does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart, combatStart; ops gainEnergy, applyStatus.",,,,,,live-tag,⚱,C9A227,ashOfRemembrance
+property.cinderOfTheFallen,cinderOfTheFallen,Cinder of the Fallen,property,TagNode,,"What Cinder of the Fallen does when the fight gives it its moment. Effects in nodeEffects.json: triggers on combatStart, enemyDied; ops applyStatus, gainEnergy.",,,,,,live-tag,☠,C9A227,cinderOfTheFallen
+property.crimsonCovenant,crimsonCovenant,Crimson Covenant,property,TagNode,,"What Crimson Covenant does when the fight gives it its moment. Effects in nodeEffects.json: triggers on combatStart, damageDealt; ops loseHp, applyStatus.",,,,,,live-tag,🩸,C9A227,crimsonCovenant
+property.travelersWhetstone,travelersWhetstone,Traveler's Whetstone,property,TagNode,,What Traveler's Whetstone does when the fight gives it its moment. Effects in nodeEffects.json: triggers on combatStart; ops applyStatus.,,,,,,live-tag,🔪,9A9A9A,travelersWhetstone
+property.moonlitVial,moonlitVial,Moonlit Vial,property,TagNode,,What Moonlit Vial does when the fight gives it its moment. Effects in nodeEffects.json: triggers on combatStart; ops block.,,,,,,live-tag,🧪,9A9A9A,moonlitVial
+property.wardensLantern,wardensLantern,Warden's Lantern,property,TagNode,,What Warden's Lantern does when the fight gives it its moment. Effects in nodeEffects.json: triggers on hpLost; ops draw.,,,,,,live-tag,🏮,9A9A9A,wardensLantern
+property.hollowedHorn,hollowedHorn,Hollowed Horn,property,TagNode,,What Hollowed Horn does when the fight gives it its moment. Effects in nodeEffects.json: triggers on enemyStaggered; ops applyStatus.,,,,,,live-tag,📯,6E9C6E,hollowedHorn
+property.gildedTear,gildedTear,Gilded Tear,property,TagNode,,What Gilded Tear does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart; ops heal.,,,,,,live-tag,💛,6E9C6E,gildedTear
+property.watchmansBadge,watchmansBadge,Watchman's Badge,property,TagNode,,What Watchman's Badge does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart; ops applyStatus.,,,,,,live-tag,🎖,B08CC9,watchmansBadge
+property.howlingStandard,howlingStandard,Howling Standard,property,TagNode,,What Howling Standard does when the fight gives it its moment. Effects in nodeEffects.json: triggers on enemyStaggered; ops applyStatus.,,,,,,live-tag,🚩,B08CC9,howlingStandard
+property.emberwickCharm,emberwickCharm,Emberwick Charm,property,TagNode,,What Emberwick Charm does when the fight gives it its moment. Effects in nodeEffects.json: triggers on hpLost; ops gainEnergy.,,,,,,live-tag,🕯,9A9A9A,emberwickCharm
+property.carrionMorsel,carrionMorsel,Carrion Morsel,property,TagNode,,What Carrion Morsel does when the fight gives it its moment. Effects in nodeEffects.json: triggers on enemyDied; ops heal.,,,,,,live-tag,🍖,9A9A9A,carrionMorsel
+property.gravetendersBell,gravetendersBell,Gravetender's Bell,property,TagNode,,What Gravetender's Bell does when the fight gives it its moment. Effects in nodeEffects.json: triggers on enemyDied; ops draw.,,,,,,live-tag,🔔,6E9C6E,gravetendersBell
+property.sentinelsOath,sentinelsOath,Sentinel's Oath,property,TagNode,,What Sentinel's Oath does when the fight gives it its moment. Effects in nodeEffects.json: triggers on cardPlayed; ops applyStatus.,,,,,,live-tag,🛡,6E9C6E,sentinelsOath
+property.forsakenWarflag,forsakenWarflag,Forsaken Warflag,property,TagNode,,What Forsaken Warflag does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart; ops applyStatus.,,,,,,live-tag,🏴,B08CC9,forsakenWarflag
+property.wrathCoil,wrathCoil,Wrath Coil,property,TagNode,,What Wrath Coil does when the fight gives it its moment. Effects in nodeEffects.json: triggers on hpLost; ops damage.,,,,,,live-tag,⚡,B08CC9,wrathCoil
+property.favored,favored,Favored,property,TagNode,,"A class card's leaning: skill XP in the weapon groups the card also names (its item-type tags) is multiplied. Scoped by the carrier's own tags, never by a second table.",,,,,,live-tag,✦,9FC3E8,favored
+property.ashenGrip,ashenGrip,Ashen Grip,property,TagNode,,What Ashen Grip does when the fight gives it its moment. Effects in nodeEffects.json: triggers on stanceEntered; ops restoreStamina.,,,,,,live-tag,🤚,8C7A5B,ashenGrip
+property.lodestarShard,lodestarShard,Lodestar Shard,property,TagNode,,What Lodestar Shard does when the fight gives it its moment. Effects in nodeEffects.json: triggers on combatStart; ops restoreMana.,,,,,,live-tag,🌟,8C7A5B,lodestarShard
+property.waxenSeal,waxenSeal,Waxen Seal,property,TagNode,,What Waxen Seal does when the fight gives it its moment. Effects in nodeEffects.json: triggers on healed; ops heal.,,,,,,live-tag,🕯,8C7A5B,waxenSeal
+property.whetstonePouch,whetstonePouch,Whetstone Pouch,property,TagNode,,What Whetstone Pouch does when the fight gives it its moment. Effects in nodeEffects.json: triggers on damageDealt; ops applyStatus.,,,,,,live-tag,👝,8C7A5B,whetstonePouch
+property.ironFooting,ironFooting,Iron Footing,property,TagNode,,Every stance you enter braces you. Effects in nodeEffects.json: triggers on stanceEntered; ops block.,,,,,,live-tag,🦶,9FC3E8,ironFooting
+property.bloodTempo,bloodTempo,Blood Tempo,property,TagNode,,A change of footing is a breath. Effects in nodeEffects.json: triggers on stanceEntered; ops draw.,,,,,,live-tag,♪,9FC3E8,bloodTempo
+property.ashenReserve,ashenReserve,Ashen Reserve,property,TagNode,,The grip gives back a little more. Effects in nodeEffects.json: triggers on playerTurnStart; ops restoreStamina.,,,,,,live-tag,🤚,9FC3E8,ashenReserve
+property.grimHarvest,grimHarvest,Grim Harvest,property,TagNode,,What falls feeds you. Effects in nodeEffects.json: triggers on enemyDied; ops heal.,,,,,,live-tag,🩸,9FC3E8,grimHarvest
+property.restHpSmall,restHpSmall,Small rest,property,TagNode,,A rough camp's rest: a small share of your max HP back. Effects in nodeEffects.json: triggers on rested; ops heal.,,,,,,live-tag,♨,7FA8C9,restHpSmall
+property.restHpPartial,restHpPartial,Partial rest,property,TagNode,,A shrine's rest: part of your max HP back. Effects in nodeEffects.json: triggers on rested; ops heal.,,,,,,live-tag,♨,7FA8C9,restHpPartial
+property.restHpFull,restHpFull,Full rest,property,TagNode,,A town's bed: HP to full. Effects in nodeEffects.json: triggers on rested; ops heal.,,,,,,live-tag,♨,7FA8C9,restHpFull
+property.restMana,restMana,Mana rest,property,TagNode,,"Mana back by the configured mode (balance.rest.mana.mode) — the door resolves this tag to the mode's own tag, so a place that wants another amount carries restManaFlat, restManaFloor or restManaFull instead.",,,,,,live-tag,◈,7FA8C9,restMana
+property.restManaFlat,restManaFlat,Flat mana rest,property,TagNode,,Mana back by a fixed amount. Effects in nodeEffects.json: triggers on rested; ops restoreMana.,,,,,,live-tag,◈,7FA8C9,restManaFlat
+property.restManaFloor,restManaFloor,Mana rest to a floor,property,TagNode,,"Mana back to a floor of max, or to full when already there. Effects in nodeEffects.json: triggers on rested; ops restoreMana.",,,,,,live-tag,◈,7FA8C9,restManaFloor
+property.restManaFull,restManaFull,Full mana rest,property,TagNode,,Mana to full. Effects in nodeEffects.json: triggers on rested; ops restoreMana.,,,,,,live-tag,◈,7FA8C9,restManaFull
+property.restFlasks,restFlasks,Flask refill,property,TagNode,,Arriving refills your flask charges (the grace refill). Effects in nodeEffects.json: triggers on arrived; ops refillFlasks.,,,,,,live-tag,⚗,7FA8C9,restFlasks
+property.smith,smith,Smith,property,TagNode,,"The place offers a smith: upgrade, extract, install (balance.smithing.services says which).",,,,,,live-tag,⚒,9A9A9A,smith
+property.levelUp,levelUp,Level-up,property,TagNode,,The place is where waiting attribute points are assigned.,,,,,,live-tag,✦,9A9A9A,levelUp
+property.questBoard,questBoard,Quest board,property,TagNode,,"The place keeps a quest board: the quests offered in this town, and a journal of the run's quests.",,,,,,live-tag,✉,C9A227,questBoard
+property.deckEdit,deckEdit,Deck editing,property,TagNode,,"Under Rest sites only (Settings → Advanced → Deck), the deck editor opens from this place's Rest screen. A service marker, with no rule.",,,,,,live-tag,✎,C9A227,deckEdit
+property.warlord,warlord,Warlord,property,TagNode,,The subclass that opens every fight already swinging. Effects in nodeEffects.json: triggers on combatStart; ops applyStatus.,,,,,,live-tag,👑,9FC3E8,warlord
+property.bulwarkKing,bulwarkKing,Bulwark King,property,TagNode,,The subclass that is never caught open. Effects in nodeEffects.json: triggers on playerTurnStart; ops block.,,,,,,live-tag,🏰,9FC3E8,bulwarkKing
+property.attunedMind,attunedMind,Attuned Mind,property,TagNode,,Mana found is a card found. Effects in nodeEffects.json: triggers on manaRestored; ops draw.,,,,,,live-tag,✴,9FC3E8,attunedMind
+property.starlitFocus,starlitFocus,Starlit Focus,property,TagNode,,The charge is there before the first cast. Effects in nodeEffects.json: triggers on combatStart; ops applyStatus.,,,,,,live-tag,✦,9FC3E8,starlitFocus
+property.lodestarCap,lodestarCap,Lodestar Cap,property,TagNode,,The shard opens the fight wider. Effects in nodeEffects.json: triggers on combatStart; ops restoreMana.,,,,,,live-tag,🌟,9FC3E8,lodestarCap
+property.arcaneDraw,arcaneDraw,Arcane Draw,property,TagNode,,The first break each combat is a hand. Effects in nodeEffects.json: triggers on arcaneBreak; ops draw.,,,,,,live-tag,🌀,9FC3E8,arcaneDraw
+property.conduit,property.conduit,Conduit,property,TagNode,,"The subclass whose casts cost breath, not blood. Effects in nodeEffects.json: triggers on playerTurnStart; ops restoreStamina.",,,,,,live-tag,⚡,9FC3E8,conduit
+property.reservoir,reservoir,Reservoir,property,TagNode,,The subclass that never runs dry. Effects in nodeEffects.json: triggers on playerTurnStart; ops restoreMana.,,,,,,live-tag,🫙,9FC3E8,reservoir
+property.warmth,warmth,Warmth,property,TagNode,,Every heal braces you. Effects in nodeEffects.json: triggers on healed; ops block.,,,,,,live-tag,☀,9FC3E8,warmth
+property.vigil,vigil,Vigil,property,TagNode,,The litany never quite stops. Effects in nodeEffects.json: triggers on playerTurnStart; ops heal.,,,,,,live-tag,🕯,9FC3E8,vigil
+property.sealOfPlenty,sealOfPlenty,Seal of Plenty,property,TagNode,,The first heal pays for the next cast. Effects in nodeEffects.json: triggers on healed; ops restoreMana.,,,,,,live-tag,📿,9FC3E8,sealOfPlenty
+property.wakingRot,wakingRot,Waking Rot,property,TagNode,,Your blows carry the blight. Effects in nodeEffects.json: triggers on damageDealt; ops applyStatus.,,,,,,live-tag,🦠,9FC3E8,wakingRot
+property.martyr,martyr,Martyr,property,TagNode,,The subclass that turns every wound to a wall. Effects in nodeEffects.json: triggers on hpLost; ops block.,,,,,,live-tag,✝,9FC3E8,martyr
+property.saint,saint,Saint,property,TagNode,,The subclass that walks in whole. Effects in nodeEffects.json: triggers on combatStart; ops heal.,,,,,,live-tag,🌞,9FC3E8,saint
+property.quickHands,quickHands,Quick Hands,property,TagNode,,Prepared before the first card. Effects in nodeEffects.json: triggers on combatStart; ops applyStatus.,,,,,,live-tag,🤏,9FC3E8,quickHands
+property.secondWind,secondWind,Second Wind,property,TagNode,,"What you burn, you draw. Effects in nodeEffects.json: triggers on cardExhausted; ops draw.",,,,,,live-tag,💨,9FC3E8,secondWind
+property.honedEdge,honedEdge,Honed Edge,property,TagNode,,Every prepared cut opens a vein. Effects in nodeEffects.json: triggers on damageDealt; ops applyStatus.,,,,,,live-tag,🔪,9FC3E8,honedEdge
+property.poisonedPouch,poisonedPouch,Poisoned Pouch,property,TagNode,,The whetstone is not the only thing in the pouch. Effects in nodeEffects.json: triggers on damageDealt; ops applyStatus.,,,,,,live-tag,☠,9FC3E8,poisonedPouch
+property.assassin,assassin,Assassin,property,TagNode,,"The subclass that reads a stagger as an opening. Effects in nodeEffects.json: triggers on enemyStaggered; ops applyStatus, draw.",,,,,,live-tag,🗡,9FC3E8,assassin
+property.shadow,property.shadow,Shadow,property,TagNode,,The subclass nothing quite reaches. Effects in nodeEffects.json: triggers on playerTurnStart; ops block.,,,,,,live-tag,🌑,9FC3E8,shadow
+property.partingBlow,partingBlow,Parting Blow,property,TagNode,,Every step out of a stance is a cut. Effects in nodeEffects.json: triggers on stanceExited; ops damage.,,,,,,live-tag,⚔,9FC3E8,partingBlow
+property.ironRebuke,ironRebuke,Iron Rebuke,property,TagNode,,Brace answers every wound it cannot stop. Effects in nodeEffects.json: triggers on hpLost; ops damage.,,,,,,live-tag,⛓,9FC3E8,ironRebuke
+property.cinderGrip,cinderGrip,Cinder Grip,property,TagNode,,The grip leaves ash in every wound. Effects in nodeEffects.json: triggers on stanceEntered; ops applyStatus.,,,,,,live-tag,✊,9FC3E8,cinderGrip
+property.mendingGrip,mendingGrip,Mending Grip,property,TagNode,,The grip closes the wound it opened. Effects in nodeEffects.json: triggers on stanceEntered; ops heal.,,,,,,live-tag,🩹,9FC3E8,mendingGrip
+property.spentStars,spentStars,Spent Stars,property,TagNode,,"What burns out, burns once more. Effects in nodeEffects.json: triggers on cardExhausted; ops restoreMana.",,,,,,live-tag,💫,9FC3E8,spentStars
+property.fallingStar,fallingStar,Falling Star,property,TagNode,,The mana comes down somewhere. Effects in nodeEffects.json: triggers on manaRestored; ops damage.,,,,,,live-tag,☄,9FC3E8,fallingStar
+property.lodestarPull,lodestarPull,Lodestar Pull,property,TagNode,,The shard drags the foe off its footing. Effects in nodeEffects.json: triggers on combatStart; ops applyStatus.,,,,,,live-tag,🧲,9FC3E8,lodestarPull
+property.shardHunger,shardHunger,Shard Hunger,property,TagNode,,The shard drinks from a staggering foe. Effects in nodeEffects.json: triggers on enemyStaggered; ops restoreMana.,,,,,,live-tag,💠,9FC3E8,shardHunger
+property.burningGrace,burningGrace,Burning Grace,property,TagNode,,"The warmth spills over, and scalds. Effects in nodeEffects.json: triggers on healed; ops damage.",,,,,,live-tag,🔥,9FC3E8,burningGrace
+property.dazzlingLight,dazzlingLight,Dazzling Light,property,TagNode,,The litany is hard to look at. Effects in nodeEffects.json: triggers on healed; ops applyStatus.,,,,,,live-tag,✨,9FC3E8,dazzlingLight
+property.anointedBlade,anointedBlade,Anointed Blade,property,TagNode,,The seal breaks over the edge. Effects in nodeEffects.json: triggers on healed; ops applyStatus.,,,,,,live-tag,🗡,9FC3E8,anointedBlade
+property.unsealedScroll,unsealedScroll,Unsealed Scroll,property,TagNode,,"Under the wax, the next verse. Effects in nodeEffects.json: triggers on healed; ops draw.",,,,,,live-tag,📜,9FC3E8,unsealedScroll
+property.lowProfile,lowProfile,Low Profile,property,TagNode,,"Ready, and hard to find. Effects in nodeEffects.json: triggers on statusApplied; ops block.",,,,,,live-tag,🫥,9FC3E8,lowProfile
+property.feint,feint,Baiting Feint,property,TagNode,,The first move is never the real one. Effects in nodeEffects.json: triggers on statusApplied; ops poiseDamage.,,,,,,live-tag,🎭,9FC3E8,feint
+property.spareWhetstone,spareWhetstone,Spare Whetstone,property,TagNode,,"A second stone, for the second cut. Effects in nodeEffects.json: triggers on damageDealt; ops gainEnergy.",,,,,,live-tag,🪨,9FC3E8,spareWhetstone
+property.whettedGuard,whettedGuard,Whetted Guard,property,TagNode,,The edge that cuts also turns a blade. Effects in nodeEffects.json: triggers on damageDealt; ops block.,,,,,,live-tag,🤺,9FC3E8,whettedGuard
+property.coal-on-steel,coal-on-steel,Coal on Steel,property,TagNode,,The first Blade hit each turn applies +1 Bleed buildup. Effects in nodeEffects.json: triggers on damageDealt; ops applyStatus.,,,,,,live-tag,✦,D7B36B,feat:coal-on-steel
+property.brace-and-bite,brace-and-bite,Brace and Bite,property,TagNode,,The first Blade attack each turn played while you have Block deals +3 damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.,,,,,,live-tag,✦,D7B36B,feat:brace-and-bite
+property.red-footwork,red-footwork,Red Footwork,property,TagNode,,The first Guard card each turn targeting an enemy with Bleed buildup draws 1 card. Effects in nodeEffects.json: triggers on cardPreparing; ops draw.,,,,,,live-tag,✦,D7B36B,feat:red-footwork
+property.anvil-discipline,anvil-discipline,Anvil Discipline,property,TagNode,,The first Heavy attack each turn deals +2 Break damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.,,,,,,live-tag,✦,D7B36B,feat:anvil-discipline
+property.forge-momentum,forge-momentum,Forge Momentum,property,TagNode,,Your first Blade attack after a Guard card each turn deals +4 damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.,,,,,,live-tag,✦,D7B36B,feat:forge-momentum
+property.paid-in-blood,paid-in-blood,Paid in Blood,property,TagNode,,The first Blood attack after you have lost HP since your previous turn began deals +4 damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.,,,,,,live-tag,✦,D7B36B,feat:paid-in-blood
+property.last-rampart,last-rampart,Last Rampart,property,TagNode,,"At half HP or lower, your first Guard card each turn grants +4 Block. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.",,,,,,live-tag,✦,D7B36B,feat:last-rampart
+property.war-cadence,war-cadence,War Cadence,property,TagNode,,"After your second Heavy card in a turn, gain 4 Block, once per turn. Effects in nodeEffects.json: triggers on cardResolved; ops block.",,,,,,live-tag,✦,D7B36B,feat:war-cadence
+property.broad-sentence,broad-sentence,Broad Sentence,property,TagNode,,Your first attack that hits all living enemies each turn deals +2 damage to each target. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.,,,,,,live-tag,✦,D7B36B,feat:broad-sentence
+property.ember-sovereign,ember-sovereign,Ember Sovereign,property,TagNode,,"Once per turn, a Crown of Cinders charge gains +2 damage before it is consumed. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.",,,,,,live-tag,✦,D7B36B,feat:ember-sovereign
+property.dread-of-the-hammer,dread-of-the-hammer,Dread of the Hammer,property,TagNode,,Your first Heavy attack against a Staggered target each turn deals +4 damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.,,,,,,live-tag,✦,D7B36B,feat:dread-of-the-hammer
+property.scarred-oath,scarred-oath,Scarred Oath,property,TagNode,,"Your first Guard card after losing HP since your previous turn began grants +3 Block, once per turn. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.",,,,,,live-tag,✦,D7B36B,feat:scarred-oath
+property.harvest-the-wound,harvest-the-wound,Harvest the Wound,property,TagNode,,"Your first credited kill of an enemy with Bleed buildup heals 3 HP, once per combat. Effects in nodeEffects.json: triggers on enemyDied; ops heal.",,,,,,live-tag,✦,D7B36B,feat:harvest-the-wound
+property.orbit-keeper,orbit-keeper,Orbit Keeper,property,TagNode,,Your first Starstone spell following another spell each turn deals +3 direct damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.,,,,,,live-tag,✦,D7B36B,feat:orbit-keeper
+property.moonward-scholar,moonward-scholar,Moonward Scholar,property,TagNode,,The first Guard spell played after you spent at least 2 Mana this turn grants +3 Block. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.,,,,,,live-tag,✦,D7B36B,feat:moonward-scholar
+property.comet-reader,comet-reader,Comet Reader,property,TagNode,,The first Comet Mark attack each turn applies +1 Vulnerable after damage. Effects in nodeEffects.json: triggers on cardResolved; ops applyStatus.,,,,,,live-tag,✦,D7B36B,feat:comet-reader
+property.mirror-of-rime,mirror-of-rime,Mirror of Rime,property,TagNode,,Your first Rime Mirror each turn applies +2 Frost buildup. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.,,,,,,live-tag,✦,D7B36B,feat:mirror-of-rime
+property.constellation-keeper,constellation-keeper,Constellation Keeper,property,TagNode,,Your first Starstone attack after two distinct Starstone card IDs this turn deals +3 damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.,,,,,,live-tag,✦,D7B36B,feat:constellation-keeper
+property.patient-wellspring,patient-wellspring,Patient Wellspring,property,TagNode,,The first Mana Weave restoration each turn also grants 3 Block. Effects in nodeEffects.json: triggers on manaRestored; ops block.,,,,,,live-tag,✦,D7B36B,feat:patient-wellspring
+property.weight-of-the-void,weight-of-the-void,Weight of the Void,property,TagNode,,The first Gravity Snare each turn applies +1 Weak after damage. Effects in nodeEffects.json: triggers on cardResolved; ops applyStatus.,,,,,,live-tag,✦,D7B36B,feat:weight-of-the-void
+property.nightglass-scholar,nightglass-scholar,Nightglass Scholar,property,TagNode,,"Once per turn, your Nightglass charge grants +2 additional damage when consumed. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.",,,,,,live-tag,✦,D7B36B,feat:nightglass-scholar
+property.eclipse-hunter,eclipse-hunter,Eclipse Hunter,property,TagNode,,Your first Starstone attack against a Frost-built-up or Frost-exposed target each turn deals +4 damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.,,,,,,live-tag,✦,D7B36B,feat:eclipse-hunter
+property.firmament-keeper,firmament-keeper,Firmament Keeper,property,TagNode,,"Once per turn, consuming a Warded Casting charge also grants 4 Block. Effects in nodeEffects.json: triggers on cardChargeConsumed; ops block.",,,,,,live-tag,✦,D7B36B,feat:firmament-keeper
+property.celestial-refrain,celestial-refrain,Celestial Refrain,property,TagNode,,"The second play of the same Starstone card ID in a turn grants 4 Block, once per turn. Effects in nodeEffects.json: triggers on cardResolved; ops block.",,,,,,live-tag,✦,D7B36B,feat:celestial-refrain
+property.memory-of-winter,memory-of-winter,Memory of Winter,property,TagNode,,Retain up to 4 Block into your next turn; use the highest retention allowance if another source also retains Block.,,,,,,live-tag,✦,D7B36B,feat:memory-of-winter
+property.threefold-sky,threefold-sky,Threefold Sky,property,TagNode,,"Playing your third distinct Starstone card ID in a turn draws 1 card, once per turn. Effects in nodeEffects.json: triggers on cardResolved; ops draw.",,,,,,live-tag,✦,D7B36B,feat:threefold-sky
+property.first-knife,first-knife,First Knife,property,TagNode,,"If your first card this turn is a Blade attack, it deals +3 damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.",,,,,,live-tag,✦,D7B36B,feat:first-knife
+property.pocket-method,pocket-method,Pocket Method,property,TagNode,,Your first Guard card after an explicit discard each turn grants +3 Block. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.,,,,,,live-tag,✦,D7B36B,feat:pocket-method
+property.crooked-measure,crooked-measure,Crooked Measure,property,TagNode,,Your first Crooked Guard hit each turn applies +1 Weak after damage. Effects in nodeEffects.json: triggers on cardResolved; ops applyStatus.,,,,,,live-tag,✦,D7B36B,feat:crooked-measure
+property.open-flank,open-flank,Open Flank,property,TagNode,,Your first Blade attack against an enemy with zero Block each turn deals +3 damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.,,,,,,live-tag,✦,D7B36B,feat:open-flank
+property.hidden-palm,hidden-palm,Hidden Palm,property,TagNode,,The first Sleight of Hand sequence each turn grants 3 Block after the discard. Effects in nodeEffects.json: triggers on cardResolved; ops block.,,,,,,live-tag,✦,D7B36B,feat:hidden-palm
+property.tighten-the-wire,tighten-the-wire,Tighten the Wire,property,TagNode,,Your first Tether Cut attack each turn against a Weak or Vulnerable enemy deals +3 damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.,,,,,,live-tag,✦,D7B36B,feat:tighten-the-wire
+property.smoke-dancer,smoke-dancer,Smoke Dancer,property,TagNode,,"Once per turn, a Smoke Edge charge adds +2 damage before it is consumed. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.",,,,,,live-tag,✦,D7B36B,feat:smoke-dancer
+property.carrion-measure,carrion-measure,Carrion Measure,property,TagNode,,Your first Blade attack against an enemy at half HP or lower each turn deals +4 damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.,,,,,,live-tag,✦,D7B36B,feat:carrion-measure
+property.two-quiet-knives,two-quiet-knives,Two Quiet Knives,property,TagNode,,Your first Paired Strikes attack each turn deals +1 damage on each of its two hits. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.,,,,,,live-tag,✦,D7B36B,feat:two-quiet-knives
+property.trapdoor-smile,trapdoor-smile,Trapdoor Smile,property,TagNode,,Your first Blade attack after both a Guile card and a Guard card this turn deals +4 damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.,,,,,,live-tag,✦,D7B36B,feat:trapdoor-smile
+property.clean-exit,clean-exit,Clean Exit,property,TagNode,,"Your first Guard card played before any attack this turn restores 1 Stamina, once per turn. Effects in nodeEffects.json: triggers on cardPreparing; ops restoreStamina.",,,,,,live-tag,✦,D7B36B,feat:clean-exit
+property.razor-ledger,razor-ledger,Razor Ledger,property,TagNode,,Your first Blade attack after an explicit discard each turn deals +3 damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.,,,,,,live-tag,✦,D7B36B,feat:razor-ledger
+property.ashen-mercy,ashen-mercy,Ashen Mercy,property,TagNode,,The first Mercy in Ash card each turn heals +2 HP. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.,,,,,,live-tag,✦,D7B36B,feat:ashen-mercy
+property.censer-keeper,censer-keeper,Censer Keeper,property,TagNode,,The first Blood Censer offering each turn grants +3 Block after its HP payment. Effects in nodeEffects.json: triggers on hpOfferingPaid; ops block.,,,,,,live-tag,✦,D7B36B,feat:censer-keeper
+property.sower-of-blight,sower-of-blight,Sower of Blight,property,TagNode,,The first Blight Seed hit each turn applies +2 Crimson Blight buildup. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.,,,,,,live-tag,✦,D7B36B,feat:sower-of-blight
+property.funeral-watch,funeral-watch,Funeral Watch,property,TagNode,,"At half HP or lower, your first Guard card each turn grants +3 Block. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.",,,,,,live-tag,✦,D7B36B,feat:funeral-watch
+property.ember-almoner,ember-almoner,Ember Almoner,property,TagNode,,Your first Ember Tithe each turn grants +1 Regen after the HP payment. Effects in nodeEffects.json: triggers on hpOfferingPaid; ops applyStatus.,,,,,,live-tag,✦,D7B36B,feat:ember-almoner
+property.choir-of-bone,choir-of-bone,Choir of Bone,property,TagNode,,"The first Guard card you play while any living enemy has Crimson Blight buildup restores 1 Stamina, once per turn. Effects in nodeEffects.json: triggers on cardPreparing; ops restoreStamina.",,,,,,live-tag,✦,D7B36B,feat:choir-of-bone
+property.requiem-reader,requiem-reader,Requiem Reader,property,TagNode,,The first Ritual hit against an enemy with Crimson Blight buildup each turn deals +3 damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.,,,,,,live-tag,✦,D7B36B,feat:requiem-reader
+property.pilgrim-of-scars,pilgrim-of-scars,Pilgrim of Scars,property,TagNode,,"If you began the turn at half HP or lower, your first Guard card that turn heals 3 HP. Effects in nodeEffects.json: triggers on cardPreparing; ops heal.",,,,,,live-tag,✦,D7B36B,feat:pilgrim-of-scars
+property.crowned-offering,crowned-offering,Crowned Offering,property,TagNode,,The first Ritual attack after an earlier HP offering this turn deals +4 damage. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.,,,,,,live-tag,✦,D7B36B,feat:crowned-offering
+property.dawn-cantor,dawn-cantor,Dawn Cantor,property,TagNode,,The first Dawn Rite removal each turn also grants 3 Block. Effects in nodeEffects.json: triggers on statusRemoved; ops block.,,,,,,live-tag,✦,D7B36B,feat:dawn-cantor
+property.bearer-of-burdens,bearer-of-burdens,Bearer of Burdens,property,TagNode,,The first negative status newly applied to you by an enemy each turn restores 1 Mana. Effects in nodeEffects.json: triggers on statusApplied; ops restoreMana.,,,,,,live-tag,✦,D7B36B,feat:bearer-of-burdens
+property.sepulchral-promise,sepulchral-promise,Sepulchral Promise,property,TagNode,,"Your first credited kill of an enemy with Crimson Blight buildup heals 3 HP, once per combat. Effects in nodeEffects.json: triggers on enemyDied; ops heal.",,,,,,live-tag,✦,D7B36B,feat:sepulchral-promise
+property.progression-emberjaw-token,progression-emberjaw-token,Emberjaw Token,property,TagNode,,What Emberjaw Token confers when the fight gives it its moment. Effects in nodeEffects.json: triggers on damageDealt; ops applyStatus.,,,,,,live-tag,🦷,C79C64,progression-emberjaw-token
+property.progression-cracked-war-anvil,progression-cracked-war-anvil,Cracked War Anvil,property,TagNode,,What Cracked War Anvil confers when the fight gives it its moment. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.,,,,,,live-tag,⚒️,C79C64,progression-cracked-war-anvil
+property.progression-cinderbound-crown,progression-cinderbound-crown,Cinderbound Crown,property,TagNode,,What Cinderbound Crown confers when the fight gives it its moment. Effects in nodeEffects.json: triggers on enemyDied; ops heal.,,,,,,live-tag,👑,C79C64,progression-cinderbound-crown
+property.progression-moonwell-lens,progression-moonwell-lens,Moonwell Lens,property,TagNode,,What Moonwell Lens confers when the fight gives it its moment. Effects in nodeEffects.json: triggers on cardPlayed; ops block.,,,,,,live-tag,🔮,C79C64,progression-moonwell-lens
+property.progression-nightglass-rosary,progression-nightglass-rosary,Nightglass Rosary,property,TagNode,,What Nightglass Rosary confers when the fight gives it its moment. Effects in nodeEffects.json: triggers on cardPlayed; ops restoreMana.,,,,,,live-tag,📿,C79C64,progression-nightglass-rosary
+property.progression-fragment-of-the-third-sky,progression-fragment-of-the-third-sky,Fragment of the Third Sky,property,TagNode,,What Fragment of the Third Sky confers when the fight gives it its moment. Effects in nodeEffects.json: triggers on cardPlayed; ops block.,,,,,,live-tag,🌌,C79C64,progression-fragment-of-the-third-sky
+property.progression-whisperglass-die,progression-whisperglass-die,Whisperglass Die,property,TagNode,,What Whisperglass Die confers when the fight gives it its moment. Effects in nodeEffects.json: triggers on cardPreparing; ops grantCardCharge.,,,,,,live-tag,🎲,C79C64,progression-whisperglass-die
+property.progression-purse-of-borrowed-shadows,progression-purse-of-borrowed-shadows,Purse of Borrowed Shadows,property,TagNode,,What Purse of Borrowed Shadows confers when the fight gives it its moment. Effects in nodeEffects.json: triggers on cardDiscarded; ops block.,,,,,,live-tag,👝,C79C64,progression-purse-of-borrowed-shadows
+property.progression-ember-alms-bowl,progression-ember-alms-bowl,Ember Alms Bowl,property,TagNode,,What Ember Alms Bowl confers when the fight gives it its moment. Effects in nodeEffects.json: triggers on hpOfferingPaid; ops block.,,,,,,live-tag,🥣,C79C64,progression-ember-alms-bowl
+property.progression-ossuary-prayer-wheel,progression-ossuary-prayer-wheel,Ossuary Prayer Wheel,property,TagNode,,What Ossuary Prayer Wheel confers when the fight gives it its moment. Effects in nodeEffects.json: triggers on enemyDied; ops restoreMana.,,,,,,live-tag,🛞,C79C64,progression-ossuary-prayer-wheel
+property.companion,property.companion,Companion,property,TagNode,,"What a companion confers while it travels with you: a branch, not a tag; each companion's own node sits under it.",,,,,,live-tag,☥,B08D57,companion
+property.companion.hollowSquire,hollowSquire,Hollow Squire,property.companion,TagNode,,A squire without a knight raises a shield before you. Effects in nodeEffects.json: triggers on combatStart; ops block.,,,,,,live-tag,🛡,B08D57,hollowSquire
+property.companion.emberHound,emberHound,Ember Hound,property.companion,TagNode,,A hound of banked coals bites at your foes. Effects in nodeEffects.json: triggers on playerTurnStart; ops damage.,,,,,,live-tag,🐕,C9502E,emberHound
+property.sigil,property.sigil,Sigil,property,TagNode,,"What a sigil confers while it sits in a slot of an equipped armament: a branch, not a tag; each sigil's own node sits under it.",,,,,,live-tag,◈,7A6FB0,sigil
+property.sigil.emberSigil,emberSigil,Ember Sigil,property.sigil,TagNode,,An ember set in steel warms a guard before the first blow. Effects in nodeEffects.json: triggers on combatStart; ops block.,,,,,,live-tag,🔥,C9502E,emberSigil
+property.sigil.thornSigil,thornSigil,Thorn Sigil,property.sigil,TagNode,,A thorn set in steel opens the first wound of a fight. Effects in nodeEffects.json: triggers on damageDealt; ops applyStatus.,,,,,,live-tag,🌿,8E3B3B,thornSigil
+property.sigil.tideSigil,tideSigil,Tide Sigil,property.sigil,TagNode,,A tide set in steel brings a card back with every fifth one played. Effects in nodeEffects.json: triggers on cardPlayed; ops draw.,,,,,,live-tag,🌊,3F6FA0,tideSigil
+property.sigil.hearthSigil,hearthSigil,Hearth Sigil,property.sigil,TagNode,,A hearth set in steel turns every mending into a guard. Effects in nodeEffects.json: triggers on healed; ops block.,,,,,,live-tag,🏠,B08D57,hearthSigil
+property.sigil.vigilSigil,vigilSigil,Sigil of the Last Vigil,property.sigil,TagNode,,A legendary vigil: a guard rises at the start of a fight you enter already wounded. Effects in nodeEffects.json: triggers on combatStart; ops block.,,,,,,live-tag,🕯,8A7A3C,vigilSigil
+property.sigil.pyreSigil,pyreSigil,Pyre Sigil,property.sigil,TagNode,,A legendary pyre: every card you burn away raises a guard. Effects in nodeEffects.json: triggers on cardExhausted; ops block.,,,,,,live-tag,🔥,B5522A,pyreSigil
+property.sigil.gravelightSigil,gravelightSigil,Gravelight Sigil,property.sigil,TagNode,,A legendary gravelight: a fallen foe mends you while you stand wounded. Effects in nodeEffects.json: triggers on enemyDied; ops heal.,,,,,,live-tag,💀,6F7FA8,gravelightSigil
+meta.combat.skill.technique.counter,technique.counter,Counter,meta.combat.skill.technique,Skill,,Categorized Counter identity; effects are authored separately.,,,,,,live-tag,◇,9FC3E8,technique:counter
+meta.combat.skill.technique.searing-edge,searing-edge,Searing Edge,meta.combat.skill.technique,Skill,,A direct hit carries an authored Bleed buildup rider; the tag supplies no extra damage by itself.,,,,,,live-tag,✦,D7B36B,ability:searing-edge
+meta.combat.skill.technique.guarded-strike,guarded-strike,Guarded Strike,meta.combat.skill.technique,Skill,,Tests whether the acting player currently has positive Block before an attack resolves.,,,,,,live-tag,✦,D7B36B,ability:guarded-strike
+meta.combat.skill.technique.bloodstep,bloodstep,Bloodstep,meta.combat.skill.technique,Skill,,Tests whether the selected enemy has positive Bleed buildup before the card resolves.,,,,,,live-tag,✦,D7B36B,ability:bloodstep
+meta.combat.skill.technique.hammerfall,hammerfall,Hammerfall,meta.combat.skill.technique,Skill,,Marks an attack with an explicit Break-damage rider; HP damage and Break damage remain separate values.,,,,,,live-tag,✦,D7B36B,ability:hammerfall
+meta.combat.skill.technique.forgewake,forgewake,Forgewake,meta.combat.skill.technique,Skill,,Tests whether the acting player has already played a Guard card during this turn.,,,,,,live-tag,✦,D7B36B,ability:forgewake
+meta.combat.skill.technique.crimson-reprisal,crimson-reprisal,Crimson Reprisal,meta.combat.skill.technique,Skill,,"Tests whether the acting player lost HP since their previous turn began; paying HP counts, losing Block does not.",,,,,,live-tag,✦,D7B36B,ability:crimson-reprisal
+meta.combat.skill.technique.last-stand,last-stand,Last Stand,meta.combat.skill.technique,Skill,,Tests whether current HP is at or below 50% of current maximum HP before resolution.,,,,,,live-tag,✦,D7B36B,ability:last-stand
+meta.combat.skill.technique.war-tempo,war-tempo,War Tempo,meta.combat.skill.technique,Skill,,Tests whether at least two Heavy cards have already been played by the acting player during this turn.,,,,,,live-tag,✦,D7B36B,ability:war-tempo
+meta.combat.skill.technique.wide-cleave,wide-cleave,Wide Cleave,meta.combat.skill.technique,Skill,,Marks one authored attack effect that independently hits every living enemy; it is not a separate hit per tag.,,,,,,live-tag,✦,D7B36B,ability:wide-cleave
+meta.combat.skill.technique.ember-crown,ember-crown,Ember Crown,meta.combat.skill.technique,Skill,,Marks a one-charge bonus to the next direct attack this turn; the charge expires at turn end and cannot stack with itself.,,,,,,live-tag,✦,D7B36B,ability:ember-crown
+meta.combat.skill.technique.dreadweight,dreadweight,Dreadweight,meta.combat.skill.technique,Skill,,Tests whether the selected enemy is currently Staggered before a direct hit.,,,,,,live-tag,✦,D7B36B,ability:dreadweight
+meta.combat.skill.technique.oathscar,oathscar,Oathscar,meta.combat.skill.technique,Skill,,Identifies the first Guard card after the acting player has lost HP since their previous turn began; at most once per turn.,,,,,,live-tag,✦,D7B36B,ability:oathscar
+meta.combat.skill.technique.wound-harvest,wound-harvest,Wound Harvest,meta.combat.skill.technique,Skill,,Identifies a credited kill of an enemy that had positive Bleed buildup immediately before the killing hit.,,,,,,live-tag,✦,D7B36B,ability:wound-harvest
+meta.combat.skill.technique.cinder-orbit,cinder-orbit,Cinder Orbit,meta.combat.skill.technique,Skill,,Tests whether the immediately preceding card played this turn by the same player was a spell.,,,,,,live-tag,✦,D7B36B,ability:cinder-orbit
+meta.combat.skill.technique.lunar-guard,lunar-guard,Lunar Guard,meta.combat.skill.technique,Skill,,Tests whether the acting player has already spent at least 2 Mana this turn; refunded Mana does not erase spending.,,,,,,live-tag,✦,D7B36B,ability:lunar-guard
+meta.combat.skill.technique.comet-mark,comet-mark,Comet Mark,meta.combat.skill.technique,Skill,,Marks an attack that applies an authored Vulnerable rider after its direct damage.,,,,,,live-tag,✦,D7B36B,ability:comet-mark
+meta.combat.skill.technique.rime-mirror,rime-mirror,Rime Mirror,meta.combat.skill.technique,Skill,,Marks a defensive spell with an authored Frost buildup rider against one selected enemy.,,,,,,live-tag,✦,D7B36B,ability:rime-mirror
+meta.combat.skill.technique.constellation,technique.constellation,Constellation,meta.combat.skill.technique,Skill,,Tests how many distinct Starstone card IDs the acting player has played this turn; two copies of one ID count once.,,,,,,live-tag,✦,D7B36B,ability:constellation
+meta.combat.skill.technique.mana-weave,mana-weave,Mana Weave,meta.combat.skill.technique,Skill,,"Marks an authored Mana restoration rider, capped at one activation per owning player per turn.",,,,,,live-tag,✦,D7B36B,ability:mana-weave
+meta.combat.skill.technique.gravity-snare,gravity-snare,Gravity Snare,meta.combat.skill.technique,Skill,,Marks a spell with an authored Weak rider after its direct damage.,,,,,,live-tag,✦,D7B36B,ability:gravity-snare
+meta.combat.skill.technique.nightglass,nightglass,Nightglass,meta.combat.skill.technique,Skill,,Marks a one-charge direct-spell-damage bonus to the next spell this turn; no stacking and no carry into the next turn.,,,,,,live-tag,✦,D7B36B,ability:nightglass
+meta.combat.skill.technique.eclipse-window,eclipse-window,Eclipse Window,meta.combat.skill.technique,Skill,,Tests whether the selected enemy has positive Frost buildup or is Frost-exposed before resolution.,,,,,,live-tag,✦,D7B36B,ability:eclipse-window
+meta.combat.skill.technique.warded-casting,warded-casting,Warded Casting,meta.combat.skill.technique,Skill,,Marks a one-charge Mana discount for the next spell this turn; cost cannot fall below zero and the charge expires at turn end.,,,,,,live-tag,✦,D7B36B,ability:warded-casting
+meta.combat.skill.technique.celestial-echo,celestial-echo,Celestial Echo,meta.combat.skill.technique,Skill,,Identifies the second play of the same Starstone card ID in a turn; the condition can activate once per turn.,,,,,,live-tag,✦,D7B36B,ability:celestial-echo
+meta.combat.skill.technique.cold-memory,cold-memory,Cold Memory,meta.combat.skill.technique,Skill,,"Marks an authored amount of Block retained into the next turn; retention sources use the largest allowance, not their sum.",,,,,,live-tag,✦,D7B36B,ability:cold-memory
+meta.combat.skill.technique.astral-convergence,astral-convergence,Astral Convergence,meta.combat.skill.technique,Skill,,Identifies the third distinct Starstone card ID played by the same player in a turn; once per turn.,,,,,,live-tag,✦,D7B36B,ability:astral-convergence
+meta.combat.skill.technique.ash-opener,ash-opener,Ash Opener,meta.combat.skill.technique,Skill,,Tests whether this is the acting player's first card played this turn.,,,,,,live-tag,✦,D7B36B,ability:ash-opener
+meta.combat.skill.technique.discard-weave,discard-weave,Discard Weave,meta.combat.skill.technique,Skill,,Tests whether the acting player has discarded a card this turn; Exhaust and a spent card entering discard do not count.,,,,,,live-tag,✦,D7B36B,ability:discard-weave
+meta.combat.skill.technique.crooked-guard,crooked-guard,Crooked Guard,meta.combat.skill.technique,Skill,,Marks a direct attack with an authored Weak rider; the rider resolves after damage.,,,,,,live-tag,✦,D7B36B,ability:crooked-guard
+meta.combat.skill.technique.exposed-flank,exposed-flank,Exposed Flank,meta.combat.skill.technique,Skill,,Tests whether the selected enemy has exactly zero Block immediately before the hit.,,,,,,live-tag,✦,D7B36B,ability:exposed-flank
+meta.combat.skill.technique.sleight-hand,sleight-hand,Sleight of Hand,meta.combat.skill.technique,Skill,,Marks an authored draw-then-discard sequence; the player chooses the discarded card and ordinary hand limits apply.,,,,,,live-tag,✦,D7B36B,ability:sleight-hand
+meta.combat.skill.technique.tether-cut,tether-cut,Tether Cut,meta.combat.skill.technique,Skill,,Tests whether the selected enemy currently has Weak or Vulnerable before damage resolves.,,,,,,live-tag,✦,D7B36B,ability:tether-cut
+meta.combat.skill.technique.smoke-edge,smoke-edge,Smoke Edge,meta.combat.skill.technique,Skill,,Marks a one-charge bonus to the next Blade attack this turn; the charge expires at turn end and cannot stack with itself.,,,,,,live-tag,✦,D7B36B,ability:smoke-edge
+meta.combat.skill.technique.carrion-finish,carrion-finish,Carrion Finish,meta.combat.skill.technique,Skill,,Tests whether the selected enemy is at or below 50% maximum HP before the attack.,,,,,,live-tag,✦,D7B36B,ability:carrion-finish
+meta.combat.skill.technique.paired-strikes,paired-strikes,Paired Strikes,meta.combat.skill.technique,Skill,,Marks an attack with exactly two authored direct hits; rank bonuses are divided across the hits.,,,,,,live-tag,✦,D7B36B,ability:paired-strikes
+meta.combat.skill.technique.trapdoor,trapdoor,Trapdoor,meta.combat.skill.technique,Skill,,Tests whether the acting player has already played at least one Guile card and one Guard card this turn.,,,,,,live-tag,✦,D7B36B,ability:trapdoor
+meta.combat.skill.technique.clean-escape,clean-escape,Clean Escape,meta.combat.skill.technique,Skill,,Identifies the first Guard card played before any attack this turn; once per turn.,,,,,,live-tag,✦,D7B36B,ability:clean-escape
+meta.combat.skill.technique.razor-debt,razor-debt,Razor Debt,meta.combat.skill.technique,Skill,,Identifies the first Blade attack after an explicit discard this turn; once per turn.,,,,,,live-tag,✦,D7B36B,ability:razor-debt
+meta.combat.skill.technique.mercy-ash,mercy-ash,Mercy in Ash,meta.combat.skill.technique,Skill,,Marks a defensive card with an authored healing rider; healing cannot exceed maximum HP.,,,,,,live-tag,✦,D7B36B,ability:mercy-ash
+meta.combat.skill.technique.blood-censer,blood-censer,Blood Censer,meta.combat.skill.technique,Skill,,Marks a card with an explicit HP offering paid before its benefits; the offering cannot reduce HP below 1.,,,,,,live-tag,✦,D7B36B,ability:blood-censer
+meta.combat.skill.technique.blight-seed,blight-seed,Blight Seed,meta.combat.skill.technique,Skill,,Marks a direct hit with an authored Crimson Blight buildup rider; this is not Poison.,,,,,,live-tag,✦,D7B36B,ability:blight-seed
+meta.combat.skill.technique.funeral-guard,funeral-guard,Funeral Guard,meta.combat.skill.technique,Skill,,Tests whether the acting player has HP at or below 50% maximum HP before a Guard card resolves.,,,,,,live-tag,✦,D7B36B,ability:funeral-guard
+meta.combat.skill.technique.ember-tithe,ember-tithe,Ember Tithe,meta.combat.skill.technique,Skill,,"Marks an explicit, nonlethal HP offering that buys an authored regenerative benefit.",,,,,,live-tag,✦,D7B36B,ability:ember-tithe
+meta.combat.skill.technique.bone-chorus,bone-chorus,Bone Chorus,meta.combat.skill.technique,Skill,,Tests whether at least one living enemy has positive Crimson Blight buildup before resolution.,,,,,,live-tag,✦,D7B36B,ability:bone-chorus
+meta.combat.skill.technique.requiem-brand,requiem-brand,Requiem Brand,meta.combat.skill.technique,Skill,,Tests whether the selected enemy has positive Crimson Blight buildup before the hit.,,,,,,live-tag,✦,D7B36B,ability:requiem-brand
+meta.combat.skill.technique.pilgrim-shelter,pilgrim-shelter,Pilgrim Shelter,meta.combat.skill.technique,Skill,,Tests whether the acting player began this turn at or below 50% maximum HP; later healing does not change that turn's result.,,,,,,live-tag,✦,D7B36B,ability:pilgrim-shelter
+meta.combat.skill.technique.scarred-rite,scarred-rite,Scarred Rite,meta.combat.skill.technique,Skill,,"Tests whether the acting player paid an HP offering earlier this turn, before this card's own payment; ordinary enemy damage does not count.",,,,,,live-tag,✦,D7B36B,ability:scarred-rite
+meta.combat.skill.technique.dawn-rite,dawn-rite,Dawn Rite,meta.combat.skill.technique,Skill,,Marks an authored removal of a specific negative status; it never removes every status implicitly.,,,,,,live-tag,✦,D7B36B,ability:dawn-rite
+meta.combat.skill.technique.burden-bearer,burden-bearer,Burden Bearer,meta.combat.skill.technique,Skill,,Identifies the first new negative status application from an enemy to this player in a turn; self-applied statuses do not count.,,,,,,live-tag,✦,D7B36B,ability:burden-bearer
+meta.combat.skill.technique.sepulchral-pact,sepulchral-pact,Sepulchral Pact,meta.combat.skill.technique,Skill,,Identifies a credited kill of an enemy with positive Crimson Blight buildup immediately before the killing hit.,,,,,,live-tag,✦,D7B36B,ability:sepulchral-pact
+targeting,targeting,targeting,,TagNode,,Target selection: the rules an action uses to choose the creature it hits. Grouping node for the targeting vocabulary.,,,,,,live-tag,,,targeting
+targeting.self,self,self,targeting,TagNode,,Targets the acting creature itself.,,,,,,live-tag,,,targeting.self
+targeting.enemy,targeting.enemy,enemy,targeting,TagNode,,Targets one enemy the player chooses.,,,,,,live-tag,,,targeting.enemy
+targeting.allEnemies,allEnemies,allEnemies,targeting,TagNode,,Targets every living enemy at once.,,,,,,live-tag,,,targeting.allEnemies
+targeting.randomEnemy,randomEnemy,randomEnemy,targeting,TagNode,,Targets one enemy chosen at random.,,,,,,live-tag,,,targeting.randomEnemy
+targeting.ally,ally,ally,targeting,TagNode,,Targets an ally of the acting player.,,,,,,live-tag,,,targeting.ally
+targeting.single,single,Single,targeting,TagNode,,One direct target.,,,,,,live-tag,◇,9FC3E8,targeting:single
+targeting.area,targeting.area,Area,targeting,TagNode,,An area action; most Counters do not cover it.,,,,,,live-tag,◇,9FC3E8,targeting:area
+equipmentRoot,equipmentRoot,equipment,,TagNode,,Grip and hand slots: which hands a weapon or shield occupies. Grouping node for the equipment vocabulary.,,,,,,live-tag,,,equipment
+equipmentRoot.bound,equipmentRoot.bound,bound,equipmentRoot,TagNode,,Equipment that must be bound (worn or carried) before a hand slot applies. mainHand and offHand require it (nodeRelations.csv REQUIRES).,,,,,,live-tag,,,equipment.bound
+equipmentRoot.mainHand,mainHand,mainHand,equipmentRoot,TagNode,,A weapon held in the main hand. Requires bound (nodeRelations.csv).,,,,,,live-tag,,,equipment.mainHand
+equipmentRoot.offHand,offHand,offHand,equipmentRoot,TagNode,,"An item held in the off hand. Requires bound, and conflicts with twoHanded (nodeRelations.csv).",,,,,,live-tag,,,equipment.offHand
+equipmentRoot.twoHanded,twoHanded,twoHanded,equipmentRoot,TagNode,,A weapon held in both hands. Conflicts with offHand (nodeRelations.csv); loadout.js GRIP_TAGS 'two'.,,,,,,live-tag,,,equipment.twoHanded
+equipmentRoot.shield,equipmentRoot.shield,shield,equipmentRoot,TagNode,,A shield held in the off hand.,,,,,,live-tag,,,equipment.shield
+equipmentRoot.parryTool,parryTool,parryTool,equipmentRoot,TagNode,,An off-hand tool held to parry.,,,,,,live-tag,,,equipment.parryTool
+equipmentRoot.dualWield,dualWield,dualWield,equipmentRoot,TagNode,,One one-handed weapon in each hand; loadout.js GRIP_TAGS 'dual'.,,,,,,live-tag,,,equipment.dualWield
+scaling,scaling,scaling,,TagNode,,Which attribute a card's effect scales with. Grouping node for the scaling vocabulary.,,,,,,live-tag,,,scaling
+scaling.strength,scaling.strength,strength,scaling,TagNode,,This card scales with Strength.,,,,,,live-tag,,,scaling.strength
+scaling.dexterity,scaling.dexterity,dexterity,scaling,TagNode,,This card scales with Dexterity.,,,,,,live-tag,,,scaling.dexterity
+scaling.constitution,scaling.constitution,constitution,scaling,TagNode,,This card scales with Constitution.,,,,,,live-tag,,,scaling.constitution
+scaling.intelligence,scaling.intelligence,intelligence,scaling,TagNode,,This card scales with Intelligence.,,,,,,live-tag,,,scaling.intelligence
+scaling.wisdom,scaling.wisdom,wisdom,scaling,TagNode,,This card scales with Wisdom.,,,,,,live-tag,,,scaling.wisdom
+costRoot,costRoot,cost,,TagNode,,How a card is paid for. Grouping node for the cost vocabulary.,,,,,,live-tag,,,cost
+costRoot.action,costRoot.action,action,costRoot,TagNode,,Costs Stamina to play.,,,,,,live-tag,,,cost.action
+costRoot.alternative,alternative,alternative,costRoot,TagNode,,May be paid with a complete alternative option instead of its listed cost.,,,,,,live-tag,,,cost.alternative
+utilityRoot,utilityRoot,utility,,TagNode,,"Action roles a card or flask can take outside its damage: evasion, conduit and mana charge. Grouping node for the utility vocabulary.",,,,,,live-tag,,,utility
+utilityRoot.evasion,utilityRoot.evasion,evasion,utilityRoot,TagNode,,Contributes to Dodge Rolls and avoiding damage.,,,,,,live-tag,,,utility.evasion
+utilityRoot.conduit,utilityRoot.conduit,conduit,utilityRoot,TagNode,,Channels magic through an equipped armament.,,,,,,live-tag,,,utility.conduit
+utilityRoot.manaCharge,manaCharge,manaCharge,utilityRoot,TagNode,,Recovers the stated amount of Mana.,,,,,,live-tag,,,utility.manaCharge
+lifecycle,lifecycle,lifecycle,,TagNode,,"Where a card goes after it is played or resolved: recalled to hand, sealed away, or exhausted. Grouping node for the lifecycle vocabulary.",,,,,,live-tag,,,lifecycle
+lifecycle.recall,recall,recall,lifecycle,TagNode,,Returns to your hand after the named moment instead of being discarded.,,,,,,live-tag,,,lifecycle.recall
+lifecycle.recall.afterUse,afterUse,afterUse,lifecycle.recall,TagNode,,Returns to your hand after being played. A forced discard is not a use.,,,,,,live-tag,,,lifecycle.recall.afterUse
+lifecycle.recall.afterTurnDraw,afterTurnDraw,afterTurnDraw,lifecycle.recall,TagNode,,Returns to your hand after your turn's draw.,,,,,,live-tag,,,lifecycle.recall.afterTurnDraw
+lifecycle.recall.afterCardPlay,afterCardPlay,afterCardPlay,lifecycle.recall,TagNode,,Returns to your hand after you play another card.,,,,,,live-tag,,,lifecycle.recall.afterCardPlay
+lifecycle.seal,seal,seal,lifecycle,TagNode,,Set aside in the Sealed zone when its seal condition is met.,,,,,,live-tag,,,lifecycle.seal
+reach,reach,Reach,,TagNode,,Inspection details for combat techniques.,,,,,,live-tag,,,reach
+reach.contact,contact,Contact,reach,TagNode,,At melee reach.,,,,,,live-tag,◇,9FC3E8,reach:contact
+reach.near,near,Near,reach,TagNode,,Normal ranged reach.,,,,,,live-tag,◇,9FC3E8,reach:near
+reach.far,far,Far,reach,TagNode,,Extended ranged reach.,,,,,,live-tag,◇,9FC3E8,reach:far
+counterMode,counterMode,Counter reach,,TagNode,,Counter reach: which kind of incoming attack a counter can answer. Grouping node for the counter reach vocabulary.,,,,,,live-tag,,,counterMode
+counterMode.melee,counterMode.melee,Melee counter,counterMode,TagNode,,"Replies to eligible melee Attack or Smash. Sweep, Force, Piercing and Ranged bypass this reaction.",,,,,,live-tag,◇,D7B36B,counter:melee
+counterMode.spell,counterMode.spell,Spell counter,counterMode,TagNode,,"Intercepts incoming physical ranged moves or spells. Against physical ranged moves, strips Ward without Health retaliation. Against spellcasters, can retaliate against Health.",,,,,,live-tag,◇,D7B36B,counter:spell
+item,item,Item,,TagNode,,"What a piece of gear DOES beyond its numbers, and what a run pickup is.",,,,,,live-tag,,,item
+item.bound,item.bound,Bound,item,TagNode,,Carries its own cards — they arrive with the piece and are named in equipmentGrants.csv.,,,,,,live-tag,⛓,C9A227,bound
+itemType,itemType,Item type,,TagNode,,"What a piece of equipment IS, as the Armoury and the smith name it. Distinct from the card domain: a Blade item type and a Blade card school are different facts about the same sword.",,,,,,live-tag,,,itemType
+itemType.blade,itemType.blade,Blade,itemType,TagNode,,What this piece IS: the Armoury and the smith name it Blade.,,,,,,live-tag,⚔,C9502E,item:blade
+itemType.magic-focus,magic-focus,Magic Focus,itemType,TagNode,,What this piece IS: the Armoury and the smith name it Magic Focus.,,,,,,live-tag,✦,9FC3E8,item:magic-focus
+grantSource,grantSource,Grant source,,TagNode,,"Where a starting card came from. The composed deck deals bound cards in this vocabulary's authored order, so adding a source is a row here rather than a code change. Nothing WEARS these — the `grant` family exists to declare them, the way `effect` declares which words a damage effect may carry.",,,,,,live-tag,,,grantSource
+grantSource.global,grantSource.global,Global,grantSource,TagNode,,Dealt to every class whatever it wears — balance.equipment.startingDeck.global.grants.,,,,,,live-tag,🌐,B8B0A0,from:global
+grantSource.relic,grantSource.relic,Relic,grantSource,TagNode,,Carried in by the starting relic.,,,,,,live-tag,◈,C9A227,from:relic
+grantSource.armor,grantSource.armor,Armor,grantSource,TagNode,,Bound to the outfit the run begins wearing.,,,,,,live-tag,▣,7FA8C9,from:armor
+grantSource.weapon,grantSource.weapon,Weapon,grantSource,TagNode,,Bound to an armament in hand at creation.,,,,,,live-tag,⚔,C9502E,from:weapon
+grantSource.class,grantSource.class,Class,grantSource,TagNode,,The class signature card.,,,,,,live-tag,✦,9FC3E8,from:class
+meta.combat.damage.arcane,damage.arcane,arcane,meta.combat.damage,DamageType,,Arcane damage. Builds Arcane Exposure on enemies that track it.,,,,,,live-tag,,,damage.arcane
+meta.combat.damage.blade,damage.blade,blade,meta.combat.damage,DamageType,,Damage dealt with an edge.,,,,,,live-tag,,,damage.blade
+meta.combat.damage.blunt,damage.blunt,blunt,meta.combat.damage,DamageType,,Damage dealt with mass and impact.,,,,,,live-tag,,,damage.blunt
+meta.combat.damage.piercing,piercing,piercing,meta.combat.damage,DamageType,,Damage dealt with a point.,,,,,,live-tag,,,damage.piercing
+damageType,damageType,Damage type,,TagNode,,Identity of a typed HP damage component.,,,,,,live-tag,,,damageType
+run,run,Run,,TagNode,,"Run structure — what an event, an encounter or an unlock is about.",,,,,,live-tag,,,run
+internal,internal,internal,,TagNode,,"Engine-internal state tags, never shown to the player (visibility INTERNAL in nodes.csv). Grouping node for the internal vocabulary.",,,,,,live-tag,,,internal
+card.flourish,card.flourish,Flourish,card,Card,,Finesse — footwork and multi-hit.,,,,,,live-tag,✧,9FC3E8,flourish
+card.heavy,card.heavy,Heavy,card,Card,,"Slow, committed, and hard to stop.",,,,,,live-tag,◆,C9A227,heavy
+card.basic,basic,Basic,card,Card,,Everybody's — on the shelf without being found.,,,,,,live-tag,○,7A6F5A,basic
+card.ranged,card.ranged,Ranged,card,Card,,Authored ranged presentation; no position system.,,,,,,live-tag,➶,7FA8C9,ranged
+card.precision,card.precision,Precision,card,Card,,Deliberate aim and finesse; presentation only.,,,,,,live-tag,◎,C9A227,precision
+card.extractable,extractable,Extractable,card,Card,,"A smith can lift this card out of the item that lends it, and seat it in another item's mount. Strikes and defends do not carry it — today.",,,,,,live-tag,⚙,C9A227,extractable
+trait,trait,Combat traits,,TagNode,,Combat traits: properties of an attack or a target that matchups and rules refer to. Grouping node for the trait vocabulary.,,,,,,live-tag,,,trait
+trait.adequateReach,adequateReach,Adequatereach,trait,TagNode,,Combat trait for adequate reach. No engine or content reads it yet.,,,,,,live-tag,◇,9FC3E8,trait:adequateReach
+trait.closing,closing,Closing,trait,TagNode,,Combat trait for closing in. No engine or content reads it yet.,,,,,,live-tag,◇,9FC3E8,trait:closing
+trait.conductive,conductive,Conductive,trait,TagNode,,"Combat trait that lightning is strong against (src/content/combatMatchups.js, lightning strongTraits).",,,,,,live-tag,◇,9FC3E8,trait:conductive
+trait.mental,mental,Mental,trait,TagNode,,Combat trait named mental. No trait reference found; 'mental' is also a recovery profile in src/model/combatStatusState.js.,,,,,,live-tag,◇,9FC3E8,trait:mental
+trait.projectile,trait.projectile,Projectile,trait,TagNode,,Combat trait for projectile attacks. The projectile delivery (delivery:projectile) is read in src/model/attackTags.js; this trait is not read yet.,,,,,,live-tag,◇,9FC3E8,trait:projectile
+trait.reveal,reveal,Reveal,trait,TagNode,,Combat trait for reveal. No engine or content reads it yet.,,,,,,live-tag,◇,9FC3E8,trait:reveal
+trait.shattering,shattering,Shattering,trait,TagNode,,"Combat trait that frost is weak against (src/content/combatMatchups.js, frost weakTraits).",,,,,,live-tag,◇,9FC3E8,trait:shattering
+trait.unavoidable,unavoidable,Unavoidable,trait,TagNode,,Combat trait for unavoidable attacks. No engine or content reads it yet.,,,,,,live-tag,◇,9FC3E8,trait:unavoidable
+trait.unreflectable,unreflectable,Unreflectable,trait,TagNode,,Combat trait given to the meteorite and starfallBeam cards (src/content/combatExpansionCards.js).,,,,,,live-tag,◇,9FC3E8,trait:unreflectable
+meta.presentation,presentation,Presentation,meta,TagNode,,Presentation layer: how the game looks and reads. Carries no gameplay identity.,,,,,,new,,,
+meta.presentation.scene,scene,Scene,meta.presentation,Component,,Scene art and frame.,,,,,,new,,,
+meta.presentation.battlefield,battlefield,Battlefield,meta.presentation,Component,,Enemy and player stage.,,,,,,new,,,
+meta.presentation.card-structure,card-structure,Card structure,meta.presentation,Component,,Card frame parts.,,,,,,new,,,
+meta.presentation.hud-header,hud-header,HUD header,meta.presentation,Component,,Top bar HUD.,,,,,,new,,,
+meta.presentation.footer,footer,Footer,meta.presentation,Component,,Bottom bar.,,,,,,new,,,
+meta.presentation.button,button,Button,meta.presentation,Component,,Buttons and icon buttons.,,,,,,new,,,
+meta.presentation.modal,modal,Modal,meta.presentation,Component,,Dialogs and sheets.,,,,,,new,,,
+meta.presentation.menu,menu,Menu,meta.presentation,Component,,Menus and navigation.,,,,,,new,,,
+meta.presentation.background-art,background-art,Background art,meta.presentation,Component,,Backdrops and environment art.,,,,,,new,,,
+meta.presentation.map,map,Map,meta.presentation,Component,,Run map.,,,,,,new,,,
+meta.presentation.overlay,overlay,Overlay,meta.presentation,Component,,Full-screen overlays.,,,,,,new,,,
+meta.presentation.wireframe,wireframe,Wireframe,meta.presentation,Component,,Wireframe (grey-box) layouts.,,,,,,new,,,
+meta.presentation.other,presentation.other,Other (component),meta.presentation,Component,,Components whose inventory group is other.,,,,,,new,,,
+meta.presentation.layout,layout,Layout,meta.presentation,Layout,,Positions and sizes of components.,,,,,,new,,,
+meta.presentation.layout.breakpoint,breakpoint,Breakpoint,meta.presentation.layout,Breakpoint,,"Layout condition, normalised to a band.",,,,,,new,,,
+meta.presentation.layout.breakpoint.mobile,mobile,Mobile,meta.presentation.layout.breakpoint,Breakpoint,,Band mobile.,,,,,,new,,,
+meta.presentation.layout.breakpoint.tablet,tablet,Tablet,meta.presentation.layout.breakpoint,Breakpoint,,Band tablet.,,,,,,new,,,
+meta.presentation.layout.breakpoint.desktop,desktop,Desktop,meta.presentation.layout.breakpoint,Breakpoint,,Band desktop.,,,,,,new,,,
+meta.presentation.layout.breakpoint.wide,wide,Wide,meta.presentation.layout.breakpoint,Breakpoint,,Band wide.,,,,,,new,,,
+meta.presentation.layout.breakpoint.state,state,State,meta.presentation.layout.breakpoint,Breakpoint,,Band state.,,,,,,new,,,
+meta.presentation.layout.breakpoint.all,all,All,meta.presentation.layout.breakpoint,Breakpoint,,Band all.,,,,,,new,,,
+meta.presentation.layout.breakpoint.other,breakpoint.other,Other,meta.presentation.layout.breakpoint,Breakpoint,,Band other.,,,,,,new,,,
+meta.presentation.layout.anchor,anchor,Anchor,meta.presentation.layout,Layout,,Anchor and transform rules.,,,,,,new,,,
+meta.presentation.layout.z-layer,z-layer,Z-layer,meta.presentation.layout,Layout,,Stacking layers.,,,,,,new,,,
+meta.presentation.resolution,resolution,Resolution,meta.presentation,Resolution,,Art tiers and card sizes.,,,,,,new,,,
+meta.presentation.resolution.light,resolution.light,light,meta.presentation.resolution,Resolution,,Tier light.,,,,,,new,,,
+meta.presentation.resolution.high,high,high,meta.presentation.resolution,Resolution,,Tier high.,,,,,,new,,,
+meta.presentation.resolution.common,resolution.common,common,meta.presentation.resolution,Resolution,,Tier common.,,,,,,new,,,
+meta.presentation.resolution.placeholder,placeholder,placeholder,meta.presentation.resolution,Resolution,,Tier placeholder.,,,,,,new,,,
+meta.presentation.resolution.local-high-res,local-high-res,local-high-res,meta.presentation.resolution,Resolution,,Tier local-high-res.,,,,,,new,,,
+meta.presentation.resolution.setting,resolution.setting,setting,meta.presentation.resolution,Resolution,,Tier setting.,,,,,,new,,,
+meta.presentation.resolution.auto-thresholds,auto-thresholds,auto-thresholds,meta.presentation.resolution,Resolution,,Tier auto-thresholds.,,,,,,new,,,
+meta.presentation.resolution.card-512,card-512,card-512,meta.presentation.resolution,Resolution,,Tier card-512.,,,,,,new,,,
+meta.presentation.resolution.card-1024,card-1024,card-1024,meta.presentation.resolution,Resolution,,Tier card-1024.,,,,,,new,,,
+meta.presentation.resolution.map-levels,map-levels,map-levels,meta.presentation.resolution,Resolution,,Tier map-levels.,,,,,,new,,,
+meta.presentation.resolution.environment-atlas,environment-atlas,environment-atlas,meta.presentation.resolution,Resolution,,Tier environment-atlas.,,,,,,new,,,
+meta.presentation.resolution.mobile-variants,mobile-variants,mobile-variants,meta.presentation.resolution,Resolution,,Tier mobile-variants.,,,,,,new,,,
+meta.presentation.resolution.pose-canvas,pose-canvas,pose-canvas,meta.presentation.resolution,Resolution,,Tier pose-canvas.,,,,,,new,,,
+meta.presentation.resolution.enemy-canvas,enemy-canvas,enemy-canvas,meta.presentation.resolution,Resolution,,Tier enemy-canvas.,,,,,,new,,,
+meta.presentation.resolution.svg-vector,svg-vector,svg-vector,meta.presentation.resolution,Resolution,,Tier svg-vector.,,,,,,new,,,
+meta.presentation.animation,animation,Animation,meta.presentation,Animation,,Sprite and motion sequences.,,,,,,new,,,
+meta.presentation.animation.pas,pas,pas,meta.presentation.animation,Animation,,Animation group pas.,,,,,,new,,,
+meta.presentation.animation.pcs,pcs,pcs,meta.presentation.animation,Animation,,Animation group pcs.,,,,,,new,,,
+meta.presentation.animation.aca,aca,aca,meta.presentation.animation,Animation,,Animation group aca.,,,,,,new,,,
+meta.presentation.animation.reaver,reaver,reaver,meta.presentation.animation,Animation,,Animation group reaver.,,,,,,new,,,
+meta.presentation.animation.eq,eq,eq,meta.presentation.animation,Animation,,Animation group eq.,,,,,,new,,,
+meta.presentation.animation.pose,pose,pose,meta.presentation.animation,Animation,,Animation group pose.,,,,,,new,,,
+meta.presentation.animation.painted,painted,painted,meta.presentation.animation,Animation,,Animation group painted.,,,,,,new,,,
+meta.presentation.animation.readiness,readiness,readiness,meta.presentation.animation,Animation,,Animation group readiness.,,,,,,new,,,
+meta.presentation.animation.defeated,defeated,defeated,meta.presentation.animation,Animation,,Animation group defeated.,,,,,,new,,,
+meta.presentation.animation.enemypose,enemypose,enemypose,meta.presentation.animation,Animation,,Animation group enemypose.,,,,,,new,,,
+meta.presentation.animation.enemystate,enemystate,enemystate,meta.presentation.animation,Animation,,Animation group enemystate.,,,,,,new,,,
+meta.presentation.animation.combatfx,combatfx,combatfx,meta.presentation.animation,Animation,,Animation group combatfx.,,,,,,new,,,
+meta.presentation.animation.poseeffect,poseeffect,poseeffect,meta.presentation.animation,Animation,,Animation group poseeffect.,,,,,,new,,,
+meta.presentation.animation.action,animation.action,action,meta.presentation.animation,Animation,,Animation group action.,,,,,,new,,,
+meta.presentation.animation.presseq,presseq,presseq,meta.presentation.animation,Animation,,Animation group presseq.,,,,,,new,,,
+meta.presentation.animation.posepl,posepl,posepl,meta.presentation.animation,Animation,,Animation group posepl.,,,,,,new,,,
+meta.presentation.animation.waapi,waapi,waapi,meta.presentation.animation,Animation,,Animation group waapi.,,,,,,new,,,
+meta.presentation.animation.css,css,css,meta.presentation.animation,Animation,,Animation group css.,,,,,,new,,,
+meta.presentation.effect,effect,Effect,meta.presentation,Effect,,Visual effects by kind.,,,,,,new,,,
+meta.presentation.effect.sprite-effect,sprite-effect,sprite-effect,meta.presentation.effect,Effect,,Effect kind sprite-effect.,,,,,,new,,,
+meta.presentation.effect.aura,aura,aura,meta.presentation.effect,Effect,,Effect kind aura.,,,,,,new,,,
+meta.presentation.effect.glow,glow,glow,meta.presentation.effect,Effect,,Effect kind glow.,,,,,,new,,,
+meta.presentation.effect.tint,tint,tint,meta.presentation.effect,Effect,,Effect kind tint.,,,,,,new,,,
+meta.presentation.effect.screen-shake,screen-shake,screen-shake,meta.presentation.effect,Effect,,Effect kind screen-shake.,,,,,,new,,,
+meta.presentation.effect.flash,flash,flash,meta.presentation.effect,Effect,,Effect kind flash.,,,,,,new,,,
+meta.presentation.effect.float-text,float-text,float-text,meta.presentation.effect,Effect,,Effect kind float-text.,,,,,,new,,,
+meta.presentation.effect.shadow,effect.shadow,shadow,meta.presentation.effect,Effect,,Effect kind shadow.,,,,,,new,,,
+meta.presentation.effect.particle,particle,particle,meta.presentation.effect,Effect,,Effect kind particle.,,,,,,new,,,
+meta.presentation.text,presentation.text,Text,meta.presentation,String,,Player-facing strings by use.,,,,,,new,,,
+meta.presentation.text.label,label,label,meta.presentation.text,String,,String kind label.,,,,,,new,,,
+meta.presentation.text.tooltip,tooltip,tooltip,meta.presentation.text,String,,String kind tooltip.,,,,,,new,,,
+meta.presentation.text.hardcoded,hardcoded,hardcoded,meta.presentation.text,String,,String kind hardcoded.,,,,,,new,,,
+meta.presentation.symbol,symbol,Symbol,meta.presentation,Symbol,,Icons and sigils.,,,,,,new,,,
+meta.presentation.symbol.cardtag,cardtag,cardtag,meta.presentation.symbol,Symbol,,Symbol group cardtag.,,,,,,new,,,
+meta.presentation.symbol.cardtag-alias,cardtag-alias,cardtag-alias,meta.presentation.symbol,Symbol,,Symbol group cardtag-alias.,,,,,,new,,,
+meta.presentation.symbol.action,symbol.action,action,meta.presentation.symbol,Symbol,,Symbol group action.,,,,,,new,,,
+meta.presentation.symbol.school,school,school,meta.presentation.symbol,Symbol,,Symbol group school.,,,,,,new,,,
+meta.presentation.symbol.intent,intent,intent,meta.presentation.symbol,Symbol,,Symbol group intent.,,,,,,new,,,
+meta.presentation.symbol.card-icon,card-icon,card-icon,meta.presentation.symbol,Symbol,,Symbol group card-icon.,,,,,,new,,,
+meta.presentation.symbol.ui-icon,ui-icon,ui-icon,meta.presentation.symbol,Symbol,,Symbol group ui-icon.,,,,,,new,,,
+meta.presentation.symbol.glyph,glyph,glyph,meta.presentation.symbol,Symbol,,Symbol group glyph.,,,,,,new,,,
+meta.presentation.symbol.ui-alias,ui-alias,ui-alias,meta.presentation.symbol,Symbol,,Symbol group ui-alias.,,,,,,new,,,
+meta.presentation.symbol.status,symbol.status,status,meta.presentation.symbol,Symbol,,Symbol group status.,,,,,,new,,,
+meta.presentation.symbol.resource,symbol.resource,resource,meta.presentation.symbol,Symbol,,Symbol group resource.,,,,,,new,,,
+meta.presentation.symbol.stance,symbol.stance,stance,meta.presentation.symbol,Symbol,,Symbol group stance.,,,,,,new,,,
+meta.presentation.symbol.tag,tag,tag,meta.presentation.symbol,Symbol,,Symbol group tag.,,,,,,new,,,
+meta.presentation.symbol.keyword,symbol.keyword,keyword,meta.presentation.symbol,Symbol,,Symbol group keyword.,,,,,,new,,,
+meta.presentation.symbol.uistring-glyph,uistring-glyph,uistring-glyph,meta.presentation.symbol,Symbol,,Symbol group uistring-glyph.,,,,,,new,,,
+meta.presentation.setting,presentation.setting,Setting,meta.presentation,Setting,,Settings rows by scope.,,,,,,new,,,
+meta.presentation.setting.player,player,Player,meta.presentation.setting,Setting,,Settings scope player.,,,,,,new,,,
+meta.presentation.setting.player.combat,player.combat,Combat,meta.presentation.setting.player,Setting,,player settings group Combat.,,,,,,new,,,
+meta.presentation.setting.player.accessibility,player.accessibility,Accessibility,meta.presentation.setting.player,Setting,,player settings group Accessibility.,,,,,,new,,,
+meta.presentation.setting.player.display,player.display,Display,meta.presentation.setting.player,Setting,,player settings group Display.,,,,,,new,,,
+meta.presentation.setting.player.audio,audio,Audio,meta.presentation.setting.player,Setting,,player settings group Audio.,,,,,,new,,,
+meta.presentation.setting.player.lobby,lobby,Lobby,meta.presentation.setting.player,Setting,,player settings group Lobby.,,,,,,new,,,
+meta.presentation.setting.player.debug,debug,Debug,meta.presentation.setting.player,Setting,,player settings group Debug.,,,,,,new,,,
+meta.presentation.setting.player.pose-studio,pose-studio,Pose studio,meta.presentation.setting.player,Setting,,player settings group Pose studio.,,,,,,new,,,
+meta.presentation.setting.tuning,tuning,Tuning,meta.presentation.setting,Setting,,Settings scope tuning.,,,,,,new,,,
+meta.presentation.setting.tuning.accessibility,tuning.accessibility,Accessibility,meta.presentation.setting.tuning,Setting,,tuning settings group Accessibility.,,,,,,new,,,
+meta.presentation.setting.tuning.world,world,World,meta.presentation.setting.tuning,Setting,,tuning settings group World.,,,,,,new,,,
+meta.presentation.setting.tuning.progression,progression,Progression,meta.presentation.setting.tuning,Setting,,tuning settings group Progression.,,,,,,new,,,
+meta.presentation.setting.tuning.rewards,rewards,Rewards,meta.presentation.setting.tuning,Setting,,tuning settings group Rewards.,,,,,,new,,,
+meta.presentation.setting.tuning.interface,interface,Interface,meta.presentation.setting.tuning,Setting,,tuning settings group Interface.,,,,,,new,,,
+meta.presentation.setting.tuning.display,tuning.display,Display,meta.presentation.setting.tuning,Setting,,tuning settings group Display.,,,,,,new,,,
+meta.presentation.setting.tuning.text,tuning.text,Text,meta.presentation.setting.tuning,Setting,,tuning settings group Text.,,,,,,new,,,
+meta.presentation.setting.tuning.export,export,Export,meta.presentation.setting.tuning,Setting,,tuning settings group Export.,,,,,,new,,,
+meta.presentation.setting.tuning.equipment,equipment,Equipment,meta.presentation.setting.tuning,Setting,,tuning settings group Equipment.,,,,,,new,,,
+meta.presentation.setting.tuning.wireframes,wireframes,Wireframes,meta.presentation.setting.tuning,Setting,,tuning settings group Wireframes.,,,,,,new,,,
+meta.presentation.setting.tuning.deck,deck,Deck,meta.presentation.setting.tuning,Setting,,tuning settings group Deck.,,,,,,new,,,
+meta.presentation.setting.tuning.recovery,tuning.recovery,Recovery,meta.presentation.setting.tuning,Setting,,tuning settings group Recovery.,,,,,,new,,,
+meta.presentation.setting.tuning.stats,stats,Stats,meta.presentation.setting.tuning,Setting,,tuning settings group Stats.,,,,,,new,,,
+meta.presentation.setting.tuning.opening,opening,Opening,meta.presentation.setting.tuning,Setting,,tuning settings group Opening.,,,,,,new,,,
+meta.presentation.setting.tuning.shops,shops,Shops,meta.presentation.setting.tuning,Setting,,tuning settings group Shops.,,,,,,new,,,
+meta.presentation.setting.tuning.combat,tuning.combat,Combat,meta.presentation.setting.tuning,Setting,,tuning settings group Combat.,,,,,,new,,,
+meta.presentation.style,style,Style,meta.presentation,Style,,CSS properties and tokens.,,,,,,new,,,
+meta.presentation.style.token,token,token,meta.presentation.style,Token,,Style kind token.,,,,,,new,,,
+meta.presentation.style.color,color,color,meta.presentation.style,Style,,Style kind color.,,,,,,new,,,
+meta.presentation.style.typography,typography,typography,meta.presentation.style,Style,,Style kind typography.,,,,,,new,,,
+meta.presentation.style.spacing,spacing,spacing,meta.presentation.style,Style,,Style kind spacing.,,,,,,new,,,
+meta.presentation.style.radius,radius,radius,meta.presentation.style,Style,,Style kind radius.,,,,,,new,,,
+meta.presentation.style.shadow,style.shadow,shadow,meta.presentation.style,Style,,Style kind shadow.,,,,,,new,,,
+meta.presentation.style.motion,motion,motion,meta.presentation.style,Style,,Style kind motion.,,,,,,new,,,
+meta.presentation.style.z-index,z-index,z-index,meta.presentation.style,Style,,Style kind z-index.,,,,,,new,,,
+meta.presentation.style.other,style.other,other,meta.presentation.style,Style,,Style kind other.,,,,,,new,,,

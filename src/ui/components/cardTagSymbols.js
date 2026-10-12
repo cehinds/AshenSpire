@@ -20,7 +20,7 @@ const SHAPES = Object.freeze({
   guile: '<path d="M2 7q14 8 28 0v12L19 30l-3-9-3 9L2 19Zm4 6v5l6 1v-4Zm20 0-6 2v4l6-1Z"/>',
 });
 
-const ALIASES = Object.freeze({ fire:'spell', burn:'spell', cold:'frost', arcane:'force', sacred:'divine', holy:'divine', necrotic:'decay', crimsonBlight:'decay', blight:'decay', blood:'bleed', gorefire:'spell', blade:'slashing', pierce:'piercing', heavy:'blunt', starstone:'force', astral:'force', venom:'decay', oath:'divine', weak:'lightning', vulnerable:'guard', staggered:'blunt', poise:'blunt', precision:'ranged', cleave:'attack', counter:'counter', flourish:'skill', prepared:'guile', concealed:'guile', ash:'guile' });
+const ALIASES = Object.freeze({ fire:'spell', burn:'spell', cold:'frost', arcane:'force', sacred:'divine', holy:'divine', necrotic:'decay', crimsonBlight:'decay', necroticBlight:'decay', blight:'decay', blood:'bleed', gorefire:'spell', blade:'slashing', pierce:'piercing', heavy:'blunt', starstone:'force', astral:'force', venom:'decay', oath:'divine', weak:'lightning', vulnerable:'guard', staggered:'blunt', poise:'blunt', precision:'ranged', cleave:'attack', counter:'counter', flourish:'skill', prepared:'guile', concealed:'guile', ash:'guile' });
 
 function shapeFor(tag) {
   const key = tag.id.split(':').at(-1);
