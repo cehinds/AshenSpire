@@ -1,7 +1,7 @@
 {
   "generated_at_utc": "2026-10-12T16:21:00Z",
   "tool": "tools.image_gen__imagegen",
-  "exact_prompt_file": "sheet-a-revision.prompt.txt",
+  "exact_prompt_file": "sheet-a-revision-pass1.prompt.txt",
   "requested_dimensions": [
     1024,
     1536
@@ -18,7 +18,7 @@
   "transparent_background": true,
   "input_images": [
     {
-      "path": "pose-studio/stances/update-stances/greatsword-sweep/sheet-a.png",
+      "path": "pose-studio/stances/update-stances/greatsword-sweep/sheet-a-original.png",
       "sha256": "1d17d81b813d247b89e53ea4f6fa6919679ab96512087a343fc5e5641a32def1",
       "use": "revise pose sheet while retaining pose ideas"
     },
