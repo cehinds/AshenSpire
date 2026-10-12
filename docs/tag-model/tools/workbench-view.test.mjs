@@ -22,11 +22,13 @@ function viewHelpers() {
   const b = html.indexOf(VIEW_END);
   if (a < 0 || b < a) throw new Error('view block markers missing in workbench.html');
   const src = html.slice(a, b + VIEW_END.length);
-  return vm.runInNewContext(src + '\n;({ containsText, underTag, rowPasses, TAG_STATUS, baseIndex, classifyRow, removedCount, changeMap, relatedKeys, childTags, incomingRelated })', {});
+  return vm.runInNewContext(src + '\n;({ containsText, underTag, rowPasses, TAG_STATUS, baseIndex, classifyRow, removedCount, changeMap, relatedKeys, childTags, incomingRelated, nextCell, arrowMoves })', {});
 }
 
-const { rowPasses, underTag, TAG_STATUS, changeMap, classifyRow, baseIndex, removedCount, relatedKeys, childTags, incomingRelated } = viewHelpers();
+const { rowPasses, underTag, TAG_STATUS, changeMap, classifyRow, baseIndex, removedCount, relatedKeys, childTags, incomingRelated, nextCell, arrowMoves } = viewHelpers();
 const NO_TAG_LOOKUP = () => null;
+// the helpers' objects and arrays come from the vm realm; a JSON round trip makes them comparable with assert.deepEqual
+const J = (v) => JSON.parse(JSON.stringify(v));
 
 // The real tags.csv as row objects, with a key lookup over both key and id, as findTag does.
 function realTags() {
@@ -234,4 +236,31 @@ test('the real tags.csv: every related key resolves, and each outgoing link is a
   assert.ok(links > 0, 'the file has related links');
   const meta = lookup('meta.character');
   assert.deepEqual(childTags(objs, meta, lookup).map((r) => r.id).sort(), objs.filter((r) => String(r.parent) === 'meta.character').map((r) => r.id).sort());
+});
+
+// Keyboard: arrows step to the nearest cell that has an input, and stop at the table edge.
+test('arrow keys step to the nearest cell with an input and stop at the edges', () => {
+  const nr = 3, nc = 4;
+  const has = (r, c) => c !== 0 && !(r === 1 && c === 2); // column 0 is the action cell; (1,2) is a result cell with no input
+  const step = (r, c, key) => J(nextCell({ r, c }, key, nr, nc, has));
+  assert.deepEqual(step(0, 1, 'ArrowDown'), { r: 1, c: 1 });
+  assert.deepEqual(step(0, 1, 'ArrowRight'), { r: 0, c: 2 });
+  assert.deepEqual(step(1, 3, 'ArrowLeft'), { r: 1, c: 1 }, 'skips the cell with no input');
+  assert.deepEqual(step(1, 1, 'ArrowDown'), { r: 2, c: 1 });
+  assert.equal(step(0, 1, 'ArrowUp'), null, 'top edge');
+  assert.equal(step(2, 3, 'ArrowDown'), null, 'bottom edge');
+  assert.equal(step(0, 1, 'ArrowLeft'), null, 'the action cell has no input, so nothing lies left');
+  assert.equal(step(0, 3, 'ArrowRight'), null, 'right edge');
+  assert.equal(step(0, 1, 'Enter'), null, 'not an arrow key');
+});
+
+test('an arrow key moves between cells, unless it belongs to the caret of a cell being edited', () => {
+  assert.equal(arrowMoves('ArrowLeft', false, false, false), true, 'a cell not being edited always moves');
+  assert.equal(arrowMoves('ArrowRight', false, false, false), true);
+  assert.equal(arrowMoves('ArrowLeft', true, false, false), false, 'inside the text, left moves the caret');
+  assert.equal(arrowMoves('ArrowLeft', true, true, false), true, 'at the start, left leaves the cell');
+  assert.equal(arrowMoves('ArrowRight', true, false, false), false, 'inside the text, right moves the caret');
+  assert.equal(arrowMoves('ArrowRight', true, false, true), true, 'at the end, right leaves the cell');
+  assert.equal(arrowMoves('ArrowUp', true, false, false), true, 'up always leaves, and commits');
+  assert.equal(arrowMoves('ArrowDown', true, false, false), true, 'down always leaves, and commits');
 });
