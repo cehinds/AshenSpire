@@ -94,6 +94,7 @@ The preview screen is the live combat screen with only these additions:
   Only revealed dimensions count: stance from stage 2, speed only at stage 3 (as
   card hints). An unrevealed dimension counts as neither, so nothing hidden leaks
   through the colour, and a LAN peer computes it from what it was sent.
+  Speed is the plan-time forecast (timeline speed without the d4, `plannedSpeed()`).
   Computed by `targetOutline()` in `resolver.mjs` (DESIGN.md, Card hints).
 - The live green outline for the player's selection and playable cards becomes
   blue in the preview, so green only means advantage.

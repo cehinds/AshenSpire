@@ -658,25 +658,34 @@ export function cardHint(card, enemyAction, ctx = {}) {
 // Target outline while choosing a target for a card (PREVIEW-PLAN, Screen; DESIGN.md,
 // Card hints). Separate from cardHint's border, which keeps its own rules.
 //
-// input: { card, foe, mods, momentum, stage, stanceTable }. card and foe take the
-// same shape as cardHint's. mods, momentum (decayed M_e) and stanceTable (from
-// parseStanceAdvantage) are passed on to cardHint. stage is the perception stage.
+// input: { card, foe, cardSpeed, foeSpeed, stage, stanceTable }. card and foe are the
+// action objects (stance, target). cardSpeed and foeSpeed are PLAN-TIME speeds: the
+// timeline speed without the round's d4, from timeline.js plannedSpeed() (card speed +
+// preemptive buff + DEX initiative base + momentum term, counted once). They are a
+// forecast, not the real order: the d4 is rolled at round start (SPEC 4.11), so the
+// real order can differ by the d4 gap. stanceTable is from parseStanceAdvantage.
+// Speeds are required at stage 3 and ignored below it.
 //
 // Each dimension is an advantage, a disadvantage or neither. Speed is revealed at
-// stage 3 only: the card acts first (positive delta) is an advantage, last is a
+// stage 3 only: the card acts first (plan-time speed higher) is an advantage, last is a
 // disadvantage, equal is neither. Stance is revealed from stage 2: the table gives
 // the card a bonus over the foe's stance is an advantage, and a bonus for the
 // foe's stance over the card's is a disadvantage. An unrevealed dimension counts as
 // neither. Returns 'green' when both are advantages, 'yellow' when exactly one is
 // (even if the other is a disadvantage), 'red' when both are disadvantages, and
 // null otherwise, including stage 0 and 1 and self-target cards.
-export function targetOutline({ card, foe, mods = {}, momentum = 0, stage = 3, stanceTable = null } = {}) {
+export function targetOutline({ card, foe, cardSpeed, foeSpeed, stage = 3, stanceTable = null } = {}) {
   if (!card || typeof card !== 'object') throw new TypeError('card must be an object');
   if (!foe || typeof foe !== 'object') throw new TypeError('foe must be an object');
   const s = clampStage(stage);
   if (card.target === 'self' || s < 2) return null;
-  const hint = cardHint(card, { ...foe, stage: s }, { mods, stanceAdvantage: stanceTable, momentum });
-  const speedSign = hint.speedDelta === null ? 0 : Math.sign(hint.speedDelta);
+  let speedSign = 0;
+  if (s >= 3) {
+    if (!Number.isFinite(cardSpeed) || !Number.isFinite(foeSpeed)) {
+      throw new TypeError('cardSpeed and foeSpeed must be finite plan-time speeds at stage 3');
+    }
+    speedSign = Math.sign(cardSpeed - foeSpeed);
+  }
   const speedAdv = speedSign > 0;
   const speedDis = speedSign < 0;
   const stanceAdv = stanceBonus(stanceTable, card.stance, foe.stance) > 0;

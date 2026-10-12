@@ -295,9 +295,13 @@ Computed by `cardHint()` in `resolver.mjs`. Terse spec, not final UI.
 
 Target outline (`targetOutline()` in `resolver.mjs`, separate from the border above,
 which it does not change). It colours the target while a card is being chosen.
-Each revealed dimension is an advantage, a disadvantage or neither: speed from
-stage 3 (the card acts first, or last), stance from stage 2 (the stance table gives
-the card the bonus, or the foe's stance does). Green is an advantage in both,
+Its speed is the plan-time timeline speed: `plannedSpeed()` in `timeline.mjs`, which is
+the timeline speed without the round's d4 (card speed, preemptive buff, DEX initiative
+base and momentum term, counted once). The caller passes both speeds in, so the outline
+is a forecast: the d4 is rolled at round start, so the real order can differ by the d4
+gap. Each revealed dimension is an advantage, a disadvantage or neither: speed from
+stage 3 (the card's plan-time speed is higher, or lower), stance from stage 2 (the stance
+table gives the card the bonus, or the foe's stance does). Green is an advantage in both,
 yellow exactly one (even if the other is a disadvantage), red a disadvantage in
 both, and no outline otherwise. An unrevealed dimension counts as neither, and
 stage 0 and 1 give no outline. Self-target cards have none.

@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import * as timeline from './timeline.mjs';
 import {
   makeCombatant,
+  plannedSpeed,
   buildTimeline,
   createRound,
   makeFight,
@@ -1372,3 +1373,43 @@ test('a reaction evade card in the table adds its Evasion to the attack it answe
   assert.equal(out.events.find((e) => e.type === 'hit').need, 10);
   assert.equal(out.events.some((e) => e.type === 'evadeRoll'), false);
 });
+
+test('plannedSpeed is the buildTimeline entry speed minus its d4, for every entry of seeded fights', () => {
+  // Seeded LCG: each seed draws a different set of d4s, so the check covers many rolls.
+  const lcg = (seed) => () => {
+    seed = (seed * 1103515245 + 12345) % 2147483648;
+    return seed / 2147483648;
+  };
+  const momentum = { goblin: 2, wolf: -3 };
+  let checked = 0;
+  for (let seed = 1; seed <= 25; seed += 1) {
+    const combatants = {
+      player: makeCombatant({ id: 'player', attrs: { DEX: 7 }, hp: 20, sp: 4 }),
+      goblin: makeCombatant({ id: 'goblin', attrs: { DEX: 5 }, hp: 10, sp: 3 }),
+      wolf: makeCombatant({ id: 'wolf', attrs: { DEX: 2 }, hp: 8, sp: 3 }),
+    };
+    const queues = {
+      player: [atk('jab', 'goblin', 6), card('brace', 'counter', 'goblin', 2), card('ward', 'guard', 'self', 1), card('heal', 'other', 'self', 2)],
+      goblin: [atk('stab', 'player', 2), card('parry', 'counter', 'player', 3)],
+      wolf: [atk('bite', 'player', 1), atk('claw', 'player', 2)],
+    };
+    const tl = buildTimeline(queues, { combatants, rng: lcg(seed), momentum });
+    for (const entry of tl.entries) {
+      const planned = plannedSpeed({
+        combatant: combatants[entry.actor], card: entry.card, preemptive: entry.preemptive, momentum, foeId: entry.card.target,
+      });
+      assert.equal(planned, entry.speed.total - entry.speed.d4, `seed ${seed}, ${entry.cardId}`);
+      checked += 1;
+    }
+  }
+  assert.ok(checked >= 100, `checked ${checked} entries`);
+});
+
+test('plannedSpeed has no d4 input and counts the preemptive buff only for a preemptive card', () => {
+  const player = makeCombatant({ id: 'player', attrs: { DEX: 4 }, hp: 10 });
+  const brace = card('brace', 'counter', 'goblin', 2);
+  assert.equal(plannedSpeed({ combatant: player, card: brace, preemptive: true, momentum: {}, foeId: 'goblin' }), 2 + 1 + 2);
+  assert.equal(plannedSpeed({ combatant: player, card: brace, preemptive: false, momentum: {}, foeId: 'goblin' }), 2 + 2);
+  assert.equal(plannedSpeed({ combatant: player, card: card('heal', 'other', 'self', 2), preemptive: false, momentum: { goblin: 3 }, foeId: 'self' }), 2 + 2, 'self-target: no momentum term');
+});
+

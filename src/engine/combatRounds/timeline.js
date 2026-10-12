@@ -233,6 +233,29 @@ function momentumTerm(side, id, target, momentum) {
   return 0 - momentumSpeed(get(momentum, id, 0));
 }
 
+// The part of an action's speed known at plan time (before the round's d4 roll):
+// card speed + preemptive buff + DEX initiative base + momentum term. buildTimeline
+// adds the d4 to this, and nothing else, so the two cannot drift apart.
+// parts: { combatant, id?, card, preemptive, momentum, foeId }. combatant is a record
+// from makeCombatant; id defaults to combatant.id; foeId is the foe the card is aimed
+// at (the player's momentum term is on that foe). momentum is { [enemyId]: M }, decayed.
+function planParts({ combatant, id = combatant.id, card, preemptive, momentum = {}, foeId }) {
+  const cardSpeed = Number(card.speed ?? 0);
+  const buff = preemptive ? REACTION_BUFF.speed : 0;
+  const base = initiativeBase(combatant);
+  const target = card.target === 'self' ? 'self' : foeId;
+  const momentumPart = momentumTerm(combatant.side, id, target, momentum);
+  return { card: cardSpeed, buff, base, momentum: momentumPart, known: cardSpeed + buff + base + momentumPart };
+}
+
+// plannedSpeed({ combatant, card, preemptive, momentum, foeId }): the plan-time speed
+// of one queued action, which is the timeline speed without the round's d4 (SPEC 4.11).
+// A forecast: the outline and the planning UI use it, and the real order also adds
+// the d4 rolled at round start.
+export function plannedSpeed(input) {
+  return planParts(input).known;
+}
+
 // Orders the queued actions for one round (owner, 2026-10-11). Returns
 // { merge, initiative: { [id]: { base, d4, lead } }, entries }.
 //
@@ -278,10 +301,8 @@ export function buildTimeline(queues, ctx = {}) {
     const cards = Array.isArray(queue) ? queue : [];
     return cards.map((c, cardIndex) => {
       const preemptive = DEFENSIVE_KINDS.includes(c.kind);
-      const buff = preemptive ? REACTION_BUFF.speed : 0;
-      const card = Number(c.speed ?? 0);
-      const momentumPart = momentumTerm(combatants[id].side, id, c.target, momentum);
-      const initiative = base[id] + d4[id] + momentumPart;
+      const parts = planParts({ combatant: combatants[id], id, card: c, preemptive, momentum, foeId: c.target });
+      const initiative = parts.base + d4[id] + parts.momentum;
       return {
         seq: (seq += 1) - 1,
         actor: id,
@@ -292,14 +313,14 @@ export function buildTimeline(queues, ctx = {}) {
         preemptive,
         card: { ...c, sp: cardSp(c) },
         speed: {
-          card,
-          buff,
-          base: base[id],
+          card: parts.card,
+          buff: parts.buff,
+          base: parts.base,
           d4: d4[id],
-          momentum: momentumPart,
+          momentum: parts.momentum,
           initiative,
-          total: card + buff + initiative,
-          effective: card + buff + initiative,
+          total: parts.known + d4[id],
+          effective: parts.known + d4[id],
         },
       };
     });

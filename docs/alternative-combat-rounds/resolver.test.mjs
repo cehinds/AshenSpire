@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { makeCombatant, plannedSpeed } from './timeline.mjs';
 import {
   actionSpeed,
   momentumSpeed,
@@ -1954,8 +1955,13 @@ test('cardHint at stage 3: a speed field without speed component ids still gives
 
 // Target outline (PREVIEW-PLAN, Screen; DESIGN.md, Card hints). Speed counts from
 // stage 3, stance from stage 2. Each counts as an advantage, a disadvantage or neither.
+// Plan-time speeds are passed in (timeline plannedSpeed, no d4). These cases use the
+// card tier as the speed, so the tier is the whole speed.
+const tierSpeed = (c) => HINT_MODS.card[c.card];
 const outline = (card, foe, extra = {}) =>
-  targetOutline({ card, foe, mods: HINT_MODS, stanceTable: stanceTable(), momentum: 0, stage: 3, ...extra });
+  targetOutline({
+    card, foe, cardSpeed: tierSpeed(card), foeSpeed: tierSpeed(foe), stage: 3, stanceTable: stanceTable(), ...extra,
+  });
 const GREEN_CARD = { card: 'three', stance: 'counter' }; // faster, counter beats attack
 const GREEN_FOE = { card: 'one', stance: 'attack' };
 
@@ -1999,6 +2005,56 @@ test('targetOutline at stage 0 and 1: nothing is revealed, so no outline even fo
 
 test('targetOutline: a self-target card has no target outline', () => {
   assert.equal(outline({ ...GREEN_CARD, target: 'self' }, GREEN_FOE), null);
+});
+
+// Speed is the plan-time timeline speed (card speed + preemptive buff + DEX base +
+// momentum term, no d4). The outline must use those speeds, not the raw card speed.
+const planCard = (id, target, speed, extra = {}) => ({ id, kind: 'attack', target, speed, ...extra });
+const DEX_1 = makeCombatant({ id: 'player', attrs: { DEX: 1 }, hp: 10 });
+const DEX_6_GOBLIN = makeCombatant({ id: 'goblin', attrs: { DEX: 6 }, hp: 10 });
+
+test('targetOutline: a DEX base can make the foe faster than the card\'s raw speed lead', () => {
+  // Raw speed favours the player (3 vs 2). Plan-time speeds: player 3, goblin 2 + DEX base 3 = 5.
+  const cardSpeed = plannedSpeed({ combatant: DEX_1, card: planCard('jab', 'goblin', 3), preemptive: false, momentum: {}, foeId: 'goblin' });
+  const foeSpeed = plannedSpeed({ combatant: DEX_6_GOBLIN, card: planCard('stab', 'player', 2), preemptive: false, momentum: {}, foeId: 'player' });
+  assert.equal(cardSpeed, 3);
+  assert.equal(foeSpeed, 5);
+  const at = (stance, foeStance) => targetOutline({
+    card: { stance, target: 'goblin' }, foe: { stance: foeStance }, cardSpeed, foeSpeed, stage: 3, stanceTable: stanceTable(),
+  });
+  assert.equal(at('block', 'smash'), 'red', 'speed against the card and stance against it');
+  assert.equal(at('smash', 'block'), 'yellow', 'stance for the card, speed against it');
+  assert.equal(at('attack', 'attack'), null, 'speed against the card alone is no outline');
+});
+
+test('targetOutline: momentum is counted once, inside the plan-time speeds', () => {
+  // Momentum 2 on the goblin: player 3 + 1 = 4, goblin 2 + 3 - 1 = 4. Equal, so no speed dimension.
+  const cardSpeed = plannedSpeed({ combatant: DEX_1, card: planCard('jab', 'goblin', 3), preemptive: false, momentum: { goblin: 2 }, foeId: 'goblin' });
+  const foeSpeed = plannedSpeed({ combatant: DEX_6_GOBLIN, card: planCard('stab', 'player', 2), preemptive: false, momentum: { goblin: 2 }, foeId: 'player' });
+  assert.equal(cardSpeed, 4);
+  assert.equal(foeSpeed, 4);
+  const block = targetOutline({ card: { stance: 'block', target: 'goblin' }, foe: { stance: 'smash' }, cardSpeed, foeSpeed, stage: 3, stanceTable: stanceTable() });
+  assert.equal(block, null, 'equal plan-time speed, stance against: no outline (momentum not added again)');
+});
+
+test('targetOutline: a preemptive defensive card gets its speed buff, which can flip the speed dimension', () => {
+  const guard = { id: 'brace', kind: 'counter', target: 'goblin', speed: 2 };
+  const DEX_1_GOBLIN = makeCombatant({ id: 'goblin', attrs: { DEX: 1 }, hp: 10 });
+  const foe = { stance: 'attack' };
+  const plain = plannedSpeed({ combatant: DEX_1, card: { ...guard, kind: 'attack' }, preemptive: false, momentum: {}, foeId: 'goblin' });
+  const buffed = plannedSpeed({ combatant: DEX_1, card: guard, preemptive: true, momentum: {}, foeId: 'goblin' });
+  assert.equal(plain, 2);
+  assert.equal(buffed, 3, 'card 2 + REACTION_BUFF.speed 1');
+  const foeEqual = plannedSpeed({ combatant: DEX_1_GOBLIN, card: planCard('bite', 'player', 2), preemptive: false, momentum: {}, foeId: 'player' });
+  assert.equal(foeEqual, 2);
+  const out = (cardSpeed) => targetOutline({ card: { stance: 'attack', target: 'goblin' }, foe, cardSpeed, foeSpeed: foeEqual, stage: 3, stanceTable: stanceTable() });
+  assert.equal(out(plain), null, 'unbuffed: equal speed, neutral stance');
+  assert.equal(out(buffed), 'yellow', 'buffed: the card is faster');
+});
+
+test('targetOutline: speeds are required at stage 3 and ignored below it', () => {
+  assert.throws(() => targetOutline({ card: { stance: 'attack', target: 'goblin' }, foe: { stance: 'attack' }, stage: 3, stanceTable: stanceTable() }), TypeError);
+  assert.equal(targetOutline({ card: { stance: 'counter', target: 'goblin' }, foe: { stance: 'attack' }, stage: 2, stanceTable: stanceTable() }), 'yellow');
 });
 
 test('cardHint speedDelta sign matches who acts first in resolvePair and resolveRound', () => {
