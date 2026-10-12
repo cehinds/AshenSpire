@@ -98,14 +98,13 @@ export function combatantIntent(intent, content, registries = null, { onTarget =
 export const RESTING_PLAYER_ACTION = Object.freeze({ maneuver: 'ready' });
 
 // Selected card previews use authored action identity, never card-name guesses.
+// Spells and untyped cards (no attack/smash/sweep/defend/counter maneuver) show the prepare sigil.
 export function playerActionIntent(profile, onTarget) {
-  if (!profile?.maneuver && profile?.camp !== 'spell') return null;
-  const icon = ({ defend: 'defend', counter: 'counter', smash: 'smash', attack: 'attack', sweep: 'attack', ranged: 'attack', casting: 'cast', ready: 'prepare' })[profile.maneuver]
-    || (profile.camp === 'spell' ? 'cast' : null);
-  if (!icon) return null;
+  if (!profile) return null;
+  const icon = ({ defend: 'defend', counter: 'counter', smash: 'smash', attack: 'attack', sweep: 'sweep', ranged: 'attack', casting: 'prepare', ready: 'prepare' })[profile.maneuver] || 'prepare';
   const node = document.createElement('button');
   node.type = 'button'; node.className = 'player-action-intent overhead-control';
-  node.setAttribute('aria-label', `Selected action: ${profile.maneuver || 'cast'}`);
+  node.setAttribute('aria-label', `Selected action: ${profile.maneuver || 'prepare'}`);
   node.append(intentIcon(icon));
   node.addEventListener('click', event => { event.stopPropagation(); onTarget(); });
   return node;
