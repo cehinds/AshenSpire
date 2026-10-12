@@ -61,12 +61,17 @@ function conditionFor(value) {
   if (result.p === 'hasStatus' || result.f === 'stacks') result.status = { frost: 'frozen', frostExposed: 'chilled', bleed: 'bleeding' }[result.status] || result.status;
   return result;
 }
-// A spell reaches by its explicit row, then the far list, then its delivery:
-// projectile is far, melee is contact, anything else is near.
+// A spell reaches by its explicit row, then its own authored reach, then the far
+// list, then its delivery: projectile is far, melee is contact, anything else is near.
 function spellReach(def, row) {
   if (row.reach) return row.reach;
-  if (FAR.has(def.id)) return 'far';
+  // Read before rewriteTags strips the reach tags.
+  const REACHES = ['contact', 'near', 'far'];
+  if (REACHES.includes(def.reach)) return def.reach;
   const tags = def.cardTags || def.tags || [];
+  const authored = tags.find(tag => tag.startsWith('reach:'))?.slice(6);
+  if (REACHES.includes(authored)) return authored;
+  if (FAR.has(def.id)) return 'far';
   if (tags.includes('delivery:projectile')) return 'far';
   if (tags.includes('delivery:melee')) return 'contact';
   return 'near';

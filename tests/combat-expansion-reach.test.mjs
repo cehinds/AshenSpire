@@ -31,3 +31,14 @@ test('an equipment row reach wins over its projectile delivery tag', () => {
   assert(card.tags.includes('delivery:projectile'));
   assert(card.tags.includes('reach:near'));
 });
+
+test('an authored reach wins over the far list and the delivery tag under v2', () => {
+  // rimeNeedle is authored reach:near.
+  assert.equal(expanded('rimeNeedle').reach, 'near');
+  // A reach:contact tag beats cometFragment's far-list reach.
+  const base = resolveCard(registries, { cardId: 'cometFragment' });
+  const tagged = [...(base.cardTags || base.tags || []).filter(tag => !tag.startsWith('reach:')), 'reach:contact'];
+  assert.equal(applyCombatExpansionCard({ ...base, tags: tagged, cardTags: tagged }).reach, 'contact');
+  // An authored reach:near beats a projectile delivery and the far list.
+  assert.equal(applyCombatExpansionCard({ ...base, reach: 'near' }).reach, 'near');
+});
