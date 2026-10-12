@@ -101,6 +101,13 @@ dialog .row{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;margin-
 .fcol.check{flex-direction:row;align-items:center;gap:6px;color:var(--fg)}
 .fbar{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .count{font:.76rem var(--mono);color:var(--muted)}
+/* changed view: a changed row is tinted with a marker on its action cell; a changed cell is tinted on its own */
+tr.chg td{background:color-mix(in srgb,var(--ember) 10%,transparent)}
+tr.chg-new td{background:color-mix(in srgb,var(--ok) 12%,transparent)}
+tr.chg td.act{box-shadow:inset 3px 0 0 var(--ember)}
+tr.chg-new td.act{box-shadow:inset 3px 0 0 var(--ok)}
+td.chg input{background:color-mix(in srgb,var(--ember) 24%,transparent)}
+tr.chg-new td.chg input{background:color-mix(in srgb,var(--ok) 26%,transparent)}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
 </style>
 
@@ -167,7 +174,7 @@ const CORE = new Set(['tags','objects','values','formulas','ranks','relations','
 const loaded = new Set(); const pending = new Set();
 const PAGE = 150;
 
-const state = { data:{}, view:'tags', filter:{}, shown:{}, sheet:null, sheetRank:1, colf:{}, tagf:{}, fopen:{} }; /* colf: per-column text filters; tagf: tags status / subtree / emptyDesc; fopen: filter panel open */
+const state = { data:{}, view:'tags', filter:{}, shown:{}, sheet:null, sheetRank:1, colf:{}, tagf:{}, fopen:{}, cmp:{}, changedOnly:{} }; /* colf: per-column text filters; tagf: tags status / subtree / emptyDesc; fopen: filter panel open; cmp: 'load' or 'save' base for the changed view; changedOnly: show only changed rows */
 for (const t of ORDER) { state.data[t] = {columns:[...TABLES[t].columns], rows:[]}; state.shown[t]=PAGE; }
 let db=null, canWrite=true, downloads=null, assetsCap=null, localMode=false;
 const dirty=new Set(), saving=new Set(), timers={}, editGen={}; /* editGen[t] counts the edits to table t; a save remembers the count it started with */
@@ -210,7 +217,9 @@ function chunkRows(rows){
 const BLOB_RETRY_MS=[250,500];
 const tstate={};
 const sleepMs=ms=>new Promise(r=>setTimeout(r,ms));
-function TS(t){ return tstate[t]||(tstate[t]={seq:0, base:'', blobs:new Map(), latest:undefined, lastSaveAt:0, conflict:null, incomplete:null, legacy:null, legacyDocs:[], unsub:[], partsUnsub:null, parts:new Map()}); }
+function TS(t){ return tstate[t]||(tstate[t]={seq:0, base:'', blobs:new Map(), latest:undefined, lastSaveAt:0, conflict:null, incomplete:null, legacy:null, legacyDocs:[], unsub:[], partsUnsub:null, parts:new Map(), snapLoad:null, snapSave:null}); }
+/* copies of a table as it was loaded (snapLoad) and as it was last saved (snapSave), for the changed view; a copy, so later edits do not move it */
+function snapshotOf(cols, rows){ return {columns:[...cols], rows:rows.map(r=>({...r}))}; }
 function headPath(t){ return 'tables/'+t; }
 function blobPath(t,h){ return 'tables/'+t+'/blobs/'+h; }
 /* a blob head's rev; legacy heads have none, so their base is '' */
@@ -225,6 +234,7 @@ function adoptRows(t, hc, objs){
   if(dirty.has(t)||saving.has(t)) return;
   const cols=[...hc]; for(const c of TABLES[t].columns) if(!cols.includes(c)) cols.push(c);
   loaded.add(t); pending.delete(t);
+  TS(t).snapLoad=TS(t).snapSave=snapshotOf(cols, objs);
   if(JSON.stringify(objs)===JSON.stringify(state.data[t].rows) && JSON.stringify(cols)===JSON.stringify(state.data[t].columns)){ render(); return; }
   state.data[t]={columns:cols, rows:objs};
   rebuild(); setStatus(); render();
@@ -384,6 +394,7 @@ async function flush(t, opts){
   const now=Date.now();
   const built=chunkRows(state.data[t].rows.map(r=>cols.map(c=>r[c]??''))).map(rows=>({hash:hashText(JSON.stringify({rows})), rows}));
   const hashes=built.map(b=>b.hash);
+  const savedSnap=snapshotOf(cols, state.data[t].rows); /* what this save writes, for the changed view once it lands */
   let newer=null;
   try{
     /* before the lease: write every blob the server head does not carry. Blobs are immutable, so a hash the head
@@ -420,7 +431,7 @@ async function flush(t, opts){
       const g=await db.doc(blobPath(t,h)).get();
       if(!g.exists) await db.doc(blobPath(t,h)).set({rows:rowsOf.get(h), createdAt:Date.now()});
     }
-    ts.base=rev; ts.lastSaveAt=Date.now(); ts.conflict=null; ts.incomplete=null; ts.legacy=null;
+    ts.base=rev; ts.lastSaveAt=Date.now(); ts.conflict=null; ts.incomplete=null; ts.legacy=null; ts.snapSave=savedSnap;
     ts.blobs=new Map(built.map(b=>[b.hash,b.rows]));
     /* a legacy table converts on this first save: delete only the legacy part docs we read, now that the new head is written */
     const oldParts=ts.legacyDocs||[]; ts.legacyDocs=[]; stopParts(t);
@@ -653,7 +664,7 @@ function importRows(tbl, key, parsed, mode){
 
 /* ---------- persistence ---------- */
 const LS='ashen-tag-workbench-v1';
-function saveLocal(){ try{ localStorage.setItem(LS, JSON.stringify(state.data)); }catch(e){ setStatus('bad','Browser storage is full or blocked, so this edit is only in this tab. Export CSV now.'); } }
+function saveLocal(){ try{ localStorage.setItem(LS, JSON.stringify(state.data)); if(localMode) for(const t of ORDER) TS(t).snapSave=snapshotOf(state.data[t].columns, state.data[t].rows); }catch(e){ setStatus('bad','Browser storage is full or blocked, so this edit is only in this tab. Export CSV now.'); } }
 function loadLocal(){ try{ const s=localStorage.getItem(LS); if(s){ const d=JSON.parse(s); for(const t of ORDER) if(d[t]&&Array.isArray(d[t].rows)){ const cols=Array.isArray(d[t].columns)? d[t].columns.slice() : []; for(const c of TABLES[t].columns) if(!cols.includes(c)) cols.push(c); state.data[t]={columns:cols, rows:d[t].rows}; } } }catch(e){} }
 function editable(t){ return localMode || (!!db && canWrite && loaded.has(t)); }
 function setStatus(level,msg){
@@ -686,6 +697,40 @@ function rowPasses(t, row, f, columns, lookup){
     if(f.subtree){ const root=lookup(f.subtree); if(!root||!underTag(row,root,lookup)) return false; }
   }
   return true;
+}
+/* changed view: a row is matched to its base row by its key, or by its whole content when the table has no key */
+function rowSig(r,columns){ return columns.map(c=>String(r[c]??'')).join('\u0001'); }
+function baseKey(r,columns,key){ return key? String(r[key]??'') : rowSig(r,columns); }
+/* the base rows indexed for matching (first row wins for a repeated key); null when there is no base */
+function baseIndex(columns, key, base){
+  if(!base) return null;
+  const idx=new Map();
+  for(const b of base.rows||[]){ const k=baseKey(b,columns,key); if(!idx.has(k)) idx.set(k,b); }
+  return idx;
+}
+/* how a row differs from its base: {kind:'new'|'changed', cols:Set of changed columns}, or null when unchanged or no base */
+function classifyRow(columns, key, row, idx){
+  if(!idx) return null;
+  const b=idx.get(baseKey(row,columns,key));
+  if(!b) return {kind:'new', cols:new Set()};
+  if(!key) return null; /* a keyless row matches its base only when its content is the same */
+  const cols=new Set(columns.filter(c=>String(row[c]??'')!==String(b[c]??'')));
+  return cols.size? {kind:'changed', cols} : null;
+}
+/* the rows of the base that the table no longer has */
+function removedCount(columns, key, rows, base){
+  if(!base) return 0;
+  const have=new Set(rows.map(r=>baseKey(r,columns,key)));
+  const seen=new Set(); let n=0;
+  for(const b of base.rows||[]){ const k=baseKey(b,columns,key); if(seen.has(k)) continue; seen.add(k); if(!have.has(k)) n++; }
+  return n;
+}
+/* every changed row of a table: map row index -> classifyRow result, plus how many base rows are gone */
+function changeMap(columns, key, rows, base){
+  const idx=baseIndex(columns,key,base), map=new Map();
+  if(!idx) return {map, removed:0};
+  rows.forEach((r,i)=>{ const c=classifyRow(columns,key,r,idx); if(c) map.set(i,c); });
+  return {map, removed:removedCount(columns,key,rows,base)};
 }
 /* view:end */
 
@@ -737,18 +782,37 @@ function renderTable(p,t){
   const nActive=activeFilters(t);
   const fb=btn('Filters'+(nActive? ' ('+nActive+')' : ''),()=>{ state.fopen[t]=!state.fopen[t]; render(); });
   fb.setAttribute('aria-expanded', String(!!(state.fopen[t]||nActive)));
-  tools.append(q,fb,count,add,col,imp,exp); if(!editable(t)){ add.disabled=col.disabled=imp.disabled=true; }
+  const cmpSel=document.createElement('select'); cmpSel.setAttribute('aria-label','Compare with');
+  for(const [v,l] of [['load','Changed since load'],['save','Changed since last save']]){ const o=document.createElement('option'); o.value=v; o.textContent=l; if(v===(state.cmp[t]||'load')) o.selected=true; cmpSel.appendChild(o); }
+  cmpSel.onchange=()=>{ state.cmp[t]=cmpSel.value; draw(); };
+  const onlyLab=document.createElement('label'); onlyLab.className='fcol check'; const only=document.createElement('input'); only.type='checkbox'; only.checked=!!state.changedOnly[t]; only.setAttribute('aria-label','Changed rows only');
+  const onlySpan=document.createElement('span'); onlySpan.textContent='Changed only'; onlyLab.append(only,onlySpan);
+  only.onchange=()=>{ state.changedOnly[t]=only.checked; state.shown[t]=PAGE; draw(); };
+  tools.append(q,fb,cmpSel,onlyLab,count,add,col,imp,exp); if(!editable(t)){ add.disabled=col.disabled=imp.disabled=true; }
   p.appendChild(tools);
   const help=document.createElement('p'); help.className='help'; help.style.margin='8px 0'; help.innerHTML=def.help; p.appendChild(help);
   if(t==='formulas'||t==='objects'||t==='tags'){ const lg=document.createElement('div'); lg.className='legend'; lg.innerHTML='<span><i style="background:var(--bad)"></i>unknown reference</span><span><i style="background:var(--warn)"></i>tag has no preview value</span>'; p.appendChild(lg); }
   if(state.fopen[t]||nActive) p.appendChild(filterPanel(t,()=>draw()));
   q.value=state.filter[t]||'';
   const grid=document.createElement('div'); grid.className='grid'; p.appendChild(grid);
+  /* the changed view compares with the loaded version or with the last save (TS snapshots, set by the storage block) */
+  const baseOf=()=>TS(t)[state.cmp[t]==='save'? 'snapSave' : 'snapLoad'];
+  let chg={map:new Map(), removed:0}, shownN=tbl.rows.length;
+  const summary=()=>{
+    const parts=[]; if(shownN!==tbl.rows.length) parts.push('Showing '+shownN+' of '+tbl.rows.length);
+    const news=[...chg.map.values()].filter(v=>v.kind==='new').length, mod=chg.map.size-news;
+    const bits=[mod&&mod+' changed', news&&news+' new', chg.removed&&chg.removed+' removed'].filter(Boolean);
+    if(bits.length) parts.push(bits.join(', '));
+    count.textContent=parts.join(' · ');
+  };
+  const recheck=()=>{ chg=changeMap(tbl.columns,def.key,tbl.rows,baseOf()); };
+  const markChanged=(tr,r)=>{ const k=classifyRow(tbl.columns,def.key,r,baseIndex(tbl.columns,def.key,baseOf())); tr.className=k? (k.kind==='new'?'chg-new':'chg') : ''; for(const td of tr.querySelectorAll('td[data-c]')) td.classList.toggle('chg', !!(k&&k.cols.has(td.dataset.c))); };
   const draw=()=>{
     grid.textContent='';
     const spec=filterSpec(t), lookup=findTag;
-    const rows=tbl.rows.map((r,i)=>[r,i]).filter(([r])=>rowPasses(t,r,spec,tbl.columns,lookup));
-    count.textContent= rows.length===tbl.rows.length? '' : 'Showing '+rows.length+' of '+tbl.rows.length;
+    recheck();
+    const rows=tbl.rows.map((r,i)=>[r,i]).filter(([r,i])=>rowPasses(t,r,spec,tbl.columns,lookup) && (!state.changedOnly[t] || chg.map.has(i)));
+    shownN=rows.length; summary();
     if(!tbl.rows.length && !localMode && !loaded.has(t)){ grid.innerHTML='<div class="empty">Loading '+escapeHtml(def.label)+'…</div>'; return; }
     if(!tbl.rows.length){ grid.innerHTML='<div class="empty">No rows yet. Add a row, or import a CSV whose first line names the columns:<br><code class="mono">'+escapeHtml(tbl.columns.join(','))+'</code></div>'; return; }
     const table=document.createElement('table');
@@ -758,7 +822,7 @@ function renderTable(p,t){
     const thead=document.createElement('thead'); thead.appendChild(head); table.appendChild(thead);
     const body=document.createElement('tbody');
     for(const [r,i] of rows.slice(0,state.shown[t])){
-      const tr=document.createElement('tr');
+      const tr=document.createElement('tr'); const k=chg.map.get(i); if(k) tr.className=k.kind==='new'? 'chg-new' : 'chg';
       const act=document.createElement('td'); act.className='act';
       const del=document.createElement('button'); del.className='x'; del.type='button'; del.title='Delete row'; del.setAttribute('aria-label','Delete row'); del.textContent='×';
       del.onclick=()=>{ tbl.rows.splice(i,1); markDirty(t); render(); }; if(!editable(t)) del.disabled=true;
@@ -766,10 +830,10 @@ function renderTable(p,t){
       if(t==='objects'){ const go=document.createElement('button'); go.className='x'; go.type='button'; go.title='Open sheet'; go.textContent='↗'; go.onclick=()=>{ state.sheet=String(r.id); state.view='sheet'; render(); }; act.appendChild(go); }
       act.appendChild(del); tr.appendChild(act);
       for(const c of tbl.columns){
-        const td=document.createElement('td'); td.className='c-'+c;
+        const td=document.createElement('td'); td.className='c-'+c; td.dataset.c=c; if(k&&k.cols.has(c)) td.classList.add('chg');
         const inp=document.createElement('input'); inp.value=r[c]??''; inp.setAttribute('aria-label',c); inp.readOnly=!editable(t);
         const issue=cellIssue(t,c,r[c]); if(issue){ td.classList.add('bad'); inp.title=issue; } else if(r[c]!=null&&String(r[c]).length>30) inp.title=String(r[c]);
-        inp.addEventListener('change',()=>{ r[c]=coerce(inp.value); markDirty(t); const is=cellIssue(t,c,r[c]); td.classList.toggle('bad',!!is); inp.title=is||''; if(t==='formulas') draw(); renderTabs(); });
+        inp.addEventListener('change',()=>{ r[c]=coerce(inp.value); markDirty(t); const is=cellIssue(t,c,r[c]); td.classList.toggle('bad',!!is); inp.title=is||''; markChanged(tr,r); recheck(); summary(); if(t==='formulas') draw(); renderTabs(); });
         td.appendChild(inp); tr.appendChild(td);
       }
       if(t==='formulas'){ const td=document.createElement('td'); td.className='out'; const e=evalExpr(r.expr,1,null,r.status); if('v' in e) td.textContent=fmt(e.v); else { td.textContent=e.err; td.classList.add(formulaCellClass(e)); } tr.appendChild(td); }
@@ -968,7 +1032,7 @@ rebuild(); setStatus(); render();
   const cl=window.claude;
   const [d,u,dl,as]=await Promise.all([cl?.use?.('db')??null, cl?.use?.('user')??null, cl?.use?.('downloads')??null, cl?.use?.('assets')??null]).catch(()=>[null,null,null,null]);
   db=d; downloads=dl; assetsCap=as; render();
-  if(!db){ localMode=true; ORDER.forEach(t=>loaded.add(t)); loadLocal(); rebuild(); setStatus('warn','The shared table store is not available here.'); render(); return; }
+  if(!db){ localMode=true; ORDER.forEach(t=>loaded.add(t)); loadLocal(); for(const t of ORDER) TS(t).snapLoad=TS(t).snapSave=snapshotOf(state.data[t].columns, state.data[t].rows); rebuild(); setStatus('warn','The shared table store is not available here.'); render(); return; }
   if(u){ try{ const w=await u.can('data.write'); if(w===false) canWrite=false; }catch(e){} }
   window.__subscribe=subscribeTable;
   for(const t of ORDER) if(CORE.has(t)) ensure(t);

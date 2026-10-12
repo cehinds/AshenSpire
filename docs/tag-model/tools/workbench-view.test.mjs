@@ -22,10 +22,10 @@ function viewHelpers() {
   const b = html.indexOf(VIEW_END);
   if (a < 0 || b < a) throw new Error('view block markers missing in workbench.html');
   const src = html.slice(a, b + VIEW_END.length);
-  return vm.runInNewContext(src + '\n;({ containsText, underTag, rowPasses, TAG_STATUS })', {});
+  return vm.runInNewContext(src + '\n;({ containsText, underTag, rowPasses, TAG_STATUS, baseIndex, classifyRow, removedCount, changeMap })', {});
 }
 
-const { rowPasses, underTag, TAG_STATUS } = viewHelpers();
+const { rowPasses, underTag, TAG_STATUS, changeMap, classifyRow, baseIndex, removedCount } = viewHelpers();
 const NO_TAG_LOOKUP = () => null;
 
 // The real tags.csv as row objects, with a key lookup over both key and id, as findTag does.
@@ -121,4 +121,74 @@ test('the real tags.csv: the status and empty-description counts match the file'
   const root = lookup('meta.character');
   const expected = objs.filter((r) => r === root || r.id.startsWith('meta.character.')).length;
   assert.equal(count({ subtree: 'meta.character' }), expected);
+});
+
+// The changed view: rows are matched by key, or by content when the table has no key.
+const KCOLS = ['id', 'name', 'qty'];
+const snap = (rows) => ({ columns: KCOLS, rows: rows.map((r) => ({ ...r })) });
+const BASE = [
+  { id: 'a', name: 'Alpha', qty: 1 },
+  { id: 'b', name: 'Beta', qty: 2 },
+  { id: 'c', name: 'Gamma', qty: 3 },
+];
+
+test('with no base there is nothing to mark, and nothing removed', () => {
+  const r = changeMap(KCOLS, 'id', BASE, null);
+  assert.equal(r.map.size, 0);
+  assert.equal(r.removed, 0);
+});
+
+test('a keyed table: an unchanged row is not marked, an edited cell marks its row and that cell only', () => {
+  const rows = [{ id: 'a', name: 'Alpha', qty: 1 }, { id: 'b', name: 'Beta!', qty: 2 }, { id: 'c', name: 'Gamma', qty: 3 }];
+  const { map, removed } = changeMap(KCOLS, 'id', rows, snap(BASE));
+  assert.equal(removed, 0);
+  assert.deepEqual([...map.keys()], [1]);
+  assert.equal(map.get(1).kind, 'changed');
+  assert.deepEqual([...map.get(1).cols], ['name']);
+});
+
+test('a keyed table: a new key is a new row, an edit that changes the key is new plus a removal', () => {
+  const rows = [{ id: 'z', name: 'Zeta', qty: 9 }, { id: 'a', name: 'Alpha', qty: 1 }, { id: 'b', name: 'Beta', qty: 2 }];
+  const { map, removed } = changeMap(KCOLS, 'id', rows, snap(BASE));
+  assert.equal(map.get(0).kind, 'new');
+  assert.equal(map.has(1) || map.has(2), false, 'the other rows are unchanged');
+  assert.equal(removed, 1, 'Gamma (id c) is gone');
+  const renamed = [{ id: 'a2', name: 'Alpha', qty: 1 }, ...BASE.slice(1)];
+  const r2 = changeMap(KCOLS, 'id', renamed, snap(BASE));
+  assert.equal(r2.map.get(0).kind, 'new');
+  assert.equal(r2.removed, 1, 'the old key a is gone, so one removal');
+});
+
+test('a row moved to the top of a keyed table is not marked', () => {
+  const rows = [BASE[2], BASE[0], BASE[1]].map((r) => ({ ...r }));
+  assert.equal(changeMap(KCOLS, 'id', rows, snap(BASE)).map.size, 0);
+});
+
+test('a keyless table matches by whole row: a changed row is new, an identical one is not', () => {
+  const cols = ['from', 'to'];
+  const base = { columns: cols, rows: [{ from: 'a', to: 'b' }, { from: 'c', to: 'd' }] };
+  const rows = [{ from: 'c', to: 'd' }, { from: 'a', to: 'x' }];
+  const { map, removed } = changeMap(cols, null, rows, base);
+  assert.deepEqual([...map.keys()], [1]);
+  assert.equal(map.get(1).kind, 'new');
+  assert.equal(removed, 1);
+});
+
+test('a row that already matches its base is classified by classifyRow as null, and removedCount is zero for equal tables', () => {
+  const idx = baseIndex(KCOLS, 'id', snap(BASE));
+  assert.equal(classifyRow(KCOLS, 'id', { ...BASE[0] }, idx), null);
+  assert.equal(removedCount(KCOLS, 'id', BASE.map((r) => ({ ...r })), snap(BASE)), 0);
+});
+
+test('the real tags.csv against a copy with one edited tag: exactly that row and cell are marked', () => {
+  const { header, rows } = readTable(path.join(TABLES_DIR, 'tags.csv'));
+  const objs = rows.map((r) => Object.fromEntries(header.map((h, i) => [h, r[i] ?? ''])));
+  const base = { columns: header, rows: objs.map((r) => ({ ...r })) };
+  const edited = objs.map((r) => ({ ...r }));
+  const target = edited.find((r) => r.id === 'meta.character');
+  target.label = 'Hero';
+  const { map, removed } = changeMap(header, 'id', edited, base);
+  assert.equal(removed, 0);
+  assert.deepEqual([...map.keys()], [edited.indexOf(target)]);
+  assert.deepEqual([...map.get(edited.indexOf(target)).cols], ['label']);
 });
