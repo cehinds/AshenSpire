@@ -1,0 +1,190 @@
+{
+  "schemaVersion": 1,
+  "status": "review-only; shipped selections/catalog/rig/runtime are unchanged",
+  "canvas": {
+    "width": 768,
+    "height": 512,
+    "floorY": 464,
+    "bodyX": 384
+  },
+  "normalization": "Counter A1.18; Counter B1.0 provisional rigid-body calibration; Evade0.75; manual pelvis projection anchors.",
+  "sources": [
+    {
+      "id": "C",
+      "label": "Counter \u00b7 original Counter15",
+      "source": "pose-studio/stances/update-stances/greatsword-counter/sheet-a.png",
+      "sha256": "cdf9e317db377a672a6de09af90516bf903246cd5800727f7acf364d353d49cd",
+      "size": [
+        1024,
+        1536
+      ],
+      "sourceBounds": [
+        91,
+        1110,
+        462,
+        1408
+      ],
+      "cropBounds": [
+        87,
+        1101,
+        466,
+        1412
+      ],
+      "scale": 1.18,
+      "sourceAnchor": [
+        264,
+        1408
+      ],
+      "pelvisLandmark": [
+        264,
+        1252
+      ],
+      "selectedDepiction": "original board one-hand low hanging cover; owner choice overrides earlier grip flag"
+    },
+    {
+      "id": "D",
+      "label": "Defend \u00b7 Counter12",
+      "source": "pose-studio/stances/update-stances/greatsword-counter/sheet-a.png",
+      "sha256": "cdf9e317db377a672a6de09af90516bf903246cd5800727f7acf364d353d49cd",
+      "size": [
+        1024,
+        1536
+      ],
+      "sourceBounds": [
+        592,
+        196,
+        932,
+        491
+      ],
+      "cropBounds": [
+        589,
+        193,
+        936,
+        498
+      ],
+      "scale": 1.18,
+      "sourceAnchor": [
+        782,
+        491
+      ],
+      "pelvisLandmark": [
+        782,
+        360
+      ]
+    },
+    {
+      "id": "H",
+      "label": "High Parry \u00b7 Counter16",
+      "source": "pose-studio/stances/update-stances/greatsword-counter/sheet-b.png",
+      "sha256": "ce4ee18063bc064c8598da4faac2c46364aef23d4b51d243a247bda270450cdc",
+      "size": [
+        1024,
+        1536
+      ],
+      "sourceBounds": [
+        90,
+        143,
+        481,
+        487
+      ],
+      "cropBounds": [
+        86,
+        139,
+        484,
+        498
+      ],
+      "scale": 1.0,
+      "sourceAnchor": [
+        282,
+        487
+      ],
+      "pelvisLandmark": [
+        282,
+        346
+      ],
+      "calibrationStatus": "Counter B rigid helmet/boot size is larger than A; reduced prototype scale pending director alignment review"
+    },
+    {
+      "id": "G",
+      "label": "Guarded \u00b7 Counter20",
+      "source": "pose-studio/stances/update-stances/greatsword-counter/sheet-b.png",
+      "sha256": "ce4ee18063bc064c8598da4faac2c46364aef23d4b51d243a247bda270450cdc",
+      "size": [
+        1024,
+        1536
+      ],
+      "sourceBounds": [
+        82,
+        1075,
+        454,
+        1448
+      ],
+      "cropBounds": [
+        79,
+        1071,
+        458,
+        1458
+      ],
+      "scale": 1.0,
+      "sourceAnchor": [
+        286,
+        1448
+      ],
+      "pelvisLandmark": [
+        286,
+        1296
+      ],
+      "calibrationStatus": "Counter B rigid helmet/boot size is larger than A; reduced prototype scale pending director alignment review"
+    },
+    {
+      "id": "V",
+      "label": "Vertical Guard \u00b7 Evade12",
+      "source": "pose-studio/stances/update-stances/greatsword-evade/sheet-a.png",
+      "sha256": "e19fe59da17dfb2b52b07cddcd3f2400bd70145aeb6c647322ef821894665c75",
+      "size": [
+        1024,
+        1536
+      ],
+      "sourceBounds": [
+        555,
+        59,
+        1012,
+        542
+      ],
+      "cropBounds": [
+        551,
+        55,
+        1016,
+        546
+      ],
+      "scale": 0.75,
+      "sourceAnchor": [
+        864,
+        542
+      ],
+      "pelvisLandmark": [
+        864,
+        395
+      ]
+    },
+    {
+      "id": "S",
+      "label": "Smash \u00b7 existing selected Smash05",
+      "source": "assets-display/alternative/reaver-greatsword-pilot-smash.webp",
+      "sha256": "9abfefe7258a3bfa2238e7c0516396c61baa5ca009a649b8408183b91fcdf6e2",
+      "size": [
+        512,
+        512
+      ],
+      "preserveBytes": true,
+      "sourceAnchor": [
+        334,
+        464
+      ],
+      "pelvisLandmark": [
+        334,
+        326
+      ]
+    }
+  ]
+}
