@@ -25,7 +25,7 @@ Numbers in this spec are the **initial balance targets**. They will move during 
 | top | Combat and equipment revision ([COMBAT-EQUIPMENT-RULES](docs/COMBAT-EQUIPMENT-RULES.md)) | **partly built** | Parts serve live play (the Dodge Roll in `src/framework/weight.js`, §12.1). The full framework cutover is not performed ([framework-cutover-report](docs/framework-cutover-report.md)); the three-build prototype gate and the 36→50 class pools are post-1.0 (D3). |
 | 1 | Product overview | **built** | 4 classes, 3 seats climbed as 3 tiers, profile and slots. |
 | 2 | Legal and asset constraints | **partly built** | Attribution: `tools/credits-check.mjs`, 40 checks, 33/33 asset directories (FINISH §10). Open: §2.4 asset indirection. 138 literal `url('../assets/…)` references in six `styles/` files (`grep -rc "url('../assets" styles`; for example `styles/combat.css`, `styles/ui.css`) still bypass `assetUrl()` and its fallback (DEVELOPER.md, *high-res release*). |
-| 3 | Architecture, DSLs, procedural systems, saves, validation | **built** | Run schema 23 (`RUN_SCHEMA_VERSION` in `src/model/state.js`; `tests/save-migration.test.mjs`); `validateContent` 0 errors. |
+| 3 | Architecture, DSLs, procedural systems, saves, validation | **built** | Run schema at `RUN_SCHEMA_VERSION` (`src/model/state.js`; `tests/save-migration.test.mjs`); `validateContent` 0 errors. |
 | 4 | Combat rules | **built** | §4.7 shared player/enemy tags, deferred Counters, typed riders and persisted stance reads ship in #1705, with solo/co-op engine and browser regressions. Ashen Blight remains a separate proposal. Warrior's Vow enters the chosen stance. |
 | 5 | Content | **built** | Warrior's Vow (§5.2) offers every stance of the player's class and enters the chosen one. 5.2–5.4 are the historical M1/M2 sets reconciled to the canonical names and values of their current shipped definitions; older prose elsewhere remains readable through `docs/IP-SCRUB.md`. Live counts: 292 card definitions in the composed bundle (class reward pools after class-mastery composition: Reaver 53, Starseer 59, Rogue 53, Herald 49), 73 relics (63 base plus 10 class-mastery), 25 events, 7 flasks, 33 enemies (20 regular, 10 boss, 3 elite). |
 | 6 | Map generation | **built** | `engine/mapgen.js`, `tools/mapplan.mjs`. |
@@ -1170,6 +1170,60 @@ seat, naming the first failing check (`switchOff`, `attackerStaggered`,
 disconnected seat get none. A Smash that breaks physical Guard emits
 `combatGuardBroken` once per break. Both are informational receipts and change
 no rule.
+
+### 4.11 Combat Rounds Preview
+
+**Contract status: planned.** An opt-in preview that runs real fights on the speed-ordered rounds specified in [docs/alternative-combat-rounds/DESIGN.md](docs/alternative-combat-rounds/DESIGN.md), with the owner's decisions in [docs/alternative-combat-rounds/PREVIEW-PLAN.md](docs/alternative-combat-rounds/PREVIEW-PLAN.md). Formulas stay in DESIGN.md and are not restated here. Until its phases ship, combat follows §4.1 to §4.10 unchanged.
+
+**Setting**
+
+- Advanced → Combat holds one opt-in row, *Combat rounds preview*. It is shown on dev and test builds only and is hidden on release builds.
+- The row is read at New Run and frozen into the run, as the other Advanced rows are. A saved fight keeps the rules it started with; a later change applies to new runs only.
+- The preview covers solo and co-op/LAN. Co-op parity is part of the contract, not a later step.
+- With the row off, fights, saves and RNG rolls are unchanged, and no preview field is written.
+
+**Live rules that stay**
+
+- The hand is the live hand: draw, hand size, Retain, Ethereal, reshuffle and the `handRules` settings of §4.1 apply unchanged.
+- Resources are live. Stamina is SP and Mana is MP.
+- A landed card or enemy move runs its live effects: damage (§4.2), statuses (§4.4), draws, relics and triggers. The timeline decides order and whether an action lands; it does not compute effects.
+- Counter and Evade keep their live rules (§4.7, §4.8). Each has a speed value and takes its place in the order. The timeline's own Counter-cancel and evade-percent rules are not used.
+- A reaction from hand uses the reaction choice of §4.10 (Back, Play).
+
+**Queue and End Turn**
+
+- Playing a card queues it and pays its SP, and its MP if it has an MP cost, at queue time. Unqueuing refunds it.
+- Enemies queue cards and moves from their own SP pool, stat-driven with a base of 3. A move costs 1 SP unless the move says otherwise.
+- End Turn keeps its label and look. In the preview it commits the round: it adapts the enemy queues, steps the round through the timeline, pauses for a reaction when a player-targeted attack needs one, then runs the live turn-end hand rules.
+
+**Order and hits**
+
+- Initiative is base, plus momentum, plus a d4. Each combatant rolls its own d4 once per round, in combatant order (the player first, then the others in key order), and that roll is used for all of its actions that round. The preview uses the `speed` merge of DESIGN.md: each action's speed is card speed plus the preemptive buff plus initiative, actions act highest speed first, a later card in a queue never acts before an earlier one, and ties go to higher initiative, then the player. The d4 draws on the preview's own RNG stream, appended to the closed stream set of §3.11, so every existing stream and seed keeps its rolls. Its counter is saved only when it is non-zero and reads as 0 when missing, so a run with the preview off saves exactly as before.
+- Hit or miss uses the hit roll of DESIGN.md. A missed action applies no effects.
+- A reaction pause keeps the round's cursor. A save taken during a pause resumes at that cursor (§3.12).
+
+**Momentum**
+
+- Momentum is kept per enemy, between −3 and +3, and decays as DESIGN.md states.
+- A success at the cap sets an overflow flag. The side's next landed hit carries doubled poise damage, and the flag clears when that hit spends it.
+
+**Perception**
+
+- For each enemy, the player reads the first 1 + Perception actions of that enemy's own queue, in its play order (the queue prefix of DESIGN.md), where Perception is the §4.9 stat. Actions beyond that count show as `?` symbols in that enemy's intent box, at their place in its play order (owner, 2026-10-11).
+- A visible action shows at stage 3 when its §4.9 read is exact, and as `?` when it is not. The read is the §4.9 roll; perception adds no roll of its own.
+- The intent box shows the enemy's current action at today's size and its follow-up actions as smaller symbols. There is no separate initiative track or queue strip (owner, 2026-10-11).
+
+**Co-op and LAN**
+
+- Each seat keeps its own queue, momentum and perception reads. Each living observer records its own read (§4.9).
+- A LAN peer receives a concealed action only as the projection that §4.7 and §4.9 allow. The host never sends a concealed action's full queue entry.
+
+**Resolved (owner, 2026-10-11)**
+
+- A queued card pays only its Stamina cost as SP (and Mana as MP). A live Actions cost is not paid in the preview.
+- Enemy actions beyond the read count show as `?` in the enemy's intent box (see Perception).
+- A queued Counter answers only the next attack from its target, then is spent. The §4.7 grant and expiry timing does not apply in the preview.
+- In co-op, momentum is per seat: each seat has its own −3..+3 against each enemy.
 
 ## 5. Content specification
 

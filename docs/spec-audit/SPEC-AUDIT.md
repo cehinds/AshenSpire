@@ -88,7 +88,7 @@ SPEC.md was corrected in this PR, one section range per commit wave, following t
 
 - [ ] **stale** SPEC L399-405 (schema: `meter?: { max, growthMult, onFill }`)
   - Code: no status row in `src/content/statuses.js` uses `meter:`; build-up statuses use `proc:` (`statuses.js:82` bleed, `:103` frost). The engine reads `def.proc` (`src/engine/statuses.js:70`, `:91` sets `inst.meter = { value: 0, max: def.proc.threshold }`)
-  - Fix: document the shipped key as `proc: { threshold, burstPercent, burstMin, burstMax, poiseDamage, resistance }`.
+  - Fix: document the shipped key `proc: { threshold, burstPercent, burstMin, burstMax, poiseDamage, resistance }` and keep the legacy `meter?` form, which `src/model/schemas.js:907` still accepts and `src/engine/statuses.js:178-199` still runs (overflow, growth, `meterFilled`, `onFill`).
 - [ ] **stale** SPEC L410-415 (bleed example: `meter: { max: 12, growthMult: 1.5, onFill: percentMaxHp 15, min 8, max 35 }`)
   - Code: `src/content/statuses.js:76` `id: 'bleed'`, `stackMode: 'add'`, `decay: 'none'`, `proc: { threshold: 7 (:83), burstPercent: 15 (:84), burstMin: 8 (:85), burstMax: 35 (:86), poiseDamage: 3 (:87), resistance … }`; no `max: 12` and no `growthMult: 1.5`
   - Fix: replace the example with the shipped `proc` block.
@@ -521,8 +521,8 @@ SPEC.md was corrected in this PR, one section range per commit wave, following t
 ### New-game opening presentation (2026-09-19) (SPEC L2553-2564)
 
 - [ ] **stale** SPEC L2555: "Solo new games may show a configurable six-scene prologue"
-  - Code: `src/model/prologue.js` PROLOGUE_DEFAULTS.scenes has 9 scenes (probe5)
-  - Fix: "a configurable prologue (9 scenes by default, `PROLOGUE_DEFAULTS.scenes`)."
+  - Code: `src/model/prologue.js` PROLOGUE_DEFAULTS.scenes has 9 entries, of which 5 are enabled; the other 4 are empty editor slots that `prologueSequence` skips (`src/model/prologue.js:440-451`)
+  - Fix: "a configurable prologue (five shipped scenes by default, plus four empty editor slots that stay switched off; `PROLOGUE_DEFAULTS.scenes`)."
 - [ ] **stale** SPEC L2558: "Optional `run.prologue` is `{version:1, status, scene:0..5, reason?}`"
   - Code: `src/model/prologue.js:705` PROLOGUE_STATE_VERSION = 2; `:736-739` (pendingPrologueScene bounds scene by `scenes.length`); `src/main.js:1298` creates `{ version: PROLOGUE_STATE_VERSION, status: 'pending', scene: 0 }`
   - Fix: "version 2, scene 0 to scenes.length − 1".
