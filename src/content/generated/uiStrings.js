@@ -34,14 +34,14 @@ export const uiStrings = [
     "id": "combat.protection.block",
     "extends": "",
     "short": "Block",
-    "full": "Absorbs attack damage.",
+    "full": "Absorbs physical attack damage.",
     "tip": "Block"
   },
   {
     "id": "combat.protection.ward",
     "extends": "",
     "short": "Arcane Ward",
-    "full": "Ward guards against magic. Full at the start of every fight, it absorbs each magic hit after Barrier and before Block (each hit still lets at least 1 damage through) and is spent by what it absorbs; a Ward break costs Stamina next turn. It does not regenerate unless a card, feat, class feature or relic restores it. Ward from magical guards is part of Block and absorbs after ordinary Block.",
+    "full": "Ward guards against magic. Full at the start of every fight, it absorbs each magic hit after Barrier (each hit still lets at least 1 damage through) and is spent by what it absorbs; a Ward break costs Stamina next turn. Block does not stop magic. It does not regenerate unless a card, feat, class feature or relic restores it.",
     "tip": "Arcane Ward"
   },
   {

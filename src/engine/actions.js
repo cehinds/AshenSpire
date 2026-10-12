@@ -356,7 +356,6 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
   // Matchup and control vulnerabilities precede typed defenses and Ward.
   const type = ctx.combatExpansionRules.matchups.damageAliases[profile.damageType] || profile.damageType;
   const ward = tactical.resistedAmounts[contactIndex] || 0;
-  void spell;
   // The plan was made for the whole action. A status rider may have spent Barrier or
   // Ward between hits: what the live pool no longer holds is not absorbed for free,
   // so it goes back into this hit before Block.
@@ -376,10 +375,12 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
     if (spend.breakEvent) breaks.push(['wardBroken', spend.breakEvent]);
   }
   amount += (plannedBarrier - barrierSpent) + (plannedWard - wardSpent);
+  // Block is the physical twin of Barrier: it soaks physical contacts only, so a Spell
+  // never touches target.block (and does not spend a guard bypass).
   const pool = 'block';
-  const bypass = Math.min(amount, tactical.guardBypassRemaining || 0);
+  const bypass = spell ? 0 : Math.min(amount, tactical.guardBypassRemaining || 0);
   tactical.guardBypassRemaining -= bypass;
-  const blocked = Math.min(Math.max(0, target[pool] || 0), Math.max(0, amount - bypass));
+  const blocked = spell ? 0 : Math.min(Math.max(0, target[pool] || 0), Math.max(0, amount - bypass));
   target[pool] = Math.max(0, (target[pool] || 0) - blocked);
   // Poise is the physical twin of Ward and sits after Block: a magical contact never meets it.
   // Each physical hit it meets still lets at least 1 through; what it absorbs is spent.

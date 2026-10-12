@@ -32,8 +32,8 @@ combat.rating.ward,,Ward rating,Ward rating reduces magical damage and weighs in
 combat.poise.shared,,Poise,"Poise resists physical attacks{resistance} and configured status effects. Both physical and magical hits that pass Block fill this bar. A full bar causes Stagger: {effect}.",Shared break meter
 combat.poise.actionLoss,,Actions,{amount} fewer Actions next turn,Actions lost after Stagger
 combat.poise.enemyLoss,,Move,lose the next move,Stagger cancels the next move
-combat.protection.block,,Block,Absorbs attack damage.,Block
-combat.protection.ward,,Arcane Ward,"Ward guards against magic. Full at the start of every fight, it absorbs each magic hit after Barrier and before Block (each hit still lets at least 1 damage through) and is spent by what it absorbs; a Ward break costs Stamina next turn. It does not regenerate unless a card, feat, class feature or relic restores it. Ward from magical guards is part of Block and absorbs after ordinary Block.",Arcane Ward
+combat.protection.block,,Block,Absorbs physical attack damage.,Block
+combat.protection.ward,,Arcane Ward,"Ward guards against magic. Full at the start of every fight, it absorbs each magic hit after Barrier (each hit still lets at least 1 damage through) and is spent by what it absorbs; a Ward break costs Stamina next turn. Block does not stop magic. It does not regenerate unless a card, feat, class feature or relic restores it.",Arcane Ward
 combat.protection.poise,,Poise,"Poise guards against physical hits. Full at the start of every fight, it absorbs each physical hit after Block (each hit still lets at least 1 damage through) and is spent by what it absorbs. When it breaks you are staggered. It does not regenerate unless a card, feat, class feature or relic restores it.",Poise
 combat.protection.barrier,,Barrier,"Ward charged past full (gold rim). Ward added while Ward is full becomes Barrier, which soaks magic hits completely before Ward and lasts until the start of its owner's next turn.",Barrier
 combat.protection.poiseGuard,,Poise guard,Absorbs physical impact before the Poise bar fills. Expires at the start of your next turn.,Poise guard
