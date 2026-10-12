@@ -1023,7 +1023,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const protection = document.createElement('div'); protection.className = 'combat-expansion-protection';
       const stance = ent.combatStance?.maneuver;
       protection.textContent = [`Ward ${ent.persistentWard?.value || 0}/${ent.persistentWard?.max || 0}`,
-        `Barrier ${ent.barrier || 0}`, stance ? stance[0].toUpperCase() + stance.slice(1) : ''].filter(Boolean).join(' · ');
+        `${t('combat.protection.barrier')} ${ent.barrier || 0}`, stance ? stance[0].toUpperCase() + stance.slice(1) : ''].filter(Boolean).join(' · ');
       wrap.appendChild(protection);
     }
     if (isEnemy) {
@@ -1050,7 +1050,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         { label: 'MP', value: entity.mana, max: entity.maxMana },
           { label: 'Poise', value: entity.poiseMeter?.value, max: entity.poiseMeter?.max },
           { label: entity.combatExpansionVersion === 2 ? 'Ward rating' : t('combat.rating.ward'), value: entity.ratings?.ward },
-          ...(entity.combatExpansionVersion === 2 ? [{ label: 'Ward pool', value: entity.persistentWard?.value || 0, max: entity.persistentWard?.max || 0 }, { label: 'Barrier', value: entity.barrier || 0 }] : []),
+          ...(entity.combatExpansionVersion === 2 ? [{ label: 'Ward pool', value: entity.persistentWard?.value || 0, max: entity.persistentWard?.max || 0 }, { label: t('combat.protection.barrier'), value: entity.barrier || 0 }] : []),
         { label: t('combat.protection.block'), value: entity.block || 0 },
       ].filter(row => row.value != null);
       const abilities = activeCombatAbilities(registries, entity, false);
