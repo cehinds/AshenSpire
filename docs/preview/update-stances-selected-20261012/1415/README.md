@@ -1,6 +1,6 @@
 # Selected Reaver greatsword browser QA
 
-Final unpatched build **0.7.1.1415**, source digest **04a5dbdc03**, convergence commit [`c893f2462`](https://github.com/cehinds/AshenSpire/commit/c893f2462). Captures came from the served `AshenSpire.html`; the served artifact was verified as ordinal 1415 with digest 04a5dbdc03.
+Selected-pose and mobile captures use the final art/layout build **0.7.1.1415**, digest **04a5dbdc03**, convergence commit [`c893f2462`](https://github.com/cehinds/AshenSpire/commit/c893f2462). The served artifact was verified as ordinal 1415 with that digest. The later 0.7.1.1417 change affects reaction playback only; the selected art/layout is unchanged. Actual gameplay reactions were recaptured on the final build in [1417 reaction QA](../1417/README.md).
 
 ## Selected held poses
 
