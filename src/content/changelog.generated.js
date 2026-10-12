@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-12",
     "summary": "Desktop combat looks like the phone",
     "detail": "On desktop the hand is taller and its cards are much larger. They sit in a tight row just under the Combat log / Reaction row, and the footer is compact. Enemies stand together on one ground line, and the castle and trees of the horizon show along the top of the battlefield. The Combat log row, intent badges, stance mark and footer words are larger. Phone, tablet and widescreen layouts are unchanged.",
-    "build": "0.7.1.1363",
+    "build": "0.7.1.1365",
     "pullRequest": 1878,
     "url": "https://github.com/cehinds/AshenSpire/pull/1878"
   },
