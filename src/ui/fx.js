@@ -1412,7 +1412,7 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
           const anchor = ctx.anchorFor(e.targetId);
           if (!sequential) hitSounds();
           if (parts.guard) spawnFx(ctx.layer, anchor, 'fx-spark', 320, '✦');
-          if (ward && !parts.damage) spawnFx(ctx.layer, anchor, 'fx-spark', 320, '✦');
+          if (ward && !parts.guard && !parts.damage) spawnFx(ctx.layer, anchor, 'fx-spark', 320, '✦');
           if (!parts.damage) return; // fully guarded: no flinch, slash, or shake
           // Attack impacts slash at the contact.
           if (beatKind === 'attack') spawnFx(ctx.layer, anchor, 'fx-slash', 300);
