@@ -33,10 +33,18 @@ test('a body at the field edge stays on stage', () => {
 });
 
 test('selected pose reach clamps mobile artwork without refitting its body or domain cell', () => {
-  const stage = { dataset: { idleHeightRatio: '1', idleWidthRatio: String(246/261), maximumWidthRatio: String(456/261) } };
-  const host = { querySelector: selector => selector === '.painted-stage' ? stage : null };
-  const geometry = combatSpriteGeometry({ firstElementChild: host, offsetHeight: 190, offsetWidth: 179 }, () => {});
-  assert.equal(geometry.visibleWidth, 190*246/261, 'fitting keeps the readable idle envelope');
+  const stage = { dataset: { idleHeightRatio: '1', idleWidthRatio: String(246/261), maximumWidthRatio: String(456/261) },
+    matches: selector => selector === '.painted-stage', querySelector: () => null };
+  // The live alternative card stage is the sprite's first child itself,
+  // rather than a painted stage nested inside a separate sprite wrapper.
+  const sprite = { firstElementChild: stage, offsetHeight: 190, offsetWidth: 179 };
+  const geometry = combatSpriteGeometry(sprite, () => {});
+  const aimed = { ...sprite, firstElementChild: { matches: () => false, querySelector: () => null },
+    querySelector: selector => selector === ':scope > .painted-stage[data-maximum-width-ratio]' ? stage : null };
+  assert.deepEqual(combatSpriteGeometry(aimed, () => {}), geometry, 'a preceding self-target outline cannot hide the pilot envelope');
+  const nested = { ...sprite, firstElementChild: { querySelector: selector => selector === '.painted-stage' ? stage : null } };
+  assert.equal(combatSpriteGeometry(nested, () => {}).edgeWidth, geometry.edgeWidth, 'root and nested stages carry the same edge reserve');
+  assert.equal(geometry.visibleWidth, 179, 'fitting preserves the directly mounted body box, including DOM rounding');
   const actor = { side: 'player', ...geometry, leading: 0,
     slot: { id: 'player', cell: 'C1', x: 63.13275125, ground: 373.44975 } };
   const size = { id: 'player', scale: .6080383240223463, visibleHeight: 186.34860359596735, multiplier: 1 };
@@ -58,8 +66,9 @@ test('selected pose reach clamps mobile artwork without refitting its body or do
       width/2, 'a figure already within the viewport stays at its existing centre');
   }
   delete stage.dataset.maximumWidthRatio;
-  assert.equal(combatSpriteGeometry({ firstElementChild: host, offsetHeight: 190, offsetWidth: 179 }, () => {}).edgeWidth,
-    undefined, 'other profiles retain their existing geometry');
+  const original = { ...geometry }; delete original.edgeWidth;
+  assert.deepEqual(combatSpriteGeometry(sprite, () => {}), original,
+    'other directly mounted profiles retain all their existing geometry');
 });
 
 test('a short portrait field keeps its enemies back on the floor, clear of the player', () => {
