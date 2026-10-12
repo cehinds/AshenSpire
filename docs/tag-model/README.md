@@ -42,12 +42,13 @@ Plus **assets**, the art each object can show.
 
 ## Objects
 
-`tables/objects.csv` holds one row per carrier. Relics, companions, sigils and
-progression class feats each have a row, with `kind` set to their family. The
-`tags` column holds the classification tag key and the property tag key; the
-property tag is the handle that `content/source/nodeEffects.json` keys. Charms,
-eleven relics and the twenty `classSkillFeats` entries are not rows yet
-(`DECISIONS.md`, decision 14).
+`tables/objects.csv` holds one row per carrier. All five families are rows, with
+`kind` set to their family: relics (charms included), companions, sigils, and
+feats (class skill feats included). The `tags` column always holds the
+classification tag key. Where the object has one, it also holds the
+property/effect tag key, the handle that `content/source/nodeEffects.json` keys.
+The 11 effect-less relics and the 20 class skill feats carry only their
+classification tag (`DECISIONS.md`, decision 14).
 
 ## Conventions
 
