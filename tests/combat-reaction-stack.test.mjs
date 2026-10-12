@@ -32,3 +32,41 @@ test('version 2 offers a trait:reaction card by tag, and version 1 does not', ()
   dispatch(v1.combat, { type: 'endTurn' });
   assert.equal(v1.combat.pendingReaction, undefined);
 });
+
+const answer = (combat, optionId = null) => dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId });
+const pick = (combat, cardInstanceId) => combat.pendingReaction.options.find(row => row.play.cardInstanceId === cardInstanceId).id;
+const offeredInstances = combat => [...new Set(combat.pendingReaction.options.map(row => row.play.cardInstanceId))];
+const resources = combat => ({ energy: combat.player.energy, stamina: combat.player.stamina, mana: combat.player.mana });
+
+test('passing with an empty stack matches the version 1 Back outcome', () => {
+  const back = version => {
+    const { combat } = fixture({ version, cardIds: ['guardCounter'] });
+    dispatch(combat, { type: 'endTurn' });
+    const out = answer(combat);
+    return { types: out.events.map(event => event.type), phase: combat.phase, turn: combat.turn, hp: combat.player.hp };
+  };
+  assert.deepEqual(back(2), back(1));
+});
+
+test('a pushed reaction is not paid, stays in hand, and the seat is offered again at depth 1', () => {
+  const { combat } = fixture({ cardIds: ['guardCounter', 'sweepingBlow', 'whirlingGuard'] });
+  dispatch(combat, { type: 'endTurn' });
+  const root = combat.pendingReaction.groupKey, before = resources(combat);
+  const out = answer(combat, pick(combat, 'r1'));
+  assert.deepEqual(resources(combat), before);
+  assert.equal(out.events.filter(event => event.type === 'cardPlayed').length, 0);
+  assert.ok(combat.piles.hand.some(inst => inst.instanceId === 'r1'));
+  assert.deepEqual(combat.reactionStack.entries.map(entry => entry.cardInstanceId), ['r1']);
+  assert.equal(combat.pendingReaction.id, `${root}:player:1`);
+  assert.ok(out.events.some(event => event.type === 'combatReactionStacked' && event.depth === 1 && event.cardInstanceId === 'r1'));
+});
+
+test('a stacked instance and a second Counter are not offered again', () => {
+  const { combat } = fixture({ cardIds: ['guardCounter', 'sweepingBlow', 'whirlingGuard', 'guardCounter'] });
+  dispatch(combat, { type: 'endTurn' });
+  answer(combat, pick(combat, 'r1'));
+  assert.ok(offeredInstances(combat).includes('r0') && offeredInstances(combat).includes('r3'));
+  answer(combat, pick(combat, 'r0'));
+  assert.deepEqual(offeredInstances(combat), ['r2']);
+  assert.ok(combat.pendingReaction.id.endsWith(':player:2'));
+});
