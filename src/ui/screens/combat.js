@@ -416,6 +416,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   let heldTurnHand = null;
   let enemyPlayback = false;
   let busy = false; // animating / resolving
+  // The appearance may already be Classic before this screen mounts, so the
+  // change notification below is not guaranteed to fire for this combat.
+  normalizeClassicPlayerFormationCell(combat, readSettings());
   onDisplayAppearanceChange(combatEl, () => {
     // Classic must not merely paint an invalid perspective lane at its spawn:
     // keep the combat state aligned with the cell that movement and saves use.

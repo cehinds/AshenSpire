@@ -93,3 +93,11 @@ test('combat normalizes a saved player lane before the appearance redraw', () =>
   assert.ok(subscription.indexOf('normalizeClassicPlayerFormationCell') < subscription.indexOf('render()'),
     'state normalization precedes redraw');
 });
+
+test('combat normalizes a saved player lane when the screen first mounts', () => {
+  const busy = combatScreen.indexOf('let busy = false');
+  const subscription = combatScreen.indexOf('onDisplayAppearanceChange(combatEl', busy);
+  const initial = combatScreen.indexOf('normalizeClassicPlayerFormationCell(combat, readSettings())', busy);
+  assert.ok(busy >= 0 && initial > busy && initial < subscription,
+    'initial state normalization runs even when Classic was selected before mount');
+});
