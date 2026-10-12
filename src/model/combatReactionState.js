@@ -19,7 +19,7 @@ const enemyEntry = (entry, state, ownerIds, stack) => (state.enemies || []).some
 
 export function combatReactionProblems(state, { ownerIds = new Set(['player']), queue = state.abilityQueue || state.queue || [] } = {}) {
   const problems = [];
-  const fields = ['pendingReaction', 'reactionResume', 'reactionCursor', 'reactionHandCleanup', 'enemyReactionRolls', 'reactionRootPlay'];
+  const fields = ['pendingReaction', 'reactionResume', 'reactionCursor', 'reactionHandCleanup', 'enemyReactionRolls', 'reactionRootPlay', 'reactionStack', 'reactionRules'];
   if (state.reactionRulesVersion === undefined) {
     if (fields.some(field => state[field] !== undefined)) problems.push('Paused reaction requires its carried rules');
     return problems;

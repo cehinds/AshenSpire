@@ -7,6 +7,7 @@ import { createRng } from '../src/engine/rng.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { createCoopCombat, endTurn, chooseReaction, chooseDiscard, playCard } from '../src/engine/coopCombat.js';
 import { serializeCoopCombatSnapshot, decodeCoopCombatSnapshot } from '../src/engine/coopCombatSnapshot.js';
+import { combatReactionProblems } from '../src/model/combatReactionState.js';
 
 // `strike` is tagged `trait:reaction` in this bundle only (the real projection is separate work).
 // `chooseStrike` is a Strike that also makes its player discard a card, a play that pauses.
@@ -295,4 +296,26 @@ test('a second Strike is still offered after the first is stacked, though it wou
   const { combat } = lowHpFixture(['strike', 'strike']);
   answer(combat, pick(combat, 'r0'));
   assert.ok(offeredInstances(combat).includes('r1'), 'r1 is offered on top of r0');
+});
+
+test('a versionless state carrying a reaction stack or tuning is refused', () => {
+  const stack = { groupKey: 'g', entries: [], resolving: false };
+  assert.deepEqual(combatReactionProblems({ reactionStack: stack }), ['Paused reaction requires its carried rules']);
+  assert.deepEqual(combatReactionProblems({ reactionRules: {} }), ['Paused reaction requires its carried rules']);
+  assert.deepEqual(combatReactionProblems({}), []);
+});
+
+test('a second Counter from one seat fizzles at resolution even if its saved entry hides the maneuver', () => {
+  const { combat, registries } = fixture({ cardIds: ['guardCounter', 'riposte', 'sweepingBlow'] });
+  dispatch(combat, { type: 'endTurn' });
+  answer(combat, pick(combat, 'r0'));
+  const saved = JSON.parse(JSON.stringify(serializeCombatSnapshot(combat)));
+  // An edited save: a second Counter (r1) pushed with its maneuver marker cleared.
+  const first = saved.reactionStack.entries[0];
+  saved.reactionStack.entries = [{ ...first, maneuver: null }, { ...first, optionId: 'edited', cardId: 'riposte', cardInstanceId: 'r1', play: { ...first.play, cardInstanceId: 'r1' }, maneuver: null }];
+  saved.pendingReaction.id = saved.pendingReaction.id.replace(/:1$/, ':2');
+  const restored = restoreCombatSnapshot({ registries, rng: createRng(combat.rng.seed, combat.rng.getCounters()), snapshot: saved });
+  const out = dispatch(restored, { type: 'chooseReaction', offerId: restored.pendingReaction.id, optionId: null });
+  assert.deepEqual(out.events.filter(event => event.type === 'cardPlayed').map(event => event.cardInstanceId), ['r1']);
+  assert.ok(out.events.some(event => event.type === 'combatReactionFizzled' && event.cardInstanceId === 'r0' && event.reason === 'secondCounter'));
 });

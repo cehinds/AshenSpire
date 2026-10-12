@@ -411,10 +411,22 @@ function playStackEntry(ctx, group, entry, hooks) {
     return false;
   }
   const hand = (ctx.players ? ctx.players.get(ownerId)?.piles.hand : ctx.piles.hand) || [];
-  if (!hand.some(inst => inst.instanceId === play.cardInstanceId)) {
+  const instance = hand.find(inst => inst.instanceId === play.cardInstanceId);
+  if (!instance) {
     ctx.emit('combatReactionFizzled', { ownerId, cardInstanceId: play.cardInstanceId, reason: 'notInHand' });
     reportRestOfRoot(ctx, group, ownerId, hooks);
     return false;
+  }
+  // One Counter per seat per stack, read from the card itself rather than the saved entry.
+  const resolvedDef = resolveCombatCard(ctx, instance);
+  if ((resolvedDef.cardTags || resolvedDef.tags || []).includes('maneuver:counter') && ctx.reactionStack) {
+    const seats = ctx.reactionStack.counterSeats ||= [];
+    if (seats.includes(ownerId)) {
+      ctx.emit('combatReactionFizzled', { ownerId, cardInstanceId: play.cardInstanceId, reason: 'secondCounter' });
+      reportRestOfRoot(ctx, group, ownerId, hooks);
+      return false;
+    }
+    seats.push(ownerId);
   }
   ctx.reactionResume = { queue: ctx.queue, foundation: ctx.foundation ? {
     actionSerial: ctx.foundation.actionSerial, eventCount: ctx.foundation.eventCount,
