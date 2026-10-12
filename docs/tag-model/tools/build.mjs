@@ -46,6 +46,13 @@ const LEGACY = JSON.parse(readFileSync(join(HERE, 'legacy-status.json'), 'utf8')
 const argv = process.argv.slice(2);
 const invAt = argv.indexOf('--inv');
 const INV = invAt >= 0 ? argv[invAt + 1] : null;
+// Without --inv the build rebuilds from tables/presentation/. That folder is
+// generated and not on every branch: with it absent there is nothing to rebuild,
+// so exit 0 instead of failing (the Data Studio Tag model job runs this step).
+if (!INV && !existsSync(PRES)) {
+  console.log('build: tables/presentation is not on this branch; nothing to rebuild (pass --inv <folder> to re-extract).');
+  process.exit(0);
+}
 
 const INVENTORY = ['components', 'layouts', 'styles', 'tokens', 'breakpoints', 'assets', 'animations',
   'effects', 'resolutions', 'settings', 'symbols', 'combat-symbols', 'strings'];
