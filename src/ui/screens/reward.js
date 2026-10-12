@@ -1282,7 +1282,7 @@ export function mountRewards(app, {
       }
       // The chosen relic's card face wears the same green trim as its button.
       for (const face of strip.querySelectorAll('.reward-relic-face')) {
-        const selected = face.parentElement?.dataset?.pickId === cardId;
+        const selected = face.dataset.pickId === cardId;
         face.classList.toggle('is-chosen', selected);
       }
       confirmButton.disabled = false;
@@ -1310,12 +1310,14 @@ export function mountRewards(app, {
     if (isRelic) strip.classList.add('reward-relic-choice');
     for (const id of isRelic ? ids : []) {
       const option = relicOption(id);
-      // One column per relic: the card face on top (no inspection, no lore),
-      // the text button under it as the accessible radio. Both select.
+      // One column per relic: the card face on top at glance (no inspection door,
+      // no lore), the text button under it as the accessible radio. Both select.
+      // The face binds no door of its own, so a tap on it only selects.
       const column = el('div', { class: 'reward-relic-option', dataset: { pickId: id } });
       if (option.definition) {
-        const face = renderCollectibleCard(registries, option.definition, t('reward.kind.relic'), { interactive: false }).card;
+        const face = renderCollectibleCard(registries, option.definition, t('reward.kind.relic'), { interactive: false, inspection: false, level: 'glance' }).card;
         face.classList.add('reward-relic-face');
+        face.dataset.pickId = id;
         face.addEventListener('click', () => selectCard(id));
         column.appendChild(face);
       }
