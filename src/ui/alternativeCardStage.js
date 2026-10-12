@@ -285,7 +285,18 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
       resources=aura||[];elapsed=0;holdUntil=0;playing={action:key,sequence,duration:ms};
       paint(performance.now(),true);last=performance.now();wake();return true;
     },
-    hold(ms){if(!(playing||flashAt!==null||bodyReaction)||!(ms>0))return false;holdUntil=Math.max(performance.now(),holdUntil)+ms;return true;},
+    hold(ms){
+      if(!(playing||flashAt!==null||bodyReaction)||!(ms>0))return false;
+      // Contact is cued by the timeline timer; a delayed RAF may still show
+      // the preceding wind-up. Paint the reviewed contact before hit-stop.
+      if(playing?.sequence.pilot&&!bodyReaction){
+        const sequence=playing.sequence;
+        const contact=sequence.durations.slice(0,sequence.impact).reduce((a,b)=>a+b,0)
+          /sequence.durations.reduce((a,b)=>a+b,0)*playing.duration;
+        if(elapsed<contact){elapsed=contact;paint();}
+      }
+      holdUntil=Math.max(performance.now(),holdUntil)+ms;return true;
+    },
     react(resource){clearTimeout(reactionTimer);el.dataset.poseReaction=resource;reactionTimer=setTimeout(()=>{el.dataset.poseReaction='';},180);},settle:settleStage,endReaction,
     dispose(){disposed=true;clearTimeout(reactionTimer);if(request!==null)cancelAnimationFrame(request);request=null;playing=null;bodyReaction=null;images.clear();down=null;hurt=null;auraRenderer.dispose();}
   });

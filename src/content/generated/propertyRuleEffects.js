@@ -4139,10 +4139,21 @@ export const propertyRuleEffects = {
                   "tag": "guard"
                 },
                 {
-                  "p": "hasStatus",
-                  "of": "allEnemies",
-                  "status": "crimsonBlight",
-                  "snapshot": "beforePlay"
+                  "p": "any",
+                  "preds": [
+                    {
+                      "p": "hasStatus",
+                      "of": "allEnemies",
+                      "status": "crimsonBlight",
+                      "snapshot": "beforePlay"
+                    },
+                    {
+                      "p": "hasStatus",
+                      "of": "allEnemies",
+                      "status": "necroticBlight",
+                      "snapshot": "beforePlay"
+                    }
+                  ]
                 }
               ]
             }
@@ -4188,10 +4199,21 @@ export const propertyRuleEffects = {
                   ]
                 },
                 {
-                  "p": "hasStatus",
-                  "of": "target",
-                  "status": "crimsonBlight",
-                  "snapshot": "beforePlay"
+                  "p": "any",
+                  "preds": [
+                    {
+                      "p": "hasStatus",
+                      "of": "target",
+                      "status": "crimsonBlight",
+                      "snapshot": "beforePlay"
+                    },
+                    {
+                      "p": "hasStatus",
+                      "of": "target",
+                      "status": "necroticBlight",
+                      "snapshot": "beforePlay"
+                    }
+                  ]
                 }
               ]
             }
@@ -4348,6 +4370,7 @@ export const propertyRuleEffects = {
             "frostExposed",
             "insanityExposed",
             "crimsonBlight",
+            "necroticBlight",
             "burn",
             "madness",
             "staggered",
@@ -4379,8 +4402,17 @@ export const propertyRuleEffects = {
               "p": "eventSourceIsOwner"
             },
             {
-              "p": "enemyKilledWithStatus",
-              "status": "crimsonBlight"
+              "p": "any",
+              "preds": [
+                {
+                  "p": "enemyKilledWithStatus",
+                  "status": "crimsonBlight"
+                },
+                {
+                  "p": "enemyKilledWithStatus",
+                  "status": "necroticBlight"
+                }
+              ]
             }
           ]
         },
@@ -4716,8 +4748,17 @@ export const propertyRuleEffects = {
               "p": "eventSourceIsOwner"
             },
             {
-              "p": "enemyKilledWithStatus",
-              "status": "crimsonBlight"
+              "p": "any",
+              "preds": [
+                {
+                  "p": "enemyKilledWithStatus",
+                  "status": "crimsonBlight"
+                },
+                {
+                  "p": "enemyKilledWithStatus",
+                  "status": "necroticBlight"
+                }
+              ]
             }
           ]
         },

@@ -47,7 +47,7 @@ for (const coop of [false, true]) for (const split of [false, true]) for (const 
     assert.deepEqual(hits, smash ? [4, 3, 3] : [1, 3, 3]);
     if (!split) {
       const summary = combatCardSummary(shown.resolvedDefinition, shown, f.registries);
-      assert.ok(summary.includes(`${hits.join(' + ')} damage (${hits.reduce((sum, amount) => sum + amount, 0)} total across 3 hits)`), summary);
+      assert.ok(summary.includes(`${hits.join(' + ')} Slashing damage (${hits.reduce((sum, amount) => sum + amount, 0)} total across 3 hits)`), summary);
     }
     for (const value of values) {
       assert.equal(value.totalDamage, value.hitDamages.reduce((sum, amount) => sum + amount, 0));

@@ -274,9 +274,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }
   }
   if (typeof window !== 'undefined') window.__combat = combat; // debug handle
-  function selectedCounterOrigins() {
+  let playbackEvents = [], playbackCounterOrigins = new Set();
+  function selectedCounterOrigins(events) {
     if(!selectedProfile())return new Set();
-    return selectedWeaponCounterOrigins(combat.eventLog,event=>{
+    return selectedWeaponCounterOrigins(events,event=>{
       if(event.sourceId!=='player' || !event.cardId)return false;
       const card=resolvePlayedCombatCard(combat,event,event.cardInstance || {cardId:event.cardId});
       const kind=selectedWeaponCounterFor(card,selectedProfile(),registries.cards.get(event.cardId));
@@ -287,16 +288,16 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     layer: $('.fx-layer'),
     reactionForReceipt: event => {
       const kind = selectedWeaponReactionFor(event, selectedProfile());
-      if (selectedCounterOrigins().has(event) && ['fully-defended','evade'].includes(kind)) return null;
+      if (playbackCounterOrigins.has(event) && ['fully-defended','evade'].includes(kind)) return null;
       const stage = kind && stageFor(fxCtx.anchorFor(event.targetId));
       // dispatch(endTurn) resolves the whole enemy batch before its receipts are
       // played. Final model state therefore cannot suppress an earlier evade or
       // guard break. Only the reaction emitted after the batch's lethal HP loss
-      // belongs to the defeated beat; eventLog and the dispatch buffer share the
-      // same event objects, so their relative order is unambiguous.
-      const eventIndex = combat.eventLog.indexOf(event);
+      // belongs to the defeated beat. Use the decorated playback batch: defense
+      // presentation may clone a receipt without changing its resolved outcome.
+      const eventIndex = playbackEvents.indexOf(event);
       const lethalLossIndex = combat.player.alive === false
-        ? combat.eventLog.findLastIndex(row => row.type === 'hpLost' && row.targetId === event.targetId)
+        ? playbackEvents.findLastIndex(row => row.type === 'hpLost' && row.targetId === event.targetId)
         : -1;
       const defeatedBeat = kind === 'guard-break' && lethalLossIndex >= 0 && eventIndex > lethalLossIndex;
       if (!kind || defeatedBeat || !stage?.reactionPoses?.includes(kind)) return null;
@@ -307,7 +308,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     },
     reactionTimingForReceipt: (event,speed) => {
       const kind=selectedWeaponReactionFor(event,selectedProfile());
-      if(!kind || selectedCounterOrigins().has(event))return speed.reactionMs;
+      if(!kind || playbackCounterOrigins.has(event))return speed.reactionMs;
       const stage=stageFor(fxCtx.anchorFor(event.targetId));
       return stage?.reactionPoses?.includes(kind) ? stage.reactionTiming?.(kind,speed)?.totalMs || speed.reactionMs : speed.reactionMs;
     },
@@ -2431,6 +2432,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   function afterDispatch(events) {
     events = decorateCombatEffects(events, registries, barrierVisuals);
+    playbackEvents = events;
+    playbackCounterOrigins = selectedCounterOrigins(events);
     // Capture definitions while disp still holds consumed Powers and equipment
     // profile instances. Reduce the SAME events on paced and skipped paths.
     appliedVisualEvents = new Set();

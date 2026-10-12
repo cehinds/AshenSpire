@@ -133,7 +133,7 @@ test('the solo screen reaction hook imports its timing helpers and calls the cur
   const fxCtx={anchorFor:id=>{assert.equal(id,'player');return anchor;}};
   const combat={player:{alive:true},eventLog:[]};
   const factory=runInNewContext('({'+source.slice(begin,end)+'}).reactionForReceipt',{
-    ...bindings,selectedWeaponReactionFor,selectedCounterOrigins:()=>selectedWeaponCounterOrigins(combat.eventLog),selectedProfile:()=>pilot,combat,fxCtx,stageFor:element=>{assert.equal(element,anchor);return current;},
+    ...bindings,selectedWeaponReactionFor,playbackCounterOrigins:new Set(),selectedProfile:()=>pilot,combat,playbackEvents:combat.eventLog,fxCtx,stageFor:element=>{assert.equal(element,anchor);return current;},
   });
   try {
     for(const speed of ['normal','slow','instant']) {
@@ -152,7 +152,7 @@ test('the solo screen reaction hook imports its timing helpers and calls the cur
     const earlyBreak={type:'combatGuardBroken',targetId:'player'};
     const lethalLoss={type:'hpLost',targetId:'player',amount:5};
     const lethalBreak={type:'combatGuardBroken',targetId:'player'};
-    combat.eventLog=[earlyEvade,earlyBreak,lethalLoss,lethalBreak];combat.player.alive=false;
+    combat.eventLog.push(earlyEvade,earlyBreak,lethalLoss,lethalBreak);combat.player.alive=false;
     assert.equal(typeof factory(earlyEvade),'function','final defeat does not hide an earlier evade');
     assert.equal(typeof factory(earlyBreak),'function','final defeat does not hide an earlier guard break');
     assert.equal(factory(lethalBreak),null,'the guard break after the lethal loss yields to defeat');
@@ -219,6 +219,21 @@ test('selected holds preserve existing returns and finite reactions restore the 
         assert.equal(stage.pose,'stance-'+origin,'the actual active '+origin+' survives '+action);
       }
     }
+    stage.settle();stage.setStance('counter');
+    const attackTiming=stage.actionTiming('attack');
+    stage.play('attack',attackTiming.totalMs);advance(75);
+    assert.equal(stage.pose,'pilot-attack-3','a lagging RAF is still in wind-up before timer contact');
+    assert.equal(stage.hold(60),true);
+    assert.equal(stage.pose,'pilot-attack-4','the contact timer paints the reviewed strike before hit-stop');
+    assert.equal(stage.presentation.elapsed,attackTiming.impactMs);
+    assert.equal(stage.presentation.duration,attackTiming.totalMs,'contact synchronization preserves the authored clip duration');
+    advance(30);assert.equal(stage.pose,'pilot-attack-4');
+    advance(31);assert.ok(stage.presentation.elapsed>attackTiming.impactMs,'the action clock resumes after the unchanged hold');
+    advance(100);assert.equal(stage.pose,'stance-counter');
+    stage.play('attack',attackTiming.totalMs);advance(140);
+    const laterElapsed=stage.presentation.elapsed,laterPose=stage.pose;
+    stage.hold(60);assert.equal(stage.pose,laterPose);assert.equal(stage.presentation.elapsed,laterElapsed,'a later phase never rewinds to contact');
+    stage.settle({reaction:true});
     stage.settle();stage.setStance('counter');
     const full=stage.reactionTiming('fully-defended');
     stage.reactPose('fully-defended',full.totalMs);assert.equal(stage.pose,'pilot-defend');

@@ -138,7 +138,7 @@ if (MUTATE && !(MUTATE in MUTATIONS) && !(MUTATE in STAR_MUTATIONS)) {
 const SIGNATURE = {
   reaver: ['bleed'], // poise breaks counted via the enemyStaggered event, not a status
   starseer: ['starstoneCharge'],
-  herald: ['crimsonBlight'],
+  herald: ['crimsonBlight', 'necroticBlight'],
 };
 
 // ---- reaverkit: the #55 falsifier policy ------------------------------------
