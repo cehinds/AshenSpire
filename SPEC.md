@@ -1106,6 +1106,15 @@ family limit applies. Skills normally remain reusable; deck-added Status
 cards remain distinct from entity statuses and built-in recovery controls.
 These Power destinations do not change version-1 fights or saved snapshots.
 
+**Card traits (reaction rules version 2).** [docs/combat-card-traits-contract.md](docs/combat-card-traits-contract.md)
+defines four rank-scaled card traits, applied at runtime to new expanded runs:
+Reaction (playable during the opponent's turn), Counterstrike (+50% effectiveness,
++75% with stance advantage, each bonus at least 1), Impact N (N Poise on hit, or
+double the card's own Poise damage) and Flux N (the same for Ward). The contract
+holds the formulas, the stance-advantage table, tiers and card picks. Runs and
+snapshots on reaction rules version 1 carry no traits. This specification
+precedes the implementation.
+
 ### 4.9 Enemy knowledge, Perception and hidden-intent clues
 
 [docs/enemy-knowledge-contract.md](docs/enemy-knowledge-contract.md) defines the
@@ -1149,6 +1158,16 @@ seat, naming the first failing check (`switchOff`, `attackerStaggered`,
 disconnected seat get none. A Smash that breaks physical Guard emits
 `combatGuardBroken` once per break. Both are informational receipts and change
 no rule.
+
+**Reaction stack (reaction rules version 2).** New expanded runs snapshot
+reaction rules version 2. A seat may then answer one incoming root with several
+Reaction cards: each choice is pushed without payment and the seat is offered
+again until it passes, runs out of options or reaches the depth cap; the stack
+then resolves last played first, and the paused action last. An entry that can
+no longer be played fizzles (`combatReactionFizzled`) and pays nothing. Entries
+carry a side so enemies can react later; none do yet. The rules are in
+[docs/combat-card-traits-contract.md](docs/combat-card-traits-contract.md);
+version 1 keeps one reaction per root.
 
 ### 4.11 Combat Rounds Preview
 
