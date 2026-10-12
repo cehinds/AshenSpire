@@ -21,6 +21,7 @@ const build = JSON.parse(readFileSync(resolve(root, 'buildordinal.json'), 'utf8'
 const metadata = { capturedAt: new Date().toISOString(), sourceCommit: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(),
   buildVersion: `${build.release}.${build.ordinal}`, sourceDigest: build.digest, entry, browser: 'Chromium via Playwright/CDP',
   browserPlugin: 'not available', posedPages: 'Rail navigation into a fresh Starseer creation preview; no completed playthrough claimed.' };
+metadata.fullNodeSuite = { status: 'incomplete', reason: 'Manager reported the discovered full Node suite reached its 15-minute cap; focused checks and browser validation are reported separately.' };
 const componentIds = [
   'creation-page-heading', 'creation-panel', 'creation-choice-tile',
   'creation-part-material', 'creation-part-trim', 'creation-part-body',
@@ -41,6 +42,7 @@ try {
     page.setDefaultNavigationTimeout(120000);
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
+    page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
     const url = `http://127.0.0.1:${serving.port}/${entry}?shot=components#folio-creation-feat-browser`;
     await page.goto(url, { waitUntil: 'domcontentloaded' });
     try {
@@ -57,14 +59,31 @@ try {
     assert.equal(await featBrowser.getAttribute('data-inspected-feat'), 'weaponDrill');
     assert.equal(await featBrowser.getAttribute('data-birth-feat-allowance'), '0');
     assert.equal(await featBrowser.locator('.cc-feat-detail-title').textContent(), 'Weapon Drill');
+    assert.equal(await featBrowser.locator('.cc-feat-detail').getAttribute('data-locked'), 'true');
+    for (const groupId of ['class', 'skill']) {
+      const filter = featBrowser.locator(`.cc-feat-group-filter[data-feat-group="${groupId}"]`);
+      if (width < 700) await filter.tap(); else await filter.click();
+      assert.equal(await featBrowser.getAttribute('data-feat-group'), groupId);
+      assert.ok(await featBrowser.locator('.cc-feat-choices button .cc-feat-level-requirement').count(), `${groupId} rows show existing progression requirements`);
+      const inspect = featBrowser.locator('.cc-feat-choices button').first();
+      assert.ok(await inspect.isEnabled(), 'locked feats remain inspectable');
+      await inspect.click();
+      assert.ok(await featBrowser.locator('.cc-feat-detail .cc-feat-level-requirement').count());
+    }
+    await featBrowser.locator('.cc-feat-group-filter[data-feat-group="character"]').click();
+    await featBrowser.locator('[data-feat="weaponDrill"].cc-choice-tile').click();
     const choice = page.locator('#folio-creation-choice-tile button');
     await choice.click();
     assert.equal(await page.locator('#folio-creation-choice-tile button').getAttribute('aria-pressed'), 'true');
     const navigation = page.locator('#folio-creation-step-navigation .cc-step-navigation');
     await navigation.scrollIntoViewIfNeeded();
     const attributes = navigation.locator('[data-creation-step="attributes"]');
-    if (!await attributes.isVisible()) await navigation.locator('.as-catnav-toggle').click();
-    await attributes.click();
+    if (!await attributes.isVisible()) {
+      const toggle = navigation.locator('.as-catnav-toggle');
+      if (width < 700) await toggle.tap(); else await toggle.click();
+      await attributes.waitFor({ state: 'visible' });
+    }
+    if (width < 700) await attributes.tap(); else await attributes.click();
     assert.equal(await attributes.getAttribute('aria-current'), 'step');
     for (const componentId of componentIds) {
       const folio = page.locator(`#folio-${componentId}`);
@@ -88,18 +107,28 @@ try {
     live.setDefaultNavigationTimeout(120000);
     const liveErrors = [];
     live.on('pageerror', error => liveErrors.push(error.message));
+    live.on('console', message => { if (message.type() === 'error') liveErrors.push(message.text()); });
     const liveUrl = `http://127.0.0.1:${serving.port}/${entry}?shot=customize&shotClass=starseer`;
     await live.goto(liveUrl, { waitUntil: 'domcontentloaded' });
     await live.locator('#cz-tab-class').waitFor({ state: 'attached', timeout: 60000 });
     for (const stage of ['class', 'attributes', 'keepsake', 'equipment', 'feats', 'spells', 'review']) {
       const control = live.locator(`#cz-tab-${stage}`);
-      if (!await control.isVisible()) await live.locator('#cz-cat-select').click();
-      await control.click();
+      if (!await control.isVisible()) {
+        if (width < 700) await live.locator('#cz-cat-select').tap(); else await live.locator('#cz-cat-select').click();
+      }
+      if (width < 700) await control.tap(); else await control.click();
       await live.locator(`.cz-railed[data-creation-stage="${stage}"]`).waitFor();
-      assert.ok(await live.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `${stage} fits the ${width}px viewport`);
+      assert.ok(await live.evaluate(() => {
+        const root = document.querySelector('.screen.customize');
+        return [root, ...root.querySelectorAll('.modal-foot-actions > button, #cz-cat-select, #cz-current-step')]
+          .filter(node => !node.hidden && node.getClientRects().length)
+          .every(node => { const rect = node.getBoundingClientRect(); return rect.left >= -1 && rect.right <= innerWidth + 1; });
+      }), `${stage} rendered controls fit the ${width}px viewport`);
       if (stage === 'feats') {
         await live.locator('#cz-feats-panel [data-feat="weaponDrill"].cc-choice-tile').click();
         assert.equal(await live.locator('#cz-feats-panel .cc-feat-detail-title').textContent(), 'Weapon Drill');
+        assert.equal(await live.locator('#cz-feats-panel .cc-feat-detail').getAttribute('data-locked'), 'true');
+        assert.ok(await live.locator('#cz-feats-panel .cc-feat-detail .cc-feat-level-requirement').count(), 'real creation page shows canonical level requirement');
       }
       await live.locator('.cz-stage img').evaluateAll(async images => {
         const shown = images.filter(image => image.getClientRects().length);

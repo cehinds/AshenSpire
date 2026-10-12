@@ -151,7 +151,9 @@ async function exercise(width, height, screenshotName) {
   const noOverflow = () => evaluate(`(() => {
     const root=document.querySelector('.screen.customize');
     const scrollers=[root,...root.querySelectorAll('*')].filter(e=>['auto','scroll'].includes(getComputedStyle(e).overflowX));
-    return document.documentElement.scrollWidth<=window.innerWidth+1 && root.scrollWidth<=root.clientWidth+1 && scrollers.every(e=>e.scrollWidth<=e.clientWidth+1);
+    const surfaces=[root,...root.querySelectorAll('.modal-foot-actions > button, #cz-cat-select, #cz-current-step')].filter(e=>!e.hidden&&e.getClientRects().length);
+    const inViewport=surfaces.every(e=>{const r=e.getBoundingClientRect();return r.left>=-1&&r.right<=window.innerWidth+1;});
+    return inViewport && root.scrollWidth<=root.clientWidth+1 && scrollers.every(e=>e.scrollWidth<=e.clientWidth+1);
   })()`);
   const at = `${width}x${height}`;
 
