@@ -375,6 +375,22 @@ test('briarCast with Block 2, Ward 3, Poise 5 takes no Ward and no Ward rating i
   assert.equal(r.preview, r.committed, 'preview equals committed');
 });
 
+// The mirror: a fully magic hit meets Ward and Barrier only. Block and Poise, and their rating
+// impact, never see it, even on a physical-looking carrier whose magic share is 1.
+test('a fully magic hit on a physical-looking carrier skips Block and Poise and fills the Ward meter', () => {
+  const magicOnly = { tags: ['camp:physical', 'damage:slashing'], magicShare: 1, skipRatingBonus: true,
+    combatProfile: { camp: 'physical', damageType: 'slashing', maneuver: 'attack', reach: 'contact', targeting: 'single' } };
+  const r = strike(magicOnly, 5, { ward: 10, block: 3, poise: 5, damageTypeShares: {} });
+  const d = hitOf(r);
+  assert.equal(d.magicAmount, 5);
+  assert.equal(d.physicalAmount, 0);
+  assert.equal(r.enemy.block, 3, 'Block is untouched');
+  assert.equal(r.enemy.persistentPoise.value, 5, 'Poise is untouched');
+  assert.equal(r.events.filter(e => e.type === 'ratingImpact' && e.meter === 'poise').length, 0, 'no Poise rating impact');
+  assert.equal(r.events.filter(e => e.type === 'ratingImpact' && e.meter === 'ward').length, 1, 'the Ward meter takes the impact');
+  assert.equal(r.preview, r.committed, 'preview equals committed');
+});
+
 test('entwiningRoots (alteration, blunt) is all physical', () => {
   const r = strike(enemyMoveCarrier('thornMatriarch', 'entwiningRoots'), 6, { ward: 10 });
   assert.equal(hitOf(r).magicAmount, 0);
