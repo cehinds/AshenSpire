@@ -8,7 +8,7 @@ import { createCombat } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { enqueueExpandedAction, previewExpandedActions } from '../src/engine/combatExpansionActions.js';
 import { executeAction, gainBlock } from '../src/engine/actions.js';
-import { resolveCombatRatings, magicShareOf, splitDamageTypesOf } from '../src/model/combatRatings.js';
+import { resolveCombatRatings, magicShareOf, splitDamageTypesOf, attackImpact } from '../src/model/combatRatings.js';
 import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
 import { combatProfileFor } from '../src/model/combatCardProfile.js';
 import { objectTagIds } from '../src/content/tags.js';
@@ -486,4 +486,12 @@ test('a +4 rating bonus on a technique adds to its physical part', () => {
   assert.equal(d.magicAmount, 3, 'the 10 keeps its 0.3 magic part');
   assert.equal(d.physicalAmount, 11, 'the +4 Attack joins the 7 physical');
   assert.equal(r.preview, r.committed, 'preview equals committed');
+});
+
+// An enemy's physical hit adds 1 to the player's Poise-break meter (owner decision, 2026-10-12): the
+// rating impact default for an enemy physical hit with no card or weapon value is 1, not 2.
+test('an enemy physical hit with no card or weapon impact adds 1 to the Poise meter', () => {
+  const ctx = { registries: createRegistries(contentBundle), ratingsRules: resolveCombatRatings({}, contentBundle) };
+  assert.equal(ctx.ratingsRules.impact.enemyPhysical, 1, 'the default rating impact of an enemy physical hit');
+  assert.equal(attackImpact(ctx, { kind: 'enemy' }, {}, false), 1, 'the impact the Poise meter takes');
 });
