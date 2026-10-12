@@ -305,3 +305,23 @@ test('clicking a relic button moves the green trim from one face and button to a
     assert.equal(columns[2].querySelector('button.reward-pick').classList.contains('is-chosen'), true);
   });
 });
+
+test('Continue with auto-collect ON never takes an owned relic from the boss choice', () => {
+  withKitDom((dom) => {
+    dom.document.documentElement ??= dom.document.body;
+    const app = dom.document.createElement('main');
+    dom.document.body.replaceChildren(app);
+    const run = createRunState({ seed: 0x10a5, classId: 'reaver', registries: REG });
+    run.relics = ['crownOfStitches'];  // the first option: the unseeded auto pick lands on it
+    const checkpoint = pendingRewardCheckpoint({ relicChoices: CHOICES }, { source: 'boss', after: 'advanceAct' });
+    mountRewards(app, {
+      registries: REG, run, onDone() {}, checkpoint, onPersist: () => true,
+      saves: { loadMeta: () => ({ settings: { levelUpRefillSeconds: 0, rewardCollect: 'auto' } }), saveMeta() {} },
+      rewards: { relicChoices: CHOICES },
+    });
+    app.querySelector('#reward-continue').click();
+    assert.equal(run.relics.filter((id) => id === 'crownOfStitches').length, 1, 'the owned relic is kept, not doubled');
+    assert.equal(run.relics.length, 2, 'exactly one unowned option was taken');
+    assert.ok(['wardenHorn', 'ashOfRemembrance'].includes(run.relics[1]), `took an unowned option: ${run.relics[1]}`);
+  });
+});
