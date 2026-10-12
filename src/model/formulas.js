@@ -79,6 +79,20 @@ export function constantFormulaValue(formula) {
 
 /** State-dependent stack quantities on authored faces, without evaluating an actor. */
 export function describeFormula(formula) {
+  // A sum of describable stack counts (Herald payoffs read Crimson + Necrotic
+  // Blight together, SPEC §4.4) reads as its terms joined by "plus".
+  if (isFormula(formula) && formula.f === 'add') {
+    if (!Array.isArray(formula.args) || !formula.args.length
+        || Object.keys(formula).some(key => !['f', 'args', 'min', 'max'].includes(key))
+        || ['min', 'max'].some(key => formula[key] !== undefined && !Number.isFinite(formula[key]))) return undefined;
+    const parts = formula.args.map(describeFormula);
+    if (parts.some(part => part === undefined)) return undefined;
+    let text = parts.join(' plus ');
+    if (formula.min !== undefined) text += ` (minimum ${formula.min})`;
+    if (formula.max !== undefined) text += ` (maximum ${formula.max})`;
+    if (['min', 'max'].some(key => formula[key] !== undefined && !Number.isInteger(formula[key]))) text += ' (rounded down)';
+    return text;
+  }
   if (!isFormula(formula) || formula.f !== 'stacks'
       || Object.keys(formula).some(key => !['f', 'status', 'of', 'per', 'min', 'max'].includes(key))
       || ['min', 'max'].some(key => formula[key] !== undefined && !Number.isFinite(formula[key]))) return undefined;

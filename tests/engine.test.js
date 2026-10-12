@@ -777,23 +777,82 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(S.getStacks(e1, 'frostExposed'), 1, 'frost\'s exposure landed through the collision');
   });
 
-  // ---- 8. Crimson Blight: tick / lasts the fight / re-apply adds ----------------------
-  // Owner, 2026-10-12 (#4): the Necrotic status is permanent for the fight —
-  // its row's decay is 'none', so no expiry after any number of turns.
-  test('8. Blight ticks at enemy turn start, never expires during the fight, re-apply adds stacks', () => {
+  // ---- 8. Crimson Blight: tick / expire after 3 / refresh ---------------------------
+  test('8. Blight ticks at enemy turn start, expires entirely after 3 turns, re-apply refreshes', () => {
     const c = makeCombat({ deck: Array(5).fill('defend') });
     const e1 = getEntity(c, 'e1');
-    S.applyStatus(c, e1, 'crimsonBlight', 1);
+    S.applyStatus(c, e1, 'crimsonBlight', 4);
     dispatch(c, { type: 'endTurn' }); // enemy turn 1
     let ticks = logOf(c, 'hpLost').filter((e) => e.targetId === 'e1');
     eq(ticks.length, 1, 'one tick');
-    eq(ticks[0].amount, 1, 'tick = stacks');
-    S.applyStatus(c, e1, 'crimsonBlight', 1); // 2 stacks
-    for (let i = 0; i < 5; i++) dispatch(c, { type: 'endTurn' }); // enemy turns 2-6
+    eq(ticks[0].amount, 4, 'tick = stacks');
+    S.applyStatus(c, e1, 'crimsonBlight', 2); // 6 stacks, duration refreshed to 3
+    dispatch(c, { type: 'endTurn' }); // tick 6 (duration 3→2)
+    dispatch(c, { type: 'endTurn' }); // tick 6 (2→1)
+    dispatch(c, { type: 'endTurn' }); // tick 6 (1→0 → expired)
     ticks = logOf(c, 'hpLost').filter((e) => e.targetId === 'e1');
-    eq(ticks.map((t) => t.amount).join(','), '1,2,2,2,2,2', 'tick sequence — no expiry after 3 turns');
-    eq(S.getStacks(e1, 'crimsonBlight'), 2, 'blight still present after 6 enemy turns');
-    assert(!logOf(c, 'statusExpired').some((e) => e.status === 'crimsonBlight'), 'no expired event');
+    eq(ticks.map((t) => t.amount).join(','), '4,6,6,6', 'tick sequence');
+    assert(!e1.statuses.crimsonBlight, 'blight expired entirely');
+    assert(logOf(c, 'statusExpired').some((e) => e.status === 'crimsonBlight' && e.reason === 'expired'), 'expired event');
+  });
+
+  // ---- 8b. Necrotic Blight: only Necrotic damage's Blight lasts the fight --------
+  // Owner, 2026-10-12 (#4, clarified): Blight applied by the Necrotic damage
+  // rider is its own row (necroticBlight, decay 'none'); every other Crimson
+  // Blight — an enemy's on the player included — keeps its 3-turn duration.
+  test('8b. enemy Crimson Blight on the player expires after 3 turns; a Necrotic hit applies Necrotic Blight that outlasts 6 turns; Holy cleanses it; solo == co-op', () => {
+    // Court Marionette's blowdart puts plain Crimson Blight on the player.
+    const marionette = REG.enemies.get('courtMarionette');
+    eq(marionette.moves.blowdart.effects[0].status, 'crimsonBlight', 'Court Marionette still applies the bounded row');
+    const p = makeCombat({ deck: Array(5).fill('defend'), enemies: ['tGiant'] });
+    S.applyStatus(p, p.player, 'crimsonBlight', 2);
+    // Applied mid-turn: its 3 turns run out at the end of the third player turn,
+    // ticking at the two turn starts in between.
+    dispatch(p, { type: 'endTurn' });
+    dispatch(p, { type: 'endTurn' });
+    eq(S.getStacks(p.player, 'crimsonBlight'), 2, 'still present inside its 3 turns');
+    dispatch(p, { type: 'endTurn' });
+    assert(!p.player.statuses.crimsonBlight, 'enemy-style Crimson Blight on the player expired after 3 player turns');
+    eq(logOf(p, 'hpLost').filter((e) => e.targetId === p.player.id).length, 2, 'ticked at the turn starts inside its duration, then gone');
+    assert(logOf(p, 'statusExpired').some((e) => e.status === 'crimsonBlight' && e.reason === 'expired'), 'expired event');
+
+    // A Necrotic (damage:decay) hit applies Necrotic Blight, never Crimson Blight.
+    const c = makeCombat({ deck: ['cullTheWeak', 'defend', 'defend', 'defend', 'defend'], enemies: ['tGiant'] });
+    const e1 = getEntity(c, 'e1');
+    playFromHand(c, 'cullTheWeak', 'e1');
+    eq(S.getStacks(e1, 'necroticBlight'), 1, 'Necrotic rider applied 1 Necrotic Blight');
+    eq(S.getStacks(e1, 'crimsonBlight'), 0, 'and no Crimson Blight');
+    const hitLosses = logOf(c, 'hpLost').filter((e) => e.targetId === 'e1').length;
+    for (let i = 0; i < 6; i++) dispatch(c, { type: 'endTurn' });
+    eq(S.getStacks(e1, 'necroticBlight'), 1, 'Necrotic Blight still present after 6 enemy turns');
+    eq(logOf(c, 'hpLost').filter((e) => e.targetId === 'e1').length - hitLosses, 6, 'it ticked every enemy turn');
+    assert(!logOf(c, 'statusExpired').some((e) => e.status === 'necroticBlight'), 'never expired');
+
+    // Holy cleanses Necrotic Blight off the attacker, so a cleanse still ends it.
+    const h = makeCombat({ deck: Array(5).fill('sacredHarvest'), enemies: ['tGiant'], stamina: 6 });
+    S.applyStatus(h, h.player, 'necroticBlight', 2);
+    playFromHand(h, 'sacredHarvest', 'e1');
+    eq(S.getStacks(h.player, 'necroticBlight'), 1, 'Holy hit cleansed one Necrotic Blight stack');
+    playFromHand(h, 'sacredHarvest', 'e1');
+    assert(!h.player.statuses.necroticBlight, 'a second Holy hit cleansed the last stack');
+
+    // Co-op runs the same rider: one seat, same card, same enemy state.
+    const deck = ['cullTheWeak', 'defend', 'defend', 'defend', 'defend'];
+    const coop = createCoopCombat({
+      registries: REG, rng: createRng(0xc0ffee),
+      players: [{ id: 'p1', classId: 'reaver', maxHp: 78, hp: 78, mana: 2, maxMana: 2, stamina: 3, maxStamina: 3, energyMax: 3, drawPerTurn: 5,
+        deck: deck.map((cardId, i) => ({ instanceId: `c${i + 1}`, cardId, upgraded: false })), relicIds: [] }],
+      enemyIds: ['tGiant'],
+    });
+    const solo = makeCombat({ deck, enemies: ['tGiant'] });
+    playFromHand(solo, 'cullTheWeak', 'e1');
+    const coopCard = coop.players.get('p1').piles.hand.find((card) => card.cardId === 'cullTheWeak');
+    playCoopCard(coop, 'p1', coopCard.instanceId, 'e1');
+    const ce1 = coop.enemies.find((e) => e.id === 'e1');
+    eq(S.getStacks(ce1, 'necroticBlight'), S.getStacks(getEntity(solo, 'e1'), 'necroticBlight'), 'co-op Necrotic Blight == solo');
+    eq(S.getStacks(ce1, 'necroticBlight'), 1, 'co-op applied it');
+    eq(S.getStacks(ce1, 'crimsonBlight'), 0, 'co-op applies no Crimson Blight either');
+    eq(ce1.hp, getEntity(solo, 'e1').hp, 'co-op enemy HP == solo');
   });
 
   // ---- 9. Poise: fill → Stagger (skip + 1.5× window + growth + cancel delayed) ----

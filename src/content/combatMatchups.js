@@ -49,7 +49,7 @@ export const combatMatchups = {
     fire: { status: 'burn', stacks: 1, requiresHpLoss: true },
     lightning: { status: 'weak', stacks: 1, requiresHpLoss: true },
     force: { wardDrain: 2 },
-    necrotic: { status: 'crimsonBlight', stacks: 1, requiresHpLoss: true },
+    necrotic: { status: 'necroticBlight', stacks: 1, requiresHpLoss: true },
     holy: { cleanse: 1, requiresHpLoss: true },
     poison: { status: 'venom', stacks: 1, requiresHpLoss: true },
     [NOTE]: {
@@ -60,14 +60,14 @@ export const combatMatchups = {
       'fire.stacks': 'Burn stacks applied by a fire hit once per action and target.',
       'lightning.stacks': 'Weak stacks applied by a lightning hit once per action and target.',
       'force.wardDrain': 'Ward removed by a force hit once per action and target.',
-      'necrotic.stacks': 'Crimson Blight stacks applied by a necrotic hit once per action and target.',
+      'necrotic.stacks': 'Necrotic Blight (lasts the fight) stacks applied by a necrotic hit once per action and target.',
       'holy.cleanse': 'Harmful status stacks cleansed from the holy attacker once per action and target.',
       'poison.stacks': 'Venom stacks applied by a poison hit once per action and target.',
       '{type}.requiresHpLoss': 'Requires actual HP loss before {type} damage applies its status or cleanse rider.',
     },
   },
   damageAliases: { frost: 'cold', arcane: 'force', sacred: 'holy', decay: 'necrotic', pierce: 'piercing', bludgeoning: 'blunt' },
-  cleanseStatuses: ['weak', 'frail', 'vulnerable', 'crimsonBlight', 'burn'],
+  cleanseStatuses: ['weak', 'frail', 'vulnerable', 'crimsonBlight', 'necroticBlight', 'burn'],
 };
 
 // New runs carry this table separately; the version-1 table above is immutable
@@ -107,9 +107,9 @@ export const combatExpansionMatchups = {
     fire: { status: 'burn', pressure: 4, recoveryProfile: 'elemental', requiresHpLoss: true },
     lightning: { status: 'paralysis', pressure: 3, recoveryProfile: 'elemental', requiresHpLoss: true },
     force: { wardDrain: 2 },
-    necrotic: { status: 'crimsonBlight', pressure: 4, recoveryProfile: 'curse', requiresHpLoss: true },
+    necrotic: { status: 'necroticBlight', pressure: 4, recoveryProfile: 'curse', requiresHpLoss: true },
     holy: { cleanse: 1, requiresHpLoss: true },
     poison: { status: 'venom', pressure: 4, recoveryProfile: 'bodily', requiresHpLoss: true },
   },
-  cleanseStatuses: ['weak', 'frail', 'vulnerable', 'crimsonBlight', 'burn'],
+  cleanseStatuses: ['weak', 'frail', 'vulnerable', 'crimsonBlight', 'necroticBlight', 'burn'],
 };

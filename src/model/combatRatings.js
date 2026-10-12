@@ -22,7 +22,8 @@ export const combatRatingDefaults = {
   statuses: {
     bleed: { poise: 1, ward: 0 }, frost: { poise: 0.5, ward: 0.5 },
     insanity: { poise: 0, ward: 1 }, madness: { poise: 0, ward: 1 },
-    crimsonBlight: { poise: 0.5, ward: 0.5 }, venom: { poise: 1, ward: 0 },
+    crimsonBlight: { poise: 0.5, ward: 0.5 }, necroticBlight: { poise: 0.5, ward: 0.5 },
+    venom: { poise: 1, ward: 0 },
     burn: { poise: 0.25, ward: 0.75 },
   },
 };

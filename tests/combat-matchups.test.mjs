@@ -13,7 +13,7 @@ function fixture() {
   const source = { id: 'enemy', kind: 'enemy', alive: true, hp: 30, block: 0, statuses: {} };
   const target = { id: 'player', kind: 'player', alive: true, hp: 30, block: 4, statuses: {} };
   const ctx = { turn: 1, emit: (type, payload) => events.push({ type, ...payload }), enqueue: action => queue.push(action),
-    registries: { statuses: new Map(['bleed', 'frost', 'burn', 'weak', 'crimsonBlight', 'venom'].map(id => [id, { id }])) } };
+    registries: { statuses: new Map(['bleed', 'frost', 'burn', 'weak', 'crimsonBlight', 'necroticBlight', 'venom'].map(id => [id, { id }])) } };
   return { ctx, source, target, events, queue };
 }
 function landed(f, incoming, base) {
@@ -155,7 +155,7 @@ test('combat-local rules override tactical balance without changing defaults', (
 
 test('typed status riders resolve canonical types and legacy aliases through content rules', () => {
   for (const [type, status] of [['slashing', 'bleed'], ['cold', 'frost'], ['frost', 'frost'],
-    ['fire', 'burn'], ['lightning', 'weak'], ['necrotic', 'crimsonBlight'], ['decay', 'crimsonBlight'], ['poison', 'venom']]) {
+    ['fire', 'burn'], ['lightning', 'weak'], ['necrotic', 'necroticBlight'], ['decay', 'necroticBlight'], ['poison', 'venom']]) {
     const f = fixture();
     const effects = matchupRiderEffects(f.ctx, f.source, f.target, card('attack', type), { amount: 4, hpLoss: 1 });
     assert.deepEqual(effects, [{ op: 'applyStatus', status, stacks: 1 }], type);
