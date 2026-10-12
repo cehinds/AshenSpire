@@ -4,13 +4,23 @@
 export const GENERATED_CHANGELOG = Object.freeze([
   {
     "id": "pr-1868",
-    "date": "2026-10-11",
-    "group": "2026-10-11",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
     "summary": "Deck editor: (i) centred under the art, grey Basic/Cantrip badge, vertical grip",
     "detail": "The inspect (i) sits centred on the bottom edge of the card art, the rank badge sits higher and reads grey at rank 0 (Basic, Cantrip), and the phone grip is vertical again.",
-    "build": "0.7.1.1357",
+    "build": "0.7.1.1359",
     "pullRequest": 1868,
     "url": "https://github.com/cehinds/AshenSpire/pull/1868"
+  },
+  {
+    "id": "pr-1872",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Co-op: the blow that ends a fight reaches the combat log",
+    "detail": "When your attack killed the last enemy in co-op, the combat log and the Full log missed that turn's card, damage and death entries before the reward screen closed them. They now appear.",
+    "build": "0.7.1.1357",
+    "pullRequest": 1872,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1872"
   },
   {
     "id": "pr-1849",
