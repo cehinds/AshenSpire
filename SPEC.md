@@ -1057,6 +1057,7 @@ When the Combat Rounds Preview is on, see §4.11.
 - **Co-op is not wired to the pool.** Co-op set aside on dev (#1881): a co-op enemy still plans one move a turn, and its moves do not pay the table. Co-op cards pay the derived costs of §4.3a.
 - **Rounds mode** (§4.11) uses the same pool and prices: the enemy SP of its queues is the enemy's stat pool, and each queued move costs its SP.
 - **Enemy schema.** An enemy may carry `attributes` (whole numbers by attribute id) and `equipmentSp` (a whole number); a move may carry `sp` (a whole number, 0 or more).
+- **Shipped tier-1 bosses (owner target 2026-10-12: greedy-bot wins of 10–25% for every class).** The Fell Warden, the Bell Keeper and the Thorn Matriarch carry Dexterity 4 and Constitution 4 (SP 5). Move SP: Fell Warden Cane Strike 1, Hammer Toss 2, Held Blade 1, Twin Daggers 1; Bell Keeper Bronze Toll 1, Clapper Swing 1, Muffled Prayer 2, Cracked Peal 1; Thorn Matriarch Root Crown 1, Thorn Needles 1, Entwining Roots 3. The band is not met for every class: the class spread at each boss (Herald highest, Starseer and Rogue lowest) is wider than 15 points, and boss SP moves every class together.
 
 Shipped values and where they live: the stance table, the 1.8 multiplier and every card-cost tunable are in `content/actionCosts.js`; the stamina row is in `content/derivedStats.js`. The 1.8 multiplier is a **provisional default, owner to tune**.
 

@@ -127,6 +127,9 @@ export const act1Enemies = [
   {
     id: 'fellWarden',
     equipmentPower: 0.3,
+    // SP pool 5 (SPEC §4.6a): the stamina row reads Dexterity 4 and Constitution 4 (+1 each) on its base 3. Boss SP is
+    // tuned by these stats and each move's own `sp` (owner, 2026-10-12; tier-1 bot win rates in docs/BALANCE.md).
+    attributes: { dexterity: 4, constitution: 4 },
     size: 'large',
     tint: 'var(--blood)',
     name: 'The Fell Warden',
@@ -136,16 +139,16 @@ export const act1Enemies = [
     art: '👁',
     firstMove: 'caneStrike',
     moves: {
-      caneStrike: { intent: 'attack', damage: 8, weight: 40, maxConsecutive: 2 },
-      hammerToss: { intent: 'attack', damage: 5, hits: 2, weight: 30, maxConsecutive: 2 },
+      caneStrike: { sp: 1, intent: 'attack', damage: 8, weight: 40, maxConsecutive: 2 },
+      hammerToss: { sp: 2, intent: 'attack', damage: 5, hits: 2, weight: 30, maxConsecutive: 2 },
       heldBlade: {
         // Signature delayed attack: telegraphs 16, holds (gaining 8 Block),
         // lands the following turn regardless of newly rolled intents.
         // Staggering him cancels it (engine-generic delayed-move rule).
-        intent: 'attack', damage: 14, weight: 30, maxConsecutive: 1,
+        sp: 1, intent: 'attack', damage: 14, weight: 30, maxConsecutive: 1,
         delay: { turns: 1, whileCharging: { block: 8 } },
       },
-      twinDaggers: { intent: 'attack', damage: 3, hits: 4, weight: 35, locked: true },
+      twinDaggers: { sp: 1, intent: 'attack', damage: 3, hits: 4, weight: 35, locked: true },
     },
     phases: [
       {
@@ -301,6 +304,10 @@ export const act1Enemies = [
   },
   {
     "id": "bellKeeper",
+    "attributes": {
+      "dexterity": 4,
+      "constitution": 4
+    },
     "name": "The Bell Keeper",
     "size": "large",
     "hp": [
@@ -316,6 +323,7 @@ export const act1Enemies = [
     "artFaces": "left",
     "moves": {
       "bronzeToll": {
+        "sp": 1,
         "intent": "attack",
         "damage": 19,
         "weight": 35,
@@ -328,18 +336,21 @@ export const act1Enemies = [
         }
       },
       "clapperSwing": {
+        "sp": 1,
         "intent": "attack",
         "damage": 9,
         "weight": 45,
         "maxConsecutive": 2
       },
       "muffledPrayer": {
+        "sp": 2,
         "intent": "block",
         "block": 9,
         "weight": 20,
         "maxConsecutive": 1
       },
       "crackedPeal": {
+        "sp": 1,
         "intent": "attack",
         "damage": 6,
         "weight": 25,
@@ -362,6 +373,10 @@ export const act1Enemies = [
   },
   {
     "id": "thornMatriarch",
+    "attributes": {
+      "dexterity": 4,
+      "constitution": 4
+    },
     "name": "The Thorn Matriarch",
     "size": "large",
     "hp": [
@@ -377,12 +392,14 @@ export const act1Enemies = [
     "artFaces": "left",
     "moves": {
       "rootCrown": {
+        "sp": 1,
         "intent": "block",
         "block": 8,
         "weight": 25,
         "maxConsecutive": 1
       },
       "thornNeedles": {
+        "sp": 1,
         "intent": "attack",
         "damage": 4,
         "weight": 45,
@@ -390,6 +407,7 @@ export const act1Enemies = [
         "maxConsecutive": 2
       },
       "entwiningRoots": {
+        "sp": 3,
         "intent": "attack",
         "damage": 15,
         "weight": 30,
