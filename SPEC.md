@@ -155,7 +155,7 @@ Design laws (contractual):
 2. **The engine contains no entity-specific code.** There is no `if (status === 'bleed')` anywhere. The engine implements a closed set of primitives — effect opcodes (§3.4), formula ops (§3.5), trigger events + predicates (§3.6), and a generic status model (§3.7) — and *all* game behavior is content data composing those primitives. Adding a card, relic, status, stance, enemy, or event = adding data.
 3. **Procedural content stays procedural.** Map generation, encounter rolls, reward rolls, and enemy move selection are seeded algorithms (§3.8) — but every knob they consume lives in content data, never as code constants.
 4. **All tuning is data.** `src/content/balance.js` holds every global constant that is not a stat row (reward odds, cinder ranges, prices, flask drop decay); every stat is a row of `src/content/derivedStats.js` (§3.5). A balance change is a one-file data diff.
-5. **Headless engine.** Nothing under `src/engine/` references `document`, `window`, `localStorage`, or timers. Under `src/model/`, only `offlineDownload.js` sets timers (its request timeouts). A combat runs to completion from `tests/index.html` with no UI imports.
+5. **Headless engine.** Nothing under `src/engine/` references `document`, `window`, `localStorage`, or timers. Under `src/model/`, only `offlineDownload.js` sets timers (its request timeouts). A combat runs to completion from `tests/index.html` with no DOM; the suite it loads (`tests/engine.test.js`) also imports some UI presentation models and helpers, but never mounts a screen.
 6. **Budgeted escape hatch.** `src/content/scripts.js` is a registry of named custom behaviors for what the DSL can't express. Target <5% of content; every entry carries a comment justifying why the DSL couldn't do it. A script pattern appearing twice gets promoted to a DSL primitive (engine PR).
 
 ### 3.2 File tree — the layer contract, not an inventory
@@ -244,7 +244,7 @@ effects: [
 
 Common fields on any opcode: `target: self | enemy | allEnemies | randomEnemy` (cards with an `enemy` target require UI targeting), `amount: number | Formula` (§3.5), `if: Predicate` (§3.6) to gate the opcode, `repeat: n` for multi-hit.
 
-`removeStatus { status, amount? }` removes the named status from its targets. With no `amount`, remove the whole status and its application history. With `amount: number | Formula`, evaluate against each target, clamp the result nonnegative, and remove that many stacks (or that much build-up from a status that carries `proc`). Preserve remaining magnitude/applications; remove the status when its magnitude reaches zero. An absent status is a no-op. For example, `{ op: 'removeStatus', target: 'self', status: 'weak', amount: 1 }` cleanses one Weak stack rather than every Weak application. Removal receipts report the quantity actually removed.
+`removeStatus { status, amount? }` removes the named status from its targets. With no `amount`, remove the whole status and its application history. With `amount: number | Formula`, evaluate against each target, clamp the result nonnegative, and remove that many stacks (or that much build-up from a status that carries `proc` or the legacy `meter`). Preserve remaining magnitude/applications; remove the status when its magnitude reaches zero. An absent status is a no-op. For example, `{ op: 'removeStatus', target: 'self', status: 'weak', amount: 1 }` cleanses one Weak stack rather than every Weak application. Removal receipts report the quantity actually removed.
 
 **Card rating values are cost-derived.** Before card definitions enter the
 registries, primary values are recalculated as:
@@ -1756,7 +1756,7 @@ resolver consume that same descriptor; UI code must not retype a default, range,
 Adding an eligible descriptor therefore adds its control without another hand-authored settings
 row.
 
-The editor groups the complete inventory into the shipped tabs, in this order (`ADVANCED_GROUPS`, `src/ui/screens/settings.js`): Opening, Progression, Combat, Stats, Recovery, Rewards, Shops, Deck, Equipment, World, Interface, Text, Battlefield, Wireframes, Export, Sync, Changelog and About. A retired tab id opens the first tab. A release build shows only Deck, Interface, Text, Changelog and About (`RELEASE_ADVANCED_GROUP_IDS`); the other tabs appear in dev and test builds. Stored values are untouched either way.
+The editor groups the complete inventory into the shipped tabs, in this order (`ADVANCED_GROUPS`, `src/ui/screens/settings.js`): Opening, Progression, Combat, Stats, Recovery, Rewards, Shops, Deck, Equipment, World, Interface, Text, Battlefield, Wireframes, Export, Sync, Changelog and About. A retired tab id opens the first tab, except the merged `Ratings & Resistance` and `Hand & Draw` tabs, and a `Progression`, `Combat` or retired `Rules` tab left on a topic that moved, which open Stats (`MERGED_ADVANCED_GROUPS`, `MOVED_ADVANCED_TOPICS`). A release build shows only Deck, Interface, Text, Changelog and About (`RELEASE_ADVANCED_GROUP_IDS`); the other tabs appear in dev and test builds. Stored values are untouched either way.
 
 What the tabs hold, by area:
 
