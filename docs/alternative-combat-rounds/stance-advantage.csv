@@ -7,3 +7,5 @@ block,attack,1,TBD status: block holds against a plain attack
 evade,attack,1,TBD status: evade dodges a plain attack
 evade,smash,1,TBD status: evade dodges a heavy attack
 evade,sweep,1,TBD status: evade dodges a wide attack
+attack,smash,1,owner 2026-10-12: a quick attack beats a slow heavy wind-up
+attack,sweep,1,owner 2026-10-12: a direct attack beats a wide swing

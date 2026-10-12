@@ -1199,6 +1199,7 @@ When the Combat Rounds Preview is on, see §4.11.
 **Provisional (pending owner)**
 
 - Block (player and enemy) lasts one round in the preview: both reset at the start of the round commit (provisional, pending owner confirmation).
+- attack beats smash and sweep (+1), so a plain attack can reach a green outline (owner, 2026-10-12).
 - A queued Counter is never aimed at a foe in the preview (its target plan is the player's own, in both fight versions), so it answers the next attack its live coverage reaches, from any enemy, and is then spent. This replaces "from its target" above until the owner decides (provisional, pending owner confirmation). A Counter that does not cover an attack neither answers it nor earns its momentum or stagger. A Counter whose attack misses is spent. A Counter not spent in the round is cleared at round end, as the timeline clears it.
 
 ## 5. Content specification

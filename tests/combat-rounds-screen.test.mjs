@@ -12,7 +12,8 @@ import { createRng } from '../src/engine/rng.js';
 import { cardKind } from '../src/model/tree.js';
 import { COMBAT_ROUNDS_KEY } from '../src/model/combatRounds.js';
 import * as Rounds from '../src/engine/combatRoundsAdapter.js';
-import { targetOutline } from '../src/engine/combatRounds/resolver.js';
+import { targetOutline, parseStanceAdvantage } from '../src/engine/combatRounds/resolver.js';
+import * as roundsContent from '../src/content/combatRounds.js';
 import { decorateCombatRoundsScreen } from '../src/ui/components/combatRoundsScreen.js';
 import * as Screen from '../src/ui/models/CombatRoundsScreenModel.js';
 
@@ -143,6 +144,18 @@ test('the target outline the screen draws is the forecast outline, and absent wi
   const foe = { stance: 'attack' };
   assert.equal(targetOutline({ card, foe, cardSpeed: 5, foeSpeed: 3, stage: 0, stanceTable: new Map() }), null,
     'a hidden read reveals no dimension, so no outline');
+});
+
+test('owner 2026-10-12: a targeted attack, faster than a revealed smash or sweep, outlines green', () => {
+  const stanceTable = parseStanceAdvantage(roundsContent.STANCE_ADVANTAGE_CSV);
+  const card = { target: 'enemy1', stance: 'attack' };
+  for (const foeStance of ['smash', 'sweep']) {
+    const foe = { stance: foeStance };
+    assert.equal(targetOutline({ card, foe, cardSpeed: 5, foeSpeed: 3, stage: 3, stanceTable }), 'green',
+      `faster attack vs revealed ${foeStance} is green`);
+  }
+  assert.equal(targetOutline({ card, foe: { stance: 'smash' }, cardSpeed: 3, foeSpeed: 5, stage: 3, stanceTable }), 'yellow',
+    'a slower attack vs smash has only the stance in its favour, so yellow not green');
 });
 
 test('the preview stylesheet scopes every rule to the preview or to the classes the screen adds', () => {
