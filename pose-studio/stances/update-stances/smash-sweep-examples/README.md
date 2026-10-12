@@ -4,6 +4,12 @@ Twenty revised sequences are ready for review: **ten low iai-inspired Sweep and 
 
 Each example has **five total slots**: approved starting stance → three action images → the exact same stance. The [interactive viewer](index.html) provides play/pause, speed, numbered stepping and a copyable example ID. Our labeled GIFs use uniform **350 ms review exposures**, hard cuts and no synthesized in-between poses. Artist source GIFs retain their separately recorded review timing.
 
+## Owner-selected sequence comparison
+
+![SM03 Smash and corrected SW09 Sweep, five numbered slots](renders/selected-sm03-sw09.gif)
+
+This comparison draws the registered Full-tier sources at their exact logical dimensions and offsets in a common 932×625 canvas per side. The figures are not resized or fitted to alpha bounds. Five slots use 350 ms review exposures; runtime pacing remains separate. [Registered placement and hash record](renders/selected-sm03-sw09.json).
+
 ## Revised iai Sweep · SW01–SW10
 
 The five numbered slots are **Start stance → Wind-up → Turning slash → Low finish → Return stance**. The new low draw stance shows the visible near/right inner elbow and an underhand grip: thumb up, knuckles down, palm beneath the hilt. Every example twists into a surrounding whirlwind slash and repeats its exact approved seed at both ends. SW09 now uses the separately approved straight-arm seed; the other nine retain their review seed. The runtime candidate now uses the selected SW09 corrected seed as its held Sweep, with its three action images and exact origin restoration; the other nine examples remain references.

@@ -41,3 +41,39 @@ for family,tiles in contacts.items():
     contact.save(out/(family+'-contact.png'))
 (out/'manifest.json').write_text(json.dumps({'reviewOnly':True,'examples':records,'totalSlots':5*len(records),'timing':'Uniform 350 ms review exposures, not gameplay timing'},indent=2)+'\n')
 print(f'Rendered {len(records)} labeled five-slot GIFs; decoded counts and durations pass.')
+
+# Selected production comparison: use the stage's shared logical canvas and
+# exact full-tier dimensions/offsets, never alpha-bound fitting or repainting.
+import re,hashlib
+repo=root.parents[3]
+registered=json.loads(re.search(r'export const alternativeSelectedStances = (.+);',(repo/'src/content/alternativeSelectedStances.js').read_text()).group(1))
+profile=registered['weaponProfiles']['reaver-greatsword-pilot']
+if profile.get('selectedSmash') and profile.get('selectedSweep'):
+    bounds=[f.get('stageBounds',f['bounds']) for f in profile['frames'].values()]
+    top=max(0,-min(b[1] for b in bounds));left=max(0,16-min(b[0] for b in bounds));right=max(0,max(b[2] for b in bounds)-(768-16))
+    canvas=(768+left+right,544+top);floor=464+16+top
+    groups=[('SM03','Selected Smash',['smash','smash-takeoff','smash-airborne','smash-impact','smash'],catalog['families']['smash']['slotLabels']),
+            ('SW09','Selected straight-arm Sweep',['sweep','sweep-windup','sweep-contact','sweep-finish','sweep'],catalog['families']['sweep']['slotLabels'])]
+    comparison=[];sources=[]
+    for slot in range(5):
+        display=Image.new('RGB',(canvas[0]*2,canvas[1]+88),(26,33,37))
+        for col,(id,title,keys,labels) in enumerate(groups):
+            panel=Image.new('RGB',(canvas[0],canvas[1]+88),(26,33,37));draw=ImageDraw.Draw(panel)
+            for y in range(0,canvas[1],32):
+                for x in range(0,canvas[0],32):draw.rectangle((x,y,x+31,y+31),fill=(36,44,48) if (x//32+y//32)%2 else (32,40,44))
+            f=profile['frames'][keys[slot]];source=Image.open(repo/f['path']).convert('RGBA');assert source.size==tuple(f['size'])
+            placement=(left+f['drawOffset'][0],16+top+f['drawOffset'][1]);panel.paste(source,placement,source)
+            draw.text((18,canvas[1]+8),f'{id} · {title}',font=large,fill=(220,231,209))
+            draw.text((18,canvas[1]+47),f'{slot+1}/5 · {labels[slot]} · 350 ms review timing',font=font,fill=(189,202,181))
+            display.paste(panel,(col*canvas[0],0))
+            sources.append({'id':id,'slot':slot+1,'key':keys[slot],'path':f['path'],'sha256':hashlib.sha256((repo/f['path']).read_bytes()).hexdigest(),'logicalSize':f['size'],'placement':placement})
+        comparison.append(display)
+    palette=Image.new('RGB',(comparison[0].width,comparison[0].height*5))
+    for slot,frame in enumerate(comparison):palette.paste(frame,(0,frame.height*slot))
+    palette=palette.quantize(colors=256)
+    encoded=[frame.quantize(palette=palette,dither=Image.Dither.FLOYDSTEINBERG) for frame in comparison]
+    target=out/'selected-sm03-sw09.gif';encoded[0].save(target,save_all=True,append_images=encoded[1:],duration=[350]*5,loop=0,optimize=False,disposal=2)
+    decoded=Image.open(target);assert decoded.n_frames==5
+    for slot in range(5):decoded.seek(slot);assert decoded.info['duration']==350
+    (out/'selected-sm03-sw09.json').write_text(json.dumps({'reviewOnly':True,'registeredCanvas':canvas,'padding':{'left':left,'right':right,'top':top},'floorY':floor,'slots':5,'durationsMs':[350]*5,'drawing':'Exact registered source dimensions and offsets; no resizing or alpha-bound fitting','sources':sources},indent=2)+'\n')
+    print(f'Selected two-up comparison:5 decoded slots, registered canvas{canvas}, unscaled source images.')
