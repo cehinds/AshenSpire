@@ -2,10 +2,19 @@
   "generated_at_utc": "2026-10-12T16:21:00Z",
   "tool": "tools.image_gen__imagegen",
   "exact_prompt_file": "sheet-a-revision.prompt.txt",
-  "requested_dimensions": [1024, 1536],
-  "actual_dimensions": [1024, 1536],
+  "requested_dimensions": [
+    1024,
+    1536
+  ],
+  "actual_dimensions": [
+    1024,
+    1536
+  ],
   "mode": "RGBA",
-  "alpha_extrema": [0, 254],
+  "alpha_extrema": [
+    0,
+    254
+  ],
   "transparent_background": true,
   "input_images": [
     {
@@ -40,16 +49,17 @@
     },
     {
       "path": "/workspace/generated_images/exec-b397e393-6061-44f1-9067-56f6a87a1e7f.png",
-      "preserved_file": "sheet-a-revision-variation2.original.png",
-      "sha256": "ac43c85c1a98463114b4b94c8490316663adcd46db553a4796ea70fbb6a0b1f8"
+      "preserved_file": "unattributed-output-a-revision-b02.original.png",
+      "sha256": "ac43c85c1a98463114b4b94c8490316663adcd46db553a4796ea70fbb6a0b1f8",
+      "asset_attribution": "unverified; root confirmed byte-identical to Counter A revision 2, not a Sweep output"
     }
   ],
   "raw_output_preserved": true,
   "review_status": "pending art director review",
   "production_status": "concept only; not selected or runtime art",
   "observed_deviations": [
-    "All revised outputs still exceed the centered 368x368 safe boxes; the first two include silhouettes crossing cell boundaries.",
-    "The scale revision improved separation on variation2, whose five threshold-alpha bboxes remain within their respective 512px cells, but its silhouettes still exceed the safe-box target.",
-    "SW11/SW13 visual similarity and two-hand grip readability remain for director review; no sheet is marked approved."
+    "The first revised output and first variation still exceed safe-box targets; pending identity verification.",
+    "The second variation was root-verified byte-identical to Counter A revision 2. It is not a Sweep output and is retained only as a raw tool receipt.",
+    "No revised sheet has been approved as Sweep art."
   ]
 }

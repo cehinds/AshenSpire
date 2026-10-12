@@ -1,9 +1,9 @@
-# Greatsword sweep options
+# Greatsword sweep generation receipts
 
-These are raw image-generation concept sheets for SW11–SW20. They are not selected production assets. Keep all original PNG bytes intact; review images against their prompts and do not normalize or paint over them.
+This directory preserves raw image-generation outputs and prompt/provenance records. Do not treat every receipt as Sweep artwork or as production art. Concurrent imagegen requests contaminated output attribution; root verified some outputs are identical to other stance families.
 
-Sheet A contains SW11–SW15 in row-major order, with the requested bottom-right cell left empty. The first generated sheet has several one-hand or hidden-hand reads. The director called SW12 and SW15 distinct, while requesting clearer second grips for SW11, SW13, and SW14. The separate revision outputs address those grips and scale but still exceed the 368×368 safe-box target; the revision variation2 keeps all silhouettes inside their own 512px cells. None is marked approved.
+`sheet-a.png` is the original SW11–SW15 candidate reviewed by the director. It still needs clearer two-hand grip reads on SW11, SW13, and SW14. The separate A revision outputs are pending identity and art review. `unattributed-output-a-revision-b02.original.png` is verified to be identical to Counter A revision 2 and is not a Sweep output.
 
-Sheet B contains SW16–SW20 in row-major order. The image tool returned an additional untouched variation, preserved separately. Both outputs exceed the centered safe boxes and some silhouettes cross cell boundaries. The visible concepts read more like shorter swords than the required long greatsword, and two-hand grips need director review.
+The requested SW16–SW20 prompt and generation receipts remain documented in `sheet-b.prompt.txt` and `sheet-b.provenance.json`. `unattributed-output-b01.original.png` is verified to be identical to Evade A revision 1 and is not a Sweep output. The second B output is preserved as an unverified raw receipt. Neither is approved as Sweep art.
 
-The PNGs contain alpha. Direct image-view rendering can expose hidden RGB haze; neutral compositing over white confirms the character pixels are present and the transparent areas are clear. See the prompt and provenance files for exact hashes and observations.
+All PNG source bytes are preserved unchanged. Direct image-view rendering can expose hidden RGB haze; neutral compositing over white confirms transparent pixels and rendered figure pixels, but does not establish which family an output belongs to. See the provenance files for hashes and exact prompt/reference records.
