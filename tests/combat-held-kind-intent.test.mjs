@@ -148,8 +148,8 @@ test('an armed untyped card shows the prepare glyph over a held defend', () => {
 
 test('selection previews the card stance on the figure sprite; deselect returns to the held stance', () => {
   const source = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
-  assert.match(source, /stageFor\(player\?\.querySelector\('\.sprite'\)\)\?\.setStance\?\.\(def \? stanceForCard\(def\) : heldStances\.get\(\)\);/);
-  assert.match(source, /stageFor\(box\)\?\.setStance\?\.\(activeDef \? stanceForCard\(activeDef\) : heldStances\.get\(\)\);/);
+  assert.match(source, /stageFor\(player\?\.querySelector\('\.sprite'\)\)\?\.setStance\?\.\(playerStance\(def\)\);/);
+  assert.match(source, /stageFor\(box\)\?\.setStance\?\.\(playerStance\(activeDef\)\);/);
 });
 
 // Owner (2026-10-12): the glyph and the figure's stance agree, even for a card

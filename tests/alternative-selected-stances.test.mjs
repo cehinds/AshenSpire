@@ -26,5 +26,35 @@ test('all twelve runtime stances preserve the owner-selected sources and package
   assert.deepEqual(frame.anchor,[256,464]);assert.equal(frame.bounds[3],464);
   count++;
  }
- assert.equal(count,12);assert.equal(Object.keys(catalog.hashes).length,24);
+ assert.equal(count,12);assert.equal(Object.keys(catalog.hashes).length,34);
+});
+
+test('the selected Reaver greatsword pilot keeps the five chosen sources and both registered tiers',()=>{
+ const profile=catalog.weaponProfiles['reaver-greatsword-pilot'];
+ assert.ok(profile);
+ assert.equal(profile.classId,'reaver');assert.equal(profile.weaponFamily,'greatsword');
+ const manifest=JSON.parse(readFileSync(new URL('../'+profile.selections,import.meta.url)));
+ assert.deepEqual(Object.keys(profile.frames).sort(),['counter','evade','guard-break','smash','sweep']);
+ const packed=withAlternativeArt({assets:{}});
+ for(const choice of manifest.choices){
+  const frame=profile.frames[choice.role];
+  assert.equal(frame.sourceOption,choice.sourceOption);
+  assert.deepEqual(frame.sourceBounds,choice.sourceBounds);
+  assert.deepEqual(frame.cropBounds,choice.cropBounds);
+  assert.equal(frame.source.path,choice.sourcePath);
+  assert.equal(hash(readFileSync(new URL('../'+choice.sourcePath,import.meta.url))),
+   manifest.sourceSheets.find(sheet=>sheet.path===choice.sourcePath).sha256);
+  for(const [path,expected,size]of [[frame.path,frame.sha256,[512,512]],[frame.lite,frame.liteSha256,[256,256]]]){
+   const bytes=readFileSync(new URL('../'+path,import.meta.url));
+   assert.equal(hash(bytes),expected);
+   assert.deepEqual([webpDimensions(bytes).width,webpDimensions(bytes).height],size);
+   assert.equal(packed.assets[path].common.sha256,expected);
+  }
+  assert.deepEqual(frame.anchor,[256,464]);
+  const supportY=choice.supportAnchor?.sourceY??choice.sourceBounds[3];
+  assert.deepEqual(frame.supportAnchor,choice.supportAnchor);
+  const expectedBottom=Math.round(464+(choice.sourceBounds[3]-supportY)*frame.scale);
+  assert.ok(Math.abs(frame.bounds[3]-expectedBottom)<=1);
+  assert.ok(frame.bounds[3]<=512);
+ }
 });
