@@ -9,6 +9,7 @@
 // the ones createRound() in timeline.js applies; this file only splits the same steps across calls.
 // Headless: no DOM, no storage, no timers, no node: imports.
 import {
+  atomically,
   beginRound,
   chooseReaction,
   enterEntry,
@@ -40,19 +41,6 @@ function callContext(round, hooks) {
     options: { rng: hooks.rng, evadeTable: hooks.evadeTable },
     run: { queuedIds: round.queuedIds, pending: round.pending, stanceTable: hooks.stanceAdvantage ?? null },
   };
-}
-
-// Runs fn, and if it throws puts the round back exactly as it was. A round is plain JSON, so a
-// snapshot taken first is a complete copy of it.
-function atomically(round, fn) {
-  const saved = JSON.parse(JSON.stringify(round));
-  try {
-    return fn();
-  } catch (err) {
-    for (const key of Object.keys(round)) delete round[key];
-    Object.assign(round, saved);
-    throw err;
-  }
 }
 
 // The start events (momentum decay) come out once, with the first call that returns events.

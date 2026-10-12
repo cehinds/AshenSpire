@@ -1480,3 +1480,65 @@ test('plannedQueueSpeeds: a single card is its plannedSpeed, and an empty or mis
   assert.deepEqual(timeline.plannedQueueSpeeds({ combatant: player, momentum: {} }), []);
 });
 
+
+// Atomic stepping (Codex finding on PR #1867). A throwing or ineligible onReaction must leave the
+// round as it was, and the retry must resolve the same attack with the same events. The round's
+// cursor is not exposed, so the retry producing the clean run's events is the check on it.
+const reactionFight = () => {
+  const st = duo({}, { hand: [guardCard()] });
+  st.momentum = { goblin: 2 }; // a start decay event, so the pending start events are checked too
+  return st;
+};
+const reactionOpts = (onReaction) => ({ queues: { goblin: [stab(1, 4)] }, rng: HIT_RNG, onReaction });
+
+function drainFrom(round) {
+  const events = [];
+  let r;
+  do {
+    r = round.next();
+    events.push(...r.events);
+  } while (!r.done);
+  return { events, state: r.state };
+}
+
+for (const [label, badPick] of [['throws', 'throw'], ['returns an ineligible card id', { id: 'not-in-hand' }]]) {
+  test(`createRound next() is atomic when onReaction ${label}: the round is unchanged and the retry matches a clean run`, () => {
+    const clean = createRound(reactionFight(), reactionOpts(() => null)).resolveAll();
+    let calls = 0;
+    const round = createRound(reactionFight(), reactionOpts(() => {
+      calls += 1;
+      if (calls === 1) {
+        if (badPick === 'throw') throw new Error('reaction prompt closed');
+        return badPick;
+      }
+      return null;
+    }));
+    const before = JSON.stringify(round.state);
+    assert.throws(() => round.next(), badPick === 'throw' ? /reaction prompt closed/ : TypeError);
+    assert.equal(JSON.stringify(round.state), before, 'a failed next() leaves round.state unchanged');
+    const retried = drainFrom(round);
+    assert.deepEqual(retried.events, clean.events, 'the retry resolves the same attack and keeps the start events');
+    assert.deepEqual(retried.state, clean.state);
+    assert.equal(calls, 2, 'one attack asks onReaction twice in all: the failed call, then the retry');
+  });
+}
+
+test('createRound resolveAll() is atomic: a throw midway leaves the round unchanged and a retry matches a clean run', () => {
+  const twoAttacks = () => ({ queues: { goblin: [stab(1, 4), atk('stab2', 'player', 2, { damage: 2 })] }, rng: HIT_RNG });
+  const clean = createRound(reactionFight(), { ...twoAttacks(), onReaction: () => null }).resolveAll();
+  let calls = 0;
+  const round = createRound(reactionFight(), {
+    ...twoAttacks(),
+    onReaction: () => {
+      calls += 1;
+      if (calls === 2) throw new Error('reaction prompt closed');
+      return null;
+    },
+  });
+  const before = JSON.stringify(round.state);
+  assert.throws(() => round.resolveAll(), /reaction prompt closed/);
+  assert.equal(JSON.stringify(round.state), before, 'a failed resolveAll() leaves round.state unchanged');
+  const retried = round.resolveAll();
+  assert.deepEqual(retried.events, clean.events);
+  assert.deepEqual(retried.state, clean.state);
+});

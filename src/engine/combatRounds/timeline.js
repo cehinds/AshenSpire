@@ -897,6 +897,20 @@ export function settleRound(cur, pending, events) {
   for (const id of Object.keys(cur.active)) cur.active[id] = { guard: 0, guardCards: [], evade: [], counters: [] };
 }
 
+// Runs fn, and if it throws puts `target` back exactly as it was. `target` is plain data or holds
+// plain data and Maps (a fight state from makeFight()); structuredClone keeps both. Shared by
+// createRound() here and by the JSON round in round.js, so a throw never leaves a half-stepped round.
+export function atomically(target, fn) {
+  const saved = structuredClone(target);
+  try {
+    return fn();
+  } catch (err) {
+    for (const key of Object.keys(target)) delete target[key];
+    Object.assign(target, saved);
+    throw err;
+  }
+}
+
 // Starts one round and returns a step-able resolver (owner, 2026-10-11).
 //
 // state:   from makeFight(); not changed. The round works on a copy.
@@ -909,42 +923,53 @@ export function settleRound(cur, pending, events) {
 //   resolveAll()  calls next() to the end: { events, state, timeline }.
 //   state         a copy of the state now.
 // Round start: enemy momentum decays (decay events come with the first next()).
+// A throw (onReaction throwing, or returning a card that is not eligible) leaves the round exactly
+// as it was before the call: the cursor, the pending start events and the state. The retry then
+// resolves the same entry. resolveAll() is atomic as a whole the same way.
 export function createRound(state, options = {}) {
-  const { cur, timeline, startEvents, run } = beginRound(state, options);
-  const entries = timeline.entries;
-  let idx = 0;
-  let settled = false;
-  let pending = startEvents;
-  const snapshot = () => structuredClone(cur);
-
-  const next = () => {
-    const events = pending;
-    pending = [];
-    if (settled) return { entry: null, events, state: snapshot(), done: true };
-    let entry = null;
-    if (idx < entries.length) {
-      entry = entries[idx];
-      idx += 1;
-      applyEntry(cur, entry, events, options, run);
-    }
-    if (idx >= entries.length) {
-      settled = true;
-      settleRound(cur, run.pending, events);
-    }
-    return { entry: entry ? structuredClone(entry) : null, events, state: snapshot(), done: settled };
+  const started = beginRound(state, options);
+  const entries = started.timeline.entries;
+  // All the mutable round state lives in one frame, so atomically() can put it all back.
+  const frame = {
+    cur: started.cur,
+    run: started.run,
+    idx: 0,
+    settled: false,
+    pendingEvents: started.startEvents,
   };
+  const snapshot = () => structuredClone(frame.cur);
+
+  const next = () => atomically(frame, () => {
+    const events = frame.pendingEvents;
+    frame.pendingEvents = [];
+    if (frame.settled) return { entry: null, events, state: snapshot(), done: true };
+    let entry = null;
+    if (frame.idx < entries.length) {
+      entry = entries[frame.idx];
+      applyEntry(frame.cur, entry, events, options, frame.run);
+      // The cursor moves only once this entry has resolved, so a throw leaves it on this entry.
+      frame.idx += 1;
+    }
+    if (frame.idx >= entries.length) {
+      frame.settled = true;
+      settleRound(frame.cur, frame.run.pending, events);
+    }
+    return { entry: entry ? structuredClone(entry) : null, events, state: snapshot(), done: frame.settled };
+  });
 
   return {
-    timeline,
+    timeline: started.timeline,
     next,
     resolveAll() {
-      const events = [];
-      let r;
-      do {
-        r = next();
-        events.push(...r.events);
-      } while (!r.done);
-      return { events, state: r.state, timeline };
+      return atomically(frame, () => {
+        const events = [];
+        let r;
+        do {
+          r = next();
+          events.push(...r.events);
+        } while (!r.done);
+        return { events, state: r.state, timeline: started.timeline };
+      });
     },
     get state() {
       return snapshot();
