@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { createRunState, validateRunShape, initializeRunDerivedStats } from '../src/model/state.js';
+import { createRunState, deserializeRun, validateRunShape, initializeRunDerivedStats } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch } from '../src/engine/combat.js';
@@ -124,6 +124,32 @@ test('new runs freeze their combat tuning and legacy factory births remain expli
   assert.equal(legacy.advancedConfigSnapshot.breakMeterVersion, 1);
   const corrupt = structuredClone(run); delete corrupt.combatExpansionRules.statuses.sleep;
   assert.match(validateRunShape(corrupt).join(';'), /statuses.sleep/);
+});
+
+test('the released pre-Necrotic-Blight snapshot receives only the new v2 rule rows', () => {
+  const { run } = fixture();
+  run.combatExpansionRules.matchups.counter.incomingMultiplier = .75;
+  run.combatExpansionRules.matchups.damageRiders.necrotic.status = 'crimsonBlight';
+  run.combatExpansionRules.matchups.cleanseStatuses = run.combatExpansionRules.matchups.cleanseStatuses
+    .filter(status => status !== 'necroticBlight');
+  delete run.combatExpansionRules.statuses.statuses.necroticBlight;
+  delete run.combatExpansionRules.equipment.armour['herald:ossuary'].traits.buildupResistance.necroticBlight;
+
+  const loaded = deserializeRun(JSON.stringify(run));
+  assert.equal(loaded.combatExpansionRules.matchups.damageRiders.necrotic.status, 'necroticBlight');
+  assert.deepEqual(loaded.combatExpansionRules.matchups.cleanseStatuses,
+    ['weak', 'frail', 'vulnerable', 'crimsonBlight', 'necroticBlight', 'burn']);
+  assert.equal(loaded.combatExpansionRules.statuses.statuses.necroticBlight.activeStatus,
+    'necroticBlight');
+  assert.equal(loaded.combatExpansionRules.statuses.statuses.necroticBlight.profile, 'curse');
+  assert.equal(loaded.combatExpansionRules.equipment.armour['herald:ossuary']
+    .traits.buildupResistance.necroticBlight, 15);
+  assert.equal(loaded.combatExpansionRules.matchups.counter.incomingMultiplier, .75,
+    'unrelated carried tuning remains frozen');
+
+  const corrupt = structuredClone(loaded);
+  delete corrupt.combatExpansionRules.statuses.statuses.sleep;
+  assert.throws(() => deserializeRun(JSON.stringify(corrupt)), /statuses\.sleep/);
 });
 
 test('expanded level and attribute writers preserve Cinder SP penalty and unboosted base maxima', () => {

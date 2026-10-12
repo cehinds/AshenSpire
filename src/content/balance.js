@@ -126,6 +126,7 @@ const cardValueStatusMultipliers = {
   frostExposed: 1,
   insanityExposed: 1,
   crimsonBlight: 1,
+  necroticBlight: 1,
   burn: 1,
   regen: 1,
   madness: 1,
