@@ -1,3 +1,4 @@
+import { directPlacement } from './targetDirectPlacement.js';
 // Screen-pixel geometry; DOM zoom conversion belongs to the renderer.
 const overlaps = (a, b, gap) => a.left < b.left + b.width + gap && a.left + a.width + gap > b.left
   && a.top < b.top + b.height + gap && a.top + a.height + gap > b.top;
@@ -6,6 +7,9 @@ const anchorY = (target, edge) => Number.isFinite(target.ground) ? target.ground
 
 export function enemyTargetGrid({ width, height, targets, obstacles = [], hardObstacles = [], size = 64, gap = 4, inset = 8 }) {
   if (!targets.length || width <= 0 || height <= 0) return [];
+  // A foe's box placed directly on its anchor wins when every foe fits; the lattice below is the fallback.
+  const direct = directPlacement({ width, height, targets, obstacles, hardObstacles, edges: [size, 56, 48].filter(value => value <= size), gap, inset });
+  if (direct) return direct;
   let cells = [], best = Infinity;
   // A cell over an owned obstacle (a foe's own controls) is reserved for that foe only.
   const eligible = (cell, target) => !cell.owners?.length || cell.owners.every(id => id === target.id);

@@ -206,3 +206,31 @@ for (const [label, grid] of [['Classic', enemyTargetGrid], ['Alternative', alter
     assert.ok(Math.abs(slot.top + slot.height / 2 - target.y) <= 0.5, `box centre y ${slot.top + slot.height / 2} = ${target.y}`);
   });
 }
+
+// Direct placement: each foe's square sits on its own anchor when every foe fits,
+// so a crowded pair keeps centred, grounded boxes sharing one edge.
+for (const [label, grid, fullSize, firstFit] of [['Classic', enemyTargetGrid, 64, 64], ['Alternative', alternativeEnemyTargetGrid, 88, 72]]) {
+  test(`${label} grid places two close foes directly on their ground line with one shared edge`, () => {
+    const targets = [{ id: 'a', x: 120, y: 150, ground: 300 }, { id: 'b', x: 208, y: 150, ground: 300 }];
+    const obstacles = [{ left: 76, top: 200, width: 88, height: 40, owner: 'a' }, { left: 164, top: 200, width: 88, height: 40, owner: 'b' }];
+    const slots = grid({ width: 320, height: 420, targets, obstacles });
+    assert.equal(slots.length, 2);
+    const [a, b] = targets.map(target => slots.find(slot => slot.id === target.id));
+    assert.equal(a.width, a.height);
+    assert.equal(a.width, b.width, 'both boxes share one edge');
+    assert.equal(a.width, firstFit, `the first edge that fits every foe (${firstFit}px)`);
+    for (const [slot, target] of [[a, targets[0]], [b, targets[1]]]) {
+      assert.ok(Math.abs(slot.left + slot.width / 2 - target.x) <= 0.5, `centre x ${slot.left + slot.width / 2} = ${target.x}`);
+      assert.equal(slot.top + slot.height, target.ground, 'bottom on the ground line');
+    }
+    assert.ok(!overlaps(a, b), 'boxes do not overlap');
+  });
+
+  test(`${label} grid gives a lone grounded foe its full size, centred, bottom on the ground`, () => {
+    const target = { id: 'a', x: 200, y: 150, ground: 300 };
+    const [slot] = grid({ width: 420, height: 420, targets: [target] });
+    assert.equal(slot.width, fullSize);
+    assert.equal(slot.left + slot.width / 2, target.x);
+    assert.equal(slot.top + slot.height, target.ground);
+  });
+}
