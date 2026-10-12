@@ -93,6 +93,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1904"
   },
   {
+    "id": "pr-1916",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Build numbers in the changelog stay in order",
+    "detail": "Nothing changes in the game. When the build pipeline gives a merged change its final build number, it now also moves that entry so each day's list stays newest build first.",
+    "build": "0.7.1.1431",
+    "pullRequest": 1916,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1916"
+  },
+  {
     "id": "pr-1902",
     "date": "2026-10-12",
     "group": "2026-10-12",
