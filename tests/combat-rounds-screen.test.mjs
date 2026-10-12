@@ -158,6 +158,25 @@ test('owner 2026-10-12: a targeted attack, faster than a revealed smash or sweep
     'a slower attack vs smash has only the stance in its favour, so yellow not green');
 });
 
+test('owner 2026-10-12: the target outline lists the dark shadow first, then the coloured 1px rings outermost', () => {
+  const css = readFileSync(new URL('../styles/combat-rounds-preview.css', import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  for (const [tone, colour] of [['green', '#5ccf6a'], ['yellow', '#e7c65c'], ['red', '#ef4949']]) {
+    const rule = css.match(new RegExp(`data-target-outline='${tone}'\\] \\{\\s*filter: ([^;]+);`));
+    assert.ok(rule, `${tone} outline rule exists`);
+    const shadows = rule[1].split('drop-shadow(').slice(1).map((chunk) => chunk.trim().replace(/\)$/, ''));
+    const dark = shadows.filter((args) => /#000\b|rgba\(0,0,0/.test(args));
+    const rings = shadows.filter((args) => args.includes(colour));
+    assert.equal(rings.length, 4, `${tone}: four coloured 1px rings`);
+    assert.equal(dark.length, 2, `${tone}: two dark shadows`);
+    assert.deepEqual(shadows.slice(0, 2).map((args) => /#000\b|rgba\(0,0,0/.test(args)), [true, true], `${tone}: the dark shadow is first`);
+    assert.deepEqual(shadows.slice(2).every((args) => args.includes(colour)), true, `${tone}: the rings come last, outermost`);
+    for (const args of dark) {
+      const blur = Number((args.match(/calc\((\d+(?:\.\d+)?)px/) ?? args.match(/\s(\d+(?:\.\d+)?)px/))[1]);
+      assert.ok(blur <= 1.5, `${tone}: shadow blur ${blur}px is at most 1.5px so the ring stays thin`);
+    }
+  }
+});
+
 test('the preview stylesheet scopes every rule to the preview or to the classes the screen adds', () => {
   const css = readFileSync(new URL('../styles/combat-rounds-preview.css', import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
   const selectors = [...css.matchAll(/([^{}]+)\{/g)].map(m => m[1].trim()).filter(Boolean);
