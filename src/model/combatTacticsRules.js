@@ -116,12 +116,22 @@ export function expansionCounterProblems(counter, path = 'combatCounter') {
   return problems;
 }
 
+/** Reaction rules v2 Defend trait guard: whole, non-negative Impact Poise and Flux Ward (combat-card-traits-contract). */
+export function combatTraitGuardProblems(guard, path) {
+  if (!record(guard)) return [`${path} must be an object`];
+  const problems = [];
+  for (const key of ['poise', 'ward']) if (!whole(guard[key])) problems.push(`${path}.${key} must be a non-negative whole number`);
+  for (const key of Object.keys(guard)) if (!['poise', 'ward'].includes(key)) problems.push(`${path}.${key} is unknown`);
+  return problems;
+}
+
 export function combatExpansionEntityProblems(entity, path = 'entity') {
   if (!record(entity)) return [`${path} must be an object`];
   const problems = [];
   for (const key of ['combatOwnerCycle', 'combatPreparationSerial', 'combatCounterReturnedCycle']) {
     if (entity[key] !== undefined && !whole(entity[key])) problems.push(`${path}.${key} must be a non-negative whole number`);
   }
+  if (entity.combatTraitGuard !== undefined) problems.push(...combatTraitGuardProblems(entity.combatTraitGuard, `${path}.combatTraitGuard`));
   const stance = entity.combatStance;
   if (stance !== undefined) {
     if (!record(stance)) problems.push(`${path}.combatStance must be an object`);

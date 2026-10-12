@@ -262,4 +262,9 @@ test('a Defend trait guard survives a combat snapshot round trip', () => {
   const saved = JSON.parse(JSON.stringify(serializeCombatSnapshot(f.combat)));
   const restored = restoreCombatSnapshot({ registries, rng: createRng(901), snapshot: saved });
   assert.deepEqual(restored.player.combatTraitGuard, { poise: 2, ward: 1 });
+  for (const bad of [{ poise: 1e9 + 0.5, ward: 1 }, { poise: -1, ward: 0 }, { poise: 2 }, 'x']) {
+    const corrupt = structuredClone(saved);
+    corrupt.player.combatTraitGuard = bad;
+    assert.throws(() => restoreCombatSnapshot({ registries, rng: createRng(901), snapshot: corrupt }), /combatTraitGuard/, JSON.stringify(bad));
+  }
 });
