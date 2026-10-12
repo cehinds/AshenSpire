@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-12",
     "summary": "The design spec records the owner's audit decisions",
     "detail": "Development-process change only, nothing in the game changes. The specification now describes a dozen more rules as the game plays them, and records four design decisions: bosses will offer a choice of three relics, the enemy cap will become a setting, the export button stays on debug pages, and LAN co-op is planned for a later release.",
-    "build": "0.7.1.1423",
+    "build": "0.7.1.1427",
     "pullRequest": 1893,
     "url": "https://github.com/cehinds/AshenSpire/pull/1893"
   },
@@ -18,9 +18,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-12",
     "summary": "The design spec matches the game again",
     "detail": "Development-process change only, nothing in the game changes. The specification document was checked section by section against the game's code, and the audit is kept in docs/spec-audit/SPEC-AUDIT.md. The spec now describes what the game does: Actions and Stamina are one resource, the defaults are the ones the game ships, and rules that were never built are gone. The few points that need a design decision are listed in the audit.",
-    "build": "0.7.1.1423",
+    "build": "0.7.1.1427",
     "pullRequest": 1863,
     "url": "https://github.com/cehinds/AshenSpire/pull/1863"
+  },
+  {
+    "id": "pr-1900",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Cards rebalanced; Insanity now staggers; Necrotic Blight lasts the fight",
+    "detail": "Thirteen cards now match their rarity and cost. Blood Offering, Exsanguinate, Star Slicer, Umbral Ward, Iron Skin, Ash Circle, Vanish, Binding Parry and Draw Cut hit or guard for less. Comet Fragment, Bloodhunter's Strike and Shield Crash got stronger, and Sundering Hew now applies Vulnerable. Weapon attacks now have a fixed damage type: slashing cards apply Bleed. An Insanity break now Staggers, so Executioner and other Staggered bonuses apply. Necrotic damage applies Necrotic Blight, which lasts the whole fight; other Blight still fades after 3 turns. Holy hits now cleanse in new runs. Frost and Insanity exposures now boost even small tagged hits, and Feint applies Prepare at every rank.",
+    "build": "0.7.1.1427",
+    "pullRequest": 1900,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1900"
+  },
+  {
+    "id": "pr-1897",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "The approved Reaver greatsword sequences now play in solo combat",
+    "detail": "Attack and Smash use the six selected phases; Guard, Parry and Resisted share the weighted impact order, while Guard-tag and Evasion-tag counters follow their separate approved routes. Actual combat receipts choose reactions and retaliation, and actions restore the originating stance. Other loadouts and co-op retain their existing presentation. Labeled review animations and thirty additional stance concepts remain available separately.",
+    "build": "0.7.1.1425",
+    "pullRequest": 1897,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1897"
   },
   {
     "id": "pr-1901",

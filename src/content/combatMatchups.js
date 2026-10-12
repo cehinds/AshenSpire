@@ -107,9 +107,9 @@ export const combatExpansionMatchups = {
     fire: { status: 'burn', pressure: 4, recoveryProfile: 'elemental', requiresHpLoss: true },
     lightning: { status: 'paralysis', pressure: 3, recoveryProfile: 'elemental', requiresHpLoss: true },
     force: { wardDrain: 2 },
-    necrotic: { status: 'crimsonBlight', pressure: 4, recoveryProfile: 'curse', requiresHpLoss: true },
+    necrotic: { status: 'necroticBlight', pressure: 4, recoveryProfile: 'curse', requiresHpLoss: true },
     holy: { cleanse: 1, requiresHpLoss: true },
     poison: { status: 'venom', pressure: 4, recoveryProfile: 'bodily', requiresHpLoss: true },
   },
-  cleanseStatuses: ['weak', 'frail', 'vulnerable', 'crimsonBlight', 'burn'],
+  cleanseStatuses: ['weak', 'frail', 'vulnerable', 'crimsonBlight', 'necroticBlight', 'burn'],
 };

@@ -133,7 +133,7 @@ export const rogueCards = [
   {
     id: 'vanish', name: 'Vanish', class: 'rogue', rarity: 'common', cost: 1, type: 'skill', keywords: ['exhaust'], icon: '◌',
     flavor: "Art of the unmarked beneath the bridges.\n\nTaught to the docks by those who lived under the Citadel's bridges before the Decree, when to be seen was to be entered on a roll. Under the bridges there is nothing but ice.\n\nMost of those teachers vanished in the end. Where to, the docks cannot agree.",
-    effects: [{ op: 'block', target: 'self', amount: 8 }, prepare(), { op: 'addCard', card: 'smokePellet', pile: 'hand' }],
+    effects: [{ op: 'block', target: 'self', amount: 6 }, prepare(), { op: 'addCard', card: 'smokePellet', pile: 'hand' }],
     textTemplate: 'Gain {block} Block. Become Prepared. Add a Smoke Pellet to your hand. Exhaust.',
     upgrade: { keywords: [], effects: [{ op: 'block', target: 'self', amount: 8 }, prepare(), { op: 'addCard', card: 'smokePellet', pile: 'hand' }], textTemplate: 'Gain {block} Block. Become Prepared. Add a Smoke Pellet to your hand.' },
   },
@@ -369,9 +369,9 @@ export const rogueCards = [
   {
     id: 'bindingParry', name: 'Binding Parry', class: 'rogue', rarity: 'rare', cost: 1, type: 'skill', keywords: [], icon: '⚔',
     flavor: "The blade caught, turned, and held aside.\n\nA duelling master of the Court taught it for coin to anyone who asked, dock thieves among them. When the Court learned whom he had taught, it stitched his hands.\n\nHe teaches it still, by describing it.",
-    effects: [{ op: 'block', target: 'self', amount: 12 }, prepare(), { op: 'draw', amount: 1 }],
+    effects: [{ op: 'block', target: 'self', amount: 9 }, prepare(), { op: 'draw', amount: 1 }],
     textTemplate: 'Gain {block} Block. Prepare Melee Counter. Become Prepared. Draw {draw} card.',
-    upgrade: { effects: [{ op: 'block', target: 'self', amount: 16 }, prepare(), { op: 'draw', amount: 1 }] },
+    upgrade: { effects: [{ op: 'block', target: 'self', amount: 13 }, prepare(), { op: 'draw', amount: 1 }] },
   },
   {
     id: 'whirlingGuard', name: 'Whirling Guard', class: 'rogue', rarity: 'rare', cost: 1, type: 'attack', keywords: [], icon: '🌀',
