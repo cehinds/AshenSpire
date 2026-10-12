@@ -507,6 +507,17 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
  * muted, upgraded text below with changed values highlighted green/red (the
  * same up/down coloring cards use in play). All numbers come from the defs.
  */
+/** cardPlainText(registries, ref) → the card's rules text as plain text (the
+ * same template the face fills, tags stripped), for labels beside a face. */
+export function cardPlainText(registries, ref) {
+  const def = resolveCard(registries, ref);
+  const div = typeof document !== 'undefined' ? document.createElement('div') : null;
+  const html = fillTemplate(def, staticTokens(def), null);
+  if (!div) return String(html).replace(/<[^>]+>/g, '');
+  div.innerHTML = html;
+  return div.textContent.replace(/\s+/g, ' ').trim();
+}
+
 export function upgradePreviewHtml(registries, ref) {
   const base = resolveCard(registries, { ...ref, upgraded: false });
   const upg = resolveCard(registries, { ...ref, upgraded: true });

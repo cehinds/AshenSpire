@@ -56,7 +56,7 @@ import { sigilRuleText } from '../../model/sigils.js';
 import { renderEquipmentInspection } from '../components/equipmentCard.js';
 import { renderCollectibleCard, renderCollectibleInspection } from '../components/collectibleCard.js';
 import { esc, attachTooltip, showTooltipFor } from '../components/tooltip.js';
-import { relicText } from '../components/card.js';
+import { relicText, cardPlainText } from '../components/card.js';
 import { sfx } from '../sfx.js';
 import { isEngaged, focusFirst } from '../input.js';
 import { flaskIdentityHtml, flaskDetailLines } from '../components/flask.js';
@@ -1442,7 +1442,7 @@ export function mountRewards(app, {
       face.addEventListener('click', () => selectCard(choiceId));
       // The text under the face: the card's name and the effect text its face
       // already shows (the .ctext block, resolved by the card component).
-      const effect = face.querySelector('.ctext')?.textContent?.trim() || '';
+      const effect = face.querySelector('.ctext')?.textContent?.trim() || cardPlainText(registries, { cardId, ...grade });
       const tile = el('button', { class: 'class-pick reward-node reward-pick reward-choice-button', type: 'button', role: 'radio',
         'aria-checked': String(choiceId === selectedCardId), dataset: { pickId: choiceId, cardId } }, [
         el('div', { class: 'cp-body' }, [el('h3', { text: registries.cards.get(cardId)?.name || cardId }), el('p', { text: effect })]),
