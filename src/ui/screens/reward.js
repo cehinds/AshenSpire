@@ -1280,6 +1280,11 @@ export function mountRewards(app, {
         candidate.classList.toggle('is-chosen', selected);
         candidate.setAttribute('aria-checked', String(selected));
       }
+      // The chosen relic's card face wears the same green trim as its button.
+      for (const face of strip.querySelectorAll('.reward-relic-face')) {
+        const selected = face.parentElement?.dataset?.pickId === cardId;
+        face.classList.toggle('is-chosen', selected);
+      }
       confirmButton.disabled = false;
       confirmReason();
       message.hidden = true;
@@ -1310,6 +1315,7 @@ export function mountRewards(app, {
       const column = el('div', { class: 'reward-relic-option', dataset: { pickId: id } });
       if (option.definition) {
         const face = renderCollectibleCard(registries, option.definition, t('reward.kind.relic'), { interactive: false }).card;
+        face.classList.add('reward-relic-face');
         face.addEventListener('click', () => selectCard(id));
         column.appendChild(face);
       }
