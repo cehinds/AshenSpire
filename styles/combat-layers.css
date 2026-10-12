@@ -467,4 +467,8 @@
 }
 /* Desktop corner tools (owner, 2026-10-12): the log and reaction switch sit in
    the screen's bottom corners, so the row draws no backing strip between them. */
-:root .combat[data-layout='formation'] .combat-tools[data-tools-placement='corners'] { background: none; box-shadow: none; }
+:root .combat[data-layout='formation'] .combat-tools[data-tools-placement='corners'] { background: none; box-shadow: none; pointer-events: none; }
+/* The corner row spans the hand; only its buttons and open log take input,
+   and they sit above any card that reaches a corner. */
+:root .combat[data-layout='formation'] .combat-tools[data-tools-placement='corners'] { z-index: calc(var(--combat-layer-cards) + 1) !important; }
+:root .combat[data-layout='formation'] .combat-tools[data-tools-placement='corners'] > * { pointer-events: auto; }
