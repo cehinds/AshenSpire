@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-12",
     "summary": "Each fighter's readout sits above or below it, and the battlefield is narrower on wide screens",
     "detail": "A front-row enemy's health and intent now hang just below its feet instead of drifting off to one side, so every readout stays with its own fighter. On wide screens the fighters stand closer to the middle. Switching back to the Classic look mid-fight keeps you in a row Classic has.",
-    "build": "0.7.1.1395",
+    "build": "0.7.1.1397",
     "pullRequest": 1884,
     "url": "https://github.com/cehinds/AshenSpire/pull/1884"
   },
