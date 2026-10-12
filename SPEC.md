@@ -1336,7 +1336,7 @@ Rarity: S = starter, C = common, U = uncommon, R = rare. Cost in Stamina (engine
 | Serrated Blade | C | 1 | Attack | Deal 7. If target has any Bleed: apply 3 Bleed. | 9 dmg, 4 Bleed |
 | Enter: Gorefire | C | 1 | Skill | Enter Gorefire Stance. Draw 1. | cost 0 |
 | Enter: Bulwark | C | 1 | Skill | Enter Bulwark Stance. | Gain 3 extra Block |
-| Stomp | U | 2 | Attack | Deal 12. 8 Poise damage. | 16 dmg, 10 Poise |
+| Stomp | U | 1 + 1 Mana | Attack | Deal 9 to the selected enemy. | none; rank-up (§13.4o) |
 | Rallying Standard | U | 1 | Power | At the start of your turn, gain 1 Strength. Take 1 damage. | no self-damage |
 | War Surgeon | U | 1 | Skill | Exhaust. Heal 2 HP for every 4 Bleed on all enemies. | every 3 |
 | Hemorrhage | U | 1 | Skill | Double the target's Bleed. Exhaust. | don't Exhaust |
