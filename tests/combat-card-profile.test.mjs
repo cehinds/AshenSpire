@@ -106,3 +106,13 @@ test('resolved equipment identity overrides source card lookup without guessing 
   assert.equal(combatProfileFor({ name: 'Fire Smash Counter' }).camp, null);
   assert.throws(() => combatProfileFor({ id: 'fixture', tags: ['camp:physical', 'camp:spell'] }), /conflicting/);
 });
+
+test('player spell attacks without a reach tag take reach from their delivery', () => {
+  const card = id => contentBundle.cards.find(candidate => candidate.id === id);
+  assert.equal(combatProfileFor(card('cometFragment')).reach, 'far');
+  assert.equal(combatProfileFor(card('starSlicer')).reach, 'contact');
+  assert.equal(combatProfileFor(card('frostNova')).reach, 'near');
+  assert.equal(combatProfileFor(card('rimeNeedle')).reach, 'near');
+  assert.equal(combatProfileFor(card('strike')).reach, undefined);
+  assert.equal(combatProfileFor(card('crystalBarrier')).reach, undefined);
+});
