@@ -26,8 +26,10 @@
 //
 // WHAT IT WRITES. Only the stamp that follows a receipt's link:
 //   ([#N](https://github.com/cehinds/AshenSpire/pull/N), `X`)  ->  `X` = release.ordinal
-// Every other byte of CHANGELOG.md is left alone, and about-changelog.mjs --write
-// still owns the file's shape and the generated module. A pull request with no
+// and, when that stamp would break its date group's newest-build-first order, the
+// receipt's own line moves within that group (reorderReceipt). Nothing moves across
+// a date heading. Every other byte of CHANGELOG.md is left alone, and about-changelog.mjs
+// --write still owns the file's shape and the generated module. A pull request with no
 // receipt is a note, not a failure: receipts.mjs --check is what fails a gap.
 //
 // THE GENERATED MODULE IS IN THE DIGEST. src/content/changelog.generated.js is
@@ -60,6 +62,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve as pathResolve } from 'node:path';
 import { landedPull, rangeSubjects } from './receipts.mjs';
+import { compareVersions, versionTuple } from './buildversion.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const CHANGELOG = join(ROOT, 'CHANGELOG.md');
@@ -89,6 +92,58 @@ export function parseRange(text) {
 // may be missing from a manual run. Either way there is no range to walk.
 export function isNullSha(sha) {
   return !sha || /^0+$/.test(sha);
+}
+
+// THE ORDER KEY OF A STAMP, as about-changelog's stampKey builds it, so the move below
+// agrees with the strict check: the version, then the scheme slot (a legacy `-rc.N`
+// stamp sorts first within its candidate), then the tail. about-changelog.mjs runs its
+// own gate on import, so its copy cannot be imported here; this is the same rule, and
+// the test that runs the real --check-order on the result is what keeps the two in step.
+function orderKey(stamp) {
+  const m = /^(\d+\.\d+\.\d+(?:-[A-Za-z]+\.\d+)?)\.(\d+)$/.exec(stamp);
+  if (!m) return null;
+  const v = versionTuple(m[1], Number(m[2]));
+  if (v === null) return null;
+  return [...v.slice(0, 3), /-rc\.\d+$/.test(m[1]) ? '0' : '1', v[3]];
+}
+
+// THE RECEIPT'S LINE WITHIN ITS DATE GROUP. A group runs newest build first, so a
+// re-pointed receipt can sit out of order with its neighbours. It is left where it is
+// when every stamped receipt above it is at least as new and every one below at most
+// as new (a tie keeps its place). Otherwise it moves to just above the first stamped
+// receipt of its group whose build is lower, or, when none is lower, just below the
+// group's last stamped receipt. A group is the lines between two `## ` headings, so
+// the move never crosses a date. Receipts are one line each (about-changelog refuses
+// a receipt that is not a top-level bullet), so a move is a move of one line.
+function reorderReceipt(text, pr, stamp) {
+  const key = orderKey(stamp);
+  if (key === null) return text;
+  const lines = text.split('\n');
+  const hit = new RegExp(`/pull/${pr}\\),\\s*\`${stamp.replace(/\./g, '\\.')}\``);
+  const at = lines.findIndex((l) => l.startsWith('- ') && hit.test(l));
+  if (at < 0) return text;
+  let head = at - 1;
+  while (head >= 0 && !/^## /.test(lines[head])) head -= 1;
+  let tail = at + 1;
+  while (tail < lines.length && !/^## /.test(lines[tail])) tail += 1;
+  const stamped = [];
+  for (let i = head + 1; i < tail; i += 1) {
+    if (i === at || !lines[i].startsWith('- ')) continue;
+    const m = /\/pull\/\d+\),\s*`([^`\n]+)`/.exec(lines[i]);
+    const k = m ? orderKey(m[1]) : null;
+    if (k !== null) stamped.push({ i, cmp: compareVersions(k, key) });
+  }
+  const comparable = stamped.filter((s) => s.cmp !== null);
+  const inOrder = comparable.every((s) => (s.i < at ? s.cmp >= 0 : s.cmp <= 0));
+  if (inOrder || !comparable.length) return text;
+  const rest = lines.slice();
+  const [moved] = rest.splice(at, 1);
+  const lower = comparable.find((s) => s.cmp < 0);
+  // An index in `rest`: the line at original index `i` has moved up one if it sat below `at`.
+  const shifted = (i) => (i > at ? i - 1 : i);
+  const to = lower ? shifted(lower.i) : shifted(comparable[comparable.length - 1].i) + 1;
+  rest.splice(to, 0, moved);
+  return rest.join('\n');
 }
 
 // THE PURE CORE. Re-points every receipt of each named pull request to `box`.
