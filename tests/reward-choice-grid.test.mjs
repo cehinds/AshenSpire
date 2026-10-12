@@ -91,3 +91,30 @@ test('each card option\'s text button carries that card\'s plain rules text, not
     });
   });
 });
+
+test('the choice grid sizes its columns to the offer: --choice-count is 1 for one card and 4 for four', () => {
+  withKitDom((dom) => {
+    dom.document.documentElement ??= dom.document.body;
+    // The stub DOM keeps no inline style, so record what the screen sets on each element.
+    const createElement = dom.document.createElement.bind(dom.document);
+    dom.document.createElement = (tag) => {
+      const node = createElement(tag);
+      const props = new Map();
+      node.style = { setProperty: (key, value) => props.set(key, String(value)), getPropertyValue: (key) => props.get(key) ?? '', removeProperty: (key) => props.delete(key) };
+      return node;
+    };
+    for (const [cardIds, count] of [[['frostNova'], '1'], [['frostNova', 'starstoneArc', 'scholarsInsight', 'strike'], '4']]) {
+      const app = dom.document.createElement('main');
+      dom.document.body.replaceChildren(app);
+      const run = { cinders: 0, deck: [], flasks: [], relics: [], loadout: { storage: [] } };
+      mountRewards(app, {
+        registries: REG, run, checkpoint: { states: {}, chosenCardId: null }, rewards: { cardIds }, onDone() {}, onPersist: () => true,
+        saves: { loadMeta: () => ({ settings: { levelUpRefillSeconds: 0 } }), saveMeta() {} },
+      });
+      app.querySelector('[data-kind="card"]').click();
+      const strip = app.querySelector('.reward-row');
+      assert.equal(app.querySelectorAll('.reward-row .reward-choice-option').length, Number(count), `${count} option column(s) rendered`);
+      assert.equal(strip.style.getPropertyValue('--choice-count'), count, `the grid's --choice-count for ${count} option(s)`);
+    }
+  });
+});
