@@ -800,6 +800,8 @@ export const RUN_SHAPE = [
   { key: 'savedAt', type: 'string', optional: true }, // ISO time of the last landed save (W1l–W1r)
   { key: 'mapNodeId', type: 'string', nullable: true },
   { key: 'mapGraph', type: 'object', nullable: true },
+  // Classic-map rest re-entry record (restRevisit.js); absent when none.
+  { key: 'restRevisit', type: 'object', optional: true, nullable: true },
   // Optional, backward-compatible presentation state. It is owned by the run
   // rather than Settings because the ladder and pan are live choices for this
   // climb; Settings only supplies the default when this field is absent.

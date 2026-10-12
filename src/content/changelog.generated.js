@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-12",
     "summary": "Combatants stand on an even grid, and any part of an enemy's square targets it",
     "detail": "In the default view the battlefield is now one even grid of three lanes, leaning on a diagonal into the distance: enemies in a back row and a front row, your party in one row nearest you, with open ground between you and them. Each square has a shadow where its fighter's feet stand. Enemies fill the back row first (one in the middle, two on the outer lanes, three across), then the front row, up to six. You start in the left lane. Tapping anywhere in an occupied enemy square selects that enemy, or plays your readied card or flask on it. Moving now picks one of the three lanes in your row. The Classic look is unchanged.",
-    "build": "0.7.1.1377",
+    "build": "0.7.1.1379",
     "pullRequest": 1870,
     "url": "https://github.com/cehinds/AshenSpire/pull/1870"
+  },
+  {
+    "id": "pr-1879",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Rest sites: grounded art, a clearer order, and a way back in",
+    "detail": "The traveler and campfire now sit on the shrine floor instead of floating, on desktop and phone. The choices read Rest, Level up, Upgrade, Flask, then the rest. After leaving a rest site, its node stays clickable on the map until you pick a new one, so you can go back for something you forgot; what you already took stays taken.",
+    "build": "0.7.1.1361",
+    "pullRequest": 1879,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1879"
   },
   {
     "id": "pr-1868",
