@@ -303,8 +303,8 @@ Formula, relation and value keys follow the README conventions.
 ## Open: round-trip differences
 
 Every live node in `content/source/nodes.csv` (448) now maps to exactly one tag
-through `liveId`, with no collisions. The compile report still lists 73 field
-differences (section 3 of `compile-report.md`), down from 197: 108 were chip
+through `liveId`, with no collisions. The compile report still lists 81 field
+differences (section 3 of `compile-report.md`), down from 181: 108 were chip
 fields the model left empty, and they now carry the live glyph and colour. The
 rest are real disagreements between the live tree and the model. The model
 keeps its placement and wording until the owner decides. A tag with both a
@@ -367,7 +367,7 @@ to confirm decision 3 against the live tree. Rows: `meta.combat.delivery.ranged`
 `meta.combat.stance.counter.ranged-counter` under `counterMode`, not under the
 counter stance.
 
-**Placement: technique, school, class stance and roots under meta (9).**
+**Placement: technique, school, class stance and roots under meta (7).**
 - `meta.combat.skill.technique` sits under Skill in the model. The live
   `technique` root has no parent.
 - `meta.combat.skill.spellcraft` sits under Skill. The live `school` root has no
