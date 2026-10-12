@@ -1,0 +1,638 @@
+{
+  "source": "f515caf546263ed411a5c8d05875d43699bfc01d",
+  "build": "0.7.1.1433",
+  "fixture": "Built game shot=combat with starseer/5hand; shot=rest with restOnly deck-editor setting. Disposable screenshot profile.",
+  "checks": [
+    {
+      "device": "desktop",
+      "screen": "hand-simple",
+      "cards": [
+        {
+          "kind": "simple",
+          "id": "starstonePebble",
+          "loaded": 480,
+          "rail": [
+            {
+              "id": "camp:spell",
+              "label": "Spell",
+              "svg": "<path d=\"m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z\"></path>",
+              "badge": ""
+            },
+            {
+              "id": "damage:blunt",
+              "label": "Blunt",
+              "svg": "<path d=\"M5 2h22v12H5Zm8 14h6v15h-6Z\"></path>",
+              "badge": ""
+            },
+            {
+              "id": "status:starstoneCharge",
+              "label": "Starstone Charge 1",
+              "svg": "<path d=\"m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z\"></path>",
+              "badge": "1"
+            }
+          ]
+        },
+        {
+          "kind": "official",
+          "id": "attune",
+          "loaded": 480,
+          "rail": [
+            {
+              "id": "camp:spell",
+              "label": "Spell",
+              "svg": "<path d=\"m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z\"></path>",
+              "badge": ""
+            },
+            {
+              "id": "school:alteration",
+              "label": "Alteration",
+              "svg": "<path d=\"m1 25 10-20 8 13 5-7 7 14ZM3 28h26v3H3Z\"></path>",
+              "badge": ""
+            }
+          ]
+        },
+        {
+          "kind": "simple",
+          "id": "starSpark",
+          "loaded": 480,
+          "rail": [
+            {
+              "id": "camp:spell",
+              "label": "Spell",
+              "svg": "<path d=\"m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z\"></path>",
+              "badge": ""
+            },
+            {
+              "id": "damage:piercing",
+              "label": "Piercing",
+              "svg": "<path d=\"m28 1 3 3-9 16-4-4ZM15 13l10 10-3 3-10-10ZM4 25l10-10 4 4L8 29H4Z\"></path>",
+              "badge": ""
+            },
+            {
+              "id": "status:weak",
+              "label": "Weak",
+              "svg": "<path d=\"M18 1 3 19h11l-2 12L30 12H18l4-11Z\"></path>",
+              "badge": ""
+            },
+            {
+              "id": "status:starstoneCharge",
+              "label": "Starstone Charge 1",
+              "svg": "<path d=\"m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z\"></path>",
+              "badge": "1"
+            },
+            {
+              "id": "status:paralysis",
+              "label": "Paralysis",
+              "svg": "<path d=\"m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z\"></path>",
+              "badge": ""
+            }
+          ]
+        },
+        {
+          "kind": "simple",
+          "id": "defend",
+          "loaded": 480,
+          "rail": [
+            {
+              "id": "camp:spell",
+              "label": "Spell",
+              "svg": "<path d=\"m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z\"></path>",
+              "badge": ""
+            },
+            {
+              "id": "school:alteration",
+              "label": "Alteration",
+              "svg": "<path d=\"m1 25 10-20 8 13 5-7 7 14ZM3 28h26v3H3Z\"></path>",
+              "badge": ""
+            }
+          ]
+        },
+        {
+          "kind": "simple",
+          "id": "strike",
+          "loaded": 480,
+          "rail": [
+            {
+              "id": "camp:physical",
+              "label": "Physical",
+              "svg": "<path d=\"M16 2 29 7v10c0 7-13 14-13 14S3 24 3 17V7Zm-2 8v8H8v4h16v-4h-6v-8Z\"></path>",
+              "badge": ""
+            }
+          ]
+        }
+      ],
+      "spellPaths": [
+        "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+        "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z"
+      ],
+      "overflow": false
+    },
+    {
+      "device": "desktop",
+      "screen": "hand-legacy",
+      "cards": [
+        {
+          "kind": "official",
+          "id": "starstonePebble",
+          "loaded": 480,
+          "rail": [
+            {
+              "id": "camp:spell",
+              "label": "Spell",
+              "svg": "<path d=\"m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z\"></path>",
+              "badge": ""
+            },
+            {
+              "id": "damage:blunt",
+              "label": "Blunt",
+              "svg": "<path d=\"M5 2h22v12H5Zm8 14h6v15h-6Z\"></path>",
+              "badge": ""
+            },
+            {
+              "id": "status:starstoneCharge",
+              "label": "Starstone Charge 1",
+              "svg": "<path d=\"m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z\"></path>",
+              "badge": "1"
+            }
+          ]
+        },
+        {
+          "kind": "official",
+          "id": "attune",
+          "loaded": 480,
+          "rail": [
+            {
+              "id": "camp:spell",
+              "label": "Spell",
+              "svg": "<path d=\"m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z\"></path>",
+              "badge": ""
+            },
+            {
+              "id": "school:alteration",
+              "label": "Alteration",
+              "svg": "<path d=\"m1 25 10-20 8 13 5-7 7 14ZM3 28h26v3H3Z\"></path>",
+              "badge": ""
+            }
+          ]
+        },
+        {
+          "kind": "official",
+          "id": "starSpark",
+          "loaded": 480,
+          "rail": [
+            {
+              "id": "camp:spell",
+              "label": "Spell",
+              "svg": "<path d=\"m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z\"></path>",
+              "badge": ""
+            },
+            {
+              "id": "damage:piercing",
+              "label": "Piercing",
+              "svg": "<path d=\"m28 1 3 3-9 16-4-4ZM15 13l10 10-3 3-10-10ZM4 25l10-10 4 4L8 29H4Z\"></path>",
+              "badge": ""
+            },
+            {
+              "id": "status:weak",
+              "label": "Weak",
+              "svg": "<path d=\"M18 1 3 19h11l-2 12L30 12H18l4-11Z\"></path>",
+              "badge": ""
+            },
+            {
+              "id": "status:starstoneCharge",
+              "label": "Starstone Charge 1",
+              "svg": "<path d=\"m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z\"></path>",
+              "badge": "1"
+            },
+            {
+              "id": "status:paralysis",
+              "label": "Paralysis",
+              "svg": "<path d=\"m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z\"></path>",
+              "badge": ""
+            }
+          ]
+        },
+        {
+          "kind": "official",
+          "id": "defend",
+          "loaded": 480,
+          "rail": [
+            {
+              "id": "camp:spell",
+              "label": "Spell",
+              "svg": "<path d=\"m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z\"></path>",
+              "badge": ""
+            },
+            {
+              "id": "school:alteration",
+              "label": "Alteration",
+              "svg": "<path d=\"m1 25 10-20 8 13 5-7 7 14ZM3 28h26v3H3Z\"></path>",
+              "badge": ""
+            }
+          ]
+        },
+        {
+          "kind": "official",
+          "id": "strike",
+          "loaded": 480,
+          "rail": [
+            {
+              "id": "camp:physical",
+              "label": "Physical",
+              "svg": "<path d=\"M16 2 29 7v10c0 7-13 14-13 14S3 24 3 17V7Zm-2 8v8H8v4h16v-4h-6v-8Z\"></path>",
+              "badge": ""
+            }
+          ]
+        }
+      ],
+      "spellPaths": [
+        "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+        "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z"
+      ],
+      "overflow": false
+    },
+    {
+      "device": "desktop",
+      "screen": "deck",
+      "expanded": {
+        "cards": [
+          {
+            "kind": "simple",
+            "id": "strike",
+            "loaded": 480,
+            "rail": [
+              {
+                "id": "camp:spell",
+                "label": "Spell",
+                "svg": "<path d=\"m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z\"></path>",
+                "badge": ""
+              },
+              {
+                "id": "damage:arcane",
+                "label": "Force",
+                "svg": "<path d=\"M16 2 30 16 16 30 2 16Zm0 6-8 8 8 8 8-8Z\"></path><circle cx=\"16\" cy=\"16\" r=\"4\"></circle>",
+                "badge": ""
+              }
+            ]
+          }
+        ],
+        "spellPaths": [
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z"
+        ],
+        "overflow": false
+      },
+      "thumbnails": 38,
+      "simple": 32,
+      "missing": 0,
+      "overflow": false
+    },
+    {
+      "device": "phone",
+      "screen": "hand-simple",
+      "cards": [
+        {
+          "kind": "simple",
+          "id": "starstonePebble",
+          "loaded": 480,
+          "rail": [
+            {
+              "id": "camp:spell",
+              "label": "Spell",
+              "svg": "<path d=\"m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z\"></path>",
+              "badge": ""
+            },
+            {
+              "id": "damage:blunt",
+              "label": "Blunt",
+              "svg": "<path d=\"M5 2h22v12H5Zm8 14h6v15h-6Z\"></path>",
+              "badge": ""
+            },
+            {
+              "id": "status:starstoneCharge",
+              "label": "Starstone Charge 1",
+              "svg": "<path d=\"m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z\"></path>",
+              "badge": "1"
+            }
+          ]
+        },
+        {
+          "kind": "official",
+          "id": "attune",
+          "loaded": 480,
+          "rail": [
+            {
+              "id": "camp:spell",
+              "label": "Spell",
+              "svg": "<path d=\"m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z\"></path>",
+              "badge": ""
+            },
+            {
+              "id": "school:alteration",
+              "label": "Alteration",
+              "svg": "<path d=\"m1 25 10-20 8 13 5-7 7 14ZM3 28h26v3H3Z\"></path>",
+              "badge": ""
+            }
+          ]
+        },
+        {
+          "kind": "simple",
+          "id": "starSpark",
+          "loaded": 480,
+          "rail": [
+            {
+              "id": "camp:spell",
+              "label": "Spell",
+              "svg": "<path d=\"m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z\"></path>",
+              "badge": ""
+            },
+            {
+              "id": "damage:piercing",
+              "label": "Piercing",
+              "svg": "<path d=\"m28 1 3 3-9 16-4-4ZM15 13l10 10-3 3-10-10ZM4 25l10-10 4 4L8 29H4Z\"></path>",
+              "badge": ""
+            },
+            {
+              "id": "status:weak",
+              "label": "Weak",
+              "svg": "<path d=\"M18 1 3 19h11l-2 12L30 12H18l4-11Z\"></path>",
+              "badge": ""
+            },
+            {
+              "id": "status:starstoneCharge",
+              "label": "Starstone Charge 1",
+              "svg": "<path d=\"m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z\"></path>",
+              "badge": "1"
+            },
+            {
+              "id": "status:paralysis",
+              "label": "Paralysis",
+              "svg": "<path d=\"m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z\"></path>",
+              "badge": ""
+            }
+          ]
+        },
+        {
+          "kind": "simple",
+          "id": "defend",
+          "loaded": 480,
+          "rail": [
+            {
+              "id": "camp:spell",
+              "label": "Spell",
+              "svg": "<path d=\"m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z\"></path>",
+              "badge": ""
+            },
+            {
+              "id": "school:alteration",
+              "label": "Alteration",
+              "svg": "<path d=\"m1 25 10-20 8 13 5-7 7 14ZM3 28h26v3H3Z\"></path>",
+              "badge": ""
+            }
+          ]
+        },
+        {
+          "kind": "simple",
+          "id": "strike",
+          "loaded": 480,
+          "rail": [
+            {
+              "id": "camp:physical",
+              "label": "Physical",
+              "svg": "<path d=\"M16 2 29 7v10c0 7-13 14-13 14S3 24 3 17V7Zm-2 8v8H8v4h16v-4h-6v-8Z\"></path>",
+              "badge": ""
+            }
+          ]
+        }
+      ],
+      "spellPaths": [
+        "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+        "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z"
+      ],
+      "overflow": false
+    },
+    {
+      "device": "phone",
+      "screen": "hand-legacy",
+      "cards": [
+        {
+          "kind": "official",
+          "id": "starstonePebble",
+          "loaded": 480,
+          "rail": [
+            {
+              "id": "camp:spell",
+              "label": "Spell",
+              "svg": "<path d=\"m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z\"></path>",
+              "badge": ""
+            },
+            {
+              "id": "damage:blunt",
+              "label": "Blunt",
+              "svg": "<path d=\"M5 2h22v12H5Zm8 14h6v15h-6Z\"></path>",
+              "badge": ""
+            },
+            {
+              "id": "status:starstoneCharge",
+              "label": "Starstone Charge 1",
+              "svg": "<path d=\"m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z\"></path>",
+              "badge": "1"
+            }
+          ]
+        },
+        {
+          "kind": "official",
+          "id": "attune",
+          "loaded": 480,
+          "rail": [
+            {
+              "id": "camp:spell",
+              "label": "Spell",
+              "svg": "<path d=\"m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z\"></path>",
+              "badge": ""
+            },
+            {
+              "id": "school:alteration",
+              "label": "Alteration",
+              "svg": "<path d=\"m1 25 10-20 8 13 5-7 7 14ZM3 28h26v3H3Z\"></path>",
+              "badge": ""
+            }
+          ]
+        },
+        {
+          "kind": "official",
+          "id": "starSpark",
+          "loaded": 480,
+          "rail": [
+            {
+              "id": "camp:spell",
+              "label": "Spell",
+              "svg": "<path d=\"m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z\"></path>",
+              "badge": ""
+            },
+            {
+              "id": "damage:piercing",
+              "label": "Piercing",
+              "svg": "<path d=\"m28 1 3 3-9 16-4-4ZM15 13l10 10-3 3-10-10ZM4 25l10-10 4 4L8 29H4Z\"></path>",
+              "badge": ""
+            },
+            {
+              "id": "status:weak",
+              "label": "Weak",
+              "svg": "<path d=\"M18 1 3 19h11l-2 12L30 12H18l4-11Z\"></path>",
+              "badge": ""
+            },
+            {
+              "id": "status:starstoneCharge",
+              "label": "Starstone Charge 1",
+              "svg": "<path d=\"m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z\"></path>",
+              "badge": "1"
+            },
+            {
+              "id": "status:paralysis",
+              "label": "Paralysis",
+              "svg": "<path d=\"m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z\"></path>",
+              "badge": ""
+            }
+          ]
+        },
+        {
+          "kind": "official",
+          "id": "defend",
+          "loaded": 480,
+          "rail": [
+            {
+              "id": "camp:spell",
+              "label": "Spell",
+              "svg": "<path d=\"m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z\"></path>",
+              "badge": ""
+            },
+            {
+              "id": "school:alteration",
+              "label": "Alteration",
+              "svg": "<path d=\"m1 25 10-20 8 13 5-7 7 14ZM3 28h26v3H3Z\"></path>",
+              "badge": ""
+            }
+          ]
+        },
+        {
+          "kind": "official",
+          "id": "strike",
+          "loaded": 480,
+          "rail": [
+            {
+              "id": "camp:physical",
+              "label": "Physical",
+              "svg": "<path d=\"M16 2 29 7v10c0 7-13 14-13 14S3 24 3 17V7Zm-2 8v8H8v4h16v-4h-6v-8Z\"></path>",
+              "badge": ""
+            }
+          ]
+        }
+      ],
+      "spellPaths": [
+        "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+        "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z"
+      ],
+      "overflow": false
+    },
+    {
+      "device": "phone",
+      "screen": "deck",
+      "expanded": {
+        "cards": [
+          {
+            "kind": "simple",
+            "id": "strike",
+            "loaded": 480,
+            "rail": [
+              {
+                "id": "camp:spell",
+                "label": "Spell",
+                "svg": "<path d=\"m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z\"></path>",
+                "badge": ""
+              },
+              {
+                "id": "damage:arcane",
+                "label": "Force",
+                "svg": "<path d=\"M16 2 30 16 16 30 2 16Zm0 6-8 8 8 8 8-8Z\"></path><circle cx=\"16\" cy=\"16\" r=\"4\"></circle>",
+                "badge": ""
+              }
+            ]
+          }
+        ],
+        "spellPaths": [
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z",
+          "m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z"
+        ],
+        "overflow": false
+      },
+      "thumbnails": 19,
+      "simple": 16,
+      "missing": 0,
+      "overflow": false
+    }
+  ],
+  "errors": []
+}
