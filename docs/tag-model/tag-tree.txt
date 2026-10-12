@@ -618,12 +618,7 @@ classification
   strike
   guard
   weaponArt
-  class {What a class is. Every object in the class collection carries this, and nothing outside it may.}
-  relic {What a relic is. Every object in the relic collection carries this, and nothing outside it may.}
-  flask {What a flask is. Every object in the flask collection carries this, and nothing outside it may.}
   keepsake {What a keepsake is. Every object in the keepsake collection carries this, and nothing outside it may.}
-  event {What a event is. Every object in the event collection carries this, and nothing outside it may.}
-  encounter {What a encounter is. Every object in the encounter collection carries this, and nothing outside it may.}
   enemy {What a enemy is. Every object in the enemy collection carries this, and nothing outside it may.}
   armament {What a armament is. Every object in the armament collection carries this, and nothing outside it may.}
   armour {What a armour is. Every object in the armour collection carries this, and nothing outside it may.}
@@ -633,7 +628,6 @@ classification
   unlock {What a unlock is. Every object in the unlock collection carries this, and nothing outside it may.}
   companion {What a companion is. Every object in the companion collection carries this, and nothing outside it may.}
   sigil {What a sigil is. Every object in the sigil collection carries this, and nothing outside it may.}
-  feat {A selected class progression feat.}
   enemyMove {A scoped action in an enemy move table.}
 Theme {Build synergies; tags alone grant no effects.}
   Class stance [m] {card skill; holds a stance until changed}

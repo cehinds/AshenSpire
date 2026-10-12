@@ -1,7 +1,7 @@
 id,key,label,parent,erd,school,description,effect,variables,duration,stacking,related,status,glyph,color,liveId
 meta,meta,Meta,,TagNode,,,,,,,,game-concept,,,
 meta.character,character,Character,meta,Character,,,,,,,,game-concept,,,
-meta.character.class,character.class,Class,meta.character,Class,,,,,,,,game-concept,,,
+meta.character.class,character.class,Class,meta.character,Class,,,,,,,,live-tag,,,classification.class
 meta.character.class.warrior,warrior,Warrior,meta.character.class,Class,,Reaver,,,,,,game-concept,,,
 meta.character.class.scoundrel,scoundrel,Scoundrel,meta.character.class,Class,,Rogue,,,,,,game-concept,,,
 meta.character.class.monk,monk,Monk,meta.character.class,Class,,Herald,,,,,,game-concept,,,
@@ -97,7 +97,7 @@ meta.character.armor.slot.body,body,Body,meta.character.armor.slot,Armor,,,,,,,,
 meta.character.armor.slot.hands,hands,Hands,meta.character.armor.slot,Armor,,,,,,,,game-concept,,,
 meta.character.armor.slot.feet,feet,Feet,meta.character.armor.slot,Armor,,,,,,,,game-concept,,,
 meta.character.armor.slot.talisman,talisman,Talisman,meta.character.armor.slot,Armor,,,,,,,,game-concept,,,
-meta.character.relic,character.relic,Relic,meta.character,Relic,,,,,,,,game-concept,,,
+meta.character.relic,character.relic,Relic,meta.character,Relic,,,,,,,,live-tag,,,classification.relic
 meta.character.relic.rarity,relic.rarity,Rarity,meta.character.relic,Relic,,,,,,,,game-concept,,,
 meta.character.relic.rarity.starter,relic.rarity.starter,Starter,meta.character.relic.rarity,Relic,,,,,,,,game-concept,,,
 meta.character.relic.rarity.common,relic.rarity.common,Common,meta.character.relic.rarity,Relic,,,,,,,,game-concept,,,
@@ -112,12 +112,12 @@ meta.character.relic.trigger.on-play,on-play,On play,meta.character.relic.trigge
 meta.character.relic.trigger.on-hit,on-hit,On hit,meta.character.relic.trigger,Relic,,,,,,,,new,,,
 meta.character.relic.trigger.on-kill,on-kill,On kill,meta.character.relic.trigger,Relic,,,,,,,,new,,,
 meta.character.relic.trigger.passive,passive,Passive,meta.character.relic.trigger,Relic,,,,,,,,game-concept,,,
-meta.character.feat,character.feat,Feat,meta.character,Feat,,,,,,,,game-concept,,,
+meta.character.feat,feat,Feat,meta.character,Feat,,,,,,,,live-tag,,,classification.feat
 meta.character.feat.class-feat,class-feat,Class feat,meta.character.feat,Feat,,,,,,,,game-concept,,,
 meta.character.feat.skill-feat,skill-feat,Skill feat,meta.character.feat,Feat,,,,,,,,game-concept,,,
 meta.character.feat.ability,ability,Ability,meta.character.feat,Feat,,,,,,,,game-concept,,,
 meta.character.consumable,character.consumable,Consumable,meta.character,Consumable,,,,,,,,game-concept,,,
-meta.character.consumable.flask,consumable.flask,Flask,meta.character.consumable,Consumable,,"HP, MP",,,,,,game-concept,,,
+meta.character.consumable.flask,flask,Flask,meta.character.consumable,Consumable,,"HP, MP",,,,,,live-tag,,,classification.flask
 meta.character.consumable.potion,potion,Potion,meta.character.consumable,Consumable,,,,,,,,game-concept,,,
 meta.character.consumable.throwable,throwable,Throwable,meta.character.consumable,Consumable,,,,,,,,new,,,
 meta.character.consumable.buff-item,buff-item,Buff item,meta.character.consumable,Consumable,,,,,,,,new,,,
@@ -143,8 +143,8 @@ meta.character.other.location.shrine,shrine,Shrine,meta.character.other.location
 meta.character.other.location.camp,location.camp,Camp,meta.character.other.location,Location,,,,,,,,game-concept,,,
 meta.character.other.location.inn,inn,Inn,meta.character.other.location,Location,,,,,,,,game-concept,,,
 meta.character.other.location.chapel,chapel,Chapel,meta.character.other.location,Location,,,,,,,,game-concept,,,
-meta.character.other.location.event,location.event,Event,meta.character.other.location,Location,,,,,,,,game-concept,,,
-meta.character.other.location.encounter,location.encounter,Encounter,meta.character.other.location,Location,,,,,,,,game-concept,,,
+meta.character.other.location.event,location.event,Event,meta.character.other.location,Location,,,,,,,,live-tag,,,classification.event
+meta.character.other.location.encounter,encounter,Encounter,meta.character.other.location,Location,,,,,,,,live-tag,,,classification.encounter
 meta.combat,meta.combat,Combat,meta,TagNode,,,,,,,,game-concept,,,
 meta.combat.skill,combat.skill,Skill,meta.combat,Skill,,,,,,,,game-concept,,,
 meta.combat.skill.weapon-skill,weapon-skill,Weapon skill,meta.combat.skill,Skill,,deals physical damage,,,,,,game-concept,,,
@@ -404,12 +404,7 @@ card.type.attack,type.attack,Attack,card.type,TagNode,,,,,,,,live-tag,,,classifi
 classification.strike,classification.strike,strike,classification,TagNode,,,,,,,,live-tag,,,classification.strike
 classification.guard,classification.guard,guard,classification,TagNode,,,,,,,,live-tag,,,classification.guard
 classification.weaponArt,weaponArt,weaponArt,classification,TagNode,,,,,,,,live-tag,,,classification.weaponArt
-classification.class,classification.class,class,classification,TagNode,,"What a class is. Every object in the class collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.class
-classification.relic,classification.relic,relic,classification,TagNode,,"What a relic is. Every object in the relic collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.relic
-classification.flask,classification.flask,flask,classification,TagNode,,"What a flask is. Every object in the flask collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.flask
 classification.keepsake,keepsake,keepsake,classification,TagNode,,"What a keepsake is. Every object in the keepsake collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.keepsake
-classification.event,classification.event,event,classification,TagNode,,"What a event is. Every object in the event collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.event
-classification.encounter,classification.encounter,encounter,classification,TagNode,,"What a encounter is. Every object in the encounter collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.encounter
 classification.enemy,classification.enemy,enemy,classification,TagNode,,"What a enemy is. Every object in the enemy collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.enemy
 classification.armament,armament,armament,classification,TagNode,,"What a armament is. Every object in the armament collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.armament
 classification.armour,armour,armour,classification,TagNode,,"What a armour is. Every object in the armour collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.armour
@@ -419,7 +414,6 @@ classification.startingKit,startingKit,startingKit,classification,TagNode,,"What
 classification.unlock,unlock,unlock,classification,TagNode,,"What a unlock is. Every object in the unlock collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.unlock
 classification.companion,classification.companion,companion,classification,TagNode,,"What a companion is. Every object in the companion collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.companion
 classification.sigil,classification.sigil,sigil,classification,TagNode,,"What a sigil is. Every object in the sigil collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.sigil
-classification.feat,classification.feat,feat,classification,TagNode,,A selected class progression feat.,,,,,,live-tag,,,classification.feat
 classification.enemyMove,enemyMove,enemyMove,classification,TagNode,,A scoped action in an enemy move table.,,,,,,live-tag,,,classification.enemyMove
 meta.combat.camp,combat.camp,Combat camp,meta.combat,TagNode,,Authored combat identity shared by cards and enemy moves.,,,,,,live-tag,,,camp
 meta.combat.camp.physical,camp.physical,Physical,meta.combat.camp,TagNode,,Selects physical Guard or magical Ward combat rules.,,,,,,live-tag,⚔,D7B36B,camp:physical

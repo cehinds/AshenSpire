@@ -52,16 +52,28 @@ None: every live id is mapped by at most one tag.
 
 ## 3. Field parity
 
-78 differences.
+90 differences.
 
 | Model tag | Live id | Field | Model | Live |
 |---|---|---|---|---|
+| meta.character.class | classification.class | label | Class | class |
+| meta.character.class | classification.class | parent | meta.character | classification (mapped to classification) |
 | meta.character.weapon.off-hand.shield | item:shield | parent | meta.character.weapon.off-hand | itemType (mapped to itemType) |
 | meta.character.armor | item:armor | parent | meta.character | itemType (mapped to itemType) |
 | meta.character.armor.defensive-property.siphon | siphon | parent | meta.character.armor.defensive-property | property (mapped to property) |
 | meta.character.armor.defensive-property.insulated | trait:insulated | parent | meta.character.armor.defensive-property | trait (mapped to trait) |
 | meta.character.armor.defensive-property.grounded | trait:grounded | parent | meta.character.armor.defensive-property | trait (mapped to trait) |
+| meta.character.relic | classification.relic | label | Relic | relic |
+| meta.character.relic | classification.relic | parent | meta.character | classification (mapped to classification) |
+| meta.character.feat | classification.feat | label | Feat | feat |
+| meta.character.feat | classification.feat | parent | meta.character | classification (mapped to classification) |
+| meta.character.consumable.flask | classification.flask | label | Flask | flask |
+| meta.character.consumable.flask | classification.flask | parent | meta.character.consumable | classification (mapped to classification) |
 | meta.character.creature | creature | parent | meta.character | (live root) |
+| meta.character.other.location.event | classification.event | label | Event | event |
+| meta.character.other.location.event | classification.event | parent | meta.character.other.location | classification (mapped to classification) |
+| meta.character.other.location.encounter | classification.encounter | label | Encounter | encounter |
+| meta.character.other.location.encounter | classification.encounter | parent | meta.character.other.location | classification (mapped to classification) |
 | meta.combat.skill.weapon-skill.blade | blade | parent | meta.combat.skill.weapon-skill | card (mapped to card) |
 | meta.combat.skill.weapon-skill.bow | bow | parent | meta.combat.skill.weapon-skill | card (mapped to card) |
 | meta.combat.skill.technique | technique | parent | meta.combat.skill | (live root) |
