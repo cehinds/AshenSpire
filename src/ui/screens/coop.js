@@ -25,7 +25,7 @@ import { openUpcastChoice } from '../components/upcastChoice.js';
 import { wireCoopUpcastControl } from '../components/coopUpcastControl.js';
 import { controlGate } from '../../engine/combatStatusControl.js';
 import { openDiscardChoiceModal } from '../components/discardChoiceModal.js';
-import { openReactionChoiceModal } from '../components/reactionChoiceModal.js';
+import { openReactionChoiceModal, committedReactionStack } from '../components/reactionChoiceModal.js';
 import { combatEffectForEvent, decorateCombatEffects, combatEffectReceipt, presentationTargetIds } from '../../model/combatEffectEvents.js';
 import { statureFor } from '../components/stature.js';
 import { combatEffectAngle } from '../combatEffectDirection.js';
@@ -1158,7 +1158,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     const ownerId = owner.id;
     reactionOfferId = owner.pendingReaction.id;
     if (me !== ownerId) { seatIdx = seats.indexOf(ownerId); me = ownerId; }
-    reactionShell = openReactionChoiceModal({ pending: owner.pendingReaction,
+    const stack = committedReactionStack(sc.reactionStack, owner.pendingReaction.groupKey)
+      .map((entry) => ({ name: registries.cards.get(entry.cardId)?.name || entry.cardId, cardInstanceId: entry.cardInstanceId }));
+    reactionShell = openReactionChoiceModal({ pending: owner.pendingReaction, stack,
       onClosed: () => { reactionShell = null; reactionOfferId = null; },
       onAnswer: intent => {
         if (!disposed && me === ownerId && latestWireSnap?.scene?.reactionWaiting?.id === intent.offerId)
@@ -1445,6 +1447,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         } else el.addEventListener('click', play);
       },
     });
+    const stackedIds = new Set((sc.reactionStack?.entries || []).map((entry) => entry.cardInstanceId));
     if (meP && meP.alive && meP.connected) {
       handStrip.render({
         cards: meP.hand.map((c) => {
@@ -1465,6 +1468,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
             def, name: def.name, affordable, reason,
             preview: costs.preview,
             selected: c.instanceId === armedFriendlyCard,
+            stacked: stackedIds.has(c.instanceId),
           };
         }),
       });
