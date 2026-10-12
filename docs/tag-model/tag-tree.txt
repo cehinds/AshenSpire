@@ -416,6 +416,13 @@ Meta
       Turn skip [n]
       Stance change [n]
       Intent reveal / conceal [n]
+    Attack source {Source profile supplying an attack; separate from damage type.}
+      Weapon {Categorized Weapon identity; effects are authored separately.}
+      Spell {Categorized Spell identity; effects are authored separately.}
+      Unarmed {Categorized Unarmed identity; effects are authored separately.}
+    Combat camp {Authored combat identity shared by cards and enemy moves.}
+      Physical {Selects physical Guard or magical Ward combat rules.}
+      Spell {Selects physical Guard or magical Ward combat rules.}
   Presentation [n] {Presentation layer: how the game looks and reads. Carries no gameplay identity.}
     Combat presentation {Sprite selection only; never damage or resistance identity.}
       blade {blade visual identity; no combat modifier.}
@@ -612,10 +619,6 @@ Card
   Ranged {Authored ranged presentation; no position system.}
   Precision {Deliberate aim and finesse; presentation only.}
   Extractable {A smith can lift this card out of the item that lends it, and seat it in another item's mount. Strikes and defends do not carry it — today.}
-Attack source {Source profile supplying an attack; separate from damage type.}
-  Weapon {Categorized Weapon identity; effects are authored separately.}
-  Spell {Categorized Spell identity; effects are authored separately.}
-  Unarmed {Categorized Unarmed identity; effects are authored separately.}
 classification {Grouping node for classification in nodes.csv.}
   strike {Grouping node for strike in nodes.csv.}
   guard {Grouping node for guard in nodes.csv.}
@@ -637,9 +640,6 @@ classification {Grouping node for classification in nodes.csv.}
   sigil {What a sigil is. Every object in the sigil collection carries this, and nothing outside it may.}
   feat {A selected class progression feat.}
   enemyMove {A scoped action in an enemy move table.}
-Combat camp {Authored combat identity shared by cards and enemy moves.}
-  Physical {Selects physical Guard or magical Ward combat rules.}
-  Spell {Selects physical Guard or magical Ward combat rules.}
 Theme {Build synergies; tags alone grant no effects.}
   Blood {Categorized Blood identity; effects are authored separately.}
   Blight {Categorized Blight identity; effects are authored separately.}

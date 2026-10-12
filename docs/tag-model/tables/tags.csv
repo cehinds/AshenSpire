@@ -140,7 +140,7 @@ meta.character.creature.rank.boss,rank.boss,Boss,meta.character.creature.rank,Cr
 meta.character.other,character.other,Other,meta.character,Character,,,,,,,,game-concept,,,
 meta.character.other.location,location,Location,meta.character.other,Location,,,,,,,,game-concept,,,
 meta.character.other.location.shrine,shrine,Shrine,meta.character.other.location,Location,,,,,,,,game-concept,,,
-meta.character.other.location.camp,camp,Camp,meta.character.other.location,Location,,,,,,,,game-concept,,,
+meta.character.other.location.camp,location.camp,Camp,meta.character.other.location,Location,,,,,,,,game-concept,,,
 meta.character.other.location.inn,inn,Inn,meta.character.other.location,Location,,,,,,,,game-concept,,,
 meta.character.other.location.chapel,chapel,Chapel,meta.character.other.location,Location,,,,,,,,game-concept,,,
 meta.character.other.location.event,location.event,Event,meta.character.other.location,Location,,,,,,,,game-concept,,,
@@ -394,10 +394,10 @@ card.upgrade,card.upgrade,Upgrade,card,Card,,,,,,,,game-concept,,,
 card.upgrade.base,base,Base,card.upgrade,Card,,,,,,,,game-concept,,,
 card.upgrade.upgraded,upgraded,Upgraded,card.upgrade,Card,,,,,,,,live-tag,,,internal.upgraded
 card.character-card,character-card,Character card,card,Card,,class-bound,,,,,,game-concept,,,
-attackSource,attackSource,Attack source,,TagNode,,Source profile supplying an attack; separate from damage type.,,,,,,live-tag,,,attackSource
-attackSource.weapon,attackSource.weapon,Weapon,attackSource,TagNode,,Categorized Weapon identity; effects are authored separately.,,,,,,live-tag,◇,9FC3E8,source:weapon
-attackSource.spell,attackSource.spell,Spell,attackSource,TagNode,,Categorized Spell identity; effects are authored separately.,,,,,,live-tag,◇,9FC3E8,source:spell
-attackSource.unarmed,attackSource.unarmed,Unarmed,attackSource,TagNode,,Categorized Unarmed identity; effects are authored separately.,,,,,,live-tag,◇,9FC3E8,source:unarmed
+meta.combat.attack-source,attack-source,Attack source,meta.combat,TagNode,,Source profile supplying an attack; separate from damage type.,,,,,,live-tag,,,attackSource
+meta.combat.attack-source.weapon,attack-source.weapon,Weapon,meta.combat.attack-source,TagNode,,Categorized Weapon identity; effects are authored separately.,,,,,,live-tag,◇,9FC3E8,source:weapon
+meta.combat.attack-source.spell,attack-source.spell,Spell,meta.combat.attack-source,TagNode,,Categorized Spell identity; effects are authored separately.,,,,,,live-tag,◇,9FC3E8,source:spell
+meta.combat.attack-source.unarmed,attack-source.unarmed,Unarmed,meta.combat.attack-source,TagNode,,Categorized Unarmed identity; effects are authored separately.,,,,,,live-tag,◇,9FC3E8,source:unarmed
 meta.combat.delivery.projectile,delivery.projectile,Projectile,meta.combat.delivery,TagNode,,Categorized Projectile identity; effects are authored separately.,,,,,,live-tag,◇,9FC3E8,delivery:projectile
 classification,classification,classification,,TagNode,,Grouping node for classification in nodes.csv.,,,,,,live-tag,,,classification
 card.type.attack,type.attack,Attack,card.type,TagNode,,Grouping node for attack in nodes.csv.,,,,,,live-tag,,,classification.attack
@@ -421,9 +421,9 @@ classification.companion,classification.companion,companion,classification,TagNo
 classification.sigil,classification.sigil,sigil,classification,TagNode,,"What a sigil is. Every object in the sigil collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.sigil
 classification.feat,classification.feat,feat,classification,TagNode,,A selected class progression feat.,,,,,,live-tag,,,classification.feat
 classification.enemyMove,enemyMove,enemyMove,classification,TagNode,,A scoped action in an enemy move table.,,,,,,live-tag,,,classification.enemyMove
-campRoot,campRoot,Combat camp,,TagNode,,Authored combat identity shared by cards and enemy moves.,,,,,,live-tag,,,camp
-campRoot.physical,campRoot.physical,Physical,campRoot,TagNode,,Selects physical Guard or magical Ward combat rules.,,,,,,live-tag,⚔,D7B36B,camp:physical
-campRoot.spell,campRoot.spell,Spell,campRoot,TagNode,,Selects physical Guard or magical Ward combat rules.,,,,,,live-tag,✦,9FC3E8,camp:spell
+meta.combat.camp,combat.camp,Combat camp,meta.combat,TagNode,,Authored combat identity shared by cards and enemy moves.,,,,,,live-tag,,,camp
+meta.combat.camp.physical,camp.physical,Physical,meta.combat.camp,TagNode,,Selects physical Guard or magical Ward combat rules.,,,,,,live-tag,⚔,D7B36B,camp:physical
+meta.combat.camp.spell,camp.spell,Spell,meta.combat.camp,TagNode,,Selects physical Guard or magical Ward combat rules.,,,,,,live-tag,✦,9FC3E8,camp:spell
 meta.presentation.fx,fx,Combat presentation,meta.presentation,TagNode,,Sprite selection only; never damage or resistance identity.,,,,,,live-tag,,,presentation
 meta.presentation.fx.blade,fx.blade,blade,meta.presentation.fx,TagNode,,blade visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:blade
 meta.presentation.fx.guard,fx.guard,guard,meta.presentation.fx,TagNode,,guard visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:guard
