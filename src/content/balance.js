@@ -589,15 +589,18 @@ export const balance = {
     // Herald and Starseer meet them more naturally. Within a rarity, a card
     // tagged damage:<element> for one of the class's elements weighs
     // offerWeightMult times a plain card in that class's card rewards.
-    // startingSpellChance is reserved for the starting-spell roll, which awaits
-    // the owner's choice of design; nothing reads it yet.
+    // startingChoice: the affinity classes may pick up to maxPicks of these
+    // element spells as one of their selectable starting spells at character
+    // creation (owner decision 13, 2026-10-12). Only classless attack cards whose
+    // attack.source is `source` and rarity is listed qualify; the picker is
+    // src/model/startingAbilities.js. Skills (Stoneskin, Dissonance) are not spells.
     elementAffinity: {
       classes: { herald: ['psychic', 'earth'], starseer: ['psychic', 'earth'] },
       offerWeightMult: 2,
-      startingSpellChance: 0.25,
+      startingChoice: { maxPicks: 1, source: 'spell', rarities: ['common', 'uncommon'] },
       [NOTE]: {
         offerWeightMult: 'How many times likelier an affinity-element card is to be picked, within its rarity, in this class\'s card rewards.',
-        startingSpellChance: 'Chance (0 to 1) that a new run for an affinity class starts with one element spell in place of a basic card.',
+        startingChoice: 'Element spells an affinity class may pick among its starting spells at character creation: at most maxPicks of them, from classless attack cards of this source and these rarities.',
       },
     },
     // Decaying flask drop (StS potion rule): −step on drop, +step on miss.

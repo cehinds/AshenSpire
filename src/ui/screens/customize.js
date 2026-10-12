@@ -1020,7 +1020,7 @@ export function mountCustomize(app, {
         // Requirements can change while an earlier equipment fold is open.
         state.startingAbilityIds = state.startingAbilityIds.filter(id => section.choices.some(card => card.id === id));
         for (const card of section.choices) {
-          const face = renderCard(registries, { cardId: card.id, abilityRank: section.rank });
+          const face = renderCard(registries, section.elementIds.includes(card.id) ? { cardId: card.id } : { cardId: card.id, abilityRank: section.rank });
           const choose = button({ label: t('creation.abilities.choose'), weight: 'secondary', className: 'cc-ability-choose' });
           choose.setAttribute('aria-label', t('creation.abilities.chooseLabel', { name: card.name }));
           const select = () => {
