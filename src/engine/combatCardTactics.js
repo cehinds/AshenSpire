@@ -1,5 +1,6 @@
 import { combatProfileFor } from '../model/combatCardProfile.js';
-import { evaluate } from '../model/formulas.js';
+import { evaluate, isFormula } from '../model/formulas.js';
+import { counterstrikeAmount, counterstrikePct, hasStanceAdvantage, stanceManeuverOf } from './combatCardTraitMath.js';
 import { evalPredicate } from './triggers.js';
 import { cardRatingBonus } from './combatRatings.js';
 import { armCombatCounter, matchupRules, combatExpansionEnabled, setCombatStance, prepareCombatEvade } from './combatMatchups.js';
@@ -81,6 +82,42 @@ function counterNumbers(ctx, source, target, carrier, effects, meta) {
   return combatExpansionEnabled(ctx) ? { damage, poiseDamage, wardDamage } : { damage, poiseDamage };
 }
 
+// Effect ops whose `amount` Counterstrike scales (docs/combat-card-traits-contract.md).
+const COUNTERSTRIKE_AMOUNT_OPS = ['damage', 'block', 'gainBarrier', 'poiseDamage', 'wardDamage', 'gainPoise', 'gainWard', 'heal', 'buildup'];
+
+// The enemy a Counterstrike card answers: the chosen enemy target, else the
+// incoming attacker of the reaction in progress, else none.
+function counterstrikeTarget(ctx, target) {
+  if (target?.kind === 'enemy') return target;
+  const id = ctx._reactionSourceId;
+  return id == null ? null : (ctx.enemies || []).find(enemy => enemy.id === id) || null;
+}
+
+/**
+ * Reaction rules v2: a played card carrying traitValues.counterstrike scales its
+ * effect amounts on a per-play copy. Counter cards are left to their return payload.
+ */
+function counterstrikeEffects(ctx, source, target, carrier, effects, arm) {
+  if (ctx.reactionRulesVersion !== 2 || carrier.traitValues?.counterstrike !== true) return effects;
+  const cardManeuver = carrier.combatProfile?.maneuver || null;
+  const setStance = arm && cardManeuver && carrier.combatProfile.stanceTrigger !== false;
+  const playerManeuver = setStance ? cardManeuver : stanceManeuverOf(source);
+  const enemy = counterstrikeTarget(ctx, target);
+  const targetManeuver = enemy ? stanceManeuverOf(enemy) : null;
+  const pct = counterstrikePct(ctx, playerManeuver, targetManeuver);
+  const advantaged = hasStanceAdvantage(ctx, playerManeuver, targetManeuver);
+  carrier.counterstrikePct = pct;
+  ctx.emit?.('combatCounterstrikeApplied', { cardId: carrier.cardId, pct, advantaged });
+  const scaled = effects.map(effect => {
+    if (!COUNTERSTRIKE_AMOUNT_OPS.includes(effect.op) || effect.amount === undefined) return effect;
+    const amount = isFormula(effect.amount)
+      ? { f: 'traitBonus', base: effect.amount, pct }
+      : counterstrikeAmount(effect.amount, pct);
+    return { ...effect, amount };
+  });
+  return scaled;
+}
+
 /** Counter keeps support actions, postponing its printed damage to retaliation. */
 export function prepareTacticalCard(ctx, source, target, carrier, effects, meta = {}, { arm = true, damageBonus = 0, poiseBonus = 0 } = {}) {
   // Feats may inject an application after the printed face was snapshotted.
@@ -92,7 +129,7 @@ export function prepareTacticalCard(ctx, source, target, carrier, effects, meta 
     setCombatStance(ctx, source, carrier);
     if (carrier.combatProfile?.evade) prepareCombatEvade(ctx, source, carrier.combatProfile.evade);
   }
-  if (carrier.combatProfile?.maneuver !== 'counter') return effects;
+  if (carrier.combatProfile?.maneuver !== 'counter') return counterstrikeEffects(ctx, source, target, carrier, effects, arm);
   const rules = matchupRules(ctx).counter;
   if (arm) {
     const numbers = counterNumbers(ctx, source, target, carrier, effects, meta);
