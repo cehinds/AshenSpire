@@ -47,6 +47,7 @@ import { reviveTokenFor, reviveHp, adjustCount } from '../model/consumables.js';
 import { reconcileWardBlock, wardBlockReceipt } from '../model/blockPresentation.js';
 import { allowAbilityOnce, grantAbilityCharge, recordAbilityOffering, requestAbilityDiscard } from './abilityRiders.js';
 import * as Matchups from './combatMatchups.js';
+import { typedDefenseAmount } from './combatExpansionEquipment.js';
 import { creditKnowledgeImpact } from './enemyKnowledge.js';
 
 import * as Expanded from './combatExpansionActions.js';
@@ -287,8 +288,7 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
       amount = Math.max(0, Math.floor(total * (camp === 'spell' ? 1 : ratingDamageMultiplier(ctx, target, false))
         * (Number.isFinite(resistance) ? Math.max(0, 1 - resistance / 100) : 1)));
     }
-    amount = Math.max(0, Math.ceil(amount * (1 + Math.max(0, target.damageWeaknessPercent?.[type] || 0) / 100))
-      - Math.max(0, target.damageResistanceFlat?.[type] || 0));
+    amount = typedDefenseAmount(target, type, amount);
     const shares = total > 0 ? allocateInteger(amount, indices[key].map(index => receipt.amounts[index])) : indices[key].map(() => 0);
     indices[key].forEach((index, i) => { receipt.defendedAmounts[index] = shares[i]; });
   }

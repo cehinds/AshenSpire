@@ -1073,6 +1073,8 @@ Riders resolve once per committed root action (player card or enemy move) and ta
 | Holy | After HP loss, cleanse one stack from the attacker's first eligible hostile status in configured priority order |
 | Necrotic | Apply 1 Necrotic Blight after HP loss; unlike Crimson Blight (3 turns) it lasts the rest of the fight (§4.4), and Holy cleanses remove it. This is combat status buildup, not persistent run corruption |
 
+**Enemy elemental resist** (owner, 2026-10-12). Under version 2 an enemy row in `combatExpansionEquipment.enemies` may carry a `resist` map beside `weak`, in percent (tiers 25 minor and 50 major, capped at 75 like armour resistances). Every damage path (live hit, foundation components, preview; solo and co-op) applies one line per damage type: `amount = max(0, ceil(total × (1 + weak/100) × (1 − resist/100)) − flat)`. One row never both resists and is weak to the same type; the validator refuses it. A few enemies (about 10 to 15%) resist an element, so a mono-element deck is dented, never walled.
+
 All tactical numbers remain authored/configurable; their defaults above establish the initial balance. Existing status thresholds, resistances and decay remain unchanged. Existing damage, source, delivery and theme tags retain their separate identities.
 
 **Intent visibility and persistence**
