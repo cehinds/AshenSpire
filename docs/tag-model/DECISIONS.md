@@ -272,33 +272,43 @@ Formula, relation and value keys follow the README conventions.
 - **Couldn't place:** the damage-type placement question below still stands.
   It concerns which tree holds damage types as a whole, not these two sets.
 
-## 14. Relics, companions, sigils and feats are objects
+## 14. Relics, charms, companions, sigils and class feats are objects
 
 - **Date:** 2026-10-12 (owner).
-- **Decision:** each relic, companion, sigil and progression class feat is a row
-  in `tables/objects.csv`. Its `kind` is the object's family, and its `tags`
-  hold the classification tag key (`classification.relic`, `.companion`,
-  `.sigil` or `.feat`) and its property tag key. The property tags stay as the
-  effect handles, because the game keys effects by them. Ids and names are the
-  game's own (`relics.js`, `progression/relics.js`, `companions.js`,
-  `sigils.js`, `progression/feats.js`). Descriptions are the game's text, not
-  written here: relic text is its `textTemplate` with its `{token}` placeholders
-  left as they are, companion and sigil text is its `blurb`, and feat text is
-  the `feat:*` blurb in `nodes.csv`.
-- **Tables changed:** `tables/objects.csv` gains 118 rows: 59 relic, 2
-  companion, 7 sigil and 50 feat, one commit per kind. `tags.csv` is not
-  touched.
-- **Couldn't place:**
-  - Charms (`kindlingCharm`, `goldleafCharm`, `emberwickCharm`). No
-    `classification.charm` exists in `nodes.csv`, and `tagging.csv` classes them
-    as relics. Not added. Owner to say whether charm is a kind with its own
-    classification tag, or a relic.
-  - Eleven relics with no property node in `nodes.csv`: `cinderPouch`,
-    `feralEye`, `crackedTear`, `sealstoneKey`, `emberFragment`,
-    `ancestralHorn`, `saltedRelic`, `wayfarersKnot`, `prismaticThorn`,
-    `restlessClasp`, `paupersDiadem`. Not added.
-  - Twenty class feats in `classSkillFeats.js` (`reaver*`, `starseer*`,
-    `rogue*`, `herald*`). They carry no property tag in `tagging.csv`. Not added.
+- **Decision:** each relic, charm, companion, sigil and class feat is a row in
+  `tables/objects.csv`. Its `kind` is the object's family. Its `tags` hold the
+  classification tag key, and its property tag key where it has one. The
+  property tags stay as the effect handles, because the game keys effects by
+  them. Ids and names are the game's own (`relics.js`, `progression/relics.js`,
+  `companions.js`, `sigils.js`, `progression/feats.js`, `classSkillFeats.js`).
+  Classification tags are written with their current keys (for example
+  `character.relic` and `feat`), after the repoint on this branch.
+- **Owner rulings, 2026-10-12:**
+  - Charms are relics. `kindlingCharm`, `goldleafCharm` and `emberwickCharm`
+    are `kind` relic, with their own property tags.
+  - Relics with no property node are objects with only the relic classification
+    tag, and no effect tag. These are eleven: `cinderPouch`, `feralEye`,
+    `crackedTear`, `sealstoneKey`, `emberFragment`, `ancestralHorn`,
+    `saltedRelic`, `wayfarersKnot`, `prismaticThorn`, `restlessClasp` and
+    `paupersDiadem`.
+  - Class skill feats are objects with only the feat classification tag, and no
+    effect tag. These are the twenty `classSkillFeats.js` entries (`reaver*`,
+    `starseer*`, `rogue*`, `herald*`).
+- **Descriptions:** the game's own text, not written here.
+  - Relics: the `textTemplate`, with its `{token}` placeholders left in.
+  - Progression feats: the `feat:*` propertyRule `textTemplate`, which the game
+    renders with numbers filled in from balance (`classSkillFeatDescription.js`).
+    The `nodes.csv` blurb is a different wording for the same effect, so it is
+    not used. All fifty feat rows carry the template, with `{token}` placeholders
+    left in.
+  - Companions and sigils: their `blurb`.
+  - Class skill feats: their `description`.
+- **Tables changed:** `tables/objects.csv` gains 152 rows: 62 relic with a property tag (59
+  relics and 3 charms), 11 relic with no effect tag, 2 companion, 7
+  sigil, 50 feat, and 20 class skill feat with no effect tag. The feat
+  descriptions were corrected in a separate commit. `tags.csv` is not touched.
+- **Couldn't place:** none. The rows above cover every entry the game defines in
+  these five families.
 
 ## Open: round-trip differences
 
