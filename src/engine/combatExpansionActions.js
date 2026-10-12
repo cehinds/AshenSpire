@@ -7,6 +7,7 @@ import { combatProfileFor } from '../model/combatCardProfile.js';
 import { mountCombatCombo } from './combatExpansionCombos.js';
 import * as Matchups from './combatMatchups.js';
 import * as Control from './combatStatusControl.js';
+import { traitHitAmount } from './combatCardTraitMath.js';
 
 const keyOf = (ctx, entity) => ctx.playerIdForEntity?.(entity) || entity?.id;
 export function effectCarrier(carrier, effect) {
@@ -18,7 +19,7 @@ export function effectCarrier(carrier, effect) {
   return merged;
 }
 export function enqueueExpandedAction(ctx, actions, { source, target, carrier } = {}) {
-  if (ctx.combatExpansionVersion !== 2 || (carrier?.combatReaction && ctx.reactionRulesVersion !== 1)) {
+  if (ctx.combatExpansionVersion !== 2 || (carrier?.combatReaction && !(ctx.reactionRulesVersion >= 1))) {
     for (const action of actions) ctx.enqueue(action);
     return null;
   }
@@ -90,6 +91,8 @@ export function enqueueExpandedAction(ctx, actions, { source, target, carrier } 
   for (const action of actions) ctx.enqueue(action);
   ctx.enqueue({ effect: { op: 'completeCombatAction' }, source, owner: source, target, card: carrier,
     meta: { expansionGroup: group } });
+  // A reaction offer check reads the planned contacts of the card it tries (enemy reactions).
+  ctx._groupSink?.push(group);
   return group;
 }
 
@@ -161,5 +164,56 @@ export function completeExpandedAction(ctx, action) {
     Control.completeStatusAction(ctx, target, row.interactions || receipt.profile, { connected: receipt.connected,
       actionKey: group.key, damaging: receipt.amount > 0 });
   }
+  applyTraitImpact(ctx, action, group);
   ctx.pendingExpansionActions = Math.max(0, (ctx.pendingExpansionActions || 0) - 1);
+}
+
+// A target counts as hit when a damage contact connected (not avoided; a fully
+// blocked hit still connected), or, for a card with no damage contact, when a
+// status landed or its own Poise/Ward reached the target.
+function traitLanded(row, own) {
+  const receipt = row?.receipt;
+  if (receipt && row.contacts?.some(contact => !contact.effect)) return receipt.connected === true;
+  if (receipt?.statusAccepted > 0) return true;
+  return own.poiseDealt > 0 || own.wardDealt > 0;
+}
+
+/**
+ * Reaction rules version 2 (docs/combat-card-traits-contract.md, "Impact and
+ * Flux"): a completed card's Impact adds Poise and its Flux adds Ward, once per
+ * target that was hit. A card with its own Poise/Ward doubles it; otherwise N.
+ * A Power with Flux deals its Ward to every living enemy when played.
+ */
+export function applyTraitImpact(ctx, action, group) {
+  const carrier = group.carrier || {};
+  if (ctx.reactionRulesVersion !== 2 || carrier.combatReaction) return;
+  const impact = carrier.traitValues?.impact > 0 ? carrier.traitValues.impact : 0;
+  const flux = carrier.traitValues?.flux > 0 ? carrier.traitValues.flux : 0;
+  if (!impact && !flux) return;
+  const power = flux > 0 && carrier.type === 'power';
+  if (power) for (const enemy of ctx.enemies || []) {
+    if (!expansionTargetPresent(ctx, enemy)) continue;
+    dealTraitFlux(ctx, action, carrier, enemy, flux, false);
+  }
+  const keys = new Set([...Object.keys(group.targets), ...Object.keys(group.ownPressure || {})]);
+  for (const key of keys) {
+    const row = group.targets[key];
+    const own = group.ownPressure?.[key] || { poiseDealt: 0, wardDealt: 0 };
+    const target = expansionEntity(ctx, row || own);
+    if (!expansionTargetPresent(ctx, target) || !traitLanded(row, own)) continue;
+    if (impact) {
+      const amount = traitHitAmount(own.poiseDealt, impact);
+      Actions.dealPoiseDamage(ctx, target, amount);
+      ctx.emit?.('combatImpactApplied', { cardId: carrier.cardId, sourceId: action.source?.id, targetId: target.id,
+        ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(target) } : {}), amount, doubled: own.poiseDealt > 0 });
+    }
+    if (flux && !power) dealTraitFlux(ctx, action, carrier, target, traitHitAmount(own.wardDealt, flux), own.wardDealt > 0);
+  }
+}
+
+function dealTraitFlux(ctx, action, carrier, target, amount, doubled) {
+  if (!(amount > 0)) return;
+  Control.spendPersistentWard(ctx, target, amount, { sourceId: action.source?.id });
+  ctx.emit?.('combatFluxApplied', { cardId: carrier.cardId, sourceId: action.source?.id, targetId: target.id,
+    ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(target) } : {}), amount, doubled });
 }

@@ -52,7 +52,7 @@ test('expanded grade summaries retain added buildup together with authored limit
   assert.match(offering, /Offer 3 HP \(leave at least 1 HP\)/);
   assert.match(offering, /offerings paid at least 1 this turn/);
   assert.match(offering, /once per turn per family/);
-  assert.match(offering, /Add 3 Crimson Blight buildup/);
+  assert.match(offering, /Add 3 Necrotic Blight buildup/);
   const orbit = combatCardSummary(grade('progression-cinder-orbit'), null, reg);
   assert.match(orbit, /your previous card this turn was a Spell/);
   assert.match(orbit, /Add 4 Burn buildup/);

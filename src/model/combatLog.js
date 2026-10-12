@@ -51,7 +51,11 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
         text = `${source} played ${card}${event.upcastTier ? ` (Upcast ${event.upcastTier})` : ''} · ${costs.join(', ')}.`;
         break;
       }
-      case 'enemyMoveStarted': text = `${source} used ${word(event.moveId)}.`; break;
+      case 'enemyMoveStarted': {
+        const move = registries?.enemies?.get(event.enemyId)?.moves?.[event.moveId]?.name || word(event.moveId);
+        text = event.reaction ? `${source} reacts with ${move}.` : `${source} used ${word(event.moveId)}.`;
+        break;
+      }
       case 'combatCounterTriggered': text = `${source} counterattacked ${target}.`; break;
       case 'damageDealt': {
         const lost = Math.max(0, event.amount - (event.blocked || 0));

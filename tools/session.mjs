@@ -677,10 +677,15 @@ export function createSession({ registries, seedString, endless = false, restore
     // A boss scales by the tier it is met at instead (balance.bossTiers).
     const boss = bossTierScale(registries, { encounter: enc, tier: contentAct() });
     const extraHpMult = (1 + registries.balance.endless.hpPerLoop * loop) * (boss ? boss.hp : seatTierHpMult(registries, currentSeat(), contentAct()));
+    // Every living member counts, connected or not: a disconnected older seat may reconnect into this fight.
+    // Dead seats are excluded: they can never rejoin, so they must not hold the living party back.
+    const partyRuns = livingMembers().map(member => member.run);
+    const partyReactionRulesVersion = !partyRuns.length ? null : partyRuns.every(run => run.reactionRulesVersion >= 1) ? Math.min(...partyRuns.map(run => run.reactionRulesVersion)) : null;
     const combat = createCoopCombat({
       combatKey: `${session.seed}:${session.actNumber}:${session.cursorId}:${encounterId}`,
       combatExpansionVersion: connectedMembers().some(member => member.run.combatExpansionVersion === 2) ? 2 : 1,
-      reactionRulesVersion: connectedMembers().every(member => member.run.reactionRulesVersion === 1) ? 1 : null,
+      reactionRulesVersion: partyReactionRulesVersion,
+      reactionRules: livingMembers().find(member => member.run.reactionRulesVersion === partyReactionRulesVersion)?.run.reactionRules,
       combatExpansionRules: connectedMembers().find(member => member.run.combatExpansionVersion === 2)?.run.combatExpansionRules || null,
       breakMeterVersion: session.advancedConfigSnapshot?.breakMeterVersion,
       registries, rng,
@@ -806,7 +811,10 @@ export function createSession({ registries, seedString, endless = false, restore
       kind: 'combat',
       combatExpansionVersion: c.sharedExpansionVersion || 1,
       reactionRulesVersion: c.reactionRulesVersion,
+      ...(c.reactionRules ? { reactionRules: structuredClone(c.reactionRules) } : {}),
       reactionWaiting: c.pendingReaction ? { id: c.pendingReaction.id, ownerId: c.pendingReaction.ownerId } : null,
+      // Public: every seat sees what is already committed to the open root's stack.
+      ...(c.reactionStack ? { reactionStack: structuredClone(c.reactionStack) } : {}),
       combatExpansionRules: c.combatExpansionRules, combatStatusRules: c.combatStatusRules,
       ...([1, 2].includes(c.breakMeterVersion) ? { breakMeterVersion: c.breakMeterVersion } : {}),
       ...(c.combatMatchupRules ? { combatMatchupRules: structuredClone(c.combatMatchupRules) } : {}),
@@ -856,7 +864,7 @@ export function createSession({ registries, seedString, endless = false, restore
         statusControl: P.entity.statusControl, recoveryControls: recoveryControls({ ...c, combatExpansionVersion: P.entity.combatExpansionVersion || 1 }, P.entity),
         pendingAbilityDiscard: c.pendingAbilityDiscard || null,
         pendingReaction: c.pendingReaction?.ownerId === P.id ? structuredClone(c.pendingReaction) : null,
-        ...(c.reactionRulesVersion === 1 ? { reactionsEnabled: P.entity.reactionsEnabled !== false } : {}),
+        ...(c.reactionRulesVersion >= 1 ? { reactionsEnabled: P.entity.reactionsEnabled !== false } : {}),
         abilityRiders: P.entity.abilityRiders,
         id: P.id, classId: P.entity.classId, hp: P.entity.hp, maxHp: P.entity.maxHp, block: P.entity.block,
         ...(P.entity.wardBlock !== undefined ? { wardBlock: P.entity.wardBlock } : {}),

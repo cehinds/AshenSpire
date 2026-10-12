@@ -990,7 +990,7 @@ export function playTimeline(events, ctx, done) {
   // hold and a step after the swing.
   const sequentialMs = beatOrder === 'sequential'
     ? beats.filter((beat) => beat.kind === 'attack')
-      .reduce((ms, beat) => ms + speed.stanceLeadMs + beat.events.length * (speed.reactionMs + speed.stepMs), 0)
+      .reduce((ms, beat) => ms + speed.stanceLeadMs + beat.events.reduce((total,event)=>total + (Number(ctx.reactionTimingForReceipt?.(event,speed)) || speed.reactionMs) + speed.stepMs,0), 0)
     : 0;
   const budget = COMBAT_TIMING.watchdogBaseMs + sequentialMs + beats.length * (speed.beatMs + actorBudgetMs + 4 * speed.stepMs);
   const watchdog = setTimeout(() => {
@@ -1183,6 +1183,7 @@ export function playTimeline(events, ctx, done) {
           schedule(stepV, speed.stepMs + (held ? holdMs : 0));
           return;
         }
+        let reactionEndAt = 0;
         const applyBeat = () => {
           cueBeat(beatIndex);
           safe(() => playBeatCues(beat.events, { isLocalPlayer: ctx.isLocalPlayer, damageBuzz: !damageCued.has(beatIndex) }));
@@ -1192,7 +1193,7 @@ export function playTimeline(events, ctx, done) {
           cancelActorAnimation();
           safe(() => ctx.onBeatApplied && ctx.onBeatApplied(leadApplied ? { ...beat, events: beat.events.filter((e) => !lead.has(e)) } : beat));
           traceBeat('bars');
-          schedule(nextBeat, speed.beatMs);
+          schedule(nextBeat, Math.max(speed.beatMs,reactionEndAt-Date.now()));
         };
         // Sequential: once the attacker is back in its stance, each event's
         // reaction plays, then (reactionMs later) its numbers, in event order;
@@ -1236,7 +1237,7 @@ export function playTimeline(events, ctx, done) {
               // The bars follow in the next task, so the number is laid out
               // and painted before the beat's re-render, not after it.
               if (ri >= reactions.length) schedule(applyBeat, 0);
-              else schedule(stepR, speed.stepMs);
+              else schedule(stepR, Math.max(speed.stepMs,reactionEndAt-Date.now()));
             };
             // The callout shows with the reaction and waits for nothing.
             const said = () => {
@@ -1259,9 +1260,10 @@ export function playTimeline(events, ctx, done) {
             traceBeat('reaction', event.type);
             safe(() => parts.reaction(ctx));
             said();
+            reactionEndAt = Math.max(reactionEndAt,Date.now() + (Number(ctx.reactionTimingForReceipt?.(event,speed)) || speed.reactionMs));
             if (!parts.numbers) {
               if (ri >= reactions.length) schedule(applyBeat, speed.reactionMs);
-              else schedule(stepR, speed.reactionMs);
+              else schedule(stepR, Math.max(speed.reactionMs,reactionEndAt-Date.now()));
               return;
             }
             schedule(numbers, speed.reactionMs);

@@ -17,10 +17,10 @@ import { combatRules as combatRulesBundle } from '../src/content/combatRules.js'
 const drainQueue = combat => { while (combat.queue.length) executeAction(combat, combat.queue.shift()); };
 
 // magicShare (optional) stamps the pebble's own share: 1 makes the Ward tests below a magic hit, as they were written.
-function fixture(effects = [{ op: 'damage', target: 'enemy', amount: 5, hits: 2 }], { statuses = contentBundle.statuses, ruleset = null, magicShare = undefined } = {}) {
+function fixture(effects = [{ op: 'damage', target: 'enemy', amount: 5, hits: 2 }], { statuses = contentBundle.statuses, ruleset = null, magicShare = undefined, ...options } = {}) {
   const registries = createRegistries({ ...contentBundle, statuses, cards: contentBundle.cards.map(card => card.id === 'starstonePebble'
     ? { ...card, effects, cost: 0, manaCost: 0, upgrade: undefined, ...(magicShare === undefined ? {} : { magicShare }) } : card) });
-  const combat = createCombat({ registries, rng: createRng(801), combatExpansionVersion: 2, ...(ruleset ? { ruleset } : {}),
+  const combat = createCombat({ registries, rng: createRng(801), combatExpansionVersion: 2, ...(ruleset ? { ruleset } : {}), ...options,
     enemyIds: ['wanderingSoldier'], player: { classId: 'starseer', maxHp: 100, hp: 100,
       maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1,
       deck: [{ cardId: 'starstonePebble', instanceId: 'paired', upgraded: false }] } });
@@ -32,8 +32,9 @@ function fixture(effects = [{ op: 'damage', target: 'enemy', amount: 5, hits: 2 
   return { combat, enemy, registries };
 }
 
+// Pinned to reaction rules version 1: version 2 adds the spell's Flux Ward (combat-impact-flux tests).
 test('whole Spell action applies persistent Ward once across hits, spends it, and preview matches the committed budget', () => {
-  const { combat, enemy } = fixture(undefined, { magicShare: 1 });
+  const { combat, enemy } = fixture(undefined, { magicShare: 1, reactionRulesVersion: 1 });
   const counters = combat.rng.getCounters();
   const preview = previewCard(combat, 'paired', enemy.id);
   assert.deepEqual(combat.rng.getCounters(), counters, 'preview consumes no streams');

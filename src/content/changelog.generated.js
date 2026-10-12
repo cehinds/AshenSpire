@@ -8,9 +8,89 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-12",
     "summary": "Ward, Barrier and Poise now wear away, and every hit shows where it landed",
     "detail": "Magic hits meet Barrier, then Ward; physical hits meet Block, then Poise. Barrier and Block soak a hit completely, while Ward and Poise always let at least 1 damage through and are spent by what they absorb. Every fighter starts each fight with full Ward and Poise, and they only come back through a card, feat, class feature or relic. Ward added past full becomes Barrier until your next turn. Breaking an enemy's Ward or Poise interrupts its action; a break costs you 1 Stamina next turn. Each layer has its own colour on the health bar and in the hit numbers (Barrier blue, Ward purple, Block silver, Poise gold, Health red), with popups for MISSED, BREAK, WARD BREAK, POSTURE BREAK and INTERRUPTED, and the combat log lists each layer's share and the roll behind a miss. A creature resistant to a damage school takes three quarters of the hit.",
-    "build": "0.7.1.1423",
+    "build": "0.7.1.1435",
     "pullRequest": 1896,
     "url": "https://github.com/cehinds/AshenSpire/pull/1896"
+  },
+  {
+    "id": "pr-1906",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Enemies can react to your cards",
+    "detail": "In new runs, some enemies now answer what you play. A Gilded Knight may raise its guard just before a heavy hit lands, and a Court Duelist may strike back when you play a reaction, even a plain Block. Their reactions go on the same stack as yours and resolve last played first.",
+    "build": "0.7.1.1435",
+    "pullRequest": 1906,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1906"
+  },
+  {
+    "id": "pr-1893",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "The design spec records the owner's audit decisions",
+    "detail": "Development-process change only, nothing in the game changes. The specification now describes a dozen more rules as the game plays them, and records four design decisions: bosses will offer a choice of three relics, the enemy cap will become a setting, the export button stays on debug pages, and LAN co-op is planned for a later release.",
+    "build": "0.7.1.1431",
+    "pullRequest": 1893,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1893"
+  },
+  {
+    "id": "pr-1863",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "The design spec matches the game again",
+    "detail": "Development-process change only, nothing in the game changes. The specification document was checked section by section against the game's code, and the audit is kept in docs/spec-audit/SPEC-AUDIT.md. The spec now describes what the game does: Actions and Stamina are one resource, the defaults are the ones the game ships, and rules that were never built are gone. The few points that need a design decision are listed in the audit.",
+    "build": "0.7.1.1431",
+    "pullRequest": 1863,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1863"
+  },
+  {
+    "id": "pr-1904",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Rules written for enemy reactions on the reaction stack",
+    "detail": "Nothing changes in the game yet. The specification now describes enemies that react to your cards: a Gilded Knight can guard before a heavy hit lands, and a Court Duelist can answer any reaction you play, a plain Block included.",
+    "build": "0.7.1.1431",
+    "pullRequest": 1904,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1904"
+  },
+  {
+    "id": "pr-1902",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Rules written for chained reactions and three new card traits",
+    "detail": "Nothing changes in the game yet. The specification now describes playing several Reaction cards against one enemy action, resolving last played first, and the Counterstrike, Impact and Flux card traits that will follow.",
+    "build": "0.7.1.1429",
+    "pullRequest": 1902,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1902"
+  },
+  {
+    "id": "pr-1900",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Cards rebalanced; Insanity now staggers; Necrotic Blight lasts the fight",
+    "detail": "Thirteen cards now match their rarity and cost. Blood Offering, Exsanguinate, Star Slicer, Umbral Ward, Iron Skin, Ash Circle, Vanish, Binding Parry and Draw Cut hit or guard for less. Comet Fragment, Bloodhunter's Strike and Shield Crash got stronger, and Sundering Hew now applies Vulnerable. Weapon attacks now have a fixed damage type: slashing cards apply Bleed. An Insanity break now Staggers, so Executioner and other Staggered bonuses apply. Necrotic damage applies Necrotic Blight, which lasts the whole fight; other Blight still fades after 3 turns. Holy hits now cleanse in new runs. Frost and Insanity exposures now boost even small tagged hits, and Feint applies Prepare at every rank.",
+    "build": "0.7.1.1427",
+    "pullRequest": 1900,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1900"
+  },
+  {
+    "id": "pr-1897",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "The approved Reaver greatsword sequences now play in solo combat",
+    "detail": "Attack and Smash use the six selected phases; Guard, Parry and Resisted share the weighted impact order, while Guard-tag and Evasion-tag counters follow their separate approved routes. Actual combat receipts choose reactions and retaliation, and actions restore the originating stance. Other loadouts and co-op retain their existing presentation. Labeled review animations and thirty additional stance concepts remain available separately.",
+    "build": "0.7.1.1425",
+    "pullRequest": 1897,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1897"
+  },
+  {
+    "id": "pr-1905",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Chain reactions, and Counterstrike, Impact and Flux on cards",
+    "detail": "In new runs, cards tagged Reaction can be played during the enemy's turn, and several can be chained against one attack: the last one played resolves first. Counterstrike adds 50% to a card's numbers (75% when your stance beats the target's), Impact adds Poise damage on a hit or doubles the card's own, and Flux does the same for Ward. Burn and Crimson Blight now wear down Ward each turn. Saved runs keep their old rules.",
+    "build": "0.7.1.1433",
+    "pullRequest": 1905,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1905"
   },
   {
     "id": "pr-1901",

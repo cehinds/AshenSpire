@@ -35,7 +35,8 @@ export const combatRatingDefaults = {
   statuses: {
     bleed: { poise: 1, ward: 0 }, frost: { poise: 0.5, ward: 0.5 },
     insanity: { poise: 0, ward: 1 }, madness: { poise: 0, ward: 1 },
-    crimsonBlight: { poise: 0.5, ward: 0.5 }, venom: { poise: 1, ward: 0 },
+    crimsonBlight: { poise: 0.5, ward: 0.5 }, necroticBlight: { poise: 0.5, ward: 0.5 },
+    venom: { poise: 1, ward: 0 },
     burn: { poise: 0.25, ward: 0.75 },
   },
 };
@@ -570,7 +571,7 @@ export function sourceRatingValue(ctx, entity, id, sourceArmamentId, equipmentSc
 }
 
 export function isMagicalAttack(ctx, carrier) {
-  const def = carrier?.cardId ? ctx.registries.cards.get(carrier.cardId) : null;
+  const def = carrier?.cardId && ctx.registries.cards.has(carrier.cardId) ? ctx.registries.cards.get(carrier.cardId) : null;
   return cardIsMagical({
     ...def,
     ...carrier,
@@ -780,7 +781,7 @@ export function attackImpact(ctx, source, carrier, magical = isMagicalAttack(ctx
   // Otherwise the card's own Poise or Ward value (SPEC §3.4) is its impact.
   // The carrier holds the RESOLVED face's values — a staff's Strike carries
   // Ward — and the registry def is the fallback for a carrier built without.
-  const def = carrier?.cardId ? ctx.registries.cards.get(carrier.cardId) : null;
+  const def = carrier?.cardId && ctx.registries.cards.has(carrier.cardId) ? ctx.registries.cards.get(carrier.cardId) : null;
   const ratingValues = carrier?.cardRatingValues
     || (carrier?.upgraded ? def?.upgrade?.cardRatingValues : null)
     || def?.cardRatingValues;

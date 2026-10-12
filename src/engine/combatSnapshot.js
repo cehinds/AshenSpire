@@ -52,11 +52,15 @@ export function serializeCombatSnapshot(combat) {
     ...(combat.combatMatchupRules ? { combatMatchupRules: combat.combatMatchupRules } : {}),
     ...(combat.combatIntentRules ? { combatIntentRules: combat.combatIntentRules } : {}),
     ...(combat.enemyKnowledge ? { enemyKnowledge: combat.enemyKnowledge } : {}),
-    ...(combat.reactionRulesVersion === 1 ? { reactionRulesVersion: 1,
+    ...([1, 2].includes(combat.reactionRulesVersion) ? { reactionRulesVersion: combat.reactionRulesVersion,
       ...(combat.foundationNextSerial !== undefined ? { foundationNextSerial: combat.foundationNextSerial } : {}),
       ...(combat.reactionCursor ? { reactionCursor: combat.reactionCursor } : {}),
       ...(combat.reactionHandCleanup ? { reactionHandCleanup: combat.reactionHandCleanup } : {}),
       ...(combat.pendingReaction ? { pendingReaction: combat.pendingReaction } : {}),
+      ...(combat.reactionRulesVersion === 2 ? { reactionRules: combat.reactionRules } : {}),
+      ...(combat.reactionStack ? { reactionStack: combat.reactionStack } : {}),
+      ...(combat.enemyReactionRolls ? { enemyReactionRolls: combat.enemyReactionRolls } : {}),
+      ...(combat.reactionRootPlay ? { reactionRootPlay: combat.reactionRootPlay } : {}),
       ...(combat.reactionResume ? { reactionResume: { ...combat.reactionResume, queue: combat.reactionResume.queue.map(({ source, owner, target, ...action }) => ({ ...action, sourceId: source?.id, ownerId: owner?.id, targetId: target?.id })) } } : {}) } : {}),
     ...(combat.ratingsRules ? { ratingsRules: combat.ratingsRules } : {}),
     ...([1, 2].includes(combat.breakMeterVersion) ? { breakMeterVersion: combat.breakMeterVersion } : {}),
@@ -238,7 +242,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   // raw emitter alone would record no XP for the rest of the restored fight.
   attachSkillXp(combat);
   combat.enqueue = (action) => combat.queue.push(action);
-  for (const key of ['reactionRulesVersion', 'foundationNextSerial', 'reactionCursor', 'reactionHandCleanup', 'pendingReaction', 'reactionResume']) {
+  for (const key of ['reactionRulesVersion', 'reactionRules', 'reactionStack', 'foundationNextSerial', 'reactionCursor', 'reactionHandCleanup', 'pendingReaction', 'reactionResume', 'enemyReactionRolls', 'reactionRootPlay']) {
     if (saved[key] !== undefined) combat[key] = saved[key];
   }
   if (saved.abilityQueue) {
