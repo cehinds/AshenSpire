@@ -23,8 +23,8 @@ try {
     const page = await context.newPage();
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
-    await page.goto(`http://127.0.0.1:${port}/?shot=customize&shotClass=${classId}`);
-    await page.waitForSelector('#cz-next');
+    await page.goto(`http://127.0.0.1:${port}/?shot=customize&shotClass=${classId}`, { waitUntil: 'commit' });
+    await page.waitForFunction(() => document.querySelector('.cz-railed')?.dataset.creationStage === 'class');
     await page.locator('#cz-next').click();
     await page.locator('#cz-next').click();
     await page.locator('#cz-next').click();

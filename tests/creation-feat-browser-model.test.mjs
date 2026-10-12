@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
+import { masteryRowId } from '../src/model/classMastery.js';
+import { skillFeatOptions } from '../src/model/skills.js';
 import { creationFeatBrowserGroups } from '../src/ui/models/CreationFeatBrowserModel.js';
 const registries = createRegistries(contentBundle);
 const born = classId => createRunState({ registries, classId, seed: 42 });
@@ -42,4 +44,28 @@ test('authored mastery gates and retuned skill cadence change requirements rathe
   assert.equal(groups[1].rows.find(row => row.id === 'reaverIronFooting').requiredLevel, 7);
   assert.equal(groups[2].rows.find(row => row.id === 'bladeCritical').requiredLevel, 5);
   assert.ok(!groups[1].rows.some(row => row.trackId === 'class:starseer'));
+});
+
+
+test('profile unlocks expose their source without falsely claiming the numeric level is met', () => {
+  const run = born('reaver');
+  const gate = registries.classMastery.find(row => row.kind === 'feat' && row.ref === 'reaverIronFooting');
+  run.classMasteryState = { version: 1, profile: { classMastery: { reaver: { level: 0, xp: 0, unlockedRows: [masteryRowId(gate)] } } } };
+  const result = creationFeatBrowserGroups(registries, run)[1].rows.find(row => row.id === gate.ref);
+  assert.equal(result.currentLevel, 0);
+  assert.equal(result.requiredLevel, gate.level);
+  assert.equal(result.locked, false);
+  assert.equal(result.unlockedByProfile, true);
+  assert.ok(skillFeatOptions(run, 'class:reaver', 0, registries).includes(gate.ref));
+});
+
+test('mastery gate overrides a differing minLevel like authoritative skill feat options', () => {
+  const run = born('reaver');
+  run.classMasteryState = { version: 1, profile: { classMastery: {} } };
+  run.skills['class:reaver'] = { level: 1 };
+  const source = { ...registries, classSkillFeats: registries.classSkillFeats.map(feat => feat.id === 'reaverIronFooting' ? { ...feat, minLevel: 9 } : feat) };
+  const result = creationFeatBrowserGroups(source, run)[1].rows.find(row => row.id === 'reaverIronFooting');
+  assert.equal(result.requiredLevel, 1);
+  assert.equal(result.locked, false);
+  assert.ok(skillFeatOptions(run, 'class:reaver', 1, source).includes(result.id));
 });
