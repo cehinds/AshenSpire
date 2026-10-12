@@ -1,18 +1,19 @@
 {
   "generated_at_utc": "2026-10-12T16:22:00Z",
   "tool": "tools.image_gen__imagegen",
-  "exact_prompt_file": "sheet-a-revision.prompt.txt",
+  "exact_prompt_file": null,
+  "prompt_file_unavailable_reason": "The exact prompt used for this 2026-10-12T16:22:00Z output is absent from the repository and tracked history. The available sheet-a.prompt.txt belongs to the separate sheet-a record, and sheet-a-revision-pass1.prompt.txt belongs to the earlier pass1 output; neither is verified as this output’s exact prompt.",
   "requested_dimensions": [1024, 1536],
   "actual_dimensions": [1024, 1536],
   "mode": "RGBA",
   "alpha_extrema": [0, 254],
   "transparent_background": true,
   "original_tool_output": "/workspace/generated_images/exec-a9530da8-a1e8-44ed-add1-715e74287631.png",
-  "preserved_canonical_file": "sheet-a-revision.original.png",
+  "preserved_canonical_file": "sheet-a.png",
   "sha256": "0fe543067cb65beecc2be7c214c75dbe35bd5e270dde92d9cb67998e6f271f3d",
   "referenced_images": [
     {
-      "path": "pose-studio/stances/update-stances/greatsword-sweep/sheet-a.png",
+      "path": "pose-studio/stances/update-stances/greatsword-sweep/sheet-a-original.png",
       "sha256": "1d17d81b813d247b89e53ea4f6fa6919679ab96512087a343fc5e5641a32def1",
       "use": "revise grips and pose composition"
     },
