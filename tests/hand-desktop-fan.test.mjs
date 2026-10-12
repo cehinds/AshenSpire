@@ -1,14 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { COMBAT_TOOLS_HEIGHT_PX, handLayout } from '../src/ui/models/HandLayout.js';
+import { COMBAT_TOOLS_DESKTOP_HEIGHT_PX, handLayout } from '../src/ui/models/HandLayout.js';
 import { wireframeUi } from '../src/content/wireframeUi.js';
 
 // Desktop (data-form-factor="desktop") plan, mirroring hand.js: the band is
-// `bandPx` physical px tall and the tool row (30px, plus its 4px separation)
-// sits at its top. The plan's origin is below that separation.
-const TOOLS_ROW_PX = 30;
+// `bandPx` physical px tall and the tool row (36px, styles/combat-layers.css)
+// sits at its top, with 4px of separation. The plan's origin is below that.
+const TOOLS_ROW_PX = 36;
 const desktop = ({ width = 1440, zoom = 1.2, bandPx = 342, count = 4, controlsHeight = 0 } = {}) => {
-  const toolsLocal = COMBAT_TOOLS_HEIGHT_PX / zoom;
+  const toolsLocal = COMBAT_TOOLS_DESKTOP_HEIGHT_PX / zoom;
   return {
     zoom, bandPx, count, controlsHeight, toolsLocal,
     // rem as hand.js derives it: the 16px authored rem, or the page's 10px root when larger.
@@ -27,8 +27,8 @@ const restTops = plan => plan.cards.map(card => {
 test('desktop fan top sits within 12px under the tool row at each desktop band', () => {
   for (const [width, zoom, bandPx] of [[1280, .99, 274], [1440, 1.2, 342], [1920, 1.48, 411]]) for (const count of [3, 4, 5, 7]) {
     const { plan, zoom: z } = desktop({ width, zoom, bandPx, count });
-    const gapPx = COMBAT_TOOLS_HEIGHT_PX + Math.min(...restTops(plan)) * z - TOOLS_ROW_PX;
-    assert.ok(gapPx > 0 && gapPx <= 12 + 1e-9, `${width} ${count} cards: fan top ${gapPx}px under the tool row`);
+    const gapPx = COMBAT_TOOLS_DESKTOP_HEIGHT_PX + Math.min(...restTops(plan)) * z - TOOLS_ROW_PX;
+    assert.ok(gapPx >= 8 - 1e-9 && gapPx <= 12 + 1e-9, `${width} ${count} cards: fan top ${gapPx}px under the 36px tool row`);
   }
 });
 
