@@ -576,6 +576,25 @@ export function staggerEnemy(ctx, enemy) {
  * the bar: the direct path neither consumes nor grows it (SPEC §4.4). Under
  * combat ratings a break is the skipped turn alone (no onFill), on both paths.
  */
+/**
+ * growPoiseMeter(ctx, entity) — after a full Poise fill, the meter's max grows
+ * by balance.poise.growthMult (unless a combatant disables growth). Shared by
+ * dealPoiseDamage and the status-pressure fill in combatStatusControl, so every
+ * full-meter Stagger grows the meter the same way.
+ */
+export function growPoiseMeter(ctx, entity) {
+  const cfg = (ctx.registries.balance && ctx.registries.balance.poise) || {};
+  const growth = cfg.growthMult != null ? cfg.growthMult : 1.25;
+  if (growth === 1 || statuses.anyCombatantFlag(ctx, 'meterMaxGrowthDisabled')) return;
+  entity.poiseMeter.max = Math.ceil(entity.poiseMeter.max * growth);
+  // COUNTED, not multiplied. A later restamp from the receipt (an armament
+  // swap, a restored fight) replays the same rounded steps; one compound
+  // multiply would land a point low, because each live fill rounds up
+  // before the next (Codex, #1203).
+  entity.poiseMeter.growths = (entity.poiseMeter.growths || 0) + 1;
+  entity.poiseMeter.growthMult = growth;
+}
+
 export function breakEnemy(ctx, enemy) {
   if (!staggerEnemy(ctx, enemy)) return false;
   if (ctx.ratingsRules) return true;
@@ -630,7 +649,6 @@ export function dealPoiseDamage(ctx, entity, amount, { knowledgeMatchup = false 
     return;
   }
   entity.poiseMeter.value += n;
-  const cfg = (ctx.registries.balance && ctx.registries.balance.poise) || {};
   let guard = 0;
   while (entity.poiseMeter.value >= entity.poiseMeter.max) {
     if (++guard > 100) throw new Error('Poise meter fill loop did not terminate');
@@ -641,16 +659,7 @@ export function dealPoiseDamage(ctx, entity, amount, { knowledgeMatchup = false 
     } else {
       staggerPlayer(ctx, entity);
     }
-    const growth = cfg.growthMult != null ? cfg.growthMult : 1.25;
-    if (growth !== 1 && !statuses.anyCombatantFlag(ctx, 'meterMaxGrowthDisabled')) {
-      entity.poiseMeter.max = Math.ceil(entity.poiseMeter.max * growth);
-      // COUNTED, not multiplied. A later restamp from the receipt (an armament
-      // swap, a restored fight) replays the same rounded steps; one compound
-      // multiply would land a point low, because each live fill rounds up
-      // before the next (Codex, #1203).
-      entity.poiseMeter.growths = (entity.poiseMeter.growths || 0) + 1;
-      entity.poiseMeter.growthMult = growth;
-    }
+    growPoiseMeter(ctx, entity);
     if (ctx.foundation) { entity.poiseMeter.value = Math.min(entity.poiseMeter.max - 1, entity.poiseMeter.value); break; }
   }
 }

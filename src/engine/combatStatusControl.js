@@ -147,7 +147,8 @@ export function applyStatusPressure(ctx, target, id, units, source = null, optio
           // and `staggered` status a full bar from dealPoiseDamage gives.
           ctx.emit?.('meterFilled', { targetId: target.id, meter: 'poise', threshold: meter.max });
           Actions.breakEnemy(ctx, target);
-        } else Actions.staggerPlayer(ctx, target);
+          Actions.growPoiseMeter(ctx, target);
+        } else { Actions.staggerPlayer(ctx, target); Actions.growPoiseMeter(ctx, target); }
       }
     }
     if (admitted) {
