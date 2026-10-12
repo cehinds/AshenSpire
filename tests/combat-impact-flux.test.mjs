@@ -143,3 +143,107 @@ test('burn ticks Ward 1 at its owner turn start under version 2 and nothing unde
     assert.equal(combat.player.persistentWard.value, expected, `version ${version}`);
   }
 });
+
+// A player Counter armed with a fixed payload, then one enemy hit that Block fully absorbs.
+function counterReturn({ version = 2, traitValues, payload = { hp: 10, poise: 4, ward: 2 }, mode, incoming = PHYSICAL,
+  incomingBlock = 8, maneuver = 'counter', profile = PHYSICAL, coverage } = {}) {
+  const f = fixture({ version });
+  const { combat } = f;
+  const enemy = f.enemies[0];
+  const counter = { cardId: 'testCounter', instanceId: 'test-counter', type: 'skill',
+    combatProfile: { ...profile, maneuver, ...(mode === 'spell' ? { camp: 'spell', school: 'fire' } : {}) },
+    combatRiderTargets: [], ...(traitValues ? { traitValues } : {}) };
+  setCombatStance(combat, combat.player, counter);
+  armCombatCounter(combat, combat.player, counter, { payload, ...(mode ? { mode } : {}), ...(coverage ? { coverage } : {}) });
+  const receipt = beginTacticalAction(combat, enemy, combat.player, { combatProfile: incoming }, [{ amount: 8 }]);
+  recordTacticalContact(receipt, { blocked: incomingBlock });
+  const poise = enemy.poiseMeter.value, ward = enemy.persistentWard.value, hp = enemy.hp;
+  completeTacticalAction(combat, enemy, combat.player, { combatProfile: incoming }, receipt);
+  drain(combat);
+  return { ...f, poise: enemy.poiseMeter.value - poise, ward: ward - enemy.persistentWard.value, hp: hp - enemy.hp };
+}
+
+test('a Counter return without trait values keeps SPEC 4.8 reply Poise and Ward', () => {
+  const plain = counterReturn();
+  assert.equal(plain.hp, 10);
+  assert.equal(plain.poise, 4);
+  assert.equal(plain.ward, 2);
+});
+
+test('Counterstrike scales the authored return before Impact and Flux double it', () => {
+  // Counter against an Attack: 75% advantage. hp 10 -> 17, poise 4 -> 7, ward 2 -> 3, then Impact and Flux.
+  const traited = counterReturn({ traitValues: { counterstrike: true, impact: 2, flux: 1 } });
+  assert.equal(traited.hp, 17);
+  assert.equal(traited.poise, 14);
+  assert.equal(traited.ward, 6);
+});
+
+test('Impact gives N reply Poise to a Counter whose return has none', () => {
+  const traited = counterReturn({ traitValues: { impact: 2, flux: 1 }, payload: { hp: 10, poise: 0, ward: 0 } });
+  assert.equal(traited.poise, 2);
+  assert.equal(traited.ward, 1);
+});
+
+test('a Spell Counter against a physical projectile keeps no reply Poise, even with Impact', () => {
+  const projectile = { camp: 'physical', maneuver: 'ranged', delivery: 'projectile', reach: 'far', targeting: 'single', damageType: 'piercing' };
+  // The card authors coverage of physical projectiles as well as spells.
+  const coverage = { camps: ['spell', 'physical'], reaches: ['contact', 'near', 'far'], targeting: ['single'], effects: ['damage', 'status'] };
+  const payload = { hp: 10, poise: 0, ward: 2 };
+  const traited = counterReturn({ mode: 'spell', incoming: projectile, coverage, payload, traitValues: { impact: 2, flux: 1 } });
+  assert.equal(traited.hp, 0, 'a Spell Counter drains Ward only against a projectile');
+  assert.equal(traited.poise, 0);
+  assert.equal(traited.ward, 4, 'Ward still doubles: 2 authored Ward becomes 4');
+});
+
+test('reaction rules version 1 leaves Counter returns untouched by trait values', () => {
+  const plain = counterReturn({ version: 1 });
+  const traited = counterReturn({ version: 1, traitValues: { counterstrike: true, impact: 2, flux: 1 } });
+  assert.deepEqual([traited.hp, traited.poise, traited.ward], [plain.hp, plain.poise, plain.ward]);
+});
+
+// The Defend trait guard: armed when a Defend with Impact/Flux is prepared, spent by the first enemy hit
+// that Block, Barrier or Ward reduced, cleared at the owner's turn start.
+function guardFight() {
+  const f = fixture();
+  const { combat } = f;
+  const enemy = f.enemies[0];
+  const defend = { cardId: 'testDefend', instanceId: 'test-defend', type: 'skill',
+    combatProfile: { camp: 'physical', maneuver: 'defend', reach: 'contact', targeting: 'single' } };
+  const hit = (blocked, hpLoss = 0) => {
+    const receipt = beginTacticalAction(combat, enemy, combat.player, { combatProfile: PHYSICAL }, [{ amount: 8 }]);
+    recordTacticalContact(receipt, { blocked, hpLoss });
+    const before = { poise: enemy.poiseMeter.value, ward: enemy.persistentWard.value };
+    completeTacticalAction(combat, enemy, combat.player, { combatProfile: PHYSICAL }, receipt);
+    drain(combat);
+    return { poise: enemy.poiseMeter.value - before.poise, ward: before.ward - enemy.persistentWard.value };
+  };
+  return { ...f, enemy, defend, hit };
+}
+
+test('a Defend trait guard answers the first reduced enemy hit once, then is gone', () => {
+  const f = guardFight();
+  setCombatStance(f.combat, f.combat.player, { ...f.defend, traitValues: { impact: 2, flux: 1 } });
+  assert.deepEqual(f.combat.player.combatTraitGuard, { poise: 2, ward: 1 });
+  setCombatStance(f.combat, f.combat.player, { ...f.defend, traitValues: { impact: 1, flux: 3 } });
+  assert.deepEqual(f.combat.player.combatTraitGuard, { poise: 2, ward: 3 }, 'max-merged, not stacked');
+  assert.deepEqual(f.hit(0, 5), { poise: 0, ward: 0 }, 'an unreduced hit leaves the guard armed');
+  assert.ok(f.combat.player.combatTraitGuard);
+  assert.deepEqual(f.hit(3, 5), { poise: 2, ward: 3 });
+  assert.equal(f.combat.player.combatTraitGuard, undefined);
+  assert.deepEqual(f.hit(3, 5), { poise: 0, ward: 0 }, 'the guard fires once');
+});
+
+test('the owner turn start clears an unspent Defend trait guard', () => {
+  const f = guardFight();
+  setCombatStance(f.combat, f.combat.player, { ...f.defend, traitValues: { impact: 2 } });
+  startTacticalTurn(f.combat, f.combat.player);
+  assert.equal(f.combat.player.combatTraitGuard, undefined);
+});
+
+test('a Defend trait guard survives a combat snapshot round trip', () => {
+  const f = guardFight();
+  setCombatStance(f.combat, f.combat.player, { ...f.defend, traitValues: { impact: 2, flux: 1 } });
+  const saved = JSON.parse(JSON.stringify(serializeCombatSnapshot(f.combat)));
+  const restored = restoreCombatSnapshot({ registries, rng: createRng(901), snapshot: saved });
+  assert.deepEqual(restored.player.combatTraitGuard, { poise: 2, ward: 1 });
+});
