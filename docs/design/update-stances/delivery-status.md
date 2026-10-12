@@ -1,6 +1,6 @@
 # Selected stance delivery status
 
-The selected Reaver/greatsword poses and runtime integration are complete. Independent source reviews are approved. The final unpatched artifact is build **0.7.1.1417**, digest **b1ec8952f6**, from source commit [`e8efd0244`](https://github.com/cehinds/AshenSpire/commit/e8efd0244), which corrects reaction playback timing/readiness/defeat handling. [PR #1890](https://github.com/cehinds/AshenSpire/pull/1890) remains open; the user-authorized merge is pending.
+The selected Reaver/greatsword poses and runtime integration are complete. Independent source reviews are approved. The final unpatched artifact is build **0.7.1.1417**, digest **b1ec8952f6**, from source commit [`e8efd0244`](https://github.com/cehinds/AshenSpire/commit/e8efd0244), which corrects reaction playback timing/readiness/defeat handling. [PR #1890](https://github.com/cehinds/AshenSpire/pull/1890) merged into Dev at [`5852a791b`](https://github.com/cehinds/AshenSpire/commit/5852a791b59024235c826249a0704bc8d0e034d6).
 
 | Role | Selected source |
 | --- | --- |
@@ -21,8 +21,9 @@ Runtime eligibility is default-armour Reaver with the sole actual greatsword in 
 | Corrected source assertion | 10/10 |
 | Selected poses, mobile fit, unsupported-scope checks | Passed on 0.7.1.1415; art/layout are unchanged in 0.7.1.1417 |
 | Actual guard-break and successful-Evade receipts | Passed on final build 0.7.1.1417; no page errors |
+| Final-head fast CI | Passed: core suite, all four discovered-test shards, preview, receipts, Workbench and Quick Start browser checks |
 | Evidence | [Final 1417 reaction QA](../../preview/update-stances-selected-20261012/1417/README.md) and [1415 held-pose/mobile QA](../../preview/update-stances-selected-20261012/1415/README.md) |
 
 The 0.7.1.1417 change is limited to reaction playback, so the 0.7.1.1415 selected-pose and mobile screenshots remain representative. The browser checks use the actual starter loadout and authored cards. For the finite-reaction proof on 0.7.1.1417, a deterministic registered Colossus Smash supplies the incoming move, while the game engine emits the receipts; Guard-break and successful Evade restore their held poses, and no page errors occurred. The 57/57 focused source review covers reaction timing/readiness/defeat handling and identity/order fixtures. Mobile QA completed its geometry and scope assertions; its shell reported 11 benign Chromium vibration user-activation notices, with zero application exceptions or relevant errors. The selected scope remains default-armour Reaver with a sole greatsword; other weapons, classes, and armor appearances are not covered by this pilot.
 
-The user authorized delivery and merge without another approval request. The separate follow-up is ten new greatsword options each for Sweep, Counter, and Evade, thirty total; it has not begun in this delivery.
+The user authorized delivery and merge without another approval request. The separate follow-up is ten new greatsword options each for Sweep, Counter, and Evade, thirty total. Generation is in progress on three dedicated family branches; no follow-up boards have landed in this branch yet, so its recorded generated count remains zero. The prepared gallery keeps these entries disabled until assets arrive and the director reviews them. Co-op remains paused.
