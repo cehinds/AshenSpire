@@ -12,7 +12,18 @@ function withTagIds(card = {}) {
 
 /** The player's authored action profile (maneuver and camp) for a confirmed card. */
 export function kindForCard(card = {}) {
-  return combatProfileFor(withTagIds(card));
+  card = withTagIds(card);
+  const profile = combatProfileFor(card);
+  // The glyph follows the figure's stance, so the two always agree: a spell with
+  // an offensive maneuver is held as casting and shows prepare, and an untagged
+  // attack or block card takes the figure's fallback.
+  const stance = stanceForCard(card);
+  // Casting (prepare) carries no maneuver: the glyph's own fallback is prepare.
+  const maneuver = stance === 'casting' ? null
+    : stance === 'defensive' ? 'defend'
+    : stance === 'offensive' ? (['attack', 'smash', 'ranged'].includes(profile.maneuver) ? profile.maneuver : 'attack')
+    : stance || profile.maneuver;
+  return maneuver === profile.maneuver ? profile : { ...profile, maneuver };
 }
 
 /** Presentation only. The resolved card, including equipment-projected tags, owns identity. */
@@ -24,12 +35,15 @@ export function stanceForCard(card = {}) {
   if (defensive.has(profile.maneuver)) return 'defensive';
   if (profile.camp === 'spell') return 'casting';
   if (profile.maneuver === 'sweep') return 'sweep';
+  // Owner (2026-10-12): smash holds its own painted wind-up, not the offensive frame.
+  if (profile.maneuver === 'smash') return 'smash';
   if (offensive.has(profile.maneuver)) return 'offensive';
   const tags = new Set(card.cardTags ?? card.tags ?? []);
   if (tags.has('source:spell') || card.abilityKind === 'spell' || card.type === 'spell') return 'casting';
   if (tags.has('guard') || tags.has('block')) return 'defensive';
   if (card.type === 'attack') return 'offensive';
-  return null;
+  // Prepare: spells and any card with no attack/smash/sweep/defend/counter maneuver.
+  return 'casting';
 }
 
 /** Accept ONLY previewIntent()/coopEnemyIntent() output, never an enemy or private move. */
@@ -43,16 +57,13 @@ export function stanceForPublicIntent(intent = {}) {
   return null;
 }
 
-/** Each seat keeps its last confirmed card until its next turn. Failed/preparing plays do nothing. */
+/** Each seat keeps its last confirmed card until its next confirmed card (only combatStarted clears). Failed/preparing plays do nothing. */
 export function createStanceLedger(classify = stanceForCard) {
   const actors = new Map();
   return Object.freeze({
     accept(receipt, resolvedCard) {
       const actorId = receipt?.playerId || receipt?.sourceId || 'player';
       if (receipt?.type === 'combatStarted') { actors.clear(); return null; }
-      if (receipt?.type === 'playerTurnStart') {
-        actors.delete(actorId); return null;
-      }
       if (receipt?.type !== 'cardPlayed') return actors.get(actorId) ?? null;
       const stance = classify(resolvedCard || { id: receipt.cardId, type: receipt.cardType, cardTags: receipt.cardTags });
       actors.set(actorId, stance); return stance;
