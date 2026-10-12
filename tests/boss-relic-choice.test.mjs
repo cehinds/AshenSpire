@@ -237,7 +237,7 @@ test('the relic chooser lays out three option columns, each a card face above it
     run.relics = [];
     const { app } = mountBossReward(dom, { relicChoices: CHOICES, run });
     app.querySelector('.reward-kind[data-kind="relic"]').click();
-    const columns = app.querySelectorAll('.reward-row .reward-relic-option');
+    const columns = app.querySelectorAll('.reward-row .reward-choice-option');
     assert.equal(columns.length, 3, 'three columns');
     assert.deepEqual(columns.map((c) => c.dataset.pickId), CHOICES);
     for (const column of columns) {
@@ -254,10 +254,10 @@ test('clicking a relic card face selects it, lighting only that card face and bu
     run.relics = [];
     const { app } = mountBossReward(dom, { relicChoices: CHOICES, run });
     app.querySelector('.reward-kind[data-kind="relic"]').click();
-    const column = app.querySelectorAll('.reward-relic-option')[1];
+    const column = app.querySelectorAll('.reward-choice-option')[1];
     column.querySelector('.equipment-poker-card').click();
     assert.equal(app.querySelector('#reward-card-confirm').disabled, false, 'a face click enables Confirm');
-    const columns = app.querySelectorAll('.reward-relic-option');
+    const columns = app.querySelectorAll('.reward-choice-option');
     columns.forEach((c, i) => {
       const chosen = i === 1;
       assert.equal(c.querySelector('.equipment-poker-card').classList.contains('is-chosen'), chosen, `face ${i}`);
@@ -276,7 +276,7 @@ test('clicking a relic button moves the green trim from one face and button to a
     app.querySelector('.reward-kind[data-kind="relic"]').click();
     pickButtons(app)[0].click();
     pickButtons(app)[2].click();
-    const columns = app.querySelectorAll('.reward-relic-option');
+    const columns = app.querySelectorAll('.reward-choice-option');
     assert.equal(columns[0].querySelector('.equipment-poker-card').classList.contains('is-chosen'), false);
     assert.equal(columns[2].querySelector('.equipment-poker-card').classList.contains('is-chosen'), true);
     assert.equal(columns[0].querySelector('button.reward-pick').classList.contains('is-chosen'), false);
