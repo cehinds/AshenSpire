@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-12",
     "summary": "On desktop, the Combat log and Reaction sit in the bottom corners",
     "detail": "The Combat log button now sits in the bottom-left corner and the Reaction toggle in the bottom-right, so the strip above your cards is gone and the hand sits lower on the screen with more room for the battlefield. Phone and tablet are unchanged.",
-    "build": "0.7.1.1402",
+    "build": "0.7.1.1406",
     "pullRequest": 1885,
     "url": "https://github.com/cehinds/AshenSpire/pull/1885"
+  },
+  {
+    "id": "pr-1884",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Each fighter's readout sits above or below it, and the battlefield is narrower on wide screens",
+    "detail": "A front-row enemy's health and intent now hang just below its feet instead of drifting off to one side, so every readout stays with its own fighter. On wide screens the fighters stand closer to the middle, and the enemies' back row steps a little to the right so it stands clear of the front row. Switching back to the Classic look mid-fight keeps you in a row Classic has.",
+    "build": "0.7.1.1404",
+    "pullRequest": 1884,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1884"
+  },
+  {
+    "id": "pr-1876",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Spell range follows how a spell is delivered; new physical and magical marks in the deck editor",
+    "detail": "In expanded-combat runs a spell's range now follows its delivery: projectile spells such as Comet Fragment reach Ranged, bladed spells such as Starblade Phalanx (now a melee spell) strike at Melee, and the rest stay at Reach (runs from before expanded combat are unchanged). The deck editor shows the same range combat uses, marks physical cards with a silver Smash sigil and spells with a blue flame, and a Ranged card like Ricochet reads just \"Ranged\".",
+    "build": "0.7.1.1402",
+    "pullRequest": 1876,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1876"
   },
   {
     "id": "pr-1886",
