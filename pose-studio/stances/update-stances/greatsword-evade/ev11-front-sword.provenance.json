@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "family": "evade",
+  "actor": "reaver",
+  "weapon": "greatsword",
+  "optionId": "EV11",
+  "sequenceRole": "EV2 in EV16 -> edited EV11 -> EV13 -> starting stance",
+  "tool": "image_gen.imagegen",
+  "transparentBackgroundRequested": true,
+  "unchangedOriginal": "/workspace/generated_images/exec-f324e921-a15c-4c23-99f3-a3c9f52adeb8.png",
+  "output": "ev11-front-sword.png",
+  "sha256": "1a4ded8f5ae88e90665f8bfc19853c955e5d0af60d61f4411743e967e32b8cda1",
+  "dimensions": [1436, 1095],
+  "mode": "RGBA",
+  "alphaExtrema": [0, 255],
+  "createdUtc": "2026-10-12",
+  "reference": {
+    "path": "sheet-a.png",
+    "sha256": "e19fe59da17dfb2b52b07cddcd3f2400bd70145aeb6c647322ef821894665c75",
+    "cell": "top-left Evade11",
+    "inputCrop": "/workspace/evade11-reference-crop.png",
+    "cropBoundsXYWH": [0, 140, 550, 420],
+    "cropSha256": "03a81a207b7dc650c6c757cfae6eca9c1ce612d48d20b7475c1573581b60825f",
+    "cropOperation": "Rectangular isolation only; no repaint or resizing"
+  },
+  "prompt": "ev11-front-sword.prompt.txt",
+  "status": "director_accepted_for_requested_preview_not_user_selected",
+  "directorReview": {
+    "decision": "accepted_for_requested_preview",
+    "observations": ["Sword front/right", "Two hands", "Backward lean and wide base preserved", "Rear perspective intact", "Complete sword tip"]
+  },
+  "actualObservations": [
+    "Rear-left view facing right with red cape and metal armor preserved.",
+    "Wide stance and modest backward lean preserved.",
+    "Both hands hold one hilt in front of torso; blade extends front/right.",
+    "Full body and weapon visible; sword tip close to right canvas edge."
+  ],
+  "runtimeChanged": false
+}
