@@ -7,8 +7,8 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-10-12",
     "group": "2026-10-12",
     "summary": "Spell range follows how a spell is delivered; new physical and magical marks in the deck editor",
-    "detail": "A spell attack with no set range now reaches by its delivery: projectiles are Ranged, melee spells Melee, and the rest Reach (they were all Melee before, so projectile spells now fare worse against a Prone foe and can be stopped by a Decoy). Starblade Phalanx is a melee spell. The deck editor marks physical cards with a silver Smash sigil and spells with a blue flame, and a Ranged card like Ricochet reads just \"Ranged\".",
-    "build": "0.7.1.1367",
+    "detail": "In expanded-combat runs a spell's range now follows its delivery: projectile spells such as Comet Fragment reach Ranged, bladed spells such as Starblade Phalanx (now a melee spell) strike at Melee, and the rest stay at Reach; older runs are unchanged. The deck editor shows the same range combat uses, marks physical cards with a silver Smash sigil and spells with a blue flame, and a Ranged card like Ricochet reads just \"Ranged\".",
+    "build": "0.7.1.1369",
     "pullRequest": 1876,
     "url": "https://github.com/cehinds/AshenSpire/pull/1876"
   },
