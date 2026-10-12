@@ -19,8 +19,9 @@ The reproducible exporter `tools/selected-weapon-profile-export.mjs` writes the
 `assets-display/alternative/reaver-greatsword-pilot-*.webp` and the selected
 Sprite Workshop project; `src/content/alternativeSelectedStances.js` records
 profile registration, export hashes and shared floor anchors. These poses apply
-only to default-armour Reaver actually holding the sole greatsword in a two-hand
-grip. They add held preparation and bounded target reactions; existing full
+only to default-armour Reaver holding the sole greatsword in either active hand
+with the other hand empty. The paintings visually use both hands on the sword;
+eligibility does not depend on the equipment grip-mode field. They add held preparation and bounded target reactions; existing full
 attack/retaliation sequences remain. Co-op does not opt into this pilot.
 The [external reference ledger](docs/design/update-stances/references.md)
 records research links and evidence limits; no external reference artwork was
