@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1872",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Co-op: the blow that ends a fight reaches the combat log",
+    "detail": "When your attack killed the last enemy in co-op, the combat log and the Full log missed that turn's card, damage and death entries before the reward screen closed them. They now appear.",
+    "build": "0.7.1.1357",
+    "pullRequest": 1872,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1872"
+  },
+  {
     "id": "pr-1863",
     "date": "2026-10-11",
     "group": "2026-10-11",

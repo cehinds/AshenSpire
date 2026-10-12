@@ -261,6 +261,19 @@ export function coopLocalSeat(localSeats) {
   return Array.isArray(localSeats) && localSeats.length ? (id) => localSeats.includes(id) : undefined;
 }
 
+/**
+ * The frame a fight's last receipts pace as: the final authoritative combat
+ * scene settleCombat keeps in `combatReceipts` (its combatLog with the killing
+ * entries, its players for card resolution, HP, statuses, intents), over the
+ * mounted scene for anything an older or partial frame lacks.
+ */
+export function coopFinalFrame(snapshot, mountedScene) {
+  const final = snapshot.scene.combatReceipts;
+  const full = Array.isArray(final.players) && final.players.length > 0 && Array.isArray(final.enemies);
+  return { ...snapshot, scene: full ? { ...mountedScene, ...final, kind: 'combat' }
+    : { ...mountedScene, events: final.events, receiptSeq: final.receiptSeq } };
+}
+
 export function coopReceiptSounds(scene, lastSeq = 0, localSeats = null, { hapticsOnly = false } = {}) {
   // A FIGHT'S LAST RECEIPTS ride the reward or completion scene that replaced
   // it (session.mjs settleCombat): the card that ended the fight buzzes, as
@@ -1995,7 +2008,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       ? coopPacedRoute(sc, lastReceiptSeq, (prevCombat.players || []).map(player => player.id)) : null;
     if (route && sc.kind !== 'combat') {
       // The killing blow plays on the board still mounted, then its scene lands.
-      const final = { ...s, scene: { ...snap.scene, events: sc.combatReceipts.events, receiptSeq: sc.combatReceipts.receiptSeq } };
+      const final = coopFinalFrame(s, snap.scene);
       paceReactionReceipts(final, { mode: route, land: s });
       return;
     }
