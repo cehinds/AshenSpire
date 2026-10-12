@@ -100,6 +100,20 @@ for (const [label, grid] of [['Classic', enemyTargetGrid], ['Alternative', alter
     assert.ok(!overlaps(a, neighbour), 'a box never covers b\'s controls');
   });
 
+  test(`${label} grid places every foe in a distinct cell when owned controls overlap`, () => {
+    // Overlapping owned controls leave each foe a single cell; the lattice is kept
+    // only when the final assignment places both foes in distinct cells.
+    const placements = grid({ width: 320, height: 150, targets: [
+      { id: 'a', x: 40, y: 37 }, { id: 'b', x: 63, y: 16 }],
+    obstacles: [
+      { left: 150, top: 26, width: 122, height: 87, owner: 'a' }, { left: 199, top: 69, width: 129, height: 41, owner: 'a' },
+      { left: 203, top: -13, width: 115, height: 62, owner: 'b' }, { left: 238, top: -3, width: 96, height: 103, owner: 'b' },
+    ] });
+    assert.equal(placements.length, 2);
+    assert.notDeepEqual(placements[0], placements[1]);
+    assert.ok(!overlaps(placements[0], placements[1]), 'the two foes do not share a cell');
+  });
+
   test(`${label} grid still pushes a foe off unowned obstacles`, () => {
     const blocker = { left: 170, top: 170, width: 60, height: 60 };
     const [slot] = grid({ width: 420, height: 420, targets: [{ id: 'a', x: 200, y: 200 }], obstacles: [blocker] });
