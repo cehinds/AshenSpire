@@ -181,7 +181,7 @@
           282,
           346
         ],
-        "calibrationStatus": "Counter B rigid helmet/boot size is larger than A; reduced prototype scale pending director alignment review"
+        "calibrationStatus": "Counter B rigid helmet/boot size is larger than A; reduced scale1.0 approved by director for sequence review"
       },
       "drawTransform": {
         "x": 188,
@@ -244,7 +244,7 @@
           286,
           1296
         ],
-        "calibrationStatus": "Counter B rigid helmet/boot size is larger than A; reduced prototype scale pending director alignment review"
+        "calibrationStatus": "Counter B rigid helmet/boot size is larger than A; reduced scale1.0 approved by director for sequence review"
       },
       "drawTransform": {
         "x": 177,
