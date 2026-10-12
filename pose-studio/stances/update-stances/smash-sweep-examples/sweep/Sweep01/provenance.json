@@ -1,0 +1,59 @@
+{
+  "status": "pilot awaiting director review",
+  "generator": "image_gen.imagegen",
+  "raw_sha256": "ffd6e0b95ec4c14cece8d8a2db14c37c422d4d1d940c75e1286259f204633af7",
+  "prompt_sha256": "b66436416fd97b06a5ba7706caa832c1c8fd7fbfb0b12a2fa1122d46a55fe730",
+  "source": "/workspace/stances-options/pose-studio/stances/update-stances/sequence-review/frames/W.webp",
+  "source_sha256": "40f7c5f3a1d988ae99b0764050630f1a00028be50131bd13456db58b4d737865",
+  "frame_count": 5,
+  "normalization": "connected figure isolation; one shared scale from seed/strip standing body height; anatomical head x references and shared sole baseline, no alpha-bounds centering",
+  "action_transforms": [
+    {
+      "frame": 2,
+      "raw_component": 5,
+      "shared_scale": 1.0252808988764044,
+      "placement": [
+        53,
+        124
+      ],
+      "head_reference_x": 700,
+      "target_head_x": 360,
+      "sole_y": 467
+    },
+    {
+      "frame": 3,
+      "raw_component": 3,
+      "shared_scale": 1.0252808988764044,
+      "placement": [
+        128,
+        104
+      ],
+      "head_reference_x": 1040,
+      "target_head_x": 377,
+      "sole_y": 467
+    },
+    {
+      "frame": 4,
+      "raw_component": 4,
+      "shared_scale": 1.0252808988764044,
+      "placement": [
+        140,
+        115
+      ],
+      "head_reference_x": 1545,
+      "target_head_x": 392,
+      "sole_y": 467
+    }
+  ],
+  "bookends": "frames01/05 copied exact source bytes",
+  "references": [
+    {
+      "url": "https://www.hema101.com/post/beginner-s-guide-to-fencing-with-the-longsword",
+      "interpretation": "middle hew maintains horizontal hand plane; waist variant is artistic interpretation"
+    },
+    {
+      "url": "https://hemapenzance.com/blog/how-to-lunge-with-a-sabre",
+      "interpretation": "blade leads foot and heel/weight follow; sabre movement adapted artistically to greatsword, no copied assets"
+    }
+  ]
+}
