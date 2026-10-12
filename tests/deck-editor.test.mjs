@@ -1505,3 +1505,26 @@ test('Hub tabs confirm valid deck edits before navigation and refuse an invalid 
     assert.equal(run.deck.length, savedLength);
   });
 });
+
+test('DOM: a Counter shows a range only when its reply deals damage (v2)', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  const run = createRunState({ seed: 0x5eed, classId: 'reaver', registries: REG, combatExpansionVersion: 2 });
+  const probes = ['evasiveGuard', 'backstep', 'dodgeRoll', 'quickstep', 'guardCounter'];
+  for (const cardId of probes) {
+    if (!run.deck.some(c => c.cardId === cardId)) run.sideboard.push({ instanceId: `probe-${cardId}`, cardId, upgraded: false });
+  }
+  withDom(() => {
+    const editor = mountDeckEditor(document.body, { registries: REG, run, settings: {} });
+    const row = (cardId) => [...editor.root.querySelectorAll('.deck-editor-tile')].find(t => t.dataset.key?.startsWith(`card:${cardId}~`));
+    const rangeOf = (cardId) => row(cardId)?.querySelector('.deck-editor-range')?.dataset.range;
+    // Evasions that only gain Poise on the reply deal no damage: no range.
+    assert.equal(rangeOf('evasiveGuard'), undefined, 'Evasive Guard deals no damage');
+    assert.equal(rangeOf('backstep'), undefined, 'Backstep deals no damage');
+    // Dodge Roll and Quickstep reply with 3 damage (counterPayload hp 3), so they read Melee.
+    assert.equal(rangeOf('dodgeRoll'), 'melee', 'Dodge Roll replies with 3 damage');
+    assert.equal(rangeOf('quickstep'), 'melee', 'Quickstep replies with 3 damage');
+    // Guard Counter's reply is a damage effect, so it keeps its Melee range.
+    assert.equal(rangeOf('guardCounter'), 'melee', 'Guard Counter deals damage');
+    editor.close();
+  });
+});
