@@ -111,3 +111,17 @@ test('an encounter past the grid capacity keeps every enemy placed', () => {
   assert.equal(enemies.length, 15);
   assert(enemies.every(s => Number.isFinite(s.x) && Number.isFinite(s.ground) && s.box), 'no enemy loses its geometry');
 });
+
+test('enemies of one class stand one height in every rank; low creatures stay at half', () => {
+  for (const [width, height, narrow] of [[1440, 400, false], [390, 460, true]]) {
+    const formation = alternativeFormation(plan(5), width, height, narrow);
+    const actors = formation.slots.map((slot, i) => ({ slot, side: slot.side, visibleWidth: 120 + i * 30, visibleHeight: 300,
+      leading: 40, ratio: 1, multiplier: 1, enemyId: slot.side === 'enemy' && i === 2 ? 'blightHound' : `foe${i}` }));
+    const sizes = fitAlternativeSprites({ width, height, actors, narrow });
+    const enemy = sizes.filter(size => formation.slots.find(s => s.id === size.id).side === 'enemy');
+    const hound = enemy.find(size => actors.find(a => a.slot.id === size.id).enemyId === 'blightHound');
+    const others = enemy.filter(size => size !== hound);
+    assert.equal(new Set(others.map(size => Math.round(size.visibleHeight * 1e6))).size, 1, 'one minion height across both ranks');
+    assert(Math.abs(hound.visibleHeight - others[0].visibleHeight * .5) < 1e-6, 'a low creature is half its class height');
+  }
+});

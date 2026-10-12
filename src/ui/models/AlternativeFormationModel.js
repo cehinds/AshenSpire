@@ -76,12 +76,21 @@ export function alternativeFormation(plan, width, height, narrow) {
   return plan;
 }
 
+const LOW_SILHOUETTES = ['blightHound', 'stitchedHound', 'lanternMoth', 'graveWisp', 'stitchCrab', 'cinderMantis'];
+
+// An enemy's class (minion / elite / boss) is its stature; actors measured in
+// tests may carry only the ratio combatSpriteRatio derived from it.
+const enemyClass = a => a.stature ?? a.frame?.dataset?.stature ?? (a.ratio >= 2 ? 'huge' : a.ratio > 1 ? 'large' : 'normal');
+
 export function fitAlternativeSprites({ width, height, actors, narrow }) {
-  return actors.filter(a => a.visibleHeight > 0 && a.visibleWidth > 0).map(a => {
+  const fits = actors.filter(a => a.visibleHeight > 0 && a.visibleWidth > 0).map(a => {
+    const enemy = a.side !== 'player';
     const sideCount = actors.filter(b => b.side === a.side).length;
-    const lowSilhouette = ['blightHound','stitchedHound','lanternMoth','graveWisp','stitchCrab','cinderMantis'].includes(a.enemyId);
-    const ratio = a.side === 'player' ? 1 : lowSilhouette ? .50 : Math.min(1.3, a.ratio);
-    const requested = height * (narrow ? .46 : .73) * ratio * a.slot.depth;
+    const low = enemy && LOW_SILHOUETTES.includes(a.enemyId);
+    const ratio = !enemy ? 1 : low ? .50 : Math.min(1.3, a.ratio);
+    // Owner (2026-10-12): an enemy class stands one height in every rank, so
+    // the rank depth shrink applies to the party only.
+    const requested = height * (narrow ? .46 : .73) * ratio * (enemy ? 1 : a.slot.depth);
     const widthLimit = Math.min(width * (narrow ? (sideCount > 2 ? .24 : .34) : (sideCount > 2 ? .20 : .31)),
       a.slot.artWidth ? a.slot.artWidth * .96 : Infinity);
     // A 130px landscape field can leave less headroom than the measured
@@ -92,7 +101,19 @@ export function fitAlternativeSprites({ width, height, actors, narrow }) {
     const visibleHeight = Math.max(shortFloor, Math.min(requested * Math.min(1.25, a.multiplier || 1),
       a.slot.ground - a.leading - 6, widthLimit * a.visibleHeight / a.visibleWidth,
       2 * Math.min(a.slot.x - 5, width - a.slot.x - 5) * a.visibleHeight / a.visibleWidth));
-    return { id:a.slot.id, scale:visibleHeight/a.visibleHeight, visibleHeight, multiplier:1, x:a.slot.x };
+    return { a, enemy, low, visibleHeight };
+  });
+  // Every enemy of one class takes the class's smallest fitted height, so no
+  // member outgrows its own lane, headroom or edge. Low creatures stay at half
+  // of their class height.
+  const classUnit = new Map();
+  for (const fit of fits.filter(fit => fit.enemy)) {
+    const key = enemyClass(fit.a), unit = fit.visibleHeight / (fit.low ? .5 : 1);
+    classUnit.set(key, Math.min(classUnit.get(key) ?? Infinity, unit));
+  }
+  return fits.map(({ a, enemy, low, visibleHeight: own }) => {
+    const visibleHeight = enemy ? classUnit.get(enemyClass(a)) * (low ? .5 : 1) : own;
+    return { id: a.slot.id, scale: visibleHeight / a.visibleHeight, visibleHeight, multiplier: 1, x: a.slot.x };
   });
 }
 

@@ -1579,6 +1579,12 @@
 .formation-grid[data-perspective='true'] .formation-grid-cell[data-occupied='true']::before {
   border-color: var(--grid-stroke);
 }
+/* Owner (2026-10-12): plain dark shadows. Each fighter's own floor shadow
+   (.sprite::before) marks where it stands; the cell rings show only as move
+   destinations while formation movement is on. */
+.formation-grid[data-perspective='true'] .formation-grid-cell::before { display: none; }
+:root[data-formation-movement='true'] .formation-grid[data-perspective='true'] .formation-grid-cell:not(:disabled)::before,
+.formation-grid[data-perspective='true'] .formation-grid-cell.formation-selected::before { display: block; }
 .formation-grid[data-perspective='true'] .formation-grid-cell.formation-selected::before { border-width: 3px; }
 .field.grid-target-hover { cursor: pointer; }
 :root .combat .combatant .sprite { scale: none; translate: none; }
