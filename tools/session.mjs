@@ -807,6 +807,7 @@ export function createSession({ registries, seedString, endless = false, restore
       kind: 'combat',
       combatExpansionVersion: c.sharedExpansionVersion || 1,
       reactionRulesVersion: c.reactionRulesVersion,
+      ...(c.reactionRules ? { reactionRules: structuredClone(c.reactionRules) } : {}),
       reactionWaiting: c.pendingReaction ? { id: c.pendingReaction.id, ownerId: c.pendingReaction.ownerId } : null,
       // Public: every seat sees what is already committed to the open root's stack.
       ...(c.reactionStack ? { reactionStack: structuredClone(c.reactionStack) } : {}),

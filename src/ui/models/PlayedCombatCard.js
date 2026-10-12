@@ -21,6 +21,7 @@ export function resolveCoopPlayedCombatCard(registries, snapshot, receipt) {
     player: owner,
     combatExpansionVersion: owner.combatExpansionVersion || 1,
     reactionRulesVersion: snapshot.scene.reactionRulesVersion ?? null,
+    ...(snapshot.scene.reactionRules ? { reactionRules: snapshot.scene.reactionRules } : {}),
     breakMeterVersion: snapshot.scene.breakMeterVersion ?? receipt.cardInstance?.breakMeterVersion ?? 0,
   };
   return resolvePlayedCombatCard(context, receipt, owner.hand?.find(card => card.instanceId === receipt.cardInstanceId));
