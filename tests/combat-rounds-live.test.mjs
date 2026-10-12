@@ -522,6 +522,14 @@ test('an earlier queued card cannot take a Mana-discount charge that a later que
   assert.ok(events.some((e) => e.type === 'cardChargeConsumed' && e.cardId === found.manaCardId), 'the later card consumes its own claimed charge');
 });
 
+// End Turn, declining any reaction the commit offers (Back), so the turn runs to its end. Returns the events.
+function endTurnDeclining(c) {
+  const out = dispatch(c, { type: 'endTurn' });
+  const events = [...out.events];
+  while (c.pendingReaction) events.push(...dispatch(c, { type: 'chooseReaction', offerId: c.pendingReaction.id, optionId: null }).events);
+  return { events };
+}
+
 // Review finding 3: in an expanded (v2) fight a queued enemy honours control action loss as live does: one
 // Frozen stack takes the enemy's action at its entry, once per round. Baseline first: the seed's enemy acts.
 test('in an expanded fight, a Frozen stack takes a queued enemy\'s action at its entry, once per round', () => {
@@ -544,10 +552,11 @@ test('in an expanded fight, a Frozen stack takes a queued enemy\'s action at its
   assert.equal(lost.length, 1, 'one action is lost, and only one');
   assert.equal(enemy.statuses?.frozen?.stacks, 1, 'one stack is spent, the other remains');
 
-  const second = dispatch(c, { type: 'endTurn' });
+  // A player-targeted attack can pause the commit for a reaction (SPEC §4.11); this test declines any offer.
+  const second = endTurnDeclining(c);
   assert.equal(second.events.filter((e) => e.type === 'statusRemoved' && e.targetId === enemy.id && e.reason === 'actionDenied').length, 1, 'the second stack takes the next round');
   assert.equal(acted(second.events), false, 'the next round is lost to the second stack');
-  const third = dispatch(c, { type: 'endTurn' });
+  const third = endTurnDeclining(c);
   assert.equal(acted(third.events), true, 'with no stack left the enemy acts again');
 });
 

@@ -898,6 +898,7 @@ export function dispatch(combat, intent) {
         Reactions.setReactionsEnabled(combat, combat.player, intent.enabled);
         break;
       case 'chooseReaction':
+        if (Rounds.roundPaused(combat)) { resumeCombatRound(combat, intent); break; }
         Reactions.answerReaction(combat, 'player', intent, { play: doPlayCard });
         resumeEnemyTurn(combat);
         break;
@@ -1286,6 +1287,13 @@ function abilityKindOf(def) {
   return def.abilityKind || ((def.cardTags || def.tags || []).includes('source:spell') ? 'spell' : 'maneuver');
 }
 
+// A card's maneuver (SPEC §4.7): its combat profile's, else the `maneuver:*` tag the card carries.
+function maneuverOf(def) {
+  if (def.combatProfile?.maneuver) return def.combatProfile.maneuver;
+  const tag = (def.cardTags ?? def.tags ?? []).find((t) => typeof t === 'string' && t.startsWith('maneuver:'));
+  return tag ? tag.slice('maneuver:'.length) : undefined;
+}
+
 // The Mana a card costs before any Mana-discount charge (the pricing resolvedCardPlayCosts discounts).
 function baseManaCost(combat, def) {
   const weightClass = playerWeightClass(combat).weightClass;
@@ -1595,7 +1603,7 @@ function queueRoundCard(combat, { cardInstanceId, targetId, choice, upcastTier, 
   // The timeline's view of the card (SPEC §4.11): an attack aims at its foe; a defensive card is for its owner.
   const aimsAtFoe = needsEnemyTarget(def) || chargedEnemyTarget;
   const isAttack = cardKind(def) === 'attack' && Boolean(target);
-  const kind = Rounds.playerKind({ isAttack, effects: def.effects ?? [], maneuver: def.combatProfile?.maneuver });
+  const kind = Rounds.playerKind({ isAttack, effects: def.effects ?? [], maneuver: maneuverOf(def) });
   const tlTarget = kind === 'attack' || aimsAtFoe ? (target ? target.id : 'self') : 'self';
   const tags = Array.isArray(def.cardTags ?? def.tags) ? [...(def.cardTags ?? def.tags)] : [];
   Rounds.addQueuedCard(combat, {
@@ -1678,7 +1686,7 @@ function enemyMoveAt(combat, enemy, moveId) {
 }
 
 // The live helpers the adapter's commit calls (combatRoundsAdapter.js never imports this file).
-function previewRoundOps() {
+function previewRoundOps(hand = []) {
   return {
     enemyTurnStart,
     enemyOwnerTurnStart,
@@ -1688,24 +1696,131 @@ function previewRoundOps() {
     enemyMove: enemyMoveAt,
     drain: drainQueue,
     findEntity,
+    reactionHand: () => hand,
+    playReaction: playRoundReaction,
   };
 }
 
-// Commits the round at End Turn. This preview declines live reactions for the commit (P3a, PREVIEW-PLAN):
-// the player's reaction flag is cleared while the round runs and restored after.
-function commitCombatRound(combat) {
+// The Counter and Evade cards in hand the player may play as a reaction to an enemy attack in this commit
+// (SPEC §4.10, §4.11). Each is a timeline record: its speed, its Stamina as SP, and its Mana. A card that is
+// queued is not a reaction, and nothing is offered while reactions are off.
+function roundReactionHand(combat) {
+  const p = combat.player;
+  if (!Reactions.usesReactions(combat) || p.reactionsEnabled === false || !p.alive || p.hp <= 0) return [];
+  const queued = new Set(Rounds.queuedCards(combat).map((r) => r.instanceId));
+  const claimed = claimedCharges(combat);
+  const offers = [];
+  for (const inst of combat.piles.hand) {
+    if (queued.has(inst.instanceId)) continue;
+    const def = resolveCombatCard(combat, inst);
+    const kind = Rounds.playerKind({ isAttack: false, effects: def.effects ?? [], maneuver: maneuverOf(def) });
+    if (kind !== 'counter' && kind !== 'evade') continue;
+    if (def.cost === 'X' || combat.registries.framework.isUnplayable(def)) continue;
+    if (!Control.controlGate(combat, p, def).allowed) continue;
+    const costs = playCosts(combat, def, claimed);
+    if (costs.energy > p.energy || costs.mana > p.mana) continue;
+    const tags = Array.isArray(def.cardTags ?? def.tags) ? [...(def.cardTags ?? def.tags)] : [];
+    offers.push({
+      id: inst.cardId, instanceId: inst.instanceId, name: def.name ?? inst.cardId, kind,
+      speed: Rounds.cardSpeed(def, inst.cardId), target: 'self', sp: costs.stamina, mana: costs.mana,
+      tags, stance: Rounds.stanceFor(kind, tags),
+    });
+  }
+  return offers;
+}
+
+// Plays a reaction card the player chose in a paused commit (SPEC §4.10 Play): its Stamina and Mana are
+// paid now, as a queued card's are at queue time, and its live effects run before the attack resolves.
+function playRoundReaction(combat, instanceId, attackerId) {
+  const p = combat.player;
+  const inst = combat.piles.hand.find((c) => c.instanceId === instanceId);
+  if (!inst) throw new Error(`Card '${instanceId}' is not in hand`);
+  const def = resolveCombatCard(combat, inst);
+  const costs = playCosts(combat, def, claimedCharges(combat, instanceId));
+  p.energy -= costs.energy;
+  if (costs.energy > 0) combat.emit('energySpent', { amount: costs.energy });
+  p.mana -= costs.mana;
+  if (costs.mana > 0) combat.emit('manaSpent', { amount: costs.mana });
+  if (costs.stamina > 0) {
+    p.counters.staminaSpentThisTurn = (p.counters.staminaSpentThisTurn || 0) + costs.stamina;
+    combat.emit('staminaSpent', { amount: costs.stamina });
+  }
+  const targetId = needsEnemyTarget(def) ? attackerId : undefined;
+  combat._reactionPlaying = true;
+  try {
+    doPlayCard(combat, { cardInstanceId: instanceId, ...(targetId ? { targetId } : {}) }, { prepaid: { energy: costs.energy, mana: costs.mana, stamina: costs.stamina } });
+  } finally {
+    delete combat._reactionPlaying;
+  }
+  combat.emit('combatRoundReaction', { cardInstanceId: instanceId, cardId: inst.cardId, against: attackerId, sourceId: p.id });
+  drainQueue(combat);
+}
+
+// Offers the paused commit's reaction choice through the existing reaction modal (combat.pendingReaction).
+function offerRoundReaction(combat, offer) {
+  const id = `combatRound:${offer.attack.seq}`;
+  combat.pendingReaction = {
+    id, groupKey: id, ownerId: 'player', sourceId: offer.attack.attacker,
+    options: offer.eligible.map((c) => ({
+      id: c.instanceId, name: c.name, cardId: c.id, play: { cardInstanceId: c.instanceId },
+      staminaCost: c.sp, manaCost: c.mana, choiceName: null,
+    })),
+  };
+  combat.emit('combatReactionOffered', { offerId: id, ownerId: 'player', sourceId: offer.attack.attacker });
+}
+
+// The player's answer to a paused commit (chooseReaction). The reaction is validated first; a pick that is
+// not on offer throws and changes nothing. Declining (optionId null) resolves the attack with no reaction.
+function resumeCombatRound(combat, { offerId, optionId = null }) {
+  const pending = combat.pendingReaction;
+  if (!pending || pending.id !== offerId || pending.ownerId !== 'player') throw new Error('This reaction choice is unavailable');
+  let pick = null;
+  if (optionId !== null && optionId !== undefined) {
+    const option = pending.options.find((o) => o.id === optionId);
+    if (!option) throw new Error('Choose an available reaction card');
+    pick = option.play.cardInstanceId;
+  }
+  const discardIds = Rounds.pausedDiscardIds(combat);
   const p = combat.player;
   const saved = p.reactionsEnabled;
   p.reactionsEnabled = false;
+  let out;
   try {
-    // An expanded fight already runs this inside dispatch's foundation transaction. A legacy fight is
-    // made atomic here, so a throw part way restores the pre-commit state.
-    if (combat.combatExpansionVersion === 2) Rounds.commitRound(combat, previewRoundOps());
-    else atomicCommit(combat, () => Rounds.commitRound(combat, previewRoundOps()));
+    out = combatRoundTransaction(combat, () => Rounds.resumeRound(combat, previewRoundOps(), pick));
   } finally {
     if (saved === undefined) delete p.reactionsEnabled;
     else p.reactionsEnabled = saved;
   }
+  combat.emit('combatReactionChosen', { offerId, ownerId: 'player', cardInstanceId: pick });
+  delete combat.pendingReaction;
+  if (out.paused) { offerRoundReaction(combat, out.offer); return; }
+  if (combat.result) return;
+  completeEndTurn(combat, discardIds);
+}
+
+// Runs one step of the round. An expanded fight already runs this inside dispatch's foundation transaction.
+// A legacy fight is made atomic here, so a throw part way restores the pre-step state.
+function combatRoundTransaction(combat, fn) {
+  return combat.combatExpansionVersion === 2 ? fn() : atomicCommit(combat, fn);
+}
+
+// Commits the round at End Turn (SPEC §4.11). The player's reaction candidates are read first; then the
+// live reaction flag is cleared while the round runs, so the live enemy moves never offer their own choice
+// (the round offers the player's). Returns true when the commit pauses for a reaction.
+function commitCombatRound(combat, discardIds) {
+  const p = combat.player;
+  const hand = roundReactionHand(combat);
+  const saved = p.reactionsEnabled;
+  p.reactionsEnabled = false;
+  let out;
+  try {
+    out = combatRoundTransaction(combat, () => Rounds.commitRound(combat, previewRoundOps(hand), discardIds));
+  } finally {
+    if (saved === undefined) delete p.reactionsEnabled;
+    else p.reactionsEnabled = saved;
+  }
+  if (out.paused) offerRoundReaction(combat, out.offer);
+  return out.paused;
 }
 
 // Runs fn; if it throws, puts the fight's plain data back as it was. Identity is restored per position
@@ -1771,9 +1886,14 @@ function doEndTurn(combat, discardIds = []) {
   if (combat.combatRounds && discardIds.some((id) => Rounds.isQueued(combat, id))) throw new Error('Unqueue a card before discarding it');
   validateDiscardChoice(combat, discardIds);
   if (combat.combatRounds) {
-    commitCombatRound(combat);
+    if (commitCombatRound(combat, discardIds)) return;
     if (combat.result) return;
   }
+  completeEndTurn(combat, discardIds);
+}
+
+// The live end of the player's turn: the hand's end-turn rules, then the enemy phase.
+function completeEndTurn(combat, discardIds) {
   endPlayerTurn(combat, discardIds);
   if (combat.result) return;
   enemyPhase(combat);

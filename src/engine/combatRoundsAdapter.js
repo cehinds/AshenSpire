@@ -195,13 +195,15 @@ function engineTables(rules) {
   };
 }
 
-function playerSpec(combat, sp) {
+// The player's timeline combatant. `sp` is the SP pool (the queued cards' SP plus the Stamina left, so a
+// reaction pays from what the queue left); `hand` holds the reaction candidates (combat.js).
+function playerSpec(combat, sp, hand) {
   const attrs = { ...(combat.attributes ?? combat.player.attributes ?? {}) };
   return {
     id: 'player', side: 'player', name: combat.player.name ?? 'player', attrs,
     level: Number(combat.characterLevel ?? 0) || 0,
     hp: Math.max(0, Number(combat.player.hp) || 0), sp, wis: Number(attrs.WIS ?? 0) || 0,
-    tags: [], stance: null, hand: [],
+    tags: [], stance: null, hand,
   };
 }
 
@@ -222,8 +224,11 @@ function enemySpec(enemy) {
 //   enemyMove(combat, enemy, moveId)  the live move (or its delayed charge)
 //   drain(combat)                   drainQueue
 //   findEntity(combat, id)          the live lookup
-// Returns nothing; the caller then runs the live turn-end.
-export function commitRound(combat, ops) {
+//   reactionHand(combat)            the reaction candidates the player may play this commit (timeline records)
+//   playReaction(combat, instanceId, attackerId)  pays and plays a chosen reaction card, live
+// Returns { paused, offer }. A paused commit (SPEC §4.11) waits for the player's reaction: `offer` is the
+// round's { attack, eligible }, and resumeRound() continues it. Otherwise the caller runs the live turn end.
+export function commitRound(combat, ops, discardIds = []) {
   const cr = roundState(combat);
   const rules = cr.rules;
   const tables = engineTables(rules);
@@ -232,18 +237,19 @@ export function commitRound(combat, ops) {
 
   // SPEC §4.1 order: each enemy's turn start (its DoT ticks, the block reset) comes before its moves.
   ops.enemyTurnStart(combat);
-  if (combat.result) return;
+  if (combat.result) return { paused: false, offer: null };
   for (const enemy of combat.enemies) {
     if (!enemy.alive) continue;
     ops.enemyOwnerTurnStart(combat, enemy);
-    if (combat.result) return;
+    if (combat.result) return { paused: false, offer: null };
   }
   // An enemy a tick killed never acts: its queue is dropped.
   for (const enemy of combat.enemies) if (!enemy.alive) delete cr.enemyQueues[enemy.id];
 
   const playerRecords = queuedCards(combat).slice();
   const sp = playerRecords.reduce((sum, r) => sum + r.tl.sp, 0);
-  const specs = [playerSpec(combat, sp), ...combat.enemies.map(enemySpec)];
+  const spare = Math.max(0, Number(combat.player.energy) || 0);
+  const specs = [playerSpec(combat, sp + spare, ops.reactionHand(combat)), ...combat.enemies.map(enemySpec)];
   const state = makeFight(specs, { armor: tables.armor, cards: tables.cards });
   Object.assign(state.momentum, cr.momentum ?? {});
   Object.assign(state.poiseDouble, cr.poiseDouble ?? {});
@@ -257,26 +263,86 @@ export function commitRound(combat, ops) {
     queues[enemy.id] = entries.map((e, i) => enemyTimelineCard(enemy, e, i, def));
   }
 
-  const round = startRound(state, { queues, rng, merge: rules.merge, decay: rules.decay });
-  const hooks = { rng, evadeTable: tables.evadeTable, stanceAdvantage: tables.stanceAdvantage };
+  // The round is plain JSON from here on, so a pause is saved with the rest of combat.combatRounds.
+  cr.round = startRound(state, { queues, rng, merge: rules.merge, decay: rules.decay, liveDefence: true });
+  cr.discardIds = [...discardIds];
+  return runRound(combat, ops);
+}
+
+// Continues a commit that paused for a reaction. `pick` is the instanceId of the chosen reaction card, or
+// null to decline. The answer is validated before anything changes (round.js), and nothing that already ran
+// is run again: the paused entry is the only one resolved here. Returns { paused, offer } like commitRound().
+export function resumeRound(combat, ops, pick) {
+  const cr = roundState(combat);
+  const round = cr.round;
+  if (!cr.paused || !round?.awaiting) throw new TypeError('the round is not waiting for a reaction');
+  const rules = cr.rules;
+  const hooks = roundHooks(combat, rules);
+  const entry = round.timeline.entries[round.awaiting.index];
+  const answer = answerReaction(round, pick, hooks);
+  const events = [...cr.paused.events, ...answer.events];
+  const played = events.find((e) => e.type === 'reaction');
+  if (played) ops.playReaction(combat, played.instanceId, entry.actor);
+  delete cr.paused;
+  settleEntry(combat, entry, events, ops);
+  if (combat.result) return { paused: false, offer: null };
+  return runRound(combat, ops);
+}
+
+function roundHooks(combat, rules) {
+  const tables = engineTables(rules);
+  return { rng: () => combat.rng.float('combatRounds'), evadeTable: tables.evadeTable, stanceAdvantage: tables.stanceAdvantage };
+}
+
+// Steps the round to its end or to the next reaction pause. A pause keeps the round's cursor in `round`.
+function runRound(combat, ops) {
+  const cr = roundState(combat);
+  const round = cr.round;
+  const hooks = roundHooks(combat, cr.rules);
   while (round.idx < round.timeline.entries.length) {
     const entry = round.timeline.entries[round.idx];
     const step = stepRound(round, hooks);
-    const events = [...step.events];
-    // No reaction is offered in P3a (the timeline hand is empty): a pause is declined.
-    if (step.awaitingReaction) events.push(...answerReaction(round, null, hooks).events);
-    const hit = events.find((e) => e.type === 'hit');
-    const landed = hit ? hit.hit === true : true;
-    if (entry.side === 'player') applyPlayerEntry(combat, entry, landed, ops);
-    else applyEnemyEntry(combat, entry, landed, ops);
-    if (combat.result) return;
+    if (step.awaitingReaction) {
+      // A card that left hand after the commit began is not a choice any more (a queued card discarded it).
+      round.awaiting.eligible = round.awaiting.eligible.filter((c) => combat.piles.hand.some((h) => h.instanceId === c.instanceId));
+      if (round.awaiting.eligible.length) {
+        cr.paused = { events: step.events };
+        return { paused: true, offer: { attack: { ...round.awaiting.attack }, eligible: round.awaiting.eligible.map((c) => ({ ...c })) } };
+      }
+      // Nothing left to offer: the attack resolves with no reaction.
+      const events = [...step.events, ...answerReaction(round, null, hooks).events];
+      settleEntry(combat, entry, events, ops);
+    } else {
+      settleEntry(combat, entry, step.events, ops);
+    }
+    if (combat.result) return { paused: false, offer: null };
   }
-
   const { state: after } = finishRound(round);
   delete cr.enemyActed;
   cr.momentum = after.momentum;
   cr.poiseDouble = after.poiseDouble;
   cr.charges = after.charges;
+  delete cr.round;
+  delete cr.discardIds;
+  return { paused: false, offer: null };
+}
+
+// Applies one resolved entry: a landed action runs its live effects, a missed one applies nothing.
+function settleEntry(combat, entry, events, ops) {
+  const hit = events.find((e) => e.type === 'hit');
+  const landed = hit ? hit.hit === true : true;
+  if (entry.side === 'player') applyPlayerEntry(combat, entry, landed, ops);
+  else applyEnemyEntry(combat, entry, landed, ops);
+}
+
+// True while a commit waits for the player's reaction (SPEC §4.11).
+export function roundPaused(combat) {
+  return Boolean(combat.combatRounds?.paused);
+}
+
+// The discard choice End Turn made before the commit paused.
+export function pausedDiscardIds(combat) {
+  return [...(combat.combatRounds?.discardIds ?? [])];
 }
 
 function applyPlayerEntry(combat, entry, landed, ops) {

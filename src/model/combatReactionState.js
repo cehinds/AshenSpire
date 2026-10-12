@@ -35,7 +35,9 @@ export function combatReactionProblems(state, { ownerIds = new Set(['player']), 
       || pending.options.some(option => !record(option) || !text(option.id) || !record(option.play) || !text(option.play.cardInstanceId)
         || !Number.isFinite(option.staminaCost) || option.staminaCost < 0 || !Number.isFinite(option.manaCost) || option.manaCost < 0)
       || new Set(pending.options.map(option => option.id)).size !== pending.options.length) problems.push('Invalid pending reaction choice');
-    if (!queued(queue) || !queue.some(action => action.meta?.expansionGroup?.key === pending.groupKey && !action.meta.expansionGroup.begun)) problems.push('Reaction choice requires its unstarted contact plan');
+    // A Combat Rounds Preview pause (SPEC §4.11) holds its attack in the round, not in the action queue.
+    const roundPause = Boolean(state.combatRounds?.paused);
+    if (!roundPause && (!queued(queue) || !queue.some(action => action.meta?.expansionGroup?.key === pending.groupKey && !action.meta.expansionGroup.begun))) problems.push('Reaction choice requires its unstarted contact plan');
     if (!['enemy', 'player', 'suspended'].includes(state.phase)) problems.push('Reaction choice is outside combat');
   }
   if (state.reactionResume !== undefined && (!record(state.reactionResume) || !queued(state.reactionResume.queue)

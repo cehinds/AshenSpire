@@ -126,6 +126,8 @@ test('a preview fight with queued cards saves and restores: queues and paid SP i
   assert.equal(restored.player.mana, c.player.mana, 'the paid Mana survives');
   const turn = restored.turn;
   dispatch(restored, { type: 'endTurn' });
+  // A player-targeted attack can pause the commit for a reaction (SPEC §4.11): Back declines it.
+  while (restored.pendingReaction) dispatch(restored, { type: 'chooseReaction', offerId: restored.pendingReaction.id, optionId: null });
   assert.equal(restored.phase, 'player', 'End Turn commits the restored round and hands the turn back');
   assert.equal(restored.turn, turn + 1);
   assert.deepEqual(restored.combatRounds.playerQueue, []);
