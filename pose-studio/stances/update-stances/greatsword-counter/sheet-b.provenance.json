@@ -1,8 +1,8 @@
 {
-  "generated_at_utc": "2026-10-12T16:18:16.254932+00:00",
+  "generated_at_utc": "2026-10-12T16:29:36.261923+00:00",
   "tool": "tools.image_gen__imagegen",
-  "exact_prompt": "sheet-b.prompt.txt",
-  "prompt_sha256": "b90179876c8ed103e151039cf003a185bb5fe9923bcc4b1a3df5df7da7144fd7",
+  "exact_prompt": "sheet-b-repair-final.prompt.txt",
+  "prompt_sha256": "d47a378407e22833af3f0cd6293ac85eccc68beb45dfb37dc35fd40aeab04a2d",
   "requested_dimensions": [
     1024,
     1536
@@ -19,25 +19,16 @@
   "transparent_background": true,
   "reference_images": [
     {
-      "path": "/workspace/AshenSpire/docs/design/class-armor-rear-2026-10-06/references/reaver-default-rear.png",
-      "sha256": "013f46c2d92303243da8527fcf9a15bd7c31f41e3add503e3fdd6ebc8f9950cd",
-      "visually_inspected": true
-    },
-    {
-      "path": "/workspace/AshenSpire/assets-display/alternative/reaver-greatsword-pilot-counter.webp",
-      "sha256": "fba5777cc513b41e7c714d635ff1231cb9282b6f9e070e255ceb89df8ab1a05d",
-      "visually_inspected": true
-    },
-    {
-      "path": "/workspace/AshenSpire/assets-display/alternative/reaver-greatsword-pilot-smash.webp",
-      "sha256": "9abfefe7258a3bfa2238e7c0516396c61baa5ca009a649b8408183b91fcdf6e2",
+      "path": "pose-studio/stances/update-stances/greatsword-counter/sheet-b-repair-1.png",
+      "sha256": "995a379e54624fac51431e50c221cb51353165101a15a94e697710a899a52250",
       "visually_inspected": true
     }
   ],
-  "original_tool_path": "/workspace/generated_images/exec-706bdcbd-f47a-481e-b4b6-972ad80177b1.png",
+  "original_tool_path": "/workspace/generated_images/exec-e76c3648-4976-44fb-a590-047f5d7376f7.png",
+  "output_identification": "Exact file path returned by this imagegen call; no newest-file glob or directory comparison",
   "preserved_artifact": "sheet-b.png",
   "raw_bytes_preserved": true,
-  "sha256": "b143f93e7693efb336de644e54e931f4d9d10c5a5a37126aa764f03dc6571831",
+  "sha256": "ce4ee18063bc064c8598da4faac2c46364aef23d4b51d243a247bda270450cdc",
   "concept_ids": [
     "CT16",
     "CT17",
@@ -46,59 +37,57 @@
     "CT20"
   ],
   "layout": "2 columns x 3 rows, row-major; bottom-right empty",
-  "review_status": "awaiting art director review; not selected or approved",
+  "review_status": "awaiting final art director review; not selected or runtime approved",
   "observations": [
-    "Five different blade planes/body loads are visible with apparently planted boots",
-    "CT16 roof, CT17 outside descending cover, CT18 point-on-line, CT19 lower high-cover base and CT20 forward diagonal are represented",
-    "Generator again enlarged bodies beyond ~210px and missed fixed-cell 72px margins",
-    "Left-column horizontal blades cross the 512px column boundary; CT20 tip rises above its nominal row",
-    "Hand anatomy, cloak continuity and exact brief fidelity await director review",
-    "Use browser alpha compositing to assess transparency; hidden RGB preview is not proof of background failure"
+    "CT17 hilt and both gripping hands moved forward/right of helmet",
+    "Other four pose designs retained; all silhouettes inside nominal cells",
+    "Body scale above requested210px; exact72px margin target not met",
+    "Pending director full-resolution anatomy review"
   ],
   "alpha_cell_diagnostics": [
     {
       "cell": 1,
       "alpha_gt_127_bbox_local": [
-        45,
-        58,
-        512,
+        90,
+        143,
+        481,
         487
       ]
     },
     {
       "cell": 2,
       "alpha_gt_127_bbox_local": [
-        0,
-        74,
-        490,
-        492
+        52,
+        171,
+        444,
+        491
       ]
     },
     {
       "cell": 3,
       "alpha_gt_127_bbox_local": [
-        29,
-        48,
-        512,
-        512
+        89,
+        122,
+        494,
+        426
       ]
     },
     {
       "cell": 4,
       "alpha_gt_127_bbox_local": [
-        0,
-        72,
-        482,
-        449
+        43,
+        123,
+        432,
+        429
       ]
     },
     {
       "cell": 5,
       "alpha_gt_127_bbox_local": [
-        38,
-        0,
-        465,
-        430
+        83,
+        52,
+        453,
+        424
       ]
     },
     {

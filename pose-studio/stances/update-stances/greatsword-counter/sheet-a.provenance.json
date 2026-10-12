@@ -36,12 +36,13 @@
     "CT15"
   ],
   "layout": "2 columns x 3 rows, row-major; bottom-right empty",
-  "review_status": "awaiting final art director review; not selected or approved",
+  "review_status": "director accepts CT11-14 concept poses; CT15 second hand unresolved; not runtime approved",
   "observations": [
     "All five complete silhouettes now appear inside nominal cells, with no overlap",
     "CT14 distinctly lower and wider; CT13 visible hilt grips",
     "Figures remain above requested210px standing height; exact72px margins not consistently achieved",
-    "CT12/14/15 grip clarity remains art director review item"
+    "CT12/14/15 grip clarity remains art director review item",
+    "CT15-only followup did not clarify second grip; canonical board retains prior revision"
   ],
   "alpha_cell_diagnostics": [
     {
