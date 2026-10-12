@@ -1,4 +1,4 @@
-// Combat Rounds Preview, solo adapter (SPEC §4.11, PREVIEW-PLAN P3a). Headless: no DOM, no timers.
+// Combat Rounds Preview, solo adapter (SPEC §4.11, PREVIEW-PLAN P3a/P3b). Headless: no DOM, no timers.
 //
 // combat.js calls this module only when `combat.combatRounds` is set; every other path is untouched.
 // It owns three things:
@@ -7,6 +7,8 @@
 //      at queue time, and the card stays in hand until End Turn.
 //   3. The commit: End Turn builds the timeline inputs, steps the round, and hands each landed
 //      action back to combat.js, which runs the live effects. A missed action applies nothing.
+//      A player-targeted attack with a Counter or Evade on offer pauses the commit (round.js);
+//      resumeRound() answers it and carries on from the paused entry (SPEC §4.11).
 // The timeline decides order and hit or miss only. combat.js passes its own helpers in `ops`, so
 // this file never imports combat.js (no cycle).
 import { startRound, stepRound, answerReaction, finishRound } from './combatRounds/round.js';
