@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "library": "shared",
-  "pinnedRelease": "hd-assets-v19",
+  "pinnedRelease": "hd-assets-v15",
   "note": "Canonical packed IDs retain their existing byte home; this index groups them without duplication.",
   "assets": {
     "assets/card-components/0949257201425783d7c8.webp": {
@@ -16976,10 +16976,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/ashheartDragon.webp",
-          "bytes": 2734,
-          "sha256": "391054d14f6a9852250c16cfe22f2f7e4f683bb9628e88ff3b30f71997d31bba",
-          "width": 256,
-          "height": 256
+          "bytes": 5354,
+          "sha256": "c00198a37fdb5d478ceef1fa36b65824b482acc172b0719ba52ac62ea6b76e7e",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/ashheartDragon.webp",
@@ -16995,10 +16995,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/ashRevenant.webp",
-          "bytes": 2090,
-          "sha256": "bda199324ff5742d306ea33d119429e4875b09755efc2ac90a2232c834b607cd",
-          "width": 256,
-          "height": 256
+          "bytes": 3536,
+          "sha256": "80f078627ca60230f0e360b9f03b34c716d4afef3a4e18d0606811948cdad0cd",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/ashRevenant.webp",
@@ -17014,10 +17014,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/bellKeeper.webp",
-          "bytes": 2086,
-          "sha256": "e31a172b36737f9da6f54eb0021bf619b56387aa518f86fd648002a112706045",
-          "width": 256,
-          "height": 256
+          "bytes": 3888,
+          "sha256": "8f8a24d2b9ec2c26f3ee845942d3204ba199bf974cbd014e45d94a8d4e70f439",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/bellKeeper.webp",
@@ -17033,10 +17033,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/blightedValkyrie.webp",
-          "bytes": 2276,
-          "sha256": "88cc96437e8f3cc249948a3b25519812b280816fbc967b3b995bf8855015c262",
-          "width": 256,
-          "height": 256
+          "bytes": 4098,
+          "sha256": "b2475249a2b9ff5f2dca9b2c3e9603a9b7ea96d814bb8192a0356770a81b3f5d",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/blightedValkyrie.webp",
@@ -17052,10 +17052,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/blightHound.webp",
-          "bytes": 2024,
-          "sha256": "a99b701d6293b53d60e059e1f08b0dff1db3f11f018bcd1fc0ef7c213b736d07",
-          "width": 256,
-          "height": 256
+          "bytes": 3678,
+          "sha256": "4c83afe9126b19398642c8924b8929586f86e49cc8c60ab005c5290de5b7dcbe",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/blightHound.webp",
@@ -17071,10 +17071,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/briarHermit.webp",
-          "bytes": 2922,
-          "sha256": "9ae575a1e58cce97c9297be4848216db7cc9f7fc6080fc871f59e8c836de5d90",
-          "width": 256,
-          "height": 256
+          "bytes": 5416,
+          "sha256": "13503c37fcbb01509c8499e7081bc818921d34cabe42dde5bff1dbbb8403445b",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/briarHermit.webp",
@@ -17090,10 +17090,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/chainScavenger.webp",
-          "bytes": 1894,
-          "sha256": "ef6b963e1e52759bfc1d41e933234b49861434d4d67f3ae82670c2a6f9ec45b0",
-          "width": 256,
-          "height": 256
+          "bytes": 3510,
+          "sha256": "38065049dd7788df43538c5eaad34a7cb23bfd1f811f34e113f0a0a320eb6239",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/chainScavenger.webp",
@@ -17109,10 +17109,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/charredColossus.webp",
-          "bytes": 1652,
-          "sha256": "1f09e1a9ea31e2603d2ffc3b4259646dcd71833303166f7158ea3878fe426503",
-          "width": 256,
-          "height": 256
+          "bytes": 3072,
+          "sha256": "9c15b49a5b4dbacff7783898cffad8de2a6cae18f2511bb5f370200dcb230121",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/charredColossus.webp",
@@ -17128,10 +17128,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/cinderMantis.webp",
-          "bytes": 2402,
-          "sha256": "7b8b293ebe7556df55c6a11242dec11b62970e8398415e383ea4dac90d5a761a",
-          "width": 256,
-          "height": 256
+          "bytes": 4448,
+          "sha256": "c1d01a41ad982fd68910603b534aa609cb0ac122f81ae83a6821f3e909f2ed30",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/cinderMantis.webp",
@@ -17147,10 +17147,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/courtDuelist.webp",
-          "bytes": 1986,
-          "sha256": "be6b1b735d14700ed1424b4a0488a3c3b5fa012f5ebabd5bc98b4b1d5e11af83",
-          "width": 256,
-          "height": 256
+          "bytes": 3706,
+          "sha256": "03df506bdb90911fd1541687ec66ad7a010ae4a317633525c0101943a7fa6000",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/courtDuelist.webp",
@@ -17166,10 +17166,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/courtMarionette.webp",
-          "bytes": 2154,
-          "sha256": "fe07a9592d37b65198862a002e5793066a21350144a63ce42ffebfce81a0a0d8",
-          "width": 256,
-          "height": 256
+          "bytes": 3578,
+          "sha256": "fb9129729e2d11b3a30c355825fd1215a1997dd4666214d7f0fc2a76f37ef22e",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/courtMarionette.webp",
@@ -17185,10 +17185,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/courtSurgeon.webp",
-          "bytes": 1700,
-          "sha256": "9c6bc3c5a9a0d3f1ba355fb93103690cf67b19ecccc54fe4a757a3472546639b",
-          "width": 256,
-          "height": 256
+          "bytes": 3134,
+          "sha256": "5e8239fb4e2473bedc3bd300445155bd761bf3e2655a8201ab70771e47ac2b82",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/courtSurgeon.webp",
@@ -17204,10 +17204,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/eclipseCantor.webp",
-          "bytes": 3156,
-          "sha256": "067d9a320bba9440dbea8de35e68d18da98289b0ef05c697373c707c469fb1bf",
-          "width": 256,
-          "height": 256
+          "bytes": 5942,
+          "sha256": "72d5cdd61efa56575653b69b44711851c66d6722f457cf0ea83efb15f252657b",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/eclipseCantor.webp",
@@ -17223,10 +17223,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/emberStarvedPilgrim.webp",
-          "bytes": 1404,
-          "sha256": "8ffd00c08b30da4e13f3614a2f59e6a4d7e95a4ace33daef5b3b4a565f9733a8",
-          "width": 256,
-          "height": 256
+          "bytes": 2516,
+          "sha256": "7d5a2a9035e5156b64ec699f4e426933acb8a2a0734065f7878fa912e10d6880",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/emberStarvedPilgrim.webp",
@@ -17242,10 +17242,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/fellWarden.webp",
-          "bytes": 2432,
-          "sha256": "d1c6c1fb470b6b726e843239d6d2ddecb4b7548092aab24c27f555b6de99c230",
-          "width": 256,
-          "height": 256
+          "bytes": 4438,
+          "sha256": "c44288af83710bc1c2f09b388fb04893de5e7a4b82eb62b083d7065401d01710",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/fellWarden.webp",
@@ -17261,10 +17261,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/furnaceSaint.webp",
-          "bytes": 2686,
-          "sha256": "04fcc66de7fc62202e097e269f23d97d1084f1a84cdbd9f08d9cda513941d34b",
-          "width": 256,
-          "height": 256
+          "bytes": 4996,
+          "sha256": "e2c5960620ad6486303e6a076ae854336fb94e7d2dbc29f1494756830ac06dce",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/furnaceSaint.webp",
@@ -17280,10 +17280,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/gildedKnight.webp",
-          "bytes": 1960,
-          "sha256": "28a179a36c512ace7f676784fabb95fb9ea4a2561b5b9da0a51694990cc599f9",
-          "width": 256,
-          "height": 256
+          "bytes": 3648,
+          "sha256": "bdca1143eb40027d4a8f603bb1b6d8d1bdbdb808f45a5f30920583068a32e198",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/gildedKnight.webp",
@@ -17299,10 +17299,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/glassRegent.webp",
-          "bytes": 2280,
-          "sha256": "45d08f46c1b2bb0850bb936b7cbf5095bdbfed2dc289409c1f2dad4ca153d5a8",
-          "width": 256,
-          "height": 256
+          "bytes": 4380,
+          "sha256": "45c4b69874e3aa6cf991b306fdfa9169582b5cb8d71a019e9b10148e5b876ed0",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/glassRegent.webp",
@@ -17318,10 +17318,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/graveWisp.webp",
-          "bytes": 2300,
-          "sha256": "7b79df1933448ade4d55520fb0b526b815cc68cfdc398f7b1e94d97758423c2a",
-          "width": 256,
-          "height": 256
+          "bytes": 4318,
+          "sha256": "5fba1a36af890d44606dd49197aa6ed79ee4c48d312853165cdb06559eb80cdf",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/graveWisp.webp",
@@ -17337,10 +17337,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/herald-emberhabit.webp",
-          "bytes": 2038,
-          "sha256": "00e19875ed6437511e9edd43256dd7f55a8df3f3c117f2b2a4278f4ea155bb77",
-          "width": 256,
-          "height": 256
+          "bytes": 3700,
+          "sha256": "5ca657b7f6f7fd970b3bd46016b500d40ecac28396c0c95c9041bac4da48e2c2",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/herald-emberhabit.webp",
@@ -17356,10 +17356,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/herald-ossuary.webp",
-          "bytes": 1856,
-          "sha256": "b475241d3497285f6c33619af723869b62193acc3dbe82322d8b6f3a5a806393",
-          "width": 256,
-          "height": 256
+          "bytes": 3444,
+          "sha256": "aff75d07851323c74cd490a74ab3e7a3f72f2b1f9c95f962ea04bfaa752246e2",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/herald-ossuary.webp",
@@ -17375,10 +17375,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/herald-pilgrim.webp",
-          "bytes": 1710,
-          "sha256": "2cffdcad0e0419dc980e77d9b73e5d670fd59015878c9423321cb69ac8a7159f",
-          "width": 256,
-          "height": 256
+          "bytes": 3078,
+          "sha256": "f216f52a078f5cac81f5c87aa28b8b9b979e313c7585969c822012f33cc9ce4f",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/herald-pilgrim.webp",
@@ -17394,10 +17394,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/herald.webp",
-          "bytes": 1740,
-          "sha256": "17a3bddcfee8393d18fc37fd526e04bdd22d7efd0a99f600c18373219bd12fa4",
-          "width": 256,
-          "height": 256
+          "bytes": 3158,
+          "sha256": "2659ce86bb822e686e816e7a57f04d4c6f81a3187e7cd4af2b8265f0aeb2e48e",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/herald.webp",
@@ -17413,10 +17413,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/hollowAstronomer.webp",
-          "bytes": 2378,
-          "sha256": "59900edb0f910c6ca46338bc17bea01bc0eee627ab7e02c8597763f8224e337f",
-          "width": 256,
-          "height": 256
+          "bytes": 4368,
+          "sha256": "db3f5f8c51372421d472af9f9f9c509d605410d3b6ea10b66b642f5a9696a771",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/hollowAstronomer.webp",
@@ -17432,10 +17432,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/huskBrute.webp",
-          "bytes": 2092,
-          "sha256": "10eb60e9a54e7cfe270b690ed9d0b1c96c50cb22dca35575a73dcc3dee77464a",
-          "width": 256,
-          "height": 256
+          "bytes": 3738,
+          "sha256": "1221138864d43894bc0d53ed840b45b32ae09a65c9d3542b0a2783e8d4b68bef",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/huskBrute.webp",
@@ -17451,10 +17451,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/lanternMoth.webp",
-          "bytes": 2404,
-          "sha256": "491ecf35852c09552461233e9843c541edaa57fb1c6bd7dda2ec1508c7403e52",
-          "width": 256,
-          "height": 256
+          "bytes": 4374,
+          "sha256": "42c6703ae96b129be94b69db543a6edc72ccf1119291aed08e675f4b358c435f",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/lanternMoth.webp",
@@ -17470,10 +17470,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/livingArmor.webp",
-          "bytes": 1954,
-          "sha256": "058423b7962fe67df5dab16afa49fb558c9b452dbfc1c12804dfdfda3165c69b",
-          "width": 256,
-          "height": 256
+          "bytes": 3582,
+          "sha256": "e9cb658a271fc493750df3f0b30fb2b584cf84f80207f00cc3d5453e78ab3c6c",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/livingArmor.webp",
@@ -17489,10 +17489,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/marrowOrganist.webp",
-          "bytes": 2622,
-          "sha256": "764c332f63f49b1e927b56bd946d29ec1b1cbbd97c2e137fa02369186b6e4981",
-          "width": 256,
-          "height": 256
+          "bytes": 4868,
+          "sha256": "0449c5cfb41b80da89ef034a987ed11430499a5b4782ab89674682c80a4f68ba",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/marrowOrganist.webp",
@@ -17508,10 +17508,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/mirrorScribe.webp",
-          "bytes": 2274,
-          "sha256": "b47809743e5d8b70ec9fc0c58ca4124b44ec3222ce80bd636be15756566bc7f0",
-          "width": 256,
-          "height": 256
+          "bytes": 4236,
+          "sha256": "b447674c90401d99ea808db5d039fa73ee384f3b08b64a094a2c53ada6c53f94",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/mirrorScribe.webp",
@@ -17527,10 +17527,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/reaver-oathsworn.webp",
-          "bytes": 2586,
-          "sha256": "f5f5bb7c068ae2aa4d991f8305a56909df27f9c35c3a435e86ec1f2c837cf277",
-          "width": 256,
-          "height": 256
+          "bytes": 4634,
+          "sha256": "4023bc14791bc36986c4c8fee8510873a4382f6ab4ed7b10278e361a3d6f9a71",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/reaver-oathsworn.webp",
@@ -17546,10 +17546,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/reaver-vigil.webp",
-          "bytes": 1898,
-          "sha256": "b8b6a28ee9af3158ae1c30cfd48bf3c5924e7d16b74568d76aac2f24e0e83190",
-          "width": 256,
-          "height": 256
+          "bytes": 3408,
+          "sha256": "fb27596359f4cd747bfedc6724867a219f009343bf0d6ccf8a6f6c22c0c7fd14",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/reaver-vigil.webp",
@@ -17565,10 +17565,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/reaver-warden.webp",
-          "bytes": 2576,
-          "sha256": "f076f9b8643f982d138159a4c5ccad69d7b0f9eadb095347c26733ce2b0110b8",
-          "width": 256,
-          "height": 256
+          "bytes": 4638,
+          "sha256": "795572795f8050336a137c01aa7bd6ca632537c8a64feb80dbb3f782707d71fe",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/reaver-warden.webp",
@@ -17584,10 +17584,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/reaver.webp",
-          "bytes": 2180,
-          "sha256": "40d09f9b512892f10a75e3d8041d605a96377ea17078732c2291d9276a28a971",
-          "width": 256,
-          "height": 256
+          "bytes": 3820,
+          "sha256": "41d1898b794a4b17b836c758633ee541667eb3f442d77cfa035694c06600df34",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/reaver.webp",
@@ -17603,10 +17603,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/rogue-duelist.webp",
-          "bytes": 1956,
-          "sha256": "62b91fcac40fbfb68743beb3215f249a46c8259d0be930448f6f48ab022537d1",
-          "width": 256,
-          "height": 256
+          "bytes": 3458,
+          "sha256": "a8ca555620cb5858f81b50b264598d2e92c662de21191214329cecc60deae8ec",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/rogue-duelist.webp",
@@ -17622,10 +17622,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/rogue-nightveil.webp",
-          "bytes": 1910,
-          "sha256": "4452722c406beb86e59142fc7256cc89c908612b6e8adb1e9053c593eaddcd4f",
-          "width": 256,
-          "height": 256
+          "bytes": 3092,
+          "sha256": "a962de89e08e4a351b32ba51cc9e0472e3548108502d1ac66ae4a0b17d343f2f",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/rogue-nightveil.webp",
@@ -17641,10 +17641,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/rogue-shadow.webp",
-          "bytes": 1594,
-          "sha256": "d29551d71b47f3bf52718a0c8816e6f2237d47a237d27d30fc1d9a7485994a96",
-          "width": 256,
-          "height": 256
+          "bytes": 2868,
+          "sha256": "67165c3e0a456af24785b0229f788865e88cc2cb76a6279b7dde244cfb72d863",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/rogue-shadow.webp",
@@ -17660,10 +17660,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/rogue.webp",
-          "bytes": 1744,
-          "sha256": "494c7aaa7e01277066ab51787ff89e54116cda4747186432c9bb2de329bca034",
-          "width": 256,
-          "height": 256
+          "bytes": 3022,
+          "sha256": "83c6300d8ff89de7c7c3234475a3d0cbdf68b6c296022f3f9a41e511f68c7950",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/rogue.webp",
@@ -17679,10 +17679,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/starseer-astral.webp",
-          "bytes": 2336,
-          "sha256": "54072bbf0b8e4291abbc894e737cc6a5e70782da275ff1a147501c57db799a66",
-          "width": 256,
-          "height": 256
+          "bytes": 4318,
+          "sha256": "367220bb3cec1f7a0ba54434547f2c72d8a61dab14dbf410d52b54c6480500b9",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/starseer-astral.webp",
@@ -17698,10 +17698,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/starseer-eclipse.webp",
-          "bytes": 2078,
-          "sha256": "ef8d2307818927c2f7201b4881aa3b9f26ac3dfea7c345f2bb4ba4ef037687f3",
-          "width": 256,
-          "height": 256
+          "bytes": 3572,
+          "sha256": "00a32cad44bc613469e3cb4d071e41f7fe7d8559170c58aa3d34efededc45c17",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/starseer-eclipse.webp",
@@ -17717,10 +17717,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/starseer-starlit.webp",
-          "bytes": 1720,
-          "sha256": "ae2afb10657cf7a7199054f432667e2faec6cc74a868727838a740eec1d74d1a",
-          "width": 256,
-          "height": 256
+          "bytes": 3036,
+          "sha256": "1b9fe1648b2dafae37c9b350de4d8846cf647478eb533d9b7199f181f7ed78fb",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/starseer-starlit.webp",
@@ -17736,10 +17736,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/starseer.webp",
-          "bytes": 2178,
-          "sha256": "79d2da76acb0ed506579daa0887142e48f593f46925b47e19054ae81f937d508",
-          "width": 256,
-          "height": 256
+          "bytes": 3828,
+          "sha256": "fedc24cc4c16c5318e162357dbbaea910094e0d803e3f9e36e564a1c5e85eee8",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/starseer.webp",
@@ -17755,10 +17755,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/stitchCrab.webp",
-          "bytes": 2510,
-          "sha256": "720ee80d1c112000718c5d2e103455522ac2aa34ff1b3d88879d7204dc4bc943",
-          "width": 256,
-          "height": 256
+          "bytes": 4622,
+          "sha256": "f256657111c43d4e31bb5bd1274256ca3da4c1cbf30a1eeeb3077c39158b0dce",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/stitchCrab.webp",
@@ -17774,10 +17774,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/stitchedHound.webp",
-          "bytes": 1542,
-          "sha256": "e681c4972c6d04f5f72b793d723201be8110e694b0a545aec1eebe00c14f9419",
-          "width": 256,
-          "height": 256
+          "bytes": 2700,
+          "sha256": "f90dc462243cb150878dad0e1f9c224b73fe57e568d2bb8477c25635b6a17f6a",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/stitchedHound.webp",
@@ -17793,10 +17793,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/stitchedKing.webp",
-          "bytes": 2684,
-          "sha256": "a256f05144dc450980ed48d29bf2860e38f842de4ac8da2dfee5ff74bf59ad9c",
-          "width": 256,
-          "height": 256
+          "bytes": 5066,
+          "sha256": "77b2b02bbe74784c5a282b732aa90ca2f6d0752b9d6f9bed481d72ed091d0391",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/stitchedKing.webp",
@@ -17812,10 +17812,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/thornMatriarch.webp",
-          "bytes": 2208,
-          "sha256": "76f8328e2d381ba9762943dcbda48ef0ff0d823e874d71d9c9b2267b52d09e79",
-          "width": 256,
-          "height": 256
+          "bytes": 4208,
+          "sha256": "0f8efab0735a3c4e66b3307ce1309376439957ac594f0ca81cb2e89ce6d80565",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/thornMatriarch.webp",
@@ -17831,10 +17831,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/valkyrieShade.webp",
-          "bytes": 2610,
-          "sha256": "a5708aaba942667ca9b0f2c7623ddfb6b50a743c93f40a16f6b5229624379382",
-          "width": 256,
-          "height": 256
+          "bytes": 4746,
+          "sha256": "441ca3f3f1adbf9b7398d117c8a2a722cf640882d71c1e76c9348d9c3c931e39",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/valkyrieShade.webp",
@@ -17850,10 +17850,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/wanderingSoldier.webp",
-          "bytes": 2004,
-          "sha256": "7240d146372b616dc57f74498fb5b153a67d2ea442ad02eda273e8d475f8d353",
-          "width": 256,
-          "height": 256
+          "bytes": 3562,
+          "sha256": "143d10295c4b2c21b6f51a480dc599f39e185a4c476e8eba7e85777f207b4599",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/wanderingSoldier.webp",
@@ -17869,10 +17869,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/wyrmAspirant.webp",
-          "bytes": 2914,
-          "sha256": "a660532aed0d753eccb1667dfe627a9d9ff78c14536793d2922bd871980e7375",
-          "width": 256,
-          "height": 256
+          "bytes": 5250,
+          "sha256": "925ecbb2d0bb6c0f82c5d79104a75b397fc6ab2551a3b4b900db7bb55c08ccdb",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/wyrmAspirant.webp",
@@ -17888,10 +17888,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/defeated-poses/wyrmLord.webp",
-          "bytes": 2236,
-          "sha256": "1ec4b31b368df624f8d216b0233742d189d5af6812bca35a308acbcdb4604534",
-          "width": 256,
-          "height": 256
+          "bytes": 4276,
+          "sha256": "fa86a564d1a61dd67ba7415d799874f72b44458ba2ff7ccd564dfee849cb75cd",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/defeated-poses/wyrmLord.webp",
@@ -17907,10 +17907,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/enemies-expansion/ashheartDragon.webp",
-          "bytes": 6404,
-          "sha256": "616ccf7e9b3ed368f6461e7ba3c1fe3a396ddbb1d40517e794a717e59bbc454c",
-          "width": 256,
-          "height": 256
+          "bytes": 12154,
+          "sha256": "6750899c97e590ddcafadad22d61b54e5d59462a09315c1a393b1c5de7ed2740",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/enemies-expansion/ashheartDragon.webp",
@@ -17926,10 +17926,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/enemies-expansion/bellKeeper.webp",
-          "bytes": 5984,
-          "sha256": "96bd5e264cb4ffdc650e0c459cb12948aea0b8e9f745a205a649b293d8b8d7a5",
-          "width": 256,
-          "height": 256
+          "bytes": 11468,
+          "sha256": "eacc4a720e17043e449b8bab85cfeab69c1bfd6fba321c9bf5b0876d12698a5d",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/enemies-expansion/bellKeeper.webp",
@@ -17945,10 +17945,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/enemies-expansion/briarHermit.webp",
-          "bytes": 7158,
-          "sha256": "db68d3692041661ba450b7e2a33686c75b8b6867ef8203832ff7db37b5a6586f",
-          "width": 256,
-          "height": 256
+          "bytes": 13958,
+          "sha256": "c2f87941edf0b06e6b51fea65af17c88b6900c44436b980d6e670e2d60480c4a",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/enemies-expansion/briarHermit.webp",
@@ -17964,10 +17964,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/enemies-expansion/chainScavenger.webp",
-          "bytes": 4652,
-          "sha256": "37e6d769e643146ea083e70c39be5e992ec9e9f9ba1c9102b5423488e38541a6",
-          "width": 256,
-          "height": 256
+          "bytes": 8740,
+          "sha256": "90e8309f7ed09b2b3109182b54967e9fc9cecfdd7cd77a7c060d7c2db0dfe621",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/enemies-expansion/chainScavenger.webp",
@@ -17983,10 +17983,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/enemies-expansion/cinderMantis.webp",
-          "bytes": 6444,
-          "sha256": "5e1c83203f1c6445c40138596635377a0511cad65c4013535200d3ea823e2593",
-          "width": 256,
-          "height": 256
+          "bytes": 11618,
+          "sha256": "5482205de0a5f4778084a6d016ced8af97c2a26a17ca93955576d5178927c077",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/enemies-expansion/cinderMantis.webp",
@@ -18002,10 +18002,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/enemies-expansion/eclipseCantor.webp",
-          "bytes": 7066,
-          "sha256": "c2aa506cba3138b7a6a5acac0cd53de03a8c0782aa97139b810353fbeb486425",
-          "width": 256,
-          "height": 256
+          "bytes": 12768,
+          "sha256": "3cea7d7e1028614c87390a152c2da50a6942272e6306090dec5bdf84a0f51ab0",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/enemies-expansion/eclipseCantor.webp",
@@ -18021,10 +18021,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/enemies-expansion/furnaceSaint.webp",
-          "bytes": 7150,
-          "sha256": "ecd042b7c53ad3d519caeb331fc2009aba70a8384898890201145044510e6b08",
-          "width": 256,
-          "height": 256
+          "bytes": 13920,
+          "sha256": "a209546d326d3b3f3e3c3f6e30a32ff52c51ac4f7c1266a6ec189554c43c1852",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/enemies-expansion/furnaceSaint.webp",
@@ -18040,10 +18040,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/enemies-expansion/glassRegent.webp",
-          "bytes": 5094,
-          "sha256": "3fb5fe51eeea76046ff2494b3d96839fbd854d84d098df059c2507a7eb6e5d9f",
-          "width": 256,
-          "height": 256
+          "bytes": 9736,
+          "sha256": "7395d7dd124acf9526ad10a15a065104ae1c1f2af7687e18ff6dec4908492436",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/enemies-expansion/glassRegent.webp",
@@ -18059,10 +18059,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/enemies-expansion/hollowAstronomer.webp",
-          "bytes": 6226,
-          "sha256": "4f35475e3b73529b54e6403081ddd3aec1baf0f07c8b3b4c670b142a6c5f354d",
-          "width": 256,
-          "height": 256
+          "bytes": 11818,
+          "sha256": "d50550f337faee02b50fcb9094c1d14612223b6083b8e507c0dba419ac316e28",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/enemies-expansion/hollowAstronomer.webp",
@@ -18078,10 +18078,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/enemies-expansion/lanternMoth.webp",
-          "bytes": 6796,
-          "sha256": "9ad72ab5586efc439ae9286bd563afc421bf7065d5a853576099ec8a67483cbb",
-          "width": 256,
-          "height": 256
+          "bytes": 12522,
+          "sha256": "cd717dd66d1d5e72cf6dea40053b27ccbdb1459183cf2dd93f8a35ce60719945",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/enemies-expansion/lanternMoth.webp",
@@ -18097,10 +18097,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/enemies-expansion/marrowOrganist.webp",
-          "bytes": 6272,
-          "sha256": "0d4d4f2e41eda670b27f592e5056fb404667ffa4323d8fd373fc707877c66b9e",
-          "width": 256,
-          "height": 256
+          "bytes": 11690,
+          "sha256": "e77bd8b04200a493e2615dc06064f435b4f6c14395f681e480b55abef8e79926",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/enemies-expansion/marrowOrganist.webp",
@@ -18116,10 +18116,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/enemies-expansion/mirrorScribe.webp",
-          "bytes": 6698,
-          "sha256": "0b8ef33f2b36bca8f80a523235b59f6ac284cd77abcfdf7088a2cd06155b5932",
-          "width": 256,
-          "height": 256
+          "bytes": 12732,
+          "sha256": "6f5a48fb974d79230b3f2fafb8d6ac15c2dc9d778043c1f138fbd96a6181b5ea",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/enemies-expansion/mirrorScribe.webp",
@@ -18135,10 +18135,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/enemies-expansion/stitchCrab.webp",
-          "bytes": 5212,
-          "sha256": "5e48c4b350ea12b8f97f030630fa3ccd94eabe1610fbaacb63b7b52f3e8c42fd",
-          "width": 256,
-          "height": 256
+          "bytes": 9830,
+          "sha256": "839bce1662a152ca938f445623d7ff2ee34c453159ec57bb89c8629800a666dc",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/enemies-expansion/stitchCrab.webp",
@@ -18154,10 +18154,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/enemies-expansion/thornMatriarch.webp",
-          "bytes": 6700,
-          "sha256": "3c1cc3b863df70857bdca050d07480d903ad7f3af2039abdfc772d9b932fa0b4",
-          "width": 256,
-          "height": 256
+          "bytes": 12502,
+          "sha256": "81205af94c61dce1bfb7afba74abed5a7e449eeca48395f266aa587f8018c0bc",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/enemies-expansion/thornMatriarch.webp",
@@ -18173,10 +18173,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/enemies-unity/painted_blightHound.webp",
-          "bytes": 3290,
-          "sha256": "c98959872c074fea216bc4d617149d5bbf4e275e7a22106b30f4d7e178c152a9",
-          "width": 256,
-          "height": 256
+          "bytes": 6194,
+          "sha256": "d84ee3d3985ac8118f839b648945619342c33aee63c2cbd537c65fa1ecdd499c",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/enemies-unity/painted_blightHound.webp",
@@ -18192,10 +18192,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/enemies-unity/painted_courtDuelist.webp",
-          "bytes": 3640,
-          "sha256": "7259a4d27f038c8e53a565f39e230cae289c49ead8417f6c40dc310a30d68cf3",
-          "width": 256,
-          "height": 256
+          "bytes": 6978,
+          "sha256": "ef1b125d5193fc0b25cde529451cfefec0d5e7c0cfd4934358ad7015ed16bf0f",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/enemies-unity/painted_courtDuelist.webp",
@@ -18211,10 +18211,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/enemies-unity/painted_courtSurgeon.webp",
-          "bytes": 3380,
-          "sha256": "130249bbed0201bbc9dbea90d0b768ecc62235603eabb0b309d672235012fb3e",
-          "width": 256,
-          "height": 256
+          "bytes": 6524,
+          "sha256": "8dbfe7051a8a1b737c5664797533c40ca70cf30fe3e2b33bac5e7bc3b31bfdd7",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/enemies-unity/painted_courtSurgeon.webp",
@@ -18230,10 +18230,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/enemies-unity/painted_fellWarden.webp",
-          "bytes": 3940,
-          "sha256": "f652d52dbb49b8d5fe57461b1bd852216f5f4c597d48cd566ab625441c5d4c91",
-          "width": 256,
-          "height": 256
+          "bytes": 7600,
+          "sha256": "a93fa3bcbb6203ac5ef097a8b4fd1b80643e430236e26dbf046d539582bfb674",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/enemies-unity/painted_fellWarden.webp",
@@ -18249,10 +18249,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/enemies-unity/painted_gildedKnight.webp",
-          "bytes": 4016,
-          "sha256": "7824b45bc85ebd0ede7bf4bb4bd7fbb79eaf00d1b33630c26fa69ff878cb57a3",
-          "width": 256,
-          "height": 256
+          "bytes": 7872,
+          "sha256": "d5576aac81e85a9c44697aedde0eb14cdba2bb157660a3f8d7af44c9e19b70f1",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/enemies-unity/painted_gildedKnight.webp",
@@ -18268,10 +18268,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/enemies-unity/painted_graveWisp.webp",
-          "bytes": 5332,
-          "sha256": "e40d42a61289da83ccd307f74c667bf7449baf6d9392095edcf22ef95d58d2a3",
-          "width": 256,
-          "height": 256
+          "bytes": 10180,
+          "sha256": "371398d7c68e1211a105379a219e5e99187b3abe3bfaaec6b86709f9b000a4b2",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/enemies-unity/painted_graveWisp.webp",
@@ -18287,10 +18287,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/enemies-unity/painted_livingArmor.webp",
-          "bytes": 3012,
-          "sha256": "162f54b1ee7d6d832643954f224ead247719f9c87f84be9348d30f939721aadc",
-          "width": 256,
-          "height": 256
+          "bytes": 5990,
+          "sha256": "f7a208a4eff5c07a7437bc65c704e64186dbb3be5da11592d9a4f31e6b8fb818",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/enemies-unity/painted_livingArmor.webp",
@@ -18306,10 +18306,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/enemies-unity/painted_stitchedKing.webp",
-          "bytes": 4236,
-          "sha256": "6af8ce681af9f51807fb9758ff6aa7f98451020fadc2430cede4c79df9a1d2b4",
-          "width": 256,
-          "height": 256
+          "bytes": 8526,
+          "sha256": "4b371507fdbba60f33075a594556cb73e54d834326280411060ffc289e515e82",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/enemies-unity/painted_stitchedKing.webp",
@@ -18325,10 +18325,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/enemies-unity/painted_valkyrieShade.webp",
-          "bytes": 6694,
-          "sha256": "2052f7ffe9cc90ada808436e3b51fbe40ce8882e1569ed713d1d5d0dc66df350",
-          "width": 256,
-          "height": 256
+          "bytes": 12976,
+          "sha256": "10b623b3e6021d70c9d36492327e1a6b9151a06b9ce019f6e20c910c3772eb3e",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/enemies-unity/painted_valkyrieShade.webp",
@@ -18344,10 +18344,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/enemies-unity/painted_wanderingSoldier.webp",
-          "bytes": 2980,
-          "sha256": "ae84e65d9181fa82c2b7f32b050aae14fdd1b9d41e3e74bf3e39df410bbd66db",
-          "width": 256,
-          "height": 256
+          "bytes": 5664,
+          "sha256": "55bbd27b3a337cf93d78e17c3f64a0b0ce123c019143e9549f203bb589921b6b",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/enemies-unity/painted_wanderingSoldier.webp",
@@ -18363,10 +18363,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/enemies-unity/painted_wyrmAspirant.webp",
-          "bytes": 4958,
-          "sha256": "99e1e0cace49136f85c5376d55f76cac29f27ea35fac96512d86f9da3bca81d5",
-          "width": 256,
-          "height": 256
+          "bytes": 9372,
+          "sha256": "97363e9e71c9744cb5339db5b400cf87de5453c4b3fb684481d564514c7d78e1",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/enemies-unity/painted_wyrmAspirant.webp",
@@ -18382,10 +18382,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/enemies-unity/painted_wyrmLord.webp",
-          "bytes": 5350,
-          "sha256": "43198889c509a9000ade4a2def9383494d48eb3066ff2f67b587a01bb982748d",
-          "width": 256,
-          "height": 256
+          "bytes": 10652,
+          "sha256": "5ff9355ec7933f83c7a8fd05f787a5329e023fe7e4959f090f4a18fd248cea76",
+          "width": 384,
+          "height": 384
         },
         "high": {
           "path": "assets/enemies-unity/painted_wyrmLord.webp",
@@ -18401,10 +18401,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/environments/ashen-crown-map.webp",
-          "bytes": 14314,
-          "sha256": "4e3ded6277a8cb5f96b6e4e76dedfd952a1c014274a3257667f75dfd7497d70b",
-          "width": 171,
-          "height": 256
+          "bytes": 121766,
+          "sha256": "eed24407b552f5486d720f5b8c79e28345fcb02463919c4c268a1ad46640b095",
+          "width": 480,
+          "height": 720
         },
         "high": {
           "path": "assets/environments/ashen-crown-map.webp",
@@ -18420,10 +18420,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/environments/cinder-reach-map.webp",
-          "bytes": 15112,
-          "sha256": "53486340a6e8356b90c0e82e2583cfe99d0fd7c546bd5d1b9520596cc063740f",
-          "width": 171,
-          "height": 256
+          "bytes": 118346,
+          "sha256": "163aca36a78e4342ae4c12c44b560288a950e7c0550565a4d0d6e4cc299ef33c",
+          "width": 480,
+          "height": 720
         },
         "high": {
           "path": "assets/environments/cinder-reach-map.webp",
@@ -18439,10 +18439,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/environments/crownfall-landmark.webp",
-          "bytes": 14478,
-          "sha256": "86d2044a8a6fb30c17ffb5a1e132afae60e1beab6b5699cf800b2e3cdb5b502a",
-          "width": 256,
-          "height": 256
+          "bytes": 93168,
+          "sha256": "0430945afc8a20725fd5100736f3893ce36b506cf318ed49f0d6bdefbec43ce7",
+          "width": 720,
+          "height": 720
         },
         "high": {
           "path": "assets/environments/crownfall-landmark.webp",
@@ -18458,10 +18458,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/environments/crownfall-local.webp",
-          "bytes": 25844,
-          "sha256": "65f5759290df6e62b7184e81b28552ef9994b7d9ff4e381138130566443eb907",
-          "width": 256,
-          "height": 256
+          "bytes": 200846,
+          "sha256": "ebd199008b8996c796d50365c70ce2b9a8fccf264b23296ab46589d5ba67bd0d",
+          "width": 720,
+          "height": 720
         },
         "high": {
           "path": "assets/environments/crownfall-local.webp",
@@ -18477,10 +18477,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/environments/drowned-coast-map.webp",
-          "bytes": 15296,
-          "sha256": "7014764294d4a8e542b695b2984aa821e5e28b8515a8448e2e37bb1d99971d6e",
-          "width": 171,
-          "height": 256
+          "bytes": 121446,
+          "sha256": "2352a72693208cda12180c05754530d7df9463a5a098786ebc0c0b7d4daddb44",
+          "width": 480,
+          "height": 720
         },
         "high": {
           "path": "assets/environments/drowned-coast-map.webp",
@@ -18496,10 +18496,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/environments/fractured-realm-square.webp",
-          "bytes": 26314,
-          "sha256": "4985414b9db733cb5c4c91ccba6058cdbd0e5491bc0bfc518aed0aa1543df1ed",
-          "width": 256,
-          "height": 256
+          "bytes": 199052,
+          "sha256": "1e97b4e4ca22118155da84e9e7e0ef0ab92974c0bebeaea90da64bdf7e60a356",
+          "width": 720,
+          "height": 720
         },
         "high": {
           "path": "assets/environments/fractured-realm-square.webp",
@@ -18515,10 +18515,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/environments/hollow-weald-map.webp",
-          "bytes": 13014,
-          "sha256": "4657a59ad3ab092b98987b6bda295d5b3c1f754bc6909644930b50f58405e486",
-          "width": 171,
-          "height": 256
+          "bytes": 115370,
+          "sha256": "fe53070dc643eeb6e67ce9a49c305184ef5d4d0968aed0274d09626fbe64406d",
+          "width": 480,
+          "height": 720
         },
         "high": {
           "path": "assets/environments/hollow-weald-map.webp",
@@ -18534,10 +18534,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/environments/pale-marches-map.webp",
-          "bytes": 16352,
-          "sha256": "bdcc55a586c9b9742791f80e46eaca1da4bd8390af338d46916b930826272506",
-          "width": 171,
-          "height": 256
+          "bytes": 130404,
+          "sha256": "b24713f2563ea50ddaf666a384836dc7a5e499ba72abd89f216e70007571c5d3",
+          "width": 480,
+          "height": 720
         },
         "high": {
           "path": "assets/environments/pale-marches-map.webp",
@@ -18553,10 +18553,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/environments/the-fivefold-frontier-world.webp",
-          "bytes": 15592,
-          "sha256": "e44b5106459574e0bad0d3c0a2aeda50052cd1491771b2a6be219de24d3c73be",
-          "width": 171,
-          "height": 256
+          "bytes": 122612,
+          "sha256": "5b76da08fa40aa8a88431aa24d0ab8b81999644a90e7cf9df358eafcdf5d98bf",
+          "width": 480,
+          "height": 720
         },
         "high": {
           "path": "assets/environments/the-fivefold-frontier-world.webp",
@@ -18572,10 +18572,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/environments/the-fractured-realm-world.webp",
-          "bytes": 14746,
-          "sha256": "7d412611054bfb8b5f44bd2f54b4c84c8bc40f2dd9ab867c9874f95690f8b289",
-          "width": 171,
-          "height": 256
+          "bytes": 116820,
+          "sha256": "7820fed1206fe2df3f525eebd02f565716b2dcf96e6b827bf7ee46c26415846d",
+          "width": 480,
+          "height": 720
         },
         "high": {
           "path": "assets/environments/the-fractured-realm-world.webp",
@@ -18591,10 +18591,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/environments/the-shattered-gulf-world.webp",
-          "bytes": 15042,
-          "sha256": "c6f8582a57ce3cf871cc353e1df24f43811058867f3e0e6673602c2520aa1ad1",
-          "width": 171,
-          "height": 256
+          "bytes": 118402,
+          "sha256": "3871a8a415267921e63c4c57ebd31eb51b76d7b8cdc63000a5a6009cc2b1ebf5",
+          "width": 480,
+          "height": 720
         },
         "high": {
           "path": "assets/environments/the-shattered-gulf-world.webp",
@@ -18610,10 +18610,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/body_herald_default.webp",
-          "bytes": 2638,
-          "sha256": "63929340ae3cca6e97b2750b29089d59329a27d2fd799528510541dd4503229e",
-          "width": 202,
-          "height": 256
+          "bytes": 5572,
+          "sha256": "9c7c616a385351ed01eb3db6571b2572e867a1a2c406eb7565cd8472874d411f",
+          "width": 379,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/body_herald_default.webp",
@@ -18629,10 +18629,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/body_herald_emberhabit.webp",
-          "bytes": 2712,
-          "sha256": "8150abcd130a07daccc44584d42c8372836ae6036638c9fed5c1f19432e833ab",
-          "width": 202,
-          "height": 256
+          "bytes": 5824,
+          "sha256": "ee5e4341bb2eeb942116f8ca7a262ce94881078fc62208c7ce723bda1b4393ae",
+          "width": 379,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/body_herald_emberhabit.webp",
@@ -18648,10 +18648,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/body_herald_ossuary.webp",
-          "bytes": 2678,
-          "sha256": "fbbabdf1bc98efe7b56fb4550d2176d9b93d914373fcbf21264c6fbc543aa571",
-          "width": 202,
-          "height": 256
+          "bytes": 5666,
+          "sha256": "4d39bf717d84affa2b54b4ad8ac008f02e4c9fb9af5d4cf1ae66b5856fd4de52",
+          "width": 379,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/body_herald_ossuary.webp",
@@ -18667,10 +18667,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/body_herald_pilgrim.webp",
-          "bytes": 2694,
-          "sha256": "1266885546cbe195f7a0a8d996db2c98f059ca67732e4278226ac0a6d7ec71d5",
-          "width": 202,
-          "height": 256
+          "bytes": 5732,
+          "sha256": "2bd6915d9f3dd091807979e119d5137e45d7c692640c33a68ef91014c8486281",
+          "width": 379,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/body_herald_pilgrim.webp",
@@ -18686,10 +18686,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/body_reaver_default.webp",
-          "bytes": 2356,
-          "sha256": "43c4b85da8292c5023c9c324295986e8e3a85fa3db637a7380c6e7c40632cfb6",
-          "width": 202,
-          "height": 256
+          "bytes": 4766,
+          "sha256": "94d9eef261a40b34edda15f6e53db05ce2db0a93bf9725d7233515e427311709",
+          "width": 379,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/body_reaver_default.webp",
@@ -18705,10 +18705,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/body_reaver_oathsworn.webp",
-          "bytes": 2456,
-          "sha256": "ebe8eb8a02d7c6c653cd7f76638ea71b4fc31633fb6d759ab6d6b27377901ee8",
-          "width": 202,
-          "height": 256
+          "bytes": 5084,
+          "sha256": "63af580bc6ac729ed2c0d3875fc786edbde4542406153b83a1294d5cc604c8d6",
+          "width": 379,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/body_reaver_oathsworn.webp",
@@ -18724,10 +18724,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/body_reaver_vigil.webp",
-          "bytes": 2326,
-          "sha256": "f46b059e72cdecd102e311ede487171cbc7bcf9276d5e0603fbbcf833b375cf1",
-          "width": 202,
-          "height": 256
+          "bytes": 4676,
+          "sha256": "3ae9b582f488e4c76b37712cfa83b3af3edb8c1941f9e6cd59ccf1ef755f84bd",
+          "width": 379,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/body_reaver_vigil.webp",
@@ -18743,10 +18743,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/body_reaver_warden.webp",
-          "bytes": 2382,
-          "sha256": "21bdd2717c28519072e884ac0a2e859fb2e4f4372dfb23fa34045db9de45b221",
-          "width": 202,
-          "height": 256
+          "bytes": 4812,
+          "sha256": "388ba199cb40264b35cdf5869137e2a475e79c3e6ff79333734163d596de0e38",
+          "width": 379,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/body_reaver_warden.webp",
@@ -18762,10 +18762,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/body_rogue_default.webp",
-          "bytes": 2344,
-          "sha256": "1118bee0451c8d39fd69bca158eadd2d084cf34f174506c8b3c5b3d512252306",
-          "width": 202,
-          "height": 256
+          "bytes": 4758,
+          "sha256": "f339c1ae0ccda2b959ef26ee94562f9409ce28253fab126fc08da48e08fc4874",
+          "width": 379,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/body_rogue_default.webp",
@@ -18781,10 +18781,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/body_rogue_duelist.webp",
-          "bytes": 2378,
-          "sha256": "090c08ddbfd03fb5037c803d102720d673e9606d7057a716f3451e4a2fe5eff7",
-          "width": 202,
-          "height": 256
+          "bytes": 4818,
+          "sha256": "b9ad2c4f438e7182d00896952508502957954ec5060b48fd78f79eda6b5c088e",
+          "width": 379,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/body_rogue_duelist.webp",
@@ -18800,10 +18800,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/body_rogue_nightveil.webp",
-          "bytes": 2332,
-          "sha256": "533a8dbe775b7acc3cdf4b923f971486c6a6a04f1bf24e75eaf8bf20de2dcd08",
-          "width": 202,
-          "height": 256
+          "bytes": 4706,
+          "sha256": "46fceeb62186cbbdbc9f03f9810320395aebb1c8c95dc3f1fde52e2c3cb84e59",
+          "width": 379,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/body_rogue_nightveil.webp",
@@ -18819,10 +18819,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/body_rogue_shadow.webp",
-          "bytes": 2362,
-          "sha256": "312b710d3734504a853bc8022aa58b05c70bf746c75b162582b3e7a33960efce",
-          "width": 202,
-          "height": 256
+          "bytes": 4742,
+          "sha256": "d65bfcb98ff4dfa29f215369ef6f848eea8fb04c0004337994d463f8b43549f7",
+          "width": 379,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/body_rogue_shadow.webp",
@@ -18838,10 +18838,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/body_starseer_astral.webp",
-          "bytes": 1976,
-          "sha256": "2e84042fceb129dbea4f738bc7628b5969616101ff1a9207f1b46d1d104fe321",
-          "width": 202,
-          "height": 256
+          "bytes": 4180,
+          "sha256": "3437da0c3731f4f574a0dcc9849374bcda3eb96c899ca1cf5f1d00a5a511a34f",
+          "width": 379,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/body_starseer_astral.webp",
@@ -18857,10 +18857,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/body_starseer_default.webp",
-          "bytes": 1952,
-          "sha256": "b182ae1439809099df1ddcd7264ab86d1fd86da7646561392e37b1da7bc75c4c",
-          "width": 202,
-          "height": 256
+          "bytes": 4032,
+          "sha256": "07df65b8433ad0d8f54c0c7610130b883a7cc54dce900fa2bf97c723b022d2ff",
+          "width": 379,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/body_starseer_default.webp",
@@ -18876,10 +18876,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/body_starseer_eclipse.webp",
-          "bytes": 1862,
-          "sha256": "e61acfc5157130cb2537bb9b11cf73a6944cffbf507dc1bcc0af3d84006b8339",
-          "width": 202,
-          "height": 256
+          "bytes": 3872,
+          "sha256": "0849f6a6008daa9d226c808b92833b3f5ba50773f485ec58a510574004ba6cf0",
+          "width": 379,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/body_starseer_eclipse.webp",
@@ -18895,10 +18895,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/body_starseer_starlit.webp",
-          "bytes": 2096,
-          "sha256": "666216278ca89b2ab80f60f41ed699f07ca9e221963fbc2f7153e16468953fe0",
-          "width": 202,
-          "height": 256
+          "bytes": 4404,
+          "sha256": "6172dc31c41ee59693a7781e575f4049b225465ba1b3052f3923ea263a2b306c",
+          "width": 379,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/body_starseer_starlit.webp",
@@ -18914,10 +18914,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/icon_ashStaff.webp",
-          "bytes": 2362,
-          "sha256": "ae31732b32b1b4a61e2ca0ef6cd0a67f1bdf28342bcfd442bf8046856cf29215",
-          "width": 256,
-          "height": 256
+          "bytes": 5642,
+          "sha256": "4e05a5655fa790ac32f6c43ff41e1600da39739b1aade119181c3fc8afe966ee",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/icon_ashStaff.webp",
@@ -18933,10 +18933,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/icon_battleaxe.webp",
-          "bytes": 3106,
-          "sha256": "804daffe0105222d5c17bc8a4855d92aa4fc6e4b023c5ac2bd27faae51754327",
-          "width": 256,
-          "height": 256
+          "bytes": 6988,
+          "sha256": "1170d1099fd80c767e68a4e6ced5dfe4fa1c8e387c937a18287f078810c3674f",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/icon_battleaxe.webp",
@@ -18952,10 +18952,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/icon_blightRod.webp",
-          "bytes": 2818,
-          "sha256": "746d6e063025f2d2df499c62f266d38cae5cb2eb1a7457708a30988e09609ab2",
-          "width": 256,
-          "height": 256
+          "bytes": 6818,
+          "sha256": "4645cc29af5885b83ceb8c27eed93f6542c5fd6b39c10900e6b8524babe53b97",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/icon_blightRod.webp",
@@ -18971,10 +18971,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/icon_boneSceptre.webp",
-          "bytes": 2980,
-          "sha256": "1cf95cf4c1c320fc8b994de99cedd052d1400b1d0c75122abd2d185102119446",
-          "width": 256,
-          "height": 256
+          "bytes": 6854,
+          "sha256": "e4fcea0b2764463c0f2cca5e9e12f973faab78a4c1c4d1d9dcbfd14d7e07afd6",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/icon_boneSceptre.webp",
@@ -18990,10 +18990,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/icon_buckler.webp",
-          "bytes": 4018,
-          "sha256": "26c04d5e4cd8195516823228ff846e329fea168ddc52ae44732b86a11606b7f0",
-          "width": 256,
-          "height": 256
+          "bytes": 9570,
+          "sha256": "ed4fbb07f8a78e09ddc0dad4388c499d5b6da6765045fcde9e9050a896cd45c8",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/icon_buckler.webp",
@@ -19009,10 +19009,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/icon_dagger.webp",
-          "bytes": 2952,
-          "sha256": "f9c5fefefee6c36547f72fd722be7ff8b2775f06dcccfe63317f22563c91c59a",
-          "width": 256,
-          "height": 256
+          "bytes": 6684,
+          "sha256": "668849e2698a39f9c32e120924a1e7f4d899cb17fe6359639091b854ed5fa593",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/icon_dagger.webp",
@@ -19028,10 +19028,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/icon_emberlightSceptre.webp",
-          "bytes": 2566,
-          "sha256": "cd12ee0aac1eb0470df44e1ab62567a68e2a8de588b9638eba317128ae39dec8",
-          "width": 256,
-          "height": 256
+          "bytes": 5960,
+          "sha256": "8774d7fb42ead843c9428a5367fceb7e5d3d663333045af62489b4dfd5ade083",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/icon_emberlightSceptre.webp",
@@ -19047,10 +19047,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/icon_goldboughBranch.webp",
-          "bytes": 3558,
-          "sha256": "03e8975c37c6d44e3087fa73a742ef04ef718860fc53b64d9615fdcc659d9e3d",
-          "width": 256,
-          "height": 256
+          "bytes": 8268,
+          "sha256": "a340a55a505013ef90922d8cd32af75c20fce8f87298cdd051ae6302130cb831",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/icon_goldboughBranch.webp",
@@ -19066,10 +19066,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/icon_gorefireBrand.webp",
-          "bytes": 2652,
-          "sha256": "94bd870d000921786eecd981b5088d8ced21cb381e52f25954f328275f1fc4f6",
-          "width": 256,
-          "height": 256
+          "bytes": 6140,
+          "sha256": "180024f554e9ba8d74251df553163b739e8f0ea35d9a779840eb8f9d6a88c80e",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/icon_gorefireBrand.webp",
@@ -19085,10 +19085,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/icon_greatsword.webp",
-          "bytes": 2558,
-          "sha256": "33ccc30d514f009f933d184f935da1cc0086b9c61eb302bb805d5261d4672a4a",
-          "width": 256,
-          "height": 256
+          "bytes": 5890,
+          "sha256": "ab7d199acac63abcc6235413895c8f1831b72d87f97483b2c748aa76c9d9be74",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/icon_greatsword.webp",
@@ -19104,10 +19104,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/icon_gutterLeathers.webp",
-          "bytes": 3046,
-          "sha256": "a6210c3a6cc4b5b0ee91f8b279e359194c910654d754ce6f8bedecc811bdf102",
-          "width": 256,
-          "height": 256
+          "bytes": 7390,
+          "sha256": "94793cd46b9aadeeba1a17f4dfdf99e51e62c76ed29ac2b1d56e8096b6ebf508",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/icon_gutterLeathers.webp",
@@ -19123,10 +19123,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/icon_halberd.webp",
-          "bytes": 2204,
-          "sha256": "e23d40af5070559bb7fa6550586b1adfd8be4acbc1c36ac8a2973932cf79dceb",
-          "width": 256,
-          "height": 256
+          "bytes": 5306,
+          "sha256": "f88c6064634dd8a242c061d7b00d2c3c1d230255c049eb89d7a9c106891eef90",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/icon_halberd.webp",
@@ -19142,10 +19142,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/icon_katana.webp",
-          "bytes": 2278,
-          "sha256": "2127a1549dd78acf6a7a239cec3312811018b55a261f33c404fbc81b9f9f5d1b",
-          "width": 256,
-          "height": 256
+          "bytes": 5268,
+          "sha256": "94fc5ca7de82035ab45d45c0d22343c2a1afed3927e6cbb98d32ec54dadaeae5",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/icon_katana.webp",
@@ -19161,10 +19161,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/icon_kiteShield.webp",
-          "bytes": 2890,
-          "sha256": "504fe2d4c0cce18782577f1185d1bccb5986502acab6ade04c245ddd0a62dae4",
-          "width": 256,
-          "height": 256
+          "bytes": 6972,
+          "sha256": "d0a85548db368dc9a139a7181d9f0017f42b8d73aad6aba07c2068bb3e3a4603",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/icon_kiteShield.webp",
@@ -19180,10 +19180,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/icon_kiteShieldInventory2026.webp",
-          "bytes": 2188,
-          "sha256": "5ecee420ef668b37b18e9305e386537a374132b2652c053941ac13325ceead23",
-          "width": 256,
-          "height": 256
+          "bytes": 5018,
+          "sha256": "6459863591cc3a6001af7a9970e0fd4b4a41562fefc094741da97786a668ec35",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/icon_kiteShieldInventory2026.webp",
@@ -19199,10 +19199,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/icon_lantern.webp",
-          "bytes": 2932,
-          "sha256": "492023f60937db3c07d4f80b326ccb773de7ebaf29449d714de5ecc5f0a74860",
-          "width": 256,
-          "height": 256
+          "bytes": 6660,
+          "sha256": "d7b0104e93aa6ae2e8261278e9c59a11c8b5defbd8cf8bdc42776f0c4e60c69c",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/icon_lantern.webp",
@@ -19218,10 +19218,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/icon_nightweave.webp",
-          "bytes": 3058,
-          "sha256": "ac67dea13bc1daee1b03e2a58a600a2b6656eb6fd136d5ad1dccf5c26b863183",
-          "width": 256,
-          "height": 256
+          "bytes": 7488,
+          "sha256": "5c5965821f01401489e097bf109020d66251f94b81421e899ef16e97d6ea60f1",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/icon_nightweave.webp",
@@ -19237,10 +19237,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/icon_parryDagger.webp",
-          "bytes": 3086,
-          "sha256": "5329c2658cd6a1e99a68997fb4e11d7da5ff15b37461a04cde905e296c7075bb",
-          "width": 256,
-          "height": 256
+          "bytes": 7028,
+          "sha256": "c40226a4ff730b8d5d025c5b8dd4ed0c914442af7218e4294b0ff5bf9ff84c25",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/icon_parryDagger.webp",
@@ -19256,10 +19256,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/icon_riteVestments.webp",
-          "bytes": 2266,
-          "sha256": "e1e2aee1770bd59bb1af78cbd707e422bb16bd98d4e906b115270aab87311635",
-          "width": 256,
-          "height": 256
+          "bytes": 5496,
+          "sha256": "23245f3addb59c1c936b418d3e56c114600cd70e5112ac2e0036ff9d82a1e7b6",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/icon_riteVestments.webp",
@@ -19275,10 +19275,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/icon_roundShield.webp",
-          "bytes": 4118,
-          "sha256": "db12ff84af619947f32f1c071195c45aff8d0c6933691c2947f3a7b3d2b63c37",
-          "width": 256,
-          "height": 256
+          "bytes": 9776,
+          "sha256": "bf8be68cea9697c53ed1f448780d4dba742c0e64cf21a3ee6ac917bd31de167e",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/icon_roundShield.webp",
@@ -19294,10 +19294,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/icon_shortbow.webp",
-          "bytes": 3014,
-          "sha256": "03ec9477a0652f0f005e2eb5864ab2faca48a706386f7ef71f40f4c5a21a5a62",
-          "width": 256,
-          "height": 256
+          "bytes": 6742,
+          "sha256": "02cc9f5f4a8ca0395bcf9985bd4a6c31ed9c3ba46450c0de19066965167418e7",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/icon_shortbow.webp",
@@ -19313,10 +19313,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/icon_spikedShield.webp",
-          "bytes": 4006,
-          "sha256": "f0d00f86f971aa9a684a630aa1aebcb46bb70c0eba02ab5e7b8bdb7e6e176ff9",
-          "width": 256,
-          "height": 256
+          "bytes": 9650,
+          "sha256": "977773da8bbc1647cb94df9f45af6844ecdf891f9b09ef6893eaa04a0b1b4b98",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/icon_spikedShield.webp",
@@ -19332,10 +19332,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/icon_starstoneStaff.webp",
-          "bytes": 2522,
-          "sha256": "4a4937625c05fa2eae4d24c771ed074095d46aed4e31fed3da78ab5612c4e55a",
-          "width": 256,
-          "height": 256
+          "bytes": 5738,
+          "sha256": "13253d9320e7122d36b33be8758364ccb9d38825d292444e2e89e2e6b46f0659",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/icon_starstoneStaff.webp",
@@ -19351,10 +19351,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/icon_straightSword.webp",
-          "bytes": 2264,
-          "sha256": "905a5f378dac555c1a8cad01d9d16d3deb48b6c66df75d639581619e6d6c70ea",
-          "width": 256,
-          "height": 256
+          "bytes": 5546,
+          "sha256": "9e103a71272d78813bab802a88a248d6ec63a0603b7c6face971f2a238ae2162",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/icon_straightSword.webp",
@@ -19370,10 +19370,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/icon_straightSwordInventory2026.webp",
-          "bytes": 1850,
-          "sha256": "bd08c827485098f0238121a863dcb03a1caaa831d700a689a91015389b200a8d",
-          "width": 256,
-          "height": 256
+          "bytes": 4492,
+          "sha256": "8a7598e8645e252e27848469e2b9273c4bfca79bd2a007da1c8377638c156e29",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/icon_straightSwordInventory2026.webp",
@@ -19389,10 +19389,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/icon_torch.webp",
-          "bytes": 2998,
-          "sha256": "10c5be86a5e65b18e4b137d18c129065379edda4a151a080fc6edde42aad6851",
-          "width": 256,
-          "height": 256
+          "bytes": 6974,
+          "sha256": "ee60bdfa3a938a19dedec510fd24912c2ddaf08d9a6378a87e92276731375b92",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/icon_torch.webp",
@@ -19408,10 +19408,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/icon_towerShield.webp",
-          "bytes": 2368,
-          "sha256": "2a872aea40ced67c75350deebcc426bd4218d9c5db5cbede49e89062a0af4287",
-          "width": 256,
-          "height": 256
+          "bytes": 5566,
+          "sha256": "572617885fe9f53248397ec65f519d2b78c14d893aff6ee7c89386ca8b00dafd",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/icon_towerShield.webp",
@@ -19427,10 +19427,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/icon_twinblade.webp",
-          "bytes": 2106,
-          "sha256": "b9aa6724798fcf7589153f2be925ca75554444e75672898ceeb3a25199bad758",
-          "width": 256,
-          "height": 256
+          "bytes": 4818,
+          "sha256": "4f4c9c7427bdfe37a91a429f4a1b3b54aa65f512b5bd85e4765191264e7da547",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/icon_twinblade.webp",
@@ -19446,10 +19446,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/icon_warhammer.webp",
-          "bytes": 2626,
-          "sha256": "1b7a771c00c97f6e226e3954adccd8824e7abfb57f0c828b8f20247cbac8c5a2",
-          "width": 256,
-          "height": 256
+          "bytes": 6144,
+          "sha256": "ecddc74d4a1775d463ef0859036a751c9a2345f52f7efe51a65ef699783ac3cc",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/icon_warhammer.webp",
@@ -19465,10 +19465,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/icon_wayfarerPlate.webp",
-          "bytes": 3366,
-          "sha256": "cfb18e19cb4855a4f2943b5fcb4129b52fa66ced927710eb8689c86217960f2b",
-          "width": 256,
-          "height": 256
+          "bytes": 8056,
+          "sha256": "0c9f44be617093ce0c77f95a4b39367350d8d74636d85a0685750419b4193860",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/icon_wayfarerPlate.webp",
@@ -19484,10 +19484,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/icon_wyrmhornStaff.webp",
-          "bytes": 3004,
-          "sha256": "21b3977e0f72a69ed2154a6157e7d8a0d167327d82bd5d99b2b5e1e6d5900d59",
-          "width": 256,
-          "height": 256
+          "bytes": 6708,
+          "sha256": "836ef50981ec197a8ce21add6998d86ff1712b81d85c83c4b637e69db027bcc9",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/icon_wyrmhornStaff.webp",
@@ -19503,10 +19503,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/weapon_ashStaff.webp",
-          "bytes": 450,
-          "sha256": "2499e14f6ae9df1293f90b79f1a335aa2812da30c9e90d9a709584348805c41e",
-          "width": 202,
-          "height": 256
+          "bytes": 1012,
+          "sha256": "68334b7772f0d684b5c3ebb059af7c3fce28dd666c1ba39b6e94d174a8fb25d0",
+          "width": 379,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/weapon_ashStaff.webp",
@@ -19522,10 +19522,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/weapon_battleaxe.webp",
-          "bytes": 432,
-          "sha256": "ce9563b61dd2f2e807d83eb11c5d5d5fa9757e71c72c25bb579e94eecb87bcd8",
-          "width": 202,
-          "height": 256
+          "bytes": 932,
+          "sha256": "c19a9ae5e69cbcfaf4af4505ebd8cafce4c5d7136caa6ed0826594872a2ae57b",
+          "width": 379,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/weapon_battleaxe.webp",
@@ -19541,10 +19541,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/weapon_blightRod.webp",
-          "bytes": 444,
-          "sha256": "3acbaf91728ae2d3f70801107a3ff15501926055080f85d6ad6d2b125c9b7235",
-          "width": 202,
-          "height": 256
+          "bytes": 996,
+          "sha256": "bde99314d766a59822a36b04da5ded51730e25f4cea96664dd1d7cd18e735abe",
+          "width": 379,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/weapon_blightRod.webp",
@@ -19560,10 +19560,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/weapon_boneSceptre.webp",
-          "bytes": 468,
-          "sha256": "f45869608589f101e8cfa82cc3afbe620214e892c438096e919c0642950bc2c0",
-          "width": 202,
-          "height": 256
+          "bytes": 960,
+          "sha256": "68920ab3c100dc42424f4d9dfd1378437f7b4dbcddff809e19869cd8a2628f84",
+          "width": 379,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/weapon_boneSceptre.webp",
@@ -19579,10 +19579,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/weapon_buckler.webp",
-          "bytes": 726,
-          "sha256": "03bd4f6f819e2ef1038b1c49d3db9dc788672b8c5f08591c4fdb145edf6e5cc2",
-          "width": 202,
-          "height": 256
+          "bytes": 1574,
+          "sha256": "dec4d7ab03a8f5bed5f259afe50dabf8aa8b0935b778745b8dca3fe76e882151",
+          "width": 379,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/weapon_buckler.webp",
@@ -19598,10 +19598,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/weapon_dagger.webp",
-          "bytes": 478,
-          "sha256": "215da42ba41d8162f98c5b981763c000ab1ef24d187afad4d9c0081a1cf626a2",
-          "width": 202,
-          "height": 256
+          "bytes": 872,
+          "sha256": "022fdb7596ef9bde490c4b29ff32637c5b33b145d32c54389b1c1cdc957599d8",
+          "width": 379,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/weapon_dagger.webp",
@@ -19617,10 +19617,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/weapon_emberlightSceptre.webp",
-          "bytes": 658,
-          "sha256": "6ead11700146351ca5312d9a51071b06f6485c00b0b0609c2f6fbecbdd8a470e",
-          "width": 202,
-          "height": 256
+          "bytes": 1384,
+          "sha256": "4fad0186ec7cc28231e9ba5249fda7d2c467e5c0f77f8817760ae04278667844",
+          "width": 379,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/weapon_emberlightSceptre.webp",
@@ -19636,10 +19636,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/weapon_goldboughBranch.webp",
-          "bytes": 664,
-          "sha256": "4dd630fb268734170d48a56da7d2a834d4e97ff88d8f3478bc69d342a8edd015",
-          "width": 202,
-          "height": 256
+          "bytes": 1534,
+          "sha256": "b69736bf67ea3ce245b6aa3e90a593a3eb285de85c7be3ad2612fcb3ebdf58cb",
+          "width": 379,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/weapon_goldboughBranch.webp",
@@ -19655,10 +19655,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/weapon_gorefireBrand.webp",
-          "bytes": 646,
-          "sha256": "70af98c2506d7298daf1b2145aca43a1c3737d3485c1b11ec2c63e47afa1000d",
-          "width": 202,
-          "height": 256
+          "bytes": 1332,
+          "sha256": "ea198883bd0e6cc69623524c2cd83c70c156949f120576b507b86a4bfce1b69b",
+          "width": 379,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/weapon_gorefireBrand.webp",
@@ -19674,10 +19674,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/weapon_greatsword.webp",
-          "bytes": 556,
-          "sha256": "7ed822e14f38cf8f9fea7dbedf2aeb7757b827172b16b7bcf3a318ed3a3365f5",
-          "width": 202,
-          "height": 256
+          "bytes": 1130,
+          "sha256": "8ff152182a0a7742913665a8a7468e5aed845fdf767195e5a73afdd9584d4301",
+          "width": 379,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/weapon_greatsword.webp",
@@ -19693,10 +19693,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/weapon_halberd.webp",
-          "bytes": 630,
-          "sha256": "79711866930d2c789770538273395511028ed520b682c70d683ae0b11ef1a4e2",
-          "width": 202,
-          "height": 256
+          "bytes": 1346,
+          "sha256": "fbd1cffb2e11968ce9c5f2c90cd51a20d3ba2c7b76a52a060b747718b9797825",
+          "width": 379,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/weapon_halberd.webp",
@@ -19712,10 +19712,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/weapon_katana.webp",
-          "bytes": 658,
-          "sha256": "ee5e25eb80c0fe7d5d1b4d35588a448131d493c216ad3b72d26f221f9a554cc0",
-          "width": 202,
-          "height": 256
+          "bytes": 1390,
+          "sha256": "f9f324aa3a034aa3850910e97e777b3055a213f3e8b907fcc248b816cc6784ba",
+          "width": 379,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/weapon_katana.webp",
@@ -19731,10 +19731,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/weapon_kiteShield.webp",
-          "bytes": 520,
-          "sha256": "fb3b76ab897bd5c71ae421c8bb01c0aa531fba18c967c147b41b8184ca2f29ba",
-          "width": 202,
-          "height": 256
+          "bytes": 1142,
+          "sha256": "4f3f42513907fed4fbf100a3683dd067fb6420a40099fd3e4a4be8b54d9730cf",
+          "width": 379,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/weapon_kiteShield.webp",
@@ -19750,10 +19750,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/weapon_lantern.webp",
-          "bytes": 302,
-          "sha256": "27790188d34af7e2cc405541fadc734a0d1cc9dbbfdbd54f72dc48721ace73fe",
-          "width": 202,
-          "height": 256
+          "bytes": 726,
+          "sha256": "688dce1c56d70b642bc9e0e0b7565ece35ec80f25eda52cb3c80788c43411b60",
+          "width": 379,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/weapon_lantern.webp",
@@ -19769,10 +19769,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/weapon_parryDagger.webp",
-          "bytes": 362,
-          "sha256": "fdd14a4ec17c529247d5859e889677dea079de585ff56e5c2805a32ad5b7c528",
-          "width": 202,
-          "height": 256
+          "bytes": 814,
+          "sha256": "791c8dce71032a57b6a288ea7ee733910051c3f708abac0174bd239e1e7df934",
+          "width": 379,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/weapon_parryDagger.webp",
@@ -19788,10 +19788,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/weapon_roundShield.webp",
-          "bytes": 810,
-          "sha256": "4c31f9bfbe24632b97f827af3c6b4287da24dd6438e9399a7dfd665334a5c9a3",
-          "width": 202,
-          "height": 256
+          "bytes": 1668,
+          "sha256": "284ffa10430f21f06f01069edb02cf069dd02e87e4bc0bd12cebcda09ea1a7d1",
+          "width": 379,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/weapon_roundShield.webp",
@@ -19807,10 +19807,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/weapon_spikedShield.webp",
-          "bytes": 830,
-          "sha256": "bf28ed542c75c47bf45527eb2503357f0b95dcfbb429c2624634da7aafd6172c",
-          "width": 202,
-          "height": 256
+          "bytes": 1670,
+          "sha256": "c012f27a1708b85075b0040c2e36eb42a1eb35334c9ef5e74021359e61acf185",
+          "width": 379,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/weapon_spikedShield.webp",
@@ -19826,10 +19826,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/weapon_starstoneStaff.webp",
-          "bytes": 488,
-          "sha256": "32759e9c48f41a6cdf88a6ed4f39491e83dd9b224803f82dca88b722886bbf42",
-          "width": 202,
-          "height": 256
+          "bytes": 1032,
+          "sha256": "f62c40eb165d8b85c628ccf5503d75bcc78504fb5385b59eff0bf245a961fedb",
+          "width": 379,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/weapon_starstoneStaff.webp",
@@ -19845,10 +19845,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/weapon_straightSword.webp",
-          "bytes": 494,
-          "sha256": "6df640bea85c4a86dfbe558722df9a156c236f21d58ac2945b34897fac58c9d2",
-          "width": 202,
-          "height": 256
+          "bytes": 1010,
+          "sha256": "a56ed37e2da13db967e5e429fe31c9b5bc135fb2a7d79d396ad6febcdbb7d777",
+          "width": 379,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/weapon_straightSword.webp",
@@ -19864,10 +19864,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/weapon_torch.webp",
-          "bytes": 418,
-          "sha256": "47491fc5681d36c94d966e500656c1c37dcd8d5dc279f41b1c76866adbbd63cc",
-          "width": 202,
-          "height": 256
+          "bytes": 910,
+          "sha256": "6266227d8cc10d5ef86fe6690decfcf24e73612909bbe9873832ffa0bf47d06f",
+          "width": 379,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/weapon_torch.webp",
@@ -19883,10 +19883,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/weapon_towerShield.webp",
-          "bytes": 464,
-          "sha256": "d7a4074ea8da53bda9c3903c7ac60e179a52df7050bc1d9183397334e7619f6e",
-          "width": 202,
-          "height": 256
+          "bytes": 960,
+          "sha256": "b68e4b8562ab3b52f4c933736c735c76dfc90eeb86d5d958d3f95e02c0db2ddf",
+          "width": 379,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/weapon_towerShield.webp",
@@ -19902,10 +19902,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/weapon_twinblade.webp",
-          "bytes": 442,
-          "sha256": "241a86bd6a5211469a56da0c138b728058aecdb3439ae7710cd1e8e0fe609324",
-          "width": 202,
-          "height": 256
+          "bytes": 914,
+          "sha256": "fe6fa2e2397a8a0ec5a5c19a5e09cc76da436e27597e2b2e7fe3d0561f36b08f",
+          "width": 379,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/weapon_twinblade.webp",
@@ -19921,10 +19921,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/weapon_warhammer.webp",
-          "bytes": 382,
-          "sha256": "d8a785e5c91158f6d251b73dec3c922355ecdbd48fc900001f69a09054328885",
-          "width": 202,
-          "height": 256
+          "bytes": 864,
+          "sha256": "b7f2af0ed30fdfdf098f430f4733090e5e721281677a9bc71bb00ab2ea05231b",
+          "width": 379,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/weapon_warhammer.webp",
@@ -19940,10 +19940,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/equipment/weapon_wyrmhornStaff.webp",
-          "bytes": 660,
-          "sha256": "93549ccb1bb607ad2aa9c9e549114d70777b83d35fb601fe4e294c972c95bb91",
-          "width": 202,
-          "height": 256
+          "bytes": 1476,
+          "sha256": "db63f3790d79300637c2d0917af6e8ea2d6fc614885a2a2a42bc46c630b07aa9",
+          "width": 379,
+          "height": 480
         },
         "high": {
           "path": "assets/equipment/weapon_wyrmhornStaff.webp",
@@ -20736,10 +20736,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/player-polish/scenes/armoury-still-life-master.webp",
-          "bytes": 5460,
-          "sha256": "58143e86550cf20c4d9e256dd2f654c57230dd774bb396b0e328c1624d4cdf79",
-          "width": 256,
-          "height": 256
+          "bytes": 35198,
+          "sha256": "4af005ea15d3016b17948981ee05a5aa0a8f39d490d3a207b3113975451c758f",
+          "width": 720,
+          "height": 720
         },
         "high": {
           "path": "assets/player-polish/scenes/armoury-still-life-master.webp",
@@ -20755,10 +20755,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/player-polish/scenes/chapel-rest-master.webp",
-          "bytes": 16862,
-          "sha256": "b7787c7d634316c23f1faf7ec77ced3f71d3c3b6a7f4857bea75c687083e971c",
-          "width": 256,
-          "height": 256
+          "bytes": 102168,
+          "sha256": "bb1d27533b46e3cc83937ce3fa2bed768b627d1e554775cb5288dbfc441cb24d",
+          "width": 720,
+          "height": 720
         },
         "high": {
           "path": "assets/player-polish/scenes/chapel-rest-master.webp",
@@ -20774,10 +20774,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/player-polish/scenes/forge-desktop.webp",
-          "bytes": 6676,
-          "sha256": "6d4b8594d3910864bd3457188d9ba843f7ea8aa0f8951f033d8bc256313fd109",
-          "width": 256,
-          "height": 144
+          "bytes": 109388,
+          "sha256": "acb1a779ab83cf60016d19b253370acb76bbb0bf227ab03c35092d4862f1af03",
+          "width": 1279,
+          "height": 720
         },
         "high": {
           "path": "assets/player-polish/scenes/forge-desktop.webp",
@@ -20793,10 +20793,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/player-polish/scenes/forge-mobile.webp",
-          "bytes": 7546,
-          "sha256": "dc0d998a6df2a246e1fe763222199e8d82fa992c274e81c15eb5b2a493357cf8",
-          "width": 144,
-          "height": 256
+          "bytes": 50700,
+          "sha256": "fb355d68ba11e29adf4d0da779afff0be70e27e1457e37b841a2d31e864cbd7e",
+          "width": 405,
+          "height": 720
         },
         "high": {
           "path": "assets/player-polish/scenes/forge-mobile.webp",
@@ -20812,10 +20812,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/player-polish/scenes/grave-dialogue-master.webp",
-          "bytes": 17256,
-          "sha256": "9d22d224fa51bb02b9bc5cbbe2467e0a2190dfd0a19a00b49cb1a5137e5bbf2f",
-          "width": 256,
-          "height": 256
+          "bytes": 103826,
+          "sha256": "a4abda7bccd03505ec696513f4bdd513c4f5606f3d2b6a762f007b81b841db69",
+          "width": 720,
+          "height": 720
         },
         "high": {
           "path": "assets/player-polish/scenes/grave-dialogue-master.webp",
@@ -20831,10 +20831,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/player-polish/scenes/merchant-desktop.webp",
-          "bytes": 6676,
-          "sha256": "0139d2e89a5ff77e8e0226f0836eb277f33a0d52d8592f202f0384101a49abfb",
-          "width": 256,
-          "height": 144
+          "bytes": 94894,
+          "sha256": "33de69688bbfb85451c0c35f17cb668f112bd777b9098a72c5ebd7bec222b87c",
+          "width": 1279,
+          "height": 720
         },
         "high": {
           "path": "assets/player-polish/scenes/merchant-desktop.webp",
@@ -20850,10 +20850,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/player-polish/scenes/merchant-mobile.webp",
-          "bytes": 4838,
-          "sha256": "cd896390ce6f536b77963b14b681b065eb4f9112139897c04f4502477b8284b9",
-          "width": 144,
-          "height": 256
+          "bytes": 29882,
+          "sha256": "02aca14789a9c79a8e32f89bd406a39ea91e26a50bf7fe0f08fae10af2720be9",
+          "width": 405,
+          "height": 720
         },
         "high": {
           "path": "assets/player-polish/scenes/merchant-mobile.webp",
@@ -20869,10 +20869,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/player-polish/scenes/spire-vista-desktop.webp",
-          "bytes": 8232,
-          "sha256": "3998b8a6dde59c2f09faf32d35b0464a14ab1b98ef7e965600b31fd3bc3c1961",
-          "width": 256,
-          "height": 144
+          "bytes": 139528,
+          "sha256": "2404732d835d20806fabd174c1ab4a364dfb47d0b7ab7b07e589a3b02748e510",
+          "width": 1279,
+          "height": 720
         },
         "high": {
           "path": "assets/player-polish/scenes/spire-vista-desktop.webp",
@@ -20888,10 +20888,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/player-polish/scenes/spire-vista-mobile.webp",
-          "bytes": 8356,
-          "sha256": "7f3c5ac533e97aaf2f53993917a31ae38ed031073b43129340dd6296f77c2483",
-          "width": 144,
-          "height": 256
+          "bytes": 52928,
+          "sha256": "2575578c4c6ece42adb5cf992e4b5e56c22dc52d12aa68f90fff75155f93d546",
+          "width": 405,
+          "height": 720
         },
         "high": {
           "path": "assets/player-polish/scenes/spire-vista-mobile.webp",
@@ -25353,10 +25353,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/prologue/carry-desktop.webp",
-          "bytes": 4972,
-          "sha256": "6c9d64af124d2f55930205e45e6e358679fbb47b318dc140007975f59a72a2b7",
-          "width": 256,
-          "height": 160
+          "bytes": 69942,
+          "sha256": "382e96ff27f1b76ad863223031271cbc004691b395c95a61c668d760e7f51f21",
+          "width": 1151,
+          "height": 720
         },
         "high": {
           "path": "assets/prologue/carry-desktop.webp",
@@ -25372,10 +25372,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/prologue/carry-herald-desktop.webp",
-          "bytes": 11492,
-          "sha256": "693ffac1f63ec7ac343e946d9c0a408bdcf7cd00c9648f8d85a7d3637cecc480",
-          "width": 256,
-          "height": 160
+          "bytes": 156226,
+          "sha256": "b9db8b6319faecfe9505693959a454b864c0d880c753a69e4dbb3832531f9e19",
+          "width": 1151,
+          "height": 720
         },
         "high": {
           "path": "assets/prologue/carry-herald-desktop.webp",
@@ -25391,10 +25391,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/prologue/carry-herald-mobile.webp",
-          "bytes": 10556,
-          "sha256": "50eb941b11f6a4d2103fb075b5e63115ec4fdd56adbe9570b084f6336aa03e40",
-          "width": 144,
-          "height": 256
+          "bytes": 71312,
+          "sha256": "9573017e49b9ae7760054b14575b0a6092c549a80d86aa41511b61ee497a6624",
+          "width": 405,
+          "height": 720
         },
         "high": {
           "path": "assets/prologue/carry-herald-mobile.webp",
@@ -25410,10 +25410,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/prologue/carry-mobile.webp",
-          "bytes": 5748,
-          "sha256": "65a7129dfcce2aebf28d78180fd0bf821be96065a1b8fba2be1c367c124ec006",
-          "width": 144,
-          "height": 256
+          "bytes": 43620,
+          "sha256": "643e76fca748d8181fee147dd5c0c477659267be57fd696fad1ee9e5ef2ef115",
+          "width": 405,
+          "height": 720
         },
         "high": {
           "path": "assets/prologue/carry-mobile.webp",
@@ -25429,10 +25429,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/prologue/carry-reaver-desktop.webp",
-          "bytes": 6888,
-          "sha256": "1d2202e3f114a270e20a3ab3d7ded017ebb37556323e406b33185c0e84ae1557",
-          "width": 256,
-          "height": 160
+          "bytes": 85402,
+          "sha256": "7152bf97dc424d4195cc04c5fb63d7116b3ece8ed646cc02df6b355f309f3e5b",
+          "width": 1151,
+          "height": 720
         },
         "high": {
           "path": "assets/prologue/carry-reaver-desktop.webp",
@@ -25448,10 +25448,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/prologue/carry-reaver-mobile.webp",
-          "bytes": 7006,
-          "sha256": "01721a3ae2d2f279ef6ed225b7f1e16c4584b339ee0f2842793c29ab2d139f49",
-          "width": 144,
-          "height": 256
+          "bytes": 43344,
+          "sha256": "7ea29a3d4cf053e8d97c22fafd50de419a42b5efa46d37ef43978bd8c45f4a5c",
+          "width": 405,
+          "height": 720
         },
         "high": {
           "path": "assets/prologue/carry-reaver-mobile.webp",
@@ -25467,10 +25467,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/prologue/carry-rogue-desktop.webp",
-          "bytes": 9490,
-          "sha256": "dfed58f0c8069817fcda690fd65fc5ce92d5169b97863a0aa1e7487550620de7",
-          "width": 256,
-          "height": 160
+          "bytes": 121260,
+          "sha256": "8574361fdb9849c02c3e952a139fe22a4f84589b6ace5d7b88b475823e87d30c",
+          "width": 1151,
+          "height": 720
         },
         "high": {
           "path": "assets/prologue/carry-rogue-desktop.webp",
@@ -25486,10 +25486,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/prologue/carry-rogue-mobile.webp",
-          "bytes": 10496,
-          "sha256": "6232dcb29764553490ff9bc2a5037cf9ab16c28c0d994cbdbab839927e10c951",
-          "width": 144,
-          "height": 256
+          "bytes": 72114,
+          "sha256": "958f098710a17c42a5627a0c27388f448d668a5ebb5d7db35cfdda2497ead13d",
+          "width": 405,
+          "height": 720
         },
         "high": {
           "path": "assets/prologue/carry-rogue-mobile.webp",
@@ -25505,10 +25505,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/prologue/carry-starseer-desktop.webp",
-          "bytes": 6042,
-          "sha256": "ff9d02b396a7ea0ed3e5e11e1a39e9f13744453188639a832ba0ec9844ae6bc4",
-          "width": 256,
-          "height": 160
+          "bytes": 76874,
+          "sha256": "6ed0a1354a3ee6d4ff9da8954346acac22529e3bb65e03169206c13cb76435db",
+          "width": 1151,
+          "height": 720
         },
         "high": {
           "path": "assets/prologue/carry-starseer-desktop.webp",
@@ -25524,10 +25524,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/prologue/carry-starseer-mobile.webp",
-          "bytes": 5416,
-          "sha256": "14b473ea107b6fb5f13f635ffabf25873c9e7c83fb98e2fbaba4afcaf0e569ce",
-          "width": 144,
-          "height": 256
+          "bytes": 33120,
+          "sha256": "6c25959fd1c61600462491e75a6449513a62a49dc02cb9da392762d83f262146",
+          "width": 405,
+          "height": 720
         },
         "high": {
           "path": "assets/prologue/carry-starseer-mobile.webp",
@@ -25543,10 +25543,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/prologue/herald.webp",
-          "bytes": 8606,
-          "sha256": "03e8486658e08e083f1b9c02e49f0e8dc1be25886d16785b43d32a4b722e9989",
-          "width": 165,
-          "height": 256
+          "bytes": 43892,
+          "sha256": "be37b0b55e2c4276c69011d499435f06174c072879fb16435eff6d27c10b4316",
+          "width": 463,
+          "height": 720
         },
         "high": {
           "path": "assets/prologue/herald.webp",
@@ -25562,10 +25562,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/prologue/night-desktop.webp",
-          "bytes": 3984,
-          "sha256": "9ad522c1a5e34d9056440cae6c7257357629b21a831414b0e71a09576c5ff5e5",
-          "width": 256,
-          "height": 160
+          "bytes": 49114,
+          "sha256": "142c10b15f047db5a5e89adfe2515f1680ceac83a0e472d3acb04b25182a2a4b",
+          "width": 1151,
+          "height": 720
         },
         "high": {
           "path": "assets/prologue/night-desktop.webp",
@@ -25581,10 +25581,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/prologue/night-mobile.webp",
-          "bytes": 4316,
-          "sha256": "cb80072673c3be8f0478cfefc31fc6edea6b8cecfbc58aa6b5093828198cc92a",
-          "width": 144,
-          "height": 256
+          "bytes": 25918,
+          "sha256": "b632515fc1c771035b38af2f2176d747bd1b95399870e9cd8e6c3cd1be962652",
+          "width": 405,
+          "height": 720
         },
         "high": {
           "path": "assets/prologue/night-mobile.webp",
@@ -25600,10 +25600,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/prologue/reaver.webp",
-          "bytes": 7810,
-          "sha256": "c44d47583f83b10a914a516b1d1fb0cf31f8de219aae9522f5603d564e49daec",
-          "width": 165,
-          "height": 256
+          "bytes": 38916,
+          "sha256": "02f07767d8c3d19db83613f66b2d006178cbfe0e6ce556302f5fc9207422297d",
+          "width": 463,
+          "height": 720
         },
         "high": {
           "path": "assets/prologue/reaver.webp",
@@ -25619,10 +25619,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/prologue/road-desktop.webp",
-          "bytes": 10756,
-          "sha256": "519e3c7f53f45273d45d92fce782060b65e572b88257934013ffe4b2f0e60580",
-          "width": 256,
-          "height": 160
+          "bytes": 155562,
+          "sha256": "de70726d9d4b21465f5f68249b23e8cefa9ebd2b03f224aed5ce5735e6669573",
+          "width": 1151,
+          "height": 720
         },
         "high": {
           "path": "assets/prologue/road-desktop.webp",
@@ -25638,10 +25638,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/prologue/road-mobile.webp",
-          "bytes": 11028,
-          "sha256": "9cdd5f49a398f6c0adaa74f40515487058f504630f34735378e2f45e0d026425",
-          "width": 144,
-          "height": 256
+          "bytes": 77890,
+          "sha256": "73583a75c70ac69a5099a5e3006698d2f947e389c1434d198260420739759637",
+          "width": 405,
+          "height": 720
         },
         "high": {
           "path": "assets/prologue/road-mobile.webp",
@@ -25657,10 +25657,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/prologue/rogue.webp",
-          "bytes": 8094,
-          "sha256": "9c3c3f529b996df2093ca6360e2f0e418089ec6443c8a84affe7c5200b0d46ac",
-          "width": 165,
-          "height": 256
+          "bytes": 39878,
+          "sha256": "e590f29e32c6d723cd1148ba0ee1635e50ce5766c7cced5fc4c61c8a6053eee4",
+          "width": 463,
+          "height": 720
         },
         "high": {
           "path": "assets/prologue/rogue.webp",
@@ -25676,10 +25676,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/prologue/starseer.webp",
-          "bytes": 9028,
-          "sha256": "debeb3e551265361f8212394114d6bd8cee3259ea7c6123b4b1baf06c40be319",
-          "width": 165,
-          "height": 256
+          "bytes": 47996,
+          "sha256": "7a7132d8b441e3b6345bc3f72ca9eeae0db6116c15d30fe7fe7590f6c3b14dc8",
+          "width": 463,
+          "height": 720
         },
         "high": {
           "path": "assets/prologue/starseer.webp",
@@ -25695,10 +25695,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/prologue/step-crownfall-desktop.webp",
-          "bytes": 8924,
-          "sha256": "61abf505bcbf82c91ed1a201832a45bf0eb4e03a7cb7fd896d5c0399156cd17c",
-          "width": 256,
-          "height": 160
+          "bytes": 120418,
+          "sha256": "70dd46225f6554dcdc8605e124264183a118ffb6a46101715043d4250e2a174c",
+          "width": 1151,
+          "height": 720
         },
         "high": {
           "path": "assets/prologue/step-crownfall-desktop.webp",
@@ -25714,10 +25714,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/prologue/step-crownfall-mobile.webp",
-          "bytes": 9088,
-          "sha256": "8a98de1cc027168aee25087cac1c66e5b2cc46df4f429bf739a39be3e0f6bc40",
-          "width": 144,
-          "height": 256
+          "bytes": 60282,
+          "sha256": "cbdedf503c1d42cc0baa3ad19895847201f290d52cc4679d7a313daed73588e0",
+          "width": 405,
+          "height": 720
         },
         "high": {
           "path": "assets/prologue/step-crownfall-mobile.webp",
@@ -25733,10 +25733,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/prologue/step-desktop.webp",
-          "bytes": 8862,
-          "sha256": "a44ea01f483f49a3fc20da02289643175ec12268d2e7b75de1fd9c7aede47843",
-          "width": 256,
-          "height": 160
+          "bytes": 130560,
+          "sha256": "dcfe949bcf40f9f05a7bed736d6fae64af2c939335992c923a92c16de7af38c1",
+          "width": 1151,
+          "height": 720
         },
         "high": {
           "path": "assets/prologue/step-desktop.webp",
@@ -25752,10 +25752,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/prologue/step-marches-desktop.webp",
-          "bytes": 11616,
-          "sha256": "f057eb974b680130591c0323357672107409705f27cc9cd0f78035bb8701e12c",
-          "width": 256,
-          "height": 160
+          "bytes": 158778,
+          "sha256": "6e1bd4ebae151b7dccd8b054bdf2adb0dbf220ef1e7a5da960c22eb8bc1da5df",
+          "width": 1151,
+          "height": 720
         },
         "high": {
           "path": "assets/prologue/step-marches-desktop.webp",
@@ -25771,10 +25771,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/prologue/step-marches-mobile.webp",
-          "bytes": 10860,
-          "sha256": "b7f51f5352de826b149b8f72b4cd959ffa39282eb5ab031599a63d39a69160f2",
-          "width": 144,
-          "height": 256
+          "bytes": 70170,
+          "sha256": "21692a7f793a7e192ba385ee036af14ca967d605fdaf6501433c6f62b250d2a1",
+          "width": 405,
+          "height": 720
         },
         "high": {
           "path": "assets/prologue/step-marches-mobile.webp",
@@ -25790,10 +25790,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/prologue/step-mobile.webp",
-          "bytes": 8982,
-          "sha256": "8f235d096aa4a14058e45f2fe981bac148b5e55fd6cb19ecc0ad1fdc468f80b3",
-          "width": 144,
-          "height": 256
+          "bytes": 65454,
+          "sha256": "cd41585b5dbe986ca4f7ca285c532664822f9c72384560cb7849ad1eb7d57f17",
+          "width": 405,
+          "height": 720
         },
         "high": {
           "path": "assets/prologue/step-mobile.webp",
@@ -25809,10 +25809,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/prologue/step-reach-desktop.webp",
-          "bytes": 9764,
-          "sha256": "310d3f7c96d15c10c38e954b9773e6f825249ada37ec9bc77e75f26ce4addcb0",
-          "width": 256,
-          "height": 160
+          "bytes": 123042,
+          "sha256": "e2f2c8a70c3d7a819d29d1a9cb5b0da523b602cf5d69b67bffdab2903abf49fe",
+          "width": 1151,
+          "height": 720
         },
         "high": {
           "path": "assets/prologue/step-reach-desktop.webp",
@@ -25828,10 +25828,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/prologue/step-reach-mobile.webp",
-          "bytes": 9970,
-          "sha256": "e94fbc3820a51f2eabc98b33c79432997cf9902b6c74e5f5f998f97d7f5c7952",
-          "width": 144,
-          "height": 256
+          "bytes": 69696,
+          "sha256": "8c8e1c8b519f510a56c8206594317c51211f6798cc3939193a619170295d6c7a",
+          "width": 405,
+          "height": 720
         },
         "high": {
           "path": "assets/prologue/step-reach-mobile.webp",
@@ -25847,10 +25847,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/prologue/step-weald-desktop.webp",
-          "bytes": 11276,
-          "sha256": "68fb46b1819f75b31e6b38cae3dda77238bbae70ec55ead8a5ef6f0ef88e4e0e",
-          "width": 256,
-          "height": 160
+          "bytes": 170140,
+          "sha256": "994d8642a79fcdd14722f199f4eba6f9c1834029eca904b12dc5012d6bdca88b",
+          "width": 1150,
+          "height": 720
         },
         "high": {
           "path": "assets/prologue/step-weald-desktop.webp",
@@ -25866,10 +25866,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/prologue/step-weald-mobile.webp",
-          "bytes": 11300,
-          "sha256": "e5ff5a3f61300ae59380c05045b91ed5aafb7d90a2b188e4aa2a81f3fdfaa43e",
-          "width": 144,
-          "height": 256
+          "bytes": 77380,
+          "sha256": "5404661e4a47bb0ce8779175d58e782ae584095dccb749448ec48a6aa40f22fd",
+          "width": 405,
+          "height": 720
         },
         "high": {
           "path": "assets/prologue/step-weald-mobile.webp",
@@ -25885,10 +25885,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/prologue/warmth-desktop.webp",
-          "bytes": 8902,
-          "sha256": "20c4a2130b38793a79c770114656ac4e881e1c7b2798afb0785accd114c618c6",
-          "width": 256,
-          "height": 160
+          "bytes": 113238,
+          "sha256": "c54c5e9b4ca2aae04b7018f11a09c2258e1f414ead0ad1bdbe40a27f552fb5a4",
+          "width": 1151,
+          "height": 720
         },
         "high": {
           "path": "assets/prologue/warmth-desktop.webp",
@@ -25904,10 +25904,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/prologue/warmth-mobile.webp",
-          "bytes": 8594,
-          "sha256": "7f9adee3b9dbd22ef2de92c8011d94ead663b83b3de598fdd76443c5612d30e0",
-          "width": 144,
-          "height": 256
+          "bytes": 58234,
+          "sha256": "6dfc0a19278900ff90c9fc04f611e20cc4eacae3baa2d53a1cc8f2121469b86c",
+          "width": 405,
+          "height": 720
         },
         "high": {
           "path": "assets/prologue/warmth-mobile.webp",
@@ -25923,10 +25923,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/prologue/year-desktop.webp",
-          "bytes": 9452,
-          "sha256": "64c8693df84ccbf8ecfcf4c6b48fe76cac50c37a6f2d246f389855e4ff2776f7",
-          "width": 256,
-          "height": 160
+          "bytes": 116180,
+          "sha256": "f6663026b0daa8eb5876a064cb115ba9e760a8e0ff4d3a519d1c018b513fe71a",
+          "width": 1151,
+          "height": 720
         },
         "high": {
           "path": "assets/prologue/year-desktop.webp",
@@ -25942,10 +25942,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/prologue/year-mobile.webp",
-          "bytes": 9802,
-          "sha256": "34c4631da42e138fcb0f11109d325cfdb9c5a5e44ff32e3f4dfaa31a96049e6d",
-          "width": 144,
-          "height": 256
+          "bytes": 64654,
+          "sha256": "f0f6604184d423f6b873ac39239f72909e0ab1aa94384ae7cbe763544e628874",
+          "width": 405,
+          "height": 720
         },
         "high": {
           "path": "assets/prologue/year-mobile.webp",
@@ -25961,10 +25961,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/readiness-poses/herald-emberhabit/bloodRite.webp",
-          "bytes": 1934,
-          "sha256": "4e25dc449ce72cc25b7acdb3119a8b4d73cec1811b70b62d82b027fe13a12dcf",
-          "width": 256,
-          "height": 256
+          "bytes": 4950,
+          "sha256": "297e96be9327523d38594b989c74aed029c908960d9efda5b63ae36b933e1b23",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/readiness-poses/herald-emberhabit/bloodRite.webp",
@@ -25980,10 +25980,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/readiness-poses/herald-emberhabit/bloodRiteTransition.webp",
-          "bytes": 1832,
-          "sha256": "ca6af41ec1e5b241777a5b7c80d9ae1cbd44a60597f5ae49b9dbeabb8d42b3b2",
-          "width": 256,
-          "height": 256
+          "bytes": 4704,
+          "sha256": "14a45079156cdf2c1cea3f28429716cabb9ebb79e61fec416dc5822a96ad940d",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/readiness-poses/herald-emberhabit/bloodRiteTransition.webp",
@@ -25999,10 +25999,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/readiness-poses/herald-ossuary/bloodRite.webp",
-          "bytes": 2122,
-          "sha256": "4142a8fd4f39d976a3df9314ec4753b447010fee406cdf5b6489add506993927",
-          "width": 256,
-          "height": 256
+          "bytes": 5436,
+          "sha256": "af154e8120e0c0460272c82274b806bbe927683e9c153f59bf603b3262ce9def",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/readiness-poses/herald-ossuary/bloodRite.webp",
@@ -26018,10 +26018,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/readiness-poses/herald-ossuary/bloodRiteTransition.webp",
-          "bytes": 2006,
-          "sha256": "a54c0c1736ad7bef8d8b82c8cfd7728b2864984e84c705f2f689f69bdb68301e",
-          "width": 256,
-          "height": 256
+          "bytes": 5124,
+          "sha256": "74e22561ba4d25492178c84af35b54799387156eed24d122288f9469d0604897",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/readiness-poses/herald-ossuary/bloodRiteTransition.webp",
@@ -26037,10 +26037,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/readiness-poses/herald-pilgrim/bloodRite.webp",
-          "bytes": 2000,
-          "sha256": "d56542576da23778d8edcde81f29e47df2a073f3681601d432a27f9f966f629e",
-          "width": 256,
-          "height": 256
+          "bytes": 5168,
+          "sha256": "ac2c2b264495de03452978c02ce78b9ab5b997d7b52b763a4ba8ff4ed7d9b211",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/readiness-poses/herald-pilgrim/bloodRite.webp",
@@ -26056,10 +26056,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/readiness-poses/herald-pilgrim/bloodRiteTransition.webp",
-          "bytes": 1828,
-          "sha256": "32f966354baccaf4c3cbbd220359e9ab9f6b17365abd77bec2c9b9bc7de970af",
-          "width": 256,
-          "height": 256
+          "bytes": 4868,
+          "sha256": "5cbb26dafdc3190774113a0830734ec766ab1abd5b2403a693aae178f7b40298",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/readiness-poses/herald-pilgrim/bloodRiteTransition.webp",
@@ -26075,10 +26075,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/readiness-poses/herald/bloodRite.webp",
-          "bytes": 1806,
-          "sha256": "df109eeb1957265edeca6f7851fcc872ce16b259ccc33a6730894618482e4479",
-          "width": 256,
-          "height": 256
+          "bytes": 4642,
+          "sha256": "50f77d14d617ad5e02130a99db6ccd0c2af19c4755af591a11ef5b7ea060b96d",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/readiness-poses/herald/bloodRite.webp",
@@ -26094,10 +26094,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/readiness-poses/herald/bloodRiteTransition.webp",
-          "bytes": 1772,
-          "sha256": "0754bc3b6a3f254de1a51c250f390067feeb0263b102f79912e18c5e5b2defbe",
-          "width": 256,
-          "height": 256
+          "bytes": 4482,
+          "sha256": "37ce8cf636d0085c19f4c1099579b022dbe88e3ec759a7229f43bf688b0b56d6",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/readiness-poses/herald/bloodRiteTransition.webp",
@@ -26113,10 +26113,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/readiness-poses/rogue-duelist/prepared.webp",
-          "bytes": 1762,
-          "sha256": "6916ee9c5cd1bc1ca14d1d3558d2b59a9fd53cfbb660b4a5b2e5f86387952b40",
-          "width": 256,
-          "height": 256
+          "bytes": 4372,
+          "sha256": "f471575b45b1514e2836dfe435182f7c53a801eb60dc0c7f87dc3987c1ac2fb0",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/readiness-poses/rogue-duelist/prepared.webp",
@@ -26132,10 +26132,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/readiness-poses/rogue-duelist/preparedTransition.webp",
-          "bytes": 1756,
-          "sha256": "56a15c1079835836af1fad9c94a7efef4bc3517e4085886cee3c6f3d61ad2189",
-          "width": 256,
-          "height": 256
+          "bytes": 4432,
+          "sha256": "0e4a308a15d50131057b92068189221f58ece5d9b617bf830d417ed1e6cfa39d",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/readiness-poses/rogue-duelist/preparedTransition.webp",
@@ -26151,10 +26151,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/readiness-poses/rogue-nightveil/prepared.webp",
-          "bytes": 1858,
-          "sha256": "072d1c12f1da090cf23b81d3a33433d0518a6f54de4e048c854ca32e7119487e",
-          "width": 256,
-          "height": 256
+          "bytes": 4658,
+          "sha256": "ee6c01bdf2a91b5c7260fcee8462aede77cf3782c0c4458d06a6c261c9d1a8fc",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/readiness-poses/rogue-nightveil/prepared.webp",
@@ -26170,10 +26170,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/readiness-poses/rogue-nightveil/preparedTransition.webp",
-          "bytes": 1952,
-          "sha256": "583c7160c5a51fdd60a3a64a5affae6a7bb6a9bdaee5159b85db935098f405f4",
-          "width": 256,
-          "height": 256
+          "bytes": 4838,
+          "sha256": "7769a5f7e6dba2ef39cab9368b74622db13f59812041d997ff3287b6ca4be0ff",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/readiness-poses/rogue-nightveil/preparedTransition.webp",
@@ -26189,10 +26189,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/readiness-poses/rogue-shadow/prepared.webp",
-          "bytes": 2070,
-          "sha256": "4f282438161786cefa5f4f62e4959d03ae164afe0ee66a9c9be484eea6c4e63e",
-          "width": 256,
-          "height": 256
+          "bytes": 5254,
+          "sha256": "aafb74ce5e6a9ecf19c4f054f44390e892f37b0766d796a2259c56582f893c77",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/readiness-poses/rogue-shadow/prepared.webp",
@@ -26208,10 +26208,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/readiness-poses/rogue-shadow/preparedTransition.webp",
-          "bytes": 1846,
-          "sha256": "b07e98dcc3c59a7df3a2a3f7373a859e0775c40ead831b6676b4c190960c794f",
-          "width": 256,
-          "height": 256
+          "bytes": 4598,
+          "sha256": "916e3aabe6a57b2dd601aa0952ffdb922aaf3429ca05aabf5c9d8fa8fd4917e1",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/readiness-poses/rogue-shadow/preparedTransition.webp",
@@ -26227,10 +26227,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/readiness-poses/rogue/prepared.webp",
-          "bytes": 1688,
-          "sha256": "d0cd1b1e6673f72217e48e22f9ad0d52a740188c2a052f66e558200fd0b30eda",
-          "width": 256,
-          "height": 256
+          "bytes": 4204,
+          "sha256": "64bf3287df92327dcecea2fb824465e769f3b2cd1459ea7eed27ec8c6a002210",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/readiness-poses/rogue/prepared.webp",
@@ -26246,10 +26246,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/readiness-poses/rogue/preparedTransition.webp",
-          "bytes": 1658,
-          "sha256": "610f597af1b906ecae85f70cf1f557b101aa902a5f7d7832f64cc0c36adf399b",
-          "width": 256,
-          "height": 256
+          "bytes": 4200,
+          "sha256": "63744a4f25b8c626c391c31fafc05daac33bef6a37aef0db08334d4c324f802b",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/readiness-poses/rogue/preparedTransition.webp",
@@ -26265,10 +26265,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/readiness-poses/starseer-astral/starstoneCharge.webp",
-          "bytes": 2812,
-          "sha256": "87f6f0855e38dd7c58391ebfc7ffc9beae1eff27a5034914f7dfcf5f686711c1",
-          "width": 256,
-          "height": 256
+          "bytes": 7552,
+          "sha256": "1fa8d5e49c5281fd3eac5d14cb534239dc620c4d923b72ccd1bb162c73fadc6b",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/readiness-poses/starseer-astral/starstoneCharge.webp",
@@ -26284,10 +26284,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/readiness-poses/starseer-astral/starstoneChargeTransition.webp",
-          "bytes": 2680,
-          "sha256": "cbc1301237dc438ceb5b1afa723ce4e7d6156c320b3198c85404b3407bf98748",
-          "width": 256,
-          "height": 256
+          "bytes": 6954,
+          "sha256": "d9f4408f236a9119b82b7ff9e95dbdb71ada7fa656a582b7816e5c5feb407e5d",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/readiness-poses/starseer-astral/starstoneChargeTransition.webp",
@@ -26303,10 +26303,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/readiness-poses/starseer-eclipse/starstoneCharge.webp",
-          "bytes": 2504,
-          "sha256": "fd7b2da89f5efbd583185f8a15ef5a665077e0c82ea5dc9fe928aeaa2815cf5f",
-          "width": 256,
-          "height": 256
+          "bytes": 6568,
+          "sha256": "71641afe88052a52a49b192591768f5f4330b9402206779101887099ac6c8dd4",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/readiness-poses/starseer-eclipse/starstoneCharge.webp",
@@ -26322,10 +26322,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/readiness-poses/starseer-eclipse/starstoneChargeTransition.webp",
-          "bytes": 2174,
-          "sha256": "1c635bc6e3b81d66a122ae5db8fefebde8b7cd52e126e4d849874325ef5cdacc",
-          "width": 256,
-          "height": 256
+          "bytes": 5414,
+          "sha256": "a3c0a8bef0d10ed14f3684e43a4253adbb8471133f787fe93adccea82f8c68ee",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/readiness-poses/starseer-eclipse/starstoneChargeTransition.webp",
@@ -26341,10 +26341,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/readiness-poses/starseer-starlit/starstoneCharge.webp",
-          "bytes": 3382,
-          "sha256": "218d04c3a39939a9b9cc3ef74b2ef44ae012fa05bc2896cdd23950330d57da41",
-          "width": 256,
-          "height": 256
+          "bytes": 8754,
+          "sha256": "c61365899448d304627506d079e5c664004e1dfc81413eec6163121bdfc727e0",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/readiness-poses/starseer-starlit/starstoneCharge.webp",
@@ -26360,10 +26360,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/readiness-poses/starseer-starlit/starstoneChargeTransition.webp",
-          "bytes": 2842,
-          "sha256": "e16882077ca120b5b32bd0a566709eb3afa871d5972eb101b72f05b7d62575f2",
-          "width": 256,
-          "height": 256
+          "bytes": 7348,
+          "sha256": "dfeb3027d84ec7eefb49b68b60451974c5d715d151465706dcd38d8088d02d41",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/readiness-poses/starseer-starlit/starstoneChargeTransition.webp",
@@ -26379,10 +26379,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/readiness-poses/starseer/starstoneCharge.webp",
-          "bytes": 2392,
-          "sha256": "8505d4d2cf1c2f09e202e1f796e9ec2556adeda8e4a9e0d6296b98d1c7e307b4",
-          "width": 256,
-          "height": 256
+          "bytes": 6082,
+          "sha256": "f84f4a733a33ef0bf472b3e80c710a253c509fe4091e8540ccd318f012e64089",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/readiness-poses/starseer/starstoneCharge.webp",
@@ -26398,10 +26398,10 @@
       "tiers": {
         "light": {
           "path": "assets-mobile/readiness-poses/starseer/starstoneChargeTransition.webp",
-          "bytes": 2178,
-          "sha256": "e4e15530cb6b995ff974d9fce36671879ce282128196124f45f2bfa0e4f90f33",
-          "width": 256,
-          "height": 256
+          "bytes": 5474,
+          "sha256": "452475e9c0ff786e90fe8005d31699577ba5df6d2c3eeb9393de12b2764b7c7c",
+          "width": 480,
+          "height": 480
         },
         "high": {
           "path": "assets/readiness-poses/starseer/starstoneChargeTransition.webp",
@@ -30289,23 +30289,23 @@
     },
     "assets-display/shared/emberHound-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "036a744cdc97b1bb8537566759ac9c9b3fd04ec32c9028859d0ddd5d1ef367eb",
-      "bytes": 3742
+      "sha256": "d166a54c67217680427a458679cacf6a3b68ecc06205fa1521f7bcb59dde6ee1",
+      "bytes": 10606
     },
     "assets-display/shared/emberHound.webp": {
       "source": "reviewed-export",
-      "sha256": "036a744cdc97b1bb8537566759ac9c9b3fd04ec32c9028859d0ddd5d1ef367eb",
-      "bytes": 3742
+      "sha256": "d166a54c67217680427a458679cacf6a3b68ecc06205fa1521f7bcb59dde6ee1",
+      "bytes": 10606
     },
     "assets-display/shared/hollowSquire-mobile.webp": {
       "source": "reviewed-export",
-      "sha256": "e6ee39618d07cc7fbe5314e5b231a1e51b9b6aa89b82be8632cfc396e1864b4b",
-      "bytes": 4010
+      "sha256": "3bf92868abe1babce95f9585b411a7ba5c80f14db77ad1f2d71d29eb9d60bd12",
+      "bytes": 10680
     },
     "assets-display/shared/hollowSquire.webp": {
       "source": "reviewed-export",
-      "sha256": "e6ee39618d07cc7fbe5314e5b231a1e51b9b6aa89b82be8632cfc396e1864b4b",
-      "bytes": 4010
+      "sha256": "3bf92868abe1babce95f9585b411a7ba5c80f14db77ad1f2d71d29eb9d60bd12",
+      "bytes": 10680
     }
   }
 }
