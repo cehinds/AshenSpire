@@ -14,7 +14,7 @@ SPEC.md was corrected in this PR, one section range per commit wave, following t
 - §3.6 L391-392: are `staggerBreak` and `resonance` live, and does §13.4k gate them?
 
 - **Owner decisions (2026-10-12)**
-  - §6: a boss keeps its choice of 3 boss relics; today it drops one (TO BUILD in SPEC §6).
+  - §6: a boss keeps its choice of 3 boss relics; built (solo: up to `balance.rewards.bossRelicChoices` distinct unowned boss relics, pick one; co-op still grants one).
   - §7.2: the enemy cap becomes a setting, default 3 (TO BUILD in SPEC §7.2).
   - §7.2.1: Export configuration stays debug-only.
   - §11: LAN co-op is built but not part of the current release; planned for a later release.

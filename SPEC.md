@@ -1395,7 +1395,7 @@ Boss — **The Fell Warden** (Margit-inspired, HP 120, Poise 30):
 - **Phase 1 (>50% HP):** pattern cycle with a signature **delay** mechanic: move *Held Blade* shows "Attack 14 — Delayed"; on its turn it does nothing (gains 8 Block instead); the **following** turn it attacks for 14 regardless of newly rolled intents. Teaches intent-reading. Other moves: Cane Strike 8 (repeatable ×2), Hammer Toss 5×2.
 - **Phase 2 (≤50% HP, `phases` trigger, once):** roars — apply 1 Frail + 1 Weak to player, gains +2 Strength, unlocks *Twin Daggers 3×4*.
 - Staggering him cancels a Held Blade in progress (satisfying counterplay).
-- Reward: 225–270 cinders, one boss relic (the boss-relic choice of 3 is **TO BUILD**, §6), card reward with rare upgrade odds boosted.
+- Reward: 225–270 cinders, a choice of boss relics (§6), card reward with rare upgrade odds boosted.
 
 (Act 2/3 rosters — including the Grafted-King-inspired phase boss and the final Malenia-inspired boss that heals for 3 per hit landed on you and inflicts Bleed on the *player* — are designed in M3; their signature mechanics are listed in §10 so engine hooks exist.)
 
@@ -1540,7 +1540,7 @@ Faithful to StS's published algorithm, simplified where invisible to the player.
 - **Map camera movement.** The map opens with the current decision framed and supports grab-dragging on both axes with mouse, touch, and pen. **Settings → Advanced → Interface → Two-axis map dragging** is on by default; turning it off restores vertical-only map travel and keeps the horizontal camera centred. Zoom reset recentres the current decision in either mode, and the saved run camera preserves both axes.
 - Acts 2/3 reuse the generator with different encounter tables and elite/boss pools (data only).
 
-Rewards after combat: cinders (Monster 45–75, Elite 105–150, Boss 225–270) + a card reward at the §15.1 schedule (shipped: a 10% chance per won fight, `balance.rewards.cardRewards.chancePct`; choose 1 of 3 at the default odds common 60% / uncommon 35% / rare 5%, Elite 45/40/15, which a class's own reward weights may override) + flask roll (§5.5). Elites additionally drop a relic; bosses drop a boss-relic choice of 3. **TO BUILD:** today a boss drops one boss relic (`src/main.js`, `rollRelicReward(... { rarities: ['boss'] })`). Merchant prices, in cinders (the old rune prices ×3): cards 135–480 by rarity, relics 420–900, flasks 150–240, card removal 225 (+75 per purchase). All numbers: `balance.js`.
+Rewards after combat: cinders (Monster 45–75, Elite 105–150, Boss 225–270) + a card reward at the §15.1 schedule (shipped: a 10% chance per won fight, `balance.rewards.cardRewards.chancePct`; choose 1 of 3 at the default odds common 60% / uncommon 35% / rare 5%, Elite 45/40/15, which a class's own reward weights may override) + flask roll (§5.5). Elites additionally drop a relic. A solo boss victory offers up to `balance.rewards.bossRelicChoices` (3) distinct unowned boss relics (`src/main.js`, `rollRelicChoices` on the `relicRewards` stream; one left gives a single `relicId`) and the player picks one; auto-collect picks one at random from the unowned options, and with auto-collect off an unpicked choice is left behind. Co-op bosses still grant one boss relic (`tools/session.mjs`). Merchant prices, in cinders (the old rune prices ×3): cards 135–480 by rarity, relics 420–900, flasks 150–240, card removal 225 (+75 per purchase). All numbers: `balance.js`.
 
 ---
 
