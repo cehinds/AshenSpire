@@ -92,51 +92,68 @@ version-2 snapshot without the key has no enemy reactions.
 
 - **Opt-in moves.** An enemy move with a `reaction` field is a *reaction move*:
   `reaction: { on: ['playerAction' | 'playerReaction', …], minIncoming = 1,
-  chance = 1 }`. It carries `trait:reaction` in `tagging.csv` and is never rolled
-  as an intent.
-- **Windows.**
-  - `playerAction`: a player card's action group is about to begin against this
-    enemy (the enemy is a target with a positive contact). The window opens
-    before the first action of the group, on the player's turn.
-  - `playerReaction`: a player reaction was just pushed onto a stack whose root
-    is this enemy's own action, or which targets this enemy.
-- **Decision.** In a window, each living enemy that is targeted (or owns the
-  root), is not staggered or control-locked, and has an unused reaction move whose
-  `on` lists the window, considers its moves in authored order. A move qualifies
-  when the incoming contact's damage is at least `minIncoming`; it is taken when
-  a roll on the new `enemyReaction` RNG stream (appended last) is below `chance`.
-  The roll is memoised per (group key, enemy id, move id), so previews, saves and
-  replays draw it once. An enemy with no reaction moves draws nothing, so fights
-  without them keep every RNG counter unchanged.
-- **Budget.** Each enemy takes at most one reaction per its owner cycle
-  (`combatReactionCycle`), and the per-side depth cap applies (`maxDepth` counts
-  each side's entries; Counter-return roots 1).
-- **Push and answer.** The enemy entry `{ side: 'enemy', ownerId: <enemy id>,
-  moveId, targetPlayerId }` is pushed and announced (`combatEnemyReactionStacked`).
-  On the player's turn the acting seat is then offered its Reaction cards against
-  the enemy reaction's contacts, with the ordinary offer rules; during an enemy
-  turn, an enemy may answer a player reaction once and the seat may answer that
-  in turn, within the caps.
-- **Resolution.** Entries still resolve last pushed first. An enemy entry runs
-  the move's payload through the ordinary enemy executor against
-  `targetPlayerId` (the seat whose card opened the window), as a
-  `combatReaction` carrier at the stack's depth: no riders, crits or automatic
-  Counter returns chain from it. It pays nothing. It fizzles
-  (`combatReactionFizzled`) when its enemy is dead, staggered or control-locked
-  when reached, or its target seat is gone.
-- **Cancellation.** If the stack's resolution kills the acting player card's
-  targets, that card's actions follow the ordinary cancellation rules.
+  chance = 1 }`. It carries `trait:reaction` in `tagging.csv`. Intent selection
+  filters reaction moves out **before** weighting, `firstMove`, `maxConsecutive`
+  or any pattern indexing, so seeds of enemies that gain one do not shift.
+- **Windows.** Neither window opens for a Counter-return root, for any action
+  whose carrier is a reaction (`combatReaction`, `reactionDepth`, or played while
+  a stack resolves), or while a stack is resolving.
+  - `playerAction`: a player card's root action group is about to begin and the
+    enemy is one of its targets with a positive contact.
+  - `playerReaction`: a player pushed a reaction onto a stack whose root is this
+    enemy's own (non-Counter-return) action, or whose root is a player card that
+    targets this enemy.
+- **Order.** Eligible enemies decide in roster order, each at most once per
+  window. After every enemy has decided, the seat is offered: on the player's
+  turn only the seat that played the root card; on an enemy turn the seats in
+  saved order as before. When a seat pushes, a `playerReaction` window opens for
+  the enemies; this alternation continues until nobody pushes or the caps stop it.
+- **Decision.** An eligible enemy is alive, not staggered or control-locked, and
+  has an unused reaction move whose `on` lists the window. It considers its moves
+  in authored order; a move qualifies when the triggering contact's damage
+  (the root card's contact against this enemy, or the pushed reaction's largest
+  positive contact) is at least `minIncoming`. A qualifying move with `chance`
+  1 is taken and one with 0 is not, without a draw; otherwise one draw on the new
+  `enemyReaction` RNG stream (appended last) decides it. Draws are memoised in
+  `combat.enemyReactionRolls["<group key>:<enemy id>:<move id>"]`, which is saved
+  with the combat and cleared at each player-turn start. Candidate states
+  (previews, offer checks) read the memo and never draw; an unmemoised decision
+  counts as "does not react" there. An enemy with no reaction moves draws nothing.
+- **Budget.** Each enemy takes at most one reaction per combat turn (the `turn`
+  counter: one player turn and the enemy phase after it), recorded as
+  `enemy.combatReactionTurn`. Player entries keep the per-seat `maxDepth` cap;
+  enemy entries on one stack are capped at `maxDepth` in total.
+- **Commit at push.** An enemy entry `{ side: 'enemy', ownerId: <enemy id>,
+  moveId, targetPlayerId, plan }` commits its contact plan when pushed: the
+  ordinary expanded planning (`enqueueExpandedAction`, including its crit draws)
+  runs into the entry's `plan` (its actions and group) instead of the queue, and
+  is saved with the stack. `targetPlayerId` is the seat whose card or reaction
+  opened the window. It is announced as `combatEnemyReactionStacked`. Seats are
+  offered against the plan's row, with the ordinary offer rules; a plan with no
+  positive contact against the seat offers nothing.
+- **Offer checks.** The LIFO replay of an offer check executes each enemy entry's
+  committed plan in the candidate state in its stack position.
+- **Resolution.** Entries still resolve last pushed first. An enemy entry
+  enqueues its committed plan's actions, as a `combatReaction` carrier at the
+  stack's depth: no riders, crits, automatic Counter returns or reaction windows
+  chain from it. It pays nothing. It fizzles (`combatReactionFizzled`) when its
+  enemy is dead, staggered or control-locked when reached, or its target seat is
+  gone.
+- **Cancellation.** If the stack's resolution kills the root card's targets,
+  that card's actions follow the ordinary cancellation rules.
 - **Presentation.** An enemy reaction announces itself with
   `enemyMoveStarted { reaction: true }` and the log line "X reacts with Move."
-- **First carriers.** Gilded Knight gains *Gilded Guard* (block 6,
+- **First carriers.** Gilded Knight gains *Gilded Guard* (block 6, damage 3,
   `on: ['playerAction']`, `minIncoming: 8`); Court Duelist gains *Binding
   Riposte* (damage 4, `on: ['playerReaction']`, `chance: 0.5`).
 
 ## Counterstrike
 
-- Applied when the card is prepared, after its stance is set. On a Counter card
-  it applies to the return payload when the return is built, against the
-  attacker the return answers.
+- Applied when the card is prepared, after its stance is set, to the card's own
+  effects (a Counter card's included). On a Counter card it also applies to the
+  return payload when the return is built, against the attacker the return
+  answers. Derived bonuses (such as the card rating bonus) are computed from the
+  scaled amount.
 - **Advantage.** The player's stance is the card's maneuver when the card sets a
   stance, otherwise the current tactical stance. The target is the chosen enemy;
   during a reaction, the incoming attacker; for a Counter return, the attacker it
@@ -257,8 +274,10 @@ and `src/content/combatExpansionCards.js`. T is the tier above.
   nothing; save/restore mid-offer and mid-resolution with identical RNG counters;
   co-op seat order, per-seat cap, one Counter per seat, a co-op fizzle, and
   stale/foreign offers rejected; enemy reactions: Gilded Guard pushes before a
-  heavy player hit and resolves first, the player can answer it, Binding Riposte
-  answers a player reaction at its chance, one reaction per enemy cycle, a
-  memoised roll survives save/restore, a fight without reaction moves keeps its
-  RNG counters, and `enemyReactions` absent disables them;
+  heavy player hit and resolves first, the acting seat can answer it (and only
+  that seat in co-op), Binding Riposte answers a player reaction at its chance,
+  no window on Counter-return roots or reaction plays, one reaction per enemy
+  per turn, a memoised roll and a committed plan survive save/restore, offer
+  checks never draw, a fight without reaction moves keeps its RNG counters and
+  intent sequences, and `enemyReactions` absent disables them;
   a version-1 snapshot replays unchanged.
