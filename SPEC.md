@@ -1770,8 +1770,9 @@ The editor groups the complete inventory into stable nested sections:
   three lanes of equal width, an enemy back rank and front rank, and one player rank nearest
   the camera. Each cell's shadow is its foot anchor, where the sprite's feet stand. Enemies
   fill the back rank first, spread across the lanes (one in the middle, two on the outer lanes),
-  then the front rank, up to six; the party (up to three) shares its rank and the player starts
-  in the left lane. Gameplay cells keep their addresses: a column is depth (outer = back), a row
+  then the front rank, up to six; the party shares its rank and the player starts in the left
+  lane. A four-player co-op party, or more than six enemies, widens the grid to more lanes
+  rather than stacking two bodies on one anchor. Gameplay cells keep their addresses: a column is depth (outer = back), a row
   is a lane, and the player's front column is not a perspective destination. Pressing anywhere
   in an occupied enemy cell acts on that enemy (select, or play the armed card or flask). Lane
   span, rank tops and heights, and foot fractions per phone/desktop are data

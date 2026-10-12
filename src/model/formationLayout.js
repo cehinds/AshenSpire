@@ -33,9 +33,11 @@ export function formationLayoutConfig(values = {}) {
 // the same lanes. Gameplay columns are depth (outer = back), rows are lanes.
 export const PERSPECTIVE_LANES = 3;
 
-export function formationDimensions(values = {}, actorsPerSide = 0) {
+// `partySize` matters only to the perspective: its party shares one rank, so
+// a four-player party needs four lanes.
+export function formationDimensions(values = {}, actorsPerSide = 0, partySize = 0) {
   if (values.perspectiveGrid) {
-    return { columns: 2, rows: Math.min(6, Math.max(PERSPECTIVE_LANES, Math.ceil(actorsPerSide / 2))), perspective: true };
+    return { columns: 2, rows: Math.min(6, Math.max(PERSPECTIVE_LANES, Math.ceil(actorsPerSide / 2), partySize)), perspective: true };
   }
   const config = formationLayoutConfig(values);
   let columns = config.formationColumns, rows = config.formationRows;

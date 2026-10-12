@@ -79,3 +79,11 @@ test('the party keeps room for its name and meters below the feet on short field
     for (const cell of formation.cells.filter(c => c.side === 'player')) assert(cell.ground <= height - 32 + 1e-9);
   }
 });
+
+test('every member of a four-player party gets a lane of their own', () => {
+  const formation = alternativeFormation(plan(3, 4), 390, 420, true);
+  const party = formation.slots.filter(s => s.side === 'player');
+  assert.equal(party.length, 4);
+  assert.equal(new Set(party.map(s => s.cell)).size, 4);
+  assert.equal(new Set(party.map(s => Math.round(s.x))).size, 4);
+});

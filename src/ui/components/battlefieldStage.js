@@ -401,7 +401,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const pageZoom = uiZoom();
     const presentation = { ...presentationConfig(), ...JSON.parse(document.documentElement.dataset.formationSettings || '{}'),
       perspectiveGrid: !classicAppearance() };
-    const dimensions = formationDimensions(presentation, Math.max(frames.filter(f => f.classList.contains('player')).length, frames.filter(f => f.classList.contains('enemy')).length));
+    const partySize = frames.filter(f => f.classList.contains('player')).length;
+    const dimensions = formationDimensions(presentation, Math.max(partySize, frames.filter(f => f.classList.contains('enemy')).length), partySize);
     if (isFormationCell(field.dataset.playerCell, dimensions)) {
       presentation.playerSpawnRow = field.dataset.playerCell[0];
       presentation.playerSpawnColumn = field.dataset.playerCell[1];
