@@ -1745,7 +1745,7 @@ keeps the same state and focus contract without meaningful animation.
   MP 20, SP 20. A bar's fill remains `current / maximum`; its visual length compares that
   maximum with the data-owned reference and obeys the shared viewport cap. A character may
   exceed a reference—it lengthens only to the layout cap and never clamps gameplay state.
-- **Enemy row (upper right 60%):** up to 5 enemies; each shows sprite/placeholder, name, HP bar, **Poise meter** (thin amber bar under HP), **threshold-proc bars** (up to two active proc statuses such as Bleed or Frost, each drawn with its status's own glyph and `tint`, only when >0; `src/ui/screens/combat.js`), status icon row, and **intent icon + number above the head**.
+- **Enemy row (upper right 60%):** up to 5 enemies today. **TO BUILD** (owner, 2026-10-12): the enemy cap becomes a setting, default 3. Each shows sprite/placeholder, name, HP bar, **Poise meter** (thin amber bar under HP), **threshold-proc bars** (up to two active proc statuses such as Bleed or Frost, each drawn with its status's own glyph and `tint`, only when >0; `src/ui/screens/combat.js`), status icon row, and **intent icon + number above the head**.
 - **Player zone (lower left):** stance icon, status row, Block shield badge overlapping HP.
 - **Hand:** bottom center, fanned, up to the derived `handSize` (base 7, max 20; `src/content/derivedStats.js`); hover raises card ×1.5 with full text.
 - **Stamina orb:** bottom left, current Stamina only (no maximum), with a Mana ring unless the `manaRing` setting is off (`src/ui/components/staminaOrb.js`). **End Turn** button bottom right — pulses if Stamina remains and any card is playable; confirm-free.
