@@ -242,7 +242,7 @@ effects: [
 **Opcode list** (closed set; extending it is an engine PR):
 
 - Combat: `damage {hits?}`, `block`, `applyStatus`, `removeStatus`, `draw`, `discard {random?}`, `exhaust`, `addCard {card, pile, position}`, `gainEnergy` (adds Stamina; the id is a retired alias), `restoreStamina`, `restoreMana`, `loseHp` (ignores block), `heal`, `shuffleDiscardIntoDraw`, `enterStance`, `poiseDamage`, `stagger`, `buildup`, `arcaneBuildup`, `gainBarrier`, `wardDamage`, `grantCardCharge`, `grantRollMode`, `retain`, `gainPoise` / `gainWard` (`amount` plus the card's Block rating bonus — DR on a physical skill, PR on a magical card — held as the target's Poise or Ward guard, which absorbs physical or magical impact before the matching meter fills and clears at the start of its owner's turn with Block; emits `meterGuardGained`), `dodgeRoll` (player only; no fields — the die, the Dexterity + Weight Class check, the difficulty and the temporary guard are the framework's `dodgeRoll` rule over `mechanics.json`; rolls on stream `misc`; success lands the guard as Block through the block door; emits `dodgeRolled`). Internal (not content-authorable): `completeCombatAction`, which `executeAction` runs to close a combat action (`src/engine/actions.js`).
-- Run-level (events, shops, rewards reuse the same DSL): `addCinders` (older name `addRunes`), `addCardToDeck {card}`, `removeCardFromDeck`, `upgradeCard {random?}`, `addRelic {random? | id}`, `addFlask`, `addFlaskCapacity`, `refillFlasks`, `loseMaxHpPct`, `startCombat {encounterId}`, `swapClass {classId | random}` (§13.4h).
+- Run-level (events, shops, rewards reuse the same DSL): `addCinders` (renamed from `addRunes`; the old id is not accepted), `addCardToDeck {card}`, `removeCardFromDeck`, `upgradeCard {random?}`, `addRelic {random? | id}`, `addFlask`, `addFlaskCapacity`, `refillFlasks`, `loseMaxHpPct`, `startCombat {encounterId}`, `swapClass {classId | random}` (§13.4h).
 
 Common fields on any opcode: `target: self | enemy | allEnemies | randomEnemy` (cards with an `enemy` target require UI targeting), `amount: number | Formula` (§3.5), `if: Predicate` (§3.6) to gate the opcode, `repeat: n` for multi-hit.
 
@@ -818,7 +818,7 @@ scope and verification.
 
 **Pools between fights (2026-09-24, plan A2).** Every fight opens with Stamina
 at its maximum (`mechanics.stamina.combatStartRefill: "full"`; `"carry"` keeps
-the old rule, but it currently has no effect: every player turn start refills Stamina to its
+the old rule, but it has no effect on the Stamina a fight opens with: every player turn start refills Stamina to its
 maximum less any Stagger loss, in `src/engine/combat.js`'s player turn start); a restored fight keeps the Stamina it was saved with. HP and
 Mana carry from one fight to the next, and only rests, flasks and effects
 restore them. The refill also clears the Stamina deficit an equipment swap
