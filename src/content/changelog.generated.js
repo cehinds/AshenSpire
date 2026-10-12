@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1911",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "The 2026-10-12 receipts run newest first again",
+    "detail": "The build-stamp bot had re-pointed #1897's receipt to a newer build without moving it above #1901's, which turned every check on dev red.",
+    "build": "0.7.1.1427",
+    "pullRequest": 1911,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1911"
+  },
+  {
     "id": "pr-1900",
     "date": "2026-10-12",
     "group": "2026-10-12",
@@ -13,16 +23,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1900"
   },
   {
-    "id": "pr-1901",
-    "date": "2026-10-12",
-    "group": "2026-10-12",
-    "summary": "The link check's self-test covers the Combat Rounds docs",
-    "detail": "Nothing changes in the game. The link checker's self-test now copies the Combat Rounds docs folder, so a test that imports from it no longer marks the self-test untestable.",
-    "build": "0.7.1.1423",
-    "pullRequest": 1901,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1901"
-  },
-  {
     "id": "pr-1897",
     "date": "2026-10-12",
     "group": "2026-10-12",
@@ -31,6 +31,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1425",
     "pullRequest": 1897,
     "url": "https://github.com/cehinds/AshenSpire/pull/1897"
+  },
+  {
+    "id": "pr-1901",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "The link check's self-test covers the Combat Rounds docs",
+    "detail": "Nothing changes in the game. The link checker's self-test now copies the Combat Rounds docs folder, so a test that imports from it no longer marks the self-test untestable.",
+    "build": "0.7.1.1423",
+    "pullRequest": 1901,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1901"
   },
   {
     "id": "pr-1895",
