@@ -1,4 +1,5 @@
 // Production export from approved review rasters. No image generation or body refitting.
+import {registerSelectedSmash} from './selected-smash-registration.mjs';
 import {createRequire} from 'node:module';
 import {createHash} from 'node:crypto';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
@@ -100,6 +101,7 @@ for(const choice of recipe.choices){
 }
 catalog.weaponProfiles[recipe.id]={...previous,selections:recipePath,canvas:recipe.canvas,stageAnchor:recipe.stageAnchor,frames,
  approvedSequences:recipe.sequences,sourceReview:recipe.reviewManifest};
+registerSelectedSmash(catalog,{root});
 writeFileSync(catalogPath,'// Owner-selected held poses and weapon-specific pose profiles, exported from unchanged comparison artwork.\nexport const alternativeSelectedStances = '+JSON.stringify(catalog)+';\n');
 writeFileSync(resolve(root,'pose-studio/stances/update-stances/sequence-production-provenance.json'),JSON.stringify({
  schemaVersion:1,tool:'tools/selected-combat-sequence-export.mjs',recipe:recipePath,
