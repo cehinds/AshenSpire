@@ -138,18 +138,23 @@ test('build-stamp.yml checks out full history, then sets up node, then fetches t
   const checkout = WORKFLOW.indexOf('uses: actions/checkout@v5');
   const node = WORKFLOW.indexOf('uses: ./.github/actions/setup-node');
   const art = WORKFLOW.indexOf('uses: ./.github/actions/fetch-art');
-  const build = WORKFLOW.indexOf('node tools/launch.mjs --build-only');
+  const build = WORKFLOW.indexOf('node tools/build-stamp.mjs --stamp');
   assert.ok(checkout > 0 && node > checkout && art > node && build > art, 'checkout, setup-node, fetch-art, build in that order');
   assert.match(WORKFLOW.slice(checkout, node), /fetch-depth: 0/);
   assert.match(WORKFLOW.slice(art, art + 600), /packs: \$\{\{ env\.ART_PACKS \}\}/);
   assert.match(WORKFLOW, /ART_PACKS: all/);
 });
 
-test('build-stamp.yml runs the build, the re-point, and the changelog regeneration in order', () => {
+test('build-stamp.yml runs the whole stamp as one --stamp step, before anything is added or pushed', () => {
+  // The convergence loop owns the build, the re-point, the module write and the
+  // rebuilds. The workflow must not run those steps itself: a separate write
+  // after a build is exactly the one-build-behind defect (the module is in the digest).
+  assert.doesNotMatch(WORKFLOW, /tools\/launch\.mjs/);
+  assert.doesNotMatch(WORKFLOW, /about-changelog\.mjs --write/);
   const at = (s) => WORKFLOW.indexOf(s);
-  assert.ok(at('node tools/launch.mjs --build-only') < at('node tools/build-stamp.mjs --range'));
-  assert.ok(at('node tools/build-stamp.mjs --range') < at('node tools/about-changelog.mjs --write'));
-  assert.ok(at('node tools/about-changelog.mjs --write') < at('git add --'));
+  assert.ok(at('node tools/build-stamp.mjs --stamp --range') > 0 && at('node tools/build-stamp.mjs --stamp --prs') > 0);
+  assert.ok(at('node tools/build-stamp.mjs --stamp --range') < at('git add --'));
+  assert.ok(at('node tools/build-stamp.mjs --stamp --prs') < at('git add --'));
 });
 
 test('build-stamp.yml adds exactly the three derived files, never the built HTML or everything', () => {

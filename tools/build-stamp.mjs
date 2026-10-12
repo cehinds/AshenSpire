@@ -30,7 +30,17 @@
 // still owns the file's shape and the generated module. A pull request with no
 // receipt is a note, not a failure: receipts.mjs --check is what fails a gap.
 //
+// THE GENERATED MODULE IS IN THE DIGEST. src/content/changelog.generated.js is
+// under src/**, so writing it moves the box, and a receipt stamped with the box
+// from before that write is one build behind. --stamp therefore runs the whole
+// sequence as a convergence loop (converge, below): build, re-point to the box
+// plus one, about-changelog --write, rebuild, and repeat until the box is a
+// fixed point and one more build leaves buildordinal.json byte-identical, then
+// buildversion --check. Bounded by MAX_ROUNDS; it never loops unbounded.
+//
 // Usage
+//   node tools/build-stamp.mjs --stamp --range <before>..<after>   the whole stamp, for a push
+//   node tools/build-stamp.mjs --stamp --prs 1884                  the same, named by hand
 //   node tools/build-stamp.mjs --range <before>..<after>   the PRs that landed in a push
 //                                                           (after must be HEAD)
 //                                                           before all zeros or
@@ -42,7 +52,7 @@
 // Exit 0 when the changelog is stamped (or nothing needed stamping), 1 when the
 // selftest fails, 2 when the harness could not run (bad usage, no box).
 
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve as pathResolve } from 'node:path';
@@ -161,8 +171,123 @@ function prsFromRange(text) {
   return { prs: landedInSubjects(rangeSubjects(before)), bound: `${before}..HEAD` };
 }
 
+// THE CONVERGENCE LOOP (--stamp). The generated changelog module is inside the
+// build digest (src/**), so writing it moves the box: a receipt stamped with the
+// box it had before the write is one build behind the tree that carries the
+// write. The manual rule was: stamp at ordinal+1, `about-changelog --write`
+// (which allows exactly one build ahead), rebuild. This is that rule, run until
+// it is a fixed point, and never more than MAX_ROUNDS times.
+//
+// `io` is the only thing that touches the world, so the loop is testable with
+// a scripted fake: build() → { box, bytes } after a build; readChangelog() and
+// writeChangelog(text); about() runs `about-changelog --write`; verify() →
+// null, or the reason buildversion --check refused the tree.
+export const MAX_ROUNDS = 3;
+const fmtBox = (b) => `${b.release}.${b.ordinal}`;
+const sameBox = (a, b) => a.release === b.release && a.ordinal === b.ordinal;
+
+export function converge(io, prs, { maxRounds = MAX_ROUNDS } = {}) {
+  const first = io.build();
+  if (!restamp(io.readChangelog(), prs, first.box).changed.length) {
+    return { status: 'nothing', box: first.box, rounds: 0, log: [] };
+  }
+  const log = [];
+  let target = { release: first.box.release, ordinal: first.box.ordinal + 1 };
+  for (let round = 1; round <= maxRounds; round += 1) {
+    const cur = io.readChangelog();
+    const re = restamp(cur, prs, target);
+    if (re.text !== cur) io.writeChangelog(re.text);
+    io.about();
+    const built = io.build();
+    log.push(`round ${round}: stamped ${fmtBox(target)}, rebuilt to ${fmtBox(built.box)}`);
+    const everyLandedOnBox = restamp(io.readChangelog(), prs, built.box).changed.length === 0;
+    if (sameBox(built.box, target) && everyLandedOnBox) {
+      // A fixed point must survive one more build: nothing else may move the box.
+      const again = io.build();
+      if (again.bytes === built.bytes) {
+        const problem = io.verify();
+        if (problem) return { status: 'failed', reason: `the converged tree fails the build invariant: ${problem}`, box: built.box, rounds: round, log };
+        return { status: 'converged', box: built.box, rounds: round, log };
+      }
+      log.push(`round ${round}: a further rebuild moved buildordinal.json to ${fmtBox(again.box)}; retrying`);
+      target = again.box;
+      continue;
+    }
+    // The rebuild landed the box where it landed; the next round re-points to that.
+    target = built.box;
+  }
+  return { status: 'failed', reason: `no fixed point in ${maxRounds} rounds (the box keeps moving under the stamp)`, log };
+}
+
+// THE REAL WORLD behind converge(). A build failure throws, which the caller
+// reports as a harness fault (exit 2): it is not a finding about the stamp.
+function realIo() {
+  const run = (args, what) => {
+    const r = spawnSync(process.execPath, args, { cwd: ROOT, stdio: 'inherit' });
+    if (r.status !== 0) throw new Error(`${what} exited ${r.status}`);
+  };
+  return {
+    build() {
+      run([join(ROOT, 'tools', 'launch.mjs'), '--build-only'], 'launch --build-only');
+      const bytes = readFileSync(BUILDORDINAL, 'utf8');
+      const b = JSON.parse(bytes);
+      return { box: { release: b.release, ordinal: b.ordinal }, bytes };
+    },
+    readChangelog: () => readFileSync(CHANGELOG, 'utf8'),
+    writeChangelog: (text) => writeFileSync(CHANGELOG, text),
+    about: () => run([join(ROOT, 'tools', 'about-changelog.mjs'), '--write'], 'about-changelog --write'),
+    verify() {
+      const r = spawnSync(process.execPath, [join(ROOT, 'tools', 'buildversion.mjs'), '--check'], { cwd: ROOT, encoding: 'utf8' });
+      if (r.status === 0) return null;
+      return (`${r.stdout}${r.stderr}`.trim().split('\n').slice(-2).join(' | ')) || 'buildversion --check failed';
+    },
+  };
+}
+
+function prsFromArgs(argv) {
+  const p = argv.indexOf('--prs');
+  const r = argv.indexOf('--range');
+  if (p >= 0) {
+    const list = String(argv[p + 1] ?? '').split(',').map((s) => s.trim()).filter(Boolean);
+    if (!list.length || !list.every((s) => /^\d+$/.test(s))) throw new Error(`--prs wants pull request numbers, got '${argv[p + 1] ?? ''}'`);
+    return { prs: [...new Set(list)], bound: '--prs' };
+  }
+  if (r >= 0) return prsFromRange(argv[r + 1]);
+  throw new Error('--stamp wants --range <before>..<after> or --prs <N,N,…>');
+}
+
+function stampMode(argv) {
+  let prs;
+  let bound;
+  try {
+    ({ prs, bound } = prsFromArgs(argv));
+  } catch (error) {
+    console.error(`build-stamp: ${error.message}`);
+    return 2;
+  }
+  console.log(`build-stamp --stamp — landed pull requests ${prs.length ? prs.map((n) => `#${n}`).join(' ') : 'none'} (${bound})`);
+  let result;
+  try { result = converge(realIo(), prs); }
+  catch (error) {
+    console.error(`build-stamp --stamp: HARNESS COULD NOT RUN — ${error.message}`);
+    return 2;
+  }
+  for (const line of result.log || []) console.log(`  ${line}`);
+  if (result.status === 'nothing') {
+    console.log(`build-stamp: no landed receipt is stamped with an older box; buildordinal.json is ${fmtBox(result.box)} and nothing else changes`);
+    return 0;
+  }
+  if (result.status === 'converged') {
+    console.log(`build-stamp: converged on ${fmtBox(result.box)} in ${result.rounds} round(s); every landed receipt names it`);
+    return 0;
+  }
+  console.error(`build-stamp --stamp: FAILED — ${result.reason}`);
+  return 1;
+}
+
 function main(argv) {
   if (argv.includes('--selftest')) return selftest();
+  if (argv.includes('--stamp')) return stampMode(argv);
   const r = argv.indexOf('--range');
   const p = argv.indexOf('--prs');
   if (r < 0 && p < 0) {
@@ -280,6 +405,66 @@ function selftest() {
   try { parseRange('nope'); } catch { threw = true; }
   check('parseRange refuses a malformed range', threw);
   check('an all-zero before is a null sha', isNullSha('0000000000000000000000000000000000000000') && isNullSha(''));
+
+  // THE CONVERGENCE LOOP, against a scripted world. `builds` is what each build
+  // reports, in order; `bytes` is derived from the box so an unchanged box reads
+  // as an unchanged buildordinal.json.
+  const fake = (builds, { verify = null, text = `${MD}\n` } = {}) => {
+    const state = { text, writes: 0, about: 0, built: 0 };
+    const io = {
+      build() {
+        const box = builds[Math.min(state.built, builds.length - 1)];
+        state.built += 1;
+        return { box, bytes: `${box.release}.${box.ordinal}` };
+      },
+      readChangelog: () => state.text,
+      writeChangelog(t) { state.text = t; state.writes += 1; },
+      about() { state.about += 1; },
+      verify: () => verify,
+    };
+    return { io, state };
+  };
+  const B = (n) => ({ release: '0.5.5', ordinal: n });
+  {
+    // Nothing landed on an older box: no write, no rebuild after the first.
+    const { io, state } = fake([B(3)], { text: MD.replace(/0\.5\.5\.1/g, '0.5.5.3') });
+    const r = converge(io, ['12'], { maxRounds: 3 });
+    check('converge: a receipt already on the box stops at the first build', r.status === 'nothing' && state.writes === 0 && state.about === 0 && state.built === 1, JSON.stringify(r));
+  }
+  {
+    // The box moves to 3 after the first build; the receipt goes to 4 (ordinal+1),
+    // the write lands, the rebuild reports 4, and one more build is stable.
+    const { io, state } = fake([B(3), B(4), B(4)]);
+    const r = converge(io, ['12'], { maxRounds: 3 });
+    check('converge: the one-round fixed point is ordinal+1, written and rebuilt', r.status === 'converged' && r.box.ordinal === 4 && r.rounds === 1 && state.writes === 1 && state.text.includes('`0.5.5.4`'), JSON.stringify(r));
+  }
+  {
+    // The module was already current, so the write changes nothing and the box
+    // stays at 3. The next round re-points to 3 and converges there.
+    const { io, state } = fake([B(3), B(3), B(3), B(3)]);
+    const r = converge(io, ['12'], { maxRounds: 3 });
+    check('converge: a rebuild that does not bump re-points to the actual box and converges', r.status === 'converged' && r.box.ordinal === 3 && r.rounds === 2 && state.text.includes('`0.5.5.3`'), JSON.stringify(r));
+  }
+  {
+    // The box never settles: each rebuild reports a new ordinal, so the loop stops.
+    const { io } = fake([B(3), B(4), B(5), B(6), B(7), B(8), B(9), B(10)]);
+    const r = converge(io, ['12'], { maxRounds: 3 });
+    check('converge: a box that never settles fails after the round bound, not forever', r.status === 'failed' && /no fixed point in 3 rounds/.test(r.reason), JSON.stringify(r));
+  }
+  {
+    // A converged tree that buildversion --check refuses is a failure, not a green.
+    const { io } = fake([B(3), B(4), B(4)], { verify: 'digest differs' });
+    const r = converge(io, ['12'], { maxRounds: 3 });
+    check('converge: a fixed point that fails buildversion --check is refused', r.status === 'failed' && /digest differs/.test(r.reason), JSON.stringify(r));
+  }
+  {
+    // A further rebuild moves the file after a box looked settled: retry, do not accept.
+    // Builds: 3 (first), 4 (round 1 reaches the target), 5 (the stability build moves it),
+    // then 5 and 5 (round 2 settles). Accepting round 1 would have been the bug.
+    const { io } = fake([B(3), B(4), B(5), B(5), B(5)]);
+    const r = converge(io, ['12'], { maxRounds: 3 });
+    check('converge: a box that moves on the stability build is retried, not accepted', r.status === 'converged' && r.box.ordinal === 5 && r.rounds === 2, JSON.stringify(r));
+  }
 
   console.log('');
   if (red) { console.log(`build-stamp-selftest: FAIL — ${red} check(s) red`); return 1; }

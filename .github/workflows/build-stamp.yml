@@ -92,14 +92,16 @@ jobs:
           for attempt in 1 2 3 4; do
             git fetch -q origin "+refs/heads/$REF_NAME:refs/remotes/origin/$REF_NAME"
             git reset -q --hard "origin/$REF_NAME"
-            # The build writes buildordinal.json (and the ignored HTML, which is never added).
-            node tools/launch.mjs --build-only
+            # THE WHOLE STAMP, AS ONE STEP. --stamp builds, re-points the landed receipts,
+            # regenerates the changelog module, and rebuilds until the box is a fixed point
+            # (the module is inside the build digest, so writing it moves the box). It
+            # exits 1 when no fixed point is reached in its round bound, and then nothing
+            # is pushed: `set -e` stops this step before the commit below.
             if [ -n "$PRS" ]; then
-              node tools/build-stamp.mjs --prs "$PRS"
+              node tools/build-stamp.mjs --stamp --prs "$PRS"
             else
-              node tools/build-stamp.mjs --range "$BEFORE..$(git rev-parse HEAD)"
+              node tools/build-stamp.mjs --stamp --range "$BEFORE..$(git rev-parse HEAD)"
             fi
-            node tools/about-changelog.mjs --write
 
             # Only the three derived files, never the built HTML or anything else the build wrote.
             git add -- buildordinal.json CHANGELOG.md src/content/changelog.generated.js
