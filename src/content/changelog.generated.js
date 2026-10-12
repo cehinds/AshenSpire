@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-12",
     "summary": "Reaver greatsword combat stances now use selected artwork",
     "detail": "A Reaver in the default armor carrying only a greatsword now shows selected poses for Sweep, Counter and Smash, holds its Evade pose when ready, and shows its Guard Break reaction when an enemy breaks its guard. These reactions use the five selected greatsword paintings.",
-    "build": "0.7.1.1406",
+    "build": "0.7.1.1408",
     "pullRequest": 1890,
     "url": "https://github.com/cehinds/AshenSpire/pull/1890"
+  },
+  {
+    "id": "pr-1876",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Spell range follows how a spell is delivered; new physical and magical marks in the deck editor",
+    "detail": "In expanded-combat runs a spell's range now follows its delivery: projectile spells such as Comet Fragment reach Ranged, bladed spells such as Starblade Phalanx (now a melee spell) strike at Melee, and the rest stay at Reach (runs from before expanded combat are unchanged). The deck editor shows the same range combat uses, marks physical cards with a silver Smash sigil and spells with a blue flame, and a Ranged card like Ricochet reads just \"Ranged\".",
+    "build": "0.7.1.1402",
+    "pullRequest": 1876,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1876"
   },
   {
     "id": "pr-1886",

@@ -1,6 +1,6 @@
 # Selected stance delivery status
 
-The five selected Reaver/greatsword pose exports and runtime integration are complete. Independent code review is approved. [PR #1890](https://github.com/cehinds/AshenSpire/pull/1890) carries build **0.7.1.1406**; browser QA and the authorized merge remain pending.
+The five selected Reaver/greatsword pose exports and runtime integration are complete. Independent code review is approved. [PR #1890](https://github.com/cehinds/AshenSpire/pull/1890) carries build **0.7.1.1408**; browser QA and the authorized merge remain pending.
 
 | Target role | Selected source | Decision |
 | --- | --- | --- |
@@ -25,7 +25,7 @@ Exact crop coordinates, unchanged source hashes and export provenance are in the
 | Independent code review | Approved |
 | Initial focused runtime/animation tests | 97 passed; initial implementation evidence |
 | Final selected-weapon tests | 5 passed, including the real starting-kit registry projection |
-| PR / receipt | #1890 / build 0.7.1.1406, digest `35ae0d901e` |
+| PR / receipt | #1890 / build 0.7.1.1408, digest `c192e3e401` |
 | Browser QA / solo gameplay validation | Pending |
 | Authorized merge | Requested by the user; pending |
 | Co-op | Paused |
@@ -34,6 +34,6 @@ The runtime pilot requires default-armour Reaver with the sole actual greatsword
 
 The 97 initial focused passes and five final tests are separate validation scopes. The final tests are in `tests/selected-weapon-stances.test.mjs` and include actual starting-kit projection after the eligibility correction. Independent review and these source tests do not establish browser/gameplay acceptance.
 
-The user's request authorizes delivery and merge without another approval question. “Pending” means evidence or merge completion remains outstanding, not that authorization is missing. Receipt/build evidence comes from source commit `06b073d14`; these documentation updates do not alter build inputs. The older [integration notes](integration-notes.md) describe the initial investigation; later Dev changes and the selected implementation must be assessed from the current source and implementation evidence.
+The user's request authorizes delivery and merge without another approval question. “Pending” means evidence or merge completion remains outstanding, not that authorization is missing. The initial receipt at `06b073d14` used build 0.7.1.1406. After merging Dev `216845621` (#1876), the receipt and both high-art/light builds were regenerated to 0.7.1.1408 (`c192e3e401`). Earlier brief/matrix build references record the pre-refresh snapshot; this delivery record names the current build. Documentation updates do not alter build inputs. The older [integration notes](integration-notes.md) describe the initial investigation; later Dev changes and the selected implementation must be assessed from the current source and implementation evidence.
 
 After the selected delivery is merged, the authorized next pass is ten **new greatsword options each for Sweep, Counter and Evade**, thirty total. This separate pass has zero generated options in the present snapshot. Other weapons, additional class appearances, magic treatments and the full 600-option baseline remain planned.
