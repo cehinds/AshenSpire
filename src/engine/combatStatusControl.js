@@ -121,14 +121,26 @@ export function restorePersistentWard(ctx, entity, nominal, options = {}) {
   if (sleep) credit = Math.min(credit, Math.max(0, rules(ctx).sleep.wardCombatCap - s.sleepWardContribution));
   if (options.cap !== undefined) credit = Math.min(credit, Math.max(0, options.cap));
   if (sleep) s.sleepWardContribution += credit;
-  const room = ward.max - ward.value;
+  // A clamped pool restores against its MISSING amount (kept while a rating dip
+  // holds it above max), not against max - value. Only once missing reaches 0
+  // does a card's overflow become Barrier.
+  const missingMode = ward.missing !== undefined;
+  const room = missingMode ? Math.max(0, ward.missing) : ward.max - ward.value;
   const exact = overflow ? credit + s.wardRestoreCarry : Math.min(room, credit + s.wardRestoreCarry);
   const whole = Math.floor(exact + 1e-9);
   const restored = Math.min(room, whole);
   const barrier = overflow ? whole - restored : 0;
-  ward.value += restored;
-  // A pool that is no longer empty keeps no clamped missing amount; its missing is max - value again.
-  if (ward.value > 0) delete ward.missing;
+  if (missingMode) {
+    const missingAfter = room - restored;
+    ward.value = Math.max(0, Math.min(ward.max, ward.max - missingAfter));
+    // Missing is kept only while it is still above max; at or below max it is max - value again.
+    if (missingAfter <= ward.max) delete ward.missing;
+    else ward.missing = missingAfter;
+  } else {
+    ward.value += restored;
+    // A pool that is no longer empty keeps no clamped missing amount; its missing is max - value again.
+    if (ward.value > 0) delete ward.missing;
+  }
   s.wardRestoreCarry = overflow || ward.value < ward.max ? Math.max(0, exact - whole) : 0;
   emit(ctx, 'persistentWardChanged', entity, { restored, credited: credit, value: ward.value, max: ward.max, source });
   if (barrier > 0) {

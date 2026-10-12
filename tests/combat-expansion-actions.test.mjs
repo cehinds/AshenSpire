@@ -186,6 +186,32 @@ test('a rating swing keeps the missing Ward fixed: a dip and recovery cannot ref
   assert.deepEqual({ ...enemy.persistentWard }, { max: 10, value: 2 }, 'recovery restores the same missing, not a full pool');
 });
 
+test('a restore against a missing Ward fills the missing amount, and Barrier overflows only once missing reaches 0', () => {
+  const { combat, enemy } = fixture();
+  enemy.ratings.ward = 10; enemy.persistentWard = { max: 10, value: 2 }; enemy.barrier = 0;
+  enemy.ratings.ward = 3; syncWardMaximum(combat, enemy);
+  assert.deepEqual({ ...enemy.persistentWard }, { max: 3, value: 0, missing: 8 });
+  restoreExpandedWard(combat, enemy, 2, { modifierPercent: 0 });
+  assert.deepEqual({ ...enemy.persistentWard }, { max: 3, value: 0, missing: 6 }, 'the card restores 2 of the 8 missing, not up to max');
+  assert.equal(enemy.barrier, 0, 'no Barrier while missing is above max');
+  enemy.ratings.ward = 10; syncWardMaximum(combat, enemy);
+  assert.deepEqual({ ...enemy.persistentWard }, { max: 10, value: 4 }, 'recovery returns the pool to 4 of 10');
+  const overflow = restoreExpandedWard(combat, enemy, 8, { modifierPercent: 0 });
+  assert.deepEqual({ ...enemy.persistentWard }, { max: 10, value: 10 });
+  assert.equal(overflow.barrier, 2, 'the part past the 6 missing becomes Barrier');
+  assert.equal(enemy.barrier, 2);
+});
+
+test('a card that closes the missing Ward sends only the rest past it to Barrier', () => {
+  const { combat, enemy } = fixture();
+  enemy.ratings.ward = 10; enemy.persistentWard = { max: 10, value: 2 }; enemy.barrier = 0;
+  enemy.ratings.ward = 3; syncWardMaximum(combat, enemy);
+  const out = restoreExpandedWard(combat, enemy, 10, { modifierPercent: 0 });
+  assert.deepEqual({ ...enemy.persistentWard }, { max: 3, value: 3 }, 'missing 8 is closed; the pool fills to its max');
+  assert.equal(out.barrier, 2);
+  assert.equal(enemy.barrier, 2);
+});
+
 test('a magical Barrier gain refills Ward first and only the overflow becomes Barrier', () => {
   const { combat, enemy } = fixture();
   enemy.persistentWard = { max: 3, value: 1 }; enemy.barrier = 0;
