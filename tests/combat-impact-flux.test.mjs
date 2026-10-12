@@ -268,3 +268,16 @@ test('a Defend trait guard survives a combat snapshot round trip', () => {
     assert.throws(() => restoreCombatSnapshot({ registries, rng: createRng(901), snapshot: corrupt }), /combatTraitGuard/, JSON.stringify(bad));
   }
 });
+
+test('a saved Counter carrier refuses malformed trait values', async () => {
+  const { combatCounterProblems } = await import('../src/model/combatTacticsRules.js');
+  const counter = traits => ({ version: 2, charges: 1, serial: 1, mode: 'melee', expiresOnOwnerCycle: 1,
+    coverage: { camps: ['physical'], reaches: ['contact'], targeting: ['single'], effects: ['damage'] },
+    payload: { hp: 4, poise: 2, ward: 0 }, carrier: { combatProfile: { maneuver: 'counter' }, ...(traits ? { traitValues: traits } : {}) } });
+  const traitProblems = traits => combatCounterProblems(counter(traits), 'c', 2).filter(problem => /traitValues/.test(problem));
+  assert.deepEqual(traitProblems(undefined), []);
+  assert.deepEqual(traitProblems({ counterstrike: true, impact: 2, flux: 1 }), []);
+  for (const bad of [{ impact: 1e9 }, { flux: -1 }, { impact: 1.5 }, { counterstrike: 'yes' }, { bogus: 1 }, 'x']) {
+    assert.ok(traitProblems(bad).length > 0, JSON.stringify(bad));
+  }
+});
