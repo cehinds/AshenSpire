@@ -12,7 +12,11 @@ const keyOf = (ctx, entity) => ctx.playerIdForEntity?.(entity) || entity?.id;
 export function effectCarrier(carrier, effect) {
   const merged = { ...carrier, ...(effect.attack ? { attack: effect.attack } : {}),
     ...(effect.tags ? { tags: effect.tags } : {}), ...(effect.damageSchool ? { damageSchool: effect.damageSchool } : {}) };
-  merged.combatProfile = { ...carrier?.combatProfile, ...combatProfileFor(merged), ...effect.combatProfile };
+  const typed = combatProfileFor(merged);
+  // An untagged weapon card's type was resolved from the equipped piece
+  // (tacticalCarrier); a tagless re-read must not erase it (owner #19).
+  if (!typed.damageType && carrier?.combatProfile?.damageType) delete typed.damageType;
+  merged.combatProfile = { ...carrier?.combatProfile, ...typed, ...effect.combatProfile };
   // The action stance belongs to the card; an effect can override its delivery/type.
   merged.combatProfile.maneuver = effect.combatProfile?.maneuver || carrier?.combatProfile?.maneuver || merged.combatProfile.maneuver;
   return merged;
