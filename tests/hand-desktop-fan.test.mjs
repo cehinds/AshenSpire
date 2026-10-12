@@ -61,9 +61,8 @@ const restBottoms = plan => plan.cards.map(card => {
 });
 
 test('desktop cards fill the band down to the chooser reserve, within 20px', () => {
-  // The 1920 band is not in this test: its card is held at the authored
-  // 11.5rem maximum (content/config/ui/scenes/w4a-combat.json), so it cannot fill.
-  for (const [width, zoom, bandPx] of [[1280, .99, 274], [1440, 1.2, 342]]) for (const count of [3, 4, 5, 7])
+  // 1920 fills too: its desktop cap (desktopMaxWidthRem) lets the face grow.
+  for (const [width, zoom, bandPx] of [[1280, .99, 274], [1440, 1.2, 342], [1920, 1.48, 411]]) for (const count of [3, 4, 5, 7])
     for (const controlsPx of [44, 52]) {
       const { plan, toolsLocal, zoom: z } = desktop({ width, zoom, bandPx, count, controlsHeight: controlsPx / zoom });
       const height = bandPx / zoom - toolsLocal;

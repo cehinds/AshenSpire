@@ -65,11 +65,14 @@ export function handLayout({ width, height, count, rem = 16, zoom = 1, compact =
   // of its height, so the face is sized to the band less that share.
   const rotatedShare = count > 1 ? (Math.sin(fanAngle) * wireframeUi.card.ratio + Math.cos(fanAngle) - 1) / 2 : 0;
   const faceHeight = fan ? available / (1 + rotatedShare) : available;
+  // A desktop fan may grow past the phone-and-tablet cap so its band fills at
+  // wide screens (content/config/ui/scenes/w4a-combat.json, desktopMaxWidthRem).
+  const maxWidthRem = fan ? uiConfig.scenes.w4a.sizing.hand.desktopMaxWidthRem : config.maxWidthRem;
   const cardWidth = compact
     // Phone cards fill the band between a readable floor and a cap, both in
     // physical px (content/config/ui/scenes/w4a-combat.json, compactCombat).
     ? Math.max(compactCard.cardMinWidthPx / zoom, Math.min(compactCard.cardMaxWidthPx / zoom, readableWidth, available * wireframeUi.card.ratio))
-    : Math.max(config.minWidthRem * rem, Math.min(config.maxWidthRem * rem, faceHeight * wireframeUi.card.ratio));
+    : Math.max(config.minWidthRem * rem, Math.min(maxWidthRem * rem, faceHeight * wireframeUi.card.ratio));
   const cardHeight = cardWidth / wireframeUi.card.ratio;
   inset = Math.max(inset, Math.sin(config.fanAngleDegrees * Math.PI / 180) * cardHeight / 2 + 1);
   // Horizontal margin: the vertical inset everywhere but a phone, which keeps
