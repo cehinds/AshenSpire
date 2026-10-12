@@ -43,7 +43,7 @@ test('compact geometry reserves the measured controls and overhead gaps', () => 
 
 test('unarmed intent taps preserve the selection-first tooltip path', () => {
   assert.match(combat, /selectCombatant\(enemy\.id\);[\s\S]*?return false;/);
-  assert.match(coop, /selectCombatant\(e\.id\);[\s\S]*?return false;/);
+  assert.match(coop, /selectCombatant\((?:e\.id|enemyId)\);[\s\S]*?return false;/);
 });
 
 test('an armed self-target HUD click reaches only one frame listener', () => {
