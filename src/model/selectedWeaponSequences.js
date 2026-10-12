@@ -11,6 +11,8 @@ export function selectedWeaponSequence(kind) {
   else if (kind === 'defend' || kind === 'guard-break') { poses=[kind];weights=[6]; }
   else if (kind === 'smash') return {poses:['origin','pilot-smash-takeoff','pilot-smash-airborne','pilot-smash-impact','origin'],
     durations:[1,1,1,1,1],impact:3,travel:[0,0,0,0,0],hold:false,pilot:true,timingUnits:5,contactCue:true};
+  else if (kind === 'sweep') return {poses:['origin','pilot-sweep-windup','pilot-sweep-contact','pilot-sweep-finish','origin'],
+    durations:[1,1,1,1,1],impact:2,travel:[0,0,0,0,0],hold:false,pilot:true,timingUnits:5,contactCue:true};
   else if (kind === 'attack') { poses=attack;weights=[1,1,1,1,1,1];contact=3; }
   else if (kind === 'counter-guard') { poses=[...impact,'smash',...attack];weights=[...impactWeights,1,1,1,1,1,1,1];contact=10; }
   else if (kind === 'counter-evade') { poses=[...evade,...attack];weights=[1,1,1,1,1,1,1,1,1];contact=6; }
