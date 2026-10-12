@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1888",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Combat Rounds preview is now in the codebase",
+    "detail": "The alternative round-based combat design and its rules engine are brought over as a preview with its own tests and SPEC section. Nothing in play changes: live combat does not use it yet.",
+    "build": "0.7.1.1419",
+    "pullRequest": 1888,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1888"
+  },
+  {
     "id": "pr-1890",
     "date": "2026-10-12",
     "group": "2026-10-12",
