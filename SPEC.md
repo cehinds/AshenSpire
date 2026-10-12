@@ -191,8 +191,10 @@ node tools/dirorder.mjs --selftest                             # the shape check
 
 **The one rule that makes the table enforceable:** imports point *inward* — `ui` may import
 `engine`, `model` and `content`; `engine` may import `model` and `content`; `model` may import
-`content`; **`content` imports nothing.** A content file that imports from `engine` is the
-defect this layering exists to catch.
+`content`; **`content` never imports `ui`.** It may import `model/` schemas and helpers (and the
+`config/` and `framework/` data modules). The one exception is `src/content/prototypes/`, where
+`combatBuilds.js` imports `engine/combat.js` and `engine/rng.js`. A content file outside
+`prototypes/` that imports from `engine` is the defect this layering exists to catch.
 
 ### 3.3 Domain model, registries, and state
 
