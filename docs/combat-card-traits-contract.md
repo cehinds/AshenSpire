@@ -75,6 +75,13 @@ summary read "Impact N" / "Flux N".
   whole stack, a solo run cannot reach this; it is a guard for co-op, where a
   later seat's entries resolve first and can change state an earlier seat's
   check assumed. The acceptance test reaches it that way.
+- **Root ended.** If resolving an entry kills the root's attacker (or, for a
+  player-card root, leaves its acting seat dead or disconnected), every entry
+  still on the stack fizzles (`reason: 'rootEnded'`) and pays nothing. Offer
+  checks replay the stack with the same rule, so an option is not withheld just
+  because an earlier entry would kill the attacker.
+- **Tuning.** Impact and Flux magnitudes and the Counterstrike percentages are
+  read from the fight's saved `reactionRules`, never from the shipped constants.
 - Entries carry a side (`player` or `enemy`). Enemy entries follow *Enemy
   reactions* below.
 - Eligibility in version 2: a hand card needs `trait:reaction`. A
