@@ -226,6 +226,11 @@ test('scene bands that do not sum to 100 are refused by name', () => {
     'content/config/ui/scenes/w4c-dialogue.json: sizing.bands sum to 105, not 100');
 });
 
+test('wide scene bands with a negative entry are refused by name, even when they sum to 100', () => {
+  refusedWith(planted('ui/scenes/w4a-combat.json', (d) => { d.sizing.wideBands = { hud: -5, scene: 45, context: 60, footer: 0 }; }),
+    'content/config/ui/scenes/w4a-combat.json: sizing.wideBands must map each band to a non-negative percent');
+});
+
 test('a floorPercent outside 0–100 is refused by name', () => {
   refusedWith(planted('ui/scenes/w4a-combat.json', (d) => { d.sizing.floorPercent = 120; }),
     'content/config/ui/scenes/w4a-combat.json: sizing.floorPercent 120 is outside 0–100');

@@ -275,21 +275,23 @@ export function deckEditorCostProblems(rel, presentation) {
   return out;
 }
 
+/** One band table (sizing.bands or sizing.wideBands): non-negative finite shares summing to 100. */
+function bandProblems(at, key, bands) {
+  const values = isObject(bands) ? Object.values(bands) : [];
+  if (!isObject(bands) || values.some((v) => typeof v !== 'number' || !Number.isFinite(v) || v < 0)) {
+    return [`${at}: sizing.${key} must map each band to a non-negative percent`];
+  }
+  const sum = values.reduce((a, b) => a + b, 0);
+  return Math.abs(sum - 100) > 1e-9 ? [`${at}: sizing.${key} sum to ${sum}, not 100`] : [];
+}
+
 /** The W4 scene contract. Every refusal names the file and the rule. */
 export function sceneProblems(rel, scene) {
   const out = [];
   const at = `${CONFIG_DIR}/${rel}`;
   const sizing = isObject(scene.sizing) ? scene.sizing : {};
-  if ('bands' in sizing) {
-    const bands = sizing.bands;
-    const values = isObject(bands) ? Object.values(bands) : [];
-    if (!isObject(bands) || values.some((v) => typeof v !== 'number' || !Number.isFinite(v) || v < 0)) {
-      out.push(`${at}: sizing.bands must map each band to a non-negative percent`);
-    } else {
-      const sum = values.reduce((a, b) => a + b, 0);
-      if (Math.abs(sum - 100) > 1e-9) out.push(`${at}: sizing.bands sum to ${sum}, not 100`);
-    }
-  }
+  if ('bands' in sizing) out.push(...bandProblems(at, 'bands', sizing.bands));
+  if ('wideBands' in sizing) out.push(...bandProblems(at, 'wideBands', sizing.wideBands));
   if ('floorPercent' in sizing) {
     const p = sizing.floorPercent;
     if (typeof p !== 'number' || !(p >= 0 && p <= 100)) out.push(`${at}: sizing.floorPercent ${JSON.stringify(p)} is outside 0–100`);
