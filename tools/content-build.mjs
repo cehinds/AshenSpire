@@ -64,6 +64,7 @@ import { configSourceErrors } from './config-build.mjs';
 import { FORM_FACTORS as HUD_FORM_FACTORS } from './hud-layout-tokens.mjs';
 import { manifestIds } from './art-source.mjs';
 import { holdForCli } from './lib/build-lock.mjs';
+import { RANGES as WEAPON_RANGES } from '../src/model/combatRanges.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = join(ROOT, 'content', 'source');
@@ -153,9 +154,8 @@ function emit(name, data, sourceFile) {
 }
 
 // Every armament states its default range (content/source/weapons.csv). The
-// vocabulary is closed here so a typo fails the build by file and row, not at
+// vocabulary (src/model/combatRanges.js) is closed so a typo fails the build by file and row, not at
 // runtime as a silent undefined.
-const WEAPON_RANGES = ['melee', 'reach', 'ranged'];
 function checkWeaponRanges(rows, file) {
   rows.forEach((row, n) => {
     if (!WEAPON_RANGES.includes(row.range)) {

@@ -30,6 +30,7 @@ import { cardEquipmentExceptions } from './generated/cardEquipmentExceptions.js'
 import { equipmentGrants } from './generated/equipmentGrants.js';
 import { TAGGING, tagsInDomain } from './tags.js';
 import { armouryUi } from './generated/armouryUi.js';
+import { RANGES } from '../model/combatRanges.js';
 
 /** '' → [], 'a' → ['a'], ['a','b'] → ['a','b']. */
 function list(v) {
@@ -99,8 +100,8 @@ export function armamentById(id) {
   return ARMAMENT_BY_ID.get(id) || null;
 }
 
-/** The closed range vocabulary every weapons.csv row states (tools/content-build.mjs refuses any other). */
-export const WEAPON_RANGES = Object.freeze(['melee', 'reach', 'ranged']);
+/** The closed range vocabulary every weapons.csv row states (src/model/combatRanges.js; tools/content-build.mjs refuses any other). */
+export const WEAPON_RANGES = RANGES;
 
 /**
  * A weapon's default range, `melee` | `reach` | `ranged`. Read off the def the
