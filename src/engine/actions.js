@@ -391,18 +391,25 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
   const type = ctx.combatExpansionRules.matchups.damageAliases[profile.damageType] || profile.damageType;
   const ward = tactical.resistedAmounts[contactIndex] || 0;
   void spell;
-  const barrierSpent = Math.min(Math.max(0, target.barrier || 0), tactical.barrierSpentAmounts?.[contactIndex] || 0);
+  // The plan was made for the whole action. A status rider may have spent Barrier or
+  // Ward between hits: what the live pool no longer holds is not absorbed for free,
+  // so it goes back into this hit before Block.
+  const plannedBarrier = tactical.barrierSpentAmounts?.[contactIndex] || 0;
+  const plannedWard = tactical.wardSpentAmounts?.[contactIndex] || 0;
+  const barrierSpent = Math.min(Math.max(0, target.barrier || 0), plannedBarrier);
   // Break events are collected here and emitted after damageDealt, so the log reads the hit first.
   const breaks = [];
   if (barrierSpent > 0) {
     target.barrier -= barrierSpent;
     if (target.barrier === 0) breaks.push(['barrierBroken', { targetId: target.id, sourceId: source?.id, ...seatOf(ctx, target) }]);
   }
-  const wardSpent = tactical.wardSpentAmounts?.[contactIndex] || 0;
-  if (wardSpent > 0 && target.persistentWard?.value > 0) {
-    const spend = Control.spendPersistentWard(ctx, target, wardSpent, { cause: 'damage', sourceId: source?.id, deferBreak: true });
+  let wardSpent = 0;
+  if (plannedWard > 0 && target.persistentWard?.value > 0) {
+    const spend = Control.spendPersistentWard(ctx, target, plannedWard, { cause: 'damage', sourceId: source?.id, deferBreak: true });
+    wardSpent = spend.spent;
     if (spend.breakEvent) breaks.push(['wardBroken', spend.breakEvent]);
   }
+  amount += (plannedBarrier - barrierSpent) + (plannedWard - wardSpent);
   const pool = 'block';
   const bypass = Math.min(amount, tactical.guardBypassRemaining || 0);
   tactical.guardBypassRemaining -= bypass;

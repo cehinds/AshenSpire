@@ -203,6 +203,33 @@ test('a non-magical Barrier gain adds Barrier alone and leaves Ward alone', () =
   assert.equal(enemy.barrier, 6);
 });
 
+test('a planned Spell hit does not absorb Ward a rider spent before it lands', () => {
+  const { combat, enemy } = fixture();
+  enemy.ratings.ward = enemy.persistentWard.max = enemy.persistentWard.value = 4;
+  enemy.block = 0; enemy.barrier = 0;
+  const carrier = { cardId: 'starstonePebble', damageSchool: 'fire', tags: ['camp:spell', 'maneuver:casting'],
+    combatProfile: { camp: 'spell', maneuver: 'casting', school: 'fire', damageType: 'fire', reach: 'near', targeting: 'single' } };
+  const actions = [1, 2].map(() => ({ effect: { op: 'damage', target: 'enemy', amount: 5 }, source: combat.player, owner: combat.player, target: enemy, card: carrier, meta: {} }));
+  enqueueExpandedAction(combat, actions, { source: combat.player, target: enemy, carrier });
+  const hits = [];
+  const emit = combat.emit;
+  combat.emit = (type, payload) => {
+    const out = emit.call(combat, type, payload);
+    if (type === 'damageDealt' && payload.targetId === enemy.id) {
+      hits.push(payload);
+      // A rider empties Ward between the two hits; the second hit's planned share is not there.
+      if (hits.length === 1) enemy.persistentWard.value = 0;
+    }
+    return out;
+  };
+  const before = enemy.hp;
+  drainQueue(combat);
+  assert.equal(hits.length, 2);
+  assert.equal(hits[1].wardAbsorbed ?? 0, 0, 'the second hit absorbs no Ward that is not there');
+  assert.equal(hits[1].amount, 5, 'its planned Ward share goes back into the hit');
+  assert.equal(before - enemy.hp, 3 + 5, 'the first hit loses 3 and the second loses all 5');
+});
+
 test('a rise from a full Ward pool adds the same amount to current Ward', () => {
   const { combat, enemy } = fixture();
   enemy.ratings.ward = 10; enemy.persistentWard = { max: 10, value: 10 };
