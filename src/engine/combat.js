@@ -1280,6 +1280,19 @@ export function cardPlayCosts(combat, cardInstanceId, upcastRanks) {
   return playCosts(preparingPreview(combat, inst, def), def, claimed);
 }
 
+// The ability kind a card plays with (SPEC §4.11 preview and live share it): its authored kind, else spell
+// for a source:spell card and maneuver for the rest. Queue-time charge matching and play-time cardRef both read it.
+function abilityKindOf(def) {
+  return def.abilityKind || ((def.cardTags || def.tags || []).includes('source:spell') ? 'spell' : 'maneuver');
+}
+
+// The Mana a card costs before any Mana-discount charge (the pricing resolvedCardPlayCosts discounts).
+function baseManaCost(combat, def) {
+  const weightClass = playerWeightClass(combat).weightClass;
+  const pools = F.foundationCosts(combat, def, weightClass, combat.registries.framework.costProfile(def, { weightClass }));
+  return pools.mana + (def.upcastSurcharge || 0);
+}
+
 // Preview only (SPEC §4.11): the Mana-discount charges the queued cards hold, except the card named.
 // A queued card claims the discount charges it priced with; unqueuing or resolving it releases them.
 function claimedCharges(combat, exceptInstanceId = null) {
@@ -1300,9 +1313,11 @@ function withoutClaims(player, claimed) {
 
 // The charge keys this card's Mana discount comes from, net of the claimed ones.
 function manaDiscountClaims(combat, def, claimed) {
+  // A card with no Mana to discount holds no discount: it would take a charge a Mana card can use.
+  if (!(baseManaCost(combat, def) > 0)) return [];
   const player = withoutClaims(combat.player, claimed);
   const charges = player.abilityRiders?.charges || {};
-  const { keys } = R.matchingAbilityCharges(player, { ...def, type: cardKind(def), authoredTags: def.cardTags || def.tags });
+  const { keys } = R.matchingAbilityCharges(player, { ...def, type: cardKind(def), authoredTags: def.cardTags || def.tags, abilityKind: abilityKindOf(def) });
   return keys.filter((key) => (charges[key]?.manaDiscount || 0) > 0);
 }
 
@@ -1338,7 +1353,7 @@ function preparingPreview(combat, inst, def, targetId) {
   if (clone.foundation) { clone.foundation.actionSerial++; clone.foundation.eventCount = 0; clone.foundation.rolls = {}; clone.foundation.counts = {}; }
   clone._buffer = null;
   const target = targetId ? findEntity(clone, targetId) : clone.enemies.find(e => e.alive);
-  clone.emit('cardPreparing', { cardInstanceId: inst.instanceId, cardId: inst.cardId, cardType: cardKind(def), cardTags: def.cardTags || def.tags || [], abilityKind: def.abilityKind || ((def.cardTags || def.tags || []).includes('source:spell') ? 'spell' : 'maneuver'), sourceId: clone.player.id, targetId: target?.id || null, ...R.beforeAbilityPlay(clone, clone.player), cardTargetsAllEnemies: R.cardTargetsAllEnemies(def) });
+  clone.emit('cardPreparing', { cardInstanceId: inst.instanceId, cardId: inst.cardId, cardType: cardKind(def), cardTags: def.cardTags || def.tags || [], abilityKind: abilityKindOf(def), sourceId: clone.player.id, targetId: target?.id || null, ...R.beforeAbilityPlay(clone, clone.player), cardTargetsAllEnemies: R.cardTargetsAllEnemies(def) });
   drainQueue(clone);
   return clone;
 }
@@ -1401,7 +1416,7 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
   // cardTagIs). The card definition and the deck instance never carry them.
   const derivedTags = gripTags(gripOf(combat.registries, combat.loadout, p.classId));
   const cardRef = {
-    abilityKind: def.abilityKind || ((def.cardTags || def.tags || []).includes('source:spell') ? 'spell' : 'maneuver'), abilityFamily: def.abilityFamily, abilityRank: def.abilityRank,
+    abilityKind: abilityKindOf(def), abilityFamily: def.abilityFamily, abilityRank: def.abilityRank,
     sourceArmamentId: inst.sourceArmamentId || inst.weaponId,
     ratingId: inst.ratingId,
     ratingValue: inst.ratingValue,
@@ -1872,7 +1887,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
     owner: p,
     target: target || (needsEnemyTarget(def) ? living[0] || null : null),
     card: {
-      abilityKind: def.abilityKind || ((def.cardTags || def.tags || []).includes('source:spell') ? 'spell' : 'maneuver'), abilityFamily: def.abilityFamily,
+      abilityKind: abilityKindOf(def), abilityFamily: def.abilityFamily,
       sourceArmamentId: inst.sourceArmamentId || inst.weaponId,
       ratingId: inst.ratingId,
       ratingValue: inst.ratingValue,
