@@ -6,8 +6,11 @@ import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { enqueueExpandedAction } from '../src/engine/combatExpansionActions.js';
 import { executeAction, applyAttackDamage, restoreExpandedWard, gainBarrier, syncWardMaximum } from '../src/engine/actions.js';
-import { schoolResistanceMultiplier, persistentWardMaximum } from '../src/model/combatRatings.js';
+import { schoolResistanceMultiplier, persistentWardMaximum, persistentPoiseMaximum } from '../src/model/combatRatings.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
+import { applyStatus, decayAtTurnEnd } from '../src/engine/statuses.js';
+import { restorePersistentPoise } from '../src/engine/combatStatusControl.js';
+import { syncPoiseMaximum } from '../src/engine/combatPools.js';
 
 const drainQueue = combat => { while (combat.queue.length) executeAction(combat, combat.queue.shift()); };
 
@@ -85,6 +88,8 @@ test('expanded critical hits multiply once and still announce the original multi
   const { combat, enemy } = fixture([{ op: 'damage', target: 'enemy', amount: 5, tags: ['testCritical'] }]);
   combat.player.critRules = [{ tags: ['testCritical'], base: 1, cap: 1, multiplier: 2 }];
   enemy.persistentWard.value = 0;
+  // A physical hit meets Poise now; this test is about the multiplier, so the enemy has none.
+  enemy.ratings.poise = 0; enemy.persistentPoise = { max: 0, value: 0 };
   const before = enemy.hp;
   const out = dispatch(combat, { type: 'playCard', cardInstanceId: 'paired', targetId: enemy.id });
   assert.equal(before - enemy.hp, 10);
@@ -107,7 +112,7 @@ test('un-aimed card faces show offense while target inspection shows Ward mitiga
 test('a physical hit skips Ward: Block soaks, then Health', () => {
   const { combat, enemy } = fixture([{ op: 'damage', target: 'enemy', amount: 10 }]);
   enemy.ratings.ward = enemy.persistentWard.value = enemy.persistentWard.max = 4;
-  enemy.ratings.poise = 0; enemy.block = 3; enemy.barrier = 5;
+  enemy.ratings.poise = 0; enemy.persistentPoise = { max: 0, value: 0 }; enemy.block = 3; enemy.barrier = 5;
   const carrier = { cardId: 'strike', damageSchool: 'physical', tags: ['camp:physical', 'maneuver:attack'],
     combatProfile: { camp: 'physical', maneuver: 'attack', school: 'physical', damageType: 'slashing', reach: 'contact', targeting: 'single' } };
   const before = enemy.hp;
@@ -174,6 +179,153 @@ test('a buff that raises the Ward rating raises the Ward maximum and current War
   assert.deepEqual({ ...enemy.persistentWard }, { max: 2, value: 2 });
 });
 
+test('a rating swing keeps the missing Ward fixed: a dip and recovery cannot refill a damaged pool', () => {
+  const { combat, enemy } = fixture();
+  enemy.ratings.ward = 10; enemy.persistentWard = { max: 10, value: 2 };
+  enemy.ratings.ward = 3; syncWardMaximum(combat, enemy);
+  assert.deepEqual({ ...enemy.persistentWard }, { max: 3, value: 0, missing: 8 }, 'the dip clamps the value and keeps the 8 missing');
+  enemy.ratings.ward = 10; syncWardMaximum(combat, enemy);
+  assert.deepEqual({ ...enemy.persistentWard }, { max: 10, value: 2 }, 'recovery restores the same missing, not a full pool');
+});
+
+test('a restore against a missing Ward fills the missing amount, and Barrier overflows only once missing reaches 0', () => {
+  const { combat, enemy } = fixture();
+  enemy.ratings.ward = 10; enemy.persistentWard = { max: 10, value: 2 }; enemy.barrier = 0;
+  enemy.ratings.ward = 3; syncWardMaximum(combat, enemy);
+  assert.deepEqual({ ...enemy.persistentWard }, { max: 3, value: 0, missing: 8 });
+  restoreExpandedWard(combat, enemy, 2, { modifierPercent: 0 });
+  assert.deepEqual({ ...enemy.persistentWard }, { max: 3, value: 0, missing: 6 }, 'the card restores 2 of the 8 missing, not up to max');
+  assert.equal(enemy.barrier, 0, 'no Barrier while missing is above max');
+  enemy.ratings.ward = 10; syncWardMaximum(combat, enemy);
+  assert.deepEqual({ ...enemy.persistentWard }, { max: 10, value: 4 }, 'recovery returns the pool to 4 of 10');
+  const overflow = restoreExpandedWard(combat, enemy, 8, { modifierPercent: 0 });
+  assert.deepEqual({ ...enemy.persistentWard }, { max: 10, value: 10 });
+  assert.equal(overflow.barrier, 2, 'the part past the 6 missing becomes Barrier');
+  assert.equal(enemy.barrier, 2);
+});
+
+test('a card that closes the missing Ward sends only the rest past it to Barrier', () => {
+  const { combat, enemy } = fixture();
+  enemy.ratings.ward = 10; enemy.persistentWard = { max: 10, value: 2 }; enemy.barrier = 0;
+  enemy.ratings.ward = 3; syncWardMaximum(combat, enemy);
+  const out = restoreExpandedWard(combat, enemy, 10, { modifierPercent: 0 });
+  assert.deepEqual({ ...enemy.persistentWard }, { max: 3, value: 3 }, 'missing 8 is closed; the pool fills to its max');
+  assert.equal(out.barrier, 2);
+  assert.equal(enemy.barrier, 2);
+});
+
+test('a magical Barrier gain refills Ward first and only the overflow becomes Barrier', () => {
+  const { combat, enemy } = fixture();
+  enemy.persistentWard = { max: 3, value: 1 }; enemy.barrier = 0;
+  const spell = { cardId: 'starstonePebble', damageSchool: 'fire', tags: ['camp:spell', 'maneuver:casting'],
+    combatProfile: { camp: 'spell', maneuver: 'casting', school: 'fire', damageType: 'fire', reach: 'near', targeting: 'single' } };
+  gainBarrier(combat, enemy, 6, spell);
+  assert.equal(enemy.persistentWard.value, 3, 'Ward is refilled to full first');
+  assert.equal(enemy.barrier, 4, 'the other 4 become Barrier');
+});
+
+test('a non-magical Barrier gain adds Barrier alone and leaves Ward alone', () => {
+  const { combat, enemy } = fixture();
+  enemy.persistentWard = { max: 3, value: 1 }; enemy.barrier = 0;
+  gainBarrier(combat, enemy, 6, { skipRatingBonus: true });
+  assert.equal(enemy.persistentWard.value, 1, 'a non-magic source does not refill Ward');
+  assert.equal(enemy.barrier, 6);
+});
+
+test('a mana-costing skill that is not a Spell adds Barrier alone, even though it is magical', () => {
+  const { combat, enemy } = fixture();
+  enemy.persistentWard = { max: 3, value: 1 }; enemy.barrier = 0;
+  const skill = { cardId: 'starstonePebble', manaCost: 2, skipRatingBonus: true, tags: ['maneuver:casting'],
+    combatProfile: { camp: 'physical', maneuver: 'casting', school: 'arcane', damageType: 'blunt', reach: 'near', targeting: 'single' } };
+  assert.equal(gainBarrier(combat, enemy, 6, skill), 6);
+  assert.equal(enemy.persistentWard.value, 1, 'a non-Spell source does not refill Ward');
+  assert.equal(enemy.barrier, 6);
+});
+
+test('a Spell card refills Ward first and gainBarrier returns the Ward refill plus the Barrier overflow', () => {
+  const { combat, enemy } = fixture();
+  enemy.persistentWard = { max: 3, value: 1 }; enemy.barrier = 0;
+  const spellByTag = { cardId: 'starstonePebble', skipRatingBonus: true, tags: ['camp:spell'] };
+  assert.equal(gainBarrier(combat, enemy, 6, spellByTag), 6, 'granted: 2 into Ward, 4 into Barrier');
+  assert.equal(enemy.persistentWard.value, 3);
+  assert.equal(enemy.barrier, 4);
+});
+
+test('Barrier is consumed hit by hit: the first hit is fully stopped, the second meets Ward', () => {
+  const { combat, enemy } = fixture();
+  enemy.ratings.ward = 5; enemy.persistentWard = { max: 5, value: 5 };
+  enemy.block = 0; enemy.barrier = 5;
+  const carrier = { cardId: 'starstonePebble', damageSchool: 'fire', tags: ['camp:spell', 'maneuver:casting'],
+    combatProfile: { camp: 'spell', maneuver: 'casting', school: 'fire', damageType: 'fire', reach: 'near', targeting: 'single' } };
+  const actions = [1, 2].map(() => ({ effect: { op: 'damage', target: 'enemy', amount: 5 }, source: combat.player, owner: combat.player, target: enemy, card: carrier, meta: {} }));
+  enqueueExpandedAction(combat, actions, { source: combat.player, target: enemy, carrier });
+  const hits = [];
+  const emit = combat.emit;
+  combat.emit = (type, payload) => { if (type === 'damageDealt' && payload.targetId === enemy.id) hits.push(payload); return emit.call(combat, type, payload); };
+  const before = enemy.hp;
+  drainQueue(combat);
+  assert.equal(hits.length, 2);
+  assert.equal(hits[0].amount, 0, 'Barrier stops the first hit outright');
+  assert.equal(hits[0].barrierAbsorbed, 5);
+  assert.equal(hits[1].wardAbsorbed, 4, 'the second hit meets Ward 5 and spends 4 of it');
+  assert.equal(before - enemy.hp, 1, 'the second hit lets 1 through');
+  assert.equal(enemy.persistentWard.value, 1);
+});
+
+test('a planned Spell hit does not absorb Ward a rider spent before it lands', () => {
+  const { combat, enemy } = fixture();
+  enemy.ratings.ward = enemy.persistentWard.max = enemy.persistentWard.value = 4;
+  enemy.block = 0; enemy.barrier = 0;
+  const carrier = { cardId: 'starstonePebble', damageSchool: 'fire', tags: ['camp:spell', 'maneuver:casting'],
+    combatProfile: { camp: 'spell', maneuver: 'casting', school: 'fire', damageType: 'fire', reach: 'near', targeting: 'single' } };
+  const actions = [1, 2].map(() => ({ effect: { op: 'damage', target: 'enemy', amount: 5 }, source: combat.player, owner: combat.player, target: enemy, card: carrier, meta: {} }));
+  enqueueExpandedAction(combat, actions, { source: combat.player, target: enemy, carrier });
+  const hits = [];
+  const emit = combat.emit;
+  combat.emit = (type, payload) => {
+    const out = emit.call(combat, type, payload);
+    if (type === 'damageDealt' && payload.targetId === enemy.id) {
+      hits.push(payload);
+      // A rider empties Ward between the two hits; the second hit's planned share is not there.
+      if (hits.length === 1) enemy.persistentWard.value = 0;
+    }
+    return out;
+  };
+  const before = enemy.hp;
+  drainQueue(combat);
+  assert.equal(hits.length, 2);
+  assert.equal(hits[1].wardAbsorbed ?? 0, 0, 'the second hit absorbs no Ward that is not there');
+  assert.equal(hits[1].amount, 5, 'its planned Ward share goes back into the hit');
+  assert.equal(before - enemy.hp, 3 + 5, 'the first hit loses 3 and the second loses all 5');
+});
+
+test('a status with a Ward bonus moves the Ward pool as soon as it is applied', () => {
+  const { combat, enemy } = fixture();
+  combat.ratingsRules = { bonuses: { 'status:bleeding': { ward: 2 } } };
+  enemy.ratings.ward = 3; enemy.persistentWard = { max: 3, value: 3 };
+  applyStatus(combat, enemy, 'bleeding', 1, null);
+
+  assert.deepEqual({ ...enemy.persistentWard }, { max: 5, value: 5 }, 'the pool follows the status without a later sync');
+});
+
+test('a Ward bonus stack that decays at turn end lowers the Ward maximum at once', () => {
+  const { combat, enemy } = fixture();
+  combat.ratingsRules = { bonuses: { 'status:weak': { ward: 2 } } };
+  enemy.ratings.ward = 3; enemy.persistentWard = { max: 3, value: 3 };
+  applyStatus(combat, enemy, 'weak', 2, null);
+  assert.deepEqual({ ...enemy.persistentWard }, { max: 7, value: 7 }, 'two stacks add 4 to the pool');
+  decayAtTurnEnd(combat, enemy);
+  assert.equal(enemy.statuses.weak.stacks, 1);
+  assert.deepEqual({ ...enemy.persistentWard }, { max: 5, value: 5 }, 'the decayed stack lowers the maximum without a later sync');
+});
+
+test('a rise from a full Ward pool adds the same amount to current Ward', () => {
+  const { combat, enemy } = fixture();
+  enemy.ratings.ward = 10; enemy.persistentWard = { max: 10, value: 10 };
+  enemy.ratings.ward = 13; syncWardMaximum(combat, enemy);
+  assert.deepEqual({ ...enemy.persistentWard }, { max: 13, value: 13 });
+});
+
 test('each hit Ward meets still lets at least 1 damage through', () => {
   const { combat, enemy } = fixture();
   enemy.ratings.ward = enemy.persistentWard.value = enemy.persistentWard.max = 20;
@@ -183,4 +335,144 @@ test('each hit Ward meets still lets at least 1 damage through', () => {
   assert.deepEqual(damage.map(event => event.amount), [1, 1]);
   assert.equal(before - enemy.hp, 2);
   assert.equal(enemy.persistentWard.value, 12, 'Ward is spent only by the 8 it absorbed');
+});
+
+const physicalCarrier = () => ({ cardId: 'strike', damageSchool: 'physical', tags: ['camp:physical', 'maneuver:attack'],
+  combatProfile: { camp: 'physical', maneuver: 'attack', school: 'physical', damageType: 'slashing', reach: 'contact', targeting: 'single' } });
+const magicCarrier = () => ({ cardId: 'starstonePebble', damageSchool: 'fire', tags: ['camp:spell', 'maneuver:casting'],
+  combatProfile: { camp: 'spell', maneuver: 'casting', school: 'fire', damageType: 'fire', reach: 'near', targeting: 'single' } });
+function captureEvents(combat) {
+  const events = []; const emit = combat.emit;
+  combat.emit = (type, payload) => { events.push({ type, ...payload }); return emit.call(combat, type, payload); };
+  return events;
+}
+
+test('Poise is the physical twin of Ward: Block soaks, Poise absorbs and breaks, the enemy is staggered after the hit', () => {
+  const { combat, enemy } = fixture([{ op: 'damage', target: 'enemy', amount: 10 }]);
+  enemy.ratings.ward = enemy.persistentWard.value = enemy.persistentWard.max = 0;
+  enemy.ratings.poise = 4; enemy.persistentPoise = { max: 4, value: 4 };
+  enemy.block = 3; enemy.barrier = 0;
+  const events = captureEvents(combat);
+  const before = enemy.hp;
+  applyAttackDamage(combat, combat.player, enemy, 10, [], physicalCarrier());
+  assert.equal(enemy.block, 0, 'Block soaks 3 first');
+  assert.equal(enemy.persistentPoise.value, 0, 'Poise absorbs the 4 that reach it and breaks');
+  assert.equal(before - enemy.hp, 3, 'HP loss is the 3 that passed both');
+  assert.equal(enemy.skipNextTurn, true, 'the enemy is staggered');
+  const types = events.map(event => event.type);
+  const dealt = events.find(event => event.type === 'damageDealt');
+  assert.equal(dealt.poiseAbsorbed, 4); assert.equal(dealt.poiseRemaining, 0);
+  assert.equal(dealt.amount, 6, 'amount is what the hit did after Poise: 10 less the 4 Poise took');
+  assert.ok(types.indexOf('poiseBroken') > types.indexOf('damageDealt'), 'the break is reported after the hit');
+  assert.ok(types.includes('enemyStaggered'));
+});
+
+test('Poise lets at least 1 damage through per physical hit it meets, and is spent by what it absorbs', () => {
+  const { combat, enemy } = fixture([{ op: 'damage', target: 'enemy', amount: 3 }]);
+  enemy.ratings.ward = enemy.persistentWard.value = enemy.persistentWard.max = 0;
+  enemy.ratings.poise = 10; enemy.persistentPoise = { max: 10, value: 10 };
+  enemy.block = 0; enemy.barrier = 0;
+  const before = enemy.hp;
+  applyAttackDamage(combat, combat.player, enemy, 3, [], physicalCarrier());
+  assert.equal(before - enemy.hp, 1);
+  assert.equal(enemy.persistentPoise.value, 8);
+});
+
+test('a Smash that breaks the last Block marks its blockBroken smash; a plain attack breaking Block does not', () => {
+  const { combat, enemy } = fixture([{ op: 'damage', target: 'enemy', amount: 10 }]);
+  enemy.ratings.ward = enemy.persistentWard.value = enemy.persistentWard.max = 0;
+  enemy.ratings.poise = 0; enemy.persistentPoise = { max: 0, value: 0 };
+  enemy.combatStance = { maneuver: 'defend' };
+  const physical = physicalCarrier();
+  const smash = { ...physical, tags: ['camp:physical', 'maneuver:smash'], combatProfile: { ...physical.combatProfile, maneuver: 'smash' } };
+  enemy.block = 3; enemy.barrier = 0;
+  let events = captureEvents(combat);
+  applyAttackDamage(combat, combat.player, enemy, 10, [], smash);
+  assert.equal(enemy.block, 0, 'the Smash breaks the last Block');
+  assert.equal(events.find(event => event.type === 'blockBroken').smash, true);
+  enemy.combatStance = null; enemy.block = 3; enemy.hp = enemy.maxHp;
+  events = captureEvents(combat);
+  applyAttackDamage(combat, combat.player, enemy, 10, [], physical);
+  assert.equal(events.find(event => event.type === 'blockBroken').smash, undefined, 'an ordinary break is not a Smash');
+});
+
+test('a physical Poise break costs a player one Stamina next turn and staggers nobody', () => {
+  const { combat, enemy } = fixture();
+  const mage = combat.player;
+  mage.ratings = { ...mage.ratings, poise: 2, ward: 0 };
+  mage.persistentWard = { max: 0, value: 0 };
+  mage.persistentPoise = { max: 2, value: 2 }; mage.block = 0; mage.barrier = 0; mage.pendingActionLoss = 0;
+  const events = captureEvents(combat);
+  applyAttackDamage(combat, enemy, mage, 5, [], physicalCarrier());
+  assert.equal(mage.persistentPoise.value, 0);
+  assert.equal(mage.pendingActionLoss, 1, 'a Poise break costs one Stamina next turn');
+  const broke = events.find(event => event.type === 'poiseBroken');
+  assert.equal(broke.staminaLoss, 1);
+  assert.equal(events.some(event => event.type === 'playerStaggered'), false, 'a player is not staggered by Poise');
+});
+
+test('a restorePoise op refills a clamped Poise pool against its missing amount, with no Barrier overflow', () => {
+  const { combat, enemy } = fixture();
+  enemy.ratings.poise = 10; enemy.persistentPoise = { max: 10, value: 2 }; enemy.barrier = 0;
+  enemy.ratings.poise = 3; syncPoiseMaximum(combat, enemy);
+  assert.deepEqual({ ...enemy.persistentPoise }, { max: 3, value: 0, missing: 8 });
+  executeAction(combat, { effect: { op: 'restorePoise', target: 'enemy', amount: 2 }, source: combat.player, owner: combat.player, target: enemy, card: null, meta: {} });
+  assert.deepEqual({ ...enemy.persistentPoise }, { max: 3, value: 0, missing: 6 }, 'the restore closes 2 of the 8 missing, not up to max');
+  enemy.ratings.poise = 10; syncPoiseMaximum(combat, enemy);
+  assert.deepEqual({ ...enemy.persistentPoise }, { max: 10, value: 4 }, 'recovery returns the pool to 4 of 10');
+  executeAction(combat, { effect: { op: 'restorePoise', target: 'enemy', amount: 8 }, source: combat.player, owner: combat.player, target: enemy, card: null, meta: {} });
+  assert.deepEqual({ ...enemy.persistentPoise }, { max: 10, value: 10 }, 'the restore fills to max');
+  assert.equal(enemy.barrier, 0, 'Poise never overflows into Barrier');
+});
+
+test('restorePersistentPoise honours a once-per-combat key and never restores a full pool', () => {
+  const { combat, enemy } = fixture();
+  enemy.persistentPoise = { max: 4, value: 1 };
+  const first = restorePersistentPoise(combat, enemy, 2, { onceKey: 'rite' });
+  assert.equal(first.restored, 2); assert.equal(enemy.persistentPoise.value, 3);
+  const again = restorePersistentPoise(combat, enemy, 2, { onceKey: 'rite' });
+  assert.equal(again.restored, 0, 'the once key is spent for the fight');
+  restorePersistentPoise(combat, enemy, 5, { modifierPercent: 0 });
+  assert.deepEqual({ ...enemy.persistentPoise }, { max: 4, value: 4 });
+  assert.equal(restorePersistentPoise(combat, enemy, 3).restored, 0, 'a full pool takes nothing');
+});
+
+test('an older save with Ward and no Poise restores with a full Poise pool; a newer save keeps its Poise', () => {
+  const { combat, enemy, registries } = fixture();
+  enemy.ratings.poise = 4; enemy.persistentPoise = { max: 4, value: 1 };
+  const restore = saved => restoreCombatSnapshot({ registries, rng: createRng(combat.rng.seed, combat.rng.getCounters()), snapshot: saved });
+  const kept = restore(JSON.parse(JSON.stringify(serializeCombatSnapshot(combat))));
+  assert.equal(kept.enemies[0].persistentPoise.value, 1, 'a save that has Poise keeps its value');
+  const old = JSON.parse(JSON.stringify(serializeCombatSnapshot(combat)));
+  delete old.enemies[0].persistentPoise;
+  const restored = restore(old);
+  const back = restored.enemies[0];
+  assert.ok(back.persistentWard, 'the combatant is still expanded');
+  assert.deepEqual({ ...back.persistentPoise }, { max: persistentPoiseMaximum(restored, back), value: persistentPoiseMaximum(restored, back) },
+    'the missing Poise pool starts full at the Poise maximum');
+  assert.ok(back.persistentPoise.max > 0);
+});
+
+test('a magical hit leaves Poise untouched', () => {
+  const { combat, enemy } = fixture([{ op: 'damage', target: 'enemy', amount: 10 }]);
+  enemy.ratings.ward = enemy.persistentWard.value = enemy.persistentWard.max = 0;
+  enemy.ratings.poise = 4; enemy.persistentPoise = { max: 4, value: 4 };
+  enemy.block = 0; enemy.barrier = 0;
+  applyAttackDamage(combat, combat.player, enemy, 10, [], magicCarrier());
+  assert.equal(enemy.persistentPoise.value, 4, 'Poise guards against physical hits only');
+});
+
+test('a spell status pressure that spends the last Ward point breaks Ward: one event, one Stamina for a player', async () => {
+  const Control = await import('../src/engine/combatStatusControl.js');
+  const { combat, enemy } = fixture();
+  const mage = combat.player;
+  mage.persistentWard = { max: 1, value: 1 }; mage.pendingActionLoss = 0;
+  const events = captureEvents(combat);
+  // frost is a Spell status: its buildup spends Ward before it can land.
+  Control.applyStatusPressure(combat, mage, 'frost', 10, enemy, { camp: 'spell' });
+  assert.equal(mage.persistentWard.value, 0);
+  assert.equal(mage.pendingActionLoss, 1, 'a player pays one Stamina next turn');
+  const broke = events.filter(event => event.type === 'wardBroken');
+  assert.equal(broke.length, 1);
+  assert.equal(broke[0].staminaLoss, 1);
 });

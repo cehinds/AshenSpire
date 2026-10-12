@@ -5882,13 +5882,15 @@ button[data-button-size] {
   font-variant-numeric: tabular-nums; text-shadow: 0 1px 3px #000; isolation: isolate;
 }
 :root .combat .combatant .combat-health-badge::before { content: ''; position: absolute; inset: 0; z-index: -1; }
-:root .combat .combatant .combat-health-shield::before { background: linear-gradient(135deg, #61abe0, var(--health-blue), #194a6b); clip-path: polygon(8% 5%,50% 0,92% 5%,87% 70%,50% 100%,13% 70%); }
-:root .combat .combatant .combat-health-shield { aspect-ratio: 40/44; filter: drop-shadow(0 0 3px #348fcb55); }
+:root .combat .combatant .combat-health-shield::before { background: linear-gradient(135deg, #f2f4f7, #c3c9d1, #6f7782); clip-path: polygon(8% 5%,50% 0,92% 5%,87% 70%,50% 100%,13% 70%); }
+:root .combat .combatant .combat-health-shield { aspect-ratio: 40/44; filter: drop-shadow(0 0 3px #d8dde355); }
 :root .combat .combatant .combat-health-shield .combat-health-badge-value { transform: translateY(-.23em); }
 :root .combat .combatant .combat-health-ward::before { border-radius: 50%; background: linear-gradient(135deg, #b38ae8, var(--ward-purple), #4d316b); }
 :root .combat .combatant .combat-health-ward { filter: drop-shadow(0 0 4px #9a63d966); }
-/* Barrier: Ward charged past full until the owner's next turn — a gold rim. */
-:root .combat .combatant .combat-health-ward-barrier::before { box-shadow: 0 0 0 max(2px, calc(3px / var(--ui-zoom, 1))) #ffd34d, 0 0 8px 2px #ffd34daa; }
+:root .combat .combatant .combat-health-poise::before { border-radius: 50%; background: linear-gradient(135deg, #ffe08a, #ffd34d, #8a6a12); }
+:root .combat .combatant .combat-health-poise { filter: drop-shadow(0 0 4px #ffd34d66); }
+/* Barrier: Ward charged past full until the owner's next turn — a blue rim. */
+:root .combat .combatant .combat-health-ward-barrier::before { box-shadow: 0 0 0 max(2px, calc(3px / var(--ui-zoom, 1))) #5fa8ff, 0 0 8px 2px #5fa8ffaa; }
 :root .combat .combatant .combat-health-badge:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 :root .combat .combatant .combat-health-badge { min-width: max-content; }
 :root body.cb-safe .combat .combatant .combat-health-row { --health-red: var(--res-hp); }

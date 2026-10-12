@@ -21,5 +21,5 @@ export function protectionPresentation(entity) {
   const whole = value => Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
   // Barrier is Ward charged past full: it counts in the badge and gilds it.
   const barrier = whole(entity?.barrier);
-  return { defense, ward: ward + whole(entity?.persistentWard?.value) + barrier, barrier };
+  return { defense, ward: ward + whole(entity?.persistentWard?.value) + barrier, barrier, poise: whole(entity?.persistentPoise?.value) };
 }

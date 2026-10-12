@@ -142,6 +142,16 @@ test('a card plan no swing played (Instant, reduced motion, a skip) plays on the
   assert.match(body('renderCombat'), /for \(const \[ownerId, plan\] of pendingAnimations\) playSeatPlan\(ownerId, plan\);/);
 });
 
+test('the paced frames move the Barrier, Ward and Poise badges with each hit, not only Block and Health', () => {
+  const pace = body('playPacedReceipts');
+  assert.match(pace, /if \(event\.barrierRemaining !== undefined\) target\.barrier = event\.barrierRemaining;/);
+  assert.match(pace, /if \(event\.wardRemaining !== undefined && target\.persistentWard\) target\.persistentWard\.value = event\.wardRemaining;/);
+  assert.match(pace, /if \(event\.poiseRemaining !== undefined && target\.persistentPoise\) target\.persistentPoise\.value = event\.poiseRemaining;/);
+  assert.match(pace, /if \(event\.type === 'barrierGained' && target && event\.total !== undefined\) target\.barrier = event\.total;/);
+  assert.match(pace, /if \(event\.type === 'persistentWardChanged' && target\?\.persistentWard\)/);
+  assert.match(pace, /if \(event\.type === 'persistentPoiseChanged' && target\?\.persistentPoise\)/);
+});
+
 test('a throw before the timeline starts clears the flag; a cancelled or torn-down run renders nothing', () => {
   const pace = body('paceReactionReceipts');
   assert.match(pace, /try \{\s*playPacedReceipts\(next, setPacing, run, land\);\s*\} catch \(error\) \{/);

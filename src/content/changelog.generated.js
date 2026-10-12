@@ -6,11 +6,31 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "id": "pr-1896",
     "date": "2026-10-12",
     "group": "2026-10-12",
-    "summary": "Ward now wears away, and it shows on every fighter",
-    "detail": "Spells no longer bounce off a full Ward forever. Ward and Barrier guard against magic: a magic hit meets Barrier first, which soaks it completely, then Ward, which lets at least 1 damage through per hit and is spent by what it absorbs, then Block, then Health. A Ward break costs Stamina next turn. Every fighter starts each fight with full Ward; it only comes back through a card, feat, class feature or relic, and Ward added past full becomes Barrier, shown as a gold rim on the purple Ward circle until your next turn. Hits now show where they landed (Barrier gold, Ward purple, Block blue, Poise orange, Health red, a white MISS for evasion), and the combat log lists each layer's share and the roll behind a miss. A creature resistant to a damage school takes three quarters of the hit.",
-    "build": "0.7.1.1425",
+    "summary": "Ward, Barrier and Poise now wear away, and every hit shows where it landed",
+    "detail": "Magic hits meet Barrier, then Ward; physical hits meet Block, then Poise. Barrier and Block soak a hit completely, while Ward and Poise always let at least 1 damage through and are spent by what they absorb. Every fighter starts each fight with full Ward and Poise, and they only come back through a card, feat, class feature or relic. Ward added past full becomes Barrier until your next turn. Breaking an enemy's Ward or Poise interrupts its action; a break costs you 1 Stamina next turn. Each layer has its own colour on the health bar and in the hit numbers (Barrier blue, Ward purple, Block silver, Poise gold, Health red), with popups for MISSED, BREAK, WARD BREAK, POSTURE BREAK and INTERRUPTED, and the combat log lists each layer's share and the roll behind a miss. A creature resistant to a damage school takes three quarters of the hit.",
+    "build": "0.7.1.1421",
     "pullRequest": 1896,
     "url": "https://github.com/cehinds/AshenSpire/pull/1896"
+  },
+  {
+    "id": "pr-1895",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Development builds get their build number from a pipeline",
+    "detail": "Nothing changes in the game. Pull requests no longer commit a build number; after a merge lands, a bot rebuilds and stamps each receipt with the build it actually shipped in.",
+    "build": "0.7.1.1421",
+    "pullRequest": 1895,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1895"
+  },
+  {
+    "id": "pr-1888",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Combat Rounds preview is now in the codebase",
+    "detail": "The alternative round-based combat design and its rules engine are brought over as a preview with its own tests and SPEC section. Nothing in play changes: live combat does not use it yet.",
+    "build": "0.7.1.1419",
+    "pullRequest": 1888,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1888"
   },
   {
     "id": "pr-1890",

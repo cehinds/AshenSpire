@@ -385,12 +385,15 @@ export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
 export const CALLOUT_KINDS = {
   staggered: { string: 'combat.callout.staggered', tone: 'gold' },
   disrupted: { string: 'combat.callout.disrupted', tone: 'gold' },
-  countered: { string: 'combat.callout.countered', tone: 'gold' },
+  countered: { string: 'combat.callout.countered', tone: 'red' },
   evaded: { string: 'combat.callout.evaded', tone: 'white' },
   critical: { string: 'combat.callout.critical', tone: 'red' },
   guardBreak: { string: 'combat.callout.guardBreak', tone: 'red' },
   wardBreak: { string: 'combat.callout.wardBreak', tone: 'ward' },
-  barrierBreak: { string: 'combat.callout.barrierBreak', tone: 'gold' },
+  barrierBreak: { string: 'combat.callout.barrierBreak', tone: 'barrier' },
+  blockBreak: { string: 'combat.callout.blockBreak', tone: 'block' },
+  interrupted: { string: 'combat.callout.interrupted', tone: 'interrupt' },
+  poiseBreak: { string: 'combat.callout.poiseBreak', tone: 'gold' },
 };
 export const CALLOUT_MS = 900;
 export const CALLOUT_INSTANT_MS = 500;
@@ -478,10 +481,11 @@ export function guardHitFloatParts(event) {
   const amount = Math.max(0, Number(event && event.amount) || 0);
   const blocked = Math.min(amount, Math.max(0, Number(event && event.blocked) || 0));
   const residual = amount - blocked;
-  // What Barrier (gold) and Ward (purple) absorbed before the hit reached
+  // What Barrier (blue) and Ward (purple) absorbed before the hit reached
   // Block (blue) and Health (red), each its own unsigned number.
   const barrier = Math.max(0, Number(event && event.barrierAbsorbed) || 0);
   const ward = Math.max(0, Number(event && event.wardAbsorbed) || 0);
+  const poise = Math.max(0, Number(event && event.poiseAbsorbed) || 0);
   return {
     amount,
     blocked,
@@ -489,6 +493,7 @@ export function guardHitFloatParts(event) {
     // A hit Barrier stopped outright reads RESISTED.
     barrier: barrier > 0 ? { text: amount === 0 && ward === 0 ? `${barrier} RESISTED` : String(barrier), cls: 'barrier small' } : null,
     ward: ward > 0 ? { text: String(ward), cls: 'ward small' } : null,
+    poise: poise > 0 ? { text: String(poise), cls: 'poise small' } : null,
     guard: blocked > 0 ? { text: String(blocked), cls: 'blk small' } : null,
     damage: residual > 0 ? { text: `-${residual}`, cls: dmgClass(residual) } : null,
   };
@@ -1363,16 +1368,22 @@ function visualPartsFor(e, beatKind, opts) {
 export function calloutForEvent(e = {}) {
   let kind = null;
   switch (e.type) {
-    case 'enemyStaggered':
+    // A stagger a break caused shows that break's word and INTERRUPTED, not a second STAGGERED.
+    case 'enemyStaggered': if (!e.cause) kind = 'staggered'; break;
     case 'playerStaggered': kind = 'staggered'; break;
+    case 'enemyInterrupted': kind = 'interrupted'; break;
+    // A Smash's Block break is the GUARD BREAK callout (combatGuardBroken); it earns no BREAK word of its own.
+    case 'blockBroken': if (!e.smash) kind = 'blockBreak'; break;
     case 'ratingImpact': if (e.breaks > 0) kind = e.label === 'Disruption' ? 'disrupted' : 'staggered'; break;
     case 'combatCounterTriggered': kind = 'countered'; break; // over the attacker who got countered
     case 'attackEvaded': kind = 'evaded'; break;
-    case 'combatAvoidanceResolved': if (e.avoided && e.evade?.success) kind = 'evaded'; break;
+    // Any avoidance that stopped the hit is a miss: an evade, a distance roll, or a prevention charge.
+    case 'combatAvoidanceResolved': if (e.avoided) kind = 'evaded'; break;
     case 'critHit': kind = 'critical'; break;
     case 'combatGuardBroken': kind = 'guardBreak'; break;
     case 'wardBroken': kind = 'wardBreak'; break;
     case 'barrierBroken': kind = 'barrierBreak'; break;
+    case 'poiseBroken': kind = 'poiseBreak'; break;
     default: break;
   }
   return kind && e.targetId != null ? { kind, targetId: e.targetId } : null;
@@ -1403,6 +1414,16 @@ function visualFor(e, beatKind, opts) {
 
 // opts.sequential (SPEC §7.4, beatOrder 'sequential'): a hit's sound plays
 // with its number; only the spark and slash stay at the contact.
+// A break's visual: a shatter ring in the layer's tone, over the fighter it broke, with its sound.
+function breakBurst(e, tone, sound) {
+  return {
+    reaction: (ctx) => {
+      sfx.play(sound);
+      spawnFx(ctx.layer, ctx.anchorFor(e.targetId), `fx-shatter ${tone}`, 420);
+    },
+  };
+}
+
 function baseVisualParts(e, beatKind, { sequential = false } = {}) {
   switch (e.type) {
     case 'damageDealt': {
@@ -1449,6 +1470,7 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
           // Barrier and Ward stack above the Block / Health pair.
           if (parts.barrier) floatNum(ctx.layer, anchor, parts.barrier.text, parts.barrier.cls, null, { x: -52, y: -34, jitter: false });
           if (parts.ward) floatNum(ctx.layer, anchor, parts.ward.text, parts.ward.cls, null, { x: parts.barrier ? 0 : -26, y: -34, jitter: false });
+          if (parts.poise) floatNum(ctx.layer, anchor, parts.poise.text, parts.poise.cls, null, { x: 26, y: -34, jitter: false });
           if (parts.guard) floatNum(ctx.layer, anchor, parts.guard.text, parts.guard.cls, null,
             { x: paired ? -26 : 0, jitter: false });
           if (parts.damage) floatNum(ctx.layer, anchor, parts.damage.text, parts.damage.cls, null,
@@ -1551,10 +1573,28 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
       return e.amount > 0
         ? { numbers: (ctx) => floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount} ${e.meter === 'ward' ? 'WARD' : 'POISE'}`, `${e.meter === 'ward' ? 'ward' : 'poise'} small`) }
         : null;
+    // A miss (any avoidance that stopped the hit): a white streak over the fighter it missed, and a swish.
+    case 'combatAvoidanceResolved':
+    case 'attackEvaded':
+      if (e.type === 'combatAvoidanceResolved' && !e.avoided) return null;
+      return {
+        reaction: (ctx) => {
+          sfx.play('cardDraw');
+          spawnFx(ctx.layer, ctx.anchorFor(e.targetId), 'fx-miss-streak', 380);
+        },
+      };
+    // A Smash's Block break shows as GUARD BREAK alone: no burst and no sound for it here.
+    case 'blockBroken': return e.smash ? null : breakBurst(e, 'block', 'hit_heavy');
+    case 'barrierBroken': return breakBurst(e, 'barrier', 'block');
+    case 'wardBroken': return breakBurst(e, 'ward', 'procBurst');
+    case 'poiseBroken': return breakBurst(e, 'gold', 'hit_heavy');
+    case 'enemyInterrupted': return breakBurst(e, 'interrupt', 'stagger');
+    case 'playerStaggered': return breakBurst(e, 'gold', 'stagger');
     case 'enemyStaggered':
       return {
         reaction: (ctx) => {
-          sfx.play('stagger');
+          // A break's stagger plays the break's own sound (poiseBroken, enemyInterrupted), not a second one.
+          if (!e.cause) sfx.play('stagger');
           // The STAGGERED word is the on-character callout now, not a banner.
           const anchor = ctx.anchorFor(e.targetId);
           flash(anchor, 'wobble', 600); // poise broken: the whole figure teeters

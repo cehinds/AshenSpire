@@ -39,7 +39,7 @@ import { turnDrawCount, endTurnCardFate, validateDiscardChoice, applyDiscardChoi
 import { handRow, scaledCards } from '../model/handRules.js';
 import { LEGACY_HAND_MAX } from '../model/statRows.js';
 import { refreshCombatRatings, recoverRatingMeters, cardRatingBonus, clearMeterGuards } from './combatRatings.js';
-import { persistentWardMaximum } from '../model/combatRatings.js';
+import { persistentWardMaximum, persistentPoiseMaximum } from '../model/combatRatings.js';
 import * as F from './combatRules.js';
 import * as Reactions from './combatReactions.js';
 import { emitEvent, fireOwnerHooks, findEntity, hasEventTriggers } from './triggers.js';
@@ -351,6 +351,7 @@ export function createCombat({
   if (combatExpansionVersion === 2) {
     for (const entity of [combat.player, ...combat.enemies]) {
       Control.initializePersistentWard(entity, persistentWardMaximum(combat, entity));
+      Control.initializePersistentPoise(entity, persistentPoiseMaximum(combat, entity));
       entity.barrier = 0;
     }
   }

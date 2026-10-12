@@ -1,11 +1,15 @@
 import * as Actions from './actions.js';
 import { combatStatusRules } from '../content/combatStatusRules.js';
+import { syncWardMaximum, syncPoiseMaximum } from './combatPools.js';
+import { persistentPoiseMaximum } from '../model/combatRatings.js';
 
 const finite = value => Number.isFinite(value) ? value : 0;
 const whole = value => Math.max(0, Math.floor(finite(value)));
 const stacks = (entity, id) => whole(entity?.statuses?.[id]?.stacks);
 const enabled = ctx => ctx?.combatExpansionVersion === 2;
 const rules = ctx => ctx?.combatStatusRules || ctx?.combatExpansionRules?.statuses || combatStatusRules;
+// A status's stacks can carry a Ward or Poise bonus: every direct stack change re-syncs the pools.
+const syncPools = (ctx, entity) => { if (entity) { syncWardMaximum(ctx, entity); syncPoiseMaximum(ctx, entity); } };
 const emit = (ctx, type, entity, payload = {}) => ctx.emit?.(type, { targetId: entity.id, ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(entity) } : {}), ...payload });
 function state(entity) {
   return entity.statusControl ||= { version: 1, gauges: {}, sleepHpRestored: 0,
@@ -23,6 +27,7 @@ function clearActive(ctx, entity, id, count = Infinity, reason = 'recovered') {
   if (!removed) return 0;
   inst.stacks -= removed;
   if (!inst.stacks) delete entity.statuses[id];
+  syncPools(ctx, entity);
   emit(ctx, 'statusRemoved', entity, { status: id, amount: removed, reason });
   return removed;
 }
@@ -39,17 +44,74 @@ export function initializePersistentWard(entity, maximum) {
   return entity.persistentWard;
 }
 
-/** Fractional explicit pressure shares one carried budget, not one per hit. */
+/** Poise is the physical twin of Ward: full at every fight start, never regenerates on its own. */
+export function initializePersistentPoise(entity, maximum) {
+  const max = whole(maximum);
+  entity.persistentPoise = { max, value: max };
+  return entity.persistentPoise;
+}
+
+/**
+ * A save written before Poise had its own pool carries a Ward and no Poise. The
+ * restored fight gives that combatant a full Poise pool, as a fresh fight would.
+ * Only an expanded combatant (one with a Ward pool) is touched.
+ */
+export function backfillPersistentPoise(ctx, entity) {
+  if (!entity?.persistentWard || entity.persistentPoise) return entity?.persistentPoise;
+  return initializePersistentPoise(entity, persistentPoiseMaximum(ctx, entity));
+}
+
+/**
+ * THE ONE WARD BREAK. A player pays breaks.wardActionLoss Stamina next turn; an
+ * enemy has no Stamina and pays nothing. Every path that takes Ward to 0 comes
+ * here (spending it, a status pressure, a matchup's strip). `deferBreak` returns
+ * the payload without emitting, so a caller can emit after its damageDealt.
+ */
+export function breakPersistentWard(ctx, entity, meta = {}) {
+  const cost = Math.max(0, ctx?.ratingsRules?.breaks?.wardActionLoss ?? 1);
+  const staminaLoss = entity.kind === 'player' ? cost : 0;
+  if (staminaLoss) entity.pendingActionLoss = (entity.pendingActionLoss || 0) + staminaLoss;
+  const interrupted = entity.kind === 'enemy';
+  const payload = { targetId: entity.id, sourceId: meta.sourceId, staminaLoss, ...(interrupted ? { interrupted: true } : {}),
+    ...(ctx?.playerIdForEntity && entity.kind === 'player' ? { targetPlayerId: ctx.playerIdForEntity(entity) } : {}) };
+  if (!meta.deferBreak) {
+    ctx?.emit?.('wardBroken', payload);
+    if (interrupted) interruptForBreak(ctx, entity, 'wardBreak');
+  }
+  return payload;
+}
+
+/**
+ * A Ward or Poise break INTERRUPTS an enemy: its prepared action is cancelled
+ * (staggerEnemy). An enemy has no Stamina pool (createEnemyCombatEntity sets
+ * none), so the break costs it nothing; only a player pays Stamina next turn.
+ * A dead enemy, or one at 0 HP, is not interrupted, and a refused stagger
+ * (impact protection) interrupts nothing.
+ */
+export function interruptForBreak(ctx, entity, cause) {
+  // A killing hit breaks nothing that can act again: no INTERRUPTED for a dead enemy.
+  if (entity?.kind !== 'enemy' || !entity.alive || !(entity.hp > 0)) return;
+  const cancelledMove = entity.pendingMove ? entity.pendingMove.moveId : null;
+  if (!Actions.staggerEnemy(ctx, entity, { cause })) return;
+  ctx?.emit?.('enemyInterrupted', { targetId: entity.id, cancelledMove, cause });
+}
+
+/**
+ * Fractional explicit pressure shares one carried budget, not one per hit.
+ * `broke` names a Ward taken from above zero to zero: `breakEvent` is its
+ * wardBroken payload (already emitted unless `deferBreak`).
+ */
 export function spendPersistentWard(ctx, entity, amount, meta = {}) {
-  if (!enabled(ctx) || !entity?.persistentWard || amount <= 0) return { spent: 0, carry: 0 };
+  if (!enabled(ctx) || !entity?.persistentWard || amount <= 0) return { spent: 0, carry: 0, broke: false, breakEvent: null };
   const s = state(entity), ward = entity.persistentWard;
-  if (ward.value <= 0) { s.wardDamageCarry = 0; return { spent: 0, carry: 0 }; }
+  if (ward.value <= 0) { s.wardDamageCarry = 0; return { spent: 0, carry: 0, broke: false, breakEvent: null }; }
   const exact = Math.max(0, finite(amount)) + s.wardDamageCarry;
   const spent = Math.min(ward.value, Math.floor(exact + 1e-9));
   ward.value -= spent;
   s.wardDamageCarry = ward.value > 0 ? exact - Math.floor(exact + 1e-9) : 0;
   emit(ctx, 'persistentWardChanged', entity, { spent, value: ward.value, max: ward.max, ...meta });
-  return { spent, carry: s.wardDamageCarry };
+  const breakEvent = ward.value === 0 && spent > 0 ? breakPersistentWard(ctx, entity, meta) : null;
+  return { spent, carry: s.wardDamageCarry, broke: breakEvent !== null, breakEvent };
 }
 
 /** One authority for additive modifiers, caps, once allowances and carry. */
@@ -75,12 +137,26 @@ export function restorePersistentWard(ctx, entity, nominal, options = {}) {
   if (sleep) credit = Math.min(credit, Math.max(0, rules(ctx).sleep.wardCombatCap - s.sleepWardContribution));
   if (options.cap !== undefined) credit = Math.min(credit, Math.max(0, options.cap));
   if (sleep) s.sleepWardContribution += credit;
-  const room = ward.max - ward.value;
+  // A clamped pool restores against its MISSING amount (kept while a rating dip
+  // holds it above max), not against max - value. Only once missing reaches 0
+  // does a card's overflow become Barrier.
+  const missingMode = ward.missing !== undefined;
+  const room = missingMode ? Math.max(0, ward.missing) : ward.max - ward.value;
   const exact = overflow ? credit + s.wardRestoreCarry : Math.min(room, credit + s.wardRestoreCarry);
   const whole = Math.floor(exact + 1e-9);
   const restored = Math.min(room, whole);
   const barrier = overflow ? whole - restored : 0;
-  ward.value += restored;
+  if (missingMode) {
+    const missingAfter = room - restored;
+    ward.value = Math.max(0, Math.min(ward.max, ward.max - missingAfter));
+    // Missing is kept only while it is still above max; at or below max it is max - value again.
+    if (missingAfter <= ward.max) delete ward.missing;
+    else ward.missing = missingAfter;
+  } else {
+    ward.value += restored;
+    // A pool that is no longer empty keeps no clamped missing amount; its missing is max - value again.
+    if (ward.value > 0) delete ward.missing;
+  }
   s.wardRestoreCarry = overflow || ward.value < ward.max ? Math.max(0, exact - whole) : 0;
   emit(ctx, 'persistentWardChanged', entity, { restored, credited: credit, value: ward.value, max: ward.max, source });
   if (barrier > 0) {
@@ -88,6 +164,34 @@ export function restorePersistentWard(ctx, entity, nominal, options = {}) {
     emit(ctx, 'barrierGained', entity, { amount: barrier, total: entity.barrier });
   }
   return { restored, barrier, credited: credit, carry: s.wardRestoreCarry };
+}
+
+/**
+ * The Poise twin of restorePersistentWard: the same missing rule (a clamped pool
+ * refills against `missing`), but no Barrier overflow. Poise is whole, so a
+ * fraction of the credit is floored; no Sleep and no Ashen Blight percent apply.
+ */
+export function restorePersistentPoise(ctx, entity, nominal, options = {}) {
+  if (!enabled(ctx) || !entity?.alive || !entity.persistentPoise) return { restored: 0, credited: 0 };
+  const s = state(entity), poise = entity.persistentPoise;
+  const onceKey = options.onceKey ? `poise:${options.onceKey}` : null;
+  if (onceKey && s.wardAllowances[onceKey]) return { restored: 0, credited: 0 };
+  if (!(nominal > 0)) return { restored: 0, credited: 0 };
+  const missingMode = poise.missing !== undefined;
+  if (!missingMode && poise.value >= poise.max) return { restored: 0, credited: 0 };
+  if (onceKey) s.wardAllowances[onceKey] = true;
+  let credit = Math.max(0, nominal * (1 + finite(options.modifierPercent) / 100));
+  if (options.cap !== undefined) credit = Math.min(credit, Math.max(0, options.cap));
+  const room = missingMode ? Math.max(0, poise.missing) : poise.max - poise.value;
+  const restored = Math.min(room, Math.floor(credit + 1e-9));
+  if (missingMode) {
+    const missingAfter = room - restored;
+    poise.value = Math.max(0, Math.min(poise.max, poise.max - missingAfter));
+    if (missingAfter <= poise.max) delete poise.missing;
+    else poise.missing = missingAfter;
+  } else poise.value += restored;
+  emit(ctx, 'persistentPoiseChanged', entity, { restored, credited: credit, value: poise.value, max: poise.max, source: options.source || 'card' });
+  return { restored, credited: credit };
 }
 
 /** Active grants are separate from explicit buildup; no implicit proc meter. */
@@ -102,6 +206,7 @@ export function applyExpansionActiveStatus(ctx, target, id, amount, source = nul
   const inst = target.statuses[id] ||= { stacks: 0 };
   inst.stacks = before + add;
   delete inst.meter;
+  syncPools(ctx, target);
   const def = ctx.registries?.statuses?.get(id);
   if (def?.decay?.duration) inst.duration = def.decay.duration;
   emit(ctx, 'statusApplied', target, { sourceId: source?.id ?? null, sourceKind: source?.kind, targetKind: target.kind,
@@ -115,6 +220,7 @@ function grant(ctx, target, id, amount, source) {
   const def = ctx.registries?.statuses?.get(id), prior = stacks(target, id);
   const inst = target.statuses[id] ||= { stacks: 0 };
   inst.stacks = def?.stackMode === 'unique' ? 1 : def?.stackMode === 'refresh' ? Math.max(prior, amount) : prior + amount;
+  syncPools(ctx, target);
   if (def?.decay?.duration) inst.duration = def.decay.duration;
   emit(ctx, 'statusApplied', target, { sourceId: source?.id ?? null, status: id, stacks: amount, total: inst.stacks, wasAbsent: !prior });
 }
@@ -146,7 +252,7 @@ export function applyStatusPressure(ctx, target, id, units, source = null, optio
     gauge.value -= threshold;
     let admitted = true;
     if (camp === 'spell' && target.persistentWard?.value > 0) {
-      const spent = spendPersistentWard(ctx, target, 1, { status: id, actionKey: options.actionKey });
+      const spent = spendPersistentWard(ctx, target, 1, { status: id, actionKey: options.actionKey, sourceId: source?.id });
       receipt.wardSpent += spent.spent;
       admitted = target.persistentWard.value === 0;
     } else if (camp === 'physical' && target.poiseMeter?.max > 0) {

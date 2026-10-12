@@ -123,7 +123,8 @@ for (const mode of ['sequential', 'impact', 'instant', 'reduced']) test(`selecte
 
 test('an unsupported receipt reaction hook preserves callout-only pacing',t2=>{
   drive(t2,({trace,run,finish})=>{
-    run(enemyAttack({type:'attackEvaded',targetId:'player'}),{reactionForReceipt:()=>null});finish();
+    // A callout-only event: a miss now has its own streak and swish, so it no longer serves here.
+    run(enemyAttack({type:'combatCounterTriggered',sourceId:'e1',targetId:'player'}),{reactionForReceipt:()=>null});finish();
     assert.equal(timeOf(trace,'bars'),TOTAL,'no extra reaction wait when the fighter has no selected profile');
   });
 });
@@ -166,6 +167,22 @@ test('a failed avoidance roll and an unbroken rating say nothing', () => {
   assert.equal(calloutForEvent({ type: 'combatAvoidanceResolved', targetId: 'player', avoided: false, evade: { success: false } }), null);
   assert.equal(calloutForEvent({ type: 'ratingImpact', targetId: 'e1', breaks: 0, label: 'Stagger' }), null);
   assert.deepEqual(calloutForEvent({ type: 'ratingImpact', targetId: 'e1', breaks: 1, label: 'Disruption' }), { kind: 'disrupted', targetId: 'e1' });
+  // A distance roll or a prevention charge that stops a hit is a miss too, over the fighter it missed.
+  assert.deepEqual(calloutForEvent({ type: 'combatAvoidanceResolved', sourceId: 'e1', targetId: 'player', avoided: true, distance: { roll: 4, chance: 30, success: true } }), { kind: 'evaded', targetId: 'player' });
+  assert.deepEqual(calloutForEvent({ type: 'combatAvoidanceResolved', sourceId: 'e1', targetId: 'player', avoided: true, prevention: 'decoy' }), { kind: 'evaded', targetId: 'player' });
+  // Each break earns its own word over the fighter it broke; an enemy's cancelled action reads INTERRUPTED.
+  assert.deepEqual(calloutForEvent({ type: 'blockBroken', targetId: 'player' }), { kind: 'blockBreak', targetId: 'player' });
+  // A Smash that breaks the last Block shows GUARD BREAK alone: its blockBroken earns no BREAK word.
+  assert.equal(calloutForEvent({ type: 'blockBroken', targetId: 'e1', smash: true }), null);
+  assert.deepEqual(calloutForEvent({ type: 'combatGuardBroken', targetId: 'e1', poise: 0 }), { kind: 'guardBreak', targetId: 'e1' });
+  assert.deepEqual(calloutForEvent({ type: 'wardBroken', targetId: 'e1', staminaLoss: 0 }), { kind: 'wardBreak', targetId: 'e1' });
+  assert.deepEqual(calloutForEvent({ type: 'poiseBroken', targetId: 'e1', interrupted: true, staminaLoss: 1 }), { kind: 'poiseBreak', targetId: 'e1' });
+  assert.deepEqual(calloutForEvent({ type: 'enemyInterrupted', targetId: 'e1', cancelledMove: 'slam', cause: 'poiseBreak' }), { kind: 'interrupted', targetId: 'e1' });
+  // A stagger a break caused shows no second word: the break's word and INTERRUPTED carry it.
+  assert.equal(calloutForEvent({ type: 'enemyStaggered', targetId: 'e1', cause: 'poiseBreak' }), null);
+  assert.deepEqual(calloutForEvent({ type: 'enemyStaggered', targetId: 'e1' }), { kind: 'staggered', targetId: 'e1' });
+  assert.equal(CALLOUT_KINDS.interrupted.string, 'combat.callout.interrupted');
+  assert.equal(CALLOUT_KINDS.barrierBreak.tone, 'barrier');
 });
 
 test('COUNTERED shows on the attacker who got countered, at the counter\'s impact', (t2) => {

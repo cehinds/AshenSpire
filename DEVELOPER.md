@@ -34,11 +34,20 @@ downloaded. A `dev` clone needs no Git LFS. `tools/verify-shipped.mjs` fails if
 any of them is tracked again. Historical builds (and `release`/`main`, which
 still carry theirs) remain LFS pointers; readers of those verify content hashes.
 
-A pull request still commits the one derived fact the build writes,
-`buildordinal.json` (plus `src/content/changelog.generated.js`), and its receipt
-names that ordinal. CI rebuilds and requires the rebuild to change nothing
-committed, then runs `node tools/buildversion.mjs --check` against the fresh
-build, so the box and the receipt are still checked to agree.
+A pull request does not commit `buildordinal.json`. Its receipt is stamped with
+the box as it stands on its own branch. After a push to `dev`, the
+`build-stamp.yml` workflow rebuilds the merged tree, re-points the receipts of the
+pull requests that landed, regenerates `src/content/changelog.generated.js`, and
+commits those three files to `dev` as `build: stamp <release>.<ordinal>
+[build-stamp]`. On a pull request and on `dev`, `dev-preview.yml` tolerates a
+rebuild that changes only those two derived files; test, release and main still
+require the rebuild to change nothing. Promotion from `dev` to `test` waits for
+the build-stamp run on the `dev` tip to succeed, and for that tip to be the stamp
+commit or a later docs-only bot commit, since `test`'s strict check would otherwise
+refuse the promotion. After a successful stamp push, build-stamp dispatches
+`dev-preview` for the stamped tip, so its `dev-standalone-<sha>` artifact is that
+commit's build. The Pages site's dev channel is not republished by the bot; see the
+comment in `build-stamp.yml`.
 
 **Which checks gate a pull request** (owner, 2026-10-11, the stage rules). Every
 check runs in one of four stages, and this table is the only list of them. Each
@@ -61,6 +70,7 @@ Any workflow can be started by hand on any branch (Actions → *Run workflow*).
 | `worker-check.yml` → sanity: receipts self-test (`tools/receipts.mjs --selftest`) | yes | — | — | — |
 | `receipts.yml` → receipts: selftest; a PR runs `--check --pr auto`, a push to `dev` the range to `origin/test` | — | yes | — | — |
 | `dev-preview.yml` → preview: build, standalone artifact, fast gates | — | yes | yes (the build runs again) | yes (the build runs again) |
+| `build-stamp.yml` → stamp: rebuild the merged tree, re-point the landed receipts, commit `buildordinal.json`, `CHANGELOG.md` and the generated module as `[build-stamp]`, then dispatch `dev-preview` for that commit | — | yes (push to `dev` only; not on a pull request) | — | — |
 | `tests.yml` → core: engine suite, each tool's verdict, CHANGELOG order (no browser) | — | yes | — | — |
 | `tests.yml` → discovered tests, four shards, `--no-slow` (`SLOW_DISCOVERED` in `tests/run-node-lanes.mjs`; this includes `tests/readme-sync.test.mjs`) | — | yes | — | — |
 | `quick-start.yml` → Quick start to the first card play within 6 inputs; click to contact ≤ 400 ms and click to first number ≤ 750 ms (medians) at Normal pacing (`tools/click-impact-probe.mjs`: contact is the effects layer's `data-contact` counter, which `src/ui/fx.js` bumps at each impact frame; the number is the first `.float-num` damage or guard float, which under the default `sequential` beat order follows the defender's reaction) | — | yes | yes | only when release differs from test |
@@ -530,8 +540,8 @@ and raise nothing; `isBenignPageNotice()` is the anchored classifier, and
 `node tools/launch.mjs --build-only` still writes the build tree into `build/`
 and `dist/` (the pack-shaped `AshenSpire.html` with its packs, and the light
 single file at `download/`) and the root alias, but only to your working tree:
-git ignores them. Commit the box it moves
-(`buildordinal.json`) and the regenerated changelog module, never the HTML.
+git ignores them. Do not commit the box it moves (`buildordinal.json`): the
+build-stamp workflow commits it on `dev` after a merge. Never commit the HTML.
 To play a build you did not make, download the `<branch>-standalone-<commit>`
 artifact from that commit's workflow run: every pull request into `dev` and
 every push to `dev`, `test`, `release` and `main` uploads one. A tool or test
@@ -695,18 +705,29 @@ receipt of its own is the author's to fix, before merge.
 The tool checks **coverage**, not truth: whether an entry exists naming each
 merged pull request. Whether the prose is accurate is not machine-checkable.
 The one stamp it does check is the `--pr` pull request's own: its receipt must
-carry exactly the release and ordinal of `buildordinal.json` in the tree being
-checked, the box that pull request ships (#1315 merged with `0.7.1.518` on a
-box of 519, and nothing caught it). Older receipts' ordinals belong to
+name a build of the release in `buildordinal.json`. A stamp of any build in the release, below or
+above the tree's box, passes with a note, since build-stamp re-points it after the
+merge; no stamp, prose, a malformed stamp or another release fails (#1315 merged
+with `0.7.1.518` on a box of 519, and nothing caught it). Older receipts' ordinals belong to
 `tools/about-changelog.mjs`, which owns the file's shape. If CHANGELOG.md ever
 yields no pull-request references at all, that is this tool's own syntax having
 moved out from under it, and it exits **2 (harness could not run)** rather than
 reporting every merge as unreceipted.
 
-Writing one is in the file's own header: a receipt for already-landed work names
-the ordinal **as committed at that merge**; a receipt shipping in its own pull
-request is written one ahead, then `node tools/about-changelog.mjs --write` and a
-rebuild converge the box to the receipt.
+Writing one is in the file's own header: a receipt names the ordinal of
+`buildordinal.json` as it stands on the pull request's branch, and build-stamp
+re-points it to the real build after the merge (`tools/build-stamp.mjs`). A
+receipt for already-landed work keeps the ordinal **as committed at that merge**,
+which build-stamp does not change except for the pull requests in the push it
+handles.
+
+**Pending receipts in the order check.** `tools/about-changelog.mjs --check-order`
+runs with `--pending auto` on a pull request into `dev` and on a push to `dev`
+(`tests.yml`). A pending receipt is one whose pull request is the event's own, or
+landed in the push, and whose stamp build-stamp has not yet re-pointed. Its shape is
+still checked, a bullet, a link and a well-formed stamp of this release, but it is
+left out of the order comparisons, and each one prints a NOTE. On `test`, `release`
+and `main` the order is strict.
 
 ## The four layers (dependencies point down only)
 
@@ -1217,7 +1238,8 @@ the HTML; the score stays synthesized, as for any `file://` page.
 `node tools/external-play.mjs --file` opens it that way in Chromium.
 `node tools/launch.mjs --build-only` picks the flags for you (see *Run & test*).
 The files are local build output, ignored by git on `dev`: of the build's own
-outputs, commit only `buildordinal.json` (and the generated changelog module).
+outputs, a pull request commits none: `buildordinal.json` and the generated
+changelog module are written on `dev` by build-stamp after the merge.
 Generated content and config modules are committed as usual.
 
 The browser tools that drive a built page (`--dist`, `--standalone`,

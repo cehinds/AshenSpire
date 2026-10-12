@@ -47,6 +47,8 @@ export const COMBAT_OPCODES = Object.freeze([
   // before the matching meter fills, until the owner's next turn.
   'gainPoise',
   'gainWard',
+  // Refills Poise (the Poise twin of gainWard's restore); never a guard.
+  'restorePoise',
   'gainBarrier',
   'buildup',
   'wardDamage',
@@ -112,7 +114,7 @@ export const TARGETS = Object.freeze([
 
 // Event bus events emitted by executed actions (SPEC §3.10).
 export const EVENTS = Object.freeze([
-  'ashenBlightPaid', 'barrierGained', 'barrierBroken', 'wardBroken', 'controlRecovered', 'controlResolveScheduled', 'persistentWardChanged', 'statusGaugeFilled', 'statusPoiseBreak', 'statusPressure', 'statusRecoveryRolled',
+  'ashenBlightPaid', 'barrierGained', 'barrierBroken', 'wardBroken', 'poiseBroken', 'blockBroken', 'enemyInterrupted', 'controlRecovered', 'controlResolveScheduled', 'persistentWardChanged', 'persistentPoiseChanged', 'statusGaugeFilled', 'statusPoiseBreak', 'statusPressure', 'statusRecoveryRolled',
   'combatAvoidanceResolved',
   'combatCounterArmed', 'combatCounterConsumed', 'combatCounterTriggered',
   'combatWardStripped', 'combatMatchupApplied', 'combatDamageRider',
@@ -524,6 +526,7 @@ export const EFFECT_SPECS = Object.freeze({
   // computeMeterGuardGain), held as entity.poiseGuard / entity.wardGuard.
   gainPoise: { allowed: [], required: ['amount'], refs: {} },
   gainWard: { allowed: ['oncePerCombat'], required: ['amount'], refs: {} },
+  restorePoise: { allowed: ['oncePerCombat'], required: ['amount'], refs: {} },
   grantRollMode: { allowed: ['roll', 'advantage', 'disadvantage'], required: ['roll'], refs: {} },
   retain: { allowed: [], required: ['amount'], refs: {} },
   gainBarrier: { allowed: [], required: ['amount'], refs: {} },

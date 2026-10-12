@@ -5,6 +5,7 @@ import { usesSingleBreakMeter, breakMeterIds } from '../model/breakMeter.js';
 import * as statuses from '../framework/statusSemantics.js';
 import * as Matchups from './combatMatchups.js';
 import { creditKnowledgeImpact } from './enemyKnowledge.js';
+import { syncWardMaximum, syncPoiseMaximum } from './combatPools.js';
 
 export function refreshCombatRatings(ctx) {
   if (!ctx.ratingsRules) return;
@@ -28,6 +29,14 @@ export function refreshCombatRatings(ctx) {
     let max = Math.max(1, Math.floor(receipt.totals[id]));
     for (let n = 0; n < (prior?.growths || 0); n++) max = Math.ceil(max * ctx.ratingsRules.breaks.thresholdGrowth);
     ctx.player[key] = { ...prior, value: Math.min(prior?.value || 0, max - 1), max, growths: prior?.growths || 0 };
+  }
+  // The live rating moved: every Ward and Poise pool follows it now, not at its next use.
+  if (ctx.combatExpansionVersion === 2) {
+    for (const entity of [ctx.player, ...(ctx.enemies || [])]) {
+      if (!entity) continue;
+      syncWardMaximum(ctx, entity);
+      syncPoiseMaximum(ctx, entity);
+    }
   }
 }
 
