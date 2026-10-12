@@ -71,7 +71,11 @@ test('combat.combatRounds is stamped only when on, with empty state', () => {
 
   const onRun = createRunState({ seed: 5, classId: 'rogue', registries, profileMeta: { settings: { [COMBAT_ROUNDS_KEY]: true } } });
   const onCombat = createRunCombat({ registries, rng: createRng(4242), run: onRun, enemyIds: [ENEMY], settings: {} });
-  assert.deepEqual(Object.keys(onCombat.combatRounds).sort(), ['charges', 'momentum', 'poiseDouble', 'rules']);
+  // P3a (PREVIEW-PLAN): the fight's own round state holds the queues too. The player has no card
+  // queued yet, and the creation roll has queued each enemy's hidden moves (combatRoundsAdapter.js).
+  assert.deepEqual(Object.keys(onCombat.combatRounds).sort(), ['charges', 'enemyQueues', 'momentum', 'playerQueue', 'poiseDouble', 'rules']);
   assert.deepEqual({ momentum: onCombat.combatRounds.momentum, poiseDouble: onCombat.combatRounds.poiseDouble, charges: onCombat.combatRounds.charges }, { momentum: {}, poiseDouble: {}, charges: {} });
+  assert.deepEqual(onCombat.combatRounds.playerQueue, []);
+  assert.deepEqual(Object.keys(onCombat.combatRounds.enemyQueues), onCombat.enemies.filter((e) => e.alive).map((e) => e.id));
   assert.equal(onCombat.combatRounds.rules.version, 1);
 });
