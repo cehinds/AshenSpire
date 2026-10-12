@@ -1,6 +1,7 @@
 import { combatMatchups, combatIntent, combatExpansionMatchups } from '../content/combatMatchups.js';
 import { combatStatusRules } from '../content/combatStatusRules.js';
 import { ASHEN_BLIGHT_RULES } from '../content/ashenBlight.js';
+import { reactionRulesSnapshot } from '../content/combatCardTraits.js';
 import { createAshenBlightState, effectiveAshenBlightAttributes, ashenBlightBonuses } from '../model/ashenBlight.js';
 import { resolveCombatCard } from './combatExpansion.js';
 import * as Control from './combatStatusControl.js';
@@ -139,12 +140,14 @@ export function createCombat({
   // null — every recovery setting at its default — keeps the idle-Stamina rule
   // below and writes no recovery state into the fight or its save.
   recoveryRules = null,
-  knowledge = null, reactionRulesVersion = null,
+  knowledge = null, reactionRulesVersion, reactionRules = null,
   // SPEC §14.1 Play in deck order: read once by the caller (runCombat.js) and
   // carried on the fight as `orderedDraw`, so a saved fight keeps its rule.
   orderedDraw = false,
   combatExpansionVersion = 1, combatExpansionRules = null, combatKey = 'headless',
 }) {
+  // New expanded fights carry reaction rules version 2; null (saved or explicit) stays without reactions.
+  const reactionVersion = reactionRulesVersion === undefined ? (combatExpansionVersion === 2 ? 2 : null) : reactionRulesVersion;
   // Run creation owns derived Mana. Older headless fixtures without a Mana
   // pool get a harmless zero pool; class data is never a fallback authority.
   const maxMana = Number.isFinite(player.maxMana) ? player.maxMana : 0;
@@ -187,7 +190,7 @@ export function createCombat({
     ...(handRules ? { handRules: structuredClone(handRules), pendingDiscardDraw: 0 } : {}),
     ...(recoveryRules ? { recovery: newRecoveryState(recoveryRules) } : {}),
     foundation: F.createFoundation(ruleset, combatProfiles, registries),
-    ...(reactionRulesVersion === 1 && combatExpansionVersion === 2 ? { reactionRulesVersion: 1 } : {}),
+    ...(reactionVersion >= 1 && combatExpansionVersion === 2 ? { reactionRulesVersion: reactionVersion, ...(reactionVersion === 2 ? { reactionRules: reactionRulesSnapshot(reactionRules) } : {}) } : {}),
     registries,
     equipmentProfileRuleSnapshot,
     // Carried from the run so a mid-combat swap can restamp against the quota
@@ -1290,12 +1293,12 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
   const inst = combat.piles.hand[idx];
   const def = resolveCombatCard(combat, inst, { upcastTier, upcastRanks });
   const kws = def.keywords || [];
-  if (!Control.controlGate(combat, p, def).allowed) throw new Error('Recover from the active control statuses before playing cards');
+  if (!Control.controlGate(combat, p, def).allowed) throw F.playRefusal('Recover from the active control statuses before playing cards', 'controlled');
   if (p.ashenBlight?.milestones?.some(row => row.path === null)) throw new Error('Choose the pending Ashen Blight feat first');
   const chosen = assertCardChoice(cardChoice(combat.registries, def, p.classId), choice);
   F.assertFoundationPlayable(combat, def, chosen);
 
-  if (combat.registries.framework.isUnplayable(def)) throw new Error(`'${def.name}' is unplayable`);
+  if (combat.registries.framework.isUnplayable(def)) throw F.playRefusal(`'${def.name}' is unplayable`, 'unplayable');
 
   const isX = def.cost === 'X';
   let { energy: cost, mana: manaCost, stamina: staminaCost } = playCosts(combat, def);
@@ -1360,7 +1363,8 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
   A.preflightCardHp(combat, def, p, target, before);
   if (combat.combatExpansionVersion === 2) {
     const check = playCosts(preparingPreview(combat, inst, def, targetId), def);
-    if (p.energy < check.energy || p.mana < check.mana) throw new Error('Not enough Stamina or Mana');
+    if (p.energy < check.energy) throw F.playRefusal('Not enough Stamina or Mana', 'cost', { resource: 'stamina', need: check.energy, have: p.energy });
+    if (p.mana < check.mana) throw F.playRefusal('Not enough Stamina or Mana', 'cost', { resource: 'mana', need: check.mana, have: p.mana });
     const payment = Blight.payAshenBlight(combat, p, { amount: def.ashenBlightCost || 0, receiptId: `${combat.combatKey}:${p.combatOwnerCycle}:${p.counters.cardsPlayedThisCombat + 1}:${inst.instanceId}`, combatKey: combat.combatKey });
     if (payment.recorded) combat.emit('ashenBlightPaid', { sourceId: p.id, amount: payment.paid, value: payment.value });
     if (payment.terminal) {
@@ -1380,8 +1384,8 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
     target ||= combat.enemies.find(e => e.alive) || null;
   }
   ({ energy: cost, mana: manaCost, stamina: staminaCost } = playCosts(combat, def));
-  if (p.energy < cost) throw new Error('Not enough Actions (Stamina) to play this card');
-  if (p.mana < manaCost) throw new Error('Not enough mana to play this card');
+  if (p.energy < cost) throw F.playRefusal('Not enough Actions (Stamina) to play this card', 'cost', { resource: 'stamina', need: cost, have: p.energy });
+  if (p.mana < manaCost) throw F.playRefusal('Not enough mana to play this card', 'cost', { resource: 'mana', need: manaCost, have: p.mana });
 
   // Pay cost (X-cost consumes ALL energy — SPEC §4.3).
   p.energy -= cost;

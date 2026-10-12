@@ -130,6 +130,7 @@ export function createRunCombat({
       bankable: knowledgeRun.enemyKnowledgeState.bankable, profiles: { player: mergeEnemyKnowledge(knowledgeRun.enemyKnowledgeState.pending, enemyKnowledgeProfile) } } } : {}),
     combatExpansionVersion: run.combatExpansionVersion || 1,
     reactionRulesVersion: run.reactionRulesVersion || null,
+    reactionRules: run.reactionRules,
     combatExpansionRules: run.combatExpansionRules,
     combatKey: `${run.seed}/${run.actNumber}/${run.floor}/${run.mapNodeId || enemyIds.join(',')}`,
     // ONE ROW FORMAT, READ FROM THE RUN (ruleset 7). The rating rows and the

@@ -124,6 +124,7 @@ export const UI_COMPONENTS = Object.freeze({
   combatActionRail: 'combat-action-rail',
   combatTools: 'combat-tools',
   combatLogDrawer: 'combat-log-drawer',
+  combatLogModal: 'combat-log-modal',
   reactionToggle: 'reaction-toggle',
   characterDisclosure: 'character-disclosure',
   classPreviewPane: 'class-preview-pane',

@@ -3,10 +3,11 @@ import { childModel } from '../models/ComponentModel.js';
 import { combatLogHeight, combatLogSnapSize, combatLogDragScale, COMBAT_LOG_SIZES } from '../models/CombatToolsModel.js';
 import { markUiComponent, UI_COMPONENTS as UI } from './uiComponents.js';
 import { anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
-import { t, tFull } from '../strings.js';
+import { t } from '../strings.js';
 import { trackGesture } from '../gesture.js';
 import { hudGeometry, toolsRowTop } from '../models/HudLayoutOffsetModel.js';
 import { visibleCombatPanelRect } from './battlefieldStage.js';
+import { renderCombatLogEntries, openCombatLogModal } from './combatLogModal.js';
 
 // The narrowest a hand-spanning row may be, in CSS px: Combat log and the
 // Reaction switch side by side with their gap. A two-card hand is narrower.
@@ -50,6 +51,16 @@ function cardBand(hand) {
   return right > left ? { left, right } : null;
 }
 
+/** Closes the Full log door for good: the combat has ended or the screen is leaving. */
+export function closeCombatFullLog(state) {
+  const door = state.fullLog;
+  state.fullLog = null;
+  door?.close();
+}
+
+// Gap between a corner tool and the combat screen's edge, in CSS px.
+const CORNER_INSET = 16;
+
 export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
   const root = markUiComponent(el('aside', { class: 'combat-tools', 'data-combat-read-only': '' }), UI.combatTools);
   const logButton = button({ label: t('combat.log.title'), attrs: { 'data-combat-tool': 'log', 'aria-expanded': 'false', 'aria-controls': 'combat-log' } });
@@ -65,9 +76,19 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
   track.append(value, thumb); reaction.replaceChildren(label, track);
   const panel = markUiComponent(el('section', { id: 'combat-log', class: 'combat-log-panel', 'aria-label': t('combat.log.title'), hidden: true }), UI.combatLogDrawer);
   const title = el('div', { class: 'combat-log-heading', text: t('combat.log.title') });
+  // Opens the full-screen log. It sits in the header, outside the scrolling list,
+  // and is a plain text button: it is not one of the three drag sizes.
+  const fullLog = button({ label: t('combat.log.full'), attrs: { 'data-combat-tool': 'full-log', 'aria-haspopup': 'dialog' } });
+  fullLog.classList.add('combat-log-full');
+  // A remount draws a new Full log button. An open door is adopted by it: its
+  // focus return moves to this button, and a closed handle is dropped.
+  if (state.fullLog && !state.fullLog.panel.isConnected) state.fullLog = null;
+  state.fullLog?.setOpener(fullLog);
+  const head = el('div', { class: 'combat-log-head' });
+  head.append(title, fullLog);
   const list = el('div', { class: 'combat-log-entries', 'data-combat-tool': 'entries', tabindex: '0', role: 'region', 'aria-label': t('combat.log.actions') });
   list.addEventListener('scroll', () => { state.scrollTop = list.scrollTop; state.followLatest = list.scrollTop + list.clientHeight >= list.scrollHeight - 4; });
-  panel.append(title, list); root.append(panel, logButton, reaction); combatEl.append(root);
+  panel.append(head, list); root.append(panel, logButton, reaction); combatEl.append(root);
   let drag = null, suppressClick = false, released = false;
   const snapHeights = () => {
     const menuBottom = [...combatEl.querySelectorAll('.topbar button')].reduce((max, node) => Math.max(max, node.getBoundingClientRect().bottom), 0);
@@ -117,6 +138,15 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
       : COMBAT_LOG_SIZES[Math.max(0, Math.min(2, index + (event.key === 'ArrowUp' ? 1 : -1)))];
     state.open = true; onViewChange();
   });
+  // The full log is a door of its own. It reads the same entries as the drawer
+  // and changes neither the drawer's open state nor its size. Its live handle
+  // sits on the screen's `state`, so a remount keeps the same door open; only
+  // the screen's teardown (closeCombatFullLog) or the reader's Close ends it.
+  let latestEntries = [];
+  fullLog.addEventListener('click', () => {
+    if (state.fullLog) return;
+    state.fullLog = openCombatLogModal({ entries: latestEntries, opener: fullLog, onClose: () => { state.fullLog = null; } });
+  });
   reaction.addEventListener('click', () => onToggle(reaction.getAttribute('aria-checked') !== 'true'));
   let frame = 0, entryKey = '';
   function measure() {
@@ -149,14 +179,26 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
     // the field but never leaves the combat screen, never covers a control
     // above it, and never drops over the cards below its dock (dy > 0 is
     // ignored). Its height is read only for a raise: at 0 no layout is forced.
+    // Owner (2026-10-12), desktop only: the log sits in the screen's left
+    // corner and the reaction switch in its right, level with the card
+    // bottoms, so the strip above the cards stays free.
+    const corners = globalThis.document?.documentElement?.dataset.formFactor === 'desktop' && handBox;
     const dockTop = handBox?.top || 0;
-    const top = dy < 0 ? toolsRowTop({ dockTop, dy: dy * zoom, screenTop: combatBox.top,
-      row: { left, width, height: root.getBoundingClientRect().height }, obstacles: toolsObstacles(combatEl, zoom) }) : dockTop;
+    const top = corners ? handBox.bottom - root.getBoundingClientRect().height - CORNER_INSET * zoom
+      : dy < 0 ? toolsRowTop({ dockTop, dy: dy * zoom, screenTop: combatBox.top,
+        row: { left, width, height: root.getBoundingClientRect().height }, obstacles: toolsObstacles(combatEl, zoom) }) : dockTop;
+    root.dataset.toolsPlacement = corners ? 'corners' : 'row';
     const localDock = anchorLocalBox(combatEl, { left,
       top, width: 0, height: 0 }, { zoom });
     root.style.top = `${localDock.top}px`;
     root.style.left = `${localDock.left}px`;
     root.style.right = 'auto';
+    if (corners) {
+      // The corners hug the combat screen's own edges, in its local px.
+      root.style.left = `${CORNER_INSET}px`;
+      root.style.right = `${CORNER_INSET}px`;
+      root.style.width = 'auto';
+    }
     const height = drag?.active ? drag.height : snapHeights()[state.size];
     const localPanel = anchorLocalBox(VIEWPORT_ORIGIN, { left: 0, top: 0, width: 0, height }, { zoom });
     panel.style.height = `${localPanel.height}px`;
@@ -192,15 +234,10 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
     value.textContent = stateLabel;
     panel.hidden = !log.open; logButton.setAttribute('aria-expanded', String(log.open));
     logButton.setAttribute('aria-description', `${log.size}. Tap to open or close; drag up or down to resize. Arrow keys change size.`);
+    latestEntries = log.entries;
     const key = JSON.stringify(log.entries);
     if (key !== entryKey) {
-      entryKey = key; list.replaceChildren();
-      let round, items;
-      for (const entry of log.entries) {
-        if (entry.round !== round) { round = entry.round; items = el('ol', {}); list.append(el('h3', { text: t('combat.log.round', { round }) }), items); }
-        items.append(el('li', { text: entry.text }));
-      }
-      if (!log.entries.length) list.append(el('p', { text: tFull('combat.log.empty') }));
+      entryKey = key; renderCombatLogEntries(list, log.entries); state.fullLog?.setEntries(log.entries);
       list.scrollTop = state.followLatest !== false ? list.scrollHeight : state.scrollTop || 0;
     }
     schedule();
@@ -208,5 +245,6 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
   return { update, flushGeometry,
     focusedTool() { return root.contains(document.activeElement) ? document.activeElement.dataset.combatTool || null : null; },
     restoreFocus(token) { if (token) root.querySelector(`[data-combat-tool="${CSS.escape(token)}"]`)?.focus({ preventScroll: true }); },
+    // A remount releases this instance but leaves an open full log to the next one.
     release() { released = true; observer.disconnect(); formFactorObserver.disconnect(); cancelAnimationFrame(frame); window.visualViewport?.removeEventListener('resize', schedule); removeEventListener('resize', schedule); root.remove(); } };
 }

@@ -93,7 +93,7 @@ try {
       assert(await page.locator('.player.context-selected').count(), 'player HP tap selects its character');
       assert(await page.locator('.player .combatant-mini-hud [data-meter-row="name"]').isVisible(), 'selected character reveals its name');
       assert(await page.locator('.player .combatant-mini-hud [data-meter-row="resource"]').first().isVisible(), 'selected character reveals its resource details');
-      await page.locator('.player[data-inspect-ready="true"] .combatant-info').waitFor({ state: 'visible' });
+      await page.locator('.player.context-selected .combatant-info[data-placed="true"]').waitFor({ state: 'visible' });
       await page.waitForTimeout(100);
       const details = await page.evaluate(() => {
         const panel = document.querySelector('.player .combatant-mini-hud').getBoundingClientRect();
@@ -137,7 +137,7 @@ try {
       });
       assert(selectedEnemy.name.height > 0 && selectedEnemy.name.top >= selectedEnemy.body.bottom - .5,
         `${width}: selected enemy name must appear below its body`);
-      await page.locator('.enemy.context-selected[data-inspect-ready="true"] .combatant-info').waitFor({ state: 'visible' });
+      await page.locator('.enemy.context-selected .combatant-info[data-placed="true"]').waitFor({ state: 'visible' });
       await page.screenshot({ path: `${out}/${width}-enemy-selected.png` });
       await tap('.enemy.context-selected .combatant-info');
       await page.locator('.combatant-door').waitFor();

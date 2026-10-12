@@ -3,6 +3,246 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1893",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "The design spec records the owner's audit decisions",
+    "detail": "Development-process change only, nothing in the game changes. The specification now describes a dozen more rules as the game plays them, and records four design decisions: bosses will offer a choice of three relics, the enemy cap will become a setting, the export button stays on debug pages, and LAN co-op is planned for a later release.",
+    "build": "0.7.1.1431",
+    "pullRequest": 1893,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1893"
+  },
+  {
+    "id": "pr-1863",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "The design spec matches the game again",
+    "detail": "Development-process change only, nothing in the game changes. The specification document was checked section by section against the game's code, and the audit is kept in docs/spec-audit/SPEC-AUDIT.md. The spec now describes what the game does: Actions and Stamina are one resource, the defaults are the ones the game ships, and rules that were never built are gone. The few points that need a design decision are listed in the audit.",
+    "build": "0.7.1.1431",
+    "pullRequest": 1863,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1863"
+  },
+  {
+    "id": "pr-1904",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Rules written for enemy reactions on the reaction stack",
+    "detail": "Nothing changes in the game yet. The specification now describes enemies that react to your cards: a Gilded Knight can guard before a heavy hit lands, and a Court Duelist can answer any reaction you play, a plain Block included.",
+    "build": "0.7.1.1431",
+    "pullRequest": 1904,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1904"
+  },
+  {
+    "id": "pr-1902",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Rules written for chained reactions and three new card traits",
+    "detail": "Nothing changes in the game yet. The specification now describes playing several Reaction cards against one enemy action, resolving last played first, and the Counterstrike, Impact and Flux card traits that will follow.",
+    "build": "0.7.1.1429",
+    "pullRequest": 1902,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1902"
+  },
+  {
+    "id": "pr-1900",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Cards rebalanced; Insanity now staggers; Necrotic Blight lasts the fight",
+    "detail": "Thirteen cards now match their rarity and cost. Blood Offering, Exsanguinate, Star Slicer, Umbral Ward, Iron Skin, Ash Circle, Vanish, Binding Parry and Draw Cut hit or guard for less. Comet Fragment, Bloodhunter's Strike and Shield Crash got stronger, and Sundering Hew now applies Vulnerable. Weapon attacks now have a fixed damage type: slashing cards apply Bleed. An Insanity break now Staggers, so Executioner and other Staggered bonuses apply. Necrotic damage applies Necrotic Blight, which lasts the whole fight; other Blight still fades after 3 turns. Holy hits now cleanse in new runs. Frost and Insanity exposures now boost even small tagged hits, and Feint applies Prepare at every rank.",
+    "build": "0.7.1.1427",
+    "pullRequest": 1900,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1900"
+  },
+  {
+    "id": "pr-1897",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "The approved Reaver greatsword sequences now play in solo combat",
+    "detail": "Attack and Smash use the six selected phases; Guard, Parry and Resisted share the weighted impact order, while Guard-tag and Evasion-tag counters follow their separate approved routes. Actual combat receipts choose reactions and retaliation, and actions restore the originating stance. Other loadouts and co-op retain their existing presentation. Labeled review animations and thirty additional stance concepts remain available separately.",
+    "build": "0.7.1.1425",
+    "pullRequest": 1897,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1897"
+  },
+  {
+    "id": "pr-1905",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Chain reactions, and Counterstrike, Impact and Flux on cards",
+    "detail": "In new runs, cards tagged Reaction can be played during the enemy's turn, and several can be chained against one attack: the last one played resolves first. Counterstrike adds 50% to a card's numbers (75% when your stance beats the target's), Impact adds Poise damage on a hit or doubles the card's own, and Flux does the same for Ward. Burn and Crimson Blight now wear down Ward each turn. Saved runs keep their old rules.",
+    "build": "0.7.1.1433",
+    "pullRequest": 1905,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1905"
+  },
+  {
+    "id": "pr-1901",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "The link check's self-test covers the Combat Rounds docs",
+    "detail": "Nothing changes in the game. The link checker's self-test now copies the Combat Rounds docs folder, so a test that imports from it no longer marks the self-test untestable.",
+    "build": "0.7.1.1423",
+    "pullRequest": 1901,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1901"
+  },
+  {
+    "id": "pr-1895",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Development builds get their build number from a pipeline",
+    "detail": "Nothing changes in the game. Pull requests no longer commit a build number; after a merge lands, a bot rebuilds and stamps each receipt with the build it actually shipped in.",
+    "build": "0.7.1.1421",
+    "pullRequest": 1895,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1895"
+  },
+  {
+    "id": "pr-1888",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Combat Rounds preview is now in the codebase",
+    "detail": "The alternative round-based combat design and its rules engine are brought over as a preview with its own tests and SPEC section. Nothing in play changes: live combat does not use it yet.",
+    "build": "0.7.1.1419",
+    "pullRequest": 1888,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1888"
+  },
+  {
+    "id": "pr-1890",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Reaver greatsword combat stances now use selected artwork",
+    "detail": "A Reaver in the default armor carrying only a greatsword now shows selected poses for Sweep, Counter and Smash, holds its Evade pose when ready, and shows its Guard Break reaction when an enemy breaks its guard. These reactions use the five selected greatsword paintings.",
+    "build": "0.7.1.1417",
+    "pullRequest": 1890,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1890"
+  },
+  {
+    "id": "pr-1885",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "On desktop, the Combat log and Reaction sit in the bottom corners",
+    "detail": "The Combat log button now sits in the bottom-left corner and the Reaction toggle in the bottom-right, so the strip above your cards is gone and the hand sits lower on the screen with more room for the battlefield. Phone and tablet are unchanged.",
+    "build": "0.7.1.1406",
+    "pullRequest": 1885,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1885"
+  },
+  {
+    "id": "pr-1884",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Each fighter's readout sits above or below it, and the battlefield is narrower on wide screens",
+    "detail": "A front-row enemy's health and intent now hang just below its feet instead of drifting off to one side, so every readout stays with its own fighter. On wide screens the fighters stand closer to the middle, and the enemies' back row steps a little to the right so it stands clear of the front row. Switching back to the Classic look mid-fight keeps you in a row Classic has.",
+    "build": "0.7.1.1404",
+    "pullRequest": 1884,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1884"
+  },
+  {
+    "id": "pr-1876",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Spell range follows how a spell is delivered; new physical and magical marks in the deck editor",
+    "detail": "In expanded-combat runs a spell's range now follows its delivery: projectile spells such as Comet Fragment reach Ranged, bladed spells such as Starblade Phalanx (now a melee spell) strike at Melee, and the rest stay at Reach (runs from before expanded combat are unchanged). The deck editor shows the same range combat uses, marks physical cards with a silver Smash sigil and spells with a blue flame, and a Ranged card like Ricochet reads just \"Ranged\".",
+    "build": "0.7.1.1402",
+    "pullRequest": 1876,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1876"
+  },
+  {
+    "id": "pr-1886",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Picking a card shows its stance before you play it",
+    "detail": "Selecting a card in hand puts your fighter in that card's stance, and the stance mark above their head changes to match; click through your hand and both follow each card, and cancelling returns them to your last stance. Playing the card swings from that stance, and afterwards your fighter holds it — into the next turn too — until you play another card. The stances are attack, smash, sweep, defend, counter and prepare: spells and cards that are none of the others show prepare, and sweep now has its own mark. Smash holds each class's painted wind-up, and every swing now leaves from your stance and returns to it instead of snapping to a neutral pose. Co-op seats hold their stance across turns but do not show a preview while selecting.",
+    "build": "0.7.1.1401",
+    "pullRequest": 1886,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1886"
+  },
+  {
+    "id": "pr-1875",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Widescreen combat uses the desktop layout",
+    "detail": "On widescreen monitors the combat screen now uses the same band sizes as desktop: a taller hand with the larger desktop cards in a row under the Combat log and the compact 450px footer. Turning a tablet into a desktop-width window now redraws the battlefield for the new layout. Phone and tablet layouts are unchanged.",
+    "build": "0.7.1.1393",
+    "pullRequest": 1875,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1875"
+  },
+  {
+    "id": "pr-1881",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Co-op is set aside for now",
+    "detail": "The title menu no longer offers Forsaken Together while co-op is reworked. Nothing else changes, and solo play is untouched.",
+    "build": "0.7.1.1389",
+    "pullRequest": 1881,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1881"
+  },
+  {
+    "id": "pr-1870",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Combatants stand on an even grid, and any part of an enemy's square targets it",
+    "detail": "In the default view the battlefield is now one even grid of three lanes, leaning on a diagonal into the distance: enemies in a back row and a front row, your party in one row nearest you, with open ground between you and them. Each square has a shadow where its fighter's feet stand. Enemies fill the back row first (one in the middle, two on the outer lanes, three across), then the front row, up to six. You start in the left lane. Tapping anywhere in an occupied enemy square selects that enemy, or plays your readied card or flask on it. Moving now picks one of the three lanes in your row. The Classic look is unchanged.",
+    "build": "0.7.1.1387",
+    "pullRequest": 1870,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1870"
+  },
+  {
+    "id": "pr-1878",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Desktop combat looks like the phone",
+    "detail": "On desktop the hand is taller and its cards are much larger. They sit in a tight row just under the Combat log / Reaction row, and the footer is compact. Enemies stand together on one ground line, and the castle and trees of the horizon show along the top of the battlefield. The Combat log row, intent badges, stance mark and footer words are larger. Phone, tablet and widescreen layouts are unchanged.",
+    "build": "0.7.1.1363",
+    "pullRequest": 1878,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1878"
+  },
+  {
+    "id": "pr-1879",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Rest sites: grounded art, a clearer order, and a way back in",
+    "detail": "The traveler and campfire now sit on the shrine floor instead of floating, on desktop and phone. The choices read Rest, Level up, Upgrade, Flask, then the rest. After leaving a rest site, its node stays clickable on the map until you pick a new one, so you can go back for something you forgot; what you already took stays taken.",
+    "build": "0.7.1.1361",
+    "pullRequest": 1879,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1879"
+  },
+  {
+    "id": "pr-1868",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Deck editor: (i) centred under the art, grey Basic/Cantrip badge, vertical grip",
+    "detail": "The inspect (i) sits centred on the bottom edge of the card art, the rank badge sits higher and reads grey at rank 0 (Basic, Cantrip), and the phone grip is vertical again.",
+    "build": "0.7.1.1359",
+    "pullRequest": 1868,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1868"
+  },
+  {
+    "id": "pr-1872",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Co-op: the blow that ends a fight reaches the combat log",
+    "detail": "When your attack killed the last enemy in co-op, the combat log and the Full log missed that turn's card, damage and death entries before the reward screen closed them. They now appear.",
+    "build": "0.7.1.1357",
+    "pullRequest": 1872,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1872"
+  },
+  {
+    "id": "pr-1849",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Attacks play in order, Inspect buttons only on the selected fighter, and the game says why a reaction wasn't offered",
+    "detail": "STAGGERED, COUNTERED, EVADED, CRITICAL and GUARD BREAK now rise over the fighter they happen to, and a short note above the Reaction switch says why a Counter or Sweep wasn't offered. The combat log now opens at its middle size, and its Full log button shows every entry of the fight on one full-screen page. An attack now plays the swing and the return to stance first, then the target's reaction, then the damage number, and only then does the health bar change. A fighter's Inspect \"i\" now shows only while that fighter is selected, and it appears already in its place instead of jumping there; a card's Inspect appears once, above the card. Your stance and status icons stay visible when your hero isn't selected. When an enemy attacks and you hold a Counter or Sweep the game can't offer, the combat log says why (for example, a Counter can't answer a Sweep, or you're short on SP), and a Smash that breaks Guard is logged. In co-op, the same callouts and the \"no reaction\" note now show too. On a phone the note sits above your HP bar instead of covering it, and Full log is a small gold text link in the log's header. In co-op your own attacks now play in that same order too, and floating numbers no longer vanish when the board redraws. On phones the hand cards are bigger and sit right under the Combat log / Reaction row while staying readable, enemies stand further back on short screens, your stance shows above your hero while it isn't selected, and co-op's Ward/Barrier readout is a small label shown only on the selected hero. The Draw, Discard and Potions art in the footer keeps its shape instead of being squashed flat, a Smash that breaks Guard and kills its target still shows GUARD BREAK, and in co-op the blow that ends a fight now plays on the battlefield before the reward screen. On short phones the backdrop keeps its horizon in view, enemies stand a little higher, and the Combat log / Reaction row and cards sit a little lower. Fighters and their badges have a stronger dark outline, floor shadows are as wide as the health bar, your hero always shows a stance mark above the head, and your hero's selection outline is blue.",
+    "build": "0.7.1.1355",
+    "pullRequest": 1849,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1849"
+  },
+  {
+    "id": "pr-1850",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Deck editor: one card list with − and ＋, and every card shows its stance",
+    "detail": "Removing a card no longer jumps to the search box (on phones it opened the keyboard). Search is off for now and each list has one compact title row. Every row in the card library now has − count ＋ buttons, and the inspected card offers both Add to deck and Remove from deck. Phones drop the Library / Inspect / Deck tabs for one list; inspecting opens over it and Back returns to it, and a Draw order view appears only when Play in deck order is on. Each card names its stance (Attack, Defend, Counter, Smash, Sweep or Ranged; otherwise Spell, Power, Consumable or Skill) and its range (Melee, Reach or Ranged), with its rank as a badge on the art (Cantrip or Basic at rank 0) and a physical or magical mark beside its costs. A selected card shows an (i) on its art; the (i), or pressing the art again, opens Inspect.",
+    "build": "0.7.1.1345",
+    "pullRequest": 1850,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1850"
+  },
+  {
     "id": "pr-1861",
     "date": "2026-10-11",
     "group": "2026-10-11",

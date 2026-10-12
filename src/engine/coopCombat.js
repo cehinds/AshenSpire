@@ -1,6 +1,7 @@
 import { combatMatchups, combatIntent, combatExpansionMatchups } from '../content/combatMatchups.js';
 import { combatStatusRules as defaultStatusRules } from '../content/combatStatusRules.js';
 import { ASHEN_BLIGHT_RULES } from '../content/ashenBlight.js';
+import { reactionRulesSnapshot } from '../content/combatCardTraits.js';
 import { combatExpansionEquipment } from '../content/combatExpansionEquipment.js';
 import { expandedEquipmentProjection, expandedEnemyProjection } from './combatExpansionEquipment.js';
 import { tacticalCarrier, prepareTacticalCard, enqueueCounterWard, enemyMoveCarrier, primeEnemyCounter, enemyCounterDefensePrimed, expandedEnemyMove } from './combatCardTactics.js';
@@ -90,7 +91,7 @@ export function coopHpMult(headcount, factor = 0.6) {
  * Enemy HP = base roll × coopHpMult(headcount) × extraHpMult (endless/custom);
  * enemy move damage × enemyDamageMult (balance.bossTiers, SPEC §13.3).
  */
-export function createCoopCombat({ registries, rng, players, enemyIds, enemyLevels = [], extraHpMult = 1, enemyDamageMult = 1, enemyStatuses = [], ruleset = null, combatProfiles = {}, ratingsRules = registries.balance?.combatRatings || null, breakMeterVersion = null, combatExpansionVersion = players.some(p => p.combatExpansionVersion === 2) ? 2 : 1, combatExpansionRules = null, combatStatusRules = null, combatKey = 'combat', snapshot = null, knowledge = null, reactionRulesVersion = null }) {
+export function createCoopCombat({ registries, rng, players, enemyIds, enemyLevels = [], extraHpMult = 1, enemyDamageMult = 1, enemyStatuses = [], ruleset = null, combatProfiles = {}, ratingsRules = registries.balance?.combatRatings || null, breakMeterVersion = null, combatExpansionVersion = players.some(p => p.combatExpansionVersion === 2) ? 2 : 1, combatExpansionRules = null, combatStatusRules = null, combatKey = 'combat', snapshot = null, knowledge = null, reactionRulesVersion = null, reactionRules = null }) {
   const C = {
     combatExpansionVersion, sharedExpansionVersion: combatExpansionVersion,
     combatExpansionRules: structuredClone(combatExpansionRules || { matchups: combatExpansionMatchups, statuses: defaultStatusRules, ashenBlight: ASHEN_BLIGHT_RULES, equipment: combatExpansionEquipment }),
@@ -100,7 +101,7 @@ export function createCoopCombat({ registries, rng, players, enemyIds, enemyLeve
     ...(ratingsRules?.enabled ? { ratingsRules: structuredClone(ratingsRules) } : {}),
     ...(breakMeterVersion === 2 ? { breakMeterVersion: 2 } : ratingsRules?.enabled && breakMeterVersion === 1 ? { breakMeterVersion: 1 } : {}),
     foundation: F.createFoundation(ruleset, combatProfiles, registries),
-    ...(reactionRulesVersion === 1 && combatExpansionVersion === 2 ? { reactionRulesVersion: 1 } : {}),
+    ...(reactionRulesVersion >= 1 && combatExpansionVersion === 2 ? { reactionRulesVersion, ...(reactionRulesVersion === 2 ? { reactionRules: reactionRulesSnapshot(reactionRules) } : {}) } : {}),
     registries,
     rng,
     turn: 0,
@@ -708,12 +709,12 @@ function doPlayCard(C, { cardInstanceId, targetId, choice, upcastTier, selectedB
   if (idx < 0) throw new Error(`Card '${cardInstanceId}' is not in hand`);
   const inst = C.piles.hand[idx];
   const def = resolveCombatCard(C, inst, { upcastTier });
-  if (!controlGate(C, p, def).allowed) throw new Error('Recover from active control before playing this card');
+  if (!controlGate(C, p, def).allowed) throw F.playRefusal('Recover from active control before playing this card', 'controlled');
   if (!preflightOnly && C.combatExpansionVersion === 2 && p.ashenBlight?.milestones.some(row => row.path === null)) throw new Error('Choose the pending Ashen Blight feat first');
   const kws = def.keywords || [];
   const chosen = assertCardChoice(cardChoice(C.registries, def, p.classId), choice);
   F.assertFoundationPlayable(C, def, chosen);
-  if (C.registries.framework.isUnplayable(def)) throw new Error(`'${def.name}' is unplayable`);
+  if (C.registries.framework.isUnplayable(def)) throw F.playRefusal(`'${def.name}' is unplayable`, 'unplayable');
 
   const isX = def.cost === 'X';
   const expandedCosts = C.combatExpansionVersion === 2 ? SoloCombatCosts.resolvedCardPlayCosts(C, def) : null;
@@ -810,8 +811,8 @@ function doPlayCard(C, { cardInstanceId, targetId, choice, upcastTier, selectedB
   if (C.combatExpansionVersion === 2) {
     ({ energy: cost, mana: manaCost, stamina: staminaCost } = SoloCombatCosts.resolvedCardPlayCosts(C, def));
   } else manaCost = Math.max(0, pools.mana - charges.manaDiscount) + (def.upcastSurcharge || 0);
-  if (p.energy < cost) throw new Error('Not enough Actions (Stamina) to play this card');
-  if (p.mana < manaCost) throw new Error('Not enough mana to play this card');
+  if (p.energy < cost) throw F.playRefusal('Not enough Actions (Stamina) to play this card', 'cost', { resource: 'stamina', need: cost, have: p.energy });
+  if (p.mana < manaCost) throw F.playRefusal('Not enough mana to play this card', 'cost', { resource: 'mana', need: manaCost, have: p.mana });
   if (preflightOnly) return { energy: cost, mana: manaCost };
 
   p.energy -= cost;

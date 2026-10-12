@@ -2,14 +2,18 @@ const record = value => !!value && typeof value === 'object' && !Array.isArray(v
 const text = value => typeof value === 'string' && value.length > 0;
 const queued = value => Array.isArray(value) && value.every(action => record(action) && record(action.effect) && text(action.effect.op));
 
+import { reactionRulesProblems } from '../content/combatCardTraits.js';
+
 export function combatReactionProblems(state, { ownerIds = new Set(['player']), queue = state.abilityQueue || state.queue || [] } = {}) {
   const problems = [];
-  const fields = ['pendingReaction', 'reactionResume', 'reactionCursor', 'reactionHandCleanup'];
+  const fields = ['pendingReaction', 'reactionResume', 'reactionCursor', 'reactionHandCleanup', 'reactionStack', 'reactionRules'];
   if (state.reactionRulesVersion === undefined) {
     if (fields.some(field => state[field] !== undefined)) problems.push('Paused reaction requires its carried rules');
     return problems;
   }
-  if (state.reactionRulesVersion !== 1 || (state.sharedExpansionVersion || state.combatExpansionVersion) !== 2) problems.push('Reaction rules require expanded combat');
+  if (![1, 2].includes(state.reactionRulesVersion) || (state.sharedExpansionVersion || state.combatExpansionVersion) !== 2) problems.push('Reaction rules require expanded combat');
+  if (state.reactionRulesVersion === 2) problems.push(...reactionRulesProblems(state.reactionRules).map(problem => `Reaction rules: ${problem}`));
+  else if (state.reactionRules !== undefined) problems.push('Reaction rules tuning requires reaction rules version 2');
   if (state.foundationNextSerial !== undefined && (!Number.isSafeInteger(state.foundationNextSerial) || state.foundationNextSerial < 0)) problems.push('Invalid reaction foundation serial');
   if (state.reactionCursor !== undefined && (!record(state.reactionCursor) || !Number.isSafeInteger(state.reactionCursor.index)
     || state.reactionCursor.index < 0 || state.reactionCursor.index >= state.enemies.length
@@ -26,6 +30,36 @@ export function combatReactionProblems(state, { ownerIds = new Set(['player']), 
     const cleanup = owed ? owed.length > 0 && owed.every(seat => record(seat.reactionHandCleanup)
       && typeof seat.reactionHandCleanup.locked === 'boolean') : record(state.reactionHandCleanup);
     if (!cleanup) problems.push('Enemy reaction requires its pending hand cleanup');
+  }
+  const stack = state.reactionStack;
+  if (stack !== undefined) {
+    const stacked = seatId => stack.entries.filter(entry => entry.ownerId === seatId).length;
+    const stackCap = () => {
+      const group = incoming.find(action => action.meta?.expansionGroup?.key === stack.groupKey).meta.expansionGroup;
+      const caps = state.reactionRules?.stack || {};
+      return group.counterReturn ? caps.counterReturnMaxDepth : caps.maxDepth;
+    };
+    if (state.reactionRulesVersion !== 2) problems.push('Reaction stack requires reaction rules version 2');
+    else if (!record(stack) || !text(stack.groupKey) || typeof stack.resolving !== 'boolean' || !Array.isArray(stack.entries)
+      || !stack.entries.length || stack.entries.some(entry => !record(entry) || entry.side !== 'player'
+        || !ownerIds.has(entry.ownerId) || !text(entry.cardId) || !record(entry.play) || !text(entry.play.cardInstanceId)
+        || (entry.maneuver !== null && entry.maneuver !== undefined && typeof entry.maneuver !== 'string'))
+      || !incoming.some(action => action.meta?.expansionGroup?.key === stack.groupKey)
+      || (stack.counterSeats !== undefined && (!Array.isArray(stack.counterSeats) || new Set(stack.counterSeats).size !== stack.counterSeats.length
+        || stack.counterSeats.some(seatId => !ownerIds.has(seatId))))) problems.push('Invalid reaction stack');
+    else if ((() => {
+      // The live engine never builds these; a saved stack must not bypass them either.
+      const cap = stackCap();
+      return [...new Set(stack.entries.map(entry => entry.ownerId))].some(seatId => stacked(seatId) > cap
+        || stack.entries.filter(entry => entry.ownerId === seatId && entry.maneuver === 'counter').length > 1);
+    })()) problems.push('Reaction stack exceeds its per-seat limits');
+    else if (state.pendingReaction !== undefined && (!record(state.pendingReaction) || state.pendingReaction.groupKey !== stack.groupKey
+      || state.pendingReaction.id !== `${stack.groupKey}:${state.pendingReaction.ownerId}:${stacked(state.pendingReaction.ownerId)}`)) {
+      problems.push('Reaction choice does not match its stack depth');
+    } else if (state.pendingReaction !== undefined && stacked(state.pendingReaction.ownerId) >= stackCap()) {
+      // The live engine stops offering at the cap; a saved offer past it would push entry cap + 1.
+      problems.push('Reaction choice is past its seat limit');
+    }
   }
   const pending = state.pendingReaction;
   if (pending !== undefined) {
