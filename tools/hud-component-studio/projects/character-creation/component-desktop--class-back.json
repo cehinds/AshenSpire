@@ -1,0 +1,117 @@
+{
+  "version": 1,
+  "title": "Class Back",
+  "canvas": {
+    "width": 245,
+    "height": 50,
+    "background": "transparent"
+  },
+  "defaultState": "class",
+  "states": [
+    {
+      "id": "class",
+      "name": "Class"
+    }
+  ],
+  "assets": {
+    "panel-frame": {
+      "src": "assets/panel-frame.png",
+      "width": 1080,
+      "height": 720
+    },
+    "soot-material": {
+      "src": "assets/soot-material.png",
+      "width": 256,
+      "height": 256
+    }
+  },
+  "nodes": [
+    {
+      "id": "class-back",
+      "name": "Class Back",
+      "type": "group",
+      "parent": null,
+      "x": 0,
+      "y": 0,
+      "width": 245,
+      "height": 50,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "fill": "none"
+    },
+    {
+      "id": "class-back-surface",
+      "name": "Reusable antique brass trim",
+      "type": "image",
+      "parent": "class-back",
+      "x": 0,
+      "y": 0,
+      "width": 245,
+      "height": 50,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "asset": "panel-frame",
+      "fit": "stretch"
+    },
+    {
+      "id": "class-back-label",
+      "name": "Class Back Label",
+      "type": "text",
+      "parent": "class-back",
+      "x": 22,
+      "y": 15,
+      "width": 210,
+      "height": 30,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "text": "Back",
+      "fontSize": 18,
+      "fontFamily": "Arial",
+      "fill": "#e7dec8",
+      "lineHeight": 1.3
+    },
+    {
+      "id": "class-back-surface-background",
+      "name": "Reusable soot material background",
+      "type": "image",
+      "parent": "class-back",
+      "x": 0,
+      "y": 0,
+      "width": 245,
+      "height": 50,
+      "z": 0,
+      "visible": true,
+      "locked": false,
+      "opacity": 0.45,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "asset": "soot-material",
+      "fit": "stretch"
+    }
+  ],
+  "metadata": {
+    "componentSource": "class-back",
+    "sourceState": "class",
+    "designOnly": true
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "title": "Review Feats Body",
+  "canvas": {
+    "width": 475,
+    "height": 30,
+    "background": "transparent"
+  },
+  "defaultState": "review",
+  "states": [
+    {
+      "id": "review",
+      "name": "Review"
+    }
+  ],
+  "assets": {},
+  "nodes": [
+    {
+      "id": "review-feats-value",
+      "name": "Review Feats Value",
+      "type": "text",
+      "parent": "review-feats-body",
+      "x": 0,
+      "y": 0,
+      "width": 475,
+      "height": 30,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "text": "Field Study \u00b7 concept selection",
+      "fontSize": 15,
+      "fontFamily": "Arial",
+      "fill": "#e7dec8",
+      "lineHeight": 1.3
+    },
+    {
+      "id": "review-feats-body",
+      "name": "Review Feats Body",
+      "type": "group",
+      "parent": null,
+      "x": 0,
+      "y": 0,
+      "width": 475,
+      "height": 30,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "fill": "none"
+    }
+  ],
+  "metadata": {
+    "componentSource": "review-feats-body",
+    "sourceState": "review",
+    "designOnly": true
+  }
+}

@@ -102,6 +102,8 @@ version-2 snapshot without the key has no enemy reactions.
   chance = 1 }`. It carries `trait:reaction` in `tagging.csv`. Intent selection
   filters reaction moves out **before** weighting, `firstMove`, `maxConsecutive`
   or any pattern indexing, so seeds of enemies that gain one do not shift.
+  A reaction move authored `locked: true` is offered only once its id is in the
+  enemy's `unlockedMoves`, as for normal moves.
 - **Windows.** Neither window opens for a Counter-return root, for any action
   whose carrier is a reaction (`combatReaction`, `reactionDepth`, or played while
   a stack resolves), or while a stack is resolving.

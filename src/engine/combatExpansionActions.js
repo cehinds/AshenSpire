@@ -88,6 +88,8 @@ export function enqueueExpandedAction(ctx, actions, { source, target, carrier } 
   for (const action of actions) ctx.enqueue(action);
   ctx.enqueue({ effect: { op: 'completeCombatAction' }, source, owner: source, target, card: carrier,
     meta: { expansionGroup: group } });
+  // A reaction offer check reads the planned contacts of the card it tries (enemy reactions).
+  ctx._groupSink?.push(group);
   return group;
 }
 
