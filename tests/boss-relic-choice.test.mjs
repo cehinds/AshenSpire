@@ -325,3 +325,19 @@ test('Continue with auto-collect ON never takes an owned relic from the boss cho
     assert.ok(['wardenHorn', 'ashOfRemembrance'].includes(run.relics[1]), `took an unowned option: ${run.relics[1]}`);
   });
 });
+
+test('the chooser disables an option the run already owns and leaves the others pickable', () => {
+  withKitDom((dom) => {
+    const run = createRunState({ seed: 0x10a5, classId: 'reaver', registries: REG });
+    run.relics = ['wardenHorn'];
+    const { app } = mountBossReward(dom, { relicChoices: CHOICES, run });
+    app.querySelector('.reward-kind[data-kind="relic"]').click();
+    const buttons = pickButtons(app);
+    const owned = buttons.find((el) => el.dataset.pickId === 'wardenHorn');
+    assert.equal(owned.hasAttribute('disabled'), true, 'the owned option is disabled');
+    assert.equal(owned.closest('.reward-choice-option').classList.contains('is-owned'), true, 'its column is marked owned');
+    owned.click();
+    assert.equal(app.querySelector('#reward-card-confirm').disabled, true, 'a click on the owned option selects nothing');
+    buttons.filter((el) => el !== owned).forEach((el) => assert.equal(el.hasAttribute('disabled'), false, `${el.dataset.pickId} stays pickable`));
+  });
+});
