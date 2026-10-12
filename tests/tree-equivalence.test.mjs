@@ -75,8 +75,12 @@ test('registered tags retain identity, approved tactical metadata changes are ex
   const tags = new Map(TAGS.map((t) => [t.id, t]));
   // SPEC 4.7 deliberately changes display labels and rider descriptions,
   // while preserving each damage ID, domain, colour and glyph. The historical
-  // fixture stays intact; every approved changed field is named here.
+  // fixture stays intact; every approved changed field is named here. The
+  // approved Spell presentation uses one outlined sparkle across its identities.
   const tacticalMetadata = {
+    'source:spell': { glyph: '✧' },
+    'camp:spell': { glyph: '✧' },
+    'maneuver:casting': { glyph: '✧' },
     'damage:slashing': { blurb: 'Applies 1 Bleed on a Health hit unless the card already prints a Bleed effect.' },
     'damage:piercing': { blurb: 'Bypasses up to 2 Guard; bypasses melee Counter.' },
     'damage:blunt': { blurb: 'Adds 2 Poise damage once per action against each target.' },
@@ -87,6 +91,10 @@ test('registered tags retain identity, approved tactical metadata changes are ex
     'damage:sacred': { label: 'Holy', blurb: 'Removes 1 hostile debuff from the attacker after a Health hit.' },
     'damage:decay': { label: 'Necrotic', blurb: 'Applies Blight on a Health hit (Crimson in classic combat; Necrotic in expanded combat) unless the card already prints a Crimson Blight effect.' },
   };
+  // Also check approved metadata for named tactical tags added after the fixture.
+  for (const [id, fields] of Object.entries(tacticalMetadata)) {
+    for (const [field, value] of Object.entries(fields)) assert.equal(tags.get(id)?.[field], value, `approved '${id}'.${field}`);
+  }
   for (const old of pre.tags) {
     const t = tags.get(old.id);
     assert.ok(t, `tag '${old.id}' is still registered`);
