@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-12",
     "summary": "The design spec records the owner's audit decisions",
     "detail": "Development-process change only, nothing in the game changes. The specification now describes a dozen more rules as the game plays them, and records four design decisions: bosses will offer a choice of three relics, the enemy cap will become a setting, the export button stays on debug pages, and LAN co-op is planned for a later release.",
-    "build": "0.7.1.1408",
+    "build": "0.7.1.1425",
     "pullRequest": 1893,
     "url": "https://github.com/cehinds/AshenSpire/pull/1893"
   },
@@ -18,9 +18,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-12",
     "summary": "The design spec matches the game again",
     "detail": "Development-process change only, nothing in the game changes. The specification document was checked section by section against the game's code, and the audit is kept in docs/spec-audit/SPEC-AUDIT.md. The spec now describes what the game does: Actions and Stamina are one resource, the defaults are the ones the game ships, and rules that were never built are gone. The few points that need a design decision are listed in the audit.",
-    "build": "0.7.1.1407",
+    "build": "0.7.1.1422",
     "pullRequest": 1863,
     "url": "https://github.com/cehinds/AshenSpire/pull/1863"
+  },
+  {
+    "id": "pr-1890",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Reaver greatsword combat stances now use selected artwork",
+    "detail": "A Reaver in the default armor carrying only a greatsword now shows selected poses for Sweep, Counter and Smash, holds its Evade pose when ready, and shows its Guard Break reaction when an enemy breaks its guard. These reactions use the five selected greatsword paintings.",
+    "build": "0.7.1.1417",
+    "pullRequest": 1890,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1890"
   },
   {
     "id": "pr-1885",

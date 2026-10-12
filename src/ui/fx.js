@@ -610,6 +610,7 @@ function flare(layer, anchor, color) {
  * Events are staggered COMBAT_TIMING.instantStepMs apart; clicking anywhere flushes instantly.
  */
 export function animateEvents(events, ctx, done) {
+  const receiptVisuals = { reactionForReceipt: ctx.reactionForReceipt };
   flushRequested = false;
   // Beat by beat, as the paced timeline cues them, so instant or
   // reduced-motion playback makes the same sounds as Normal pacing, in the
@@ -621,12 +622,16 @@ export function animateEvents(events, ctx, done) {
   beats.forEach((beat, b) => { for (const e of beat.events) if (!beatOf.has(e)) beatOf.set(e, b); });
   let cued = 0;
   const cueThrough = (b) => { while (cued <= b && cued < beats.length) playBeatCues(beats[cued++].events, { isLocalPlayer: ctx.isLocalPlayer }); };
-  pending = events.filter((e) => visualFor(e) !== null);
+  pending = events.filter((e) => visualFor(e, undefined, receiptVisuals) !== null);
   const skip = (event) => {
     // A read-only control (the combat log, the Reaction switch) is not a skip, as in playTimeline.
     // It stays registered until the walk ends (removed below), so a read-only click leaves it armed.
     if (event?.target?.closest?.('[data-combat-read-only]')) return;
     flushRequested = true;
+    if (ctx.reactionForReceipt) for (const sprite of globalThis.document?.querySelectorAll?.('.combatant .sprite') || []) {
+      const stage = stageFor(sprite);
+      if (stage?.reactionPoses?.length) stage.endReaction?.();
+    }
     clearCallouts(ctx.layer);
   };
   addEventListener('pointerdown', skip, { capture: true });
@@ -649,12 +654,12 @@ export function animateEvents(events, ctx, done) {
     // pull the next hit into this tick (a crit multi-hit still steps per hit).
     let hadRegular = false;
     do {
-      if (!calloutOnly(pending[i])) hadRegular = true;
+      if (!calloutOnly(pending[i], receiptVisuals)) hadRegular = true;
       cueThrough(beatOf.has(pending[i]) ? beatOf.get(pending[i]) : -1);
-      const fn = visualFor(pending[i]);
+      const fn = visualFor(pending[i], undefined, receiptVisuals);
       if (fn) fn(ctx);
       i++;
-    } while (i < pending.length && (calloutOnly(pending[i]) || (!hadRegular && calloutOnly(pending[i - 1]))));
+    } while (i < pending.length && (calloutOnly(pending[i], receiptVisuals) || (!hadRegular && calloutOnly(pending[i - 1], receiptVisuals))));
     setTimeout(step, COMBAT_TIMING.instantStepMs);
   };
   step();
@@ -774,6 +779,7 @@ export function stanceState(stage) {
 }
 
 export function playTimeline(events, ctx, done) {
+  const receiptVisuals = { reactionForReceipt: ctx.reactionForReceipt };
   const speed = ANIM_SPEEDS[getAnimSpeed()];
   const reduced = reducedMotionRequested();
   const beatOrder = ctx.beatOrder || getBeatOrder();
@@ -995,7 +1001,7 @@ export function playTimeline(events, ctx, done) {
     // event's display update runs exactly once.
     const lead = new Set(beat.lead || []);
     for (const e of lead) {
-      const v = visualFor(e, beat.kind);
+      const v = visualFor(e, beat.kind, receiptVisuals);
       if (v) safe(() => v(ctx));
     }
     const leadApplied = lead.size > 0 && typeof ctx.onLeadApplied === 'function';
@@ -1005,13 +1011,13 @@ export function playTimeline(events, ctx, done) {
     // (sequential: only the contact parts here; reactions and numbers follow
     // the recovery).
     const rest = beat.events.filter((e) => !lead.has(e));
-    const partsOf = new Map(rest.map((e) => [e, visualPartsFor(e, beat.kind, { sequential })]));
+    const partsOf = new Map(rest.map((e) => [e, visualPartsFor(e, beat.kind, { sequential, ...receiptVisuals })]));
     const visualEvents = sequential
       ? rest.filter((e) => partsOf.get(e)?.contact)
       : rest.filter((e) => partsOf.get(e));
     const visuals = sequential
       ? visualEvents.map((e) => partsOf.get(e).contact)
-      : visualEvents.map((e) => visualFor(e, beat.kind));
+      : visualEvents.map((e) => visualFor(e, beat.kind, receiptVisuals));
     // Cast flourish: non-attack actors (skills, powers, buff moves) flare a
     // glyph as their wind-up — attacks get the slash arc on impact instead.
     if (actorEl && beat.kind !== 'attack' && beat.events.length) {
@@ -1033,7 +1039,7 @@ export function playTimeline(events, ctx, done) {
     };
     schedule(() => {
       // A beat with nothing to draw at impact still reaches its impact frame.
-      if (actorEl && visualEvents.every(calloutOnly)) markContact('impact');
+      if (actorEl && visualEvents.every(event => calloutOnly(event, receiptVisuals))) markContact('impact');
       let vi = 0;
       const stepV = () => {
         if (finished) return;
@@ -1043,7 +1049,7 @@ export function playTimeline(events, ctx, done) {
         }
         // A callout-only event (impact order: COUNTERED on a counter beat)
         // shows at once and takes no step, so the hit after it is not delayed.
-        if (vi < visuals.length && calloutOnly(visualEvents[vi])) {
+        if (vi < visuals.length && calloutOnly(visualEvents[vi], receiptVisuals)) {
           traceBeat('callout', visualEvents[vi].type);
           safe(() => visuals[vi++](ctx));
           stepV();
@@ -1325,7 +1331,13 @@ export function playReceiptHaptics(events, { isLocalPlayer } = {}) {
 // `callout` is the on-character word (callout above): it plays with the
 // reaction, and adds no wait of its own.
 function visualPartsFor(e, beatKind, opts) {
-  const base = withCallout(baseVisualParts(e, beatKind, opts), e), effect = combatEffectForEvent(e);
+  let base = withCallout(baseVisualParts(e, beatKind, opts), e);
+  const receiptReaction = opts?.reactionForReceipt?.(e);
+  if (receiptReaction) {
+    const original = base?.reaction;
+    base = { ...base, reaction: ctx => { original?.(ctx); receiptReaction(ctx); } };
+  }
+  const effect = combatEffectForEvent(e);
   if (!effect) return base;
   const playEffect = (ctx) => {
     const anchor = ctx.anchorFor(effect.targetId);
@@ -1362,13 +1374,13 @@ function withCallout(parts, e) {
 }
 
 // An event whose only visual is its callout: it never takes a step of its own.
-function calloutOnly(e) {
-  const parts = visualPartsFor(e);
+function calloutOnly(e, opts) {
+  const parts = visualPartsFor(e, undefined, opts);
   return !!parts && Object.keys(parts).every((key) => key === 'callout' || !parts[key]);
 }
 
-function visualFor(e, beatKind) {
-  const parts = visualPartsFor(e, beatKind);
+function visualFor(e, beatKind, opts) {
+  const parts = visualPartsFor(e, beatKind, opts);
   if (!parts) return null;
   return (ctx) => {
     parts.contact?.(ctx);
