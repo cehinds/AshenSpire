@@ -220,6 +220,21 @@ test('selected holds preserve existing returns and finite reactions restore the 
       }
     }
     stage.settle();stage.setStance('counter');
+    const attackTiming=stage.actionTiming('attack');
+    stage.play('attack',attackTiming.totalMs);advance(75);
+    assert.equal(stage.pose,'pilot-attack-3','a lagging RAF is still in wind-up before timer contact');
+    assert.equal(stage.hold(60),true);
+    assert.equal(stage.pose,'pilot-attack-4','the contact timer paints the reviewed strike before hit-stop');
+    assert.equal(stage.presentation.elapsed,attackTiming.impactMs);
+    assert.equal(stage.presentation.duration,attackTiming.totalMs,'contact synchronization preserves the authored clip duration');
+    advance(30);assert.equal(stage.pose,'pilot-attack-4');
+    advance(31);assert.ok(stage.presentation.elapsed>attackTiming.impactMs,'the action clock resumes after the unchanged hold');
+    advance(100);assert.equal(stage.pose,'stance-counter');
+    stage.play('attack',attackTiming.totalMs);advance(140);
+    const laterElapsed=stage.presentation.elapsed,laterPose=stage.pose;
+    stage.hold(60);assert.equal(stage.pose,laterPose);assert.equal(stage.presentation.elapsed,laterElapsed,'a later phase never rewinds to contact');
+    stage.settle({reaction:true});
+    stage.settle();stage.setStance('counter');
     const full=stage.reactionTiming('fully-defended');
     stage.reactPose('fully-defended',full.totalMs);assert.equal(stage.pose,'pilot-defend');
     advance(66);assert.equal(stage.pose,'pilot-impact-v');
