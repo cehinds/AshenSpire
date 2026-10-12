@@ -165,7 +165,7 @@ Meta
         Light
         Medium
         Heavy
-      Technique
+      Technique {Conditions for explicit technique bonuses.}
         Heavy [m]
         Precision [m]
         Pierce [m]

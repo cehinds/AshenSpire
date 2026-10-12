@@ -166,7 +166,7 @@ meta.combat.skill.armor-skill,armor-skill,Armor skill,meta.combat.skill,Skill,,,
 meta.combat.skill.armor-skill.light,armor-skill.light,Light,meta.combat.skill.armor-skill,Skill,,,,,,,,game-concept,,,
 meta.combat.skill.armor-skill.medium,armor-skill.medium,Medium,meta.combat.skill.armor-skill,Skill,,,,,,,,game-concept,,,
 meta.combat.skill.armor-skill.heavy,armor-skill.heavy,Heavy,meta.combat.skill.armor-skill,Skill,,,,,,,,game-concept,,,
-meta.combat.skill.technique,technique,Technique,meta.combat.skill,Skill,,,,,,,,live-tag,,,technique
+meta.combat.skill.technique,technique,Technique,meta.combat.skill,Skill,,Conditions for explicit technique bonuses.,,,,,,live-tag,,,technique
 meta.combat.skill.technique.heavy,technique.heavy,Heavy,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,◇,9FC3E8,technique:heavy
 meta.combat.skill.technique.precision,technique.precision,Precision,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,◇,9FC3E8,technique:precision
 meta.combat.skill.technique.pierce,technique.pierce,Pierce,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,†,9FC3E8,pierce
