@@ -21,7 +21,7 @@
   "sha256": "0fe543067cb65beecc2be7c214c75dbe35bd5e270dde92d9cb67998e6f271f3d",
   "referenced_images": [
     {
-      "path": "pose-studio/stances/update-stances/greatsword-sweep/sheet-a.png",
+      "path": "pose-studio/stances/update-stances/greatsword-sweep/sheet-a-original.png",
       "sha256": "1d17d81b813d247b89e53ea4f6fa6919679ab96512087a343fc5e5641a32def1",
       "use": "revise grips and pose composition"
     },

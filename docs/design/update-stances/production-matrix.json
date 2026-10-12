@@ -449,7 +449,7 @@
       "conceptSelectable": 19,
       "conceptNeedsRevision": 1,
       "userSelected": 5,
-      "productionApproved": 0
+      "productionApproved": 5
     },
     {
       "id": 2,
@@ -693,7 +693,7 @@
             "full": "assets-display/alternative/reaver-greatsword-pilot-guard-break.webp",
             "mobile": "assets-display/alternative/reaver-greatsword-pilot-guard-break-mobile.webp"
           },
-          "browserValidated": false
+          "browserValidated": true
         },
         {
           "id": "greatsword-guard_break-07",
@@ -793,13 +793,13 @@
         }
       ],
       "magicTreatmentScopeStatus": "requested_held_stance",
-      "reviewNote": "All ten options received art-director concept review. No user selection or production approval. See art-review.md for pose/anatomy/readiness caveats. Guard-break04 is not selectable: blade length remains short and touches neighboring A05 boot.",
+      "reviewNote": "All ten options received art-director concept review. One selected option is exported, browser-validated, and merged. See art-review.md for pose/anatomy/readiness caveats. Guard-break04 is not selectable: blade length remains short and touches neighboring A05 boot.",
       "artifactAuthority": "canonicalArtistBrief and artPaths; duplicate physical/magic pose descriptions intentionally omitted",
       "conceptDirectorReviewed": 10,
       "conceptSelectable": 9,
       "conceptNeedsRevision": 1,
       "userSelected": 1,
-      "productionApproved": 0,
+      "productionApproved": 1,
       "provenancePath": "pose-studio/stances/update-stances/guard-break/provenance.json",
       "registeredPoseCount": 1
     },
@@ -1158,7 +1158,7 @@
             "full": "assets-display/alternative/reaver-greatsword-pilot-sweep.webp",
             "mobile": "assets-display/alternative/reaver-greatsword-pilot-sweep-mobile.webp"
           },
-          "browserValidated": false
+          "browserValidated": true
         },
         {
           "id": "greatsword-smash_stance-05",
@@ -1188,7 +1188,7 @@
             "full": "assets-display/alternative/reaver-greatsword-pilot-smash.webp",
             "mobile": "assets-display/alternative/reaver-greatsword-pilot-smash-mobile.webp"
           },
-          "browserValidated": false
+          "browserValidated": true
         },
         {
           "id": "greatsword-smash_stance-06",
@@ -1218,7 +1218,7 @@
             "full": "assets-display/alternative/reaver-greatsword-pilot-counter.webp",
             "mobile": "assets-display/alternative/reaver-greatsword-pilot-counter-mobile.webp"
           },
-          "browserValidated": false
+          "browserValidated": true
         },
         {
           "id": "greatsword-smash_stance-07",
@@ -1271,7 +1271,7 @@
             "full": "assets-display/alternative/reaver-greatsword-pilot-evade.webp",
             "mobile": "assets-display/alternative/reaver-greatsword-pilot-evade-mobile.webp"
           },
-          "browserValidated": false
+          "browserValidated": true
         },
         {
           "id": "greatsword-smash_stance-09",
@@ -1321,13 +1321,13 @@
         }
       ],
       "magicTreatmentScopeStatus": "requested_held_stance",
-      "reviewNote": "All ten options received art-director concept review. No user selection or production approval. See art-review.md for pose/anatomy/readiness caveats.",
+      "reviewNote": "All ten options received art-director concept review. Four selected options are exported, browser-validated, and merged; the remaining options are concepts. See art-review.md for pose/anatomy/readiness caveats.",
       "artifactAuthority": "canonicalArtistBrief and artPaths; duplicate physical/magic pose descriptions intentionally omitted",
       "conceptDirectorReviewed": 10,
       "conceptSelectable": 10,
       "conceptNeedsRevision": 0,
       "userSelected": 4,
-      "productionApproved": 0,
+      "productionApproved": 4,
       "registeredPoseCount": 4
     },
     {

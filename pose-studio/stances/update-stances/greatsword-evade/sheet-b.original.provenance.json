@@ -13,7 +13,7 @@
   "tool": "image_gen.imagegen",
   "transparentBackgroundRequested": true,
   "unchangedOriginal": "/workspace/generated_images/exec-369274aa-8914-4bd0-978a-42b589480f25.png",
-  "output": "sheet-b.png",
+  "output": "sheet-b.original.png",
   "sha256": "0ff07cf6885c79f97e1668d51e8e1f5165e3316191345ac6af366a790918c35b",
   "dimensions": [
     1024,
