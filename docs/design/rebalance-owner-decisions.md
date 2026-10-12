@@ -32,3 +32,4 @@ Detail and rationale: `docs/design/elements-and-tag-mechanics.md`.
     - `bloodTithe`: Slashing or Piercing, following the equipped blade.
     - Untagged weapon cards must resolve to the weapon family's type in v1 and v2 (today v2 falls back to Blunt).
 20. PR #1901 (link self-test fix) approved to merge once CI is green.
+21. The four Rogue poison cards (Asp Dart, Viper Strike, Septic Blade, Lethal Dose) stay in the classic (v1) card pools as well as v2 (already so; no code change).
