@@ -427,7 +427,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     main.addEventListener('click', () => { const open = armed; armed = false; select(row, source, open); });
   }
 
-  // The (i) sits on the art's bottom-right corner, measured from the art's own
+  // The (i) sits bottom-centre on the art (owner, 2026-10-11), measured from the art's own
   // box so it needs no reserved space in any layout. Rows without art keep the
   // stylesheet's position.
   let inspectObserver = null;
@@ -438,7 +438,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     if (!art || !Number.isFinite(art.offsetWidth) || !art.offsetWidth) return;
     const inset = 3;
     node.classList.add('on-art');
-    node.style.left = `${main.offsetLeft + art.offsetLeft + art.offsetWidth - node.offsetWidth - inset}px`;
+    node.style.left = `${main.offsetLeft + art.offsetLeft + (art.offsetWidth - node.offsetWidth) / 2}px`;
     node.style.top = `${main.offsetTop + art.offsetTop + art.offsetHeight - node.offsetHeight - inset}px`;
   }
   function trackInspect() {
