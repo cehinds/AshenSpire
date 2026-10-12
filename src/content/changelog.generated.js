@@ -8,9 +8,39 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-12",
     "summary": "Cards rebalanced; Insanity now staggers; Necrotic Blight lasts the fight",
     "detail": "Thirteen cards now match their rarity and cost. Blood Offering, Exsanguinate, Star Slicer, Umbral Ward, Iron Skin, Ash Circle, Vanish, Binding Parry and Draw Cut hit or guard for less. Comet Fragment, Bloodhunter's Strike and Shield Crash got stronger, and Sundering Hew now applies Vulnerable. Weapon attacks now have a fixed damage type: slashing cards apply Bleed. An Insanity break now Staggers, so Executioner and other Staggered bonuses apply. Necrotic damage applies Necrotic Blight, which lasts the whole fight; other Blight still fades after 3 turns. Holy hits now cleanse in new runs. Frost and Insanity exposures now boost even small tagged hits, and Feint applies Prepare at every rank.",
-    "build": "0.7.1.1421",
+    "build": "0.7.1.1423",
     "pullRequest": 1900,
     "url": "https://github.com/cehinds/AshenSpire/pull/1900"
+  },
+  {
+    "id": "pr-1901",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "The link check's self-test covers the Combat Rounds docs",
+    "detail": "Nothing changes in the game. The link checker's self-test now copies the Combat Rounds docs folder, so a test that imports from it no longer marks the self-test untestable.",
+    "build": "0.7.1.1423",
+    "pullRequest": 1901,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1901"
+  },
+  {
+    "id": "pr-1897",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "The approved Reaver greatsword sequences now play in solo combat",
+    "detail": "Attack and Smash use the six selected phases; Guard, Parry and Resisted share the weighted impact order, while Guard-tag and Evasion-tag counters follow their separate approved routes. Actual combat receipts choose reactions and retaliation, and actions restore the originating stance. Other loadouts and co-op retain their existing presentation. Labeled review animations and thirty additional stance concepts remain available separately.",
+    "build": "0.7.1.1425",
+    "pullRequest": 1897,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1897"
+  },
+  {
+    "id": "pr-1895",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Development builds get their build number from a pipeline",
+    "detail": "Nothing changes in the game. Pull requests no longer commit a build number; after a merge lands, a bot rebuilds and stamps each receipt with the build it actually shipped in.",
+    "build": "0.7.1.1421",
+    "pullRequest": 1895,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1895"
   },
   {
     "id": "pr-1888",

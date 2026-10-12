@@ -998,13 +998,13 @@ export const propertyRules = [
     "tag": "feat:choir-of-bone",
     "requires": "",
     "excludes": "",
-    "textTemplate": "The first Guard card you play while any living enemy has Crimson Blight buildup restores {restoreStamina} Stamina, once per turn."
+    "textTemplate": "The first Guard card you play while any living enemy has Crimson or Necrotic Blight buildup restores {restoreStamina} Stamina, once per turn."
   },
   {
     "tag": "feat:requiem-reader",
     "requires": "",
     "excludes": "",
-    "textTemplate": "The first Ritual hit against an enemy with Crimson Blight buildup each turn deals +{damage} damage."
+    "textTemplate": "The first Ritual hit against an enemy with Crimson or Necrotic Blight buildup each turn deals +{damage} damage."
   },
   {
     "tag": "feat:pilgrim-of-scars",
@@ -1034,7 +1034,7 @@ export const propertyRules = [
     "tag": "feat:sepulchral-promise",
     "requires": "",
     "excludes": "",
-    "textTemplate": "Your first credited kill of an enemy with Crimson Blight buildup heals {heal} HP, once per combat."
+    "textTemplate": "Your first credited kill of an enemy with Crimson or Necrotic Blight buildup heals {heal} HP, once per combat."
   },
   {
     "tag": "progression-emberjaw-token",
@@ -1094,6 +1094,6 @@ export const propertyRules = [
     "tag": "progression-ossuary-prayer-wheel",
     "requires": "",
     "excludes": "",
-    "textTemplate": "Your first credited kill of an enemy with Crimson Blight buildup each combat restores {restoreMana} Mana."
+    "textTemplate": "Your first credited kill of an enemy with Crimson or Necrotic Blight buildup each combat restores {restoreMana} Mana."
   }
 ];

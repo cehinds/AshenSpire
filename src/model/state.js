@@ -46,7 +46,7 @@ import { featById } from './feats.js';
 import { combatSnapshotProblems } from './combatSnapshot.js';
 import { createAshenBlightState, ashenBlightProblems, effectiveAshenBlightAttributes, ashenBlightBonuses } from './ashenBlight.js';
 import { ensureExpandedStarterCoverage } from './combatExpansionStarter.js';
-import { createCombatExpansionRuleSnapshot, combatExpansionRulesProblems, backfillCombatStatusRuleRows } from './combatExpansionRules.js';
+import { createCombatExpansionRuleSnapshot, bringCombatExpansionRulesForward, combatExpansionRulesProblems, backfillCombatStatusRuleRows } from './combatExpansionRules.js';
 import { defaultSeatOrder, seatOrderProblems } from './seats.js';
 import { bringShopStockForward, shopStockProblems } from './shopKinds.js';
 import { boughtArmourProblems, consumablesProblems, companionsProblems } from './marketStock.js';
@@ -1681,6 +1681,14 @@ export function migrateRunSchema(run) {
   // migratedFromRunSchemaVersion. A Standard run has nothing to migrate.
   if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
     throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: ${Array.from({ length: RUN_SCHEMA_VERSION }, (_, index) => index + 1).join(', ')})`);
+  }
+  if (run.combatExpansionVersion === 2) {
+    bringCombatExpansionRulesForward(run.combatExpansionRules);
+    // A run saved in (or just after) a fight carries its own frozen copy in
+    // the combat snapshot; bring those forward by the same narrow migration.
+    for (const holder of [run.combatEntered, run.combatPendingOutcome]) {
+      if (holder?.snapshot?.combatExpansionVersion === 2) bringCombatExpansionRulesForward(holder.snapshot.combatExpansionRules);
+    }
   }
   if (preShopKinds) bringShopStockForward(run);
   // Status rows added to the shipped rule table after a v2 run began join its frozen copy.

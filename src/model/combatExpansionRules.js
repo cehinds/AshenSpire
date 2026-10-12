@@ -13,17 +13,48 @@ export function createCombatExpansionRuleSnapshot() {
     ashenBlight: ASHEN_BLIGHT_RULES, equipment: combatExpansionEquipment });
 }
 
+// Status rule rows shipped after v2 runs were already saved (Psychic's Confused
+// and Earth's Slowed, owner decision 5). Only these are filled in.
+const STATUS_RULES_ADDED_SINCE_RELEASE = ['confused', 'slowed'];
+
 /**
  * A save freezes the status rule table it started under, and the check below
- * wants exactly today's rows. Rows added to the shipped table since (confused,
- * slowed, necroticBlight) are filled in from it, additively: no carried row is
- * touched, so a save may still not redefine a rule it already holds.
+ * wants exactly today's rows. The named rows added since are filled in from the
+ * shipped table, additively: no carried row is touched, and any other missing
+ * row still fails validation. Necrotic Blight is left to
+ * bringCombatExpansionRulesForward, which also moves its rider, cleanse and
+ * resistance.
  */
 export function backfillCombatStatusRuleRows(holder) {
   const rows = holder?.combatExpansionRules?.statuses?.statuses;
   if (!record(rows)) return holder;
-  for (const [id, row] of Object.entries(combatStatusRules.statuses)) if (!(id in rows)) rows[id] = structuredClone(row);
+  for (const id of STATUS_RULES_ADDED_SINCE_RELEASE) if (!(id in rows)) rows[id] = structuredClone(combatStatusRules.statuses[id]);
   return holder;
+}
+
+/**
+ * Bring the one released pre-Necrotic-Blight v2 snapshot forward. This is a
+ * narrow signature migration: other missing or altered frozen rules still
+ * fail validation instead of being silently replaced with today's tuning.
+ */
+export function bringCombatExpansionRulesForward(value) {
+  const rider = value?.matchups?.damageRiders?.necrotic;
+  const cleanses = value?.matchups?.cleanseStatuses;
+  const statuses = value?.statuses?.statuses;
+  const resistance = value?.equipment?.armour?.['herald:ossuary']?.traits?.buildupResistance;
+  if (!record(rider) || !Array.isArray(cleanses) || !record(statuses) || !record(resistance)
+    || Object.hasOwn(statuses, 'necroticBlight')
+    || rider.status !== 'crimsonBlight'
+    || cleanses.includes('necroticBlight')
+    || resistance.crimsonBlight !== 15
+    || resistance.necroticBlight !== undefined) return false;
+
+  rider.status = combatExpansionMatchups.damageRiders.necrotic.status;
+  const crimsonIndex = cleanses.indexOf('crimsonBlight');
+  cleanses.splice(crimsonIndex < 0 ? cleanses.length : crimsonIndex + 1, 0, 'necroticBlight');
+  statuses.necroticBlight = structuredClone(combatStatusRules.statuses.necroticBlight);
+  resistance.necroticBlight = combatExpansionEquipment.armour['herald:ossuary'].traits.buildupResistance.necroticBlight;
+  return true;
 }
 
 /** Carried tuning is data, never executable callbacks or a live-table fallback. */

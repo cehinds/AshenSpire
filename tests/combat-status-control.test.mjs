@@ -267,4 +267,7 @@ test('a physical gauge that fills an enemy Poise bar breaks it through the one b
   const onFill = queued.filter(a => a.target === enemy && a.effect.op === 'applyStatus');
   assert.deepEqual(onFill.map(a => a.effect), balance.poise.onFill, 'balance.poise.onFill (the staggered status) is queued, as for a full bar');
   assert.ok(onFill.some(a => a.effect.status === 'staggered'));
+  // Like a full bar from dealPoiseDamage, the break grows the meter (Codex, #1900).
+  assert.equal(enemy.poiseMeter.max, Math.ceil(2 * balance.poise.growthMult), 'the Poise meter grew');
+  assert.equal(enemy.poiseMeter.growths, 1, 'the growth is counted for restamps');
 });

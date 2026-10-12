@@ -181,7 +181,7 @@ export const heraldCards = [
       { op: 'damage', target: 'enemy', amount: 6 },
       { op: 'damage', target: 'enemy', amount: 4, if: { p: 'any', preds: [{ p: 'hasStatus', of: 'target', status: 'crimsonBlight' }, { p: 'hasStatus', of: 'target', status: 'necroticBlight' }] } },
     ],
-    textTemplate: 'Deal {damage} damage. If the target has Crimson Blight: deal {damage.2} more.',
+    textTemplate: 'Deal {damage} damage. If the target has Blight: deal {damage.2} more.',
     upgrade: {
       effects: [
         { op: 'damage', target: 'enemy', amount: 8 },
@@ -239,9 +239,17 @@ export const heraldCards = [
     keywords: ['exhaust', 'retain'], icon: '🌺',
     effects: [
       { op: 'applyStatus', target: 'enemy', status: 'crimsonBlight', stacks: { f: 'stacks', status: 'crimsonBlight', of: 'target' } },
+      { op: 'applyStatus', target: 'enemy', status: 'necroticBlight', stacks: { f: 'stacks', status: 'necroticBlight', of: 'target' }, if: { p: 'hasStatus', of: 'target', status: 'necroticBlight' } },
     ],
-    textTemplate: "Double the target's Crimson Blight. Exhaust.",
-    upgrade: { keywords: ['retain'], textTemplate: "Double the target's Crimson Blight." },
+    textTemplate: "Double the target's Blight (Crimson and Necrotic). Exhaust.",
+    upgrade: {
+      keywords: ['retain'],
+      effects: [
+        { op: 'applyStatus', target: 'enemy', status: 'crimsonBlight', stacks: { f: 'stacks', status: 'crimsonBlight', of: 'target' } },
+        { op: 'applyStatus', target: 'enemy', status: 'necroticBlight', stacks: { f: 'stacks', status: 'necroticBlight', of: 'target' }, if: { p: 'hasStatus', of: 'target', status: 'necroticBlight' } },
+      ],
+      textTemplate: "Double the target's Blight (Crimson and Necrotic).",
+    },
   },
   {
     id: 'sacredHarvest', name: 'Sacred Harvest', class: 'herald', rarity: 'uncommon', cost: 1, manaCost: 1, type: 'attack',
@@ -425,12 +433,12 @@ export const heraldCards = [
     effects: [
       { op: 'damage', target: 'enemy', amount: { f: 'mul', args: [2, { f: 'add', args: [{ f: 'stacks', status: 'crimsonBlight', of: 'target' }, { f: 'stacks', status: 'necroticBlight', of: 'target' }] }] } },
     ],
-    textTemplate: "Deal damage equal to twice the target's Crimson Blight.",
+    textTemplate: "Deal damage equal to twice the target's Blight.",
     upgrade: {
       effects: [
         { op: 'damage', target: 'enemy', amount: { f: 'mul', args: [3, { f: 'add', args: [{ f: 'stacks', status: 'crimsonBlight', of: 'target' }, { f: 'stacks', status: 'necroticBlight', of: 'target' }] }] } },
       ],
-      textTemplate: "Deal damage equal to three times the target's Crimson Blight.",
+      textTemplate: "Deal damage equal to three times the target's Blight.",
     },
   },
   {
@@ -554,7 +562,7 @@ export const heraldCards = [
     flavor: "Title of the Feral Ember's preachers.\n\nThe Chapel gave the same name to the novice who walked before a bier with a bell. The Feral Ember holds that the word was never the Chapel's to give, but the fire's.\n\nWe go before the fire, and it follows us gladly.",
     keywords: [], icon: '❀',
     effects: [{ op: 'applyStatus', target: 'self', status: 'harbingerOfBlight', stacks: one }],
-    textTemplate: 'Whenever Crimson Blight is applied to an enemy, heal 1 HP.',
+    textTemplate: 'Whenever Blight (Crimson or Necrotic) is applied to an enemy, heal 1 HP.',
     upgrade: { cost: 1 },
   },
 

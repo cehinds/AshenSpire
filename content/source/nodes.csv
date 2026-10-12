@@ -119,7 +119,7 @@ damage:frost,damageType,Cold,9FC3E8,◇,,,,,Applies 1 Frost on a Health hit unle
 damage:lightning,damageType,Lightning,9FC3E8,◇,,,,,Applies 1 Weak (Sap) on a Health hit unless the card already prints a Weak effect.
 damage:arcane,damageType,Force,9FC3E8,◇,,,,,Strips 2 Ward once per action; bypasses melee Counter.
 damage:sacred,damageType,Holy,9FC3E8,◇,,,,,Removes 1 hostile debuff from the attacker after a Health hit.
-damage:decay,damageType,Necrotic,9FC3E8,◇,,,,,Applies 1 Crimson Blight on a Health hit unless the card already prints a Crimson Blight effect.
+damage:decay,damageType,Necrotic,9FC3E8,◇,,,,,Applies Blight on a Health hit (Crimson in classic combat; Necrotic in expanded combat) unless the card already prints a Crimson Blight effect.
 damage:poison,damageType,Poison,9FC3E8,◇,,,,,Applies 1 Venom on a Health hit unless the card already prints a Venom effect. Not reduced by armour class; constructs halve its build-up.
 damage:psychic,damageType,Psychic,9FC3E8,◇,,,,,Applies 1 Confused on a Health hit unless the card already prints a Confused effect. Not reduced by armour class.
 damage:earth,damageType,Earth,9FC3E8,◇,,,,,Applies 1 Slowed on a Health hit unless the card already prints a Slowed effect. Not reduced by armour class; absorbed by Ward.

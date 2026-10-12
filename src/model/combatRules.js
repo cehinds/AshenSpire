@@ -156,16 +156,24 @@ export function resolveDamageComponents(rules, { components, armor = 0, penetrat
   const weightTotal = components.reduce((sum, c) => sum + c.amount, 0);
   const effectiveArmor = Math.max(0, armor - penetration);
   const reduction = Math.min(rules.armor.cap, effectiveArmor / (effectiveArmor + rules.armor.scale));
-  return components.map((component, index) => {
+  const raw = components.map((component, index) => {
     const weight = weightTotal > 0 ? component.amount / weightTotal : (index === 0 ? 1 : 0);
     const resistance = Math.min(rules.resistanceCap, resistances[component.type] || 0);
     const physical = rules.damageTypes[component.type].physical;
-    const amount = immunities.includes(component.type) ? 0 : Math.max(0, taggedBonusFloor(
-      Math.max(0, component.amount + flatBonus * weight) * multiplier * (physical ? 1 - reduction : 1) * (1 - resistance),
-      taggedBonus,
-    ));
-    return { type: component.type, amount };
+    return immunities.includes(component.type) ? 0
+      : Math.max(0, Math.max(0, component.amount + flatBonus * weight) * multiplier * (physical ? 1 - reduction : 1) * (1 - resistance));
   });
+  if (!(taggedBonus > 1)) return components.map((component, i) => ({ type: component.type, amount: Math.max(0, taggedBonusFloor(raw[i], taggedBonus)) }));
+  // The exposure bonus rounds UP once per hit, not once per component, then
+  // is shared across the components by their share of the hit; a one-component
+  // hit equals taggedBonusFloor exactly. Never below the old all-floor total.
+  const plain = raw.map(Math.floor);
+  const plainTotal = plain.reduce((a, b) => a + b, 0);
+  const total = raw.reduce((a, b) => a + b, 0);
+  const allFloor = raw.reduce((sum, x) => sum + Math.floor(x * taggedBonus), 0);
+  const bonus = total > 0 ? Math.max(Math.ceil(total * (taggedBonus - 1) - 1e-9), allFloor - plainTotal) : 0;
+  const shares = bonus > 0 ? allocateInteger(bonus, raw) : raw.map(() => 0);
+  return components.map((component, i) => ({ type: component.type, amount: plain[i] + shares[i] }));
 }
 
 export function weaponImpact(rules, source, { magical = false, bonus = 0, factor = 1 } = {}) {

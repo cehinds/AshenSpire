@@ -757,7 +757,7 @@ export const statuses = [
         ],
       },
     ],
-    tooltip: 'Whenever you apply Crimson Blight to an enemy, heal 1 HP per stack.',
+    tooltip: 'Whenever you apply Blight (Crimson or Necrotic) to an enemy, heal 1 HP per stack.',
   },
   {
     // Blood Unction flask: this turn, attacks apply +2 Bleed per hit
