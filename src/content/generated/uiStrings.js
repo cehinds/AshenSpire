@@ -59,6 +59,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "combat.card.magicPhysicalDamage",
+    "extends": "",
+    "short": "{magic} · {physical}",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "combat.protection.poise",
     "extends": "",
     "short": "Poise",
