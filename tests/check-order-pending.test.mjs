@@ -38,7 +38,7 @@ function run(args, { changelog = markdown(), event = null } = {}) {
   try {
     writeFileSync(join(root, 'CHANGELOG.md'), changelog);
     writeFileSync(join(root, 'buildordinal.json'), JSON.stringify(BOX));
-    const env = { ...process.env, GITHUB_EVENT_NAME: '', GITHUB_EVENT_PATH: '', GITHUB_REF: '', GITHUB_EVENT_BEFORE: '' };
+    const env = { ...process.env, GITHUB_EVENT_NAME: '', GITHUB_EVENT_PATH: '', GITHUB_REF: '' };
     if (event) {
       const path = join(root, 'event.json');
       writeFileSync(path, JSON.stringify(event));
@@ -88,8 +88,8 @@ test('a bad --pending value is a usage error, exit 2, not a finding', () => {
 test('tests.yml passes --pending auto only on pull_request and dev pushes, and reads the base SHA from env', () => {
   const yml = readFileSync(new URL('../.github/workflows/tests.yml', import.meta.url), 'utf8');
   const step = yml.slice(yml.indexOf('- name: CHANGELOG receipts run newest first'), yml.indexOf('- name: The ordering check still catches'));
-  assert.match(step, /EVENT_BEFORE: \$\{\{ github\.event\.before \}\}/);
   assert.doesNotMatch(step.split('run: |')[1] || '', /\$\{\{/, 'the run script interpolates an expression');
   assert.match(step, /pull_request:\*\|push:dev\|push:alternative\/dev\|push:alternative\/\*\/dev\) pending="--pending auto"/);
-  assert.match(step, /GITHUB_EVENT_BEFORE="\$EVENT_BEFORE" node tools\/verdict\.mjs -- node tools\/about-changelog\.mjs --check-order \$pending/);
+  assert.match(step, /node tools\/verdict\.mjs -- node tools\/about-changelog\.mjs --check-order \$pending/);
+  assert.doesNotMatch(step, /EVENT_BEFORE|github\.event\.before/, 'the base is the stamp base, not the event before');
 });

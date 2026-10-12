@@ -1002,8 +1002,8 @@ function realCalendarDate(date) {
 
 // THE PENDING SET, for --pending. `auto` reads the event: a pull_request names
 // its own number (receipts.mjs pullFromEnv), a push names the pull requests that
-// landed between GITHUB_EVENT_BEFORE and HEAD (build-stamp's landedSince, the
-// rule build-stamp itself re-points by). A list is taken as given. No flag means
+// landed since the stamp base on HEAD (build-stamp's landedSince: the last [build-stamp]
+// commit, else the stamp workflow's introduction; the same base build-stamp re-points by). A list is taken as given. No flag means
 // no exemption: the strict ordering, as before.
 // Whether a stamp's release names the box's release, compared numerically the way
 // buildversion orders them (leading zeros are the same release; a `-tag` must
@@ -1020,7 +1020,7 @@ export function sameRelease(release, current) {
 export function pendingPulls(spec, env = process.env, cwd = ROOT) {
   if (spec === null || spec === undefined) return [];
   if (spec === 'auto') {
-    if (env.GITHUB_EVENT_NAME === 'push') return landedSince(env.GITHUB_EVENT_BEFORE || '', { cwd });
+    if (env.GITHUB_EVENT_NAME === 'push') return landedSince({ cwd });
     const n = pullFromEnv(env);
     return n ? [n] : [];
   }

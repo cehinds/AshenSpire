@@ -41,7 +41,7 @@
 // Usage
 //   node tools/build-stamp.mjs --stamp --since-last-stamp          the whole stamp, for a push: the
 //                                                                  landings since the last [build-stamp]
-//                                                                  commit (GITHUB_EVENT_BEFORE without one)
+//                                                                  commit, else the introduction's parent
 //   node tools/build-stamp.mjs --stamp --range <before>..<after>   the same, for a range named by hand
 //   node tools/build-stamp.mjs --stamp --prs 1884                  the same, named by hand
 //   node tools/build-stamp.mjs --range <before>..<after>   the PRs that landed in a push
@@ -141,71 +141,78 @@ function headEntries(cwd = ROOT) {
   return [{ subject, firstParent: true }];
 }
 
-// THE LANDED PULL REQUESTS OF A PUSH, by the same rule as the stamp itself:
-// the commits from `before` to HEAD, or HEAD's own subject when `before` is all
-// zeros or not in this checkout. about-changelog.mjs --pending auto reads it, so
-// the pending set and the re-point set can never disagree about what landed.
-export function landedSince(before, { cwd = ROOT } = {}) {
-  const { base } = stampBaseIn(cwd, before);
+// THE LANDED PULL REQUESTS OF A PUSH, by the rule the stamp itself uses: the commits
+// above the base on HEAD's first-parent line, with the merges and squashes among them.
+// about-changelog.mjs --pending auto reads it, so the pending set and the re-point set
+// can never disagree about what landed.
+export function landedSince({ cwd = ROOT } = {}) {
+  const { base } = stampBaseIn(cwd);
   if (!base) return landedInSubjects(headEntries(cwd));
   return landedInSubjects(rangeSubjects(base, { cwd }));
 }
 
-// THE BASE OF A LANDING RANGE. A run that was cancelled (GitHub keeps one pending
-// run per group, so a newer push replaces a queued one) or that failed never
-// stamped its pushes, so the next run's event.before would skip their merges.
-// The base is therefore the LAST STAMP: the newest first-parent commit on HEAD
-// whose subject carries [build-stamp]. Only without one does the event's before
-// serve, and only without that, HEAD's own subject.
-// A BOT STAMP COMMIT, EXACTLY. A substring marker is not enough: a human squash
-// whose title mentions [build-stamp] would otherwise become the base and drop its
-// own pull request from every later range. Both the author and the whole subject
-// must match what build-stamp writes. The workflow's `if:` checks the author and
-// the prefix; this predicate is the exact check, and every use goes through it.
+// THE BASE OF A LANDING RANGE, in order:
+//   1. the newest first-parent BOT STAMP commit on HEAD (the exact predicate below);
+//   2. else the first parent of the commit that INTRODUCED the stamp workflow, so the
+//      introducing merge is counted, and nothing merged before the pipeline existed is;
+//   3. else HEAD's own subject only.
+// NOT THE EVENT'S before. A run that was cancelled, or that failed, stamped nothing, and
+// the next run's before would skip the merges it missed. Both bases above are commits
+// on HEAD that stay put, so a later run always covers an earlier one's misses.
+//
+// A BOT STAMP COMMIT, EXACTLY. A substring marker is not enough: a human squash whose
+// title mentions [build-stamp] would otherwise become the base and drop its own pull
+// request from every later range. Both the author and the whole subject must match what
+// build-stamp writes. The workflow's `if:` checks the author and the prefix; this
+// predicate is the exact check, and every use goes through it.
 export const BOT_AUTHOR = 'github-actions[bot]';
 export const STAMP_SUBJECT = /^build: stamp \d+\.\d+\.\d+(?:-[A-Za-z]+\.\d+)?\.\d+ \[build-stamp\]$/;
+export const WORKFLOW_PATH = '.github/workflows/build-stamp.yml';
 export function isStampCommit(author, subject) {
   return author === BOT_AUTHOR && STAMP_SUBJECT.test(subject);
 }
 
-// PURE. `commits` is the first-parent line of HEAD, newest first, as {sha, author, subject}.
-// `before` is a usable commit sha or null. Returns { base, source }, base null
-// meaning HEAD's own subject only.
-export function pickStampBase(commits, before) {
+// PURE. `commits` is HEAD's first-parent line, newest first, as {sha, author, subject};
+// `baseline` is the introduction's first parent, or null. Returns { base, source }, base
+// null meaning HEAD's own subject only.
+export function pickStampBase(commits, baseline) {
   const hit = commits.find((c) => isStampCommit(c.author, c.subject));
   if (hit) return { base: hit.sha, source: 'last-stamp' };
-  if (before) return { base: before, source: 'before' };
+  if (baseline) return { base: baseline, source: 'introduction' };
   return { base: null, source: 'head-only' };
 }
 
-// PURE. The landed pull requests of the commits above `base` on the first-parent
-// line, newest first. A squash `(#N)` and a merge subject both count, as in
-// receipts.mjs. With base null or absent, every commit counts.
+// PURE. The landed pull requests of the commits above `base` on the first-parent line,
+// newest first. A squash `(#N)` and a merge subject both count, as in receipts.mjs.
+// With base null or absent, every commit counts.
 export function landedAfterBase(commits, base) {
   const i = base ? commits.findIndex((c) => c.sha === base) : -1;
   const above = i >= 0 ? commits.slice(0, i) : commits;
   return landedInSubjects(above.map((c) => ({ subject: c.subject, firstParent: true })));
 }
 
-// Git's view of the same rule. The before is used only when it is a commit of this
-// checkout and an ancestor of HEAD; otherwise it cannot bound a range.
-function usableBefore(before, cwd) {
-  if (isNullSha(before)) return null;
+// The first parent of the oldest first-parent commit that added the stamp workflow, or
+// null when git cannot find the introduction (a root commit, or a shallow history).
+export function introductionBase(cwd) {
+  let added;
   try {
-    execFileSync('git', ['cat-file', '-e', `${before}^{commit}`], { cwd, stdio: 'ignore' });
-    execFileSync('git', ['merge-base', '--is-ancestor', before, 'HEAD'], { cwd, stdio: 'ignore' });
-    return before;
+    added = execFileSync('git', ['log', '--first-parent', '--diff-filter=A', '--format=%H', '--', WORKFLOW_PATH], { cwd, encoding: 'utf8' });
+  } catch { return null; }
+  const shas = added.split('\n').filter(Boolean);
+  if (!shas.length) return null;
+  try {
+    return execFileSync('git', ['rev-parse', '--verify', '--quiet', `${shas[shas.length - 1]}^1`], { cwd, encoding: 'utf8' }).trim() || null;
   } catch { return null; }
 }
 
-export function stampBaseIn(cwd, before) {
+export function stampBaseIn(cwd) {
   const lines = execFileSync('git', ['log', '--first-parent', '--format=%H%x09%an%x09%s', 'HEAD'], { cwd, encoding: 'utf8' })
     .split('\n').filter(Boolean);
   const commits = lines.map((l) => {
     const [sha, author, ...rest] = l.split('\t');
     return { sha, author, subject: rest.join('\t') };
   });
-  return pickStampBase(commits, usableBefore(before, cwd));
+  return pickStampBase(commits, introductionBase(cwd));
 }
 
 function readBox() {
@@ -359,7 +366,7 @@ function prsFromArgs(argv) {
     return { prs: [...new Set(list)], bound: '--prs' };
   }
   if (argv.includes('--since-last-stamp')) {
-    return { prs: landedSince(process.env.GITHUB_EVENT_BEFORE || '', { cwd: ROOT }), bound: 'since the last [build-stamp] commit' };
+    return { prs: landedSince({ cwd: ROOT }), bound: 'since the last [build-stamp] commit' };
   }
   if (r >= 0) return prsFromRange(argv[r + 1]);
   throw new Error('--stamp wants --since-last-stamp, --range <before>..<after>, or --prs <N,N,…>');
@@ -533,10 +540,10 @@ function selftest() {
   check('base: a human author with the exact stamp subject is not a base', pickStampBase([{ sha: 'b', author: 'dev', subject: 'build: stamp 0.7.1.1 [build-stamp]' }], null).source === 'head-only');
   check('landed: the human squash is counted, its PR is not dropped', landedAfterBase(squash, null).join() === '9,4', `got ${landedAfterBase(squash, null)}`);
   const noStamp = line.filter((c) => !isStampCommit(c.author, c.subject));
-  check('base: the last stamp commit wins over the event before',
+  check('base: the last stamp commit wins over the introduction',
     JSON.stringify(pickStampBase(line, 'm0')) === JSON.stringify({ base: 'st1', source: 'last-stamp' }));
-  check('base: without a stamp, the event before serves',
-    JSON.stringify(pickStampBase(noStamp, 'm0')) === JSON.stringify({ base: 'm0', source: 'before' }));
+  check('base: without a stamp, the introduction serves',
+    JSON.stringify(pickStampBase(noStamp, 'm0')) === JSON.stringify({ base: 'm0', source: 'introduction' }));
   check('base: without a stamp or a before, HEAD only',
     JSON.stringify(pickStampBase(noStamp, null)) === JSON.stringify({ base: null, source: 'head-only' }));
   check('landed after the stamp: a merge and a squash count, the stamp does not',

@@ -86,12 +86,12 @@ jobs:
       - name: Rebuild, re-point the landed receipts, regenerate the changelog, and push
         # Four tries with 2, 4 and 8 seconds of backoff, as architecture-sync does. Each
         # try starts from the current origin tip, so a push that landed meanwhile is
-        # rebuilt and stamped again rather than overwritten. The range is the one this push
-        # moved (BEFORE..HEAD), taken from the event, never interpolated into the script.
+        # rebuilt and stamped again rather than overwritten. The range is not taken from the
+        # event: it starts after the last [build-stamp] commit (or the stamp workflow's
+        # introduction), so a run that was cancelled or failed is covered by the next one.
         shell: bash
         env:
           REF_NAME: ${{ github.ref_name }}
-          BEFORE: ${{ github.event.before }}
           PRS: ${{ github.event.inputs.prs }}
           # For the dev-preview dispatch after a successful push (gh workflow run).
           GH_TOKEN: ${{ github.token }}
@@ -125,11 +125,11 @@ jobs:
             # (the module is inside the build digest, so writing it moves the box). It
             # exits 1 when no fixed point is reached in its round bound, and then nothing
             # is pushed: `set -e` stops this step before the commit below.
-            # The base is the last [build-stamp] commit on HEAD; BEFORE serves only without one.
+            # The base is the last [build-stamp] commit on HEAD, else the introduction's parent.
             if [ -n "$PRS" ]; then
               node tools/build-stamp.mjs --stamp --prs "$PRS"
             else
-              GITHUB_EVENT_BEFORE="$BEFORE" node tools/build-stamp.mjs --stamp --since-last-stamp
+              node tools/build-stamp.mjs --stamp --since-last-stamp
             fi
 
             # Only the three derived files, never the built HTML or anything else the build wrote.
