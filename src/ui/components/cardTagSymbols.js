@@ -1,5 +1,6 @@
 import { ACTION_SIGILS } from '../../content/combatSigils.js';
 import { constantFormulaValue } from '../../model/formulas.js';
+import { cardArtElement } from '../cardArtComposition.js';
 import { t, tFull } from '../strings.js';
 import { esc } from './tooltip.js';
 
@@ -25,7 +26,7 @@ const SHAPES = Object.freeze({
   guile: '<path d="M2 7q14 8 28 0v12L19 30l-3-9-3 9L2 19Zm4 6v5l6 1v-4Zm20 0-6 2v4l6-1Z"/>',
 });
 
-const ALIASES = Object.freeze({ fire:'fire', burn:'fire', cold:'frost', arcane:'force', sacred:'divine', holy:'divine', necrotic:'decay', crimsonBlight:'decay', necroticBlight:'decay', blight:'decay', blood:'bleed', gorefire:'fire', blade:'slashing', pierce:'piercing', heavy:'blunt', starstone:'force', astral:'force', venom:'decay', oath:'divine', weak:'lightning', vulnerable:'guard', staggered:'blunt', poise:'blunt', precision:'ranged', cleave:'attack', counter:'counter', flourish:'skill', prepared:'guile', concealed:'guile', ash:'guile' });
+const ALIASES = Object.freeze({ fire:'fire', burn:'fire', cold:'frost', arcane:'force', psychic:'illusion', alternation:'alteration', sacred:'divine', holy:'divine', necrotic:'decay', crimsonBlight:'decay', necroticBlight:'decay', blight:'decay', blood:'bleed', gorefire:'fire', blade:'slashing', pierce:'piercing', heavy:'blunt', starstone:'force', astral:'force', venom:'decay', oath:'divine', weak:'lightning', vulnerable:'guard', staggered:'blunt', poise:'blunt', precision:'ranged', cleave:'attack', counter:'counter', flourish:'skill', prepared:'guile', concealed:'guile', ash:'guile' });
 
 function shapeFor(tag) {
   const key = tag.id.split(':').at(-1);
@@ -58,10 +59,14 @@ export function cardSideTags(model, def = {}, registries = null, preview = null)
   const camp = tags.find(tag => ['camp:physical', 'camp:spell'].includes(tag.id));
   if (camp) selected.push(camp);
   const damage = carriesHealthDamage(def) ? tags.filter(tag => tag.id.startsWith('damage:')) : [];
+  // One effect identity: an explicit supported element wins over its school,
+  // including aliases, before the cap can displace a status icon.
+  const element = tags.find(tag => tag.id.startsWith('element:') && cardArtElement(tag.id));
+  const school = tags.find(tag => tag.id.startsWith('school:'));
   const evasion = Boolean(def.evade) || def.effects?.some(effect => effect?.op === 'dodgeRoll')
     || tags.some(tag => ['maneuver:evade', 'effect:evade', 'utility.evasion'].includes(tag.id));
   const effects = damage.length ? damage : evasion ? [{ id: 'effect:evade', label: t('card.tags.evade'), blurb: tFull('card.tags.evade') }]
-    : tags.filter(tag => tag.id.startsWith('school:') || tag.id.startsWith('element:'));
+    : [element || school].filter(Boolean);
   for (const tag of effects) if (!selected.some(row => row.id === tag.id) && selected.length < 5) selected.push(tag);
   const statuses = new Map();
   const add = (id, occurrence = null) => {

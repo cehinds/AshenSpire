@@ -44,6 +44,14 @@ test('utility school metadata is not shown as damage while actual damage and HP 
     assert.equal(cardSideTags(tags,def,reg)[1].id,'school:fire');
   }
 });
+test('explicit element replaces duplicate school identity before the five-icon cap',()=>{
+  const def={effects:[effect('weak'),effect('frost'),effect('bleed')]};
+  for(const [school,element] of [['frost','frost'],['decay','necrotic'],['illusion','psychic'],['alteration','alternation']]){
+    const rows=cardSideTags(model('camp:spell','school:'+school,'element:'+element),def,reg);
+    assert.deepEqual(rows.map(row=>row.id),['camp:spell','element:'+element,'status:weak','status:frost','status:bleed']);
+  }
+  assert.equal(cardSideTags(model('camp:spell','element:unknown','school:frost'),{},reg)[1].id,'school:frost');
+});
 test('stack badges never invent sums, conditional results, pressure or unknown formula values',()=>{
   for(const effects of [
     [effect('strength',2,{target:'ally'}),effect('strength',1,{target:'self'})],
