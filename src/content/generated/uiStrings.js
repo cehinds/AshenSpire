@@ -45,6 +45,13 @@ export const uiStrings = [
     "tip": "Arcane Ward"
   },
   {
+    "id": "combat.protection.poise",
+    "extends": "",
+    "short": "Poise",
+    "full": "Poise guards against physical hits. Full at the start of every fight, it absorbs each physical hit after Block (each hit still lets at least 1 damage through) and is spent by what it absorbs. When it breaks you are staggered. It does not regenerate unless a card, feat, class feature or relic restores it.",
+    "tip": "Poise"
+  },
+  {
     "id": "combat.protection.barrier",
     "extends": "",
     "short": "Barrier",
@@ -258,6 +265,13 @@ export const uiStrings = [
     "id": "combat.callout.barrierBreak",
     "extends": "",
     "short": "BARRIER BREAK",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.callout.poiseBreak",
+    "extends": "",
+    "short": "POSTURE BREAK",
     "full": "",
     "tip": ""
   },

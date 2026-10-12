@@ -451,6 +451,7 @@
 }
 .fx-callout.red { color: var(--ember); }
 .fx-callout.ward { color: #b38ae8; }
+.fx-callout.poise { color: #ff9a3c; }
 .fx-callout.white { color: #fff; }
 .float-num { z-index: 1; }
 .reduce-flashes .fx-callout { animation: callout-rise var(--fx-callout-ms, 900ms) ease-out forwards; }

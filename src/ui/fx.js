@@ -391,6 +391,7 @@ export const CALLOUT_KINDS = {
   guardBreak: { string: 'combat.callout.guardBreak', tone: 'red' },
   wardBreak: { string: 'combat.callout.wardBreak', tone: 'ward' },
   barrierBreak: { string: 'combat.callout.barrierBreak', tone: 'gold' },
+  poiseBreak: { string: 'combat.callout.poiseBreak', tone: 'poise' },
 };
 export const CALLOUT_MS = 900;
 export const CALLOUT_INSTANT_MS = 500;
@@ -482,6 +483,7 @@ export function guardHitFloatParts(event) {
   // Block (blue) and Health (red), each its own unsigned number.
   const barrier = Math.max(0, Number(event && event.barrierAbsorbed) || 0);
   const ward = Math.max(0, Number(event && event.wardAbsorbed) || 0);
+  const poise = Math.max(0, Number(event && event.poiseAbsorbed) || 0);
   return {
     amount,
     blocked,
@@ -489,6 +491,7 @@ export function guardHitFloatParts(event) {
     // A hit Barrier stopped outright reads RESISTED.
     barrier: barrier > 0 ? { text: amount === 0 && ward === 0 ? `${barrier} RESISTED` : String(barrier), cls: 'barrier small' } : null,
     ward: ward > 0 ? { text: String(ward), cls: 'ward small' } : null,
+    poise: poise > 0 ? { text: String(poise), cls: 'poise small' } : null,
     guard: blocked > 0 ? { text: String(blocked), cls: 'blk small' } : null,
     damage: residual > 0 ? { text: `-${residual}`, cls: dmgClass(residual) } : null,
   };
@@ -1373,6 +1376,7 @@ export function calloutForEvent(e = {}) {
     case 'combatGuardBroken': kind = 'guardBreak'; break;
     case 'wardBroken': kind = 'wardBreak'; break;
     case 'barrierBroken': kind = 'barrierBreak'; break;
+    case 'poiseBroken': kind = 'poiseBreak'; break;
     default: break;
   }
   return kind && e.targetId != null ? { kind, targetId: e.targetId } : null;
@@ -1449,6 +1453,7 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
           // Barrier and Ward stack above the Block / Health pair.
           if (parts.barrier) floatNum(ctx.layer, anchor, parts.barrier.text, parts.barrier.cls, null, { x: -52, y: -34, jitter: false });
           if (parts.ward) floatNum(ctx.layer, anchor, parts.ward.text, parts.ward.cls, null, { x: parts.barrier ? 0 : -26, y: -34, jitter: false });
+          if (parts.poise) floatNum(ctx.layer, anchor, parts.poise.text, parts.poise.cls, null, { x: 26, y: -34, jitter: false });
           if (parts.guard) floatNum(ctx.layer, anchor, parts.guard.text, parts.guard.cls, null,
             { x: paired ? -26 : 0, jitter: false });
           if (parts.damage) floatNum(ctx.layer, anchor, parts.damage.text, parts.damage.cls, null,

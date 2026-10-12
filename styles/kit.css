@@ -5887,6 +5887,8 @@ button[data-button-size] {
 :root .combat .combatant .combat-health-shield .combat-health-badge-value { transform: translateY(-.23em); }
 :root .combat .combatant .combat-health-ward::before { border-radius: 50%; background: linear-gradient(135deg, #b38ae8, var(--ward-purple), #4d316b); }
 :root .combat .combatant .combat-health-ward { filter: drop-shadow(0 0 4px #9a63d966); }
+:root .combat .combatant .combat-health-poise::before { border-radius: 50%; background: linear-gradient(135deg, #ffb066, #ff9a3c, #8a4a12); }
+:root .combat .combatant .combat-health-poise { filter: drop-shadow(0 0 4px #ff9a3c66); }
 /* Barrier: Ward charged past full until the owner's next turn — a gold rim. */
 :root .combat .combatant .combat-health-ward-barrier::before { box-shadow: 0 0 0 max(2px, calc(3px / var(--ui-zoom, 1))) #ffd34d, 0 0 8px 2px #ffd34daa; }
 :root .combat .combatant .combat-health-badge:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }

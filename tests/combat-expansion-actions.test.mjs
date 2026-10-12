@@ -186,3 +186,68 @@ test('each hit Ward meets still lets at least 1 damage through', () => {
   assert.equal(before - enemy.hp, 2);
   assert.equal(enemy.persistentWard.value, 12, 'Ward is spent only by the 8 it absorbed');
 });
+
+const physicalCarrier = () => ({ cardId: 'strike', damageSchool: 'physical', tags: ['camp:physical', 'maneuver:attack'],
+  combatProfile: { camp: 'physical', maneuver: 'attack', school: 'physical', damageType: 'slashing', reach: 'contact', targeting: 'single' } });
+const magicCarrier = () => ({ cardId: 'starstonePebble', damageSchool: 'fire', tags: ['camp:spell', 'maneuver:casting'],
+  combatProfile: { camp: 'spell', maneuver: 'casting', school: 'fire', damageType: 'fire', reach: 'near', targeting: 'single' } });
+function captureEvents(combat) {
+  const events = []; const emit = combat.emit;
+  combat.emit = (type, payload) => { events.push({ type, ...payload }); return emit.call(combat, type, payload); };
+  return events;
+}
+
+test('Poise is the physical twin of Ward: Block soaks, Poise absorbs and breaks, the enemy is staggered after the hit', () => {
+  const { combat, enemy } = fixture([{ op: 'damage', target: 'enemy', amount: 10 }]);
+  enemy.ratings.ward = enemy.persistentWard.value = enemy.persistentWard.max = 0;
+  enemy.ratings.poise = 4; enemy.persistentPoise = { max: 4, value: 4 };
+  enemy.block = 3; enemy.barrier = 0;
+  const events = captureEvents(combat);
+  const before = enemy.hp;
+  applyAttackDamage(combat, combat.player, enemy, 10, [], physicalCarrier());
+  assert.equal(enemy.block, 0, 'Block soaks 3 first');
+  assert.equal(enemy.persistentPoise.value, 0, 'Poise absorbs the 4 that reach it and breaks');
+  assert.equal(before - enemy.hp, 3, 'HP loss is the 3 that passed both');
+  assert.equal(enemy.skipNextTurn, true, 'the enemy is staggered');
+  const types = events.map(event => event.type);
+  const dealt = events.find(event => event.type === 'damageDealt');
+  assert.equal(dealt.poiseAbsorbed, 4); assert.equal(dealt.poiseRemaining, 0);
+  assert.equal(dealt.amount, 6, 'amount is what the hit did after Poise: 10 less the 4 Poise took');
+  assert.ok(types.indexOf('poiseBroken') > types.indexOf('damageDealt'), 'the break is reported after the hit');
+  assert.ok(types.includes('enemyStaggered'));
+});
+
+test('Poise lets at least 1 damage through per physical hit it meets, and is spent by what it absorbs', () => {
+  const { combat, enemy } = fixture([{ op: 'damage', target: 'enemy', amount: 3 }]);
+  enemy.ratings.ward = enemy.persistentWard.value = enemy.persistentWard.max = 0;
+  enemy.ratings.poise = 10; enemy.persistentPoise = { max: 10, value: 10 };
+  enemy.block = 0; enemy.barrier = 0;
+  const before = enemy.hp;
+  applyAttackDamage(combat, combat.player, enemy, 3, [], physicalCarrier());
+  assert.equal(before - enemy.hp, 1);
+  assert.equal(enemy.persistentPoise.value, 8);
+});
+
+test('a physical Poise break costs a player one Stamina next turn and staggers nobody', () => {
+  const { combat, enemy } = fixture();
+  const mage = combat.player;
+  mage.ratings = { ...mage.ratings, poise: 2, ward: 0 };
+  mage.persistentWard = { max: 0, value: 0 };
+  mage.persistentPoise = { max: 2, value: 2 }; mage.block = 0; mage.barrier = 0; mage.pendingActionLoss = 0;
+  const events = captureEvents(combat);
+  applyAttackDamage(combat, enemy, mage, 5, [], physicalCarrier());
+  assert.equal(mage.persistentPoise.value, 0);
+  assert.equal(mage.pendingActionLoss, 1, 'a Poise break costs one Stamina next turn');
+  const broke = events.find(event => event.type === 'poiseBroken');
+  assert.equal(broke.staminaLoss, 1);
+  assert.equal(events.some(event => event.type === 'playerStaggered'), false, 'a player is not staggered by Poise');
+});
+
+test('a magical hit leaves Poise untouched', () => {
+  const { combat, enemy } = fixture([{ op: 'damage', target: 'enemy', amount: 10 }]);
+  enemy.ratings.ward = enemy.persistentWard.value = enemy.persistentWard.max = 0;
+  enemy.ratings.poise = 4; enemy.persistentPoise = { max: 4, value: 4 };
+  enemy.block = 0; enemy.barrier = 0;
+  applyAttackDamage(combat, combat.player, enemy, 10, [], magicCarrier());
+  assert.equal(enemy.persistentPoise.value, 4, 'Poise guards against physical hits only');
+});

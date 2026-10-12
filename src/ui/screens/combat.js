@@ -921,6 +921,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       block: e.block,
       barrier: e.barrier || 0,
       persistentWard: e.persistentWard ? { ...e.persistentWard } : null,
+      persistentPoise: e.persistentPoise ? { ...e.persistentPoise } : null,
       combatStance: e.combatStance ? { ...e.combatStance } : null,
       ...(e.wardBlock !== undefined ? { wardBlock: e.wardBlock } : {}),
       alive,
@@ -969,6 +970,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         case 'persistentWardChanged':
           if (t?.persistentWard) { t.persistentWard.value = e.value; if (Number.isFinite(e.max)) t.persistentWard.max = e.max; }
           break;
+        case 'persistentPoiseChanged':
+          if (t?.persistentPoise) { t.persistentPoise.value = e.value; if (Number.isFinite(e.max)) t.persistentPoise.max = e.max; }
+          break;
         case 'barrierGained':
           if (t) t.barrier = e.total;
           break;
@@ -988,6 +992,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
             t.block = e.blockRemaining ?? Math.max(0, t.block - e.blocked);
             if (e.barrierRemaining !== undefined) t.barrier = e.barrierRemaining;
             if (e.wardBlockRemaining !== undefined) t.wardBlock = e.wardBlockRemaining;
+            if (e.poiseRemaining !== undefined && t.persistentPoise) t.persistentPoise.value = e.poiseRemaining;
             reconcileWardBlock(t);
           }
           break;
