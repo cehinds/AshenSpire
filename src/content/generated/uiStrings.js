@@ -41,7 +41,7 @@ export const uiStrings = [
     "id": "combat.protection.ward",
     "extends": "",
     "short": "Arcane Ward",
-    "full": "Absorbs incoming hits before Block, always letting at least 1 damage through, and is spent by each hit it meets. Includes Block granted by magical guards.",
+    "full": "Ward pool: absorbs each hit before Block, always letting at least 1 damage through, and is spent by the hit it meets. Ward from magical guards is part of Block and absorbs after ordinary Block.",
     "tip": "Arcane Ward"
   },
   {
