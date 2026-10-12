@@ -4500,7 +4500,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "starbladePhalanx",
-    "tagId": "delivery:projectile"
+    "tagId": "delivery:melee"
   },
   {
     "family": "card",
