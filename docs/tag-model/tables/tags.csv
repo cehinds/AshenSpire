@@ -399,11 +399,11 @@ meta.combat.attack-source.weapon,attack-source.weapon,Weapon,meta.combat.attack-
 meta.combat.attack-source.spell,attack-source.spell,Spell,meta.combat.attack-source,TagNode,,Categorized Spell identity; effects are authored separately.,,,,,,live-tag,◇,9FC3E8,source:spell
 meta.combat.attack-source.unarmed,attack-source.unarmed,Unarmed,meta.combat.attack-source,TagNode,,Categorized Unarmed identity; effects are authored separately.,,,,,,live-tag,◇,9FC3E8,source:unarmed
 meta.combat.delivery.projectile,delivery.projectile,Projectile,meta.combat.delivery,TagNode,,Categorized Projectile identity; effects are authored separately.,,,,,,live-tag,◇,9FC3E8,delivery:projectile
-classification,classification,classification,,TagNode,,Grouping node for classification in nodes.csv.,,,,,,live-tag,,,classification
-card.type.attack,type.attack,Attack,card.type,TagNode,,Grouping node for attack in nodes.csv.,,,,,,live-tag,,,classification.attack
-classification.strike,classification.strike,strike,classification,TagNode,,Grouping node for strike in nodes.csv.,,,,,,live-tag,,,classification.strike
-classification.guard,classification.guard,guard,classification,TagNode,,Grouping node for guard in nodes.csv.,,,,,,live-tag,,,classification.guard
-classification.weaponArt,weaponArt,weaponArt,classification,TagNode,,Grouping node for weaponArt in nodes.csv.,,,,,,live-tag,,,classification.weaponArt
+classification,classification,classification,,TagNode,,,,,,,,live-tag,,,classification
+card.type.attack,type.attack,Attack,card.type,TagNode,,,,,,,,live-tag,,,classification.attack
+classification.strike,classification.strike,strike,classification,TagNode,,,,,,,,live-tag,,,classification.strike
+classification.guard,classification.guard,guard,classification,TagNode,,,,,,,,live-tag,,,classification.guard
+classification.weaponArt,weaponArt,weaponArt,classification,TagNode,,,,,,,,live-tag,,,classification.weaponArt
 classification.class,classification.class,class,classification,TagNode,,"What a class is. Every object in the class collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.class
 classification.relic,classification.relic,relic,classification,TagNode,,"What a relic is. Every object in the relic collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.relic
 classification.flask,classification.flask,flask,classification,TagNode,,"What a flask is. Every object in the flask collection carries this, and nothing outside it may.",,,,,,live-tag,,,classification.flask

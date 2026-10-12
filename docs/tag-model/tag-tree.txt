@@ -587,7 +587,7 @@ Card
     Curse
     Status
     Consumable
-    Attack {Grouping node for attack in nodes.csv.}
+    Attack
   Rarity
     Starter
     Common
@@ -619,10 +619,10 @@ Card
   Ranged {Authored ranged presentation; no position system.}
   Precision {Deliberate aim and finesse; presentation only.}
   Extractable {A smith can lift this card out of the item that lends it, and seat it in another item's mount. Strikes and defends do not carry it — today.}
-classification {Grouping node for classification in nodes.csv.}
-  strike {Grouping node for strike in nodes.csv.}
-  guard {Grouping node for guard in nodes.csv.}
-  weaponArt {Grouping node for weaponArt in nodes.csv.}
+classification
+  strike
+  guard
+  weaponArt
   class {What a class is. Every object in the class collection carries this, and nothing outside it may.}
   relic {What a relic is. Every object in the relic collection carries this, and nothing outside it may.}
   flask {What a flask is. Every object in the flask collection carries this, and nothing outside it may.}
