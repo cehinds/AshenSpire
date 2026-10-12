@@ -1,6 +1,8 @@
-// Enemy action pool (owner decision, 2026-10-12; SPEC §4.6, §4.11): each enemy move costs SP from the action-cost
-// table by its stance, an enemy spends its per-turn pool until it is empty, a move it cannot afford is not picked,
-// and an enemy always plays at least one move. Normal combat and the rounds preview share the pool.
+// Enemy action pool (owner decisions, 2026-10-12; SPEC §4.6a, §4.11): each enemy move costs its own `sp`, else SP from
+// the action-cost table by its stance; an enemy's per-turn pool is its stats (the stamina row on its attributes, plus
+// its equipment SP; 3 with no stats), it spends the pool until it is empty, a move it cannot afford is not picked, and
+// it always plays at least one move. Normal combat and the rounds preview share the pool.
+// Replaced rule: a flat pool of 2 (ENEMY_SP_POOL); the expectations that read 2 now read the stat pool, 3.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -16,6 +18,7 @@ import * as Rounds from '../src/engine/combatRoundsAdapter.js';
 
 const ENEMY = 'wanderingSoldier';
 const base = createRegistries(contentBundle);
+const POOL = 3; // a minion with no authored stats: the stamina row's base
 
 // wanderingSoldier with a smash move added (tagged maneuver:smash, so it costs 2) and an optional per-enemy pool.
 function registriesWith({ pool, extraMoves } = {}) {
@@ -54,8 +57,11 @@ test('a move costs SP from the table by its stance; an untagged move costs the 1
   assert.ok(def.moves.slash, 'fixture: the soldier has a slash');
 });
 
-test('the enemy pool is 2 by default, and a per-enemy spPool overrides it', () => {
-  assert.equal(Rounds.enemyPool(base.enemies.get(ENEMY)), 2);
+test('the enemy pool is its stats (3 with none), and a fixture spPool overrides it', () => {
+  assert.equal(Rounds.enemyPool(base.enemies.get(ENEMY)), POOL);
+  assert.equal(Rounds.enemyPool({ attributes: { dexterity: 8, constitution: 8 } }), POOL + 2 + 2, 'dexterity and constitution weigh 0.25 each');
+  assert.equal(Rounds.enemyPool({ attributes: { dexterity: 8 }, equipmentSp: 1 }), POOL + 2 + 1, 'equipment SP adds on top');
+  assert.equal(Rounds.enemyPool({ attributes: { strength: 20 } }), POOL, 'strength is not on the stamina row');
   assert.equal(Rounds.enemyPool({ spPool: 4 }), 4);
   assert.equal(Rounds.enemyPool({ spPool: 0 }), 0, 'a zero pool is a real override');
 });
@@ -73,7 +79,7 @@ test('an enemy spends its pool until it is empty, deterministically for a seed',
     const first = runOnce();
     assert.deepEqual(runOnce(), first, `seed ${seed} repeats`);
     const spent = first.reduce((sum, id) => sum + Rounds.enemyMoveSp(def.moves[id]), 0);
-    assert.equal(spent, 2, `seed ${seed} spends its pool of 2 exactly, got ${first}`);
+    assert.equal(spent, POOL, `seed ${seed} spends its pool of ${POOL} exactly, got ${first}`);
   }
 });
 
@@ -88,14 +94,20 @@ function pickWithin(def, maxSp, rng) {
   return entries[entries.length - 1][0];
 }
 
-test('a move costing more than the remaining pool is never picked; the 2-cost move only ever fills an empty pool', () => {
+test('a move costing more than the remaining pool is never picked: a 2-SP smash fits only with 2 SP left', () => {
   const reg = registriesWith({ extraMoves: { crush: { ...SMASH, weight: 1000 } } });
-  const combat = fight({ reg });
-  for (const enemy of combat.enemies.filter((e) => e.alive)) {
-    const plan = planOf(enemy);
-    assert.ok(spentOf(plan, reg) <= 2, `${plan} fits the pool`);
-    const at = plan.indexOf('crush');
-    if (at >= 0) assert.equal(plan.length, at + 1, 'a smash ends the plan, it is never followed by a 1-SP move it cannot afford');
+  for (const seed of [5, 6, 7, 8]) {
+    const combat = fight({ reg, seed });
+    for (const enemy of combat.enemies.filter((e) => e.alive)) {
+      const plan = planOf(enemy);
+      assert.ok(spentOf(plan, reg) <= POOL, `${plan} fits the pool`);
+      let left = POOL;
+      for (const id of plan) {
+        const sp = Rounds.enemyMoveSp(reg.enemies.get(ENEMY).moves[id]);
+        assert.ok(sp <= left, `${id} (${sp} SP) is picked only with ${sp} SP left, had ${left}: ${plan}`);
+        left -= sp;
+      }
+    }
   }
 });
 
@@ -117,7 +129,7 @@ test('normal combat: the intent is the first move, and follow-ups show only with
   const offEnemy = off.enemies[0];
   assert.ok(offEnemy.intent.moveId, 'the enemy has a first move');
   assert.equal(enemyPlanActions(off, offEnemy).length, 0, 'toggle off: no follow-up symbols');
-  assert.equal(spentOf(planOf(offEnemy), reg), 2, 'toggle off: the follow-ups are planned all the same, and held back from the box');
+  assert.equal(spentOf(planOf(offEnemy), reg), POOL, 'toggle off: the follow-ups are planned all the same, and held back from the box');
   const on = fight({ reg, seed: 9, settings: { [MULTI_ACTION_KEY]: true } });
   const onEnemy = on.enemies[0];
   assert.equal(onEnemy.intent.moveId, off.enemies[0].intent.moveId, 'the same first move with or without the toggle');
@@ -130,7 +142,7 @@ test('normal combat: an enemy plays every move of its pool in its turn, one at a
   const reg = registriesWith({ extraMoves: { crush: SMASH } });
   const combat = fight({ reg, seed: 13 });
   const planned = combat.enemies.map((e) => planOf(e));
-  assert.ok(planned.every((p) => spentOf(p, reg) === 2), `every plan spends the pool of 2: ${JSON.stringify(planned)}`);
+  assert.ok(planned.every((p) => spentOf(p, reg) === POOL), `every plan spends the pool of ${POOL}: ${JSON.stringify(planned)}`);
   dispatch(combat, { type: 'endTurn' });
   while (combat.pendingReaction) dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: null });
   combat.enemies.forEach((enemy, i) => {
@@ -141,12 +153,12 @@ test('normal combat: an enemy plays every move of its pool in its turn, one at a
 
 test('rounds mode uses the same pool: the rounds enemy SP is the pool, and each queue fits it', () => {
   const reg = registriesWith({ extraMoves: { crush: SMASH } });
-  assert.equal(Rounds.ENEMY_SP, 2);
+  assert.equal(Rounds.enemyPool(reg.enemies.get(ENEMY)), POOL);
   const combat = fight({ reg, seed: 5, rounds: true });
   for (const enemy of combat.enemies.filter((e) => e.alive)) {
     const queue = combat.combatRounds.enemyQueues[enemy.id];
     assert.ok(queue.length >= 1, 'at least one move');
-    assert.ok(queue.reduce((s, q) => s + q.sp, 0) <= 2, 'within the pool of 2');
+    assert.ok(queue.reduce((s, q) => s + q.sp, 0) <= POOL, `within the pool of ${POOL}`);
   }
 });
 

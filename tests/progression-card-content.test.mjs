@@ -1,6 +1,7 @@
 import { botCardTargetId } from '../tools/simbot.mjs';
 import test from 'node:test';
-import { cardActionStance, stanceCost } from '../src/model/actionCosts.js';
+import { cardCostBudget } from '../src/model/actionCosts.js';
+import { applyAbilityGrade } from '../src/model/abilityGrades.js';
 import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
@@ -202,31 +203,27 @@ test('assembled content validates every normalized card, feat and relic rule', (
 });
 
 
-// The grade's authored Action cost is the base for its derived SP (SPEC action costs, owner 2026-10-12): a stanced
-// family card pays its stance's table price plus the grade's own delta over the card's base cost; a fixed or unstanced
-// card keeps the authored number.
-export function gradeActionCost(card, profile) {
-  const stance = card.costRule === 'fixed' || typeof card.cost !== 'number' ? null : cardActionStance(card);
-  const price = stance ? stanceCost(stance) : null;
-  return price === null ? profile.actionCost : Math.max(0, price + profile.actionCost - card.cost);
-}
+// Each grade's Stamina and Mana are the cost formula's at that grade's rank (SPEC §4.3a, owner 2026-10-12). Replaced
+// rule: the authored actionCost (then the stance price plus the grade's delta) and Mana equal to the rank.
+const gradeCost = (card, profile) => cardCostBudget(applyAbilityGrade(card, profile.rank), { rank: profile.rank });
 test('every authored family grade completes a paid real play in the assembled engine', () => {
   for (const card of progressionCards) for (const profile of card.gradeProfiles) {
     const combat = fixture();
     const instance = { instanceId: 'graded-play', cardId: card.id, upgraded: false, abilityRank: profile.rank };
     combat.piles.hand.push(instance);
     const face = resolveCard(combat.registries, instance);
-    assert.equal(face.cost, gradeActionCost(card, profile), `${card.name}/${profile.rank}`);
-    assert.equal(face.manaCost, profile.rank, `${card.name}/${profile.rank}`);
+    const priced = gradeCost(combat.registries.cards.get(card.id), profile);
+    assert.equal(face.cost, priced.sp, `${card.name}/${profile.rank}`);
+    assert.equal(face.manaCost || 0, priced.mp, `${card.name}/${profile.rank}`);
     const preview = previewCard(combat, instance.instanceId);
-    assert.equal(preview.manaCost, profile.rank);
+    assert.equal(preview.manaCost, face.manaCost || 0);
     dispatch(combat, { type: 'playCard', cardInstanceId: instance.instanceId, targetId: botCardTargetId(combat.registries, combat, instance, combat.enemies[0].id) });
     while (combat.pendingAbilityDiscard) {
       const ids = combat.piles.hand.slice(0, combat.pendingAbilityDiscard.count).map(c => c.instanceId);
       assert.doesNotThrow(() => dispatch(combat, { type: 'chooseDiscard', cardInstanceIds: ids }), `${card.name}/${profile.rank}, choosing ${JSON.stringify(ids)} from ${combat.piles.hand.length}`);
     }
     assert.equal(combat.eventLog.filter(e => e.type === 'cardResolved').length, 1, `${card.name}/${profile.rank}`);
-    assert.equal(combat.player.mana, 100 - profile.rank + (card.id === 'progression-wellspring-sigil' && profile.rank >= 2 ? 1 : 0));
+    assert.equal(combat.player.mana, 100 - (face.manaCost || 0) + (card.id === 'progression-wellspring-sigil' && profile.rank >= 2 ? 1 : 0));
   }
 });
 

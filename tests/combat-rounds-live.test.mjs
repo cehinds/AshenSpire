@@ -78,13 +78,14 @@ test('queueing a card pays its Stamina and Mana, keeps the card in hand, and dea
 
 test('a queued card with a Mana cost pays that Mana at queue time', () => {
   let found = null;
-  for (const classId of ['starseer', 'reaver', 'rogue', 'herald']) {
-    const c = fight({ classId, expansion: 2 });
+  // Several seeds: under the cost formula (SPEC §4.3a) seed 5's opening hands hold no affordable Mana card.
+  for (const seed of [SEED, 1, 2, 3, 4, 6, 7, 8]) for (const classId of ['starseer', 'reaver', 'rogue', 'herald']) {
+    if (found) break;
+    const c = fight({ classId, expansion: 2, seed });
     for (const card of c.piles.hand) {
       const cost = cardPlayCosts(c, card.instanceId);
       if (cost.mana > 0 && cost.energy <= c.player.energy && cost.mana <= c.player.mana) { found = { c, card, cost }; break; }
     }
-    if (found) break;
   }
   assert.ok(found, 'a Mana card is in some opening hand');
   const { c, card, cost } = found;
@@ -119,14 +120,16 @@ test('a card cannot be queued twice, and a queued card cannot be discarded', () 
   assert.equal(c.phase, 'player', 'the refused discard leaves the turn open');
 });
 
-test('each enemy queues its moves from a 2 SP pool (owner 2026-10-12), SP per move from the action-cost table', () => {
-  assert.equal(Rounds.ENEMY_SP, 2);
+// Replaced rule: a flat 2 SP pool. The pool is the enemy's stats now (SPEC §4.6a): 3 for a minion with no stats.
+test('each enemy queues its moves from its stat SP pool (owner 2026-10-12), SP per move from the action-cost table', () => {
+  const pool = Rounds.enemyPool(registries.enemies.get(ENEMY));
+  assert.equal(pool, 3);
   const c = fight();
   for (const enemy of c.enemies.filter((e) => e.alive)) {
     const queue = c.combatRounds.enemyQueues[enemy.id];
     assert.ok(queue.length >= 1, `${enemy.id} queues at least one move`);
     const spent = queue.reduce((sum, e) => sum + e.sp, 0);
-    assert.ok(spent <= Rounds.ENEMY_SP, `${enemy.id} spends ${spent} SP of ${Rounds.ENEMY_SP}`);
+    assert.ok(spent <= pool, `${enemy.id} spends ${spent} SP of ${pool}`);
     assert.equal(enemy.intent.moveId, queue[0].moveId, 'slot 0 is the intent the existing code reads');
   }
 });
@@ -263,6 +266,8 @@ function ENEMY_ID_OF(c) {
 // fights as the golden in the P3a commit: three seeds, four turns, each card played on the first
 // living enemy, reactions set off). Re-recorded at the dev merge (2026-10-12): dev's combatReactionUnavailable
 // receipts (SPEC §4.10) are in the log now, and this equals origin/dev's own output for the same script.
+// Re-recorded for the cost formula and the stat-driven enemy pool (SPEC §4.3a, §4.6a; owner 2026-10-12): card costs and
+// the enemy's 3-SP pool change what the script plays. The previous hash came from the replaced stance-table rule.
 function scriptedLog(seed, classId = 'reaver', enemyIds = [ENEMY]) {
   const run = createRunState({ seed, classId, registries });
   const c = createRunCombat({ registries, rng: createRng(seed), run, enemyIds, settings: {} });
@@ -284,8 +289,8 @@ function scriptedLog(seed, classId = 'reaver', enemyIds = [ENEMY]) {
 
 test('with the preview off, a scripted fight event log is byte-identical to the recorded golden', () => {
   const all = [1, 2, 3].map((s) => scriptedLog(s)).join('\n');
-  assert.equal(createHash('sha256').update(all).digest('hex'), '038fb9b84e3f79ab96e9f0c7ff663b9e18df720a857b5da133824ce144f5ece6');
-  assert.equal(all.length, 254862);
+  assert.equal(createHash('sha256').update(all).digest('hex'), '2de6fed4076ccceaad0ff69423c47a8770aeae1df27e776490f6d7ecb8b17972');
+  assert.equal(all.length, 258718);
 });
 
 // Review finding 1: a queued card that an earlier queued card removed from hand never resolves.

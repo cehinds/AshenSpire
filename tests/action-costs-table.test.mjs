@@ -1,9 +1,10 @@
-// Action costs (owner decision, 2026-10-12, SPEC §4 Action costs): the stance → SP table, its validation, and the
-// stance a card or enemy move is classified under.
+// Action costs (owner decision, 2026-10-12, SPEC §4.3a, §4.6a): the stance → SP table that prices an enemy move that
+// names no `sp` of its own, its validation, and the stance a move is classified under. Player cards are priced by the
+// cost formula instead (tests/action-costs-formula.test.mjs).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { ACTION_COST_TABLE, ENEMY_SP_POOL, TWO_COST_EFFECT_MULTIPLIER, SCALED_EFFECT_OPS } from '../src/content/actionCosts.js';
-import { validateActionCostTable, stanceCost, actionStance } from '../src/model/actionCosts.js';
+import { ACTION_COST_TABLE, TWO_COST_EFFECT_MULTIPLIER, SCALED_EFFECT_OPS } from '../src/content/actionCosts.js';
+import { validateActionCostTable, stanceCost, actionStance, enemyPoolOf } from '../src/model/actionCosts.js';
 
 test('the cost table is the owner table: attack 1, block 1, smash 2, counter 2, cast 2, sweep 2', () => {
   assert.deepEqual({ ...ACTION_COST_TABLE }, { attack: 1, block: 1, smash: 2, counter: 2, cast: 2, sweep: 2 });
@@ -49,8 +50,9 @@ test('an unclassified move has no stance, and an evade has one that the table do
   assert.equal(stanceCost(actionStance({ kind: 'evade', tags: [] })), null);
 });
 
-test('the provisional 1.8 multiplier, the 2-SP enemy pool and the scaled effect ops are the shipped defaults', () => {
-  assert.equal(ENEMY_SP_POOL, 2);
+test('the provisional 1.8 multiplier, the stat-driven enemy pool (3 with no stats) and the scaled effect ops are the shipped defaults', () => {
+  // Replaced rule: a flat ENEMY_SP_POOL of 2. The pool is now the stamina row on the enemy's stats, base 3 (SPEC §4.6a).
+  assert.equal(enemyPoolOf({ id: 'statless' }), 3);
   assert.equal(TWO_COST_EFFECT_MULTIPLIER, 1.8);
   assert.deepEqual([...SCALED_EFFECT_OPS].sort(), ['block', 'buildup', 'damage', 'gainBarrier', 'gainPoise', 'gainWard', 'heal', 'poiseDamage', 'wardDamage']);
   for (const never of ['draw', 'discard', 'addCard', 'applyStatus', 'loseHp']) assert.ok(!SCALED_EFFECT_OPS.includes(never), `${never} is never scaled`);

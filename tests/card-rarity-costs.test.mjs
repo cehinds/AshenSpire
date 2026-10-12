@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { cardActionStance, stanceCost } from '../src/model/actionCosts.js';
+import { cardCostBudget, isCostOptOut } from '../src/model/actionCosts.js';
+import { applyAbilityGrade } from '../src/model/abilityGrades.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
@@ -20,21 +21,17 @@ test('preserved legacy reward cards retain their pinned Mana rarity shares and o
       const cost = legacyReg.framework.costProfile(def);
       assert.equal(cost.stamina, def.cost === 'X' ? 0 : def.cost);
       assert.equal(def.staminaCost || 0, 0, 'no obsolete additive stamina charge');
-      assert.ok(!def.manaCost || def.cost === 'X' || def.cost >= 1);
+      // A 0-SP magic card is possible under the cost formula (owner, 2026-10-12): every priced card costs something.
+      assert.ok(isCostOptOut(def) || def.cost + (def.manaCost || 0) >= 1, `${c.id}: a priced card costs something`);
     }
   }
 });
 
 
-// The grade's authored Action cost is the base for its derived SP (SPEC action costs, owner 2026-10-12): a stanced
-// family card pays its stance's table price plus the grade's own delta over the card's base cost; a fixed or unstanced
-// card keeps the authored number.
-export function gradeActionCost(card, profile) {
-  const stance = card.costRule === 'fixed' || typeof card.cost !== 'number' ? null : cardActionStance(card);
-  const price = stance ? stanceCost(stance) : null;
-  return price === null ? profile.actionCost : Math.max(0, price + profile.actionCost - card.cost);
-}
-test('every expanded ability grade pays its authored Action cost and Mana equal to rank', () => {
+// Every ability grade is priced by the cost formula at its own rank (SPEC §4.3a, owner 2026-10-12): the authored
+// actionCost and manaCost are the inputs no longer; the face's effects and tags are. Replaced rule: the grade's Mana was
+// its rank and its Actions were the authored number (later, the stance price plus the grade's delta).
+test('every expanded ability grade pays the Stamina and Mana the cost formula prices at its rank', () => {
   const families = reg.cards.all().filter(card => card.gradeProfiles);
   assert.equal(families.length, 82, 'forty new families and forty-two retuned existing abilities');
   for (const card of families) {
@@ -44,10 +41,13 @@ test('every expanded ability grade pays its authored Action cost and Mana equal 
       const def = resolveCard(reg, { cardId: card.id, abilityRank: rank });
       const cost = reg.framework.costProfile(def);
       assert.equal(profile.rank, rank, card.id);
-      assert.equal(def.manaCost || 0, rank, `${card.id} grade ${rank}: printed Mana`);
-      assert.equal(def.cost, gradeActionCost(card, profile), `${card.id} grade ${rank}: the action cost of its stance`);
-      assert.ok(Number.isInteger(def.cost) && def.cost >= 0 && def.cost <= 5, `${card.id} grade ${rank}: a whole SP cost, ${def.cost}`);
+      if (isCostOptOut(card)) continue;
+      const priced = cardCostBudget(applyAbilityGrade(card, rank), { rank });
+      assert.equal(def.cost, priced.sp, `${card.id} grade ${rank}: the formula's Stamina`);
+      assert.equal(def.manaCost || 0, priced.mp, `${card.id} grade ${rank}: the formula's Mana`);
+      assert.ok(def.cost + (def.manaCost || 0) >= 1, `${card.id} grade ${rank}: a priced card always costs something`);
       assert.equal(cost.stamina, def.cost, 'Actions and Stamina are the same resource');
+      assert.equal(cost.mana, def.manaCost || 0, 'the framework reads the derived Mana');
       assert.equal(def.staminaCost || 0, 0, 'no additional Stamina charge');
     }
   }
