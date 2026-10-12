@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1881",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Co-op is set aside for now",
+    "detail": "The title menu no longer offers Forsaken Together while co-op is reworked. Nothing else changes, and solo play is untouched.",
+    "build": "0.7.1.1363",
+    "pullRequest": 1881,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1881"
+  },
+  {
     "id": "pr-1879",
     "date": "2026-10-12",
     "group": "2026-10-12",
