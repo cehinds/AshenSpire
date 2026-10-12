@@ -62,7 +62,7 @@ import { isEngaged, focusFirst } from '../input.js';
 import { flaskIdentityHtml, flaskDetailLines } from '../components/flask.js';
 import { flaskSlotCap } from '../../model/gracerefill.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
-import { rewardPlan, rewardClaimStatus, resolveContinue, unseenIds, rewardNotes, CARD_CHOICE_KINDS, smithingStonesPaid, smithingStoneRowCopy } from '../../model/rewardplan.js';
+import { rewardPlan, rewardClaimStatus, resolveContinue, unseenIds, rewardNotes, CARD_CHOICE_KINDS, isRelicChoice, smithingStonesPaid, smithingStoneRowCopy } from '../../model/rewardplan.js';
 import { orderedXpRows, xpFillDurations } from '../../model/rewardXpPresentation.js';
 import { rewardProgress } from '../../model/rewardprogress.js';
 import { levelUpPlan, pendingLevelCount, applySkillAttribute } from '../../model/levelup.js';
@@ -152,6 +152,8 @@ export function mountRewards(app, {
     ...(smithingStonesPaid(rewards.smithingStoneReceipt) ? { smithingStone: 'taken' } : {}),
   }; // kind → 'taken'|'skipped' (absent = pending / implicitly left in manual mode)
   let chosenCardId = checkpoint?.chosenCardId || null;
+  // A boss victory's relic choice (SPEC §6): the one relic picked from the offer.
+  let chosenRelicId = checkpoint?.chosenRelicId || null;
   // The skill drafts' picks, keyed by ROW KEY (plan phase 4b): one offer may
   // carry several drafts, even for one track, so the card row's single
   // `chosenCardId` is not their record.
@@ -166,6 +168,7 @@ export function mountRewards(app, {
     if (checkpoint) {
       checkpoint.states = { ...states };
       checkpoint.chosenCardId = chosenCardId;
+      if (chosenRelicId || checkpoint.chosenRelicId !== undefined) checkpoint.chosenRelicId = chosenRelicId;
       checkpoint.chosenDraftCardIds = { ...chosenDraftCardIds };
       checkpoint.chosenDraftNodeIds = { ...chosenDraftNodeIds };
       if (Object.keys(chosenRankUps).length || checkpoint.chosenRankUps !== undefined) checkpoint.chosenRankUps = { ...chosenRankUps };
@@ -289,6 +292,17 @@ export function mountRewards(app, {
       return true;
     },
     relic(row) {
+      // A boss relic choice: the picked id must be one the offer named and the
+      // run does not already hold; anything else lands nothing.
+      if (isRelicChoice(row)) {
+        const id = row.chosenRelicId;
+        if (!row.relicIds.includes(id) || run.relics.includes(id)) return false;
+        run.relics.push(id);
+        syncFlaskGrowth(registries, run);
+        chosenRelicId = id;
+        recordSeen('relic', [id]);
+        return true;
+      }
       run.relics.push(row.relicId);
       syncFlaskGrowth(registries, run); // growth chain: a relic source binds the moment it is held
       recordSeen('relic', [row.relicId]);
@@ -311,9 +325,9 @@ export function mountRewards(app, {
     const raised = row.kind === 'skillRankUp' ? ownedInstance(row.instanceId) : null;
     // An attribute pick moves attributes and every derived pool: the whole run
     // is the record a refused save puts back.
-    const runBefore = row.kind === 'skillAttribute' || row.kind === 'skillFeat' || row.kind === 'classMilestone' || row.kind === 'skillDraft' ? structuredClone(run) : null;
-    const cardBefore = CARD_CHOICE_KINDS.includes(row.kind) || row.kind === 'classMilestone' || row.kind === 'classDraft' || row.kind === 'levelChoice' || row.kind === 'skillRankUp' || row.kind === 'skillAttribute' || row.kind === 'skillFeat' ? {
-      deck: [...run.deck], chosenCardId, chosenDraft: { ...chosenDraftCardIds }, chosenNode: { ...chosenDraftNodeIds },
+    const runBefore = row.kind === 'skillAttribute' || row.kind === 'skillFeat' || row.kind === 'classMilestone' || row.kind === 'skillDraft' || isRelicChoice(row) ? structuredClone(run) : null;
+    const cardBefore = CARD_CHOICE_KINDS.includes(row.kind) || isRelicChoice(row) || row.kind === 'classMilestone' || row.kind === 'classDraft' || row.kind === 'levelChoice' || row.kind === 'skillRankUp' || row.kind === 'skillAttribute' || row.kind === 'skillFeat' ? {
+      deck: [...run.deck], chosenCardId, chosenRelicId, chosenDraft: { ...chosenDraftCardIds }, chosenNode: { ...chosenDraftNodeIds },
       feats: [...(run.feats || [])],
       // A draft's take spends the ledger's queued draft; only a draft's rollback puts it back.
       skills: row.kind === 'skillDraft' || row.kind === 'classDraft' || row.kind === 'skillRankUp' ? structuredClone(run.skills || {}) : null,
@@ -332,6 +346,7 @@ export function mountRewards(app, {
       if (cardBefore) {
         run.deck.splice(0, run.deck.length, ...cardBefore.deck);
         chosenCardId = cardBefore.chosenCardId;
+        chosenRelicId = cardBefore.chosenRelicId;
         for (const key of Object.keys(chosenDraftCardIds)) delete chosenDraftCardIds[key];
         Object.assign(chosenDraftCardIds, cardBefore.chosenDraft);
         if (cardBefore.skills) run.skills = cardBefore.skills;
