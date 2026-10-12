@@ -92,6 +92,7 @@ import {
   rollClassDraftIds,
   rollFlaskDrop,
   rollRelicReward,
+  rollRelicChoices,
   rollArmamentDrop,
 } from './engine/encounters.js';
 import { buildMarketStock, marketVisitStock, commitInnRest, buildBlacksmithStock, blacksmithVisitStock, buildMasterStock, masterVisitStock } from './engine/shopKinds.js';
@@ -3183,6 +3184,9 @@ async function onCombatEnd(result, combat, enc) {
     const drops = registries.balance.equipment.drops || {};
     const bossDrafts = settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillDrafts('boss', manualLevelUp) : [];
     const bossClassDrafts = settingOn(saves.loadMeta().settings, 'rewardBattleClassDrafts') ? rollClassDrafts(manualLevelUp) : [];
+    // A boss offers up to balance.rewards.bossRelicChoices relics to pick ONE
+    // from; one relic (or none) keeps the single relicId shape.
+    const bossRelics = rollRelicChoices(registries, rng, run.relics, { rarities: ['boss'], count: Math.max(1, registries.balance.rewards.bossRelicChoices ?? 3) });
     const bossRewards = {
       title: victoryTitle(enc),
       cinders: Math.floor(rollRuneReward(registries, rng, 'boss', run.relics) * featMultiplier(run, 'cinders')) + (bossArmament ? 0 : drops.consolationCinders || 0),
@@ -3192,7 +3196,7 @@ async function onCombatEnd(result, combat, enc) {
       skillAttributes: settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillAttributes(manualLevelUp) : [],
       skillFeats: settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillFeats(manualLevelUp) : [],
       ...rollCardRows('boss', levelsEarned),
-      relicId: rollRelicReward(registries, rng, run.relics, { rarities: ['boss'] }),
+      ...(bossRelics.length > 1 ? { relicChoices: bossRelics } : { relicId: bossRelics[0] ?? null }),
       ...sigilOffer('boss'),
       armamentId: bossArmament,
       smithingStoneReceipt,
