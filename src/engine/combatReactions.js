@@ -275,7 +275,10 @@ export function resolveReactionStack(ctx, hooks) {
     const entry = stack.entries[stack.entries.length - 1];
     if (entry.side !== 'player') throw new Error('Enemy reactions are not implemented');
     stack.entries.pop();
-    if (playStackEntry(ctx, group, entry, hooks)) return true;
+    if (playStackEntry(ctx, group, entry, hooks)) {
+      if (!stack.entries.length) delete ctx.reactionStack;
+      return true;
+    }
   }
   delete ctx.reactionStack;
   return false;
