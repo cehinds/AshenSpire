@@ -13,6 +13,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1915"
   },
   {
+    "id": "pr-1905",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Chain reactions, and Counterstrike, Impact and Flux on cards",
+    "detail": "In new runs, cards tagged Reaction can be played during the enemy's turn, and several can be chained against one attack: the last one played resolves first. Counterstrike adds 50% to a card's numbers (75% when your stance beats the target's), Impact adds Poise damage on a hit or doubles the card's own, and Flux does the same for Ward. Burn and Crimson Blight now wear down Ward each turn. Saved runs keep their old rules.",
+    "build": "0.7.1.1433",
+    "pullRequest": 1905,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1905"
+  },
+  {
     "id": "pr-1893",
     "date": "2026-10-12",
     "group": "2026-10-12",
@@ -71,16 +81,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1425",
     "pullRequest": 1897,
     "url": "https://github.com/cehinds/AshenSpire/pull/1897"
-  },
-  {
-    "id": "pr-1905",
-    "date": "2026-10-12",
-    "group": "2026-10-12",
-    "summary": "Chain reactions, and Counterstrike, Impact and Flux on cards",
-    "detail": "In new runs, cards tagged Reaction can be played during the enemy's turn, and several can be chained against one attack: the last one played resolves first. Counterstrike adds 50% to a card's numbers (75% when your stance beats the target's), Impact adds Poise damage on a hit or doubles the card's own, and Flux does the same for Ward. Burn and Crimson Blight now wear down Ward each turn. Saved runs keep their old rules.",
-    "build": "0.7.1.1433",
-    "pullRequest": 1905,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1905"
   },
   {
     "id": "pr-1901",
