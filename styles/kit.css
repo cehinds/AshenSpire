@@ -1689,6 +1689,26 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 :root[data-layout='narrow'] .reward-door .rp-next { justify-self: end; }
 .reward-door .reward-row { justify-content: center; flex-wrap: wrap; padding: 0.6rem 0; max-width: 100%; }
 .reward-door .reward-row .reward-node { white-space: normal; }
+/* THE REWARD CHOICE GRID (owner-approved layout: boss relics and card picks):
+   three columns in ONE row on desktop and phone alike. Each column is the
+   option's card face on top and its text button under it; both select, and the
+   chosen one wears the green trim. The face scales to its column, the button
+   text wraps and never clips. */
+.reward-door .reward-row.reward-choice-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: stretch; justify-content: stretch; width: 100%; max-width: 60rem; padding: .6rem 0; }
+.reward-door .reward-choice-option { display: flex; flex-direction: column; gap: .6rem; min-width: 0; width: 100%; }
+.reward-door .reward-choice-option > .equipment-poker-card { width: 100%; max-width: 220px; margin-inline: auto; flex: 0 0 auto; }
+.reward-door .reward-choice-option > .card { align-self: center; zoom: var(--choice-card-zoom, 1); }
+.reward-door .reward-choice-option > .reward-pick { flex: 1 1 auto; min-width: 0; box-sizing: border-box; padding: .7rem .8rem; gap: .3rem; }
+.reward-door .reward-choice-option > .reward-pick h3 { font-size: clamp(1.2rem, 1.5vw, 1.6rem); line-height: 1.2; white-space: normal; overflow-wrap: anywhere; }
+.reward-door .reward-choice-option > .reward-pick p { font-size: clamp(1.1rem, 1.25vw, 1.35rem); overflow-wrap: anywhere; }
+@media (max-width: 520px) {
+  .reward-door .reward-row.reward-choice-grid { gap: 8px; }
+  .reward-door .reward-choice-option { gap: .4rem; }
+  .reward-door .reward-choice-option > .card { --choice-card-zoom: .56; }
+  .reward-door .reward-choice-option > .reward-pick { padding: .45rem .4rem; }
+  .reward-door .reward-choice-option > .reward-pick h3 { font-size: clamp(11px, 3.2vw, 14px); }
+  .reward-door .reward-choice-option > .reward-pick p { font-size: clamp(10px, 2.9vw, 12.5px); }
+}
 .reward-door .reward-kind[data-state='taken'] .chip { color: var(--gold); border-color: var(--gold); }
 /* The ring itself is the shared one above; the door adds only the lift. */
 .reward-door .reward-row .card.reward-selected { transform: translateY(-8px) scale(1.06); }

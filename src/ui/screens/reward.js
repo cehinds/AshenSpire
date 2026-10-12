@@ -54,7 +54,7 @@ import { isProgressionReward, progressionRewardUnlocked } from '../../model/defe
 import { renderCard } from '../components/card.js';
 import { sigilRuleText } from '../../model/sigils.js';
 import { renderEquipmentInspection } from '../components/equipmentCard.js';
-import { renderCollectibleInspection } from '../components/collectibleCard.js';
+import { renderCollectibleCard, renderCollectibleInspection } from '../components/collectibleCard.js';
 import { esc, attachTooltip, showTooltipFor } from '../components/tooltip.js';
 import { relicText } from '../components/card.js';
 import { sfx } from '../sfx.js';
@@ -1276,9 +1276,18 @@ export function mountRewards(app, {
       for (const candidate of strip.querySelectorAll('.reward-pick')) {
         const selected = candidate.dataset.pickId === cardId;
         // Both, always together (#997): the lift and the shared ring.
-        candidate.classList.toggle('reward-selected', selected);
+        // A column's text button wears the green trim only: `reward-selected`
+        // is the lift of the face above it, so one option reads as one lit card.
+        if (!candidate.classList.contains('reward-choice-button')) candidate.classList.toggle('reward-selected', selected);
         candidate.classList.toggle('is-chosen', selected);
         candidate.setAttribute('aria-checked', String(selected));
+      }
+      // The chosen relic's card face wears the same green trim as its button.
+      // A card face also takes the door's lift (`reward-selected`), as before.
+      for (const face of strip.querySelectorAll('.reward-choice-face')) {
+        const selected = face.dataset.pickId === cardId;
+        face.classList.toggle('reward-selected', selected);
+        face.classList.toggle('is-chosen', selected);
       }
       confirmButton.disabled = false;
       confirmReason();
@@ -1302,17 +1311,28 @@ export function mountRewards(app, {
         tile.after(inspection);
       }
     }
+    if (isRelic) strip.classList.add('reward-choice-grid');
     for (const id of isRelic ? ids : []) {
       const option = relicOption(id);
-      const tile = el('button', { class: 'class-pick reward-node reward-pick', type: 'button', role: 'radio',
+      // One column per relic: the card face on top at glance (no inspection door,
+      // no lore), the text button under it as the accessible radio. Both select.
+      // The face binds no door of its own, so a tap on it only selects.
+      const column = el('div', { class: 'reward-choice-option', dataset: { pickId: id } });
+      if (option.definition) {
+        const face = renderCollectibleCard(registries, option.definition, t('reward.kind.relic'), { interactive: false, inspection: false, level: 'glance' }).card;
+        face.classList.add('reward-choice-face');
+        face.dataset.pickId = id;
+        face.addEventListener('click', () => selectCard(id));
+        column.appendChild(face);
+      }
+      const tile = el('button', { class: 'class-pick reward-node reward-pick reward-choice-button', type: 'button', role: 'radio',
         'aria-checked': String(id === selectedCardId), dataset: { pickId: id } }, [
         el('div', { class: 'cp-body' }, [el('h3', { text: option.name }), el('p', { text: option.text })]),
       ]);
-      tile.classList.toggle('reward-selected', id === selectedCardId);
       tile.classList.toggle('is-chosen', id === selectedCardId);
       tile.addEventListener('click', () => selectCard(id));
-      strip.appendChild(tile);
-      if (option.definition) tile.after(renderCollectibleInspection(registries, option.definition, t('reward.kind.relic'), { interactive: false }));
+      column.appendChild(tile);
+      strip.appendChild(column);
     }
     for (const option of isLevelChoice ? row.options : []) {
       const choiceId = `${option.kind}:${option.id}`;
@@ -1375,6 +1395,8 @@ export function mountRewards(app, {
     }
     for (const choiceId of isNodeRow || isLevelChoice || isRankUp || isRelic || (isMilestone && row.rewardKind !== 'cards') ? [] : ids) {
       const cardId = (row.cardIds || row.options)[ids.indexOf(choiceId)];
+      // Card choices share the relic chooser's grid: one row of option columns.
+      strip.classList.add('reward-choice-grid');
       // This face only selects; collection belongs to Confirm. Inspection must
       // not consume the touch tap before selection enables that button.
       // THE DOOR OFFERS THE VERB THE PLAYER CAME FOR. Opening a card here used
@@ -1388,22 +1410,22 @@ export function mountRewards(app, {
       // skill bonus and passive Block it would be stamped with (SPEC §13.4o).
       const skillBonus = skillBonusFor(registries, run, { cardId });
       const passiveBlock = passiveBlockFor(registries, run, { cardId });
-      const el = renderCard(registries, { cardId, ...grade, ...(skillBonus > 0 ? { skillBonus } : {}), ...(passiveBlock > 0 ? { passiveBlock } : {}) }, {
+      const face = renderCard(registries, { cardId, ...grade, ...(skillBonus > 0 ? { skillBonus } : {}), ...(passiveBlock > 0 ? { passiveBlock } : {}) }, {
         owned: ownedCopies(run, cardId),
         actionOwnsTouch: true,
         surface: 'reward',
         availability: { choose: taken() ? t('reward.card.alreadyTaken') : true },
         commands: { choose: () => { selectCard(choiceId); confirmButton.click(); } },
       });
-      el.dataset.cardId = cardId;
-      el.dataset.pickId = choiceId;
-      el.classList.add('reward-pick');
-      el.setAttribute('role', 'radio');
-      el.setAttribute('aria-checked', String(choiceId === selectedCardId));
+      face.dataset.cardId = cardId;
+      face.dataset.pickId = choiceId;
+      // The face is one half of its option column; the text button under it is
+      // the accessible radio (reward-pick). Both select; both take the chosen trim.
+      face.classList.add('reward-choice-face');
       // `reward-selected` is the door's own lift; `is-chosen` is the ring the
       // whole game now shares (kit.css). Both, always together.
-      el.classList.toggle('reward-selected', choiceId === selectedCardId);
-      el.classList.toggle('is-chosen', choiceId === selectedCardId);
+      face.classList.toggle('reward-selected', choiceId === selectedCardId);
+      face.classList.toggle('is-chosen', choiceId === selectedCardId);
       if (marks.cards.includes(cardId)) {
         // The marker is a RENDERED badge, not only a data attribute — Codex
         // 4989824448's third finding: `data-new` alone had no consumer in any
@@ -1411,14 +1433,27 @@ export function mountRewards(app, {
         // attribute stays as the machine-readable hook; the chip is what the
         // player sees. Positioned inside `.card` (its named container —
         // position: relative, ui.css) per Law 2.
-        el.dataset.new = '1';
+        face.dataset.new = '1';
         const badge = document.createElement('span');
         badge.className = 'chip reward-new card-badge-new';
         badge.textContent = t('reward.card.new');
-        el.appendChild(badge);
+        face.appendChild(badge);
       }
-      el.addEventListener('click', () => selectCard(choiceId));
-      strip.appendChild(el);
+      face.addEventListener('click', () => selectCard(choiceId));
+      // The text under the face: the card's name and the effect text its face
+      // already shows (the .ctext block, resolved by the card component).
+      const effect = face.querySelector('.ctext')?.textContent?.trim() || '';
+      const tile = el('button', { class: 'class-pick reward-node reward-pick reward-choice-button', type: 'button', role: 'radio',
+        'aria-checked': String(choiceId === selectedCardId), dataset: { pickId: choiceId, cardId } }, [
+        el('div', { class: 'cp-body' }, [el('h3', { text: registries.cards.get(cardId)?.name || cardId }), el('p', { text: effect })]),
+      ]);
+      // The button wears the green trim only; `reward-selected` stays the
+      // card face's own lift, so one card reads as the one lit selection.
+      tile.classList.toggle('is-chosen', choiceId === selectedCardId);
+      tile.addEventListener('click', () => selectCard(choiceId));
+      const column = el('div', { class: 'reward-choice-option', dataset: { pickId: choiceId } });
+      column.append(face, tile);
+      strip.appendChild(column);
     }
     confirmButton.disabled = !selectedCardId;
     confirmReason();
