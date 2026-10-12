@@ -137,8 +137,11 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // px beneath it; phone, tablet and widescreen keep the 34px constant.
       const toolsRow = desktop ? handEl.closest('.combat')?.querySelector('.combat-tools') : null;
       const measuredRow = toolsRow ? toolsRow.getBoundingClientRect().height : 0;
+      // Desktop keeps its tools in the screen corners (combatTools.js), so the
+      // fan reserves no tool row above the cards there.
+      const cornerTools = toolsRow?.dataset.toolsPlacement === 'corners';
       const toolsPhysical = !desktop ? COMBAT_TOOLS_HEIGHT_PX
-        : measuredRow > 0 ? measuredRow + 4 : COMBAT_TOOLS_DESKTOP_HEIGHT_PX;
+        : cornerTools ? 0 : measuredRow > 0 ? measuredRow + 4 : COMBAT_TOOLS_DESKTOP_HEIGHT_PX;
       const toolsHeight = toolsPhysical / zoom;
       handEl.style.setProperty('--hand-controls-max-width', `${Math.max(0, handEl.clientWidth - 2 / zoom)}px`);
       // Measure the complete row, including the normally hidden native picker.
