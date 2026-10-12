@@ -134,9 +134,11 @@ version-2 snapshot without the key has no enemy reactions.
 
 ## Counterstrike
 
-- Applied when the card is prepared, after its stance is set. On a Counter card
-  it applies to the return payload when the return is built, against the
-  attacker the return answers.
+- Applied when the card is prepared, after its stance is set, to the card's own
+  effects (a Counter card's included). On a Counter card it also applies to the
+  return payload when the return is built, against the attacker the return
+  answers. Derived bonuses (such as the card rating bonus) are computed from the
+  scaled amount.
 - **Advantage.** The player's stance is the card's maneuver when the card sets a
   stance, otherwise the current tactical stance. The target is the chosen enemy;
   during a reaction, the incoming attacker; for a Counter return, the attacker it
