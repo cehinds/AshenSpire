@@ -124,13 +124,13 @@ export const colorlessCards = [
     flavor: "Blow of whatever is heavy.\n\nA cudgel, a mallet, a shovel from a mine camp. The reach's miners swing it at things in the lower galleries that were miners once. Foreman Coll says not to look at their hands, which remember the work.\n\nHis camp has lost fewer than any other.",
     keywords: [], icon: '🔨',
     effects: [
-      { op: 'damage', target: 'enemy', amount: 6 },
+      { op: 'damage', target: 'enemy', amount: 7 },
       { op: 'poiseDamage', target: 'enemy', amount: 4 },
     ],
     textTemplate: 'Deal {damage} damage and {poiseDamage} Poise damage.',
     upgrade: {
       effects: [
-        { op: 'damage', target: 'enemy', amount: 8 },
+        { op: 'damage', target: 'enemy', amount: 9 },
         { op: 'poiseDamage', target: 'enemy', amount: 6 },
       ],
     },
