@@ -286,7 +286,10 @@ test('the banner momentum is the decayed value that applies this round', () => {
 
 test('the banner tab reads the decayed momentum, not the stored one', () => {
   const screen = readFileSync(new URL('../src/ui/components/combatRoundsScreen.js', import.meta.url), 'utf8');
-  assert.match(screen, /momentumTab\(roundMomentum\(combat\)\[targetedId\]/, 'the banner reads roundMomentum');
+  // Rounds mode reads roundMomentum (the decayed value); a normal fight reads displayedMomentum, which is already decayed
+  // at its turn start (SPEC §4.11, owner decision 2026-10-12). Neither reads the stored rounds momentum directly.
+  assert.match(screen, /combat\.combatRounds \? roundMomentum\(combat\) : displayedMomentum\(combat\)/, 'the banner reads the decayed value of the fight');
+  assert.match(screen, /momentumTab\(values\[targetedId\]/, 'the tab reads that value for the targeted enemy');
   assert.doesNotMatch(screen, /momentumTab\(cr\.momentum/, 'the banner no longer reads the stored momentum');
 });
 

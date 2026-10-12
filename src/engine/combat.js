@@ -43,6 +43,7 @@ import * as F from './combatRules.js';
 import * as Reactions from './combatReactions.js';
 import { combatProfileFor } from '../model/combatCardProfile.js';
 import * as Rounds from './combatRoundsAdapter.js';
+import { decayNormalMomentum, settleNormalMomentum } from './normalPreview.js';
 import { emitEvent, fireOwnerHooks, findEntity, hasEventTriggers } from './triggers.js';
 import { attachSkillXp } from './skillXp.js';
 import * as S from '../framework/statusSemantics.js';
@@ -481,6 +482,8 @@ function finishCombat(combat, result) {
 function startPlayerTurn(combat) {
   combat.turn += 1;
   combat.phase = 'player';
+  // SPEC §4.11: a turn is a round for normal-combat momentum; each enemy's M decays one step first (rounds rule).
+  decayNormalMomentum(combat);
   const p = combat.player;
   R.beginAbilityTurn(p);
   delete p.combatRetainedCards;
@@ -708,6 +711,8 @@ function enemyPhase(combat) {
 
   combat.emit('enemyTurnEnd', { turn: combat.turn });
   drainQueue(combat);
+  // SPEC §4.11: the turn's momentum deltas settle once, after every enemy has acted.
+  settleNormalMomentum(combat);
   delete combat.reactionCursor;
 }
 
@@ -946,7 +951,7 @@ export function dispatch(combat, intent) {
       }
       case 'playCard':
         if (combat.combatRounds) queueRoundCard(combat, intent);
-        else doPlayCard(combat, intent);
+        else withPlayedCardStance(combat, intent, () => doPlayCard(combat, intent));
         break;
       case 'unqueueCard':
         unqueueRoundCard(combat, intent);
@@ -1640,6 +1645,12 @@ function roundTimelineView(def, inst, cardInstanceId, target, aimsAtFoe, sp) {
 // plan-time speed hint (PREVIEW-PLAN, Screen).
 export function roundCardForecast(combat, instanceId, targetId = null) {
   if (!combat.combatRounds) return null;
+  return cardTimelineViewFor(combat, instanceId, targetId);
+}
+
+// The timeline view of a hand card aimed at targetId (null when the card is not in hand). Pays and queues nothing.
+// Shared by the rounds forecast and normal combat's momentum stance (SPEC §4.11).
+export function cardTimelineViewFor(combat, instanceId, targetId = null) {
   const p = combat.player;
   const inst = combat.piles.hand.find((c) => c.instanceId === instanceId);
   if (!inst) return null;
@@ -1649,6 +1660,21 @@ export function roundCardForecast(combat, instanceId, targetId = null) {
   const chargedEnemyTarget = targetPlan.mode === 'friendly' && cardNeedsEnemyTargetNow(combat, instanceId);
   const target = targetId == null ? null : findEntity(combat, targetId);
   return roundTimelineView(def, inst, instanceId, target && target.alive ? target : null, needsEnemyTarget(def) || chargedEnemyTarget, 0);
+}
+
+// Normal combat's momentum (SPEC §4.11): the card being played carries its timeline stance while it resolves, so
+// the attack it lands is credited with that stance. Cleared afterwards; nothing saves it.
+function withPlayedCardStance(combat, intent, fn) {
+  if (!combat.normalPreview?.momentum) return fn();
+  // A card that cannot be aimed is refused by the play itself; its stance is only a reading, so it falls back.
+  let view = null;
+  try { view = cardTimelineViewFor(combat, intent.cardInstanceId, intent.targetId ?? null); } catch { view = null; }
+  combat.normalPreview.state.playerStance = view?.stance ?? 'attack';
+  try {
+    return fn();
+  } finally {
+    delete combat.normalPreview.state.playerStance;
+  }
 }
 
 // Pays a queued card's SP and MP back: the unqueue refund, and the refund of a card that never resolved.

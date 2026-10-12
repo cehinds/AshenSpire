@@ -572,6 +572,12 @@ function credit(cur, run, { key, winner, winCard, foeCard, events, seq, credited
   events.push({ type: 'momentum', reason: 'success', enemyId: key, by: winner, gain, bonus, delta, seq });
 }
 
+// The same credit for a caller outside a round (normalPreview.js, SPEC §4.11 normal-combat momentum). `run` is
+// { pending, stanceTable }: the summed deltas are written to run.pending, exactly as a round writes them.
+export function creditExchange(run, args) {
+  credit(null, run, args);
+}
+
 // A counter with the 'stagger' tag adds +-3 to its side's summed delta (owner, 2026-10-11).
 // A staggered target with 'hyperArmor' resists (as in resolver.mjs): no +-3, and a 'resisted'
 // event instead. The target is the attacker the counter answers.

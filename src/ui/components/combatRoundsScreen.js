@@ -7,6 +7,7 @@ import { intentIcon } from './intentIcon.js';
 import { previewIntent, roundCardForecast } from '../../engine/combat.js';
 import { screenForecast, enemyActions, roundMomentum } from '../../engine/combatRoundsAdapter.js';
 import { targetOutline } from '../../engine/combatRounds/resolver.js';
+import { displayedMomentum, momentumOn } from '../../engine/normalPreview.js';
 import { followUpSymbols, momentumTab, perceptionLevel, readStage, speedHint, READ_EXACT } from '../models/CombatRoundsScreenModel.js';
 
 const CLEAN = ['.cr-followups', '.cr-speed', '.cr-queue', '.cr-momentum'];
@@ -18,7 +19,10 @@ const CLEAN = ['.cr-followups', '.cr-speed', '.cr-queue', '.cr-momentum'];
 // every write. The browser lays the page out once for the whole decoration, not once per enemy.
 export function decorateCombatRoundsScreen(root, combat, { armedCardId = null, targetedId = null } = {}) {
   if (!root) return;
+  // The rounds layer (follow-ups, hints, queue order) needs combat.combatRounds. The momentum tab also shows in a
+  // normal fight whose momentum toggle is on (SPEC §4.11), and reads that fight's own stored value.
   const on = Boolean(combat?.combatRounds);
+  const showTab = on || momentumOn(combat);
   const perception = on ? perceptionLevel(combat) : 0;
 
   // Pass 1, reads only. The art is measured as the previous decoration left it: the follow-up symbols are added to
@@ -46,7 +50,11 @@ export function decorateCombatRoundsScreen(root, combat, { armedCardId = null, t
   for (const selector of CLEAN) root.querySelectorAll(selector).forEach((node) => node.remove());
   root.querySelectorAll('[data-target-outline]').forEach((node) => delete node.dataset.targetOutline);
   root.querySelectorAll('[data-cr-outline]').forEach((node) => delete node.dataset.crOutline);
-  if (!on) { delete root.dataset.combatRounds; return; }
+  if (!on) {
+    delete root.dataset.combatRounds;
+    if (showTab) decorateMomentumTab(root, combat, targetedId);
+    return;
+  }
   root.dataset.combatRounds = 'preview';
   const cr = combat.combatRounds;
 
@@ -99,18 +107,23 @@ export function decorateCombatRoundsScreen(root, combat, { armedCardId = null, t
     card.append(arrow);
   }
 
-  // Momentum on the turn banner, for the targeted enemy: the decayed value, what applies to this round's order.
+  decorateMomentumTab(root, combat, targetedId);
+}
+
+// Momentum on the turn banner, for the targeted enemy: the decayed value, what applies to this round's order. Rounds
+// mode reads the rounds state; a normal fight reads its own (already decayed at the turn start, SPEC §4.11).
+function decorateMomentumTab(root, combat, targetedId) {
   const ribbon = root.querySelector('.turn-ribbon');
-  if (ribbon) {
-    const tab = targetedId ? momentumTab(roundMomentum(combat)[targetedId] ?? 0) : null;
-    if (tab) {
-      ribbon.dataset.momentum = tab.tone;
-      const node = document.createElement('span');
-      node.className = 'cr-momentum';
-      node.dataset.tone = tab.tone;
-      node.setAttribute('aria-hidden', 'true');
-      node.textContent = tab.tab;
-      ribbon.append(node);
-    } else delete ribbon.dataset.momentum;
-  }
+  if (!ribbon) return;
+  const values = combat.combatRounds ? roundMomentum(combat) : displayedMomentum(combat);
+  const tab = targetedId ? momentumTab(values[targetedId] ?? 0) : null;
+  if (tab) {
+    ribbon.dataset.momentum = tab.tone;
+    const node = document.createElement('span');
+    node.className = 'cr-momentum';
+    node.dataset.tone = tab.tone;
+    node.setAttribute('aria-hidden', 'true');
+    node.textContent = tab.tab;
+    ribbon.append(node);
+  } else delete ribbon.dataset.momentum;
 }
