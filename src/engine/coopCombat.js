@@ -971,13 +971,19 @@ function planEnemyReactionMove(C, enemy, moveId, targetPlayerId) {
   C.combatExpansionVersion = 2;
   const move = expandedEnemyMove(enemy, C.registries.enemies.get(enemy.enemyId).moves[moveId], moveId, C);
   const carrier = enemyMoveCarrier(enemy, move, moveId, C);
-  const effects = (move.effects || []).filter(effect => effect.target === 'player' || SEAT_PILE_OPS.has(effect.op));
-  if (move.damage != null) effects.unshift({ op: 'damage', target: 'player', amount: enemyMoveDamage(enemy, move), hits: move.hits ?? 1 });
+  // A Counter move delivers its damage through the Counter mechanism, never as a direct
+  // hit: the same guards as the ordinary payload (executeExpandedEnemyPayload) and the
+  // solo planner (combat.js enemyMoveActions).
+  const counter = carrier.combatProfile.maneuver === 'counter';
+  const defensePrimed = counter && enemyCounterDefensePrimed(enemy, moveId);
+  const effects = (move.effects || []).filter(effect => (effect.target === 'player' || SEAT_PILE_OPS.has(effect.op))
+    && !(counter && ['damage', 'poiseDamage', 'wardDamage'].includes(effect.op)));
+  if (move.damage != null && !counter) effects.unshift({ op: 'damage', target: 'player', amount: enemyMoveDamage(enemy, move), hits: move.hits ?? 1 });
   const actions = effects.map(effect => ({ effect: { ...effect, ...(effect.target === 'player' ? { target: undefined } : {}) },
     source: enemy, owner: enemy, target: P.entity, card: carrier, meta: { moveId, activePlayerId: P.id } }));
   const self = (move.effects || []).filter(effect => effect.target !== 'player' && !SEAT_PILE_OPS.has(effect.op));
-  if (move.block != null) self.unshift({ op: 'block', target: 'self', amount: move.block });
-  if (move.barrier != null) self.unshift({ op: 'gainBarrier', target: 'self', amount: move.barrier });
+  if (move.block != null && !defensePrimed) self.unshift({ op: 'block', target: 'self', amount: move.block });
+  if (move.barrier != null && !defensePrimed) self.unshift({ op: 'gainBarrier', target: 'self', amount: move.barrier });
   actions.unshift(...self.map(effect => ({ effect, source: enemy, owner: enemy, target: enemy, card: carrier, meta: { moveId } })));
   return { actions, carrier, target: P.entity, kind: move.intent };
 }
