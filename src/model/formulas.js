@@ -93,6 +93,22 @@ export function describeFormula(formula) {
     if (['min', 'max'].some(key => formula[key] !== undefined && !Number.isInteger(formula[key]))) text += ' (rounded down)';
     return text;
   }
+  // A constant 1/N share of a describable count — Reclamation's "1 per 2
+  // Blight", floored once on the sum (the evaluator's single final floor).
+  if (isFormula(formula) && formula.f === 'mul') {
+    if (!Array.isArray(formula.args) || formula.args.length !== 2
+        || Object.keys(formula).some(key => !['f', 'args', 'min', 'max'].includes(key))
+        || ['min', 'max'].some(key => formula[key] !== undefined && !Number.isFinite(formula[key]))) return undefined;
+    const [share, inner] = formula.args;
+    const per = typeof share === 'number' && share > 0 ? 1 / share : NaN;
+    const described = describeFormula(inner);
+    if (!Number.isInteger(per) || per < 2 || described === undefined) return undefined;
+    let text = `1 per ${per} of (${described}) (whole groups)`;
+    if (formula.min !== undefined) text += ` (minimum ${formula.min})`;
+    if (formula.max !== undefined) text += ` (maximum ${formula.max})`;
+    if (['min', 'max'].some(key => formula[key] !== undefined && !Number.isInteger(formula[key]))) text += ' (rounded down)';
+    return text;
+  }
   if (!isFormula(formula) || formula.f !== 'stacks'
       || Object.keys(formula).some(key => !['f', 'status', 'of', 'per', 'min', 'max'].includes(key))
       || ['min', 'max'].some(key => formula[key] !== undefined && !Number.isFinite(formula[key]))) return undefined;

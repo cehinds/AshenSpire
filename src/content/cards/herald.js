@@ -354,15 +354,15 @@ export const heraldCards = [
     flavor: "Return of warmth lent to the dying.\n\nPerformed at the deathbed once the name was read, and called a courtesy returned. After the rite the dying were colder, and the Saint warmer.\n\nThe rubric closes: do not explain this to the family.",
     keywords: ['exhaust', 'retain'], icon: '🍂',
     effects: [
-      { op: 'heal', target: 'self', amount: { f: 'add', args: [{ f: 'stacks', status: 'crimsonBlight', of: 'allEnemies', per: 2 }, { f: 'stacks', status: 'necroticBlight', of: 'allEnemies', per: 2 }] } },
+      { op: 'heal', target: 'self', amount: { f: 'mul', args: [0.5, { f: 'add', args: [{ f: 'stacks', status: 'crimsonBlight', of: 'allEnemies' }, { f: 'stacks', status: 'necroticBlight', of: 'allEnemies' }] }] } },
     ],
-    textTemplate: 'Heal 1 HP for every 2 Crimson Blight on all enemies. Exhaust.',
+    textTemplate: 'Heal 1 HP for every 2 Blight (Crimson or Necrotic) on all enemies. Exhaust.',
     upgrade: {
       keywords: ['exhaust', 'retain'],
       effects: [
         { op: 'heal', target: 'self', amount: { f: 'add', args: [{ f: 'stacks', status: 'crimsonBlight', of: 'allEnemies' }, { f: 'stacks', status: 'necroticBlight', of: 'allEnemies' }] } },
       ],
-      textTemplate: 'Heal 1 HP for every Crimson Blight on all enemies. Exhaust.',
+      textTemplate: 'Heal 1 HP for every Blight (Crimson or Necrotic) on all enemies. Exhaust.',
     },
   },
 
