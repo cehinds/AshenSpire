@@ -1,23 +1,23 @@
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { anchorLocalBox, uiZoom, VIEWPORT_ORIGIN } from '../fx.js';
 import { combatFormation } from '../models/CombatFormationModel.js';
-import { floorCellsFor } from '../models/CombatCompositionModel.js';
 import { isWideFormFactor } from '../models/FormFactorModel.js';
 import { COMBAT_TARGET_HIT_PX, combatOverheadAnchors, combatOverheadRibbonShift, combatTargetAnchors, combatTargetPackSize } from '../models/CombatOverheadModel.js';
 import { formationTileGeometry } from '../models/FormationGridModel.js';
-import { FORMATION_ROWS, formationDimensions, isFormationCell } from '../../model/formationLayout.js';
+import { FORMATION_ROWS, formationDimensions, playerFormationCell } from '../../model/formationLayout.js';
 import { fitIconTray } from './iconTray.js';
 import { combatSpriteRatio, fitCombatSprites, NARROW_MIN_HEIGHT_FRACTION } from '../models/CombatSpriteScaleModel.js';
 import { combatSpriteGeometry, currentSpriteArtBounds } from './combatSpriteGeometry.js';
 import { classicAppearance, displayAppearance } from '../displayAppearance.js';
-import { wireAlternativeBackdrop, fitAlternativeBackdrop } from '../alternativeArt.js';
+import { wireAlternativeBackdrop, fitAlternativeBackdrop, combatHorizonFloor } from '../alternativeArt.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
 import { targetOutline } from '../models/TargetLayerModel.js';
 import { fitSceneBackdrop } from './sceneBackdrop.js';
 import { battlefieldBackdropConfig } from '../models/SceneLayerModel.js';
 import { presentationConfig } from '../../model/advancedConfig.js';
-import { alternativeCombatComposition, combatComposition as classicCombatComposition, combatSceneryGround, combatStandingGround, stableHandAnchor, combatArtworkKey, stableCombatArtwork } from '../models/CombatCompositionModel.js';
+import { alternativeCombatComposition, combatComposition as classicCombatComposition, combatSceneryGround, combatStandingGround, stableHandAnchor, combatArtworkKey, stableCombatArtwork, DESKTOP_HORIZON_SHARE } from '../models/CombatCompositionModel.js';
 import { alternativeFormation, fitAlternativeSprites } from '../models/AlternativeFormationModel.js';
+import { perspectiveCellContains } from '../models/AlternativeFormationModel.js';
 import { playerDetailsPlacement } from '../models/PlayerDetailsPlacementModel.js';
 import { hudGeometry, offsetPlacement, offsetTargetPlate, targetPlateBox } from '../models/HudLayoutOffsetModel.js';
 import { restingHandEnvelope, handGeometryKey } from '../models/HandLayout.js';
@@ -456,11 +456,14 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // as computed style when not handed it, and per tile and per combatant, each
     // after a style write, that was a style flush apiece (36 tiles).
     const pageZoom = uiZoom();
-    const presentation = { ...presentationConfig(), ...JSON.parse(document.documentElement.dataset.formationSettings || '{}') };
-    const dimensions = formationDimensions(presentation, Math.max(frames.filter(f => f.classList.contains('player')).length, frames.filter(f => f.classList.contains('enemy')).length));
-    if (isFormationCell(field.dataset.playerCell, dimensions)) {
-      presentation.playerSpawnRow = field.dataset.playerCell[0];
-      presentation.playerSpawnColumn = field.dataset.playerCell[1];
+    const presentation = { ...presentationConfig(), ...JSON.parse(document.documentElement.dataset.formationSettings || '{}'),
+      perspectiveGrid: !classicAppearance() };
+    const partySize = frames.filter(f => f.classList.contains('player')).length;
+    const dimensions = formationDimensions(presentation, Math.max(partySize, frames.filter(f => f.classList.contains('enemy')).length), partySize);
+    const playerCell = playerFormationCell(field.dataset.playerCell, dimensions);
+    if (playerCell) {
+      presentation.playerSpawnRow = playerCell[0];
+      presentation.playerSpawnColumn = playerCell[1];
     }
     const plan = combatFormation({ width: fieldRect.width, height: fieldRect.height,
       presentation,
@@ -472,6 +475,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const grid = field.querySelector('.formation-grid');
     if (grid) {
       grid.dataset.shape = presentation.gridShape;
+      grid.dataset.perspective = String(!classicAppearance());
       grid.style.zIndex = presentation.gridLayer === 'above'
         ? 'var(--combat-layer-selection)' : 'calc(var(--combat-layer-shadows) - 1)';
       grid.style.setProperty('--player-grid-color', presentation.playerGridColor);
@@ -483,11 +487,25 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       for (const cell of plan.cells) {
         const tile = grid.querySelector(`[data-cell="${cell.cell}"]`);
         if (!tile) continue;
-        const geometry = formationTileGeometry(cell, plan, presentation);
-        const localTile = anchorLocalBox(VIEWPORT_ORIGIN, {
+        // A perspective cell is drawn whole, its shadow at the foot anchor.
+        const geometry = cell.box ? { width: cell.box.width, height: cell.box.height, transform: 'none' }
+          : formationTileGeometry(cell, plan, presentation);
+        const localTile = anchorLocalBox(VIEWPORT_ORIGIN, cell.box ?? {
           left: cell.x - geometry.width / 2, top: cell.ground,
           width: geometry.width, height: geometry.height,
         }, { zoom: pageZoom });
+        if (cell.box) {
+          tile.style.setProperty('--foot-y', `${(cell.ground - cell.box.top) / cell.box.height * 100}%`);
+          // Shear the rectangle about its centre into the cell's parallelogram;
+          // the shadow is sheared back so it stays a level ellipse.
+          const shear = Math.atan(cell.box.skew || 0);
+          tile.style.transform = `skewX(${-shear}rad)`;
+          tile.style.setProperty('--cell-unskew', `${shear}rad`);
+        } else {
+          tile.style.removeProperty('--foot-y');
+          tile.style.removeProperty('transform');
+          tile.style.removeProperty('--cell-unskew');
+        }
         tile.style.left = `${localTile.left}px`;
         tile.style.top = `${localTile.top}px`;
         tile.style.width = `${localTile.width}px`;
@@ -499,6 +517,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         tile.dataset.anchorY = String(cell.ground);
       }
       field.formationPlan = { plan, width: fieldRect.width, height: fieldRect.height };
+      wireGridTargeting(field);
       field.dispatchEvent(new Event('formationlayoutchange'));
     }
     // Writes first, then reads: resetting each sprite's zoom immediately before
@@ -580,14 +599,17 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const fitFormation = () => {
       // Classic and alternative compositions differ; choose per fit, not at import.
       const combatComposition = classicAppearance() ? classicCombatComposition : alternativeCombatComposition;
-      // Desktop and widescreen put enemies on the back row, spread apart (the
-      // form factor is the decider, written by applyUiScale).
-      const wide = isWideFormFactor(document.documentElement.dataset.formFactor);
       const sizes = combatComposition({ width: fieldRect.width, height: fieldRect.height, actors,
+        perspectiveGrid: !classicAppearance(),
         handTop: handAnchor?.key === handLayoutKey ? handAnchor.top : null,
         handLeft: handAnchor?.key === handLayoutKey ? handAnchor.left : 0,
         solo: solo && window.innerHeight > 480,
-        wide,
+        desktop: document.documentElement.dataset.formFactor === 'desktop',
+        // Desktop keeps the horizon share on the field; the shared row stands on the
+        // standing-area floor the backdrop camera needs (physical px, like fieldRect).
+        horizonFloor: document.documentElement.dataset.formFactor === 'desktop'
+          ? combatHorizonFloor(combat, { width: combat.getBoundingClientRect().width / zoom, height: fieldRect.height / zoom, share: DESKTOP_HORIZON_SHARE }) * zoom
+          : undefined,
         sizes: classicAppearance()
           ? fitCombatSprites({ width: fieldRect.width, height: fieldRect.height, actors,
             minHeight: narrow ? fieldRect.height * NARROW_MIN_HEIGHT_FRACTION : 0 })
@@ -635,8 +657,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       }
     }
     const artworkFit = layoutState.artworkFit = stableCombatArtwork(layoutState.artworkFit, combatArtworkKey({ width: fieldRect.width,
-      height: fieldRect.height, zoom: pageZoom, wide: isWideFormFactor(document.documentElement.dataset.formFactor),
-      presentation, appearance: displayAppearance(), handAnchor, actors }), sizes);
+      height: fieldRect.height, zoom: pageZoom, wide: isWideFormFactor(document.documentElement.dataset.formFactor), presentation, appearance: displayAppearance(), handAnchor, actors }), sizes);
     sizes = artworkFit.sizes;
     // Intent/Inspect controls still respond to their current text and selection,
     // but their changing headroom cannot resize or move the settled artwork.
@@ -1009,16 +1030,14 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const sceneHeight = fieldTop + fieldRect.height / zoom;
     if (!classicAppearance()) fitAlternativeBackdrop(combat, { width: rect.width / zoom, height: fieldRect.height / zoom,
       fieldTop, ground: combatSceneryGround(sizes, actors, plan.ground) / zoom,
-      standGround: combatStandingGround(sizes, actors, plan.ground) / zoom, narrow, coverFloor: true });
+      standGround: combatStandingGround(sizes, actors, plan.ground) / zoom, narrow,
+      horizonShare: document.documentElement.dataset.formFactor === 'desktop' ? DESKTOP_HORIZON_SHARE : undefined, coverFloor: true });
     if (backdrop) fitSceneBackdrop(backdrop, {
       width: backdropWidth, height: rect.height / zoom, zoom,
       windowTop: 0, windowHeight: sceneHeight,
       config: battlefieldBackdropConfig({ height: sceneHeight, appearance: displayAppearance(),
         fieldTop, fieldHeight: fieldRect.height / zoom,
-        // Desktop and widescreen stand the enemies on the back row, so the
-        // floor line is their feet (the lowest placed figure), not the grid.
-        formation: { cells: floorCellsFor({ wide: isWideFormFactor(document.documentElement.dataset.formFactor), classic: classicAppearance(), sizes, cells: plan.cells })
-          .map(cell => ({ ground: cell.ground / zoom })), rowSpacing: plan.rowSpacing / zoom } }),
+        formation: { cells: plan.cells.map(cell => ({ ground: cell.ground / zoom })), rowSpacing: plan.rowSpacing / zoom } }),
     });
     field.dataset.groundY = String(fieldRect.top + plan.ground);
   };
@@ -1104,4 +1123,58 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   releaseActiveStage = release;
   refresh();
   return Object.freeze({ refresh, release });
+}
+
+// In the perspective grid the whole cell is the enemy's target: a press
+// anywhere in an occupied enemy cell acts as a press on that enemy (select it,
+// or play the armed card or flask on it). Bodies and controls keep their own
+// handlers; a vacant or disabled cell passes the press through unchanged.
+const gridTargetingFields = new WeakSet();
+function enemyFrameAtCell(field, x, y) {
+  const grid = field.querySelector('.formation-grid[data-perspective="true"]');
+  const plan = field.formationPlan?.plan;
+  if (!grid || !plan) return null;
+  const rect = field.getBoundingClientRect();
+  const occupied = new Set(plan.slots.filter(slot => slot.side === 'enemy').map(slot => slot.cell));
+  const cell = plan.cells.find(cell => cell.box && occupied.has(cell.cell)
+    && perspectiveCellContains(cell.box, x - rect.left, y - rect.top));
+  if (!cell) return null;
+  // Past the grid's capacity two enemies can share a cell; take a living one.
+  return [...field.querySelectorAll(`.combatant.enemy[data-formation-cell="${CSS.escape(cell.cell)}"]`)]
+    .find(frame => !frame.inert && !frame.classList.contains('dead')) ?? null;
+}
+function wireGridTargeting(field) {
+  if (gridTargetingFields.has(field)) return;
+  gridTargetingFields.add(field);
+  const passive = target => target.closest('.combatant, button:not(.formation-grid-cell), .hand, .card, .modal, input, a, [role="button"]');
+  field.addEventListener('click', event => {
+    if (passive(event.target)) return;
+    const frame = enemyFrameAtCell(field, event.clientX, event.clientY);
+    if (!frame) return;
+    event.stopPropagation();
+    event.preventDefault();
+    frame.click();
+  }, true);
+  let hovered = null;
+  field.addEventListener('pointermove', event => {
+    // Over a body or control, that element's own pointer events own the
+    // highlight: keep it on the same enemy, clear it from any other.
+    if (passive(event.target)) {
+      if (hovered && hovered !== event.target.closest('.combatant')) hovered.dispatchEvent(new PointerEvent('pointerleave'));
+      hovered = null;
+      field.classList.remove('grid-target-hover');
+      return;
+    }
+    const frame = enemyFrameAtCell(field, event.clientX, event.clientY);
+    if (frame === hovered) return;
+    hovered?.dispatchEvent(new PointerEvent('pointerleave'));
+    hovered = frame;
+    frame?.dispatchEvent(new PointerEvent('pointerenter'));
+    field.classList.toggle('grid-target-hover', !!frame);
+  });
+  field.addEventListener('pointerleave', () => {
+    hovered?.dispatchEvent(new PointerEvent('pointerleave'));
+    hovered = null;
+    field.classList.remove('grid-target-hover');
+  });
 }

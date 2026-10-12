@@ -1,4 +1,5 @@
 import { footerLayout, footerSizing } from '../../content/footerLayout.js';
+import { isWideFormFactor } from './FormFactorModel.js';
 
 // Semantic ownership survives the editor's selection/docking groups.
 const assetRoles = { frame: 'sp', orb: 'sp', sigil: 'sp', diamond: 'sp', spent: 'sp', draw: 'draw', plate: 'end', 'spent-cards': 'discard', potions: 'potions' };
@@ -32,20 +33,17 @@ export function footerText(item, values) {
 }
 // The decorated footer gets space without stealing the battlefield's floor.
 // Small hosts retain the existing rails and touch-target geometry.
-// `wide` (desktop and widescreen form factors) selects the shorter footer
-// sizing in content/config (footerLayout sizing.wideMaximumWidthPx and
-// wideMinimumHeightPx); phones and tablets keep the established footer.
-export function footerArtHeight(width, zoom = 1, wide = false) {
+// `formFactor` (data-form-factor) picks the desktop footer width once it is gated.
+export function footerArtHeight(width, zoom = 1, formFactor = null) {
   // Compact controls keep their own artwork faces and readable labels; they
   // do not need the authored desktop rail's full vertical canvas.
-  if (width * zoom < 680) return 64 / zoom;
+  if (width * zoom < footerSizing.compactBelowPx) return 64 / zoom;
   const bounds = footerLayoutModel(footerLayout).bounds;
-  const minimumHeightPx = wide ? footerSizing.wideMinimumHeightPx : footerSizing.minimumHeightPx;
-  return Math.max(minimumHeightPx / zoom, footerArtWidth(width, zoom, wide) * bounds.h / bounds.w);
+  return Math.max(footerSizing.minimumHeightPx / zoom, footerArtWidth(width, zoom, formFactor) * bounds.h / bounds.w);
 }
 
-export function footerArtWidth(width, zoom = 1, wide = false) {
-  const maximumWidthPx = wide ? footerSizing.wideMaximumWidthPx : footerSizing.maximumWidthPx;
+export function footerArtWidth(width, zoom = 1, formFactor = null) {
+  const maximumWidthPx = isWideFormFactor(formFactor) ? footerSizing.desktopMaximumWidthPx : footerSizing.maximumWidthPx;
   return Math.min(width, maximumWidthPx / zoom);
 }
 

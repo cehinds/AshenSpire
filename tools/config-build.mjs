@@ -275,7 +275,7 @@ export function deckEditorCostProblems(rel, presentation) {
   return out;
 }
 
-/** One band table (sizing.bands or sizing.wideBands): non-negative finite shares summing to 100. */
+/** One band table (sizing.bands or sizing.desktopBands): non-negative finite shares summing to 100. */
 function bandProblems(at, key, bands) {
   const values = isObject(bands) ? Object.values(bands) : [];
   if (!isObject(bands) || values.some((v) => typeof v !== 'number' || !Number.isFinite(v) || v < 0)) {
@@ -291,7 +291,7 @@ export function sceneProblems(rel, scene) {
   const at = `${CONFIG_DIR}/${rel}`;
   const sizing = isObject(scene.sizing) ? scene.sizing : {};
   if ('bands' in sizing) out.push(...bandProblems(at, 'bands', sizing.bands));
-  if ('wideBands' in sizing) out.push(...bandProblems(at, 'wideBands', sizing.wideBands));
+  if ('desktopBands' in sizing) out.push(...bandProblems(at, 'desktopBands', sizing.desktopBands));
   if ('floorPercent' in sizing) {
     const p = sizing.floorPercent;
     if (typeof p !== 'number' || !(p >= 0 && p <= 100)) out.push(`${at}: sizing.floorPercent ${JSON.stringify(p)} is outside 0–100`);
