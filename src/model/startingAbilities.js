@@ -46,11 +46,17 @@ export function startingAbilityProblem(registries, run, cardIds, settings = {}) 
   return null;
 }
 
+// A starting spell's card reference: element spells are plain cards with no
+// ability grade; every other starting spell carries the plan's rank.
+export function startingAbilityRef(plan, cardId) {
+  return plan.elementIds.includes(cardId) ? { cardId } : { cardId, abilityRank: plan.rank };
+}
+
 export function startingAbilityRefs(registries, run, cardIds, settings = {}) {
   // Omitted for existing quick-start, fixtures and co-op birth callers.
   if (cardIds === undefined) return [];
   const problem = startingAbilityProblem(registries, run, cardIds, settings);
   if (problem) throw new Error(problem);
   const plan = startingAbilityPlan(registries, run, settings);
-  return cardIds.map(cardId => plan.elementIds.includes(cardId) ? { cardId } : { cardId, abilityRank: plan.rank });
+  return cardIds.map(cardId => startingAbilityRef(plan, cardId));
 }
