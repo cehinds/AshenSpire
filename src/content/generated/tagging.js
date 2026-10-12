@@ -4379,6 +4379,12 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
+    "objectId": "bloodTithe",
+    "tagId": "damage:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
     "objectId": "kickOff",
     "tagId": "delivery:melee"
   },

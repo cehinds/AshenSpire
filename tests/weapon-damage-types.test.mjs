@@ -7,7 +7,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
 import { tacticalCarrier } from '../src/engine/combatCardTactics.js';
 import { effectCarrier } from '../src/engine/combatExpansionActions.js';
-import { foundationSource } from '../src/engine/combatRules.js';
+import { foundationSource, foundationCarrier } from '../src/engine/combatRules.js';
 import { combatRules } from '../src/content/combatRules.js';
 import { createRng } from '../src/engine/rng.js';
 import { applyCombatExpansionMartial } from '../src/content/combatExpansionMartial.js';
@@ -25,7 +25,8 @@ const EXPECTED = {
   cheapShot: WEAPON_TYPED,
   bloodhuntersStrike: WEAPON_TYPED,
   guardCounter: WEAPON_TYPED,
-  bloodTithe: { blade: 'slashing', dagger: 'piercing', blunt: 'slashing', bow: 'slashing', unarmed: 'slashing' },
+  // Weapon half + Necrotic half (owner #24): the label is the weapon half (first on the tie).
+  bloodTithe: { blade: 'slashing', dagger: 'piercing', blunt: 'slashing', bow: 'piercing', unarmed: 'slashing' },
   // Mixed Blunt + Force (owner #23): the label is the heavier part.
   ruinousBlow: { blade: 'blunt', dagger: 'blunt', blunt: 'blunt', bow: 'blunt', unarmed: 'blunt' },
   deathblow: { blade: 'arcane', dagger: 'arcane', blunt: 'arcane', bow: 'arcane', unarmed: 'arcane' },
@@ -34,7 +35,7 @@ const MIXED = {
   ruinousBlow: [{ type: 'blunt', weight: 60 }, { type: 'arcane', weight: 40 }],
   deathblow: [{ type: 'blunt', weight: 40 }, { type: 'arcane', weight: 60 }],
 };
-const FIXED_TAGS = { ruinousBlow: ['damage:blunt', 'damage:arcane'], deathblow: ['damage:blunt', 'damage:arcane'] };
+const FIXED_TAGS = { ruinousBlow: ['damage:blunt', 'damage:arcane'], deathblow: ['damage:blunt', 'damage:arcane'], bloodTithe: ['damage:decay'] };
 
 function fight(cardId, weapon, version, extra = {}) {
   const player = { classId: 'reaver', maxHp: 200, hp: 200, maxMana: 50, mana: 50, energyMax: 10, drawPerTurn: 5,
@@ -112,7 +113,8 @@ for (const version of [1, 2]) {
       if (version === 2) for (const hit of hits) assert.equal(hit.damageType, { arcane: 'force' }[EXPECTED[cardId][label]] || EXPECTED[cardId][label], `v2 ${cardId} with ${label}`);
       else {
         const type = EXPECTED[cardId][label];
-        assert.equal(!!enemy.statuses.bleed, type === 'slashing', `v1 ${cardId} with ${label}: Bleed rider`);
+        // Blood Tithe prints its own Bleed with every weapon (owner #24).
+        assert.equal(!!enemy.statuses.bleed, type === 'slashing' || cardId === 'bloodTithe', `v1 ${cardId} with ${label}: Bleed rider`);
         if (type === 'blunt') assert(enemy.poiseMeter.value >= 2, `v1 ${cardId} with ${label}: Blunt Poise rider`);
       }
     }
@@ -154,6 +156,40 @@ test('a mixed-damage profile keeps its weighted parts, labelled by the heaviest 
   // Each part brings its own rider, once.
   const cfg = { damageRiders: { blunt: { poise: 2 }, arcane: { wardDrain: 2 } } };
   assert.deepEqual(hitRiders(cfg, 'arcane', { combatProfile: heavy }), [{ wardDrain: 2 }, { poise: 2 }]);
+});
+
+// Owner decision #24: half the equipped piece's cut or stab, half Necrotic, and Bleed on hit.
+const TITHE = { sword: ['straightSword', 'slashing'], dagger: ['dagger', 'piercing'], spikedShield: ['spikedShield', 'piercing'],
+  bow: ['shortbow', 'piercing'], hammer: ['warhammer', 'slashing'], unarmed: [null, 'slashing'] };
+for (const version of [1, 2]) test(`v${version}: Blood Tithe deals its weapon half plus Necrotic, and Bleeds, with every piece`, () => {
+  for (const [label, [weapon, part]] of Object.entries(TITHE)) {
+    const where = `v${version} Blood Tithe with ${label}`;
+    const base = regs.cards.get('bloodTithe');
+    const def = version === 2 ? applyCombatExpansionMartial(base) : base;
+    const { c, enemy } = fight('bloodTithe', weapon, version);
+    const carrier = tacticalCarrier(def, {}, c, c.player);
+    assert.deepEqual(carrier.combatProfile.damageComponents, [{ type: part, weight: 50 }, { type: 'decay', weight: 50 }], where);
+    assert.equal(carrier.combatProfile.damageType, part, where);
+    if (version === 2) for (const effect of def.effects.filter(row => row.op === 'damage')) {
+      assert.deepEqual(effectCarrier(carrier, effect).combatProfile.damageComponents, carrier.combatProfile.damageComponents, `${where} (effect)`);
+    }
+    dispatch(c, { type: 'playCard', cardInstanceId: 'card1', targetId: enemy.id });
+    // v1 prints 2 Bleed; v2 projects it as 8 Bleed build-up (4 per stack).
+    if (version === 1) assert.ok(enemy.statuses.bleed, `${where}: Bleed`);
+    else assert.ok(enemy.statusControl?.gauges?.bleed?.value > 0, `${where}: Bleed build-up`);
+  }
+  const bleed = (version === 2 ? applyCombatExpansionMartial(regs.cards.get('bloodTithe')) : regs.cards.get('bloodTithe')).effects
+    .filter(row => row.status === 'bleed').map(row => [row.op, row.stacks ?? row.amount]);
+  assert.deepEqual(bleed, [version === 2 ? ['buildup', 8] : ['applyStatus', 2]]);
+});
+
+test('the rules foundation splits Blood Tithe into the weapon half and Necrotic', () => {
+  for (const [label, [weapon, part]] of Object.entries(TITHE)) {
+    const { c } = fight('bloodTithe', weapon, 1, { ruleset: combatRules });
+    const def = regs.cards.get('bloodTithe');
+    const carrier = foundationCarrier(c, c.player, { tags: def.tags, attack: def.attack });
+    assert.deepEqual(carrier.attack.components, [{ type: part, weight: 50 }, { type: 'decay', weight: 50 }], label);
+  }
 });
 
 test('a weapon part can sit beside fixed components: exactly one part follows the weapon', () => {

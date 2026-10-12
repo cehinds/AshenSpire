@@ -783,6 +783,8 @@ card,,ruinousBlow,damage:blunt
 card,,ruinousBlow,damage:arcane
 card,,deathblow,damage:blunt
 card,,deathblow,damage:arcane
+# Blood Tithe's fixed half is Necrotic; its weapon half follows the piece (owner #24).
+card,,bloodTithe,damage:decay
 card,,kickOff,delivery:melee
 card,,starstonePebble,source:spell
 card,,starstonePebble,damage:arcane
