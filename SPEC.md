@@ -916,9 +916,9 @@ dmg = dmg * (attacker has Weak      ? 0.75 : 1)
 dmg = dmg * (defender has Vulnerable? 1.5  : 1)
 dmg = dmg * (defender is Staggered  ? 1.5  : 1)  // legacy ratings only (see below)
 dmg = dmg * defender's Poise or Ward resistance  // ratings on; Ward for magical hits
-dmg = dmg * (tag-scoped vulnerability, §3.7)
 dmg = dmg * (school resistance, then school vulnerability)
-dmg = floor(dmg); if dmg < 0 → 0
+dmg = floor(dmg) + ceil(dmg × (tagged − 1))      // tag-scoped vulnerability, §3.7 (taggedBonusFloor); plain floor(dmg) when no tag applies
+if dmg < 0 → 0
 ```
 
 The tactical matchup multipliers (§4.7) run after the floor. Staggered's ×1.5 is
