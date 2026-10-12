@@ -21,6 +21,7 @@ const DESKTOP_RULES = [
   ['combat-layers.css', ".intent-stance"],
   ['combat-layers.css', ".stance-chip[data-meter-row='stance']"],
   ['combat-layers.css', ".stance-chip[data-meter-row='stance'] > .as-glyph"],
+  ['combat-layers.css', "[data-footer-binding='endTurn']"],
 ];
 
 // Split a stylesheet into selector-list + body chunks at top-level braces.
@@ -67,4 +68,15 @@ test('desktop intent badge and stance glyph are 1.25x and match each other', () 
   assert.match(icon.body, /width:\s*calc\(26px \/ var\(--ui-zoom,1\)\)/);
   const value = rules(text).find(r => r.selector.startsWith(GATE) && r.selector.endsWith(':not(.context-selected) .intent'));
   assert.match(value.body, /font-size:\s*calc\(20px \/ var\(--ui-zoom,1\)\)/);
+});
+
+test('desktop footer words scale 1.15x and the counts keep their size', () => {
+  const text = css('combat-layers.css');
+  const words = rules(text).find(r => r.selector.startsWith(GATE) && r.selector.includes("[data-footer-binding='endTurn']"));
+  assert.ok(words, 'footer words rule');
+  for (const binding of ['endTurn', 'drawLabel', 'discard', 'exhaust', 'potions']) {
+    assert.ok(words.selector.includes(`[data-footer-binding='${binding}']`), `${binding} scaled`);
+  }
+  assert.match(words.body, /transform:\s*scale\(1\.15\)/);
+  assert.ok(!words.selector.includes("'draw'"), 'the draw count is not scaled');
 });
