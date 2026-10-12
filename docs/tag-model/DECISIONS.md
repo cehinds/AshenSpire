@@ -320,14 +320,16 @@ rest are real disagreements between the live tree and the model. The model
 keeps its placement and wording until the owner decides. A tag with both a
 label and a parent difference is counted in both clusters below.
 
-**Labels, casing only (14).** The model shows display case; nodes.csv holds the
+**Labels, casing only (21).** The model shows display case; nodes.csv holds the
 identifier. Owner to say whether the model label should match nodes.csv exactly
 or keep display case.
 - `card.cost.mana`, `card.cost.stamina`, `card.type.curse`, `card.type.power`,
   `card.type.skill`, `card.upgrade.upgraded`, `card.keyword.ethereal`,
   `card.keyword.exhaust`, `card.keyword.innate`, `card.keyword.retain`,
   `card.keyword.unplayable`, `meta.combat.damage`, `meta.combat.damage.magic`,
-  `meta.combat.damage.physical`.
+  `meta.combat.damage.physical`, `meta.character.{class,relic,feat}`,
+  `meta.character.consumable.flask`, `meta.character.other.location.{event,encounter}`,
+  `card.type.attack`.
 
 **Labels, different word (10).** Owner to say which name is the game's.
 - `meta.combat.damage.magic.divine` (model Divine, live Holy; `damage:sacred`).
