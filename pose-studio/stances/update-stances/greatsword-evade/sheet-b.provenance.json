@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "family": "evade",
+  "actor": "reaver",
+  "weapon": "greatsword",
+  "optionIds": [
+    "EV16",
+    "EV17",
+    "EV18",
+    "EV19",
+    "EV20"
+  ],
+  "tool": "image_gen.imagegen",
+  "transparentBackgroundRequested": true,
+  "unchangedOriginal": "/workspace/generated_images/exec-61a0efe5-9fa1-4ad8-ab53-2b92454ba69c.png",
+  "output": "sheet-b.png",
+  "sha256": "1b94177b045816f325153be36fafa37fe96c6e708f1b0b9cc1ac99d1ee043c81",
+  "dimensions": [
+    1024,
+    1536
+  ],
+  "mode": "RGBA",
+  "alphaExtrema": [
+    5,
+    253
+  ],
+  "createdUtc": "2026-10-12T16:26:26.370758+00:00",
+  "references": [
+    {
+      "path": "sheet-b.revision-1.png",
+      "sha256": "f14b13ca9fbb9b1ff781c077720c80492979585374d0d288ac036e954e2e1cbd"
+    }
+  ],
+  "prompt": "sheet-b.repair-2.prompt.txt",
+  "status": "EV16_EV17_EV19_EV20_concept_approved_EV18_repair_pending_director_review",
+  "initialConcerns": [
+    "EV18hipgripmovedforward/side;twohanded anatomy requiresdirectorverification.",
+    "Fixed512cropscantruncateart;directorwillpresentintactboardswithperoptioncontrols.Noextrareflows."
+  ],
+  "revision": 2,
+  "supersededOriginal": "sheet-b.original.png",
+  "supersededRevision": "sheet-b.revision-1.png",
+  "actualOptionNames": {
+    "EV16": "Deep planted landing with upright blade",
+    "EV17": "Narrow upright collected recovery",
+    "EV18": "Wide planted low trailing carry",
+    "EV19": "Compact forward horizontal carry",
+    "EV20": "Upright low forward carry"
+  },
+  "runtimeChanged": false
+}
