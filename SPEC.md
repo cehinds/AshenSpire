@@ -1187,7 +1187,8 @@ Reaction cards: each choice is pushed without payment and the seat is offered
 again until it passes, runs out of options or reaches the depth cap; the stack
 then resolves last played first, and the paused action last. An entry that can
 no longer be played fizzles (`combatReactionFizzled`) and pays nothing. Entries
-carry a side so enemies can react later; none do yet. The rules are in
+carry a side; opted-in enemy moves react too, on the player's turn and to
+player reactions. The rules are in
 [docs/combat-card-traits-contract.md](docs/combat-card-traits-contract.md);
 version 1 keeps one reaction per root.
 
