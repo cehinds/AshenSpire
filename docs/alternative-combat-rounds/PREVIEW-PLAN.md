@@ -97,6 +97,7 @@ The preview screen is the live combat screen with only these additions:
   Speed is the plan-time effective forecast (timeline speed without the d4, capped by the
   card's place in its queue: `plannedQueueSpeeds()`).
   Computed by `targetOutline()` in `resolver.mjs` (DESIGN.md, Card hints).
+  The outline is thin and crisp (about 1.5px, no glow or halo), hugging the sprite edge (owner, 2026-10-12).
 - The live green outline for the player's selection and playable cards becomes
   blue in the preview, so green only means advantage.
 - No queue strip, no initiative track; End Turn stays as it is.
