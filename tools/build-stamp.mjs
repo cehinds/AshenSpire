@@ -56,7 +56,7 @@
 // selftest fails, 2 when the harness could not run (bad usage, no box).
 
 import { execFileSync, spawnSync } from 'node:child_process';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve as pathResolve } from 'node:path';
 import { landedPull, rangeSubjects } from './receipts.mjs';
@@ -64,6 +64,7 @@ import { landedPull, rangeSubjects } from './receipts.mjs';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const CHANGELOG = join(ROOT, 'CHANGELOG.md');
 const BUILDORDINAL = join(ROOT, 'buildordinal.json');
+const GENERATED = join(ROOT, 'src', 'content', 'changelog.generated.js');
 
 // The pull request numbers that landed, in first-seen order, from the entries
 // receipts.mjs's range walk returns. A number is taken once.
@@ -243,12 +244,31 @@ const fmtBox = (b) => `${b.release}.${b.ordinal}`;
 const sameBox = (a, b) => a.release === b.release && a.ordinal === b.ordinal;
 
 export function converge(io, prs, { maxRounds = MAX_ROUNDS } = {}) {
+  // THE MODULE FIRST, EVERY RUN. A PR can leave src/content/changelog.generated.js
+  // stale against CHANGELOG.md (a docs-only receipt that already matches). The
+  // generated module is in the digest, so the box that build reports is only right
+  // once the module is current; repairing it must not wait for a receipt to move.
+  const wrote = io.about();
   const first = io.build();
-  if (!restamp(io.readChangelog(), prs, first.box).changed.length) {
-    return { status: 'nothing', box: first.box, rounds: 0, log: [] };
-  }
   const log = [];
-  let target = { release: first.box.release, ordinal: first.box.ordinal + 1 };
+  let target;
+  if (restamp(io.readChangelog(), prs, first.box).changed.length) {
+    target = { release: first.box.release, ordinal: first.box.ordinal + 1 };
+  } else if (!wrote) {
+    return { status: 'nothing', box: first.box, rounds: 0, log };
+  } else {
+    // The module was repaired and no landed receipt is off the box. The box that
+    // build reported settles only if one more build agrees, as a fixed point must.
+    log.push(`the module was repaired; no landed receipt is off the box ${fmtBox(first.box)}`);
+    const again = io.build();
+    if (again.bytes === first.bytes) {
+      const problem = io.verify();
+      if (problem) return { status: 'failed', reason: `the converged tree fails the build invariant: ${problem}`, box: again.box, rounds: 0, log };
+      return { status: 'converged', box: again.box, rounds: 0, log };
+    }
+    log.push(`a further rebuild moved buildordinal.json to ${fmtBox(again.box)}; settling from there`);
+    target = again.box;
+  }
   for (let round = 1; round <= maxRounds; round += 1) {
     const cur = io.readChangelog();
     const re = restamp(cur, prs, target);
@@ -291,7 +311,12 @@ function realIo() {
     },
     readChangelog: () => readFileSync(CHANGELOG, 'utf8'),
     writeChangelog: (text) => writeFileSync(CHANGELOG, text),
-    about: () => run([join(ROOT, 'tools', 'about-changelog.mjs'), '--write'], 'about-changelog --write'),
+    // Returns whether the module on disk changed, so the loop knows a repair happened.
+    about() {
+      const before = existsSync(GENERATED) ? readFileSync(GENERATED, 'utf8') : '';
+      run([join(ROOT, 'tools', 'about-changelog.mjs'), '--write'], 'about-changelog --write');
+      return (existsSync(GENERATED) ? readFileSync(GENERATED, 'utf8') : '') !== before;
+    },
     verify() {
       const r = spawnSync(process.execPath, [join(ROOT, 'tools', 'buildversion.mjs'), '--check'], { cwd: ROOT, encoding: 'utf8' });
       if (r.status === 0) return null;
@@ -507,7 +532,7 @@ function selftest() {
   // THE CONVERGENCE LOOP, against a scripted world. `builds` is what each build
   // reports, in order; `bytes` is derived from the box so an unchanged box reads
   // as an unchanged buildordinal.json.
-  const fake = (builds, { verify = null, text = `${MD}\n` } = {}) => {
+  const fake = (builds, { verify = null, text = `${MD}\n`, aboutChanges = false } = {}) => {
     const state = { text, writes: 0, about: 0, built: 0 };
     const io = {
       build() {
@@ -517,7 +542,7 @@ function selftest() {
       },
       readChangelog: () => state.text,
       writeChangelog(t) { state.text = t; state.writes += 1; },
-      about() { state.about += 1; },
+      about() { state.about += 1; return aboutChanges; },
       verify: () => verify,
     };
     return { io, state };
@@ -527,7 +552,23 @@ function selftest() {
     // Nothing landed on an older box: no write, no rebuild after the first.
     const { io, state } = fake([B(3)], { text: MD.replace(/0\.5\.5\.1/g, '0.5.5.3') });
     const r = converge(io, ['12'], { maxRounds: 3 });
-    check('converge: a receipt already on the box stops at the first build', r.status === 'nothing' && state.writes === 0 && state.about === 0 && state.built === 1, JSON.stringify(r));
+    check('converge: a receipt already on the box, a current module, stops at the first build', r.status === 'nothing' && state.writes === 0 && state.about === 1 && state.built === 1, JSON.stringify(r));
+  }
+  {
+    // A STALE MODULE UNDER A RECEIPT ALREADY ON THE BOX. The module write runs first and
+    // repairs it (aboutChanges). That moves the box (3 → 4), so the receipt is off it and
+    // is re-pointed to 5, the box plus one; the rebuild confirms, and the fixed point is 5.
+    const { io, state } = fake([B(4), B(5), B(5)], { aboutChanges: true, text: MD.replace(/0\.5\.5\.1/g, '0.5.5.3') });
+    const r = converge(io, ['12'], { maxRounds: 3 });
+    const first = state.about === 2 && r.status === 'converged' && r.box.ordinal === 5 && r.rounds === 1;
+    check('converge: a stale module under a receipt already on the box is repaired first, then the receipt follows the bump to a fixed point', first, JSON.stringify(r) + ` about=${state.about}`);
+  }
+  {
+    // The module was stale but no landed receipt is off the box: the repaired build's box
+    // settles when one more build agrees; nothing is re-pointed.
+    const { io, state } = fake([B(4), B(4)], { aboutChanges: true, text: MD.replace(/0\.5\.5\.1/g, '0.5.5.4') });
+    const r = converge(io, ['999'], { maxRounds: 3 });
+    check('converge: a repaired module with no receipt off the box settles without re-pointing anything', r.status === 'converged' && r.box.ordinal === 4 && r.rounds === 0 && state.writes === 0, JSON.stringify(r));
   }
   {
     // The box moves to 3 after the first build; the receipt goes to 4 (ordinal+1),
