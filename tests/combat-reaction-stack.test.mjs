@@ -118,6 +118,12 @@ test('a saved stack is validated: side, owner and the offer depth must match', (
   const enemySide = structuredClone(saved);
   enemySide.reactionStack.entries[0].side = 'enemy';
   assert.throws(() => restore(enemySide), /Invalid reaction stack/, 'enemy entries are rejected until enemy reactions exist');
+  const badSeats = structuredClone(saved);
+  badSeats.reactionStack.counterSeats = {};
+  assert.throws(() => restore(badSeats), /Invalid reaction stack/);
+  const dupSeats = structuredClone(saved);
+  dupSeats.reactionStack.counterSeats = ['player', 'player'];
+  assert.throws(() => restore(dupSeats), /Invalid reaction stack/);
   const overCap = structuredClone(saved);
   overCap.reactionRules.stack.maxDepth = 0;
   assert.throws(() => restore(overCap), /exceeds its per-seat limits/);
@@ -215,6 +221,8 @@ test('a stacked play that pauses for its own discard resumes the rest of the sta
   const json = value => JSON.parse(JSON.stringify(value));
   const saved = json(serializeCombatSnapshot(combat));
   const restored = restoreCombatSnapshot({ registries, rng: createRng(combat.rng.seed, combat.rng.getCounters()), snapshot: saved });
+  // The Sweep (r0) still waits on the stack: it cannot be chosen as discard fodder.
+  assert.throws(() => dispatch(combat, { type: 'chooseDiscard', cardInstanceIds: ['r0'] }), /Choose exactly/);
   const resumed = [combat, restored].map(state => dispatch(state, { type: 'chooseDiscard', cardInstanceIds: ['r2'] }));
   assert.deepEqual(resumed[0].events.filter(event => event.type === 'cardPlayed').map(event => event.cardInstanceId), ['r0']);
   assert.deepEqual(json(resumed[0].events), json(resumed[1].events));
