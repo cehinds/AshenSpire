@@ -77,10 +77,13 @@ test('a reaction move validates without a weight, and a rolled move still needs 
   assert.ok(errorsFor({ intent: 'block', block: 6 }).some(path => /moves\.probeMove\.weight/.test(path)));
 });
 
-test('reaction bounds: non-empty on, a weight-free move, minIncoming >= 1, chance in [0, 1]', () => {
+test('reaction bounds: non-empty on, a weight-free move, minIncoming >= 0, chance in [0, 1]', () => {
   assert.ok(errorsFor({ intent: 'block', block: 6, reaction: { on: [] } }).some(path => /reaction\.on/.test(path)));
   assert.ok(errorsFor({ intent: 'block', block: 6, weight: 5, reaction: { on: ['playerAction'] } }).some(path => /probeMove\.weight/.test(path)));
-  assert.ok(errorsFor({ intent: 'block', block: 6, reaction: { on: ['playerAction'], minIncoming: 0 } }).some(path => /minIncoming/.test(path)));
+  // minIncoming 0 is valid (no incoming damage required); negative or fractional is not.
+  assert.deepEqual(errorsFor({ intent: 'block', block: 6, reaction: { on: ['playerReaction'], minIncoming: 0 } }).filter(path => /minIncoming/.test(path)), []);
+  assert.ok(errorsFor({ intent: 'block', block: 6, reaction: { on: ['playerAction'], minIncoming: -1 } }).some(path => /minIncoming/.test(path)));
+  assert.ok(errorsFor({ intent: 'block', block: 6, reaction: { on: ['playerAction'], minIncoming: 1.5 } }).some(path => /minIncoming/.test(path)));
   // chance 0 is the contract's deterministic never-taken move: valid, and it draws nothing.
   assert.ok(!errorsFor({ intent: 'block', block: 6, reaction: { on: ['playerReaction'], chance: 0 } }).some(path => /chance/.test(path)));
   assert.ok(errorsFor({ intent: 'block', block: 6, reaction: { on: ['playerReaction'], chance: -0.1 } }).some(path => /chance/.test(path)));
