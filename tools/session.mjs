@@ -680,7 +680,8 @@ export function createSession({ registries, seedString, endless = false, restore
     const combat = createCoopCombat({
       combatKey: `${session.seed}:${session.actNumber}:${session.cursorId}:${encounterId}`,
       combatExpansionVersion: connectedMembers().some(member => member.run.combatExpansionVersion === 2) ? 2 : 1,
-      reactionRulesVersion: connectedMembers().every(member => member.run.reactionRulesVersion === 1) ? 1 : null,
+      reactionRulesVersion: connectedMembers().every(member => member.run.reactionRulesVersion >= 1) ? Math.min(...connectedMembers().map(member => member.run.reactionRulesVersion)) : null,
+      reactionRules: connectedMembers()[0]?.run.reactionRules,
       combatExpansionRules: connectedMembers().find(member => member.run.combatExpansionVersion === 2)?.run.combatExpansionRules || null,
       breakMeterVersion: session.advancedConfigSnapshot?.breakMeterVersion,
       registries, rng,
@@ -856,7 +857,7 @@ export function createSession({ registries, seedString, endless = false, restore
         statusControl: P.entity.statusControl, recoveryControls: recoveryControls({ ...c, combatExpansionVersion: P.entity.combatExpansionVersion || 1 }, P.entity),
         pendingAbilityDiscard: c.pendingAbilityDiscard || null,
         pendingReaction: c.pendingReaction?.ownerId === P.id ? structuredClone(c.pendingReaction) : null,
-        ...(c.reactionRulesVersion === 1 ? { reactionsEnabled: P.entity.reactionsEnabled !== false } : {}),
+        ...(c.reactionRulesVersion >= 1 ? { reactionsEnabled: P.entity.reactionsEnabled !== false } : {}),
         abilityRiders: P.entity.abilityRiders,
         id: P.id, classId: P.entity.classId, hp: P.entity.hp, maxHp: P.entity.maxHp, block: P.entity.block,
         ...(P.entity.wardBlock !== undefined ? { wardBlock: P.entity.wardBlock } : {}),
