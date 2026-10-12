@@ -2564,7 +2564,7 @@ Scene draw order is floor, background, actors, then interface.
 
 ## New-game opening presentation (2026-09-19)
 
-Solo new games may show a configurable prologue (nine scenes by default, `PROLOGUE_DEFAULTS.scenes` in `src/model/prologue.js`) after creation and
+Solo new games may show a configurable prologue (five shipped scenes by default, plus four empty editor slots that stay switched off; `PROLOGUE_DEFAULTS.scenes` in `src/model/prologue.js`) after creation and
 starting draft, after map generation but before map mounting. Its text and
 presentation overrides are included in the existing advanced configuration
 snapshot/export. Optional `run.prologue` is `{version:2,status:'pending'|'complete',scene:0 to `scenes.length` − 1,reason?:'completed'|'skipped'}`.
