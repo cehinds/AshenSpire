@@ -1,4 +1,5 @@
 import { rollPendingAbilityOffers } from './model/abilityOffers.js';
+import { openRestRecord, recordRestConsumed, markRestLeft, restRevisitNodeId, clearRestRevisitOnTravel } from './model/restRevisit.js';
 import { queueInitialProgression } from './model/initialProgression.js';
 import { isAbilitySkill } from './model/abilityGrades.js';
 import { expandedProgression } from './model/classMilestones.js';
@@ -2482,6 +2483,8 @@ function showMap(opts) {
     run,
     meta: activeMeta,
     selectedId,
+    // A left classic rest site stays enterable until a new node is chosen.
+    revisitId: restRevisitNodeId(run),
     onPick: enterNode,
     onSettings: showSettings,
     onSettingsChange: persistSettingsChange,
@@ -2664,6 +2667,8 @@ function finishWorldService() {
 function enterNode(nodeId) {
   sfx.play('nodeTravel');
   const node = run.mapGraph.nodes[nodeId];
+  // Travelling to another node ends a left rest site's re-entry (restRevisit.js).
+  clearRestRevisitOnTravel(run, nodeId);
   run.mapNodeId = nodeId;
   if (!run.path.includes(nodeId)) run.path.push(nodeId);
   run.floor = node.floor;
@@ -3593,7 +3598,13 @@ function showRest(openPanel = null, locationId = null) {
     dlog('ERROR', `settings.${b.key}: stored value ${JSON.stringify(b.stored)} is not one of the counts this row offers — using ${b.used}.`);
   }
   const worldRest = run.journey?.activeService;
-  const restState = run.legacyDungeon?.activeRest || (worldRest ? run.journey.serviceStates[worldRest.pointId] : null);
+  // The classic map's rest site keeps its own record (restRevisit.js), which
+  // stands in for the service state so a re-entry does not refill again.
+  const classicRest = !run.journey && !run.legacyDungeon;
+  const priorRevisit = run.restRevisit;
+  const record = classicRest ? openRestRecord(run) : null;
+  if (record !== priorRevisit) persist();
+  const restState = run.legacyDungeon?.activeRest || (worldRest ? run.journey.serviceStates[worldRest.pointId] : null) || record;
   if (!openVisit || openVisit.locationId !== restLocationId || openVisit.ctx.run !== run) {
     openVisit = createLocationVisit({ run, registries, rng }, restLocationId, { healMult, refillCounts: counts, restBonus: restRecoveryBonus(saves.loadMeta().settings || {}) });
     // A resumed atlas visit arrived once already (the service state says so);
@@ -3632,6 +3643,9 @@ function showRest(openPanel = null, locationId = null) {
     // The deck editor under Rest sites only (SPEC §14.1): where the place
     // carries `deckEdit`; it closes back onto this visit.
     deckEditor: deckDoors(visit.services).rest ? { onOpen: () => showDeckEditor(() => showRest()) } : null,
+    // The classic rest site's re-entry record and its consumed-choice hook.
+    revisit: record,
+    onConsumed: (kind) => { if (record) { recordRestConsumed(run, kind); persist(); } },
     onReallocate: () => persist(),
     // An assigned point is permanent. It persists the moment it is assigned,
     // not when the player leaves the shrine, for the same reason the
@@ -3647,6 +3661,7 @@ function showRest(openPanel = null, locationId = null) {
       openVisit = null;
       if (run.legacyDungeon?.activeRest) resolveDungeonNode(run);
       else finishWorldService();
+      if (classicRest) markRestLeft(run);
       persist();
       showMap();
     },
