@@ -233,3 +233,13 @@ test('Skip releases a boss relic choice without taking a relic', () => {
     assert.deepEqual(run.relics, [], 'nothing taken');
   });
 });
+
+test('the run-state validator refuses a Taken relic choice with no chosen relic', () => {
+  const run = createRunState({ seed: 0x10a5, classId: 'reaver', registries: REG });
+  run.pendingReward = bossPending({ states: { relic: 'taken' }, chosenRelicId: null });
+  assert.ok(pendingProblems(run).some((p) => p.includes('relic Taken state requires chosenRelicId')), pendingProblems(run).join('; '));
+  run.pendingReward = bossPending({ states: { relic: 'taken' }, chosenRelicId: 'wardenHorn' });
+  assert.deepEqual(pendingProblems(run), [], 'a Taken choice that names its pick is fine');
+  run.pendingReward = bossPending({ states: { relic: 'skipped' }, chosenRelicId: null });
+  assert.deepEqual(pendingProblems(run), [], 'a skipped choice needs no pick');
+});
