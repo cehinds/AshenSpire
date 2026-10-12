@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { COMBAT_TOOLS_DESKTOP_HEIGHT_PX, handLayout } from '../src/ui/models/HandLayout.js';
+import { uiConfig } from '../src/config/generated/ui.js';
 import { wireframeUi } from '../src/content/wireframeUi.js';
 
 // Desktop (data-form-factor="desktop") plan, mirroring hand.js: the band is
@@ -95,4 +97,33 @@ test('a seven-card desktop hand still fits the width', () => {
     assert.ok((plan.cards.at(-1).x + plan.cardWidth - plan.cards[0].x) * z <= width * 0.9 + 1e-6, `${width}: row spans more than 90%`);
     assert.ok((plan.cards.at(-1).x + plan.cardWidth) * z <= width + 1e-6, `${width}: right edge inside`);
   }
+});
+
+// hand.js picks the fan from the form factor. Widescreen is a wide form factor
+// (FormFactorModel), so it takes the desktop fan: the 15rem card cap and the
+// top-anchored row. Its tool row stays the phone/tablet 34px constant, and the
+// tablet keeps the non-desktop fan. Only the fan's flag comes from isWideFormFactor.
+const handSource = readFileSync(new URL('../src/ui/components/hand.js', import.meta.url), 'utf8');
+
+test('a widescreen hand is given the desktop fan; the tool row keeps its literal desktop check', () => {
+  assert.match(handSource, /import \{[^}]*isWideFormFactor[^}]*\} from '\.\.\/models\/FormFactorModel\.js';/);
+  assert.match(handSource, /const wideFan = isWideFormFactor\(formFactor\);/);
+  assert.match(handSource, /headroom: compact \|\| wideFan \? toolsHeight : 0, desktop: wideFan \}\);/);
+  assert.match(handSource, /const toolsRow = desktop \? /);
+  assert.match(handSource, /const toolsPhysical = !desktop \? COMBAT_TOOLS_HEIGHT_PX/);
+});
+
+test('widescreen gets the desktop 15rem cap and top anchoring; tablet keeps the 11.5rem centred fan', () => {
+  const zoom = 1.48, width = 1920, bandPx = 411;
+  const rem = Math.max(16 / zoom, 10);
+  const toolsLocal = COMBAT_TOOLS_DESKTOP_HEIGHT_PX / zoom;
+  const input = { width: width / zoom, height: bandPx / zoom - toolsLocal, count: 4, rem, zoom, headroom: toolsLocal };
+  const wide = handLayout({ ...input, desktop: true });
+  const tablet = handLayout({ ...input, desktop: false });
+  const cap = wireframeUi.hand.maxWidthRem;
+  assert.ok(wide.cardWidth > tablet.cardWidth, 'widescreen cards are larger than the tablet cards');
+  assert.ok(tablet.cardWidth <= cap * rem + 1e-6, 'tablet cards stay under the 11.5rem cap');
+  assert.ok(wide.cardWidth <= uiConfig.scenes.w4a.sizing.hand.desktopMaxWidthRem * rem + 1e-6, 'widescreen cards stay under the 15rem cap');
+  assert.ok(wide.top * zoom < 12, `widescreen fan is anchored under the tool row (top ${wide.top * zoom}px)`);
+  assert.ok(tablet.top * zoom > wide.top * zoom + 20, 'tablet fan is centred, not anchored under the row');
 });
