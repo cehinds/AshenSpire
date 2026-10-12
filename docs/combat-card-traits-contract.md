@@ -141,11 +141,16 @@ version-2 snapshot without the key has no enemy reactions.
   ordinary expanded planning (`enqueueExpandedAction`, including its crit draws)
   runs into the entry's `plan` (its actions and group) instead of the queue, and
   is saved with the stack. `targetPlayerId` is the seat whose card or reaction
-  opened the window. It is announced as `combatEnemyReactionStacked`. Seats are
-  offered against the plan's row, with the ordinary offer rules; a plan with no
-  positive contact against the seat offers nothing.
+  opened the window. It is announced as `combatEnemyReactionStacked`. The seat is
+  offered against **every** enemy entry on the stack, with the ordinary offer
+  rules: a card is eligible when it answers at least one of those plans' positive
+  contacts against the seat (a Counter's coverage matching any one of them). No
+  enemy entry with a positive contact against the seat offers nothing.
 - **Offer checks.** The LIFO replay of an offer check executes each enemy entry's
-  committed plan in the candidate state in its stack position.
+  committed plan in the candidate state in its stack position. An enemy entry
+  that fizzles in the replay (its enemy dead, staggered or locked by an earlier
+  entry) is a valid outcome, not a failed check, so a reaction is never withheld
+  because it would neutralise an enemy's reaction.
 - **Resolution.** Entries still resolve last pushed first. An enemy entry
   enqueues its committed plan's actions, as a `combatReaction` carrier at the
   stack's depth: no riders, crits, automatic Counter returns or reaction windows
