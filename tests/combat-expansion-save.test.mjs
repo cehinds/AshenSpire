@@ -152,6 +152,59 @@ test('the released pre-Necrotic-Blight snapshot receives only the new v2 rule ro
   assert.throws(() => deserializeRun(JSON.stringify(corrupt)), /statuses\.sleep/);
 });
 
+// The released pre-Necrotic-Blight shape of one frozen rules copy.
+function predateNecroticBlight(rules) {
+  rules.matchups.damageRiders.necrotic.status = 'crimsonBlight';
+  rules.matchups.cleanseStatuses = rules.matchups.cleanseStatuses.filter(status => status !== 'necroticBlight');
+  delete rules.statuses.statuses.necroticBlight;
+  delete rules.equipment.armour['herald:ossuary'].traits.buildupResistance.necroticBlight;
+}
+const assertCarriesNecroticBlight = (rules, at) => {
+  assert.equal(rules.matchups.damageRiders.necrotic.status, 'necroticBlight', at);
+  assert.ok(rules.matchups.cleanseStatuses.includes('necroticBlight'), at);
+  assert.equal(rules.statuses.statuses.necroticBlight.activeStatus, 'necroticBlight', at);
+  assert.equal(rules.equipment.armour['herald:ossuary'].traits.buildupResistance.necroticBlight, 15, at);
+};
+
+test('a pre-Necrotic-Blight save taken mid-fight brings its combatEntered snapshot rules forward too', () => {
+  const { run, rng } = fixture(), save = manager();
+  const combat = createRunCombat({ registries, run, rng, enemyIds: ['wanderingSoldier'], settings: { playInDeckOrder: true } });
+  combat.beforeCombatCommit = commitOwner(run, save);
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'save-native' });
+  const old = structuredClone(save.loadRun(registries));
+  assert.equal(old.combatExpansionVersion, 2);
+  assert.equal(old.combatEntered.snapshot.combatExpansionVersion, 2);
+  predateNecroticBlight(old.combatExpansionRules);
+  predateNecroticBlight(old.combatEntered.snapshot.combatExpansionRules);
+
+  const loaded = deserializeRun(JSON.stringify(old));
+  assertCarriesNecroticBlight(loaded.combatExpansionRules, 'run rules');
+  assertCarriesNecroticBlight(loaded.combatEntered.snapshot.combatExpansionRules, 'combatEntered snapshot rules');
+  const restored = restoreCombatSnapshot({ registries, rng: createRng(run.seed, loaded.streamCounters), snapshot: loaded.combatEntered.snapshot });
+  assert.equal(restored.combatExpansionRules.matchups.damageRiders.necrotic.status, 'necroticBlight');
+});
+
+test('a pre-Necrotic-Blight save holding a pending outcome brings that snapshot rules forward too', () => {
+  const { run, rng } = fixture(), save = manager();
+  const combat = createRunCombat({ registries, run, rng, enemyIds: ['wanderingSoldier'], settings: { playInDeckOrder: true } });
+  combat.beforeCombatCommit = commitOwner(run, save);
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'save-native' });
+  const enemy = combat.enemies[0]; enemy.hp = 1; enemy.block = 0; enemy.wardBarrier = 0; enemy.combatStance = 'attacking'; delete enemy.combatCounter;
+  const strike = combat.piles.hand.find(card => resolveCombatCard(combat, card).effects.some(effect => effect.op === 'damage'));
+  dispatch(combat, { type: 'playCard', cardInstanceId: strike.instanceId, targetId: enemy.id });
+  const old = structuredClone(save.loadRun(registries));
+  assert.equal(old.combatPendingOutcome.snapshot.combatExpansionVersion, 2);
+  predateNecroticBlight(old.combatExpansionRules);
+  predateNecroticBlight(old.combatPendingOutcome.snapshot.combatExpansionRules);
+
+  const loaded = deserializeRun(JSON.stringify(old));
+  assertCarriesNecroticBlight(loaded.combatPendingOutcome.snapshot.combatExpansionRules, 'combatPendingOutcome snapshot rules');
+
+  const corrupt = structuredClone(old);
+  delete corrupt.combatPendingOutcome.snapshot.combatExpansionRules.statuses.statuses.sleep;
+  assert.throws(() => deserializeRun(JSON.stringify(corrupt)), /statuses\.sleep/, 'other missing frozen rules still fail');
+});
+
 test('expanded level and attribute writers preserve Cinder SP penalty and unboosted base maxima', () => {
   const { run } = fixture(), save = manager();
   payAshenBlight({ combatExpansionVersion: 2, draw: () => .5 }, run, { amount: 25, receiptId: 'cinder', combatKey: 'prior' });

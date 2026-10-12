@@ -1682,7 +1682,14 @@ export function migrateRunSchema(run) {
   if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
     throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: ${Array.from({ length: RUN_SCHEMA_VERSION }, (_, index) => index + 1).join(', ')})`);
   }
-  if (run.combatExpansionVersion === 2) bringCombatExpansionRulesForward(run.combatExpansionRules);
+  if (run.combatExpansionVersion === 2) {
+    bringCombatExpansionRulesForward(run.combatExpansionRules);
+    // A run saved in (or just after) a fight carries its own frozen copy in
+    // the combat snapshot; bring those forward by the same narrow migration.
+    for (const holder of [run.combatEntered, run.combatPendingOutcome]) {
+      if (holder?.snapshot?.combatExpansionVersion === 2) bringCombatExpansionRulesForward(holder.snapshot.combatExpansionRules);
+    }
+  }
   if (preShopKinds) bringShopStockForward(run);
   const problems = validateRunShape(run, { legacy, preLedger, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels, preSideboard, preRefinedStones, preShopKinds, preSigils, preConsumables, preTrainingPool, preAttunedSigils });
   if (preTrainingPool && (run.trainingPool === undefined || run.trainingPool === null)) run.trainingPool = 0;
