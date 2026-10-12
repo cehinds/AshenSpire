@@ -397,6 +397,8 @@ counter stance.
 - `meta.character.armor.defensive-property.siphon` sits under Defensive property.
   Live `siphon` is under `property`.
 
+**Placement: collection ids and former roots (owner, 2026-10-12, accepted) (10).** Parent: `meta.character.{class,relic,feat}`, `meta.character.consumable.flask`, `meta.character.other.location.{event,encounter}` (live `classification`); `card.type.attack` (live `classification`); `meta.combat.camp`, `meta.combat.attack-source`, `meta.presentation.fx` (live roots have no parent).
+
 **Not counted here.** Five live roots have a bare name that is also the last
 segment of another id, so no bare id has a unique key. They are new top-level
 tags with the suffix `Root`: `campRoot` (camp), `presentationRoot` (presentation),
