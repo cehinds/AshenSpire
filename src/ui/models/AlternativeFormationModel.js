@@ -1,5 +1,7 @@
 // The alternative camera changes presentation only. Cell IDs and occupancy
 // remain the same, including the movement grid's vacant destinations.
+// `wide` (desktop and widescreen) is accepted for the caller's one call shape;
+// the wide enemy line is placed by alternativeCombatComposition, not the grid.
 export function alternativeFormation(plan, width, height, narrow) {
   const columns = plan.columns || 2, rows = plan.rows || 3;
   const place = cell => {

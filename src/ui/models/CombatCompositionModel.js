@@ -70,7 +70,12 @@ export function combatComposition({ sizes, actors, width, height, handTop, solo 
 // the turn ribbon (the headroom clamp), so the lift shortens the figure-to-plate gap.
 export const SHORT_PHONE_ENEMY_LIFT = .05;
 
-export function alternativeCombatComposition({ sizes, actors, width, height, handTop, handLeft = 0, solo = true }) {
+// Desktop and widescreen: the enemy line centre, as a share of the field width,
+// and the enemies' back row. Wide fields are short landscape strips, so the
+// shared rules would put every enemy on the near row and overlap them.
+const WIDE_ENEMY_CENTER = .70;
+
+export function alternativeCombatComposition({ sizes, actors, width, height, handTop, handLeft = 0, solo = true, wide = false }) {
   const enemies = actors.filter(actor => actor.side === 'enemy');
   const enemyFits = sizes.filter(size => enemies.some(actor => actor.slot.id === size.id));
   const center = enemyFits.length ? (Math.min(...enemyFits.map(f => f.x)) + Math.max(...enemyFits.map(f => f.x))) / 2 : width * .55;
@@ -85,6 +90,7 @@ export function alternativeCombatComposition({ sizes, actors, width, height, han
     const ratio = visibleHeight / size.visibleHeight;
     const halfWidth = actor.visibleWidth * size.scale * ratio / 2;
     const proposedX = player ? (solo ? Math.max(size.x + width * .035, handLeft + halfWidth) : size.x)
+      : wide ? (size.x - center) * 1.3 + width * WIDE_ENEMY_CENTER
       : (size.x - center) * (spacious ? 1.3 : 1) + width * (spacious ? .66 : .68);
     const x = Math.max(halfWidth + 6, Math.min(width - halfWidth - 6, proposedX));
     // Enemies stand back on the floor, about half-way up the field. A short
@@ -92,7 +98,7 @@ export function alternativeCombatComposition({ sizes, actors, width, height, han
     // than dropping its enemies onto the player's foot line; the clamp keeps
     // their intent and HP clear under the ribbon. Only a short landscape strip
     // (width > 2 x height) keeps the near foot line for its stacked lanes.
-    const backRow = spacious || width <= height * 2;
+    const backRow = wide || spacious || width <= height * 2;
     const nearRow = Math.max(visibleHeight + actor.leading + 6, (size.ground ?? actor.slot.ground) - height * .07);
     // A short portrait phone lifts its back row a little more (SHORT_PHONE_ENEMY_LIFT,
     // a share of the field height). Its standing line stays on the unlifted
@@ -115,7 +121,7 @@ export function alternativeCombatComposition({ sizes, actors, width, height, han
   });
   // A short landscape strip has no room above the row for spread overheads;
   // its depth ranks keep their packed overhead lanes instead.
-  return width <= height * 2 ? separateEnemies(fitted, width) : fitted.map(({ separationHalf, separationSide, ...fit }) => fit);
+  return wide || width <= height * 2 ? separateEnemies(fitted, width) : fitted.map(({ separationHalf, separationSide, ...fit }) => fit);
 }
 
 // Depth ranks share a formation column, so a phone can stack one enemy

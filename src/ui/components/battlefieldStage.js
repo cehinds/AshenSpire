@@ -1,6 +1,7 @@
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { anchorLocalBox, uiZoom, VIEWPORT_ORIGIN } from '../fx.js';
 import { combatFormation } from '../models/CombatFormationModel.js';
+import { isWideFormFactor } from '../models/FormFactorModel.js';
 import { COMBAT_TARGET_HIT_PX, combatOverheadAnchors, combatOverheadRibbonShift, combatTargetAnchors, combatTargetPackSize } from '../models/CombatOverheadModel.js';
 import { formationTileGeometry } from '../models/FormationGridModel.js';
 import { FORMATION_ROWS, formationDimensions, isFormationCell } from '../../model/formationLayout.js';
@@ -578,10 +579,14 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     const fitFormation = () => {
       // Classic and alternative compositions differ; choose per fit, not at import.
       const combatComposition = classicAppearance() ? classicCombatComposition : alternativeCombatComposition;
+      // Desktop and widescreen put enemies on the back row, spread apart (the
+      // form factor is the decider, written by applyUiScale).
+      const wide = isWideFormFactor(document.documentElement.dataset.formFactor);
       const sizes = combatComposition({ width: fieldRect.width, height: fieldRect.height, actors,
         handTop: handAnchor?.key === handLayoutKey ? handAnchor.top : null,
         handLeft: handAnchor?.key === handLayoutKey ? handAnchor.left : 0,
         solo: solo && window.innerHeight > 480,
+        wide,
         sizes: classicAppearance()
           ? fitCombatSprites({ width: fieldRect.width, height: fieldRect.height, actors,
             minHeight: narrow ? fieldRect.height * NARROW_MIN_HEIGHT_FRACTION : 0 })
@@ -1008,7 +1013,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       windowTop: 0, windowHeight: sceneHeight,
       config: battlefieldBackdropConfig({ height: sceneHeight, appearance: displayAppearance(),
         fieldTop, fieldHeight: fieldRect.height / zoom,
-        formation: { cells: plan.cells.map(cell => ({ ground: cell.ground / zoom })), rowSpacing: plan.rowSpacing / zoom } }),
+        // Desktop and widescreen stand the enemies on the back row, so the
+        // floor line is their feet (the lowest placed figure), not the grid.
+        formation: { cells: (isWideFormFactor(document.documentElement.dataset.formFactor) ? sizes.map(size => ({ ground: size.ground })) : plan.cells).map(cell => ({ ground: cell.ground / zoom })), rowSpacing: plan.rowSpacing / zoom } }),
     });
     field.dataset.groundY = String(fieldRect.top + plan.ground);
   };

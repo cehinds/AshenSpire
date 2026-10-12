@@ -22,3 +22,12 @@ export function formFactorFor(width, height, thresholds) {
   if (t.tabletMaxWidth != null && w <= t.tabletMaxWidth) return 'tablet';
   return 'desktop';
 }
+
+// The wide-screen form factors: the desktop and widescreen HUD layouts. A
+// phone (mobile) and a tablet keep their established geometry; only these two
+// read the wide sizing in content/config (w4a-combat sizing.wideBands, and
+// footerLayout sizing.wideMaximumWidthPx / wideMinimumHeightPx).
+export const WIDE_FORM_FACTORS = Object.freeze(['desktop', 'widescreen']);
+export function isWideFormFactor(formFactor) {
+  return WIDE_FORM_FACTORS.includes(formFactor);
+}

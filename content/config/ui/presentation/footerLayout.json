@@ -1,7 +1,9 @@
 {
   "sizing": {
     "maximumWidthPx": 600,
-    "minimumHeightPx": 92
+    "minimumHeightPx": 92,
+    "wideMaximumWidthPx": 420,
+    "wideMinimumHeightPx": 80
   },
   "components": {
     "layout": {
