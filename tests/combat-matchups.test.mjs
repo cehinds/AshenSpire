@@ -155,7 +155,7 @@ test('combat-local rules override tactical balance without changing defaults', (
 
 test('typed status riders resolve canonical types and legacy aliases through content rules', () => {
   for (const [type, status] of [['slashing', 'bleed'], ['cold', 'frost'], ['frost', 'frost'],
-    ['fire', 'burn'], ['lightning', 'weak'], ['necrotic', 'necroticBlight'], ['decay', 'necroticBlight'], ['poison', 'venom']]) {
+    ['fire', 'burn'], ['lightning', 'weak'], ['necrotic', 'crimsonBlight'], ['decay', 'crimsonBlight'], ['poison', 'venom']]) {
     const f = fixture();
     const effects = matchupRiderEffects(f.ctx, f.source, f.target, card('attack', type), { amount: 4, hpLoss: 1 });
     assert.deepEqual(effects, [{ op: 'applyStatus', status, stacks: 1 }], type);

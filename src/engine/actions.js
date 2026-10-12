@@ -338,6 +338,9 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
         actionKey: carrier.expansionGroup?.key || `${ctx.turn}:${carrier.instanceId || 'reaction'}` });
       Matchups.recordTacticalStatus(tactical, pressure);
     } else if (effect.op === 'poiseDamage') dealPoiseDamage(ctx, target, effect.amount);
+    // Holy's cleanse (target 'self' = the attacker) resolves as on the v1 path;
+    // without this a v2 Holy hit cleansed nothing (SPEC §4.7).
+    else if (effect.op === 'removeStatus') ctx.enqueue({ effect, source, owner: source, target, card: { ...carrier, combatReaction: true }, meta: { combatDamageRider: true } });
   }
   if (profile.school === 'lightning' && Control.electricalTraits(ctx, target).conductive
     && source?.alive && !Control.electricalTraits(ctx, source).grounded && amount > 0) {
