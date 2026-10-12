@@ -81,7 +81,8 @@ export function computeAttackDamage(ctx, source, target, base, attackTags, carri
   dmg += statuses.getAdd(ctx, source, 'attackDamageAdd');
   dmg *= statuses.getMult(ctx, source, 'damageDealtMult');
   if (target) dmg *= statuses.getMult(ctx, target, 'damageTakenMult');
-  if (target && !beforeDefense) dmg *= ratingDamageMultiplier(ctx, target, isMagicalAttack(ctx, carrier));
+  // Pools only in expanded combat (owner decision, 2026-10-12): no Poise or Ward rating cut. Legacy keeps it.
+  if (target && !beforeDefense && ctx.combatExpansionVersion !== 2) dmg *= ratingDamageMultiplier(ctx, target, isMagicalAttack(ctx, carrier));
   // Tag-scoped extra vulnerability (#61): statuses whose taggedVulnerability
   // tags intersect the hit's effect tags. Composition is the row's DECLARED
   // stacking rule (closed enum, validated): 'multiplicative' sources multiply

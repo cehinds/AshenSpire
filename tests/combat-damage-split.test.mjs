@@ -7,7 +7,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { createCombat } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { enqueueExpandedAction, previewExpandedActions } from '../src/engine/combatExpansionActions.js';
-import { executeAction, gainBlock } from '../src/engine/actions.js';
+import { executeAction, gainBlock, computeAttackDamage } from '../src/engine/actions.js';
 import { resolveCombatRatings, magicShareOf, splitDamageTypesOf, attackImpact } from '../src/model/combatRatings.js';
 import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
 import { combatProfileFor } from '../src/model/combatCardProfile.js';
@@ -505,4 +505,12 @@ test('briarCast into Block 2 and Poise 5 takes 1 HP, Poise absorbs 2 and drops t
   assert.equal(r.enemy.persistentPoise.value, 3, 'Poise 5 is spent by the 2 it absorbs');
   assert.equal(d.wardResisted, 0, 'no Ward is resisted by a physical hit');
   assert.equal(r.preview, r.committed, 'preview equals committed');
+});
+
+// The card face reads computeAttackDamage without beforeDefense. Pools only: it takes no Poise or Ward rating cut either,
+// so the face of a 5 slash into Poise 5 and of a 5 fire into Ward 3 is 5, the same figure the contacts split.
+test('the card face takes no Poise or Ward rating cut: 5 slash into Poise 5 and 5 fire into Ward 3 both read 5', () => {
+  const { combat, enemy } = fixture({ ward: 3, poise: 5, damageTypeShares: {} });
+  assert.equal(computeAttackDamage(combat, combat.player, enemy, 5, slash.tags, slash, { matchups: false }), 5, 'physical face');
+  assert.equal(computeAttackDamage(combat, combat.player, enemy, 5, fireBolt.tags, fireBolt, { matchups: false }), 5, 'magic face');
 });
