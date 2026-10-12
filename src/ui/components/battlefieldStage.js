@@ -983,6 +983,33 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       sprite.style.setProperty('--target-outline-width', `${outline.width}px`);
       sprite.style.setProperty('--target-outline-offset', `${outline.offset}px`);
     });
+    // Owner (2026-10-12): an enemy's intent is centred on its HP bar's track
+    // and sits just above its badges and bar, never over them. The footer was
+    // packed above, so the overhead (intent and Inspect together) moves by the
+    // measured difference. Reads first, then writes: one layout serves all.
+    const INTENT_BAR_GAP = 5; // physical px, the same at every UI zoom
+    const intentMoves = placed.map(({ frame }) => {
+      if (!frame.classList.contains('enemy') || frame.classList.contains('dead')) return null;
+      const leadingHost = frame.querySelector('.combatant-leading');
+      const intent = leadingHost?.querySelector(':scope > .intent');
+      const row = frame.querySelector('.combat-health-row');
+      const track = row?.querySelector('.combat-health-meter .m-track');
+      if (!leadingHost || !intent || !track) return null;
+      const intentRect = intent.getBoundingClientRect(), trackRect = track.getBoundingClientRect();
+      const topOfRow = Math.min(row.getBoundingClientRect().top, ...[...row.querySelectorAll('.combat-health-badge')]
+        .map(badge => badge.getBoundingClientRect().top));
+      return { leadingHost,
+        dx: (trackRect.left + trackRect.width / 2) - (intentRect.left + intentRect.width / 2),
+        dy: (topOfRow - INTENT_BAR_GAP) - intentRect.bottom };
+    });
+    for (const move of intentMoves) {
+      if (!move || (Math.abs(move.dx) < 0.01 && Math.abs(move.dy) < 0.01)) continue;
+      const { leadingHost, dx, dy } = move;
+      const left = parseFloat(leadingHost.style.left) || 0;
+      const top = parseFloat(leadingHost.style.translate.split(' ')[1]) || 0;
+      leadingHost.style.left = `${left + dx / zoom}px`;
+      leadingHost.style.translate = `0 ${top + dy / zoom}px`;
+    }
     // Idle names do not reserve footer rows, but their independent tap cores
     // still need separate space when two formation rows meet on a short field.
     // Move only these transparent cores; keep art and readable plates fixed.
