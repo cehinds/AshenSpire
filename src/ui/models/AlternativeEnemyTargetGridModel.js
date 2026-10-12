@@ -5,6 +5,9 @@ const overlaps = (a, b, gap) => a.left < b.left + b.width + gap && a.left + a.wi
 export function alternativeEnemyTargetGrid({ width, height, targets, obstacles = [], hardObstacles = [], size = 88, gap = 6, inset = 8 }) {
   if (!targets.length || width <= 0 || height <= 0) return [];
   let cells = [];
+  // A cell over an owned obstacle (a foe's own controls) is reserved for that foe only.
+  const eligible = (cell, target) => !cell.owners?.length || cell.owners.every(id => id === target.id);
+  const plain = ({ owners, ...cell }) => cell;
   // Shift the entire lattice when an intent row leaves a narrow free band.
   // Anchored origins also let a lone target sit exactly on its enemy center.
   for (const blocks of [[...obstacles, ...hardObstacles], hardObstacles]) {
@@ -22,12 +25,21 @@ export function alternativeEnemyTargetGrid({ width, height, targets, obstacles =
       for (let top = startY; top + edge <= height - inset; top += pitch) {
         for (let left = startX; left + edge <= width - inset; left += pitch) {
           const cell = { left, top, width: edge, height: edge };
-          if (!blocks.some(rect => overlaps(cell, rect, gap))) grid.push(cell);
+          const hits = blocks.filter(rect => overlaps(cell, rect, gap));
+          // Hard and unowned obstacles block the cell; owned ones only claim it.
+          if (hits.some(rect => !rect.owner)) continue;
+          grid.push({ ...cell, owners: [...new Set(hits.map(rect => rect.owner))] });
         }
       }
       if (grid.length < targets.length) continue;
-      const distance = targets.reduce((sum, target) => sum + Math.min(...grid.map(cell =>
-        (cell.left + edge / 2 - target.x) ** 2 + (cell.top + edge / 2 - target.y) ** 2)), 0);
+      let distance = 0, placeable = true;
+      for (const target of targets) {
+        const options = grid.filter(cell => eligible(cell, target));
+        if (!options.length) { placeable = false; break; }
+        distance += Math.min(...options.map(cell =>
+          (cell.left + edge / 2 - target.x) ** 2 + (cell.top + edge / 2 - target.y) ** 2));
+      }
+      if (!placeable) continue;
       if (distance < score) { score = distance; cells = grid; }
     }
     if (cells.length >= targets.length) break;
@@ -46,7 +58,7 @@ export function alternativeEnemyTargetGrid({ width, height, targets, obstacles =
       const grid = [];
       for (let top = inset; top + edge <= height - inset; top += edge + gap) {
         for (let left = inset; left + edge <= width - inset; left += edge + gap) {
-          const cell = { left, top, width: edge, height: edge };
+          const cell = { left, top, width: edge, height: edge, owners: [] };
           if (!hardObstacles.some(rect => overlaps(cell, rect, gap))) grid.push(cell);
         }
       }
@@ -56,13 +68,13 @@ export function alternativeEnemyTargetGrid({ width, height, targets, obstacles =
     cells = fallback;
   }
   // Match closest pairs first so an already-centered foe keeps its own cell.
-  const pairs = targets.flatMap((target, index) => cells.map((cell, slot) => ({ index, slot,
+  const pairs = targets.flatMap((target, index) => cells.flatMap((cell, slot) => eligible(cell, target) ? [{ index, slot,
     distance: (cell.left + cell.width / 2 - target.x) ** 2 + (cell.top + cell.height / 2 - target.y) ** 2,
-  }))).sort((a, b) => a.distance - b.distance || a.index - b.index || a.slot - b.slot);
+  }] : [])).sort((a, b) => a.distance - b.distance || a.index - b.index || a.slot - b.slot);
   const used = new Set(), placed = new Map();
   for (const pair of pairs) {
     if (placed.has(pair.index) || used.has(pair.slot)) continue;
-    placed.set(pair.index, { id: targets[pair.index].id, ...cells[pair.slot] });
+    placed.set(pair.index, { id: targets[pair.index].id, ...plain(cells[pair.slot]) });
     used.add(pair.slot);
   }
   return targets.flatMap((_, index) => placed.has(index) ? [placed.get(index)] : []);
