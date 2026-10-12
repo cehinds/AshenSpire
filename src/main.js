@@ -4590,7 +4590,8 @@ if (shotState === 'combat-test') {
         cardIds: [],
       } : { cardIds: registries.classes.get(run.class).cardPool.slice(0, 3) }),
       flaskId: 'crimsonFlask',
-      relicId: 'forsakenMedallion',
+      // `?shotReward=bossRelics` poses a boss victory's relic choice (SPEC §6).
+      ...(pose === 'bossRelics' ? { relicChoices: ['crownOfStitches', 'wardenHorn', 'ashOfRemembrance'] } : { relicId: 'forsakenMedallion' }),
       armamentId: 'greatsword',
       smithingStoneReceipt,
       // What the fight paid, authored like the rest of the pose.
