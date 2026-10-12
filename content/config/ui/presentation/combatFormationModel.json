@@ -65,6 +65,7 @@
         "front": 0.92,
         "player": 1
       },
+      "backRankShift": 0.3,
       "bodyWidthFraction": 0.8,
       "bodyWidthMaxPx": 180,
       "playerBelowFootPx": 32,
