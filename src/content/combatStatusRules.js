@@ -15,6 +15,7 @@ export const combatStatusRules = {
     frost: { camp: 'spell', profile: 'elemental', activeStatus: 'frozen', initialThreshold: 6, activeThreshold: 4, cap: 3, chanceRecovery: true, grants: { chilled: 1 } },
     burn: { camp: 'spell', profile: 'elemental', activeStatus: 'burn', initialThreshold: 6, activeThreshold: 4, cap: 3, chanceRecovery: true },
     crimsonBlight: { camp: 'spell', profile: 'curse', activeStatus: 'crimsonBlight', initialThreshold: 6, activeThreshold: 4, cap: 3, chanceRecovery: true },
+    necroticBlight: { camp: 'spell', profile: 'curse', activeStatus: 'necroticBlight', initialThreshold: 6, activeThreshold: 4, cap: 3, chanceRecovery: true },
     paralysis: { camp: 'spell', profile: 'elemental', activeStatus: 'paralysis', initialThreshold: 6, activeThreshold: 4, cap: 3, chanceRecovery: true, lock: true, recoveryCost: 3 },
     sleep: { camp: 'spell', profile: 'mental', activeStatus: 'sleep', initialThreshold: 6, activeThreshold: 4, cap: 3, chanceRecovery: true, lock: true, recoveryCost: 2 },
     dazed: { camp: 'physical', profile: 'bodily', activeStatus: 'dazed', initialThreshold: 6, activeThreshold: 4, cap: 3, chanceRecovery: true, lock: true, recoveryCost: 1 },

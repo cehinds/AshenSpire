@@ -24,7 +24,7 @@
 // Headless: no document/window/localStorage/timers.
 
 import * as F from './combatRules.js';
-import { allocateInteger, resolveDamageComponents, groupedResistance } from '../model/combatRules.js';
+import { allocateInteger, resolveDamageComponents, groupedResistance, taggedBonusFloor } from '../model/combatRules.js';
 import { COMBAT_OPCODES, RUN_OPCODES, relicInRewardPool } from '../model/schemas.js';
 import { LEGACY_HAND_MAX } from '../model/statRows.js';
 import { evaluate, evaluateRaw, isFormula } from '../model/formulas.js';
@@ -85,6 +85,10 @@ export function computeAttackDamage(ctx, source, target, base, attackTags, carri
   // 'additive' sources pool (mult − 1) and apply once. Both lanes are
   // stack-invariant, so the ceiling is the closed-form product of DISTINCT
   // table mults — stacks can never raise it.
+  // THE BONUS ROUNDS UP (owner, 2026-10-12, #12): the tagged factor is kept
+  // apart and its bonus is ceil'd on the otherwise-final damage below, so a
+  // base-3 card still gains a point. Every other multiplier keeps its floor.
+  let tagged = 1;
   if (target && attackTags && attackTags.length) {
     let addPool = 0;
     for (const [id, inst] of Object.entries(target.statuses || {})) {
@@ -92,10 +96,10 @@ export function computeAttackDamage(ctx, source, target, base, attackTags, carri
       const def = ctx.registries.statuses.get(id);
       const tv = def && def.taggedVulnerability;
       if (!tv || !tv.tags.some((t) => attackTags.includes(t))) continue;
-      if (tv.stacking === 'multiplicative') dmg *= tv.mult;
+      if (tv.stacking === 'multiplicative') tagged *= tv.mult;
       else addPool += tv.mult - 1;
     }
-    if (addPool > 0) dmg *= 1 + addPool;
+    if (addPool > 0) tagged *= 1 + addPool;
   }
   if (target && school) {
     const resistance = target.damageResistanceBySchool && target.damageResistanceBySchool[school];
@@ -108,7 +112,7 @@ export function computeAttackDamage(ctx, source, target, base, attackTags, carri
       }
     }
   }
-  dmg = Math.floor(dmg);
+  dmg = taggedBonusFloor(dmg, tagged);
   dmg = dmg < 0 ? 0 : dmg;
   return matchups ? Matchups.prepareMatchupHit(ctx, source, target, carrier, dmg).amount : dmg;
 }
@@ -334,6 +338,9 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
         actionKey: carrier.expansionGroup?.key || `${ctx.turn}:${carrier.instanceId || 'reaction'}` });
       Matchups.recordTacticalStatus(tactical, pressure);
     } else if (effect.op === 'poiseDamage') dealPoiseDamage(ctx, target, effect.amount);
+    // Holy's cleanse (target 'self' = the attacker) resolves as on the v1 path;
+    // without this a v2 Holy hit cleansed nothing (SPEC §4.7).
+    else if (effect.op === 'removeStatus') ctx.enqueue({ effect, source, owner: source, target, card: { ...carrier, combatReaction: true }, meta: { combatDamageRider: true } });
   }
   if (profile.school === 'lightning' && Control.electricalTraits(ctx, target).conductive
     && source?.alive && !Control.electricalTraits(ctx, source).grounded && amount > 0) {
@@ -543,11 +550,12 @@ function afterHpChange(ctx, target, death = {}) {
  * itself; callers decide HOW it was earned — the poise bar filling
  * (dealPoiseDamage) or a direct proc (the 'stagger' opcode, insanity's row).
  * The direct path deliberately bypasses the bar: a guaranteed break that
- * neither consumes nor grows the poise meter.
+ * neither consumes nor grows the poise meter. Returns whether it broke.
+ * Callers that mean a full Stagger go through breakEnemy below.
  */
 export function staggerEnemy(ctx, enemy) {
-  if (!enemy || enemy.kind !== 'enemy' || !enemy.alive) return;
-  if (ctx.foundation && enemy.impactProtectedUntil >= ctx.turn) return;
+  if (!enemy || enemy.kind !== 'enemy' || !enemy.alive) return false;
+  if (ctx.foundation && enemy.impactProtectedUntil >= ctx.turn) return false;
   Matchups.clearCombatCounter(enemy, ctx);
   const cancelled = enemy.pendingMove ? enemy.pendingMove.moveId : null;
   enemy.pendingMove = null;
@@ -555,6 +563,27 @@ export function staggerEnemy(ctx, enemy) {
   if (ctx.foundation) enemy.impactProtectedUntil = ctx.turn + ctx.foundation.rules.impact.protectionTurns;
   enemy.intent = { kind: 'staggered', moveId: null };
   ctx.emit('enemyStaggered', { targetId: enemy.id, enemyId: enemy.enemyId, cancelledMove: cancelled });
+  return true;
+}
+
+/**
+ * breakEnemy(ctx, enemy) — the ONE path to a full enemy Stagger (owner
+ * decision 2026-10-12, #1): staggerEnemy, then balance.poise.onFill's
+ * content effects (the `staggered` status: +50% damage taken, and every
+ * card rider gated on it). Both the poise bar filling (dealPoiseDamage) and a
+ * direct proc stagger (the 'stagger' opcode, insanity's row) land here, so an
+ * Insanity break is the same Stagger a full meter is. Meter growth stays with
+ * the bar: the direct path neither consumes nor grows it (SPEC §4.4). Under
+ * combat ratings a break is the skipped turn alone (no onFill), on both paths.
+ */
+export function breakEnemy(ctx, enemy) {
+  if (!staggerEnemy(ctx, enemy)) return false;
+  if (ctx.ratingsRules) return true;
+  const cfg = (ctx.registries.balance && ctx.registries.balance.poise) || {};
+  for (const eff of cfg.onFill || []) {
+    ctx.enqueue({ effect: eff, source: enemy, owner: enemy, target: enemy, meta: {} });
+  }
+  return true;
 }
 
 /**
@@ -608,10 +637,7 @@ export function dealPoiseDamage(ctx, entity, amount, { knowledgeMatchup = false 
     entity.poiseMeter.value -= entity.poiseMeter.max;
     ctx.emit('meterFilled', { targetId: entity.id, meter: 'poise', threshold: entity.poiseMeter.max, ...(!isEnemy && ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(entity) } : {}) });
     if (isEnemy) {
-      staggerEnemy(ctx, entity);
-      for (const eff of cfg.onFill || []) {
-        ctx.enqueue({ effect: eff, source: entity, owner: entity, target: entity, meta: {} });
-      }
+      breakEnemy(ctx, entity);
     } else {
       staggerPlayer(ctx, entity);
     }
@@ -1180,7 +1206,7 @@ function runOpcode(ctx, action, eff) {
     }
     case 'stagger': {
       for (const t of resolveTargets(ctx, action, eff.target)) {
-        staggerEnemy(ctx, t);
+        breakEnemy(ctx, t);
       }
       break;
     }

@@ -574,6 +574,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(e1.skipNextTurn, 'staggered DIRECTLY — poiseMax 99 bar nowhere near full');
     assert(logOf(c, 'enemyStaggered').some((e) => e.targetId === 'e1'), 'enemyStaggered emitted');
     eq(e1.intent.kind, 'staggered', 'intent shows the break');
+    assert(S.getStacks(e1, 'staggered') > 0, 'the direct break applies Staggered, as a full bar does (owner, 2026-10-12)');
     eq(S.getStacks(e1, 'insanityExposed'), 1, 'proc left Unraveled (tag-scoped vulnerability)');
   });
 
@@ -623,12 +624,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(last.amount, 10, 'untagged hit unaffected by Frost-Exposed');
     playFromHand(c, 'tStarHit');
     last = logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop();
-    eq(last.amount, 12, 'starstone hit ×1.25 (multiplicative row)');
-    // Composes with regular Vulnerable multiplicatively: 10 × 1.5 × 1.25 = 18.75 → 18.
+    eq(last.amount, 13, 'starstone hit ×1.25 (multiplicative row), bonus rounded up: 10 + ceil(2.5)');
+    // Composes with regular Vulnerable multiplicatively: 10 × 1.5 = 15, + ceil(15 × 0.25) = 19
+    // (the exposure bonus rounds up — owner, 2026-10-12).
     S.applyStatus(c, e1, 'vulnerable', 1);
     playFromHand(c, 'tStarHit');
     last = logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop();
-    eq(last.amount, 18, 'stacks WITH Vulnerable: floor(10 × 1.5 × 1.25)');
+    eq(last.amount, 19, 'stacks WITH Vulnerable: 15 + ceil(3.75)');
     // THE CEILING (known-bad probe answered): every vulnerability lane is
     // flat-per-status and stack-count-invariant, so max compose is the
     // closed-form product of DISTINCT table mults — stacks cannot raise it.
@@ -637,17 +639,17 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     if (c.player.energy === 0) dispatch(c, { type: 'endTurn' });
     playFromHand(c, 'tStarHit');
     last = logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop();
-    eq(last.amount, 18, '99 stacks of both: SAME 18 — the ceiling is the table, not the stacks');
+    eq(last.amount, 19, '99 stacks of both: SAME 19 — the ceiling is the table, not the stacks');
     // Additive lane: declared 'additive' pools (mult−1). tAddVuln 1.5-additive
     // + frostExposed 1.25-mult on the same tagged hit:
-    // 10 × 1.25 × (1 + 0.5) = 18.75 → 18.
+    // 10 + ceil(10 × (1.25 × 1.5 − 1)) = 10 + ceil(8.75) = 19.
     const a = makeCombat({ deck: ['tStarHit'], enemies: ['tGiant'] });
     const ae = getEntity(a, 'e1');
     S.applyStatus(a, ae, 'frostExposed', 1);
     S.applyStatus(a, ae, 'tAddVuln', 1);
     playFromHand(a, 'tStarHit');
     const al = logOf(a, 'damageDealt').filter((e) => e.targetId === 'e1').pop();
-    eq(al.amount, 18, 'additive lane pools once, multiplicative lane per source');
+    eq(al.amount, 19, 'additive lane pools once, multiplicative lane per source');
   });
 
   // These two falsifiers use SHIPPED cards whose tags exist only in the
@@ -662,9 +664,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(tagIdsFor('starstonePebble').includes('starstone'), 'CSV index names Starstone Pebble as starstone');
     S.applyStatus(c, e1, 'frostExposed', 1);
     const pv = previewCard(c, c.piles.hand[0].instanceId, 'e1');
-    eq(pv.values.find((v) => v.op === 'damage').value, 7, 'preview derives starstone: floor(6 × 1.25)');
+    eq(pv.values.find((v) => v.op === 'damage').value, 8, 'preview derives starstone: 6 + ceil(6 × 0.25)');
     playFromHand(c, 'starstonePebble');
-    eq(logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop().amount, 7, 'execution derives the same starstone hit');
+    eq(logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop().amount, 8, 'execution derives the same starstone hit');
   });
 
   test('7e3. Unraveled changes a real Blight hit through tagging.csv', () => {
@@ -677,9 +679,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(tagIdsFor('blightTouch').includes('blight'), 'CSV index names Blight Touch as blight');
     S.applyStatus(c, e1, 'insanityExposed', 1);
     const pv = previewCard(c, c.piles.hand[0].instanceId, 'e1');
-    eq(pv.values.find((v) => v.op === 'damage').value, 6, 'preview derives blight: floor(5 × 1.3)');
+    eq(pv.values.find((v) => v.op === 'damage').value, 7, 'preview derives blight: 5 + ceil(5 × 0.3)');
     playFromHand(c, 'blightTouch');
-    eq(logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop().amount, 6, 'execution derives the same blight hit');
+    eq(logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop().amount, 7, 'execution derives the same blight hit');
   });
 
   // ---- 7f. Known-bads through the REAL bundle (#61): each red names its row --
@@ -792,6 +794,74 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(ticks.map((t) => t.amount).join(','), '4,6,6,6', 'tick sequence');
     assert(!e1.statuses.crimsonBlight, 'blight expired entirely');
     assert(logOf(c, 'statusExpired').some((e) => e.status === 'crimsonBlight' && e.reason === 'expired'), 'expired event');
+  });
+
+  // ---- 8b. Necrotic Blight: only Necrotic damage's Blight lasts the fight --------
+  // Owner, 2026-10-12 (#4, clarified): Blight applied by the Necrotic damage
+  // rider is its own row (necroticBlight, decay 'none'); every other Crimson
+  // Blight — an enemy's on the player included — keeps its 3-turn duration.
+  test('8b. enemy Crimson Blight on the player expires after 3 turns; a v1 Necrotic hit applies Crimson Blight; a v2 Necrotic hit applies Necrotic Blight that outlasts 6 turns; Holy cleanses it; solo == co-op', () => {
+    // Court Marionette's blowdart puts plain Crimson Blight on the player.
+    const marionette = REG.enemies.get('courtMarionette');
+    eq(marionette.moves.blowdart.effects[0].status, 'crimsonBlight', 'Court Marionette still applies the bounded row');
+    const p = makeCombat({ deck: Array(5).fill('defend'), enemies: ['tGiant'] });
+    S.applyStatus(p, p.player, 'crimsonBlight', 2);
+    // Applied mid-turn: its 3 turns run out at the end of the third player turn,
+    // ticking at the two turn starts in between.
+    dispatch(p, { type: 'endTurn' });
+    dispatch(p, { type: 'endTurn' });
+    eq(S.getStacks(p.player, 'crimsonBlight'), 2, 'still present inside its 3 turns');
+    dispatch(p, { type: 'endTurn' });
+    assert(!p.player.statuses.crimsonBlight, 'enemy-style Crimson Blight on the player expired after 3 player turns');
+    eq(logOf(p, 'hpLost').filter((e) => e.targetId === p.player.id).length, 2, 'ticked at the turn starts inside its duration, then gone');
+    assert(logOf(p, 'statusExpired').some((e) => e.status === 'crimsonBlight' && e.reason === 'expired'), 'expired event');
+
+    // Version 1 (old saves) is immutable history: its Necrotic rider still
+    // applies the bounded Crimson Blight.
+    const v1 = makeCombat({ deck: ['cullTheWeak', 'defend', 'defend', 'defend', 'defend'], enemies: ['tGiant'] });
+    playFromHand(v1, 'cullTheWeak', 'e1');
+    eq(S.getStacks(getEntity(v1, 'e1'), 'crimsonBlight'), 1, 'v1 Necrotic hit still applies Crimson Blight');
+    eq(S.getStacks(getEntity(v1, 'e1'), 'necroticBlight'), 0, 'v1 applies no Necrotic Blight');
+
+    // New runs (combat expansion v2): the Necrotic rider builds Necrotic Blight
+    // (pressure 4 against a threshold of 6, so the second hit admits a stack).
+    const seat = (deck, extra = {}) => ({ classId: 'reaver', maxHp: 78, hp: 78, mana: 2, maxMana: 2, stamina: 3, maxStamina: 3, energyMax: 3, drawPerTurn: 5,
+      deck: deck.map((cardId, i) => ({ instanceId: `c${i + 1}`, cardId, upgraded: false })), relicIds: [], ...extra });
+    const v2 = (deck) => createCombat({ registries: REG, rng: createRng(0xc0ffee), combatExpansionVersion: 2, player: seat(deck), enemyIds: ['tGiant'] });
+    const necroDeck = ['cullTheWeak', 'cullTheWeak', 'defend', 'defend', 'defend'];
+    const c = v2(necroDeck);
+    const e1 = getEntity(c, 'e1');
+    playFromHand(c, 'cullTheWeak', 'e1');
+    playFromHand(c, 'cullTheWeak', 'e1');
+    const necrotic = S.getStacks(e1, 'necroticBlight');
+    assert(necrotic >= 1, `v2 Necrotic rider admitted Necrotic Blight (got ${necrotic})`);
+    for (let i = 0; i < 6; i++) dispatch(c, { type: 'endTurn' });
+    eq(S.getStacks(e1, 'necroticBlight'), necrotic, 'Necrotic Blight still present after 6 enemy turns');
+    assert(!logOf(c, 'statusExpired').some((e) => e.status === 'necroticBlight'), 'never expired');
+
+    // Holy cleanses Necrotic Blight off the attacker (v2 cleanse list), so a cleanse still ends it.
+    const h = v2(Array(5).fill('sacredHarvest'));
+    S.applyStatus(h, h.player, 'necroticBlight', 2);
+    playFromHand(h, 'sacredHarvest', 'e1');
+    eq(S.getStacks(h.player, 'necroticBlight'), 1, 'Holy hit cleansed one Necrotic Blight stack');
+    playFromHand(h, 'sacredHarvest', 'e1');
+    assert(!h.player.statuses.necroticBlight, 'a second Holy hit cleansed the last stack');
+
+    // Co-op runs the same v2 rider: one seat, same cards, same enemy state.
+    const coop = createCoopCombat({ registries: REG, rng: createRng(0xc0ffee),
+      players: [{ id: 'p1', ...seat(necroDeck, { combatExpansionVersion: 2 }) }], enemyIds: ['tGiant'] });
+    const solo = v2(necroDeck);
+    playFromHand(solo, 'cullTheWeak', 'e1');
+    playFromHand(solo, 'cullTheWeak', 'e1');
+    for (let i = 0; i < 2; i++) {
+      const coopCard = coop.players.get('p1').piles.hand.find((card) => card.cardId === 'cullTheWeak');
+      playCoopCard(coop, 'p1', coopCard.instanceId, 'e1');
+    }
+    const ce1 = coop.enemies.find((e) => e.id === 'e1');
+    eq(coop.combatExpansionVersion, 2, 'co-op fight runs v2');
+    eq(S.getStacks(ce1, 'necroticBlight'), S.getStacks(getEntity(solo, 'e1'), 'necroticBlight'), 'co-op Necrotic Blight == solo');
+    assert(S.getStacks(ce1, 'necroticBlight') >= 1, 'co-op admitted it');
+    eq(ce1.hp, getEntity(solo, 'e1').hp, 'co-op enemy HP == solo');
   });
 
   // ---- 9. Poise: fill → Stagger (skip + 1.5× window + growth + cancel delayed) ----

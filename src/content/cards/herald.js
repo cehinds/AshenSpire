@@ -179,13 +179,13 @@ export const heraldCards = [
     keywords: [], icon: '🗡',
     effects: [
       { op: 'damage', target: 'enemy', amount: 6 },
-      { op: 'damage', target: 'enemy', amount: 4, if: { p: 'hasStatus', of: 'target', status: 'crimsonBlight' } },
+      { op: 'damage', target: 'enemy', amount: 4, if: { p: 'any', preds: [{ p: 'hasStatus', of: 'target', status: 'crimsonBlight' }, { p: 'hasStatus', of: 'target', status: 'necroticBlight' }] } },
     ],
     textTemplate: 'Deal {damage} damage. If the target has Crimson Blight: deal {damage.2} more.',
     upgrade: {
       effects: [
         { op: 'damage', target: 'enemy', amount: 8 },
-        { op: 'damage', target: 'enemy', amount: 6, if: { p: 'hasStatus', of: 'target', status: 'crimsonBlight' } },
+        { op: 'damage', target: 'enemy', amount: 6, if: { p: 'any', preds: [{ p: 'hasStatus', of: 'target', status: 'crimsonBlight' }, { p: 'hasStatus', of: 'target', status: 'necroticBlight' }] } },
       ],
     },
   },
@@ -354,15 +354,15 @@ export const heraldCards = [
     flavor: "Return of warmth lent to the dying.\n\nPerformed at the deathbed once the name was read, and called a courtesy returned. After the rite the dying were colder, and the Saint warmer.\n\nThe rubric closes: do not explain this to the family.",
     keywords: ['exhaust', 'retain'], icon: '🍂',
     effects: [
-      { op: 'heal', target: 'self', amount: { f: 'stacks', status: 'crimsonBlight', of: 'allEnemies', per: 2 } },
+      { op: 'heal', target: 'self', amount: { f: 'mul', args: [0.5, { f: 'add', args: [{ f: 'stacks', status: 'crimsonBlight', of: 'allEnemies' }, { f: 'stacks', status: 'necroticBlight', of: 'allEnemies' }] }] } },
     ],
-    textTemplate: 'Heal 1 HP for every 2 Crimson Blight on all enemies. Exhaust.',
+    textTemplate: 'Heal 1 HP for every 2 Blight (Crimson or Necrotic) on all enemies. Exhaust.',
     upgrade: {
       keywords: ['exhaust', 'retain'],
       effects: [
-        { op: 'heal', target: 'self', amount: { f: 'stacks', status: 'crimsonBlight', of: 'allEnemies' } },
+        { op: 'heal', target: 'self', amount: { f: 'add', args: [{ f: 'stacks', status: 'crimsonBlight', of: 'allEnemies' }, { f: 'stacks', status: 'necroticBlight', of: 'allEnemies' }] } },
       ],
-      textTemplate: 'Heal 1 HP for every Crimson Blight on all enemies. Exhaust.',
+      textTemplate: 'Heal 1 HP for every Blight (Crimson or Necrotic) on all enemies. Exhaust.',
     },
   },
 
@@ -423,12 +423,12 @@ export const heraldCards = [
     flavor: "Reading of every name, aloud and at once.\n\nComposed by the Furnace Saint after the Burning. The novices say it is what the fire did that night, and that the rite exists so it will be remembered. The remnant holds it holiest of the liturgies.\n\nIt has never been performed to its end.",
     keywords: ['retain'], icon: '💥',
     effects: [
-      { op: 'damage', target: 'enemy', amount: { f: 'mul', args: [2, { f: 'stacks', status: 'crimsonBlight', of: 'target' }] } },
+      { op: 'damage', target: 'enemy', amount: { f: 'mul', args: [2, { f: 'add', args: [{ f: 'stacks', status: 'crimsonBlight', of: 'target' }, { f: 'stacks', status: 'necroticBlight', of: 'target' }] }] } },
     ],
     textTemplate: "Deal damage equal to twice the target's Crimson Blight.",
     upgrade: {
       effects: [
-        { op: 'damage', target: 'enemy', amount: { f: 'mul', args: [3, { f: 'stacks', status: 'crimsonBlight', of: 'target' }] } },
+        { op: 'damage', target: 'enemy', amount: { f: 'mul', args: [3, { f: 'add', args: [{ f: 'stacks', status: 'crimsonBlight', of: 'target' }, { f: 'stacks', status: 'necroticBlight', of: 'target' }] }] } },
       ],
       textTemplate: "Deal damage equal to three times the target's Crimson Blight.",
     },

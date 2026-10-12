@@ -236,6 +236,32 @@ export const statuses = [
     tooltip:
       'At the start of its turn, loses HP equal to Blight stacks (ignores Block). Stacks do not tick down; the Blight expires entirely after 3 turns. Re-applying adds stacks and refreshes the duration.',
   },
+  // Necrotic damage's own Blight (SPEC §4.7; owner, 2026-10-12 #4): the same
+  // per-turn HP loss as Crimson Blight, but it lasts the whole fight. Only
+  // Necrotic damage applies it; every other Blight keeps the 3-turn row above.
+  // Cleanses (combatMatchups cleanseStatuses) still remove it.
+  {
+    id: 'necroticBlight',
+    tint: 'var(--rot)',
+    name: 'Necrotic Blight',
+    icon: '❀',
+    stackMode: 'add',
+    decay: 'none',
+    hooks: [
+      {
+        on: 'ownerTurnStart',
+        do: [
+          {
+            op: 'loseHp',
+            target: 'owner',
+            amount: { f: 'stacks', status: 'necroticBlight', of: 'owner' },
+          },
+        ],
+      },
+    ],
+    tooltip:
+      'At the start of its turn, loses HP equal to Necrotic Blight stacks (ignores Block). Applied by Necrotic damage. Stacks do not tick down and it lasts the whole fight; only a cleanse removes it.',
+  },
   // Burn and Regen exist for equipment to point at: a torch has to be able to
   // set something alight, and a warm habit has to be able to give a little
   // back. Both are ordinary content statuses — nothing in the engine knows
@@ -721,7 +747,7 @@ export const statuses = [
     hooks: [
       {
         on: 'statusApplied',
-        if: { p: 'all', preds: [{ p: 'eventStatusIs', status: 'crimsonBlight' }, { p: 'eventSourceIsOwner' }] },
+        if: { p: 'all', preds: [{ p: 'any', preds: [{ p: 'eventStatusIs', status: 'crimsonBlight' }, { p: 'eventStatusIs', status: 'necroticBlight' }] }, { p: 'eventSourceIsOwner' }] },
         do: [
           {
             op: 'heal',
