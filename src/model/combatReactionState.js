@@ -6,7 +6,7 @@ import { reactionRulesProblems } from '../content/combatCardTraits.js';
 
 export function combatReactionProblems(state, { ownerIds = new Set(['player']), queue = state.abilityQueue || state.queue || [] } = {}) {
   const problems = [];
-  const fields = ['pendingReaction', 'reactionResume', 'reactionCursor', 'reactionHandCleanup'];
+  const fields = ['pendingReaction', 'reactionResume', 'reactionCursor', 'reactionHandCleanup', 'reactionStack', 'reactionRules'];
   if (state.reactionRulesVersion === undefined) {
     if (fields.some(field => state[field] !== undefined)) problems.push('Paused reaction requires its carried rules');
     return problems;
