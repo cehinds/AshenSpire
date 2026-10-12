@@ -256,36 +256,95 @@ Formula, relation and value keys follow the README conventions.
   folder does not change it.
 - **Tables changed:** none.
 
+## 13. Weapon damage kinds and damage types are two tags
+
+- **Date:** 2026-10-12 (owner).
+- **Decision:** two tags: weapon damage kinds vs damage types. Blade, blunt and
+  piercing (`meta.combat.damage.physical.weapon-{blade,blunt,piercing}`) and the
+  physical damage types (`meta.combat.damage.physical.{slashing,blunt,pierce}`)
+  stay separate. The weapon ids are `weapon-*` because `physical.blunt` is the
+  damage type. Each weapon kind sits under `meta.combat.damage.physical`, and each pair is
+  linked both ways in `related`: blade with slashing, blunt with blunt, and
+  piercing with pierce.
+- **Tables changed:** `tables/tags.csv` moves the three weapon kinds under
+  `meta.combat.damage.physical` (renamed to `weapon-*`) and adds the six `related` links. No liveId
+  changes.
+- **Couldn't place:** the damage-type placement question below still stands.
+  It concerns which tree holds damage types as a whole, not these two sets.
+
+## 14. Relics, charms, companions, sigils and class feats are objects
+
+- **Date:** 2026-10-12 (owner).
+- **Decision:** each relic, charm, companion, sigil and class feat is a row in
+  `tables/objects.csv`. Its `kind` is the object's family. Its `tags` hold the
+  classification tag key, and its property tag key where it has one. The
+  property tags stay as the effect handles, because the game keys effects by
+  them. Ids and names are the game's own (`relics.js`, `progression/relics.js`,
+  `companions.js`, `sigils.js`, `progression/feats.js`, `classSkillFeats.js`).
+  Classification tags are written with their current keys (for example
+  `character.relic` and `feat`), after the repoint on this branch.
+- **Owner rulings, 2026-10-12:**
+  - Charms are relics. `kindlingCharm`, `goldleafCharm` and `emberwickCharm`
+    are `kind` relic, with their own property tags.
+  - Relics with no property node are objects with only the relic classification
+    tag, and no effect tag. These are eleven: `cinderPouch`, `feralEye`,
+    `crackedTear`, `sealstoneKey`, `emberFragment`, `ancestralHorn`,
+    `saltedRelic`, `wayfarersKnot`, `prismaticThorn`, `restlessClasp` and
+    `paupersDiadem`.
+  - Class skill feats are objects with only the feat classification tag, and no
+    effect tag. These are the twenty `classSkillFeats.js` entries (`reaver*`,
+    `starseer*`, `rogue*`, `herald*`).
+- **Descriptions:** the game's own text, not written here.
+  - Relics: the `textTemplate`, with its `{token}` placeholders left in.
+  - Progression feats: the feat's `feat:*` textTemplate, which is what the game
+    shows (`src/content/progression/feats.js:313` → `getFeatDescription` in
+    `src/model/classSkillFeatDescription.js`). It differs from the `nodes.csv`
+    blurb only by its `{token}` placeholders, and by "half HP" becoming "50% HP"
+    in 4 feats: last-rampart, carrion-measure, funeral-watch and
+    pilgrim-of-scars. All fifty feat rows carry the template, with `{token}`
+    placeholders left in.
+  - Companions and sigils: their `blurb`.
+  - Class skill feats: their `description`.
+- **Tables changed:** `tables/objects.csv` gains 152 rows: 62 relic with a property tag (59
+  relics and 3 charms), 11 relic with no effect tag, 2 companion, 7
+  sigil, 50 feat, and 20 class skill feat with no effect tag. The feat
+  descriptions were corrected in a separate commit. `tags.csv` is not touched.
+- **Couldn't place:** none. The rows above cover every entry the game defines in
+  these five families.
+
 ## Open: round-trip differences
 
 Every live node in `content/source/nodes.csv` (448) now maps to exactly one tag
-through `liveId`, with no collisions. The compile report still lists 73 field
-differences (section 3 of `compile-report.md`), down from 197: 108 were chip
+through `liveId`, with no collisions. The compile report still lists 92 field
+differences (section 3 of `compile-report.md`), down from 181: 108 were chip
 fields the model left empty, and they now carry the live glyph and colour. The
 rest are real disagreements between the live tree and the model. The model
 keeps its placement and wording until the owner decides. A tag with both a
 label and a parent difference is counted in both clusters below.
 
-**Labels, casing only (14).** The model shows display case; nodes.csv holds the
+**Labels, casing only (21).** The model shows display case; nodes.csv holds the
 identifier. Owner to say whether the model label should match nodes.csv exactly
 or keep display case.
 - `card.cost.mana`, `card.cost.stamina`, `card.type.curse`, `card.type.power`,
   `card.type.skill`, `card.upgrade.upgraded`, `card.keyword.ethereal`,
   `card.keyword.exhaust`, `card.keyword.innate`, `card.keyword.retain`,
   `card.keyword.unplayable`, `meta.combat.damage`, `meta.combat.damage.magic`,
-  `meta.combat.damage.physical`.
+  `meta.combat.damage.physical`, `meta.character.{class,relic,feat}`,
+  `meta.character.consumable.flask`, `meta.character.other.location.{event,encounter}`,
+  `card.type.attack`.
 
-**Labels, different word (10).** Owner to say which name is the game's.
+**Labels, different word (11).** Owner to say which name is the game's.
 - `meta.combat.damage.magic.divine` (model Divine, live Holy; `damage:sacred`).
 - `meta.combat.damage.magic.frost` (model Frost, live Cold; `damage:frost`).
 - `meta.combat.damage.physical.pierce` (model Pierce, live Piercing; `damage:piercing`).
 - `meta.combat.skill.spellcraft.necrotic` (model Necrotic, live Decay; `school:decay`).
 - `meta.combat.delivery.casting` (model Casting, live Spell; `maneuver:casting`).
-- `meta.combat.skill.class-stance` (model Class stance, live Stance; `theme:stance`).
+- `theme.stance` (model Class stance, live Stance; `theme:stance`).
 - `meta.combat.skill.spellcraft` (model Spellcraft, live Magic school; `school`).
 - `meta.combat.stance` (model Stance, live Combat maneuver; `maneuver`).
 - `meta.combat.stance.defensive` (model Defensive, live Defend; `maneuver:defend`).
 - `card.type.status` (model Status, live statusCard).
+- `meta.combat.damage.hybrid` / `damage.arcane` (Hybrid vs arcane; `liveId` `damage.arcane`).
 
 **Placement: damage types (9).** The live tree puts `damage.physical`,
 `damage.magic` and `damage.hybrid` under the `damageType` root. The model puts
@@ -294,10 +353,16 @@ them under Damage. Owner to say which tree holds damage types. Rows:
 `meta.combat.damage.physical.{blunt,pierce,slashing}`,
 `meta.combat.damage.hybrid.force`.
 
+**Duplicate root: damageType.** The model has a `damageType` root (live id
+`damageType`, mapped in commit f30b60a96) with no children. Its damage kinds
+sit under `meta.combat.damage`, which holds physical, magic and hybrid. Both
+roots name the same thing. Owner to say whether to merge them into one root,
+and which one keeps the id.
+
 **Placement: card schools (13).** The live tree lists these under the `card`
 root. The model puts each under a technique, spellcraft, weapon-skill or stance
 tag. Owner to say whether a school is a card identity, a technique, or both.
-- Under technique: `meta.combat.skill.technique.{blood,guile,pierce,venom}`.
+- Under technique: `meta.combat.technique.{blood,guile,pierce,venom}`.
 - Under spellcraft: `meta.combat.skill.spellcraft.{divine.oath,fire.ash,fire.gorefire,force.starstone,necrotic.blight,psychic.ritual}`.
 - Under weapon-skill: `meta.combat.skill.weapon-skill.{blade,bow}`.
 - Under stance: `meta.combat.stance.defensive.block.guard`.
@@ -309,21 +374,20 @@ Owner to say which parent each belongs to. Rows: `card.keyword.{ethereal,exhaust
 `card.type.{curse,power,skill,status}`, `card.upgrade.upgraded`,
 `card.cost.{mana,stamina}`.
 
-**Placement: delivery, stance and counter (3).** Owner decision 3 puts Ranged
+**Placement: delivery, stance and counter (5).** Owner decision 3 puts Ranged
 and Casting under delivery. The live tree puts `maneuver:ranged` and
 `maneuver:casting` under the maneuver root, which maps to the stance tag. Owner
 to confirm decision 3 against the live tree. Rows: `meta.combat.delivery.ranged`,
 `meta.combat.delivery.casting`. The live tree also puts
-`meta.combat.stance.counter.ranged-counter` under `counterMode`, not under the
+`meta.combat.stance.counter.ranged-counter`, `meta.combat.stance.counter.melee-counter`
+and `meta.combat.stance.counter.spell-counter` under `counterMode`, not under the
 counter stance.
 
-**Placement: technique, school, class stance and roots under meta (9).**
-- `meta.combat.skill.technique` sits under Skill in the model. The live
-  `technique` root has no parent.
+**Placement: technique, school and roots under meta (6).**
+- `meta.combat.technique` sits under Combat in the model, in its own group
+  (moved from Skill, owner 2026-10-12). The live `technique` root has no parent.
 - `meta.combat.skill.spellcraft` sits under Skill. The live `school` root has no
   parent.
-- `meta.combat.skill.class-stance` sits under Skill. Live `theme:stance` is under
-  the `theme` root.
 - `meta.combat.damage`, `meta.combat.delivery` and `meta.combat.stance` sit under
   Combat, and `meta.character.creature` under Character. Their live roots have no
   parent. Owner to say whether the model's `meta` grouping stays.
@@ -337,9 +401,11 @@ counter stance.
 - `meta.character.armor.defensive-property.siphon` sits under Defensive property.
   Live `siphon` is under `property`.
 
-**Not counted here.** Five live roots have a bare name that is also the last
+**Placement: collection ids and former roots (owner, 2026-10-12, accepted) (10).** Parent: `meta.character.{class,relic,feat}`, `meta.character.consumable.flask`, `meta.character.other.location.{event,encounter}` (live `classification`); `card.type.attack` (live `classification`); `meta.combat.camp`, `meta.combat.attack-source`, `meta.presentation.fx` (live roots have no parent).
+
+**Not counted here.** Three live roots have a bare name that is also the last
 segment of another id, so no bare id has a unique key. They are new top-level
-tags with the suffix `Root`: `campRoot` (camp), `presentationRoot` (presentation),
-`costRoot` (cost), `equipmentRoot` (equipment) and `utilityRoot` (utility). Their
+tags with the suffix `Root`: `costRoot` (cost), `equipmentRoot` (equipment) and
+`utilityRoot` (utility). Their
 children sit under them. This keeps every key unique without adding a parity
 difference.

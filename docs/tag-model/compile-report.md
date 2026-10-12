@@ -52,25 +52,36 @@ None: every live id is mapped by at most one tag.
 
 ## 3. Field parity
 
-73 differences.
+92 differences.
 
 | Model tag | Live id | Field | Model | Live |
 |---|---|---|---|---|
+| meta.character.class | classification.class | label | Class | class |
+| meta.character.class | classification.class | parent | meta.character | classification (mapped to classification) |
 | meta.character.weapon.off-hand.shield | item:shield | parent | meta.character.weapon.off-hand | itemType (mapped to itemType) |
 | meta.character.armor | item:armor | parent | meta.character | itemType (mapped to itemType) |
 | meta.character.armor.defensive-property.siphon | siphon | parent | meta.character.armor.defensive-property | property (mapped to property) |
 | meta.character.armor.defensive-property.insulated | trait:insulated | parent | meta.character.armor.defensive-property | trait (mapped to trait) |
 | meta.character.armor.defensive-property.grounded | trait:grounded | parent | meta.character.armor.defensive-property | trait (mapped to trait) |
+| meta.character.relic | classification.relic | label | Relic | relic |
+| meta.character.relic | classification.relic | parent | meta.character | classification (mapped to classification) |
+| meta.character.feat | classification.feat | label | Feat | feat |
+| meta.character.feat | classification.feat | parent | meta.character | classification (mapped to classification) |
+| meta.character.consumable.flask | classification.flask | label | Flask | flask |
+| meta.character.consumable.flask | classification.flask | parent | meta.character.consumable | classification (mapped to classification) |
 | meta.character.creature | creature | parent | meta.character | (live root) |
+| meta.character.other.location.event | classification.event | label | Event | event |
+| meta.character.other.location.event | classification.event | parent | meta.character.other.location | classification (mapped to classification) |
+| meta.character.other.location.encounter | classification.encounter | label | Encounter | encounter |
+| meta.character.other.location.encounter | classification.encounter | parent | meta.character.other.location | classification (mapped to classification) |
 | meta.combat.skill.weapon-skill.blade | blade | parent | meta.combat.skill.weapon-skill | card (mapped to card) |
 | meta.combat.skill.weapon-skill.bow | bow | parent | meta.combat.skill.weapon-skill | card (mapped to card) |
-| meta.combat.skill.technique | technique | parent | meta.combat.skill | (live root) |
-| meta.combat.skill.technique.pierce | pierce | parent | meta.combat.skill.technique | card (mapped to card) |
-| meta.combat.skill.technique.guile | guile | parent | meta.combat.skill.technique | card (mapped to card) |
-| meta.combat.skill.technique.blood | blood | parent | meta.combat.skill.technique | card (mapped to card) |
-| meta.combat.skill.technique.venom | venom | parent | meta.combat.skill.technique | card (mapped to card) |
-| meta.combat.skill.class-stance | theme:stance | label | Class stance | Stance |
-| meta.combat.skill.class-stance | theme:stance | parent | meta.combat.skill | theme (mapped to theme) |
+| meta.combat.technique | technique | parent | meta.combat | (live root) |
+| meta.combat.technique.pierce | pierce | parent | meta.combat.technique | card (mapped to card) |
+| meta.combat.technique.guile | guile | parent | meta.combat.technique | card (mapped to card) |
+| meta.combat.technique.blood | blood | parent | meta.combat.technique | card (mapped to card) |
+| meta.combat.technique.venom | venom | parent | meta.combat.technique | card (mapped to card) |
+| theme.stance | theme:stance | label | Class stance | Stance |
 | meta.combat.skill.spellcraft | school | label | Spellcraft | Magic school |
 | meta.combat.skill.spellcraft | school | parent | meta.combat.skill | (live root) |
 | meta.combat.skill.spellcraft.fire.gorefire | gorefire | parent | meta.combat.skill.spellcraft.fire | card (mapped to card) |
@@ -95,6 +106,7 @@ None: every live id is mapped by at most one tag.
 | meta.combat.damage.magic.divine | damage:sacred | label | Divine | Holy |
 | meta.combat.damage.magic.divine | damage:sacred | parent | meta.combat.damage.magic | damageType (mapped to damageType) |
 | meta.combat.damage.magic.necrotic | damage:decay | parent | meta.combat.damage.magic | damageType (mapped to damageType) |
+| meta.combat.damage.hybrid | damage.arcane | label | Hybrid | arcane |
 | meta.combat.damage.hybrid.force | damage:arcane | parent | meta.combat.damage.hybrid | damageType (mapped to damageType) |
 | meta.combat.stance | maneuver | label | Stance | Combat maneuver |
 | meta.combat.stance | maneuver | parent | meta.combat | (live root) |
@@ -129,6 +141,13 @@ None: every live id is mapped by at most one tag.
 | card.cost.mana | cost.mana | parent | card.cost | cost (mapped to costRoot) |
 | card.upgrade.upgraded | internal.upgraded | label | Upgraded | upgraded |
 | card.upgrade.upgraded | internal.upgraded | parent | card.upgrade | internal (mapped to internal) |
+| meta.combat.attack-source | attackSource | parent | meta.combat | (live root) |
+| card.type.attack | classification.attack | label | Attack | attack |
+| card.type.attack | classification.attack | parent | card.type | classification (mapped to classification) |
+| meta.combat.camp | camp | parent | meta.combat | (live root) |
+| meta.presentation.fx | presentation | parent | meta.presentation | (live root) |
+| meta.combat.stance.counter.melee-counter | counter:melee | parent | meta.combat.stance.counter | counterMode (mapped to counterMode) |
+| meta.combat.stance.counter.spell-counter | counter:spell | parent | meta.combat.stance.counter | counterMode (mapped to counterMode) |
 
 ## 4. Reverse: live-tag with no live node
 

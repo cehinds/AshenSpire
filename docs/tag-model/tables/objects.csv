@@ -3,3 +3,155 @@ strike,card,Strike,Card,type.stance,offensive.attack,card.rarity.starter,sp,[str
 dodgeRoll,card,Dodge Roll,Card,type.stance,evade,card.rarity.starter,sp,[dodgeRoll.cost],evade dr defensive-stats.block poise defensive-stats.ward,armor-skill.light,skill-exp,,assets/cards/extended/card-dodgeRoll-512.webp,assets/cards/default-outline/icons/dodge.svg,hand,list,1,"Gain [dodgeRoll.block] Block, Poise and Ward."
 straightSword,weapon,Straight Sword,Weapon,,,,,,one-handed.sword weapon-skill.sword weapon-skill.blade slashing physical.pierce ar,weapon-skill.blade,skill-exp,strike,assets/equipment/weapon_straightSword.webp,assets/cards/default-outline/icons/sword.svg,rightHand leftHand,list,3,A plain sword. Grants Strike.
 wayfarerPlate,armor,Wayfarer Plate,Armor,,,,,,weight.heavy plated padded body dr poise,armor-skill.heavy,skill-exp,,assets/equipment/icon_wayfarerPlate.webp,assets/cards/default-outline/icons/shield.svg,body,list,3,"The armour you were buried in. DR [wayfarerPlate.dr], Poise [wayfarerPlate.poise]."
+forsakenMedallion,relic,Forsaken Medallion,Relic,,,,,,character.relic forsakenMedallion,,,,,,,,,Max HP +{hpFlat}. Your first attack each combat also deals {poiseDamage} Poise damage.
+starstoneShard,relic,Starstone Shard,Relic,,,,,,character.relic starstoneShard,,,,,,,,,Max HP +{hpFlat}. Mana +{manaFlat}. Magic damage +{magicDamageFlat}. Begin each combat with Starstone Charge and restore {restoreMana} Mana.
+cutpursesCoin,relic,Cutpurse's Coin,Relic,,,,,,character.relic cutpursesCoin,,,,,,,,,Begin each combat Prepared. Your first attack each combat applies {venom} Venom.
+goldFigurine,relic,Gold Figurine,Relic,,,,,,character.relic goldFigurine,,,,,,,,,"Whenever you heal, gain {block} Block (even at full HP)."
+goldenSprout,relic,Golden Sprout,Relic,,,,,,character.relic goldenSprout,,,,,,,,,"At the start of each combat, heal {heal} HP."
+whetstoneFragment,relic,Whetstone Fragment,Relic,,,,,,character.relic whetstoneFragment,,,,,,,,,Your first attack each combat deals {damage} extra damage.
+crackedLantern,relic,Cracked Lantern,Relic,,,,,,character.relic crackedLantern,,,,,,,,,"On your first turn each combat, gain {gainEnergy} Stamina."
+sacrificialKnife,relic,Sacrificial Knife,Relic,,,,,,character.relic sacrificialKnife,,,,,,,,,Your first attack each combat applies {bleed} Bleed.
+curedHide,relic,Cured Hide,Relic,,,,,,character.relic curedHide,,,,,,,,,"The first time you lose HP each combat, gain {block} Block. Poise threshold +2 (no current consumer)."
+ivoryComb,relic,Ivory Comb,Relic,,,,,,character.relic ivoryComb,,,,,,,,,Every 8th card you play each combat: draw {draw} card.
+fellWardenBrand,relic,Fell Warden Brand,Relic,,,,,,character.relic fellWardenBrand,,,,,,,,,"Whenever an enemy Staggers, draw {draw} cards."
+bloodiedTalisman,relic,Bloodied Talisman,Relic,,,,,,character.relic bloodiedTalisman,,,,,,,,,"Whenever Bleed bursts, the victim loses {loseHp} additional HP."
+twinnedArmor,relic,Twinned Armor,Relic,,,,,,character.relic twinnedArmor,,,,,,,,,Every 10th card you play each combat: gain {block} Block.
+blightTouchedIdol,relic,Blight-Touched Idol,Relic,,,,,,character.relic blightTouchedIdol,,,,,,,,,Your first attack each combat applies {crimsonBlight} Crimson Blight.
+warhorn,relic,Warhorn,Relic,,,,,,character.relic warhorn,,,,,,,,,"At the start of each combat, gain {strength} Strength."
+vowOfVengeance,relic,Vow of Vengeance,Relic,,,,,,character.relic vowOfVengeance,,,,,,,,,"Whenever an enemy dies, gain {strength} Strength."
+pearlOfSagacity,relic,Pearl of Sagacity,Relic,,,,,,character.relic pearlOfSagacity,,,,,,,,,Every 6th card you play each combat: gain {gainEnergy} Stamina.
+blessedDew,relic,Blessed Dew,Relic,,,,,,character.relic blessedDew,,,,,,,,,"At the start of each turn, heal {heal} HP."
+azureSigil,relic,Azure Sigil,Relic,,,,,,character.relic azureSigil,,,,,,,,,The first Skill you play each combat: gain {gainEnergy} Stamina.
+bloodstainedChalice,relic,Bloodstained Chalice,Relic,,,,,,character.relic bloodstainedChalice,,,,,,,,,"Whenever Bleed bursts on an enemy, gain {block} Block."
+goldboughSapling,relic,Goldbough Sapling,Relic,,,,,,character.relic goldboughSapling,,,,,,,,,"At the start of your turn, if you have no Block: gain {block} Block."
+wyrmHeart,relic,Wyrm Heart,Relic,,,,,,character.relic wyrmHeart,,,,,,,,,Gain {gainEnergy} extra Stamina each turn. Shrines and chapels no longer offer Rest.
+titansCinder,relic,Titan's Cinder,Relic,,,,,,character.relic titansCinder,,,,,,,,,"At the start of each turn, gain {strength} Strength."
+radiantAegis,relic,Radiant Aegis,Relic,,,,,,character.relic radiantAegis,,,,,,,,,"At the start of each turn, if you have Block: gain {block} Block."
+flayersCenser,relic,Flayer's Censer,Relic,,,,,,character.relic flayersCenser,,,,,,,,,"At the start of each turn, apply {crimsonBlight} Crimson Blight to ALL enemies."
+vigilantHalo,relic,Vigilant Halo,Relic,,,,,,character.relic vigilantHalo,,,,,,,,,"Whenever an enemy Staggers, heal {heal} HP."
+carrionTalon,relic,Carrion Talon,Relic,,,,,,character.relic carrionTalon,,,,,,,,,"Whenever an enemy dies, deal {damage} damage to a random enemy."
+emberIdol,relic,Ember Idol,Relic,,,,,,character.relic emberIdol,,,,,,,,,"At the start of each turn, deal {damage} damage to ALL enemies."
+crownOfStitches,relic,Crown of Stitches,Relic,,,,,,character.relic crownOfStitches,,,,,,,,,Begin each combat with {strength} Strength — and {frail} Frail. New limbs are heavy.
+wardenHorn,relic,Warden Horn,Relic,,,,,,character.relic wardenHorn,,,,,,,,,"Draw {draw} extra card each turn. At the start of each combat, lose {loseHp} HP."
+ashOfRemembrance,relic,Ash of Remembrance,Relic,,,,,,character.relic ashOfRemembrance,,,,,,,,,"Gain {gainEnergy} extra Stamina each turn. At the start of each combat, gain {madness} Madness."
+cinderOfTheFallen,relic,Cinder of the Fallen,Relic,,,,,,character.relic cinderOfTheFallen,,,,,,,,,"Whenever an enemy dies, gain {gainEnergy} Stamina. At the start of each combat, gain {madness} Madness."
+crimsonCovenant,relic,Crimson Covenant,Relic,,,,,,character.relic crimsonCovenant,,,,,,,,,"Your attacks apply {bleed} Bleed. At the start of each combat, lose {loseHp} HP."
+travelersWhetstone,relic,Traveler's Whetstone,Relic,,,,,,character.relic travelersWhetstone,,,,,,,,,"At the start of each combat, gain {strength} Strength."
+moonlitVial,relic,Moonlit Vial,Relic,,,,,,character.relic moonlitVial,,,,,,,,,"At the start of each combat, gain {block} Block."
+wardensLantern,relic,Warden's Lantern,Relic,,,,,,character.relic wardensLantern,,,,,,,,,"The first time you lose HP each combat, draw {draw} card."
+hollowedHorn,relic,Hollowed Horn,Relic,,,,,,character.relic hollowedHorn,,,,,,,,,"Whenever an enemy Staggers, apply {vulnerable} Vulnerable to ALL enemies."
+gildedTear,relic,Gilded Tear,Relic,,,,,,character.relic gildedTear,,,,,,,,,"On your first turn each combat, heal {heal} HP."
+watchmansBadge,relic,Watchman's Badge,Relic,,,,,,character.relic watchmansBadge,,,,,,,,,"At the start of each turn, if you are not Weak: gain {strength} Strength."
+howlingStandard,relic,Howling Standard,Relic,,,,,,character.relic howlingStandard,,,,,,,,,"Whenever an enemy Staggers, gain {strength} Strength."
+carrionMorsel,relic,Carrion Morsel,Relic,,,,,,character.relic carrionMorsel,,,,,,,,,"Whenever an enemy dies, heal {heal} HP."
+gravetendersBell,relic,Gravetender's Bell,Relic,,,,,,character.relic gravetendersBell,,,,,,,,,"Whenever an enemy dies, draw {draw} card."
+sentinelsOath,relic,Sentinel's Oath,Relic,,,,,,character.relic sentinelsOath,,,,,,,,,Every 12th card you play each combat: gain {strength} Strength.
+forsakenWarflag,relic,Forsaken Warflag,Relic,,,,,,character.relic forsakenWarflag,,,,,,,,,"At the start of each turn, apply {weak} Weak to ALL enemies."
+wrathCoil,relic,Wrath Coil,Relic,,,,,,character.relic wrathCoil,,,,,,,,,"Whenever you lose HP, deal {damage} damage to a random enemy."
+ashenGrip,relic,Ashen Grip,Relic,,,,,,character.relic ashenGrip,,,,,,,,,The first stance you enter each turn refunds {restoreStamina} Stamina.
+lodestarShard,relic,Lodestar Shard,Relic,,,,,,character.relic lodestarShard,,,,,,,,,Begin each combat with {restoreMana} extra Mana.
+waxenSeal,relic,Waxen Seal,Relic,,,,,,character.relic waxenSeal,,,,,,,,,"The first time you heal each combat, heal {heal} more."
+whetstonePouch,relic,Whetstone Pouch,Relic,,,,,,character.relic whetstonePouch,,,,,,,,,Your first attack while Prepared each combat applies {bleed} Bleed.
+progression-emberjaw-token,relic,Emberjaw Token,Relic,,,,,,character.relic progression-emberjaw-token,,,,,,,,,Your first Blade hit each combat applies {bleed} additional Bleed buildup.
+progression-cracked-war-anvil,relic,Cracked War Anvil,Relic,,,,,,character.relic progression-cracked-war-anvil,,,,,,,,,Your first Heavy attack each turn deals {poiseDamage} additional Break damage.
+progression-cinderbound-crown,relic,Cinderbound Crown,Relic,,,,,,character.relic progression-cinderbound-crown,,,,,,,,,Your first credited kill of an enemy with Bleed buildup each combat heals {heal} HP.
+progression-moonwell-lens,relic,Moonwell Lens,Relic,,,,,,character.relic progression-moonwell-lens,,,,,,,,,Your first Starstone spell each turn played after spending at least 2 Mana grants {block} Block.
+progression-nightglass-rosary,relic,Nightglass Rosary,Relic,,,,,,character.relic progression-nightglass-rosary,,,,,,,,,"The second play of the same Starstone card ID in a turn restores {restoreMana} Mana, once per turn."
+progression-fragment-of-the-third-sky,relic,Fragment of the Third Sky,Relic,,,,,,character.relic progression-fragment-of-the-third-sky,,,,,,,,,"Your third distinct Starstone card ID played in a turn grants {block} Block, once per turn."
+progression-whisperglass-die,relic,Whisperglass Die,Relic,,,,,,character.relic progression-whisperglass-die,,,,,,,,,"If your first card in combat is a Blade attack, it deals +{chargeDamage} damage."
+progression-purse-of-borrowed-shadows,relic,Purse of Borrowed Shadows,Relic,,,,,,character.relic progression-purse-of-borrowed-shadows,,,,,,,,,"After your first explicit discard each turn, gain {block} Block."
+progression-ember-alms-bowl,relic,Ember Alms Bowl,Relic,,,,,,character.relic progression-ember-alms-bowl,,,,,,,,,Your first nonlethal HP offering each turn grants {block} Block after its payment.
+progression-ossuary-prayer-wheel,relic,Ossuary Prayer Wheel,Relic,,,,,,character.relic progression-ossuary-prayer-wheel,,,,,,,,,Your first credited kill of an enemy with Crimson Blight buildup each combat restores {restoreMana} Mana.
+hollowSquire,companion,Hollow Squire,Companion,,,,,,classification.companion hollowSquire,,,,,,,,,A squire without a knight. It raises a shield before you at the start of each fight.
+emberHound,companion,Ember Hound,Companion,,,,,,classification.companion emberHound,,,,,,,,,A hound of banked coals. It bites at your foes as each of your turns begins.
+emberSigil,sigil,Ember Sigil,Sigil,,,,,,classification.sigil emberSigil,,,,,,,,,An ember set in steel: it raises a guard at the start of each fight.
+thornSigil,sigil,Thorn Sigil,Sigil,,,,,,classification.sigil thornSigil,,,,,,,,,A thorn set in steel: your first attack hit of each fight makes the foe bleed.
+tideSigil,sigil,Tide Sigil,Sigil,,,,,,classification.sigil tideSigil,,,,,,,,,A tide set in steel: every few cards you play in a fight draw you another.
+hearthSigil,sigil,Hearth Sigil,Sigil,,,,,,classification.sigil hearthSigil,,,,,,,,,"A hearth set in steel: whenever you heal, it raises a guard."
+vigilSigil,sigil,Sigil of the Last Vigil,Sigil,,,,,,classification.sigil vigilSigil,,,,,,,,,"A candle that never gutters: when you enter a fight already wounded, it raises a guard."
+pyreSigil,sigil,Pyre Sigil,Sigil,,,,,,classification.sigil pyreSigil,,,,,,,,,An ember of the old pyres: every card you burn away raises a guard.
+gravelightSigil,sigil,Gravelight Sigil,Sigil,,,,,,classification.sigil gravelightSigil,,,,,,,,,"A cold light over the barrows: while you stand wounded, each foe that falls mends you."
+progression-coal-on-steel,feat,Coal on Steel,Feat,,,,,,feat coal-on-steel,,,,,,,,,The first Blade hit each turn applies +{bleed} Bleed buildup.
+progression-brace-and-bite,feat,Brace and Bite,Feat,,,,,,feat brace-and-bite,,,,,,,,,The first Blade attack each turn played while you have Block deals +{damage} damage.
+progression-red-footwork,feat,Red Footwork,Feat,,,,,,feat red-footwork,,,,,,,,,The first Guard card each turn targeting an enemy with Bleed buildup draws {draw} card.
+progression-anvil-discipline,feat,Anvil Discipline,Feat,,,,,,feat anvil-discipline,,,,,,,,,The first Heavy attack each turn deals +{break} Break damage.
+progression-forge-momentum,feat,Forge Momentum,Feat,,,,,,feat forge-momentum,,,,,,,,,Your first Blade attack after a Guard card each turn deals +{damage} damage.
+progression-paid-in-blood,feat,Paid in Blood,Feat,,,,,,feat paid-in-blood,,,,,,,,,The first Blood attack after you have lost HP since your previous turn began deals +{damage} damage.
+progression-last-rampart,feat,Last Rampart,Feat,,,,,,feat last-rampart,,,,,,,,,"At {hpPct}% HP or lower, your first Guard card each turn grants +{block} Block."
+progression-war-cadence,feat,War Cadence,Feat,,,,,,feat war-cadence,,,,,,,,,"After your second Heavy card in a turn, gain {block} Block, once per turn."
+progression-broad-sentence,feat,Broad Sentence,Feat,,,,,,feat broad-sentence,,,,,,,,,Your first attack that hits all living enemies each turn deals +{damage} damage to each target.
+progression-ember-sovereign,feat,Ember Sovereign,Feat,,,,,,feat ember-sovereign,,,,,,,,,"Once per turn, a Crown of Cinders charge gains +{damage} damage before it is consumed."
+progression-dread-of-the-hammer,feat,Dread of the Hammer,Feat,,,,,,feat dread-of-the-hammer,,,,,,,,,Your first Heavy attack against a Staggered target each turn deals +{damage} damage.
+progression-scarred-oath,feat,Scarred Oath,Feat,,,,,,feat scarred-oath,,,,,,,,,"Your first Guard card after losing HP since your previous turn began grants +{block} Block, once per turn."
+progression-harvest-the-wound,feat,Harvest the Wound,Feat,,,,,,feat harvest-the-wound,,,,,,,,,"Your first credited kill of an enemy with Bleed buildup heals {heal} HP, once per combat."
+progression-orbit-keeper,feat,Orbit Keeper,Feat,,,,,,feat orbit-keeper,,,,,,,,,Your first Starstone spell following another spell each turn deals +{damage} direct damage.
+progression-moonward-scholar,feat,Moonward Scholar,Feat,,,,,,feat moonward-scholar,,,,,,,,,The first Guard spell played after you spent at least {manaSpent} Mana this turn grants +{block} Block.
+progression-comet-reader,feat,Comet Reader,Feat,,,,,,feat comet-reader,,,,,,,,,The first Comet Mark attack each turn applies +{vulnerable} Vulnerable after damage.
+progression-mirror-of-rime,feat,Mirror of Rime,Feat,,,,,,feat mirror-of-rime,,,,,,,,,Your first Rime Mirror each turn applies +{buildup} Frost buildup.
+progression-constellation-keeper,feat,Constellation Keeper,Feat,,,,,,feat constellation-keeper,,,,,,,,,Your first Starstone attack after two distinct Starstone card IDs this turn deals +{damage} damage.
+progression-patient-wellspring,feat,Patient Wellspring,Feat,,,,,,feat patient-wellspring,,,,,,,,,The first Mana Weave restoration each turn also grants {block} Block.
+progression-weight-of-the-void,feat,Weight of the Void,Feat,,,,,,feat weight-of-the-void,,,,,,,,,The first Gravity Snare each turn applies +{weak} Weak after damage.
+progression-nightglass-scholar,feat,Nightglass Scholar,Feat,,,,,,feat nightglass-scholar,,,,,,,,,"Once per turn, your Nightglass charge grants +{damage} additional damage when consumed."
+progression-eclipse-hunter,feat,Eclipse Hunter,Feat,,,,,,feat eclipse-hunter,,,,,,,,,Your first Starstone attack against a Frost-built-up or Frost-exposed target each turn deals +{damage} damage.
+progression-firmament-keeper,feat,Firmament Keeper,Feat,,,,,,feat firmament-keeper,,,,,,,,,"Once per turn, consuming a Warded Casting charge also grants {block} Block."
+progression-celestial-refrain,feat,Celestial Refrain,Feat,,,,,,feat celestial-refrain,,,,,,,,,"The second play of the same Starstone card ID in a turn grants {block} Block, once per turn."
+progression-memory-of-winter,feat,Memory of Winter,Feat,,,,,,feat memory-of-winter,,,,,,,,,Retain up to {retainBlockUpTo} Block into your next turn; use the highest retention allowance if another source also retains Block.
+progression-threefold-sky,feat,Threefold Sky,Feat,,,,,,feat threefold-sky,,,,,,,,,"Playing your third distinct Starstone card ID in a turn draws {draw} card, once per turn."
+progression-first-knife,feat,First Knife,Feat,,,,,,feat first-knife,,,,,,,,,"If your first card this turn is a Blade attack, it deals +{damage} damage."
+progression-pocket-method,feat,Pocket Method,Feat,,,,,,feat pocket-method,,,,,,,,,Your first Guard card after an explicit discard each turn grants +{block} Block.
+progression-crooked-measure,feat,Crooked Measure,Feat,,,,,,feat crooked-measure,,,,,,,,,Your first Crooked Guard hit each turn applies +{weak} Weak after damage.
+progression-open-flank,feat,Open Flank,Feat,,,,,,feat open-flank,,,,,,,,,Your first Blade attack against an enemy with zero Block each turn deals +{damage} damage.
+progression-hidden-palm,feat,Hidden Palm,Feat,,,,,,feat hidden-palm,,,,,,,,,The first Sleight of Hand sequence each turn grants {block} Block after the discard.
+progression-tighten-the-wire,feat,Tighten the Wire,Feat,,,,,,feat tighten-the-wire,,,,,,,,,Your first Tether Cut attack each turn against a Weak or Vulnerable enemy deals +{damage} damage.
+progression-smoke-dancer,feat,Smoke Dancer,Feat,,,,,,feat smoke-dancer,,,,,,,,,"Once per turn, a Smoke Edge charge adds +{damage} damage before it is consumed."
+progression-carrion-measure,feat,Carrion Measure,Feat,,,,,,feat carrion-measure,,,,,,,,,Your first Blade attack against an enemy at {hpPct}% HP or lower each turn deals +{damage} damage.
+progression-two-quiet-knives,feat,Two Quiet Knives,Feat,,,,,,feat two-quiet-knives,,,,,,,,,Your first Paired Strikes attack each turn deals +{damage} damage on each of its two hits.
+progression-trapdoor-smile,feat,Trapdoor Smile,Feat,,,,,,feat trapdoor-smile,,,,,,,,,Your first Blade attack after both a Guile card and a Guard card this turn deals +{damage} damage.
+progression-clean-exit,feat,Clean Exit,Feat,,,,,,feat clean-exit,,,,,,,,,"Your first Guard card played before any attack this turn restores {restoreStamina} Stamina, once per turn."
+progression-razor-ledger,feat,Razor Ledger,Feat,,,,,,feat razor-ledger,,,,,,,,,Your first Blade attack after an explicit discard each turn deals +{damage} damage.
+progression-ashen-mercy,feat,Ashen Mercy,Feat,,,,,,feat ashen-mercy,,,,,,,,,The first Mercy in Ash card each turn heals +{heal} HP.
+progression-censer-keeper,feat,Censer Keeper,Feat,,,,,,feat censer-keeper,,,,,,,,,The first Blood Censer offering each turn grants +{block} Block after its HP payment.
+progression-sower-of-blight,feat,Sower of Blight,Feat,,,,,,feat sower-of-blight,,,,,,,,,The first Blight Seed hit each turn applies +{buildup} Crimson Blight buildup.
+progression-funeral-watch,feat,Funeral Watch,Feat,,,,,,feat funeral-watch,,,,,,,,,"At {hpPct}% HP or lower, your first Guard card each turn grants +{block} Block."
+progression-ember-almoner,feat,Ember Almoner,Feat,,,,,,feat ember-almoner,,,,,,,,,Your first Ember Tithe each turn grants +{regen} Regen after the HP payment.
+progression-choir-of-bone,feat,Choir of Bone,Feat,,,,,,feat choir-of-bone,,,,,,,,,"The first Guard card you play while any living enemy has Crimson Blight buildup restores {restoreStamina} Stamina, once per turn."
+progression-requiem-reader,feat,Requiem Reader,Feat,,,,,,feat requiem-reader,,,,,,,,,The first Ritual hit against an enemy with Crimson Blight buildup each turn deals +{damage} damage.
+progression-pilgrim-of-scars,feat,Pilgrim of Scars,Feat,,,,,,feat pilgrim-of-scars,,,,,,,,,"If you began the turn at {hpPct}% HP or lower, your first Guard card that turn heals {heal} HP."
+progression-crowned-offering,feat,Crowned Offering,Feat,,,,,,feat crowned-offering,,,,,,,,,The first Ritual attack after an earlier HP offering this turn deals +{damage} damage.
+progression-dawn-cantor,feat,Dawn Cantor,Feat,,,,,,feat dawn-cantor,,,,,,,,,The first Dawn Rite removal each turn also grants {block} Block.
+progression-bearer-of-burdens,feat,Bearer of Burdens,Feat,,,,,,feat bearer-of-burdens,,,,,,,,,The first negative status newly applied to you by an enemy each turn restores {restoreMana} Mana.
+progression-sepulchral-promise,feat,Sepulchral Promise,Feat,,,,,,feat sepulchral-promise,,,,,,,,,"Your first credited kill of an enemy with Crimson Blight buildup heals {heal} HP, once per combat."
+kindlingCharm,relic,Kindling Charm,Relic,,,,,,character.relic kindlingCharm,,,,,,,,,"At the start of each combat, draw {draw} extra card."
+goldleafCharm,relic,Goldleaf Charm,Relic,,,,,,character.relic goldleafCharm,,,,,,,,,"At the start of your first turn, gain {block} Block."
+emberwickCharm,relic,Emberwick Charm,Relic,,,,,,character.relic emberwickCharm,,,,,,,,,"The first time you lose HP each combat, gain {gainEnergy} Stamina."
+cinderPouch,relic,Cinder Pouch,Relic,,,,,,character.relic,,,,,,,,,Gain 25% more Cinders from combats.
+feralEye,relic,Feral Eye,Relic,,,,,,character.relic,,,,,,,,,Elites offer an extra card reward choice.
+crackedTear,relic,Cracked Tear,Relic,,,,,,character.relic,,,,,,,,,Flasks are 50% stronger (rounded up).
+sealstoneKey,relic,Sealstone Key,Relic,,,,,,character.relic,,,,,,,,,Unknown (?) locations on the map are revealed.
+emberFragment,relic,Ember Fragment,Relic,,,,,,character.relic,,,,,,,,,Resting heals 15% more.
+ancestralHorn,relic,Ancestral Horn,Relic,,,,,,character.relic,,,,,,,,,Power cards cost 1 less.
+saltedRelic,relic,Salted Relic,Relic,,,,,,character.relic,,,,,,,,,Gain 20% more Cinders from combats.
+wayfarersKnot,relic,Wayfarer's Knot,Relic,,,,,,character.relic,,,,,,,,,Gain 10% more Cinders from combats. Resting heals 10% more.
+prismaticThorn,relic,Prismatic Thorn,Relic,,,,,,character.relic,,,,,,,,,Your hits build 25% more Arcane Exposure. Flasks are 25% weaker (rounded up).
+restlessClasp,relic,Restless Clasp,Relic,,,,,,character.relic,,,,,,,,,Flasks are 100% stronger. Resting heals 50% less.
+paupersDiadem,relic,Pauper's Diadem,Relic,,,,,,character.relic,,,,,,,,,Power cards cost 1 less (minimum 0). Gain 35% fewer Cinders from combats.
+reaverIronFooting,feat,Iron Footing,Feat,,,,,,feat,,,,,,,,,Your Guard cards gain +2 Block.
+reaverKeenBlade,feat,Keen Blade,Feat,,,,,,feat,,,,,,,,,Blade attacks have an 8% chance to deal 1.5× damage.
+reaverBloodDiscipline,feat,Blood Discipline,Feat,,,,,,feat,,,,,,,,,Blood attacks have a 12% chance to deal 1.5× damage.
+reaverMasteryFocus,feat,Weight of War,Feat,,,,,,feat,,,,,,,,,Heavy attacks have a 15% chance to deal 1.5× damage.
+reaverMasteryResolve,feat,Unbroken Line,Feat,,,,,,feat,,,,,,,,,Your Guard cards gain +3 Block.
+starseerAshShelter,feat,Ash Shelter,Feat,,,,,,feat,,,,,,,,,Your Ritual cards gain +2 Block.
+starseerClearSky,feat,Clear Sky,Feat,,,,,,feat,,,,,,,,,Starstone attacks have a 10% chance to deal 1.5× damage.
+starseerRitualPrecision,feat,Ritual Precision,Feat,,,,,,feat,,,,,,,,,Ritual attacks have an 8% chance to deal 1.5× damage.
+starseerMasteryFocus,feat,Comet Sight,Feat,,,,,,feat,,,,,,,,,Starstone attacks have a 15% chance to deal 1.5× damage.
+starseerMasteryResolve,feat,Astral Shelter,Feat,,,,,,feat,,,,,,,,,Your Starstone cards gain +3 Block.
+rogueQuietGuard,feat,Quiet Guard,Feat,,,,,,feat,,,,,,,,,Your Guard cards gain +2 Block.
+rogueMeasuredPoint,feat,Measured Point,Feat,,,,,,feat,,,,,,,,,Pierce attacks have a 10% chance to deal 1.5× damage.
+rogueKnifeWork,feat,Knife Work,Feat,,,,,,feat,,,,,,,,,Blade attacks have an 8% chance to deal 1.5× damage.
+rogueMasteryFocus,feat,Perfect Opening,Feat,,,,,,feat,,,,,,,,,Flourish attacks have a 15% chance to deal 1.5× damage.
+rogueMasteryResolve,feat,Hidden Parry,Feat,,,,,,feat,,,,,,,,,Your Flourish cards gain +3 Block.
+heraldRiteShelter,feat,Rite Shelter,Feat,,,,,,feat,,,,,,,,,Your Ritual cards gain +2 Block.
+heraldBlightPrecision,feat,Blight Precision,Feat,,,,,,feat,,,,,,,,,Blight attacks have a 10% chance to deal 1.5× damage.
+heraldOathEdge,feat,Oath Edge,Feat,,,,,,feat,,,,,,,,,Oath attacks have a 12% chance to deal 1.5× damage.
+heraldMasteryFocus,feat,Flame Witness,Feat,,,,,,feat,,,,,,,,,Ritual attacks have a 15% chance to deal 1.5× damage.
+heraldMasteryResolve,feat,Unspent Oath,Feat,,,,,,feat,,,,,,,,,Your Oath cards gain +3 Block.
