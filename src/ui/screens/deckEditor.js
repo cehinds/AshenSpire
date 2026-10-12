@@ -33,6 +33,7 @@ import { DECK_PANES, deckEditorModel, deckEditorView, deckVariantKey, nextFilter
 import { t, tFull } from '../strings.js';
 import { renderCard, staticTokens } from '../components/card.js';
 import { resolveCard } from '../../model/registries.js';
+import { applyCombatExpansionCard } from '../../content/combatExpansionCards.js';
 import { combatProfileFor } from '../../model/combatCardProfile.js';
 import { sigilHtml } from '../components/combatSigilView.js';
 import { playingCardModel } from '../../model/playingCard.js';
@@ -347,8 +348,14 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   // of the six; otherwise what the card is: Spell, Power, Consumable or Skill.
   // Every card names one.
   const MANEUVER_STANCES = ['attack', 'defend', 'counter', 'smash', 'sweep', 'ranged'];
-  const stanceKey = (row) => {
+  // The definition combat resolves: under expanded combat (v2) a run's spell
+  // reach and targeting come from applyCombatExpansionCard, so the editor shows them.
+  const combatDef = (row) => {
     const def = resolveCard(registries, row.ref);
+    return run?.combatExpansionVersion === 2 ? applyCombatExpansionCard(def) : def;
+  };
+  const stanceKey = (row) => {
+    const def = combatDef(row);
     const profile = combatProfileFor(def);
     if (MANEUVER_STANCES.includes(profile.maneuver)) return profile.maneuver;
     // Power and Consumable come before the spell camp: a magical Power is a Power.
@@ -365,7 +372,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   // The rank the card face prints (its ability rank, else its rank badge). Rank 0
   // has a name: a spell's is Cantrip, a combat maneuver's is Basic.
   const rankNode = (row) => {
-    const def = resolveCard(registries, row.ref);
+    const def = combatDef(row);
     const card = playingCardModel(registries, row.ref);
     // An unranked maneuver or spell (the starter Strike and Defend) is rank 0.
     const ranked = card.abilityRank ?? (card.rankBadge ? Number(String(card.rankBadge).replace(/\D+/g, '')) : null);
@@ -385,7 +392,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   const ATTACKING = ['attack', 'smash', 'sweep', 'ranged', 'counter'];
   const rangeNode = (row) => {
     if (stanceKey(row) === 'ranged') return null;
-    const def = resolveCard(registries, row.ref);
+    const def = combatDef(row);
     const profile = combatProfileFor(def);
     const attacking = ATTACKING.includes(profile.maneuver) || (profile.camp === 'spell' && def.type === 'attack');
     if (!attacking) return null;
@@ -396,7 +403,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   // Physical or magical, as an icon before the costs: the Smash sigil in silver
   // for physical cards, the Spell flame in blue for magical ones.
   const campNode = (row) => {
-    const camp = combatProfileFor(resolveCard(registries, row.ref)).camp === 'spell' ? 'magical' : 'physical';
+    const camp = combatProfileFor(combatDef(row)).camp === 'spell' ? 'magical' : 'physical';
     const node = el('span', { class: 'deck-editor-camp', dataset: { camp }, role: 'img', title: tFull(`deckEditor.camp.${camp}`), 'aria-label': t(`deckEditor.camp.${camp}`) });
     node.innerHTML = sigilHtml(camp === 'magical' ? 'spell' : 'smash', 'action', { tooltip: false });
     return node;

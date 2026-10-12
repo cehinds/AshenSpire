@@ -1306,18 +1306,19 @@ test('DOM: every row names a stance and a rank; rank 0 reads Cantrip for magical
   }
 });
 
-test('DOM: range follows the player card combat default; the mark follows the camp', async () => {
+test('DOM: range follows the expanded combat delivery; the mark follows the camp', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
-  const run = createRunState({ seed: 0x5eed, classId: 'starseer', registries: REG, combatExpansionVersion: 1 });
-  for (const cardId of ['cometFragment', 'ricochet', 'strike', 'phaseWard', 'stargazerCard']) {
+  const run = createRunState({ seed: 0x5eed, classId: 'starseer', registries: REG, combatExpansionVersion: 2 });
+  for (const cardId of ['cometFragment', 'starbladePhalanx', 'ricochet', 'strike', 'phaseWard', 'stargazerCard']) {
     if (!run.deck.some(c => c.cardId === cardId)) run.sideboard.push({ instanceId: `probe-${cardId}`, cardId, upgraded: false });
   }
   withDom(() => {
     const editor = mountDeckEditor(document.body, { registries: REG, run, settings: {} });
     const row = (cardId) => [...editor.root.querySelectorAll('.deck-editor-tile')].find(t => t.dataset.key?.startsWith(`card:${cardId}~`));
     const read = (cardId) => { const r = row(cardId); return [r?.querySelector('.deck-editor-range')?.dataset.range, r?.querySelector('.deck-editor-camp')?.dataset.camp]; };
-    // An untagged spell takes its delivery as reach: a projectile reads Ranged.
+    // A v2 spell takes its delivery as reach: a projectile reads Ranged, a melee blade Melee.
     assert.deepEqual(read('cometFragment'), ['ranged', 'magical']);
+    assert.deepEqual(read('starbladePhalanx'), ['melee', 'magical']);
     // A ranged maneuver's stance already reads Ranged, so it shows no separate range.
     assert.deepEqual(read('ricochet'), [undefined, 'physical'], 'a ranged maneuver shows no separate range');
     assert.equal(row('ricochet').querySelector('.deck-editor-stance')?.dataset.stance, 'ranged');
