@@ -1,26 +1,20 @@
 {
-  "generated_at_utc": "2026-10-12T16:21:00Z",
+  "generated_at_utc": "2026-10-12T16:22:00Z",
   "tool": "tools.image_gen__imagegen",
   "exact_prompt_file": "sheet-a-revision.prompt.txt",
-  "requested_dimensions": [
-    1024,
-    1536
-  ],
-  "actual_dimensions": [
-    1024,
-    1536
-  ],
+  "requested_dimensions": [1024, 1536],
+  "actual_dimensions": [1024, 1536],
   "mode": "RGBA",
-  "alpha_extrema": [
-    0,
-    254
-  ],
+  "alpha_extrema": [0, 254],
   "transparent_background": true,
-  "input_images": [
+  "original_tool_output": "/workspace/generated_images/exec-a9530da8-a1e8-44ed-add1-715e74287631.png",
+  "preserved_canonical_file": "sheet-a-revision.original.png",
+  "sha256": "0fe543067cb65beecc2be7c214c75dbe35bd5e270dde92d9cb67998e6f271f3d",
+  "referenced_images": [
     {
       "path": "pose-studio/stances/update-stances/greatsword-sweep/sheet-a.png",
       "sha256": "1d17d81b813d247b89e53ea4f6fa6919679ab96512087a343fc5e5641a32def1",
-      "use": "revise pose sheet while retaining pose ideas"
+      "use": "revise grips and pose composition"
     },
     {
       "path": "docs/design/class-armor-rear-2026-10-06/masters/reaver-default.png",
@@ -38,28 +32,12 @@
       "use": "selected Smash camera, body scale, and greatsword proportions"
     }
   ],
-  "original_tool_output": "/workspace/generated_images/exec-34f6dc5a-da33-4aaa-b640-42e0f6e28c18.png",
-  "preserved_canonical_file": "sheet-a-revision.original.png",
-  "sha256": "774f170b629b8b11b212702a0bd10a776afc34863d198316d7d26c54a63f09fd",
-  "additional_tool_outputs": [
-    {
-      "path": "/workspace/generated_images/exec-b972a1bd-dda1-4251-a1a0-cbc22dad56f7.png",
-      "preserved_file": "sheet-a-revision-variation.original.png",
-      "sha256": "a072fe00348d8a904f2fd2ceef37bdf38b23d1c518e8b17a4a065613a2553919"
-    },
-    {
-      "path": "/workspace/generated_images/exec-b397e393-6061-44f1-9067-56f6a87a1e7f.png",
-      "preserved_file": "unattributed-output-a-revision-b02.original.png",
-      "sha256": "ac43c85c1a98463114b4b94c8490316663adcd46db553a4796ea70fbb6a0b1f8",
-      "asset_attribution": "unverified; root confirmed byte-identical to Counter A revision 2, not a Sweep output"
-    }
-  ],
   "raw_output_preserved": true,
   "review_status": "pending art director review",
   "production_status": "concept only; not selected or runtime art",
   "observed_deviations": [
-    "The first revised output and first variation still exceed safe-box targets; pending identity verification.",
-    "The second variation was root-verified byte-identical to Counter A revision 2. It is not a Sweep output and is retained only as a raw tool receipt.",
-    "No revised sheet has been approved as Sweep art."
+    "This is the imagegen path explicitly returned for the grip-edit request; it is the canonical revision receipt after correcting the earlier worker file-selection mistake.",
+    "All figures are still larger than the centered 368x368 safe boxes; some silhouettes cross cell bounds.",
+    "SW11/SW13 distinction and second-hand visibility remain for art director review."
   ]
 }

@@ -1,9 +1,7 @@
-# Greatsword sweep generation receipts
+# Greatsword sweep options
 
-This directory preserves raw image-generation outputs and prompt/provenance records. Do not treat every receipt as Sweep artwork or as production art. Concurrent imagegen requests contaminated output attribution; root verified some outputs are identical to other stance families.
+`sheet-a.png` is the explicit returned grip-edit output approved by root as five concept candidates. Its candidate mapping is recorded in the provenance. `sheet-a-original.png` preserves the earlier unedited concept board; `sheet-a-revision-pass1.original.png` preserves the earlier grip-revision pass.
 
-`sheet-a.png` is the original SW11–SW15 candidate reviewed by the director. It still needs clearer two-hand grip reads on SW11, SW13, and SW14. The separate A revision outputs are pending identity and art review. `unattributed-output-a-revision-b02.original.png` is verified to be identical to Counter A revision 2 and is not a Sweep output.
+`sheet-b.png` is the explicit returned output for SW16–SW20 and is the source for one targeted B edit. Its board is pending that edit and director review. Do not use old files selected by directory timestamp; the correction record explains the worker selection error and the verified hashes.
 
-The requested SW16–SW20 prompt and generation receipts remain documented in `sheet-b.prompt.txt` and `sheet-b.provenance.json`. `unattributed-output-b01.original.png` is verified to be identical to Evade A revision 1 and is not a Sweep output. The second B output is preserved as an unverified raw receipt. Neither is approved as Sweep art.
-
-All PNG source bytes are preserved unchanged. Direct image-view rendering can expose hidden RGB haze; neutral compositing over white confirms transparent pixels and rendered figure pixels, but does not establish which family an output belongs to. See the provenance files for hashes and exact prompt/reference records.
+All source PNGs remain unchanged. These are concept candidates, not runtime assets. See the prompts and provenance files for exact imagegen inputs and returned paths.

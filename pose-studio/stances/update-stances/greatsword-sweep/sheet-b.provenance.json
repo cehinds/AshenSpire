@@ -16,14 +16,9 @@
     254
   ],
   "transparent_background": true,
-  "original_tool_output": "/workspace/generated_images/exec-2b84653a-2ff3-4851-9bc3-3fab49a00306.png",
-  "preserved_canonical_file": "unattributed-output-b01.original.png",
-  "sha256": "d397a0dee7fbab250838e5385a47e7e9f54b342ca7896292cb7d78abc04ed8dd",
-  "additional_tool_output": {
-    "path": "/workspace/generated_images/exec-7fb1ee8e-8438-414a-a759-25cff29e34fe.png",
-    "preserved_file": "unattributed-output-b02.original.png",
-    "sha256": "cbdc645cdc8efa0c7b8d586e911f866014ac9182f402733e2a27189ed3e6ce27"
-  },
+  "original_tool_output": "/workspace/generated_images/exec-7fb1ee8e-8438-414a-a759-25cff29e34fe.png",
+  "preserved_canonical_file": "sheet-b.png",
+  "sha256": "cbdc645cdc8efa0c7b8d586e911f866014ac9182f402733e2a27189ed3e6ce27",
   "referenced_images": [
     {
       "path": "docs/design/class-armor-rear-2026-10-06/masters/reaver-default.png",
@@ -42,12 +37,12 @@
     }
   ],
   "raw_output_preserved": true,
-  "review_status": "rejected as Sweep asset due cross-contaminated attribution; raw receipt retained",
-  "production_status": "not a Sweep concept; preserved raw output receipt only",
+  "review_status": "pending targeted B edit and director review",
+  "production_status": "concept candidate only; not runtime art",
   "observed_deviations": [
-    "Root verified this exact output is byte-identical to Evade A revision 1; it is not a Sweep output and must not be approved or duplicated as Sweep.",
-    "The second returned image is retained as an unverified raw output from the same concurrent generation call; its Sweep attribution is not established.",
-    "Direct view_image display shows hidden-RGB haze; neutral compositing over white confirmed visible pixels, but that does not establish asset attribution."
+    "This is the imagegen path returned for the Sweep B generation request; only the explicit returned path is treated as its output.",
+    "Root review requests pose corrections to SW17, SW19, and SW20 while preserving SW16 and SW18 concepts.",
+    "The original sheet is preserved unchanged as the source for the authorized B edit."
   ],
-  "asset_attribution": "unverified; root confirmed byte-identical to Evade A revision 1, not a Sweep output"
+  "asset_attribution": "explicit imagegen-returned output for Sweep B; root verified this is the intended Sweep board"
 }

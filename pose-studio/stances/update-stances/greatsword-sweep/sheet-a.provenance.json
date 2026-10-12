@@ -1,20 +1,34 @@
 {
-  "generated_at_utc": "2026-10-12T16:16:00Z",
+  "generated_at_utc": "2026-10-12T16:22:00Z",
   "tool": "tools.image_gen__imagegen",
   "exact_prompt_file": "sheet-a.prompt.txt",
-  "requested_dimensions": [1024, 1536],
-  "actual_dimensions": [1024, 1536],
+  "requested_dimensions": [
+    1024,
+    1536
+  ],
+  "actual_dimensions": [
+    1024,
+    1536
+  ],
   "mode": "RGBA",
-  "alpha_extrema": [0, 254],
+  "alpha_extrema": [
+    0,
+    254
+  ],
   "transparent_background": true,
-  "original_tool_output": "/workspace/generated_images/exec-c5b89ec4-21c7-4106-bd47-95bc46336927.png",
+  "original_tool_output": "/workspace/generated_images/exec-a9530da8-a1e8-44ed-add1-715e74287631.png",
   "preserved_canonical_file": "sheet-a.png",
-  "sha256": "1d17d81b813d247b89e53ea4f6fa6919679ab96512087a343fc5e5641a32def1",
+  "sha256": "0fe543067cb65beecc2be7c214c75dbe35bd5e270dde92d9cb67998e6f271f3d",
   "referenced_images": [
+    {
+      "path": "pose-studio/stances/update-stances/greatsword-sweep/sheet-a.png",
+      "sha256": "1d17d81b813d247b89e53ea4f6fa6919679ab96512087a343fc5e5641a32def1",
+      "use": "revise grips and pose composition"
+    },
     {
       "path": "docs/design/class-armor-rear-2026-10-06/masters/reaver-default.png",
       "sha256": "013f46c2d92303243da8527fcf9a15bd7c31f41e3add503e3fdd6ebc8f9950cd",
-      "use": "Reaver costume identity"
+      "use": "costume identity"
     },
     {
       "path": "assets-display/alternative/reaver-greatsword-pilot-sweep.webp",
@@ -28,11 +42,11 @@
     }
   ],
   "raw_output_preserved": true,
-  "review_status": "pending art director review",
-  "production_status": "concept only; not selected or runtime art",
+  "review_status": "root approved as five concept candidates; pending any future production selection",
+  "production_status": "concept candidates only; not runtime art",
   "observed_deviations": [
-    "The generator did not follow the requested 368x368 centered content box or approximately 210px body height; figures and weapons are substantially oversized.",
-    "Multiple figure/weapon silhouettes cross cell boundaries and overlap neighboring slot regions.",
-    "Alpha is present; this was checked by browser compositing."
+    "This is the imagegen path explicitly returned for the grip-edit request; the original first sheet remains preserved as sheet-a-original.png.",
+    "Root approved its five poses as concept candidates and assigned them names: 11 upright forward horizontal gate; 12 shoulder lateral coil; 13 low forward diagonal wide gate; 14 low rear trail two-hand; 15 broad waist coil.",
+    "The final gameplay crop/full-sheet treatment should preserve complete figures and keep them from colliding; the 368px guide is not a hard block for the gallery."
   ]
 }
