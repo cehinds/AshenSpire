@@ -145,6 +145,14 @@ Stable IDs live in [`UiComponentId.js`](../src/ui/models/UiComponentId.js). Mode
 factories live under [`src/ui/models/`](../src/ui/models/) and the shared HUD
 projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 
+Card artwork uses `cardArtComposition.js` for deterministic family, palette and
+element/status accents, and `cardArtLayers.js` for decorative layers clipped to
+the artwork well. `cardArtStyle.js` applies the saved Simple (default) or Legacy
+preference to mounted cards and deck thumbnails. `cardArtwork.js` retains the
+original catalog and provides new-image → legacy → outline fallback. The
+`illustratedCardHtml` renderer consumes the composition's fit, focus and layers;
+gameplay definitions and card rules are unchanged.
+
 | Component ID | Model / factory | View or renderer | Reuse | Purpose |
 |---|---|---|---|---|
 | `player.scenePainting` | `PlayerArtworkModel` | `scenePainting`, `servicePortrait` | Title, rest and services | Painted scenery with independent foreground layers. |
