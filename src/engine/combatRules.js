@@ -193,6 +193,11 @@ export function foundationCosts(ctx, def, weightClass, legacy) {
   return { ...legacy, action: rules.stamina[weight], mana: 0, stamina: rules.stamina[weight], variable: false };
 }
 
+/** A card-play refusal that names why, so a reaction trial can say it (SPEC §4.10). */
+export function playRefusal(message, reason, extra = {}) {
+  return Object.assign(new Error(message), { playRefusal: { reason, ...extra } });
+}
+
 export function assertFoundationPlayable(ctx, def, choice) {
   if (!ctx.foundation) return;
   if (def.effects?.some((e) => e.op === 'dodgeRoll')) {

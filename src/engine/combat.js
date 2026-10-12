@@ -1290,12 +1290,12 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
   const inst = combat.piles.hand[idx];
   const def = resolveCombatCard(combat, inst, { upcastTier, upcastRanks });
   const kws = def.keywords || [];
-  if (!Control.controlGate(combat, p, def).allowed) throw new Error('Recover from the active control statuses before playing cards');
+  if (!Control.controlGate(combat, p, def).allowed) throw F.playRefusal('Recover from the active control statuses before playing cards', 'controlled');
   if (p.ashenBlight?.milestones?.some(row => row.path === null)) throw new Error('Choose the pending Ashen Blight feat first');
   const chosen = assertCardChoice(cardChoice(combat.registries, def, p.classId), choice);
   F.assertFoundationPlayable(combat, def, chosen);
 
-  if (combat.registries.framework.isUnplayable(def)) throw new Error(`'${def.name}' is unplayable`);
+  if (combat.registries.framework.isUnplayable(def)) throw F.playRefusal(`'${def.name}' is unplayable`, 'unplayable');
 
   const isX = def.cost === 'X';
   let { energy: cost, mana: manaCost, stamina: staminaCost } = playCosts(combat, def);
@@ -1360,7 +1360,8 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
   A.preflightCardHp(combat, def, p, target, before);
   if (combat.combatExpansionVersion === 2) {
     const check = playCosts(preparingPreview(combat, inst, def, targetId), def);
-    if (p.energy < check.energy || p.mana < check.mana) throw new Error('Not enough Stamina or Mana');
+    if (p.energy < check.energy) throw F.playRefusal('Not enough Stamina or Mana', 'cost', { resource: 'stamina', need: check.energy, have: p.energy });
+    if (p.mana < check.mana) throw F.playRefusal('Not enough Stamina or Mana', 'cost', { resource: 'mana', need: check.mana, have: p.mana });
     const payment = Blight.payAshenBlight(combat, p, { amount: def.ashenBlightCost || 0, receiptId: `${combat.combatKey}:${p.combatOwnerCycle}:${p.counters.cardsPlayedThisCombat + 1}:${inst.instanceId}`, combatKey: combat.combatKey });
     if (payment.recorded) combat.emit('ashenBlightPaid', { sourceId: p.id, amount: payment.paid, value: payment.value });
     if (payment.terminal) {
@@ -1380,8 +1381,8 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
     target ||= combat.enemies.find(e => e.alive) || null;
   }
   ({ energy: cost, mana: manaCost, stamina: staminaCost } = playCosts(combat, def));
-  if (p.energy < cost) throw new Error('Not enough Actions (Stamina) to play this card');
-  if (p.mana < manaCost) throw new Error('Not enough mana to play this card');
+  if (p.energy < cost) throw F.playRefusal('Not enough Actions (Stamina) to play this card', 'cost', { resource: 'stamina', need: cost, have: p.energy });
+  if (p.mana < manaCost) throw F.playRefusal('Not enough mana to play this card', 'cost', { resource: 'mana', need: manaCost, have: p.mana });
 
   // Pay cost (X-cost consumes ALL energy — SPEC §4.3).
   p.energy -= cost;
