@@ -225,10 +225,6 @@ Meta
         Dawn Rite {Marks an authored removal of a specific negative status; it never removes every status implicitly.}
         Burden Bearer {Identifies the first new negative status application from an enemy to this player in a turn; self-applied statuses do not count.}
         Sepulchral Pact {Identifies a credited kill of an enemy with positive Crimson Blight buildup immediately before the killing hit.}
-      Class stance [m] {card skill; holds a stance until changed}
-        Gorefire Stance
-        Bulwark Stance
-        Brace
       Prepare [n] {Prepare. Available to players as well as enemies (owner decision 4, 2026-10-11); sets Prepared}
       Spellcraft {each school deals its damage type}
         Fire
@@ -640,6 +636,10 @@ classification
   feat {A selected class progression feat.}
   enemyMove {A scoped action in an enemy move table.}
 Theme {Build synergies; tags alone grant no effects.}
+  Class stance [m] {card skill; holds a stance until changed}
+    Gorefire Stance
+    Bulwark Stance
+    Brace
   Blood {Categorized Blood identity; effects are authored separately.}
   Blight {Categorized Blight identity; effects are authored separately.}
   Astral {Categorized Astral identity; effects are authored separately.}

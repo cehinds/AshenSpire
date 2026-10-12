@@ -173,12 +173,12 @@ meta.combat.skill.technique.pierce,technique.pierce,Pierce,meta.combat.skill.tec
 meta.combat.skill.technique.cleave,technique.cleave,Cleave,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,◇,9FC3E8,technique:cleave
 meta.combat.skill.technique.flourish,technique.flourish,Flourish,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,◇,9FC3E8,technique:flourish
 meta.combat.skill.technique.guile,technique.guile,Guile,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]). rogue trickery,,,,,,live-tag,◇,647B73,guile
-meta.combat.skill.technique.blood,technique.blood,Blood,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]). pay HP for power,,,,,,live-tag,🩸,8A1A1A,blood
+meta.combat.skill.technique.blood,technique.blood,Blood,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]). pay HP for power,,,,,theme.blood,live-tag,🩸,8A1A1A,blood
 meta.combat.skill.technique.venom,technique.venom,Venom,meta.combat.skill.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]). poison craft,,,,,,live-tag,☠,7FAF63,venom
-meta.combat.skill.class-stance,class-stance,Class stance,meta.combat.skill,ClassStance,,Moved: re-homed in the proposal (tag-tree.txt [m]). card skill; holds a stance until changed,,,,,,live-tag,◇,9FC3E8,theme:stance
-meta.combat.skill.class-stance.gorefire-stance,gorefire-stance,Gorefire Stance,meta.combat.skill.class-stance,ClassStance,,,,,,,,game-concept,,,
-meta.combat.skill.class-stance.bulwark-stance,bulwark-stance,Bulwark Stance,meta.combat.skill.class-stance,ClassStance,,,,,,,,game-concept,,,
-meta.combat.skill.class-stance.brace,brace,Brace,meta.combat.skill.class-stance,ClassStance,,,,,,,,game-concept,,,
+theme.stance,theme.stance,Class stance,theme,ClassStance,,Moved: re-homed in the proposal (tag-tree.txt [m]). card skill; holds a stance until changed,,,,,,live-tag,◇,9FC3E8,theme:stance
+theme.stance.gorefire-stance,gorefire-stance,Gorefire Stance,theme.stance,ClassStance,,,,,,,,game-concept,,,
+theme.stance.bulwark-stance,bulwark-stance,Bulwark Stance,theme.stance,ClassStance,,,,,,,,game-concept,,,
+theme.stance.brace,brace,Brace,theme.stance,ClassStance,,,,,,,,game-concept,,,
 meta.combat.skill.prepare,prepare,Prepare,meta.combat.skill,Skill,,"Prepare. Available to players as well as enemies (owner decision 4, 2026-10-11); sets Prepared",,,,,,new,,,
 meta.combat.skill.spellcraft,spellcraft,Spellcraft,meta.combat.skill,Skill,,each school deals its damage type,,,,,,live-tag,,,school
 meta.combat.skill.spellcraft.fire,spellcraft.fire,Fire,meta.combat.skill.spellcraft,Skill,spellcraft.fire,,,,,,,live-tag,🔥,E47C43,school:fire
@@ -188,11 +188,11 @@ meta.combat.skill.spellcraft.frost,spellcraft.frost,Frost,meta.combat.skill.spel
 meta.combat.skill.spellcraft.lightning,spellcraft.lightning,Lightning,meta.combat.skill.spellcraft,Skill,spellcraft.lightning,,,,,,,live-tag,ϟ,E8D46A,school:lightning
 meta.combat.skill.spellcraft.earth,spellcraft.earth,Earth,meta.combat.skill.spellcraft,Skill,spellcraft.earth,,,,,,,game-concept,,,
 meta.combat.skill.spellcraft.force,spellcraft.force,Force,meta.combat.skill.spellcraft,Skill,spellcraft.force,,,,,,,live-tag,✦,B99DEC,school:force
-meta.combat.skill.spellcraft.force.starstone,force.starstone,Starstone,meta.combat.skill.spellcraft.force,Skill,spellcraft.force,Moved: re-homed in the proposal (tag-tree.txt [m]). astral force,,,,,,live-tag,✦,7FA8C9,starstone
+meta.combat.skill.spellcraft.force.starstone,force.starstone,Starstone,meta.combat.skill.spellcraft.force,Skill,spellcraft.force,Moved: re-homed in the proposal (tag-tree.txt [m]). astral force,,,,,astral,live-tag,✦,7FA8C9,starstone
 meta.combat.skill.spellcraft.divine,spellcraft.divine,Divine,meta.combat.skill.spellcraft,Skill,spellcraft.divine,,,,,,,live-tag,✚,F0D99A,school:divine
-meta.combat.skill.spellcraft.divine.oath,divine.oath,Oath,meta.combat.skill.spellcraft.divine,Skill,spellcraft.divine,"Moved: re-homed in the proposal (tag-tree.txt [m]). vows, holy martial",,,,,,live-tag,✚,C9A227,oath
+meta.combat.skill.spellcraft.divine.oath,divine.oath,Oath,meta.combat.skill.spellcraft.divine,Skill,spellcraft.divine,"Moved: re-homed in the proposal (tag-tree.txt [m]). vows, holy martial",,,,,theme.oath,live-tag,✚,C9A227,oath
 meta.combat.skill.spellcraft.necrotic,spellcraft.necrotic,Necrotic,meta.combat.skill.spellcraft,Skill,spellcraft.necrotic,,,,,,,live-tag,☣,A4BD72,school:decay
-meta.combat.skill.spellcraft.necrotic.blight,necrotic.blight,Blight,meta.combat.skill.spellcraft.necrotic,Skill,spellcraft.necrotic,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,☣,B5541C,blight
+meta.combat.skill.spellcraft.necrotic.blight,necrotic.blight,Blight,meta.combat.skill.spellcraft.necrotic,Skill,spellcraft.necrotic,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,theme.blight,live-tag,☣,B5541C,blight
 meta.combat.skill.spellcraft.psychic,spellcraft.psychic,Psychic,meta.combat.skill.spellcraft,Skill,spellcraft.psychic,,,,,,,new,,,
 meta.combat.skill.spellcraft.psychic.illusion,illusion,Illusion,meta.combat.skill.spellcraft.psychic,Skill,spellcraft.psychic,Moved: re-homed in the proposal (tag-tree.txt [m]). existing school,,,,,,live-tag,◎,C59BD7,school:illusion
 meta.combat.skill.spellcraft.psychic.ritual,psychic.ritual,Ritual,meta.combat.skill.spellcraft.psychic,Skill,spellcraft.psychic,Moved: re-homed in the proposal (tag-tree.txt [m]). madness,,,,,,live-tag,◈,C9A227,ritual
@@ -455,10 +455,10 @@ meta.presentation.fx.frost,fx.frost,frost,meta.presentation.fx,TagNode,,frost vi
 meta.presentation.fx.bulwark,bulwark,bulwark,meta.presentation.fx,TagNode,,bulwark visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:bulwark
 meta.presentation.fx.utility,utility,utility,meta.presentation.fx,TagNode,,utility visual identity; no combat modifier.,,,,,,live-tag,✧,9FC3E8,fx:utility
 theme,theme,Theme,,TagNode,,Build synergies; tags alone grant no effects.,,,,,,live-tag,,,theme
-theme.blood,theme.blood,Blood,theme,TagNode,,Categorized Blood identity; effects are authored separately.,,,,,,live-tag,◇,9FC3E8,theme:blood
-theme.blight,theme.blight,Blight,theme,TagNode,,Categorized Blight identity; effects are authored separately.,,,,,,live-tag,◇,9FC3E8,theme:blight
-theme.astral,astral,Astral,theme,TagNode,,Categorized Astral identity; effects are authored separately.,,,,,,live-tag,◇,9FC3E8,theme:astral
-theme.oath,theme.oath,Oath,theme,TagNode,,Categorized Oath identity; effects are authored separately.,,,,,,live-tag,◇,9FC3E8,theme:oath
+theme.blood,theme.blood,Blood,theme,TagNode,,Categorized Blood identity; effects are authored separately.,,,,,technique.blood,live-tag,◇,9FC3E8,theme:blood
+theme.blight,theme.blight,Blight,theme,TagNode,,Categorized Blight identity; effects are authored separately.,,,,,necrotic.blight,live-tag,◇,9FC3E8,theme:blight
+theme.astral,astral,Astral,theme,TagNode,,Categorized Astral identity; effects are authored separately.,,,,,force.starstone,live-tag,◇,9FC3E8,theme:astral
+theme.oath,theme.oath,Oath,theme,TagNode,,Categorized Oath identity; effects are authored separately.,,,,,divine.oath,live-tag,◇,9FC3E8,theme:oath
 property,property,Property,,TagNode,,"What a holder CONFERS while it is held. Each property node has exactly one entry in nodeEffects.json; the holder grants it, and it leaves when the holder does. EVERY family may carry one — what the mount path can hold (worn, owned, chosen) is the engine's narrower list, engine/properties.js MOUNTABLE_KINDS.",,,,,,live-tag,,,property
 property.overcharge,overcharge,Overcharge,property,TagNode,,A focus that pushes harder: each hit builds more Arcane Exposure.,,,,,,live-tag,✧,9FC3E8,overcharge
 property.staggerBreak,staggerBreak,Stagger Break,property,TagNode,,A focus that breaks harder: breaking a foe's Arcane Exposure batters its Poise. Effects in nodeEffects.json: triggers on arcaneBreak; ops poiseDamage.,,,,,,live-tag,✦,C9A96B,staggerBreak

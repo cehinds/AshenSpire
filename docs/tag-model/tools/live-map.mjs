@@ -46,7 +46,7 @@ export const LIVE = {
   'meta.combat.skill.technique.guile': 'guile',
   'meta.combat.skill.technique.blood': 'blood',
   'meta.combat.skill.technique.venom': 'venom',
-  'meta.combat.skill.class-stance': 'theme:stance',
+  'theme.stance': 'theme:stance',
   'meta.combat.skill.spellcraft.fire.gorefire': 'gorefire',
   'meta.combat.skill.spellcraft.fire.ash': 'ash',
   'meta.combat.skill.spellcraft.force.starstone': 'starstone',

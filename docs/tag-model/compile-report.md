@@ -52,7 +52,7 @@ None: every live id is mapped by at most one tag.
 
 ## 3. Field parity
 
-79 differences.
+78 differences.
 
 | Model tag | Live id | Field | Model | Live |
 |---|---|---|---|---|
@@ -69,8 +69,7 @@ None: every live id is mapped by at most one tag.
 | meta.combat.skill.technique.guile | guile | parent | meta.combat.skill.technique | card (mapped to card) |
 | meta.combat.skill.technique.blood | blood | parent | meta.combat.skill.technique | card (mapped to card) |
 | meta.combat.skill.technique.venom | venom | parent | meta.combat.skill.technique | card (mapped to card) |
-| meta.combat.skill.class-stance | theme:stance | label | Class stance | Stance |
-| meta.combat.skill.class-stance | theme:stance | parent | meta.combat.skill | theme (mapped to theme) |
+| theme.stance | theme:stance | label | Class stance | Stance |
 | meta.combat.skill.spellcraft | school | label | Spellcraft | Magic school |
 | meta.combat.skill.spellcraft | school | parent | meta.combat.skill | (live root) |
 | meta.combat.skill.spellcraft.fire.gorefire | gorefire | parent | meta.combat.skill.spellcraft.fire | card (mapped to card) |
