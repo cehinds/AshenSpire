@@ -58,7 +58,7 @@ import { enemySprite, playerSprite, spritesAreEnabled } from '../assets.js';
 import { createStanceLedger, kindForCard, stanceForCard } from '../../model/alternativeStance.js';
 import { selectedWeaponProfileFor, selectedWeaponStanceFor, selectedWeaponReactionFor } from '../../model/selectedWeaponStances.js';
 import { animateEvents, playEventCues, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } from '../fx.js';
-import { COMBAT_TIMING } from '../animationPace.js';
+import { ANIM_SPEEDS, COMBAT_TIMING, getAnimSpeed } from '../animationPace.js';
 import { figureSpec, equippedPieces, gripOf } from '../../model/loadout.js';
 import { resourceAura } from '../combatAura.js';
 import { CARD_ACTION_CLASSES } from '../../model/alternativeCardAnimation.js';
