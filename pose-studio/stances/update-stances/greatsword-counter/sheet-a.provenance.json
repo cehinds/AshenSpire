@@ -35,7 +35,7 @@
     }
   ],
   "original_tool_path": "/workspace/generated_images/exec-b14418c9-a946-4a2c-ae0c-c0a51f54bd10.png",
-  "preserved_artifact": "sheet-a.png",
+  "preserved_artifact": "sheet-a.original.png",
   "raw_bytes_preserved": true,
   "sha256": "6ebb2770f132fa2a99745286ff58a4efee233c93093d4fea70052109fd62c9c3",
   "concept_ids": [
@@ -46,7 +46,7 @@
     "CT15"
   ],
   "layout": "2 columns x 3 rows, row-major; bottom-right empty",
-  "review_status": "awaiting art director review; not selected or approved",
+  "review_status": "rejected oversized initial board; preserved original",
   "observations": [
     "Five forward defensive blade lines replace the selected rearward overhead load; both boots appear grounded",
     "Generator enlarged bodies beyond the requested ~210px scale and did not honor 72px cell margins",
