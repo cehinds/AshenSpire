@@ -92,6 +92,7 @@ export function assertMomentumGain(card) {
 // defensive hand cards with it, so a bad card never gets as far as a reaction.
 export function assertReactionCard(card) {
   if (!card || typeof card !== 'object') throw new TypeError('a reaction card must be an object');
+  assertCardKey(card);
   assertDefenceNumbers(card);
   gainOf(card);
   cardSp(card);
@@ -210,6 +211,7 @@ function validateQueues(queues, combatants) {
     for (const card of queue) {
       if (!card || typeof card !== 'object') throw new TypeError(`a card in "${id}" must be an object`);
       if (typeof card.id !== 'string' || card.id === '') throw new TypeError(`a card in "${id}" needs an id`);
+      assertCardKey(card);
       if (!CARD_KINDS.includes(card.kind)) throw new TypeError(`card "${card.id}" kind must be one of ${CARD_KINDS.join(', ')}`);
       if (!Number.isFinite(Number(card.speed ?? 0))) throw new TypeError(`card "${card.id}" speed must be a finite number`);
       for (const field of DEFENCE_FIELDS) defenceNumber(card, field);
@@ -336,7 +338,7 @@ export function buildTimeline(queues, ctx = {}) {
         cardId: c.id,
         target: c.target,
         preemptive,
-        card: { ...c, sp: cardSp(c) },
+        card: { ...structuredClone(c), sp: cardSp(c) },
         speed: {
           card: parts.card,
           buff: parts.buff,
@@ -586,6 +588,25 @@ export function cardKey(card) {
   return card?.instanceId ?? card?.id;
 }
 
+// A card key is persisted in paused rounds and used to select one reaction copy. JSON must keep
+// that key unchanged: non-finite numbers become null, while empty or non-scalar keys cannot name
+// a card reliably. Queued cards always have an id; reaction-only hand cards may instead use a
+// valid instanceId.
+export function assertCardKey(card) {
+  const instance = card?.instanceId;
+  if (instance !== undefined && instance !== null
+    && !((typeof instance === 'string' && instance.length > 0)
+      || (typeof instance === 'number' && Number.isFinite(instance)))) {
+    throw new TypeError('card instanceId must be a non-empty string or finite number');
+  }
+  const key = cardKey(card);
+  if (!((typeof key === 'string' && key.length > 0)
+    || (typeof key === 'number' && Number.isFinite(key)))) {
+    throw new TypeError('a reaction card needs a non-empty string or finite numeric identifier');
+  }
+  return key;
+}
+
 // The player's reaction offer for one attack (owner, 2026-10-11): when an attack targets a player,
 // the player may play an unplayed defensive card from hand, if SP is left. Enemies never react.
 // Returns { attack, eligible } when there is a card to offer, else null. It changes nothing, so a
@@ -604,12 +625,13 @@ export function reactionOffer(cur, entry, run) {
     && cardSp(c) <= cur.spLeft[id]
     && (c.kind !== 'counter' || c.target === 'self' || c.target === entry.actor));
   if (eligible.length === 0) return null;
+  const rawDamage = Number(entry.card.damage ?? 0);
   const attack = {
     seq: entry.seq,
     attacker: entry.actor,
     target: id,
     cardId: entry.cardId,
-    damage: Math.max(0, Number(entry.card.damage ?? 0) || 0),
+    damage: Number.isFinite(rawDamage) ? Math.max(0, rawDamage) : 0,
     speed: entry.speed.total,
   };
   return { attack, eligible };
@@ -811,7 +833,7 @@ function applyEntry(cur, entry, events, options, run) {
   const offer = typeof options.onReaction === 'function' ? reactionOffer(cur, entry, run) : null;
   let chosen = null;
   if (offer) {
-    const pick = options.onReaction(offer.attack, offer.eligible.map((c) => ({ ...c })));
+    const pick = options.onReaction(structuredClone(offer.attack), structuredClone(offer.eligible));
     chosen = chooseReaction(offer.eligible, pick);
   }
   resolveAttackEntry(cur, entry, events, options, run, chosen);
@@ -954,6 +976,7 @@ export function createRound(state, options = {}) {
   };
   const resolutionOptions = { ...options, rng: replayableRng };
   const snapshot = () => structuredClone(frame.cur);
+  const timelineSnapshot = () => structuredClone(started.timeline);
 
   const next = () => atomically(frame, () => {
     const events = frame.pendingEvents;
@@ -974,7 +997,7 @@ export function createRound(state, options = {}) {
   });
 
   return {
-    timeline: started.timeline,
+    timeline: timelineSnapshot(),
     next,
     resolveAll() {
       return atomically(frame, () => {
@@ -984,7 +1007,7 @@ export function createRound(state, options = {}) {
           r = next();
           events.push(...r.events);
         } while (!r.done);
-        return { events, state: r.state, timeline: started.timeline };
+        return { events, state: r.state, timeline: timelineSnapshot() };
       });
     },
     get state() {
