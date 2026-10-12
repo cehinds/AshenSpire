@@ -63,12 +63,14 @@ combat.reaction.mp,,{amount} MP,,
 combat.callout.staggered,,STAGGERED,,
 combat.callout.disrupted,,DISRUPTED,,
 combat.callout.countered,,COUNTERED,,
-combat.callout.evaded,,MISS,,
+combat.callout.evaded,,MISSED,,
 combat.callout.critical,,CRITICAL,,
 combat.callout.guardBreak,,GUARD BREAK,,
 combat.callout.wardBreak,,WARD BREAK,,
-combat.callout.barrierBreak,,BARRIER BREAK,,
+combat.callout.barrierBreak,,BREAK,,
 combat.callout.poiseBreak,,POSTURE BREAK,,
+combat.callout.blockBreak,,BREAK,,
+combat.callout.interrupted,,INTERRUPTED,,
 # ---- the house vocabulary — the words every screen shares ------------------
 common.back,,Back,Return to the screen before this one.,Back
 common.continue,,Continue,Move on from this screen.,Continue

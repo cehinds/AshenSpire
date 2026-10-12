@@ -385,13 +385,15 @@ export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
 export const CALLOUT_KINDS = {
   staggered: { string: 'combat.callout.staggered', tone: 'gold' },
   disrupted: { string: 'combat.callout.disrupted', tone: 'gold' },
-  countered: { string: 'combat.callout.countered', tone: 'gold' },
+  countered: { string: 'combat.callout.countered', tone: 'red' },
   evaded: { string: 'combat.callout.evaded', tone: 'white' },
   critical: { string: 'combat.callout.critical', tone: 'red' },
   guardBreak: { string: 'combat.callout.guardBreak', tone: 'red' },
   wardBreak: { string: 'combat.callout.wardBreak', tone: 'ward' },
-  barrierBreak: { string: 'combat.callout.barrierBreak', tone: 'gold' },
-  poiseBreak: { string: 'combat.callout.poiseBreak', tone: 'poise' },
+  barrierBreak: { string: 'combat.callout.barrierBreak', tone: 'barrier' },
+  blockBreak: { string: 'combat.callout.blockBreak', tone: 'block' },
+  interrupted: { string: 'combat.callout.interrupted', tone: 'interrupt' },
+  poiseBreak: { string: 'combat.callout.poiseBreak', tone: 'gold' },
 };
 export const CALLOUT_MS = 900;
 export const CALLOUT_INSTANT_MS = 500;
@@ -1366,8 +1368,11 @@ function visualPartsFor(e, beatKind, opts) {
 export function calloutForEvent(e = {}) {
   let kind = null;
   switch (e.type) {
-    case 'enemyStaggered':
+    // A stagger a break caused shows that break's word and INTERRUPTED, not a second STAGGERED.
+    case 'enemyStaggered': if (!e.cause) kind = 'staggered'; break;
     case 'playerStaggered': kind = 'staggered'; break;
+    case 'enemyInterrupted': kind = 'interrupted'; break;
+    case 'blockBroken': kind = 'blockBreak'; break;
     case 'ratingImpact': if (e.breaks > 0) kind = e.label === 'Disruption' ? 'disrupted' : 'staggered'; break;
     case 'combatCounterTriggered': kind = 'countered'; break; // over the attacker who got countered
     case 'attackEvaded': kind = 'evaded'; break;
@@ -1408,6 +1413,16 @@ function visualFor(e, beatKind, opts) {
 
 // opts.sequential (SPEC §7.4, beatOrder 'sequential'): a hit's sound plays
 // with its number; only the spark and slash stay at the contact.
+// A break's visual: a shatter ring in the layer's tone, over the fighter it broke, with its sound.
+function breakBurst(e, tone, sound) {
+  return {
+    reaction: (ctx) => {
+      sfx.play(sound);
+      spawnFx(ctx.layer, ctx.anchorFor(e.targetId), `fx-shatter ${tone}`, 420);
+    },
+  };
+}
+
 function baseVisualParts(e, beatKind, { sequential = false } = {}) {
   switch (e.type) {
     case 'damageDealt': {
@@ -1567,10 +1582,17 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
           spawnFx(ctx.layer, ctx.anchorFor(e.targetId), 'fx-miss-streak', 380);
         },
       };
+    case 'blockBroken': return breakBurst(e, 'block', 'hit_heavy');
+    case 'barrierBroken': return breakBurst(e, 'barrier', 'block');
+    case 'wardBroken': return breakBurst(e, 'ward', 'procBurst');
+    case 'poiseBroken': return breakBurst(e, 'gold', 'hit_heavy');
+    case 'enemyInterrupted': return breakBurst(e, 'interrupt', 'stagger');
+    case 'playerStaggered': return breakBurst(e, 'gold', 'stagger');
     case 'enemyStaggered':
       return {
         reaction: (ctx) => {
-          sfx.play('stagger');
+          // A break's stagger plays the break's own sound (poiseBroken, enemyInterrupted), not a second one.
+          if (!e.cause) sfx.play('stagger');
           // The STAGGERED word is the on-character callout now, not a banner.
           const anchor = ctx.anchorFor(e.targetId);
           flash(anchor, 'wobble', 600); // poise broken: the whole figure teeters

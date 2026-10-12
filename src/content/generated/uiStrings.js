@@ -236,7 +236,7 @@ export const uiStrings = [
   {
     "id": "combat.callout.evaded",
     "extends": "",
-    "short": "MISS",
+    "short": "MISSED",
     "full": "",
     "tip": ""
   },
@@ -264,7 +264,7 @@ export const uiStrings = [
   {
     "id": "combat.callout.barrierBreak",
     "extends": "",
-    "short": "BARRIER BREAK",
+    "short": "BREAK",
     "full": "",
     "tip": ""
   },
@@ -272,6 +272,20 @@ export const uiStrings = [
     "id": "combat.callout.poiseBreak",
     "extends": "",
     "short": "POSTURE BREAK",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.callout.blockBreak",
+    "extends": "",
+    "short": "BREAK",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.callout.interrupted",
+    "extends": "",
+    "short": "INTERRUPTED",
     "full": "",
     "tip": ""
   },
