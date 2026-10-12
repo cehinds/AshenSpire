@@ -16,7 +16,8 @@ for example in catalog['examples']:
         for y in range(0,height,32):
             for x in range(0,width,32):draw.rectangle((x,y,x+31,y+31),fill=(36,44,48) if (x//32+y//32)%2 else (32,40,44))
         frame.paste(source,(0,0),source)
-        roles=['Start '+family['origin'],'Action1','Action2','Action3','Return '+family['origin']]
+        roles=family.get('slotLabels',['Start stance','Action 1','Action 2','Action 3','Return stance']).copy()
+        roles[0]+=' '+family['origin'];roles[4]+=' '+family['origin']
         draw.text((18,height+8),f"{example['id']} · {example['name']}",font=large,fill=(220,231,209))
         draw.text((18,height+47),f"{i+1}/5 · {roles[i]} · 350 ms review timing",font=font,fill=(189,202,181));frames.append(frame)
     palette=Image.new('RGB',(width,(height+88)*5))
@@ -32,7 +33,7 @@ for example in catalog['examples']:
     for i,frame in enumerate(frames):storyboard.paste(frame.resize((tile_width,tile_height),Image.Resampling.LANCZOS),(tile_width*i,0))
     storyboard.save(out/(example['id']+'-storyboard.png'))
     contacts[example['family']].append(frames[2].resize((tile_width,tile_height),Image.Resampling.LANCZOS))
-    records.append({'id':example['id'],'slots':5,'sourcePaths':example['frames'],'durationsMs':[350]*5,'decodedGifFrames':5,'gif':example['id']+'.gif','storyboard':example['id']+'-storyboard.png'})
+    records.append({'id':example['id'],'slots':5,'sourcePaths':example['frames'],'slotLabels':family.get('slotLabels'),'durationsMs':[350]*5,'decodedGifFrames':5,'gif':example['id']+'.gif','storyboard':example['id']+'-storyboard.png'})
 for family,tiles in contacts.items():
     if not tiles:continue
     width,height=tiles[0].size;contact=Image.new('RGB',(width*2,height*5),(26,33,37))

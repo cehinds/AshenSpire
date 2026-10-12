@@ -11,7 +11,14 @@
         1024
       ],
       "sourceManifest": null,
-      "pending": true
+      "pending": true,
+      "slotLabels": [
+        "Start stance",
+        "Wind-up",
+        "Turning slash",
+        "Low finish",
+        "Return stance"
+      ]
     },
     "smash": {
       "label": "Ground-slam Smash",
@@ -21,7 +28,14 @@
         768
       ],
       "sourceManifest": "smash/ground-slam-revision-2/index.json",
-      "pending": false
+      "pending": false,
+      "slotLabels": [
+        "Start stance",
+        "Takeoff",
+        "Airborne load",
+        "Ground impact",
+        "Return stance"
+      ]
     }
   },
   "examples": [

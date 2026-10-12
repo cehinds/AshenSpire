@@ -1,11 +1,11 @@
 // Review-only player. Native source frames stay unchanged; no runtime commands.
 const $=id=>document.getElementById(id);
 let catalog,selected,index=0,playing=false,timer,request=0;const images=new Map();
-const labels=['Start stance','Action1','Action2','Action3','Return stance'];
+const defaultLabels=['Start stance','Action 1','Action 2','Action 3','Return stance'];
 function stop(){playing=false;clearTimeout(timer);}
 function schedule(){clearTimeout(timer);timer=setTimeout(()=>{if(index<4){index++;render();schedule();}else if($('loop').checked){index=0;render();schedule();}else{stop();render();}},catalog.reviewSlotMs/Number($('speed').value));}
 function render(){
-  const item=selected, family=catalog.families[item.family],frame=images.get(item.frames[index]);
+  const item=selected, family=catalog.families[item.family],frame=images.get(item.frames[index]),labels=family.slotLabels||defaultLabels;
   $('title').textContent=`${item.id} · ${item.name}`;$('step-label').textContent=`${index+1}/5 · ${labels[index]}${index===0||index===4?' · '+family.origin:''} · Next: ${index<4?`${index+2} ${labels[index+1]}`:'End'}`;
   $('frame').src=frame.src;$('frame').alt=`${item.id} ${item.name}, slot${index+1} of5: ${labels[index]}`;$('frame').width=family.size[0];$('frame').height=family.size[1];
   $('caveat').hidden=!item.caveat;$('caveat').textContent=item.caveat||'';

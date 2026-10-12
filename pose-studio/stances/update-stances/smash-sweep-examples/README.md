@@ -6,11 +6,11 @@ Each example has **five total slots**: approved starting stance → three action
 
 ## Revised iai Sweep · SW01–SW10 · pending
 
-The new Sweep begins in a low draw stance, turns and twists into the slash, and shows whirlwind trails surrounding the character. The visible near/right arm shows its inner elbow, thumb up, knuckles down and palm beneath the hilt. The new approved seed will be repeated exactly at both ends of each sequence. It does not overwrite the delivered runtime W stance.
+Sweep’s five numbered slots will be **Start stance → Wind-up → Turning slash → Low finish → Return stance**. The new Sweep begins in a low draw stance, turns and twists into the slash, and shows whirlwind trails surrounding the character. The visible near/right arm shows its inner elbow, thumb up, knuckles down and palm beneath the hilt. The new approved seed will be repeated exactly at both ends of each sequence. It does not overwrite the delivered runtime W stance.
 
 ## Revised ground-slam Smash · SM01–SM10
 
-All ten examples jump into a heavy greatsword ground impact. Their start/end PNGs preserve the original S decoded RGBA pixels without resizing at the recorded padded placement. Airborne feet remain above the common ground; impact dust may extend below it.
+The five numbered Smash slots are **Start stance → Takeoff → Airborne load → Ground impact → Return stance**. All ten examples jump into a heavy greatsword ground impact. Their start/end PNGs preserve the original S decoded RGBA pixels without resizing at the recorded padded placement. Airborne feet remain above the common ground; impact dust may extend below it.
 
 ![Ten revised ground-slam Smash sequences](smash/ground-slam-revision-2/comparison.gif)
 

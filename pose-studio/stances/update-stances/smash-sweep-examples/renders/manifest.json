@@ -11,6 +11,13 @@
         "smash/ground-slam-revision-2/SM01/frames/04.png",
         "smash/ground-slam-revision-2/SM01/frames/05.png"
       ],
+      "slotLabels": [
+        "Start stance",
+        "Takeoff",
+        "Airborne load",
+        "Ground impact",
+        "Return stance"
+      ],
       "durationsMs": [
         350,
         350,
@@ -31,6 +38,13 @@
         "smash/ground-slam-revision-2/SM02/frames/03.png",
         "smash/ground-slam-revision-2/SM02/frames/04.png",
         "smash/ground-slam-revision-2/SM02/frames/05.png"
+      ],
+      "slotLabels": [
+        "Start stance",
+        "Takeoff",
+        "Airborne load",
+        "Ground impact",
+        "Return stance"
       ],
       "durationsMs": [
         350,
@@ -53,6 +67,13 @@
         "smash/ground-slam-revision-2/SM03/frames/04.png",
         "smash/ground-slam-revision-2/SM03/frames/05.png"
       ],
+      "slotLabels": [
+        "Start stance",
+        "Takeoff",
+        "Airborne load",
+        "Ground impact",
+        "Return stance"
+      ],
       "durationsMs": [
         350,
         350,
@@ -73,6 +94,13 @@
         "smash/ground-slam-revision-2/SM04/frames/03.png",
         "smash/ground-slam-revision-2/SM04/frames/04.png",
         "smash/ground-slam-revision-2/SM04/frames/05.png"
+      ],
+      "slotLabels": [
+        "Start stance",
+        "Takeoff",
+        "Airborne load",
+        "Ground impact",
+        "Return stance"
       ],
       "durationsMs": [
         350,
@@ -95,6 +123,13 @@
         "smash/ground-slam-revision-2/SM05/frames/04.png",
         "smash/ground-slam-revision-2/SM05/frames/05.png"
       ],
+      "slotLabels": [
+        "Start stance",
+        "Takeoff",
+        "Airborne load",
+        "Ground impact",
+        "Return stance"
+      ],
       "durationsMs": [
         350,
         350,
@@ -115,6 +150,13 @@
         "smash/ground-slam-revision-2/SM06/frames/03.png",
         "smash/ground-slam-revision-2/SM06/frames/04.png",
         "smash/ground-slam-revision-2/SM06/frames/05.png"
+      ],
+      "slotLabels": [
+        "Start stance",
+        "Takeoff",
+        "Airborne load",
+        "Ground impact",
+        "Return stance"
       ],
       "durationsMs": [
         350,
@@ -137,6 +179,13 @@
         "smash/ground-slam-revision-2/SM07/frames/04.png",
         "smash/ground-slam-revision-2/SM07/frames/05.png"
       ],
+      "slotLabels": [
+        "Start stance",
+        "Takeoff",
+        "Airborne load",
+        "Ground impact",
+        "Return stance"
+      ],
       "durationsMs": [
         350,
         350,
@@ -157,6 +206,13 @@
         "smash/ground-slam-revision-2/SM08/frames/03.png",
         "smash/ground-slam-revision-2/SM08/frames/04.png",
         "smash/ground-slam-revision-2/SM08/frames/05.png"
+      ],
+      "slotLabels": [
+        "Start stance",
+        "Takeoff",
+        "Airborne load",
+        "Ground impact",
+        "Return stance"
       ],
       "durationsMs": [
         350,
@@ -179,6 +235,13 @@
         "smash/ground-slam-revision-2/SM09/frames/04.png",
         "smash/ground-slam-revision-2/SM09/frames/05.png"
       ],
+      "slotLabels": [
+        "Start stance",
+        "Takeoff",
+        "Airborne load",
+        "Ground impact",
+        "Return stance"
+      ],
       "durationsMs": [
         350,
         350,
@@ -199,6 +262,13 @@
         "smash/ground-slam-revision-2/SM10/frames/03.png",
         "smash/ground-slam-revision-2/SM10/frames/04.png",
         "smash/ground-slam-revision-2/SM10/frames/05.png"
+      ],
+      "slotLabels": [
+        "Start stance",
+        "Takeoff",
+        "Airborne load",
+        "Ground impact",
+        "Return stance"
       ],
       "durationsMs": [
         350,
