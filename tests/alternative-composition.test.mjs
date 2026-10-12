@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { alternativeCombatComposition, combatStandingGround, SHORT_PHONE_ENEMY_LIFT } from '../src/ui/models/CombatCompositionModel.js';
+import { alternativeCombatComposition, combatStandingGround, SHORT_PHONE_ENEMY_LIFT, SPACIOUS_RIBBON_RESERVE } from '../src/ui/models/CombatCompositionModel.js';
 import { alternativeEnemyTargetGrid } from '../src/ui/models/AlternativeEnemyTargetGridModel.js';
 
 test('alternative labeled targets keep their original 88 pixel cells', () => {
@@ -105,4 +105,47 @@ test('a short portrait phone lifts its enemies a little; the camera keeps the un
   for (const enemy of enemies) assert.ok(Math.abs(enemy.ground - (backRow - height * SHORT_PHONE_ENEMY_LIFT)) < 1e-9,
     `enemy feet at ${enemy.ground}, expected the back row lifted by 5% of the field`);
   assert.ok(Math.abs(combatStandingGround(fit, actors, 0) - backRow) < 1e-9, 'standing line is the unlifted back row');
+});
+
+// Owner (2026-10-12): desktop enemies stand in one back row on a shared foot
+// line, like the approved phone, instead of each slot's own depth.
+test('desktop enemies share one back-row foot line, with intent and HP clear of the ribbon', () => {
+  const width = 1440, height = 417;
+  const actors = ['p', 'a', 'b'].map((id, i) => ({ side: i ? 'enemy' : 'player',
+    visibleWidth: 60, leading: 40, slot: { id, ground: [330, 380, 340][i] } }));
+  const sizes = actors.map((a, i) => ({ id: a.slot.id, x: [260, 900, 1180][i],
+    visibleHeight: 200, scale: 1, multiplier: 1 }));
+  const fit = alternativeCombatComposition({ actors, sizes, width, height, handTop: height, desktop: true });
+  const enemies = fit.slice(1);
+  assert.equal(new Set(enemies.map(e => e.ground)).size, 1, 'one shared foot line');
+  for (const enemy of enemies) {
+    const headroom = enemy.ground - enemy.visibleHeight - actors[1].leading;
+    assert.ok(headroom >= SPACIOUS_RIBBON_RESERVE - 1e-9, `intent and HP at ${headroom} clear the ribbon`);
+  }
+  assert.ok(enemies[0].ground <= height * .8, 'the row stays on the floor, not in the sky');
+});
+
+test('desktop enemies are centred near two thirds of the width and no enemy passes 0.8', () => {
+  const width = 1440, height = 417;
+  const actors = ['p', 'a', 'b'].map((id, i) => ({ side: i ? 'enemy' : 'player',
+    visibleWidth: 60, leading: 40, slot: { id, ground: 360 } }));
+  // Far-apart formation columns: the 1.3 spread would push the far enemy past 0.8.
+  const sizes = actors.map((a, i) => ({ id: a.slot.id, x: [260, 620, 1140][i],
+    visibleHeight: 200, scale: 1, multiplier: 1 }));
+  const fit = alternativeCombatComposition({ actors, sizes, width, height, handTop: height, desktop: true });
+  const enemies = fit.slice(1);
+  const left = Math.min(...enemies.map(e => e.x)), right = Math.max(...enemies.map(e => e.x));
+  assert.ok(Math.abs((left + right) / 2 - width * .66) < 1e-6, `centre at ${(left + right) / 2 / width}`);
+  assert.ok(right <= width * .8 + 1e-9, `far enemy at ${right / width}`);
+  assert.ok(left >= width * .5, `near enemy at ${left / width}`);
+});
+
+test('a tablet spacious field keeps its own depth rows (no shared desktop line)', () => {
+  const width = 1024, height = 400;
+  const actors = ['p', 'a', 'b'].map((id, i) => ({ side: i ? 'enemy' : 'player',
+    visibleWidth: 60, leading: 40, slot: { id, ground: [330, 380, 340][i] } }));
+  const sizes = actors.map((a, i) => ({ id: a.slot.id, x: [260, 500, 700][i],
+    visibleHeight: 100, scale: 1, multiplier: 1 }));
+  const fit = alternativeCombatComposition({ actors, sizes, width, height, handTop: height });
+  assert.notEqual(fit[1].ground, fit[2].ground, 'tablet enemies keep their slot depth');
 });
