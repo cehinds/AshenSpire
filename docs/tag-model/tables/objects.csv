@@ -62,3 +62,5 @@ progression-whisperglass-die,relic,Whisperglass Die,Relic,,,,,,classification.re
 progression-purse-of-borrowed-shadows,relic,Purse of Borrowed Shadows,Relic,,,,,,classification.relic progression-purse-of-borrowed-shadows,,,,,,,,,"After your first explicit discard each turn, gain {block} Block."
 progression-ember-alms-bowl,relic,Ember Alms Bowl,Relic,,,,,,classification.relic progression-ember-alms-bowl,,,,,,,,,Your first nonlethal HP offering each turn grants {block} Block after its payment.
 progression-ossuary-prayer-wheel,relic,Ossuary Prayer Wheel,Relic,,,,,,classification.relic progression-ossuary-prayer-wheel,,,,,,,,,Your first credited kill of an enemy with Crimson Blight buildup each combat restores {restoreMana} Mana.
+hollowSquire,companion,Hollow Squire,Companion,,,,,,classification.companion hollowSquire,,,,,,,,,A squire without a knight. It raises a shield before you at the start of each fight.
+emberHound,companion,Ember Hound,Companion,,,,,,classification.companion emberHound,,,,,,,,,A hound of banked coals. It bites at your foes as each of your turns begins.
