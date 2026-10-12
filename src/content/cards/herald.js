@@ -315,13 +315,13 @@ export const heraldCards = [
     keywords: [], icon: '🔻',
     effects: [
       { op: 'loseHp', target: 'self', amount: 3 },
-      { op: 'damage', target: 'enemy', amount: 14 },
+      { op: 'damage', target: 'enemy', amount: 12 },
     ],
     textTemplate: 'Lose {loseHp} HP. Deal {damage} damage.',
     upgrade: {
       effects: [
         { op: 'loseHp', target: 'self', amount: 3 },
-        { op: 'damage', target: 'enemy', amount: 18 },
+        { op: 'damage', target: 'enemy', amount: 16 },
       ],
     },
   },
@@ -539,7 +539,7 @@ export const heraldCards = [
     keywords: [], icon: '⚰',
     effects: [
       { op: 'loseHp', target: 'self', amount: 6 },
-      { op: 'damage', target: 'enemy', amount: 24 },
+      { op: 'damage', target: 'enemy', amount: 20 },
     ],
     textTemplate: 'Lose {loseHp} HP. Deal {damage} damage.',
     upgrade: {
