@@ -59,7 +59,7 @@ summary read "Impact N" / "Flux N".
   entries, so one seat cannot use up another's offers. Seats answer in saved seat
   order; the whole stack then resolves last pushed first, across seats.
 - **Counter-return roots:** `maxDepth = 1` (one entry per seat, no re-offer),
-  preserving the reaction contract's anti-chain rule.
+  preserving the reaction contract's anti-chain rule. `counterReturnMaxDepth` is fixed at 1 and is not tunable.
 - **At most one `maneuver:counter` card per seat on a stack.** SPEC §4.8 lets a
   new Counter replace the previous one and never stacks charges, so once a seat
   has pushed a Counter, its further Counter cards are not offered.
@@ -102,6 +102,8 @@ version-2 snapshot without the key has no enemy reactions.
   chance = 1 }`. It carries `trait:reaction` in `tagging.csv`. Intent selection
   filters reaction moves out **before** weighting, `firstMove`, `maxConsecutive`
   or any pattern indexing, so seeds of enemies that gain one do not shift.
+  A reaction move authored `locked: true` is offered only once its id is in the
+  enemy's `unlockedMoves`, as for normal moves.
 - **Windows.** Neither window opens for a Counter-return root, for any action
   whose carrier is a reaction (`combatReaction`, `reactionDepth`, or played while
   a stack resolves), or while a stack is resolving.

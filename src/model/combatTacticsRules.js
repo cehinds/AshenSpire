@@ -108,10 +108,37 @@ export function expansionCounterProblems(counter, path = 'combatCounter') {
     for (const key of ['hp', 'poise', 'ward']) if (!whole(counter.payload[key])) problems.push(`${path}.payload.${key} must be a non-negative whole number`);
     if (counter.payload.smashPoiseBonus !== undefined && !whole(counter.payload.smashPoiseBonus)) problems.push(`${path}.payload.smashPoiseBonus must be a non-negative whole number`);
     if (counter.payload.hpAgainstNonCaster !== undefined && typeof counter.payload.hpAgainstNonCaster !== 'boolean') problems.push(`${path}.payload.hpAgainstNonCaster must be boolean`);
-    for (const key of Object.keys(counter.payload)) if (!['hp', 'poise', 'ward', 'hpAgainstNonCaster', 'smashPoiseBonus'].includes(key)) problems.push(`${path}.payload.${key} is unknown`);
+    for (const key of ['hpBase', 'hpRating', 'poiseBase']) if (counter.payload[key] !== undefined && !whole(counter.payload[key])) problems.push(`${path}.payload.${key} must be a non-negative whole number`);
+    for (const key of Object.keys(counter.payload)) if (!['hp', 'poise', 'ward', 'hpAgainstNonCaster', 'smashPoiseBonus', 'hpBase', 'hpRating', 'poiseBase'].includes(key)) problems.push(`${path}.payload.${key} is unknown`);
   }
   if (counter.schoolEffect !== undefined && !['hp', 'poise', 'ward'].includes(counter.schoolEffect)) problems.push(`${path}.schoolEffect must name one return effect`);
   if (!record(counter.carrier) || !record(counter.carrier.combatProfile)) problems.push(`${path}.carrier must preserve its combat profile`);
+  else if (counter.carrier.traitValues !== undefined) problems.push(...traitValuesProblems(counter.carrier.traitValues, `${path}.carrier.traitValues`));
+  return problems;
+}
+
+// Card trait values a saved carrier may hold (combat-card-traits-contract); magnitudes stay small.
+const TRAIT_MAGNITUDE_MAX = 99;
+export function traitValuesProblems(values, path) {
+  if (!record(values)) return [`${path} must be an object`];
+  const problems = [];
+  for (const [key, value] of Object.entries(values)) {
+    if (['reaction', 'counterstrike'].includes(key)) { if (value !== true) problems.push(`${path}.${key} must be true when present`); }
+    else if (['impact', 'flux'].includes(key)) { if (!whole(value) || value > TRAIT_MAGNITUDE_MAX) problems.push(`${path}.${key} must be a whole number from 0 to ${TRAIT_MAGNITUDE_MAX}`); }
+    else problems.push(`${path}.${key} is unknown`);
+  }
+  return problems;
+}
+
+// A trait guard holds at most a doubled card amount plus Impact/Flux, far below this; the cap keeps the meter fill loop finite.
+const TRAIT_GUARD_MAX = 999;
+
+/** Reaction rules v2 Defend trait guard: whole, non-negative Impact Poise and Flux Ward (combat-card-traits-contract). */
+export function combatTraitGuardProblems(guard, path) {
+  if (!record(guard)) return [`${path} must be an object`];
+  const problems = [];
+  for (const key of ['poise', 'ward']) if (!whole(guard[key]) || guard[key] > TRAIT_GUARD_MAX) problems.push(`${path}.${key} must be a whole number from 0 to ${TRAIT_GUARD_MAX}`);
+  for (const key of Object.keys(guard)) if (!['poise', 'ward'].includes(key)) problems.push(`${path}.${key} is unknown`);
   return problems;
 }
 
@@ -121,6 +148,7 @@ export function combatExpansionEntityProblems(entity, path = 'entity') {
   for (const key of ['combatOwnerCycle', 'combatPreparationSerial', 'combatCounterReturnedCycle']) {
     if (entity[key] !== undefined && !whole(entity[key])) problems.push(`${path}.${key} must be a non-negative whole number`);
   }
+  if (entity.combatTraitGuard !== undefined) problems.push(...combatTraitGuardProblems(entity.combatTraitGuard, `${path}.combatTraitGuard`));
   const stance = entity.combatStance;
   if (stance !== undefined) {
     if (!record(stance)) problems.push(`${path}.combatStance must be an object`);

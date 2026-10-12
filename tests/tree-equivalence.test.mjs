@@ -140,7 +140,7 @@ test('registered tags retain identity, approved tactical metadata changes are ex
     school: ['school:frost', 'school:fire', 'school:lightning', 'school:force', 'school:alteration', 'school:illusion', 'school:divine', 'school:decay'],
     counterMode: ['counter:melee', 'counter:ranged', 'counter:spell'],
     reach: ['reach:contact', 'reach:near', 'reach:far'],
-    trait: ['trait:adequateReach', 'trait:closing', 'trait:conductive', 'trait:grounded', 'trait:insulated', 'trait:mental', 'trait:projectile', 'trait:reveal', 'trait:shattering', 'trait:unavoidable', 'trait:unreflectable'],
+    trait: ['trait:adequateReach', 'trait:closing', 'trait:conductive', 'trait:counterstrike', 'trait:flux', 'trait:grounded', 'trait:impact', 'trait:insulated', 'trait:mental', 'trait:projectile', 'trait:reaction', 'trait:reveal', 'trait:shattering', 'trait:unavoidable', 'trait:unreflectable'],
   };
   for (const [domain, ids] of Object.entries(TACTICAL_TAGS)) {
     assert.deepEqual(TAGS.filter(tag => tag.domain === domain).map(tag => tag.id).sort(), [...ids].sort(), `${domain} holds exactly its approved tactical identities`);
@@ -176,8 +176,9 @@ test('every object states exactly one kind, the one its collection and type name
   // The original 513, forty cards, ten relics, fifty new class feats, and the
   // twenty existing mastery feats now participating in the kind registry.
   assert.equal(contentBundle.classSkillFeats.length, 70);
-  assert.equal(contentBundle.enemyMoves.length, 103, 'the scoped enemy move collection contains all 103 authored actions');
-  assert.equal(counted, 513 + 40 + 10 + 70 + 103 + 32, 'all 768 objects, including class feats and scoped enemy move kinds');
+  // Plus the two enemy reaction moves (gildedGuard, bindingRiposte; docs/combat-card-traits-contract.md).
+  assert.equal(contentBundle.enemyMoves.length, 105, 'the scoped enemy move collection contains all 105 authored actions');
+  assert.equal(counted, 513 + 40 + 10 + 70 + 105 + 32, 'all 770 objects, including class feats and scoped enemy move kinds');
 });
 
 test('a node carries no numbers: every variable resolves through a binding to a balance row, and the ladder reads highest scope first', () => {

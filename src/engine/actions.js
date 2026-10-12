@@ -822,6 +822,20 @@ function evalRaw(ctx, action, value, dflt, target) {
 // executeAction — the queue interpreter body
 // ---------------------------------------------------------------------------
 
+/**
+ * Reaction rules version 2: the Poise or Ward a completed card's own effect
+ * dealt to a target, kept on its expansion group for Impact and Flux
+ * (docs/combat-card-traits-contract.md, "Impact and Flux").
+ */
+function trackOwnPressure(ctx, action, target, meter, amount) {
+  const group = action.meta?.expansionGroup;
+  if (ctx.reactionRulesVersion !== 2 || !group || !target || !(amount > 0)) return;
+  const key = ctx.playerIdForEntity?.(target) || target.id;
+  const pressure = group.ownPressure ||= {};
+  const row = pressure[key] ||= { id: target.id, playerId: ctx.playerIdForEntity?.(target), poiseDealt: 0, wardDealt: 0 };
+  row[meter] += amount;
+}
+
 export function executeAction(ctx, action) {
   if (action.effect?.op === 'completeCombatAction') { Expanded.completeExpandedAction(ctx, action); return; }
   if (ctx.result) return; // combat already decided; remaining actions fizzle
@@ -982,6 +996,7 @@ function runOpcode(ctx, action, eff) {
       for (const t of resolveTargets(ctx, action, eff.target)) {
         const spent = Control.spendPersistentWard(ctx, t,
         evalNum(ctx, action, eff.amount, 0, t) * (!action.card?.combatWardEdgeApplied && action.card?.combatProfile?.camp === 'spell' && action.card?.combatProfile?.damageType === 'piercing' ? 1.25 : 1), { sourceId: action.source?.id });
+        trackOwnPressure(ctx, action, t, 'wardDealt', spent.spent);
         creditKnowledgeImpact(ctx, t, spent.spent);
       }
       break;
@@ -1205,9 +1220,13 @@ function runOpcode(ctx, action, eff) {
         const bonus = ctx.combatExpansionVersion === 2 ? Blight.ashenBlightMartialPoise(ctx, action.source,
           { cycleKey: String(action.source?.combatOwnerCycle || 0), camp: action.card?.combatProfile?.camp, authoredPoise: authored }) : 0;
         const amount = Math.floor((authored + bonus) * multiplier);
+        // Impact doubles only the Poise that passed the target's Poise guard.
+        const guardBefore = Number.isFinite(t?.poiseGuard) ? Math.max(0, Math.floor(t.poiseGuard)) : 0;
         if (ctx.ratingsRules && action.meta?.combatCounterReaction) {
           Ratings.applyRatingImpact(ctx, action.source, t, action.card, amount, { triggerHit: false });
         } else dealPoiseDamage(ctx, t, amount, { knowledgeMatchup: multiplier > 1 });
+        const guardAfter = Number.isFinite(t?.poiseGuard) ? Math.max(0, Math.floor(t.poiseGuard)) : 0;
+        trackOwnPressure(ctx, action, t, 'poiseDealt', Math.max(0, amount - (guardBefore - guardAfter)));
       }
       break;
     }
