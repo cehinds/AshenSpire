@@ -602,6 +602,8 @@ export const reaverCards = [
   },
   {
     id: 'bloodTithe', name: 'Blood Tithe', class: 'reaver', rarity: 'rare', cost: 2, type: 'attack',
+    // Cuts or stabs with the equipped blade; any other weapon cuts (owner #19).
+    attack: { weaponDamage: { families: ['blade'], types: ['slashing', 'piercing'] } },
     flavor: "Harvest tithe of the weald, paid in blood.\n\nGiven at the Bastion's field-shrine in years the grain failed. The Wardens called it voluntary, and kept no names, as a courtesy to the givers.\n\nThe tithe-roll lengthens with each year of the Mark Trade, and the villages it lists grow fewer.",
     keywords: [], icon: '🗡',
     effects: [
