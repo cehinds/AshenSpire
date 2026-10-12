@@ -993,6 +993,12 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // A selected (targeted) enemy's HP bar sits below its figure, so its intent goes above the
     // figure's head instead: centred on the bar, its bottom a few px above the painted art's top.
     const INTENT_ART_GAP = 4;
+    // Owner (2026-10-12): a selected intent keeps at least this gap under the turn ribbon's
+    // bottom edge wherever the two overlap horizontally. It may then overlap the art's top.
+    // The gap is 4 visual px, so in local px it is 4 / --ui-zoom (a 390 px phone runs at 0.9).
+    const INTENT_RIBBON_GAP = 4 / uiZoom();
+    const turnRibbonEl = field.querySelector(':scope > .turn-ribbon');
+    const ribbonBox = turnRibbonEl ? anchorLocalBox(field, turnRibbonEl) : null;
     const intentMoves = placed.map(({ frame, sprite }) => {
       if (!frame.classList.contains('enemy') || frame.classList.contains('dead')) return null;
       const leadingHost = frame.querySelector('.combatant-leading');
@@ -1001,8 +1007,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       const track = row?.querySelector('.combat-health-meter .m-track');
       if (!leadingHost || !intent || !track) return null;
       const intentBox = anchorLocalBox(frame, intent), trackBox = anchorLocalBox(frame, track);
+      const selected = frame.classList.contains('context-selected') && !!sprite;
       let bottomLimit;
-      if (frame.classList.contains('context-selected') && sprite) {
+      if (selected) {
         const artTop = anchorLocalBox(frame, { left: 0, top: currentSpriteArtBounds(sprite, refresh).top, width: 0, height: 0 }).top;
         bottomLimit = artTop - INTENT_ART_GAP;
       } else {
@@ -1010,9 +1017,18 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
           .map(badge => anchorLocalBox(frame, badge).top));
         bottomLimit = topOfRow - INTENT_BAR_GAP;
       }
-      return { leadingHost,
-        dx: (trackBox.left + trackBox.width / 2) - (intentBox.left + intentBox.width / 2),
-        dy: bottomLimit - (intentBox.top + intentBox.height) };
+      const dx = (trackBox.left + trackBox.width / 2) - (intentBox.left + intentBox.width / 2);
+      let dy = bottomLimit - (intentBox.top + intentBox.height);
+      if (selected && ribbonBox && ribbonBox.width > 0 && ribbonBox.height > 0) {
+        // Both boxes are in the field's local px, so the shift needs no zoom arithmetic.
+        const intentFieldBox = anchorLocalBox(field, intent);
+        const intentLeft = intentFieldBox.left + dx;
+        const sharesColumns = intentLeft < ribbonBox.left + ribbonBox.width && intentLeft + intentFieldBox.width > ribbonBox.left;
+        const ribbonFloor = ribbonBox.top + ribbonBox.height + INTENT_RIBBON_GAP;
+        const intentTop = intentFieldBox.top + dy;
+        if (sharesColumns && intentTop < ribbonFloor) dy += ribbonFloor - intentTop;
+      }
+      return { leadingHost, dx, dy };
     });
     for (const move of intentMoves) {
       if (!move || (Math.abs(move.dx) < 0.01 && Math.abs(move.dy) < 0.01)) continue;
