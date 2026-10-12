@@ -371,7 +371,11 @@ test('each hit Ward meets still lets at least 1 damage through', () => {
   const damage = out.events.filter(event => event.type === 'damageDealt' && event.targetId === enemy.id);
   assert.deepEqual(damage.map(event => event.amount), [1, 1]);
   assert.equal(before - enemy.hp, 2);
-  assert.equal(enemy.persistentWard.value, 12, 'Ward is spent only by the 8 it absorbed');
+  assert.deepEqual(damage.map(event => event.wardAbsorbed), [4, 4], 'Ward is spent only by the 8 it absorbed');
+  // starstonePebble is a Spell with Flux (reaction rules v2): its on-hit Ward damage spends the pool on top.
+  const flux = out.events.filter(event => event.type === 'combatFluxApplied' && event.targetId === enemy.id);
+  assert.deepEqual(flux.map(event => event.amount), [1]);
+  assert.equal(enemy.persistentWard.value, 20 - 8 - 1, 'the 8 absorbed and the 1 Flux Ward damage');
 });
 
 const physicalCarrier = () => ({ cardId: 'strike', damageSchool: 'physical', tags: ['camp:physical', 'maneuver:attack'],
