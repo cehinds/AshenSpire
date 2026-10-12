@@ -1447,7 +1447,8 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
   }
   combat.emit('cardPreparing', { cardInstanceId: inst.instanceId, cardId: inst.cardId, cardType: kind, cardTags: cardRef.authoredTags, abilityKind: cardRef.abilityKind, sourceId: p.id, targetId: target?.id || null, ...before });
   drainQueue(combat);
-  const charges = R.matchingAbilityCharges(p, cardRef, { enemyAvailable: combat.enemies.some(e => e.alive) });
+  // A charge another queued card claimed is not this card's to take, riders and all (SPEC §4.11).
+  const charges = R.matchingAbilityCharges(withoutClaims(p, claimedCharges(combat, cardInstanceId)), cardRef, { enemyAvailable: combat.enemies.some(e => e.alive) });
   const chargedEffects = R.abilityChargedEffects(def.effects || [], charges, combat.enemies.some(e => e.alive), combat);
   if (chargedEffects !== def.effects) {
     if (target && target.kind !== 'enemy') throw new Error('Buildup charge requires a living enemy target');

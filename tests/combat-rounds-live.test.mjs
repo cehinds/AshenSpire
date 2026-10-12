@@ -492,6 +492,36 @@ test('a card that misses consumes the Mana-discount charge it claimed, so a late
   assert.ok(!events.some((e) => e.type === 'cardChargeConsumed' && e.cardId === blockCardId), 'the later card does not take the missed card\'s charge');
 });
 
+// Review finding 2b: a queued card's charge claim is respected at the commit. A charge granted during the turn
+// (after an earlier card was queued) matches that earlier 0-Mana attack; the Mana attack queued after it claims
+// the charge. The earlier card resolves first and must not consume the charge (with its damage rider) that
+// the later card paid for.
+function claimPairFixture() {
+  for (const classId of ['starseer', 'reaver', 'rogue', 'herald']) {
+    for (let seed = 1; seed <= 40; seed++) {
+      const c = fight({ classId, seed, expansion: 1 });
+      const free = c.piles.hand.find((x) => cardKind(resolveCard(registries, x)) === 'attack' && cardPlayCosts(c, x.instanceId).mana === 0);
+      const mana = c.piles.hand.find((x) => x.instanceId !== free?.instanceId && cardKind(resolveCard(registries, x)) === 'attack' && cardPlayCosts(c, x.instanceId).mana >= 1);
+      if (free && mana) return { classId, seed, freeId: free.instanceId, manaId: mana.instanceId, freeCardId: free.cardId, manaCardId: mana.cardId };
+    }
+  }
+  return null;
+}
+
+test('an earlier queued card cannot take a Mana-discount charge that a later queued card claimed', () => {
+  const found = claimPairFixture();
+  assert.ok(found, 'fixture: a 0-Mana attack and a Mana attack are in some opening hand');
+  const c = fixRoundRoll(fight({ classId: found.classId, seed: found.seed, expansion: 1 }), 0.999);
+  const targetId = liveEnemy(c).id;
+  dispatch(c, { type: 'playCard', cardInstanceId: found.freeId, targetId });
+  c.player.abilityRiders = { ...(c.player.abilityRiders || {}), charges: { ...(c.player.abilityRiders?.charges || {}), discount: { manaDiscount: 1, damage: 2 } } };
+  dispatch(c, { type: 'playCard', cardInstanceId: found.manaId, targetId });
+  assert.deepEqual(c.combatRounds.playerQueue.find((r) => r.instanceId === found.manaId).claims, ['discount'], 'fixture: the later card claims the charge');
+  const { events } = dispatch(c, { type: 'endTurn' });
+  assert.ok(!events.some((e) => e.type === 'cardChargeConsumed' && e.cardId === found.freeCardId), 'the earlier card does not consume the claimed charge');
+  assert.ok(events.some((e) => e.type === 'cardChargeConsumed' && e.cardId === found.manaCardId), 'the later card consumes its own claimed charge');
+});
+
 // Review finding 1: a stagger that lands before the enemy's first entry skips its moves for the round. The
 // flag must be spent with that round, not carried into the next one: exactly one round is lost.
 test('a stagger that lands before the enemy acts costs that enemy exactly one round', () => {
