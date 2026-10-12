@@ -9,6 +9,8 @@ import { createRng } from '../src/engine/rng.js';
 import { enqueueExpandedAction, previewExpandedActions } from '../src/engine/combatExpansionActions.js';
 import { executeAction, gainBlock } from '../src/engine/actions.js';
 import { resolveCombatRatings, magicShareOf } from '../src/model/combatRatings.js';
+import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
+import { combatProfileFor } from '../src/model/combatCardProfile.js';
 
 function fixture({ ward = 3, barrier = 0, block = 0, poise = 0, weakness = {}, flat = {}, damageTypeShares = null } = {}) {
   const registries = createRegistries(contentBundle);
@@ -275,4 +277,93 @@ test('magicShareOf: card override, then damage type with 0 and 1 honoured, then 
   assert.equal(magicShareOf({ camp: 'spell' }, config), 1, 'no damage type: the spell camp is all magic');
   assert.equal(magicShareOf({ camp: 'physical' }, config), 0, 'no damage type: the physical camp is all physical');
   assert.equal(magicShareOf({ camp: 'spell', damageType: 'psychic' }, config), 1, 'a type the rules do not name falls back to camp');
+});
+
+// Owner routing (magicShareOf precedence, the card's split base, and the rating bonus typed by its rating).
+// A v2 card carrier, built the way combat builds one: the overlaid card's tags and combat profile.
+const v2Carrier = (id, extra = {}) => {
+  const def = applyCombatExpansionCard(contentBundle.cards.find(card => card.id === id));
+  return { cardId: id, tags: def.tags, attack: def.attack, damageSchool: def.damageSchool, combatProfile: combatProfileFor(def), skipRatingBonus: true, ...extra };
+};
+const hitOf = r => r.damage[0];
+
+test('starstonePebble in v2 (force) splits 50:50: five magic, five blunt', () => {
+  const r = strike(v2Carrier('starstonePebble'), 10, { ward: 10 });
+  const d = hitOf(r);
+  assert.equal(d.magicAmount, 5);
+  assert.equal(d.physicalAmount, 5);
+  assert.equal(r.preview, r.committed, 'preview equals committed');
+});
+
+test('a ranged (near) lightning spell is all magic despite its v2 piercing tag', () => {
+  const r = strike(v2Carrier('starSpark'), 5, { ward: 0 });
+  const d = hitOf(r);
+  assert.equal(d.magicAmount, 5);
+  assert.equal(d.physicalAmount, 0);
+  assert.equal(r.preview, r.committed, 'preview equals committed');
+});
+
+test('a spell-camp hit with no school and a physical type is all physical', () => {
+  const plain = { tags: ['camp:spell', 'damage:piercing'], skipRatingBonus: true, combatProfile: { camp: 'spell', damageType: 'piercing', maneuver: 'casting', reach: 'near', targeting: 'single' } };
+  const r = strike(plain, 5, { ward: 3 });
+  assert.equal(hitOf(r).magicAmount, 0);
+  assert.equal(hitOf(r).physicalAmount, 5);
+  assert.equal(r.enemy.persistentWard.value, 3, 'Ward untouched');
+  assert.equal(r.preview, r.committed, 'preview equals committed');
+});
+
+test('a 10-damage melee fire spell with slashing deals 7 fire to the Ward path and 3 slashing to Block', () => {
+  const meleeFire = { tags: ['camp:spell', 'school:fire', 'damage:slashing', 'reach:contact'], skipRatingBonus: true,
+    combatProfile: { camp: 'spell', maneuver: 'casting', school: 'fire', damageType: 'slashing', reach: 'contact', targeting: 'single' } };
+  const r = strike(meleeFire, 10, { ward: 10, block: 3 });
+  const d = hitOf(r);
+  assert.equal(d.magicAmount, 7, 'the Melee spell share (0.7) of 10 is magic');
+  assert.equal(d.physicalAmount, 3, 'the rest is slashing');
+  assert.equal(d.blocked, 3, 'Block takes the slashing 3');
+  assert.equal(r.enemy.block, 0);
+  assert.equal(r.preview, r.committed, 'preview equals committed');
+});
+
+test('a 10-damage fire-tagged smash technique deals 3 fire and 7 physical', () => {
+  const smash = { tags: ['camp:physical', 'maneuver:smash', 'damage:fire'], skipRatingBonus: true,
+    combatProfile: { camp: 'physical', maneuver: 'smash', damageType: 'fire', reach: 'contact', targeting: 'single' } };
+  const r = strike(smash, 10, { ward: 10 });
+  const d = hitOf(r);
+  assert.equal(d.magicAmount, 3, 'the Technique magic share (0.3) of 10 is magic');
+  assert.equal(d.physicalAmount, 7);
+  assert.equal(r.preview, r.committed, 'preview equals committed');
+});
+
+test('a plain physical technique is all physical', () => {
+  const r = strike(v2Carrier('rogueShiv'), 6, { ward: 3 });
+  assert.equal(hitOf(r).magicAmount, 0);
+  assert.equal(hitOf(r).physicalAmount, 6);
+  assert.equal(r.preview, r.committed, 'preview equals committed');
+});
+
+test("a card's own magicShare wins over its school and its camp", () => {
+  const override = { ...v2Carrier('rogueShiv'), magicShare: 1 };
+  assert.equal(hitOf(strike(override, 6, { ward: 10 })).magicAmount, 6, 'a technique with magicShare 1 is all magic');
+  const force = { ...v2Carrier('starstonePebble'), magicShare: 0.2 };
+  assert.equal(hitOf(strike(force, 10, { ward: 10 })).magicAmount, 2, 'a force Spell with magicShare 0.2 splits 2:8');
+});
+
+test('a +4 rating bonus on a spell adds to its magic part', () => {
+  const spell = { ...v2Carrier('starSpark'), skipRatingBonus: false, ratingValue: 4 };
+  const r = strike(spell, 10, { ward: 20 });
+  const d = hitOf(r);
+  assert.equal(d.magicAmount, 14, 'the 10 lightning and the +4 Power are all magic');
+  assert.equal(d.physicalAmount, 0);
+  assert.equal(r.preview, r.committed, 'preview equals committed');
+});
+
+test('a +4 rating bonus on a technique adds to its physical part', () => {
+  // A 10-damage fire-tagged smash, so the split (3 magic, 7 physical) is what the rating joins.
+  const technique = { cardId: 'rogueShiv', tags: ['camp:physical', 'maneuver:smash', 'damage:fire'], skipRatingBonus: false, ratingValue: 4,
+    combatProfile: { camp: 'physical', maneuver: 'smash', damageType: 'fire', reach: 'contact', targeting: 'single' } };
+  const r = strike(technique, 10, { ward: 20 });
+  const d = hitOf(r);
+  assert.equal(d.magicAmount, 3, 'the 10 keeps its 0.3 magic part');
+  assert.equal(d.physicalAmount, 11, 'the +4 Attack joins the 7 physical');
+  assert.equal(r.preview, r.committed, 'preview equals committed');
 });
