@@ -1,4 +1,5 @@
 import { footerLayout, footerSizing } from '../../content/footerLayout.js';
+import { isWideFormFactor } from './FormFactorModel.js';
 
 // Semantic ownership survives the editor's selection/docking groups.
 const assetRoles = { frame: 'sp', orb: 'sp', sigil: 'sp', diamond: 'sp', spent: 'sp', draw: 'draw', plate: 'end', 'spent-cards': 'discard', potions: 'potions' };
@@ -42,7 +43,7 @@ export function footerArtHeight(width, zoom = 1, formFactor = null) {
 }
 
 export function footerArtWidth(width, zoom = 1, formFactor = null) {
-  const maximumWidthPx = formFactor === 'desktop' ? footerSizing.desktopMaximumWidthPx : footerSizing.maximumWidthPx;
+  const maximumWidthPx = isWideFormFactor(formFactor) ? footerSizing.desktopMaximumWidthPx : footerSizing.maximumWidthPx;
   return Math.min(width, maximumWidthPx / zoom);
 }
 

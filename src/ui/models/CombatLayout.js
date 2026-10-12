@@ -1,6 +1,7 @@
 import { wireframeUi } from '../../content/wireframeUi.js';
 import { uiConfig } from '../../config/generated/ui.js';
 import { COMBAT_TOOLS_HEIGHT_PX } from './HandLayout.js';
+import { isWideFormFactor } from './FormFactorModel.js';
 
 // The W4 bands, top to bottom.
 const SCENE_BANDS = Object.freeze(['hud', 'scene', 'context', 'footer']);
@@ -50,8 +51,8 @@ export function allocateSceneBands({ width, height, zoom = 1, rem = 16 } = {}, l
 // yields height to the battlefield, but only down to one minimum-width card
 // with its lift, arc and insets. Card faces, text and targets keep their
 // minimums. A host that still cannot fit is reported, not squeezed.
-// `formFactor` (data-form-factor) selects the desktop shares from
-// w4a-combat.json sizing.desktopBands; every other form factor keeps sizing.bands.
+// `formFactor` (data-form-factor) selects the wide shares from w4a-combat.json
+// sizing.desktopBands for desktop and widescreen; phone and tablet keep config.combat.bands.
 export function allocateCombatBands({ width, height, zoom = 1, rem = 16, footerArtPx = 0, compact = false, formFactor = null }, config = wireframeUi) {
   let stacked;
   let handShare;
@@ -75,7 +76,7 @@ export function allocateCombatBands({ width, height, zoom = 1, rem = 16, footerA
     const minimumBattlefield = config.formation.minimumSpritePx / zoom + config.formation.detailReserveRem * rem;
     // Combat's bands and footer floor arrive as wireframeUi.combat; they are
     // handed to the shared plan in the W4 scene-config shape.
-    const desktop = formFactor === 'desktop' ? uiConfig.scenes.w4a.sizing.desktopBands : null;
+    const desktop = isWideFormFactor(formFactor) ? uiConfig.scenes.w4a.sizing.desktopBands : null;
     const [hudBand, sceneBand, contextBand, footerBand] = desktop
       ? [desktop.hud, desktop.scene, desktop.context, desktop.footer]
       : config.combat.bands;

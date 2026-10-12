@@ -36,6 +36,48 @@
     "footSteps": [
       0.25,
       1.125
-    ]
+    ],
+    "perspectiveGrid": {
+      "wide": {
+        "left": 0.08,
+        "right": 0.92,
+        "enemyTop": 0.45,
+        "enemyRowHeight": 0.11,
+        "playerTop": 0.68,
+        "playerRowHeight": 0.26,
+        "skew": 0.45
+      },
+      "narrow": {
+        "left": 0.0,
+        "right": 1.0,
+        "enemyTop": 0.31,
+        "enemyRowHeight": 0.15,
+        "playerTop": 0.68,
+        "playerRowHeight": 0.28,
+        "skew": 0.18
+      },
+      "footFraction": {
+        "enemy": 0.62,
+        "player": 0.7
+      },
+      "depth": {
+        "back": 0.84,
+        "front": 0.92,
+        "player": 1
+      },
+      "bodyWidthFraction": 0.8,
+      "bodyWidthMaxPx": 180,
+      "playerBelowFootPx": 32,
+      "shortBelowPx": 280,
+      "short": {
+        "left": 0.2,
+        "right": 0.8,
+        "enemyTop": 0.56,
+        "enemyRowHeight": 0.12,
+        "playerTop": 0.8,
+        "playerRowHeight": 0.2,
+        "skew": 0.45
+      }
+    }
   }
 }
