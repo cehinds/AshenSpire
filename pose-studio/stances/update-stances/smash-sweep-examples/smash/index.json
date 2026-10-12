@@ -5,7 +5,7 @@
   "slotsPerExample": 5,
   "totalSlots": 50,
   "uniqueActionPaintings": 30,
-  "bookendSource": "../sequence-review/frames/S.webp",
+  "bookendSource": "../../sequence-review/frames/S.webp",
   "bookendPreservation": "Original decoded RGBA pixels padded at128,192 in768canvas; slots1and5 identical PNG bytes",
   "reviewScope": "Director accepted option art for user review only; no gameplay selection",
   "examples": [
