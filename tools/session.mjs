@@ -677,11 +677,14 @@ export function createSession({ registries, seedString, endless = false, restore
     // A boss scales by the tier it is met at instead (balance.bossTiers).
     const boss = bossTierScale(registries, { encounter: enc, tier: contentAct() });
     const extraHpMult = (1 + registries.balance.endless.hpPerLoop * loop) * (boss ? boss.hp : seatTierHpMult(registries, currentSeat(), contentAct()));
+    // Every party member counts, connected or not: a disconnected older seat may reconnect into this fight.
+    const partyRuns = [...members.values()].map(member => member.run);
+    const partyReactionRulesVersion = partyRuns.length && partyRuns.every(run => run.reactionRulesVersion >= 1) ? Math.min(...partyRuns.map(run => run.reactionRulesVersion)) : null;
     const combat = createCoopCombat({
       combatKey: `${session.seed}:${session.actNumber}:${session.cursorId}:${encounterId}`,
       combatExpansionVersion: connectedMembers().some(member => member.run.combatExpansionVersion === 2) ? 2 : 1,
-      reactionRulesVersion: connectedMembers().every(member => member.run.reactionRulesVersion >= 1) ? Math.min(...connectedMembers().map(member => member.run.reactionRulesVersion)) : null,
-      reactionRules: connectedMembers()[0]?.run.reactionRules,
+      reactionRulesVersion: partyReactionRulesVersion,
+      reactionRules: [...members.values()].find(member => member.run.reactionRulesVersion === partyReactionRulesVersion)?.run.reactionRules,
       combatExpansionRules: connectedMembers().find(member => member.run.combatExpansionVersion === 2)?.run.combatExpansionRules || null,
       breakMeterVersion: session.advancedConfigSnapshot?.breakMeterVersion,
       registries, rng,
