@@ -9,8 +9,20 @@ The standalone [HUD Component Studio](tools/hud-component-studio/README.md) reus
 The [Update Stances pilot](pose-studio/stances/update-stances/README.md) contains
 original OpenAI ImageGen comparison paintings made from this project's existing
 Reaver references under human direction. Exact prompts, source hashes and revision
-records accompany the paintings. These are review concepts, not registered game
-assets. The [external reference ledger](docs/design/update-stances/references.md)
+records accompany the paintings. The comparison sheets remain review sources.
+Five owner-selected derivatives use Sweep ← Smash04, Counter ← Smash06,
+Smash ← Smash05, held Evade ← Smash08, and Guard-break ← Guard-break06.
+The [selection manifest](pose-studio/stances/update-stances/selections.json)
+records exact source sheets, hashes, isolated figure bounds and crop bounds.
+The reproducible exporter `tools/selected-weapon-profile-export.mjs` writes the
+512px/full and 256px/mobile WebPs under
+`assets-display/alternative/reaver-greatsword-pilot-*.webp` and the selected
+Sprite Workshop project; `src/content/alternativeSelectedStances.js` records
+profile registration, export hashes and shared floor anchors. These poses apply
+only to default-armour Reaver actually holding the sole greatsword in a two-hand
+grip. They add held preparation and bounded target reactions; existing full
+attack/retaliation sequences remain. Co-op does not opt into this pilot.
+The [external reference ledger](docs/design/update-stances/references.md)
 records research links and evidence limits; no external reference artwork was
 imported. First-party generated artwork; no third-party asset license is claimed.
 
