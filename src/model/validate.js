@@ -2088,7 +2088,7 @@ function collectContentProblems(bundle, errors = []) {
         if (!Array.isArray(on) || on.length === 0) err(`${movePath}.reaction.on`, 'reaction.on must be a non-empty list');
         if (move.weight !== undefined) err(`${movePath}.weight`, 'a reaction move is never rolled and must not carry a weight');
         if (minIncoming !== undefined && !(Number.isInteger(minIncoming) && minIncoming >= 1)) err(`${movePath}.reaction.minIncoming`, 'minIncoming must be an integer >= 1');
-        if (chance !== undefined && !(typeof chance === 'number' && chance > 0 && chance <= 1)) err(`${movePath}.reaction.chance`, 'chance must be a number in (0, 1]');
+        if (chance !== undefined && !(typeof chance === 'number' && chance >= 0 && chance <= 1)) err(`${movePath}.reaction.chance`, 'chance must be a number in [0, 1]');
       } else if (typeof move.weight !== 'number' || Number.isNaN(move.weight)) {
         err(`${movePath}.weight`, `Expected number, got ${describe(move.weight)}`);
       }
