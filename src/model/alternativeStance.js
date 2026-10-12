@@ -4,11 +4,20 @@ export const STANCE_FAMILIES = Object.freeze(['offensive', 'defensive', 'casting
 const defensive = new Set(['defend', 'defending']);
 const offensive = new Set(['attack', 'smash', 'sweep', 'ranged', 'attacking', 'smashing', 'sweeping']);
 
-/** Presentation only. The resolved card, including equipment-projected tags, owns identity. */
-export function stanceForCard(card = {}) {
+function withTagIds(card = {}) {
   card ??= {};
   const resolvedTags = card.cardTags ?? card.tags;
-  if (resolvedTags) card = { ...card, cardTags: resolvedTags.map(tag => typeof tag === 'string' ? tag : tag.id) };
+  return resolvedTags ? { ...card, cardTags: resolvedTags.map(tag => typeof tag === 'string' ? tag : tag.id) } : card;
+}
+
+/** The player's authored action profile (maneuver and camp) for a confirmed card. */
+export function kindForCard(card = {}) {
+  return combatProfileFor(withTagIds(card));
+}
+
+/** Presentation only. The resolved card, including equipment-projected tags, owns identity. */
+export function stanceForCard(card = {}) {
+  card = withTagIds(card);
   const profile = combatProfileFor(card);
   // Player-only reviewed counter/sweep families; public enemy intent stays broad.
   if (profile.maneuver === 'counter') return 'counter';
@@ -35,7 +44,7 @@ export function stanceForPublicIntent(intent = {}) {
 }
 
 /** Each seat keeps its last confirmed card until its next turn. Failed/preparing plays do nothing. */
-export function createStanceLedger() {
+export function createStanceLedger(classify = stanceForCard) {
   const actors = new Map();
   return Object.freeze({
     accept(receipt, resolvedCard) {
@@ -45,7 +54,7 @@ export function createStanceLedger() {
         actors.delete(actorId); return null;
       }
       if (receipt?.type !== 'cardPlayed') return actors.get(actorId) ?? null;
-      const stance = stanceForCard(resolvedCard || { id: receipt.cardId, type: receipt.cardType, cardTags: receipt.cardTags });
+      const stance = classify(resolvedCard || { id: receipt.cardId, type: receipt.cardType, cardTags: receipt.cardTags });
       actors.set(actorId, stance); return stance;
     },
     get(actorId = 'player') { return actors.get(actorId) ?? null; },

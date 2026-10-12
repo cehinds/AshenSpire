@@ -22,7 +22,11 @@ test('approved compact Inspect and HP shapes retain active paging', () => {
 
 test('expanded combat panels and selected details stay in the correct layer', () => {
   assert.match(css, /\.combat-tools:has\(\.combat-log-panel:not\(\[hidden\]\)\)\s*\{[^}]*z-index:\s*calc\(var\(--combat-layer-hud\) \+ 1\)/s);
-  assert.match(css, /\.player:not\(\.context-selected\):not\(\.selected-target\)[^{]*\.statuses\s*\{\s*display:\s*none !important;/s);
+  // Owner decision (2026-10-11): at rest a player folds only its name and
+  // resource rows; the stance chip and status icons stay visible.
+  assert.match(css, /\.player:not\(\.context-selected\):not\(\.selected-target\)[^{]*\[data-meter-row='resource'\]\s*\{\s*display:\s*none !important;/s);
+  const restHide = css.match(/\.player:not\(\.context-selected\):not\(\.selected-target\)[^{]*\{\s*display:\s*none !important;/s)?.[0] ?? '';
+  assert.doesNotMatch(restHide, /data-meter-row='stance'|\.statuses/, 'the stance chip and statuses are not hidden at rest');
 });
 
 test('compact geometry reserves the measured controls and overhead gaps', () => {

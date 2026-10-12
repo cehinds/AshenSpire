@@ -14,7 +14,7 @@ import { targetOutline } from '../models/TargetLayerModel.js';
 import { fitSceneBackdrop } from './sceneBackdrop.js';
 import { battlefieldBackdropConfig } from '../models/SceneLayerModel.js';
 import { presentationConfig } from '../../model/advancedConfig.js';
-import { alternativeCombatComposition, combatComposition as classicCombatComposition, combatSceneryGround, stableHandAnchor, combatArtworkKey, stableCombatArtwork } from '../models/CombatCompositionModel.js';
+import { alternativeCombatComposition, combatComposition as classicCombatComposition, combatSceneryGround, combatStandingGround, stableHandAnchor, combatArtworkKey, stableCombatArtwork } from '../models/CombatCompositionModel.js';
 import { alternativeFormation, fitAlternativeSprites } from '../models/AlternativeFormationModel.js';
 import { playerDetailsPlacement } from '../models/PlayerDetailsPlacementModel.js';
 import { hudGeometry, offsetPlacement, offsetTargetPlate, targetPlateBox } from '../models/HudLayoutOffsetModel.js';
@@ -56,6 +56,35 @@ export function combatPlayerInfoRect(node, art, viewport, zoom, floor = Infinity
   // down under the resting hand or tools, which would take every tap on it.
   const top = Math.max(viewport.top, Math.min(art.top - height - 4, floor - height - 4));
   return { left, top, right: left + width, bottom: top + height, width, height };
+}
+
+// Owner (2026-10-11): the player's intent glyph (attack, smash, counter, defend,
+// sweep, spell) stays above the figure's head while the player is not selected,
+// so the stance reads at rest: centred over the art, below the HUD band. Selected,
+// the Inspect "i" takes that centre (combatPlayerInfoRect), so the glyph steps
+// just left of it (`avoid`, the visible Inspect rect), at the same height: the
+// smallest move that keeps it off the Inspect tap target, half the Inspect
+// width + a 4px gap + half the glyph width. Rightward if the left edge is short.
+export function placePlayerIntentGlyph(leading, { art, hudBottom, zoom = 1, avoid = null, viewport = null }) {
+  const node = leading.querySelector('.player-action-intent');
+  if (!node) return null;
+  const host = node.offsetParent || leading;
+  const { width, height } = node.getBoundingClientRect();
+  const floorTop = Number.isFinite(hudBottom) ? hudBottom + 2 : -Infinity;
+  const top = Math.max(floorTop, art.top - height - 4);
+  let centre = (art.left + art.right) / 2;
+  const overlaps = avoid && centre - width / 2 < avoid.right && centre + width / 2 > avoid.left
+    && top < avoid.bottom && top + height > avoid.top;
+  if (overlaps) {
+    const gap = 4;
+    const leftCentre = avoid.left - gap - width / 2;
+    centre = viewport && leftCentre - width / 2 < viewport.left ? avoid.right + gap + width / 2 : leftCentre;
+  }
+  const local = anchorLocalBox(host, { left: centre - width / 2, top, width, height }, { zoom });
+  node.style.left = `${local.left}px`;
+  node.style.top = `${local.top}px`;
+  node.dataset.placed = 'true';
+  return { centre, top, width, height };
 }
 
 // The selected-card action is independent of the reading panel, like Info.
@@ -227,7 +256,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // including selectable doors that have not painted yet.
     playerInfoRects = players.flatMap(({ infoRect, actionRect }) => [infoRect, actionRect]).filter(Boolean);
     panels.push(...playerInfoRects);
-    for (const { player, leading, art, stack, viewport, panel, inspect, action, infoRect, actionRect } of players) {
+    for (const { player, leading, art, stack, viewport, panel, inspect, infoRect } of players) {
       const expanded = player.classList.contains('context-selected');
       const panelGap = expanded && viewport.width <= 320 ? 3 : 4;
       const idleLeft = Math.max(viewport.left + 4, Math.min(art.left + (art.width - panel.width) / 2, viewport.right - panel.width - 4));
@@ -259,14 +288,37 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       if (leading.style.top !== top) leading.style.top = top;
       if (leading.style.left !== left) leading.style.left = left;
       leading.style.translate = 'none';
-      for (const [door, rect] of [[inspect, infoRect], [action, actionRect]]) {
+      // Selected, the Inspect door is visible: the glyph keeps off it.
+      placePlayerIntentGlyph(leading, { art, hudBottom, zoom, avoid: expanded ? infoRect : null, viewport });
+      for (const [door, rect] of [[inspect, infoRect]]) {
         if (!rect) continue;
         const local = anchorLocalBox({ left: placement.left, top: placement.top, width: panel.width, height: panel.height }, rect, { zoom });
         door.style.left = `${local.left}px`;
         door.style.top = `${local.top}px`;
+        // The Info door stays visibility:hidden until its spot is written, so
+        // it never paints at a temporary position and then moves.
+        if (door === inspect) door.dataset.placed = 'true';
       }
       player.dataset.spriteArtTop = String(art.top);
       player.dataset.playerHudGap = String(art.top - leading.getBoundingClientRect().bottom);
+    }
+  }
+  // Owner (2026-10-11): each combatant's floor shadow is as wide as its health
+  // bar. The bar is read at rest: a selected player's bar widens into the
+  // reading panel, so its last resting width holds and the shadow stays put.
+  // Sprite and bar are both scaled by any selection transform, so their ratio
+  // is the shadow's width as a share of the figure.
+  function syncFloorShadows() {
+    for (const frame of field.querySelectorAll('.combatant')) {
+      const sprite = frame.querySelector('.sprite'), bar = frame.querySelector('.combat-health-meter');
+      if (!sprite || !bar) continue;
+      if (!frame.classList.contains('context-selected')) {
+        const barWidth = bar.getBoundingClientRect().width;
+        if (barWidth > 0) frame.dataset.healthBarWidth = String(barWidth);
+      }
+      const barWidth = Number(frame.dataset.healthBarWidth), spriteWidth = sprite.getBoundingClientRect().width;
+      if (!(barWidth > 0 && spriteWidth > 0)) continue;
+      sprite.style.setProperty('--floor-shadow-width', `${(barWidth / spriteWidth * 100).toFixed(2)}%`);
     }
   }
   // Every living enemy's Inspect hangs above its intent. The default spot is
@@ -325,9 +377,12 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       sides.push(chosen[0]);
     }
     measured.forEach(({ info }, i) => {
-      if (sides[i] == null) return;
+      // Not displayed (unselected): its spot is no longer current, so the
+      // door must be placed again before it can show.
+      if (sides[i] == null) { delete info.dataset.placed; return; }
       if (sides[i]) { if (info.dataset.inspectSide !== sides[i]) info.dataset.inspectSide = sides[i]; }
       else if (info.hasAttribute('data-inspect-side')) info.removeAttribute('data-inspect-side');
+      info.dataset.placed = 'true';
     });
   }
   let inspectTick = 0;
@@ -930,6 +985,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // Last layout write of the refit: the HUD, ribbon and intents are settled.
     // The combat box above is unchanged by the Inspect marks.
     placeEnemyInspect();
+    syncFloorShadows();
     // Fit the sky from the top of the combat screen, including the HUD.
     // Extending a field-only crop upward can expose empty space above the
     // painting. Continuing behind cards must not move the ground line.
@@ -945,7 +1001,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // where the hand consumes much of the viewport. Keep the same horizon.
     const sceneHeight = fieldTop + fieldRect.height / zoom;
     if (!classicAppearance()) fitAlternativeBackdrop(combat, { width: rect.width / zoom, height: fieldRect.height / zoom,
-      fieldTop, ground: combatSceneryGround(sizes, actors, plan.ground) / zoom, narrow, coverFloor: true });
+      fieldTop, ground: combatSceneryGround(sizes, actors, plan.ground) / zoom,
+      standGround: combatStandingGround(sizes, actors, plan.ground) / zoom, narrow, coverFloor: true });
     if (backdrop) fitSceneBackdrop(backdrop, {
       width: backdropWidth, height: rect.height / zoom, zoom,
       windowTop: 0, windowHeight: sceneHeight,
@@ -959,7 +1016,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   const combatHost = field.closest('.combat');
   let wiredAppearance = displayAppearance();
   let releaseBackdrop = wireAlternativeBackdrop(combatHost);
-  combatHost.addEventListener('combatantselectionchange', schedule);
+  // A selection change places the newly shown Info door in the same task that
+  // shows it, so the first paint already has its spot; the frame refit follows.
+  const selectionChanged = () => { refresh(); schedule(); };
+  combatHost.addEventListener('combatantselectionchange', selectionChanged);
   combatHost.addEventListener('handlayoutchange', schedule);
   const resizeObserver = new ResizeObserver(schedule);
   resizeObserver.observe(field);
@@ -1006,7 +1066,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   });
   const release = () => {
     releaseBackdrop();
-    combatHost.removeEventListener('combatantselectionchange', schedule);
+    combatHost.removeEventListener('combatantselectionchange', selectionChanged);
     combatHost.removeEventListener('handlayoutchange', schedule);
     cancelAnimationFrame(frameRequest);
     cancelAnimationFrame(trackingRequest);

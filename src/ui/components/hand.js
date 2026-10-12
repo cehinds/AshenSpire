@@ -135,14 +135,18 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // Hidden, inert clones reserve its space before a press selects a face;
       // selection must never resize the fan underneath that pointer.
       let controlsHeight = 0;
-      for (const card of cards) {
+      const controlled = [];
+      cards.forEach((card, index) => {
         const controls = card.querySelector('.card-upcast-controls');
-        if (!controls) continue;
+        if (!controls) return;
+        controlled.push(index);
         controlsHeight = Math.max(controlsHeight, measureHandUpcastHeight(controls,
           { zoom, width: Math.max(0, handEl.clientWidth - 2 / zoom), cache: upcastMeasurements }));
-      }
+      });
+      // On a phone the selected card's lift rises over the tool row (it paints
+      // above the row), so no empty lift band separates the row from the fan.
       const plan = handLayout({ width: handEl.clientWidth, height: handEl.clientHeight - toolsHeight,
-        count: cards.length, rem, zoom, compact, controlsHeight });
+        count: cards.length, rem, zoom, compact, controlsHeight, controlled, headroom: compact ? toolsHeight : 0 });
       handEl.dataset.wireframeHand = 'true';
       handEl.style.setProperty('--hand-card-zoom', '1');
       handEl.style.setProperty('--hand-span', plan.span + 'px');

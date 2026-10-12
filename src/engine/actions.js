@@ -151,6 +151,12 @@ export function attackTagsFor(action, effect, registries) {
   return Array.isArray(effect.tags) ? effect.tags : [];
 }
 
+// Co-op seats for a crit receipt, so a client can place its callout over a
+// player target (whose entity id is the shared 'player'). Solo adds nothing.
+function critSeats(ctx, source, target) {
+  return ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source), targetPlayerId: ctx.playerIdForEntity(target) } : {};
+}
+
 /**
  * critChance(rules, attributes, tags) → { chance, multiplier } for an attack of
  * these tags (SPEC §13.4o): every matching rule adds base + Σ weight ×
@@ -192,7 +198,7 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
   const computed = receipt ? receipt.amount : computeAttackDamage(ctx, source, target, base, attackTags, carrier, { matchups: false });
   // A critical hit multiplies the finished blow, before Block takes its share.
   const critical = carrier && carrier.critMultiplier > 1 ? Math.floor(computed * carrier.critMultiplier) : computed;
-  if (critical > computed) ctx.emit('critHit', { sourceId: source?.id, targetId: target.id, multiplier: carrier.critMultiplier, amount: critical });
+  if (critical > computed) ctx.emit('critHit', { sourceId: source?.id, targetId: target.id, ...critSeats(ctx, source, target), multiplier: carrier.critMultiplier, amount: critical });
   const tactical = Matchups.prepareMatchupHit(ctx, source, target, carrier, critical);
   const dmg = tactical.amount;
   const blocked = Math.min(target.block, Math.max(0, dmg - tactical.guardBypass));
@@ -298,7 +304,7 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
   const tactical = planned?.receipt || Matchups.beginTacticalAction(ctx, source, target, carrier, [{ ...profile, amount: raw }],
     { ...Control.statusIncomingModifier(ctx, target, profile), restrictions: Control.controlRestrictions(ctx, target) });
   if (tactical.avoided) return 0;
-  if (carrier.critMultiplier > 1) ctx.emit('critHit', { sourceId: source?.id, targetId: target.id, multiplier: carrier.critMultiplier, amount: raw });
+  if (carrier.critMultiplier > 1) ctx.emit('critHit', { sourceId: source?.id, targetId: target.id, ...critSeats(ctx, source, target), multiplier: carrier.critMultiplier, amount: raw });
   prepareExpandedDefense(ctx, target, tactical, carrier);
   const contactIndex = planned?.index || 0;
   let amount = tactical.defendedAmounts[contactIndex] || 0;
@@ -1222,7 +1228,8 @@ export function preflightCardHp(ctx, def, source, target, meta) {
     for (const entity of resolveTargets(ctx, action, effect.target)) {
       const amount = Math.max(0, evalNum(ctx, action, effect.amount, 0, entity)) * Math.max(0, evalNum(ctx, action, effect.repeat, 1));
       const hp = remaining.get(entity) ?? entity.hp;
-      if (effect.nonlethal && amount >= hp) throw new Error('Not enough HP for a nonlethal offering');
+      if (effect.nonlethal && amount >= hp) throw Object.assign(new Error('Not enough HP for a nonlethal offering'),
+        { playRefusal: { reason: 'cost', resource: 'hp', need: (entity.hp - hp) + amount + 1, have: entity.hp } });
       remaining.set(entity, Math.max(0, hp - amount));
     }
   }

@@ -101,6 +101,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "combat.log.full",
+    "extends": "",
+    "short": "Full log",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "combat.log.round",
     "extends": "",
     "short": "Round {round}",
@@ -188,6 +195,48 @@ export const uiStrings = [
     "id": "combat.reaction.mp",
     "extends": "",
     "short": "{amount} MP",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.callout.staggered",
+    "extends": "",
+    "short": "STAGGERED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.callout.disrupted",
+    "extends": "",
+    "short": "DISRUPTED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.callout.countered",
+    "extends": "",
+    "short": "COUNTERED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.callout.evaded",
+    "extends": "",
+    "short": "EVADED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.callout.critical",
+    "extends": "",
+    "short": "CRITICAL",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.callout.guardBreak",
+    "extends": "",
+    "short": "GUARD BREAK",
     "full": "",
     "tip": ""
   },
