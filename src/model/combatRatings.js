@@ -604,20 +604,71 @@ export function canonicalDamageType(type) {
   return DAMAGE_TYPE_ALIASES[type] || type || null;
 }
 
+/** The magic school a contact carries: its profile school, else a school:<id> tag. */
+export function schoolOf(profile) {
+  const tag = (profile?.tags || []).find(t => typeof t === 'string' && t.startsWith('school:'));
+  const school = profile?.school || (tag ? tag.slice('school:'.length) : null) || null;
+  // 'physical' names a camp's weapon work, not a magic school.
+  return school && school !== 'physical' ? school : null;
+}
+
+/** The magic share a school carries (content/combatRules.js). A school the rules do not list is all magic. */
+export function schoolMagicShare(school) {
+  const row = damageTypeRules.schools?.[school];
+  return row && Number.isFinite(row.magicShare) ? row.magicShare : 1;
+}
+
+// The physical damage type of a hit: the source weapon's, else the card's own physical type.
+function physicalTypeOf(profile) {
+  const type = canonicalDamageType(profile?.damageType);
+  return profile?.physicalDamageType || (isPhysicalDamageType(type) ? type : null);
+}
+
+const MELEE_REACHES = new Set(['contact', 'melee']);
+
 /**
  * magicShareOf(profile, config) → the share of a hit that is magic (Barrier,
- * then Ward) rather than physical (Block, then Poise). Precedence: a carrier's
- * own magicShare; then its damage type's configured share, endpoints included
- * (physical 0, magic 1, arcane's hybrid 0.5 or a tuned row); then the camp, and
- * only for a hit with no damage type at all. A spell-camp card with physical
- * damage therefore routes its physical part like any physical hit. The engine
- * and the card face both read this.
+ * then Ward) rather than physical (Block, then Poise). Precedence (owner rules):
+ *   1. the carrier's own magicShare;
+ *   2. a melee spell (spell camp, contact or melee reach) with a physical damage
+ *      type splits: its school's share if strictly between 0 and 1, else the
+ *      Melee spell magic share;
+ *   3. a physical-camp maneuver that carries a magic school, a magic damage type
+ *      or a spell rider splits by the Technique magic share;
+ *   4. a magic school decides: its share (lightning, fire, frost, divine, decay
+ *      are all magic; force and alteration are half);
+ *   5. the damage type's share (0 and 1 honoured);
+ *   6. otherwise the camp: a spell is all magic, a physical hit all physical.
+ * The engine and the card face both read this.
  */
 export function magicShareOf(profile, config = null) {
   if (Number.isFinite(profile?.magicShare)) return Math.min(1, Math.max(0, profile.magicShare));
-  const typed = damageTypeMagicShare(config, canonicalDamageType(profile?.damageType));
+  const spell = profile?.camp === 'spell';
+  const school = schoolOf(profile);
+  const type = canonicalDamageType(profile?.damageType);
+  if (spell && MELEE_REACHES.has(profile?.reach) && physicalTypeOf(profile)) {
+    const share = school ? damageTypeRules.schools?.[school]?.magicShare : undefined;
+    return share > 0 && share < 1 ? share : meleeSpellMagicShare(config);
+  }
+  if (profile?.camp === 'physical' && profile.maneuver && (school || isMagicDamageType(type) || profile.riderSpell)) {
+    return techniqueMagicShare(config);
+  }
+  if (school) return schoolMagicShare(school);
+  const typed = damageTypeMagicShare(config, type);
   if (typed !== null) return typed;
-  return profile?.camp === 'spell' ? 1 : 0;
+  return spell ? 1 : 0;
+}
+
+/** The Melee spell magic share: the Advanced row when the run has one, else the content default. */
+export function meleeSpellMagicShare(config) {
+  const value = config?.magicSplit?.meleeSpell;
+  return Number.isFinite(value) ? value : damageTypeRules.magicSplit.meleeSpell;
+}
+
+/** The Technique magic share: the Advanced row when the run has one, else the content default. */
+export function techniqueMagicShare(config) {
+  const value = config?.magicSplit?.technique;
+  return Number.isFinite(value) ? value : damageTypeRules.magicSplit.technique;
 }
 
 /** splitDamageTypesOf(profile) → the magic and physical damage types of a split hit. */
