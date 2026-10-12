@@ -56,9 +56,10 @@ import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
 import { relicText, renderCard } from '../components/card.js';
 import { enemySprite, playerSprite, spritesAreEnabled } from '../assets.js';
 import { createStanceLedger, kindForCard, stanceForCard } from '../../model/alternativeStance.js';
+import { selectedWeaponProfileFor, selectedWeaponStanceFor, selectedWeaponReactionFor } from '../../model/selectedWeaponStances.js';
 import { animateEvents, playEventCues, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } from '../fx.js';
-import { COMBAT_TIMING } from '../animationPace.js';
-import { figureSpec, equippedPieces } from '../../model/loadout.js';
+import { ANIM_SPEEDS, COMBAT_TIMING, getAnimSpeed } from '../animationPace.js';
+import { figureSpec, equippedPieces, gripOf } from '../../model/loadout.js';
 import { resourceAura } from '../combatAura.js';
 import { CARD_ACTION_CLASSES } from '../../model/alternativeCardAnimation.js';
 import { resolveCombatAnimation, combatRestAfterEvent } from '../../model/combatAnimation.js';
@@ -249,6 +250,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   const heldStances = createStanceLedger();
   // The player's last confirmed card kind: the at-rest intent glyph above the head.
   const heldKinds = createStanceLedger(kindForCard);
+  const heldCards = createStanceLedger(card => card);
+  function selectedProfile() {
+    return selectedWeaponProfileFor({ classId: run.class, armourId: figureSpec(registries, run.loadout, run.class).armourId, grip: gripOf(registries, run.loadout, run.class) });
+  }
+  function playerStance(def) {
+    return selectedWeaponStanceFor({ profile: selectedProfile(), stance: def ? stanceForCard(def) : heldStances.get(), card: def || heldCards.get(), entity: dv(combat.player) });
+  }
   let readinessOrder = [];
   let visualPlans = new Map();
   const barrierVisuals = new Map();
@@ -259,6 +267,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       appliedVisualEvents.add(event);
       heldStances.accept(event, visualPlans.get(event.cardInstanceId)?.stanceCard);
       heldKinds.accept(event, visualPlans.get(event.cardInstanceId)?.stanceCard);
+      heldCards.accept(event, visualPlans.get(event.cardInstanceId)?.stanceCard);
       playerRest = combatRestAfterEvent(playerRest, event, 'player', visualPlans.get(event.cardInstanceId));
       readinessOrder = readinessAfterEvent(readinessOrder, event, 'player');
     }
@@ -266,6 +275,24 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   if (typeof window !== 'undefined') window.__combat = combat; // debug handle
   const fxCtx = {
     layer: $('.fx-layer'),
+    reactionForReceipt: event => {
+      const kind = selectedWeaponReactionFor(event, selectedProfile());
+      const stage = kind && stageFor(fxCtx.anchorFor(event.targetId));
+      // dispatch(endTurn) resolves the whole enemy batch before its receipts are
+      // played. Final model state therefore cannot suppress an earlier evade or
+      // guard break. Only the reaction emitted after the batch's lethal HP loss
+      // belongs to the defeated beat; eventLog and the dispatch buffer share the
+      // same event objects, so their relative order is unambiguous.
+      const eventIndex = combat.eventLog.indexOf(event);
+      const lethalLossIndex = combat.player.alive === false
+        ? combat.eventLog.findLastIndex(row => row.type === 'hpLost' && row.targetId === event.targetId)
+        : -1;
+      const defeatedBeat = kind === 'guard-break' && lethalLossIndex >= 0 && eventIndex > lethalLossIndex;
+      if (!kind || defeatedBeat || !stage?.reactionPoses?.includes(kind)) return null;
+      return () => {
+        stageFor(fxCtx.anchorFor(event.targetId))?.reactPose?.(kind, ANIM_SPEEDS[getAnimSpeed()]?.reactionMs || 280);
+      };
+    },
     combatEl,
     anchorFor: (id) => app.querySelector(`[data-eid="${id}"] .sprite`) || app.querySelector(`[data-eid="${id}"]`),
     relicAnchor: (relicId) => app.querySelector(`[data-relic-id="${relicId}"]`),
@@ -659,7 +686,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // The figure's glyph and stance: the armed card's, else the held ones.
   function syncPlayerPreview(player, inst, def) {
     syncPlayerActionIntent(player, inst, heldKinds.get());
-    stageFor(player?.querySelector('.sprite'))?.setStance?.(def ? stanceForCard(def) : heldStances.get());
+    stageFor(player?.querySelector('.sprite'))?.setStance?.(playerStance(def));
   }
 
   // An armed card's kind shows while it is armed; otherwise the last confirmed
@@ -1429,7 +1456,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const p = combat.player;
     const figure = figureSpec(registries, run.loadout, run.class);
     const animation = equipmentAnimationForLoadout(registries, run.loadout, run.class);
-    const artKey = JSON.stringify([run.class, run.customization, figure.armourId, animation?.setId, animation?.grip, spritesAreEnabled(), document.documentElement.dataset.performance, displayAppearance()]);
+    const artKey = JSON.stringify([run.class, run.customization, figure.armourId, selectedProfile(), animation?.setId, animation?.grip, spritesAreEnabled(), document.documentElement.dataset.performance, displayAppearance()]);
     const existing = artKey === playerArtKey ? zone.querySelector('.combatant.player') : null;
     const renderKey = JSON.stringify([artKey, p, dv(p), run.attributes, run.loadout, selected, selfArm, playerRest, heldStances.get(), heldKinds.get(), readinessOrder, readSettings()]);
     if (existing && playerRenderKey === renderKey) return;
@@ -1479,7 +1506,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       entityId: 'player',
       leading: [combatantInfo(combatantSubject('player', p).name, opener => openCombatantDoor(combatantSubject('player', p), opener))],
       classNames: [selfArm ? 'armed' : '', selectedCombatantId === 'player' ? 'context-selected' : ''],
-      sprite: existing ? null : playerSprite(run.customization || {}, run.class, figure.armourId, { animation, view: 'combat' }),
+      sprite: existing ? null : playerSprite(run.customization || {}, run.class, figure.armourId, { animation, view: 'combat', selectedWeaponProfile: selectedProfile() }),
       name: markMeterRow(labelStack({ label: `${run.customization?.name || runClassIdentity(registries, run).name} · Lv ${characterLevel(run)}`, attrs: { class: 'nm' } }), 'name'),
       meters: meterBars(p),
       trailing,
@@ -1520,7 +1547,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const activeCard = findInst(selected || selfArm);
     const activeDef = activeCard ? resolveCombatCard(combat, activeCard, { upcastRanks: upcastRanksByCard.get(activeCard.instanceId) }) : null;
     syncPlayerActionIntent(box, activeCard, heldKinds.get());
-    stageFor(box)?.setStance?.(activeDef ? stanceForCard(activeDef) : heldStances.get());
+    stageFor(box)?.setStance?.(playerStance(activeDef));
     stageFor(box)?.setRestPose?.(resolveCombatPose(dv(p), playerRest, readinessOrder), { immediate: !existing });
     playerRenderKey = renderKey;
   }
