@@ -4,6 +4,13 @@ import { t, tFull } from '../strings.js';
 // `stack` is the already-committed entries of this root, top first, each
 // { name }. Empty or absent is the version 1 modal, unchanged; with entries,
 // the list shows above the options and Back reads Resolve (it still answers null).
+// The committed entries of one root's stack, top first. The engine pushes onto
+// the end and resolves the last pushed first, so the top is the last entry.
+export function committedReactionStack(reactionStack, groupKey) {
+  if (!reactionStack || reactionStack.groupKey !== groupKey) return [];
+  return [...(reactionStack.entries || [])].reverse();
+}
+
 export function openReactionChoiceModal({ pending, onAnswer, onClosed, stack = [] }) {
   const stacked = Array.isArray(stack) && stack.length > 0;
   let selected = null;
