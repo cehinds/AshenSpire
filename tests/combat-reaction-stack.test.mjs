@@ -358,3 +358,14 @@ test('a second Counter from one seat fizzles at resolution even if its saved ent
   assert.deepEqual(out.events.filter(event => event.type === 'cardPlayed').map(event => event.cardInstanceId), ['r1']);
   assert.ok(out.events.some(event => event.type === 'combatReactionFizzled' && event.cardInstanceId === 'r0' && event.reason === 'secondCounter'));
 });
+
+test('discard candidates leave out only the choosing seat\'s own stacked cards', async () => {
+  const { discardCandidates } = await import('../src/engine/abilityRiders.js');
+  const hand = [{ instanceId: 'x1' }, { instanceId: 'x2' }];
+  const reactionStack = { entries: [{ side: 'player', ownerId: 'a', play: { cardInstanceId: 'x1' } }] };
+  assert.deepEqual(discardCandidates({ playerKey: 'a', piles: { hand }, reactionStack }).map(card => card.instanceId), ['x2']);
+  // Seat b holds its own x1 too: the stack entry belongs to a, so b may still discard it.
+  assert.deepEqual(discardCandidates({ playerKey: 'b', piles: { hand }, reactionStack }).map(card => card.instanceId), ['x1', 'x2']);
+  // Solo play has no playerKey; its entries are owned by 'player'.
+  assert.deepEqual(discardCandidates({ piles: { hand }, reactionStack: { entries: [{ side: 'player', ownerId: 'player', play: { cardInstanceId: 'x2' } }] } }).map(card => card.instanceId), ['x1']);
+});

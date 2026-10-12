@@ -168,6 +168,12 @@ function stackedInstanceIds(ctx) {
     .map(entry => entry.play?.cardInstanceId));
 }
 
+// The hand cards the choosing seat may discard: its stacked cards wait to resolve, so they are excluded.
+export function discardCandidates(ctx) {
+  const stacked = stackedInstanceIds(ctx);
+  return ctx.piles.hand.filter(card => !stacked.has(card.instanceId));
+}
+
 export function requestAbilityDiscard(ctx, action, amount) {
   const stacked = stackedInstanceIds(ctx);
   const count = Math.min(Math.max(0, amount), ctx.piles.hand.filter(c => !stacked.has(c.instanceId)).length);
