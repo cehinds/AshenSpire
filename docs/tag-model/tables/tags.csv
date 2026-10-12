@@ -400,7 +400,7 @@ attackSource.spell,attackSource.spell,Spell,attackSource,TagNode,,Categorized Sp
 attackSource.unarmed,attackSource.unarmed,Unarmed,attackSource,TagNode,,Categorized Unarmed identity; effects are authored separately.,,,,,,live-tag,◇,9FC3E8,source:unarmed
 meta.combat.delivery.projectile,delivery.projectile,Projectile,meta.combat.delivery,TagNode,,Categorized Projectile identity; effects are authored separately.,,,,,,live-tag,◇,9FC3E8,delivery:projectile
 classification,classification,classification,,TagNode,,Grouping node for classification in nodes.csv.,,,,,,live-tag,,,classification
-classification.attack,classification.attack,attack,classification,TagNode,,Grouping node for attack in nodes.csv.,,,,,,live-tag,,,classification.attack
+card.type.attack,type.attack,Attack,card.type,TagNode,,Grouping node for attack in nodes.csv.,,,,,,live-tag,,,classification.attack
 classification.strike,classification.strike,strike,classification,TagNode,,Grouping node for strike in nodes.csv.,,,,,,live-tag,,,classification.strike
 classification.guard,classification.guard,guard,classification,TagNode,,Grouping node for guard in nodes.csv.,,,,,,live-tag,,,classification.guard
 classification.weaponArt,weaponArt,weaponArt,classification,TagNode,,Grouping node for weaponArt in nodes.csv.,,,,,,live-tag,,,classification.weaponArt

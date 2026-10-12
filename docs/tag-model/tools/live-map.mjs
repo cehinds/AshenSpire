@@ -81,6 +81,7 @@ export const LIVE = {
   'meta.character.armor.defensive-property.grounded': 'trait:grounded',
   // card
   'card': 'card',
+  'card.type.attack': 'classification.attack',
   'card.type.curse': 'classification.curse',
   'card.type.skill': 'classification.skill',
   'card.type.power': 'classification.power',
@@ -101,7 +102,6 @@ export const LIVE = {
   'meta.combat.delivery.melee': 'delivery:melee',
   'meta.combat.delivery.projectile': 'delivery:projectile',
   'classification': 'classification',
-  'classification.attack': 'classification.attack',
   'classification.strike': 'classification.strike',
   'classification.guard': 'classification.guard',
   'classification.weaponArt': 'classification.weaponArt',

@@ -400,7 +400,7 @@
  "attackSource.unarmed": "new",
  "meta.combat.delivery.projectile": "new",
  "classification": "new",
- "classification.attack": "new",
+ "card.type.attack": "new",
  "classification.strike": "new",
  "classification.guard": "new",
  "classification.weaponArt": "new",

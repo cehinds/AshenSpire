@@ -550,6 +550,7 @@ Card
     Curse
     Status
     Consumable
+    Attack {Grouping node for attack in nodes.csv.}
   Rarity
     Starter
     Common
@@ -586,7 +587,6 @@ Attack source {Source profile supplying an attack; separate from damage type.}
   Spell {Categorized Spell identity; effects are authored separately.}
   Unarmed {Categorized Unarmed identity; effects are authored separately.}
 classification {Grouping node for classification in nodes.csv.}
-  attack {Grouping node for attack in nodes.csv.}
   strike {Grouping node for strike in nodes.csv.}
   guard {Grouping node for guard in nodes.csv.}
   weaponArt {Grouping node for weaponArt in nodes.csv.}
