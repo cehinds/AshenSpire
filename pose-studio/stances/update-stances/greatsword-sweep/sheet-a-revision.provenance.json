@@ -1,7 +1,8 @@
 {
   "generated_at_utc": "2026-10-12T16:22:00Z",
   "tool": "tools.image_gen__imagegen",
-  "exact_prompt_file": "sheet-a-revision.prompt.txt",
+  "exact_prompt_file": null,
+  "prompt_file_unavailable_reason": "The exact prompt used for this 2026-10-12T16:22:00Z output is absent from the repository and tracked history. The available sheet-a.prompt.txt belongs to the separate sheet-a record, and sheet-a-revision-pass1.prompt.txt belongs to the earlier pass1 output; neither is verified as this output’s exact prompt.",
   "requested_dimensions": [1024, 1536],
   "actual_dimensions": [1024, 1536],
   "mode": "RGBA",
