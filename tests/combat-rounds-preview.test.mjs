@@ -2,6 +2,7 @@
 // rules, and the fight's `combatRounds` field, which exists only when on.
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { advancedConfigRows } from '../src/model/advancedConfig.js';
@@ -9,6 +10,8 @@ import { COMBAT_ROUNDS_KEY, combatRoundsFor, combatRoundsRows } from '../src/mod
 import { createRunState } from '../src/model/state.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { createRng } from '../src/engine/rng.js';
+import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
+import { dispatch } from '../src/engine/combat.js';
 import { categoryHandler } from '../src/ui/screens/settings.js';
 import { advancedSection } from '../src/ui/models/AdvancedSettingsGroups.js';
 import { visibleAdvancedGroups } from '../src/ui/screens/settings.js';
@@ -78,4 +81,52 @@ test('combat.combatRounds is stamped only when on, with empty state', () => {
   assert.deepEqual(onCombat.combatRounds.playerQueue, []);
   assert.deepEqual(Object.keys(onCombat.combatRounds.enemyQueues), onCombat.enemies.filter((e) => e.alive).map((e) => e.id));
   assert.equal(onCombat.combatRounds.rules.version, 1);
+});
+
+// Review finding 3: a save must carry the round state. The off-mode golden below is the snapshot text
+// as it was before the preview saved anything (two fights, a turn each): the preview-off save must not change.
+
+test('a preview-off save is byte-identical to the save before the preview saved round state', () => {
+  const out = [];
+  for (const [seed, classId] of [[5, 'rogue'], [9, 'reaver']]) {
+    const run = createRunState({ seed, classId, registries, profileMeta: { settings: {} } });
+    const c = createRunCombat({ registries, rng: createRng(4242), run, enemyIds: [ENEMY], settings: {} });
+    out.push(JSON.stringify(serializeCombatSnapshot(c)));
+    const card = c.piles.hand.find((x) => x.cardId);
+    try { dispatch(c, { type: 'playCard', cardInstanceId: card.instanceId, targetId: c.enemies[0].id }); } catch { /* an unplayable card: the save still runs */ }
+    dispatch(c, { type: 'endTurn' });
+    out.push(JSON.stringify(serializeCombatSnapshot(c)));
+  }
+  const all = out.join('\n');
+  assert.ok(!all.includes('"combatRounds"'), 'no preview key is written');
+  assert.equal(createHash('sha256').update(all).digest('hex'), 'daf25e46b0059112535b0362fdac55841dec4664242a5b9bc5de82e96f873a01');
+  assert.equal(all.length, 118947);
+});
+
+test('a preview fight with queued cards saves and restores: queues and paid SP intact, End Turn works after restore', () => {
+  const run = createRunState({ seed: 5, classId: 'reaver', registries, profileMeta: { settings: { [COMBAT_ROUNDS_KEY]: true } } });
+  const c = fight(run);
+  let queued = 0;
+  for (const card of [...c.piles.hand]) {
+    if (queued === 2) break;
+    const targetId = c.enemies.find((e) => e.alive).id;
+    for (const attempt of [{ targetId }, {}]) {
+      try { dispatch(c, { type: 'playCard', cardInstanceId: card.instanceId, ...attempt }); queued++; break; } catch { /* not playable this way */ }
+    }
+  }
+  assert.equal(queued, 2, 'fixture: two attacks are queued');
+  const saved = JSON.parse(JSON.stringify(serializeCombatSnapshot(c)));
+  assert.ok(saved.combatRounds, 'the round record is in the save');
+  const restored = restoreCombatSnapshot({ registries, rng: createRng(4242), snapshot: saved });
+  assert.deepEqual(restored.combatRounds.playerQueue, c.combatRounds.playerQueue, 'the player queue survives');
+  assert.deepEqual(restored.combatRounds.enemyQueues, c.combatRounds.enemyQueues, 'the enemy queues survive');
+  assert.deepEqual(restored.combatRounds.momentum, c.combatRounds.momentum);
+  assert.deepEqual(restored.combatRounds.rules, c.combatRounds.rules);
+  assert.equal(restored.player.energy, c.player.energy, 'the paid Stamina survives');
+  assert.equal(restored.player.mana, c.player.mana, 'the paid Mana survives');
+  const turn = restored.turn;
+  dispatch(restored, { type: 'endTurn' });
+  assert.equal(restored.phase, 'player', 'End Turn commits the restored round and hands the turn back');
+  assert.equal(restored.turn, turn + 1);
+  assert.deepEqual(restored.combatRounds.playerQueue, []);
 });
