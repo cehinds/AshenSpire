@@ -31,7 +31,10 @@ export function alternativeFormation(plan, width, height, narrow) {
   const lift = Math.max(0, height * profile.playerTop + playerFoot - (height - GRID.playerBelowFootPx));
   const baseline = height * (profile.playerTop + profile.playerRowHeight) - lift;
   const shear = y => profile.skew * (baseline - y);
-  const laneWidth = (width * (profile.right - profile.left) - shear(height * profile.enemyTop - lift)) / lanes;
+  // The enemy back rank also steps right by a fraction of a lane, so its
+  // figures stand clear of the front rank's; the lanes narrow to keep it in.
+  const backShift = GRID.backRankShift || 0;
+  const laneWidth = (width * (profile.right - profile.left) - shear(height * profile.enemyTop - lift)) / (lanes + backShift);
   const place = cell => {
     const enemy = cell.side ? cell.side === 'enemy' : Number(cell.cell.slice(1)) > plan.columns;
     // Enemy column 0 is the outermost (back) column; the player's front
@@ -43,7 +46,7 @@ export function alternativeFormation(plan, width, height, narrow) {
     const foot = rowHeight * (enemy ? GRID.footFraction.enemy : GRID.footFraction.player);
     const top = height * (enemy ? profile.enemyTop : profile.playerTop) + rank * rowHeight - lift;
     const ground = top + foot;
-    const laneLeft = width * profile.left + lane * laneWidth;
+    const laneLeft = width * profile.left + (lane + (enemy && rank === 0 ? backShift : 0)) * laneWidth;
     // `box` is the cell's unsheared rectangle at its mid-height; `skew` shears
     // it about that centre line into the drawn parallelogram.
     const left = laneLeft + shear(top + rowHeight / 2);
