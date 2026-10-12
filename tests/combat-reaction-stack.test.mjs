@@ -185,6 +185,24 @@ test('co-op seats answer in order and the whole stack resolves last pushed first
   assert.equal(C.pendingReaction, undefined);
 });
 
+test('co-op instance ids are per seat: seat A stacking rc1 does not hide seat B its own rc1', () => {
+  const { registries } = fixture();
+  const players = ['a', 'b'].map(id => ({ id, classId: 'reaver', maxHp: 100, hp: 100,
+    maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 1, combatExpansionVersion: 2,
+    deck: [{ cardId: 'sweepingBlow', instanceId: 'rc1', upgraded: false }] }));
+  const C = createCoopCombat({ registries, rng: createRng(713), players, enemyIds: ['wanderingSoldier'], reactionRulesVersion: 2 });
+  for (const P of C.players.values()) P.entity.block = 100;
+  endTurn(C, 'a'); endTurn(C, 'b');
+  assert.equal(C.pendingReaction.ownerId, 'a');
+  assert.ok(C.pendingReaction.options.some(row => row.play.cardInstanceId === 'rc1'));
+  chooseReaction(C, 'a', { offerId: C.pendingReaction.id, optionId: C.pendingReaction.options.find(row => row.play.cardInstanceId === 'rc1').id });
+  assert.equal(C.reactionStack.entries.length, 1);
+  assert.equal(C.reactionStack.entries[0].ownerId, 'a');
+  // Seat A has no card left; seat B's own rc1 must still be offered.
+  assert.equal(C.pendingReaction.ownerId, 'b');
+  assert.ok(C.pendingReaction.options.some(row => row.play.cardInstanceId === 'rc1'), 'seat B rc1 is offered');
+});
+
 test('a co-op seat that disconnects after committing fizzles its entries and pays nothing', () => {
   const { registries } = fixture();
   const players = ['a', 'b'].map(id => ({ id, classId: 'reaver', maxHp: 100, hp: 100,

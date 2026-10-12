@@ -85,7 +85,8 @@ function optionsFor(ctx, row, group, hooks, refusal = null) {
   const seat = ctx.players ? row.playerId : 'player';
   const counterStacked = entries.some(entry => entry.ownerId === seat && entry.maneuver === 'counter');
   for (inst of handOf(ctx, row)) {
-    if (entries.some(entry => entry.play.cardInstanceId === inst.instanceId)) continue;
+    // Instance ids are unique per seat only (co-op runs each start at rc1), so match the owner too.
+    if (entries.some(entry => entry.ownerId === seat && entry.play?.cardInstanceId === inst.instanceId)) continue;
     const base = resolveCombatCard(ctx, inst);
     if (counterStacked && (base.cardTags || base.tags || []).includes('maneuver:counter')) continue;
     if (!eligible(ctx, base, row)) { if (candidateByManeuver(ctx, base)) note('notCovered'); continue; }

@@ -1447,7 +1447,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         } else el.addEventListener('click', play);
       },
     });
-    const stackedIds = new Set((sc.reactionStack?.entries || []).map((entry) => entry.cardInstanceId));
+    // Only this viewer's own stacked cards are hidden; another seat's rc1 is still playable here.
+    const stackedIds = new Set((sc.reactionStack?.entries || []).filter((entry) => entry.ownerId === me).map((entry) => entry.cardInstanceId));
     if (meP && meP.alive && meP.connected) {
       handStrip.render({
         cards: meP.hand.map((c) => {
