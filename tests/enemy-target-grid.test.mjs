@@ -252,3 +252,23 @@ for (const [label, grid, size] of [['Classic', enemyTargetGrid, 64], ['Alternati
     assert.ok(!overlaps(a, b), 'the two cells are distinct');
   });
 }
+
+// Fallback passes keep other foes' controls and the player's overhead controls
+// blocked: only unowned soft obstacles are dropped once the lattice fails.
+for (const [label, grid] of [['Classic', enemyTargetGrid], ['Alternative', alternativeEnemyTargetGrid]]) {
+  test(`${label} grid never covers another foe's controls when the first lattice fails`, () => {
+    const bControls = { left: 0, top: 0, width: 200, height: 120, owner: 'b' };
+    const placements = grid({ width: 200, height: 200, targets: [{ id: 'a', x: 100, y: 60 }],
+      obstacles: [bControls, { left: 0, top: 120, width: 200, height: 80 }] });
+    const a = placements.find(slot => slot.id === 'a');
+    assert.ok(a, 'a legal cell exists below b\'s controls, so a is placed');
+    assert.ok(!overlaps(a, bControls), 'a box never covers b\'s controls (gap 0)');
+  });
+
+  test(`${label} grid never covers a player overhead control passed as a hard obstacle`, () => {
+    const player = { left: 60, top: 60, width: 80, height: 80 };
+    const placements = grid({ width: 200, height: 200, targets: [{ id: 'a', x: 100, y: 100 }], hardObstacles: [player] });
+    assert.equal(placements.length, 1, 'foe a is placed');
+    assert.ok(!overlaps(placements[0], player), 'the box stays clear of the player controls (gap 0)');
+  });
+}

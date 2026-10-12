@@ -27,17 +27,18 @@ function watchTargetPlacement(host, picker) {
     const localRect = rect => ({ left: rect.left - box.left, top: rect.top - box.top, width: rect.width, height: rect.height });
     // A box may cover its own foe's controls (intent, Inspect, HP, armor), which
     // stay clickable above it through combat-layers.css z-index. It never covers
-    // another foe's or the player's controls, so those are obstacles without an owner.
+    // another foe's controls, so those are obstacles with an owner.
     const visibleRects = nodes => nodes.map(node => node.getBoundingClientRect()).filter(rect => rect.width && rect.height);
     const obstacles = [
       ...visibleRects([combat?.querySelector('.combat-hud'), host.querySelector('.turn-ribbon')].filter(Boolean)).map(localRect),
-      ...visibleRects([...host.querySelectorAll('.combatant.player :is(.combatant-leading, .meters)')]).map(localRect),
       ...[...host.querySelectorAll('.combatant.enemy')].flatMap(figure => visibleRects([...figure.querySelectorAll(':is(.combatant-leading, .meters, .nm)')])
         .map(rect => ({ ...localRect(rect), owner: figure.dataset.eid }))),
     ];
     const playerRect = host.querySelector('.combatant.player .sprite')?.getBoundingClientRect();
-    // Cards, combat tools and action buttons paint above the picker: never place a target under them.
-    const hardNodes = [playerRect, ...(combat?.querySelectorAll('.combat-tools, .combat-action-row button, .hand .card') ?? [])];
+    // The player's overhead controls and the cards, combat tools and action buttons
+    // paint above the picker: never place a target under them.
+    const playerControls = [...host.querySelectorAll('.combatant.player :is(.combatant-leading, .meters)')];
+    const hardNodes = [playerRect, ...playerControls, ...(combat?.querySelectorAll('.combat-tools, .combat-action-row button, .hand .card') ?? [])];
     const hardObstacles = hardNodes.filter(Boolean)
       .map(node => (node.getBoundingClientRect ? node.getBoundingClientRect() : node))
       .filter(rect => rect.width && rect.height).map(localRect);

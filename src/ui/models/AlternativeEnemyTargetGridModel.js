@@ -31,7 +31,7 @@ export function alternativeEnemyTargetGrid({ width, height, targets, obstacles =
   };
   // Shift the entire lattice when an intent row leaves a narrow free band.
   // Anchored origins also let a lone target sit exactly on its enemy center.
-  for (const blocks of [[...obstacles, ...hardObstacles], hardObstacles]) {
+  for (const blocks of [[...obstacles, ...hardObstacles], [...obstacles.filter(rect => rect.owner), ...hardObstacles]]) {
   for (const edge of [...new Set([size, 72, 56, 48].filter(value => value <= size))]) {
     const pitch = edge + gap;
     const origins = (span, anchors, blocks, start, length) => [...new Set([
@@ -75,8 +75,11 @@ export function alternativeEnemyTargetGrid({ width, height, targets, obstacles =
       const grid = [];
       for (let top = inset; top + edge <= height - inset; top += edge + gap) {
         for (let left = inset; left + edge <= width - inset; left += edge + gap) {
-          const cell = { left, top, width: edge, height: edge, owners: [] };
-          if (!hardObstacles.some(rect => overlaps(cell, rect, gap))) grid.push(cell);
+          const cell = { left, top, width: edge, height: edge };
+          // Unowned soft obstacles are dropped here; owned ones still claim the cell.
+          if (hardObstacles.some(rect => overlaps(cell, rect, gap))) continue;
+          const owners = obstacles.filter(rect => rect.owner && overlaps(cell, rect, gap)).map(rect => rect.owner);
+          grid.push({ ...cell, owners: [...new Set(owners)] });
         }
       }
       if (grid.length > fallback.length) fallback = grid;
