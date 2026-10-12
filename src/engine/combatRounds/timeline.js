@@ -485,7 +485,9 @@ function resolveAttack(cur, entry, events, rng, options, reactionEvade = null, r
   const accuracy = accuracyFor({ attrs: attacker.attrs, level: attacker.level, tags: card.tags, accuracy: card.accuracy })
     + attacker.accuracyExtra;
   // The evade card spent on this attack adds its evasion-cards.csv bonus to the hit roll (owner, 2026-10-11).
-  const { hit, need } = hitRoll({ accuracy, evasion: target.evasion + (evadeUse?.evasion ?? 0) }, d20);
+  // Under liveDefence (SPEC §4.11) the live dodgeRoll decides the dodge, so the timeline's table bonus is not added.
+  const tableEvasion = cur.liveDefence ? 0 : (evadeUse?.evasion ?? 0);
+  const { hit, need } = hitRoll({ accuracy, evasion: target.evasion + tableEvasion }, d20);
 
   // A full block: the block covers the whole hit (block >= damage, damage > 0).
   const blocked = hit && dmg > 0 && cur.active[target.id].guard >= dmg;

@@ -388,3 +388,29 @@ for (const expanded of [false, true]) {
     assert.equal(queued.momentum[queued.ids.graveWisp] ?? 0, base.momentum[base.ids.graveWisp] ?? 0, 'the uncovered attack earns no Counter credit');
   });
 }
+
+// --- P3b fix 4 (SPEC §4.11): under liveDefence the timeline's evade rules are not used, so the evasion-cards bonus is not either ---
+
+test('under liveDefence a played Evade adds no evasion-cards.csv bonus to the attacker\'s hit roll', () => {
+  // Backstep is worth +5 Evasion in evasion-cards.csv (a table card is matched by its name). Under liveDefence the
+  // live dodgeRoll decides the dodge, so the attack's hit roll is the same with the Evade played as without it.
+  const attackNeed = (queues, liveDefence) => {
+    const state = makeFight([
+      { id: 'player', side: 'player', name: 'P', attrs: {}, hp: 50, sp: 3, hand: [] },
+      { id: 'e1', side: 'enemy', name: 'A', attrs: {}, hp: 50, sp: 3 },
+    ], TABLES);
+    const round = startRound(state, { queues, rng: HOOKS.rng, liveDefence });
+    const events = [];
+    for (let guard = 0; guard < 20; guard += 1) { const step = stepRound(round, HOOKS); events.push(...step.events); if (step.done) break; }
+    events.push(...finishRound(round).events);
+    return events.find((e) => e.type === 'hit' && e.by === 'e1');
+  };
+  const attack = [card('a1', 'attack', 'player', { speed: 1, damage: 1 })];
+  const without = attackNeed({ player: [], e1: attack }, true);
+  const withEvade = attackNeed({ player: [card('Backstep', 'evade', 'self', { speed: 9 })], e1: attack }, true);
+  assert.ok(without && withEvade, 'fixture: the enemy attack resolves in both rounds');
+  assert.equal(withEvade.need, without.need, 'the evasion-cards.csv bonus is not added under liveDefence');
+  // The same round without liveDefence does use the table bonus, so the fixture really carries one.
+  const timelineWith = attackNeed({ player: [card('Backstep', 'evade', 'self', { speed: 9 })], e1: attack }, false);
+  assert.ok(timelineWith.need > withEvade.need, 'without liveDefence the table bonus lowers the attacker\'s need');
+});
