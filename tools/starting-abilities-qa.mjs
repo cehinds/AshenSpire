@@ -4,6 +4,10 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { launchBrowser, resolveBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
+import {contentBundle} from '../src/content/index.js';
+import {createRegistries} from '../src/model/registries.js';
+import {creationHasSpells} from '../src/ui/models/CreationWorkspaceModel.js';
+const registries=createRegistries(contentBundle);
 const require = createRequire(import.meta.url);
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || (process.env.CODEX_PRIMARY_RUNTIME_NODE_MODULES ? `${process.env.CODEX_PRIMARY_RUNTIME_NODE_MODULES}/playwright` : 'playwright'));
 const out = resolve(process.env.STARTING_ABILITIES_OUT || 'outputs/starting-abilities');
@@ -23,6 +27,12 @@ try {
     await page.waitForSelector('#cz-next');
     await page.locator('#cz-next').click();
     await page.locator('#cz-next').click();
+    await page.locator('#cz-next').click();
+    const spellStep = creationHasSpells(registries, classId);
+    if (spellStep) {
+      assert.equal(await page.locator('#cz-equipment-section option[value="startingAbilities"]').count(), 0, 'spells are not an Equipment section');
+      await page.locator('#cz-tab-spells').dispatchEvent('click');
+    }
     if (classId === 'reaver') {
       await page.locator('#cz-equipment-section').selectOption('startingAbilities');
       assert.equal(await page.locator('[data-equipment-section="startingAbilities"] .cc-ability-choice[data-card-id="shieldBash"]').count(), 1);
@@ -42,9 +52,9 @@ try {
       assert.equal(await page.locator('[data-face="startingAbilities"]').evaluate(node => node.closest('details').open), false, 'native fold still closes');
     }
     // Use the native fold face, including the path whose refreshed pool was missing.
-    if (!await page.locator('[data-face="startingAbilities"]').isVisible()) await page.locator('#cz-equipment-section').selectOption('startingAbilities');
-    else await page.locator('[data-face="startingAbilities"]').click();
-    const area = page.locator('[data-equipment-section="startingAbilities"]');
+    if (!spellStep && !await page.locator('[data-face="startingAbilities"]').isVisible()) await page.locator('#cz-equipment-section').selectOption('startingAbilities');
+    else if (!spellStep) await page.locator('[data-face="startingAbilities"]').click();
+    const area = page.locator(spellStep ? '#cz-starting-spells [data-ability-step="spells"]' : '[data-ability-step="equipment"]');
     await area.waitFor({ state: 'visible' });
     assert.equal(await page.locator('#cz-next').getAttribute('aria-disabled'), 'true', 'incomplete ability count blocks Continue');
     const choose = area.locator('.cc-ability-choose');
