@@ -177,3 +177,32 @@ test('overhead controls paint above the target picker in the formation stacking 
   assert.equal(z('.combatant :is(.nm,.meters,.statuses)'), 'calc(var(--combat-layer-selection) + 1) !important');
   assert.equal(z('.combatant .combatant-leading'), 'calc(var(--combat-layer-selection) + 3) !important');
 });
+
+// A foe's box sits on its ground anchor (the shadow point under its feet): the
+// square's bottom edge is `ground`, and foes in one row share that bottom edge.
+for (const [label, grid] of [['Classic', enemyTargetGrid], ['Alternative', alternativeEnemyTargetGrid]]) {
+  test(`${label} grid puts a lone grounded foe's box bottom on its ground line, centred on x`, () => {
+    const target = { id: 'a', x: 200, y: 150, ground: 300 };
+    const [slot] = grid({ width: 420, height: 420, targets: [target] });
+    assert.ok(slot, 'the foe gets a box');
+    assert.ok(Math.abs(slot.top + slot.height - target.ground) <= 0.5, `box bottom ${slot.top + slot.height} = ${target.ground}`);
+    assert.ok(Math.abs(slot.left + slot.width / 2 - target.x) <= 0.5, `box centre x ${slot.left + slot.width / 2} = ${target.x}`);
+  });
+
+  test(`${label} grid gives two far-apart foes on one ground line identical top and height`, () => {
+    const targets = [{ id: 'l', x: 110, y: 120, ground: 300 }, { id: 'r', x: 310, y: 120, ground: 300 }];
+    const slots = grid({ width: 420, height: 420, targets });
+    assert.equal(slots.length, 2);
+    const [left, right] = targets.map(target => slots.find(slot => slot.id === target.id));
+    assert.equal(left.top, right.top, 'shared ground line gives one top');
+    assert.equal(left.height, right.height, 'every foe gets the same square size');
+    assert.equal(left.top + left.height, 300);
+    assert.equal(right.top + right.height, 300);
+  });
+
+  test(`${label} grid keeps centring a foe without a ground anchor on its y`, () => {
+    const target = { id: 'c', x: 200, y: 200 };
+    const [slot] = grid({ width: 420, height: 420, targets: [target] });
+    assert.ok(Math.abs(slot.top + slot.height / 2 - target.y) <= 0.5, `box centre y ${slot.top + slot.height / 2} = ${target.y}`);
+  });
+}

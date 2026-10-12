@@ -1,6 +1,8 @@
 // Screen-pixel geometry; DOM zoom conversion belongs to the renderer.
 const overlaps = (a, b, gap) => a.left < b.left + b.width + gap && a.left + a.width + gap > b.left
   && a.top < b.top + b.height + gap && a.top + a.height + gap > b.top;
+// A target with a ground anchor puts its square's bottom edge on that line; otherwise its centre is y.
+const anchorY = (target, edge) => Number.isFinite(target.ground) ? target.ground - edge / 2 : target.y;
 
 export function alternativeEnemyTargetGrid({ width, height, targets, obstacles = [], hardObstacles = [], size = 88, gap = 6, inset = 8 }) {
   if (!targets.length || width <= 0 || height <= 0) return [];
@@ -13,7 +15,7 @@ export function alternativeEnemyTargetGrid({ width, height, targets, obstacles =
   // when every foe gets a distinct eligible cell.
   const assignCells = grid => {
     const pairs = targets.flatMap((target, index) => grid.flatMap((cell, slot) => eligible(cell, target) ? [{ index, slot,
-      distance: (cell.left + cell.width / 2 - target.x) ** 2 + (cell.top + cell.height / 2 - target.y) ** 2,
+      distance: (cell.left + cell.width / 2 - target.x) ** 2 + (cell.top + cell.height / 2 - anchorY(target, cell.height)) ** 2,
     }] : [])).sort((a, b) => a.distance - b.distance || a.index - b.index || a.slot - b.slot);
     const used = new Set(), placed = new Map();
     for (const pair of pairs) {
@@ -33,7 +35,7 @@ export function alternativeEnemyTargetGrid({ width, height, targets, obstacles =
       ...blocks.flatMap(rect => [rect[start] + rect[length] + gap, rect[start] - edge - gap]),
     ].map(value => inset + ((value - inset) % pitch + pitch) % pitch))];
     const xs = origins(width, targets.map(target => target.x), blocks, 'left', 'width');
-    const ys = origins(height, targets.map(target => target.y), blocks, 'top', 'height');
+    const ys = origins(height, targets.map(target => anchorY(target, edge)), blocks, 'top', 'height');
     let score = Infinity;
     for (const startX of xs) for (const startY of ys) {
       const grid = [];
@@ -49,7 +51,7 @@ export function alternativeEnemyTargetGrid({ width, height, targets, obstacles =
       if (grid.length < targets.length) continue;
       if (assignCells(grid).length < targets.length) continue;
       const distance = targets.reduce((sum, target) => sum + Math.min(...grid.filter(cell => eligible(cell, target)).map(cell =>
-        (cell.left + edge / 2 - target.x) ** 2 + (cell.top + edge / 2 - target.y) ** 2)), 0);
+        (cell.left + edge / 2 - target.x) ** 2 + (cell.top + edge / 2 - anchorY(target, edge)) ** 2)), 0);
       if (distance < score) { score = distance; cells = grid; }
     }
     if (cells.length >= targets.length) break;
