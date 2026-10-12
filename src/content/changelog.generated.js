@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1890",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Reaver greatsword combat stances now use selected artwork",
+    "detail": "A Reaver in the default armor carrying only a greatsword now shows selected poses for Sweep, Counter and Smash, holds its Evade pose when ready, and shows its Guard Break reaction when an enemy breaks its guard. These reactions use the five selected greatsword paintings.",
+    "build": "0.7.1.1417",
+    "pullRequest": 1890,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1890"
+  },
+  {
+    "id": "pr-1885",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "On desktop, the Combat log and Reaction sit in the bottom corners",
+    "detail": "The Combat log button now sits in the bottom-left corner and the Reaction toggle in the bottom-right, so the strip above your cards is gone and the hand sits lower on the screen with more room for the battlefield. Phone and tablet are unchanged.",
+    "build": "0.7.1.1406",
+    "pullRequest": 1885,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1885"
+  },
+  {
     "id": "pr-1884",
     "date": "2026-10-12",
     "group": "2026-10-12",
