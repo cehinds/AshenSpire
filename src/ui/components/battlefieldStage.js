@@ -1129,8 +1129,9 @@ function enemyFrameAtCell(field, x, y) {
   const cell = plan.cells.find(cell => cell.box && occupied.has(cell.cell)
     && perspectiveCellContains(cell.box, x - rect.left, y - rect.top));
   if (!cell) return null;
-  const frame = field.querySelector(`.combatant.enemy[data-formation-cell="${CSS.escape(cell.cell)}"]`);
-  return frame && !frame.inert && !frame.classList.contains('dead') ? frame : null;
+  // Past the grid's capacity two enemies can share a cell; take a living one.
+  return [...field.querySelectorAll(`.combatant.enemy[data-formation-cell="${CSS.escape(cell.cell)}"]`)]
+    .find(frame => !frame.inert && !frame.classList.contains('dead')) ?? null;
 }
 function wireGridTargeting(field) {
   if (gridTargetingFields.has(field)) return;
