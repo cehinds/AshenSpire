@@ -1,0 +1,217 @@
+{
+  "reviewOnly": true,
+  "examples": [
+    {
+      "id": "SM01",
+      "slots": 5,
+      "sourcePaths": [
+        "smash/ground-slam-revision-2/SM01/frames/01.png",
+        "smash/ground-slam-revision-2/SM01/frames/02.png",
+        "smash/ground-slam-revision-2/SM01/frames/03.png",
+        "smash/ground-slam-revision-2/SM01/frames/04.png",
+        "smash/ground-slam-revision-2/SM01/frames/05.png"
+      ],
+      "durationsMs": [
+        350,
+        350,
+        350,
+        350,
+        350
+      ],
+      "decodedGifFrames": 5,
+      "gif": "SM01.gif",
+      "storyboard": "SM01-storyboard.png"
+    },
+    {
+      "id": "SM02",
+      "slots": 5,
+      "sourcePaths": [
+        "smash/ground-slam-revision-2/SM02/frames/01.png",
+        "smash/ground-slam-revision-2/SM02/frames/02.png",
+        "smash/ground-slam-revision-2/SM02/frames/03.png",
+        "smash/ground-slam-revision-2/SM02/frames/04.png",
+        "smash/ground-slam-revision-2/SM02/frames/05.png"
+      ],
+      "durationsMs": [
+        350,
+        350,
+        350,
+        350,
+        350
+      ],
+      "decodedGifFrames": 5,
+      "gif": "SM02.gif",
+      "storyboard": "SM02-storyboard.png"
+    },
+    {
+      "id": "SM03",
+      "slots": 5,
+      "sourcePaths": [
+        "smash/ground-slam-revision-2/SM03/frames/01.png",
+        "smash/ground-slam-revision-2/SM03/frames/02.png",
+        "smash/ground-slam-revision-2/SM03/frames/03.png",
+        "smash/ground-slam-revision-2/SM03/frames/04.png",
+        "smash/ground-slam-revision-2/SM03/frames/05.png"
+      ],
+      "durationsMs": [
+        350,
+        350,
+        350,
+        350,
+        350
+      ],
+      "decodedGifFrames": 5,
+      "gif": "SM03.gif",
+      "storyboard": "SM03-storyboard.png"
+    },
+    {
+      "id": "SM04",
+      "slots": 5,
+      "sourcePaths": [
+        "smash/ground-slam-revision-2/SM04/frames/01.png",
+        "smash/ground-slam-revision-2/SM04/frames/02.png",
+        "smash/ground-slam-revision-2/SM04/frames/03.png",
+        "smash/ground-slam-revision-2/SM04/frames/04.png",
+        "smash/ground-slam-revision-2/SM04/frames/05.png"
+      ],
+      "durationsMs": [
+        350,
+        350,
+        350,
+        350,
+        350
+      ],
+      "decodedGifFrames": 5,
+      "gif": "SM04.gif",
+      "storyboard": "SM04-storyboard.png"
+    },
+    {
+      "id": "SM05",
+      "slots": 5,
+      "sourcePaths": [
+        "smash/ground-slam-revision-2/SM05/frames/01.png",
+        "smash/ground-slam-revision-2/SM05/frames/02.png",
+        "smash/ground-slam-revision-2/SM05/frames/03.png",
+        "smash/ground-slam-revision-2/SM05/frames/04.png",
+        "smash/ground-slam-revision-2/SM05/frames/05.png"
+      ],
+      "durationsMs": [
+        350,
+        350,
+        350,
+        350,
+        350
+      ],
+      "decodedGifFrames": 5,
+      "gif": "SM05.gif",
+      "storyboard": "SM05-storyboard.png"
+    },
+    {
+      "id": "SM06",
+      "slots": 5,
+      "sourcePaths": [
+        "smash/ground-slam-revision-2/SM06/frames/01.png",
+        "smash/ground-slam-revision-2/SM06/frames/02.png",
+        "smash/ground-slam-revision-2/SM06/frames/03.png",
+        "smash/ground-slam-revision-2/SM06/frames/04.png",
+        "smash/ground-slam-revision-2/SM06/frames/05.png"
+      ],
+      "durationsMs": [
+        350,
+        350,
+        350,
+        350,
+        350
+      ],
+      "decodedGifFrames": 5,
+      "gif": "SM06.gif",
+      "storyboard": "SM06-storyboard.png"
+    },
+    {
+      "id": "SM07",
+      "slots": 5,
+      "sourcePaths": [
+        "smash/ground-slam-revision-2/SM07/frames/01.png",
+        "smash/ground-slam-revision-2/SM07/frames/02.png",
+        "smash/ground-slam-revision-2/SM07/frames/03.png",
+        "smash/ground-slam-revision-2/SM07/frames/04.png",
+        "smash/ground-slam-revision-2/SM07/frames/05.png"
+      ],
+      "durationsMs": [
+        350,
+        350,
+        350,
+        350,
+        350
+      ],
+      "decodedGifFrames": 5,
+      "gif": "SM07.gif",
+      "storyboard": "SM07-storyboard.png"
+    },
+    {
+      "id": "SM08",
+      "slots": 5,
+      "sourcePaths": [
+        "smash/ground-slam-revision-2/SM08/frames/01.png",
+        "smash/ground-slam-revision-2/SM08/frames/02.png",
+        "smash/ground-slam-revision-2/SM08/frames/03.png",
+        "smash/ground-slam-revision-2/SM08/frames/04.png",
+        "smash/ground-slam-revision-2/SM08/frames/05.png"
+      ],
+      "durationsMs": [
+        350,
+        350,
+        350,
+        350,
+        350
+      ],
+      "decodedGifFrames": 5,
+      "gif": "SM08.gif",
+      "storyboard": "SM08-storyboard.png"
+    },
+    {
+      "id": "SM09",
+      "slots": 5,
+      "sourcePaths": [
+        "smash/ground-slam-revision-2/SM09/frames/01.png",
+        "smash/ground-slam-revision-2/SM09/frames/02.png",
+        "smash/ground-slam-revision-2/SM09/frames/03.png",
+        "smash/ground-slam-revision-2/SM09/frames/04.png",
+        "smash/ground-slam-revision-2/SM09/frames/05.png"
+      ],
+      "durationsMs": [
+        350,
+        350,
+        350,
+        350,
+        350
+      ],
+      "decodedGifFrames": 5,
+      "gif": "SM09.gif",
+      "storyboard": "SM09-storyboard.png"
+    },
+    {
+      "id": "SM10",
+      "slots": 5,
+      "sourcePaths": [
+        "smash/ground-slam-revision-2/SM10/frames/01.png",
+        "smash/ground-slam-revision-2/SM10/frames/02.png",
+        "smash/ground-slam-revision-2/SM10/frames/03.png",
+        "smash/ground-slam-revision-2/SM10/frames/04.png",
+        "smash/ground-slam-revision-2/SM10/frames/05.png"
+      ],
+      "durationsMs": [
+        350,
+        350,
+        350,
+        350,
+        350
+      ],
+      "decodedGifFrames": 5,
+      "gif": "SM10.gif",
+      "storyboard": "SM10-storyboard.png"
+    }
+  ],
+  "totalSlots": 50,
+  "timing": "Uniform 350 ms review exposures, not gameplay timing"
+}

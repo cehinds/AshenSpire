@@ -1,0 +1,193 @@
+{
+  "schemaVersion": 1,
+  "status": "Revised ground-slam Smash: ten director-approved review examples. Revised iai Sweep: ten examples pending source completion; publication paused.",
+  "reviewSlotMs": 350,
+  "families": {
+    "sweep": {
+      "label": "Iai Sweep",
+      "origin": "New low stance",
+      "size": [
+        1024,
+        1024
+      ],
+      "sourceManifest": null,
+      "pending": true
+    },
+    "smash": {
+      "label": "Ground-slam Smash",
+      "origin": "S",
+      "size": [
+        768,
+        768
+      ],
+      "sourceManifest": "smash/ground-slam-revision-2/index.json",
+      "pending": false
+    }
+  },
+  "examples": [
+    {
+      "id": "SM01",
+      "family": "smash",
+      "name": "Forward plunge slam",
+      "frames": [
+        "smash/ground-slam-revision-2/SM01/frames/01.png",
+        "smash/ground-slam-revision-2/SM01/frames/02.png",
+        "smash/ground-slam-revision-2/SM01/frames/03.png",
+        "smash/ground-slam-revision-2/SM01/frames/04.png",
+        "smash/ground-slam-revision-2/SM01/frames/05.png"
+      ],
+      "sourceGif": "smash/ground-slam-revision-2/SM01/preview.gif",
+      "provenance": "smash/ground-slam-revision-2/SM01/provenance.json",
+      "storyboard": "smash/ground-slam-revision-2/SM01/preview.png",
+      "caveat": null
+    },
+    {
+      "id": "SM02",
+      "family": "smash",
+      "name": "Power-hop cleave slam",
+      "frames": [
+        "smash/ground-slam-revision-2/SM02/frames/01.png",
+        "smash/ground-slam-revision-2/SM02/frames/02.png",
+        "smash/ground-slam-revision-2/SM02/frames/03.png",
+        "smash/ground-slam-revision-2/SM02/frames/04.png",
+        "smash/ground-slam-revision-2/SM02/frames/05.png"
+      ],
+      "sourceGif": "smash/ground-slam-revision-2/SM02/preview.gif",
+      "provenance": "smash/ground-slam-revision-2/SM02/provenance.json",
+      "storyboard": "smash/ground-slam-revision-2/SM02/preview.png",
+      "caveat": null
+    },
+    {
+      "id": "SM03",
+      "family": "smash",
+      "name": "Twisting aerial slam",
+      "frames": [
+        "smash/ground-slam-revision-2/SM03/frames/01.png",
+        "smash/ground-slam-revision-2/SM03/frames/02.png",
+        "smash/ground-slam-revision-2/SM03/frames/03.png",
+        "smash/ground-slam-revision-2/SM03/frames/04.png",
+        "smash/ground-slam-revision-2/SM03/frames/05.png"
+      ],
+      "sourceGif": "smash/ground-slam-revision-2/SM03/preview.gif",
+      "provenance": "smash/ground-slam-revision-2/SM03/provenance.json",
+      "storyboard": "smash/ground-slam-revision-2/SM03/preview.png",
+      "caveat": null
+    },
+    {
+      "id": "SM04",
+      "family": "smash",
+      "name": "High vertical hammer",
+      "frames": [
+        "smash/ground-slam-revision-2/SM04/frames/01.png",
+        "smash/ground-slam-revision-2/SM04/frames/02.png",
+        "smash/ground-slam-revision-2/SM04/frames/03.png",
+        "smash/ground-slam-revision-2/SM04/frames/04.png",
+        "smash/ground-slam-revision-2/SM04/frames/05.png"
+      ],
+      "sourceGif": "smash/ground-slam-revision-2/SM04/preview.gif",
+      "provenance": "smash/ground-slam-revision-2/SM04/provenance.json",
+      "storyboard": "smash/ground-slam-revision-2/SM04/preview.png",
+      "caveat": null
+    },
+    {
+      "id": "SM05",
+      "family": "smash",
+      "name": "Lateral bound slam",
+      "frames": [
+        "smash/ground-slam-revision-2/SM05/frames/01.png",
+        "smash/ground-slam-revision-2/SM05/frames/02.png",
+        "smash/ground-slam-revision-2/SM05/frames/03.png",
+        "smash/ground-slam-revision-2/SM05/frames/04.png",
+        "smash/ground-slam-revision-2/SM05/frames/05.png"
+      ],
+      "sourceGif": "smash/ground-slam-revision-2/SM05/preview.gif",
+      "provenance": "smash/ground-slam-revision-2/SM05/provenance.json",
+      "storyboard": "smash/ground-slam-revision-2/SM05/preview.png",
+      "caveat": null
+    },
+    {
+      "id": "SM06",
+      "family": "smash",
+      "name": "Long-leap crater slam",
+      "frames": [
+        "smash/ground-slam-revision-2/SM06/frames/01.png",
+        "smash/ground-slam-revision-2/SM06/frames/02.png",
+        "smash/ground-slam-revision-2/SM06/frames/03.png",
+        "smash/ground-slam-revision-2/SM06/frames/04.png",
+        "smash/ground-slam-revision-2/SM06/frames/05.png"
+      ],
+      "sourceGif": "smash/ground-slam-revision-2/SM06/preview.gif",
+      "provenance": "smash/ground-slam-revision-2/SM06/provenance.json",
+      "storyboard": "smash/ground-slam-revision-2/SM06/preview.png",
+      "caveat": null
+    },
+    {
+      "id": "SM07",
+      "family": "smash",
+      "name": "Turning drop slam",
+      "frames": [
+        "smash/ground-slam-revision-2/SM07/frames/01.png",
+        "smash/ground-slam-revision-2/SM07/frames/02.png",
+        "smash/ground-slam-revision-2/SM07/frames/03.png",
+        "smash/ground-slam-revision-2/SM07/frames/04.png",
+        "smash/ground-slam-revision-2/SM07/frames/05.png"
+      ],
+      "sourceGif": "smash/ground-slam-revision-2/SM07/preview.gif",
+      "provenance": "smash/ground-slam-revision-2/SM07/provenance.json",
+      "storyboard": "smash/ground-slam-revision-2/SM07/preview.png",
+      "caveat": null
+    },
+    {
+      "id": "SM08",
+      "family": "smash",
+      "name": "One-knee falling hammer",
+      "frames": [
+        "smash/ground-slam-revision-2/SM08/frames/01.png",
+        "smash/ground-slam-revision-2/SM08/frames/02.png",
+        "smash/ground-slam-revision-2/SM08/frames/03.png",
+        "smash/ground-slam-revision-2/SM08/frames/04.png",
+        "smash/ground-slam-revision-2/SM08/frames/05.png"
+      ],
+      "sourceGif": "smash/ground-slam-revision-2/SM08/preview.gif",
+      "provenance": "smash/ground-slam-revision-2/SM08/provenance.json",
+      "storyboard": "smash/ground-slam-revision-2/SM08/preview.png",
+      "caveat": null
+    },
+    {
+      "id": "SM09",
+      "family": "smash",
+      "name": "Compact two-foot hammer",
+      "frames": [
+        "smash/ground-slam-revision-2/SM09/frames/01.png",
+        "smash/ground-slam-revision-2/SM09/frames/02.png",
+        "smash/ground-slam-revision-2/SM09/frames/03.png",
+        "smash/ground-slam-revision-2/SM09/frames/04.png",
+        "smash/ground-slam-revision-2/SM09/frames/05.png"
+      ],
+      "sourceGif": "smash/ground-slam-revision-2/SM09/preview.gif",
+      "provenance": "smash/ground-slam-revision-2/SM09/provenance.json",
+      "storyboard": "smash/ground-slam-revision-2/SM09/preview.png",
+      "caveat": null
+    },
+    {
+      "id": "SM10",
+      "family": "smash",
+      "name": "Wide scissor spiral slam",
+      "frames": [
+        "smash/ground-slam-revision-2/SM10/frames/01.png",
+        "smash/ground-slam-revision-2/SM10/frames/02.png",
+        "smash/ground-slam-revision-2/SM10/frames/03.png",
+        "smash/ground-slam-revision-2/SM10/frames/04.png",
+        "smash/ground-slam-revision-2/SM10/frames/05.png"
+      ],
+      "sourceGif": "smash/ground-slam-revision-2/SM10/preview.gif",
+      "provenance": "smash/ground-slam-revision-2/SM10/provenance.json",
+      "storyboard": "smash/ground-slam-revision-2/SM10/preview.png",
+      "caveat": null
+    }
+  ],
+  "archive": {
+    "sweep": "sweep/manifest.json",
+    "smash": "smash/index.json"
+  }
+}
