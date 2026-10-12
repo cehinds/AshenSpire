@@ -299,7 +299,7 @@ export function combatRatingRows(bundle) {
   for (const [id, label] of Object.entries(splitRows)) add(`magicSplit.${id}`, combatRatingDefaults.magicSplit[id], label, 'Damage types', {
     min: 0, max: 1, step: 0.05,
     note: id === 'meleeSpell'
-      ? 'A spell that hits in melee with a physical damage type deals this share of its damage as magic (Barrier and Ward) and the rest as physical (Block, then Poise). A school with its own share (force, alteration: half) is used instead when it splits.'
+      ? 'A spell with no magic school that hits in melee with a physical damage type deals this share of its damage as magic (Barrier and Ward) and the rest as physical (Block, then Poise). A school with its own share (force: half; alteration: none) decides instead.'
       : 'A martial technique with spell effects (a magic school, a magic damage type, or a spell rider) deals this share of its damage as magic and the rest as physical.',
   });
   for (const status of bundle.statuses) {
@@ -632,15 +632,17 @@ const MELEE_REACHES = new Set(['contact', 'melee']);
  * magicShareOf(profile, config) → the share of a hit that is magic (Barrier,
  * then Ward) rather than physical (Block, then Poise). Precedence (owner rules):
  *   1. the carrier's own magicShare;
- *   2. a melee spell (spell camp, contact or melee reach) with a physical damage
- *      type splits: its school's share if strictly between 0 and 1, else the
- *      Melee spell magic share;
- *   3. a physical-camp maneuver that carries a magic school, a magic damage type
+ *   2. a school whose listed share is below 1 decides at any reach: force splits
+ *      (0.5), alteration is all physical (0);
+ *   3. a melee spell (spell camp, contact or melee reach) with no magic school and
+ *      a physical damage type splits by the Melee spell share. A magic-only school
+ *      spell that carries a physical tag is never this branch: it stays all magic;
+ *   4. a physical-camp maneuver that carries a magic school, a magic damage type
  *      or a spell rider splits by the Technique magic share;
- *   4. a magic school decides: its share (lightning, fire, frost, divine, decay
- *      are all magic; force and alteration are half);
- *   5. the damage type's share (0 and 1 honoured);
- *   6. otherwise the camp: a spell is all magic, a physical hit all physical.
+ *   5. a magic school decides: its share (lightning, fire, frost, divine, decay
+ *      and an unlisted school such as illusion are all magic);
+ *   6. the damage type's share (0 and 1 honoured);
+ *   7. otherwise the camp: a spell is all magic, a physical hit all physical.
  * The engine and the card face both read this.
  */
 export function magicShareOf(profile, config = null) {
@@ -648,10 +650,9 @@ export function magicShareOf(profile, config = null) {
   const spell = profile?.camp === 'spell';
   const school = schoolOf(profile);
   const type = canonicalDamageType(profile?.damageType);
-  if (spell && MELEE_REACHES.has(profile?.reach) && physicalTypeOf(profile)) {
-    const share = school ? damageTypeRules.schools?.[school]?.magicShare : undefined;
-    return share > 0 && share < 1 ? share : meleeSpellMagicShare(config);
-  }
+  const schoolShare = school ? damageTypeRules.schools?.[school]?.magicShare : undefined;
+  if (Number.isFinite(schoolShare) && schoolShare < 1) return Math.max(0, schoolShare);
+  if (spell && !school && MELEE_REACHES.has(profile?.reach) && physicalTypeOf(profile)) return meleeSpellMagicShare(config);
   if (profile?.camp === 'physical' && profile.maneuver && (school || isMagicDamageType(type) || profile.riderSpell)) {
     return techniqueMagicShare(config);
   }

@@ -11,6 +11,7 @@ import { executeAction, gainBlock } from '../src/engine/actions.js';
 import { resolveCombatRatings, magicShareOf, splitDamageTypesOf } from '../src/model/combatRatings.js';
 import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
 import { combatProfileFor } from '../src/model/combatCardProfile.js';
+import { objectTagIds } from '../src/content/tags.js';
 
 function fixture({ ward = 3, barrier = 0, block = 0, poise = 0, weakness = {}, flat = {}, damageTypeShares = null } = {}) {
   const registries = createRegistries(contentBundle);
@@ -312,15 +313,15 @@ test('a spell-camp hit with no school and a physical type is all physical', () =
   assert.equal(r.preview, r.committed, 'preview equals committed');
 });
 
-test('a 10-damage melee fire spell with slashing deals 7 fire to the Ward path and 3 slashing to Block', () => {
+test('a 10-damage melee fire spell with a slashing tag is all fire: the magic school decides, the tag is a secondary type', () => {
   const meleeFire = { tags: ['camp:spell', 'school:fire', 'damage:slashing', 'reach:contact'], skipRatingBonus: true,
     combatProfile: { camp: 'spell', maneuver: 'casting', school: 'fire', damageType: 'slashing', reach: 'contact', targeting: 'single' } };
   const r = strike(meleeFire, 10, { ward: 10, block: 3 });
   const d = hitOf(r);
-  assert.equal(d.magicAmount, 7, 'the Melee spell share (0.7) of 10 is magic');
-  assert.equal(d.physicalAmount, 3, 'the rest is slashing');
-  assert.equal(d.blocked, 3, 'Block takes the slashing 3');
-  assert.equal(r.enemy.block, 0);
+  assert.equal(d.magicAmount, 10, 'a magic-only school spell is all magic, whatever physical tag it carries');
+  assert.equal(d.physicalAmount, 0);
+  assert.equal(d.blocked, 0, 'Block takes no part of it');
+  assert.equal(r.enemy.block, 3, 'Block is untouched');
   assert.equal(r.preview, r.committed, 'preview equals committed');
 });
 
@@ -332,6 +333,52 @@ test('a 10-damage fire-tagged smash technique deals 3 fire and 7 physical', () =
   assert.equal(d.magicAmount, 3, 'the Technique magic share (0.3) of 10 is magic');
   assert.equal(d.physicalAmount, 7);
   assert.equal(r.preview, r.committed, 'preview equals committed');
+});
+
+// Alteration is a spell whose damage is all physical (combatRules.js schools.alteration): its enemy moves
+// carry the spell tags and their own physical tag, and they deal no Ward or Barrier damage.
+const enemyMoveCarrier = (enemyId, moveId) => ({ enemyId, moveId, cardId: undefined,
+  tags: objectTagIds('enemyMove', moveId, enemyId), skipRatingBonus: true,
+  combatProfile: combatProfileFor({ enemyId, moveId }) });
+
+test('thornNeedles (alteration, piercing) is all physical: the card tag piercing, no magic', () => {
+  const carrier = enemyMoveCarrier('thornMatriarch', 'thornNeedles');
+  assert.equal(carrier.combatProfile.school, 'alteration');
+  assert.equal(carrier.combatProfile.damageType, 'piercing');
+  const r = strike(carrier, 6, { ward: 10 });
+  assert.equal(hitOf(r).magicAmount, 0);
+  assert.equal(hitOf(r).physicalAmount, 6);
+  assert.equal(r.enemy.persistentWard.value, 10, 'Ward untouched');
+  assert.equal(r.preview, r.committed, 'preview equals committed');
+});
+
+test('briarCast (alteration, piercing) is all physical', () => {
+  const r = strike(enemyMoveCarrier('briarHermit', 'briarCast'), 6, { ward: 10 });
+  assert.equal(hitOf(r).magicAmount, 0);
+  assert.equal(hitOf(r).physicalAmount, 6);
+  assert.equal(r.preview, r.committed, 'preview equals committed');
+});
+
+test('entwiningRoots (alteration, blunt) is all physical', () => {
+  const r = strike(enemyMoveCarrier('thornMatriarch', 'entwiningRoots'), 6, { ward: 10 });
+  assert.equal(hitOf(r).magicAmount, 0);
+  assert.equal(hitOf(r).physicalAmount, 6);
+  assert.equal(r.preview, r.committed, 'preview equals committed');
+});
+
+// Magic share precedence, rule by rule (combatRatings.js magicShareOf).
+test('magicShareOf precedence: a listed school below 1 decides at any reach; a melee spell without a magic school takes the Melee share', () => {
+  const config = resolveCombatRatings({}, contentBundle);
+  const spell = { camp: 'spell', maneuver: 'casting' };
+  assert.equal(magicShareOf({ ...spell, school: 'force', damageType: 'arcane', reach: 'contact' }, config), 0.5, 'force splits at melee reach');
+  assert.equal(magicShareOf({ ...spell, school: 'alteration', damageType: 'piercing', reach: 'contact' }, config), 0, 'alteration is all physical at melee reach');
+  assert.equal(magicShareOf({ ...spell, school: 'alteration', damageType: 'piercing', reach: 'near' }, config), 0, 'alteration is all physical at near reach');
+  assert.equal(magicShareOf({ ...spell, school: 'lightning', damageType: 'slashing', reach: 'contact' }, config), 1, 'a magic-only school spell with a physical tag is all magic');
+  assert.equal(magicShareOf({ ...spell, damageType: 'slashing', reach: 'contact' }, config), 0.7, 'a melee spell with no school and a physical type takes the Melee share');
+  assert.equal(magicShareOf({ ...spell, damageType: 'slashing', reach: 'contact' }, { ...config, magicSplit: { ...config.magicSplit, meleeSpell: 0.4 } }), 0.4, 'the Melee share is the run row');
+  assert.equal(magicShareOf({ ...spell, damageType: 'slashing', reach: 'near' }, config), 0, 'a ranged spell with a physical type is physical, not the Melee share');
+  assert.equal(magicShareOf({ ...spell, damageType: 'fire', reach: 'contact' }, config), 1, 'a melee spell with a magic type is magic');
+  assert.equal(magicShareOf({ camp: 'physical', maneuver: 'smash', damageType: 'fire', reach: 'contact' }, config), 0.3, 'a fire-tagged technique takes the Technique share');
 });
 
 test('physical type: the card tag wins, else the school (force and alteration: blunt), magic-only schools keep their card tag', () => {
