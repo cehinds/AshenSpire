@@ -145,6 +145,11 @@ export function queuedCards(combat) {
   return roundState(combat).playerQueue;
 }
 
+// True when the enemy's queue is in the round state: it ran in the last commit, or it is waiting for one.
+export function enemyQueued(combat, enemyId) {
+  return Boolean(roundState(combat).enemyQueues[enemyId]);
+}
+
 export function isQueued(combat, instanceId) {
   return queuedCards(combat).some((r) => r.instanceId === instanceId);
 }
@@ -199,6 +204,8 @@ function enemySpec(enemy) {
 }
 
 // Runs one round. `ops` is combat.js's bundle:
+//   enemyTurnStart(combat)          the enemy turn start: the event and the block reset
+//   enemyOwnerTurnStart(combat, enemy)  one enemy's turn-start hooks (its DoT ticks)
 //   playCard(combat, intent, paid)  the live card effects, with no second payment
 //   discardUnplayed(combat, instanceId)  a missed card leaves the hand
 //   refund(combat, record)          pays back a queued card's SP and MP (it never resolved)
@@ -211,6 +218,17 @@ export function commitRound(combat, ops) {
   const rules = cr.rules;
   const tables = engineTables(rules);
   const rng = () => combat.rng.float('combatRounds');
+
+  // SPEC §4.1 order: each enemy's turn start (its DoT ticks, the block reset) comes before its moves.
+  ops.enemyTurnStart(combat);
+  if (combat.result) return;
+  for (const enemy of combat.enemies) {
+    if (!enemy.alive) continue;
+    ops.enemyOwnerTurnStart(combat, enemy);
+    if (combat.result) return;
+  }
+  // An enemy a tick killed never acts: its queue is dropped.
+  for (const enemy of combat.enemies) if (!enemy.alive) delete cr.enemyQueues[enemy.id];
 
   const playerRecords = queuedCards(combat).slice();
   const sp = playerRecords.reduce((sum, r) => sum + r.tl.sp, 0);
@@ -247,7 +265,6 @@ export function commitRound(combat, ops) {
   cr.momentum = after.momentum;
   cr.poiseDouble = after.poiseDouble;
   cr.charges = after.charges;
-  cr.enemyQueues = {};
 }
 
 function applyPlayerEntry(combat, entry, landed, ops) {

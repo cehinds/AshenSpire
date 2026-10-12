@@ -596,12 +596,11 @@ function finishPlayerHand(combat, preserveLockedHand = false) {
   drainQueue(combat);
 }
 
-function enemyPhase(combat) {
-  if (!combat.reactionCursor) {
-  combat.phase = 'enemy';
+// The enemy turn start (SPEC §4.1 step 5): the start event, then each living enemy loses its block.
+// The Combat Rounds Preview runs this in the round commit, before the enemies' moves (SPEC §4.11).
+function enemyTurnStart(combat) {
   combat.emit('enemyTurnStart', { turn: combat.turn });
-
-  // (5) Enemies lose their block at the start of THEIR turn.
+  // Enemies lose their block at the start of THEIR turn.
   for (const e of combat.enemies) {
     if (!e.alive) continue;
     if (!S.getFlag(combat, e, 'retainBlock')) e.block = 0;
@@ -616,7 +615,30 @@ function enemyPhase(combat) {
     }
   }
   drainQueue(combat);
-  if (combat.result) return;
+}
+
+// One enemy's own turn start: its owner-relative hooks (DoT ticks etc.) and, expanded, its status
+// recovery. Leaves the enemy dead when a tick killed it.
+function enemyOwnerTurnStart(combat, enemy) {
+  Reactions.revealActor(combat, enemy);
+  fireOwnerHooks(combat, enemy, 'ownerTurnStart');
+  drainQueue(combat);
+  if (combat.result || !enemy.alive) return;
+  if (combat.combatExpansionVersion === 2) {
+    Control.recoverStatusesAtOwnerStart(combat, enemy, { cycle: enemy.combatOwnerCycle });
+    Control.sleepRestoration(combat, enemy);
+  }
+}
+
+function enemyPhase(combat) {
+  // With the Combat Rounds Preview on, the turn start ran in the round commit, before the moves.
+  const preview = Boolean(combat.combatRounds);
+  if (!combat.reactionCursor) {
+    combat.phase = 'enemy';
+    if (!preview) {
+      enemyTurnStart(combat);
+      if (combat.result) return;
+    }
   }
   const cursor = combat.reactionCursor || { index: 0, stage: 'start' };
   if (Reactions.usesReactions(combat)) combat.reactionCursor = cursor;
@@ -625,22 +647,19 @@ function enemyPhase(combat) {
     if (combat.result) return;
     if (!enemy.alive) continue;
     if (cursor.stage === 'start') {
-    Reactions.revealActor(combat, enemy);
-    // Owner-relative turn-start hooks (DoT ticks etc.).
-    fireOwnerHooks(combat, enemy, 'ownerTurnStart');
-    drainQueue(combat);
-    if (combat.result) return;
-    if (!enemy.alive) continue;
-
-    if (combat.combatExpansionVersion === 2) {
-      Control.recoverStatusesAtOwnerStart(combat, enemy, { cycle: enemy.combatOwnerCycle });
-      Control.sleepRestoration(combat, enemy);
+    if (!preview) {
+      // Owner-relative turn-start hooks (DoT ticks etc.).
+      enemyOwnerTurnStart(combat, enemy);
+      if (combat.result) return;
+      if (!enemy.alive) continue;
     }
     cursor.stage = 'payload';
     }
     if (cursor.stage === 'payload') {
     cursor.stage = 'drain';
-    if (enemy.skipNextTurn || S.getFlag(combat, enemy, 'skipTurn') || Control.controlRestrictions(combat, enemy).locked || Control.consumeControlActionLoss(combat, enemy)) {
+    if (preview && Rounds.enemyQueued(combat, enemy.id)) {
+      // The round's commit already ran this enemy's queued moves, and its skip flag is kept for its next turn.
+    } else if (enemy.skipNextTurn || S.getFlag(combat, enemy, 'skipTurn') || Control.controlRestrictions(combat, enemy).locked || Control.consumeControlActionLoss(combat, enemy)) {
       // Staggered / skip: the telegraphed move does not happen.
       if (!enemy.pendingMove) cancelKnowledgeAction(combat, enemy);
       enemy.skipNextTurn = false;
@@ -655,7 +674,7 @@ function enemyPhase(combat) {
         executeMovePayload(combat, enemy, move, moveId);
       }
       // else: still charging (delay.turns > 1) — the enemy does nothing.
-    } else if (!combat.combatRounds && enemy.intent && enemy.intent.moveId) {
+    } else if (!preview && enemy.intent && enemy.intent.moveId) {
       // With the Combat Rounds Preview on, the queued moves run in the round's commit (SPEC §4.11).
       const def = combat.registries.enemies.get(enemy.enemyId);
       const move = expandedEnemyMove(enemy, def.moves[enemy.intent.moveId], enemy.intent.moveId, combat);
@@ -1628,6 +1647,8 @@ function enemyMoveAt(combat, enemy, moveId) {
 // The live helpers the adapter's commit calls (combatRoundsAdapter.js never imports this file).
 function previewRoundOps() {
   return {
+    enemyTurnStart,
+    enemyOwnerTurnStart,
     playCard: (c, intent, paid) => doPlayCard(c, intent, { prepaid: paid }),
     discardUnplayed: discardUnplayedCard,
     refund: refundQueuedCard,

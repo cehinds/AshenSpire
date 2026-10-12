@@ -13,6 +13,7 @@ import { cardKind } from '../src/model/tree.js';
 import { COMBAT_ROUNDS_KEY } from '../src/model/combatRounds.js';
 import * as Rounds from '../src/engine/combatRoundsAdapter.js';
 import { handRow, scaledCards } from '../src/model/handRules.js';
+import { applyStatus } from '../src/engine/statuses.js';
 
 const registries = createRegistries(contentBundle);
 const ENEMY = 'wanderingSoldier';
@@ -408,4 +409,54 @@ test('queued cards do not count toward hand-size overflow; a full unqueued hand 
 
   const unqueued = padded(retaining(fight({ expansion: 1 })));
   assert.throws(() => dispatch(unqueued, { type: 'endTurn' }), /Select 1/, 'without queued cards the overflow is still owed');
+});
+
+// Review finding 5: an enemy's turn-start effects (its DoT ticks, the block reset) run before its moves, as
+// the live enemy phase does. A fight with two enemies keeps the round going when one of them dies.
+function twoEnemyFight(seed, expansion = 1) {
+  const run = createRunState({ seed, classId: 'reaver', registries, combatExpansionVersion: expansion, profileMeta: { settings: { [COMBAT_ROUNDS_KEY]: true } } });
+  return fixRoundRoll(createRunCombat({ registries, rng: createRng(seed), run, enemyIds: [ENEMY, ENEMY], settings: {} }), 0.999);
+}
+
+test('a lethal turn-start tick kills the enemy before its queued moves: it does not act in the round', () => {
+  let found = null;
+  for (let seed = 1; seed <= 40 && !found; seed++) {
+    const c = twoEnemyFight(seed);
+    const [dying, living] = c.enemies;
+    const def = registries.enemies.get(dying.enemyId);
+    const queue = c.combatRounds.enemyQueues[dying.id] || [];
+    if (queue.some((entry) => Rounds.moveKind(def.moves[entry.moveId]) === 'attack')) found = { c, dying, living };
+  }
+  assert.ok(found, 'fixture: an enemy queues an attack');
+  const { c, dying, living } = found;
+  dying.hp = 1;
+  applyStatus(c, dying, 'crimsonBlight', 3, living);
+  const { events } = dispatch(c, { type: 'endTurn' });
+  assert.equal(dying.alive, false, 'the DoT tick kills the enemy');
+  assert.ok(!events.some((e) => e.type === 'enemyMoveStarted' && e.sourceId === dying.id), 'the dead enemy starts no move');
+  assert.ok(!events.some((e) => e.type === 'damageDealt' && e.sourceId === dying.id), 'its queued attack deals nothing');
+  assert.ok(living.alive, 'fixture: the other enemy lives');
+  assert.equal(c.combatRounds.enemyQueues[dying.id], undefined, 'its queue is dropped');
+  assert.equal(c.phase, 'player', 'the fight goes on');
+});
+
+test('a stagger that lands after an enemy has acted persists into its next turn, as it does live', () => {
+  const c = twoEnemyFight(7);
+  const [enemy] = c.enemies;
+  // The stagger lands on the enemy's first move: it is applied after that move has acted.
+  let landed = false;
+  const realEmit = c.emit;
+  c.emit = (type, payload) => {
+    const out = realEmit(type, payload);
+    if (!landed && type === 'enemyMoveStarted' && payload.sourceId === enemy.id) { landed = true; enemy.skipNextTurn = true; }
+    return out;
+  };
+  dispatch(c, { type: 'endTurn' });
+  assert.equal(landed, true, 'fixture: the enemy acted in the round');
+  assert.equal(enemy.skipNextTurn, true, 'the stagger persists past the round it landed in');
+
+  const { events } = dispatch(c, { type: 'endTurn' });
+  assert.ok(!events.some((e) => e.type === 'enemyMoveStarted' && e.sourceId === enemy.id), 'the staggered enemy starts no move on its next turn');
+  assert.equal(enemy.skipNextTurn, false, 'the stagger is spent on that turn');
+  assert.equal(c.phase, 'player');
 });
