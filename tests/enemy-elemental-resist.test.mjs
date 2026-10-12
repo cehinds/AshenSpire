@@ -74,3 +74,54 @@ test('the validator accepts resist, refuses resist over the cap and resist on a 
   const bad = rulesWith({ fire: -5 });
   assert.ok(combatExpansionRulesProblems(bad).some(problem => /resist must contain non-negative/.test(problem)));
 });
+
+// The five authored enemy resists (design section 3, decision #6).
+const AUTHORED = {
+  charredColossus: { fire: 50 }, ashheartDragon: { fire: 25 }, courtMarionette: { psychic: 50 },
+  thornMatriarch: { earth: 50 }, marrowOrganist: { decay: 50 },
+};
+
+test('each of the five authored enemies projects its resist, and the shipped rules validate', () => {
+  const rules = createCombatExpansionRuleSnapshot();
+  assert.deepEqual(combatExpansionRulesProblems(rules), []);
+  for (const [enemyId, resist] of Object.entries(AUTHORED)) {
+    assert.deepEqual(expandedEnemyProjection(enemyId, rules.equipment).damageResistPercent, resist, enemyId);
+  }
+});
+
+test('no enemy resists a type it is weak to', () => {
+  const { enemies } = createCombatExpansionRuleSnapshot().equipment;
+  for (const [enemyId, row] of Object.entries(enemies)) {
+    for (const type of Object.keys(row.resist || {})) assert.equal(row.weak?.[type], undefined, `${enemyId} ${type}`);
+  }
+});
+
+// A solo v2 hit of plain 10-damage fire (cinderSigil, school fire) on one enemy.
+function fireHit(enemyId, { dropResist = false } = {}) {
+  const fireRegistries = createRegistries({ ...contentBundle, cards: contentBundle.cards.map(card => card.id === 'cinderSigil'
+    ? { ...card, effects: [{ op: 'damage', target: 'enemy', amount: 10 }], cost: 0, manaCost: 0, upgrade: undefined } : card) });
+  const rules = createCombatExpansionRuleSnapshot();
+  if (dropResist) delete rules.equipment.enemies[enemyId].resist;
+  const fireCombat = createCombat({ registries: fireRegistries, rng: createRng(802), combatExpansionVersion: 2, combatExpansionRules: rules,
+    enemyIds: [enemyId], player: { ...player, deck: [{ cardId: 'cinderSigil', instanceId: 'sigil', upgraded: false }] } });
+  const enemy = fireCombat.enemies[0]; calm(enemy);
+  const preview = previewCard(fireCombat, 'sigil', enemy.id);
+  const before = enemy.hp;
+  dispatch(fireCombat, { type: 'playCard', cardInstanceId: 'sigil', targetId: enemy.id });
+  const event = fireCombat.eventLog.find(row => row.type === 'damageDealt' && row.targetId === enemy.id);
+  return { dealt: before - enemy.hp, shown: preview.values.find(row => row.op === 'damage').totalDamage, type: event?.damageType };
+}
+
+test('a fire hit is ceil-halved by charredColossus (fire 50) and ceil-quartered by ashheartDragon (fire 25); preview equals the hit', () => {
+  const colossusFull = fireHit('charredColossus', { dropResist: true }).dealt;
+  const dragonFull = fireHit('ashheartDragon', { dropResist: true }).dealt;
+  assert.ok(colossusFull > 0 && dragonFull > 0, 'baseline hits land');
+  const colossus = fireHit('charredColossus');
+  assert.equal(colossus.type, 'fire');
+  assert.equal(colossus.dealt, Math.ceil(colossusFull * 0.5));
+  assert.ok(colossus.dealt < colossusFull, 'the resist lowers the same enemy\'s hit');
+  assert.equal(colossus.shown, colossus.dealt);
+  const dragon = fireHit('ashheartDragon');
+  assert.equal(dragon.dealt, Math.ceil(dragonFull * 0.75));
+  assert.equal(dragon.shown, dragon.dealt);
+});
