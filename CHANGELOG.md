@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-12
 
+- **Spell range follows how a spell is delivered; new physical and magical marks in the deck editor** ([#1876](https://github.com/cehinds/AshenSpire/pull/1876), `0.7.1.1360`). A spell attack with no set range now reaches by its delivery: projectiles are Ranged, melee spells Melee, and the rest Reach (they were all Melee before, so projectile spells now fare worse against a Prone foe and can be stopped by a Decoy). Starblade Phalanx is a melee spell. The deck editor marks physical cards with a silver Smash sigil and spells with a blue flame, and a Ranged card like Ricochet reads just "Ranged".
 - **Deck editor: (i) centred under the art, grey Basic/Cantrip badge, vertical grip** ([#1868](https://github.com/cehinds/AshenSpire/pull/1868), `0.7.1.1359`). The inspect (i) sits centred on the bottom edge of the card art, the rank badge sits higher and reads grey at rank 0 (Basic, Cantrip), and the phone grip is vertical again.
 - **Co-op: the blow that ends a fight reaches the combat log** ([#1872](https://github.com/cehinds/AshenSpire/pull/1872), `0.7.1.1357`). When your attack killed the last enemy in co-op, the combat log and the Full log missed that turn's card, damage and death entries before the reward screen closed them. They now appear.
 
