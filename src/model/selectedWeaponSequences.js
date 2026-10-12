@@ -10,7 +10,7 @@ export function selectedWeaponSequence(kind) {
   else if (kind === 'evade') { poses=evade;weights=[1,1,1]; }
   else if (kind === 'defend' || kind === 'guard-break') { poses=[kind];weights=[6]; }
   else if (kind === 'attack' || kind === 'smash') { poses=attack;weights=[1,1,1,1,1,1];contact=2; }
-  else if (kind === 'counter-guard') { poses=[...impact,'smash',...attack];weights=[...impactWeights,1,1,1,1,1,1,1];contact=16; }
+  else if (kind === 'counter-guard') { poses=[...impact,'smash',...attack];weights=[...impactWeights,1,1,1,1,1,1,1];contact=9; }
   else if (kind === 'counter-evade') { poses=[...evade,...attack];weights=[1,1,1,1,1,1,1,1,1];contact=5; }
   else return null;
   return {poses:poses.map(p=>'pilot-'+p),durations:weights,impact:contact,travel:poses.map(()=>0),hold:false,pilot:true};
@@ -24,7 +24,7 @@ export function selectedWeaponSequenceTiming(sequence, speed) {
 }
 
 /** Associate a return with only its consumed incoming root action. */
-export function selectedWeaponCounterOrigins(events) {
+export function selectedWeaponCounterOrigins(events, qualifies = () => true) {
   const reactions = new Set();
   let root = [], consumed = [];
   const reset = () => {root=[];consumed=[];};
@@ -34,7 +34,7 @@ export function selectedWeaponCounterOrigins(events) {
     if (event.type === 'combatCounterTriggered') {
       const origin = consumed.find(row=>row.sourceId===event.sourceId && row.targetId===event.targetId
         && row.cardInstanceId===event.cardInstanceId && row.cardId===event.cardId);
-      if (origin) for (const row of root) if (row.sourceId===event.targetId && row.targetId===event.sourceId) reactions.add(row);
+      if (origin && qualifies(event)) for (const row of root) if (row.sourceId===event.targetId && row.targetId===event.sourceId) reactions.add(row);
       reset();
     } else root.push(event);
   }
