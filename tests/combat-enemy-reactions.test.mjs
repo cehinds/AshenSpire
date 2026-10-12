@@ -162,17 +162,20 @@ const strikeDef = contentBundle.cards.find(card => card.id === 'strike');
 const heavyDef = { ...strikeDef, id: 'heavyStrike', name: 'Heavy Strike', effects: [{ op: 'damage', target: 'enemy', amount: 12 }] };
 const heavyReactDef = { ...heavyDef, id: 'heavyReact', name: 'Heavy React' };
 const strikeTags = contentBundle.tagging.filter(row => row.family === 'card' && row.objectId === 'strike');
-function engineRegistries({ firstMoves = {} } = {}) {
+// counterGuard: Gilded Guard's carrier resolves to maneuver:counter instead of defend.
+const retagGuard = row => row.family === 'enemyMove' && row.objectId === 'gildedGuard' && row.tagId === 'maneuver:defend'
+  ? { ...row, tagId: 'maneuver:counter' } : row;
+function engineRegistries({ firstMoves = {}, counterGuard = false } = {}) {
   return createRegistries({ ...contentBundle, cards: [...contentBundle.cards, heavyDef, heavyReactDef],
-    tagging: [...contentBundle.tagging, ...strikeTags.map(row => ({ ...row, objectId: 'heavyStrike' })),
+    tagging: [...(counterGuard ? contentBundle.tagging.map(retagGuard) : contentBundle.tagging), ...strikeTags.map(row => ({ ...row, objectId: 'heavyStrike' })),
       ...strikeTags.map(row => ({ ...row, objectId: 'heavyReact' })),
       { family: 'card', scope: '', objectId: 'strike', tagId: 'trait:reaction' },
       { family: 'card', scope: '', objectId: 'heavyReact', tagId: 'trait:reaction' }],
     enemies: contentBundle.enemies.map(enemy => firstMoves[enemy.id] ? { ...enemy, firstMove: firstMoves[enemy.id] } : enemy) });
 }
 const seatStats = { classId: 'reaver', maxHp: 100, hp: 100, maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20 };
-function solo({ enemyIds = ['gildedKnight'], cards = ['heavyStrike', 'strike'], seed = 5, flag = true, version = 2, firstMoves } = {}) {
-  const registries = engineRegistries({ firstMoves });
+function solo({ enemyIds = ['gildedKnight'], cards = ['heavyStrike', 'strike'], seed = 5, flag = true, version = 2, firstMoves, counterGuard } = {}) {
+  const registries = engineRegistries({ firstMoves, counterGuard });
   const combat = createCombat({ registries, rng: createRng(seed), combatExpansionVersion: 2, reactionRulesVersion: version, enemyIds,
     player: { ...seatStats, drawPerTurn: cards.length, deck: cards.map((cardId, index) => ({ cardId, instanceId: `c${index}`, upgraded: false })) } });
   if (!flag && combat.reactionRules) delete combat.reactionRules.enemyReactions;
@@ -359,8 +362,8 @@ test('no window on Counter-return roots or reaction plays', () => {
 });
 
 // ---- co-op ------------------------------------------------------------------
-function coop({ seed = 9, hands = { a: ['heavyStrike', 'strike'], b: ['strike', 'strike'] }, firstMoves, enemyIds = ['gildedKnight'] } = {}) {
-  const registries = engineRegistries({ firstMoves });
+function coop({ seed = 9, hands = { a: ['heavyStrike', 'strike'], b: ['strike', 'strike'] }, firstMoves, enemyIds = ['gildedKnight'], counterGuard } = {}) {
+  const registries = engineRegistries({ firstMoves, counterGuard });
   const players = Object.entries(hands).map(([id, cards]) => ({ id, ...seatStats, drawPerTurn: cards.length, combatExpansionVersion: 2,
     deck: cards.map((cardId, index) => ({ cardId, instanceId: `${id}:${index}`, upgraded: false })) }));
   const C = createCoopCombat({ registries, rng: createRng(seed), players, enemyIds, reactionRulesVersion: 2 });
@@ -437,20 +440,30 @@ test('co-op: the acting seat leaving during its window cancels the root', () => 
 });
 
 test('co-op: the last connected seat leaving mid-window resumes its root on rejoin, with the card discarded once', () => {
-  const { C, players } = coop({ hands: { a: ['heavyStrike', 'strike'], b: ['strike'] } });
+  const { C, players, registries } = coop({ hands: { a: ['heavyStrike', 'strike'], b: ['strike'] } });
+  // The host saves every committed transaction, as the session does.
+  const saves = [];
+  C.beforeCombatCommit = candidate => { saves.push(JSON.parse(JSON.stringify(serializeCoopCombatSnapshot(candidate)))); return { ok: true }; };
   const knight = C.enemies[0];
   leaveCombat(C, 'b');
   coopPlay(C, 'a', 'a:0', knight.id);
   assert.equal(C.pendingReaction.ownerId, 'a');
   leaveCombat(C, 'a');
   assert.equal(C.phase, 'suspended');
-  joinCombat(C, players.find(player => player.id === 'a'));
-  assert.equal(C.reactionStack, undefined);
-  assert.equal(C.reactionRootPlay, undefined);
-  const seat = C.players.get('a');
-  const copies = [...seat.piles.hand, ...seat.piles.discard, ...seat.piles.draw].filter(inst => inst.instanceId === 'a:0');
-  assert.equal(copies.length, 1, 'the root card sits in exactly one pile');
-  assert.doesNotThrow(() => decodeCoopCombatSnapshot(serializeCoopCombatSnapshot(C)));
+  assert.ok(C.queue.length > 0 && (C.reactionRootPlay || C.reactionStack), 'suspended with the paused player root');
+  // The suspended disconnect commits: its save serialises, decodes and restores.
+  const saved = saves.at(-1);
+  assert.doesNotThrow(() => decodeCoopCombatSnapshot(saved));
+  const restored = createCoopCombat({ registries, rng: createRng(C.rng.seed, C.rng.getCounters()), players, enemyIds: [], snapshot: saved });
+  for (const state of [C, restored]) {
+    joinCombat(state, players.find(player => player.id === 'a'));
+    assert.equal(state.reactionStack, undefined);
+    assert.equal(state.reactionRootPlay, undefined);
+    const seat = state.players.get('a');
+    const copies = [...seat.piles.hand, ...seat.piles.discard, ...seat.piles.draw, ...seat.piles.exhaust].filter(inst => inst.instanceId === 'a:0');
+    assert.equal(copies.length, 1, 'the root card sits in exactly one pile');
+    assert.doesNotThrow(() => decodeCoopCombatSnapshot(serializeCoopCombatSnapshot(state)));
+  }
 });
 
 test('a playerReaction window opens only for the root owner or enemies the root card targets', () => {
@@ -461,4 +474,20 @@ test('a playerReaction window opens only for the root owner or enemies the root 
   const opened = openEnemyWindow(C, group, 'playerReaction', { ownerId: 'a', incoming: { [duelist.id]: 9 } }, {});
   assert.deepEqual(opened, []);
   assert.equal(C.rng.getCounters().enemyReaction || 0, 0, 'no window, so no draw');
+});
+
+test('co-op: a Counter reaction move plans no direct hit, as in solo', () => {
+  // The reaction's own segment: from its enemyMoveStarted to the next event from anyone else.
+  const reactionHits = (events, knightId) => {
+    const start = events.findIndex(event => event.type === 'enemyMoveStarted' && event.reaction);
+    assert.ok(start >= 0, 'the guard reacted');
+    const end = events.findIndex((event, index) => index > start && event.type === 'damageDealt' && event.sourceId !== knightId);
+    return events.slice(start, end < 0 ? undefined : end).filter(event => event.type === 'damageDealt' && event.sourceId === knightId).length;
+  };
+  const { combat } = solo({ counterGuard: true, cards: ['heavyStrike'] });
+  const soloOut = play(combat, 'c0');
+  const { C } = coop({ counterGuard: true, hands: { a: ['heavyStrike'], b: ['strike'] } });
+  const coopOut = coopPlay(C, 'a', 'a:0', C.enemies[0].id);
+  assert.equal(reactionHits(soloOut.events, combat.enemies[0].id), 0);
+  assert.equal(reactionHits(coopOut.events, C.enemies[0].id), 0, 'the Counter delivers its damage, not a planned hit');
 });

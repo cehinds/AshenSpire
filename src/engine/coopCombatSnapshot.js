@@ -11,7 +11,7 @@ import { perceptionProblems } from '../model/perception.js';
 const forbidden = new Set(['__proto__', 'prototype', 'constructor']);
 export function serializeCoopCombatSnapshot(combat) {
   if (!combat?.players || combat._buffer !== null || (combat.queue?.length && !combat.pendingAbilityDiscard && !combat.pendingReaction
-    && !(combat.reactionCursor && combat.phase === 'suspended'))) throw new Error('Co-op combat is still resolving');
+    && !(combat.phase === 'suspended' && (combat.reactionCursor || combat.reactionStack || combat.reactionRootPlay)))) throw new Error('Co-op combat is still resolving');
   const nodes = [], seen = new Map();
   function encode(value) {
     if (value === null || typeof value === 'string' || typeof value === 'boolean') return value;
