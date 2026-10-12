@@ -5,6 +5,18 @@ import { uiConfig } from '../../config/generated/ui.js';
 // separation before card geometry begins. Keep the band allocator and the
 // renderer on the same physical floor.
 export const COMBAT_TOOLS_HEIGHT_PX = 34;
+// The desktop tool row is 36 physical px (styles/combat-layers.css), so its
+// reserve is that row plus the same four px. hand.js measures the live row and
+// uses this only when the row cannot be measured.
+export const COMBAT_TOOLS_DESKTOP_HEIGHT_PX = 40;
+// Desktop fan: the resting top sits this far below the plan origin, which is
+// already four physical pixels under the tool row (so the gap reads 10px).
+export const DESKTOP_FAN_GAP_PX = 6;
+// Desktop cards sit in a tight row: a gap of this share of the card width
+// between neighbours, centred. They overlap only when the row would otherwise
+// exceed DESKTOP_FAN_MAX_SPAN of the hand's width.
+export const DESKTOP_FAN_GAP = 0.07;
+export const DESKTOP_FAN_MAX_SPAN = 0.9;
 const compactCard = uiConfig.scenes.w4a.sizing.compactCombat;
 
 // Presentation order is local, keyed by instance, and never mutates a pile.
@@ -25,9 +37,13 @@ export function moveHandInstance(order, id, slot) {
 // only where they exceed that headroom, so the resting fan sits right under
 // the row instead of under an empty band, and the reclaimed height goes to
 // the cards.
-export function handLayout({ width, height, count, rem = 16, zoom = 1, compact = false, controlsHeight = 0, controlled = null, headroom = 0 }, config = wireframeUi.hand) {
+// `desktop` (data-form-factor === 'desktop') anchors the resting fan under the
+// tool row and fills the band with it; every other form factor is unchanged.
+export function handLayout({ width, height, count, rem = 16, zoom = 1, compact = false, controlsHeight = 0, controlled = null, headroom = 0, desktop = false }, config = wireframeUi.hand) {
   let inset = config.verticalInsetRem * rem;
   const lift = config.selectedLiftRem * rem;
+  const fan = desktop && !compact;
+  const gapLocal = fan ? DESKTOP_FAN_GAP_PX / zoom : 0;
   const liftReserve = Math.max(0, lift - headroom);
   // The selected face already rises by lift, and the chooser's correction
   // (handInspectionOverlay) may raise it on through the headroom. Reserve only
@@ -35,7 +51,8 @@ export function handLayout({ width, height, count, rem = 16, zoom = 1, compact =
   // touch begins.
   const controlsReserve = Math.max(0, controlsHeight - Math.max(lift, headroom));
   const arc = config.arcRem * rem;
-  const available = Math.max(0, height - inset * 2 - liftReserve - arc - controlsReserve);
+  const available = fan ? Math.max(0, height - gapLocal - arc - controlsReserve)
+    : Math.max(0, height - inset * 2 - liftReserve - arc - controlsReserve);
   const progress = Math.max(0, Math.min(1,
     (width / rem - config.narrowWidthRem) / (config.wideWidthRem - config.narrowWidthRem)));
   const requested = Math.round(config.minCapacity + progress * (config.maxCapacity - config.minCapacity));
@@ -48,11 +65,18 @@ export function handLayout({ width, height, count, rem = 16, zoom = 1, compact =
   const gutter = compact ? compactCard.cardSideGutterPx / zoom : 0;
   const fanCount = Math.max(1, Math.min(count, requested));
   const readableWidth = (width - gutter * 2) / (1 + (fanCount - 1) * compactCard.cardVisibleFraction + spread * 2);
+  // A desktop fan's rotated outer corners hang below the face by a fixed share
+  // of its height, so the face is sized to the band less that share.
+  const rotatedShare = count > 1 ? (Math.sin(fanAngle) * wireframeUi.card.ratio + Math.cos(fanAngle) - 1) / 2 : 0;
+  const faceHeight = fan ? available / (1 + rotatedShare) : available;
+  // A desktop fan may grow past the phone-and-tablet cap so its band fills at
+  // wide screens (content/config/ui/scenes/w4a-combat.json, desktopMaxWidthRem).
+  const maxWidthRem = fan ? uiConfig.scenes.w4a.sizing.hand.desktopMaxWidthRem : config.maxWidthRem;
   const cardWidth = compact
     // Phone cards fill the band between a readable floor and a cap, both in
     // physical px (content/config/ui/scenes/w4a-combat.json, compactCombat).
     ? Math.max(compactCard.cardMinWidthPx / zoom, Math.min(compactCard.cardMaxWidthPx / zoom, readableWidth, available * wireframeUi.card.ratio))
-    : Math.max(config.minWidthRem * rem, Math.min(config.maxWidthRem * rem, available * wireframeUi.card.ratio));
+    : Math.max(config.minWidthRem * rem, Math.min(maxWidthRem * rem, faceHeight * wireframeUi.card.ratio));
   const cardHeight = cardWidth / wireframeUi.card.ratio;
   inset = Math.max(inset, Math.sin(config.fanAngleDegrees * Math.PI / 180) * cardHeight / 2 + 1);
   // Horizontal margin: the vertical inset everywhere but a phone, which keeps
@@ -61,7 +85,12 @@ export function handLayout({ width, height, count, rem = 16, zoom = 1, compact =
   const touch = config.exposedTargetPx / zoom;
   const capacity = Math.max(1, Math.min(requested, Math.floor(Math.max(0, width - cardWidth) / touch) + 1));
   const visible = Math.max(1, Math.min(count, capacity));
-  const step = visible > 1 ? Math.max(touch, Math.min(cardWidth, (width - cardWidth - side * 2) / (visible - 1))) : count > 1 ? touch : 0;
+  // A desktop row keeps DESKTOP_FAN_GAP between cards, and shrinks the step
+  // (overlapping) only when the row would exceed DESKTOP_FAN_MAX_SPAN of the
+  // width; a phone or tablet fan keeps its cards at their own width as before.
+  const spreadStep = fan ? cardWidth * (1 + DESKTOP_FAN_GAP) : cardWidth;
+  const fitStep = fan ? (DESKTOP_FAN_MAX_SPAN * width - cardWidth) / Math.max(1, visible - 1) : Infinity;
+  const step = visible > 1 ? Math.max(touch, Math.min(spreadStep, fitStep, (width - cardWidth - side * 2) / (visible - 1))) : count > 1 ? touch : 0;
   const span = count ? cardWidth + Math.max(0, count - 1) * step : 0;
   const start = Math.max(side, (width - span) / 2);
   const middle = (count - 1) / 2;
@@ -96,7 +125,13 @@ export function handLayout({ width, height, count, rem = 16, zoom = 1, compact =
     const reserve = !controlled || controlled.includes(index) ? controlsReserve : 0;
     return card.y + cardHeight / 2 + (Math.abs(Math.sin(radians)) * cardWidth + Math.abs(Math.cos(radians)) * cardHeight) / 2 + reserve;
   }), 0);
-  const top = drop > 0
+  const restOffset = cards.length && fan ? Math.min(...cards.map(card => {
+    const radians = card.angle * Math.PI / 180;
+    return card.y + cardHeight / 2 - (Math.abs(Math.sin(radians)) * cardWidth
+      + Math.abs(Math.cos(radians)) * cardHeight) / 2;
+  })) : 0;
+  const top = fan ? Math.max(0, Math.min(bottomLimit, gapLocal - restOffset))
+    : drop > 0
     ? Math.max(0, Math.min(Math.max(bottomLimit, height - 1 / zoom - reach), base + drop))
     : Math.max(0, Math.min(bottomLimit, base));
   const restTop = cards.length ? Math.min(...cards.map(card => {
