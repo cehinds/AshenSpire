@@ -60,3 +60,8 @@ test('co-op enemy frames mark a readied hostile card\'s hover target, as solo do
   assert.match(coop, /box\.addEventListener\('pointerenter', \(\) => \{[\s\S]*?cardNeedsEnemyTarget\(cardDef\(selected\)\)\) box\.classList\.add\('hover-target'\);/);
   assert.match(coop, /box\.addEventListener\('pointerleave', \(\) => box\.classList\.remove\('hover-target'\)\);/);
 });
+
+test('a front-rank enemy readout hangs below its feet, never beside it', () => {
+  assert.match(stage, /const hudBelow = actor => !classicAppearance\(\) && actor\.side === 'enemy' && actor\.slot\.rank === 1;/);
+  assert.match(stage, /if \(hudBelow\(actor\)\) \{[\s\S]*?const overheadX = anchor\?\.x \?\? x;[\s\S]*?leadingHost\.style\.left = `\$\{overheadLocal\.left\}px`;[\s\S]*?ground \+ overheadGap - above \+ \(anchor\?\.offsetY \?\? 0\)/);
+});

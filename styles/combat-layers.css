@@ -465,3 +465,10 @@
 :root[data-form-factor='desktop'] .combat-action-row[data-footer-art] .footer-art-face text:is([data-footer-binding='endTurn'],[data-footer-binding='drawLabel'],[data-footer-binding='discard'],[data-footer-binding='exhaust'],[data-footer-binding='potions']) {
   transform: scale(1.15); transform-box: fill-box; transform-origin: center;
 }
+/* Desktop corner tools (owner, 2026-10-12): the log and reaction switch sit in
+   the screen's bottom corners, so the row draws no backing strip between them. */
+:root .combat[data-layout='formation'] .combat-tools[data-tools-placement='corners'] { background: none; box-shadow: none; pointer-events: none; }
+/* The corner row spans the hand; only its buttons and open log take input,
+   and they sit above any card that reaches a corner. */
+:root .combat[data-layout='formation'] .combat-tools[data-tools-placement='corners'] { z-index: calc(var(--combat-layer-cards) + 1) !important; }
+:root .combat[data-layout='formation'] .combat-tools[data-tools-placement='corners'] > * { pointer-events: auto; }
