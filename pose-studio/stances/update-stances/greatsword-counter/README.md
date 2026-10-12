@@ -2,7 +2,7 @@
 
 Canonical review boards: `sheet-a.png` (CT11–15) and `sheet-b.png` (CT16–20), row-major across two columns and three rows, bottom-right empty. Transparent 1024×1536 original imagegen output bytes; no programmatic image edits, resizing or alpha repair.
 
-The art director accepted CT11–14 as concept poses. CT15 still reads one-handed: its targeted repair failed and is preserved as `sheet-a-ct15-failed.png`. A retains the earlier canonical board. B now moves CT17's two hilt grips in front of the helmet; final director review is pending. These are concept candidates, not selected or registered runtime assets.
+The art director accepted CT11–14 as concept poses. CT15 still reads one-handed: both targeted grip repairs failed and are preserved as `sheet-a-ct15-failed.png` and `sheet-a-ct15-navel-failed.png`. A retains the earlier canonical board. B now moves CT17's two hilt grips in front of the helmet; final director review is pending. These are concept candidates, not selected or registered runtime assets.
 
 | ID | Held cover |
 |---|---|
@@ -20,3 +20,5 @@ The art director accepted CT11–14 as concept poses. CT15 still reads one-hande
 Complete silhouettes fit their nominal cells on the current boards. The generator did not meet the requested approximately 210px body scale or exact 72px margins; those remain production normalization targets. Boots appear planted. Full-resolution grip/cape anatomy remains subject to review.
 
 Each `.provenance.json` records the exact prompt file, inspected local reference hashes, exact returned tool path, actual dimensions, output hash and limitations. `.original.png` boards and numbered repairs preserve the generation history. Outputs were copied from exact returned paths, never selected by a newest-file glob. No external reference pixels were inspected or imported.
+
+A fresh single-figure `ct15-replacement.png` is now available for director review. It was generated from only the costume and selected Smash references, without the previous Counter board. Two separate gauntlets and exposed hilt leather are visibly legible. Gallery use and superseding old CT15 await director acceptance; the four other A concepts remain unchanged. Exact output bytes, actual dimensions and prompt are recorded in its provenance.
