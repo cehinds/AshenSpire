@@ -9,7 +9,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { initialClassTreeChoices } from '../src/model/classTree.js';
 import { registriesForClassMastery } from '../src/model/classMasteryRun.js';
 import { createSession } from '../tools/session.mjs';
-import { coopTimelineRoute, coopPacedRoute, coopReceiptOverlays, coopCardPlayBuzz, coopReceiptSounds } from '../src/ui/screens/coop.js';
+import { coopTimelineRoute, coopPacedRoute, coopReceiptOverlays, coopCardPlayBuzz, coopReceiptSounds, coopFinalFrame } from '../src/ui/screens/coop.js';
 import { haptic } from '../src/ui/haptics.js';
 import { decorateCombatEffects, combatEffectReceipt } from '../src/model/combatEffectEvents.js';
 import { resolveCoopPlayedCombatCard } from '../src/ui/models/PlayedCombatCard.js';
@@ -224,7 +224,24 @@ test('the blow that ends a fight is paced once, on the board, before its reward 
   // Wiring: only with the combat board still mounted; the replacing scene lands at the end.
   const receive = body('receiveSnapshot');
   assert.match(receive, /app\.querySelector\('\.combat\.coop'\) && snap\?\.scene\?\.kind === 'combat'/);
-  assert.match(receive, /paceReactionReceipts\(final, \{ mode: route, land: s \}\);/);
+  assert.match(receive, /const final = coopFinalFrame\(s, snap\.scene\);\s*paceReactionReceipts\(final, \{ mode: route, land: s \}\);/);
+  // The paced frame is the final authoritative combat frame: its combatLog
+  // carries the killing blow's entries (the drawer and Full log read it).
+  const frame = coopFinalFrame(host.snapshot(), board);
+  const killing = scene.combatReceipts.events.filter(event => ['cardPlayed', 'damageDealt', 'enemyDied'].includes(event.type)).map(event => event.eventIndex);
+  const finalIds = scene.combatReceipts.combatLog.map(entry => entry.id);
+  for (const id of killing) {
+    assert.ok(finalIds.includes(id), `the final frame logs event ${id}`);
+    assert.ok(!(board.combatLog || []).some(entry => entry.id === id), `the mounted board never had event ${id}`);
+  }
+  assert.deepEqual(frame.scene.combatLog, scene.combatReceipts.combatLog, 'the paced frame reads the final combatLog');
+  assert.deepEqual(frame.scene.players, scene.combatReceipts.players, 'and its players, for card resolution');
+  assert.equal(frame.scene.kind, 'combat');
+  assert.equal(frame.scene.receiptSeq, scene.combatReceipts.receiptSeq);
+  // A partial frame (events and seq only) keeps the mounted scene for the rest.
+  const partial = coopFinalFrame({ ...host.snapshot(), scene: { ...scene, combatReceipts: { receiptSeq: 9, events: [] } } }, board);
+  assert.deepEqual(partial.scene.players, board.players);
+  assert.equal(partial.scene.receiptSeq, 9);
   const timeline = body('playPacedReceipts');
   assert.match(timeline, /snap = land;\s*render\(\);/);
   assert.match(timeline, /if \(land === next\) \{ snap = next; render\(\); \}/, 'a skip does not redraw the ended fight');
