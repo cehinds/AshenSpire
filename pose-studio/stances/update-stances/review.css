@@ -9,3 +9,9 @@
 
 .revision-note{display:block;font-size:10px;line-height:1.5;color:#e3bd94;border-top:1px solid #67523c;padding:8px 11px}.needs-revision{border-color:#796143}.needs-revision .concept-name{color:#b9b7af}.concept-grid{align-items:stretch}
 .concept-note{display:block;font-size:10px;line-height:1.5;color:#c7ceb9;border-top:1px solid #444a3e;padding:8px 11px}
+
+/* Each family declares its sheet geometry; portrait follow-up sources remain intact. */
+.source-sheet[data-orientation="portrait"]{max-width:768px;margin-left:auto;margin-right:auto}
+.concept-grid[data-columns="2"]{grid-template-columns:repeat(2,minmax(0,1fr));max-width:768px;margin-left:auto;margin-right:auto}
+.sheet-scroll[data-orientation="portrait"] img{max-width:768px;margin-left:auto;margin-right:auto}
+@media(max-width:600px){.source-sheet[data-orientation="portrait"] .source-image{min-width:0}.source-sheet[data-orientation="portrait"]::after{content:none}}
