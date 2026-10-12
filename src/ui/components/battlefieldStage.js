@@ -8,7 +8,7 @@ import { fitIconTray } from './iconTray.js';
 import { combatSpriteRatio, fitCombatSprites, NARROW_MIN_HEIGHT_FRACTION } from '../models/CombatSpriteScaleModel.js';
 import { combatSpriteGeometry, currentSpriteArtBounds } from './combatSpriteGeometry.js';
 import { classicAppearance, displayAppearance } from '../displayAppearance.js';
-import { wireAlternativeBackdrop, fitAlternativeBackdrop } from '../alternativeArt.js';
+import { wireAlternativeBackdrop, fitAlternativeBackdrop, combatHorizonFloor } from '../alternativeArt.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
 import { targetOutline } from '../models/TargetLayerModel.js';
 import { fitSceneBackdrop } from './sceneBackdrop.js';
@@ -583,6 +583,11 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         handLeft: handAnchor?.key === handLayoutKey ? handAnchor.left : 0,
         solo: solo && window.innerHeight > 480,
         desktop: document.documentElement.dataset.formFactor === 'desktop',
+        // Desktop keeps the horizon share on the field; the shared row stands on the
+        // standing-area floor the backdrop camera needs (physical px, like fieldRect).
+        horizonFloor: document.documentElement.dataset.formFactor === 'desktop'
+          ? combatHorizonFloor(combat, { width: combat.getBoundingClientRect().width / zoom, height: fieldRect.height / zoom, share: DESKTOP_HORIZON_SHARE }) * zoom
+          : undefined,
         sizes: classicAppearance()
           ? fitCombatSprites({ width: fieldRect.width, height: fieldRect.height, actors,
             minHeight: narrow ? fieldRect.height * NARROW_MIN_HEIGHT_FRACTION : 0 })

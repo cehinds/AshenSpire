@@ -135,6 +135,14 @@ export function desktopHorizonFloor(device, { width, height, share }) {
   return share * height + (standingTop * device.height - horizon) * scale;
 }
 
+// The standing-area floor for the combat backdrop on `combat`, in field-local px,
+// with the same scene and width/height fitAlternativeBackdrop frames.
+export function combatHorizonFloor(combat, { width, height, share }) {
+  const backdrop = combat.querySelector('.alternative-backdrop');
+  const scene = alternativeArtCatalog.scenes[backdrop?.dataset.scene];
+  return scene ? desktopHorizonFloor(scene.devices.desktop, { width, height, share }) : undefined;
+}
+
 export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground, standGround, narrow, horizonShare, coverFloor = false }) {
   const backdrop = combat.querySelector('.alternative-backdrop');
   const scene = alternativeArtCatalog.scenes[backdrop?.dataset.scene];

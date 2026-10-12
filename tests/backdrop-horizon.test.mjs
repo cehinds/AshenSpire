@@ -94,3 +94,9 @@ test('at 1280x720 the desktop horizon stays 10-30% down, and the standing floor 
   assert.ok(Math.min(horizonGround, clampLimit(floor + 10)) === horizonGround, 'a lower row no longer lifts the horizon');
   assert.ok(horizonOnField(Math.min(horizonGround, clampLimit(180))) < .1, 'the old 180px row lifted the horizon off the top, as Codex measured');
 });
+
+test('the stage passes the standing-area floor to the desktop shared row only', () => {
+  const stage = readFileSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url), 'utf8');
+  assert.match(stage, /horizonFloor: document\.documentElement\.dataset\.formFactor === 'desktop'\s*\?\s*combatHorizonFloor\(combat,/);
+  assert.match(stage, /\* zoom\s*\n\s*: undefined,/, 'the floor is converted to physical px, like fieldRect');
+});
