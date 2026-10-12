@@ -12,7 +12,8 @@ export const enemyReactionsActive = ctx => ctx.reactionRulesVersion === 2 && ctx
 // The enemy's reaction moves that list `window`, in authored order.
 export function reactionMovesOf(ctx, enemy, window) {
   const def = ctx.registries?.enemies?.get(enemy.enemyId);
-  return Object.entries(def?.moves || {}).filter(([, move]) => move.reaction?.on?.includes(window));
+  return Object.entries(def?.moves || {}).filter(([id, move]) => move.reaction?.on?.includes(window)
+    && (!move.locked || (enemy.unlockedMoves || []).includes(id)));
 }
 
 // The largest positive contact amount aimed at `id` in a group (or a committed plan,

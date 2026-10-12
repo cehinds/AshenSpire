@@ -84,6 +84,15 @@ test('a chance-0 move is never taken and the decision passes to the next move', 
   assert.equal(draws(combat), before);
 });
 
+test('a locked reaction move is offered only once its id is unlocked', () => {
+  const moves = { guardL: { intent: 'attack', damage: 2, locked: true, reaction: { on: ['playerAction'], chance: 1 } } };
+  const combat = fixture({ moves });
+  const args = { groupKey: 'g', windowIndex: 0, incoming: 5 };
+  assert.equal(decideEnemyReaction(combat, first, 'playerAction', args), null);
+  first.unlockedMoves = [...(first.unlockedMoves || []), 'guardL'];
+  assert.equal(decideEnemyReaction(combat, first, 'playerAction', args), 'guardL');
+});
+
 test('a fractional chance draws once and memoises the outcome per window', () => {
   const moves = { riposteB: { intent: 'attack', damage: 4, reaction: { on: ['playerReaction'], chance: 0.5 } } };
   const combat = fixture({ moves });
