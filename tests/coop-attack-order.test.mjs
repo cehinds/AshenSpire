@@ -276,3 +276,8 @@ test('a paced attack still buzzes its card play once, for a local seat only, and
   assert.ok(buzz > 0 && buzz < timeline.indexOf('playTimeline(events,'), 'at the start of the paced run');
   assert.ok(buzz < timeline.indexOf('lastSoundSeq = Math.max'), 'before lastSoundSeq is marked');
 });
+
+test("the paced path scopes the timeline's haptics to this screen's seats, as coopReceiptSounds does", () => {
+  assert.match(body('playPacedReceipts'), /playTimeline\(events, \{[\s\S]{0,300}isLocalPlayer: coopLocalSeat\(seats\),/);
+  assert.match(coop, /const isLocalPlayer = coopLocalSeat\(localSeats\);/);
+});

@@ -620,7 +620,7 @@ export function animateEvents(events, ctx, done) {
   const beatOf = new Map();
   beats.forEach((beat, b) => { for (const e of beat.events) if (!beatOf.has(e)) beatOf.set(e, b); });
   let cued = 0;
-  const cueThrough = (b) => { while (cued <= b && cued < beats.length) playBeatCues(beats[cued++].events); };
+  const cueThrough = (b) => { while (cued <= b && cued < beats.length) playBeatCues(beats[cued++].events, { isLocalPlayer: ctx.isLocalPlayer }); };
   pending = events.filter((e) => visualFor(e) !== null);
   const skip = (event) => {
     // A read-only control (the combat log, the Reaction switch) is not a skip, as in playTimeline.
@@ -736,6 +736,9 @@ export function groupBeats(events) {
  *     onFlush()            — skip: jump display to true final state,
  *     beatOrder?           — 'sequential' | 'impact'; defaults to the
  *                            animationPace.js setting (getBeatOrder),
+ *     isLocalPlayer?(seatId) — co-op: the seats this screen plays; the damage and
+ *                            turn-start haptics buzz for those only. Absent
+ *                            (solo), every player receipt is local.
  *   }
  * Uses the module anim speed; 'instant' (or reducedMotion) falls back to
  * animateEvents' classic behavior (final state + fast floats).
@@ -803,7 +806,7 @@ export function playTimeline(events, ctx, done) {
   const flushHaptics = () => {
     const rest = beats.slice(cued);
     cued = beats.length;
-    for (const [i, beat] of rest.entries()) playBeatHaptics(beat.events, { damageBuzz: !damageCued.has(cued - rest.length + i) });
+    for (const [i, beat] of rest.entries()) playBeatHaptics(beat.events, { isLocalPlayer: ctx.isLocalPlayer, damageBuzz: !damageCued.has(cued - rest.length + i) });
   };
   let flushed = false;
   let finished = false;
@@ -921,7 +924,7 @@ export function playTimeline(events, ctx, done) {
 
     if (beat.banner) {
       cueBeat(beatIndex);
-      safe(() => playBeatCues(beat.events));
+      safe(() => playBeatCues(beat.events, { isLocalPlayer: ctx.isLocalPlayer }));
       const hold = turnBannerHoldMs(speed);
       safe(() => { if (!ctx.layer.closest('.combat')?.querySelector('.turn-ribbon')) banner(ctx.layer, beat.banner, 'turn', hold); });
       safe(() => ctx.onBeatApplied && ctx.onBeatApplied(beat));
@@ -1063,7 +1066,7 @@ export function playTimeline(events, ctx, done) {
           safe(() => v(ctx));
           markContact(event.type);
           // Sequential: the damage buzz waits for the number (below).
-          if (!sequential && !damageCued.has(beatIndex) && playerLostHp(event)) {
+          if (!sequential && !damageCued.has(beatIndex) && playerLostHp(event, ctx.isLocalPlayer)) {
             damageCued.add(beatIndex);
             safe(() => haptic.play('damageTaken'));
           }
@@ -1073,7 +1076,7 @@ export function playTimeline(events, ctx, done) {
         }
         const applyBeat = () => {
           cueBeat(beatIndex);
-          safe(() => playBeatCues(beat.events, { damageBuzz: !damageCued.has(beatIndex) }));
+          safe(() => playBeatCues(beat.events, { isLocalPlayer: ctx.isLocalPlayer, damageBuzz: !damageCued.has(beatIndex) }));
           // 3) HUD updates for this beat, 4) inter-beat breath. Painted actor
           // sequences retain their recovery frames before the render replaces
           // the sprite host; ordinary CSS lunges update immediately as before.
@@ -1117,7 +1120,7 @@ export function playTimeline(events, ctx, done) {
               }
               traceBeat('numbers', event.type);
               if (parts.numbers) safe(() => parts.numbers(ctx));
-              if (!damageCued.has(beatIndex) && playerLostHp(event)) {
+              if (!damageCued.has(beatIndex) && playerLostHp(event, ctx.isLocalPlayer)) {
                 damageCued.add(beatIndex);
                 safe(() => haptic.play('damageTaken'));
               }

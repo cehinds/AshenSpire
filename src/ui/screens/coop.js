@@ -256,6 +256,11 @@ export function coopCardPlayBuzz(events = [], localSeats = null) {
   return n;
 }
 
+/** The local-seat predicate for haptics: seats this screen plays; no list = every seat. */
+export function coopLocalSeat(localSeats) {
+  return Array.isArray(localSeats) && localSeats.length ? (id) => localSeats.includes(id) : undefined;
+}
+
 export function coopReceiptSounds(scene, lastSeq = 0, localSeats = null, { hapticsOnly = false } = {}) {
   // A FIGHT'S LAST RECEIPTS ride the reward or completion scene that replaced
   // it (session.mjs settleCombat): the card that ended the fight buzzes, as
@@ -266,7 +271,7 @@ export function coopReceiptSounds(scene, lastSeq = 0, localSeats = null, { hapti
   if (seq <= lastSeq) return lastSeq;
   // Haptics are personal: a seat this screen does not play (a LAN teammate)
   // makes sound here, but does not buzz this device. No list = every seat.
-  const isLocalPlayer = Array.isArray(localSeats) && localSeats.length ? (id) => localSeats.includes(id) : undefined;
+  const isLocalPlayer = coopLocalSeat(localSeats);
   if (final) { if (lastSeq > 0) playReceiptHaptics(final.events || [], { isLocalPlayer }); }
   else if (lastSeq > 0 || scene.opening === true) (hapticsOnly ? playReceiptHaptics : playReceiptSounds)(scene.events || [], { isLocalPlayer });
   return seq;
@@ -2167,6 +2172,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     // marks lastSoundSeq), so it plays here, once, as the receipts land.
     if ((Number(next.scene.receiptSeq) || 0) > lastSoundSeq) coopCardPlayBuzz(next.scene.events, seats);
     playTimeline(events, {
+      // Haptics are personal, as in coopReceiptSounds: a teammate's hit or turn
+      // start sounds here but does not buzz this device.
+      isLocalPlayer: coopLocalSeat(seats),
       get layer() { return app.querySelector('.fx-layer'); },
       get combatEl() { return app.querySelector('.combat'); }, anchorFor,
       maxActorAnimationMs(speed) {
