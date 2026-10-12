@@ -538,7 +538,8 @@ its mounts, and **seat** a run-owned card in an emptied or open mount.
 - **Not in a Sealed or Draft run** (owner, 2026-10-02). A pool-built deck is never dealt the
   equipment's lent cards (`isPoolDeckRun`, `model/cardRemoval.js`), and extracting one would
   hand the run a free copy of what those modes exclude. `extractionRefusal` answers `poolDeck`
-  from the run's own Custom Climb rules every time, never from a stored field: `extractionPlan`
+  from the run's own Custom Climb rules, or from a stored `run.poolDeck === true` flag on a fight's
+  synthetic run (`isPoolDeckRun`): `extractionPlan`
   lists no candidate and carries that `refusal`, `commitExtraction` refuses it by name (a free
   grant too) before touching the run, and every smith door — the Shrine, a merchant's rolled
   smith, the blacksmith's `extractArt` — shows the service unavailable with the
