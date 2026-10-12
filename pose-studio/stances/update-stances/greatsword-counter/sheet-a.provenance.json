@@ -1,8 +1,8 @@
 {
-  "generated_at_utc": "2026-10-12T16:15:59.324912+00:00",
+  "generated_at_utc": "2026-10-12T16:25:29.204775+00:00",
   "tool": "tools.image_gen__imagegen",
-  "exact_prompt": "sheet-a.prompt.txt",
-  "prompt_sha256": "21ddf60f2f72b2cffa4ae7912dfb7da759e640f16a5f9c0efd91a65991f14b93",
+  "exact_prompt": "sheet-a-repair-final.prompt.txt",
+  "prompt_sha256": "ab839ee18254aadbd81dec6defa729878a8047e602b9a294d9fcc2cefaad01e3",
   "requested_dimensions": [
     1024,
     1536
@@ -19,25 +19,15 @@
   "transparent_background": true,
   "reference_images": [
     {
-      "path": "/workspace/AshenSpire/docs/design/class-armor-rear-2026-10-06/references/reaver-default-rear.png",
-      "sha256": "013f46c2d92303243da8527fcf9a15bd7c31f41e3add503e3fdd6ebc8f9950cd",
-      "visually_inspected": true
-    },
-    {
-      "path": "/workspace/AshenSpire/assets-display/alternative/reaver-greatsword-pilot-counter.webp",
-      "sha256": "fba5777cc513b41e7c714d635ff1231cb9282b6f9e070e255ceb89df8ab1a05d",
-      "visually_inspected": true
-    },
-    {
-      "path": "/workspace/AshenSpire/assets-display/alternative/reaver-greatsword-pilot-smash.webp",
-      "sha256": "9abfefe7258a3bfa2238e7c0516396c61baa5ca009a649b8408183b91fcdf6e2",
+      "path": "pose-studio/stances/update-stances/greatsword-counter/sheet-a-repair-2.png",
+      "sha256": "ac43c85c1a98463114b4b94c8490316663adcd46db553a4796ea70fbb6a0b1f8",
       "visually_inspected": true
     }
   ],
-  "original_tool_path": "/workspace/generated_images/exec-b14418c9-a946-4a2c-ae0c-c0a51f54bd10.png",
-  "preserved_artifact": "sheet-a.original.png",
+  "original_tool_path": "/workspace/generated_images/exec-7bff1bac-30e7-4813-97bf-a91245f3a162.png",
+  "preserved_artifact": "sheet-a.png",
   "raw_bytes_preserved": true,
-  "sha256": "6ebb2770f132fa2a99745286ff58a4efee233c93093d4fea70052109fd62c9c3",
+  "sha256": "cdf9e317db377a672a6de09af90516bf903246cd5800727f7acf364d353d49cd",
   "concept_ids": [
     "CT11",
     "CT12",
@@ -46,68 +36,62 @@
     "CT15"
   ],
   "layout": "2 columns x 3 rows, row-major; bottom-right empty",
-  "review_status": "rejected oversized initial board; preserved original",
+  "review_status": "awaiting final art director review; not selected or approved",
   "observations": [
-    "Five forward defensive blade lines replace the selected rearward overhead load; both boots appear grounded",
-    "Generator enlarged bodies beyond the requested ~210px scale and did not honor 72px cell margins",
-    "Horizontal/down-right blades in the left column approach or cross the 512px cell boundary",
-    "Full-resolution hand separation and continuous-cape anatomy remain review items",
-    "Hidden RGB background in tool preview is not a transparency conclusion; use browser alpha compositing"
+    "All five complete silhouettes now appear inside nominal cells, with no overlap",
+    "CT14 distinctly lower and wider; CT13 visible hilt grips",
+    "Figures remain above requested210px standing height; exact72px margins not consistently achieved",
+    "CT12/14/15 grip clarity remains art director review item"
   ],
   "alpha_cell_diagnostics": [
     {
       "cell": 1,
       "alpha_gt_127_bbox_local": [
-        21,
-        57,
-        512,
-        503
+        131,
+        168,
+        436,
+        487
       ]
     },
     {
       "cell": 2,
       "alpha_gt_127_bbox_local": [
-        0,
-        128,
-        485,
-        503
+        81,
+        197,
+        419,
+        490
       ]
     },
     {
       "cell": 3,
       "alpha_gt_127_bbox_local": [
-        23,
-        60,
-        512,
-        483
+        97,
+        142,
+        499,
+        424
       ]
     },
     {
       "cell": 4,
       "alpha_gt_127_bbox_local": [
-        0,
-        11,
-        484,
-        483
+        70,
+        118,
+        427,
+        425
       ]
     },
     {
       "cell": 5,
       "alpha_gt_127_bbox_local": [
-        30,
-        34,
-        512,
-        449
+        94,
+        87,
+        462,
+        384
       ]
     },
     {
       "cell": 6,
-      "alpha_gt_127_bbox_local": [
-        0,
-        331,
-        46,
-        379
-      ]
+      "alpha_gt_127_bbox_local": null
     }
   ]
 }
