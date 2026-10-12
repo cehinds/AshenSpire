@@ -83,3 +83,17 @@ test('passive recovery never removes Necrotic Blight; it still removes Crimson B
   assert.equal(rolled.some(event => event.status === 'necroticBlight'), false, 'Necrotic Blight is never rolled for');
   assert.equal(S.getStacks(enemy, 'necroticBlight'), 2);
 });
+
+for (const cardId of ['plagueBearer', 'scourge', 'rotMote', 'blightwardLash', 'witheringTouch']) {
+  test(`a v2 ${cardId} hit fills Crimson Blight only: the printed Crimson also suppresses the Necrotic matchup rider`, () => {
+    const c = v2Combat({ cardId });
+    const enemy = c.enemies[0];
+    const before = c.eventLog.length;
+    dispatch(c, { type: 'playCard', cardInstanceId: c.piles.hand[0].instanceId, targetId: enemy.id });
+    const events = c.eventLog.slice(before);
+    assert.ok(events.some(event => event.type === 'hpLost' && event.targetId === enemy.id), 'the hit cost HP');
+    const pressure = events.filter(event => event.type === 'statusPressure' && event.targetId === enemy.id).map(event => event.status);
+    assert.ok(pressure.includes('crimsonBlight'), JSON.stringify(pressure));
+    assert.equal(pressure.includes('necroticBlight'), false, JSON.stringify(pressure));
+  });
+}
