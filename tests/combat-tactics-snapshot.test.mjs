@@ -12,6 +12,8 @@ import { createRng } from '../src/engine/rng.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { armCombatCounter, matchupRules, prepareMatchupHit } from '../src/engine/combatMatchups.js';
 import { applyRatingImpact } from '../src/engine/combatRatings.js';
+import { executeAction } from '../src/engine/actions.js';
+import { getStacks } from '../src/engine/statuses.js';
 
 const registries = createRegistries(contentBundle);
 test('headless co-op preview conceals exact move when observer is missing', () => {
@@ -131,6 +133,10 @@ test('Poise or Ward breaks cancel the armed Counter before a follow-up attack', 
     assert.equal(enemy.intent.kind, 'staggered');
     assert.equal(enemy.combatCounter, undefined, `${meterName} break cancels reaction`);
     assert.equal(prepareMatchupHit(combat, combat.player, enemy, attack, 8).counterEligible, false);
+    // Resolve what the break queued, as a dispatch's drain would: every enemy
+    // break queues balance.poise.onFill (owner, 2026-10-12).
+    while (combat.queue.length) executeAction(combat, combat.queue.shift());
+    assert.ok(getStacks(enemy, 'staggered') > 0, `${meterName} break applies the staggered status`);
     const saved = serializeCombatSnapshot(combat);
     const loaded = restoreCombatSnapshot({ registries, rng: createRng(449, combat.rng.getCounters()), snapshot: saved });
     assert.equal(loaded.enemies[0].combatCounter, undefined);

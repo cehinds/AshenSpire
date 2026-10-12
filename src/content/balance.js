@@ -371,7 +371,7 @@ export const balance = {
     [NOTE]: {
       growthMult: 'How much a Poise threshold grows each time the meter fills, so the second stagger of a fight is dearer than the first. Only while combat ratings are off; with ratings on, Break threshold multiplier sets this.',
       playerImpactPerHit: 'Poise the player loses per enemy hit that lands, outside a ruleset that states its own weapon impact. Only while combat ratings are off; with ratings on, the impact rows set how much each hit fills the meter.',
-      'onFill.{i}.stacks': 'Stacks of {statusName} that {recipient} when its Poise meter fills. The player\'s own fill runs no row from this list — it reads Stagger · Player instead. Only while combat ratings are off; with ratings on, a break skips the enemy\'s next turn instead.',
+      'onFill.{i}.stacks': 'Stacks of {statusName} that {recipient} when its Poise meter fills. The player\'s own fill runs no row from this list — it reads Stagger · Player instead. With combat ratings on, every enemy break runs it too, Poise or Ward, beside the skipped turn.',
     },
   },
 
