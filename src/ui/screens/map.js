@@ -490,7 +490,13 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // The camera settles on the board's own ResizeObserver + backstop; the focus
   // cursor lands once it has (only when the player is using keyboard/gamepad, so
   // mouse players get no stray ring).
-  board.recenter(() => { if (isEngaged()) focusFirst('.map-node.reachable'); });
+  // The first cursor stop is a node the player can travel to: the node they
+  // stand on (a rest revisit keeps it reachable) is skipped when another exists.
+  board.recenter(() => {
+    if (!isEngaged()) return;
+    const fresh = '.map-node.reachable:not(.current)';
+    focusFirst(document.querySelector(fresh) ? fresh : '.map-node.reachable');
+  });
   let frameA = 0;
   let frameB = 0;
   const recenterAfterSettle = () => {
