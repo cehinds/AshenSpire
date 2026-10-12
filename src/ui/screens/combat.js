@@ -520,8 +520,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   combatEl.addEventListener('cardinspectionselect', event => {
     selectCombatant(null);
     const id = event.target.closest('.hand .card')?.dataset.instanceId;
-    if (id && id !== selected && id !== selfArm) {
+    if (id && id !== selected && id !== selfArm && (selected || selfArm || selectedFlask != null)) {
       selected = null; selectedFlask = null; selfArm = null;
+      // Inspecting another card disarms: the figure drops the armed card's preview
+      // (syncCardSelection would also strip the inspection highlight just lit).
+      syncPlayerPreview($('.combatant.player'), null, null);
     }
     refreshAim();
   });
@@ -641,14 +644,17 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // The figure and its glyph preview the selected card; deselecting returns them to the held
     // stance. While a play's receipt is pending (hand frozen), keep the preview: the held ledgers
     // still name the stance before the play until its cardPlayed beat lands.
-    if (def || !$('.hand')?.inert) {
-      syncPlayerActionIntent(player, inst, heldKinds.get());
-      stageFor(player?.querySelector('.sprite'))?.setStance?.(def ? stanceForCard(def) : heldStances.get());
-    }
+    if (def || !$('.hand')?.inert) syncPlayerPreview(player, inst, def);
     applyTargetLayer();
     setHintMode(active ? 'targeting' : null);
     hideTooltip();
     refreshAim();
+  }
+
+  // The figure's glyph and stance: the armed card's, else the held ones.
+  function syncPlayerPreview(player, inst, def) {
+    syncPlayerActionIntent(player, inst, heldKinds.get());
+    stageFor(player?.querySelector('.sprite'))?.setStance?.(def ? stanceForCard(def) : heldStances.get());
   }
 
   // An armed card's kind shows while it is armed; otherwise the last confirmed
