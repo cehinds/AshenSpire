@@ -167,6 +167,27 @@ test('co-op seats answer in order and the whole stack resolves last pushed first
   assert.equal(C.pendingReaction, undefined);
 });
 
+test('a co-op seat that disconnects after committing fizzles its entries and pays nothing', () => {
+  const { registries } = fixture();
+  const players = ['a', 'b'].map(id => ({ id, classId: 'reaver', maxHp: 100, hp: 100,
+    maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 2, combatExpansionVersion: 2,
+    deck: [{ cardId: 'sweepingBlow', instanceId: `${id}:sweep`, upgraded: false }, { cardId: 'whirlingGuard', instanceId: `${id}:guard`, upgraded: false }] }));
+  const C = createCoopCombat({ registries, rng: createRng(709), players, enemyIds: ['wanderingSoldier'], reactionRulesVersion: 2 });
+  for (const P of C.players.values()) P.entity.block = 100;
+  endTurn(C, 'a'); endTurn(C, 'b');
+  const pick = instanceId => C.pendingReaction.options.find(row => row.play.cardInstanceId === instanceId).id;
+  chooseReaction(C, 'a', { offerId: C.pendingReaction.id, optionId: pick('a:sweep') });
+  chooseReaction(C, 'a', { offerId: C.pendingReaction.id, optionId: pick('a:guard') });
+  assert.equal(C.pendingReaction.ownerId, 'b');
+  const seatA = C.players.get('a');
+  seatA.connected = false;
+  const out = chooseReaction(C, 'b', { offerId: C.pendingReaction.id, optionId: null });
+  const fizzled = out.events.filter(event => event.type === 'combatReactionFizzled' && event.ownerId === 'a');
+  assert.deepEqual(fizzled.map(event => [event.cardInstanceId, event.reason]), [['a:guard', 'ownerGone'], ['a:sweep', 'ownerGone']]);
+  // Payment is the cardPlayed receipt: none for either seat (seat b passed).
+  assert.equal(out.events.filter(event => event.type === 'cardPlayed').length, 0);
+});
+
 test('a stacked play that pauses for its own discard resumes the rest of the stack', () => {
   // Pushed: a Sweep (r0), then the discarding Strike (r1). The Strike resolves first and pauses,
   // leaving the Sweep on the stack; the discard choice then resumes the Sweep and the attack.

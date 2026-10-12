@@ -314,6 +314,11 @@ export function resolveReactionStack(ctx, hooks) {
 function playStackEntry(ctx, group, entry, hooks) {
   const { ownerId, play } = entry;
   hooks.setOwner?.(ctx, ownerId);
+  // A seat that died or disconnected after committing pays nothing and plays nothing.
+  if (!seatPresent(ctx, ownerId)) {
+    ctx.emit('combatReactionFizzled', { ownerId, cardInstanceId: play.cardInstanceId, reason: 'ownerGone' });
+    return false;
+  }
   const hand = (ctx.players ? ctx.players.get(ownerId)?.piles.hand : ctx.piles.hand) || [];
   if (!hand.some(inst => inst.instanceId === play.cardInstanceId)) {
     ctx.emit('combatReactionFizzled', { ownerId, cardInstanceId: play.cardInstanceId, reason: 'notInHand' });
