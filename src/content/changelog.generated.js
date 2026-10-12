@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-12",
     "summary": "Every enemy break now staggers under combat ratings",
     "detail": "With ratings on, a break of the Poise or Ward meter, by weapon or spell, and an Insanity break now apply Staggered as well as the skipped turn, so Executioner and other Staggered payoffs fire in normal runs. Spell breaks no longer add Magic Vulnerable on top; Staggered already raises damage of every type.",
-    "build": "0.7.1.1433",
+    "build": "0.7.1.1435",
     "pullRequest": 1913,
     "url": "https://github.com/cehinds/AshenSpire/pull/1913"
+  },
+  {
+    "id": "pr-1906",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Enemies can react to your cards",
+    "detail": "In new runs, some enemies now answer what you play. A Gilded Knight may raise its guard just before a heavy hit lands, and a Court Duelist may strike back when you play a reaction, even a plain Block. Their reactions go on the same stack as yours and resolve last played first.",
+    "build": "0.7.1.1435",
+    "pullRequest": 1906,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1906"
   },
   {
     "id": "pr-1905",
@@ -21,16 +31,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1433",
     "pullRequest": 1905,
     "url": "https://github.com/cehinds/AshenSpire/pull/1905"
-  },
-  {
-    "id": "pr-1906",
-    "date": "2026-10-12",
-    "group": "2026-10-12",
-    "summary": "Enemies can react to your cards",
-    "detail": "In new runs, some enemies now answer what you play. A Gilded Knight may raise its guard just before a heavy hit lands, and a Court Duelist may strike back when you play a reaction, even a plain Block. Their reactions go on the same stack as yours and resolve last played first.",
-    "build": "0.7.1.1431",
-    "pullRequest": 1906,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1906"
   },
   {
     "id": "pr-1893",
