@@ -145,3 +145,9 @@ test('an armed untyped card shows the prepare glyph over a held defend', () => {
   assert.equal(actions.at(-1).attrs['aria-label'], 'Selected action: prepare', 'the armed profile is always used when present');
   assert.equal(actions.at(-1).children[0].icon, 'prepare');
 });
+
+test('selection previews the card stance on the figure sprite; deselect returns to the held stance', () => {
+  const source = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
+  assert.match(source, /stageFor\(player\?\.querySelector\('\.sprite'\)\)\?\.setStance\?\.\(def \? stanceForCard\(def\) : heldStances\.get\(\)\);/);
+  assert.match(source, /stageFor\(box\)\?\.setStance\?\.\(activeDef \? stanceForCard\(activeDef\) : heldStances\.get\(\)\);/);
+});

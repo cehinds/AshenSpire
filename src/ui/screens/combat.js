@@ -56,7 +56,7 @@ import { helpText, resolveTooltipSettings } from '../../model/tooltipSettings.js
 import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
 import { relicText, renderCard } from '../components/card.js';
 import { enemySprite, playerSprite, spritesAreEnabled } from '../assets.js';
-import { createStanceLedger, kindForCard } from '../../model/alternativeStance.js';
+import { createStanceLedger, kindForCard, stanceForCard } from '../../model/alternativeStance.js';
 import { animateEvents, playEventCues, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } from '../fx.js';
 import { COMBAT_TIMING } from '../animationPace.js';
 import { figureSpec, equippedPieces } from '../../model/loadout.js';
@@ -640,6 +640,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const def = inst && resolveCombatCard(combat, inst, { upcastRanks: upcastRanksByCard.get(inst.instanceId) });
     player?.classList.toggle('skill-selected', cardKind(def) === 'skill');
     syncPlayerActionIntent(player, inst, heldKinds.get());
+    // The figure previews the selected card's stance; deselecting returns it to the held stance.
+    stageFor(player?.querySelector('.sprite'))?.setStance?.(def ? stanceForCard(def) : heldStances.get());
     applyTargetLayer();
     setHintMode(active ? 'targeting' : null);
     hideTooltip();
@@ -1502,8 +1504,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }, true);
     if (!existing) zone.appendChild(box);
     const activeCard = findInst(selected || selfArm);
+    const activeDef = activeCard ? resolveCombatCard(combat, activeCard, { upcastRanks: upcastRanksByCard.get(activeCard.instanceId) }) : null;
     syncPlayerActionIntent(box, activeCard, heldKinds.get());
-    stageFor(box)?.setStance?.(heldStances.get());
+    stageFor(box)?.setStance?.(activeDef ? stanceForCard(activeDef) : heldStances.get());
     stageFor(box)?.setRestPose?.(resolveCombatPose(dv(p), playerRest, readinessOrder), { immediate: !existing });
     playerRenderKey = renderKey;
   }
