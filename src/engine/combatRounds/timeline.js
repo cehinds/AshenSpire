@@ -132,7 +132,9 @@ export function makeCombatant(spec = {}, tables = {}) {
   if (!Number.isFinite(hp) || hp < 0) throw new TypeError(`${id}.hp must be a number of 0 or more`);
   const sp = Number(spec.sp ?? DEFAULT_SP);
   if (!Number.isFinite(sp) || sp < 0) throw new TypeError(`${id}.sp must be a number of 0 or more`);
-  const attrs = { ...(spec.attrs ?? {}) };
+  // A non-finite attribute counts as 0, as the other numbers here do: JSON turns Infinity and NaN
+  // into null, so a kept value would make a saved round differ from the live one.
+  const attrs = Object.fromEntries(Object.entries(spec.attrs ?? {}).map(([k, x]) => [k, typeof x === 'number' && !Number.isFinite(x) ? 0 : x]));
   const evasion = evasionFor({
     evasionArmor: spec.evasionArmor,
     dex: spec.dex,
@@ -165,7 +167,8 @@ export function makeCombatant(spec = {}, tables = {}) {
     evasion,
     evadeBasePct: Number.isFinite(base) ? base : 0,
     intangibleCharges: Number.isFinite(charges) && charges > 0 ? charges : 0,
-    accuracyExtra: Number(spec.accuracy ?? 0) || 0,
+    // A non-finite accuracy counts as 0, the same as the level and wis above.
+    accuracyExtra: Number.isFinite(Number(spec.accuracy ?? 0)) ? Number(spec.accuracy ?? 0) : 0,
     hand: Array.isArray(spec.hand) ? spec.hand.map((c) => ({ ...c })) : [],
     // The evasion-cards.csv table (owner, 2026-10-11): a played evade card whose name or id is
     // in it adds that bonus to the hit roll of the one attack it answers. Null when no table.
