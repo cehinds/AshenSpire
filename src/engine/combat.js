@@ -794,8 +794,10 @@ function rollIntents(combat, isFirstTurn = false) {
 }
 
 function weightedMovePick(combat, enemy, def) {
+  // Reaction moves (docs/combat-card-traits-contract.md, "Enemy reactions") are never
+  // rolled: they are dropped before any weighting, maxConsecutive or pattern indexing.
   const entries = Object.entries(def.moves).filter(
-    ([id, mv]) => !mv.locked || enemy.unlockedMoves.includes(id)
+    ([id, mv]) => !mv.reaction && (!mv.locked || enemy.unlockedMoves.includes(id))
   );
   if (entries.length === 0) return null;
 

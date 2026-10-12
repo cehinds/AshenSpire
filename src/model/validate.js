@@ -2076,6 +2076,8 @@ function collectContentProblems(bundle, errors = []) {
     const moveIds = new Set(Object.keys(enemy.moves || {}));
     if (enemy.firstMove != null && !moveIds.has(enemy.firstMove)) {
       err(`${path}.firstMove`, `firstMove '${enemy.firstMove}' is not one of this enemy's moves`);
+    } else if (enemy.firstMove != null && enemy.moves[enemy.firstMove].reaction !== undefined) {
+      err(`${path}.firstMove`, `firstMove '${enemy.firstMove}' is a reaction move and is never rolled as an intent`);
     }
     // A reaction move is never rolled, so it carries no weight; every other move
     // is rolled and needs one. `reaction` bounds mirror docs/combat-card-traits-contract.md.
