@@ -761,6 +761,11 @@ card,,hamstringRogue,damage:slashing
 card,,bladeDanceRogue,damage:slashing
 card,,thousandCutsRogue,damage:slashing
 card,,sweepingBlow,damage:slashing
+card,,lowBlow,damage:blunt
+card,,sap,damage:blunt
+card,,poiseBreaker,damage:blunt
+card,,sunderplate,damage:blunt
+card,,sunderingChop,damage:blunt
 card,,stomp,damage:blunt
 card,,stomp,delivery:melee
 card,,kickOff,damage:blunt

@@ -4259,6 +4259,36 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
+    "objectId": "lowBlow",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sap",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "poiseBreaker",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sunderplate",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sunderingChop",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "card",
+    "scope": "",
     "objectId": "stomp",
     "tagId": "damage:blunt"
   },
