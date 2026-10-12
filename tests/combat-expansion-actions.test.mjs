@@ -367,6 +367,24 @@ test('Poise lets at least 1 damage through per physical hit it meets, and is spe
   assert.equal(enemy.persistentPoise.value, 8);
 });
 
+test('a Smash that breaks the last Block marks its blockBroken smash; a plain attack breaking Block does not', () => {
+  const { combat, enemy } = fixture([{ op: 'damage', target: 'enemy', amount: 10 }]);
+  enemy.ratings.ward = enemy.persistentWard.value = enemy.persistentWard.max = 0;
+  enemy.ratings.poise = 0; enemy.persistentPoise = { max: 0, value: 0 };
+  enemy.combatStance = { maneuver: 'defend' };
+  const physical = physicalCarrier();
+  const smash = { ...physical, tags: ['camp:physical', 'maneuver:smash'], combatProfile: { ...physical.combatProfile, maneuver: 'smash' } };
+  enemy.block = 3; enemy.barrier = 0;
+  let events = captureEvents(combat);
+  applyAttackDamage(combat, combat.player, enemy, 10, [], smash);
+  assert.equal(enemy.block, 0, 'the Smash breaks the last Block');
+  assert.equal(events.find(event => event.type === 'blockBroken').smash, true);
+  enemy.combatStance = null; enemy.block = 3; enemy.hp = enemy.maxHp;
+  events = captureEvents(combat);
+  applyAttackDamage(combat, combat.player, enemy, 10, [], physical);
+  assert.equal(events.find(event => event.type === 'blockBroken').smash, undefined, 'an ordinary break is not a Smash');
+});
+
 test('a physical Poise break costs a player one Stamina next turn and staggers nobody', () => {
   const { combat, enemy } = fixture();
   const mage = combat.player;

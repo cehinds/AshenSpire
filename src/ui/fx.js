@@ -1372,7 +1372,8 @@ export function calloutForEvent(e = {}) {
     case 'enemyStaggered': if (!e.cause) kind = 'staggered'; break;
     case 'playerStaggered': kind = 'staggered'; break;
     case 'enemyInterrupted': kind = 'interrupted'; break;
-    case 'blockBroken': kind = 'blockBreak'; break;
+    // A Smash's Block break is the GUARD BREAK callout (combatGuardBroken); it earns no BREAK word of its own.
+    case 'blockBroken': if (!e.smash) kind = 'blockBreak'; break;
     case 'ratingImpact': if (e.breaks > 0) kind = e.label === 'Disruption' ? 'disrupted' : 'staggered'; break;
     case 'combatCounterTriggered': kind = 'countered'; break; // over the attacker who got countered
     case 'attackEvaded': kind = 'evaded'; break;
@@ -1582,7 +1583,8 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
           spawnFx(ctx.layer, ctx.anchorFor(e.targetId), 'fx-miss-streak', 380);
         },
       };
-    case 'blockBroken': return breakBurst(e, 'block', 'hit_heavy');
+    // A Smash's Block break shows as GUARD BREAK alone: no burst and no sound for it here.
+    case 'blockBroken': return e.smash ? null : breakBurst(e, 'block', 'hit_heavy');
     case 'barrierBroken': return breakBurst(e, 'barrier', 'block');
     case 'wardBroken': return breakBurst(e, 'ward', 'procBurst');
     case 'poiseBroken': return breakBurst(e, 'gold', 'hit_heavy');

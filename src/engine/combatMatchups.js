@@ -442,9 +442,18 @@ function schoolReturnMultiplier(ctx, counter, incoming) {
   return check('strong') ? cfg.schoolStrongMultiplier : 1;
 }
 
+/**
+ * THE ONE SMASH GUARD-BREAK TEST: a Smash that connects and leaves the target
+ * with no Block. GUARD BREAK (combatGuardBroken) and the Block's blockBroken
+ * both read it, so the Block break a Smash makes is shown as GUARD BREAK alone.
+ */
+export function isSmashGuardBreak(receipt, target) {
+  return !!receipt && receipt.smash === true && (receipt.connected ?? true) && number(receipt.guardBefore) > 0 && number(target?.block) <= 0;
+}
+
 /** A Smash that breaks the target's last Guard. Reported even when the hit killed the target. */
 export function completeGuardBreak(ctx, source, target, carrier, receipt) {
-  if (!(receipt.smash && receipt.connected && receipt.guardBefore > 0 && number(target?.block) <= 0)) return;
+  if (!isSmashGuardBreak(receipt, target)) return;
   const amount = carrier?.combatProfile?.breakPoiseBonus ?? expansionMatchupRules(ctx).smash.guardBreakPoiseBonus;
   // The break is reported even with no bonus, and even when this hit killed
   // the target: Guard broke all the same. A dead target takes no bonus Poise.

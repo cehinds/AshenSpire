@@ -231,8 +231,10 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
       tags: receipt.tags } : {}),
     isAttack: true,
   });
-  // Block going from above zero to zero by this hit is a break (never double-counted with GUARD BREAK: see fx.js).
-  if (blockBefore > 0 && !(target.block > 0)) ctx.emit('blockBroken', { targetId: target.id, sourceId: source?.id, ...seatOf(ctx, target) });
+  // Block going from above zero to zero by this hit is a break. A Smash that does it also reports
+  // GUARD BREAK (combatGuardBroken); this blockBroken is marked smash, and fx.js shows GUARD BREAK alone.
+  if (blockBefore > 0 && !(target.block > 0)) ctx.emit('blockBroken', { targetId: target.id, sourceId: source?.id, ...seatOf(ctx, target),
+    ...(Matchups.isSmashGuardBreak(tactical, target) ? { smash: true } : {}) });
   if (hpLoss > 0) {
     if (ctx.ratingsRules && !carrier?.combatReaction) {
       const multiplier = Matchups.matchupPoiseMultiplier(ctx, source, target, carrier);
@@ -395,7 +397,8 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
   const blockBefore = target[pool] || 0;
   const blocked = spell ? 0 : Math.min(Math.max(0, target[pool] || 0), Math.max(0, amount - bypass));
   target[pool] = Math.max(0, (target[pool] || 0) - blocked);
-  if (blockBefore > 0 && !(target[pool] > 0)) breaks.push(['blockBroken', { targetId: target.id, sourceId: source?.id, ...seatOf(ctx, target) }]);
+  if (blockBefore > 0 && !(target[pool] > 0)) breaks.push(['blockBroken', { targetId: target.id, sourceId: source?.id, ...seatOf(ctx, target),
+    ...(Matchups.isSmashGuardBreak(tactical, target) ? { smash: true } : {}) }]);
   // Poise is the physical twin of Ward and sits after Block: a magical contact never meets it.
   // Each physical hit it meets still lets at least 1 through; what it absorbs is spent.
   let hpLoss = amount - blocked;
