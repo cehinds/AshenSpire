@@ -270,7 +270,7 @@ function gainBarrierAmount(ctx, entity, amount, card = null, spell = isSpellCard
     // restorePersistentWard refills Ward and emits the Barrier overflow itself. Ashen Blight's
     // restore percent is already on the gain upstream, so it is not applied a second time here.
     const granted = Control.restorePersistentWard(ctx, entity, amount, { source: 'card', modifierPercent: 0 });
-    return (granted.restored || 0) + (granted.barrier || 0);
+    return (granted.restored || 0) + (granted.missingRecovered || 0) + (granted.barrier || 0);
   }
   entity.barrier = (entity.barrier || 0) + amount;
   ctx.emit('barrierGained', { targetId: entity.id, amount, total: entity.barrier, ...seatOf(ctx, entity) });

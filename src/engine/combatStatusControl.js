@@ -165,6 +165,7 @@ export function restorePersistentWard(ctx, entity, nominal, options = {}) {
   // holds it above max), not against max - value. Only once missing reaches 0
   // does a card's overflow become Barrier.
   const missingMode = ward.missing !== undefined;
+  const valueBefore = ward.value;
   const room = missingMode ? Math.max(0, ward.missing) : ward.max - ward.value;
   const exact = overflow ? credit + s.wardRestoreCarry : Math.min(room, credit + s.wardRestoreCarry);
   const whole = Math.floor(exact + 1e-9);
@@ -182,12 +183,15 @@ export function restorePersistentWard(ctx, entity, nominal, options = {}) {
     if (ward.value > 0) delete ward.missing;
   }
   s.wardRestoreCarry = overflow || ward.value < ward.max ? Math.max(0, exact - whole) : 0;
-  emit(ctx, 'persistentWardChanged', entity, { restored, credited: credit, value: ward.value, max: ward.max, source });
+  // restored is the Ward the pool actually gained. A clamped pool's refill first pays down hidden
+  // missing debt (missingRecovered), which leaves the value where it was.
+  const increase = ward.value - valueBefore, missingRecovered = restored - increase;
+  emit(ctx, 'persistentWardChanged', entity, { restored: increase, missingRecovered, credited: credit, value: ward.value, max: ward.max, source });
   if (barrier > 0) {
     entity.barrier = (entity.barrier || 0) + barrier;
     emit(ctx, 'barrierGained', entity, { amount: barrier, total: entity.barrier });
   }
-  return { restored, barrier, credited: credit, carry: s.wardRestoreCarry };
+  return { restored: increase, missingRecovered, barrier, credited: credit, carry: s.wardRestoreCarry };
 }
 
 /**
@@ -209,6 +213,7 @@ export function restorePersistentPoise(ctx, entity, nominal, options = {}) {
   if (onceKey) s.wardAllowances[onceKey] = true;
   let credit = Math.max(0, nominal * (1 + finite(options.modifierPercent) / 100));
   if (options.cap !== undefined) credit = Math.min(credit, Math.max(0, options.cap));
+  const valueBefore = poise.value;
   const room = missingMode ? Math.max(0, poise.missing) : poise.max - poise.value;
   const whole = Math.floor(credit + 1e-9);
   const restored = Math.min(room, whole);
@@ -224,12 +229,13 @@ export function restorePersistentPoise(ctx, entity, nominal, options = {}) {
     if (missingAfter <= poise.max) delete poise.missing;
     else poise.missing = missingAfter;
   } else poise.value += restored;
-  emit(ctx, 'persistentPoiseChanged', entity, { restored, credited: credit, value: poise.value, max: poise.max, source: options.source || 'card' });
+  const increase = poise.value - valueBefore, missingRecovered = restored - increase;
+  emit(ctx, 'persistentPoiseChanged', entity, { restored: increase, missingRecovered, credited: credit, value: poise.value, max: poise.max, source: options.source || 'card' });
   if (block > 0) {
     entity.block = (entity.block || 0) + block;
     emit(ctx, 'blockGained', entity, { amount: block, total: entity.block, source: 'poise' });
   }
-  return { restored, block, credited: credit };
+  return { restored: increase, missingRecovered, block, credited: credit };
 }
 
 /** Active grants are separate from explicit buildup; no implicit proc meter. */
@@ -433,7 +439,8 @@ export function sleepRestoration(ctx, entity, options = {}) {
   const hp = Math.min(Math.max(0, entity.maxHp - entity.hp), Math.max(0, cfg.hpCombatCap - s.sleepHpRestored), Math.max(0, Math.floor(cfg.hpPerStack * count * (1 + percent / 100))));
   entity.hp += hp; s.sleepHpRestored += hp;
   if (hp) emit(ctx, 'healed', entity, { sourceId: entity.id, amount: hp, source: 'sleep' });
-  const ward = restorePersistentWard(ctx, entity, 1, { source: 'sleep', ...(options.wardModifierPercent !== undefined ? { modifierPercent: options.wardModifierPercent } : {}) }).restored;
+  const refill = restorePersistentWard(ctx, entity, 1, { source: 'sleep', ...(options.wardModifierPercent !== undefined ? { modifierPercent: options.wardModifierPercent } : {}) });
+  const ward = (refill.restored || 0) + (refill.missingRecovered || 0);
   return { hp, ward };
 }
 
