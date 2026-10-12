@@ -22807,5 +22807,209 @@ export const tagging = [
     "scope": "",
     "objectId": "lowGuardRiposte",
     "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "aspDart",
+    "tagId": "ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "aspDart",
+    "tagId": "venom"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "aspDart",
+    "tagId": "fx:ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "aspDart",
+    "tagId": "fx:venom"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "aspDart",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "aspDart",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "aspDart",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "aspDart",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "aspDart",
+    "tagId": "maneuver:ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "aspDart",
+    "tagId": "damage:poison"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "viperStrike",
+    "tagId": "venom"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "viperStrike",
+    "tagId": "fx:venom"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "viperStrike",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "viperStrike",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "viperStrike",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "viperStrike",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "viperStrike",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "viperStrike",
+    "tagId": "damage:poison"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "septicBlade",
+    "tagId": "venom"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "septicBlade",
+    "tagId": "fx:venom"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "septicBlade",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "septicBlade",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "septicBlade",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "septicBlade",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "septicBlade",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "septicBlade",
+    "tagId": "damage:poison"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lethalDose",
+    "tagId": "venom"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lethalDose",
+    "tagId": "fx:venom"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lethalDose",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lethalDose",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lethalDose",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lethalDose",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lethalDose",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lethalDose",
+    "tagId": "damage:poison"
   }
 ];

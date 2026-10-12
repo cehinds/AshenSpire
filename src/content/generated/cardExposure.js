@@ -641,5 +641,25 @@ export const cardExposure = [
     "cardId": "crawlingShot",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "aspDart",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "viperStrike",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "septicBlade",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "lethalDose",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
   }
 ];
