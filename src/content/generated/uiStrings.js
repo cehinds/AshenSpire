@@ -6275,6 +6275,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "settings.row.cardArtStyle",
+    "extends": "",
+    "short": "Card artwork",
+    "full": "Simple uses the new card artwork with elemental and status accents. Legacy keeps the original illustrations.",
+    "tip": ""
+  },
+  {
     "id": "settings.row.uiScale",
     "extends": "",
     "short": "UI size",
