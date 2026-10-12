@@ -116,7 +116,9 @@ version-2 snapshot without the key has no enemy reactions.
   is this enemy. A window opened by a push the enemy is not targeted by, on a
   root it does not own, gives it nothing to qualify on. A qualifying move with `chance`
   1 is taken and one with 0 is not, without a draw; otherwise one draw on the new
-  `enemyReaction` RNG stream (appended last) decides it. Draws are memoised in
+  `enemyReaction` RNG stream (appended last) decides it. A move that is not taken
+  passes to the enemy's next qualifying move in authored order; the first move
+  taken ends the enemy's decision for that window. Draws are memoised in
   `combat.enemyReactionRolls["<group key>:<window>:<enemy id>:<move id>"]`, where
   `<window>` counts the windows opened on that root (0 for the first, +1 per
   push),, which is saved
