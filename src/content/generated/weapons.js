@@ -26,7 +26,8 @@ export const weapons = [
     "weight": 5,
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
-    "inventoryArtKey": "straightSwordInventory2026"
+    "inventoryArtKey": "straightSwordInventory2026",
+    "range": "melee"
   },
   {
     "id": "greatsword",
@@ -55,7 +56,8 @@ export const weapons = [
     "weight": 8,
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
-    "inventoryArtKey": ""
+    "inventoryArtKey": "",
+    "range": "melee"
   },
   {
     "id": "dagger",
@@ -81,7 +83,8 @@ export const weapons = [
     "weight": 3,
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
-    "inventoryArtKey": ""
+    "inventoryArtKey": "",
+    "range": "melee"
   },
   {
     "id": "shortbow",
@@ -107,7 +110,8 @@ export const weapons = [
     "weight": 2,
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
-    "inventoryArtKey": ""
+    "inventoryArtKey": "",
+    "range": "ranged"
   },
   {
     "id": "katana",
@@ -133,7 +137,8 @@ export const weapons = [
     "weight": 5,
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
-    "inventoryArtKey": ""
+    "inventoryArtKey": "",
+    "range": "melee"
   },
   {
     "id": "halberd",
@@ -162,7 +167,8 @@ export const weapons = [
     "weight": 7,
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
-    "inventoryArtKey": ""
+    "inventoryArtKey": "",
+    "range": "reach"
   },
   {
     "id": "warhammer",
@@ -188,7 +194,8 @@ export const weapons = [
     "weight": 9,
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
-    "inventoryArtKey": ""
+    "inventoryArtKey": "",
+    "range": "melee"
   },
   {
     "id": "twinblade",
@@ -217,7 +224,8 @@ export const weapons = [
     "weight": 5,
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
-    "inventoryArtKey": ""
+    "inventoryArtKey": "",
+    "range": "melee"
   },
   {
     "id": "battleaxe",
@@ -243,7 +251,8 @@ export const weapons = [
     "weight": 7,
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
-    "inventoryArtKey": ""
+    "inventoryArtKey": "",
+    "range": "melee"
   },
   {
     "id": "buckler",
@@ -269,7 +278,8 @@ export const weapons = [
     "weight": 4,
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
-    "inventoryArtKey": ""
+    "inventoryArtKey": "",
+    "range": "melee"
   },
   {
     "id": "kiteShield",
@@ -295,7 +305,8 @@ export const weapons = [
     "weight": 8,
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
-    "inventoryArtKey": "kiteShieldInventory2026"
+    "inventoryArtKey": "kiteShieldInventory2026",
+    "range": "melee"
   },
   {
     "id": "towerShield",
@@ -321,7 +332,8 @@ export const weapons = [
     "weight": 12,
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
-    "inventoryArtKey": ""
+    "inventoryArtKey": "",
+    "range": "melee"
   },
   {
     "id": "roundShield",
@@ -347,7 +359,8 @@ export const weapons = [
     "weight": 7,
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
-    "inventoryArtKey": ""
+    "inventoryArtKey": "",
+    "range": "melee"
   },
   {
     "id": "spikedShield",
@@ -373,7 +386,8 @@ export const weapons = [
     "weight": 8,
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
-    "inventoryArtKey": ""
+    "inventoryArtKey": "",
+    "range": "melee"
   },
   {
     "id": "lantern",
@@ -399,7 +413,8 @@ export const weapons = [
     "weight": 2,
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
-    "inventoryArtKey": ""
+    "inventoryArtKey": "",
+    "range": "melee"
   },
   {
     "id": "torch",
@@ -425,7 +440,8 @@ export const weapons = [
     "weight": 2,
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
-    "inventoryArtKey": ""
+    "inventoryArtKey": "",
+    "range": "melee"
   },
   {
     "id": "parryDagger",
@@ -451,7 +467,8 @@ export const weapons = [
     "weight": 3,
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
-    "inventoryArtKey": ""
+    "inventoryArtKey": "",
+    "range": "melee"
   },
   {
     "id": "ashStaff",
@@ -477,7 +494,8 @@ export const weapons = [
     "weight": 3,
     "weaponArtManaCost": 1,
     "uniqueSkillStaminaCost": 0,
-    "inventoryArtKey": ""
+    "inventoryArtKey": "",
+    "range": "reach"
   },
   {
     "id": "starstoneStaff",
@@ -506,7 +524,8 @@ export const weapons = [
     "weight": 3,
     "weaponArtManaCost": 1,
     "uniqueSkillStaminaCost": 0,
-    "inventoryArtKey": ""
+    "inventoryArtKey": "",
+    "range": "reach"
   },
   {
     "id": "boneSceptre",
@@ -535,7 +554,8 @@ export const weapons = [
     "weight": 4,
     "weaponArtManaCost": 1,
     "uniqueSkillStaminaCost": 0,
-    "inventoryArtKey": ""
+    "inventoryArtKey": "",
+    "range": "reach"
   },
   {
     "id": "emberlightSceptre",
@@ -561,7 +581,8 @@ export const weapons = [
     "weight": 4,
     "weaponArtManaCost": 1,
     "uniqueSkillStaminaCost": 0,
-    "inventoryArtKey": ""
+    "inventoryArtKey": "",
+    "range": "reach"
   },
   {
     "id": "goldboughBranch",
@@ -590,7 +611,8 @@ export const weapons = [
     "weight": 4,
     "weaponArtManaCost": 1,
     "uniqueSkillStaminaCost": 0,
-    "inventoryArtKey": ""
+    "inventoryArtKey": "",
+    "range": "reach"
   },
   {
     "id": "blightRod",
@@ -619,7 +641,8 @@ export const weapons = [
     "weight": 3,
     "weaponArtManaCost": 1,
     "uniqueSkillStaminaCost": 0,
-    "inventoryArtKey": ""
+    "inventoryArtKey": "",
+    "range": "reach"
   },
   {
     "id": "gorefireBrand",
@@ -648,7 +671,8 @@ export const weapons = [
     "weight": 3,
     "weaponArtManaCost": 1,
     "uniqueSkillStaminaCost": 0,
-    "inventoryArtKey": ""
+    "inventoryArtKey": "",
+    "range": "reach"
   },
   {
     "id": "wyrmhornStaff",
@@ -678,7 +702,8 @@ export const weapons = [
     "weight": 5,
     "weaponArtManaCost": 1,
     "uniqueSkillStaminaCost": 0,
-    "inventoryArtKey": ""
+    "inventoryArtKey": "",
+    "range": "reach"
   },
   {
     "id": "frostSpear",
@@ -704,7 +729,8 @@ export const weapons = [
     "weight": 6,
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
-    "inventoryArtKey": "halberd"
+    "inventoryArtKey": "halberd",
+    "range": "reach"
   },
   {
     "id": "cinderAxe",
@@ -733,7 +759,8 @@ export const weapons = [
     "weight": 7,
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
-    "inventoryArtKey": "battleaxe"
+    "inventoryArtKey": "battleaxe",
+    "range": "melee"
   },
   {
     "id": "duskChime",
@@ -762,6 +789,7 @@ export const weapons = [
     "weight": 3,
     "weaponArtManaCost": 1,
     "uniqueSkillStaminaCost": 0,
-    "inventoryArtKey": "boneSceptre"
+    "inventoryArtKey": "boneSceptre",
+    "range": "reach"
   }
 ];
