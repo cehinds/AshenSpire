@@ -112,11 +112,11 @@ function locationTitle(locationId) {
   return t('rest.title');
 }
 
-export function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, healMult = 1, refill = null, openPanel = null, multiUse = false, rested = false, services = null, hud = null, visit = null, questBoard = null, deckEditor = null }) {
+export function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, healMult = 1, refill = null, openPanel = null, multiUse = false, rested = false, services = null, hud = null, visit = null, questBoard = null, deckEditor = null, revisit = null, onConsumed = null }) {
   // E13's multi-use Shrine: an action re-opens the same screen (with what was
   // already taken recorded) instead of leaving; LEAVE is the one way out.
   const remount = (extra = {}) => mountRest(app, {
-    registries, run, meta, onDone, onReallocate, onLevelUp, healMult, refill, openPanel: null, multiUse, rested, services, hud, visit, questBoard, deckEditor, ...extra,
+    registries, run, meta, onDone, onReallocate, onLevelUp, healMult, refill, openPanel: null, multiUse, rested, services, hud, visit, questBoard, deckEditor, revisit, onConsumed, ...extra,
   });
   // THE PLACE IS A CARRIER (plan phase 7). The door (main.js) opens the visit
   // — the location's rules mounted, `arrived` already emitted — and hands it
@@ -129,11 +129,18 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   const heal = preview ? preview.heal : 0;
   const manaAfter = preview ? preview.manaAfter : run.mana;
   const manaGain = Math.max(0, manaAfter - run.mana);
-  const noRest = relicNoRest || (multiUse && rested);
+  // A single-use visit whose one choice was already taken (a re-opened visit,
+  // `revisit`) stays spent; a rest already taken here, this visit or an earlier
+  // one, holds Rest shut.
+  const spentHere = !multiUse && !!revisit?.spent;
+  const restedHere = rested || !!revisit?.rested;
+  const noRest = relicNoRest || restedHere || spentHere;
   // The locked copy names the real reason: the relic that forbids rest here,
-  // or a rest already taken at this place under Multi-use — never a relic the
-  // player does not carry.
-  const noRestCopy = relicNoRest ? `The ${registries.relics.get(stay.restDenied).name} will not let you rest here.` : 'You have already rested here.';
+  // a rest already taken at this place, or a single-use choice already spent —
+  // never a relic the player does not carry.
+  const noRestCopy = relicNoRest
+    ? `The ${registries.relics.get(stay.restDenied).name} will not let you rest here.`
+    : restedHere ? 'You have already rested here.' : 'Your choice here is spent.';
   // Rest at full health and full Mana led the list as if it were the thing to
   // do — "Heal 0 HP (62 → 62/62)" in the first, brightest card (review,
   // 2026-09-11). It stays a choice (it is still the way to end a visit without
@@ -145,9 +152,11 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   // balance.smithing.services, resolved at the door and handed in. A screen
   // mounted without the table keeps the upgrade it always had.
   const offered = stay.services.smith ? (services && Array.isArray(services.services) ? services.services : ['upgrade']) : [];
-  const canInspectSmithing = offered.includes('upgrade') && smith.candidates.length > 0;
+  const canInspectSmithing = offered.includes('upgrade') && smith.candidates.length > 0 && !spentHere;
   const extract = offered.includes('extract') ? mountServiceOffer(registries, run, 'extract') : null;
   const install = offered.includes('install') ? mountServiceOffer(registries, run, 'install') : null;
+  const extractOpen = !!extract && extract.available && !spentHere;
+  const installOpen = !!install && install.available && !spentHere;
   // THE QUEST BOARD (plan phase 10b) is a service the place's tags offer
   // (`questBoard`); the door hands in its counts and the way to it, since the
   // board is the atlas town's and this screen knows no atlas. Reading it takes
@@ -220,6 +229,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   // unchanged. The Shrine's name moves to the head's title, and the flavour
   // subtitle under it goes (FRONTEND-WIREFRAMES §4: no redundant shrine
   // introduction). The refill sentence moves to the second slot, below.
+  // Order (owner, 2026-10-12): Rest, Level up, Upgrade, Flask, then the rest.
   const choicesHtml = `
       <div class="class-row shrine-option-${shrineLayout}" data-option-layout="${shrineLayout}">
         <div class="class-pick${noRest ? ' locked' : nothingToRestore ? ' quiet' : ''}" id="rest-opt" role="button" tabindex="${noRest ? '-1' : '0'}" aria-disabled="${noRest ? 'true' : 'false'}">
@@ -229,62 +239,6 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
             <p>${noRest ? noRestCopy : nothingToRestore ? `Nothing to restore — you stand at ${run.hp}/${run.maxHp} HP${run.mana >= run.maxMana ? ' with full Mana' : ''}. Resting still ${multiUse ? 'takes the rest' : 'ends the visit'}.` : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp})${manaGain > 0 ? ` and restore Mana (${run.mana} → ${manaAfter})` : ''}.`}</p>
           </div>
         </div>
-        ${stay.services.smith ? `<div class="class-pick${canInspectSmithing ? '' : ' locked'}" id="smith-opt"
-             role="button" tabindex="${canInspectSmithing ? '0' : '-1'}"
-             aria-disabled="${canInspectSmithing ? 'false' : 'true'}">
-          <div class="glyph">${engravedIconHtml('equipment')}</div>
-          <div class="cp-body">
-            <h3>Upgrade an Item</h3>
-            <p>${canInspectSmithing
-              ? `${smith.stones} Smithing Stone${smith.stones === 1 ? '' : 's'} · choose one owned armament.`
-              : 'No owned armament has an effective tier remaining.'}</p>
-          </div>
-        </div>` : ''}
-        ${extract ? `<div class="class-pick${extract.available ? '' : ' locked'}" id="extract-opt"
-             role="button" tabindex="${extract.available ? '0' : '-1'}"
-             aria-disabled="${extract.available ? 'false' : 'true'}">
-          <div class="glyph">⚙</div>
-          <div class="cp-body">
-            <h3>Extract a Card</h3>
-            <p>${esc(extract.summary)}</p>
-          </div>
-        </div>` : ''}
-        ${install ? `<div class="class-pick${install.available ? '' : ' locked'}" id="install-opt"
-             role="button" tabindex="${install.available ? '0' : '-1'}"
-             aria-disabled="${install.available ? 'false' : 'true'}">
-          <div class="glyph">⚒</div>
-          <div class="cp-body">
-            <h3>Seat a Card</h3>
-            <p>${esc(install.summary)}</p>
-          </div>
-        </div>` : ''}
-        ${stay.services.flasks ? `<details class="class-pick shrine-fold" id="flask-reallocate"${openPanel === 'flask' ? ' open' : ''}>
-          <summary>
-            <span class="glyph shrine-fold-glyph">⚗</span>
-            <span class="ob shrine-fold-summary"><b class="on">Reallocate Flask Charges</b><small class="om">${charge.assigned}/${charge.capacity} assigned</small></span>
-            <span class="r-trail shrine-fold-caret" aria-hidden="true">${FOLD_GLYPH.collapsed}</span>
-          </summary>
-          <div class="shrine-fold-content">
-          <div class="shrine-fold-detail">
-          <div class="cp-body">
-          <!-- THE PER-FLASK COUNTS LEFT THIS LINE WHEN THE ROWS GAINED THEM.
-               It used to read "Fixed capacity 3: <art> 2 · <art> 1" — the same
-               two numbers the increment rows below now carry, which is Law 1
-               clause 2 (a number a player reads is a copy nothing syncs) and,
-               measured at 390x844, the thing that pushed the `+` button and the
-               count clean off the right edge of the phone. presentation-matrix
-               went red on "relevant controls remain inside the viewport" and
-               that is how I found it, not by looking. The capacity stays,
-               because it is the one number the rows do NOT say. -->
-          ${html(subtitle(`Fixed capacity ${charge.capacity}`))}
-          <div class="flask-increment">
-            ${flaskRowsHtml}
-            ${html(statusText(`${charge.assigned} of ${charge.capacity} assigned`, { class: 'flask-increment-total' }))}
-          </div>
-          </div>
-          </div>
-          </div>
-        </details>` : ''}
         <!-- THE OFFER PREDICATE, PUBLISHED RATHER THAN RE-DERIVED.
              Constantine: "make the flask and the level up collapsible (with
              level up being grayed out or not visible when there isn't enough
@@ -318,6 +272,62 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
             <p>${level.offerable ? `${budget.points} point${budget.points === 1 ? '' : 's'} to assign · Level ${level.level}` : level.capped ? `Level ${level.level} · the level cap` : `Level ${level.level} · ${level.xp} / ${level.xpToNext} XP to the next`}</p>
           </div>
         </div>` : ''}
+        ${stay.services.smith ? `<div class="class-pick${canInspectSmithing ? '' : ' locked'}" id="smith-opt"
+             role="button" tabindex="${canInspectSmithing ? '0' : '-1'}"
+             aria-disabled="${canInspectSmithing ? 'false' : 'true'}">
+          <div class="glyph">${engravedIconHtml('equipment')}</div>
+          <div class="cp-body">
+            <h3>Upgrade an Item</h3>
+            <p>${canInspectSmithing
+              ? `${smith.stones} Smithing Stone${smith.stones === 1 ? '' : 's'} · choose one owned armament.`
+              : spentHere ? 'Your choice here is spent.' : 'No owned armament has an effective tier remaining.'}</p>
+          </div>
+        </div>` : ''}
+        ${stay.services.flasks ? `<details class="class-pick shrine-fold" id="flask-reallocate"${openPanel === 'flask' ? ' open' : ''}>
+          <summary>
+            <span class="glyph shrine-fold-glyph">⚗</span>
+            <span class="ob shrine-fold-summary"><b class="on">Reallocate Flask Charges</b><small class="om">${charge.assigned}/${charge.capacity} assigned</small></span>
+            <span class="r-trail shrine-fold-caret" aria-hidden="true">${FOLD_GLYPH.collapsed}</span>
+          </summary>
+          <div class="shrine-fold-content">
+          <div class="shrine-fold-detail">
+          <div class="cp-body">
+          <!-- THE PER-FLASK COUNTS LEFT THIS LINE WHEN THE ROWS GAINED THEM.
+               It used to read "Fixed capacity 3: <art> 2 · <art> 1" — the same
+               two numbers the increment rows below now carry, which is Law 1
+               clause 2 (a number a player reads is a copy nothing syncs) and,
+               measured at 390x844, the thing that pushed the `+` button and the
+               count clean off the right edge of the phone. presentation-matrix
+               went red on "relevant controls remain inside the viewport" and
+               that is how I found it, not by looking. The capacity stays,
+               because it is the one number the rows do NOT say. -->
+          ${html(subtitle(`Fixed capacity ${charge.capacity}`))}
+          <div class="flask-increment">
+            ${flaskRowsHtml}
+            ${html(statusText(`${charge.assigned} of ${charge.capacity} assigned`, { class: 'flask-increment-total' }))}
+          </div>
+          </div>
+          </div>
+          </div>
+        </details>` : ''}
+        ${extract ? `<div class="class-pick${extractOpen ? '' : ' locked'}" id="extract-opt"
+             role="button" tabindex="${extractOpen ? '0' : '-1'}"
+             aria-disabled="${extractOpen ? 'false' : 'true'}">
+          <div class="glyph">⚙</div>
+          <div class="cp-body">
+            <h3>Extract a Card</h3>
+            <p>${spentHere ? 'Your choice here is spent.' : esc(extract.summary)}</p>
+          </div>
+        </div>` : ''}
+        ${install ? `<div class="class-pick${installOpen ? '' : ' locked'}" id="install-opt"
+             role="button" tabindex="${installOpen ? '0' : '-1'}"
+             aria-disabled="${installOpen ? 'false' : 'true'}">
+          <div class="glyph">⚒</div>
+          <div class="cp-body">
+            <h3>Seat a Card</h3>
+            <p>${spentHere ? 'Your choice here is spent.' : esc(install.summary)}</p>
+          </div>
+        </div>` : ''}
         ${board ? `<div class="class-pick" id="board-opt" role="button" tabindex="0">
           <div class="glyph">✉</div>
           <div class="cp-body">
@@ -341,12 +351,12 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   // W1s {Status} and availability: one fact per offered choice, read off the
   // same plans that build and wire the cards above — never re-derived.
   const offeredChoices = [
-    { id: 'rest', selector: '#rest-opt', available: !noRest, used: !relicNoRest && multiUse && rested },
-    stay.services.smith && { id: 'smith', selector: '#smith-opt', available: canInspectSmithing },
-    extract && { id: 'extract', selector: '#extract-opt', available: extract.available },
-    install && { id: 'install', selector: '#install-opt', available: install.available },
-    stay.services.flasks && { id: 'flask', selector: '#flask-reallocate', available: charge.rows.some((r) => r.canAdd || r.canSub) },
+    { id: 'rest', selector: '#rest-opt', available: !noRest, used: !relicNoRest && (restedHere || spentHere) },
     stay.services.levelUp && { id: 'level', selector: '#level-opt', available: level.offerable },
+    stay.services.smith && { id: 'smith', selector: '#smith-opt', available: canInspectSmithing },
+    stay.services.flasks && { id: 'flask', selector: '#flask-reallocate', available: charge.rows.some((r) => r.canAdd || r.canSub) },
+    extract && { id: 'extract', selector: '#extract-opt', available: extractOpen },
+    install && { id: 'install', selector: '#install-opt', available: installOpen },
   ].filter(Boolean);
   const availability = restChoiceStatus(offeredChoices);
   // The foot is Multi-use's continuation (it was LEAVE THE SHRINE under the
@@ -355,7 +365,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   // where a relic denies the Rest: then Rest is not a way on, and a place
   // with no smith (a chapel) would hold the run for good (the review of
   // #1195), so the foot is the way out.
-  const leave = multiUse || relicNoRest ? button({ label: t('rest.continue'), weight: 'primary', id: 'shrine-leave', className: 'shrine-leave' }) : null;
+  const leave = (multiUse || relicNoRest || revisit?.left) ? button({ label: t('rest.continue'), weight: 'primary', id: 'shrine-leave', className: 'shrine-leave' }) : null;
   const consequences = el('aside', { class: 'choice-body-consequences choice-status rest-consequences', 'aria-label': t('rest.consequences.heading') });
   app.querySelector('.rest-screen').appendChild(scenePainting('rest'));
   mountChoiceBody(app.querySelector('.rest-screen'), {
@@ -437,6 +447,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
         // The rules fire (`rested`), the pools move through the engine's
         // opcodes; this screen writes nothing to the run itself.
         restAt(stay);
+        onConsumed?.('rest');
         sfx.play('shrine');
         if (multiUse) { if (onLevelUp) onLevelUp(); remount({ rested: true }); return; }
         onDone(`Rested: +${heal} HP.`);
@@ -636,6 +647,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
         },
         onConfirm: (itemRef) => {
           const receipt = commitSmithing(registries, run, itemRef);
+          onConsumed?.('smith');
           const done = [...receipts, receipt];
           sfx.play('shrine');
           if (onLevelUp) onLevelUp();
@@ -659,7 +671,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   // path that leaves the Shrine unless multi-use holds it open.
   for (const [selector, offer] of [['#extract-opt', extract], ['#install-opt', install]]) {
     const option = app.querySelector(selector);
-    if (!option || !offer || !offer.available) continue;
+    if (!option || !offer || !offer.available || spentHere) continue;
     const open = () => openMountService(app, {
       service: offer.service,
       registries,
@@ -669,6 +681,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
       multiUse,
       place: 'shrine',
       onCommitted: (receipt) => {
+        onConsumed?.(offer.service);
         sfx.play('shrine');
         if (multiUse) { if (onLevelUp) onLevelUp(); remount(); return; }
         onDone(mountReceiptLine(receipt));
