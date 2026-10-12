@@ -9346,5 +9346,75 @@ export const uiStrings = [
     "short": "Open all character creation steps.",
     "full": "",
     "tip": ""
+  },
+  {
+    "id": "creation.feats.group.character",
+    "extends": "",
+    "short": "Character",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.group.class",
+    "extends": "",
+    "short": "Class",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.group.skill",
+    "extends": "",
+    "short": "Skills",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.lockedRequirement",
+    "extends": "",
+    "short": "Requires {track} level {required}. Current level: {current}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.availableRequirement",
+    "extends": "",
+    "short": "{track} level {required} requirement met. Current level: {current}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.profileUnlocked",
+    "extends": "",
+    "short": "Unlocked in profile.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.locked",
+    "extends": "",
+    "short": "Level requirement not met",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.available",
+    "extends": "",
+    "short": "Level requirement met",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.emptyGroup",
+    "extends": "",
+    "short": "No feats in this group.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.noOffers",
+    "extends": "",
+    "short": "No feat offers are currently earned on the {track} track.",
+    "full": "",
+    "tip": ""
   }
 ];
