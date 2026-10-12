@@ -67,11 +67,17 @@ export function combatComposition({ sizes, actors, width, height, handTop, solo 
 // sprite's feet stand on the cell's shadow. The shared fit already sized each
 // body to its lane and its headroom; composition only keeps it in the field.
 export function alternativeCombatComposition({ sizes, actors, width }) {
+  const actorOf = size => actors.find(actor => actor.slot.id === size.id);
+  const need = size => Math.max(0, size.visibleHeight + actorOf(size).leading + 6 - actorOf(size).slot.ground);
+  // A field too short for a body and its overhead stack (a ~130px landscape
+  // strip) must lower the feet. Every enemy drops by the same amount, so the
+  // ranks and lanes keep their spacing instead of collapsing onto one line.
+  const enemyDrop = Math.max(0, ...sizes.filter(size => actorOf(size).side === 'enemy').map(need));
   return sizes.map(size => {
-    const actor = actors.find(actor => actor.slot.id === size.id);
+    const actor = actorOf(size);
     const halfWidth = actor.visibleWidth * size.scale / 2;
     const x = Math.max(halfWidth + 6, Math.min(width - halfWidth - 6, actor.slot.x));
-    const ground = Math.max(size.visibleHeight + actor.leading + 6, actor.slot.ground);
+    const ground = actor.slot.ground + (actor.side === 'enemy' ? enemyDrop : need(size));
     return { ...size, x, ground };
   });
 }

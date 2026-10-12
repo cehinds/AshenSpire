@@ -47,3 +47,13 @@ test('a short portrait field keeps its enemies back on the floor, clear of the p
   // The perspective composition carries no camera override: the backdrop frames the back rank.
   assert.equal(combatStandingGround(fit, actors, 0), Math.min(...fit.filter(f => f.id !== 'p').map(f => f.ground)));
 });
+
+test('a field too short for the overheads lowers every enemy together, keeping the ranks apart', () => {
+  // ~130px landscape strip: anchors at 58 (back) and 74 (front); the overhead stack needs more.
+  const actors = [['a', 58], ['b', 74]].map(([id, ground]) => ({ side: 'enemy', visibleWidth: 40, leading: 60,
+    slot: { id, x: id === 'a' ? 200 : 400, ground } }));
+  const sizes = actors.map(a => ({ id: a.slot.id, visibleHeight: 4, scale: 1, multiplier: 1 }));
+  const [back, front] = alternativeCombatComposition({ actors, sizes, width: 844 });
+  assert.ok(back.ground >= 4 + 60 + 6 - 1e-9, 'the back rank keeps its overhead room');
+  assert.equal(front.ground - back.ground, 74 - 58, 'the ranks keep their spacing');
+});
