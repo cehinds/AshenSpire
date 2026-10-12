@@ -1075,8 +1075,13 @@ function wireGridTargeting(field) {
   let hovered = null;
   field.addEventListener('pointermove', event => {
     // Over a body or control, that element's own pointer events own the
-    // highlight; forget the cell hover without clearing it.
-    if (passive(event.target)) { hovered = null; field.classList.remove('grid-target-hover'); return; }
+    // highlight: keep it on the same enemy, clear it from any other.
+    if (passive(event.target)) {
+      if (hovered && hovered !== event.target.closest('.combatant')) hovered.dispatchEvent(new PointerEvent('pointerleave'));
+      hovered = null;
+      field.classList.remove('grid-target-hover');
+      return;
+    }
     const frame = enemyFrameAtCell(field, event.clientX, event.clientY);
     if (frame === hovered) return;
     hovered?.dispatchEvent(new PointerEvent('pointerleave'));
