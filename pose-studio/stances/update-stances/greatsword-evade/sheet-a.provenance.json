@@ -32,7 +32,7 @@
     }
   ],
   "prompt": "sheet-a.repair-2.prompt.txt",
-  "status": "revised_pending_director_review",
+  "status": "director_concept_approved_not_user_selected",
   "initialConcerns": [
     "11rearweight and13taller body differentiation improved.12deepkneeload still not clearrear support.",
     "Generator enlargedfiguresagain;leftcolumnboots/swordtips cross512cellborderandrowboundaries.",
@@ -40,5 +40,18 @@
   ],
   "revision": 2,
   "supersededOriginal": "sheet-a.original.png",
-  "supersededRevision": "sheet-a.revision-1.png"
+  "supersededRevision": "sheet-a.revision-1.png",
+  "actualOptionNames": {
+    "EV11": "Rear-weighted low blade",
+    "EV12": "Deep planted landing with upright blade",
+    "EV13": "Tall wide low carry",
+    "EV14": "Long lateral high carry",
+    "EV15": "Deep forward duck"
+  },
+  "reviewNotes": [
+    "Rootdirectorapprovedallfiveactualconcepts;do notforceoriginalpromptnames.",
+    "Fixed512cropscantruncateart;intactboardswithperoptioncontrolsplanned.",
+    "No additional layout-onlygeneration;confirmedruntimefiveunchanged."
+  ],
+  "runtimeChanged": false
 }
