@@ -208,6 +208,7 @@ test('Gilded Guard pushes before a heavy player hit and resolves first; a light 
   assert.ok(types(out).includes('cardResolved'));
   assert.deepEqual(combat.piles.discard.map(inst => inst.instanceId), ['c0']);
   assert.equal(combat.reactionStack, undefined);
+  assert.ok(knight.performedMoves.includes('gildedGuard'), 'the resolved reaction joins the enemy history');
   const log = combatLogEntries(out.events, { registries, enemies: combat.enemies }).map(row => row.text);
   assert.ok(log.includes('Gilded Knight reacts with Gilded Guard.'), log.join('\n'));
   // A 6-damage Strike is under minIncoming 8: no window, no stack.
@@ -490,4 +491,14 @@ test('co-op: a Counter reaction move plans no direct hit, as in solo', () => {
   const coopOut = coopPlay(C, 'a', 'a:0', C.enemies[0].id);
   assert.equal(reactionHits(soloOut.events, combat.enemies[0].id), 0);
   assert.equal(reactionHits(coopOut.events, C.enemies[0].id), 0, 'the Counter delivers its damage, not a planned hit');
+});
+
+test('a reaction move start leaves the telegraphed knowledge action unresolved', async () => {
+  const { recordKnowledgeEvent } = await import('../src/engine/enemyKnowledge.js');
+  const enemy = { id: 'e1', alive: true, intent: { kind: 'attack' }, knowledgeAction: { executed: false, reads: {} } };
+  const combat = { enemyKnowledge: {}, enemies: [enemy] };
+  recordKnowledgeEvent(combat, { type: 'enemyMoveStarted', sourceId: 'e1', reaction: true });
+  assert.equal(enemy.knowledgeAction.executed, false);
+  recordKnowledgeEvent(combat, { type: 'enemyMoveStarted', sourceId: 'e1' });
+  assert.equal(enemy.knowledgeAction.executed, true);
 });

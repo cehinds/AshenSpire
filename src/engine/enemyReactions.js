@@ -159,6 +159,8 @@ export function runEnemyPlan(ctx, entry, hooks) {
   const wasPlaying = ctx._reactionPlaying;
   ctx._reactionPlaying = true;
   try {
+    const enemy = (ctx.enemies || []).find(row => row.id === entry.ownerId);
+    if (enemy) (enemy.performedMoves ||= []).push(entry.moveId);
     ctx.emit('enemyMoveStarted', { sourceId: entry.ownerId, enemyId: entry.enemyId, moveId: entry.moveId,
       kind: entry.plan.group.kind ?? null, reaction: true });
     ctx.pendingExpansionActions = (ctx.pendingExpansionActions || 0) + 1;
