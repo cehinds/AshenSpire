@@ -41,12 +41,14 @@
       "use": "selected Smash camera, body scale, and greatsword proportions"
     }
   ],
-  "review_status": "pending root review",
-  "production_status": "concept candidates only; not runtime art",
+  "review_status": "root approved SW16 and SW19 as concepts, accepted SW20 as a concept variant; SW17 and SW18 need one targeted edit",
+  "production_status": "concept options only; no production/runtime selection",
   "observed_deviations": [
-    "SW17 now holds the sword laterally at shoulder height with elbows below crown.",
-    "SW19 is a wider low near-level knee-height gate distinct from SW16's narrow down-forward diagonal.",
-    "SW20 retains a long rear leg and forward torso, but its sword/arms still read high and may remain too overhead; director review required.",
-    "No figure has been approved by this edit for production use."
+    "SW16 actual geometry: low-forward/downward narrow hold; root approved as a concept.",
+    "SW17 actual geometry: shoulder-high lateral coil; currently too close to SW18 and Sweep A12. Planned edit: rear-weighted backward lean, long front leg, bent rear leg, retaining shoulder-high blade.",
+    "SW18 actual geometry: shoulder-level cross coil; currently too close to SW17 and Sweep A12. Planned edit: narrow feet and upright torso, hands at low ribs/waist, horizontal blade to the left below shoulders.",
+    "SW19 actual geometry: very wide low-forward sweep; root approved as a concept.",
+    "SW20 actual geometry: high-arc extended lunge. Root accepted it as a valid concept variant; do not describe it as a below-crown side coil.",
+    "One focused edit for SW17 and SW18 is pending the root grant after Counter and Evade finish. No additional image generation is authorized before that grant."
   ]
 }
