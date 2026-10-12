@@ -14,11 +14,15 @@
 import { startRound, stepRound, answerReaction, finishRound } from './combatRounds/round.js';
 import { makeFight, makeCombatant, plannedQueueSpeeds } from './combatRounds/timeline.js';
 import { decayMomentum } from './combatRounds/resolver.js';
-import { DEFAULT_SP, SPEED_MODS_CSV } from '../content/combatRounds.js';
+import { stanceFor, playerKind, moveKind } from './combatRounds/stance.js';
+import { enemyMoveSpOf, enemyPoolOf } from '../model/actionCosts.js';
+import { SPEED_MODS_CSV } from '../content/combatRounds.js';
+import { ENEMY_SP_POOL } from '../content/actionCosts.js';
 
-// Enemy SP per round (SPEC §4.11: stat-driven, base 3). One constant, used for every enemy in P3a.
-export const ENEMY_SP = DEFAULT_SP;
-// A move costs 1 SP unless the move defines its own `sp`.
+// Enemy SP per turn (SPEC §4.11; owner decision, 2026-10-12): the default pool, 2. A per-enemy `spPool` overrides it
+// (enemyPoolOf). ENEMY_SP is the default kept for the export the tests read.
+export const ENEMY_SP = ENEMY_SP_POOL;
+// A move with no stance costs 1 SP unless the move defines its own `sp` (SPEC §4.11).
 export const MOVE_SP = 1;
 // Guard for zero-cost moves, which would otherwise never run the SP pool out.
 const QUEUE_MAX = 16;
@@ -34,30 +38,38 @@ export function roundState(combat) {
 
 // --- Enemy queues ------------------------------------------------------------------------------
 
+// A move's SP (SPEC §4.11, owner 2026-10-12): its own `sp` when it names one, else the action-cost table price of its
+// stance (model/actionCosts.js), else MOVE_SP.
 export function moveSp(move) {
-  const n = Number(move?.sp ?? MOVE_SP);
-  return Number.isFinite(n) && n >= 0 ? n : MOVE_SP;
+  return enemyMoveSpOf(move, moveKind(move), MOVE_SP);
 }
+export const enemyMoveSp = moveSp;
 
-// One enemy's hidden queue. `pick(enemy, def)` is the live weighted pick (enemyAI stream); each pick
-// is recorded in movesHistory at once, so maxConsecutive sees the queued run. The first pick of the
-// fight is the scripted opener when the move set has one. The queue ends when the next pick would
-// spend more SP than is left.
+// The enemy's SP pool per turn (enemyPoolOf: its own spPool, else ENEMY_SP_POOL).
+export const enemyPool = enemyPoolOf;
+
+// One enemy's hidden queue. `pick(enemy, def, maxSp)` is the live weighted pick (enemyAI stream), offered only the
+// moves that cost at most `maxSp` SP left in the pool; each pick is recorded in movesHistory at once, so maxConsecutive
+// sees the queued run. The first pick of the fight is the scripted opener when the move set has one.
 export function buildEnemyQueue(enemy, def, { isFirstTurn = false, pick }) {
   return extendEnemyQueue(enemy, def, [], { isFirstTurn, pick });
 }
 
-// Appends picks to `queue` (in place) until the enemy's SP pool is spent, and returns it. A queue that already
-// holds moves keeps them: the SP they spend counts against the pool. Normal combat's multi-action plan (SPEC §4.11)
-// tops its plan up with this, so the planned moves are the ones picked, in the order they are played.
+// Appends picks to `queue` (in place) until the enemy's SP pool is spent, and returns it (SPEC §4.6, §4.11). The queue
+// ends when the pool is empty or nothing affordable is left. An enemy with an empty queue always plays one move: when
+// nothing fits the pool, the first pick is offered no limit (Infinity). A queue that already holds moves keeps them,
+// and the SP they spend counts against the pool.
 export function extendEnemyQueue(enemy, def, queue, { isFirstTurn = false, pick }) {
+  const pool = enemyPoolOf(def);
   let spent = queue.reduce((sum, entry) => sum + entry.sp, 0);
   while (queue.length < QUEUE_MAX) {
+    if (queue.length > 0 && spent >= pool) break;
     const opener = isFirstTurn && queue.length === 0 && def.firstMove ? def.firstMove : null;
-    const moveId = opener ?? pick(enemy, def);
+    let moveId = opener ?? pick(enemy, def, pool - spent);
+    if (moveId == null && queue.length === 0 && opener == null) moveId = pick(enemy, def, Infinity);
     if (moveId == null) break;
     const sp = moveSp(def.moves[moveId]);
-    if (spent + sp > ENEMY_SP) break;
+    if (spent + sp > pool && queue.length > 0) break;
     spent += sp;
     enemy.movesHistory.push(moveId);
     queue.push({ moveId, sp });
@@ -111,35 +123,8 @@ export function cardSpeed(card, cardId) {
   return SPEED_DEFAULTS.get(cardId) ?? 0;
 }
 
-// The timeline stance of an action (the stance-advantage table's names). Tags can name a heavy or a
-// wide attack; otherwise the kind decides.
-const KIND_STANCE = Object.freeze({ attack: 'attack', guard: 'block', evade: 'evade', counter: 'counter' });
-export function stanceFor(kind, tags = []) {
-  // The content tags a heavy or wide attack as maneuver:smash / maneuver:sweep (cards and enemy moves alike); a bare
-  // smash or sweep tag counts too.
-  if (kind === 'attack' && (tags.includes('smash') || tags.includes('maneuver:smash'))) return 'smash';
-  if (kind === 'attack' && (tags.includes('sweep') || tags.includes('maneuver:sweep'))) return 'sweep';
-  return KIND_STANCE[kind] ?? null;
-}
-
-// Kinds the timeline knows: attack, guard, evade, counter and other. A preemptive kind (guard, evade,
-// counter) must target its owner or a foe (guard and evade: self), so the caller passes the target.
-export function playerKind({ isAttack, effects = [], maneuver }) {
-  if (isAttack) return 'attack';
-  if (effects.some((e) => e?.op === 'dodgeRoll')) return 'evade';
-  if (maneuver === 'counter') return 'counter';
-  if (effects.some((e) => e?.op === 'block')) return 'guard';
-  return 'other';
-}
-
-// An enemy move's timeline kind, from its authored intent. `damage` decides an attack, as the
-// enemy's intent box does.
-export function moveKind(move) {
-  if (move?.damage != null || move?.intent === 'attack') return 'attack';
-  if (move?.intent === 'block' || move?.block != null) return 'guard';
-  if (move?.intent === 'counter') return 'counter';
-  return 'other';
-}
+// The timeline stance and kind helpers live in combatRounds/stance.js (no cycle with model/actionCosts.js).
+export { stanceFor, playerKind, moveKind };
 
 // The timeline card of one queued enemy move. An attack aims at the player; a defensive or other
 // move is for its owner.
@@ -233,10 +218,10 @@ function playerSpec(combat, sp, hand) {
   };
 }
 
-function enemySpec(enemy) {
+function enemySpec(enemy, def) {
   return {
     id: enemy.id, side: 'enemy', name: enemy.name ?? enemy.enemyId, attrs: {},
-    level: Number(enemy.level ?? 0) || 0, hp: Math.max(0, Number(enemy.hp) || 0), sp: ENEMY_SP,
+    level: Number(enemy.level ?? 0) || 0, hp: Math.max(0, Number(enemy.hp) || 0), sp: enemyPoolOf(def),
     wis: 0, tags: [], stance: null, hand: [],
   };
 }
@@ -277,7 +262,7 @@ export function commitRound(combat, ops, discardIds = []) {
   const playerRecords = queuedCards(combat).slice();
   const sp = playerRecords.reduce((sum, r) => sum + r.tl.sp, 0);
   const spare = Math.max(0, Number(combat.player.energy) || 0);
-  const specs = [playerSpec(combat, sp + spare, ops.reactionHand(combat)), ...combat.enemies.map(enemySpec)];
+  const specs = [playerSpec(combat, sp + spare, ops.reactionHand(combat)), ...combat.enemies.map((e) => enemySpec(e, combat.registries.enemies.get(e.enemyId)))];
   const state = makeFight(specs, { armor: tables.armor, cards: tables.cards });
   Object.assign(state.momentum, cr.momentum ?? {});
   Object.assign(state.poiseDouble, cr.poiseDouble ?? {});
@@ -475,7 +460,7 @@ export function screenForecast(combat, enemyId, candidate = null) {
   let foeSpeed = null;
   let foe = null;
   if (enemy && cards.length) {
-    const speeds = plannedQueueSpeeds({ combatant: makeCombatant(enemySpec(enemy), tables), queue: cards, momentum });
+    const speeds = plannedQueueSpeeds({ combatant: makeCombatant(enemySpec(enemy, combat.registries.enemies.get(enemy.enemyId)), tables), queue: cards, momentum });
     foeSpeed = speeds[0];
     foe = { stance: cards[0].stance, kind: cards[0].kind };
   }

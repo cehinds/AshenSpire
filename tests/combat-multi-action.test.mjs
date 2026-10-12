@@ -30,7 +30,7 @@ function endTurn(c) {
   while (c.pendingReaction) dispatch(c, { type: 'chooseReaction', offerId: c.pendingReaction.id, optionId: null });
 }
 
-test('the plan is picked to the SP pool: as many moves as one enemy SP pool holds, each recorded in its history', () => {
+test('the plan is picked to the SP pool: as many moves as one enemy SP pool holds (2 by default, owner 2026-10-12), each recorded in its history', () => {
   const enemy = { id: 'e1', movesHistory: [] };
   const def = { moves: { a: { weight: 1 }, b: { weight: 1, sp: 2 } } };
   const picks = ['a', 'a', 'b'];
@@ -39,37 +39,42 @@ test('the plan is picked to the SP pool: as many moves as one enemy SP pool hold
   assert.deepEqual(enemy.movesHistory, ['a', 'a'], 'each pick is recorded as it is made');
   const more = Rounds.extendEnemyQueue(enemy, def, queue, { pick: () => 'a' });
   assert.equal(more, queue, 'an existing plan is extended in place');
-  assert.equal(more.length, 3, 'the pool holds three 1-SP moves');
+  assert.equal(more.length, 2, 'the default pool holds two 1-SP moves (was three before the owner decision of 2026-10-12)');
 });
 
-test('with the toggle off, no enemy plans anything and no plan key is written', () => {
+test('with the toggle off, the pool still plans its moves (action costs are always on), but no follow-up symbol shows', () => {
   const c = fight({});
   assert.equal(multiActionOn(c), false);
-  for (const enemy of c.enemies) assert.equal('plannedMoves' in enemy, false);
+  for (const enemy of c.enemies) {
+    const plan = [enemy.intent.moveId, ...(enemy.plannedMoves ?? []).map((p) => p.moveId)];
+    const spent = plan.reduce((sum, id) => sum + Rounds.enemyMoveSp(registries.enemies.get(enemy.enemyId).moves[id]), 0);
+    assert.equal(spent, 2, 'the plan spends the pool, so the enemy plays it all in its turn');
+  }
   assert.deepEqual(enemyPlanActions(c, c.enemies[0]), []);
 });
 
 test('the planned moves are the moves the enemy plays, in order, turn after turn', () => {
+  // Owner 2026-10-12: an enemy spends its pool in its turn, so the head and every follow-up play in the enemy phase,
+  // in plan order. Each turn's performed moves are the plan the enemy held when the turn began.
   const c = fight({ [MULTI_ACTION_KEY]: true }, { seed: SEED });
   const enemy = c.enemies[0];
   assert.ok(Array.isArray(enemy.plannedMoves) && enemy.plannedMoves.length >= 1, 'the first roll plans the follow-ups');
-  const intents = [];
-  const plans = [];
+  let turns = 0;
   for (let turn = 0; turn < 6 && !c.result; turn++) {
     const live = c.enemies.find((e) => e.alive);
     if (!live) break;
-    intents.push(live.intent.moveId);
-    plans.push(live.plannedMoves.map((p) => p.moveId));
+    const plan = [live.intent.moveId, ...live.plannedMoves.map((p) => p.moveId)];
+    const before = live.performedMoves?.length ?? 0;
     endTurn(c);
+    const played = (live.performedMoves ?? []).slice(before);
+    assert.ok(played.length >= 1, `turn ${turn}: the enemy plays at least one move`);
+    assert.deepEqual(played, plan.slice(0, played.length), `turn ${turn}: the plan plays in order`);
+    turns++;
   }
-  assert.ok(intents.length >= 4, 'the fixture plays several turns');
-  for (let t = 0; t + 1 < intents.length; t++) {
-    const next = intents.slice(t + 1, t + 1 + plans[t].length);
-    assert.deepEqual(plans[t].slice(0, next.length), next, `turn ${t}: the plan's follow-ups are the next moves played`);
-  }
-  // The intent is the move that plays: the moves the event log records as started are exactly the intents, in order.
+  assert.ok(turns >= 3, 'the fixture plays several turns');
+  // The intent is the move that plays: the moves the event log records as started are the moves performed, in order.
   const started = c.eventLog.filter((e) => e.type === 'enemyMoveStarted' && e.sourceId === enemy.id).map((e) => e.moveId);
-  assert.deepEqual(started, intents, 'every planned head is the move the enemy plays');
+  assert.deepEqual(started, enemy.performedMoves, 'every move the enemy starts is one it performed, in order');
 });
 
 test('the planned moves are the weighted picks from the enemyAI stream, so the plan is what the enemy will do', () => {

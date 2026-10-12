@@ -669,10 +669,12 @@ function enemyPhase(combat) {
     if (preview && Rounds.enemyQueued(combat, enemy.id)) {
       // The round's commit already ran this enemy's queued moves, and its skip flag is kept for its next turn.
     } else if (enemy.skipNextTurn || S.getFlag(combat, enemy, 'skipTurn') || Control.controlRestrictions(combat, enemy).locked || Control.consumeControlActionLoss(combat, enemy)) {
-      // Staggered / skip: the telegraphed move does not happen.
+      // Staggered / skip: the telegraphed move does not happen, and neither does the rest of its plan this turn.
       if (!enemy.pendingMove) cancelKnowledgeAction(combat, enemy);
       enemy.skipNextTurn = false;
+      enemy.planDue = false;
     } else if (enemy.pendingMove) {
+      enemy.planDue = false;
       if (combat.turn >= enemy.pendingMove.resolveOnTurn) {
         // Delayed move resolving: the committed attack lands regardless of
         // newly rolled intents (SPEC §5.3 'Held Blade' pattern, generic data).
@@ -688,6 +690,9 @@ function enemyPhase(combat) {
       const def = combat.registries.enemies.get(enemy.enemyId);
       const move = expandedEnemyMove(enemy, def.moves[enemy.intent.moveId], enemy.intent.moveId, combat);
       if (move.delay) {
+        // A charging move takes the enemy's turn: its planned follow-ups do not play this turn.
+        enemy.planDue = false;
+        enemy.plannedMoves = [];
         startDelayedMove(combat, enemy, move, enemy.intent.moveId);
       } else {
         executeMovePayload(combat, enemy, move, enemy.intent.moveId);
@@ -697,6 +702,25 @@ function enemyPhase(combat) {
     drainQueue(combat);
     if (Reactions.reactionPaused(combat)) return;
     if (combat.result) return;
+
+    // Normal combat (SPEC §4.6, owner 2026-10-12): the rest of the enemy's planned pool plays in order after its head.
+    // Each move leaves the plan before it runs, so a reaction pause resumes at the next planned move.
+    while (!preview && enemy.alive && enemy.planDue && !enemy.pendingMove && enemy.plannedMoves?.length) {
+      const next = enemy.plannedMoves.shift();
+      const def = combat.registries.enemies.get(enemy.enemyId);
+      presentIntent(combat, enemy, def, next.moveId);
+      const move = expandedEnemyMove(enemy, def.moves[next.moveId], next.moveId, combat);
+      if (move.delay) {
+        enemy.plannedMoves = [];
+        startDelayedMove(combat, enemy, move, next.moveId);
+      } else {
+        executeMovePayload(combat, enemy, move, next.moveId);
+      }
+      drainQueue(combat);
+      if (Reactions.reactionPaused(combat)) return;
+      if (combat.result) return;
+    }
+    if (enemy.plannedMoves?.length === 0) enemy.planDue = false;
 
     // Owner-relative turn-end hooks, then decay (perTurnEnd statuses the
     // player applied to an enemy tick down at the ENEMY's turn end).
@@ -798,11 +822,11 @@ function rollIntents(combat, isFirstTurn = false) {
   // stream; slot 0 becomes the intent, so the intent box and the visibility rolls read as before.
   const queues = combat.combatRounds ? Rounds.buildEnemyQueues(combat, {
     isFirstTurn,
-    pick: (enemy, def) => weightedMovePick(combat, enemy, def),
+    pick: (enemy, def, maxSp) => weightedMovePick(combat, enemy, def, maxSp),
     held: (enemy) => Boolean(enemy.pendingMove) || enemy.skipNextTurn || S.getFlag(combat, enemy, 'skipTurn'),
   }) : null;
-  // Normal combat with the multi-action toggle (SPEC §4.11): the moves are planned ahead, one at a time.
-  const planned = !queues && multiActionOn(combat);
+  // Normal combat (SPEC §4.6, owner 2026-10-12): every enemy plans its pool of SP with the same weighted pick. The head
+  // is this turn's first intent; the rest play in order during the enemy phase, each revealed as it plays.
   for (const enemy of combat.enemies) {
     delete enemy.actorIntentRevealed;
     if (!enemy.alive) continue;
@@ -816,38 +840,40 @@ function rollIntents(combat, isFirstTurn = false) {
       continue;
     }
     const def = combat.registries.enemies.get(enemy.enemyId);
-    let moveId;
-    if (queues) {
-      moveId = queues[enemy.id]?.[0]?.moveId ?? null; // the queue's slot 0, already recorded in movesHistory
-    } else if (planned) {
-      // SPEC §4.11 multi-action preview: the head of the plan is played now; its picks were recorded when planned.
-      moveId = Rounds.takePlannedMove(combat, enemy, def, { isFirstTurn, pick: (e, d) => weightedMovePick(combat, e, d) });
-    } else if (isFirstTurn && def.firstMove) {
-      moveId = def.firstMove; // optional scripted opener
-    } else {
-      moveId = weightedMovePick(combat, enemy, def);
-    }
+    // Rounds mode: the queue's slot 0, already recorded in movesHistory. Normal combat: the head of the plan, whose picks
+    // were recorded when planned (SPEC §4.11 multi-action preview; the pool plays all of it).
+    const moveId = queues ? (queues[enemy.id]?.[0]?.moveId ?? null)
+      : Rounds.takePlannedMove(combat, enemy, def, { isFirstTurn, pick: (e, d, maxSp) => weightedMovePick(combat, e, d, maxSp) });
     if (moveId == null) {
       enemy.intent = { kind: 'unknown', moveId: null };
       continue;
     }
-    if (!queues && !planned) enemy.movesHistory.push(moveId);
-    clearCombatCounter(enemy);
-    enemy.intent = buildIntent(def.moves[moveId], moveId, enemy, combat);
-    setCombatStance(combat, enemy, enemyMoveCarrier(enemy, def.moves[moveId], moveId, combat));
-    if (combat.enemyKnowledge) {
-      rollEnemyKnowledge(combat, enemy, { charging: !!def.moves[moveId].delay });
-      delete enemy.intentRevealed;
-    } else if (enemy.intent.combatProfile.camp) enemy.intentRevealed = combat.rng.float('enemyIntentVisibility') >= hiddenIntentChance(combat.attributes || {}, combat.combatIntentRules || {});
-    else delete enemy.intentRevealed;
-    primeEnemyCounter(combat, enemy, def.moves[moveId], moveId);
+    presentIntent(combat, enemy, def, moveId);
+    // The pool's planned moves play after the head in the enemy phase (enemyPhase), so the plan is due this turn.
+    if (!queues) enemy.planDue = true;
     drainQueue(combat);
   }
 }
 
-function weightedMovePick(combat, enemy, def) {
+// Shows a move as the enemy's intent: its box, stance, visibility roll and counter priming. The head of a turn and
+// each follow-up that plays both go through here, so a revealed follow-up reads like the first move.
+function presentIntent(combat, enemy, def, moveId) {
+  clearCombatCounter(enemy);
+  enemy.intent = buildIntent(def.moves[moveId], moveId, enemy, combat);
+  setCombatStance(combat, enemy, enemyMoveCarrier(enemy, def.moves[moveId], moveId, combat));
+  if (combat.enemyKnowledge) {
+    rollEnemyKnowledge(combat, enemy, { charging: !!def.moves[moveId].delay });
+    delete enemy.intentRevealed;
+  } else if (enemy.intent.combatProfile.camp) enemy.intentRevealed = combat.rng.float('enemyIntentVisibility') >= hiddenIntentChance(combat.attributes || {}, combat.combatIntentRules || {});
+  else delete enemy.intentRevealed;
+  primeEnemyCounter(combat, enemy, def.moves[moveId], moveId);
+}
+
+// The weighted pick (SPEC §4.6). `maxSp` is the SP left in the enemy's pool: a move that costs more is not picked
+// (owner decision, 2026-10-12). Infinity offers every move (the minimum-one fallback).
+function weightedMovePick(combat, enemy, def, maxSp = Infinity) {
   const entries = Object.entries(def.moves).filter(
-    ([id, mv]) => !mv.locked || enemy.unlockedMoves.includes(id)
+    ([id, mv]) => (!mv.locked || enemy.unlockedMoves.includes(id)) && Rounds.enemyMoveSp(mv) <= maxSp
   );
   if (entries.length === 0) return null;
 

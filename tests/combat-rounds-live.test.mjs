@@ -119,8 +119,8 @@ test('a card cannot be queued twice, and a queued card cannot be discarded', () 
   assert.equal(c.phase, 'player', 'the refused discard leaves the turn open');
 });
 
-test('each enemy queues its moves from a 3 SP pool, one SP per move unless the move says otherwise', () => {
-  assert.equal(Rounds.ENEMY_SP, 3);
+test('each enemy queues its moves from a 2 SP pool (owner 2026-10-12), SP per move from the action-cost table', () => {
+  assert.equal(Rounds.ENEMY_SP, 2);
   const c = fight();
   for (const enemy of c.enemies.filter((e) => e.alive)) {
     const queue = c.combatRounds.enemyQueues[enemy.id];
@@ -284,8 +284,8 @@ function scriptedLog(seed, classId = 'reaver', enemyIds = [ENEMY]) {
 
 test('with the preview off, a scripted fight event log is byte-identical to the recorded golden', () => {
   const all = [1, 2, 3].map((s) => scriptedLog(s)).join('\n');
-  assert.equal(createHash('sha256').update(all).digest('hex'), 'dd42bcd5a5a13bf63353d54ad40ad7b11befa3b52fc7e886a2f0b681735e9129');
-  assert.equal(all.length, 289925);
+  assert.equal(createHash('sha256').update(all).digest('hex'), '038fb9b84e3f79ab96e9f0c7ff663b9e18df720a857b5da133824ce144f5ece6');
+  assert.equal(all.length, 254862);
 });
 
 // Review finding 1: a queued card that an earlier queued card removed from hand never resolves.

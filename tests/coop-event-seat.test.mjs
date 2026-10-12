@@ -19,7 +19,7 @@ test('transactional ally and self effects retain actual co-op target seats in th
   const oath=playCard(combat,'p1','ashOath','p2').events.filter(event=>event.type==='statusApplied'&&event.status==='strength');
   assert.deepEqual(oath.map(event=>[event.targetId,event.targetPlayerId,event.playerId,event.total]),[['player','p2','p2',2],['player','p1','p1',1]]);
   const healed=playCard(combat,'p1','sharedFlame','p2').events.find(event=>event.type==='healed');
-  assert.equal(healed.amount,7);assert.equal(healed.targetPlayerId,'p2');assert.equal(healed.playerId,'p2','an inactive ally receives its own healing receipt');
+  assert.equal(healed.amount,13,'sharedFlame is a 2-SP cast now: its 7 heal scales to 13 (SPEC action costs)');assert.equal(healed.targetPlayerId,'p2');assert.equal(healed.playerId,'p2','an inactive ally receives its own healing receipt');
   const readiness=playCard(combat,'p1','smokePellet').events.find(event=>event.type==='statusApplied'&&event.status==='prepared');
   assert.equal(readiness.playerId,'p1');assert.equal(readiness.targetPlayerId,'p1');
   const consumed=playCard(combat,'p1','quickCut',combat.enemies[0].id).events.find(event=>event.type==='statusExpired'&&event.status==='prepared');

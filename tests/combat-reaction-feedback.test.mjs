@@ -25,7 +25,8 @@ const withOffering = (card, amount) => {
 function registriesWith(move = {}, offer = null) {
   const cards = offer === null ? contentBundle.cards : contentBundle.cards.map(card => card.id === 'guardCounter' ? withOffering(card, offer) : card);
   return createRegistries({ ...contentBundle, cards, enemies: contentBundle.enemies.map(enemy => enemy.id === 'wanderingSoldier'
-    ? { ...enemy, firstMove: 'slash', moves: { slash: { ...SLASH, ...move } } } : enemy) });
+    // spPool 1: this file tests one incoming action per enemy turn; the per-enemy pool override (owner 2026-10-12) keeps it.
+    ? { ...enemy, firstMove: 'slash', spPool: 1, moves: { slash: { ...SLASH, ...move } } } : enemy) });
 }
 const seatStats = { classId: 'reaver', maxHp: 100, hp: 100, maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20 };
 
@@ -63,8 +64,9 @@ test('a melee Counter facing a Sweep reports notCovered with the attack kind', (
 test('a Counter the seat cannot pay for reports cost with need and have', () => {
   const combat = solo();
   combat.player.energy = 0;
+  // guardCounter is a counter: 2 SP by the action-cost table (owner 2026-10-12), so the refusal needs 2.
   assert.deepEqual(unavailable(soloEnd(combat)), [{ ownerId: 'player', sourceId: 'e1', reason: 'cost',
-    cardId: 'guardCounter', cardIds: ['guardCounter'], attackKind: 'attack', resource: 'stamina', need: 1, have: 0 }]);
+    cardId: 'guardCounter', cardIds: ['guardCounter'], attackKind: 'attack', resource: 'stamina', need: 2, have: 0 }]);
 });
 
 test('a Counter whose HP offering would leave the seat dead reports cost with resource hp', () => {
@@ -143,9 +145,9 @@ test('a staggered or controlled attacker reports the halt once per root', () => 
 test('a status-only root is notCovered, and a seat it control-locks reports controlled', () => {
   const ATTACK = ['camp:physical', 'maneuver:attack', 'reach:contact', 'targeting:single'];
   const registries = createRegistries({ ...contentBundle, enemies: contentBundle.enemies.map(enemy => enemy.id === 'wanderingSoldier'
-    ? { ...enemy, firstMove: 'slash', moves: { slash: { intent: 'debuff', weight: 1,
+    ? { ...enemy, firstMove: 'slash', spPool: 1, moves: { slash: { intent: 'debuff', weight: 1,
       effects: [{ op: 'applyStatus', status: 'paralysis', stacks: 2, target: 'player' }] } } }
-    : enemy.id === 'blightHound' ? { ...enemy, firstMove: 'slash', moves: { slash: { intent: 'attack', damage: 1, weight: 1, cardTags: ATTACK } } } : enemy) });
+    : enemy.id === 'blightHound' ? { ...enemy, firstMove: 'slash', spPool: 1, moves: { slash: { intent: 'attack', damage: 1, weight: 1, cardTags: ATTACK } } } : enemy) });
   const combat = createCombat({ registries, rng: createRng(701), combatExpansionVersion: 2, reactionRulesVersion: 1,
     enemyIds: ['wanderingSoldier', 'blightHound'], player: { ...seatStats, drawPerTurn: 1,
       deck: [{ cardId: 'guardCounter', instanceId: 'r0', upgraded: false }] } });
@@ -221,7 +223,7 @@ test('co-op reports the same reasons through the same offer door', () => {
   cost.players.get('a').entity.energy = 0;
   endTurn(cost, 'a');
   assert.deepEqual(unavailable(cost.eventLog), [{ ownerId: 'a', sourceId: 'e1', reason: 'cost',
-    cardId: 'guardCounter', cardIds: ['guardCounter'], attackKind: 'attack', resource: 'stamina', need: 1, have: 0 }]);
+    cardId: 'guardCounter', cardIds: ['guardCounter'], attackKind: 'attack', resource: 'stamina', need: 2, have: 0 }]);
   const sweep = coop({ move: { cardTags: SWEEP } });
   endTurn(sweep, 'a');
   assert.deepEqual(unavailable(sweep.eventLog).map(row => [row.ownerId, row.reason, row.attackKind]), [['a', 'notCovered', 'sweep']]);
@@ -256,7 +258,7 @@ test('mixed-version co-op reports an expanded seat reaction using that seat\'s c
   endTurn(combat, 'expanded');
   endTurn(combat, 'legacy');
   assert.deepEqual(unavailable(combat.eventLog), [{ ownerId: 'expanded', sourceId: 'e1', reason: 'cost',
-    cardId: 'whirlingGuard', cardIds: ['whirlingGuard'], attackKind: 'sweep', resource: 'stamina', need: 1, have: 0 }]);
+    cardId: 'whirlingGuard', cardIds: ['whirlingGuard'], attackKind: 'sweep', resource: 'stamina', need: 2, have: 0 }]);
 });
 
 const guardBroken = events => events.filter(event => event.type === 'combatGuardBroken').map(({ type, ...payload }) => payload);

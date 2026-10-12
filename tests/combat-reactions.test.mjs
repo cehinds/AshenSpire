@@ -40,13 +40,18 @@ test('incoming plans pause before hits, reveal only the actor, and decline resum
   assert.throws(() => dispatch(combat, { type: 'chooseReaction', offerId: 'stale' }));
   assert.deepEqual(serializeCombatSnapshot(combat), before);
   assert.deepEqual(combat.rng.getCounters(), rng);
+  // Owner 2026-10-12: each enemy spends its 2-SP pool, so a 1-SP slash is played twice per enemy turn, and each
+  // planned move pauses for its own reaction, in roster order: e1, e1, e2, e2.
   const first = answer(combat);
   assert.deepEqual(first.events.filter(event => event.type === 'enemyMoveStarted').map(event => event.sourceId), ['e1']);
+  assert.equal(combat.pendingReaction.sourceId, 'e1', "e1's second planned slash pauses next");
+  answer(combat);
   assert.equal(combat.pendingReaction.sourceId, 'e2');
+  answer(combat);
   answer(combat);
   assert.equal(combat.turn, 2);
   assert.equal(combat.phase, 'player');
-  assert.deepEqual(combat.enemies.map(enemy => enemy.performedMoves), [['slash'], ['slash']]);
+  assert.deepEqual(combat.enemies.map(enemy => enemy.performedMoves), [['slash', 'slash'], ['slash', 'slash']]);
 });
 
 test('headless bot resolves optional offers before trying ordinary player actions', () => {
@@ -58,7 +63,7 @@ test('headless bot resolves optional offers before trying ordinary player action
     assert.equal(action.type, 'chooseReaction'); assert.equal(action.optionId, null);
     dispatch(combat, action); choices++;
   }
-  assert.equal(choices, 2); assert.equal(combat.turn, 2); assert.equal(combat.phase, 'player');
+  assert.equal(choices, 4, 'two enemies, two planned slashes each (2-SP pool, 1 SP per slash)'); assert.equal(combat.turn, 2); assert.equal(combat.phase, 'player');
   assert.equal(combat.eventLog.filter(event => event.type === 'cardPlayed').length, 0);
 });
 
@@ -72,8 +77,13 @@ test('one selected Counter pays once and successful multi-hit return follows the
   assert.equal(out.events.filter(event => event.type === 'combatCounterTriggered').length, 1);
   const trigger = out.events.findIndex(event => event.type === 'combatCounterTriggered');
   const contacts = out.events.map((event, index) => ({ event, index })).filter(({ event }) => event.type === 'damageDealt' && event.targetId === 'player');
-  assert.equal(contacts.length, 2);
+  // The first slash has two hits, both before the Counter's return. The enemy's second planned slash pauses for its own
+  // reaction, so its hits are not in this answer's events yet.
+  assert.equal(contacts.length, 2, 'the first slash lands both hits before the return');
   assert.ok(contacts.every(({ index }) => index < trigger));
+  assert.equal(combat.pendingReaction?.sourceId, 'e1', "the enemy's second planned slash is offered next");
+  answer(combat);
+  assert.equal(combat.eventLog.filter(event => event.type === 'damageDealt' && event.targetId === 'player').length >= 4, true, 'the second slash lands its two hits after its own reaction');
   assert.equal(combat.pendingReaction, undefined);
 });
 

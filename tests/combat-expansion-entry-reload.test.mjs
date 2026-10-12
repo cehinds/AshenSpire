@@ -74,7 +74,9 @@ test('v2 ordinary natural turns and Attack preserve the original durable entry c
   naturalAttack(f.combat);
   assert.ok(f.combat.turn > 1);
   assert.notEqual(f.combat.player.hp, opening.player.hp, 'real enemy turns changed player HP');
-  assert.notDeepEqual(f.combat.enemies.map(enemy => enemy.hp), opening.enemies.map(enemy => enemy.hp), 'the accepted attack changed enemy HP');
+  // The enemy now plans its 2-SP pool, so its planned guard can absorb the strike: the attack was accepted either way,
+  // so the check reads HP and Block together (SPEC action costs).
+  assert.notDeepEqual(f.combat.enemies.map(enemy => [enemy.hp, enemy.block]), opening.enemies.map(enemy => [enemy.hp, enemy.block]), 'the accepted attack changed enemy HP or absorbed into Block');
   assert.notDeepEqual(serializeCombatSnapshot(f.combat), opening);
   assert.equal(f.writes(), 1, 'ordinary actions do not write an implicit Save Game');
   const { loaded, restored } = f.load();
