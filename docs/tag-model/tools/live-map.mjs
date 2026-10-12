@@ -464,9 +464,9 @@ export const LIVE = {
   'grantSource.weapon': 'from:weapon',
   'grantSource.class': 'from:class',
   // proposed live mapping (domain pass)
-  'meta.combat.damage.blade': 'damage.blade',
-  'meta.combat.damage.blunt': 'damage.blunt',
-  'meta.combat.damage.piercing': 'damage.piercing',
+  'meta.combat.damage.physical.weapon-blade': 'damage.blade',
+  'meta.combat.damage.physical.weapon-blunt': 'damage.blunt',
+  'meta.combat.damage.physical.weapon-piercing': 'damage.piercing',
   // proposed live mapping (domain pass)
   'damageType': 'damageType',
   // proposed live mapping (domain pass)

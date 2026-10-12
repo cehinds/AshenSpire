@@ -256,6 +256,22 @@ Formula, relation and value keys follow the README conventions.
   folder does not change it.
 - **Tables changed:** none.
 
+## 13. Weapon damage kinds and damage types are two tags
+
+- **Date:** 2026-10-12 (owner).
+- **Decision:** two tags: weapon damage kinds vs damage types. Blade, blunt and
+  piercing (`meta.combat.damage.physical.weapon-{blade,blunt,piercing}`) and the
+  physical damage types (`meta.combat.damage.physical.{slashing,blunt,pierce}`)
+  stay separate. The weapon ids are `weapon-*` because `physical.blunt` is the
+  damage type. Each weapon kind sits under `meta.combat.damage.physical`, and each pair is
+  linked both ways in `related`: blade with slashing, blunt with blunt, and
+  piercing with pierce.
+- **Tables changed:** `tables/tags.csv` moves the three weapon kinds under
+  `meta.combat.damage.physical` (renamed to `weapon-*`) and adds the six `related` links. No liveId
+  changes.
+- **Couldn't place:** the damage-type placement question below still stands.
+  It concerns which tree holds damage types as a whole, not these two sets.
+
 ## Open: round-trip differences
 
 Every live node in `content/source/nodes.csv` (448) now maps to exactly one tag

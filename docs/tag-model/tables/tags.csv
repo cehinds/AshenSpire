@@ -199,9 +199,9 @@ meta.combat.skill.spellcraft.psychic.ritual,psychic.ritual,Ritual,meta.combat.sk
 meta.combat.skill.spellcraft.alteration,alteration,Alteration,meta.combat.skill.spellcraft,Skill,alteration,"Moved: re-homed in the proposal (tag-tree.txt [m]). existing school, non-elemental",,,,,,live-tag,◇,9BC8BE,school:alteration
 meta.combat.damage,damage,Damage,meta.combat,DamageType,,,,,,,,live-tag,,,damage
 meta.combat.damage.physical,damage.physical,Physical,meta.combat.damage,DamageType,,,,,,,,live-tag,,,damage.physical
-meta.combat.damage.physical.slashing,slashing,Slashing,meta.combat.damage.physical,DamageType,,→ Bleeding,On Health hit: apply [bleeding],,,,,live-tag,◇,9FC3E8,damage:slashing
-meta.combat.damage.physical.blunt,physical.blunt,Blunt,meta.combat.damage.physical,DamageType,,→ Poise damage,+2 Poise damage,,,,,live-tag,◇,9FC3E8,damage:blunt
-meta.combat.damage.physical.pierce,physical.pierce,Pierce,meta.combat.damage.physical,DamageType,,ignores Guard,Ignores 2 Guard; slips past melee Counter,,,,,live-tag,◇,9FC3E8,damage:piercing
+meta.combat.damage.physical.slashing,slashing,Slashing,meta.combat.damage.physical,DamageType,,→ Bleeding,On Health hit: apply [bleeding],,,,weapon-blade,live-tag,◇,9FC3E8,damage:slashing
+meta.combat.damage.physical.blunt,physical.blunt,Blunt,meta.combat.damage.physical,DamageType,,→ Poise damage,+2 Poise damage,,,,weapon-blunt,live-tag,◇,9FC3E8,damage:blunt
+meta.combat.damage.physical.pierce,physical.pierce,Pierce,meta.combat.damage.physical,DamageType,,ignores Guard,Ignores 2 Guard; slips past melee Counter,,,,weapon-piercing,live-tag,◇,9FC3E8,damage:piercing
 meta.combat.damage.magic,damage.magic,Magic,meta.combat.damage,DamageType,,,,,,,,live-tag,,,damage.magic
 meta.combat.damage.magic.fire,magic.fire,Fire,meta.combat.damage.magic,DamageType,spellcraft.fire,→ Burned,On hit: apply [burned],burned,,,,live-tag,◇,9FC3E8,damage:fire
 meta.combat.damage.magic.frost,magic.frost,Frost,meta.combat.damage.magic,DamageType,spellcraft.frost,→ Frostbitten,On hit: apply [build-up.frost],,,,,live-tag,◇,9FC3E8,damage:frost
@@ -743,9 +743,9 @@ grantSource.relic,grantSource.relic,Relic,grantSource,TagNode,,Carried in by the
 grantSource.armor,grantSource.armor,Armor,grantSource,TagNode,,Bound to the outfit the run begins wearing.,,,,,,live-tag,▣,7FA8C9,from:armor
 grantSource.weapon,grantSource.weapon,Weapon,grantSource,TagNode,,Bound to an armament in hand at creation.,,,,,,live-tag,⚔,C9502E,from:weapon
 grantSource.class,grantSource.class,Class,grantSource,TagNode,,The class signature card.,,,,,,live-tag,✦,9FC3E8,from:class
-meta.combat.damage.blade,damage.blade,blade,meta.combat.damage,DamageType,,Damage dealt with an edge.,,,,,,live-tag,,,damage.blade
-meta.combat.damage.blunt,damage.blunt,blunt,meta.combat.damage,DamageType,,Damage dealt with mass and impact.,,,,,,live-tag,,,damage.blunt
-meta.combat.damage.piercing,piercing,piercing,meta.combat.damage,DamageType,,Damage dealt with a point.,,,,,,live-tag,,,damage.piercing
+meta.combat.damage.physical.weapon-blade,weapon-blade,blade,meta.combat.damage.physical,DamageType,,Damage dealt with an edge.,,,,,slashing,live-tag,,,damage.blade
+meta.combat.damage.physical.weapon-blunt,weapon-blunt,blunt,meta.combat.damage.physical,DamageType,,Damage dealt with mass and impact.,,,,,physical.blunt,live-tag,,,damage.blunt
+meta.combat.damage.physical.weapon-piercing,weapon-piercing,piercing,meta.combat.damage.physical,DamageType,,Damage dealt with a point.,,,,,physical.pierce,live-tag,,,damage.piercing
 damageType,damageType,Damage type,,TagNode,,Identity of a typed HP damage component.,,,,,,live-tag,,,damageType
 run,run,Run,,TagNode,,"Run structure — what an event, an encounter or an unlock is about.",,,,,,live-tag,,,run
 internal,internal,internal,,TagNode,,"Engine-internal state tags, never shown to the player (visibility INTERNAL in nodes.csv). Grouping node for the internal vocabulary.",,,,,,live-tag,,,internal

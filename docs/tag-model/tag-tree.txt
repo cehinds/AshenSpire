@@ -252,6 +252,9 @@ Meta
         Slashing {→ Bleeding}
         Blunt {→ Poise damage}
         Pierce {ignores Guard}
+        blade {Damage dealt with an edge.}
+        blunt {Damage dealt with mass and impact.}
+        piercing {Damage dealt with a point.}
       Magic
         Fire {→ Burned}
         Frost {→ Frostbitten}
@@ -262,9 +265,6 @@ Meta
         Psychic [n] {→ Confused}
       Hybrid
         Force {Block or Barrier stops it}
-      blade {Damage dealt with an edge.}
-      blunt {Damage dealt with mass and impact.}
-      piercing {Damage dealt with a point.}
     Stance
       Offensive
         Attack {44 cards}
