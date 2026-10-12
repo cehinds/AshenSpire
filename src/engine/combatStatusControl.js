@@ -1,11 +1,14 @@
 import * as Actions from './actions.js';
 import { combatStatusRules } from '../content/combatStatusRules.js';
+import { syncWardMaximum, syncPoiseMaximum } from './combatPools.js';
 
 const finite = value => Number.isFinite(value) ? value : 0;
 const whole = value => Math.max(0, Math.floor(finite(value)));
 const stacks = (entity, id) => whole(entity?.statuses?.[id]?.stacks);
 const enabled = ctx => ctx?.combatExpansionVersion === 2;
 const rules = ctx => ctx?.combatStatusRules || ctx?.combatExpansionRules?.statuses || combatStatusRules;
+// A status's stacks can carry a Ward or Poise bonus: every direct stack change re-syncs the pools.
+const syncPools = (ctx, entity) => { if (entity) { syncWardMaximum(ctx, entity); syncPoiseMaximum(ctx, entity); } };
 const emit = (ctx, type, entity, payload = {}) => ctx.emit?.(type, { targetId: entity.id, ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(entity) } : {}), ...payload });
 function state(entity) {
   return entity.statusControl ||= { version: 1, gauges: {}, sleepHpRestored: 0,
@@ -23,6 +26,7 @@ function clearActive(ctx, entity, id, count = Infinity, reason = 'recovered') {
   if (!removed) return 0;
   inst.stacks -= removed;
   if (!inst.stacks) delete entity.statuses[id];
+  syncPools(ctx, entity);
   emit(ctx, 'statusRemoved', entity, { status: id, amount: removed, reason });
   return removed;
 }
@@ -191,6 +195,7 @@ export function applyExpansionActiveStatus(ctx, target, id, amount, source = nul
   const inst = target.statuses[id] ||= { stacks: 0 };
   inst.stacks = before + add;
   delete inst.meter;
+  syncPools(ctx, target);
   const def = ctx.registries?.statuses?.get(id);
   if (def?.decay?.duration) inst.duration = def.decay.duration;
   emit(ctx, 'statusApplied', target, { sourceId: source?.id ?? null, sourceKind: source?.kind, targetKind: target.kind,
@@ -204,6 +209,7 @@ function grant(ctx, target, id, amount, source) {
   const def = ctx.registries?.statuses?.get(id), prior = stacks(target, id);
   const inst = target.statuses[id] ||= { stacks: 0 };
   inst.stacks = def?.stackMode === 'unique' ? 1 : def?.stackMode === 'refresh' ? Math.max(prior, amount) : prior + amount;
+  syncPools(ctx, target);
   if (def?.decay?.duration) inst.duration = def.decay.duration;
   emit(ctx, 'statusApplied', target, { sourceId: source?.id ?? null, status: id, stacks: amount, total: inst.stacks, wasAbsent: !prior });
 }

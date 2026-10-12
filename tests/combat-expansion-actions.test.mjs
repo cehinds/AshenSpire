@@ -8,7 +8,7 @@ import { enqueueExpandedAction } from '../src/engine/combatExpansionActions.js';
 import { executeAction, applyAttackDamage, restoreExpandedWard, gainBarrier, syncWardMaximum } from '../src/engine/actions.js';
 import { schoolResistanceMultiplier, persistentWardMaximum } from '../src/model/combatRatings.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
-import { applyStatus } from '../src/engine/statuses.js';
+import { applyStatus, decayAtTurnEnd } from '../src/engine/statuses.js';
 import { restorePersistentPoise } from '../src/engine/combatStatusControl.js';
 import { syncPoiseMaximum } from '../src/engine/combatPools.js';
 
@@ -306,6 +306,17 @@ test('a status with a Ward bonus moves the Ward pool as soon as it is applied', 
   applyStatus(combat, enemy, 'bleeding', 1, null);
 
   assert.deepEqual({ ...enemy.persistentWard }, { max: 5, value: 5 }, 'the pool follows the status without a later sync');
+});
+
+test('a Ward bonus stack that decays at turn end lowers the Ward maximum at once', () => {
+  const { combat, enemy } = fixture();
+  combat.ratingsRules = { bonuses: { 'status:weak': { ward: 2 } } };
+  enemy.ratings.ward = 3; enemy.persistentWard = { max: 3, value: 3 };
+  applyStatus(combat, enemy, 'weak', 2, null);
+  assert.deepEqual({ ...enemy.persistentWard }, { max: 7, value: 7 }, 'two stacks add 4 to the pool');
+  decayAtTurnEnd(combat, enemy);
+  assert.equal(enemy.statuses.weak.stacks, 1);
+  assert.deepEqual({ ...enemy.persistentWard }, { max: 5, value: 5 }, 'the decayed stack lowers the maximum without a later sync');
 });
 
 test('a rise from a full Ward pool adds the same amount to current Ward', () => {

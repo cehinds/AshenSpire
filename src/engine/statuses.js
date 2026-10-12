@@ -263,6 +263,8 @@ export function decayAtTurnEnd(ctx, entity) {
     if (def.decay === 'perTurnEnd') {
       if (inst.meter) inst.meter.value -= 1;
       else inst.stacks -= 1;
+      // A stack that carries a Ward or Poise bonus moves the pool at once, not at the next status change.
+      syncPoolsAfterStatus(ctx, entity);
       if (getStacks(entity, statusId) <= 0) {
         removeStatus(ctx, entity, statusId, { reason: 'decayed' });
       }
