@@ -181,7 +181,8 @@ const TEST_ENEMIES = [
   // #61: tagged twin of tDummy — the resistance gate's positive arm.
   { id: 'tBeast', name: 'T Beast', hp: [30, 30], poiseMax: 99, moves: { wait: { intent: 'unknown', weight: 1 } } },
   { id: 'tGiant', name: 'T Giant', hp: [400, 400], poiseMax: 99, moves: { wait: { intent: 'unknown', weight: 1 } } },
-  { id: 'tHitter', name: 'T Hitter', hp: [50, 50], poiseMax: 99, moves: { hit: { intent: 'attack', damage: 10, weight: 1 } } },
+  // spPool 1: a one-blow test enemy (the per-enemy pool override, owner 2026-10-12); its checks count one blow a turn.
+  { id: 'tHitter', name: 'T Hitter', hp: [50, 50], poiseMax: 99, spPool: 1, moves: { hit: { intent: 'attack', damage: 10, weight: 1 } } },
   { id: 'tRegen', name: 'T Regen', hp: [50, 50], poiseMax: 99, moves: { regen: { intent: 'buff', weight: 1, effects: [{ op: 'heal', target: 'self', amount: 4 }] } } },
   { id: 'tAi', name: 'T AI', hp: [999, 999], poiseMax: 999, moves: { a: { intent: 'unknown', weight: 9999, maxConsecutive: 1 }, b: { intent: 'unknown', weight: 1 } } },
   {
@@ -662,9 +663,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(tagIdsFor('starstonePebble').includes('starstone'), 'CSV index names Starstone Pebble as starstone');
     S.applyStatus(c, e1, 'frostExposed', 1);
     const pv = previewCard(c, c.piles.hand[0].instanceId, 'e1');
-    eq(pv.values.find((v) => v.op === 'damage').value, 7, 'preview derives starstone: floor(6 × 1.25)');
+    // starstonePebble is a 2-SP cast now (SPEC action costs): its 6 scales to 11, then Frost-Exposed's ×1.25 floors to 13.
+    eq(pv.values.find((v) => v.op === 'damage').value, 13, 'preview derives starstone: floor(11 × 1.25) (was floor(6 × 1.25) = 7)');
     playFromHand(c, 'starstonePebble');
-    eq(logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop().amount, 7, 'execution derives the same starstone hit');
+    eq(logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop().amount, 13, 'execution derives the same starstone hit (scaled, see the preview)');
   });
 
   test('7e3. Unraveled changes a real Blight hit through tagging.csv', () => {
@@ -677,9 +679,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(tagIdsFor('blightTouch').includes('blight'), 'CSV index names Blight Touch as blight');
     S.applyStatus(c, e1, 'insanityExposed', 1);
     const pv = previewCard(c, c.piles.hand[0].instanceId, 'e1');
-    eq(pv.values.find((v) => v.op === 'damage').value, 6, 'preview derives blight: floor(5 × 1.3)');
+    // blightTouch is a 2-SP cast now: its 5 scales to 9, then Insanity-Exposed's ×1.3 floors to 11 (was 6).
+    eq(pv.values.find((v) => v.op === 'damage').value, 11, 'preview derives blight: floor(9 × 1.3)');
     playFromHand(c, 'blightTouch');
-    eq(logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop().amount, 6, 'execution derives the same blight hit');
+    eq(logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop().amount, 11, 'execution derives the same blight hit');
   });
 
   // ---- 7f. Known-bads through the REAL bundle (#61): each red names its row --
@@ -1571,9 +1574,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // Ancestral Horn: Powers cost 1 less (preview AND execution).
     const h = makeCombat({ deck: ['unbreakable', 'strike', 'strike', 'strike', 'strike'], relicIds: ['ancestralHorn'] });
     const inst = h.piles.hand.find((x) => x.cardId === 'unbreakable');
-    eq(previewCard(h, inst.instanceId).cost, 1, 'preview shows reduced cost');
+    eq(previewCard(h, inst.instanceId).cost, 0, 'preview shows reduced cost (Unbreakable is a 1-SP block now, minus 1)');
     dispatch(h, { type: 'playCard', cardInstanceId: inst.instanceId });
-    eq(h.player.energy, 2, 'paid 1 instead of 2');
+    eq(h.player.energy, 3, 'paid 0 instead of 1 (the Horn takes the 1-SP block down to 0)');
 
     // Run-level event opcodes: addCardToDeck + startCombat + shrine math.
     const rn3 = createRunState({ seed: 2, classId: 'reaver', registries: REG });
@@ -1629,14 +1632,14 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const a = makeCombat({ deck: Array(5).fill('starstonePebble'), enemies: ['tGiant'], mana: 6, maxMana: 6, stamina: 6 });
     playFromHand(a, 'starstonePebble');
     let hits = logOf(a, 'damageDealt').map((e) => e.amount);
-    eq(hits.join(','), '6', 'first spell: no bonus');
+    eq(hits.join(','), '11', 'first spell: no bonus (starstonePebble is a 2-SP cast: 6 scales to 11)');
     playFromHand(a, 'starstonePebble');
     hits = logOf(a, 'damageDealt').map((e) => e.amount);
-    eq(hits.join(','), '6,6,3', 'second spell: Starstone bonus fired');
+    eq(hits.join(','), '11,11,5', 'second spell: Starstone bonus fired (the bonus scales with the 2-SP card: 3 to 5)');
     dispatch(a, { type: 'endTurn' });
     eq(S.getStacks(a.player, 'starstoneCharge'), 0, 'charge fades at turn end');
     playFromHand(a, 'starstonePebble');
-    eq(logOf(a, 'damageDealt').map((e) => e.amount).join(','), '6,6,3,6', 'new turn: no bonus again');
+    eq(logOf(a, 'damageDealt').map((e) => e.amount).join(','), '11,11,5,11', 'new turn: no bonus again');
 
     // The starting relic's structured school modifier is host-stamped once and
     // feeds the same attack math used by preview, solo execution, and co-op.
@@ -1653,9 +1656,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const soloSpell = soloMagic.piles.hand.find((card) => card.cardId === 'starstonePebble');
     const soloPreview = previewCard(soloMagic, soloSpell.instanceId, 'e1').values.find((value) => value.op === 'damage');
     // A2: Starstone Shard's magic damage is +2 (was +1).
-    eq(soloPreview.value, 8, 'solo preview includes the stamped +2 magic damage');
+    eq(soloPreview.value, 13, 'solo preview includes the stamped +2 magic damage, added to the scaled 11 (a 2-SP spell)');
     dispatch(soloMagic, { type: 'playCard', cardInstanceId: soloSpell.instanceId, targetId: 'e1' });
-    eq(logOf(soloMagic, 'damageDealt')[0].amount, 8, 'solo live primary damage matches preview');
+    eq(logOf(soloMagic, 'damageDealt')[0].amount, 13, 'solo live primary damage matches preview (scaled 11, plus the stamped 2)');
 
     const coopMagic = createCoopCombat({
       registries: REG, rng: createRng(0xc002),
@@ -1671,13 +1674,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(coopMagic.players.get('p1').entity.mana, soloMagic.player.mana, 'co-op combatStart uses the same Mana recovery row — and Lodestar Shard\'s (plan phase 5a)');
     const coopSpell = coopMagic.players.get('p1').piles.hand.find((card) => card.cardId === 'starstonePebble');
     const coopEvents = playCoopCard(coopMagic, 'p1', coopSpell.instanceId, 'e1').events;
-    eq(coopEvents.filter((event) => event.type === 'damageDealt')[0].amount, 8,
-      'co-op live magic damage uses the same host-stamped +2');
+    eq(coopEvents.filter((event) => event.type === 'damageDealt')[0].amount, 13,
+      'co-op live magic damage uses the same host-stamped +2, on the scaled 11 (a 2-SP spell)');
 
     // Starstone Shard: combat starts pre-charged → the FIRST spell combos.
     const s = makeCombat({ deck: Array(5).fill('starstonePebble'), enemies: ['tGiant'], relicIds: ['starstoneShard'], stamina: 2 });
     playFromHand(s, 'starstonePebble');
-    eq(logOf(s, 'damageDealt').map((e) => e.amount).join(','), '6,3', 'Shard pre-charges the opener');
+    eq(logOf(s, 'damageDealt').map((e) => e.amount).join(','), '11,5', 'Shard pre-charges the opener (the 2-SP spell scales 6,3 to 11,5)');
 
     // Herald blood economy: Blood Pact pays HP for energy + draw.
     const p = makeCombat({ deck: ['bloodPact', 'strike', 'strike', 'strike', 'strike', 'strike'] });
@@ -1868,7 +1871,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     dispatch(v, { type: 'endTurn' }); // firstMove spiralThrust: 20 dmg + 2 player Bleed
     const heals = logOf(v, 'healed').filter((e) => e.targetId === 'e1');
     assert(heals.length >= 1 && heals[0].amount === 2, 'healed 2 off her own hit');
-    eq(S.getStacks(v.player, 'bleed'), 2, 'her blade Bleeds the player');
+    // Two planned blade moves, each Bleeding 2 (the enemy's 2-SP pool, owner 2026-10-12).
+    eq(S.getStacks(v.player, 'bleed'), 4, 'her blade Bleeds the player once per planned move');
 
     // Player-side Bleed meter bursts exactly like an enemy's (SPEC §10 seam).
     S.applyStatus(v, v.player, 'bleed', 10); // 2 + 10 = 12 → fill (effects enqueued)
@@ -9061,19 +9065,20 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(logOf(c2, 'relicTriggered').filter((e) => e.relicId === 'whetstonePouch').length, 1);
     // Waxen Seal: the first heal each combat heals more, once.
     const c3 = makeCombat({ deck: ['warmLitany', 'warmLitany', 'warmLitany', 'warmLitany', 'warmLitany'], relicIds: ['waxenSeal'], hp: 40 });
-    c3.player.maxStamina = 3; c3.player.stamina = 3;
+    c3.player.maxStamina = 5; c3.player.stamina = 5; c3.player.energyMax = 5; c3.player.energy = 5; // two 2-SP casts (SPEC action costs)
     playFromHand(c3, 'warmLitany');
-    eq(c3.player.hp, 40 + 3 + REG.balance.powers.waxenSeal.heal, 'Litany heals, and the seal heals more');
+    // warmLitany is a 2-SP cast now: its 3 heal scales to 5 (SPEC action costs).
+    eq(c3.player.hp, 40 + 5 + REG.balance.powers.waxenSeal.heal, 'Litany heals, and the seal heals more');
     playFromHand(c3, 'warmLitany');
-    eq(c3.player.hp, 40 + 3 + REG.balance.powers.waxenSeal.heal + 3, 'the second heal is its own');
+    eq(c3.player.hp, 40 + 5 + REG.balance.powers.waxenSeal.heal + 5, 'the second heal is its own');
     // A heal at full HP heals nothing and spends nothing (healPositive):
     // Golden Sprout's opening heal on a healthy Herald leaves the seal for the
     // first real heal.
     const c3b = makeCombat({ deck: ['warmLitany', 'warmLitany', 'warmLitany', 'warmLitany', 'warmLitany'], relicIds: ['goldenSprout', 'waxenSeal'], hp: 78 });
     eq(logOf(c3b, 'relicTriggered').filter((e) => e.relicId === 'waxenSeal').length, 0, 'a zero heal does not spend the seal');
-    c3b.player.maxStamina = 3; c3b.player.stamina = 3; c3b.player.hp = 40;
+    c3b.player.maxStamina = 3; c3b.player.stamina = 3; c3b.player.energyMax = 3; c3b.player.energy = 3; c3b.player.hp = 40;
     playFromHand(c3b, 'warmLitany');
-    eq(c3b.player.hp, 40 + 3 + REG.balance.powers.waxenSeal.heal, 'the first real heal does');
+    eq(c3b.player.hp, 40 + 5 + REG.balance.powers.waxenSeal.heal, 'the first real heal does (warmLitany heals 5 at 2 SP)');
     // Co-op: a heal is the HEALED seat's — an ally healed by A fires the ally's
     // seal on the ally, and A's seal stays whole.
     const hA = createRunState({ seed: 0x5a5c, classId: 'herald', registries: REG });
@@ -9097,7 +9102,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(c4.player.mana, 1 + REG.balance.powers.lodestarShard.restoreMana, 'the shard restores Mana as the fight opens');
     // Attune restores Mana and exhausts; upgraded it stays.
     const c5 = makeCombat({ deck: ['attune', { id: 'attune', up: true }, 'strike', 'strike', 'strike'], mana: 0, maxMana: 3 });
-    c5.player.maxStamina = 3; c5.player.stamina = 3;
+    c5.player.maxStamina = 5; c5.player.stamina = 5; c5.player.energyMax = 5; c5.player.energy = 5; // attune is a 2-SP cast now
     playFromHand(c5, 'attune'); eq(c5.player.mana, 1); eq(c5.piles.exhaust.filter((c) => c.cardId === 'attune').length, 1, 'Attune exhausts');
     playFromHand(c5, 'attune'); eq(c5.player.mana, 2); eq(c5.piles.exhaust.filter((c) => c.cardId === 'attune').length, 1, 'Attune+ does not');
     // VALIDATION, by name.
