@@ -174,3 +174,25 @@ test('a 1280x720 desktop field (about 297px high) still shares the back row and 
   // Horizon framing: the backdrop frames the near row, as on the spacious desktop.
   assert.ok(enemies.every(e => e.sceneryGround !== undefined), 'desktop enemies carry the horizon framing');
 });
+
+// Codex P2 (2026-10-12): at 1280x720 a back row above the standing area lifted
+// the backdrop camera off the horizon. The row now moves down to that floor.
+test('a desktop back row moves down onto the standing-area floor and never up', () => {
+  const width = 1280, height = 297;
+  const actors = ['p', 'a', 'b'].map((id, i) => ({ side: i ? 'enemy' : 'player',
+    visibleWidth: 60, leading: 40, slot: { id, ground: 250 } }));
+  const sizes = actors.map((a, i) => ({ id: a.slot.id, x: [200, 560, 900][i], visibleHeight: 110, scale: 1, multiplier: 1 }));
+  const without = alternativeCombatComposition({ actors, sizes, width, height, handTop: height, desktop: true });
+  const floor = 244;
+  const withFloor = alternativeCombatComposition({ actors, sizes, width, height, handTop: height, desktop: true, horizonFloor: floor });
+  const [, ...enemies] = withFloor;
+  assert.equal(new Set(enemies.map(e => e.ground)).size, 1, 'still one shared foot line');
+  for (const enemy of enemies) assert.ok(enemy.ground >= floor - 1e-9, `feet at ${enemy.ground}, below the floor ${floor}`);
+  assert.ok(enemies[0].ground > without[1].ground, 'the row moved down');
+  // A floor above the field never pushes the row past its bottom edge.
+  const low = alternativeCombatComposition({ actors, sizes, width, height, handTop: height, desktop: true, horizonFloor: 400 });
+  assert.ok(low[1].ground <= height + 1e-9, 'the row stays inside the field');
+  // Without a floor, or on a phone, nothing changes.
+  const phone = alternativeCombatComposition({ actors, sizes, width: 360, height: 267, handTop: 267, horizonFloor: 300 });
+  assert.deepEqual(phone, alternativeCombatComposition({ actors, sizes, width: 360, height: 267, handTop: 267 }));
+});

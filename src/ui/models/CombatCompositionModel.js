@@ -84,7 +84,9 @@ export const SPACIOUS_RIBBON_RESERVE = 30;
 
 // `desktop` (the desktop form factor only) turns on the shared back row below;
 // tablets and phones keep the spacious path they had.
-export function alternativeCombatComposition({ sizes, actors, width, height, handTop, handLeft = 0, solo = true, desktop = false }) {
+// `horizonFloor` (desktop only, same units as height) is the standing-area top the
+// camera needs the shared row to stand on; the row moves down to it, never up.
+export function alternativeCombatComposition({ sizes, actors, width, height, handTop, handLeft = 0, solo = true, desktop = false, horizonFloor }) {
   const enemies = actors.filter(actor => actor.side === 'enemy');
   const enemyFits = sizes.filter(size => enemies.some(actor => actor.slot.id === size.id));
   const center = enemyFits.length ? (Math.min(...enemyFits.map(f => f.x)) + Math.max(...enemyFits.map(f => f.x))) / 2 : width * .55;
@@ -94,7 +96,8 @@ export function alternativeCombatComposition({ sizes, actors, width, height, han
   const sharedRow = desktop;
   // One foot line for the whole back row: the tallest enemy's headroom, never
   // higher than the floor's standing share of the field.
-  const spaciousRow = sharedRow ? Math.max(height * .48, ...enemyFits.map(size => {
+  const floor = sharedRow && Number.isFinite(horizonFloor) ? Math.min(horizonFloor, height) : 0;
+  const spaciousRow = sharedRow ? Math.max(height * .48, floor, ...enemyFits.map(size => {
     const actor = actors.find(actor => actor.slot.id === size.id);
     return Math.min(size.visibleHeight, height * .7) + actor.leading + SPACIOUS_RIBBON_RESERVE;
   })) : 0;
