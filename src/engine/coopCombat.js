@@ -376,6 +376,8 @@ function addPlayerState(C, p, { initial = false } = {}) {
     syncFeatProperties(C, P.entity, P.skillFeats);
     syncSigilProperties(C, P.entity, P.attunedSigils); // SPEC §15.4: the seat's own attuned legendaries
     if (C.ratingsRules) refreshCombatRatings(C);
+    // The joiner's Ward rating exists only after the refresh: fill the pool now.
+    if (P.entity.combatExpansionVersion === 2) initializePersistentWard(P.entity, persistentWardMaximum(C, P.entity));
     setActive(C, wasActive || null);
     // …and the fresh hand, which is the player phase's business only.
     if (C.phase === 'player') {

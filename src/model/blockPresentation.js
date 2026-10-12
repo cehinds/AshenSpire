@@ -18,6 +18,7 @@ export function wardBlockReceipt(entity) {
 // magical share of Block plus the persistent Ward pool (expanded combat).
 export function protectionPresentation(entity) {
   const { defense, ward } = blockPresentation(entity);
-  const pool = Number.isFinite(entity?.persistentWard?.value) ? Math.max(0, Math.floor(entity.persistentWard.value)) : 0;
+  const whole = value => Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
+  const pool = whole(entity?.persistentWard?.value) + whole(entity?.persistentWard?.bonus);
   return { defense, ward: ward + pool };
 }

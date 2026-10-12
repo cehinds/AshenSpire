@@ -5,7 +5,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { enqueueExpandedAction } from '../src/engine/combatExpansionActions.js';
-import { executeAction, applyAttackDamage } from '../src/engine/actions.js';
+import { executeAction, applyAttackDamage, restoreExpandedWard } from '../src/engine/actions.js';
 import { schoolResistanceMultiplier, persistentWardMaximum } from '../src/model/combatRatings.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 
@@ -128,9 +128,19 @@ test('a resistant creature takes floor(0.75 × damage) by default, configurable 
   assert.equal(schoolResistanceMultiplier({ ratingsRules: { resistance: { schoolTaken: 0.01 } } }, enemy, 'magic'), 0.1, 'never past 90% resistance');
 });
 
-test('a combatant starts with half its Ward rating as its Ward pool', () => {
-  assert.equal(persistentWardMaximum({}, { ratings: { ward: 25 } }), 12);
-  assert.equal(persistentWardMaximum({ ratingsRules: { resistance: { wardPool: 1 } } }, { ratings: { ward: 25 } }), 25);
+test('a combatant starts every fight with its full Ward (configurable share)', () => {
+  assert.equal(persistentWardMaximum({}, { ratings: { ward: 25 } }), 25);
+  assert.equal(persistentWardMaximum({ ratingsRules: { resistance: { wardPool: 0.5 } } }, { ratings: { ward: 25 } }), 12);
+});
+
+test('a card that adds Ward refills the pool first, then adds the rest as bonus Ward spent first', () => {
+  const { combat, enemy } = fixture([{ op: 'damage', target: 'enemy', amount: 5 }]);
+  enemy.persistentWard.max = 10; enemy.persistentWard.value = 7;
+  assert.equal(restoreExpandedWard(combat, enemy, 5).restored, 5);
+  assert.deepEqual({ ...enemy.persistentWard }, { max: 10, value: 10, bonus: 2 });
+  const out = dispatch(combat, { type: 'playCard', cardInstanceId: 'paired', targetId: enemy.id });
+  assert.equal(out.events.find(event => event.type === 'damageDealt' && event.targetId === enemy.id).amount, 1);
+  assert.deepEqual({ ...enemy.persistentWard }, { max: 10, value: 8 }, 'bonus spent first, then the pool, by the 4 absorbed');
 });
 
 test('each hit Ward meets still lets at least 1 damage through', () => {
@@ -141,5 +151,5 @@ test('each hit Ward meets still lets at least 1 damage through', () => {
   const damage = out.events.filter(event => event.type === 'damageDealt' && event.targetId === enemy.id);
   assert.deepEqual(damage.map(event => event.amount), [1, 1]);
   assert.equal(before - enemy.hp, 2);
-  assert.equal(enemy.persistentWard.value, 10);
+  assert.equal(enemy.persistentWard.value, 12, 'Ward is spent only by the 8 it absorbed');
 });

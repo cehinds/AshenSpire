@@ -18,8 +18,8 @@ export const combatRatingDefaults = {
   // schoolTaken: the share of a hit a creature with an authored school
   // resistance still takes (0.75 → floor(0.75 × damage); 0.1 is the floor, a
   // 90% cap). wardPool: the share of the Ward rating that becomes the Ward pool
-  // a combatant starts each fight with.
-  resistance: { physicalK: 100, magicalK: 100, statusK: 100, maximum: 0.8, schoolTaken: 0.75, wardPool: 0.5 },
+  // a combatant starts each fight with (1: full Ward, restored every fight).
+  resistance: { physicalK: 100, magicalK: 100, statusK: 100, maximum: 0.8, schoolTaken: 0.75, wardPool: 1 },
   impact: { magic: 1, light: 1, medium: 2, heavy: 3, colossal: 4,
     lightMaxWeight: 3, mediumMaxWeight: 6, heavyMaxWeight: 8, unarmed: 1, enemyPhysical: 2 },
   breaks: { poiseActionLoss: 1, wardActionLoss: 1, thresholdGrowth: 1.25, recoveryPerTurn: 0 },
@@ -274,7 +274,7 @@ export function combatRatingRows(bundle) {
       min: field.endsWith('K') ? 0.01 : field === 'thresholdGrowth' ? 1 : field === 'schoolTaken' ? 0.1 : 0,
       max: field === 'maximum' ? 0.95 : field === 'schoolTaken' || field === 'wardPool' ? 1 : 999,
       note: field === 'schoolTaken' ? 'A creature resistant to a damage school takes this share of the hit, rounded down: 0.75 takes 75%, 0.5 takes half. Never below 0.1 (90% resistance).'
-        : field === 'wardPool' ? 'Each combatant starts a fight with this share of its Ward rating as its Ward pool: 0.5 means half. Ward absorbs hits (always letting at least 1 through) and is spent by what it absorbs.'
+        : field === 'wardPool' ? 'Each combatant starts every fight with this share of its Ward rating as its Ward pool: 1 means full. Ward absorbs hits (each hit still lets at least 1 through), is spent by what it absorbs, and does not regenerate unless a card, feat, class feature or relic restores it.'
         : field.endsWith('K') ? 'Rating needed for 50% resistance before the cap. A higher value makes resistance weaker.' : field === 'maximum' ? 'Maximum damage or status reduction: 0.8 means 80%.' : field === 'thresholdGrowth' ? 'After a break, multiply the threshold by this amount. 1.25 means 25% higher; 1 disables growth.' : group === 'impact' ? 'Physical hits pressure Poise; magical hits pressure Ward. Only hits that pass Block cause impact.' : 'Applies to new runs.',
       integer: group === 'impact' || field.endsWith('ActionLoss') || field === 'recoveryPerTurn',
       step: group === 'impact' || field.endsWith('ActionLoss') || field === 'recoveryPerTurn' ? 1 : 0.01,

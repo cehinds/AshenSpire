@@ -27,7 +27,14 @@ function clearActive(ctx, entity, id, count = Infinity, reason = 'recovered') {
   return removed;
 }
 
-/** Called once at combat creation; NEVER on restore, stance change or turns. */
+/** Ward total: the pool plus any bonus a card added above it. */
+export const wardTotal = entity => Math.max(0, entity?.persistentWard?.value || 0) + Math.max(0, entity?.persistentWard?.bonus || 0);
+
+/**
+ * Called at combat creation (every fight starts with full Ward); NEVER on
+ * restore, stance change or turns. Ward does not regenerate on its own: only a
+ * feature that restores it (a card, a feat, a class feature, a relic, Sleep).
+ */
 export function initializePersistentWard(entity, maximum) {
   const max = whole(maximum);
   entity.persistentWard = { max, value: max };
@@ -39,12 +46,16 @@ export function initializePersistentWard(entity, maximum) {
 export function spendPersistentWard(ctx, entity, amount, meta = {}) {
   if (!enabled(ctx) || !entity?.persistentWard || amount <= 0) return { spent: 0, carry: 0 };
   const s = state(entity), ward = entity.persistentWard;
-  if (ward.value <= 0) { s.wardDamageCarry = 0; return { spent: 0, carry: 0 }; }
+  if (wardTotal(entity) <= 0) { s.wardDamageCarry = 0; return { spent: 0, carry: 0 }; }
   const exact = Math.max(0, finite(amount)) + s.wardDamageCarry;
-  const spent = Math.min(ward.value, Math.floor(exact + 1e-9));
-  ward.value -= spent;
-  s.wardDamageCarry = ward.value > 0 ? exact - Math.floor(exact + 1e-9) : 0;
-  emit(ctx, 'persistentWardChanged', entity, { spent, value: ward.value, max: ward.max, ...meta });
+  const spent = Math.min(wardTotal(entity), Math.floor(exact + 1e-9));
+  // Bonus Ward (above the pool) is spent first.
+  const fromBonus = Math.min(ward.bonus || 0, spent);
+  if (ward.bonus !== undefined) ward.bonus -= fromBonus;
+  if (ward.bonus === 0) delete ward.bonus;
+  ward.value -= spent - fromBonus;
+  s.wardDamageCarry = wardTotal(entity) > 0 ? exact - Math.floor(exact + 1e-9) : 0;
+  emit(ctx, 'persistentWardChanged', entity, { spent, value: ward.value, max: ward.max, bonus: ward.bonus || 0, ...meta });
   return { spent, carry: s.wardDamageCarry };
 }
 
@@ -60,19 +71,26 @@ export function restorePersistentWard(ctx, entity, nominal, options = {}) {
   // Reactive restoration budgets count a positive attempted grant, including
   // a full pool. Sleep's distinct once allowance is committed only if missing.
   const percent = finite(options.modifierPercent ?? ctx.restorationModifierPercent?.(entity, 'ward', source));
-  if (ward.value >= ward.max) { s.wardRestoreCarry = 0; return { restored: 0, credited: 0 }; }
+  // A card that adds Ward refills the pool first, then adds the rest as bonus
+  // Ward above it. Other restoration (Sleep, effects) stops at the pool.
+  const overflow = source === 'card';
+  if (ward.value >= ward.max && !overflow) { s.wardRestoreCarry = 0; return { restored: 0, credited: 0 }; }
   if (sleep) s.sleepWardGranted = true;
   if (onceKey) s.wardAllowances[onceKey] = true;
   let credit = Math.max(0, nominal * (1 + percent / 100));
   if (sleep) credit = Math.min(credit, Math.max(0, rules(ctx).sleep.wardCombatCap - s.sleepWardContribution));
   if (options.cap !== undefined) credit = Math.min(credit, Math.max(0, options.cap));
   if (sleep) s.sleepWardContribution += credit;
-  const exact = Math.min(ward.max - ward.value, credit + s.wardRestoreCarry);
-  const restored = Math.min(ward.max - ward.value, Math.floor(exact + 1e-9));
+  const room = ward.max - ward.value;
+  const exact = overflow ? credit + s.wardRestoreCarry : Math.min(room, credit + s.wardRestoreCarry);
+  const whole = Math.floor(exact + 1e-9);
+  const restored = Math.min(room, whole);
+  const bonus = overflow ? whole - restored : 0;
   ward.value += restored;
-  s.wardRestoreCarry = ward.value < ward.max ? Math.max(0, exact - restored) : 0;
-  emit(ctx, 'persistentWardChanged', entity, { restored, credited: credit, value: ward.value, max: ward.max, source });
-  return { restored, credited: credit, carry: s.wardRestoreCarry };
+  if (bonus > 0) ward.bonus = (ward.bonus || 0) + bonus;
+  s.wardRestoreCarry = overflow || ward.value < ward.max ? Math.max(0, exact - whole) : 0;
+  emit(ctx, 'persistentWardChanged', entity, { restored, bonusAdded: bonus, credited: credit, value: ward.value, max: ward.max, bonus: ward.bonus || 0, source });
+  return { restored: restored + bonus, credited: credit, carry: s.wardRestoreCarry };
 }
 
 /** Active grants are separate from explicit buildup; no implicit proc meter. */
@@ -130,10 +148,10 @@ export function applyStatusPressure(ctx, target, id, units, source = null, optio
     const threshold = stacks(target, row.activeStatus) ? row.activeThreshold : row.initialThreshold;
     gauge.value -= threshold;
     let admitted = true;
-    if (camp === 'spell' && target.persistentWard?.value > 0) {
+    if (camp === 'spell' && wardTotal(target) > 0) {
       const spent = spendPersistentWard(ctx, target, 1, { status: id, actionKey: options.actionKey });
       receipt.wardSpent += spent.spent;
-      admitted = target.persistentWard.value === 0;
+      admitted = wardTotal(target) === 0;
     } else if (camp === 'physical' && target.poiseMeter?.max > 0) {
       const meter = target.poiseMeter;
       meter.value += 1; receipt.poiseStrain += 1;

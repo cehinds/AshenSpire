@@ -41,7 +41,7 @@ export const uiStrings = [
     "id": "combat.protection.ward",
     "extends": "",
     "short": "Arcane Ward",
-    "full": "Ward pool: absorbs each hit before Block, always letting at least 1 damage through, and is spent by the hit it meets. Ward from magical guards is part of Block and absorbs after ordinary Block.",
+    "full": "Ward pool: full at the start of every fight, absorbs each hit before Block (each hit still lets at least 1 damage through) and is spent by what it absorbs. It does not regenerate unless a card, feat, class feature or relic restores it; a card that adds Ward refills the pool first and adds the rest as bonus Ward. Ward from magical guards is part of Block and absorbs after ordinary Block.",
     "tip": "Arcane Ward"
   },
   {
