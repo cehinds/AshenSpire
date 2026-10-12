@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1913",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Every enemy break now staggers under combat ratings",
+    "detail": "With ratings on, a break of the Poise or Ward meter, by weapon or spell, and an Insanity break now apply Staggered as well as the skipped turn, so Executioner and other Staggered payoffs fire in normal runs. Spell breaks no longer add Magic Vulnerable on top; Staggered already raises damage of every type.",
+    "build": "0.7.1.1429",
+    "pullRequest": 1913,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1913"
+  },
+  {
+    "id": "pr-1902",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Rules written for chained reactions and three new card traits",
+    "detail": "Nothing changes in the game yet. The specification now describes playing several Reaction cards against one enemy action, resolving last played first, and the Counterstrike, Impact and Flux card traits that will follow.",
+    "build": "0.7.1.1429",
+    "pullRequest": 1902,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1902"
+  },
+  {
     "id": "pr-1900",
     "date": "2026-10-12",
     "group": "2026-10-12",
@@ -21,16 +41,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1425",
     "pullRequest": 1897,
     "url": "https://github.com/cehinds/AshenSpire/pull/1897"
-  },
-  {
-    "id": "pr-1902",
-    "date": "2026-10-12",
-    "group": "2026-10-12",
-    "summary": "Rules written for chained reactions and three new card traits",
-    "detail": "Nothing changes in the game yet. The specification now describes playing several Reaction cards against one enemy action, resolving last played first, and the Counterstrike, Impact and Flux card traits that will follow.",
-    "build": "0.7.1.1429",
-    "pullRequest": 1902,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1902"
   },
   {
     "id": "pr-1901",
