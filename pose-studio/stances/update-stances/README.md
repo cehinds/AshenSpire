@@ -16,7 +16,19 @@ Numeric choices are authoritative; the extra image of guard-break03 is context, 
 
 After the selected delivery is merged, the next authorized pass is **ten new greatsword options each for Sweep, Counter and Evade**, thirty total. That separate pass is planned and has zero generated concepts in this snapshot; it does not complete the 600-option baseline.
 
-Open [the interactive review gallery](index.html) to inspect each preserved source sheet and the confirmed role labels. Browser favorites remain editable comparison choices and do not change the recorded five selections. Copied JSON includes both confirmed roles and browser favorites. Refer to a family plus its number (for example `smash04`, `guard-break02`). Numbers follow reading order: the first three figures above, then the two below.
+The gallery now scaffolds those thirty proposals from the [follow-up reference brief](../../../docs/design/update-stances/followup-reference-brief.md). It is isolated follow-up work and must not enter the selected-delivery PR. Generation remains paused until the parent confirms that selected delivery has merged.
+
+| Follow-up family | Stable option IDs | Planned source sheets | Layout / review state |
+| --- | --- | --- | --- |
+| Sweep | `reaver-greatsword-sweep-11` through `-20` | `greatsword-sweep/sheet-a.png`, `sheet-b.png` | Portrait 2 columns × 3 rows; NEEDS REVIEW |
+| Counter | `reaver-greatsword-counter-11` through `-20` | `greatsword-counter/sheet-a.png`, `sheet-b.png` | Portrait 2 columns × 3 rows; NEEDS REVIEW |
+| Evade | `reaver-greatsword-evade-11` through `-20` | `greatsword-evade/sheet-a.png`, `sheet-b.png` | Portrait 2 columns × 3 rows; NEEDS REVIEW |
+
+Sheet A contains 11–15 and B contains 16–20, each in row-major order with the bottom-right cell empty. The original Smash/Guard-break sheets retain their landscape 3-column × 2-row layout and 01–10 numbering. Family layout, numbering offset and per-sheet `reviewStatuses` live in `review.mjs`; follow-up sheets start `needs-review`. Missing sources show planned placeholders. Available but unreviewed images may be inspected, while their favorite controls stay disabled and do not increase the selectable count. Only a director-approved `candidate` sheet enables its non-flagged options.
+
+The availability summary and copied JSON distinguish thirty planned follow-up concepts, actual loaded source sheets and director-reviewed/selectable concepts. Browser favorites exclude missing and unreviewed options. The original five confirmed roles remain recorded independently of browser favorites, including after Clear and reload. No new painting, crop, runtime registration or replacement of selected art belongs to this scaffold.
+
+Open [the interactive review gallery](index.html) to inspect source sheets and the confirmed role labels. Browser favorites remain editable comparison choices and do not change the recorded five selections. Copied JSON includes confirmed roles, available browser favorites and follow-up coverage. Refer to a family plus its number (for example `smash04`, `guard-break02`, `sweep11`); each sheet describes its own reading-order layout.
 
 The core baseline families are guard break, Smash stance, Smash attack sequence, melee Counter, ranged Counter and magic Counter. Sweep and Evade are now authorized selected roles and next-pass families. The ten weapon groups are sword + shield, greatsword, staff, bow, dagger, dual daggers, single sword, spear, halberd and unarmed. Class appearance and actual equipped weapon remain separate. Co-op development is paused.
 
