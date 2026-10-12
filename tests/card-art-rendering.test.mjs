@@ -7,10 +7,31 @@ import { renderCard } from '../src/ui/components/card.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { withModalDom } from './helpers/modal-dom.mjs';
+import { ACTION_SIGILS } from '../src/content/combatSigils.js';
+import { CARD_COMPONENTS } from '../src/content/cardComponents.generated.js';
 
 const registries=createRegistries(contentBundle);
 const ref={cardId:'strike',profileId:'bladeAttack'};
 const definition=resolveCard(registries,ref);
+
+test('authored layout and actual mounted Spell footers retain the outlined sparkle',()=>{
+  for (const layout of [CARD_COMPONENTS.template, ...Object.values(CARD_COMPONENTS.cards)]) {
+    assert.equal(layout.symbols.actions.spell.svg.body, ACTION_SIGILS.spell.shape);
+    assert.equal(layout.symbols.tags.spell.svg.body, ACTION_SIGILS.spell.shape);
+    assert.notEqual(layout.symbols.tags.fire.svg.body, ACTION_SIGILS.spell.shape);
+  }
+  withModalDom(()=>{
+    for (const cardId of ['starstonePebble', 'starSpark']) {
+      const card = renderCard(registries, { cardId }, { inspection: false });
+      document.body.append(card);
+      const svg = card.querySelector('[data-primary-sigil="spell"] .combat-sigil-action svg');
+      assert.ok(svg, cardId);
+      assert.equal(svg.getAttribute('fill-rule'), 'evenodd');
+      assert.equal(svg.querySelectorAll('path').length, 1);
+      assert.equal(svg.querySelector('path').getAttribute('d'), 'm16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z');
+    }
+  });
+});
 
 test('resolved cards use Simple by default while legacy API and unsupported art are retained',()=>{
   applyCardArtStyle({});

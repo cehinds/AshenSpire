@@ -1804,7 +1804,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .deck-editor .deck-editor-main[data-illustrated="false"]:has(> .deck-editor-rank) > :is(.deck-editor-row-rules, .deck-editor-meta) { grid-column: 2 / 4; }
 .deck-editor .deck-editor-main[data-illustrated="false"] > .deck-editor-rank { grid-column: 3; grid-row: 1; justify-self: end; align-self: center; margin: 0; }
 .deck-editor .deck-editor-heading .deck-editor-range { flex: none; font: 600 max(.9rem, var(--deck-min-text)) system-ui, sans-serif; letter-spacing: .035em; color: #e5c36a; }
-.deck-editor .deck-editor-costs .deck-editor-camp { display: inline-flex; align-items: center; justify-content: center; width: var(--deck-row-cost); height: var(--deck-row-cost); color: #4f9dff; }
+.deck-editor .deck-editor-costs .deck-editor-camp { display: inline-flex; align-items: center; justify-content: center; width: var(--deck-row-cost); height: var(--deck-row-cost); color: #efd09a; }
 .deck-editor .deck-editor-costs .deck-editor-camp[data-camp="physical"] { color: #c9ced6; }
 .deck-editor .deck-editor-costs .deck-editor-camp .combat-sigil, .deck-editor .deck-editor-costs .deck-editor-camp svg { width: 80%; height: 80%; display: block; }
 /* Desktop: a library tile's name takes line 1 in full, and its type and stance

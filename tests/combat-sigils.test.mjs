@@ -62,8 +62,8 @@ test('card footer icons and corresponding intents use the same approved geometry
   }
 });
 
-test('Spell identity uses one diamond while Fire, Burn and Gorefire retain flames', () => {
-  const diamond = '<path d="M16 2 29 16 16 30 3 16Z"/>';
+test('Spell identity uses the outlined four-point diamond while Fire, Burn and Gorefire retain flames', () => {
+  const diamond = '<path d="m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z"/>';
   assert.equal(ACTION_SIGILS.spell.shape, diamond);
   assert.ok(cardSigilsHtml({ action: 'spell' }).includes(diamond));
   for (const id of ['camp:spell', 'source:spell']) {
@@ -76,7 +76,7 @@ test('Spell identity uses one diamond while Fire, Burn and Gorefire retain flame
   }
   assert.ok(SCHOOL_SIGILS.fire.shape.includes('M17 3c3 8'));
   for (const id of ['camp:spell', 'source:spell', 'maneuver:casting']) {
-    assert.equal(contentBundle.tags.find(tag => tag.id === id).glyph, '◆');
+    assert.equal(contentBundle.tags.find(tag => tag.id === id).glyph, '✧');
   }
   assert.equal(contentBundle.tags.find(tag => tag.id === 'school:fire').glyph, '🔥');
 });
