@@ -64,7 +64,7 @@ export function combatFormation(input) {
   }
   const { width, height, friends = [], enemies = [], footerClearance = 0, preview = false } = input;
   const config = formationLayoutConfig(input.presentation);
-  const dimensions = formationDimensions(config, Math.max(friends.length, enemies.length));
+  const dimensions = formationDimensions(config, Math.max(friends.length, enemies.length), friends.length);
   const { columns, rows } = dimensions;
   const footprint = width * config.formationWidth / 100;
   const gap = footprint * config.formationGap / 100;

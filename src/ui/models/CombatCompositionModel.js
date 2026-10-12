@@ -9,8 +9,8 @@ export function stableHandAnchor(previous, layoutKey, { left, top } = {}) {
 // Text, selection and intent changes can repack controls without refitting the
 // artwork. Only layout, presentation settings, art geometry or formation changes
 // invalidate the settled body sizes and foot positions.
-export function combatArtworkKey({ width, height, zoom, presentation, appearance, handAnchor, actors }) {
-  return JSON.stringify([width, height, zoom, presentation, appearance, handAnchor, actors.map(actor => [
+export function combatArtworkKey({ width, height, zoom, wide = false, presentation, appearance, handAnchor, actors }) {
+  return JSON.stringify([width, height, zoom, wide, presentation, appearance, handAnchor, actors.map(actor => [
     actor.slot.id, actor.slot.cell, actor.slot.x, actor.slot.ground, actor.slot.fitGround,
     actor.slot.depth, actor.slot.artWidth, actor.ratio, actor.multiplier, actor.art,
     actor.boxHeight, actor.visibleHeight, actor.visibleWidth, actor.footOffset,
@@ -86,7 +86,28 @@ export const SPACIOUS_RIBBON_RESERVE = 30;
 // tablets and phones keep the spacious path they had.
 // `horizonFloor` (desktop only, same units as height) is the standing-area top the
 // camera needs the shared row to stand on; the row moves down to it, never up.
-export function alternativeCombatComposition({ sizes, actors, width, height, handTop, handLeft = 0, solo = true, desktop = false, horizonFloor }) {
+export function alternativeCombatComposition(options) {
+  return options.perspectiveGrid
+    ? perspectiveGridComposition(options)
+    : legacyAlternativeComposition(options);
+}
+
+// The perspective grid places every body on its cell's foot anchor: the
+// sprite's feet stand on the cell's shadow. The shared fit already sized each
+// body to its lane and its headroom; composition only keeps it in the field.
+function perspectiveGridComposition({ sizes, actors, width }) {
+  return sizes.map(size => {
+    const actor = actors.find(actor => actor.slot.id === size.id);
+    const halfWidth = actor.visibleWidth * size.scale / 2;
+    const x = Math.max(halfWidth + 6, Math.min(width - halfWidth - 6, actor.slot.x));
+    return { ...size, x, ground: actor.slot.ground };
+  });
+}
+
+// Keep the pre-grid composition available for the non-perspective path and
+// its desktop-only layout. The perspective path above deliberately owns its
+// foot anchors, while the desktop bands, hand, HUD and horizon remain shared.
+function legacyAlternativeComposition({ sizes, actors, width, height, handTop, handLeft = 0, solo = true, desktop = false, horizonFloor }) {
   const enemies = actors.filter(actor => actor.side === 'enemy');
   const enemyFits = sizes.filter(size => enemies.some(actor => actor.slot.id === size.id));
   const center = enemyFits.length ? (Math.min(...enemyFits.map(f => f.x)) + Math.max(...enemyFits.map(f => f.x))) / 2 : width * .55;
@@ -147,36 +168,5 @@ export function alternativeCombatComposition({ sizes, actors, width, height, han
       ...(standingGround === undefined ? {} : { standingGround }),
       separationHalf: halfWidth, separationSide: player ? 'player' : 'enemy' };
   });
-  // A short landscape strip has no room above the row for spread overheads;
-  // its depth ranks keep their packed overhead lanes instead.
-  return width <= height * 2 ? separateEnemies(fitted, width) : fitted.map(({ separationHalf, separationSide, ...fit }) => fit);
-}
-
-// Depth ranks share a formation column, so a phone can stack one enemy
-// wholly behind another. Sweep enemies apart in x order until their art no
-// longer overlaps (their overhead intent and HP need the room); enemies
-// already apart never move. The row stays between the player's centre line
-// and the stage edge; when it cannot fit there, the enemies share the
-// overlap evenly rather than crowding onto the player.
-function separateEnemies(fits, width) {
-  const enemies = fits.filter(fit => fit.separationSide === 'enemy').sort((a, b) => a.x - b.x);
-  const players = fits.filter(fit => fit.separationSide === 'player');
-  const left = Math.max(6, ...players.map(fit => fit.x));
-  const right = width - 6;
-  if (enemies.length) {
-    const pairs = enemies.slice(1).reduce((sum, cur, i) => sum + enemies[i].separationHalf + cur.separationHalf, 0);
-    const room = right - left - enemies[0].separationHalf - enemies.at(-1).separationHalf;
-    const spacing = pairs > 0 && room < pairs ? Math.max(.4, room / pairs) : 1;
-    enemies[0].x = Math.max(enemies[0].x, left + enemies[0].separationHalf);
-    for (let i = 1; i < enemies.length; i++) {
-      const prev = enemies[i - 1], cur = enemies[i];
-      cur.x = Math.max(cur.x, prev.x + (prev.separationHalf + cur.separationHalf) * spacing);
-    }
-    for (let i = enemies.length - 1; i >= 0; i--) {
-      const next = enemies[i + 1];
-      const limit = next ? next.x - (next.separationHalf + enemies[i].separationHalf) * spacing : right - enemies[i].separationHalf;
-      enemies[i].x = Math.min(enemies[i].x, limit);
-    }
-  }
-  return fits.map(({ separationHalf, separationSide, ...fit }) => fit);
+  return fitted;
 }

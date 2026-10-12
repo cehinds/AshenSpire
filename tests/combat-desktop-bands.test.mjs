@@ -41,9 +41,9 @@ test('desktop bands keep the hand at its physical minimum on every desktop size'
   }
 });
 
-test('tablet, mobile and widescreen keep the nominal stacked shares', () => {
+test('tablet, mobile and unknown form factors keep the nominal stacked shares', () => {
   const nominal = allocateCombatBands({ width: 1024, height: 768 });
-  for (const formFactor of ['tablet', 'mobile', 'widescreen', null]) {
+  for (const formFactor of ['tablet', 'mobile', null]) {
     assert.deepEqual({ ...allocateCombatBands({ width: 1024, height: 768, formFactor }) }, { ...nominal }, `formFactor ${formFactor}`);
   }
   assert.ok(near(nominal.hud, 76.8) && near(nominal.hand, 230.4), 'nominal 10/55/30/5 at 1024x768');
@@ -53,6 +53,14 @@ test('desktop footer art is 450 physical px wide, about 92px tall at 1440x900', 
   const zoom = 1.2, width = 1440 / zoom;
   assert.ok(near(footerArtWidth(width, zoom, 'desktop') * zoom, 450), 'width');
   assert.ok(Math.abs(footerArtHeight(width, zoom, 'desktop') * zoom - 92) < 0.5, `height ${footerArtHeight(width, zoom, 'desktop') * zoom}`);
+});
+
+test('widescreen footer art takes the desktop 450px width, not the phone 600px', () => {
+  for (const zoom of [1, 1.2]) {
+    const width = 1440 / zoom;
+    assert.ok(near(footerArtWidth(width, zoom, 'widescreen') * zoom, 450), `widescreen width at zoom ${zoom}`);
+    assert.ok(near(footerArtHeight(width, zoom, 'widescreen'), footerArtHeight(width, zoom, 'desktop')), 'widescreen footer height matches desktop');
+  }
 });
 
 test('tablet and phone footer art keeps the 600px maximum', () => {
