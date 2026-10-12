@@ -7,6 +7,7 @@ import { cardChoice } from '../model/cardChoices.js';
 import { upcastOptions } from '../model/upcasting.js';
 import { controlRestrictions } from './combatStatusControl.js';
 import { cardTargetPlan } from '../model/cardTargets.js';
+import { fightReacts, incomingAgainst, openEnemyWindow, playerRootSeat, runEnemyPlan, seatGone } from './enemyReactions.js';
 
 // Reaction rules: 1 = one reaction per root; 2 = card traits plus the reaction stack.
 export const usesReactions = ctx => ctx.reactionRulesVersion >= 1;
@@ -68,7 +69,24 @@ function candidateCardIds(ctx, row) {
   return ids;
 }
 
-function optionsFor(ctx, row, group, hooks, refusal = null) {
+// The rows a seat answers on this root, as { enemyId, row }: each enemy entry's committed
+// plan row against the seat (top of the stack first), then the root's own row on an enemy
+// root. Without enemy entries this is the root row alone, as before.
+function planRowFor(ctx, entry, seat) {
+  return Object.values(entry.plan?.group?.targets || {}).find(target => ctx.players ? target.playerId === seat : target.id === ctx.player.id) || null;
+}
+function threatsFor(ctx, row, group, entries, seat) {
+  const threats = [];
+  for (const entry of [...entries].reverse()) {
+    if (entry.side !== 'enemy' || entry.targetPlayerId !== seat) continue;
+    const planRow = planRowFor(ctx, entry, seat);
+    if (planRow?.contacts.some(positive)) threats.push({ enemyId: entry.ownerId, row: planRow });
+  }
+  if (row && !playerRootSeat(ctx, group) && (!threats.length || row.contacts.some(positive))) threats.push({ enemyId: group.sourceId, row });
+  return threats;
+}
+
+function optionsFor(ctx, row, group, hooks, refusal = null, seatId = null) {
   const options = [];
   let inst;
   // The refusal also names the card it came from (cardId), so the log can name it.
@@ -82,44 +100,63 @@ function optionsFor(ctx, row, group, hooks, refusal = null) {
   // entry is offered no further Counter. Each option is tried on top of the stack.
   const stack = stackOf(ctx, group);
   const entries = stack?.entries || [];
-  const seat = ctx.players ? row.playerId : 'player';
-  const counterStacked = entries.some(entry => entry.ownerId === seat && entry.maneuver === 'counter');
-  for (inst of handOf(ctx, row)) {
-    if (entries.some(entry => entry.play.cardInstanceId === inst.instanceId)) continue;
+  const seat = seatId || (ctx.players ? row.playerId : 'player');
+  const counterStacked = entries.some(entry => entry.side === 'player' && entry.ownerId === seat && entry.maneuver === 'counter');
+  // Enemy entries on the stack: the seat answers each one's plan (and an enemy root's own
+  // row); an enemy-targeted card gets one option per answered enemy, top of the stack first.
+  const enemyEntries = entries.some(entry => entry.side === 'enemy');
+  const threats = threatsFor(ctx, row, group, entries, seat);
+  // A pushed card's contacts against each enemy decide the playerReaction window.
+  const captureIncoming = fightReacts(ctx, 'playerReaction');
+  const players = ctx.players ? [...ctx.players.values()].map(row => ({ id: row.id, alive: row.entity.alive, connected: row.connected }))
+    : [{ id: ctx.player.id, alive: true, connected: true }];
+  for (inst of ctx.players ? ctx.players.get(seat)?.piles.hand || [] : ctx.piles.hand || []) {
+    if (entries.some(entry => entry.side === 'player' && entry.play.cardInstanceId === inst.instanceId)) continue;
     const base = resolveCombatCard(ctx, inst);
     if (counterStacked && (base.cardTags || base.tags || []).includes('maneuver:counter')) continue;
-    if (!eligible(ctx, base, row)) { if (candidateByManeuver(ctx, base)) note('notCovered'); continue; }
+    const answered = threats.filter(threat => eligible(ctx, base, threat.row));
+    if (!answered.length) { if (candidateByManeuver(ctx, base)) note('notCovered'); continue; }
     const choices = cardChoice(ctx.registries, base, ctx.player.classId)?.options || [null];
-    for (const tier of [0, ...upcastOptions(base).map(option => option.ranks)]) for (const choice of choices) {
+    const aimed = cardTargetPlan(base, seat, ctx.enemies, players, { solo: !ctx.players }).mode === 'enemy';
+    const aims = aimed ? [...new Set(answered.map(threat => threat.enemyId))] : [answered[0].enemyId];
+    for (const aim of aims) for (const tier of [0, ...upcastOptions(base).map(option => option.ranks)]) for (const choice of choices) {
       const candidate = candidateState(ctx);
       candidate.queue = []; delete candidate.pendingReaction; delete candidate.reactionResume;
       candidate._reactionPlaying = true; candidate._buffer = null;
-      candidate._reactionSourceId = group.sourceId;
+      candidate._reactionSourceId = aim;
       candidate.pendingExpansionActions = 0;
       if (candidate.foundation) { candidate.foundation.eventCount = 0; candidate.foundation.rolls = {}; candidate.foundation.counts = {}; }
-      hooks.setOwner?.(candidate, row.playerId);
-      const targetPlan = cardTargetPlan(base, row.playerId || 'player', candidate.enemies,
-        candidate.players ? [...candidate.players.values()].map(seat => ({ id: seat.id, alive: seat.entity.alive, connected: seat.connected }))
-          : [{ id: candidate.player.id, alive: true, connected: true }], { solo: !candidate.players });
-      const play = { cardInstanceId: inst.instanceId, ...(targetPlan.mode === 'enemy' ? { targetId: group.sourceId } : {}),
+      hooks.setOwner?.(candidate, seat);
+      const play = { cardInstanceId: inst.instanceId, ...(aimed ? { targetId: aim } : {}),
         ...(choice ? { choice: choice.id } : {}), ...(tier ? { upcastTier: tier } : {}) };
       try {
         const paymentStart = candidate.eventLog.length;
+        if (captureIncoming) candidate._groupSink = [];
         hooks.play(candidate, play);
+        const planned = candidate._groupSink?.find(row => row.carrier?.instanceId === inst.instanceId);
+        delete candidate._groupSink;
         const paid = candidate.eventLog.slice(paymentStart).find(event => event.type === 'cardPlayed');
         if (!paid || !candidate.player.alive) { note('other'); continue; }
         // The stacked entries resolve after this option, last pushed first; all must play.
+        // An enemy entry runs its committed plan; one that fizzles is a valid outcome.
         for (const entry of [...entries].reverse()) {
           // Once the root has ended the rest fizzle and pay nothing, so the option stands.
           if (rootEnded(candidate, group)) break;
+          if (entry.side === 'enemy') { runEnemyPlan(candidate, structuredClone(entry), hooks); continue; }
           hooks.setOwner?.(candidate, entry.ownerId);
           const start = candidate.eventLog.length;
           hooks.play(candidate, { ...entry.play });
           if (!candidate.eventLog.slice(start).some(event => event.type === 'cardPlayed')) throw new Error('Stacked reaction did not play');
         }
-        options.push({ id: `${inst.instanceId}:${tier}:${choice?.id || 'default'}`, name: base.name,
+        const incoming = {};
+        if (captureIncoming) for (const enemy of ctx.enemies) {
+          const amount = incomingAgainst(planned, enemy.id);
+          if (amount > 0) incoming[enemy.id] = amount;
+        }
+        options.push({ id: `${inst.instanceId}:${tier}:${choice?.id || 'default'}${aimed && enemyEntries ? `:${aim}` : ''}`, name: base.name,
           cardId: inst.cardId, play, staminaCost: paid.staminaSpent ?? paid.energySpent ?? 0,
-          manaCost: paid.manaSpent || 0, choiceName: choice?.label || choice?.name || null });
+          manaCost: paid.manaSpent || 0, choiceName: choice?.label || choice?.name || null,
+          ...(captureIncoming ? { incoming } : {}), ...(enemyEntries ? { sourceId: aim } : {}) });
       } catch (error) {
         // Ineligible under the normal card/payment/control rules; the refusal names why.
         const { reason, ...extra } = error?.playRefusal || {};
@@ -154,8 +191,18 @@ function reportUnavailable(ctx, group, id, row, reason, extra = {}, hooks = null
 function rootEnded(ctx, group) {
   const source = (ctx.enemies || []).find(enemy => enemy.id === group.sourceId);
   if (source) return !source.alive;
+  const acting = playerRootSeat(ctx, group);
+  if (acting) return seatGone(ctx, acting);
   const seat = group.sourcePlayerId ? ctx.players?.get(group.sourcePlayerId) : null;
   return !!seat && (!seat.entity?.alive || seat.connected !== true);
+}
+
+// Enemy reactions: a player-card root whose acting seat is dead or gone once its stack
+// has resolved is cancelled, and none of its actions run.
+function cancelEndedPlayerRoot(ctx, group) {
+  const acting = playerRootSeat(ctx, group);
+  if (acting && seatGone(ctx, acting)) group.cancelled = true;
+  restoreRootPlay(ctx);
 }
 
 const rowFor = (ctx, group, id) =>Object.values(group.targets).find(target => ctx.players ? target.playerId === id : target.id === ctx.player.id);
@@ -179,7 +226,8 @@ export function beforeReactionAction(ctx, action, hooks) {
   if (!usesReactions(ctx) || ctx._reactionPlaying) return false;
   if (ctx.pendingReaction) return true;
   const group = action.meta?.expansionGroup;
-  if (!group || group.carrier?.reactionDepth || action.source?.kind !== 'enemy') return false;
+  if (!group || group.carrier?.reactionDepth) return false;
+  if (action.source?.kind !== 'enemy') return !group.begun && action.source?.kind === 'player' && beforePlayerRoot(ctx, group, hooks);
   if (group.begun) { reportAlreadyAnswered(ctx, action, group, hooks); return false; }
   if (stackedReactions(ctx)) return beforeStackedReaction(ctx, action, group, hooks);
   if (!action.source.alive) return false;
@@ -245,33 +293,64 @@ function beforeStackedReaction(ctx, action, group, hooks) {
     }
   }
   const open = action.source.alive && !haltReason(ctx, action.source);
+  return offerSeats(ctx, group, ids, hooks, open);
+}
+
+// Enemy reactions, playerAction window: before a player card's root group begins, the
+// enemies it hits decide in roster order. If any pushed, only the acting seat is offered
+// (against every enemy entry), alternating with playerReaction windows; then the stack
+// resolves and the root runs, or is cancelled when its seat is gone.
+function beforePlayerRoot(ctx, group, hooks) {
+  if (!stackedReactions(ctx) || !fightReacts(ctx)) return false;
+  const acting = playerRootSeat(ctx, group);
+  if (!acting || group.carrier?.combatReaction || group.counterReturn) return false;
+  if (!stackOf(ctx, group)) {
+    // A stack whose last entry paused for its own choice has emptied: the root resumes.
+    if (group.enemyWindows !== undefined) { if (!ctx.reactionStack) restoreRootPlay(ctx); return false; }
+    if (ctx.reactionStack || seatGone(ctx, acting)) return false;
+    openEnemyWindow(ctx, group, 'playerAction', null, hooks);
+    if (!stackOf(ctx, group)) return false;
+  }
+  return offerSeats(ctx, group, [acting], hooks, !seatGone(ctx, acting));
+}
+
+// Each seat in `ids`, in order, is offered again after every card it pushes, until it
+// passes, has no option left or reaches the depth cap. Then the stack resolves.
+function offerSeats(ctx, group, ids, hooks, open) {
+  const stack = stackOf(ctx, group);
+  const playerRoot = !!playerRootSeat(ctx, group);
   const cap = group.counterReturn ? ctx.reactionRules.stack.counterReturnMaxDepth : ctx.reactionRules.stack.maxDepth;
   group.reactionAnswered ||= [];
   for (const id of ids) {
-    const row = rowFor(ctx, group, id);
-    if (!row || !row.contacts.some(positive) || group.reactionAnswered.includes(id)) continue;
+    const row = playerRoot ? null : rowFor(ctx, group, id);
+    const enemyRows = (stack?.entries || []).filter(entry => entry.side === 'enemy' && entry.targetPlayerId === id
+      && planRowFor(ctx, entry, id)?.contacts.some(positive));
+    if ((!row || !row.contacts.some(positive)) && !enemyRows.length) continue;
+    if (group.reactionAnswered.includes(id)) continue;
     const seat = ctx.players?.get(id);
     const entity = seat?.entity || ctx.player;
-    const depth = (stack?.entries || []).filter(entry => entry.ownerId === id).length;
+    const depth = (stack?.entries || []).filter(entry => entry.side === 'player' && entry.ownerId === id).length;
     if (!open || depth >= cap || !entity.alive || entity.reactionsEnabled === false || (seat && !seat.connected)) {
-      if (open && depth < cap && entity.reactionsEnabled === false && seatPresent(ctx, id)) reportUnavailable(ctx, group, id, row, 'switchOff', {}, hooks);
+      if (row && open && depth < cap && entity.reactionsEnabled === false && seatPresent(ctx, id)) reportUnavailable(ctx, group, id, row, 'switchOff', {}, hooks);
       group.reactionAnswered.push(id); continue;
     }
     const previous = ctx.playerKey;
     hooks.setOwner?.(ctx, id);
     const refusal = {};
-    const options = optionsFor(ctx, row, group, hooks, refusal);
+    const options = optionsFor(ctx, row, group, hooks, refusal, id);
     hooks.setOwner?.(ctx, previous);
     if (!options.length) {
-      if (!depth) {
+      if (!depth && row) {
         const { reason = 'other', ...extra } = refusal;
         reportUnavailable(ctx, group, id, row, reason, extra, hooks);
       }
       group.reactionAnswered.push(id); continue;
     }
+    // A player-card root has no enemy attacker; the offer names the top enemy entry.
+    const sourceId = playerRoot ? enemyRows.at(-1).ownerId : group.sourceId;
     ctx.pendingReaction = { id: `${group.key}:${id}:${depth}`, groupKey: group.key, ownerId: id,
-      sourceId: group.sourceId, options };
-    ctx.emit('combatReactionOffered', { offerId: ctx.pendingReaction.id, ownerId: id, sourceId: group.sourceId });
+      sourceId, options };
+    ctx.emit('combatReactionOffered', { offerId: ctx.pendingReaction.id, ownerId: id, sourceId });
     return true;
   }
   return stack?.entries.length ? resolveReactionStack(ctx, hooks) : false;
@@ -291,23 +370,35 @@ export function resolveReactionStack(ctx, hooks) {
     if (rootEnded(ctx, group)) {
       while (stack.entries.length) {
         const entry = stack.entries.pop();
+        if (entry.side === 'enemy') { ctx.emit('combatReactionFizzled', enemyFizzle(entry, 'rootEnded')); continue; }
         hooks.setOwner?.(ctx, entry.ownerId);
         ctx.emit('combatReactionFizzled', { ownerId: entry.ownerId, cardInstanceId: entry.play.cardInstanceId, reason: 'rootEnded' });
       }
       delete ctx.reactionStack;
+      cancelEndedPlayerRoot(ctx, group);
       return false;
     }
-    const entry = stack.entries[stack.entries.length - 1];
-    if (entry.side !== 'player') throw new Error('Enemy reactions are not implemented');
-    stack.entries.pop();
+    const entry = stack.entries.pop();
+    if (entry.side === 'enemy') {
+      // Its committed plan, exactly as committed; it pays nothing and fizzles when its
+      // enemy is halted or its target seat is gone.
+      const halted = runEnemyPlan(ctx, entry, hooks);
+      if (halted) ctx.emit('combatReactionFizzled', enemyFizzle(entry, halted));
+      if (ctx.result) { delete ctx.reactionStack; return false; }
+      continue;
+    }
     if (playStackEntry(ctx, group, entry, hooks)) {
       if (!stack.entries.length) delete ctx.reactionStack;
       return true;
     }
   }
   delete ctx.reactionStack;
+  cancelEndedPlayerRoot(ctx, group);
   return false;
 }
+
+const enemyFizzle = (entry, reason) => ({ side: 'enemy', ownerId: entry.ownerId, enemyId: entry.enemyId, moveId: entry.moveId,
+  targetPlayerId: entry.targetPlayerId, reason });
 
 // One entry under today's single-reaction mechanics. An entry whose card has left the hand,
 // or whose play is refused, fizzles and pays nothing. Returns true when it paused.
@@ -335,7 +426,7 @@ function playStackEntry(ctx, group, entry, hooks) {
     ctx.foundation.eventCount = 0; ctx.foundation.rolls = {}; ctx.foundation.counts = {};
   }
   ctx._reactionPlaying = true;
-  ctx._reactionSourceId = group.sourceId;
+  ctx._reactionSourceId = entry.sourceId || group.sourceId;
   let refusal = null;
   try { hooks.play(ctx, { ...play }); }
   catch (error) { if (!error?.playRefusal) throw error; refusal = error.playRefusal; }
@@ -348,13 +439,17 @@ function playStackEntry(ctx, group, entry, hooks) {
   }
   if (ctx.player.combatCounter && play.cardInstanceId === ctx.player.combatCounter.carrier?.instanceId) {
     (group.manualCounterSerials ||= {})[ownerId] = ctx.player.combatCounter.serial;
+    // A stacked Counter also answers the enemy entries still beneath it.
+    for (const below of ctx.reactionStack?.entries || []) {
+      if (below.side === 'enemy' && below.targetPlayerId === ownerId) (below.plan.group.manualCounterSerials ||= {})[ownerId] = ctx.player.combatCounter.serial;
+    }
   }
   reportRestOfRoot(ctx, group, ownerId, hooks);
   return !restoreReactionQueue(ctx);
 }
 
 export function finishReactions(ctx) {
-  for (const field of ['reactionCursor', 'pendingReaction', 'reactionResume', 'reactionHandCleanup', 'reactionStack']) delete ctx[field];
+  for (const field of ['reactionCursor', 'pendingReaction', 'reactionResume', 'reactionHandCleanup', 'reactionStack', 'reactionRootPlay']) delete ctx[field];
   for (const seat of ctx.players?.values() || []) delete seat.reactionHandCleanup;
   ctx.pendingExpansionActions = 0;
   ctx.queue.length = 0;
@@ -369,8 +464,8 @@ export function answerReaction(ctx, ownerId, { offerId, optionId = null }, hooks
   if (optionId !== null && !option) throw new Error('Choose an available reaction card');
   hooks.setOwner?.(ctx, ownerId);
   if (option) {
-    const row = Object.values(group.targets).find(target => ctx.players ? target.playerId === ownerId : target.id === ctx.player.id);
-    const canonical = optionsFor(ctx, row, group, hooks).find(current => current.id === optionId);
+    const row = playerRootSeat(ctx, group) ? null : Object.values(group.targets).find(target => ctx.players ? target.playerId === ownerId : target.id === ctx.player.id);
+    const canonical = optionsFor(ctx, row, group, hooks, null, ownerId).find(current => current.id === optionId);
     if (!canonical || JSON.stringify(canonical.play) !== JSON.stringify(option.play)
       || canonical.cardId !== option.cardId || canonical.staminaCost !== option.staminaCost
       || canonical.manaCost !== option.manaCost) throw new Error('That reaction card is no longer playable');
@@ -380,12 +475,16 @@ export function answerReaction(ctx, ownerId, { offerId, optionId = null }, hooks
     const instance = (ctx.players ? ctx.players.get(ownerId)?.piles.hand : ctx.piles.hand)?.find(inst => inst.instanceId === option.play.cardInstanceId);
     const def = resolveCombatCard(ctx, instance);
     const stack = ctx.reactionStack ||= { groupKey: group.key, entries: [], resolving: false };
-    stack.entries.push({ side: 'player', ownerId, optionId: option.id, play: option.play, cardId: option.cardId,
-      cardInstanceId: option.play.cardInstanceId, maneuver: (def.cardTags || def.tags || []).includes('maneuver:counter') ? 'counter' : null });
+    const entry = { side: 'player', ownerId, optionId: option.id, play: option.play, cardId: option.cardId,
+      cardInstanceId: option.play.cardInstanceId, maneuver: (def.cardTags || def.tags || []).includes('maneuver:counter') ? 'counter' : null,
+      ...(option.sourceId ? { sourceId: option.sourceId } : {}), ...(option.incoming ? { incoming: option.incoming } : {}) };
+    stack.entries.push(entry);
     delete ctx.pendingReaction;
-    const depth = stack.entries.filter(entry => entry.ownerId === ownerId).length;
+    const depth = stack.entries.filter(row => row.side === 'player' && row.ownerId === ownerId).length;
     ctx.emit('combatReactionChosen', { offerId, ownerId, cardInstanceId: option.play.cardInstanceId });
     ctx.emit('combatReactionStacked', { offerId, ownerId, cardInstanceId: option.play.cardInstanceId, depth });
+    // Enemy reactions: the push opens a playerReaction window, then the seat is re-offered.
+    openEnemyWindow(ctx, group, 'playerReaction', entry, hooks);
     return;
   }
   group.reactionAnswered.push(ownerId);
@@ -416,11 +515,34 @@ export function answerReaction(ctx, ownerId, { offerId, optionId = null }, hooks
 // A reaction that killed, staggered or locked the attacker cancels the rest, so
 // there is nothing left to explain (Codex on #1849).
 function reportRestOfRoot(ctx, group, ownerId, hooks) {
+  if (playerRootSeat(ctx, group)) return;
   const row = rowFor(ctx, group, ownerId);
   if (!row || row.contacts.filter(positive).length < 2 || !seatPresent(ctx, ownerId)) return;
   const source = (ctx.enemies || []).find(enemy => enemy.id === group.sourceId);
   if (source && (!source.alive || source.skipNextTurn || controlRestrictions(ctx, source).locked)) return;
   reportUnavailable(ctx, group, ownerId, row, 'alreadyAnswered', {}, hooks);
+}
+
+// Enemy reactions: while a player-card root waits on its reaction window, the card that
+// opened it stays unresolved (no cardResolved, no discard). Version 1 and Counter-return
+// pauses have no player-card root, so they resolve the card as before.
+export function deferRootPlay(ctx) {
+  const pending = ctx.pendingReaction;
+  if (!pending || !ctx.pendingAbilityPlay) return false;
+  const group = ctx.queue.find(action => action.meta?.expansionGroup?.key === pending.groupKey)?.meta.expansionGroup;
+  if (!playerRootSeat(ctx, group)) return false;
+  ctx.reactionRootPlay = ctx.pendingAbilityPlay;
+  delete ctx.pendingAbilityPlay;
+  return true;
+}
+
+// Once the stack has resolved, the deferred card is the resolving play again, so its own
+// root actions (a discard choice among them) run as they would have; the command door
+// that resumed the root then completes it (cardResolved, discard).
+function restoreRootPlay(ctx) {
+  if (!ctx.reactionRootPlay || ctx.pendingAbilityPlay) return;
+  ctx.pendingAbilityPlay = { ...ctx.reactionRootPlay, deferredRoot: true };
+  delete ctx.reactionRootPlay;
 }
 
 export function restoreReactionQueue(ctx) {

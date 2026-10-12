@@ -432,7 +432,7 @@ function drainQueue(combat) {
     if (++guard > QUEUE_GUARD) {
       throw new Error('Action queue did not drain (possible infinite trigger loop)');
     }
-    if (Reactions.beforeReactionAction(combat, combat.queue[0], { play: doPlayCard })) return;
+    if (Reactions.beforeReactionAction(combat, combat.queue[0], reactionHooks)) return;
     const action = combat.queue.shift();
     Reactions.startQueuedEnemy(combat, action);
     A.executeAction(combat, action);
@@ -721,6 +721,22 @@ function executeMovePayload(combat, enemy, move, moveId) {
     combat.emit('enemyMoveStarted', start);
   }
   const carrier = enemyMoveCarrier(enemy, move, moveId, combat);
+  const actions = enemyMoveActions(combat, enemy, move, moveId, carrier);
+  const group = enqueueExpandedAction(combat, actions, { source: enemy, target: combat.player, carrier });
+  if (Reactions.usesReactions(combat) && group) group.enemyMoveStart = start;
+}
+
+// Enemy reactions: the reaction move's actions and carrier, planned by the stack
+// (engine/enemyReactions.js pushEnemyReaction) instead of the queue.
+function planEnemyReactionMove(combat, enemy, moveId) {
+  const move = expandedEnemyMove(enemy, combat.registries.enemies.get(enemy.enemyId).moves[moveId], moveId, combat);
+  const carrier = enemyMoveCarrier(enemy, move, moveId, combat);
+  return { actions: enemyMoveActions(combat, enemy, move, moveId, carrier), carrier, target: combat.player, kind: move.intent };
+}
+
+const reactionHooks = { play: doPlayCard, drain: drainQueue, planEnemyReaction: planEnemyReactionMove };
+
+function enemyMoveActions(combat, enemy, move, moveId, carrier) {
   const actions = [];
   if (move.damage != null && carrier.combatProfile.maneuver !== 'counter') {
     actions.push({
@@ -749,8 +765,7 @@ function executeMovePayload(combat, enemy, move, moveId) {
   for (const eff of move.effects || []) {
     if (carrier.combatProfile.maneuver !== 'counter' || !['damage', 'poiseDamage', ...(combat.combatExpansionVersion === 2 ? ['wardDamage'] : [])].includes(eff.op)) actions.push({ effect: eff, source: enemy, owner: enemy, target: combat.player, card: carrier, meta: { moveId } });
   }
-  const group = enqueueExpandedAction(combat, actions, { source: enemy, target: combat.player, carrier });
-  if (Reactions.usesReactions(combat) && group) group.enemyMoveStart = start;
+  return actions;
 }
 
 // ---------------------------------------------------------------------------
@@ -866,7 +881,7 @@ export function dispatch(combat, intent) {
         Reactions.setReactionsEnabled(combat, combat.player, intent.enabled);
         break;
       case 'chooseReaction':
-        Reactions.answerReaction(combat, 'player', intent, { play: doPlayCard });
+        Reactions.answerReaction(combat, 'player', intent, reactionHooks);
         resumeEnemyTurn(combat);
         break;
       case 'predictIntent':
@@ -1452,6 +1467,8 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
     staminaSpent: staminaCost,
   });
   drainQueue(combat);
+  // An enemy reaction window on this card's own root: it resolves when the root resumes.
+  if (Reactions.deferRootPlay(combat)) return;
 
   finishAbilityPlay(combat);
 }
