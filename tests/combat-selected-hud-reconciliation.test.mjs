@@ -16,7 +16,7 @@ test('compact selected and idle panels reserve all seats actual22px Info and24px
     const viewport={left:0,top:0,right:320,bottom:650,width:320,height:650},options=[],doors=[];
     const players=[true,false].map((selected,index)=>{
       const sprite={index},art={left:40+index*160,right:100+index*160,top:190,bottom:300};
-      const inspect={size:22,style:{},getBoundingClientRect:()=>({width:0,height:0})};
+      const inspect={size:22,style:{},dataset:{},getBoundingClientRect:()=>({width:0,height:0})};
       const action={size:24,style:{},getBoundingClientRect:()=>({width:24,height:24})};
       const infoRect=combatPlayerInfoRect(inspect,art,viewport,zoom);
       doors.push(infoRect,combatPlayerActionRect(action,infoRect,art,zoom));
@@ -31,7 +31,7 @@ test('compact selected and idle panels reserve all seats actual22px Info and24px
     const sync=runInNewContext(source.slice(begin,end)+'\nplacePlayerHud',{hudGeometry,offsetPlacement,getComputedStyle:()=>({}),
       field,uiZoom:()=>zoom,visibleCombatPanelRect:()=>null,settledTargets:[],settledFooterSize:44,playerInfoRects:[],
       readRestingHand:()=>({clearanceTop:340}),currentSpriteArtBounds:s=>({left:40+s.index*160,right:100+s.index*160,top:190,bottom:300}),
-      combatPlayerInfoRect,combatPlayerActionRect,combatTargetHudFootprints,
+      combatPlayerInfoRect,combatPlayerActionRect,placePlayerIntentGlyph:()=>null,combatTargetHudFootprints,
       playerDetailsPlacement:input=>{options.push(input);return {left:110,top:230};},
       anchorLocalBox:(host,rect)=>({left:rect.left-host.left,top:rect.top-host.top}),
     });

@@ -654,8 +654,8 @@ energyGained, energySpent
 flaskUsed, relicTriggered(relicId)
 equipmentChanged(reason,beforeLoadoutSignature,afterLoadoutSignature,changedPositions)
 combatReactionOffered, combatReactionChosen
-combatReactionUnavailable(ownerId,sourceId,reason,cardId,cardIds,attackKind) †
-combatGuardBroken(targetId,sourceId,poise,sourcePlayerId?,targetPlayerId?) †
+combatReactionUnavailable(ownerId,sourceId,reason,cardId,cardIds,attackKind)
+combatGuardBroken(targetId,sourceId,poise,sourcePlayerId?,targetPlayerId?)
 ```
 
 ### 3.11 Seeded RNG

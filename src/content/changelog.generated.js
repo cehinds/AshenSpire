@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-12",
     "summary": "Combatants stand on an even grid, and any part of an enemy's square targets it",
     "detail": "In the default view the battlefield is now one even grid of three lanes, leaning on a diagonal into the distance: enemies in a back row and a front row, your party in one row nearest you, with open ground between you and them. Each square has a shadow where its fighter's feet stand. Enemies fill the back row first (one in the middle, two on the outer lanes, three across), then the front row, up to six. You start in the left lane. Tapping anywhere in an occupied enemy square selects that enemy, or plays your readied card or flask on it. Moving now picks one of the three lanes in your row. The Classic look is unchanged.",
-    "build": "0.7.1.1361",
+    "build": "0.7.1.1359",
     "pullRequest": 1870,
     "url": "https://github.com/cehinds/AshenSpire/pull/1870"
+  },
+  {
+    "id": "pr-1872",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Co-op: the blow that ends a fight reaches the combat log",
+    "detail": "When your attack killed the last enemy in co-op, the combat log and the Full log missed that turn's card, damage and death entries before the reward screen closed them. They now appear.",
+    "build": "0.7.1.1357",
+    "pullRequest": 1872,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1872"
+  },
+  {
+    "id": "pr-1849",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Attacks play in order, Inspect buttons only on the selected fighter, and the game says why a reaction wasn't offered",
+    "detail": "STAGGERED, COUNTERED, EVADED, CRITICAL and GUARD BREAK now rise over the fighter they happen to, and a short note above the Reaction switch says why a Counter or Sweep wasn't offered. The combat log now opens at its middle size, and its Full log button shows every entry of the fight on one full-screen page. An attack now plays the swing and the return to stance first, then the target's reaction, then the damage number, and only then does the health bar change. A fighter's Inspect \"i\" now shows only while that fighter is selected, and it appears already in its place instead of jumping there; a card's Inspect appears once, above the card. Your stance and status icons stay visible when your hero isn't selected. When an enemy attacks and you hold a Counter or Sweep the game can't offer, the combat log says why (for example, a Counter can't answer a Sweep, or you're short on SP), and a Smash that breaks Guard is logged. In co-op, the same callouts and the \"no reaction\" note now show too. On a phone the note sits above your HP bar instead of covering it, and Full log is a small gold text link in the log's header. In co-op your own attacks now play in that same order too, and floating numbers no longer vanish when the board redraws. On phones the hand cards are bigger and sit right under the Combat log / Reaction row while staying readable, enemies stand further back on short screens, your stance shows above your hero while it isn't selected, and co-op's Ward/Barrier readout is a small label shown only on the selected hero. The Draw, Discard and Potions art in the footer keeps its shape instead of being squashed flat, a Smash that breaks Guard and kills its target still shows GUARD BREAK, and in co-op the blow that ends a fight now plays on the battlefield before the reward screen. On short phones the backdrop keeps its horizon in view, enemies stand a little higher, and the Combat log / Reaction row and cards sit a little lower. Fighters and their badges have a stronger dark outline, floor shadows are as wide as the health bar, your hero always shows a stance mark above the head, and your hero's selection outline is blue.",
+    "build": "0.7.1.1355",
+    "pullRequest": 1849,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1849"
   },
   {
     "id": "pr-1850",
