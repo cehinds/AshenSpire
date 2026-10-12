@@ -14,6 +14,11 @@ test('review ratios keep the existing six-phase attack cadence and whole counter
   assert.equal(timing(clip('attack'),ANIM_SPEEDS.normal).totalMs,195);
   assert.equal(timing(clip('smash'),ANIM_SPEEDS.normal).totalMs,195);
   assert.equal(timing(clip('smash'),ANIM_SPEEDS.normal).impactMs,117);
+  assert.equal(timing(clip('sweep'),ANIM_SPEEDS.normal).totalMs,195);
+  assert.equal(timing(clip('sweep'),ANIM_SPEEDS.normal).impactMs,78);
+  assert.deepEqual(clip('sweep').poses,['origin','pilot-sweep-windup','pilot-sweep-contact','pilot-sweep-finish','origin']);
+  assert.deepEqual(clip('sweep').travel,[0,0,0,0,0]);
+  assert.equal(clip('sweep').contactCue,true);
   assert.deepEqual(clip('smash').poses,['origin','pilot-smash-takeoff','pilot-smash-airborne','pilot-smash-impact','origin']);
   assert.equal(clip('smash').poses[clip('smash').impact],'pilot-smash-impact');
   assert.equal(timing(clip('fully-defended'),ANIM_SPEEDS.normal).totalMs,422.5);

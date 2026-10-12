@@ -107,3 +107,13 @@ test('selected aerial Smash keeps the whole expanded aura surface without changi
   assert.deepEqual(f.draws.at(-1).args,[f.surfaces[0],0,0]);
   f.renderer.dispose();
 });
+
+test('the selected turning Sweep aura retains both horizontal margins at the original logical size',()=>{
+  const f=fixture({canvasWidth:932,canvasHeight:625});
+  f.renderer.draw(f.target,{},'drop-shadow(0 0 2px #aabbcc)',-53,-173,1024,1024);
+  assert.deepEqual([f.surfaces[0].width,f.surfaces[0].height],[932,625]);
+  assert.deepEqual(f.clears[0].args,[0,0,932,625]);
+  assert.deepEqual(f.draws.at(-2).args.slice(1),[-53,-173,1024,1024]);
+  assert.deepEqual(f.draws.at(-1).args,[f.surfaces[0],0,0]);
+  f.renderer.dispose();
+});

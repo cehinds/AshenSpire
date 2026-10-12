@@ -1,8 +1,9 @@
 // Production export from approved review rasters. No image generation or body refitting.
+import {registerSelectedSweep} from './selected-sweep-registration.mjs';
 import {registerSelectedSmash} from './selected-smash-registration.mjs';
 import {createRequire} from 'node:module';
 import {createHash} from 'node:crypto';
-import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
+import {readFileSync,writeFileSync,mkdirSync,existsSync} from 'node:fs';
 import {resolve,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
@@ -17,6 +18,8 @@ const catalogPath=resolve(root,'src/content/alternativeSelectedStances.js');
 const match=readFileSync(catalogPath,'utf8').match(/^export const alternativeSelectedStances = (.+);\r?$/m);
 if(!match)throw new Error('Missing selected stances catalog');
 const catalog=JSON.parse(match[1]),previous=catalog.weaponProfiles[recipe.id];
+const selectedSweep=existsSync(resolve(root,'pose-studio/stances/update-stances/selected-sweep-sw09/production.json'));
+if(selectedSweep)registerSelectedSweep(catalog,{root});
 const preserved=new Map();
 for(const choice of recipe.choices.filter(choice=>choice.preserve)){
  const frame=previous.frames[choice.role];
@@ -25,7 +28,7 @@ for(const choice of recipe.choices.filter(choice=>choice.preserve)){
  }
  preserved.set(choice.role,frame);
 }
-const inputs=recipe.choices.filter(choice=>!choice.preserve&&!choice.aliasOf).map(choice=>{
+const inputs=recipe.choices.filter(choice=>!choice.preserve&&!choice.aliasOf&&!(selectedSweep&&choice.role==='sweep')).map(choice=>{
  const preview=review.frames[choice.previewId],bytes=readFileSync(resolve(reviewDir,preview.imagePath));
  if(sha(bytes)!==preview.sha256)throw new Error('Approved preview changed: '+choice.previewId);
  const original=choice.role==='attack-3'?recipe.legacyAttack3Source:preview.source;
@@ -68,6 +71,10 @@ function register(frame){
  }
 }
 for(const choice of recipe.choices){
+ if(selectedSweep&&choice.role==='sweep'){
+  frames.sweep=previous.frames.sweep;register(frames.sweep);
+  outputs.push({role:'sweep',mode:'selected-SW09-production-preserved',path:frames.sweep.path,sha256:frames.sweep.sha256});continue;
+ }
  if(choice.aliasOf){
   if(!frames[choice.aliasOf])throw new Error('Alias base missing: '+choice.role);
   frames[choice.role]={...frames[choice.aliasOf],aliasOf:choice.aliasOf};continue;
@@ -102,6 +109,7 @@ for(const choice of recipe.choices){
 catalog.weaponProfiles[recipe.id]={...previous,selections:recipePath,canvas:recipe.canvas,stageAnchor:recipe.stageAnchor,frames,
  approvedSequences:recipe.sequences,sourceReview:recipe.reviewManifest};
 registerSelectedSmash(catalog,{root});
+registerSelectedSweep(catalog,{root});
 writeFileSync(catalogPath,'// Owner-selected held poses and weapon-specific pose profiles, exported from unchanged comparison artwork.\nexport const alternativeSelectedStances = '+JSON.stringify(catalog)+';\n');
 writeFileSync(resolve(root,'pose-studio/stances/update-stances/sequence-production-provenance.json'),JSON.stringify({
  schemaVersion:1,tool:'tools/selected-combat-sequence-export.mjs',recipe:recipePath,
