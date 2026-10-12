@@ -48,8 +48,11 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
       ...Object.fromEntries(attacks.flatMap(([name, entry]) =>
       ['attack', 'spell', 'ranged', 'rangedMagic'].map(action => [`weapon:${action}:${name}`, { ...entry.sequence, action }]))) },
   };
+  // Smash holds the first painted frame of its own swing (owner, 2026-10-12),
+  // the way counter and sweep hold theirs.
   const heldFrames = { ...alternativeSelectedStances.classes[classId]?.frames,
-    ...Object.fromEntries(Object.entries(selected.stances).map(([action, pose]) => [action, selected.frames[pose]])) };
+    ...Object.fromEntries(Object.entries(selected.stances).map(([action, pose]) => [action, selected.frames[pose]])),
+    ...(family.frames['smash-load'] ? { smash: family.frames['smash-load'] } : {}) };
   const frames = { ...family.frames, ...Object.fromEntries(Object.entries(heldFrames).map(([stance, frame]) => ['stance-'+stance, frame])) };
   const el = document.createElement('div');
   el.className = 'pose-stage painted-stage alternative-card-stage';
@@ -117,6 +120,8 @@ export function createAlternativeCardStage(classId, { still = false } = {}) {
     if (playing) {
       const sampled=sampleSequence(playing.sequence,elapsed,playing.duration,{reduced:reducedMotionRequested()});
       pose=playing.sequence.poses[sampled.index];
+      // A swing leaves from and returns to the held stance, not the neutral ready frame.
+      if (pose==='ready' && stance) pose='stance-'+stance;
       effect=playing.sequence.effects?.[sampled.index];
       x=['attack','smash','sweep'].includes(playing.action)?sampled.x:0;
     }
