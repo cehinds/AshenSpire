@@ -429,3 +429,39 @@
   text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 :root .combat .combatant:not(.context-selected) .combat-expansion-protection { display: none; }
+
+/* Desktop only (1280-1920 wide): the tools row reads at the approved phone size.
+   Physical px: a 14px label on a 36px row, a 12px reaction value, and the switch
+   scaled with it. Phone, tablet and widescreen keep the rules above. */
+:root[data-form-factor='desktop'] .combat[data-layout='formation'] .combat-tools > button {
+  min-height: calc(36px / var(--ui-zoom,1)); height: calc(36px / var(--ui-zoom,1));
+  font-size: calc(14px / var(--ui-zoom,1));
+}
+:root[data-form-factor='desktop'] .combat[data-layout='formation'] .combat-tools .reaction-switch-track {
+  width: calc(84px / var(--ui-zoom,1)); height: calc(23px / var(--ui-zoom,1));
+}
+:root[data-form-factor='desktop'] .combat[data-layout='formation'] .combat-tools .reaction-switch-value { font-size: calc(12px / var(--ui-zoom,1)); }
+:root[data-form-factor='desktop'] .combat[data-layout='formation'] .combat-tools .reaction-switch-thumb { width: calc(17px / var(--ui-zoom,1)); height: calc(17px / var(--ui-zoom,1)); }
+/* Desktop only: intent badges, their value and glyph, and the player's stance
+   chip read about 1.25x larger. The stance glyph is the enemy intent glyph's size
+   (26 px physical), so the two marks match. Phone, tablet and widescreen are unchanged. */
+:root[data-form-factor='desktop'] .combat[data-layout='formation'] .enemy .combatant-leading .intent { width: calc(130px / var(--ui-zoom,1)); min-width: calc(130px / var(--ui-zoom,1)); }
+:root[data-form-factor='desktop'] .combat[data-layout='formation'] .combatant:not(.context-selected) .intent {
+  min-height: calc(32px / var(--ui-zoom,1)); height: calc(32px / var(--ui-zoom,1)); font-size: calc(20px / var(--ui-zoom,1));
+}
+:root[data-form-factor='desktop'] .combat[data-layout='formation'] .intent .intent-icon { width: calc(26px / var(--ui-zoom,1)); height: calc(26px / var(--ui-zoom,1)); }
+:root[data-form-factor='desktop'] .combat[data-layout='formation'] .combatant-leading .intent-stance { font-size: calc(15px / var(--ui-zoom,1)); }
+:root[data-form-factor='desktop'] .combat[data-layout='formation'] .combatant .stance-chip[data-meter-row='stance'] {
+  height: calc(28px / var(--ui-zoom,1)); font-size: calc(14px / var(--ui-zoom,1));
+}
+:root[data-form-factor='desktop'] .combat[data-layout='formation'] .combatant .stance-chip[data-meter-row='stance'] > .as-glyph {
+  width: calc(26px / var(--ui-zoom,1)); height: calc(26px / var(--ui-zoom,1));
+}
+/* Desktop only: the footer's words (End Turn, Draw, Discard, Exhaust, Potions)
+   are SVG text authored in content/config/ui/presentation/footerLayout.json, so
+   their size is in art units and scales with the 450 px desktop face. A 1.15x
+   scale about each word's centre makes them read beside the 92 px footer. The
+   counts and the SPACE key keep their authored size. */
+:root[data-form-factor='desktop'] .combat-action-row[data-footer-art] .footer-art-face text:is([data-footer-binding='endTurn'],[data-footer-binding='drawLabel'],[data-footer-binding='discard'],[data-footer-binding='exhaust'],[data-footer-binding='potions']) {
+  transform: scale(1.15); transform-box: fill-box; transform-origin: center;
+}
