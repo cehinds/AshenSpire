@@ -8,10 +8,13 @@ import { createCombat } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { enqueueExpandedAction, previewExpandedActions } from '../src/engine/combatExpansionActions.js';
 import { executeAction, gainBlock } from '../src/engine/actions.js';
+import { resolveCombatRatings, magicShareOf } from '../src/model/combatRatings.js';
 
-function fixture({ ward = 3, barrier = 0, block = 0, poise = 0, weakness = {}, flat = {} } = {}) {
+function fixture({ ward = 3, barrier = 0, block = 0, poise = 0, weakness = {}, flat = {}, damageTypeShares = null } = {}) {
   const registries = createRegistries(contentBundle);
-  const combat = createCombat({ registries, rng: createRng(901), combatExpansionVersion: 2,
+  // A damage type's Advanced share (damageTypeShares) is a run's ratings config, read through ctx.ratingsRules.
+  const ratingsRules = damageTypeShares ? { ...resolveCombatRatings(Object.fromEntries(Object.entries(damageTypeShares).map(([type, share]) => [`gameConfig.combatRatings.damageTypes.${type}`, share])), contentBundle), enabled: true } : null;
+  const combat = createCombat({ registries, rng: createRng(901), combatExpansionVersion: 2, ...(ratingsRules ? { ratingsRules } : {}),
     enemyIds: ['wanderingSoldier'], player: { classId: 'starseer', maxHp: 100, hp: 100,
       maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1, deck: [] } });
   const enemy = combat.enemies[0];
@@ -100,11 +103,45 @@ test('a fire card stays all magic, and a slashing strike all physical', () => {
   assert.equal(s.wardAbsorbed, undefined, 'a physical hit never touches Ward');
 });
 
-test('a spell with a physical tag stays on its camp: Ward, not Block (shipped counters keep their route)', () => {
+// Was: 'a spell with a physical tag stays on its camp: Ward, not Block' (magicAmount 5, wardAbsorbed 3).
+// The damage type decides the route, so a spell-camp blunt hit is physical: Ward is untouched and HP takes it.
+test('a spell-camp counter with blunt damage routes its physical part through Block and HP, not Ward', () => {
   const counter = { tags: ['camp:spell', 'damage:blunt'], skipRatingBonus: true, combatProfile: { camp: 'spell', damageType: 'blunt', maneuver: 'counter', reach: 'near', targeting: 'single' } };
-  const d = strike(counter, 5, { ward: 3 }).damage[0];
-  assert.equal(d.magicAmount, 5);
-  assert.equal(d.wardAbsorbed, 3);
+  const r = strike(counter, 5, { ward: 3 });
+  const d = r.damage[0];
+  assert.equal(d.magicAmount, 0);
+  assert.equal(d.physicalAmount, 5);
+  assert.equal(d.wardAbsorbed, undefined, 'Ward is not spent');
+  assert.equal(r.enemy.persistentWard.value, 3, 'Ward stays 3');
+  assert.equal(r.hpLost(r.hpBefore), 5);
+});
+
+test('a spell-camp card with slashing damage hits Block and then Poise, and never Ward', () => {
+  const slashSpell = { tags: ['camp:spell', 'damage:slashing'], skipRatingBonus: true, combatProfile: { camp: 'spell', damageType: 'slashing', maneuver: 'casting', reach: 'near', targeting: 'single' } };
+  const r = strike(slashSpell, 6, { ward: 3, block: 2, poise: 2 });
+  const [d] = r.damage;
+  assert.equal(d.magicAmount, 0);
+  assert.equal(d.physicalAmount, 6);
+  assert.equal(d.blocked, 2, 'Block soaks 2 first');
+  assert.equal(r.enemy.block, 0, 'Block is spent');
+  assert.equal(r.enemy.persistentPoise.value, 0, 'Poise soaks the rest of the physical part');
+  assert.equal(d.wardAbsorbed, undefined);
+  assert.equal(r.enemy.persistentWard.value, 3, 'Ward untouched');
+  assert.equal(r.preview, r.committed, 'preview equals committed');
+});
+
+test('a physical-camp card whose damage type shares 1 hits Barrier and Ward, not Block', () => {
+  const slashAsMagic = { tags: ['camp:physical', 'damage:slashing'], skipRatingBonus: true, combatProfile: { camp: 'physical', damageType: 'slashing', maneuver: 'attack', reach: 'contact', targeting: 'single' } };
+  const r = strike(slashAsMagic, 5, { ward: 3, block: 3, barrier: 2, damageTypeShares: { slashing: 1 } });
+  const [d] = r.damage;
+  assert.equal(d.magicAmount, 5, 'all magic');
+  assert.equal(d.physicalAmount, 0);
+  assert.equal(d.blocked, 0, 'Block does not soak a magic part');
+  assert.equal(r.enemy.block, 3, 'Block untouched');
+  assert.equal(r.enemy.barrier, 0, 'Barrier soaks 2 first');
+  assert.equal(d.wardAbsorbed, 2, 'Ward then soaks 2 of the remaining 3: a pure hit lets at least 1 through Ward');
+  assert.equal(r.hpLost(r.hpBefore), 1, 'that 1 reaches HP');
+  assert.equal(r.preview, r.committed);
 });
 
 test('a scepter defend of 5 gives Barrier 2 and Block 3 on full Ward, and Ward 2 and Block 3 on empty Ward', () => {
@@ -214,4 +251,18 @@ test('a Frost Spear (piercing) hit takes the piercing weakness and a flat pierci
 test('a Warhammer hit takes a flat blunt resistance, not a slashing one', () => {
   assert.equal(strike(warhammerStrike, 4, { ward: 0, flat: { blunt: 2 } }).damage[0].amount, 2);
   assert.equal(strike(warhammerStrike, 4, { ward: 0, flat: { slashing: 2 } }).damage[0].amount, 4);
+});
+
+// Precedence (model/combatRatings.js magicShareOf): a card's own share, then its damage type's share
+// (endpoints honoured), then the camp only when the hit has no damage type.
+test('magicShareOf: card override, then damage type with 0 and 1 honoured, then camp only for an untyped hit', () => {
+  const config = resolveCombatRatings({}, contentBundle);
+  assert.equal(magicShareOf({ camp: 'physical', damageType: 'slashing', magicShare: 0.4 }, config), 0.4, 'a card override wins');
+  assert.equal(magicShareOf({ camp: 'spell', damageType: 'slashing' }, config), 0, 'a spell-camp slashing hit is physical');
+  assert.equal(magicShareOf({ camp: 'physical', damageType: 'fire' }, config), 1, 'a physical-camp fire hit is magic');
+  assert.equal(magicShareOf({ camp: 'spell', damageType: 'arcane' }, config), 0.5, 'arcane still splits');
+  assert.equal(magicShareOf({ camp: 'physical', damageType: 'arcane' }, config), 0.5, 'arcane splits in either camp');
+  assert.equal(magicShareOf({ camp: 'spell' }, config), 1, 'no damage type: the spell camp is all magic');
+  assert.equal(magicShareOf({ camp: 'physical' }, config), 0, 'no damage type: the physical camp is all physical');
+  assert.equal(magicShareOf({ camp: 'spell', damageType: 'psychic' }, config), 1, 'a type the rules do not name falls back to camp');
 });

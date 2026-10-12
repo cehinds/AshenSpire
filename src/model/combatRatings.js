@@ -596,15 +596,17 @@ export function canonicalDamageType(type) {
 
 /**
  * magicShareOf(profile, config) → the share of a hit that is magic (Barrier,
- * then Ward) rather than physical (Block). A carrier's own magicShare wins. A
- * hybrid damage type (strictly between 0 and 1: arcane, or a tuned row) splits
- * any camp. Otherwise the camp decides: a spell is all magic, a strike all
- * physical. The engine and the card face both read this.
+ * then Ward) rather than physical (Block, then Poise). Precedence: a carrier's
+ * own magicShare; then its damage type's configured share, endpoints included
+ * (physical 0, magic 1, arcane's hybrid 0.5 or a tuned row); then the camp, and
+ * only for a hit with no damage type at all. A spell-camp card with physical
+ * damage therefore routes its physical part like any physical hit. The engine
+ * and the card face both read this.
  */
 export function magicShareOf(profile, config = null) {
   if (Number.isFinite(profile?.magicShare)) return Math.min(1, Math.max(0, profile.magicShare));
-  const hybrid = damageTypeMagicShare(config, canonicalDamageType(profile?.damageType));
-  if (hybrid !== null && hybrid > 0 && hybrid < 1) return hybrid;
+  const typed = damageTypeMagicShare(config, canonicalDamageType(profile?.damageType));
+  if (typed !== null) return typed;
   return profile?.camp === 'spell' ? 1 : 0;
 }
 

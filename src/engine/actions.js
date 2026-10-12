@@ -288,10 +288,11 @@ export function restoreExpandedWard(ctx, entity, nominal, options = {}) {
 
 // Damage routing. A hit is split into a MAGIC part, which Barrier and Ward take,
 // and a PHYSICAL part, which Block and then Poise take. A contact's magic share
-// says how much of it is magic. A carrier's own share wins. A hybrid damage type
-// (strictly between 0 and 1: arcane, or a tuned row) splits any camp. Otherwise
-// the camp decides, so a spell is all magic and a strike all physical whatever
-// their tags say; the shipped contacts keep the route they always had.
+// comes from its own override, else its damage type (0 for slashing, piercing and
+// blunt; 1 for fire, frost, lightning, sacred and decay; arcane's 0.5 or a tuned row),
+// and only a hit with no damage type falls back to its camp. So a spell-camp card that
+// deals physical damage routes that damage like any physical hit. Card camp still decides
+// non-damage things (Ward-first Barrier gains, mana, tags).
 // The routing rule lives in model/combatRatings.js (magicShareOf) so the card face reads the same split.
 export function contactMagicShare(ctx, profile) {
   return magicShareOf(profile, ctx.ratingsRules);

@@ -15,9 +15,10 @@ import { combatRules as combatRulesBundle } from '../src/content/combatRules.js'
 
 const drainQueue = combat => { while (combat.queue.length) executeAction(combat, combat.queue.shift()); };
 
-function fixture(effects = [{ op: 'damage', target: 'enemy', amount: 5, hits: 2 }], { statuses = contentBundle.statuses, ruleset = null } = {}) {
+// magicShare (optional) stamps the pebble's own share: 1 makes the Ward tests below a magic hit, as they were written.
+function fixture(effects = [{ op: 'damage', target: 'enemy', amount: 5, hits: 2 }], { statuses = contentBundle.statuses, ruleset = null, magicShare = undefined } = {}) {
   const registries = createRegistries({ ...contentBundle, statuses, cards: contentBundle.cards.map(card => card.id === 'starstonePebble'
-    ? { ...card, effects, cost: 0, manaCost: 0, upgrade: undefined } : card) });
+    ? { ...card, effects, cost: 0, manaCost: 0, upgrade: undefined, ...(magicShare === undefined ? {} : { magicShare }) } : card) });
   const combat = createCombat({ registries, rng: createRng(801), combatExpansionVersion: 2, ...(ruleset ? { ruleset } : {}),
     enemyIds: ['wanderingSoldier'], player: { classId: 'starseer', maxHp: 100, hp: 100,
       maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1,
@@ -31,7 +32,7 @@ function fixture(effects = [{ op: 'damage', target: 'enemy', amount: 5, hits: 2 
 }
 
 test('whole Spell action applies persistent Ward once across hits, spends it, and preview matches the committed budget', () => {
-  const { combat, enemy } = fixture();
+  const { combat, enemy } = fixture(undefined, { magicShare: 1 });
   const counters = combat.rng.getCounters();
   const preview = previewCard(combat, 'paired', enemy.id);
   assert.deepEqual(combat.rng.getCounters(), counters, 'preview consumes no streams');
@@ -42,6 +43,18 @@ test('whole Spell action applies persistent Ward once across hits, spends it, an
   assert.equal(before - enemy.hp, value);
   assert.equal(damage.reduce((sum, event) => sum + event.wardResisted, 0), 3);
   assert.equal(enemy.persistentWard.value, 0, 'Ward is spent by the damage it absorbs');
+});
+
+// Was: the same blunt Spell action spent Ward (wardResisted 3, Ward 0). The damage type decides the route now:
+// the blunt part is physical, so Ward is not touched and the hit lands on HP.
+test('a blunt Spell action (physical damage type) leaves Ward alone and routes its damage through Block and HP', () => {
+  const { combat, enemy } = fixture();
+  const before = enemy.hp;
+  const out = dispatch(combat, { type: 'playCard', cardInstanceId: 'paired', targetId: enemy.id });
+  const damage = out.events.filter(event => event.type === 'damageDealt' && event.targetId === enemy.id);
+  assert.equal(damage.reduce((sum, event) => sum + (event.wardResisted || 0), 0), 0, 'no Ward is resisted');
+  assert.equal(enemy.persistentWard.value, 3, 'Ward stays 3');
+  assert.ok(before - enemy.hp > 0, 'the hit lands on HP');
 });
 
 test('paused action receipts are interned after JSON restore and finish without repeating a charge or roll', () => {
@@ -348,7 +361,7 @@ test('a rise from a full Ward pool adds the same amount to current Ward', () => 
 });
 
 test('each hit Ward meets still lets at least 1 damage through', () => {
-  const { combat, enemy } = fixture();
+  const { combat, enemy } = fixture(undefined, { magicShare: 1 });
   enemy.ratings.ward = enemy.persistentWard.value = enemy.persistentWard.max = 20;
   const before = enemy.hp;
   const out = dispatch(combat, { type: 'playCard', cardInstanceId: 'paired', targetId: enemy.id });
