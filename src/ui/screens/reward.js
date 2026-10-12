@@ -54,7 +54,7 @@ import { isProgressionReward, progressionRewardUnlocked } from '../../model/defe
 import { renderCard } from '../components/card.js';
 import { sigilRuleText } from '../../model/sigils.js';
 import { renderEquipmentInspection } from '../components/equipmentCard.js';
-import { renderCollectibleInspection } from '../components/collectibleCard.js';
+import { renderCollectibleCard, renderCollectibleInspection } from '../components/collectibleCard.js';
 import { esc, attachTooltip, showTooltipFor } from '../components/tooltip.js';
 import { relicText } from '../components/card.js';
 import { sfx } from '../sfx.js';
@@ -1302,8 +1302,17 @@ export function mountRewards(app, {
         tile.after(inspection);
       }
     }
+    if (isRelic) strip.classList.add('reward-relic-choice');
     for (const id of isRelic ? ids : []) {
       const option = relicOption(id);
+      // One column per relic: the card face on top (no inspection, no lore),
+      // the text button under it as the accessible radio. Both select.
+      const column = el('div', { class: 'reward-relic-option', dataset: { pickId: id } });
+      if (option.definition) {
+        const face = renderCollectibleCard(registries, option.definition, t('reward.kind.relic'), { interactive: false }).card;
+        face.addEventListener('click', () => selectCard(id));
+        column.appendChild(face);
+      }
       const tile = el('button', { class: 'class-pick reward-node reward-pick', type: 'button', role: 'radio',
         'aria-checked': String(id === selectedCardId), dataset: { pickId: id } }, [
         el('div', { class: 'cp-body' }, [el('h3', { text: option.name }), el('p', { text: option.text })]),
@@ -1311,8 +1320,8 @@ export function mountRewards(app, {
       tile.classList.toggle('reward-selected', id === selectedCardId);
       tile.classList.toggle('is-chosen', id === selectedCardId);
       tile.addEventListener('click', () => selectCard(id));
-      strip.appendChild(tile);
-      if (option.definition) tile.after(renderCollectibleInspection(registries, option.definition, t('reward.kind.relic'), { interactive: false }));
+      column.appendChild(tile);
+      strip.appendChild(column);
     }
     for (const option of isLevelChoice ? row.options : []) {
       const choiceId = `${option.kind}:${option.id}`;
