@@ -19,4 +19,4 @@ The source preview separately exercised 54 maneuver/element combinations. Automa
 
 ![Current cards in the deck editor](deck-desktop.png)
 
-[Machine-readable browser observations](built-checks.json)
+Raw browser observations are retained in the task output folder, outside the repository, per the QA evidence policy.
