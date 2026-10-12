@@ -40,7 +40,21 @@ const statusRow = (registry, id) => {
   if (typeof registry.get === 'function') return registry.get(id) || null;
   return Array.isArray(registry) ? registry.find(row => row.id === id) : null;
 };
-const safeTint = value => typeof value === 'string' && /^(#[\da-f]{3,8}|var\(--[a-z][a-z\d-]*\))$/i.test(value) ? value : null;
+const safeTint = value => typeof value === 'string' && /^(#(?:[\da-f]{3}|[\da-f]{4}|[\da-f]{6}|[\da-f]{8})|var\(--[a-z][a-z\d-]*\))$/i.test(value) ? value : null;
+const physicalVariant = (def, ref) => {
+  const key = `${def.id || def.cardId || ref?.cardId || ''}:${def.equipmentProfileId || def.profileId || ref?.profileId || ''}`;
+  let hash = 2166136261;
+  for (const char of key) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619) >>> 0;
+  return (hash % 5) + 1;
+};
+const damageElement = (def, tags) => {
+  const components = def.attack?.components;
+  const types = [...new Set(Array.isArray(components) ? components.map(row => row?.type).filter(type => typeof type === 'string')
+    : typeof def.attack?.damageType === 'string' ? [def.attack.damageType]
+      : tags.filter(tag => tag.startsWith('damage:')).map(tag => tag.slice(7)))];
+  // Even one elemental component beside a physical component is mixed damage.
+  return types.length === 1 ? cardArtElement(types[0]) : null;
+};
 
 /** Every active status can contribute a small motif; registry labels are data, not markup. */
 export function cardArtStatuses(def, tags = [], registries = null) {
@@ -52,7 +66,7 @@ export function cardArtStatuses(def, tags = [], registries = null) {
     if (['applyStatus', 'buildup'].includes(value.op) && typeof value.status === 'string') ids.push(value.status);
     for (const child of Object.values(value)) if (child && typeof child === 'object') walk(child, depth + 1);
   }
-  walk(def?.effects);
+  for (const key of ['effects', 'counterPayload', 'upcast', 'schoolEffect']) walk(def?.[key]);
   const rows = [];
   for (const id of [...new Set(ids)].sort()) {
     const row = statusRow(registries?.statuses, id);
@@ -77,12 +91,12 @@ export function simpleCardArt(def, { ref, registries = null, large = false, vari
   if (!CARD_ART_MANEUVERS.includes(maneuver)) return null;
   const category = camp === 'spell' ? 'magical' : 'physical';
   const school = uniqueIdentity(tags, 'school:');
-  const element = cardArtElement(uniqueIdentity(tags, 'element:') || school)
+  const element = cardArtElement(uniqueIdentity(tags, 'element:')) || cardArtElement(school) || damageElement(def, tags)
     || (category === 'magical' ? 'force' : null);
   const theme = element && CARD_ART_ELEMENTS[element];
   const requestedVariant = variant ?? def.art?.variant;
   const selectedVariant = Number.isInteger(requestedVariant) && requestedVariant >= 1 && requestedVariant <= 5
-    ? requestedVariant : category === 'magical' ? theme.variant : 1;
+    ? requestedVariant : category === 'magical' ? theme.variant : physicalVariant(def, ref);
   const statuses = cardArtStatuses(def, tags, registries);
   const layers = Object.freeze([...(theme ? [Object.freeze({ kind: 'element', ...theme })] : []), ...statuses.map(status => Object.freeze({ kind: 'status', ...status }))]);
   return Object.freeze({

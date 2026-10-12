@@ -1,7 +1,7 @@
 import { CARD_ART_ELEMENTS } from './cardArtComposition.js';
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
-const color = value => typeof value === 'string' && /^(#[\da-f]{3,8}|var\(--[a-z][a-z\d-]*\))$/i.test(value) ? value : '#c9d2dc';
+const color = value => typeof value === 'string' && /^(#(?:[\da-f]{3}|[\da-f]{4}|[\da-f]{6}|[\da-f]{8})|var\(--[a-z][a-z\d-]*\))$/i.test(value) ? value : '#c9d2dc';
 // Hand-authored, deterministic marks stay around the perimeter; no SVG IDs,
 // scripts, external resources, animation or generated geometry on each render.
 const MOTIFS = Object.freeze({
