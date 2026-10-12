@@ -278,9 +278,19 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     reactionForReceipt: event => {
       const kind = selectedWeaponReactionFor(event, selectedProfile());
       const stage = kind && stageFor(fxCtx.anchorFor(event.targetId));
-      if (!kind || combat.player.alive === false || !stage?.reactionPoses?.includes(kind)) return null;
+      // dispatch(endTurn) resolves the whole enemy batch before its receipts are
+      // played. Final model state therefore cannot suppress an earlier evade or
+      // guard break. Only the reaction emitted after the batch's lethal HP loss
+      // belongs to the defeated beat; eventLog and the dispatch buffer share the
+      // same event objects, so their relative order is unambiguous.
+      const eventIndex = combat.eventLog.indexOf(event);
+      const lethalLossIndex = combat.player.alive === false
+        ? combat.eventLog.findLastIndex(row => row.type === 'hpLost' && row.targetId === event.targetId)
+        : -1;
+      const defeatedBeat = kind === 'guard-break' && lethalLossIndex >= 0 && eventIndex > lethalLossIndex;
+      if (!kind || defeatedBeat || !stage?.reactionPoses?.includes(kind)) return null;
       return () => {
-        if (combat.player.alive !== false) stageFor(fxCtx.anchorFor(event.targetId))?.reactPose?.(kind, ANIM_SPEEDS[getAnimSpeed()]?.reactionMs || 280);
+        stageFor(fxCtx.anchorFor(event.targetId))?.reactPose?.(kind, ANIM_SPEEDS[getAnimSpeed()]?.reactionMs || 280);
       };
     },
     combatEl,

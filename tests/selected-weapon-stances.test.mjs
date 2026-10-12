@@ -130,7 +130,7 @@ test('the solo screen reaction hook imports its timing helpers and calls the cur
   const calls=[],anchor={};
   let current={reactionPoses:['guard-break','evade'],reactPose:(...args)=>calls.push(args)};
   const fxCtx={anchorFor:id=>{assert.equal(id,'player');return anchor;}};
-  const combat={player:{alive:true}};
+  const combat={player:{alive:true},eventLog:[]};
   const factory=runInNewContext('({'+source.slice(begin,end)+'}).reactionForReceipt',{
     ...bindings,selectedWeaponReactionFor,selectedProfile:()=>pilot,combat,fxCtx,stageFor:element=>{assert.equal(element,anchor);return current;},
   });
@@ -146,7 +146,15 @@ test('the solo screen reaction hook imports its timing helpers and calls the cur
     const callback=factory({type:'combatGuardBroken',targetId:'player'});
     current={reactionPoses:['guard-break'],reactPose:()=>calls.push(['replacement'])};callback();
     assert.deepEqual(calls.at(-1),['replacement'],'a repaint routes to the replacement stage');
-    combat.player.alive=false;assert.equal(factory({type:'combatGuardBroken',targetId:'player'}),null);
+    current={reactionPoses:['guard-break','evade'],reactPose:(...args)=>calls.push(args)};
+    const earlyEvade={type:'attackEvaded',targetId:'player'};
+    const earlyBreak={type:'combatGuardBroken',targetId:'player'};
+    const lethalLoss={type:'hpLost',targetId:'player',amount:5};
+    const lethalBreak={type:'combatGuardBroken',targetId:'player'};
+    combat.eventLog=[earlyEvade,earlyBreak,lethalLoss,lethalBreak];combat.player.alive=false;
+    assert.equal(typeof factory(earlyEvade),'function','final defeat does not hide an earlier evade');
+    assert.equal(typeof factory(earlyBreak),'function','final defeat does not hide an earlier guard break');
+    assert.equal(factory(lethalBreak),null,'the guard break after the lethal loss yields to defeat');
     assert.equal(factory({type:'combatAvoidanceResolved',targetId:'player',avoided:false,evade:{success:false}}),null);
   } finally { animationPace.setAnimSpeed('normal'); }
 });
@@ -168,6 +176,9 @@ test('selected holds preserve existing returns and finite reactions restore the 
   try {
     applyDisplayAppearance({});
     assert.ok(alternativeSelectedStances.weaponProfiles?.[pilot]?.frames,'the actual selected catalog must be present');
+    const loading=createAlternativeCardStage('reaver',{weaponProfile:pilot});stages.push(loading);
+    assert.deepEqual(loading.reactionPoses,['evade','guard-break'],'reaction capability is known before bitmaps load');
+    await loading.ready;
     const stage=await make({weaponProfile:pilot});
     const edgeWidthRatio = stage.el.dataset.maximumWidthRatio;
     assert.ok(Number(edgeWidthRatio) > Number(stage.el.dataset.idleWidthRatio), 'the selected wide blade has its own viewport envelope');
@@ -206,6 +217,9 @@ test('selected holds preserve existing returns and finite reactions restore the 
     stage.settle();stage.reactPose('evade',180);stage.setStance('sweep');advance(190);
     assert.equal(stage.pose,'stance-sweep','the finite reaction returns to the newest hold');
     stage.reactPose('guard-break',280);assert.equal(stage.endReaction(),true);assert.equal(stage.pose,'stance-sweep');
+    stage.reactPose('evade',animationPace.ANIM_SPEEDS.fast.reactionMs);advance(animationPace.ANIM_SPEEDS.fast.reactionMs-1);
+    assert.equal(stage.pose,'pilot-evade','Fast keeps the reaction for its requested timeline duration');
+    advance(2);assert.equal(stage.pose,'stance-sweep','Fast restores the hold when its 81 ms beat ends');
     stage.reactPose('evade',280);stage.settle({reaction:true});assert.equal(stage.pose,'stance-sweep');
     stage.reactPose('guard-break',280);stage.setRestPose('defeated');assert.equal(stage.pose,'defeated');
     assert.equal(stage.reactPose('evade',280),false,'defeat wins over a later reaction');
