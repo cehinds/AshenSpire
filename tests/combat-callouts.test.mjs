@@ -166,6 +166,9 @@ test('a failed avoidance roll and an unbroken rating say nothing', () => {
   assert.equal(calloutForEvent({ type: 'combatAvoidanceResolved', targetId: 'player', avoided: false, evade: { success: false } }), null);
   assert.equal(calloutForEvent({ type: 'ratingImpact', targetId: 'e1', breaks: 0, label: 'Stagger' }), null);
   assert.deepEqual(calloutForEvent({ type: 'ratingImpact', targetId: 'e1', breaks: 1, label: 'Disruption' }), { kind: 'disrupted', targetId: 'e1' });
+  // A distance roll or a prevention charge that stops a hit is a miss too, over the fighter it missed.
+  assert.deepEqual(calloutForEvent({ type: 'combatAvoidanceResolved', sourceId: 'e1', targetId: 'player', avoided: true, distance: { roll: 4, chance: 30, success: true } }), { kind: 'evaded', targetId: 'player' });
+  assert.deepEqual(calloutForEvent({ type: 'combatAvoidanceResolved', sourceId: 'e1', targetId: 'player', avoided: true, prevention: 'decoy' }), { kind: 'evaded', targetId: 'player' });
 });
 
 test('COUNTERED shows on the attacker who got countered, at the counter\'s impact', (t2) => {

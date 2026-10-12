@@ -1371,7 +1371,8 @@ export function calloutForEvent(e = {}) {
     case 'ratingImpact': if (e.breaks > 0) kind = e.label === 'Disruption' ? 'disrupted' : 'staggered'; break;
     case 'combatCounterTriggered': kind = 'countered'; break; // over the attacker who got countered
     case 'attackEvaded': kind = 'evaded'; break;
-    case 'combatAvoidanceResolved': if (e.avoided && e.evade?.success) kind = 'evaded'; break;
+    // Any avoidance that stopped the hit is a miss: an evade, a distance roll, or a prevention charge.
+    case 'combatAvoidanceResolved': if (e.avoided) kind = 'evaded'; break;
     case 'critHit': kind = 'critical'; break;
     case 'combatGuardBroken': kind = 'guardBreak'; break;
     case 'wardBroken': kind = 'wardBreak'; break;
@@ -1556,6 +1557,16 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
       return e.amount > 0
         ? { numbers: (ctx) => floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount} ${e.meter === 'ward' ? 'WARD' : 'POISE'}`, `${e.meter === 'ward' ? 'ward' : 'poise'} small`) }
         : null;
+    // A miss (any avoidance that stopped the hit): a white streak over the fighter it missed, and a swish.
+    case 'combatAvoidanceResolved':
+    case 'attackEvaded':
+      if (e.type === 'combatAvoidanceResolved' && !e.avoided) return null;
+      return {
+        reaction: (ctx) => {
+          sfx.play('cardDraw');
+          spawnFx(ctx.layer, ctx.anchorFor(e.targetId), 'fx-miss-streak', 380);
+        },
+      };
     case 'enemyStaggered':
       return {
         reaction: (ctx) => {

@@ -454,6 +454,9 @@
 .fx-callout.red { color: var(--ember); }
 .fx-callout.ward { color: #b38ae8; }
 .fx-callout.poise { color: #ff9a3c; }
+.fx-miss-streak { position: absolute; width: 96px; height: 4px; translate: -50% -50%; border-radius: 2px; pointer-events: none;
+  background: linear-gradient(90deg, transparent, #fff, transparent); animation: fx-miss-swish 380ms ease-out forwards; }
+@keyframes fx-miss-swish { from { opacity: 0; transform: translateX(-30px) scaleX(0.4); } 40% { opacity: 1; } to { opacity: 0; transform: translateX(30px) scaleX(1.2); } }
 .fx-callout.white { color: #fff; }
 .float-num { z-index: 1; }
 .reduce-flashes .fx-callout { animation: callout-rise var(--fx-callout-ms, 900ms) ease-out forwards; }
