@@ -225,7 +225,7 @@ meta.combat.stance.offensive.smash,smash,Smash,meta.combat.stance.offensive,Stan
 meta.combat.stance.offensive.smash.bash,bash,Bash,meta.combat.stance.offensive.smash,Stance,,"Bashing Blow, Shield Bash, Shield Crash, Stomp, Kick Off",,,,,,game-concept,,,
 meta.combat.stance.offensive.smash.sunder,sunder,Sunder,meta.combat.stance.offensive.smash,Stance,,"Sundering Chop, Sunderplate, Ruinous Blow, Colossus Smash",,,,,,game-concept,,,
 meta.combat.stance.offensive.smash.poise-break,poise-break,Poise break,meta.combat.stance.offensive.smash,Stance,,"Poise Breaker, Breaker's Toll, Kiln Cleave",,,,,,game-concept,,,
-meta.combat.stance.offensive.sweep,sweep,Sweep,meta.combat.stance.offensive,Stance,,6 cards,Hits all; slips past melee Counter; ×0.75 vs [defensive.block],,,,,live-tag,🌀,93C9BC,maneuver:sweep
+meta.combat.stance.offensive.sweep,sweep,Sweep,meta.combat.stance.offensive,Stance,,6 cards,Hits all; slips past melee Counter; ×0.75 vs [defensive.block],,,,wide-cleave,live-tag,🌀,93C9BC,maneuver:sweep
 meta.combat.stance.offensive.sweep.cleave,sweep.cleave,Cleave,meta.combat.stance.offensive.sweep,Stance,,"Cleaving Blow, Crimson Cleave, Hewing Arc, Sweeping Blow",,,,,,game-concept,,,
 meta.combat.stance.offensive.sweep.whirl,whirl,Whirl,meta.combat.stance.offensive.sweep,Stance,,Whirling Guard,,,,,,game-concept,,,
 meta.combat.stance.defensive,defensive,Defensive,meta.combat.stance,Stance,,,,,,,,live-tag,🛡,9FC3E8,maneuver:defend
@@ -238,7 +238,7 @@ meta.combat.stance.defensive.evade,evade,Evade,meta.combat.stance.defensive,Stan
 meta.combat.stance.defensive.evade.dodge,evade.dodge,Dodge,meta.combat.stance.defensive.evade,Stance,,"Dodge Roll, Evasive Guard, Backstep, Quickstep, Acrobatics",,,,,,game-concept,,,
 meta.combat.stance.defensive.evade.vanish,vanish,Vanish,meta.combat.stance.defensive.evade,Stance,,"Shadowstep, Vanish, Nightstep, Misdirect",,,,,,game-concept,,,
 meta.combat.stance.defensive.evade.obscure,obscure,Obscure,meta.combat.stance.defensive.evade,Stance,,"Smoke Bomb, Smoke Pellet, Smoke Veil, Pocket Sand",,,,,,game-concept,,,
-meta.combat.stance.counter,stance.counter,Counter,meta.combat.stance,Stance,,"20 cards, its own stance",Incoming ×0.5; returns damage,,,,,live-tag,↩,C8A3D8,maneuver:counter
+meta.combat.stance.counter,stance.counter,Counter,meta.combat.stance,Stance,,"20 cards, its own stance",Incoming ×0.5; returns damage,,,,technique.counter,live-tag,↩,C8A3D8,maneuver:counter
 meta.combat.stance.counter.parry,parry,Parry,meta.combat.stance.counter,Stance,,"Riposte, Rondel Parry, Binding Parry, Low Guard Riposte, Spiked Reprisal",,,,,,game-concept,,,
 meta.combat.stance.counter.school-counter,school-counter,School counter,meta.combat.stance.counter,Stance,,"one per spell school: Fire, Frost, Lightning, Force...",,,,,,game-concept,,,
 meta.combat.stance.counter.ranged-counter,ranged-counter,Ranged counter,meta.combat.stance.counter,Stance,,"Nock and Wait, Barrage Counter",,,,,,live-tag,◇,D7B36B,counter:ranged
@@ -633,7 +633,7 @@ property.sigil.hearthSigil,hearthSigil,Hearth Sigil,property.sigil,TagNode,,A he
 property.sigil.vigilSigil,vigilSigil,Sigil of the Last Vigil,property.sigil,TagNode,,A legendary vigil: a guard rises at the start of a fight you enter already wounded. Effects in nodeEffects.json: triggers on combatStart; ops block.,,,,,,live-tag,🕯,8A7A3C,vigilSigil
 property.sigil.pyreSigil,pyreSigil,Pyre Sigil,property.sigil,TagNode,,A legendary pyre: every card you burn away raises a guard. Effects in nodeEffects.json: triggers on cardExhausted; ops block.,,,,,,live-tag,🔥,B5522A,pyreSigil
 property.sigil.gravelightSigil,gravelightSigil,Gravelight Sigil,property.sigil,TagNode,,A legendary gravelight: a fallen foe mends you while you stand wounded. Effects in nodeEffects.json: triggers on enemyDied; ops heal.,,,,,,live-tag,💀,6F7FA8,gravelightSigil
-meta.combat.skill.technique.counter,technique.counter,Counter,meta.combat.skill.technique,Skill,,Categorized Counter identity; effects are authored separately.,,,,,,live-tag,◇,9FC3E8,technique:counter
+meta.combat.skill.technique.counter,technique.counter,Counter,meta.combat.skill.technique,Skill,,Categorized Counter identity; effects are authored separately.,,,,,stance.counter,live-tag,◇,9FC3E8,technique:counter
 meta.combat.skill.technique.searing-edge,searing-edge,Searing Edge,meta.combat.skill.technique,Skill,,A direct hit carries an authored Bleed buildup rider; the tag supplies no extra damage by itself.,,,,,,live-tag,✦,D7B36B,ability:searing-edge
 meta.combat.skill.technique.guarded-strike,guarded-strike,Guarded Strike,meta.combat.skill.technique,Skill,,Tests whether the acting player currently has positive Block before an attack resolves.,,,,,,live-tag,✦,D7B36B,ability:guarded-strike
 meta.combat.skill.technique.bloodstep,bloodstep,Bloodstep,meta.combat.skill.technique,Skill,,Tests whether the selected enemy has positive Bleed buildup before the card resolves.,,,,,,live-tag,✦,D7B36B,ability:bloodstep
@@ -642,7 +642,7 @@ meta.combat.skill.technique.forgewake,forgewake,Forgewake,meta.combat.skill.tech
 meta.combat.skill.technique.crimson-reprisal,crimson-reprisal,Crimson Reprisal,meta.combat.skill.technique,Skill,,"Tests whether the acting player lost HP since their previous turn began; paying HP counts, losing Block does not.",,,,,,live-tag,✦,D7B36B,ability:crimson-reprisal
 meta.combat.skill.technique.last-stand,last-stand,Last Stand,meta.combat.skill.technique,Skill,,Tests whether current HP is at or below 50% of current maximum HP before resolution.,,,,,,live-tag,✦,D7B36B,ability:last-stand
 meta.combat.skill.technique.war-tempo,war-tempo,War Tempo,meta.combat.skill.technique,Skill,,Tests whether at least two Heavy cards have already been played by the acting player during this turn.,,,,,,live-tag,✦,D7B36B,ability:war-tempo
-meta.combat.skill.technique.wide-cleave,wide-cleave,Wide Cleave,meta.combat.skill.technique,Skill,,Marks one authored attack effect that independently hits every living enemy; it is not a separate hit per tag.,,,,,,live-tag,✦,D7B36B,ability:wide-cleave
+meta.combat.skill.technique.wide-cleave,wide-cleave,Wide Cleave,meta.combat.skill.technique,Skill,,Marks one authored attack effect that independently hits every living enemy; it is not a separate hit per tag.,,,,,sweep,live-tag,✦,D7B36B,ability:wide-cleave
 meta.combat.skill.technique.ember-crown,ember-crown,Ember Crown,meta.combat.skill.technique,Skill,,Marks a one-charge bonus to the next direct attack this turn; the charge expires at turn end and cannot stack with itself.,,,,,,live-tag,✦,D7B36B,ability:ember-crown
 meta.combat.skill.technique.dreadweight,dreadweight,Dreadweight,meta.combat.skill.technique,Skill,,Tests whether the selected enemy is currently Staggered before a direct hit.,,,,,,live-tag,✦,D7B36B,ability:dreadweight
 meta.combat.skill.technique.oathscar,oathscar,Oathscar,meta.combat.skill.technique,Skill,,Identifies the first Guard card after the acting player has lost HP since their previous turn began; at most once per turn.,,,,,,live-tag,✦,D7B36B,ability:oathscar
