@@ -157,3 +157,40 @@ test('the preview stylesheet scopes every rule to the preview or to the classes 
   for (const hex of ['#5ccf6a', '#e7c65c', '#ef4949']) assert.match(css, new RegExp(hex));
   assert.doesNotMatch(css, /blur\(|glow/, 'the outline has no glow or halo');
 });
+
+// Review item 1: a queued card is taken back by a tap, a completed hold and a hotkey, even when the energy left
+// after queueing no longer covers its cost (`affordable` reads that leftover, so it is not a reason to refuse).
+const combatScreenSource = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
+function sliceBetween(src, from, to) {
+  const a = src.indexOf(from);
+  assert.ok(a >= 0, `missing marker: ${from}`);
+  const b = src.indexOf(to, a + from.length);
+  assert.ok(b > a, `missing end marker ${to} after ${from}`);
+  return src.slice(a, b);
+}
+
+test('a tap on a queued card takes it back before the affordable and dragging guards', () => {
+  const tap = sliceBetween(combatScreenSource, 'const tap = () => {', '\n    const holdProgress');
+  const queued = tap.indexOf('isRoundQueued(inst.instanceId)');
+  assert.ok(queued >= 0, 'tap checks for a queued card');
+  assert.match(tap.slice(queued, queued + 120), /unqueueCard\(inst\.instanceId\)/, 'a queued card is unqueued');
+  assert.ok(queued < tap.indexOf('if (!affordable)'), 'the queued check comes before the affordable guard (no "Not enough stamina")');
+  assert.ok(queued < tap.indexOf('dragging'), 'the queued check comes before the dragging guard');
+});
+
+test('a completed hold on a queued card takes it back before the affordable and dragging guards', () => {
+  const hold = sliceBetween(combatScreenSource, 'return armHold(el, {', '\n    });\n  }');
+  const confirm = hold.slice(hold.indexOf('onConfirm: () => {'));
+  const queued = confirm.indexOf('isRoundQueued(inst.instanceId)');
+  assert.ok(queued >= 0, 'the hold-confirm path checks for a queued card');
+  assert.ok(queued < confirm.indexOf('if (busy || !affordable || dragging)'), 'before the affordable and dragging guard');
+  assert.match(confirm.slice(queued, queued + 120), /unqueueCard\(inst\.instanceId\)/);
+});
+
+test('the hotkey on a queued card takes it back before the affordable guard', () => {
+  const hotkey = sliceBetween(combatScreenSource, 'const visibleId = handCards', 'const hostile = cardTargets(');
+  const queued = hotkey.indexOf('isRoundQueued(inst.instanceId)');
+  assert.ok(queued >= 0, 'the hotkey path checks for a queued card');
+  assert.ok(queued < hotkey.indexOf('if (!affordable) return;'), 'before the affordable guard');
+  assert.match(hotkey.slice(queued, queued + 120), /unqueueCard\(inst\.instanceId\)/);
+});
