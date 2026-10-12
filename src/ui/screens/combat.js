@@ -655,7 +655,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     leading.querySelector('.player-action-intent')?.remove();
     const def = inst ? resolveCombatCard(combat, inst, { upcastRanks: upcastRanksByCard.get(inst.instanceId) }) : null;
     const armed = def ? combatProfileFor(def) : null;
-    const action = playerActionIntent(armed?.maneuver || armed?.camp === 'spell' ? armed : held ?? RESTING_PLAYER_ACTION, () => {
+    const action = playerActionIntent(armed ?? held ?? RESTING_PLAYER_ACTION, () => {
       if (selfArm) playCard(selfArm, null);
       else selectCombatant('player');
     });
