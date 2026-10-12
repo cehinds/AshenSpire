@@ -1330,7 +1330,7 @@ Rarity: S = starter, C = common, U = uncommon, R = rare. Cost in Stamina (engine
 | Gorefire Slash | S | 1 + 1 Mana | Attack | Deal 5. Apply 3 Bleed. | 5 dmg, 5 Bleed |
 | Crimson Cleave | C | 2 | Attack | Deal 5 to the selected enemy. | none; rank-up (§13.4o) |
 | Shield Bash | C | 1 | Attack | Deal 3 to the selected enemy. | none; rank-up (§13.4o) |
-| Quickstep | C | 1 | Skill | Gain 6 Block. Draw 1. | 8 Block |
+| Quickstep | C | 1 | Skill | Gain 4 Block. | none; rank-up (§13.4o) |
 | Guard Counter | C | 1 | Attack | Deal 4. If you have Block: deal 10 instead. | 6 / 14 |
 | Iron Resolve | C | 1 | Skill | Gain 5 Block. If in Bulwark Stance: gain 9 instead. | 7 / 12 |
 | Serrated Blade | C | 1 | Attack | Deal 7. If target has any Bleed: apply 3 Bleed. | 9 dmg, 4 Bleed |
