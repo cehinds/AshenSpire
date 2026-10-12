@@ -464,7 +464,7 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
         reactionDepth: Math.max(receipt.counter.carrier.reactionDepth || 0, carrier?.reactionDepth || 0),
         ...(effect.op === 'wardDamage' ? { combatWardEdgeApplied: true } : {}) }, meta: { combatCounterReaction: true, enemyKnowledgeActionSerial: source.knowledgeAction?.serial } };
     queue.push(action);
-    if (ctx.reactionRulesVersion !== 1) ctx.enqueue?.(action);
+    if (!(ctx.reactionRulesVersion >= 1)) ctx.enqueue?.(action);
   };
   completeGuardBreak(ctx, source, target, carrier, receipt);
   const counter = receipt.counter;
@@ -501,7 +501,7 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
   if (payload.hp > 0) enqueue({ op: 'damage', amount: payload.hp });
   if (payload.poise > 0) enqueue({ op: 'poiseDamage', amount: payload.poise });
   if (payload.ward > 0) enqueue({ op: 'wardDamage', amount: payload.ward });
-  if (ctx.reactionRulesVersion === 1 && queue.length) {
+  if (ctx.reactionRulesVersion >= 1 && queue.length) {
     const group = enqueueExpandedAction(ctx, queue, { source: target, target: source, carrier: queue[0].card });
     if (group) group.counterReturn = event;
   } else ctx.emit?.('combatCounterTriggered', event);

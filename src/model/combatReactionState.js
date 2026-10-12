@@ -2,6 +2,8 @@ const record = value => !!value && typeof value === 'object' && !Array.isArray(v
 const text = value => typeof value === 'string' && value.length > 0;
 const queued = value => Array.isArray(value) && value.every(action => record(action) && record(action.effect) && text(action.effect.op));
 
+import { reactionRulesProblems } from '../content/combatCardTraits.js';
+
 export function combatReactionProblems(state, { ownerIds = new Set(['player']), queue = state.abilityQueue || state.queue || [] } = {}) {
   const problems = [];
   const fields = ['pendingReaction', 'reactionResume', 'reactionCursor', 'reactionHandCleanup'];
@@ -9,7 +11,9 @@ export function combatReactionProblems(state, { ownerIds = new Set(['player']), 
     if (fields.some(field => state[field] !== undefined)) problems.push('Paused reaction requires its carried rules');
     return problems;
   }
-  if (state.reactionRulesVersion !== 1 || (state.sharedExpansionVersion || state.combatExpansionVersion) !== 2) problems.push('Reaction rules require expanded combat');
+  if (![1, 2].includes(state.reactionRulesVersion) || (state.sharedExpansionVersion || state.combatExpansionVersion) !== 2) problems.push('Reaction rules require expanded combat');
+  if (state.reactionRulesVersion === 2) problems.push(...reactionRulesProblems(state.reactionRules).map(problem => `Reaction rules: ${problem}`));
+  else if (state.reactionRules !== undefined) problems.push('Reaction rules tuning requires reaction rules version 2');
   if (state.foundationNextSerial !== undefined && (!Number.isSafeInteger(state.foundationNextSerial) || state.foundationNextSerial < 0)) problems.push('Invalid reaction foundation serial');
   if (state.reactionCursor !== undefined && (!record(state.reactionCursor) || !Number.isSafeInteger(state.reactionCursor.index)
     || state.reactionCursor.index < 0 || state.reactionCursor.index >= state.enemies.length

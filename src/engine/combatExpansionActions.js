@@ -18,7 +18,7 @@ export function effectCarrier(carrier, effect) {
   return merged;
 }
 export function enqueueExpandedAction(ctx, actions, { source, target, carrier } = {}) {
-  if (ctx.combatExpansionVersion !== 2 || (carrier?.combatReaction && ctx.reactionRulesVersion !== 1)) {
+  if (ctx.combatExpansionVersion !== 2 || (carrier?.combatReaction && !(ctx.reactionRulesVersion >= 1))) {
     for (const action of actions) ctx.enqueue(action);
     return null;
   }

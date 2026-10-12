@@ -1380,7 +1380,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (combatLayout) combatLayout.release();
     combatLayout = wireCombatLayout(app.querySelector('.combat'));
     combatTools?.release();
-    const updateTools = () => combatTools.update(combatToolsModel({ supported: sc.reactionRulesVersion === 1,
+    const updateTools = () => combatTools.update(combatToolsModel({ supported: sc.reactionRulesVersion >= 1,
       enabled: meP?.reactionsEnabled !== false, disabled: busy() || sc.phase !== 'player' || !!sc.reactionWaiting
         || !meP?.connected || !meP?.alive || !!meP?.pendingAbilityDiscard,
       ...combatToolsState, entries: sc.combatLog || [] }));

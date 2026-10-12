@@ -1123,7 +1123,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   function renderCombatTools() {
-    combatTools.update(combatToolsModel({ supported: combat.reactionRulesVersion === 1,
+    combatTools.update(combatToolsModel({ supported: combat.reactionRulesVersion >= 1,
       enabled: combat.player.reactionsEnabled !== false,
       disabled: busy || combat.phase !== 'player' || !!combat.pendingAbilityDiscard || !!combat.pendingReaction,
       ...combatToolsState, entries: combatLogEntries(combat.eventLog.slice(0, disp?.logLength ?? combat.eventLog.length),

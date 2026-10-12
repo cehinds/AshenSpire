@@ -8,7 +8,10 @@ import { upcastOptions } from '../model/upcasting.js';
 import { controlRestrictions } from './combatStatusControl.js';
 import { cardTargetPlan } from '../model/cardTargets.js';
 
-export const usesReactions = ctx => ctx.reactionRulesVersion === 1;
+// Reaction rules: 1 = one reaction per root; 2 = card traits plus the reaction stack.
+export const usesReactions = ctx => ctx.reactionRulesVersion >= 1;
+export const stackedReactions = ctx => ctx.reactionRulesVersion === 2;
+export const cardTraitsActive = ctx => ctx.reactionRulesVersion === 2;
 export const reactionPaused = ctx => !!(ctx.pendingReaction || ctx.reactionResume || ctx.pendingAbilityDiscard);
 
 export function setReactionsEnabled(ctx, entity, enabled) {

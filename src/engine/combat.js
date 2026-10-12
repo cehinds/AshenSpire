@@ -1,6 +1,7 @@
 import { combatMatchups, combatIntent, combatExpansionMatchups } from '../content/combatMatchups.js';
 import { combatStatusRules } from '../content/combatStatusRules.js';
 import { ASHEN_BLIGHT_RULES } from '../content/ashenBlight.js';
+import { reactionRulesSnapshot } from '../content/combatCardTraits.js';
 import { createAshenBlightState, effectiveAshenBlightAttributes, ashenBlightBonuses } from '../model/ashenBlight.js';
 import { resolveCombatCard } from './combatExpansion.js';
 import * as Control from './combatStatusControl.js';
@@ -139,12 +140,14 @@ export function createCombat({
   // null — every recovery setting at its default — keeps the idle-Stamina rule
   // below and writes no recovery state into the fight or its save.
   recoveryRules = null,
-  knowledge = null, reactionRulesVersion = null,
+  knowledge = null, reactionRulesVersion, reactionRules = null,
   // SPEC §14.1 Play in deck order: read once by the caller (runCombat.js) and
   // carried on the fight as `orderedDraw`, so a saved fight keeps its rule.
   orderedDraw = false,
   combatExpansionVersion = 1, combatExpansionRules = null, combatKey = 'headless',
 }) {
+  // New expanded fights carry reaction rules version 2; null (saved or explicit) stays without reactions.
+  const reactionVersion = reactionRulesVersion === undefined ? (combatExpansionVersion === 2 ? 2 : null) : reactionRulesVersion;
   // Run creation owns derived Mana. Older headless fixtures without a Mana
   // pool get a harmless zero pool; class data is never a fallback authority.
   const maxMana = Number.isFinite(player.maxMana) ? player.maxMana : 0;
@@ -187,7 +190,7 @@ export function createCombat({
     ...(handRules ? { handRules: structuredClone(handRules), pendingDiscardDraw: 0 } : {}),
     ...(recoveryRules ? { recovery: newRecoveryState(recoveryRules) } : {}),
     foundation: F.createFoundation(ruleset, combatProfiles, registries),
-    ...(reactionRulesVersion === 1 && combatExpansionVersion === 2 ? { reactionRulesVersion: 1 } : {}),
+    ...(reactionVersion >= 1 && combatExpansionVersion === 2 ? { reactionRulesVersion: reactionVersion, ...(reactionVersion === 2 ? { reactionRules: reactionRulesSnapshot(reactionRules) } : {}) } : {}),
     registries,
     equipmentProfileRuleSnapshot,
     // Carried from the run so a mid-combat swap can restamp against the quota
