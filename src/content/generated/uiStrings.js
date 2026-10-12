@@ -9073,5 +9073,40 @@ export const uiStrings = [
     "short": "{stance} ?",
     "full": "",
     "tip": ""
+  },
+  {
+    "id": "strings.error.noId",
+    "extends": "",
+    "short": "uiStrings: a row has no id",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "strings.error.duplicateId",
+    "extends": "",
+    "short": "uiStrings: duplicate id '{id}'",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "strings.error.unknownId",
+    "extends": "",
+    "short": "uiStrings: unknown id '{id}'",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "strings.error.extendsCycle",
+    "extends": "",
+    "short": "uiStrings: extends cycle {chain}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "strings.error.noForm",
+    "extends": "",
+    "short": "uiStrings: '{id}' has no {form} form",
+    "full": "",
+    "tip": ""
   }
 ];
