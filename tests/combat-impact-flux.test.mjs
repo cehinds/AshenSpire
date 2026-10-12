@@ -194,6 +194,12 @@ test('Counterstrike scales the authored hp base, not its rating bonus or other b
   assert.equal(traited.hp, 19);
 });
 
+test('Counterstrike scales only the authored Counter Poise, not a charge on top', () => {
+  // poise 6 = authored 4 + a 2-Poise Break charge. 75% (Counter vs Attack): 4 -> 7, charge 2 unscaled -> 9.
+  const traited = counterReturn({ traitValues: { counterstrike: true }, payload: { hp: 0, poise: 6, ward: 0, poiseBase: 4 } });
+  assert.equal(traited.poise, 9);
+});
+
 test('Impact gives N reply Poise to a Counter whose return has none', () => {
   const traited = counterReturn({ traitValues: { impact: 2, flux: 1 }, payload: { hp: 10, poise: 0, ward: 0 } });
   assert.equal(traited.poise, 2);
