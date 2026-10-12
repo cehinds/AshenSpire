@@ -122,6 +122,19 @@ export function horizonCameraGround(device, { height, scale, share }) {
   return share * height + (device.groundAnchor * device.height - horizon) * scale;
 }
 
+// The field-local y of the desktop standing area's top when the camera frames
+// the horizon at `share`. fitAlternativeBackdrop lifts the camera onto the
+// farthest-back foot line, so a shared back row that stands above this line
+// would push the horizon off the field; the stage keeps that row at or below it.
+export function desktopHorizonFloor(device, { width, height, share }) {
+  const landmark = device.layers?.find(layer => /landmark/.test(layer.id));
+  if (!landmark || !(width > 0) || !(height > 0) || !Number.isFinite(share)) return undefined;
+  const scale = Math.max(width / device.width, height / device.height);
+  const horizon = landmark.y + LANDMARK_HORIZON_SHARE * landmark.height;
+  const standingTop = device.standingArea?.y ?? device.groundAnchor;
+  return share * height + (standingTop * device.height - horizon) * scale;
+}
+
 export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground, standGround, narrow, horizonShare, coverFloor = false }) {
   const backdrop = combat.querySelector('.alternative-backdrop');
   const scene = alternativeArtCatalog.scenes[backdrop?.dataset.scene];

@@ -70,3 +70,27 @@ test('the stage frames the desktop camera on the horizon share and nothing else'
   const stage = readFileSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url), 'utf8');
   assert.match(stage, /horizonShare: document\.documentElement\.dataset\.formFactor === 'desktop' \? DESKTOP_HORIZON_SHARE : undefined/);
 });
+
+// Codex P2 (2026-10-12): at 1280x720 the field is about 297px high. A shared
+// back row standing above the standing area lifted the camera, pushing the
+// horizon above the field. The standing-area floor keeps the clamp a no-op.
+test('at 1280x720 the desktop horizon stays 10-30% down, and the standing floor keeps the row on the floor', async () => {
+  const { alternativeArtCatalog } = await import('../src/ui/alternativeArtCatalog.js');
+  const { horizonCameraGround, desktopHorizonFloor, LANDMARK_HORIZON_SHARE } = await import('../src/ui/alternativeArt.js');
+  const device = alternativeArtCatalog.scenes['pale-marches-2'].devices.desktop;
+  const width = 1280, height = 297, share = .2;
+  const scale = Math.max(width / device.width, height / device.height);
+  const landmark = device.layers.find(layer => /landmark/.test(layer.id));
+  const horizonCanvas = landmark.y + LANDMARK_HORIZON_SHARE * landmark.height;
+  const horizonGround = horizonCameraGround(device, { height, scale, share });
+  const horizonOnField = frame => (frame - device.groundAnchor * device.height * scale + horizonCanvas * scale) / height;
+  assert.ok(horizonOnField(horizonGround) >= .1 && horizonOnField(horizonGround) <= .3, `horizon at ${horizonOnField(horizonGround)}`);
+  // The fitAlternativeBackdrop clamp: the camera may not frame below the standing area's top.
+  const standingTop = device.standingArea.y;
+  const clampLimit = (standing) => standing + (device.groundAnchor - standingTop) * device.height * scale;
+  const floor = desktopHorizonFloor(device, { width, height, share });
+  assert.ok(Math.abs(clampLimit(floor) - horizonGround) < 1e-9, 'the floor is exactly where the horizon framing stops being clamped');
+  // A back row at or below the floor leaves the horizon where the share puts it.
+  assert.ok(Math.min(horizonGround, clampLimit(floor + 10)) === horizonGround, 'a lower row no longer lifts the horizon');
+  assert.ok(horizonOnField(Math.min(horizonGround, clampLimit(180))) < .1, 'the old 180px row lifted the horizon off the top, as Codex measured');
+});
