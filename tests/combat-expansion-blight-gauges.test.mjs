@@ -27,6 +27,21 @@ test('the decay spell rider uses the curse recovery profile', () => {
   assert.equal(rider.recoveryProfile, 'curse');
 });
 
+for (const id of ['plagueBearer', 'blightwardLash', 'scourge', 'witheringTouch', 'rotMote']) {
+  test(`decay card ${id} that prints Crimson Blight adds no automatic Necrotic Blight`, () => {
+    const card = applyCombatExpansionCard(cards.get(id));
+    assert.equal(buildupStatuses(card.effects).includes('necroticBlight'), false, id);
+    if (card.upgrade?.effects) assert.equal(buildupStatuses(card.upgrade.effects).includes('necroticBlight'), false, `${id} upgrade`);
+  });
+}
+
+test('v2 Blight Bloom doubles Necrotic Blight through the gauge, like Crimson', () => {
+  const card = applyCombatExpansionCard(cards.get('blightBloom'));
+  const statuses = buildupStatuses(card.effects);
+  assert.ok(statuses.includes('crimsonBlight') && statuses.includes('necroticBlight'), JSON.stringify(statuses));
+  assert.equal(card.effects.some(effect => effect.op === 'applyStatus' && effect.status === 'necroticBlight'), false);
+});
+
 test('a card that prints Crimson Blight keeps its printed Crimson Blight buildup', () => {
   const card = applyCombatExpansionCard(cards.get('rotMote'));
   assert.ok(buildupStatuses(card.effects).includes('crimsonBlight'));
