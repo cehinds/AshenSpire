@@ -503,12 +503,10 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
 }
 
 /**
- * Tooltip HTML previewing what a card becomes when Smithed: current text in
- * muted, upgraded text below with changed values highlighted green/red (the
- * same up/down coloring cards use in play). All numbers come from the defs.
+ * cardPlainText(registries, ref) → the card's effect text as a plain string:
+ * the same template the face fills, with tags stripped. Pure string work, no
+ * DOM, so it runs the same headless and in a browser.
  */
-/** cardPlainText(registries, ref) → the card's rules text as plain text (the
- * same template the face fills, tags stripped), for labels beside a face. */
 export function cardPlainText(registries, ref) {
   const def = resolveCard(registries, ref);
   // Plain string work only: no DOM, so it runs the same headless and in a
@@ -520,6 +518,11 @@ export function cardPlainText(registries, ref) {
     .replace(/\s+/g, ' ').trim();
 }
 
+/**
+ * Tooltip HTML previewing what a card becomes when Smithed: current text in
+ * muted, upgraded text below with changed values highlighted green/red (the
+ * same up/down coloring cards use in play). All numbers come from the defs.
+ */
 export function upgradePreviewHtml(registries, ref) {
   const base = resolveCard(registries, { ...ref, upgraded: false });
   const upg = resolveCard(registries, { ...ref, upgraded: true });
