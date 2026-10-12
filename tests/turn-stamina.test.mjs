@@ -142,7 +142,7 @@ test('gain and recovery effects share the same turn budget, including overflow',
 test('Mana remains a separate payment and Power reductions affect the one stamina cost', () => {
   const c = fight();
   // A 1 SP + 1 MP spell under the cost formula (SPEC §4.3a); Gorefire Slash, the old fixture, pays no Mana now.
-  c.piles.hand = [{ instanceId: 'spell', cardId: 'starstonePebble', upgraded: false }];
+  c.piles.hand = [{ instanceId: 'spell', cardId: 'blightTouch', upgraded: false }];
   c.player.mana = 0;
   assert.throws(() => dispatch(c, { type: 'playCard', cardInstanceId: 'spell', targetId: 'e1' }), /mana/);
   assert.equal(c.player.stamina, 3);

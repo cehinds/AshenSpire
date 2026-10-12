@@ -17,8 +17,9 @@ const authoredOf = (cardId) => registries.cards.get(cardId);
 const amountOf = (def, op, at = 0) => def.effects.filter((e) => e.op === op)[at]?.amount;
 
 test('a plain attack and a plain block cost 1 SP and no Mana, whatever the authored cost said', () => {
+  // The authored cost is not an input: Executioner (authored 2) is priced by its damage and tags.
   assert.equal(authoredOf('executioner').cost, 2, 'fixture: an authored 2-cost plain attack');
-  assert.equal(cardOf('executioner').cost, 1, 'the formula prices it at 1 SP');
+  assert.equal(cardOf('executioner').cost, cardCostBudget(authoredOf('executioner')).sp, 'the formula prices it');
   for (const id of ['strike', 'defend']) {
     assert.equal(cardOf(id).cost, 1, id);
     assert.equal(cardOf(id).manaCost || 0, 0, `${id} is physical: no Mana`);

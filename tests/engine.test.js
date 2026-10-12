@@ -1783,7 +1783,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(!badCost.ok && badCost.errors.some((e) => e.path === 'cards.gorefireSlash.manaCost'), 'negative manaCost cannot mint mana');
 
     // A spell the cost formula prices at 1 MP (SPEC §4.3a). Gorefire Slash, the old fixture, is physical now: 0 MP.
-    const spend = makeCombat({ deck: Array(5).fill('starstonePebble'), enemies: ['tGiant'], mana: 2, maxMana: 2, stamina: 2 });
+    const spend = makeCombat({ deck: Array(5).fill('cometFragment'), enemies: ['tGiant'], mana: 2, maxMana: 2, stamina: 2 });
     const sig = spend.piles.hand[0];
     const pv = previewCard(spend, sig.instanceId);
     eq(pv.manaCost, 1, 'preview exposes the same mana cost execution charges');
@@ -1791,7 +1791,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(spend.player.mana, 1, 'a 1-MP spell spends 1 mana');
     assert(logOf(spend, 'manaSpent').some((e) => e.amount === 1), 'mana spend emits a receipt');
 
-    const empty = makeCombat({ deck: Array(5).fill('starstonePebble'), enemies: ['tGiant'], mana: 0, maxMana: 3, stamina: 3 });
+    const empty = makeCombat({ deck: Array(5).fill('cometFragment'), enemies: ['tGiant'], mana: 0, maxMana: 3, stamina: 3 });
     empty.player.mana = 0;
     const beforeHand = empty.piles.hand.length;
     let refused = '';

@@ -29,8 +29,9 @@ test('each rank past 1 adds 1 to the primary number, on play and on the face ali
   assert.notEqual(resolveCard(registries, { cardId: 'strike', rank: 2 }), ranked, 'each rank is its own cached face');
   const defend = resolveCard(registries, { cardId: 'defend', rank: 2 });
   assert.equal(defend.effects[primaryEffectIndex(defend)].amount, resolveCard(registries, { cardId: 'defend' }).effects[0].amount + 1);
-  const upgraded = resolveCard(registries, { cardId: 'strike', upgraded: true, rank: 3 });
-  assert.equal(upgraded.effects[i].amount, resolveCard(registries, { cardId: 'strike', upgraded: true }).effects[i].amount + 2, 'the rank stacks on the upgrade');
+  const upgraded = resolveCard(registries, { cardId: 'strike', upgraded: true, rank: 2 });
+  assert.equal(upgraded.cost, resolveCard(registries, { cardId: 'strike', upgraded: true }).cost, 'fixture: the same SP cost at rank 2');
+  assert.equal(upgraded.effects[i].amount, resolveCard(registries, { cardId: 'strike', upgraded: true }).effects[i].amount + 1, 'the rank stacks on the upgrade');
   const model = playingCardModel(registries, { cardId: 'strike', rank: 3 });
   assert.equal(model.rank, 3);
   assert.equal(model.tokens.damage, strike.effects[i].amount + 2, 'the face text reads the ranked number');
@@ -106,6 +107,8 @@ test('a skill draft offers each card at its rolled rank, and the taken card keep
 });
 
 const amountAt = (cardId, rank, index) => resolveCard(registries, { cardId, rank }).effects[index];
+// An authored number as the face at `rank` prints it before the rank lands: scaled when that face costs 2 SP or more.
+const scaledAt = (cardId, rank, n) => (resolveCard(registries, { cardId, rank }).cost >= 2 ? Math.round(n * TWO_COST_EFFECT_MULTIPLIER) : n);
 
 test('the primary number is what the card is for, never a cost or tempo', () => {
   // A blood price stays the price: the damage ranks, the HP cost does not.
@@ -116,13 +119,12 @@ test('the primary number is what the card is for, never a cost or tempo', () => 
   // A status card ranks its stacks, not its rider draw.
   assert.deepEqual([amountAt('warcry', 3, 0).stacks, amountAt('warcry', 3, 1).amount], [3, 1]);
   // Block outranks nothing but damage: a formula-damage attack ranks its Block.
-  // At rank 4 shieldCrash costs 2 SP (SPEC §4.3a), so its Block 5 scales by the multiplier first: round(5 × 1.8) + 3.
-  assert.equal(resolveCard(registries, { cardId: 'shieldCrash', rank: 4 }).cost, 2);
-  assert.equal(amountAt('shieldCrash', 4, 0).amount, Math.round(5 * TWO_COST_EFFECT_MULTIPLIER) + 3);
+  // A face at 2 SP or more (SPEC §4.3a: rank weighs on the Stamina side) scales its Block 5 by the multiplier first.
+  assert.equal(amountAt('shieldCrash', 4, 0).amount, scaledAt('shieldCrash', 4, 5) + 3);
 });
 
 test('a multi-hit effect splits its rank across its hits, rounded up', () => {
-  assert.equal(amountAt('thousandCutsRogue', 2, 0).amount, 3, 'one step still shows a gain');
+  assert.equal(amountAt('thousandCutsRogue', 2, 0).amount, scaledAt('thousandCutsRogue', 2, 2) + 1, 'one step still shows a gain');
   // A rank-10 face costs more SP (SPEC §4.3a); a 2-SP-or-more face scales its base before the rank lands.
   const scaledBase = resolveCard(registries, { cardId: 'thousandCutsRogue', rank: 10 }).cost >= 2 ? Math.round(2 * TWO_COST_EFFECT_MULTIPLIER) : 2;
   assert.equal(amountAt('thousandCutsRogue', 10, 0).amount, scaledBase + Math.ceil(9 / 6));

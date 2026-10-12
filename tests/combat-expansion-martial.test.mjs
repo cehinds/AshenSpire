@@ -127,8 +127,8 @@ test('Shield Bash is Counter with authored Block and Poise instead of immediate 
   const carrier = tacticalCarrier(def, { cardId: def.id, type: def.type });
   const support = prepareTacticalCard(f.ctx, f.target, f.source, carrier, def.effects);
   assert.equal(combatProfileFor(def).maneuver, 'counter');
-  // Shield Bash's reply is 4 plus the 2 its scaled damage gains at 2 SP (3 to 5), so 6 (SPEC action costs).
-  assert.deepEqual(f.target.combatCounter.payload, { hp: 0, poise: 6, ward: 0, smashPoiseBonus: 2 });
+  // Shield Bash costs 1 SP under the cost formula (SPEC §4.3a), so its reply is the authored 4.
+  assert.deepEqual(f.target.combatCounter.payload, { hp: 0, poise: 4, ward: 0, smashPoiseBonus: 2 });
   assert.deepEqual(support, [{ op: 'block', target: 'self', amount: 5 }]);
   assert.equal(def.ratingId, 'dr');
 });

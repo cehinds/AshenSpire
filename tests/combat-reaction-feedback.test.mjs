@@ -258,7 +258,7 @@ test('mixed-version co-op reports an expanded seat reaction using that seat\'s c
   endTurn(combat, 'expanded');
   endTurn(combat, 'legacy');
   assert.deepEqual(unavailable(combat.eventLog), [{ ownerId: 'expanded', sourceId: 'e1', reason: 'cost',
-    cardId: 'whirlingGuard', cardIds: ['whirlingGuard'], attackKind: 'sweep', resource: 'stamina', need: 1, have: 0 }]);
+    cardId: 'whirlingGuard', cardIds: ['whirlingGuard'], attackKind: 'sweep', resource: 'stamina', need: 2, have: 0 }]); // Whirling Guard: 2 SP under the cost formula (SPEC §4.3a)
 });
 
 const guardBroken = events => events.filter(event => event.type === 'combatGuardBroken').map(({ type, ...payload }) => payload);

@@ -19,12 +19,12 @@
 
 // ---- Player cards: the budget tunables -------------------------------------------------------------------------
 export const COST_BUDGET = Object.freeze({
-  spDivisor: 4,           // D: S_sp points per Stamina (the owner leaned to 6; calibrated to 4, see COST-WEIGHTS.md)
-  mpDivisor: 5,           // P: S_mp points per Mana (configurable apart from D)
-  damageWeight: 0.5,      // points per damage step reached (damageSteps); raw damage would swamp the tags
-  damageSteps: Object.freeze([1, 6, 12, 20, 30]), // damage thresholds (hits counted); empty = linear damage × damageWeight
+  spDivisor: 6,           // D: S_sp points per Stamina (the owner's ruling, 2026-10-12: "use D as 6")
+  mpDivisor: 6,           // P: S_mp points per Mana (configurable apart from D; equal to it today)
+  damageWeight: 1.5,      // points per damage step reached (damageSteps); raw damage would swamp the tags
+  damageSteps: Object.freeze([1, 3, 5, 8, 12]), // damage thresholds (hits counted); empty = linear damage × damageWeight
   rankWeight: 1,          // points per rank above the base (a base card, rank 0, adds nothing); SP side
-  castingEffortWeight: 4, // points on any cast card (camp:spell or maneuver:casting); SP side
+  castingEffortWeight: 6, // points on any cast card (camp:spell or maneuver:casting); SP side
   restoreWeight: 1,       // points per Mana restored (SP side) or Stamina restored (MP side)
   twoCostMultiplier: 1.8, // a card whose derived SP is 2 or more multiplies its effect amounts by this
 });
@@ -33,9 +33,9 @@ export const COST_BUDGET = Object.freeze({
 // does not carry, or that this table does not list, adds nothing. Range tags are priced by RANGE_WEIGHTS instead.
 export const COST_TAGS = Object.freeze({
   // Damage types
-  'damage:slashing': { weight: 1, side: 'sp' },
-  'damage:piercing': { weight: 1, side: 'sp' },
-  'damage:blunt': { weight: 1, side: 'sp' },
+  'damage:slashing': { weight: 0, side: 'sp' },
+  'damage:piercing': { weight: 0, side: 'sp' },
+  'damage:blunt': { weight: 0, side: 'sp' },
   'damage:fire': { weight: 0, side: 'mp' },
   'damage:frost': { weight: 0, side: 'mp' },
   'damage:lightning': { weight: 0, side: 'mp' },
@@ -44,7 +44,7 @@ export const COST_TAGS = Object.freeze({
   'damage:decay': { weight: 0, side: 'mp' },
   // Camps and sources
   'camp:physical': { weight: 2, side: 'sp' },
-  'camp:spell': { weight: 2, side: 'mp' },
+  'camp:spell': { weight: 3, side: 'mp' },
   'source:weapon': { weight: 0, side: 'sp' },
   'source:spell': { weight: 0, side: 'mp' },
   'source:unarmed': { weight: 0, side: 'sp' },
@@ -52,7 +52,7 @@ export const COST_TAGS = Object.freeze({
   'maneuver:attack': { weight: 0, side: 'sp' },
   'maneuver:defend': { weight: 0, side: 'sp' },
   'maneuver:ranged': { weight: 1, side: 'sp' },
-  'maneuver:counter': { weight: 2, side: 'sp' },
+  'maneuver:counter': { weight: 0, side: 'sp' },
   'maneuver:smash': { weight: 3, side: 'sp' },
   'maneuver:sweep': { weight: 3, side: 'sp' },
   'maneuver:casting': { weight: 0, side: 'mp' },
@@ -78,7 +78,7 @@ export const COST_TAGS = Object.freeze({
   'school:decay': { weight: 3, side: 'mp' },
   // Weapon and theme chips (card domain)
   blade: { weight: 1, side: 'sp' },
-  heavy: { weight: 1, side: 'sp' },
+  heavy: { weight: 2, side: 'sp' },
   pierce: { weight: 1, side: 'sp' },
   precision: { weight: 1, side: 'sp' },
   guard: { weight: 0, side: 'sp' },
@@ -97,7 +97,7 @@ export const COST_TAGS = Object.freeze({
   ritual: { weight: 0, side: 'sp' },
   blight: { weight: 0, side: 'sp' },
   // Techniques
-  'technique:heavy': { weight: 1, side: 'sp' },
+  'technique:heavy': { weight: 2, side: 'sp' },
   'technique:cleave': { weight: 1, side: 'sp' },
   'technique:precision': { weight: 1, side: 'sp' },
   'technique:counter': { weight: 1, side: 'sp' },

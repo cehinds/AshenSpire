@@ -289,8 +289,8 @@ function scriptedLog(seed, classId = 'reaver', enemyIds = [ENEMY]) {
 
 test('with the preview off, a scripted fight event log is byte-identical to the recorded golden', () => {
   const all = [1, 2, 3].map((s) => scriptedLog(s)).join('\n');
-  assert.equal(createHash('sha256').update(all).digest('hex'), '2de6fed4076ccceaad0ff69423c47a8770aeae1df27e776490f6d7ecb8b17972');
-  assert.equal(all.length, 258718);
+  assert.equal(createHash('sha256').update(all).digest('hex'), 'ea77f4a552f271deaf71eb45974cc96f4719dbbb2febaf1506f63ab2539565a4');
+  assert.equal(all.length, 299660);
 });
 
 // Review finding 1: a queued card that an earlier queued card removed from hand never resolves.

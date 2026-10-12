@@ -127,10 +127,10 @@ for (const isCoop of [false, true]) test(`${isCoop ? 'co-op' : 'solo'} Counter p
   applyStatus(c, enemy, 'vulnerable', 1);
   const preview = isCoop ? previewCoopCard(c, 'p1', 'card1', enemy.id) : previewCard(c, 'card1', enemy.id);
   const damage = preview.values.find(value => value.op === 'damage');
-  // spikedReprisal costs 2 SP under the cost formula (SPEC §4.3a): its 4 damage scales to 7.
-  assert.equal(damage.value, 7);
-  assert.equal(damage.perTarget[enemy.id], 7);
-  assert.deepEqual(damage.hitDamages, [7]);
+  // spikedReprisal costs 1 SP under the cost formula (SPEC §4.3a): its authored 4 damage.
+  assert.equal(damage.value, 4);
+  assert.equal(damage.perTarget[enemy.id], 4);
+  assert.deepEqual(damage.hitDamages, [4]);
   if (isCoop) playCard(c, 'p1', 'card1', enemy.id);
   else dispatch(c, { type: 'playCard', cardInstanceId: 'card1', targetId: enemy.id });
   const actor = isCoop ? c.players.get('p1').entity : c.player;
