@@ -17,7 +17,7 @@ export function creationFeatBrowserGroups(registries, run) {
     return { id: feat.id, name: feat.name,
       description: group === 'class' ? getFeatDescription(source, feat) : feat.description,
       group, trackId, trackLabel: trackId === 'character' ? 'Character' : labels.get(trackId) || trackId,
-      currentLevel, requiredLevel, locked: !unlocked && currentLevel < requiredLevel };
+      currentLevel, requiredLevel, unlockedByProfile: unlocked, locked: !unlocked && currentLevel < requiredLevel };
   };
   // main.rollLevelChoices offers the general catalogue at each earned
   // character level; birth is level 1, so its first level-up is level 2.
@@ -25,7 +25,8 @@ export function creationFeatBrowserGroups(registries, run) {
   const classRows = (source.classSkillFeats || []).filter(feat => feat.skillId === classTrack).map(feat => {
     const gates = (source.classMastery || []).filter(gate => gate.kind === 'feat' && gate.ref === feat.id && gate.classId === classId);
     const gateLevel = gates.length ? Math.min(...gates.map(gate => gate.level)) : 0;
-    const required = Math.max(feat.minLevel || 0, gateLevel);
+    // Mastery feat options use the authored gate instead of minLevel.
+    const required = gates.length ? gateLevel : (feat.minLevel || 0);
     const unlockedRows = masteryProfileFor(run).classMastery?.[classId]?.unlockedRows || [];
     const unlocked = hasClassMastery(run) && gates.some(gate => unlockedRows.includes(masteryRowId(gate)));
     return row(feat, 'class', classTrack, required, unlocked);
