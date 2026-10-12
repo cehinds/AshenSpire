@@ -367,6 +367,7 @@ test('briarCast with Block 2, Ward 3, Poise 5 takes no Ward and no Ward rating i
   const r = strike(enemyMoveCarrier('briarHermit', 'briarCast'), 5, { ward: 3, block: 2, poise: 5, damageTypeShares: {} });
   const d = hitOf(r);
   assert.equal(d.magicAmount, 0);
+  assert.equal(d.wardResisted, 0, 'a physical hit is not Ward-resisted, even where its physical part is reduced');
   assert.equal(d.wardAbsorbed, undefined, 'Ward is not spent');
   assert.equal(r.enemy.persistentWard.value, 3, 'Ward stays 3');
   const wardImpacts = r.events.filter(e => e.type === 'ratingImpact' && e.meter === 'ward');

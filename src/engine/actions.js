@@ -422,7 +422,8 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
   receipt.defendedAmounts = hits.map((hit, index) => physicalTyped[index] + magicLeft[index]);
   receipt.barrierSpentAmounts = barrierSpent;
   receipt.wardSpentAmounts = wardSpent;
-  receipt.resistedAmounts = receipt.amounts.map((amount, index) => Math.max(0, amount - receipt.defendedAmounts[index]));
+  // What Barrier and Ward kept of the magic part. A physical part's own reduction (its rating's mitigation, a resistance) is not Ward's.
+  receipt.resistedAmounts = hits.map((hit, index) => Math.max(0, hit.magic - magicLeft[index]));
   receipt.magicAmounts = magicTyped;
   receipt.physicalAmounts = physicalTyped;
   receipt.blockableAmounts = blockable;
