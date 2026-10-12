@@ -18,3 +18,12 @@ test('native feat layers preserve staged geometry and separate original art part
   }
  }
 }));
+test('a build without the staged feat PNGs falls back to the registered glyph emblem',()=>withKitDom(()=>{
+ const [id]=Object.keys(CREATION_FEAT_ART);
+ const node=creationFeatEmblem(id);
+ node.querySelector('img').dispatchEvent(new Event('error'));
+ assert.equal(node.querySelectorAll('img').length,0);
+ assert.ok(!node.classList.contains('cc-native-feat-emblem'));
+ assert.ok(node.querySelector('.cc-feat-medallion-trim'));
+ assert.equal(node.dataset.feat,id);
+}));
