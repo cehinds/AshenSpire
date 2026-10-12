@@ -67,7 +67,16 @@
       },
       "bodyWidthFraction": 0.8,
       "bodyWidthMaxPx": 180,
-      "playerBelowFootPx": 32
+      "playerBelowFootPx": 32,
+      "shortBelowPx": 280,
+      "short": {
+        "left": 0.2,
+        "right": 0.8,
+        "enemyTop": 0.56,
+        "enemyRowHeight": 0.12,
+        "playerTop": 0.8,
+        "playerRowHeight": 0.2
+      }
     }
   }
 }

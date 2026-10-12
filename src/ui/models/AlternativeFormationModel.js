@@ -17,7 +17,9 @@ export function perspectiveLanePattern(count, lanes) {
 // back rank first, then the front rank; the player's party shares one rank.
 // Cell IDs stay gameplay addresses: column = depth (outer = back), row = lane.
 export function alternativeFormation(plan, width, height, narrow) {
-  const profile = narrow ? GRID.narrow : GRID.wide;
+  // A short strip (landscape phone) has no room for depth above the bodies'
+  // overhead controls; its ranks sit low and close together.
+  const profile = height < GRID.shortBelowPx ? GRID.short : narrow ? GRID.narrow : GRID.wide;
   const lanes = plan.rows || 3;
   const laneWidth = width * (profile.right - profile.left) / lanes;
   const place = cell => {
@@ -28,12 +30,13 @@ export function alternativeFormation(plan, width, height, narrow) {
     const rank = enemy ? (cell.column === 0 ? 0 : 1) : 0;
     const lane = enemy ? cell.row : lanes - 1 - cell.row;
     const rowHeight = height * (enemy ? profile.enemyRowHeight : profile.playerRowHeight);
-    const top = height * (enemy ? profile.enemyTop : profile.playerTop) + rank * rowHeight;
-    const left = width * profile.left + lane * laneWidth;
+    const foot = rowHeight * (enemy ? GRID.footFraction.enemy : GRID.footFraction.player);
     // The player's name and meters sit below the feet; on a short field the
-    // party's foot line rises so they stay inside the battlefield.
-    const ground = enemy ? top + rowHeight * GRID.footFraction.enemy
-      : Math.max(top, Math.min(top + rowHeight * GRID.footFraction.player, height - GRID.playerBelowFootPx));
+    // party's rank rises, cell and shadow together, so they stay in the field.
+    const top = Math.min(height * (enemy ? profile.enemyTop : profile.playerTop) + rank * rowHeight,
+      enemy ? Infinity : height - GRID.playerBelowFootPx - foot);
+    const left = width * profile.left + lane * laneWidth;
+    const ground = top + foot;
     return { ...cell, side: enemy ? 'enemy' : 'player', lane, rank,
       formationRow: enemy && rank === 0 ? 'back-row' : 'front-row',
       x: left + laneWidth / 2, ground, fitGround: ground,
