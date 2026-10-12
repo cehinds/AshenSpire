@@ -627,6 +627,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       card.classList.toggle('selected', on);
       card.setAttribute('aria-pressed', String(on));
     });
+    // The preview's target outline follows the aimed card, which this sync is the one place that changes.
+    decorateRoundsScreen();
     const player = $('.combatant.player');
     player?.classList.toggle('armed', !!selfArm);
     if (player) { player.tabIndex = selfArm ? 0 : -1; player.setAttribute('aria-label', selfArm ? 'Play selected card on yourself' : 'Player information'); }

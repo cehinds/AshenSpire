@@ -50,7 +50,9 @@ export function decorateCombatRoundsScreen(root, combat, { armedCardId = null, t
       const colour = forecast?.foe ? targetOutline({ card, foe: forecast.foe, cardSpeed: forecast.cardSpeed,
         foeSpeed: forecast.foeSpeed, stage, stanceTable: forecast.stanceTable }) : null;
       if (colour) {
-        const art = [...box.querySelectorAll('.sprite img')].filter((node) => !node.closest('.aim-silho'));
+        // The visible art only: not the hidden aim copy, and not the foot shadow (which is not an image).
+        const art = [...box.querySelectorAll('.sprite img')].filter((node) => !node.closest('.aim-silho') && node.getClientRects().length > 0
+          && getComputedStyle(node).visibility !== 'hidden');
         const glyphs = intentEl ? [...intentEl.querySelectorAll('.intent-icon')] : [];
         for (const node of [...art, ...glyphs]) node.dataset.targetOutline = colour;
       }

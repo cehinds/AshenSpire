@@ -15,6 +15,10 @@
   filter: drop-shadow(0 calc(4px / var(--ui-zoom,1)) calc(5px / var(--ui-zoom,1)) rgba(0,0,0,.45));
 }
 
+/* The live blur halo behind an enemy being aimed at is replaced by the thin outline below (no glow or halo, owner
+   2026-10-12). Player-side aim glows are unchanged. */
+.combat[data-combat-rounds='preview'] .enemy .aim-silho { display: none; }
+
 /* Target outline (PREVIEW-PLAN, Screen): 1px, solid, hugging the sprite edge; no glow or halo beyond the
    wireframe's dark rim. The filter lists the four 1px edges, then the wireframe's dark rim. */
 .combat[data-combat-rounds='preview'] [data-target-outline='green'] {
@@ -40,17 +44,19 @@
 .cr-followup .intent-icon { width: 100%; height: 100%; }
 .cr-followup[data-unknown='true'] { color: #c88aeb; }
 
-/* Hand: a speed arrow against the targeted enemy (green faster, red slower), and the queue order. */
+/* Hand: a speed arrow against the targeted enemy (green faster, red slower) on the card's left edge, and the
+   queue order on its right edge. Both sit mid-height, clear of the energy badge at the top left and the key hint. */
 .combat[data-combat-rounds='preview'] .hand .card { position: relative; }
-.cr-speed { position: absolute; left: calc(6px / var(--ui-zoom,1)); top: calc(6px / var(--ui-zoom,1)); z-index: 4; pointer-events: none;
-  font: bold calc(20px / var(--ui-zoom,1))/1 Georgia, serif; text-shadow: 0 1px 2px #000; }
+.cr-speed { position: absolute; left: calc(4px / var(--ui-zoom,1)); top: 42%; z-index: 4; pointer-events: none;
+  min-width: calc(22px / var(--ui-zoom,1)); padding: calc(1px / var(--ui-zoom,1)) calc(3px / var(--ui-zoom,1)); border-radius: calc(4px / var(--ui-zoom,1));
+  text-align: center; background: rgba(12,9,5,.82); font: bold calc(34px / var(--ui-zoom,1))/1 Georgia, serif; text-shadow: 0 1px 2px #000; }
 .cr-speed[data-tone='faster'] { color: #5ccf6a; }
 .cr-speed[data-tone='slower'] { color: #ef4949; }
 .cr-queued::after { content: ''; position: absolute; inset: 0; z-index: 3; border-radius: inherit; background: rgba(0,0,0,.5); pointer-events: none; }
-.cr-queue { position: absolute; right: calc(6px / var(--ui-zoom,1)); top: calc(6px / var(--ui-zoom,1)); z-index: 5; pointer-events: none;
-  min-width: calc(20px / var(--ui-zoom,1)); height: calc(20px / var(--ui-zoom,1)); padding: 0 calc(4px / var(--ui-zoom,1)); border-radius: 999px;
-  display: inline-flex; align-items: center; justify-content: center; background: #16120b; border: 1px solid var(--gold);
-  color: var(--gold); font: bold calc(12px / var(--ui-zoom,1))/1 Georgia, serif; }
+.cr-queue { position: absolute; right: calc(4px / var(--ui-zoom,1)); top: 42%; z-index: 5; pointer-events: none;
+  min-width: calc(26px / var(--ui-zoom,1)); height: calc(26px / var(--ui-zoom,1)); padding: 0 calc(4px / var(--ui-zoom,1)); border-radius: 999px;
+  display: inline-flex; align-items: center; justify-content: center; background: #16120b; border: calc(2px / var(--ui-zoom,1)) solid var(--gold);
+  color: var(--gold); font: bold calc(16px / var(--ui-zoom,1))/1 Georgia, serif; box-shadow: 0 1px 4px #000; }
 
 /* Momentum on the turn banner: the outline and the tab for the targeted enemy. */
 .combat[data-combat-rounds='preview'] .turn-ribbon[data-momentum] { outline: calc(1px / var(--ui-zoom,1)) solid var(--cr-tone, #5ccf6a); outline-offset: calc(2px / var(--ui-zoom,1)); }
