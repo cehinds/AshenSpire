@@ -4,7 +4,7 @@ These previews compare image order using existing Reaver art plus the explicitly
 
 Open [the interactive player](index.html) through a local HTTP server. Play/pause, choose any numbered slot, step backward/forward, change speed, and copy the numbered order. The starting stance selector covers Attack, Smash, Counter, Defend, Evade and Sweep. “Show origin context” adds the chosen stance before/after the defense interior; the exact six-slot interior remains unchanged.
 
-All slots use **350 ms review timing at 1×**, including the six supplied attack images. This is not an authored gameplay timing claim. Speed scales the whole preview. Frames cut directly: no tween, invented transition, extra transition artwork or generated in-between pose is present.
+Impact reaction slots hold for **D×2, V×3, G×1, H×2, C×3, D×2**: six pose slots, **13 frame units** for P. Each review frame unit lasts **350 ms at 1×**. A/B each total14 units. Origin context, S, AT and EV slots each use one unit. This is not an authored gameplay timing claim. Speed scales the whole preview. The hold count describes exposure duration, not extra paintings. Frames cut directly: no tween, invented transition, extra transition artwork or generated in-between pose is present.
 
 ## All six starting stances
 
@@ -32,9 +32,9 @@ Guard, Parry and Resisted share one interior order; they are not separately conf
 
 | Variant | Defense interior (six numbered slots, including return) |
 | --- | --- |
-| **P · Your latest order** | **1 D → 2 V → 3 G → 4 H → 5 C → 6 D** |
-| A · Earlier counter-start alternative | 1 C → 2 V → 3 D → 4 H → 5 G → 6 C |
-| B · High-parry-first alternative | 1 C → 2 V → 3 H → 4 D → 5 G → 6 C |
+| **P · Your latest order** | **1 D×2 → 2 V×3 → 3 G×1 → 4 H×2 → 5 C×3 → 6 D×2** |
+| A · Earlier counter-start alternative | 1 C×3 → 2 V×3 → 3 D×2 → 4 H×2 → 5 G×1 → 6 C×3 |
+| B · High-parry-first alternative | 1 C×3 → 2 V×3 → 3 H×2 → 4 D×2 → 5 G×1 → 6 C×3 |
 
 ![P defense](renders/p-guard.gif)
 

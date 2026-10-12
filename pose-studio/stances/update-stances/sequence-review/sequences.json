@@ -83,5 +83,25 @@
     "AT6",
     "C"
   ],
-  "timingNote": "All defense, attack and return slots use 350 ms review timing at 1\u00d7. The six user-supplied attack images replace the earlier four-phase comparison. Speed scales the whole preview. Hard cuts only: no invented in-between poses. Evade shows the selected starting stance, EV1\u2013EV3, then the same starting stance."
+  "timingNote": "Impact reaction holds use the requested frame exposures: D\u00d72, V\u00d73, G\u00d71, H\u00d72, C\u00d73. P has six pose slots and 13 review frame units (350 ms/unit at 1\u00d7); A/B each have14. Origin context, S, AT and EV slots each use one350ms review unit. These are review timings, not new paintings or authored gameplay timings. Hard cuts only.",
+  "defenseHoldFrames": {
+    "D": 2,
+    "V": 3,
+    "G": 1,
+    "H": 2,
+    "C": 3
+  },
+  "attackLabels": [
+    "Smash05",
+    "Sweep20",
+    "Smash06",
+    "Sweep16",
+    "Evade15",
+    "Evade13"
+  ],
+  "evadeLabels": [
+    "Landing \u00b7 Evade16",
+    "Sword-front lean \u00b7 Evade11",
+    "Recovery \u00b7 Evade13"
+  ]
 }

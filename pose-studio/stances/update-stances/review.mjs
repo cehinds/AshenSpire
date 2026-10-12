@@ -30,14 +30,15 @@ const families = [
     names: ["Upright forward-horizontal side coil", "Shoulder-height lateral coil", "Forward-extended downward gate", "Upright low-side trail", "Wide lateral hip transfer", "Low forward downward hold", "Shoulder-high coil / lifted rear heel", "Compact low-waist cross coil", "Very wide low-forward sweep", "High-arc extended lunge"],
   },
   {
-    id: 'counter', title: 'Counter follow-up', description: "Ten generated interception-and-reply readiness concepts, numbered 11–20. Counter15 now uses an approved standalone two-hand replacement; the original board depiction is superseded.",
+    id: 'counter', title: 'Counter follow-up', description: "Ten generated interception-and-reply readiness concepts, numbered 11–20. The owner chose original board Counter15 for the sequence review; the two-hand replacement remains an unselected alternate.",
     numberOffset: 10, layout: PORTRAIT_LAYOUT, followup: true,
     sheets: ['greatsword-counter/sheet-a.png', 'greatsword-counter/sheet-b.png'],
     reviewStatuses: ['candidate', 'candidate'],
-    replacements: { 15: {
+    notes: { 15: 'Latest owner choice: original board figure, used as C in sequence review.' },
+    alternates: { 15: {
       imagePath: 'greatsword-counter/ct15-replacement.png', name: 'Two-hand low hanging cover', reviewStatus: 'candidate',
       sha256: '7a332139be986d3642ec72a2f99b51cc075ed8f41e926ea050c7c4188aae66ea',
-      supersededReason: 'The original board15 grip remains unclear. This approved single-figure source replaces only option15.',
+      supersededReason: 'Earlier director preference for a two-hand grip; the owner subsequently chose original board15. This alternate is not the active Counter source.',
     } },
     names: ["High hanging, down-right blade", "Low forward plough, up-right blade", "High point-forward horizontal side cover", "Lower wide chest-centered inclined barrier", "Rear-weighted low hanging", "Compact crown roof, horizontal blade", "Forward outside hanging cover, withdrawn torso", "Withdrawn point-on-line, sternum hilt", "Lower wide high hanging cover", "Outside diagonal cut-ready cover"],
   },
@@ -66,6 +67,7 @@ const STORAGE_KEY = 'ashenspire.update-stances.review.v1';
 const selections = new Set(confirmedRoles.keys());
 const sheetStates = new Map();
 const replacementStates = new Map();
+const alternateStates = new Map();
 const cards = new Map();
 const allOptions = families.flatMap(family => family.names.map((name, index) => {
   const number = family.numberOffset + index + 1;
@@ -78,6 +80,8 @@ const allOptions = families.flatMap(family => family.names.map((name, index) => 
     column: cell % family.layout.columns, row: Math.floor(cell / family.layout.columns),
     layout: family.layout, followup: !!family.followup,
     reviewStatus: replacement?.reviewStatus || family.reviewStatuses?.[Math.floor(index / 5)] || 'candidate',
+    alternate: family.alternates?.[number] || null,
+    ownerReviewChoice: family.id === 'counter' && number === 15,
     replacement, imagePath: replacement?.imagePath || family.sheets[Math.floor(index / 5)],
     revision: family.revisions?.[number] || null, note: family.notes?.[number] || null,
   };
@@ -215,17 +219,18 @@ function render() {
       sheetView.dataset.orientation = family.layout.orientation;
       const placeholder = node('p', 'source-placeholder', family.followup ? 'Source board not integrated yet · generation in progress.' : 'Source artwork is loading.');
       sheetView.append(placeholder); section.append(sheetView);
-      for (const option of allOptions.filter(option => option.sheet === path && option.replacement)) {
-        section.append(node('p', 'superseded-note', `Original board option${option.number} is superseded. ${option.replacement.supersededReason}`));
+      for (const option of allOptions.filter(option => option.sheet === path && (option.replacement || option.alternate))) {
+        const extra = option.replacement || option.alternate;
+        section.append(node('p', 'superseded-note', option.alternate ? `Original board option${option.number} is the owner-selected review source. ${extra.supersededReason}` : `Original board option${option.number} is superseded. ${extra.supersededReason}`));
         const figure = node('figure', 'replacement-source');
         const view = node('div', 'source-sheet'); view.dataset.orientation = 'portrait';
-        view.append(node('p', 'source-placeholder', 'Approved replacement is loading. Selection remains paused.'));
-        const caption = node('figcaption', '', `Option${option.number} replacement · ${option.name}. Full unchanged source figure; same option ID.`);
-        const link = node('a', '', 'Open replacement original'); link.href = option.replacement.imagePath; link.target = '_blank'; link.rel = 'noopener';
+        view.append(node('p', 'source-placeholder', option.alternate ? 'Unselected alternate is loading; original board selection is independent.' : 'Approved replacement is loading. Selection remains paused.'));
+        const caption = node('figcaption', '', option.alternate ? `Option${option.number} unselected alternate · ${extra.name}. Original board figure remains the active source.` : `Option${option.number} replacement · ${option.name}. Full unchanged source figure; same option ID.`);
+        const link = node('a', '', option.alternate ? 'Open unselected alternate' : 'Open replacement original'); link.href = extra.imagePath; link.target = '_blank'; link.rel = 'noopener';
         caption.append(document.createTextNode(' '), link);
-        const sourceStatus = node('p', 'sheet-status', 'Replacement loading · selection paused');
+        const sourceStatus = node('p', 'sheet-status', option.alternate ? 'Unselected alternate loading · original board selection is independent' : 'Replacement loading · selection paused');
         figure.append(view, caption, sourceStatus); section.append(figure);
-        replacementStates.set(option.id, { loaded: false, ready: false, view, status: sourceStatus });
+        (option.alternate ? alternateStates : replacementStates).set(option.id, { loaded: false, ready: false, view, status: sourceStatus });
       }
       const grid = node('div', 'concept-grid');
       grid.dataset.columns = family.layout.columns;
@@ -264,6 +269,14 @@ function loadSheets() {
       saveChoices(); updateChoices();
     };
     image.src = path;
+  }
+}
+function loadAlternates() {
+  for (const option of allOptions.filter(option=>option.alternate)) {
+    const state=alternateStates.get(option.id), image=new Image();
+    image.onload=()=>{state.loaded=true;image.className='source-image';image.alt=`Unselected alternate for option${option.number}: ${option.alternate.name}`;state.view.replaceChildren(image);state.status.textContent='Unselected alternate · original board remains the active source';};
+    image.onerror=()=>{state.status.textContent='Alternate unavailable · original board selection is independent';state.view.replaceChildren(node('p','source-placeholder','Unselected alternate unavailable.'));};
+    image.src=option.alternate.imagePath;
   }
 }
 function loadReplacements() {
@@ -318,4 +331,5 @@ document.querySelector('#sheet-dialog').addEventListener('click', event => {
   if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) event.currentTarget.close();
 });
 render(); loadSheets(); loadReplacements();
+loadAlternates();
 if (!storageAvailable) announce('Browser storage is unavailable; copy your choices before leaving.');

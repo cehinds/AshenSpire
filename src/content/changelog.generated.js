@@ -16,9 +16,9 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "id": "pr-1897",
     "date": "2026-10-12",
     "group": "2026-10-12",
-    "summary": "Thirty new greatsword concepts are available for review",
-    "detail": "Pose Studio now offers ten new Reaver greatsword choices each for Sweep, Counter and Evade, with labeled replacement figures where the original grip or boot needed repair. These are art-review concepts awaiting owner selection and runtime production.",
-    "build": "0.7.1.1421",
+    "summary": "Greatsword sequence orders can be compared before gameplay wiring",
+    "detail": "Labeled previews show the shared Guard / Parry / Resisted order, six supplied attack images, Counter extension and Evade from six starting stances, with pause/step controls, review timing, portable animations and exact source provenance. Thirty additional stance concepts remain available for review; no new gameplay sequence is registered.",
+    "build": "0.7.1.1423",
     "pullRequest": 1897,
     "url": "https://github.com/cehinds/AshenSpire/pull/1897"
   },
