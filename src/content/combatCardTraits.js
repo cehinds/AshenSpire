@@ -33,7 +33,7 @@ export function reactionRulesProblems(rules) {
   if (!record(impact) || !record(impact.base) || !tuned(impact.base.smash) || !tuned(impact.base.default) || !tuned(impact.perTwoTiers)) problems.push(`Impact tuning must be integers from 0 to ${TUNING_MAX}`);
   if (!record(flux) || !tuned(flux.base) || !tuned(flux.perTwoTiers)) problems.push(`Flux tuning must be integers from 0 to ${TUNING_MAX}`);
   if (!record(stack) || !Number.isSafeInteger(stack.maxDepth) || stack.maxDepth < 1 || stack.maxDepth > TUNING_MAX) problems.push(`Reaction stack maxDepth must be an integer from 1 to ${TUNING_MAX}`);
-  if (record(stack) && (!Number.isSafeInteger(stack.counterReturnMaxDepth) || stack.counterReturnMaxDepth < 1)) problems.push('Counter return maxDepth must be a positive integer');
+  if (record(stack) && stack.counterReturnMaxDepth !== 1) problems.push('Counter return maxDepth must be exactly 1');
   if (!record(advantage) || Object.values(advantage).some(list => !Array.isArray(list) || list.some(item => typeof item !== 'string'))) problems.push('Advantage map must map maneuvers to arrays of maneuvers');
   return problems;
 }
