@@ -4,6 +4,10 @@ Status: exploration only. Captures the owner's design of 2026-10-11. Nothing
 here is engine code, and no game content changes. The numbers in this file
 are the owner's unless marked TBD.
 
+The player-facing preview built on these notes is specified in
+[SPEC §4.11](../../SPEC.md) (Combat Rounds Preview); its owner decisions and
+phases are in [PREVIEW-PLAN.md](PREVIEW-PLAN.md).
+
 ## Goal
 
 Replace turn-by-turn exchange with a speed-ordered pairing. Each card the
@@ -44,10 +48,16 @@ The table of values lives in `speed-mods.csv`. The total is computed by
 - The slots form one queue for the round, in play order. Each slot names its
   enemy, so slots from different enemies can sit side by side in the queue.
   A slot's index is its position in that queue, from 0 to n-1.
-- Perception decides how many slots are visible to the player. The visible
-  slots are the first ones in play order, so perception is a count (a prefix
-  of the queue), not a set of chosen slots. Perception still hides details:
-  each visible slot is revealed only to the stage described below.
+- Perception decides how many actions are visible to the player. The visible
+  ones are a prefix, so perception is a count, not a set of chosen actions. Which
+  queue the prefix is taken from depends on the model:
+  - Slot model (`resolver.mjs` only): the prefix is of the combined cross-enemy
+    queue above, so the visible slots are its first ones in play order.
+  - Timeline model and the preview (SPEC §4.11): the prefix is per enemy. For
+    each enemy, perception reads the first 1 + Perception actions of that enemy's
+    own queue, in its play order.
+  Perception still hides details: each visible slot or action is revealed only
+  to the stage described below.
 - Visible slots show as action icons, in play order.
 - When the player plays a card, it is played against one of the enemy's
   queued slots (one of the visible ones, or any, see Open questions).
@@ -253,15 +263,16 @@ Computed by `cardHint()` in `resolver.mjs`. Terse spec, not final UI.
 
 - Border, per enemy:
   - green: the card is faster and its stance beats the enemy's (both advantages).
-  - yellow: one of the two.
-  - red: neither.
+  - yellow: one of the two is a player advantage.
+  - red: the card is slower and the enemy's stance beats the card's stance.
+  - none: any neutral or incomplete comparison not covered above.
   - blue: self-target card (skills). It highlights only the player.
 - Perception limits the hint (see Perception stages):
   - stage 0 and stage 1: speed and stance are not shown. The border is `grey`
     (unknown), and the speed delta and arrow are null.
   - stage 2: the stance is known, but speed is not. The border is yellow when
-    the card's stance has an advantage, otherwise red. Green is not possible,
-    and the speed delta and arrow are null.
+    the card's stance has an advantage, otherwise there is no outline. Green
+    and red are not possible, and the speed delta and arrow are null.
   - stage 3: the full border rules above, with speed and the arrow.
   - self-target (blue) cards: the speed delta is null below stage 3, as for
     other cards. A self-target card never shows an arrow.
@@ -281,6 +292,21 @@ Computed by `cardHint()` in `resolver.mjs`. Terse spec, not final UI.
   when slower.
 - Tapping a speed value shows the breakdown: base, weapon, armor, range, attack
   type, skill, initiative, and momentum (trunc(M_e / 2)).
+
+Target outline (`targetOutline()` in `resolver.mjs`, separate from the border above,
+which it does not change). It colours the target while a card is being chosen.
+Its speed is the plan-time EFFECTIVE timeline speed: `plannedQueueSpeeds()` in `timeline.mjs`
+gives each card's speed without the round's d4 (card speed, preemptive buff, DEX initiative
+base and momentum term, counted once), capped by the previous card in the same queue as
+`buildTimeline` caps it. A later card cannot forecast faster than an earlier one in its queue.
+The caller passes both speeds in, so the outline
+is a forecast: the d4 is rolled at round start, so the real order can differ by the d4
+gap. Each revealed dimension is an advantage, a disadvantage or neither: speed from
+stage 3 (the card's plan-time speed is higher, or lower), stance from stage 2 (the stance
+table gives the card the bonus, or the foe's stance does). Green is an advantage in both,
+yellow exactly one (even if the other is a disadvantage), red a disadvantage in
+both, and no outline otherwise. An unrevealed dimension counts as neither, and
+stage 0 and 1 give no outline. Self-target cards have none.
 
 ## Hit roll (owner-approved model, 2026-10-11)
 

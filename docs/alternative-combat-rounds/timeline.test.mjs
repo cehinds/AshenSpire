@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import * as timeline from './timeline.mjs';
 import {
   makeCombatant,
+  plannedSpeed,
   buildTimeline,
   createRound,
   makeFight,
@@ -13,7 +14,7 @@ import {
   adaptChance,
   MERGE_MODES,
 } from './timeline.mjs';
-import { parseStanceAdvantage, parseEvasionCards } from './resolver.mjs';
+import { parseStanceAdvantage, parseEvasionCards, targetOutline } from './resolver.mjs';
 
 // Rng helpers. d4 = floor(u*4)+1: u 0 -> 1, 0.3 -> 2, 0.5 -> 3, 0.75 -> 4.
 const constRng = (u) => () => u;
@@ -1371,4 +1372,173 @@ test('a reaction evade card in the table adds its Evasion to the attack it answe
   }).resolveAll();
   assert.equal(out.events.find((e) => e.type === 'hit').need, 10);
   assert.equal(out.events.some((e) => e.type === 'evadeRoll'), false);
+});
+
+test('plannedSpeed is the uncapped buildTimeline entry total minus its d4, for every entry of seeded fights', () => {
+  // Seeded LCG: each seed draws a different set of d4s, so the check covers many rolls.
+  const lcg = (seed) => () => {
+    seed = (seed * 1103515245 + 12345) % 2147483648;
+    return seed / 2147483648;
+  };
+  const momentum = { goblin: 2, wolf: -3 };
+  let checked = 0;
+  for (let seed = 1; seed <= 25; seed += 1) {
+    const combatants = {
+      player: makeCombatant({ id: 'player', attrs: { DEX: 7 }, hp: 20, sp: 4 }),
+      goblin: makeCombatant({ id: 'goblin', attrs: { DEX: 5 }, hp: 10, sp: 3 }),
+      wolf: makeCombatant({ id: 'wolf', attrs: { DEX: 2 }, hp: 8, sp: 3 }),
+    };
+    const queues = {
+      player: [atk('jab', 'goblin', 6), card('brace', 'counter', 'goblin', 2), card('ward', 'guard', 'self', 1), card('heal', 'other', 'self', 2)],
+      goblin: [atk('stab', 'player', 2), card('parry', 'counter', 'player', 3)],
+      wolf: [atk('bite', 'player', 1), atk('claw', 'player', 2)],
+    };
+    const tl = buildTimeline(queues, { combatants, rng: lcg(seed), momentum });
+    for (const entry of tl.entries) {
+      const planned = plannedSpeed({
+        combatant: combatants[entry.actor], card: entry.card, preemptive: entry.preemptive, momentum, foeId: entry.card.target,
+      });
+      assert.equal(planned, entry.speed.total - entry.speed.d4, `seed ${seed}, ${entry.cardId}`);
+      checked += 1;
+    }
+  }
+  assert.ok(checked >= 100, `checked ${checked} entries`);
+});
+
+test('plannedSpeed has no d4 input and counts the preemptive buff only for a preemptive card', () => {
+  const player = makeCombatant({ id: 'player', attrs: { DEX: 4 }, hp: 10 });
+  const brace = card('brace', 'counter', 'goblin', 2);
+  assert.equal(plannedSpeed({ combatant: player, card: brace, preemptive: true, momentum: {}, foeId: 'goblin' }), 2 + 1 + 2);
+  assert.equal(plannedSpeed({ combatant: player, card: brace, preemptive: false, momentum: {}, foeId: 'goblin' }), 2 + 2);
+  assert.equal(plannedSpeed({ combatant: player, card: card('heal', 'other', 'self', 2), preemptive: false, momentum: { goblin: 3 }, foeId: 'self' }), 2 + 2, 'self-target: no momentum term');
+});
+
+test('plannedQueueSpeeds caps a card at the previous card in its queue (Codex example)', () => {
+  // DEX 1 gives base 0, so the speeds are the card speeds. Player queue [speed 1, speed 5]
+  // against a goblin speed-3 action: the 5 is effectively 1, so it is behind the goblin.
+  const player = makeCombatant({ id: 'player', attrs: { DEX: 1 }, hp: 10 });
+  const goblin = makeCombatant({ id: 'goblin', attrs: { DEX: 1 }, hp: 10 });
+  const queue = [atk('jab', 'goblin', 1), atk('slash', 'goblin', 5)];
+  assert.equal(timeline.plannedSpeed({ combatant: player, card: queue[1], preemptive: false, momentum: {}, foeId: 'goblin' }), 5, 'uncapped total');
+  const [first, second] = timeline.plannedQueueSpeeds({ combatant: player, queue, momentum: {} });
+  assert.equal(first, 1);
+  assert.equal(second, 1, 'capped at the previous card');
+  const [foe] = timeline.plannedQueueSpeeds({ combatant: goblin, queue: [atk('stab', 'player', 3)], momentum: {} });
+  assert.equal(foe, 3);
+  assert.ok(second < foe, 'the second card forecasts behind the goblin');
+  // Stance: the card's block is beaten by the goblin's smash, so the card is at a stance
+  // disadvantage. With the speed disadvantage too, the outline is red. The uncapped 5 would
+  // have read as a speed advantage, which gives yellow.
+  const stanceTable = parseStanceAdvantage('attacker_stance,defender_stance,bonus\nsmash,block,2\n');
+  const outline = targetOutline({
+    card: { stance: 'block', target: 'goblin' }, foe: { stance: 'smash' }, cardSpeed: second, foeSpeed: foe, stage: 3, stanceTable,
+  });
+  assert.equal(outline, 'red', 'speed disadvantage counts for the capped card');
+});
+
+test('plannedQueueSpeeds is the buildTimeline entry effective speed minus its d4, for every combatant and entry of seeded fights', () => {
+  // Seeded LCG: each seed draws a different set of d4s. The queues include capped cards
+  // (wolf claw after bite; goblin parry after stab), so the cap is exercised.
+  const lcg = (seed) => () => {
+    seed = (seed * 1103515245 + 12345) % 2147483648;
+    return seed / 2147483648;
+  };
+  const momentum = { goblin: 2, wolf: -3 };
+  let checked = 0;
+  let capped = 0;
+  for (let seed = 1; seed <= 25; seed += 1) {
+    const combatants = {
+      player: makeCombatant({ id: 'player', attrs: { DEX: 7 }, hp: 20, sp: 4 }),
+      goblin: makeCombatant({ id: 'goblin', attrs: { DEX: 5 }, hp: 10, sp: 3 }),
+      wolf: makeCombatant({ id: 'wolf', attrs: { DEX: 2 }, hp: 8, sp: 3 }),
+    };
+    const queues = {
+      player: [atk('jab', 'goblin', 6), card('brace', 'counter', 'goblin', 2), card('ward', 'guard', 'self', 1), card('heal', 'other', 'self', 2)],
+      goblin: [atk('stab', 'player', 2), card('parry', 'counter', 'player', 3)],
+      wolf: [atk('bite', 'player', 1), atk('claw', 'player', 2)],
+    };
+    const tl = buildTimeline(queues, { combatants, rng: lcg(seed), momentum });
+    for (const id of Object.keys(combatants)) {
+      const planned = timeline.plannedQueueSpeeds({ combatant: combatants[id], queue: queues[id], momentum });
+      assert.equal(planned.length, queues[id].length, `seed ${seed}, ${id}: one speed per card`);
+      for (const entry of tl.entries.filter((e) => e.actor === id)) {
+        assert.equal(planned[entry.cardIndex], entry.speed.effective - entry.speed.d4, `seed ${seed}, ${entry.cardId}`);
+        if (entry.speed.effective !== entry.speed.total) capped += 1;
+        checked += 1;
+      }
+    }
+  }
+  assert.equal(checked, 25 * 8, 'every entry of every seed');
+  assert.ok(capped >= 25, `the cap changed ${capped} entries`);
+});
+
+test('plannedQueueSpeeds: a single card is its plannedSpeed, and an empty or missing queue is []', () => {
+  const player = makeCombatant({ id: 'player', attrs: { DEX: 4 }, hp: 10 });
+  const brace = card('brace', 'counter', 'goblin', 2);
+  assert.deepEqual(timeline.plannedQueueSpeeds({ combatant: player, queue: [brace], momentum: {} }), [2 + 1 + 2]);
+  assert.deepEqual(timeline.plannedQueueSpeeds({ combatant: player, queue: [], momentum: {} }), []);
+  assert.deepEqual(timeline.plannedQueueSpeeds({ combatant: player, momentum: {} }), []);
+});
+
+
+// Atomic stepping (Codex finding on PR #1867). A throwing or ineligible onReaction must leave the
+// round as it was, and the retry must resolve the same attack with the same events. The round's
+// cursor is not exposed, so the retry producing the clean run's events is the check on it.
+const reactionFight = () => {
+  const st = duo({}, { hand: [guardCard()] });
+  st.momentum = { goblin: 2 }; // a start decay event, so the pending start events are checked too
+  return st;
+};
+const reactionOpts = (onReaction) => ({ queues: { goblin: [stab(1, 4)] }, rng: HIT_RNG, onReaction });
+
+function drainFrom(round) {
+  const events = [];
+  let r;
+  do {
+    r = round.next();
+    events.push(...r.events);
+  } while (!r.done);
+  return { events, state: r.state };
+}
+
+for (const [label, badPick] of [['throws', 'throw'], ['returns an ineligible card id', { id: 'not-in-hand' }]]) {
+  test(`createRound next() is atomic when onReaction ${label}: the round is unchanged and the retry matches a clean run`, () => {
+    const clean = createRound(reactionFight(), reactionOpts(() => null)).resolveAll();
+    let calls = 0;
+    const round = createRound(reactionFight(), reactionOpts(() => {
+      calls += 1;
+      if (calls === 1) {
+        if (badPick === 'throw') throw new Error('reaction prompt closed');
+        return badPick;
+      }
+      return null;
+    }));
+    const before = JSON.stringify(round.state);
+    assert.throws(() => round.next(), badPick === 'throw' ? /reaction prompt closed/ : TypeError);
+    assert.equal(JSON.stringify(round.state), before, 'a failed next() leaves round.state unchanged');
+    const retried = drainFrom(round);
+    assert.deepEqual(retried.events, clean.events, 'the retry resolves the same attack and keeps the start events');
+    assert.deepEqual(retried.state, clean.state);
+    assert.equal(calls, 2, 'one attack asks onReaction twice in all: the failed call, then the retry');
+  });
+}
+
+test('createRound resolveAll() is atomic: a throw midway leaves the round unchanged and a retry matches a clean run', () => {
+  const twoAttacks = () => ({ queues: { goblin: [stab(1, 4), atk('stab2', 'player', 2, { damage: 2 })] }, rng: HIT_RNG });
+  const clean = createRound(reactionFight(), { ...twoAttacks(), onReaction: () => null }).resolveAll();
+  let calls = 0;
+  const round = createRound(reactionFight(), {
+    ...twoAttacks(),
+    onReaction: () => {
+      calls += 1;
+      if (calls === 2) throw new Error('reaction prompt closed');
+      return null;
+    },
+  });
+  const before = JSON.stringify(round.state);
+  assert.throws(() => round.resolveAll(), /reaction prompt closed/);
+  assert.equal(JSON.stringify(round.state), before, 'a failed resolveAll() leaves round.state unchanged');
+  const retried = round.resolveAll();
+  assert.deepEqual(retried.events, clean.events);
+  assert.deepEqual(retried.state, clean.state);
 });

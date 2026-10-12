@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { makeCombatant, plannedSpeed } from './timeline.mjs';
 import {
   actionSpeed,
   momentumSpeed,
@@ -16,6 +17,7 @@ import {
   rollD20,
   parseStanceAdvantage,
   cardHint,
+  targetOutline,
   SPEED_TIERS,
   revealAction,
   clampStage,
@@ -1274,15 +1276,21 @@ test('cardHint: equal speed is not a speed advantage, so smash over block is yel
   assert.equal(hint.speedDelta, 0);
 });
 
-test('cardHint: equal speed with no stance advantage is red, not yellow', () => {
-  // Both total 2 and attack>attack is not in the CSV: neither holds.
+test('cardHint: equal speed with no stance advantage has no outline', () => {
+  // Both total 2 and attack>attack is not in the CSV: both dimensions are neutral.
   const hint = cardHint({ card: 'two', stance: 'attack' }, { card: 'two', stance: 'attack' }, hintCtx());
-  assert.equal(hint.border, 'red');
+  assert.equal(hint.border, null);
   assert.equal(hint.arrow, null);
 });
 
-test('cardHint: red when neither speed nor stance is in the card\'s favour', () => {
+test('cardHint: a speed disadvantage with neutral stances has no outline', () => {
   const hint = cardHint({ card: 'one', stance: 'attack' }, { card: 'three', stance: 'attack' }, hintCtx());
+  assert.equal(hint.border, null);
+});
+
+test('cardHint: red only when speed and stance both favour the enemy', () => {
+  // The card is slower, and the enemy's smash stance beats the card's block.
+  const hint = cardHint({ card: 'one', stance: 'block' }, { card: 'three', stance: 'smash' }, hintCtx());
   assert.equal(hint.border, 'red');
 });
 
@@ -1919,8 +1927,11 @@ test('cardHint at perception stage 2: the stance is known and speed is not, so n
   assert.equal(advantage.arrow, null);
 
   const none = cardHint({ card: 'three', stance: 'attack' }, revealAction(HINT_FOE, 2), hintCtx());
-  assert.equal(none.border, 'red', 'no stance advantage, and speed is not used');
+  assert.equal(none.border, null, 'unknown speed is neutral and must not leak a disadvantage');
   assert.equal(none.speedDelta, null);
+
+  const enemyAdvantage = cardHint({ card: 'three', stance: 'block' }, revealAction({ ...HINT_FOE, stance: 'smash' }, 2), hintCtx());
+  assert.equal(enemyAdvantage.border, null, 'one known disadvantage is not enough for a red outline');
 });
 
 test('cardHint self-target card: blue border, but no speed delta while the enemy speed is unknown', () => {
@@ -1940,6 +1951,110 @@ test('cardHint at stage 3: a speed field without speed component ids still gives
   const hint = cardHint(HINT_CARD, revealAction({ id: 'x', speed: 1, kind: 'attack', stance: 'attack' }, 3), hintCtx());
   assert.equal(hint.speedDelta, 2, 'player 3 minus enemy speed 1');
   assert.deepEqual(hint.arrow, { glyph: '>>', colour: 'green' });
+});
+
+// Target outline (PREVIEW-PLAN, Screen; DESIGN.md, Card hints). Speed counts from
+// stage 3, stance from stage 2. Each counts as an advantage, a disadvantage or neither.
+// Plan-time speeds are passed in (timeline plannedSpeed, no d4). These cases use the
+// card tier as the speed, so the tier is the whole speed.
+const tierSpeed = (c) => HINT_MODS.card[c.card];
+const outline = (card, foe, extra = {}) =>
+  targetOutline({
+    card, foe, cardSpeed: tierSpeed(card), foeSpeed: tierSpeed(foe), stage: 3, stanceTable: stanceTable(), ...extra,
+  });
+const GREEN_CARD = { card: 'three', stance: 'counter' }; // faster, counter beats attack
+const GREEN_FOE = { card: 'one', stance: 'attack' };
+
+test('targetOutline: green when the card has the advantage in both speed and stance', () => {
+  assert.equal(outline(GREEN_CARD, GREEN_FOE), 'green');
+});
+
+test('targetOutline: yellow when one dimension is an advantage and the other is neutral', () => {
+  assert.equal(outline({ card: 'three', stance: 'attack' }, { card: 'one', stance: 'attack' }), 'yellow', 'speed only');
+  assert.equal(outline({ card: 'two', stance: 'counter' }, { card: 'two', stance: 'attack' }), 'yellow', 'stance only');
+});
+
+test('targetOutline: yellow when one dimension is an advantage even if the other is a disadvantage', () => {
+  // Faster (3 vs 1), but the foe's counter beats the card's attack.
+  assert.equal(outline({ card: 'three', stance: 'attack' }, { card: 'one', stance: 'counter' }), 'yellow', 'speed up, stance down');
+  // Slower (1 vs 3), but counter beats attack for the card.
+  assert.equal(outline({ card: 'one', stance: 'counter' }, { card: 'three', stance: 'attack' }), 'yellow', 'speed down, stance up');
+});
+
+test('targetOutline: red when the card is at a disadvantage in both speed and stance', () => {
+  assert.equal(outline({ card: 'one', stance: 'attack' }, { card: 'three', stance: 'counter' }), 'red');
+});
+
+test('targetOutline: one disadvantage and the other neutral is no outline', () => {
+  assert.equal(outline({ card: 'one', stance: 'attack' }, { card: 'three', stance: 'attack' }), null, 'speed down, stance neutral');
+  assert.equal(outline({ card: 'two', stance: 'attack' }, { card: 'two', stance: 'counter' }), null, 'speed equal, stance down');
+});
+
+test('targetOutline: equal speed with a neutral stance is no outline', () => {
+  assert.equal(outline({ card: 'two', stance: 'attack' }, { card: 'two', stance: 'attack' }), null);
+});
+
+test('targetOutline at stage 2: speed is hidden, so a stance advantage is yellow and a stance disadvantage is null', () => {
+  assert.equal(outline(GREEN_CARD, GREEN_FOE, { stage: 2 }), 'yellow', 'stance advantage only, speed unknown');
+  assert.equal(outline({ card: 'three', stance: 'attack' }, { card: 'one', stance: 'counter' }, { stage: 2 }), null, 'stance down, speed unknown');
+});
+
+test('targetOutline at stage 0 and 1: nothing is revealed, so no outline even for a green pair', () => {
+  for (const stage of [0, 1]) assert.equal(outline(GREEN_CARD, GREEN_FOE, { stage }), null, `stage ${stage}`);
+});
+
+test('targetOutline: a self-target card has no target outline', () => {
+  assert.equal(outline({ ...GREEN_CARD, target: 'self' }, GREEN_FOE), null);
+});
+
+// Speed is the plan-time timeline speed (card speed + preemptive buff + DEX base +
+// momentum term, no d4). The outline must use those speeds, not the raw card speed.
+const planCard = (id, target, speed, extra = {}) => ({ id, kind: 'attack', target, speed, ...extra });
+const DEX_1 = makeCombatant({ id: 'player', attrs: { DEX: 1 }, hp: 10 });
+const DEX_6_GOBLIN = makeCombatant({ id: 'goblin', attrs: { DEX: 6 }, hp: 10 });
+
+test('targetOutline: a DEX base can make the foe faster than the card\'s raw speed lead', () => {
+  // Raw speed favours the player (3 vs 2). Plan-time speeds: player 3, goblin 2 + DEX base 3 = 5.
+  const cardSpeed = plannedSpeed({ combatant: DEX_1, card: planCard('jab', 'goblin', 3), preemptive: false, momentum: {}, foeId: 'goblin' });
+  const foeSpeed = plannedSpeed({ combatant: DEX_6_GOBLIN, card: planCard('stab', 'player', 2), preemptive: false, momentum: {}, foeId: 'player' });
+  assert.equal(cardSpeed, 3);
+  assert.equal(foeSpeed, 5);
+  const at = (stance, foeStance) => targetOutline({
+    card: { stance, target: 'goblin' }, foe: { stance: foeStance }, cardSpeed, foeSpeed, stage: 3, stanceTable: stanceTable(),
+  });
+  assert.equal(at('block', 'smash'), 'red', 'speed against the card and stance against it');
+  assert.equal(at('smash', 'block'), 'yellow', 'stance for the card, speed against it');
+  assert.equal(at('attack', 'attack'), null, 'speed against the card alone is no outline');
+});
+
+test('targetOutline: momentum is counted once, inside the plan-time speeds', () => {
+  // Momentum 2 on the goblin: player 3 + 1 = 4, goblin 2 + 3 - 1 = 4. Equal, so no speed dimension.
+  const cardSpeed = plannedSpeed({ combatant: DEX_1, card: planCard('jab', 'goblin', 3), preemptive: false, momentum: { goblin: 2 }, foeId: 'goblin' });
+  const foeSpeed = plannedSpeed({ combatant: DEX_6_GOBLIN, card: planCard('stab', 'player', 2), preemptive: false, momentum: { goblin: 2 }, foeId: 'player' });
+  assert.equal(cardSpeed, 4);
+  assert.equal(foeSpeed, 4);
+  const block = targetOutline({ card: { stance: 'block', target: 'goblin' }, foe: { stance: 'smash' }, cardSpeed, foeSpeed, stage: 3, stanceTable: stanceTable() });
+  assert.equal(block, null, 'equal plan-time speed, stance against: no outline (momentum not added again)');
+});
+
+test('targetOutline: a preemptive defensive card gets its speed buff, which can flip the speed dimension', () => {
+  const guard = { id: 'brace', kind: 'counter', target: 'goblin', speed: 2 };
+  const DEX_1_GOBLIN = makeCombatant({ id: 'goblin', attrs: { DEX: 1 }, hp: 10 });
+  const foe = { stance: 'attack' };
+  const plain = plannedSpeed({ combatant: DEX_1, card: { ...guard, kind: 'attack' }, preemptive: false, momentum: {}, foeId: 'goblin' });
+  const buffed = plannedSpeed({ combatant: DEX_1, card: guard, preemptive: true, momentum: {}, foeId: 'goblin' });
+  assert.equal(plain, 2);
+  assert.equal(buffed, 3, 'card 2 + REACTION_BUFF.speed 1');
+  const foeEqual = plannedSpeed({ combatant: DEX_1_GOBLIN, card: planCard('bite', 'player', 2), preemptive: false, momentum: {}, foeId: 'player' });
+  assert.equal(foeEqual, 2);
+  const out = (cardSpeed) => targetOutline({ card: { stance: 'attack', target: 'goblin' }, foe, cardSpeed, foeSpeed: foeEqual, stage: 3, stanceTable: stanceTable() });
+  assert.equal(out(plain), null, 'unbuffed: equal speed, neutral stance');
+  assert.equal(out(buffed), 'yellow', 'buffed: the card is faster');
+});
+
+test('targetOutline: speeds are required at stage 3 and ignored below it', () => {
+  assert.throws(() => targetOutline({ card: { stance: 'attack', target: 'goblin' }, foe: { stance: 'attack' }, stage: 3, stanceTable: stanceTable() }), TypeError);
+  assert.equal(targetOutline({ card: { stance: 'counter', target: 'goblin' }, foe: { stance: 'attack' }, stage: 2, stanceTable: stanceTable() }), 'yellow');
 });
 
 test('cardHint speedDelta sign matches who acts first in resolvePair and resolveRound', () => {
