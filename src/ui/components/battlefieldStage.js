@@ -66,13 +66,13 @@ export function placePlayerIntentGlyph(leading, { art, hudBottom, zoom = 1 }) {
   const node = leading.querySelector('.player-action-intent');
   if (!node) return null;
   const host = node.offsetParent || leading;
-  const origin = host.getBoundingClientRect();
   const { width, height } = node.getBoundingClientRect();
   const floorTop = Number.isFinite(hudBottom) ? hudBottom + 2 : -Infinity;
   const top = Math.max(floorTop, art.top - height - 4);
   const centre = (art.left + art.right) / 2;
-  node.style.left = `${(centre - width / 2 - origin.left) / zoom}px`;
-  node.style.top = `${(top - origin.top) / zoom}px`;
+  const local = anchorLocalBox(host, { left: centre - width / 2, top, width, height }, { zoom });
+  node.style.left = `${local.left}px`;
+  node.style.top = `${local.top}px`;
   node.dataset.placed = 'true';
   return { centre, top, width, height };
 }
