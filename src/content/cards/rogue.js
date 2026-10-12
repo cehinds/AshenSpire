@@ -349,14 +349,14 @@ export const rogueCards = [
     id: 'lethalDose', name: 'Lethal Dose', class: 'rogue', rarity: 'rare', cost: 1, type: 'attack', keywords: ['exhaust'], icon: '⚗',
     flavor: "Whole vial, all at once.\n\nThe surgeons measured doses by the drop and wrote each one down. The docks pour the vial and write nothing, which is why the surgeons' ledgers hold so many unexplained recoveries.\n\nThe docks' ledgers hold the rest.",
     effects: [
-      { op: 'damage', target: 'enemy', amount: { f: 'mul', args: [4, { f: 'stacks', status: 'venom', of: 'target' }] } },
+      { op: 'damage', target: 'enemy', amount: { f: 'add', args: [6, { f: 'mul', args: [4, { f: 'stacks', status: 'venom', of: 'target' }] }] } },
       { op: 'removeStatus', target: 'enemy', status: 'venom' },
     ],
-    textTemplate: "Deal damage equal to 4 times the target's Venom, then remove its Venom. Exhaust.",
+    textTemplate: "Deal 6 damage plus 4 times the target's Venom, then remove its Venom. Exhaust.",
     upgrade: { effects: [
-      { op: 'damage', target: 'enemy', amount: { f: 'mul', args: [5, { f: 'stacks', status: 'venom', of: 'target' }] } },
+      { op: 'damage', target: 'enemy', amount: { f: 'add', args: [8, { f: 'mul', args: [5, { f: 'stacks', status: 'venom', of: 'target' }] }] } },
       { op: 'removeStatus', target: 'enemy', status: 'venom' },
-    ], textTemplate: "Deal damage equal to 5 times the target's Venom, then remove its Venom. Exhaust." },
+    ], textTemplate: "Deal 8 damage plus 5 times the target's Venom, then remove its Venom. Exhaust." },
   },
   // ---- The class ability card (plan phase 5a, proposal §4) -----------------
   // Prepare: the Rogue's loop is setup then payoff; the cheapest way in.

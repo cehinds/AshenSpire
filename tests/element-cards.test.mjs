@@ -61,8 +61,20 @@ test('Septic Blade hits harder on a target already carrying 3 Venom', () => {
 
 test('Lethal Dose cashes the target\'s Venom out as damage and removes it', () => {
   const { enemy, hp } = play('lethalDose', { setup: (combat, target) => applyStatus(combat, target, 'venom', 3) });
-  assert.equal(hp - enemy.hp, 12, '4 damage per Venom stack, v2 caps Venom at 3');
+  assert.equal(hp - enemy.hp, 18, '6 + 4 per Venom stack, v2 caps Venom at 3');
   assert.equal(getStacks(enemy, 'venom'), 0);
+});
+
+test('Lethal Dose upgraded deals 8 + 5 per Venom stack', () => {
+  // 23 damage would kill the default soldier before Venom is removed, so give the target room to survive the hit.
+  const { enemy, hp } = play('lethalDose', { upgraded: true, setup: (combat, target) => { target.hp = 100; applyStatus(combat, target, 'venom', 3); } });
+  assert.equal(hp - enemy.hp, 23, '8 + 5 x 3 Venom');
+  assert.equal(getStacks(enemy, 'venom'), 0);
+});
+
+test('Lethal Dose with no Venom still deals its 6 base damage', () => {
+  const { enemy, hp } = play('lethalDose');
+  assert.equal(hp - enemy.hp, 6, 'base 6 with 0 Venom');
 });
 
 test('Psychic cards confuse; Dissonance also silences', () => {
