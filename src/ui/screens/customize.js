@@ -1065,7 +1065,7 @@ export function mountCustomize(app, {
     host.replaceChildren(plan?.skillId === 'item:magic-focus'
       ? renderStartingAbility(plan, { stage: 'spells' })
       : flavour(t('creation.spells.unavailable')));
-    scheduleCardFits();
+    scheduleCardFits(host.querySelectorAll('.card'));
   }
 
   function renderEquipment(preferredOpenId = null) {
