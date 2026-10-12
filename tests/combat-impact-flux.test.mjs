@@ -81,6 +81,15 @@ test('Impact doubles the card own Poise: 3 own Poise becomes 6 in total', () => 
   assert.deepEqual(applied.map(event => [event.amount, event.doubled]), [[3, true]]);
 });
 
+test('Impact counts only the own Poise that passed a Poise guard', () => {
+  // A 4-Poise guard swallows the card's own 4 Poise, so Impact falls back to N instead of doubling 4.
+  const effects = [damage(5), { op: 'poiseDamage', target: 'enemy', amount: 4 }];
+  const guard = { before: f => { f.enemies[0].poiseGuard = 4; } };
+  const traited = outcome({ effects, traitValues: { impact: 1 }, ...guard });
+  const applied = traited.events.filter(event => event.type === 'combatImpactApplied');
+  assert.deepEqual(applied.map(event => [event.amount, event.doubled]), [[1, false]]);
+});
+
 test('Impact applies once per target on an area hit with several contacts', () => {
   const effects = [{ op: 'damage', target: 'allEnemies', amount: 5, hits: 2 }];
   const base = outcome({ effects, enemies: 2 });

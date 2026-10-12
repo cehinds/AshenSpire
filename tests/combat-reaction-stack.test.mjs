@@ -117,6 +117,14 @@ test('a saved stack is validated: side, owner and the offer depth must match', (
   const enemySide = structuredClone(saved);
   enemySide.reactionStack.entries[0].side = 'enemy';
   assert.throws(() => restore(enemySide), /Invalid reaction stack/, 'enemy entries are rejected until enemy reactions exist');
+  const overCap = structuredClone(saved);
+  overCap.reactionRules.stack.maxDepth = 0;
+  assert.throws(() => restore(overCap), /exceeds its per-seat limits/);
+  const twoCounters = structuredClone(saved);
+  twoCounters.reactionStack.entries.push({ ...twoCounters.reactionStack.entries[0], cardInstanceId: 'rX', play: { ...twoCounters.reactionStack.entries[0].play, cardInstanceId: 'rX' } });
+  for (const entry of twoCounters.reactionStack.entries) entry.maneuver = 'counter';
+  twoCounters.pendingReaction.id = twoCounters.pendingReaction.id.replace(/:1$/, ':2');
+  assert.throws(() => restore(twoCounters), /exceeds its per-seat limits/);
   const badDepth = structuredClone(saved);
   badDepth.pendingReaction.id = badDepth.pendingReaction.id.replace(/:1$/, ':0');
   assert.throws(() => restore(badDepth), /does not match its stack depth/);
