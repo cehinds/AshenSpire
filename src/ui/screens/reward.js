@@ -893,14 +893,11 @@ export function mountRewards(app, {
       && (!characterLevelRow(row) || (Number.isInteger(row.requiredLevel) ? unlocked(row) : !deferredLevelOffer() || (row.ordinal < claimedLevels && !states[row.key])))).map(rowHtml).join('');
     // The button is the verb; the FootNote says what the verb does here (the
     // E11 dial: auto-collect takes the rest, manual leaves it) and how to press.
-    // A boss relic choice (SPEC §6) waits for its pick or its Skip: Continue
-    // holds until then, so the offer is never left behind by accident.
-    const relicChoiceWaiting = plan.rows.some((row) => isRelicChoice(row) && !states[row.key] && !row.blockedBy);
     const cont = button({
       label: t('reward.continue'),
-      weight: 'primary', id: 'reward-continue', disabled: !xpAnimationDone || !!refill || relicChoiceWaiting, attrs: {
+      weight: 'primary', id: 'reward-continue', disabled: !xpAnimationDone || !!refill, attrs: {
         'aria-describedby': 'reward-hold-copy',
-        'data-confirm-ready': String(xpAnimationDone && !refill && !relicChoiceWaiting),
+        'data-confirm-ready': String(xpAnimationDone && !refill),
       },
     });
     const foot = modalFooter({ note: holdNote(), primary: cont, className: 'reward-foot', size: 'medium' });
@@ -945,7 +942,7 @@ export function mountRewards(app, {
       ? `<div class="tt-title">${esc(t('reward.continue'))}</div>${esc('Collects remaining battle loot. Unfinished level rewards are saved for later.')}`
       : `<div class="tt-title">${esc(t('reward.continue'))}</div>${esc('Leave with your chosen loot. Unfinished level rewards are saved for later.')}`));
     const finish = () => {
-      if (skillClaimPending || !xpAnimationDone || refill || relicChoiceWaiting) return;
+      if (skillClaimPending || !xpAnimationDone || refill) return;
       // 'cardRewards' is the stream that rolled this offer (STREAM_NAMES is a
       // closed set); the auto pick advances the same stream, so a seeded run
       // resolves the same card every replay.

@@ -210,29 +210,14 @@ test('a boss relic pick the run already holds lands nothing', () => {
   });
 });
 
-test('Continue holds on a boss relic choice until it is picked or skipped', () => {
+test('Continue is pressable with an unpicked boss relic choice, as with a card choice', () => {
   withKitDom((dom) => {
     const run = createRunState({ seed: 0x10a5, classId: 'reaver', registries: REG });
     run.relics = [];
     const { app, checkpoint } = mountBossReward(dom, { relicChoices: CHOICES, run });
-    assert.equal(app.querySelector('#reward-continue').disabled, true, 'held while the choice waits');
-    app.querySelector('.reward-kind[data-kind="relic"]').click();
-    pickButtons(app)[0].click();
-    app.querySelector('#reward-card-confirm').click();
-    assert.equal(app.querySelector('#reward-continue').disabled, false, 'released once picked');
-    assert.equal(checkpoint.chosenRelicId, 'crownOfStitches');
-  });
-});
-
-test('Skip releases a boss relic choice without taking a relic', () => {
-  withKitDom((dom) => {
-    const run = createRunState({ seed: 0x10a5, classId: 'reaver', registries: REG });
-    run.relics = [];
-    const { app, checkpoint } = mountBossReward(dom, { relicChoices: CHOICES, run });
-    app.querySelector('.reward-skip').click();
-    assert.equal(checkpoint.states.relic, 'skipped');
-    assert.equal(app.querySelector('#reward-continue').disabled, false, 'released once skipped');
-    assert.deepEqual(run.relics, [], 'nothing taken');
+    assert.equal(app.querySelector('#reward-continue').disabled, false, 'E11: Continue is always pressable');
+    assert.equal(checkpoint.chosenRelicId, null);
+    assert.deepEqual(run.relics, [], 'nothing taken on mount');
   });
 });
 
