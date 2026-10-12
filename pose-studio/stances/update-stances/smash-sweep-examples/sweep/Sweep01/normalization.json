@@ -1,13 +1,13 @@
 {
-  "raw": "raw-revision.png",
-  "raw_sha256": "1b916d0cfce327497d55f3639164fe75b6fb8c0476a33093312e6cdf76dc7b74",
+  "raw": "raw-revision2.png",
+  "raw_sha256": "acb881767095333a4d5b5c26de9468ec5d9c846ae70a7eec34c4de85a026d482",
   "source_sha256": "40f7c5f3a1d988ae99b0764050630f1a00028be50131bd13456db58b4d737865",
   "frame_count": 5,
   "frame_sha256": [
     "40f7c5f3a1d988ae99b0764050630f1a00028be50131bd13456db58b4d737865",
-    "eaa679438bbef02f50a53857fb2352b36617ce7aa1981a92c344205ee5fe7ee7",
-    "62d269dbe6b0ba20a3cfe420f399546a1650d530929a68ca4617c0d44ac0d528",
-    "45d8518b98089730d3b027381b03be39072aaea45609723616ec90140eaf5057",
+    "4af249d4f406e874fe7b85830b1faebcbcbb333131bbf3e66c5a9a6f9c7ba032",
+    "a9d2a62b7d71fe9255bf1137c5c54af816483460a7085ac2bff01cd7a3c23512",
+    "2d74362e8fced20e02938116dae00dcc7a107898a7f3f5c9b4cfb38e1a4e45e5",
     "40f7c5f3a1d988ae99b0764050630f1a00028be50131bd13456db58b4d737865"
   ],
   "method": "connected figure isolation, common body scale, anatomical head reference, sole baseline; no alpha bounds centering",
@@ -15,36 +15,36 @@
     {
       "frame": 2,
       "component": 5,
-      "scale": 1.0055096418732783,
+      "scale": 0.9811827956989247,
       "placement": [
-        34,
-        115
+        45,
+        112
       ],
-      "head_reference": 700.0,
+      "head_reference": 695.0,
       "target_head": 360.0,
       "sole_y": 467
     },
     {
       "frame": 3,
-      "component": 3,
-      "scale": 1.0055096418732783,
+      "component": 4,
+      "scale": 0.9811827956989247,
       "placement": [
-        121,
-        100
+        124,
+        101
       ],
-      "head_reference": 1070.0,
+      "head_reference": 1065.0,
       "target_head": 377.0,
       "sole_y": 467
     },
     {
       "frame": 4,
-      "component": 4,
-      "scale": 1.0055096418732783,
+      "component": 3,
+      "scale": 0.9811827956989247,
       "placement": [
-        76,
-        105
+        109,
+        103
       ],
-      "head_reference": 1620.0,
+      "head_reference": 1630.0,
       "target_head": 392.0,
       "sole_y": 467
     }
