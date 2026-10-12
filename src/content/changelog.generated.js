@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1904",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Rules written for enemy reactions on the reaction stack",
+    "detail": "Nothing changes in the game yet. The specification now describes enemies that react to your cards: a Gilded Knight can guard before a heavy hit lands, and a Court Duelist can answer any reaction you play, a plain Block included.",
+    "build": "0.7.1.1429",
+    "pullRequest": 1904,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1904"
+  },
+  {
+    "id": "pr-1902",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Rules written for chained reactions and three new card traits",
+    "detail": "Nothing changes in the game yet. The specification now describes playing several Reaction cards against one enemy action, resolving last played first, and the Counterstrike, Impact and Flux card traits that will follow.",
+    "build": "0.7.1.1429",
+    "pullRequest": 1902,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1902"
+  },
+  {
     "id": "pr-1900",
     "date": "2026-10-12",
     "group": "2026-10-12",
@@ -31,16 +51,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1423",
     "pullRequest": 1905,
     "url": "https://github.com/cehinds/AshenSpire/pull/1905"
-  },
-  {
-    "id": "pr-1902",
-    "date": "2026-10-12",
-    "group": "2026-10-12",
-    "summary": "Rules written for chained reactions and three new card traits",
-    "detail": "Nothing changes in the game yet. The specification now describes playing several Reaction cards against one enemy action, resolving last played first, and the Counterstrike, Impact and Flux card traits that will follow.",
-    "build": "0.7.1.1423",
-    "pullRequest": 1902,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1902"
   },
   {
     "id": "pr-1901",
