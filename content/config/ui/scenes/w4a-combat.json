@@ -31,6 +31,7 @@
       "minimumHeightPx": 208,
       "minWidthRem": 5,
       "maxWidthRem": 11.5,
+      "desktopMaxWidthRem": 15,
       "minCapacity": 5,
       "maxCapacity": 15,
       "narrowWidthRem": 22,
