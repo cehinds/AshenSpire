@@ -18846,6 +18846,18 @@ export const tagging = [
     "family": "enemyMove",
     "scope": "gildedKnight",
     "objectId": "gildedGuard",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "gildedKnight",
+    "objectId": "gildedGuard",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "gildedKnight",
+    "objectId": "gildedGuard",
     "tagId": "trait:reaction"
   },
   {
@@ -19315,6 +19327,18 @@ export const tagging = [
     "scope": "courtDuelist",
     "objectId": "bindingRiposte",
     "tagId": "targeting:single"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtDuelist",
+    "objectId": "bindingRiposte",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtDuelist",
+    "objectId": "bindingRiposte",
+    "tagId": "source:weapon"
   },
   {
     "family": "enemyMove",
