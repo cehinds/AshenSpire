@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-10-12T16:30:00Z",
+  "generated_at_utc": "2026-10-12T16:45:00Z",
   "tool": "tools.image_gen__imagegen",
   "exact_prompt_file": "sheet-b.prompt.txt",
   "requested_dimensions": [
@@ -16,14 +16,14 @@
     254
   ],
   "transparent_background": true,
-  "original_tool_output": "/workspace/generated_images/exec-0c3f8c7f-1542-4764-a66b-2b40def40a91.png",
+  "original_tool_output": "/workspace/generated_images/exec-532fb87d-d92c-4b85-959a-deca98504da6.png",
   "preserved_canonical_file": "sheet-b.png",
-  "sha256": "accc940c276cfe87eee1f49bcd5692cbdeef8d7b018dfe5af766fdd4bf1fecee",
+  "sha256": "8b9deed36436a27db6e884d7009350b1698ddd6f61339383bf3dffea4bcc3dcc",
   "input_images": [
     {
-      "path": "pose-studio/stances/update-stances/greatsword-sweep/sheet-b-original.png",
-      "sha256": "cbdc645cdc8efa0c7b8d586e911f866014ac9182f402733e2a27189ed3e6ce27",
-      "use": "verified SW16\u2013SW20 source board"
+      "path": "pose-studio/stances/update-stances/greatsword-sweep/sheet-b-pre17-18edit.original.png",
+      "sha256": "accc940c276cfe87eee1f49bcd5692cbdeef8d7b018dfe5af766fdd4bf1fecee",
+      "use": "verified prior Sweep B concept board"
     },
     {
       "path": "docs/design/class-armor-rear-2026-10-06/masters/reaver-default.png",
@@ -41,14 +41,18 @@
       "use": "selected Smash camera, body scale, and greatsword proportions"
     }
   ],
-  "review_status": "root approved SW16 and SW19 as concepts, accepted SW20 as a concept variant; SW17 and SW18 need one targeted edit",
-  "production_status": "concept options only; no production/runtime selection",
-  "observed_deviations": [
-    "SW16 actual geometry: low-forward/downward narrow hold; root approved as a concept.",
-    "SW17 actual geometry: shoulder-high lateral coil; currently too close to SW18 and Sweep A12. Planned edit: rear-weighted backward lean, long front leg, bent rear leg, retaining shoulder-high blade.",
-    "SW18 actual geometry: shoulder-level cross coil; currently too close to SW17 and Sweep A12. Planned edit: narrow feet and upright torso, hands at low ribs/waist, horizontal blade to the left below shoulders.",
-    "SW19 actual geometry: very wide low-forward sweep; root approved as a concept.",
-    "SW20 actual geometry: high-arc extended lunge. Root accepted it as a valid concept variant; do not describe it as a below-crown side coil.",
-    "One focused edit for SW17 and SW18 is pending the root grant after Counter and Evade finish. No additional image generation is authorized before that grant."
-  ]
+  "review_status": "pending root review of targeted SW17/SW18 edit",
+  "production_status": "concept candidates only; not runtime art",
+  "director_record": {
+    "approved_concepts_before_edit": {
+      "SW16": "low-forward/downward narrow hold",
+      "SW19": "very wide low-forward sweep",
+      "SW20": "high-arc extended lunge"
+    },
+    "requested_edit": {
+      "SW17": "rear-weighted backward lean, long front leg, bent rear leg; shoulder-high lateral blade",
+      "SW18": "narrow feet, upright torso, hands low at ribs/waist, horizontal blade left below shoulders"
+    },
+    "visual_check": "SW17 has a visibly extended front leg and bent rear leg with the blade at shoulder height. SW18 is narrow and upright with low horizontal blade. The source board is preserved; this generated output redraws the sheet, so exact pixel identity of SW16/SW19/SW20 is not asserted."
+  }
 }

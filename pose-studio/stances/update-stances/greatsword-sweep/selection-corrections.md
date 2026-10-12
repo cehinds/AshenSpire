@@ -9,3 +9,5 @@ The worker initially selected files by sorting `/workspace/generated_images` by 
 - Removed the unverified directory-selected output SHA `a072fe00348d8a904f2fd2ceef37bdf38b23d1c518e8b17a4a065613a2553919`; it was not an explicit returned path for a Sweep call.
 
 This was a worker file-selection error. The image generation tool was not the cause.
+
+- Targeted Sweep B edit: `sheet-b.png`, SHA-256 `8b9deed36436a27db6e884d7009350b1698ddd6f61339383bf3dffea4bcc3dcc`, returned path `exec-532fb87d-d92c-4b85-959a-deca98504da6.png`. This edit targeted only SW17 and SW18; root review is pending.
