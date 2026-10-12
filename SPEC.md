@@ -936,6 +936,22 @@ the complete current/maximum value remains in the accessible label and tooltip.
 - Smithing: a run owns `smithingStones`, an `armamentLevels` map, and idempotent reward claims. The shipped tier cap is 1 and promoting an armament to tier 1 costs 1 Smithing Stone. Elite and boss victories award 1 Stone; normal and treasure reward pools award 0. Legacy equipment-card upgrade flags migrate to the corresponding source armament tier without granting Stones.
 - Empty draw pile + draw needed → discard pile is shuffled (stream `shuffle`) into draw first.
 
+### 4.3a Action costs (owner decision, 2026-10-12)
+
+**Always on.** Action costs apply in every fight, with the combat rounds preview off or on, solo and co-op. The tables are `content/actionCosts.js`; the rules are `model/actionCosts.js`; `registries.resolveCard` runs the derived step once per resolved card, after the upgrade and before the equipment and status mods.
+
+- **The table (SP per stance):** attack 1, block (defend) 1, smash 2, counter 2, cast (spell) 2, sweep 2. A stance the table does not price (evade: the Dodge Roll keeps its weight-class price, §13.4l) keeps the authored cost.
+- **A card's stance:** a spell (`camp:spell`) or a casting maneuver is a cast whatever its kind. A maneuver tag names the stance before the kind does: `smash`, `sweep`, `counter`, `defend` (block), `attack` and `ranged` (attack). Otherwise the card's kind decides: an attack is an attack, a card with a Block effect is a block.
+- **Layering.** A derived cost is the table price, plus the card's authored upgrade delta (upgraded cost minus base cost), floored at 0. Mana is never derived. The existing per-card rules then apply on top, unchanged: relic and power reductions, Mana discounts, upgrades already folded in, upcast surcharges. Equipment and status mods apply after the derived step, so a mod's flat bonus is added to the scaled number and is not scaled itself.
+- **Opt-outs (a card keeps its authored cost and numbers):** a card whose content sets `costRule: 'fixed'` (the 0-cost cards listed in the table of opt-outs below); a curse or status (by type); an X cost (variable); a stance the table does not price (evade); and an unclassified card, a power or plain skill with no attack, block or spell stance, whose authored cost stands (provisional, see below).
+- **Opt-outs by content (`costRule: 'fixed'`):** warriorsVow, twinkling, shootingShard, bloodPact, bloodletting, painOffering, rogueShiv, smokePellet, setupRogue, prepare, hex, blindingSand, hamstring, masterOfStrategy, blightedTransmute, blightedSecondBloom, blightedBlightward. Curses (guilt, wound, dazed) and statuses (slimed) are opted out by type.
+- **Balance rule (provisional default, owner to tune).** A card whose derived cost is 2 has its numeric effect amounts multiplied by `TWO_COST_EFFECT_MULTIPLIER` = **1.8** and rounded to a whole number. Scaled: `damage`, `block`, `buildup`, `heal`, `gainBarrier`, `gainPoise`, `gainWard`, `poiseDamage`, `wardDamage` (`SCALED_EFFECT_OPS`). Never scaled: costs, card counts (`draw`, `discard`, `addCard`), turns and durations (`applyStatus` duration), stack counts, hit counts, and HP or Mana prices. A card whose derived cost is 1 keeps its base values, so a 1-cost card is the weaker option.
+- **Card text** is built from the same resolved effects, so it shows the scaled numbers.
+- **Known gap (expanded rules, version 2).** Effects that the expanded-rules projection adds after the derived step (for example Shield Bash's Block 5) are not scaled. Its counter reply is projected from the scaled damage.
+- **Validation.** `validateActionCostTable` refuses a missing, negative or fractional stance by name. The card schema admits `costRule`; `costRule` values other than `'fixed'` are not valid content.
+
+*Falsify:* a smash, sweep, counter or spell card derives 2; a plain attack or block derives 1; a 0-cost card without `costRule: 'fixed'` is refused by the test; a 2-cost card's damage is `round(base × 1.8)`; a 1-cost card's damage is unchanged; `draw` is never scaled (`action-costs-table.test.mjs`, `action-costs-cards.test.mjs`).
+
 ### 4.4 Status effects
 
 Common (StS layer):
@@ -1021,6 +1037,20 @@ Enemy definition shape (content file):
 ```
 
 When the Combat Rounds Preview is on, see §4.11.
+
+### 4.6a Enemy SP pool (owner decision, 2026-10-12)
+
+- **Every enemy move costs SP** from the table by its stance (`moveKind` and the move's tags, the same classification as player cards). A move that names its own `sp` keeps it. A move with no stance costs 1 SP.
+- **Each enemy has an SP pool per turn:** `ENEMY_SP_POOL` = **2** by default (the owner's default), configurable in `content/actionCosts.js`; a per-enemy override is the `spPool` field of the enemy's content definition.
+- **Enemies spend until the pool is empty.** Each pick is the existing weighted pick, restricted to the moves the enemy can still afford (a move costing more than the remaining pool cannot be picked) and to the `maxConsecutive` rule. The pool is empty, or nothing affordable is left, when the plan stops.
+- **The minimum of one move.** An enemy whose pool is below every move's cost still plays one move; its first pick is offered no limit.
+- **Normal combat.** At the start of the player's turn each enemy plans its pool. The first planned move is the intent. In the enemy phase the planned moves play in plan order, each one revealed as it plays. The intent box shows the first move as the main intent. Follow-ups show as smaller symbols only with the multi-action preview toggle (§4.11); otherwise they are not shown until they play.
+- **A charging (delayed) move ends the enemy's turn**: the planned follow-ups do not play after it. A staggered enemy plays none of its plan that turn.
+- **The plan is saved** with the fight, so a save taken mid-turn restores the same intent and follow-ups.
+- **Co-op is not wired to the pool.** Co-op set aside on dev (#1881): a co-op enemy still plans one move a turn, and its moves do not pay the table. Co-op cards pay the derived costs of §4.3a.
+- **Rounds mode** (§4.11) uses the same pool and table: the enemy SP of its queues is the pool (2), and each queued move costs its table price.
+
+Shipped values and where they live: the table, the pool default and the 1.8 multiplier are in `content/actionCosts.js`. The 1.8 multiplier is a **provisional default, owner to tune**.
 
 ### 4.7 Tagged combat cards and readable enemy stances
 
@@ -1170,7 +1200,7 @@ When the Combat Rounds Preview is on, see §4.11.
 - Advanced → Combat holds three independent opt-in rows, all **off by default** (owner decision, 2026-10-12): *Combat rounds preview* (the rounds mode, its own key, unchanged), *Momentum*, and *Multi-action preview*. They are shown on dev and test builds only, because the Combat group is not in `RELEASE_ADVANCED_GROUP_IDS` and a release build never draws it.
 - Each row is read at New Run and frozen into the run, as the other Advanced rows are. A saved fight keeps the rules it started with; a later change applies to new runs only.
 - The preview covers solo and co-op/LAN. Co-op parity is part of the contract, not a later step. The two toggles in normal combat are solo-only until P6 wires them into co-op (see *Normal combat* below).
-- With all three off, fights, saves and RNG rolls are unchanged, and no preview field is written: a fight carries no `combatRounds` or `normalPreview`.
+- With all three off, no preview field is written: a fight carries no `combatRounds` or `normalPreview`. The action costs (§4.3a) and the enemy SP pool (§4.6a) are always on (owner decision, 2026-10-12), so with the toggles off a fight, its save and its RNG rolls change from the 2026-10-11 rules. A save taken mid-turn also carries each enemy's planned moves.
 
 **Momentum and follow-ups in rounds mode**
 
@@ -1182,7 +1212,7 @@ When the Combat Rounds Preview is on, see §4.11.
 - *Momentum* (owner decision, 2026-10-12) keeps a value per enemy, −3..+3, by the rounds rules: each enemy's value moves one step toward 0 when the player's turn starts (a turn is a round). Each exchange credits its winner once: a landed attack to the player, an enemy hit that lands to the enemy, an attack fully blocked or evaded to the defender, and a counter that fires to its owner. The gain is 1 (normal cards have no `momentumGain`) plus the stance bonus from `stance-advantage.csv`. The summed deltas settle once, at the end of the enemy phase, are clamped to −3..+3, and a raw total past the cap sets the overflow flag.
 - Normal combat has no speed order and no hit roll, so momentum has **no mechanical effect** here: it is tracked and shown, and nothing else reads it. Two rounds rules are not mapped and change nothing: the ±3 counter stagger (normal Counters carry no stagger tag) and the poise double (normal combat models no poise damage to double).
 - The turn banner shows the targeted enemy's momentum tab (`++` for +2/+3, `+-` for ±1, `--` for −2/−3, none at 0), from its stored value, already decayed for the turn.
-- *Multi-action preview* (owner decision, 2026-10-12): each enemy plans its moves ahead with the same weighted pick, from the `enemyAI` stream, filling a plan to the rounds enemy SP pool (3 at 1 SP per move, the default). The head of the plan is the intent played this roll; the rest are its planned follow-ups. The plan is the moves the enemy plays, in that order. A staggered or held enemy keeps its plan. The intent box shows the follow-ups as §4.9 describes. The enemy SP pool itself is a separate change, so the plan size is the rounds default for now.
+- *Multi-action preview* (owner decision, 2026-10-12): each enemy plans its moves ahead with the same weighted pick, from the `enemyAI` stream, filling a plan to the enemy SP pool (2 by default, §4.6a), each move at its table price (§4.3a). The head of the plan is the intent played this roll; the rest are its planned follow-ups. The plan is the moves the enemy plays, in that order. A staggered or held enemy keeps its plan. The intent box shows the follow-ups as §4.9 describes.
 
 **Always on, in every fight** (owner decision, 2026-10-12; `styles/combat-visuals.css`)
 
@@ -1202,7 +1232,7 @@ When the Combat Rounds Preview is on, see §4.11.
 **Queue and End Turn**
 
 - Playing a card queues it and pays its SP, and its MP if it has an MP cost, at queue time. Unqueuing refunds it.
-- Enemies queue cards and moves from their own SP pool, stat-driven with a base of 3. A move costs 1 SP unless the move says otherwise.
+- Enemies queue cards and moves from their own SP pool (§4.6a): 2 by default, a per-enemy `spPool` overrides it. A move costs its stance's table price (§4.3a), and 1 SP when its stance is not priced or the move names no stance.
 - End Turn keeps its label and look. In the preview it commits the round: it adapts the enemy queues, steps the round through the timeline, pauses for a reaction when a player-targeted attack needs one, then runs the live turn-end hand rules.
 
 **Order and hits**
