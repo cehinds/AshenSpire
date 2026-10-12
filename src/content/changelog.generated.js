@@ -7,10 +7,20 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-10-12",
     "group": "2026-10-12",
     "summary": "The 2026-10-12 receipts run newest first again",
-    "detail": "The build-stamp bot had re-pointed #1897's receipt to a newer build without moving it above #1901's, which turned every check on dev red.",
-    "build": "0.7.1.1427",
+    "detail": "The build-stamp bot re-points a landed receipt to its real build without moving it, which put #1897 and then #1902 below older builds and turned every check on dev red.",
+    "build": "0.7.1.1429",
     "pullRequest": 1911,
     "url": "https://github.com/cehinds/AshenSpire/pull/1911"
+  },
+  {
+    "id": "pr-1902",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Rules written for chained reactions and three new card traits",
+    "detail": "Nothing changes in the game yet. The specification now describes playing several Reaction cards against one enemy action, resolving last played first, and the Counterstrike, Impact and Flux card traits that will follow.",
+    "build": "0.7.1.1429",
+    "pullRequest": 1902,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1902"
   },
   {
     "id": "pr-1900",
