@@ -74,6 +74,10 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
   el.dataset.maximumHeightRatio = String((464-Math.min(...Object.values(frames).map(frame=>frame.bounds[1])))/height);
   const width = Math.max(256-family.frames.ready.bounds[0], family.frames.ready.bounds[2]-256)*2*scale;
   el.dataset.idleWidthRatio = String(width/190);
+  // Selected poses share one canvas scale and floor. Reserve their full reach
+  // for the viewport edge clamp without shrinking the readable idle body.
+  if (pilotFrames) el.dataset.maximumWidthRatio = String(Math.max(...Object.values(pilotFrames)
+    .map(frame => Math.max(256-frame.bounds[0], frame.bounds[2]-256)*2))/height);
   el.style.cssText = `position:relative;width:${width}px;height:190px;flex:none;overflow:visible;`;
   // Room to either side keeps the authored dash and aura inside the canvas.
   const canvas = document.createElement('canvas');

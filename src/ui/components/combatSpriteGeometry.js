@@ -95,8 +95,10 @@ export function combatSpriteGeometry(sprite, refresh) {
   const boxHeight = sprite.offsetHeight, boxWidth = sprite.offsetWidth;
   const stage = host.querySelector('.painted-stage');
   if (stage && !host.querySelector('.rendered-stage')) {
+    const maximumWidthRatio = Number(stage.dataset.maximumWidthRatio || 0);
     return { boxHeight, visibleHeight: boxHeight * Number(stage.dataset.idleHeightRatio || 1),
-      visibleWidth: boxHeight * Number(stage.dataset.idleWidthRatio || boxWidth / boxHeight), footOffset: 0 };
+      visibleWidth: boxHeight * Number(stage.dataset.idleWidthRatio || boxWidth / boxHeight), footOffset: 0,
+      ...(maximumWidthRatio > 0 ? { edgeWidth: boxHeight * maximumWidthRatio } : {}) };
   }
   const img = host.querySelector('.enemy-pose-idle, .painted-presentation, .facing > img');
   const bounds = img && imageBounds(img, refresh);
