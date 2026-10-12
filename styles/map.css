@@ -259,6 +259,11 @@
    `g.` is load-bearing: kit.css's `.tooltip-selected:not(.overhead-control)`
    is (0,2,0) and loads after this file, so an equal selector loses. */
 g.map-node.tooltip-selected, g.map-node[data-tip-open="true"] { outline: none; }
+/* A tap no longer runs the tooltip's tap-to-select on map nodes (#1830), so
+   the class above is never set and the browser's own ring showed on the
+   tapped node instead. A pointer or touch focus draws none; keyboard focus
+   (:focus-visible) and the pad cursor (.gp-focus) keep theirs. */
+g.map-node:focus:not(:focus-visible) { outline: none; }
 .map-node .node-halo {
   fill: none; stroke: var(--gold); stroke-width: 2.5;
   transform-box: fill-box; transform-origin: center;
@@ -323,6 +328,18 @@ g.map-node.tooltip-selected, g.map-node[data-tip-open="true"] { outline: none; }
 .reduced-motion .map-node.shrine-lane > circle:not(.node-halo) {
   animation: none;
   filter: drop-shadow(0 0 5px var(--gold));
+}
+
+/* Lite performance mode stops the map's endless animations, the same way
+   Reduced motion does above (combat.css carries the lite rules for combat).
+   Only the motion goes; the reachable, current and shrine cues stay on screen. */
+:root[data-performance='lite'] .mapscreen .map-node.current circle { animation: none; }
+:root[data-performance='lite'] .mapscreen .map-node.reachable > circle:not(.node-halo) { animation: none; stroke-opacity: 1; }
+:root[data-performance='lite'] .mapscreen .map-node .node-halo { animation: none; stroke-opacity: 0.5; }
+:root[data-performance='lite'] .mapscreen .map-edge.shrine-lane,
+:root[data-performance='lite'] .mapscreen .map-node.shrine-lane > circle:not(.node-halo) {
+  animation: none;
+  filter: none;
 }
 /* A selected shrine-lane node shows the selection glow and stops pulsing,
    like any other selected node; the shrine rules above would otherwise win. */

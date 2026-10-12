@@ -3847,6 +3847,11 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 :root .combat .combatant-leading .intent.knowledge-read { width:max-content; max-width:none; }
 .card-inspection-target > .card-info-button { position:absolute; z-index:8; top:calc(-1 * (var(--inspect-box) + var(--inspect-gap, calc(10px / var(--ui-zoom, 1))))); right:auto; bottom:auto; left:50%; transform:translateX(-50%); visibility:hidden; pointer-events:none; }
 .card-inspection-target:is(.inspection-selected, .selected, [aria-selected='true']) > .card-info-button { visibility:visible; pointer-events:auto; }
+/* A hand card's Inspect is the portal above the card (handInspectionOverlay), shown
+   once it is moved there. The in-card copy stays hidden even while the card is
+   selected, so it never paints at a temporary spot and then moves (owner, 2026-10-11).
+   Non-hand card views keep the shared in-card rule above. */
+.hand .card-inspection-target > .card-info-button { visibility:hidden; pointer-events:none; }
 /* WCF3: the selected card and its inspect control share one glow. The hand
    moves that control into an overlay, so the portal wears the same filter. */
 .inspection-selected, .hand-info-portal { filter:var(--selection-glow, drop-shadow(0 0 calc(.35 * max(16px / var(--ui-zoom, 1), 1rem)) var(--gold))); }
@@ -4939,7 +4944,7 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 :root .combat[data-layout='formation']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art] > :is(.pile,.end-turn,.combat-potions) {
   position: relative; padding: 0; border: 0; border-radius: 0;
   background: transparent; box-shadow: none; overflow: visible;
-  color: #e7dcc0; text-shadow: 0 1px 3px #000;
+  color: #e7dcc0; text-shadow: var(--hud-text-shadow, 0 1px 3px #000);
 }
 .footer-art-face { display: block; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
 .footer-art-face text { paint-order: stroke; stroke: #100e0b; stroke-width: .6px; }
@@ -4990,6 +4995,10 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
    844x390 included) keeps 44px piles: a 42% icon over 11px counts fits them. */
 .combat-action-row[data-footer-compact='true'] .pile .footer-art-face { height: 42%; flex: 0 1 42%; }
 .combat-action-row[data-footer-compact='true'] .pile .footer-compact-label { font-size: calc(11px / var(--ui-zoom, 1)); }
+/* A compact face is sized by height; its width follows the art's own aspect (the
+   aspect-ratio footerArt.js writes) so the contained art is not stretched into a
+   pile's full width. */
+.combat-action-row[data-footer-compact='true'] .footer-art-face[data-art-fit='contain'] { width: auto; }
 /* Piles on a compact host (<= 600px, packCombatFooter's compact branch): a 28px
    icon over 13px counts, the minimum legible size on a phone. Discard/Exhaust's
    two lines are the tallest content, and the pile height (pileHeightPx) is sized
@@ -4997,6 +5006,21 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
    44px piles, which cannot hold this stack. */
 .combat[data-compact-combat='true'] .combat-action-row[data-footer-compact='true'] .pile .footer-art-face { height: calc(28px / var(--ui-zoom, 1)); flex: 0 0 auto; }
 .combat[data-compact-combat='true'] .combat-action-row[data-footer-compact='true'] .pile .footer-compact-label { font-size: calc(13px / var(--ui-zoom, 1)); }
+/* Phone portrait (compact-combat): the art gets the height the row has. The
+   layout's pile is 60 px (pileHeightPx), which leaves a 28 px face too small
+   to read. The row keeps its 92 px height; each pile column is 88 px, a 56 px
+   face over its label with about 5 px clear of the screen edge (the art is
+   about 35-37 px tall at its natural aspect), and Potions takes a 60 px face,
+   so its art is 64 px wide at its natural aspect. The selectors outrank the
+   packed-footer rules they replace. */
+:root .combat[data-layout='formation'][data-compact-combat='true']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art][data-footer-compact='true'] > .pile,
+:root .combat[data-layout='formation'][data-compact-combat='true']:is(.coop,:not(.coop)) .combat-action-row[data-footer-art][data-footer-compact='true'] > .combat-potions {
+  height: calc(88px / var(--ui-zoom, 1)); min-height: calc(88px / var(--ui-zoom, 1));
+}
+.combat[data-compact-combat='true'] .combat-action-row[data-footer-compact='true'] .pile .footer-art-face[data-art-fit='contain'] { height: calc(56px / var(--ui-zoom, 1)); }
+.combat[data-compact-combat='true'] .combat-action-row[data-footer-compact='true'] .combat-potions .footer-art-face[data-art-fit='contain'] { height: calc(60px / var(--ui-zoom, 1)); }
+/* The art bottom meets its label: the face drops by its blank strip (--art-drop, a fraction of its own height). */
+.combat[data-compact-combat='true'] .combat-action-row[data-footer-compact='true'] .footer-art-face[data-art-fit='contain'] { transform: translateY(calc(var(--art-drop, 0) * 100% + 1.6px)); }
 .combat-action-row[data-footer-compact='true'] .end-turn .footer-art-face { position: absolute; inset: 0; height: 100%; }
 .combat-action-row[data-footer-compact='true'] .end-turn .footer-compact-label { position: relative; max-width: 90%; }
 .combat-action-row[data-footer-art] .end-turn > :is(.footer-compact-label,.hold-hint) { position: relative; z-index: 1; }
@@ -5160,7 +5184,7 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 }
 :root .combat[data-layout='formation'] .combatant .sprite::before {
   content: ''; position: absolute; left: 50%; bottom: 0;
-  width: 70%; height: 8%; border-radius: 50%; transform: translate(-50%,50%);
+  width: var(--floor-shadow-width, 70%); height: 8%; border-radius: 50%; transform: translate(-50%,50%);
   background: #0008; pointer-events: none; z-index: -1;
 }
 .modal-foot-actions[data-action-count] {
@@ -5851,7 +5875,7 @@ button[data-button-size] {
   outline: max(1px, calc(2px / var(--ui-zoom, 1))) solid var(--ward-gold); outline-offset: 1px;
   box-shadow: 0 0 calc(7px / var(--ui-zoom, 1)) #d8b35466;
 }
-:root .combat .combatant .combat-health-meter .m-value { color: #fff1d6; letter-spacing: 0; }
+:root .combat .combatant .combat-health-meter .m-value { color: #fff1d6; letter-spacing: 0; text-shadow: var(--hud-text-shadow, 0 1px 2px #000); }
 :root .combat .combatant .combat-health-badge {
   position: relative; flex: 0 0 max(14.285%, calc(26px / var(--ui-zoom, 1))); min-width: 0; aspect-ratio: 1; display: grid; place-items: center;
   color: #fff1d6; font: 500 var(--combatant-value-text, calc(12px / var(--ui-zoom, 1)))/1 var(--font-body);

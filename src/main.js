@@ -1,4 +1,5 @@
 import { rollPendingAbilityOffers } from './model/abilityOffers.js';
+import { openRestRecord, recordRestConsumed, markRestLeft, restRevisitNodeId, clearRestRevisitOnTravel } from './model/restRevisit.js';
 import { queueInitialProgression } from './model/initialProgression.js';
 import { isAbilitySkill } from './model/abilityGrades.js';
 import { expandedProgression } from './model/classMilestones.js';
@@ -24,6 +25,7 @@ import { LEGACY_DUNGEONS, dungeonForEncounter, dungeonDefinition, dungeonNode, d
 import { mountLegacyDungeon } from './ui/screens/legacyDungeon.js';
 import { mountDialogue } from './ui/screens/dialogue.js';
 import { applyHudVisibility } from './ui/models/HudVisibilityModel.js';
+import { formFactorFor } from './ui/models/FormFactorModel.js';
 import { applyWireframeChoices } from './ui/wireframeChoices.js';
 import { restampModalWireframes } from './ui/components/modalShell.js';
 import { restampWorkspaceFrames } from './ui/components/w1Workspace.js';
@@ -82,6 +84,7 @@ import { openRunEnemyKnowledge } from './model/enemyKnowledgeRun.js';
 import { createRunStartOwner } from './model/runStart.js';
 import { createSaveTransfer } from './engine/saveTransfer.js';
 import { openOfflinePlay } from './ui/components/offlinePlay.js';
+import { modalOpen, onModalsClosed } from './ui/modalState.js';
 import {
   rollEncounter,
   rollRuneReward,
@@ -301,7 +304,13 @@ if (shotState === 'crisis') {
   bootStorage.setItem(META_KEY, String(bootStorage.getItem(META_KEY)).slice(0, 24));
   bootStorage.removeItem(META_BACKUP_KEY);
 }
-const saves = shotState ? createSaveManager(bootStorage) : createBrowserSaveManager(bootStorage, { locks: navigator.locks });
+// The cross-tab profile lock guards a storage other tabs share. Memory storage
+// (blocked browser storage, e.g. the sandboxed branch preview, whose frame
+// also refuses the Web Locks API) belongs to this tab alone, so it needs none:
+// asking would make every run start fail.
+let persistentStorage = false;
+try { persistentStorage = bootStorage === window.localStorage; } catch { /* blocked browser storage */ }
+const saves = shotState ? createSaveManager(bootStorage) : createBrowserSaveManager(bootStorage, { locks: persistentStorage ? navigator.locks : null });
 
 // `?shotSettings=<json>` — display settings for a ?shot= boot, written into the
 // EPHEMERAL store above. Read only when shotState is truthy, so a normal boot
@@ -674,6 +683,15 @@ function applyUiScale(settings) {
   // cannot disagree. The stylesheets key off this and measure nothing (#24).
   document.documentElement.setAttribute('data-layout', narrow ? 'narrow' : 'wide');
   document.documentElement.setAttribute('data-composition', compact ? 'short-wide' : 'standard');
+  // The HUD form factor (docs/hud-layout-tokens.md) — which
+  // content/hud-layout/<form-factor>.json styles the combat HUD. Written here,
+  // beside data-layout, so styling has no decider of its own; it never picks
+  // the mode or the zoom above. It does change HUD geometry (the tools span
+  // and the px offset tokens), so the combat tools row and the battlefield
+  // stage observe this attribute and re-measure when it changes.
+  // Thresholds: balance.ui.uiScale.formFactor.
+  document.documentElement.setAttribute('data-form-factor',
+    formFactorFor(window.innerWidth, window.innerHeight, UI.uiScale.formFactor));
   // Publish the short/refusal value from that same decider for layout consumers too.
   // This is not another short-screen predicate: CSS reads the answer computed
   // above, just as it reads `data-layout`. In particular, combat may let its
@@ -1139,7 +1157,14 @@ function newRun(config) {
     prepare: () => saves.ensureProfile(),
     isCurrent: () => app.firstElementChild === surface && run === previousRun,
     adopt: () => beginPreparedRun({ ...config, seedString: asked }),
-    onFailure: error => showSettingsNotice(`Profile could not be saved: ${error.message}`, 'profile'),
+    onFailure: error => {
+      const message = `Profile could not be saved: ${error.message}`;
+      console.error('[run] start refused:', error);
+      // The command log keeps the reason even when the banner is folded into
+      // its overflow; keying by reason lets a new reason raise its own banner.
+      dlog('ERROR', `run start refused: ${error.message}`);
+      if (!showSettingsNotice(message, 'profile')) failureBanner(`run:start:${error.message}`, 'THIS RUN COULD NOT START', ` · ${error.message}`);
+    },
   });
 }
 
@@ -1201,10 +1226,10 @@ function beginPreparedRun({ classId, seedString, customization, keepsakeId, cust
     ? legacyArcaneShot || shotCombatVersion === '1' ? null : 1
     : shotKnowledgeVersion === '0' ? null : 1;
   const shotReactionVersion = shotState === 'combat' ? shotParams.get('shotReactionVersion') : null;
-  if (shotReactionVersion !== null && !['0', '1'].includes(shotReactionVersion)) throw new Error('shotReactionVersion must be 0 or 1');
+  if (shotReactionVersion !== null && !['0', '1', '2'].includes(shotReactionVersion)) throw new Error('shotReactionVersion must be 0, 1 or 2');
   const reactionRulesVersion = shotReactionVersion === null
-    ? legacyArcaneShot || shotCombatVersion === '1' || shotKnowledgeVersion === '0' ? null : 1
-    : shotReactionVersion === '0' ? null : 1;
+    ? legacyArcaneShot || shotCombatVersion === '1' || shotKnowledgeVersion === '0' ? null : 2
+    : shotReactionVersion === '0' ? null : Number(shotReactionVersion);
   const configSnapshot = { ...advancedConfigSnapshot(saves.loadMeta().settings || {}),
     breakMeterVersion: combatExpansionVersion === 2 ? 2 : 1 };
   // The Arcane matrix is a legacy-run visual fixture. It deliberately carries
@@ -1741,10 +1766,14 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
       const empty = slots.find((s) => !s.summary);
       startRunInSlot({ ...quickStartRunConfig(registries), seedString: randomSeedString() }, empty ? empty.slot : 1);
     },
-    // A delete returns to the door it came from, with the slot now empty.
+    // The Title updates in place from the returned list (no remount). The
+    // snapshot below is this showTitle's own `slots`, which onQuickStart and
+    // onCustom read, so it is refreshed too.
     onDelete: (slot, from = null) => {
       saves.clearRun(slot);
-      showTitle({ reopen: from });
+      const fresh = saveSlotRecords();
+      slots.splice(0, slots.length, ...fresh);
+      return fresh;
     },
     onHistory: showHistory,
     onCompendium: showCompendium,
@@ -1911,8 +1940,12 @@ const quickMenuControls = {
   },
 };
 
+// The Settings door showSettings opened, so an import, which replaces the profile
+// under it, can close it. Its toggles read the stale DOM otherwise.
+let settingsDoor = null;
+
 function showSettings() {
-  openSettings({
+  settingsDoor = openSettings({
     meta: activeMeta,
     previewAttributes: run?.attributes,
     previewLevel: run ? characterLevelOf(run) : null,
@@ -1922,11 +1955,34 @@ function showSettings() {
   });
 }
 
+// AFTER AN IMPORT, NO RELOAD. The restored profile is on disk; re-read it the way
+// boot does (persistSettingsChange's order) and redraw the title over the same page.
+// It goes through the Profile door's restore (onRestored in showProfile): the
+// stored profile is brought forward, then the same defaults choice as boot is
+// decided before any promoted value is seeded. With no choice pending the
+// promoted defaults are seeded; otherwise the imported values remain intact
+// for Keep local. applyRestoredSettings then re-applies display, UI scale, pad
+// and key bindings, drops a stale Undo, and fills activeSettings IN PLACE
+// (other owners hold that object).
+function refreshAfterImport() {
+  activeMeta = saves.loadMeta();
+  const settings = bringStoredProfileForward(activeMeta);
+  settingsChoicePending = saves.profileStatus().ok
+    && needsSettingsChoice(activeMeta, BUILD_VERSION, settingsRows(), promotionFor(SETTINGS_DEFAULTS, promotionDebug()).values);
+  if (!settingsChoicePending) seedPromotedDefaults(activeMeta, settings);
+  applyRestoredSettings(settings);
+  rebuildRegistries(activeSettings);
+  settingsChoiceChecked = true;
+  // The Settings door (opened from the title's Download & saves path) still shows the old profile.
+  settingsDoor?.close?.(); settingsDoor = null;
+  showTitle({ skipStartup: true });
+}
+
 function showOfflinePlay() {
   const transfer = createSaveTransfer(bootStorage, registries);
   const ownedTransfer = { ...transfer, restore: text => saves.withProfile
     ? saves.withProfile(() => transfer.restore(text)) : transfer.restore(text) };
-  openOfflinePlay({ transfer: ownedTransfer, assertImportAllowed: () => {
+  openOfflinePlay({ transfer: ownedTransfer, onImported: refreshAfterImport, assertImportAllowed: () => {
     if (run) throw new Error('Return to the title screen before importing saves.');
     let persistent = false;
     try { persistent = bootStorage === window.localStorage; } catch { /* blocked browser storage */ }
@@ -2371,8 +2427,21 @@ const MAP_REMOUNT_KEYS = ['mapMode', 'mapZoom', 'mapFreePan', 'classicAppearance
 // has no Potions control, and a remount drops its selected destination
 // (#1474 review).
 const FLASK_REMOUNT_KEYS = ['useRestorativeFlasksOutsideCombat'];
+// A remount that lands while a modal is open (Settings over the map) waits for
+// the modal to close. One deferred remount is kept; later changes merge into it.
+let deferredMapRemount = null;
 function remountMapIfShowing(changed) {
   if (!run || !changed) return;
+  if (modalOpen()) {
+    if (deferredMapRemount) { Object.assign(deferredMapRemount, changed); return; }
+    const pending = { ...changed };
+    deferredMapRemount = pending;
+    onModalsClosed(() => {
+      if (deferredMapRemount === pending) deferredMapRemount = null;
+      remountMapIfShowing(pending);
+    });
+    return;
+  }
   const screen = app.querySelector('.mapscreen');
   if (!screen) return;
   const mapKey = MAP_REMOUNT_KEYS.some((k) => k in changed);
@@ -2414,6 +2483,8 @@ function showMap(opts) {
     run,
     meta: activeMeta,
     selectedId,
+    // A left classic rest site stays enterable until a new node is chosen.
+    revisitId: restRevisitNodeId(run),
     onPick: enterNode,
     onSettings: showSettings,
     onSettingsChange: persistSettingsChange,
@@ -2594,8 +2665,11 @@ function finishWorldService() {
 }
 
 function enterNode(nodeId) {
-  sfx.play('nodeTravel');
+  // Re-entering the node the player stands on is not travel, so no travel sound.
+  if (nodeId !== run.mapNodeId) sfx.play('nodeTravel');
   const node = run.mapGraph.nodes[nodeId];
+  // Travelling to another node ends a left rest site's re-entry (restRevisit.js).
+  clearRestRevisitOnTravel(run, nodeId);
   run.mapNodeId = nodeId;
   if (!run.path.includes(nodeId)) run.path.push(nodeId);
   run.floor = node.floor;
@@ -2882,7 +2956,7 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
     }
   }
   if (shotState === 'combat' && shotParams.get('shotReaction') === 'counter') {
-    if (combat.reactionRulesVersion !== 1) throw new Error('shotReaction=counter requires reaction rules version 1');
+    if (!(combat.reactionRulesVersion >= 1)) throw new Error('shotReaction=counter requires reaction rules');
     // Memory-only validation pose; choices, payment and returns use production commands.
     combat.piles.draw.push(...combat.piles.hand);
     combat.piles.hand = ['guardCounter', 'sweepingBlow', 'strike'].map((cardId, index) => ({ cardId, instanceId: `reaction-shot-${index}`, upgraded: false }));
@@ -3525,7 +3599,15 @@ function showRest(openPanel = null, locationId = null) {
     dlog('ERROR', `settings.${b.key}: stored value ${JSON.stringify(b.stored)} is not one of the counts this row offers — using ${b.used}.`);
   }
   const worldRest = run.journey?.activeService;
-  const restState = run.legacyDungeon?.activeRest || (worldRest ? run.journey.serviceStates[worldRest.pointId] : null);
+  // The classic map's rest site keeps its own record (restRevisit.js), which
+  // stands in for the service state so a re-entry does not refill again.
+  const classicRest = !run.journey && !run.legacyDungeon;
+  const priorRevisit = run.restRevisit;
+  // The Multi-use setting is read once; a record opened now keeps it for the visit.
+  const multiUseSetting = run.journey ? false : settingOn(saves.loadMeta().settings, 'shrineMultiUse');
+  const record = classicRest ? openRestRecord(run, { multiUse: multiUseSetting }) : null;
+  if (record !== priorRevisit) persist();
+  const restState = run.legacyDungeon?.activeRest || (worldRest ? run.journey.serviceStates[worldRest.pointId] : null) || record;
   if (!openVisit || openVisit.locationId !== restLocationId || openVisit.ctx.run !== run) {
     openVisit = createLocationVisit({ run, registries, rng }, restLocationId, { healMult, refillCounts: counts, restBonus: restRecoveryBonus(saves.loadMeta().settings || {}) });
     // A resumed atlas visit arrived once already (the service state says so);
@@ -3541,6 +3623,19 @@ function showRest(openPanel = null, locationId = null) {
   }
   const visit = openVisit;
   const refill = visit.refill;
+  // The smith's services are rolled once per classic visit and kept on the
+  // record, so a re-entry shows the same offer. A plain copy saves as JSON.
+  let smithServices = null;
+  if (visit.services.smith) {
+    if (record) {
+      if (!record.smithServices) {
+        const roll = smithServicesAt(registries, 'shrine', rng);
+        record.smithServices = { ...roll, services: [...roll.services] };
+        persist();
+      }
+      smithServices = record.smithServices;
+    } else smithServices = smithServicesAt(registries, 'shrine', rng);
+  }
   mountRest(app, {
     registries,
     run,
@@ -3553,7 +3648,7 @@ function showRest(openPanel = null, locationId = null) {
     // Which smith services this place offers — the table's word, resolved
     // here so the screen reads one answer (a chance of 100 consumes no roll),
     // and only where the place carries the `smith` tag.
-    services: visit.services.smith ? smithServicesAt(registries, 'shrine', rng) : null,
+    services: smithServices,
     // The board is the atlas town's (plan phase 10b): offered where the place
     // carries `questBoard` and the run stands in a town, returning here.
     questBoard: visit.services.questBoard && worldRest ? (() => {
@@ -3564,6 +3659,9 @@ function showRest(openPanel = null, locationId = null) {
     // The deck editor under Rest sites only (SPEC §14.1): where the place
     // carries `deckEdit`; it closes back onto this visit.
     deckEditor: deckDoors(visit.services).rest ? { onOpen: () => showDeckEditor(() => showRest()) } : null,
+    // The classic rest site's re-entry record and its consumed-choice hook.
+    revisit: record,
+    onConsumed: (kind) => { if (record) { recordRestConsumed(run, kind); persist(); } },
     onReallocate: () => persist(),
     // An assigned point is permanent. It persists the moment it is assigned,
     // not when the player leaves the shrine, for the same reason the
@@ -3573,12 +3671,13 @@ function showRest(openPanel = null, locationId = null) {
     onLevelUp: () => persist(),
     // E13's toggle: with it on, Rest and Smith re-open the Shrine instead of
     // leaving it, and the screen carries its own LEAVE.
-    multiUse: run.journey ? false : settingOn(saves.loadMeta().settings, 'shrineMultiUse'),
+    multiUse: record && typeof record.multiUse === 'boolean' ? record.multiUse : multiUseSetting,
     onDone: () => {
       leaveLocation(visit);
       openVisit = null;
       if (run.legacyDungeon?.activeRest) resolveDungeonNode(run);
       else finishWorldService();
+      if (classicRest) markRestLeft(run);
       persist();
       showMap();
     },

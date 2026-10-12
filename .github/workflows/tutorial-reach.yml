@@ -1,5 +1,5 @@
 # .github/workflows/tutorial-reach.yml — the first-run tutorial's exits, in a
-# real browser, on every pull request into dev.
+# real browser, on a push to test and on workflow_dispatch.
 #
 # WHY THIS FILE EXISTS (docs/FINISH.md §6, "The tutorial reachability probe runs
 # in CI"). The coach marks (src/ui/components/tutorial.js) are the only thing
@@ -12,12 +12,17 @@
 # boundary block has said "NO job here runs it" since 2026-07-28; nothing did,
 # and on 2026-10-02 it was red at every viewport with nobody watching.
 #
-# WHERE IT RUNS. A pull request into dev is gated by fast checks (DEVELOPER.md,
-# *Which checks gate a pull request*). The full sweep is ~10 minutes of browser
-# time in one process, so it is SHARDED with the tool's own `--only` list into
-# three parallel jobs of a few minutes each; together they cover every case the
-# bare `node tools/tutorial-reach.mjs` runs, and a shard that names an unknown
-# case exits 2 instead of running nothing.
+# WHERE IT RUNS (owner, 2026-10-11, the stage rules). A pull request into dev
+# and a push to dev run only the base smoke (about five minutes), and this file
+# is not part of it. It runs on a push to `test` (and `alternative/**/test`) and
+# on workflow_dispatch, where the higher-level testing lives. The full sweep is
+# ~10 minutes of browser time in one process, so it is SHARDED with the tool's
+# own `--only` list into three parallel jobs of a few minutes each; together
+# they cover every case the bare `node tools/tutorial-reach.mjs` runs, and a
+# shard that names an unknown case exits 2 instead of running nothing.
+#
+# On a push to `release` it runs only when that tree differs from origin/test (the
+# `stage` job decides); the test stage already ran the same code.
 #
 # A JOB OF ITS OWN, like map-camera.yml and coop-hud.yml: `core` is a no-browser
 # lane. It serves the SOURCE tree, so it needs no build and no LFS. With no
@@ -27,15 +32,13 @@
 name: tutorial reach
 
 on:
-  pull_request:
-    branches: [dev, alternative/dev, 'alternative/**/dev']
   push:
-    branches: [dev, test, release, alternative/dev, 'alternative/**/dev', alternative/test, 'alternative/**/test']
+    branches: [test, release, 'alternative/**/test']
   workflow_dispatch:
 
 concurrency:
-  group: tutorial-reach-${{ github.ref_name }}-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: tutorial-reach-${{ github.ref_name }}-${{ github.sha }}
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -54,6 +57,47 @@ env:
   ART_PACKS: all
 
 jobs:
+  # ---------------------------------------------------------------------------
+  # THE STAGE DECISION. The job below runs unless this is a push to `release`
+  # whose tree equals origin/test: a release that carries only the SHA the test
+  # stage already ran is not run again. A fix that landed on release directly
+  # differs from test and runs. A failed fetch or diff counts as a difference.
+  # Pure git, no tool runs here. The same decision as ci.yml's `stage` job.
+  # ---------------------------------------------------------------------------
+  stage:
+    name: stage decision
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      run: ${{ steps.decide.outputs.run }}
+    steps:
+      # Trees only: a sparse checkout of .github and blobless history, so the
+      # 2 GB art tree is never fetched for a comparison of tree ids.
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /.github/
+
+      - name: Decide whether this workflow runs
+        id: decide
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          run=1
+          if [ "$EVENT_NAME" = "push" ] && [ "$REF_NAME" = "release" ]; then
+            if ! git fetch --no-tags --filter=blob:none origin test:refs/remotes/origin/test; then
+              echo "could not fetch origin/test; running"
+            elif git diff --quiet origin/test HEAD; then
+              run=0
+            fi
+          fi
+          echo "run=$([ "$run" = 1 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "stage decision: run=$run (event=$EVENT_NAME ref=$REF_NAME)"
+
   reach:
     name: tutorial reach ${{ matrix.shard.name }} (real browser)
     runs-on: ubuntu-latest
@@ -70,6 +114,8 @@ jobs:
             only: 1280x800,1366x768,1440x900
           - name: large + first run
             only: 1920x1080,2560x1440,resize,first-run
+    needs: stage
+    if: needs.stage.outputs.run == 'true'
     steps:
       - uses: actions/checkout@v5
         with:

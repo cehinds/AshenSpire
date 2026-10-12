@@ -1,0 +1,108 @@
+name: worker-branch-cleanup
+
+# WHY THIS EXISTS (owner, 2026-10-11). Worker branches are named
+# `worker/<parent-topic>/<task>` and pushed to origin so the orchestrator can
+# merge them into their parent branch. Once a parent is merged and `dev` is
+# promoted to `test`, those origin worker branches are no longer needed.
+#
+# THE RULE. Delete every origin `worker/**` branch whose tip is an ancestor of
+# `origin/test`. Nothing outside `worker/` is ever touched. A worker branch that
+# is not yet merged into `test` is kept and listed in the step summary.
+#
+# BOUNDARY. This only deletes origin worker branch pointers. Local worktrees and
+# local worker branches are cleaned up by the session that owns them.
+
+on:
+  push:
+    branches: [test]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'List what would be deleted without deleting anything'
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: worker-branch-cleanup
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository history
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Delete origin worker branches merged into test
+        env:
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --prune origin '+refs/heads/worker/*:refs/remotes/origin/worker/*' '+refs/heads/test:refs/remotes/origin/test'
+
+          # %(refname:strip=3) drops refs/remotes/origin/, so $b is already the
+          # branch name `worker/<parent-topic>/<task>`. It is used as-is for the
+          # log, the summary and the push --delete target, never prefixed again.
+          deleted=()
+          kept=()
+          fresh=()
+          would=()
+          test_tip=$(git rev-parse refs/remotes/origin/test)
+          while IFS= read -r b; do
+            [ -n "$b" ] || continue
+            tip=$(git rev-parse "refs/remotes/origin/$b")
+            if [ "$tip" = "$test_tip" ]; then
+              # Just created, no commits beyond test yet: keep it, so a branch
+              # cut for work that has not started is not deleted as "merged".
+              echo "kept $b (tip equals origin/test; no work beyond test yet)"
+              fresh+=("$b")
+            elif git merge-base --is-ancestor "refs/remotes/origin/$b" refs/remotes/origin/test; then
+              if [ "$DRY_RUN" = "true" ]; then
+                echo "[dry run] would delete $b"
+                would+=("$b")
+                continue
+              else
+                # Lease against the tip checked above: if a worker pushed to
+                # the branch since the ancestry check, the push is rejected
+                # and the branch is kept.
+                if git push --force-with-lease="refs/heads/$b:$tip" origin ":refs/heads/$b"; then
+                  echo "deleted $b"
+                else
+                  echo "kept $b (moved since check)"
+                  kept+=("$b")
+                  continue
+                fi
+              fi
+              deleted+=("$b")
+            else
+              echo "kept $b (not merged into test)"
+              kept+=("$b")
+            fi
+          done < <(git for-each-ref --format='%(refname:strip=3)' refs/remotes/origin/worker/)
+
+          {
+            echo "## worker-branch-cleanup"
+            echo
+            if [ "$DRY_RUN" = "true" ]; then
+              echo "Dry run: nothing was deleted."
+              echo
+              echo "### Would delete (${#would[@]})"
+              for b in "${would[@]+"${would[@]}"}"; do echo "- \`$b\`"; done
+              echo
+            fi
+            echo "### Deleted (${#deleted[@]})"
+            for b in "${deleted[@]+"${deleted[@]}"}"; do echo "- \`$b\`"; done
+            echo
+            echo "### Kept, not merged into test (${#kept[@]})"
+            for b in "${kept[@]+"${kept[@]}"}"; do echo "- \`$b\`"; done
+            echo
+            echo "### Kept, tip equals test, no work yet (${#fresh[@]})"
+            for b in "${fresh[@]+"${fresh[@]}"}"; do echo "- \`$b\`"; done
+          } >> "$GITHUB_STEP_SUMMARY"

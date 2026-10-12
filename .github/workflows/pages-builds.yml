@@ -29,41 +29,72 @@
 # the whole `main` tree is the base of the artifact and the only replaced file is
 # the root index.html (main's own is kept at /index-game.html).
 #
-# PUBLICATION IS SPLIT BY BRANCH (owner's ruling, 2026-09-05). A push to dev
-# ASSEMBLES, proves and then PUBLISHES the site. A push to test, release or main
-# assembles and proves it and stops: those are published only by the owner's own
-# dispatch whose `publish` input spells PUBLISH (github.actor AND
-# github.triggering_actor are both checked against github.repository_owner, so
-# neither a write collaborator's dispatch nor their re-run of the owner's dispatch
-# deploys). The automatic path is `dev` alone.
+# PUBLICATION IS SPLIT BY BRANCH. A push to dev or release ASSEMBLES, proves and then
+# PUBLISHES the site (dev: owner's ruling 2026-09-05; release: owner's ruling
+# 2026-10-11, which reverses the 2026-09-05 refusal for release only). A push to test
+# assembles and proves it and stops. A push to main assembles and proves it and stops:
+# main is published only by the owner's own dispatch whose `publish` input spells
+# PUBLISH (github.actor AND github.triggering_actor are both checked against
+# github.repository_owner, so neither a write collaborator's dispatch nor their re-run
+# of the owner's dispatch deploys). The automatic paths are `dev` and `release`.
 #
-# WHY `dev` ALONE, WHEN THE RULING SAID DEV, TEST AND RELEASE. Because the other two
-# CANNOT publish, and asking them to was turning finished work red. The `github-pages`
-# environment carries a deployment-branch rule and it admits `dev` and `main` only. A
-# workflow cannot read that rule, so the guard listed all three development branches
-# and every test/release run walked into the gate and failed there in about two
-# seconds with no steps and no log. The annotation is GitHub's, not ours:
+# A RELEASE PUBLISHES WITH THE HIGH-RES ART. tools/pages-site.mjs names release (and
+# main) in FULL_ART_BRANCHES and fullArtFor() returns true for it, so every release
+# build the site rebuilds from source is built with --full-art (the high tier); the
+# committed builds of older commits are full editions by construction. dev-preview.yml
+# gives release `--full-art` for the same reason (its ART_TIER expression).
+#
+# THE ENVIRONMENT RULE (ONE-TIME OWNER ACTION, BEFORE A RELEASE PUSH CAN DEPLOY). The
+# `github-pages` environment carries a deployment-branch rule, and until it also
+# admits `release` GitHub refuses a release deploy at the gate, in about two seconds
+# with no steps and no log:
 #
 #   Branch "release" is not allowed to deploy to github-pages due to environment
 #   protection rules.
 #
-# Measured 2026-09-07 on release `fb299d90` (run 209, the release PR #795): assemble
-# green in 97s, deploy red at the gate, the release PR carrying a red check with
-# nothing wrong with the release. The day's deployment statuses say the same for
-# every branch — dev and main reach `success`, test and release go `waiting` →
-# `failure`.
+# Settings → Environments → github-pages → Deployment branches: add `release`. A
+# workflow cannot read that rule, so this guard and PUBLISH_REQUESTED below have to
+# agree with it by hand; they list `release` only because the owner has said so. Until
+# the rule admits it, a release push assembles green and its deploy job is refused.
+#
+# `test` STILL CANNOT PUBLISH. Its branch is not admitted by the environment, and a
+# guard that listed it would walk every test run into the gate and turn finished
+# work red (measured 2026-09-07 on release `fb299d90`, run 209: assemble green in
+# 97s, deploy refused at the gate). To give test the same publish path, the owner adds
+# `test` to the environment's deployment branches FIRST, then the guard and
+# PUBLISH_REQUESTED below. The owner's dispatch still publishes any branch the
+# environment admits, main included.
 #
 # NOTHING IS LOST BY NOT TRYING. The site is reassembled from git history on every
 # run and `tools/pages-site.mjs` walks dev, test, release and main whatever branch
-# the run is on, so a dev publication already carries the test and release sections
-# at their newest commits. What those two lose is only the ability to TRIGGER a
-# publication — not their place in the published site.
+# the run is on, so a dev or release publication already carries every other
+# section at its newest commit. What a branch that cannot deploy loses is only the
+# ability to TRIGGER a publication — not its place in the published site.
 #
-# TO GIVE THEM THAT BACK, THE ENVIRONMENT HAS TO ADMIT THEM FIRST: Settings →
-# Environments → github-pages → Deployment branches, add `test` and `release`, THEN
-# add them back to the deploy guard and to PUBLISH_REQUESTED below. Adding them here
-# alone reinstates exactly the failure above. The owner's dispatch still publishes
-# any branch the environment admits, main included.
+# FEATURE-BRANCH BUILDS. Every open pull request into dev whose head is a branch of
+# this repository (feature/*, fix/*, chore/*) has its newest playable build at
+# branches/<branch>/latest/ (README, Play and download). The assemble job lists the
+# open PRs with GITHUB_TOKEN, fetches each one's newest successful dev-preview build
+# for its head commit and hands them to tools/pages-site.mjs, which publishes them
+# and lists them on the index. A build therefore lives exactly as long as its PR is
+# open: a merge arrives as a push to dev, a close as the pull_request_target event
+# below, and each publishes a site without it. The deploy job is unchanged. The
+# sticky "Playable build" comment is posted by its own job after a successful deploy.
+#
+# A FAILED OR CANCELLED PREVIEW MUST NOT LEAVE A STALE BUILD LIVE. A completed
+# dev-preview run on a feature/, fix/ or chore/ branch wakes assemble and deploy
+# whatever its conclusion. The assemble step lists only a preview whose run for the
+# PR's CURRENT head sha concluded success (the `select(.head_sha == $sha and
+# .conclusion == "success")` filter), so a head whose preview failed has no
+# qualifying run and its branch is left out of the site: the stale
+# branches/<branch>/latest/ is removed, not kept. Dev, test, release and main keep
+# their own publishing conditions; alternative/ previews still publish on success only.
+#
+# WHY pull_request_target AND NOT pull_request. A closed pull_request run's ref is
+# refs/pull/N/merge, which the github-pages environment's branch rule refuses (the
+# same gate as test above). pull_request_target runs with the base ref
+# refs/heads/dev, which the rule admits. Nothing from the PR is checked out or run:
+# the checkout is dev, and the workflow holds read permissions only.
 #
 # The assemble job still holds no Pages WRITE or OIDC credential (contents: read and
 # pages: read only — configure-pages needs to read the site's configuration); the
@@ -71,8 +102,8 @@
 # environment, which can additionally carry required reviewers. What changed is which
 # events may REACH that job, not which job holds the credential.
 #
-# The cost is named rather than discovered: publishing on a push to `dev` is a
-# standing delegation to every future push on it. It was accepted because the
+# The cost is named rather than discovered: publishing on a push to `dev` or `release`
+# is a standing delegation to every future push on either. It was accepted because the
 # alternative was measured — the site sat three days and 52 green assemble runs
 # behind the game while every one skipped the deploy job.
 # ONE-TIME OWNER ACTION before the first deploy: Settings → Pages → Build and
@@ -95,8 +126,14 @@ on:
     # Successful alternative previews republish through the default dev ref,
     # which is already admitted by the github-pages environment.
     workflows: [dev preview]
-    branches: [alternative/dev, alternative/test, 'alternative/**/dev', 'alternative/**/test']
+    branches: ['alternative/**/dev', 'alternative/**/test', '[Ff][Ee][Aa][Tt][Uu][Rr][Ee]/**', '[Ff][Ii][Xx]/**', '[Cc][Hh][Oo][Rr][Ee]/**']
     types: [completed]
+  # A closed PR (merged or not) republishes the site without its branch build. A
+  # merge also pushes to dev, which republishes too; the close is what removes a
+  # build whose PR was closed unmerged.
+  pull_request_target:
+    types: [closed]
+    branches: [dev]
   workflow_dispatch:
     inputs:
       keep:
@@ -165,7 +202,7 @@ permissions:
 
 jobs:
   assemble:
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' || (startsWith(github.event.workflow_run.head_branch, 'feature/') || startsWith(github.event.workflow_run.head_branch, 'fix/') || startsWith(github.event.workflow_run.head_branch, 'chore/'))
     runs-on: ubuntu-latest
     # Bounded: about 20 light rebuilds (~20 s each) plus hydrating the committed
     # builds. A run that needs more than this is broken, not slow.
@@ -173,9 +210,16 @@ jobs:
     # pages: read is what actions/configure-pages needs to read the site's
     # configuration; it deploys nothing. The write and the OIDC token stay on
     # the deploy job alone.
+    # actions: read downloads each open PR's dev-preview build; pull-requests: read
+    # lists the open PRs. Neither grants a write, and the deploy job keeps its own.
     permissions:
       contents: read
       pages: read
+      actions: read
+      pull-requests: read
+    outputs:
+      # Compact JSON array of {pr, dir} for every PR whose preview is in the site this run.
+      comment_targets: ${{ steps.previews.outputs.comment_targets }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -187,7 +231,7 @@ jobs:
           # (docs/ART-REPO-PLAN.md step 7) that this job stop doing so.
           lfs: false
           # Completed alternative previews republish from trusted dev workflow code.
-          ref: ${{ github.event_name == 'workflow_run' && 'dev' || github.ref }}
+          ref: ${{ (github.event_name == 'workflow_run' || github.event_name == 'pull_request_target') && 'dev' || github.ref }}
           fetch-depth: 0
       # ONE MISSING BRANCH USED TO TAKE DOWN EVERY RUN. `git fetch origin dev
       # test release main` is atomic: `fatal: couldn't find remote ref test`
@@ -324,6 +368,84 @@ jobs:
             if [ -d "$RUNNER_TEMP/main/dist/$d" ]; then cp -r "$RUNNER_TEMP/main/dist/$d" "$RUNNER_TEMP/main-build/$d"; fi
           done
           echo "MAIN_BUILD_ARGS=--main-build $RUNNER_TEMP/main-build" >> "$GITHUB_ENV"
+      # FEATURE-BRANCH BUILDS, FETCHED BEFORE THE ASSEMBLE. The list of open PRs is read
+      # now and the build for each PR's head commit is taken from its dev-preview run.
+      # dev-preview names its artifact from the BASE ref (dev), so a PR's artifact is
+      # dev-standalone-<merge commit>: it is found by run id and name prefix, not by the
+      # branch. A PR with no successful build for its current head is left out (its
+      # last build is not kept past a new push). Any listing or download failure stops
+      # the publish: a site built without a branch that should be in it would drop it.
+      - name: Fetch each open pull request's playable build (branches/<branch>/latest/)
+        id: previews
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/branch-previews"
+          entries="$RUNNER_TEMP/branch-preview-entries.jsonl"
+          rm -rf "$out"; mkdir -p "$out"; : > "$entries"
+          prs=$(gh api --paginate "repos/$REPO/pulls?state=open&base=dev&per_page=100" \
+            | jq -r --arg repo "$REPO" '.[] | select(.head.repo.full_name == $repo) | select(.head.ref | test("^(feature|fix|chore)/"; "i")) | [.number, .head.ref, .head.sha] | @tsv')
+          # THE BRANCH NAME IS THE SITE PATH, unchanged. A name that cannot be one is
+          # refused by the same check the generator runs (--branch-dir), named with its
+          # PR, and skipped before any download. Nothing is sanitised, so nothing collides.
+          while IFS=$'\t' read -r pr ref sha; do
+            [ -n "$pr" ] || continue
+            if ! safe=$(node tools/pages-site.mjs --branch-dir "$ref"); then
+              echo "::warning title=Branch not published::PR #$pr ($ref) is skipped: its branch name cannot be a site path (A-Z a-z 0-9 . _ / - only; no empty, \".\" or \"..\" segment)."
+              continue
+            fi
+            run=$(gh api -X GET "repos/$REPO/actions/workflows/dev-preview.yml/runs" -f event=pull_request -f branch="$ref" -f per_page=30 \
+              | jq -r --arg sha "$sha" '[.workflow_runs[] | select(.head_sha == $sha)][0] | select(.conclusion == "success") | .id // empty')
+            if [ -z "$run" ]; then
+              echo "::notice title=No build yet::PR #$pr ($ref): the newest dev preview for $sha has not succeeded"
+              continue
+            fi
+            # Only a live artifact counts: the standalone build is kept 14 days, and an
+            # expired one is skipped (this PR gets no build until it is pushed again).
+            name=$(gh api "repos/$REPO/actions/runs/$run/artifacts" \
+              --jq '[.artifacts[] | select(.expired == false) | select(.name | startswith("dev-standalone-"))][0].name // empty')
+            if [ -z "$name" ]; then
+              echo "::warning title=Preview not published::PR #$pr ($ref): preview artifact expired; push to rebuild"
+              continue
+            fi
+            # One PR's download failure skips that PR only; it never fails the whole publish.
+            if ! err=$(gh run download "$run" --repo "$REPO" --name "$name" --dir "$out/$safe" 2>&1); then
+              rm -rf "$out/$safe"
+              if printf '%s' "$err" | grep -q 'HTTP 410'; then
+                echo "::warning title=Preview not published::PR #$pr ($ref): preview artifact expired; push to rebuild"
+              else
+                echo "::warning title=Preview not published::PR #$pr ($ref): download of $name failed, skipped: $(printf '%s' "$err" | head -n 1)"
+              fi
+              continue
+            fi
+            # The same shape readBranchPreviews() (tools/pages-site.mjs) accepts: exactly
+            # one non-empty .html. Anything else is skipped HERE, so comment_targets
+            # never names a preview the site will not publish.
+            # Every .html entry counts (any type), as readBranchPreviews() counts them;
+            # then the one entry must be a non-empty regular file.
+            htmls=$(find "$out/$safe" -mindepth 1 -maxdepth 1 -name '*.html' | wc -l)
+            only=$(find "$out/$safe" -mindepth 1 -maxdepth 1 -name '*.html' -type f -size +0c | wc -l)
+            if [ "$htmls" -ne 1 ] || [ "$only" -ne 1 ]; then
+              rm -rf "$out/$safe"
+              echo "::warning title=Preview not published::PR #$pr ($ref): the artifact holds $htmls .html entr(y/ies), expected exactly one non-empty file; skipped"
+              continue
+            fi
+            jq -cn --arg b "$ref" --arg d "$safe" --argjson pr "$pr" --arg sha "$sha" '{branch: $b, dir: $d, pr: $pr, sha: $sha}' >> "$entries"
+            echo "  fetched PR #$pr $ref at $sha"
+          done <<< "$prs"
+          jq -s '{previews: .}' "$entries" > "$out/previews.json"
+          # A run that coalesces several pushes publishes several previews, so the sticky
+          # comment goes to every PR whose preview is in the site from this run, not only
+          # the PR that triggered it. Compact JSON on one line, so it is safe as an output.
+          targets=$(jq -sc '[.[] | {pr: (.pr | tostring), dir: .dir}]' "$entries")
+          echo "comment_targets=$targets" >> "$GITHUB_OUTPUT"
+          {
+            echo "### Feature-branch builds"
+            echo
+            echo "$(jq -s 'length' "$entries") open pull request(s) into \`dev\` carry a playable build at \`branches/<branch>/latest/\`."
+          } >> "$GITHUB_STEP_SUMMARY"
       - name: Assemble the site from git history — committed builds proven byte-identical, uncommitted ones rebuilt from their commit
         # `keep` from a dispatch is clamped here (1..25) and again in the
         # generator: each listed uncommitted build is a rebuild.
@@ -333,7 +455,7 @@ jobs:
           keep=$(printf '%s' "$KEEP_INPUT" | tr -cd '0-9' | cut -c1-3); keep=${keep:-10}
           if [ "$keep" -lt 1 ]; then keep=1; fi
           if [ "$keep" -gt 25 ]; then keep=25; fi
-          node tools/verdict.mjs -- node tools/pages-site.mjs --out _site --keep "$keep" --build-missing "$RUNNER_TEMP/pages-rebuilds" ${MAIN_BUILD_ARGS:-}
+          node tools/verdict.mjs -- node tools/pages-site.mjs --out _site --keep "$keep" --build-missing "$RUNNER_TEMP/pages-rebuilds" --branch-previews "$RUNNER_TEMP/branch-previews" ${MAIN_BUILD_ARGS:-}
       - name: The generator's own drift plant is still caught
         run: node tools/verdict.mjs -- node tools/pages-site.mjs --selftest ${MAIN_BUILD_ARGS:-}
       - uses: actions/configure-pages@v5
@@ -362,10 +484,11 @@ jobs:
           # decides whether the summary says "published" or "not published", so a
           # flag narrower than the guard prints "not published" on a run that
           # publishes — the exact silence (#553) this step was added to end.
-          # `dev` alone on the push path, because the github-pages environment admits
-          # `dev` and `main` only and a run that cannot publish must not claim it
-          # will — see the header.
-          PUBLISH_REQUESTED: ${{ (github.event_name == 'push' && github.ref_name == 'dev') || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') || (github.event_name == 'workflow_dispatch' && inputs.publish == 'PUBLISH') }}
+          # `dev` and `release` on the push path (release by the owner's ruling,
+          # 2026-10-11). A run that cannot publish must not claim it will: until the
+          # github-pages environment admits `release`, its deploy is refused at the
+          # gate — see the header.
+          PUBLISH_REQUESTED: ${{ (github.event_name == 'push' && (github.ref_name == 'dev' || github.ref_name == 'release')) || (github.event_name == 'workflow_run' && (github.event.workflow_run.conclusion == 'success' || (startsWith(github.event.workflow_run.head_branch, 'feature/') || startsWith(github.event.workflow_run.head_branch, 'fix/') || startsWith(github.event.workflow_run.head_branch, 'chore/')))) || (github.event_name == 'pull_request_target') || (github.event_name == 'workflow_dispatch' && inputs.publish == 'PUBLISH') }}
         run: |
           set -u
           {
@@ -424,18 +547,18 @@ jobs:
           if [ "$PUBLISH_REQUESTED" != "true" ]; then
             {
               echo
-              echo "This branch does not publish on a push — only \`dev\` does. To publish this"
+              echo "This branch does not publish on a push — only \`dev\` and \`release\` do. To publish this"
               echo "assembly, the repository owner dispatches this workflow with"
               echo "\`publish\` = \`PUBLISH\`; a collaborator's dispatch does not, and no standing"
               echo "setting may stand in for that decision."
               echo
               echo "Nothing is stale because of this. The site is reassembled from git history"
               echo "every run, across dev, test, release and main, so this commit is already in"
-              echo "the next publication from \`dev\` whether or not this run publishes."
-              if [ "$GITHUB_REF_NAME" = "test" ] || [ "$GITHUB_REF_NAME" = "release" ]; then
+              echo "the next publication from \`dev\` or \`release\` whether or not this run publishes."
+              if [ "$GITHUB_REF_NAME" = "test" ]; then
                 echo
-                echo "\`$GITHUB_REF_NAME\` additionally **cannot** deploy: the \`github-pages\`"
-                echo "environment's deployment-branch rule admits \`dev\` and \`main\` only, so a"
+                echo "\`test\` additionally **cannot** deploy: the \`github-pages\`"
+                echo "environment's deployment-branch rule admits \`dev\`, \`release\` (once the owner adds it) and \`main\` only, so a"
                 echo "dispatch from here would be refused at the environment gate. See the"
                 echo "header of \`.github/workflows/pages-builds.yml\` for what to change first."
               fi
@@ -444,27 +567,31 @@ jobs:
 
   deploy:
     needs: assemble
-    # TWO WAYS TO PUBLISH, AND ONLY `dev` HAS THE FIRST.
+    # TWO WAYS TO PUBLISH, AND ONLY `dev` AND `release` HAVE THE FIRST.
     #
     # Owner's ruling, 2026-09-05: the development branches republish on their own;
-    # main needs the owner's say-so. This reverses the earlier refusal to
+    # main needs the owner's say-so. Owner's ruling, 2026-10-11: a push to `release`
+    # publishes on its own too, once the github-pages environment admits `release`
+    # (the one-time action in the header). This reverses the earlier refusal to
     # automate publication at all — that refusal was paid for on 2026-09-02..05,
     # when the site sat three days and 52 green assemble runs behind the game
     # while every one of them skipped this job. Automatic publication on `dev` is
     # the deliberate cost of that.
     #
-    # 1. A PUSH to dev publishes. This IS a standing delegation to every future
-    #    push on that branch: whoever can push it can reach this job's Pages
-    #    credential. That is accepted for the branch that only ever serves
-    #    development builds, and refused for main.
+    # 1. A PUSH to dev or release publishes. This IS a standing delegation to every
+    #    future push on those branches: whoever can push them can reach this job's
+    #    Pages credential. That is accepted for the development branch and, by the
+    #    owner's 2026-10-11 ruling, for release (which only the owner pushes), and
+    #    refused for main.
     #
     #    `test` and `release` were on this line until 2026-09-07 and could never
-    #    honour it: the github-pages environment's deployment-branch rule admits
+    #    honour it: the github-pages environment's deployment-branch rule admitted
     #    `dev` and `main` only, so their runs died AT THIS JOB'S ENVIRONMENT GATE
     #    in about two seconds — no steps, no log, a red check on work that was
     #    fine (release `fb299d90`, run 209, PR #795). A guard cannot read that
     #    rule, so it has to agree with it by hand; the header says what to change,
-    #    and in which order, to put them back.
+    #    and in which order, before `release` is listed here (owner, 2026-10-11)
+    #    and before `test` is.
     #
     # 2. THE OWNER'S OWN DISPATCH publishes any branch, main included. Never a
     #    write collaborator's dispatch (anyone with write may run a workflow, so
@@ -481,12 +608,20 @@ jobs:
     # a change to how the site is assembled rather than to who may publish it.
     # Merging to main is already owner-only, so what reaches main is the owner's
     # decision before this job ever runs.
+    # A feature/fix/chore preview that failed or was cancelled also reaches this job
+    # (workflow_run, any conclusion): the current-head check in assemble drops its stale
+    # build, so the site never keeps it. Comments stay out of the folded if: block below.
     if: >-
       (
         github.event_name == 'push'
-        && github.ref_name == 'dev'
+        && (github.ref_name == 'dev' || github.ref_name == 'release')
       ) || (
-        github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'
+        github.event_name == 'workflow_run' && (
+          github.event.workflow_run.conclusion == 'success'
+          || (startsWith(github.event.workflow_run.head_branch, 'feature/') || startsWith(github.event.workflow_run.head_branch, 'fix/') || startsWith(github.event.workflow_run.head_branch, 'chore/'))
+        )
+      ) || (
+        github.event_name == 'pull_request_target'
       ) || (
         github.event_name == 'workflow_dispatch' && inputs.publish == 'PUBLISH'
         && github.actor == github.repository_owner
@@ -515,3 +650,122 @@ jobs:
             echo "| URL | ${{ steps.deployment.outputs.page_url }} |"
             echo "| Commit | \`$GITHUB_SHA\` |"
           } >> "$GITHUB_STEP_SUMMARY"
+
+  # THE STICKY "PLAYABLE BUILD" COMMENT. Its own job, so the Pages deploy job keeps
+  # its environment and permissions exactly as they were: pull-requests: write is
+  # granted here alone, and only after the deploy has succeeded. It runs whenever
+  # assemble ran and the deploy succeeded, even when no preview was published this
+  # run, because a PR whose current preview was withdrawn still has a comment that
+  # now points at a removed path. For each PR:
+  #   - published this run (assemble's comment_targets) → upsert the link comment;
+  #   - open, same-repo feature/fix/chore into dev, NOT published, with a sticky
+  #     comment already → edit that comment to say the preview is withdrawn;
+  #   - not published and no sticky comment → nothing. A withdrawn note is never a
+  #     new comment.
+  # One comment per PR, found by its marker and updated in place on every push.
+  # Closed pull requests into dev (the last 14 days) are swept independently of the
+  # event: a run that coalesced pushes can miss the close, so the list, not the
+  # trigger, decides which closed PR's link is removed.
+  comment:
+    needs: [assemble, deploy]
+    if: needs.assemble.result == 'success' && needs.deploy.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Post or update the playable-build comment on each published PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          # Branch-derived values reach the shell only through env, never ${{ }} in run.
+          TARGETS: ${{ needs.assemble.outputs.comment_targets }}
+          # The PR this run closed (pull_request_target, closed), or empty. Its preview is
+          # removed with the close, so its own sticky comment is edited to say so.
+          CLOSED_PR: ${{ github.event_name == 'pull_request_target' && github.event.action == 'closed' && github.event.pull_request.number || '' }}
+        run: |
+          set -uo pipefail
+          # One upsert per PR. A failure on one PR is named and the rest still run; the
+          # step fails at the end so no failed comment goes unreported.
+          upsert() {
+            local pr="$1" dir="$2" url body id
+            url="https://cehinds.github.io/AshenSpire/branches/$dir/latest/"
+            body=$(printf '<!-- ashen-playable-build -->\nPlayable build: %s\n' "$url")
+            id=$(gh api --paginate "repos/$REPO/issues/$pr/comments" \
+              --jq '.[] | select(.body | startswith("<!-- ashen-playable-build -->")) | .id' | sed -n '1p') || return 1
+            if [ -n "$id" ]; then
+              gh api -X PATCH "repos/$REPO/issues/comments/$id" -f body="$body" > /dev/null || return 1
+              echo "updated the playable-build comment on PR #$pr"
+            else
+              gh api -X POST "repos/$REPO/issues/$pr/comments" -f body="$body" > /dev/null || return 1
+              echo "posted the playable-build comment on PR #$pr"
+            fi
+          }
+          # A PR whose preview is withdrawn (not published this run) keeps its sticky
+          # comment, which would point at a removed path. That comment is edited to say
+          # so. Only an existing comment is edited: no comment is created to say it.
+          withdraw() {
+            local pr="$1" text="$2" id body
+            body=$(printf '%s\n' '<!-- ashen-playable-build -->' "$text")
+            id=$(gh api --paginate "repos/$REPO/issues/$pr/comments" \
+              --jq '.[] | select(.body | startswith("<!-- ashen-playable-build -->")) | .id' | sed -n '1p') || return 1
+            if [ -z "$id" ]; then return 0; fi
+            gh api -X PATCH "repos/$REPO/issues/comments/$id" -f body="$body" > /dev/null || return 1
+            echo "marked the playable-build comment on PR #$pr as withdrawn"
+          }
+          # Edits the sticky comment only when it still links a preview. A comment already
+          # marked removed has no link and is left alone, so this pass is idempotent. Never
+          # creates a comment.
+          remove_link() {
+            local pr="$1" text="$2" id body
+            id=$(gh api --paginate "repos/$REPO/issues/$pr/comments" \
+              --jq '.[] | select(.body | startswith("<!-- ashen-playable-build -->") and contains("Playable build: https://")) | .id' | sed -n '1p') || return 1
+            if [ -z "$id" ]; then return 0; fi
+            body=$(printf '%s\n' '<!-- ashen-playable-build -->' "$text")
+            gh api -X PATCH "repos/$REPO/issues/comments/$id" -f body="$body" > /dev/null || return 1
+            echo "removed the preview link from the playable-build comment on closed PR #$pr"
+          }
+          failed=0
+          declare -A published=()
+          rows=$(printf '%s' "${TARGETS:-[]}" | jq -r '.[] | [(.pr | tostring), .dir] | @tsv') || { echo "::error::could not read the comment targets"; exit 1; }
+          while IFS=$'\t' read -r pr dir; do
+            [ -n "$pr" ] || continue
+            published[$pr]=1
+            if ! upsert "$pr" "$dir"; then
+              echo "::error title=Playable-build comment failed::PR #$pr"
+              failed=1
+            fi
+          done <<< "$rows"
+          # The closed PR joins the withdrawal set. A closed PR is not in the open list
+          # below, so it is handled here, once, and its comment says the PR is closed.
+          if [ -n "$CLOSED_PR" ]; then
+            if ! withdraw "$CLOSED_PR" "Preview removed: this pull request is closed."; then
+              echo "::error title=Closed-PR comment failed::PR #$CLOSED_PR"
+              failed=1
+            fi
+          fi
+          open=$(gh api --paginate "repos/$REPO/pulls?state=open&base=dev&per_page=100" \
+            | jq -r --arg repo "$REPO" '.[] | select(.head.repo.full_name == $repo and .base.ref == "dev") | select(.head.ref | test("^(feature|fix|chore)/"; "i")) | .number') \
+            || { echo "::error::could not list the open pull requests into dev"; exit 1; }
+          while read -r pr; do
+            [ -n "$pr" ] || continue
+            [ -n "${published[$pr]:-}" ] && continue
+            if ! withdraw "$pr" "Preview withdrawn: the current commit's build did not succeed; it returns when a build passes."; then
+              echo "::error title=Withdrawn-preview comment failed::PR #$pr"
+              failed=1
+            fi
+          done <<< "$open"
+          # Closed pull requests into dev, closed in the last 14 days, same repository,
+          # feature/fix/chore heads. Paginated, 100 per page.
+          since="$(date -u -d '14 days ago' +%Y-%m-%dT%H:%M:%SZ)"
+          closed=$(gh api --paginate "repos/$REPO/pulls?state=closed&base=dev&sort=updated&direction=desc&per_page=100" \
+            | jq -r --arg repo "$REPO" --arg since "$since" '.[] | select(.closed_at != null and .closed_at >= $since and .head.repo.full_name == $repo and .base.ref == "dev") | select(.head.ref | test("^(feature|fix|chore)/"; "i")) | .number') \
+            || { echo "::error::could not list the closed pull requests into dev"; exit 1; }
+          while read -r pr; do
+            [ -n "$pr" ] || continue
+            [ -n "${published[$pr]:-}" ] && continue
+            if ! remove_link "$pr" "Preview removed: this pull request is closed."; then
+              echo "::error title=Closed-PR link removal failed::PR #$pr"
+              failed=1
+            fi
+          done <<< "$closed"
+          exit "$failed"

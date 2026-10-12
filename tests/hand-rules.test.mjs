@@ -358,3 +358,87 @@ test('the hand receipt carries the terms the chips print', () => {
   assert.equal(receipt.bonus, 0);
   assert.equal(receipt.terms.intelligence, 0);
 });
+
+// Turn-end refresh with a dry draw pile: the discard joins the returned hand
+// in the same shuffle, so the next turn draws from a recycled deck.
+const REFRESH_RULES = { drawMode: 'fixed', overflow: 'keep', retain: false, shuffleHand: true };
+const refreshFight = (base = {}) => fight({}, { intelligence: 10 }, { ...REFRESH_RULES, ...base }, rowsWith({ draw: { base: 4 } }));
+const handOf = (prefix, n) => Array.from({ length: n }, (_, i) => ({ instanceId: `${prefix}${i}`, cardId: 'strike', upgraded: false }));
+const ids = cards => cards.map(c => c.instanceId);
+
+test('a dry draw pile recycles the discard at turn end: the next hand is the turn draw, the discard is empty', () => {
+  const c = refreshFight();
+  c.piles.draw = [];
+  c.piles.hand = handOf('h', 4);
+  c.piles.discard = handOf('d', 9);
+  dispatch(c, { type: 'endTurn' });
+  assert.equal(c.piles.hand.length, 4, 'the next turn draws its 4');
+  assert.equal(c.piles.discard.length, 0, 'the discard was reshuffled into the draw pile');
+  assert.equal(c.piles.draw.length + c.piles.hand.length, 13);
+  assert.deepEqual(ids([...c.piles.hand, ...c.piles.draw]).sort(), [...ids(handOf('h', 4)), ...ids(handOf('d', 9))].sort());
+});
+
+test('a draw pile that already covers the next draw leaves the discard alone', () => {
+  const c = refreshFight();
+  c.piles.draw = handOf('x', 5);
+  c.piles.hand = handOf('h', 4);
+  c.piles.discard = handOf('d', 9);
+  dispatch(c, { type: 'endTurn' });
+  assert.equal(c.piles.discard.length, 9, 'the discard waits for its normal reshuffle');
+});
+
+test('reshuffle: false keeps the discard out of the turn-end refresh', () => {
+  const c = refreshFight({ reshuffle: false });
+  c.piles.draw = [];
+  c.piles.hand = handOf('h', 4);
+  c.piles.discard = handOf('d', 9);
+  dispatch(c, { type: 'endTurn' });
+  assert.equal(c.piles.discard.length, 9);
+  assert.equal(c.piles.hand.length + c.piles.draw.length, 4);
+});
+
+test('a kept hand that fills capacity leaves the discard alone at turn end, even when the draw pile is short', () => {
+  const c = refreshFight({ retain: true });
+  const seen = [];
+  const emit = c.emit;
+  c.emit = (type, payload) => { seen.push({ type, payload }); return emit(type, payload); };
+  c.piles.draw = [];
+  c.piles.hand = Array.from({ length: c.handMax }, (_, i) => ({ instanceId: `k${i}`, cardId: 'urgentHeal', upgraded: false }));
+  c.piles.discard = handOf('d', 9);
+  dispatch(c, { type: 'endTurn' });
+  assert.equal(c.piles.discard.length, 9, 'a full hand draws nothing, so the discard is not recycled');
+  assert.equal(c.piles.hand.length, c.handMax);
+  assert(!seen.some(e => e.type === 'deckShuffled' && e.payload?.reshuffledDiscard), 'no discard reshuffle was emitted');
+});
+
+// A full kept hand (Retain fills capacity) gets the turn-end prompt with a free
+// discard of any number; the freed room is refilled by the next draw.
+const fullHandFight = () => fight({ retain: true }, { intelligence: 10 }, { ...REFRESH_RULES, retain: true }, rowsWith({ draw: { base: 4 } }));
+const retainedHand = (n) => Array.from({ length: n }, (_, i) => ({ instanceId: `k${i}`, cardId: 'urgentHeal', upgraded: false }));
+
+test('a kept hand at capacity offers a free discard of any number at turn end', () => {
+  const c = fullHandFight();
+  c.piles.hand = retainedHand(c.handMax);
+  const plan = discardChoicePlan(c);
+  assert.equal(plan.prompt, true);
+  assert.equal(plan.minimum, 0);
+  assert.equal(plan.maximum, c.handMax);
+});
+
+test('a kept hand below capacity with no Retain prompt keeps the old no-prompt behaviour', () => {
+  const c = fullHandFight();
+  c.piles.hand = retainedHand(c.handMax - 1);
+  const plan = discardChoicePlan(c);
+  assert.equal(plan.prompt, false);
+  assert.equal(plan.minimum, 0);
+});
+
+test('a free turn-end discard lets the next draw refill the freed room', () => {
+  const c = fullHandFight();
+  c.piles.hand = retainedHand(c.handMax);
+  c.piles.draw = handOf('x', 20);
+  const plan = discardChoicePlan(c);
+  dispatch(c, { type: 'endTurn', discardIds: plan.cards.slice(0, 3).map(card => card.instanceId) });
+  assert.equal(c.piles.hand.length, c.handMax, 'the next draw refills the three freed slots');
+  assert.equal(c.piles.discard.length, 3);
+});

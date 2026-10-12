@@ -55,6 +55,11 @@ export const STREAM_NAMES = Object.freeze([
   'statusPressure',
   'ashenBlight',
   'enemyIntentClue',
+  // Enemy reaction rolls (docs/combat-card-traits-contract.md, "Enemy reactions"):
+  // appended last so no stream above moves. An enemy with no reaction moves draws
+  // nothing here, so fights without them keep every counter unchanged. A save
+  // written before the stream existed starts it at 0.
+  'enemyReaction',
 ]);
 
 const MULBERRY_INC = 0x6d2b79f5;

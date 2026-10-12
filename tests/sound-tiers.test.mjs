@@ -132,7 +132,7 @@ test('instant playback cues beat by beat, as paced playback does', () => {
   ];
   const cues = played(() => playEventCues(events));
   assert.deepEqual(cues, ['cardDiscard', 'cardDraw', 'turnStinger', 'cardDraw']);
-  assert.match(src('src/ui/fx.js'), /export function animateEvents[\s\S]{0,700}const beats = groupBeats\(events\);[\s\S]{0,400}playBeatCues\(beats\[cued\+\+\]\.events\)/,
+  assert.match(src('src/ui/fx.js'), /export function animateEvents[\s\S]{0,700}const beats = groupBeats\(events\);[\s\S]{0,400}playBeatCues\(beats\[cued\+\+\]\.events[,)]/,
     'animateEvents (instant / reduced motion) cues the same beats the paced timeline does');
 });
 

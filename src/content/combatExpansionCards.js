@@ -34,8 +34,8 @@ const UPCAST = {
   contagion: { pressurePerRank: 1 }, hex: { pressurePerRank: 1 },
 };
 const CHANCE_PRESSURE = new Set(['ashenMote', 'cinderSigil', 'starSpark', 'blightTouch', 'witheringTouch', 'hex']);
-const STATUS = { frost: 'frost', burn: 'burn', crimsonBlight: 'crimsonBlight', weak: 'weak', vulnerable: 'vulnerable', bleed: 'bleed', insanity: 'dazed' };
-const PROFILE = { frost: 'elemental', burn: 'elemental', crimsonBlight: 'curse', weak: 'mental', vulnerable: 'curse', bleed: 'bodily', insanity: 'mental' };
+const STATUS = { frost: 'frost', burn: 'burn', crimsonBlight: 'crimsonBlight', necroticBlight: 'necroticBlight', weak: 'weak', vulnerable: 'vulnerable', bleed: 'bleed', insanity: 'dazed' };
+const PROFILE = { frost: 'elemental', burn: 'elemental', crimsonBlight: 'curse', necroticBlight: 'curse', weak: 'mental', vulnerable: 'curse', bleed: 'bodily', insanity: 'mental' };
 function pressureValue(stacks, id) {
   // Frost's old units are retuned as units; other old stack grants become four
   // pressure units per stack instead of bypassing the new gauges/defenses.
@@ -61,9 +61,24 @@ function conditionFor(value) {
   if (result.p === 'hasStatus' || result.f === 'stacks') result.status = { frost: 'frozen', frostExposed: 'chilled', bleed: 'bleeding' }[result.status] || result.status;
   return result;
 }
+// A spell reaches by its explicit row, then its own authored reach, then the far
+// list, then its delivery: projectile is far, melee is contact, anything else is near.
+function spellReach(def, row) {
+  if (row.reach) return row.reach;
+  // Read before rewriteTags strips the reach tags.
+  const REACHES = ['contact', 'near', 'far'];
+  if (REACHES.includes(def.reach)) return def.reach;
+  const tags = def.cardTags || def.tags || [];
+  const authored = tags.find(tag => tag.startsWith('reach:'))?.slice(6);
+  if (REACHES.includes(authored)) return authored;
+  if (FAR.has(def.id)) return 'far';
+  if (tags.includes('delivery:projectile')) return 'far';
+  if (tags.includes('delivery:melee')) return 'contact';
+  return 'near';
+}
 function rewriteTags(def, row, maneuver) {
   const tags = (def.cardTags || def.tags || []).filter(tag => !['camp:', 'school:', 'damage:', 'maneuver:', 'reach:', 'targeting:', 'counter:'].some(prefix => tag.startsWith(prefix)));
-  tags.push('camp:spell', `school:${row.school}`, `damage:${row.damageType}`, `reach:${row.reach || (FAR.has(def.id) ? 'far' : 'near')}`, `targeting:${AREA.has(def.id) ? 'area' : 'single'}`);
+  tags.push('camp:spell', `school:${row.school}`, `damage:${row.damageType}`, `reach:${spellReach(def, row)}`, `targeting:${AREA.has(def.id) ? 'area' : 'single'}`);
   if (maneuver) tags.push(`maneuver:${maneuver}`);
   if (COUNTERS[def.id]) tags.push('counter:spell');
   return tags;
@@ -82,12 +97,14 @@ export function applyCombatExpansionCard(def) {
   const maneuver = row.maneuver || (COUNTERS[def.id] ? 'counter' : originalTags.find(tag => tag.startsWith('maneuver:'))?.slice(9)
     || (def.type === 'attack' ? 'casting' : null));
   const card = { ...def, tags: rewriteTags(def, row, maneuver), cardTags: rewriteTags(def, row, maneuver),
-    damageSchool: 'magic', reach: row.reach || (FAR.has(def.id) ? 'far' : 'near'), targeting: AREA.has(def.id) ? 'area' : 'single',
+    damageSchool: 'magic', reach: spellReach(def, row), targeting: AREA.has(def.id) ? 'area' : 'single',
     attack: { ...def.attack, source: 'spell', damageType: row.damageType }, effects: effectsFor(def.effects, row.school), textTemplate: barrierText(def.textTemplate) };
   if (def.upgrade) card.upgrade = { ...def.upgrade, ...(def.upgrade.effects ? { effects: effectsFor(def.upgrade.effects, row.school) } : {}), ...(def.upgrade.textTemplate ? { textTemplate: barrierText(def.upgrade.textTemplate) } : {}) };
   const damaging = card.effects.some(effect => effect.op === 'damage');
-  const rider = { frost: 'frost', fire: 'burn', lightning: 'paralysis', decay: 'crimsonBlight' }[row.school];
-  if (damaging && rider && !card.effects.some(effect => effect.op === 'buildup' && effect.status === rider)) {
+  const rider = { frost: 'frost', fire: 'burn', lightning: 'paralysis', decay: 'necroticBlight' }[row.school];
+  // A decay card that prints its own Blight (Crimson or Necrotic) keeps only what it prints: one Blight per hit.
+  const printsRider = effect => effect.op === 'buildup' && (effect.status === rider || (row.school === 'decay' && effect.status === 'crimsonBlight'));
+  if (damaging && rider && !card.effects.some(printsRider)) {
     const target = AREA.has(def.id) ? 'allEnemies' : 'enemy';
     card.effects.push({ op: 'buildup', target, status: rider, amount: row.school === 'fire' ? 4 : 3, camp: 'spell', recoveryProfile: PROFILE[rider] || 'elemental' });
     if (card.upgrade?.effects) card.upgrade.effects.push({ op: 'buildup', target, status: rider, amount: row.school === 'fire' ? 5 : 4, camp: 'spell', recoveryProfile: PROFILE[rider] || 'elemental' });

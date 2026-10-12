@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
+// HUD layout geometry tokens unset (getComputedStyle → {}): every offset is 0.
+import {hudGeometry,offsetPlacement} from '../src/ui/models/HudLayoutOffsetModel.js';
 import { combatTargetAnchors } from '../src/ui/models/CombatOverheadModel.js';
 import { playerDetailsPlacement } from '../src/ui/models/PlayerDetailsPlacementModel.js';
 import { packCombatTargetsWithHud, combatTargetHudFootprints, combatPlayerActionRect } from '../src/ui/components/battlefieldStage.js';
@@ -93,8 +95,8 @@ test('historical1209 phone geometry packs full footers beside its original reser
   const field={getBoundingClientRect:rect,closest:()=>combat,
     querySelectorAll:selector=>selector==='.combatant.player'?[player]:intents.map(box=>({...box,
       top:box.top+delta,bottom:box.bottom+delta}))};
-  const tracking=runInNewContext(stage.slice(start,end)+'\nplacePlayerHud',{
-    field,settledTargets:result,settledFooterSize:44,combatTargetHudFootprints,playerInfoRects:[],combatPlayerActionRect,
+  const tracking=runInNewContext(stage.slice(start,end)+'\nplacePlayerHud',{hudGeometry,offsetPlacement,getComputedStyle:()=>({}),
+    field,settledTargets:result,settledFooterSize:44,combatTargetHudFootprints,playerInfoRects:[],combatPlayerActionRect,placePlayerIntentGlyph:()=>null,
     uiZoom:()=>1,visibleCombatPanelRect:node=>node,combatPlayerInfoRect:()=>null,
     currentSpriteArtBounds:()=>({...trackingArt,top:trackingArt.top+delta,bottom:trackingArt.bottom+delta}),
     readRestingHand:()=>({clearanceTop:handTop+delta}),

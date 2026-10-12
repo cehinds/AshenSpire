@@ -4,6 +4,7 @@
   },
   "sizing": {
     "bands": { "hud": 10, "scene": 55, "context": 30, "footer": 5 },
+    "desktopBands": { "hud": 8, "scene": 50, "context": 38, "footer": 4 },
     "floorPercent": 80,
     "compactCombat": {
       "maxWidthPx": 600,
@@ -20,12 +21,17 @@
       "endWidthMinPx": 56,
       "pileWidthPx": 50,
       "spentWidthPx": 64,
-      "pileHeightPx": 60
+      "pileHeightPx": 60,
+      "cardMinWidthPx": 72,
+      "cardMaxWidthPx": 112,
+      "cardVisibleFraction": 0.9,
+      "cardSideGutterPx": 6
     },
     "hand": {
       "minimumHeightPx": 208,
       "minWidthRem": 5,
       "maxWidthRem": 11.5,
+      "desktopMaxWidthRem": 15,
       "minCapacity": 5,
       "maxCapacity": 15,
       "narrowWidthRem": 22,
@@ -59,7 +65,7 @@
     }
   },
   "positioning": {
-    "hand": { "selectedLiftRem": 1, "verticalInsetRem": 0.25, "fanAngleDegrees": 2.5, "arcRem": 0.6 },
+    "hand": { "selectedLiftRem": 1, "verticalInsetRem": 0.25, "fanAngleDegrees": 2.5, "arcRem": 0.6, "compactDropRem": 0.3 },
     "formation": {
       "insetRem": 1,
       "horizontalStepFraction": 0.05,

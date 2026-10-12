@@ -77,6 +77,7 @@ export const wireframeUi = freeze({
     verticalInsetRem: place.hand.verticalInsetRem,
     fanAngleDegrees: place.hand.fanAngleDegrees,
     arcRem: place.hand.arcRem,
+    compactDropRem: place.hand.compactDropRem,
     dragThresholdPx: w4a.behavior.hand.dragThresholdPx,
   },
   combat: {

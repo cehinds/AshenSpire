@@ -1,0 +1,30 @@
+{
+  "format": "ashenspire-hud-css-bindings/1",
+  "contract": "docs/hud-layout-tokens.md",
+  "scale": { "numerator": 390, "denominator": 512, "note": "Design px on the 512-wide canvas to CSS px at the 390-wide mobile reference. Applies to every length, size, offset and shadow value." },
+  "stateNote": "Each binding reads its node in the view where that component is shown (state). On Mobile with Edit all views off, an edit made in another view is not exported.",
+  "tokens": {
+    "--hud-text-shadow": { "type": "shadow", "order": "text", "node": "header-hp-value", "path": "textShadow", "state": "player-selected" },
+    "--hud-text-plate-bg": { "type": "color", "node": "player-feet-hp-value", "path": "textBacking.color", "state": "idle" },
+    "--hud-text-plate-radius": { "type": "length", "node": "player-feet-hp-value", "path": "textBacking.radius", "state": "idle" },
+    "--hud-text-plate-pad": { "type": "length", "node": "player-feet-hp-value", "path": "textBacking.padX", "state": "idle" },
+    "--hud-panel-bg": { "type": "color", "node": "player-details-frame", "path": "fill", "state": "player-selected" },
+    "--hud-panel-shadow": { "type": "shadow", "order": "box", "node": "player-details-frame", "path": "shadow", "state": "player-selected" },
+    "--hud-panel-radius": { "type": "length", "node": "player-details-frame", "path": "radius", "state": "player-selected" },
+    "--hud-player-panel-border": { "type": "color", "node": "player-details-frame", "path": "stroke", "state": "player-selected" },
+    "--hud-enemy-panel-border": { "type": "color", "node": "enemy-nameplate-frame", "path": "stroke", "state": "enemy-selected" },
+    "--hud-details-font": { "type": "font", "node": "player-details-name", "path": "fontFamily", "state": "player-selected" },
+    "--hud-details-name-size": { "type": "length", "node": "player-details-name", "path": "fontSize", "state": "player-selected" },
+    "--hud-details-value-size": { "type": "length", "node": "player-details-hp-value", "path": "fontSize", "state": "player-selected" },
+    "--hud-details-label-color": { "type": "color", "node": "player-details-poise-label", "path": "fill", "state": "player-selected" },
+    "--hud-details-min-width": { "type": "length", "node": "player-details", "path": "minWidth", "state": "player-selected" },
+    "--hud-tools-bg": { "type": "color", "node": "hand-toolbar", "path": "fill", "state": "player-selected" },
+    "--hud-header-hp-max-width": { "type": "length-or-none", "node": "header-hp-track", "path": "maxWidth", "state": "player-selected" },
+    "--hud-tools-span": { "type": "keyword", "values": ["field", "hand"], "node": "hand-toolbar", "path": "span", "state": "player-selected" },
+    "--hud-player-details-dx": { "type": "px", "node": "player-details", "axis": "x", "state": "player-selected" },
+    "--hud-player-details-dy": { "type": "px", "node": "player-details", "axis": "y", "state": "player-selected" },
+    "--hud-enemy-nameplate-dy": { "type": "px", "node": "enemy-nameplate", "axis": "y", "state": "enemy-selected" },
+    "--hud-turn-ribbon-dy": { "type": "px", "node": "turn", "axis": "y", "state": "player-selected" },
+    "--hud-tools-dy": { "type": "px", "node": "hand-toolbar", "axis": "y", "state": "player-selected" }
+  }
+}

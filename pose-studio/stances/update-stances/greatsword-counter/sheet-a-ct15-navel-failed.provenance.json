@@ -1,0 +1,102 @@
+{
+  "generated_at_utc": "2026-10-12T16:36:08.076675+00:00",
+  "tool": "tools.image_gen__imagegen",
+  "exact_prompt": "sheet-a-ct15-navel.prompt.txt",
+  "prompt_sha256": "1c1e6fa9c4c89bb3bf2236948dcec868c31de02c92550b7b29ed15b76c6903a8",
+  "requested_dimensions": [
+    1024,
+    1536
+  ],
+  "actual_dimensions": [
+    1024,
+    1536
+  ],
+  "mode": "RGBA",
+  "alpha_extrema": [
+    2,
+    253
+  ],
+  "transparent_background": true,
+  "reference_images": [
+    {
+      "path": "pose-studio/stances/update-stances/greatsword-counter/sheet-a-repair-3.png",
+      "sha256": "cdf9e317db377a672a6de09af90516bf903246cd5800727f7acf364d353d49cd",
+      "visually_inspected": true
+    }
+  ],
+  "original_tool_path": "/workspace/generated_images/exec-49306209-67a1-47c7-bb26-38fa960f6a3c.png",
+  "output_identification": "Exact file path returned by this imagegen call; no newest-file glob or directory comparison",
+  "preserved_artifact": "sheet-a-ct15-navel-failed.png",
+  "raw_bytes_preserved": true,
+  "sha256": "cab39c41e9f3797047f027375b8420a9755479106fbf67338d812d2b157312c1",
+  "concept_ids": [
+    "CT11",
+    "CT12",
+    "CT13",
+    "CT14",
+    "CT15"
+  ],
+  "layout": "2 columns x 3 rows, row-major; bottom-right empty",
+  "review_status": "failed final CT15 navel/two-hand repair; canonical A retained",
+  "observations": [
+    "Requested hilt relocation to navel did not visibly move hilt away from side thigh",
+    "Only one hilt-gripping gauntlet remains clearly legible; concept15 remains flagged",
+    "No further generation planned; no claim that two-hand requirement was achieved"
+  ],
+  "alpha_cell_diagnostics": [
+    {
+      "cell": 1,
+      "alpha_gt_127_bbox_local": [
+        0,
+        0,
+        512,
+        512
+      ]
+    },
+    {
+      "cell": 2,
+      "alpha_gt_127_bbox_local": [
+        0,
+        0,
+        512,
+        512
+      ]
+    },
+    {
+      "cell": 3,
+      "alpha_gt_127_bbox_local": [
+        0,
+        0,
+        512,
+        493
+      ]
+    },
+    {
+      "cell": 4,
+      "alpha_gt_127_bbox_local": [
+        0,
+        0,
+        463,
+        477
+      ]
+    },
+    {
+      "cell": 5,
+      "alpha_gt_127_bbox_local": [
+        0,
+        7,
+        512,
+        512
+      ]
+    },
+    {
+      "cell": 6,
+      "alpha_gt_127_bbox_local": [
+        0,
+        27,
+        512,
+        512
+      ]
+    }
+  ]
+}

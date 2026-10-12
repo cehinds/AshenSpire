@@ -1,0 +1,9 @@
+Create one standalone full-body greatsword stance concept, not a contact sheet. Exact output: transparent PNG, 1024x1024 pixels, one isolated figure centered with generous transparent space around the complete figure and weapon. Show the entire body, entire greatsword, cape, both boots, pommel, guard, and blade with no cropping.
+
+Subject: the Reaver from the references, rear-left three-quarter camera, facing screen-right. Use the high-resolution rear armor reference for costume identity only: closed helmet, worn rusty silver and bronze plate, continuous crimson cape. Use the selected greatsword Smash reference for the correct long two-handed sword proportions, Reaver body scale, and rear-left viewpoint; do not copy its pose. No source pose board reference.
+
+Pose ID SW17, high lateral coil with a rear-weighted grounded stance: torso with a slight backward lean, long front leg reaching forward and bent rear leg visibly loaded behind. Both boot soles flat on the ground; show both boots fully. Stable wide base; no raised heel, lifted foot, jump, or lunge. Keep the weight visibly rearward.
+
+Hold the long two-handed greatsword beside and behind the shoulder, with the blade running diagonally up-left across the rear/side of the figure. Both hands are separately visible on the same connected hilt beside the shoulder, with clear hand spacing and both forearms traceable to their own shoulders. Elbows stay below the helmet crown. This is a lateral shoulder-high coil, not an overhead smash or overhead sledge pose. Blade must not cover the head or hide a hand. Preserve the long greatsword-to-body ratio from the selected reference.
+
+Clean isolated semi-realistic game concept art with restrained materials and shading. Single figure only. No other people, enemy, shield, props, scenery, floor plane, ground shadow, text, labels, borders, glow, aura, or effects. Keep the complete silhouette inside the canvas with generous transparent margins.

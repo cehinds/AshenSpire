@@ -1,0 +1,59 @@
+/* workbench/ui/kit/grid.css — styles for grid.mjs. Every colour is a Workbench
+   token (--as-*, shared/tokens.css), so the grid is dark inside the app. The
+   fallbacks are the same dark values, so the grid stays dark when used alone.
+   Contrast (WCAG AA, 4.5:1 for text): ink on the surface, muted text on the
+   surface, and the error and warning text inks are all above 4.5:1. */
+.gk-root { --gk-bg: var(--as-bg-panel, #1a1815); --gk-bg-deep: var(--as-bg, #131210); --gk-line: var(--as-line, #2e2a25);
+  --gk-ink: var(--as-text, #ece5d8); --gk-muted: var(--as-text-dim, #b0a593);
+  --gk-sel: var(--as-accent-soft, rgba(224, 166, 74, .14)); --gk-active: var(--as-accent, #e0a64a);
+  --gk-bad: var(--as-bad, #e0645c); --gk-bad-ink: #f08a82; --gk-warn: var(--as-warn, #e3b341);
+  font: var(--as-text-md, 13px)/1.3 var(--as-font, system-ui, sans-serif); color: var(--gk-ink);
+  display: flex; flex-direction: column; min-height: 0; background: var(--gk-bg); color-scheme: dark; }
+.gk-bar { display: flex; align-items: center; gap: 8px; padding: 6px 0; flex-wrap: wrap; }
+.gk-bar .gk-spacer { flex: 1; }
+.gk-count { color: var(--gk-muted); font-variant-numeric: tabular-nums; }
+.gk-search { min-width: 220px; padding: 4px 8px; border: 1px solid var(--gk-line); border-radius: 6px; background: var(--gk-bg-deep); color: var(--gk-ink); }
+.gk-search::placeholder { color: var(--gk-muted); }
+.gk-bar button, .gk-menu button { padding: 4px 10px; border: 1px solid var(--gk-line); border-radius: 6px; background: transparent; color: inherit; cursor: pointer; }
+.gk-bar button:disabled { opacity: .45; cursor: default; }
+.gk-scroll { position: relative; flex: 1; min-height: 240px; overflow: auto; border: 1px solid var(--gk-line); border-radius: 8px; outline: none; background: var(--gk-bg-deep); }
+.gk-scroll:focus-visible { box-shadow: 0 0 0 2px var(--gk-active); }
+.gk-head { position: sticky; top: 0; z-index: 4; height: 32px; background: var(--gk-bg); border-bottom: 1px solid var(--gk-line); }
+.gk-hrow { position: relative; height: 32px; }
+.gk-hcell { position: absolute; top: 0; height: 32px; display: flex; align-items: center; gap: 4px; padding: 0 8px; box-sizing: border-box; font-weight: 600; white-space: nowrap; overflow: hidden; background: var(--gk-bg); cursor: pointer; user-select: none; }
+.gk-hcell .gk-label { overflow: hidden; text-overflow: ellipsis; }
+.gk-sort { color: var(--gk-muted); font-size: 11px; }
+.gk-rz { position: absolute; right: 0; top: 0; width: 6px; height: 100%; cursor: col-resize; }
+.gk-body { position: relative; }
+.gk-rows { position: absolute; inset: 0; }
+.gk-row { position: absolute; left: 0; }
+.gk-cell { position: absolute; top: 0; height: 100%; box-sizing: border-box; padding: 0 8px; display: flex; align-items: center; border-bottom: 1px solid var(--gk-line); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: var(--gk-bg); cursor: cell; }
+.gk-cell.gk-num, .gk-hcell.gk-gutter { justify-content: flex-end; color: var(--gk-muted); font-variant-numeric: tabular-nums; cursor: pointer; }
+.gk-frozen { z-index: 2; }
+.gk-hcell.gk-frozen { z-index: 5; }
+.gk-t-number, .gk-t-boolean { justify-content: flex-end; font-variant-numeric: tabular-nums; }
+.gk-t-json, .gk-t-formula { font-family: ui-monospace, monospace; font-size: 12px; }
+.gk-sel { background: var(--gk-sel) !important; }
+.gk-active { outline: 2px solid var(--gk-active); outline-offset: -2px; z-index: 3; }
+.gk-bad { box-shadow: inset 3px 0 0 var(--gk-bad); color: var(--gk-bad-ink); }
+.gk-warn { box-shadow: inset 3px 0 0 var(--gk-warn); }
+/* A derived cell (a lock from the tag model): greyed, and never edited, pasted or filled. */
+.gk-cell.gk-locked { color: var(--gk-muted, #8a8f98); background: repeating-linear-gradient(135deg, transparent 0 6px, rgba(127, 127, 127, 0.10) 6px 12px); cursor: not-allowed; }
+.gk-row-bad .gk-num { color: var(--gk-bad-ink); font-weight: 600; }
+.gk-editor { position: absolute; z-index: 6; box-sizing: border-box; padding: 0 8px; border: 2px solid var(--gk-active); font: inherit; background: var(--gk-bg-deep); color: var(--gk-ink); outline: none; }
+.gk-editor.gk-invalid { border-color: var(--gk-bad); }
+.gk-root[data-density="comfortable"] .gk-cell { font-size: 14px; }
+.gk-menu { position: absolute; z-index: 20; display: flex; flex-direction: column; min-width: 180px; padding: 4px; background: var(--gk-bg); border: 1px solid var(--gk-line); border-radius: 8px; box-shadow: 0 8px 24px rgba(0, 0, 0, .18); }
+.gk-menu button { border: 0; text-align: left; border-radius: 4px; }
+.gk-menu button:hover, .gk-menu button:focus-visible { background: var(--gk-sel); }
+.gk-banner { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 6px; padding: 6px 8px; border: 1px solid var(--gk-bad); border-radius: 8px; background: var(--gk-bg); color: var(--gk-ink); }
+.gk-banner-body { flex: 1; min-width: 0; }
+.gk-banner ul { margin: 4px 0 0; padding-left: 18px; }
+.gk-banner p { margin: 4px 0 0; color: var(--gk-muted); }
+.gk-banner-close { flex: none; padding: 0 6px; border: 0; background: transparent; color: inherit; font-size: 16px; line-height: 1; cursor: pointer; }
+.gk-check ul { list-style: none; margin: 0; padding: 0; max-height: 60vh; overflow: auto; }
+.gk-check li button { width: 100%; text-align: left; padding: 6px 8px; border: 0; border-bottom: 1px solid var(--gk-line); background: transparent; color: inherit; cursor: pointer; }
+.gk-check li.gk-error .gk-where { color: var(--gk-bad-ink); font-weight: 600; }
+.gk-check li.gk-warning .gk-where { color: var(--gk-warn); font-weight: 600; }
+.gk-check .gk-ok { color: var(--gk-muted); }
+@media (max-width: 640px) { .gk-search { min-width: 0; flex: 1; } }

@@ -116,11 +116,14 @@
 :root .combat[data-layout='formation'] .enemy .combatant-card > .nm {
   display: block !important; width: calc(104px / var(--ui-zoom,1)); height: calc(18px / var(--ui-zoom,1));
   line-height: calc(18px / var(--ui-zoom,1)); font-size: calc(11px / var(--ui-zoom,1));
-  background: #1c1812ef; border: 1px solid #a48743; border-bottom: 0; border-radius: 4px 4px 0 0;
+  background: var(--hud-panel-bg, #1c1812ef); border: 1px solid #a48743; border-bottom: 0;
+  border-radius: var(--hud-panel-radius, 4px) var(--hud-panel-radius, 4px) 0 0;
+  text-shadow: var(--hud-text-shadow, none);
 }
 :root .combat[data-layout='formation'] .enemy .combatant-card > .meters {
   width: calc(104px / var(--ui-zoom,1)); box-sizing: border-box; padding: calc(3px / var(--ui-zoom,1));
-  background: #1c1812ef; border: 1px solid #a48743; border-top: 0; border-radius: 0 0 4px 4px;
+  background: var(--hud-panel-bg, #1c1812ef); border: 1px solid #a48743; border-top: 0;
+  border-radius: 0 0 var(--hud-panel-radius, 4px) var(--hud-panel-radius, 4px);
   margin-top: calc(-3px / var(--ui-zoom,1));
 }
 :root .combat[data-layout='formation'] .enemy .meters > :not([data-meter-row='hp']) { display: none; }
@@ -162,9 +165,12 @@
 /* The hand owns a slim tool row; no side panel steals a phone's card slots. */
 :root .combat[data-layout='formation'] .combat-tools {
   display: grid; grid-template-columns: 1fr 1fr; gap: calc(8px / var(--ui-zoom,1));
-  padding: 0; border: 0; background: none; box-shadow: none;
+  padding: 0; border: 0;
+  /* HUD layout tokens: the row's backing (transparent = off). */
+  background: var(--hud-tools-bg); box-shadow: var(--hud-panel-shadow, none);
+  border-radius: var(--hud-panel-radius, 0px);
 }
-:root .combat[data-layout='formation'] .combat-tools > [data-combat-tool='log'] { justify-self: start; }
+:root .combat[data-layout='formation'] .combat-tools > [data-combat-tool='log'] { justify-self: start; text-shadow: var(--hud-text-shadow, none); }
 :root .combat[data-layout='formation'] .combat-tools > [data-combat-tool='reaction'] { justify-self: end; }
 :root .combat[data-layout='formation'] .combat-tools > button {
   min-height: calc(30px / var(--ui-zoom,1)); height: calc(30px / var(--ui-zoom,1));
@@ -187,10 +193,16 @@
   pointer-events: auto; cursor: pointer;
 }
 :root .combat[data-layout='formation'] .player:not(.context-selected):not(.selected-target) .combatant-mini-hud > .nm,
-:root .combat[data-layout='formation'] .player:not(.context-selected):not(.selected-target) .combatant-mini-hud [data-meter-row='resource'],
-:root .combat[data-layout='formation'] .player:not(.context-selected):not(.selected-target) .combatant-mini-hud [data-meter-row='stance'],
-:root .combat[data-layout='formation'] .player:not(.context-selected):not(.selected-target) .combatant-mini-hud .statuses { display: none !important; }
-:root .combat[data-layout='formation'] .player .combatant-mini-hud .nm { font-size: calc(11px / var(--ui-zoom,1)); }
+:root .combat[data-layout='formation'] .player:not(.context-selected):not(.selected-target) .combatant-mini-hud [data-meter-row='resource'] { display: none !important; }
+/* Owner decision (2026-10-11): the stance chip and status icons stay visible
+   while the player is not selected; only the name and resource rows fold away. */
+/* The stance chip's glyph is a 1em square beside its text. Its masked icon
+   fills the glyph (height:100%), and the glyph had no height of its own, so
+   the shield painted 0px tall and left an empty slot before the name. */
+:root .combat[data-layout='formation'] .combatant .stance-chip[data-meter-row='stance'] > .as-glyph {
+  flex: 0 0 auto; width: 1em; height: 1em;
+}
+:root .combat[data-layout='formation'] .player .combatant-mini-hud .nm { font-size: var(--hud-details-name-size, calc(11px / var(--ui-zoom,1))); }
 :root .combat[data-layout='formation'] .player .combatant-mini-hud .meters { background: none; border: 0; }
 :root .combat[data-layout='formation'] .player .combatant-mini-hud .nm { min-height: 0; line-height: calc(13px / var(--ui-zoom,1)); margin: 0; padding: 0; }
 :root .combat[data-layout='formation'] .player .combatant-mini-hud .meters { display: grid; grid-template-columns: 1fr 1fr; gap: calc(2px / var(--ui-zoom,1)); padding: 0; }
@@ -201,6 +213,7 @@
 :root .combat[data-layout='formation'] .player .combatant-mini-hud .meters [data-meter-row='resource'] :is(.m-well,.engraved-icon) { display: none; }
 :root .combat[data-layout='formation'] .player .combatant-mini-hud .meters [data-meter-row='resource'] .m-plate { width: 100%; min-width: 0; gap: 1px; justify-content: space-between; }
 :root .combat[data-layout='formation'] .player .combatant-mini-hud .meters [data-meter-row='resource'] :is(.m-label,.m-value) { font-size: calc(9px / var(--ui-zoom,1)); white-space: nowrap; }
+:root .combat[data-layout='formation'] .player .combatant-mini-hud .meters [data-meter-row='resource'] .m-value { font-size: var(--hud-details-value-size, calc(9px / var(--ui-zoom,1))); }
 :root .combat[data-compact-combat='true'] .combatant-leading .intent {
   width: calc(74px / var(--ui-zoom,1)); min-width: calc(74px / var(--ui-zoom,1)); min-height: calc(42px / var(--ui-zoom,1));
   padding: calc(3px / var(--ui-zoom,1)); gap: calc(2px / var(--ui-zoom,1));
@@ -212,9 +225,28 @@
 :root .combat[data-compact-combat='true'] .enemy .combatant-card > .nm { height: calc(15px / var(--ui-zoom,1)); line-height: calc(15px / var(--ui-zoom,1)); font-size: calc(10px / var(--ui-zoom,1)); }
 
 :root .combat[data-layout='formation'] .player:is(.context-selected,.selected-target) .combatant-mini-hud {
-  background: #1c1812f2; border: 1px solid #a48743; border-radius: 4px;
-  padding: 0; box-shadow: 0 2px 6px #0006;
+  background: var(--hud-panel-bg, #1c1812f2); border: 1px solid var(--hud-player-panel-border, #a48743);
+  border-radius: var(--hud-panel-radius, 4px);
+  padding: 0; box-shadow: var(--hud-panel-shadow, 0 2px 6px #0006);
+  min-width: var(--hud-details-min-width, auto);
 }
+/* HUD layout tokens (docs/hud-layout-tokens.md): the details panel's type. Its
+   meter labels set their own family (kit.css), so the font names them too. */
+:root .combat[data-layout='formation'] .player:is(.context-selected,.selected-target) .combatant-mini-hud :is(.nm,.m-label,.m-value) {
+  font-family: var(--hud-details-font, var(--font-body));
+}
+/* Readable headings swaps every display face for the UI face; the token yields. */
+:root body.readable-ui .combat[data-layout='formation'] .player:is(.context-selected,.selected-target) .combatant-mini-hud :is(.nm,.m-label,.m-value) {
+  font-family: var(--font-body);
+}
+:root .combat[data-layout='formation'] .player:is(.context-selected,.selected-target) .combatant-mini-hud .nm { text-shadow: var(--hud-text-shadow, none); }
+:root .combat[data-layout='formation'] .player:is(.context-selected,.selected-target) .combatant-mini-hud [data-meter-row='resource'] .m-label {
+  color: var(--hud-details-label-color, var(--muted)); text-shadow: var(--hud-text-shadow, none);
+}
+:root .combat[data-layout='formation']:not(.coop) .player:is(.context-selected,.selected-target) .combatant-mini-hud .meters .as-meter[data-res='hp'] .m-value {
+  font-size: var(--hud-details-value-size, var(--combatant-value-text, calc(12px / var(--ui-zoom, 1))));
+}
+:root .combat[data-layout='formation'] .player:is(.context-selected,.selected-target) .combatant-mini-hud [data-meter-row='resource'] .m-value { text-shadow: var(--hud-text-shadow, 0 1px 2px #000); }
 :root .combat[data-layout='formation'] .player .combatant-leading > .combatant-info {
   --inspect-box: calc(22px / var(--ui-zoom,1));
 }
@@ -256,7 +288,7 @@
    armed-target silhouettes now own that cue; idle artwork stays unoutlined. */
 :root .combat[data-layout='formation'] .combatant .alternative-silhouette { filter: none; }
 :root .combat[data-layout='formation'] .combatant { --combatant-highlight: #ef4949; }
-:root .combat[data-layout='formation'] .combatant.player { --combatant-highlight: #65df68; }
+:root .combat[data-layout='formation'] .combatant.player { --combatant-highlight: #66b8ff; }
 :root .combat[data-layout='formation'] .combatant.context-selected .sprite {
   filter: drop-shadow(1px 0 0 var(--combatant-highlight)) drop-shadow(-1px 0 0 var(--combatant-highlight)) drop-shadow(0 1px 2px var(--combatant-highlight));
 }
@@ -266,7 +298,13 @@
   max-width: var(--inspect-box); max-height: var(--inspect-box); padding: 0;
   font-size: calc(14px / var(--ui-zoom,1)); border: 1px solid var(--gold);
 }
-:root .combat[data-layout='formation'] .player .combatant-leading > .combatant-info { display: flex; align-items: center; justify-content: center; visibility: visible; pointer-events: auto; }
+/* Owner decision (2026-10-11): an Inspect "i" shows only while its combatant is
+   selected. The rest-state hide below is !important so no shared rule reopens it. */
+:root .combat[data-layout='formation'] .player.context-selected .combatant-leading > .combatant-info { display: flex; align-items: center; justify-content: center; visibility: visible; pointer-events: auto; }
+:root .combat .combatant:not(.context-selected) .combatant-leading > .combatant-info { display: none !important; }
+/* A door shows only once battlefieldStage has written its spot (data-placed).
+   Visibility, not display, so a hidden door still measures for placement. */
+:root .combat .combatant-info:not([data-placed='true']) { visibility: hidden !important; }
 :root .combat[data-layout='formation'] .context-selected .combatant-leading > .combatant-info {
   border-color: var(--combatant-highlight); color: var(--combatant-highlight); box-shadow: 0 0 3px var(--combatant-highlight);
 }
@@ -316,20 +354,30 @@
   background: none; border: 0; box-shadow: none; padding: 0;
   min-height: calc(26px / var(--ui-zoom,1)); height: calc(26px / var(--ui-zoom,1));
   color: #ffe7ab; font-size: calc(16px / var(--ui-zoom,1));
+  text-shadow: var(--hud-text-shadow, none);
 }
 :root .combat[data-layout='formation'] .combatant:not(.context-selected) .intent > :not(.intent-compact) { display: none; }
 :root .combat[data-layout='formation'] .combatant:not(.context-selected) .intent .intent-compact { display: inline-flex; }
-:root .combat[data-layout='formation'] .context-selected .intent { border: 1px solid var(--combatant-highlight); }
+:root .combat[data-layout='formation'] .context-selected .intent { border: 1px solid var(--hud-enemy-panel-border, var(--combatant-highlight)); }
+/* HUD layout tokens: the selected intent bubble shares the panel style. */
+:root .combat[data-layout='formation'] .enemy.context-selected .combatant-leading .intent {
+  background-color: var(--hud-panel-bg, #201b15);
+  box-shadow: var(--hud-panel-shadow, inset 0 1px 0 #ffffff36, 0 2px 5px #0009);
+  border-radius: var(--hud-panel-radius, calc(8px / var(--ui-zoom, 1)));
+}
 :root .combat[data-layout='formation'] .enemy:not(.context-selected) .combatant-card > .nm { display: none !important; }
 :root .combat[data-layout='formation'] .enemy:not(.context-selected) .combatant-card > .meters {
   background: none; border: 0; padding: 0; margin: 0;
 }
-:root .combat[data-layout='formation'] .enemy.context-selected .combatant-card > :is(.nm,.meters) { border-color: var(--combatant-highlight); }
+:root .combat[data-layout='formation'] .enemy.context-selected .combatant-card > :is(.nm,.meters) { border-color: var(--hud-enemy-panel-border, var(--combatant-highlight)); }
+/* The nameplate is two stacked boxes (name over HP). The panel shadow goes on
+   the lower one only; on the name box it would fall across the seam. */
+:root .combat[data-layout='formation'] .enemy.context-selected .combatant-card > .meters { box-shadow: var(--hud-panel-shadow, none); }
 :root .combat[data-layout='formation'] .enemy:not(.context-selected)::after { display: none; }
 :root .combat[data-compact-combat='true'] .enemy.context-selected .combat-health-row { --health-row-h: calc(12px / var(--ui-zoom,1)); --combatant-hp-h: var(--health-row-h); }
 :root .combat[data-compact-combat='true'] .enemy.context-selected .combatant-card > .meters { padding: calc(2px / var(--ui-zoom,1)); }
 :root .combat[data-layout='formation'] .player.context-selected .combatant-mini-hud {
-  border-color: var(--combatant-highlight); padding: calc(4px / var(--ui-zoom,1));
+  border-color: var(--hud-player-panel-border, var(--combatant-highlight)); padding: calc(4px / var(--ui-zoom,1));
 }
 :root .combat[data-layout='formation'] .player.context-selected .combatant-leading { width: calc(220px / var(--ui-zoom,1)); }
 :root .combat[data-layout='formation'] .player-action-intent {
@@ -337,8 +385,15 @@
   width: calc(24px / var(--ui-zoom,1)); height: calc(24px / var(--ui-zoom,1));
   min-width: 0; min-height: 0; padding: 0; border: 0; background: none; box-shadow: none; color: var(--gold);
 }
+:root .combat[data-layout='formation'] .player-action-intent:not([data-placed]) { visibility: hidden; }
 :root .combat[data-layout='formation'] .combatant:not(.context-selected) .combat-health-row { --health-row-h: calc(7px / var(--ui-zoom,1)); --combatant-hp-h: var(--health-row-h); --combatant-value-text: calc(10px / var(--ui-zoom,1)); min-height: var(--health-row-h); padding-bottom: calc(12px / var(--ui-zoom,1)); }
 :root .combat[data-layout='formation'] .combatant:not(.context-selected) .combat-health-meter > .m-plate { top: calc(8px / var(--ui-zoom,1)); bottom: auto; }
+/* HUD layout tokens: an optional backing plate behind the idle HP value
+   (transparent = off; radius and pad default to 0, the value's own box). */
+:root .combat[data-layout='formation'] .combatant:not(.context-selected) .combat-health-meter .m-value {
+  background: var(--hud-text-plate-bg); border-radius: var(--hud-text-plate-radius);
+  padding-inline: var(--hud-text-plate-pad);
+}
 
 /* Compact details keep all three rows readable without a 44px empty HP slot. */
 :root .combat[data-compact-combat='true'] .player.context-selected .combatant-leading { width: calc(176px / var(--ui-zoom,1)); }
@@ -361,3 +416,59 @@
   :root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud .combat-health-row { grid-column: 2; grid-row: 1; min-width: 0; }
   :root .combat[data-compact-combat='true'] .player.context-selected .combatant-mini-hud [data-meter-row='resource'] { grid-row: 2; min-width: 0; }
 }
+
+/* Co-op's protection readout (screens/coop.js: "Ward 0/0 · Barrier 0 · Attack")
+   had no style and painted as large wrapping body text over the fighters.
+   Solo has no on-figure equivalent; it reads like the details panel's
+   POISE / WARD labels, so it takes their compact type, one line, and folds
+   away at rest as the solo resource rows do. */
+:root .combat .combat-expansion-protection {
+  display: block; max-width: 100%; margin: 0; padding: 0 calc(4px / var(--ui-zoom,1));
+  font: 600 calc(10px / var(--ui-zoom,1))/1.3 var(--hud-details-font, var(--font-body)); letter-spacing: .04em;
+  color: var(--hud-details-label-color, var(--gold)); text-shadow: var(--hud-text-shadow, none);
+  text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+:root .combat .combatant:not(.context-selected) .combat-expansion-protection { display: none; }
+
+/* Desktop only (1280-1920 wide): the tools row reads at the approved phone size.
+   Physical px: a 14px label on a 36px row, a 12px reaction value, and the switch
+   scaled with it. Phone, tablet and widescreen keep the rules above. */
+:root[data-form-factor='desktop'] .combat[data-layout='formation'] .combat-tools > button {
+  min-height: calc(36px / var(--ui-zoom,1)); height: calc(36px / var(--ui-zoom,1));
+  font-size: calc(14px / var(--ui-zoom,1));
+}
+:root[data-form-factor='desktop'] .combat[data-layout='formation'] .combat-tools .reaction-switch-track {
+  width: calc(84px / var(--ui-zoom,1)); height: calc(23px / var(--ui-zoom,1));
+}
+:root[data-form-factor='desktop'] .combat[data-layout='formation'] .combat-tools .reaction-switch-value { font-size: calc(12px / var(--ui-zoom,1)); }
+:root[data-form-factor='desktop'] .combat[data-layout='formation'] .combat-tools .reaction-switch-thumb { width: calc(17px / var(--ui-zoom,1)); height: calc(17px / var(--ui-zoom,1)); }
+/* Desktop only: intent badges, their value and glyph, and the player's stance
+   chip read about 1.25x larger. The stance glyph is the enemy intent glyph's size
+   (26 px physical), so the two marks match. Phone, tablet and widescreen are unchanged. */
+:root[data-form-factor='desktop'] .combat[data-layout='formation'] .enemy .combatant-leading .intent { width: calc(130px / var(--ui-zoom,1)); min-width: calc(130px / var(--ui-zoom,1)); }
+:root[data-form-factor='desktop'] .combat[data-layout='formation'] .combatant:not(.context-selected) .intent {
+  min-height: calc(32px / var(--ui-zoom,1)); height: calc(32px / var(--ui-zoom,1)); font-size: calc(20px / var(--ui-zoom,1));
+}
+:root[data-form-factor='desktop'] .combat[data-layout='formation'] .intent .intent-icon { width: calc(26px / var(--ui-zoom,1)); height: calc(26px / var(--ui-zoom,1)); }
+:root[data-form-factor='desktop'] .combat[data-layout='formation'] .combatant-leading .intent-stance { font-size: calc(15px / var(--ui-zoom,1)); }
+:root[data-form-factor='desktop'] .combat[data-layout='formation'] .combatant .stance-chip[data-meter-row='stance'] {
+  height: calc(28px / var(--ui-zoom,1)); font-size: calc(14px / var(--ui-zoom,1));
+}
+:root[data-form-factor='desktop'] .combat[data-layout='formation'] .combatant .stance-chip[data-meter-row='stance'] > .as-glyph {
+  width: calc(26px / var(--ui-zoom,1)); height: calc(26px / var(--ui-zoom,1));
+}
+/* Desktop only: the footer's words (End Turn, Draw, Discard, Exhaust, Potions)
+   are SVG text authored in content/config/ui/presentation/footerLayout.json, so
+   their size is in art units and scales with the 450 px desktop face. A 1.15x
+   scale about each word's centre makes them read beside the 92 px footer. The
+   counts and the SPACE key keep their authored size. */
+:root[data-form-factor='desktop'] .combat-action-row[data-footer-art] .footer-art-face text:is([data-footer-binding='endTurn'],[data-footer-binding='drawLabel'],[data-footer-binding='discard'],[data-footer-binding='exhaust'],[data-footer-binding='potions']) {
+  transform: scale(1.15); transform-box: fill-box; transform-origin: center;
+}
+/* Desktop corner tools (owner, 2026-10-12): the log and reaction switch sit in
+   the screen's bottom corners, so the row draws no backing strip between them. */
+:root .combat[data-layout='formation'] .combat-tools[data-tools-placement='corners'] { background: none; box-shadow: none; pointer-events: none; }
+/* The corner row spans the hand; only its buttons and open log take input,
+   and they sit above any card that reaches a corner. */
+:root .combat[data-layout='formation'] .combat-tools[data-tools-placement='corners'] { z-index: calc(var(--combat-layer-cards) + 1) !important; }
+:root .combat[data-layout='formation'] .combat-tools[data-tools-placement='corners'] > * { pointer-events: auto; }

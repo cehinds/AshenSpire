@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
 import {combatProfileFor} from '../src/model/combatCardProfile.js';
+import {kindForCard} from '../src/model/alternativeStance.js';
 
 const source=readFileSync(new URL('../src/ui/screens/combat.js',import.meta.url),'utf8');
 const begin=source.indexOf('  function syncPlayerActionIntent('),end=source.indexOf('  function armSelf(',begin);
@@ -12,7 +13,7 @@ test('the actual selected action resolves effective equipment tags and the chose
   const calls=[],actions=[],events=[];
   const leading={querySelector:()=>({remove:()=>calls.push('remove')}),append:action=>actions.push(action)};
   const player={querySelector:()=>leading};
-  const context={combat:{},upcastRanksByCard:new Map([[inst.instanceId,ranks]]),combatProfileFor,
+  const context={combat:{},upcastRanksByCard:new Map([[inst.instanceId,ranks]]),combatProfileFor,kindForCard,
     resolveCombatCard:(combat,instance,options)=>{
       assert.equal(combat,context.combat);assert.equal(instance,inst);assert.equal(options.upcastRanks,ranks);
       calls.push('resolve');
@@ -29,13 +30,23 @@ test('the actual selected action resolves effective equipment tags and the chose
 });
 
 test('both real selection/render callers pass the instance and clear removes the previous action',()=>{
-  assert.match(source,/syncPlayerActionIntent\(player, inst\);/);
-  assert.match(source,/syncPlayerActionIntent\(box, activeCard\);/);
+  assert.match(source,/syncPlayerActionIntent\(player, inst, heldKinds\.get\(\)\);/);
+  assert.match(source,/syncPlayerActionIntent\(box, activeCard, heldKinds\.get\(\)\);/);
   const calls=[];
   const player={querySelector:()=>({querySelector:()=>({remove:()=>calls.push('removed')}),append:()=>assert.fail('no selected action')})};
+  const shown=[];
   const context={upcastRanksByCard:new Map(),resolveCombatCard:()=>assert.fail('no carrier to resolve'),
-    combatProfileFor,playerActionIntent:profile=>{assert.equal(profile,null);return null;},
+    combatProfileFor,kindForCard,RESTING_PLAYER_ACTION:{maneuver:'ready'},
+    playerActionIntent:profile=>{shown.push(profile);return null;},
     combatEl:{dispatchEvent:()=>calls.push('refit')},CustomEvent:class{}};
   runInNewContext(source.slice(begin,end)+'\nsyncPlayerActionIntent',context)(player,null);
   assert.deepEqual(calls,['removed','refit']);
+  assert.deepEqual(shown,[{maneuver:'ready'}],'with nothing armed or held, the resting mark is what the figure shows');
+});
+
+test('the sweep intent icon uses the sweep sigil, not the attack sigil', async () => {
+  const { INTENT_ICON_SHAPES } = await import('../src/ui/components/intentIcon.js');
+  const { ACTION_SIGILS } = await import('../src/content/combatSigils.js');
+  assert.equal(INTENT_ICON_SHAPES.sweep, ACTION_SIGILS.sweep.shape);
+  assert.notEqual(INTENT_ICON_SHAPES.sweep, ACTION_SIGILS.attack.shape);
 });

@@ -3,6 +3,7 @@
 
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { modalHead, modalFooter, el, prose, stampModalSize } from '../kit/index.js';
+import { registerModal } from '../modalState.js';
 
 let activeClose = null;
 export const CONFIRMATION_COMMIT_EVENT = 'ashenspire:confirmation-commit';
@@ -136,6 +137,9 @@ export function openConfirmationModal({
   veil.appendChild(dialog);
   document.body.appendChild(veil);
 
+  // The dialog leaves the modal state here, whichever way it closes. A retained
+  // input shield is a veil with no dialog, so it is not a modal any more.
+  const unregisterModal = registerModal('confirmation', dialog);
   let closed = false;
   const close = ({ restoreFocus = true, retainInputShield = false } = {}) => {
     if (closed) return;
@@ -147,6 +151,9 @@ export function openConfirmationModal({
     if (restoreFocus && returnFocusElement instanceof HTMLElement && returnFocusElement.isConnected) {
       returnFocusElement.focus({ preventScroll: true });
     }
+    // Last: releasing the last modal runs whenNoOverlay() waiters at once, and
+    // one of those may replace the element focus just returned to.
+    unregisterModal();
   };
   activeClose = close;
 

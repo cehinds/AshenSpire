@@ -76,7 +76,7 @@ test('host learning acknowledgment commits member and combat once, and refusal a
 test('actual reaction authority persists offers and hides unowned options', () => {
   const { host, saved } = fixture('reaction-authority');
   const C = host.live.combat;
-  assert.equal(C.reactionRulesVersion, 1);
+  assert.equal(C.reactionRulesVersion, 2);
   for (const P of C.players.values()) {
     P.piles.draw.push(...P.piles.hand);
     P.piles.hand = [{ cardId: 'guardCounter', instanceId: `${P.id}:reaction`, upgraded: false }];

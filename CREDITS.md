@@ -1,4 +1,40 @@
 # Credits & Asset Licenses
+
+## HUD Component Studio authoring fixture (2026-10-10)
+
+The standalone [HUD Component Studio](tools/hud-component-studio/README.md) reuses existing game/review artwork without changing its bytes. Its [asset manifest](tools/hud-component-studio/assets.manifest.json) records source repository paths, the `hd-assets-v18` art release where applicable, and SHA-256 receipts. Original authorship and licence records remain those documented here. The four simple SVG UI shapes and editor code were authored with Codex under human direction; they are recorded separately from copied source art. The packaged IM Fell English and Libre Baskerville font files retain their original notices and SIL OFL 1.1 in [FONT-LICENSE.txt](tools/hud-component-studio/FONT-LICENSE.txt).
+
+## Weapon stance exploration (2026-10-11)
+
+The [Update Stances pilot](pose-studio/stances/update-stances/README.md) contains
+original OpenAI ImageGen comparison paintings made from this project's existing
+Reaver references under human direction. Exact prompts, source hashes and revision
+records accompany the paintings. The comparison sheets remain review sources.
+The original PR #1890 delivery used five owner-selected derivatives: Sweep ← Smash04, Counter ← Smash06,
+Smash ← Smash05, held Evade ← Smash08, and Guard-break ← Guard-break06.
+The [selection manifest](pose-studio/stances/update-stances/selections.json)
+records exact source sheets, hashes, isolated figure bounds and crop bounds.
+The reproducible exporter `tools/selected-weapon-profile-export.mjs` writes the
+512px/full and 256px/mobile WebPs under
+`assets-display/alternative/reaver-greatsword-pilot-*.webp` and the selected
+Sprite Workshop project; `src/content/alternativeSelectedStances.js` records
+profile registration, export hashes and shared floor anchors. These poses apply
+only to default-armour Reaver holding the sole greatsword in either active hand
+with the other hand empty. The paintings visually use both hands on the sword;
+eligibility does not depend on the equipment grip-mode field. They add held preparation and bounded target reactions; existing full
+attack/retaliation sequences remain. Co-op does not opt into this pilot.
+The [external reference ledger](docs/design/update-stances/references.md)
+records research links and evidence limits; no external reference artwork was
+imported. First-party generated artwork; no third-party asset license is claimed.
+
+### Greatsword follow-up concepts (2026-10-12)
+
+The Sweep, Counter and Evade boards under `pose-studio/stances/update-stances/greatsword-sweep/`, `greatsword-counter/` and `greatsword-evade/` are first-party paintings generated with OpenAI image generation from this project's Reaver references under human art direction. Exact prompts, original outputs, superseded repairs and SHA-256 provenance accompany each family. The gallery displays intact source files plus director-approved standalone replacement figures for Sweep17, Counter15 and Evade20. Original board depictions remain preserved as superseded context. These comparison sources are not runtime cutouts. The [director review record](docs/design/update-stances/followup-art-review.md) distinguishes concept approval from outstanding grip repairs. No external reference artwork or third-party licence is asserted for these generated boards.
+
+### Sequence-order previews (2026-10-12)
+
+The [labeled sequence review](pose-studio/stances/update-stances/sequence-review/README.md) reuses the recorded project-owned stance paintings as normalized preview frames. Its source/asset manifests retain exact original identities, hashes, scale and body-anchor recipes. Counter uses the owner's **original board Counter15**, while the earlier two-hand replacement remains an unselected alternate. EV1 uses a recorded ImageGen background/alpha repair of Evade16, preserving the pose. EV2 is the explicitly recorded OpenAI ImageGen sword-front edit of Evade11, with the original painting preserved and prompt/output/hash provenance linked by the Evade source README. The GIF renderer composes those frames with labels and hard cuts; it paints no intermediate character poses. The review GIFs remain authoring artifacts. The owner subsequently approved the P order and supplied attack/Evade routes for runtime; `sequence-production.json` and `sequence-production-provenance.json` record the exact Full/Lite exports and preserved Smash/Guard-break bytes. The body-registered profile is limited to default-armour Reaver with a sole greatsword; other loadouts and co-op are unchanged. No third-party artwork or licence is introduced.
+
 ## Molten River Blight meter (2026-10-08)
 
 Original texture generated for AshenSpire with OpenAI image generation from the owner-selected Molten River concept. Runtime ID: `assets/ui/ashen-blight-molten-river.webp`; high and generated light twins ship through [AshenSpire-art](https://github.com/cehinds/AshenSpire-art), with the master and prompt in `art/molten-river-blight-20261008/`. No third-party artwork or license is claimed.
