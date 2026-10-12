@@ -48,6 +48,21 @@ export function spendPersistentWard(ctx, entity, amount, meta = {}) {
   return { spent, carry: s.wardDamageCarry };
 }
 
+/** Ward's configured share of one magical action's damage; old saves use the default. */
+export function wardResistShare(ctx) {
+  return rules(ctx).ward?.resistMaxShare ?? 0.5;
+}
+
+/** Spell damage Ward absorbed on commit is spent from the pool, whole points only. */
+export function absorbWithPersistentWard(ctx, entity, amount, meta = {}) {
+  if (!enabled(ctx) || !entity?.persistentWard || !(amount > 0)) return 0;
+  const ward = entity.persistentWard;
+  const spent = Math.min(Math.max(0, ward.value), Math.floor(amount));
+  ward.value -= spent;
+  if (spent > 0) emit(ctx, 'persistentWardChanged', entity, { spent, value: ward.value, max: ward.max, cause: 'resisted', ...meta });
+  return spent;
+}
+
 /** One authority for additive modifiers, caps, once allowances and carry. */
 export function restorePersistentWard(ctx, entity, nominal, options = {}) {
   if (!enabled(ctx) || !entity?.alive || !entity.persistentWard) return { restored: 0, credited: 0 };
