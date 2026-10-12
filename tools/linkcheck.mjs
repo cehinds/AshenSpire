@@ -82,6 +82,10 @@ const SELFTEST = process.argv.includes('--selftest');
 // The standalone studio is authored source too. Capture tooling imports its
 // server, so both the live census and isolated failure-plant copies need it.
 const ROOTS = ['src', 'tools', 'tests', 'pose-studio'];
+// Docs modules that tests import (tests/combat-rounds-round.test.mjs reads the
+// alternative-combat-rounds timeline). They are not walked as denominator, but
+// the self-test copy must carry them or the baseline links red with ENOENT.
+const COPIED_EXTRA = ['docs/alternative-combat-rounds'];
 const SKIP_DIRS = new Set([
   'node_modules',   // none in this tree, and not ours to link
   'build',          // generated bundle — linking a 2 MB single file says nothing
@@ -270,7 +274,7 @@ const PLANTS = [
 
 function copyTree() {
   const t = mkdtempSync(join(tmpdir(), 'linkcheck-'));
-  for (const d of ROOTS) if (existsSync(join(ROOT, d))) cpSync(join(ROOT, d), join(t, d), { recursive: true });
+  for (const d of [...ROOTS, ...COPIED_EXTRA]) if (existsSync(join(ROOT, d))) cpSync(join(ROOT, d), join(t, d), { recursive: true });
   return t;
 }
 
