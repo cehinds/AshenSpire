@@ -259,7 +259,7 @@ Meta
         Divine {cleanses}
         Necrotic {→ Blighted}
         Psychic [n] {→ Confused}
-      Hybrid
+      Hybrid {Arcane damage. Builds Arcane Exposure on enemies that track it.}
         Force {Block or Barrier stops it}
     Stance
       Offensive
