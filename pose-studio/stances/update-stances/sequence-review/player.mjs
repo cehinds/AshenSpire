@@ -38,7 +38,7 @@ function render() {
 function pause(){playing=false;clearTimeout(timer);if(config&&assets)render();}
 function schedule(){clearTimeout(timer);timer=setTimeout(()=>{const list=steps();if(index+1<list.length){index++;render();schedule();}else if($('loop').checked){index=0;render();schedule();}else{pause();}},steps()[index].duration / Number($('speed').value));}
 function seek(value){pause();index=Math.max(0,Math.min(steps().length-1,value));render();}
-function select(nextVariant,nextMode,origin){pause();if(nextMode!==mode&&!origin){$('context').checked=nextMode==='counter';$('origin').value=({guard:'D',counter:'C',attack:'T',smash:'S',evade:'E'})[nextMode];}if(origin)$('origin').value=origin;variant=nextVariant;mode=nextMode;$('mode').value=mode;index=0;render();}
+function select(nextVariant,nextMode,origin){pause();if(nextMode!==mode&&!origin){$('context').checked=nextMode==='counter';$('origin').value=({guard:'D',counter:'C',attack:'T',smash:'S',evade:'E'})[nextMode];}if(origin){$('origin').value=origin;$('context').checked=true;}variant=nextVariant;mode=nextMode;$('mode').value=mode;index=0;render();}
 async function init(){
   document.querySelectorAll('button,select,input').forEach(item=>item.disabled=true);
   [config,assets]=await Promise.all(['sequences.json','preview-assets.json'].map(async path=>{const response=await fetch(path);if(!response.ok)throw Error(`${path}: ${response.status}`);return response.json();}));
@@ -48,7 +48,7 @@ async function init(){
   $('timing').textContent=config.timingNote;
   $('mode').addEventListener('change',()=>select(variant,$('mode').value));
   $('origin').value='D';
-  $('origin').addEventListener('change',()=>select(variant,mode));
+  $('origin').addEventListener('change',()=>{ $('context').checked=true;select(variant,mode);});
   $('context').addEventListener('change',()=>seek(0));
   $('previous').addEventListener('click',()=>seek(index-1));$('next').addEventListener('click',()=>seek(index+1));
   $('play').addEventListener('click',()=>{if(playing){pause();return;}if(index===steps().length-1)index=0;playing=true;render();schedule();});

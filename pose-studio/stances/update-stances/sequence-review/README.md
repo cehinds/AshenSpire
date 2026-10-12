@@ -1,6 +1,6 @@
 # Labeled greatsword sequence review
 
-These previews compare image order using existing Reaver art plus the explicitly recorded EV2 sword-front edit. **They change no gameplay, shipped pose catalogs, rigs or selected export manifests.** The original five runtime poses delivered in PR #1890 remain a separate historical delivery. The latest source choices and sequence order below are for review before any new wiring.
+These previews compare image order using existing Reaver art plus the explicitly recorded EV1 transparency repair and EV2 sword-front edit. **They change no gameplay, shipped pose catalogs, rigs or selected export manifests.** The original five runtime poses delivered in PR #1890 remain a separate historical delivery. The latest source choices and sequence order below are for review before any new wiring.
 
 Open [the interactive player](index.html) through a local HTTP server. Play/pause, choose any numbered slot, step backward/forward, change speed, and copy the numbered order. The starting stance selector covers Attack, Smash, Counter, Defend, Evade and Sweep. “Show origin context” adds the chosen stance before/after the defense interior; the exact six-slot interior remains unchanged.
 
@@ -64,7 +64,7 @@ The Counter extension preserves the chosen six-slot interior, then adds **S → 
 | AT1…AT6 | **Smash05 → Sweep20 → Smash06 → Sweep16 → Evade15 → Evade13**, in the supplied order. AT1 and S intentionally share the same pose but remain separate numbered steps. |
 | EV1…EV3 | **Evade16 → edited Evade11 (sword in front, backward lean retained) → Evade13**. |
 
-EV2 is a first-party OpenAI ImageGen edit of Evade11: the sword moves in front while the backward lean is retained. Its raw source is preserved, and its prompt/output/hash record is linked from the Evade source README. Other preview figures are mechanically extracted from their recorded sources; this is not a claim that every frame is unedited.
+EV1 uses an explicitly recorded ImageGen background/alpha repair of Evade16, preserving its pose. EV2 is a first-party OpenAI ImageGen edit of Evade11: the sword moves in front while the backward lean is retained. Its raw source is preserved, and its prompt/output/hash record is linked from the Evade source README. Other preview figures are mechanically extracted from their recorded sources; this is not a claim that every frame is unedited.
 
 The earlier native four-phase attack comparison is superseded by the six supplied images. No native timing is assigned to these new six images.
 
