@@ -9,7 +9,7 @@ import { createRng } from '../src/engine/rng.js';
 import { enqueueExpandedAction, previewExpandedActions } from '../src/engine/combatExpansionActions.js';
 import { executeAction, gainBlock } from '../src/engine/actions.js';
 
-function fixture({ ward = 3, barrier = 0, block = 0 } = {}) {
+function fixture({ ward = 3, barrier = 0, block = 0, poise = 0 } = {}) {
   const registries = createRegistries(contentBundle);
   const combat = createCombat({ registries, rng: createRng(901), combatExpansionVersion: 2,
     enemyIds: ['wanderingSoldier'], player: { classId: 'starseer', maxHp: 100, hp: 100,
@@ -17,7 +17,8 @@ function fixture({ ward = 3, barrier = 0, block = 0 } = {}) {
   const enemy = combat.enemies[0];
   enemy.block = block; enemy.barrier = barrier;
   enemy.damageResistanceFlat = {}; enemy.damageWeaknessPercent = {};
-  enemy.ratings = { ar: 0, dr: 0, pr: 0, poise: 0, ward: 3 };
+  enemy.ratings = { ar: 0, dr: 0, pr: 0, poise, ward: 3 };
+  if (poise > 0) enemy.persistentPoise = { max: poise, value: poise };
   delete enemy.combatCounter; delete enemy.combatEvade; delete enemy.combatStance;
   enemy.persistentWard.max = 3; enemy.persistentWard.value = ward;
   return { combat, enemy };
@@ -37,7 +38,8 @@ function strike(carrier, amount, setup = {}) {
   enqueueExpandedAction(combat, [action()], { source: combat.player, target: enemy, carrier });
   while (combat.queue.length) executeAction(combat, combat.queue.shift());
   const damage = events.filter(e => e.type === 'damageDealt' && e.targetId === enemy.id);
-  return { combat, enemy, events, damage, preview, hpBefore, committed: damage.reduce((s, e) => s + e.amount, 0),
+  // committed is the HP the hit took: the figure a preview shows (after Block and Poise).
+  return { combat, enemy, events, damage, preview, hpBefore, committed: hpBefore - enemy.hp,
     hpLost: before => before - enemy.hp };
 }
 
@@ -154,4 +156,35 @@ test('a Ward break on a living enemy is interrupted exactly when the enemy is in
   const ward = events.find(e => e.type === 'wardBroken');
   assert.ok(ward, 'Ward broke');
   assert.equal(Boolean(ward.interrupted), events.some(e => e.type === 'enemyInterrupted'));
+});
+
+const slash = { tags: ['camp:physical', 'damage:slashing'], skipRatingBonus: true, combatProfile: { camp: 'physical', damageType: 'slashing', maneuver: 'attack', reach: 'contact', targeting: 'single' } };
+const fireBolt = { tags: ['camp:spell', 'damage:fire'], skipRatingBonus: true, combatProfile: { camp: 'spell', damageType: 'fire', maneuver: 'casting', reach: 'near', targeting: 'single' } };
+
+test('a physical hit is previewed after Poise: 5 against 10 Poise deals 1, and the preview says 1', () => {
+  const r = strike(slash, 5, { ward: 0, poise: 10 });
+  assert.equal(r.hpLost(r.hpBefore), 1, 'the hit deals 1');
+  assert.equal(r.preview, 1, 'the preview shows 1');
+  assert.equal(r.preview, r.committed);
+});
+
+test('a physical hit is previewed after Block: 5 against Block 3 deals 2, and the preview says 2', () => {
+  const r = strike(slash, 5, { block: 3 });
+  assert.equal(r.hpLost(r.hpBefore), 2);
+  assert.equal(r.preview, 2);
+});
+
+test('a magic hit is previewed after Ward: 5 fire against Ward 3 deals 2, and the preview says 2', () => {
+  const r = strike(fireBolt, 5, { ward: 3 });
+  assert.equal(r.hpLost(r.hpBefore), 2);
+  assert.equal(r.preview, 2);
+  assert.equal(r.preview, r.committed);
+});
+
+test('preview equals committed for physical, magic and split hits, with Block and Poise in play', () => {
+  const cases = [[slash, 5, { ward: 0, poise: 10, block: 2 }], [fireBolt, 5, { ward: 3, block: 3 }], [scepter, 5, { ward: 3, block: 3, poise: 2 }]];
+  for (const [carrier, amount, setup] of cases) {
+    const r = strike(carrier, amount, setup);
+    assert.equal(r.preview, r.committed, JSON.stringify(setup));
+  }
 });

@@ -135,7 +135,7 @@ export function previewExpandedActions(ctx, actions, options) {
   const group = enqueueExpandedAction(local, copied, { ...options, source: entity(options.source), target: entity(options.target) });
   beginExpandedAction(local, group, entity(options.source));
   return copied.map(action => (action.meta.expansionContacts || []).flat().map(contact => ({ ...contact,
-    amount: group.targets[contact.key].receipt.defendedAmounts[contact.index] || 0,
+    amount: group.targets[contact.key].receipt.hpAmounts?.[contact.index] || 0,
     receipt: group.targets[contact.key].receipt })));
 }
 

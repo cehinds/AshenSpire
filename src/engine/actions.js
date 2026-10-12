@@ -370,6 +370,7 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
   // Block soaks the physical part, in the order contacts strike, and never a magic part.
   // A split hit that would cost no HP while Ward absorbed some of it lets 1 through from Ward.
   const blockable = physicalTyped.slice();
+  const residual = hits.map(() => 0);
   let blockLeft = Math.max(0, target.block || 0);
   let bypassLeft = receipt.guardBypass || 0;
   hits.forEach((hit, index) => {
@@ -378,11 +379,25 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
     bypassLeft -= bypass;
     const blocked = Math.min(blockLeft, Math.max(0, pool - bypass));
     blockLeft -= blocked;
-    if (pool - blocked === 0 && magicLeft[index] === 0 && wardSpent[index] > 0) {
+    residual[index] = pool - blocked;
+    if (residual[index] === 0 && magicLeft[index] === 0 && wardSpent[index] > 0) {
       magicLeft[index] += 1;
       wardSpent[index] -= 1;
     }
   });
+  // Poise soaks what Block left of a physical part, in the same order. Each physical part it
+  // meets still lets at least 1 through. A magic part never meets Poise.
+  syncPoiseMaximum(ctx, target);
+  let poiseLeft = Math.max(0, target.persistentPoise?.value || 0);
+  const poiseAbsorbed = hits.map(() => 0);
+  hits.forEach((hit, index) => {
+    if (residual[index] > 0 && poiseLeft > 0) {
+      poiseAbsorbed[index] = residual[index] - Math.max(1, residual[index] - poiseLeft);
+      poiseLeft -= poiseAbsorbed[index];
+    }
+  });
+  // What each contact costs HP once Block and Poise have done their part: the figure a preview shows.
+  receipt.hpAmounts = hits.map((hit, index) => residual[index] - poiseAbsorbed[index] + magicLeft[index]);
   receipt.defendedAmounts = hits.map((hit, index) => physicalTyped[index] + magicLeft[index]);
   receipt.barrierSpentAmounts = barrierSpent;
   receipt.wardSpentAmounts = wardSpent;
