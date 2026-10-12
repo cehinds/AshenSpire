@@ -165,7 +165,7 @@ export function foundationDamage(ctx, source, target, base, carrier = null, atta
     }
   }
   // The tag-scoped share of the (capped) vulnerability travels apart, so its
-  // bonus rounds UP per component (owner, 2026-10-12, #12; taggedBonusFloor).
+  // bonus rounds UP once per hit (owner, 2026-10-12, #12; resolveDamageComponents).
   const plain = Math.min(rules.vulnerabilityCap, multiplier);
   const withTags = Math.min(rules.vulnerabilityCap, multiplier * tagged * (1 + vulnerability));
   const taggedBonus = plain > 0 ? withTags / plain : 1;
