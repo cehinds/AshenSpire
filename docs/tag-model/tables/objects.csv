@@ -135,3 +135,23 @@ wayfarersKnot,relic,Wayfarer's Knot,Relic,,,,,,character.relic,,,,,,,,,Gain 10% 
 prismaticThorn,relic,Prismatic Thorn,Relic,,,,,,character.relic,,,,,,,,,Your hits build 25% more Arcane Exposure. Flasks are 25% weaker (rounded up).
 restlessClasp,relic,Restless Clasp,Relic,,,,,,character.relic,,,,,,,,,Flasks are 100% stronger. Resting heals 50% less.
 paupersDiadem,relic,Pauper's Diadem,Relic,,,,,,character.relic,,,,,,,,,Power cards cost 1 less (minimum 0). Gain 35% fewer Cinders from combats.
+reaverIronFooting,feat,Iron Footing,Feat,,,,,,feat,,,,,,,,,Your Guard cards gain +2 Block.
+reaverKeenBlade,feat,Keen Blade,Feat,,,,,,feat,,,,,,,,,Blade attacks have an 8% chance to deal 1.5× damage.
+reaverBloodDiscipline,feat,Blood Discipline,Feat,,,,,,feat,,,,,,,,,Blood attacks have a 12% chance to deal 1.5× damage.
+reaverMasteryFocus,feat,Weight of War,Feat,,,,,,feat,,,,,,,,,Heavy attacks have a 15% chance to deal 1.5× damage.
+reaverMasteryResolve,feat,Unbroken Line,Feat,,,,,,feat,,,,,,,,,Your Guard cards gain +3 Block.
+starseerAshShelter,feat,Ash Shelter,Feat,,,,,,feat,,,,,,,,,Your Ritual cards gain +2 Block.
+starseerClearSky,feat,Clear Sky,Feat,,,,,,feat,,,,,,,,,Starstone attacks have a 10% chance to deal 1.5× damage.
+starseerRitualPrecision,feat,Ritual Precision,Feat,,,,,,feat,,,,,,,,,Ritual attacks have an 8% chance to deal 1.5× damage.
+starseerMasteryFocus,feat,Comet Sight,Feat,,,,,,feat,,,,,,,,,Starstone attacks have a 15% chance to deal 1.5× damage.
+starseerMasteryResolve,feat,Astral Shelter,Feat,,,,,,feat,,,,,,,,,Your Starstone cards gain +3 Block.
+rogueQuietGuard,feat,Quiet Guard,Feat,,,,,,feat,,,,,,,,,Your Guard cards gain +2 Block.
+rogueMeasuredPoint,feat,Measured Point,Feat,,,,,,feat,,,,,,,,,Pierce attacks have a 10% chance to deal 1.5× damage.
+rogueKnifeWork,feat,Knife Work,Feat,,,,,,feat,,,,,,,,,Blade attacks have an 8% chance to deal 1.5× damage.
+rogueMasteryFocus,feat,Perfect Opening,Feat,,,,,,feat,,,,,,,,,Flourish attacks have a 15% chance to deal 1.5× damage.
+rogueMasteryResolve,feat,Hidden Parry,Feat,,,,,,feat,,,,,,,,,Your Flourish cards gain +3 Block.
+heraldRiteShelter,feat,Rite Shelter,Feat,,,,,,feat,,,,,,,,,Your Ritual cards gain +2 Block.
+heraldBlightPrecision,feat,Blight Precision,Feat,,,,,,feat,,,,,,,,,Blight attacks have a 10% chance to deal 1.5× damage.
+heraldOathEdge,feat,Oath Edge,Feat,,,,,,feat,,,,,,,,,Oath attacks have a 12% chance to deal 1.5× damage.
+heraldMasteryFocus,feat,Flame Witness,Feat,,,,,,feat,,,,,,,,,Ritual attacks have a 15% chance to deal 1.5× damage.
+heraldMasteryResolve,feat,Unspent Oath,Feat,,,,,,feat,,,,,,,,,Your Oath cards gain +3 Block.
