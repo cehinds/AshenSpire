@@ -1,6 +1,6 @@
 # Labeled greatsword sequence review
 
-These previews compare image order using existing Reaver art plus the explicitly recorded EV1 transparency repair and EV2 sword-front edit. **They change no gameplay, shipped pose catalogs, rigs or selected export manifests.** The original five runtime poses delivered in PR #1890 remain a separate historical delivery. The latest source choices and sequence order below are for review before any new wiring.
+These previews compare image order using existing Reaver art plus the explicitly recorded EV1 transparency repair and EV2 sword-front edit. **The player and GIFs use review timing.** The owner approved the P impact order and supplied attack/Evade routes for runtime integration in PR #1897; the separate [production recipe](../sequence-production.json) and [export provenance](../sequence-production-provenance.json) record the shipped profile. The original five poses delivered in PR #1890 remain historical. A/B alternatives are not runtime choices.
 
 Open [the interactive player](index.html) through a local HTTP server. Play/pause, choose any numbered slot, step backward/forward, change speed, and copy the numbered order. The starting stance selector covers Attack, Smash, Counter, Defend, Evade and Sweep. “Show origin context” adds the chosen stance before/after the defense interior; the exact six-slot interior remains unchanged.
 
@@ -8,7 +8,7 @@ Impact reaction slots hold for **D×2, V×3, G×1, H×2, C×3, D×2**: six pose 
 
 ## All six starting stances
 
-Each cell names its origin and returns to that exact origin. The grids add origin context around the unchanged sequence interior. Both Counter modes default to originating stance C; the other cells demonstrate restoration for comparison. These are tag-specific previews, with no runtime tag-priority rule.
+Each cell names its origin and returns to that exact origin. The grids add origin context around the unchanged sequence interior. Both Counter modes default to originating stance C; the other cells demonstrate restoration for comparison. These tag-specific previews expose each approved route; combat routing is documented by the production implementation, not inferred from GIF timing.
 
 Guard / Parry / Resisted — primary interior **D → V → G → H → C → D**:
 
@@ -76,7 +76,7 @@ EV1 uses an explicitly recorded ImageGen background/alpha repair of Evade16, pre
 
 The earlier native four-phase attack comparison is superseded by the six supplied images. No native timing is assigned to these new six images.
 
-[Asset contract](ASSET-CONTRACT.md), [source records](sources.json) and [preview asset manifest](preview-assets.json) preserve hashes, crops, body anchors, floor, sizes and drawing offsets. Registration uses body/pelvis landmarks and a common floor; swords and capes do not recenter the body. This is preview normalization, not runtime approval.
+[Asset contract](ASSET-CONTRACT.md), [source records](sources.json) and [preview asset manifest](preview-assets.json) preserve hashes, crops, body anchors, floor, sizes and drawing offsets. Registration uses body/pelvis landmarks and a common floor; swords and capes do not recenter the body. This preview registration is also reused by the approved production profile. Compiled-game validation is tracked in the [delivery status](../../../../docs/design/update-stances/delivery-status.md).
 
 The original `all-origins-counter.gif` path is retained as the Guard-tag Counter alias.
 

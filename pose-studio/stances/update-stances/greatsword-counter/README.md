@@ -24,4 +24,4 @@ Each `.provenance.json` records the exact prompt file, inspected local reference
 The director-approved single-figure `ct15-replacement.png` is the earlier unselected CT15 alternate. It was generated from only the costume and selected Smash references, without the previous Counter board. Two separate gauntlets and exposed hilt leather are visibly legible. It was previously proposed to replace the sheet depiction under the same ID; the owner subsequently chose the original, and the four other A concepts remain unchanged. Exact output bytes, actual dimensions and prompt are recorded in its provenance.
 
 
-The labeled sequence preview uses original CT15 as C, CT12 as D, CT16 as H and CT20 as G. These image choices do not approve gameplay wiring or a final animation order. [Sequence review and exact sources](../sequence-review/README.md).
+The labeled sequence preview uses original CT15 as C, CT12 as D, CT16 as H and CT20 as G. The owner subsequently approved the P sequence and production integration; the source records remain distinct from the unselected A/B alternatives. [Sequence review and exact sources](../sequence-review/README.md).

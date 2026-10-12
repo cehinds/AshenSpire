@@ -1,6 +1,6 @@
 # Update Stances — greatsword pilot review
 
-**Latest: [labeled sequence-order previews](sequence-review/README.md)** — all six starting stances, exact six-slot defense order, six supplied attack images and three Evade images. Review only; no gameplay change.
+**Latest: [labeled sequence-order previews](sequence-review/README.md)** — all six starting stances, exact six-slot defense order, six supplied attack images and three Evade images. The approved P/source routes are integrated separately in [the production recipe](sequence-production.json); these GIFs retain readable review timing.
 
 **[Review the thirty new Sweep, Counter and Evade concepts](#new-greatsword-options).** All thirty are director-approved comparison options; they are not new runtime selections.
 
@@ -16,7 +16,7 @@ This review contains **50 generated and director-reviewed greatsword pose concep
 | Evade | Smash08 |
 | Smash | Smash05 |
 
-Numeric choices are authoritative; the extra image of guard-break03 is context, not a sixth selection. Exact source crops and export provenance are in [selections.json](selections.json), owned by the art exporter. The selected pilot is registered, browser-validated and merged in PR #1890; evidence is in [delivery-status.md](../../../docs/design/update-stances/delivery-status.md). New follow-up boards remain concept comparisons, with no new runtime registration.
+Numeric choices are authoritative; the extra image of guard-break03 is context, not a sixth selection. Exact source crops and export provenance are in [selections.json](selections.json), owned by the art exporter. The selected pilot is registered, browser-validated and merged in PR #1890; evidence is in [delivery-status.md](../../../docs/design/update-stances/delivery-status.md). The owner subsequently approved selected follow-up sources and sequences for PR #1897; [production registration](sequence-production.json) records that update. Unchosen options remain concepts.
 
 The next authorized pass requests **ten new greatsword options each for Sweep, Counter and Evade**, thirty total. All thirty concepts have landed. Sweep17, Counter15 and Evade20 have approved standalone replacement figures under their original IDs. All thirty follow-up options are concept-approved. This separate pass does not complete the 600-option baseline.
 
@@ -28,7 +28,7 @@ The next authorized pass requests **ten new greatsword options each for Sweep, C
 
 Follow-up sheets are portrait, two columns by three rows: A contains 11–15 and B contains 16–20, in reading order with the bottom-right empty. The original Smash/Guard-break sheets remain landscape, three columns by two rows and numbered 01–10. **The gallery displays intact source boards.** Cell layout labels locate concepts; they are not crop instructions or runtime atlas registration. In particular, Evade sword/boot/cape bounds can cross nominal cell boundaries, so fixed 512px crops would truncate art.
 
-Names below describe the actual paintings, including the approved replacement figures. The [director review record](../../../docs/design/update-stances/followup-art-review.md) governs the current flags and supersedes stale review-pending statements in the artist snapshots. Missing, unreviewed or flagged options cannot be favorited. Sweep17, Counter15 and Evade20 retain their original IDs, but their favorites and copied source paths refer to the approved single-figure replacements shown below the boards. If a replacement cannot load, its option stays disabled; the superseded board figure cannot serve as a fallback. Replacements do not add extra option counts. All three replacements are explicitly director-approved; availability still requires their own source images to load.
+Names below describe the actual paintings, including the approved replacement figures. The [director review record](../../../docs/design/update-stances/followup-art-review.md) governs the current flags and supersedes stale review-pending statements in the artist snapshots. Missing, unreviewed or flagged options cannot be favorited. Sweep17 and Evade20 retain their IDs and use the approved single-figure replacements. The owner chose original-board Counter15 instead of its earlier two-hand replacement, which remains an unselected alternate. If an active replacement cannot load, its option stays disabled; the superseded board figure cannot serve as a fallback. Counter15 instead depends on its original board; its unselected alternate loads independently. Replacements do not add extra option counts. All three alternate/replacement paintings remain director-approved; only the two active replacements gate their option availability.
 
 The original five confirmed roles remain immutable records separate from editable browser favorites. Clear and reload preserve those labels. Copied JSON distinguishes actual source availability, concept review and selectable counts; new concept favorites do not modify runtime selections.
 
