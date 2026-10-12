@@ -3,23 +3,36 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { alternativeCombatComposition, combatSceneryGround, combatStandingGround } from '../src/ui/models/CombatCompositionModel.js';
 
-// Owner (2026-10-11): at 360x620 the battlefield showed only ground. Moving
-// short-portrait enemies back (0ec3cf026) also moved the backdrop camera,
-// which follows the enemy ground, so the horizon and landmark left the field.
-const height = 267, width = 360;
-const actors = ['p', 'a', 'b'].map((id, i) => ({ side: i ? 'enemy' : 'player',
-  visibleWidth: 60, leading: 40, slot: { id, ground: 240 } }));
-const sizes = actors.map((a, i) => ({ id: a.slot.id, x: [80, 220, 300][i], visibleHeight: 80, scale: 1, multiplier: 1 }));
+import { alternativeFormation, fitAlternativeSprites } from '../src/ui/models/AlternativeFormationModel.js';
+import { combatFormation } from '../src/ui/models/CombatFormationModel.js';
 
-test('a short portrait field frames its backdrop on the near row while its enemies stand back', () => {
-  const fit = alternativeCombatComposition({ actors, sizes, width, height, handTop: height });
-  const nearRow = 240 - height * .07;
-  assert.ok(Math.abs(combatSceneryGround(fit, actors, 0) - nearRow) < 1e-9, 'camera keeps the pre-0ec3cf026 framing');
-  assert.ok(combatStandingGround(fit, actors, 0) <= height * .6, 'enemies stay on the back row');
-  assert.ok(combatStandingGround(fit, actors, 0) < combatSceneryGround(fit, actors, 0) - 40);
+// Owner (2026-10-11): at 360x620 the battlefield showed only ground, because
+// the backdrop camera follows the enemy ground. On the perspective grid the
+// enemies' back rank stands high on the floor, so the camera frames a line
+// well above the party and the horizon and landmark stay in view.
+const fitAt = (width, height, narrow) => {
+  const plan = alternativeFormation(combatFormation({ width, height, presentation: { perspectiveGrid: true, formationPreset: 'straight' },
+    friends: ['p'], enemies: ['a', 'b', 'c'] }), width, height, narrow);
+  const actors = plan.slots.map(slot => ({ slot, side: slot.side, visibleWidth: 60, visibleHeight: 160, leading: 40, ratio: 1, multiplier: 1 }));
+  return { actors, fit: alternativeCombatComposition({ actors, sizes: fitAlternativeSprites({ width, height, actors, narrow }), width, height, perspectiveGrid: true }) };
+};
+
+test('the backdrop frames the enemy back rank, high enough to keep the horizon in view', () => {
+  for (const [width, height, narrow] of [[360, 267, true], [390, 460, true], [1440, 400, false]]) {
+    const { actors, fit } = fitAt(width, height, narrow);
+    const framed = combatSceneryGround(fit, actors, 0);
+    assert.ok(framed <= height * .6, `camera line at ${framed} of ${height}`);
+    assert.equal(framed, combatStandingGround(fit, actors, 0), 'the grid never splits the camera from the standing line');
+    assert.ok(fit.every(size => size.sceneryGround === undefined && size.standingGround === undefined));
+  }
 });
 
 test('a tablet spacious field frames its backdrop on the enemy ground as before', () => {
+  const width = 1024;
+  const actors = ['p', 'a', 'b'].map((id, i) => ({ side: i ? 'enemy' : 'player',
+    visibleWidth: 60, leading: 40, slot: { id, ground: [330, 300, 280][i] } }));
+  const sizes = actors.map((actor, i) => ({ id: actor.slot.id, x: [260, 500, 700][i],
+    visibleHeight: 100, scale: 1, multiplier: 1 }));
   const tall = alternativeCombatComposition({ actors, sizes, width, height: 376, handTop: 376 });
   assert.equal(combatSceneryGround(tall, actors, 0), combatStandingGround(tall, actors, 0));
   assert.ok(tall.every(fit => fit.sceneryGround === undefined));

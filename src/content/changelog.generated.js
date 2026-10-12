@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1870",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Combatants stand on an even grid, and any part of an enemy's square targets it",
+    "detail": "In the default view the battlefield is now one even grid of three lanes, leaning on a diagonal into the distance: enemies in a back row and a front row, your party in one row nearest you, with open ground between you and them. Each square has a shadow where its fighter's feet stand. Enemies fill the back row first (one in the middle, two on the outer lanes, three across), then the front row, up to six. You start in the left lane. Tapping anywhere in an occupied enemy square selects that enemy, or plays your readied card or flask on it. Moving now picks one of the three lanes in your row. The Classic look is unchanged.",
+    "build": "0.7.1.1387",
+    "pullRequest": 1870,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1870"
+  },
+  {
     "id": "pr-1878",
     "date": "2026-10-12",
     "group": "2026-10-12",
