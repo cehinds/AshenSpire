@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { placePlayerIntentGlyph } from '../src/ui/components/battlefieldStage.js';
 
 // The player's intent glyph stays above the figure's head while the player is
-// not selected. The resting stance chip stays in the details panel only.
+// not selected; selected, it steps beside the Inspect door. The resting stance chip stays in the details panel only.
 const stage = readFileSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url), 'utf8');
 const css = readFileSync(new URL('../styles/combat-layers.css', import.meta.url), 'utf8');
 
@@ -29,9 +29,9 @@ test('at rest the intent glyph is centred above the art, below the HUD band', ()
   assert.equal(high.top, 62);
 });
 
-test('the same spot selected or not: the glyph is placed by the stage in every state', () => {
+test('the glyph is placed by the stage in every state; at rest it never moves between passes', () => {
   // The stage's player loop never gates the glyph on the selection state.
-  assert.match(stage, /placePlayerIntentGlyph\(leading, \{ art, hudBottom, zoom \}\);/);
+  assert.match(stage, /placePlayerIntentGlyph\(leading, \{ art, hudBottom, zoom, avoid: expanded \? infoRect : null, viewport \}\);/);
   assert.doesNotMatch(stage, /if \(expanded\)[^\n]*\n[^\n]*placePlayerIntentGlyph/);
   const { style, leading } = fakeLeading();
   const art = box(35, 205, 99, 105);
@@ -39,6 +39,34 @@ test('the same spot selected or not: the glyph is placed by the stage in every s
   const rest = { ...style };
   placePlayerIntentGlyph(leading, { art, hudBottom: 60, zoom: 1 });
   assert.deepEqual({ ...style }, rest);
+});
+
+// Codex P2 on #1849: selected, the Inspect "i" centres at the glyph's rest spot
+// (combatPlayerInfoRect) and the later-painted glyph took its taps.
+test('selected, the glyph steps just beside the visible Inspect door and never covers it', () => {
+  const art = box(35, 205, 99, 105);
+  const viewport = box(0, 0, 400, 700);
+  for (const inspectSize of [22, 44]) {
+    const { leading } = fakeLeading();
+    const centre = 35 + 99 / 2;
+    const inspect = box(centre - inspectSize / 2, art.top - inspectSize - 4, inspectSize, inspectSize);
+    const rest = placePlayerIntentGlyph(leading, { art, hudBottom: 60, zoom: 1 });
+    const selected = placePlayerIntentGlyph(leading, { art, hudBottom: 60, zoom: 1, avoid: inspect, viewport });
+    const glyph = box(selected.centre - selected.width / 2, selected.top, selected.width, selected.height);
+    const intersects = glyph.left < inspect.right && glyph.right > inspect.left && glyph.top < inspect.bottom && glyph.bottom > inspect.top;
+    assert.equal(intersects, false, `a ${inspectSize}px Inspect stays clear`);
+    assert.equal(selected.top, rest.top, 'no vertical jump');
+    assert.equal(rest.centre - selected.centre, inspectSize / 2 + 4 + 12, 'the smallest step: half the door, a 4px gap, half the glyph');
+  }
+  // Against the field's left edge it steps right instead.
+  const { leading } = fakeLeading();
+  const nearEdge = box(0, 205, 40, 105);
+  const inspect = box(20 - 22, nearEdge.top - 48, 44, 44);
+  const spot = placePlayerIntentGlyph(leading, { art: nearEdge, hudBottom: 60, zoom: 1, avoid: inspect, viewport: box(0, 0, 400, 700) });
+  assert.ok(spot.centre - spot.width / 2 >= inspect.right, 'right of the door');
+  // A non-overlapping door (moved off by its own placement) leaves the glyph centred.
+  const clear = placePlayerIntentGlyph(fakeLeading().leading, { art, hudBottom: 60, zoom: 1, avoid: box(300, 100, 44, 44), viewport });
+  assert.equal(clear.centre, 35 + 99 / 2);
 });
 
 test('no intent glyph, nothing is placed', () => {

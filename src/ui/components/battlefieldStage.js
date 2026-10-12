@@ -60,16 +60,26 @@ export function combatPlayerInfoRect(node, art, viewport, zoom, floor = Infinity
 
 // Owner (2026-10-11): the player's intent glyph (attack, smash, counter, defend,
 // sweep, spell) stays above the figure's head while the player is not selected,
-// so the stance reads at rest. It takes the same spot selected or not, centred
-// over the art and below the HUD band, so it never jumps on selection.
-export function placePlayerIntentGlyph(leading, { art, hudBottom, zoom = 1 }) {
+// so the stance reads at rest: centred over the art, below the HUD band. Selected,
+// the Inspect "i" takes that centre (combatPlayerInfoRect), so the glyph steps
+// just left of it (`avoid`, the visible Inspect rect), at the same height: the
+// smallest move that keeps it off the Inspect tap target, half the Inspect
+// width + a 4px gap + half the glyph width. Rightward if the left edge is short.
+export function placePlayerIntentGlyph(leading, { art, hudBottom, zoom = 1, avoid = null, viewport = null }) {
   const node = leading.querySelector('.player-action-intent');
   if (!node) return null;
   const host = node.offsetParent || leading;
   const { width, height } = node.getBoundingClientRect();
   const floorTop = Number.isFinite(hudBottom) ? hudBottom + 2 : -Infinity;
   const top = Math.max(floorTop, art.top - height - 4);
-  const centre = (art.left + art.right) / 2;
+  let centre = (art.left + art.right) / 2;
+  const overlaps = avoid && centre - width / 2 < avoid.right && centre + width / 2 > avoid.left
+    && top < avoid.bottom && top + height > avoid.top;
+  if (overlaps) {
+    const gap = 4;
+    const leftCentre = avoid.left - gap - width / 2;
+    centre = viewport && leftCentre - width / 2 < viewport.left ? avoid.right + gap + width / 2 : leftCentre;
+  }
   const local = anchorLocalBox(host, { left: centre - width / 2, top, width, height }, { zoom });
   node.style.left = `${local.left}px`;
   node.style.top = `${local.top}px`;
@@ -278,7 +288,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       if (leading.style.top !== top) leading.style.top = top;
       if (leading.style.left !== left) leading.style.left = left;
       leading.style.translate = 'none';
-      placePlayerIntentGlyph(leading, { art, hudBottom, zoom });
+      // Selected, the Inspect door is visible: the glyph keeps off it.
+      placePlayerIntentGlyph(leading, { art, hudBottom, zoom, avoid: expanded ? infoRect : null, viewport });
       for (const [door, rect] of [[inspect, infoRect]]) {
         if (!rect) continue;
         const local = anchorLocalBox({ left: placement.left, top: placement.top, width: panel.width, height: panel.height }, rect, { zoom });
