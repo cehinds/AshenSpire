@@ -24,7 +24,7 @@
 // Headless: no document/window/localStorage/timers.
 
 import * as F from './combatRules.js';
-import { allocateInteger, resolveDamageComponents, groupedResistance } from '../model/combatRules.js';
+import { allocateInteger, resolveDamageComponents, groupedResistance, taggedBonusFloor } from '../model/combatRules.js';
 import { COMBAT_OPCODES, RUN_OPCODES, relicInRewardPool } from '../model/schemas.js';
 import { LEGACY_HAND_MAX } from '../model/statRows.js';
 import { evaluate, evaluateRaw, isFormula } from '../model/formulas.js';
@@ -85,6 +85,10 @@ export function computeAttackDamage(ctx, source, target, base, attackTags, carri
   // 'additive' sources pool (mult − 1) and apply once. Both lanes are
   // stack-invariant, so the ceiling is the closed-form product of DISTINCT
   // table mults — stacks can never raise it.
+  // THE BONUS ROUNDS UP (owner, 2026-10-12, #12): the tagged factor is kept
+  // apart and its bonus is ceil'd on the otherwise-final damage below, so a
+  // base-3 card still gains a point. Every other multiplier keeps its floor.
+  let tagged = 1;
   if (target && attackTags && attackTags.length) {
     let addPool = 0;
     for (const [id, inst] of Object.entries(target.statuses || {})) {
@@ -92,10 +96,10 @@ export function computeAttackDamage(ctx, source, target, base, attackTags, carri
       const def = ctx.registries.statuses.get(id);
       const tv = def && def.taggedVulnerability;
       if (!tv || !tv.tags.some((t) => attackTags.includes(t))) continue;
-      if (tv.stacking === 'multiplicative') dmg *= tv.mult;
+      if (tv.stacking === 'multiplicative') tagged *= tv.mult;
       else addPool += tv.mult - 1;
     }
-    if (addPool > 0) dmg *= 1 + addPool;
+    if (addPool > 0) tagged *= 1 + addPool;
   }
   if (target && school) {
     const resistance = target.damageResistanceBySchool && target.damageResistanceBySchool[school];
@@ -108,7 +112,7 @@ export function computeAttackDamage(ctx, source, target, base, attackTags, carri
       }
     }
   }
-  dmg = Math.floor(dmg);
+  dmg = taggedBonusFloor(dmg, tagged);
   dmg = dmg < 0 ? 0 : dmg;
   return matchups ? Matchups.prepareMatchupHit(ctx, source, target, carrier, dmg).amount : dmg;
 }

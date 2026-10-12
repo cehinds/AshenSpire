@@ -624,12 +624,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(last.amount, 10, 'untagged hit unaffected by Frost-Exposed');
     playFromHand(c, 'tStarHit');
     last = logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop();
-    eq(last.amount, 12, 'starstone hit ×1.25 (multiplicative row)');
-    // Composes with regular Vulnerable multiplicatively: 10 × 1.5 × 1.25 = 18.75 → 18.
+    eq(last.amount, 13, 'starstone hit ×1.25 (multiplicative row), bonus rounded up: 10 + ceil(2.5)');
+    // Composes with regular Vulnerable multiplicatively: 10 × 1.5 = 15, + ceil(15 × 0.25) = 19
+    // (the exposure bonus rounds up — owner, 2026-10-12).
     S.applyStatus(c, e1, 'vulnerable', 1);
     playFromHand(c, 'tStarHit');
     last = logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop();
-    eq(last.amount, 18, 'stacks WITH Vulnerable: floor(10 × 1.5 × 1.25)');
+    eq(last.amount, 19, 'stacks WITH Vulnerable: 15 + ceil(3.75)');
     // THE CEILING (known-bad probe answered): every vulnerability lane is
     // flat-per-status and stack-count-invariant, so max compose is the
     // closed-form product of DISTINCT table mults — stacks cannot raise it.
@@ -638,17 +639,17 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     if (c.player.energy === 0) dispatch(c, { type: 'endTurn' });
     playFromHand(c, 'tStarHit');
     last = logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop();
-    eq(last.amount, 18, '99 stacks of both: SAME 18 — the ceiling is the table, not the stacks');
+    eq(last.amount, 19, '99 stacks of both: SAME 19 — the ceiling is the table, not the stacks');
     // Additive lane: declared 'additive' pools (mult−1). tAddVuln 1.5-additive
     // + frostExposed 1.25-mult on the same tagged hit:
-    // 10 × 1.25 × (1 + 0.5) = 18.75 → 18.
+    // 10 + ceil(10 × (1.25 × 1.5 − 1)) = 10 + ceil(8.75) = 19.
     const a = makeCombat({ deck: ['tStarHit'], enemies: ['tGiant'] });
     const ae = getEntity(a, 'e1');
     S.applyStatus(a, ae, 'frostExposed', 1);
     S.applyStatus(a, ae, 'tAddVuln', 1);
     playFromHand(a, 'tStarHit');
     const al = logOf(a, 'damageDealt').filter((e) => e.targetId === 'e1').pop();
-    eq(al.amount, 18, 'additive lane pools once, multiplicative lane per source');
+    eq(al.amount, 19, 'additive lane pools once, multiplicative lane per source');
   });
 
   // These two falsifiers use SHIPPED cards whose tags exist only in the
@@ -663,9 +664,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(tagIdsFor('starstonePebble').includes('starstone'), 'CSV index names Starstone Pebble as starstone');
     S.applyStatus(c, e1, 'frostExposed', 1);
     const pv = previewCard(c, c.piles.hand[0].instanceId, 'e1');
-    eq(pv.values.find((v) => v.op === 'damage').value, 7, 'preview derives starstone: floor(6 × 1.25)');
+    eq(pv.values.find((v) => v.op === 'damage').value, 8, 'preview derives starstone: 6 + ceil(6 × 0.25)');
     playFromHand(c, 'starstonePebble');
-    eq(logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop().amount, 7, 'execution derives the same starstone hit');
+    eq(logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop().amount, 8, 'execution derives the same starstone hit');
   });
 
   test('7e3. Unraveled changes a real Blight hit through tagging.csv', () => {
@@ -678,9 +679,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(tagIdsFor('blightTouch').includes('blight'), 'CSV index names Blight Touch as blight');
     S.applyStatus(c, e1, 'insanityExposed', 1);
     const pv = previewCard(c, c.piles.hand[0].instanceId, 'e1');
-    eq(pv.values.find((v) => v.op === 'damage').value, 6, 'preview derives blight: floor(5 × 1.3)');
+    eq(pv.values.find((v) => v.op === 'damage').value, 7, 'preview derives blight: 5 + ceil(5 × 0.3)');
     playFromHand(c, 'blightTouch');
-    eq(logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop().amount, 6, 'execution derives the same blight hit');
+    eq(logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop().amount, 7, 'execution derives the same blight hit');
   });
 
   // ---- 7f. Known-bads through the REAL bundle (#61): each red names its row --

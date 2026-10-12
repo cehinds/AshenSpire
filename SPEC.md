@@ -958,7 +958,11 @@ the resist row, duration in its decay, gate in the proc row). Declared per row:
 `threshold, burstPercent (of target max HP), burstMin/burstMax, poiseDamage (per proc),
 stagger (direct), effects, resistance {status, tags}`. Schema + validator enforce every
 knob (`model/schemas.js`, `model/validate.js`); tag-scoped extra vulnerability composes
-by a declared `stacking` rule (closed enum: additive | multiplicative).
+by a declared `stacking` rule (closed enum: additive | multiplicative). **Its bonus rounds
+up** (owner, 2026-10-12): the hit's damage without the exposure floors as usual, and the
+exposure's share of it is added rounded up (`taggedBonusFloor`, `model/combatRules.js`), so a
+base-3 tagged card still gains a point; preview and hit share the one derivation. Every other
+multiplier, plain Vulnerable included, keeps its floor.
 
 **The numbers are deliberately NOT restated in this spec.** Every knob above is marked
 PROVISIONAL in its own row and is expected to move — Bleed's threshold was picked against the

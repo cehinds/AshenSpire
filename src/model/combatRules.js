@@ -124,9 +124,22 @@ export function allocateInteger(total, weights) {
   return result;
 }
 
-export function resolveDamageComponents(rules, { components, armor = 0, penetration = 0, resistances = {}, immunities = [], multiplier = 1, flatBonus = 0 }) {
+/**
+ * taggedBonusFloor(x, tagged) — a hit's integer damage when `x` is its
+ * pre-rounding damage without tag-scoped vulnerability and `tagged` the
+ * matched exposure factor (owner, 2026-10-12, #12): the plain part floors as
+ * every other multiplier does, the exposure bonus rounds UP, so a base-3
+ * starstone card still gains a point on a Frost-Exposed target. Never below
+ * floor(x × tagged), the old all-floor result. tagged ≤ 1 floors as before.
+ */
+export function taggedBonusFloor(x, tagged = 1) {
+  if (!(tagged > 1) || !(x > 0)) return Math.floor(x * tagged);
+  return Math.floor(x) + Math.ceil(x * (tagged - 1) - 1e-9);
+}
+
+export function resolveDamageComponents(rules, { components, armor = 0, penetration = 0, resistances = {}, immunities = [], multiplier = 1, flatBonus = 0, taggedBonus = 1 }) {
   if (!components.length) throw new Error('a direct hit needs damage components');
-  assertNumber(armor, 'armor'); assertNumber(penetration, 'penetration'); assertNumber(multiplier, 'multiplier');
+  assertNumber(armor, 'armor'); assertNumber(penetration, 'penetration'); assertNumber(multiplier, 'multiplier'); assertNumber(taggedBonus, 'tagged bonus');
   if (!Number.isFinite(flatBonus)) throw new Error('flat damage bonus must be finite');
   components.forEach(({ type, amount }) => {
     if (!rules.damageTypes[type]) throw new Error(`unknown damage type '${type}'`);
@@ -139,8 +152,9 @@ export function resolveDamageComponents(rules, { components, armor = 0, penetrat
     const weight = weightTotal > 0 ? component.amount / weightTotal : (index === 0 ? 1 : 0);
     const resistance = Math.min(rules.resistanceCap, resistances[component.type] || 0);
     const physical = rules.damageTypes[component.type].physical;
-    const amount = immunities.includes(component.type) ? 0 : Math.max(0, Math.floor(
+    const amount = immunities.includes(component.type) ? 0 : Math.max(0, taggedBonusFloor(
       Math.max(0, component.amount + flatBonus * weight) * multiplier * (physical ? 1 - reduction : 1) * (1 - resistance),
+      taggedBonus,
     ));
     return { type: component.type, amount };
   });
