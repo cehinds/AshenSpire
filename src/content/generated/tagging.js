@@ -4355,6 +4355,18 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
+    "objectId": "ruinousBlow",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "deathblow",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "card",
+    "scope": "",
     "objectId": "kickOff",
     "tagId": "delivery:melee"
   },
