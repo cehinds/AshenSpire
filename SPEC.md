@@ -1842,7 +1842,7 @@ by deriving the historical shipped defaults required by their version. Profile s
 only overrides, so changing a shipped default remains meaningful and Reset never writes a stale
 copy of that default.
 
-**Portable export.** Advanced Settings has one Export configuration action that serializes a
+**Portable export.** Advanced Settings has one Export configuration action, shown on debug pages only (`pageDebug()`, `src/ui/screens/settings.js`; owner, 2026-10-12), that serializes a
 versioned JSON document containing the schema/version marker, build/source information, explicit
 overrides and their resolved values. It never includes run saves, profile progress, unlocks,
 history, user file paths, or quarantine/archive data. Where the File System Access API is
