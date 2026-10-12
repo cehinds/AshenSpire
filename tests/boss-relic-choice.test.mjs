@@ -13,7 +13,7 @@ import { relicInRewardPool } from '../src/model/schemas.js';
 import { createRng } from '../src/engine/rng.js';
 import { rollRelicChoices, rollRelicReward } from '../src/engine/encounters.js';
 import { configuredRewardOffer, pendingRewardCheckpoint } from '../src/model/rewardSourcePolicy.js';
-import { resolveContinue, rewardClaimStatus, rewardPlan } from '../src/model/rewardplan.js';
+import { resolveContinue, rewardClaimStatus, rewardPlan, unownedRelicChoices } from '../src/model/rewardplan.js';
 import { createRunState, validateRunShape } from '../src/model/state.js';
 import { mountRewards } from '../src/ui/screens/reward.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
@@ -105,6 +105,28 @@ test('a boss relic choice row is a required pick, auto-collected one-of-offer li
   assert.ok(!manual.take.some((r) => r.kind === 'relic'), 'auto-collect OFF takes no relic');
   assert.ok(manual.leave.some((r) => r.kind === 'relic'), 'the unpicked choice is left');
   assert.equal(rewardClaimStatus(plan, { [row.key]: 'skipped' }).requiredChoice, null, 'a skipped choice no longer blocks');
+});
+
+test('auto-collect with an owned relic in the offer takes a or c, never the owned b, never nothing', () => {
+  const plan = rewardPlan({ relicChoices: ['relicA', 'relicB', 'relicC'] });
+  const owned = ['relicB'];
+  const narrowed = { ...plan, rows: unownedRelicChoices(plan.rows, owned) };
+  const seen = new Set();
+  for (let n = 0; n < 3; n++) {
+    const { take } = resolveContinue(narrowed, {}, 'auto', (count) => n % count);
+    const picked = take.filter((r) => r.kind === 'relic');
+    assert.equal(picked.length, 1, `pick ${n}: one relic taken`);
+    assert.ok(!owned.includes(picked[0].chosenRelicId), `pick ${n}: never the owned relic`);
+    seen.add(picked[0].chosenRelicId);
+  }
+  assert.deepEqual([...seen].sort(), ['relicA', 'relicC'], 'both unowned options are reachable');
+});
+
+test('a boss relic choice whose every id is owned is dropped, so nothing is taken from it', () => {
+  const plan = rewardPlan({ relicChoices: ['relicA', 'relicB'] });
+  const rows = unownedRelicChoices(plan.rows, ['relicA', 'relicB']);
+  assert.ok(!rows.some((r) => r.kind === 'relic'), 'no relic row remains');
+  assert.deepEqual(resolveContinue({ rows }, {}, 'auto', () => 0).take, [], 'auto-collect takes nothing');
 });
 
 test('a single boss relic (relicId) keeps the one-relic row shape', () => {
@@ -281,5 +303,41 @@ test('clicking a relic button moves the green trim from one face and button to a
     assert.equal(columns[2].querySelector('.equipment-poker-card').classList.contains('is-chosen'), true);
     assert.equal(columns[0].querySelector('button.reward-pick').classList.contains('is-chosen'), false);
     assert.equal(columns[2].querySelector('button.reward-pick').classList.contains('is-chosen'), true);
+  });
+});
+
+test('Continue with auto-collect ON never takes an owned relic from the boss choice', () => {
+  withKitDom((dom) => {
+    dom.document.documentElement ??= dom.document.body;
+    const app = dom.document.createElement('main');
+    dom.document.body.replaceChildren(app);
+    const run = createRunState({ seed: 0x10a5, classId: 'reaver', registries: REG });
+    run.relics = ['crownOfStitches'];  // the first option: the unseeded auto pick lands on it
+    const checkpoint = pendingRewardCheckpoint({ relicChoices: CHOICES }, { source: 'boss', after: 'advanceAct' });
+    mountRewards(app, {
+      registries: REG, run, onDone() {}, checkpoint, onPersist: () => true,
+      saves: { loadMeta: () => ({ settings: { levelUpRefillSeconds: 0, rewardCollect: 'auto' } }), saveMeta() {} },
+      rewards: { relicChoices: CHOICES },
+    });
+    app.querySelector('#reward-continue').click();
+    assert.equal(run.relics.filter((id) => id === 'crownOfStitches').length, 1, 'the owned relic is kept, not doubled');
+    assert.equal(run.relics.length, 2, 'exactly one unowned option was taken');
+    assert.ok(['wardenHorn', 'ashOfRemembrance'].includes(run.relics[1]), `took an unowned option: ${run.relics[1]}`);
+  });
+});
+
+test('the chooser disables an option the run already owns and leaves the others pickable', () => {
+  withKitDom((dom) => {
+    const run = createRunState({ seed: 0x10a5, classId: 'reaver', registries: REG });
+    run.relics = ['wardenHorn'];
+    const { app } = mountBossReward(dom, { relicChoices: CHOICES, run });
+    app.querySelector('.reward-kind[data-kind="relic"]').click();
+    const buttons = pickButtons(app);
+    const owned = buttons.find((el) => el.dataset.pickId === 'wardenHorn');
+    assert.equal(owned.hasAttribute('disabled'), true, 'the owned option is disabled');
+    assert.equal(owned.closest('.reward-choice-option').classList.contains('is-owned'), true, 'its column is marked owned');
+    owned.click();
+    assert.equal(app.querySelector('#reward-card-confirm').disabled, true, 'a click on the owned option selects nothing');
+    buttons.filter((el) => el !== owned).forEach((el) => assert.equal(el.hasAttribute('disabled'), false, `${el.dataset.pickId} stays pickable`));
   });
 });

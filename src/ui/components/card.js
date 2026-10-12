@@ -511,11 +511,13 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
  * same template the face fills, tags stripped), for labels beside a face. */
 export function cardPlainText(registries, ref) {
   const def = resolveCard(registries, ref);
-  const div = typeof document !== 'undefined' ? document.createElement('div') : null;
-  const html = fillTemplate(def, staticTokens(def), null);
-  if (!div) return String(html).replace(/<[^>]+>/g, '');
-  div.innerHTML = html;
-  return div.textContent.replace(/\s+/g, ' ').trim();
+  // Plain string work only: no DOM, so it runs the same headless and in a
+  // browser. Tags go first; &amp; is decoded last so "&amp;lt;" stays literal.
+  return String(fillTemplate(def, staticTokens(def), null))
+    .replace(/<[^>]+>/g, '')
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    .replace(/&amp;/g, '&')
+    .replace(/\s+/g, ' ').trim();
 }
 
 export function upgradePreviewHtml(registries, ref) {

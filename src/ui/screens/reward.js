@@ -62,7 +62,7 @@ import { isEngaged, focusFirst } from '../input.js';
 import { flaskIdentityHtml, flaskDetailLines } from '../components/flask.js';
 import { flaskSlotCap } from '../../model/gracerefill.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
-import { rewardPlan, rewardClaimStatus, resolveContinue, unseenIds, rewardNotes, CARD_CHOICE_KINDS, isRelicChoice, smithingStonesPaid, smithingStoneRowCopy } from '../../model/rewardplan.js';
+import { rewardPlan, rewardClaimStatus, resolveContinue, unownedRelicChoices, unseenIds, rewardNotes, CARD_CHOICE_KINDS, isRelicChoice, smithingStonesPaid, smithingStoneRowCopy } from '../../model/rewardplan.js';
 import { orderedXpRows, xpFillDurations } from '../../model/rewardXpPresentation.js';
 import { rewardProgress } from '../../model/rewardprogress.js';
 import { levelUpPlan, pendingLevelCount, applySkillAttribute } from '../../model/levelup.js';
@@ -947,7 +947,10 @@ export function mountRewards(app, {
       // closed set); the auto pick advances the same stream, so a seeded run
       // resolves the same card every replay.
       const pickFn = rng ? (n) => rng.int('cardRewards', 0, n - 1) : () => 0;
-      const { take: offered } = resolveContinue({ rows: plan.rows.filter(row => !isProgressionReward(row)) }, states, mode, pickFn);
+      // A boss relic choice can name a relic this screen already gave the run
+      // (a class milestone claimed first): auto-collect picks only what is left.
+      const rows = unownedRelicChoices(plan.rows.filter(row => !isProgressionReward(row)), run.relics);
+      const { take: offered } = resolveContinue({ rows }, states, mode, pickFn);
       // Level cards belong to a level claim, never to auto-collect on Continue.
       const toTake = offered.filter((row) => !isProgressionReward(row));
       for (const row of toTake) {
@@ -1311,26 +1314,33 @@ export function mountRewards(app, {
         tile.after(inspection);
       }
     }
-    if (isRelic) strip.classList.add('reward-choice-grid');
+    if (isRelic) {
+      strip.classList.add('reward-choice-grid');
+      strip.style.setProperty('--choice-count', String(ids.length));
+    }
     for (const id of isRelic ? ids : []) {
       const option = relicOption(id);
       // One column per relic: the card face on top at glance (no inspection door,
       // no lore), the text button under it as the accessible radio. Both select.
       // The face binds no door of its own, so a tap on it only selects.
-      const column = el('div', { class: 'reward-choice-option', dataset: { pickId: id } });
+      // A relic the run already holds (one gained earlier on this screen) is
+      // shown but cannot be picked: its face and button are disabled.
+      const owned = run.relics.includes(id);
+      const column = el('div', { class: `reward-choice-option${owned ? ' is-owned' : ''}`, dataset: { pickId: id } });
       if (option.definition) {
         const face = renderCollectibleCard(registries, option.definition, t('reward.kind.relic'), { interactive: false, inspection: false, level: 'glance' }).card;
         face.classList.add('reward-choice-face');
         face.dataset.pickId = id;
-        face.addEventListener('click', () => selectCard(id));
+        if (owned) face.classList.add('is-owned');
+        else face.addEventListener('click', () => selectCard(id));
         column.appendChild(face);
       }
-      const tile = el('button', { class: 'class-pick reward-node reward-pick reward-choice-button', type: 'button', role: 'radio',
+      const tile = el('button', { class: 'class-pick reward-node reward-pick reward-choice-button', type: 'button', role: 'radio', disabled: owned,
         'aria-checked': String(id === selectedCardId), dataset: { pickId: id } }, [
         el('div', { class: 'cp-body' }, [el('h3', { text: option.name }), el('p', { text: option.text })]),
       ]);
       tile.classList.toggle('is-chosen', id === selectedCardId);
-      tile.addEventListener('click', () => selectCard(id));
+      if (!owned) tile.addEventListener('click', () => selectCard(id));
       column.appendChild(tile);
       strip.appendChild(column);
     }
@@ -1395,8 +1405,10 @@ export function mountRewards(app, {
     }
     for (const choiceId of isNodeRow || isLevelChoice || isRankUp || isRelic || (isMilestone && row.rewardKind !== 'cards') ? [] : ids) {
       const cardId = (row.cardIds || row.options)[ids.indexOf(choiceId)];
-      // Card choices share the relic chooser's grid: one row of option columns.
+      // Card choices share the relic chooser's grid: one row of option columns,
+      // sized to the offer (kit.css reads --choice-count).
       strip.classList.add('reward-choice-grid');
+      strip.style.setProperty('--choice-count', String(ids.length));
       // This face only selects; collection belongs to Confirm. Inspection must
       // not consume the touch tap before selection enables that button.
       // THE DOOR OFFERS THE VERB THE PLAYER CAME FOR. Opening a card here used
@@ -1410,7 +1422,9 @@ export function mountRewards(app, {
       // skill bonus and passive Block it would be stamped with (SPEC §13.4o).
       const skillBonus = skillBonusFor(registries, run, { cardId });
       const passiveBlock = passiveBlockFor(registries, run, { cardId });
-      const face = renderCard(registries, { cardId, ...grade, ...(skillBonus > 0 ? { skillBonus } : {}), ...(passiveBlock > 0 ? { passiveBlock } : {}) }, {
+      // One ref for the face and its text button, so both show the same rules.
+      const faceRef = { cardId, ...grade, ...(skillBonus > 0 ? { skillBonus } : {}), ...(passiveBlock > 0 ? { passiveBlock } : {}) };
+      const face = renderCard(registries, faceRef, {
         owned: ownedCopies(run, cardId),
         actionOwnsTouch: true,
         surface: 'reward',
@@ -1440,9 +1454,10 @@ export function mountRewards(app, {
         face.appendChild(badge);
       }
       face.addEventListener('click', () => selectCard(choiceId));
-      // The text under the face: the card's name and the effect text its face
-      // already shows (the .ctext block, resolved by the card component).
-      const effect = face.querySelector('.ctext')?.textContent?.trim() || cardPlainText(registries, { cardId, ...grade });
+      // The text under the face: the card's name and its effect as plain text
+      // from the same template the face fills. The face's .ctext is drawn
+      // later, so it cannot be read here.
+      const effect = cardPlainText(registries, faceRef);
       const tile = el('button', { class: 'class-pick reward-node reward-pick reward-choice-button', type: 'button', role: 'radio',
         'aria-checked': String(choiceId === selectedCardId), dataset: { pickId: choiceId, cardId } }, [
         el('div', { class: 'cp-body' }, [el('h3', { text: registries.cards.get(cardId)?.name || cardId }), el('p', { text: effect })]),
