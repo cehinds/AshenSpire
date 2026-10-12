@@ -24,9 +24,15 @@ const EXPECTED = {
   bloodhuntersStrike: WEAPON_TYPED,
   guardCounter: WEAPON_TYPED,
   bloodTithe: { blade: 'slashing', dagger: 'piercing', blunt: 'slashing', bow: 'slashing', unarmed: 'slashing' },
+  // Mixed Blunt + Force (owner #23): the label is the heavier part.
   ruinousBlow: { blade: 'blunt', dagger: 'blunt', blunt: 'blunt', bow: 'blunt', unarmed: 'blunt' },
-  deathblow: { blade: 'blunt', dagger: 'blunt', blunt: 'blunt', bow: 'blunt', unarmed: 'blunt' },
+  deathblow: { blade: 'arcane', dagger: 'arcane', blunt: 'arcane', bow: 'arcane', unarmed: 'arcane' },
 };
+const MIXED = {
+  ruinousBlow: [{ type: 'blunt', weight: 60 }, { type: 'arcane', weight: 40 }],
+  deathblow: [{ type: 'blunt', weight: 40 }, { type: 'arcane', weight: 60 }],
+};
+const FIXED_TAGS = { ruinousBlow: ['damage:blunt', 'damage:arcane'], deathblow: ['damage:blunt', 'damage:arcane'] };
 
 function fight(cardId, weapon, version, extra = {}) {
   const player = { classId: 'reaver', maxHp: 200, hp: 200, maxMana: 50, mana: 50, energyMax: 10, drawPerTurn: 5,
@@ -38,10 +44,39 @@ function fight(cardId, weapon, version, extra = {}) {
   return { c, enemy };
 }
 
-test('the listed cards carry no fixed damage tag except Ruinous Blow and Deathblow (Blunt)', () => {
+test('only the mixed cards carry fixed damage tags', () => {
   for (const cardId of Object.keys(EXPECTED)) {
     const tags = regs.cards.get(cardId).tags.filter(tag => tag.startsWith('damage:'));
-    assert.deepEqual(tags, ['ruinousBlow', 'deathblow'].includes(cardId) ? ['damage:blunt'] : [], cardId);
+    assert.deepEqual(tags, FIXED_TAGS[cardId] || [], cardId);
+  }
+});
+
+for (const version of [1, 2]) test(`v${version}: Ruinous Blow is 60 Blunt / 40 Force and Deathblow 40 Blunt / 60 Force`, () => {
+  for (const [cardId, components] of Object.entries(MIXED)) for (const [label, weapon] of Object.entries(WEAPONS)) {
+    const { c } = fight(cardId, weapon, version);
+    const base = regs.cards.get(cardId);
+    const def = version === 2 ? applyCombatExpansionMartial(base) : base;
+    assert.deepEqual(def.attack.components, components, `v${version} ${cardId}`);
+    const carrier = tacticalCarrier(def, {}, c, c.player);
+    assert.deepEqual(carrier.combatProfile.damageComponents, components, `v${version} ${cardId} with ${label}`);
+  }
+});
+
+test('v2: a Force resistance blunts only the Force share of a mixed hit, in preview and live alike', () => {
+  const dealt = (cardId, resist) => {
+    const { c, enemy } = fight(cardId, 'straightSword', 2);
+    if (resist) enemy.damageResistPercent = { arcane: 50 };
+    const shown = previewCard(c, 'card1', enemy.id).values.filter((row, i) => row.op === 'damage' && !regs.cards.get(cardId).effects[i].if)
+      .reduce((sum, row) => sum + (row.perTarget?.[enemy.id] ?? row.value ?? 0), 0);
+    const live = dispatch(c, { type: 'playCard', cardInstanceId: 'card1', targetId: enemy.id }).events
+      .filter(event => event.type === 'damageDealt' && event.sourceId === 'player').reduce((sum, event) => sum + event.amount, 0);
+    assert.equal(live, shown, `${cardId} resist ${resist}`);
+    return live;
+  };
+  for (const [cardId, [, force]] of Object.entries(MIXED)) {
+    const full = dealt(cardId, false), resisted = dealt(cardId, true);
+    // About half the Force share is lost (each type rounds on its own), never the Blunt share.
+    assert.ok(Math.abs((full - resisted) - full * force.weight / 100 / 2) <= 2, `${cardId}: ${full} -> ${resisted}`);
   }
 });
 
@@ -71,7 +106,8 @@ for (const version of [1, 2]) {
         .filter(event => event.type === 'damageDealt' && event.sourceId === 'player');
       assert.equal(hits.reduce((sum, event) => sum + event.amount, 0), shown, `v${version} ${cardId} with ${label}`);
       // v2 names the type on the hit; v1 shows it through its matchup rider.
-      if (version === 2) for (const hit of hits) assert.equal(hit.damageType, EXPECTED[cardId][label], `v2 ${cardId} with ${label}`);
+      // The v2 hit event names Force by its matchup alias.
+      if (version === 2) for (const hit of hits) assert.equal(hit.damageType, { arcane: 'force' }[EXPECTED[cardId][label]] || EXPECTED[cardId][label], `v2 ${cardId} with ${label}`);
       else {
         const type = EXPECTED[cardId][label];
         assert.equal(!!enemy.statuses.bleed, type === 'slashing', `v1 ${cardId} with ${label}: Bleed rider`);
