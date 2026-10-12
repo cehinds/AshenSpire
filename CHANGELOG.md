@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-12
 
+- **Desktop combat looks like the phone** ([#1878](https://github.com/cehinds/AshenSpire/pull/1878), `0.7.1.1361`). On desktop the hand is taller and its cards are much larger. They sit in a tight row just under the Combat log / Reaction row, and the footer is compact. Enemies stand together on one ground line, and the castle and trees of the horizon show along the top of the battlefield. The Combat log row, intent badges, stance mark and footer words are larger. Phone, tablet and widescreen layouts are unchanged.
 - **Deck editor: (i) centred under the art, grey Basic/Cantrip badge, vertical grip** ([#1868](https://github.com/cehinds/AshenSpire/pull/1868), `0.7.1.1359`). The inspect (i) sits centred on the bottom edge of the card art, the rank badge sits higher and reads grey at rank 0 (Basic, Cantrip), and the phone grip is vertical again.
 - **Co-op: the blow that ends a fight reaches the combat log** ([#1872](https://github.com/cehinds/AshenSpire/pull/1872), `0.7.1.1357`). When your attack killed the last enemy in co-op, the combat log and the Full log missed that turn's card, damage and death entries before the reward screen closed them. They now appear.
 
