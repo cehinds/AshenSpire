@@ -22,10 +22,10 @@ function viewHelpers() {
   const b = html.indexOf(VIEW_END);
   if (a < 0 || b < a) throw new Error('view block markers missing in workbench.html');
   const src = html.slice(a, b + VIEW_END.length);
-  return vm.runInNewContext(src + '\n;({ containsText, underTag, rowPasses, TAG_STATUS, baseIndex, classifyRow, removedCount, changeMap })', {});
+  return vm.runInNewContext(src + '\n;({ containsText, underTag, rowPasses, TAG_STATUS, baseIndex, classifyRow, removedCount, changeMap, relatedKeys, childTags, incomingRelated })', {});
 }
 
-const { rowPasses, underTag, TAG_STATUS, changeMap, classifyRow, baseIndex, removedCount } = viewHelpers();
+const { rowPasses, underTag, TAG_STATUS, changeMap, classifyRow, baseIndex, removedCount, relatedKeys, childTags, incomingRelated } = viewHelpers();
 const NO_TAG_LOOKUP = () => null;
 
 // The real tags.csv as row objects, with a key lookup over both key and id, as findTag does.
@@ -191,4 +191,47 @@ test('the real tags.csv against a copy with one edited tag: exactly that row and
   assert.equal(removed, 0);
   assert.deepEqual([...map.keys()], [edited.indexOf(target)]);
   assert.deepEqual([...map.get(edited.indexOf(target)).cols], ['label']);
+});
+
+// Tag links: children are the direct children; incoming links are the tags whose related list names this one.
+test('children are the direct children only, and a tag is not its own child', () => {
+  const tags = [
+    mk({ id: 'p', key: 'p' }),
+    mk({ id: 'p.a', key: 'a', parent: 'p' }),
+    mk({ id: 'p.a.x', key: 'x', parent: 'p.a' }),
+    mk({ id: 'p.b', key: 'b', parent: 'p' }),
+  ];
+  const lookup = (k) => tags.find((r) => r.id === k || r.key === k) || null;
+  assert.deepEqual(childTags(tags, tags[0], lookup).map((r) => r.id), ['p.a', 'p.b']);
+  assert.deepEqual(childTags(tags, tags[2], lookup), []);
+});
+
+test('incoming related links name the tags whose related list includes this tag, by key', () => {
+  const tags = [
+    mk({ id: 'a', key: 'a', related: 'b c' }),
+    mk({ id: 'b', key: 'b' }),
+    mk({ id: 'c', key: 'c', related: 'b' }),
+    mk({ id: 'd', key: 'd', related: 'zz' }),
+  ];
+  const lookup = (k) => tags.find((r) => r.id === k || r.key === k) || null;
+  // the helper's arrays come from the vm realm, so compare their JSON
+  assert.equal(JSON.stringify(relatedKeys('  b   c ')), JSON.stringify(['b', 'c']));
+  assert.deepEqual(incomingRelated(tags, tags[1], lookup).map((r) => r.id), ['a', 'c']);
+  assert.deepEqual(incomingRelated(tags, tags[3], lookup), []);
+});
+
+test('the real tags.csv: every related key resolves, and each outgoing link is an incoming link on its target', () => {
+  const { objs, lookup } = realTags();
+  let links = 0;
+  for (const r of objs) {
+    for (const k of relatedKeys(r.related)) {
+      links++;
+      const target = lookup(k);
+      assert.ok(target, 'unknown related key ' + k + ' on ' + r.id);
+      assert.ok(incomingRelated(objs, target, lookup).includes(r), r.id + ' should appear among incoming links of ' + k);
+    }
+  }
+  assert.ok(links > 0, 'the file has related links');
+  const meta = lookup('meta.character');
+  assert.deepEqual(childTags(objs, meta, lookup).map((r) => r.id).sort(), objs.filter((r) => String(r.parent) === 'meta.character').map((r) => r.id).sort());
 });

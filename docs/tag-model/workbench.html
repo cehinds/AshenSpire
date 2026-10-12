@@ -95,12 +95,24 @@ dialog .row{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;margin-
 .empty{padding:28px;text-align:center;color:var(--muted);line-height:1.6}
 .legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.76rem;color:var(--muted)}
 .legend i{display:inline-block;width:14px;height:2px;vertical-align:middle;margin-right:4px}
-.filters{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px}
+.filters{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px}
 .fcol{display:flex;flex-direction:column;gap:2px;font-size:.72rem;color:var(--muted);min-width:0}
 .fcol input,.fcol select{width:100%;min-width:0;box-sizing:border-box;font-size:.8rem}
-.fcol.check{flex-direction:row;align-items:center;gap:6px;color:var(--fg)}
+.fcol.check{flex-direction:row;align-items:center;gap:6px;color:var(--fg);white-space:nowrap}
 .fbar{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .count{font:.76rem var(--mono);color:var(--muted)}
+/* tag links: parent and related values are buttons under their inputs; the side panel sits beside the grid */
+.reflinks{display:flex;flex-wrap:wrap;gap:4px;padding:0 6px 6px}
+button.reflink{font:500 .7rem var(--mono);padding:1px 7px;border-radius:999px;background:var(--sunk)}
+button.reflink.bad{color:var(--bad);border-color:var(--bad)}
+.split{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start}
+.split>.grid{flex:1 1 520px;min-width:0}
+.sidepanel{flex:0 1 280px;min-width:0;max-width:100%;max-height:68vh;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.sidepanel h3{font:600 .95rem var(--body);margin:0}
+.sidepanel h4{font:600 .8rem var(--body);margin:8px 0 2px;color:var(--muted)}
+.sidepanel .plinks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:.8rem}
+.sidepanel .plinks li{display:flex;flex-wrap:wrap;align-items:center;gap:4px;min-width:0;overflow-wrap:anywhere}
+tr.hi td{background:color-mix(in srgb,var(--teal) 18%,transparent)}
 /* changed view: a changed row is tinted with a marker on its action cell; a changed cell is tinted on its own */
 tr.chg td{background:color-mix(in srgb,var(--ember) 10%,transparent)}
 tr.chg-new td{background:color-mix(in srgb,var(--ok) 12%,transparent)}
@@ -174,7 +186,7 @@ const CORE = new Set(['tags','objects','values','formulas','ranks','relations','
 const loaded = new Set(); const pending = new Set();
 const PAGE = 150;
 
-const state = { data:{}, view:'tags', filter:{}, shown:{}, sheet:null, sheetRank:1, colf:{}, tagf:{}, fopen:{}, cmp:{}, changedOnly:{} }; /* colf: per-column text filters; tagf: tags status / subtree / emptyDesc; fopen: filter panel open; cmp: 'load' or 'save' base for the changed view; changedOnly: show only changed rows */
+const state = { data:{}, view:'tags', filter:{}, shown:{}, sheet:null, sheetRank:1, colf:{}, tagf:{}, fopen:{}, cmp:{}, changedOnly:{}, panel:null, hi:null }; /* colf: per-column text filters; tagf: tags status / subtree / emptyDesc; fopen: filter panel open; cmp: 'load' or 'save' base for the changed view; changedOnly: show only changed rows; panel: the tag whose links panel is open; hi: the row a link jumped to */
 for (const t of ORDER) { state.data[t] = {columns:[...TABLES[t].columns], rows:[]}; state.shown[t]=PAGE; }
 let db=null, canWrite=true, downloads=null, assetsCap=null, localMode=false;
 const dirty=new Set(), saving=new Set(), timers={}, editGen={}; /* editGen[t] counts the edits to table t; a save remembers the count it started with */
@@ -698,6 +710,10 @@ function rowPasses(t, row, f, columns, lookup){
   }
   return true;
 }
+/* tag links: the keys a related value names, the children of a tag, and the tags whose related list names it */
+function relatedKeys(v){ return String(v??'').split(/\s+/).filter(Boolean); }
+function childTags(tags, row, lookup){ return tags.filter(r=>r!==row && lookup(String(r.parent??'').trim())===row); }
+function incomingRelated(tags, row, lookup){ return tags.filter(r=>r!==row && relatedKeys(r.related).some(k=>lookup(k)===row)); }
 /* changed view: a row is matched to its base row by its key, or by its whole content when the table has no key */
 function rowSig(r,columns){ return columns.map(c=>String(r[c]??'')).join('\u0001'); }
 function baseKey(r,columns,key){ return key? String(r[key]??'') : rowSig(r,columns); }
@@ -794,7 +810,9 @@ function renderTable(p,t){
   if(t==='formulas'||t==='objects'||t==='tags'){ const lg=document.createElement('div'); lg.className='legend'; lg.innerHTML='<span><i style="background:var(--bad)"></i>unknown reference</span><span><i style="background:var(--warn)"></i>tag has no preview value</span>'; p.appendChild(lg); }
   if(state.fopen[t]||nActive) p.appendChild(filterPanel(t,()=>draw()));
   q.value=state.filter[t]||'';
-  const grid=document.createElement('div'); grid.className='grid'; p.appendChild(grid);
+  const grid=document.createElement('div'); grid.className='grid';
+  if(t==='tags'&&state.panel&&tbl.rows.includes(state.panel)){ const split=document.createElement('div'); split.className='split'; split.append(grid, sidePanel(state.panel)); p.appendChild(split); }
+  else p.appendChild(grid);
   /* the changed view compares with the loaded version or with the last save (TS snapshots, set by the storage block) */
   const baseOf=()=>TS(t)[state.cmp[t]==='save'? 'snapSave' : 'snapLoad'];
   let chg={map:new Map(), removed:0}, shownN=tbl.rows.length;
@@ -806,9 +824,9 @@ function renderTable(p,t){
     count.textContent=parts.join(' · ');
   };
   const recheck=()=>{ chg=changeMap(tbl.columns,def.key,tbl.rows,baseOf()); };
-  const markChanged=(tr,r)=>{ const k=classifyRow(tbl.columns,def.key,r,baseIndex(tbl.columns,def.key,baseOf())); tr.className=k? (k.kind==='new'?'chg-new':'chg') : ''; for(const td of tr.querySelectorAll('td[data-c]')) td.classList.toggle('chg', !!(k&&k.cols.has(td.dataset.c))); };
+  const markChanged=(tr,r)=>{ const k=classifyRow(tbl.columns,def.key,r,baseIndex(tbl.columns,def.key,baseOf())); tr.classList.remove('chg','chg-new'); if(k) tr.classList.add(k.kind==='new'? 'chg-new' : 'chg'); for(const td of tr.querySelectorAll('td[data-c]')) td.classList.toggle('chg', !!(k&&k.cols.has(td.dataset.c))); };
   const draw=()=>{
-    grid.textContent='';
+    grid.textContent=''; let scrollHere=null;
     const spec=filterSpec(t), lookup=findTag;
     recheck();
     const rows=tbl.rows.map((r,i)=>[r,i]).filter(([r,i])=>rowPasses(t,r,spec,tbl.columns,lookup) && (!state.changedOnly[t] || chg.map.has(i)));
@@ -823,10 +841,12 @@ function renderTable(p,t){
     const body=document.createElement('tbody');
     for(const [r,i] of rows.slice(0,state.shown[t])){
       const tr=document.createElement('tr'); const k=chg.map.get(i); if(k) tr.className=k.kind==='new'? 'chg-new' : 'chg';
+      if(state.hi&&state.hi.t===t&&state.hi.row===r){ tr.classList.add('hi'); if(state.hi.scroll){ state.hi.scroll=false; scrollHere=tr; } }
       const act=document.createElement('td'); act.className='act';
       const del=document.createElement('button'); del.className='x'; del.type='button'; del.title='Delete row'; del.setAttribute('aria-label','Delete row'); del.textContent='×';
       del.onclick=()=>{ tbl.rows.splice(i,1); markDirty(t); render(); }; if(!editable(t)) del.disabled=true;
       if(t==='assets'&&assetsCap&&canWrite){ const up=document.createElement('button'); up.className='x'; up.type='button'; up.title='Upload preview image'; up.textContent='⤒'; up.onclick=()=>uploadPreview(r); act.appendChild(up); }
+      if(t==='tags'){ const lk=document.createElement('button'); lk.className='x'; lk.type='button'; lk.title='Children and incoming links'; lk.setAttribute('aria-label','Show children and incoming links'); lk.setAttribute('aria-pressed',String(state.panel===r)); lk.textContent='⇄'; lk.onclick=()=>keepScroll(()=>{ state.panel= state.panel===r? null : r; render(); }); act.appendChild(lk); }
       if(t==='objects'){ const go=document.createElement('button'); go.className='x'; go.type='button'; go.title='Open sheet'; go.textContent='↗'; go.onclick=()=>{ state.sheet=String(r.id); state.view='sheet'; render(); }; act.appendChild(go); }
       act.appendChild(del); tr.appendChild(act);
       for(const c of tbl.columns){
@@ -834,16 +854,60 @@ function renderTable(p,t){
         const inp=document.createElement('input'); inp.value=r[c]??''; inp.setAttribute('aria-label',c); inp.readOnly=!editable(t);
         const issue=cellIssue(t,c,r[c]); if(issue){ td.classList.add('bad'); inp.title=issue; } else if(r[c]!=null&&String(r[c]).length>30) inp.title=String(r[c]);
         inp.addEventListener('change',()=>{ r[c]=coerce(inp.value); markDirty(t); const is=cellIssue(t,c,r[c]); td.classList.toggle('bad',!!is); inp.title=is||''; markChanged(tr,r); recheck(); summary(); if(t==='formulas') draw(); renderTabs(); });
-        td.appendChild(inp); tr.appendChild(td);
+        td.appendChild(inp); if(t==='tags'&&(c==='parent'||c==='related')){ const links=linkChips(r,c); if(links) td.appendChild(links); } tr.appendChild(td);
       }
       if(t==='formulas'){ const td=document.createElement('td'); td.className='out'; const e=evalExpr(r.expr,1,null,r.status); if('v' in e) td.textContent=fmt(e.v); else { td.textContent=e.err; td.classList.add(formulaCellClass(e)); } tr.appendChild(td); }
       body.appendChild(tr);
     }
     table.appendChild(body); grid.appendChild(table);
+    if(scrollHere) scrollHere.scrollIntoView({block:'center'});
     if(rows.length>state.shown[t]){ const m=document.createElement('div'); m.className='more'; m.appendChild(btn(`Show ${Math.min(PAGE,rows.length-state.shown[t])} more of ${rows.length-state.shown[t]}`,()=>{ state.shown[t]+=PAGE; draw(); })); grid.appendChild(m); }
   };
   let tmr; q.addEventListener('input',()=>{ clearTimeout(tmr); tmr=setTimeout(()=>{ state.filter[t]=q.value; state.shown[t]=PAGE; draw(); },150); });
   draw();
+}
+/* jumps to a row: clears the filters so it is in the grid, and marks it for a highlight and a scroll */
+function jumpTo(t,row){
+  const i=state.data[t].rows.indexOf(row); if(i<0) return;
+  state.filter[t]=''; state.colf[t]={}; state.tagf[t]={}; state.changedOnly[t]=false;
+  state.shown[t]=Math.max(state.shown[t], i+1);
+  state.view=t; state.hi={t, row, scroll:true}; render();
+}
+/* a tag link button for a parent or related key; a key with no tag is shown, disabled */
+function linkButton(key, target){
+  const b=btn(target? (target.key||target.id) : key, ()=>jumpTo('tags',target), 'reflink');
+  if(target) b.title=target.id+(target.label? ' · '+target.label : '')+' · jump to this row'; else { b.disabled=true; b.className+=' bad'; b.title='No tag with this key'; }
+  return b;
+}
+function linkChips(row, c){
+  const keys= c==='parent'? [String(row.parent??'').trim()].filter(Boolean) : relatedKeys(row.related);
+  if(!keys.length) return null;
+  const box=document.createElement('div'); box.className='reflinks';
+  for(const k of keys) box.appendChild(linkButton(k, findTag(k)));
+  return box;
+}
+/* the side panel for one tag: its children and the tags that link to it */
+function sidePanel(row){
+  const tags=state.data.tags.rows, box=document.createElement('aside'); box.className='sidepanel'; box.setAttribute('aria-label','Links for '+(row.key||row.id));
+  const h=document.createElement('h3'); h.textContent=row.label||row.key||row.id; box.appendChild(h);
+  const sub=document.createElement('p'); sub.className='mono'; sub.textContent=row.id; box.appendChild(sub);
+  const section=(title,list)=>{
+    const hh=document.createElement('h4'); hh.textContent=title+' ('+list.length+')'; box.appendChild(hh);
+    if(!list.length){ const p=document.createElement('p'); p.className='help'; p.textContent='None.'; box.appendChild(p); return; }
+    const ul=document.createElement('ul'); ul.className='plinks';
+    for(const r of list){ const li=document.createElement('li'); li.appendChild(linkButton(r.key||r.id, r)); if(r.label){ const s=document.createElement('span'); s.textContent=' '+r.label; li.appendChild(s); } ul.appendChild(li); }
+    box.appendChild(ul);
+  };
+  section('Children', childTags(tags,row,findTag));
+  section('Incoming related links', incomingRelated(tags,row,findTag));
+  box.appendChild(btn('Close',()=>keepScroll(()=>{ state.panel=null; render(); })));
+  return box;
+}
+/* re-renders with the grid's scroll position kept (the grid is rebuilt on every render) */
+function keepScroll(fn){
+  const g=document.querySelector('#panel .grid'), top=g? g.scrollTop : 0;
+  fn();
+  const g2=document.querySelector('#panel .grid'); if(g2) g2.scrollTop=top;
 }
 /* the active column and tag filters of a table (the search box is counted separately) */
 function activeFilters(t){
