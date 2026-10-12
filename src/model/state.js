@@ -138,7 +138,7 @@ export function createRunState({
   registries,
   combatExpansionVersion = 2,
   enemyKnowledgeVersion = 1,
-  reactionRulesVersion = combatExpansionVersion === 2 ? 1 : null,
+  reactionRulesVersion = combatExpansionVersion === 2 ? 2 : null,
   attributeMode = undefined,
   attributes: requestedAttributes = undefined,
   derivedStatOptions = {},

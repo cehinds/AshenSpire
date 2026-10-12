@@ -48,7 +48,7 @@ function newSeededRun(saves) {
   const run = createRunState({ seed: SEED, classId: 'reaver', registries, profileMeta: saves.loadMeta() });
   assert.equal(run.combatExpansionVersion, 2);
   assert.equal(run.enemyKnowledgeRules?.version, 1);
-  assert.equal(run.reactionRulesVersion, 1);
+  assert.equal(run.reactionRulesVersion, 2);
   openRunEnemyKnowledge(run, { receiptId: '60000000-0000-4000-8000-000000000001', bankable: true });
   run.seedString = seedToString(SEED);
   run.customization = { name: 'Forsaken', glyph: '⚔', tint: 'gold' };
