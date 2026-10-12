@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-12",
     "summary": "Spell range follows how a spell is delivered; new physical and magical marks in the deck editor",
     "detail": "A spell attack with no set range now reaches by its delivery: projectiles are Ranged, melee spells Melee, and the rest Reach (they were all Melee before, so projectile spells now fare worse against a Prone foe and can be stopped by a Decoy). Starblade Phalanx is a melee spell. The deck editor marks physical cards with a silver Smash sigil and spells with a blue flame, and a Ranged card like Ricochet reads just \"Ranged\".",
-    "build": "0.7.1.1360",
+    "build": "0.7.1.1363",
     "pullRequest": 1876,
     "url": "https://github.com/cehinds/AshenSpire/pull/1876"
+  },
+  {
+    "id": "pr-1879",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Rest sites: grounded art, a clearer order, and a way back in",
+    "detail": "The traveler and campfire now sit on the shrine floor instead of floating, on desktop and phone. The choices read Rest, Level up, Upgrade, Flask, then the rest. After leaving a rest site, its node stays clickable on the map until you pick a new one, so you can go back for something you forgot; what you already took stays taken.",
+    "build": "0.7.1.1361",
+    "pullRequest": 1879,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1879"
   },
   {
     "id": "pr-1868",
