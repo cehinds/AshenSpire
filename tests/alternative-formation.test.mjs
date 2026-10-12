@@ -18,12 +18,18 @@ test('the perspective grid is one sheared grid: equal parallelograms on diagonal
     assert.equal(new Set(formation.cells.map(c => Math.round(c.box.width * 1e6))).size, 1, 'every cell has one width');
     const skew = formation.cells[0].box.skew;
     assert(skew > 0, 'the grid leans');
+    const backSteps = [];
     for (const lane of [0, 1, 2]) {
-      // Every anchor of a lane lies on one diagonal line of slope -skew.
+      // Every anchor of a lane lies on one diagonal line of slope -skew; the
+      // enemy back rank steps right of that line by one shared amount.
       const column = formation.cells.filter(c => c.lane === lane);
-      const intercepts = column.map(c => c.x + skew * c.ground);
+      const intercepts = column.filter(c => !(c.side === 'enemy' && c.rank === 0)).map(c => c.x + skew * c.ground);
       assert(Math.max(...intercepts) - Math.min(...intercepts) < 1e-6, 'a lane is one straight diagonal');
+      const back = column.find(c => c.side === 'enemy' && c.rank === 0);
+      backSteps.push(back.x + skew * back.ground - intercepts[0]);
     }
+    assert(backSteps[0] > 0, 'the back rank steps right of its lane line');
+    assert(Math.max(...backSteps) - Math.min(...backSteps) < 1e-6, 'every back-rank cell steps right by the same amount');
     const back = enemies.filter(c => c.rank === 0), front = enemies.filter(c => c.rank === 1);
     assert(Math.max(...back.map(c => c.ground)) < Math.min(...front.map(c => c.ground)), 'back rank sits behind the front');
     assert(Math.max(...front.map(c => c.box.top + c.box.height)) <= Math.min(...players.map(c => c.box.top)) + 1e-6,

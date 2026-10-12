@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-12",
     "summary": "The design spec matches the game again",
     "detail": "Development-process change only, nothing in the game changes. The specification document was checked section by section against the game's code, and the audit is kept in docs/spec-audit/SPEC-AUDIT.md. The spec now describes what the game does: Actions and Stamina are one resource, the defaults are the ones the game ships, and rules that were never built are gone. The few points that need a design decision are listed in the audit.",
-    "build": "0.7.1.1403",
+    "build": "0.7.1.1407",
     "pullRequest": 1863,
     "url": "https://github.com/cehinds/AshenSpire/pull/1863"
+  },
+  {
+    "id": "pr-1885",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "On desktop, the Combat log and Reaction sit in the bottom corners",
+    "detail": "The Combat log button now sits in the bottom-left corner and the Reaction toggle in the bottom-right, so the strip above your cards is gone and the hand sits lower on the screen with more room for the battlefield. Phone and tablet are unchanged.",
+    "build": "0.7.1.1406",
+    "pullRequest": 1885,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1885"
+  },
+  {
+    "id": "pr-1884",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Each fighter's readout sits above or below it, and the battlefield is narrower on wide screens",
+    "detail": "A front-row enemy's health and intent now hang just below its feet instead of drifting off to one side, so every readout stays with its own fighter. On wide screens the fighters stand closer to the middle, and the enemies' back row steps a little to the right so it stands clear of the front row. Switching back to the Classic look mid-fight keeps you in a row Classic has.",
+    "build": "0.7.1.1404",
+    "pullRequest": 1884,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1884"
   },
   {
     "id": "pr-1876",

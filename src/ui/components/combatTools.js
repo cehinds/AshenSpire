@@ -58,6 +58,9 @@ export function closeCombatFullLog(state) {
   door?.close();
 }
 
+// Gap between a corner tool and the combat screen's edge, in CSS px.
+const CORNER_INSET = 16;
+
 export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
   const root = markUiComponent(el('aside', { class: 'combat-tools', 'data-combat-read-only': '' }), UI.combatTools);
   const logButton = button({ label: t('combat.log.title'), attrs: { 'data-combat-tool': 'log', 'aria-expanded': 'false', 'aria-controls': 'combat-log' } });
@@ -176,14 +179,26 @@ export function mountCombatTools(combatEl, { state, onToggle, onViewChange }) {
     // the field but never leaves the combat screen, never covers a control
     // above it, and never drops over the cards below its dock (dy > 0 is
     // ignored). Its height is read only for a raise: at 0 no layout is forced.
+    // Owner (2026-10-12), desktop only: the log sits in the screen's left
+    // corner and the reaction switch in its right, level with the card
+    // bottoms, so the strip above the cards stays free.
+    const corners = globalThis.document?.documentElement?.dataset.formFactor === 'desktop' && handBox;
     const dockTop = handBox?.top || 0;
-    const top = dy < 0 ? toolsRowTop({ dockTop, dy: dy * zoom, screenTop: combatBox.top,
-      row: { left, width, height: root.getBoundingClientRect().height }, obstacles: toolsObstacles(combatEl, zoom) }) : dockTop;
+    const top = corners ? handBox.bottom - root.getBoundingClientRect().height - CORNER_INSET * zoom
+      : dy < 0 ? toolsRowTop({ dockTop, dy: dy * zoom, screenTop: combatBox.top,
+        row: { left, width, height: root.getBoundingClientRect().height }, obstacles: toolsObstacles(combatEl, zoom) }) : dockTop;
+    root.dataset.toolsPlacement = corners ? 'corners' : 'row';
     const localDock = anchorLocalBox(combatEl, { left,
       top, width: 0, height: 0 }, { zoom });
     root.style.top = `${localDock.top}px`;
     root.style.left = `${localDock.left}px`;
     root.style.right = 'auto';
+    if (corners) {
+      // The corners hug the combat screen's own edges, in its local px.
+      root.style.left = `${CORNER_INSET}px`;
+      root.style.right = `${CORNER_INSET}px`;
+      root.style.width = 'auto';
+    }
     const height = drag?.active ? drag.height : snapHeights()[state.size];
     const localPanel = anchorLocalBox(VIEWPORT_ORIGIN, { left: 0, top: 0, width: 0, height }, { zoom });
     panel.style.height = `${localPanel.height}px`;
