@@ -112,8 +112,9 @@ export const CARD_CHOICE_KINDS = Object.freeze(['card', 'levelCard', 'skillDraft
 
 /**
  * A boss victory's relic choice (SPEC §6): a relic row carrying `relicIds`
- * is one required pick among them. It is never auto-collected, and its pick
- * is the row's `chosenRelicId`. A lone `relicId` row is not a choice.
+ * is one pick among them, held as the row's `chosenRelicId`. Auto-collect on
+ * Continue picks one at random from the unowned ids; with it off, it is left behind.
+ * A lone `relicId` row is not a choice.
  */
 export const isRelicChoice = (row) => row.kind === 'relic' && Array.isArray(row.relicIds);
 
