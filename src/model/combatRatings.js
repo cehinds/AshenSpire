@@ -589,6 +589,34 @@ export function damageTypeMagicShare(config, type) {
   return Number.isFinite(fallback) ? fallback : null;
 }
 
+const DAMAGE_TYPE_ALIASES = { pierce: 'piercing', slash: 'slashing', cold: 'frost', force: 'arcane', holy: 'sacred', necrotic: 'decay' };
+export function canonicalDamageType(type) {
+  return DAMAGE_TYPE_ALIASES[type] || type || null;
+}
+
+/**
+ * magicShareOf(profile, config) → the share of a hit that is magic (Barrier,
+ * then Ward) rather than physical (Block). A carrier's own magicShare wins. A
+ * hybrid damage type (strictly between 0 and 1: arcane, or a tuned row) splits
+ * any camp. Otherwise the camp decides: a spell is all magic, a strike all
+ * physical. The engine and the card face both read this.
+ */
+export function magicShareOf(profile, config = null) {
+  if (Number.isFinite(profile?.magicShare)) return Math.min(1, Math.max(0, profile.magicShare));
+  const hybrid = damageTypeMagicShare(config, canonicalDamageType(profile?.damageType));
+  if (hybrid !== null && hybrid > 0 && hybrid < 1) return hybrid;
+  return profile?.camp === 'spell' ? 1 : 0;
+}
+
+/** splitDamageTypesOf(profile) → the magic and physical damage types of a split hit. */
+export function splitDamageTypesOf(profile) {
+  const type = canonicalDamageType(profile?.damageType);
+  return {
+    magic: isMagicDamageType(type) ? type : 'arcane',
+    physical: profile?.physicalDamageType || (isPhysicalDamageType(type) ? type : 'blunt'),
+  };
+}
+
 export function ratingDamageMultiplier(ctx, target, magical) {
   if (!ctx.ratingsRules || !target?.ratings) return 1;
   const r = ctx.ratingsRules.resistance;

@@ -1,4 +1,5 @@
 // Damage split (magic share): the data that says how much of a hit is magic
+import { combatCardSummary } from '../src/model/playingCard.js';
 // (Barrier and Ward) and how much is physical (Block), and the physical type
 // of every weapon. The engine rules are tested in combat-damage-split.test.mjs.
 import test from 'node:test';
@@ -73,4 +74,20 @@ test('every weapon, shield and staff names its physical damage type, as authored
   const armaments = contentBundle.equipment.armaments;
   assert.equal(armaments.length, Object.keys(WEAPON_PHYSICAL_TYPE).length);
   for (const piece of armaments) assert.equal(piece.physicalDamageType, WEAPON_PHYSICAL_TYPE[piece.id], piece.id);
+});
+
+test('a split strike reads "5 damage (3 blunt, 2 arcane)" and a split defend "Gain 3 Block and 2 Ward" on the card', () => {
+  const scepterStrike = { id: 'scepterStrike', name: 'Scepter Strike', type: 'attack', cost: 1,
+    tags: ['camp:spell', 'maneuver:casting', 'damage:arcane'], magicShare: 0.4, physicalDamageType: 'blunt',
+    combatProfile: { camp: 'spell', maneuver: 'casting', damageType: 'arcane', school: 'force' },
+    effects: [{ op: 'damage', target: 'enemy', amount: 5 }] };
+  const strike = combatCardSummary(scepterStrike);
+  assert.match(strike, /Deal 5 damage \(3 blunt, 2 arcane\)/);
+  const scepterGuard = { id: 'scepterGuard', name: 'Ritual Ward', type: 'skill', cost: 1,
+    tags: ['camp:spell', 'maneuver:defend'], magicShare: 0.4,
+    combatProfile: { camp: 'spell', maneuver: 'defend', damageType: 'arcane' },
+    effects: [{ op: 'block', target: 'self', amount: 5 }] };
+  assert.match(combatCardSummary(scepterGuard), /Gain 3 Block and 2 Ward/);
+  const whole = { ...scepterStrike, magicShare: undefined, combatProfile: { camp: 'spell', damageType: 'fire' }, tags: ['camp:spell', 'damage:fire'] };
+  assert.match(combatCardSummary(whole), /Deal 5 Fire damage/, 'a whole-magic card keeps its plain line');
 });

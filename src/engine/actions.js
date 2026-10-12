@@ -40,7 +40,7 @@ import { commitSmithing, smithingPlan } from '../model/smithing.js';
 import * as Properties from './properties.js';
 import * as Ratings from './combatRatings.js';
 import { isMagicalAttack, ratingDamageMultiplier, attackImpact, schoolResistanceMultiplier, persistentWardMaximum, persistentPoiseMaximum,
-  damageTypeMagicShare, isMagicDamageType, isPhysicalDamageType } from '../model/combatRatings.js';
+  canonicalDamageType, magicShareOf, splitDamageTypesOf } from '../model/combatRatings.js';
 import { swapRunClass } from '../model/classSwap.js';
 import { applyGraceRefill } from './encounters.js';
 import { orderedReturn } from '../model/deckRules.js';
@@ -292,27 +292,9 @@ export function restoreExpandedWard(ctx, entity, nominal, options = {}) {
 // (strictly between 0 and 1: arcane, or a tuned row) splits any camp. Otherwise
 // the camp decides, so a spell is all magic and a strike all physical whatever
 // their tags say; the shipped contacts keep the route they always had.
-const DAMAGE_TYPE_ALIASES = { pierce: 'piercing', slash: 'slashing', cold: 'frost', force: 'arcane', holy: 'sacred', necrotic: 'decay' };
-export function canonicalDamageType(type) {
-  return DAMAGE_TYPE_ALIASES[type] || type || null;
-}
-
+// The routing rule lives in model/combatRatings.js (magicShareOf) so the card face reads the same split.
 export function contactMagicShare(ctx, profile) {
-  if (Number.isFinite(profile?.magicShare)) return Math.min(1, Math.max(0, profile.magicShare));
-  const hybrid = damageTypeMagicShare(ctx.ratingsRules, canonicalDamageType(profile?.damageType));
-  if (hybrid !== null && hybrid > 0 && hybrid < 1) return hybrid;
-  return profile?.camp === 'spell' ? 1 : 0;
-}
-
-// A split hit types each part on its own: the magic part by its damage type (a
-// physical tag gives way to arcane), the physical part by the weapon that struck
-// it (a magic tag gives way to blunt).
-function splitDamageTypes(profile) {
-  const type = canonicalDamageType(profile.damageType);
-  return {
-    magic: isMagicDamageType(type) ? type : 'arcane',
-    physical: profile.physicalDamageType || (isPhysicalDamageType(type) ? type : 'blunt'),
-  };
+  return magicShareOf(profile, ctx.ratingsRules);
 }
 
 export function prepareExpandedDefense(ctx, target, receipt, carrier) {
@@ -323,7 +305,7 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
     const split = share > 0 && share < 1;
     const magic = share >= 1 ? amount : split ? Math.floor(amount * share + 1e-9) : 0;
     const legacy = canonicalDamageType(profile.damageType) || 'blunt';
-    return { amount, split, magic, physical: amount - magic, types: split ? splitDamageTypes(profile) : { magic: legacy, physical: legacy } };
+    return { amount, split, magic, physical: amount - magic, types: split ? splitDamageTypesOf(profile) : { magic: legacy, physical: legacy } };
   });
   // Typed defence, once per (camp, type) group of parts.
   const parts = [];
