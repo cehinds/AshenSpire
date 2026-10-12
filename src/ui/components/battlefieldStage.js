@@ -15,7 +15,7 @@ import { fitSceneBackdrop } from './sceneBackdrop.js';
 import { battlefieldBackdropConfig } from '../models/SceneLayerModel.js';
 import { presentationConfig } from '../../model/advancedConfig.js';
 import { alternativeCombatComposition, combatComposition as classicCombatComposition, combatSceneryGround, stableHandAnchor, combatArtworkKey, stableCombatArtwork } from '../models/CombatCompositionModel.js';
-import { alternativeFormation, fitAlternativeSprites } from '../models/AlternativeFormationModel.js';
+import { alternativeFormation, perspectiveCellContains, fitAlternativeSprites } from '../models/AlternativeFormationModel.js';
 import { playerDetailsPlacement } from '../models/PlayerDetailsPlacementModel.js';
 import { hudGeometry, offsetPlacement, offsetTargetPlate, targetPlateBox } from '../models/HudLayoutOffsetModel.js';
 import { restingHandEnvelope, handGeometryKey } from '../models/HandLayout.js';
@@ -436,8 +436,18 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
           left: cell.x - geometry.width / 2, top: cell.ground,
           width: geometry.width, height: geometry.height,
         }, { zoom: pageZoom });
-        if (cell.box) tile.style.setProperty('--foot-y', `${(cell.ground - cell.box.top) / cell.box.height * 100}%`);
-        else tile.style.removeProperty('--foot-y');
+        if (cell.box) {
+          tile.style.setProperty('--foot-y', `${(cell.ground - cell.box.top) / cell.box.height * 100}%`);
+          // Shear the rectangle about its centre into the cell's parallelogram;
+          // the shadow is sheared back so it stays a level ellipse.
+          const shear = Math.atan(cell.box.skew || 0);
+          tile.style.transform = `skewX(${-shear}rad)`;
+          tile.style.setProperty('--cell-unskew', `${shear}rad`);
+        } else {
+          tile.style.removeProperty('--foot-y');
+          tile.style.removeProperty('transform');
+          tile.style.removeProperty('--cell-unskew');
+        }
         tile.style.left = `${localTile.left}px`;
         tile.style.top = `${localTile.top}px`;
         tile.style.width = `${localTile.width}px`;
@@ -1051,14 +1061,15 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
 const gridTargetingFields = new WeakSet();
 function enemyFrameAtCell(field, x, y) {
   const grid = field.querySelector('.formation-grid[data-perspective="true"]');
-  if (!grid) return null;
-  for (const tile of grid.querySelectorAll('.formation-grid-cell[data-side="enemy"][data-occupied="true"]:not([hidden])')) {
-    const rect = tile.getBoundingClientRect();
-    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) continue;
-    const frame = field.querySelector(`.combatant.enemy[data-formation-cell="${CSS.escape(tile.dataset.cell)}"]`);
-    return frame && !frame.inert && !frame.classList.contains('dead') ? frame : null;
-  }
-  return null;
+  const plan = field.formationPlan?.plan;
+  if (!grid || !plan) return null;
+  const rect = field.getBoundingClientRect();
+  const occupied = new Set(plan.slots.filter(slot => slot.side === 'enemy').map(slot => slot.cell));
+  const cell = plan.cells.find(cell => cell.box && occupied.has(cell.cell)
+    && perspectiveCellContains(cell.box, x - rect.left, y - rect.top));
+  if (!cell) return null;
+  const frame = field.querySelector(`.combatant.enemy[data-formation-cell="${CSS.escape(cell.cell)}"]`);
+  return frame && !frame.inert && !frame.classList.contains('dead') ? frame : null;
 }
 function wireGridTargeting(field) {
   if (gridTargetingFields.has(field)) return;

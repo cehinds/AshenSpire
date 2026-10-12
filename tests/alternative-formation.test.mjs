@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { alternativeFormation, fitAlternativeSprites, perspectiveLanePattern } from '../src/ui/models/AlternativeFormationModel.js';
+import { alternativeFormation, fitAlternativeSprites, perspectiveCellContains, perspectiveLanePattern } from '../src/ui/models/AlternativeFormationModel.js';
 import { combatFormation } from '../src/ui/models/CombatFormationModel.js';
 
 const plan = (count, players = 1) => combatFormation({ width: 1000, height: 500,
@@ -8,27 +8,44 @@ const plan = (count, players = 1) => combatFormation({ width: 1000, height: 500,
   friends: Array.from({ length: players }, (_, i) => `p${i}`),
   enemies: Array.from({ length: count }, (_, i) => `e${i}`) });
 
-test('the perspective grid is uniform: every rank shares the same lanes', () => {
+test('the perspective grid is one sheared grid: equal parallelograms on diagonal lanes', () => {
   for (const [width, height, narrow] of [[1600, 620, false], [390, 420, true], [844, 220, false]]) {
     const formation = alternativeFormation(plan(6), width, height, narrow);
     const enemies = formation.cells.filter(c => c.side === 'enemy');
     const players = formation.cells.filter(c => c.side === 'player');
     assert.equal(enemies.length, 6);
     assert.equal(players.length, 3, 'one player rank of three lanes');
+    assert.equal(new Set(formation.cells.map(c => Math.round(c.box.width * 1e6))).size, 1, 'every cell has one width');
+    const skew = formation.cells[0].box.skew;
+    assert(skew > 0, 'the grid leans');
     for (const lane of [0, 1, 2]) {
+      // Every anchor of a lane lies on one diagonal line of slope -skew.
       const column = formation.cells.filter(c => c.lane === lane);
-      assert.equal(new Set(column.map(c => Math.round(c.x * 1e6))).size, 1, 'a lane has one x in every rank');
-      assert.equal(new Set(column.map(c => Math.round(c.box.width * 1e6))).size, 1);
+      const intercepts = column.map(c => c.x + skew * c.ground);
+      assert(Math.max(...intercepts) - Math.min(...intercepts) < 1e-6, 'a lane is one straight diagonal');
     }
     const back = enemies.filter(c => c.rank === 0), front = enemies.filter(c => c.rank === 1);
     assert(Math.max(...back.map(c => c.ground)) < Math.min(...front.map(c => c.ground)), 'back rank sits behind the front');
-    assert(Math.max(...front.map(c => c.ground)) < Math.min(...players.map(c => c.ground)), 'the party stands nearest');
+    assert(Math.max(...front.map(c => c.box.top + c.box.height)) <= Math.min(...players.map(c => c.box.top)) + 1e-6,
+      'the party rank does not overlap the enemy ranks');
     for (const cell of formation.cells) {
       assert(cell.ground > cell.box.top && cell.ground < cell.box.top + cell.box.height, 'the foot anchor is inside its cell');
-      assert(Math.abs(cell.x - (cell.box.left + cell.box.width / 2)) < 1e-9);
+      assert(perspectiveCellContains(cell.box, cell.x, cell.ground), 'the foot anchor is inside its parallelogram');
       assert(cell.box.top + cell.box.height <= height + 1e-6);
+      for (const y of [cell.box.top, cell.box.top + cell.box.height]) {
+        const centre = cell.box.left + cell.box.width / 2 + skew * (cell.box.top + cell.box.height / 2 - y);
+        assert(centre - cell.box.width / 2 >= -1e-6 && centre + cell.box.width / 2 <= width + 1e-6, 'the sheared cell stays on the field');
+      }
     }
   }
+});
+
+test('a press hits only the parallelogram it lands in', () => {
+  const box = { left: 100, top: 100, width: 100, height: 50, skew: .5 };
+  assert(perspectiveCellContains(box, 150, 125));
+  assert(perspectiveCellContains(box, 160, 101), 'the top edge leans right');
+  assert(!perspectiveCellContains(box, 105, 101), 'the bounding box corner outside the parallelogram misses');
+  assert(!perspectiveCellContains(box, 150, 99));
 });
 
 test('enemies fill the back rank first, spread across the lanes', () => {
