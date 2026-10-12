@@ -1410,7 +1410,9 @@ export function mountRewards(app, {
       // skill bonus and passive Block it would be stamped with (SPEC §13.4o).
       const skillBonus = skillBonusFor(registries, run, { cardId });
       const passiveBlock = passiveBlockFor(registries, run, { cardId });
-      const face = renderCard(registries, { cardId, ...grade, ...(skillBonus > 0 ? { skillBonus } : {}), ...(passiveBlock > 0 ? { passiveBlock } : {}) }, {
+      // One ref for the face and its text button, so both show the same rules.
+      const faceRef = { cardId, ...grade, ...(skillBonus > 0 ? { skillBonus } : {}), ...(passiveBlock > 0 ? { passiveBlock } : {}) };
+      const face = renderCard(registries, faceRef, {
         owned: ownedCopies(run, cardId),
         actionOwnsTouch: true,
         surface: 'reward',
@@ -1440,9 +1442,10 @@ export function mountRewards(app, {
         face.appendChild(badge);
       }
       face.addEventListener('click', () => selectCard(choiceId));
-      // The text under the face: the card's name and the effect text its face
-      // already shows (the .ctext block, resolved by the card component).
-      const effect = face.querySelector('.ctext')?.textContent?.trim() || cardPlainText(registries, { cardId, ...grade });
+      // The text under the face: the card's name and its effect as plain text
+      // from the same template the face fills. The face's .ctext is drawn
+      // later, so it cannot be read here.
+      const effect = cardPlainText(registries, faceRef);
       const tile = el('button', { class: 'class-pick reward-node reward-pick reward-choice-button', type: 'button', role: 'radio',
         'aria-checked': String(choiceId === selectedCardId), dataset: { pickId: choiceId, cardId } }, [
         el('div', { class: 'cp-body' }, [el('h3', { text: registries.cards.get(cardId)?.name || cardId }), el('p', { text: effect })]),
