@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1936",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Dev previews publish again when a pull request merges during the publish",
+    "detail": "Nothing in the game changes. The dev site's self-check now rebuilds the stamped build its run was started for, instead of whatever just landed on dev.",
+    "build": "0.7.1.1465",
+    "pullRequest": 1936,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1936"
+  },
+  {
     "id": "pr-1921",
     "date": "2026-10-13",
     "group": "2026-10-13",
