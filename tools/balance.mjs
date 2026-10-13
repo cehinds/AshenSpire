@@ -38,8 +38,11 @@ const round1 = (n) => Math.round(n * 10) / 10;
 const avgHp = (def) => (def.hp[0] + def.hp[1]) / 2;
 
 // Weighted intent DPS over base-phase (non-locked) moves; also self-heal/turn.
+// Reaction moves are never rolled as an intent (engine: weightedMovePick), and
+// carry no weight, so they are excluded here too; left in, one NaN weight made
+// every row that held the enemy NaN.
 function enemyStats(def) {
-  const moves = Object.values(def.moves).filter((m) => !m.locked);
+  const moves = Object.values(def.moves).filter((m) => !m.reaction && !m.locked);
   const totalW = moves.reduce((a, m) => a + m.weight, 0) || 1;
   let dps = 0;
   let heal = 0;

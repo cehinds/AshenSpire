@@ -3,6 +3,126 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1935",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "The art pack now includes the ornate feat medallions",
+    "detail": "Nothing on screen changes yet. The game's art pack moves to its next release, which adds the gilded medallion layers the character-creation Feats step will use.",
+    "build": "0.7.1.1469",
+    "pullRequest": 1935,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1935"
+  },
+  {
+    "id": "pr-1946",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Changelog entries stay in build order",
+    "detail": "Nothing changes in the game. The balance-report entry moved to the day it shipped, so the build stamp can number new builds again.",
+    "build": "0.7.1.1467",
+    "pullRequest": 1946,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1946"
+  },
+  {
+    "id": "pr-1940",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Old notes, screenshots and a retired prompt tool cleared out of the project",
+    "detail": "Development housekeeping only, nothing in the game changes. Archived design notes, old PR screenshots, the finished combat prototype's output, two outdated plans and the unused prompt library leave the repository.",
+    "build": "0.7.1.1467",
+    "pullRequest": 1940,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1940"
+  },
+  {
+    "id": "pr-1943",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "The Workbench opens from a link on the project site",
+    "detail": "Development-process change only, nothing in the game changes. The Workbench is now published at https://cehinds.github.io/AshenSpire/workbench/ with every studio, the game preview running from source, and the art. It shows a snapshot of dev; edits stay in your browser, and the banner at the top downloads or discards them. Saving to the project, builds and live reload still need the Workbench on your computer.",
+    "build": "0.7.1.1467",
+    "pullRequest": 1943,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1943"
+  },
+  {
+    "id": "pr-1933",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Builds started from forked pull requests no longer receive the art repository's access key",
+    "detail": "Development-process change only, nothing in the game changes. A build workflow triggered by a fork's preview run now fetches the art without the project's private key.",
+    "build": "0.7.1.1467",
+    "pullRequest": 1933,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1933"
+  },
+  {
+    "id": "pr-1941",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Creation spell and maneuver cards fit, and combat input can't lock",
+    "detail": "In character creation the Spells step and the Combat Maneuvers picker show cards at the review page's size, and the maneuver list scrolls so every card can be reached and chosen. In combat, a failure while preparing a play's visuals no longer leaves End Turn and the hand unresponsive.",
+    "build": "0.7.1.1467",
+    "pullRequest": 1941,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1941"
+  },
+  {
+    "id": "pr-1927",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Test shards that run out of time say so",
+    "detail": "Nothing changes in the game. A test shard stopped by its 15-minute limit now reports that it was stopped, instead of printing NaN test counts.",
+    "build": "0.7.1.1467",
+    "pullRequest": 1927,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1927"
+  },
+  {
+    "id": "pr-1936",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Dev previews publish again when a pull request merges during the publish",
+    "detail": "Nothing in the game changes. The dev site's self-check now rebuilds the stamped build its run was started for, instead of whatever just landed on dev.",
+    "build": "0.7.1.1467",
+    "pullRequest": 1936,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1936"
+  },
+  {
+    "id": "pr-1932",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "The balance report reads Gilded Knight correctly again",
+    "detail": "Nothing changes in the game. Gilded Knight's damage per turn no longer reads as \"not a number\", because its guard reaction is no longer counted as an attack. The balance document is regenerated to match the current game.",
+    "build": "0.7.1.1467",
+    "pullRequest": 1932,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1932"
+  },
+  {
+    "id": "pr-1921",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Every weapon has a default range, and hand cards show it",
+    "detail": "Combat ranges are now called Melee, Reach and Ranged (formerly contact, near and far), and older saves still load. Each weapon states the range it fights at, and attack cards in the combat hand show a Melee, Reach or Ranged chip, by the same rule the deck editor uses.",
+    "build": "0.7.1.1465",
+    "pullRequest": 1921,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1921"
+  },
+  {
+    "id": "pr-1930",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "One press on a visible Inspect \"i\" opens it",
+    "detail": "One click, tap or Enter on a fighter's Inspect \"i\" opens the inspector at once, even when the fighter was not selected first.",
+    "build": "0.7.1.1463",
+    "pullRequest": 1930,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1930"
+  },
+  {
+    "id": "pr-1934",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Desktop combat uses the phone's proportions",
+    "detail": "On desktop and widescreen the hand now takes 30% of the screen instead of 38%, so the battlefield is larger and enemies are drawn bigger. Hand cards scale with the hand like on a phone, and the horizon sits where it does on a phone. Phone and tablet layouts are unchanged.",
+    "build": "0.7.1.1463",
+    "pullRequest": 1934,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1934"
+  },
+  {
     "id": "pr-1896",
     "date": "2026-10-12",
     "group": "2026-10-12",

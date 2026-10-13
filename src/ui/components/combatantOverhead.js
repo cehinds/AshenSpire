@@ -1,4 +1,4 @@
-import { attachTooltip, hideTooltip, esc } from './tooltip.js';
+import { attachTooltip, clearControlSelection, hideTooltip, esc } from './tooltip.js';
 import { combatIntentPresentation } from '../models/CombatIntentModel.js';
 import { intentIcon } from './intentIcon.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
@@ -29,11 +29,12 @@ export function combatantInfo(name, open) {
   node.setAttribute('aria-label', `Inspect ${name}`);
   node.setAttribute('aria-haspopup', 'dialog');
   attachTooltip(node, () => `<div class="tt-title">${esc(name)}</div>Inspect resources, skills, and active effects.`, {
-    selectionFirst: true, activate: open, intent: 'above', align: 'center',
+    selectionFirst: true, intent: 'above', align: 'center',
   });
+  // One tap, click or keyboard activation opens inspection at once (owner, 2026-10-13).
   node.addEventListener('click', event => {
-    if (!node.closest('.combatant')?.classList.contains('context-selected')) return;
-    event.preventDefault(); event.stopImmediatePropagation(); hideTooltip(); open(node);
+    event.preventDefault(); event.stopImmediatePropagation(); hideTooltip();
+    clearControlSelection(); open(node);
   }, true);
   return node;
 }
