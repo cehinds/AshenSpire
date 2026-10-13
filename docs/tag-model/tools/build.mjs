@@ -49,6 +49,7 @@ const INV = invAt >= 0 ? argv[invAt + 1] : null;
 // Without --inv the build rebuilds from tables/presentation/. That folder is
 // generated and not on every branch: with it absent there is nothing to rebuild,
 // so exit 0 instead of failing (the Data Studio Tag model job runs this step).
+// Ported from dev (c55d3facd); a no-op on a branch that has the folder.
 if (!INV && !existsSync(PRES)) {
   console.log('build: tables/presentation is not on this branch; nothing to rebuild (pass --inv <folder> to re-extract).');
   process.exit(0);
@@ -801,7 +802,12 @@ const TAG_HEAD = ['id', 'key', 'label', 'parent', 'erd', 'school', 'description'
 const tagsPath = join(TABLES, 'tags.csv');
 const tagsTable = readTable(tagsPath);
 const ci = Object.fromEntries(TAG_HEAD.map(h => [h, tagsTable.header.indexOf(h)]));
-const legacyRows = tagsTable.rows.filter(r => !r[ci.id].startsWith('meta.presentation'));
+// An authored tag whose id is also a generated node id would be dropped silently below.
+for (const r of tagsTable.rows) {
+  const id = r[ci.id];
+  if (nodes.has(id) && LEGACY[id]) throw new Error(`authored tag id ${id} collides with a generated node id; rename the tag or drop the node`);
+}
+const legacyRows = tagsTable.rows.filter(r => !nodes.has(r[ci.id])); // authored rows under meta.presentation (fx) are kept
 const oldKeyById = Object.fromEntries(legacyRows.map(r => [r[ci.id], r[ci.key]]));
 const oldIdByKey = Object.fromEntries(legacyRows.map(r => [r[ci.key], r[ci.id]]));
 
