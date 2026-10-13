@@ -120,7 +120,7 @@ import { el, meter, meters, pill, labelStack, keycap, glyph, iconButton, button,
 import { clearSelection, onSelectionChange } from '../components/cardSelection.js';
 import { wireFormationMovement } from '../components/formationMovement.js';
 import { formationGridHtml } from '../components/formationGrid.js';
-import { formationMovePlan } from '../../model/formationMovement.js';
+import { formationMovePlan, normalizeClassicPlayerFormationCell } from '../../model/formationMovement.js';
 import { discardChoicePlan } from '../../engine/handRules.js';
 import { openHandDiscard } from '../components/handDiscard.js';
 import { resolveCombatCard } from '../../engine/combatExpansion.js';
@@ -450,7 +450,15 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   let heldTurnHand = null;
   let enemyPlayback = false;
   let busy = false; // animating / resolving
-  onDisplayAppearanceChange(combatEl, () => { if (!busy) render(); });
+  // The appearance may already be Classic before this screen mounts, so the
+  // change notification below is not guaranteed to fire for this combat.
+  normalizeClassicPlayerFormationCell(combat, readSettings());
+  onDisplayAppearanceChange(combatEl, () => {
+    // Classic must not merely paint an invalid perspective lane at its spawn:
+    // keep the combat state aligned with the cell that movement and saves use.
+    normalizeClassicPlayerFormationCell(combat, readSettings());
+    if (!busy) render();
+  });
   // The fight has resolved and this screen is handing off (see the
   // `combat.result` branch in the settle callback). Its menu is closed from
   // that moment: the run is mid-handoff and nothing the menu offers is sound.
@@ -3127,3 +3135,4 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   showPendingDiscard();
 }
 import { equipmentAnimationForLoadout, animationTiming } from '../../model/equipmentAnimation.js';
+

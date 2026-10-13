@@ -75,7 +75,12 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve as pathResolve } from 'node:path';
 import { versionTuple, compareVersions } from './buildversion.mjs';
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+// `--root <dir>` reads CHANGELOG.md and buildordinal.json from <dir> instead, so a
+// caller can check a pull request tree with this tool's own copy (pr-restamp does).
+const rootAt = process.argv.indexOf('--root');
+const ROOT = rootAt >= 0 && process.argv[rootAt + 1]
+  ? pathResolve(process.argv[rootAt + 1])
+  : join(dirname(fileURLToPath(import.meta.url)), '..');
 const CHANGELOG = join(ROOT, 'CHANGELOG.md');
 const BUILDORDINAL = join(ROOT, 'buildordinal.json');
 
@@ -488,6 +493,6 @@ else if (argv.includes('--check') || argv.length === 0) {
   const i = argv.indexOf('--since');
   process.exit(check(i >= 0 ? argv[i + 1] : null));
 } else {
-  console.error('usage: node tools/receipts.mjs [--check] [--since <rev> | --pr <N|auto>] | --selftest');
+  console.error('usage: node tools/receipts.mjs [--check] [--since <rev> | --pr <N|auto>] [--root <dir>] | --selftest');
   process.exit(2);
 }

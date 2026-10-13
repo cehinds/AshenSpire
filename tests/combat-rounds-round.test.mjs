@@ -640,6 +640,76 @@ const keyOf = (c) => c.instanceId ?? c.id;
 test('cardKey is instanceId when a card has one, and its id otherwise', () => {
   assert.equal(timelineModule.cardKey({ id: 'defend' }), 'defend');
   assert.equal(timelineModule.cardKey({ id: 'defend', instanceId: 'defend#2' }), 'defend#2');
+  assert.equal(timelineModule.cardKey({ id: 'defend', instanceId: 2 }), 2);
+});
+
+test('round setup rejects card keys that cannot survive JSON and reactions without a key', () => {
+  const specs = [player({ hand: [{ kind: 'guard', target: 'self', speed: 1, sp: 1, block: 4 }] }),
+    { id: 'goblin', hp: 14, sp: 3, attrs: { DEX: 3 }, level: 1 }];
+  const queues = { player: [], goblin: [card('stab', 'attack', 'player', { instanceId: Infinity })] };
+  assert.throws(() => startRound(makeFight(specs, TABLES), { queues, rng: rng(1) }), /instanceId.*finite number/);
+
+  queues.goblin[0].instanceId = -0;
+  assert.throws(() => startRound(makeFight(specs, TABLES), { queues, rng: rng(1) }), /instanceId.*other than -0/);
+
+  queues.goblin[0].instanceId = 'stab#1';
+  assert.throws(() => startRound(makeFight(specs, TABLES), { queues, rng: rng(1) }), /reaction card needs.*identifier/);
+
+  specs[0].hand[0].instanceId = -0;
+  assert.throws(() => startRound(makeFight(specs, TABLES), { queues, rng: rng(1) }), /instanceId.*other than -0/);
+});
+
+test('an uncloneable queued card fails before initiative consumes rng', () => {
+  const fight = makeFight([
+    player({ hp: 30 }),
+    { id: 'goblin', hp: 14, sp: 3, attrs: { DEX: 3 }, level: 1 },
+  ], TABLES);
+  const bad = card('stab', 'attack', 'player', { extension: { callback() {} } });
+  const rngFn = counted(3);
+
+  assert.throws(() => startRound(fight, {
+    queues: { player: [], goblin: [bad] }, rng: rngFn,
+  }), (err) => err?.name === 'DataCloneError');
+  assert.equal(rngFn.calls, 0, 'queue snapshot validation happens before either initiative d4');
+});
+
+test('createRound isolates queued cards, exposed timelines and nested onReaction data', () => {
+  const reaction = card('brace', 'guard', 'self', { instanceId: 'brace#1', tags: ['guard'] });
+  const attack = card('stab', 'attack', 'player', {
+    instanceId: 'stab#1', accuracy: 100, damage: Infinity, tags: ['sharp'],
+  });
+  const state = makeFight([
+    player({ hand: [reaction], hp: 30 }),
+    { id: 'goblin', hp: 14, sp: 3, attrs: { DEX: 3 }, level: 1 },
+  ], TABLES);
+  let offeredDamage = null;
+  const round = createRound(state, {
+    queues: { player: [], goblin: [attack] },
+    rng: rng(2),
+    onReaction(offeredAttack, eligible) {
+      offeredDamage = offeredAttack.damage;
+      eligible[0].tags.push('callback-only');
+      offeredAttack.damage = 999;
+      return null;
+    },
+  });
+
+  attack.damage = 999;
+  attack.tags.push('caller-only');
+  round.timeline.entries[0].card.damage = 999;
+  round.timeline.entries[0].card.tags.push('display-only');
+  const out = round.resolveAll();
+
+  assert.equal(offeredDamage, 0, 'the offer uses the same finite damage rule as resolution');
+  assert.deepStrictEqual(out.state.combatants.player.hand[0].tags, ['guard']);
+  assert.deepStrictEqual(state.combatants.player.hand[0].tags, ['guard']);
+  assert.deepStrictEqual(out.timeline.entries[0].card.tags, ['sharp']);
+  assert.equal(out.timeline.entries[0].card.damage, Infinity);
+  assert.equal(out.state.combatants.player.hp, 30, 'non-finite attack damage resolves as zero');
+
+  out.timeline.entries[0].card.tags.push('result-only');
+  assert.deepStrictEqual(round.timeline.entries[0].card.tags, ['sharp', 'display-only'],
+    'the resolveAll timeline is detached from the initially exposed timeline');
 });
 
 test('a queued copy does not make its twin copy ineligible: the other copy is still offered', () => {
