@@ -96,4 +96,8 @@ describe('workbench static build', () => {
   it('writes no game/assets when --no-art is given', () => {
     assert.equal(existsSync(path.join(out, 'game', 'assets')), false);
   });
+
+  it('writes no asset-file/ when --no-art is given', () => {
+    assert.equal(existsSync(path.join(out, 'asset-file')), false);
+  });
 });
