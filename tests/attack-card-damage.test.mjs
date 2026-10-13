@@ -110,8 +110,11 @@ test('advanced settings deterministically change costs and per-status reductions
   });
   const registries = createRegistries(configured);
   const slash = registries.cards.get('gorefireSlash');
-  assert.equal(slash.effects.find((effect) => effect.op === 'damage').amount, 15);
-  assert.equal(createRegistries(configured).cards.get('gorefireSlash').effects[0].amount, 15);
+  // Gorefire Slash applies Burn 1 as well as Bleed, so its cost-derived base
+  // loses statusEffectReductionMultiplier (2) x Burn weight (1) = 2 more than
+  // before this card gained Burn: 15 - 2 = 13.
+  assert.equal(slash.effects.find((effect) => effect.op === 'damage').amount, 13);
+  assert.equal(createRegistries(configured).cards.get('gorefireSlash').effects[0].amount, 13);
 });
 
 test('X-cost attacks use one Action of value per repeated hit', () => {

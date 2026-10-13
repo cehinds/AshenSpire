@@ -10,9 +10,9 @@ import { enqueueExpandedAction } from './combatExpansionActions.js';
 export const enemyReactionsActive = ctx => ctx.reactionRulesVersion === 2 && ctx.reactionRules?.enemyReactions === true;
 
 // The enemy's reaction moves that list `window`, in authored order.
-export function reactionMovesOf(ctx, enemy, window) {
+export function reactionMovesOf(ctx, enemy, reactionWindow) {
   const def = ctx.registries?.enemies?.get(enemy.enemyId);
-  return Object.entries(def?.moves || {}).filter(([id, move]) => move.reaction?.on?.includes(window)
+  return Object.entries(def?.moves || {}).filter(([id, move]) => move.reaction?.on?.includes(reactionWindow)
     && (!move.locked || (enemy.unlockedMoves || []).includes(id)));
 }
 
@@ -36,11 +36,11 @@ export function incomingAgainst(source, id) {
 // otherwise one draw on the enemyReaction stream decides it, memoised per window in
 // ctx.enemyReactionRolls. A candidate state (ctx._reactionPlaying) reads the memo only:
 // an unmemoised roll there is "does not react" and never draws.
-export function decideEnemyReaction(ctx, enemy, window, { groupKey, windowIndex, incoming }) {
+export function decideEnemyReaction(ctx, enemy, reactionWindow, { groupKey, windowIndex, incoming }) {
   if (!enemyReactionsActive(ctx) || !enemy?.alive || enemy.skipNextTurn) return null;
   if (enemy.combatReactionTurn === ctx.turn) return null;
   if (controlRestrictions(ctx, enemy).locked) return null;
-  for (const [moveId, move] of reactionMovesOf(ctx, enemy, window)) {
+  for (const [moveId, move] of reactionMovesOf(ctx, enemy, reactionWindow)) {
     const { minIncoming = 1, chance = 1 } = move.reaction;
     if (minIncoming !== 0 && !(incoming > 0 && incoming >= minIncoming)) continue;
     if (chance >= 1) return moveId;
@@ -64,9 +64,9 @@ export function clearEnemyReactionRolls(ctx) {
 // Any enemy of this fight holds a reaction move (for `window`, or for either window).
 // Without one the window machinery stays out of the state entirely, so such a fight
 // is identical to a flag-off run.
-export function fightReacts(ctx, window = null) {
+export function fightReacts(ctx, reactionWindow = null) {
   if (!enemyReactionsActive(ctx)) return false;
-  const windows = window ? [window] : ['playerAction', 'playerReaction'];
+  const windows = reactionWindow ? [reactionWindow] : ['playerAction', 'playerReaction'];
   return (ctx.enemies || []).some(enemy => windows.some(name => reactionMovesOf(ctx, enemy, name).length));
 }
 
@@ -191,22 +191,22 @@ export function playerRootSeat(ctx, group) {
  * against it. Roster order, each enemy at most once, enemy entries capped at maxDepth
  * in total. Returns the entries pushed.
  */
-export function openEnemyWindow(ctx, group, window, pushed, hooks) {
-  if (!fightReacts(ctx, window) || group.counterReturn || group.carrier?.combatReaction || group.carrier?.reactionDepth) return [];
+export function openEnemyWindow(ctx, group, reactionWindow, pushed, hooks) {
+  if (!fightReacts(ctx, reactionWindow) || group.counterReturn || group.carrier?.combatReaction || group.carrier?.reactionDepth) return [];
   const index = group.enemyWindows || 0;
   group.enemyWindows = index + 1;
-  const targetPlayerId = window === 'playerAction' ? playerRootSeat(ctx, group) : pushed.ownerId;
+  const targetPlayerId = reactionWindow === 'playerAction' ? playerRootSeat(ctx, group) : pushed.ownerId;
   if (!targetPlayerId) return [];
   const cap = ctx.reactionRules.stack.maxDepth;
   const pushedEntries = [];
   for (const enemy of ctx.enemies) {
     const stacked = ctx.reactionStack?.groupKey === group.key ? ctx.reactionStack.entries : [];
     if (stacked.filter(entry => entry.side === 'enemy').length >= cap) break;
-    const incoming = window === 'playerAction' ? incomingAgainst(group, enemy.id) : pushed.incoming?.[enemy.id] || 0;
+    const incoming = reactionWindow === 'playerAction' ? incomingAgainst(group, enemy.id) : pushed.incoming?.[enemy.id] || 0;
     // The window opens for enemies the root card targets, or (playerReaction) that own the
     // root or that the root card targets (contract); the decision then qualifies on `incoming`.
-    if (window === 'playerAction' ? !(incoming > 0) : group.sourceId !== enemy.id && !(incomingAgainst(group, enemy.id) > 0)) continue;
-    const moveId = decideEnemyReaction(ctx, enemy, window, { groupKey: group.key, windowIndex: index, incoming });
+    if (reactionWindow === 'playerAction' ? !(incoming > 0) : group.sourceId !== enemy.id && !(incomingAgainst(group, enemy.id) > 0)) continue;
+    const moveId = decideEnemyReaction(ctx, enemy, reactionWindow, { groupKey: group.key, windowIndex: index, incoming });
     if (moveId) pushedEntries.push(pushEnemyReaction(ctx, group, enemy, moveId, targetPlayerId, hooks));
   }
   return pushedEntries;
