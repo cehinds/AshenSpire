@@ -15,6 +15,8 @@
 export const act3Enemies = [
   {
     id: 'ashRevenant',
+    // Stats for its SP pool (SPEC §4.6a, owner 2026-10-13).
+    attributes: { strength: 7, dexterity: 4, constitution: 3, wisdom: 2, intelligence: 2 },
     equipmentPower: 0.15,
     size: 'medium',
     tint: 'var(--ember)',
@@ -36,6 +38,8 @@ export const act3Enemies = [
   },
   {
     id: 'emberStarvedPilgrim',
+    // Stats for its SP pool (SPEC §4.6a, owner 2026-10-13).
+    attributes: { strength: 6, dexterity: 3, constitution: 3, wisdom: 2, intelligence: 2 },
     size: 'small',
     tint: 'var(--grace)',
     name: 'Ember-Starved Pilgrim',
@@ -63,6 +67,8 @@ export const act3Enemies = [
   },
   {
     id: 'valkyrieShade',
+    // Stats for its SP pool (SPEC §4.6a, owner 2026-10-13).
+    attributes: { strength: 7, dexterity: 4, constitution: 3, wisdom: 2, intelligence: 2 },
     equipmentPower: 0.25,
     size: 'medium',
     tint: 'var(--blood)',
@@ -81,6 +87,8 @@ export const act3Enemies = [
   },
   {
     id: 'charredColossus',
+    // Stats for its SP pool (SPEC §4.6a, owner 2026-10-13).
+    attributes: { strength: 7, dexterity: 4, constitution: 3, wisdom: 2, intelligence: 2 },
     size: 'large',
     tint: 'var(--ember)',
     name: 'Charred Colossus',
@@ -103,6 +111,8 @@ export const act3Enemies = [
   // ---- Elite ------------------------------------------------------------------
   {
     id: 'wyrmLord',
+    // Stats for its SP pool (SPEC §4.6a, owner 2026-10-13).
+    attributes: { strength: 9, dexterity: 4, constitution: 4, wisdom: 3, intelligence: 3 },
     equipmentPower: 0.3,
     size: 'large',
     tint: 'var(--gold)',
@@ -132,6 +142,9 @@ export const act3Enemies = [
   // ---- Final boss: The Blighted Valkyrie (GDD §2, SPEC §5.3/§10) ---------------------
   {
     id: 'blightedValkyrie',
+    // Stats for its SP pool (SPEC §4.6a, owner 2026-10-13).
+    attributes: { strength: 8, dexterity: 6, constitution: 4, wisdom: 7, intelligence: 5 },
+    blighted: true,
     equipmentPower: 0.3,
     size: 'large',
     tint: 'var(--rot)',
@@ -179,6 +192,13 @@ export const act3Enemies = [
   // Expanded destinations: authored weighted moves use the existing phase and delay engine.
   {
     "id": "cinderMantis",
+    "attributes": {
+      "strength": 7,
+      "dexterity": 4,
+      "constitution": 3,
+      "wisdom": 2,
+      "intelligence": 2
+    },
     "name": "Cinder Mantis",
     "size": "medium",
     "hp": [
@@ -222,6 +242,13 @@ export const act3Enemies = [
   },
   {
     "id": "eclipseCantor",
+    "attributes": {
+      "strength": 3,
+      "dexterity": 3,
+      "constitution": 3,
+      "wisdom": 5,
+      "intelligence": 4
+    },
     "name": "Eclipse Cantor",
     "size": "medium",
     "hp": [
@@ -271,6 +298,13 @@ export const act3Enemies = [
   },
   {
     "id": "furnaceSaint",
+    "attributes": {
+      "strength": 9,
+      "dexterity": 4,
+      "constitution": 4,
+      "wisdom": 3,
+      "intelligence": 3
+    },
     "name": "The Furnace Saint",
     "size": "large",
     "hp": [
@@ -328,6 +362,13 @@ export const act3Enemies = [
   },
   {
     "id": "hollowAstronomer",
+    "attributes": {
+      "strength": 6,
+      "dexterity": 4,
+      "constitution": 3,
+      "wisdom": 5,
+      "intelligence": 5
+    },
     "name": "The Hollow Astronomer",
     "size": "large",
     "hp": [
@@ -404,6 +445,13 @@ export const act3Enemies = [
   },
   {
     "id": "ashheartDragon",
+    "attributes": {
+      "strength": 10,
+      "dexterity": 4,
+      "constitution": 4,
+      "wisdom": 5,
+      "intelligence": 3
+    },
     "name": "The Ashheart Dragon",
     "size": "large",
     "hp": [

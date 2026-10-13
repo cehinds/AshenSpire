@@ -53,6 +53,11 @@ export function serializeCombatSnapshot(combat) {
     ...(combat.combatMatchupRules ? { combatMatchupRules: combat.combatMatchupRules } : {}),
     ...(combat.combatIntentRules ? { combatIntentRules: combat.combatIntentRules } : {}),
     ...(combat.enemyKnowledge ? { enemyKnowledge: combat.enemyKnowledge } : {}),
+    // SPEC §4.11: the Combat Rounds Preview's whole round record (rules, queues, momentum, charges).
+    // Absent with the preview off, so an off-mode save has no new key.
+    ...(combat.combatRounds ? { combatRounds: combat.combatRounds } : {}),
+    // SPEC §4.11: the normal fight's momentum toggles and state. Absent when both toggles are off.
+    ...(combat.normalPreview ? { normalPreview: combat.normalPreview } : {}),
     ...([1, 2].includes(combat.reactionRulesVersion) ? { reactionRulesVersion: combat.reactionRulesVersion,
       ...(combat.foundationNextSerial !== undefined ? { foundationNextSerial: combat.foundationNextSerial } : {}),
       ...(combat.reactionCursor ? { reactionCursor: combat.reactionCursor } : {}),
@@ -164,6 +169,8 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     ...(saved.combatMatchupRules ? { combatMatchupRules: saved.combatMatchupRules } : {}),
     ...(saved.combatIntentRules ? { combatIntentRules: saved.combatIntentRules } : {}),
     ...(saved.enemyKnowledge ? { enemyKnowledge: saved.enemyKnowledge } : {}),
+    ...(saved.combatRounds ? { combatRounds: saved.combatRounds } : {}),
+    ...(saved.normalPreview ? { normalPreview: saved.normalPreview } : {}),
     ...(saved.ratingsRules ? { ratingsRules: saved.ratingsRules } : {}),
     ...([1, 2].includes(saved.breakMeterVersion) ? { breakMeterVersion: saved.breakMeterVersion } : {}),
     // `ratingAttributeScale` IS NOT CARRIED BACK (owner, 2026-09-21). A fight

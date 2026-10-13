@@ -156,6 +156,9 @@ test('real run fights retain every valid bot decision, save and RNG versus force
   function fight(classId, forcePreview) {
     const run = createRunState({ seed: 1, classId, registries: base });
     const combat = createRunCombat({ registries: base, run, rng: createRng(11), enemyIds: base.encounters.get('patrol').enemies });
+    // Tougher foes: under the cost formula (SPEC §4.3a) a Rogue's 2-SP Ambush can end the patrol on turn 1, before any
+    // defensive play this check needs to see.
+    for (const enemy of combat.enemies) enemy.hp = enemy.maxHp = enemy.maxHp * 4;
     if (forcePreview) combat._emitEvent = (...args) => emitEvent(...args);
     const decisions = []; let guard = 0;
     while (!combat.result && combat.turn <= 150 && guard++ < 8000) {

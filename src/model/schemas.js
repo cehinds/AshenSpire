@@ -623,6 +623,8 @@ const modifiersSchema = obj(Object.fromEntries(
 ));
 
 const enemyMoveSchema = obj({
+  // The move's SP price (SPEC §4.6a): replaces the stance table's. A boss move's price is authored here.
+  sp: opt(int),
   counterDamage: opt(int),
   counterPoiseDamage: opt(int),
   damageSchool: opt(en(...DAMAGE_SCHOOLS)),
@@ -793,6 +795,8 @@ export const SCHEMAS = Object.freeze({
   }),
   card: obj({
     minCombatExpansionVersion: opt(int),
+    // Action costs (owner decision, 2026-10-12): 'fixed' keeps a 0-cost card's authored cost and numbers (model/actionCosts.js).
+    costRule: opt(str),
     corrupted: opt(bool),
     ashenBlightCost: opt(int),
     counterCoverage: opt(any),
@@ -1010,6 +1014,10 @@ export const SCHEMAS = Object.freeze({
     poiseMax: int,
     levelProfile: levelBandSchema,
     equipmentPower: opt(num), // small additive XP weight for authored enemy gear
+    // The enemy's stats for its SP pool (SPEC §4.6a): the stamina row read on these attributes, plus equipment SP.
+    attributes: opt(mapOf(int)),
+    equipmentSp: opt(int),
+    blighted: opt(bool), // blight shifts its attributes (content/actionCosts.js ENEMY_BLIGHT_SHIFT)
     moves: mapOf(enemyMoveSchema),
     firstMove: opt(str), // checked against own moves in validate.js
     phases: opt(arr(enemyPhaseSchema)),

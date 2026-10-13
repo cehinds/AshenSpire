@@ -43,7 +43,8 @@ test('roster has exactly 20 regular enemies, 10 bosses, and 3 elites with valid 
 test('all 46 new moves execute their actual damage, Block, and effect payloads',()=>{
  let count=0;
  for(const id of added)for(const [key,move]of Object.entries(reg.enemies.get(id).moves)){
-  const c=fight(id),e=c.enemies[0];e.intent={kind:move.intent,moveId:key};e.hp-=1;
+  // The fixture sets this one move by hand, so the pool's other planned moves are cleared (owner 2026-10-12 plans).
+  const c=fight(id),e=c.enemies[0];e.intent={kind:move.intent,moveId:key};e.plannedMoves=[];e.hp-=1;
   // This test isolates the authored payload; tactical riders have live tests.
   c.combatMatchupRules = { ...c.combatMatchupRules, damageRiders: {} };
   const before=c.player.hp;end(c);

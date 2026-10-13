@@ -698,6 +698,18 @@ export function targetOutline({ card, foe, cardSpeed, foeSpeed, stage = 3, stanc
   return null;
 }
 
+// Normal combat's target outline (SPEC §4.11; owner decision 2026-10-12). Speed counts only in rounds mode, so the
+// outline is the stance alone: green when the card's stance beats the foe's revealed stance, red when the foe's
+// beats the card's, and none when neutral, unrevealed (stage below 2) or aimed at the card's own side.
+export function stanceOutline({ card, foe, stage = 3, stanceTable = null } = {}) {
+  if (!card || typeof card !== 'object') throw new TypeError('card must be an object');
+  if (!foe || typeof foe !== 'object') throw new TypeError('foe must be an object');
+  if (card.target === 'self' || clampStage(stage) < 2) return null;
+  if (stanceBonus(stanceTable, card.stance, foe.stance) > 0) return 'green';
+  if (stanceBonus(stanceTable, foe.stance, card.stance) > 0) return 'red';
+  return null;
+}
+
 // The side that wins the slot with this event, or null (DESIGN.md, Momentum). A
 // landed hit or a counter that fires is the attacker's success. Any miss is the
 // defender's success, whatever the defender did (owner, 2026-10-11).
