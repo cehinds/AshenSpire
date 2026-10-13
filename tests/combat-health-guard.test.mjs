@@ -33,3 +33,18 @@ test('combatHealthModel carries the guard tone and the Poise trim', () => {
   assert.equal(combatHealthModel({}).guard, 'none');
   assert.equal(combatHealthModel({ poise: 3 }).poise, 3);
 });
+
+test('the Ward badge names its Warded Block apart from the Ward pool', () => {
+  // Warded Block is the magical share of Block; the separate entity.wardGuard meter guard is not read here.
+  const guarded = protectionPresentation({ block: 5, wardBlock: 3, persistentWard: { value: 4 } });
+  assert.equal(guarded.wardBlock, 3);
+  const badge = combatHealthModel(guarded).badges.find(row => row.kind === 'ward');
+  assert.equal(badge.value, 7, 'the Ward badge is the Warded Block plus the persistent pool');
+  assert.equal(badge.wardBlock, 3);
+  const plain = protectionPresentation({ block: 5, persistentWard: { value: 4 } });
+  assert.equal(plain.wardBlock, 0);
+  const plainBadge = combatHealthModel(plain).badges.find(row => row.kind === 'ward');
+  assert.equal(plainBadge.value, 4);
+  assert.equal(plainBadge.wardBlock, 0);
+  assert.equal(combatHealthModel({ ward: 3 }).badges[0].wardBlock, 0, 'a caller without wardBlock reads none');
+});
