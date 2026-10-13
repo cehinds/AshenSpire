@@ -321,7 +321,10 @@ jobs:
           # secret. The real fix is the owner's: delete the ART_REPO_TOKEN secret, or
           # move it into a GitHub Environment limited to dev, test, release and main
           # (docs/EXTERNAL-ASSETS-PLAN.md, step 11).
-          ART_REPO_TOKEN: ${{ contains(fromJSON('["refs/heads/dev","refs/heads/test","refs/heads/release","refs/heads/main"]'), github.ref) && secrets.ART_REPO_TOKEN || '' }}
+          # A workflow_run run takes github.ref from the default branch, so the ref gate
+          # alone admitted a run that a FORK pull request started. The same-repository
+          # clause below excludes fork-originated workflow_run runs.
+          ART_REPO_TOKEN: ${{ (github.event_name != 'workflow_run' || github.event.workflow_run.head_repository.full_name == github.repository) && contains(fromJSON('["refs/heads/dev","refs/heads/test","refs/heads/release","refs/heads/main"]'), github.ref) && secrets.ART_REPO_TOKEN || '' }}
         run: |
           set -euo pipefail
           if git cat-file -e origin/main:AshenSpire.html 2>/dev/null; then
