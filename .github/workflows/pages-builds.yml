@@ -321,9 +321,7 @@ jobs:
           # secret. The real fix is the owner's: delete the ART_REPO_TOKEN secret, or
           # move it into a GitHub Environment limited to dev, test, release and main
           # (docs/EXTERNAL-ASSETS-PLAN.md, step 11).
-          # A workflow_run run's github.ref is the default branch, so the build-stamp
-          # run that publishes dev is admitted by its own clause: it was a dev push.
-          ART_REPO_TOKEN: ${{ (contains(fromJSON('["refs/heads/dev","refs/heads/test","refs/heads/release","refs/heads/main"]'), github.ref) || (github.event_name == 'workflow_run' && github.event.workflow_run.name == 'build-stamp' && github.event.workflow_run.head_branch == 'dev' && github.event.workflow_run.conclusion == 'success')) && secrets.ART_REPO_TOKEN || '' }}
+          ART_REPO_TOKEN: ${{ contains(fromJSON('["refs/heads/dev","refs/heads/test","refs/heads/release","refs/heads/main"]'), github.ref) && secrets.ART_REPO_TOKEN || '' }}
         run: |
           set -euo pipefail
           if git cat-file -e origin/main:AshenSpire.html 2>/dev/null; then
