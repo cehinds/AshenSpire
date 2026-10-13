@@ -395,11 +395,66 @@ Formula, relation and value keys follow the README conventions.
   - **Still open.** The feat raises to the cap (and the rank step's interaction with feats).
     See `docs/tag-model/proposals/evade-cap-feats.md` (proposal, owner to pick).
 
+- **Ruling 11 (owner answers, 2026-10-13). Evade stacks, hit roll, feats and rounds.**
+  - **Feats.** All four cap feats are approved: Weight Shifted (Reaver, heavy +1),
+    Light on the Stones (Herald, medium +1), Steady Fit (`armour:medium` rank 4, medium +1)
+    and Heavy Hold (`armour:heavy` rank 4, heavy +1). The per-band ceiling of +2 stands.
+    They are still not in game data; adding them is part of the Evade PR. Proposal file
+    marked "owner approved 2026-10-13".
+  - **Block.** The +3 Block per stack adds to the card's own Block (Quickstep 5 + 3 = 8).
+  - **Rounds preview.** The +3 Block does get the 1.8× scaling on cards with 2 or more SP.
+  - **Poise reply.** Evasive Guard, Backstep and Acrobatics Rogue lose their Poise reply
+    when they leave the counter group.
+  - **Reaction rules version.** Version 3 for new runs. Saved runs keep version 2.
+  - **Stance family.** Evade is its own stance family, not under `defensive`. The tag-model
+    parent change (`meta.combat.stance.defensive.evade`) belongs to the Evade PR, not now.
+  - **Hit roll.** `evade.evasion` is the defender's Evasion in the hit roll,
+    `d20 + Accuracy >= 8 + Evasion`. The `evadeRollPreview` option is removed; the Evade
+    PR does not wire the formula there.
+  - **Stacks (owner, verbatim):** "each stack adds teh flat bonus ... if evasion is 12 and
+    plays a card with the evasion tags with 2 stacks then the user will increase evasion to
+    18 (12 + 3 +3) and gain 6 block". Each stack adds `evade.baseEvade` (3) to Evasion and
+    gives 3 Block.
+  - **Stance bonus stacks with stacks (owner, verbatim):** "stance bonus does stack". The
+    Evade stance's `evade.stanceBonus` (3) adds on top of the stack bonus.
+  - **Decay (owner, verbatim):** "1 stack is lost per use and 1 at the start of each
+    successive turn so if you have 3 stacks of evade and you are hit with multi attack 2
+    then your evasion will decrease for each stack. the block remains because it's applied
+    to defense, evasion will reduce until evasion stacks are gone. that also means if you
+    have 3 stacks and don't use any evade, at the start of your next turn you only have 2
+    stacks".
+    - Each incoming attack (each hit of a multi-attack) consumes 1 stack.
+    - One more stack decays at the start of each of the owner's turns.
+    - Block gained from stacks stays under the normal Block rules.
+    - The Evasion bonus drops by 3 per stack lost.
+    - **Our reading, to mark as such:** "use" means any incoming attack roll against you,
+      hit or miss. The owner has not confirmed a miss consumes a stack. This is an open
+      item (see the tuning list).
+
+  **Worked examples** (attacker Accuracy 5, so a hit needs `d20 + 5 >= defence`, where
+  defence = 8 + Evasion; the miss chance is the count of d20 values that miss, out of 20):
+
+  | Case | Evasion terms | Evasion | Defence | Needs (d20) | Miss |
+  |---|---|---|---|---|---|
+  | Rogue, cloth, DEX 4, no Evade | 0 + min(4, 99) | 4 | 12 | 7 | 30% |
+  | Rogue, 2-stack card | 2×3 + min(4, 99) | 10 | 18 | 13 | 60% (+6 Block) |
+  | Rogue, 2-stack card + stance | 6 + 4 + 3 | 13 | 21 | 16 | 75% (cap) |
+  | Multi-attack 2 vs 3 stacks + stance, DEX 4, hit 1 | 9 + 4 + 3 | 16 | 24 | 19 | 90%; then one stack lost |
+  | Same, hit 2 | 6 + 4 + 3 | 13 | 21 | 16 | 75%; then one more lost |
+  | Same, after both hits | 3 + 4 + 3 | 10 | 18 | 13 | 60%; one stack left, it decays at your next turn start |
+  | Reaver, medium, DEX 7, rank 6, Steady Fit, 1 stack | 3 + min(7, 5 + 2 + 1 = 8) | 10 | 18 | 13 | 60% |
+  | Reaver, heavy, rank 0, 1 stack | 3 + min(7, 2) | 5 | 13 | 8 | 35% |
+
+  The multi-attack rows show the hit-by-hit stack loss from the owner's example. The
+  Reaver rows use the cap from ruling 10 and the feats from ruling 11, with DEX 7.
+
 ### Tuning list (open items left in section 15)
 
-- Feat raises to the Evade DEX cap: open. Candidate feats are drafted in
-  `docs/tag-model/proposals/evade-cap-feats.md` (proposal, owner to pick). The per-rank
-  step is closed by ruling 10 (`evade.dexCap.rankStep` = 3).
+- Feat raises to the Evade DEX cap: closed by ruling 11 (four feats approved,
+  `docs/tag-model/proposals/evade-cap-feats.md`; not yet in game data, that is the Evade PR).
+  The per-rank step is closed by ruling 10 (`evade.dexCap.rankStep` = 3).
+- Stack behaviour (gain, decay, Block, stance stacking): closed by ruling 11.
+- Open after ruling 11: whether a miss also consumes a stack (ruling 11 reading: yes).
 - The Evade stance bonus value is closed by ruling 10 (`evade.stanceBonus` = 3).
 - **Cross-references for the cap:**
   - Evasion rating formula, `docs/tag-model/tables/formulas.csv` `evasion.rating`:
