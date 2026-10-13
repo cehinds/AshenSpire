@@ -10,7 +10,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -80,6 +80,17 @@ describe('workbench static build', () => {
   it('moves the game module paths under the base', () => {
     const render = readFileSync(path.join(out, 'game', 'workbench', 'modules', 'entities', 'render.html'), 'utf8');
     assert.ok(render.includes(`${BASE}game/workbench/modules/`));
+  });
+
+  it('mirrors the root preview pages with their absolute paths moved under the base', () => {
+    const previews = readdirSync(path.join(out, 'game')).filter((f) => /-preview\.html$/.test(f));
+    assert.ok(previews.length >= 1, 'at least one *-preview.html is in game/');
+    for (const name of previews) {
+      const text = readFileSync(path.join(out, 'game', name), 'utf8');
+      assert.equal(/["'`(]\/styles\//.test(text), false, `${name} has no absolute /styles/ path`);
+      const source = readFileSync(path.join(REPO, name), 'utf8');
+      if (/["'`(]\/styles\//.test(source)) assert.ok(text.includes(`${BASE}game/styles/`), `${name} points styles under the base`);
+    }
   });
 
   it('writes no game/assets when --no-art is given', () => {

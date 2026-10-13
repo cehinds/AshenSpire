@@ -34,7 +34,8 @@ const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DESIGN_PREFIX = 'docs/design/';
 const UI_NAMES = ['index.html', 'app.mjs', 'workbench.css', 'shared', 'ui', 'modules', 'lib'];
 const UI_REWRITE = /(["'`(])\/(api|shared|ui|modules|lib|static|export|asset-file|app\.mjs|workbench\.css)\b/g;
-const GAME_REWRITE = /(["'`(])\/workbench\//g;
+const GAME_REWRITE = /(["'`(])\/(workbench|styles|src|assets|pose-studio)\//g;
+const PREVIEW_PAGE = /^([\w.-]+-preview|tooltip-review[\w.-]*)\.html$/;
 const UI_TEXT = /\.(html|mjs|js|css)$/;
 const GAME_TEXT = /\.(html|mjs|js|css|json|svg)$/;
 const SNAPSHOT_DIRS = ['content', 'docs/tag-model', 'pose-studio/renewal', 'pose-studio/stances', 'workbench/workspace', 'ui-studio/workspace'];
@@ -169,9 +170,15 @@ async function main() {
   }
 
   // The game runtime that tools/serve.mjs serves from the checkout.
-  const gameRewrite = { re: GAME_REWRITE, to: `$1${base}game/workbench/` };
+  const gameRewrite = { re: GAME_REWRITE, to: `$1${base}game/$2/` };
   const game = path.join(out, 'game');
   await copyTree(path.join(REPO, 'index.html'), path.join(game, 'index.html'), { textRe: GAME_TEXT, rewrite: gameRewrite });
+  // The root preview pages the Entity Browser and Library open from the game server.
+  for (const entry of await fs.readdir(REPO, { withFileTypes: true })) {
+    if (entry.isFile() && PREVIEW_PAGE.test(entry.name)) {
+      await copyTree(path.join(REPO, entry.name), path.join(game, entry.name), { textRe: GAME_TEXT, rewrite: gameRewrite });
+    }
+  }
   for (const dir of ['src', 'styles']) await copyTree(path.join(REPO, dir), path.join(game, dir), { textRe: GAME_TEXT, rewrite: gameRewrite });
   await copyTree(path.join(REPO, 'workbench', 'modules'), path.join(game, 'workbench', 'modules'), { textRe: GAME_TEXT, rewrite: gameRewrite });
   for (const entry of await fs.readdir(path.join(REPO, 'pose-studio'), { withFileTypes: true })) {
