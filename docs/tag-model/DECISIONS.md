@@ -510,6 +510,66 @@ expansion `counter` group plus the `EVADES` set.
   (`src/model/alternativeStance.js`, `src/model/combatCardProfile.js`,
   `src/model/playingCard.js` `combatCardType`).
 
+## 16. Sweep gains precision stacks that add Accuracy
+
+- **Date:** 2026-10-13 (owner). Separate from section 15 (Evade).
+- **Owner ruling, 2026-10-13 (verbatim):**
+  > Sweep should have an accuracy bonus to evasion because it comes with 3 stacks of precision but reduces it by 1 stack for each enemy its targeting. If each stack adds +1 precision then Sweep naturally has a +3 to accuracy against 1 target, +2 for 2 targets+1 for 3.  0 for 4 and -1 for 5 and so on and so forth
+- **Decision:** a Sweep attack has precision stacks equal to 4 minus the number
+  of targets, and each precision stack adds +1 Accuracy. The ruling's own table
+  (+3 at 1 target) fixes the count at 4 − targets. Reading it as 3 − targets
+  would give +2 at 1 target, which the ruling does not say.
+  - `sweep.precisionStacks = 4 − targets`
+  - Accuracy bonus = `precisionStacks × 1` (`precision.perStack` = 1)
+  - The value can be negative. It feeds the hit roll, d20 + Accuracy ≥ 8 +
+    Evasion, against each target.
+- **Table (1 to 6 targets):**
+
+  | Targets | Precision stacks | Accuracy bonus |
+  |---|---|---|
+  | 1 | 3 | +3 |
+  | 2 | 2 | +2 |
+  | 3 | 1 | +1 |
+  | 4 | 0 | 0 |
+  | 5 | −1 | −1 |
+  | 6 | −2 | −2 |
+
+- **Worked example: Accuracy 5 against Evasion 4 (defence 12).** The hit needs
+  d20 + Accuracy ≥ 12. Miss % uses `hit.missChance`, which is
+  min(0.75, max(0.05, (8 + Evasion − Accuracy − 1) / 20)). A natural 20 always
+  hits and a natural 1 always misses. The 75% cap and the 5% floor do not bind
+  in either case, so they change neither number.
+  - 1 target: Accuracy 5 + 3 = 8. Hit when d20 ≥ 4. Miss on 1 to 3: **15%**
+    ((8 + 4 − 8 − 1) / 20 = 3/20).
+  - 4 targets: Accuracy 5 + 0 = 5. Hit when d20 ≥ 7. Miss on 1 to 6: **30%**
+    ((8 + 4 − 5 − 1) / 20 = 6/20).
+- **Relation to existing rules:**
+  - `accuracy.rating` already sums tag bonuses: quick +1 and telegraphed −2,
+    through `accuracy.tagBonus` (section 11). Precision stacks are a new tag
+    bonus term beside it, not an extra value inside `accuracy.tagBonus`.
+  - Precision already exists as live tags. `precision` (card) says "presentation
+    only" (`content/source/nodes.csv:60`). `fx:precision` says "no combat
+    modifier" (`nodes.csv:92`). `technique:precision` says "effects are authored
+    separately" (`nodes.csv:124`). On `origin/dev`,
+    `src/engine/combatMatchups.js:425` uses Precision as a technique rider joined
+    to Piercing's bypass.
+  - This ruling gives Precision a new meaning: stacks that each add +1 Accuracy.
+    That is a change to the live Precision tags, not only to the tables.
+- **Tables changed:** `tables/formulas.csv` gains `sweep.accuracyBonus` (proposed).
+  The `accuracy.rating` description cites it. Its expression is unchanged.
+  `tables/values.csv` gains `precision.perStack` = 1 (proposed), and the sweep
+  target count as a runtime input if `tools/check.mjs` needs it to resolve.
+  Game code is not changed.
+- **Open questions for the owner:**
+  - Does `technique:precision` become this stack mechanic, or is precision-stack
+    a separate status? If it becomes the stack mechanic, the "presentation only"
+    description on `precision` and "no combat modifier" on `fx:precision` change.
+  - Are precision stacks a status that other cards can also grant, or a
+    Sweep-only computed bonus?
+  - Does the target count include allies hit, or only enemies?
+  - Do the stacks decay like Evade stacks (one per use, one per turn start), or
+    are they computed per attack?
+
 ## Open: round-trip differences
 
 Every live node in `content/source/nodes.csv` (448) now maps to exactly one tag
