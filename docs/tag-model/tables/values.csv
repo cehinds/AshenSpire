@@ -80,3 +80,5 @@ wanderingSoldier.evasion,1,rating,enemy,"Enemy evasion: Wandering Soldier (decis
 blightHound.evasion,3,rating,enemy,"Enemy evasion: Blight Hound (decision 11)"
 huskBrute.evasion,0,rating,enemy,"Enemy evasion: Husk Brute (decision 11)"
 fellWarden.evasion,2,rating,enemy,"Enemy evasion: Fell Warden (decision 11)"
+evade.baseEvade,3,rating,evasion,"Base evasion per stack of Evade (DECISIONS section 15, ruling 1). Proposed"
+evade.stacks,0,stacks,evasion,"Preview of the Evade stacks in effect; 0 with no Evade. Runtime input. Proposed"

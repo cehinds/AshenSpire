@@ -325,8 +325,6 @@ Formula, relation and value keys follow the README conventions.
   > Evade tag is unique in the sense that weight class affects efficacy
 - **Where it lands:** a separate PR after TagRefactor reaches `dev`. It is not on
   this branch. `content/source/tagging.csv` is not changed by this decision.
-- **Open, owner to confirm:** the Evasion reading. Either Evasion += stacks × (DEX + 3),
-  or DEX + 3 × stacks.
 - **Ruling 4 (verbatim):**
   > Armor cap on dex works with feats reducing this penalty
   - Closes the weight-class question. Evade's weight-class effect reuses the armour
@@ -336,6 +334,11 @@ Formula, relation and value keys follow the README conventions.
   - New open item for the Evade PR: which feats reduce the penalty, and by how much.
     No such feat exists in `content/source/nodes.csv` on dev, so the owner must name
     them.
+- **Ruling 5 (verbatim):**
+  > Base evasion x stacks + min( dex, amor dex cap) + other bonuses that add evasion such ass evasion stance
+  - Resolves the stacks question: Evasion = baseEvade × stacks + min(DEX, armourDexCap) + other evasion bonuses (for example the evasion stance). baseEvade = 3, from ruling 1's "base +3 per stack".
+  - Recorded as `evade.evasion` (proposed) in `docs/tag-model/tables/formulas.csv`, using `evade.baseEvade` (3) and `evade.stacks` (preview 0) in `values.csv`, both proposed. `evasion.rating` is not changed.
+  - Open for the owner, not resolved here. Differences from the approved `evasion.rating` (armorBase + min(max(DEX−1,0), cap) + shield + card bonus): (a) the DEX term here has no −1; (b) there is no armour base term; (c) the shield term is not listed, and the card bonus is used as "other bonuses". The stance bonus has no variable yet.
 - **Cross-references for the weight-class question:**
   - Evasion rating formula, `docs/tag-model/tables/formulas.csv` `evasion.rating`:
     `armor.evasionBase` plus DEX capped by `armor.dexCap`. Per the owner note, the caps
