@@ -55,9 +55,9 @@ test('a discard chosen outside a reaction starts a new root action in solo and c
 test('a discard chosen while a reaction is paused stays inside the reaction action', () => {
   const results = [false, true].map(coop => {
     const { combat, enemy, play, discard } = setup(coop);
-    enemy.combatStance = { camp: 'physical', maneuver: 'counter', reach: 'contact', targeting: 'single' };
+    enemy.combatStance = { camp: 'physical', maneuver: 'counter', range: 'melee', targeting: 'single' };
     armCombatCounter(combat, enemy, { moveId: 'returnCarrier',
-      tags: ['camp:physical', 'maneuver:counter', 'reach:contact', 'targeting:single'],
+      tags: ['camp:physical', 'maneuver:counter', 'range:melee', 'targeting:single'],
       combatProfile: { ...enemy.combatStance, damageType: 'blunt' } }, { payload: { hp: 1, poise: 0, ward: 0 } });
     play('strike', enemy.id);
     const offer = combat.pendingReaction;

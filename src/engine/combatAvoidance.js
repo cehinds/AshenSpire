@@ -48,7 +48,7 @@ export function evadeRollPreview(ctx, entity, profile, incomingDamage, { evadeBo
     + Math.floor(finite(attrs.intelligence) / 10) + finite(prepared?.bonus) + finite(entity?.evadeBonus)
     + finite(evadeBonus) - penalty;
   const difficulty = cfg.baseDC + Math.max(0, finite(incomingDamage)) + finite(profile?.difficultyBonus)
-    + (profile?.targeting === 'area' ? cfg.areaDifficulty[profile.reach] || 0 : 0);
+    + (profile?.targeting === 'area' ? cfg.areaDifficulty[profile.range] || 0 : 0);
   const eligible = !!prepared?.charges && !evadeDisabled && !trait(profile, 'unavoidable') && profile?.dodgeable !== false
     && (!prepared.whileStatus || entity.statuses?.[prepared.whileStatus]?.stacks > 0);
   let successes = 0;
@@ -62,11 +62,11 @@ export function evadeRollPreview(ctx, entity, profile, incomingDamage, { evadeBo
 export function distancePreview(ctx, entity, incomingProfile) {
   const cfg = (ctx?.combatExpansionRules?.matchups || ctx?.combatExpansionMatchupRules || combatExpansionMatchups).distance;
   const stance = entity?.combatStance;
-  const position = stance?.reach;
-  const eligible = stance?.maneuver === 'ranged' && incomingProfile?.reach === 'contact'
+  const position = stance?.range;
+  const eligible = stance?.maneuver === 'ranged' && incomingProfile?.range === 'melee'
     && !trait(incomingProfile, 'closing') && !trait(incomingProfile, 'adequateReach')
     && !trait(incomingProfile, 'unavoidable');
-  const base = position === 'far' ? cfg.farChance : position === 'near' ? cfg.nearChance : 0;
+  const base = position === 'ranged' ? cfg.rangedChance : position === 'reach' ? cfg.reachChance : 0;
   const baseChance = eligible ? Math.max(0, Math.min(cfg.maximumBaseChance, base + finite(entity.distanceAvoidanceBonus))) : 0;
   const flags = { advantage: entity?.distanceAdvantage, disadvantage: entity?.distanceDisadvantage };
   return { eligible: eligible && baseChance > 0, baseChance, chance: effectiveChance(baseChance, flags), flags };
@@ -81,7 +81,7 @@ export function previewAvoidance(ctx, entity, profile, incomingDamage, options =
   }
   const prevention = ctx?.combatExpansionVersion === 2 && incomingDamage > 0
     ? entity?.statuses?.invulnerability?.stacks > 0 ? 'invulnerability'
-      : entity?.statuses?.decoy?.stacks > 0 && profile?.targeting === 'single' && ['near', 'far'].includes(profile?.reach) ? 'decoy' : null
+      : entity?.statuses?.decoy?.stacks > 0 && profile?.targeting === 'single' && ['reach', 'ranged'].includes(profile?.range) ? 'decoy' : null
     : null;
   return { distance, evade, prevention, chance: prevention ? 100 : distance.chance + (1 - distance.chance / 100) * evade.chance };
 }
