@@ -13,14 +13,14 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1883"
   },
   {
-    "id": "pr-1932",
+    "id": "pr-1927",
     "date": "2026-10-13",
     "group": "2026-10-13",
-    "summary": "The balance report reads Gilded Knight correctly again",
-    "detail": "Nothing changes in the game. Gilded Knight's damage per turn no longer reads as \"not a number\", because its guard reaction is no longer counted as an attack. The balance document is regenerated to match the current game.",
+    "summary": "Test shards that run out of time say so",
+    "detail": "Nothing changes in the game. A test shard stopped by its 15-minute limit now reports that it was stopped, instead of printing NaN test counts.",
     "build": "0.7.1.1465",
-    "pullRequest": 1932,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1932"
+    "pullRequest": 1927,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1927"
   },
   {
     "id": "pr-1936",
@@ -61,6 +61,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1463",
     "pullRequest": 1934,
     "url": "https://github.com/cehinds/AshenSpire/pull/1934"
+  },
+  {
+    "id": "pr-1932",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "The balance report reads Gilded Knight correctly again",
+    "detail": "Nothing changes in the game. Gilded Knight's damage per turn no longer reads as \"not a number\", because its guard reaction is no longer counted as an attack. The balance document is regenerated to match the current game.",
+    "build": "0.7.1.1459",
+    "pullRequest": 1932,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1932"
   },
   {
     "id": "pr-1896",
