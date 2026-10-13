@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "title": "Attributes Impact Heading",
+  "canvas": {
+    "width": 314,
+    "height": 40,
+    "background": "transparent"
+  },
+  "defaultState": "attributes",
+  "states": [
+    {
+      "id": "attributes",
+      "name": "Attributes"
+    }
+  ],
+  "assets": {},
+  "nodes": [
+    {
+      "id": "attribute-impact-title",
+      "name": "Attribute Impact Title",
+      "type": "text",
+      "parent": "attributes-impact-heading",
+      "x": 0,
+      "y": 0,
+      "width": 314,
+      "height": 40,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "text": "Your foundation",
+      "fontSize": 25,
+      "fontFamily": "Georgia",
+      "fill": "#d7b45f",
+      "lineHeight": 1.3
+    },
+    {
+      "id": "attributes-impact-heading",
+      "name": "Attributes Impact Heading",
+      "type": "group",
+      "parent": null,
+      "x": 0,
+      "y": 0,
+      "width": 314,
+      "height": 40,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "fill": "none"
+    }
+  ],
+  "metadata": {
+    "componentSource": "attributes-impact-heading",
+    "sourceState": "attributes",
+    "designOnly": true
+  }
+}

@@ -27,7 +27,8 @@ export const SCHOOL_SIGILS = Object.freeze({
 export function cardSigilIdentity(primaryType, profile) {
   const action = primaryType.toLowerCase();
   if (!Object.hasOwn(ACTION_SIGILS, action)) throw new Error(`Unknown primary card type: ${primaryType}`);
-  const school = profile.school || null;
+  // Earth is an alteration school (see the Alteration sigil's help); it has no mark of its own.
+  const school = profile.school === 'earth' ? 'alteration' : profile.school || null;
   if (school && !Object.hasOwn(SCHOOL_SIGILS, school)) throw new Error(`Unknown card school: ${school}`);
   return Object.freeze({ action, school });
 }

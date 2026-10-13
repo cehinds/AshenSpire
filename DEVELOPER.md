@@ -1193,14 +1193,23 @@ itself; read them there.
 
 ### Character-creation component catalog
 
-Open `?shot=components` on a served checkout to see the Class, Character,
-Starting Equip, and Seed sections together as interactive reference specimens.
+Open `?shot=components` on a served checkout to see the Class, Attributes,
+Keepsake, Equipment, Feats, Spells, and Review sections as interactive reference specimens.
 The catalog moves the production panels into labeled folios; it does not keep a
 second copy of their markup or content. Select **Assign Points** to inspect its
 live dialog and refusal states. `node tools/character-creation-check.mjs`
 drives the player flow's stats step at desktop and 390×844 mobile sizes:
 Standard and Assign points for every class, with the Hand and Draw chips
 checked against the hand a solo fight deals. It does not visit the catalog.
+
+Every folio has a direct `#folio-<component-id>` link. The new page heading,
+panel, choice tile, material/trim/body layers, navigation, and canonical feat
+browser are mounted through `src/ui/catalog/creationSpecimens.js` using their
+production renderers. Feat inspection grants nothing with the current allowance
+of zero. `node tools/character-creation-components-qa.mjs --out /tmp/creation-components`
+captures each registered specimen at desktop and phone widths and checks DOM
+identity, layout fit, runtime errors, and interaction state. Add `--artifact`
+to check the frozen `build/download/AshenSpire.html` build after integration.
 
 ## Shared Load / Quit confirmation
 

@@ -387,6 +387,12 @@ export const propertyRules = [
     "textTemplate": ""
   },
   {
+    "tag": "oathKept",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": ""
+  },
+  {
     "tag": "ashenGrip",
     "requires": "",
     "excludes": "",

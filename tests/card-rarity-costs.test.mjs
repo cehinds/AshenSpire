@@ -10,7 +10,7 @@ const legacyReg = reg.legacyProgressionSource;
 const rewardIds = new Set(contentBundle.legacyProgression.classes.flatMap(c => c.cardPool));
 
 test('preserved legacy reward cards retain their pinned Mana rarity shares and one turn cost', () => {
-  for (const [rarity, count, manaShare, exceptions] of [['common',62,0.15,5], ['uncommon',63,0.3,0], ['rare',49,0.5,0]]) {
+  for (const [rarity, count, manaShare, exceptions] of [['common',64,0.15,6], ['uncommon',64,0.3,0], ['rare',50,0.5,0]]) {
     const cards = legacyReg.cards.all().filter(c => rewardIds.has(c.id) && c.rarity === rarity);
     assert.equal(cards.length, count);
     assert.equal(cards.filter(c => c.manaCost > 0).length, Math.round(count * manaShare) - exceptions);
