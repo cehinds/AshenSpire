@@ -6320,10 +6320,10 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 @media(max-width:600px) { .customize.cc-design-workspace .cz-railed[data-cat-nav="selector"] { display:grid!important; } }
 /* Spells is now its own page rather than an equipment fold. Match its real
    selector hook and keep card rules readable instead of the old tiny grid. */
-.cc-design-workspace #cz-spell-choices { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); justify-items:center; gap:48px 20px; padding:58px 6px 14px; }
+.cc-design-workspace #cz-spell-choices { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,180px)); justify-items:stretch; justify-content:start; align-content:start; gap:48px 20px; padding:58px 6px 14px; }
 .cc-design-workspace #cz-spell-choices > .cc-ability-choice { width:100%; }
-@media(max-width:600px) { .cc-design-workspace #cz-spell-choices { grid-template-columns:minmax(0,1fr); gap:48px; } }
-.cc-design-workspace #cz-spell-choices { grid-auto-flow:row; grid-auto-columns:minmax(0,1fr); overflow:visible; scroll-snap-type:none; }
+@media(max-width:600px) { .cc-design-workspace #cz-spell-choices { grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); justify-items:center; gap:48px; } }
+.cc-design-workspace #cz-spell-choices { grid-auto-flow:row; grid-auto-columns:auto; overflow:visible; scroll-snap-type:none; }
 .cc-design-workspace #cz-spell-choices > .cc-ability-choice { grid-column:auto; grid-row:auto; min-width:0; }
 .cc-design-workspace .cz-actions button[aria-disabled="true"] { background:var(--bg-raise,#1b1710); color:var(--cc-copy-muted); border-color:var(--line,#786443); animation:none; }
 
