@@ -148,3 +148,7 @@ test('a charge-added buildup row from the live preview reaches the face, aligned
   assert.ok(all.some(line => /Frost 3/.test(line)), JSON.stringify(all));
   assert.match(all[0], /4 Poise damage/);
 });
+
+test('a nested before-play status check says "before this card"', () => {
+  assert.ok(text('progression-eclipse-lance').some(line => /^If .* before this card: /.test(line)), JSON.stringify(text('progression-eclipse-lance')));
+});

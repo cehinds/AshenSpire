@@ -237,6 +237,8 @@ function buildLines(def, preview, registries) {
   // A stack threshold ("at least 3 Venom") must reach the label; nested ones keep the authored text.
   const thresholdInside = pred => !!pred && typeof pred === 'object'
     && ((pred.p === 'hasStatus' && pred.atLeast !== undefined) || [pred.pred, ...(pred.preds || [])].some(thresholdInside));
+  const statusSnapshotInside = pred => !!pred && typeof pred === 'object'
+    && ((pred.p === 'hasStatus' && pred.snapshot === 'beforePlay') || [pred.pred, ...(pred.preds || [])].some(statusSnapshotInside));
   const prefixFor = predicate => {
     if (predicate.p === 'hasStatus') {
       const extra = Object.keys(predicate).filter(key => !['p', 'of', 'status', 'atLeast'].includes(key));
@@ -251,7 +253,8 @@ function buildLines(def, preview, registries) {
       && Object.keys(predicate.pred).every(key => ['p', 'of', 'status'].includes(key))) return `No ${esc(title(predicate.pred.status))}: `;
     const text = condition(predicate);
     if (!text) fail();
-    return `If ${esc(text)}: `;
+    // condition() drops a nested status check's before-play snapshot; say it, so a card never seems to enable its own bonus.
+    return `If ${esc(text)}${statusSnapshotInside(predicate) ? ' before this card' : ''}: `;
   };
 
   const unconditional = [], groups = new Map();
