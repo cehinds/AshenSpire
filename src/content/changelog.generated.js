@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-13",
     "summary": "Pull requests stay mergeable after each build stamp",
     "detail": "After every build stamp on dev, a bot merges dev into each open pull request that only conflicts in the build number and changelog files, moves its changelog entry to the current build, and reruns its checks. Pull requests with any other conflict get one comment asking a person to merge dev.",
-    "build": "0.7.1.1499",
+    "build": "0.7.1.1501",
     "pullRequest": 1937,
     "url": "https://github.com/cehinds/AshenSpire/pull/1937"
   },
