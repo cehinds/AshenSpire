@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1943",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "The Workbench opens from a link on the project site",
+    "detail": "Development-process change only, nothing in the game changes. The Workbench is now published at https://cehinds.github.io/AshenSpire/workbench/ with every studio, the game preview running from source, and the art. It shows a snapshot of dev; edits stay in your browser, and the banner at the top downloads or discards them. Saving to the project, builds and live reload still need the Workbench on your computer.",
+    "build": "0.7.1.1465",
+    "pullRequest": 1943,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1943"
+  },
+  {
     "id": "pr-1936",
     "date": "2026-10-13",
     "group": "2026-10-13",
