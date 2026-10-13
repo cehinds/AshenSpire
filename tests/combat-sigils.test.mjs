@@ -186,3 +186,12 @@ test('a selected tag symbol explains itself with its name, count and blurb from 
   const tooltip = (await import('node:fs')).readFileSync(new URL('../src/ui/components/tooltip.js', import.meta.url), 'utf8');
   assert.match(tooltip, /\.card-tag-symbol\[data-tip\]/, 'the shared explain handler takes tag symbols');
 });
+
+test('a press on a tag symbol through the hand lane explains it and never reaches the card', async () => {
+  const tooltip = (await import('node:fs')).readFileSync(new URL('../src/ui/components/tooltip.js', import.meta.url), 'utf8');
+  // The lane (.hand-hit-lane) covers the card; the redirect runs in capture on document,
+  // stops the press from reaching the card's own handlers, and re-dispatches the click to the symbol.
+  assert.match(tooltip, /const symbolUnderLane = ev => \{[\s\S]*?closest\?\.\('\.hand-hit-lane'\)/);
+  assert.match(tooltip, /for \(const type of \['pointerdown', 'pointerup', 'mousedown', 'mouseup'\]\)[\s\S]*?ev\.stopPropagation\(\)/);
+  assert.match(tooltip, /ev\.stopPropagation\(\); ev\.preventDefault\(\);\s*sym\.dispatchEvent\(new MouseEvent\('click'/);
+});

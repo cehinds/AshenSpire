@@ -649,6 +649,27 @@ function wireTitles() {
   };
   document.addEventListener('click', explain, true);
   document.addEventListener('keydown', explain, true);
+  // The hand's hit lane covers a whole card, and a tag symbol's rail sits under it in the
+  // card's stacking context. A press on a symbol through the lane explains the symbol and
+  // never reaches the card (no select, no play); the click is redirected to the symbol.
+  const symbolUnderLane = ev => {
+    const lane = ev.target?.closest?.('.hand-hit-lane');
+    if (!lane || !lane.parentElement) return null;
+    for (const sym of lane.parentElement.querySelectorAll('.card-tag-symbol[data-tip]')) {
+      const r = sym.getBoundingClientRect();
+      if (ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom) return sym;
+    }
+    return null;
+  };
+  for (const type of ['pointerdown', 'pointerup', 'mousedown', 'mouseup']) {
+    document.addEventListener(type, ev => { if (symbolUnderLane(ev)) ev.stopPropagation(); }, true);
+  }
+  document.addEventListener('click', ev => {
+    const sym = symbolUnderLane(ev);
+    if (!sym) return;
+    ev.stopPropagation(); ev.preventDefault();
+    sym.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: ev.clientX, clientY: ev.clientY }));
+  }, true);
   document.addEventListener('pointerdown', ev => {
     if (!panels.some(p => p?.contains(ev.target)) && !state[0].target?.contains(ev.target) && !selectedControl?.contains(ev.target)) {
       clearControlSelection(); hideTooltip();
