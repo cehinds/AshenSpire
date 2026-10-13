@@ -90,6 +90,9 @@ describe('workbench static build', () => {
   it('moves the game module paths under the base', () => {
     const render = readFileSync(path.join(out, 'game', 'workbench', 'modules', 'entities', 'render.html'), 'utf8');
     assert.ok(render.includes(`${BASE}game/workbench/modules/`));
+    // Its <base href="/"> would send every relative path to the site root.
+    assert.ok(render.includes(`<base href="${BASE}game/">`));
+    assert.ok(!render.includes('../../../'), 'the way back to the root is dropped');
   });
 
   it('mirrors the root preview pages with their absolute paths moved under the base', () => {

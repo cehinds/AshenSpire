@@ -82,7 +82,10 @@ async function copyTree(src, dst, { textRe = null, rewrite = null } = {}) {
     return;
   }
   await fs.mkdir(path.dirname(dst), { recursive: true });
-  if (rewrite && textRe && textRe.test(src)) await fs.writeFile(dst, (await fs.readFile(src, 'utf8')).replace(rewrite.re, rewrite.to));
+  if (rewrite && textRe && textRe.test(src)) {
+    const text = (await fs.readFile(src, 'utf8')).replace(rewrite.re, rewrite.to);
+    await fs.writeFile(dst, rewrite.after ? rewrite.after(text) : text);
+  }
   else await fs.copyFile(src, dst);
 }
 
@@ -199,7 +202,13 @@ async function main() {
   }
 
   // The game runtime that tools/serve.mjs serves from the checkout.
-  const gameRewrite = { re: GAME_REWRITE, to: `$1${base}game/$2/` };
+  // A render page with <base href="/"> resolves every relative path from the game root, so
+  // its base moves to the mirror's root and its ../../../ (the way back to the root from
+  // workbench/modules/<module>/) is dropped.
+  const gameRewrite = {
+    re: GAME_REWRITE, to: `$1${base}game/$2/`,
+    after: (text) => (text.includes('<base href="/">') ? text.replace('<base href="/">', `<base href="${base}game/">`).replace(/(["'])(?:\.\.\/){3}/g, '$1') : text),
+  };
   const game = path.join(out, 'game');
   await copyTree(path.join(REPO, 'index.html'), path.join(game, 'index.html'), { textRe: GAME_TEXT, rewrite: gameRewrite });
   // The root preview pages the Entity Browser and Library open from the game server.
