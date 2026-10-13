@@ -21,6 +21,7 @@ import { offlinePlay } from '../../content/offlinePlay.js';
 import { openDebugLog } from '../debuglog.js';
 import { esc, attachTooltip } from '../components/tooltip.js';
 import { ART_QUALITY_KEY, ART_AUTO, ART_QUALITY_CHOICES, LEGACY_ART_QUALITY, wantsHighRes, artQualityStatus, pickHighResFolder, canPickFolder } from '../highResArt.js';
+import { CARD_ART_STYLE_KEY, CARD_ART_SIMPLE, CARD_ART_STYLE_CHOICES } from '../cardArtStyle.js';
 import { tierStatus, tierChoiceDisabled, retryOffered, retryBuiltInArt, retryRunning } from '../artTier.js';
 import { setTabRing, hasTabRing } from '../input.js';
 import { renderAboutSection, renderChangelogSection } from './about.js';
@@ -521,6 +522,9 @@ const ROWS = [
     choices: ART_QUALITY_CHOICES, legacyChoices: LEGACY_ART_QUALITY, choiceDisabled: tierChoiceDisabled, describedBy: 'set-artQuality-tier',
     label: t('settings.row.artQuality'), applied: artQualityHtml,
     note: tFull('settings.row.artQuality') },
+  { cat: 'Display', key: CARD_ART_STYLE_KEY, type: 'choice', def: CARD_ART_SIMPLE,
+    choices: CARD_ART_STYLE_CHOICES, label: t('settings.row.cardArtStyle'),
+    note: tFull('settings.row.cardArtStyle') },
   { cat: 'Display', key: 'uiScale', type: 'choice', def: 'Auto',
     choices: ['Auto', 'S', 'M', 'L', 'XL'], label: t('settings.row.uiScale'), applied: appliedHtml,
     note: tFull('settings.row.uiScale') },

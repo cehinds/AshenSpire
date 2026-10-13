@@ -53,17 +53,17 @@ check(rogue?.abilityCard === 'prepare' && rogueCards.some((card) => card.id === 
 const legacyRogue = bundle.legacyProgression.classes.find(row => row.id === 'rogue');
 const legacyRewards = legacyRogue.cardPool.map(id => bundle.legacyProgression.cards.find(card => card.id === id)).filter(Boolean);
 const addedFamilies = cardFamilies.filter(row => row.classId === 'rogue');
-check(legacyRogue.cardPool.length === 43 && legacyRewards.length === 43,
-  'preserved Rogue reward pool has exactly 43 reachable cards');
+check(legacyRogue.cardPool.length === 47 && legacyRewards.length === 47,
+  'preserved Rogue reward pool has exactly 47 reachable cards (the original 43 plus the four poison cards)');
 check(JSON.stringify(legacyRewards.reduce((out, card) => ({ ...out, [card.rarity]: (out[card.rarity] || 0) + 1 }), {}))
-  === JSON.stringify({ common: 16, uncommon: 15, rare: 12 }),
-  'preserved Rogue reward rarities are 16 common / 15 uncommon / 12 rare');
+  === JSON.stringify({ common: 18, uncommon: 16, rare: 13 }),
+  'preserved Rogue reward rarities are 18 common / 16 uncommon / 13 rare');
 const expectedPool = [...legacyRogue.cardPool, ...addedFamilies.map(row => row.id)].sort();
-check(addedFamilies.length === 10 && JSON.stringify([...rogue.cardPool].sort()) === JSON.stringify(expectedPool) && rewardCards.length === 53,
-  'expanded Rogue reward pool has exactly the legacy 43 plus ten authored families');
+check(addedFamilies.length === 10 && JSON.stringify([...rogue.cardPool].sort()) === JSON.stringify(expectedPool) && rewardCards.length === 57,
+  'expanded Rogue reward pool has exactly the legacy 47 plus ten authored families');
 check(JSON.stringify(rewardCards.reduce((out, card) => ({ ...out, [card.rarity]: (out[card.rarity] || 0) + 1 }), {}))
-  === JSON.stringify({ common: 19, uncommon: 19, rare: 15 }),
-  'expanded Rogue reward rarities are 19 common / 19 uncommon / 15 rare');
+  === JSON.stringify({ common: 21, uncommon: 20, rare: 16 }),
+  'expanded Rogue reward rarities are 21 common / 20 uncommon / 16 rare');
 check(rogueCards.every((card) => card.textTemplate && (card.gradeProfiles
   ? card.gradeProfiles.length === 6 && card.gradeProfiles.every((profile, rank) => profile.rank === rank && profile.textTemplate && profile.effects.length)
   : card.upgrade && Object.keys(card.upgrade).length)),

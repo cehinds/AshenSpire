@@ -1,5 +1,6 @@
 // Saved tactical tuning is authoritative for the rest of that fight.
 import { combatMatchups } from '../content/combatMatchups.js';
+import { RANGES } from './combatRanges.js';
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const text = value => typeof value === 'string' && value.length > 0;
 const nonNegative = value => Number.isFinite(value) && value >= 0;
@@ -28,7 +29,7 @@ export function combatMatchupRulesProblems(rules, path = 'combatMatchupRules') {
   const list = (value, at) => {
     if (!Array.isArray(value) || value.some(item => !text(item)) || new Set(value).size !== value.length) problems.push(`${at} must contain unique non-empty strings`);
   };
-  object(rules, path, ['counter', 'smash', 'attack', 'damageRiders', 'damageAliases', 'cleanseStatuses']);
+  object(rules, path, ['counter', 'smash', 'attack', 'damageRiders', 'tagRiders', 'damageAliases', 'cleanseStatuses']);
   const counterNumbers = ['incomingMultiplier', 'retaliationMultiplier', 'retaliationFlat', 'poiseMultiplier', 'guard', 'ward', 'defaultDamage'];
   if (object(rules.counter, `${path}.counter`, [...counterNumbers, 'meleeBypassDamageTypes', 'meleeIncomingManeuvers'])) {
     for (const key of counterNumbers) numeric(rules.counter[key], `${path}.counter.${key}`, !key.endsWith('Multiplier'));
@@ -41,9 +42,11 @@ export function combatMatchupRulesProblems(rules, path = 'combatMatchupRules') {
   }
   if (object(rules.attack, `${path}.attack`, ['preparedPoiseMultiplier'])) numeric(rules.attack.preparedPoiseMultiplier, `${path}.attack.preparedPoiseMultiplier`);
   if (!record(rules.damageRiders)) problems.push(`${path}.damageRiders must be an object`);
-  else for (const [type, rider] of Object.entries(rules.damageRiders)) {
-    const at = `${path}.damageRiders.${type}`;
-    if (!text(type)) problems.push(`${at} requires a damage type`);
+  // Technique riders (keyed by card tag) are optional: older frozen tables have none.
+  if (rules.tagRiders !== undefined && !record(rules.tagRiders)) problems.push(`${path}.tagRiders must be an object`);
+  for (const [group, label] of [['damageRiders', 'damage type'], ['tagRiders', 'card tag']]) if (record(rules[group])) for (const [type, rider] of Object.entries(rules[group])) {
+    const at = `${path}.${group}.${type}`;
+    if (!text(type)) problems.push(`${at} requires a ${label}`);
     if (!object(rider, at, ['status', 'stacks', 'requiresHpLoss', 'poise', 'guardBypass', 'wardDrain', 'cleanse'])) continue;
     for (const key of ['stacks', 'poise', 'guardBypass', 'wardDrain', 'cleanse']) if (rider[key] !== undefined) numeric(rider[key], `${at}.${key}`, true);
     if (rider.status !== undefined && !text(rider.status)) problems.push(`${at}.status must be a non-empty string`);
@@ -68,10 +71,9 @@ export function combatCounterProblems(counter, path, version = 1) {
 }
 
 const CAMPS = ['physical', 'spell'];
-const REACHES = ['contact', 'near', 'far'];
 const TARGETING = ['single', 'area'];
 const MANEUVERS = ['attack', 'defend', 'counter', 'sweep', 'ranged', 'smash', 'casting'];
-const SCHOOLS = ['frost', 'fire', 'lightning', 'force', 'alteration', 'illusion', 'divine', 'decay'];
+const SCHOOLS = ['frost', 'fire', 'lightning', 'force', 'alteration', 'illusion', 'divine', 'decay', 'earth'];
 
 function stringsProblems(value, path, allowed = null, required = false) {
   if (value === undefined && !required) return [];
@@ -82,10 +84,10 @@ function stringsProblems(value, path, allowed = null, required = false) {
 
 export function counterCoverageProblems(coverage, path = 'counterCoverage') {
   if (!record(coverage)) return [`${path} must be an object`];
-  const allowed = ['camps', 'schools', 'reaches', 'targeting', 'maneuvers', 'effects', 'requiredTraits', 'excludedTraits'];
+  const allowed = ['camps', 'schools', 'ranges', 'targeting', 'maneuvers', 'effects', 'requiredTraits', 'excludedTraits'];
   const problems = Object.keys(coverage).filter(key => !allowed.includes(key)).map(key => `${path}.${key} is unknown`);
   for (const [key, values, required] of [['camps', CAMPS, true], ['schools', SCHOOLS, false],
-    ['reaches', REACHES, true], ['targeting', TARGETING, true], ['maneuvers', MANEUVERS, false],
+    ['ranges', RANGES, true], ['targeting', TARGETING, true], ['maneuvers', MANEUVERS, false],
     ['effects', ['damage', 'status', 'support'], true], ['requiredTraits', null, false], ['excludedTraits', null, false]]) {
     problems.push(...stringsProblems(coverage[key], `${path}.${key}`, values, required));
   }
@@ -108,10 +110,37 @@ export function expansionCounterProblems(counter, path = 'combatCounter') {
     for (const key of ['hp', 'poise', 'ward']) if (!whole(counter.payload[key])) problems.push(`${path}.payload.${key} must be a non-negative whole number`);
     if (counter.payload.smashPoiseBonus !== undefined && !whole(counter.payload.smashPoiseBonus)) problems.push(`${path}.payload.smashPoiseBonus must be a non-negative whole number`);
     if (counter.payload.hpAgainstNonCaster !== undefined && typeof counter.payload.hpAgainstNonCaster !== 'boolean') problems.push(`${path}.payload.hpAgainstNonCaster must be boolean`);
-    for (const key of Object.keys(counter.payload)) if (!['hp', 'poise', 'ward', 'hpAgainstNonCaster', 'smashPoiseBonus'].includes(key)) problems.push(`${path}.payload.${key} is unknown`);
+    for (const key of ['hpBase', 'hpRating', 'poiseBase']) if (counter.payload[key] !== undefined && !whole(counter.payload[key])) problems.push(`${path}.payload.${key} must be a non-negative whole number`);
+    for (const key of Object.keys(counter.payload)) if (!['hp', 'poise', 'ward', 'hpAgainstNonCaster', 'smashPoiseBonus', 'hpBase', 'hpRating', 'poiseBase'].includes(key)) problems.push(`${path}.payload.${key} is unknown`);
   }
   if (counter.schoolEffect !== undefined && !['hp', 'poise', 'ward'].includes(counter.schoolEffect)) problems.push(`${path}.schoolEffect must name one return effect`);
   if (!record(counter.carrier) || !record(counter.carrier.combatProfile)) problems.push(`${path}.carrier must preserve its combat profile`);
+  else if (counter.carrier.traitValues !== undefined) problems.push(...traitValuesProblems(counter.carrier.traitValues, `${path}.carrier.traitValues`));
+  return problems;
+}
+
+// Card trait values a saved carrier may hold (combat-card-traits-contract); magnitudes stay small.
+const TRAIT_MAGNITUDE_MAX = 99;
+export function traitValuesProblems(values, path) {
+  if (!record(values)) return [`${path} must be an object`];
+  const problems = [];
+  for (const [key, value] of Object.entries(values)) {
+    if (['reaction', 'counterstrike'].includes(key)) { if (value !== true) problems.push(`${path}.${key} must be true when present`); }
+    else if (['impact', 'flux'].includes(key)) { if (!whole(value) || value > TRAIT_MAGNITUDE_MAX) problems.push(`${path}.${key} must be a whole number from 0 to ${TRAIT_MAGNITUDE_MAX}`); }
+    else problems.push(`${path}.${key} is unknown`);
+  }
+  return problems;
+}
+
+// A trait guard holds at most a doubled card amount plus Impact/Flux, far below this; the cap keeps the meter fill loop finite.
+const TRAIT_GUARD_MAX = 999;
+
+/** Reaction rules v2 Defend trait guard: whole, non-negative Impact Poise and Flux Ward (combat-card-traits-contract). */
+export function combatTraitGuardProblems(guard, path) {
+  if (!record(guard)) return [`${path} must be an object`];
+  const problems = [];
+  for (const key of ['poise', 'ward']) if (!whole(guard[key]) || guard[key] > TRAIT_GUARD_MAX) problems.push(`${path}.${key} must be a whole number from 0 to ${TRAIT_GUARD_MAX}`);
+  for (const key of Object.keys(guard)) if (!['poise', 'ward'].includes(key)) problems.push(`${path}.${key} is unknown`);
   return problems;
 }
 
@@ -121,11 +150,12 @@ export function combatExpansionEntityProblems(entity, path = 'entity') {
   for (const key of ['combatOwnerCycle', 'combatPreparationSerial', 'combatCounterReturnedCycle']) {
     if (entity[key] !== undefined && !whole(entity[key])) problems.push(`${path}.${key} must be a non-negative whole number`);
   }
+  if (entity.combatTraitGuard !== undefined) problems.push(...combatTraitGuardProblems(entity.combatTraitGuard, `${path}.combatTraitGuard`));
   const stance = entity.combatStance;
   if (stance !== undefined) {
     if (!record(stance)) problems.push(`${path}.combatStance must be an object`);
     else {
-      for (const [key, allowed] of [['maneuver', MANEUVERS], ['camp', CAMPS], ['reach', REACHES]]) {
+      for (const [key, allowed] of [['maneuver', MANEUVERS], ['camp', CAMPS], ['range', RANGES]]) {
         if (!allowed.includes(stance[key])) problems.push(`${path}.combatStance.${key} is unsupported`);
       }
       if (stance.school !== undefined && !SCHOOLS.includes(stance.school)) problems.push(`${path}.combatStance.school is unsupported`);
@@ -164,11 +194,11 @@ export function combatExpansionMatchupRulesProblems(rules, path = 'combatExpansi
   numbers('smash', ['defendedMultiplier', 'guardBreakPoiseBonus']);
   numbers('defend', ['sweepMultiplier', 'turnStartProtection']);
   numbers('evade', ['die', 'baseDC']);
-  numbers('distance', ['nearChance', 'farChance', 'maximumBaseChance']);
+  numbers('distance', ['reachChance', 'rangedChance', 'maximumBaseChance']);
   if (rules.evade?.die !== 20) problems.push(`${path}.evade.die must be 20`);
   if (rules.counter?.maxReturnsPerCycle !== 1) problems.push(`${path}.counter.maxReturnsPerCycle must be 1`);
   if (rules.distance?.maximumBaseChance > 50) problems.push(`${path}.distance.maximumBaseChance cannot exceed 50`);
-  for (const [group, keys] of [['armorPenalty', ['light', 'medium', 'heavy']], ['areaDifficulty', REACHES]]) {
+  for (const [group, keys] of [['armorPenalty', ['light', 'medium', 'heavy']], ['areaDifficulty', RANGES]]) {
     for (const key of keys) if (!nonNegative(rules.evade?.[group]?.[key])) problems.push(`${path}.evade.${group}.${key} must be finite and non-negative`);
   }
   if (!record(rules.counter?.defaultCoverage)) problems.push(`${path}.counter.defaultCoverage must be an object`);
@@ -177,25 +207,27 @@ export function combatExpansionMatchupRulesProblems(rules, path = 'combatExpansi
   else for (const [school, match] of Object.entries(rules.counter.schoolMatchups)) {
     if (!SCHOOLS.includes(school) || !record(match)) { problems.push(`${path}.counter.schoolMatchups.${school} is unsupported`); continue; }
     for (const [key, values] of Object.entries(match)) {
-      if (!/^(strong|weak)(Schools|DamageTypes|Reaches|Targeting|Traits)$/.test(key)) problems.push(`${path}.counter.schoolMatchups.${school}.${key} is unknown`);
+      if (!/^(strong|weak)(Schools|DamageTypes|Ranges|Targeting|Traits)$/.test(key)) problems.push(`${path}.counter.schoolMatchups.${school}.${key} is unknown`);
       problems.push(...stringsProblems(values, `${path}.counter.schoolMatchups.${school}.${key}`));
     }
   }
   // Normalize only the validator view. Version 2 authors gauge pressure; its
   // actual data never inherits version 1's direct active-stack applications.
-  const riders = {};
+  const normalized = { damageRiders: {}, tagRiders: {} };
   if (!record(rules.damageRiders)) problems.push(`${path}.damageRiders must be an object`);
-  else for (const [type, rider] of Object.entries(rules.damageRiders)) {
-    if (!record(rider)) { problems.push(`${path}.damageRiders.${type} must be an object`); continue; }
+  if (rules.tagRiders !== undefined && !record(rules.tagRiders)) problems.push(`${path}.tagRiders must be an object`);
+  for (const group of ['damageRiders', 'tagRiders']) if (record(rules[group])) for (const [type, rider] of Object.entries(rules[group])) {
+    if (!record(rider)) { problems.push(`${path}.${group}.${type} must be an object`); continue; }
     const { pressure, recoveryProfile, ...rest } = rider;
-    if (rider.status !== undefined && (!whole(pressure) || pressure === 0)) problems.push(`${path}.damageRiders.${type}.pressure must be a positive whole number`);
-    if (rider.status !== undefined && !['bodily', 'elemental', 'mental', 'curse'].includes(recoveryProfile)) problems.push(`${path}.damageRiders.${type}.recoveryProfile is unsupported`);
-    if (rider.stacks !== undefined) problems.push(`${path}.damageRiders.${type}.stacks must be authored as pressure`);
-    riders[type] = { ...rest, ...(rider.status ? { stacks: pressure } : {}) };
+    if (rider.status !== undefined && (!whole(pressure) || pressure === 0)) problems.push(`${path}.${group}.${type}.pressure must be a positive whole number`);
+    if (rider.status !== undefined && !['bodily', 'elemental', 'mental', 'curse'].includes(recoveryProfile)) problems.push(`${path}.${group}.${type}.recoveryProfile is unsupported`);
+    if (rider.stacks !== undefined) problems.push(`${path}.${group}.${type}.stacks must be authored as pressure`);
+    normalized[group][type] = { ...rest, ...(rider.status ? { stacks: pressure } : {}) };
   }
-  const riderRules = { ...combatMatchups,
-    damageRiders: riders, damageAliases: rules.damageAliases, cleanseStatuses: rules.cleanseStatuses };
-  problems.push(...combatMatchupRulesProblems(riderRules, path).filter(problem => /damageRiders|damageAliases|cleanseStatuses/.test(problem)));
+  const riderRules = { ...combatMatchups, damageRiders: normalized.damageRiders,
+    ...(rules.tagRiders !== undefined ? { tagRiders: normalized.tagRiders } : {}), damageAliases: rules.damageAliases, cleanseStatuses: rules.cleanseStatuses };
+  if (rules.tagRiders === undefined) delete riderRules.tagRiders;
+  problems.push(...combatMatchupRulesProblems(riderRules, path).filter(problem => /damageRiders|tagRiders|damageAliases|cleanseStatuses/.test(problem)));
   problems.push(...stringsProblems(rules.reactionLocks, `${path}.reactionLocks`));
   return problems;
 }

@@ -15,6 +15,9 @@ import { launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
 // THE ORDERING RULE HAS ONE HOME, AND IT IS NOT HERE. See stampKey below.
 import { versionTuple, compareVersions } from './buildversion.mjs';
+// The landing rule and the event's pull request number, from the modules that own them.
+import { pullFromEnv } from './receipts.mjs';
+import { landedSince } from './build-stamp.mjs';
 
 const SCRIPT = fileURLToPath(import.meta.url);
 const SCRIPT_ROOT = resolve(dirname(SCRIPT), '..');
@@ -661,7 +664,7 @@ export function flattenInline(text, where, labels = new Set()) {
 // is what this projector enforces; the triple is the release the build wore.
 // Ordinals are receipts of real builds, so: date groups run newest-first; a
 // build cited by an older group is never newer than one a newer group cites
-// (ties allowed — docs/evidence merges share an ordinal); nothing cites a build
+// (ties allowed — evidence merges share an ordinal); nothing cites a build
 // that does not exist yet (`currentOrdinal`, from buildordinal.json).
 // The pre-release tag is exactly `-<word>.<n>` (docs/versioning.md: `rc.<n>`),
 // so the ordinal is always the segment AFTER it: `0.5.0-rc.1.1905` parses as
@@ -769,9 +772,12 @@ function headingDate(group) {
   return group.match(RELEASE_HEADING)?.[2] ?? group.match(/^\d{4}-\d{2}-\d{2}/)?.[0];
 }
 
-export function parseChangelog(markdown, { currentOrdinal, currentRelease = null, projecting = false } = {}) {
+export function parseChangelog(markdown, { currentOrdinal, currentRelease = null, projecting = false, pending = [] } = {}) {
   const entries = [];
   const receipts = [];
+  // A pending receipt (--pending) is parsed and shape-checked here like any other,
+  // but its stamp takes no part in the cross-group order or the ceiling below.
+  const pendingSet = new Set(pending.map(String));
   const labels = linkDefinitionLabels(markdown);
   let group = '';
   for (const line of markdown.split(/\r?\n/)) {
@@ -809,6 +815,7 @@ export function parseChangelog(markdown, { currentOrdinal, currentRelease = null
       ordinal: stamp ? Number(stamp[2]) : null,
       release: stamp ? stamp[1] : null,
       key,
+      pending: pendingSet.has(String(pullRequest)),
     });
     entries.push({
       id: `pr-${pullRequest}`,
@@ -831,7 +838,7 @@ export function parseChangelog(markdown, { currentOrdinal, currentRelease = null
     if (!groups.length || groups[groups.length - 1].group !== r.group) {
       groups.push({ group: r.group, date: r.date, stamps: [] });
     }
-    if (r.key !== null) groups[groups.length - 1].stamps.push(r);
+    if (r.key !== null && !r.pending) groups[groups.length - 1].stamps.push(r);
   }
   for (let i = 1; i < groups.length; i++) {
     const newer = groups[i - 1], older = groups[i];
@@ -898,7 +905,7 @@ export function parseChangelog(markdown, { currentOrdinal, currentRelease = null
       ? release === currentRelease
       : compareStamps(stampKey(release, 0), currentKey) === 0);
     for (const r of receipts) {
-      if (r.ordinal === null) continue;
+      if (r.ordinal === null || r.pending) continue;
       // A legacy `-rc.N` stamp is numbered in the retired global space and the
       // current counter cannot speak for it at all.
       if (isLegacyStamp(r.key)) continue;
@@ -922,6 +929,15 @@ export function parseChangelog(markdown, { currentOrdinal, currentRelease = null
 // hold. It is the PLAIN ceiling, not the projecting one: the one-build-ahead
 // allowance belongs to `--write` alone (docs/versioning.md), and a committed
 // tree whose receipt outruns buildordinal.json skipped the rebuild (#1279 review).
+//
+// PENDING RECEIPTS (--pending auto|N,M). A pull request's receipt is stamped
+// with the box of its own branch, and a push to dev lands receipts whose stamp
+// build-stamp has not yet re-pointed. Those are the pending receipts: on a pull
+// request, the pull request's own; on a push, the pull requests that landed in
+// it. A pending receipt is still shape-checked (a bullet, a link, a well-formed
+// stamp of this release), but it is excluded from the ceiling and from every
+// order comparison, as both the higher and the lower party, and each one is
+// printed as a NOTE. No flag means nothing is pending: the rules below, strictly.
 //
 // WITHIN A DATE, BUILDS NEVER RISE. Receipts run newest first inside a date as
 // well as across dates, so reading down, each stamp is no newer than the one
@@ -973,6 +989,7 @@ export const ORDER_SCOPE = [
   '  the in-game projection or the About route (the plain run does, with a browser) ·',
   `  within-date order in dates before ${WITHIN_DATE_FROM} (matched pair by pair against the pin, not refused one by one) ·`,
   '  that a receipt\'s build actually contains its change, or that its PR merged ·',
+  '  the build order of a PENDING receipt under --pending: its shape is checked, its order is not until build-stamp re-points it ·',
   '  that a release heading\'s version matches buildordinal.json\'s release ·',
   '  receipts whose stamp is prose rather than <release>.<ordinal> (they have no build to order) ·',
   '  Markdown it does not scan for — a heading or receipt written as raw HTML (`<h2>`, `<li>`) or inside an HTML block is not seen.',
@@ -983,7 +1000,38 @@ function realCalendarDate(date) {
   return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === date;
 }
 
-export function checkOrder(markdown, { currentOrdinal, currentRelease } = {}) {
+// THE PENDING SET, for --pending. `auto` reads the event: a pull_request names
+// its own number (receipts.mjs pullFromEnv), a push names the pull requests that
+// landed since the stamp base on HEAD (build-stamp's landedSince: the last [build-stamp]
+// commit, else the stamp workflow's introduction; the same base build-stamp re-points by). A list is taken as given. No flag means
+// no exemption: the strict ordering, as before.
+// Whether a stamp's release names the box's release, compared numerically the way
+// buildversion orders them (leading zeros are the same release; a `-tag` must
+// match the box's tag). Falls back to the raw spelling only when a side cannot be
+// ordered at all.
+export function sameRelease(release, current) {
+  const got = versionTuple(release, 0);
+  const want = versionTuple(current, 0);
+  if (got === null || want === null) return release === current;
+  return compareVersions(got.slice(0, -1), want.slice(0, -1)) === 0
+    && release.includes('-') === current.includes('-');
+}
+
+export function pendingPulls(spec, env = process.env, cwd = ROOT) {
+  if (spec === null || spec === undefined) return [];
+  if (spec === 'auto') {
+    if (env.GITHUB_EVENT_NAME === 'push') return landedSince({ cwd });
+    const n = pullFromEnv(env);
+    return n ? [n] : [];
+  }
+  const list = String(spec).split(',').map((s) => s.trim()).filter(Boolean);
+  if (!list.length || !list.every((s) => /^\d+$/.test(s))) {
+    throw new Error(`--pending wants 'auto' or pull request numbers, got '${spec}'`);
+  }
+  return list;
+}
+
+export function checkOrder(markdown, { currentOrdinal, currentRelease, pending = [] } = {}) {
   if (typeof currentOrdinal !== 'number' || typeof currentRelease !== 'string') {
     throw new Error('check-order: buildordinal.json gave no ordinal and release, so no receipt can be weighed against the builds that exist');
   }
@@ -1051,8 +1099,33 @@ export function checkOrder(markdown, { currentOrdinal, currentRelease } = {}) {
     newerHeading = { line, date };
     checks++;
   }
-  const entries = parseChangelog(markdown, { currentOrdinal, currentRelease, projecting: false });
+  const entries = parseChangelog(markdown, { currentOrdinal, currentRelease, projecting: false, pending });
   checks += entries.length;
+  // PENDING RECEIPTS ARE SHAPE-CHECKED AND NOT ORDERED. A receipt whose pull
+  // request has landed or is landing on dev, and whose stamp build-stamp has not
+  // yet re-pointed, carries the box of its own branch. Ordered against the newer
+  // receipts above and below it, that stale stamp reads as a rise, though the
+  // merge is about to fix it. So a pending receipt must still be a bullet, a
+  // link and a well-formed stamp of this release (the shape checks above and
+  // below), but it is left out of the ceiling, the within-date and the
+  // cross-group comparisons, as both the higher and the lower party. It is named
+  // on every run, so the exemption is visible, never silent.
+  const pendingSet = new Set(pending.map(String));
+  const exempt = [];
+  for (const e of entries) {
+    if (!pendingSet.has(String(e.pullRequest))) continue;
+    const m = STAMP.exec(e.build);
+    if (!m || stampKey(m[1], Number(m[2])) === null) {
+      throw new Error(`check-order: pending #${e.pullRequest} is stamped \`${e.build}\`, not a build — a pending receipt is still shape-checked`);
+    }
+    // Compared as versions, as stampVerdict and the ordering compare them: a leading
+    // zero (`00.7.1`) is the same release, and a pre-release tag must match the box's.
+    if (!sameRelease(m[1], currentRelease)) {
+      throw new Error(`check-order: pending #${e.pullRequest} is stamped release ${m[1]}; buildordinal.json is ${currentRelease} — a pending receipt is still shape-checked`);
+    }
+    exempt.push(e);
+  }
+  const judged = pendingSet.size ? entries.filter((e) => !pendingSet.has(String(e.pullRequest))) : entries;
   // NO RECEIPT NEWER THAN THE NEWEST BUILD. parseChangelog bounds only receipts
   // of the current release, so `0.8.0.3` under a `0.7.1` tree was never weighed
   // and named a build of a release that does not exist yet (#1279 review). Every
@@ -1061,7 +1134,7 @@ export function checkOrder(markdown, { currentOrdinal, currentRelease } = {}) {
   // same comparison is safe for it.
   const ceilingKey = stampKey(currentRelease, currentOrdinal);
   if (ceilingKey === null) throw new Error(`check-order: buildordinal.json's ${currentRelease}.${currentOrdinal} is not a build this tool can order`);
-  for (const e of entries) {
+  for (const e of judged) {
     const m = e.build.match(STAMP);
     const key = m ? stampKey(m[1], Number(m[2])) : null;
     if (key !== null && compareStamps(key, ceilingKey) > 0) {
@@ -1077,7 +1150,7 @@ export function checkOrder(markdown, { currentOrdinal, currentRelease } = {}) {
   const keyOf = (build) => { const m = build.match(STAMP); return m ? stampKey(m[1], Number(m[2])) : null; };
   const rises = [];
   let above = null;
-  for (const below of entries) {
+  for (const below of judged) {
     if (above && above.date !== below.date) above = null;
     const older = keyOf(below.build);
     if (older === null) continue;
@@ -1091,7 +1164,7 @@ export function checkOrder(markdown, { currentOrdinal, currentRelease } = {}) {
     above = below;
   }
   const groups = [];
-  for (const e of entries) {
+  for (const e of judged) {
     if (!groups.length || groups[groups.length - 1].group !== e.group) groups.push({ group: e.group, stamps: [] });
     const key = keyOf(e.build);
     if (key !== null) groups[groups.length - 1].stamps.push({ build: e.build, key });
@@ -1123,7 +1196,7 @@ export function checkOrder(markdown, { currentOrdinal, currentRelease } = {}) {
       + (gone.length ? ` — pinned but no longer present: ${gone.join('; ')}` : '')
       + ' — a rise written into an old date is refused like any other; if one was repaired, remove its pin in the same change');
   }
-  return { entries, checks: checks + 1 };
+  return { entries, checks: checks + 1, pending: exempt };
 }
 
 // The plants are FILE BYTES: each writes a CHANGELOG.md and buildordinal.json
@@ -1235,12 +1308,12 @@ async function orderCorpus(ordinalFile) {
   // reason; the one line that names it is.
   const redLine = (out) => out.split('\n').find((l) => /RED —|Error:/.test(l)) ?? '(no red line)';
   let caught = 0;
-  const runAt = (markdown, ordinal) => {
+  const runAt = (markdown, ordinal, extra = []) => {
     const parent = mkdtempSync(join(tmpdir(), 'about-changelog-order-'));
     try {
       writeFileSync(join(parent, 'CHANGELOG.md'), markdown);
       if (ordinal !== 'absent') writeFileSync(join(parent, 'buildordinal.json'), roomy);
-      const child = spawnSync(process.execPath, [SCRIPT, '--root', parent, '--check-order'], { encoding: 'utf8', timeout: 60000 });
+      const child = spawnSync(process.execPath, [SCRIPT, '--root', parent, '--check-order', ...extra], { encoding: 'utf8', timeout: 60000 });
       return { code: child.status, out: `${child.stdout || ''}\n${child.stderr || ''}` };
     } finally { rmSync(parent, { recursive: true, force: true }); }
   };
@@ -1252,7 +1325,32 @@ async function orderCorpus(ordinalFile) {
   const pass = runAt(good, null);
   if (pass.code === 0) { caught++; console.log('CAUGHT (inverted) a planted 1.0.0 release heading, a receipt at the ordinal, a tie and a descent pass'); }
   else { console.error(`MISS legitimate release heading refused: exit=${pass.code}; said: ${redLine(pass.out)}`); process.exitCode = 1; }
-  return { caught, total: plants.length + 1 };
+  // THE PENDING EXEMPTION. A stale-stamped pending receipt on top of the newest
+  // date must pass with --pending, and the same file must still fail without it.
+  // A pending receipt that is not a build, or that cites another release, still
+  // fails. A non-pending rise still fails while another receipt is pending.
+  const PEND = ['--pending', '990001'];
+  const pendingPlants = [
+    // [name, markdown, args, expected: null (must pass) or a substring of the red line]
+    ['pending stale receipt above a newer one in its date passes with --pending', top(`## 2099-01-01\n\n${r(990001, n)}\n${r(990002, n + 1)}\n`), PEND, null],
+    ['the same receipt without --pending is still a rise', top(`## 2099-01-01\n\n${r(990001, n)}\n${r(990002, n + 1)}\n`), [], 'build rises within 2099-01-01'],
+    ['pending stale receipt across a date group passes with --pending', top(`## 2099-01-01\n\n${r(990001, n - 1)}\n`), PEND, null],
+    ['the same receipt across a date group without --pending runs backward', top(`## 2099-01-01\n\n${r(990001, n - 1)}\n`), [], 'build runs backward'],
+    ['pending receipt past buildordinal.json passes with --pending (exempt from the ceiling)', top(`## 2099-01-01\n\n${r(990001, n + 2)}\n`), PEND, null],
+    ['pending receipt with a malformed stamp still fails', top(`## 2099-01-01\n\n${rv(990001, 'evidence-only')}\n${r(990002, n)}\n`), PEND, 'a pending receipt is still shape-checked'],
+    ['pending receipt citing another release still fails', top(`## 2099-01-01\n\n${r(990001, 0, next)}\n`), PEND, 'a pending receipt is still shape-checked'],
+    ['pending receipt with a leading zero on the same release passes with --pending', top(`## 2099-01-01\n\n${r(990001, n, `0${rel}`)}\n${r(990002, n + 1)}\n`), PEND, null],
+    ['a non-pending rise still fails while another receipt is pending', top(`## 2099-01-01\n\n${r(990001, n)}\n${r(990003, n)}\n${r(990002, n + 1)}\n`), PEND, 'build rises within 2099-01-01'],
+  ];
+  for (const [name, markdown, args, expect] of pendingPlants) {
+    const { code, out } = runAt(markdown, null, args);
+    if (expect === null) {
+      if (code === 0) { caught++; console.log(`CAUGHT ${name}`); }
+      else { console.error(`MISS ${name}: exit=${code}; said: ${redLine(out)}`); process.exitCode = 1; }
+    } else if (code !== 0 && out.includes(expect)) { caught++; console.log(`CAUGHT ${name}`); }
+    else { console.error(`MISS ${name}: exit=${code}; expected ${expect}; said: ${redLine(out)}`); process.exitCode = 1; }
+  }
+  return { caught, total: plants.length + 1 + pendingPlants.length };
 }
 function generatedText(entries) {
   return `// GENERATED from /CHANGELOG.md by tools/about-changelog.mjs --write.\n// Do not edit: the focused check refuses any drift from the authoritative Markdown.\n\nexport const GENERATED_CHANGELOG = Object.freeze(${JSON.stringify(entries, null, 2)});\n`;
@@ -1578,7 +1676,7 @@ async function selftest() {
     try { validateChangelog(entries); console.error(`MISS ${name}`); }
     catch { caught++; console.log(`CAUGHT ${name}`); }
   }
-  // Build numbers are deliberately not identities: docs/evidence batches may
+  // Build numbers are deliberately not identities: evidence batches may
   // share one, while their PR-derived stable entry IDs remain distinct.
   try { validateChangelog([good[0], { ...good[1], build: good[0].build }]); console.log('PASS duplicate build accepted with distinct stable IDs'); }
   catch (error) { console.error(`FAIL duplicate build rejected: ${error.message}`); process.exitCode = 1; }
@@ -2110,8 +2208,16 @@ try {
     } else {
       // A refused order is a FINDING (exit 1), not a harness death: the door
       // (verdict.mjs) reads an unhandled throw as "could not run" (exit 2).
+      const pi = process.argv.indexOf('--pending');
+      let pending;
+      try { pending = pendingPulls(pi >= 0 ? (process.argv[pi + 1] ?? 'auto') : null); }
+      catch (error) {
+        console.error(`about-changelog check-order: ${error.message}`);
+        process.exit(2);
+      }
       try {
-        const { entries, checks } = checkOrder(readFileSync(OWNER, 'utf8'), { currentOrdinal: currentOrdinal(), currentRelease: currentRelease() ?? undefined });
+        const { entries, checks, pending: exempt } = checkOrder(readFileSync(OWNER, 'utf8'), { currentOrdinal: currentOrdinal(), currentRelease: currentRelease() ?? undefined, pending });
+        for (const e of exempt) console.log(`  NOTE  pending: #${e.pullRequest} (\`${e.build}\`) — build-stamp re-points it after merge`);
         console.log(`about-changelog check-order: ${entries.length} receipts ordered newest first; ${GRANDFATHERED_RISES.length} pre-${WITHIN_DATE_FROM} within-date rises match the pin`);
         console.log(`about-changelog check-order: OK — ${checks} checks passed`);
       } catch (error) {

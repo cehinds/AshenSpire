@@ -107,7 +107,8 @@ const cardPlayedEvent = (c, instanceId) => c.eventLog.find((e) => e.type === 'ca
 
 test('pause and answer with Counter: the commit waits, the chosen Counter is paid and played, then the turn ends', () => {
   const c = fight();
-  assert.equal(c.reactionRulesVersion, 1, 'fixture: reactions are on in an expanded fight');
+  // A new expanded run snapshots reaction rules version 2 (dev, SPEC §4.10); the preview offers the same way on 1 and 2.
+  assert.ok([1, 2].includes(c.reactionRulesVersion), 'fixture: reactions are on in an expanded fight');
   addToHand(c, 'guardCounter', 'rx-counter');
   const cost = cardPlayCosts(c, 'rx-counter');
   const turn = c.turn;

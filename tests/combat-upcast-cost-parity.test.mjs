@@ -23,7 +23,7 @@ function registry({ cost = 1, manaCost = 1, upcast = tiers } = {}) {
   return createRegistries({ ...contentBundle, cards: [...contentBundle.cards, {
     // costRule 'fixed': this fixture prices its own cost; the cost formula does not apply (SPEC §4.3a).
     id, name: 'Paid Tier Fixture', type: 'skill', kindIds: ['classification.skill'], cost, manaCost, costRule: 'fixed',
-    tags: ['camp:physical', 'maneuver:defend', 'reach:contact', 'targeting:single'],
+    tags: ['camp:physical', 'maneuver:defend', 'range:melee', 'targeting:single'],
     effects: [{ op: 'block', target: 'self', amount: 2 }], textTemplate: 'Gain {block} Block.',
     ...(upcast ? { upcast } : {}),
   }] });

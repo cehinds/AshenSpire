@@ -15,7 +15,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { contentBundle } from '../src/content/index.js';
-import { createRegistries } from '../src/model/registries.js';
+import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { locationServices, locationTags } from '../src/model/locations.js';
 import { deckEditorModel, deckEditorDoors, deckVariantKey, openDeckEdit, nextFilterPreset, deckEditorView } from '../src/ui/models/DeckEditorModel.js';
@@ -484,7 +484,7 @@ test('Reading Desk: inspector uses one native artwork image across card selectio
         const images = face.querySelectorAll('[data-component="art"] img');
         assert.equal(images.length, 1, tile.name);
         assert.ok(images[0].classList.contains('playing-card-art'));
-        assert.equal(images[0].getAttribute('data-card-art'), illustratedArtwork(tile.ref, face.dataset.cardId, { large: true }).kind);
+        assert.equal(images[0].getAttribute('data-card-art'), illustratedArtwork(tile.ref, face.dataset.cardId, { large: true, definition:resolveCard(REG,tile.ref), registries:REG }).kind);
         assert.equal(face.querySelector('.deck-editor-art'), null, 'no second Reading Desk artwork overlay');
       }
     } finally { editor.close(); }
@@ -526,6 +526,32 @@ test('Reading Desk: deck search and Cards mode preserve the run and Back returns
     assert.equal(editor.root.querySelector('.deck-editor').dataset.mobileView, 'collection', 'Back returns to the list');
     assert.deepEqual(editState(run), before);
     editor.close();
+  });
+});
+
+test('Reading Desk: thumbnail art follows the live style preference and retains legacy fallback', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  const { applyCardArtStyle } = await import('../src/ui/cardArtStyle.js');
+  withDom(dom => {
+    applyCardArtStyle({});
+    const run=freshRun(),before=editState(run);
+    const editor=mountDeckEditor(document.body,{registries:REG,run,search:true});
+    try {
+      const search=editor.root.querySelector('[data-focus-key="deck-search"]');
+      search.value='Gorefire';
+      search.dispatchEvent(new dom.Event('input'));
+      editor.root.querySelector('[data-focus-key="display:cards"]').click();
+      const well=()=>editor.root.querySelector('.deck-editor-row .deck-editor-art');
+      assert.equal(well().dataset.cardArt,'simple');
+      well().querySelector('img').dispatchEvent(new dom.Event('error'));
+      assert.equal(well().dataset.cardArt,'official');
+      assert.equal(well().querySelector('[data-card-art-layers]'),null);
+      applyCardArtStyle({cardArtStyle:'Legacy'});
+      assert.equal(well().dataset.cardArt,'official');
+      applyCardArtStyle({});
+      assert.equal(well().dataset.cardArt,'simple');
+      assert.deepEqual(editState(run),before);
+    } finally {editor.close();applyCardArtStyle({});}
   });
 });
 
@@ -1306,25 +1332,53 @@ test('DOM: every row names a stance and a rank; rank 0 reads Cantrip for magical
   }
 });
 
-test('DOM: range follows the player card combat default; the mark follows the camp', async () => {
+test('DOM: range follows the expanded combat delivery; the mark follows the camp', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
-  const run = createRunState({ seed: 0x5eed, classId: 'starseer', registries: REG, combatExpansionVersion: 1 });
-  for (const cardId of ['cometFragment', 'ricochet', 'strike', 'phaseWard', 'stargazerCard']) {
+  const run = createRunState({ seed: 0x5eed, classId: 'starseer', registries: REG, combatExpansionVersion: 2 });
+  for (const cardId of ['cometFragment', 'starbladePhalanx', 'ricochet', 'strike', 'phaseWard', 'stargazerCard']) {
     if (!run.deck.some(c => c.cardId === cardId)) run.sideboard.push({ instanceId: `probe-${cardId}`, cardId, upgraded: false });
   }
   withDom(() => {
     const editor = mountDeckEditor(document.body, { registries: REG, run, settings: {} });
     const row = (cardId) => [...editor.root.querySelectorAll('.deck-editor-tile')].find(t => t.dataset.key?.startsWith(`card:${cardId}~`));
     const read = (cardId) => { const r = row(cardId); return [r?.querySelector('.deck-editor-range')?.dataset.range, r?.querySelector('.deck-editor-camp')?.dataset.camp]; };
-    // An untagged spell resolves at contact in combat (combatMatchups.js), so it reads Melee.
-    assert.deepEqual(read('cometFragment'), ['melee', 'magical']);
-    assert.deepEqual(read('ricochet'), ['reach', 'physical'], 'a ranged maneuver reaches near');
-    // Phase Ward carries reach:contact but attacks nothing: no range.
+    // A v2 spell takes its delivery as range: a projectile reads Ranged, a melee blade Melee.
+    assert.deepEqual(read('cometFragment'), ['ranged', 'magical']);
+    assert.deepEqual(read('starbladePhalanx'), ['melee', 'magical']);
+    // A ranged maneuver's stance already reads Ranged, so it shows no separate range.
+    assert.deepEqual(read('ricochet'), [undefined, 'physical'], 'a ranged maneuver shows no separate range');
+    assert.equal(row('ricochet').querySelector('.deck-editor-stance')?.dataset.stance, 'ranged');
+    // Physical marks carry the approved shield; magical marks carry the Spell sparkle.
+    const mark = (cardId) => row(cardId).querySelector('.deck-editor-camp .combat-sigil')?.dataset.sigil;
+    assert.equal(mark('ricochet'), 'physical');
+    assert.equal(mark('cometFragment'), 'spell');
+    const spellMark = row('cometFragment').querySelector('.deck-editor-camp .combat-sigil');
+    assert.equal(spellMark.querySelectorAll('path').length, 1);
+    assert.equal(spellMark.querySelector('path').getAttribute('d'), 'm16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z');
+    // Phase Ward carries range:melee but attacks nothing: no range.
     assert.equal(read('phaseWard')[0], undefined, 'a card that attacks nothing shows no range');
     // A magical Power is a Power, with no Cantrip badge.
     const stargazer = row('stargazerCard');
     assert.equal(stargazer?.querySelector('.deck-editor-stance')?.dataset.stance, 'power');
     assert.equal(stargazer.querySelector('.deck-editor-rank'), null);
+    editor.close();
+  });
+});
+
+test('DOM: the range chip reads Melee, Reach and Ranged from the card\'s own range (owner, 2026-10-12)', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  const run = createRunState({ seed: 0x5eed, classId: 'starseer', registries: REG, combatExpansionVersion: 2 });
+  for (const cardId of ['starbladePhalanx', 'rimeNeedle', 'cometFragment']) {
+    if (!run.deck.some(c => c.cardId === cardId)) run.sideboard.push({ instanceId: `probe-${cardId}`, cardId, upgraded: false });
+  }
+  withDom(() => {
+    const editor = mountDeckEditor(document.body, { registries: REG, run, settings: {} });
+    const chip = (cardId) => [...editor.root.querySelectorAll('.deck-editor-tile')]
+      .find(t => t.dataset.key?.startsWith(`card:${cardId}~`))?.querySelector('.deck-editor-range');
+    for (const [cardId, range, label] of [['starbladePhalanx', 'melee', 'Melee'], ['rimeNeedle', 'reach', 'Reach'], ['cometFragment', 'ranged', 'Ranged']]) {
+      assert.equal(chip(cardId)?.dataset.range, range, cardId);
+      assert.equal(chip(cardId)?.textContent, label, cardId);
+    }
     editor.close();
   });
 });
@@ -1496,5 +1550,28 @@ test('Hub tabs confirm valid deck edits before navigation and refuse an invalid 
     assert.equal(valid.session.closed, true);
     assert.equal(valid.root.isConnected, false);
     assert.equal(run.deck.length, savedLength);
+  });
+});
+
+test('DOM: a Counter shows a range only when its reply deals damage (v2)', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  const run = createRunState({ seed: 0x5eed, classId: 'reaver', registries: REG, combatExpansionVersion: 2 });
+  const probes = ['evasiveGuard', 'backstep', 'dodgeRoll', 'quickstep', 'guardCounter'];
+  for (const cardId of probes) {
+    if (!run.deck.some(c => c.cardId === cardId)) run.sideboard.push({ instanceId: `probe-${cardId}`, cardId, upgraded: false });
+  }
+  withDom(() => {
+    const editor = mountDeckEditor(document.body, { registries: REG, run, settings: {} });
+    const row = (cardId) => [...editor.root.querySelectorAll('.deck-editor-tile')].find(t => t.dataset.key?.startsWith(`card:${cardId}~`));
+    const rangeOf = (cardId) => row(cardId)?.querySelector('.deck-editor-range')?.dataset.range;
+    // Evasions that only gain Poise on the reply deal no damage: no range.
+    assert.equal(rangeOf('evasiveGuard'), undefined, 'Evasive Guard deals no damage');
+    assert.equal(rangeOf('backstep'), undefined, 'Backstep deals no damage');
+    // Dodge Roll and Quickstep reply with 3 damage (counterPayload hp 3), so they read Melee.
+    assert.equal(rangeOf('dodgeRoll'), 'melee', 'Dodge Roll replies with 3 damage');
+    assert.equal(rangeOf('quickstep'), 'melee', 'Quickstep replies with 3 damage');
+    // Guard Counter's reply is a damage effect, so it keeps its Melee range.
+    assert.equal(rangeOf('guardCounter'), 'melee', 'Guard Counter deals damage');
+    editor.close();
   });
 });

@@ -47,6 +47,8 @@ export const COMBAT_OPCODES = Object.freeze([
   // before the matching meter fills, until the owner's next turn.
   'gainPoise',
   'gainWard',
+  // Refills Poise (the Poise twin of gainWard's restore); never a guard.
+  'restorePoise',
   'gainBarrier',
   'buildup',
   'wardDamage',
@@ -112,7 +114,7 @@ export const TARGETS = Object.freeze([
 
 // Event bus events emitted by executed actions (SPEC §3.10).
 export const EVENTS = Object.freeze([
-  'ashenBlightPaid', 'barrierGained', 'controlRecovered', 'controlResolveScheduled', 'persistentWardChanged', 'statusGaugeFilled', 'statusPoiseBreak', 'statusPressure', 'statusRecoveryRolled',
+  'ashenBlightPaid', 'barrierGained', 'barrierBroken', 'wardBroken', 'poiseBroken', 'blockBroken', 'enemyInterrupted', 'controlRecovered', 'controlResolveScheduled', 'persistentWardChanged', 'persistentPoiseChanged', 'statusGaugeFilled', 'statusPoiseBreak', 'statusPressure', 'statusRecoveryRolled',
   'combatAvoidanceResolved',
   'combatCounterArmed', 'combatCounterConsumed', 'combatCounterTriggered',
   'combatWardStripped', 'combatMatchupApplied', 'combatDamageRider',
@@ -382,6 +384,8 @@ const passiveFields = Object.freeze(Object.fromEntries(
 // disagree about what exists.
 export const MODIFIER_TYPES = Object.freeze({
   damageDealtMult: 'num',
+  // Scales only spell-camp damage its owner deals (Silenced, design §2.4).
+  spellDamageDealtMult: 'num',
   damageTakenMult: 'num',
   blockGainedMult: 'num',
   attackDamageAdd: 'num',
@@ -524,6 +528,7 @@ export const EFFECT_SPECS = Object.freeze({
   // computeMeterGuardGain), held as entity.poiseGuard / entity.wardGuard.
   gainPoise: { allowed: [], required: ['amount'], refs: {} },
   gainWard: { allowed: ['oncePerCombat'], required: ['amount'], refs: {} },
+  restorePoise: { allowed: ['oncePerCombat'], required: ['amount'], refs: {} },
   grantRollMode: { allowed: ['roll', 'advantage', 'disadvantage'], required: ['roll'], refs: {} },
   retain: { allowed: [], required: ['amount'], refs: {} },
   gainBarrier: { allowed: [], required: ['amount'], refs: {} },
@@ -627,7 +632,14 @@ const enemyMoveSchema = obj({
   damage: opt(int),
   hits: opt(int),
   block: opt(int),
-  weight: num,
+  // Required on a rolled move; absent on a reaction move, which is never rolled
+  // (validate.js enforces both). docs/combat-card-traits-contract.md, "Enemy reactions".
+  weight: opt(num),
+  reaction: opt(obj({
+    on: arr(en('playerAction', 'playerReaction')),
+    minIncoming: opt(int),
+    chance: opt(num),
+  })),
   maxConsecutive: opt(int),
   effects: opt(effects),
   locked: opt(bool),
@@ -731,6 +743,7 @@ export const SCHEMAS = Object.freeze({
     baseValue: num,
     ratingId: en('ar', 'dr', 'pr', 'poise', 'ward'),
     cap: union(num, str),
+    magicShare: union(num, str),
     flavor: str,
     mods: arr(str),
     compatibility: en('attack-v1', 'guard-v1', 'technique-v1'),
@@ -790,6 +803,7 @@ export const SCHEMAS = Object.freeze({
     defensiveReaction: opt(bool),
     counterPayload: opt(any),
     evade: opt(any),
+    traitValues: opt(any),
     upcast: opt(any),
     usableWhile: opt(arr(str)),
     projectile: opt(bool),
@@ -797,7 +811,7 @@ export const SCHEMAS = Object.freeze({
     comboHook: opt(any),
     schoolEffect: opt(str),
     breakPoiseBonus: opt(num),
-    reach: opt(str),
+    range: opt(str),
     targeting: opt(str),
     traits: opt(arr(str)),
     stanceTrigger: opt(any),
@@ -900,6 +914,7 @@ export const SCHEMAS = Object.freeze({
     name: str,
     icon: opt(str),
     tint: opt(str), // status-pip accent CSS color (display; proc bars tint from this too)
+    fluxPerTurn: opt(int), // reaction rules v2: Ward damage at the owner's turn start (wired in src/engine/triggers.js)
     stackMode: en(...STACK_MODES),
     stacking: opt(obj({ mode: en('add', 'refresh', 'replace', 'strongest', 'independent', 'unique'), cap: int,
       duration: opt(int), clock: opt(en('ownerTurnStart', 'ownerTurnEnd')), refresh: opt(bool) })),

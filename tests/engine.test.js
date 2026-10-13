@@ -578,6 +578,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(e1.skipNextTurn, 'staggered DIRECTLY — poiseMax 99 bar nowhere near full');
     assert(logOf(c, 'enemyStaggered').some((e) => e.targetId === 'e1'), 'enemyStaggered emitted');
     eq(e1.intent.kind, 'staggered', 'intent shows the break');
+    assert(S.getStacks(e1, 'staggered') > 0, 'the direct break applies Staggered, as a full bar does (owner, 2026-10-12)');
     eq(S.getStacks(e1, 'insanityExposed'), 1, 'proc left Unraveled (tag-scoped vulnerability)');
   });
 
@@ -627,12 +628,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(last.amount, 10, 'untagged hit unaffected by Frost-Exposed');
     playFromHand(c, 'tStarHit');
     last = logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop();
-    eq(last.amount, 12, 'starstone hit ×1.25 (multiplicative row)');
-    // Composes with regular Vulnerable multiplicatively: 10 × 1.5 × 1.25 = 18.75 → 18.
+    eq(last.amount, 13, 'starstone hit ×1.25 (multiplicative row), bonus rounded up: 10 + ceil(2.5)');
+    // Composes with regular Vulnerable multiplicatively: 10 × 1.5 = 15, + ceil(15 × 0.25) = 19
+    // (the exposure bonus rounds up — owner, 2026-10-12).
     S.applyStatus(c, e1, 'vulnerable', 1);
     playFromHand(c, 'tStarHit');
     last = logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop();
-    eq(last.amount, 18, 'stacks WITH Vulnerable: floor(10 × 1.5 × 1.25)');
+    eq(last.amount, 19, 'stacks WITH Vulnerable: 15 + ceil(3.75)');
     // THE CEILING (known-bad probe answered): every vulnerability lane is
     // flat-per-status and stack-count-invariant, so max compose is the
     // closed-form product of DISTINCT table mults — stacks cannot raise it.
@@ -641,17 +643,17 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     if (c.player.energy === 0) dispatch(c, { type: 'endTurn' });
     playFromHand(c, 'tStarHit');
     last = logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop();
-    eq(last.amount, 18, '99 stacks of both: SAME 18 — the ceiling is the table, not the stacks');
+    eq(last.amount, 19, '99 stacks of both: SAME 19 — the ceiling is the table, not the stacks');
     // Additive lane: declared 'additive' pools (mult−1). tAddVuln 1.5-additive
     // + frostExposed 1.25-mult on the same tagged hit:
-    // 10 × 1.25 × (1 + 0.5) = 18.75 → 18.
+    // 10 + ceil(10 × (1.25 × 1.5 − 1)) = 10 + ceil(8.75) = 19.
     const a = makeCombat({ deck: ['tStarHit'], enemies: ['tGiant'] });
     const ae = getEntity(a, 'e1');
     S.applyStatus(a, ae, 'frostExposed', 1);
     S.applyStatus(a, ae, 'tAddVuln', 1);
     playFromHand(a, 'tStarHit');
     const al = logOf(a, 'damageDealt').filter((e) => e.targetId === 'e1').pop();
-    eq(al.amount, 18, 'additive lane pools once, multiplicative lane per source');
+    eq(al.amount, 19, 'additive lane pools once, multiplicative lane per source');
   });
 
   // These two falsifiers use SHIPPED cards whose tags exist only in the
@@ -667,9 +669,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     S.applyStatus(c, e1, 'frostExposed', 1);
     const pv = previewCard(c, c.piles.hand[0].instanceId, 'e1');
     // starstonePebble costs 1 SP + 1 MP under the cost formula (SPEC §4.3a), so its 6 is not scaled.
-    eq(pv.values.find((v) => v.op === 'damage').value, 7, 'preview derives starstone: floor(6 × 1.25)');
+    eq(pv.values.find((v) => v.op === 'damage').value, 8, 'preview derives starstone: 6 + ceil(6 × 0.25)');
     playFromHand(c, 'starstonePebble');
-    eq(logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop().amount, 7, 'execution derives the same starstone hit');
+    eq(logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop().amount, 8, 'execution derives the same starstone hit');
   });
 
   test('7e3. Unraveled changes a real Blight hit through tagging.csv', () => {
@@ -683,9 +685,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     S.applyStatus(c, e1, 'insanityExposed', 1);
     const pv = previewCard(c, c.piles.hand[0].instanceId, 'e1');
     // blightTouch costs 1 SP + 1 MP under the cost formula (SPEC §4.3a), so its 5 is not scaled.
-    eq(pv.values.find((v) => v.op === 'damage').value, 6, 'preview derives blight: floor(5 × 1.3)');
+    eq(pv.values.find((v) => v.op === 'damage').value, 7, 'preview derives blight: 5 + ceil(5 × 0.3)');
     playFromHand(c, 'blightTouch');
-    eq(logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop().amount, 6, 'execution derives the same blight hit');
+    eq(logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop().amount, 7, 'execution derives the same blight hit');
   });
 
   // ---- 7f. Known-bads through the REAL bundle (#61): each red names its row --
@@ -800,6 +802,74 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(logOf(c, 'statusExpired').some((e) => e.status === 'crimsonBlight' && e.reason === 'expired'), 'expired event');
   });
 
+  // ---- 8b. Necrotic Blight: only Necrotic damage's Blight lasts the fight --------
+  // Owner, 2026-10-12 (#4, clarified): Blight applied by the Necrotic damage
+  // rider is its own row (necroticBlight, decay 'none'); every other Crimson
+  // Blight — an enemy's on the player included — keeps its 3-turn duration.
+  test('8b. enemy Crimson Blight on the player expires after 3 turns; a v1 Necrotic hit applies Crimson Blight; a v2 Necrotic hit applies Necrotic Blight that outlasts 6 turns; Holy cleanses it; solo == co-op', () => {
+    // Court Marionette's blowdart puts plain Crimson Blight on the player.
+    const marionette = REG.enemies.get('courtMarionette');
+    eq(marionette.moves.blowdart.effects[0].status, 'crimsonBlight', 'Court Marionette still applies the bounded row');
+    const p = makeCombat({ deck: Array(5).fill('defend'), enemies: ['tGiant'] });
+    S.applyStatus(p, p.player, 'crimsonBlight', 2);
+    // Applied mid-turn: its 3 turns run out at the end of the third player turn,
+    // ticking at the two turn starts in between.
+    dispatch(p, { type: 'endTurn' });
+    dispatch(p, { type: 'endTurn' });
+    eq(S.getStacks(p.player, 'crimsonBlight'), 2, 'still present inside its 3 turns');
+    dispatch(p, { type: 'endTurn' });
+    assert(!p.player.statuses.crimsonBlight, 'enemy-style Crimson Blight on the player expired after 3 player turns');
+    eq(logOf(p, 'hpLost').filter((e) => e.targetId === p.player.id).length, 2, 'ticked at the turn starts inside its duration, then gone');
+    assert(logOf(p, 'statusExpired').some((e) => e.status === 'crimsonBlight' && e.reason === 'expired'), 'expired event');
+
+    // Version 1 (old saves) is immutable history: its Necrotic rider still
+    // applies the bounded Crimson Blight.
+    const v1 = makeCombat({ deck: ['cullTheWeak', 'defend', 'defend', 'defend', 'defend'], enemies: ['tGiant'] });
+    playFromHand(v1, 'cullTheWeak', 'e1');
+    eq(S.getStacks(getEntity(v1, 'e1'), 'crimsonBlight'), 1, 'v1 Necrotic hit still applies Crimson Blight');
+    eq(S.getStacks(getEntity(v1, 'e1'), 'necroticBlight'), 0, 'v1 applies no Necrotic Blight');
+
+    // New runs (combat expansion v2): the Necrotic rider builds Necrotic Blight
+    // (pressure 4 against a threshold of 6, so the second hit admits a stack).
+    const seat = (deck, extra = {}) => ({ classId: 'reaver', maxHp: 78, hp: 78, mana: 2, maxMana: 2, stamina: 3, maxStamina: 3, energyMax: 3, drawPerTurn: 5,
+      deck: deck.map((cardId, i) => ({ instanceId: `c${i + 1}`, cardId, upgraded: false })), relicIds: [], ...extra });
+    const v2 = (deck) => createCombat({ registries: REG, rng: createRng(0xc0ffee), combatExpansionVersion: 2, player: seat(deck), enemyIds: ['tGiant'] });
+    const necroDeck = ['cullTheWeak', 'cullTheWeak', 'defend', 'defend', 'defend'];
+    const c = v2(necroDeck);
+    const e1 = getEntity(c, 'e1');
+    playFromHand(c, 'cullTheWeak', 'e1');
+    playFromHand(c, 'cullTheWeak', 'e1');
+    const necrotic = S.getStacks(e1, 'necroticBlight');
+    assert(necrotic >= 1, `v2 Necrotic rider admitted Necrotic Blight (got ${necrotic})`);
+    for (let i = 0; i < 6; i++) dispatch(c, { type: 'endTurn' });
+    eq(S.getStacks(e1, 'necroticBlight'), necrotic, 'Necrotic Blight still present after 6 enemy turns');
+    assert(!logOf(c, 'statusExpired').some((e) => e.status === 'necroticBlight'), 'never expired');
+
+    // Holy cleanses Necrotic Blight off the attacker (v2 cleanse list), so a cleanse still ends it.
+    const h = v2(Array(5).fill('sacredHarvest'));
+    S.applyStatus(h, h.player, 'necroticBlight', 2);
+    playFromHand(h, 'sacredHarvest', 'e1');
+    eq(S.getStacks(h.player, 'necroticBlight'), 1, 'Holy hit cleansed one Necrotic Blight stack');
+    playFromHand(h, 'sacredHarvest', 'e1');
+    assert(!h.player.statuses.necroticBlight, 'a second Holy hit cleansed the last stack');
+
+    // Co-op runs the same v2 rider: one seat, same cards, same enemy state.
+    const coop = createCoopCombat({ registries: REG, rng: createRng(0xc0ffee),
+      players: [{ id: 'p1', ...seat(necroDeck, { combatExpansionVersion: 2 }) }], enemyIds: ['tGiant'] });
+    const solo = v2(necroDeck);
+    playFromHand(solo, 'cullTheWeak', 'e1');
+    playFromHand(solo, 'cullTheWeak', 'e1');
+    for (let i = 0; i < 2; i++) {
+      const coopCard = coop.players.get('p1').piles.hand.find((card) => card.cardId === 'cullTheWeak');
+      playCoopCard(coop, 'p1', coopCard.instanceId, 'e1');
+    }
+    const ce1 = coop.enemies.find((e) => e.id === 'e1');
+    eq(coop.combatExpansionVersion, 2, 'co-op fight runs v2');
+    eq(S.getStacks(ce1, 'necroticBlight'), S.getStacks(getEntity(solo, 'e1'), 'necroticBlight'), 'co-op Necrotic Blight == solo');
+    assert(S.getStacks(ce1, 'necroticBlight') >= 1, 'co-op admitted it');
+    eq(ce1.hp, getEntity(solo, 'e1').hp, 'co-op enemy HP == solo');
+  });
+
   // ---- 9. Poise: fill → Stagger (skip + 1.5× window + growth + cancel delayed) ----
   test('9. Poise fill Staggers: skips turn, +50% window, poiseMax ×1.25, cancels Held Blade', () => {
     const c = makeCombat({ deck: ['tPoise', 'strike', 'strike', 'strike', 'strike'], enemies: ['tDelayer'] });
@@ -844,11 +914,22 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(c.player.stanceId, 'gorefire', 'entered gorefire');
     eq(c.player.hp, 76, 'entering Gorefire cost 2 HP (ignores block)');
     playFromHand(c, 'twinbladeFlurry');
-    eq(S.getStacks(getEntity(c, 'e1'), 'bleed'), 6, '3 hits × 2 Bleed per hit');
+    // The stance rides every hit: three Gorefire applications of 2. Twinblade
+    // Flurry is a fixed damage:slashing card (owner decision 16), and the
+    // slashing rider adds 1 Bleed once per action; 6 + 1 reaches the Bleed
+    // threshold (7), so the meter bursts and resets. Count the applications,
+    // not the leftover meter.
+    const gorefireBleeds = logOf(c, 'statusApplied').filter((e) => e.status === 'bleed' && e.stacks === 2);
+    eq(gorefireBleeds.length, 3, '3 hits × 2 Bleed per hit from the stance');
+    eq(logOf(c, 'statusApplied').filter((e) => e.status === 'bleed').reduce((n, e) => n + e.stacks, 0), 7, 'stance 6 + slashing rider 1');
+    assert(logOf(c, 'procBurst').some((e) => e.status === 'bleed'), 'the fixed slashing type feeds the Bleed meter to its burst');
     playFromHand(c, 'enterBulwark');
     eq(c.player.stanceId, 'bulwark', 'stance switched (exclusive)');
     assert(logOf(c, 'stanceExited').some((e) => e.stance === 'gorefire'), 'exited event');
-    eq(c.player.block, 3, 'Bulwark onEnter +3 (its own play does not double-trigger)');
+    // Enter Gorefire is an Oath card played before any stance this fight, so it
+    // kept the Oath (+2 Block, owner decision 11); Enter Bulwark comes after a
+    // stance and grants only its own 3.
+    eq(c.player.block, 2 + 3, 'Oath 2 from Enter Gorefire + Bulwark onEnter 3 (its own play does not double-trigger)');
     dispatch(c, { type: 'endTurn' });
     const d = c.piles.hand.find((x) => x.cardId === 'defend' || x.cardId === 'enterGorefire');
     const before = c.player.block;
@@ -2082,7 +2163,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       assert(row.scope === '', `card rows carry no scope ('${row.objectId}')`);
     }
     // The lookups the UI and any future synergy predicate depend on.
-    eq(tagsFor('gorefireSlash').map((tag) => tag.id).join('|'), 'blade|blood|gorefire|source:weapon|delivery:melee|theme:blood|camp:physical|maneuver:attack', 'Gorefire Slash separates legacy school, source, delivery and theme');
+    eq(tagsFor('gorefireSlash').map((tag) => tag.id).join('|'), 'blade|blood|gorefire|source:weapon|damage:slashing|delivery:melee|theme:blood|camp:physical|maneuver:attack', 'Gorefire Slash separates legacy school, source, fixed damage type, delivery and theme');
     eq(tagsFor('strike')[0].label, 'Blade', 'strike resolves to the Blade tag');
     eq(tagsFor('nonexistentCard').length, 0, 'an untagged card resolves to no tags');
     assert(Array.isArray(tagIdsFor('strike')), 'tag ids always come back as an array');
@@ -2146,7 +2227,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // obj.tags whatever table the row was authored in.
     eq(REG.classes.get('reaver').tags.join('|'), 'blade|guard|blood|item:blade', 'the Reaver carries its class tags — and, since plan phase 5a, the item type it favours');
     eq(REG.cards.get('strike').tags.join('|'), 'blade|source:weapon|delivery:melee|camp:physical|maneuver:attack', 'a card carries its tags on the def');
-    eq(objectTagIds('class', 'starseer').join('|'), 'starstone|ranged|favored|item:magic-focus', 'the table resolves by family and id (the leaning and its item type since plan phase 5a)');
+    eq(objectTagIds('class', 'starseer').join('|'), 'starstone|ranged|favored|oathKept|item:magic-focus', 'the table resolves by family and id (the leaning and its item type since plan phase 5a)');
     eq(tagIdsOf('card', { id: 'strike' }).join('|'), 'blade|source:weapon|delivery:melee|camp:physical|maneuver:attack', 'tagIdsOf resolves an unscoped family');
     eq(tagIdsOf('armament', REG.equipment.armaments.find((a) => a.id === 'straightSword')).join('|'),
       'item:blade|blade|basic|source:weapon|delivery:melee|damage:slashing', 'tagIdsOf resolves an armament, item type included');
@@ -2804,7 +2885,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // else. Effects now allow the legacy card domain plus categorized combat
     // domains; changing the junction must still change validation.
     const kw = contentBundle.keywords.map((k) => k.id);
-    const effectDomains = ['card', 'attackSource', 'delivery', 'damageType', 'technique', 'theme', 'camp', 'maneuver', 'school', 'counterMode', 'reach', 'targeting', 'trait'];
+    const effectDomains = ['card', 'attackSource', 'delivery', 'damageType', 'technique', 'theme', 'camp', 'maneuver', 'school', 'counterMode', 'range', 'targeting', 'trait'];
     eq(tagIdsAllowedFor(contentBundle, 'effect').sort().join('|'), effectDomains.flatMap((domain) => tagIdsInDomain(contentBundle, domain)).sort().join('|'),
       'the derived effect vocabulary includes every approved combat category');
     const repaired = JSON.parse(JSON.stringify(contentBundle));
@@ -9003,7 +9084,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(card.kind, 'class'); eq(card.zone, 'core'); eq(card.name, 'Reaver');
     eq(card.kit.abilityCardId, 'brace'); eq(card.kit.relicId, 'ashenGrip'); eq(card.kit.startingRelicId, 'forsakenMedallion');
     eq(card.kit.weaponKitId, 'reaverBaseline'); eq(card.kit.rightHand, 'straightSword'); eq(card.kit.leftHand, 'roundShield');
-    eq(card.favored.join(','), 'item:blade', 'the leaning is the item type the class names'); eq(card.propertyTags.join(','), 'favored');
+    eq(card.favored.join(','), 'item:blade', 'the leaning is the item type the class names'); eq(card.propertyTags.join(','), 'favored,oathKept');
     eq(card.schools.join(','), 'blade,guard,blood', 'the schools are the class-domain card tags, the item type apart');
     let threw = null; try { classCard(REG, 'nope'); } catch (e) { threw = e.message; }
     assert(/unknown class/i.test(threw || ''), 'an unknown class is refused by name');
@@ -9026,7 +9107,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const cb = seat(REG, fresh, 0x5a5a);
     const mounts = cb.propertyMounts[triggerOwnerKey(cb, cb.player)];
     assert(mounts['class:reaver'], 'the class card mounts as a carrier keyed class:<id>');
-    eq(mounts['class:reaver'].kind, 'class'); eq(mounts['class:reaver'].rules.map((r) => r.tag).join(','), 'favored');
+    eq(mounts['class:reaver'].kind, 'class'); eq(mounts['class:reaver'].rules.map((r) => r.tag).join(','), 'favored,oathKept');
     assert(mounts['class:reaver'].scopeTags.includes('item:blade') && !mounts['class:reaver'].scopeTags.includes('item:shield'), 'the mount keeps the card\'s own tags as its scope');
     const rows = REG.balance.skill.xp; const mult = REG.balance.skill.favoredXpMult;
     const foe = cb.enemies[0];
@@ -9035,7 +9116,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(cb.skillXp.player.xp['item:blade'], rows.perHit * mult, 'blade XP is favoured');
     eq(cb.skillXp.player.xp['item:shield'], rows.perHit, 'shield XP is not');
     // A class that carries no leaning mounts nothing and pays plain XP.
-    const plainReg = createRegistries({ ...contentBundle, tagging: contentBundle.tagging.filter((r) => !(r.family === 'class' && r.objectId === 'reaver' && r.tagId === 'favored')) });
+    // (Every class card also carries the Oath rule, oathKept; drop both to leave it bare.)
+    const plainReg = createRegistries({ ...contentBundle, tagging: contentBundle.tagging.filter((r) => !(r.family === 'class' && r.objectId === 'reaver' && ['favored', 'oathKept'].includes(r.tagId))) });
     const plain = seat(plainReg, createRunState({ seed: 0x5a5a, classId: 'reaver', registries: plainReg }), 0x5a5a);
     assert(!(plain.propertyMounts[triggerOwnerKey(plain, plain.player)] || {})['class:reaver'], 'no property, no mount');
     recordSkillXp(plain, { type: 'damageDealt', sourceId: 'player', targetId: plain.enemies[0].id, amount: 3, sourceHand: 'right' });
@@ -9201,8 +9283,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     run.coreTags = ['ironFooting'];
     const cb = createCombat({ registries: REG, rng: createRng(0x5b5b), player: { classId: 'reaver', attributes: run.attributes, skills: run.skills, coreTags: run.coreTags, maxHp: 78, hp: 78, mana: 2, maxMana: 2, energyMax: run.energyMax, drawPerTurn: run.drawPerTurn, deck: run.deck, loadout: run.loadout, relicIds: run.relics }, enemyIds: ['fellWarden'] });
     const mount = cb.propertyMounts[triggerOwnerKey(cb, cb.player)]['class:reaver'];
-    eq(mount.rules.map((r) => r.tag).join(','), 'favored,ironFooting', 'the picked node mounts beside the leaning');
-    eq(classCarrier(REG, 'reaver', 'player', ['ironFooting', 'attunedMind']).tagIds.join(','), 'favored,ironFooting', "the carrier confers the class's own tree only");
+    eq(mount.rules.map((r) => r.tag).join(','), 'favored,oathKept,ironFooting', 'the picked node mounts beside the leaning');
+    eq(classCarrier(REG, 'reaver', 'player', ['ironFooting', 'attunedMind']).tagIds.join(','), 'favored,oathKept,ironFooting', "the carrier confers the class's own tree only");
     const blockBefore = cb.player.block;
     cb.player.maxStamina = 3; cb.player.stamina = 3; // Brace costs a Stamina
     const braceInst = cb.piles.hand.find((x) => x.cardId === 'brace') || cb.piles.draw.find((x) => x.cardId === 'brace');
@@ -9211,14 +9293,14 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(cb.player.block - blockBefore >= 4 + REG.balance.classTree.ironFooting.block, 'Brace braces, and Iron Footing braces more');
     const stored = JSON.parse(JSON.stringify(serializeCombatSnapshot(cb))); eq(stored.coreTags.join(','), 'ironFooting', 'the snapshot carries the picks');
     const back2 = restoreCombatSnapshot({ registries: REG, rng: createRng(1), snapshot: stored });
-    eq(back2.propertyMounts[triggerOwnerKey(back2, back2.player)]['class:reaver'].rules.map((r) => r.tag).join(','), 'favored,ironFooting', 'a restored fight mounts the pick again');
+    eq(back2.propertyMounts[triggerOwnerKey(back2, back2.player)]['class:reaver'].rules.map((r) => r.tag).join(','), 'favored,oathKept,ironFooting', 'a restored fight mounts the pick again');
     const seatB = createRunState({ seed: 0x5b5c, classId: 'starseer', registries: REG });
     const party = createCoopCombat({ registries: REG, rng: createRng(2), players: [
       { id: 'A', classId: 'reaver', attributes: run.attributes, skills: {}, coreTags: ['bloodTempo'], maxHp: 78, hp: 78, maxMana: 2, mana: 2, energyMax: run.energyMax, drawPerTurn: run.drawPerTurn, deck: run.deck, loadout: run.loadout, relicIds: [] },
       { id: 'B', classId: 'starseer', attributes: seatB.attributes, skills: {}, coreTags: [], maxHp: 60, hp: 60, maxMana: 2, mana: 2, energyMax: seatB.energyMax, drawPerTurn: seatB.drawPerTurn, deck: seatB.deck, loadout: seatB.loadout, relicIds: [] },
     ], enemyIds: ['fellWarden'] });
-    eq(party.propertyMounts.A['class:reaver'].rules.map((r) => r.tag).join(','), 'favored,bloodTempo', "each seat's picks are its own");
-    eq(party.propertyMounts.B['class:starseer'].rules.map((r) => r.tag).join(','), 'favored');
+    eq(party.propertyMounts.A['class:reaver'].rules.map((r) => r.tag).join(','), 'favored,oathKept,bloodTempo', "each seat's picks are its own");
+    eq(party.propertyMounts.B['class:starseer'].rules.map((r) => r.tag).join(','), 'favored,oathKept');
     // THE CARD READS ITS PICKS: the subclass lends its name and glyph.
     eq(classCard(REG, 'reaver', ['ironFooting']).presentation.name, 'Reaver', 'a lower pick leaves the name');
     const sub = classCard(REG, 'reaver', ['ironFooting', 'warlord']);
@@ -9233,21 +9315,22 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // A HEAL THAT HEALS NOTHING and a Mana restore that restores nothing fire
     // no node (the review of #1192): Warmth, Seal of Plenty and Attuned Mind
     // gate on healPositive / manaPositive. The gates' fire counts are read, as
-    // test 87 reads them: the rule's actions wait on the queue.
+    // test 87 reads them: the rule's actions wait on the queue. Class trigger
+    // indices 0 and 1 are the Oath rule (oathKept) every class card carries.
     {
       const her = createRunState({ seed: 0x5b5c, classId: 'herald', registries: REG });
       const hc = createCombat({ registries: REG, rng: createRng(0x5b5c), player: { classId: 'herald', attributes: her.attributes, skills: her.skills, coreTags: ['warmth', 'sealOfPlenty'], maxHp: 70, hp: 70, mana: 2, maxMana: 2, energyMax: her.energyMax, drawPerTurn: her.drawPerTurn, deck: her.deck, loadout: her.loadout, relicIds: [] }, enemyIds: ['fellWarden'] });
       const fires = (c, key) => (c.triggerState.get(key) || {}).fires || 0;
       applyHeal(hc, hc.player, 5);
-      eq(fires(hc, 'property:player:class:herald:0'), 0, 'a heal at full HP wakes no Warmth'); eq(fires(hc, 'property:player:class:herald:1'), 0, 'and spends no Seal of Plenty');
+      eq(fires(hc, 'property:player:class:herald:2'), 0, 'a heal at full HP wakes no Warmth'); eq(fires(hc, 'property:player:class:herald:3'), 0, 'and spends no Seal of Plenty');
       hc.player.hp = 60; applyHeal(hc, hc.player, 5);
-      eq(fires(hc, 'property:player:class:herald:0'), 1, 'a heal that heals wakes Warmth'); eq(fires(hc, 'property:player:class:herald:1'), 1, 'and Seal of Plenty once');
+      eq(fires(hc, 'property:player:class:herald:2'), 1, 'a heal that heals wakes Warmth'); eq(fires(hc, 'property:player:class:herald:3'), 1, 'and Seal of Plenty once');
       const star = createRunState({ seed: 0x5b5d, classId: 'starseer', registries: REG });
       const sc = createCombat({ registries: REG, rng: createRng(0x5b5d), player: { classId: 'starseer', attributes: star.attributes, skills: star.skills, coreTags: ['attunedMind'], maxHp: 60, hp: 60, mana: 2, maxMana: 2, energyMax: star.energyMax, drawPerTurn: star.drawPerTurn, deck: star.deck, loadout: star.loadout, relicIds: [] }, enemyIds: ['fellWarden'] });
       sc.emit('manaRestored', { targetId: sc.player.id, amount: 0 });
-      eq(fires(sc, 'property:player:class:starseer:0'), 0, 'a restore at full Mana wakes no Attuned Mind');
+      eq(fires(sc, 'property:player:class:starseer:2'), 0, 'a restore at full Mana wakes no Attuned Mind');
       sc.emit('manaRestored', { targetId: sc.player.id, amount: 1 });
-      eq(fires(sc, 'property:player:class:starseer:0'), 1, 'a restore that restores does');
+      eq(fires(sc, 'property:player:class:starseer:2'), 1, 'a restore that restores does');
     }
     // THE MENU: a class draft is a keyed choice row of nodes, ahead of the skill draft; auto-collect picks a node.
     const plan = rewardPlan({ classDrafts: [{ classId: 'reaver', level: 1, nodeIds: ['ironFooting', 'bloodTempo'] }], skillDrafts: [{ skillId: 'item:blade', level: 1, cardIds: ['quickCut'] }] }, { flaskSlotsFree: 1 });

@@ -34,9 +34,11 @@ export function roundState(combat) {
 // --- Enemy queues ------------------------------------------------------------------------------
 
 // A move's SP (SPEC §4.11, owner 2026-10-12): its own `sp` when it names one, else the action-cost table price of its
-// stance (model/actionCosts.js), else MOVE_SP.
-export function moveSp(move) {
-  return enemyMoveSpOf(move, moveKind(move), MOVE_SP);
+// stance (model/actionCosts.js), else MOVE_SP. Given the paying `enemy` and its expanded (v2) `combat`, a spell-camp
+// move costs one more SP per Silenced stack, as a player's spell card does (owner, 2026-10-13).
+export function moveSp(move, { enemy = null, moveId, combat = null } = {}) {
+  const entity = enemy && combat?.combatExpansionVersion === 2 ? enemy : null;
+  return enemyMoveSpOf(move, moveKind(move), MOVE_SP, { entity, enemyId: enemy?.enemyId, moveId });
 }
 export const enemyMoveSp = moveSp;
 
@@ -47,15 +49,16 @@ export const enemyPool = (def) => enemyPoolOf(def);
 // One enemy's hidden queue. `pick(enemy, def, maxSp)` is the live weighted pick (enemyAI stream), offered only the
 // moves that cost at most `maxSp` SP left in the pool; each pick is recorded in movesHistory at once, so maxConsecutive
 // sees the queued run. The first pick of the fight is the scripted opener when the move set has one.
-export function buildEnemyQueue(enemy, def, { isFirstTurn = false, pick }) {
-  return extendEnemyQueue(enemy, def, [], { isFirstTurn, pick });
+export function buildEnemyQueue(enemy, def, { isFirstTurn = false, pick, combat = null }) {
+  return extendEnemyQueue(enemy, def, [], { isFirstTurn, pick, combat });
 }
 
 // Appends picks to `queue` (in place) until the enemy's SP pool is spent, and returns it (SPEC §4.6, §4.11). The queue
 // ends when the pool is empty or nothing affordable is left. An enemy with an empty queue always plays one move: when
 // nothing fits the pool, the first pick is offered no limit (Infinity). A queue that already holds moves keeps them,
 // and the SP they spend counts against the pool.
-export function extendEnemyQueue(enemy, def, queue, { isFirstTurn = false, pick }) {
+// `combat` (optional) prices each move for this enemy: see moveSp().
+export function extendEnemyQueue(enemy, def, queue, { isFirstTurn = false, pick, combat = null }) {
   const pool = enemyPool(def);
   let spent = queue.reduce((sum, entry) => sum + entry.sp, 0);
   while (queue.length < QUEUE_MAX) {
@@ -64,7 +67,7 @@ export function extendEnemyQueue(enemy, def, queue, { isFirstTurn = false, pick 
     let moveId = opener ?? pick(enemy, def, pool - spent);
     if (moveId == null && queue.length === 0 && opener == null) moveId = pick(enemy, def, Infinity);
     if (moveId == null) break;
-    const sp = moveSp(def.moves[moveId]);
+    const sp = moveSp(def.moves[moveId], { enemy, moveId, combat });
     if (spent + sp > pool && queue.length > 0) break;
     spent += sp;
     enemy.movesHistory.push(moveId);
@@ -81,7 +84,7 @@ export function buildEnemyQueues(combat, { isFirstTurn = false, pick, held }) {
   for (const enemy of combat.enemies) {
     if (!enemy.alive || held(enemy)) continue;
     const def = combat.registries.enemies.get(enemy.enemyId);
-    queues[enemy.id] = buildEnemyQueue(enemy, def, { isFirstTurn, pick });
+    queues[enemy.id] = buildEnemyQueue(enemy, def, { isFirstTurn, pick, combat });
   }
   cr.enemyQueues = queues;
   return queues;
@@ -92,7 +95,7 @@ export function buildEnemyQueues(combat, { isFirstTurn = false, pick, held }) {
 // is the moves the enemy plays, in order, so a planned follow-up is the action it does next. null when nothing picks.
 export function takePlannedMove(combat, enemy, def, { isFirstTurn = false, pick }) {
   const plan = enemy.plannedMoves ?? (enemy.plannedMoves = []);
-  extendEnemyQueue(enemy, def, plan, { isFirstTurn, pick });
+  extendEnemyQueue(enemy, def, plan, { isFirstTurn, pick, combat });
   return plan.shift()?.moveId ?? null;
 }
 

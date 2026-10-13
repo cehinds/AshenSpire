@@ -1,6 +1,5 @@
 import { COMBAT_TOOLS_HEIGHT_PX, COMBAT_TOOLS_DESKTOP_HEIGHT_PX, handLayout, handGeometryKey, reconcileHandOrder, moveHandInstance } from '../models/HandLayout.js';
 import { mountHandInspectionOverlay } from './handInspectionOverlay.js';
-import { isWideFormFactor } from '../models/FormFactorModel.js';
 // src/ui/components/hand.js — THE hand strip. One renderer, two surfaces.
 //
 // Until 2026-08-15 the hand was rendered TWICE: combat.js's template (the
@@ -15,7 +14,7 @@ import { isWideFormFactor } from '../models/FormFactorModel.js';
 // surface enters as parameters, never as a second template:
 //
 //   cards     — the viewer's list: { inst, preview?, affordable, reason?,
-//               name?, selected? }. Solo passes live previewCard numbers off
+//               name?, selected?, stacked? }. Solo passes live previewCard numbers off
 //               the paced snapshot; co-op passes the host snapshot's hand
 //               with a spelled-out unavailability reason (its player cannot
 //               hover the engine for one).
@@ -132,17 +131,19 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // combat root's mirror (combatLayout) can lag a debounced change.
       const formFactor = document.documentElement.dataset.formFactor || handEl.closest('.combat')?.dataset.formFactor || null;
       const desktop = formFactor === 'desktop';
-      // The fan (card cap, top anchoring) is the wide form factors' — desktop and
-      // widescreen. The tool row below keeps its own literal desktop check.
-      const wideFan = isWideFormFactor(formFactor);
       // The compact toolbar occupies a 30px compact row at the top of the hand.
       // Keep four physical pixels between that row and the resting card fan.
       // Desktop measures the live 36px tool row and keeps the same four physical
       // px beneath it; phone, tablet and widescreen keep the 34px constant.
       const toolsRow = desktop ? handEl.closest('.combat')?.querySelector('.combat-tools') : null;
       const measuredRow = toolsRow ? toolsRow.getBoundingClientRect().height : 0;
+      // Desktop keeps its tools in the screen corners (combatTools.js), so the
+      // fan reserves no tool row above the cards there. Read from the form
+      // factor, not the row's placement mark: a freshly rebuilt row has no
+      // mark until its queued measure runs, after this layout.
+      const cornerTools = desktop;
       const toolsPhysical = !desktop ? COMBAT_TOOLS_HEIGHT_PX
-        : measuredRow > 0 ? measuredRow + 4 : COMBAT_TOOLS_DESKTOP_HEIGHT_PX;
+        : cornerTools ? 0 : measuredRow > 0 ? measuredRow + 4 : COMBAT_TOOLS_DESKTOP_HEIGHT_PX;
       const toolsHeight = toolsPhysical / zoom;
       handEl.style.setProperty('--hand-controls-max-width', `${Math.max(0, handEl.clientWidth - 2 / zoom)}px`);
       // Measure the complete row, including the normally hidden native picker.
@@ -160,7 +161,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // On a phone the selected card's lift rises over the tool row (it paints
       // above the row), so no empty lift band separates the row from the fan.
       const plan = handLayout({ width: handEl.clientWidth, height: handEl.clientHeight - toolsHeight,
-        count: cards.length, rem, zoom, compact, controlsHeight, controlled, headroom: compact || wideFan ? toolsHeight : 0, desktop: wideFan });
+        count: cards.length, rem, zoom, compact, controlsHeight, controlled, headroom: compact ? toolsHeight : 0 });
       handEl.dataset.wireframeHand = 'true';
       handEl.style.setProperty('--hand-card-zoom', '1');
       handEl.style.setProperty('--hand-span', plan.span + 'px');
@@ -250,7 +251,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     const alive = () => document.body.contains(handEl);
     ro = new ResizeObserver(() => { if (alive()) scheduleHandLayout(); else ro.disconnect(); });
     mo = new MutationObserver(() => { if (alive()) scheduleHandLayout(); else mo.disconnect(); });
-    // data-form-factor re-lays the fan too: desktop anchors it differently.
+    // data-form-factor re-lays the hand too (the tool row reserve differs by form factor).
     mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-layout', 'data-form-factor'] });
     ro.observe(handEl);
   }
@@ -293,6 +294,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       if (record && record.signature !== signature) { record.release?.(); record.el.remove(); renderedCards.delete(id); record = null; }
       if (record) {
         record.el.classList.toggle('selected', !!entry.selected);
+        record.el.classList.toggle('is-stacked', !!entry.stacked);
         if (handEl.children[i] !== record.el) handEl.insertBefore(record.el, handEl.children[i] || null);
         return;
       }
@@ -307,7 +309,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // nothing at all. Caught in review on the promotion, not by a test,
       // which is why tests/hand-forwards-surface.test.mjs now exists.
       const el = renderCard(registries, entry.inst,
-        { preview: entry.preview, affordable: entry.affordable, actionOwnsTouch: true,
+        { preview: entry.preview, affordable: entry.affordable, actionOwnsTouch: true, range: true,
           surface: entry.surface, availability: entry.availability, commands: entry.commands });
       const spread = Math.min(6, n) * 1.2;
       // THE FAN HANGS UPWARD FROM ITS DEEPEST CARD, NOT DOWNWARD FROM ITS
@@ -349,6 +351,8 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
         });
       }
       if (entry.selected) el.classList.add('selected');
+      // Already committed to an open reaction stack: muted until it resolves.
+      if (entry.stacked) el.classList.add('is-stacked');
       // The spelled-out unavailability reason is VIEWER data (co-op supplies
       // it; solo's player reads live previews and the hint bar instead). When
       // present it rides the card as a badge and as assistive text.

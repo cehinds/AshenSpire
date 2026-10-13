@@ -14,7 +14,7 @@ import { combatRules } from '../src/content/combatRules.js';
 import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
 
 const SLASH = { intent: 'attack', damage: 1, hits: 2, weight: 1 };
-const SWEEP = ['camp:physical', 'maneuver:sweep', 'reach:contact', 'targeting:single'];
+const SWEEP = ['camp:physical', 'maneuver:sweep', 'range:melee', 'targeting:single'];
 
 // An HP offering on the Counter: `offer` is the nonlethal HP payment it asks for.
 const withOffering = (card, amount) => {
@@ -143,7 +143,7 @@ test('a staggered or controlled attacker reports the halt once per root', () => 
 });
 
 test('a status-only root is notCovered, and a seat it control-locks reports controlled', () => {
-  const ATTACK = ['camp:physical', 'maneuver:attack', 'reach:contact', 'targeting:single'];
+  const ATTACK = ['camp:physical', 'maneuver:attack', 'range:melee', 'targeting:single'];
   const registries = createRegistries({ ...contentBundle, enemies: contentBundle.enemies.map(enemy => enemy.id === 'wanderingSoldier'
     ? { ...enemy, firstMove: 'slash', spPool: 1, moves: { slash: { intent: 'debuff', weight: 1,
       effects: [{ op: 'applyStatus', status: 'paralysis', stacks: 2, target: 'player' }] } } }
@@ -264,7 +264,7 @@ test('mixed-version co-op reports an expanded seat reaction using that seat\'s c
 const guardBroken = events => events.filter(event => event.type === 'combatGuardBroken').map(({ type, ...payload }) => payload);
 
 test('v2: an enemy Smash that breaks a defending seat\'s Guard emits combatGuardBroken once per root', () => {
-  const SMASH = { damage: 20, hits: 1, cardTags: ['camp:physical', 'maneuver:smash', 'reach:contact', 'targeting:single'] };
+  const SMASH = { damage: 20, hits: 1, cardTags: ['camp:physical', 'maneuver:smash', 'range:melee', 'targeting:single'] };
   for (const [block, broken] of [[0, true], [200, false]]) {
     const combat = solo({ cardIds: ['defend'], move: SMASH });
     combat.player.block = 0;
@@ -279,7 +279,7 @@ test('v2: an enemy Smash that breaks a defending seat\'s Guard emits combatGuard
 
 test('v2: a lethal Smash still reports Guard broken without applying break Poise to the dead seat', () => {
   const combat = solo({ cardIds: ['defend'], move: { damage: 20, hits: 1,
-    cardTags: ['camp:physical', 'maneuver:smash', 'reach:contact', 'targeting:single'] } });
+    cardTags: ['camp:physical', 'maneuver:smash', 'range:melee', 'targeting:single'] } });
   combat.player.block = 0;
   combat.player.hp = 1;
   dispatch(combat, { type: 'playCard', cardInstanceId: 'r0' });
@@ -341,7 +341,7 @@ test('v1: a Smash with a zero break bonus still reports the Guard break, with no
 });
 
 test('v2: a lethal Smash that breaks Guard still emits combatGuardBroken once, with no bonus Poise queued', () => {
-  const SMASH = { damage: 20, hits: 1, cardTags: ['camp:physical', 'maneuver:smash', 'reach:contact', 'targeting:single'] };
+  const SMASH = { damage: 20, hits: 1, cardTags: ['camp:physical', 'maneuver:smash', 'range:melee', 'targeting:single'] };
   const combat = solo({ cardIds: ['defend'], move: SMASH });
   combat.player.block = 0;
   dispatch(combat, { type: 'playCard', cardInstanceId: 'r0' });

@@ -45,6 +45,9 @@ export const COST_TAGS = Object.freeze({
   'damage:arcane': { weight: 0, side: 'mp' },
   'damage:sacred': { weight: 0, side: 'mp' },
   'damage:decay': { weight: 0, side: 'mp' },
+  'damage:poison': { weight: 2, side: 'sp' },
+  'damage:psychic': { weight: 0, side: 'mp' },
+  'damage:earth': { weight: 0, side: 'mp' },
   // Camps and sources
   'camp:physical': { weight: 2, side: 'sp' },
   'camp:spell': { weight: 1, side: 'mp' },
@@ -79,6 +82,7 @@ export const COST_TAGS = Object.freeze({
   'school:illusion': { weight: 1, side: 'mp' },
   'school:divine': { weight: 1, side: 'mp' },
   'school:decay': { weight: 1, side: 'mp' },
+  'school:earth': { weight: 1, side: 'mp' },
   // Weapon and theme chips (card domain)
   blade: { weight: 1, side: 'sp' },
   heavy: { weight: 0, side: 'sp' },
@@ -117,6 +121,12 @@ export const COST_TAGS = Object.freeze({
   'trait:shattering': { weight: 1, side: 'sp' },
   'trait:unavoidable': { weight: 1, side: 'sp' },
   'trait:unreflectable': { weight: 1, side: 'sp' },
+  // Reaction rules version 2 traits (docs/combat-card-traits-contract.md). Combat adds them after the cost is derived
+  // (engine/combatExpansion.js applyCardTraits), so today these weights price no shipped card.
+  'trait:counterstrike': { weight: 1, side: 'sp' },
+  'trait:impact': { weight: 1, side: 'sp' },
+  'trait:flux': { weight: 1, side: 'sp' },
+  'trait:reaction': { weight: 0, side: 'sp' },
   // Keywords
   'lifecycle.retain': { weight: 1, side: 'sp' },
   'lifecycle.innate': { weight: 1, side: 'sp' },
@@ -154,10 +164,10 @@ export const DRAWBACK_OPS = Object.freeze({
 export const RANGE_WEIGHTS = Object.freeze({ melee: 1, reach: 2, ranged: 3 });
 export const RANGE_TAGS = Object.freeze({
   'delivery:melee': 'melee',
-  'reach:contact': 'melee',
-  'reach:near': 'reach',
+  'range:melee': 'melee',
+  'range:reach': 'reach',
   'delivery:area': 'reach',
-  'reach:far': 'ranged',
+  'range:ranged': 'ranged',
   'delivery:projectile': 'ranged',
   'maneuver:ranged': 'ranged',
 });

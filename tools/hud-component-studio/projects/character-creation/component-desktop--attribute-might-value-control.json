@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "title": "Attribute Might Value Control",
+  "canvas": {
+    "width": 55,
+    "height": 31,
+    "background": "transparent"
+  },
+  "defaultState": "attributes",
+  "states": [
+    {
+      "id": "attributes",
+      "name": "Attributes"
+    }
+  ],
+  "assets": {},
+  "nodes": [
+    {
+      "id": "Might-value",
+      "name": "Might Value",
+      "type": "text",
+      "parent": "attribute-might-value-control",
+      "x": 0,
+      "y": 0,
+      "width": 55,
+      "height": 30.799999999999997,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "text": "1",
+      "fontSize": 22,
+      "fontFamily": "Georgia",
+      "fill": "#d7b45f",
+      "lineHeight": 1.3
+    },
+    {
+      "id": "attribute-might-value-control",
+      "name": "Attribute Might Value Control",
+      "type": "group",
+      "parent": null,
+      "x": 0,
+      "y": 0,
+      "width": 55,
+      "height": 30.799999999999997,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "fill": "none"
+    }
+  ],
+  "metadata": {
+    "componentSource": "attribute-might-value-control",
+    "sourceState": "attributes",
+    "designOnly": true
+  }
+}

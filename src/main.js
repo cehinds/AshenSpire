@@ -9,6 +9,7 @@ import { mountInitialClassMastery } from './ui/components/classMastery.js';
 import { hasClassMastery, openRunClassMastery, registriesForClassMastery, adoptClassMasteryProfile, refreshRunClassMastery } from './model/classMasteryRun.js';
 import { mergeProgressionRewards, partitionProgressionRewards, unclaimedProgressionRewards } from './model/deferredProgression.js';
 import { applyArtQuality, onArtSourceChange, builtInArtArrived, ART_REDRAW_EVENT } from './ui/highResArt.js';
+import { applyCardArtStyle } from './ui/cardArtStyle.js';
 import { whenBuiltInArtReady, musicHold, bootLine, packsPinned, builtInArtStatus, builtInArtSettled } from './ui/assetPacks.js';
 import { applyArtTier, onTierArrived, requestedTier, retryBuiltInArt, onRetryProgress } from './ui/artTier.js';
 import { startBootArt, bootArtLine, bootArtRetried } from './ui/bootArt.js';
@@ -92,6 +93,7 @@ import {
   rollClassDraftIds,
   rollFlaskDrop,
   rollRelicReward,
+  rollRelicChoices,
   rollArmamentDrop,
 } from './engine/encounters.js';
 import { buildMarketStock, marketVisitStock, commitInnRest, buildBlacksmithStock, blacksmithVisitStock, buildMasterStock, masterVisitStock } from './engine/shopKinds.js';
@@ -841,6 +843,7 @@ function applyCardSizeSettings(settings) {
 }
 
 function applyDisplaySettings(settings) {
+  applyCardArtStyle(settings);
   const appearanceChanged = applyDisplayAppearance(settings);
   // Art quality: lay a local high-res source over the built-in art, or clear
   // it. Asynchronous (a served hd/ folder is fetched); screens drawn after it
@@ -1226,10 +1229,10 @@ function beginPreparedRun({ classId, seedString, customization, keepsakeId, cust
     ? legacyArcaneShot || shotCombatVersion === '1' ? null : 1
     : shotKnowledgeVersion === '0' ? null : 1;
   const shotReactionVersion = shotState === 'combat' ? shotParams.get('shotReactionVersion') : null;
-  if (shotReactionVersion !== null && !['0', '1'].includes(shotReactionVersion)) throw new Error('shotReactionVersion must be 0 or 1');
+  if (shotReactionVersion !== null && !['0', '1', '2'].includes(shotReactionVersion)) throw new Error('shotReactionVersion must be 0, 1 or 2');
   const reactionRulesVersion = shotReactionVersion === null
-    ? legacyArcaneShot || shotCombatVersion === '1' || shotKnowledgeVersion === '0' ? null : 1
-    : shotReactionVersion === '0' ? null : 1;
+    ? legacyArcaneShot || shotCombatVersion === '1' || shotKnowledgeVersion === '0' ? null : 2
+    : shotReactionVersion === '0' ? null : Number(shotReactionVersion);
   const configSnapshot = { ...advancedConfigSnapshot(saves.loadMeta().settings || {}),
     breakMeterVersion: combatExpansionVersion === 2 ? 2 : 1 };
   // The Arcane matrix is a legacy-run visual fixture. It deliberately carries
@@ -2956,7 +2959,7 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
     }
   }
   if (shotState === 'combat' && shotParams.get('shotReaction') === 'counter') {
-    if (combat.reactionRulesVersion !== 1) throw new Error('shotReaction=counter requires reaction rules version 1');
+    if (!(combat.reactionRulesVersion >= 1)) throw new Error('shotReaction=counter requires reaction rules');
     // Memory-only validation pose; choices, payment and returns use production commands.
     combat.piles.draw.push(...combat.piles.hand);
     combat.piles.hand = ['guardCounter', 'sweepingBlow', 'strike'].map((cardId, index) => ({ cardId, instanceId: `reaction-shot-${index}`, upgraded: false }));
@@ -2965,7 +2968,7 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
     for (const enemy of combat.enemies) {
       enemy.hp = enemy.maxHp = 100;
       enemy.intent = { kind: 'attack', moveId: 'slash', damage: 7, hits: 1,
-        combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', reach: 'contact', targeting: 'single' } };
+        combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', range: 'melee', targeting: 'single' } };
       enemy.intentRevealed = false;
     }
   }
@@ -3183,6 +3186,9 @@ async function onCombatEnd(result, combat, enc) {
     const drops = registries.balance.equipment.drops || {};
     const bossDrafts = settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillDrafts('boss', manualLevelUp) : [];
     const bossClassDrafts = settingOn(saves.loadMeta().settings, 'rewardBattleClassDrafts') ? rollClassDrafts(manualLevelUp) : [];
+    // A boss offers up to balance.rewards.bossRelicChoices relics to pick ONE
+    // from; one relic (or none) keeps the single relicId shape.
+    const bossRelics = rollRelicChoices(registries, rng, run.relics, { rarities: ['boss'], count: Math.max(1, registries.balance.rewards.bossRelicChoices ?? 3) });
     const bossRewards = {
       title: victoryTitle(enc),
       cinders: Math.floor(rollRuneReward(registries, rng, 'boss', run.relics) * featMultiplier(run, 'cinders')) + (bossArmament ? 0 : drops.consolationCinders || 0),
@@ -3192,7 +3198,7 @@ async function onCombatEnd(result, combat, enc) {
       skillAttributes: settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillAttributes(manualLevelUp) : [],
       skillFeats: settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillFeats(manualLevelUp) : [],
       ...rollCardRows('boss', levelsEarned),
-      relicId: rollRelicReward(registries, rng, run.relics, { rarities: ['boss'] }),
+      ...(bossRelics.length > 1 ? { relicChoices: bossRelics } : { relicId: bossRelics[0] ?? null }),
       ...sigilOffer('boss'),
       armamentId: bossArmament,
       smithingStoneReceipt,
@@ -4586,7 +4592,8 @@ if (shotState === 'combat-test') {
         cardIds: [],
       } : { cardIds: registries.classes.get(run.class).cardPool.slice(0, 3) }),
       flaskId: 'crimsonFlask',
-      relicId: 'forsakenMedallion',
+      // `?shotReward=bossRelics` poses a boss victory's relic choice (SPEC §6).
+      ...(pose === 'bossRelics' ? { relicChoices: ['crownOfStitches', 'wardenHorn', 'ashOfRemembrance'] } : { relicId: 'forsakenMedallion' }),
       armamentId: 'greatsword',
       smithingStoneReceipt,
       // What the fight paid, authored like the rest of the pose.

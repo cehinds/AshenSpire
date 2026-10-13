@@ -33,11 +33,16 @@ import { DECK_PANES, deckEditorModel, deckEditorView, deckVariantKey, nextFilter
 import { t, tFull } from '../strings.js';
 import { renderCard, staticTokens } from '../components/card.js';
 import { resolveCard } from '../../model/registries.js';
-import { combatProfileFor } from '../../model/combatCardProfile.js';
-import { sigilHtml } from '../components/combatSigilView.js';
+import { applyCombatExpansionCard } from '../../content/combatExpansionCards.js';
+import { applyCardTraits } from '../../content/traitProjection.js';
+import { combatCardRange, combatProfileFor } from '../../model/combatCardProfile.js';
+import { cardCategorySigilHtml } from '../components/cardTagSymbols.js';
 import { playingCardModel } from '../../model/playingCard.js';
-import { playingCardArt } from '../cardArtwork.js';
+import { playingCardArt, cardArtFallbacks } from '../cardArtwork.js';
+import { cardArtLayersHtml } from '../cardArtLayers.js';
+import { registerCardArtRefresh } from '../cardArtStyle.js';
 import { assetUrl } from '../assetmap.js';
+import { markArtPlaceholder } from '../artFallback.js';
 import { cardShapeCssProperties, cardLevelWidthCss } from '../models/CardSizeModel.js';
 import { keywordExplanations } from '../components/tooltipGlossary.js';
 import { deckCardAnimationPreview } from '../components/deckCardAnimationPreview.js';
@@ -191,14 +196,31 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   }
 
   function artwork(row, large = false) {
-    const art = playingCardArt(row.ref, { large });
-    const img = el('img', {
-      class: `deck-editor-art${art?.kind === 'outline' ? ' outline' : ''}`,
-      src: art ? assetUrl(art.path) : '', alt: '', draggable: 'false',
-    });
-    if (art?.position) img.style.setProperty('object-position', art.position);
-    img.addEventListener('error', () => { img.hidden = true; });
-    return img;
+    const well = el('span', {class:'deck-editor-art', 'aria-hidden':'true'});
+    Object.assign(well.style, {position:'relative',overflow:'hidden',display:'block'});
+    const paint = () => {
+      const art = playingCardArt(row.ref, {large, definition:combatDef(row), registries});
+      well.dataset.cardArt=art?.kind||'outline';
+      const img = el('img', {src:art?assetUrl(art.path):'',alt:'',draggable:'false'});
+      Object.assign(img.style, {width:'100%',height:'100%',objectFit:art?.fit||(art?.kind==='outline'?'contain':'cover'),objectPosition:art?.position||'center',filter:art?.filter||''});
+      well.classList.toggle('outline', art?.kind==='outline');
+      well.replaceChildren(img);
+      if(art)well.insertAdjacentHTML('beforeend',cardArtLayersHtml(art));
+      const fallbacks=cardArtFallbacks(row.ref,art,{large});
+      img.addEventListener('error',()=>{
+        markArtPlaceholder(well, paint);
+        const next=fallbacks.shift();
+        well.querySelectorAll('[data-card-art-layers]').forEach(node=>node.remove());
+        if(!next){img.hidden=true;return;}
+        well.dataset.cardArt=next.kind;
+        well.classList.toggle('outline',next.kind==='outline');
+        Object.assign(img.style,{filter:'',objectFit:next.fit||(next.extended?'cover':'contain'),objectPosition:next.position||'center'});
+        img.src=assetUrl(next.path);
+      });
+    };
+    paint();
+    registerCardArtRefresh(well,paint);
+    return well;
   }
 
   const selectionKey = (row, source) => source === 'collection' ? row.key : row.groupKey;
@@ -243,7 +265,9 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     }
     const { row, source } = inspected || selected;
     const def = resolveCard(registries, row.ref);
-    const face = renderCard(registries, row.ref, { inspection: false, level: 'inspect' });
+    // Reaction rules version 2: the face shows the run's projected trait chips and trait line.
+    const face = renderCard(registries, row.ref, { inspection: false, level: 'inspect',
+      ...(run?.reactionRulesVersion === 2 ? { definition: combatDef(row) } : {}) });
     for (const [key, value] of Object.entries(cardShapeCssProperties())) face.style.setProperty(key, value);
     face.style.setProperty('--deck-inspect-width', cardLevelWidthCss('inspect'));
     face.querySelector('.card-costs')?.replaceChildren(rowCosts(row));
@@ -347,8 +371,23 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   // of the six; otherwise what the card is: Spell, Power, Consumable or Skill.
   // Every card names one.
   const MANEUVER_STANCES = ['attack', 'defend', 'counter', 'smash', 'sweep', 'ranged'];
+  // The definition combat resolves: under expanded combat (v2) a run's spell
+  // reach and targeting come from applyCombatExpansionCard, so the editor shows them.
+  // One draw resolves each row's definition once: the cache is keyed by the
+  // row's ref (what resolveCard reads) and cleared at the start of draw().
+  const combatDefCache = new Map();
+  const combatDef = (row) => {
+    const key = JSON.stringify(row.ref);
+    if (!combatDefCache.has(key)) {
+      const def = resolveCard(registries, row.ref);
+      // Reaction rules version 2 shows the card's trait tags; version 1 shows the card as before.
+      const expanded = run?.combatExpansionVersion === 2 ? applyCombatExpansionCard(def) : def;
+      combatDefCache.set(key, run?.combatExpansionVersion === 2 && run.reactionRulesVersion === 2 ? applyCardTraits(expanded, run.reactionRules) : expanded);
+    }
+    return combatDefCache.get(key);
+  };
   const stanceKey = (row) => {
-    const def = resolveCard(registries, row.ref);
+    const def = combatDef(row);
     const profile = combatProfileFor(def);
     if (MANEUVER_STANCES.includes(profile.maneuver)) return profile.maneuver;
     // Power and Consumable come before the spell camp: a magical Power is a Power.
@@ -365,7 +404,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   // The rank the card face prints (its ability rank, else its rank badge). Rank 0
   // has a name: a spell's is Cantrip, a combat maneuver's is Basic.
   const rankNode = (row) => {
-    const def = resolveCard(registries, row.ref);
+    const def = combatDef(row);
     const card = playingCardModel(registries, row.ref);
     // An unranked maneuver or spell (the starter Strike and Defend) is rank 0.
     const ranked = card.abilityRank ?? (card.rankBadge ? Number(String(card.rankBadge).replace(/\D+/g, '')) : null);
@@ -376,27 +415,18 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       : t(combatProfileFor(def).camp === 'spell' ? 'deckEditor.rank.cantrip' : 'deckEditor.rank.basic');
     return el('span', { class: 'deck-editor-rank', dataset: { rank }, text });
   };
-  // Range (owner, 2026-10-11): Melee / Reach / Ranged from the card's reach
-  // (contact / near / far). An untagged attacking card takes the player
-  // card's combat default (engine/combatMatchups.js normalizedProfile):
-  // projectiles and ranged maneuvers reach near, the rest contact. A card that attacks nothing shows no range.
-  const RANGE_BY_REACH = { contact: 'melee', near: 'reach', far: 'ranged' };
-  const ATTACKING = ['attack', 'smash', 'sweep', 'ranged', 'counter'];
+  // Range: the shared rule (combatCardRange in model/combatCardProfile.js) decides
+  // which cards show one; the hand's chip reads the same rule.
   const rangeNode = (row) => {
-    const def = resolveCard(registries, row.ref);
-    const profile = combatProfileFor(def);
-    const attacking = ATTACKING.includes(profile.maneuver) || (profile.camp === 'spell' && def.type === 'attack');
-    if (!attacking) return null;
-    const reach = profile.reach || (profile.delivery === 'projectile' || profile.maneuver === 'ranged' ? 'near' : 'contact');
-    const range = RANGE_BY_REACH[reach];
+    const range = combatCardRange(combatDef(row));
     return range ? el('span', { class: 'deck-editor-range', dataset: { range }, text: t(`deckEditor.range.${range}`) }) : null;
   };
-  // Physical or magical, as an icon before the costs. Magical reuses the Spell
-  // sigil; physical borrows the crossed blades until it has its own mark.
+  // Physical or magical, as an icon before the costs: the Physical shield in gold
+  // for physical cards, the outlined Spell sparkle in gold for magical ones.
   const campNode = (row) => {
-    const camp = combatProfileFor(resolveCard(registries, row.ref)).camp === 'spell' ? 'magical' : 'physical';
+    const camp = combatProfileFor(combatDef(row)).camp === 'spell' ? 'magical' : 'physical';
     const node = el('span', { class: 'deck-editor-camp', dataset: { camp }, role: 'img', title: tFull(`deckEditor.camp.${camp}`), 'aria-label': t(`deckEditor.camp.${camp}`) });
-    node.innerHTML = sigilHtml(camp === 'magical' ? 'spell' : 'attack', 'action', { tooltip: false });
+    node.innerHTML = cardCategorySigilHtml(camp === 'magical' ? 'spell' : 'physical');
     return node;
   };
   const tileCosts = (row) => rowCosts(row, [campNode(row)]);
@@ -751,6 +781,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   }
 
   function draw() {
+    combatDefCache.clear();
     model = deckEditorModel({ registries, run, settings, view });
     if (!model.ordered && mobileView === 'deck') mobileView = 'collection';
     const rows = selected?.source === 'deck' ? model.deck : model.collection;

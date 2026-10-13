@@ -1,6 +1,7 @@
 import { combatMatchups, combatIntent, combatExpansionMatchups } from '../content/combatMatchups.js';
 import { combatStatusRules } from '../content/combatStatusRules.js';
 import { ASHEN_BLIGHT_RULES } from '../content/ashenBlight.js';
+import { reactionRulesSnapshot } from '../content/combatCardTraits.js';
 import { createAshenBlightState, effectiveAshenBlightAttributes, ashenBlightBonuses } from '../model/ashenBlight.js';
 import { resolveCombatCard } from './combatExpansion.js';
 import * as Control from './combatStatusControl.js';
@@ -34,16 +35,18 @@ import { reconcileWardBlock } from '../model/blockPresentation.js';
 // Headless: no document/window/localStorage/timers.
 
 import * as A from './actions.js';
+import { spellCardCostSurcharge, combatProfileFor } from '../model/combatCardProfile.js';
 import * as R from './abilityRiders.js';
 import { turnDrawCount, endTurnCardFate, validateDiscardChoice, applyDiscardChoice, returnUnplayedCards } from './handRules.js';
 import { handRow, scaledCards } from '../model/handRules.js';
 import { LEGACY_HAND_MAX } from '../model/statRows.js';
 import { refreshCombatRatings, recoverRatingMeters, cardRatingBonus, clearMeterGuards } from './combatRatings.js';
+import { persistentWardMaximum, persistentPoiseMaximum } from '../model/combatRatings.js';
 import * as F from './combatRules.js';
 import * as Reactions from './combatReactions.js';
-import { combatProfileFor } from '../model/combatCardProfile.js';
 import * as Rounds from './combatRoundsAdapter.js';
 import { decayNormalMomentum, settleNormalMomentum, multiActionOn } from './normalPreview.js';
+import { clearEnemyReactionRolls } from './enemyReactions.js';
 import { emitEvent, fireOwnerHooks, findEntity, hasEventTriggers } from './triggers.js';
 import { attachSkillXp } from './skillXp.js';
 import * as S from '../framework/statusSemantics.js';
@@ -143,7 +146,7 @@ export function createCombat({
   // null — every recovery setting at its default — keeps the idle-Stamina rule
   // below and writes no recovery state into the fight or its save.
   recoveryRules = null,
-  knowledge = null, reactionRulesVersion = null,
+  knowledge = null, reactionRulesVersion, reactionRules = null,
   // SPEC §14.1 Play in deck order: read once by the caller (runCombat.js) and
   // carried on the fight as `orderedDraw`, so a saved fight keeps its rule.
   orderedDraw = false,
@@ -156,6 +159,8 @@ export function createCombat({
   normalPreview = null,
   combatExpansionVersion = 1, combatExpansionRules = null, combatKey = 'headless',
 }) {
+  // New expanded fights carry reaction rules version 2; null (saved or explicit) stays without reactions.
+  const reactionVersion = reactionRulesVersion === undefined ? (combatExpansionVersion === 2 ? 2 : null) : reactionRulesVersion;
   // Run creation owns derived Mana. Older headless fixtures without a Mana
   // pool get a harmless zero pool; class data is never a fallback authority.
   const maxMana = Number.isFinite(player.maxMana) ? player.maxMana : 0;
@@ -201,7 +206,7 @@ export function createCombat({
     ...(normalPreview ? { normalPreview: { momentum: normalPreview.momentum === true, multiAction: normalPreview.multiAction === true,
       state: { momentum: {}, poiseDouble: {}, pending: {} } } } : {}),
     foundation: F.createFoundation(ruleset, combatProfiles, registries),
-    ...(reactionRulesVersion === 1 && combatExpansionVersion === 2 ? { reactionRulesVersion: 1 } : {}),
+    ...(reactionVersion >= 1 && combatExpansionVersion === 2 ? { reactionRulesVersion: reactionVersion, ...(reactionVersion === 2 ? { reactionRules: reactionRulesSnapshot(reactionRules) } : {}) } : {}),
     registries,
     equipmentProfileRuleSnapshot,
     // Carried from the run so a mid-combat swap can restamp against the quota
@@ -363,7 +368,8 @@ export function createCombat({
   }
   if (combatExpansionVersion === 2) {
     for (const entity of [combat.player, ...combat.enemies]) {
-      Control.initializePersistentWard(entity, entity.ratings?.ward || 0);
+      Control.initializePersistentWard(entity, persistentWardMaximum(combat, entity));
+      Control.initializePersistentPoise(entity, persistentPoiseMaximum(combat, entity));
       entity.barrier = 0;
     }
   }
@@ -385,6 +391,8 @@ export function createCombat({
     // or every card would come back to its bare-handed self at combat start.
     ...(c.mods && c.mods.length ? { mods: [...c.mods] } : {}),
     ...(typeof c.damageSchool === 'string' ? { damageSchool: c.damageSchool } : {}),
+    ...(Number.isFinite(c.magicShare) ? { magicShare: c.magicShare } : {}),
+    ...(typeof c.physicalDamageType === 'string' ? { physicalDamageType: c.physicalDamageType } : {}),
     ...(Number.isInteger(c.exposureBuildupPerHit) ? { exposureBuildupPerHit: c.exposureBuildupPerHit } : {}),
     ...(c.equipmentRole ? { equipmentRole: c.equipmentRole, profileId: c.profileId, profileReceipt: c.profileReceipt } : {}),
     ...(c.ratingId ? { ratingId: c.ratingId } : {}),
@@ -442,7 +450,7 @@ function drainQueue(combat) {
     if (++guard > QUEUE_GUARD) {
       throw new Error('Action queue did not drain (possible infinite trigger loop)');
     }
-    if (Reactions.beforeReactionAction(combat, combat.queue[0], { play: doPlayCard })) return;
+    if (Reactions.beforeReactionAction(combat, combat.queue[0], reactionHooks)) return;
     const action = combat.queue.shift();
     Reactions.startQueuedEnemy(combat, action);
     A.executeAction(combat, action);
@@ -482,6 +490,7 @@ function finishCombat(combat, result) {
 
 function startPlayerTurn(combat) {
   combat.turn += 1;
+  clearEnemyReactionRolls(combat);
   combat.phase = 'player';
   // SPEC §4.11: a turn is a round for normal-combat momentum; each enemy's M decays one step first (rounds rule).
   decayNormalMomentum(combat);
@@ -782,6 +791,22 @@ function executeMovePayload(combat, enemy, move, moveId) {
     combat.emit('enemyMoveStarted', start);
   }
   const carrier = enemyMoveCarrier(enemy, move, moveId, combat);
+  const actions = enemyMoveActions(combat, enemy, move, moveId, carrier);
+  const group = enqueueExpandedAction(combat, actions, { source: enemy, target: combat.player, carrier });
+  if (Reactions.usesReactions(combat) && group) group.enemyMoveStart = start;
+}
+
+// Enemy reactions: the reaction move's actions and carrier, planned by the stack
+// (engine/enemyReactions.js pushEnemyReaction) instead of the queue.
+function planEnemyReactionMove(combat, enemy, moveId) {
+  const move = expandedEnemyMove(enemy, combat.registries.enemies.get(enemy.enemyId).moves[moveId], moveId, combat);
+  const carrier = enemyMoveCarrier(enemy, move, moveId, combat);
+  return { actions: enemyMoveActions(combat, enemy, move, moveId, carrier), carrier, target: combat.player, kind: move.intent };
+}
+
+const reactionHooks = { play: doPlayCard, drain: drainQueue, planEnemyReaction: planEnemyReactionMove };
+
+function enemyMoveActions(combat, enemy, move, moveId, carrier) {
   const actions = [];
   if (move.damage != null && carrier.combatProfile.maneuver !== 'counter') {
     actions.push({
@@ -810,8 +835,7 @@ function executeMovePayload(combat, enemy, move, moveId) {
   for (const eff of move.effects || []) {
     if (carrier.combatProfile.maneuver !== 'counter' || !['damage', 'poiseDamage', ...(combat.combatExpansionVersion === 2 ? ['wardDamage'] : [])].includes(eff.op)) actions.push({ effect: eff, source: enemy, owner: enemy, target: combat.player, card: carrier, meta: { moveId } });
   }
-  const group = enqueueExpandedAction(combat, actions, { source: enemy, target: combat.player, carrier });
-  if (Reactions.usesReactions(combat) && group) group.enemyMoveStart = start;
+  return actions;
 }
 
 // ---------------------------------------------------------------------------
@@ -872,9 +896,12 @@ function presentIntent(combat, enemy, def, moveId) {
 
 // The weighted pick (SPEC §4.6). `maxSp` is the SP left in the enemy's pool: a move that costs more is not picked
 // (owner decision, 2026-10-12). Infinity offers every move (the minimum-one fallback).
+// Reaction moves (docs/combat-card-traits-contract.md, "Enemy reactions") are never rolled: they are dropped before any
+// weighting, maxConsecutive or pattern indexing.
 function weightedMovePick(combat, enemy, def, maxSp = Infinity) {
   const entries = Object.entries(def.moves).filter(
-    ([id, mv]) => (!mv.locked || enemy.unlockedMoves.includes(id)) && Rounds.enemyMoveSp(mv) <= maxSp
+    ([id, mv]) => !mv.reaction && (!mv.locked || enemy.unlockedMoves.includes(id))
+      && Rounds.enemyMoveSp(mv, { enemy, moveId: id, combat }) <= maxSp
   );
   if (entries.length === 0) return null;
 
@@ -942,7 +969,7 @@ export function dispatch(combat, intent) {
         break;
       case 'chooseReaction':
         if (Rounds.roundPaused(combat)) { resumeCombatRound(combat, intent); break; }
-        Reactions.answerReaction(combat, 'player', intent, { play: doPlayCard });
+        Reactions.answerReaction(combat, 'player', intent, reactionHooks);
         resumeEnemyTurn(combat);
         break;
       case 'predictIntent':
@@ -1300,8 +1327,10 @@ export function resolvedCardPlayCosts(combat, def, claimed = null) {
   const pools = F.foundationCosts(combat, def, weightClass, combat.registries.framework.costProfile(def, { weightClass }));
   // A break-even restore pays its own part of the price (owner, 2026-10-13; model/actionCosts.js ownRestoreFunds).
   const funds = ownRestoreFunds(def);
+  // Silenced (v2): each stack adds 1 SP to a spell-camp card. An X card already spends every point.
+  const silenced = combat.combatExpansionVersion === 2 && def.cost !== 'X' ? spellCardCostSurcharge(combat.player, def) : 0;
   const stamina = def.cost === 'X' ? combat.player.stamina + (def.upcastSurcharge || 0)
-    : Math.max(0, effectiveCost(combat, def) + (def.upcastSurcharge || 0) - funds.stamina);
+    : Math.max(0, effectiveCost(combat, def) + (def.upcastSurcharge || 0) + silenced - funds.stamina);
   const player = withoutClaims(combat.player, claimed);
   return { energy: stamina, mana: Math.max(0, pools.mana + (def.upcastSurcharge || 0) - funds.mana - R.matchingAbilityCharges(player, { ...def, type: cardKind(def), authoredTags: def.cardTags || def.tags }).manaDiscount), stamina };
 }
@@ -1323,7 +1352,7 @@ export function cardPlayCosts(combat, cardInstanceId, upcastRanks) {
     && combat._emitEvent === emitEvent && Array.isArray(combat.queue) && combat.queue.length === 0
     && !combat.pendingAbilityDiscard && !combat._abilityAction && !combat._emitDepth
     && !combat._foundationTransaction && !combat._foundationAncestry?.length
-    && !hasEventTriggers(combat, 'cardPreparing')) return playCosts(combat, def, claimed);
+    && !hasEventTriggers(combat, 'cardPreparing', { cardTags: def.cardTags || def.tags || [] })) return playCosts(combat, def, claimed);
   return playCosts(preparingPreview(combat, inst, def), def, claimed);
 }
 
@@ -1391,7 +1420,7 @@ export function cardNeedsEnemyTargetNow(combat, cardInstanceId) {
     && combat.enemies?.some(enemy => enemy.alive && enemy.hp > 0)
     && combat._emitEvent === emitEvent && Array.isArray(combat.queue) && combat.queue.length === 0
     && !combat.pendingAbilityDiscard && !combat._abilityAction && !combat._emitDepth
-    && !combat._foundationAncestry?.length && !hasEventTriggers(combat, 'cardPreparing')) {
+    && !combat._foundationAncestry?.length && !hasEventTriggers(combat, 'cardPreparing', { cardTags: def.cardTags || def.tags || [] })) {
     const enemyAvailable = combat.enemies.some(enemy => enemy.alive);
     const charges = R.matchingAbilityCharges(combat.player, {
       ...def, type: cardKind(def), authoredTags: def.cardTags || def.tags,
@@ -1487,6 +1516,8 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
     // Which piece lent this card, for the skill hooks (engine/skillXp.js).
     ...(inst.grantedBy ? { grantedBy: inst.grantedBy } : {}),
     damageSchool: inst.damageSchool ?? def.damageSchool,
+    ...(Number.isFinite(inst.magicShare ?? def.magicShare) ? { magicShare: inst.magicShare ?? def.magicShare } : {}),
+    ...(typeof (inst.physicalDamageType ?? def.physicalDamageType) === 'string' ? { physicalDamageType: inst.physicalDamageType ?? def.physicalDamageType } : {}),
     exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
     // The resolved face's Poise/Ward values: a staff's Strike resolves
     // magical and carries Ward, which the registry def cannot (attackImpact).
@@ -1592,6 +1623,8 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
     staminaSpent: staminaCost,
   });
   drainQueue(combat);
+  // An enemy reaction window on this card's own root: it resolves when the root resumes.
+  if (Reactions.deferRootPlay(combat)) return;
 
   finishAbilityPlay(combat);
 }
@@ -1829,7 +1862,7 @@ function enemyAttackProfile(combat, entry) {
   const enemy = combat.enemies.find(e => e.id === entry.actor);
   const move = combat.registries.enemies.get(enemy.enemyId).moves[entry.cardId];
   const expanded = expandedEnemyMove(enemy, move, entry.cardId, combat);
-  return { ...combatProfileFor({ ...move, enemyId: enemy.enemyId, moveId: entry.cardId }), reach: expanded.reach, targeting: expanded.targeting };
+  return { ...combatProfileFor({ ...move, enemyId: enemy.enemyId, moveId: entry.cardId }), range: expanded.range, targeting: expanded.targeting };
 }
 
 // The reaction record of a card in hand, priced now, or null when it cannot be played as a reaction now.
@@ -2141,6 +2174,8 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
       derivedTags: gripTags(gripOf(combat.registries, combat.loadout, combat.player.classId)),
       authoredTags: def.cardTags ?? (def.tags?.length ? def.tags : []),
       damageSchool: inst.damageSchool ?? def.damageSchool,
+      ...(Number.isFinite(inst.magicShare ?? def.magicShare) ? { magicShare: inst.magicShare ?? def.magicShare } : {}),
+      ...(typeof (inst.physicalDamageType ?? def.physicalDamageType) === 'string' ? { physicalDamageType: inst.physicalDamageType ?? def.physicalDamageType } : {}),
       exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
       ...(def.cardRatingValues ? { cardRatingValues: def.cardRatingValues } : {}),
     },
@@ -2262,6 +2297,12 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
         if (combat.combatExpansionVersion === 2 && !targetId && !isCounterReply) {
           const printedBase = evalPreview(combat, action, eff.amount, null) + (action.meta.abilityChargeDamage || 0) + (action.meta.abilityChargeDamageEffect || 0);
           entry.faceValue = A.computeAttackDamage(combat, p, null, printedBase, attackTags, carrier, { matchups: false, beforeDefense: true });
+          // The face splits its amount as the contacts do: the card's own damage, then its rating bonus by category.
+          entry.splitBase = Math.max(0, Math.floor(evalPreview(combat, action, eff.amount, null)));
+          entry.ratingBonus = A.cardRatingDamage(combat, p, carrier, printedBase);
+          entry.ratingPart = A.ratingBonusPart(combat, carrier);
+          // The physical type the carrier resolved (a lending weapon, or a technique's wielded weapon) names the face's physical part.
+          if (carrier.physicalDamageType) entry.physicalDamageType = carrier.physicalDamageType;
         }
         // #61 M5: when the aimed target's tag-scoped vulnerability matches
         // this hit's tags, name the matched row's tint so the hand can accent

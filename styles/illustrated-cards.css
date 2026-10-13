@@ -53,13 +53,19 @@
 :root .card-sigil-band .combat-sigil-action {width:11.5cqw;height:11.5cqw;max-height:100%;pointer-events:none;}
 :root .card-sigil-band .card-type-name {font:700 7cqw/1 Georgia,serif;letter-spacing:.085em;text-transform:uppercase;white-space:nowrap;}
 :root .illustrated-card-face .card-tag-rail {
-  position:absolute;z-index:7;right:9%;top:16%;display:flex;flex-direction:column;align-items:center;gap:2cqw;
+  /* No stacking context of its own: the symbols sit above the hand's hit lane (z 20), so a tap explains a symbol and never plays the card. */
+  position:absolute;z-index:auto;right:9%;top:16%;display:flex;flex-direction:column;align-items:center;gap:2cqw;
   color:#e8bd78;pointer-events:none;
 }
 :root .card-tag-rail .card-tag-symbol {display:flex;width:8cqw;height:8cqw;flex:none;filter:drop-shadow(0 0 .65cqw #000) drop-shadow(0 0 1.1cqw #000) drop-shadow(0 .7cqw .7cqw #000);}
 :root .card-tag-symbol svg {display:block;width:100%;height:100%;}
+:root .card-tag-symbol {pointer-events:auto;cursor:pointer;}
+:root .card-tag-rail .card-tag-symbol {position:relative;z-index:21;}
+:root .card-tag-count {position:absolute;right:-1.6cqw;bottom:-1.6cqw;min-width:6cqw;height:6cqw;box-sizing:border-box;padding:0 .9cqw;border-radius:3cqw;border:.35cqw solid #e8bd78;background:#16110e;color:#fff0cc;font:700 5.2cqw/5.3cqw Georgia,serif;text-align:center;text-shadow:0 1px 1px #000;}
 :root .illustrated-card-face[data-rules-dense='true'] .card-tag-rail {top:13.9%;gap:.5cqw;}
 :root .illustrated-card-face[data-rules-dense='true'] .card-tag-symbol {width:7cqw;height:7cqw;}
+/* The range chip (combat hand): the tag chip's own box, sized in card units with a readable floor. */
+:root .card-tag-rail .card-range-chip {display:block;margin-top:.4cqw;padding:.3cqw 1.2cqw;border-color:#e5c36a;border-radius:.8cqw;background:rgba(12,9,6,.8);color:#e5c36a;font:600 clamp(10px,5cqw,13px)/1.2 system-ui,sans-serif;letter-spacing:.04em;text-shadow:0 1px 2px #000;}
 :root .card.illustrated-card .card-rank {
   position:absolute;z-index:9;left:50%;right:auto;bottom:auto;transform:translateX(-50%);
   display:grid;place-items:center;width:42%;max-width:70%;height:8cqw;min-height:14px;margin:0;padding:0;border:0;border-radius:0;

@@ -480,7 +480,7 @@ export const tagFamilyDomains = [
   },
   {
     "family": "card",
-    "domain": "reach"
+    "domain": "range"
   },
   {
     "family": "card",
@@ -488,7 +488,7 @@ export const tagFamilyDomains = [
   },
   {
     "family": "basicCardProfile",
-    "domain": "reach"
+    "domain": "range"
   },
   {
     "family": "basicCardProfile",
@@ -500,7 +500,7 @@ export const tagFamilyDomains = [
   },
   {
     "family": "enemyMove",
-    "domain": "reach"
+    "domain": "range"
   },
   {
     "family": "enemyMove",
@@ -512,7 +512,7 @@ export const tagFamilyDomains = [
   },
   {
     "family": "effect",
-    "domain": "reach"
+    "domain": "range"
   },
   {
     "family": "effect",

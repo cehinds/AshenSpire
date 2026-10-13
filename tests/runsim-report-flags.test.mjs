@@ -10,7 +10,18 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { bossTierScale } from '../src/model/seats.js';
 
+// runsim is deterministic per seed, and four tests read the same `2 --mana-ab`
+// fleet (two read the same `--seat-tiers` one). Each fleet is run once and its
+// output shared: the file used to run the heaviest fleet four times over, and
+// on a loaded Windows shard one copy passed its 120 s spawn limit (run
+// 38382452982, while the others took 82-110 s).
+const outputs = new Map();
 const run = (...args) => {
+  const key = args.join('\0');
+  if (!outputs.has(key)) outputs.set(key, runOnce(...args));
+  return outputs.get(key);
+};
+const runOnce = (...args) => {
   const r = spawnSync(process.execPath, ['tools/runsim.mjs', ...args], {
     cwd: new URL('..', import.meta.url), encoding: 'utf8', timeout: 120000,
   });

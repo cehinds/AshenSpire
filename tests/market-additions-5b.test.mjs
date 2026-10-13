@@ -174,7 +174,7 @@ test('with shipped defaults pre-§14 shelves are byte-identical and later stream
   // Sigils and intent visibility were appended later; a market draws neither.
   // The Combat Rounds Preview stream (SPEC §4.11) is appended last, drawn only by a fight on the preview.
   assert.equal(STREAM_NAMES.indexOf('shopOffers'), 15, 'no stream was inserted before shopOffers');
-  assert.deepEqual(STREAM_NAMES.slice(15), ['shopOffers', 'sigils', 'enemyIntentVisibility', 'combatAvoidance', 'statusRecovery', 'statusPressure', 'ashenBlight', 'enemyIntentClue', 'combatRounds']);
+  assert.deepEqual(STREAM_NAMES.slice(15), ['shopOffers', 'sigils', 'enemyIntentVisibility', 'combatAvoidance', 'statusRecovery', 'statusPressure', 'ashenBlight', 'enemyIntentClue', 'enemyReaction', 'combatRounds']);
   for (let seed = 1; seed <= 30; seed++) {
     const run = createRunState({ seed, classId: 'reaver', registries: REG });
     run.seenEvents = [];

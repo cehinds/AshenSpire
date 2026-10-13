@@ -12,7 +12,7 @@ export function configuredRewardOffer(rewards, source, enabled) {
     removeWhenOff('rewardBattleSkillDrafts', ['skillDrafts', 'skillRankUps', 'skillAttributes', 'skillFeats']);
     removeWhenOff('rewardBattleClassDrafts', ['classDrafts']);
     removeWhenOff('rewardBattleFlasks', ['flaskId']);
-    removeWhenOff('rewardBattleRelics', ['relicId']);
+    removeWhenOff('rewardBattleRelics', ['relicId', 'relicChoices']);
     removeWhenOff('rewardBattleArmaments', ['armamentId']);
     if (!enabled('rewardLevelCards') && offer.levelCards) {
       offer.levelCards = offer.levelCards.filter(row => row.source === 'class');
@@ -39,6 +39,7 @@ export function pendingRewardCheckpoint(rewards, { source, after }) {
     rewards: structuredClone(rewards),
     states: rewards.smithingStoneReceipt?.amount > 0 ? { smithingStone: 'taken' } : {},
     chosenCardId: null,
+    chosenRelicId: null,
     chosenDraftCardIds: {},
     chosenDraftNodeIds: {},
   };

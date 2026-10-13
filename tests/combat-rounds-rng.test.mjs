@@ -7,7 +7,9 @@ import { createRng, STREAM_NAMES } from '../src/engine/rng.js';
 
 test('combatRounds is the last stream, and no earlier stream moved', () => {
   assert.equal(STREAM_NAMES.at(-1), 'combatRounds');
-  assert.equal(STREAM_NAMES.indexOf('enemyIntentClue'), STREAM_NAMES.length - 2);
+  // dev's enemyReaction stream (enemy reactions) landed before it; both are appended after enemyIntentClue.
+  assert.equal(STREAM_NAMES.indexOf('enemyReaction'), STREAM_NAMES.length - 2);
+  assert.equal(STREAM_NAMES.indexOf('enemyIntentClue'), STREAM_NAMES.length - 3);
 });
 
 test('existing streams roll the same values on a fixed seed (golden from before the stream existed)', () => {

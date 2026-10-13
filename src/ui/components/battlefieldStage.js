@@ -9,13 +9,13 @@ import { fitIconTray } from './iconTray.js';
 import { combatSpriteRatio, fitCombatSprites, NARROW_MIN_HEIGHT_FRACTION } from '../models/CombatSpriteScaleModel.js';
 import { combatSpriteGeometry, currentSpriteArtBounds } from './combatSpriteGeometry.js';
 import { classicAppearance, displayAppearance } from '../displayAppearance.js';
-import { wireAlternativeBackdrop, fitAlternativeBackdrop, combatHorizonFloor } from '../alternativeArt.js';
+import { wireAlternativeBackdrop, fitAlternativeBackdrop } from '../alternativeArt.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
 import { targetOutline } from '../models/TargetLayerModel.js';
 import { fitSceneBackdrop } from './sceneBackdrop.js';
 import { battlefieldBackdropConfig } from '../models/SceneLayerModel.js';
 import { presentationConfig } from '../../model/advancedConfig.js';
-import { alternativeCombatComposition, combatComposition as classicCombatComposition, combatSceneryGround, combatStandingGround, stableHandAnchor, combatArtworkKey, stableCombatArtwork, DESKTOP_HORIZON_SHARE } from '../models/CombatCompositionModel.js';
+import { alternativeCombatComposition, combatComposition as classicCombatComposition, combatSceneryGround, combatStandingGround, stableHandAnchor, combatArtworkKey, stableCombatArtwork } from '../models/CombatCompositionModel.js';
 import { alternativeFormation, fitAlternativeSprites } from '../models/AlternativeFormationModel.js';
 import { perspectiveCellContains } from '../models/AlternativeFormationModel.js';
 import { playerDetailsPlacement } from '../models/PlayerDetailsPlacementModel.js';
@@ -363,6 +363,9 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         // misses the mark still selects this same enemy.
         ['below', { left: centre - size / 2, top: box.bottom + gap }],
       ].map(([side, at]) => [side, at, combatInspectTapBox({ ...at, width: size })]);
+      // A readout hung below the feet keeps Inspect below or beside its
+      // intent: a spot above it would put the tap area over the fighter.
+      if (info.closest('.combatant')?.dataset.hudBelow) spots.splice(0, spots.length, ...['below', 'left', 'right'].map(side => spots.find(([s]) => s === side)));
       // Our own intent is the anchor; every tap pad must clear everything else,
       // including the Inspect marks already planned this pass.
       const others = [...controls.filter(({ node }) => !(node.matches('.intent') && node.parentElement === anchor)).map(({ rect }) => rect),
@@ -428,6 +431,10 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // WCO1 headroom: the HUD band's bottom edge, in the field's local px.
     const hudBand = combat.querySelector(':scope > .topbar');
     const overheadGap = combat.dataset.compactCombat === 'true' ? 4 : 14;
+    // Owner (2026-10-12): a readout sits directly above or below its fighter,
+    // never beside it. On the perspective grid a front-rank enemy's readout
+    // goes below its feet; above its head stands the back rank's.
+    const hudBelow = actor => !classicAppearance() && actor.side === 'enemy' && actor.slot.rank === 1;
     const ceiling = hudBand ? Math.max(0, (hudBand.getBoundingClientRect().bottom - fieldRect.top) / zoom) : 0;
     const vitality = hudBand?.querySelector('.resbars-host');
     if (vitality) combat.style.setProperty('--combat-header-opaque-end',
@@ -572,6 +579,8 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         // Reading controls do not change the unselected fitting envelope.
         leading: Math.max(Math.min(66, fieldRect.height * .25), leadingHeight * zoom + ceiling * zoom + overheadGap) };
     });
+    // A readout below the feet needs no headroom above the head.
+    for (const actor of actors) if (hudBelow(actor)) actor.leading = 6;
     const narrow = document.documentElement.dataset.layout === 'narrow';
     const hand = combat.querySelector('.hand');
     const handRect = hand?.getBoundingClientRect();
@@ -604,12 +613,6 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         handTop: handAnchor?.key === handLayoutKey ? handAnchor.top : null,
         handLeft: handAnchor?.key === handLayoutKey ? handAnchor.left : 0,
         solo: solo && window.innerHeight > 480,
-        desktop: document.documentElement.dataset.formFactor === 'desktop',
-        // Desktop keeps the horizon share on the field; the shared row stands on the
-        // standing-area floor the backdrop camera needs (physical px, like fieldRect).
-        horizonFloor: document.documentElement.dataset.formFactor === 'desktop'
-          ? combatHorizonFloor(combat, { width: combat.getBoundingClientRect().width / zoom, height: fieldRect.height / zoom, share: DESKTOP_HORIZON_SHARE }) * zoom
-          : undefined,
         sizes: classicAppearance()
           ? fitCombatSprites({ width: fieldRect.width, height: fieldRect.height, actors,
             minHeight: narrow ? fieldRect.height * NARROW_MIN_HEIGHT_FRACTION : 0 })
@@ -649,7 +652,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
           if (!fitted || ribbonLeading(actor) <= actor.leading) return false;
           const artWidth = fitted.visibleHeight * growthFor(actor, fitted) * actor.visibleWidth / actor.visibleHeight;
           const overheadX = overheads.find(overhead => overhead.id === actor.slot.id)?.x ?? fitted.x;
-          return crosses(fitted.x, artWidth) || crosses(overheadX, actor.leadingWidth * zoom);
+          return crosses(fitted.x, artWidth) || (!hudBelow(actor) && crosses(overheadX, actor.leadingWidth * zoom));
         });
         if (!moved.length) break;
         for (const actor of moved) actor.leading = ribbonLeading(actor);
@@ -663,7 +666,13 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // but their changing headroom cannot resize or move the settled artwork.
     const overheadControls = actors.filter(actor => actor.leadingWidth > 0 && sizes.some(size => size.id === actor.slot.id)).map(actor => {
       const fitted = sizes.find(size => size.id === actor.slot.id);
-      const bottom = (fitted.ground ?? actor.slot.ground) - fitted.visibleHeight - overheadGap;
+      const ground = fitted.ground ?? actor.slot.ground;
+      if (hudBelow(actor)) {
+        const top = ground + overheadGap;
+        return { id: actor.slot.id, side: actor.side, row: 'below', x: fitted.x,
+          width: actor.leadingWidth * zoom, top, bottom: top + actor.leadingHeight * zoom };
+      }
+      const bottom = ground - fitted.visibleHeight - overheadGap;
       return { id: actor.slot.id, side: actor.side, row: actor.slot.row, x: fitted.x,
         width: actor.leadingWidth * zoom, top: bottom - actor.leadingHeight * zoom, bottom };
     });
@@ -674,6 +683,22 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     // player's settled art and controls are measured (see below).
     const placeLeading = ({ actor, frame, leadingHost, id, x, ground, visibleHeight }, anchors) => {
       const anchor = anchors.find(overhead => overhead.id === id);
+      if (hudBelow(actor)) {
+        // A front-rank enemy's readout hangs below its feet. Keep its preferred
+        // centre on the body, but honour the packer's bounded displacement when
+        // four or more perspective lanes make neighbouring readouts collide.
+        const overheadX = anchor?.x ?? x;
+        const overheadLocal = anchorLocalBox(VIEWPORT_ORIGIN,
+          { left: overheadX - x, top: 0, width: 0, height: 0 }, { zoom });
+        leadingHost.style.left = `${overheadLocal.left}px`;
+        const above = ground - visibleHeight - overheadGap - actor.leadingHeight * zoom;
+        leadingHost.style.translate = `0 ${(ground + overheadGap - above + (anchor?.offsetY ?? 0)) / zoom}px`;
+        if (anchor?.obstructed) frame.dataset.overheadObstructed = 'true';
+        else delete frame.dataset.overheadObstructed;
+        frame.dataset.hudBelow = 'true';
+        return;
+      }
+      delete frame.dataset.hudBelow;
       const overheadX = anchor?.x ?? x;
       const overheadLocal = anchorLocalBox(VIEWPORT_ORIGIN,
         { left: overheadX - x, top: 0, width: 0, height: 0 }, { zoom });
@@ -952,6 +977,62 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
       sprite.style.setProperty('--target-outline-width', `${outline.width}px`);
       sprite.style.setProperty('--target-outline-offset', `${outline.offset}px`);
     });
+    // Owner (2026-10-12): an enemy's intent is centred on its HP bar's track
+    // and sits just above its badges and bar, never over them. The footer was
+    // packed above, so the overhead (intent and Inspect together) moves by the
+    // measured difference. Reads first, then writes: one layout serves all.
+    // Gap between the intent and the badge row, in layout px (anchorLocalBox
+    // measures in the frame's own layout space, so no zoom arithmetic here).
+    const INTENT_BAR_GAP = 5;
+    // A selected (targeted) enemy's HP bar sits below its figure, so its intent goes above the
+    // figure's head instead: centred on the bar, its bottom a few px above the painted art's top.
+    const INTENT_ART_GAP = 4;
+    // Owner (2026-10-12): a selected intent keeps at least this gap under the turn ribbon's
+    // bottom edge wherever the two overlap horizontally. It may then overlap the art's top.
+    // The gap is 4 visual px, so in local px it is 4 / --ui-zoom (a 390 px phone runs at 0.9).
+    const INTENT_RIBBON_GAP = 4 / uiZoom();
+    const turnRibbonEl = field.querySelector(':scope > .turn-ribbon');
+    const ribbonBox = turnRibbonEl ? anchorLocalBox(field, turnRibbonEl) : null;
+    const intentMoves = placed.map(({ frame, sprite }) => {
+      if (!frame.classList.contains('enemy') || frame.classList.contains('dead')) return null;
+      const leadingHost = frame.querySelector('.combatant-leading');
+      const intent = leadingHost?.querySelector(':scope > .intent');
+      const row = frame.querySelector('.combat-health-row');
+      const track = row?.querySelector('.combat-health-meter .m-track');
+      if (!leadingHost || !intent || !track) return null;
+      const intentBox = anchorLocalBox(frame, intent), trackBox = anchorLocalBox(frame, track);
+      const selected = frame.classList.contains('context-selected') && !!sprite;
+      let bottomLimit;
+      if (selected) {
+        const artTop = anchorLocalBox(frame, { left: 0, top: currentSpriteArtBounds(sprite, refresh).top, width: 0, height: 0 }).top;
+        bottomLimit = artTop - INTENT_ART_GAP;
+      } else {
+        const topOfRow = Math.min(anchorLocalBox(frame, row).top, ...[...row.querySelectorAll('.combat-health-badge')]
+          .map(badge => anchorLocalBox(frame, badge).top));
+        bottomLimit = topOfRow - INTENT_BAR_GAP;
+      }
+      const dx = (trackBox.left + trackBox.width / 2) - (intentBox.left + intentBox.width / 2);
+      let dy = bottomLimit - (intentBox.top + intentBox.height);
+      if (selected && ribbonBox && ribbonBox.width > 0 && ribbonBox.height > 0) {
+        // Both boxes are in the field's local px, so the shift needs no zoom arithmetic.
+        const intentFieldBox = anchorLocalBox(field, intent);
+        const intentLeft = intentFieldBox.left + dx;
+        const sharesColumns = intentLeft < ribbonBox.left + ribbonBox.width && intentLeft + intentFieldBox.width > ribbonBox.left;
+        const ribbonFloor = ribbonBox.top + ribbonBox.height + INTENT_RIBBON_GAP;
+        const intentTop = intentFieldBox.top + dy;
+        if (sharesColumns && intentTop < ribbonFloor) dy += ribbonFloor - intentTop;
+      }
+      return { leadingHost, dx, dy };
+    });
+    for (const move of intentMoves) {
+      if (!move || (Math.abs(move.dx) < 0.01 && Math.abs(move.dy) < 0.01)) continue;
+      const { leadingHost, dx, dy } = move;
+      // The host's current place in its own containing block, in layout px.
+      const hostBox = anchorLocalBox(leadingHost.offsetParent || leadingHost.parentElement, leadingHost);
+      const hostShiftY = parseFloat(leadingHost.style.translate.split(' ')[1]) || 0;
+      leadingHost.style.left = `${hostBox.left + dx}px`;
+      leadingHost.style.translate = `0 ${hostShiftY + dy}px`;
+    }
     // Idle names do not reserve footer rows, but their independent tap cores
     // still need separate space when two formation rows meet on a short field.
     // Move only these transparent cores; keep art and readable plates fixed.
@@ -1031,7 +1112,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     if (!classicAppearance()) fitAlternativeBackdrop(combat, { width: rect.width / zoom, height: fieldRect.height / zoom,
       fieldTop, ground: combatSceneryGround(sizes, actors, plan.ground) / zoom,
       standGround: combatStandingGround(sizes, actors, plan.ground) / zoom, narrow,
-      horizonShare: document.documentElement.dataset.formFactor === 'desktop' ? DESKTOP_HORIZON_SHARE : undefined, coverFloor: true });
+      coverFloor: true });
     if (backdrop) fitSceneBackdrop(backdrop, {
       width: backdropWidth, height: rect.height / zoom, zoom,
       windowTop: 0, windowHeight: sceneHeight,

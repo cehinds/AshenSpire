@@ -49,9 +49,9 @@ weapon,roundShield,,TBD,placeholder; id from content/source/weapons.csv
 weapon,buckler,,TBD,placeholder; id from content/source/weapons.csv
 weapon,ashStaff,,TBD,placeholder; id from content/source/weapons.csv
 weapon,boneSceptre,,TBD,placeholder; id from content/source/weapons.csv
-range,contact,,TBD,placeholder
-range,near,,TBD,placeholder
-range,far,,TBD,placeholder
+range,melee,,TBD,placeholder
+range,reach,,TBD,placeholder
+range,ranged,,TBD,placeholder
 attackType,quick,,TBD,placeholder
 attackType,heavy,,TBD,placeholder
 attackType,telegraphed,,TBD,placeholder

@@ -165,70 +165,6 @@ Meta
         Light
         Medium
         Heavy
-      Technique
-        Heavy [m]
-        Precision [m]
-        Pierce [m]
-        Cleave [m]
-        Flourish [m]
-        Guile [m] {rogue trickery}
-        Blood [m] {pay HP for power}
-        Venom [m] {poison craft}
-        Counter {Categorized Counter identity; effects are authored separately.}
-        Searing Edge {A direct hit carries an authored Bleed buildup rider; the tag supplies no extra damage by itself.}
-        Guarded Strike {Tests whether the acting player currently has positive Block before an attack resolves.}
-        Bloodstep {Tests whether the selected enemy has positive Bleed buildup before the card resolves.}
-        Hammerfall {Marks an attack with an explicit Break-damage rider; HP damage and Break damage remain separate values.}
-        Forgewake {Tests whether the acting player has already played a Guard card during this turn.}
-        Crimson Reprisal {Tests whether the acting player lost HP since their previous turn began; paying HP counts, losing Block does not.}
-        Last Stand {Tests whether current HP is at or below 50% of current maximum HP before resolution.}
-        War Tempo {Tests whether at least two Heavy cards have already been played by the acting player during this turn.}
-        Wide Cleave {Marks one authored attack effect that independently hits every living enemy; it is not a separate hit per tag.}
-        Ember Crown {Marks a one-charge bonus to the next direct attack this turn; the charge expires at turn end and cannot stack with itself.}
-        Dreadweight {Tests whether the selected enemy is currently Staggered before a direct hit.}
-        Oathscar {Identifies the first Guard card after the acting player has lost HP since their previous turn began; at most once per turn.}
-        Wound Harvest {Identifies a credited kill of an enemy that had positive Bleed buildup immediately before the killing hit.}
-        Cinder Orbit {Tests whether the immediately preceding card played this turn by the same player was a spell.}
-        Lunar Guard {Tests whether the acting player has already spent at least 2 Mana this turn; refunded Mana does not erase spending.}
-        Comet Mark {Marks an attack that applies an authored Vulnerable rider after its direct damage.}
-        Rime Mirror {Marks a defensive spell with an authored Frost buildup rider against one selected enemy.}
-        Constellation {Tests how many distinct Starstone card IDs the acting player has played this turn; two copies of one ID count once.}
-        Mana Weave {Marks an authored Mana restoration rider, capped at one activation per owning player per turn.}
-        Gravity Snare {Marks a spell with an authored Weak rider after its direct damage.}
-        Nightglass {Marks a one-charge direct-spell-damage bonus to the next spell this turn; no stacking and no carry into the next turn.}
-        Eclipse Window {Tests whether the selected enemy has positive Frost buildup or is Frost-exposed before resolution.}
-        Warded Casting {Marks a one-charge Mana discount for the next spell this turn; cost cannot fall below zero and the charge expires at turn end.}
-        Celestial Echo {Identifies the second play of the same Starstone card ID in a turn; the condition can activate once per turn.}
-        Cold Memory {Marks an authored amount of Block retained into the next turn; retention sources use the largest allowance, not their sum.}
-        Astral Convergence {Identifies the third distinct Starstone card ID played by the same player in a turn; once per turn.}
-        Ash Opener {Tests whether this is the acting player's first card played this turn.}
-        Discard Weave {Tests whether the acting player has discarded a card this turn; Exhaust and a spent card entering discard do not count.}
-        Crooked Guard {Marks a direct attack with an authored Weak rider; the rider resolves after damage.}
-        Exposed Flank {Tests whether the selected enemy has exactly zero Block immediately before the hit.}
-        Sleight of Hand {Marks an authored draw-then-discard sequence; the player chooses the discarded card and ordinary hand limits apply.}
-        Tether Cut {Tests whether the selected enemy currently has Weak or Vulnerable before damage resolves.}
-        Smoke Edge {Marks a one-charge bonus to the next Blade attack this turn; the charge expires at turn end and cannot stack with itself.}
-        Carrion Finish {Tests whether the selected enemy is at or below 50% maximum HP before the attack.}
-        Paired Strikes {Marks an attack with exactly two authored direct hits; rank bonuses are divided across the hits.}
-        Trapdoor {Tests whether the acting player has already played at least one Guile card and one Guard card this turn.}
-        Clean Escape {Identifies the first Guard card played before any attack this turn; once per turn.}
-        Razor Debt {Identifies the first Blade attack after an explicit discard this turn; once per turn.}
-        Mercy in Ash {Marks a defensive card with an authored healing rider; healing cannot exceed maximum HP.}
-        Blood Censer {Marks a card with an explicit HP offering paid before its benefits; the offering cannot reduce HP below 1.}
-        Blight Seed {Marks a direct hit with an authored Crimson Blight buildup rider; this is not Poison.}
-        Funeral Guard {Tests whether the acting player has HP at or below 50% maximum HP before a Guard card resolves.}
-        Ember Tithe {Marks an explicit, nonlethal HP offering that buys an authored regenerative benefit.}
-        Bone Chorus {Tests whether at least one living enemy has positive Crimson Blight buildup before resolution.}
-        Requiem Brand {Tests whether the selected enemy has positive Crimson Blight buildup before the hit.}
-        Pilgrim Shelter {Tests whether the acting player began this turn at or below 50% maximum HP; later healing does not change that turn's result.}
-        Scarred Rite {Tests whether the acting player paid an HP offering earlier this turn, before this card's own payment; ordinary enemy damage does not count.}
-        Dawn Rite {Marks an authored removal of a specific negative status; it never removes every status implicitly.}
-        Burden Bearer {Identifies the first new negative status application from an enemy to this player in a turn; self-applied statuses do not count.}
-        Sepulchral Pact {Identifies a credited kill of an enemy with positive Crimson Blight buildup immediately before the killing hit.}
-      Class stance [m] {card skill; holds a stance until changed}
-        Gorefire Stance
-        Bulwark Stance
-        Brace
       Prepare [n] {Prepare. Available to players as well as enemies (owner decision 4, 2026-10-11); sets Prepared}
       Spellcraft {each school deals its damage type}
         Fire
@@ -247,25 +183,85 @@ Meta
           Illusion [m] {existing school}
           Ritual [m] {madness}
         Alteration [m] {existing school, non-elemental}
+    Technique {Conditions for explicit technique bonuses.}
+      Heavy [m]
+      Precision [m] {Each stack adds +1 Accuracy (DECISIONS section 16, owner 2026-10-13); not a Piercing bypass (section 17).}
+      Pierce [m] {Piercing stacks reduce Block and Poise (physical) or Barrier and Ward (magical) by 2 per stack (DECISIONS section 17, owner 2026-10-13).}
+      Cleave [m]
+      Flourish [m]
+      Guile [m] {rogue trickery}
+      Blood [m] {pay HP for power}
+      Venom [m] {poison craft}
+      Counter {Categorized Counter identity; effects are authored separately.}
+      Searing Edge {A direct hit carries an authored Bleed buildup rider; the tag supplies no extra damage by itself.}
+      Guarded Strike {Tests whether the acting player currently has positive Block before an attack resolves.}
+      Bloodstep {Tests whether the selected enemy has positive Bleed buildup before the card resolves.}
+      Hammerfall {Marks an attack with an explicit Break-damage rider; HP damage and Break damage remain separate values.}
+      Forgewake {Tests whether the acting player has already played a Guard card during this turn.}
+      Crimson Reprisal {Tests whether the acting player lost HP since their previous turn began; paying HP counts, losing Block does not.}
+      Last Stand {Tests whether current HP is at or below 50% of current maximum HP before resolution.}
+      War Tempo {Tests whether at least two Heavy cards have already been played by the acting player during this turn.}
+      Wide Cleave {Marks one authored attack effect that independently hits every living enemy; it is not a separate hit per tag.}
+      Ember Crown {Marks a one-charge bonus to the next direct attack this turn; the charge expires at turn end and cannot stack with itself.}
+      Dreadweight {Tests whether the selected enemy is currently Staggered before a direct hit.}
+      Oathscar {Identifies the first Guard card after the acting player has lost HP since their previous turn began; at most once per turn.}
+      Wound Harvest {Identifies a credited kill of an enemy that had positive Bleed buildup immediately before the killing hit.}
+      Cinder Orbit {Tests whether the immediately preceding card played this turn by the same player was a spell.}
+      Lunar Guard {Tests whether the acting player has already spent at least 2 Mana this turn; refunded Mana does not erase spending.}
+      Comet Mark {Marks an attack that applies an authored Vulnerable rider after its direct damage.}
+      Rime Mirror {Marks a defensive spell with an authored Frost buildup rider against one selected enemy.}
+      Constellation {Tests how many distinct Starstone card IDs the acting player has played this turn; two copies of one ID count once.}
+      Mana Weave {Marks an authored Mana restoration rider, capped at one activation per owning player per turn.}
+      Gravity Snare {Marks a spell with an authored Weak rider after its direct damage.}
+      Nightglass {Marks a one-charge direct-spell-damage bonus to the next spell this turn; no stacking and no carry into the next turn.}
+      Eclipse Window {Tests whether the selected enemy has positive Frost buildup or is Frost-exposed before resolution.}
+      Warded Casting {Marks a one-charge Mana discount for the next spell this turn; cost cannot fall below zero and the charge expires at turn end.}
+      Celestial Echo {Identifies the second play of the same Starstone card ID in a turn; the condition can activate once per turn.}
+      Cold Memory {Marks an authored amount of Block retained into the next turn; retention sources use the largest allowance, not their sum.}
+      Astral Convergence {Identifies the third distinct Starstone card ID played by the same player in a turn; once per turn.}
+      Ash Opener {Tests whether this is the acting player's first card played this turn.}
+      Discard Weave {Tests whether the acting player has discarded a card this turn; Exhaust and a spent card entering discard do not count.}
+      Crooked Guard {Marks a direct attack with an authored Weak rider; the rider resolves after damage.}
+      Exposed Flank {Tests whether the selected enemy has exactly zero Block immediately before the hit.}
+      Sleight of Hand {Marks an authored draw-then-discard sequence; the player chooses the discarded card and ordinary hand limits apply.}
+      Tether Cut {Tests whether the selected enemy currently has Weak or Vulnerable before damage resolves.}
+      Smoke Edge {Marks a one-charge bonus to the next Blade attack this turn; the charge expires at turn end and cannot stack with itself.}
+      Carrion Finish {Tests whether the selected enemy is at or below 50% maximum HP before the attack.}
+      Paired Strikes {Marks an attack with exactly two authored direct hits; rank bonuses are divided across the hits.}
+      Trapdoor {Tests whether the acting player has already played at least one Guile card and one Guard card this turn.}
+      Clean Escape {Identifies the first Guard card played before any attack this turn; once per turn.}
+      Razor Debt {Identifies the first Blade attack after an explicit discard this turn; once per turn.}
+      Mercy in Ash {Marks a defensive card with an authored healing rider; healing cannot exceed maximum HP.}
+      Blood Censer {Marks a card with an explicit HP offering paid before its benefits; the offering cannot reduce HP below 1.}
+      Blight Seed {Marks a direct hit with an authored Crimson Blight buildup rider; this is not Poison.}
+      Funeral Guard {Tests whether the acting player has HP at or below 50% maximum HP before a Guard card resolves.}
+      Ember Tithe {Marks an explicit, nonlethal HP offering that buys an authored regenerative benefit.}
+      Bone Chorus {Tests whether at least one living enemy has positive Crimson Blight buildup before resolution.}
+      Requiem Brand {Tests whether the selected enemy has positive Crimson Blight buildup before the hit.}
+      Pilgrim Shelter {Tests whether the acting player began this turn at or below 50% maximum HP; later healing does not change that turn's result.}
+      Scarred Rite {Tests whether the acting player paid an HP offering earlier this turn, before this card's own payment; ordinary enemy damage does not count.}
+      Dawn Rite {Marks an authored removal of a specific negative status; it never removes every status implicitly.}
+      Burden Bearer {Identifies the first new negative status application from an enemy to this player in a turn; self-applied statuses do not count.}
+      Sepulchral Pact {Identifies a credited kill of an enemy with positive Crimson Blight buildup immediately before the killing hit.}
     Damage
       Physical
         Slashing {→ Bleeding}
         Blunt {→ Poise damage}
-        Pierce {ignores Guard}
+        Pierce {ignores Guard. Each stack reduces Block and Poise by 2 (DECISIONS section 17, owner 2026-10-13).}
+        blade {Damage dealt with an edge.}
+        blunt {Damage dealt with mass and impact.}
+        piercing {Damage dealt with a point. Piercing rules: DECISIONS section 17 (owner 2026-10-13).}
       Magic
         Fire {→ Burned}
         Frost {→ Frostbitten}
         Lightning {→ Paralyzed}
-        Earth
+        Earth {Applies 1 Slowed on a Health hit}
         Divine {cleanses}
         Necrotic {→ Blighted}
-        Psychic [n] {→ Confused}
-      Hybrid
+        Psychic {→ Confused}
+        Poison {→ Venom}
+      Hybrid {Arcane damage. Builds Arcane Exposure on enemies that track it.}
         Force {Block or Barrier stops it}
-      arcane {Arcane damage. Builds Arcane Exposure on enemies that track it.}
-      blade {Damage dealt with an edge.}
-      blunt {Damage dealt with mass and impact.}
-      piercing {Damage dealt with a point.}
     Stance
       Offensive
         Attack {44 cards}
@@ -288,14 +284,16 @@ Meta
           Shield {Shieldwall, Shield Guard, Shield Bastion, Set the Shield}
           Ward {Starstone Ward, Vesper Ward, Blightward, Frost Veil, Crystal Barrier}
           Endure {Last Stand, Iron Resolve, Unbreakable, Iron Vow, Penance}
-        Evade {about 15 cards, tagged Defend today}
+        Evade {about 15 cards, tagged Defend today. Efficacy scales by armour weight class (DECISIONS.md section 15)}
           Dodge {Dodge Roll, Evasive Guard, Backstep, Quickstep, Acrobatics}
           Vanish {Shadowstep, Vanish, Nightstep, Misdirect}
           Obscure {Smoke Bomb, Smoke Pellet, Smoke Veil, Pocket Sand}
       Counter {20 cards, its own stance}
         Parry {Riposte, Rondel Parry, Binding Parry, Low Guard Riposte, Spiked Reprisal}
         School counter {one per spell school: Fire, Frost, Lightning, Force...}
+        Melee counter {Replies to eligible melee Attack or Smash. Sweep, Force, Piercing and Ranged bypass this reaction.}
         Ranged counter {Nock and Wait, Barrage Counter}
+        Spell counter {Intercepts incoming physical ranged moves or spells. Against physical ranged moves, strips Ward without Health retaliation. Against spellcasters, can retaliate against Health.}
         Ward counter {Umbral Ward, Warding Star, Rime Mirror, Crimson Reprisal}
     Delivery
       Melee {Melee delivery; the default for the Attack, Smash and Sweep stances (owner decision 3, 2026-10-11)}
@@ -416,7 +414,44 @@ Meta
       Turn skip [n]
       Stance change [n]
       Intent reveal / conceal [n]
+    Attack source {Source profile supplying an attack; separate from damage type.}
+      Weapon {Categorized Weapon identity; effects are authored separately.}
+      Spell {Categorized Spell identity; effects are authored separately.}
+      Unarmed {Categorized Unarmed identity; effects are authored separately.}
+    Combat camp {Authored combat identity shared by cards and enemy moves.}
+      Physical {Selects physical Guard or magical Ward combat rules.}
+      Spell {Selects physical Guard or magical Ward combat rules.}
   Presentation [n] {Presentation layer: how the game looks and reads. Carries no gameplay identity.}
+    Combat presentation {Sprite selection only; never damage or resistance identity.}
+      blade {blade visual identity; no combat modifier.}
+      guard {guard visual identity; no combat modifier.}
+      blood {blood visual identity; no combat modifier.}
+      gorefire {gorefire visual identity; no combat modifier.}
+      starstone {starstone visual identity; no combat modifier.}
+      ritual {ritual visual identity; no combat modifier.}
+      blight {blight visual identity; no combat modifier.}
+      oath {oath visual identity; no combat modifier.}
+      flourish {flourish visual identity; no combat modifier.}
+      ash {ash visual identity; no combat modifier.}
+      heavy {heavy visual identity; no combat modifier.}
+      pierce {pierce visual identity; no combat modifier.}
+      ranged {ranged visual identity; no combat modifier.}
+      precision {precision visual identity; no combat modifier.}
+      guile {guile visual identity; no combat modifier.}
+      venom {venom visual identity; no combat modifier.}
+      shield {shield visual identity; no combat modifier.}
+      barrier {barrier visual identity; no combat modifier.}
+      ward {ward visual identity; no combat modifier.}
+      magic {magic visual identity; no combat modifier.}
+      arcane {arcane visual identity; no combat modifier.}
+      dodge {dodge visual identity; no combat modifier.}
+      riposte {riposte visual identity; no combat modifier.}
+      heal {heal visual identity; no combat modifier.}
+      cleanse {cleanse visual identity; no combat modifier.}
+      bind {bind visual identity; no combat modifier.}
+      frost {frost visual identity; no combat modifier.}
+      bulwark {bulwark visual identity; no combat modifier.}
+      utility {utility visual identity; no combat modifier.}
     Scene [n] {Scene art and frame.}
     Battlefield [n] {Enemy and player stage.}
     Card structure [n] {Card frame parts.}
@@ -550,6 +585,7 @@ Card
     Curse
     Status
     Consumable
+    Attack
   Rarity
     Starter
     Common
@@ -579,23 +615,13 @@ Card
   Heavy {Slow, committed, and hard to stop.}
   Basic {Everybody's — on the shelf without being found.}
   Ranged {Authored ranged presentation; no position system.}
-  Precision {Deliberate aim and finesse; presentation only.}
+  Precision {Deliberate aim and finesse. Each stack adds +1 Accuracy; no longer presentation only (DECISIONS section 16, owner 2026-10-13).}
   Extractable {A smith can lift this card out of the item that lends it, and seat it in another item's mount. Strikes and defends do not carry it — today.}
-Attack source {Source profile supplying an attack; separate from damage type.}
-  Weapon {Categorized Weapon identity; effects are authored separately.}
-  Spell {Categorized Spell identity; effects are authored separately.}
-  Unarmed {Categorized Unarmed identity; effects are authored separately.}
-classification {Grouping node for classification in nodes.csv.}
-  attack {Grouping node for attack in nodes.csv.}
-  strike {Grouping node for strike in nodes.csv.}
-  guard {Grouping node for guard in nodes.csv.}
-  weaponArt {Grouping node for weaponArt in nodes.csv.}
-  class {What a class is. Every object in the class collection carries this, and nothing outside it may.}
-  relic {What a relic is. Every object in the relic collection carries this, and nothing outside it may.}
-  flask {What a flask is. Every object in the flask collection carries this, and nothing outside it may.}
+classification
+  strike
+  guard
+  weaponArt
   keepsake {What a keepsake is. Every object in the keepsake collection carries this, and nothing outside it may.}
-  event {What a event is. Every object in the event collection carries this, and nothing outside it may.}
-  encounter {What a encounter is. Every object in the encounter collection carries this, and nothing outside it may.}
   enemy {What a enemy is. Every object in the enemy collection carries this, and nothing outside it may.}
   armament {What a armament is. Every object in the armament collection carries this, and nothing outside it may.}
   armour {What a armour is. Every object in the armour collection carries this, and nothing outside it may.}
@@ -605,42 +631,12 @@ classification {Grouping node for classification in nodes.csv.}
   unlock {What a unlock is. Every object in the unlock collection carries this, and nothing outside it may.}
   companion {What a companion is. Every object in the companion collection carries this, and nothing outside it may.}
   sigil {What a sigil is. Every object in the sigil collection carries this, and nothing outside it may.}
-  feat {A selected class progression feat.}
   enemyMove {A scoped action in an enemy move table.}
-Combat camp {Authored combat identity shared by cards and enemy moves.}
-  Physical {Selects physical Guard or magical Ward combat rules.}
-  Spell {Selects physical Guard or magical Ward combat rules.}
-Combat presentation {Sprite selection only; never damage or resistance identity.}
-  blade {blade visual identity; no combat modifier.}
-  guard {guard visual identity; no combat modifier.}
-  blood {blood visual identity; no combat modifier.}
-  gorefire {gorefire visual identity; no combat modifier.}
-  starstone {starstone visual identity; no combat modifier.}
-  ritual {ritual visual identity; no combat modifier.}
-  blight {blight visual identity; no combat modifier.}
-  oath {oath visual identity; no combat modifier.}
-  flourish {flourish visual identity; no combat modifier.}
-  ash {ash visual identity; no combat modifier.}
-  heavy {heavy visual identity; no combat modifier.}
-  pierce {pierce visual identity; no combat modifier.}
-  ranged {ranged visual identity; no combat modifier.}
-  precision {precision visual identity; no combat modifier.}
-  guile {guile visual identity; no combat modifier.}
-  venom {venom visual identity; no combat modifier.}
-  shield {shield visual identity; no combat modifier.}
-  barrier {barrier visual identity; no combat modifier.}
-  ward {ward visual identity; no combat modifier.}
-  magic {magic visual identity; no combat modifier.}
-  arcane {arcane visual identity; no combat modifier.}
-  dodge {dodge visual identity; no combat modifier.}
-  riposte {riposte visual identity; no combat modifier.}
-  heal {heal visual identity; no combat modifier.}
-  cleanse {cleanse visual identity; no combat modifier.}
-  bind {bind visual identity; no combat modifier.}
-  frost {frost visual identity; no combat modifier.}
-  bulwark {bulwark visual identity; no combat modifier.}
-  utility {utility visual identity; no combat modifier.}
 Theme {Build synergies; tags alone grant no effects.}
+  Class stance [m] {card skill; holds a stance until changed}
+    Gorefire Stance
+    Bulwark Stance
+    Brace
   Blood {Categorized Blood identity; effects are authored separately.}
   Blight {Categorized Blight identity; effects are authored separately.}
   Astral {Categorized Astral identity; effects are authored separately.}
@@ -694,6 +690,7 @@ Property {What a holder CONFERS while it is held. Each property node has exactly
   Emberwick Charm {What Emberwick Charm does when the fight gives it its moment. Effects in nodeEffects.json: triggers on hpLost; ops gainEnergy.}
   Carrion Morsel {What Carrion Morsel does when the fight gives it its moment. Effects in nodeEffects.json: triggers on enemyDied; ops heal.}
   Gravetender's Bell {What Gravetender's Bell does when the fight gives it its moment. Effects in nodeEffects.json: triggers on enemyDied; ops draw.}
+  Oath Kept {While you have not entered a stance this fight, each Oath card you play grants Block. Every class card carries it; entering a stance breaks it for the rest of the fight.}
   Sentinel's Oath {What Sentinel's Oath does when the fight gives it its moment. Effects in nodeEffects.json: triggers on cardPlayed; ops applyStatus.}
   Forsaken Warflag {What Forsaken Warflag does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart; ops applyStatus.}
   Wrath Coil {What Wrath Coil does when the fight gives it its moment. Effects in nodeEffects.json: triggers on hpLost; ops damage.}
@@ -825,7 +822,7 @@ Property {What a holder CONFERS while it is held. Each property node has exactly
     Sigil of the Last Vigil {A legendary vigil: a guard rises at the start of a fight you enter already wounded. Effects in nodeEffects.json: triggers on combatStart; ops block.}
     Pyre Sigil {A legendary pyre: every card you burn away raises a guard. Effects in nodeEffects.json: triggers on cardExhausted; ops block.}
     Gravelight Sigil {A legendary gravelight: a fallen foe mends you while you stand wounded. Effects in nodeEffects.json: triggers on enemyDied; ops heal.}
-targeting {Target selection: the rules an action uses to choose the creature it hits. Grouping node for the targeting vocabulary.}
+targeting
   self {Targets the acting creature itself.}
   enemy {Targets one enemy the player chooses.}
   allEnemies {Targets every living enemy at once.}
@@ -833,40 +830,38 @@ targeting {Target selection: the rules an action uses to choose the creature it 
   ally {Targets an ally of the acting player.}
   Single {One direct target.}
   Area {An area action; most Counters do not cover it.}
-equipment {Grip and hand slots: which hands a weapon or shield occupies. Grouping node for the equipment vocabulary.}
-  bound {Equipment that must be bound (worn or carried) before a hand slot applies. mainHand and offHand require it (nodeRelations.csv REQUIRES).}
-  mainHand {A weapon held in the main hand. Requires bound (nodeRelations.csv).}
-  offHand {An item held in the off hand. Requires bound, and conflicts with twoHanded (nodeRelations.csv).}
-  twoHanded {A weapon held in both hands. Conflicts with offHand (nodeRelations.csv); loadout.js GRIP_TAGS 'two'.}
-  shield {A shield held in the off hand.}
-  parryTool {An off-hand tool held to parry.}
+equipment
+  bound {Granted by an equipped armament. It leaves your deck when the armament does.}
+  mainHand {Bound to the armament in your main hand.}
+  offHand {Bound to the armament in your off hand.}
+  twoHanded {Bound to an armament held in both hands.}
+  shield {Bound to an equipped shield.}
+  parryTool {Bound to an equipped parry tool.}
   dualWield {One one-handed weapon in each hand; loadout.js GRIP_TAGS 'dual'.}
-scaling {Which attribute a card's effect scales with. Grouping node for the scaling vocabulary.}
+scaling
   strength {This card scales with Strength.}
   dexterity {This card scales with Dexterity.}
   constitution {This card scales with Constitution.}
   intelligence {This card scales with Intelligence.}
   wisdom {This card scales with Wisdom.}
-cost {How a card is paid for. Grouping node for the cost vocabulary.}
+cost
   action {Costs Stamina to play.}
   alternative {May be paid with a complete alternative option instead of its listed cost.}
-utility {Action roles a card or flask can take outside its damage: evasion, conduit and mana charge. Grouping node for the utility vocabulary.}
+utility
   evasion {Contributes to Dodge Rolls and avoiding damage.}
   conduit {Channels magic through an equipped armament.}
   manaCharge {Recovers the stated amount of Mana.}
-lifecycle {Where a card goes after it is played or resolved: recalled to hand, sealed away, or exhausted. Grouping node for the lifecycle vocabulary.}
+lifecycle
   recall {Returns to your hand after the named moment instead of being discarded.}
     afterUse {Returns to your hand after being played. A forced discard is not a use.}
     afterTurnDraw {Returns to your hand after your turn's draw.}
     afterCardPlay {Returns to your hand after you play another card.}
   seal {Set aside in the Sealed zone when its seal condition is met.}
-Reach {Inspection details for combat techniques.}
-  Contact {At melee reach.}
-  Near {Normal ranged reach.}
-  Far {Extended ranged reach.}
+Range {Inspection details for combat techniques.}
+  Melee {At melee range: within arm's length.}
+  Reach {At reach: past arm's length but not yet ranged.}
+  Ranged {At ranged distance.}
 Counter reach {Counter reach: which kind of incoming attack a counter can answer. Grouping node for the counter reach vocabulary.}
-  Melee counter {Replies to eligible melee Attack or Smash. Sweep, Force, Piercing and Ranged bypass this reaction.}
-  Spell counter {Intercepts incoming physical ranged moves or spells. Against physical ranged moves, strips Ward without Health retaliation. Against spellcasters, can retaliate against Health.}
 Item {What a piece of gear DOES beyond its numbers, and what a run pickup is.}
   Bound {Carries its own cards — they arrive with the piece and are named in equipmentGrants.csv.}
 Item type {What a piece of equipment IS, as the Armoury and the smith name it. Distinct from the card domain: a Blade item type and a Blade card school are different facts about the same sword.}
@@ -880,14 +875,18 @@ Grant source {Where a starting card came from. The composed deck deals bound car
   Class {The class signature card.}
 Damage type {Identity of a typed HP damage component.}
 Run {Run structure — what an event, an encounter or an unlock is about.}
-internal {Engine-internal state tags, never shown to the player (visibility INTERNAL in nodes.csv). Grouping node for the internal vocabulary.}
-Combat traits {Combat traits: properties of an attack or a target that matchups and rules refer to. Grouping node for the trait vocabulary.}
-  Adequatereach {Combat trait for adequate reach. No engine or content reads it yet.}
-  Closing {Combat trait for closing in. No engine or content reads it yet.}
+internal
+Combat traits
+  Adequatereach {Combat trait for adequate reach. Read in src/engine/combatAvoidance.js:67: a ranged-stance defender cannot avoid it by distance.}
+  Closing {Combat trait for closing in. Read in src/engine/combatAvoidance.js:67: a ranged-stance defender cannot avoid it by distance.}
   Conductive {Combat trait that lightning is strong against (src/content/combatMatchups.js, lightning strongTraits).}
-  Mental {Combat trait named mental. No trait reference found; 'mental' is also a recovery profile in src/model/combatStatusState.js.}
-  Projectile {Combat trait for projectile attacks. The projectile delivery (delivery:projectile) is read in src/model/attackTags.js; this trait is not read yet.}
-  Reveal {Combat trait for reveal. No engine or content reads it yet.}
+  Counterstrike {+50% effectiveness; +75% when the player's stance has advantage over the target's.}
+  Flux {On hit: N Ward damage, or double the Ward damage the card already deals.}
+  Impact {On hit: N Poise damage, or double the Poise damage the card already deals.}
+  Mental {Combat trait named mental. Read in src/content/combatMatchups.js:87: Force is weak against it. 'mental' is also a recovery profile in src/model/combatStatusState.js.}
+  Projectile {Combat trait for projectile attacks. The projectile delivery (delivery:projectile) is read in src/model/attackTags.js. This trait is read in src/content/combatMatchups.js:87: Force is strong against it.}
+  Reaction {Playable from hand during the opponent's turn, before the pending action resolves.}
+  Reveal {Combat trait for reveal. Read in src/content/combatMatchups.js:89: Illusion is weak against it.}
   Shattering {Combat trait that frost is weak against (src/content/combatMatchups.js, frost weakTraits).}
-  Unavoidable {Combat trait for unavoidable attacks. No engine or content reads it yet.}
+  Unavoidable {Combat trait for unavoidable attacks. Read in src/engine/combatAvoidance.js:52 (no evade roll) and :68 (no distance avoidance).}
   Unreflectable {Combat trait given to the meteorite and starfallBeam cards (src/content/combatExpansionCards.js).}

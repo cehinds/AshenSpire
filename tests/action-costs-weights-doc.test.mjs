@@ -28,7 +28,7 @@ const subsection = (text, title) => {
   return text.slice(start, end < 0 ? undefined : end);
 };
 
-const COMBAT_DOMAINS = ['damageType', 'delivery', 'reach', 'maneuver', 'camp', 'attackSource', 'counterMode', 'targeting', 'school', 'technique', 'trait', 'lifecycle', 'card'];
+const COMBAT_DOMAINS = ['damageType', 'delivery', 'reach', 'range', 'maneuver', 'camp', 'attackSource', 'counterMode', 'targeting', 'school', 'technique', 'trait', 'lifecycle', 'card'];
 
 test('every tag weight and side in the doc is the shipped one, and every weighted tag is in the doc once', () => {
   const tagText = section('Tag weights');

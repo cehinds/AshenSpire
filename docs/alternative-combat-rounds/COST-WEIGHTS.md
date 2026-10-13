@@ -17,8 +17,9 @@ that count; on 2026-10-13 restores break even):
 - **S_mp** = damageWeight × magical damage steps + rankWeightMp × rank (on a
   magical card) + Σ MP-side tag weights + MP-side statuses × stacks.
 - **SP** = floor(S_sp / spDivisor) and **MP** = floor(S_mp / mpDivisor).
-- If both are 0, the larger side pays 1 (SP on a tie). A Mana-restoring card
-  pays that 1 in SP.
+- If both are 0 after the maneuver floor, the larger side pays 1 (SP on a tie).
+  A Mana-restoring card pays that 1 in SP. A floored smash or sweep already
+  pays SP, so it is not also charged 1 MP.
 - **Restores break even (owner, 2026-10-13).** A card that restores Mana then
   costs restoreWeight × that Mana on top of its MP, and a card that restores
   Stamina costs restoreWeight × that Stamina on top of its SP. The card face
@@ -146,6 +147,9 @@ player's piles).
 | `damage:arcane` | 0 | MP | As fire. |
 | `damage:sacred` | 0 | MP | As fire. |
 | `damage:decay` | 0 | MP | As fire. |
+| `damage:poison` | 2 | SP | A physical damage type on physical-camp cards (its Venom rider is the type's own): as slashing. |
+| `damage:psychic` | 0 | MP | As fire. |
+| `damage:earth` | 0 | MP | As fire. |
 
 ### Camps and sources
 
@@ -196,6 +200,7 @@ player's piles).
 | `school:illusion` | 1 | MP | As fire. |
 | `school:divine` | 1 | MP | As fire. |
 | `school:decay` | 1 | MP | As fire. |
+| `school:earth` | 1 | MP | As fire. |
 
 ### Weapon and archetype chips
 
@@ -246,6 +251,10 @@ player's piles).
 | `trait:shattering` | 1 | SP | Breaks guards: 1. |
 | `trait:unavoidable` | 1 | SP | Cannot be dodged: 1. |
 | `trait:unreflectable` | 1 | SP | Cannot be reflected: 1. |
+| `trait:counterstrike` | 1 | SP | +50% effectiveness: 1. Added in combat after the cost is derived (reaction rules version 2), so it prices no shipped card today. |
+| `trait:impact` | 1 | SP | Poise damage on hit: 1. As counterstrike, added after the cost is derived. |
+| `trait:flux` | 1 | SP | Ward damage on hit: 1. As counterstrike, added after the cost is derived. |
+| `trait:reaction` | 0 | SP | A timing rule (playable on the opponent's turn), not power. Enemy moves carry it; no card is priced by it. |
 
 ### Keywords
 
@@ -277,10 +286,10 @@ A card takes the largest range among its tags (owner: melee 1, reach 2, ranged 3
 | Tag | Range | Weight | Side | Reason |
 |---|---|---|---|---|
 | `delivery:melee` | melee | 1 | SP | Contact range (owner). |
-| `reach:contact` | melee | 1 | SP | Contact range (owner). |
-| `reach:near` | reach | 2 | SP | Reaches a step further, or a whole area (owner). |
+| `range:melee` | melee | 1 | SP | Contact range (owner). |
+| `range:reach` | reach | 2 | SP | Reaches a step further, or a whole area (owner). |
 | `delivery:area` | reach | 2 | SP | Reaches a step further, or a whole area (owner). |
-| `reach:far` | ranged | 3 | SP | Hits from afar (owner). |
+| `range:ranged` | ranged | 3 | SP | Hits from afar (owner). |
 | `delivery:projectile` | ranged | 3 | SP | Hits from afar (owner). |
 | `maneuver:ranged` | ranged | 3 | SP | Hits from afar (owner). |
 
@@ -352,6 +361,13 @@ Every status a card applies (applyStatus, or buildup as one stack) weighs 2 (own
 | `invulnerability` | 2 | card | The owner's floor for a status. |
 | `decoy` | 2 | card | The owner's floor for a status. |
 | `concealed` | 2 | card | The owner's floor for a status. |
+| `silenced` | 2 | card | The owner's floor for a status. |
+| `necroticBlight` | 2 | card | The owner's floor for a status. |
+| `stanceShifted` | 2 | card | The owner's floor for a status. |
+| `stoneskin` | 2 | card | The owner's floor for a status. |
+| `confused` | 2 | card | The owner's floor for a status. |
+| `slowed` | 2 | card | The owner's floor for a status. |
+| `entombed` | 2 | card | The owner's floor for a status. |
 
 ## Outliers
 

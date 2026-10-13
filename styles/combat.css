@@ -351,6 +351,8 @@
 }
 /* The selected card's glow is the shared WCF3 filter (kit.css); no second outline. */
 .hand .card.selected { border-color: var(--gold); }
+/* A card already on the reaction stack: muted until the stack resolves. */
+.hand .card.is-stacked { opacity: .55; filter: saturate(.4); }
 
 /* #198: drag aiming deliberately reuses the click-selected `.aim-silho`
    visual above. The ghost names whether the current point can commit; enemies
@@ -417,16 +419,23 @@
   translate: -50% 0;
   position: absolute; font-family: var(--font-display); font-weight: 800; font-size: 2.5rem;
   color: var(--parchment);
-  /* A dark outline keeps numbers legible over any sprite. */
-  text-shadow: 0 0 3px #000, 0 0 3px #000, 0 2px 5px #000;
+  /* A 1px dark outline keeps numbers legible over any sprite. */
+  text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
   transform-origin: center bottom;
   animation: num-pop 540ms cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
 }
-.float-num.dmg { color: #ff8f6b; }
+.float-num.dmg { color: #ff4a4a; }
 .float-num.small { font-size: 2rem; }
 .float-num.heavy { font-size: 3.4rem; }
-.float-num.crit { font-size: 4.4rem; color: #ffc861; text-shadow: 0 0 4px #000, 0 0 10px rgba(201, 162, 39, 0.7), 0 2px 6px #000; }
-.float-num.blk { color: var(--frost); }
+.float-num.crit { font-size: 4.4rem; color: #ff4a4a; }
+/* Where a hit landed: Barrier blue, Ward purple, Block silver, Poise gold,
+   Health red (owner, 2026-10-12). */
+.float-num.barrier { color: #5fa8ff; }
+.float-num.ward { color: #b38ae8; }
+.float-num.poise { color: #ffd34d; }
+/* The Force part a Silenced target was immune to: the IMMUNE callout's pale grey. */
+.float-num.immune { color: #cfd3d8; }
+.float-num.blk { color: #d8dde3; }
 .float-num.heal { color: var(--green); }
 .float-num.burst { color: var(--ember); font-size: 3.6rem; }
 /* Reduced motion: a plain rise, no bounce/overshoot. */
@@ -441,10 +450,30 @@
   font-family: var(--font-display); font-weight: 800; font-size: 2.8rem; letter-spacing: 0.08em;
   color: var(--gold); pointer-events: none;
   text-shadow: var(--hud-text-shadow, 0 0 3px #000, 0 2px 5px #000);
+  /* A 1px outline under the HUD shadow (owner, 2026-10-12). */
+  -webkit-text-stroke: 1px #000; paint-order: stroke fill;
   animation: callout-rise var(--fx-callout-ms, 900ms) ease-out forwards,
     callout-glow var(--fx-callout-ms, 900ms) ease-out forwards;
 }
 .fx-callout.red { color: var(--ember); }
+.fx-callout.ward { color: #b38ae8; }
+.fx-callout.barrier { color: #5fa8ff; }
+.fx-callout.block { color: #d8dde3; }
+.fx-callout.immune { color: #cfd3d8; }
+.fx-callout.interrupt { color: #ff9a3c; }
+/* A break's shatter ring, in its tone: silver Block, blue Barrier, purple Ward, gold Poise, orange INTERRUPTED. */
+.fx-shatter { position: absolute; width: 46px; height: 46px; border-radius: 50%; border: 3px solid var(--shatter, #fff);
+  translate: -50% -50%; pointer-events: none; animation: fx-shatter-ring 420ms ease-out forwards; }
+.fx-shatter.block { --shatter: #d8dde3; }
+.fx-shatter.barrier { --shatter: #5fa8ff; }
+.fx-shatter.ward { --shatter: #b38ae8; }
+.fx-shatter.gold { --shatter: #ffd34d; }
+.fx-shatter.interrupt { --shatter: #ff9a3c; }
+@keyframes fx-shatter-ring { from { opacity: 1; transform: scale(0.3); } to { opacity: 0; transform: scale(1.9) rotate(20deg); } }
+.fx-miss-streak { position: absolute; width: 96px; height: 4px; translate: -50% -50%; border-radius: 2px; pointer-events: none;
+  background: linear-gradient(90deg, transparent, #fff, transparent); animation: fx-miss-swish 380ms ease-out forwards; }
+@keyframes fx-miss-swish { from { opacity: 0; transform: translateX(-30px) scaleX(0.4); } 40% { opacity: 1; } to { opacity: 0; transform: translateX(30px) scaleX(1.2); } }
+.fx-callout.white { color: #fff; }
 .float-num { z-index: 1; }
 .reduce-flashes .fx-callout { animation: callout-rise var(--fx-callout-ms, 900ms) ease-out forwards; }
 .reduced-motion .fx-callout { animation: callout-fade var(--fx-callout-ms, 900ms) ease-out forwards; }

@@ -22,7 +22,7 @@ import { applyAbilityGrade } from './abilityGrades.js';
 
 const EQUIPMENT_PROFILE_SNAPSHOT_VERSION = 2;
 const EQUIPMENT_PROFILE_PATCH_FIELDS = Object.freeze(['baseValue', 'ratingId', 'cap']);
-const EQUIPMENT_PROFILE_CARRIER_FIELDS = Object.freeze(['damageSchool', 'exposureBuildupPerHit']);
+const EQUIPMENT_PROFILE_CARRIER_FIELDS = Object.freeze(['damageSchool', 'exposureBuildupPerHit', 'magicShare']);
 // src/model/loadout.js — what you carry, and what it does to your cards.
 //
 // The design rule (SPEC §3.1(2)) is that equipment may not add behaviour the
@@ -416,6 +416,7 @@ function collectEquipmentProblems(registries, problems = []) {
     if (!Number.isFinite(profile.baseValue) || profile.baseValue < 0) problems.push(`${profile.id}: baseValue must be finite and non-negative`);
     if (!ratingIds.includes(profile.ratingId)) problems.push(`${profile.id}: unknown ratingId '${profile.ratingId}'`);
     if (profile.cap !== '' && profile.cap != null && (!Number.isFinite(profile.cap) || profile.cap < 0)) problems.push(`${profile.id}: cap must be blank or a finite non-negative number`);
+    if (profile.magicShare !== '' && profile.magicShare != null && (!Number.isFinite(profile.magicShare) || profile.magicShare < 0 || profile.magicShare > 1)) problems.push(`${profile.id}: magicShare must be blank or a number from 0 to 1`);
     if (profile.compatibility !== `${profile.role}-v1`) problems.push(`${profile.id}: compatibility '${profile.compatibility}' must match role vocabulary '${profile.role}-v1'`);
     // The service owns what a family may carry, so this reads the same rule
     // the boot door reads rather than a second copy of it.
@@ -1020,7 +1021,7 @@ function profileById(registries, id) {
 function profileRule(profile) {
   return {
     ...Object.fromEntries(EQUIPMENT_PROFILE_PATCH_FIELDS.map((key) => [key, profile[key] === '' ? null : profile[key]])),
-    ...Object.fromEntries(EQUIPMENT_PROFILE_CARRIER_FIELDS.map((key) => [key, profile[key]])),
+    ...Object.fromEntries(EQUIPMENT_PROFILE_CARRIER_FIELDS.map((key) => [key, profile[key] === '' ? null : profile[key]])),
     compatibility: profile.compatibility,
   };
 }
@@ -1078,6 +1079,9 @@ export function restoreEquipmentProfileRuleSnapshot(snapshot, registries) {
     // exactly once during migration; every subsequent save owns the values.
     if (rule.damageSchool === undefined) rule.damageSchool = profile.damageSchool;
     if (rule.exposureBuildupPerHit === undefined) rule.exposureBuildupPerHit = profile.exposureBuildupPerHit;
+    // A blank magic share is the card's damage type default (null). Older snapshots adopt the live row once.
+    if (rule.magicShare === undefined) rule.magicShare = profile.magicShare === '' ? null : profile.magicShare;
+    if (rule.magicShare !== null && !(Number.isFinite(rule.magicShare) && rule.magicShare >= 0 && rule.magicShare <= 1)) throw new Error(`${profile.id}.magicShare must be null or 0..1`);
     if (!DAMAGE_SCHOOLS.includes(rule.damageSchool)) throw new Error(`${profile.id}.damageSchool '${rule.damageSchool}' is unknown`);
     if (!Number.isInteger(rule.exposureBuildupPerHit) || rule.exposureBuildupPerHit < 0) throw new Error(`${profile.id}.exposureBuildupPerHit must be a non-negative integer`);
     const legal = [...EQUIPMENT_PROFILE_PATCH_FIELDS, ...EQUIPMENT_PROFILE_CARRIER_FIELDS, 'compatibility'];
@@ -3098,6 +3102,13 @@ export function stampDeck(registries, run, cards, {
     else delete inst.damageSchool;
     if (Number.isInteger(carrier.exposureBuildupPerHit)) inst.exposureBuildupPerHit = carrier.exposureBuildupPerHit;
     else delete inst.exposureBuildupPerHit;
+    // The magic share is the profile's; the physical damage type is the lending weapon's (armaments.csv physicalDamageType).
+    const priorShare = inst.magicShare;
+    const priorPhysical = inst.physicalDamageType;
+    if (Number.isFinite(carrier.magicShare)) inst.magicShare = carrier.magicShare;
+    else delete inst.magicShare;
+    if (row && row.piece && row.piece.physicalDamageType) inst.physicalDamageType = row.piece.physicalDamageType;
+    else delete inst.physicalDamageType;
     const mods = cardMods(registries, run.loadout, run.class, {
       attackSourceWeaponId: inst.kitRole === 'attack' ? inst.grantedBy : inst.equipmentRole === 'attack' ? (inst.weaponId || null) : undefined,
     });
@@ -3105,7 +3116,8 @@ export function stampDeck(registries, run, cards, {
       : row && row.role === 'guard' ? `block=${row.receipt.effectBase}` : null;
     const next = [...(amountMod ? [amountMod] : []), ...((row && row.profile.mods) || []), ...(mods.get(inst.cardId) || [])];
     const prev = inst.mods || [];
-    const carrierChanged = priorSchool !== inst.damageSchool || priorBuildup !== inst.exposureBuildupPerHit;
+    const carrierChanged = priorSchool !== inst.damageSchool || priorBuildup !== inst.exposureBuildupPerHit
+      || priorShare !== inst.magicShare || priorPhysical !== inst.physicalDamageType;
     if (!carrierChanged && next.length === prev.length && next.every((v, i) => v === prev[i])) continue;
     if (next.length) inst.mods = next;
     else delete inst.mods;

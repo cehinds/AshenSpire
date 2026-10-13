@@ -292,8 +292,10 @@ function scriptedLog(seed, classId = 'reaver', enemyIds = [ENEMY]) {
 test('with the preview off, a scripted fight event log is byte-identical to the recorded golden', () => {
   const all = [1, 2, 3].map((s) => scriptedLog(s)).join('\n');
   // Re-recorded for the retuned Wandering Soldier (2 SP, HP 31-36, Slash 8; owner 2026-10-13: harder tier-1 normals).
-  assert.equal(createHash('sha256').update(all).digest('hex'), 'c22891469f122a284f2d322279aa25315f8449c60e4eefcffcf52713ede6a4a9');
-  assert.equal(all.length, 343316);
+  // Re-recorded at the origin/dev merge of 2026-10-13 (#1931, #1896 and the rest): dev's combat changes (reaction rules
+  // version 2, split hits, Silenced, the damage-type tags the cost formula prices) change what the script plays.
+  assert.equal(createHash('sha256').update(all).digest('hex'), '79b004c855ccbc9fc3508274c7e54806281c70e7416bd8a9c7a395908eae0614');
+  assert.equal(all.length, 406414);
 });
 
 // Review finding 1: a queued card that an earlier queued card removed from hand never resolves.

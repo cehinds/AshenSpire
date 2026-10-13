@@ -20,7 +20,7 @@ const persisted = snapshot => JSON.parse(JSON.stringify(snapshot));
 function fixture(prepare = () => {}) {
   const run = createRunState({ registries, seed: 11, classId: 'reaver', enemyKnowledgeVersion: null });
   // Exercise the historical expanded checkpoint policy, before reaction saves.
-  delete run.reactionRulesVersion;
+  delete run.reactionRulesVersion; delete run.reactionRules;
   assert.equal(run.combatExpansionVersion, 2, 'use a real expanded creation receipt');
   assert.equal(run.equipmentProfileRuleSnapshot.snapshotVersion, 2);
   assert.ok(Number.isInteger(run.equipmentAttackSlotCount));

@@ -59,7 +59,8 @@ test('scoped enemy moves resolve through both the tag service and nested combat 
   const meleeCounters = service.withTag('enemyMove', 'counter:melee');
   assert.deepEqual(meleeCounters.map(move => `${move.enemyId}.${move.id}`).sort(),
     ['cinderMantis.foldedBlades', 'courtDuelist.riposte', 'gildedKnight.parry']);
-  assert.equal(service.withTag('enemyMove', 'camp:physical').length, 66);
+  // 66 rolled physical moves plus the two physical reaction moves (gildedGuard, bindingRiposte).
+  assert.equal(service.withTag('enemyMove', 'camp:physical').length, 68);
   assert.equal(service.withTag('enemyMove', 'camp:spell').length, 37);
   for (const move of registries.enemyMoves) {
     const nested = registries.enemies.get(move.enemyId).moves[move.id];
@@ -72,7 +73,7 @@ test('counter faces describe deferred replies while keeping immediate support vi
   const counterCards = contentBundle.cards.filter(card => combatProfileFor(card).maneuver === 'counter');
   assert.ok(counterCards.length > 0);
   for (const card of counterCards) {
-    const preparation = /(?:Prepare (?:(?:Melee|Ranged|Spell)|a (?:frost|fire|lightning|force|alteration|illusion|divine|decay)) Counter|Counter Contact attacks for)/;
+    const preparation = /(?:Prepare (?:(?:Melee|Ranged|Spell)|a (?:frost|fire|lightning|force|alteration|illusion|divine|decay)) Counter|Counter Melee attacks for)/;
     assert.match(card.textTemplate, preparation, card.id);
     if (card.minCombatExpansionVersion === 2) {
       assert.ok(card.counterCoverage, `${card.id}: explicit coverage`);

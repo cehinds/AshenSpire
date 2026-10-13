@@ -55,6 +55,11 @@ export const STREAM_NAMES = Object.freeze([
   'statusPressure',
   'ashenBlight',
   'enemyIntentClue',
+  // Enemy reaction rolls (docs/combat-card-traits-contract.md, "Enemy reactions"):
+  // appended last so no stream above moves. An enemy with no reaction moves draws
+  // nothing here, so fights without them keep every counter unchanged. A save
+  // written before the stream existed starts it at 0.
+  'enemyReaction',
   // The Combat Rounds Preview's own stream (SPEC §4.11): appended last so no
   // stream above moves. Nothing draws on it while the preview is off, so its
   // counter stays 0 and getCounters() omits it: an off-mode save has no new

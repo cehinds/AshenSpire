@@ -1,0 +1,138 @@
+{
+  "version": 1,
+  "title": "Review Journey",
+  "canvas": {
+    "width": 354,
+    "height": 78,
+    "background": "transparent"
+  },
+  "defaultState": "review",
+  "states": [
+    {
+      "id": "review",
+      "name": "Review"
+    }
+  ],
+  "assets": {
+    "panel-frame": {
+      "src": "assets/panel-frame.png",
+      "width": 1080,
+      "height": 720
+    },
+    "soot-material": {
+      "src": "assets/soot-material.png",
+      "width": 256,
+      "height": 256
+    }
+  },
+  "nodes": [
+    {
+      "id": "review-journey",
+      "name": "Review Journey",
+      "type": "group",
+      "parent": null,
+      "x": 0,
+      "y": 0,
+      "width": 354,
+      "height": 78,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "fill": "none"
+    },
+    {
+      "id": "review-journey-label",
+      "name": "Review Journey Label",
+      "type": "text",
+      "parent": "review-journey",
+      "x": 0,
+      "y": 0,
+      "width": 354,
+      "height": 40,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "text": "Journey",
+      "fontSize": 14,
+      "fontFamily": "Arial",
+      "fill": "#b8aa87",
+      "lineHeight": 1.3
+    },
+    {
+      "id": "review-journey-material",
+      "name": "Review Journey Material",
+      "type": "image",
+      "parent": "review-journey",
+      "x": 0,
+      "y": 23,
+      "width": 354,
+      "height": 47,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "asset": "soot-material"
+    },
+    {
+      "id": "review-journey-trim",
+      "name": "Review Journey Trim",
+      "type": "image",
+      "parent": "review-journey",
+      "x": 0,
+      "y": 23,
+      "width": 354,
+      "height": 47,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "asset": "panel-frame"
+    },
+    {
+      "id": "review-journey-value",
+      "name": "Review Journey Value",
+      "type": "text",
+      "parent": "review-journey",
+      "x": 15,
+      "y": 36,
+      "width": 324,
+      "height": 40,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "text": "Classic Climb  \u25be",
+      "fontSize": 16,
+      "fontFamily": "Arial",
+      "fill": "#e7dec8",
+      "lineHeight": 1.3
+    }
+  ],
+  "metadata": {
+    "componentSource": "review-journey",
+    "sourceState": "review",
+    "designOnly": true
+  }
+}

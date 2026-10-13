@@ -16,6 +16,7 @@ import {
 } from '../content/actionCosts.js';
 import { DRAWBACK_KEYWORD_TAGS } from '../content/actionCosts.js';
 import { stanceFor } from '../engine/combatRounds/stance.js';
+import { spellCardCostSurcharge } from './combatCardProfile.js';
 
 export const ACTION_STANCES = Object.freeze(['attack', 'block', 'smash', 'counter', 'cast', 'sweep']);
 export const COST_SIDES = Object.freeze(['sp', 'mp']);
@@ -176,15 +177,17 @@ export function cardCostBudget(def, { rank = 0, config = COST_CONFIG, upgradeDel
   const rawMp = Math.floor(sMp / budget.mpDivisor);
   let sp = rawSp;
   let mp = rawMp;
+  // The maneuver floor (owner, 2026-10-13): a base (rank 0) smash or sweep costs at least its floor (2 SP). A higher rank
+  // has no floor, and an authored upgrade that lowers the cost lowers the floor by as much. It applies before the
+  // minimum-1 rule below, so a floored card that already pays SP is not also charged 1 MP (a mixed physical/magic smash
+  // such as Ruinous Blow would otherwise cost more with Exhaust than without it).
+  const floor = rank === 0 ? Math.max(0, ...allTags.map((t) => config.maneuverFloors[t] ?? 0)) - Math.max(0, upgradeDelta) : 0;
+  if (sp < floor) sp = floor;
   // Both 0: the larger side pays 1 (SP on a tie). A Mana-restoring card pays Stamina: it buys Mana with Stamina, so a
   // player with no Mana can always cast it.
   if (sp === 0 && mp === 0) {
     if (restoreMana > 0 || !(sMp > sSp)) sp = 1; else mp = 1;
   }
-  // The maneuver floor (owner, 2026-10-13): a base (rank 0) smash or sweep costs at least its floor (2 SP). A higher rank
-  // has no floor, and an authored upgrade that lowers the cost lowers the floor by as much.
-  const floor = rank === 0 ? Math.max(0, ...allTags.map((t) => config.maneuverFloors[t] ?? 0)) - Math.max(0, upgradeDelta) : 0;
-  if (sp < floor) sp = floor;
   // Restores break even (owner, 2026-10-13): the restore is priced in its own pool and pays that part itself.
   const funded = Object.freeze({ sp: Math.min(parts.restoreStamina, restoreStamina), mp: Math.min(parts.restoreMana, restoreMana) });
   sp += parts.restoreStamina;
@@ -306,8 +309,13 @@ export function enemyPoolOf(def, { row = ENEMY_SP_ROW } = {}) {
 }
 export const enemySpOf = enemyPoolOf;
 
-/** A move's SP: its own `sp` when it names one, else the table price of its stance, else `fallback` (1 SP). */
-export function enemyMoveSpOf(move, kind, fallback) {
-  if (Number.isFinite(Number(move?.sp)) && move?.sp !== null && move?.sp !== undefined) return Math.max(0, Number(move.sp));
-  return stanceCost(actionStance({ kind, tags: move?.tags })) ?? fallback;
+/**
+ * A move's SP: its own `sp` when it names one, else the table price of its stance, else `fallback` (1 SP). With an
+ * `entity` (the enemy paying, expanded combat only), a spell-camp move adds the Silenced surcharge the player's cards pay
+ * (model/combatCardProfile.js spellCardCostSurcharge, one SP per stack); `enemyId` and `moveId` find its authored tags.
+ */
+export function enemyMoveSpOf(move, kind, fallback, { entity = null, enemyId, moveId } = {}) {
+  const own = Number.isFinite(Number(move?.sp)) && move?.sp !== null && move?.sp !== undefined;
+  const base = own ? Math.max(0, Number(move.sp)) : stanceCost(actionStance({ kind, tags: move?.tags })) ?? fallback;
+  return base + (entity ? spellCardCostSurcharge(entity, { ...move, enemyId, moveId }) : 0);
 }

@@ -37,7 +37,7 @@ export function wireCombatLayout(combatEl) {
     combatEl.dataset.formFactor = formFactor || '';
     const compact = width * zoom <= uiConfig.scenes.w4a.sizing.compactCombat.maxWidthPx;
     combatEl.dataset.compactCombat = String(compact);
-    const bands = allocateCombatBands({ width, height: combatEl.clientHeight, zoom, rem, compact, formFactor, footerArtPx: footerArtHeight(width, zoom, formFactor) * zoom });
+    const bands = allocateCombatBands({ width, height: combatEl.clientHeight, zoom, rem, compact, footerArtPx: footerArtHeight(width, zoom, formFactor) * zoom });
     // The W4 parent's bands (kit.css, shared with the quest dialogue): the
     // battlefield is the scene band, the grid's flexible row; the hand is the
     // context band.

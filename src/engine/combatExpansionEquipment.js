@@ -1,15 +1,19 @@
 import { combatExpansionEquipment } from '../content/combatExpansionEquipment.js';
 import { equippedIn } from '../model/loadout.js';
+import { combatRules } from '../content/combatRules.js';
 
 const positive = value => Number.isFinite(value) ? Math.max(0, value) : 0;
+// Elemental resist is a percent like weakness, capped with armour resistances.
+export const RESIST_PERCENT_CAP = Math.round(combatRules.resistanceCap * 100);
 function projection(rows, armorClass = 'light') {
-  const result = { armorClass, damageResistanceFlat: {}, damageWeaknessPercent: {}, combatTraits: {} };
+  const result = { armorClass, damageResistanceFlat: {}, damageWeaknessPercent: {}, damageResistPercent: {}, combatTraits: {} };
   for (const row of rows) {
     if (!row) continue;
     if (row.armorClass) result.armorClass = row.armorClass;
     for (const [key, value] of Object.entries(row.flat || {})) result.damageResistanceFlat[key] = (result.damageResistanceFlat[key] || 0) + positive(value);
     // Weakness is one maximum component modifier, never two multiplicative edges.
     for (const [key, value] of Object.entries(row.weak || {})) result.damageWeaknessPercent[key] = Math.max(result.damageWeaknessPercent[key] || 0, positive(value));
+    for (const [key, value] of Object.entries(row.resist || {})) result.damageResistPercent[key] = Math.min(RESIST_PERCENT_CAP, Math.max(result.damageResistPercent[key] || 0, positive(value)));
     for (const [key, value] of Object.entries(row.traits || {})) {
       if (value && typeof value === 'object' && !Array.isArray(value)) {
         const map = result.combatTraits[key] ||= {};
@@ -19,6 +23,16 @@ function projection(rows, armorClass = 'light') {
     }
   }
   return result;
+}
+
+/**
+ * One typed-defense line for every v2 damage path (live, foundation, preview):
+ * ceil(total * (1 + weak/100) * (1 - resist/100)) - flat, never below zero.
+ */
+export function typedDefenseAmount(target, type, total) {
+  const weak = positive(target?.damageWeaknessPercent?.[type]);
+  const resist = Math.min(RESIST_PERCENT_CAP, positive(target?.damageResistPercent?.[type]));
+  return Math.max(0, Math.ceil(total * (1 + weak / 100) * (1 - resist / 100)) - positive(target?.damageResistanceFlat?.[type]));
 }
 
 /** Active slot/class identities only. Unworn storage and other classes do not count. */

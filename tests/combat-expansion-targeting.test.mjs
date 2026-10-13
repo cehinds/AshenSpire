@@ -58,7 +58,7 @@ test('selected upcast tier changes the same target plan committed by the engine'
   const local = createRegistries({ ...contentBundle, cards: [...contentBundle.cards, {
     // costRule 'fixed': the fixture prices its own 0-SP base; the upcast tier surcharge is what it tests (SPEC action costs).
     id, name: 'Target Tier Fixture', type: 'skill', kindIds: ['classification.skill'], cost: 0, costRule: 'fixed', manaCost: 0,
-    tags: ['camp:physical', 'maneuver:defend', 'reach:contact', 'targeting:single'],
+    tags: ['camp:physical', 'maneuver:defend', 'range:melee', 'targeting:single'],
     effects: [{ op: 'block', target: 'self', amount: 2 }], textTemplate: 'Gain {block} Block.',
     upcast: { baseTier: 2, unlockedTiers: [3, 5], maximumTier: 5, blockPerRank: 1,
       breakpoints: [{ ranks: 3, effects: [{ op: 'buildup', target: 'enemy', status: 'weak', amount: 1 }] }] },

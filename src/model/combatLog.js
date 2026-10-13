@@ -51,14 +51,50 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
         text = `${source} played ${card}${event.upcastTier ? ` (Upcast ${event.upcastTier})` : ''} · ${costs.join(', ')}.`;
         break;
       }
-      case 'enemyMoveStarted': text = `${source} used ${word(event.moveId)}.`; break;
-      case 'combatCounterTriggered': text = `${source} counterattacked ${target}.`; break;
-      case 'damageDealt': {
-        const lost = Math.max(0, event.amount - (event.blocked || 0));
-        text = lost ? `${source} dealt ${lost} damage to ${target}${event.blocked ? ` (${event.blocked} blocked)` : ''}.`
-          : `${target} ${event.blocked ? `blocked ${event.blocked} damage` : 'resisted the attack'}.`;
+      case 'enemyMoveStarted': {
+        const move = registries?.enemies?.get(event.enemyId)?.moves?.[event.moveId]?.name || word(event.moveId);
+        text = event.reaction ? `${source} reacts with ${move}.` : `${source} used ${word(event.moveId)}.`;
         break;
       }
+      case 'combatCounterTriggered': text = `${source} counterattacked ${target}.`; break;
+      case 'damageDealt': {
+        // Silenced: a hit that is all Force is negated whole.
+        if (event.silencedImmune) { text = `${target} is immune to Force (Silenced).`; break; }
+        const lost = Math.max(0, event.amount - (event.blocked || 0));
+        // Each layer's share, with what is left of it: Barrier, Ward, Block, then the damage actually inflicted.
+        const barrier = event.barrierAbsorbed || 0, ward = event.wardAbsorbed || 0, poise = event.poiseAbsorbed || 0;
+        const layers = [
+          ...(barrier ? [`Barrier absorbed ${barrier} (${(event.barrierRemaining || 0) + barrier} → ${event.barrierRemaining || 0})`] : []),
+          ...(ward ? [`Ward absorbed ${ward} (${(event.wardRemaining || 0) + ward} → ${event.wardRemaining || 0})`] : []),
+          ...(event.blocked ? [`Block absorbed ${event.blocked} (${(event.blockRemaining || 0) + event.blocked} → ${event.blockRemaining || 0})`] : []),
+          ...(poise ? [`Poise absorbed ${poise} (${(event.poiseRemaining || 0) + poise} → ${event.poiseRemaining || 0})`] : []),
+        ];
+        if (barrier || ward || poise) {
+          text = lost ? `${source} hit ${target} for ${event.amount + barrier + ward + poise}: ${layers.join(', ')}; ${lost} damage dealt.`
+            : `${target} resisted the attack: ${layers.join(', ')}.`;
+        } else {
+          text = lost ? `${source} dealt ${lost} damage to ${target}${event.blocked ? ` (${event.blocked} blocked)` : ''}.`
+            : `${target} ${event.blocked ? `blocked ${event.blocked} damage` : 'resisted the attack'}.`;
+        }
+        // Silenced: the hit's Force part was negated, the rest went on.
+        if (event.forceImmune > 0) text = `${text.replace(/\.$/, '')}; ${event.forceImmune} Force IMMUNE (Silenced).`;
+        break;
+      }
+      // A miss shows the roll and what it needed (white MISS on the fighter).
+      case 'combatAvoidanceResolved': {
+        if (!event.avoided) break;
+        const e = event.evade, d = event.distance;
+        if (e?.success) text = `${source} missed ${target}: Evade rolled ${e.roll}${e.total !== e.roll ? ` + ${e.total - e.roll} bonus = ${e.total}` : ''}, needed more than ${e.difficulty}.`;
+        else if (d?.success) text = `${source} missed ${target}: distance rolled ${d.roll}, needed ${d.chance} or less.`;
+        else if (event.prevention) text = `${source} missed ${target} (${word(event.prevention)}).`;
+        break;
+      }
+      case 'barrierBroken': text = `${target}'s Barrier broke.`; break;
+      case 'wardBroken': text = event.interrupted ? `${target}'s Ward broke (interrupted).` : `${target}'s Ward broke${event.staminaLoss ? ` (−${event.staminaLoss} Stamina next turn)` : ''}.`; break;
+      case 'persistentWardChanged': if (event.restored > 0) text = `${target} restored ${event.restored} Ward (${event.value - event.restored} → ${event.value}).`; break;
+      case 'poiseBroken': text = event.interrupted ? `${target}'s Poise broke (interrupted).` : `${target}'s Poise broke${Number.isFinite(event.staminaLoss) ? (event.staminaLoss ? ` (−${event.staminaLoss} Stamina next turn)` : '') : ' (staggered)'}.`; break;
+      case 'barrierGained': text = `${target} gained ${event.amount} Barrier.`; break;
+      case 'ratingImpact': if (event.meter === 'poise' && event.amount > 0) text = `${target}'s stagger meter took ${event.amount} (${event.value}/${event.max}).`; break;
       case 'blockGained': text = `${target} gained ${event.amount} Block.`; break;
       case 'healed': text = `${target} recovered ${event.amount} HP.`; break;
       case 'hpLost': if (event.cause !== 'attack') text = `${target} lost ${event.amount} HP.`; break;

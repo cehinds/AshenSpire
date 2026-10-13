@@ -12,9 +12,10 @@ import { stampPlayerPoiseMax } from '../model/state.js';
 import { playerPoiseThresholdReceipt } from '../model/statProjection.js';
 import { attachSkillXp } from './skillXp.js';
 import { refreshCombatRatings } from './combatRatings.js';
-import { controlRestrictions } from './combatStatusControl.js';
+import { controlRestrictions, backfillPersistentPoise } from './combatStatusControl.js';
 import { ashenBlightRestorationPercent } from './ashenBlight.js';
 import { COMBAT_SNAPSHOT_VERSION, assertCombatSnapshot } from '../model/combatSnapshot.js';
+import { bringRangesForward } from '../model/combatRanges.js';
 
 /**
  * A fight saved before plan phase 2 keyed its relic gates `relic:<owner>:<id>:<i>`;
@@ -57,11 +58,15 @@ export function serializeCombatSnapshot(combat) {
     ...(combat.combatRounds ? { combatRounds: combat.combatRounds } : {}),
     // SPEC §4.11: the normal fight's momentum toggles and state. Absent when both toggles are off.
     ...(combat.normalPreview ? { normalPreview: combat.normalPreview } : {}),
-    ...(combat.reactionRulesVersion === 1 ? { reactionRulesVersion: 1,
+    ...([1, 2].includes(combat.reactionRulesVersion) ? { reactionRulesVersion: combat.reactionRulesVersion,
       ...(combat.foundationNextSerial !== undefined ? { foundationNextSerial: combat.foundationNextSerial } : {}),
       ...(combat.reactionCursor ? { reactionCursor: combat.reactionCursor } : {}),
       ...(combat.reactionHandCleanup ? { reactionHandCleanup: combat.reactionHandCleanup } : {}),
       ...(combat.pendingReaction ? { pendingReaction: combat.pendingReaction } : {}),
+      ...(combat.reactionRulesVersion === 2 ? { reactionRules: combat.reactionRules } : {}),
+      ...(combat.reactionStack ? { reactionStack: combat.reactionStack } : {}),
+      ...(combat.enemyReactionRolls ? { enemyReactionRolls: combat.enemyReactionRolls } : {}),
+      ...(combat.reactionRootPlay ? { reactionRootPlay: combat.reactionRootPlay } : {}),
       ...(combat.reactionResume ? { reactionResume: { ...combat.reactionResume, queue: combat.reactionResume.queue.map(({ source, owner, target, ...action }) => ({ ...action, sourceId: source?.id, ownerId: owner?.id, targetId: target?.id })) } } : {}) } : {}),
     ...(combat.ratingsRules ? { ratingsRules: combat.ratingsRules } : {}),
     ...([1, 2].includes(combat.breakMeterVersion) ? { breakMeterVersion: combat.breakMeterVersion } : {}),
@@ -150,8 +155,11 @@ function restoredPoolDeck(saved, fallback) {
 }
 
 export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttackSlotCount, fallbackRemovedAttackSlotIds, fallbackDerivedStatRuleSnapshot, fallbackAttributeMode, fallbackPoolDeck }) {
-  assertCombatSnapshot(snapshot);
+  // A fight saved before the range rename reads melee/reach/ranged (combatRanges.js);
+  // the caller's object is left as saved.
   const saved = structuredClone(snapshot);
+  bringRangesForward(saved);
+  assertCombatSnapshot(saved);
   if (saved.foundation) validateFoundationSnapshot(saved.foundation);
   const combat = {
     registries,
@@ -245,7 +253,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   // raw emitter alone would record no XP for the rest of the restored fight.
   attachSkillXp(combat);
   combat.enqueue = (action) => combat.queue.push(action);
-  for (const key of ['reactionRulesVersion', 'foundationNextSerial', 'reactionCursor', 'reactionHandCleanup', 'pendingReaction', 'reactionResume']) {
+  for (const key of ['reactionRulesVersion', 'reactionRules', 'reactionStack', 'foundationNextSerial', 'reactionCursor', 'reactionHandCleanup', 'pendingReaction', 'reactionResume', 'enemyReactionRolls', 'reactionRootPlay']) {
     if (saved[key] !== undefined) combat[key] = saved[key];
   }
   if (saved.abilityQueue) {
@@ -288,6 +296,8 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
       ...(Number.isInteger(combat.characterLevel) ? { level: { level: combat.characterLevel } } : {}),
     }).value);
   }
+  // An older expanded save has Ward and no Poise: every combatant restores with a full Poise pool.
+  for (const entity of [combat.player, ...(combat.enemies || [])]) backfillPersistentPoise(combat, entity);
   return combat;
 }
 
