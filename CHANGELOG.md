@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-13
 
+- **The changelog order test passes again now that a new day has begun** ([#1944](https://github.com/cehinds/AshenSpire/pull/1944), `0.7.1.1465`). Development-process change only, nothing in the game changes. A test that plants an out-of-order changelog entry now plants it inside its own day, so a newer day's entries no longer trip a different check first.
 - **Every weapon has a default range, and hand cards show it** ([#1921](https://github.com/cehinds/AshenSpire/pull/1921), `0.7.1.1465`). Combat ranges are now called Melee, Reach and Ranged (formerly contact, near and far), and older saves still load. Each weapon states the range it fights at, and attack cards in the combat hand show a Melee, Reach or Ranged chip, by the same rule the deck editor uses.
 - **One press on a visible Inspect "i" opens it** ([#1930](https://github.com/cehinds/AshenSpire/pull/1930), `0.7.1.1463`). One click, tap or Enter on a fighter's Inspect "i" opens the inspector at once, even when the fighter was not selected first.
 - **Desktop combat uses the phone's proportions** ([#1934](https://github.com/cehinds/AshenSpire/pull/1934), `0.7.1.1463`). On desktop and widescreen the hand now takes 30% of the screen instead of 38%, so the battlefield is larger and enemies are drawn bigger. Hand cards scale with the hand like on a phone, and the horizon sits where it does on a phone. Phone and tablet layouts are unchanged.

@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1944",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "The changelog order test passes again now that a new day has begun",
+    "detail": "Development-process change only, nothing in the game changes. A test that plants an out-of-order changelog entry now plants it inside its own day, so a newer day's entries no longer trip a different check first.",
+    "build": "0.7.1.1465",
+    "pullRequest": 1944,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1944"
+  },
+  {
     "id": "pr-1921",
     "date": "2026-10-13",
     "group": "2026-10-13",
