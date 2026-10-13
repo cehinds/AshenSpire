@@ -1,0 +1,229 @@
+// src/model/cardFaceText.js — the text a playing card's face says, as lines.
+//
+// ONE MODEL FOR EVERY CARD FACE. It reads the same context combatCardSummary
+// reads (cardSummaryContext in playingCard.js), so a number on the face comes
+// from the same preview the engine executes (SPEC §3.13) and never from a
+// second formula. The output is data: `{ kind, html }` lines in display
+// priority (damage, status, gain, condition, bonus, detail). The view decides
+// where the lines go. `html` is escaped, and every number is
+// `<span class="val">n</span>`, gaining ` up` or ` down` when the live preview
+// has moved it from its static base. Without a preview no number is marked.
+//
+// Returns null for a card with an effect it cannot phrase (the same cases as
+// combatCardSummary). The caller then keeps the authored text.
+
+import { cardSummaryContext, combatCardDamageLabel, splitOf } from './playingCard.js';
+import { isSpellCard } from './combatCardProfile.js';
+import { tagService } from './tagService.js';
+import { resolve as resolveTags } from '../content/tags.js';
+
+const UNPHRASEABLE = Symbol('unphraseable');
+const fail = () => { throw UNPHRASEABLE; };
+
+const LINE_ORDER = ['damage', 'status', 'gain', 'condition', 'bonus', 'detail'];
+const KEYWORDS = ['exhaust', 'retain', 'ethereal', 'innate'];
+const ENEMY_TARGETS = ['enemy', 'allEnemies', 'randomEnemy'];
+const STATUS_NEVER_PHRASED = ['invulnerability', 'decoy', 'grounded', 'sleep'];
+
+function esc(value) {
+  return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+/** The card-face lines for `def`, or null when a part of it cannot be phrased. */
+export function cardFaceLines(def, preview = null, registries = null) {
+  try {
+    return buildLines(def, preview, registries);
+  } catch (error) {
+    if (error === UNPHRASEABLE) return null;
+    throw error;
+  }
+}
+
+function buildLines(def, preview, registries) {
+  if (def.comboHook) return null;
+  const { value, title, condition, profile: p, bindings, tokens } = cardSummaryContext(def, preview, registries);
+  const ratings = registries?.balance?.combatRatings ?? null;
+  const counter = p.maneuver === 'counter';
+  const damageVerb = counter ? 'Return' : 'Inflict';
+
+  // The static number an effect's field authored: its token's base, else the literal.
+  const baseOf = (effect, index, field) => {
+    const token = bindings.find(row => row.index === index && row.field === field)?.token;
+    const fromToken = token === undefined ? undefined : tokens[token];
+    if (typeof fromToken === 'number') return fromToken;
+    return typeof effect[field] === 'number' ? effect[field] : undefined;
+  };
+
+  // A number as a span; up or down only when a live preview has moved it off its base.
+  const num = (amount, base = undefined) => {
+    if (amount === '?' || amount === undefined || amount === null || (typeof amount === 'number' && !Number.isFinite(amount))) fail();
+    let cls = 'val';
+    if (preview && typeof amount === 'number' && typeof base === 'number') {
+      if (amount > base) cls += ' up';
+      else if (amount < base) cls += ' down';
+    }
+    return `<span class="${cls}">${esc(amount)}</span>`;
+  };
+
+  const typeWord = id => {
+    const service = registries && tagService(registries);
+    const list = [`damage:${id}`];
+    return (service ? service.resolve(list) : resolveTags(list)).map(tag => tag.label).join('');
+  };
+  const typed = (amountHtml, label) => (label ? `${amountHtml} ${esc(label)}` : amountHtml);
+  const areaOf = target => target === 'allEnemies' ? ' to all enemies' : target === 'randomEnemy' ? ' to a random enemy' : '';
+  const durationOf = effect => {
+    if (effect.duration === undefined) return '';
+    if (typeof effect.duration !== 'number') fail();
+    return ` (${num(effect.duration, effect.duration)} turns)`;
+  };
+
+  // Each effect becomes fragments: `{ cat, text }`, cat in damage | status | remove | gain | bonus.
+  const phraseEffect = (effect, index) => {
+    const n = value(effect, index), base = baseOf(effect, index, 'amount');
+    const area = areaOf(effect.target);
+    const frag = (cat, text) => [{ cat, text }];
+    switch (effect.op) {
+      case 'damage': {
+        const live = preview?.values?.[index], hits = live?.hits ?? effect.hits ?? 1;
+        if (typeof hits !== 'number') fail();
+        const sequence = live?.hitDamages;
+        const unequal = sequence?.length > 1 && sequence.some(amount => amount !== sequence[0]);
+        const type = combatCardDamageLabel(def, preview, registries, index);
+        const word = `${type ? `${esc(type)} ` : ''}damage`;
+        // A hit part magic and part physical names both parts, the physical first.
+        const split = !unequal && hits === 1 ? splitOf(def, p, n, ratings, live) : null;
+        let text;
+        if (split) {
+          text = `${typed(num(split.physical), typeWord(split.types.physical))}, ${typed(num(split.magic), typeWord(split.types.magic))} damage`;
+        } else if (unequal) {
+          text = `${sequence.map(amount => num(amount)).join(' + ')} ${word} (${num(live.totalDamage)} total across ${sequence.length} hits)`;
+        } else {
+          text = `${num(n, base)} ${word}${hits !== 1 ? ` ×${num(hits, typeof effect.hits === 'number' ? effect.hits : undefined)}` : ''}`;
+        }
+        return frag('damage', text + area);
+      }
+      case 'poiseDamage': return frag('damage', `${num(n, base)} Poise damage${area}`);
+      case 'wardDamage': return frag('damage', `${num(n, base)} Ward damage${area}`);
+      case 'block': {
+        if (effect.target === 'ally') return frag('bonus', `Ally gains ${num(n, base)} Block`);
+        const split = splitOf(def, p, n, ratings);
+        if (split) return frag('gain', `${num(split.physical)} Block, ${num(split.magic)} Ward`);
+        return frag('gain', `${num(n, base)} Block`);
+      }
+      // A Spell's gain refills Ward first, so it reads Ward.
+      case 'gainBarrier': return frag('gain', `${num(n, base)} ${isSpellCard({ combatProfile: p, tags: def.tags }) ? 'Ward' : 'Barrier'}`);
+      case 'gainWard': return frag('gain', `${num(n, base)} Ward${effect.oncePerCombat ? ' once per combat' : ''}`);
+      case 'gainPoise': return frag('gain', `${num(n, base)} Poise guard`);
+      case 'restoreMana': return frag('gain', `${num(n, base)} Mana`);
+      case 'restoreStamina':
+      case 'gainEnergy': return frag('gain', `${num(n, base)} SP`);
+      case 'heal': return frag('bonus', `Heal ${effect.target === 'ally' ? 'an ally for ' : ''}${num(n, base)} HP`);
+      case 'buildup': return frag('status', `${esc(title(effect.status))} ${num(n, base)}${area}`);
+      case 'applyStatus': {
+        if (STATUS_NEVER_PHRASED.includes(effect.status)) fail();
+        const stacks = value(effect, index, 'stacks'), stacksBase = baseOf(effect, index, 'stacks');
+        const name = `${esc(title(effect.status))} ${num(stacks, stacksBase)}`, duration = durationOf(effect);
+        const out = [];
+        if (effect.target === 'self') out.push({ cat: 'gain', text: `${name}${duration}` });
+        else if (ENEMY_TARGETS.includes(effect.target)) out.push({ cat: 'status', text: `${name}${duration}${area}` });
+        else if (effect.target === 'ally') out.push({ cat: 'bonus', text: `Apply ${name} to an ally${duration}` });
+        else out.push({ cat: 'bonus', text: `Apply ${name}${duration}${area}` });
+        if (effect.status === 'concealed') {
+          const explanation = registries?.statuses?.has(effect.status) && registries.statuses.get(effect.status).tooltip;
+          if (!explanation) fail();
+          out.push({ cat: 'bonus', text: esc(explanation.replace(/\.$/, '')) });
+        }
+        return out;
+      }
+      case 'removeStatus': {
+        const amount = effect.amount === undefined ? 'all' : num(n, base);
+        const suffix = effect.target === 'enemy' ? ' from target' : effect.target === 'ally' ? ' from an ally' : area;
+        return frag('remove', `${amount} ${esc(title(effect.status))}${suffix}`);
+      }
+      case 'draw': return frag('bonus', `Draw ${num(n, base)}`);
+      case 'discard': return frag('bonus', `${effect.choose ? 'Choose and discard' : 'Discard'} ${num(n, base)}${effect.random ? ' at random' : ''}`);
+      case 'loseHp': return frag('bonus', `${effect.offering ? 'Offer' : 'Pay'} ${num(n, base)} HP${effect.nonlethal ? ' (leave at least 1 HP)' : ''}`);
+      case 'retain': return frag('bonus', `Retain ${num(n, base)}`);
+      case 'grantRollMode': return frag('bonus', `Next ${esc(effect.roll)}: ${effect.advantage ? 'Advantage' : 'Disadvantage'}`);
+      case 'enterStance': return frag('bonus', effect.choose ? 'Choose a stance'
+        : `Enter ${esc(registries?.stances?.has(effect.stance) ? registries.stances.get(effect.stance).name : effect.stance)}`);
+      case 'addCard': {
+        const count = effect.count || 1;
+        const name = registries?.cards?.has(effect.card) ? registries.cards.get(effect.card).name : effect.card;
+        return frag('bonus', `Add ${num(count)} ${esc(name)} to ${esc(effect.pile || 'hand')}`);
+      }
+      case 'grantCardCharge': {
+        const bonuses = Object.entries({ damage: 'damage', block: 'Block', heal: 'healing', break: 'Poise', buildup: `${effect.buildupStatus || ''} buildup`, manaDiscount: 'Mana discount' })
+          .filter(([key]) => effect[key] !== undefined).map(([key, label]) => key === 'manaDiscount'
+            ? `${num(value(effect, index, key), baseOf(effect, index, key))} less Mana (min 0)`
+            : `+${num(value(effect, index, key), baseOf(effect, index, key))} ${esc(label)}`);
+        const match = [effect.cardType, effect.abilityKind, effect.cardTag].filter(Boolean).join(' ');
+        return frag('bonus', `Next ${esc(match || 'matching card')} this turn: ${bonuses.join(', ')}; cannot stack with itself`);
+      }
+      default: return fail(); // Complex effects keep their authored text.
+    }
+  };
+
+  // The line a set of fragments reads as, one segment per kind, in fixed order.
+  const segmentsOf = (fragments, extraBonus = []) => {
+    const of = cat => fragments.filter(f => f.cat === cat).map(f => f.text);
+    const out = [];
+    const damage = of('damage'), status = of('status'), remove = of('remove'), gain = of('gain'), bonus = [...of('bonus'), ...extraBonus];
+    if (damage.length) out.push({ kind: 'damage', text: `${damageVerb} ${damage.join(', ')}` });
+    if (status.length) out.push({ kind: 'status', text: `Inflict ${status.join(', ')}` });
+    if (remove.length) out.push({ kind: 'status', text: `Remove ${remove.join(', ')}` });
+    if (gain.length) out.push({ kind: 'gain', text: `Gain ${gain.join(', ')}` });
+    if (bonus.length) out.push({ kind: 'bonus', text: bonus.join(', ') });
+    return out;
+  };
+
+  // A predicate's label: the status name for the card's own status, else "If ...".
+  const prefixFor = predicate => {
+    if (predicate.p === 'hasStatus' && predicate.of === 'self') return `${esc(title(predicate.status))}: `;
+    const text = condition(predicate);
+    if (!text) fail();
+    return `If ${esc(text)}: `;
+  };
+
+  const unconditional = [], groups = new Map();
+  for (const [index, effect] of (def.effects || []).entries()) {
+    const fragments = phraseEffect(effect, index);
+    if (effect.oncePerTurn && fragments.length) fragments[fragments.length - 1].text += ' once per turn per family';
+    if (effect.if) {
+      const key = JSON.stringify(effect.if);
+      if (!groups.has(key)) groups.set(key, { prefix: prefixFor(effect.if), fragments: [] });
+      groups.get(key).fragments.push(...fragments);
+    } else unconditional.push(...fragments);
+  }
+
+  // Counter: what the payload returns, for each part the effects do not already deal.
+  if (counter) {
+    const payload = def.counterPayload || {};
+    for (const [key, label, op] of [['hp', 'damage', 'damage'], ['poise', 'Poise', 'poiseDamage'], ['ward', 'Ward', 'wardDamage']]) {
+      if ((def.effects || []).some(effect => effect.op === op)) continue;
+      const live = preview?.values?.find(row => row.op === op)?.value;
+      const amount = live ?? payload[key];
+      if (typeof amount !== 'number' || !(amount > 0)) continue;
+      const type = key === 'hp' ? combatCardDamageLabel(def, preview, registries) : '';
+      unconditional.push({ cat: 'damage', text: `${typed(num(amount, payload[key]), type)} ${label}` });
+    }
+  }
+  if (def.pronePoiseBonus) unconditional.push({ cat: 'bonus', text: `+${num(def.pronePoiseBonus)} Poise while Prone` });
+  if (def.evade) {
+    unconditional.push({ cat: 'bonus', text: `${def.evade.whileStatus ? `While ${esc(title(def.evade.whileStatus))}: ` : ''}Prepare one Evade${def.evade.advantage ? ' with Advantage' : ''}` });
+  }
+
+  const keywords = (def.keywords || []).filter(keyword => KEYWORDS.includes(keyword)).map(keyword => keyword[0].toUpperCase() + keyword.slice(1));
+  const byKind = { damage: [], status: [], gain: [], condition: [], bonus: [], detail: [] };
+  for (const segment of segmentsOf(unconditional, keywords)) byKind[segment.kind].push(segment.text);
+  for (const group of groups.values()) {
+    byKind.condition.push(group.prefix + segmentsOf(group.fragments).map(segment => segment.text).join('. '));
+  }
+  if (def.usableWhile?.length) byKind.detail.push(`Usable through ${def.usableWhile.map(id => esc(title(id))).join(', ')}`);
+
+  const lines = [];
+  for (const kind of LINE_ORDER) for (const html of byKind[kind]) if (html) lines.push({ kind, html });
+  return lines;
+}
