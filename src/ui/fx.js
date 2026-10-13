@@ -1448,6 +1448,13 @@ function visualPartsFor(e, beatKind, opts) {
     const anchor = ctx.anchorFor(effect.targetId);
     if (anchor) playCombatEffect(ctx.layer, anchorLocalBox(ctx.layer, anchor), effect.kind, { size: 190 });
   };
+  // SPEC §7.4 (sequential): the Stagger wobble is the defender's reaction, not
+  // the impact frame, so its break sprite plays with that reaction and takes no
+  // contact step that would hold back the hit's first number.
+  if (opts?.sequential && e.type === 'enemyStaggered' && base?.reaction && !base.contact) {
+    const reaction = base.reaction;
+    return { ...base, reaction: (ctx) => { reaction(ctx); playEffect(ctx); } };
+  }
   const contact = base?.contact;
   return { ...base, contact: contact ? (ctx) => { contact(ctx); playEffect(ctx); } : playEffect };
 }
