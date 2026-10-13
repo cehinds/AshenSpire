@@ -433,6 +433,8 @@
 .float-num.barrier { color: #5fa8ff; }
 .float-num.ward { color: #b38ae8; }
 .float-num.poise { color: #ffd34d; }
+/* The Force part a Silenced target was immune to: the IMMUNE callout's pale grey. */
+.float-num.immune { color: #cfd3d8; }
 .float-num.blk { color: #d8dde3; }
 .float-num.heal { color: var(--green); }
 .float-num.burst { color: var(--ember); font-size: 3.6rem; }

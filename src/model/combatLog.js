@@ -58,6 +58,8 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
       }
       case 'combatCounterTriggered': text = `${source} counterattacked ${target}.`; break;
       case 'damageDealt': {
+        // Silenced: a hit that is all Force is negated whole.
+        if (event.silencedImmune) { text = `${target} is immune to Force (Silenced).`; break; }
         const lost = Math.max(0, event.amount - (event.blocked || 0));
         // Each layer's share, with what is left of it: Barrier, Ward, Block, then the damage actually inflicted.
         const barrier = event.barrierAbsorbed || 0, ward = event.wardAbsorbed || 0, poise = event.poiseAbsorbed || 0;
@@ -74,6 +76,8 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
           text = lost ? `${source} dealt ${lost} damage to ${target}${event.blocked ? ` (${event.blocked} blocked)` : ''}.`
             : `${target} ${event.blocked ? `blocked ${event.blocked} damage` : 'resisted the attack'}.`;
         }
+        // Silenced: the hit's Force part was negated, the rest went on.
+        if (event.forceImmune > 0) text = `${text.replace(/\.$/, '')}; ${event.forceImmune} Force IMMUNE (Silenced).`;
         break;
       }
       // A miss shows the roll and what it needed (white MISS on the fighter).
