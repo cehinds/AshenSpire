@@ -107,17 +107,45 @@ function orderKey(stamp) {
   return [...v.slice(0, 3), /-rc\.\d+$/.test(m[1]) ? '0' : '1', v[3]];
 }
 
+// A receipt re-pointed to the box belongs to the newest date group: it landed now,
+// and the box out-runs every stamp in a newer group, so leaving it under an older
+// date makes the checker refuse the file ("build runs backward"). It moves to the
+// top of the newest date group; reorderReceipt then sees it already in place.
+function moveToNewestGroup(text, pr, stamp) {
+  const lines = text.split('\n');
+  const hit = new RegExp(`/pull/${pr}\\),\\s*\`${stamp.replace(/\./g, '\\.')}\``);
+  const at = lines.findIndex((l) => l.startsWith('- ') && hit.test(l));
+  if (at < 0) return text;
+  const isDate = (l) => /^## \d{4}-\d{2}-\d{2}\b/.test(l);
+  const newest = lines.findIndex(isDate);
+  let own = at - 1;
+  while (own >= 0 && !/^## /.test(lines[own])) own -= 1;
+  if (newest < 0 || own === newest || own < newest) return text;
+  const [moved] = lines.splice(at, 1);
+  let first = newest + 1;
+  while (first < lines.length && !lines[first].startsWith('- ') && !/^## /.test(lines[first])) first += 1;
+  if (first >= lines.length || /^## /.test(lines[first])) {
+    // The newest group has no receipt yet: open it with this one, after its heading's blank line.
+    first = newest + 1;
+    if (lines[first] === '') first += 1;
+  }
+  lines.splice(first, 0, moved);
+  return lines.join('\n');
+}
+
 // THE RECEIPT'S LINE WITHIN ITS DATE GROUP. A group runs newest build first, so a
 // re-pointed receipt can sit out of order with its neighbours. It is left where it is
 // when every stamped receipt above it is at least as new and every one below at most
 // as new (a tie keeps its place). Otherwise it moves to just above the first stamped
 // receipt of its group whose build is lower, or, when none is lower, just below the
 // group's last stamped receipt. A group is the lines between two `## ` headings, so
-// the move never crosses a date. Receipts are one line each (about-changelog refuses
-// a receipt that is not a top-level bullet), so a move is a move of one line.
+// this move never crosses a date (moveToNewestGroup, run first, is the one that
+// does). Receipts are one line each (about-changelog refuses a receipt that is not
+// a top-level bullet), so a move is a move of one line.
 function reorderReceipt(text, pr, stamp) {
   const key = orderKey(stamp);
   if (key === null) return text;
+  text = moveToNewestGroup(text, pr, stamp);
   const lines = text.split('\n');
   const hit = new RegExp(`/pull/${pr}\\),\\s*\`${stamp.replace(/\./g, '\\.')}\``);
   const at = lines.findIndex((l) => l.startsWith('- ') && hit.test(l));
