@@ -1,0 +1,167 @@
+{
+  "schemaVersion": 1,
+  "family": "smash",
+  "exampleCount": 10,
+  "slotsPerExample": 5,
+  "totalSlots": 50,
+  "uniqueActionPaintings": 30,
+  "bookendSource": "../../sequence-review/frames/S.webp",
+  "bookendPreservation": "Original decoded RGBA pixels padded at128,192 in768canvas; slots1and5 identical PNG bytes",
+  "reviewScope": "Director accepted option art for user review only; no gameplay selection",
+  "examples": [
+    {
+      "id": "SM01",
+      "motifId": "J-A",
+      "name": "Forward plunge",
+      "frames": [
+        "J-A/frames/01.png",
+        "J-A/frames/02.png",
+        "J-A/frames/03.png",
+        "J-A/frames/04.png",
+        "J-A/frames/05.png"
+      ],
+      "gif": "J-A/preview.gif",
+      "provenance": "J-A/provenance.json"
+    },
+    {
+      "id": "SM02",
+      "motifId": "J-B",
+      "name": "Short hop cleave",
+      "frames": [
+        "J-B/frames/01.png",
+        "J-B/frames/02.png",
+        "J-B/frames/03.png",
+        "J-B/frames/04.png",
+        "J-B/frames/05.png"
+      ],
+      "gif": "J-B/preview.gif",
+      "provenance": "J-B/provenance.json"
+    },
+    {
+      "id": "SM03",
+      "motifId": "J-C",
+      "name": "Twisting aerial",
+      "frames": [
+        "J-C/frames/01.png",
+        "J-C/frames/02.png",
+        "J-C/frames/03.png",
+        "J-C/frames/04.png",
+        "J-C/frames/05.png"
+      ],
+      "gif": "J-C/preview.gif",
+      "provenance": "J-C/provenance.json"
+    },
+    {
+      "id": "SM04",
+      "motifId": "J-D",
+      "name": "Delayed overhead",
+      "frames": [
+        "J-D/frames/01.png",
+        "J-D/frames/02.png",
+        "J-D/frames/03.png",
+        "J-D/frames/04.png",
+        "J-D/frames/05.png"
+      ],
+      "gif": "J-D/preview.gif",
+      "provenance": "J-D/provenance.json"
+    },
+    {
+      "id": "SM05",
+      "motifId": "J-E",
+      "name": "Lateral bound",
+      "frames": [
+        "J-E/frames/01.png",
+        "J-E/frames/02.png",
+        "J-E/frames/03.png",
+        "J-E/frames/04.png",
+        "J-E/frames/05.png"
+      ],
+      "gif": "J-E/preview.gif",
+      "provenance": "J-E/provenance.json"
+    },
+    {
+      "id": "SM06",
+      "motifId": "VK-F",
+      "name": "Direct sword vault",
+      "frames": [
+        "VK-F/frames/01.png",
+        "VK-F/frames/02.png",
+        "VK-F/frames/03.png",
+        "VK-F/frames/04.png",
+        "VK-F/frames/05.png"
+      ],
+      "gif": "VK-F/preview.gif",
+      "provenance": "VK-F/provenance.json"
+    },
+    {
+      "id": "SM07",
+      "motifId": "VK-G",
+      "name": "Lateral pole-vault",
+      "frames": [
+        "VK-G/frames/01.png",
+        "VK-G/frames/02.png",
+        "VK-G/frames/03.png",
+        "VK-G/frames/04.png",
+        "VK-G/frames/05.png"
+      ],
+      "gif": "VK-G/preview.gif",
+      "provenance": "VK-G/provenance.json"
+    },
+    {
+      "id": "SM08",
+      "motifId": "VK-H",
+      "name": "Low hurdle kickoff",
+      "frames": [
+        "VK-H/frames/01.png",
+        "VK-H/frames/02.png",
+        "VK-H/frames/03.png",
+        "VK-H/frames/04.png",
+        "VK-H/frames/05.png"
+      ],
+      "gif": "VK-H/preview.gif",
+      "provenance": "VK-H/provenance.json"
+    },
+    {
+      "id": "SM09",
+      "motifId": "VK-I",
+      "name": "High scissor press",
+      "frames": [
+        "VK-I/frames/01.png",
+        "VK-I/frames/02.png",
+        "VK-I/frames/03.png",
+        "VK-I/frames/04.png",
+        "VK-I/frames/05.png"
+      ],
+      "gif": "VK-I/preview.gif",
+      "provenance": "VK-I/provenance.json"
+    },
+    {
+      "id": "SM10",
+      "motifId": "VK-J",
+      "name": "Short rebound",
+      "frames": [
+        "VK-J/frames/01.png",
+        "VK-J/frames/02.png",
+        "VK-J/frames/03.png",
+        "VK-J/frames/04.png",
+        "VK-J/frames/05.png"
+      ],
+      "gif": "VK-J/preview.gif",
+      "provenance": "VK-J/provenance.json"
+    }
+  ],
+  "qa": {
+    "reviewer": "sweep_sequences_art",
+    "result": "PASS",
+    "frameCount": 50,
+    "exactBookends": 20,
+    "perExampleGifSlots": 5,
+    "comparisonGifSlots": 5,
+    "sharedGroundY": 658,
+    "edgeClipping": false,
+    "limitations": [
+      "SM09 frame3 visibly one-arm supported; far hand obscured",
+      "First/last source pixels exactly preserved in padded PNGs; source WebP container bytes differ"
+    ]
+  }
+}

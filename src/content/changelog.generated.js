@@ -3,6 +3,36 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1910",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Sweep and Smash now play the selected greatsword sequences",
+    "detail": "Default-armour Reaver with a sole greatsword now uses the corrected straight-arm low iai Sweep and the SM03 twisting aerial ground slam, returning to the prepared stance after each action. The selected impact pose stays available until its actual combat cue arrives, including cold starts. Attack keeps its separate six phases. Twenty labeled five-slot examples preserve the other review choices and their source history; other loadouts and co-op retain their existing presentation.",
+    "build": "0.7.1.1451",
+    "pullRequest": 1910,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1910"
+  },
+  {
+    "id": "pr-1912",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Combat target boxes centre on the enemy",
+    "detail": "The gold target box now sits on the enemy sprite instead of below small enemies. Intent, HP and armor above the enemy stay clickable.",
+    "build": "0.7.1.1449",
+    "pullRequest": 1912,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1912"
+  },
+  {
+    "id": "pr-1909",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Cards use the new simple artwork, with elemental and status accents",
+    "detail": "Existing attack, smash, counter, evade, sweep and defend cards use the approved artwork by default. Display settings can switch back to Legacy. Spells use an outlined diamond marker. Side icons put Magic or Physical first, then damage or effect type and up to three status effects, with stack counts where known and at most five icons. Magical cards compose colors, backgrounds and small effects from their element and status tags; no new playable cards are added.",
+    "build": "0.7.1.1447",
+    "pullRequest": 1909,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1909"
+  },
+  {
     "id": "pr-1914",
     "date": "2026-10-12",
     "group": "2026-10-12",
