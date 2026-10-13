@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1970",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Combat taps and End Turn are much faster on phones",
+    "detail": "On a slower phone, tapping a card or a target could hang for a second or more, and ending a turn with a Counter in hand could take several seconds before the reaction prompt appeared, so the game looked frozen. Card previews are no longer recalculated dozens of times per tap, and equipment lookups, the fight-log copy and the battlefield refit no longer repeat on every tap. Selecting a card is about twice as fast on a slow phone, and the reaction prompt appears sooner. If a busy screen ignores a tap, the debug log now says why.",
+    "build": "0.7.1.1503",
+    "pullRequest": 1970,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1970"
+  },
+  {
     "id": "pr-1939",
     "date": "2026-10-13",
     "group": "2026-10-13",
