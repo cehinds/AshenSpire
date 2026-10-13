@@ -35,5 +35,5 @@ test('a Flux card puts its symbol on the rail with the value and no word on the 
   const el = renderCard(reg, { cardId: 'starstonePebble' }, { inspection: false, preview: previewOf('starstonePebble') });
   const html = markup.get(el); 
   assert.match(html, /data-tag-id="trait:flux"[^>]*aria-label="Flux 1"/);
-  assert.match(html, /<b class="card-tag-count" aria-hidden="true">1<\/b>/);
+  assert.match(html, /<span class="card-tag-count" aria-hidden="true">1<\/span>/);
 }));
