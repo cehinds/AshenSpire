@@ -244,7 +244,9 @@ function checkPull(prArg) {
 }
 
 function git(args, cwd = ROOT) {
-  return execFileSync('git', args, { cwd, encoding: 'utf8' });
+  // A landing window can hold thousands of commits (a long-lived branch merged in), and
+  // rangeSubjects lists every one of them: the 1 MB default buffer throws ENOBUFS.
+  return execFileSync('git', args, { cwd, encoding: 'utf8', maxBuffer: 1 << 28 });
 }
 
 function resolve(rev) {
