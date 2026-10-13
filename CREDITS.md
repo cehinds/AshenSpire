@@ -1,5 +1,18 @@
 # Credits & Asset Licenses
 
+## Card art library (2026-10-12)
+
+The 60 original paintings under `assets/cards/library/` were generated with
+OpenAI image generation under human direction: Physical and Magical Attack,
+Smash, Counter, Evade, Sweep and Defend, each in five color and aura variants.
+Each family retains one weapon or shield design. Physical Sweep uses the
+owner-selected Option 14; Counter depicts a shield and sword. The
+[source library and runtime provenance](https://github.com/cehinds/AshenSpire-art/tree/06170d86c6ba6baa24cd60dd516edf21180450f7/art/card-art-library-60)
+preserve PNG masters, prompts, revision history and source/runtime hashes.
+High exports and generated light twins are supplied by the art release pinned
+in `art-release.json`. Existing artwork remains available at its original IDs.
+No third-party artwork was downloaded and no third-party licence is claimed.
+
 ## HUD Component Studio authoring fixture (2026-10-10)
 
 The standalone [HUD Component Studio](tools/hud-component-studio/README.md) reuses existing game/review artwork without changing its bytes. Its [asset manifest](tools/hud-component-studio/assets.manifest.json) records source repository paths, the `hd-assets-v18` art release where applicable, and SHA-256 receipts. Original authorship and licence records remain those documented here. The four simple SVG UI shapes and editor code were authored with Codex under human direction; they are recorded separately from copied source art. The packaged IM Fell English and Libre Baskerville font files retain their original notices and SIL OFL 1.1 in [FONT-LICENSE.txt](tools/hud-component-studio/FONT-LICENSE.txt).
@@ -34,6 +47,10 @@ The Sweep, Counter and Evade boards under `pose-studio/stances/update-stances/gr
 ### Sequence-order previews (2026-10-12)
 
 The [labeled sequence review](pose-studio/stances/update-stances/sequence-review/README.md) reuses the recorded project-owned stance paintings as normalized preview frames. Its source/asset manifests retain exact original identities, hashes, scale and body-anchor recipes. Counter uses the owner's **original board Counter15**, while the earlier two-hand replacement remains an unselected alternate. EV1 uses a recorded ImageGen background/alpha repair of Evade16, preserving the pose. EV2 is the explicitly recorded OpenAI ImageGen sword-front edit of Evade11, with the original painting preserved and prompt/output/hash provenance linked by the Evade source README. The GIF renderer composes those frames with labels and hard cuts; it paints no intermediate character poses. The review GIFs remain authoring artifacts. The owner subsequently approved the P order and supplied attack/Evade routes for runtime; `sequence-production.json` and `sequence-production-provenance.json` record the exact Full/Lite exports and preserved Smash/Guard-break bytes. The body-registered profile is limited to default-armour Reaver with a sole greatsword; other loadouts and co-op are unchanged. No third-party artwork or licence is introduced.
+
+### Sweep and Smash example art (2026-10-12)
+
+The [five-slot option gallery](pose-studio/stances/update-stances/smash-sweep-examples/README.md) uses first-party OpenAI ImageGen paintings from the project's Reaver references under human art direction. The owner superseded the earlier horizontal Sweep and jump/vault Smash studies with low iai-inspired draw/whirlwind Sweep and heavy jumping ground-slam Smash. Earlier raw paintings and provenance remain preserved as source history. The revised Smash set records 30 action paintings and 20 repeated S exposures, preserving S decoded RGBA pixels at the approved unscaled padded placement. Selected SW09 uses its separately approved straight-arm low stance, now registered as the held Sweep; all earlier source artwork remains preserved. Exact raw outputs, prompts, repairs, crop/scale/placement and source hashes accompany the artist manifests. The gallery renderer composes labels and hard cuts only. SM03, Twisting aerial slam, is owner-selected for Smash and implemented in the runtime candidate; compiled gameplay validation is pending. SW09 is also owner-selected for Sweep; its approved straight sword-arm correction and clearer low iai hold are recorded separately in `sweep/selected-sweep-sw09/` with original/repair prompts, normalized frames and hash provenance. Full/Lite production exports and runtime registration are integrated; combined compiled gameplay validation is pending. Other examples remain references, and the original SW09 source is preserved as history. External references contribute documented research/inference only; no third-party artwork or licence is asserted.
 
 ## Molten River Blight meter (2026-10-08)
 

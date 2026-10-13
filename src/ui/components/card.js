@@ -23,14 +23,16 @@ import { balance } from '../../content/balance.js';
 import { flasks } from '../../content/flasks.js';
 import { tagService } from '../../model/tagService.js';
 import { metadataFooter, artworkAnchor } from '../models/IdentityModel.js';
-import { defaultCardArtFallbacks } from '../cardArtwork.js';
+import { cardArtFallbacks } from '../cardArtwork.js';
+import { markArtPlaceholder } from '../artFallback.js';
+import { registerCardArtRefresh } from '../cardArtStyle.js';
 import { assetUrl } from '../assetmap.js';
 import { t } from '../strings.js';
 import { loreLine } from './loreLine.js';
 import { cardChoice } from '../../model/cardChoices.js';
 import { engravedIconHtml, engravedGlyphId } from './engravedIcon.js';
 import { equipmentCardArt } from '../assets.js';
-import { combatProfileFor, combatProfileTags, numberedTraitRow, traitLine } from '../../model/combatCardProfile.js';
+import { combatProfileFor, combatProfileTags, numberedTraitRow } from '../../model/combatCardProfile.js';
 import { ashenBlightCardLabel } from './ashenBlight.js';
 import { ACTION_SIGILS, SCHOOL_SIGILS, cardSigilIdentity } from '../../content/combatSigils.js';
 import { compactCardRules, sigilExplanationHtml } from './combatSigilView.js';
@@ -155,12 +157,10 @@ export function renderCard(registries, ref, opts = {}) {
     subtype: combatProfile.camp === 'spell' ? 'Spell' : 'Martial' } } : {}),
     ...(expanded ? { faceType: combatCardType(def) } : {}),
     tags: [...rawModel.tags, ...combatTags.filter(tag => !rawModel.tags.some(existing => existing.id === tag.id))] };
-  model.sideTags = cardSideTags(model, def, registries);
+  model.sideTags = cardSideTags(model, def, registries, opts.preview || null);
   // Authored clauses carry family limits and charge/payment constraints that
   // the generic effect summary cannot express. Keep those complete on the face.
   const faceSummary = expanded ? combatCardSummary(def, opts.preview, registries) : null;
-  // Reaction rules v2 cards carry traitValues; the face names them first.
-  const traitRule = traitLine(def.traitValues);
   const fallbackDamageLabel = expanded && !faceSummary
     && (def.effects?.some(effect => effect.op === 'damage') || def.counterPayload?.hp)
     ? combatCardDamageLabel(def, opts.preview, registries) : '';
@@ -270,19 +270,21 @@ export function renderCard(registries, ref, opts = {}) {
   });
   let drawn = levelNow();
   const paint = (at) => {
-    const artwork = illustratedArtwork(ref, model.id, {large:at==='inspect',equipmentArt:equipmentPainting});
+    const artwork = illustratedArtwork(ref, model.id, {large:at==='inspect',equipmentArt:equipmentPainting,
+      definition:def,registries});
     const kept = el.children?[...el.children].filter(node=>node?.dataset?.cardPainted!=='1'):[];
     const authoredRules = def.weightClassPriced
       ? fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences).replace(/ Light:.*$/,'')+' Cost reflects your current weight.'
       : fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences);
     el.innerHTML = illustratedCardHtml(model,{
       // The printed price is live; the full weight table stays in Information.
-      rules: compactCardRules(`${traitRule ? `${esc(traitRule)} ` : ''}${faceSummary ? esc(faceSummary)
+      rules: compactCardRules(`${faceSummary ? esc(faceSummary)
         : `${fallbackDamageLabel ? `${esc(fallbackDamageLabel)}: ` : ''}${authoredRules}`}`),
       painting:artwork?.path,
       equipmentArtwork:artwork?.equipment,
       artworkKind:artwork?.kind,
       artworkPosition:artwork?.position,
+      artworkComposition:artwork,
       glyph:engravedIconHtml(engravedGlyphId(model.icon))||esc(model.icon),
     });
     applyCardAppearance(el.querySelector('.illustrated-card-face'));
@@ -297,12 +299,25 @@ export function renderCard(registries, ref, opts = {}) {
     const image = el.querySelector?.('.playing-card-art');
     if(image){
       image.dataset.cardArt = artwork?.kind || 'illustrated';
-      const fallbacks = defaultCardArtFallbacks(ref).filter(path=>path!==artwork?.path);
-      image.addEventListener('error',()=>{const next=fallbacks.shift();if(next){image.dataset.cardArt='outline';image.style.objectFit='contain';image.style.objectPosition='center';image.src=assetUrl(next);}});
+      const fallbacks = cardArtFallbacks(ref, artwork, {large:at==='inspect',
+        legacy:artwork?.kind==='simple'?illustratedArtwork(ref,model.id,{large:at==='inspect',equipmentArt:equipmentPainting,style:'Legacy'}):null});
+      image.addEventListener('error',()=>{
+        markArtPlaceholder(el, () => paint(drawn));
+        const next=fallbacks.shift();
+        if(next){
+          image.parentNode?.querySelectorAll('[data-card-art-layers]').forEach(node=>node.remove());
+          image.dataset.cardArt=next.kind;
+          image.style.filter='';
+          image.style.objectFit=next.fit||(next.extended?'cover':'contain');
+          image.style.objectPosition=next.position||'center';
+          image.src=assetUrl(next.path);
+        }
+      });
     }
 
   };
   paint(drawn);
+  registerCardArtRefresh(el, () => paint(drawn));
 
   // #61 M5: a matched tag-scoped vulnerability lights the card's boosted
   // number in the status row's own tint — "these cards just lit up" instead
@@ -503,6 +518,22 @@ function fitCardFaces(cards) {
 if (typeof window !== 'undefined' && typeof document !== 'undefined') {
   window.addEventListener('resize', () => scheduleCardFits(document.querySelectorAll('.card')));
   document.fonts?.ready.then(() => scheduleCardFits(document.querySelectorAll('.card')));
+}
+
+/**
+ * cardPlainText(registries, ref) → the card's effect text as a plain string:
+ * the same template the face fills, with tags stripped. Pure string work, no
+ * DOM, so it runs the same headless and in a browser.
+ */
+export function cardPlainText(registries, ref) {
+  const def = resolveCard(registries, ref);
+  // Plain string work only: no DOM, so it runs the same headless and in a
+  // browser. Tags go first; &amp; is decoded last so "&amp;lt;" stays literal.
+  return String(fillTemplate(def, staticTokens(def), null))
+    .replace(/<[^>]+>/g, '')
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    .replace(/&amp;/g, '&')
+    .replace(/\s+/g, ' ').trim();
 }
 
 /**

@@ -387,7 +387,10 @@
 }
 :root .combat[data-layout='formation'] .player-action-intent:not([data-placed]) { visibility: hidden; }
 :root .combat[data-layout='formation'] .combatant:not(.context-selected) .combat-health-row { --health-row-h: calc(7px / var(--ui-zoom,1)); --combatant-hp-h: var(--health-row-h); --combatant-value-text: calc(10px / var(--ui-zoom,1)); min-height: var(--health-row-h); padding-bottom: calc(12px / var(--ui-zoom,1)); }
-:root .combat[data-layout='formation'] .combatant:not(.context-selected) .combat-health-meter > .m-plate { top: calc(8px / var(--ui-zoom,1)); bottom: auto; }
+/* Owner (2026-10-12): HP numbers sit BELOW the bar, centred under its track, in
+   every state. The plate hangs from the track's bottom edge, at least 2px clear. */
+:root .combat[data-layout='formation'] .enemy .combat-health-meter > .m-plate,
+:root .combat[data-layout='formation'] .player .combat-health-meter > .m-plate { position: absolute; inset: auto 0 auto 0; top: calc(100% + 2px / var(--ui-zoom,1)); bottom: auto; display: flex; justify-content: center; align-items: flex-start; pointer-events: none; }
 /* HUD layout tokens: an optional backing plate behind the idle HP value
    (transparent = off; radius and pad default to 0, the value's own box). */
 :root .combat[data-layout='formation'] .combatant:not(.context-selected) .combat-health-meter .m-value {

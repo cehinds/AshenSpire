@@ -9,7 +9,11 @@ export function selectedWeaponSequence(kind) {
   if (kind === 'fully-defended') { poses=impact;weights=impactWeights; }
   else if (kind === 'evade') { poses=evade;weights=[1,1,1]; }
   else if (kind === 'defend' || kind === 'guard-break') { poses=[kind];weights=[6]; }
-  else if (kind === 'attack' || kind === 'smash') { poses=attack;weights=[1,1,1,1,1,1];contact=3; }
+  else if (kind === 'smash') return {poses:['origin','pilot-smash-takeoff','pilot-smash-airborne','pilot-smash-impact','origin'],
+    durations:[1,1,1,1,1],impact:3,travel:[0,0,0,0,0],hold:false,pilot:true,timingUnits:5,contactCue:true};
+  else if (kind === 'sweep') return {poses:['origin','pilot-sweep-windup','pilot-sweep-contact','pilot-sweep-finish','origin'],
+    durations:[1,1,1,1,1],impact:2,travel:[0,0,0,0,0],hold:false,pilot:true,timingUnits:5,contactCue:true};
+  else if (kind === 'attack') { poses=attack;weights=[1,1,1,1,1,1];contact=3; }
   else if (kind === 'counter-guard') { poses=[...impact,'smash',...attack];weights=[...impactWeights,1,1,1,1,1,1,1];contact=10; }
   else if (kind === 'counter-evade') { poses=[...evade,...attack];weights=[1,1,1,1,1,1,1,1,1];contact=6; }
   else return null;
@@ -19,7 +23,7 @@ export function selectedWeaponSequence(kind) {
 export function selectedWeaponSequenceTiming(sequence, speed) {
   if (!speed || !sequence) return {totalMs:0,impactMs:0};
   if(sequence.reaction)return {totalMs:speed.reactionMs,impactMs:0};
-  const unit = speed.lungeMs / 6;
+  const unit = speed.lungeMs / (sequence.timingUnits || 6);
   return {totalMs:sequence.durations.reduce((a,b)=>a+b,0)*unit,
     impactMs:sequence.durations.slice(0,sequence.impact).reduce((a,b)=>a+b,0)*unit};
 }

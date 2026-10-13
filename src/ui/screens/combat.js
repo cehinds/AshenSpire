@@ -88,7 +88,7 @@ import { trackGesture } from '../gesture.js';
 import { finishCardDrag } from '../cardDragEnd.js';
 import { resourceBars } from '../components/resbars.js';
 import { combatHealthRow } from '../components/combatHealth.js';
-import { blockPresentation, reconcileWardBlock } from '../../model/blockPresentation.js';
+import { protectionPresentation, reconcileWardBlock } from '../../model/blockPresentation.js';
 import { renderArcaneExposure, arcaneExposureReceipt } from '../components/arcaneExposure.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { combatVitals } from '../models/StaminaOrbModel.js';
@@ -407,6 +407,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       '--action-lift': `${-8 * reach}px`,
     };
     const original = Object.keys(overrides).map((name) => [name, actorEl.style.getPropertyValue(name), actorEl.style.getPropertyPriority(name)]);
+    let contactCue=null;
     if (totalMs) {
       actorEl.classList.remove(actionClass);
       void actorEl.offsetWidth;
@@ -415,9 +416,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       // A damaging spell still needs its enemy attack drawing; its motion
       // family remains a cast rather than being changed into a melee lunge.
       if (enemyAttack) actorEl.classList.add('enemy-attack-pose');
-      if (plan.pose) stage?.play(plan.pose, totalMs, plan.aura);
+      if (plan.pose) {stage?.play(plan.pose, totalMs, plan.aura);contactCue=stage?.contactCue?.();}
     }
-    return { totalMs, impactMs: authoredTiming?.impactMs ?? Math.round(totalMs * COMBAT_TIMING.windupFraction), hold: (ms) => { stage?.hold?.(ms); }, cancel: () => {
+    return { totalMs, contact:contactCue?.contact, remainingMs:contactCue?.remainingMs, impactMs: authoredTiming?.impactMs ?? Math.round(totalMs * COMBAT_TIMING.windupFraction), hold: (ms) => { stage?.hold?.(ms); }, cancel: () => {
       actorEl.classList.remove(actionClass);
       if (enemyAttack) actorEl.classList.remove('enemy-attack-pose');
       for (const [name, value, priority] of original) {
@@ -816,7 +817,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
     const def = registries.enemies.get(entity.enemyId);
     const intent = disp?.ents[entity.id]?.intentPreview || previewIntent(combat, entity.id);
-    const learning = combat.enemyKnowledge ? projectEnemyKnowledge(def, combat.enemyKnowledge.owners.player?.knowledge.enemies[def.id], { registries, combatMatchupRules: combat.combatMatchupRules }) : null;
+    const learning = combat.enemyKnowledge ? projectEnemyKnowledge(def, combat.enemyKnowledge.owners.player?.knowledge.enemies[def.id], { registries, combatMatchupRules: combat.combatMatchupRules, ratingsRules: combat.ratingsRules }) : null;
     const currentMoveId = intent.moveId;
     const skills = learning ? null : Object.entries(def.moves || {}).map(([moveId, move]) => ({
       name: words(moveId),
@@ -944,6 +945,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       block: e.block,
       barrier: e.barrier || 0,
       persistentWard: e.persistentWard ? { ...e.persistentWard } : null,
+      persistentPoise: e.persistentPoise ? { ...e.persistentPoise } : null,
       combatStance: e.combatStance ? { ...e.combatStance } : null,
       ...(e.wardBlock !== undefined ? { wardBlock: e.wardBlock } : {}),
       alive,
@@ -990,7 +992,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           for (const enemy of combat.enemies) if (disp.ents[enemy.id]) disp.ents[enemy.id].intentPreview = previewIntent(combat, enemy.id);
           break;
         case 'persistentWardChanged':
-          if (t?.persistentWard) t.persistentWard.value = e.value;
+        case 'combatWardStripped':
+          if (t?.persistentWard && Number.isFinite(e.value)) { t.persistentWard.value = e.value; if (Number.isFinite(e.max)) t.persistentWard.max = e.max; }
+          break;
+        case 'persistentPoiseChanged':
+          if (t?.persistentPoise) { t.persistentPoise.value = e.value; if (Number.isFinite(e.max)) t.persistentPoise.max = e.max; }
           break;
         case 'barrierGained':
           if (t) t.barrier = e.total;
@@ -1011,6 +1017,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
             t.block = e.blockRemaining ?? Math.max(0, t.block - e.blocked);
             if (e.barrierRemaining !== undefined) t.barrier = e.barrierRemaining;
             if (e.wardBlockRemaining !== undefined) t.wardBlock = e.wardBlockRemaining;
+            if (e.poiseRemaining !== undefined && t.persistentPoise) t.persistentPoise.value = e.poiseRemaining;
             reconcileWardBlock(t);
           }
           break;
@@ -1341,7 +1348,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         if (bar.id === 'poise' || bar.id === 'ward') {
           const magical = bar.id === 'ward';
           const loss = combat.ratingsRules.breaks[magical ? 'wardActionLoss' : 'poiseActionLoss'];
-          const percent = entity ? Math.round((1 - ratingDamageMultiplier(combat, entity, magical)) * 100) : null;
+          // Pools only in expanded combat (owner decision, 2026-10-12): the rating cut is gone, so no percent is stated.
+          const percent = entity && combat.combatExpansionVersion !== 2 ? Math.round((1 - ratingDamageMultiplier(combat, entity, magical)) * 100) : null;
           if (combat.breakMeterVersion === 1) return esc(tFull('combat.poise.shared', {
             resistance: percent === null ? '' : ` by ${percent}%`,
             effect: kind === 'player' ? tFull('combat.poise.actionLoss', { amount: loss }) : tFull('combat.poise.enemyLoss'),
@@ -1380,7 +1388,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (bar.id === 'hp') {
         markUiComponent(el, UI.healthStatusBar, entity.kind);
         const next = el.nextSibling;
-        const row = combatHealthRow(el, blockPresentation(v), { tooltips, blockHelp: helpText('block') });
+        const row = combatHealthRow(el, protectionPresentation(v), { tooltips, blockHelp: helpText('block') });
         bars.insertBefore(row, next);
       }
       if (bar.id === 'poise') markUiComponent(el, UI.poiseStatusBar, entity.kind);
@@ -1515,7 +1523,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       trailing.push(chip);
     }
     if (combat.foundation && p.evade > 0) {
-      const chip = pill({ label: `Evade ${p.evade}`, attrs: { class: 'foundation-evade' } });
+      const chip = pill({ label: `${t('card.tags.evade')} ${p.evade}`, attrs: { class: 'foundation-evade' } });
       bindAbilityBadge(chip, p, 'evade');
       trailing.push(chip);
     }
