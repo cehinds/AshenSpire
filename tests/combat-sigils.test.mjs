@@ -189,11 +189,11 @@ test('a selected tag symbol explains itself with its name, count and blurb from 
 
 test('a press on a tag symbol through the hand lane explains it and never reaches the card', async () => {
   const tooltip = (await import('node:fs')).readFileSync(new URL('../src/ui/components/tooltip.js', import.meta.url), 'utf8');
-  // The lane (.hand-hit-lane) covers the card; the redirect runs in capture on document,
-  // stops the press from reaching the card's own handlers, and re-dispatches the click to the symbol.
+  // The lane (.hand-hit-lane) covers the card. The existing explain listener (no new page listener)
+  // redirects that click to the symbol, stops it there, and re-dispatches it to the symbol.
   assert.match(tooltip, /const symbolUnderLane = ev => \{[\s\S]*?closest\?\.\('\.hand-hit-lane'\)/);
-  assert.match(tooltip, /for \(const type of \['pointerdown', 'pointerup', 'mousedown', 'mouseup'\]\)[\s\S]*?ev\.stopPropagation\(\)/);
-  assert.match(tooltip, /ev\.stopPropagation\(\); ev\.preventDefault\(\);\s*sym\.dispatchEvent\(new MouseEvent\('click'/);
+  assert.match(tooltip, /if \(ev\.type === 'click'\) \{\s*const sym = symbolUnderLane\(ev\);[\s\S]*?ev\.stopPropagation\(\); ev\.preventDefault\(\);\s*sym\.dispatchEvent\(new MouseEvent\('click'/);
   // One press explains a tag symbol: the symbol skips the select-then-explain step.
   assert.match(tooltip, /const oneTap = term\.classList\.contains\('card-tag-symbol'\);\s*if \(ev\.type === 'click' && !oneTap && selectedControl !== term\)/);
+  assert.doesNotMatch(tooltip, /for \(const type of \['pointerdown'/, 'no computed-type page listener');
 });

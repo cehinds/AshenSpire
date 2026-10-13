@@ -632,6 +632,16 @@ function wireTitles() {
   document.addEventListener('pointerover', adopt, true);
   document.addEventListener('focusin', adopt, true);
   const explain = ev => {
+    // A click on a tag symbol through the hand's hit lane explains that symbol: the press
+    // stops here, so the card is not selected or played, and the click is re-dispatched to the symbol.
+    if (ev.type === 'click') {
+      const sym = symbolUnderLane(ev);
+      if (sym) {
+        ev.stopPropagation(); ev.preventDefault();
+        sym.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: ev.clientX, clientY: ev.clientY }));
+        return;
+      }
+    }
     const term = ev.target?.closest?.('.tooltip-keyword[data-tip], .inspection-tag[data-tip], .card-tag-symbol[data-tip], .as-tip [data-tip][role="button"]');
     if (!term || panels[1]?.contains(term)) return;
     if (ev.type === 'keydown' && !['Enter', ' '].includes(ev.key)) return;
@@ -663,15 +673,6 @@ function wireTitles() {
     }
     return null;
   };
-  for (const type of ['pointerdown', 'pointerup', 'mousedown', 'mouseup']) {
-    document.addEventListener(type, ev => { if (symbolUnderLane(ev)) ev.stopPropagation(); }, true);
-  }
-  document.addEventListener('click', ev => {
-    const sym = symbolUnderLane(ev);
-    if (!sym) return;
-    ev.stopPropagation(); ev.preventDefault();
-    sym.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: ev.clientX, clientY: ev.clientY }));
-  }, true);
   document.addEventListener('pointerdown', ev => {
     // A press on a symbol through the hand lane is the symbol's own press: it keeps the selection.
     if (!panels.some(p => p?.contains(ev.target)) && !state[0].target?.contains(ev.target) && !selectedControl?.contains(ev.target) && !symbolUnderLane(ev)) {
