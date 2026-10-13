@@ -36,6 +36,7 @@ import { combatCardRange, combatProfileFor, combatProfileTags, numberedTraitRow 
 import { ashenBlightCardLabel } from './ashenBlight.js';
 import { ACTION_SIGILS, SCHOOL_SIGILS, cardSigilIdentity } from '../../content/combatSigils.js';
 import { compactCardRules, sigilExplanationHtml } from './combatSigilView.js';
+import { cardFaceLines } from '../../model/cardFaceText.js';
 
 // WCI3: rarity at the start of the band, the owned count at the end, each only
 // when the surface can state it. No domain action ever belongs in this band.
@@ -271,6 +272,11 @@ export function renderCard(registries, ref, opts = {}) {
     floor, lit: litCard() === identity,
   });
   let drawn = levelNow();
+  // ONE TEXT FOR EVERY VIEW. The face lines are the shared model's output
+  // (cardFaceText.js); weight-priced cards keep the authored text they name.
+  const faceLines = def.weightClassPriced ? null : cardFaceLines(def, opts.preview || null, registries);
+  // The combat hand passes faceLineLimit: lines past it stay in the DOM, hidden until the card is selected.
+  const faceLineLimit = Number.isFinite(opts.faceLineLimit) ? opts.faceLineLimit : null;
   const paint = (at) => {
     const artwork = illustratedArtwork(ref, model.id, {large:at==='inspect',equipmentArt:equipmentPainting,
       definition:def,registries});
@@ -278,10 +284,14 @@ export function renderCard(registries, ref, opts = {}) {
     const authoredRules = def.weightClassPriced
       ? fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences).replace(/ Light:.*$/,'')+' Cost reflects your current weight.'
       : fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences);
+    const rulesHtml = faceLines
+      ? compactCardRules(faceLines.map((line, i) => `<span class="face-line" data-face-kind="${line.kind}"${faceLineLimit !== null && i >= faceLineLimit ? ' data-face-extra="true"' : ''}>${line.html}</span>`).join(''))
+      : compactCardRules(`${faceSummary ? esc(faceSummary)
+        : `${fallbackDamageLabel ? `${esc(fallbackDamageLabel)}: ` : ''}${authoredRules}`}`);
+    el.dataset.faceLines = faceLines ? String(faceLines.length) : '';
     el.innerHTML = illustratedCardHtml(model,{
       // The printed price is live; the full weight table stays in Information.
-      rules: compactCardRules(`${faceSummary ? esc(faceSummary)
-        : `${fallbackDamageLabel ? `${esc(fallbackDamageLabel)}: ` : ''}${authoredRules}`}`),
+      rules: rulesHtml,
       painting:artwork?.path,
       equipmentArtwork:artwork?.equipment,
       artworkKind:artwork?.kind,
@@ -409,6 +419,14 @@ export function renderCard(registries, ref, opts = {}) {
  */
 const pendingFits = new Set();
 let fitFrame = 0;
+
+// The combat hand shows three face lines at rest and five when selected.
+export function setHandFaceBudget(el, selected) {
+  const rules = el?.querySelector?.('.ic-text[data-face-lines="true"]');
+  if (!rules) return;
+  rules.dataset.maxLines = selected ? '5' : '3';
+  scheduleCardFits([el]);
+}
 
 export function scheduleCardFits(cards) {
   for (const card of cards) pendingFits.add(card);

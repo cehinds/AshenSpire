@@ -84,3 +84,6 @@
   box-shadow:inset 0 .8cqw 1cqw #89bdde50,inset 0 -.6cqw .8cqw #020e25;
 }
 :root .illustrated-card-face .card-rank-text {position:relative;z-index:1;}
+/* One face text in every view; the hand hides lines past three until its card is selected. */
+:root .illustrated-card .face-line {display:block;}
+:root .hand .illustrated-card:not(.selected) [data-face-extra] {display:none;}
