@@ -123,7 +123,6 @@ export const combatExpansionMatchups = {
     cold: { status: 'frost', pressure: 3, recoveryProfile: 'elemental', requiresHpLoss: true },
     fire: { status: 'burn', pressure: 4, recoveryProfile: 'elemental', requiresHpLoss: true },
     lightning: { status: 'paralysis', pressure: 3, recoveryProfile: 'elemental', requiresHpLoss: true },
-    force: { wardDrain: 2 },
     necrotic: { status: 'necroticBlight', pressure: 4, recoveryProfile: 'curse', requiresHpLoss: true },
     holy: { cleanse: 1, requiresHpLoss: true },
     poison: { status: 'venom', pressure: 4, recoveryProfile: 'bodily', requiresHpLoss: true },
