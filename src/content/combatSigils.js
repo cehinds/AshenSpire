@@ -1,10 +1,11 @@
+import { CARD_COMPONENTS } from './cardComponents.generated.js';
 // Original monochrome marks. Identity comes from authored combat tags, never
 // a card name, damage element, class colour, or inferred effect.
 const mark = (label, shape, help, solid = false) => Object.freeze({ label, shape, help, solid });
 export const ACTION_SIGILS = Object.freeze({
   attack: mark('Attack', '<path d="m3 2 7 3 15 18-3 3L6 10Zm26 0-7 3L7 23l3 3L26 10ZM3 22l7 7 2-2-7-7Zm19 5 2 2 7-7-2-2ZM2 29l2 2 4-4-2-2Zm22-2 4 4 2-2-4-4Z"/>', 'A direct attack.', true),
   defend: mark('Defend', '<path d="M16 2 28 7v10c0 7-12 13-12 13S4 24 4 17V7Zm0 4v20c5-3 8-6 8-9V10Z"/>', 'Guard or other defensive support.', true),
-  evade: mark('Evade', '<path d="M 11.75 7.25 19.5 7.25 18.75 17.75 Q 21 19.25 24 20.25 Q 25.5 21.5 24.5 24 L 8 24 7.75 21 10.75 18Z"/>', 'Defensive stance: prepare one chance to avoid the next eligible direct damaging action.', true),
+  evade: mark('Evade', CARD_COMPONENTS.template.symbols.tags.evade.svg.body, 'Defensive stance: prepare one chance to avoid the next eligible direct damaging action.', true),
   counter: mark('Counter', '<path d="M15 2 26 6v3L7 28c-3-3-4-6-4-11V7Zm11 14v2c0 6-11 12-11 12l-4-2ZM28 2l2 1-1 6L12 26l-3-3ZM6 21l7 7-2 2-7-7ZM2 29l2 2 4-4-2-2Z"/>', 'Prepare a reply to a qualifying incoming action. Inspect for its conditions.', true),
   sweep: mark('Sweep', '<path d="M4 23q12-24 24 0M4 23h24M24 18l4 5-4 5"/>', 'An attack across several targets.'),
   ranged: mark('Ranged', '<path d="m30 2-5 14-4-5L10 22v6l-5 3v-6H0l4-6h6L20 9l-5-3Z"/>', 'An attack made at range.', true),

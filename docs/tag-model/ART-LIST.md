@@ -20,15 +20,16 @@ weight for effects, and a 32-unit grid.
 Evade stance sprite (owner request, DECISIONS.md section 5): row `evade`,
 priority P1. Owner decision: all Evade cards (Dodge Roll and the rest of
 Defensive > Evade, about 15 in the tree) share this one stance sprite. Owner
-ruling: the sprite is the existing boot art, `cards/default-outline/icons/boot.svg`,
-inlined as a 32-unit outline sigil (path scaled to 1/4). It draws the Defend
-sigil until it is wired.
+ruling: the sprite is the existing boot art, `cards/default-outline/icons/boot.svg`.
+It is the card-art template boot, `CARD_COMPONENTS.template.symbols.tags.evade`
+in `src/content/cardComponents.generated.js`, and `ACTION_SIGILS.evade` reuses
+that body rather than copying it. It is no longer the Defend sigil.
 
 ## P1: combat-critical (22)
 
 | Tag key | Label | What it is in play | Shown now | Borrowed icon | Art brief | Target size and format |
 | --- | --- | --- | --- | --- | --- | --- |
-| `evade` | Evade | Defensive stance. Evade cards prepare one chance to avoid the next eligible direct damaging action. | none (no ACTION_SIGILS entry; default-outline "dodge" art only on unarmedGuard/unarmedTechnique) | `svg:combatSigils.ACTION_SIGILS.defend` | One shared Evade stance sprite for every Evade card (Dodge Roll and the rest of Defensive > Evade). Reused existing art: `cards/default-outline/icons/boot.svg` (a side-view boot), inlined as a 32-unit outline sigil in one ink at the sigil stroke weight. Outline, not solid, because the source is outline art. | Sigil: 32-unit inline SVG like ACTION_SIGILS; file later at icon tier (SVG 24x24, max 256 px light and high) |
+| `evade` | Evade | Defensive stance. Evade cards prepare one chance to avoid the next eligible direct damaging action. | `ACTION_SIGILS.evade`, the card-art template boot (`CARD_COMPONENTS.template.symbols.tags.evade`) | `svg:cardComponents.generated.js` template evade body | One shared Evade stance sprite for every Evade card (Dodge Roll and the rest of Defensive > Evade). The sigil is the card-art template boot, reused from `CARD_COMPONENTS.template.symbols.tags.evade` (source art `cards/default-outline/icons/boot.svg`), not a copy. It is a 32-unit silhouette with interior detail cut-outs, drawn with the same fill as the other solid sigils. | Sigil: 32-unit inline SVG like ACTION_SIGILS; file later at icon tier (SVG 24x24, max 256 px light and high) |
 | `status:frostExposed` | Frost-Exposed | Takes more damage from starstone attacks. Stacks with Vulnerable. | glyph "🫧" (text) | `assets/player-polish/ui/icons/frost.svg` | The six-spoke Frost snowflake with one spoke broken by a jagged gap, line weight. Derives from the Frost school sigil so the family reads. | Icon: SVG 24x24, icon tier (light and high max 256 px) |
 | `status:insanityExposed` | Unraveled | Takes more damage from ritual and blight attacks. Stacks with Vulnerable. | glyph "🕳" (text) | `assets/player-polish/ui/icons/insanity.svg` | A spiral with a dark centre ring broken on one side, line weight. Derives from the Madness and Insanity family of marks. | Icon: SVG 24x24, icon tier (light and high max 256 px) |
 | `status:unbreakable` | Unbreakable | Block no longer expires at turn start. Block is capped at 30. | glyph "⬟" (text) | `assets/cards/default-outline/icons/shieldwall.svg` | A solid hexagonal bulwark plate with one horizontal bar inside it, solid. One ink. Unbreakable+ adds a second bar. | Card icon: SVG 128x128, same folder as the borrowed icon (no raster tier) |
