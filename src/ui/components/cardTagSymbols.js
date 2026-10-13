@@ -44,7 +44,7 @@ export function cardSideTags(model, def = {}, registries = null) {
   add(element); add(status); add(skill);
   add(tags.find(tag => tag.id === 'camp:spell'));
   add(tags.find(tag => tag.id.startsWith('school:')));
-  for(const tag of tags.filter(tag => !/^(source|reach|targeting|counter|camp|maneuver|delivery):/.test(tag.id)))add(tag);
+  for(const tag of tags.filter(tag => !/^(source|range|targeting|counter|camp|maneuver|delivery):/.test(tag.id)))add(tag);
   // Put identity first, then spell camp, followed by damage/school and status.
   return selected.sort((a,b) => (a===skill?0:a.id==='camp:spell'?1:a===element?2:3) - (b===skill?0:b.id==='camp:spell'?1:b===element?2:3));
 }

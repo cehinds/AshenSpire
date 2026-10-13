@@ -13,7 +13,7 @@ const groups = {
 };
 export const combatExpansionMartialOverlay = Object.fromEntries(Object.entries(groups)
   .flatMap(([maneuver, ids]) => ids.split(' ').map(id => [id, { maneuver }])));
-combatExpansionMartialOverlay.nockAndWait = { maneuver: 'counter', reach: 'near', counterMode: 'ranged' };
+combatExpansionMartialOverlay.nockAndWait = { maneuver: 'counter', range: 'reach', counterMode: 'ranged' };
 // Defensive use still pays and resolves the card's printed effects.
 combatExpansionMartialOverlay.whirlingGuard.defensiveReaction = true;
 combatExpansionMartialOverlay.sweepingBlow.defensiveReaction = true;
@@ -24,7 +24,7 @@ combatExpansionMartialOverlay.sweepingBlow.buildup = {
   camp: 'physical', recoveryProfile: 'bodily',
 };
 const AREA = new Set(['ricochet', 'fanOfKnives', 'toxicVolley', 'arrowVolley']);
-const FAR = new Set(['aimedShot', 'barbedArrow']);
+const RANGED = new Set(['aimedShot', 'barbedArrow']);
 const EVADES = new Set(['evasiveGuard', 'dodgeRoll', 'quickstep', 'backstep', 'acrobaticsRogue', 'shadowstep', 'progression-nightstep']);
 const POISE_REPLIES = { shieldBash: 4, riposte: 4, rondelParry: 4, bindingParry: 3, spikedReprisal: 5,
   'progression-crimson-reprisal': 5, evasiveGuard: 2, backstep: 3, acrobaticsRogue: 3,
@@ -69,10 +69,10 @@ function pressureEffects(effects = []) {
       amount: typeof stacks === 'number' ? stacks * 4 : { f: 'mul', args: [stacks ?? 1, 4] } };
   });
 }
-function tagsFor(tags, row, reach, targeting) {
-  const preserved = tags.filter(tag => !['maneuver:', 'reach:', 'targeting:', 'counter:'].some(prefix => tag.startsWith(prefix)));
+function tagsFor(tags, row, range, targeting) {
+  const preserved = tags.filter(tag => !['maneuver:', 'range:', 'targeting:', 'counter:'].some(prefix => tag.startsWith(prefix)));
   if (row.maneuver !== 'support') preserved.push(`maneuver:${row.maneuver}`);
-  preserved.push(`reach:${reach}`, `targeting:${targeting}`);
+  preserved.push(`range:${range}`, `targeting:${targeting}`);
   if (row.maneuver === 'counter') preserved.push(`counter:${row.counterMode || 'melee'}`);
   return preserved;
 }
@@ -86,10 +86,10 @@ export function applyCombatExpansionMartial(def) {
   const existing = tags.find(tag => tag.startsWith('maneuver:'))?.slice(9);
   const role = def.equipmentRole && !['dodgeRoll', 'evasiveGuard'].includes(def.id) && existing
     ? { ...row, maneuver: existing } : row;
-  const reach = def.reach || role.reach || (FAR.has(def.id) ? 'far' : role.maneuver === 'ranged' ? 'near' : 'contact');
+  const range = def.range || role.range || (RANGED.has(def.id) ? 'ranged' : role.maneuver === 'ranged' ? 'reach' : 'melee');
   const targeting = def.targeting || (role.maneuver === 'sweep' || AREA.has(def.id) ? 'area' : 'single');
-  const rewritten = tagsFor(tags, role, reach, targeting);
-  const card = { ...def, tags: rewritten, cardTags: rewritten, reach, targeting,
+  const rewritten = tagsFor(tags, role, range, targeting);
+  const card = { ...def, tags: rewritten, cardTags: rewritten, range, targeting,
     ...(row.defensiveReaction ? { defensiveReaction: true } : {}),
     effects: pressureEffects(def.effects), ...(role.maneuver === 'support' ? { stanceTrigger: false } : {}) };
   if (def.upgrade?.effects) card.upgrade = { ...def.upgrade, effects: pressureEffects(def.upgrade.effects) };
@@ -108,7 +108,7 @@ export function applyCombatExpansionMartial(def) {
       card.effects.unshift({ op: 'block', target: 'self', amount: 5 });
       card.ratingId = 'dr';
     }
-    card.counterCoverage = { camps: ['physical'], reaches: [role.counterMode === 'ranged' ? 'near' : 'contact', ...(role.counterMode === 'ranged' ? ['far'] : [])],
+    card.counterCoverage = { camps: ['physical'], ranges: [role.counterMode === 'ranged' ? 'reach' : 'melee', ...(role.counterMode === 'ranged' ? ['ranged'] : [])],
       targeting: ['single'], effects: ['damage'], ...(role.counterMode === 'ranged' ? {} : { maneuvers: ['attack', 'smash'] }) };
     if (POISE_REPLIES[def.id]) {
       const reply = replyProjection(def), returnPoise = reply.amount;

@@ -583,8 +583,8 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
   if (combatProfile.maneuver === 'counter') {
     if (def.counterCoverage) {
       const c = def.counterCoverage;
-      const names = { physical: 'Martial', spell: 'Spell', contact: 'Contact', near: 'Near', far: 'Far', single: 'Single', area: 'Area', damage: 'damage', status: 'status pressure' };
-      const coverage = [c.camps, c.reaches, c.targeting, c.effects].map(ids => (ids || []).map(id => names[id] || id).join(' + ')).filter(Boolean).join(' · ');
+      const names = { physical: 'Martial', spell: 'Spell', melee: 'Melee', reach: 'Reach', ranged: 'Ranged', single: 'Single', area: 'Area', damage: 'damage', status: 'status pressure' };
+      const coverage = [c.camps, c.ranges, c.targeting, c.effects].map(ids => (ids || []).map(id => names[id] || id).join(' + ')).filter(Boolean).join(' · ');
       html += `<div class="combat-rule-hint"><strong>Counter coverage:</strong> ${esc(coverage)}${c.schools ? ` · ${esc(c.schools.join(' + '))}` : ''}. Return once after all covered damage and status pressure is resisted. Evade and Invulnerability give no return. The prepared stance remains until another maneuver replaces it.</div>`;
     } else html += '<div class="combat-rule-hint">Prepare counter until next player turn. Listed damage and Poise damage become retaliation after full Guard or Ward absorption; card support effects resolve when played.</div>';
   }

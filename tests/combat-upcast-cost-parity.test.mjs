@@ -22,7 +22,7 @@ const tiers = { baseTier: 2, unlockedTiers: [3, 5], maximumTier: 5, blockPerRank
 function registry({ cost = 1, manaCost = 1, upcast = tiers } = {}) {
   return createRegistries({ ...contentBundle, cards: [...contentBundle.cards, {
     id, name: 'Paid Tier Fixture', type: 'skill', kindIds: ['classification.skill'], cost, manaCost,
-    tags: ['camp:physical', 'maneuver:defend', 'reach:contact', 'targeting:single'],
+    tags: ['camp:physical', 'maneuver:defend', 'range:melee', 'targeting:single'],
     effects: [{ op: 'block', target: 'self', amount: 2 }], textTemplate: 'Gain {block} Block.',
     ...(upcast ? { upcast } : {}),
   }] });

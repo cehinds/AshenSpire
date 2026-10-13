@@ -303,7 +303,7 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
 
 function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
   const planned = carrier.expansionContact;
-  const profile = { ...carrier.combatProfile, reach: carrier.combatProfile?.reach || 'contact', targeting: carrier.combatProfile?.targeting || 'single' };
+  const profile = { ...carrier.combatProfile, range: carrier.combatProfile?.range || 'melee', targeting: carrier.combatProfile?.targeting || 'single' };
   const raw = planned ? planned.receipt.amounts[planned.index] : Math.floor(computeAttackDamage(ctx, source, target, base, tags, carrier, { matchups: false, beforeDefense: true }) * (carrier.critMultiplier || 1));
   const tactical = planned?.receipt || Matchups.beginTacticalAction(ctx, source, target, carrier, [{ ...profile, amount: raw }],
     { ...Control.statusIncomingModifier(ctx, target, profile), restrictions: Control.controlRestrictions(ctx, target) });

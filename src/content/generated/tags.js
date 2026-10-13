@@ -3639,31 +3639,31 @@ export const tags = [
     "blurb": "A spell stance. Counter coverage depends on school and delivery."
   },
   {
-    "id": "reach:contact",
-    "domain": "reach",
-    "label": "Contact",
+    "id": "range:melee",
+    "domain": "range",
+    "label": "Melee",
     "color": "9FC3E8",
     "glyph": "◇",
     "visibility": "",
-    "blurb": "At melee reach."
+    "blurb": "At melee range: within arm's length."
   },
   {
-    "id": "reach:near",
-    "domain": "reach",
-    "label": "Near",
+    "id": "range:reach",
+    "domain": "range",
+    "label": "Reach",
     "color": "9FC3E8",
     "glyph": "◇",
     "visibility": "",
-    "blurb": "Normal ranged reach."
+    "blurb": "At reach: past arm's length but not yet ranged."
   },
   {
-    "id": "reach:far",
-    "domain": "reach",
-    "label": "Far",
+    "id": "range:ranged",
+    "domain": "range",
+    "label": "Ranged",
     "color": "9FC3E8",
     "glyph": "◇",
     "visibility": "",
-    "blurb": "Extended ranged reach."
+    "blurb": "At ranged distance."
   },
   {
     "id": "targeting:single",

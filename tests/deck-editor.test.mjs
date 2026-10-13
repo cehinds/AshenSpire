@@ -1316,7 +1316,7 @@ test('DOM: range follows the expanded combat delivery; the mark follows the camp
     const editor = mountDeckEditor(document.body, { registries: REG, run, settings: {} });
     const row = (cardId) => [...editor.root.querySelectorAll('.deck-editor-tile')].find(t => t.dataset.key?.startsWith(`card:${cardId}~`));
     const read = (cardId) => { const r = row(cardId); return [r?.querySelector('.deck-editor-range')?.dataset.range, r?.querySelector('.deck-editor-camp')?.dataset.camp]; };
-    // A v2 spell takes its delivery as reach: a projectile reads Ranged, a melee blade Melee.
+    // A v2 spell takes its delivery as range: a projectile reads Ranged, a melee blade Melee.
     assert.deepEqual(read('cometFragment'), ['ranged', 'magical']);
     assert.deepEqual(read('starbladePhalanx'), ['melee', 'magical']);
     // A ranged maneuver's stance already reads Ranged, so it shows no separate range.
@@ -1326,7 +1326,7 @@ test('DOM: range follows the expanded combat delivery; the mark follows the camp
     const mark = (cardId) => row(cardId).querySelector('.deck-editor-camp .combat-sigil')?.dataset.sigil;
     assert.equal(mark('ricochet'), 'smash');
     assert.equal(mark('cometFragment'), 'spell');
-    // Phase Ward carries reach:contact but attacks nothing: no range.
+    // Phase Ward carries range:melee but attacks nothing: no range.
     assert.equal(read('phaseWard')[0], undefined, 'a card that attacks nothing shows no range');
     // A magical Power is a Power, with no Cantrip badge.
     const stargazer = row('stargazerCard');

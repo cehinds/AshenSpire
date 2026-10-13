@@ -308,10 +308,10 @@ export function statusIncomingModifier(ctx, entity, profile = {}) {
   const cfg = rules(ctx); let percent = 0, evadeBonus = 0;
   if (!entity.statusControl?.resolveActive) percent += stacks(entity, cfg.sleep.status) * cfg.sleep.damagePercentPerStack;
   if (stacks(entity, cfg.prone.status)) {
-    if (profile.reach === 'contact') percent += cfg.prone.contactPercent;
+    if (profile.range === 'melee') percent += cfg.prone.meleePercent;
     else if (profile.targeting !== 'area' || profile.projectile) {
       percent += cfg.prone.rangedSinglePercent;
-      if (profile.camp === 'physical' && ['near', 'far'].includes(profile.reach)) evadeBonus += profile.reach === 'far' ? cfg.prone.farEvade : cfg.prone.nearEvade;
+      if (profile.camp === 'physical' && ['reach', 'ranged'].includes(profile.range)) evadeBonus += profile.range === 'ranged' ? cfg.prone.rangedEvade : cfg.prone.reachEvade;
     }
   }
   if (profile.damageType === 'blunt' && stacks(entity, cfg.interactions.chilled)) percent += cfg.interactions.chilledBluntPercent;

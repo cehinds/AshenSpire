@@ -5151,9 +5151,9 @@ export const nodes = [
     "blurb": "A scoped action in an enemy move table."
   },
   {
-    "id": "reach",
+    "id": "range",
     "parentId": "",
-    "label": "Reach",
+    "label": "Range",
     "color": "",
     "glyph": "",
     "visibility": "",
@@ -5187,40 +5187,40 @@ export const nodes = [
     "blurb": "A spell stance. Counter coverage depends on school and delivery."
   },
   {
-    "id": "reach:contact",
-    "parentId": "reach",
-    "label": "Contact",
+    "id": "range:melee",
+    "parentId": "range",
+    "label": "Melee",
     "color": "9FC3E8",
     "glyph": "◇",
     "visibility": "",
     "priority": "",
     "domain": "",
     "aside": "",
-    "blurb": "At melee reach."
+    "blurb": "At melee range: within arm's length."
   },
   {
-    "id": "reach:near",
-    "parentId": "reach",
-    "label": "Near",
+    "id": "range:reach",
+    "parentId": "range",
+    "label": "Reach",
     "color": "9FC3E8",
     "glyph": "◇",
     "visibility": "",
     "priority": "",
     "domain": "",
     "aside": "",
-    "blurb": "Normal ranged reach."
+    "blurb": "At reach: past arm's length but not yet ranged."
   },
   {
-    "id": "reach:far",
-    "parentId": "reach",
-    "label": "Far",
+    "id": "range:ranged",
+    "parentId": "range",
+    "label": "Ranged",
     "color": "9FC3E8",
     "glyph": "◇",
     "visibility": "",
     "priority": "",
     "domain": "",
     "aside": "",
-    "blurb": "Extended ranged reach."
+    "blurb": "At ranged distance."
   },
   {
     "id": "targeting:single",

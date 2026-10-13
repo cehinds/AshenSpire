@@ -10,7 +10,7 @@ test('large face labels match the maneuver while spell Counters remain Counter',
   for (const [id, label] of [['strike','Attack'],['defend','Defend'],['bashingBlow','Smash'],['shieldBash','Counter'],['dodgeRoll','Counter'],['barrageCounter','Counter'],['emberDart','Spell']]) assert.equal(combatCardType(card(id)), label, id);
 });
 test('Counter summary distinguishes protection from return and includes card Evade', () => {
-  assert.doesNotMatch(combatCardSummary(card('barrageCounter'), null, reg), /Counter|Area|Contact|attacks and spells/);
+  assert.doesNotMatch(combatCardSummary(card('barrageCounter'), null, reg), /Counter|Area|Melee|attacks and spells/);
   assert.match(combatCardSummary(card('shieldBash'), null, reg), /Gain \d+ Block/);
   assert.match(combatCardSummary(card('shieldBash'), null, reg), /Return.*Poise/);
   const dodge = combatCardSummary(card('dodgeRoll'), null, reg);
@@ -81,7 +81,7 @@ test('temporary tier options keep nonzero base separate and never offer locked t
 test('compact Counter face leaves complete delivery coverage in inspection', async () => {
   const { cardDetailHtml } = await import('../src/ui/components/card.js');
   const html = cardDetailHtml(reg, {cardId:'barrageCounter', upgraded:false});
-  for (const term of ['Counter coverage:', 'Martial', 'Spell', 'Contact', 'Near', 'Far', 'Area', 'status pressure']) assert.ok(html.includes(term), term);
+  for (const term of ['Counter coverage:', 'Martial', 'Spell', 'Melee', 'Reach', 'Ranged', 'Area', 'status pressure']) assert.ok(html.includes(term), term);
 });
 
 test('primary Power and Status labels precede camps; utility skills remain Skill', () => {

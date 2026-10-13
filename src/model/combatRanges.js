@@ -53,6 +53,7 @@ export function bringRangesForward(value) {
   const walk = (node, parentKey) => {
     if (node === null || typeof node !== 'object' || seen.has(node)) return;
     seen.add(node);
+    if (node instanceof Map || node instanceof Set) { for (const item of node.values()) walk(item, null); return; }
     if (Array.isArray(node)) {
       node.forEach((item, index) => {
         if (legacyTag(item)) { node[index] = `range:${normalizeRange(item.slice(6))}`; changed = true; }

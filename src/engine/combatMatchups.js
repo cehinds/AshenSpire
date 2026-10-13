@@ -232,7 +232,7 @@ function normalizedProfile(carrier, contact = {}) {
   const profile = { ...base, ...contact };
   profile.camp = isSpell(profile) ? 'spell' : profile.camp;
   // Compatibility mapping uses existing authored delivery, never card names.
-  profile.reach ||= profile.delivery === 'projectile' || profile.maneuver === 'ranged' ? 'near' : 'contact';
+  profile.range ||= profile.delivery === 'projectile' || profile.maneuver === 'ranged' ? 'reach' : 'melee';
   profile.targeting ||= profile.maneuver === 'sweep' ? 'area' : 'single';
   profile.projectile ??= carrier?.attack?.delivery === 'projectile' || hasTrait(profile, 'projectile');
   profile.dodgeable ??= carrier?.attack?.dodgeable;
@@ -252,7 +252,7 @@ export function setCombatStance(ctx, entity, carrier) {
   if (!profile.maneuver || profile.stanceTrigger === false) return entity.combatStance || null;
   clearCombatCounter(entity, ctx);
   entity.combatStance = { maneuver: profile.maneuver, camp: profile.camp,
-    reach: profile.reach, ...(profile.school ? { school: profile.school } : {}),
+    range: profile.range, ...(profile.school ? { school: profile.school } : {}),
     ...(Number.isInteger(profile.stanceExpiry) ? { expiresOnOwnerCycle: (entity.combatOwnerCycle || 0) + profile.stanceExpiry } : {}),
   };
   // Reaction rules version 2: a Defend card with Impact/Flux arms the trait guard (max-merged).
@@ -318,7 +318,7 @@ function armExpansionCounter(ctx, entity, carrier, options) {
 /** Every declared filter must match; Area is never inferred from target count. */
 export function counterCoverageMatches(coverage, profile, effect = 'damage') {
   if (!coverage || !profile) return false;
-  const filters = [['camps', 'camp'], ['schools', 'school'], ['reaches', 'reach'],
+  const filters = [['camps', 'camp'], ['schools', 'school'], ['ranges', 'range'],
     ['targeting', 'targeting'], ['maneuvers', 'maneuver']];
   for (const [list, key] of filters) {
     const values = coverage[list];
@@ -448,7 +448,7 @@ function schoolReturnMultiplier(ctx, counter, incoming) {
   if (!match || !counter.schoolEffect) return 1;
   const check = (prefix) => match[`${prefix}Schools`]?.includes(incoming.school)
     || match[`${prefix}DamageTypes`]?.includes(incoming.damageType)
-    || match[`${prefix}Reaches`]?.includes(incoming.reach)
+    || match[`${prefix}Ranges`]?.includes(incoming.range)
     || match[`${prefix}Targeting`]?.includes(incoming.targeting)
     || match[`${prefix}Traits`]?.some(trait => hasTrait(incoming, trait));
   if (check('weak')) return cfg.schoolWeakMultiplier;
@@ -522,7 +522,7 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
   if (receipt.profiles.some((profile, index) => receipt.covered[index] && profile.effect !== 'status' && profile.maneuver === 'smash')) {
     payload.poise += scale(number(counter.payload.smashPoiseBonus));
   }
-  if (target.statuses?.prone?.stacks > 0 && receipt.profiles.some((profile, index) => receipt.covered[index] && profile.reach === 'contact')) {
+  if (target.statuses?.prone?.stacks > 0 && receipt.profiles.some((profile, index) => receipt.covered[index] && profile.range === 'melee')) {
     payload.poise += number(counter.carrier.combatProfile?.pronePoiseBonus);
   }
   const magical = isSpell(counter.carrier.combatProfile);

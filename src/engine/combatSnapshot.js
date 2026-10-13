@@ -15,6 +15,7 @@ import { refreshCombatRatings } from './combatRatings.js';
 import { controlRestrictions } from './combatStatusControl.js';
 import { ashenBlightRestorationPercent } from './ashenBlight.js';
 import { COMBAT_SNAPSHOT_VERSION, assertCombatSnapshot } from '../model/combatSnapshot.js';
+import { bringRangesForward } from '../model/combatRanges.js';
 
 /**
  * A fight saved before plan phase 2 keyed its relic gates `relic:<owner>:<id>:<i>`;
@@ -149,8 +150,11 @@ function restoredPoolDeck(saved, fallback) {
 }
 
 export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttackSlotCount, fallbackRemovedAttackSlotIds, fallbackDerivedStatRuleSnapshot, fallbackAttributeMode, fallbackPoolDeck }) {
-  assertCombatSnapshot(snapshot);
+  // A fight saved before the range rename reads melee/reach/ranged (combatRanges.js);
+  // the caller's object is left as saved.
   const saved = structuredClone(snapshot);
+  bringRangesForward(saved);
+  assertCombatSnapshot(saved);
   if (saved.foundation) validateFoundationSnapshot(saved.foundation);
   const combat = {
     registries,

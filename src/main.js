@@ -2965,7 +2965,7 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
     for (const enemy of combat.enemies) {
       enemy.hp = enemy.maxHp = 100;
       enemy.intent = { kind: 'attack', moveId: 'slash', damage: 7, hits: 1,
-        combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', reach: 'contact', targeting: 'single' } };
+        combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', range: 'melee', targeting: 'single' } };
       enemy.intentRevealed = false;
     }
   }
