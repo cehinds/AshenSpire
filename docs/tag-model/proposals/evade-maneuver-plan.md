@@ -247,3 +247,12 @@ No open owner questions remain. Every question has been answered and recorded in
   the Poise reply, the stance family, the hit roll, the stacks rules, the reaction rules version.
 - Ruling 12 (2026-10-13): the miss consumes a stack (old Q11); the Impact and Flux trait guards
   do not apply to Evade (old Q8); Evade drops the Defend matchup vulnerabilities (old Q10).
+
+## 14. Cross-reference: Sweep precision (DECISIONS §16)
+
+Owner ruling 16 (2026-10-13) gives Sweep precision stacks that add Accuracy: 4 minus the
+targets, so +3 at one target and 0 at four. This is a note only; it does not change the
+scope above. Under the Evade matchups (DECISIONS §15, Q10), Evade beats Sweep. A one-target
+Sweep's +3 Accuracy offsets one Evade stack (+3 Evasion) in the hit roll
+`d20 + Accuracy >= 8 + Evasion`. Sweep precision is not part of this plan's steps. Its open
+questions are in DECISIONS §16.
