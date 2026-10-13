@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-9999",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Starseer and Herald can no longer pick two element spells and get stuck on Spells",
+    "detail": "The starting spells allow only one element spell (Mind Spike, Mind Fracture, Stone Sling, Rockfall or Drowsing Mote), but the picker let you take two, then greyed Next with no way to see why. Once you hold one element spell the other four now grey out, and the progress line says only one is allowed.",
+    "build": "0.7.1.1485",
+    "pullRequest": 9999,
+    "url": "https://github.com/cehinds/AshenSpire/pull/9999"
+  },
+  {
     "id": "pr-1954",
     "date": "2026-10-13",
     "group": "2026-10-13",
