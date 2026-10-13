@@ -81,10 +81,12 @@ jobs:
           git fetch -q origin "+refs/heads/dev:refs/remotes/origin/dev"
 
           # One record per open pull request into dev. A cross-repository head is a fork's
-          # branch: this job cannot push to it, so it is skipped.
+          # branch: this job cannot push to it, so it is skipped. GitHub's mergeable field is
+          # not trusted (it is UNKNOWN right after a push): each head is judged below by
+          # git merge-tree.
           gh pr list --repo "$GITHUB_REPOSITORY" --base dev --state open --limit 200 \
-            --json number,headRefName,isCrossRepository,mergeable \
-            --jq '.[] | select(.isCrossRepository | not) | [.number, .headRefName, .mergeable] | @tsv' \
+            --json number,headRefName,isCrossRepository \
+            --jq '.[] | select(.isCrossRepository | not) | [.number, .headRefName] | @tsv' \
             > "$RUNNER_TEMP/prs.tsv"
 
           wanted=",${PRS_INPUT// /},"
@@ -102,14 +104,28 @@ jobs:
             fi
           }
 
-          while IFS=$'\t' read -r pr head mergeable; do
+          while IFS=$'\t' read -r pr head; do
             if [ -n "$PRS_INPUT" ] && [[ "$wanted" != *",$pr,"* ]]; then
               continue
             fi
-            # Only a pull request GitHub reports as conflicting is touched. A clean one is
-            # mergeable as it stands, and a merge of dev into it is the owner's call.
-            if [ "$mergeable" != "CONFLICTING" ]; then
-              echo "#$pr is $mergeable; nothing to re-stamp."
+            # Only a head that conflicts with dev now is touched: merge-tree exits 1 on a
+            # conflict and 0 when the merge is clean. A clean head is the owner's call to merge.
+            if ! git fetch -q origin "+refs/heads/$head:refs/remotes/origin/$head"; then
+              echo "::error::#$pr: could not fetch $head."
+              failed=1
+              continue
+            fi
+            set +e
+            git merge-tree --write-tree origin/dev "refs/remotes/origin/$head" >/dev/null 2>&1
+            judged=$?
+            set -e
+            if [ "$judged" -eq 0 ]; then
+              echo "#$pr merges cleanly into dev; nothing to re-stamp."
+              continue
+            fi
+            if [ "$judged" -ne 1 ]; then
+              echo "::error::#$pr: git merge-tree could not judge $head (exit $judged)."
+              failed=1
               continue
             fi
             echo "::group::#$pr ($head)"
