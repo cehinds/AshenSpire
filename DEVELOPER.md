@@ -55,7 +55,8 @@ request's branch, takes `dev`'s box and generated module, re-stamps that pull
 request's receipt to the box, and pushes one merge commit when the receipt checks
 pass, then dispatches the pull request's checks by hand (a `GITHUB_TOKEN` push starts
 none). It resolves conflicts only in the three derived files, and it refuses (exit 3)
-a merge that changes the pull request's own diff against `dev`. It asks a person,
+a merge that adds to or drops from the set of non-derived files the pull request changes
+against `dev` (the set is compared, not each file's content). It asks a person,
 with one comment on the pull request, for that refusal or a failed check; the owner's
 review gate is unchanged (CONTRIBUTING rule 6).
 
