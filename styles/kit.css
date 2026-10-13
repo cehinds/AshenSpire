@@ -6244,9 +6244,9 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 .cc-design-workspace input, .cc-design-workspace select, .cc-design-workspace .ls-label,
 .cc-design-workspace .as-optioncard .as-subtitle { font-size:var(--cc-body-font); }
 .cc-design-workspace .cc-ability-progress { font-size:var(--cc-body-font); color:var(--cc-copy-muted); }
-.cc-design-workspace .cc-equip-group[data-equipment-section="startingAbilities"] > .cc-card-selectors { grid-template-columns:repeat(auto-fill,minmax(150px,180px)); justify-content:start; align-content:start; }
-.cc-design-workspace .cc-ability-choice > .card { width:100%; max-width:180px; }
-.cc-design-workspace .cc-ability-choose { max-width:180px; min-height:var(--cc-control-floor); font-size:var(--cc-body-font); }
+.cc-design-workspace .cc-equip-group[data-equipment-section="startingAbilities"] > .cc-card-selectors { grid-template-columns:repeat(auto-fill,minmax(min(100%,var(--card-w-glance,152px)),var(--card-w-glance,152px))); justify-content:start; align-content:start; }
+.cc-design-workspace .cc-ability-choice > .card { width:100%; max-width:var(--card-w-glance,152px); }
+.cc-design-workspace .cc-ability-choose { max-width:var(--card-w-glance,152px); min-height:var(--cc-control-floor); font-size:var(--cc-body-font); }
 .cc-design-workspace .cc-review { font-size:var(--cc-body-font); }
 .cc-design-workspace .cc-review .card { max-width:300px; }
 @media(max-width:960px) {
@@ -6267,7 +6267,7 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
  .cc-design-workspace .cz-scroll { padding:16px; }
  .cc-design-workspace .cc-equip-group[data-equipment-section="startingAbilities"] > .cc-card-selectors { grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); justify-items:center; }
  .cc-design-workspace .cc-ability-choice { width:100%; }
- .cc-design-workspace .cc-ability-choice > .card { max-width:180px; }
+ .cc-design-workspace .cc-ability-choice > .card { max-width:var(--card-w-glance,152px); }
  /* Older equipment-fit rules hid its stage picker. The shared navigation
     must remain reachable on every page, including Equipment and Spells. */
  .customize.cc-design-workspace:has(#cz-equipment-panel) .as-railed[data-cat-nav="selector"] > .as-catnav-toggle,
@@ -6320,7 +6320,7 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 @media(max-width:600px) { .customize.cc-design-workspace .cz-railed[data-cat-nav="selector"] { display:grid!important; } }
 /* Spells is now its own page rather than an equipment fold. Match its real
    selector hook and keep card rules readable instead of the old tiny grid. */
-.cc-design-workspace #cz-spell-choices { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,180px)); justify-items:stretch; justify-content:start; align-content:start; gap:48px 20px; padding:58px 6px 14px; }
+.cc-design-workspace #cz-spell-choices { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,var(--card-w-glance,152px)),var(--card-w-glance,152px))); justify-items:stretch; justify-content:start; align-content:start; gap:48px 20px; padding:58px 6px 14px; }
 .cc-design-workspace #cz-spell-choices > .cc-ability-choice { width:100%; }
 @media(max-width:600px) { .cc-design-workspace #cz-spell-choices { grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); justify-items:center; gap:48px; } }
 .cc-design-workspace #cz-spell-choices { grid-auto-flow:row; grid-auto-columns:auto; overflow:visible; scroll-snap-type:none; }
