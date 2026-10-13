@@ -320,7 +320,9 @@ export function prepareCombatEvade(ctx, entity, config = {}) {
     ...(config.whileStatus ? { whileStatus: config.whileStatus } : {}),
     expiresOnOwnerCycle: (entity.combatOwnerCycle || 0) + 1 };
   ctx.emit?.('evadeGained', { sourceId: entity.id,
-    ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(entity) } : {}), charges: entity.combatEvade.charges });
+    ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(entity) } : {}), charges: entity.combatEvade.charges,
+    // Tells this prepared Evade apart from the foundation's evadeGained (combatRules.js).
+    combatEvade: true });
   return entity.combatEvade;
 }
 

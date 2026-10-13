@@ -1116,6 +1116,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           break;
         }
         case 'evadeGained': {
+          // Only the expansion's prepared Evade; the foundation Evade has its own row.
+          if (!e.combatEvade) break;
           const actor = disp.ents[e.sourceId];
           const live = e.sourceId === 'player' ? combat.player : combat.enemies.find(enemy => enemy.id === e.sourceId);
           if (actor) actor.combatEvade = { ...(live?.combatEvade || {}), charges: e.charges,
