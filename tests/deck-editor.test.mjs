@@ -1336,6 +1336,24 @@ test('DOM: range follows the expanded combat delivery; the mark follows the camp
   });
 });
 
+test('DOM: the range chip reads Melee, Reach and Ranged from the card\'s own range (owner, 2026-10-12)', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  const run = createRunState({ seed: 0x5eed, classId: 'starseer', registries: REG, combatExpansionVersion: 2 });
+  for (const cardId of ['starbladePhalanx', 'rimeNeedle', 'cometFragment']) {
+    if (!run.deck.some(c => c.cardId === cardId)) run.sideboard.push({ instanceId: `probe-${cardId}`, cardId, upgraded: false });
+  }
+  withDom(() => {
+    const editor = mountDeckEditor(document.body, { registries: REG, run, settings: {} });
+    const chip = (cardId) => [...editor.root.querySelectorAll('.deck-editor-tile')]
+      .find(t => t.dataset.key?.startsWith(`card:${cardId}~`))?.querySelector('.deck-editor-range');
+    for (const [cardId, range, label] of [['starbladePhalanx', 'melee', 'Melee'], ['rimeNeedle', 'reach', 'Reach'], ['cometFragment', 'ranged', 'Ranged']]) {
+      assert.equal(chip(cardId)?.dataset.range, range, cardId);
+      assert.equal(chip(cardId)?.textContent, label, cardId);
+    }
+    editor.close();
+  });
+});
+
 test('DOM: the stepper reads in-deck / owned (∞ for a basic); its label is the tile countText', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
   withDom(() => {
