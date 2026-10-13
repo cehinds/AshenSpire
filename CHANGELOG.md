@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-13
 
-- **The build-number bot recovers a missed preview by itself** ([#1939](https://github.com/cehinds/AshenSpire/pull/1939), `0.7.1.1469`). Nothing changes in the game. If the bot stamped a build but could not start its preview, re-running it now starts the preview even after a documentation update has landed on top.
+- **The build-number bot recovers a missed preview by itself** ([#1939](https://github.com/cehinds/AshenSpire/pull/1939), `0.7.1.1471`). Nothing changes in the game. If the bot stamped a build but could not start its preview, re-running it now starts the preview even after a documentation update has landed on top.
+- **Ornate feat emblems in character creation** ([#1923](https://github.com/cehinds/AshenSpire/pull/1923), `0.7.1.1471`). The Feats step shows each feat as a layered, gilded medallion instead of a flat glyph. If the artwork cannot load, the tile falls back to the glyph.
 - **The art pack now includes the ornate feat medallions** ([#1935](https://github.com/cehinds/AshenSpire/pull/1935), `0.7.1.1469`). Nothing on screen changes yet. The game's art pack moves to its next release, which adds the gilded medallion layers the character-creation Feats step will use.
 - **Changelog entries stay in build order** ([#1946](https://github.com/cehinds/AshenSpire/pull/1946), `0.7.1.1467`). Nothing changes in the game. The balance-report entry moved to the day it shipped, so the build stamp can number new builds again.
 - **Old notes, screenshots and a retired prompt tool cleared out of the project** ([#1940](https://github.com/cehinds/AshenSpire/pull/1940), `0.7.1.1467`). Development housekeeping only, nothing in the game changes. Archived design notes, old PR screenshots, the finished combat prototype's output, two outdated plans and the unused prompt library leave the repository.
