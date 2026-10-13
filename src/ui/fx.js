@@ -575,6 +575,8 @@ export function guardHitFloatParts(event) {
   const barrier = Math.max(0, Number(event && event.barrierAbsorbed) || 0);
   const ward = Math.max(0, Number(event && event.wardAbsorbed) || 0);
   const poise = Math.max(0, Number(event && event.poiseAbsorbed) || 0);
+  // The Force part a Silenced target was immune to (the rest of the hit landed).
+  const forceImmune = Math.max(0, Number(event && event.forceImmune) || 0);
   return {
     amount,
     blocked,
@@ -583,6 +585,7 @@ export function guardHitFloatParts(event) {
     barrier: barrier > 0 ? { text: amount === 0 && ward === 0 ? `${barrier} RESISTED` : String(barrier), cls: 'barrier small' } : null,
     ward: ward > 0 ? { text: String(ward), cls: 'ward small' } : null,
     poise: poise > 0 ? { text: String(poise), cls: 'poise small' } : null,
+    immune: forceImmune > 0 ? { text: `${forceImmune} IMMUNE`, cls: 'immune small' } : null,
     guard: blocked > 0 ? { text: String(blocked), cls: 'blk small' } : null,
     damage: residual > 0 ? { text: `-${residual}`, cls: dmgClass(residual) } : null,
   };
@@ -1640,6 +1643,7 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
           if (parts.barrier) floatNum(ctx.layer, anchor, parts.barrier.text, parts.barrier.cls, null, { x: -52, y: -34, jitter: false });
           if (parts.ward) floatNum(ctx.layer, anchor, parts.ward.text, parts.ward.cls, null, { x: parts.barrier ? 0 : -26, y: -34, jitter: false });
           if (parts.poise) floatNum(ctx.layer, anchor, parts.poise.text, parts.poise.cls, null, { x: 26, y: -34, jitter: false });
+          if (parts.immune) floatNum(ctx.layer, anchor, parts.immune.text, parts.immune.cls, null, { x: 0, y: -62, jitter: false });
           if (parts.guard) floatNum(ctx.layer, anchor, parts.guard.text, parts.guard.cls, null,
             { x: paired ? -26 : 0, jitter: false });
           if (parts.damage) floatNum(ctx.layer, anchor, parts.damage.text, parts.damage.cls, null,

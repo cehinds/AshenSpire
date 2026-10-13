@@ -1,6 +1,6 @@
 // Silenced in expanded combat (owner, 2026-10-13): a Silenced creature is immune to Force. Each Force
-// hit is negated whole (its arcane and blunt halves alike) and spends one Silenced stack; once the stacks
-// run out, later hits land. A Force effect that is not damage spends one stack per application. The
+// hit has its Force (Arcane) part negated, the rest landing as usual, and spends one Silenced stack; a hit
+// that is all Force is negated whole. Once the stacks run out, later hits land. A Force effect that is not damage spends one stack per application. The
 // preview shows 0 for an immune hit, so preview equals commit. Ward and Block are not touched by an immune hit.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -12,8 +12,10 @@ import { getStacks } from '../src/engine/statuses.js';
 import { isForceHit } from '../src/model/combatRatings.js';
 
 const OVERRIDES = {
-  // Star Shower (school:force): three 3-damage hits, nothing else.
-  starShower: { effects: [{ op: 'damage', target: 'enemy', amount: 3, hits: 3 }], cost: 0, manaCost: 0, upgrade: undefined },
+  // Star Shower (school:force) as a pure Force hit (magicShare 1: all Arcane): three 3-damage hits, nothing else.
+  starShower: { effects: [{ op: 'damage', target: 'enemy', amount: 3, hits: 3 }], cost: 0, manaCost: 0, upgrade: undefined, magicShare: 1 },
+  // Star Slicer (school:force) as shipped splits: half Arcane, half the force school's Blunt. Two 4-damage hits.
+  starSlicer: { effects: [{ op: 'damage', target: 'enemy', amount: 4, hits: 2 }], cost: 0, manaCost: 0, upgrade: undefined },
   // Starstone Pebble (school:force) reshaped as a pure Force effect on the target.
   starstonePebble: { effects: [{ op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 1 }], cost: 0, manaCost: 0, upgrade: undefined, type: 'skill' },
 };
@@ -43,7 +45,7 @@ test('a Force hit is the force school or any Arcane part', () => {
   assert.equal(isForceHit({ camp: 'spell', school: 'fire', damageType: 'fire' }), false);
 });
 
-test('a 3-hit Force card into 2 Silenced stacks: hits 1 and 2 are immune and spend 2 -> 1 -> 0, hit 3 lands', () => {
+test('a 3-hit pure Force card into 2 Silenced stacks: hits 1 and 2 are immune and spend 2 -> 1 -> 0, hit 3 lands', () => {
   const { combat, enemy } = setup('starShower', 2);
   const before = enemy.hp;
   const out = dispatch(combat, { type: 'playCard', cardInstanceId: 'c', targetId: enemy.id });
@@ -59,7 +61,7 @@ test('a 3-hit Force card into 2 Silenced stacks: hits 1 and 2 are immune and spe
   assert.deepEqual(order.slice(0, 4), ['damageDealt', 'statusRemoved', 'damageDealt', 'statusRemoved']);
 });
 
-test('the preview shows 0 for the immune hits, so preview equals commit', () => {
+test('the preview shows 0 for the pure Force immune hits, so preview equals commit', () => {
   const { combat, enemy } = setup('starShower', 2);
   const shown = previewCard(combat, 'c', enemy.id).values.find(row => row.op === 'damage');
   const before = enemy.hp;
@@ -84,7 +86,20 @@ test('a non-damage Force effect on a Silenced enemy spends 1 stack', () => {
   assert.equal(getStacks(enemy, 'silenced'), 1);
 });
 
-test('Ruinous Blow (Necrotic + Force) is a Force hit: a Silenced enemy is immune to it and spends a stack', () => {
+test('a split Force hit into Silenced: the Arcane half is immune, the Blunt half lands, one stack per hit, preview equals commit', () => {
+  const { combat, enemy } = setup('starSlicer', 2);
+  const shown = previewCard(combat, 'c', enemy.id).values.find(row => row.op === 'damage');
+  const before = enemy.hp;
+  const out = dispatch(combat, { type: 'playCard', cardInstanceId: 'c', targetId: enemy.id });
+  const hits = out.events.filter(e => e.type === 'damageDealt' && e.targetId === enemy.id);
+  assert.deepEqual(hits.map(e => e.forceImmune), [2, 2], 'each 4 hit loses its 2 Arcane');
+  assert.deepEqual(hits.map(e => e.amount), [2, 2], 'its 2 Blunt lands');
+  assert.equal(getStacks(enemy, 'silenced'), 0);
+  assert.equal(before - enemy.hp, 4);
+  assert.equal(shown.totalDamage, before - enemy.hp, 'preview equals commit');
+});
+
+test('Ruinous Blow (60 Blunt / 40 Force) into Silenced: the 60% Blunt lands, the 40% Force is immune, one stack spent', () => {
   const combat = createCombat({ registries, rng: createRng(5), combatExpansionVersion: 2, enemyIds: ['wanderingSoldier'],
     player: { classId: 'reaver', maxHp: 200, hp: 200, maxMana: 50, mana: 50, energyMax: 10, drawPerTurn: 5, relicIds: [],
       deck: [{ instanceId: 'c', cardId: 'ruinousBlow' }],
@@ -94,8 +109,10 @@ test('Ruinous Blow (Necrotic + Force) is a Force hit: a Silenced enemy is immune
   const before = enemy.hp;
   const out = dispatch(combat, { type: 'playCard', cardInstanceId: 'c', targetId: enemy.id });
   const hits = out.events.filter(e => e.type === 'damageDealt' && e.targetId === enemy.id);
-  assert.equal(hits[0].immune, true);
-  assert.equal(hits[0].amount, 0);
+  const hit = hits[0];
+  assert.ok(hit.forceImmune > 0, 'the Force part is immune');
+  assert.equal(hit.magicAmount, 0, 'no Force part reaches Ward or HP');
+  assert.ok(hit.physicalAmount > hit.forceImmune, 'the larger Blunt part lands');
   assert.equal(getStacks(enemy, 'silenced'), 0);
   assert.equal(before - enemy.hp, hits.reduce((sum, e) => sum + e.amount, 0));
 });
@@ -108,7 +125,7 @@ const FORCE_CARDS = {
   testForceStrip: { type: 'skill', effects: [{ op: 'wardDamage', target: 'enemy', amount: 1 }] },
   testForceDraw: { type: 'skill', effects: [{ op: 'draw', amount: 1 }] },
   // A Force status first, then a Force hit: the status spends the last stack, but the hit's immunity was decided up front.
-  testForceStatusHit: { type: 'attack', effects: [{ op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 1 }, { op: 'damage', target: 'enemy', amount: 6 }] },
+  testForceStatusHit: { type: 'attack', magicShare: 1, effects: [{ op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 1 }, { op: 'damage', target: 'enemy', amount: 6 }] },
 };
 const FORCE_OPS = createRegistries({ ...contentBundle,
   cards: [...contentBundle.cards, ...Object.entries(FORCE_CARDS).map(([id, card]) => ({ ...pebble, id, name: id, cost: 0, manaCost: 0, upgrade: undefined, ...card }))],

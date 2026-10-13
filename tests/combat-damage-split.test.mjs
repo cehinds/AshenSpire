@@ -15,7 +15,7 @@ import { objectTagIds } from '../src/content/tags.js';
 import { previewCard } from '../src/engine/combat.js';
 import { splitOf } from '../src/model/playingCard.js';
 
-function fixture({ ward = 3, barrier = 0, block = 0, poise = 0, weakness = {}, flat = {}, damageTypeShares = null } = {}) {
+function fixture({ ward = 3, barrier = 0, block = 0, poise = 0, weakness = {}, flat = {}, damageTypeShares = null, silenced = 0 } = {}) {
   const registries = createRegistries(contentBundle);
   // A damage type's Advanced share (damageTypeShares) is a run's ratings config, read through ctx.ratingsRules.
   const ratingsRules = damageTypeShares ? { ...resolveCombatRatings(Object.fromEntries(Object.entries(damageTypeShares).map(([type, share]) => [`gameConfig.combatRatings.damageTypes.${type}`, share])), contentBundle), enabled: true } : null;
@@ -29,6 +29,7 @@ function fixture({ ward = 3, barrier = 0, block = 0, poise = 0, weakness = {}, f
   if (poise > 0) enemy.persistentPoise = { max: poise, value: poise };
   delete enemy.combatCounter; delete enemy.combatEvade; delete enemy.combatStance;
   enemy.persistentWard.max = 3; enemy.persistentWard.value = ward;
+  if (silenced) enemy.statuses.silenced = { stacks: silenced, duration: 2 };
   return { combat, enemy };
 }
 
@@ -448,6 +449,19 @@ test('a mixed-component hit meets Ward with its magic part and Block with its ph
   assert.equal(r.committed, 1, 'Block soaks the 4 slashing; 1 magic gets past Ward');
   assert.equal(r.enemy.block, 6, 'Block soaked only the physical 4');
   assert.equal(r.preview, r.committed, 'preview equals commit');
+});
+
+// Silenced (owner, 2026-10-13): a staff strike's Arcane part is immune, its Blunt part lands.
+test('a scepter strike of 5 into a Silenced enemy: the 2 Arcane are immune, the 3 Blunt land, one stack spent', () => {
+  const r = strike(scepter, 5, { ward: 3, silenced: 1 });
+  const d = hitOf(r);
+  assert.equal(d.forceImmune, 2);
+  assert.equal(d.magicAmount, 0);
+  assert.equal(d.physicalAmount, 3);
+  assert.equal(r.enemy.persistentWard.value, 3, 'Ward is untouched: no magic reached it');
+  assert.equal(r.committed, 3);
+  assert.equal(r.preview, r.committed, 'preview equals commit');
+  assert.equal(r.enemy.statuses.silenced, undefined, 'the stack is spent');
 });
 
 // Earth is physical (owner, 2026-10-13): an earth spell meets Block and Poise, never Ward, and an earth resist types it.

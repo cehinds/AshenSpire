@@ -56,3 +56,12 @@ test('the stagger meter (ratingImpact poise) is named apart from the Poise pool'
   const [line] = log([{ type: 'ratingImpact', targetId: 'e1', meter: 'poise', amount: 3, value: 5, max: 12 }]);
   assert.match(line, /stagger meter took 3 \(5\/12\)\.$/);
 });
+
+test('Silenced: an all-Force hit logs IMMUNE; a split hit names its immune Force part, in the log and on the fighter', () => {
+  const [whole] = log([{ type: 'damageDealt', sourceId: 'player', targetId: 'e1', amount: 0, blocked: 0, immune: true, silencedImmune: true }]);
+  assert.match(whole, /is immune to Force \(Silenced\)\.$/);
+  const event = { type: 'damageDealt', sourceId: 'player', targetId: 'e1', amount: 15, blocked: 0, forceImmune: 8 };
+  assert.match(log([event])[0], /dealt 15 damage to .*; 8 Force IMMUNE \(Silenced\)\.$/);
+  assert.equal(guardHitFloatParts(event).immune.text, '8 IMMUNE');
+  assert.equal(guardHitFloatParts({ ...event, forceImmune: 0 }).immune, null);
+});
