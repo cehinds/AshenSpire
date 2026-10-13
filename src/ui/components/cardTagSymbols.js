@@ -152,11 +152,18 @@ function symbolTip(tag) {
   return tFull('card.tag.tooltip', { name: traitName, blurb });
 }
 
-export function cardTagRailHtml(tags) {
-  if(!tags?.length)return '';
-  return '<div class="card-tag-rail" aria-label="Primary card tags">' + tags.slice(0,5).map(tag => {
+// The combat hand's range chip (Melee / Reach / Ranged) closes the rail, in the
+// tag chip's own style (as-tag), so it sits with the symbols and never over the cost or name.
+export function cardRangeChipHtml(range) {
+  if(!range)return '';
+  return '<span class="as-tag card-range-chip" data-range="' + esc(range) + '">' + esc(t(`deckEditor.range.${range}`)) + '</span>';
+}
+
+export function cardTagRailHtml(tags, range = null) {
+  if(!tags?.length && !range)return '';
+  return '<div class="card-tag-rail" aria-label="Primary card tags">' + (tags || []).slice(0,5).map(tag => {
     const count = Number.isInteger(tag.count) && tag.count >= 0 ? tag.count : null;
     const name = tag.label + (count === null ? '' : ' ' + count);
     return '<span class="card-tag-symbol" role="img" tabindex="0" data-tip="' + esc(symbolTip(tag)) + '" data-tag-id="' + esc(tag.id) + '" aria-label="' + esc(name) + '" aria-description="' + esc(tag.blurb || tag.label) + '"><svg viewBox="0 0 32 32" fill="currentColor" fill-rule="evenodd" aria-hidden="true" focusable="false">' + shapeFor(tag) + '</svg>' + (count === null ? '' : '<span class="card-tag-count" aria-hidden="true">' + count + '</span>') + '</span>';
-  }).join('') + '</div>';
+  }).join('') + cardRangeChipHtml(range) + '</div>';
 }

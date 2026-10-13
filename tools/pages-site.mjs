@@ -229,6 +229,11 @@ function showIfPresent(rev, path) {
 function gitBuf(args) {
   return execFileSync('git', args, { cwd: ROOT, maxBuffer: 1 << 28 });
 }
+/** The newest stamp commit (`build: stamp … [build-stamp]`) on `ref`'s first-parent line, or null. */
+export function newestStampOf(ref, run = git) {
+  if (!ref) return null;
+  try { return run(['log', '--first-parent', '-1', '--format=%H', '--grep=^build: stamp .*\\[build-stamp\\]$', ref]).trim() || null; } catch { return null; }
+}
 function refFor(branch) {
   // Prefer the remote-tracking ref (CI fetches all four); fall back to a local branch.
   for (const r of [`${REMOTE}/${branch}`, branch]) {
@@ -1942,7 +1947,9 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
     const savedBuildMissing = BUILD_MISSING;
     BUILD_MISSING = rbDir;
     try {
-      const devRef = refFor('dev') || 'HEAD';
+      // dev's newest [build-stamp] commit, not its live tip: a merge that lands
+      // on dev mid-run is unstamped, and its rebuild rewrites buildordinal.json.
+      const devRef = newestStampOf(refFor('dev')) || refFor('dev') || 'HEAD';
       const headSha = git(['rev-parse', devRef]).trim();
       const box = JSON.parse(git(['show', `${headSha}:buildordinal.json`]));
       const probe = { branch: 'dev', ordinal: Number(box.ordinal), sha: headSha, source: 'rebuild' };
