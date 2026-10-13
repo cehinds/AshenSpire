@@ -38,7 +38,11 @@ export function emitEvent(ctx, type, payload = {}) {
   };
   // What caused an effect, for the combat log: the enemy move it belongs to,
   // and the status, stance or property whose trigger enqueued it. Additive.
-  if (action?.meta?.moveId && payload.moveId === undefined) payload = { ...payload, moveId: action.meta.moveId };
+  // A preparation action (charge-up, Counter priming) runs while the selected
+  // move may still be a hidden intent, so it says only `preparing` and never
+  // names the move (SPEC §Intent visibility).
+  if (action?.meta?.preparing) { if (payload.preparing === undefined) payload = { ...payload, preparing: true }; }
+  else if (action?.meta?.moveId && payload.moveId === undefined) payload = { ...payload, moveId: action.meta.moveId };
   if (action?.meta?.triggeredBy && payload.triggeredBy === undefined) payload = { ...payload, triggeredBy: action.meta.triggeredBy };
   // Co-op player entities share id 'player'. Attribute the actual target in
   // the canonical bus so detached transactions and live enemy effects agree.

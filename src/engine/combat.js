@@ -674,13 +674,13 @@ function enemyPhase(combat) {
             owner: enemy,
             target: combat.player,
             card: carrier,
-            meta: {},
+            meta: { preparing: true },
           });
         }
         if (wc.barrier != null) combat.enqueue({ effect: { op: 'gainBarrier', target: 'self', amount: wc.barrier },
-          source: enemy, owner: enemy, target: enemy, card: carrier, meta: { moveId: enemy.intent.moveId } });
+          source: enemy, owner: enemy, target: enemy, card: carrier, meta: { moveId: enemy.intent.moveId, preparing: true } });
         for (const eff of wc.effects || []) {
-          combat.enqueue({ effect: eff, source: enemy, owner: enemy, target: combat.player, card: carrier, meta: { moveId: enemy.intent.moveId } });
+          combat.enqueue({ effect: eff, source: enemy, owner: enemy, target: combat.player, card: carrier, meta: { moveId: enemy.intent.moveId, preparing: true } });
         }
         enemy.pendingMove = {
           moveId: enemy.intent.moveId,
