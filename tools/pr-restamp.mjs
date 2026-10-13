@@ -104,12 +104,39 @@ export function restampReceipts(text, n, stamp) {
   return text.split('\n').map((line) => (isReceiptLine(line, n) ? line.replace(re, (_, open, close) => `${open}${stamp}${close}`) : line)).join('\n');
 }
 
+// A date group left with no bullet is removed with its heading. Only a `## YYYY-MM-DD`
+// group this edit emptied is a candidate; the group ends at the next heading or HTML line
+// (so the <details> block is never read as content), and any other heading is untouched.
+function groupEmpty(lines, idx) {
+  for (let j = idx + 1; j < lines.length; j++) {
+    const line = lines[j];
+    if (/^#/.test(line) || /^</.test(line)) return true;
+    if (line.trim() !== '') return false;
+  }
+  return true;
+}
+
+// Collapses a run of blank lines to one, inside the span of one date group (from its
+// heading to the next heading or HTML line). Only groups this edit touched are passed in.
+function collapseBlanks(lines, idx) {
+  let j = idx + 1;
+  while (j < lines.length && !/^#/.test(lines[j]) && !/^</.test(lines[j])) {
+    if (lines[j].trim() === '' && j + 1 < lines.length && lines[j + 1].trim() === '') {
+      lines.splice(j + 1, 1);
+    } else {
+      j++;
+    }
+  }
+}
+
 // THE PURE CORE. `baseText` is the CHANGELOG.md the merge starts from (origin/dev's,
 // or the merged text), `prText` the pull request's own. Its receipt lines for #n are
 // REMOVED from baseText and re-inserted as the FIRST bullet of the NEWEST date group,
 // re-stamped to `stamp`. A receipt lives under the date it lands, not the date its
 // author wrote it: when the newest group is older than `today` (UTC), a `## today`
 // group is created at the top. A newest group dated after `today` is used as it is.
+// A date group the removal leaves with no bullet is dropped with its heading, and runs
+// of blank lines are collapsed to one, only inside the groups this edit touched.
 // A pull request with no receipt in prText returns baseText unchanged; the receipt
 // checks then name the gap.
 export function utcToday() {
@@ -123,7 +150,25 @@ export function mergeReceiptLines(baseText, prText, n, stamp, today = utcToday()
   }
   if (moved.length === 0) return baseText;
 
-  const kept = baseText.split('\n').filter((l) => !isReceiptLine(l, n));
+  const source = baseText.split('\n');
+  const touched = new Set();
+  let currentHeading = null;
+  for (const line of source) {
+    if (DATE_HEADING.test(line.trimEnd())) currentHeading = line.trimEnd();
+    if (isReceiptLine(line, n) && currentHeading) touched.add(currentHeading);
+  }
+  const kept = source.filter((l) => !isReceiptLine(l, n));
+
+  // Drop each touched group this removal emptied, with the blank lines after its heading.
+  for (const heading of [...touched]) {
+    const idx = kept.indexOf(heading);
+    if (idx < 0 || !groupEmpty(kept, idx)) continue;
+    let end = idx + 1;
+    while (end < kept.length && kept[end].trim() === '') end++;
+    kept.splice(idx, end - idx);
+    touched.delete(heading);
+  }
+
   let at = kept.findIndex((l) => DATE_HEADING.test(l.trimEnd()));
   const newest = at >= 0 ? DATE_HEADING.exec(kept[at].trimEnd())[1] : null;
   if (newest === null || newest < today) {
@@ -138,10 +183,17 @@ export function mergeReceiptLines(baseText, prText, n, stamp, today = utcToday()
     }
     at = kept.indexOf(head);
   }
+  const target = kept[at].trimEnd();
   let k = at + 1;
   while (k < kept.length && kept[k].trim() === '') k++;
   const after = k < kept.length && kept[k].startsWith('- ') ? [] : [''];
   kept.splice(k, 0, ...moved, ...after);
+
+  touched.add(target);
+  for (const heading of touched) {
+    const idx = kept.indexOf(heading);
+    if (idx >= 0) collapseBlanks(kept, idx);
+  }
   return kept.join('\n');
 }
 
@@ -365,6 +417,18 @@ function selftest() {
   // 8. a PR text without a receipt for #N leaves the base unchanged.
   check('a PR text with no receipt for #N leaves the base unchanged',
     mergeReceiptLines(dev, '## 2026-10-13\n\nno receipt here\n', 1930, STAMP, '2026-10-13') === dev);
+
+  // 10. the removal empties a date group: the heading goes with its last bullet.
+  const emptied = `# Changelog\n\n## 2026-10-13\n\n${rc(1930, '0.7.1.1450')}\n\n## 2026-10-12\n\n${rc(1907, '0.7.1.1457')}\n\n## History\n\n`;
+  out = mergeReceiptLines(emptied, prText('2026-10-13', rc(1930, '0.7.1.1450')), 1930, STAMP, '2026-10-14');
+  check('an emptied date group is dropped with its heading, other headings kept',
+    headings(out).join() === '## 2026-10-14,## 2026-10-12,## History', headings(out).join());
+
+  // 11. the removal leaves a double blank line in a group: collapsed to one.
+  const doubled = `# Changelog\n\n## 2026-10-14\n\n${rc(1907, '0.7.1.1457')}\n\n${rc(1930, '0.7.1.1450')}\n\n## 2026-10-12\n\n${rc(1900, '0.7.1.1400')}\n`;
+  out = mergeReceiptLines(doubled, prText('2026-10-14', rc(1930, '0.7.1.1450')), 1930, STAMP, '2026-10-14');
+  check('a double blank left by the removal is collapsed to one',
+    !out.includes('\n\n\n') && out.includes(`## 2026-10-14\n\n${rc(1930, STAMP)}\n${rc(1907, '0.7.1.1457')}\n\n## 2026-10-12`), JSON.stringify(out));
 
   // 9. the PR's own non-derived set: unchanged, added to, or dropped from.
   const same = diffSetChange(['a.js', 'b.js'], ['b.js', 'a.js']);

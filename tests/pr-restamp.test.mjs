@@ -86,3 +86,17 @@ test("another pull request's receipt whose prose links #N is neither moved nor r
   const out = mergeReceiptLines(base, prText('2026-10-11', rc(1930, '0.7.1.1450')), 1930, STAMP, '2026-10-12');
   assert.ok(out.includes(prose));
 });
+
+test('a date group the removal empties is dropped with its heading; other headings stay', () => {
+  const base = `# Changelog\n\n## 2026-10-13\n\n${rc(1930, '0.7.1.1450')}\n\n## 2026-10-12\n\n${rc(1907, '0.7.1.1457')}\n\n## History\n\n`;
+  const out = mergeReceiptLines(base, prText('2026-10-13', rc(1930, '0.7.1.1450')), 1930, STAMP, '2026-10-14');
+  assert.deepEqual(headings(out), ['## 2026-10-14', '## 2026-10-12', '## History']);
+  assert.ok(!out.includes('## 2026-10-13'));
+});
+
+test('a double blank line the removal leaves is collapsed to one', () => {
+  const base = `# Changelog\n\n## 2026-10-14\n\n${rc(1907, '0.7.1.1457')}\n\n${rc(1930, '0.7.1.1450')}\n\n## 2026-10-12\n\n${rc(1900, '0.7.1.1400')}\n`;
+  const out = mergeReceiptLines(base, prText('2026-10-14', rc(1930, '0.7.1.1450')), 1930, STAMP, '2026-10-14');
+  assert.ok(!out.includes('\n\n\n'));
+  assert.ok(out.includes(`## 2026-10-14\n\n${rc(1930, STAMP)}\n${rc(1907, '0.7.1.1457')}\n\n## 2026-10-12`));
+});
