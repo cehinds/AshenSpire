@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-10-13
+
+- **Desktop combat uses the phone's proportions** ([#1934](https://github.com/cehinds/AshenSpire/pull/1934), `0.7.1.1455`). On desktop and widescreen the hand now takes 30% of the screen instead of 38%, so the battlefield is larger and enemies are drawn bigger. Hand cards scale with the hand like on a phone, and the horizon sits where it does on a phone. Phone and tablet layouts are unchanged.
+
 ## 2026-10-12
 
 - **The online dev build publishes after its build number is stamped** ([#1928](https://github.com/cehinds/AshenSpire/pull/1928), `0.7.1.1453`). Development-process change only, nothing in the game changes. The playable dev build on the project site no longer fails to publish while a new build waits for its number; it publishes once the number is stamped.
