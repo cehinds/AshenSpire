@@ -133,14 +133,25 @@ export function makeCombatant(spec = {}, tables = {}) {
   if (!Number.isFinite(hp) || hp < 0) throw new TypeError(`${id}.hp must be a number of 0 or more`);
   const sp = Number(spec.sp ?? DEFAULT_SP);
   if (!Number.isFinite(sp) || sp < 0) throw new TypeError(`${id}.sp must be a number of 0 or more`);
-  const attrs = { ...(spec.attrs ?? {}) };
+  // A non-finite attribute counts as 0, as the other numbers here do: JSON turns Infinity and NaN
+  // into null, so a kept value would make a saved round differ from the live one.
+  const attrs = Object.fromEntries(Object.entries(spec.attrs ?? {}).map(([k, x]) => [k, typeof x === 'number' && !Number.isFinite(x) ? 0 : x]));
+  // The evasion-cards table, when given, is a Map (makeFight). Anything else would silently drop the
+  // card bonuses, so it is rejected here, before evasionFor() reads it.
+  if (tables?.cards !== undefined && tables?.cards !== null && !(tables.cards instanceof Map)) {
+    throw new TypeError('tables.cards must be a Map from parseEvasionCards()');
+  }
+  // Every numeric input evasionFor() reads is normalised the same way as attrs (Codex P2 on PR #1871):
+  // a non-finite value counts as 0. A missing value (null/undefined) is kept, so dex still falls back
+  // to attrs.DEX and evasion to 0.
+  const finiteOrZero = (x) => (x == null ? x : (Number.isFinite(Number(x)) ? Number(x) : 0));
   const evasion = evasionFor({
     evasionArmor: spec.evasionArmor,
-    dex: spec.dex,
+    dex: finiteOrZero(spec.dex),
     shield: spec.shield,
     evasionCard: spec.evasionCard,
     attrs,
-    evasion: spec.evasion,
+    evasion: finiteOrZero(spec.evasion),
   }, tables);
   const base = Number(spec.evadeBasePct ?? spec.evadePct ?? 0);
   const wis = Number(spec.wis ?? 0);
@@ -482,7 +493,9 @@ function resolveAttack(cur, entry, events, rng, options, reactionEvade = null, r
   const accuracy = accuracyFor({ attrs: attacker.attrs, level: attacker.level, tags: card.tags, accuracy: card.accuracy })
     + attacker.accuracyExtra;
   // The evade card spent on this attack adds its evasion-cards.csv bonus to the hit roll (owner, 2026-10-11).
-  const { hit, need } = hitRoll({ accuracy, evasion: target.evasion + (evadeUse?.evasion ?? 0) }, d20);
+  // Under liveDefence (SPEC §4.11) the live dodgeRoll decides the dodge, so the timeline's table bonus is not added.
+  const tableEvasion = cur.liveDefence ? 0 : (evadeUse?.evasion ?? 0);
+  const { hit, need } = hitRoll({ accuracy, evasion: target.evasion + tableEvasion }, d20);
 
   // A full block: the block covers the whole hit (block >= damage, damage > 0).
   const blocked = hit && dmg > 0 && cur.active[target.id].guard >= dmg;
@@ -496,7 +509,7 @@ function resolveAttack(cur, entry, events, rng, options, reactionEvade = null, r
     if (target.tags.includes('intangible') && cur.charges[target.id] > 0) {
       avoid = 'intangible';
       cur.charges[target.id] -= 1;
-    } else {
+    } else if (!cur.liveDefence) {
       const stancePct = target.stance && options.evadeTable ? (options.evadeTable.get(target.stance) ?? 0) : 0;
       const bonuses = [];
       if (stancePct) bonuses.push({ source: `stance:${target.stance}`, pct: stancePct, scope: 'exchange' });
@@ -567,6 +580,12 @@ function credit(cur, run, { key, winner, winCard, foeCard, events, seq, credited
   events.push({ type: 'momentum', reason: 'success', enemyId: key, by: winner, gain, bonus, delta, seq });
 }
 
+// The same credit for a caller outside a round (normalPreview.js, SPEC §4.11 normal-combat momentum). `run` is
+// { pending, stanceTable }: the summed deltas are written to run.pending, exactly as a round writes them.
+export function creditExchange(run, args) {
+  credit(null, run, args);
+}
+
 // A counter with the 'stagger' tag adds +-3 to its side's summed delta (owner, 2026-10-11).
 // A staggered target with 'hyperArmor' resists (as in resolver.mjs): no +-3, and a 'resisted'
 // event instead. The target is the attacker the counter answers.
@@ -589,19 +608,19 @@ export function cardKey(card) {
 }
 
 // A card key is persisted in paused rounds and used to select one reaction copy. JSON must keep
-// that key unchanged: non-finite numbers become null, while empty or non-scalar keys cannot name
-// a card reliably. Queued cards always have an id; reaction-only hand cards may instead use a
-// valid instanceId.
+// that key unchanged: non-finite numbers become null and -0 becomes 0, while empty or non-scalar
+// keys cannot name a card reliably. Queued cards always have an id; reaction-only hand cards may
+// instead use a valid instanceId.
 export function assertCardKey(card) {
   const instance = card?.instanceId;
   if (instance !== undefined && instance !== null
     && !((typeof instance === 'string' && instance.length > 0)
-      || (typeof instance === 'number' && Number.isFinite(instance)))) {
-    throw new TypeError('card instanceId must be a non-empty string or finite number');
+      || (typeof instance === 'number' && Number.isFinite(instance) && !Object.is(instance, -0)))) {
+    throw new TypeError('card instanceId must be a non-empty string or finite number other than -0');
   }
   const key = cardKey(card);
   if (!((typeof key === 'string' && key.length > 0)
-    || (typeof key === 'number' && Number.isFinite(key)))) {
+    || (typeof key === 'number' && Number.isFinite(key) && !Object.is(key, -0)))) {
     throw new TypeError('a reaction card needs a non-empty string or finite numeric identifier');
   }
   return key;
@@ -738,7 +757,8 @@ function resolveExchange(cur, entry, events, options, run, reacted) {
   const counterCard = counter ? { momentumGain: counter.gain, stance: counter.stance } : null;
   const credited = [];
   const sideOf = (id) => cur.combatants[id].side;
-  if (ownerAlive() && !counter.reaction && counter.speed > entry.speed.effective) {
+  // liveDefence (SPEC §4.11): the Counter's cancel and its damage are the live rules, applied by combat.js.
+  if (!cur.liveDefence && ownerAlive() && !counter.reaction && counter.speed > entry.speed.effective) {
     // A faster counter cancels the attack. A tie or a slower counter does not.
     events.push({ type: 'countered', by: counter.owner, target: entry.actor, cardId: counter.cardId, cancelled: true });
     applyDamage(cur, entry.actor, counter.damage, events);
@@ -758,7 +778,7 @@ function resolveExchange(cur, entry, events, options, run, reacted) {
   }
   if (ownerAlive()) {
     events.push({ type: 'counterFired', by: counter.owner, target: entry.actor, cardId: counter.cardId, after: true });
-    applyDamage(cur, entry.actor, counter.damage, events);
+    if (!cur.liveDefence) applyDamage(cur, entry.actor, counter.damage, events);
     credit(cur, run, { key, winner: sideOf(counter.owner), winCard: counterCard, foeCard: attackCard, events, seq: entry.seq, credited });
     if (counter.stagger) stagger(run, { key, owner: counter.owner, target: entry.actor, cur, events, seq: entry.seq });
   }
@@ -856,12 +876,34 @@ function decayAll(cur, combatants, step, events) {
 // Returns { cur, timeline, startEvents, run }: `cur` is the working fight state, `timeline` holds
 // the ordered entries, `startEvents` are the decay events, and `run` is the round-scoped data:
 // queuedIds { [combatantId]: [cardKey] }, pending { [enemyId]: momentum delta }, stanceTable.
+// Checks every option a round reads, before any rng draw (Codex finding on PR #1867). The caller's
+// rng is not rolled back by atomically(), so a throw after a draw would leave it advanced. A bad
+// option therefore throws here, first. evadeTable and stanceAdvantage are read with .get(), so the
+// check is a get() function (a Map, or any object with a get method). Throws TypeError.
+export function assertRoundOptions(options = {}) {
+  const { rng, evadeTable, stanceAdvantage, onReaction } = options;
+  if (typeof rng !== 'function') throw new TypeError('rng must be a function returning [0, 1)');
+  const hasGet = (t) => t !== null && typeof t === 'object' && typeof t.get === 'function';
+  if (evadeTable !== undefined && evadeTable !== null && !hasGet(evadeTable)) {
+    throw new TypeError('evadeTable must be a Map (or an object with a get method) of stance to evade pct');
+  }
+  if (stanceAdvantage !== undefined && stanceAdvantage !== null && !hasGet(stanceAdvantage)) {
+    throw new TypeError('stanceAdvantage must be a Map (or an object with a get method) from parseStanceAdvantage()');
+  }
+  if (onReaction !== undefined && onReaction !== null && typeof onReaction !== 'function') {
+    throw new TypeError('onReaction must be a function');
+  }
+}
+
 export function beginRound(state, options = {}) {
+  assertRoundOptions(options);
   if (!state || typeof state !== 'object' || !state.combatants) throw new TypeError('state must come from makeFight()');
   const cur = structuredClone(state);
   cur.momentum = { ...(cur.momentum ?? {}) };
   cur.poiseDouble = { ...(cur.poiseDouble ?? {}) };
   cur.charges = { ...(cur.charges ?? {}) };
+  // SPEC §4.11: the preview's defences are live. The flag is stored only when set, so a plain round is unchanged.
+  if (options.liveDefence === true) cur.liveDefence = true;
   // Every combatant has a poise flag, false unless an overflow set it.
   for (const id of Object.keys(cur.combatants)) put(cur.poiseDouble, id, get(cur.poiseDouble, id) === true);
   // Round-scoped effects (block, evade, counters) start empty each round.
@@ -925,6 +967,9 @@ export function settleRound(cur, pending, events) {
 // Runs fn, and if it throws puts `target` back exactly as it was. `target` is plain data or holds
 // plain data and Maps (a fight state from makeFight()); structuredClone keeps both. Shared by
 // createRound() here and by the JSON round in round.js, so a throw never leaves a half-stepped round.
+// NOTE: this restores the round only. The caller's rng is a function and is NOT rolled back: a draw
+// made before a throw stays drawn, so a retry rolls differently. That is why every hook a round reads
+// is validated (assertRoundOptions, and callContext in round.js) before the first draw.
 export function atomically(target, fn) {
   const saved = structuredClone(target);
   try {

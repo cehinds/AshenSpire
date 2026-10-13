@@ -955,6 +955,31 @@ the complete current/maximum value remains in the accessible label and tooltip.
 - Smithing: a run owns `smithingStones`, an `armamentLevels` map, and idempotent reward claims. The shipped tier cap is 1 and promoting an armament to tier 1 costs 1 Smithing Stone. Elite and boss victories award 1 Stone; normal and treasure reward pools award 0. Legacy equipment-card upgrade flags migrate to the corresponding source armament tier without granting Stones.
 - Empty draw pile + draw needed → discard pile is shuffled (stream `shuffle`) into draw first.
 
+### 4.3a Action costs (owner decisions, 2026-10-12)
+
+**Always on.** Action costs apply in every fight, with the combat rounds preview off or on, solo and co-op. The tunables are `content/actionCosts.js`; the rules are `model/actionCosts.js`; `registries.resolveCard` runs the derived step once per resolved card and rank, after the upgrade and before the equipment and status mods. Every weight, with its reason and the calibration, is in [docs/alternative-combat-rounds/COST-WEIGHTS.md](docs/alternative-combat-rounds/COST-WEIGHTS.md); a test fails when that file and the config disagree.
+
+- **The formula (owner's shape; Mana-side rank, Ethereal and stacks added by the owner, 2026-10-12; restores break even, 2026-10-13).** Each resource is priced on its own side:
+  - S_sp = `damageWeight` × physical damage steps + `rankWeight` × rank + Σ SP-side tag weights + range weight + `castingEffortWeight` (a cast card) + SP-side statuses × stacks + drawback weights (negative).
+  - S_mp = `damageWeight` × magical damage steps + `rankWeightMp` × rank (a magical card) + Σ MP-side tag weights + MP-side statuses × stacks.
+  - **SP** (the card's `cost`) = floor(S_sp / `spDivisor`); **MP** (its `manaCost`) = floor(S_mp / `mpDivisor`). Each sum is floored at 0 first. If both are 0 after the maneuver floor, the larger side pays 1 (SP on a tie; SP for a card that restores Mana); a floored smash or sweep already pays SP and is not also charged 1 MP.
+  - **Restores break even (owner, 2026-10-13).** A card that restores Mana adds `restoreWeight` × that Mana to its MP, and one that restores Stamina adds `restoreWeight` × that Stamina to its SP; the face shows the full price. Its own restore pays that part: `applyActionCosts` marks it on the restore effect (`funded`), the engine's one card pricing (`resolvedCardPlayCosts`, and co-op's) charges the price less `ownRestoreFunds(def)`, and the restore gives back its amount less `funded`. The card is castable at 0 of that pool and changes it by exactly 0 (Attune, Ember Communion: 1 SP, 1 Mana, castable at 0 Mana, net Mana 0). Replaced rule (2026-10-12): the restore was subtracted from the price, so these cards netted Mana.
+- **Terms.** A card is magical when it carries any MP-side tag; its damage and the statuses it applies then count on the MP side. Damage counts its hits and is turned into points by the `damageSteps` table (each threshold reached adds `damageWeight`; an empty table means damage × `damageWeight`). A tag counts once per card, at a weight from -3 to 3. The range weight is the largest range among the card's delivery and reach tags (owner: melee 1, reach 2, ranged 3). A status the card applies (`applyStatus`, or `buildup` as one stack) weighs 2 or more (owner) × its stacks; `statusStackCap` (none by default) caps the stacks priced. A cast card is one with `camp:spell` or `maneuver:casting`.
+- **Drawbacks (owner).** Exhaust, Ethereal (owner, 2026-10-12), a curse or status added to the player's own piles (`addCard`), an HP or other resource cost (`loseHp`), a discard (`discard`), and several turns to cast (`grantCardCharge`). They carry negative weights on the SP side; a side never goes below 0.
+- **Rank.** The card's rank above the base: an ability grade's own rank (0–5), or a legacy instance rank minus 1 (SPEC §13.4o). A base card is rank 0. Each rank is priced on its own, so a higher rank can cost more; on a magical card it weighs on both sides.
+- **Shipped tunables (calibrated 2026-10-12, see COST-WEIGHTS.md):** `spDivisor` (D) **6** (the owner's ruling, not tuned), `mpDivisor` (P) 8, `damageWeight` 1.5 on the steps 1 / 3 / 5 / 8 / 12, `rankWeight` 1, `rankWeightMp` 4, `castingEffortWeight` 6, `restoreWeight` 1, `statusWeight` 2, no stack cap, `smashPoiseBase` 3; Ethereal weighs -1; the smash, sweep and heavy tags weigh 0 (the floor prices a base smash). P was raised from 6 because at 6 the rank 1–3 spell and rank 1–2 targets miss 80%.
+- **The owner's targets (2026-10-12)** and the shipped hit rates: most basic and cantrip cards cost 1 Stamina (basics 81%; cantrips 78% at 1 SP / 0 MP, 94% at 1 SP with up to 1 MP); smashes and sweeps cost 2 (100% at rank 0, by the floor); rank 1–2 cost 1 SP + 1 MP, or 2 SP, some only one (84%); most rank 1–3 spells cost 1–2 Mana (82%); many magic cards cost at least 1 SP, 0-SP magic still possible (95% at 1+); higher SP usually means lower MP (99% are not 2+/2+).
+- **Layering.** The derived SP and MP replace the authored `cost` and `manaCost`; the authored numbers are not inputs. The existing per-card rules then apply on top, unchanged: relic and power reductions, Mana discounts, upcast surcharges. Equipment and status mods apply after the derived step, so a mod's flat bonus is added to the scaled number and is not scaled itself.
+- **Opt-outs (a card keeps its authored cost, Mana and numbers):** a card whose content sets `costRule: 'fixed'` (the 0-cost cards listed below); a curse or status (by type); an X cost (variable). Every other card is priced, the Dodge Roll and powers included.
+- **Opt-outs by content (`costRule: 'fixed'`):** warriorsVow, twinkling, shootingShard, bloodPact, bloodletting, painOffering, rogueShiv, smokePellet, setupRogue, prepare, hex, blindingSand, hamstring, masterOfStrategy, blightedTransmute, blightedSecondBloom, blightedBlightward. Curses (guilt, wound, dazed) and statuses (slimed) are opted out by type.
+- **Smashes and sweeps (owner, 2026-10-13).** "Some higher rank ones could cost 1 sp? But basic ones are 2sp": at rank 0 a smash or a sweep costs at least its floor (`MANEUVER_SP_FLOORS`: 2 each); a higher rank has no floor, and an authored upgrade that lowers the cost lowers the floor by as much. "Be sure to add poise and base damage to account for the higher cost for smashes and AoE for sweeps but normal damage": a smash at 2 SP or more scales its damage and Poise damage; a sweep at 2 SP or more keeps its damage unscaled (`SWEEP_UNSCALED_OPS`) and scales its other riders. "All smashes deal poise damage": every smash adds `smashPoiseBase` (3) to its own Poise damage, or gains a Poise damage effect of that amount on its first damage target, at every rank, and its face names it.
+- **Balance rule (provisional default, owner to tune).** A card whose derived SP is 2 or more has its numeric effect amounts multiplied by `twoCostMultiplier` = **1.8** and rounded to a whole number. Scaled: `damage`, `block`, `buildup`, `heal`, `gainBarrier`, `gainPoise`, `gainWard`, `poiseDamage`, `wardDamage` (`SCALED_EFFECT_OPS`). Never scaled: costs, card counts (`draw`, `discard`, `addCard`), turns and durations (`applyStatus` duration), stack counts, hit counts, and HP or Mana prices. A card at 1 SP keeps its base values. The cost is priced on the unscaled face.
+- **Card text** is built from the same resolved effects, so it shows the scaled numbers.
+- **Known gap (expanded rules, version 2).** Effects that the expanded-rules projection adds after the derived step (for example Shield Bash's Block 5) are not scaled. Its counter reply is projected from the scaled damage.
+- **Validation.** `validateCostConfig` refuses a tag weight outside -3..3 or not whole, a negative weight on a tag that is not a drawback, a side other than SP or MP, a range weight outside 1..3, a status weight outside 2..3, a non-positive budget number and a damage step table that is not ascending, each by name. `validateActionCostTable` refuses a bad enemy stance price (§4.6a). The card schema admits `costRule`; values other than `'fixed'` are not valid content.
+
+*Falsify:* a dry Herald cannot cast Ember Communion; a magic card's Mana does not rise with its rank; Ethereal raises a cost; the owner's Sword Strike (3 damage, bladed, physical, slash, all weight 1, D = 20) sums to 6 and costs 1 SP; Exhaust never raises a card's cost; moving points from the MP side to the SP side never lowers SP or raises MP; a grade's Mana in the framework cost profile is the formula's; COST-WEIGHTS.md and the config disagree on a number (`action-costs-formula.test.mjs`, `action-costs-cards.test.mjs`, `action-costs-weights-doc.test.mjs`).
+
 ### 4.4 Status effects
 
 Common (StS layer):
@@ -1051,6 +1076,24 @@ Enemy definition shape (content file):
 ```
 
 When the Combat Rounds Preview is on, see §4.11.
+
+### 4.6a Enemy SP pool (owner decisions, 2026-10-12)
+
+- **Every enemy move costs SP:** its own `sp` when the move names one (how a boss move is priced in content), else the stance table by its stance (`moveKind` and the move's tags): attack 1, block 1, smash 2, counter 2, cast 2, sweep 2 (`ACTION_COST_TABLE`). A move with no priced stance costs 1 SP.
+- **Each enemy's SP pool per turn is its stats** (owner, 2026-10-13: "enemies are essentially characters with cards, at about 2 SP"; minions usually 1–2 SP, elites 2–3, bosses 3–4, all from stats and equipment). SP = `ENEMY_SP_ROW` (base 1, + floor(0.25 × Dexterity) + floor(0.25 × Constitution) + floor(0.2 × Wisdom) + floor(0.2 × Intelligence)) read on the enemy's `attributes`, plus its `equipmentSp`, floored at 0. Enemy attributes are inflated next to a player's. **Blight** (owner, 2026-10-13: "blight lowers INT, WIS and DEX and raises STR and CON"): a `blighted` enemy's attributes shift by `ENEMY_BLIGHT_SHIFT` (−2 Intelligence, Wisdom and Dexterity, +2 Strength and Constitution, floored at 0) wherever its stats are read; the Blight Hound and the Blighted Valkyrie are blighted. Every shipped enemy carries stats, and a test holds each to its band (`ENEMY_SP_BANDS`: normal 1–2, elite 2–3, boss 3–4). A test fixture may fix a pool with `spPool`.
+- **Enemies spend until the pool is empty.** Each pick is the existing weighted pick, restricted to the moves the enemy can still afford (a move costing more than the remaining pool cannot be picked) and to the `maxConsecutive` rule. The pool is empty, or nothing affordable is left, when the plan stops.
+- **The minimum of one move.** An enemy whose pool is below every move's cost still plays one move; its first pick is offered no limit.
+- **Normal combat.** At the start of the player's turn each enemy plans its pool. The first planned move is the intent. In the enemy phase the planned moves play in plan order, each one revealed as it plays. The intent box shows the first move as the main intent. Follow-ups show as smaller symbols only with the multi-action preview toggle (§4.11); otherwise they are not shown until they play.
+- **A charging (delayed) move ends the enemy's turn**: the planned follow-ups do not play after it. A staggered enemy plays none of its plan that turn.
+- **The plan is saved** with the fight, so a save taken mid-turn restores the same intent and follow-ups.
+- **Co-op is not wired to the pool.** Co-op set aside on dev (#1881): a co-op enemy still plans one move a turn, and its moves do not pay the table. Co-op cards pay the derived costs of §4.3a.
+- **Rounds mode** (§4.11) uses the same pool and prices: the enemy SP of its queues is the enemy's stat pool, and each queued move costs its SP.
+- **Silenced** (owner, 2026-10-13, expanded combat): a spell-camp move costs one more SP per Silenced stack on the enemy, as a player's spell card does (`spellCostSurcharge`, `model/combatCardProfile.js`). The pick's affordability and the SP the plan or queue spends both read the surcharged price, in normal combat and in rounds mode.
+- **Enemy schema.** An enemy may carry `attributes` (whole numbers by attribute id), `equipmentSp` (a whole number) and `blighted` (true); a move may carry `sp` (a whole number, 0 or more).
+- **Shipped tier-1 bosses (owner target: greedy-bot wins of 10–25% for every class; SP 3–4 from stats).** The Fell Warden has SP 3 (Strength 9, Dexterity 4, Constitution 4, Wisdom 3, Intelligence 3) and moves Cane Strike 1, Hammer Toss 1, Held Blade 1, Twin Daggers 3; the Bell Keeper SP 4 (10/4/4/5/3) with every move at 1; the Thorn Matriarch SP 4 (6/4/3/5/5) with Root Crown 1, Thorn Needles 1, Entwining Roots 2. The band is not met for every class: the class spread at the Bell Keeper and the Thorn Matriarch (Herald highest, Rogue lowest) is wider than 15 points, and boss SP moves every class together. The owner accepted these boss numbers for now (2026-10-13): no further class levers, and the bosses stay as tuned.
+- **Tier-1 normals and elites (owner, 2026-10-13: "should be harder about 50 to 75 normies, 25 to 50 elites, 10 to 25 for bosses").** The target is a greedy-bot win rate of 50–75% per class at every tier-1 normal encounter and 25–50% at the elite. It is tuned through enemy data only: stats (SP within the minion 1–2 and elite 2–3 bands, HP, move damage), equipment and move SP. Every tier-1 minion now has SP 2. Where it falls short: the Lone Soldier stays near 100%, because the Wandering Soldier is shared with the Twin Patrol, which falls far below 50% at any Soldier strong enough to threaten alone. Some cells miss by the class spread, which is wider than the band (the Twin Patrol: Starseer and Herald about 45%, Reaver and Rogue about 75%). The Wyrm Aspirant's spread (Herald about 60%, Rogue under 10%) is wider than its 25-point band. `docs/BALANCE.md` §5 has the measured table.
+
+Shipped values and where they live: the stance table, the 1.8 multiplier and every card-cost tunable are in `content/actionCosts.js`; the stamina row is in `content/derivedStats.js`. The 1.8 multiplier is a **provisional default, owner to tune**.
 
 ### 4.7 Tagged combat cards and readable enemy stances
 
@@ -1161,6 +1204,8 @@ precedes the implementation.
 
 ### 4.9 Enemy knowledge, Perception and hidden-intent clues
 
+**Intent box follow-ups** (owner decision, 2026-10-12). When the multi-action preview is on (Advanced → Combat, §4.11), an enemy's intent box shows its planned follow-up actions after the current one, as smaller symbols in the same box. The first 1 + Perception follow-ups show their icon when today's intent read is exact; the rest, and every follow-up while the read is hidden, show `?`. The read is the one §4.9 already rolls for the enemy; Perception adds no roll. With the toggle off, the box shows no follow-ups.
+
 [docs/enemy-knowledge-contract.md](docs/enemy-knowledge-contract.md) defines the
 separately versioned extension to §4.8: three saved visibility outcomes, a 30%
 base exact identification chance improved by Wisdom, Intelligence, character
@@ -1203,6 +1248,8 @@ disconnected seat get none. A Smash that breaks physical Guard emits
 `combatGuardBroken` once per break. Both are informational receipts and change
 no rule.
 
+When the Combat Rounds Preview is on, see §4.11.
+
 **Reaction stack (reaction rules version 2).** New expanded runs snapshot
 reaction rules version 2. A seat may then answer one incoming root with several
 Reaction cards: each choice is pushed without payment and the seat is offered
@@ -1220,10 +1267,29 @@ version 1 keeps one reaction per root.
 
 **Setting**
 
-- Advanced → Combat holds one opt-in row, *Combat rounds preview*. It is shown on dev and test builds only and is hidden on release builds.
-- The row is read at New Run and frozen into the run, as the other Advanced rows are. A saved fight keeps the rules it started with; a later change applies to new runs only.
-- The preview covers solo and co-op/LAN. Co-op parity is part of the contract, not a later step.
-- With the row off, fights, saves and RNG rolls are unchanged, and no preview field is written.
+- Advanced → Combat holds three independent opt-in rows, all **off by default** (owner decision, 2026-10-12): *Combat rounds preview* (the rounds mode, its own key, unchanged), *Momentum*, and *Multi-action preview*. They are shown on dev and test builds only, because the Combat group is not in `RELEASE_ADVANCED_GROUP_IDS` and a release build never draws it.
+- Each row is read at New Run and frozen into the run, as the other Advanced rows are. A saved fight keeps the rules it started with; a later change applies to new runs only.
+- The preview covers solo and co-op/LAN. Co-op parity is part of the contract, not a later step. The two toggles in normal combat are solo-only until P6 wires them into co-op (see *Normal combat* below).
+- With all three off, no preview field is written: a fight carries no `combatRounds` or `normalPreview`. The action costs (§4.3a) and the enemy SP pool (§4.6a) are always on (owner decision, 2026-10-12), so with the toggles off a fight, its save and its RNG rolls change from the 2026-10-11 rules. A save taken mid-turn also carries each enemy's planned moves.
+
+**Momentum and follow-ups in rounds mode**
+
+- Momentum follows its own toggle. With Momentum off, the rounds engine runs with momentum frozen at 0: every enemy is at 0 at each round start, no momentum is kept and no overflow flag is set. With it on, the rules below apply as written.
+- The multi-action toggle sets whether the intent box shows follow-up actions (§4.9). With it off, the rounds queue still runs, but no follow-up symbols show.
+
+**Normal combat (rounds mode off)**
+
+- *Momentum* (owner decision, 2026-10-12) keeps a value per enemy, −3..+3, by the rounds rules: each enemy's value moves one step toward 0 when the player's turn starts (a turn is a round). Each exchange credits its winner once: a landed attack to the player, an enemy hit that lands to the enemy, an attack fully blocked or evaded to the defender, and a counter that fires to its owner. The gain is 1 (normal cards have no `momentumGain`) plus the stance bonus from `stance-advantage.csv`. The summed deltas settle once, at the end of the enemy phase, are clamped to −3..+3, and a raw total past the cap sets the overflow flag.
+- Normal combat has no speed order and no hit roll, so momentum has **no mechanical effect** here: it is tracked and shown, and nothing else reads it. Two rounds rules are not mapped and change nothing: the ±3 counter stagger (normal Counters carry no stagger tag) and the poise double (normal combat models no poise damage to double).
+- The turn banner shows the targeted enemy's momentum tab (`++` for +2/+3, `+-` for ±1, `--` for −2/−3, none at 0), from its stored value, already decayed for the turn.
+- *Multi-action preview* (owner decision, 2026-10-12): each enemy plans its moves ahead with the same weighted pick, from the `enemyAI` stream, filling a plan to the enemy SP pool (its stats, 3 with none, §4.6a), each move at its SP (§4.6a). The head of the plan is the intent played this roll; the rest are its planned follow-ups. The plan is the moves the enemy plays, in that order. A staggered or held enemy keeps its plan. The intent box shows the follow-ups as §4.9 describes.
+
+**Always on, in every fight** (owner decision, 2026-10-12; `styles/combat-visuals.css`)
+
+- The blue selection and playable outline (`--selection-color` is blue on the combat screen), so green only means advantage.
+- A soft dark drop-shadow on each intent glyph and on each character sprite.
+- The thin target outline: a dark shadow first, hugging the sprite, then the coloured 1px ring outermost, with no glow or halo. The colour is drawn while a card is aimed at an enemy. With rounds mode off it is stance alone: green when the card's stance beats the enemy's revealed stance, red when it loses, none when neutral or unrevealed. With rounds mode on it also uses speed (see *Screen* in `docs/alternative-combat-rounds/PREVIEW-PLAN.md`).
+- With every toggle off, the outline and these visuals are the only writes: no element is added to the combat screen.
 
 **Live rules that stay**
 
@@ -1236,7 +1302,7 @@ version 1 keeps one reaction per root.
 **Queue and End Turn**
 
 - Playing a card queues it and pays its SP, and its MP if it has an MP cost, at queue time. Unqueuing refunds it.
-- Enemies queue cards and moves from their own SP pool, stat-driven with a base of 3. A move costs 1 SP unless the move says otherwise.
+- Enemies queue cards and moves from their own SP pool (§4.6a): the stamina row on their stats, 3 with none. A move costs its own `sp`, else its stance's table price (§4.6a), and 1 SP when its stance is not priced or the move names no stance.
 - End Turn keeps its label and look. In the preview it commits the round: it adapts the enemy queues, steps the round through the timeline, pauses for a reaction when a player-targeted attack needs one, then runs the live turn-end hand rules.
 
 **Order and hits**
@@ -1267,6 +1333,17 @@ version 1 keeps one reaction per root.
 - Enemy actions beyond the read count show as `?` in the enemy's intent box (see Perception).
 - A queued Counter answers only the next attack from its target, then is spent. The §4.7 grant and expiry timing does not apply in the preview.
 - In co-op, momentum is per seat: each seat has its own −3..+3 against each enemy.
+
+**Resolved (owner, 2026-10-13)**
+
+- Normal-combat momentum stays display only: it is tracked and shown, and has no mechanical effect.
+- Block (player and enemy) lasts one round in the preview: both reset at the start of the round commit.
+- Hidden enemy actions beyond the read show one `?` per action in the enemy's intent box (see Perception).
+
+**Provisional (pending owner)**
+
+- attack beats smash and sweep (+1), so a plain attack can reach a green outline (owner, 2026-10-12).
+- A queued Counter is never aimed at a foe in the preview (its target plan is the player's own, in both fight versions), so it answers the next attack its live coverage reaches, from any enemy, and is then spent. This replaces "from its target" above until the owner decides (provisional, pending owner confirmation). A Counter that does not cover an attack neither answers it nor earns its momentum or stagger. A Counter whose attack misses is spent. A Counter not spent in the round is cleared at round end, as the timeline clears it.
 
 ## 5. Content specification
 
@@ -1402,13 +1479,13 @@ Basics (encounters roll from the weighted table in `src/content/encounters/weald
 
 | Enemy | HP | Poise | Moves (weight) | Notes |
 |---|---|---|---|---|
-| Wandering Soldier | 22–26 | 10 | Slash 7 (45), Guard 6 Block (30), Warcry +2 Str (25, max1) | bread & butter |
-| Blight Hound | 12–15 | 6 | Bite 6 (60), Lunge 3×2 (40) | fast, fragile; spawns in pairs |
-| Husk Brute | 30–34 | 16 | Club 9 (50), Bellow: apply 1 Frail and add 1 Slimed (25), Brace 8 Block (25) | tanky |
-| Grave Wisp | 10–12 | 4 | Curse: shuffle 1 Dazed into draw (50), Drain 4 + heals self 4 (50) | kill first |
+| Wandering Soldier | 31–36 | 10 | Slash 8 (45), Guard 6 Block (30), Warcry +2 Str (25, max1) | bread & butter |
+| Blight Hound | 14–18 | 6 | Bite 6 (60), Lunge 3×2 (40) | fast, fragile; spawns in pairs |
+| Husk Brute | 30–34 | 16 | Club 15 (50), Bellow: apply 1 Frail and add 1 Slimed (25), Brace 8 Block (25) | tanky |
+| Grave Wisp | 12–14 | 4 | Curse: shuffle 1 Dazed into draw (50), Drain 8 + heals self 4 (50) | kill first |
 | Pack encounter | — | — | 2× Blight Hound + 1 Grave Wisp | teaches targeting |
 
-Elite — **Wyrm Aspirant** (HP 68–72, Poise 24): opener always Consecrate (+3 Strength); then Halberd Sweep 11 (50) / Tail Slam 7 + 1 Weak (30) / Golden Guard 12 Block + 4 HP heal (20, max1). Drops a relic.
+Elite — **Wyrm Aspirant** (HP 82–86, Poise 24): opener always Consecrate (+3 Strength); then Halberd Sweep 17 (50) / Tail Slam 11 + 1 Weak (30) / Golden Guard 12 Block + 4 HP heal (20, max1). Drops a relic.
 
 Boss — **The Fell Warden** (Margit-inspired, HP 120, Poise 30):
 - **Phase 1 (>50% HP):** pattern cycle with a signature **delay** mechanic: move *Held Blade* shows "Attack 14 — Delayed"; on its turn it does nothing (gains 8 Block instead); the **following** turn it attacks for 14 regardless of newly rolled intents. Teaches intent-reading. Other moves: Cane Strike 8 (repeatable ×2), Hammer Toss 5×2.

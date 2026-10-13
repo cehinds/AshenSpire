@@ -1,4 +1,5 @@
 import { combatMatchups, combatIntent, combatExpansionMatchups } from '../content/combatMatchups.js';
+import { ownRestoreFunds } from '../model/actionCosts.js';
 import { combatStatusRules as defaultStatusRules } from '../content/combatStatusRules.js';
 import { ASHEN_BLIGHT_RULES } from '../content/ashenBlight.js';
 import { reactionRulesSnapshot } from '../content/combatCardTraits.js';
@@ -825,7 +826,13 @@ function doPlayCard(C, { cardInstanceId, targetId, choice, upcastTier, selectedB
   }
   if (C.combatExpansionVersion === 2) {
     ({ energy: cost, mana: manaCost, stamina: staminaCost } = SoloCombatCosts.resolvedCardPlayCosts(C, def));
-  } else manaCost = Math.max(0, pools.mana - charges.manaDiscount) + (def.upcastSurcharge || 0);
+  } else {
+    // A break-even restore pays its own part of the price (owner, 2026-10-13; model/actionCosts.js ownRestoreFunds).
+    const funds = ownRestoreFunds(def);
+    if (!isX) cost = Math.max(0, cost - funds.stamina);
+    staminaCost = cost;
+    manaCost = Math.max(0, pools.mana + (def.upcastSurcharge || 0) - funds.mana - charges.manaDiscount);
+  }
   if (p.energy < cost) throw F.playRefusal('Not enough Actions (Stamina) to play this card', 'cost', { resource: 'stamina', need: cost, have: p.energy });
   if (p.mana < manaCost) throw F.playRefusal('Not enough mana to play this card', 'cost', { resource: 'mana', need: manaCost, have: p.mana });
   if (preflightOnly) return { energy: cost, mana: manaCost };

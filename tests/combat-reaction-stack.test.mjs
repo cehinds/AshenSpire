@@ -19,8 +19,9 @@ function fixture({ version = 2, cardIds = ['guardCounter', 'sweepingBlow'], enem
     cards: [...contentBundle.cards, chooseStrike],
     tagging: [...contentBundle.tagging, { family: 'card', scope: '', objectId: 'strike', tagId: 'trait:reaction' },
       ...strikeTagging.map(row => ({ ...row, objectId: 'chooseStrike' })), { family: 'card', scope: '', objectId: 'chooseStrike', tagId: 'trait:reaction' }],
+    // spPool 1: one incoming root per enemy turn; the stat-driven SP pool (SPEC §4.6a) would plan follow-up attacks.
     enemies: contentBundle.enemies.map(enemy => enemy.id === 'wanderingSoldier'
-      ? { ...enemy, firstMove: 'slash', moves: { slash: { intent: 'attack', damage: 1, hits: 2, weight: 1,
+      ? { ...enemy, firstMove: 'slash', spPool: 1, moves: { slash: { intent: 'attack', damage: 1, hits: 2, weight: 1,
         tags: ['camp:physical', 'maneuver:attack', 'range:melee', 'targeting:single'] } } } : enemy) });
   const combat = createCombat({ registries, rng: createRng(701), combatExpansionVersion: 2, reactionRulesVersion: version,
     enemyIds: Array(enemyCount).fill('wanderingSoldier'), player: { classId: 'reaver', maxHp: 100, hp: 100,

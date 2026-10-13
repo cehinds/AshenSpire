@@ -19,7 +19,8 @@ const drainQueue = combat => { while (combat.queue.length) executeAction(combat,
 // magicShare (optional) stamps the pebble's own share: 1 makes the Ward tests below a magic hit, as they were written.
 function fixture(effects = [{ op: 'damage', target: 'enemy', amount: 5, hits: 2 }], { statuses = contentBundle.statuses, ruleset = null, magicShare = undefined, ...options } = {}) {
   const registries = createRegistries({ ...contentBundle, statuses, cards: contentBundle.cards.map(card => card.id === 'starstonePebble'
-    ? { ...card, effects, cost: 0, manaCost: 0, upgrade: undefined, ...(magicShare === undefined ? {} : { magicShare }) } : card) });
+    // costRule 'fixed': the fixture pins its own free card (SPEC action costs, 2026-10-12).
+    ? { ...card, effects, cost: 0, costRule: 'fixed', manaCost: 0, upgrade: undefined, ...(magicShare === undefined ? {} : { magicShare }) } : card) });
   const combat = createCombat({ registries, rng: createRng(801), combatExpansionVersion: 2, ...(ruleset ? { ruleset } : {}), ...options,
     enemyIds: ['wanderingSoldier'], player: { classId: 'starseer', maxHp: 100, hp: 100,
       maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1,

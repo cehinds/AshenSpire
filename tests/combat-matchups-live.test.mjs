@@ -12,9 +12,12 @@ import { resolveCombatRatings } from '../src/model/combatRatings.js';
 import { staggerPlayer } from '../src/engine/actions.js';
 import { grantAbilityCharge } from '../src/engine/abilityRiders.js';
 
+// This file tests matchup mechanics on the authored card numbers, so every card keeps its authored cost and numbers:
+// it opts out of the cost formula (costRule 'fixed', SPEC §4.3a), which tests/action-costs-*.test.mjs cover.
+const authoredCosts = (cards) => cards.map(card => ({ ...card, costRule: 'fixed' }));
 function registry({ enemyId = 'wanderingSoldier', moveId = 'slash', damage = 8, legacy = false } = {}) {
   const base = legacy ? legacyContentBundle : contentBundle;
-  return createRegistries({ ...base,
+  return createRegistries({ ...base, cards: authoredCosts(base.cards),
     enemies: base.enemies.map(enemy => enemy.id === enemyId ? { ...enemy, firstMove: moveId } : enemy),
     enemyMoves: base.enemyMoves.map(move => move.enemyId === enemyId && move.id === moveId ? { ...move, ...(move.damage != null ? { damage } : {}) } : move),
   });
@@ -320,7 +323,9 @@ test('empty custom combat identity retains local hit vulnerability tags in previ
 
 test('card preview spends tactical defenses across every hit and later damage effect', () => {
   const registries = createRegistries({ ...contentBundle,
-    cards: contentBundle.cards.map(card => card.id === 'twinbladeFlurry' ? { ...card,
+    // costRule 'fixed': the reshaped flurry keeps its authored 3s (its damage:slashing tag prices it at 2 SP, which
+    // would scale them; SPEC §4.3a).
+    cards: contentBundle.cards.map(card => card.id === 'twinbladeFlurry' ? { ...card, costRule: 'fixed',
       effects: [{ op: 'damage', target: 'enemy', amount: 3, hits: 2 },
         { op: 'damage', target: 'enemy', amount: 3 }],
     } : card),
