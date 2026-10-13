@@ -36,10 +36,13 @@ import { resolveCard } from '../../model/registries.js';
 import { applyCombatExpansionCard } from '../../content/combatExpansionCards.js';
 import { applyCardTraits } from '../../content/traitProjection.js';
 import { combatProfileFor } from '../../model/combatCardProfile.js';
-import { sigilHtml } from '../components/combatSigilView.js';
+import { cardCategorySigilHtml } from '../components/cardTagSymbols.js';
 import { playingCardModel } from '../../model/playingCard.js';
-import { playingCardArt } from '../cardArtwork.js';
+import { playingCardArt, cardArtFallbacks } from '../cardArtwork.js';
+import { cardArtLayersHtml } from '../cardArtLayers.js';
+import { registerCardArtRefresh } from '../cardArtStyle.js';
 import { assetUrl } from '../assetmap.js';
+import { markArtPlaceholder } from '../artFallback.js';
 import { cardShapeCssProperties, cardLevelWidthCss } from '../models/CardSizeModel.js';
 import { keywordExplanations } from '../components/tooltipGlossary.js';
 import { deckCardAnimationPreview } from '../components/deckCardAnimationPreview.js';
@@ -193,14 +196,31 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   }
 
   function artwork(row, large = false) {
-    const art = playingCardArt(row.ref, { large });
-    const img = el('img', {
-      class: `deck-editor-art${art?.kind === 'outline' ? ' outline' : ''}`,
-      src: art ? assetUrl(art.path) : '', alt: '', draggable: 'false',
-    });
-    if (art?.position) img.style.setProperty('object-position', art.position);
-    img.addEventListener('error', () => { img.hidden = true; });
-    return img;
+    const well = el('span', {class:'deck-editor-art', 'aria-hidden':'true'});
+    Object.assign(well.style, {position:'relative',overflow:'hidden',display:'block'});
+    const paint = () => {
+      const art = playingCardArt(row.ref, {large, definition:combatDef(row), registries});
+      well.dataset.cardArt=art?.kind||'outline';
+      const img = el('img', {src:art?assetUrl(art.path):'',alt:'',draggable:'false'});
+      Object.assign(img.style, {width:'100%',height:'100%',objectFit:art?.fit||(art?.kind==='outline'?'contain':'cover'),objectPosition:art?.position||'center',filter:art?.filter||''});
+      well.classList.toggle('outline', art?.kind==='outline');
+      well.replaceChildren(img);
+      if(art)well.insertAdjacentHTML('beforeend',cardArtLayersHtml(art));
+      const fallbacks=cardArtFallbacks(row.ref,art,{large});
+      img.addEventListener('error',()=>{
+        markArtPlaceholder(well, paint);
+        const next=fallbacks.shift();
+        well.querySelectorAll('[data-card-art-layers]').forEach(node=>node.remove());
+        if(!next){img.hidden=true;return;}
+        well.dataset.cardArt=next.kind;
+        well.classList.toggle('outline',next.kind==='outline');
+        Object.assign(img.style,{filter:'',objectFit:next.fit||(next.extended?'cover':'contain'),objectPosition:next.position||'center'});
+        img.src=assetUrl(next.path);
+      });
+    };
+    paint();
+    registerCardArtRefresh(well,paint);
+    return well;
   }
 
   const selectionKey = (row, source) => source === 'collection' ? row.key : row.groupKey;
@@ -416,12 +436,12 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     const range = RANGE_BY_REACH[reach];
     return range ? el('span', { class: 'deck-editor-range', dataset: { range }, text: t(`deckEditor.range.${range}`) }) : null;
   };
-  // Physical or magical, as an icon before the costs: the Smash sigil in silver
-  // for physical cards, the Spell flame in blue for magical ones.
+  // Physical or magical, as an icon before the costs: the Physical shield in gold
+  // for physical cards, the outlined Spell sparkle in gold for magical ones.
   const campNode = (row) => {
     const camp = combatProfileFor(combatDef(row)).camp === 'spell' ? 'magical' : 'physical';
     const node = el('span', { class: 'deck-editor-camp', dataset: { camp }, role: 'img', title: tFull(`deckEditor.camp.${camp}`), 'aria-label': t(`deckEditor.camp.${camp}`) });
-    node.innerHTML = sigilHtml(camp === 'magical' ? 'spell' : 'smash', 'action', { tooltip: false });
+    node.innerHTML = cardCategorySigilHtml(camp === 'magical' ? 'spell' : 'physical');
     return node;
   };
   const tileCosts = (row) => rowCosts(row, [campNode(row)]);

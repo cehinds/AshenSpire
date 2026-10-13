@@ -28,6 +28,9 @@ name: build-stamp
 # since the LAST [build-stamp] commit on HEAD (build-stamp.mjs --since-last-stamp),
 # not just its own event's range. A later run covers what an earlier cancelled or
 # failed run missed. The retry loop below starts each try from the current origin tip.
+#
+# pages-builds follows this run on dev: its workflow_run publishes the site once this run
+# concludes success, so the site only ever rebuilds a head that carries the stamp.
 
 on:
   push:
@@ -132,6 +135,11 @@ jobs:
               node tools/build-stamp.mjs --stamp --since-last-stamp
             fi
 
+            # Re-pointing one receipt can create a rise within its date group.
+            # Validate the complete stamped order before any commit or preview dispatch;
+            # no pending-PR exemption applies after the bot has stamped the tree.
+            node tools/about-changelog.mjs --check-order
+
             # Only the three derived files, never the built HTML or anything else the build wrote.
             git add -- buildordinal.json CHANGELOG.md src/content/changelog.generated.js
             if git diff --cached --quiet; then
@@ -164,12 +172,10 @@ jobs:
               # re-dispatches for its stamp, so the final tip still gets its artifact.
               # Only after a successful push, so a rejected push dispatches nothing.
               if ! dispatch_preview; then exit 1; fi
-              # THE PAGES SITE IS NOT REPUBLISHED HERE, AND THAT IS DELIBERATE. pages-builds
-              # deploys dev on a push to dev, and on a dispatch only when the actor is the
-              # repository owner who typed PUBLISH. GITHUB_TOKEN is neither, so this step
-              # cannot publish the stamped tip. Until the next push to dev, or the owner's
-              # own pages-builds dispatch, the dev site shows the pre-stamp build. The
-              # artifact above is the playable build for the stamped commit.
+              # THE PAGES SITE IS NOT REPUBLISHED FROM THIS STEP, AND THAT IS DELIBERATE. The
+              # push above uses GITHUB_TOKEN, so it triggers nothing; pages-builds follows this
+              # run's own completion on dev and publishes the stamped tip once this run concludes
+              # success. The artifact above is the playable build for the stamped commit.
               exit 0
             fi
             echo "Push to $REF_NAME rejected (attempt $attempt)."
