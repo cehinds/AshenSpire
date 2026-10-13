@@ -91,9 +91,20 @@ export function triggerOwnerKey(ctx, entity) {
 /** Conservative listener check: false means this bus cannot enqueue a reaction.
  * Check inactive seats too, so an unknown co-op routing situation takes the
  * ordinary event path. Malformed/custom sources also retain that path.
+ *
+ * `cardTags`, when given, is the exact cardTags list the event will carry (and
+ * it carries no derivedTags). A trigger whose `if` is a cardTagIs, or an `all`
+ * holding one, on a tag outside that list cannot pass evalPredicate, so it is
+ * not a listener for this event. The Oath rule (oathKept) is on every class
+ * mount and asks for an `oath` card on cardPreparing; without this every card
+ * price and target read cloned the whole combat, event log included.
  */
-export function hasEventTriggers(ctx, type) {
-  const listens = rows => rows == null ? false : !Array.isArray(rows) || rows.some(row => !row || typeof row !== 'object' || row.on === type);
+export function hasEventTriggers(ctx, type, { cardTags } = {}) {
+  const requiredTags = pred => !pred || typeof pred !== 'object' ? []
+    : pred.p === 'cardTagIs' && typeof pred.tag === 'string' ? [pred.tag]
+    : pred.p === 'all' && Array.isArray(pred.preds) ? pred.preds.flatMap(requiredTags) : [];
+  const excluded = row => Array.isArray(cardTags) && requiredTags(row.if).some(tag => !cardTags.includes(tag));
+  const listens = rows => rows == null ? false : !Array.isArray(rows) || rows.some(row => !row || typeof row !== 'object' || (row.on === type && !excluded(row)));
   try {
     if (ctx.players && !(ctx.players instanceof Map)) return true;
     const players = ctx.players ? [...ctx.players.values()].map(seat => seat.entity) : [ctx.player];
