@@ -435,13 +435,25 @@ function applyPlayerEntry(combat, entry, landed, ops) {
     ops.discardUnplayed(combat, record);
     return;
   }
-  ops.playCard(combat, {
-    cardInstanceId: record.instanceId,
-    targetId: record.targetId ?? undefined,
-    choice: record.choice,
-    upcastTier: record.upcastTier,
-    upcastRanks: record.upcastRanks,
-  }, record.paid);
+  try {
+    ops.playCard(combat, {
+      cardInstanceId: record.instanceId,
+      targetId: record.targetId ?? undefined,
+      choice: record.choice,
+      upcastTier: record.upcastTier,
+      upcastRanks: record.upcastRanks,
+    }, record.paid);
+  } catch (error) {
+    // An earlier entry of this round (a queued Restful Dream's Sleep, an enemy's Stagger) can leave the player
+    // under control, which refuses every card after it. The control gate runs before the play changes anything,
+    // so the card is skipped like one that left the hand and its SP and MP come back. Any other refusal is a
+    // real fault and still throws: letting a refused play throw made the whole commit roll back, so End Turn
+    // threw the same way every time and the turn could never end.
+    if (error?.playRefusal?.reason !== 'controlled') throw error;
+    ops.refund(combat, record);
+    combat.emit('combatRoundCardSkipped', { cardInstanceId: record.instanceId, cardId: record.cardId, reason: 'controlled', refund: { ...record.paid } });
+    return;
+  }
   ops.drain(combat);
 }
 
