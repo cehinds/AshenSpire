@@ -92,7 +92,8 @@ function buildLines(def, preview, registries) {
         if (typeof hits !== 'number') fail();
         const sequence = live?.hitDamages;
         const unequal = sequence?.length > 1 && sequence.some(amount => amount !== sequence[0]);
-        const type = combatCardDamageLabel(def, preview, registries, index);
+        // The face names the hit's leading type only ("Lightning", not "Lightning · Piercing"); inspection keeps the full label.
+        const type = combatCardDamageLabel(def, preview, registries, index).split(' · ')[0];
         const word = `${type ? `${esc(type)} ` : ''}damage`;
         // A hit part magic and part physical names both parts, the physical first.
         const split = !unequal && hits === 1 ? splitOf(def, p, n, ratings, live) : null;

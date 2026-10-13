@@ -63,3 +63,17 @@ test('with faceLineLimit 3 a card with more than three lines marks lines 4+ data
     else assert.match(line.attrs, /data-face-extra="true"/, `line ${i + 1} is marked extra`);
   });
 }));
+
+test('the hand drops detail lines; other views keep them', () => withKitDom(dom => {
+  const markup = trackInnerHtml(dom);
+  const kinds = opts => faceLinesOf(markup.get(renderCard(reg, { cardId: 'sanctuaryCleanse' }, { inspection: false, ...opts })))
+    .map(line => /data-face-kind="(\w+)"/.exec(line.attrs)[1]);
+  assert.ok(kinds({}).includes('detail'), 'a non-hand view keeps Usable through');
+  assert.ok(!kinds({ faceLineLimit: 3 }).includes('detail'), 'the hand leaves it to inspection');
+}));
+
+test('a hit that is magic with a physical tag names only its leading type on the face', () => withKitDom(dom => {
+  const markup = trackInnerHtml(dom);
+  const lines = faceLinesOf(markup.get(renderCard(reg, { cardId: 'starSpark' }, { inspection: false, preview: previewOf('starSpark') })));
+  assert.doesNotMatch(textOf(lines[0]), /·/);
+}));

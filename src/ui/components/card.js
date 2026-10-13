@@ -278,6 +278,8 @@ export function renderCard(registries, ref, opts = {}) {
   if (faceLines && def.weightClassPriced) faceLines.push({ kind: 'detail', html: 'Cost reflects your current weight' });
   // The combat hand passes faceLineLimit: lines past it stay in the DOM, hidden until the card is selected.
   const faceLineLimit = Number.isFinite(opts.faceLineLimit) ? opts.faceLineLimit : null;
+  // The hand keeps the essentials: detail lines (chances, usable-through, pricing) stay with inspection and the larger views.
+  if (faceLines && faceLineLimit !== null) for (let i = faceLines.length - 1; i >= 0; i--) if (faceLines[i].kind === 'detail' && faceLines.length > 1) faceLines.splice(i, 1);
   const paint = (at) => {
     const artwork = illustratedArtwork(ref, model.id, {large:at==='inspect',equipmentArt:equipmentPainting,
       definition:def,registries});
