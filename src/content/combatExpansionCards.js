@@ -1,6 +1,7 @@
 // Explicit authored ids are the mapping authority. This overlay is applied
 // only by the v2 resolver; old runs continue to use their original definitions.
 import { applyCombatExpansionMartial } from './combatExpansionMartial.js';
+import { RANGES } from '../model/combatRanges.js';
 const SCHOOL_IDS = {
   force: ['starstonePebble', 'cometFragment', 'starbladePhalanx', 'starShower', 'starSlicer', 'starlance', 'starstoneArc', 'moonrendCut', 'meteorite', 'meteorSwarm', 'astralCleave', 'radiantSpray', 'supernova', 'starstoneKris', 'starfallBeam', 'starcaller', 'shootingShard', 'celestialLance', 'progression-comet-needle', 'progression-falling-constellation'],
   frost: ['frostVeil', 'frostNova', 'progression-rime-mirror', 'progression-eclipse-lance'],
@@ -14,17 +15,17 @@ const SCHOOL_IDS = {
 const TYPE = { force: 'blunt', frost: 'frost', lightning: 'piercing', fire: 'fire', alteration: 'blunt', illusion: 'psychic', divine: 'sacred', decay: 'decay' };
 export const combatExpansionCardOverlay = Object.fromEntries(Object.entries(SCHOOL_IDS).flatMap(([school, ids]) => ids.map(id => [id, { school, damageType: TYPE[school] }])));
 export const combatExpansionSpellProfiles = {
-  staffMagicAttack: { school: 'force', damageType: 'blunt', maneuver: 'casting', reach: 'near' },
-  sceptreArcaneAttack: { school: 'force', damageType: 'blunt', maneuver: 'casting', reach: 'near' },
-  staffGuard: { school: 'alteration', damageType: 'blunt', maneuver: 'defend', reach: 'contact' },
-  sceptreGuard: { school: 'alteration', damageType: 'blunt', maneuver: 'defend', reach: 'contact' },
+  staffMagicAttack: { school: 'force', damageType: 'blunt', maneuver: 'casting', range: 'reach' },
+  sceptreArcaneAttack: { school: 'force', damageType: 'blunt', maneuver: 'casting', range: 'reach' },
+  staffGuard: { school: 'alteration', damageType: 'blunt', maneuver: 'defend', range: 'melee' },
+  sceptreGuard: { school: 'alteration', damageType: 'blunt', maneuver: 'defend', range: 'melee' },
 };
 const AREA = new Set(['frostNova', 'meteorSwarm', 'radiantSpray', 'supernova', 'starfallBeam', 'gravityWell', 'pyreOfCharts', 'ashCircle', 'ashfallRite', 'graveOffering', 'contagion', 'scourge', 'butterflyPlague', 'bloodHarvest']);
-const FAR = new Set(['starlance', 'starfallBeam', 'celestialLance', 'meteorite', 'meteorSwarm', 'progression-eclipse-lance', 'progression-comet-needle']);
+const RANGED = new Set(['starlance', 'starfallBeam', 'celestialLance', 'meteorite', 'meteorSwarm', 'progression-eclipse-lance', 'progression-comet-needle']);
 const COUNTERS = {
-  umbralWard: { camps: ['physical', 'spell'], reach: ['near', 'far'], targeting: ['single'], ward: 3, poise: 1 },
-  wardingStar: { camps: ['spell'], reach: ['contact', 'near', 'far'], targeting: ['single'], ward: 2, poise: 0 },
-  'progression-rime-mirror': { camps: ['physical', 'spell'], reach: ['contact', 'near'], targeting: ['single'], ward: 2, poise: 1 },
+  umbralWard: { camps: ['physical', 'spell'], ranges: ['reach', 'ranged'], targeting: ['single'], ward: 3, poise: 1 },
+  wardingStar: { camps: ['spell'], ranges: ['melee', 'reach', 'ranged'], targeting: ['single'], ward: 2, poise: 0 },
+  'progression-rime-mirror': { camps: ['physical', 'spell'], ranges: ['melee', 'reach'], targeting: ['single'], ward: 2, poise: 1 },
 };
 const UPCAST = {
   starstonePebble: { damagePerRank: 2 }, cometFragment: { damagePerRank: 2 },
@@ -61,24 +62,23 @@ function conditionFor(value) {
   if (result.p === 'hasStatus' || result.f === 'stacks') result.status = { frost: 'frozen', frostExposed: 'chilled', bleed: 'bleeding' }[result.status] || result.status;
   return result;
 }
-// A spell reaches by its explicit row, then its own authored reach, then the far
-// list, then its delivery: projectile is far, melee is contact, anything else is near.
-function spellReach(def, row) {
-  if (row.reach) return row.reach;
-  // Read before rewriteTags strips the reach tags.
-  const REACHES = ['contact', 'near', 'far'];
-  if (REACHES.includes(def.reach)) return def.reach;
+// A spell's range is its explicit row, then its own authored range, then the
+// ranged list, then its delivery: projectile is ranged, melee is melee, anything else is reach.
+function spellRange(def, row) {
+  if (row.range) return row.range;
+  // Read before rewriteTags strips the range tags.
+  if (RANGES.includes(def.range)) return def.range;
   const tags = def.cardTags || def.tags || [];
-  const authored = tags.find(tag => tag.startsWith('reach:'))?.slice(6);
-  if (REACHES.includes(authored)) return authored;
-  if (FAR.has(def.id)) return 'far';
-  if (tags.includes('delivery:projectile')) return 'far';
-  if (tags.includes('delivery:melee')) return 'contact';
-  return 'near';
+  const authored = tags.find(tag => tag.startsWith('range:'))?.slice(6);
+  if (RANGES.includes(authored)) return authored;
+  if (RANGED.has(def.id)) return 'ranged';
+  if (tags.includes('delivery:projectile')) return 'ranged';
+  if (tags.includes('delivery:melee')) return 'melee';
+  return 'reach';
 }
 function rewriteTags(def, row, maneuver) {
-  const tags = (def.cardTags || def.tags || []).filter(tag => !['camp:', 'school:', 'damage:', 'maneuver:', 'reach:', 'targeting:', 'counter:'].some(prefix => tag.startsWith(prefix)));
-  tags.push('camp:spell', `school:${row.school}`, `damage:${row.damageType}`, `reach:${spellReach(def, row)}`, `targeting:${AREA.has(def.id) ? 'area' : 'single'}`);
+  const tags = (def.cardTags || def.tags || []).filter(tag => !['camp:', 'school:', 'damage:', 'maneuver:', 'range:', 'targeting:', 'counter:'].some(prefix => tag.startsWith(prefix)));
+  tags.push('camp:spell', `school:${row.school}`, `damage:${row.damageType}`, `range:${spellRange(def, row)}`, `targeting:${AREA.has(def.id) ? 'area' : 'single'}`);
   if (maneuver) tags.push(`maneuver:${maneuver}`);
   if (COUNTERS[def.id]) tags.push('counter:spell');
   return tags;
@@ -97,7 +97,7 @@ export function applyCombatExpansionCard(def) {
   const maneuver = row.maneuver || (COUNTERS[def.id] ? 'counter' : originalTags.find(tag => tag.startsWith('maneuver:'))?.slice(9)
     || (def.type === 'attack' ? 'casting' : null));
   const card = { ...def, tags: rewriteTags(def, row, maneuver), cardTags: rewriteTags(def, row, maneuver),
-    damageSchool: 'magic', reach: spellReach(def, row), targeting: AREA.has(def.id) ? 'area' : 'single',
+    damageSchool: 'magic', range: spellRange(def, row), targeting: AREA.has(def.id) ? 'area' : 'single',
     attack: { ...def.attack, source: 'spell', damageType: row.damageType }, effects: effectsFor(def.effects, row.school), textTemplate: barrierText(def.textTemplate) };
   if (def.upgrade) card.upgrade = { ...def.upgrade, ...(def.upgrade.effects ? { effects: effectsFor(def.upgrade.effects, row.school) } : {}), ...(def.upgrade.textTemplate ? { textTemplate: barrierText(def.upgrade.textTemplate) } : {}) };
   const damaging = card.effects.some(effect => effect.op === 'damage');
@@ -115,7 +115,7 @@ export function applyCombatExpansionCard(def) {
   }
   if (COUNTERS[def.id]) {
     const counter = COUNTERS[def.id];
-    card.counterCoverage = { camps: counter.camps, reaches: counter.reach, targeting: counter.targeting, effects: ['damage', 'status'] };
+    card.counterCoverage = { camps: counter.camps, ranges: counter.ranges, targeting: counter.targeting, effects: ['damage', 'status'] };
     card.counterPayload = { hp: 0, ward: counter.ward, poise: counter.poise };
     card.schoolEffect = counter.ward ? 'ward' : 'poise';
   }
@@ -142,10 +142,10 @@ export function applyCombatExpansionCard(def) {
   return card;
 }
 
-const counter = (id, school, { camps = ['spell'], reach = ['contact', 'near', 'far'], targeting = ['single'], poise = 0, ward = 2, cost = 1 } = {}) => ({
+const counter = (id, school, { camps = ['spell'], ranges = ['melee', 'reach', 'ranged'], targeting = ['single'], poise = 0, ward = 2, cost = 1 } = {}) => ({
   id, name: `${school[0].toUpperCase() + school.slice(1)} Counter`, class: 'colorless', rarity: 'common', cost, manaCost: 1, type: 'skill', keywords: [],
-  tags: ['camp:spell', `school:${school}`, `damage:${TYPE[school]}`, 'maneuver:counter', targeting.includes('area') ? 'counter:ranged' : 'counter:spell', 'reach:near', 'targeting:single'],
-  reach: 'near', targeting: 'single', counterCoverage: { camps, reaches: reach, targeting, effects: ['damage', 'status'] },
+  tags: ['camp:spell', `school:${school}`, `damage:${TYPE[school]}`, 'maneuver:counter', targeting.includes('area') ? 'counter:ranged' : 'counter:spell', 'range:reach', 'targeting:single'],
+  range: 'reach', targeting: 'single', counterCoverage: { camps, ranges, targeting, effects: ['damage', 'status'] },
   counterPayload: { hp: 0, ward, poise }, schoolEffect: ward ? 'ward' : 'poise',
   effects: [{ op: 'gainBarrier', target: 'self', amount: 5 }],
   textTemplate: `Gain {gainBarrier} Barrier. Prepare a ${school} Counter: ${ward} Ward${poise ? ` and ${poise} Poise` : ''} return.`,
@@ -153,21 +153,21 @@ const counter = (id, school, { camps = ['spell'], reach = ['contact', 'near', 'f
 });
 const cantrip = (id, name, school, damage, status = null, units = 3) => ({
   id, name, class: 'colorless', rarity: 'common', cost: 1, manaCost: 0, type: 'attack', keywords: [],
-  tags: ['camp:spell', `school:${school}`, `damage:${TYPE[school]}`, 'maneuver:casting', 'reach:near', 'targeting:single'],
-  damageSchool: 'magic', exposureBuildupPerHit: 0, attack: { source: 'spell', damageType: TYPE[school] }, reach: 'near', targeting: 'single',
+  tags: ['camp:spell', `school:${school}`, `damage:${TYPE[school]}`, 'maneuver:casting', 'range:reach', 'targeting:single'],
+  damageSchool: 'magic', exposureBuildupPerHit: 0, attack: { source: 'spell', damageType: TYPE[school] }, range: 'reach', targeting: 'single',
   effects: [{ op: 'damage', target: 'enemy', amount: damage }, ...(status ? [{ op: 'buildup', target: 'enemy', status, amount: units, camp: 'spell', recoveryProfile: combatProfileForPressure(status), chance: 50 }] : [])],
   textTemplate: `Deal {damage} damage.${status ? ` May add {${status}} ${status} buildup; upcasting improves its chance.` : ''}`,
   upcast: { baseTier: 0, unlockedTiers: [1, 2, 3], maximumTier: 3, damagePerRank: 1, ...(status ? { pressurePerRank: 1, chancePerRank: 25 } : {}) },
 });
 function combatProfileForPressure(id) { return { sleep: 'mental', crimsonBlight: 'curse', weak: 'mental' }[id] || 'elemental'; }
 export const combatExpansionNewCards = [
-  counter('frostCounter', 'frost', { camps: ['physical', 'spell'], reach: ['contact', 'near'], poise: 1 }),
+  counter('frostCounter', 'frost', { camps: ['physical', 'spell'], ranges: ['melee', 'reach'], poise: 1 }),
   counter('fireCounter', 'fire'), counter('lightningCounter', 'lightning'),
-  counter('forceCounter', 'force', { camps: ['physical'], reach: ['near', 'far'], ward: 0, poise: 3 }),
+  counter('forceCounter', 'force', { camps: ['physical'], ranges: ['reach', 'ranged'], ward: 0, poise: 3 }),
   counter('alterationCounter', 'alteration', { camps: ['physical', 'spell'], ward: 1, poise: 1 }),
   counter('illusionCounter', 'illusion', { camps: ['physical', 'spell'], poise: 1, ward: 1 }),
   counter('divineCounter', 'divine'), counter('decayCounter', 'decay'),
-  { ...counter('barrageCounter', 'alteration', { camps: ['physical', 'spell'], targeting: ['area'], reach: ['contact', 'near', 'far'], ward: 1, poise: 1, cost: 2 }), name: 'Barrage Interception' },
+  { ...counter('barrageCounter', 'alteration', { camps: ['physical', 'spell'], targeting: ['area'], ranges: ['melee', 'reach', 'ranged'], ward: 1, poise: 1, cost: 2 }), name: 'Barrage Interception' },
   cantrip('rimeNeedle', 'Rime Needle', 'frost', 3, 'frost'),
   cantrip('emberDart', 'Ember Dart', 'fire', 5, 'burn', 4),
   cantrip('staticNeedle', 'Static Needle', 'lightning', 3, 'paralysis'),
@@ -176,21 +176,21 @@ export const combatExpansionNewCards = [
   cantrip('holySpark', 'Holy Spark', 'divine', 4),
   cantrip('rotMote', 'Rot Mote', 'decay', 3, 'crimsonBlight'),
   { id: 'phaseWard', name: 'Phase Ward', class: 'colorless', rarity: 'rare', cost: 2, manaCost: 2, type: 'skill', keywords: ['exhaust'],
-    tags: ['camp:spell', 'school:alteration', 'damage:blunt', 'reach:contact', 'targeting:single'],
+    tags: ['camp:spell', 'school:alteration', 'damage:blunt', 'range:melee', 'targeting:single'],
     effects: [{ op: 'applyStatus', target: 'self', status: 'invulnerability', stacks: 1 }],
     textTemplate: 'Gain {invulnerability} Invulnerability: avoid the next direct damaging action. Status buildup still applies. Exhaust.' },
   { id: 'illusionDecoy', name: 'Illusion Decoy', class: 'colorless', rarity: 'uncommon', cost: 1, manaCost: 1, type: 'skill', keywords: [],
-    tags: ['camp:spell', 'school:illusion', 'damage:psychic', 'reach:contact', 'targeting:single'],
+    tags: ['camp:spell', 'school:illusion', 'damage:psychic', 'range:melee', 'targeting:single'],
     effects: [{ op: 'applyStatus', target: 'self', status: 'decoy', stacks: 1 }],
-    textTemplate: 'Gain {decoy} Decoy: avoid a Single Near/Far damaging action. Status buildup still applies; Sweep and Holy reveal it.' },
+    textTemplate: 'Gain {decoy} Decoy: avoid a Single Reach/Ranged damaging action. Status buildup still applies; Sweep and Holy reveal it.' },
   { id: 'earthGrounding', name: 'Earth Grounding', class: 'colorless', rarity: 'common', cost: 1, manaCost: 0, type: 'skill', keywords: [],
-    tags: ['camp:spell', 'school:alteration', 'damage:blunt', 'reach:contact', 'targeting:single', 'trait:grounded'],
+    tags: ['camp:spell', 'school:alteration', 'damage:blunt', 'range:melee', 'targeting:single', 'trait:grounded'],
     effects: [{ op: 'applyStatus', target: 'self', status: 'grounded', stacks: 1 }], textTemplate: 'Gain {grounded} Grounded for 2 turns and clear pending Paralysis pressure.' },
   { id: 'restfulDream', name: 'Restful Dream', class: 'colorless', rarity: 'uncommon', cost: 1, manaCost: 1, type: 'skill', keywords: [],
-    tags: ['camp:spell', 'school:illusion', 'damage:psychic', 'reach:contact', 'targeting:single'],
+    tags: ['camp:spell', 'school:illusion', 'damage:psychic', 'range:melee', 'targeting:single'],
     effects: [{ op: 'applyStatus', target: 'self', status: 'sleep', stacks: 1 }], textTemplate: 'Gain {sleep} Sleep: lock ordinary cards and become vulnerable. Rest next turn within the combat healing and Ward caps.' },
   { id: 'sanctuaryCleanse', name: 'Sanctuary Cleanse', class: 'colorless', rarity: 'uncommon', cost: 1, manaCost: 1, type: 'skill', keywords: [],
-    tags: ['camp:spell', 'school:divine', 'damage:sacred', 'reach:contact', 'targeting:single'], usableWhile: ['sleep', 'paralysis', 'dazed'],
+    tags: ['camp:spell', 'school:divine', 'damage:sacred', 'range:melee', 'targeting:single'], usableWhile: ['sleep', 'paralysis', 'dazed'],
     effects: [{ op: 'removeStatus', target: 'self', status: 'sleep', amount: 1 }, { op: 'removeStatus', target: 'self', status: 'paralysis', amount: 1 }, { op: 'removeStatus', target: 'self', status: 'dazed', amount: 1 }, { op: 'gainBarrier', target: 'self', amount: 3 }],
     textTemplate: 'Usable through Sleep, Paralysis and Dazed. Cleanse {removeStatus} Sleep, {removeStatus.2} Paralysis and {removeStatus.3} Dazed. Gain {gainBarrier} Barrier.' },
 ].map(card => ({ ...card, minCombatExpansionVersion: 2 }));

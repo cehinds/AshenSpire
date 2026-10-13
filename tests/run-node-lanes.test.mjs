@@ -4,7 +4,7 @@ import { readFileSync, existsSync, mkdirSync, mkdtempSync, writeFileSync, copyFi
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { parseRunNodeOptions, discoveryShardFiles, discoverySpeedFiles, SLOW_DISCOVERED, selftestInGroup } from './run-node-lanes.mjs';
+import { parseRunNodeOptions, discoveryShardFiles, discoverySpeedFiles, SLOW_DISCOVERED, selftestInGroup, shardSummaryCounts } from './run-node-lanes.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const RUNNER = readFileSync(join(ROOT, 'tests/run-node.mjs'), 'utf8');
@@ -237,4 +237,22 @@ test('browser layout and startup matrices retain every shard with an independent
     assert.deepEqual([...body.matchAll(/['"](\d+\/\d+)['"]/g)].map(match => match[1]), Array.from({ length: count }, (_, i) => `${i}/${count}`));
     assert.match(job(workflow, 'boundary'), new RegExp(`needs: \\[[^\\]]*${name}`));
   }
+});
+
+test('shard summary counts name a time stop, a missing count, or print the normal counts', () => {
+  const normal = 'ℹ tests 812\nℹ suites 40\nℹ pass 811\nℹ fail 1\nℹ duration_ms 1200\n';
+  assert.equal(shardSummaryCounts({ out: normal, timedOut: false, limitMinutes: 15, files: 149 }), '149 files, 812 tests, 1 failed');
+  // A stopped shard prints no summary, so the counts are unknown even if partial output is present.
+  assert.equal(shardSummaryCounts({ out: '', timedOut: true, limitMinutes: 15, files: 149 }), '149 files, stopped after 15 minutes (timed out; no test summary)');
+  assert.equal(shardSummaryCounts({ out: normal, timedOut: true, limitMinutes: 15, files: 149 }), '149 files, stopped after 15 minutes (timed out; no test summary)');
+  // Not timed out, but the summary is missing a count: never print NaN.
+  assert.equal(shardSummaryCounts({ out: 'ℹ tests 5\n', timedOut: false, limitMinutes: 15, files: 3 }), '3 files, counts unavailable');
+  assert.equal(shardSummaryCounts({ out: '', timedOut: false, limitMinutes: 15, files: 3 }), '3 files, counts unavailable');
+  assert.doesNotMatch(shardSummaryCounts({ out: '', timedOut: false, limitMinutes: 15, files: 3 }), /NaN/);
+});
+
+test('the discovered summary line uses the shard counts helper, so a time stop never prints NaN', () => {
+  assert.match(RUNNER, /shardSummaryCounts\(\{ out, timedOut: result\.error\?\.code === 'ETIMEDOUT'/);
+  assert.match(RUNNER, /\$\{counts\}/);
+  assert.doesNotMatch(RUNNER, /\$\{count\('tests'\)\} tests/);
 });

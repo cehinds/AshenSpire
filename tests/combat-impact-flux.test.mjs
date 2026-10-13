@@ -15,7 +15,7 @@ import { armCombatCounter, beginTacticalAction, completeTacticalAction, recordTa
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 
 const registries = createRegistries(contentBundle);
-const PHYSICAL = { camp: 'physical', maneuver: 'attack', damageType: 'slash', reach: 'contact', targeting: 'single' };
+const PHYSICAL = { camp: 'physical', maneuver: 'attack', damageType: 'slash', range: 'melee', targeting: 'single' };
 
 function fixture({ version = 2, enemies = 1 } = {}) {
   const combat = createCombat({ registries, rng: createRng(901), combatExpansionVersion: 2, reactionRulesVersion: version,
@@ -207,9 +207,9 @@ test('Impact gives N reply Poise to a Counter whose return has none', () => {
 });
 
 test('a Spell Counter against a physical projectile keeps no reply Poise, even with Impact', () => {
-  const projectile = { camp: 'physical', maneuver: 'ranged', delivery: 'projectile', reach: 'far', targeting: 'single', damageType: 'piercing' };
+  const projectile = { camp: 'physical', maneuver: 'ranged', delivery: 'projectile', range: 'ranged', targeting: 'single', damageType: 'piercing' };
   // The card authors coverage of physical projectiles as well as spells.
-  const coverage = { camps: ['spell', 'physical'], reaches: ['contact', 'near', 'far'], targeting: ['single'], effects: ['damage', 'status'] };
+  const coverage = { camps: ['spell', 'physical'], ranges: ['melee', 'reach', 'ranged'], targeting: ['single'], effects: ['damage', 'status'] };
   const payload = { hp: 10, poise: 0, ward: 2 };
   const traited = counterReturn({ mode: 'spell', incoming: projectile, coverage, payload, traitValues: { impact: 2, flux: 1 } });
   assert.equal(traited.hp, 0, 'a Spell Counter drains Ward only against a projectile');
@@ -230,7 +230,7 @@ function guardFight() {
   const { combat } = f;
   const enemy = f.enemies[0];
   const defend = { cardId: 'testDefend', instanceId: 'test-defend', type: 'skill',
-    combatProfile: { camp: 'physical', maneuver: 'defend', reach: 'contact', targeting: 'single' } };
+    combatProfile: { camp: 'physical', maneuver: 'defend', range: 'melee', targeting: 'single' } };
   const hit = (blocked, hpLoss = 0) => {
     const receipt = beginTacticalAction(combat, enemy, combat.player, { combatProfile: PHYSICAL }, [{ amount: 8 }]);
     recordTacticalContact(receipt, { blocked, hpLoss });
@@ -289,7 +289,7 @@ test('a trait guard caps Poise and Ward at 999 so the meter fill loop always ter
 test('a saved Counter carrier refuses malformed trait values', async () => {
   const { combatCounterProblems } = await import('../src/model/combatTacticsRules.js');
   const counter = traits => ({ version: 2, charges: 1, serial: 1, mode: 'melee', expiresOnOwnerCycle: 1,
-    coverage: { camps: ['physical'], reaches: ['contact'], targeting: ['single'], effects: ['damage'] },
+    coverage: { camps: ['physical'], ranges: ['melee'], targeting: ['single'], effects: ['damage'] },
     payload: { hp: 4, poise: 2, ward: 0 }, carrier: { combatProfile: { maneuver: 'counter' }, ...(traits ? { traitValues: traits } : {}) } });
   const traitProblems = traits => combatCounterProblems(counter(traits), 'c', 2).filter(problem => /traitValues/.test(problem));
   assert.deepEqual(traitProblems(undefined), []);
