@@ -1659,10 +1659,12 @@
 .intent-icon[data-solid='true'] { fill: currentColor; fill-rule: evenodd; stroke: none; }
 /* A read that passes tints its intent by damage class (owner, 2026-10-13):
    silver with a black outline for physical, blue with a purple outline for magic. */
-.intent[data-damage-class='physical'] .intent-icon { fill: #c7ccd4; stroke: #0d0d0f; }
-.intent[data-damage-class='magic'] .intent-icon { fill: #4f63e6; stroke: #8a3fd6; }
-.intent[data-damage-class='physical'] .intent-icon[data-solid='true'] { fill: #c7ccd4; stroke: #0d0d0f; stroke-width: 1.5; }
-.intent[data-damage-class='magic'] .intent-icon[data-solid='true'] { fill: #4f63e6; stroke: #8a3fd6; stroke-width: 1.5; }
+/* Line-art icons (prepare, power) have open subpaths, so they keep fill:none:
+   the line takes the inner colour and a drop shadow draws the outline. */
+.intent[data-damage-class='physical'] .intent-icon { stroke: #c7ccd4; filter: drop-shadow(0 0 1px #0d0d0f) drop-shadow(0 0 1px #0d0d0f); }
+.intent[data-damage-class='magic'] .intent-icon { stroke: #4f63e6; filter: drop-shadow(0 0 1px #8a3fd6) drop-shadow(0 0 1px #8a3fd6); }
+.intent[data-damage-class='physical'] .intent-icon[data-solid='true'] { fill: #c7ccd4; stroke: #0d0d0f; stroke-width: 1.5; filter: none; }
+.intent[data-damage-class='magic'] .intent-icon[data-solid='true'] { fill: #4f63e6; stroke: #8a3fd6; stroke-width: 1.5; filter: none; }
 .combatant-leading .intent[data-intent-visibility='partial'] { --intent-accent: #e7c65c; }
 .combatant-leading .intent[data-intent-visibility='unknown'] { --intent-accent: #c88aeb; color: var(--intent-accent); }
 .combatant-leading .intent[data-intent-visibility='unknown'] .intent-stance { font-size: calc(28px / var(--ui-zoom, 1)); }
