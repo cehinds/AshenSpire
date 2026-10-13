@@ -1,0 +1,23 @@
+/* Layout Studio · Book recipes render page (served by the game server). */
+html, body { margin: 0; background: #14161b; color: #e7eaf0; font: 13px/1.4 system-ui, sans-serif; }
+body.book-render { min-height: 100vh; }
+#stage { padding: 14px 16px 24px; box-sizing: border-box; }
+.bkr-note { color: #9aa1ad; }
+.bkr { display: grid; gap: 14px; justify-items: center; }
+.bkr-stage { width: min(300px, 70vw); aspect-ratio: 1 / 1; }
+.bkr-stage .book-art, .bkr-size .book-art, .bkr-book .book-art, .bkr-choice .book-art { width: 100%; height: 100%; display: block; }
+.bkr-sizes { display: flex; gap: 18px; align-items: flex-end; justify-content: center; flex-wrap: wrap; }
+.bkr-size { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.bkr-size figcaption { font-size: 11px; color: #9aa1ad; }
+.bkr-group { width: 100%; box-sizing: border-box; }
+.bkr-group h3 { margin: 4px 0 6px; font-size: 12px; font-weight: 600; color: #9aa1ad; text-transform: uppercase; letter-spacing: 0.04em; }
+.bkr-choices { display: flex; flex-wrap: wrap; gap: 6px; }
+.bkr-shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 6px; }
+.bkr-choice, .bkr-book {
+  display: inline-flex; flex-direction: column; align-items: center; gap: 4px; padding: 5px; border-radius: 8px;
+  border: 1px solid transparent; background: transparent; color: inherit; font: inherit; font-size: 11px; cursor: pointer;
+}
+.bkr-choice > .book-art { width: 64px; height: 64px; }
+.bkr-book > .book-art { width: 56px; height: 56px; }
+.bkr-choice[aria-pressed="true"], .bkr-book[aria-selected="true"] { border-color: #7aa7ff; background: rgba(122, 167, 255, 0.14); }
+.bkr-choice:focus-visible, .bkr-book:focus-visible { outline: 2px solid #7aa7ff; outline-offset: 2px; }

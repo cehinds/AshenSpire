@@ -216,6 +216,7 @@ export const statuses = [
   },
   {
     id: 'crimsonBlight',
+    fluxPerTurn: 1,
     tint: 'var(--rot)',
     name: 'Crimson Blight',
     icon: '❀',
@@ -236,12 +237,39 @@ export const statuses = [
     tooltip:
       'At the start of its turn, loses HP equal to Blight stacks (ignores Block). Stacks do not tick down; the Blight expires entirely after 3 turns. Re-applying adds stacks and refreshes the duration.',
   },
+  // Necrotic damage's own Blight (SPEC §4.7; owner, 2026-10-12 #4): the same
+  // per-turn HP loss as Crimson Blight, but it lasts the whole fight. Only
+  // Necrotic damage applies it; every other Blight keeps the 3-turn row above.
+  // Cleanses (combatMatchups cleanseStatuses) still remove it.
+  {
+    id: 'necroticBlight',
+    tint: 'var(--rot)',
+    name: 'Necrotic Blight',
+    icon: '❀',
+    stackMode: 'add',
+    decay: 'none',
+    hooks: [
+      {
+        on: 'ownerTurnStart',
+        do: [
+          {
+            op: 'loseHp',
+            target: 'owner',
+            amount: { f: 'stacks', status: 'necroticBlight', of: 'owner' },
+          },
+        ],
+      },
+    ],
+    tooltip:
+      'At the start of its turn, loses HP equal to Necrotic Blight stacks (ignores Block). Applied by Necrotic damage. Stacks do not tick down and it lasts the whole fight; only a cleanse removes it.',
+  },
   // Burn and Regen exist for equipment to point at: a torch has to be able to
   // set something alight, and a warm habit has to be able to give a little
   // back. Both are ordinary content statuses — nothing in the engine knows
   // they are the ones armaments reach for (content/source/equipMods.csv does).
   {
     id: 'burn',
+    fluxPerTurn: 1,
     tint: 'var(--ember)',
     name: 'Burn',
     icon: '🔥',
@@ -721,7 +749,7 @@ export const statuses = [
     hooks: [
       {
         on: 'statusApplied',
-        if: { p: 'all', preds: [{ p: 'eventStatusIs', status: 'crimsonBlight' }, { p: 'eventSourceIsOwner' }] },
+        if: { p: 'all', preds: [{ p: 'any', preds: [{ p: 'eventStatusIs', status: 'crimsonBlight' }, { p: 'eventStatusIs', status: 'necroticBlight' }] }, { p: 'eventSourceIsOwner' }] },
         do: [
           {
             op: 'heal',
@@ -731,7 +759,7 @@ export const statuses = [
         ],
       },
     ],
-    tooltip: 'Whenever you apply Crimson Blight to an enemy, heal 1 HP per stack.',
+    tooltip: 'Whenever you apply Blight (Crimson or Necrotic) to an enemy, heal 1 HP per stack.',
   },
   {
     // Blood Unction flask: this turn, attacks apply +2 Bleed per hit
@@ -854,6 +882,41 @@ export const statuses = [
     instancePresentation: { valueToken: 'percent', durationToken: 'turns' },
     schoolDamageVulnerability: { school: 'magic' },
     tooltip: 'Magic-school HP damage is increased while this lasts.',
+  },
+  {
+    // Fight-long marker for the Oath rule (oathKept): set when its owner
+    // enters a stance, it never decays, so Oath stays broken for the fight.
+    id: 'stanceShifted',
+    name: 'Stance Shifted',
+    icon: '⇄',
+    stackMode: 'unique',
+    decay: 'none',
+    tooltip: 'You have entered a stance this fight: Oath cards no longer grant Block.',
+  },
+  {
+    // Psychic family (design elements-and-tag-mechanics §2.1). Spell-camp
+    // damage only; physical moves are untouched.
+    id: 'silenced',
+    name: 'Silenced',
+    icon: '◌',
+    tint: '#8b7cd6',
+    stackMode: 'refresh',
+    decay: { duration: 2 }, // PROVISIONAL
+    modifiers: { spellDamageDealtMult: 0.5 },
+    tooltip: 'Spell-camp moves deal 50% less damage for 2 turns.',
+  },
+  {
+    // Earth family (design elements-and-tag-mechanics 2.2). Applied by the
+    // Stoneskin card. Ticks down at the owner's turn end, so two ticks carry its
+    // Block through exactly one turn start.
+    id: 'stoneskin',
+    name: 'Stoneskin',
+    icon: '◆',
+    tint: '#8a7b5c',
+    stackMode: 'unique',
+    decay: { duration: 2 }, // PROVISIONAL
+    modifiers: { retainBlock: true },
+    tooltip: 'Your Block is not removed at the start of your next turn.',
   },
   ...expansionStatuses,
 ];

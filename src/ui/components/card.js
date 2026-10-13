@@ -23,14 +23,16 @@ import { balance } from '../../content/balance.js';
 import { flasks } from '../../content/flasks.js';
 import { tagService } from '../../model/tagService.js';
 import { metadataFooter, artworkAnchor } from '../models/IdentityModel.js';
-import { defaultCardArtFallbacks } from '../cardArtwork.js';
+import { cardArtFallbacks } from '../cardArtwork.js';
+import { markArtPlaceholder } from '../artFallback.js';
+import { registerCardArtRefresh } from '../cardArtStyle.js';
 import { assetUrl } from '../assetmap.js';
 import { t } from '../strings.js';
 import { loreLine } from './loreLine.js';
 import { cardChoice } from '../../model/cardChoices.js';
 import { engravedIconHtml, engravedGlyphId } from './engravedIcon.js';
 import { equipmentCardArt } from '../assets.js';
-import { combatProfileFor, combatProfileTags } from '../../model/combatCardProfile.js';
+import { combatProfileFor, combatProfileTags, numberedTraitRow, traitLine } from '../../model/combatCardProfile.js';
 import { ashenBlightCardLabel } from './ashenBlight.js';
 import { ACTION_SIGILS, SCHOOL_SIGILS, cardSigilIdentity } from '../../content/combatSigils.js';
 import { compactCardRules, sigilExplanationHtml } from './combatSigilView.js';
@@ -135,11 +137,12 @@ function fillTemplate(def, tokens, baseTokens, damageSequences = []) {
  *   opts — { preview?    (previewCard result → live numbers),
  *            affordable? (bool; greys out when false),
  *            small?      (scale for reward/pile grids),
- *            tooltip?    (false suppresses the shared hover/focus tooltip) }
+ *            tooltip?    (false suppresses the shared hover/focus tooltip),
+ *            definition? (an already projected definition, e.g. the run's trait projection) }
  */
 export function renderCard(registries, ref, opts = {}) {
   configureTooltipGlossary(registries);
-  const def = opts.preview?.resolvedDefinition || resolveCard(registries, ref);
+  const def = opts.preview?.resolvedDefinition || opts.definition || resolveCard(registries, ref);
   // ONE PROJECTION, READ ONCE. Everything this function used to derive on its
   // way to innerHTML — the tag junction, the cost profile, the type row, the
   // class tint — is `model` now (src/model/playingCard.js). Drawing is what is
@@ -154,10 +157,12 @@ export function renderCard(registries, ref, opts = {}) {
     subtype: combatProfile.camp === 'spell' ? 'Spell' : 'Martial' } } : {}),
     ...(expanded ? { faceType: combatCardType(def) } : {}),
     tags: [...rawModel.tags, ...combatTags.filter(tag => !rawModel.tags.some(existing => existing.id === tag.id))] };
-  model.sideTags = cardSideTags(model, def, registries);
+  model.sideTags = cardSideTags(model, def, registries, opts.preview || null);
   // Authored clauses carry family limits and charge/payment constraints that
   // the generic effect summary cannot express. Keep those complete on the face.
   const faceSummary = expanded ? combatCardSummary(def, opts.preview, registries) : null;
+  // Reaction rules v2 cards carry traitValues; the face names them first.
+  const traitRule = traitLine(def.traitValues);
   const fallbackDamageLabel = expanded && !faceSummary
     && (def.effects?.some(effect => effect.op === 'damage') || def.counterPayload?.hp)
     ? combatCardDamageLabel(def, opts.preview, registries) : '';
@@ -267,19 +272,21 @@ export function renderCard(registries, ref, opts = {}) {
   });
   let drawn = levelNow();
   const paint = (at) => {
-    const artwork = illustratedArtwork(ref, model.id, {large:at==='inspect',equipmentArt:equipmentPainting});
+    const artwork = illustratedArtwork(ref, model.id, {large:at==='inspect',equipmentArt:equipmentPainting,
+      definition:def,registries});
     const kept = el.children?[...el.children].filter(node=>node?.dataset?.cardPainted!=='1'):[];
     const authoredRules = def.weightClassPriced
       ? fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences).replace(/ Light:.*$/,'')+' Cost reflects your current weight.'
       : fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences);
     el.innerHTML = illustratedCardHtml(model,{
       // The printed price is live; the full weight table stays in Information.
-      rules: compactCardRules(faceSummary ? esc(faceSummary)
-        : `${fallbackDamageLabel ? `${esc(fallbackDamageLabel)}: ` : ''}${authoredRules}`),
+      rules: compactCardRules(`${traitRule ? `${esc(traitRule)} ` : ''}${faceSummary ? esc(faceSummary)
+        : `${fallbackDamageLabel ? `${esc(fallbackDamageLabel)}: ` : ''}${authoredRules}`}`),
       painting:artwork?.path,
       equipmentArtwork:artwork?.equipment,
       artworkKind:artwork?.kind,
       artworkPosition:artwork?.position,
+      artworkComposition:artwork,
       glyph:engravedIconHtml(engravedGlyphId(model.icon))||esc(model.icon),
     });
     applyCardAppearance(el.querySelector('.illustrated-card-face'));
@@ -294,12 +301,25 @@ export function renderCard(registries, ref, opts = {}) {
     const image = el.querySelector?.('.playing-card-art');
     if(image){
       image.dataset.cardArt = artwork?.kind || 'illustrated';
-      const fallbacks = defaultCardArtFallbacks(ref).filter(path=>path!==artwork?.path);
-      image.addEventListener('error',()=>{const next=fallbacks.shift();if(next){image.dataset.cardArt='outline';image.style.objectFit='contain';image.style.objectPosition='center';image.src=assetUrl(next);}});
+      const fallbacks = cardArtFallbacks(ref, artwork, {large:at==='inspect',
+        legacy:artwork?.kind==='simple'?illustratedArtwork(ref,model.id,{large:at==='inspect',equipmentArt:equipmentPainting,style:'Legacy'}):null});
+      image.addEventListener('error',()=>{
+        markArtPlaceholder(el, () => paint(drawn));
+        const next=fallbacks.shift();
+        if(next){
+          image.parentNode?.querySelectorAll('[data-card-art-layers]').forEach(node=>node.remove());
+          image.dataset.cardArt=next.kind;
+          image.style.filter='';
+          image.style.objectFit=next.fit||(next.extended?'cover':'contain');
+          image.style.objectPosition=next.position||'center';
+          image.src=assetUrl(next.path);
+        }
+      });
     }
 
   };
   paint(drawn);
+  registerCardArtRefresh(el, () => paint(drawn));
 
   // #61 M5: a matched tag-scoped vulnerability lights the card's boosted
   // number in the status row's own tint — "these cards just lit up" instead
@@ -628,7 +648,7 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
   }
   const service = tagService(registries);
   const tags = def.cardTags != null ? service.resolve(def.cardTags) : service.tagsOf('card', def);
-  for (const tag of tags) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(tag.blurb)}">${esc(tag.label)}</span>`);
+  for (const tag of tags) { const row = numberedTraitRow(tag, def.traitValues); lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(row.blurb)}">${esc(row.label)}</span>`); }
   for (const tag of combatProfileTags(combatProfile, registries).filter(tag => !tags.some(existing => existing.id === tag.id))) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(tag.blurb)}">${esc(tag.label)}</span>`);
   if (lines.length) html += `<div class="inspection-tags">${[...new Set(lines)].join('')}</div>`;
   return html;

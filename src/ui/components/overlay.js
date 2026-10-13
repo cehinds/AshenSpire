@@ -18,10 +18,12 @@ import { closeFlaskActionMenu } from './flask.js';
 import { topVeil } from './veil.js';
 import { menuOverlayModel } from '../models/MenuModels.js';
 import { renderMenuOverlay, updateMenuSelection } from './menuComponents.js';
+import { registerModal } from '../modalState.js';
 
 let openVeil = null;
 let escHandler = null;
 let overlayCleanup = [];
+let unregisterOverlay = null;
 
 // ---- the panels: ONE name per tab, not two (#78) ---------------------------
 //
@@ -98,6 +100,8 @@ export function hybridStatsPlan(ctx) {
 // its own element, which is how closeOverlay() knows what to remove.
 
 export function closeOverlay() {
+  unregisterOverlay?.();
+  unregisterOverlay = null;
   if (openVeil) {
     openVeil.remove();
     openVeil = null;
@@ -137,6 +141,7 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
   const { veil, body } = renderMenuOverlay(model);
   document.body.appendChild(veil);
   openVeil = veil;
+  unregisterOverlay = registerModal('overlay', veil);
   let currentTab = null;
 
   // ONE bag, built once, handed to whichever panel the tab names. Everything a

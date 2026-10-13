@@ -1,4 +1,5 @@
 import { tableData } from './tables.mjs';
+import { keyScopeFor } from '../workbench/modules/data/model.mjs';
 export { parseCSV, stringifyCSV, tableData } from './tables.mjs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -39,10 +40,13 @@ export function validateText(name, text) {
   if (/\.(csv|json)$/.test(name)) {
     const table = tableData(name, text);
     if (table.rows && table.columns.includes('id')) {
+      // The same scope the Data Studio grid uses (workbench KEY_SCOPES): only the listed tables repeat an id within a scope column.
+      const scope = keyScopeFor(name);
       const seen = new Set();
       for (const row of table.rows) {
-        if (typeof row.id !== 'string' || !row.id.trim() || seen.has(row.id)) throw Error(`Missing or duplicate id: ${row.id}`);
-        seen.add(row.id);
+        const tuple = JSON.stringify([scope ? String(row[scope] ?? '') : '', row.id]);
+        if (typeof row.id !== 'string' || !row.id.trim() || seen.has(tuple)) throw Error(`Missing or duplicate id: ${row.id}`);
+        seen.add(tuple);
       }
     }
   }

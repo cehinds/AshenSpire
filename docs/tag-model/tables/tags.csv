@@ -168,8 +168,8 @@ meta.combat.skill.armor-skill.medium,armor-skill.medium,Medium,meta.combat.skill
 meta.combat.skill.armor-skill.heavy,armor-skill.heavy,Heavy,meta.combat.skill.armor-skill,Skill,,,,,,,,game-concept,,,
 meta.combat.technique,technique,Technique,meta.combat,Skill,,Conditions for explicit technique bonuses.,,,,,,live-tag,,,technique
 meta.combat.technique.heavy,technique.heavy,Heavy,meta.combat.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,◇,9FC3E8,technique:heavy
-meta.combat.technique.precision,technique.precision,Precision,meta.combat.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,◇,9FC3E8,technique:precision
-meta.combat.technique.pierce,technique.pierce,Pierce,meta.combat.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,†,9FC3E8,pierce
+meta.combat.technique.precision,technique.precision,Precision,meta.combat.technique,Skill,,"Moved: re-homed in the proposal (tag-tree.txt [m]). Each stack adds +1 Accuracy (DECISIONS section 16, owner 2026-10-13); not a Piercing bypass (section 17).",,,,,,live-tag,◇,9FC3E8,technique:precision
+meta.combat.technique.pierce,technique.pierce,Pierce,meta.combat.technique,Skill,,"Moved: re-homed in the proposal (tag-tree.txt [m]). Piercing stacks reduce Block and Poise (physical) or Barrier and Ward (magical) by 2 per stack (DECISIONS section 17, owner 2026-10-13).",,,,,,live-tag,†,9FC3E8,pierce
 meta.combat.technique.cleave,technique.cleave,Cleave,meta.combat.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,◇,9FC3E8,technique:cleave
 meta.combat.technique.flourish,technique.flourish,Flourish,meta.combat.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,◇,9FC3E8,technique:flourish
 meta.combat.technique.guile,technique.guile,Guile,meta.combat.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]). rogue trickery,,,,,,live-tag,◇,647B73,guile
@@ -186,7 +186,7 @@ meta.combat.skill.spellcraft.fire.gorefire,fire.gorefire,Gorefire,meta.combat.sk
 meta.combat.skill.spellcraft.fire.ash,fire.ash,Ash,meta.combat.skill.spellcraft.fire,Skill,spellcraft.fire,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,•,7A6F5A,ash
 meta.combat.skill.spellcraft.frost,spellcraft.frost,Frost,meta.combat.skill.spellcraft,Skill,spellcraft.frost,,,,,,,live-tag,❄,A6D8EF,school:frost
 meta.combat.skill.spellcraft.lightning,spellcraft.lightning,Lightning,meta.combat.skill.spellcraft,Skill,spellcraft.lightning,,,,,,,live-tag,ϟ,E8D46A,school:lightning
-meta.combat.skill.spellcraft.earth,spellcraft.earth,Earth,meta.combat.skill.spellcraft,Skill,spellcraft.earth,,,,,,,game-concept,,,
+meta.combat.skill.spellcraft.earth,spellcraft.earth,Earth,meta.combat.skill.spellcraft,Skill,spellcraft.earth,,,,,,,live-tag,⛰,8A7B5C,school:earth
 meta.combat.skill.spellcraft.force,spellcraft.force,Force,meta.combat.skill.spellcraft,Skill,spellcraft.force,,,,,,,live-tag,✦,B99DEC,school:force
 meta.combat.skill.spellcraft.force.starstone,force.starstone,Starstone,meta.combat.skill.spellcraft.force,Skill,spellcraft.force,Moved: re-homed in the proposal (tag-tree.txt [m]). astral force,,,,,astral,live-tag,✦,7FA8C9,starstone
 meta.combat.skill.spellcraft.divine,spellcraft.divine,Divine,meta.combat.skill.spellcraft,Skill,spellcraft.divine,,,,,,,live-tag,✚,F0D99A,school:divine
@@ -201,15 +201,16 @@ meta.combat.damage,damage,Damage,meta.combat,DamageType,,,,,,,,live-tag,,,damage
 meta.combat.damage.physical,damage.physical,Physical,meta.combat.damage,DamageType,,,,,,,,live-tag,,,damage.physical
 meta.combat.damage.physical.slashing,slashing,Slashing,meta.combat.damage.physical,DamageType,,→ Bleeding,On Health hit: apply [bleeding],,,,weapon-blade,live-tag,◇,9FC3E8,damage:slashing
 meta.combat.damage.physical.blunt,physical.blunt,Blunt,meta.combat.damage.physical,DamageType,,→ Poise damage,+2 Poise damage,,,,weapon-blunt,live-tag,◇,9FC3E8,damage:blunt
-meta.combat.damage.physical.pierce,physical.pierce,Pierce,meta.combat.damage.physical,DamageType,,ignores Guard,Ignores 2 Guard; slips past melee Counter,,,,weapon-piercing,live-tag,◇,9FC3E8,damage:piercing
+meta.combat.damage.physical.pierce,physical.pierce,Pierce,meta.combat.damage.physical,DamageType,,"ignores Guard. Each stack reduces Block and Poise by 2 (DECISIONS section 17, owner 2026-10-13).",Ignores 2 Guard; slips past melee Counter,,,,weapon-piercing,live-tag,◇,9FC3E8,damage:piercing
 meta.combat.damage.magic,damage.magic,Magic,meta.combat.damage,DamageType,,,,,,,,live-tag,,,damage.magic
 meta.combat.damage.magic.fire,magic.fire,Fire,meta.combat.damage.magic,DamageType,spellcraft.fire,→ Burned,On hit: apply [burned],burned,,,,live-tag,◇,9FC3E8,damage:fire
 meta.combat.damage.magic.frost,magic.frost,Frost,meta.combat.damage.magic,DamageType,spellcraft.frost,→ Frostbitten,On hit: apply [build-up.frost],,,,,live-tag,◇,9FC3E8,damage:frost
 meta.combat.damage.magic.lightning,magic.lightning,Lightning,meta.combat.damage.magic,DamageType,spellcraft.lightning,→ Paralyzed,On hit: apply [paralyzed]; breaks an ungrounded Counter,,,,,live-tag,◇,9FC3E8,damage:lightning
-meta.combat.damage.magic.earth,magic.earth,Earth,meta.combat.damage.magic,DamageType,spellcraft.earth,,,,,,,game-concept,,,
+meta.combat.damage.magic.earth,magic.earth,Earth,meta.combat.damage.magic,DamageType,spellcraft.earth,Applies 1 Slowed on a Health hit,On hit: apply [slowed],,,,,live-tag,◇,9FC3E8,damage:earth
 meta.combat.damage.magic.divine,magic.divine,Divine,meta.combat.damage.magic,DamageType,spellcraft.divine,cleanses,On hit: cleanse one debuff from the attacker,,,,,live-tag,◇,9FC3E8,damage:sacred
 meta.combat.damage.magic.necrotic,magic.necrotic,Necrotic,meta.combat.damage.magic,DamageType,spellcraft.necrotic,→ Blighted,On hit: apply [blighted],,,,,live-tag,◇,9FC3E8,damage:decay
-meta.combat.damage.magic.psychic,magic.psychic,Psychic,meta.combat.damage.magic,DamageType,spellcraft.psychic,→ Confused,On hit: apply [confused],,,,,new,,,
+meta.combat.damage.magic.psychic,magic.psychic,Psychic,meta.combat.damage.magic,DamageType,spellcraft.psychic,→ Confused,On hit: apply [confused],,,,,live-tag,◇,9FC3E8,damage:psychic
+meta.combat.damage.magic.poison,poison,Poison,meta.combat.damage.magic,DamageType,,→ Venom,On hit: apply [poisoned],,,,,live-tag,◇,9FC3E8,damage:poison
 meta.combat.damage.hybrid,hybrid,Hybrid,meta.combat.damage,DamageType,,Arcane damage. Builds Arcane Exposure on enemies that track it.,,,,,,live-tag,,,damage.arcane
 meta.combat.damage.hybrid.force,hybrid.force,Force,meta.combat.damage.hybrid,DamageType,spellcraft.force,Block or Barrier stops it,Drains 2 [defensive-stats.ward]; slips past melee Counter,,,,,live-tag,◇,9FC3E8,damage:arcane
 meta.combat.stance,combat.stance,Stance,meta.combat,Stance,,,,,,,,live-tag,,,maneuver
@@ -234,7 +235,7 @@ meta.combat.stance.defensive.block.guard,block.guard,Guard,meta.combat.stance.de
 meta.combat.stance.defensive.block.shield,block.shield,Shield,meta.combat.stance.defensive.block,Stance,,"Shieldwall, Shield Guard, Shield Bastion, Set the Shield",,,,,,game-concept,,,
 meta.combat.stance.defensive.block.ward,block.ward,Ward,meta.combat.stance.defensive.block,Stance,,"Starstone Ward, Vesper Ward, Blightward, Frost Veil, Crystal Barrier",,,,,,game-concept,,,
 meta.combat.stance.defensive.block.endure,endure,Endure,meta.combat.stance.defensive.block,Stance,,"Last Stand, Iron Resolve, Unbreakable, Iron Vow, Penance",,,,,,game-concept,,,
-meta.combat.stance.defensive.evade,evade,Evade,meta.combat.stance.defensive,Stance,,"about 15 cards, tagged Defend today",Avoid the next hit on a successful roll,,,,,game-concept,,,
+meta.combat.stance.defensive.evade,evade,Evade,meta.combat.stance.defensive,Stance,,"about 15 cards, tagged Defend today. Efficacy scales by armour weight class (DECISIONS.md section 15)",Avoid the next hit on a successful roll,,,,,game-concept,,,
 meta.combat.stance.defensive.evade.dodge,evade.dodge,Dodge,meta.combat.stance.defensive.evade,Stance,,"Dodge Roll, Evasive Guard, Backstep, Quickstep, Acrobatics",,,,,,game-concept,,,
 meta.combat.stance.defensive.evade.vanish,vanish,Vanish,meta.combat.stance.defensive.evade,Stance,,"Shadowstep, Vanish, Nightstep, Misdirect",,,,,,game-concept,,,
 meta.combat.stance.defensive.evade.obscure,obscure,Obscure,meta.combat.stance.defensive.evade,Stance,,"Smoke Bomb, Smoke Pellet, Smoke Veil, Pocket Sand",,,,,,game-concept,,,
@@ -502,6 +503,7 @@ property.howlingStandard,howlingStandard,Howling Standard,property,TagNode,,What
 property.emberwickCharm,emberwickCharm,Emberwick Charm,property,TagNode,,What Emberwick Charm does when the fight gives it its moment. Effects in nodeEffects.json: triggers on hpLost; ops gainEnergy.,,,,,,live-tag,🕯,9A9A9A,emberwickCharm
 property.carrionMorsel,carrionMorsel,Carrion Morsel,property,TagNode,,What Carrion Morsel does when the fight gives it its moment. Effects in nodeEffects.json: triggers on enemyDied; ops heal.,,,,,,live-tag,🍖,9A9A9A,carrionMorsel
 property.gravetendersBell,gravetendersBell,Gravetender's Bell,property,TagNode,,What Gravetender's Bell does when the fight gives it its moment. Effects in nodeEffects.json: triggers on enemyDied; ops draw.,,,,,,live-tag,🔔,6E9C6E,gravetendersBell
+property.oathKept,oathKept,Oath Kept,property,TagNode,,"While you have not entered a stance this fight, each Oath card you play grants Block. Every class card carries it; entering a stance breaks it for the rest of the fight.",,,,,,live-tag,✚,C9A227,oathKept
 property.sentinelsOath,sentinelsOath,Sentinel's Oath,property,TagNode,,What Sentinel's Oath does when the fight gives it its moment. Effects in nodeEffects.json: triggers on cardPlayed; ops applyStatus.,,,,,,live-tag,🛡,6E9C6E,sentinelsOath
 property.forsakenWarflag,forsakenWarflag,Forsaken Warflag,property,TagNode,,What Forsaken Warflag does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart; ops applyStatus.,,,,,,live-tag,🏴,B08CC9,forsakenWarflag
 property.wrathCoil,wrathCoil,Wrath Coil,property,TagNode,,What Wrath Coil does when the fight gives it its moment. Effects in nodeEffects.json: triggers on hpLost; ops damage.,,,,,,live-tag,⚡,B08CC9,wrathCoil
@@ -739,7 +741,7 @@ grantSource.weapon,grantSource.weapon,Weapon,grantSource,TagNode,,Bound to an ar
 grantSource.class,grantSource.class,Class,grantSource,TagNode,,The class signature card.,,,,,,live-tag,✦,9FC3E8,from:class
 meta.combat.damage.physical.weapon-blade,weapon-blade,blade,meta.combat.damage.physical,DamageType,,Damage dealt with an edge.,,,,,slashing,live-tag,,,damage.blade
 meta.combat.damage.physical.weapon-blunt,weapon-blunt,blunt,meta.combat.damage.physical,DamageType,,Damage dealt with mass and impact.,,,,,physical.blunt,live-tag,,,damage.blunt
-meta.combat.damage.physical.weapon-piercing,weapon-piercing,piercing,meta.combat.damage.physical,DamageType,,Damage dealt with a point.,,,,,physical.pierce,live-tag,,,damage.piercing
+meta.combat.damage.physical.weapon-piercing,weapon-piercing,piercing,meta.combat.damage.physical,DamageType,,Damage dealt with a point. Piercing rules: DECISIONS section 17 (owner 2026-10-13).,,,,,physical.pierce,live-tag,,,damage.piercing
 damageType,damageType,Damage type,,TagNode,,Identity of a typed HP damage component.,,,,,,live-tag,,,damageType
 run,run,Run,,TagNode,,"Run structure — what an event, an encounter or an unlock is about.",,,,,,live-tag,,,run
 internal,internal,internal,,TagNode,,,,,,,,live-tag,,,internal
@@ -747,14 +749,18 @@ card.flourish,card.flourish,Flourish,card,Card,,Finesse — footwork and multi-h
 card.heavy,card.heavy,Heavy,card,Card,,"Slow, committed, and hard to stop.",,,,,,live-tag,◆,C9A227,heavy
 card.basic,basic,Basic,card,Card,,Everybody's — on the shelf without being found.,,,,,,live-tag,○,7A6F5A,basic
 card.ranged,card.ranged,Ranged,card,Card,,Authored ranged presentation; no position system.,,,,,,live-tag,➶,7FA8C9,ranged
-card.precision,card.precision,Precision,card,Card,,Deliberate aim and finesse; presentation only.,,,,,,live-tag,◎,C9A227,precision
+card.precision,card.precision,Precision,card,Card,,"Deliberate aim and finesse. Each stack adds +1 Accuracy; no longer presentation only (DECISIONS section 16, owner 2026-10-13).",,,,,,live-tag,◎,C9A227,precision
 card.extractable,extractable,Extractable,card,Card,,"A smith can lift this card out of the item that lends it, and seat it in another item's mount. Strikes and defends do not carry it — today.",,,,,,live-tag,⚙,C9A227,extractable
 trait,trait,Combat traits,,TagNode,,,,,,,,live-tag,,,trait
 trait.adequateReach,adequateReach,Adequatereach,trait,TagNode,,Combat trait for adequate reach. Read in src/engine/combatAvoidance.js:67: a ranged-stance defender cannot avoid it by distance.,,,,,,live-tag,◇,9FC3E8,trait:adequateReach
 trait.closing,closing,Closing,trait,TagNode,,Combat trait for closing in. Read in src/engine/combatAvoidance.js:67: a ranged-stance defender cannot avoid it by distance.,,,,,,live-tag,◇,9FC3E8,trait:closing
 trait.conductive,conductive,Conductive,trait,TagNode,,"Combat trait that lightning is strong against (src/content/combatMatchups.js, lightning strongTraits).",,,,,,live-tag,◇,9FC3E8,trait:conductive
+trait.counterstrike,counterstrike,Counterstrike,trait,TagNode,,+50% effectiveness; +75% when the player's stance has advantage over the target's.,,,,,,live-tag,◇,9FC3E8,trait:counterstrike
+trait.flux,flux,Flux,trait,TagNode,,"On hit: N Ward damage, or double the Ward damage the card already deals.",,,,,,live-tag,◇,9FC3E8,trait:flux
+trait.impact,impact,Impact,trait,TagNode,,"On hit: N Poise damage, or double the Poise damage the card already deals.",,,,,,live-tag,◇,9FC3E8,trait:impact
 trait.mental,mental,Mental,trait,TagNode,,Combat trait named mental. Read in src/content/combatMatchups.js:87: Force is weak against it. 'mental' is also a recovery profile in src/model/combatStatusState.js.,,,,,,live-tag,◇,9FC3E8,trait:mental
 trait.projectile,trait.projectile,Projectile,trait,TagNode,,Combat trait for projectile attacks. The projectile delivery (delivery:projectile) is read in src/model/attackTags.js. This trait is read in src/content/combatMatchups.js:87: Force is strong against it.,,,,,,live-tag,◇,9FC3E8,trait:projectile
+trait.reaction,reaction,Reaction,trait,TagNode,,"Playable from hand during the opponent's turn, before the pending action resolves.",,,,,,live-tag,◇,9FC3E8,trait:reaction
 trait.reveal,reveal,Reveal,trait,TagNode,,Combat trait for reveal. Read in src/content/combatMatchups.js:89: Illusion is weak against it.,,,,,,live-tag,◇,9FC3E8,trait:reveal
 trait.shattering,shattering,Shattering,trait,TagNode,,"Combat trait that frost is weak against (src/content/combatMatchups.js, frost weakTraits).",,,,,,live-tag,◇,9FC3E8,trait:shattering
 trait.unavoidable,unavoidable,Unavoidable,trait,TagNode,,Combat trait for unavoidable attacks. Read in src/engine/combatAvoidance.js:52 (no evade roll) and :68 (no distance avoidance).,,,,,,live-tag,◇,9FC3E8,trait:unavoidable

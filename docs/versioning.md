@@ -293,7 +293,7 @@ hold both editions.
 |---|---|---|
 | pull request into `dev`, push to `dev` | the gates that read a bundle (`verify-shipped`, `buildversion --check`, the bundler parse gate, the tests that open the HTML) must see one, and a reviewer plays the PR's own build | `dev-standalone-<commit>`, 14 days (today's `dev-preview.yml` retention) |
 | **push to `test`** | the owner's request: the playtest build QA receives on each `dev → test` promotion | `test-standalone-<commit>`, 30 days |
-| push to `release`, push to `main` | Pages publishes those sections, and the release gate (`ci.yml` on push to `release`) reads a build | `<branch>-standalone-<commit>`, 90 days (GitHub's maximum) |
+| push to `release`, push to `main` | Pages publishes those sections (a push to `release` publishes the site, owner, 2026-10-11, once the `github-pages` environment admits `release`), and the release gate (`ci.yml` on push to `release`) reads a build | `<branch>-standalone-<commit>`, 90 days (GitHub's maximum) |
 
 A check that used to read a committed build now builds on demand in the same
 job, or downloads the artifact of the same commit. **A missing build is a
@@ -308,7 +308,7 @@ artifact through the Actions API (`actions: read`), instead of from git
 history; for a commit before the cutover it keeps reading history, where the
 LFS objects already exist. A commit whose artifact has expired is left out
 and the branch's index says so, rather than being skipped in silence. The
-publication rules in the header of `pages-builds.yml` do not change.
+publication rules in the header of `pages-builds.yml` are the ones that say so: a push to `dev` or `release` publishes, `test` and `main` do not (main only on the owner's dispatch).
 
 - *Why artifacts, not GitHub Releases.* Release assets never expire and need
   no LFS, but creating a release is owner-only (CONTRIBUTING.md,

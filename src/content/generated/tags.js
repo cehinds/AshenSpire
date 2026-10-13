@@ -583,7 +583,7 @@ export const tags = [
     "domain": "attackSource",
     "label": "Spell",
     "color": "9FC3E8",
-    "glyph": "◇",
+    "glyph": "✧",
     "visibility": "",
     "blurb": "Categorized Spell identity; effects are authored separately."
   },
@@ -702,7 +702,34 @@ export const tags = [
     "color": "9FC3E8",
     "glyph": "◇",
     "visibility": "",
-    "blurb": "Applies 1 Crimson Blight on a Health hit unless the card already prints a Crimson Blight effect."
+    "blurb": "Applies Blight on a Health hit (Crimson in classic combat; Necrotic in expanded combat) unless the card already prints a Crimson Blight effect."
+  },
+  {
+    "id": "damage:poison",
+    "domain": "damageType",
+    "label": "Poison",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "Applies 1 Venom on a Health hit unless the card already prints a Venom effect. Not reduced by armour class; constructs halve its build-up."
+  },
+  {
+    "id": "damage:psychic",
+    "domain": "damageType",
+    "label": "Psychic",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "Applies 1 Confused on a Health hit unless the card already prints a Confused effect. Not reduced by armour class."
+  },
+  {
+    "id": "damage:earth",
+    "domain": "damageType",
+    "label": "Earth",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "Applies 1 Slowed on a Health hit unless the card already prints a Slowed effect. Not reduced by armour class; absorbed by Ward."
   },
   {
     "id": "technique:heavy",
@@ -1369,6 +1396,15 @@ export const tags = [
     "glyph": "✦",
     "visibility": "",
     "blurb": "A class card's leaning: skill XP in the weapon groups the card also names (its item-type tags) is multiplied. Scoped by the carrier's own tags, never by a second table."
+  },
+  {
+    "id": "oathKept",
+    "domain": "property",
+    "label": "Oath Kept",
+    "color": "C9A227",
+    "glyph": "✚",
+    "visibility": "",
+    "blurb": "While you have not entered a stance this fight, each Oath card you play grants Block. Every class card carries it; entering a stance breaks it for the rest of the fight."
   },
   {
     "id": "ashenGrip",
@@ -3463,7 +3499,7 @@ export const tags = [
     "domain": "camp",
     "label": "Spell",
     "color": "9FC3E8",
-    "glyph": "✦",
+    "glyph": "✧",
     "visibility": "",
     "blurb": "Selects physical Guard or magical Ward combat rules."
   },
@@ -3594,6 +3630,15 @@ export const tags = [
     "blurb": "Attrition and offerings: Crimson Blight, life transfer and pay-health combos."
   },
   {
+    "id": "school:earth",
+    "domain": "school",
+    "label": "Earth",
+    "color": "8A7B5C",
+    "glyph": "⛰",
+    "visibility": "",
+    "blurb": "Grounding and weight: Slowed and Entombed slow or stop enemy turns; Stoneskin keeps Block."
+  },
+  {
     "id": "counter:melee",
     "domain": "counterMode",
     "label": "Melee counter",
@@ -3634,7 +3679,7 @@ export const tags = [
     "domain": "maneuver",
     "label": "Spell",
     "color": "9FC3E8",
-    "glyph": "◇",
+    "glyph": "✧",
     "visibility": "",
     "blurb": "A spell stance. Counter coverage depends on school and delivery."
   },
@@ -3711,6 +3756,24 @@ export const tags = [
     "blurb": "Conductive combat interaction."
   },
   {
+    "id": "trait:counterstrike",
+    "domain": "trait",
+    "label": "Counterstrike",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "+50% effectiveness; +75% when the player's stance has advantage over the target's."
+  },
+  {
+    "id": "trait:flux",
+    "domain": "trait",
+    "label": "Flux",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "On hit: N Ward damage, or double the Ward damage the card already deals."
+  },
+  {
     "id": "trait:grounded",
     "domain": "trait",
     "label": "Grounded",
@@ -3718,6 +3781,15 @@ export const tags = [
     "glyph": "◇",
     "visibility": "",
     "blurb": "Grounded combat interaction."
+  },
+  {
+    "id": "trait:impact",
+    "domain": "trait",
+    "label": "Impact",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "On hit: N Poise damage, or double the Poise damage the card already deals."
   },
   {
     "id": "trait:insulated",
@@ -3745,6 +3817,15 @@ export const tags = [
     "glyph": "◇",
     "visibility": "",
     "blurb": "Projectile combat interaction."
+  },
+  {
+    "id": "trait:reaction",
+    "domain": "trait",
+    "label": "Reaction",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "Playable from hand during the opponent's turn, before the pending action resolves."
   },
   {
     "id": "trait:reveal",

@@ -1,0 +1,5 @@
+{
+  "content.cards": "/Script/AshenSpireGame.AshenCardRow",
+  "content.enemies": "/Script/AshenSpireGame.AshenEnemyRow",
+  "content.relics": "/Game/AshenSpire/Structs/S_Relic.S_Relic"
+}

@@ -5,7 +5,8 @@
 // answerReaction() resumes it with the card played (or null). finishRound() settles momentum.
 //
 // The rng and the Map tables (stanceAdvantage, evadeTable) are passed on every call and never
-// stored, so JSON.parse(JSON.stringify(round)) is a complete save at any boundary. The rules are
+// stored. Values a failed call drew from the rng are kept as plain numbers in round.rngReplay, so
+// JSON.parse(JSON.stringify(round)) is still a complete save at any boundary. The rules are
 // the ones createRound() in timeline.js applies; this file only splits the same steps across calls.
 // Headless: no DOM, no storage, no timers, no node: imports.
 import {
@@ -33,16 +34,38 @@ function assertRound(round) {
   }
 }
 
-// The per-call context. The rng and the tables come from the hooks of this call only.
+// The per-call context. The rng and the tables come from the hooks of this call only. A draw takes
+// the round's replay values first (rngReplay, see transact()); only then does it draw from hooks.rng.
+// `fresh` collects the values this call drew from hooks.rng.
 function callContext(round, hooks) {
   assertRound(round);
   if (!hooks || typeof hooks !== 'object') throw new TypeError('hooks must be an object');
   // Checked before any rng draw: the caller's rng is not rolled back on a throw (see atomically()).
   assertRoundOptions(hooks);
+  const fresh = [];
+  const rng = () => {
+    if (round.rngReplay?.length) return round.rngReplay.shift();
+    const value = hooks.rng();
+    fresh.push(value);
+    return value;
+  };
   return {
-    options: { rng: hooks.rng, evadeTable: hooks.evadeTable },
+    fresh,
+    options: { rng, evadeTable: hooks.evadeTable },
     run: { queuedIds: round.queuedIds, pending: round.pending, stanceTable: hooks.stanceAdvantage ?? null },
   };
+}
+
+// Runs fn as atomically() does: a throw puts the round back. atomically() also puts back the replay
+// values this call consumed, so the values it drew fresh from hooks.rng go to the end of the replay.
+// The retry then draws the same values in the same order a clean run would.
+function transact(round, fresh, fn) {
+  try {
+    return atomically(round, fn);
+  } catch (err) {
+    round.rngReplay = [...(round.rngReplay ?? []), ...fresh];
+    throw err;
+  }
 }
 
 // The start events (momentum decay) come out once, with the first call that returns events.
@@ -81,6 +104,7 @@ export function startRound(state, opts = {}) {
     queuedIds: started.run.queuedIds,
     pending: started.run.pending,
     awaiting: null,
+    rngReplay: [],
   };
 }
 
@@ -92,7 +116,7 @@ export function startRound(state, opts = {}) {
 export function stepRound(round, hooks = {}) {
   const ctx = callContext(round, hooks);
   if (round.awaiting) throw new TypeError('the round is waiting for a reaction: call answerReaction() first');
-  return atomically(round, () => {
+  return transact(round, ctx.fresh, () => {
     const events = takeStartEvents(round);
     if (round.settled) return { events, awaitingReaction: null, done: true };
     const entries = round.timeline.entries;
@@ -102,13 +126,15 @@ export function stepRound(round, hooks = {}) {
       if (enterEntry(round.cur, entry, events) === 'attack') {
         const offer = reactionOffer(round.cur, entry, ctx.run);
         if (offer) {
-          const eligible = offer.eligible.map((c) => ({ ...c }));
-          const attack = { ...offer.attack };
+          // Deep copies: the offer must be a snapshot, so a caller editing a returned card's tags
+          // cannot change the paused round or the hand it came from.
+          const eligible = offer.eligible.map((c) => structuredClone(c));
+          const attack = structuredClone(offer.attack);
           round.awaiting = { index, attack, eligible };
           round.idx += 1;
           return {
             events,
-            awaitingReaction: { attack: { ...attack }, eligible: eligible.map((c) => ({ ...c })) },
+            awaitingReaction: { attack: structuredClone(attack), eligible: eligible.map((c) => structuredClone(c)) },
             done: false,
           };
         }
@@ -133,7 +159,7 @@ export function answerReaction(round, cardId, hooks = {}) {
   // Validate every field resolution reads before the pause is cleared, so a bad card throws and the
   // round still waits. atomically() also restores the round if anything after this throws.
   if (chosen) assertReactionCard(chosen);
-  return atomically(round, () => {
+  return transact(round, ctx.fresh, () => {
     const entry = round.timeline.entries[index];
     round.awaiting = null;
     const events = [];

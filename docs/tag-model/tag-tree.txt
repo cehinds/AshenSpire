@@ -185,8 +185,8 @@ Meta
         Alteration [m] {existing school, non-elemental}
     Technique {Conditions for explicit technique bonuses.}
       Heavy [m]
-      Precision [m]
-      Pierce [m]
+      Precision [m] {Each stack adds +1 Accuracy (DECISIONS section 16, owner 2026-10-13); not a Piercing bypass (section 17).}
+      Pierce [m] {Piercing stacks reduce Block and Poise (physical) or Barrier and Ward (magical) by 2 per stack (DECISIONS section 17, owner 2026-10-13).}
       Cleave [m]
       Flourish [m]
       Guile [m] {rogue trickery}
@@ -247,18 +247,19 @@ Meta
       Physical
         Slashing {→ Bleeding}
         Blunt {→ Poise damage}
-        Pierce {ignores Guard}
+        Pierce {ignores Guard. Each stack reduces Block and Poise by 2 (DECISIONS section 17, owner 2026-10-13).}
         blade {Damage dealt with an edge.}
         blunt {Damage dealt with mass and impact.}
-        piercing {Damage dealt with a point.}
+        piercing {Damage dealt with a point. Piercing rules: DECISIONS section 17 (owner 2026-10-13).}
       Magic
         Fire {→ Burned}
         Frost {→ Frostbitten}
         Lightning {→ Paralyzed}
-        Earth
+        Earth {Applies 1 Slowed on a Health hit}
         Divine {cleanses}
         Necrotic {→ Blighted}
-        Psychic [n] {→ Confused}
+        Psychic {→ Confused}
+        Poison {→ Venom}
       Hybrid {Arcane damage. Builds Arcane Exposure on enemies that track it.}
         Force {Block or Barrier stops it}
     Stance
@@ -283,7 +284,7 @@ Meta
           Shield {Shieldwall, Shield Guard, Shield Bastion, Set the Shield}
           Ward {Starstone Ward, Vesper Ward, Blightward, Frost Veil, Crystal Barrier}
           Endure {Last Stand, Iron Resolve, Unbreakable, Iron Vow, Penance}
-        Evade {about 15 cards, tagged Defend today}
+        Evade {about 15 cards, tagged Defend today. Efficacy scales by armour weight class (DECISIONS.md section 15)}
           Dodge {Dodge Roll, Evasive Guard, Backstep, Quickstep, Acrobatics}
           Vanish {Shadowstep, Vanish, Nightstep, Misdirect}
           Obscure {Smoke Bomb, Smoke Pellet, Smoke Veil, Pocket Sand}
@@ -614,7 +615,7 @@ Card
   Heavy {Slow, committed, and hard to stop.}
   Basic {Everybody's — on the shelf without being found.}
   Ranged {Authored ranged presentation; no position system.}
-  Precision {Deliberate aim and finesse; presentation only.}
+  Precision {Deliberate aim and finesse. Each stack adds +1 Accuracy; no longer presentation only (DECISIONS section 16, owner 2026-10-13).}
   Extractable {A smith can lift this card out of the item that lends it, and seat it in another item's mount. Strikes and defends do not carry it — today.}
 classification
   strike
@@ -689,6 +690,7 @@ Property {What a holder CONFERS while it is held. Each property node has exactly
   Emberwick Charm {What Emberwick Charm does when the fight gives it its moment. Effects in nodeEffects.json: triggers on hpLost; ops gainEnergy.}
   Carrion Morsel {What Carrion Morsel does when the fight gives it its moment. Effects in nodeEffects.json: triggers on enemyDied; ops heal.}
   Gravetender's Bell {What Gravetender's Bell does when the fight gives it its moment. Effects in nodeEffects.json: triggers on enemyDied; ops draw.}
+  Oath Kept {While you have not entered a stance this fight, each Oath card you play grants Block. Every class card carries it; entering a stance breaks it for the rest of the fight.}
   Sentinel's Oath {What Sentinel's Oath does when the fight gives it its moment. Effects in nodeEffects.json: triggers on cardPlayed; ops applyStatus.}
   Forsaken Warflag {What Forsaken Warflag does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart; ops applyStatus.}
   Wrath Coil {What Wrath Coil does when the fight gives it its moment. Effects in nodeEffects.json: triggers on hpLost; ops damage.}
@@ -878,8 +880,12 @@ Combat traits
   Adequatereach {Combat trait for adequate reach. Read in src/engine/combatAvoidance.js:67: a ranged-stance defender cannot avoid it by distance.}
   Closing {Combat trait for closing in. Read in src/engine/combatAvoidance.js:67: a ranged-stance defender cannot avoid it by distance.}
   Conductive {Combat trait that lightning is strong against (src/content/combatMatchups.js, lightning strongTraits).}
+  Counterstrike {+50% effectiveness; +75% when the player's stance has advantage over the target's.}
+  Flux {On hit: N Ward damage, or double the Ward damage the card already deals.}
+  Impact {On hit: N Poise damage, or double the Poise damage the card already deals.}
   Mental {Combat trait named mental. Read in src/content/combatMatchups.js:87: Force is weak against it. 'mental' is also a recovery profile in src/model/combatStatusState.js.}
   Projectile {Combat trait for projectile attacks. The projectile delivery (delivery:projectile) is read in src/model/attackTags.js. This trait is read in src/content/combatMatchups.js:87: Force is strong against it.}
+  Reaction {Playable from hand during the opponent's turn, before the pending action resolves.}
   Reveal {Combat trait for reveal. Read in src/content/combatMatchups.js:89: Illusion is weak against it.}
   Shattering {Combat trait that frost is weak against (src/content/combatMatchups.js, frost weakTraits).}
   Unavoidable {Combat trait for unavoidable attacks. Read in src/engine/combatAvoidance.js:52 (no evade roll) and :68 (no distance avoidance).}

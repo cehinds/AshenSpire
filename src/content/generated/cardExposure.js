@@ -641,5 +641,55 @@ export const cardExposure = [
     "cardId": "crawlingShot",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "aspDart",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "viperStrike",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "septicBlade",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "lethalDose",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "mindSpike",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "mindFracture",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  {
+    "cardId": "wakingNightmare",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  {
+    "cardId": "stoneSling",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "rockfall",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  {
+    "cardId": "entomb",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
   }
 ];

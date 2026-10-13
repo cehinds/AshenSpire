@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { allocateCombatBands, minimumHandHeight, packCombatFooter } from '../src/ui/models/CombatLayout.js';
 import { wireframeUi } from '../src/content/wireframeUi.js';
+import { uiConfig } from '../src/config/generated/ui.js';
 import { COMBAT_TOOLS_HEIGHT_PX, handLayout } from '../src/ui/models/HandLayout.js';
 
 const near = (a, b) => Math.abs(a - b) < 1e-6;
@@ -12,7 +13,9 @@ test('compact phones reserve a tool row and distinct smaller resting card slots'
     assert.equal(bands.supported, true);
     assert.ok(bands.battlefield * zoom >= 130);
     const hand = handLayout({width:width/zoom,height:bands.hand-34/zoom,count:5,zoom,rem:16/zoom,compact:true});
-    assert.ok(hand.cardWidth * zoom <= 104);
+    // The authored phone cap (w4a-combat.json compactCombat.cardMaxWidthPx).
+    assert.ok(hand.cardWidth * zoom <= uiConfig.scenes.w4a.sizing.compactCombat.cardMaxWidthPx + 1e-9);
+    assert.ok(hand.cardWidth * zoom >= uiConfig.scenes.w4a.sizing.compactCombat.cardMinWidthPx - 1e-9);
     assert.ok(hand.step * zoom >= 44, 'each card keeps its own finger-sized lane');
     assert.equal(new Set(hand.cards.map(card=>card.x)).size,5);
     assert.ok((hand.top+hand.cardHeight+34/zoom)*zoom <= bands.hand*zoom+.1);

@@ -23,11 +23,13 @@ test('movement spends one action, emits a receipt and survives combat save/resto
   const restored = restoreCombatSnapshot({ registries: combat.registries, rng: createRng(896), snapshot: serializeCombatSnapshot(combat) });
   assert.equal(restored.player.formationCell, 'A1');
 });
-// The player's own cell, read from the plan rather than hard-coded: the shipped
-// grid is two rows, so the preferred last row F clamps to B.
+// The player's own cell, read from the plan rather than hard-coded: the default
+// perspective grid has three lanes, so the preferred last row F clamps to C.
 const spawn = formationMovePlan(fixture(), 'A1', settings).current;
 test('the player spawns on the shipped grid\'s last row', () => {
-  assert.equal(spawn, 'B1');
+  assert.equal(spawn, 'C1');
+  // Classic keeps its own two-row grid.
+  assert.equal(formationMovePlan(fixture(), 'A1', { ...settings, classicAppearance: true }).current, 'B1');
 });
 test('disabled, unaffordable, invalid, occupied and out-of-turn moves do not mutate state', () => {
   assert.throws(() => dispatch(fixture(), { type: 'moveCharacter', cell: spawn, settings }), /Already at that position/);

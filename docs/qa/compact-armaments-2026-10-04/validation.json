@@ -1,6 +1,0 @@
-{
-  "behavioralChecks": 46,
-  "browserHealthPassed": true,
-  "errors": [],
-  "boundary": "Production Armoury mounted with real content and a deterministic run; desktop mouse and emulated mobile touch. Not a full playthrough or physical device check."
-}

@@ -65,6 +65,7 @@ export const balanceWords = Object.freeze({
     bleed: 'how many stacks of Bleed it applies',
     venom: 'how many stacks of Venom it applies',
     crimsonBlight: 'how many stacks of Crimson Blight it applies',
+    necroticBlight: 'how many stacks of Necrotic Blight it applies',
     prepared: 'how many stacks of Prepared it grants',
     madness: 'how many stacks of Madness it costs you',
     frail: 'how many stacks of Frail it costs you',
@@ -126,6 +127,7 @@ const cardValueStatusMultipliers = {
   frostExposed: 1,
   insanityExposed: 1,
   crimsonBlight: 1,
+  necroticBlight: 1,
   burn: 1,
   regen: 1,
   madness: 1,
@@ -162,6 +164,9 @@ const cardValueStatusMultipliers = {
   envenom: 1,
   glassCannon: 1,
   magicVulnerable: 1,
+  silenced: 1,
+  stanceShifted: 1,
+  stoneskin: 1,
 };
 
 const cardValueRule = () => ({
@@ -366,7 +371,7 @@ export const balance = {
     [NOTE]: {
       growthMult: 'How much a Poise threshold grows each time the meter fills, so the second stagger of a fight is dearer than the first. Only while combat ratings are off; with ratings on, Break threshold multiplier sets this.',
       playerImpactPerHit: 'Poise the player loses per enemy hit that lands, outside a ruleset that states its own weapon impact. Only while combat ratings are off; with ratings on, the impact rows set how much each hit fills the meter.',
-      'onFill.{i}.stacks': 'Stacks of {statusName} that {recipient} when its Poise meter fills. The player\'s own fill runs no row from this list — it reads Stagger · Player instead. Only while combat ratings are off; with ratings on, a break skips the enemy\'s next turn instead.',
+      'onFill.{i}.stacks': 'Stacks of {statusName} that {recipient} when its Poise meter fills. The player\'s own fill runs no row from this list — it reads Stagger · Player instead. With combat ratings on, every enemy break runs it too, Poise or Ward, beside the skipped turn.',
     },
   },
 
@@ -520,6 +525,17 @@ export const balance = {
     },
   },
 
+  // Technique tag mechanics (owner decision 11, 2026-10-12). Oath is a class
+  // property rule (oathKept, nodeEffects.json) bound to this number.
+  tagMechanics: {
+    oath: {
+      block: 2,
+      [NOTE]: {
+        block: 'Block each Oath card grants while you have not entered a stance this fight.',
+      },
+    },
+  },
+
   // ---- M2 run economy (SPEC §6) ---------------------------------------------
   rewards: {
     sourceBonuses: {
@@ -567,6 +583,24 @@ export const balance = {
       },
       [NOTE]: {
         '{classId}.{kind}.{rarity}': 'The {className}\'s own reward odds: how often {pool} offers {a rarity} card, weighed against the other rarities in its row.',
+      },
+    },
+    // Owner decision #13: Psychic and Earth cards belong to no class, but the
+    // Herald and Starseer meet them more naturally. Within a rarity, a card
+    // tagged damage:<element> for one of the class's elements weighs
+    // offerWeightMult times a plain card in that class's card rewards.
+    // startingChoice: the affinity classes may pick up to maxPicks of these
+    // element spells as one of their selectable starting spells at character
+    // creation (owner decision 13, 2026-10-12). Only classless attack cards whose
+    // attack.source is `source` and rarity is listed qualify; the picker is
+    // src/model/startingAbilities.js. Skills (Stoneskin, Dissonance) are not spells.
+    elementAffinity: {
+      classes: { herald: ['psychic', 'earth'], starseer: ['psychic', 'earth'] },
+      offerWeightMult: 2,
+      startingChoice: { maxPicks: 1, source: 'spell', rarities: ['common', 'uncommon'],
+        [NOTE]: { maxPicks: 'How many element spells (classless spell attacks of the listed rarities) an affinity class may take among its starting spells at character creation.' } },
+      [NOTE]: {
+        offerWeightMult: 'How many times likelier an affinity-element card is to be picked, within its rarity, in this class\'s card rewards.',
       },
     },
     // Decaying flask drop (StS potion rule): −step on drop, +step on miss.
@@ -1390,6 +1424,20 @@ export const balance = {
       // --predicates` is the standing check that every wall has a gate on it, and
       // `--text S` is the standing check on what this number costs.
       gateBelowH: 465,
+      // THE HUD FORM FACTOR (docs/hud-layout-tokens.md). applyUiScale writes
+      // <html data-form-factor> from these, in the window's CSS px, so the
+      // combat HUD picks content/hud-layout/<form-factor>.json. First match
+      // wins: widescreen (w / h >= widescreenMinAspect, or w >=
+      // widescreenMinWidth), mobile (w <= mobileMaxWidth), tablet (w <=
+      // tabletMaxWidth), else desktop. It chooses styling only — never the
+      // layout mode, the zoom or the gate above.
+      formFactor: {
+        widescreenMinAspect: 2.0,
+        widescreenAspectMinWidth: 1600,
+        widescreenMinWidth: 2400,
+        mobileMaxWidth: 600,
+        tabletMaxWidth: 1100,
+      },
     },
     // Text size → root font-size %. Auto owns the browser stylesheet baseline;
     // M remains a legacy data alias for old saves and geometry tools. It scales

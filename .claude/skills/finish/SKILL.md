@@ -89,8 +89,9 @@ While PRs stay open, schedule an hourly re-check. If two PRs touch the same
 code, agree which lands first. Update FINISH.md.
 Every 2 waves, a **QA agent** plays full runs end-to-end and files new bugs
 into FINISH.md as blockers.
-Merge each reviewed, green PR into `dev` yourself and promote `dev` to `test` once
-per wave (CONTRIBUTING rule 6). Never merge to `release` or `main`.
+Send each reviewed, green PR to the owner with its preview and screenshots, and
+merge it into `dev` only when the owner says to merge that PR; then promote
+`dev` to `test` once per wave (CONTRIBUTING rule 6). Never merge to `release` or `main`.
 
 ## Phase 4 — Release candidate
 Freeze features (the owner cuts `release`; agents don't). Run 3 full runs per class, the soft-lock sweep, perf and

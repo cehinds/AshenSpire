@@ -2076,6 +2076,22 @@ function collectContentProblems(bundle, errors = []) {
     const moveIds = new Set(Object.keys(enemy.moves || {}));
     if (enemy.firstMove != null && !moveIds.has(enemy.firstMove)) {
       err(`${path}.firstMove`, `firstMove '${enemy.firstMove}' is not one of this enemy's moves`);
+    } else if (enemy.firstMove != null && enemy.moves[enemy.firstMove].reaction !== undefined) {
+      err(`${path}.firstMove`, `firstMove '${enemy.firstMove}' is a reaction move and is never rolled as an intent`);
+    }
+    // A reaction move is never rolled, so it carries no weight; every other move
+    // is rolled and needs one. `reaction` bounds mirror docs/combat-card-traits-contract.md.
+    for (const [moveId, move] of Object.entries(enemy.moves || {})) {
+      const movePath = `${path}.moves.${moveId}`;
+      if (move.reaction !== undefined) {
+        const { on, minIncoming, chance } = move.reaction;
+        if (!Array.isArray(on) || on.length === 0) err(`${movePath}.reaction.on`, 'reaction.on must be a non-empty list');
+        if (move.weight !== undefined) err(`${movePath}.weight`, 'a reaction move is never rolled and must not carry a weight');
+        if (minIncoming !== undefined && !(Number.isInteger(minIncoming) && minIncoming >= 0)) err(`${movePath}.reaction.minIncoming`, 'minIncoming must be an integer >= 0 (0: no incoming damage required)');
+        if (chance !== undefined && !(typeof chance === 'number' && chance >= 0 && chance <= 1)) err(`${movePath}.reaction.chance`, 'chance must be a number in [0, 1]');
+      } else if (typeof move.weight !== 'number' || Number.isNaN(move.weight)) {
+        err(`${movePath}.weight`, `Expected number, got ${describe(move.weight)}`);
+      }
     }
     for (const [pi, phase] of (enemy.phases || []).entries()) {
       for (const mv of phase.unlockMoves || []) {
@@ -2740,8 +2756,8 @@ export function validatePredicate(pred, path, vctx) {
 }
 
 const FORMULA_FIELDS = {
-  add: ['args'],
-  mul: ['args'],
+  add: ['args', 'min', 'max'], // evaluateRaw clamps any node; a graded sum (Reclamation) caps the total
+  mul: ['args', 'min', 'max'],
   percentMaxHp: ['of', 'pct', 'min', 'max'],
   missingHp: ['of', 'min', 'max'],
   missingMana: ['of', 'min', 'max'],
@@ -2750,6 +2766,7 @@ const FORMULA_FIELDS = {
   blockOf: ['of', 'min', 'max'],
   hpOf: ['of', 'min', 'max'],
   cardsPlayedThisTurn: ['per', 'min', 'max'],
+  traitBonus: ['base', 'pct', 'min', 'max'],
 };
 
 export function validateFormula(value, path, vctx) {
@@ -2785,6 +2802,11 @@ export function validateFormula(value, path, vctx) {
   }
   if (['percentMaxHp', 'missingHp', 'missingMana', 'blockOf', 'hpOf'].includes(value.f) && value.of === undefined) {
     err(`${path}.of`, `'${value.f}' requires 'of'`);
+  }
+  if (value.f === 'traitBonus') {
+    if (value.base === undefined) err(`${path}.base`, "'traitBonus' requires a base");
+    else validateFormula(value.base, `${path}.base`, vctx);
+    if (typeof value.pct !== 'number') err(`${path}.pct`, "'traitBonus' requires a numeric pct");
   }
   if (value.f === 'percentMaxHp' && typeof value.pct !== 'number') {
     err(`${path}.pct`, "'percentMaxHp' requires a numeric pct");

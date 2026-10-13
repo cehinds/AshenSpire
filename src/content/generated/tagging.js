@@ -66,6 +66,12 @@ export const tagging = [
     "family": "class",
     "scope": "",
     "objectId": "reaver",
+    "tagId": "oathKept"
+  },
+  {
+    "family": "class",
+    "scope": "",
+    "objectId": "reaver",
     "tagId": "item:blade"
   },
   {
@@ -73,6 +79,12 @@ export const tagging = [
     "scope": "",
     "objectId": "starseer",
     "tagId": "favored"
+  },
+  {
+    "family": "class",
+    "scope": "",
+    "objectId": "starseer",
+    "tagId": "oathKept"
   },
   {
     "family": "class",
@@ -90,6 +102,12 @@ export const tagging = [
     "family": "class",
     "scope": "",
     "objectId": "rogue",
+    "tagId": "oathKept"
+  },
+  {
+    "family": "class",
+    "scope": "",
+    "objectId": "rogue",
     "tagId": "item:blade"
   },
   {
@@ -97,6 +115,12 @@ export const tagging = [
     "scope": "",
     "objectId": "herald",
     "tagId": "favored"
+  },
+  {
+    "family": "class",
+    "scope": "",
+    "objectId": "herald",
+    "tagId": "oathKept"
   },
   {
     "family": "class",
@@ -509,12 +533,6 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
-    "objectId": "executionWindow",
-    "tagId": "precision"
-  },
-  {
-    "family": "card",
-    "scope": "",
     "objectId": "perfectHeist",
     "tagId": "guile"
   },
@@ -649,12 +667,6 @@ export const tagging = [
     "scope": "",
     "objectId": "serratedBlade",
     "tagId": "blood"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "enterGorefire",
-    "tagId": "gorefire"
   },
   {
     "family": "card",
@@ -4169,6 +4181,162 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
+    "objectId": "gorefireSlash",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "crimsonCleave",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "serratedBlade",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rend",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cleavingBlow",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "twinbladeFlurry",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "goreslash",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "hewingArc",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "flameToBlade",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "kilnCleave",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "quickCut",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "hamstringRogue",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bladeDanceRogue",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "thousandCutsRogue",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sweepingBlow",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lowBlow",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sap",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "poiseBreaker",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sunderplate",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sunderingChop",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "executioner",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stitchedArms",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ambush",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "assassinate",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "coupDeGrace",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "riposte",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "card",
+    "scope": "",
     "objectId": "stomp",
     "tagId": "damage:blunt"
   },
@@ -4183,6 +4351,36 @@ export const tagging = [
     "scope": "",
     "objectId": "kickOff",
     "tagId": "damage:blunt"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ruinousBlow",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ruinousBlow",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "deathblow",
+    "tagId": "damage:blunt"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "deathblow",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodTithe",
+    "tagId": "damage:decay"
   },
   {
     "family": "card",
@@ -4500,7 +4698,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "starbladePhalanx",
-    "tagId": "delivery:projectile"
+    "tagId": "delivery:melee"
   },
   {
     "family": "card",
@@ -5053,12 +5251,6 @@ export const tagging = [
     "scope": "",
     "objectId": "envenomCard",
     "tagId": "theme:oath"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "executionWindow",
-    "tagId": "technique:precision"
   },
   {
     "family": "card",
@@ -10998,18 +11190,6 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "nockAndWait",
-    "tagId": "precision"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "nockAndWait",
-    "tagId": "technique:precision"
-  },
-  {
-    "family": "card",
-    "scope": "",
-    "objectId": "nockAndWait",
     "tagId": "classification.skill"
   },
   {
@@ -14765,6 +14945,12 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
+    "objectId": "starstonePebble",
+    "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "scope": "",
     "objectId": "cometFragment",
     "tagId": "camp:spell"
   },
@@ -14777,6 +14963,12 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
+    "objectId": "cometFragment",
+    "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "scope": "",
     "objectId": "starbladePhalanx",
     "tagId": "camp:spell"
   },
@@ -14785,6 +14977,12 @@ export const tagging = [
     "scope": "",
     "objectId": "starbladePhalanx",
     "tagId": "school:force"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starbladePhalanx",
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -14815,6 +15013,12 @@ export const tagging = [
     "scope": "",
     "objectId": "starShower",
     "tagId": "school:force"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starShower",
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -14861,6 +15065,12 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
+    "objectId": "starSlicer",
+    "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "scope": "",
     "objectId": "starstoneWard",
     "tagId": "camp:spell"
   },
@@ -14887,6 +15097,12 @@ export const tagging = [
     "scope": "",
     "objectId": "starlance",
     "tagId": "school:force"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starlance",
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -14921,6 +15137,12 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
+    "objectId": "frostNova",
+    "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "scope": "",
     "objectId": "starstoneArc",
     "tagId": "camp:spell"
   },
@@ -14929,6 +15151,12 @@ export const tagging = [
     "scope": "",
     "objectId": "starstoneArc",
     "tagId": "school:force"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starstoneArc",
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -14981,6 +15209,12 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
+    "objectId": "moonrendCut",
+    "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "scope": "",
     "objectId": "meteorite",
     "tagId": "camp:spell"
   },
@@ -14993,6 +15227,12 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
+    "objectId": "meteorite",
+    "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "scope": "",
     "objectId": "meteorSwarm",
     "tagId": "camp:spell"
   },
@@ -15001,6 +15241,12 @@ export const tagging = [
     "scope": "",
     "objectId": "meteorSwarm",
     "tagId": "school:force"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "meteorSwarm",
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -15041,6 +15287,12 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
+    "objectId": "astralCleave",
+    "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "scope": "",
     "objectId": "radiantSpray",
     "tagId": "camp:spell"
   },
@@ -15053,6 +15305,12 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
+    "objectId": "radiantSpray",
+    "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "scope": "",
     "objectId": "supernova",
     "tagId": "camp:spell"
   },
@@ -15061,6 +15319,12 @@ export const tagging = [
     "scope": "",
     "objectId": "supernova",
     "tagId": "school:force"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "supernova",
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -15089,6 +15353,12 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
+    "objectId": "starstoneKris",
+    "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "scope": "",
     "objectId": "constellationCard",
     "tagId": "camp:spell"
   },
@@ -15113,6 +15383,12 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
+    "objectId": "starfallBeam",
+    "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "scope": "",
     "objectId": "starcaller",
     "tagId": "camp:spell"
   },
@@ -15121,6 +15397,12 @@ export const tagging = [
     "scope": "",
     "objectId": "starcaller",
     "tagId": "school:force"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starcaller",
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -15169,6 +15451,12 @@ export const tagging = [
     "scope": "",
     "objectId": "shootingShard",
     "tagId": "school:force"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shootingShard",
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -15229,6 +15517,12 @@ export const tagging = [
     "scope": "",
     "objectId": "celestialLance",
     "tagId": "school:force"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "celestialLance",
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -15263,6 +15557,12 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
+    "objectId": "starSpark",
+    "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "scope": "",
     "objectId": "astralInsight",
     "tagId": "camp:spell"
   },
@@ -15311,6 +15611,12 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
+    "objectId": "cinderSigil",
+    "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "scope": "",
     "objectId": "ashenMote",
     "tagId": "camp:spell"
   },
@@ -15325,6 +15631,12 @@ export const tagging = [
     "scope": "",
     "objectId": "ashenMote",
     "tagId": "damage:fire"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ashenMote",
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -15377,6 +15689,12 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
+    "objectId": "pyreOfCharts",
+    "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "scope": "",
     "objectId": "ashCircle",
     "tagId": "camp:spell"
   },
@@ -15425,6 +15743,12 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
+    "objectId": "cinderLance",
+    "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "scope": "",
     "objectId": "ashfallRite",
     "tagId": "camp:spell"
   },
@@ -15439,6 +15763,12 @@ export const tagging = [
     "scope": "",
     "objectId": "ashfallRite",
     "tagId": "damage:fire"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ashfallRite",
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -15475,6 +15805,12 @@ export const tagging = [
     "scope": "",
     "objectId": "pyreLight",
     "tagId": "damage:fire"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "pyreLight",
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -15545,6 +15881,12 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
+    "objectId": "blightTouch",
+    "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "scope": "",
     "objectId": "flagellation",
     "tagId": "camp:spell"
   },
@@ -15559,6 +15901,12 @@ export const tagging = [
     "scope": "",
     "objectId": "flagellation",
     "tagId": "damage:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "flagellation",
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -15611,6 +15959,12 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
+    "objectId": "graveOffering",
+    "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "scope": "",
     "objectId": "bloodletting",
     "tagId": "camp:spell"
   },
@@ -15655,6 +16009,12 @@ export const tagging = [
     "scope": "",
     "objectId": "cullTheWeak",
     "tagId": "damage:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cullTheWeak",
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -15731,6 +16091,12 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
+    "objectId": "sacredHarvest",
+    "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "scope": "",
     "objectId": "thornHaloCard",
     "tagId": "camp:spell"
   },
@@ -15785,6 +16151,12 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
+    "objectId": "plagueBearer",
+    "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "scope": "",
     "objectId": "exsanguinate",
     "tagId": "camp:spell"
   },
@@ -15799,6 +16171,12 @@ export const tagging = [
     "scope": "",
     "objectId": "exsanguinate",
     "tagId": "damage:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "exsanguinate",
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -15829,6 +16207,12 @@ export const tagging = [
     "scope": "",
     "objectId": "scourge",
     "tagId": "damage:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "scourge",
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -15899,6 +16283,12 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
+    "objectId": "crimsonRite",
+    "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "scope": "",
     "objectId": "blightNova",
     "tagId": "camp:spell"
   },
@@ -15913,6 +16303,12 @@ export const tagging = [
     "scope": "",
     "objectId": "blightNova",
     "tagId": "damage:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightNova",
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -15959,6 +16355,12 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
+    "objectId": "bloodHarvest",
+    "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "scope": "",
     "objectId": "painOffering",
     "tagId": "camp:spell"
   },
@@ -15973,6 +16375,12 @@ export const tagging = [
     "scope": "",
     "objectId": "painOffering",
     "tagId": "damage:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "painOffering",
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -15995,6 +16403,12 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
+    "objectId": "witheringTouch",
+    "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "scope": "",
     "objectId": "desperateRite",
     "tagId": "camp:spell"
   },
@@ -16009,6 +16423,12 @@ export const tagging = [
     "scope": "",
     "objectId": "desperateRite",
     "tagId": "damage:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "desperateRite",
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -16043,6 +16463,12 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
+    "objectId": "bloodOfferingRite",
+    "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "scope": "",
     "objectId": "harbingerOfBlightCard",
     "tagId": "camp:spell"
   },
@@ -16069,6 +16495,12 @@ export const tagging = [
     "scope": "",
     "objectId": "blightwardLash",
     "tagId": "damage:decay"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightwardLash",
+    "tagId": "maneuver:casting"
   },
   {
     "family": "card",
@@ -16421,6 +16853,12 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
+    "objectId": "venomcoat",
+    "tagId": "damage:poison"
+  },
+  {
+    "family": "card",
+    "scope": "",
     "objectId": "misdirect",
     "tagId": "camp:physical"
   },
@@ -16477,6 +16915,12 @@ export const tagging = [
     "scope": "",
     "objectId": "toxicVolley",
     "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "toxicVolley",
+    "tagId": "damage:poison"
   },
   {
     "family": "card",
@@ -18820,6 +19264,54 @@ export const tagging = [
   },
   {
     "family": "enemyMove",
+    "scope": "gildedKnight",
+    "objectId": "gildedGuard",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "gildedKnight",
+    "objectId": "gildedGuard",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "gildedKnight",
+    "objectId": "gildedGuard",
+    "tagId": "reach:contact"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "gildedKnight",
+    "objectId": "gildedGuard",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "gildedKnight",
+    "objectId": "gildedGuard",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "gildedKnight",
+    "objectId": "gildedGuard",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "gildedKnight",
+    "objectId": "gildedGuard",
+    "tagId": "trait:reaction"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "gildedKnight",
+    "objectId": "gildedGuard",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
     "scope": "courtSurgeon",
     "objectId": "scalpel",
     "tagId": "camp:physical"
@@ -19254,6 +19746,54 @@ export const tagging = [
     "family": "enemyMove",
     "scope": "courtDuelist",
     "objectId": "riposte",
+    "tagId": "classification.enemyMove"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtDuelist",
+    "objectId": "bindingRiposte",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtDuelist",
+    "objectId": "bindingRiposte",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtDuelist",
+    "objectId": "bindingRiposte",
+    "tagId": "reach:contact"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtDuelist",
+    "objectId": "bindingRiposte",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtDuelist",
+    "objectId": "bindingRiposte",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtDuelist",
+    "objectId": "bindingRiposte",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtDuelist",
+    "objectId": "bindingRiposte",
+    "tagId": "trait:reaction"
+  },
+  {
+    "family": "enemyMove",
+    "scope": "courtDuelist",
+    "objectId": "bindingRiposte",
     "tagId": "classification.enemyMove"
   },
   {
@@ -21228,7 +21768,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "illusionCounter",
-    "tagId": "damage:arcane"
+    "tagId": "damage:psychic"
   },
   {
     "family": "card",
@@ -21636,7 +22176,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "drowsingMote",
-    "tagId": "damage:arcane"
+    "tagId": "damage:psychic"
   },
   {
     "family": "card",
@@ -21828,7 +22368,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "restfulDream",
-    "tagId": "damage:arcane"
+    "tagId": "damage:psychic"
   },
   {
     "family": "card",
@@ -22338,7 +22878,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "illusionDecoy",
-    "tagId": "damage:arcane"
+    "tagId": "damage:psychic"
   },
   {
     "family": "card",
@@ -22363,5 +22903,575 @@ export const tagging = [
     "scope": "",
     "objectId": "lowGuardRiposte",
     "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "aspDart",
+    "tagId": "ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "aspDart",
+    "tagId": "venom"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "aspDart",
+    "tagId": "fx:ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "aspDart",
+    "tagId": "fx:venom"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "aspDart",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "aspDart",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "aspDart",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "aspDart",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "aspDart",
+    "tagId": "maneuver:ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "aspDart",
+    "tagId": "damage:poison"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "viperStrike",
+    "tagId": "venom"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "viperStrike",
+    "tagId": "fx:venom"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "viperStrike",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "viperStrike",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "viperStrike",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "viperStrike",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "viperStrike",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "viperStrike",
+    "tagId": "damage:poison"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "septicBlade",
+    "tagId": "venom"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "septicBlade",
+    "tagId": "fx:venom"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "septicBlade",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "septicBlade",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "septicBlade",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "septicBlade",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "septicBlade",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "septicBlade",
+    "tagId": "damage:poison"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lethalDose",
+    "tagId": "venom"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lethalDose",
+    "tagId": "fx:venom"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lethalDose",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lethalDose",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lethalDose",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lethalDose",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lethalDose",
+    "tagId": "maneuver:attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lethalDose",
+    "tagId": "damage:poison"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lethalDose",
+    "tagId": "reach:near"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lethalDose",
+    "tagId": "precision"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lethalDose",
+    "tagId": "technique:precision"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "mindSpike",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "mindSpike",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "mindSpike",
+    "tagId": "school:illusion"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "mindSpike",
+    "tagId": "damage:psychic"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "mindSpike",
+    "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "mindSpike",
+    "tagId": "reach:near"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "mindSpike",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "mindSpike",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "dissonance",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "dissonance",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "dissonance",
+    "tagId": "school:illusion"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "dissonance",
+    "tagId": "damage:psychic"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "dissonance",
+    "tagId": "reach:contact"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "dissonance",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "dissonance",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "mindFracture",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "mindFracture",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "mindFracture",
+    "tagId": "school:illusion"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "mindFracture",
+    "tagId": "damage:psychic"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "mindFracture",
+    "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "mindFracture",
+    "tagId": "reach:near"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "mindFracture",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "mindFracture",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "wakingNightmare",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "wakingNightmare",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "wakingNightmare",
+    "tagId": "school:illusion"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "wakingNightmare",
+    "tagId": "damage:psychic"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "wakingNightmare",
+    "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "wakingNightmare",
+    "tagId": "reach:near"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "wakingNightmare",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "wakingNightmare",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stoneSling",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stoneSling",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stoneSling",
+    "tagId": "school:earth"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stoneSling",
+    "tagId": "damage:earth"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stoneSling",
+    "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stoneSling",
+    "tagId": "reach:near"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stoneSling",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stoneSling",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rockfall",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rockfall",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rockfall",
+    "tagId": "school:earth"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rockfall",
+    "tagId": "damage:earth"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rockfall",
+    "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rockfall",
+    "tagId": "reach:near"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rockfall",
+    "tagId": "targeting:area"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rockfall",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stoneskin",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stoneskin",
+    "tagId": "camp:physical"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stoneskin",
+    "tagId": "maneuver:defend"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "entomb",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "entomb",
+    "tagId": "camp:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "entomb",
+    "tagId": "school:earth"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "entomb",
+    "tagId": "damage:earth"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "entomb",
+    "tagId": "maneuver:casting"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "entomb",
+    "tagId": "reach:near"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "entomb",
+    "tagId": "targeting:single"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "entomb",
+    "tagId": "source:spell"
   }
 ];
