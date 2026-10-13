@@ -4,7 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
-import { createRegistries } from '../src/model/registries.js';
+import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
 import { resolveCombatRatings } from '../src/model/combatRatings.js';
@@ -121,11 +121,15 @@ test('one Bashing Blow logs each stagger-meter impact with its own cause, and a 
   assert.deepEqual(impacts.map(event => event.cause), ['hit', 'rider:blunt', 'poiseDamage', 'trait:impact', 'relic:forsakenMedallion']);
   const lines = combatLogEntries(c.eventLog, { registries, enemies: c.enemies }).map(row => row.text).filter(text => text.includes('stagger meter'));
   const relic = registries.relics.get('forsakenMedallion').name;
+  // Bashing Blow is a smash, so its Poise damage is the cost formula's, not the authored 4 (SPEC §4.3a; owner 2026-10-13:
+  // "All smashes deal poise damage"): the 2-SP scale plus smashPoiseBase. The Impact trait repeats that amount.
+  const poise = resolveCard(registries, { cardId: 'bashingBlow', upgraded: false }).effects.find(e => e.op === 'poiseDamage').amount;
+  assert.ok(poise > 4, 'fixture: the smash adds Poise damage to the authored 4');
   assert.deepEqual(lines.map(text => text.replace(/ \(\d+\/\d+(, broke)?\)\.$/, '')), [
     "Valkyrie Shade's stagger meter took 1 from the hit (Forsaken's Bashing Blow)",
     "Valkyrie Shade's stagger meter took 2 from Blunt (Forsaken's Bashing Blow)",
-    "Valkyrie Shade's stagger meter took 4 from Poise damage (Forsaken's Bashing Blow)",
-    "Valkyrie Shade's stagger meter took 4 from Impact (Forsaken's Bashing Blow)",
+    `Valkyrie Shade's stagger meter took ${poise} from Poise damage (Forsaken's Bashing Blow)`,
+    `Valkyrie Shade's stagger meter took ${poise} from Impact (Forsaken's Bashing Blow)`,
     `Valkyrie Shade's stagger meter took 4 from Forsaken's ${relic}`,
   ]);
   for (const text of lines) assert.match(text, /\(\d+\/\d+(, broke)?\)\.$/, 'each line ends with the meter after it');

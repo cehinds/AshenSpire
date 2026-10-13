@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1954",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "The link check's self-test fits its time limit again",
+    "detail": "Development-process fix only, nothing in the game changes. The import link check now reuses modules it has already linked within each batch instead of re-reading them for every file, so a full pass runs about four times faster and its self-test finishes inside the Windows CI limit.",
+    "build": "0.7.1.1483",
+    "pullRequest": 1954,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1954"
+  },
+  {
+    "id": "pr-1953",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Alternative combat rounds arrive as an opt-in setting, and every action now costs resources",
+    "detail": "Settings gains three toggles, all off by default: Alternative combat rounds, Momentum (display only in normal combat) and Multi-action preview (one ? per hidden enemy action). Always on: new combat shadows, the blue selection, thin stance-only target outlines with the coloured ring outermost, and enemy actions that spend Stamina and Mana from a stat-driven pool (minions 1–2, elites 2–3, bosses 3–4). Card costs are now derived from damage, rank, range and combat tags, so most basics and cantrips cost 1 Stamina, smashes and sweeps 2, and rank 1–3 spells 1–2 Mana; smashes also deal Poise damage. Silenced enemies cannot spend Mana.",
+    "build": "0.7.1.1483",
+    "pullRequest": 1953,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1953"
+  },
+  {
     "id": "pr-1942",
     "date": "2026-10-13",
     "group": "2026-10-13",

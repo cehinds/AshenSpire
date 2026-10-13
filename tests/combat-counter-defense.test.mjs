@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { legacyContentBundle } from './helpers/legacy-progression-content.mjs';
-import { createRegistries } from '../src/model/registries.js';
+import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
@@ -102,9 +102,10 @@ test('solo and co-op capture conditional Counter values after payment, before th
     if (coop) playCard(combat, 'seat', 'counter');
     else dispatch(combat, { type: 'playCard', cardInstanceId: 'counter' });
     const label = `${coop ? 'co-op' : 'solo'} ${cardId} Block${block}`;
+    // Both counters cost 1 SP under the cost formula (SPEC §4.3a), so their numbers are the authored ones.
     assert.equal(entity.combatCounter.damage, cardId === 'guardCounter' ? (block ? 10 : 4) : 6, label);
     assert.equal(entity.combatCounter.poiseDamage, cardId === 'riposte' ? (block ? 4 : 0) : 1, label);
-    assert.equal(entity.energy, actionsBefore - registries.cards.get(cardId).cost, label);
+    assert.equal(entity.energy, actionsBefore - resolveCard(registries, { cardId }).cost, label);
     assert.equal(entity.block, block + 6, `${label}: protection resolves after conditional capture`);
     const paid = combat.eventLog.findIndex(event => event.type === 'energySpent');
     const armed = combat.eventLog.findIndex(event => event.type === 'combatCounterArmed' && event.sourceId === entity.id);

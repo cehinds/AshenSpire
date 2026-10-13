@@ -330,7 +330,7 @@ test('shopOffers retains its appended index after later stream additions', () =>
   // Sigils and intent visibility append after it, preserving historical indices.
   assert.equal(STREAM_NAMES.indexOf('shopOffers'), 15);
   assert.equal(STREAM_NAMES.indexOf('rewardRolls'), 14);
-  assert.deepEqual(STREAM_NAMES.slice(15), ['shopOffers', 'sigils', 'enemyIntentVisibility', 'combatAvoidance', 'statusRecovery', 'statusPressure', 'ashenBlight', 'enemyIntentClue', 'enemyReaction']);
+  assert.deepEqual(STREAM_NAMES.slice(15), ['shopOffers', 'sigils', 'enemyIntentVisibility', 'combatAvoidance', 'statusRecovery', 'statusPressure', 'ashenBlight', 'enemyIntentClue', 'enemyReaction', 'combatRounds']);
   assert.equal(STREAM_NAMES.indexOf('shop'), 9);
   // A save written before the stream existed restores it at 0.
   assert.equal(createRng(7, { shop: 3 }).getCounters().shopOffers, 0);

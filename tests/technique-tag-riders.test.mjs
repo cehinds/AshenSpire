@@ -12,7 +12,9 @@ import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { prepareMatchupHit, matchupRiderEffects, previewTacticalAction } from '../src/engine/combatMatchups.js';
 
-const registries = createRegistries(contentBundle);
+// These checks read the authored card numbers: every card opts out of the cost formula (costRule 'fixed', SPEC §4.3a),
+// which tests/action-costs-*.test.mjs cover.
+const registries = createRegistries({ ...contentBundle, cards: contentBundle.cards.map((card) => ({ ...card, costRule: 'fixed' })) });
 const profile = damageType => ({ camp: 'physical', maneuver: 'attack', damageType });
 const carrier = (tags, damageType = 'slashing') => ({ tags, combatProfile: profile(damageType), combatRiderTargets: [] });
 
