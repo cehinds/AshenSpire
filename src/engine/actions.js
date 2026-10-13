@@ -54,7 +54,7 @@ import { creditKnowledgeImpact } from './enemyKnowledge.js';
 
 import * as Expanded from './combatExpansionActions.js';
 import * as Control from './combatStatusControl.js';
-import { isSpellCard, silencedStacks } from '../model/combatCardProfile.js';
+import { isSpellCard, silencedStacks, combatProfileFor } from '../model/combatCardProfile.js';
 import { syncWardMaximum, syncPoiseMaximum } from './combatPools.js';
 export { syncWardMaximum, syncPoiseMaximum };
 import * as Blight from './ashenBlight.js';
@@ -338,19 +338,35 @@ export function cardRatingDamage(ctx, source, carrier, base) {
 }
 
 /**
- * silencedForceContacts(ctx, target, profiles) → per contact, whether it spends one of the
- * target's Silenced stacks (expanded combat, owner 2026-10-13). A Silenced creature is immune
- * to Force: each Force contact, in order, spends one stack; a Force HIT that spends one is
- * negated whole, and a Force effect (status, impact) only spends it. Once the stacks run out,
- * later contacts land normally.
+ * silencedForceContacts(ctx, target, profiles) → per contact, whether it is a Force HIT the
+ * target's Silenced stacks make it immune to (expanded combat, owner 2026-10-13). Decided once,
+ * up front, for the whole action: each Force hit, in order, claims one stack and is negated
+ * whole; once the stacks run out, later hits land. A non-damage contact claims none: every
+ * Force effect spends its stack when it resolves (spendSilencedForEffect), and that spend never
+ * un-immunes a hit already decided.
  */
 export function silencedForceContacts(ctx, target, profiles) {
   let left = ctx.combatExpansionVersion === 2 ? silencedStacks(target) : 0;
   return profiles.map(profile => {
-    if (!(left > 0) || !isForceHit(profile)) return false;
+    if (profile?.effect || !(left > 0) || !isForceHit(profile)) return false;
     left -= 1;
     return true;
   });
+}
+
+// Ops that, written without a target, act on their owner (hand, piles, Stamina, stance).
+const OWNER_OPS = new Set(['draw', 'discard', 'exhaust', 'addCard', 'gainEnergy', 'retain', 'grantCardCharge',
+  'shuffleDiscardIntoDraw', 'enterStance', 'grantRollMode']);
+
+// Any effect of a Force card other than its damage hits spends one Silenced stack of each
+// creature it resolves onto, per application (owner, 2026-10-13): a status, push, Ward strip,
+// draw (its owner) or any other op. A random target is not re-rolled here, so a randomEnemy
+// effect spends nothing.
+function spendSilencedForEffect(ctx, action, eff) {
+  if (ctx.combatExpansionVersion !== 2 || !action.card || ['damage', 'completeCombatAction'].includes(eff.op) || eff.target === 'randomEnemy') return;
+  if (!isForceHit(action.card.combatProfile || combatProfileFor(action.card))) return;
+  const targets = eff.target === undefined && OWNER_OPS.has(eff.op) ? [action.owner || action.source].filter(Boolean) : resolveTargets(ctx, action, eff.target);
+  for (const target of targets) spendSilencedStack(ctx, target);
 }
 
 /** Spend one Silenced stack for a Force contact; the log shows it as consumed. */
@@ -361,8 +377,7 @@ export function spendSilencedStack(ctx, target) {
 export function prepareExpandedDefense(ctx, target, receipt, carrier) {
   if (receipt.defendedAmounts) return;
   // Force contacts that meet a Silenced target's stacks: a hit among them is negated before any defence.
-  receipt.silencedSpends = silencedForceContacts(ctx, target, receipt.profiles);
-  receipt.silencedImmune = receipt.silencedSpends.map((spends, index) => spends && !receipt.profiles[index].effect);
+  receipt.silencedImmune = silencedForceContacts(ctx, target, receipt.profiles);
   const hits = receipt.amounts.map((whole, index) => {
     const amount = receipt.silencedImmune[index] ? 0 : whole;
     const profile = receipt.profiles[index];
@@ -1168,6 +1183,7 @@ export function executeAction(ctx, action) {
   try {
     for (let r = 0; r < repeat; r++) {
       runOpcode(ctx, action, eff);
+      spendSilencedForEffect(ctx, action, eff);
       if (ctx.result || ctx.pendingAbilityDiscard) return;
     }
   } finally { if (previous) ctx._abilityAction = previous; else delete ctx._abilityAction; }

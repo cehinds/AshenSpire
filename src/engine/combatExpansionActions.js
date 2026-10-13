@@ -165,8 +165,6 @@ export function completeExpandedAction(ctx, action) {
       continue;
     }
     if (!expansionTargetPresent(ctx, target)) continue;
-    // A Force effect (status, impact) on a Silenced target spends one stack per application, as a Force hit does.
-    (receipt.silencedSpends || []).forEach((spends, index) => { if (spends && receipt.profiles[index]?.effect) Actions.spendSilencedStack(ctx, target); });
     Matchups.completeTacticalAction(ctx, action.source, target, group.carrier, receipt,
       { restrictions: Control.controlRestrictions(ctx, target) });
     Control.completeStatusAction(ctx, target, row.interactions || receipt.profile, { connected: receipt.connected,

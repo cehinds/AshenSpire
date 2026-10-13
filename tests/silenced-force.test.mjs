@@ -99,3 +99,54 @@ test('Ruinous Blow (Blunt + Arcane) is a Force hit: a Silenced enemy is immune t
   assert.equal(getStacks(enemy, 'silenced'), 0);
   assert.equal(before - enemy.hp, hits.reduce((sum, e) => sum + e.amount, 0));
 });
+
+// Any Force-card effect on the Silenced creature spends a stack (owner, 2026-10-13): here a Ward strip and a draw.
+// Test-only Force cards cloned from Starstone Pebble (school:force, damage:arcane), each with one shape of effect.
+const pebble = contentBundle.cards.find(card => card.id === 'starstonePebble');
+const pebbleRows = contentBundle.tagging.filter(row => row.family === 'card' && row.objectId === 'starstonePebble');
+const FORCE_CARDS = {
+  testForceStrip: { type: 'skill', effects: [{ op: 'wardDamage', target: 'enemy', amount: 1 }] },
+  testForceDraw: { type: 'skill', effects: [{ op: 'draw', amount: 1 }] },
+  // A Force status first, then a Force hit: the status spends the last stack, but the hit's immunity was decided up front.
+  testForceStatusHit: { type: 'attack', effects: [{ op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 1 }, { op: 'damage', target: 'enemy', amount: 6 }] },
+};
+const FORCE_OPS = createRegistries({ ...contentBundle,
+  cards: [...contentBundle.cards, ...Object.entries(FORCE_CARDS).map(([id, card]) => ({ ...pebble, id, name: id, cost: 0, manaCost: 0, upgrade: undefined, ...card }))],
+  tagging: [...contentBundle.tagging, ...Object.entries(FORCE_CARDS).flatMap(([id, card]) => pebbleRows.map(row => ({ ...row, objectId: id,
+    tagId: row.tagId === 'classification.attack' ? `classification.${card.type}` : row.tagId })))] });
+
+function forceSetup(cardId, { enemyStacks = 0, playerStacks = 0 } = {}) {
+  const combat = createCombat({ registries: FORCE_OPS, rng: createRng(801), combatExpansionVersion: 2, enemyIds: ['wanderingSoldier'],
+    player: { classId: 'starseer', maxHp: 100, hp: 100, maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1,
+      deck: [{ cardId, instanceId: 'c', upgraded: false }, { cardId: 'strike', instanceId: 'd', upgraded: false }] } });
+  const enemy = combat.enemies[0];
+  enemy.hp = enemy.maxHp = 200; enemy.block = enemy.barrier = 0;
+  if (enemyStacks) enemy.statuses.silenced = { stacks: enemyStacks, duration: 2 };
+  if (playerStacks) combat.player.statuses.silenced = { stacks: playerStacks, duration: 2 };
+  return { combat, enemy };
+}
+
+test('a Force Ward strip on a Silenced enemy spends 1 stack', () => {
+  const { combat, enemy } = forceSetup('testForceStrip', { enemyStacks: 2 });
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'c', targetId: enemy.id });
+  assert.equal(getStacks(enemy, 'silenced'), 1);
+});
+
+test('a Force draw spends 1 of its Silenced owner\'s stacks and none of the enemy\'s', () => {
+  const { combat, enemy } = forceSetup('testForceDraw', { enemyStacks: 2, playerStacks: 2 });
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'c' });
+  assert.equal(getStacks(combat.player, 'silenced'), 1);
+  assert.equal(getStacks(enemy, 'silenced'), 2);
+});
+
+test('immunity is decided up front: a status that spends the last stack does not un-immune the same card\'s hit', () => {
+  const { combat, enemy } = forceSetup('testForceStatusHit', { enemyStacks: 1 });
+  const before = enemy.hp;
+  const shown = previewCard(combat, 'c', enemy.id).values.find(row => row.op === 'damage');
+  const out = dispatch(combat, { type: 'playCard', cardInstanceId: 'c', targetId: enemy.id });
+  const hit = out.events.find(e => e.type === 'damageDealt' && e.targetId === enemy.id);
+  assert.equal(hit.immune, true);
+  assert.equal(before - enemy.hp, 0);
+  assert.equal(shown.totalDamage, 0, 'the preview shows 0 too');
+  assert.equal(getStacks(enemy, 'silenced'), 0);
+});
