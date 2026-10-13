@@ -620,12 +620,12 @@ expansion `counter` group plus the `EVADES` set.
     as 3 − 2 = **1**.
 - **Existing Piercing tags, cited:**
   - `meta.combat.damage.physical.pierce` (`physical.pierce`, live `damage:piercing`),
-    `tables/tags.csv` line 204: "ignores Guard", "Ignores 2 Guard; slips past
-    melee Counter".
+    `tables/tags.csv` row `meta.combat.damage.physical.pierce`: "ignores Guard",
+    "Ignores 2 Guard; slips past melee Counter".
   - `meta.combat.damage.physical.weapon-piercing` (`weapon-piercing`, live
-    `damage.piercing`), `tables/tags.csv` line 742.
+    `damage.piercing`), `tables/tags.csv` row `meta.combat.damage.physical.weapon-piercing`.
   - `meta.combat.technique.pierce` (`technique.pierce`, live `pierce`),
-    `tables/tags.csv` line 172.
+    `tables/tags.csv` row `meta.combat.technique.pierce`.
   - `content/source/nodes.csv` line 115 (`damage:piercing`): "Bypasses up to 2
     Guard; bypasses melee Counter."
   - `tables/relations.csv` line 5: `physical.pierce` BYPASSES `stance.counter`
