@@ -13,6 +13,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1948"
   },
   {
+    "id": "pr-1923",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Ornate feat emblems in character creation",
+    "detail": "The Feats step shows each feat as a layered, gilded medallion instead of a flat glyph. If the artwork cannot load, the tile falls back to the glyph.",
+    "build": "0.7.1.1469",
+    "pullRequest": 1923,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1923"
+  },
+  {
     "id": "pr-1935",
     "date": "2026-10-13",
     "group": "2026-10-13",
