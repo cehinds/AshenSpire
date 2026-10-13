@@ -85,7 +85,9 @@ const ROOTS = ['src', 'tools', 'tests', 'pose-studio'];
 // Docs modules that tests import (tests/combat-rounds-round.test.mjs reads the
 // alternative-combat-rounds timeline). They are not walked as denominator, but
 // the self-test copy must carry them or the baseline links red with ENOENT.
-const COPIED_EXTRA = ['docs/alternative-combat-rounds'];
+// workbench/ and editor/ likewise: tools/workbench-static.mjs imports
+// workbench/server.mjs, whose graph reaches editor/core.mjs (69dcc3d1b).
+const COPIED_EXTRA = ['docs/alternative-combat-rounds', 'workbench', 'editor'];
 const SKIP_DIRS = new Set([
   'node_modules',   // none in this tree, and not ours to link
   'build',          // generated bundle — linking a 2 MB single file says nothing
