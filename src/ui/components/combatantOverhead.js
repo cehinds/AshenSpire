@@ -1,4 +1,4 @@
-import { attachTooltip, hideTooltip, esc } from './tooltip.js';
+import { attachTooltip, clearControlSelection, hideTooltip, esc } from './tooltip.js';
 import { combatIntentPresentation } from '../models/CombatIntentModel.js';
 import { intentIcon } from './intentIcon.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
@@ -34,7 +34,7 @@ export function combatantInfo(name, open) {
   // One tap, click or keyboard activation opens inspection at once (owner, 2026-10-13).
   node.addEventListener('click', event => {
     event.preventDefault(); event.stopImmediatePropagation(); hideTooltip();
-    node.classList.remove('tooltip-selected'); open(node);
+    clearControlSelection(); open(node);
   }, true);
   return node;
 }
