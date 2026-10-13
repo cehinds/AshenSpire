@@ -184,6 +184,15 @@ test('a custom body clip keeps standard numbers but finishes before another reac
   });
 });
 
+test('a staggering hit: the Stagger sprite plays with the reaction, so the number keeps its plain-hit time', (t) => {
+  drive(t, ({ layer, trace, run, finish }) => {
+    run([...playerHit(4), { type: 'enemyStaggered', targetId: 'e1', cause: 'poiseBroken' }]);
+    finish();
+    assert.equal(layer.dataset.contact, '1', 'the stagger takes no contact step of its own (tools/click-impact-probe.mjs)');
+    assert.equal(timeOf(trace, 'float:-4'), TOTAL + ANIM_SPEEDS.normal.reactionMs, 'the first number lands as on a plain hit');
+  });
+});
+
 test('an identity-bound contact cue runs before hit-stop and also on an avoided or empty contact', (t) => {
   drive(t,({trace,run,finish})=>{
     run(playerHit(6),{animateActor:()=>({impactMs:100,totalMs:300,

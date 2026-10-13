@@ -21,7 +21,7 @@ export function mountBestiary(app, { registries, meta = {}, onBack, initialEnemy
   const definitions = registries.enemies.all().filter(def => Object.hasOwn(learned, def.id))
     .sort((a, b) => a.name.localeCompare(b.name));
   // Unencountered definitions are not projected into DOM/accessible labels.
-  const views = definitions.map(def => projectEnemyKnowledge(def, learned[def.id], { registries }));
+  const views = definitions.map(def => projectEnemyKnowledge(def, learned[def.id], { registries, ratingsRules: registries.balance?.combatRatings || null }));
   let selectedId = views.find(view => view.id === initialEnemyId)?.id || views[0]?.id || null;
   const detail = el('div', { class: 'cp-detail bestiary-detail', role: 'region', 'aria-label': t('knowledge.details') });
   const list = options([], { class: 'cp-grid cp-scroll bestiary-list', 'aria-label': t('knowledge.encountered') });
