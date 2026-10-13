@@ -13,6 +13,8 @@ import { createRng } from '../src/engine/rng.js';
 // 200 enemy turns on a fixed seed, through the real engine (endTurn runs rollIntents).
 // The digests were recorded from the pre-change intent code, so an enemy without
 // reaction moves (and the two carriers, once they gain one) keeps its sequence.
+// Re-recorded at the merge into feature/AlternativeCombatRounds: the stat-driven enemy SP pool (SPEC §4.6a) plans
+// several weighted picks a turn, so every sequence moves. The reaction probe below still must not move any of them.
 function intentSequence(enemyId, seed, registries = createRegistries(contentBundle)) {
   const deck = Array.from({ length: 20 }, (_, i) => ({ instanceId: `d${i}`, cardId: 'defend', upgraded: false }));
   const player = { id: 'p1', classId: 'herald', maxHp: 100000, hp: 100000, maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 2, relicIds: [], deck };
@@ -27,9 +29,9 @@ function intentSequence(enemyId, seed, registries = createRegistries(contentBund
 }
 const digest = seq => createHash('sha256').update(JSON.stringify(seq)).digest('hex');
 const PRE_CHANGE_DIGESTS = {
-  gildedKnight: ['76cd1197acb372e1df91b29586a192672c9f880a43eb5e34ab946ff90967b926', '856aa031881690adc0d8a12e3079f58af4f7db5ae46c88026ce865d698f48ec4', 'dc94f62a3930cce7892facaaeafa9de40d3bea265045124bd238a2d70cd74d10', 'ecdeb72383769682480e0d0b55517c8b8af0ddede52c772196c326ff6fba40be', 'a72a9664966eac8e19c0dd045b591177d423eecbd6a5945a5239567441449bda'],
-  courtDuelist: ['b2baf9f2826d88b482d03a7e060ccbc42444d26270f17e7da082fe2aa011d29e', 'f4149dacfe0ab69638f2e8b76232daa2c0066bb0f254a28c2a8c92450f06c333', '21c478747999352674bd81407d2115b5c966022df33da4c87a8e60c852e5a894', 'a9a5da047b184b159f7c5d761faa5ad53c8235cac5cf160acec30a497d97d268', 'a9a7520276ffe2b6eeeb576022317d76beed73dc4df23f059ab2c1e50f43b46f'],
-  wanderingSoldier: ['1068e533593c3746657749eb0e0c89f89d6c4f0811e8f00d16130733ed5b1c71', '99e5b7e3f8e10f0a144592740ecc611406107d491ad724d322aa226870b29718', 'b9d5bcfb3d2dbbbaee99a6ac57bee6c24e380230e73638e79e508f5b2b38eb4d', '0af08135b4a61c0fccaecc5af0d89b45e92858c497a60d0ab28b003e89cf15ca', 'c6d513a18baa0b3d2d5bded41cb6ff887a74d5eab2011440004fe19d7e9b8326'],
+  gildedKnight: ['b2f410a59916c6794df40f32a2733cef2a735dd520fd80c9449624dbeac09433', 'd6b987e7c1ccab58384ddd5dd33ab4b6226d1fda78353ca963266526b46212cd', '9a5ca58382b3960bd88f9ef048b3e35a9e78f4c7a8e41132907a43fa2c06aee9', '68bf2f9c79a0dfb626b33961c6c9d9397bfba0f85a9c27129c32ddd0060ef1eb', '174a9534ac1d8040783d4cdbf6807f8fe315be63a76ec543a0ed1437de0c0999'],
+  courtDuelist: ['b2eb0d2aca982aeeb2b9805c7569e0e53e61050468c3c3cc832b378266399b8b', '407b6e852be6ba308d0dfbab6c6edf13050cae3586f337c5528e8019e41dfab7', '8d228239b1cd82b191fe2deb85ff54c13c6a55b9819a503c937c5dcc0d0e42af', '9f55be3eb7b9deaf428b3a1021a69cdb86cf8a2caabd3d3dc979bea27c066dac', '9beeb5412efebcf8f81861d3042854f719d886b3c08fb7f07bc115164d9e7da3'],
+  wanderingSoldier: ['e685f94118b79ac50dbf65b2cb0c18bd8535055c5de97261ccac13755ad960e5', 'a36bbbc1a0bb7a22e01cdf4f66da451170054bb001cf6d413bbdcda24028621a', '89e00ff8a9f81b2d8ed03c01e1dac22995b258bdf9a564db5a718aeaed131155', '199cd41d5d9f5697e7c1850ea6a7ad1608746d828330d5f7fae6debd3bcd631b', '72f91f9464ce7fbcc39975497dd14f0f501ecb9518b828b16040ca5daf450881'],
 };
 
 test('intent sequences of enemies without reaction moves are unchanged on fixed seeds', () => {
@@ -104,9 +106,10 @@ test('the first reaction carriers validate, carry trait:reaction, and are never 
   assert.ok(!(combatProfileFor({ enemyId: 'gildedKnight', moveId: 'thrust' }).traits || []).includes('reaction'));
 });
 
-test('the enemyReaction stream is appended last', () => {
-  assert.equal(STREAM_NAMES.at(-1), 'enemyReaction');
-  assert.equal(STREAM_NAMES.indexOf('enemyIntentClue'), STREAM_NAMES.length - 2);
+test('the enemyReaction stream is appended after enemyIntentClue (the Combat Rounds Preview stream follows it)', () => {
+  assert.equal(STREAM_NAMES.at(-2), 'enemyReaction');
+  assert.equal(STREAM_NAMES.at(-1), 'combatRounds');
+  assert.equal(STREAM_NAMES.indexOf('enemyIntentClue'), STREAM_NAMES.length - 3);
 });
 
 test('the shipped rules carry enemyReactions and a rules object without it still validates', () => {

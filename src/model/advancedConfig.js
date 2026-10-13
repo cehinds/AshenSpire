@@ -8,6 +8,7 @@ import { balanceNote, NEW_RUN_CLAUSE } from './balanceNotes.js';
 // settings are projected into a fresh bundle for a new run.
 
 import { handRulesRows, handRulesSettingsProblems } from './handRules.js';
+import { combatRoundsRows } from './combatRounds.js';
 import {
   startingStatRows, applyStartingStatConfig, kitAttributeMinimums, kitMinimum, derivedStatFloorProblems,
   startingStatPoolProblems, applyEquipmentRequirementConfig, bundleWithConfiguredEquipment,
@@ -980,7 +981,7 @@ function withGates(rows, bundle) {
 
 export function advancedConfigRows(bundle) {
   const generated = leafRows(materializeCardValueBonuses(bundle).balance || {}, [], [], bundle).filter((row) => !row.searchPath.startsWith('ui.') && !LEGACY_BALANCE_PATHS.has(row.searchPath));
-  return withGates([...combatRatingRows(bundle), ...startingStatRows(bundle), ...handRulesRows(), ...prologueRows(), ...progressionRows(bundle), ...explicitRows(bundle), ...presentationRows(), ...balanceOwnRows(bundle), ...shopConfigRows(bundle), ...consumableConfigRows(bundle), ...generated], bundle);
+  return withGates([...combatRatingRows(bundle), ...startingStatRows(bundle), ...handRulesRows(), ...combatRoundsRows(), ...prologueRows(), ...progressionRows(bundle), ...explicitRows(bundle), ...presentationRows(), ...balanceOwnRows(bundle), ...shopConfigRows(bundle), ...consumableConfigRows(bundle), ...generated], bundle);
 }
 
 /**

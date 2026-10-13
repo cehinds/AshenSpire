@@ -6954,6 +6954,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "settings.row.combatRoundsPreview",
+    "extends": "",
+    "short": "Combat rounds preview",
+    "full": "Runs real fights on the speed-ordered combat rounds preview. Off by default. Read at New Run and fixed for that run; a fight already under way keeps the rules it started with. Dev and test builds only.",
+    "tip": ""
+  },
+  {
     "id": "settings.row.promptSettingsExport",
     "extends": "",
     "short": "Offer export when done",

@@ -112,7 +112,8 @@ test('ability inspection uses shared lessons, weapon eligibility and the saved c
     assert.equal(grade,0,'snapshot changes the current rank despite global level 4 rank 2');
     assert.deepEqual(details.cards.map(card=>card.id),abilityOfferPool(scoped,run,id,grade));
     assert.ok(details.cards.length >= 3);
-    assert.ok(details.cards.every(card=>card.abilityKind===details.abilityKind && card.abilityRank===grade && card.manaCost===0));
+    // A grade-0 card's Mana is the cost formula's (SPEC §4.3a: a grade-0 spell pays 1 MP); it was 0 by authoring.
+    assert.ok(details.cards.every(card=>card.abilityKind===details.abilityKind && card.abilityRank===grade));
     assert.equal(details.requiresEquipment,false);
     const lesson = id === 'combatManeuvers' ? 'quickstep' : 'scholarsInsight';
     assert.ok(details.cards.some(card=>card.id===lesson),'shared lessons outside the class pool are included');

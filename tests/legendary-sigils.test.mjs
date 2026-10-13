@@ -378,7 +378,7 @@ test('FINISH: market and blacksmith stock over 200 seeds never offers a legendar
 test('the `sigils` stream retains its appended index after later stream additions', () => {
   assert.equal(STREAM_NAMES.indexOf('sigils'), 16);
   assert.equal(STREAM_NAMES.indexOf('shopOffers'), 15);
-  assert.deepEqual(STREAM_NAMES.slice(16), ['sigils', 'enemyIntentVisibility', 'combatAvoidance', 'statusRecovery', 'statusPressure', 'ashenBlight', 'enemyIntentClue', 'enemyReaction']);
+  assert.deepEqual(STREAM_NAMES.slice(16), ['sigils', 'enemyIntentVisibility', 'combatAvoidance', 'statusRecovery', 'statusPressure', 'ashenBlight', 'enemyIntentClue', 'enemyReaction', 'combatRounds']);
 });
 
 test('FINISH: with defaults no sigil ever drops and no stream counter moves', () => {
@@ -406,7 +406,8 @@ test('FINISH: with dropChancePct.boss 100 a boss drops one unowned legendary and
     seen.add(id);
     const counters = rng.getCounters();
     assert.equal(counters.sigils, 1, 'chance 100 rolls no chance, one pick');
-    for (const name of STREAM_NAMES.filter((n) => n !== 'sigils')) assert.equal(counters[name], 0, `${name} did not move`);
+    // A zero counter may be omitted from getCounters() (combatRounds, SPEC §4.11): omitted means 0.
+    for (const name of STREAM_NAMES.filter((n) => n !== 'sigils')) assert.equal(counters[name] ?? 0, 0, `${name} did not move`);
     assert.equal(rollSigilDrop(boss, createRng(seed), run, 'elite'), null, 'the elite chance is still 0');
   }
   assert.ok(seen.size >= 2, 'the pick varies across seeds');
