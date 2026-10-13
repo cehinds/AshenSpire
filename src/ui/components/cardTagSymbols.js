@@ -1,5 +1,6 @@
 import { ACTION_SIGILS } from '../../content/combatSigils.js';
 import { esc } from './tooltip.js';
+import { t } from '../strings.js';
 
 // Original solid silhouettes, matching the approved B footer treatment.
 const SHAPES = Object.freeze({
@@ -49,7 +50,14 @@ export function cardSideTags(model, def = {}, registries = null) {
   return selected.sort((a,b) => (a===skill?0:a.id==='camp:spell'?1:a===element?2:3) - (b===skill?0:b.id==='camp:spell'?1:b===element?2:3));
 }
 
-export function cardTagRailHtml(tags) {
-  if(!tags?.length)return '';
-  return `<div class="card-tag-rail" data-card-layer="7" aria-label="Primary card tags">${tags.map(tag => `<span class="card-tag-symbol" role="img" data-tag-id="${esc(tag.id)}" aria-label="${esc(tag.label)}" aria-description="${esc(tag.blurb || tag.label)}"><svg viewBox="0 0 32 32" fill="currentColor" fill-rule="evenodd" aria-hidden="true" focusable="false">${shapeFor(tag)}</svg></span>`).join('')}</div>`;
+// The combat hand's range chip (Melee / Reach / Ranged) closes the rail, in the
+// tag chip's own style (as-tag), so it sits with the symbols and never over the cost or name.
+export function cardRangeChipHtml(range) {
+  if(!range)return '';
+  return `<span class="as-tag card-range-chip" data-range="${esc(range)}">${esc(t(`deckEditor.range.${range}`))}</span>`;
+}
+
+export function cardTagRailHtml(tags, range = null) {
+  if(!tags?.length && !range)return '';
+  return `<div class="card-tag-rail" data-card-layer="7" aria-label="Primary card tags">${(tags || []).map(tag => `<span class="card-tag-symbol" role="img" data-tag-id="${esc(tag.id)}" aria-label="${esc(tag.label)}" aria-description="${esc(tag.blurb || tag.label)}"><svg viewBox="0 0 32 32" fill="currentColor" fill-rule="evenodd" aria-hidden="true" focusable="false">${shapeFor(tag)}</svg></span>`).join('')}${cardRangeChipHtml(range)}</div>`;
 }

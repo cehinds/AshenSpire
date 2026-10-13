@@ -30,7 +30,7 @@ import { loreLine } from './loreLine.js';
 import { cardChoice } from '../../model/cardChoices.js';
 import { engravedIconHtml, engravedGlyphId } from './engravedIcon.js';
 import { equipmentCardArt } from '../assets.js';
-import { combatProfileFor, combatProfileTags, numberedTraitRow, traitLine } from '../../model/combatCardProfile.js';
+import { combatCardRange, combatProfileFor, combatProfileTags, numberedTraitRow, traitLine } from '../../model/combatCardProfile.js';
 import { ashenBlightCardLabel } from './ashenBlight.js';
 import { ACTION_SIGILS, SCHOOL_SIGILS, cardSigilIdentity } from '../../content/combatSigils.js';
 import { compactCardRules, sigilExplanationHtml } from './combatSigilView.js';
@@ -156,6 +156,8 @@ export function renderCard(registries, ref, opts = {}) {
     ...(expanded ? { faceType: combatCardType(def) } : {}),
     tags: [...rawModel.tags, ...combatTags.filter(tag => !rawModel.tags.some(existing => existing.id === tag.id))] };
   model.sideTags = cardSideTags(model, def, registries);
+  // The combat hand's range chip (opts.range), by the same rule the deck editor uses.
+  model.range = opts.range ? combatCardRange(def) : null;
   // Authored clauses carry family limits and charge/payment constraints that
   // the generic effect summary cannot express. Keep those complete on the face.
   const faceSummary = expanded ? combatCardSummary(def, opts.preview, registries) : null;
