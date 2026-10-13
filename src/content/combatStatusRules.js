@@ -27,7 +27,7 @@ export const combatStatusRules = {
     slowed: { camp: 'spell', profile: 'elemental', activeStatus: 'slowed', initialThreshold: 6, activeThreshold: 4, cap: 3, chanceRecovery: true },
   },
   sleep: { status: 'sleep', hpPerStack: 2, hpCombatCap: 6, wardCombatCap: 1, damagePercentPerStack: 10 },
-  prone: { status: 'prone', contactPercent: 25, rangedSinglePercent: -25, nearEvade: 2, farEvade: 4, standCost: 1 },
+  prone: { status: 'prone', meleePercent: 25, rangedSinglePercent: -25, reachEvade: 2, rangedEvade: 4, standCost: 1 },
   frozen: { status: 'frozen', actionLoss: 1 },
   interactions: { frostGauge: 'frost', frozen: 'frozen', chilled: 'chilled', grounded: 'grounded', paralysis: 'paralysis', offBalance: 'offBalance', decoy: 'decoy', concealment: 'concealed', chilledBluntPercent: 25 },
   restoration: { alterationCombatCap: 1 },

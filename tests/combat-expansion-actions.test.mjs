@@ -63,7 +63,7 @@ test('a force Spell action (school force, blunt damage type) splits: its magic h
 test('paused action receipts are interned after JSON restore and finish without repeating a charge or roll', () => {
   const { combat, enemy, registries } = fixture();
   const carrier = { cardId: 'starstonePebble', tags: ['camp:spell', 'maneuver:casting'],
-    combatProfile: { camp: 'spell', maneuver: 'casting', school: 'force', damageType: 'blunt', reach: 'near', targeting: 'single' } };
+    combatProfile: { camp: 'spell', maneuver: 'casting', school: 'force', damageType: 'blunt', range: 'reach', targeting: 'single' } };
   const actions = [1, 2].map(() => ({ effect: { op: 'damage', target: 'enemy', amount: 2 }, source: combat.player, owner: combat.player, target: enemy, card: carrier, meta: {} }));
   enqueueExpandedAction(combat, actions, { source: combat.player, target: enemy, carrier });
   combat.pendingAbilityDiscard = { count: 1 };
@@ -92,7 +92,7 @@ test('next-roll advantage and Retain hooks use saved finite owner budgets', () =
 test('mixed Martial and Spell contacts are refused before planning or spending randomness', () => {
   const { combat, enemy } = fixture([]);
   const before = { counters: combat.rng.getCounters(), serial: combat.expansionActionSerial, queue: combat.queue.length };
-  const carrier = { cardId: 'starstonePebble', combatProfile: { camp: 'spell', maneuver: 'casting', reach: 'near', targeting: 'single' } };
+  const carrier = { cardId: 'starstonePebble', combatProfile: { camp: 'spell', maneuver: 'casting', range: 'reach', targeting: 'single' } };
   assert.throws(() => enqueueExpandedAction(combat, [{ effect: { op: 'damage', target: 'enemy', amount: 5,
     combatProfile: { camp: 'physical' } }, source: combat.player, target: enemy, card: carrier }],
     { source: combat.player, target: enemy, carrier }), /camp|Martial|Spell/i);

@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-13",
     "summary": "The balance report no longer shows NaN damage for the Gilded Knight and the Duelist of the Court",
     "detail": "Nothing in play changes. Their reaction moves are never chosen as an intent, so the report now leaves them out of the average, as combat already does.",
-    "build": "0.7.1.1463",
+    "build": "0.7.1.1465",
     "pullRequest": 1942,
     "url": "https://github.com/cehinds/AshenSpire/pull/1942"
+  },
+  {
+    "id": "pr-1921",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Every weapon has a default range, and hand cards show it",
+    "detail": "Combat ranges are now called Melee, Reach and Ranged (formerly contact, near and far), and older saves still load. Each weapon states the range it fights at, and attack cards in the combat hand show a Melee, Reach or Ranged chip, by the same rule the deck editor uses.",
+    "build": "0.7.1.1465",
+    "pullRequest": 1921,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1921"
   },
   {
     "id": "pr-1930",
