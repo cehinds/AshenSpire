@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-13",
     "summary": "Switching combat views keeps your lane where the grid shows it",
     "detail": "When a fight changes from the perspective view to Classic, your saved lane now moves to the Classic square the screen displays. Moving again or reloading the fight no longer jumps you back to a hidden perspective-only lane.",
-    "build": "0.7.1.1481",
+    "build": "0.7.1.1483",
     "pullRequest": 1883,
     "url": "https://github.com/cehinds/AshenSpire/pull/1883"
+  },
+  {
+    "id": "pr-1953",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Alternative combat rounds arrive as an opt-in setting, and every action now costs resources",
+    "detail": "Settings gains three toggles, all off by default: Alternative combat rounds, Momentum (display only in normal combat) and Multi-action preview (one ? per hidden enemy action). Always on: new combat shadows, the blue selection, thin stance-only target outlines with the coloured ring outermost, and enemy actions that spend Stamina and Mana from a stat-driven pool (minions 1–2, elites 2–3, bosses 3–4). Card costs are now derived from damage, rank, range and combat tags, so most basics and cantrips cost 1 Stamina, smashes and sweeps 2, and rank 1–3 spells 1–2 Mana; smashes also deal Poise damage. Silenced enemies cannot spend Mana.",
+    "build": "0.7.1.1483",
+    "pullRequest": 1953,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1953"
   },
   {
     "id": "pr-1942",

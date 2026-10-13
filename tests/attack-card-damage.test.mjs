@@ -6,6 +6,29 @@ import { configuredContentBundle, advancedConfigRows } from '../src/model/advanc
 import { attackCardBaseDamage, attackCardDamageConfigProblems, cardIsMagical } from '../src/model/attackCardDamage.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { evaluate } from '../src/model/formulas.js';
+import { applyActionCosts } from '../src/model/actionCosts.js';
+import { applyAbilityGrade } from '../src/model/abilityGrades.js';
+import { TWO_COST_EFFECT_MULTIPLIER, SCALED_EFFECT_OPS, COST_BUDGET } from '../src/content/actionCosts.js';
+
+// The action-cost step (SPEC §4.3a, owner 2026-10-12) is the one change allowed to a face's numbers: a face that
+// derives to 2 SP or more scales its effect amounts. The expectations below are the authored face after that step,
+// priced on the registry card (which carries the combat tags the cost formula reads) at the face's rank.
+const tagged = createRegistries(contentBundle);
+const expectedFaceEffects = (authored, upgraded) => {
+  const card = tagged.cards.get(authored.id) ?? authored;
+  if (Array.isArray(card.gradeProfiles)) {
+    const graded = applyAbilityGrade(card);
+    return applyActionCosts(graded, graded, { rank: graded.abilityRank }).effects;
+  }
+  const effects = upgraded ? authored.upgrade.effects ?? authored.effects : authored.effects;
+  const cost = upgraded && authored.upgrade?.cost !== undefined ? authored.upgrade.cost : authored.cost;
+  return applyActionCosts({ ...card, cost, effects }, card).effects;
+};
+// A sweep's damage stays unscaled at 2 SP (owner, 2026-10-13: its area pays for it).
+const scaledFor = (face, n) => (face.cost >= 2 && !(face.tags || []).includes('maneuver:sweep') ? Math.round(n * TWO_COST_EFFECT_MULTIPLIER) : n);
+// The formula reads the authored cost (the step runs after it), so the formula sees the authored face.
+const authoredFaceFor = (authored, upgraded) => ({ ...authored, effects: upgraded ? authored.upgrade.effects ?? authored.effects : authored.effects,
+  cost: upgraded && authored.upgrade?.cost !== undefined ? authored.upgrade.cost : authored.cost });
 
 const defaults = contentBundle.balance.damage.attackCards;
 
@@ -50,7 +73,7 @@ test('registry projection recalculates every fixed-cost attack and both card fac
       const config = cardIsMagical(face)
         ? registries.balance.damage.potencyCards
         : registries.balance.damage.attackCards;
-      const expected = attackCardBaseDamage(face, config);
+      const expected = attackCardBaseDamage(authoredFaceFor(authored, upgraded), config);
       const primary = face.effects.find((effect) => effect.op === 'damage' && !effect.if);
       const conditional = face.effects.filter((effect) => effect.op === 'damage' && typeof effect.amount === 'number');
       const baseAmounts = authored.effects
@@ -65,8 +88,8 @@ test('registry projection recalculates every fixed-cost attack and both card fac
       // A face whose only damage is a formula keeps it as authored (no base is
       // invented in front of it); the all-effects test below pins that.
       if (authoredFace === null) continue;
-      const expectedWithAuthoredDelta = expected
-        + (authoredBase !== null && authoredFace !== null ? authoredFace - authoredBase : 0);
+      const expectedWithAuthoredDelta = scaledFor(face, expected
+        + (authoredBase !== null && authoredFace !== null ? authoredFace - authoredBase : 0));
       assert(primary || conditional.length, `${authored.id}: projected base damage`);
       if (primary) assert.deepEqual(primary.amount, expectedWithAuthoredDelta, `${authored.id}${upgraded ? '+' : ''}`);
       else assert.equal(Math.min(...conditional.map((effect) => effect.amount)), expectedWithAuthoredDelta, `${authored.id}${upgraded ? '+' : ''}`);
@@ -83,7 +106,7 @@ test('default formulas preserve authored numeric card values and upgrade-only ef
     for (const upgraded of [false, true]) {
       if (upgraded && !authored.upgrade) continue;
       const projected = resolveCard(registries, { cardId: authored.id, upgraded });
-      const authoredEffects = upgraded ? authored.upgrade.effects ?? authored.effects : authored.effects;
+      const authoredEffects = expectedFaceEffects(authored, upgraded);
       for (const op of [
         ...(authored.type === 'attack' ? ['damage', 'poiseDamage'] : []),
         'block',
@@ -170,7 +193,7 @@ test('untouched defaults leave every card face’s effects exactly as authored',
     for (const upgraded of [false, true]) {
       if (upgraded && !authored.upgrade) continue;
       const face = resolveCard(registries, { cardId: authored.id, upgraded });
-      const expected = upgraded ? authored.upgrade.effects ?? authored.effects : authored.effects;
+      const expected = expectedFaceEffects(authored, upgraded);
       assert.deepEqual(face.effects, expected, `${authored.id}${upgraded ? '+' : ''}`);
     }
   }
@@ -377,10 +400,16 @@ test('a card a staff package deals resolves through the magical formulas', () =>
   assert.equal(cardIsMagical(dealt), true);
   assert.ok('stomp' in registries.balance.damage.potencyCards.cardBonuses);
   const authored = contentBundle.legacyProgression.cards.find((card) => card.id === 'stomp');
-  assert.deepEqual(dealt.effects.map((effect) => effect.amount), authored.effects.map((effect) => effect.amount),
-    'untouched defaults keep its numbers on the magical side');
+  const scaledAuthored = dealt.cost >= 2 ? authored.effects.map((effect) => (SCALED_EFFECT_OPS.includes(effect.op) && typeof effect.amount === 'number'
+    ? Math.round(effect.amount * TWO_COST_EFFECT_MULTIPLIER) : effect.amount)) : authored.effects.map((effect) => effect.amount);
+  // Stomp is a smash: every smash adds smashPoiseBase to its Poise damage (owner, 2026-10-13).
+  const poiseAt = authored.effects.findIndex((effect) => effect.op === 'poiseDamage');
+  if (poiseAt >= 0) scaledAuthored[poiseAt] += COST_BUDGET.smashPoiseBase;
+  assert.deepEqual(dealt.effects.map((effect) => effect.amount), scaledAuthored,
+    'untouched defaults keep its numbers on the magical side, after the action-cost step');
   const tuned = createRegistries(configuredContentBundle(bundle, { 'gameConfig.balance.damage.potencyCards.globalMultiplier': 5 }));
   assert.notEqual(resolveCard(tuned, { cardId: 'stomp', legacyAbility: true, profileId: 'staffMagicAttack' }).effects[0].amount, authored.effects[0].amount,
     'the PR formula moves it');
-  assert.equal(resolveCard(tuned, { cardId: 'stomp', legacyAbility: true }).effects[0].amount, authored.effects[0].amount, 'and not its physical face');
+  const physical = resolveCard(tuned, { cardId: 'stomp', legacyAbility: true });
+  assert.equal(physical.effects[0].amount, scaledFor(physical, authored.effects[0].amount), 'and not its physical face (after the action-cost step)');
 });
