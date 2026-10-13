@@ -990,6 +990,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "card.tag.tooltip",
+    "extends": "",
+    "short": "",
+    "full": "{name} — {blurb}",
+    "tip": ""
+  },
+  {
     "id": "possession.effects.package",
     "extends": "",
     "short": "Granted card package",
