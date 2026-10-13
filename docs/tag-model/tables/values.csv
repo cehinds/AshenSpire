@@ -72,6 +72,8 @@ evasion.cardBonus,0,rating,evasion,"Preview of the evasion card bonus in effect;
 quick.accuracy,1,rating,accuracy,"Accuracy tag bonus: quick (decision 11)"
 telegraphed.accuracy,-2,rating,accuracy,"Accuracy tag bonus: telegraphed (decision 11)"
 accuracy.tagBonus,0,rating,accuracy,"Preview of the accuracy tag bonus in effect; 0 with no tag. Runtime input resolved from the tag rows"
+precision.perStack,1,rating,accuracy,"Accuracy added per precision stack (owner decision 16, 2026-10-13). Proposed"
+sweep.targets,1,targets,sweep,"Preview of the enemies a Sweep attack targets, for sweep.accuracyBonus; 1 is the preview. Runtime input from the attack's target count. Proposed"
 wisdom,0,points,character,"Preview of WIS for the accuracy formula; placeholder, class stats not in the decision"
 intelligence,0,points,character,"Preview of INT for the accuracy formula; placeholder, class stats not in the decision"
 level,1,level,character,"Preview character level for the accuracy formula (level 1)"
