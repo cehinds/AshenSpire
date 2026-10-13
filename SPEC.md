@@ -12,7 +12,7 @@
 > consistently throughout that section and records the reconciliation in its audit. The count of old names:
 > `grep -cE "runes|Vagabond|Astrologer|Prophet|Erdtree|Scarlet Rot" SPEC.md`.
 
-A single-player roguelike deckbuilder for the browser. Mechanically faithful to Slay the Spire; thematically inspired by (but legally distinct from) Elden Ring. Companion documents: [PROMPT.md](PROMPT.md) (the brief this spec expands), and — once implementation starts — `DEVELOPER.md` (how to extend) and `CREDITS.md` (asset licenses).
+A single-player roguelike deckbuilder for the browser. Mechanically faithful to Slay the Spire; thematically inspired by (but legally distinct from) Elden Ring. Companion documents: the original brief this spec expands (PROMPT.md, removed 2026-10-11), and — once implementation starts — `DEVELOPER.md` (how to extend) and `CREDITS.md` (asset licenses).
 
 Numbers in this spec are the **initial balance targets**. They will move during the M3 balance pass, but the *structures* (formulas, orderings, state shapes) are contractual.
 

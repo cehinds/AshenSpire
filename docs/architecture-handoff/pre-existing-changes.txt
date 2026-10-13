@@ -1,10 +1,8 @@
 AshenSpire.html
-PROMPT.md
 SPEC.md
 build/AshenSpire.html
 buildordinal.json
 dist/AshenSpire.html
-docs/GENERAL-GAME-BUILD-PROMPT.md
 src/content/classes.js
 src/content/derivedStats.js
 src/model/attributes.js
@@ -21,6 +19,5 @@ tools/character-creation-check.mjs
 tools/conhp.mjs
 tools/derivedstats.mjs
 tools/e11-reward-correction.mjs
-tools/prompt-library.mjs
 tools/serve.mjs
 tools/uprightgate.mjs
