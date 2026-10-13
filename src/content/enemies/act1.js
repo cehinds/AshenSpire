@@ -150,7 +150,7 @@ export const act1Enemies = [
     firstMove: 'caneStrike',
     moves: {
       caneStrike: { sp: 1, intent: 'attack', damage: 8, weight: 40, maxConsecutive: 2 },
-      hammerToss: { sp: 2, intent: 'attack', damage: 5, hits: 2, weight: 30, maxConsecutive: 2 },
+      hammerToss: { sp: 1, intent: 'attack', damage: 5, hits: 2, weight: 30, maxConsecutive: 2 },
       heldBlade: {
         // Signature delayed attack: telegraphs 16, holds (gaining 8 Block),
         // lands the following turn regardless of newly rolled intents.
@@ -158,7 +158,7 @@ export const act1Enemies = [
         sp: 1, intent: 'attack', damage: 14, weight: 30, maxConsecutive: 1,
         delay: { turns: 1, whileCharging: { block: 8 } },
       },
-      twinDaggers: { sp: 1, intent: 'attack', damage: 3, hits: 4, weight: 35, locked: true },
+      twinDaggers: { sp: 3, intent: 'attack', damage: 3, hits: 4, weight: 35, locked: true },
     },
     phases: [
       {
@@ -336,10 +336,10 @@ export const act1Enemies = [
   {
     "id": "bellKeeper",
     "attributes": {
-      "strength": 9,
+      "strength": 10,
       "dexterity": 4,
       "constitution": 4,
-      "wisdom": 3,
+      "wisdom": 5,
       "intelligence": 3
     },
     "name": "The Bell Keeper",
@@ -377,7 +377,7 @@ export const act1Enemies = [
         "maxConsecutive": 2
       },
       "muffledPrayer": {
-        "sp": 2,
+        "sp": 1,
         "intent": "block",
         "block": 9,
         "weight": 20,
@@ -408,8 +408,8 @@ export const act1Enemies = [
   {
     "id": "thornMatriarch",
     "attributes": {
-      "strength": 5,
-      "dexterity": 3,
+      "strength": 6,
+      "dexterity": 4,
       "constitution": 3,
       "wisdom": 5,
       "intelligence": 5
@@ -444,7 +444,7 @@ export const act1Enemies = [
         "maxConsecutive": 2
       },
       "entwiningRoots": {
-        "sp": 3,
+        "sp": 2,
         "intent": "attack",
         "damage": 15,
         "weight": 30,

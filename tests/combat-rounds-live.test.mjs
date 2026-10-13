@@ -268,8 +268,8 @@ function ENEMY_ID_OF(c) {
 // fights as the golden in the P3a commit: three seeds, four turns, each card played on the first
 // living enemy, reactions set off). Re-recorded at the dev merge (2026-10-12): dev's combatReactionUnavailable
 // receipts (SPEC §4.10) are in the log now, and this equals origin/dev's own output for the same script.
-// Re-recorded for the cost formula and the stat-driven enemy pool (SPEC §4.3a, §4.6a; owner 2026-10-12): card costs and
-// the enemy's 3-SP pool change what the script plays. The previous hash came from the replaced stance-table rule.
+// Re-recorded for the cost formula and the stat-driven enemy pool (SPEC §4.3a, §4.6a; owner 2026-10-12, 2026-10-13): card
+// costs and the enemy's stat pool change what the script plays. The previous hash came from the replaced stance-table rule.
 function scriptedLog(seed, classId = 'reaver', enemyIds = [ENEMY]) {
   const run = createRunState({ seed, classId, registries });
   const c = createRunCombat({ registries, rng: createRng(seed), run, enemyIds, settings: {} });
@@ -291,8 +291,8 @@ function scriptedLog(seed, classId = 'reaver', enemyIds = [ENEMY]) {
 
 test('with the preview off, a scripted fight event log is byte-identical to the recorded golden', () => {
   const all = [1, 2, 3].map((s) => scriptedLog(s)).join('\n');
-  assert.equal(createHash('sha256').update(all).digest('hex'), 'ea77f4a552f271deaf71eb45974cc96f4719dbbb2febaf1506f63ab2539565a4');
-  assert.equal(all.length, 299660);
+  assert.equal(createHash('sha256').update(all).digest('hex'), '78c682e153d4f2cc819052c8806e1253293e3779af8c1726f938071464a4a047');
+  assert.equal(all.length, 304559);
 });
 
 // Review finding 1: a queued card that an earlier queued card removed from hand never resolves.
