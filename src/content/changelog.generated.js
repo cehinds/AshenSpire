@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-13",
     "summary": "One press on a visible Inspect \"i\" opens it",
     "detail": "One click, tap or Enter on a fighter's Inspect \"i\" opens the inspector at once, even when the fighter was not selected first.",
-    "build": "0.7.1.1453",
+    "build": "0.7.1.1455",
     "pullRequest": 1930,
     "url": "https://github.com/cehinds/AshenSpire/pull/1930"
   },
