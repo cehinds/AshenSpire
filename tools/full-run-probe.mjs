@@ -278,7 +278,11 @@ async function newGameFromTitle(label) {
   const className = await ev(`document.querySelector('#cz-classes .cz-class').textContent.trim().replace(/^\\W+/, '').split(/(?=[A-Z][a-z]+ )/)[0]`);
   await press('#cz-classes .cz-class');
   await press('#cz-next');
-  await until(`!!document.querySelector('#cz-statedit .cc-mode-select')`, 'the Character stage');
+  // The staged flow (Class -> Attributes -> Keepsake -> Equipment -> Feats ->
+  // Spells for casters -> Review): each stage is the `.cz-railed` panel's
+  // data-creation-stage, and Next (#cz-next) leaves it.
+  const onStage = (stage) => `document.querySelector('.cz-railed')?.dataset.creationStage === '${stage}'`;
+  await until(`${onStage('attributes')} && !!document.querySelector('#cz-statedit .cc-mode-select')`, 'the Attributes stage');
   const openFace = async (key) => {
     await until(`!!document.querySelector('[data-face="${key}"]')`, `the ${key} fold`);
     if (!(await ev(`document.querySelector('[data-face="${key}"]')?.closest('details')?.open === true`))) await press(`[data-face="${key}"]`);
@@ -287,13 +291,18 @@ async function newGameFromTitle(label) {
   // Standard's mode id is `lean` (see map-camera-persistence.mjs).
   const mode = await ev(`(() => { const s = document.querySelector('#cz-statedit .cc-mode-select'); s.value = 'lean'; s.dispatchEvent(new Event('change', { bubbles: true })); return s.value; })()`);
   if (mode !== 'lean') throw new Error(`the stat mode select offers no Standard (lean); value=${JSON.stringify(mode)}`);
-  await openFace('keepsake');
+  await press('#cz-next');
+  await until(onStage('keepsake'), 'the Keepsake stage');
   await press('#cz-keepsakes [data-keepsake-id]');
   await press('#cz-next');
-  await until(`document.querySelector('#cz-tab-equipment')?.getAttribute('aria-selected') === 'true'`, 'the Starting equip stage');
+  await until(onStage('equipment'), 'the Equipment stage');
   await openFace('armour');
   await press('#cz-armours .equip-chip .equipment-poker-card');
-  await press('#cz-armours .equip-chip .equipment-choose');
+  // The armour's own Choose button is spent only when the stage shows it
+  // (a card click may already have chosen the armour).
+  if (await ev(`(() => { const b = document.querySelector('#cz-armours .equip-chip .equipment-choose'); if (!b) return false; const r = b.getBoundingClientRect(); return r.width > 0 && r.height > 0 && !b.disabled; })()`)) {
+    await press('#cz-armours .equip-chip .equipment-choose');
+  }
   let abilitySelections = 0;
   for (let i = 0; i < 8; i++) {
     if (await ev(`document.querySelector('#cz-tab-review')?.getAttribute('aria-selected') === 'true'`)) break;
@@ -347,6 +356,11 @@ async function enterNode(node) {
   await press(`.map-node[data-node="${node.id}"]`);
   // Select, then Enter once the tray has slid open (map.js W4b).
   await until(`document.querySelector('.map-tray')?.dataset.shown === 'true' && !document.querySelector('#map-enter')?.disabled`, `the tray's Enter for ${node.id}`, 5000);
+  // The tray is `shown` before its reveal has finished sliding (and the board
+  // glides onto the node under it): a press taken mid-slide lands on the tray
+  // row beneath the button and is dropped. Press once Enter has stopped moving.
+  await ev(`window.__enterRect = null`);
+  await until(`(() => { const b = document.querySelector('#map-enter'); if (!b) return false; const r = b.getBoundingClientRect(); const now = [r.x, r.y, r.width, r.height].join(); const same = window.__enterRect === now; window.__enterRect = now; return same; })()`, `the tray's Enter to stop moving for ${node.id}`, 5000);
   await wait(200);
   await press('#map-enter');
   // Entered: the map is gone, or a room (a treasure's spoils) is drawn over it.
