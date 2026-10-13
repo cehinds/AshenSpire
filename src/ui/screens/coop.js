@@ -97,7 +97,7 @@ import { resourceBars } from '../components/resbars.js';
 import { meterRowSelectedOnly } from '../models/CombatantMeterModel.js';
 import { characterLevel } from '../../model/levelup.js';
 import { combatHealthRow } from '../components/combatHealth.js';
-import { blockPresentation } from '../../model/blockPresentation.js';
+import { protectionPresentation } from '../../model/blockPresentation.js';
 import { renderArcaneExposure } from '../components/arcaneExposure.js';
 import { mountMapBoard } from '../components/mapboard.js';
 import { combatBackdropHtml } from '../components/environmentArt.js';
@@ -1008,7 +1008,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     const hp = bars.querySelector('.as-meter[data-res="hp"]');
     if (hp) {
       const next = hp.nextSibling;
-      const health = combatHealthRow(hp, blockPresentation(ent));
+      const health = combatHealthRow(hp, protectionPresentation(ent));
       bars.insertBefore(health, next);
     }
     wrap.classList.add('as-meters', 'tight');
@@ -1023,7 +1023,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const protection = document.createElement('div'); protection.className = 'combat-expansion-protection';
       const stance = ent.combatStance?.maneuver;
       protection.textContent = [`Ward ${ent.persistentWard?.value || 0}/${ent.persistentWard?.max || 0}`,
-        `Barrier ${ent.barrier || 0}`, stance ? stance[0].toUpperCase() + stance.slice(1) : ''].filter(Boolean).join(' · ');
+        `${t('combat.protection.barrier')} ${ent.barrier || 0}`, stance ? stance[0].toUpperCase() + stance.slice(1) : ''].filter(Boolean).join(' · ');
       wrap.appendChild(protection);
     }
     if (isEnemy) {
@@ -1050,13 +1050,13 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         { label: 'MP', value: entity.mana, max: entity.maxMana },
           { label: 'Poise', value: entity.poiseMeter?.value, max: entity.poiseMeter?.max },
           { label: entity.combatExpansionVersion === 2 ? 'Ward rating' : t('combat.rating.ward'), value: entity.ratings?.ward },
-          ...(entity.combatExpansionVersion === 2 ? [{ label: 'Ward pool', value: entity.persistentWard?.value || 0, max: entity.persistentWard?.max || 0 }, { label: 'Barrier', value: entity.barrier || 0 }] : []),
+          ...(entity.combatExpansionVersion === 2 ? [{ label: 'Ward pool', value: entity.persistentWard?.value || 0, max: entity.persistentWard?.max || 0 }, { label: t('combat.protection.barrier'), value: entity.barrier || 0 }] : []),
         { label: t('combat.protection.block'), value: entity.block || 0 },
       ].filter(row => row.value != null);
       const abilities = activeCombatAbilities(registries, entity, false);
       const intent = def ? readEnemyIntent(entity, def) : null;
       const owner = snap.scene.enemyKnowledge?.owners?.[me];
-      const learning = def && owner ? projectEnemyKnowledge(def, owner.knowledge.enemies[def.id], { registries, combatMatchupRules: snap.scene.combatMatchupRules }) : null;
+      const learning = def && owner ? projectEnemyKnowledge(def, owner.knowledge.enemies[def.id], { registries, combatMatchupRules: snap.scene.combatMatchupRules, ratingsRules: registries.balance?.combatRatings || null }) : null;
       const moveCards = learning ? learning.moveCards : def ? enemyMoveCards(def, { enemy: entity, preview: intent, registries, combatMatchupRules: snap.scene.combatMatchupRules }) : null;
       // PREVIOUS ACTIONS, oldest first — the moves that RESOLVED, which is what
       // solo reads off `entity.performedMoves`. The snapshot now carries the
@@ -2168,6 +2168,19 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         if (event.type === 'damageDealt' && target) {
           target.hp = Math.max(0, target.hp - Math.max(0, event.amount - (event.blocked || 0)));
           if (event.blockRemaining !== undefined) target.block = event.blockRemaining;
+          // The defence layers move with each hit, so their badges do too.
+          if (event.barrierRemaining !== undefined) target.barrier = event.barrierRemaining;
+          if (event.wardRemaining !== undefined && target.persistentWard) target.persistentWard.value = event.wardRemaining;
+          if (event.poiseRemaining !== undefined && target.persistentPoise) target.persistentPoise.value = event.poiseRemaining;
+        }
+        if (event.type === 'barrierGained' && target && event.total !== undefined) target.barrier = event.total;
+        if ((event.type === 'persistentWardChanged' || event.type === 'combatWardStripped') && target?.persistentWard && Number.isFinite(event.value)) {
+          target.persistentWard.value = event.value;
+          if (Number.isFinite(event.max)) target.persistentWard.max = event.max;
+        }
+        if (event.type === 'persistentPoiseChanged' && target?.persistentPoise) {
+          target.persistentPoise.value = event.value;
+          if (Number.isFinite(event.max)) target.persistentPoise.max = event.max;
         }
         if (event.type === 'cardPlayed') {
           const owner = entityFor(event.sourcePlayerId || event.playerId);

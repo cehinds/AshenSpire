@@ -21,33 +21,54 @@ test('every callout kind has a localized word', () => {
   assert.equal(t(CALLOUT_KINDS.guardBreak.string), 'GUARD BREAK');
 });
 
-test('a callout names its fighter, stacks a second, keeps at most two, and skips a repeat', (t2) => {
-  t2.mock.timers.enable({ apis: ['setTimeout'] });
+test('a callout names its fighter, shows three in lanes, queues the rest, and skips a repeat', (t2) => {
+  t2.mock.timers.enable({ apis: ['setTimeout', 'Date'] });
   withKitDom((dom) => {
     const layer = dom.document.createElement('div');
     const anchor = dom.document.createElement('div');
     const first = callout(layer, anchor, 'e1', 'staggered');
     assert.equal(first.textContent, 'STAGGERED');
     assert.equal(first.dataset.calloutFor, 'e1');
-    assert.equal(first.dataset.calloutSlot, '0');
+    assert.equal(first.dataset.calloutSlot, '2', 'lane 0 is the top slot');
     assert.match(first.className, /\bfx-callout\b.*\bgold\b/);
     assert.equal(callout(layer, anchor, 'e1', 'staggered'), null, 'the same word is not repeated on one fighter');
     const second = callout(layer, anchor, 'e1', 'critical');
-    assert.equal(second.dataset.calloutSlot, '1', 'the second stacks above the first');
+    assert.equal(second.dataset.calloutSlot, '1', 'lane 1 sits under lane 0');
     assert.match(second.className, /\bred\b/);
     const other = callout(layer, anchor, 'player', 'evaded');
-    assert.equal(other.dataset.calloutSlot, '0', 'another fighter has its own stack');
-    callout(layer, anchor, 'e1', 'guardBreak');
-    const e1 = callouts(layer).filter((node) => node.dataset.calloutFor === 'e1');
-    assert.equal(e1.length, 2, 'at most two per fighter');
-    assert.deepEqual(e1.map((node) => node.dataset.calloutKind).sort(), ['critical', 'guardBreak'], 'the oldest gives way');
-    assert.deepEqual(e1.map((node) => node.dataset.calloutSlot).sort(), ['0', '1'], 'no two share a slot');
-    t2.mock.timers.tick(900);
-    assert.equal(callouts(layer).length, 0, 'each fades out after its life');
-    callout(layer, anchor, 'e1', 'countered');
+    assert.equal(other.dataset.calloutSlot, '2', 'another fighter has its own stack');
+    const third = callout(layer, anchor, 'e1', 'guardBreak');
+    assert.equal(third.dataset.calloutSlot, '0', 'lane 2 is the bottom slot');
+    const fourth = callout(layer, anchor, 'e1', 'countered');
+    const starts = [first, second, third].map((node) => Number.parseInt(node.style.animationDelay || '0', 10));
+    assert.deepEqual(starts, [0, 150, 300], 'each word starts one step after the one before');
+    const delayMs = Number.parseInt(fourth.style.animationDelay, 10);
+    assert.ok(delayMs >= 890 && delayMs <= 900, 'the fourth waits for the earliest visible word to finish');
+    assert.equal(callouts(layer).length, 5, 'nothing is dropped: the fourth is queued');
     clearCallouts(layer);
-    assert.equal(callouts(layer).length, 0, 'a skip ends them');
+    assert.equal(callouts(layer).length, 0, 'a skip ends the visible words and the queue');
   });
+});
+
+test('instant speed: the lanes and removal use the 500ms lifetime callout() actually picked', (t2) => {
+  t2.mock.timers.enable({ apis: ['setTimeout', 'Date'] });
+  try {
+    withKitDom((dom) => {
+      setAnimSpeed('instant');
+      const layer = dom.document.createElement('div');
+      const anchor = dom.document.createElement('div');
+      const kinds = ['staggered', 'disrupted', 'countered', 'critical', 'guardBreak', 'wardBreak'];
+      const nodes = kinds.map((kind) => callout(layer, anchor, 'e1', kind));
+      const starts = nodes.map((node) => Number.parseInt(node.style.animationDelay || '0', 10));
+      assert.deepEqual(starts, [0, 150, 300, 500, 650, 800], 'the fourth word waits for the first 500ms word, not a 900ms one');
+      t2.mock.timers.tick(499);
+      assert.ok(layer.children.includes(nodes[0]), 'the first word is still up at 499ms');
+      t2.mock.timers.tick(1);
+      assert.ok(!layer.children.includes(nodes[0]), 'the first word is removed at its 500ms lifetime');
+    });
+  } finally {
+    setAnimSpeed('normal');
+  }
 });
 
 test('callout CSS: larger than a float, HUD text shadow, reduced motion and Reduce flashes', () => {
@@ -123,7 +144,8 @@ for (const mode of ['sequential', 'impact', 'instant', 'reduced']) test(`selecte
 
 test('an unsupported receipt reaction hook preserves callout-only pacing',t2=>{
   drive(t2,({trace,run,finish})=>{
-    run(enemyAttack({type:'attackEvaded',targetId:'player'}),{reactionForReceipt:()=>null});finish();
+    // A callout-only event: a miss now has its own streak and swish, so it no longer serves here.
+    run(enemyAttack({type:'combatCounterTriggered',sourceId:'e1',targetId:'player'}),{reactionForReceipt:()=>null});finish();
     assert.equal(timeOf(trace,'bars'),TOTAL,'no extra reaction wait when the fighter has no selected profile');
   });
 });
@@ -166,6 +188,22 @@ test('a failed avoidance roll and an unbroken rating say nothing', () => {
   assert.equal(calloutForEvent({ type: 'combatAvoidanceResolved', targetId: 'player', avoided: false, evade: { success: false } }), null);
   assert.equal(calloutForEvent({ type: 'ratingImpact', targetId: 'e1', breaks: 0, label: 'Stagger' }), null);
   assert.deepEqual(calloutForEvent({ type: 'ratingImpact', targetId: 'e1', breaks: 1, label: 'Disruption' }), { kind: 'disrupted', targetId: 'e1' });
+  // A distance roll or a prevention charge that stops a hit is a miss too, over the fighter it missed.
+  assert.deepEqual(calloutForEvent({ type: 'combatAvoidanceResolved', sourceId: 'e1', targetId: 'player', avoided: true, distance: { roll: 4, chance: 30, success: true } }), { kind: 'evaded', targetId: 'player' });
+  assert.deepEqual(calloutForEvent({ type: 'combatAvoidanceResolved', sourceId: 'e1', targetId: 'player', avoided: true, prevention: 'decoy' }), { kind: 'evaded', targetId: 'player' });
+  // Each break earns its own word over the fighter it broke; an enemy's cancelled action reads INTERRUPTED.
+  assert.deepEqual(calloutForEvent({ type: 'blockBroken', targetId: 'player' }), { kind: 'blockBreak', targetId: 'player' });
+  // A Smash that breaks the last Block shows GUARD BREAK alone: its blockBroken earns no BREAK word.
+  assert.equal(calloutForEvent({ type: 'blockBroken', targetId: 'e1', smash: true }), null);
+  assert.deepEqual(calloutForEvent({ type: 'combatGuardBroken', targetId: 'e1', poise: 0 }), { kind: 'guardBreak', targetId: 'e1' });
+  assert.deepEqual(calloutForEvent({ type: 'wardBroken', targetId: 'e1', staminaLoss: 0 }), { kind: 'wardBreak', targetId: 'e1' });
+  assert.deepEqual(calloutForEvent({ type: 'poiseBroken', targetId: 'e1', interrupted: true, staminaLoss: 1 }), { kind: 'poiseBreak', targetId: 'e1' });
+  assert.deepEqual(calloutForEvent({ type: 'enemyInterrupted', targetId: 'e1', cancelledMove: 'slam', cause: 'poiseBreak' }), { kind: 'interrupted', targetId: 'e1' });
+  // A stagger a break caused shows no second word: the break's word and INTERRUPTED carry it.
+  assert.equal(calloutForEvent({ type: 'enemyStaggered', targetId: 'e1', cause: 'poiseBreak' }), null);
+  assert.deepEqual(calloutForEvent({ type: 'enemyStaggered', targetId: 'e1' }), { kind: 'staggered', targetId: 'e1' });
+  assert.equal(CALLOUT_KINDS.interrupted.string, 'combat.callout.interrupted');
+  assert.equal(CALLOUT_KINDS.barrierBreak.tone, 'barrier');
 });
 
 test('COUNTERED shows on the attacker who got countered, at the counter\'s impact', (t2) => {
