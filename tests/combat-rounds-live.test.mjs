@@ -3,6 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
@@ -641,6 +642,56 @@ test('a charging attack whose hit roll misses still starts its charge; the miss 
   assert.ok(!second.events.some((e) => e.type === 'damageDealt' && e.sourceId === enemy.id), 'and deals nothing');
 });
 
+// Exact-head review P2: the round settles a delayed entry when its charge starts, but its Poise damage lands on the
+// later turn. The spent momentum multiplier must travel with that pending move until its ordinary payload drains.
+const delayedPoiseRegistries = createRegistries({ ...contentBundle, enemies: contentBundle.enemies.map((e) => (e.id === ENEMY
+  ? { ...e, moves: { ...e.moves, [CHARGE]: { intent: 'attack', damage: 12, weight: 0, sp: 1,
+    effects: [{ op: 'poiseDamage', target: 'player', amount: 4 }], delay: { turns: 1, whileCharging: { block: 5 } } } } }
+  : e)) });
+
+test('a delayed round hit keeps its Poise multiplier until the payload lands', () => {
+  const poiseDealt = (doubled) => {
+    const c = fixRoundRoll(fight({ reg: delayedPoiseRegistries, expansion: 1, momentum: true }), 0.999);
+    const enemy = liveEnemy(c);
+    c.combatRounds.enemyQueues[enemy.id] = [{ moveId: CHARGE, sp: 1 }];
+    c.player.poiseMeter.max = 100;
+    if (doubled) c.combatRounds.poiseDouble = { [enemy.id]: true };
+    endTurnDeclining(c);
+    assert.equal(enemy.pendingMove?.moveId, CHARGE, 'the flagged landed entry starts its charge');
+    const before = c.player.poiseMeter.value;
+    endTurnDeclining(c);
+    assert.equal(enemy.pendingMove, null, 'the delayed payload lands on the following enemy turn');
+    return c.player.poiseMeter.value - before;
+  };
+  const plain = poiseDealt(false);
+  assert.equal(plain, 6, 'fixture: the hit adds 2 Poise and its rider adds 4');
+  assert.equal(poiseDealt(true), plain * 2, 'the delayed hit and its Poise rider are both doubled');
+});
+
+const delayedTriggerPoiseRegistries = createRegistries({ ...contentBundle, enemies: contentBundle.enemies.map((e) => (e.id === ENEMY
+  ? { ...e, moves: { ...e.moves, [CHARGE]: { intent: 'attack', damage: 12, weight: 0, sp: 1,
+    delay: { turns: 1, whileCharging: { block: 5 } } } },
+  phases: [...(e.phases || []), { on: 'damageDealt', once: false, if: { p: 'eventSourceIsOwner' },
+    do: [{ op: 'poiseDamage', target: 'player', amount: 4 }] }] }
+  : e)) });
+
+test('a delayed round hit carries its Poise multiplier onto trigger-enqueued riders', () => {
+  const poiseDealt = (doubled) => {
+    const c = fixRoundRoll(fight({ reg: delayedTriggerPoiseRegistries, expansion: 1, momentum: true }), 0.999);
+    const enemy = liveEnemy(c);
+    c.combatRounds.enemyQueues[enemy.id] = [{ moveId: CHARGE, sp: 1 }];
+    c.player.poiseMeter.max = 100;
+    if (doubled) c.combatRounds.poiseDouble = { [enemy.id]: true };
+    endTurnDeclining(c);
+    const before = c.player.poiseMeter.value;
+    endTurnDeclining(c);
+    return c.player.poiseMeter.value - before;
+  };
+  const plain = poiseDealt(false);
+  assert.equal(plain, 6, 'fixture: the delayed hit adds 2 Poise and its damage trigger adds 4');
+  assert.equal(poiseDealt(true), plain * 2, 'the hit and its trigger-enqueued Poise rider are both doubled');
+});
+
 // Review follow-up: the timeline has no delay handling, so the round's queue itself ends at a charge. Otherwise the
 // timeline resolved a Slash the live round skipped: it credited that Slash's momentum, and a queued Counter fired on it.
 // The soldier opens with the charge, and Slash is its only weighted move, so before the fix the queue was charge, Slash.
@@ -793,4 +844,22 @@ test('an enemy a queued card kills mid-round takes no later timeline entry: its 
     return c.combatRounds.momentum[doomed.id] ?? 0;
   };
   assert.equal(momentumOf(true), momentumOf(false), 'the dead enemy\'s queued Slash credits nothing');
+});
+
+test('scopes the delayed Poise multiplier to payload completion, not reaction attacks', () => {
+  const source = readFileSync(new URL('../src/engine/combat.js', import.meta.url), 'utf8');
+  const expansionSource = readFileSync(new URL('../src/engine/combatExpansionActions.js', import.meta.url), 'utf8');
+  assert.match(source, /action\.meta\?\.roundPoiseMultiplier/, 'the queue reads scope from the action being executed');
+  assert.match(source, /action\.meta = \{ \.\.\.action\.meta, roundPoiseMultiplier:/, 'each delayed payload action carries the scope');
+  assert.match(source, /completionMeta = roundPoiseMultiplier/, 'the payload carries its scope through completion');
+  assert.match(expansionSource, /meta: \{ \.\.\.completionMeta, expansionGroup: group \}/,
+    'the completion action carries the delayed payload scope');
+  assert.match(expansionSource, /ctx\.enqueue = queued => previousEnqueue\(\{/,
+    'actions generated by completion inherit its delayed payload scope');
+  assert.match(expansionSource, /meta: \{ \.\.\.queued\.meta, roundPoiseMultiplier:/,
+    'completion-generated guard-break and trait pressure carry the multiplier');
+  assert.match(expansionSource, /finally \{\s+if \(roundPoiseMultiplier\) ctx\.enqueue = previousEnqueue;/,
+    'the completion-only enqueue wrapper is always restored');
+  assert.match(source, /executeMovePayload\(combat, enemy, move, moveId, \{ roundPoiseMultiplier \}\)/, 'the delayed move passes its saved scope to its payload');
+  assert.doesNotMatch(source, /cursor\.roundPoiseMultiplier/, 'the whole reaction drain is never globally scoped');
 });

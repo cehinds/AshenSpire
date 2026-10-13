@@ -24,7 +24,7 @@ export function effectCarrier(carrier, effect) {
   merged.combatProfile.maneuver = effect.combatProfile?.maneuver || carrier?.combatProfile?.maneuver || merged.combatProfile.maneuver;
   return merged;
 }
-export function enqueueExpandedAction(ctx, actions, { source, target, carrier } = {}) {
+export function enqueueExpandedAction(ctx, actions, { source, target, carrier, completionMeta } = {}) {
   if (ctx.combatExpansionVersion !== 2 || (carrier?.combatReaction && !(ctx.reactionRulesVersion >= 1))) {
     for (const action of actions) ctx.enqueue(action);
     return null;
@@ -96,7 +96,7 @@ export function enqueueExpandedAction(ctx, actions, { source, target, carrier } 
   ctx.pendingExpansionActions = (ctx.pendingExpansionActions || 0) + 1;
   for (const action of actions) ctx.enqueue(action);
   ctx.enqueue({ effect: { op: 'completeCombatAction' }, source, owner: source, target, card: carrier,
-    meta: { expansionGroup: group } });
+    meta: { ...completionMeta, expansionGroup: group } });
   // A reaction offer check reads the planned contacts of the card it tries (enemy reactions).
   ctx._groupSink?.push(group);
   return group;
@@ -155,23 +155,36 @@ export function completeExpandedAction(ctx, action) {
   const group = action.meta?.expansionGroup;
   if (!group) return;
   if (group.cancelled) { ctx.pendingExpansionActions = Math.max(0, (ctx.pendingExpansionActions || 0) - 1); return; }
-  beginExpandedAction(ctx, group, action.source);
-  for (const row of Object.values(group.targets)) {
-    const target = expansionEntity(ctx, row), receipt = row.receipt;
-    if (!target || !receipt) continue;
-    if (!target.alive) {
-      // A Smash that killed the target still broke its Guard; a dead target takes no bonus Poise.
-      if (expansionSeatConnected(ctx, target)) Matchups.completeGuardBreak(ctx, action.source, target, group.carrier, receipt);
-      continue;
+  // Completion can enqueue guard-break and trait pressure after the scoped action returns.
+  // Copy the delayed round receipt onto only those completion-generated actions; reaction
+  // stack actions never pass through this wrapper and therefore cannot borrow the multiplier.
+  const roundPoiseMultiplier = action.meta?.roundPoiseMultiplier;
+  const previousEnqueue = ctx.enqueue;
+  if (roundPoiseMultiplier) ctx.enqueue = queued => previousEnqueue({
+    ...queued,
+    meta: { ...queued.meta, roundPoiseMultiplier: { ...roundPoiseMultiplier } },
+  });
+  try {
+    beginExpandedAction(ctx, group, action.source);
+    for (const row of Object.values(group.targets)) {
+      const target = expansionEntity(ctx, row), receipt = row.receipt;
+      if (!target || !receipt) continue;
+      if (!target.alive) {
+        // A Smash that killed the target still broke its Guard; a dead target takes no bonus Poise.
+        if (expansionSeatConnected(ctx, target)) Matchups.completeGuardBreak(ctx, action.source, target, group.carrier, receipt);
+        continue;
+      }
+      if (!expansionTargetPresent(ctx, target)) continue;
+      Matchups.completeTacticalAction(ctx, action.source, target, group.carrier, receipt,
+        { restrictions: Control.controlRestrictions(ctx, target) });
+      Control.completeStatusAction(ctx, target, row.interactions || receipt.profile, { connected: receipt.connected,
+        actionKey: group.key, damaging: receipt.amount > 0 });
     }
-    if (!expansionTargetPresent(ctx, target)) continue;
-    Matchups.completeTacticalAction(ctx, action.source, target, group.carrier, receipt,
-      { restrictions: Control.controlRestrictions(ctx, target) });
-    Control.completeStatusAction(ctx, target, row.interactions || receipt.profile, { connected: receipt.connected,
-      actionKey: group.key, damaging: receipt.amount > 0 });
+    applyTraitImpact(ctx, action, group);
+    ctx.pendingExpansionActions = Math.max(0, (ctx.pendingExpansionActions || 0) - 1);
+  } finally {
+    if (roundPoiseMultiplier) ctx.enqueue = previousEnqueue;
   }
-  applyTraitImpact(ctx, action, group);
-  ctx.pendingExpansionActions = Math.max(0, (ctx.pendingExpansionActions || 0) - 1);
 }
 
 // A target counts as hit when a damage contact connected (not avoided; a fully
