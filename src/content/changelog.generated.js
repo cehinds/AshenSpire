@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-13",
     "summary": "Delayed Combat Rounds attacks keep their doubled Poise damage",
     "detail": "When Momentum doubles an enemy attack that charges before landing, the later payload now keeps that multiplier through its delay and through any reaction pause, then clears it after the attack resolves.",
-    "build": "0.7.1.1505",
+    "build": "0.7.1.1507",
     "pullRequest": 1959,
     "url": "https://github.com/cehinds/AshenSpire/pull/1959"
   },
