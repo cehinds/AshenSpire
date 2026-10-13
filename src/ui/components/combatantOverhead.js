@@ -31,9 +31,10 @@ export function combatantInfo(name, open) {
   attachTooltip(node, () => `<div class="tt-title">${esc(name)}</div>Inspect resources, skills, and active effects.`, {
     selectionFirst: true, activate: open, intent: 'above', align: 'center',
   });
+  // One tap, click or keyboard activation opens inspection at once (owner, 2026-10-13).
   node.addEventListener('click', event => {
-    if (!node.closest('.combatant')?.classList.contains('context-selected')) return;
-    event.preventDefault(); event.stopImmediatePropagation(); hideTooltip(); open(node);
+    event.preventDefault(); event.stopImmediatePropagation(); hideTooltip();
+    node.classList.remove('tooltip-selected'); open(node);
   }, true);
   return node;
 }
