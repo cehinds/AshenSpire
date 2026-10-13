@@ -103,10 +103,14 @@ export function combatCardType(def) {
     : def.type[0].toUpperCase() + def.type.slice(1);
 }
 
-/** Plain complete effect text. Numeric values come from the resolved preview. */
-export function combatCardSummary(def, preview = null, registries = null) {
+/**
+ * The shared read of one card for its text: the numbers a preview or the authored
+ * definition gives each effect (`value`), the status display name (`title`), the
+ * predicate phrase (`condition`), the combat profile, the token bindings and the
+ * static tokens. Every card-face text model reads through this one context.
+ */
+export function cardSummaryContext(def, preview = null, registries = null) {
   const bindings = computeTokenBindings(def.effects || []), tokens = staticCardTokens(def);
-  const ratings = registries?.balance?.combatRatings ?? null;
   const value = (effect, index, field = 'amount') => {
     const token = bindings.find(row => row.index === index && row.field === field)?.token;
     const live = preview?.values?.[index];
@@ -139,7 +143,13 @@ export function combatCardSummary(def, preview = null, registries = null) {
     if (['all', 'any'].includes(pred.p)) { const parts = pred.preds.map(condition); return parts.every(Boolean) ? parts.join(pred.p === 'all' ? ' and ' : ' or ') : ''; }
     return '';
   };
-  const p = combatProfileFor(def), parts = [];
+  return { value, title, condition, profile: combatProfileFor(def), bindings, tokens };
+}
+
+/** Plain complete effect text. Numeric values come from the resolved preview. */
+export function combatCardSummary(def, preview = null, registries = null) {
+  const { value, title, condition, profile: p } = cardSummaryContext(def, preview, registries);
+  const ratings = registries?.balance?.combatRatings ?? null, parts = [];
   for (const [index, effect] of (def.effects || []).entries()) {
     const n = value(effect, index), area = effect.target === 'allEnemies' ? ' to all enemies'
       : effect.target === 'randomEnemy' ? ' to a random enemy' : '';
@@ -425,3 +435,4 @@ export function playingCardClasses(model) {
   return `card as-card playing-poker-card rarity-${model.rarity}`
     + ` cls-${model.classId} type-${model.type.id}${model.upgraded ? ' upgraded' : ''}`;
 }
+

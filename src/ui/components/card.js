@@ -11,7 +11,7 @@ import { configureTooltipGlossary, decorateKeywords } from './tooltipGlossary.js
 // computeTokenBindings. No math happens here.
 
 import { resolveCard, relicPropertyRules } from '../../model/registries.js';
-import { playingCardModel, playingCardClasses, staticCardTokens, combatCardType, combatCardSummary, combatCardDamageLabel } from '../../model/playingCard.js';
+import { playingCardModel, playingCardClasses, staticCardTokens, combatCardType, combatCardDamageLabel } from '../../model/playingCard.js';
 import { cardFields, resolveCardLevel } from '../../model/cardFields.js';
 import { cardShape } from '../models/CardSizeModel.js';
 import { litCard } from './cardSelection.js';
@@ -36,6 +36,7 @@ import { combatCardRange, combatProfileFor, combatProfileTags, numberedTraitRow 
 import { ashenBlightCardLabel } from './ashenBlight.js';
 import { ACTION_SIGILS, SCHOOL_SIGILS, cardSigilIdentity } from '../../content/combatSigils.js';
 import { compactCardRules, sigilExplanationHtml } from './combatSigilView.js';
+import { cardFaceLines } from '../../model/cardFaceText.js';
 
 // WCI3: rarity at the start of the band, the owned count at the end, each only
 // when the surface can state it. No domain action ever belongs in this band.
@@ -160,10 +161,10 @@ export function renderCard(registries, ref, opts = {}) {
   model.sideTags = cardSideTags(model, def, registries, opts.preview || null);
   // The combat hand's range chip (opts.range), by the same rule the deck editor uses.
   model.range = opts.range ? combatCardRange(def) : null;
-  // Authored clauses carry family limits and charge/payment constraints that
-  // the generic effect summary cannot express. Keep those complete on the face.
-  const faceSummary = expanded ? combatCardSummary(def, opts.preview, registries) : null;
-  const fallbackDamageLabel = expanded && !faceSummary
+  // When the shared face model refuses a card, the authored clauses (family
+  // limits, charge and payment constraints) stay complete on the face, led by
+  // the damage label in an expanded combat view.
+  const fallbackDamageLabel = expanded
     && (def.effects?.some(effect => effect.op === 'damage') || def.counterPayload?.hp)
     ? combatCardDamageLabel(def, opts.preview, registries) : '';
   const damageWords = model.tags.filter(tag => tag.id.startsWith('damage:')).map(tag => tag.label);
@@ -271,6 +272,14 @@ export function renderCard(registries, ref, opts = {}) {
     floor, lit: litCard() === identity,
   });
   let drawn = levelNow();
+  // ONE TEXT FOR EVERY VIEW. The face lines are the shared model's output
+  // (cardFaceText.js); a weight-priced card adds its pricing note as a detail line.
+  const faceLines = cardFaceLines(def, opts.preview || null, registries);
+  if (faceLines && def.weightClassPriced) faceLines.push({ kind: 'detail', html: 'Cost reflects your current weight' });
+  // The combat hand passes faceLineLimit: lines past it stay in the DOM, hidden until the card is selected.
+  const faceLineLimit = Number.isFinite(opts.faceLineLimit) ? opts.faceLineLimit : null;
+  // In the hand, detail lines (a partial chance, usable-through, pricing) wait for selection: hidden at rest, shown when selected.
+  const extraLine = (line, i) => faceLineLimit !== null && (i >= faceLineLimit || (line.kind === 'detail' && i > 0));
   const paint = (at) => {
     const artwork = illustratedArtwork(ref, model.id, {large:at==='inspect',equipmentArt:equipmentPainting,
       definition:def,registries});
@@ -278,10 +287,14 @@ export function renderCard(registries, ref, opts = {}) {
     const authoredRules = def.weightClassPriced
       ? fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences).replace(/ Light:.*$/,'')+' Cost reflects your current weight.'
       : fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences);
+    const rulesHtml = faceLines
+      ? compactCardRules(faceLines.map((line, i) => `<span class="face-line" data-face-kind="${line.kind}"${extraLine(line, i) ? ' data-face-extra="true"' : ''}>${line.html}</span>`).join(''))
+      // A face the shared model refused keeps the authored rules, never the looser summary.
+      : compactCardRules(`${fallbackDamageLabel ? `${esc(fallbackDamageLabel)}: ` : ''}${authoredRules}`);
+    el.dataset.faceLines = faceLines ? String(faceLines.length) : '';
     el.innerHTML = illustratedCardHtml(model,{
       // The printed price is live; the full weight table stays in Information.
-      rules: compactCardRules(`${faceSummary ? esc(faceSummary)
-        : `${fallbackDamageLabel ? `${esc(fallbackDamageLabel)}: ` : ''}${authoredRules}`}`),
+      rules: rulesHtml,
       painting:artwork?.path,
       equipmentArtwork:artwork?.equipment,
       artworkKind:artwork?.kind,
@@ -357,7 +370,7 @@ export function renderCard(registries, ref, opts = {}) {
       // element the equipment card uses, so the two card kinds read alike.
       const lore = loreLine({ text: def.flavor, title: def.name });
       if (lore) details.append(lore);
-      const face = renderCard(registries, ref, { ...opts, tooltip: false, inspection: false, level: 'inspect' });
+      const face = renderCard(registries, ref, { ...opts, tooltip: false, inspection: false, level: 'inspect', faceLineLimit: undefined });
       details.classList.add('playing-card-details');
       // NO DEFAULT VERB. This line used to read
       //   `opts.inspectionAction || (() => ({ enabled: false, reason: 'Play cards from your combat hand.' }))`
@@ -409,6 +422,14 @@ export function renderCard(registries, ref, opts = {}) {
  */
 const pendingFits = new Set();
 let fitFrame = 0;
+
+// The combat hand shows three face lines at rest and five when selected.
+export function setHandFaceBudget(el, selected) {
+  const rules = el?.querySelector?.('.ic-text[data-face-lines="true"]');
+  if (!rules) return;
+  rules.dataset.maxLines = selected ? '5' : '3';
+  scheduleCardFits([el]);
+}
 
 export function scheduleCardFits(cards) {
   for (const card of cards) pendingFits.add(card);
