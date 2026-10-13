@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-13
 
-- **One press on a visible Inspect "i" opens it** ([#1930](https://github.com/cehinds/AshenSpire/pull/1930), `0.7.1.1451`). Tapping a fighter's "i" on a phone no longer only selects it first; one tap, click or Enter opens the inspector for enemies and the player, as it already does for cards.
+- **One press on a visible Inspect "i" opens it** ([#1930](https://github.com/cehinds/AshenSpire/pull/1930), `0.7.1.1451`). One click, tap or Enter on a fighter's Inspect "i" opens the inspector even when the fighter was not selected first, and a single Escape closes it again.
 
 ## 2026-10-12
 

@@ -7,7 +7,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-10-13",
     "group": "2026-10-13",
     "summary": "One press on a visible Inspect \"i\" opens it",
-    "detail": "Tapping a fighter's \"i\" on a phone no longer only selects it first; one tap, click or Enter opens the inspector for enemies and the player, as it already does for cards.",
+    "detail": "One click, tap or Enter on a fighter's Inspect \"i\" opens the inspector even when the fighter was not selected first, and a single Escape closes it again.",
     "build": "0.7.1.1451",
     "pullRequest": 1930,
     "url": "https://github.com/cehinds/AshenSpire/pull/1930"
