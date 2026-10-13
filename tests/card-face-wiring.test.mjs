@@ -77,3 +77,12 @@ test('a hit that is magic with a physical tag names only its leading type on the
   const lines = faceLinesOf(markup.get(renderCard(reg, { cardId: 'starSpark' }, { inspection: false, preview: previewOf('starSpark') })));
   assert.doesNotMatch(textOf(lines[0]), /·/);
 }));
+
+test('inspecting a hand card shows the full face, detail lines included', () => withKitDom(dom => {
+  const markup = trackInnerHtml(dom);
+  const src = renderCard.toString();
+  assert.match(src, /level: 'inspect', faceLineLimit: undefined/, 'the inspect face does not inherit the hand limit');
+  const kinds = faceLinesOf(markup.get(renderCard(reg, { cardId: 'sanctuaryCleanse' }, { inspection: false, level: 'inspect' })))
+    .map(line => /data-face-kind="(\w+)"/.exec(line.attrs)[1]);
+  assert.ok(kinds.includes('detail'));
+}));

@@ -22,7 +22,8 @@ const fail = () => { throw UNPHRASEABLE; };
 
 // Conditional riders follow the statuses they extend, ahead of gains (owner: damage and status first).
 const LINE_ORDER = ['damage', 'status', 'condition', 'gain', 'bonus', 'detail'];
-const KEYWORDS = ['exhaust', 'retain', 'ethereal', 'innate'];
+// Play restrictions first. A keyword outside this list keeps the authored text.
+const KEYWORDS = ['unplayable', 'exhaust', 'retain', 'ethereal', 'innate'];
 const ENEMY_TARGETS = ['enemy', 'allEnemies', 'randomEnemy'];
 const STATUS_NEVER_PHRASED = ['invulnerability', 'decoy', 'grounded', 'sleep'];
 
@@ -59,6 +60,8 @@ function buildLines(def, preview, registries) {
   // A number as a span; up or down only when a live preview has moved it off its base.
   const num = (amount, base = undefined) => {
     if (amount === '?' || amount === undefined || amount === null || (typeof amount === 'number' && !Number.isFinite(amount))) fail();
+    // A formula described in words ("Bleed stacks on the target") is not a number: keep the authored text.
+    if (typeof amount === 'string' && !/^\d+$/.test(amount)) fail();
     let cls = 'val';
     if (preview && typeof amount === 'number' && typeof base === 'number') {
       if (amount > base) cls += ' up';
@@ -156,11 +159,8 @@ function buildLines(def, preview, registries) {
       case 'grantRollMode': return frag('bonus', `Next ${esc(effect.roll)}: ${effect.advantage ? 'Advantage' : 'Disadvantage'}`);
       case 'enterStance': return frag('bonus', effect.choose ? 'Choose a stance'
         : `Enter ${esc(registries?.stances?.has(effect.stance) ? registries.stances.get(effect.stance).name : effect.stance)}`);
-      case 'addCard': {
-        const count = effect.count || 1;
-        const name = registries?.cards?.has(effect.card) ? registries.cards.get(effect.card).name : effect.card;
-        return frag('bonus', `Add ${num(count)} ${esc(name)} to ${esc(effect.pile || 'hand')}`);
-      }
+      // A generated card's own cost and keywords are only in the authored text.
+      case 'addCard': return fail();
       case 'grantCardCharge': {
         const bonuses = Object.entries({ damage: 'damage', block: 'Block', heal: 'healing', break: 'Poise', buildup: `${effect.buildupStatus || ''} buildup`, manaDiscount: 'Mana discount' })
           .filter(([key]) => effect[key] !== undefined).map(([key, label]) => key === 'manaDiscount'
@@ -187,8 +187,18 @@ function buildLines(def, preview, registries) {
   };
 
   // A predicate's label: the status name for the card's own status, else "If ...".
+  // A stack threshold ("at least 3 Venom") must reach the label; nested ones keep the authored text.
+  const thresholdInside = pred => !!pred && typeof pred === 'object'
+    && ((pred.p === 'hasStatus' && pred.atLeast !== undefined) || [pred.pred, ...(pred.preds || [])].some(thresholdInside));
   const prefixFor = predicate => {
-    if (predicate.p === 'hasStatus' && predicate.of === 'self') return `${esc(title(predicate.status))}: `;
+    if (predicate.p === 'hasStatus') {
+      const extra = Object.keys(predicate).filter(key => !['p', 'of', 'status', 'atLeast'].includes(key));
+      if (extra.length || (predicate.atLeast !== undefined && typeof predicate.atLeast !== 'number')) fail();
+      const name = esc(title(predicate.status)), at = predicate.atLeast;
+      if (predicate.of === 'self') return `${name}${at !== undefined ? ` ${num(at)}+` : ''}: `;
+      if (at !== undefined) return `If ${predicate.of === 'allEnemies' ? 'an enemy has' : 'the target has'} ${num(at)}+ ${name}: `;
+    }
+    if (thresholdInside(predicate)) fail();
     const text = condition(predicate);
     if (!text) fail();
     return `If ${esc(text)}: `;
@@ -222,7 +232,8 @@ function buildLines(def, preview, registries) {
     unconditional.push({ cat: 'bonus', text: `${def.evade.whileStatus ? `While ${esc(title(def.evade.whileStatus))}: ` : ''}Prepare one Evade${def.evade.advantage ? ' with Advantage' : ''}` });
   }
 
-  const keywords = (def.keywords || []).filter(keyword => KEYWORDS.includes(keyword)).map(keyword => keyword[0].toUpperCase() + keyword.slice(1));
+  if ((def.keywords || []).some(keyword => !KEYWORDS.includes(keyword))) return null;
+  const keywords = KEYWORDS.filter(keyword => (def.keywords || []).includes(keyword)).map(keyword => keyword[0].toUpperCase() + keyword.slice(1));
   const byKind = { damage: [], status: [], gain: [], condition: [], bonus: [], detail: [] };
   for (const segment of segmentsOf(unconditional, keywords)) byKind[segment.kind].push(segment.text);
   for (const group of groups.values()) {

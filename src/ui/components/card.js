@@ -370,7 +370,7 @@ export function renderCard(registries, ref, opts = {}) {
       // element the equipment card uses, so the two card kinds read alike.
       const lore = loreLine({ text: def.flavor, title: def.name });
       if (lore) details.append(lore);
-      const face = renderCard(registries, ref, { ...opts, tooltip: false, inspection: false, level: 'inspect' });
+      const face = renderCard(registries, ref, { ...opts, tooltip: false, inspection: false, level: 'inspect', faceLineLimit: undefined });
       details.classList.add('playing-card-details');
       // NO DEFAULT VERB. This line used to read
       //   `opts.inspectionAction || (() => ({ enabled: false, reason: 'Play cards from your combat hand.' }))`

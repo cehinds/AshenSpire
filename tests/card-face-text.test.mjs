@@ -59,3 +59,18 @@ test('a partial buildup chance keeps a detail line so the face never reads as ce
 test('a card with nothing to phrase returns null so the authored text stays', () => {
   assert.equal(cardFaceLines({ type: 'status', effects: [] }, null, reg), null);
 });
+
+test('cards whose face would drop meaning keep their authored text', () => {
+  // A generated card's cost and keywords live only in the authored text.
+  assert.equal(lines('shieldGuardian'), null);
+  // A formula described in words is not a number.
+  assert.equal(lines('bloodhuntersStrike'), null);
+});
+
+test('a stack threshold reaches the condition label', () => {
+  assert.ok(text('septicBlade').some(line => /^If the target has 3\+ Venom: /.test(line)), JSON.stringify(text('septicBlade')));
+});
+
+test('Unplayable leads the keywords instead of being dropped', () => {
+  assert.ok(text('dazed').some(line => /^Unplayable, Ethereal$/.test(line)), JSON.stringify(text('dazed')));
+});
