@@ -13,8 +13,8 @@ const make = () => {
  return {combat,enemy};
 };
 const drain = combat => {while(combat.queue.length)executeAction(combat,combat.queue.shift());};
-const play = (combat,enemy,{reach='near',targeting='single',pressure=true}={}) => {
- const carrier={cardId:'starstonePebble',tags:['camp:spell'],damageSchool:'magic',attack:{source:'spell',damageType:'blunt'},combatProfile:{camp:'spell',maneuver:'casting',school:'force',damageType:'blunt',reach,targeting}};
+const play = (combat,enemy,{range='reach',targeting='single',pressure=true}={}) => {
+ const carrier={cardId:'starstonePebble',tags:['camp:spell'],damageSchool:'magic',attack:{source:'spell',damageType:'blunt'},combatProfile:{camp:'spell',maneuver:'casting',school:'force',damageType:'blunt',range,targeting}};
  const effects=[{op:'damage',target:'enemy',amount:5,hits:3},...(pressure?[{op:'buildup',target:'enemy',status:'sleep',amount:6,camp:'spell',recoveryProfile:'mental'}]:[])];
  enqueueExpandedAction(combat,effects.map(effect=>({effect,source:combat.player,owner:combat.player,target:enemy,card:carrier,meta:{}})),{source:combat.player,target:enemy,carrier});drain(combat);
 };
@@ -27,9 +27,9 @@ test('Invulnerability spends one stack for all three hits, keeps Evade RNG and a
  combat.enqueue({effect:{op:'loseHp',target:'enemy',amount:1},source:combat.player,target:enemy});drain(combat);
  assert.equal(enemy.hp,hp-1);assert.equal(enemy.statuses.invulnerability.stacks,1,'HP loss does not consume direct-action protection');
 });
-test('Decoy protects ranged Single delivery but Contact and Area actions connect',()=>{
- for(const [reach,targeting,avoided]of[['far','single',true],['contact','single',false],['near','area',false]]){
-  const {combat,enemy}=make();enemy.statuses.decoy={stacks:2};const hp=enemy.hp;play(combat,enemy,{reach,targeting,pressure:false});
-  assert.equal(enemy.hp===hp,avoided,reach+'/'+targeting);assert.equal(enemy.statuses.decoy?.stacks,avoided?1:2,'bypassed Decoy stays until consumed or revealed');
+test('Decoy protects ranged Single delivery but Melee and Area actions connect',()=>{
+ for(const [range,targeting,avoided]of[['ranged','single',true],['melee','single',false],['reach','area',false]]){
+  const {combat,enemy}=make();enemy.statuses.decoy={stacks:2};const hp=enemy.hp;play(combat,enemy,{range,targeting,pressure:false});
+  assert.equal(enemy.hp===hp,avoided,range+'/'+targeting);assert.equal(enemy.statuses.decoy?.stacks,avoided?1:2,'bypassed Decoy stays until consumed or revealed');
  }
 });
