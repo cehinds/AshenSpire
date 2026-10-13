@@ -147,3 +147,33 @@ test('engine events carry their cause: an enemy move stamps moveId, a status tic
   const lines = combatLogEntries(c.eventLog, { registries, enemies: c.enemies }).map(row => row.text);
   for (const text of lines.filter(line => / (gained|recovered|lost) /.test(line))) assert.match(text, /\(.+\)\.$/, `${text} names its cause`);
 });
+
+test('a hidden charging enemy logs its Block and Barrier as preparing, never naming the move', () => {
+  for (const combatExpansionVersion of [1, 2]) {
+    const charging = createRegistries({ ...contentBundle,
+      balance: { ...contentBundle.balance, combatIntent: { ...contentBundle.balance.combatIntent,
+        baseHiddenChance: 1, minimumHiddenChance: 1, maximumHiddenChance: 1, wisdomReduction: 0, intelligenceReduction: 0 } },
+      enemies: contentBundle.enemies.map(enemy => enemy.id === 'fellWarden' ? { ...enemy, firstMove: 'heldBlade' } : enemy),
+      enemyMoves: contentBundle.enemyMoves.map(row => row.enemyId === 'fellWarden' && row.id === 'heldBlade'
+        ? { ...row, delay: { turns: 1, whileCharging: { block: 8, barrier: 3 } } } : row) });
+    const c = createCombat({ registries: charging, rng: createRng(11), combatExpansionVersion, hpMult: 4,
+      player: { id: 'p1', classId: 'reaver', maxHp: 100, hp: 100, maxMana: 10, maxStamina: 5, energyMax: 5, drawPerTurn: 3, relicIds: [],
+        deck: Array.from({ length: 6 }, (_, i) => ({ instanceId: `d${i}`, cardId: 'strike', upgraded: false })) },
+      enemyIds: ['fellWarden'] });
+    assert.equal(c.enemies[0].intent.moveId, 'heldBlade');
+    dispatch(c, { type: 'endTurn' });
+    assert.equal(c.enemies[0].pendingMove?.moveId, 'heldBlade', `v${combatExpansionVersion}: the Warden is charging`);
+    const gains = c.eventLog.filter(event => ['blockGained', 'barrierGained'].includes(event.type) && event.sourceId === 'e1');
+    assert.deepEqual(gains.map(event => event.type).sort(), ['barrierGained', 'blockGained']);
+    for (const event of gains) {
+      assert.equal(event.moveId, undefined, `v${combatExpansionVersion}: ${event.type} carries no moveId`);
+      assert.equal(event.preparing, true);
+    }
+    const name = move('fellWarden', 'heldBlade');
+    const warden = charging.enemies.get('fellWarden').name;
+    const lines = combatLogEntries(c.eventLog, { registries: charging, enemies: c.enemies }).map(row => row.text);
+    assert.ok(lines.includes(`${warden} gained 8 Block (preparing).`), lines.join('\n'));
+    assert.ok(lines.includes(`${warden} gained 3 Barrier (preparing).`), lines.join('\n'));
+    for (const text of lines) assert.ok(!text.includes(name), `the log never names the hidden move: ${text}`);
+  }
+});

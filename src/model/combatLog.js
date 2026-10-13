@@ -82,6 +82,9 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
 
     // Who caused this event, and with what. Returns { actorKey, label } (either may be null).
     const causeOf = () => {
+      // Preparation (a charge-up, Counter priming) runs while the selected move
+      // may still be a hidden intent: name the actor, never the move.
+      if (event.preparing) return { actorKey: sourceKey, label: null, preparing: true };
       const origin = event.triggeredBy;
       const card = row(registries?.cards, event.cardId)?.name;
       if (card) return { actorKey: sourceKey, label: card };
@@ -99,8 +102,9 @@ export function combatLogEntries(events, { registries, players = [], enemies = [
     };
     // "Forsaken's Blight Touch", "Guard" (the target's own), "from Forsaken", or null.
     const causeText = ({ self = targetKey } = {}) => {
-      const { actorKey, label } = causeOf();
+      const { actorKey, label, preparing } = causeOf();
       const actor = actorKey ? name(actorKey) : null;
+      if (preparing) return actorKey && actorKey !== self ? `${actor} preparing` : 'preparing';
       if (label) return actorKey && actorKey !== self ? `${actor}'s ${label}` : label;
       return actorKey && actorKey !== self ? `from ${actor}` : null;
     };
