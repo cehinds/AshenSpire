@@ -39,8 +39,12 @@ export function refreshCombatRatings(ctx) {
   }
 }
 
-export function applyRatingImpact(ctx, source, target, carrier, explicitAmount = null, { triggerHit = true, knowledgeMatchup = false } = {}) {
+export function applyRatingImpact(ctx, source, target, carrier, explicitAmount = null, { triggerHit = true, knowledgeMatchup = false, cause = null, cardId = null } = {}) {
   if (!ctx.ratingsRules || !target?.alive) return;
+  // Why the meter moved, for the log: 'hit', 'rider:<type>', 'poiseDamage', 'trait:impact', or the
+  // trigger that raised it ('relic:<id>', 'status:<id>'). Additive: no reader decides by it.
+  const origin = ctx._abilityAction?.meta?.triggeredBy;
+  const why = cause || (origin?.id ? `${origin.kind}:${origin.id}` : explicitAmount === null ? 'hit' : 'poiseDamage');
   // The meter follows the hit's magic part: a hit with none (alteration, or a physical type on a spell) is Poise's.
   const magical = isMagicalHit(ctx, carrier);
   const single = usesSingleBreakMeter(ctx);
@@ -52,12 +56,14 @@ export function applyRatingImpact(ctx, source, target, carrier, explicitAmount =
   const label = magical && !single ? 'Disruption' : 'Stagger';
   const seats = ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source), targetPlayerId: ctx.playerIdForEntity(target) } : {};
   if (amount <= 0) return;
+  // A sourceless impact (a rider, a trait) inside a card or move keeps the stamp of the action's own source.
+  if (!source) { delete seats.sourcePlayerId; }
   // A Poise or Ward guard (the Dodge Roll's gainPoise / gainWard) takes the
   // impact before the meter does, the way Block takes damage before HP.
   const guarded = absorbMeterGuard(target, meterName, amount);
   amount -= guarded;
   if (amount <= 0) {
-    ctx.emit('ratingImpact', { ...seats, targetId: target.id, sourceId: source?.id, meter: meterName, amount: 0, guarded,
+    ctx.emit('ratingImpact', { ...seats, targetId: target.id, ...(source ? { sourceId: source.id } : {}), ...(cardId ? { cardId } : {}), cause: why, meter: meterName, amount: 0, guarded,
       ...meterGuardReceipt(target, meterName), value: meter.value, max: meter.max, breaks: 0, label });
     return;
   }
@@ -90,7 +96,7 @@ export function applyRatingImpact(ctx, source, target, carrier, explicitAmount =
     ctx.emit('arcaneStagger', { ...seats, targetId: target.id, sourceId: source?.id ?? null,
       school: carrier?.damageSchool, threshold: thresholdBeforeGrowth });
   }
-  ctx.emit('ratingImpact', { ...seats, targetId: target.id, sourceId: source?.id, meter: meterName, amount,
+  ctx.emit('ratingImpact', { ...seats, targetId: target.id, ...(source ? { sourceId: source.id } : {}), ...(cardId ? { cardId } : {}), cause: why, meter: meterName, amount,
     ...(guarded ? { guarded, ...meterGuardReceipt(target, meterName) } : {}),
     value: meter.value, max: meter.max, breaks, label });
 }

@@ -27,6 +27,7 @@ Numbers in this spec are the **initial balance targets**. They will move during 
 | 2 | Legal and asset constraints | **partly built** | Attribution: `tools/credits-check.mjs`, 40 checks, 33/33 asset directories (FINISH §10). Open: §2.4 asset indirection. 138 literal `url('../assets/…)` references in six `styles/` files (`grep -rc "url('../assets" styles`; for example `styles/combat.css`, `styles/ui.css`) still bypass `assetUrl()` and its fallback (DEVELOPER.md, *high-res release*). |
 | 3 | Architecture, DSLs, procedural systems, saves, validation | **built** | Run schema at `RUN_SCHEMA_VERSION` (`src/model/state.js`; `tests/save-migration.test.mjs`); `validateContent` 0 errors. |
 | 4 | Combat rules | **built** | §4.7 shared player/enemy tags, deferred Counters, typed riders and persisted stance reads ship in #1705, with solo/co-op engine and browser regressions. Ashen Blight remains a separate proposal. Warrior's Vow enters the chosen stance. |
+| 4.11 | Combat Rounds Preview | **planned** | Engine port done (P1: `src/engine/combatRounds/`, not wired into combat yet); [docs/alternative-combat-rounds/PREVIEW-PLAN.md](docs/alternative-combat-rounds/PREVIEW-PLAN.md) phases P2–P6 (engine port, rules and setting, solo, saves, UI, co-op/LAN). Owner decisions are recorded in §4.11 (Resolved, 2026-10-11). |
 | 5 | Content | **built** | Warrior's Vow (§5.2) offers every stance of the player's class and enters the chosen one. 5.2–5.4 are the historical M1/M2 sets reconciled to the canonical names and values of their current shipped definitions; older prose elsewhere remains readable through `docs/IP-SCRUB.md`. Live counts: 292 card definitions in the composed bundle (class reward pools after class-mastery composition: Reaver 53, Starseer 59, Rogue 57, Herald 49), 73 relics (63 base plus 10 class-mastery), 25 events, 7 flasks, 33 enemies (20 regular, 10 boss, 3 elite). |
 | 6 | Map generation | **built** | `engine/mapgen.js`, `tools/mapplan.mjs`. |
 | 7 | UI/UX, HUD, input, feedback, visual style | **partly built** | Screens, HUD, input and feedback ship. Open: §7.5 interface fonts are **TO BUILD** (Cinzel/Inter are named with system fallbacks and do not ship yet; they will load as pack files through the pack loader, EXTERNAL-ASSETS-PLAN step 3b, but wiring them is not yet a plan step; only the "AS Lore" copies ship), and the release proofs for contrast, reduced motion, target size and Back-everywhere (FINISH §5–§9). |
@@ -903,6 +904,8 @@ baseline; saved stat rows and hand options override its draw and cleanup default
 6. New intents are rolled (stream `enemyAI`), display updates, back to 2.
 7. **End:** all enemies dead → victory (rewards); player HP ≤ 0 → death screen.
 
+When the Combat Rounds Preview is on, see §4.11.
+
 ### 4.2 Damage math (order is contractual)
 
 For an attack dealing `base` damage:
@@ -1047,6 +1050,8 @@ Enemy definition shape (content file):
 }
 ```
 
+When the Combat Rounds Preview is on, see §4.11.
+
 ### 4.7 Tagged combat cards and readable enemy stances
 
 **Future expansion proposal:** [Combat expansion notes](docs/combat-cards-expansion-proposal.md) describe later candidate rules for persistent stances, Evade, Counter coverage, Ward/Poise resistance, recovery cards, Sleep/Prone, tag interactions, upcasting, and three Ashen Blight feat stages. This documentation reference does not change the existing §4.7 rules below; each runtime revision requires a separate accepted contract and implementation.
@@ -1116,6 +1121,8 @@ All tactical numbers remain authored/configurable; their defaults above establis
 - The enemy move catalog may list its authored move set and base values even when the current selection is hidden, but it must not highlight which catalog entry is selected or show its live preview. A catalog is reference information, not a back door into concealed intent.
 
 **Out of scope for this contract:** new automatic school matchup loops, new feats/relics, school-specific deck-manipulation primitives and persistent Ashen Blight corruption. [Ashen Blight proposal](docs/ashen-blight-proposal.md) remains proposed until its own state/save/preview contract and implementation land. Ordinary Exhaust and Crimson Blight must not acquire persistent corruption as a side effect of tagging existing cards.
+
+When the Combat Rounds Preview is on, see §4.11.
 
 ---
 
