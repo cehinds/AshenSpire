@@ -351,7 +351,8 @@ Formula, relation and value keys follow the README conventions.
     `armour:medium`, `armour:heavy`, ranks 1 to 10; `src/model/skills.js:45`,
     `src/content/balance.js:196`, `src/content/balance.js:496`) and feats both raise it.
     The amount per rank and the feats are tuned in the Evade PR. This is the single open
-    item for the cap.
+    item for the cap. Update 2026-10-13: the per-rank step is closed by ruling 10 (+1 per 3
+    ranks); the feat raises remain open.
   - **evasion.rating does not adopt these caps (owner, 2026-10-13).** The weight-class
     caps apply to Evade only. `evasion.rating` keeps its per-armour caps. Closed.
 - **Ruling 7 (verbatim):**
@@ -378,11 +379,28 @@ Formula, relation and value keys follow the README conventions.
     `guardCounter`) and `utility.evasion` (`content/source/nodes.csv:299`). Bonus amounts
     are owner to set in that feature.
 
-### Tuning list (the only open items left in section 15)
+- **Ruling 10 (owner tuning, 2026-10-13). Per-rank cap step and the stance bonus.**
+  - **Armour rank step.** The armour skill rank (`armour:medium` and `armour:heavy`, ranks
+    1 to 10) raises that band's Evade DEX cap by +1 per 3 ranks: `floor(rank / 3)`. At rank
+    10, medium is 8 and heavy is 5. Recorded as `evade.dexCap.rankStep` = 3 (proposed,
+    `values.csv`). Light and cloth are uncapped, so the rank step does not change them.
+  - **Stance bonus.** The Evade stance gives its own Evasion bonus of +3. Recorded as
+    `evade.stanceBonus` = 3 (proposed, `values.csv`) and as the term `+ [evade.stanceBonus]`
+    in `evade.evasion` (proposed, `formulas.csv`). The bonus applies only while the Evade
+    stance is active, the same runtime gating as `evade.stacks`.
+  - **Cap formula.** `cap = bandCap + floor(armourRank / evade.dexCap.rankStep) + feat raises`.
+    The `evade.evasion` description and the `evade.dexCap` description show this. The
+    `expr` keeps `[evade.dexCap]` as the runtime input, because the lookup by band and the
+    rank term are not expressible in `expr`.
+  - **Still open.** The feat raises to the cap (and the rank step's interaction with feats).
+    See `docs/tag-model/proposals/evade-cap-feats.md` (proposal, owner to pick).
 
-- Per-rank and feat raises to the Evade DEX cap (armour skill ranks 1 to 10 and feats),
-  in the Evade PR.
-- The Evade stance bonus value (the `other evasion bonuses` term; no variable yet).
+### Tuning list (open items left in section 15)
+
+- Feat raises to the Evade DEX cap: open. Candidate feats are drafted in
+  `docs/tag-model/proposals/evade-cap-feats.md` (proposal, owner to pick). The per-rank
+  step is closed by ruling 10 (`evade.dexCap.rankStep` = 3).
+- The Evade stance bonus value is closed by ruling 10 (`evade.stanceBonus` = 3).
 - **Cross-references for the cap:**
   - Evasion rating formula, `docs/tag-model/tables/formulas.csv` `evasion.rating`:
     `armor.evasionBase` plus DEX capped by `armor.dexCap`. Per the owner note, the caps
