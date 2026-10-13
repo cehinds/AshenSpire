@@ -432,14 +432,17 @@ Formula, relation and value keys follow the README conventions.
       item (see the tuning list).
 
   **Worked examples** (attacker Accuracy 5, so a hit needs `d20 + 5 >= defence`, where
-  defence = 8 + Evasion; the miss chance is the count of d20 values that miss, out of 20):
+  defence = 8 + Evasion. Miss chance is `min(75%, max(5%, (7 + Evasion − Accuracy) / 20))`,
+  the `hit.missChance` formula: a natural 20 always hits and a natural 1 always misses.
+  Where the raw value is above 75%, the table shows the cap and the raw value in brackets.
+  "Needs" is the lowest d20 that hits; under the cap it is the value shown):
 
   | Case | Evasion terms | Evasion | Defence | Needs (d20) | Miss |
   |---|---|---|---|---|---|
   | Rogue, cloth, DEX 4, no Evade | 0 + min(4, 99) | 4 | 12 | 7 | 30% |
   | Rogue, 2-stack card | 2×3 + min(4, 99) | 10 | 18 | 13 | 60% (+6 Block) |
   | Rogue, 2-stack card + stance | 6 + 4 + 3 | 13 | 21 | 16 | 75% (cap) |
-  | Multi-attack 2 vs 3 stacks + stance, DEX 4, hit 1 | 9 + 4 + 3 | 16 | 24 | 19 | 90%; then one stack lost |
+  | Multi-attack 2 vs 3 stacks + stance, DEX 4, hit 1 | 9 + 4 + 3 | 16 | 24 | 16 (cap; raw 19) | 75% (cap; raw 90%); then one stack lost |
   | Same, hit 2 | 6 + 4 + 3 | 13 | 21 | 16 | 75%; then one more lost |
   | Same, after both hits | 3 + 4 + 3 | 10 | 18 | 13 | 60%; one stack left, it decays at your next turn start |
   | Reaver, medium, DEX 7, rank 6, Steady Fit, 1 stack | 3 + min(7, 5 + 2 + 1 = 8) | 10 | 18 | 13 | 60% |
