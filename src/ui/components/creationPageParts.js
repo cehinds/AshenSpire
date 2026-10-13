@@ -28,8 +28,12 @@ function surfaceLayers() {
     part(el('span', { class: 'cc-part-trim', style: `border-image-source:${cssAssetUrl(FRAME)}`, 'aria-hidden': 'true' }), UI.creationPartTrim, 'trim'),
   ];
 }
+// A url() inside a custom property resolves against the stylesheet that reads
+// the var() (styles/kit.css), not the page, so the material is made absolute here.
 function paintScope(node) {
-  const url = assetUrl(MATERIAL);
+  const id = assetUrl(MATERIAL);
+  let url = id;
+  try { if (globalThis.document?.baseURI) url = new URL(id, document.baseURI).href; } catch { /* keep the id */ }
   node.style.setProperty('--cc-part-material-url', `url("${String(url).replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/[\r\n\f]/g, '')}")`);
   return node;
 }
