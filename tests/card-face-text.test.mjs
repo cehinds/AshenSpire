@@ -108,3 +108,10 @@ test('mechanic statuses add their own line; curse triggers and Blight prices kee
 test('a Sleep rider that deals no damage says it does not wake the sleeper', () => {
   assert.ok(text('dreamHarvest').some(line => /\(does not wake it\)$/.test(line)), JSON.stringify(text('dreamHarvest')));
 });
+
+test('a boosted split guard colours both its Block and Ward parts', () => {
+  const def = { id: 'probeGuard', name: 'Probe', type: 'skill', magicShare: 0.4,
+    effects: [{ op: 'block', target: 'self', amount: 5 }], cardTags: ['camp:physical', 'maneuver:defend'] };
+  const [line] = cardFaceLines(def, { values: [{ op: 'block', value: 10 }] }, reg);
+  assert.equal((line.html.match(/val up/g) || []).length, 2, line.html);
+});

@@ -137,7 +137,11 @@ function buildLines(def, preview, registries) {
       case 'block': {
         if (effect.target === 'ally') return frag('bonus', `Ally gains ${num(n, base)} Block`);
         const split = splitOf(def, p, n, ratings);
-        if (split) return frag('gain', `${num(split.physical)} Block, ${num(split.magic)} Ward`);
+        if (split) {
+          // Each part compares with the same split of the static base, as a split hit does.
+          const baseSplit = typeof base === 'number' ? splitOf(def, p, base, ratings) : null;
+          return frag('gain', `${num(split.physical, baseSplit?.physical)} Block, ${num(split.magic, baseSplit?.magic)} Ward`);
+        }
         return frag('gain', `${num(n, base)} Block`);
       }
       // A Spell's gain refills Ward first, so it reads Ward.
