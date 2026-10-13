@@ -35,7 +35,7 @@ import { renderCard, staticTokens } from '../components/card.js';
 import { resolveCard } from '../../model/registries.js';
 import { applyCombatExpansionCard } from '../../content/combatExpansionCards.js';
 import { applyCardTraits } from '../../content/traitProjection.js';
-import { combatProfileFor } from '../../model/combatCardProfile.js';
+import { combatCardRange, combatProfileFor } from '../../model/combatCardProfile.js';
 import { cardCategorySigilHtml } from '../components/cardTagSymbols.js';
 import { playingCardModel } from '../../model/playingCard.js';
 import { playingCardArt, cardArtFallbacks } from '../cardArtwork.js';
@@ -415,25 +415,10 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       : t(combatProfileFor(def).camp === 'spell' ? 'deckEditor.rank.cantrip' : 'deckEditor.rank.basic');
     return el('span', { class: 'deck-editor-rank', dataset: { rank }, text });
   };
-  // Range (owner, 2026-10-11): Melee / Reach / Ranged from the card's reach
-  // (contact / near / far). An untagged spell attack takes its delivery
-  // (projectile Ranged, melee Melee, else Reach) through the player card's
-  // combat default (combatCardProfile.js). Ranged maneuvers show no separate
-  // range: their stance already reads Ranged. A card that deals no damage shows no
-  // range, so a Counter that only gains Poise (an evasion) reads no range either;
-  // a Counter whose reply deals damage (hp or Ward) does.
-  const RANGE_BY_REACH = { contact: 'melee', near: 'reach', far: 'ranged' };
-  const ATTACKING = ['attack', 'smash', 'sweep', 'ranged', 'counter'];
-  const dealsDamage = (def) => (def.effects || []).some(effect => effect.op === 'damage')
-    || (def.counterPayload?.hp > 0 || def.counterPayload?.ward > 0);
+  // Range: the shared rule (combatCardRange in model/combatCardProfile.js) decides
+  // which cards show one; the hand's chip reads the same rule.
   const rangeNode = (row) => {
-    if (stanceKey(row) === 'ranged') return null;
-    const def = combatDef(row);
-    const profile = combatProfileFor(def);
-    const attacking = ATTACKING.includes(profile.maneuver) || (profile.camp === 'spell' && def.type === 'attack');
-    if (!attacking || !dealsDamage(def)) return null;
-    const reach = profile.reach || (profile.delivery === 'projectile' || profile.maneuver === 'ranged' ? 'near' : 'contact');
-    const range = RANGE_BY_REACH[reach];
+    const range = combatCardRange(combatDef(row));
     return range ? el('span', { class: 'deck-editor-range', dataset: { range }, text: t(`deckEditor.range.${range}`) }) : null;
   };
   // Physical or magical, as an icon before the costs: the Physical shield in gold

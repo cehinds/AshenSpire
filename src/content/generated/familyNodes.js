@@ -480,7 +480,7 @@ export const familyNodes = [
   },
   {
     "family": "card",
-    "nodeId": "reach"
+    "nodeId": "range"
   },
   {
     "family": "card",
@@ -488,7 +488,7 @@ export const familyNodes = [
   },
   {
     "family": "basicCardProfile",
-    "nodeId": "reach"
+    "nodeId": "range"
   },
   {
     "family": "basicCardProfile",
@@ -500,7 +500,7 @@ export const familyNodes = [
   },
   {
     "family": "enemyMove",
-    "nodeId": "reach"
+    "nodeId": "range"
   },
   {
     "family": "enemyMove",
@@ -512,7 +512,7 @@ export const familyNodes = [
   },
   {
     "family": "effect",
-    "nodeId": "reach"
+    "nodeId": "range"
   },
   {
     "family": "effect",
