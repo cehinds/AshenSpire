@@ -53,6 +53,14 @@ async function press(page, cdp, phone, x, y) {
   }
 }
 
+// Escape up to three times, 300 ms apart, until the inspector is gone.
+async function closeWithEscape(page, inspector) {
+  for (let i = 0; i < 3 && await inspector.count() > 0; i++) {
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
+  }
+}
+
 async function centre(locator) {
   const b = await locator.boundingBox();
   assert.ok(b, 'element has a bounding box');
@@ -113,11 +121,12 @@ try {
     const ip = await centre(info);
     await press(page, cdpPage, shape.phone, ip.x, ip.y);
     await page.waitForTimeout(600);
-    const dialogs = page.locator('[role=dialog]:visible');
-    check(await dialogs.count() === 1, `${label} enemy: one press opens`);
+    // The combatant inspector is the only dialog with the combatant-door class.
+    const inspector = page.locator('[role=dialog].combatant-door:visible');
+    check(await inspector.count() === 1, `${label} enemy: one press opens`);
     await page.screenshot({ path: resolve(output, `${label}-enemy.jpg`), type: 'jpeg', quality: 70 });
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(300);
+    await closeWithEscape(page, inspector);
+    check(await inspector.count() === 0, `${label} enemy: inspector closes with Escape`);
 
     // KEYBOARD (desktop only): focus the enemy "i" and press Enter.
     if (!shape.phone) {
@@ -131,8 +140,10 @@ try {
       await kEnemy.locator('.combatant-info').focus();
       await page.keyboard.press('Enter');
       await page.waitForTimeout(600);
-      check(await page.locator('[role=dialog]:visible').count() === 1, `${label} keyboard: Enter opens`);
-      await page.keyboard.press('Escape');
+      const keyboardInspector = page.locator('[role=dialog].combatant-door:visible');
+      check(await keyboardInspector.count() === 1, `${label} keyboard: Enter opens`);
+      await closeWithEscape(page, keyboardInspector);
+      check(await keyboardInspector.count() === 0, `${label} keyboard: inspector closes with Escape`);
     }
 
     check(errors.length === 0, `${label}: no pageerror (${errors.join('; ')})`);
