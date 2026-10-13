@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-13",
     "summary": "The build-number bot recovers a missed preview by itself",
     "detail": "Nothing changes in the game. If the bot stamped a build but could not start its preview, re-running it now starts the preview even after a documentation update has landed on top.",
-    "build": "0.7.1.1459",
+    "build": "0.7.1.1463",
     "pullRequest": 1939,
     "url": "https://github.com/cehinds/AshenSpire/pull/1939"
+  },
+  {
+    "id": "pr-1930",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "One press on a visible Inspect \"i\" opens it",
+    "detail": "One click, tap or Enter on a fighter's Inspect \"i\" opens the inspector at once, even when the fighter was not selected first.",
+    "build": "0.7.1.1463",
+    "pullRequest": 1930,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1930"
+  },
+  {
+    "id": "pr-1934",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Desktop combat uses the phone's proportions",
+    "detail": "On desktop and widescreen the hand now takes 30% of the screen instead of 38%, so the battlefield is larger and enemies are drawn bigger. Hand cards scale with the hand like on a phone, and the horizon sits where it does on a phone. Phone and tablet layouts are unchanged.",
+    "build": "0.7.1.1463",
+    "pullRequest": 1934,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1934"
   },
   {
     "id": "pr-1896",

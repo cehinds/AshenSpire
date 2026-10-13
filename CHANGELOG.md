@@ -34,7 +34,9 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-13
 
-- **The build-number bot recovers a missed preview by itself** ([#1939](https://github.com/cehinds/AshenSpire/pull/1939), `0.7.1.1459`). Nothing changes in the game. If the bot stamped a build but could not start its preview, re-running it now starts the preview even after a documentation update has landed on top.
+- **The build-number bot recovers a missed preview by itself** ([#1939](https://github.com/cehinds/AshenSpire/pull/1939), `0.7.1.1463`). Nothing changes in the game. If the bot stamped a build but could not start its preview, re-running it now starts the preview even after a documentation update has landed on top.
+- **One press on a visible Inspect "i" opens it** ([#1930](https://github.com/cehinds/AshenSpire/pull/1930), `0.7.1.1463`). One click, tap or Enter on a fighter's Inspect "i" opens the inspector at once, even when the fighter was not selected first.
+- **Desktop combat uses the phone's proportions** ([#1934](https://github.com/cehinds/AshenSpire/pull/1934), `0.7.1.1463`). On desktop and widescreen the hand now takes 30% of the screen instead of 38%, so the battlefield is larger and enemies are drawn bigger. Hand cards scale with the hand like on a phone, and the horizon sits where it does on a phone. Phone and tablet layouts are unchanged.
 
 ## 2026-10-12
 
