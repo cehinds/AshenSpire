@@ -473,6 +473,25 @@ jobs:
           if [ "$keep" -lt 1 ]; then keep=1; fi
           if [ "$keep" -gt 25 ]; then keep=25; fi
           node tools/verdict.mjs -- node tools/pages-site.mjs --out _site --keep "$keep" --build-missing "$RUNNER_TEMP/pages-rebuilds" --branch-previews "$RUNNER_TEMP/branch-previews" ${MAIN_BUILD_ARGS:-}
+      # THE WORKBENCH IS PUBLISHED AS A STATIC SITE, BUILT FROM THIS RUN'S CHECKOUT.
+      #
+      # It lives at /workbench/ beside the game builds. On the workflow_run publish
+      # path the checkout is dev (see the checkout step above), so the Workbench
+      # shown there is dev's. It answers its API from a snapshot
+      # (workbench/static/static-api.mjs) and keeps edits in the visitor's browser;
+      # nothing on the page writes to the repository.
+      #
+      # The step may fail without stopping the site: continue-on-error keeps a
+      # Workbench failure to a warning in this run, and the game site still publishes.
+      - name: "Build the published Workbench at /workbench/ (from this checkout)"
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          if ! node tools/fetch-art.mjs --pack light; then
+            echo "::warning title=Workbench art not fetched::the light art pack did not fetch; the Workbench is built without art"
+          fi
+          node tools/workbench-static.mjs --out _site/workbench --base /AshenSpire/workbench/
+          echo "Workbench published at https://cehinds.github.io/AshenSpire/workbench/ from $(git rev-parse --short HEAD)" >> "$GITHUB_STEP_SUMMARY"
       - name: The generator's own drift plant is still caught
         run: node tools/verdict.mjs -- node tools/pages-site.mjs --selftest ${MAIN_BUILD_ARGS:-}
       - uses: actions/configure-pages@v5
