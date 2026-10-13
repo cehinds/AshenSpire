@@ -250,3 +250,9 @@ test('shard summary counts name a time stop, a missing count, or print the norma
   assert.equal(shardSummaryCounts({ out: '', timedOut: false, limitMinutes: 15, files: 3 }), '3 files, counts unavailable');
   assert.doesNotMatch(shardSummaryCounts({ out: '', timedOut: false, limitMinutes: 15, files: 3 }), /NaN/);
 });
+
+test('the discovered summary line uses the shard counts helper, so a time stop never prints NaN', () => {
+  assert.match(RUNNER, /shardSummaryCounts\(\{ out, timedOut: result\.error\?\.code === 'ETIMEDOUT'/);
+  assert.match(RUNNER, /\$\{counts\}/);
+  assert.doesNotMatch(RUNNER, /\$\{count\('tests'\)\} tests/);
+});
