@@ -132,6 +132,11 @@ jobs:
               node tools/build-stamp.mjs --stamp --since-last-stamp
             fi
 
+            # Re-pointing one receipt can create a rise within its date group.
+            # Validate the complete stamped order before any commit or preview dispatch;
+            # no pending-PR exemption applies after the bot has stamped the tree.
+            node tools/about-changelog.mjs --check-order
+
             # Only the three derived files, never the built HTML or anything else the build wrote.
             git add -- buildordinal.json CHANGELOG.md src/content/changelog.generated.js
             if git diff --cached --quiet; then

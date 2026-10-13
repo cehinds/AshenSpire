@@ -105,6 +105,9 @@ test('evade art uses authored preparation/readiness, without changing other type
   assert.equal(resolve(null,null,{combatEvade:{charges:1,whileStatus:'prone'},statuses:{prone:{stacks:1,duration:1}}}),'evade');
   assert.equal(resolve(null,null,{combatOwnerCycle:2,combatEvade:{charges:1,expiresOnOwnerCycle:2}}),null);
   assert.equal(resolve('defensive',card('defend',{name:'Evade',effects:[]}),{}),'defend','names do not choose presentation');
+  for (const alias of ['defensive','defend','immune']) assert.equal(resolve(alias,card('defend'),{evade:1}),'defend');
+  assert.equal(resolve('smash',card('smash'),{statuses:{invulnerability:{stacks:1}}}),'smash','a status never replaces the authored hold');
+  assert.equal(resolve(null,null,{statuses:{invulnerability:{stacks:1}}}),null);
   assert.equal(selectedWeaponStanceFor({profile:null,stance:'defensive',card:card('defend',{weightClassPriced:true})}),'defensive');
 });
 
@@ -119,6 +122,26 @@ test('finite reactions accept only confirmed player guard breaks and genuine eva
   }
   assert.equal(selectedWeaponReactionFor({type:'combatGuardBroken',targetId:'e1'},pilot),null);
   assert.equal(selectedWeaponReactionFor({type:'attackEvaded',targetId:'player'},null),null);
+});
+
+test('full protection and immunity reactions require their own confirmed outcomes', () => {
+  const hit={type:'damageDealt',targetId:'player',sourceId:'e1',isAttack:true,amount:5,blocked:5};
+  assert.equal(selectedWeaponReactionFor(hit,pilot),'fully-defended');
+  assert.equal(selectedWeaponReactionFor({...hit,amount:0,blocked:0,wardResisted:5},pilot),'fully-defended');
+  assert.equal(selectedWeaponReactionFor({...hit,wardResisted:3},pilot),'fully-defended');
+  for (const overrides of [{amount:5,blocked:4,wardResisted:10},{amount:0,blocked:0},
+    {isAttack:false},{isAttack:undefined},{sourceId:'player'},{sourceId:null},{targetId:'e1'},
+    {type:'hpLost',cause:'status'},{type:'procResisted'},{amount:NaN},{blocked:Infinity},{wardResisted:-1}]) {
+    assert.equal(selectedWeaponReactionFor({...hit,...overrides},pilot),null,JSON.stringify(overrides));
+  }
+  const prevention={type:'combatAvoidanceResolved',targetId:'player',sourceId:'e1',avoided:true,prevention:'invulnerability'};
+  assert.equal(selectedWeaponReactionFor(prevention,pilot),'defend');
+  for (const overrides of [{avoided:false},{prevention:'decoy'},{prevention:null,distance:{success:true}},
+    {type:'arcaneExposureRefused',reason:'immune'},{type:'statusApplied',status:'invulnerability'},{targetId:'e1'}]) {
+    assert.equal(selectedWeaponReactionFor({...prevention,...overrides},pilot),null);
+  }
+  assert.equal(selectedWeaponReactionFor(hit,null),null);
+  assert.equal(selectedWeaponReactionFor(prevention,null),null);
 });
 
 test('the solo screen reaction hook imports its timing helpers and calls the current target stage', () => {
@@ -208,17 +231,64 @@ test('selected holds preserve existing returns and finite reactions restore the 
     }
     for(const origin of ['offensive','defend','counter','smash','sweep','evade']) {
       stage.settle();stage.setStance(origin);
-      for(const action of ['attack','smash','counter-guard','counter-evade']) {
+      for(const action of ['attack','smash','sweep','counter-guard','counter-evade']) {
         const {totalMs,impactMs}=stage.actionTiming(action);
         assert.ok(impactMs<totalMs);
         stage.play(action,totalMs);
-        if(action==='counter-guard'){assert.equal(stage.pose,'pilot-defend');advance(impactMs+1);assert.equal(stage.pose,'pilot-attack-4');}
+        if(action==='sweep'){assert.equal(stage.pose,'stance-'+origin);advance(impactMs+1);assert.equal(stage.pose,'pilot-sweep-contact');}
+        else if(action==='smash'){assert.equal(stage.pose,'stance-'+origin);advance(impactMs+1);assert.equal(stage.pose,'pilot-smash-impact');}
+        else if(action==='counter-guard'){assert.equal(stage.pose,'pilot-defend');advance(impactMs+1);assert.equal(stage.pose,'pilot-attack-4');}
         else if(action==='counter-evade'){assert.equal(stage.pose,'pilot-evade-1');advance(impactMs+1);assert.equal(stage.pose,'pilot-attack-4');}
         else {assert.equal(stage.pose,'pilot-attack-1');advance(impactMs+1);assert.equal(stage.pose,'pilot-attack-4');}
         advance(totalMs);
         assert.equal(stage.pose,'stance-'+origin,'the actual active '+origin+' survives '+action);
       }
     }
+    stage.settle();stage.setStance('smash');
+    const smashTiming=stage.actionTiming('smash'),originalHold=stage.currentArt;
+    stage.play('smash',smashTiming.totalMs);
+    assert.equal(stage.currentArt.image,originalHold.image,'SM03 starts with the byte-exact active held stance');
+    assert.deepEqual([stage.currentArt.left,stage.currentArt.top],[originalHold.left,originalHold.top],'the first bookend never shifts the body');
+    advance(79);assert.equal(stage.pose,'pilot-smash-airborne');
+    assert.equal(stage.currentArt.canvas.height,625,'airborne blade has the required 81 pixel top margin');
+    const css=stage.currentArt.canvas.style.cssText,cssTop=Number(css.match(/top:([-\d.]+)px/)[1]),cssWidth=Number(css.match(/width:([\d.]+)px/)[1]),scale=cssWidth/stage.currentArt.canvas.width;
+    assert.ok(Math.abs(cssTop+(originalHold.top+464)*scale-190)<1e-8,'expanded canvas compensation preserves the original held floor in CSS pixels');
+    assert.equal(stage.currentArt.top,-95,'source S padding maps to the original unchanged stance registration');
+    stage.hold(60);assert.equal(stage.pose,'pilot-smash-impact','timer contact freezes the ground-impact painting');
+    advance(160);assert.equal(stage.pose,'stance-smash');
+    assert.deepEqual([stage.currentArt.left,stage.currentArt.top],[originalHold.left,originalHold.top],'the final bookend returns without a body jump');
+    stage.settle();stage.setStance('sweep');
+    const sweepOrigin=stage.currentArt,sweepTiming=stage.actionTiming('sweep');
+    assert.equal(sweepOrigin.canvas.width,932,'the planted wind-up blade gets its full horizontal canvas');
+    assert.deepEqual([sweepOrigin.width,sweepOrigin.height],[1024,1024],'the corrected stance is not fit to a different body scale');
+    const sweepCss=sweepOrigin.canvas.style.cssText,sweepScale=Number(sweepCss.match(/width:([\d.]+)px/)[1])/sweepOrigin.canvas.width;
+    const sweepLeft=Number(sweepCss.match(/left:calc\(50% - ([\d.]+)px\)/)[1]),sweepTop=Number(sweepCss.match(/top:([-\d.]+)px/)[1]);
+    assert.ok(Math.abs((sweepOrigin.left+520)*sweepScale-sweepLeft)<1e-8,'anatomical Sweep anchor stays on the same body center');
+    assert.ok(Math.abs(sweepTop+(sweepOrigin.top+734)*sweepScale-190)<1e-8,'corrected Sweep keeps the common floor');
+    stage.play('sweep',sweepTiming.totalMs);const sweepCue=stage.contactCue();advance(208);
+    assert.equal(stage.pose,'pilot-sweep-contact','a cold receipt cannot skip the turning slash');
+    assert.equal(stage.presentation.elapsed,78);assert.equal(sweepCue.contact(),true);assert.equal(sweepCue.remainingMs(),117);
+    advance(39);assert.equal(stage.pose,'pilot-sweep-finish');advance(39);assert.equal(stage.pose,'stance-sweep');advance(40);
+    assert.equal(stage.presentation.action,undefined);
+    assert.equal(stage.currentArt.image,sweepOrigin.image);assert.deepEqual([stage.currentArt.left,stage.currentArt.top],[sweepOrigin.left,sweepOrigin.top]);
+    stage.settle();stage.setStance('smash');stage.play('smash',195);
+    const coldCue=stage.contactCue();advance(208);
+    assert.equal(stage.pose,'pilot-smash-impact','a cold late receipt cannot skip the unacknowledged impact');
+    assert.equal(stage.presentation.elapsed,117);
+    assert.equal(stage.presentation.duration,195,'waiting for the cue never changes nominal cadence');
+    assert.equal(coldCue.contact(),true);assert.equal(coldCue.remainingMs(),78,'recovery accounts for the real remaining clip after a late cue');assert.equal(coldCue.contact(),false,'one play accepts its contact once');
+    advance(39);assert.equal(stage.pose,'stance-smash');
+    advance(40);assert.equal(stage.presentation.action,undefined);assert.equal(coldCue.remainingMs(),0);
+    stage.play('smash',195);const staleCue=stage.contactCue();advance(50);
+    stage.play('attack',195);assert.equal(stage.contactCue(),null,'ordinary Attack never opts into the new gate');assert.equal(staleCue.contact(),false,'an old receipt never rewinds a newer action');
+    assert.equal(stage.pose,'pilot-attack-1');stage.settle();
+    stage.play('smash',195);const cancelledCue=stage.contactCue();stage.settle({reaction:true});
+    assert.equal(cancelledCue.contact(),false);assert.equal(cancelledCue.remainingMs(),0);
+    stage.play('smash',195);const defeatedCue=stage.contactCue();stage.setRestPose('defeated');
+    assert.equal(defeatedCue.contact(),false);assert.equal(stage.pose,'defeated');stage.setRestPose('idle');
+    stage.play('smash',195);const reducedCue=stage.contactCue();reduced=true;advance(250);
+    assert.equal(stage.presentation.action,undefined,'turning on reduced motion cancels a pending contact without a hang');
+    assert.equal(reducedCue.contact(),false);reduced=false;
     stage.settle();stage.setStance('counter');
     const attackTiming=stage.actionTiming('attack');
     stage.play('attack',attackTiming.totalMs);advance(75);
@@ -241,7 +311,7 @@ test('selected holds preserve existing returns and finite reactions restore the 
     advance(100);assert.equal(stage.pose,'pilot-impact-g');
     advance(260);assert.equal(stage.pose,'stance-counter');
     stage.settle();stage.setStance('smash');stage.play('smash',500);advance(150);
-    assert.equal(stage.pose,'pilot-attack-2');
+    assert.equal(stage.pose,'pilot-smash-takeoff');
     assert.equal(stage.reactPose('guard-break',180),true);assert.equal(stage.pose,'pilot-guard-break');
     assert.equal(stage.presentation.action,'smash','a reaction never replaces the live action');
     stage.setRestPose(stage.rest);assert.equal(stage.pose,'pilot-guard-break','routine renders retain the reaction');
@@ -259,6 +329,7 @@ test('selected holds preserve existing returns and finite reactions restore the 
     stage.reactPose('guard-break',280);stage.setRestPose('defeated');assert.equal(stage.pose,'defeated');
     assert.equal(stage.reactPose('evade',280),false,'defeat wins over a later reaction');
     const fallback=await make({});assert.equal(fallback.reactPose('evade'),false);fallback.setStance('counter');
+    assert.equal(fallback.actionTiming('sweep').totalMs,195);assert.equal(fallback.actionTiming('sweep').impactMs,41.25,'other profiles retain the original Sweep contact');
     assert.equal(fallback.el.dataset.maximumWidthRatio,undefined,'the edge envelope is scoped to the selected weapon profile');
     assert.equal(fallback.pose,'stance-counter');assert.doesNotMatch(fallback.currentArt.image.url,/pilot/);
     for(const mode of ['reduced','still','instant']){
@@ -267,6 +338,13 @@ test('selected holds preserve existing returns and finite reactions restore the 
       staticStage.setStance('evade');staticStage.play('counterPrepare',mode==='instant'?0:260);
       assert.equal(staticStage.pose,'stance-evade',mode+' preparation keeps the selected static Evade hold');
       staticStage.setStance('smash');
+      staticStage.play('smash',mode==='instant'?0:195);
+      assert.equal(staticStage.pose,'stance-smash',mode+' Smash immediately retains its origin');
+      assert.equal(staticStage.presentation.action,undefined,mode+' Smash leaves no action clock');
+      assert.equal(staticStage.contactCue(),null,mode+' never waits for a contact acknowledgement');
+      staticStage.setStance('sweep');staticStage.play('sweep',mode==='instant'?0:195);
+      assert.equal(staticStage.pose,'stance-sweep',mode+' Sweep preserves its held origin');
+      assert.equal(staticStage.contactCue(),null);staticStage.setStance('smash');
       assert.equal(staticStage.reactPose('evade',180),true,mode+' displays the chosen static pose');
       assert.equal(staticStage.pose,'pilot-evade-1');advance(190);assert.equal(staticStage.pose,'stance-smash',mode+' restores the hold within its bounded lifetime');
     }

@@ -1,0 +1,32 @@
+{
+  "generator": "image_gen.imagegen",
+  "whole_strip_generation": true,
+  "active_raw": "raw.png",
+  "raws": [
+    {
+      "path": "raw.png",
+      "sha256": "2567381767ae1af6e1a348c1af5685db3d1371975f790dd80e0c3026944babae",
+      "dimensions": [
+        2169,
+        725
+      ]
+    }
+  ],
+  "prompts": [
+    {
+      "path": "prompt.txt",
+      "sha256": "ee584bb2fcfbccbc378f00ee7be05b1fc4684bc1d03f417eb8a9e83ceab595e8"
+    }
+  ],
+  "seed": "seed/stance-final.png",
+  "seed_sha256": "9979e65f7c61c446203d0a10f2a23e8e7ebcab86786d483eb3727bb528158405",
+  "bookends": "Exact approved normalized NEW seed PNG bytes copied to slots01/05; original runtimeW not used or modified",
+  "effects": "Curved slash arcs painted by ImageGen inside whole-strip generation, no mechanical effect painting",
+  "anatomy": "Low iai-inspired gather; visible palm-up underhand hilt grip, thumb above, knuckles below, inner elbow crease facing camera; level flat blade in approved idle seed",
+  "normalization": "Shared body scale from approved seed/raw idle height; anatomical helmet registration and manually identified boot contact plane; effect bounds not used for centering/scale",
+  "references": [
+    "https://www.meikyokan.org/hawaiikendo_lessons-in-iaido",
+    "https://www.northlondonbudo.co.uk/iaido-information/a-sample-iaido-kata-a-sequence-of-moves"
+  ],
+  "reference_limitations": "Dojo text observations inform low coil/turn/draw vocabulary only. Katana/seated motions adapted artistically to armored greatsword. No external character art or effects imported."
+}
