@@ -115,17 +115,21 @@ jobs:
             echo "::group::#$pr ($head)"
             out="$RUNNER_TEMP/restamp-$pr.txt"
             body="$RUNNER_TEMP/restamp-$pr-comment.md"
+            # The head goes into its own worktree. Dev's tools run against it with --repo: the
+            # head's own code is never executed, and the merge writes only to that worktree.
+            pr_dir="$RUNNER_TEMP/pr-$pr"
+            git worktree remove --force "$pr_dir" 2>/dev/null || true
             if ! { git fetch -q origin "+refs/heads/$head:refs/remotes/origin/$head" \
-                && git checkout -q -B pr "origin/$head"; } > "$out" 2>&1; then
+                && git worktree add -q --detach "$pr_dir" "refs/remotes/origin/$head"; } > "$out" 2>&1; then
               cat "$out"
               echo "::endgroup::"
               echo "::error::#$pr: could not check out $head."
               failed=1
               continue
             fi
-            before="$(git rev-parse HEAD)"
+            before="$(git -C "$pr_dir" rev-parse HEAD)"
             set +e
-            node tools/pr-restamp.mjs --pr "$pr" --base origin/dev > "$out" 2>&1
+            node "$GITHUB_WORKSPACE/tools/pr-restamp.mjs" --pr "$pr" --base origin/dev --repo "$pr_dir" > "$out" 2>&1
             status=$?
             set -e
             cat "$out"
@@ -133,12 +137,13 @@ jobs:
 
             case "$status" in
               0)
-                after="$(git rev-parse HEAD)"
+                after="$(git -C "$pr_dir" rev-parse HEAD)"
                 if [ "$after" = "$before" ]; then
                   echo "#$pr already carries dev; nothing pushed."
                   continue
                 fi
-                if ! git push -q origin "HEAD:refs/heads/$head"; then
+                # The push URL is given for this one push only; no remote is rewritten.
+                if ! git -C "$pr_dir" push -q "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/$head"; then
                   # A rejected push (the branch moved meanwhile) is retried at the next stamp.
                   echo "::notice::#$pr: push to $head rejected; it is retried at the next build stamp."
                   continue
