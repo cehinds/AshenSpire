@@ -482,7 +482,7 @@ export const reaverCards = [
     },
   },
   {
-    id: 'warriorsVow', name: "Warrior's Vow", class: 'reaver', rarity: 'rare', cost: 0, type: 'skill',
+    id: 'warriorsVow', name: "Warrior's Vow", class: 'reaver', rarity: 'rare', cost: 0, costRule: 'fixed', type: 'skill',
     flavor: "Contract of the sellswords of the Fell Courtyard.\n\nHold the gate until relieved; pay in advance. The weald's hired blades held a paid contract sacred, having few other sacred things, and the Wardens despised them for it.\n\nThe last was signed the week before the Burning. Its date of release is blank.",
     keywords: ['innate', 'exhaust'], icon: '📜',
     // "A Stance of your choice" (SPEC §5.2): the play offers every stance the

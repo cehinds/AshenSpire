@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-13",
     "summary": "Cards read the same in every view, and read intents show their damage class",
     "detail": "A card's text is now one short form everywhere — combat hand, character creation, review, rewards, shop and deck — naming each effect by its tag and number: \"Inflict 9 Blunt damage, 4 Poise damage\", \"Inflict Weak 4, Paralysis 3\", \"Remove 1 Sleep, 1 Paralysis, 1 Dazed\", \"Gain 7 Ward\". Boosted numbers are green and reduced ones red. In combat the hand shows three lines and a selected card up to five. Card tag icons stay on the right edge even beside a Melee or Reach chip. An enemy intent you read successfully is tinted silver for a physical attack and blue for magic.",
-    "build": "0.7.1.1481",
+    "build": "0.7.1.1483",
     "pullRequest": 1957,
     "url": "https://github.com/cehinds/AshenSpire/pull/1957"
+  },
+  {
+    "id": "pr-1953",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Alternative combat rounds arrive as an opt-in setting, and every action now costs resources",
+    "detail": "Settings gains three toggles, all off by default: Alternative combat rounds, Momentum (display only in normal combat) and Multi-action preview (one ? per hidden enemy action). Always on: new combat shadows, the blue selection, thin stance-only target outlines with the coloured ring outermost, and enemy actions that spend Stamina and Mana from a stat-driven pool (minions 1–2, elites 2–3, bosses 3–4). Card costs are now derived from damage, rank, range and combat tags, so most basics and cantrips cost 1 Stamina, smashes and sweeps 2, and rank 1–3 spells 1–2 Mana; smashes also deal Poise damage. Silenced enemies cannot spend Mana.",
+    "build": "0.7.1.1483",
+    "pullRequest": 1953,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1953"
   },
   {
     "id": "pr-1942",

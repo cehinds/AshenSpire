@@ -38,7 +38,9 @@ test('the face, the play and the rank all read one number', () => {
   const i = primaryEffectIndex(base);
   assert.equal(resolveCard(registries, { cardId: 'rend', skillBonus: 2 }).effects[i].amount, base.effects[i].amount + 2);
   assert.equal(resolveCard(registries, { cardId: 'rend', rank: 3, skillBonus: 1 }).effects[i].amount, base.effects[i].amount + 3, 'rank and flat stack');
-  assert.equal(resolveCard(registries, { cardId: 'thousandCutsRogue', skillBonus: 1 }).effects[0].amount, 3, 'a multi-hit card splits it, rounded up');
+  // Relative to the resolved base: the cost formula may scale the face (SPEC §4.3a); the flat +1 adds on top.
+  const cuts = resolveCard(registries, { cardId: 'thousandCutsRogue' }).effects[0].amount;
+  assert.equal(resolveCard(registries, { cardId: 'thousandCutsRogue', skillBonus: 1 }).effects[0].amount, cuts + 1, 'a multi-hit card splits it, rounded up');
 });
 
 test('combat carries the stamped bonus; a full restamp refreshes it', () => {

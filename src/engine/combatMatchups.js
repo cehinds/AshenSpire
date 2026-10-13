@@ -133,6 +133,16 @@ export function prepareMatchupHit(ctx, source, target, carrier, computedDamage) 
     guardBypass: counter && ['ranged', 'spell', 'magic'].includes(target.combatCounter.mode) ? 0 : Math.min(amount, guardBefore, bypass) };
 }
 
+/** Preview only (SPEC §4.11): whether the target's armed Counter would answer an attack with this profile now. */
+export function liveCounterCovers(ctx, target, profile) {
+  if (!profile) return false;
+  if (combatExpansionEnabled(ctx)) {
+    const counter = preparedCounter(ctx, target, null, {});
+    return Boolean(counter) && counterCoverageMatches(counter.coverage, profile, 'damage');
+  }
+  return counterEligible(ctx, target, null, profile);
+}
+
 export function matchupPoiseMultiplier(ctx, source, target, carrier) {
   const profile = combatProfileOf(carrier);
   if (!profile || carrier?.combatReaction || profile.camp !== 'physical' || profile.maneuver !== 'attack') return 1;
