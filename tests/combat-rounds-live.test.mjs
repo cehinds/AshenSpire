@@ -294,8 +294,12 @@ test('with the preview off, a scripted fight event log is byte-identical to the 
   // Re-recorded for the retuned Wandering Soldier (2 SP, HP 31-36, Slash 8; owner 2026-10-13: harder tier-1 normals).
   // Re-recorded at the origin/dev merge of 2026-10-13 (#1931, #1896 and the rest): dev's combat changes (reaction rules
   // version 2, split hits, Silenced, the damage-type tags the cost formula prices) change what the script plays.
-  assert.equal(createHash('sha256').update(all).digest('hex'), '79b004c855ccbc9fc3508274c7e54806281c70e7416bd8a9c7a395908eae0614');
-  assert.equal(all.length, 406414);
+  // Re-recorded at the origin/dev merge 1ab0ff716 (#1945, the combat log's event receipts): the log is the 18560cde5
+  // log with keys added and nothing else changed: moveId on each enemy move's events, incoming and base on damageDealt,
+  // source 'defendStance' on a stance block, triggeredBy on a triggered stagger. The PR #1953 review fixes (a mid-turn
+  // stagger, a charge in a round, normal momentum per exchange) do not reach this preview-off script.
+  assert.equal(createHash('sha256').update(all).digest('hex'), 'b0e575b620cccace23b5bbb263eca69d8489014670dcad278b7809a9f5272e4a');
+  assert.equal(all.length, 407839);
 });
 
 // Review finding 1: a queued card that an earlier queued card removed from hand never resolves.

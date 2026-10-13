@@ -104,8 +104,10 @@ test('a preview-off save is byte-identical to the save before the preview saved 
   // Re-recorded again for the retuned Wandering Soldier (2 SP, HP 31-36, Slash 8; owner 2026-10-13: harder normals).
   // Re-recorded at the origin/dev merge of 2026-10-13: dev's new save fields (reaction rules version 2, enemyReaction
   // stream) and the re-priced cards change the text. The "no preview key" check above is what guards the off mode.
-  assert.equal(createHash('sha256').update(all).digest('hex'), '4e3140a74f853168d51aeea5b2d9b903c9ab90ad1ffc3125a38f94d6712bec96');
-  assert.equal(all.length, 129889);
+  // Re-recorded at the origin/dev merge 1ab0ff716 (#1945): the saved event log gains moveId on the enemy move's events
+  // and triggeredBy on a relic's status; every other byte is the 18560cde5 save.
+  assert.equal(createHash('sha256').update(all).digest('hex'), '566d91635b6b177cefaa023662935de926da62ced426ba31aa356729e7061dee');
+  assert.equal(all.length, 130101);
 });
 
 test('a preview fight with queued cards saves and restores: queues and paid SP intact, End Turn works after restore', () => {
