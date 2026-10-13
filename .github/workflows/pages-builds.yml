@@ -29,14 +29,18 @@
 # the whole `main` tree is the base of the artifact and the only replaced file is
 # the root index.html (main's own is kept at /index-game.html).
 #
-# PUBLICATION IS SPLIT BY BRANCH. A push to dev or release ASSEMBLES, proves and then
-# PUBLISHES the site (dev: owner's ruling 2026-09-05; release: owner's ruling
-# 2026-10-11, which reverses the 2026-09-05 refusal for release only). A push to test
+# PUBLICATION IS SPLIT BY BRANCH. A push to release ASSEMBLES, proves and then
+# PUBLISHES the site (owner's ruling 2026-10-11, which reverses the 2026-09-05 refusal
+# for release only). A push to dev does not start this workflow at all: the build-stamp
+# run that follows it (its workflow_run trigger) assembles and PUBLISHES dev once that run
+# has concluded success, so dev only ever publishes a stamped head (dev: owner's ruling
+# 2026-09-05; the order: owner's decision 2026-10-13). A push to test
 # assembles and proves it and stops. A push to main assembles and proves it and stops:
 # main is published only by the owner's own dispatch whose `publish` input spells
 # PUBLISH (github.actor AND github.triggering_actor are both checked against
 # github.repository_owner, so neither a write collaborator's dispatch nor their re-run
-# of the owner's dispatch deploys). The automatic paths are `dev` and `release`.
+# of the owner's dispatch deploys). The automatic paths are `release` (a push) and `dev`
+# (build-stamp completing on dev).
 #
 # A RELEASE PUBLISHES WITH THE HIGH-RES ART. tools/pages-site.mjs names release (and
 # main) in FULL_ART_BRANCHES and fullArtFor() returns true for it, so every release
@@ -77,7 +81,7 @@
 # open PRs with GITHUB_TOKEN, fetches each one's newest successful dev-preview build
 # for its head commit and hands them to tools/pages-site.mjs, which publishes them
 # and lists them on the index. A build therefore lives exactly as long as its PR is
-# open: a merge arrives as a push to dev, a close as the pull_request_target event
+# open: a merge arrives as the build-stamp run after its push to dev, a close as the pull_request_target event
 # below, and each publishes a site without it. The deploy job is unchanged. The
 # sticky "Playable build" comment is posted by its own job after a successful deploy.
 #
@@ -102,15 +106,17 @@
 # environment, which can additionally carry required reviewers. What changed is which
 # events may REACH that job, not which job holds the credential.
 #
-# The cost is named rather than discovered: publishing on a push to `dev` or `release`
-# is a standing delegation to every future push on either. It was accepted because the
+# The cost is named rather than discovered: publishing on a push to `release`, and on
+# every build-stamp completion on `dev`, is a standing delegation to every future push
+# on either. It was accepted because the
 # alternative was measured — the site sat three days and 52 green assemble runs
 # behind the game while every one skipped the deploy job.
 # ONE-TIME OWNER ACTION before the first deploy: Settings → Pages → Build and
 # deployment → Source: "GitHub Actions"; until then the deploy step fails with GitHub's
 # own message and the legacy `main:/` source keeps serving.
 #
-# COST: one assemble run per push to any of the four branches. A run that has
+# COST: one assemble run per push to test, release or main, and one per build-stamp
+# completion on dev (a push to dev runs dev-preview, not this workflow). A run that has
 # STARTED is never cancelled — see the concurrency block for why a guess about
 # who publishes cost a publication — so a burst of pushes serialises rather than
 # killing whatever is mid-flight. A newer arrival does still supersede an older
@@ -496,7 +502,7 @@ jobs:
           # decides whether the summary says "published" or "not published", so a
           # flag narrower than the guard prints "not published" on a run that
           # publishes — the exact silence (#553) this step was added to end.
-          # `dev` and `release` on the push path (release by the owner's ruling,
+          # `release` on the push path and `dev` on a build-stamp completion (release by the owner's ruling,
           # 2026-10-11). A run that cannot publish must not claim it will: until the
           # github-pages environment admits `release`, its deploy is refused at the
           # gate — see the header.
@@ -559,7 +565,7 @@ jobs:
           if [ "$PUBLISH_REQUESTED" != "true" ]; then
             {
               echo
-              echo "This branch does not publish on a push — only \`dev\` and \`release\` do. To publish this"
+              echo "This run does not publish — a push publishes only on \`release\`, and \`dev\` publishes after its build-stamp run. To publish this"
               echo "assembly, the repository owner dispatches this workflow with"
               echo "\`publish\` = \`PUBLISH\`; a collaborator's dispatch does not, and no standing"
               echo "setting may stand in for that decision."
@@ -590,11 +596,12 @@ jobs:
     # while every one of them skipped this job. Automatic publication on `dev` is
     # the deliberate cost of that.
     #
-    # 1. A PUSH to dev or release publishes. This IS a standing delegation to every
-    #    future push on those branches: whoever can push them can reach this job's
-    #    Pages credential. That is accepted for the development branch and, by the
-    #    owner's 2026-10-11 ruling, for release (which only the owner pushes), and
-    #    refused for main.
+    # 1. A PUSH to release publishes, and a build-stamp run that concludes success on
+    #    dev publishes (the stamp run follows the push to dev; this job never runs on
+    #    the push itself). This IS a standing delegation to every future push to release
+    #    and every future build-stamp completion on dev: whoever can push them can reach
+    #    this job's Pages credential. That is accepted for dev and, by the owner's
+    #    2026-10-11 ruling, for release (which only the owner pushes), and refused for main.
     #
     #    `test` and `release` were on this line until 2026-09-07 and could never
     #    honour it: the github-pages environment's deployment-branch rule admitted
@@ -622,7 +629,9 @@ jobs:
     # decision before this job ever runs.
     # A feature/fix/chore preview that failed or was cancelled also reaches this job
     # (workflow_run, any conclusion): the current-head check in assemble drops its stale
-    # build, so the site never keeps it. Comments stay out of the folded if: block below.
+    # build, so the site never keeps it. A build-stamp run that did not succeed does not
+    # reach it, and neither does a completed dev preview on dev, which would rebuild a head
+    # that has no stamp yet. Comments stay out of the folded if: block below.
     if: >-
       (
         github.event_name == 'push'
