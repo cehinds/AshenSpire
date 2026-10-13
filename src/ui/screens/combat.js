@@ -2444,7 +2444,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   function afterDispatch(events) {
-    events = decorateCombatEffects(events, registries, barrierVisuals);
+    try { events = decorateCombatEffects(events, registries, barrierVisuals); } catch (e) { console.warn('[combat] effect decoration failed:', e && e.message); }
     playbackEvents = events;
     playbackCounterOrigins = selectedCounterOrigins(events);
     // Capture definitions while disp still holds consumed Powers and equipment
