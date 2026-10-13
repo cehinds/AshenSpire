@@ -102,6 +102,15 @@ The preview screen is the live combat screen with only these additions:
   blue in the preview, so green only means advantage.
 - No queue strip, no initiative track; End Turn stays as it is.
 
+## Owner decisions (2026-10-13)
+
+- Normal-combat momentum stays display only; it has no mechanical effect.
+- In rounds mode, Block lasts one round for both sides (resolved; was provisional).
+- Hidden enemy actions beyond the read show one `?` per action.
+- Card and enemy costs (SPEC §4.3a, §4.6a): the per-resource cost formula replaces the stance table for player cards,
+  and an enemy's SP pool is its stats (minions 1–2, elites 2–3, bosses 3–4). The items below that state a flat
+  stance price or a pool of 2 are superseded.
+
 ## Owner decisions (2026-10-12)
 
 - The combat rounds mode stays a settings toggle, off by default.
