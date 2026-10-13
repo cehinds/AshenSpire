@@ -60,7 +60,7 @@ tag. Regenerate the generated tag modules as DEVELOPER.md describes (`src/conten
   `reaction = true` for `def.evade != null` (ruling 2).
 - The counter-role block (line 108 onward) runs only for `role.maneuver === 'counter'`.
   The counter coverage at 109-112 and `POISE_REPLIES` at 115 (evasiveGuard 2,
-  backstep 3, acrobaticsRogue 3) are lost for these cards. **Owner question Q3.**
+  backstep 3, acrobaticsRogue 3) are dropped for these cards (ruling 11).
 - `combatExpansionMartial.js` line 89 has an exception for `dodgeRoll` and `evasiveGuard`
   on `equipmentRole`. Check it still holds once the role is `evade`.
 
@@ -71,7 +71,7 @@ tag. Regenerate the generated tag modules as DEVELOPER.md describes (`src/conten
 | `src/model/combatCardProfile.js:6` | `MANEUVER` set: add `evade` |
 | `src/model/combatTacticsRules.js:75` | `MANEUVERS` array: add `evade` (validation) |
 | `src/model/playingCard.js:61` `combatCardType` | `Evade` label; falls through to `p.maneuver[0].toUpperCase()` so it reads `Evade` already, but add an explicit line for clarity |
-| `src/model/alternativeStance.js:4,20-45` | `defensive` set keeps `defend`; add an `evade` stance family (Q4) |
+| `src/model/alternativeStance.js:4,20-45` | `defensive` set keeps `defend`; add an `evade` stance family (ruling 11: its own family, not `defensive`) |
 | `src/model/combatIntentVisibility.js:19` | enemy/visible intent: add `evade` (currently falls through) |
 | `src/model/alternativeCardAnimation.js:5,15` | `CARD_ACTIONS` and the maneuver mapping: add `evade` |
 | `src/model/combatPose.js:26` | rest pose list: add `evade` if an Evade pose exists |
@@ -85,7 +85,7 @@ tag. Regenerate the generated tag modules as DEVELOPER.md describes (`src/conten
 - **431 (smash status).** The smash status check reads `defend` on the target. An Evade
   target is no longer "defended" there.
 - **287 (trait guard).** The Impact and Flux trait guard is armed only by `defend`. Evade
-  gets no trait guard by default (ruling 9 keeps buckler traits separate). **Q8.**
+  gets no trait guard by default (ruling 9 keeps buckler traits separate). **Q8, open.**
 
 `counterCoverageMatches` (`combatMatchups.js:347`) and `counterCovered` / `eligible` in
 `src/engine/combatReactions.js:25-37` are the shared eligibility function. They stay as they
@@ -103,8 +103,12 @@ are. The combat-rounds session depends on them. An Evade card is eligible by its
 Engine pieces to add (one pure function, no DOM):
 
 - `evade.baseEvade` = 3; `evade.stanceBonus` = 3 while the Evade stance is active (ruling 10).
-- `evade.stacks`: Evade stacks in effect. On dev the closest state is `entity.combatEvade.charges`
-  (`combatMatchups.js:312`, `prepareCombatEvade`). **Q6** (use charges, or a new counter).
+- `evade.stacks`: Evade stacks in effect, with the owner's rules (ruling 11): each stack adds
+  3 Evasion and 3 Block; each incoming attack roll consumes one stack (hit or miss, our reading,
+  open item Q11); one stack decays at the start of each owner turn. Block gained stays. The
+  engine state is a stack counter. Today's `entity.combatEvade.charges`
+  (`combatMatchups.js:312`, `prepareCombatEvade`) is the nearest existing state; how it is stored
+  is an engine detail, not an owner question.
 - `evade.dexCap` = band cap + `floor(armourRank / evade.dexCap.rankStep)` + feat raises.
   - Band: weight class from `weightClassId` (`src/engine/skillXp.js:135`), band thresholds
     `src/content/prototypes/combatEquipment.js:9` (`loadBands`), selected in `src/model/equipmentCombatProfile.js:85`.
@@ -115,11 +119,10 @@ Engine pieces to add (one pure function, no DOM):
     `src/content/classSkillFeats.js` entries, if the feats are picked (see the feat proposal).
     Per band cap raises stack to at most +2 (proposed).
 
-Wiring into the avoidance roll: `src/engine/combatAvoidance.js:41-48` (`evadeRollPreview`).
-Today `bonus = dexterity + floor(wis/5) + floor(int/10) + prepared.bonus + entity.evadeBonus`.
-**Q5:** does `evade.evasion` replace the DEX term for Evade cards, or feed `hit.missChance`
-(which uses `evasion.rating`)? Recommended: replace only the DEX term for Evade cards, so the
-wis and int terms stay. The `evasion.rating` formula does not change (ruling 6).
+Hit roll: `evade.evasion` is the defender's Evasion in the hit roll, `d20 + Accuracy >= 8 + Evasion`
+(owner, ruling 11). That is the `hit.missChance` shape (`docs/tag-model/tables/formulas.csv:11`).
+The `evadeRollPreview` option (`src/engine/combatAvoidance.js:41-48`) is removed and is not wired.
+The `evasion.rating` formula does not change (ruling 6).
 
 The Evade DEX term lives in `evade.evasion`. `combatRounds` has its own `dexCap` table
 (`src/content/combatRounds.js:16`, `evasion-armor.csv`). That table is the rounds session's
@@ -128,9 +131,10 @@ and is not touched here.
 ### 5.2 The +3 Block per Evade
 
 - Author it as a `block` effect of 3 on each Evade card (ruling 1), not as a stance block.
-- **Q2.** `combatExpansionMartial.js:129-140` already sets quickstep and dodgeRoll primary
-  Block to 5 (`originalBlock` 4 and 3). Is the new 3 added to that, or does it replace it?
-- **Q1.** Does the +3 Block get the rounds-preview 1.8× scaling on cards with 2 or more SP? (from the brief)
+- **Ruling 11.** The +3 Block per stack adds to the card's own Block. Quickstep 5 + 3 = 8
+  (`combatExpansionMartial.js:129-140` sets the primary Block to 5 today).
+- **Ruling 11.** In the rounds preview the +3 Block gets the 1.8× scaling on cards with 2 or more SP.
+  The scaling is the rounds session's rule; this PR only supplies the 3 Block.
 
 ## 6. Keep counterCovers shared
 
@@ -166,7 +170,7 @@ adds it. This PR does not edit those files.
 ## 9. Save and co-op parity
 
 - `src/engine/combatSnapshot.js:55-60` and `src/model/combatReactionState.js:27`: the
-  accepted reaction versions are `[1, 2]`. If a new version is chosen (Q7), add it there.
+  accepted reaction versions are `[1, 2]`. Version 3 (ruling 11) is added there.
 - `src/engine/combatSnapshot.js:245` `reactionRulesVersion` / `reactionRules` keys: keep `combatEvade`
   (charges, bonus, expiry) and any new Evade stance field in the snapshot, so a restored fight
   resolves the same way.
@@ -174,10 +178,10 @@ adds it. This PR does not edit those files.
   change must read the same snapshot fields on both paths.
 - `src/ui/screens/coop.js` reads `combatStance`; check the Evade stance renders.
 
-**Q7 (reaction rules version).** Recommended: bump to version 3 for new expanded runs, so
-Evade's new rules apply only to them. Version 2 saves keep the defend-stance behaviour through a
-gate on `ctx.reactionRulesVersion === 2`. Without a bump, a saved mid-fight v2 run re-derives
-`maneuver:evade` from the card id at load and changes its resolution.
+**Reaction rules version 3 (ruling 11).** New expanded runs snapshot version 3, and the Evade
+rules apply to them. Saved runs keep version 2 and keep the defend-stance behaviour through a
+gate on `ctx.reactionRulesVersion === 2`. Without that gate, a saved mid-fight v2 run would
+re-derive `maneuver:evade` from the card id at load and change its resolution.
 
 ## 10. SPEC and contract sections to update
 
@@ -221,29 +225,27 @@ Add or change (dev file names):
 ## 12. Step list (small commits)
 
 1. Tags: `maneuver:evade` node, `nodeTerms` text, `tagging.csv` 13 rows. Regenerate. Tag-model check.
-2. Overlay: move the 13 cards to the evade group; EVADES gains the six; POISE_REPLIES per Q3.
+2. Overlay: move the 13 cards to the evade group; EVADES gains the six; POISE_REPLIES dropped (ruling 11).
 3. Profile and presentation sets (section 3.4), plus `ACTION_SIGILS.evade` in the same commit.
 4. Combat effects (section 4), with tests for 307, 374-375, 431 and 287.
-5. Evade Block: authored +3 Block effect (section 5.2), per Q1 and Q2.
-6. Evasion formula: the pure function, cap by band, rank step, feat raises (per Q5 and the picked feats).
-7. Avoidance wiring in `combatAvoidance.js` (per Q5), with tests.
-8. Reaction rules version gate (per Q7), if chosen.
-9. Save and co-op parity tests (section 9).
-10. SPEC §4.7, §4.8, §4.10, §4.11 and the contracts; DECISIONS §15 status.
-11. Regenerate generated modules and run the full suite.
+5. Evade Block: authored +3 Block effect that adds to the card's Block (section 5.2, ruling 11).
+6. Evasion formula: the pure function, cap by band, rank step, feat raises (the four approved feats).
+7. Stacks: gain, the one-per-attack and one-per-turn decay, and the Evasion drop of 3 per stack lost (ruling 11), with tests.
+8. Hit roll wiring: `evade.evasion` as the defender's Evasion in `d20 + Accuracy >= 8 + Evasion` (ruling 11), with tests.
+9. Reaction rules version 3 for new runs; saved v2 runs keep defend-stance behaviour (ruling 11).
+10. Save and co-op parity tests (section 9).
+11. SPEC §4.7, §4.8, §4.10, §4.11 and the contracts; DECISIONS §15 status.
+12. Regenerate generated modules and run the full suite.
 
 Each step keeps `check.mjs` and compile lossless. The rounds files (section 7) are not edited here.
 
 ## 13. Owner questions
 
-- **Q1.** Does the +3 Block get the rounds-preview 1.8× scaling on cards with 2 or more SP?
-- **Q2.** Is the +3 Block added to the quickstep and dodgeRoll primary Block (5 today), or does it replace it?
-- **Q3.** Do `evasiveGuard`, `backstep` and `acrobaticsRogue` keep their Poise reply (`POISE_REPLIES`)
-  now that they are not counter cards?
-- **Q4.** Is the Evade stance its own stance family, or part of `defensive`?
-- **Q5.** Does `evade.evasion` replace the DEX term in `evadeRollPreview`, or feed `hit.missChance`?
-- **Q6.** Is `evade.stacks` the `combatEvade.charges` count, or a new counter?
-- **Q7.** Bump the reaction rules version to 3 for new runs, leaving version 2 saves on defend behaviour?
+Answered on 2026-10-13 and recorded in DECISIONS §15 ruling 11; removed from this list:
+the feat approval (old Q9), the +3 Block stacking and rounds scaling (old Q1, Q2), the Poise
+reply (old Q3), the stance family (old Q4), the hit roll (old Q5), the stacks rules (old Q6),
+and the reaction rules version (old Q7). Ids of the open items are kept.
+
 - **Q8.** Do the Impact and Flux trait guards apply to Evade? (Default: no.)
-- **Q9.** Which of the four feats in `proposals/evade-cap-feats.md` enter the game, and the per-band ceiling (+2 proposed).
 - **Q10.** Confirm that Evade no longer takes the defended smash and sweep multipliers (dev 374-375) and the smash status check (dev 431).
+- **Q11.** Does a miss also consume a stack? (Our reading, ruling 11: yes. "Use" means any incoming attack roll against you, hit or miss.)

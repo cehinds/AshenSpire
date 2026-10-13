@@ -1,6 +1,10 @@
-# Evade DEX cap feats (proposal, owner to pick)
+# Evade DEX cap feats (owner approved 2026-10-13)
 
-**Status: proposal, owner to pick.** Nothing here is in game data. No row is added
+**Status: owner approved 2026-10-13.** All four feats are approved (DECISIONS section 15, ruling 11). The per-band ceiling of +2 stands.
+
+The feats are still not in game data. Adding them is part of the Evade PR.
+
+Earlier status: proposal, owner to pick. Nothing here is in game data. No row is added
 to `content/source/nodes.csv`, `nodeTerms.csv`, `nodeVariables.csv`, `nodeEffects.json`,
 `src/content/classSkillFeats.js` or `src/content/skillFeats.js`. Picking a feat means
 the Evade PR adds it.
@@ -105,7 +109,12 @@ with `bandCap` = 99 (light, cloth), 5 (medium), 2 (heavy) (`values.csv`,
   and heavy reaches 2 + 2 + 3 = 7 at rank 10 (the owner's rank-10 heavy is 5 with no
   feats, so the feats add 2 on top). Owner to confirm the +2 ceiling or pick a lower one.
 
-## Owner to pick
+## Owner decisions (2026-10-13)
+
+Approved: all four feats, the +2 per-band ceiling. Still open for the Evade PR: none listed here.
+The list below is the record of the questions asked when this was a proposal.
+
+## Owner to pick (historical)
 
 - Which of the four feats enter the game (any subset). Each is one row in its table
   plus its `nodeTerms` text and `capRaise` variable.
