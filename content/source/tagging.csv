@@ -779,9 +779,9 @@ card,,stomp,delivery:melee
 card,,kickOff,damage:blunt
 # Ruinous Blow and Deathblow deal Blunt + Force (owner #23); the split lives in
 # each card's attack.components (Ruinous Blow 60/40, Deathblow 40/60).
-card,,ruinousBlow,damage:blunt
+card,,ruinousBlow,damage:decay
 card,,ruinousBlow,damage:arcane
-card,,deathblow,damage:blunt
+card,,deathblow,damage:decay
 card,,deathblow,damage:arcane
 # Blood Tithe's fixed half is Necrotic; its weapon half follows the piece (owner #24).
 card,,bloodTithe,damage:decay

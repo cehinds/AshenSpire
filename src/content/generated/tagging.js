@@ -4356,7 +4356,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "ruinousBlow",
-    "tagId": "damage:blunt"
+    "tagId": "damage:decay"
   },
   {
     "family": "card",
@@ -4368,7 +4368,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "deathblow",
-    "tagId": "damage:blunt"
+    "tagId": "damage:decay"
   },
   {
     "family": "card",

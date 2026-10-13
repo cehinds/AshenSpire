@@ -27,15 +27,15 @@ const EXPECTED = {
   guardCounter: WEAPON_TYPED,
   // Weapon half + Necrotic half (owner #24): the label is the weapon half (first on the tie).
   bloodTithe: { blade: 'slashing', dagger: 'piercing', blunt: 'slashing', bow: 'piercing', unarmed: 'slashing' },
-  // Mixed Blunt + Force (owner #23): the label is the heavier part.
-  ruinousBlow: { blade: 'blunt', dagger: 'blunt', blunt: 'blunt', bow: 'blunt', unarmed: 'blunt' },
+  // Mixed Necrotic + Force (owner #23; Necrotic replaced Blunt, owner 2026-10-13): the label is the heavier part.
+  ruinousBlow: { blade: 'decay', dagger: 'decay', blunt: 'decay', bow: 'decay', unarmed: 'decay' },
   deathblow: { blade: 'arcane', dagger: 'arcane', blunt: 'arcane', bow: 'arcane', unarmed: 'arcane' },
 };
 const MIXED = {
-  ruinousBlow: [{ type: 'blunt', weight: 60 }, { type: 'arcane', weight: 40 }],
-  deathblow: [{ type: 'blunt', weight: 40 }, { type: 'arcane', weight: 60 }],
+  ruinousBlow: [{ type: 'decay', weight: 60 }, { type: 'arcane', weight: 40 }],
+  deathblow: [{ type: 'decay', weight: 40 }, { type: 'arcane', weight: 60 }],
 };
-const FIXED_TAGS = { ruinousBlow: ['damage:blunt', 'damage:arcane'], deathblow: ['damage:blunt', 'damage:arcane'], bloodTithe: ['damage:decay'] };
+const FIXED_TAGS = { ruinousBlow: ['damage:decay', 'damage:arcane'], deathblow: ['damage:decay', 'damage:arcane'], bloodTithe: ['damage:decay'] };
 
 function fight(cardId, weapon, version, extra = {}) {
   const player = { classId: 'reaver', maxHp: 200, hp: 200, maxMana: 50, mana: 50, energyMax: 10, drawPerTurn: 5,
@@ -54,7 +54,7 @@ test('only the mixed cards carry fixed damage tags', () => {
   }
 });
 
-for (const version of [1, 2]) test(`v${version}: Ruinous Blow is 60 Blunt / 40 Force and Deathblow 40 Blunt / 60 Force`, () => {
+for (const version of [1, 2]) test(`v${version}: Ruinous Blow is 60 Necrotic / 40 Force and Deathblow 40 Necrotic / 60 Force`, () => {
   for (const [cardId, components] of Object.entries(MIXED)) for (const [label, weapon] of Object.entries(WEAPONS)) {
     const { c } = fight(cardId, weapon, version);
     const base = regs.cards.get(cardId);
@@ -109,8 +109,8 @@ for (const version of [1, 2]) {
         .filter(event => event.type === 'damageDealt' && event.sourceId === 'player');
       assert.equal(hits.reduce((sum, event) => sum + event.amount, 0), shown, `v${version} ${cardId} with ${label}`);
       // v2 names the type on the hit; v1 shows it through its matchup rider.
-      // The v2 hit event names Force by its matchup alias.
-      if (version === 2) for (const hit of hits) assert.equal(hit.damageType, { arcane: 'force' }[EXPECTED[cardId][label]] || EXPECTED[cardId][label], `v2 ${cardId} with ${label}`);
+      // The v2 hit event names Force and Necrotic by their matchup aliases.
+      if (version === 2) for (const hit of hits) assert.equal(hit.damageType, { arcane: 'force', decay: 'necrotic' }[EXPECTED[cardId][label]] || EXPECTED[cardId][label], `v2 ${cardId} with ${label}`);
       else {
         const type = EXPECTED[cardId][label];
         // Blood Tithe prints its own Bleed with every weapon (owner #24).

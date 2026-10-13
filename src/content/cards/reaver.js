@@ -499,8 +499,8 @@ export const reaverCards = [
   },
   {
     id: 'ruinousBlow', name: 'Ruinous Blow', class: 'reaver', rarity: 'rare', cost: 3, type: 'attack',
-    // 60% Blunt, 40% Force: the heavy blow leans physical (owner #23).
-    attack: { components: [{ type: 'blunt', weight: 60 }, { type: 'arcane', weight: 40 }] },
+    // 60% Necrotic, 40% Force (owner #23; Necrotic replaces Blunt, owner 2026-10-13).
+    attack: { components: [{ type: 'decay', weight: 60 }, { type: 'arcane', weight: 40 }] },
     flavor: "Whole-body blow of the Wardens.\n\nReserved for a gate where all else has failed, and called a Warden's last argument. What becomes of the Warden who makes it, the drill does not say.\n\nThe pages that follow are stained through.",
     keywords: [], icon: '🔨',
     effects: [
