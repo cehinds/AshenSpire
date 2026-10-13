@@ -1,0 +1,185 @@
+name,condition,file,usedBy,tag,liveRef
+css-prefers-reduced-motion-reduce,(prefers-reduced-motion: reduce),styles/base.css,global [1 use],breakpoint.other,styles/base.css
+css-max-height-480px-and-min-width-600px,(max-height: 480px) and (min-width: 600px),styles/combat-layers.css,combat-tools; combat-log-panel [2 uses],breakpoint.other,styles/combat-layers.css
+css-max-width-320px,(max-width: 320px),styles/combat-layers.css,combatant-leading; combatant-mini-hud; nm; combat-health-row [6 uses],mobile,styles/combat-layers.css
+css-prefers-reduced-motion-reduce-2,(prefers-reduced-motion: reduce),styles/combat-poses.css,combat-pose-aura; pose-frame [2 uses],breakpoint.other,styles/combat-poses.css
+css-max-width-640px,(max-width: 640px),styles/combat-poses.css,readiness-outfit; player-zone; coop-seat; painted-outfit [6 uses],breakpoint.other,styles/combat-poses.css
+css-max-width-640px-2,(max-width: 640px),styles/combat-test.css,test-build-grid; test-build-choice; test-options; combat-test-setup [5 uses],breakpoint.other,styles/combat-test.css
+css-max-width-600px,(max-width: 600px),styles/combat.css,environment-backdrop; defeated-frame [2 uses],mobile,styles/combat.css
+css-prefers-reduced-motion-reduce-3,(prefers-reduced-motion: reduce),styles/combat.css,act-attack; act-move; card-drawn; pile-received; combat-potion-tray [3 uses],breakpoint.other,styles/combat.css
+css-max-width-480px,(max-width: 480px),styles/combat.css,hand-area; combat-action-row; hand; card [4 uses],mobile,styles/combat.css
+css-max-width-640px-3,(max-width: 640px),styles/combat.css,sprite; combatant-card; meters; field; enemy-row [9 uses],breakpoint.other,styles/combat.css
+css-max-height-620px,(max-height: 620px),styles/combat.css,combat; field; hand-area [3 uses],breakpoint.other,styles/combat.css
+css-hover-hover-and-pointer-fine,(hover: hover) and (pointer: fine),styles/combat.css,combat-potions; combat-potion-tray [2 uses],breakpoint.other,styles/combat.css
+css-max-height-500px,(max-height: 500px),styles/combat.css,combat-action-row; hud-info-row; turn-ribbon; combat; w4-frame; hud-top; resbars; resline; topbar-btn; resbars-host; fight-label; coop-leave (+2) [14 uses],breakpoint.other,styles/combat.css
+css-max-height-700px,(max-height: 700px),styles/combat.css,combat [1 use],breakpoint.other,styles/combat.css
+css-max-height-480px-and-min-width-600px-2,(max-height: 480px) and (min-width: 600px),styles/combat.css,combatant-leading; combatant-info; hud-relics [4 uses],breakpoint.other,styles/combat.css
+css-prefers-reduced-motion-no-preference,(prefers-reduced-motion: no-preference),styles/combat.css,combat-log-panel [1 use],breakpoint.other,styles/combat.css
+css-max-width-480px-2,(max-width: 480px),styles/corrupted-cards.css,ashen-blight-heading; corrupted-card-label [2 uses],mobile,styles/corrupted-cards.css
+css-forced-colors-active,(forced-colors: active),styles/corrupted-cards.css,corrupted-card; corrupted-card-label; ashen-blight; ashen-blight-pip; ashen-blight-fill [3 uses],breakpoint.other,styles/corrupted-cards.css
+css-prefers-reduced-motion-reduce-4,(prefers-reduced-motion: reduce),styles/kit.css,modal-veil; as-veil; modal; as-modal; tooltip; id:tooltip-2; as-toggle; caret; boot-art-status; as-glyph; upright-phone; cc-starting-summary (+13) [20 uses],breakpoint.other,styles/kit.css
+css-container-max-width-9rem,@container (max-width: 9rem),styles/kit.css,modal-foot-note; as-foot-note; m-label [3 uses],breakpoint.other,styles/kit.css
+css-container-max-width-52rem,@container (max-width: 52rem),styles/kit.css,as-railed; as-rail; as-railitem [3 uses],breakpoint.other,styles/kit.css
+css-container-max-width-51rem,@container (max-width: 51rem),styles/kit.css,as-splitbody [2 uses],breakpoint.other,styles/kit.css
+css-max-width-640px-4,(max-width: 640px),styles/kit.css,as-modal; modal; modal-foot; as-foot; modal-foot-note; as-foot-note; modal-foot-actions; as-foot-actions; modal-btnrow; as-btnrow; as-railed; startup-gate (+11) [19 uses],breakpoint.other,styles/kit.css
+css-pointer-coarse,(pointer: coarse),styles/kit.css,tooltip-keyword; inspection-tag; attr:data-tip; tag:a; tag:button; as-keycap; equipment-poker-card; inspection-info-visible; footer-art-face [5 uses],breakpoint.other,styles/kit.css
+css-container-max-width-460px,@container (max-width: 460px),styles/kit.css,shop-book-offer; shop-book-details; shop-book-name [4 uses],breakpoint.other,styles/kit.css
+css-max-width-600px-2,(max-width: 600px),styles/kit.css,shop-book-offer; shop-book-name; shop-book-details; shop-book-price; shop-book-buy; inventory-face; inventory-item-art; inventory-detail; inventory-model; card-inspection-layout; ctext; card-inspection-art (+19) [38 uses],mobile,styles/kit.css
+css-supports-grid-template-columns-subgrid,@supports (grid-template-columns: subgrid),styles/kit.css,reward-progress-list; reward-progress-row [2 uses],breakpoint.other,styles/kit.css
+css-container-max-width-64rem,@container (max-width: 64rem),styles/kit.css,as-split; as-split-handle; cc-class-preview-host [3 uses],breakpoint.other,styles/kit.css
+css-max-width-900px,(max-width: 900px),styles/kit.css,cc-character-grid; cc-preview-side; cz-portrait [3 uses],breakpoint.other,styles/kit.css
+css-max-width-700px,(max-width: 700px),styles/kit.css,act-route-strip; as-title-s; map-route-node; as-row; as-option; as-seg; cc-equip-group; cc-card-selectors; cc-equipment-continue; equipment-poker-card; cc-starting-card-grid; cc-starting-card (+7) [29 uses],breakpoint.other,styles/kit.css
+css-container-armoury-detail-max-width-480px,@container armoury-detail (max-width: 480px),styles/kit.css,card-inspection-layout; card-inspection-art; equipment-poker-card; inspection-tags [6 uses],breakpoint.other,styles/kit.css
+css-max-width-360px,(max-width: 360px),styles/kit.css,disc-faces; cc-card-selectors [1 use],mobile,styles/kit.css
+css-container-width-64rem,@container (width > 64rem),styles/kit.css,cc-class-split; as-split-pane; cc-class-preview-host; cc-choice-collection [5 uses],breakpoint.other,styles/kit.css
+css-min-width-701px,(min-width: 701px),styles/kit.css,cc-equip-group; cc-card-selectors; cc-equipment-details [3 uses],breakpoint.other,styles/kit.css
+css-orientation-portrait,(orientation: portrait),styles/kit.css,tower-door-frame [1 use],breakpoint.other,styles/kit.css
+css-max-width-360px-and-orientation-portrait,(max-width: 360px) and (orientation: portrait),styles/kit.css,title-screen [1 use],mobile,styles/kit.css
+css-max-height-500px-2,(max-height: 500px),styles/kit.css,topbar [1 use],breakpoint.other,styles/kit.css
+css-container-combat-health-max-width-4em,@container combat-health (max-width: 4em),styles/kit.css,m-value [2 uses],breakpoint.other,styles/kit.css
+css-max-width-760px,(max-width: 760px),styles/kit.css,cs-skills; cs-rail; cs-rail-item; cs-row; cs-here; cs-grants [6 uses],breakpoint.other,styles/kit.css
+css-max-width-680px,(max-width: 680px),styles/kit.css,armoury-character; as-artwell; progression-track-list; progression-attributes-banner; progression-attributes-toggle; progression-points; progression-summary-line; cs-cadence; progression-feat-list; progression-feat-effect [11 uses],breakpoint.other,styles/kit.css
+css-container-map-tray-max-width-104rem,@container map-tray (max-width: 104rem),styles/map.css,map-tray-row [1 use],breakpoint.other,styles/map.css
+css-hover-hover-and-pointer-fine-2,(hover: hover) and (pointer: fine),styles/map.css,run-potion-minis [6 uses],breakpoint.other,styles/map.css
+css-max-width-800px,(max-width: 800px),styles/map.css,atlas-header; atlas-eyebrow; atlas-vitals; atlas-header-actions; atlas-context; atlas-dialog; atlas-dialog-head; atlas-dialog-foot; atlas-location-body; atlas-local-wrap; atlas-location-detail; atlas-local-point [15 uses],breakpoint.other,styles/map.css
+css-max-width-480px-3,(max-width: 480px),styles/map.css,atlas-header; atlas-header-actions [4 uses],mobile,styles/map.css
+css-prefers-reduced-motion-reduce-5,(prefers-reduced-motion: reduce),styles/map.css,atlas-landmark [1 use],breakpoint.other,styles/map.css
+css-max-width-700px-2,(max-width: 700px),styles/map.css,atlas-dialog; atlas-location-body; atlas-dialog-head; atlas-dialog-foot; atlas-local-wrap; atlas-location-detail; atlas-local-help; atlas-local-tools; atlas-local-zoom-tools; atlas-local-pan-tools [14 uses],breakpoint.other,styles/map.css
+css-max-height-500px-and-min-width-701px,(max-height: 500px) and (min-width: 701px),styles/map.css,atlas-dialog-head; atlas-dialog-foot; atlas-local-wrap; atlas-local-help; atlas-local-port; atlas-location-body; atlas-location-detail; atlas-local-tools [9 uses],breakpoint.other,styles/map.css
+css-max-width-600px-3,(max-width: 600px),styles/map.css,atlas-node-label; atlas-scrollport; atlas-world [3 uses],mobile,styles/map.css
+css-prefers-reduced-motion-reduce-6,(prefers-reduced-motion: reduce),styles/player-polish.css,ember; screen; tm-entry; as-btn; as-iconbtn; as-option; as-tab; as-railitem; cp-cell; shop-pane; rest-traveler-foreground [4 uses],breakpoint.other,styles/player-polish.css
+css-max-width-359px,(max-width: 359px),styles/player-polish.css,combat-tools; reaction-switch [2 uses],mobile,styles/player-polish.css
+css-max-height-500px-3,(max-height: 500px),styles/player-polish.css,merchant-workspace; merchant-category-dock [2 uses],breakpoint.other,styles/player-polish.css
+css-max-width-900px-2,(max-width: 900px),styles/prologue.css,prologue-scene-editor; pse-body; pse-workspace; pse-visual; pse-inspector; pse-fields; pse-viewport; pse-phone; pse-toolbar; pse-select; pse-mode [12 uses],breakpoint.other,styles/prologue.css
+css-max-width-760px-and-orientation-portrait,(max-width: 760px) and (orientation: portrait),styles/prologue.css,prologue-screen; prologue-controls; set-row-prologue; prologue-layout-panelLeft; prologue-layout-panelRight; prologue-layout-overlay; prologue-stage; prologue-caption; prologue-bar [9 uses],breakpoint.other,styles/prologue.css
+css-max-height-500px-and-orientation-landscape,(max-height: 500px) and (orientation: landscape),styles/prologue.css,prologue-screen; prologue-caption; prologue-bar; prologue-layout-overlay; prologue-layout-letterbox [10 uses],breakpoint.other,styles/prologue.css
+css-max-width-760px-2,(max-width: 760px),styles/prologue.css,set-scene-acts [1 use],breakpoint.other,styles/prologue.css
+css-container-max-width-50rem,@container (max-width: 50rem),styles/responsive-type.css,ls-label; sr-name; r-label; modal-tab; as-tab; as-railitem; modal-btnrow; ls-hint; as-subtitle; as-prose; as-seg [3 uses],breakpoint.other,styles/responsive-type.css
+css-container-max-width-650px,@container (max-width: 650px),styles/ui.css,formation-workspace; formation-inspector; formation-preview [3 uses],breakpoint.other,styles/ui.css
+css-container-min-width-651px,@container (min-width: 651px),styles/ui.css,formation-preview-panel [1 use],breakpoint.other,styles/ui.css
+css-container-max-width-370px,@container (max-width: 370px),styles/ui.css,formation-preview-panel; formation-team-labels; formation-control; formation-preview [4 uses],breakpoint.other,styles/ui.css
+css-max-width-760px-3,(max-width: 760px),styles/ui.css,formation-workspace; formation-preview-panel; formation-inspector; formation-preview; armament-destination-options; armament-position-actions; armoury-back; armoury-foot-action [8 uses],breakpoint.other,styles/ui.css
+css-max-width-30rem,(max-width: 30rem),styles/ui.css,title-screen; cc-preview-side; cz-portrait; startup-subtitle; startup-rule [7 uses],mobile,styles/ui.css
+css-min-width-701px-2,(min-width: 701px),styles/ui.css,as-row [1 use],breakpoint.other,styles/ui.css
+css-max-width-1000px,(max-width: 1000px),styles/ui.css,armoury-equipment-receipts; equip-role-receipts; character-info-label; deck-editor; deck-editor-title; deck-editor-subtitle; deck-editor-curve; deck-editor-keys; deck-editor-counter; deck-editor-toolbar; deck-editor-mobile-tabs; deck-editor-tools (+13) [36 uses],breakpoint.other,styles/ui.css
+css-max-width-720px,(max-width: 720px),styles/ui.css,overlay-settings-actions; ov-quick-action; ov-qa-label; set-action-status [4 uses],breakpoint.other,styles/ui.css
+css-max-width-600px-4,(max-width: 600px),styles/ui.css,modal-head; modal-head-actions; set-inline-bar; modal-head-id; set-header-tools; settings-modal; set-subtabs; set-panel; choice-group; as-row; as-labelstack; set-stepper (+3) [23 uses],mobile,styles/ui.css
+css-min-width-800px,(min-width: 800px),styles/ui.css,set-topic-panel; settings-modal [3 uses],breakpoint.other,styles/ui.css
+css-max-width-520px,(max-width: 520px),styles/ui.css,set-example-lines [1 use],mobile,styles/ui.css
+css-min-width-601px,(min-width: 601px),styles/ui.css,set-panel; choice-group [3 uses],breakpoint.other,styles/ui.css
+css-pointer-coarse-2,(pointer: coarse),styles/ui.css,deck-editor-veil; deck-editor-keys; armoury-sigils; armament-position-actions; armament-destination; armoury-foot-action; armament-inspection-back [4 uses],breakpoint.other,styles/ui.css
+css-orientation-portrait-and-max-width-760px,(orientation: portrait) and (max-width: 760px),styles/ui.css,deck-editor-panes [1 use],breakpoint.other,styles/ui.css
+css-max-width-900px-3,(max-width: 900px),styles/ui.css,deck-editor; deck-editor-panes; deck-editor-inspector; deck-editor-main [4 uses],breakpoint.other,styles/ui.css
+css-min-width-1001px-and-max-height-820px,(min-width: 1001px) and (max-height: 820px),styles/ui.css,deck-editor-reading; cname; ctext [3 uses],breakpoint.other,styles/ui.css
+css-max-width-1100px-and-min-width-1001px,(max-width: 1100px) and (min-width: 1001px),styles/ui.css,deck-editor-main [1 use],breakpoint.other,styles/ui.css
+css-min-width-1001px,(min-width: 1001px),styles/ui.css,deck-editor; deck-editor-head; deck-editor-title; deck-editor-subtitle; deck-editor-counter; deck-editor-curve; deck-editor-curve-fill; deck-editor-panes; deck-editor-pane-title; deck-editor-searchbar; deck-editor-list; deck-editor-inline-inspect (+13) [26 uses],breakpoint.other,styles/ui.css
+css-prefers-reduced-motion-reduce-7,(prefers-reduced-motion: reduce),styles/ui.css,deck-editor-main [1 use],breakpoint.other,styles/ui.css
+css-max-width-1000px-2,(max-width: 1000px),styles/weapon-cards-preview.css,id:weapon-gallery [2 uses],breakpoint.other,styles/weapon-cards-preview.css
+css-max-width-600px-5,(max-width: 600px),styles/weapon-cards-preview.css,weapon-preview; id:weapon-gallery [5 uses],mobile,styles/weapon-cards-preview.css
+js-pointer-coarse,(pointer: coarse),src/main.js:702,main [1 use],breakpoint.other,src/main.js:702
+js-prefers-reduced-motion-reduce,(prefers-reduced-motion: reduce),src/ui/alternativeArt.js:149,alternativeArt [1 use],breakpoint.other,src/ui/alternativeArt.js:149
+js-prefers-reduced-motion-reduce-2,(prefers-reduced-motion: reduce),src/ui/components/battlefieldStage.js:943,battlefieldStage [1 use],breakpoint.other,src/ui/components/battlefieldStage.js:943
+js-innerwidth-gt-320,innerWidth > 320,src/ui/components/battlefieldStage.js:145,battlefieldStage [1 use],breakpoint.other,src/ui/components/battlefieldStage.js:145
+js-innerheight-lteq-480,innerHeight <= 480,src/ui/components/battlefieldStage.js:386,battlefieldStage [1 use],breakpoint.other,src/ui/components/battlefieldStage.js:386
+js-innerwidth-gteq-600,innerWidth >= 600,src/ui/components/battlefieldStage.js:386,battlefieldStage [1 use],breakpoint.other,src/ui/components/battlefieldStage.js:386
+js-innerheight-gt-480,innerHeight > 480,src/ui/components/battlefieldStage.js:494,battlefieldStage [1 use],breakpoint.other,src/ui/components/battlefieldStage.js:494
+js-min-width-1001px,(min-width: 1001px),src/ui/components/deckCardAnimationPreview.js:46,deckCardAnimationPreview [1 use],breakpoint.other,src/ui/components/deckCardAnimationPreview.js:46
+js-prefers-reduced-motion-reduce-3,(prefers-reduced-motion: reduce),src/ui/components/deckCardAnimationPreview.js:47,deckCardAnimationPreview [1 use],breakpoint.other,src/ui/components/deckCardAnimationPreview.js:47
+js-prefers-reduced-motion-reduce-4,(prefers-reduced-motion: reduce),src/ui/components/localMapCamera.js:30,localMapCamera [1 use],breakpoint.other,src/ui/components/localMapCamera.js:30
+js-prefers-reduced-motion-reduce-5,(prefers-reduced-motion: reduce),src/ui/components/startupGate.js:96,startupGate [1 use],breakpoint.other,src/ui/components/startupGate.js:96
+js-prefers-reduced-motion-reduce-6,(prefers-reduced-motion: reduce),src/ui/components/tooltip.js:186,tooltip [1 use],breakpoint.other,src/ui/components/tooltip.js:186
+js-prefers-reduced-motion-reduce-7,(prefers-reduced-motion: reduce),src/ui/motion.js:18,motion [1 use],breakpoint.other,src/ui/motion.js:18
+js-max-width-1000px,(max-width: 1000px),src/ui/screens/deckEditor.js:214,deckEditor [1 use],breakpoint.other,src/ui/screens/deckEditor.js:214
+js-pointer-coarse-2,(pointer: coarse),src/ui/screens/map.js:217,map [1 use],breakpoint.other,src/ui/screens/map.js:217
+js-max-width-npx-and-orientation-portrait,(max-width: Npx) and (orientation: portrait),src/ui/screens/prologue.js:71,prologue [1 use],breakpoint.other,src/ui/screens/prologue.js:71
+js-prefers-reduced-motion-reduce-8,(prefers-reduced-motion: reduce),src/ui/screens/prologue.js:72,prologue [1 use],breakpoint.other,src/ui/screens/prologue.js:72
+js-max-height-500px-and-orientation-landscape,(max-height:500px) and (orientation:landscape),src/ui/screens/prologue.js:136,prologue [1 use],breakpoint.other,src/ui/screens/prologue.js:136
+js-max-width-760px-and-orientation-portrait,(max-width: 760px) and (orientation: portrait),src/ui/screens/prologueSceneEditor.js:59,prologueSceneEditor [1 use],breakpoint.other,src/ui/screens/prologueSceneEditor.js:59
+js-prefers-reduced-motion-reduce-9,(prefers-reduced-motion: reduce),src/ui/screens/title.js:288,title [1 use],breakpoint.other,src/ui/screens/title.js:288
+cfg-uiScale.narrowMax,viewport width <= 520 -> data-layout=narrow (not a CSS media query),src/content/balance.js:1234 (uiScale),app.layout [1 use],state,src/content/balance.js:1234 (uiScale)
+cfg-uiScale.narrowW/narrowH,narrow fit design 430x780 (not a CSS media query),src/content/balance.js:1232-1233,app.zoom [1 use],breakpoint.other,src/content/balance.js:1232-1233
+cfg-uiScale.gateBelowH,viewport height < 465 -> compact/short band (not a CSS media query),src/content/balance.js:1392,app.layout [1 use],breakpoint.other,src/content/balance.js:1392
+cfg-uiScale.shortWideMinH,viewport height >= 340 keeps compact wide composition (not a CSS media query),src/content/balance.js:1241,app.layout [1 use],breakpoint.other,src/content/balance.js:1241
+cfg-uiScale.designW/designH,wide design baseline 1200x730 (not a CSS media query),src/content/balance.js:1208-1209,app.zoom [1 use],breakpoint.other,src/content/balance.js:1208-1209
+cfg-footer.maximumWidthPx,footer sizing max width 600 (not a CSS media query),content/config/ui/presentation/footerLayout.json sizing,footer [1 use],breakpoint.other,content/config/ui/presentation/footerLayout.json sizing
+cfg-tokens.compactBelowPx,compact below 768px (not a CSS media query),content/config/ui/tokens.json vars.compactBelowPx,scene.w4 [1 use],breakpoint.other,content/config/ui/tokens.json vars.compactBelowPx
+cfg-sizing-doorreadableminpx,"sizing.doorReadableMinPx = 384 (config threshold, not a CSS media query)",content/config/ui/components/card.json,sizing [1 use],breakpoint.other,content/config/ui/components/card.json
+cfg-sizing-defaults-inventorysplit-compactitemsbelowpx,"sizing.defaults.inventorySplit.compactItemsBelowPx = 520 (config threshold, not a CSS media query)",content/config/ui/presentation/armouryLayout.json,sizing [1 use],breakpoint.other,content/config/ui/presentation/armouryLayout.json
+cfg-sizing-defaults-inventorysplit-foldsubcardsbelowpx,"sizing.defaults.inventorySplit.foldSubcardsBelowPx = 420 (config threshold, not a CSS media query)",content/config/ui/presentation/armouryLayout.json,sizing [1 use],breakpoint.other,content/config/ui/presentation/armouryLayout.json
+cfg-sizing-defaults-inventorysplit-foldgroupsbelowpx,"sizing.defaults.inventorySplit.foldGroupsBelowPx = 260 (config threshold, not a CSS media query)",content/config/ui/presentation/armouryLayout.json,sizing [1 use],breakpoint.other,content/config/ui/presentation/armouryLayout.json
+cfg-sizing-defaults-responsive-breakpoint,"sizing.defaults.responsive.breakpoint = 760 (config threshold, not a CSS media query)",content/config/ui/presentation/armouryLayout.json,sizing [1 use],breakpoint.other,content/config/ui/presentation/armouryLayout.json
+cfg-sizing-maximumwidthpx,"sizing.maximumWidthPx = 600 (config threshold, not a CSS media query)",content/config/ui/presentation/footerLayout.json,sizing [1 use],breakpoint.other,content/config/ui/presentation/footerLayout.json
+cfg-behavior-presentation-atlaszoommax,"behavior.presentation.atlasZoomMax = 40 (config threshold, not a CSS media query)",content/config/ui/presentation/mapPresentation.json,behavior [1 use],breakpoint.other,content/config/ui/presentation/mapPresentation.json
+cfg-behavior-limits-durationms-max,"behavior.limits.durationMs.max = 30000 (config threshold, not a CSS media query)",content/config/ui/presentation/presentationSequence.json,behavior [1 use],breakpoint.other,content/config/ui/presentation/presentationSequence.json
+cfg-behavior-limits-poses-max,"behavior.limits.poses.max = 7 (config threshold, not a CSS media query)",content/config/ui/presentation/presentationSequence.json,behavior [1 use],breakpoint.other,content/config/ui/presentation/presentationSequence.json
+cfg-behavior-limits-clip-offsetms-max,"behavior.limits.clip.offsetMs.max = 30000 (config threshold, not a CSS media query)",content/config/ui/presentation/presentationSequence.json,behavior [1 use],breakpoint.other,content/config/ui/presentation/presentationSequence.json
+cfg-behavior-limits-clip-durationms-max,"behavior.limits.clip.durationMs.max = 30000 (config threshold, not a CSS media query)",content/config/ui/presentation/presentationSequence.json,behavior [1 use],breakpoint.other,content/config/ui/presentation/presentationSequence.json
+cfg-behavior-limits-clip-x-max,"behavior.limits.clip.x.max = 1000 (config threshold, not a CSS media query)",content/config/ui/presentation/presentationSequence.json,behavior [1 use],breakpoint.other,content/config/ui/presentation/presentationSequence.json
+cfg-behavior-limits-clip-y-max,"behavior.limits.clip.y.max = 600 (config threshold, not a CSS media query)",content/config/ui/presentation/presentationSequence.json,behavior [1 use],breakpoint.other,content/config/ui/presentation/presentationSequence.json
+cfg-behavior-limits-clip-size-max,"behavior.limits.clip.size.max = 800 (config threshold, not a CSS media query)",content/config/ui/presentation/presentationSequence.json,behavior [1 use],breakpoint.other,content/config/ui/presentation/presentationSequence.json
+cfg-behavior-limits-clip-rotationdeg-max,"behavior.limits.clip.rotationDeg.max = 360 (config threshold, not a CSS media query)",content/config/ui/presentation/presentationSequence.json,behavior [1 use],breakpoint.other,content/config/ui/presentation/presentationSequence.json
+cfg-behavior-limits-binding-priority-max,"behavior.limits.binding.priority.max = 999 (config threshold, not a CSS media query)",content/config/ui/presentation/presentationSequence.json,behavior [1 use],breakpoint.other,content/config/ui/presentation/presentationSequence.json
+cfg-sizing-compactcombat-maxwidthpx,"sizing.compactCombat.maxWidthPx = 600 (config threshold, not a CSS media query)",content/config/ui/scenes/w4a-combat.json,sizing [1 use],breakpoint.other,content/config/ui/scenes/w4a-combat.json
+cfg-sizing-header-wideminwidthpx,"sizing.header.wideMinWidthPx = 640 (config threshold, not a CSS media query)",content/config/ui/scenes/w4b-map.json,sizing [1 use],breakpoint.other,content/config/ui/scenes/w4b-map.json
+cfg-sizing-hud-compactbelowheightpx,"sizing.hud.compactBelowHeightPx = 500 (config threshold, not a CSS media query)",content/config/ui/scenes/w4c-dialogue.json,sizing [1 use],breakpoint.other,content/config/ui/scenes/w4c-dialogue.json
+cfg-vars-narrowbelowrem,"vars.narrowBelowRem = 64 (config threshold, not a CSS media query)",content/config/ui/screens/creation.json,vars [1 use],breakpoint.other,content/config/ui/screens/creation.json
+cfg-sizing-mobilebreakpoint,"sizing.mobileBreakpoint = 760 (config threshold, not a CSS media query)",content/config/ui/screens/prologue.json,sizing [1 use],breakpoint.other,content/config/ui/screens/prologue.json
+cfg-sizing-wideminrem,"sizing.wideMinRem = 60 (config threshold, not a CSS media query)",content/config/ui/screens/shop.json,sizing [1 use],breakpoint.other,content/config/ui/screens/shop.json
+cfg-vars-compactbelowpx,"vars.compactBelowPx = 768 (config threshold, not a CSS media query)",content/config/ui/tokens.json,vars [1 use],breakpoint.other,content/config/ui/tokens.json
+state-root-data-display-appearance-alternative,":root[data-display-appearance='alternative'] (state hook set by JS, not a media query)",styles/alternative-combat.css,hand-area [1 use],state,styles/alternative-combat.css
+state-root-data-layout-narrow,":root[data-layout='narrow'] (state hook set by JS, not a media query)",styles/alternative-combat.css,alternative-figure; player-zone; coop-seat; painted-outfit; combatant-inspector-host; card; field; enemy-row; reaver-attack-playing; reaver-attack-sequence; combatant; meters (+78) [148 uses],state,styles/alternative-combat.css
+state-body-hi-contrast,"body.hi-contrast (state hook set by JS, not a media query)",styles/base.css,hi-contrast; set-note; ctext; cz-keepsake [5 uses],state,styles/base.css
+state-body-cb-safe,"body.cb-safe (state hook set by JS, not a media query)",styles/base.css,cb-safe; combat-health-row [2 uses],state,styles/base.css
+state-body-readable-ui,"body.readable-ui (state hook set by JS, not a media query)",styles/base.css,readable-ui [1 use],state,styles/base.css
+state-root-data-ambient-off,":root[data-ambient='off'] (state hook set by JS, not a media query)",styles/base.css,title-glow; backdrop; tower-door-frame; ember [4 uses],state,styles/base.css
+state-root-data-ambient-high,":root[data-ambient='high'] (state hook set by JS, not a media query)",styles/base.css,title-glow [1 use],state,styles/base.css
+state-root-data-short-false,":root[data-short='false'] (state hook set by JS, not a media query)",styles/combat.css,field [1 use],state,styles/combat.css
+state-root-data-shot-arcane-matrix,":root[data-shot-arcane='matrix'] (state hook set by JS, not a media query)",styles/combat.css,topbar; player-zone; hand-area; field; enemy-row [5 uses],state,styles/combat.css
+state-root-data-composition-short-wide,":root[data-composition='short-wide'] (state hook set by JS, not a media query)",styles/combat.css,hand; card; cost; mana-cost; cname; art; ctype; ctext; selected; combat; player-zone; enemy-row (+20) [42 uses],state,styles/combat.css
+state-body-reduced-motion,"body.reduced-motion (state hook set by JS, not a media query)",styles/combat.css,combat-potion-tray; primary; ember; shop-pane; rest-traveler-foreground [6 uses],state,styles/combat.css
+state-root-data-performance-lite,":root[data-performance='lite'] (state hook set by JS, not a media query)",styles/combat.css,aim-outline; backdrop; sprite; facing [4 uses],state,styles/combat.css
+state-root-data-formation-grid-true,":root[data-formation-grid='true'] (state hook set by JS, not a media query)",styles/combat.css,formation-grid [1 use],state,styles/combat.css
+state-root-data-formation-movement-true,":root[data-formation-movement='true'] (state hook set by JS, not a media query)",styles/combat.css,formation-grid; formation-grid-cell [2 uses],state,styles/combat.css
+state-root-data-hud-show-vitality-false,":root[data-hud-show-vitality='false'] (state hook set by JS, not a media query)",styles/hud-visibility.css,hud-vitals-panel [1 use],state,styles/hud-visibility.css
+state-root-data-hud-show-relics-false,":root[data-hud-show-relics='false'] (state hook set by JS, not a media query)",styles/hud-visibility.css,hud-relics; hud-bottom [3 uses],state,styles/hud-visibility.css
+state-root-data-hud-show-currency-false,":root[data-hud-show-currency='false'] (state hook set by JS, not a media query)",styles/hud-visibility.css,hud-center [1 use],state,styles/hud-visibility.css
+state-root-data-hud-show-position-false,":root[data-hud-show-position='false'] (state hook set by JS, not a media query)",styles/hud-visibility.css,hud-run-meta; act-route-strip [2 uses],state,styles/hud-visibility.css
+state-root-data-hud-show-potions-false,":root[data-hud-show-potions='false'] (state hook set by JS, not a media query)",styles/hud-visibility.css,hud-potions; map-potions; combat-potion-tray; combat-potions; attr:data-hud-show-potions=false; hud-bottom [8 uses],state,styles/hud-visibility.css
+state-body-armoury-shell-body,"body.armoury-shell-body (state hook set by JS, not a media query)",styles/kit.css,armoury-shell-body [3 uses],state,styles/kit.css
+state-body-pad-mode,"body.pad-mode (state hook set by JS, not a media query)",styles/kit.css,as-keycap [2 uses],state,styles/kit.css
+state-body-hide-hints,"body.hide-hints (state hook set by JS, not a media query)",styles/kit.css,hint-bar [1 use],state,styles/kit.css
+state-body-map-compact,"body.map-compact (state hook set by JS, not a media query)",styles/kit.css,hud-identity [1 use],state,styles/kit.css
+state-body-hide-header-relics,"body.hide-header-relics (state hook set by JS, not a media query)",styles/kit.css,hud-relics [1 use],state,styles/kit.css
+state-root-data-short-true,":root[data-short='true'] (state hook set by JS, not a media query)",styles/kit.css,upright-veil; upright-glyph; upright-card; modal; as-modal; settings-modal [8 uses],state,styles/kit.css
+state-root-data-lore-face-fell,":root[data-lore-face=""fell""] (state hook set by JS, not a media query)",styles/kit.css,attr:data-lore-face=fell [1 use],state,styles/kit.css
+state-root-data-lore-face-garamond,":root[data-lore-face=""garamond""] (state hook set by JS, not a media query)",styles/kit.css,attr:data-lore-face=garamond [1 use],state,styles/kit.css
+state-root-data-lore-face-cormorant,":root[data-lore-face=""cormorant""] (state hook set by JS, not a media query)",styles/kit.css,attr:data-lore-face=cormorant [1 use],state,styles/kit.css
+state-root-data-lore-face-crimson,":root[data-lore-face=""crimson""] (state hook set by JS, not a media query)",styles/kit.css,attr:data-lore-face=crimson [1 use],state,styles/kit.css
+state-root-data-lore-face-spectral,":root[data-lore-face=""spectral""] (state hook set by JS, not a media query)",styles/kit.css,attr:data-lore-face=spectral [1 use],state,styles/kit.css
+state-root-data-lore-face-baskerville,":root[data-lore-face=""baskerville""] (state hook set by JS, not a media query)",styles/kit.css,attr:data-lore-face=baskerville [1 use],state,styles/kit.css
+state-root-data-lore-face-cinzel,":root[data-lore-face=""cinzel""] (state hook set by JS, not a media query)",styles/kit.css,attr:data-lore-face=cinzel [2 uses],state,styles/kit.css
+state-root-data-lore-face-inter,":root[data-lore-face=""inter""] (state hook set by JS, not a media query)",styles/kit.css,attr:data-lore-face=inter [1 use],state,styles/kit.css
+state-root-data-lore-face-georgia,":root[data-lore-face=""georgia""] (state hook set by JS, not a media query)",styles/kit.css,attr:data-lore-face=georgia [1 use],state,styles/kit.css
+state-root-data-lore-size-s,":root[data-lore-size=""S""] (state hook set by JS, not a media query)",styles/kit.css,attr:data-lore-size=S [1 use],state,styles/kit.css
+state-root-data-lore-size-m,":root[data-lore-size=""M""] (state hook set by JS, not a media query)",styles/kit.css,attr:data-lore-size=M [1 use],state,styles/kit.css
+state-root-data-lore-size-l,":root[data-lore-size=""L""] (state hook set by JS, not a media query)",styles/kit.css,attr:data-lore-size=L [1 use],state,styles/kit.css
+state-root-data-lore-size-xl,":root[data-lore-size=""XL""] (state hook set by JS, not a media query)",styles/kit.css,attr:data-lore-size=XL [1 use],state,styles/kit.css
+state-root-data-lore-leading-tight,":root[data-lore-leading=""tight""] (state hook set by JS, not a media query)",styles/kit.css,attr:data-lore-leading=tight [1 use],state,styles/kit.css
+state-root-data-lore-leading-normal,":root[data-lore-leading=""normal""] (state hook set by JS, not a media query)",styles/kit.css,attr:data-lore-leading=normal [1 use],state,styles/kit.css
+state-root-data-lore-leading-loose,":root[data-lore-leading=""loose""] (state hook set by JS, not a media query)",styles/kit.css,attr:data-lore-leading=loose [1 use],state,styles/kit.css
+state-root-data-lore-tracking-tight,":root[data-lore-tracking=""tight""] (state hook set by JS, not a media query)",styles/kit.css,attr:data-lore-tracking=tight [1 use],state,styles/kit.css
+state-root-data-lore-tracking-normal,":root[data-lore-tracking=""normal""] (state hook set by JS, not a media query)",styles/kit.css,attr:data-lore-tracking=normal [1 use],state,styles/kit.css
+state-root-data-lore-tracking-wide,":root[data-lore-tracking=""wide""] (state hook set by JS, not a media query)",styles/kit.css,attr:data-lore-tracking=wide [1 use],state,styles/kit.css
+state-root-data-lore-slant-upright,":root[data-lore-slant=""upright""] (state hook set by JS, not a media query)",styles/kit.css,attr:data-lore-slant=upright [1 use],state,styles/kit.css
+state-root-data-lore-identity-slant-upright,":root[data-lore-identity-slant=""upright""] (state hook set by JS, not a media query)",styles/kit.css,attr:data-lore-identity-slant=upright [1 use],state,styles/kit.css
+state-root-data-card-door-stacked,":root[data-card-door='stacked'] (state hook set by JS, not a media query)",styles/kit.css,card-inspection-layout; card-inspection-art; equipment-poker-card; card-inspection-details; card-inspection-modal [6 uses],state,styles/kit.css
+state-body-cz-scroll,"body.cz-scroll (state hook set by JS, not a media query)",styles/kit.css,cz-scroll [1 use],state,styles/kit.css
+state-root-data-walked-fade-subtle,":root[data-walked-fade='subtle'] (state hook set by JS, not a media query)",styles/map.css,map-node [1 use],state,styles/map.css
+state-root-data-walked-fade-half,":root[data-walked-fade='half'] (state hook set by JS, not a media query)",styles/map.css,map-node [1 use],state,styles/map.css
+state-root-data-walked-fade-strong,":root[data-walked-fade='strong'] (state hook set by JS, not a media query)",styles/map.css,map-node [1 use],state,styles/map.css
+state-root-data-layout-wide,":root[data-layout='wide'] (state hook set by JS, not a media query)",styles/player-polish.css,shop-frame; shop-rail; modal; armoury-character [6 uses],state,styles/player-polish.css
+state-root-data-display-appearance-classic,":root[data-display-appearance='classic'] (state hook set by JS, not a media query)",styles/player-polish.css,shared-hud [2 uses],state,styles/player-polish.css
+state-root-data-card-motif-wash,":root[data-card-motif='wash'] (state hook set by JS, not a media query)",styles/ui.css,card [1 use],state,styles/ui.css
+state-root-data-card-motif-accent,":root[data-card-motif='accent'] (state hook set by JS, not a media query)",styles/ui.css,card; rarity-uncommon; rarity-rare; rarity-special [6 uses],state,styles/ui.css
+state-root-data-card-motif-band,":root[data-card-motif='band'] (state hook set by JS, not a media query)",styles/ui.css,card; art [2 uses],state,styles/ui.css
+state-body-weapon-preview,"body.weapon-preview (state hook set by JS, not a media query)",styles/weapon-cards-preview.css,weapon-preview [1 use],state,styles/weapon-cards-preview.css

@@ -985,15 +985,17 @@ export function playTimeline(events, ctx, done) {
   // Safety net: however playback ends (or a re-render throws mid-beat), never
   // leave the caller's `busy` flag stuck — force completion after a bounded
   // wall-clock budget. This is what prevents the "cards stop responding" hang.
+  // The budget reads caller callbacks before the watchdog exists; a throw here must not escape.
+  const budgetRead = (read, fallback) => { try { return Number(read()) || fallback; } catch (e) { console.warn('[fx] timeline budget read failed:', e && e.message); return fallback; } };
   const customActorMs = typeof ctx.maxActorAnimationMs === 'function'
-    ? Number(ctx.maxActorAnimationMs(speed)) || 0
+    ? budgetRead(() => ctx.maxActorAnimationMs(speed), 0)
     : Number(ctx.maxActorAnimationMs) || 0;
   const actorBudgetMs = Math.max(speed.lungeMs, customActorMs);
   // A sequential attack beat adds its stance lead and, per event, a reaction
   // hold and a step after the swing.
   const sequentialMs = beatOrder === 'sequential'
     ? beats.filter((beat) => beat.kind === 'attack')
-      .reduce((ms, beat) => ms + speed.stanceLeadMs + beat.events.reduce((total,event)=>total + (Number(ctx.reactionTimingForReceipt?.(event,speed)) || speed.reactionMs) + speed.stepMs,0), 0)
+      .reduce((ms, beat) => ms + speed.stanceLeadMs + beat.events.reduce((total,event)=>total + budgetRead(() => ctx.reactionTimingForReceipt?.(event,speed), speed.reactionMs) + speed.stepMs,0), 0)
     : 0;
   const budget = COMBAT_TIMING.watchdogBaseMs + sequentialMs + beats.length * (speed.beatMs + actorBudgetMs + 4 * speed.stepMs);
   const watchdog = setTimeout(() => {
