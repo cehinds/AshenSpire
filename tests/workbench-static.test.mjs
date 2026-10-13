@@ -113,4 +113,11 @@ describe('workbench static build', () => {
   it('writes no asset-file/ when --no-art is given', () => {
     assert.equal(existsSync(path.join(out, 'asset-file')), false);
   });
+
+  it('keeps the repo root and the home directory out of snapshot.json', () => {
+    const text = readFileSync(path.join(out, 'static-api', 'snapshot.json'), 'utf8');
+    assert.ok(!text.includes(JSON.stringify(REPO).slice(1, -1)), 'the repo root is not in the snapshot');
+    const home = os.homedir();
+    if (home !== '/') assert.ok(!text.includes(JSON.stringify(home).slice(1, -1)), 'the home directory is not in the snapshot');
+  });
 });
