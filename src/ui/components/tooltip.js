@@ -56,7 +56,7 @@ let fadeTimer = null;
 let expander = null; // the `full` tier opener, injected to avoid a circular import
 let selectedControl = null;
 let touchSelectedControl = null;
-function clearControlSelection() {
+export function clearControlSelection() {
   selectedControl?.classList.remove("tooltip-selected");
   selectedControl = touchSelectedControl = null;
 }
