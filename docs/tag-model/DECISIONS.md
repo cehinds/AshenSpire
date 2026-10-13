@@ -637,13 +637,17 @@ expansion `counter` group plus the `EVADES` set.
     flag, and the Precision rider joined to Piercing's bypass by `riderGuardBypass`
     (the larger, never the sum). Under this ruling Precision leaves that bypass.
   - `origin/dev` `src/engine/combatMatchups.js` line 570: `pierceWard`, the
-    1.25× Ward edge for Piercing. It is kept by the owner's answer above. It is
-    code only; no values row exists for it yet.
+    1.25× Ward edge for Piercing. It is kept by the owner's answer above. Its
+    value is now `pierce.wardEdge` = 1.25 in `tables/values.csv`.
 - **Tables changed (proposed):**
   - `tables/values.csv` gains `pierce.base` = 1 (stacks), `pierce.perStack` = 2
     (points), `pierce.stacks` = 0 as the runtime-input preview (the same pattern
     as `sweep.targets`, which `check.mjs` needs to resolve the formula reference),
-    and `pierce.poiseEdge` = 1.25 beside the Ward edge at `combatMatchups.js:570`.
+    `pierce.poiseEdge` = 1.25 beside the Ward edge at `combatMatchups.js:570`, and
+    `pierce.wardEdge` = 1.25 for that Ward edge.
+  - `pierce.base`, `pierce.poiseEdge` and `pierce.wardEdge` are proposed values
+    that no formula reads yet. The four `pierce.*Ignored` formulas read only
+    `pierce.stacks` and `pierce.perStack`.
   - `tables/formulas.csv` gains `pierce.blockIgnored`, `pierce.poiseIgnored`,
     `pierce.barrierIgnored` and `pierce.wardIgnored`.
   - `tables/tags.csv`: the descriptions of the Precision rows (`card.precision`,
