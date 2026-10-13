@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-13",
     "summary": "End Turn no longer stalls in Alternative combat rounds when a queued card can't be played",
     "detail": "With the Alternative combat rounds setting on, a queued card such as a Counter, played after an earlier card in the same round had put you to Sleep or Staggered you, made End Turn do nothing. That card is now skipped and its Stamina and Mana refunded, and the round goes on.",
-    "build": "0.7.1.1491",
+    "build": "0.7.1.1493",
     "pullRequest": 1963,
     "url": "https://github.com/cehinds/AshenSpire/pull/1963"
   },
