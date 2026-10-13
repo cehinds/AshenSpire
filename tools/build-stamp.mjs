@@ -53,6 +53,9 @@
 //                                                           landing only
 //   node tools/build-stamp.mjs --prs 1884,1876             named by hand
 //   node tools/build-stamp.mjs --selftest                  the known-bad corpus
+//   node tools/build-stamp.mjs --stamp-is-current          exit 0 when HEAD is the newest bot stamp, or only
+//                                                           bot follow-ups landing no pull request sit on it
+//                                                           (--is-stamp-head is an alias)
 //
 // Exit 0 when the changelog is stamped (or nothing needed stamping), 1 when the
 // selftest fails, 2 when the harness could not run (bad usage, no box).
@@ -283,14 +286,18 @@ export function introductionBase(cwd) {
   } catch { return null; }
 }
 
-export function stampBaseIn(cwd) {
+// HEAD's first-parent line, newest first, as {sha, author, subject}. Throws when git fails.
+export function firstParentLine(cwd) {
   const lines = execFileSync('git', ['log', '--first-parent', '--format=%H%x09%an%x09%s', 'HEAD'], { cwd, encoding: 'utf8' })
     .split('\n').filter(Boolean);
-  const commits = lines.map((l) => {
+  return lines.map((l) => {
     const [sha, author, ...rest] = l.split('\t');
     return { sha, author, subject: rest.join('\t') };
   });
-  return pickStampBase(commits, introductionBase(cwd));
+}
+
+export function stampBaseIn(cwd) {
+  return pickStampBase(firstParentLine(cwd), introductionBase(cwd));
 }
 
 function readBox() {
@@ -425,14 +432,22 @@ function realIo() {
   };
 }
 
-// Exit 0 when HEAD is a bot stamp commit, 1 when it is not. The workflow's no-diff
-// branch uses it to re-dispatch the preview for a stamped tip, and only for one:
-// an ordinary no-diff run (a docs-only push) must not dispatch anything.
-function isStampHead() {
-  const [author, ...rest] = git(['log', '-1', '--format=%an%x09%s', 'HEAD']).trimEnd().split('\t');
-  const stamp = isStampCommit(author, rest.join('\t'));
-  console.log(stamp ? 'HEAD is a build stamp commit' : 'HEAD is not a build stamp commit');
-  return stamp ? 0 : 1;
+// Exit 0 when THE STAMP IS CURRENT (stampIsCurrent: HEAD is the newest bot stamp, or only
+// bot follow-ups that land no pull request sit on it), 1 when it is not, 2 when git could
+// not be read. The workflow's no-diff branch uses it to re-dispatch the preview for a
+// stamped tip, and only for one: an ordinary no-diff run (a docs-only push with no stamp
+// under it, or a human merge above the stamp) must not dispatch anything.
+// --is-stamp-head is the old name, kept as an alias for the workflow and older callers.
+function stampCurrent() {
+  let commits;
+  try { commits = firstParentLine(ROOT); }
+  catch (error) {
+    console.error(`build-stamp --stamp-is-current: HARNESS COULD NOT RUN — ${error.message}`);
+    return 2;
+  }
+  const current = stampIsCurrent(commits);
+  console.log(current ? 'the build stamp is current: HEAD is the stamp, or only bot follow-ups sit on it' : 'the build stamp is not current');
+  return current ? 0 : 1;
 }
 
 function prsFromArgs(argv) {
@@ -482,7 +497,7 @@ function stampMode(argv) {
 function main(argv) {
   if (argv.includes('--selftest')) return selftest();
   if (argv.includes('--stamp')) return stampMode(argv);
-  if (argv.includes('--is-stamp-head')) return isStampHead();
+  if (argv.includes('--stamp-is-current') || argv.includes('--is-stamp-head')) return stampCurrent();
   const r = argv.indexOf('--range');
   const p = argv.indexOf('--prs');
   if (r < 0 && p < 0) {
