@@ -20,7 +20,8 @@ import { playCardEffectLayers } from '../cardEffectLayers.js';
 // Renders strictly from combat state; animates from dispatch events. Every
 // number displayed comes from previewCard / previewIntent — no math here.
 
-import { dispatch, previewCard, previewIntent, getEntity, cardChoicePlan } from '../../engine/combat.js';
+import { dispatch as engineDispatch, previewCard as enginePreviewCard, previewIntent, getEntity, cardChoicePlan } from '../../engine/combat.js';
+import { createPreviewMemo } from '../models/PreviewMemoModel.js';
 import { decorateCombatRoundsScreen } from '../components/combatRoundsScreen.js';
 import { targetedEnemyId } from '../models/CombatRoundsScreenModel.js';
 import { discardCandidates } from '../../engine/abilityRiders.js';
@@ -150,6 +151,11 @@ export function cardHotkeyAction(key, { targeting = false, handSize = 0, livingE
 }
 
 export function mountCombat(app, { registries, run, combat, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, onLoad, onQuitWithoutSave, onArmoury, enemyAppearance = {}, quickControls = {}, readSettings = () => meta.settings || {}, opening = false }) {
+  // One preview per (card, target, ranks) until the fight next changes: see
+  // PreviewMemoModel. The fight changes only through dispatch and the Classic
+  // cell normalisation below.
+  const previewMemo = createPreviewMemo({ combat, preview: enginePreviewCard, dispatch: engineDispatch });
+  const { dispatch, previewCard } = previewMemo;
   // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
   // page-wide store, and nothing in production ever emptied it — so a card
   // whose `i` had been read kept its first beat for the life of the page, and
@@ -453,10 +459,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // The appearance may already be Classic before this screen mounts, so the
   // change notification below is not guaranteed to fire for this combat.
   normalizeClassicPlayerFormationCell(combat, readSettings());
+  previewMemo.invalidate();
   onDisplayAppearanceChange(combatEl, () => {
     // Classic must not merely paint an invalid perspective lane at its spawn:
     // keep the combat state aligned with the cell that movement and saves use.
     normalizeClassicPlayerFormationCell(combat, readSettings());
+    previewMemo.invalidate();
     if (!busy) render();
   });
   // The fight has resolved and this screen is handing off (see the
