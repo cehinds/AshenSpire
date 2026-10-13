@@ -141,7 +141,7 @@ function symbolTip(tag) {
 
 export function cardTagRailHtml(tags) {
   if(!tags?.length)return '';
-  return '<div class="card-tag-rail" data-card-layer="7" aria-label="Primary card tags">' + tags.slice(0,5).map(tag => {
+  return '<div class="card-tag-rail" aria-label="Primary card tags">' + tags.slice(0,5).map(tag => {
     const count = Number.isInteger(tag.count) && tag.count >= 0 ? tag.count : null;
     const name = tag.label + (count === null ? '' : ' ' + count);
     return '<span class="card-tag-symbol" role="img" tabindex="0" data-tip="' + esc(symbolTip(tag)) + '" data-tag-id="' + esc(tag.id) + '" aria-label="' + esc(name) + '" aria-description="' + esc(tag.blurb || tag.label) + '"><svg viewBox="0 0 32 32" fill="currentColor" fill-rule="evenodd" aria-hidden="true" focusable="false">' + shapeFor(tag) + '</svg>' + (count === null ? '' : '<span class="card-tag-count" aria-hidden="true">' + count + '</span>') + '</span>';
