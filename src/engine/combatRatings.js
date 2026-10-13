@@ -39,6 +39,14 @@ export function refreshCombatRatings(ctx) {
   }
 }
 
+// Combat Rounds (SPEC §4.11): a side's momentum overflow doubles the Poise damage of its next landed hit. The round's
+// bridge (combatRoundsAdapter.js settleEntry) sets ctx.roundPoiseMultiplier = { targetId, multiplier } while that
+// entry's live card or move resolves; every Poise impact on that target in the meantime is multiplied. 1 otherwise.
+export function roundPoiseMultiplier(ctx, target) {
+  const scope = ctx?.roundPoiseMultiplier;
+  return scope && target && scope.targetId === target.id && scope.multiplier > 0 ? scope.multiplier : 1;
+}
+
 export function applyRatingImpact(ctx, source, target, carrier, explicitAmount = null, { triggerHit = true, knowledgeMatchup = false, cause = null, cardId = null } = {}) {
   if (!ctx.ratingsRules || !target?.alive) return;
   // Why the meter moved, for the log: 'hit', 'rider:<type>', 'poiseDamage', 'trait:impact', or the
@@ -53,6 +61,7 @@ export function applyRatingImpact(ctx, source, target, carrier, explicitAmount =
   if (!meter || meter.max <= 0) return;
   let amount = explicitAmount === null ? attackImpact(ctx, source, carrier, magical) : Math.max(0, Math.floor(explicitAmount));
   if (single && magical && explicitAmount === null) amount = foldedMagicImpact(ctx, source, target, carrier, amount);
+  amount = Math.floor(amount * roundPoiseMultiplier(ctx, target));
   const label = magical && !single ? 'Disruption' : 'Stagger';
   const seats = ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source), targetPlayerId: ctx.playerIdForEntity(target) } : {};
   if (amount <= 0) return;

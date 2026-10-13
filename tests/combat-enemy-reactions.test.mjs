@@ -53,7 +53,12 @@ test('reactionMovesOf lists the moves that name the window, in authored order', 
 
 test('reaction moves are never rolled as intents', () => {
   const combat = fixture();
-  for (const enemy of combat.enemies) assert.deepEqual(enemy.movesHistory, ['attackMove']);
+  // The SP pool plans several picks a turn and records each one (SPEC §4.6a), so the history may hold more than one;
+  // every pick is the attack, never a reaction move.
+  for (const enemy of combat.enemies) {
+    assert.ok(enemy.movesHistory.length >= 1);
+    assert.ok(enemy.movesHistory.every((id) => id === 'attackMove'), JSON.stringify(enemy.movesHistory));
+  }
   assert.equal(first.intent.moveId, 'attackMove');
 });
 

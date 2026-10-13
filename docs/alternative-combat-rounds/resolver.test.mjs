@@ -793,6 +793,14 @@ test('stance-advantage.csv: owner rows are present and every stance is in the tr
   }
 });
 
+test('stance-advantage.csv: owner 2026-10-12 attack rows are present and form a triangle with smash and block', () => {
+  const table = stanceTable();
+  assert.equal(table.get('attack>smash'), 1, 'attack beats smash for +1');
+  assert.equal(table.get('attack>sweep'), 1, 'attack beats sweep for +1');
+  assert.equal(table.get('smash>block'), 2);
+  assert.equal(table.get('block>attack'), 1);
+});
+
 test('stance-advantage.csv parser: a blank bonus defaults to 1, and a bad header throws', () => {
   const t = parseStanceAdvantage('attacker_stance,defender_stance,bonus,note\nsmash,block,,blank\nsweep,evade,3,x\n');
   assert.equal(t.get('smash>block'), 1);
@@ -810,6 +818,20 @@ test('a winning stance adds its bonus: smash beating block gains 1 + 2', () => {
   );
   assert.equal(find(events, 'momentum').bonus, 2);
   assert.equal(momentum.guard, 3);
+});
+
+test('owner 2026-10-12: a plain attack beats smash and sweep, so the attack wins +1 over each', () => {
+  for (const foeStance of ['smash', 'sweep']) {
+    const { events, momentum } = resolveRound(
+      [{ id: 'strike', slot: 0, speed: 4, kind: 'attack', stance: 'attack' }],
+      [{ id: 'foe', speed: 1, kind: 'attack', stance: foeStance }],
+      1,
+      d20Face(20),
+      { stanceAdvantage: stanceTable() },
+    );
+    assert.equal(find(events, 'momentum').bonus, 1, `attack vs ${foeStance} is +1`);
+    assert.equal(momentum.foe, 2, 'base 1 plus attack-over-'+foeStance+' bonus 1');
+  }
 });
 
 test('without a stance table, the same win is worth only the base 1', () => {

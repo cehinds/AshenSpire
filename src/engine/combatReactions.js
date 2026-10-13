@@ -22,9 +22,18 @@ export function setReactionsEnabled(ctx, entity, enabled) {
   entity.reactionsEnabled = enabled;
 }
 
-const counterCovered = (ctx, def, row, tags) => row.contacts.some(contact =>
-  counterCoverageMatches(def.counterCoverage || ctx.combatExpansionRules.matchups.counter.defaultCoverage[
-    tags.includes('counter:spell') ? 'spell' : tags.includes('counter:ranged') ? 'ranged' : 'melee'], contact, contact.effect || 'damage'));
+// A Counter (a card whose resolved maneuver is counter) answers an attack its coverage reaches (SPEC §4.10).
+// Shared by the live offer and the Combat Rounds Preview's offer (SPEC §4.11), so both answer the same attacks.
+export function counterCoversAttack(ctx, def, profile, effect = 'damage') {
+  const tags = def.cardTags || def.tags || [];
+  if (!tags.includes('maneuver:counter')) return false;
+  const coverage = def.counterCoverage || ctx.combatExpansionRules.matchups.counter.defaultCoverage[
+    tags.includes('counter:spell') ? 'spell' : tags.includes('counter:ranged') ? 'ranged' : 'melee'];
+  return counterCoverageMatches(coverage, profile, effect);
+}
+
+const counterCovered = (ctx, def, row) => row.contacts.some(contact =>
+  counterCoversAttack(ctx, def, contact, contact.effect || 'damage'));
 
 // Version 2: a `trait:reaction` card is eligible by tag (a Counter still needs coverage,
 // anything else a positive contact). Untagged cards keep the version 1 rule until the
@@ -32,9 +41,9 @@ const counterCovered = (ctx, def, row, tags) => row.contacts.some(contact =>
 function eligible(ctx, def, row) {
   const tags = def.cardTags || def.tags || [];
   if (cardTraitsActive(ctx) && tags.includes('trait:reaction')) {
-    return tags.includes('maneuver:counter') ? counterCovered(ctx, def, row, tags) : row.contacts.some(positive);
+    return tags.includes('maneuver:counter') ? counterCovered(ctx, def, row) : row.contacts.some(positive);
   }
-  if (tags.includes('maneuver:counter')) return counterCovered(ctx, def, row, tags);
+  if (tags.includes('maneuver:counter')) return counterCovered(ctx, def, row);
   return tags.includes('maneuver:sweep') && def.defensiveReaction === true;
 }
 
@@ -229,6 +238,9 @@ export function beforeReactionAction(ctx, action, hooks) {
   const group = action.meta?.expansionGroup;
   if (!group || group.carrier?.reactionDepth) return false;
   if (action.source?.kind !== 'enemy') return !group.begun && action.source?.kind === 'player' && beforePlayerRoot(ctx, group, hooks);
+  // Combat Rounds (SPEC §4.11): an enemy move resolving a timeline entry had its reaction point in the round prompt,
+  // answered or not, so the live window never opens for it (one prompt per attack).
+  if (group.roundSettled) return false;
   if (group.begun) { reportAlreadyAnswered(ctx, action, group, hooks); return false; }
   if (stackedReactions(ctx)) return beforeStackedReaction(ctx, action, group, hooks);
   if (!action.source.alive) return false;

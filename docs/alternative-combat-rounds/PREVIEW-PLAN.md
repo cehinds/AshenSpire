@@ -97,6 +97,26 @@ The preview screen is the live combat screen with only these additions:
   Speed is the plan-time effective forecast (timeline speed without the d4, capped by the
   card's place in its queue: `plannedQueueSpeeds()`).
   Computed by `targetOutline()` in `resolver.mjs` (DESIGN.md, Card hints).
+  The outline is thin and crisp (about 1.5px, no glow or halo), hugging the sprite edge (owner, 2026-10-12).
 - The live green outline for the player's selection and playable cards becomes
   blue in the preview, so green only means advantage.
 - No queue strip, no initiative track; End Turn stays as it is.
+
+## Owner decisions (2026-10-13)
+
+- Normal-combat momentum stays display only; it has no mechanical effect.
+- In rounds mode, Block lasts one round for both sides (resolved; was provisional).
+- Hidden enemy actions beyond the read show one `?` per action.
+- Card and enemy costs (SPEC §4.3a, §4.6a): the per-resource cost formula replaces the stance table for player cards,
+  and an enemy's SP pool is its stats (minions 1–2, elites 2–3, bosses 3–4). The items below that state a flat
+  stance price or a pool of 2 are superseded.
+
+## Owner decisions (2026-10-12)
+
+- The combat rounds mode stays a settings toggle, off by default.
+- Momentum is its own toggle, off by default. It also works in normal combat, using the rounds rules: momentum shifts on the same hits, counters and stance wins.
+- Multi-action preview is its own toggle, off by default. It also works in normal combat, showing the enemy's planned upcoming moves.
+- Always on in every fight, even with rounds mode off: the new soft shadows on intent icons and sprites; the blue selection/playable outline; target outlines (stance advantage only when rounds mode is off, since speed needs rounds); enemy action costs.
+- Action costs apply to everyone, player and enemies: attack 1 SP, defend/block 1 SP, smash 2, counter 2, cast/spell 2, sweep 2.
+- The enemy SP pool is configurable, default 2 per turn. Enemies spend until the pool is empty.
+- Buff player cards that cost 2; cost-1 cards are much weaker.
