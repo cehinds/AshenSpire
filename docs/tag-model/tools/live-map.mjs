@@ -440,10 +440,10 @@ export const LIVE = {
   'lifecycle.recall.afterCardPlay': 'lifecycle.recall.afterCardPlay',
   'lifecycle.seal': 'lifecycle.seal',
   // proposed live mapping (domain pass)
-  'reach': 'reach',
-  'reach.contact': 'reach:contact',
-  'reach.near': 'reach:near',
-  'reach.far': 'reach:far',
+  'range': 'range',
+  'range.melee': 'range:melee',
+  'range.reach': 'range:reach',
+  'range.ranged': 'range:ranged',
   // proposed live mapping (domain pass)
   'counterMode': 'counterMode',
   'counterMode.melee': 'counter:melee',

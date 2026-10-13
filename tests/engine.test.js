@@ -2875,7 +2875,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // else. Effects now allow the legacy card domain plus categorized combat
     // domains; changing the junction must still change validation.
     const kw = contentBundle.keywords.map((k) => k.id);
-    const effectDomains = ['card', 'attackSource', 'delivery', 'damageType', 'technique', 'theme', 'camp', 'maneuver', 'school', 'counterMode', 'reach', 'targeting', 'trait'];
+    const effectDomains = ['card', 'attackSource', 'delivery', 'damageType', 'technique', 'theme', 'camp', 'maneuver', 'school', 'counterMode', 'range', 'targeting', 'trait'];
     eq(tagIdsAllowedFor(contentBundle, 'effect').sort().join('|'), effectDomains.flatMap((domain) => tagIdsInDomain(contentBundle, domain)).sort().join('|'),
       'the derived effect vocabulary includes every approved combat category');
     const repaired = JSON.parse(JSON.stringify(contentBundle));

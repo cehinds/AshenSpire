@@ -57,7 +57,7 @@ function attackKind(row) {
   if (hit.maneuver === 'sweep') return 'sweep';
   if (hit.targeting === 'area') return 'area';
   if (hit.camp === 'spell') return 'spell';
-  if (hit.reach === 'near' || hit.reach === 'far') return 'ranged';
+  if (hit.range === 'reach' || hit.range === 'ranged') return 'ranged';
   return 'attack';
 }
 

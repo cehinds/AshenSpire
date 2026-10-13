@@ -807,7 +807,7 @@ export const SCHEMAS = Object.freeze({
     comboHook: opt(any),
     schoolEffect: opt(str),
     breakPoiseBonus: opt(num),
-    reach: opt(str),
+    range: opt(str),
     targeting: opt(str),
     traits: opt(arr(str)),
     stanceTrigger: opt(any),
