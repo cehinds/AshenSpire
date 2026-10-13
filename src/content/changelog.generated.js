@@ -3,6 +3,46 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1883",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Switching combat views keeps your lane where the grid shows it",
+    "detail": "When a fight changes from the perspective view to Classic, your saved lane now moves to the Classic square the screen displays. Moving again or reloading the fight no longer jumps you back to a hidden perspective-only lane.",
+    "build": "0.7.1.1465",
+    "pullRequest": 1883,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1883"
+  },
+  {
+    "id": "pr-1932",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "The balance report reads Gilded Knight correctly again",
+    "detail": "Nothing changes in the game. Gilded Knight's damage per turn no longer reads as \"not a number\", because its guard reaction is no longer counted as an attack. The balance document is regenerated to match the current game.",
+    "build": "0.7.1.1465",
+    "pullRequest": 1932,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1932"
+  },
+  {
+    "id": "pr-1936",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Dev previews publish again when a pull request merges during the publish",
+    "detail": "Nothing in the game changes. The dev site's self-check now rebuilds the stamped build its run was started for, instead of whatever just landed on dev.",
+    "build": "0.7.1.1465",
+    "pullRequest": 1936,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1936"
+  },
+  {
+    "id": "pr-1921",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Every weapon has a default range, and hand cards show it",
+    "detail": "Combat ranges are now called Melee, Reach and Ranged (formerly contact, near and far), and older saves still load. Each weapon states the range it fights at, and attack cards in the combat hand show a Melee, Reach or Ranged chip, by the same rule the deck editor uses.",
+    "build": "0.7.1.1465",
+    "pullRequest": 1921,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1921"
+  },
+  {
     "id": "pr-1930",
     "date": "2026-10-13",
     "group": "2026-10-13",
@@ -21,16 +61,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1463",
     "pullRequest": 1934,
     "url": "https://github.com/cehinds/AshenSpire/pull/1934"
-  },
-  {
-    "id": "pr-1883",
-    "date": "2026-10-12",
-    "group": "2026-10-12",
-    "summary": "Switching combat views keeps your lane where the grid shows it",
-    "detail": "When a fight changes from the perspective view to Classic, your saved lane now moves to the Classic square the screen displays. Moving again or reloading the fight no longer jumps you back to a hidden perspective-only lane.",
-    "build": "0.7.1.1463",
-    "pullRequest": 1883,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1883"
   },
   {
     "id": "pr-1896",
