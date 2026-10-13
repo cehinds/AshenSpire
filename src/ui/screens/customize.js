@@ -1040,15 +1040,24 @@ export function mountCustomize(app, {
     const node = el('section', { class: 'cc-equip-group cc-starting-abilities', dataset: { abilityStep: stage, ...(stage === 'equipment' ? { equipmentSection: section.id } : {}) } }, box);
     const progress = el('p', { class: 'cc-ability-progress', 'aria-live': 'polite' });
     node.prepend(progress);
+    const elementCapReached = () => (section.maxElementPicks || 0) > 0
+      && state.startingAbilityIds.filter(id => section.elementIds.includes(id)).length >= section.maxElementPicks;
     const refresh = () => {
       progress.textContent = t('creation.abilities.progress', { chosen: state.startingAbilityIds.length, count: section.count, rank: section.rank });
+      if (elementCapReached()) progress.textContent += ` · ${t('creation.abilities.elementCap', { max: section.maxElementPicks })}`;
       for (const entry of box.children) {
         const picked = state.startingAbilityIds.includes(entry.dataset.cardId);
         entry.querySelector('.card').classList.toggle('selected', picked);
         const choose = entry.querySelector('.cc-ability-choose');
         choose.textContent = t(picked ? 'creation.abilities.remove' : 'creation.abilities.choose');
         choose.setAttribute('aria-pressed', String(picked));
-        choose.disabled = !picked && section.count > 1 && state.startingAbilityIds.length >= section.count;
+        const full = !picked && section.count > 1 && state.startingAbilityIds.length >= section.count;
+        // The plan allows at most maxElementPicks element spells; a further one
+        // can never validate, so it is not offered instead of stranding Next.
+        const elementCapped = !picked && elementCapReached() && section.elementIds?.includes(entry.dataset.cardId);
+        choose.disabled = full || elementCapped;
+        if (elementCapped && !full) choose.title = t('creation.abilities.elementCap', { max: section.maxElementPicks });
+        else choose.removeAttribute('title');
       }
     };
     // Requirements can change while an earlier equipment fold is open.
@@ -1060,6 +1069,7 @@ export function mountCustomize(app, {
       const select = () => {
         const picked = state.startingAbilityIds.includes(card.id);
         if (picked) state.startingAbilityIds = state.startingAbilityIds.filter(id => id !== card.id);
+        else if (section.elementIds?.includes(card.id) && elementCapReached() && section.count > 1) return;
         else if (section.count === 1) state.startingAbilityIds = [card.id];
         else if (state.startingAbilityIds.length < section.count) state.startingAbilityIds.push(card.id);
         refresh(); renderEquipmentSummary(); refreshFaces(); updateStartRefusal();
