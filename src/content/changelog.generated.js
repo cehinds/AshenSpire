@@ -3,6 +3,36 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1963",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "End Turn no longer stalls in Alternative combat rounds when a queued card can't be played",
+    "detail": "With the Alternative combat rounds setting on, a queued card such as a Counter, played after an earlier card in the same round had put you to Sleep or Staggered you, made End Turn do nothing. That card is now skipped and its Stamina and Mana refunded, and the round goes on.",
+    "build": "0.7.1.1493",
+    "pullRequest": 1963,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1963"
+  },
+  {
+    "id": "pr-1962",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Pull requests no longer wait for a per-PR owner approval; coding goes to Sonnet, simple tasks to Haiku",
+    "detail": "Development-process change only, nothing in the game changes. A pull request into dev now merges once another agent or session has reviewed it, its conflicts are resolved and the fast checks are green, and the session promotes dev to test itself; main stays with the owner. Sessions send the owner the preview and screenshots without waiting. Most coding tasks go to the new Sonnet ashen-coder agent, simple or mechanical ones to the Haiku ashen-worker, and Opus keeps planning and management.",
+    "build": "0.7.1.1491",
+    "pullRequest": 1962,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1962"
+  },
+  {
+    "id": "pr-1961",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Starseer and Herald can no longer pick two element spells and get stuck on Spells",
+    "detail": "The starting spells allow only one element spell (Mind Spike, Mind Fracture, Stone Sling, Rockfall or Drowsing Mote), but the picker let you take two, then greyed Next with no way to see why. Once you hold one element spell the other four now grey out, and the progress line says only one is allowed.",
+    "build": "0.7.1.1489",
+    "pullRequest": 1961,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1961"
+  },
+  {
     "id": "pr-1956",
     "date": "2026-10-13",
     "group": "2026-10-13",

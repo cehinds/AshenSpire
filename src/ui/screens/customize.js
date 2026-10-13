@@ -66,7 +66,7 @@ import {
 // The fold's own sentence is a row in content/source/uiStrings.csv, which is
 // where #991 put the words this game says. This screen still carries plenty of
 // copy in code — the baseline counts it — but a NEW sentence does not join it.
-import { t } from '../strings.js';
+import { t, tTip } from '../strings.js';
 import { clearSelection } from '../components/cardSelection.js';
 import { mountCreationInfoLayer } from '../components/creationInfoLayer.js';
 import { focusCreationClassPreview, openCreationStatDetail, openCreationRelicDetail } from '../components/creationPreviewDetails.js';
@@ -1040,8 +1040,11 @@ export function mountCustomize(app, {
     const node = el('section', { class: 'cc-equip-group cc-starting-abilities', dataset: { abilityStep: stage, ...(stage === 'equipment' ? { equipmentSection: section.id } : {}) } }, box);
     const progress = el('p', { class: 'cc-ability-progress', 'aria-live': 'polite' });
     node.prepend(progress);
+    const elementCapReached = () => (section.maxElementPicks || 0) > 0
+      && state.startingAbilityIds.filter(id => section.elementIds.includes(id)).length >= section.maxElementPicks;
     const refresh = () => {
       progress.textContent = t('creation.abilities.progress', { chosen: state.startingAbilityIds.length, count: section.count, rank: section.rank });
+      if (elementCapReached()) progress.textContent += ` · ${t('creation.abilities.elementCap', { max: section.maxElementPicks })}`;
       for (const entry of box.children) {
         const picked = state.startingAbilityIds.includes(entry.dataset.cardId);
         entry.querySelector('.card').classList.toggle('selected', picked);
@@ -1049,17 +1052,27 @@ export function mountCustomize(app, {
         choose.textContent = t(picked ? 'creation.abilities.remove' : 'creation.abilities.choose');
         choose.setAttribute('aria-pressed', String(picked));
         choose.disabled = !picked && section.count > 1 && state.startingAbilityIds.length >= section.count;
+        capRefreshers.get(entry.dataset.cardId)?.();
       }
     };
+    // The plan allows at most maxElementPicks element spells; a further one can
+    // never validate, so it refuses (and says why) instead of stranding Next.
+    // It refuses rather than disabling so touch, keyboard and pad can still ask.
+    const capRefreshers = new Map();
     // Requirements can change while an earlier equipment fold is open.
     state.startingAbilityIds = creationAbilitySelection(state.startingAbilityIds, section);
     for (const card of section.choices) {
       const face = renderCard(registries, startingAbilityRef(section, card.id));
       const choose = button({ label: t('creation.abilities.choose'), weight: 'secondary', className: 'cc-ability-choose' });
       choose.setAttribute('aria-label', t('creation.abilities.chooseLabel', { name: card.name }));
+      const capReason = () => (!state.startingAbilityIds.includes(card.id) && section.count > 1
+        && section.elementIds?.includes(card.id) && elementCapReached())
+        ? tTip('creation.abilities.elementCap', { max: section.maxElementPicks }) : null;
+      capRefreshers.set(card.id, refusesWhen(choose, capReason, ''));
       const select = () => {
         const picked = state.startingAbilityIds.includes(card.id);
         if (picked) state.startingAbilityIds = state.startingAbilityIds.filter(id => id !== card.id);
+        else if (capReason()) return;
         else if (section.count === 1) state.startingAbilityIds = [card.id];
         else if (state.startingAbilityIds.length < section.count) state.startingAbilityIds.push(card.id);
         refresh(); renderEquipmentSummary(); refreshFaces(); updateStartRefusal();
