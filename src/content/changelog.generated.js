@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1956",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Card symbols, multi-hit cards and the Ward badge read correctly",
+    "detail": "On-or-off traits such as Reaction and Counterstrike no longer show a stray 1 on their symbol. A card that hits more than once and deals part magic, part physical damage now shows both parts, for example \"Deal 5 damage (3 blunt, 2 arcane) ×2\". The Ward badge's tooltip now names this turn's Ward guard separately from the Ward that lasts the whole fight.",
+    "build": "0.7.1.1481",
+    "pullRequest": 1956,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1956"
+  },
+  {
     "id": "pr-1942",
     "date": "2026-10-13",
     "group": "2026-10-13",
