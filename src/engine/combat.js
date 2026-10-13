@@ -48,6 +48,7 @@ import { emitEvent, fireOwnerHooks, findEntity, hasEventTriggers } from './trigg
 import { attachSkillXp } from './skillXp.js';
 import * as S from '../framework/statusSemantics.js';
 import { resolveCard, passiveSum, passiveMult } from '../model/registries.js';
+import { ownRestoreFunds } from '../model/actionCosts.js';
 import { cardKind } from '../model/tree.js';
 import { evaluate } from '../model/formulas.js';
 import { computeTokenBindings } from '../model/validate.js';
@@ -1297,9 +1298,12 @@ function effectiveCost(combat, def) {
 export function resolvedCardPlayCosts(combat, def, claimed = null) {
   const weightClass = playerWeightClass(combat).weightClass;
   const pools = F.foundationCosts(combat, def, weightClass, combat.registries.framework.costProfile(def, { weightClass }));
-  const stamina = (def.cost === 'X' ? combat.player.stamina : effectiveCost(combat, def)) + (def.upcastSurcharge || 0);
+  // A break-even restore pays its own part of the price (owner, 2026-10-13; model/actionCosts.js ownRestoreFunds).
+  const funds = ownRestoreFunds(def);
+  const stamina = def.cost === 'X' ? combat.player.stamina + (def.upcastSurcharge || 0)
+    : Math.max(0, effectiveCost(combat, def) + (def.upcastSurcharge || 0) - funds.stamina);
   const player = withoutClaims(combat.player, claimed);
-  return { energy: stamina, mana: Math.max(0, pools.mana + (def.upcastSurcharge || 0) - R.matchingAbilityCharges(player, { ...def, type: cardKind(def), authoredTags: def.cardTags || def.tags }).manaDiscount), stamina };
+  return { energy: stamina, mana: Math.max(0, pools.mana + (def.upcastSurcharge || 0) - funds.mana - R.matchingAbilityCharges(player, { ...def, type: cardKind(def), authoredTags: def.cardTags || def.tags }).manaDiscount), stamina };
 }
 
 function playCosts(combat, def, claimed = null) { return resolvedCardPlayCosts(combat, def, claimed); }

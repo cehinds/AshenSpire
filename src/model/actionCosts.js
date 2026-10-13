@@ -109,10 +109,13 @@ const count = (value) => (Number.isFinite(value) ? value : 1);
 /**
  * The cost receipt of a player card (owner, 2026-10-12; SPEC §4.3a):
  *   S_sp = damageWeight × physical damage + rankWeight × rank + Σ SP-side tag weights + range weight
- *          + castingEffort (cast tags) + SP-side statuses + restoreWeight × Mana restored + drawbacks (negative)
- *   S_mp = damageWeight × magical damage + Σ MP-side tag weights + MP-side statuses + restoreWeight × Stamina restored
+ *          + castingEffort (cast tags) + SP-side statuses + drawbacks (negative)
+ *   S_mp = damageWeight × magical damage + Σ MP-side tag weights + MP-side statuses
  *   SP = floor(S_sp / spDivisor), MP = floor(S_mp / mpDivisor), each S floored at 0 first.
- *   If both are 0, the larger side pays 1 (SP on a tie).
+ *   If both are 0, the larger side pays 1 (SP on a tie; SP for a Mana-restoring card).
+ *   Restores break even (owner, 2026-10-13): a card then costs restoreWeight × what it restores on top, in the same
+ *   pool, and that part is funded by its own restore (`funded`), so it needs none of that pool to cast and changes it
+ *   by 0. Returns { sp, mp, funded: { sp, mp }, ... }; sp and mp are the gross prices the card face shows.
  * A card is magical when it carries any MP-side tag; its damage and statuses then count on the MP side.
  * `rank` is the card's rank above the base (a base card is 0). Returns { sp, mp, sSp, sMp, magic, cast, parts }.
  */
@@ -163,18 +166,16 @@ export function cardCostBudget(def, { rank = 0, config = COST_CONFIG, upgradeDel
     tagSp, tagMp, range,
     castingEffort: cast ? budget.castingEffortWeight : 0,
     status: statusPoints,
-    restoreMana: budget.restoreWeight * restoreMana,
-    restoreStamina: budget.restoreWeight * restoreStamina,
+    restoreMana: Math.round(budget.restoreWeight * restoreMana),
+    restoreStamina: Math.round(budget.restoreWeight * restoreStamina),
   });
   const sSp = Math.max(0, (magic ? 0 : damagePoints) + parts.rank + tagSp + range + parts.castingEffort
-    + (magic ? 0 : statusPoints) + parts.restoreMana);
-  const sMp = Math.max(0, (magic ? damagePoints : 0) + parts.rankMp + tagMp + (magic ? statusPoints : 0) + parts.restoreStamina);
-  // Restored Mana offsets the card's own Mana cost, and restored Stamina its own Stamina cost (owner, 2026-10-12), so a
-  // card that refills a pool never costs more of it than it gives back.
+    + (magic ? 0 : statusPoints));
+  const sMp = Math.max(0, (magic ? damagePoints : 0) + parts.rankMp + tagMp + (magic ? statusPoints : 0));
   const rawSp = Math.floor(sSp / budget.spDivisor);
   const rawMp = Math.floor(sMp / budget.mpDivisor);
-  let sp = Math.max(0, rawSp - restoreStamina);
-  let mp = Math.max(0, rawMp - restoreMana);
+  let sp = rawSp;
+  let mp = rawMp;
   // Both 0: the larger side pays 1 (SP on a tie). A Mana-restoring card pays Stamina: it buys Mana with Stamina, so a
   // player with no Mana can always cast it.
   if (sp === 0 && mp === 0) {
@@ -184,7 +185,11 @@ export function cardCostBudget(def, { rank = 0, config = COST_CONFIG, upgradeDel
   // has no floor, and an authored upgrade that lowers the cost lowers the floor by as much.
   const floor = rank === 0 ? Math.max(0, ...allTags.map((t) => config.maneuverFloors[t] ?? 0)) - Math.max(0, upgradeDelta) : 0;
   if (sp < floor) sp = floor;
-  return { sp, mp, sSp, sMp, rawSp, rawMp, magic, cast, tags: allTags, parts };
+  // Restores break even (owner, 2026-10-13): the restore is priced in its own pool and pays that part itself.
+  const funded = Object.freeze({ sp: Math.min(parts.restoreStamina, restoreStamina), mp: Math.min(parts.restoreMana, restoreMana) });
+  sp += parts.restoreStamina;
+  mp += parts.restoreMana;
+  return { sp, mp, funded, sSp, sMp, rawSp, rawMp, magic, cast, tags: allTags, parts };
 }
 
 /** True when a card keeps its authored cost: costRule 'fixed', a curse or a status, or an X (non-number) cost. */
@@ -230,20 +235,52 @@ export function applyActionCosts(def, authored = def, { rank = 0, config = COST_
   // An authored upgrade that lowers the cost lowers the maneuver floor by as much (owner, 2026-10-13).
   // (An ability grade's own action cost is not an upgrade: grades are priced at their rank.)
   const upgradeDelta = !Array.isArray(authored?.gradeProfiles) && typeof authored?.cost === 'number' && typeof def.cost === 'number' ? authored.cost - def.cost : 0;
-  const { sp, mp, tags } = cardCostBudget(def, { rank, config, upgradeDelta });
-  const scaled = sp >= 2;
+  const { sp, mp, funded, tags } = cardCostBudget(def, { rank, config, upgradeDelta });
+  const scaled = sp - funded.sp >= 2;
   const smash = tags.includes('maneuver:smash') && config.budget.smashPoiseBase > 0;
-  if (sp === def.cost && mp === (def.manaCost || 0) && !scaled && !smash) return def;
+  const funds = funded.sp > 0 || funded.mp > 0;
+  if (sp === def.cost && mp === (def.manaCost || 0) && !scaled && !smash && !funds) return def;
   let effects = def.effects;
   if (Array.isArray(effects)) {
     if (scaled) effects = twoCostEffects(effects, tags, config);
-    effects = Object.freeze(withSmashPoise(effects, tags, config));
+    effects = withSmashPoise(effects, tags, config);
+    if (funds) effects = withFundedRestores(effects, funded);
+    effects = Object.freeze(effects);
   }
   // The face says the Poise damage every smash deals: a template that names none gains the sentence.
   const poiseLine = smash && typeof def.textTemplate === 'string' && !def.textTemplate.includes('{poiseDamage}')
     && effects?.some((e) => e?.op === 'poiseDamage');
   const textTemplate = poiseLine ? `${def.textTemplate.trim()} Deal {poiseDamage} Poise damage.` : def.textTemplate;
   return Object.freeze({ ...def, cost: sp, manaCost: mp, ...(effects ? { effects } : {}), ...(textTemplate !== undefined ? { textTemplate } : {}) });
+}
+
+// Marks the part of each restore that pays the card's own price (`funded`): the engine charges the price less that
+// part (ownRestoreFunds) and the restore gives back only the rest, so the restored pool changes by 0 (owner, 2026-10-13).
+function withFundedRestores(effects, funded) {
+  const left = { sp: funded.sp, mp: funded.mp };
+  return effects.map((e) => {
+    const side = RESTORE_STAMINA_OPS.includes(e?.op) ? 'sp' : RESTORE_MANA_OPS.includes(e?.op) ? 'mp' : null;
+    if (!side || typeof e.amount !== 'number' || left[side] <= 0) return e;
+    const part = Math.min(left[side], e.amount);
+    left[side] -= part;
+    return Object.freeze({ ...e, funded: part });
+  });
+}
+
+/**
+ * The part of a card's price its own restores pay (owner, 2026-10-13): { stamina, mana }. The engine's one card
+ * pricing (combat.js resolvedCardPlayCosts, coopCombat.js) charges the price less this, and the restore op gives back
+ * its amount less its `funded` part, so a break-even restore card is castable at 0 of that pool and changes it by 0.
+ */
+export function ownRestoreFunds(def) {
+  let stamina = 0;
+  let mana = 0;
+  for (const e of Array.isArray(def?.effects) ? def.effects : []) {
+    const part = Number.isFinite(e?.funded) ? Math.max(0, e.funded) : 0;
+    if (RESTORE_STAMINA_OPS.includes(e?.op)) stamina += part;
+    else if (RESTORE_MANA_OPS.includes(e?.op)) mana += part;
+  }
+  return { stamina, mana };
 }
 
 /** An enemy's attributes as its SP reads them: authored, shifted by ENEMY_BLIGHT_SHIFT when it is `blighted`. */

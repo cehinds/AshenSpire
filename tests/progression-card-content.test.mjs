@@ -1,6 +1,6 @@
 import { botCardTargetId } from '../tools/simbot.mjs';
 import test from 'node:test';
-import { cardCostBudget } from '../src/model/actionCosts.js';
+import { cardCostBudget, ownRestoreFunds } from '../src/model/actionCosts.js';
 import { applyAbilityGrade } from '../src/model/abilityGrades.js';
 import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
@@ -216,14 +216,18 @@ test('every authored family grade completes a paid real play in the assembled en
     assert.equal(face.cost, priced.sp, `${card.name}/${profile.rank}`);
     assert.equal(face.manaCost || 0, priced.mp, `${card.name}/${profile.rank}`);
     const preview = previewCard(combat, instance.instanceId);
-    assert.equal(preview.manaCost, face.manaCost || 0);
+    // The preview is what the play charges: the price less the part its own restore pays (owner, 2026-10-13).
+    assert.equal(preview.manaCost, (face.manaCost || 0) - ownRestoreFunds(face).mana);
     dispatch(combat, { type: 'playCard', cardInstanceId: instance.instanceId, targetId: botCardTargetId(combat.registries, combat, instance, combat.enemies[0].id) });
     while (combat.pendingAbilityDiscard) {
       const ids = combat.piles.hand.slice(0, combat.pendingAbilityDiscard.count).map(c => c.instanceId);
       assert.doesNotThrow(() => dispatch(combat, { type: 'chooseDiscard', cardInstanceIds: ids }), `${card.name}/${profile.rank}, choosing ${JSON.stringify(ids)} from ${combat.piles.hand.length}`);
     }
     assert.equal(combat.eventLog.filter(e => e.type === 'cardResolved').length, 1, `${card.name}/${profile.rank}`);
-    assert.equal(combat.player.mana, Math.min(combat.player.maxMana, 100 - (face.manaCost || 0) + (card.id === 'progression-wellspring-sigil' && profile.rank >= 2 ? 1 : 0)), 'Mana restored stops at the maximum');
+    // A restore pays its own part of the price and gives back the rest (owner, 2026-10-13: restores break even).
+    const funded = ownRestoreFunds(face).mana;
+    const restored = (face.effects || []).filter(e => e.op === 'restoreMana' && typeof e.amount === 'number').reduce((n, e) => n + e.amount, 0);
+    assert.equal(combat.player.mana, Math.min(combat.player.maxMana, 100 - ((face.manaCost || 0) - funded) + (restored - funded)), 'Mana restored stops at the maximum');
   }
 });
 

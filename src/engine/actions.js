@@ -1076,7 +1076,8 @@ function runOpcode(ctx, action, eff) {
       break;
     }
     case 'gainEnergy': {
-      const n = Math.max(0, evalNum(ctx, action, eff.amount, 1));
+      // `funded` is the part that already paid the card's own price (owner, 2026-10-13: restores break even).
+      const n = Math.max(0, evalNum(ctx, action, eff.amount, 1) - (Number(eff.funded) || 0));
       ctx.player.energy += n;
       ctx.emit('energyGained', { amount: n });
       break;
@@ -1092,7 +1093,8 @@ function runOpcode(ctx, action, eff) {
       // BY an amount, or TO a floor (plan phase 7's floorOrFull rest): a pool
       // under the floor rises to it; one already at or above it fills.
       const toFloor = eff.toFloorPct !== undefined;
-      const n = toFloor ? 0 : Math.max(0, evalNum(ctx, action, eff.amount, 1));
+      // `funded` is the part that already paid the card's own price (owner, 2026-10-13: restores break even).
+      const n = toFloor ? 0 : Math.max(0, evalNum(ctx, action, eff.amount, 1) - (Number(eff.funded) || 0));
       const pct = toFloor ? Math.max(0, evalNum(ctx, action, eff.toFloorPct, 0)) : 0;
       for (const t of resolveTargets(ctx, action, eff.target)) {
         const before = t.mana;
