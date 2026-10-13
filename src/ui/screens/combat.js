@@ -88,7 +88,7 @@ import { trackGesture } from '../gesture.js';
 import { finishCardDrag } from '../cardDragEnd.js';
 import { resourceBars } from '../components/resbars.js';
 import { combatHealthRow } from '../components/combatHealth.js';
-import { blockPresentation, reconcileWardBlock } from '../../model/blockPresentation.js';
+import { protectionPresentation, reconcileWardBlock } from '../../model/blockPresentation.js';
 import { renderArcaneExposure, arcaneExposureReceipt } from '../components/arcaneExposure.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { combatVitals } from '../models/StaminaOrbModel.js';
@@ -321,11 +321,17 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // this accessor — one home, the status def itself, with the WORDS
     // resolved through the framework term overlay.
     statusInfo: (sid) => registries.frameworkTerms.withStatusWords(registries.statuses.get(sid)),
+    // playTimeline reads this before arming its watchdog, so it must not throw.
     maxActorAnimationMs: (speed) => {
-      if (selectedProfile()) return selectedWeaponSequenceTiming(selectedWeaponSequence('counter-guard'),speed).totalMs;
-      if (CARD_ACTION_CLASSES.includes(run.class)) return speed.lungeMs;
-      const animation = equipmentAnimationForLoadout(registries, run.loadout, run.class);
-      return Math.max(reaverAttackTiming(speed).totalMs, ...Object.keys(animation?.references || {}).map(role => animationTiming(animation, role, speed)?.totalMs || 0));
+      try {
+        if (selectedProfile()) return selectedWeaponSequenceTiming(selectedWeaponSequence('counter-guard'),speed).totalMs;
+        if (CARD_ACTION_CLASSES.includes(run.class)) return speed.lungeMs;
+        const animation = equipmentAnimationForLoadout(registries, run.loadout, run.class);
+        return Math.max(reaverAttackTiming(speed).totalMs, ...Object.keys(animation?.references || {}).map(role => animationTiming(animation, role, speed)?.totalMs || 0));
+      } catch (e) {
+        console.warn('[combat] actor animation budget failed:', e && e.message);
+        return speed.lungeMs;
+      }
     },
     animateActor: (beat, actorEl, speed) => {
       const returned = beat.events.find(event => event.type === 'combatCounterTriggered');
@@ -817,7 +823,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
     const def = registries.enemies.get(entity.enemyId);
     const intent = disp?.ents[entity.id]?.intentPreview || previewIntent(combat, entity.id);
-    const learning = combat.enemyKnowledge ? projectEnemyKnowledge(def, combat.enemyKnowledge.owners.player?.knowledge.enemies[def.id], { registries, combatMatchupRules: combat.combatMatchupRules }) : null;
+    const learning = combat.enemyKnowledge ? projectEnemyKnowledge(def, combat.enemyKnowledge.owners.player?.knowledge.enemies[def.id], { registries, combatMatchupRules: combat.combatMatchupRules, ratingsRules: combat.ratingsRules }) : null;
     const currentMoveId = intent.moveId;
     const skills = learning ? null : Object.entries(def.moves || {}).map(([moveId, move]) => ({
       name: words(moveId),
@@ -945,6 +951,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       block: e.block,
       barrier: e.barrier || 0,
       persistentWard: e.persistentWard ? { ...e.persistentWard } : null,
+      persistentPoise: e.persistentPoise ? { ...e.persistentPoise } : null,
       combatStance: e.combatStance ? { ...e.combatStance } : null,
       ...(e.wardBlock !== undefined ? { wardBlock: e.wardBlock } : {}),
       alive,
@@ -991,7 +998,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           for (const enemy of combat.enemies) if (disp.ents[enemy.id]) disp.ents[enemy.id].intentPreview = previewIntent(combat, enemy.id);
           break;
         case 'persistentWardChanged':
-          if (t?.persistentWard) t.persistentWard.value = e.value;
+        case 'combatWardStripped':
+          if (t?.persistentWard && Number.isFinite(e.value)) { t.persistentWard.value = e.value; if (Number.isFinite(e.max)) t.persistentWard.max = e.max; }
+          break;
+        case 'persistentPoiseChanged':
+          if (t?.persistentPoise) { t.persistentPoise.value = e.value; if (Number.isFinite(e.max)) t.persistentPoise.max = e.max; }
           break;
         case 'barrierGained':
           if (t) t.barrier = e.total;
@@ -1012,6 +1023,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
             t.block = e.blockRemaining ?? Math.max(0, t.block - e.blocked);
             if (e.barrierRemaining !== undefined) t.barrier = e.barrierRemaining;
             if (e.wardBlockRemaining !== undefined) t.wardBlock = e.wardBlockRemaining;
+            if (e.poiseRemaining !== undefined && t.persistentPoise) t.persistentPoise.value = e.poiseRemaining;
             reconcileWardBlock(t);
           }
           break;
@@ -1342,7 +1354,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         if (bar.id === 'poise' || bar.id === 'ward') {
           const magical = bar.id === 'ward';
           const loss = combat.ratingsRules.breaks[magical ? 'wardActionLoss' : 'poiseActionLoss'];
-          const percent = entity ? Math.round((1 - ratingDamageMultiplier(combat, entity, magical)) * 100) : null;
+          // Pools only in expanded combat (owner decision, 2026-10-12): the rating cut is gone, so no percent is stated.
+          const percent = entity && combat.combatExpansionVersion !== 2 ? Math.round((1 - ratingDamageMultiplier(combat, entity, magical)) * 100) : null;
           if (combat.breakMeterVersion === 1) return esc(tFull('combat.poise.shared', {
             resistance: percent === null ? '' : ` by ${percent}%`,
             effect: kind === 'player' ? tFull('combat.poise.actionLoss', { amount: loss }) : tFull('combat.poise.enemyLoss'),
@@ -1381,7 +1394,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (bar.id === 'hp') {
         markUiComponent(el, UI.healthStatusBar, entity.kind);
         const next = el.nextSibling;
-        const row = combatHealthRow(el, blockPresentation(v), { tooltips, blockHelp: helpText('block') });
+        const row = combatHealthRow(el, protectionPresentation(v), { tooltips, blockHelp: helpText('block') });
         bars.insertBefore(row, next);
       }
       if (bar.id === 'poise') markUiComponent(el, UI.poiseStatusBar, entity.kind);
@@ -2437,13 +2450,14 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   function afterDispatch(events) {
-    events = decorateCombatEffects(events, registries, barrierVisuals);
+    // Each step before playTimeline is guarded: busy is already true and only the timeline's finish releases it.
+    try { events = decorateCombatEffects(events, registries, barrierVisuals); } catch (e) { console.warn('[combat] effect decoration failed:', e && e.message); }
     playbackEvents = events;
-    playbackCounterOrigins = selectedCounterOrigins(events);
+    try { playbackCounterOrigins = selectedCounterOrigins(events); } catch (e) { playbackCounterOrigins = new Set(); console.warn('[combat] counter origins failed:', e && e.message); }
     // Capture definitions while disp still holds consumed Powers and equipment
     // profile instances. Reduce the SAME events on paced and skipped paths.
     appliedVisualEvents = new Set();
-    visualPlans = new Map(events.filter(e => e.type === 'cardPlayed').map(event => {
+    try { visualPlans = new Map(events.filter(e => e.type === 'cardPlayed').map(event => {
       const instance = disp?.hand.find(card => card.instanceId === event.cardInstanceId) || findInst(event.cardInstanceId) || { cardId: event.cardId };
       const definition = resolvePlayedCombatCard(combat, event, instance);
       const tags = definition.cardTags?.length ? definition.cardTags : tagService(registries).tagsOf('card', definition);
@@ -2451,7 +2465,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const action = resolveActionAnimation({ actorId: run.class, actionId: event.cardId, tags, type: event.cardType });
       const animation = equipmentAnimationForLoadout(registries, run.loadout, run.class);
       return [event.cardInstanceId, { stanceCard: { ...definition, cardTags: tags }, aura: resourceAura(definition, { ...event, hpSpent }), ...resolveCombatAnimation({ ...definition, cardTags: tags, animationTags: combatEffectTags(registries, definition), sourceArmamentId: definition.sourceArmamentId || instance.sourceArmamentId }, equippedPieces(registries, run.loadout, run.class), { animation, classId: run.class, appearance: displayAppearance(), combatExpansionVersion: combat.combatExpansionVersion, action }) }];
-    }));
+    })); } catch (e) { visualPlans = new Map(); console.warn('[combat] visual plan failed:', e && e.message); }
     // Nothing between here and playTimeline may prevent the timeline from
     // starting: busy is already true, and only the timeline's finish releases
     // it (and fires onEnd on victory/defeat). A render throw here once froze

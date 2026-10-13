@@ -9,7 +9,7 @@ import { effectiveChance, rollChanceDie, previewAvoidance } from '../src/engine/
 import { combatExpansionEntityProblems, combatExpansionMatchupRulesProblems, combatCounterProblems } from '../src/model/combatTacticsRules.js';
 
 const carrier = (maneuver = 'attack', extra = {}) => ({ combatProfile: {
-  camp: 'physical', maneuver, reach: 'contact', targeting: 'single', damageType: 'slashing', ...extra,
+  camp: 'physical', maneuver, range: 'melee', targeting: 'single', damageType: 'slashing', ...extra,
 } });
 function fixture(dice = [5]) {
   const queue = [], events = [], rolls = [];
@@ -99,11 +99,11 @@ test('Counter support has no free protection or unprinted return in v2', () => {
 test('coverage AND filters reject one-target Area; dedicated Area coverage can catch Sweep', () => {
   const f = fixture(); prepare(f);
   assert.equal(previewTacticalAction(f.ctx, f.source, f.target, carrier('sweep', { targeting: 'area' }), [{ amount: 8 }]).counterEligible, false);
-  const coverage = { camps: ['spell'], schools: ['frost'], reaches: ['far'], targeting: ['area'], effects: ['damage'] };
-  assert.equal(counterCoverageMatches(coverage, { camp: 'spell', school: 'fire', reach: 'far', targeting: 'area' }), false);
-  assert.equal(counterCoverageMatches(coverage, { camp: 'spell', school: 'frost', reach: 'near', targeting: 'area' }), false);
-  assert.equal(counterCoverageMatches(coverage, { camp: 'spell', school: 'frost', reach: 'far', targeting: 'area' }), true);
-  prepare(f, {}, { damage: 7, coverage: { camps: ['physical'], reaches: ['contact'], targeting: ['area'], effects: ['damage'] } });
+  const coverage = { camps: ['spell'], schools: ['frost'], ranges: ['ranged'], targeting: ['area'], effects: ['damage'] };
+  assert.equal(counterCoverageMatches(coverage, { camp: 'spell', school: 'fire', range: 'ranged', targeting: 'area' }), false);
+  assert.equal(counterCoverageMatches(coverage, { camp: 'spell', school: 'frost', range: 'reach', targeting: 'area' }), false);
+  assert.equal(counterCoverageMatches(coverage, { camp: 'spell', school: 'frost', range: 'ranged', targeting: 'area' }), true);
+  prepare(f, {}, { damage: 7, coverage: { camps: ['physical'], ranges: ['melee'], targeting: ['area'], effects: ['damage'] } });
   assert.equal(previewTacticalAction(f.ctx, f.source, f.target, carrier('sweep', { targeting: 'area' }), [{ amount: 8 }]).counterEligible, true);
 });
 
@@ -125,7 +125,7 @@ test('Piercing pressures Guard rather than universal bypass, Force needs printed
 
 test('Connected Lightning interrupts Counter even fully blocked; Grounded preserves it', () => {
   for (const grounded of [false, true]) {
-    const f = fixture(); prepare(f, {}, { damage: 7, coverage: { camps: ['spell'], reaches: ['contact'], targeting: ['single'], effects: ['damage'] } });
+    const f = fixture(); prepare(f, {}, { damage: 7, coverage: { camps: ['spell'], ranges: ['melee'], targeting: ['single'], effects: ['damage'] } });
     if (grounded) f.target.combatTraits = ['grounded'];
     const incoming = carrier('attack', { camp: 'spell', school: 'lightning', damageType: 'lightning' });
     const receipt = beginTacticalAction(f.ctx, f.source, f.target, incoming, [{ amount: 8 }]);
@@ -136,10 +136,10 @@ test('Connected Lightning interrupts Counter even fully blocked; Grounded preser
 });
 
 test('all admitted partial status pressure blocks full reply; Ward-resisted status-only magic qualifies', () => {
-  const coverage = { camps: ['spell'], reaches: ['near'], targeting: ['single'], effects: ['damage', 'status'] };
+  const coverage = { camps: ['spell'], ranges: ['reach'], targeting: ['single'], effects: ['damage', 'status'] };
   for (const accepted of [0, 1]) {
     const f = fixture(); f.source.caster = true; prepare(f, { camp: 'spell' }, { coverage, payload: { hp: 3, poise: 2, ward: 1 } });
-    const incoming = carrier('casting', { camp: 'spell', reach: 'near' });
+    const incoming = carrier('casting', { camp: 'spell', range: 'reach' });
     const receipt = beginTacticalAction(f.ctx, f.source, f.target, incoming, [{ effect: 'status', pressure: 6, amount: 0 }]);
     recordTacticalStatus(receipt, { acceptedBuildup: accepted, activeAdded: 0, resisted: 6 - accepted, wardSpent: 1 });
     completeTacticalAction(f.ctx, f.source, f.target, incoming, receipt);
@@ -158,7 +158,7 @@ test('spell return HP requires visible caster; explicit Ward and Poise return re
 
 test('same-camp covered and uncovered deliveries cannot return when any direct HP leaks', () => {
   const f = fixture(); prepare(f);
-  const receipt = beginTacticalAction(f.ctx, f.source, f.target, carrier(), [{ amount: 8 }, { amount: 8, reach: 'near', maneuver: 'ranged' }]);
+  const receipt = beginTacticalAction(f.ctx, f.source, f.target, carrier(), [{ amount: 8 }, { amount: 8, range: 'reach', maneuver: 'ranged' }]);
   assert.equal(receipt.amount, 12);
   assert.deepEqual(receipt.amounts, [6, 6]); // Final budget follows pre-matchup contact proportions.
   recordTacticalContact(receipt, { blocked: 6, hpLoss: 6 });
@@ -181,7 +181,7 @@ test('Counter rounds the whole action before the additive incoming status modifi
 
 test('same-camp mixed delivery applies each contact status modifier before the action-wide status rounding', () => {
   const f = fixture();
-  const receipt = beginTacticalAction(f.ctx, f.source, f.target, carrier(), [{ amount: 8 }, { amount: 8, reach: 'far' }],
+  const receipt = beginTacticalAction(f.ctx, f.source, f.target, carrier(), [{ amount: 8 }, { amount: 8, range: 'ranged' }],
     { contactModifiers: [{ percent: 35 }, { percent: -15 }] });
   assert.equal(receipt.amount, 18); // 8×1.35 + 8×.85 =17.6, rounded once at this stage.
   assert.deepEqual(receipt.amounts, [9, 9]);
@@ -213,11 +213,11 @@ test('guaranteed direct-action prevention consumes one Invulnerability, preserve
   assert.deepEqual(completeTacticalAction(f.ctx, f.source, f.target, incoming, receipt), []);
 });
 
-test('Decoy catches only one positive Single Near/Far action, never Area, Contact or status-only', () => {
-  for (const [reach, targeting, amount, catches] of [['near', 'single', 8, true], ['far', 'single', 8, true],
-    ['near', 'area', 8, false], ['contact', 'single', 8, false], ['far', 'single', 0, false]]) {
+test('Decoy catches only one positive Single Reach/Ranged action, never Area, Melee or status-only', () => {
+  for (const [range, targeting, amount, catches] of [['reach', 'single', 8, true], ['ranged', 'single', 8, true],
+    ['reach', 'area', 8, false], ['melee', 'single', 8, false], ['ranged', 'single', 0, false]]) {
     const f = fixture(); f.target.statuses.decoy = { stacks: 1 };
-    const incoming = carrier('ranged', { reach, targeting });
+    const incoming = carrier('ranged', { range, targeting });
     const receipt = beginTacticalAction(f.ctx, f.source, f.target, incoming, [{ amount }]);
     assert.equal(receipt.avoided, catches);
     assert.equal(!!f.target.statuses.decoy, !catches);
@@ -258,7 +258,7 @@ test('a same-action stagger clears pending Counter before full-action finalizati
 
 test('distance rolls before Evade, preserves charge on success, and exposes combined32% purely', () => {
   const f = fixture([20]); f.target.armorClass = 'light';
-  setCombatStance(f.ctx, f.target, carrier('ranged', { reach: 'near' })); prepareCombatEvade(f.ctx, f.target);
+  setCombatStance(f.ctx, f.target, carrier('ranged', { range: 'reach' })); prepareCombatEvade(f.ctx, f.target);
   const preview = previewAvoidance(f.ctx, f.target, carrier().combatProfile, 9);
   assert.equal(preview.distance.chance, 20); assert.equal(preview.evade.chance, 15); assert.equal(preview.chance, 32);
   assert.equal(f.rolls.length, 0);
@@ -269,7 +269,7 @@ test('distance rolls before Evade, preserves charge on success, and exposes comb
 
 test('distance failure permits one action-wide Evade, strict tie fails, high DC has no natural20 floor', () => {
   for (const [damage, dice, avoided] of [[8, [100, 17], false], [8, [100, 18], true], [30, [100, 20], false]]) {
-    const f = fixture(dice); setCombatStance(f.ctx, f.target, carrier('ranged', { reach: 'near' })); prepareCombatEvade(f.ctx, f.target);
+    const f = fixture(dice); setCombatStance(f.ctx, f.target, carrier('ranged', { range: 'reach' })); prepareCombatEvade(f.ctx, f.target);
     const receipt = beginTacticalAction(f.ctx, f.source, f.target, carrier(), [{ amount: damage / 2 }, { amount: damage / 2 }]);
     assert.equal(receipt.avoided, avoided); assert.equal(f.target.combatEvade.charges, 0);
     assert.equal(f.rolls.length, 2);
@@ -297,15 +297,15 @@ test('school edges modify only explicitly selected printed effect and weakness w
 
 test('Spell Piercing does not borrow Martial Guard bypass and Counter Ward uses one fractional edge', () => {
   const f = fixture();
-  const spell = carrier('casting', { camp: 'spell', school: 'lightning', damageType: 'piercing', reach: 'near' });
+  const spell = carrier('casting', { camp: 'spell', school: 'lightning', damageType: 'piercing', range: 'reach' });
   assert.equal(previewTacticalAction(f.ctx, f.source, f.target, spell, [{ amount: 4 }]).guardBypass, 0);
   for (const [incomingType, expected] of [['slashing', 2.5], ['blunt', 1.5]]) {
     const row = fixture();
     const counter = carrier('counter', { camp: 'spell', school: 'fire', schoolEffect: 'ward', damageType: 'piercing' });
     setCombatStance(row.ctx, row.target, counter);
     armCombatCounter(row.ctx, row.target, counter, { payload: { ward: 2 },
-      coverage: { camps: ['spell'], reaches: ['near'], targeting: ['single'], effects: ['damage'] } });
-    const incoming = carrier('casting', { camp: 'spell', school: 'frost', damageType: incomingType, reach: 'near' });
+      coverage: { camps: ['spell'], ranges: ['reach'], targeting: ['single'], effects: ['damage'] } });
+    const incoming = carrier('casting', { camp: 'spell', school: 'frost', damageType: incomingType, range: 'reach' });
     const receipt = beginTacticalAction(row.ctx, row.source, row.target, incoming, [{ amount: 4 }]);
     recordTacticalContact(receipt, { wardResisted: 4 });
     completeTacticalAction(row.ctx, row.source, row.target, incoming, receipt);
@@ -324,12 +324,12 @@ test('co-op receipt identity belongs to seat, not duplicate player entity ids', 
   assert.notEqual(a.avoidance.evade.bonus, b.avoidance.evade.bonus);
 });
 
-test('authoring preserves explicit coverage/payload/Evade fields and adds reach/targeting chips', () => {
-  const def = { id: 'example', tags: ['camp:physical', 'maneuver:counter', 'reach:far', 'targeting:area', 'trait:projectile'],
-    counterCoverage: { camps: ['physical'], reaches: ['far'], targeting: ['area'], effects: ['damage'] },
+test('authoring preserves explicit coverage/payload/Evade fields and adds range/targeting chips', () => {
+  const def = { id: 'example', tags: ['camp:physical', 'maneuver:counter', 'range:ranged', 'targeting:area', 'trait:projectile'],
+    counterCoverage: { camps: ['physical'], ranges: ['ranged'], targeting: ['area'], effects: ['damage'] },
     counterPayload: { poise: 5 }, evade: { charges: 1, bonus: 2 } };
   const card = tacticalCarrier(def);
-  assert.equal(card.combatProfile.reach, 'far'); assert.equal(card.combatProfile.targeting, 'area');
+  assert.equal(card.combatProfile.range, 'ranged'); assert.equal(card.combatProfile.targeting, 'area');
   assert.deepEqual(card.combatProfile.counterCoverage, def.counterCoverage);
   assert.deepEqual(card.combatProfile.evade, def.evade);
 });
@@ -343,7 +343,7 @@ test('version2 tactical snapshots and tuning validate strictly while legacy coun
   assert.deepEqual(combatCounterProblems(f.target.combatCounter, 'counter'), []);
   assert.ok(combatCounterProblems({ charges: 0, mode: 'melee', damage: 5, poiseDamage: 0, bonus: 0,
     carrier: carrier('counter') }, 'counter').some(problem => problem.includes('charges must be 1')));
-  for (const change of [entity => entity.combatCounter.payload.hp = Infinity, entity => entity.combatStance.reach = 'elsewhere',
+  for (const change of [entity => entity.combatCounter.payload.hp = Infinity, entity => entity.combatStance.range = 'elsewhere',
     entity => entity.combatEvade.bonus = NaN, entity => entity.combatCounter.coverage.targeting = ['unknown'],
     entity => entity.combatCounter.serial++]) {
     const invalid = structuredClone(f.target); change(invalid); assert.ok(combatExpansionEntityProblems(invalid).length > 0);

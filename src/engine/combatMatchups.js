@@ -3,6 +3,7 @@ import { combatMatchups, combatExpansionMatchups } from '../content/combatMatchu
 import * as Avoidance from './combatAvoidance.js';
 import { creditKnowledgeBenefit } from './enemyKnowledge.js';
 import { enqueueExpandedAction } from './combatExpansionActions.js';
+import { breakPersistentWard } from './combatStatusControl.js';
 import { counterstrikeAmount, counterstrikePct, stanceManeuverOf } from './combatCardTraitMath.js';
 import { dealPoiseDamage } from './actions.js';
 import { spendPersistentWard } from './combatStatusControl.js';
@@ -155,7 +156,9 @@ export function stripCombatWard(ctx, source, target, amount) {
     if (!ward) return 0;
     const stripped = Math.min(Math.max(0, ward.value), Math.max(0, Math.floor(amount)));
     ward.value -= stripped;
-    if (stripped) ctx.emit?.('combatWardStripped', { ...seats(ctx, source, target), sourceId: source?.id, sourceKind: source?.kind, targetId: target.id, amount: stripped });
+    // value and max carry the remaining Ward, so the paced reducers can move the badge as the hit does.
+    if (stripped) ctx.emit?.('combatWardStripped', { ...seats(ctx, source, target), sourceId: source?.id, sourceKind: source?.kind, targetId: target.id, amount: stripped, value: ward.value, max: ward.max });
+    if (stripped && ward.value === 0) breakPersistentWard(ctx, target, { sourceId: source?.id });
     return stripped;
   }
   let remaining = Math.max(0, Math.floor(amount));
@@ -260,7 +263,7 @@ function normalizedProfile(carrier, contact = {}) {
   const profile = { ...base, ...contact };
   profile.camp = isSpell(profile) ? 'spell' : profile.camp;
   // Compatibility mapping uses existing authored delivery, never card names.
-  profile.reach ||= profile.delivery === 'projectile' || profile.maneuver === 'ranged' ? 'near' : 'contact';
+  profile.range ||= profile.delivery === 'projectile' || profile.maneuver === 'ranged' ? 'reach' : 'melee';
   profile.targeting ||= profile.maneuver === 'sweep' ? 'area' : 'single';
   profile.projectile ??= carrier?.attack?.delivery === 'projectile' || hasTrait(profile, 'projectile');
   profile.dodgeable ??= carrier?.attack?.dodgeable;
@@ -280,7 +283,7 @@ export function setCombatStance(ctx, entity, carrier) {
   if (!profile.maneuver || profile.stanceTrigger === false) return entity.combatStance || null;
   clearCombatCounter(entity, ctx);
   entity.combatStance = { maneuver: profile.maneuver, camp: profile.camp,
-    reach: profile.reach, ...(profile.school ? { school: profile.school } : {}),
+    range: profile.range, ...(profile.school ? { school: profile.school } : {}),
     ...(Number.isInteger(profile.stanceExpiry) ? { expiresOnOwnerCycle: (entity.combatOwnerCycle || 0) + profile.stanceExpiry } : {}),
   };
   // Reaction rules version 2: a Defend card with Impact/Flux arms the trait guard (max-merged).
@@ -346,7 +349,7 @@ function armExpansionCounter(ctx, entity, carrier, options) {
 /** Every declared filter must match; Area is never inferred from target count. */
 export function counterCoverageMatches(coverage, profile, effect = 'damage') {
   if (!coverage || !profile) return false;
-  const filters = [['camps', 'camp'], ['schools', 'school'], ['reaches', 'reach'],
+  const filters = [['camps', 'camp'], ['schools', 'school'], ['ranges', 'range'],
     ['targeting', 'targeting'], ['maneuvers', 'maneuver']];
   for (const [list, key] of filters) {
     const values = coverage[list];
@@ -480,16 +483,25 @@ function schoolReturnMultiplier(ctx, counter, incoming) {
   if (!match || !counter.schoolEffect) return 1;
   const check = (prefix) => match[`${prefix}Schools`]?.includes(incoming.school)
     || match[`${prefix}DamageTypes`]?.includes(incoming.damageType)
-    || match[`${prefix}Reaches`]?.includes(incoming.reach)
+    || match[`${prefix}Ranges`]?.includes(incoming.range)
     || match[`${prefix}Targeting`]?.includes(incoming.targeting)
     || match[`${prefix}Traits`]?.some(trait => hasTrait(incoming, trait));
   if (check('weak')) return cfg.schoolWeakMultiplier;
   return check('strong') ? cfg.schoolStrongMultiplier : 1;
 }
 
+/**
+ * THE ONE SMASH GUARD-BREAK TEST: a Smash that connects and leaves the target
+ * with no Block. GUARD BREAK (combatGuardBroken) and the Block's blockBroken
+ * both read it, so the Block break a Smash makes is shown as GUARD BREAK alone.
+ */
+export function isSmashGuardBreak(receipt, target) {
+  return !!receipt && receipt.smash === true && (receipt.connected ?? true) && number(receipt.guardBefore) > 0 && number(target?.block) <= 0;
+}
+
 /** A Smash that breaks the target's last Guard. Reported even when the hit killed the target. */
 export function completeGuardBreak(ctx, source, target, carrier, receipt) {
-  if (!(receipt.smash && receipt.connected && receipt.guardBefore > 0 && number(target?.block) <= 0)) return;
+  if (!isSmashGuardBreak(receipt, target)) return;
   const amount = carrier?.combatProfile?.breakPoiseBonus ?? expansionMatchupRules(ctx).smash.guardBreakPoiseBonus;
   // The break is reported even with no bonus, and even when this hit killed
   // the target: Guard broke all the same. A dead target takes no bonus Poise.
@@ -554,7 +566,7 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
   if (receipt.profiles.some((profile, index) => receipt.covered[index] && profile.effect !== 'status' && profile.maneuver === 'smash')) {
     payload.poise += scale(number(counter.payload.smashPoiseBonus));
   }
-  if (target.statuses?.prone?.stacks > 0 && receipt.profiles.some((profile, index) => receipt.covered[index] && profile.reach === 'contact')) {
+  if (target.statuses?.prone?.stacks > 0 && receipt.profiles.some((profile, index) => receipt.covered[index] && profile.range === 'melee')) {
     payload.poise += number(counter.carrier.combatProfile?.pronePoiseBonus);
   }
   const magical = isSpell(counter.carrier.combatProfile);

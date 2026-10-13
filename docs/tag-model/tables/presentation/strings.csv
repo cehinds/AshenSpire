@@ -2318,7 +2318,7 @@ hardcoded.forsaken_together,Forsaken Together,,hardcoded,src/ui/screens/coop.js:
 hardcoded.the_fire_went_out,The fire went out,,hardcoded,src/ui/screens/coop.js:385,hardcoded,src/ui/screens/coop.js:385,coop.theFireWentOut,content/source/uiStrings.csv
 hardcoded.connection_lost,Connection lost,,hardcoded,src/ui/screens/coop.js:386,hardcoded,src/ui/screens/coop.js:386,coop.connectionLost,content/source/uiStrings.csv
 hardcoded.ward_pool,Ward pool,,hardcoded,src/ui/screens/coop.js:917,hardcoded,src/ui/screens/coop.js:917,coop.wardPool,content/source/uiStrings.csv
-hardcoded.barrier,Barrier,,hardcoded,src/ui/screens/coop.js:917,hardcoded,src/ui/screens/coop.js:917,coop.barrier,content/source/uiStrings.csv
+hardcoded.barrier,Barrier,,hardcoded,src/ui/screens/coop.js:917,hardcoded,src/ui/screens/coop.js:917,combat.protection.barrier,content/source/uiStrings.csv
 hardcoded.floor_seed,· FLOOR · SEED,,hardcoded,src/ui/screens/coop.js:1057,hardcoded,src/ui/screens/coop.js:1057,coop.floorSeed,content/source/uiStrings.csv
 hardcoded.character_level_card,Character level · Card,,hardcoded,src/ui/screens/coop.js:1588,hardcoded,src/ui/screens/coop.js:1588,coop.characterLevelCard,content/source/uiStrings.csv
 hardcoded.take_the_relic,Take the relic,,hardcoded,src/ui/screens/coop.js:1637,hardcoded,src/ui/screens/coop.js:1637,coop.takeTheRelic,content/source/uiStrings.csv

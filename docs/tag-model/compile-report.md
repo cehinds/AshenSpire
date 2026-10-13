@@ -31,7 +31,7 @@ UNMAPPED: 0
 | maneuver | 8 | 0 |
 | presentation | 30 | 0 |
 | property | 182 | 0 |
-| reach | 4 | 0 |
+| range | 4 | 0 |
 | run | 1 | 0 |
 | scaling | 6 | 0 |
 | school | 10 | 0 |
@@ -115,7 +115,9 @@ None: every live id is mapped by at most one tag.
 | meta.combat.stance | maneuver | parent | meta.combat | (live root) |
 | meta.combat.stance.defensive | maneuver:defend | label | Defensive | Defend |
 | meta.combat.stance.defensive.block.guard | guard | parent | meta.combat.stance.defensive.block | card (mapped to card) |
+| meta.combat.stance.counter.melee-counter | counter:melee | parent | meta.combat.stance.counter | counterMode (mapped to counterMode) |
 | meta.combat.stance.counter.ranged-counter | counter:ranged | parent | meta.combat.stance.counter | counterMode (mapped to counterMode) |
+| meta.combat.stance.counter.spell-counter | counter:spell | parent | meta.combat.stance.counter | counterMode (mapped to counterMode) |
 | meta.combat.delivery | delivery | parent | meta.combat | (live root) |
 | meta.combat.delivery.ranged | maneuver:ranged | parent | meta.combat.delivery | maneuver (mapped to meta.combat.stance) |
 | meta.combat.delivery.casting | maneuver:casting | label | Casting | Spell |
@@ -152,8 +154,6 @@ None: every live id is mapped by at most one tag.
 | meta.combat.camp | camp | parent | meta.combat | (live root) |
 | meta.combat.camp.spell | camp:spell | glyph | ✦ | ✧ |
 | meta.presentation.fx | presentation | parent | meta.presentation | (live root) |
-| meta.combat.stance.counter.melee-counter | counter:melee | parent | meta.combat.stance.counter | counterMode (mapped to counterMode) |
-| meta.combat.stance.counter.spell-counter | counter:spell | parent | meta.combat.stance.counter | counterMode (mapped to counterMode) |
 
 ## 4. Reverse: live-tag with no live node
 

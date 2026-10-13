@@ -1689,6 +1689,31 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 :root[data-layout='narrow'] .reward-door .rp-next { justify-self: end; }
 .reward-door .reward-row { justify-content: center; flex-wrap: wrap; padding: 0.6rem 0; max-width: 100%; }
 .reward-door .reward-row .reward-node { white-space: normal; }
+/* THE REWARD CHOICE GRID (owner-approved layout: boss relics and card picks):
+   three columns in ONE row on desktop and phone alike. Each column is the
+   option's card face on top and its text button under it; both select, and the
+   chosen one wears the green trim. The face scales to its column, the button
+   text wraps and never clips. */
+/* The column count follows the offer (--choice-count, set from JS): one to four
+   options, each column capped at 16rem and the row centred, so a lone option
+   sits in the middle rather than stretching across the door. */
+.reward-door .reward-row.reward-choice-grid { display: grid; grid-template-columns: repeat(var(--choice-count, 3), minmax(0, 16rem)); gap: 12px; align-items: stretch; justify-content: center; width: 100%; max-width: 60rem; padding: .6rem 0; }
+.reward-door .reward-choice-option { display: flex; flex-direction: column; gap: .6rem; min-width: 0; width: 100%; }
+.reward-door .reward-choice-option > .equipment-poker-card { width: 100%; max-width: 220px; margin-inline: auto; flex: 0 0 auto; }
+.reward-door .reward-choice-option > .card { align-self: center; zoom: 1; }
+.reward-door .reward-choice-option > .reward-pick { flex: 1 1 auto; min-width: 0; box-sizing: border-box; padding: .7rem .8rem; gap: .3rem; }
+.reward-door .reward-choice-option > .reward-pick h3 { font-size: clamp(1.2rem, 1.5vw, 1.6rem); line-height: 1.2; white-space: normal; overflow-wrap: anywhere; }
+.reward-door .reward-choice-option > .reward-pick p { font-size: clamp(1.1rem, 1.25vw, 1.35rem); overflow-wrap: anywhere; }
+@media (max-width: 520px) {
+  /* Four options still share one row on a 390px phone: the faces zoom down by
+     count (1.68 / count, so three options keep the .56 they had). */
+  .reward-door .reward-row.reward-choice-grid { gap: 8px; grid-template-columns: repeat(min(var(--choice-count, 3), 4), minmax(0, 1fr)); }
+  .reward-door .reward-choice-option { gap: .4rem; }
+  .reward-door .reward-choice-option > .card { zoom: min(1, calc(1.68 / var(--choice-count, 3))); }
+  .reward-door .reward-choice-option > .reward-pick { padding: .45rem .4rem; }
+  .reward-door .reward-choice-option > .reward-pick h3 { font-size: clamp(11px, 3.2vw, 14px); }
+  .reward-door .reward-choice-option > .reward-pick p { font-size: clamp(10px, 2.9vw, 12.5px); }
+}
 .reward-door .reward-kind[data-state='taken'] .chip { color: var(--gold); border-color: var(--gold); }
 /* The ring itself is the shared one above; the door adds only the lift. */
 .reward-door .reward-row .card.reward-selected { transform: translateY(-8px) scale(1.06); }
@@ -5860,7 +5885,8 @@ button[data-button-size] {
 /* Approved compact defense HUD: Ward, shield, then an elastic HP trough.
    The wrapper keeps the resource plan's total max-HP-scaled width. */
 :root .combat .combatant .combat-health-row {
-  --health-red: #ad403a; --health-blue: #348fcb; --ward-purple: #9a63d9; --ward-gold: #d8b354;
+  /* Owner colours (2026-10-12): Block silver, Ward purple, Barrier blue, HP red. */
+  --health-red: #ad403a; --block-silver: #d8dde3; --ward-purple: #b38ae8; --barrier-blue: #5fa8ff;
   --health-row-h: var(--combatant-hp-h, max(.85rem, calc(14px / var(--ui-zoom, 1))));
   display: flex; align-items: center; align-self: center; gap: 2.85%; min-width: calc(112px / var(--ui-zoom, 1)); max-width: 100%;
   min-height: var(--health-row-h); flex: none;
@@ -5869,11 +5895,16 @@ button[data-button-size] {
   position: relative; flex: 1 1 0; min-width: 0; --meter-tone: var(--health-red) !important;
   container-type: inline-size; container-name: combat-health;
 }
-:root .combat .combatant .combat-health-row > .combat-health-meter[data-protected='true'] { --meter-tone: var(--health-blue) !important; }
+/* The fill takes the highest layer still standing: Barrier > Block > Ward > Health red (healthGuardTone). */
+:root .combat .combatant .combat-health-row > .combat-health-meter[data-guard='barrier'] { --meter-tone: var(--barrier-blue) !important; }
+:root .combat .combatant .combat-health-row > .combat-health-meter[data-guard='block'] { --meter-tone: var(--block-silver) !important; }
+:root .combat .combatant .combat-health-row > .combat-health-meter[data-guard='ward'] { --meter-tone: var(--ward-purple) !important; }
+/* Poise still standing: a gold trim around the whole health bar. Poise has no badge; its value is in the bar's tooltip and aria-label. */
+:root .combat .combatant .combat-health-row > .combat-health-meter[data-poised='true'] { border-radius: 6px; box-shadow: 0 0 0 max(1px, calc(1.5px / var(--ui-zoom, 1))) #ffd34d, 0 0 6px 1px #ffd34d88; }
 :root .combat .combatant .combat-health-meter .m-track { height: var(--health-row-h); border-radius: 5px; background: #0d1412; }
 :root .combat .combatant .combat-health-meter[data-warded='true'] .m-track {
-  outline: max(1px, calc(2px / var(--ui-zoom, 1))) solid var(--ward-gold); outline-offset: 1px;
-  box-shadow: 0 0 calc(7px / var(--ui-zoom, 1)) #d8b35466;
+  outline: max(1px, calc(2px / var(--ui-zoom, 1))) solid var(--ward-purple); outline-offset: 1px;
+  box-shadow: 0 0 calc(7px / var(--ui-zoom, 1)) #b38ae966;
 }
 :root .combat .combatant .combat-health-meter .m-value { color: #fff1d6; letter-spacing: 0; text-shadow: var(--hud-text-shadow, 0 1px 2px #000); }
 :root .combat .combatant .combat-health-badge {
@@ -5882,11 +5913,14 @@ button[data-button-size] {
   font-variant-numeric: tabular-nums; text-shadow: 0 1px 3px #000; isolation: isolate;
 }
 :root .combat .combatant .combat-health-badge::before { content: ''; position: absolute; inset: 0; z-index: -1; }
-:root .combat .combatant .combat-health-shield::before { background: linear-gradient(135deg, #61abe0, var(--health-blue), #194a6b); clip-path: polygon(8% 5%,50% 0,92% 5%,87% 70%,50% 100%,13% 70%); }
-:root .combat .combatant .combat-health-shield { aspect-ratio: 40/44; filter: drop-shadow(0 0 3px #348fcb55); }
-:root .combat .combatant .combat-health-shield .combat-health-badge-value { transform: translateY(-.23em); }
+/* Block badge: a dark plate with a silver rim, so its silver figure reads with a black outline. */
+:root .combat .combatant .combat-health-shield::before { background: linear-gradient(135deg, #3b434d, #1d2228 60%, #0f1216); clip-path: polygon(8% 5%,50% 0,92% 5%,87% 70%,50% 100%,13% 70%); }
+:root .combat .combatant .combat-health-shield { aspect-ratio: 40/44; filter: drop-shadow(0 0 1px var(--block-silver)) drop-shadow(0 0 3px #d8dde355); }
+:root .combat .combatant .combat-health-shield .combat-health-badge-value { transform: translateY(-.23em); color: var(--block-silver); text-shadow: none; -webkit-text-stroke: 1px #000; paint-order: stroke fill; }
 :root .combat .combatant .combat-health-ward::before { border-radius: 50%; background: linear-gradient(135deg, #b38ae8, var(--ward-purple), #4d316b); }
-:root .combat .combatant .combat-health-ward { filter: drop-shadow(0 0 4px #9a63d966); }
+:root .combat .combatant .combat-health-ward { filter: drop-shadow(0 0 4px #b38ae966); }
+/* Barrier: Ward charged past full until the owner's next turn — a blue rim. */
+:root .combat .combatant .combat-health-ward-barrier::before { box-shadow: 0 0 0 max(2px, calc(3px / var(--ui-zoom, 1))) #5fa8ff, 0 0 8px 2px #5fa8ffaa; }
 :root .combat .combatant .combat-health-badge:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 :root .combat .combatant .combat-health-badge { min-width: max-content; }
 :root body.cb-safe .combat .combatant .combat-health-row { --health-red: var(--res-hp); }
@@ -6210,9 +6244,9 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 .cc-design-workspace input, .cc-design-workspace select, .cc-design-workspace .ls-label,
 .cc-design-workspace .as-optioncard .as-subtitle { font-size:var(--cc-body-font); }
 .cc-design-workspace .cc-ability-progress { font-size:var(--cc-body-font); color:var(--cc-copy-muted); }
-.cc-design-workspace .cc-equip-group[data-equipment-section="startingAbilities"] > .cc-card-selectors { grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr)); }
-.cc-design-workspace .cc-ability-choice > .card { width:100%; max-width:300px; }
-.cc-design-workspace .cc-ability-choose { max-width:300px; min-height:var(--cc-control-floor); font-size:var(--cc-body-font); }
+.cc-design-workspace .cc-equip-group[data-equipment-section="startingAbilities"] > .cc-card-selectors { grid-template-columns:repeat(auto-fill,minmax(min(100%,var(--card-w,14rem)),var(--card-w,14rem))); justify-content:start; align-content:start; }
+.cc-design-workspace .cc-ability-choice > .card { width:100%; max-width:var(--card-w,14rem); }
+.cc-design-workspace .cc-ability-choose { max-width:var(--card-w,14rem); min-height:var(--cc-control-floor); font-size:var(--cc-body-font); }
 .cc-design-workspace .cc-review { font-size:var(--cc-body-font); }
 .cc-design-workspace .cc-review .card { max-width:300px; }
 @media(max-width:960px) {
@@ -6231,9 +6265,9 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
  .cc-choice-title { font-size:max(22px,calc(22px / var(--ui-zoom,1))); }
  .cc-panel { padding:22px; }
  .cc-design-workspace .cz-scroll { padding:16px; }
- .cc-design-workspace .cc-equip-group[data-equipment-section="startingAbilities"] > .cc-card-selectors { grid-template-columns:minmax(0,1fr); }
+ .cc-design-workspace .cc-equip-group[data-equipment-section="startingAbilities"] > .cc-card-selectors { grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); justify-items:center; }
  .cc-design-workspace .cc-ability-choice { width:100%; }
- .cc-design-workspace .cc-ability-choice > .card { max-width:300px; }
+ .cc-design-workspace .cc-ability-choice > .card { max-width:var(--card-w,14rem); }
  /* Older equipment-fit rules hid its stage picker. The shared navigation
     must remain reachable on every page, including Equipment and Spells. */
  .customize.cc-design-workspace:has(#cz-equipment-panel) .as-railed[data-cat-nav="selector"] > .as-catnav-toggle,
@@ -6286,10 +6320,10 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 @media(max-width:600px) { .customize.cc-design-workspace .cz-railed[data-cat-nav="selector"] { display:grid!important; } }
 /* Spells is now its own page rather than an equipment fold. Match its real
    selector hook and keep card rules readable instead of the old tiny grid. */
-.cc-design-workspace #cz-spell-choices { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); justify-items:center; gap:48px 20px; padding:58px 6px 14px; }
+.cc-design-workspace #cz-spell-choices { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,var(--card-w,14rem)),var(--card-w,14rem))); justify-items:stretch; justify-content:start; align-content:start; gap:48px 20px; padding:58px 6px 14px; }
 .cc-design-workspace #cz-spell-choices > .cc-ability-choice { width:100%; }
-@media(max-width:600px) { .cc-design-workspace #cz-spell-choices { grid-template-columns:minmax(0,1fr); gap:48px; } }
-.cc-design-workspace #cz-spell-choices { grid-auto-flow:row; grid-auto-columns:minmax(0,1fr); overflow:visible; scroll-snap-type:none; }
+@media(max-width:600px) { .cc-design-workspace #cz-spell-choices { grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); justify-items:center; gap:48px; } }
+.cc-design-workspace #cz-spell-choices { grid-auto-flow:row; grid-auto-columns:auto; overflow:visible; scroll-snap-type:none; }
 .cc-design-workspace #cz-spell-choices > .cc-ability-choice { grid-column:auto; grid-row:auto; min-width:0; }
 .cc-design-workspace .cz-actions button[aria-disabled="true"] { background:var(--bg-raise,#1b1710); color:var(--cc-copy-muted); border-color:var(--line,#786443); animation:none; }
 
@@ -6359,3 +6393,10 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 /* Long class/skill summaries are teasers; the inspector always retains the
    complete authored benefit and every level requirement. */
 .cc-feat-browser .cc-choice-description { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; }
+/* Hotfix: the maneuver picker lives in the Equipment fold, whose pane is
+   overflow:hidden, so it is its own vertical scrollport (the flex column at
+   6147 loses to the generic equipment-section grid). */
+.customize .cc-equip-group[data-equipment-section="startingAbilities"] { display:flex; flex-direction:column; gap:8px; height:100%; min-height:0; }
+.customize .cc-equip-group[data-equipment-section="startingAbilities"] > .cc-card-selectors,
+.customize .cc-equip-group[data-equipment-section="startingAbilities"] > .cc-card-selectors[data-view] { flex:1 1 auto; min-height:0; grid-row:auto; grid-column:auto; grid-auto-flow:row; grid-auto-columns:auto; overflow-x:hidden; overflow-y:auto; scroll-snap-type:none; scrollbar-gutter:stable; }
+.customize .cc-equip-group[data-equipment-section="startingAbilities"] > :not(.cc-card-selectors) { flex:none; }

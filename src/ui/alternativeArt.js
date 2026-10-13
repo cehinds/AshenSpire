@@ -109,41 +109,7 @@ export function alternativeCardFadeHtml() {
 // Fit the art canvas to the actual battlefield, keeping its measured ground
 // aligned with the current formation. HUD/cards/footer and actor slots stay owned
 // by their existing models. Never stretch a layer independently of its canvas.
-// Share of a landmark art's height at which its floor meets the buildings
-// (the horizon), measured on the phone art. TODO(config): move to the scene data.
-export const LANDMARK_HORIZON_SHARE = .458;
-
-// The field-relative camera ground that puts the art's horizon `share` of the
-// way down the field (0 = top edge). Undefined when the device has no landmark.
-export function horizonCameraGround(device, { height, scale, share }) {
-  const landmark = device.layers?.find(layer => /landmark/.test(layer.id));
-  if (!landmark || !(height > 0) || !(scale > 0) || !Number.isFinite(share)) return undefined;
-  const horizon = landmark.y + LANDMARK_HORIZON_SHARE * landmark.height;
-  return share * height + (device.groundAnchor * device.height - horizon) * scale;
-}
-
-// The field-local y of the desktop standing area's top when the camera frames
-// the horizon at `share`. fitAlternativeBackdrop lifts the camera onto the
-// farthest-back foot line, so a shared back row that stands above this line
-// would push the horizon off the field; the stage keeps that row at or below it.
-export function desktopHorizonFloor(device, { width, height, share }) {
-  const landmark = device.layers?.find(layer => /landmark/.test(layer.id));
-  if (!landmark || !(width > 0) || !(height > 0) || !Number.isFinite(share)) return undefined;
-  const scale = Math.max(width / device.width, height / device.height);
-  const horizon = landmark.y + LANDMARK_HORIZON_SHARE * landmark.height;
-  const standingTop = device.standingArea?.y ?? device.groundAnchor;
-  return share * height + (standingTop * device.height - horizon) * scale;
-}
-
-// The standing-area floor for the combat backdrop on `combat`, in field-local px,
-// with the same scene and width/height fitAlternativeBackdrop frames.
-export function combatHorizonFloor(combat, { width, height, share }) {
-  const backdrop = combat.querySelector('.alternative-backdrop');
-  const scene = alternativeArtCatalog.scenes[backdrop?.dataset.scene];
-  return scene ? desktopHorizonFloor(scene.devices.desktop, { width, height, share }) : undefined;
-}
-
-export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground, standGround, narrow, horizonShare, coverFloor = false }) {
+export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground, standGround, narrow, coverFloor = false }) {
   const backdrop = combat.querySelector('.alternative-backdrop');
   const scene = alternativeArtCatalog.scenes[backdrop?.dataset.scene];
   if (!scene || width <= 0 || height <= 0) return;
@@ -151,10 +117,6 @@ export function fitAlternativeBackdrop(combat, { width, height, fieldTop, ground
   const device = scene.devices[key];
   const svg = backdrop.querySelector('svg');
   const scale = Math.max(width / device.width, height / device.height);
-  // A desktop camera may frame the horizon on a fixed share of the field instead
-  // of the enemies' ground; the phone never passes horizonShare.
-  const horizonGround = key === 'desktop' ? horizonCameraGround(device, { height, scale, share: horizonShare }) : undefined;
-  if (Number.isFinite(horizonGround)) ground = horizonGround;
   // Combat follows the fitted enemies while keeping the floor canvas beneath
   // the entire battlefield; moving it farther up exposes its lower edge.
   // Other callers (dialogue) keep their own floor line.

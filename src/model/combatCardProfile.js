@@ -1,12 +1,13 @@
 import { objectTagIds, resolve } from '../content/tags.js';
 import { tagService } from './tagService.js';
+import { RANGES, normalizeRange } from './combatRanges.js';
 import { dominantDamageType } from './attackTags.js';
 
 const CAMP = new Set(['physical', 'spell']);
 const MANEUVER = new Set(['attack', 'defend', 'counter', 'sweep', 'ranged', 'smash', 'casting']);
 const SCHOOL = new Set(['frost', 'fire', 'lightning', 'force', 'alteration', 'illusion', 'divine', 'decay', 'earth']);
 const COUNTER = new Set(['melee', 'ranged', 'spell']);
-const REACH = new Set(['contact', 'near', 'far']);
+const RANGE = new Set(RANGES);
 const TARGETING = new Set(['single', 'area']);
 
 function identity(tags, prefix, allowed, name) {
@@ -14,6 +15,39 @@ function identity(tags, prefix, allowed, name) {
   if (values.length > 1) throw new Error(`${name} carries conflicting ${prefix} tags`);
   if (values.length && allowed && !allowed.has(values[0])) throw new Error(`${name} carries unknown ${prefix} tag '${values[0]}'`);
   return values[0] || null;
+}
+
+/**
+ * THE ONE SPELL TEST: a Spell is the spell CAMP, nothing else. Mana cost and
+ * magical school do not make a card a Spell; only its camp does. Gainers of
+ * Barrier (actions.js gainBarrier) and the card face ("Gain N Ward") both read it.
+ */
+export function isSpellCard(card) {
+  if (!card) return false;
+  const tags = card.tags || card.cardTags;
+  return card.combatProfile?.camp === 'spell' || (Array.isArray(tags) && tags.includes('camp:spell'));
+}
+
+/**
+ * spellCostSurcharge(entity) → the extra Stamina (SP) a spell-camp action costs
+ * this entity: one per Silenced stack (owner, 2026-10-13, expanded combat).
+ * The one helper every SP pricing reads; spellCardCostSurcharge applies it to a card or move.
+ */
+export function spellCostSurcharge(entity) {
+  return silencedStacks(entity);
+}
+
+/** silencedStacks(entity) → the Silenced stacks an entity carries (0 without the status). */
+export function silencedStacks(entity) {
+  const stacks = Number(entity?.statuses?.silenced?.stacks);
+  return Number.isFinite(stacks) && stacks > 0 ? Math.floor(stacks) : 0;
+}
+
+/** The surcharge on one card or enemy move: spell camp only; a strike or technique pays none. */
+export function spellCardCostSurcharge(entity, card) {
+  if (!card) return 0;
+  const spell = card.combatProfile ? card.combatProfile.camp === 'spell' : (isSpellCard(card) || combatProfileFor(card).camp === 'spell');
+  return spell ? spellCostSurcharge(entity) : 0;
 }
 
 /** Resolve authored identity; card names and spell damage never choose a camp. */
@@ -42,18 +76,41 @@ export function combatProfileFor(carrier = {}) {
     profile.damageType = dominantDamageType(components);
     profile.damageComponents = components.map(({ type, weight }) => ({ type, weight }));
   }
-  const reach = identity(tags, 'reach:', REACH, id);
+  // `range:` is the family; a legacy `reach:contact|near|far` tag still reads, normalized.
+  const range = identity(tags.map(tag => tag.startsWith('reach:') ? `range:${normalizeRange(tag.slice(6))}` : tag), 'range:', RANGE, id);
   const targeting = identity(tags, 'targeting:', TARGETING, id);
-  if (reach) profile.reach = reach;
+  if (range) profile.range = range;
   if (targeting) profile.targeting = targeting;
   const traits = [...new Set(tags.filter(tag => tag.startsWith('trait:')).map(tag => tag.slice(6)))];
   if (traits.length) profile.traits = traits;
   // These are authored payloads, not guessed from a card's name or damage type.
-  for (const key of ['reach', 'targeting', 'traits', 'projectile', 'counterCoverage', 'counterPayload',
+  if (typeof carrier.reach === 'string' && carrier.range === undefined && RANGE.has(normalizeRange(carrier.reach))) profile.range = normalizeRange(carrier.reach);
+  for (const key of ['range', 'targeting', 'traits', 'projectile', 'counterCoverage', 'counterPayload',
     'evade', 'upcast', 'stanceTrigger', 'stanceExpiry', 'schoolEffect', 'caster', 'breakPoiseBonus', 'pronePoiseBonus', 'traitValues']) {
     if (carrier[key] !== undefined) profile[key] = structuredClone(carrier[key]);
   }
   return profile;
+}
+
+// Range (owner, 2026-10-11): Melee / Reach / Ranged, the card's own range
+// (src/model/combatRanges.js). An untagged spell attack takes its delivery
+// (projectile Ranged, melee Melee, else Reach) through the player card's
+// combat default. Ranged maneuvers show no separate range: their stance already
+// reads Ranged. A card that deals no damage shows no range, so a Counter that only
+// gains Poise (an evasion) reads no range either; a Counter whose reply deals
+// damage (hp or Ward) does.
+const ATTACKING = new Set(['attack', 'smash', 'sweep', 'ranged', 'counter']);
+const dealsDamage = (def) => (def.effects || []).some(effect => effect.op === 'damage')
+  || (def.counterPayload?.hp > 0 || def.counterPayload?.ward > 0);
+
+/** The range a combat definition shows: 'melee' | 'reach' | 'ranged', or null when it shows none. */
+export function combatCardRange(def = {}) {
+  const profile = combatProfileFor(def);
+  if (profile.maneuver === 'ranged') return null;
+  const attacking = ATTACKING.has(profile.maneuver) || (profile.camp === 'spell' && def.type === 'attack');
+  if (!attacking || !dealsDamage(def)) return null;
+  const range = profile.range || (profile.delivery === 'projectile' || profile.maneuver === 'ranged' ? 'reach' : 'melee');
+  return RANGES.includes(range) ? range : null;
 }
 
 /** Reaction rules v2: the Impact and Flux chips read "Impact 2" and "Flux 1". */
@@ -81,7 +138,7 @@ export function combatProfileTags(carrier = {}, registries = null) {
     profile.school && `school:${profile.school}`,
     profile.damageType && `damage:${profile.damageType}`,
     profile.counterMode && `counter:${profile.counterMode}`,
-    profile.reach && `reach:${profile.reach}`,
+    profile.range && `range:${profile.range}`,
     profile.targeting && `targeting:${profile.targeting}`,
     ...(profile.traits || []).map(trait => `trait:${trait}`),
   ].filter(Boolean);

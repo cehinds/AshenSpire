@@ -8,29 +8,109 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-13",
     "summary": "The tag model, its tools and workbench, and the Evade sigil land",
     "detail": "Development-process change only, nothing in the game changes. The tag model's tables, build, check and compile tools, and a table workbench for editing them, are in docs/tag-model/, with its owner rulings on Evade, Sweep precision and piercing stacks recorded in DECISIONS.md. The Evade action sigil now draws from the card-art template boot; no card uses it yet. Five lookup developer messages and 31 combat-test and debug-chrome strings move to content/source/uiStrings.csv, completing steps 9 and 10 of the strings migration.",
-    "build": "0.7.1.1455",
+    "build": "0.7.1.1465",
     "pullRequest": 1931,
     "url": "https://github.com/cehinds/AshenSpire/pull/1931"
   },
   {
-    "id": "pr-1867",
+    "id": "pr-1941",
     "date": "2026-10-13",
     "group": "2026-10-13",
-    "summary": "The round-based combat engine is ported as a preview",
-    "detail": "Nothing changes in the game yet. The alternative round-based combat engine (src/engine/combatRounds) is in the codebase with its own tests and a specification section (§4.11), and it is not wired into combat.",
-    "build": "0.7.1.1455",
-    "pullRequest": 1867,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1867"
+    "summary": "Creation spell and maneuver cards fit, and combat input can't lock",
+    "detail": "In character creation the Spells step and the Combat Maneuvers picker show cards at the review page's size, and the maneuver list scrolls so every card can be reached and chosen. In combat, a failure while preparing a play's visuals no longer leaves End Turn and the hand unresponsive.",
+    "build": "0.7.1.1465",
+    "pullRequest": 1941,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1941"
   },
   {
-    "id": "pr-1838",
+    "id": "pr-1927",
     "date": "2026-10-13",
     "group": "2026-10-13",
-    "summary": "The alternative combat rounds design is recorded",
-    "detail": "Development-process change only, nothing in the game changes. The design for timeline queues, initiative and merge modes is written up in docs/alternative-combat-rounds, with its own tests.",
+    "summary": "Test shards that run out of time say so",
+    "detail": "Nothing changes in the game. A test shard stopped by its 15-minute limit now reports that it was stopped, instead of printing NaN test counts.",
+    "build": "0.7.1.1465",
+    "pullRequest": 1927,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1927"
+  },
+  {
+    "id": "pr-1936",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Dev previews publish again when a pull request merges during the publish",
+    "detail": "Nothing in the game changes. The dev site's self-check now rebuilds the stamped build its run was started for, instead of whatever just landed on dev.",
+    "build": "0.7.1.1465",
+    "pullRequest": 1936,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1936"
+  },
+  {
+    "id": "pr-1921",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Every weapon has a default range, and hand cards show it",
+    "detail": "Combat ranges are now called Melee, Reach and Ranged (formerly contact, near and far), and older saves still load. Each weapon states the range it fights at, and attack cards in the combat hand show a Melee, Reach or Ranged chip, by the same rule the deck editor uses.",
+    "build": "0.7.1.1465",
+    "pullRequest": 1921,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1921"
+  },
+  {
+    "id": "pr-1930",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "One press on a visible Inspect \"i\" opens it",
+    "detail": "One click, tap or Enter on a fighter's Inspect \"i\" opens the inspector at once, even when the fighter was not selected first.",
+    "build": "0.7.1.1463",
+    "pullRequest": 1930,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1930"
+  },
+  {
+    "id": "pr-1934",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Desktop combat uses the phone's proportions",
+    "detail": "On desktop and widescreen the hand now takes 30% of the screen instead of 38%, so the battlefield is larger and enemies are drawn bigger. Hand cards scale with the hand like on a phone, and the horizon sits where it does on a phone. Phone and tablet layouts are unchanged.",
+    "build": "0.7.1.1463",
+    "pullRequest": 1934,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1934"
+  },
+  {
+    "id": "pr-1932",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "The balance report reads Gilded Knight correctly again",
+    "detail": "Nothing changes in the game. Gilded Knight's damage per turn no longer reads as \"not a number\", because its guard reaction is no longer counted as an attack. The balance document is regenerated to match the current game.",
+    "build": "0.7.1.1459",
+    "pullRequest": 1932,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1932"
+  },
+  {
+    "id": "pr-1896",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Ward, Barrier and Poise now wear away, every hit shows where it landed, and hits can be part magic, part physical",
+    "detail": "Magic damage meets Barrier, then Ward; physical damage meets Block, then Poise. Barrier and Block soak a hit completely, while Ward and Poise always let at least 1 damage through, are spent by what they absorb, and no longer also shave damage by their rating. Every fighter starts each fight with full Ward and Poise, and they only come back through a card, feat, class feature or relic. Ward added past full becomes Barrier until your next turn. Breaking an enemy's Ward or Poise interrupts its action; a break costs you 1 Stamina next turn. A hit can now be part magic and part physical: staff and sceptre strikes and defends are 40% magic, Force is half arcane and half blunt, Alteration and Earth are physical, martial techniques with spell effects are 30% magic with the weapon's damage type, and a card that names several damage types splits by them. Silenced no longer weakens spells; each stack makes spells cost 1 more Stamina, the Silenced creature is immune to the Arcane part of a hit, and each Force hit or effect on it removes a stack. Each layer has its own colour on the health bar and in the hit numbers (Barrier blue, Ward purple, Block silver, Poise gold, Health red), with popups for MISSED, BREAK, WARD BREAK, POSTURE BREAK, INTERRUPTED and IMMUNE, and the combat log lists each layer's share and the roll behind a miss. A creature resistant to a damage school takes three quarters of the hit.",
+    "build": "0.7.1.1459",
+    "pullRequest": 1896,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1896"
+  },
+  {
+    "id": "pr-1907",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Boss victories offer a choice of boss relics",
+    "detail": "Beating a boss now lays out up to three boss relics you do not own, and you keep the one you pick. With auto-collect on, Continue picks one at random, as it does for cards; with it off, an unpicked choice is left behind. Co-op boss rewards are unchanged.",
+    "build": "0.7.1.1457",
+    "pullRequest": 1907,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1907"
+  },
+  {
+    "id": "pr-1928",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "The online dev build publishes after its build number is stamped",
+    "detail": "Development-process change only, nothing in the game changes. The playable dev build on the project site no longer fails to publish while a new build waits for its number; it publishes once the number is stamped.",
     "build": "0.7.1.1455",
-    "pullRequest": 1838,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1838"
+    "pullRequest": 1928,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1928"
   },
   {
     "id": "pr-1926",
