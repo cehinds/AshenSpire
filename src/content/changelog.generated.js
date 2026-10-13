@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1914",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Poison, Psychic and Earth join the elements; weapons set their own damage type",
+    "detail": "Twelve new cards: four Rogue Poison cards (Asp Dart, Viper Strike, Septic Blade, Lethal Dose) and eight classless Psychic and Earth cards, which Herald and Starseer meet twice as often and can take as a starting spell. Five enemies resist a thematic element. Strike, Cheap Shot, Bloodhunter's Strike and Guard Counter deal your weapon's damage type; Ruinous Blow and Deathblow split Blunt and Force; Blood Tithe splits your weapon's type with Necrotic and Bleeds; Lethal Dose is a thrown vial with Precision that hits harder. Blight Bloom's text names its expanded-combat cap.",
+    "build": "0.7.1.1443",
+    "pullRequest": 1914,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1914"
+  },
+  {
     "id": "pr-1916",
     "date": "2026-10-12",
     "group": "2026-10-12",
@@ -23,6 +33,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1917"
   },
   {
+    "id": "pr-1918",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "The enemy reaction code passes the architecture check",
+    "detail": "Nothing changes in the game. A setting in the enemy reaction code used a name the architecture check reserves for the browser, so it was renamed.",
+    "build": "0.7.1.1441",
+    "pullRequest": 1918,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1918"
+  },
+  {
     "id": "pr-1915",
     "date": "2026-10-12",
     "group": "2026-10-12",
@@ -41,16 +61,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1437",
     "pullRequest": 1913,
     "url": "https://github.com/cehinds/AshenSpire/pull/1913"
-  },
-  {
-    "id": "pr-1918",
-    "date": "2026-10-12",
-    "group": "2026-10-12",
-    "summary": "The enemy reaction code passes the architecture check",
-    "detail": "Nothing changes in the game. A setting in the enemy reaction code used a name the architecture check reserves for the browser, so it was renamed.",
-    "build": "0.7.1.1441",
-    "pullRequest": 1918,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1918"
   },
   {
     "id": "pr-1906",
