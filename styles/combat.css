@@ -1657,6 +1657,12 @@
 .intent-value { display: inline-flex; align-items: center; gap: calc(4px / var(--ui-zoom, 1)); }
 .intent-icon { width: calc(21px / var(--ui-zoom, 1)); height: calc(21px / var(--ui-zoom, 1)); fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
 .intent-icon[data-solid='true'] { fill: currentColor; fill-rule: evenodd; stroke: none; }
+/* A read that passes tints its intent by damage class (owner, 2026-10-13):
+   silver with a black outline for physical, blue with a purple outline for magic. */
+.intent[data-damage-class='physical'] .intent-icon { fill: #c7ccd4; stroke: #0d0d0f; }
+.intent[data-damage-class='magic'] .intent-icon { fill: #4f63e6; stroke: #8a3fd6; }
+.intent[data-damage-class='physical'] .intent-icon[data-solid='true'] { fill: #c7ccd4; stroke: #0d0d0f; stroke-width: 1.5; }
+.intent[data-damage-class='magic'] .intent-icon[data-solid='true'] { fill: #4f63e6; stroke: #8a3fd6; stroke-width: 1.5; }
 .combatant-leading .intent[data-intent-visibility='partial'] { --intent-accent: #e7c65c; }
 .combatant-leading .intent[data-intent-visibility='unknown'] { --intent-accent: #c88aeb; color: var(--intent-accent); }
 .combatant-leading .intent[data-intent-visibility='unknown'] .intent-stance { font-size: calc(28px / var(--ui-zoom, 1)); }
