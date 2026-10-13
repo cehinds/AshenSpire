@@ -24,7 +24,7 @@ export const combatRatingDefaults = {
   // rating that becomes the Poise pool a combatant starts each fight with.
   resistance: { physicalK: 100, magicalK: 100, statusK: 100, maximum: 0.8, schoolTaken: 0.75, wardPool: 1, poisePool: 1 },
   impact: { magic: 1, light: 1, medium: 2, heavy: 3, colossal: 4,
-    lightMaxWeight: 3, mediumMaxWeight: 6, heavyMaxWeight: 8, unarmed: 1, enemyPhysical: 2 },
+    lightMaxWeight: 3, mediumMaxWeight: 6, heavyMaxWeight: 8, unarmed: 1, enemyPhysical: 1 },
   breaks: { poiseActionLoss: 1, wardActionLoss: 1, thresholdGrowth: 1.25, recoveryPerTurn: 0 },
   // The magic share of each damage type (content/combatRules.js is the
   // default): the share of a hit that is Barrier/Ward rather than Block. A

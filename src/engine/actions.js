@@ -81,7 +81,8 @@ export function computeAttackDamage(ctx, source, target, base, attackTags, carri
   dmg += statuses.getAdd(ctx, source, 'attackDamageAdd');
   dmg *= statuses.getMult(ctx, source, 'damageDealtMult');
   if (target) dmg *= statuses.getMult(ctx, target, 'damageTakenMult');
-  if (target && !beforeDefense) dmg *= ratingDamageMultiplier(ctx, target, isMagicalAttack(ctx, carrier));
+  // Pools only in expanded combat (owner decision, 2026-10-12): no Poise or Ward rating cut. Legacy keeps it.
+  if (target && !beforeDefense && ctx.combatExpansionVersion !== 2) dmg *= ratingDamageMultiplier(ctx, target, isMagicalAttack(ctx, carrier));
   // Tag-scoped extra vulnerability (#61): statuses whose taggedVulnerability
   // tags intersect the hit's effect tags. Composition is the row's DECLARED
   // stacking rule (closed enum, validated): 'multiplicative' sources multiply
@@ -356,8 +357,8 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
         resistances: groupedResistance(rules, defense.resistanceSources || [], defense.resistances || {}),
         immunities: defense.immunities || [], multiplier: 1, flatBonus: 0 }).reduce((sum, part) => sum + part.amount, 0);
     } else {
-      amount = Math.max(0, Math.floor(total * (camp === 'spell' ? 1 : ratingDamageMultiplier(ctx, target, false))
-        * schoolResistanceMultiplier(ctx, target, carrier?.damageSchool)));
+      // Pools only: no Poise or Ward rating cut. Only school resistance shapes a typed part before Block and Poise.
+      amount = Math.max(0, Math.floor(total * schoolResistanceMultiplier(ctx, target, carrier?.damageSchool)));
     }
     amount = Math.max(0, Math.ceil(amount * (1 + Math.max(0, target.damageWeaknessPercent?.[type] || 0) / 100))
       - Math.max(0, target.damageResistanceFlat?.[type] || 0));
