@@ -33,8 +33,7 @@ import { DECK_PANES, deckEditorModel, deckEditorView, deckVariantKey, nextFilter
 import { t, tFull } from '../strings.js';
 import { renderCard, staticTokens } from '../components/card.js';
 import { resolveCard } from '../../model/registries.js';
-import { applyCombatExpansionCard } from '../../content/combatExpansionCards.js';
-import { applyCardTraits } from '../../content/traitProjection.js';
+import { cardFaceDefinition, cardFaceRules } from '../../model/cardFaceDefinition.js';
 import { combatCardRange, combatProfileFor } from '../../model/combatCardProfile.js';
 import { cardCategorySigilHtml } from '../components/cardTagSymbols.js';
 import { playingCardModel } from '../../model/playingCard.js';
@@ -190,7 +189,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   }
 
   function rulesFor(row) {
-    const def = resolveCard(registries, row.ref);
+    const def = combatDef(row);
     const tokens = staticTokens(def);
     return String(def.textTemplate || '').replace(/\{([^}]+)\}/g, (match, key) => tokens[key] ?? match);
   }
@@ -265,9 +264,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     }
     const { row, source } = inspected || selected;
     const def = resolveCard(registries, row.ref);
-    // Reaction rules version 2: the face shows the run's projected trait chips and trait line.
-    const face = renderCard(registries, row.ref, { inspection: false, level: 'inspect',
-      ...(run?.reactionRulesVersion === 2 ? { definition: combatDef(row) } : {}) });
+    // The face is the card combat plays: the run's projected definition (cardFaceDefinition).
+    const face = renderCard(registries, row.ref, { inspection: false, level: 'inspect', definition: combatDef(row) });
     for (const [key, value] of Object.entries(cardShapeCssProperties())) face.style.setProperty(key, value);
     face.style.setProperty('--deck-inspect-width', cardLevelWidthCss('inspect'));
     face.querySelector('.card-costs')?.replaceChildren(rowCosts(row));
@@ -379,10 +377,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   const combatDef = (row) => {
     const key = JSON.stringify(row.ref);
     if (!combatDefCache.has(key)) {
-      const def = resolveCard(registries, row.ref);
-      // Reaction rules version 2 shows the card's trait tags; version 1 shows the card as before.
-      const expanded = run?.combatExpansionVersion === 2 ? applyCombatExpansionCard(def) : def;
-      combatDefCache.set(key, run?.combatExpansionVersion === 2 && run.reactionRulesVersion === 2 ? applyCardTraits(expanded, run.reactionRules) : expanded);
+      combatDefCache.set(key, cardFaceDefinition(registries, row.ref, cardFaceRules(run)));
     }
     return combatDefCache.get(key);
   };
@@ -405,7 +400,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   // has a name: a spell's is Cantrip, a combat maneuver's is Basic.
   const rankNode = (row) => {
     const def = combatDef(row);
-    const card = playingCardModel(registries, row.ref);
+    const card = playingCardModel(registries, row.ref, { definition: def });
     // An unranked maneuver or spell (the starter Strike and Defend) is rank 0.
     const ranked = card.abilityRank ?? (card.rankBadge ? Number(String(card.rankBadge).replace(/\D+/g, '')) : null);
     const rank = Number.isInteger(ranked) ? ranked
