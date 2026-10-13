@@ -1,9 +1,10 @@
-# AI routing: an Opus orchestrator directing Haiku workers
+# AI routing: an Opus orchestrator directing Sonnet and Haiku workers
 
 **Status:** These are the owner's operating instructions for AI sessions working in this
 repository. They were rewritten on 2026-10-10 at the owner's request. The split itself
-is the owner's standing rule: the main session runs on Opus 5.5 and manages Haiku 5.5
-subagents, which do the work. Model names here mean the newest model of that tier;
+is the owner's standing rule (updated 2026-10-13): the main session runs on Opus 5.5 and
+handles planning and management; Sonnet 5.5 subagents do most coding tasks and Haiku 5.5
+subagents do simple, mechanical ones. Model names here mean the newest model of that tier;
 when a new one ships, update the names in this file and CLAUDE.md, and the agent
 files' tier aliases pick it up without edits. The details below (brief shape, wave
 sizes, escalation) are advisory. It never overrides [SPEC.md](../../SPEC.md)
@@ -14,19 +15,20 @@ those files win. Guided-learning work follows
 
 The goal is **the most correctly finished work per unit of quota**. The expensive model
 spends its tokens on judgement: what to do, whether it was done right, and what to tell
-the owner. The cheap model spends its tokens on hands: reading, editing, running and
-reporting.
+the owner. The cheaper models spend their tokens on hands: reading, editing, running and
+reporting. Sonnet takes the coding that needs care; Haiku takes the simple, mechanical tasks.
 
 ## 1. Roles
 
 | Role | Model | Owns | Never does |
 |---|---|---|---|
-| **Orchestrator** (the main session) | Opus 5.5 (`claude-opus-5-5`) | Understanding the request; reading SPEC and the contracts; splitting the work; writing worker briefs; choosing models and isolation; verifying every result; deciding review findings; CHANGELOG receipts and `buildordinal.json`; opening PRs, then merging and promoting them once the owner says to merge (CONTRIBUTING rule 6); talking to the owner | Bulk reading, broad searches, mechanical edits or long test runs that a worker could do from a brief |
-| **Worker** | Haiku 5.5 (`claude-haiku-5-5`), the `ashen-worker` agent | One scoped task in its own worktree and branch: find, edit, test, commit, push, report | Merging, opening or merging PRs, promoting, editing CHANGELOG / `buildordinal.json` / `src/content/changelog.generated.js`, changing SPEC unless the brief says so, widening scope |
+| **Orchestrator** (the main session) | Opus 5.5 (`claude-opus-5-5`) | Understanding the request; reading SPEC and the contracts; splitting the work; writing worker briefs; choosing models and isolation; verifying every result; deciding review findings; CHANGELOG receipts and `buildordinal.json`; opening PRs, then merging and promoting them under the standing merge approval (CONTRIBUTING rule 6); talking to the owner | Bulk reading, broad searches, mechanical edits or long test runs that a worker could do from a brief |
+| **Coder** | Sonnet 5.5 (`claude-sonnet-5-5`), the `ashen-coder` agent | Most coding tasks: one scoped task in its own worktree and branch: find, edit, test, commit, push, report | Merging, opening or merging PRs, promoting, editing CHANGELOG / `buildordinal.json` / `src/content/changelog.generated.js`, changing SPEC unless the brief says so, widening scope |
+| **Worker** | Haiku 5.5 (`claude-haiku-5-5`), the `ashen-worker` agent | Simple or mechanical tasks only (renames, searches, one-line fixes, test runs, mechanical reviews), in its own worktree and branch: find, edit, test, commit, push, report | Merging, opening or merging PRs, promoting, editing CHANGELOG / `buildordinal.json` / `src/content/changelog.generated.js`, changing SPEC unless the brief says so, widening scope |
 | **Reviewer** | Opus 5.5 subagent (`ashen-reviewer`) for risky diffs; Haiku 5.5 for mechanical ones | The independent review CONTRIBUTING requires (*A pull request is not done…*, item 2), from the diff and a list of risks | Re-implementing; reading the whole repo |
-| **Escalation worker** | Opus 5.5 subagent | A task that a Haiku worker failed, or one that needs judgement the orchestrator cannot put into a brief | Becoming the default |
+| **Escalation worker** | Opus 5.5 subagent | A task that a Sonnet coder failed, or one that needs judgement the orchestrator cannot put into a brief | Becoming the default |
 
-Sonnet and the other providers are not part of the default loop (owner preference).
+Other providers are not part of the default loop.
 
 **When the orchestrator does the work itself.** Do it yourself only when writing the
 brief would cost more than doing the work: a lookup of one known file, an edit of a few
@@ -39,10 +41,10 @@ files, runs a suite, or repeats an edit goes to a worker.
 1. Understand   orchestrator: read the request, the SPEC section and the contract; decide what "done" means
 2. Split        orchestrator: survey, verify, measure, then one task per brief with disjoint file sets per wave (§3a)
 3. Brief        orchestrator: one brief per task (§3)
-4. Execute      workers (Haiku): in parallel, isolation "worktree", in the background
+4. Execute      Sonnet coders and Haiku workers: in parallel, isolation "worktree", in the background
 5. Verify       orchestrator: read the diff (not the transcript), re-run the key test, check the acceptance line
 6. Review       reviewer (§5); the orchestrator decides each finding against the diff
-7. Land         orchestrator: receipt and rebuild, PR, preview and screenshots to the owner; merge into dev only when the owner says so (CONTRIBUTING rule 6), then one promotion to test
+7. Land         orchestrator: receipt and rebuild, PR, preview and screenshots to the owner; merge into dev yourself once review, conflicts and fast checks are done (CONTRIBUTING rule 6), then one promotion to test
 8. Report       orchestrator: to the owner, in CLAUDE.md's question shape when a decision is needed
 ```
 
@@ -57,8 +59,8 @@ the whole task.
 
 ## 3. Writing a worker brief
 
-Haiku does well when it is told exactly where to look and what "done" means, and it
-wanders when it is not. Every brief carries the following, in this order:
+Workers (Haiku most of all) do well when they are told exactly where to look and what "done" means, and they
+wander when they are not. Every brief carries the following, in this order:
 
 1. **Setup.** The brief's branch is `worker/<parent-topic>/<task>`, cut from the parent
    branch, not `origin/dev`. The orchestrator pushes the parent first (`git push -u origin <parent>`), then:
@@ -96,9 +98,9 @@ worker/<topic>/<task> (local) ──► worker/<topic>/<task> (origin) ──►
   Ask the owner about anything unmerged.
 - Origin worker branches stay until `dev` is promoted to `test`. Then `worker-branch-cleanup.yml`
   deletes every origin `worker/**` branch whose tip is an ancestor of `origin/test`.
-## 3a. Splitting a request into steps Haiku can finish
+## 3a. Splitting a request into steps a worker can finish
 
-Haiku succeeds when each brief is a short recipe with the thinking already done.
+Workers succeed when each brief is a short recipe with the thinking already done.
 The orchestrator does the thinking in phases, and only the last phase is handed
 to Haiku as edits. Recorded from the FixModal session (2026-10-11), where every
 Haiku brief written this way landed first time.
@@ -188,13 +190,15 @@ recorded in the PR with it.
 ## 6. Escalation
 
 ```text
-Haiku worker
-  → fails or reports a conflict: the orchestrator sharpens the brief (usually a missing file or rule) and runs Haiku once more
-  → fails again, or the failure came from judgement and not context: an Opus 5.5 subagent with the same brief and the Haiku report
+Haiku worker (simple tasks)
+  → fails or reports a conflict: the orchestrator sharpens the brief (usually a missing file or rule) and re-sends it to a Sonnet 5.5 coder (`ashen-coder`) with the Haiku report
+Sonnet coder (most coding tasks, or after Haiku)
+  → fails or reports a conflict: the orchestrator sharpens the brief and runs Sonnet once more
+  → fails again, or the failure came from judgement and not context: an Opus 5.5 subagent with the same brief and the Sonnet report
   → still blocked: the orchestrator works it directly, or asks the owner (CLAUDE.md question shape)
 ```
 
-Skip Haiku and brief an Opus subagent from the start when the task is mainly:
+Skip Haiku and Sonnet and brief an Opus subagent from the start when the task is mainly:
 
 - interpreting an ambiguous SPEC or contract;
 - designing a save or schema migration;
@@ -208,9 +212,10 @@ from a missing file, a vague brief or the wrong model, fix that cause. The Agent
 `effort` field is set only when the owner or a skill asks for it.
 
 **Owner's effort settings (2026-10-11):** the main session runs at **high** effort;
-`ashen-reviewer` (Opus 5.5) at **medium** (pinned in its agent file); workers on Haiku 5.5
-(`ashen-worker`). An agent that is not `ashen-worker` and does implementation work is
-started with `model: haiku` unless it is an escalation (above).
+`ashen-reviewer` (Opus 5.5) at **medium** (pinned in its agent file); coders on Sonnet 5.5
+(`ashen-coder`); simple-task workers on Haiku 5.5 (`ashen-worker`). An implementing agent
+that is neither is started with `model: sonnet` (or `model: haiku` for a simple task)
+unless it is an escalation (above).
 
 ## 7. Parallelism and shared files
 
@@ -222,16 +227,19 @@ started with `model: haiku` unless it is an escalation (above).
   then land that one.
 - Promote `dev` to `test` once, after the wave's last merge (CONTRIBUTING rule 6).
 - Large, independent fan-outs (ten or more agents) use the `Workflow` tool only when the
-  owner opts in (for example `/finish`). Its agents take `model: 'haiku'` for workers and
+  owner opts in (for example `/finish`). Its agents take `model: 'sonnet'` for coding, `model: 'haiku'` for simple tasks and
   Opus for review, as above.
 
 ## 8. Mechanics in Claude Code
 
-- **Workers:** `Agent({ subagent_type: "ashen-worker", isolation: "worktree", run_in_background: true, prompt: <brief> })`.
+- **Coders (most coding tasks):** `Agent({ subagent_type: "ashen-coder", isolation: "worktree", run_in_background: true, prompt: <brief> })`.
+  The agent file pins `model: sonnet`. With a generic agent type, use
+  `Agent({ subagent_type: "general-purpose", model: "sonnet", ... })`.
+- **Workers (simple, mechanical tasks):** `Agent({ subagent_type: "ashen-worker", isolation: "worktree", run_in_background: true, prompt: <brief> })`.
   The agent file pins `model: haiku`. With a generic agent type, pass `model: "haiku"`.
-  Agent files load when the session starts; if `ashen-worker` is not found (the session
-  started on a branch without it), use `general-purpose` with `model: "haiku"` and point
-  the brief at `.claude/agents/ashen-worker.md`.
+  Agent files load when the session starts; if `ashen-coder` or `ashen-worker` is not found (the session
+  started on a branch without it), use `general-purpose` with `model: "sonnet"` or `"haiku"` and point
+  the brief at `.claude/agents/ashen-coder.md` or `.claude/agents/ashen-worker.md`.
 - **Worktree cleanup:** worker worktrees cost disk. At session start and end run `git fetch --prune origin` and `git worktree prune`, then `git worktree remove <path>` and `git branch -d <branch>` (never `-D`) for each worktree that is clean (`git status --porcelain` empty) and whose branch is merged into `origin/dev` (`git merge-base --is-ancestor <branch> origin/dev`). Keep every other worktree; ask the owner before discarding unmerged work.
 - **Reviewer:** `Agent({ subagent_type: "ashen-reviewer", prompt: <PR number + diff + risks> })`,
   pinned to `model: opus` and to read-only tools (no Edit/Write). For a mechanical diff, use
@@ -240,8 +248,7 @@ started with `model: haiku` unless it is an escalation (above).
   the original brief.
 - **Searches only:** the built-in `Explore` agent with `model: "haiku"`, for "where is X"
   sweeps whose result is a list of paths.
-- Agent definitions live in `.claude/agents/`. The main session's model is the owner's
-  choice of session model (Opus 5.5).
+- Agent definitions live in `.claude/agents/`. The main session's model is Opus 5.5.
 - **Other tools the owner uses outside Claude Code.** For example, GPT/Codex agents or
   Copilot in the IDE. They keep their own routing. This file governs Claude sessions.
   Pick a non-Claude route only when it clearly beats this loop on cost to a finished,

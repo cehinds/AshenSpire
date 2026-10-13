@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-9999",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Pull requests no longer wait for a per-PR owner approval; coding goes to Sonnet, simple tasks to Haiku",
+    "detail": "Development-process change only, nothing in the game changes. A pull request into dev now merges once another agent or session has reviewed it, its conflicts are resolved and the fast checks are green, and the session promotes dev to test itself; main stays with the owner. Sessions send the owner the preview and screenshots without waiting. Most coding tasks go to the new Sonnet ashen-coder agent, simple or mechanical ones to the Haiku ashen-worker, and Opus keeps planning and management.",
+    "build": "0.7.1.1487",
+    "pullRequest": 9999,
+    "url": "https://github.com/cehinds/AshenSpire/pull/9999"
+  },
+  {
     "id": "pr-1961",
     "date": "2026-10-13",
     "group": "2026-10-13",
