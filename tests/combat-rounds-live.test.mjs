@@ -15,6 +15,7 @@ import * as Rounds from '../src/engine/combatRoundsAdapter.js';
 import { enemyPoolOf } from '../src/model/actionCosts.js';
 import { handRow, scaledCards } from '../src/model/handRules.js';
 import { applyStatus } from '../src/engine/statuses.js';
+import { triggerOwnerKey } from '../src/engine/triggers.js';
 
 const registries = createRegistries(contentBundle);
 const ENEMY = 'wanderingSoldier';
@@ -712,4 +713,32 @@ test('a momentum overflow doubles the Poise damage of the side\'s next landed hi
   const plain = poiseDealt(false);
   assert.ok(plain >= 4, `fixture: Bashing Blow deals its 4 Poise damage (${plain} with the relic)`);
   assert.equal(poiseDealt(true), plain * 2, 'the flagged side\'s landed hit deals double, its riders included');
+});
+
+// Codex P2 on PR #1953: a queued card is priced as a live play prices it, after its cardPreparing triggers. A feat that
+// grants a Mana discount as the card prepares makes a Mana card free in cardPlayCosts; the queue must agree, and the
+// commit must not charge it again or leave the discount charge behind.
+test('the queue prices a card after its cardPreparing triggers, as cardPlayCosts does; the commit pays nothing more', () => {
+  let found = null;
+  for (const classId of ['starseer', 'herald', 'reaver', 'rogue']) {
+    for (let seed = 1; seed <= 40 && !found; seed++) {
+      const c = fight({ classId, seed, expansion: 1 });
+      const card = c.piles.hand.find((x) => cardKind(resolveCard(registries, x)) === 'attack' && cardPlayCosts(c, x.instanceId).mana >= 1);
+      if (card) found = { classId, seed, id: card.instanceId };
+    }
+    if (found) break;
+  }
+  assert.ok(found, 'fixture: a Mana attack in some opening hand');
+  const c = fixRoundRoll(fight({ classId: found.classId, seed: found.seed, expansion: 1 }), 0.999);
+  const discount = { op: 'grantCardCharge', target: 'self', key: 'feat:prep-discount', manaDiscount: 9 };
+  c.propertyMounts[triggerOwnerKey(c, c.player)].prepDiscount = { kind: 'feat', id: 'prep-discount',
+    rules: [{ triggers: [{ on: 'cardPreparing', if: { p: 'eventSourceIsOwner' }, do: [discount] }] }] };
+  c.player.mana = 0;
+  assert.equal(cardPlayCosts(c, found.id).mana, 0, 'fixture: the preview prices it free');
+  dispatch(c, { type: 'playCard', cardInstanceId: found.id, targetId: liveEnemy(c).id });
+  const record = c.combatRounds.playerQueue.find((r) => r.instanceId === found.id);
+  assert.equal(record?.paid.mana, 0, 'the queue pays the preview price');
+  endTurnDeclining(c);
+  assert.ok(c.eventLog.some((e) => e.type === 'cardPlayed' && e.cardInstanceId === found.id), 'the card resolves at the commit');
+  assert.equal(c.player.abilityRiders?.charges?.['feat:prep-discount'], undefined, 'the discount the card prepared is spent by it, once');
 });

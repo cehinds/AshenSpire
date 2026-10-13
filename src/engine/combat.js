@@ -1351,7 +1351,13 @@ export function cardPlayCosts(combat, cardInstanceId, upcastRanks) {
   const inst = combat.piles.hand.find((c) => c.instanceId === cardInstanceId);
   if (!inst) throw new Error(`Card '${cardInstanceId}' is not in hand`);
   const def = resolveCombatCard(combat, inst, { upcastRanks });
-  const claimed = claimedCharges(combat, cardInstanceId);
+  return preparedPlayCosts(combat, inst, def, claimedCharges(combat, cardInstanceId));
+}
+
+// A card's price as its play pays it: after its cardPreparing triggers (a preparing discount or surcharge), on a
+// detached preview when anything listens. cardPlayCosts and the Combat Rounds queue both price through here, so a
+// card the preview shows free queues free (SPEC §4.11). `targetId` aims the preview's preparing event.
+function preparedPlayCosts(combat, inst, def, claimed, targetId) {
   // cardPreparing has no ledger side effect in recordAbilityEvent/skill XP.
   // With no listener or queued work it cannot change any input to playCosts.
   // Custom buses, paused/resolving actions and all hook sources keep the exact
@@ -1362,7 +1368,7 @@ export function cardPlayCosts(combat, cardInstanceId, upcastRanks) {
     && !combat.pendingAbilityDiscard && !combat._abilityAction && !combat._emitDepth
     && !combat._foundationTransaction && !combat._foundationAncestry?.length
     && !hasEventTriggers(combat, 'cardPreparing', { cardTags: def.cardTags || def.tags || [] })) return playCosts(combat, def, claimed);
-  return playCosts(preparingPreview(combat, inst, def), def, claimed);
+  return playCosts(preparingPreview(combat, inst, def, targetId), def, claimed);
 }
 
 // The ability kind a card plays with (SPEC §4.11 preview and live share it): its authored kind, else spell
@@ -1677,7 +1683,8 @@ function queueRoundCard(combat, { cardInstanceId, targetId, choice, upcastTier, 
 
   const isX = def.cost === 'X';
   const claimed = claimedCharges(combat, cardInstanceId);
-  const { energy: cost, mana: manaCost, stamina: staminaCost } = playCosts(combat, def, claimed);
+  // Priced as the live play prices it: after the card's cardPreparing triggers (Codex P2 on PR #1953).
+  const { energy: cost, mana: manaCost, stamina: staminaCost } = preparedPlayCosts(combat, inst, def, claimed, target ? target.id : undefined);
   const claims = manaDiscountClaims(combat, def, claimed);
   if (p.energy < cost) throw new Error('Not enough Actions (Stamina) to play this card');
   if (p.mana < manaCost) throw new Error('Not enough mana to play this card');
