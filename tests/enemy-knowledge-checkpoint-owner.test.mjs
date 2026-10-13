@@ -28,7 +28,7 @@ function fixture(knowledge) {
   } };
   const run = createRunState({ registries, seed: 11, classId: 'reaver',
     combatExpansionVersion: 2, enemyKnowledgeVersion: knowledge ? 1 : null });
-  if (!knowledge) delete run.reactionRulesVersion; // Historical unsaved-turn policy.
+  if (!knowledge) { delete run.reactionRulesVersion; delete run.reactionRules; } // Historical unsaved-turn policy.
   if (knowledge) openRunEnemyKnowledge(run, { bankable: true,
     receiptId: '50000000-0000-4000-8000-000000000003' });
   const rng = createRng(run.seed), nodeId = 'n1_4', encounterId = 'patrol';

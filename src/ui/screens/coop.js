@@ -25,7 +25,7 @@ import { openUpcastChoice } from '../components/upcastChoice.js';
 import { wireCoopUpcastControl } from '../components/coopUpcastControl.js';
 import { controlGate } from '../../engine/combatStatusControl.js';
 import { openDiscardChoiceModal } from '../components/discardChoiceModal.js';
-import { openReactionChoiceModal } from '../components/reactionChoiceModal.js';
+import { openReactionChoiceModal, committedReactionStack, reactionStackEntryName, stackedCardIds } from '../components/reactionChoiceModal.js';
 import { combatEffectForEvent, decorateCombatEffects, combatEffectReceipt, presentationTargetIds } from '../../model/combatEffectEvents.js';
 import { statureFor } from '../components/stature.js';
 import { combatEffectAngle } from '../combatEffectDirection.js';
@@ -1137,13 +1137,16 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   let discardShell = null;
   function showPendingDiscard() {
     showPendingReaction();
-    const player = latestWireSnap?.scene?.players?.find(p => p.id === me);
+    const sc = latestWireSnap?.scene;
+    const player = sc?.players?.find(p => p.id === me);
     const pending = player?.pendingAbilityDiscard;
     if (!pending || pending.playerId !== me || discardShell || busy()) return;
     const owner = me;
+    // This viewer's stacked cards wait to resolve: they are not discard fodder (the engine refuses them).
+    const stackedIds = new Set((sc.reactionStack?.entries || []).filter((entry) => entry.ownerId === me).map((entry) => entry.cardInstanceId));
     discardShell = openDiscardChoiceModal({
       count: pending.count, cardName: registries.cards.get(pending.cardId).name,
-      cards: player.hand.map(card => ({ instanceId: card.instanceId, name: resolveCard(registries, card).name })),
+      cards: player.hand.filter((card) => !stackedIds.has(card.instanceId)).map(card => ({ instanceId: card.instanceId, name: resolveCard(registries, card).name })),
       onClosed: () => { discardShell = null; },
       onChoose: cardInstanceIds => { if (me === owner) send({ t: 'chooseDiscard', cardInstanceIds }); },
     });
@@ -1158,7 +1161,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     const ownerId = owner.id;
     reactionOfferId = owner.pendingReaction.id;
     if (me !== ownerId) { seatIdx = seats.indexOf(ownerId); me = ownerId; }
-    reactionShell = openReactionChoiceModal({ pending: owner.pendingReaction,
+    const stack = committedReactionStack(sc.reactionStack, owner.pendingReaction.groupKey)
+      .map((entry) => ({ name: reactionStackEntryName(entry, registries), cardInstanceId: entry.cardInstanceId }));
+    reactionShell = openReactionChoiceModal({ pending: owner.pendingReaction, stack,
       onClosed: () => { reactionShell = null; reactionOfferId = null; },
       onAnswer: intent => {
         if (!disposed && me === ownerId && latestWireSnap?.scene?.reactionWaiting?.id === intent.offerId)
@@ -1380,7 +1385,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (combatLayout) combatLayout.release();
     combatLayout = wireCombatLayout(app.querySelector('.combat'));
     combatTools?.release();
-    const updateTools = () => combatTools.update(combatToolsModel({ supported: sc.reactionRulesVersion === 1,
+    const updateTools = () => combatTools.update(combatToolsModel({ supported: sc.reactionRulesVersion >= 1,
       enabled: meP?.reactionsEnabled !== false, disabled: busy() || sc.phase !== 'player' || !!sc.reactionWaiting
         || !meP?.connected || !meP?.alive || !!meP?.pendingAbilityDiscard,
       ...combatToolsState, entries: sc.combatLog || [] }));
@@ -1445,6 +1450,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         } else el.addEventListener('click', play);
       },
     });
+    // Only this viewer's own stacked cards are hidden; another seat's rc1 is still playable here.
+    const stackedIds = stackedCardIds(sc.reactionStack, me);
     if (meP && meP.alive && meP.connected) {
       handStrip.render({
         cards: meP.hand.map((c) => {
@@ -1465,6 +1472,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
             def, name: def.name, affordable, reason,
             preview: costs.preview,
             selected: c.instanceId === armedFriendlyCard,
+            stacked: stackedIds.has(c.instanceId),
           };
         }),
       });

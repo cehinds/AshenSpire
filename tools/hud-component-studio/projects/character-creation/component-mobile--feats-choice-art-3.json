@@ -1,0 +1,119 @@
+{
+  "version": 1,
+  "title": "Feat emblem \u00b7 reusable background / trim / symbols / props",
+  "canvas": {
+    "width": 112,
+    "height": 112,
+    "background": "transparent"
+  },
+  "defaultState": "feats",
+  "states": [
+    {
+      "id": "feats",
+      "name": "Feats"
+    }
+  ],
+  "assets": {
+    "medallion-background": {
+      "src": "assets/medallion-background.png",
+      "width": 296,
+      "height": 292
+    },
+    "medallion-trim": {
+      "src": "assets/medallion-trim.png",
+      "width": 397,
+      "height": 380
+    },
+    "symbol-star": {
+      "src": "assets/symbol-star.png",
+      "width": 337,
+      "height": 318
+    }
+  },
+  "nodes": [
+    {
+      "id": "feats-choice-art-3",
+      "name": "Feat emblem \u00b7 reusable background / trim / symbols / props",
+      "type": "group",
+      "parent": null,
+      "x": 0,
+      "y": 0,
+      "width": 112,
+      "height": 112,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "fill": "none"
+    },
+    {
+      "id": "feats-choice-art-3-medallion-background",
+      "name": "Medallion Background",
+      "type": "image",
+      "parent": "feats-choice-art-3",
+      "x": 14.254545454545454,
+      "y": 14.254545454545454,
+      "width": 83.4909090909091,
+      "height": 83.4909090909091,
+      "z": 0,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "asset": "medallion-background",
+      "fit": "contain"
+    },
+    {
+      "id": "feats-choice-art-3-medallion-trim",
+      "name": "Medallion Trim",
+      "type": "image",
+      "parent": "feats-choice-art-3",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 112.0,
+      "height": 112.0,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "asset": "medallion-trim",
+      "fit": "contain"
+    },
+    {
+      "id": "feats-choice-art-3-symbol-star",
+      "name": "Symbol Star",
+      "type": "image",
+      "parent": "feats-choice-art-3",
+      "x": 18.327272727272728,
+      "y": 18.327272727272728,
+      "width": 77.38181818181818,
+      "height": 77.38181818181818,
+      "z": 2,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "asset": "symbol-star",
+      "fit": "contain"
+    }
+  ],
+  "metadata": {
+    "componentSource": "feats-choice-art-3",
+    "sourceState": "feats",
+    "designOnly": true
+  }
+}

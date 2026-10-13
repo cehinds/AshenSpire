@@ -34,6 +34,7 @@ import { t, tFull } from '../strings.js';
 import { renderCard, staticTokens } from '../components/card.js';
 import { resolveCard } from '../../model/registries.js';
 import { applyCombatExpansionCard } from '../../content/combatExpansionCards.js';
+import { applyCardTraits } from '../../content/traitProjection.js';
 import { combatProfileFor } from '../../model/combatCardProfile.js';
 import { cardCategorySigilHtml } from '../components/cardTagSymbols.js';
 import { playingCardModel } from '../../model/playingCard.js';
@@ -262,7 +263,9 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     }
     const { row, source } = inspected || selected;
     const def = resolveCard(registries, row.ref);
-    const face = renderCard(registries, row.ref, { inspection: false, level: 'inspect' });
+    // Reaction rules version 2: the face shows the run's projected trait chips and trait line.
+    const face = renderCard(registries, row.ref, { inspection: false, level: 'inspect',
+      ...(run?.reactionRulesVersion === 2 ? { definition: combatDef(row) } : {}) });
     for (const [key, value] of Object.entries(cardShapeCssProperties())) face.style.setProperty(key, value);
     face.style.setProperty('--deck-inspect-width', cardLevelWidthCss('inspect'));
     face.querySelector('.card-costs')?.replaceChildren(rowCosts(row));
@@ -375,7 +378,9 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     const key = JSON.stringify(row.ref);
     if (!combatDefCache.has(key)) {
       const def = resolveCard(registries, row.ref);
-      combatDefCache.set(key, run?.combatExpansionVersion === 2 ? applyCombatExpansionCard(def) : def);
+      // Reaction rules version 2 shows the card's trait tags; version 1 shows the card as before.
+      const expanded = run?.combatExpansionVersion === 2 ? applyCombatExpansionCard(def) : def;
+      combatDefCache.set(key, run?.combatExpansionVersion === 2 && run.reactionRulesVersion === 2 ? applyCardTraits(expanded, run.reactionRules) : expanded);
     }
     return combatDefCache.get(key);
   };

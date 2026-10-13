@@ -199,6 +199,27 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "combat.reaction.stack",
+    "extends": "",
+    "short": "On the stack",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.reaction.resolve",
+    "extends": "",
+    "short": "Resolve",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.reaction.helpStack",
+    "extends": "",
+    "short": "",
+    "full": "Choose another card to add on top, or Resolve to play the stack, last card first.",
+    "tip": ""
+  },
+  {
     "id": "combat.callout.staggered",
     "extends": "",
     "short": "STAGGERED",
@@ -9408,6 +9429,279 @@ export const uiStrings = [
     "extends": "",
     "short": "Evade",
     "full": "Evade or dodge an incoming action.",
+    "tip": ""
+  },
+  {
+    "id": "creation.category.attributes",
+    "extends": "",
+    "short": "Attributes",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.category.keepsake",
+    "extends": "",
+    "short": "Keepsake",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.category.feats",
+    "extends": "",
+    "short": "Feats",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.category.spells",
+    "extends": "",
+    "short": "Spells",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.section.attributes",
+    "extends": "",
+    "short": "ATTRIBUTES",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.section.feats",
+    "extends": "",
+    "short": "FEATS",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.section.spells",
+    "extends": "",
+    "short": "SPELLS",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.eyebrow",
+    "extends": "",
+    "short": "CHARACTER TRAITS",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.title",
+    "extends": "",
+    "short": "Explore feats",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.description",
+    "extends": "",
+    "short": "Learn how permanent feats shape your journey.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.availability",
+    "extends": "",
+    "short": "Earn feats as you level up. Browsing here does not grant a starting feat.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.detailLabel",
+    "extends": "",
+    "short": "Feat details",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.none",
+    "extends": "",
+    "short": "No starting feats",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.spells.eyebrow",
+    "extends": "",
+    "short": "STARTING MAGIC",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.spells.title",
+    "extends": "",
+    "short": "Choose your spells",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.spells.description",
+    "extends": "",
+    "short": "Choose your starting Rank {rank} spells before beginning the journey.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.spells.unavailable",
+    "extends": "",
+    "short": "This class has no starting spell choices.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.review.edit",
+    "extends": "",
+    "short": "Edit {category}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.continueTo",
+    "extends": "",
+    "short": "Continue to {category}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.step.progress",
+    "extends": "",
+    "short": "{index} of {count} · {category}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.nav.allSteps",
+    "extends": "",
+    "short": "All steps",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.nav.allStepsLabel",
+    "extends": "",
+    "short": "Open all character creation steps.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.group.character",
+    "extends": "",
+    "short": "Character",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.group.class",
+    "extends": "",
+    "short": "Class",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.group.skill",
+    "extends": "",
+    "short": "Skills",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.lockedRequirement",
+    "extends": "",
+    "short": "Requires {track} level {required}. Current level: {current}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.availableRequirement",
+    "extends": "",
+    "short": "{track} level {required} requirement met. Current level: {current}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.profileUnlocked",
+    "extends": "",
+    "short": "Unlocked in profile.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.locked",
+    "extends": "",
+    "short": "Level requirement not met",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.available",
+    "extends": "",
+    "short": "Level requirement met",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.emptyGroup",
+    "extends": "",
+    "short": "No feats in this group.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.noOffers",
+    "extends": "",
+    "short": "No feat offers are currently earned on the {track} track.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.return",
+    "extends": "",
+    "short": "Back to feats",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.summary.fieldStudy",
+    "extends": "",
+    "short": "More character XP.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.summary.weaponDrill",
+    "extends": "",
+    "short": "More weapon XP.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.summary.armourPractice",
+    "extends": "",
+    "short": "More armour XP.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.summary.classInsight",
+    "extends": "",
+    "short": "More class XP.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.summary.spoilsInstinct",
+    "extends": "",
+    "short": "More Cinders from victory.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.summary.vitalRenewal",
+    "extends": "",
+    "short": "Recover HP after victory.",
+    "full": "",
     "tip": ""
   }
 ];

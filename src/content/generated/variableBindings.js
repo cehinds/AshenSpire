@@ -474,6 +474,13 @@ export const variableBindings = [
   {
     "scope": "default",
     "scopeId": "",
+    "nodeId": "oathKept",
+    "variable": "block",
+    "balancePath": "tagMechanics.oath.block"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
     "nodeId": "ashenGrip",
     "variable": "restoreStamina",
     "balancePath": "powers.ashenGrip.restoreStamina"
