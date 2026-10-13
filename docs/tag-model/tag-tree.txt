@@ -185,8 +185,8 @@ Meta
         Alteration [m] {existing school, non-elemental}
     Technique {Conditions for explicit technique bonuses.}
       Heavy [m]
-      Precision [m]
-      Pierce [m]
+      Precision [m] {Each stack adds +1 Accuracy (DECISIONS section 16, owner 2026-10-13); not a Piercing bypass (section 17).}
+      Pierce [m] {Piercing stacks reduce Block and Poise (physical) or Barrier and Ward (magical) by 2 per stack (DECISIONS section 17, owner 2026-10-13).}
       Cleave [m]
       Flourish [m]
       Guile [m] {rogue trickery}
@@ -247,10 +247,10 @@ Meta
       Physical
         Slashing {→ Bleeding}
         Blunt {→ Poise damage}
-        Pierce {ignores Guard}
+        Pierce {ignores Guard. Each stack reduces Block and Poise by 2 (DECISIONS section 17, owner 2026-10-13).}
         blade {Damage dealt with an edge.}
         blunt {Damage dealt with mass and impact.}
-        piercing {Damage dealt with a point.}
+        piercing {Damage dealt with a point. Piercing rules: DECISIONS section 17 (owner 2026-10-13).}
       Magic
         Fire {→ Burned}
         Frost {→ Frostbitten}
@@ -615,7 +615,7 @@ Card
   Heavy {Slow, committed, and hard to stop.}
   Basic {Everybody's — on the shelf without being found.}
   Ranged {Authored ranged presentation; no position system.}
-  Precision {Deliberate aim and finesse; presentation only.}
+  Precision {Deliberate aim and finesse. Each stack adds +1 Accuracy; no longer presentation only (DECISIONS section 16, owner 2026-10-13).}
   Extractable {A smith can lift this card out of the item that lends it, and seat it in another item's mount. Strikes and defends do not carry it — today.}
 classification
   strike

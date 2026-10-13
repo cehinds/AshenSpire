@@ -560,15 +560,105 @@ expansion `counter` group plus the `EVADES` set.
   `tables/values.csv` gains `precision.perStack` = 1 (proposed), and the sweep
   target count as a runtime input if `tools/check.mjs` needs it to resolve.
   Game code is not changed.
-- **Open questions for the owner:**
-  - Does `technique:precision` become this stack mechanic, or is precision-stack
-    a separate status? If it becomes the stack mechanic, the "presentation only"
-    description on `precision` and "no combat modifier" on `fx:precision` change.
-  - Are precision stacks a status that other cards can also grant, or a
-    Sweep-only computed bonus?
-  - Does the target count include allies hit, or only enemies?
-  - Do the stacks decay like Evade stacks (one per use, one per turn start), or
-    are they computed per attack?
+- **Owner answers (2026-10-13).** Each answer closes one question that this
+  section listed before the ruling was recorded.
+  1. **Precision and Piercing are separate tags.** Precision is the stack
+     mechanic in this section: each stack adds +1 Accuracy. Piercing is its own
+     mechanic, ruled in section 17: it ignores defender Block and Poise
+     (physical) or Barrier and Ward (magical). Precision no longer bypasses
+     anything. So `technique:precision` and `card.precision` become this
+     mechanic, and their "presentation only" and "effects are authored
+     separately" descriptions no longer hold. `fx:precision` ("no combat
+     modifier") is a visual tag and is not changed by this answer. The dev rule
+     that joins Precision to Piercing's bypass (`src/engine/combatMatchups.js`
+     lines 425 to 427 on `origin/dev`) must change to match section 17.
+  2. **Any card can grant precision stacks.** Precision is a status, like Evade
+     stacks. Sweep starts with 3 stacks, and each enemy beyond the first removes
+     one (3 − (targets − 1) = 4 − targets, the same table as above).
+  3. **Only enemies count toward Sweep's target count.** Allies hit by Sweep do
+     not count.
+  4. **Precision stacks are computed per attack and do not carry over.** There
+     is no decay.
+
+## 17. Piercing stacks reduce a defender's Block and Poise, or Barrier and Ward
+
+- **Date:** 2026-10-13 (owner). Companion to section 16 (Precision). Open items
+  answered the same day (see *Owner answers on the open items* below).
+- **Owner ruling, 2026-10-13 (verbatim):**
+  > Piercing is one tag and precision is another. Pierce tags ignore dr and barrier poise and ward. Precision adds accuracy. If pierce is 2 base then each stack of pierce ignores an additional 2 points of block and barrier and ignores poise and ward. The type depends on if it's physical or magical. Pierce magic ignores ward and 2 points of barrier per stack. Physical is for block and poise.
+- **Owner answers on the open items (2026-10-13, verbatim):**
+  > Same with poise as 1.25x
+  - "2 per stack": Poise and Ward are not ignored outright. Each pierce stack
+    reduces them by 2, the same as Block and Barrier.
+  - "pierce is 2 base" means 2 points per stack. A Pierce card starts at 1 stack.
+  - The reading of "dr" as Block stands.
+  - The existing magical 1.25× edge against Ward stays. A matching 1.25× edge
+    applies to physical Pierce against Poise.
+- **Decision:** Piercing is a stack mechanic, separate from Precision. A Pierce
+  card starts at 1 stack (`pierce.base = 1`). Each stack reduces the defender's
+  guard by 2 points (`pierce.perStack = 2`). Which guard depends on the damage
+  type:
+
+  | Pierce type | Block or Barrier, per stack | Poise or Ward, per stack | Edge |
+  |---|---|---|---|
+  | Physical | Block −2 | Poise −2 | Poise ×1.25 (`pierce.poiseEdge`) |
+  | Magical | Barrier −2 | Ward −2 | Ward ×1.25 (`origin/dev` `combatMatchups.js:570`, `pierceWard`) |
+
+  - `pierce.blockIgnored = [pierce.stacks] * [pierce.perStack]` (physical)
+  - `pierce.poiseIgnored = [pierce.stacks] * [pierce.perStack]` (physical)
+  - `pierce.barrierIgnored = [pierce.stacks] * [pierce.perStack]` (magical)
+  - `pierce.wardIgnored = [pierce.stacks] * [pierce.perStack]` (magical)
+  - `pierce.stacks` is a runtime input: the Pierce stacks on the attack, 0 with
+    no Pierce tag.
+  - Precision does not reduce anything. It only adds Accuracy (section 16).
+- **Worked examples:**
+  - **Physical.** An attack with 2 Pierce stacks against 10 Block and 4 Poise.
+    Reduction per pool = 2 × 2 = 4. Block counts as 10 − 4 = **6**. Poise counts
+    as 4 − 4 = **0**.
+  - **Magical.** An attack with 1 Pierce stack against 5 Barrier and 3 Ward.
+    Reduction per pool = 1 × 2 = 2. Barrier counts as 5 − 2 = **3**. Ward counts
+    as 3 − 2 = **1**.
+- **Existing Piercing tags, cited:**
+  - `meta.combat.damage.physical.pierce` (`physical.pierce`, live `damage:piercing`),
+    `tables/tags.csv` line 204: "ignores Guard", "Ignores 2 Guard; slips past
+    melee Counter".
+  - `meta.combat.damage.physical.weapon-piercing` (`weapon-piercing`, live
+    `damage.piercing`), `tables/tags.csv` line 742.
+  - `meta.combat.technique.pierce` (`technique.pierce`, live `pierce`),
+    `tables/tags.csv` line 172.
+  - `content/source/nodes.csv` line 115 (`damage:piercing`): "Bypasses up to 2
+    Guard; bypasses melee Counter."
+  - `tables/relations.csv` line 5: `physical.pierce` BYPASSES `stance.counter`
+    (melee only).
+  - `tables/presentation/settings.csv` line 3027: the live setting
+    `gameConfig.balance.combatMatchups.damageRiders.piercing.guardBypass`, default 2,
+    range 0 to 20.
+  - `origin/dev` `src/engine/combatMatchups.js` lines 423 to 427: the Piercing
+    flag, and the Precision rider joined to Piercing's bypass by `riderGuardBypass`
+    (the larger, never the sum). Under this ruling Precision leaves that bypass.
+  - `origin/dev` `src/engine/combatMatchups.js` line 570: `pierceWard`, the
+    1.25× Ward edge for Piercing. It is kept by the owner's answer above. It is
+    code only; no values row exists for it yet.
+- **Tables changed (proposed):**
+  - `tables/values.csv` gains `pierce.base` = 1 (stacks), `pierce.perStack` = 2
+    (points), `pierce.stacks` = 0 as the runtime-input preview (the same pattern
+    as `sweep.targets`, which `check.mjs` needs to resolve the formula reference),
+    and `pierce.poiseEdge` = 1.25 beside the Ward edge at `combatMatchups.js:570`.
+  - `tables/formulas.csv` gains `pierce.blockIgnored`, `pierce.poiseIgnored`,
+    `pierce.barrierIgnored` and `pierce.wardIgnored`.
+  - `tables/tags.csv`: the descriptions of the Precision rows (`card.precision`,
+    `technique.precision`) and the Piercing rows (`physical.pierce`,
+    `weapon-piercing`, `technique.pierce`) point to sections 16 and 17. Status and
+    the rest of each row are unchanged.
+  - Game code is not changed by this section.
+- **Required code change (not made here, for the code PR):**
+  `src/engine/combatMatchups.js` lines 425 to 427 on `origin/dev` join Precision
+  to Piercing's bypass. Under this ruling Precision leaves the bypass. Piercing
+  reduces Block and Barrier by 2 per stack, and Poise and Ward by 2 per stack, as
+  the table above says. Physical Pierce also takes the 1.25× Poise edge, matching
+  `pierceWard` at line 570. `cfg.damageRiders.piercing.guardBypass` (default 2) is
+  the live per-stack value and needs to be reconciled with `pierce.perStack`.
+- **Open items:** none for §17 from the owner. The "dr" reading is recorded above.
 
 ## Open: round-trip differences
 

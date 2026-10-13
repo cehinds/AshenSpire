@@ -168,8 +168,8 @@ meta.combat.skill.armor-skill.medium,armor-skill.medium,Medium,meta.combat.skill
 meta.combat.skill.armor-skill.heavy,armor-skill.heavy,Heavy,meta.combat.skill.armor-skill,Skill,,,,,,,,game-concept,,,
 meta.combat.technique,technique,Technique,meta.combat,Skill,,Conditions for explicit technique bonuses.,,,,,,live-tag,,,technique
 meta.combat.technique.heavy,technique.heavy,Heavy,meta.combat.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,◇,9FC3E8,technique:heavy
-meta.combat.technique.precision,technique.precision,Precision,meta.combat.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,◇,9FC3E8,technique:precision
-meta.combat.technique.pierce,technique.pierce,Pierce,meta.combat.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,†,9FC3E8,pierce
+meta.combat.technique.precision,technique.precision,Precision,meta.combat.technique,Skill,,"Moved: re-homed in the proposal (tag-tree.txt [m]). Each stack adds +1 Accuracy (DECISIONS section 16, owner 2026-10-13); not a Piercing bypass (section 17).",,,,,,live-tag,◇,9FC3E8,technique:precision
+meta.combat.technique.pierce,technique.pierce,Pierce,meta.combat.technique,Skill,,"Moved: re-homed in the proposal (tag-tree.txt [m]). Piercing stacks reduce Block and Poise (physical) or Barrier and Ward (magical) by 2 per stack (DECISIONS section 17, owner 2026-10-13).",,,,,,live-tag,†,9FC3E8,pierce
 meta.combat.technique.cleave,technique.cleave,Cleave,meta.combat.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,◇,9FC3E8,technique:cleave
 meta.combat.technique.flourish,technique.flourish,Flourish,meta.combat.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,◇,9FC3E8,technique:flourish
 meta.combat.technique.guile,technique.guile,Guile,meta.combat.technique,Skill,,Moved: re-homed in the proposal (tag-tree.txt [m]). rogue trickery,,,,,,live-tag,◇,647B73,guile
@@ -201,7 +201,7 @@ meta.combat.damage,damage,Damage,meta.combat,DamageType,,,,,,,,live-tag,,,damage
 meta.combat.damage.physical,damage.physical,Physical,meta.combat.damage,DamageType,,,,,,,,live-tag,,,damage.physical
 meta.combat.damage.physical.slashing,slashing,Slashing,meta.combat.damage.physical,DamageType,,→ Bleeding,On Health hit: apply [bleeding],,,,weapon-blade,live-tag,◇,9FC3E8,damage:slashing
 meta.combat.damage.physical.blunt,physical.blunt,Blunt,meta.combat.damage.physical,DamageType,,→ Poise damage,+2 Poise damage,,,,weapon-blunt,live-tag,◇,9FC3E8,damage:blunt
-meta.combat.damage.physical.pierce,physical.pierce,Pierce,meta.combat.damage.physical,DamageType,,ignores Guard,Ignores 2 Guard; slips past melee Counter,,,,weapon-piercing,live-tag,◇,9FC3E8,damage:piercing
+meta.combat.damage.physical.pierce,physical.pierce,Pierce,meta.combat.damage.physical,DamageType,,"ignores Guard. Each stack reduces Block and Poise by 2 (DECISIONS section 17, owner 2026-10-13).",Ignores 2 Guard; slips past melee Counter,,,,weapon-piercing,live-tag,◇,9FC3E8,damage:piercing
 meta.combat.damage.magic,damage.magic,Magic,meta.combat.damage,DamageType,,,,,,,,live-tag,,,damage.magic
 meta.combat.damage.magic.fire,magic.fire,Fire,meta.combat.damage.magic,DamageType,spellcraft.fire,→ Burned,On hit: apply [burned],burned,,,,live-tag,◇,9FC3E8,damage:fire
 meta.combat.damage.magic.frost,magic.frost,Frost,meta.combat.damage.magic,DamageType,spellcraft.frost,→ Frostbitten,On hit: apply [build-up.frost],,,,,live-tag,◇,9FC3E8,damage:frost
@@ -741,7 +741,7 @@ grantSource.weapon,grantSource.weapon,Weapon,grantSource,TagNode,,Bound to an ar
 grantSource.class,grantSource.class,Class,grantSource,TagNode,,The class signature card.,,,,,,live-tag,✦,9FC3E8,from:class
 meta.combat.damage.physical.weapon-blade,weapon-blade,blade,meta.combat.damage.physical,DamageType,,Damage dealt with an edge.,,,,,slashing,live-tag,,,damage.blade
 meta.combat.damage.physical.weapon-blunt,weapon-blunt,blunt,meta.combat.damage.physical,DamageType,,Damage dealt with mass and impact.,,,,,physical.blunt,live-tag,,,damage.blunt
-meta.combat.damage.physical.weapon-piercing,weapon-piercing,piercing,meta.combat.damage.physical,DamageType,,Damage dealt with a point.,,,,,physical.pierce,live-tag,,,damage.piercing
+meta.combat.damage.physical.weapon-piercing,weapon-piercing,piercing,meta.combat.damage.physical,DamageType,,Damage dealt with a point. Piercing rules: DECISIONS section 17 (owner 2026-10-13).,,,,,physical.pierce,live-tag,,,damage.piercing
 damageType,damageType,Damage type,,TagNode,,Identity of a typed HP damage component.,,,,,,live-tag,,,damageType
 run,run,Run,,TagNode,,"Run structure — what an event, an encounter or an unlock is about.",,,,,,live-tag,,,run
 internal,internal,internal,,TagNode,,,,,,,,live-tag,,,internal
@@ -749,7 +749,7 @@ card.flourish,card.flourish,Flourish,card,Card,,Finesse — footwork and multi-h
 card.heavy,card.heavy,Heavy,card,Card,,"Slow, committed, and hard to stop.",,,,,,live-tag,◆,C9A227,heavy
 card.basic,basic,Basic,card,Card,,Everybody's — on the shelf without being found.,,,,,,live-tag,○,7A6F5A,basic
 card.ranged,card.ranged,Ranged,card,Card,,Authored ranged presentation; no position system.,,,,,,live-tag,➶,7FA8C9,ranged
-card.precision,card.precision,Precision,card,Card,,Deliberate aim and finesse; presentation only.,,,,,,live-tag,◎,C9A227,precision
+card.precision,card.precision,Precision,card,Card,,"Deliberate aim and finesse. Each stack adds +1 Accuracy; no longer presentation only (DECISIONS section 16, owner 2026-10-13).",,,,,,live-tag,◎,C9A227,precision
 card.extractable,extractable,Extractable,card,Card,,"A smith can lift this card out of the item that lends it, and seat it in another item's mount. Strikes and defends do not carry it — today.",,,,,,live-tag,⚙,C9A227,extractable
 trait,trait,Combat traits,,TagNode,,,,,,,,live-tag,,,trait
 trait.adequateReach,adequateReach,Adequatereach,trait,TagNode,,Combat trait for adequate reach. Read in src/engine/combatAvoidance.js:67: a ranged-stance defender cannot avoid it by distance.,,,,,,live-tag,◇,9FC3E8,trait:adequateReach
