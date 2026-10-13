@@ -17,8 +17,9 @@
 //   b. refuses (exit 3) when any conflicted path is outside the three derived
 //      files: the merge is aborted and a person must merge dev;
 //   c. resolves the derived files. buildordinal.json and the generated module take
-//      dev's version. CHANGELOG.md, when conflicted, is rebuilt from dev's text with
-//      this pull request's own receipt lines moved in under their date headings;
+//      dev's version. #N's receipt lines are moved out of CHANGELOG.md and placed
+//      as the first bullet of the newest date group (a receipt lives under the date
+//      it lands; a `## <today UTC>` group is created when the newest is older);
 //   d. re-stamps #N's receipt to dev's box (buildordinal.json as resolved). Only #N's lines;
 //   e. regenerates the changelog module and runs the receipt checks. A failure
 //      aborts the merge and exits 4 with the output;
@@ -79,51 +80,44 @@ export function restampReceipts(text, n, stamp) {
   return text.replace(re, (_, open, close) => `${open}${stamp}${close}`);
 }
 
-// THE PURE CORE. `devText` is origin/dev's CHANGELOG.md, `prText` the pull request's
-// own. Returns the text with the pull request's receipt lines moved in under their
-// date headings, first bullet under the heading, each re-stamped to `stamp`, and
-// with any dev line for #n removed first (replaced, never duplicated).
-// A pull request with no receipt in prText leaves devText as it is; the receipt
+// THE PURE CORE. `baseText` is the CHANGELOG.md the merge starts from (origin/dev's,
+// or the merged text), `prText` the pull request's own. Its receipt lines for #n are
+// REMOVED from baseText and re-inserted as the FIRST bullet of the NEWEST date group,
+// re-stamped to `stamp`. A receipt lives under the date it lands, not the date its
+// author wrote it: when the newest group is older than `today` (UTC), a `## today`
+// group is created at the top. A newest group dated after `today` is used as it is.
+// A pull request with no receipt in prText returns baseText unchanged; the receipt
 // checks then name the gap.
-export function mergeReceiptLines(devText, prText, n, stamp) {
-  const moved = [];
-  let heading = null;
-  for (const line of prText.split('\n')) {
-    if (line.startsWith('## ')) heading = line.trimEnd();
-    if (!isReceiptLine(line, n)) continue;
-    if (!heading || !DATE_HEADING.test(heading)) {
-      throw new Error(`#${n}'s receipt sits under ${heading ? `"${heading}"` : 'no heading'}, not a date heading`);
-    }
-    moved.push({ heading, line: restampReceipts(line, n, stamp) });
-  }
-  if (moved.length === 0) return devText;
+export function utcToday() {
+  return new Date().toISOString().slice(0, 10);
+}
 
-  const kept = devText.split('\n').filter((l) => !l.includes(linkFor(n)));
-  for (const heading of [...new Set(moved.map((m) => m.heading))]) {
-    const block = moved.filter((m) => m.heading === heading).map((m) => m.line);
-    const idx = kept.findIndex((l) => l.trimEnd() === heading);
-    if (idx >= 0) {
-      let k = idx + 1;
-      while (k < kept.length && kept[k].trim() === '') k++;
-      const after = k < kept.length && kept[k].startsWith('- ') ? [] : [''];
-      kept.splice(k, 0, ...block, ...after);
-      continue;
-    }
-    const date = heading.slice(3);
-    let older = -1;
-    for (let i = 0; i < kept.length; i++) {
-      const m = DATE_HEADING.exec(kept[i].trimEnd());
-      if (m && m[1] < date) { older = i; break; }
-    }
-    if (older >= 0) {
-      kept.splice(older, 0, heading, '', ...block, '');
+export function mergeReceiptLines(baseText, prText, n, stamp, today = utcToday()) {
+  const moved = [];
+  for (const line of prText.split('\n')) {
+    if (isReceiptLine(line, n)) moved.push(restampReceipts(line, n, stamp));
+  }
+  if (moved.length === 0) return baseText;
+
+  const kept = baseText.split('\n').filter((l) => !l.includes(linkFor(n)));
+  let at = kept.findIndex((l) => DATE_HEADING.test(l.trimEnd()));
+  const newest = at >= 0 ? DATE_HEADING.exec(kept[at].trimEnd())[1] : null;
+  if (newest === null || newest < today) {
+    const head = `## ${today}`;
+    if (at >= 0) {
+      kept.splice(at, 0, head, '');
     } else {
       let end = kept.length;
       while (end > 0 && kept[end - 1].trim() === '') end--;
       kept.length = end;
-      kept.push('', heading, '', ...block, '');
+      kept.push('', head, '');
     }
+    at = kept.indexOf(head);
   }
+  let k = at + 1;
+  while (k < kept.length && kept[k].trim() === '') k++;
+  const after = k < kept.length && kept[k].startsWith('- ') ? [] : [''];
+  kept.splice(k, 0, ...moved, ...after);
   return kept.join('\n');
 }
 
@@ -218,16 +212,14 @@ function main(argv) {
     const box = readBox();
     const stamp = `${box.release}.${box.ordinal}`;
 
-    let changelog;
-    if (unmerged.includes('CHANGELOG.md')) {
-      const devText = gitOk(['show', `${baseSha}:CHANGELOG.md`]);
-      const prText = gitOk(['show', `${head}:CHANGELOG.md`]);
-      changelog = mergeReceiptLines(devText, prText, pr, stamp);
-    } else {
-      changelog = readFileSync(CHANGELOG, 'utf8');
-    }
-    // d. #N's receipt names dev's box, wherever it came from.
-    writeFileSync(CHANGELOG, restampReceipts(changelog, pr, stamp));
+    // Whether or not git conflicted in CHANGELOG.md, #N's receipt lines come from the
+    // pull request's own text and land in the newest date group of the merged text.
+    // A conflicted file on disk holds conflict markers, so its start text is dev's.
+    const prText = gitOk(['show', `${head}:CHANGELOG.md`]);
+    const startText = unmerged.includes('CHANGELOG.md')
+      ? gitOk(['show', `${baseSha}:CHANGELOG.md`])
+      : readFileSync(CHANGELOG, 'utf8');
+    writeFileSync(CHANGELOG, restampReceipts(mergeReceiptLines(startText, prText, pr, stamp), pr, stamp));
 
     // e. the module follows the changelog, then the receipt and order checks must pass.
     const write = node([join(ROOT, 'tools', 'about-changelog.mjs'), '--write']);
@@ -273,60 +265,60 @@ function selftest() {
     if (!ok) fails.push(name);
   };
   const headings = (t) => t.split('\n').filter((l) => /^## /.test(l));
+  const prText = (date, ...lines) => `# Changelog\n\n## ${date}\n\n${lines.join('\n')}\n`;
 
   console.log('pr-restamp --selftest — the pure CHANGELOG core, planted cases');
 
-  // 1. heading exists: the line becomes the first bullet under it.
-  let out = mergeReceiptLines(dev, `# Changelog\n\n## 2026-10-12\n\n${rc(1930, '0.7.1.1450')}\n`, 1930, STAMP);
+  // 1. an old-dated PR receipt lands in the NEWEST group as its first bullet, re-stamped.
+  let out = mergeReceiptLines(dev, prText('2026-10-11', rc(1930, '0.7.1.1450')), 1930, STAMP, '2026-10-12');
   let lines = out.split('\n');
   const h12 = lines.indexOf('## 2026-10-12');
-  check('heading exists: the PR line is the first bullet under it',
+  check('old-dated PR receipt lands in the newest group, first bullet, re-stamped',
     lines[h12 + 2] === rc(1930, STAMP) && lines[h12 + 3] === rc(1907, '0.7.1.1457'),
     `got ${JSON.stringify(lines.slice(h12, h12 + 5))}`);
+  check('old-dated PR receipt is not left under its own old date',
+    lines.filter((l) => l.includes(`${PULL_URL}1930)`)).length === 1
+    && lines.indexOf(rc(1930, STAMP)) < lines.indexOf('## 2026-10-11'));
+  check('no heading is invented when the newest group is already today',
+    headings(out).join() === '## 2026-10-12,## 2026-10-11', headings(out).join());
 
-  // 2a. heading missing, newer than the newest: inserted above 2026-10-12, in date order.
-  out = mergeReceiptLines(dev, `## 2026-10-13\n\n${rc(1930, '0.7.1.1450')}\n`, 1930, STAMP);
-  check('heading missing: created in date-descending order (newest first)',
-    headings(out).join() === '## 2026-10-13,## 2026-10-12,## 2026-10-11', headings(out).join());
-  check('heading missing: the new group holds the PR line as its only bullet',
-    out.includes(`## 2026-10-13\n\n${rc(1930, STAMP)}\n\n## 2026-10-12`));
+  // 2. the newest group is older than today: a today group is created at the top.
+  out = mergeReceiptLines(dev, prText('2026-10-11', rc(1930, '0.7.1.1450')), 1930, STAMP, '2026-10-13');
+  check('older newest group: a today group is created at the top, holding the line',
+    headings(out).join() === '## 2026-10-13,## 2026-10-12,## 2026-10-11'
+    && out.includes(`## 2026-10-13\n\n${rc(1930, STAMP)}\n\n## 2026-10-12`), headings(out).join());
 
-  // 2b. heading missing, older than every group: appended after the oldest.
-  out = mergeReceiptLines(dev, `## 2026-09-30\n\n${rc(1930, '0.7.1.1450')}\n`, 1930, STAMP);
-  check('heading missing: an older date goes after the oldest group',
-    headings(out).join() === '## 2026-10-12,## 2026-10-11,## 2026-09-30', headings(out).join());
+  // 3. a newest group dated after today is used as it is.
+  out = mergeReceiptLines(dev, prText('2026-10-11', rc(1930, '0.7.1.1450')), 1930, STAMP, '2026-10-11');
+  check('newest group dated after today is used, no heading created',
+    headings(out).join() === '## 2026-10-12,## 2026-10-11' && out.includes(`## 2026-10-12\n\n${rc(1930, STAMP)}`), headings(out).join());
 
-  // 2c. heading missing, between two groups.
-  out = mergeReceiptLines(dev, `## 2026-10-11\n\n${rc(1930, '0.7.1.1450')}\n`, 1930, STAMP);
-  check('heading exists again (2026-10-11): line first under it, no duplicate heading',
-    headings(out).filter((h) => h === '## 2026-10-11').length === 1);
-  out = mergeReceiptLines(dev, `## 2026-10-13\n\nno receipt here\n`, 1930, STAMP);
-  check('a PR text with no receipt for #N leaves dev unchanged', out === dev);
+  // 4. no date headings at all: the group is appended.
+  out = mergeReceiptLines('# Changelog\n\nintro\n', prText('2026-10-11', rc(1930, '0.7.1.1450')), 1930, STAMP, '2026-10-13');
+  check('no date group yet: the today group is appended',
+    out.endsWith(`## 2026-10-13\n\n${rc(1930, STAMP)}\n`), JSON.stringify(out));
 
-  // 3. PR line already in dev under an old stamp: replaced, not duplicated.
-  out = mergeReceiptLines(dev, `## 2026-10-12\n\n${rc(1928, '0.7.1.1450')}\n`, 1928, STAMP);
+  // 5. a PR line already in dev under an old stamp: moved to the top, re-stamped, not duplicated.
+  out = mergeReceiptLines(dev, prText('2026-10-12', rc(1928, '0.7.1.1450')), 1928, STAMP, '2026-10-12');
   lines = out.split('\n');
   const count1928 = lines.filter((l) => l.includes(`${PULL_URL}1928)`)).length;
-  check('already present: #N appears once, re-stamped', count1928 === 1 && out.includes(rc(1928, STAMP)) && !out.includes('0.7.1.1455'),
-    `count ${count1928}`);
-  check('already present: the line moves to the top of its group',
-    lines[lines.indexOf('## 2026-10-12') + 2] === rc(1928, STAMP));
+  check('already present: #N appears once, re-stamped, first under the newest group',
+    count1928 === 1 && out.includes(rc(1928, STAMP)) && !out.includes('0.7.1.1455')
+    && lines[lines.indexOf('## 2026-10-12') + 2] === rc(1928, STAMP), `count ${count1928}`);
 
-  // 4. other PRs' lines untouched: same text, same order, same stamps.
+  // 6. other PRs' lines untouched: same text, same order, same stamps.
   const others = (t) => t.split('\n').filter((l) => l.startsWith('- ') && !l.includes(`${PULL_URL}1928)`));
-  check('other PRs: their lines are identical to dev\'s, in order',
-    others(out).join('\n') === others(dev).join('\n'));
+  check('other PRs: their lines are identical to dev\'s, in order', others(out).join('\n') === others(dev).join('\n'));
 
-  // 5. restampReceipts re-stamps only #N.
+  // 7. restampReceipts re-stamps only #N.
   const two = `${rc(1907, '0.7.1.1457')}\n${rc(1930, '0.7.1.1450')}`;
-  const r5 = restampReceipts(two, 1930, STAMP);
-  check('restamp: only #N\'s stamp changes', r5 === `${rc(1907, '0.7.1.1457')}\n${rc(1930, STAMP)}`, r5);
+  const r7 = restampReceipts(two, 1930, STAMP);
+  check('restamp: only #N\'s stamp changes', r7 === `${rc(1907, '0.7.1.1457')}\n${rc(1930, STAMP)}`, r7);
   check('restamp: pull/19 does not match pull/1907', restampReceipts(rc(1907, '0.7.1.1457'), 19, STAMP) === rc(1907, '0.7.1.1457'));
 
-  // 6. a PR receipt under a non-date heading is refused, not guessed at.
-  let threw = false;
-  try { mergeReceiptLines(dev, `## History\n\n${rc(1930, '0.7.1.1450')}\n`, 1930, STAMP); } catch { threw = true; }
-  check('a receipt under a non-date heading is refused', threw);
+  // 8. a PR text without a receipt for #N leaves the base unchanged.
+  check('a PR text with no receipt for #N leaves the base unchanged',
+    mergeReceiptLines(dev, '## 2026-10-13\n\nno receipt here\n', 1930, STAMP, '2026-10-13') === dev);
 
   console.log('');
   if (fails.length) { console.log(`pr-restamp --selftest: FAIL — ${fails.length} case(s)`); return 1; }
