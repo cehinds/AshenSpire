@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1957",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Cards read the same in every view, and read intents show their damage class",
+    "detail": "A card's text is now one short form everywhere — combat hand, character creation, review, rewards, shop and deck — naming each effect by its tag and number: \"Inflict 9 Blunt damage, 4 Poise damage\", \"Inflict Weak 4, Paralysis 3\", \"Remove 1 Sleep, 1 Paralysis, 1 Dazed\", \"Gain 7 Ward\". Boosted numbers are green and reduced ones red. In combat the hand shows three lines and a selected card up to five. Card tag icons stay on the right edge even beside a Melee or Reach chip. An enemy intent you read successfully is tinted silver for a physical attack and blue for magic.",
+    "build": "0.7.1.1493",
+    "pullRequest": 1957,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1957"
+  },
+  {
     "id": "pr-1963",
     "date": "2026-10-13",
     "group": "2026-10-13",
