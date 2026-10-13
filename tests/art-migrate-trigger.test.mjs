@@ -272,10 +272,14 @@ test('pages: a workflow_run whose jobs skip gets its own concurrency group, so i
   assert.equal(groupFor({ event: 'pull_request_target' }), 'pages-builds');
 });
 
-test('pages: the art token stays gated on protected refs alone (a workflow_run run already runs on dev\'s ref)', () => {
+test('pages: the art token is gated on a protected ref AND, for a workflow_run, on a same-repository head', () => {
+  // A workflow_run run takes github.ref from the default branch, so the protected-ref
+  // gate alone admits a run a fork pull request started. The head-repository clause
+  // must be ANDed in front of the unchanged protected-ref gate.
   const token = stepEnv('ART_REPO_TOKEN');
   assert.ok(token.includes('github.ref'), 'the token is gated on github.ref');
-  assert.ok(!token.includes('workflow_run'), 'no event-specific clause widens the protected-ref gate');
+  assert.match(token, /github\.event_name != 'workflow_run' \|\| github\.event\.workflow_run\.head_repository\.full_name == github\.repository\) && contains\(/, 'a workflow_run must come from this repository');
+  assert.ok(token.endsWith("contains(fromJSON('[\"refs/heads/dev\",\"refs/heads/test\",\"refs/heads/release\",\"refs/heads/main\"]'), github.ref) && secrets.ART_REPO_TOKEN || ''"), 'the protected-ref gate text is unchanged');
 });
 
 test('pages: the checkout of a workflow_run run is dev, so it builds the stamped commit', () => {
