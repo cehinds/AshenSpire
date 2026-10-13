@@ -874,6 +874,25 @@ test('every ART_REPO_TOKEN a workflow passes is gated on a protected ref', () =>
   assert.ok(lines >= 4, `the four fetching workflows pass the token (found ${lines})`);
 });
 
+test('every ART_REPO_TOKEN in a workflow_run workflow also requires a same-repository head', () => {
+  // A workflow_run run takes github.ref from the default branch, so the protected-ref
+  // gate alone lets a fork pull request's run reach the token. Each such line must
+  // carry the head-repository clause.
+  const dir = fileURLToPath(new URL('../.github/workflows/', import.meta.url));
+  const GUARD = "(github.event_name != 'workflow_run' || github.event.workflow_run.head_repository.full_name == github.repository) && contains(";
+  let checked = 0;
+  for (const name of readdirSync(dir).filter((n) => /\.ya?ml$/.test(n)).sort()) {
+    const text = readFileSync(join(dir, name), 'utf8');
+    if (!/^  workflow_run:/m.test(text)) continue;
+    text.split('\n').forEach((line, i) => {
+      if (/^\s*#/.test(line) || !line.includes('secrets.ART_REPO_TOKEN')) return;
+      checked += 1;
+      assert.ok(line.includes(GUARD), `${name}:${i + 1}: ART_REPO_TOKEN in a workflow_run workflow must require a same-repository head:\n${line.trim()}`);
+    });
+  }
+  assert.ok(checked >= 1, `pages-builds passes the token on workflow_run (found ${checked})`);
+});
+
 // Step 13 left three heavy browser jobs (flask-menu, its plants, motion) with
 // no fetch: they served a checkout whose art had gone, and the motion probe
 // went red on figures that 404 (dispatch run 37098149492). Every ci.yml job

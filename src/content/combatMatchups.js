@@ -91,14 +91,14 @@ export const combatMatchups = {
 export const combatExpansionMatchups = {
   counter: { incomingMultiplier: 0.5, maxReturnsPerCycle: 1,
     defaultCoverage: {
-      melee: { camps: ['physical'], reaches: ['contact'], targeting: ['single'], maneuvers: ['attack', 'smash'], effects: ['damage'] },
-      ranged: { camps: ['physical'], reaches: ['near', 'far'], targeting: ['single'], effects: ['damage'] },
-      spell: { camps: ['spell'], reaches: ['contact', 'near', 'far'], targeting: ['single'], effects: ['damage', 'status'] },
+      melee: { camps: ['physical'], ranges: ['melee'], targeting: ['single'], maneuvers: ['attack', 'smash'], effects: ['damage'] },
+      ranged: { camps: ['physical'], ranges: ['reach', 'ranged'], targeting: ['single'], effects: ['damage'] },
+      spell: { camps: ['spell'], ranges: ['melee', 'reach', 'ranged'], targeting: ['single'], effects: ['damage', 'status'] },
     },
     schoolStrongMultiplier: 1.25, schoolWeakMultiplier: 0.75,
     schoolMatchups: {
       fire: { strongSchools: ['frost'], weakDamageTypes: ['blunt'] },
-      frost: { strongReaches: ['contact'], weakSchools: ['fire'], weakTraits: ['shattering'] },
+      frost: { strongRanges: ['melee'], weakSchools: ['fire'], weakTraits: ['shattering'] },
       lightning: { strongTraits: ['conductive'], weakTraits: ['grounded'] },
       force: { strongTraits: ['projectile'], weakTraits: ['mental', 'statusOnly'] },
       alteration: {},
@@ -112,9 +112,9 @@ export const combatExpansionMatchups = {
   smash: { defendedMultiplier: 1.5, guardBreakPoiseBonus: 3 },
   defend: { sweepMultiplier: 0.75, turnStartProtection: 1 },
   evade: { die: 20, baseDC: 8, armorPenalty: { light: 1, medium: 2, heavy: 3 },
-    areaDifficulty: { contact: 0, near: 2, far: 4 },
+    areaDifficulty: { melee: 0, reach: 2, ranged: 4 },
   },
-  distance: { nearChance: 20, farChance: 35, maximumBaseChance: 50 },
+  distance: { reachChance: 20, rangedChance: 35, maximumBaseChance: 50 },
   reactionLocks: ['sleep', 'paralysis', 'dazed'],
   damageAliases: { frost: 'cold', arcane: 'force', sacred: 'holy', decay: 'necrotic', pierce: 'piercing', bludgeoning: 'blunt' },
   damageRiders: {

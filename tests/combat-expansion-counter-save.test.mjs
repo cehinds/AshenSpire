@@ -23,7 +23,7 @@ test('real armed and spent v2 Counter snapshots retain authored Smash bonus with
   assert.deepEqual(combatCounterProblems(combat.player.combatCounter, 'counter'), []);
   for (const spent of [false, true]) {
     if (spent) beginTacticalAction(combat, combat.enemies[0], combat.player,
-      { combatProfile: { camp: 'physical', maneuver: 'attack', reach: 'contact', targeting: 'single' } }, [{ amount: 8 }]);
+      { combatProfile: { camp: 'physical', maneuver: 'attack', range: 'melee', targeting: 'single' } }, [{ amount: 8 }]);
     const before = rng.getCounters(), saved = serializeCombatSnapshot(combat);
     const restored = restoreCombatSnapshot({ registries, rng: createRng(seed, before), snapshot: JSON.parse(JSON.stringify(saved)) });
     assert.deepEqual(restored.player.combatCounter, JSON.parse(JSON.stringify(combat.player.combatCounter)));

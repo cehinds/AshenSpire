@@ -62,9 +62,9 @@ test('new school counters have explicit usable coverage and Area needs dedicated
   assert.equal(counters.length, 9);
   for (const card of counters) {
     assert.equal(card.minCombatExpansionVersion, 2);
-    assert(card.counterCoverage.reaches.length > 0);
+    assert(card.counterCoverage.ranges.length > 0);
     assert.equal(card.counterCoverage.schools, undefined);
-    const profile = { camp: card.counterCoverage.camps[0], reach: card.counterCoverage.reaches[0], targeting: 'single' };
+    const profile = { camp: card.counterCoverage.camps[0], range: card.counterCoverage.ranges[0], targeting: 'single' };
     assert.equal(counterCoverageMatches(card.counterCoverage, profile), card.id !== 'barrageCounter');
     assert.equal(counterCoverageMatches(card.counterCoverage, { ...profile, targeting: 'area' }), card.id === 'barrageCounter');
     assert.equal(card.counterPayload.hp, 0, 'impact is printed; no invented HP return');
@@ -86,14 +86,14 @@ test('only selected spells upcast, new cantrips pay their own surcharge and all 
 
 test('real staff and sceptre equipment projections retain explicit Spell delivery and school', () => {
   const registries = createRegistries(contentBundle);
-  for (const [profileId, cardId, maneuver, reach] of [
-    ['staffMagicAttack', 'strike', 'casting', 'near'], ['sceptreArcaneAttack', 'strike', 'casting', 'near'],
-    ['staffGuard', 'defend', 'defend', 'contact'], ['sceptreGuard', 'defend', 'defend', 'contact'],
+  for (const [profileId, cardId, maneuver, range] of [
+    ['staffMagicAttack', 'strike', 'casting', 'reach'], ['sceptreArcaneAttack', 'strike', 'casting', 'reach'],
+    ['staffGuard', 'defend', 'defend', 'melee'], ['sceptreGuard', 'defend', 'defend', 'melee'],
   ]) {
     const card = applyCombatExpansionCard(resolveCard(registries, { cardId, profileId }));
     const profile = combatProfileFor(card);
     assert.equal(profile.camp, 'spell', profileId); assert.equal(profile.maneuver, maneuver, profileId);
-    assert.equal(profile.reach, reach, profileId); assert.equal(profile.targeting, 'single', profileId);
+    assert.equal(profile.range, range, profileId); assert.equal(profile.targeting, 'single', profileId);
     if (cardId === 'defend') assert(card.effects.some(effect => effect.op === 'gainBarrier'), profileId);
   }
 });
