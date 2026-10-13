@@ -130,6 +130,11 @@ function moveToNewestGroup(text, pr, stamp) {
     // The newest group has no receipt yet: open it with this one, after its heading's blank line.
     first = newest + 1;
     if (lines[first] === '') first += 1;
+  } else {
+    // Below receipts already carrying this stamp: restamp walks the landed pull requests
+    // newest first, so an earlier-moved (newer) receipt stays above a later (older) one.
+    const sameStamp = new RegExp(`/pull/\\d+\\),\\s*\`${stamp.replace(/\./g, '\\.')}\``);
+    while (first < lines.length && lines[first].startsWith('- ') && sameStamp.test(lines[first])) first += 1;
   }
   lines.splice(first, 0, moved);
   return lines.join('\n');
