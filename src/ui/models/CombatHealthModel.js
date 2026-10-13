@@ -6,10 +6,10 @@ import { healthGuardTone } from '../../model/blockPresentation.js';
 // and `poiseMax` (tooltip and aria-label).
 const count = value => Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
 
-export function combatHealthModel({ defense = 0, ward = 0, barrier = 0, poise = 0, poiseMax = 0, wardPool, wardGuard = 0 } = {}) {
+export function combatHealthModel({ defense = 0, ward = 0, barrier = 0, poise = 0, poiseMax = 0, wardPool, wardBlock = 0 } = {}) {
   const shield = count(defense);
   const arcaneWard = count(ward);
-  const guard = count(wardGuard);
+  const warded = count(wardBlock);
   const charged = count(barrier);
   const poised = count(poise);
   // Without the Barrier-free pool, the badge total less Barrier is the Ward pool.
@@ -22,7 +22,7 @@ export function combatHealthModel({ defense = 0, ward = 0, barrier = 0, poise = 
     poised: poised > 0,
     poiseLabel: poised > 0 ? t('combat.protection.poiseValue', { value: poised, max: Math.max(poised, count(poiseMax)) }) : null,
     badges: [
-      ...(arcaneWard > 0 ? [{ kind: 'ward', label: t('combat.protection.ward'), value: arcaneWard, barrier: charged, guard }] : []),
+      ...(arcaneWard > 0 ? [{ kind: 'ward', label: t('combat.protection.ward'), value: arcaneWard, barrier: charged, wardBlock: warded }] : []),
       ...(shield > 0 ? [{ kind: 'shield', label: t('combat.protection.block'), value: shield }] : []),
     ],
   });

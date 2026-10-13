@@ -24,7 +24,7 @@ export function protectionPresentation(entity) {
   // wardPool is the Ward that is not Barrier: the magical Block share plus the persistent pool.
   const wardPool = ward + whole(entity?.persistentWard?.value);
   // Poise has no badge: the HP bar's gold trim and its tooltip carry value/max.
-  return { defense, ward: wardPool + barrier, wardPool, wardGuard: ward, barrier, poise: whole(entity?.persistentPoise?.value), poiseMax: whole(entity?.persistentPoise?.max) };
+  return { defense, ward: wardPool + barrier, wardPool, wardBlock: ward, barrier, poise: whole(entity?.persistentPoise?.value), poiseMax: whole(entity?.persistentPoise?.max) };
 }
 
 // Which layer colours the HP bar's fill: the highest defence still standing,

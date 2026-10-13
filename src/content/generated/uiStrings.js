@@ -101,6 +101,13 @@ export const uiStrings = [
     "tip": "Ward guard"
   },
   {
+    "id": "combat.protection.wardBlock",
+    "extends": "",
+    "short": "Warded Block",
+    "full": "The part of this turn's Block raised by magic. It counts in the Ward badge, is spent after ordinary Block, and is gone at the start of your next turn.",
+    "tip": "Warded Block"
+  },
+  {
     "id": "combat.log.title",
     "extends": "",
     "short": "Combat log",
