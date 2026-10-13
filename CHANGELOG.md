@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-13
 
+- **Creation spell and maneuver cards fit, and combat input can't lock** ([#1941](https://github.com/cehinds/AshenSpire/pull/1941), `0.7.1.1461`). In character creation the Spells step and the Combat Maneuvers picker show cards at the review page's size, and the maneuver list scrolls so every card can be reached and chosen. In combat, a failure while preparing a play's visuals no longer leaves End Turn and the hand unresponsive.
 - **One press on a visible Inspect "i" opens it** ([#1930](https://github.com/cehinds/AshenSpire/pull/1930), `0.7.1.1461`). One click, tap or Enter on a fighter's Inspect "i" opens the inspector at once, even when the fighter was not selected first.
 - **Desktop combat uses the phone's proportions** ([#1934](https://github.com/cehinds/AshenSpire/pull/1934), `0.7.1.1461`). On desktop and widescreen the hand now takes 30% of the screen instead of 38%, so the battlefield is larger and enemies are drawn bigger. Hand cards scale with the hand like on a phone, and the horizon sits where it does on a phone. Phone and tablet layouts are unchanged.
 
