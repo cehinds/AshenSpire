@@ -1054,7 +1054,7 @@ export function mountCustomize(app, {
         const full = !picked && section.count > 1 && state.startingAbilityIds.length >= section.count;
         // The plan allows at most maxElementPicks element spells; a further one
         // can never validate, so it is not offered instead of stranding Next.
-        const elementCapped = !picked && elementCapReached() && section.elementIds?.includes(entry.dataset.cardId);
+        const elementCapped = !picked && section.count > 1 && elementCapReached() && section.elementIds?.includes(entry.dataset.cardId);
         choose.disabled = full || elementCapped;
         if (elementCapped && !full) choose.title = t('creation.abilities.elementCap', { max: section.maxElementPicks });
         else choose.removeAttribute('title');
