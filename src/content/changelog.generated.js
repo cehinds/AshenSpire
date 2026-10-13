@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-13",
     "summary": "Ornate feat emblems in character creation",
     "detail": "The Feats step shows each feat as a layered, gilded medallion instead of a flat glyph. If the artwork cannot load, the tile falls back to the glyph.",
-    "build": "0.7.1.1467",
+    "build": "0.7.1.1469",
     "pullRequest": 1923,
     "url": "https://github.com/cehinds/AshenSpire/pull/1923"
   },
@@ -18,7 +18,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-13",
     "summary": "The art pack now includes the ornate feat medallions",
     "detail": "Nothing on screen changes yet. The game's art pack moves to its next release, which adds the gilded medallion layers the character-creation Feats step will use.",
-    "build": "0.7.1.1467",
+    "build": "0.7.1.1469",
     "pullRequest": 1935,
     "url": "https://github.com/cehinds/AshenSpire/pull/1935"
   },
