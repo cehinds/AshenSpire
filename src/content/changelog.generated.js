@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1912",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Combat target boxes centre on the enemy",
+    "detail": "The gold target box now sits on the enemy sprite instead of below small enemies. Intent, HP and armor above the enemy stay clickable.",
+    "build": "0.7.1.1449",
+    "pullRequest": 1912,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1912"
+  },
+  {
     "id": "pr-1909",
     "date": "2026-10-12",
     "group": "2026-10-12",
