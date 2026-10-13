@@ -238,6 +238,9 @@ export function beforeReactionAction(ctx, action, hooks) {
   const group = action.meta?.expansionGroup;
   if (!group || group.carrier?.reactionDepth) return false;
   if (action.source?.kind !== 'enemy') return !group.begun && action.source?.kind === 'player' && beforePlayerRoot(ctx, group, hooks);
+  // Combat Rounds (SPEC §4.11): an enemy move resolving a timeline entry had its reaction point in the round prompt,
+  // answered or not, so the live window never opens for it (one prompt per attack).
+  if (group.roundSettled) return false;
   if (group.begun) { reportAlreadyAnswered(ctx, action, group, hooks); return false; }
   if (stackedReactions(ctx)) return beforeStackedReaction(ctx, action, group, hooks);
   if (!action.source.alive) return false;

@@ -83,16 +83,7 @@ const ENEMY = 'wanderingSoldier';
 const SEED = 5;
 
 // A preview fight (expanded rules, so reactions are on). The enemy's round is fixed to one attack on the player.
-// `miss`: the enemy fights with no attributes, so this seed's Slash misses in the timeline (d20 6 against 8) and its
-// live move never runs. These pause tests were written when the timeline read no attributes; with the enemy's attributes
-// read (Codex P1 on PR #1953) its Slash needs 2 and lands, and a landed live Slash opens the live reaction window too,
-// which is not what these tests are about. (An expanded fight rebuilds its RNG in the commit, so a roll proxy cannot
-// pin the miss here.)
-const noAttributeRegistries = createRegistries({ ...contentBundle,
-  cards: contentBundle.cards.map((card) => ({ ...card, costRule: 'fixed' })),
-  enemies: contentBundle.enemies.map((e) => (e.id === ENEMY ? { ...e, attributes: {}, spPool: 2 } : e)) });
-function fight({ reactions = true, enemyIds = [ENEMY], reg = registries, miss = false } = {}) {
-  if (miss) reg = noAttributeRegistries;
+function fight({ reactions = true, enemyIds = [ENEMY], reg = registries } = {}) {
   const run = createRunState({ seed: SEED, classId: 'reaver', registries: reg, profileMeta: { settings: { [COMBAT_ROUNDS_KEY]: true } } });
   const c = createRunCombat({ registries: reg, rng: createRng(SEED), run, enemyIds, settings: {} });
   for (const enemy of c.enemies.filter((e) => e.alive)) {
@@ -115,7 +106,7 @@ const playedCount = (c, instanceId) => c.eventLog.filter((e) => e.type === 'card
 const cardPlayedEvent = (c, instanceId) => c.eventLog.find((e) => e.type === 'cardPlayed' && e.cardInstanceId === instanceId);
 
 test('pause and answer with Counter: the commit waits, the chosen Counter is paid and played, then the turn ends', () => {
-  const c = fight({ miss: true });
+  const c = fight();
   // A new expanded run snapshots reaction rules version 2 (dev, SPEC §4.10); the preview offers the same way on 1 and 2.
   assert.ok([1, 2].includes(c.reactionRulesVersion), 'fixture: reactions are on in an expanded fight');
   addToHand(c, 'guardCounter', 'rx-counter');
@@ -138,7 +129,7 @@ test('pause and answer with Counter: the commit waits, the chosen Counter is pai
 });
 
 test('pause and answer with Evade: the chosen Evade is played as a reaction, then the turn ends', () => {
-  const c = fight({ miss: true });
+  const c = fight();
   addToHand(c, 'evasiveGuard', 'rx-evade');
   dispatch(c, { type: 'endTurn' });
   assert.ok(c.pendingReaction.options.some((o) => o.id === 'rx-evade'), 'the Evade is on offer');
@@ -148,7 +139,7 @@ test('pause and answer with Evade: the chosen Evade is played as a reaction, the
 });
 
 test('decline: Back resolves the attack with no reaction, and the card stays unplayed', () => {
-  const c = fight({ miss: true });
+  const c = fight();
   addToHand(c, 'guardCounter', 'rx-counter');
   dispatch(c, { type: 'endTurn' });
   assert.ok(c.pendingReaction, 'a reaction is offered');
@@ -161,7 +152,7 @@ test('decline: Back resolves the attack with no reaction, and the card stays unp
 });
 
 test('a save taken during the pause restores the round and the offer, and the answer resumes from there', () => {
-  const c = fight({ miss: true });
+  const c = fight();
   addToHand(c, 'guardCounter', 'rx-counter');
   dispatch(c, { type: 'endTurn' });
   const saved = JSON.parse(JSON.stringify(serializeCombatSnapshot(c)));
@@ -177,6 +168,26 @@ test('a save taken during the pause restores the round and the offer, and the an
   assert.equal(playedCount(restored, 'rx-counter'), 1, 'the restored fight plays the Counter once');
   assert.equal(restored.turn, turn + 1, 'and ends the turn');
 });
+
+// The round prompt is the reaction point for every enemy entry of the round (SPEC §4.11). The seed's Slash lands (the
+// soldier's attributes give it a 95% hit), and its live move must not open the normal-combat reaction window as well:
+// one prompt per attack, whether the player answers or declines.
+for (const answer of ['rx-counter', null]) {
+  test(`a landed Slash after the round prompt offers no second prompt (${answer ? 'answered' : 'declined'})`, () => {
+    const c = fight();
+    addToHand(c, 'guardCounter', 'rx-counter');
+    const hp = c.player.hp;
+    dispatch(c, { type: 'endTurn' });
+    assert.ok(c.pendingReaction, 'the round prompt is offered');
+    dispatch(c, { type: 'chooseReaction', offerId: c.pendingReaction.id, optionId: answer });
+    assert.equal(c.pendingReaction, undefined, 'no live prompt follows for the same attack');
+    assert.equal(c.eventLog.filter((e) => e.type === 'combatReactionOffered').length, 1, 'exactly one prompt this round');
+    const slash = c.eventLog.filter((e) => e.type === 'enemyMoveStarted' && e.sourceId === c.enemies[0].id);
+    assert.equal(slash.length, 1, 'fixture: the Slash landed and played live');
+    assert.ok(c.player.hp < hp || c.eventLog.some((e) => e.type === 'damageDealt' && e.sourceId === c.enemies[0].id), 'its damage resolved');
+    assert.equal(c.phase, 'player', 'the turn ends and play returns to the player');
+  });
+}
 
 test('with reactions off, the commit never pauses', () => {
   const c = fight({ reactions: false });

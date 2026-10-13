@@ -790,7 +790,9 @@ function startDelayedMove(combat, enemy, move, moveId) {
 // actions mutate). Order: damage hits, block, then effects.
 // 'enemyMoveStarted' marks the acting enemy so the UI can pace playback
 // one actor at a time (SPEC §7.4); content triggers may also key off it.
-function executeMovePayload(combat, enemy, move, moveId) {
+// `roundEntry`: the move resolves a Combat Rounds timeline entry, whose reaction point was the round prompt (SPEC
+// §4.11), so its group is marked roundSettled and the live reaction window does not open for it again.
+function executeMovePayload(combat, enemy, move, moveId, { roundEntry = false } = {}) {
   move = expandedEnemyMove(enemy, move, moveId, combat);
   // movesHistory records ROLLS (maxConsecutive reads it); a roll a stagger
   // cancels never happens. This is what did — the inspector's history.
@@ -803,6 +805,7 @@ function executeMovePayload(combat, enemy, move, moveId) {
   const actions = enemyMoveActions(combat, enemy, move, moveId, carrier);
   const group = enqueueExpandedAction(combat, actions, { source: enemy, target: combat.player, carrier });
   if (Reactions.usesReactions(combat) && group) group.enemyMoveStart = start;
+  if (roundEntry && group) group.roundSettled = true;
 }
 
 // Enemy reactions: the reaction move's actions and carrier, planned by the stack
@@ -1830,7 +1833,7 @@ function enemyMoveAt(combat, enemy, moveId, { landed = true } = {}) {
   if (move.delay) {
     startDelayedMove(combat, enemy, move, moveId);
     if (!landed) enemy.pendingMove.missed = true;
-  } else executeMovePayload(combat, enemy, move, moveId);
+  } else executeMovePayload(combat, enemy, move, moveId, { roundEntry: true });
 }
 
 // The live helpers the adapter's commit calls (combatRoundsAdapter.js never imports this file).
