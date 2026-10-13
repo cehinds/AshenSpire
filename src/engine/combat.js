@@ -35,6 +35,7 @@ import { reconcileWardBlock } from '../model/blockPresentation.js';
 // Headless: no document/window/localStorage/timers.
 
 import * as A from './actions.js';
+import { spellCardCostSurcharge } from '../model/combatCardProfile.js';
 import * as R from './abilityRiders.js';
 import { turnDrawCount, endTurnCardFate, validateDiscardChoice, applyDiscardChoice, returnUnplayedCards } from './handRules.js';
 import { handRow, scaledCards } from '../model/handRules.js';
@@ -1236,7 +1237,9 @@ function effectiveCost(combat, def) {
 export function resolvedCardPlayCosts(combat, def) {
   const weightClass = playerWeightClass(combat).weightClass;
   const pools = F.foundationCosts(combat, def, weightClass, combat.registries.framework.costProfile(def, { weightClass }));
-  const stamina = (def.cost === 'X' ? combat.player.stamina : effectiveCost(combat, def)) + (def.upcastSurcharge || 0);
+  // Silenced (v2): each stack adds 1 SP to a spell-camp card. An X card already spends every point.
+  const silenced = combat.combatExpansionVersion === 2 && def.cost !== 'X' ? spellCardCostSurcharge(combat.player, def) : 0;
+  const stamina = (def.cost === 'X' ? combat.player.stamina : effectiveCost(combat, def)) + (def.upcastSurcharge || 0) + silenced;
   return { energy: stamina, mana: Math.max(0, pools.mana + (def.upcastSurcharge || 0) - R.matchingAbilityCharges(combat.player, { ...def, type: cardKind(def), authoredTags: def.cardTags || def.tags }).manaDiscount), stamina };
 }
 
