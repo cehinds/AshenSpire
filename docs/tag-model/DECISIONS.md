@@ -327,8 +327,15 @@ Formula, relation and value keys follow the README conventions.
   this branch. `content/source/tagging.csv` is not changed by this decision.
 - **Open, owner to confirm:** the Evasion reading. Either Evasion += stacks × (DEX + 3),
   or DEX + 3 × stacks.
-- **Open, owner to confirm:** how weight class scales Evade. Either a multiplier per
-  light, medium or heavy class, or reuse of the armour DEX cap. Not decided here.
+- **Ruling 4 (verbatim):**
+  > Armor cap on dex works with feats reducing this penalty
+  - Closes the weight-class question. Evade's weight-class effect reuses the armour
+    DEX cap from `evasion.rating` (cloth 0/4, leather 0/6, studded 1/3, chain 1/2,
+    scale 1/1, plated 1/0). There is no separate per-class multiplier.
+  - Feats can reduce the penalty, which raises the effective DEX cap.
+  - New open item for the Evade PR: which feats reduce the penalty, and by how much.
+    No such feat exists in `content/source/nodes.csv` on dev, so the owner must name
+    them.
 - **Cross-references for the weight-class question:**
   - Evasion rating formula, `docs/tag-model/tables/formulas.csv` `evasion.rating`:
     `armor.evasionBase` plus DEX capped by `armor.dexCap`. Per the owner note, the caps
