@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-13",
     "summary": "The build-number bot recovers a missed preview by itself",
     "detail": "Nothing changes in the game. If the bot stamped a build but could not start its preview, re-running it now starts the preview even after a documentation update has landed on top.",
-    "build": "0.7.1.1471",
+    "build": "0.7.1.1473",
     "pullRequest": 1939,
     "url": "https://github.com/cehinds/AshenSpire/pull/1939"
   },
@@ -18,7 +18,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-13",
     "summary": "The test branch's long checks pass again, and pricing a card is fast again",
     "detail": "Development-process fix, with one engine speed-up. Previewing a card's cost or target no longer copies the whole fight when no rule could react to that card, which had made the balance check and simulations about three times slower after Oath began reacting to every card. The link check's self-test copies the Workbench files it needs, and the simulation-report test runs each identical simulation once.",
-    "build": "0.7.1.1471",
+    "build": "0.7.1.1473",
     "pullRequest": 1950,
     "url": "https://github.com/cehinds/AshenSpire/pull/1950"
   },
