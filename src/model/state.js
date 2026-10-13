@@ -48,6 +48,7 @@ import { combatSnapshotProblems } from './combatSnapshot.js';
 import { createAshenBlightState, ashenBlightProblems, effectiveAshenBlightAttributes, ashenBlightBonuses } from './ashenBlight.js';
 import { ensureExpandedStarterCoverage } from './combatExpansionStarter.js';
 import { createCombatExpansionRuleSnapshot, bringCombatExpansionRulesForward, combatExpansionRulesProblems, backfillCombatStatusRuleRows } from './combatExpansionRules.js';
+import { bringRangesForward } from './combatRanges.js';
 import { defaultSeatOrder, seatOrderProblems } from './seats.js';
 import { bringShopStockForward, shopStockProblems } from './shopKinds.js';
 import { boughtArmourProblems, consumablesProblems, companionsProblems } from './marketStock.js';
@@ -1718,6 +1719,11 @@ export function migrateRunSchema(run) {
     for (const holder of [run.combatEntered, run.combatPendingOutcome]) {
       if (holder?.snapshot?.combatExpansionVersion === 2) bringCombatExpansionRulesForward(holder.snapshot.combatExpansionRules);
     }
+  }
+  // A saved fight's own stances, counters, carriers and tags read the range
+  // rename the same way (combatRanges.js), in memory only.
+  for (const holder of [run.combatEntered, run.combatPendingOutcome]) {
+    if (holder?.snapshot) bringRangesForward(holder.snapshot);
   }
   if (preShopKinds) bringShopStockForward(run);
   // Status rows added to the shipped rule table after a v2 run began join its frozen copy.

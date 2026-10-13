@@ -309,7 +309,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // nothing at all. Caught in review on the promotion, not by a test,
       // which is why tests/hand-forwards-surface.test.mjs now exists.
       const el = renderCard(registries, entry.inst,
-        { preview: entry.preview, affordable: entry.affordable, actionOwnsTouch: true,
+        { preview: entry.preview, affordable: entry.affordable, actionOwnsTouch: true, range: true,
           surface: entry.surface, availability: entry.availability, commands: entry.commands });
       const spread = Math.min(6, n) * 1.2;
       // THE FAN HANGS UPWARD FROM ITS DEEPEST CARD, NOT DOWNWARD FROM ITS
