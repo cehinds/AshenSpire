@@ -55,7 +55,7 @@
 //   node tools/build-stamp.mjs --prs 1884,1876             named by hand
 //   node tools/build-stamp.mjs --selftest                  the known-bad corpus
 //   node tools/build-stamp.mjs --stamp-is-current          exit 0 when HEAD is the newest bot stamp, or only
-//                                                           bot follow-ups landing no pull request sit on it
+//                                                           architecture/readme sync commits sit on it
 //                                                           (--is-stamp-head is an alias)
 //
 // Exit 0 when the changelog is stamped (or nothing needed stamping), 1 when the
@@ -266,6 +266,10 @@ export function landedSince({ cwd = ROOT } = {}) {
 // predicate is the exact check, and every use goes through it.
 export const BOT_AUTHOR = 'github-actions[bot]';
 export const STAMP_SUBJECT = /^build: stamp \d+\.\d+\.\d+(?:-[A-Za-z]+\.\d+)?\.\d+ \[build-stamp\]$/;
+export const SAFE_STAMP_FOLLOWUP_SUBJECTS = new Set([
+  'docs: refresh current-dev architecture [architecture-sync]',
+  'docs: refresh README [readme-sync]',
+]);
 export const WORKFLOW_PATH = '.github/workflows/build-stamp.yml';
 export function isStampCommit(author, subject) {
   return author === BOT_AUTHOR && STAMP_SUBJECT.test(subject);
@@ -291,10 +295,10 @@ export function landedAfterBase(commits, base) {
 }
 
 // PURE. THE STAMP IS CURRENT when the newest BOT STAMP commit exists and every commit
-// above it on the first-parent line (up to HEAD) is a bot commit that lands no pull
-// request. HEAD being the stamp is the first case; a stamp followed only by bot
-// follow-ups (architecture-sync, readme-sync) is the other. A human merge or a bot commit
-// whose subject names a landed pull request breaks it. `commits` is HEAD's first-parent
+// above it on the first-parent line (up to HEAD) is one of the two docs-only sync commits
+// the workflows write. HEAD being the stamp is the first case; a stamp followed only by
+// architecture-sync and readme-sync is the other. Any other commit breaks it, including
+// a different bot-authored merge whose subject does not name a pull request. `commits` is HEAD's first-parent
 // line, newest first, as {sha, author, subject}.
 //
 // Why this exists: a stamp push can succeed while every dispatch of dev-preview fails.
@@ -304,7 +308,7 @@ export function stampIsCurrent(commits) {
   const i = commits.findIndex((c) => isStampCommit(c.author, c.subject));
   if (i < 0) return false;
   return commits.slice(0, i).every((c) => c.author === BOT_AUTHOR
-    && landedInSubjects([{ subject: c.subject, firstParent: true }]).length === 0);
+    && SAFE_STAMP_FOLLOWUP_SUBJECTS.has(c.subject));
 }
 
 // The first parent of the oldest first-parent commit that added the stamp workflow, or
@@ -468,7 +472,7 @@ function realIo() {
 }
 
 // Exit 0 when THE STAMP IS CURRENT (stampIsCurrent: HEAD is the newest bot stamp, or only
-// bot follow-ups that land no pull request sit on it), 1 when it is not, 2 when git could
+// the exact architecture/readme sync commits sit on it), 1 when it is not, 2 when git could
 // not be read. The workflow's no-diff branch uses it to re-dispatch the preview for a
 // stamped tip, and only for one: an ordinary no-diff run (a docs-only push with no stamp
 // under it, or a human merge above the stamp) must not dispatch anything.
@@ -481,7 +485,7 @@ function stampCurrent() {
     return 2;
   }
   const current = stampIsCurrent(commits);
-  console.log(current ? 'the build stamp is current: HEAD is the stamp, or only bot follow-ups sit on it' : 'the build stamp is not current');
+  console.log(current ? 'the build stamp is current: HEAD is the stamp, or only architecture/readme sync commits sit on it' : 'the build stamp is not current');
   return current ? 0 : 1;
 }
 
@@ -681,7 +685,7 @@ function selftest() {
 
   // THE STAMP IS CURRENT: HEAD is the stamp, or only bot follow-ups that land no pull request sit on it.
   const ARCH = 'docs: refresh current-dev architecture [architecture-sync]';
-  const README = 'docs: refresh the README [readme-sync]';
+  const README = 'docs: refresh README [readme-sync]';
   const STAMP = { sha: 'stamp', author: BOT_AUTHOR, subject: 'build: stamp 0.7.1.1459 [build-stamp]' };
   const onStamp = (...above) => [...above, STAMP, { sha: 'old', author: 'dev', subject: 'Merge pull request #5 from x/y' }];
   check('current: HEAD is the stamp', stampIsCurrent([STAMP]) === true);
@@ -695,6 +699,8 @@ function selftest() {
     stampIsCurrent(onStamp({ sha: 'b', author: BOT_AUTHOR, subject: 'Add a thing (#8)' })) === false);
   check('not current: a stamp with a bot merge above it',
     stampIsCurrent(onStamp({ sha: 'b', author: BOT_AUTHOR, subject: 'Merge pull request #9 from c/d' })) === false);
+  check('not current: a stamp with an unnumbered bot merge above it',
+    stampIsCurrent(onStamp({ sha: 'b', author: BOT_AUTHOR, subject: 'Sync promoted updates into alternative/art/dev' })) === false);
   check('not current: no stamp on the first-parent line',
     stampIsCurrent([{ sha: 'a', author: BOT_AUTHOR, subject: ARCH }, { sha: 'm', author: 'dev', subject: 'Merge pull request #5 from x/y' }]) === false);
 

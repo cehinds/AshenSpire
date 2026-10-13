@@ -1,3 +1,5 @@
+import { cardCostBudget } from '../src/model/actionCosts.js';
+import { applyAbilityGrade as gradeFace } from '../src/model/abilityGrades.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -123,7 +125,11 @@ test('ability offers persist three current-grade families and one bounded INT op
 test('authored grades resolve their exact resource costs and values without an upgrade or rank overlay',()=>{
   const {reg:base}=fresh(),reg=lessons(base);
   const card=resolveCard(reg,{cardId:'cometFragment',abilityRank:4,rank:10,upgraded:true,skillBonus:99});
-  assert.equal(card.cost,3);assert.equal(card.manaCost,4);assert.equal(card.effects[0].amount,8);assert.equal(card.textTemplate,'Grade 4');
+  // The grade's Stamina and Mana are the cost formula's at grade 4 (SPEC §4.3a; authored 3 SP / 4 MP before), and a face
+  // at 2 SP or more carries the 1.8 multiplier on its authored 8.
+  const priced=cardCostBudget(gradeFace(reg.cards.get('cometFragment'),4),{rank:4});
+  assert.equal(card.cost,priced.sp);assert.equal(card.manaCost,priced.mp);
+  assert.equal(card.effects[0].amount,priced.sp>=2?Math.round(8*1.8):8);assert.equal(card.textTemplate,'Grade 4');
 });
 
 test('one resolved spell or maneuver pays its authored track, independent of shared school tags',()=>{

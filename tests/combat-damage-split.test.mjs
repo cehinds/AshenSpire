@@ -484,7 +484,8 @@ test('an earth spell is all physical: Block takes it, Ward is untouched, and its
 // The card face splits its amount the way the committed hit does: the card's own damage by its share,
 // then the rating bonus by its category. A real previewCard builds the face (no target, so the face is the card's own number).
 function faceOf(cards, cardId, ratingValue) {
-  const registries = createRegistries({ ...contentBundle, cards: contentBundle.cards.map(card => cards[card.id] ? { ...card, ...cards[card.id] } : card) });
+  // costRule 'fixed': a reshaped card keeps its authored numbers (the cost formula would scale a smash's 2-SP face, SPEC §4.3a).
+  const registries = createRegistries({ ...contentBundle, cards: contentBundle.cards.map(card => cards[card.id] ? { ...card, ...cards[card.id], costRule: 'fixed' } : card) });
   const combat = createCombat({ registries, rng: createRng(901), combatExpansionVersion: 2, enemyIds: ['wanderingSoldier'],
     player: { classId: 'starseer', maxHp: 100, hp: 100, maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1, deck: [] } });
   combat.piles.hand = [{ instanceId: 'face', cardId, upgraded: false, ratingValue }];

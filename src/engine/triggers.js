@@ -17,6 +17,7 @@ import { abilityMetric, recordAbilityEvent, priorAbilityEntity } from './ability
 import { recordKnowledgeEvent } from './enemyKnowledge.js';
 import { spendPersistentWard } from './combatStatusControl.js';
 import { dispatchCombatCombos } from './combatExpansionCombos.js';
+import { recordNormalExchange } from './normalPreview.js';
 
 const MAX_EMIT_DEPTH = 64;
 const PLAYER_TARGET_EVENTS = new Set(['damageDealt', 'hpLost', 'healed', 'statusApplied', 'statusExpired']);
@@ -52,6 +53,8 @@ export function emitEvent(ctx, type, payload = {}) {
   }
   const event = { type, ...Foundation.foundationEvent(ctx, type, payload) };
   ctx.eventLog.push(event);
+  // SPEC §4.11: normal-combat momentum reads the attacks, evades and counters the bus carries (normalPreview.js).
+  if (ctx.normalPreview?.momentum === true) recordNormalExchange(ctx, type, event);
   recordAbilityEvent(ctx, type, event);
   if (ctx._buffer) ctx._buffer.push(event);
   recordKnowledgeEvent(ctx, event);

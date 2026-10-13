@@ -64,7 +64,9 @@ for (const [enemyId, moveId, cardId] of INJECTORS) {
   test(`${enemyId}'s ${moveId} still injects exactly one ${cardId} in solo`, () => {
     const combat = createCombat({ registries, rng: createRng(21), enemyIds: [enemyId], player: seat('solo') });
     const before = count(combat.piles, cardId);
+    // The fixture sets this one move by hand, so the pool's other planned moves are cleared (owner 2026-10-12 plans).
     combat.enemies[0].intent = { moveId };
+    combat.enemies[0].plannedMoves = [];
     dispatch(combat, { type: 'endTurn' });
     assert.ok(combat.eventLog.some((event) => event.type === 'enemyMoveStarted' && event.enemyId === enemyId && event.moveId === moveId), 'the solo enemy phase executed the authored action');
     assert.equal(count(combat.piles, cardId) - before, 1);

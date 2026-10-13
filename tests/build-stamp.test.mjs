@@ -511,6 +511,16 @@ test('a stamp with a docs-only bot commit above it is current, in a real reposit
   } finally { r.cleanup(); }
 });
 
+test('a stamp with an unnumbered bot merge above it is not current, in a real repository', () => {
+  const r = repoWithPipeline([
+    { subject: 'build: stamp 0.7.1.1459 [build-stamp]', author: BOT },
+    { subject: 'Sync promoted updates into alternative/art/dev', author: BOT },
+  ]);
+  try {
+    assert.equal(stampIsCurrent(firstParentLine(r.dir)), false);
+  } finally { r.cleanup(); }
+});
+
 test('a stamp with a human merge above it is not current, in a real repository', () => {
   const r = repoWithPipeline([
     { subject: 'build: stamp 0.7.1.1459 [build-stamp]', author: BOT },

@@ -148,8 +148,8 @@ jobs:
               # the stamp is already on the tip, so only the preview is left to do. The tip
               # is often no longer the stamp itself: architecture-sync or readme-sync may have
               # pushed a docs-only bot commit on top of it. --stamp-is-current accepts exactly
-              # that (the newest bot stamp, with only bot follow-ups landing no pull request
-              # above it), so the rerun redispatches for it. A human merge above the stamp, or
+              # that (the newest bot stamp, with only those two exact docs-sync subjects above
+              # it), so the rerun redispatches for it. Any other commit above the stamp, or
               # a run with no stamp under it, is "not current" (1) and dispatches nothing. The
               # exit status tells "not current" (1) from a harness fault (2).
               stamp_current=0
