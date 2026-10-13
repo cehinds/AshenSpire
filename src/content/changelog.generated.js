@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1942",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "The balance report no longer shows NaN damage for the Gilded Knight and the Duelist of the Court",
+    "detail": "Nothing in play changes. Their reaction moves are never chosen as an intent, so the report now leaves them out of the average, as combat already does.",
+    "build": "0.7.1.1479",
+    "pullRequest": 1942,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1942"
+  },
+  {
     "id": "pr-1945",
     "date": "2026-10-13",
     "group": "2026-10-13",

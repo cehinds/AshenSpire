@@ -29,6 +29,7 @@ import { botCardTargetId, firstAffordableCard, refusalsFor, botControlAction } f
 import { createRunState } from '../src/model/state.js';
 import { seatTiers, lastTier, encounterTier, enemyTier } from '../src/model/encounterTier.js';
 import { bossTierScale } from '../src/model/seats.js';
+import { intentStats } from './balance-intent.mjs';
 
 // A no-op punching bag for measuring unopposed player DPS.
 const DUMMY = { id: 'balanceDummy', name: 'Dummy', hp: [100000, 100000], poiseMax: 999999, moves: { wait: { intent: 'unknown', weight: 1 } } };
@@ -37,20 +38,9 @@ const REG = createRegistries({ ...contentBundle, enemies: [...contentBundle.enem
 const round1 = (n) => Math.round(n * 10) / 10;
 const avgHp = (def) => (def.hp[0] + def.hp[1]) / 2;
 
-// Weighted intent DPS over base-phase (non-locked) moves; also self-heal/turn.
-// Reaction moves are never rolled as an intent (engine: weightedMovePick), and
-// carry no weight, so they are excluded here too; left in, one NaN weight made
-// every row that held the enemy NaN.
+// Avg HP, weighted intent DPS and self-heal/turn (tools/balance-intent.mjs).
 function enemyStats(def) {
-  const moves = Object.values(def.moves).filter((m) => !m.reaction && !m.locked);
-  const totalW = moves.reduce((a, m) => a + m.weight, 0) || 1;
-  let dps = 0;
-  let heal = 0;
-  for (const m of moves) {
-    const p = m.weight / totalW;
-    if (m.intent === 'attack') dps += p * (m.damage || 0) * (m.hits || 1);
-    heal += p * (m.effects || []).filter((e) => e.op === 'heal').reduce((a, e) => a + (e.amount || 0), 0);
-  }
+  const { dps, heal } = intentStats(def);
   return { hp: avgHp(def), dps, heal, poise: def.poiseMax };
 }
 
