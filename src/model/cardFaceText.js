@@ -240,7 +240,8 @@ function buildLines(def, preview, registries) {
   const thresholdInside = pred => !!pred && typeof pred === 'object'
     && ((pred.p === 'hasStatus' && pred.atLeast !== undefined) || [pred.pred, ...(pred.preds || [])].some(thresholdInside));
   const statusSnapshotInside = pred => !!pred && typeof pred === 'object'
-    && ((pred.p === 'hasStatus' && pred.snapshot === 'beforePlay') || [pred.pred, ...(pred.preds || [])].some(statusSnapshotInside));
+    // hasBlock already says "before this card" itself; every other before-play snapshot needs the note.
+    && ((pred.p !== 'hasBlock' && pred.snapshot === 'beforePlay') || [pred.pred, ...(pred.preds || [])].some(statusSnapshotInside));
   const prefixFor = predicate => {
     if (predicate.p === 'hasStatus') {
       const extra = Object.keys(predicate).filter(key => !['p', 'of', 'status', 'atLeast'].includes(key));

@@ -157,3 +157,7 @@ test('an up-front HP payment leads the face, as it runs first', () => {
   assert.match(text('bloodPact')[0], /^Pay \d+ HP/);
   assert.match(text('flagellation')[0], /^Pay \d+ HP/);
 });
+
+test('a before-play HP check says "before this card"', () => {
+  assert.ok(text('progression-carrion-cut').some(line => /HP is at most \d+% before this card: /.test(line)), JSON.stringify(text('progression-carrion-cut')));
+});
