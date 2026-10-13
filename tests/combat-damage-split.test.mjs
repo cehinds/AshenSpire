@@ -450,6 +450,23 @@ test('a mixed-component hit meets Ward with its magic part and Block with its ph
   assert.equal(r.preview, r.committed, 'preview equals commit');
 });
 
+// Earth is physical (owner, 2026-10-13): an earth spell meets Block and Poise, never Ward, and an earth resist types it.
+const earthSpell = { tags: ['camp:spell', 'school:earth', 'damage:earth'], skipRatingBonus: true,
+  combatProfile: { camp: 'spell', maneuver: 'casting', school: 'earth', damageType: 'earth', reach: 'near', targeting: 'single' } };
+
+test('an earth spell is all physical: Block takes it, Ward is untouched, and its typed defence is earth', () => {
+  const config = resolveCombatRatings({}, contentBundle);
+  assert.equal(magicShareOf(earthSpell.combatProfile, config), 0, 'school:earth is share 0');
+  assert.equal(magicShareOf({ camp: 'spell', damageType: 'earth', reach: 'near' }, config), 0, 'the earth type alone is share 0');
+  const blocked = strike(earthSpell, 6, { ward: 3, block: 10 });
+  assert.equal(hitOf(blocked).magicAmount, 0);
+  assert.equal(blocked.committed, 0, 'Block soaks all 6');
+  assert.equal(blocked.enemy.persistentWard.value, 3, 'Ward is untouched');
+  const weak = strike(earthSpell, 6, { ward: 3, weakness: { earth: 50 } });
+  assert.equal(weak.committed, 9, 'an earth weakness lifts the hit: 6 x 1.5');
+  assert.equal(weak.preview, weak.committed, 'preview equals commit');
+});
+
 // The card face splits its amount the way the committed hit does: the card's own damage by its share,
 // then the rating bonus by its category. A real previewCard builds the face (no target, so the face is the card's own number).
 function faceOf(cards, cardId, ratingValue) {

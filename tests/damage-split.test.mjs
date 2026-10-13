@@ -14,8 +14,8 @@ test('every damage type states its magic share: physical 0, magic 1, arcane the 
   assert.deepEqual(shares, {
     slashing: 0, piercing: 0, blunt: 0,
     fire: 1, frost: 1, lightning: 1, sacred: 1, decay: 1,
-    // #1914's elements are all physical: false, so all magic.
-    poison: 1, psychic: 1, earth: 1,
+    // #1914's Poison and Psychic are all magic; Earth routes physical (owner, 2026-10-13).
+    poison: 1, psychic: 1, earth: 0,
     arcane: 0.5,
   });
 });
@@ -134,6 +134,7 @@ test('the school shares are data: force splits at half, alteration is all physic
   assert.equal(combatRules.schools.alteration.magicShare, 0);
   assert.equal(combatRules.schools.force.physicalType, 'blunt');
   assert.equal(combatRules.schools.alteration.physicalType, 'blunt');
+  assert.deepEqual([combatRules.schools.earth.magicShare, combatRules.schools.earth.physicalType], [0, 'earth'], 'earth is a magic school dealing physical earth damage');
   for (const school of ['lightning', 'fire', 'frost', 'divine', 'decay']) assert.equal(combatRules.schools[school].magicShare, 1, school);
   assert.equal(combatRules.schools.divine.magicType, 'sacred');
 });

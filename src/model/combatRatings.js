@@ -599,12 +599,21 @@ export function isMagicalHit(ctx, carrier) {
  * when no card or weapon overrides it: the Advanced row if the run has one,
  * else the content default. Null for a type the rules do not name.
  */
+// Routing class of a damage type: its content magicShare decides (0 is physical, above 0 magic),
+// else its `physical` flag. Earth is physical: false for the foundation's armour but routes physical.
+function routingShare(type) {
+  const row = damageTypeRules.damageTypes[type];
+  if (!row) return null;
+  return Number.isFinite(row.magicShare) ? row.magicShare : row.physical === false ? 1 : 0;
+}
+
 export function isMagicDamageType(type) {
-  return damageTypeRules.damageTypes[type]?.physical === false;
+  const share = routingShare(type);
+  return share !== null && share > 0;
 }
 
 export function isPhysicalDamageType(type) {
-  return damageTypeRules.damageTypes[type]?.physical === true;
+  return routingShare(type) === 0;
 }
 
 export function damageTypeMagicShare(config, type) {

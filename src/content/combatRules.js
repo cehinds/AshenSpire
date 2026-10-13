@@ -18,8 +18,10 @@ export const combatRules = {
     decay: { tag: 'damage:decay', physical: false, magicShare: 1 },
     poison: { tag: 'damage:poison', physical: false, magicShare: 1 },
     psychic: { tag: 'damage:psychic', physical: false, magicShare: 1 },
-    // Earth is marked non-physical (physical: false) and its cards carry school:earth, an all-magic school.
-    earth: { tag: 'damage:earth', physical: false, magicShare: 1 },
+    // Earth routes as PHYSICAL (owner, 2026-10-13): magicShare 0, so it meets Block, then Poise,
+    // and its typed defence stays 'earth'. `physical` is the rules foundation's armour flag
+    // (model/combatRules.js resolveDamageComponents) and stays false: armour does not cut earth.
+    earth: { tag: 'damage:earth', physical: false, magicShare: 0 },
   },
   // The magic share of a MAGIC SCHOOL (a school:<id> tag or a Spell's school).
   // Force splits (0.5): its physical part is the card's physical tag, else the
@@ -30,6 +32,8 @@ export const combatRules = {
   schools: {
     force: { magicShare: 0.5, magicType: 'arcane', physicalType: 'blunt' },
     alteration: { magicShare: 0, magicType: 'arcane', physicalType: 'blunt' },
+    // Earth is a magic school whose damage is physical (owner, 2026-10-13), like alteration.
+    earth: { magicShare: 0, magicType: 'arcane', physicalType: 'earth' },
     lightning: { magicShare: 1, magicType: 'lightning' },
     fire: { magicShare: 1, magicType: 'fire' },
     frost: { magicShare: 1, magicType: 'frost' },
