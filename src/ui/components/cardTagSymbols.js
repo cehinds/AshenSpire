@@ -126,6 +126,19 @@ export function cardSideTags(model, def = {}, registries = null, preview = null)
   return selected;
 }
 
+/** The card rail's solid symbol for one tag id (e.g. 'effect:evade') as a bare SVG element. */
+export function tagSymbolSvg(tagId, className = 'tag-symbol-art') {
+  const node = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  node.setAttribute('viewBox', '0 0 32 32');
+  node.setAttribute('fill', 'currentColor');
+  node.setAttribute('fill-rule', 'evenodd');
+  node.setAttribute('aria-hidden', 'true');
+  node.setAttribute('focusable', 'false');
+  node.setAttribute('class', className);
+  node.innerHTML = shapeFor({ id: tagId });
+  return node;
+}
+
 export function cardCategorySigilHtml(camp) {
   if (!['physical', 'spell'].includes(camp)) return '';
   return '<span class="combat-sigil" data-sigil="' + camp + '" aria-hidden="true"><svg viewBox="0 0 32 32" fill="currentColor" fill-rule="evenodd" focusable="false">' + shapeFor({ id: 'camp:' + camp }) + '</svg></span>';

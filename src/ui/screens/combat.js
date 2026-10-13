@@ -51,6 +51,8 @@ import { stageFor } from '../services/PoseAnimator.js';
 import { attachTooltip, hideTooltip, showTooltipFor, esc } from '../components/tooltip.js';
 import { combatantDetailBody, combatantInspectorLayout } from '../components/combatantInspector.js';
 import { activeCombatAbilities } from '../components/combatAbilities.js';
+import { combatStanceRow, preparedEvadeRow } from '../../model/combatTacticsDisplay.js';
+import { tagSymbolSvg } from '../components/cardTagSymbols.js';
 import { tooltipHelp } from '../../content/tooltipHelp.js';
 import { helpText, resolveTooltipSettings } from '../../model/tooltipSettings.js';
 import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
@@ -860,7 +862,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       skillLabel: 'Move set',
       moveCards: learning ? learning.moveCards : enemyMoveCards(def, { enemy: entity, preview: intent, registries, combatMatchupRules: combat.combatMatchupRules }),
       skills,
-      statuses: statusDetails(entity),
+      // The stance an enemy's telegraph set reads only as far as its intent does.
+      statuses: [...[intent.hidden ? null : combatStanceRow(v), preparedEvadeRow(v)].filter(Boolean), ...statusDetails(entity)],
       entityId: entity.id,
       history: past.map((moveId) => ({ name: words(moveId), detail: moveDetail(def.moves?.[moveId], null, entity) })),
       traits: learning ? learning.traits : (def.tags || []).map((tag) => ({ name: words(tag) })),
@@ -953,6 +956,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       persistentWard: e.persistentWard ? { ...e.persistentWard } : null,
       persistentPoise: e.persistentPoise ? { ...e.persistentPoise } : null,
       combatStance: e.combatStance ? { ...e.combatStance } : null,
+      combatEvade: e.combatEvade ? { ...e.combatEvade } : null,
+      combatOwnerCycle: e.combatOwnerCycle,
       ...(e.wardBlock !== undefined ? { wardBlock: e.wardBlock } : {}),
       alive,
       statuses,
@@ -995,6 +1000,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           break;
         }
         case 'playerTurnStart':
+          // Unused Evade charges expire as the player's turn starts.
+          if (disp.ents.player) disp.ents.player.combatEvade = null;
           for (const enemy of combat.enemies) if (disp.ents[enemy.id]) disp.ents[enemy.id].intentPreview = previewIntent(combat, enemy.id);
           break;
         case 'persistentWardChanged':
@@ -1097,6 +1104,26 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           break;
         case 'stanceEntered':
           if (disp.ents.player) disp.ents.player.stanceId = e.stance;
+          break;
+        // Expanded combat posture advances with its beat, not at playback end.
+        case 'combatStanceChanged': {
+          const actor = disp.ents[e.sourceId];
+          if (actor) {
+            const { maneuver, camp, reach, school, expiresOnOwnerCycle } = e;
+            actor.combatStance = { maneuver, camp, reach, ...(school ? { school } : {}),
+              ...(expiresOnOwnerCycle != null ? { expiresOnOwnerCycle } : {}) };
+          }
+          break;
+        }
+        case 'evadeGained': {
+          const actor = disp.ents[e.sourceId];
+          const live = e.sourceId === 'player' ? combat.player : combat.enemies.find(enemy => enemy.id === e.sourceId);
+          if (actor) actor.combatEvade = { ...(live?.combatEvade || {}), charges: e.charges,
+            expiresOnOwnerCycle: live?.combatEvade?.expiresOnOwnerCycle ?? (actor.combatOwnerCycle || 0) + 1 };
+          break;
+        }
+        case 'combatAvoidanceResolved':
+          if (t?.combatEvade && e.evade) t.combatEvade = { ...t.combatEvade, charges: Math.max(0, t.combatEvade.charges - 1) };
           break;
         case 'statusExpired':
           if (t) delete t.statuses[e.status];
@@ -1293,6 +1320,18 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     markUiComponent(row, UI.statusEffectTray, entity.kind);
     const armed = () => !!(selected || selectedFlask != null || selfArm);
     const plan = entity.kind === 'enemy' ? procDisplayPlan(entity) : { bars: [], pips: [] };
+    // Expanded combat: a prepared Evade (Dodge Roll, Quickstep) is a pip with
+    // its charge count, in the card rail's own Evade symbol.
+    const evade = preparedEvadeRow(dv(entity));
+    if (evade) {
+      const evadeTip = () => `<div class="tt-title">${esc(evade.name)}</div>${esc(evade.detail)}`;
+      const el = trayIcon({
+        art: tagSymbolSvg('effect:evade'), count: evade.charges, tone: 'var(--gold)',
+        label: evade.name, attrs: { class: 'status-icon combat-evade-icon' }, tip: evadeTip, yieldTap: armed,
+      });
+      el.setAttribute('data-status-id', 'combat-evade');
+      row.appendChild(el);
+    }
     for (const [sid, inst] of Object.entries(dv(entity).statuses || {})) {
       const def = registries.frameworkTerms.withStatusWords(registries.statuses.get(sid));
       const stacks = inst.meter ? inst.meter.value : inst.stacks;
