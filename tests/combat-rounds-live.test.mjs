@@ -638,3 +638,31 @@ test('a charging attack whose hit roll misses still starts its charge; the miss 
   assert.ok(!second.events.some((e) => e.type === 'enemyMoveStarted' && e.sourceId === enemy.id && e.moveId === CHARGE), 'the missed charge plays no payload');
   assert.ok(!second.events.some((e) => e.type === 'damageDealt' && e.sourceId === enemy.id), 'and deals nothing');
 });
+
+// Review follow-up: the timeline has no delay handling, so the round's queue itself ends at a charge. Otherwise the
+// timeline resolved a Slash the live round skipped: it credited that Slash's momentum, and a queued Counter fired on it.
+// The soldier opens with the charge, and Slash is its only weighted move, so before the fix the queue was charge, Slash.
+const openerRegistries = createRegistries({ ...contentBundle, enemies: contentBundle.enemies.map((e) => (e.id === ENEMY
+  ? { ...e, firstMove: CHARGE, moves: { ...e.moves, guard: { ...e.moves.guard, weight: 0 }, warcry: { ...e.moves.warcry, weight: 0 },
+    [CHARGE]: { intent: 'attack', damage: 12, weight: 0, sp: 1, delay: { turns: 1, whileCharging: { block: 5 } } } } }
+  : e)) });
+
+test('a round\'s queue ends at a charging move: no later entry is queued, credited or answered by a Counter', () => {
+  const round = (withCounter) => {
+    const c = fixRoundRoll(fight({ reg: openerRegistries, expansion: 1, momentum: true }), 0.999);
+    const enemy = liveEnemy(c);
+    assert.deepEqual(c.combatRounds.enemyQueues[enemy.id].map((e) => e.moveId), [CHARGE], 'the queue ends at the charge, though the pool has SP left');
+    if (withCounter) {
+      c.piles.hand.push({ instanceId: 'rx-counter', cardId: 'guardCounter', upgraded: false });
+      dispatch(c, { type: 'playCard', cardInstanceId: 'rx-counter' });
+      assert.deepEqual(c.combatRounds.playerQueue.map((r) => r.cardId), ['guardCounter'], 'fixture: the Counter is queued');
+    }
+    const { events } = endTurnDeclining(c);
+    assert.equal(enemy.pendingMove?.moveId, CHARGE, 'the charge starts');
+    assert.ok(!events.some((e) => e.type === 'enemyMoveStarted' && e.sourceId === enemy.id), 'nothing else plays');
+    return c.combatRounds.momentum[enemy.id] ?? 0;
+  };
+  const plain = round(false);
+  assert.equal(plain, -1, 'the charge entry is the enemy\'s only exchange: one credit, no Slash credit after it');
+  assert.equal(round(true), plain, 'a queued Counter answers no phantom entry: the round\'s momentum is unchanged by it');
+});

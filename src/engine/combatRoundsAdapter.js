@@ -49,8 +49,12 @@ export const enemyPool = (def) => enemyPoolOf(def);
 // One enemy's hidden queue. `pick(enemy, def, maxSp)` is the live weighted pick (enemyAI stream), offered only the
 // moves that cost at most `maxSp` SP left in the pool; each pick is recorded in movesHistory at once, so maxConsecutive
 // sees the queued run. The first pick of the fight is the scripted opener when the move set has one.
+// A charging (delayed) move takes the enemy's round (SPEC §4.6a), so the round's queue ends at it: nothing is picked
+// after it, the preview shows no follow-up that will not play, and the timeline never resolves (or credits momentum
+// for, or spends a Counter on) an entry the live round would skip. A round's queue is rebuilt each round, so no
+// follow-up is carried: the next queue is picked after the charge resolves.
 export function buildEnemyQueue(enemy, def, { isFirstTurn = false, pick, combat = null }) {
-  return extendEnemyQueue(enemy, def, [], { isFirstTurn, pick, combat });
+  return extendEnemyQueue(enemy, def, [], { isFirstTurn, pick, combat, endAtCharge: true });
 }
 
 // Appends picks to `queue` (in place) until the enemy's SP pool is spent, and returns it (SPEC §4.6, §4.11). The queue
@@ -58,10 +62,12 @@ export function buildEnemyQueue(enemy, def, { isFirstTurn = false, pick, combat 
 // nothing fits the pool, the first pick is offered no limit (Infinity). A queue that already holds moves keeps them,
 // and the SP they spend counts against the pool.
 // `combat` (optional) prices each move for this enemy: see moveSp().
-export function extendEnemyQueue(enemy, def, queue, { isFirstTurn = false, pick, combat = null }) {
+// `endAtCharge` (rounds queues): stop after a charging move (see buildEnemyQueue).
+export function extendEnemyQueue(enemy, def, queue, { isFirstTurn = false, pick, combat = null, endAtCharge = false }) {
   const pool = enemyPool(def);
   let spent = queue.reduce((sum, entry) => sum + entry.sp, 0);
   while (queue.length < QUEUE_MAX) {
+    if (endAtCharge && queue.some((entry) => def.moves[entry.moveId]?.delay)) break;
     if (queue.length > 0 && spent >= pool) break;
     const opener = isFirstTurn && queue.length === 0 && def.firstMove ? def.firstMove : null;
     let moveId = opener ?? pick(enemy, def, pool - spent);
