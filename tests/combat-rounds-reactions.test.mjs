@@ -83,7 +83,16 @@ const ENEMY = 'wanderingSoldier';
 const SEED = 5;
 
 // A preview fight (expanded rules, so reactions are on). The enemy's round is fixed to one attack on the player.
-function fight({ reactions = true, enemyIds = [ENEMY], reg = registries } = {}) {
+// `miss`: the enemy fights with no attributes, so this seed's Slash misses in the timeline (d20 6 against 8) and its
+// live move never runs. These pause tests were written when the timeline read no attributes; with the enemy's attributes
+// read (Codex P1 on PR #1953) its Slash needs 2 and lands, and a landed live Slash opens the live reaction window too,
+// which is not what these tests are about. (An expanded fight rebuilds its RNG in the commit, so a roll proxy cannot
+// pin the miss here.)
+const noAttributeRegistries = createRegistries({ ...contentBundle,
+  cards: contentBundle.cards.map((card) => ({ ...card, costRule: 'fixed' })),
+  enemies: contentBundle.enemies.map((e) => (e.id === ENEMY ? { ...e, attributes: {}, spPool: 2 } : e)) });
+function fight({ reactions = true, enemyIds = [ENEMY], reg = registries, miss = false } = {}) {
+  if (miss) reg = noAttributeRegistries;
   const run = createRunState({ seed: SEED, classId: 'reaver', registries: reg, profileMeta: { settings: { [COMBAT_ROUNDS_KEY]: true } } });
   const c = createRunCombat({ registries: reg, rng: createRng(SEED), run, enemyIds, settings: {} });
   for (const enemy of c.enemies.filter((e) => e.alive)) {
@@ -106,7 +115,7 @@ const playedCount = (c, instanceId) => c.eventLog.filter((e) => e.type === 'card
 const cardPlayedEvent = (c, instanceId) => c.eventLog.find((e) => e.type === 'cardPlayed' && e.cardInstanceId === instanceId);
 
 test('pause and answer with Counter: the commit waits, the chosen Counter is paid and played, then the turn ends', () => {
-  const c = fight();
+  const c = fight({ miss: true });
   // A new expanded run snapshots reaction rules version 2 (dev, SPEC §4.10); the preview offers the same way on 1 and 2.
   assert.ok([1, 2].includes(c.reactionRulesVersion), 'fixture: reactions are on in an expanded fight');
   addToHand(c, 'guardCounter', 'rx-counter');
@@ -129,7 +138,7 @@ test('pause and answer with Counter: the commit waits, the chosen Counter is pai
 });
 
 test('pause and answer with Evade: the chosen Evade is played as a reaction, then the turn ends', () => {
-  const c = fight();
+  const c = fight({ miss: true });
   addToHand(c, 'evasiveGuard', 'rx-evade');
   dispatch(c, { type: 'endTurn' });
   assert.ok(c.pendingReaction.options.some((o) => o.id === 'rx-evade'), 'the Evade is on offer');
@@ -139,7 +148,7 @@ test('pause and answer with Evade: the chosen Evade is played as a reaction, the
 });
 
 test('decline: Back resolves the attack with no reaction, and the card stays unplayed', () => {
-  const c = fight();
+  const c = fight({ miss: true });
   addToHand(c, 'guardCounter', 'rx-counter');
   dispatch(c, { type: 'endTurn' });
   assert.ok(c.pendingReaction, 'a reaction is offered');
@@ -152,7 +161,7 @@ test('decline: Back resolves the attack with no reaction, and the card stays unp
 });
 
 test('a save taken during the pause restores the round and the offer, and the answer resumes from there', () => {
-  const c = fight();
+  const c = fight({ miss: true });
   addToHand(c, 'guardCounter', 'rx-counter');
   dispatch(c, { type: 'endTurn' });
   const saved = JSON.parse(JSON.stringify(serializeCombatSnapshot(c)));

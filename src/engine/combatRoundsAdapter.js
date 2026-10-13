@@ -15,7 +15,7 @@ import { startRound, stepRound, answerReaction, finishRound } from './combatRoun
 import { makeFight, makeCombatant, plannedQueueSpeeds } from './combatRounds/timeline.js';
 import { decayMomentum } from './combatRounds/resolver.js';
 import { stanceFor, playerKind, moveKind } from './combatRounds/stance.js';
-import { enemyMoveSpOf, enemyPoolOf } from '../model/actionCosts.js';
+import { enemyAttributesOf, enemyMoveSpOf, enemyPoolOf } from '../model/actionCosts.js';
 import { SPEED_MODS_CSV } from '../content/combatRounds.js';
 // A move with no stance costs 1 SP unless the move defines its own `sp` (SPEC §4.11).
 export const MOVE_SP = 1;
@@ -211,10 +211,23 @@ function engineTables(rules) {
   return built;
 }
 
+// The live attribute ids (model/attributes) as the timeline names them (resolver.js attributeBonus and evasionFor,
+// timeline.js initiativeBase): STR, DEX, CON, WIS, INT. Codex P1 on PR #1953: the lowercase live keys read as 0 there.
+const TIMELINE_ATTRIBUTE_KEYS = Object.freeze({ strength: 'STR', dexterity: 'DEX', constitution: 'CON', wisdom: 'WIS', intelligence: 'INT' });
+export function timelineAttributes(live = {}) {
+  const out = {};
+  for (const [id, key] of Object.entries(TIMELINE_ATTRIBUTE_KEYS)) {
+    const n = Number(live?.[id]);
+    if (Number.isFinite(n)) out[key] = n;
+  }
+  return out;
+}
+
 // The player's timeline combatant. `sp` is the SP pool (the queued cards' SP plus the Stamina left, so a
 // reaction pays from what the queue left); `hand` holds the reaction candidates (combat.js).
 function playerSpec(combat, sp, hand) {
-  const attrs = { ...(combat.attributes ?? combat.player.attributes ?? {}) };
+  // combat.attributes is the player's effective set (settleExpandedPools in an expanded fight).
+  const attrs = timelineAttributes(combat.attributes ?? combat.player.attributes ?? {});
   return {
     id: 'player', side: 'player', name: combat.player.name ?? 'player', attrs,
     level: Number(combat.characterLevel ?? 0) || 0,
@@ -223,11 +236,13 @@ function playerSpec(combat, sp, hand) {
   };
 }
 
+// The enemy's attributes are its authored ones, blight-shifted, as its SP pool reads them (SPEC §4.6a).
 function enemySpec(enemy, def) {
+  const attrs = timelineAttributes(enemyAttributesOf(def));
   return {
-    id: enemy.id, side: 'enemy', name: enemy.name ?? enemy.enemyId, attrs: {},
+    id: enemy.id, side: 'enemy', name: enemy.name ?? enemy.enemyId, attrs,
     level: Number(enemy.level ?? 0) || 0, hp: Math.max(0, Number(enemy.hp) || 0), sp: enemyPool(def),
-    wis: 0, tags: [], stance: null, hand: [],
+    wis: Number(attrs.WIS ?? 0) || 0, tags: [], stance: null, hand: [],
   };
 }
 

@@ -200,9 +200,10 @@ test('a landed Strike deals the same live damage a live play would', () => {
 });
 
 test('a faster enemy move acts before a slower Strike, and a slower one after it', () => {
-  // Player Strike: speed 0 + DEX base 5 + d4 4 = 9 (gorefireSlash has no speed-mods row). Every enemy
-  // move gets the same speed S, so an enemy action totals S + 4 and a later move never passes an earlier
-  // one. The queue is whatever the enemy rolled; only the order against the Strike is asserted.
+  // Player Strike: speed 0 + DEX initiative floor(1 / 2) = 0 + d4 4 = 4 (gorefireSlash has no speed-mods row). Every
+  // enemy move gets the same speed S, so an enemy action totals S + its DEX initiative floor(4 / 2) = 2 + 4 and a later
+  // move never passes an earlier one. The queue is whatever the enemy rolled; only the order against the Strike is
+  // asserted. (Before the timeline read live attributes, both initiatives were 0 and the slow speed was 0.)
   const order = (speed) => {
     const speeds = { slash: speed, guard: speed, warcry: speed };
     const c = fixRoundRoll(fight({ reg: registriesWithMoveSpeeds(speeds) }), 0.999);
@@ -214,7 +215,7 @@ test('a faster enemy move acts before a slower Strike, and a slower one after it
       .filter((e) => (e.type === 'cardPlayed' && e.sourceId === c.player.id) || (e.type === 'enemyMoveStarted' && e.sourceId === enemy.id))
       .map((e) => (e.type === 'cardPlayed' ? 'strike' : 'enemy'));
   };
-  const slow = order(0);
+  const slow = order(-3);
   assert.equal(slow[0], 'strike', `slow enemy moves: the Strike goes first (${slow})`);
   assert.ok(slow.includes('enemy'), `slow enemy moves still act (${slow})`);
   const fast = order(9);
@@ -665,4 +666,26 @@ test('a round\'s queue ends at a charging move: no later entry is queued, credit
   const plain = round(false);
   assert.equal(plain, -1, 'the charge entry is the enemy\'s only exchange: one credit, no Slash credit after it');
   assert.equal(round(true), plain, 'a queued Counter answers no phantom entry: the round\'s momentum is unchanged by it');
+});
+
+// Codex P1 on PR #1953: the timeline reads STR / DEX / WIS / INT (resolver.js attributeBonus, evasionFor; timeline.js
+// initiativeBase), so the live attributes (strength, dexterity, ...) must reach it in that shape: the player's
+// effective attributes, and each enemy's authored ones (blight-shifted, actionCosts.js enemyAttributesOf).
+test('the timeline reads live attributes: DEX initiative moves the player\'s and the enemy\'s planned speeds', () => {
+  const withEnemyDex = (dex) => createRegistries({ ...contentBundle, enemies: contentBundle.enemies.map((e) => (e.id === ENEMY
+    ? { ...e, attributes: { ...e.attributes, dexterity: dex } } : e)) });
+  const foeSpeed = (dex) => {
+    const c = fight({ reg: withEnemyDex(dex), expansion: 1 });
+    return Rounds.screenForecast(c, liveEnemy(c).id).foeSpeed;
+  };
+  assert.equal(foeSpeed(8) - foeSpeed(0), 4, 'enemy DEX 8 adds floor(8 / 2) initiative over DEX 0');
+  const cardSpeed = (dex) => {
+    const c = fight({ expansion: 1 });
+    c.attributes = { ...(c.attributes ?? {}), dexterity: dex };
+    const card = attackCard(c);
+    dispatch(c, { type: 'playCard', cardInstanceId: card.instanceId, targetId: liveEnemy(c).id });
+    const record = c.combatRounds.playerQueue[0];
+    return Rounds.screenForecast(c, liveEnemy(c).id, { ...Rounds.timelineCardFor(record), instanceId: record.instanceId }).cardSpeed;
+  };
+  assert.equal(cardSpeed(6) - cardSpeed(0), 3, 'player Dexterity 6 adds floor(6 / 2) initiative over 0');
 });

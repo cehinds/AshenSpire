@@ -244,15 +244,17 @@ import { makeFight, plannedQueueSpeeds } from '../src/engine/combatRounds/timeli
 import { startRound } from '../src/engine/combatRounds/round.js';
 import { momentumSpeed } from '../src/engine/combatRounds/resolver.js';
 import { staggerEnemy } from '../src/engine/actions.js';
+import { enemyAttributesOf } from '../src/model/actionCosts.js';
 
 // The real round's speeds, built as commitRound builds them: the stored momentum goes in, and startRound decays it.
 function realRoundEntries(c, enemyId) {
   const cr = c.combatRounds;
   const tables = { armor: new Map(Object.entries(cr.rules.tables.evasionArmor)), cards: new Map(Object.entries(cr.rules.tables.evasionCards)) };
   const enemy = c.enemies.find((e) => e.id === enemyId);
+  // The attributes as commitRound passes them: the player's live set and each enemy's authored set, in timeline keys.
   const specs = [
-    { id: 'player', side: 'player', name: 'player', attrs: {}, level: 0, hp: c.player.hp, sp: 99, wis: 0, tags: [], stance: null, hand: [] },
-    ...c.enemies.map((e) => ({ id: e.id, side: 'enemy', name: e.name ?? e.enemyId, attrs: {}, level: 0, hp: e.hp, sp: 3, wis: 0, tags: [], stance: null, hand: [] })),
+    { id: 'player', side: 'player', name: 'player', attrs: Rounds.timelineAttributes(c.attributes), level: 0, hp: c.player.hp, sp: 99, wis: 0, tags: [], stance: null, hand: [] },
+    ...c.enemies.map((e) => ({ id: e.id, side: 'enemy', name: e.name ?? e.enemyId, attrs: Rounds.timelineAttributes(enemyAttributesOf(c.registries.enemies.get(e.enemyId))), level: 0, hp: e.hp, sp: 3, wis: 0, tags: [], stance: null, hand: [] })),
   ];
   const state = makeFight(specs, tables);
   Object.assign(state.momentum, cr.momentum ?? {});
@@ -425,6 +427,7 @@ test('the decorator marks an enemy only when it draws a preview outline on it', 
     const c = fight({ seed });
     const enemy = liveEnemy(c);
     const card = attackCard(c);
+    if (!card) continue; // an opening hand with no attack aims nothing
     const forecast = roundCardForecast(c, card.instanceId, enemy.id);
     const screen = forecast ? Rounds.screenForecast(c, enemy.id, forecast) : null;
     const colour = screen?.foe ? targetOutline({ card: forecast, foe: screen.foe, cardSpeed: screen.cardSpeed,
