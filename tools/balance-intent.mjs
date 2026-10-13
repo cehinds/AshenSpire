@@ -2,9 +2,13 @@
 // tools/balance.mjs (docs/BALANCE.md section 1). Kept out of balance.mjs so a
 // test can drive it without importing that tool (which runs a 300-seed sim at load).
 
-// Weighted intent DPS over base-phase (non-locked) moves; also self-heal/turn.
+// Weighted intent DPS over base-phase moves; also self-heal/turn.
+// Excluded, like the engine's weightedMovePick (src/engine/combat.js):
+//   - locked / phase-2 moves;
+//   - enemy reaction moves (`reaction`): never rolled as an intent, and they carry
+//     no `weight`, so weighting them would give NaN.
 export function intentStats(def) {
-  const moves = Object.values(def.moves).filter((m) => !m.locked);
+  const moves = Object.values(def.moves).filter((m) => !m.locked && !m.reaction);
   const totalW = moves.reduce((a, m) => a + m.weight, 0) || 1;
   let dps = 0;
   let heal = 0;
