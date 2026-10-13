@@ -14,6 +14,8 @@
 export const act2Enemies = [
   {
     id: 'gildedKnight',
+    // Stats for its SP pool (SPEC §4.6a, owner 2026-10-13).
+    attributes: { strength: 7, dexterity: 4, constitution: 3, wisdom: 2, intelligence: 2 },
     equipmentPower: 0.3,
     size: 'medium',
     tint: 'var(--gold)',
@@ -33,6 +35,8 @@ export const act2Enemies = [
   },
   {
     id: 'courtSurgeon',
+    // Stats for its SP pool (SPEC §4.6a, owner 2026-10-13).
+    attributes: { strength: 3, dexterity: 3, constitution: 3, wisdom: 4, intelligence: 4 },
     equipmentPower: 0.1,
     size: 'medium',
     tint: 'var(--grace)',
@@ -62,6 +66,8 @@ export const act2Enemies = [
   },
   {
     id: 'stitchedHound',
+    // Stats for its SP pool (SPEC §4.6a, owner 2026-10-13).
+    attributes: { strength: 6, dexterity: 3, constitution: 3, wisdom: 2, intelligence: 2 },
     size: 'small',
     tint: 'var(--blood)',
     name: 'Stitched Hound',
@@ -84,6 +90,8 @@ export const act2Enemies = [
   },
   {
     id: 'courtMarionette',
+    // Stats for its SP pool (SPEC §4.6a, owner 2026-10-13).
+    attributes: { strength: 6, dexterity: 3, constitution: 3, wisdom: 2, intelligence: 2 },
     equipmentPower: 0.1,
     size: 'small',
     tint: 'var(--rot)',
@@ -102,6 +110,8 @@ export const act2Enemies = [
   },
   {
     id: 'livingArmor',
+    // Stats for its SP pool (SPEC §4.6a, owner 2026-10-13).
+    attributes: { strength: 7, dexterity: 4, constitution: 3, wisdom: 2, intelligence: 2 },
     equipmentPower: 0.4,
     size: 'medium',
     tint: 'var(--frost)',
@@ -131,6 +141,8 @@ export const act2Enemies = [
   // ---- Elite ------------------------------------------------------------------
   {
     id: 'courtDuelist',
+    // Stats for its SP pool (SPEC §4.6a, owner 2026-10-13).
+    attributes: { strength: 9, dexterity: 4, constitution: 4, wisdom: 3, intelligence: 3 },
     equipmentPower: 0.25,
     size: 'large',
     tint: 'var(--frost)',
@@ -154,6 +166,8 @@ export const act2Enemies = [
   // ---- Boss: The Stitched King (GDD §2 — phase 2 literally adds limbs) ----------
   {
     id: 'stitchedKing',
+    // Stats for its SP pool (SPEC §4.6a, owner 2026-10-13).
+    attributes: { strength: 9, dexterity: 4, constitution: 4, wisdom: 3, intelligence: 3 },
     equipmentPower: 0.25,
     size: 'large',
     tint: 'var(--gold)',
@@ -188,6 +202,13 @@ export const act2Enemies = [
   // Expanded destinations: authored weighted moves use the existing phase and delay engine.
   {
     "id": "mirrorScribe",
+    "attributes": {
+      "strength": 3,
+      "dexterity": 3,
+      "constitution": 3,
+      "wisdom": 4,
+      "intelligence": 4
+    },
     "name": "Mirror Scribe",
     "size": "medium",
     "hp": [
@@ -231,6 +252,13 @@ export const act2Enemies = [
   },
   {
     "id": "stitchCrab",
+    "attributes": {
+      "strength": 7,
+      "dexterity": 4,
+      "constitution": 3,
+      "wisdom": 2,
+      "intelligence": 2
+    },
     "name": "Stitch Crab",
     "size": "small",
     "hp": [
@@ -276,6 +304,13 @@ export const act2Enemies = [
   },
   {
     "id": "glassRegent",
+    "attributes": {
+      "strength": 6,
+      "dexterity": 4,
+      "constitution": 3,
+      "wisdom": 5,
+      "intelligence": 5
+    },
     "name": "The Glass Regent",
     "size": "large",
     "hp": [
@@ -345,6 +380,13 @@ export const act2Enemies = [
   },
   {
     "id": "marrowOrganist",
+    "attributes": {
+      "strength": 5,
+      "dexterity": 3,
+      "constitution": 3,
+      "wisdom": 5,
+      "intelligence": 5
+    },
     "name": "The Marrow Organist",
     "size": "large",
     "hp": [

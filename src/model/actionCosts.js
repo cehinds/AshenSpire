@@ -11,11 +11,10 @@
 //   3. A derived SP of 2 or more scales the card's effect amounts (SCALED_EFFECT_OPS) by twoCostMultiplier.
 import {
   ACTION_COST_TABLE, CAST_TAGS, COST_BUDGET, COST_TAGS, DRAWBACK_OPS, KEYWORD_TAGS, RANGE_TAGS, RANGE_WEIGHTS,
-  RESTORE_MANA_OPS, RESTORE_STAMINA_OPS, SCALED_EFFECT_OPS, STATUS_STACK_CAP, MANEUVER_SP_FLOORS, SWEEP_UNSCALED_OPS, STATUS_WEIGHT, STATUS_WEIGHTS,
+  RESTORE_MANA_OPS, RESTORE_STAMINA_OPS, SCALED_EFFECT_OPS, STATUS_STACK_CAP, MANEUVER_SP_FLOORS, SWEEP_UNSCALED_OPS,
+  ENEMY_SP_ROW, ENEMY_BLIGHT_SHIFT, STATUS_WEIGHT, STATUS_WEIGHTS,
 } from '../content/actionCosts.js';
 import { DRAWBACK_KEYWORD_TAGS } from '../content/actionCosts.js';
-import { derivedStatRules } from '../content/derivedStats.js';
-import { statRowValue } from './derivedStats.js';
 import { stanceFor } from '../engine/combatRounds/stance.js';
 
 export const ACTION_STANCES = Object.freeze(['attack', 'block', 'smash', 'counter', 'cast', 'sweep']);
@@ -247,20 +246,26 @@ export function applyActionCosts(def, authored = def, { rank = 0, config = COST_
   return Object.freeze({ ...def, cost: sp, manaCost: mp, ...(effects ? { effects } : {}), ...(textTemplate !== undefined ? { textTemplate } : {}) });
 }
 
+/** An enemy's attributes as its SP reads them: authored, shifted by ENEMY_BLIGHT_SHIFT when it is `blighted`. */
+export function enemyAttributesOf(def) {
+  const authored = def?.attributes && typeof def.attributes === 'object' ? def.attributes : {};
+  if (!def?.blighted) return { ...authored };
+  const out = { ...authored };
+  for (const [id, shift] of Object.entries(ENEMY_BLIGHT_SHIFT)) out[id] = Math.max(0, (Number(out[id]) || 0) + shift);
+  return out;
+}
+
 /**
- * An enemy's SP pool per turn (owner, 2026-10-12; SPEC §4.6a): the stamina row of the derived-stat ruleset read on the
- * enemy's `attributes` (each attribute term floored, as for the player), plus its `equipmentSp`, floored at 0. An enemy
- * with no authored stats gets the row's base, 3. `level` is the row's perLevel term; the engine reads level 1, so an
- * enemy's pool is its attributes and equipment only.
+ * An enemy's SP pool per turn (owner, 2026-10-13; SPEC §4.6a): ENEMY_SP_ROW read on its attributes (each term floored on
+ * its own) plus its `equipmentSp`, floored at 0. A fixed `spPool` (test fixtures) replaces it outright.
  */
-export function enemyPoolOf(def, { level = 1 } = {}) {
-  // A fixed `spPool` (test fixtures) replaces the stat pool outright.
+export function enemyPoolOf(def, { row = ENEMY_SP_ROW } = {}) {
   if (Number.isInteger(def?.spPool) && def.spPool >= 0) return def.spPool;
-  const row = derivedStatRules.rules.stamina;
-  const attributes = def?.attributes && typeof def.attributes === 'object' ? def.attributes : {};
-  const fromStats = statRowValue(row, { attributes, level: Math.max(1, Number(level) || 1), lenientAttributes: true, statId: 'stamina' }).value;
+  const attributes = enemyAttributesOf(def);
+  let sp = row.base;
+  for (const [id, weight] of Object.entries(row)) if (id !== 'base') sp += Math.floor((Number(attributes[id]) || 0) * weight);
   const equipment = Number.isFinite(def?.equipmentSp) ? def.equipmentSp : 0;
-  return Math.max(0, Math.floor(fromStats + equipment));
+  return Math.max(0, Math.floor(sp + equipment));
 }
 export const enemySpOf = enemyPoolOf;
 

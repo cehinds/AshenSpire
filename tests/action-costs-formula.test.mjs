@@ -5,8 +5,8 @@ import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { applyAbilityGrade } from '../src/model/abilityGrades.js';
-import { COST_CONFIG, cardCostBudget, applyActionCosts, enemyPoolOf, isCostOptOut, validateCostConfig } from '../src/model/actionCosts.js';
-import { COST_BUDGET, COST_TAGS } from '../src/content/actionCosts.js';
+import { COST_CONFIG, cardCostBudget, applyActionCosts, enemyPoolOf, enemyAttributesOf, isCostOptOut, validateCostConfig } from '../src/model/actionCosts.js';
+import { COST_BUDGET, COST_TAGS, ENEMY_SP_ROW, ENEMY_SP_BANDS, ENEMY_BLIGHT_SHIFT } from '../src/content/actionCosts.js';
 import { derivedStatRules } from '../src/content/derivedStats.js';
 import * as Rounds from '../src/engine/combatRoundsAdapter.js';
 import { createRunState } from '../src/model/state.js';
@@ -117,24 +117,42 @@ test('def.manaCost reaches the framework Mana cost, and a played spell spends it
   assert.equal(applyActionCosts(spell, spell, { rank: 2 }).manaCost, spell.manaCost, 'pricing a priced face again at its rank keeps its Mana');
 });
 
-test('enemy SP comes from stats: the stamina row on the enemy\'s attributes, plus equipment SP; 3 with none', () => {
-  const row = derivedStatRules.rules.stamina;
-  assert.equal(row.base, 3, 'fixture: the stamina row starts at 3');
-  assert.equal(enemyPoolOf({}), 3, 'a minion or an elite with no stats');
-  assert.equal(enemyPoolOf({ attributes: { dexterity: 4, constitution: 4, wisdom: 5, intelligence: 5 } }), 3 + 1 + 1 + 1 + 1);
-  assert.equal(enemyPoolOf({ attributes: { dexterity: 3 } }), 3, 'each attribute term is floored on its own');
-  assert.equal(enemyPoolOf({ equipmentSp: 2 }), 5);
+test('enemy SP comes from stats: ENEMY_SP_ROW on the attributes, blight shifted, plus equipment SP', () => {
+  assert.equal(enemyPoolOf({}), ENEMY_SP_ROW.base, 'an enemy with no stats acts once');
+  assert.equal(enemyPoolOf({ attributes: { dexterity: 4, constitution: 4, wisdom: 5, intelligence: 5 } }), ENEMY_SP_ROW.base + 1 + 1 + 1 + 1);
+  assert.equal(enemyPoolOf({ attributes: { dexterity: 3 } }), ENEMY_SP_ROW.base, 'each attribute term is floored on its own');
+  assert.equal(enemyPoolOf({ equipmentSp: 2 }), ENEMY_SP_ROW.base + 2);
   assert.equal(enemyPoolOf({ equipmentSp: -9 }), 0, 'never below 0');
-  // Every shipped enemy is priced by its stats, and the rounds adapter reads the same pool.
-  for (const def of registries.enemies.all()) {
-    assert.equal(Rounds.enemyPool(def), enemyPoolOf(def), def.id);
-    if (def.attributes === undefined && def.equipmentSp === undefined) assert.equal(Rounds.enemyPool(def), 3, `${def.id} has no stats`);
+  // Blight (owner, 2026-10-13) lowers INT, WIS and DEX and raises STR and CON.
+  const stats = { strength: 6, dexterity: 6, constitution: 2, wisdom: 5, intelligence: 5 };
+  const shifted = enemyAttributesOf({ attributes: stats, blighted: true });
+  for (const [id, shift] of Object.entries(ENEMY_BLIGHT_SHIFT)) assert.equal(shifted[id], Math.max(0, stats[id] + shift), id);
+  assert.ok(ENEMY_BLIGHT_SHIFT.intelligence < 0 && ENEMY_BLIGHT_SHIFT.wisdom < 0 && ENEMY_BLIGHT_SHIFT.dexterity < 0);
+  assert.ok(ENEMY_BLIGHT_SHIFT.strength > 0 && ENEMY_BLIGHT_SHIFT.constitution > 0);
+  assert.notEqual(enemyPoolOf({ attributes: stats, blighted: true }), enemyPoolOf({ attributes: stats }), 'blight moves the pool');
+  // The rounds adapter reads the same pool.
+  for (const def of registries.enemies.all()) assert.equal(Rounds.enemyPool(def), enemyPoolOf(def), def.id);
+});
+
+test('every enemy lands in its SP band: minions 1-2, elites 2-3, bosses 3-4 (owner, 2026-10-13)', () => {
+  const pools = new Map();
+  for (const encounter of registries.encounters.all()) for (const id of encounter.enemies) {
+    if (!pools.has(id)) pools.set(id, new Set());
+    pools.get(id).add(encounter.pool);
   }
-  const run = createRunState({ seed: 3, classId: 'reaver', registries });
-  const combat = createRunCombat({ registries, rng: createRng(3), run, enemyIds: ['wanderingSoldier'], settings: {} });
-  const plan = [combat.enemies[0].intent.moveId, ...(combat.enemies[0].plannedMoves || []).map((m) => m.moveId)];
-  const spent = plan.reduce((sum, id) => sum + Rounds.enemyMoveSp(registries.enemies.get('wanderingSoldier').moves[id]), 0);
-  assert.ok(spent <= 3 && spent >= 2, `the soldier plans within its pool of 3: ${plan}`);
+  let checked = 0;
+  for (const def of registries.enemies.all()) {
+    assert.ok(def.attributes, `${def.id} has authored stats`);
+    for (const pool of pools.get(def.id) || []) {
+      const band = ENEMY_SP_BANDS[pool];
+      if (!band) continue;
+      const sp = enemyPoolOf(def);
+      assert.ok(sp >= band[0] && sp <= band[1], `${def.id} (${pool}) has ${sp} SP, outside ${band[0]}-${band[1]}`);
+      checked++;
+    }
+  }
+  assert.ok(checked >= 30, 'fixture: every shipped enemy is checked');
+  for (const id of ['blightHound', 'blightedValkyrie']) assert.equal(registries.enemies.get(id).blighted, true, `${id} is blighted`);
 });
 
 // Owner decisions of 2026-10-12, second pass: rank counts on the Mana side of a magic card too; restored Mana and

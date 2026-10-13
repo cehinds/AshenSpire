@@ -18,7 +18,10 @@ import * as Rounds from '../src/engine/combatRoundsAdapter.js';
 
 const ENEMY = 'wanderingSoldier';
 const base = createRegistries(contentBundle);
-const POOL = 3; // a minion with no authored stats: the stamina row's base
+// The fixture soldier carries Dexterity 4 and Constitution 4: a pool of 3 (ENEMY_SP_ROW base 1, +1, +1), so the pool's
+// spending rules have room to show. The shipped soldier is a 1-SP minion (owner, 2026-10-13).
+const POOL = 3;
+const FIXTURE_STATS = { strength: 6, dexterity: 4, constitution: 4, wisdom: 2, intelligence: 2 };
 
 // wanderingSoldier with a smash move added (tagged maneuver:smash, so it costs 2) and an optional per-enemy pool.
 function registriesWith({ pool, extraMoves } = {}) {
@@ -29,7 +32,7 @@ function registriesWith({ pool, extraMoves } = {}) {
       const def = orig.get(id);
       if (id !== ENEMY) return def;
       const moves = { ...def.moves, ...(extraMoves || {}) };
-      return { ...def, moves, ...(pool === undefined ? {} : { spPool: pool }) };
+      return { ...def, attributes: FIXTURE_STATS, moves, ...(pool === undefined ? {} : { spPool: pool }) };
     },
   };
   return { ...base, enemies };
@@ -37,7 +40,7 @@ function registriesWith({ pool, extraMoves } = {}) {
 
 const SMASH = { intent: 'attack', damage: 9, weight: 40, maxConsecutive: 1, tags: ['maneuver:smash'] };
 
-function fight({ reg = base, seed = 5, settings = {}, rounds = false } = {}) {
+function fight({ reg = registriesWith(), seed = 5, settings = {}, rounds = false } = {}) {
   const run = createRunState({ seed, classId: 'reaver', registries: reg, profileMeta: { settings: { [COMBAT_ROUNDS_KEY]: rounds, ...settings } } });
   return createRunCombat({ registries: reg, rng: createRng(seed), run, enemyIds: [ENEMY], settings: {} });
 }
@@ -57,11 +60,12 @@ test('a move costs SP from the table by its stance; an untagged move costs the 1
   assert.ok(def.moves.slash, 'fixture: the soldier has a slash');
 });
 
-test('the enemy pool is its stats (3 with none), and a fixture spPool overrides it', () => {
-  assert.equal(Rounds.enemyPool(base.enemies.get(ENEMY)), POOL);
-  assert.equal(Rounds.enemyPool({ attributes: { dexterity: 8, constitution: 8 } }), POOL + 2 + 2, 'dexterity and constitution weigh 0.25 each');
-  assert.equal(Rounds.enemyPool({ attributes: { dexterity: 8 }, equipmentSp: 1 }), POOL + 2 + 1, 'equipment SP adds on top');
-  assert.equal(Rounds.enemyPool({ attributes: { strength: 20 } }), POOL, 'strength is not on the stamina row');
+test('the enemy pool is its stats, and a fixture spPool overrides it', () => {
+  assert.equal(Rounds.enemyPool(base.enemies.get(ENEMY)), 1, 'the shipped soldier is a 1-SP minion');
+  assert.equal(Rounds.enemyPool(registriesWith().enemies.get(ENEMY)), POOL, 'the fixture soldier');
+  assert.equal(Rounds.enemyPool({ attributes: { dexterity: 8, constitution: 8 } }), 1 + 2 + 2, 'dexterity and constitution weigh 0.25 each');
+  assert.equal(Rounds.enemyPool({ attributes: { dexterity: 8 }, equipmentSp: 1 }), 1 + 2 + 1, 'equipment SP adds on top');
+  assert.equal(Rounds.enemyPool({ attributes: { strength: 20 } }), 1, 'strength is not on the SP row');
   assert.equal(Rounds.enemyPool({ spPool: 4 }), 4);
   assert.equal(Rounds.enemyPool({ spPool: 0 }), 0, 'a zero pool is a real override');
 });

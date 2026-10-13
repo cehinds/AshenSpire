@@ -9,6 +9,8 @@
 export const act1Enemies = [
   {
     id: 'wanderingSoldier',
+    // Stats for its SP pool (SPEC §4.6a, owner 2026-10-13).
+    attributes: { strength: 6, dexterity: 3, constitution: 3, wisdom: 2, intelligence: 2 },
     equipmentPower: 0.2,
     size: 'medium',
     name: 'Wandering Soldier',
@@ -36,6 +38,9 @@ export const act1Enemies = [
   },
   {
     id: 'blightHound',
+    // Stats for its SP pool (SPEC §4.6a, owner 2026-10-13).
+    attributes: { strength: 5, dexterity: 5, constitution: 1, wisdom: 3, intelligence: 3 },
+    blighted: true,
     size: 'small',
     tint: 'var(--rot)',
     name: 'Blight Hound',
@@ -54,6 +59,8 @@ export const act1Enemies = [
   },
   {
     id: 'huskBrute',
+    // Stats for its SP pool (SPEC §4.6a, owner 2026-10-13).
+    attributes: { strength: 7, dexterity: 4, constitution: 3, wisdom: 2, intelligence: 2 },
     size: 'medium',
     name: 'Husk Brute',
     hp: [30, 34],
@@ -75,6 +82,8 @@ export const act1Enemies = [
   },
   {
     id: 'graveWisp',
+    // Stats for its SP pool (SPEC §4.6a, owner 2026-10-13).
+    attributes: { strength: 3, dexterity: 3, constitution: 3, wisdom: 4, intelligence: 4 },
     size: 'small',
     tint: 'var(--grace)',
     name: 'Grave Wisp',
@@ -97,6 +106,8 @@ export const act1Enemies = [
   // ---- Elite (SPEC §5.3) ----------------------------------------------------
   {
     id: 'wyrmAspirant',
+    // Stats for its SP pool (SPEC §4.6a, owner 2026-10-13).
+    attributes: { strength: 7, dexterity: 4, constitution: 3, wisdom: 2, intelligence: 2 },
     equipmentPower: 0.3,
     size: 'large',
     tint: 'var(--gold)',
@@ -126,10 +137,9 @@ export const act1Enemies = [
   // ---- Boss: The Fell Warden (SPEC §5.3 — the Fell Warden-inspired) -----------------
   {
     id: 'fellWarden',
+    // Stats for its SP pool (SPEC §4.6a, owner 2026-10-13).
+    attributes: { strength: 9, dexterity: 4, constitution: 4, wisdom: 3, intelligence: 3 },
     equipmentPower: 0.3,
-    // SP pool 5 (SPEC §4.6a): the stamina row reads Dexterity 4 and Constitution 4 (+1 each) on its base 3. Boss SP is
-    // tuned by these stats and each move's own `sp` (owner, 2026-10-12; tier-1 bot win rates in docs/BALANCE.md).
-    attributes: { dexterity: 4, constitution: 4 },
     size: 'large',
     tint: 'var(--blood)',
     name: 'The Fell Warden',
@@ -168,6 +178,13 @@ export const act1Enemies = [
   // Expanded destinations: authored weighted moves use the existing phase and delay engine.
   {
     "id": "lanternMoth",
+    "attributes": {
+      "strength": 3,
+      "dexterity": 3,
+      "constitution": 3,
+      "wisdom": 4,
+      "intelligence": 4
+    },
     "name": "Lantern Moth",
     "size": "small",
     "hp": [
@@ -205,6 +222,13 @@ export const act1Enemies = [
   },
   {
     "id": "briarHermit",
+    "attributes": {
+      "strength": 6,
+      "dexterity": 3,
+      "constitution": 3,
+      "wisdom": 2,
+      "intelligence": 2
+    },
     "name": "Briar Hermit",
     "size": "medium",
     "hp": [
@@ -255,6 +279,13 @@ export const act1Enemies = [
   },
   {
     "id": "chainScavenger",
+    "attributes": {
+      "strength": 7,
+      "dexterity": 4,
+      "constitution": 3,
+      "wisdom": 2,
+      "intelligence": 2
+    },
     "name": "Chain Scavenger",
     "size": "medium",
     "hp": [
@@ -305,8 +336,11 @@ export const act1Enemies = [
   {
     "id": "bellKeeper",
     "attributes": {
+      "strength": 9,
       "dexterity": 4,
-      "constitution": 4
+      "constitution": 4,
+      "wisdom": 3,
+      "intelligence": 3
     },
     "name": "The Bell Keeper",
     "size": "large",
@@ -374,8 +408,11 @@ export const act1Enemies = [
   {
     "id": "thornMatriarch",
     "attributes": {
-      "dexterity": 4,
-      "constitution": 4
+      "strength": 5,
+      "dexterity": 3,
+      "constitution": 3,
+      "wisdom": 5,
+      "intelligence": 5
     },
     "name": "The Thorn Matriarch",
     "size": "large",

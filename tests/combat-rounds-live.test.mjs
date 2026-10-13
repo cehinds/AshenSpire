@@ -12,6 +12,7 @@ import { createRng } from '../src/engine/rng.js';
 import { cardKind } from '../src/model/tree.js';
 import { COMBAT_ROUNDS_KEY, MOMENTUM_KEY } from '../src/model/combatRounds.js';
 import * as Rounds from '../src/engine/combatRoundsAdapter.js';
+import { enemyPoolOf } from '../src/model/actionCosts.js';
 import { handRow, scaledCards } from '../src/model/handRules.js';
 import { applyStatus } from '../src/engine/statuses.js';
 
@@ -120,10 +121,10 @@ test('a card cannot be queued twice, and a queued card cannot be discarded', () 
   assert.equal(c.phase, 'player', 'the refused discard leaves the turn open');
 });
 
-// Replaced rule: a flat 2 SP pool. The pool is the enemy's stats now (SPEC §4.6a): 3 for a minion with no stats.
+// Replaced rule: a flat 2 SP pool. The pool is the enemy's stats now (SPEC §4.6a).
 test('each enemy queues its moves from its stat SP pool (owner 2026-10-12), SP per move from the action-cost table', () => {
   const pool = Rounds.enemyPool(registries.enemies.get(ENEMY));
-  assert.equal(pool, 3);
+  assert.equal(pool, enemyPoolOf(registries.enemies.get(ENEMY)), 'the stat pool (a 1-SP minion, owner 2026-10-13)');
   const c = fight();
   for (const enemy of c.enemies.filter((e) => e.alive)) {
     const queue = c.combatRounds.enemyQueues[enemy.id];
@@ -135,7 +136,8 @@ test('each enemy queues its moves from its stat SP pool (owner 2026-10-12), SP p
 });
 
 test('the queue builder respects the opener, costs, and stops when the next move would overspend', () => {
-  const def = { firstMove: 'open', moves: { open: {}, a: {}, b: { sp: 2 } } };
+  // Stats for a pool of 3 (SPEC §4.6a: base 1, +1 Dexterity 4, +1 Constitution 4).
+  const def = { firstMove: 'open', attributes: { dexterity: 4, constitution: 4 }, moves: { open: {}, a: {}, b: { sp: 2 } } };
   const picks = ['a', 'b', 'a', 'a'];
   const enemy = { movesHistory: [] };
   const queue = Rounds.buildEnemyQueue(enemy, def, { isFirstTurn: true, pick: () => picks.shift() ?? null });

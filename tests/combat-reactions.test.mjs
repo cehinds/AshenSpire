@@ -15,7 +15,7 @@ import { payAshenBlight, chooseAshenBlightFeat } from '../src/engine/ashenBlight
 
 function fixture({ version = 1, cardIds = ['guardCounter', 'sweepingBlow'], enemyCount = 2 } = {}) {
   const registries = createRegistries({ ...contentBundle, enemies: contentBundle.enemies.map(enemy => enemy.id === 'wanderingSoldier'
-    ? { ...enemy, firstMove: 'slash', moves: { slash: { intent: 'attack', damage: 1, hits: 2, weight: 1,
+    ? { ...enemy, firstMove: 'slash', attributes: { strength: 6, dexterity: 4, constitution: 4, wisdom: 2, intelligence: 2 }, moves: { slash: { intent: 'attack', damage: 1, hits: 2, weight: 1,
       tags: ['camp:physical', 'maneuver:attack', 'reach:contact', 'targeting:single'] } } } : enemy) });
   const combat = createCombat({ registries, rng: createRng(701), combatExpansionVersion: 2, reactionRulesVersion: version,
     enemyIds: Array(enemyCount).fill('wanderingSoldier'), player: { classId: 'reaver', maxHp: 100, hp: 100,
@@ -40,7 +40,7 @@ test('incoming plans pause before hits, reveal only the actor, and decline resum
   assert.throws(() => dispatch(combat, { type: 'chooseReaction', offerId: 'stale' }));
   assert.deepEqual(serializeCombatSnapshot(combat), before);
   assert.deepEqual(combat.rng.getCounters(), rng);
-  // Owner 2026-10-12: each enemy spends its 3-SP stat pool (SPEC §4.6a), so a 1-SP slash is played three times per
+  // Owner 2026-10-12: each fixture enemy spends a 3-SP stat pool (SPEC §4.6a: Dexterity 4 and Constitution 4), so a 1-SP slash is played three times per
   // enemy turn, and each planned move pauses for its own reaction, in roster order: e1 ×3, then e2 ×3.
   const first = answer(combat);
   assert.deepEqual(first.events.filter(event => event.type === 'enemyMoveStarted').map(event => event.sourceId), ['e1']);

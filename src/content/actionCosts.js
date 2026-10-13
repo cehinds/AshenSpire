@@ -14,9 +14,9 @@
 //   If both are 0, the larger side pays 1 (SP on a tie); a Mana-restoring card pays SP.
 // Opt-outs keep the authored cost and numbers: costRule 'fixed', curses and statuses (by type), and X costs.
 //
-// ENEMIES (owner, 2026-10-12, SPEC §4.6a). An enemy's SP pool is its stats: the stamina row of content/derivedStats.js
-// read on the enemy's `attributes`, plus its `equipmentSp`. With no authored stats that is the row's base, 3 (minions
-// and elites). A move's SP is its own `sp`, else the stance price below.
+// ENEMIES (owner, 2026-10-13, SPEC §4.6a). An enemy's SP pool is its stats: ENEMY_SP_ROW read on its `attributes`
+// (shifted by ENEMY_BLIGHT_SHIFT when it is `blighted`), plus its `equipmentSp`. A move's SP is its own `sp`, else the
+// stance price below.
 
 // ---- Player cards: the budget tunables -------------------------------------------------------------------------
 export const COST_BUDGET = Object.freeze({
@@ -201,6 +201,16 @@ export const SCALED_EFFECT_OPS = Object.freeze([
 export const TWO_COST_EFFECT_MULTIPLIER = COST_BUDGET.twoCostMultiplier;
 
 // ---- Enemies ---------------------------------------------------------------------------------------------------
+// The enemy SP row (owner, 2026-10-13: "enemies are essentially characters with cards, at about 2 SP"; minions usually
+// 1-2 SP, elites 2-3, bosses 3-4, all from stats and equipment). SP = base + Σ floor(attribute × weight) + equipmentSp,
+// each attribute term floored on its own. Enemy attributes are inflated next to a player's 1-4.
+export const ENEMY_SP_ROW = Object.freeze({ base: 1, dexterity: 0.25, constitution: 0.25, wisdom: 0.2, intelligence: 0.2 });
+// The SP band an enemy's pool (normal, elite, boss) must land in; a test holds every enemy to it.
+export const ENEMY_SP_BANDS = Object.freeze({ normal: Object.freeze([1, 2]), elite: Object.freeze([2, 3]), boss: Object.freeze([3, 4]) });
+// Blight (owner, 2026-10-13): "blight lowers INT, WIS and DEX and raises STR and CON". A `blighted` enemy's attributes
+// shift by these amounts (floored at 0) wherever its stats are read.
+export const ENEMY_BLIGHT_SHIFT = Object.freeze({ intelligence: -2, wisdom: -2, dexterity: -2, strength: 2, constitution: 2 });
+
 // SP per stance for an enemy move that does not name its own `sp`.
 export const ACTION_COST_TABLE = Object.freeze({
   attack: 1,

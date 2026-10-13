@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { combatRules } from '../src/content/combatRules.js';
 import { createRegistries } from '../src/model/registries.js';
+import { enemyPoolOf } from '../src/model/actionCosts.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
 import { createCoopCombat, playCard, endTurn } from '../src/engine/coopCombat.js';
@@ -55,10 +56,10 @@ for (const coop of [false, true]) for (const cardId of ['rondelParry', 'nockAndW
       const hit = c.eventLog.find(event => event.type === 'damageDealt' && event.sourceId === 'player');
       assert.equal(hit.sourceInstanceId, prepared.id);
       assert.deepEqual(hit.components, [{ type: 'slashing', amount: 7 }], 'original type uses its resistance, not later fire immunity');
-      // Solo nockAndWait: the enemy spends its 3-SP stat pool (SPEC §4.6a), so its later planned hookCasts land too (196,
-      // was 200 before the pool). Co-op enemies keep one move a turn: co-op is set aside on dev (#1881), so its enemy
-      // phase is not wired to the pool.
-      assert.equal(actor().hp, cardId === 'nockAndWait' && !coop ? 196 : 200);
+      // Solo nockAndWait: the scavenger spends its stat pool (SPEC §4.6a), so each planned hookCast after the first lands
+      // for 2 (200 before the pool). Co-op enemies keep one move a turn: co-op is set aside on dev (#1881).
+      const pool = enemyPoolOf(c.registries.enemies.get('chainScavenger'));
+      assert.equal(actor().hp, cardId === 'nockAndWait' && !coop ? 200 - 2 * (pool - 1) : 200);
     });
   }
 }

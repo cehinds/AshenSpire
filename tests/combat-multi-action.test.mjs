@@ -16,7 +16,10 @@ import { enemyPlanActions, multiActionOn } from '../src/engine/normalPreview.js'
 import { decorateCombatRoundsScreen } from '../src/ui/components/combatRoundsScreen.js';
 import * as Screen from '../src/ui/models/CombatRoundsScreenModel.js';
 
-const registries = createRegistries(contentBundle);
+// The fixture soldier carries stats for a pool of 3 (SPEC §4.6a: base 1, +1 Dexterity 4, +1 Constitution 4), so its plan
+// holds follow-ups; the shipped soldier is a 1-SP minion (owner, 2026-10-13).
+const POOL_STATS = { strength: 6, dexterity: 4, constitution: 4, wisdom: 2, intelligence: 2 };
+const registries = createRegistries({ ...contentBundle, enemies: contentBundle.enemies.map((e) => (e.id === 'wanderingSoldier' ? { ...e, attributes: POOL_STATS } : e)) });
 const ENEMY = 'wanderingSoldier';
 const SEED = 5;
 
@@ -30,16 +33,16 @@ function endTurn(c) {
   while (c.pendingReaction) dispatch(c, { type: 'chooseReaction', offerId: c.pendingReaction.id, optionId: null });
 }
 
-test('the plan is picked to the SP pool: as many moves as one enemy SP pool holds (3 for an enemy with no stats, SPEC §4.6a), each recorded in its history', () => {
+test('the plan is picked to the SP pool: as many moves as one enemy SP pool holds (SPEC §4.6a), each recorded in its history', () => {
   const enemy = { id: 'e1', movesHistory: [] };
-  const def = { moves: { a: { weight: 1 }, b: { weight: 1, sp: 2 } } };
+  const def = { attributes: POOL_STATS, moves: { a: { weight: 1 }, b: { weight: 1, sp: 2 } } };
   const picks = ['a', 'a', 'b'];
   const queue = Rounds.extendEnemyQueue(enemy, def, [], { pick: () => picks.shift() });
   assert.deepEqual(queue.map((e) => e.moveId), ['a', 'a'], 'a 2-SP move does not fit after two 1-SP moves');
   assert.deepEqual(enemy.movesHistory, ['a', 'a'], 'each pick is recorded as it is made');
   const more = Rounds.extendEnemyQueue(enemy, def, queue, { pick: () => 'a' });
   assert.equal(more, queue, 'an existing plan is extended in place');
-  assert.equal(more.length, 3, 'a statless pool holds three 1-SP moves (the stamina row base; the replaced rule was a flat 2)');
+  assert.equal(more.length, 3, 'a pool of 3 holds three 1-SP moves (the replaced rule was a flat 2)');
 });
 
 test('with the toggle off, the pool still plans its moves (action costs are always on), but no follow-up symbol shows', () => {

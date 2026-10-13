@@ -1002,6 +1002,7 @@ export const SCHEMAS = Object.freeze({
     // The enemy's stats for its SP pool (SPEC §4.6a): the stamina row read on these attributes, plus equipment SP.
     attributes: opt(mapOf(int)),
     equipmentSp: opt(int),
+    blighted: opt(bool), // blight shifts its attributes (content/actionCosts.js ENEMY_BLIGHT_SHIFT)
     moves: mapOf(enemyMoveSchema),
     firstMove: opt(str), // checked against own moves in validate.js
     phases: opt(arr(enemyPhaseSchema)),
