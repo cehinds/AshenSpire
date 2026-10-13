@@ -144,6 +144,19 @@ test('assetUrl encodes each segment of the game path under /asset-file/', () => 
   assert.equal(assetUrl('assets-mobile/poses/idle 01.webp'), '/asset-file/assets-mobile/poses/idle%2001.webp');
 });
 
+test('assetUrl uses globalThis.ASHEN_ASSET_URL when a page sets it, the default otherwise', () => {
+  const seen = [];
+  try {
+    globalThis.ASHEN_ASSET_URL = (p) => { seen.push(p); return 'https://cdn.test/' + p; };
+    assert.equal(assetUrl('assets-mobile/poses/idle 01.webp'), 'https://cdn.test/assets-mobile/poses/idle 01.webp');
+    assert.deepEqual(seen, ['assets-mobile/poses/idle 01.webp']);
+    delete globalThis.ASHEN_ASSET_URL;
+    assert.equal(assetUrl('assets-mobile/poses/idle 01.webp'), '/asset-file/assets-mobile/poses/idle%2001.webp');
+  } finally {
+    delete globalThis.ASHEN_ASSET_URL;
+  }
+});
+
 test('usage needles: the full path, the path without its tier root, and the name as a whole word', () => {
   assert.deepEqual(usageNeedles('assets/poses/idle_00.webp'), { paths: ['assets/poses/idle_00.webp', 'poses/idle_00.webp'], keys: ['idle_00'] });
   assert.deepEqual(usageNeedles('assets/b.png'), { paths: ['assets/b.png'], keys: [] }, 'a bare path under six characters is not searched, nor a short name');
