@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-12",
     "summary": "Sweep and Smash now play the selected greatsword sequences",
     "detail": "Default-armour Reaver with a sole greatsword now uses the corrected straight-arm low iai Sweep and the SM03 twisting aerial ground slam, returning to the prepared stance after each action. The selected impact pose stays available until its actual combat cue arrives, including cold starts. Attack keeps its separate six phases. Twenty labeled five-slot examples preserve the other review choices and their source history; other loadouts and co-op retain their existing presentation.",
-    "build": "0.7.1.1447",
+    "build": "0.7.1.1449",
     "pullRequest": 1910,
     "url": "https://github.com/cehinds/AshenSpire/pull/1910"
+  },
+  {
+    "id": "pr-1912",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Combat target boxes centre on the enemy",
+    "detail": "The gold target box now sits on the enemy sprite instead of below small enemies. Intent, HP and armor above the enemy stay clickable.",
+    "build": "0.7.1.1449",
+    "pullRequest": 1912,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1912"
   },
   {
     "id": "pr-1909",
