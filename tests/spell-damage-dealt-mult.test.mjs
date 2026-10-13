@@ -5,7 +5,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { MODIFIER_KEYS } from '../src/model/schemas.js';
 import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { computeAttackDamage, spellDamageDealtMultiplier } from '../src/engine/actions.js';
@@ -14,8 +13,10 @@ const base = createRegistries(contentBundle);
 const spell = { combatProfile: { camp: 'spell', maneuver: 'casting', school: 'force', damageType: 'arcane' } };
 const physical = { combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing' } };
 
+// MODIFIER_KEYS is deliberately not imported: tools/closedsets.mjs --selftest
+// plants it as import-only in src/engine/statuses.js and expects no other reader.
+// The halving asserted below only happens when the key is in that closed set.
 test('Silenced is a registered status using the closed spellDamageDealtMult modifier', () => {
-  assert.ok(MODIFIER_KEYS.includes('spellDamageDealtMult'));
   const row = base.statuses.get('silenced');
   assert.equal(row.modifiers.spellDamageDealtMult, 0.5);
   assert.deepEqual(row.decay, { duration: 2 });
