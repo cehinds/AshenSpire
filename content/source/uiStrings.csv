@@ -1432,7 +1432,7 @@ creation.abilities.summary,,Starting ability,Starting ability,Starting ability
 "strings.error.unknownId","","uiStrings: unknown id '{id}'","",""
 "strings.error.extendsCycle","","uiStrings: extends cycle {chain}","",""
 "strings.error.noForm","","uiStrings: '{id}' has no {form} form","",""
-# ---- the combat test build and its debug log chrome (screens/combatTest.js, components/debugChrome.js); the three common.* rows are shared with other screens.
+# ---- the combat test build and its debug log chrome (screens/combatTest.js, components/debugChrome.js). The copy button reads common.copied, the one common.* row this block uses.
 combatTest.build.legend,,Your build,,
 combatTest.equipment.bloodRune,,Blood Rune,,
 combatTest.equipment.buildDefault,,Build default,,
