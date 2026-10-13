@@ -356,6 +356,11 @@ async function enterNode(node) {
   await press(`.map-node[data-node="${node.id}"]`);
   // Select, then Enter once the tray has slid open (map.js W4b).
   await until(`document.querySelector('.map-tray')?.dataset.shown === 'true' && !document.querySelector('#map-enter')?.disabled`, `the tray's Enter for ${node.id}`, 5000);
+  // The tray is `shown` before its reveal has finished sliding (and the board
+  // glides onto the node under it): a press taken mid-slide lands on the tray
+  // row beneath the button and is dropped. Press once Enter has stopped moving.
+  await ev(`window.__enterRect = null`);
+  await until(`(() => { const b = document.querySelector('#map-enter'); if (!b) return false; const r = b.getBoundingClientRect(); const now = [r.x, r.y, r.width, r.height].join(); const same = window.__enterRect === now; window.__enterRect = now; return same; })()`, `the tray's Enter to stop moving for ${node.id}`, 5000);
   await wait(200);
   await press('#map-enter');
   // Entered: the map is gone, or a room (a treasure's spoils) is drawn over it.
