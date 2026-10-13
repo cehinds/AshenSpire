@@ -2,6 +2,7 @@ import { combatProfileFor } from './combatCardProfile.js';
 import { entities as frameworkEntities } from '../framework/data/entities.js';
 import { cardPropertyInstances } from '../framework/importer.js';
 import { isPureDodge } from '../framework/importer.js';
+import { preparedEvadeCharges } from './combatTacticsDisplay.js';
 
 export const REAVER_GREATSWORD_PILOT = 'reaver-greatsword-pilot';
 
@@ -25,11 +26,7 @@ function preparesEvade(card) {
 }
 
 function evadeReady(entity) {
-  const prepared = entity?.combatEvade;
-  const status = prepared?.whileStatus && entity.statuses?.[prepared.whileStatus];
-  return entity?.evade > 0 || (prepared?.charges > 0
-    && (!prepared.whileStatus || (status?.stacks > 0 && status.duration !== 0))
-    && (prepared.expiresOnOwnerCycle === undefined || (entity.combatOwnerCycle || 0) < prepared.expiresOnOwnerCycle));
+  return entity?.evade > 0 || preparedEvadeCharges(entity) > 0;
 }
 
 /** Resolve art only; the receipt ledger and authored glyph retain their identity. */

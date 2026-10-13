@@ -31,3 +31,13 @@ test('stance explanations derive their numbers from the active bundle', () => {
   assert.match(row.detail, /Gain 7 Block when entering\. Gain 4 Block/);
   assert(!row.detail.includes('{'));
 });
+
+test('expanded combat lists the live combat stance and a prepared Evade', () => {
+  const rows = activeCombatAbilities(prototypeRegistries(), { combatOwnerCycle: 1,
+    combatStance: { maneuver: 'counter', camp: 'physical', reach: 'contact' },
+    combatEvade: { charges: 1, bonus: 0, advantage: false, disadvantage: false, expiresOnOwnerCycle: 2 },
+    statuses: { strength: { stacks: 2 } } });
+  assert.deepEqual(rows.map(row => [row.id, row.kind]), [['combat-stance', 'stance'], ['combat-evade', 'evade'], ['strength', 'status']]);
+  assert.equal(rows[0].name, 'Counter stance');
+  assert.equal(rows[1].name, 'Evade ×1');
+});

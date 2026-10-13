@@ -320,7 +320,9 @@ export function prepareCombatEvade(ctx, entity, config = {}) {
     ...(config.whileStatus ? { whileStatus: config.whileStatus } : {}),
     expiresOnOwnerCycle: (entity.combatOwnerCycle || 0) + 1 };
   ctx.emit?.('evadeGained', { sourceId: entity.id,
-    ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(entity) } : {}), charges: entity.combatEvade.charges });
+    ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(entity) } : {}), charges: entity.combatEvade.charges,
+    // Tells this prepared Evade apart from the foundation's evadeGained (combatRules.js).
+    combatEvade: true });
   return entity.combatEvade;
 }
 
@@ -519,7 +521,7 @@ function completeTraitGuard(ctx, source, target, receipt) {
   if (!(receipt.amount > 0) || !(receipt.blocked + receipt.wardResisted > 0)) return;
   delete target.combatTraitGuard;
   if (!source.alive) return;
-  if (guard.poise > 0) dealPoiseDamage(ctx, source, guard.poise);
+  if (guard.poise > 0) dealPoiseDamage(ctx, source, guard.poise, { cause: 'trait:guard', source: target });
   if (guard.ward > 0) spendPersistentWard(ctx, source, guard.ward, { sourceId: target.id });
 }
 

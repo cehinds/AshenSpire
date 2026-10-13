@@ -292,8 +292,8 @@ export function primeEnemyCounter(ctx, enemy, move, moveId) {
     armCombatCounter(ctx, enemy, carrier, { damage: damage === undefined ? 0 : enemyMoveDamage(enemy, { ...move, damage }),
       poiseDamage: move.counterPoiseDamage || 0, wardDamage: move.counterWardDamage || 0,
       ...(payload ? { payload } : {}) });
-    if (move.block > 0) ctx.enqueue({ effect: { op: 'block', target: 'self', amount: move.block }, source: enemy, owner: enemy, target: enemy, card: carrier, meta: { moveId } });
-    if (move.barrier > 0) ctx.enqueue({ effect: { op: 'gainBarrier', target: 'self', amount: move.barrier }, source: enemy, owner: enemy, target: enemy, card: carrier, meta: { moveId } });
+    if (move.block > 0) ctx.enqueue({ effect: { op: 'block', target: 'self', amount: move.block }, source: enemy, owner: enemy, target: enemy, card: carrier, meta: { moveId, preparing: true } });
+    if (move.barrier > 0) ctx.enqueue({ effect: { op: 'gainBarrier', target: 'self', amount: move.barrier }, source: enemy, owner: enemy, target: enemy, card: carrier, meta: { moveId, preparing: true } });
     if (enemy.intent?.moveId === moveId) enemy.intent.counterDefensePrimed = true;
     return;
   }
@@ -301,7 +301,7 @@ export function primeEnemyCounter(ctx, enemy, move, moveId) {
     damage: move.counterDamage ?? move.damage ?? matchupRules(ctx).counter.defaultDamage });
   armCombatCounter(ctx, enemy, carrier, { damage, poiseDamage: move.counterPoiseDamage || 0 });
   delete enemy.combatCounter.expiresOnTurn;
-  ctx.enqueue({ effect: { op: 'block', target: 'self', amount: move.block ?? matchupRules(ctx).counter.guard }, source: enemy, owner: enemy, target: enemy, card: carrier, meta: { moveId } });
-  enqueueCounterWard(ctx, enemy, carrier, { moveId });
+  ctx.enqueue({ effect: { op: 'block', target: 'self', amount: move.block ?? matchupRules(ctx).counter.guard }, source: enemy, owner: enemy, target: enemy, card: carrier, meta: { moveId, preparing: true } });
+  enqueueCounterWard(ctx, enemy, carrier, { moveId, preparing: true });
   if (enemy.intent?.moveId === moveId) enemy.intent.counterDefensePrimed = true;
 }
