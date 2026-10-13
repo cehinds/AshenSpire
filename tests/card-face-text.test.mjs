@@ -29,6 +29,13 @@ test('a conditional card groups its effects under the status that gates them', (
   assert.ok(all.includes('Gain Starstone Charge 1'), all.join(' | '));
 });
 
+test('a consumed prerequisite reads after the conditional payoff that uses it', () => {
+  const all = lines('ambush');
+  const payoff = all.findIndex(line => line.html.startsWith('Prepared:'));
+  const consume = all.findIndex(line => line.html === 'Remove all Prepared');
+  assert.ok(payoff >= 0 && consume > payoff, JSON.stringify(all));
+});
+
 test('an area damage card names its area on the damage line', () => {
   const [first] = text('cleavingBlow');
   assert.match(first, /to all enemies$/);

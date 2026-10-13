@@ -22,7 +22,7 @@ const UNPHRASEABLE = Symbol('unphraseable');
 const fail = () => { throw UNPHRASEABLE; };
 
 // Conditional riders follow the statuses they extend, ahead of gains (owner: damage and status first).
-const LINE_ORDER = ['damage', 'status', 'condition', 'gain', 'bonus', 'detail'];
+const LINE_ORDER = ['damage', 'status', 'condition', 'consume', 'gain', 'bonus', 'detail'];
 // Play restrictions first. A keyword outside this list keeps the authored text.
 const KEYWORDS = ['unplayable', 'exhaust', 'retain', 'ethereal', 'innate'];
 const ENEMY_TARGETS = ['enemy', 'allEnemies', 'randomEnemy'];
@@ -67,6 +67,16 @@ function buildLines(def, preview, registries) {
   if (def.onTurnEndInHand?.length || def.ashenBlightCost) return null;
   const { value, title, condition, profile: p, bindings, tokens } = cardSummaryContext(def, preview, registries);
   const ratings = registries?.balance?.combatRatings ?? null;
+  // A self status consumed after a payoff must read after the condition that uses it.
+  // Walk nested predicates too, so the face never implies the prerequisite is removed first.
+  const dependentStatuses = new Set();
+  const collectDependentStatuses = predicate => {
+    if (!predicate || typeof predicate !== 'object') return;
+    if (predicate.p === 'hasStatus' && predicate.of === 'self') dependentStatuses.add(predicate.status);
+    collectDependentStatuses(predicate.pred);
+    for (const child of predicate.preds || []) collectDependentStatuses(child);
+  };
+  for (const effect of def.effects || []) collectDependentStatuses(effect.if);
   const counter = p.maneuver === 'counter';
   // A counter is prepared, not dealt: name its mode ("Prepare Melee Counter: return …").
   // Coverage is named by the mode whose default it equals; any other coverage keeps the authored text.
@@ -181,7 +191,8 @@ function buildLines(def, preview, registries) {
       case 'removeStatus': {
         const amount = effect.amount === undefined ? 'all' : num(n, base);
         const suffix = effect.target === 'enemy' ? ' from target' : effect.target === 'ally' ? ' from an ally' : area;
-        return frag('remove', `${amount} ${esc(title(effect.status))}${suffix}`);
+        const cat = effect.target === 'self' && dependentStatuses.has(effect.status) ? 'consume' : 'remove';
+        return frag(cat, `${amount} ${esc(title(effect.status))}${suffix}`);
       }
       case 'draw': return frag('bonus', `Draw ${num(n, base)}`);
       case 'discard': return frag('bonus', `${effect.choose ? 'Choose and discard' : 'Discard'} ${num(n, base)}${effect.random ? ' at random' : ''}`);
@@ -208,11 +219,12 @@ function buildLines(def, preview, registries) {
   const segmentsOf = (fragments, extraBonus = []) => {
     const of = cat => fragments.filter(f => f.cat === cat).map(f => f.text);
     const out = [];
-    const damage = of('damage'), status = of('status'), remove = of('remove'), gain = of('gain'), bonus = [...of('bonus'), ...extraBonus];
+    const damage = of('damage'), status = of('status'), remove = of('remove'), consume = of('consume'), gain = of('gain'), bonus = [...of('bonus'), ...extraBonus];
     if (damage.length) out.push({ kind: 'damage', text: `${damageVerb} ${damage.join(', ')}` });
     else if (counter && fragments === unconditional) out.push({ kind: 'damage', text: damageVerb.replace(/: return$/, '') });
     if (status.length) out.push({ kind: 'status', text: `Inflict ${status.join(', ')}` });
     if (remove.length) out.push({ kind: 'status', text: `Remove ${remove.join(', ')}` });
+    if (consume.length) out.push({ kind: 'consume', text: `Remove ${consume.join(', ')}` });
     if (gain.length) out.push({ kind: 'gain', text: `Gain ${gain.join(', ')}` });
     if (bonus.length) out.push({ kind: 'bonus', text: bonus.join(', ') });
     return out;
@@ -270,7 +282,7 @@ function buildLines(def, preview, registries) {
 
   if ((def.keywords || []).some(keyword => !KEYWORDS.includes(keyword))) return null;
   const keywords = KEYWORDS.filter(keyword => (def.keywords || []).includes(keyword)).map(keyword => keyword[0].toUpperCase() + keyword.slice(1));
-  const byKind = { damage: [], status: [], gain: [], condition: [], bonus: [], detail: [] };
+  const byKind = { damage: [], status: [], condition: [], consume: [], gain: [], bonus: [], detail: [] };
   for (const segment of segmentsOf(unconditional, keywords)) byKind[segment.kind].push(segment.text);
   for (const group of groups.values()) {
     // Only damage wakes a sleeper; a rider keyed on Sleep that deals none says so, as its authored text does.
