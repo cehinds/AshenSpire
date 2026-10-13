@@ -229,10 +229,10 @@ function showIfPresent(rev, path) {
 function gitBuf(args) {
   return execFileSync('git', args, { cwd: ROOT, maxBuffer: 1 << 28 });
 }
-/** The newest `[build-stamp]` commit on `ref`'s first-parent line, or null. */
+/** The newest stamp commit (`build: stamp … [build-stamp]`) on `ref`'s first-parent line, or null. */
 export function newestStampOf(ref, run = git) {
   if (!ref) return null;
-  try { return run(['log', '--first-parent', '-1', '--format=%H', '--grep=\\[build-stamp\\]', ref]).trim() || null; } catch { return null; }
+  try { return run(['log', '--first-parent', '-1', '--format=%H', '--grep=^build: stamp .*\\[build-stamp\\]$', ref]).trim() || null; } catch { return null; }
 }
 function refFor(branch) {
   // Prefer the remote-tracking ref (CI fetches all four); fall back to a local branch.

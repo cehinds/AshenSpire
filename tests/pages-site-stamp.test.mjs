@@ -18,6 +18,8 @@ test('newestStampOf picks the newest first-parent [build-stamp] commit, past a l
     commit('Merge pull request #1 from x/y');
     const stamp = commit('build: stamp 0.7.1.2 [build-stamp]');
     commit('docs: refresh current-dev architecture [architecture-sync]');
+    commit('Merge pull request #3 from x/w\n\nmentions [build-stamp] in its body');
+    commit('Revert [build-stamp] handling');
     commit('Merge pull request #2 from x/z');
     assert.equal(newestStampOf('dev', run), stamp);
     assert.equal(newestStampOf(null, run), null);
