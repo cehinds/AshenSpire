@@ -121,7 +121,8 @@ function moveToNewestGroup(text, pr, stamp) {
   const at = lines.findIndex((l) => l.startsWith('- ') && hit.test(l));
   if (at < 0) return text;
   // A date group, or a release group (`## 1.0.0 — 2026-10-13`), as about-changelog reads them.
-  const isDate = (l) => /^## (?:\d{4}-\d{2}-\d{2}\b|\d+\.\d+\.\d+ — \d{4}-\d{2}-\d{2}\r?$)/.test(l);
+  // Trailing spaces, tabs and CRLF are accepted, as about-changelog trims the heading.
+  const isDate = (l) => /^## (?:\d{4}-\d{2}-\d{2}\b|\d+\.\d+\.\d+ — \d{4}-\d{2}-\d{2}$)/.test(l.trimEnd());
   const newest = lines.findIndex(isDate);
   let own = at - 1;
   while (own >= 0 && !/^## /.test(lines[own])) own -= 1;
@@ -136,8 +137,14 @@ function moveToNewestGroup(text, pr, stamp) {
   } else {
     // Below receipts already carrying this stamp: restamp walks the landed pull requests
     // newest first, so an earlier-moved (newer) receipt stays above a later (older) one.
+    // A blank line between those receipts does not end the run: the scan lands just after
+    // the last same-stamp receipt of the group, before the next receipt or heading.
     const sameStamp = new RegExp(`/pull/\\d+\\),\\s*\`${stamp.replace(/\./g, '\\.')}\``);
-    while (first < lines.length && lines[first].startsWith('- ') && sameStamp.test(lines[first])) first += 1;
+    for (let j = first; j < lines.length && !/^## /.test(lines[j]); j += 1) {
+      if (lines[j].trim() === '') continue;
+      if (lines[j].startsWith('- ') && sameStamp.test(lines[j])) first = j + 1;
+      else break;
+    }
   }
   lines.splice(first, 0, moved);
   return lines.join('\n');

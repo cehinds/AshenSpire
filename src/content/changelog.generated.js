@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1966",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Build numbers keep stamping in two more changelog layouts",
+    "detail": "Development-process change only, nothing in the game changes. A release heading with trailing spaces, or a blank line between entries that share a build, no longer puts a merged change's changelog line in the wrong place when the dev build is stamped.",
+    "build": "0.7.1.1503",
+    "pullRequest": 1966,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1966"
+  },
+  {
     "id": "pr-1939",
     "date": "2026-10-13",
     "group": "2026-10-13",
