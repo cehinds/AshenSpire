@@ -51,6 +51,8 @@ import { stageFor } from '../services/PoseAnimator.js';
 import { attachTooltip, hideTooltip, showTooltipFor, esc } from '../components/tooltip.js';
 import { combatantDetailBody, combatantInspectorLayout } from '../components/combatantInspector.js';
 import { activeCombatAbilities } from '../components/combatAbilities.js';
+import { combatStanceRow, preparedEvadeRow } from '../../model/combatTacticsDisplay.js';
+import { tagSymbolSvg } from '../components/cardTagSymbols.js';
 import { tooltipHelp } from '../../content/tooltipHelp.js';
 import { helpText, resolveTooltipSettings } from '../../model/tooltipSettings.js';
 import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
@@ -868,7 +870,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       skillLabel: 'Move set',
       moveCards: learning ? learning.moveCards : enemyMoveCards(def, { enemy: entity, preview: intent, registries, combatMatchupRules: combat.combatMatchupRules }),
       skills,
-      statuses: statusDetails(entity),
+      // The stance an enemy's telegraph set reads only as far as its intent does.
+      statuses: [...[intent.hidden ? null : combatStanceRow(v), preparedEvadeRow(v)].filter(Boolean), ...statusDetails(entity)],
       entityId: entity.id,
       history: past.map((moveId) => ({ name: words(moveId), detail: moveDetail(def.moves?.[moveId], null, entity) })),
       traits: learning ? learning.traits : (def.tags || []).map((tag) => ({ name: words(tag) })),
@@ -961,6 +964,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       persistentWard: e.persistentWard ? { ...e.persistentWard } : null,
       persistentPoise: e.persistentPoise ? { ...e.persistentPoise } : null,
       combatStance: e.combatStance ? { ...e.combatStance } : null,
+      combatEvade: e.combatEvade ? { ...e.combatEvade } : null,
+      combatOwnerCycle: e.combatOwnerCycle,
       ...(e.wardBlock !== undefined ? { wardBlock: e.wardBlock } : {}),
       alive,
       statuses,
@@ -1003,6 +1008,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           break;
         }
         case 'playerTurnStart':
+          // Unused Evade charges expire as the player's turn starts.
+          if (disp.ents.player) disp.ents.player.combatEvade = null;
           for (const enemy of combat.enemies) if (disp.ents[enemy.id]) disp.ents[enemy.id].intentPreview = previewIntent(combat, enemy.id);
           break;
         case 'persistentWardChanged':
@@ -1105,6 +1112,28 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           break;
         case 'stanceEntered':
           if (disp.ents.player) disp.ents.player.stanceId = e.stance;
+          break;
+        // Expanded combat posture advances with its beat, not at playback end.
+        case 'combatStanceChanged': {
+          const actor = disp.ents[e.sourceId];
+          if (actor) {
+            const { maneuver, camp, reach, school, expiresOnOwnerCycle } = e;
+            actor.combatStance = { maneuver, camp, reach, ...(school ? { school } : {}),
+              ...(expiresOnOwnerCycle != null ? { expiresOnOwnerCycle } : {}) };
+          }
+          break;
+        }
+        case 'evadeGained': {
+          // Only the expansion's prepared Evade; the foundation Evade has its own row.
+          if (!e.combatEvade) break;
+          const actor = disp.ents[e.sourceId];
+          const live = e.sourceId === 'player' ? combat.player : combat.enemies.find(enemy => enemy.id === e.sourceId);
+          if (actor) actor.combatEvade = { ...(live?.combatEvade || {}), charges: e.charges,
+            expiresOnOwnerCycle: live?.combatEvade?.expiresOnOwnerCycle ?? (actor.combatOwnerCycle || 0) + 1 };
+          break;
+        }
+        case 'combatAvoidanceResolved':
+          if (t?.combatEvade && e.evade) t.combatEvade = { ...t.combatEvade, charges: Math.max(0, t.combatEvade.charges - 1) };
           break;
         case 'statusExpired':
           if (t) delete t.statuses[e.status];
@@ -1301,6 +1330,18 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     markUiComponent(row, UI.statusEffectTray, entity.kind);
     const armed = () => !!(selected || selectedFlask != null || selfArm);
     const plan = entity.kind === 'enemy' ? procDisplayPlan(entity) : { bars: [], pips: [] };
+    // Expanded combat: a prepared Evade (Dodge Roll, Quickstep) is a pip with
+    // its charge count, in the card rail's own Evade symbol.
+    const evade = preparedEvadeRow(dv(entity));
+    if (evade) {
+      const evadeTip = () => `<div class="tt-title">${esc(evade.name)}</div>${esc(evade.detail)}`;
+      const el = trayIcon({
+        art: tagSymbolSvg('effect:evade'), count: evade.charges, tone: 'var(--gold)',
+        label: evade.name, attrs: { class: 'status-icon combat-evade-icon' }, tip: evadeTip, yieldTap: armed,
+      });
+      el.setAttribute('data-status-id', 'combat-evade');
+      row.appendChild(el);
+    }
     for (const [sid, inst] of Object.entries(dv(entity).statuses || {})) {
       const def = registries.frameworkTerms.withStatusWords(registries.statuses.get(sid));
       const stacks = inst.meter ? inst.meter.value : inst.stacks;
@@ -2500,6 +2541,49 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     } catch (e) {
       console.warn('[combat] post-dispatch render failed:', e && e.message);
     }
+    // The timeline's finish is the only thing that releases busy, so it runs
+    // once, and also when the timeline throws before it could start.
+    let playbackFinished = false;
+    const finishPlayback = () => {
+        if (playbackFinished) return;
+        playbackFinished = true;
+        try { applyVisualEvents(events); } catch (e) { console.warn('[combat] final visual apply failed:', e && e.message); }
+        disp = null;
+        heldTurnHand = null;
+        enemyPlayback = false;
+        busy = false;
+        render();
+        showPendingDiscard();
+        if (combat.result) {
+          // THE FIGHT IS OVER, AND SO IS THIS SCREEN'S MENU.
+          //
+          // The keydown handler already comes off here. The ☰ button did NOT,
+          // so for the handoff below (COMBAT_TIMING.fightEndDelayMs, currently 210 ms) — plus the victory beat main.js
+          // awaits after it (balance.ui.victoryBeat.ms, 600 ms, and the beat's
+          // overlay is `pointer-events: none`) — Save, Save & Quit, Load and
+          // Quit were all one tap away on a fight that had ALREADY ENDED.
+          //
+          // Save called commitCombatSnapshot on a combat whose `result` was
+          // 'victory': a checkpoint that resumes INTO a won fight, where no
+          // dispatch will ever reach the branch that calls onEnd — the run is
+          // stuck at a battlefield with nothing left to kill. Quit tore the run
+          // down while main.js's continuation was still suspended on the beat,
+          // so the spoils were then granted against a null run.
+          //
+          // There is nothing here a player can usefully ask the menu for: the
+          // only thing that happens next is the spoils door. Close it, disable
+          // it, and refuse the actions even if something re-opens it.
+          fightOver = true;
+          closeQuickNav();
+          if (menuBtn) { menuBtn.disabled = true; menuBtn.setAttribute('aria-disabled', 'true'); }
+          removeEventListener('keydown', keyHandler);
+          handStrip.teardown();
+          setTimeout(() => onEnd(combat.result, combat), COMBAT_TIMING.fightEndDelayMs);
+        } else {
+          focusHandDefault(); // land on the leftmost playable card for kb/pad
+        }
+    };
+    try {
     playTimeline(
       events,
       {
@@ -2540,44 +2624,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           showPileFeedback(events, false);
         },
       },
-      () => {
-        applyVisualEvents(events);
-        disp = null;
-        heldTurnHand = null;
-        enemyPlayback = false;
-        busy = false;
-        render();
-        showPendingDiscard();
-        if (combat.result) {
-          // THE FIGHT IS OVER, AND SO IS THIS SCREEN'S MENU.
-          //
-          // The keydown handler already comes off here. The ☰ button did NOT,
-          // so for the handoff below (COMBAT_TIMING.fightEndDelayMs, currently 210 ms) — plus the victory beat main.js
-          // awaits after it (balance.ui.victoryBeat.ms, 600 ms, and the beat's
-          // overlay is `pointer-events: none`) — Save, Save & Quit, Load and
-          // Quit were all one tap away on a fight that had ALREADY ENDED.
-          //
-          // Save called commitCombatSnapshot on a combat whose `result` was
-          // 'victory': a checkpoint that resumes INTO a won fight, where no
-          // dispatch will ever reach the branch that calls onEnd — the run is
-          // stuck at a battlefield with nothing left to kill. Quit tore the run
-          // down while main.js's continuation was still suspended on the beat,
-          // so the spoils were then granted against a null run.
-          //
-          // There is nothing here a player can usefully ask the menu for: the
-          // only thing that happens next is the spoils door. Close it, disable
-          // it, and refuse the actions even if something re-opens it.
-          fightOver = true;
-          closeQuickNav();
-          if (menuBtn) { menuBtn.disabled = true; menuBtn.setAttribute('aria-disabled', 'true'); }
-          removeEventListener('keydown', keyHandler);
-          handStrip.teardown();
-          setTimeout(() => onEnd(combat.result, combat), COMBAT_TIMING.fightEndDelayMs);
-        } else {
-          focusHandDefault(); // land on the leftmost playable card for kb/pad
-        }
-      }
+      finishPlayback
     );
+    } catch (e) {
+      console.warn('[combat] timeline failed to start:', e && e.message);
+      finishPlayback();
+    }
   }
 
   // Cosmetic animations never own combat timing or retain interactive clones.

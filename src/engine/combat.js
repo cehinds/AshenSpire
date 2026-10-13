@@ -503,8 +503,8 @@ function startPlayerTurn(combat) {
   if (combat.combatExpansionVersion === 2) {
     p.barrier = 0;
     const protection = startTacticalTurn(combat, p);
-    if (protection.block) A.gainBlock(combat, p, protection.block, { skipRatingBonus: true });
-    if (protection.barrier) A.gainBarrier(combat, p, protection.barrier, { skipRatingBonus: true });
+    if (protection.block) A.gainBlock(combat, p, protection.block, { skipRatingBonus: true, logSource: 'defendStance' });
+    if (protection.barrier) A.gainBarrier(combat, p, protection.barrier, { skipRatingBonus: true, logSource: 'defendStance' });
     Blight.beginAshenBlightCycle(combat, p, String(p.combatOwnerCycle));
   }
 
@@ -615,8 +615,8 @@ function enemyPhase(combat) {
     if (combat.combatExpansionVersion === 2) {
       e.barrier = 0;
       const protection = startTacticalTurn(combat, e);
-      if (protection.block) A.gainBlock(combat, e, protection.block, { skipRatingBonus: true });
-      if (protection.barrier) A.gainBarrier(combat, e, protection.barrier, { skipRatingBonus: true });
+      if (protection.block) A.gainBlock(combat, e, protection.block, { skipRatingBonus: true, logSource: 'defendStance' });
+      if (protection.barrier) A.gainBarrier(combat, e, protection.barrier, { skipRatingBonus: true, logSource: 'defendStance' });
     }
   }
   drainQueue(combat);
@@ -674,13 +674,13 @@ function enemyPhase(combat) {
             owner: enemy,
             target: combat.player,
             card: carrier,
-            meta: {},
+            meta: { preparing: true },
           });
         }
         if (wc.barrier != null) combat.enqueue({ effect: { op: 'gainBarrier', target: 'self', amount: wc.barrier },
-          source: enemy, owner: enemy, target: enemy, card: carrier, meta: { moveId: enemy.intent.moveId } });
+          source: enemy, owner: enemy, target: enemy, card: carrier, meta: { moveId: enemy.intent.moveId, preparing: true } });
         for (const eff of wc.effects || []) {
-          combat.enqueue({ effect: eff, source: enemy, owner: enemy, target: combat.player, card: carrier, meta: { moveId: enemy.intent.moveId } });
+          combat.enqueue({ effect: eff, source: enemy, owner: enemy, target: combat.player, card: carrier, meta: { moveId: enemy.intent.moveId, preparing: true } });
         }
         enemy.pendingMove = {
           moveId: enemy.intent.moveId,
