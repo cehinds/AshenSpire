@@ -95,6 +95,34 @@ dialog .row{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;margin-
 .empty{padding:28px;text-align:center;color:var(--muted);line-height:1.6}
 .legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.76rem;color:var(--muted)}
 .legend i{display:inline-block;width:14px;height:2px;vertical-align:middle;margin-right:4px}
+.filters{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px}
+.fcol{display:flex;flex-direction:column;gap:2px;font-size:.72rem;color:var(--muted);min-width:0}
+.fcol input,.fcol select{width:100%;min-width:0;box-sizing:border-box;font-size:.8rem}
+.fcol.check{flex-direction:row;align-items:center;gap:6px;color:var(--fg);white-space:nowrap}
+.fbar{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.count{font:.76rem var(--mono);color:var(--muted)}
+/* tag links: parent and related values are buttons under their inputs; the side panel sits beside the grid */
+.reflinks{display:flex;flex-wrap:wrap;gap:4px;padding:0 6px 6px}
+button.reflink{font:500 .7rem var(--mono);padding:1px 7px;border-radius:999px;background:var(--sunk)}
+button.reflink.bad{color:var(--bad);border-color:var(--bad)}
+.split{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start}
+.split>.grid{flex:1 1 520px;min-width:0}
+.sidepanel{flex:0 1 280px;min-width:0;max-width:100%;max-height:68vh;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.sidepanel h3{font:600 .95rem var(--body);margin:0}
+.sidepanel h4{font:600 .8rem var(--body);margin:8px 0 2px;color:var(--muted)}
+.sidepanel .plinks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:.8rem}
+.sidepanel .plinks li{display:flex;flex-wrap:wrap;align-items:center;gap:4px;min-width:0;overflow-wrap:anywhere}
+tr.hi td{background:color-mix(in srgb,var(--teal) 18%,transparent)}
+/* keyboard: a cell in edit mode shows its own background; a read-only cell shows the default caret-less focus */
+td.editing input{background:var(--sunk)}
+td input[readonly]{cursor:default}
+/* changed view: a changed row is tinted with a marker on its action cell; a changed cell is tinted on its own */
+tr.chg td{background:color-mix(in srgb,var(--ember) 10%,transparent)}
+tr.chg-new td{background:color-mix(in srgb,var(--ok) 12%,transparent)}
+tr.chg td.act{box-shadow:inset 3px 0 0 var(--ember)}
+tr.chg-new td.act{box-shadow:inset 3px 0 0 var(--ok)}
+td.chg input{background:color-mix(in srgb,var(--ember) 24%,transparent)}
+tr.chg-new td.chg input{background:color-mix(in srgb,var(--ok) 26%,transparent)}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
 </style>
 
@@ -161,7 +189,7 @@ const CORE = new Set(['tags','objects','values','formulas','ranks','relations','
 const loaded = new Set(); const pending = new Set();
 const PAGE = 150;
 
-const state = { data:{}, view:'tags', filter:{}, shown:{}, sheet:null, sheetRank:1 };
+const state = { data:{}, view:'tags', filter:{}, shown:{}, sheet:null, sheetRank:1, colf:{}, tagf:{}, fopen:{}, cmp:{}, changedOnly:{}, panel:null, hi:null }; /* colf: per-column text filters; tagf: tags status / subtree / emptyDesc; fopen: filter panel open; cmp: 'load' or 'save' base for the changed view; changedOnly: show only changed rows; panel: the tag whose links panel is open; hi: the row a link jumped to */
 for (const t of ORDER) { state.data[t] = {columns:[...TABLES[t].columns], rows:[]}; state.shown[t]=PAGE; }
 let db=null, canWrite=true, downloads=null, assetsCap=null, localMode=false;
 const dirty=new Set(), saving=new Set(), timers={}, editGen={}; /* editGen[t] counts the edits to table t; a save remembers the count it started with */
@@ -204,7 +232,9 @@ function chunkRows(rows){
 const BLOB_RETRY_MS=[250,500];
 const tstate={};
 const sleepMs=ms=>new Promise(r=>setTimeout(r,ms));
-function TS(t){ return tstate[t]||(tstate[t]={seq:0, base:'', blobs:new Map(), latest:undefined, lastSaveAt:0, conflict:null, incomplete:null, legacy:null, legacyDocs:[], unsub:[], partsUnsub:null, parts:new Map()}); }
+function TS(t){ return tstate[t]||(tstate[t]={seq:0, base:'', blobs:new Map(), latest:undefined, lastSaveAt:0, conflict:null, incomplete:null, legacy:null, legacyDocs:[], unsub:[], partsUnsub:null, parts:new Map(), snapLoad:null, snapSave:null}); }
+/* copies of a table as it was loaded (snapLoad) and as it was last saved (snapSave), for the changed view; a copy, so later edits do not move it */
+function snapshotOf(cols, rows){ return {columns:[...cols], rows:rows.map(r=>({...r}))}; }
 function headPath(t){ return 'tables/'+t; }
 function blobPath(t,h){ return 'tables/'+t+'/blobs/'+h; }
 /* a blob head's rev; legacy heads have none, so their base is '' */
@@ -219,6 +249,7 @@ function adoptRows(t, hc, objs){
   if(dirty.has(t)||saving.has(t)) return;
   const cols=[...hc]; for(const c of TABLES[t].columns) if(!cols.includes(c)) cols.push(c);
   loaded.add(t); pending.delete(t);
+  TS(t).snapLoad=TS(t).snapSave=snapshotOf(cols, objs);
   if(JSON.stringify(objs)===JSON.stringify(state.data[t].rows) && JSON.stringify(cols)===JSON.stringify(state.data[t].columns)){ render(); return; }
   state.data[t]={columns:cols, rows:objs};
   rebuild(); setStatus(); render();
@@ -378,6 +409,7 @@ async function flush(t, opts){
   const now=Date.now();
   const built=chunkRows(state.data[t].rows.map(r=>cols.map(c=>r[c]??''))).map(rows=>({hash:hashText(JSON.stringify({rows})), rows}));
   const hashes=built.map(b=>b.hash);
+  const savedSnap=snapshotOf(cols, state.data[t].rows); /* what this save writes, for the changed view once it lands */
   let newer=null;
   try{
     /* before the lease: write every blob the server head does not carry. Blobs are immutable, so a hash the head
@@ -414,7 +446,7 @@ async function flush(t, opts){
       const g=await db.doc(blobPath(t,h)).get();
       if(!g.exists) await db.doc(blobPath(t,h)).set({rows:rowsOf.get(h), createdAt:Date.now()});
     }
-    ts.base=rev; ts.lastSaveAt=Date.now(); ts.conflict=null; ts.incomplete=null; ts.legacy=null;
+    ts.base=rev; ts.lastSaveAt=Date.now(); ts.conflict=null; ts.incomplete=null; ts.legacy=null; ts.snapSave=savedSnap;
     ts.blobs=new Map(built.map(b=>[b.hash,b.rows]));
     /* a legacy table converts on this first save: delete only the legacy part docs we read, now that the new head is written */
     const oldParts=ts.legacyDocs||[]; ts.legacyDocs=[]; stopParts(t);
@@ -647,7 +679,7 @@ function importRows(tbl, key, parsed, mode){
 
 /* ---------- persistence ---------- */
 const LS='ashen-tag-workbench-v1';
-function saveLocal(){ try{ localStorage.setItem(LS, JSON.stringify(state.data)); }catch(e){ setStatus('bad','Browser storage is full or blocked, so this edit is only in this tab. Export CSV now.'); } }
+function saveLocal(){ try{ localStorage.setItem(LS, JSON.stringify(state.data)); if(localMode) for(const t of ORDER) TS(t).snapSave=snapshotOf(state.data[t].columns, state.data[t].rows); }catch(e){ setStatus('bad','Browser storage is full or blocked, so this edit is only in this tab. Export CSV now.'); } }
 function loadLocal(){ try{ const s=localStorage.getItem(LS); if(s){ const d=JSON.parse(s); for(const t of ORDER) if(d[t]&&Array.isArray(d[t].rows)){ const cols=Array.isArray(d[t].columns)? d[t].columns.slice() : []; for(const c of TABLES[t].columns) if(!cols.includes(c)) cols.push(c); state.data[t]={columns:cols, rows:d[t].rows}; } } }catch(e){} }
 function editable(t){ return localMode || (!!db && canWrite && loaded.has(t)); }
 function setStatus(level,msg){
@@ -657,6 +689,84 @@ function setStatus(level,msg){
   el.innerHTML=where+' · '+(pend?'<b>Saving…</b>':'All changes saved')+(msg?' · <span class="'+(level||'')+'">'+escapeHtml(msg)+'</span>':'');
 }
 function escapeHtml(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* view:begin */
+/* Pure helpers for the table view: filters, changed rows, tag links and keyboard moves. They take rows and
+   arguments only (no page globals), so workbench-view.test.mjs can load this block on its own. */
+const TAG_STATUS=['live-tag','game-concept','new'];
+function containsText(v,q){ return String(v??'').toLowerCase().includes(q); }
+/* true when `row` is `root` or sits under it: following parent links from row reaches root. lookup(v) gives the tag row for a key or id */
+function underTag(row, root, lookup){
+  let cur=row;
+  for(let n=0;cur&&n<1000;n++){ if(cur===root) return true; const p=String(cur.parent??'').trim(); if(!p) return false; cur=lookup(p); }
+  return false;
+}
+/* the filter spec: text (any column), cols ({column: text}); for tags also status, subtree (a tag id or key) and emptyDesc */
+function rowPasses(t, row, f, columns, lookup){
+  const q=String(f.text??'').trim().toLowerCase();
+  if(q && !columns.some(c=>containsText(row[c],q))) return false;
+  for(const c of Object.keys(f.cols||{})){ const v=String(f.cols[c]??'').trim().toLowerCase(); if(v && !containsText(row[c],v)) return false; }
+  if(t==='tags'){
+    if(f.status && String(row.status??'')!==f.status) return false;
+    if(f.emptyDesc && String(row.description??'').trim()!=='') return false;
+    if(f.subtree){ const root=lookup(f.subtree); if(!root||!underTag(row,root,lookup)) return false; }
+  }
+  return true;
+}
+/* tag links: the keys a related value names, the children of a tag, and the tags whose related list names it */
+function relatedKeys(v){ return String(v??'').split(/\s+/).filter(Boolean); }
+function childTags(tags, row, lookup){ return tags.filter(r=>r!==row && lookup(String(r.parent??'').trim())===row); }
+function incomingRelated(tags, row, lookup){ return tags.filter(r=>r!==row && relatedKeys(r.related).some(k=>lookup(k)===row)); }
+/* keyboard: the cell an arrow key moves to, the nearest one in that direction that has an input (has(r,c)); null at the edge */
+function nextCell(pos, key, nr, nc, has){
+  const d={ArrowUp:[-1,0], ArrowDown:[1,0], ArrowLeft:[0,-1], ArrowRight:[0,1]}[key];
+  if(!d) return null;
+  let r=pos.r+d[0], c=pos.c+d[1];
+  while(r>=0 && c>=0 && r<nr && c<nc){ if(has(r,c)) return {r,c}; r+=d[0]; c+=d[1]; }
+  return null;
+}
+/* whether an arrow key moves between cells, or belongs to the caret of the cell being edited. Up and Down always move (leaving a cell commits it). */
+function arrowMoves(key, editing, atStart, atEnd){
+  if(!editing || key==='ArrowUp' || key==='ArrowDown') return true;
+  if(key==='ArrowLeft') return atStart;
+  if(key==='ArrowRight') return atEnd;
+  return false;
+}
+/* changed view: a row is matched to its base row by its key, or by its whole content when the table has no key */
+function rowSig(r,columns){ return columns.map(c=>String(r[c]??'')).join('\u0001'); }
+function baseKey(r,columns,key){ return key? String(r[key]??'') : rowSig(r,columns); }
+/* the base rows indexed for matching (first row wins for a repeated key); null when there is no base */
+function baseIndex(columns, key, base){
+  if(!base) return null;
+  const idx=new Map();
+  for(const b of base.rows||[]){ const k=baseKey(b,columns,key); if(!idx.has(k)) idx.set(k,b); }
+  return idx;
+}
+/* how a row differs from its base: {kind:'new'|'changed', cols:Set of changed columns}, or null when unchanged or no base */
+function classifyRow(columns, key, row, idx){
+  if(!idx) return null;
+  const b=idx.get(baseKey(row,columns,key));
+  if(!b) return {kind:'new', cols:new Set()};
+  if(!key) return null; /* a keyless row matches its base only when its content is the same */
+  const cols=new Set(columns.filter(c=>String(row[c]??'')!==String(b[c]??'')));
+  return cols.size? {kind:'changed', cols} : null;
+}
+/* the rows of the base that the table no longer has */
+function removedCount(columns, key, rows, base){
+  if(!base) return 0;
+  const have=new Set(rows.map(r=>baseKey(r,columns,key)));
+  const seen=new Set(); let n=0;
+  for(const b of base.rows||[]){ const k=baseKey(b,columns,key); if(seen.has(k)) continue; seen.add(k); if(!have.has(k)) n++; }
+  return n;
+}
+/* every changed row of a table: map row index -> classifyRow result, plus how many base rows are gone */
+function changeMap(columns, key, rows, base){
+  const idx=baseIndex(columns,key,base), map=new Map();
+  if(!idx) return {map, removed:0};
+  rows.forEach((r,i)=>{ const c=classifyRow(columns,key,r,idx); if(c) map.set(i,c); });
+  return {map, removed:removedCount(columns,key,rows,base)};
+}
+/* view:end */
 
 /* ---------- rendering ---------- */
 function renderTabs(){
@@ -697,21 +807,74 @@ function renderTable(p,t){
   const def=TABLES[t], tbl=state.data[t];
   renderBanners(p,t);
   const tools=document.createElement('div'); tools.className='toolbar';
-  tools.innerHTML=`<input type="search" id="q-${t}" placeholder="Filter rows" aria-label="Filter rows"><span class="grow"></span>`;
+  const q=document.createElement('input'); q.type='search'; q.id='q-'+t; q.placeholder='Filter rows'; q.setAttribute('aria-label','Filter rows');
+  const count=document.createElement('span'); count.className='count'; count.setAttribute('aria-live','polite');
   const add=btn('Add row',()=>{ const r={}; tbl.columns.forEach(c=>r[c]=''); tbl.rows.unshift(r); state.filter[t]=''; markDirty(t); render(); },'primary');
   const col=btn('Add column',()=>openText('Add a column to '+def.label,'Type the new column name.','',[['Add',v=>{ v=v.trim(); if(v&&!tbl.columns.includes(v)){ tbl.columns.push(v); markDirty(t); render(); } }]],true));
   const exp=btn('Export CSV',()=>exportCSV(t));
   const imp=btn('Import CSV',()=>importDialog(t));
-  tools.append(add,col,imp,exp); if(!editable(t)){ add.disabled=col.disabled=imp.disabled=true; }
+  const nActive=activeFilters(t);
+  const fb=btn('Filters'+(nActive? ' ('+nActive+')' : ''),()=>{ state.fopen[t]=!state.fopen[t]; render(); });
+  fb.setAttribute('aria-expanded', String(!!(state.fopen[t]||nActive)));
+  const cmpSel=document.createElement('select'); cmpSel.setAttribute('aria-label','Compare with');
+  for(const [v,l] of [['load','Changed since load'],['save','Changed since last save']]){ const o=document.createElement('option'); o.value=v; o.textContent=l; if(v===(state.cmp[t]||'load')) o.selected=true; cmpSel.appendChild(o); }
+  cmpSel.onchange=()=>{ state.cmp[t]=cmpSel.value; draw(); };
+  const onlyLab=document.createElement('label'); onlyLab.className='fcol check'; const only=document.createElement('input'); only.type='checkbox'; only.checked=!!state.changedOnly[t]; only.setAttribute('aria-label','Changed rows only');
+  const onlySpan=document.createElement('span'); onlySpan.textContent='Changed only'; onlyLab.append(only,onlySpan);
+  only.onchange=()=>{ state.changedOnly[t]=only.checked; state.shown[t]=PAGE; draw(); };
+  tools.append(q,fb,cmpSel,onlyLab,count,add,col,imp,exp); if(!editable(t)){ add.disabled=col.disabled=imp.disabled=true; }
   p.appendChild(tools);
   const help=document.createElement('p'); help.className='help'; help.style.margin='8px 0'; help.innerHTML=def.help; p.appendChild(help);
   if(t==='formulas'||t==='objects'||t==='tags'){ const lg=document.createElement('div'); lg.className='legend'; lg.innerHTML='<span><i style="background:var(--bad)"></i>unknown reference</span><span><i style="background:var(--warn)"></i>tag has no preview value</span>'; p.appendChild(lg); }
-  const q=p.querySelector('input[type=search]'); q.value=state.filter[t]||'';
-  const grid=document.createElement('div'); grid.className='grid'; p.appendChild(grid);
+  if(state.fopen[t]||nActive) p.appendChild(filterPanel(t,()=>draw()));
+  if(editable(t)){ const kb=document.createElement('p'); kb.className='count'; kb.style.margin='6px 0'; kb.textContent='Keys: arrows move between cells · Enter or a letter edits · Enter saves · Esc cancels'; p.appendChild(kb); }
+  q.value=state.filter[t]||'';
+  const grid=document.createElement('div'); grid.className='grid';
+  /* keys: arrows move between cells; Enter (or a letter, or a click) starts an edit; Enter commits; Esc cancels */
+  const enterEdit=(inp,td)=>{ if(!inp.readOnly||!editable(t)) return false; inp.dataset.orig=inp.value; inp.readOnly=false; td.classList.add('editing'); return true; };
+  grid.addEventListener('keydown',e=>{
+    const inp=e.target; if(!(inp instanceof HTMLInputElement)||!inp.classList.contains('cellin')) return;
+    const td=inp.parentElement, tr=td.parentElement, editing=!inp.readOnly;
+    if(e.key==='Enter'){
+      e.preventDefault();
+      if(!editing){ if(enterEdit(inp,td)) inp.select(); return; }
+      state.focusCell={t, i:Number(tr.dataset.i), c:td.dataset.c};
+      inp.blur(); /* the change event commits the edit; a formula table redraws and restores the focus itself */
+      if(inp.isConnected){ state.focusCell=null; inp.focus(); }
+      return;
+    }
+    if(e.key==='Escape'){ if(editing){ e.preventDefault(); inp.value=inp.dataset.orig??inp.value; inp.readOnly=true; td.classList.remove('editing'); } return; }
+    if(e.key.startsWith('Arrow')){
+      const atStart=inp.selectionStart===0&&inp.selectionEnd===0, atEnd=inp.selectionEnd===inp.value.length;
+      if(!arrowMoves(e.key,editing,atStart,atEnd)) return;
+      e.preventDefault();
+      const rowsEl=[...tr.parentElement.rows];
+      const to=nextCell({r:rowsEl.indexOf(tr), c:td.cellIndex}, e.key, rowsEl.length, tr.cells.length, (r,c)=>!!rowsEl[r].cells[c]?.querySelector('input.cellin'));
+      if(to) rowsEl[to.r].cells[to.c].querySelector('input.cellin').focus();
+      return;
+    }
+    if(!editing && e.key.length===1 && !e.ctrlKey && !e.metaKey && !e.altKey) enterEdit(inp,td); /* typing starts an edit and keeps the typed letter */
+  });
+  if(t==='tags'&&state.panel&&tbl.rows.includes(state.panel)){ const split=document.createElement('div'); split.className='split'; split.append(grid, sidePanel(state.panel)); p.appendChild(split); }
+  else p.appendChild(grid);
+  /* the changed view compares with the loaded version or with the last save (TS snapshots, set by the storage block) */
+  const baseOf=()=>TS(t)[state.cmp[t]==='save'? 'snapSave' : 'snapLoad'];
+  let chg={map:new Map(), removed:0}, shownN=tbl.rows.length;
+  const summary=()=>{
+    const parts=[]; if(shownN!==tbl.rows.length) parts.push('Showing '+shownN+' of '+tbl.rows.length);
+    const news=[...chg.map.values()].filter(v=>v.kind==='new').length, mod=chg.map.size-news;
+    const bits=[mod&&mod+' changed', news&&news+' new', chg.removed&&chg.removed+' removed'].filter(Boolean);
+    if(bits.length) parts.push(bits.join(', '));
+    count.textContent=parts.join(' · ');
+  };
+  const recheck=()=>{ chg=changeMap(tbl.columns,def.key,tbl.rows,baseOf()); };
+  const markChanged=(tr,r)=>{ const k=classifyRow(tbl.columns,def.key,r,baseIndex(tbl.columns,def.key,baseOf())); tr.classList.remove('chg','chg-new'); if(k) tr.classList.add(k.kind==='new'? 'chg-new' : 'chg'); for(const td of tr.querySelectorAll('td[data-c]')) td.classList.toggle('chg', !!(k&&k.cols.has(td.dataset.c))); };
   const draw=()=>{
-    grid.textContent='';
-    const f=(state.filter[t]||'').toLowerCase();
-    const rows=tbl.rows.map((r,i)=>[r,i]).filter(([r])=>!f||tbl.columns.some(c=>String(r[c]??'').toLowerCase().includes(f)));
+    grid.textContent=''; let scrollHere=null;
+    const spec=filterSpec(t), lookup=findTag;
+    recheck();
+    const rows=tbl.rows.map((r,i)=>[r,i]).filter(([r,i])=>rowPasses(t,r,spec,tbl.columns,lookup) && (!state.changedOnly[t] || chg.map.has(i)));
+    shownN=rows.length; summary();
     if(!tbl.rows.length && !localMode && !loaded.has(t)){ grid.innerHTML='<div class="empty">Loading '+escapeHtml(def.label)+'…</div>'; return; }
     if(!tbl.rows.length){ grid.innerHTML='<div class="empty">No rows yet. Add a row, or import a CSV whose first line names the columns:<br><code class="mono">'+escapeHtml(tbl.columns.join(','))+'</code></div>'; return; }
     const table=document.createElement('table');
@@ -721,28 +884,118 @@ function renderTable(p,t){
     const thead=document.createElement('thead'); thead.appendChild(head); table.appendChild(thead);
     const body=document.createElement('tbody');
     for(const [r,i] of rows.slice(0,state.shown[t])){
-      const tr=document.createElement('tr');
+      const tr=document.createElement('tr'); tr.dataset.i=i; const k=chg.map.get(i); if(k) tr.className=k.kind==='new'? 'chg-new' : 'chg';
+      if(state.hi&&state.hi.t===t&&state.hi.row===r){ tr.classList.add('hi'); if(state.hi.scroll){ state.hi.scroll=false; scrollHere=tr; } }
       const act=document.createElement('td'); act.className='act';
       const del=document.createElement('button'); del.className='x'; del.type='button'; del.title='Delete row'; del.setAttribute('aria-label','Delete row'); del.textContent='×';
       del.onclick=()=>{ tbl.rows.splice(i,1); markDirty(t); render(); }; if(!editable(t)) del.disabled=true;
       if(t==='assets'&&assetsCap&&canWrite){ const up=document.createElement('button'); up.className='x'; up.type='button'; up.title='Upload preview image'; up.textContent='⤒'; up.onclick=()=>uploadPreview(r); act.appendChild(up); }
+      if(t==='tags'){ const lk=document.createElement('button'); lk.className='x'; lk.type='button'; lk.title='Children and incoming links'; lk.setAttribute('aria-label','Show children and incoming links'); lk.setAttribute('aria-pressed',String(state.panel===r)); lk.textContent='⇄'; lk.onclick=()=>keepScroll(()=>{ state.panel= state.panel===r? null : r; render(); }); act.appendChild(lk); }
       if(t==='objects'){ const go=document.createElement('button'); go.className='x'; go.type='button'; go.title='Open sheet'; go.textContent='↗'; go.onclick=()=>{ state.sheet=String(r.id); state.view='sheet'; render(); }; act.appendChild(go); }
       act.appendChild(del); tr.appendChild(act);
       for(const c of tbl.columns){
-        const td=document.createElement('td'); td.className='c-'+c;
-        const inp=document.createElement('input'); inp.value=r[c]??''; inp.setAttribute('aria-label',c); inp.readOnly=!editable(t);
+        const td=document.createElement('td'); td.className='c-'+c; td.dataset.c=c; if(k&&k.cols.has(c)) td.classList.add('chg');
+        const inp=document.createElement('input'); inp.className='cellin'; inp.value=r[c]??''; inp.setAttribute('aria-label',c);
+        inp.readOnly=true; /* cells start in navigation mode: a click, Enter or a letter starts an edit (see the grid keydown) */
+        inp.addEventListener('click',()=>enterEdit(inp,td));
+        inp.addEventListener('blur',()=>{ inp.readOnly=true; td.classList.remove('editing'); });
         const issue=cellIssue(t,c,r[c]); if(issue){ td.classList.add('bad'); inp.title=issue; } else if(r[c]!=null&&String(r[c]).length>30) inp.title=String(r[c]);
-        inp.addEventListener('change',()=>{ r[c]=coerce(inp.value); markDirty(t); const is=cellIssue(t,c,r[c]); td.classList.toggle('bad',!!is); inp.title=is||''; if(t==='formulas') draw(); renderTabs(); });
-        td.appendChild(inp); tr.appendChild(td);
+        inp.addEventListener('change',()=>{ r[c]=coerce(inp.value); markDirty(t); const is=cellIssue(t,c,r[c]); td.classList.toggle('bad',!!is); inp.title=is||''; markChanged(tr,r); recheck(); summary(); if(t==='formulas') draw(); renderTabs(); });
+        td.appendChild(inp); if(t==='tags'&&(c==='parent'||c==='related')){ const links=linkChips(r,c); if(links) td.appendChild(links); } tr.appendChild(td);
       }
       if(t==='formulas'){ const td=document.createElement('td'); td.className='out'; const e=evalExpr(r.expr,1,null,r.status); if('v' in e) td.textContent=fmt(e.v); else { td.textContent=e.err; td.classList.add(formulaCellClass(e)); } tr.appendChild(td); }
       body.appendChild(tr);
     }
     table.appendChild(body); grid.appendChild(table);
+    if(scrollHere) scrollHere.scrollIntoView({block:'center'});
+    if(state.focusCell&&state.focusCell.t===t){ const f=state.focusCell; state.focusCell=null; for(const trEl of body.rows) if(Number(trEl.dataset.i)===f.i){ [...trEl.cells].find(td=>td.dataset.c===f.c)?.querySelector('input')?.focus(); break; } }
     if(rows.length>state.shown[t]){ const m=document.createElement('div'); m.className='more'; m.appendChild(btn(`Show ${Math.min(PAGE,rows.length-state.shown[t])} more of ${rows.length-state.shown[t]}`,()=>{ state.shown[t]+=PAGE; draw(); })); grid.appendChild(m); }
   };
   let tmr; q.addEventListener('input',()=>{ clearTimeout(tmr); tmr=setTimeout(()=>{ state.filter[t]=q.value; state.shown[t]=PAGE; draw(); },150); });
   draw();
+}
+/* jumps to a row: clears the filters so it is in the grid, and marks it for a highlight and a scroll */
+function jumpTo(t,row){
+  const i=state.data[t].rows.indexOf(row); if(i<0) return;
+  state.filter[t]=''; state.colf[t]={}; state.tagf[t]={}; state.changedOnly[t]=false;
+  state.shown[t]=Math.max(state.shown[t], i+1);
+  state.view=t; state.hi={t, row, scroll:true}; render();
+}
+/* a tag link button for a parent or related key; a key with no tag is shown, disabled */
+function linkButton(key, target){
+  const b=btn(target? (target.key||target.id) : key, ()=>jumpTo('tags',target), 'reflink');
+  if(target) b.title=target.id+(target.label? ' · '+target.label : '')+' · jump to this row'; else { b.disabled=true; b.className+=' bad'; b.title='No tag with this key'; }
+  return b;
+}
+function linkChips(row, c){
+  const keys= c==='parent'? [String(row.parent??'').trim()].filter(Boolean) : relatedKeys(row.related);
+  if(!keys.length) return null;
+  const box=document.createElement('div'); box.className='reflinks';
+  for(const k of keys) box.appendChild(linkButton(k, findTag(k)));
+  return box;
+}
+/* the side panel for one tag: its children and the tags that link to it */
+function sidePanel(row){
+  const tags=state.data.tags.rows, box=document.createElement('aside'); box.className='sidepanel'; box.setAttribute('aria-label','Links for '+(row.key||row.id));
+  const h=document.createElement('h3'); h.textContent=row.label||row.key||row.id; box.appendChild(h);
+  const sub=document.createElement('p'); sub.className='mono'; sub.textContent=row.id; box.appendChild(sub);
+  const section=(title,list)=>{
+    const hh=document.createElement('h4'); hh.textContent=title+' ('+list.length+')'; box.appendChild(hh);
+    if(!list.length){ const p=document.createElement('p'); p.className='help'; p.textContent='None.'; box.appendChild(p); return; }
+    const ul=document.createElement('ul'); ul.className='plinks';
+    for(const r of list){ const li=document.createElement('li'); li.appendChild(linkButton(r.key||r.id, r)); if(r.label){ const s=document.createElement('span'); s.textContent=' '+r.label; li.appendChild(s); } ul.appendChild(li); }
+    box.appendChild(ul);
+  };
+  section('Children', childTags(tags,row,findTag));
+  section('Incoming related links', incomingRelated(tags,row,findTag));
+  box.appendChild(btn('Close',()=>keepScroll(()=>{ state.panel=null; render(); })));
+  return box;
+}
+/* re-renders with the grid's scroll position kept (the grid is rebuilt on every render) */
+function keepScroll(fn){
+  const g=document.querySelector('#panel .grid'), top=g? g.scrollTop : 0;
+  fn();
+  const g2=document.querySelector('#panel .grid'); if(g2) g2.scrollTop=top;
+}
+/* the active column and tag filters of a table (the search box is counted separately) */
+function activeFilters(t){
+  const tf=state.tagf[t]||{};
+  return Object.values(state.colf[t]||{}).filter(v=>String(v||'').trim()).length + (t==='tags'? (tf.status?1:0)+(tf.subtree?1:0)+(tf.emptyDesc?1:0) : 0);
+}
+function filterSpec(t){
+  const tf=state.tagf[t]||{};
+  return {text:state.filter[t]||'', cols:state.colf[t]||{}, status:tf.status||'', subtree:tf.subtree||'', emptyDesc:!!tf.emptyDesc};
+}
+/* the filter panel: one box per column, and for tags a status, a parent subtree and an empty-description switch */
+function filterPanel(t, onChange){
+  const tbl=state.data[t], cf=state.colf[t]||(state.colf[t]={}), tf=state.tagf[t]||(state.tagf[t]={});
+  const box=document.createElement('div'); box.className='filters'; box.setAttribute('role','group'); box.setAttribute('aria-label','Column filters');
+  const field=(label,control,cls)=>{ const l=document.createElement('label'); l.className='fcol'+(cls? ' '+cls : ''); const s=document.createElement('span'); s.textContent=label; l.append(cls==='check'? control : s, cls==='check'? s : control); return l; };
+  let tmr;
+  const schedule=()=>{ clearTimeout(tmr); tmr=setTimeout(()=>{ state.shown[t]=PAGE; onChange(); },120); };
+  if(t==='tags'){
+    const st=document.createElement('select'); st.setAttribute('aria-label','Status');
+    for(const [v,l] of [['','Any status'],...TAG_STATUS.map(s=>[s,s])]){ const o=document.createElement('option'); o.value=v; o.textContent=l; if(v===(tf.status||'')) o.selected=true; st.appendChild(o); }
+    st.onchange=()=>{ tf.status=st.value; state.shown[t]=PAGE; onChange(); };
+    box.appendChild(field('status',st));
+    const sub=document.createElement('select'); sub.setAttribute('aria-label','Parent subtree');
+    const none=document.createElement('option'); none.value=''; none.textContent='Any parent'; sub.appendChild(none);
+    for(const r of [...tbl.rows].filter(r=>r.id).sort((a,b)=>String(a.id)<String(b.id)?-1:1)){ const o=document.createElement('option'); o.value=String(r.id); o.textContent=String(r.id); if(String(r.id)===(tf.subtree||'')) o.selected=true; sub.appendChild(o); }
+    sub.onchange=()=>{ tf.subtree=sub.value; state.shown[t]=PAGE; onChange(); };
+    box.appendChild(field('parent subtree',sub));
+    const ed=document.createElement('input'); ed.type='checkbox'; ed.checked=!!tf.emptyDesc; ed.setAttribute('aria-label','Empty description only');
+    ed.onchange=()=>{ tf.emptyDesc=ed.checked; state.shown[t]=PAGE; onChange(); };
+    box.appendChild(field('empty description only',ed,'check'));
+  }
+  for(const c of tbl.columns){
+    const inp=document.createElement('input'); inp.type='search'; inp.value=cf[c]||''; inp.placeholder=c; inp.setAttribute('aria-label','Filter '+c);
+    inp.addEventListener('input',()=>{ cf[c]=inp.value; schedule(); });
+    box.appendChild(field(c,inp));
+  }
+  const bar=document.createElement('div'); bar.className='fbar';
+  bar.appendChild(btn('Clear filters',()=>{ state.colf[t]={}; state.tagf[t]={}; state.filter[t]=''; state.shown[t]=PAGE; render(); }));
+  box.appendChild(bar);
+  return box;
 }
 function uploadPreview(row){
   const f=document.getElementById('file'); f.accept='image/*'; f.value='';
@@ -891,7 +1144,7 @@ rebuild(); setStatus(); render();
   const cl=window.claude;
   const [d,u,dl,as]=await Promise.all([cl?.use?.('db')??null, cl?.use?.('user')??null, cl?.use?.('downloads')??null, cl?.use?.('assets')??null]).catch(()=>[null,null,null,null]);
   db=d; downloads=dl; assetsCap=as; render();
-  if(!db){ localMode=true; ORDER.forEach(t=>loaded.add(t)); loadLocal(); rebuild(); setStatus('warn','The shared table store is not available here.'); render(); return; }
+  if(!db){ localMode=true; ORDER.forEach(t=>loaded.add(t)); loadLocal(); for(const t of ORDER) TS(t).snapLoad=TS(t).snapSave=snapshotOf(state.data[t].columns, state.data[t].rows); rebuild(); setStatus('warn','The shared table store is not available here.'); render(); return; }
   if(u){ try{ const w=await u.can('data.write'); if(w===false) canWrite=false; }catch(e){} }
   window.__subscribe=subscribeTable;
   for(const t of ORDER) if(CORE.has(t)) ensure(t);

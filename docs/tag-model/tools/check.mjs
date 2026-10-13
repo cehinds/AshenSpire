@@ -41,7 +41,7 @@
 //     every [key] resolves, no formula loops, every argument count is right. The
 //     generated module is not committed (RELEASE.md, Size and commit decision).
 
-import { readFileSync, readdirSync, existsSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readTable, parseCsv } from './csv.mjs';
@@ -54,9 +54,6 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const TM = join(HERE, '..');
 const TABLES = join(TM, 'tables');
 const PRES = join(TABLES, 'presentation');
-// The presentation inventory is generated and is not on every branch. When its
-// folder is absent, the presentation checks are skipped (see the report line).
-const HAS_PRES = existsSync(PRES);
 const NODES = join(TM, '..', '..', 'content', 'source', 'nodes.csv');
 const UI_TABLE = join(TM, '..', '..', 'content', 'source', 'uiStrings.csv');
 
@@ -67,7 +64,7 @@ const splitRefs = v => String(v || '').split(/\s+/).filter(Boolean);
 // ---------------------------------------------------------------- CSV shape
 const csvFiles = [
   ...readdirSync(TABLES).filter(f => f.endsWith('.csv')).map(f => join(TABLES, f)),
-  ...(HAS_PRES ? readdirSync(PRES).filter(f => f.endsWith('.csv')).map(f => join(PRES, f)) : []),
+  ...readdirSync(PRES).filter(f => f.endsWith('.csv')).map(f => join(PRES, f)),
 ];
 const byPath = {};
 for (const file of csvFiles) {
@@ -261,7 +258,7 @@ const presOk = {};
 for (const [name, spec] of Object.entries(PRES_SPEC)) {
   const t = P(name);
   const label = `presentation/${name}`;
-  presOk[name] = HAS_PRES && need(label, t, spec.cols);
+  presOk[name] = need(label, t, spec.cols);
   if (!presOk[name]) continue;
   if (spec.key) checkUnique(label, t, spec.key);
   const dups = t.rows.map(r => JSON.stringify(r));
@@ -512,9 +509,7 @@ if (presOk['combat-symbols'] && presOk.assets) {
 
 // ----------------------------------------------------------------- report
 const presentationRows = Object.keys(PRES_SPEC).reduce((a, n) => a + (P(n) ? P(n).rows.length : 0), 0);
-console.log(HAS_PRES
-  ? `checked ${csvFiles.length} CSV files (${Object.keys(PRES_SPEC).length} presentation, ${presentationRows} presentation rows)`
-  : `checked ${csvFiles.length} CSV files (presentation skipped: tables/presentation is not on this branch)`);
+console.log(`checked ${csvFiles.length} CSV files (${Object.keys(PRES_SPEC).length} presentation, ${presentationRows} presentation rows)`);
 console.log(`tags: ${tagRow.length} nodes, ${tagRow.filter(r => at(tags, r, 'id').startsWith('meta.presentation')).length} presentation`);
 if (errors.length) {
   for (const e of errors) console.error('FAIL ' + e);
