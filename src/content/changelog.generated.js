@@ -8,9 +8,39 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-13",
     "summary": "Switching combat views keeps your lane where the grid shows it",
     "detail": "When a fight changes from the perspective view to Classic, your saved lane now moves to the Classic square the screen displays. Moving again or reloading the fight no longer jumps you back to a hidden perspective-only lane.",
-    "build": "0.7.1.1483",
+    "build": "0.7.1.1487",
     "pullRequest": 1883,
     "url": "https://github.com/cehinds/AshenSpire/pull/1883"
+  },
+  {
+    "id": "pr-1961",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Starseer and Herald can no longer pick two element spells and get stuck on Spells",
+    "detail": "The starting spells allow only one element spell (Mind Spike, Mind Fracture, Stone Sling, Rockfall or Drowsing Mote), but the picker let you take two, then greyed Next with no way to see why. Once you hold one element spell the other four now grey out, and the progress line says only one is allowed.",
+    "build": "0.7.1.1487",
+    "pullRequest": 1961,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1961"
+  },
+  {
+    "id": "pr-1956",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Card symbols, multi-hit cards and the Ward badge read correctly",
+    "detail": "On-or-off traits such as Reaction and Counterstrike no longer show a stray 1 on their symbol. A card that hits more than once and deals part magic, part physical damage now shows both parts, for example \"Deal 5 damage (3 blunt, 2 arcane) ×2\". The Ward badge's tooltip now names the Warded Block, the part of this turn's Block raised by magic, separately from the Ward that lasts the whole fight.",
+    "build": "0.7.1.1487",
+    "pullRequest": 1956,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1956"
+  },
+  {
+    "id": "pr-1954",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "The link check's self-test fits its time limit again",
+    "detail": "Development-process fix only, nothing in the game changes. The import link check now reuses modules it has already linked within each batch instead of re-reading them for every file, so a full pass runs about four times faster and its self-test finishes inside the Windows CI limit.",
+    "build": "0.7.1.1485",
+    "pullRequest": 1954,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1954"
   },
   {
     "id": "pr-1953",

@@ -42,6 +42,7 @@ combat.protection.poiseValue,,Poise {value}/{max},"{value} of {max} Poise still 
 combat.protection.barrier,,Barrier,"Barrier is blue, the layer above Ward. Magic sources and cards that add Ward refill Ward first and the rest becomes Barrier; other sources add Barrier directly. Barrier soaks magic hits completely before Ward and lasts until the start of its owner's next turn.",Barrier
 combat.protection.poiseGuard,,Poise guard,Absorbs physical impact before the Poise bar fills. Expires at the start of your next turn.,Poise guard
 combat.protection.wardGuard,,Ward guard,Absorbs magical impact before the Ward bar fills. Expires at the start of your next turn.,Ward guard
+combat.protection.wardBlock,,Warded Block,"The part of this turn's Block raised by magic. It counts in the Ward badge, is spent after ordinary Block, and is gone at the start of your next turn.",Warded Block
 # ---- optional defensive reactions and public combat receipts --------------
 combat.log.title,,Combat log,,
 combat.log.sizeLabel,,Log size,,
@@ -1413,6 +1414,7 @@ creation.abilities.spells,,STARTING SPELLS,STARTING SPELLS,Choose two distinct R
 creation.abilities.progress,,{chosen}/{count} chosen · Rank {rank},{chosen}/{count} chosen · Rank {rank},{chosen}/{count} chosen · Rank {rank}
 creation.abilities.choose,,Learn ability,Learn ability,Learn this starting ability.
 creation.abilities.remove,,Unpick ability,Unpick ability,Unpick this starting ability choice.
+creation.abilities.elementCap,,Only {max} element spell,Only {max} element spell,You can take at most {max} element spell. Unpick it to choose this one.
 creation.abilities.chooseLabel,,Learn ability {name},Learn ability {name},Learn ability {name}
 creation.abilities.summary,,Starting ability,Starting ability,Starting ability
 
