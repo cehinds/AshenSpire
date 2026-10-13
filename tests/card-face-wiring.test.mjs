@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
-import { createRegistries } from '../src/model/registries.js';
+import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { renderCard } from '../src/ui/components/card.js';
 import { applyCardTraits } from '../src/content/traitProjection.js';
 import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
@@ -10,7 +10,8 @@ import { withKitDom } from './helpers/kit-dom.mjs';
 // Every card view reads one face text: the shared cardFaceLines model, one <span class="face-line"> per line.
 const reg = createRegistries(contentBundle);
 const previewOf = cardId => ({ combatExpansionVersion: 2, cost: 1, manaCost: 0, tokens: {}, values: [],
-  resolvedDefinition: applyCardTraits(applyCombatExpansionCard(reg.cards.get(cardId))) });
+  // The card the engine plays: resolved (action costs derived, SPEC §4.3a), then projected for combat.
+  resolvedDefinition: applyCardTraits(applyCombatExpansionCard(resolveCard(reg, { cardId }))) });
 
 // Each face line as { attrs, html } read from the rendered markup. A line runs to the next
 // face-line span, or to the end of the rules text div for the last one.
