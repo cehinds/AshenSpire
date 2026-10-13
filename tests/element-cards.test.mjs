@@ -4,7 +4,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { createCombat, dispatch } from '../src/engine/combat.js';
+import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
+import { splitOf } from '../src/model/playingCard.js';
+import { combatProfileFor } from '../src/model/combatCardProfile.js';
 import { createRng } from '../src/engine/rng.js';
 import { applyStatus, getStacks } from '../src/engine/statuses.js';
 
@@ -117,4 +119,19 @@ test('upgraded faces play too', () => {
   for (const id of [...ROGUE, ...CLASSLESS]) {
     assert.doesNotThrow(() => play(id, { upgraded: true }), id);
   }
+});
+
+test('Lethal Dose face names the wielded weapon for its physical part, as the hit types it', () => {
+  const face = weapon => {
+    const combat = createCombat({ registries, rng: createRng(4107), combatExpansionVersion: 2, enemyIds: ['wanderingSoldier'],
+      player: { classId: 'rogue', maxHp: 100, hp: 100, maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1,
+        deck: [{ cardId: 'lethalDose', instanceId: 'p', upgraded: false }],
+        loadout: { sets: { rightHand: [weapon], leftHand: [null], armor: ['default'] }, active: { rightHand: 0, leftHand: 0, armor: 0 } } } });
+    const preview = previewCard(combat, 'p');
+    const value = preview.values.find(row => row.op === 'damage');
+    return splitOf(preview.resolvedDefinition, combatProfileFor(preview.resolvedDefinition), value.faceValue, null, value);
+  };
+  assert.deepEqual(face('dagger'), { magic: 1, physical: 5, types: { magic: 'poison', physical: 'piercing' } });
+  assert.deepEqual(face('warhammer').types.physical, 'blunt');
+  assert.deepEqual(face(null).types.physical, 'blunt', 'bare hands');
 });

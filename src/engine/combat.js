@@ -1757,6 +1757,8 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
           entry.splitBase = Math.max(0, Math.floor(evalPreview(combat, action, eff.amount, null)));
           entry.ratingBonus = A.cardRatingDamage(combat, p, carrier, printedBase);
           entry.ratingPart = A.ratingBonusPart(combat, carrier);
+          // The physical type the carrier resolved (a lending weapon, or a technique's wielded weapon) names the face's physical part.
+          if (carrier.physicalDamageType) entry.physicalDamageType = carrier.physicalDamageType;
         }
         // #61 M5: when the aimed target's tag-scoped vulnerability matches
         // this hit's tags, name the matched row's tint so the hand can accent

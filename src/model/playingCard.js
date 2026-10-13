@@ -54,7 +54,7 @@ function uiText(id, tokens) {
 // `live` is the previewed value: its splitBase and ratingBonus split the amount exactly as the contacts do
 // (the card's own damage, then the rating bonus typed by its category). Without them the whole amount splits.
 export function splitOf(def, profile, amount, ratings = null, live = null) {
-  const carrier = { ...profile, magicShare: def.magicShare, physicalDamageType: def.physicalDamageType };
+  const carrier = { ...profile, magicShare: def.magicShare, physicalDamageType: def.physicalDamageType ?? live?.physicalDamageType };
   const share = magicShareOf(carrier, ratings);
   if (!(share > 0 && share < 1) || !Number.isFinite(amount)) return null;
   const parts = splitContactParts({ amount, base: live?.splitBase ?? amount, ratingBonus: live?.ratingBonus ?? 0,
