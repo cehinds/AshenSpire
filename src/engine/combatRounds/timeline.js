@@ -140,13 +140,17 @@ export function makeCombatant(spec = {}, tables = {}) {
   if (tables?.cards !== undefined && tables?.cards !== null && !(tables.cards instanceof Map)) {
     throw new TypeError('tables.cards must be a Map from parseEvasionCards()');
   }
+  // Every numeric input evasionFor() reads is normalised the same way as attrs (Codex P2 on PR #1871):
+  // a non-finite value counts as 0. A missing value (null/undefined) is kept, so dex still falls back
+  // to attrs.DEX and evasion to 0.
+  const finiteOrZero = (x) => (x == null ? x : (Number.isFinite(Number(x)) ? Number(x) : 0));
   const evasion = evasionFor({
     evasionArmor: spec.evasionArmor,
-    dex: spec.dex,
+    dex: finiteOrZero(spec.dex),
     shield: spec.shield,
     evasionCard: spec.evasionCard,
     attrs,
-    evasion: spec.evasion,
+    evasion: finiteOrZero(spec.evasion),
   }, tables);
   const base = Number(spec.evadeBasePct ?? spec.evadePct ?? 0);
   const wis = Number(spec.wis ?? 0);
