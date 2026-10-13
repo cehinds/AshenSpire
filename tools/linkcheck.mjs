@@ -123,12 +123,14 @@ function walk(dir, out = []) {
  * body runs. That is the point — this tool has no side effects on the tree it
  * inspects and cannot be broken by a module that throws on load.
  */
-async function linkGraph(entry, root) {
-  const cache = new Map();
+async function linkGraph(entry, root, shared) {
   // ONE CONTEXT FOR THE WHOLE GRAPH. A context per module is rejected with
   // "Linked modules must use the same context" — which my first run reported
   // for 88 of 149 graphs, i.e. my instrument, not the tree. Again.
-  const context = vm.createContext({});
+  // A batch passes `shared` so its entries share one context and cache too
+  // (checkTree); a fresh graph gets its own, as before.
+  const cache = shared ? shared.cache : new Map();
+  const context = shared ? shared.context : vm.createContext({});
   const make = (file) => {
     const key = resolve(file);
     if (cache.has(key)) return cache.get(key);
@@ -183,8 +185,17 @@ async function checkTree(root) {
     }
     return {total:files.length,skipped,broken};
   }
+  // One context and cache for the batch: a module linked by an earlier entry is
+  // reused, not re-read and re-parsed. Only fully linked modules stay in the
+  // cache. A failing entry is re-linked in isolation, so its error text matches
+  // a standalone link.
+  const shared = { cache: new Map(), context: vm.createContext({}) };
   for (const f of files.slice(batchStart,batchStart+64)) {
-    const err = await linkGraph(f, root);
+    let err = await linkGraph(f, root, shared);
+    if (err) {
+      for (const [key, m] of shared.cache) if (m.status !== 'linked') shared.cache.delete(key);
+      err = await linkGraph(f, root);
+    }
     if (err) broken.push({ file: relative(root, f).split(sep).join('/'), err });
   }
   return { total: files.length, skipped, broken };
