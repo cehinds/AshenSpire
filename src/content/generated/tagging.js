@@ -4374,7 +4374,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "deathblow",
-    "tagId": "damage:arcane"
+    "tagId": "damage:decay"
   },
   {
     "family": "card",

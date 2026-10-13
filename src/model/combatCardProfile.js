@@ -17,6 +17,39 @@ function identity(tags, prefix, allowed, name) {
   return values[0] || null;
 }
 
+/**
+ * THE ONE SPELL TEST: a Spell is the spell CAMP, nothing else. Mana cost and
+ * magical school do not make a card a Spell; only its camp does. Gainers of
+ * Barrier (actions.js gainBarrier) and the card face ("Gain N Ward") both read it.
+ */
+export function isSpellCard(card) {
+  if (!card) return false;
+  const tags = card.tags || card.cardTags;
+  return card.combatProfile?.camp === 'spell' || (Array.isArray(tags) && tags.includes('camp:spell'));
+}
+
+/**
+ * spellCostSurcharge(entity) → the extra Stamina (SP) a spell-camp action costs
+ * this entity: one per Silenced stack (owner, 2026-10-13, expanded combat).
+ * The one helper every SP pricing reads; spellCardCostSurcharge applies it to a card or move.
+ */
+export function spellCostSurcharge(entity) {
+  return silencedStacks(entity);
+}
+
+/** silencedStacks(entity) → the Silenced stacks an entity carries (0 without the status). */
+export function silencedStacks(entity) {
+  const stacks = Number(entity?.statuses?.silenced?.stacks);
+  return Number.isFinite(stacks) && stacks > 0 ? Math.floor(stacks) : 0;
+}
+
+/** The surcharge on one card or enemy move: spell camp only; a strike or technique pays none. */
+export function spellCardCostSurcharge(entity, card) {
+  if (!card) return 0;
+  const spell = card.combatProfile ? card.combatProfile.camp === 'spell' : (isSpellCard(card) || combatProfileFor(card).camp === 'spell');
+  return spell ? spellCostSurcharge(entity) : 0;
+}
+
 /** Resolve authored identity; card names and spell damage never choose a camp. */
 export function combatProfileFor(carrier = {}) {
   carrier ??= {};

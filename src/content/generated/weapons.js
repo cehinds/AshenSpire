@@ -27,6 +27,7 @@ export const weapons = [
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "straightSwordInventory2026",
+    "physicalDamageType": "slashing",
     "range": "melee"
   },
   {
@@ -57,6 +58,7 @@ export const weapons = [
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
+    "physicalDamageType": "slashing",
     "range": "melee"
   },
   {
@@ -84,6 +86,7 @@ export const weapons = [
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
+    "physicalDamageType": "piercing",
     "range": "melee"
   },
   {
@@ -111,6 +114,7 @@ export const weapons = [
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
+    "physicalDamageType": "piercing",
     "range": "ranged"
   },
   {
@@ -138,6 +142,7 @@ export const weapons = [
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
+    "physicalDamageType": "slashing",
     "range": "melee"
   },
   {
@@ -168,6 +173,7 @@ export const weapons = [
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
+    "physicalDamageType": "slashing",
     "range": "reach"
   },
   {
@@ -195,6 +201,7 @@ export const weapons = [
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
+    "physicalDamageType": "blunt",
     "range": "melee"
   },
   {
@@ -225,6 +232,7 @@ export const weapons = [
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
+    "physicalDamageType": "slashing",
     "range": "melee"
   },
   {
@@ -252,6 +260,7 @@ export const weapons = [
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
+    "physicalDamageType": "slashing",
     "range": "melee"
   },
   {
@@ -279,6 +288,7 @@ export const weapons = [
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
+    "physicalDamageType": "blunt",
     "range": "melee"
   },
   {
@@ -306,6 +316,7 @@ export const weapons = [
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "kiteShieldInventory2026",
+    "physicalDamageType": "blunt",
     "range": "melee"
   },
   {
@@ -333,6 +344,7 @@ export const weapons = [
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
+    "physicalDamageType": "blunt",
     "range": "melee"
   },
   {
@@ -360,6 +372,7 @@ export const weapons = [
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
+    "physicalDamageType": "blunt",
     "range": "melee"
   },
   {
@@ -387,6 +400,7 @@ export const weapons = [
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
+    "physicalDamageType": "piercing",
     "range": "melee"
   },
   {
@@ -414,6 +428,7 @@ export const weapons = [
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
+    "physicalDamageType": "blunt",
     "range": "melee"
   },
   {
@@ -441,6 +456,7 @@ export const weapons = [
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
+    "physicalDamageType": "blunt",
     "range": "melee"
   },
   {
@@ -468,6 +484,7 @@ export const weapons = [
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
+    "physicalDamageType": "piercing",
     "range": "melee"
   },
   {
@@ -495,6 +512,7 @@ export const weapons = [
     "weaponArtManaCost": 1,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
+    "physicalDamageType": "blunt",
     "range": "reach"
   },
   {
@@ -525,6 +543,7 @@ export const weapons = [
     "weaponArtManaCost": 1,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
+    "physicalDamageType": "blunt",
     "range": "reach"
   },
   {
@@ -555,6 +574,7 @@ export const weapons = [
     "weaponArtManaCost": 1,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
+    "physicalDamageType": "blunt",
     "range": "reach"
   },
   {
@@ -582,6 +602,7 @@ export const weapons = [
     "weaponArtManaCost": 1,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
+    "physicalDamageType": "blunt",
     "range": "reach"
   },
   {
@@ -612,6 +633,7 @@ export const weapons = [
     "weaponArtManaCost": 1,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
+    "physicalDamageType": "blunt",
     "range": "reach"
   },
   {
@@ -642,6 +664,7 @@ export const weapons = [
     "weaponArtManaCost": 1,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
+    "physicalDamageType": "blunt",
     "range": "reach"
   },
   {
@@ -672,6 +695,7 @@ export const weapons = [
     "weaponArtManaCost": 1,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
+    "physicalDamageType": "blunt",
     "range": "reach"
   },
   {
@@ -703,6 +727,7 @@ export const weapons = [
     "weaponArtManaCost": 1,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
+    "physicalDamageType": "blunt",
     "range": "reach"
   },
   {
@@ -730,6 +755,7 @@ export const weapons = [
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "halberd",
+    "physicalDamageType": "piercing",
     "range": "reach"
   },
   {
@@ -760,6 +786,7 @@ export const weapons = [
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "battleaxe",
+    "physicalDamageType": "slashing",
     "range": "melee"
   },
   {
@@ -790,6 +817,7 @@ export const weapons = [
     "weaponArtManaCost": 1,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "boneSceptre",
+    "physicalDamageType": "blunt",
     "range": "reach"
   }
 ];

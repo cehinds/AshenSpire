@@ -26,7 +26,7 @@ function fixture({ version = 2, enemies = 1 } = {}) {
     enemy.block = enemy.barrier = 0;
     enemy.hp = enemy.maxHp = 500;
     enemy.damageResistanceFlat = {}; enemy.damageWeaknessPercent = {};
-    enemy.ratings = { ar: 0, dr: 0, pr: 0, poise: 100, ward: 3 };
+    enemy.ratings = { ar: 0, dr: 0, pr: 0, poise: 0, ward: 10 };
     delete enemy.combatCounter; delete enemy.combatEvade; delete enemy.combatStance;
     enemy.poiseMeter = { value: 0, max: 100000 };
     enemy.persistentWard.value = enemy.persistentWard.max = 10;
