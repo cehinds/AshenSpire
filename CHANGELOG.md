@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-13
 
+- **The art pack now includes the ornate feat medallions** ([#1935](https://github.com/cehinds/AshenSpire/pull/1935), `0.7.1.1467`). Nothing on screen changes yet. The game's art pack moves to its next release, which adds the gilded medallion layers the character-creation Feats step will use.
 - **Changelog entries stay in build order** ([#1946](https://github.com/cehinds/AshenSpire/pull/1946), `0.7.1.1467`). Nothing changes in the game. The balance-report entry moved to the day it shipped, so the build stamp can number new builds again.
 - **Old notes, screenshots and a retired prompt tool cleared out of the project** ([#1940](https://github.com/cehinds/AshenSpire/pull/1940), `0.7.1.1467`). Development housekeeping only, nothing in the game changes. Archived design notes, old PR screenshots, the finished combat prototype's output, two outdated plans and the unused prompt library leave the repository.
 - **The Workbench opens from a link on the project site** ([#1943](https://github.com/cehinds/AshenSpire/pull/1943), `0.7.1.1467`). Development-process change only, nothing in the game changes. The Workbench is now published at https://cehinds.github.io/AshenSpire/workbench/ with every studio, the game preview running from source, and the art. It shows a snapshot of dev; edits stay in your browser, and the banner at the top downloads or discards them. Saving to the project, builds and live reload still need the Workbench on your computer.
