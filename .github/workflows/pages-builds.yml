@@ -481,16 +481,22 @@ jobs:
       # (workbench/static/static-api.mjs) and keeps edits in the visitor's browser;
       # nothing on the page writes to the repository.
       #
+      # The art it copies (assets-mobile/ and assets-display/) is tracked in git and
+      # already in this checkout, so nothing is fetched here: a fetch only filled an
+      # unused cache and could stall the job past its timeout.
+      #
+      # It builds into $RUNNER_TEMP and is moved into _site only after the tool exits
+      # 0, so a failed build publishes nothing. timeout-minutes bounds a stall.
+      #
       # The step may fail without stopping the site: continue-on-error keeps a
       # Workbench failure to a warning in this run, and the game site still publishes.
       - name: "Build the published Workbench at /workbench/ (from this checkout)"
         continue-on-error: true
+        timeout-minutes: 10
         run: |
           set -euo pipefail
-          if ! node tools/fetch-art.mjs --pack light; then
-            echo "::warning title=Workbench art not fetched::the light art pack did not fetch; the Workbench is built without art"
-          fi
-          node tools/workbench-static.mjs --out _site/workbench --base /AshenSpire/workbench/
+          node tools/workbench-static.mjs --out "$RUNNER_TEMP/workbench" --base /AshenSpire/workbench/
+          mv "$RUNNER_TEMP/workbench" _site/workbench
           echo "Workbench published at https://cehinds.github.io/AshenSpire/workbench/ from $(git rev-parse --short HEAD)" >> "$GITHUB_STEP_SUMMARY"
       - name: The generator's own drift plant is still caught
         run: node tools/verdict.mjs -- node tools/pages-site.mjs --selftest ${MAIN_BUILD_ARGS:-}
