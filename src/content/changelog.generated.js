@@ -23,6 +23,36 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1932"
   },
   {
+    "id": "pr-1941",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Creation spell and maneuver cards fit, and combat input can't lock",
+    "detail": "In character creation the Spells step and the Combat Maneuvers picker show cards at the review page's size, and the maneuver list scrolls so every card can be reached and chosen. In combat, a failure while preparing a play's visuals no longer leaves End Turn and the hand unresponsive.",
+    "build": "0.7.1.1465",
+    "pullRequest": 1941,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1941"
+  },
+  {
+    "id": "pr-1927",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Test shards that run out of time say so",
+    "detail": "Nothing changes in the game. A test shard stopped by its 15-minute limit now reports that it was stopped, instead of printing NaN test counts.",
+    "build": "0.7.1.1465",
+    "pullRequest": 1927,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1927"
+  },
+  {
+    "id": "pr-1936",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Dev previews publish again when a pull request merges during the publish",
+    "detail": "Nothing in the game changes. The dev site's self-check now rebuilds the stamped build its run was started for, instead of whatever just landed on dev.",
+    "build": "0.7.1.1465",
+    "pullRequest": 1936,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1936"
+  },
+  {
     "id": "pr-1921",
     "date": "2026-10-13",
     "group": "2026-10-13",

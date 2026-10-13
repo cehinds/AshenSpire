@@ -282,20 +282,23 @@ test('the strict guard catches a same-date rise when a lower receipt\'s stamp is
     const box = JSON.parse(readFileSync(join(ROOT, 'buildordinal.json'), 'utf8'));
     const actual = readFileSync(join(ROOT, 'CHANGELOG.md'), 'utf8');
     // Reproduce #1897's failure class: a receipt below an older build is
-    // raised to the current box while its original line position stays fixed.
+    // raised past it while its original line position stays fixed.
     // restamp() now moves a re-pointed receipt to the top of its date group,
     // so the out-of-order fixture is built here by editing that one stamp in place.
     const lines = actual.split('\n');
     const at = lines.findIndex((l) => l.includes('[#1901]'));
     assert.ok(at >= 0, 'the #1901 receipt is in CHANGELOG.md');
-    // Raise it to the highest build its own date group cites, not to the box:
-    // once a newer date group cites a build below the box, the box would trip
-    // the cross-date "build runs backward" check first and mask the same-date
-    // rise this case is about.
-    let start = at; while (start > 0 && !lines[start - 1].startsWith('## ')) start--;
-    let end = at; while (end < lines.length && !lines[end].startsWith('## ')) end++;
-    const groupMax = Math.max(...lines.slice(start, end).flatMap((l) => [...l.matchAll(/`0\.7\.1\.(\d+)`/g)].map((m) => Number(m[1]))));
-    lines[at] = lines[at].replace(/0\.7\.1\.\d+/, `0.7.1.${groupMax}`);
+    // Raise it one past the receipt just above it in its own date group: a rise
+    // within the group, still no higher than that group's top, so no newer date
+    // group is out-run (raising it to the box trips "runs backward" once a newer
+    // date group carries older stamps than the box).
+    const stamp = (l) => Number((l.match(/`0\.7\.1\.(\d+)`/) || [])[1]);
+    let head = at; while (head > 0 && !lines[head].startsWith('## ')) head--;
+    const above = lines.slice(head + 1, at).filter((l) => l.startsWith('- ') && Number.isFinite(stamp(l)));
+    assert.ok(above.length > 0, 'the #1901 receipt has a receipt above it in its date group');
+    const raised = stamp(above[above.length - 1]) + 1;
+    assert.ok(raised > stamp(lines[at]) && raised <= Math.max(...above.map(stamp)), 'the raise stays inside its date group');
+    lines[at] = lines[at].replace(/0\.7\.1\.\d+/, `0.7.1.${raised}`);
     const text = lines.join('\n');
     assert.notEqual(text, actual, 'the #1901 stamp was raised');
     assert.equal(text.split('\n').filter((l, i) => l !== actual.split('\n')[i]).length, 1, 'exactly one line changed');
