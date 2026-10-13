@@ -23,8 +23,8 @@ test('log contains executed public receipts by round, never predictions or unsta
   const rows = combatLogEntries(events, { registries, players: [{ id: 'p1', name: 'Reaver' }], enemies: [{ id: 'e1', enemyId: 'soldier' }] });
   assert.deepEqual(rows.map(row => [row.id, row.round]), [[2, 1], [3, 1], [4, 1], [7, 2], [8, 2]]);
   assert.match(rows[0].text, /Reaver played Guard Counter \(Upcast 2\).*2 SP, 3 MP/);
-  assert.equal(rows[2].text, 'Reaver blocked 7 damage.');
-  assert.equal(rows[4].text, 'Reaver dealt 9 damage to Soldier (1 blocked).');
+  assert.equal(rows[2].text, "Soldier's Slash hit Reaver for 7: Block absorbed 7 (7 → 0); 0 HP dealt.");
+  assert.equal(rows[4].text, "Reaver's attack hit Soldier for 10: Block absorbed 1 (1 → 0); 9 HP dealt.");
   assert.doesNotMatch(JSON.stringify(rows), /privateFuture|secretGuess|hpLost/);
   assert.deepEqual(combatLogEntries(JSON.parse(JSON.stringify(events)), { registries, players: [{ id: 'p1', name: 'Reaver' }], enemies: [{ id: 'e1', enemyId: 'soldier' }] }), rows);
 });
@@ -44,7 +44,7 @@ test('log says why no reaction was offered and when a Smash breaks Guard', () =>
     'No reaction: Reactions are off.',
     'No reaction: Soldier is staggered.',
     "One reaction per attack: the rest of this attack can't be answered.",
-    'Guard broken! (+3 Poise pressure)']);
+    "Reaver's attack broke Soldier's Guard! (+3 Poise pressure)"]);
   const coopRows = combatLogEntries([{ ...why('switchOff'), ownerId: 'p1' }],
     { registries, players: [{ id: 'p1', name: 'Reaver' }, { id: 'p2', name: 'Herald' }] });
   assert.equal(coopRows[0].text, 'Reaver: No reaction: Reactions are off.');
