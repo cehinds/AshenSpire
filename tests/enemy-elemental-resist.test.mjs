@@ -11,8 +11,10 @@ import { createRng } from '../src/engine/rng.js';
 import { createCombatExpansionRuleSnapshot, combatExpansionRulesProblems } from '../src/model/combatExpansionRules.js';
 import { expandedEnemyProjection, typedDefenseAmount } from '../src/engine/combatExpansionEquipment.js';
 
+// Starstone Pebble is a Force spell, which splits into arcane and blunt parts (#1896); magicShare 0 keeps
+// the probe one type (blunt), so a resist to that type meets the whole hit.
 const registries = createRegistries({ ...contentBundle, cards: contentBundle.cards.map(card => card.id === 'starstonePebble'
-  ? { ...card, effects: [{ op: 'damage', target: 'enemy', amount: 9 }], cost: 0, manaCost: 0, upgrade: undefined } : card) });
+  ? { ...card, effects: [{ op: 'damage', target: 'enemy', amount: 9 }], cost: 0, manaCost: 0, upgrade: undefined, magicShare: 0 } : card) });
 const player = { classId: 'starseer', maxHp: 100, hp: 100, maxMana: 10, mana: 10, maxStamina: 10, stamina: 10,
   energyMax: 10, drawPerTurn: 1, relicIds: [], combatExpansionVersion: 2,
   deck: [{ cardId: 'starstonePebble', instanceId: 'pebble', upgraded: false }] };
@@ -25,7 +27,8 @@ function rulesWith(resist) {
 
 function calm(enemy) {
   enemy.block = enemy.barrier = 0; enemy.hp = enemy.maxHp = 500;
-  enemy.ratings = { ar: 0, dr: 0, pr: 0, poise: 100, ward: 0 };
+  // Poise 0: the Poise rating is a Poise pool in expanded combat (#1896), which would soak part of the hit.
+  enemy.ratings = { ar: 0, dr: 0, pr: 0, poise: 0, ward: 0 };
   delete enemy.combatCounter; delete enemy.combatEvade; delete enemy.combatStance;
   if (enemy.persistentWard) enemy.persistentWard.value = enemy.persistentWard.max = 0;
 }

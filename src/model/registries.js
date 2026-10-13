@@ -39,6 +39,7 @@ function applyBasicCardProfile(def, profile) {
     flavor: profile.flavor || def.flavor,
     damageSchool: profile.damageSchool,
     exposureBuildupPerHit: profile.exposureBuildupPerHit,
+    ...(Number.isFinite(profile.magicShare) ? { magicShare: profile.magicShare } : {}),
     cardTags: tags,
     effects,
     equipmentProfileId: profile.id,
@@ -584,7 +585,8 @@ export function resolveCard(registries, instanceOrRef, breakMeterVersion = insta
   const smithingLevel = Number.isInteger(instanceOrRef.smithingLevel) ? instanceOrRef.smithingLevel : 0;
   const sourceArmamentId = instanceOrRef.sourceArmamentId || '';
   if (smithingLevel < 0) throw new Error(`smithingLevel must be a non-negative integer (got ${smithingLevel})`);
-  const hasCarrier = typeof instanceOrRef.damageSchool === 'string' || Number.isInteger(instanceOrRef.exposureBuildupPerHit);
+  const hasCarrier = typeof instanceOrRef.damageSchool === 'string' || Number.isInteger(instanceOrRef.exposureBuildupPerHit)
+    || Number.isFinite(instanceOrRef.magicShare) || typeof instanceOrRef.physicalDamageType === 'string';
   const rank = cardRank(instanceOrRef);
   const skillBonus = cardSkillBonus(instanceOrRef);
   const passiveBlock = cardPassiveBlock(instanceOrRef);
@@ -598,7 +600,7 @@ export function resolveCard(registries, instanceOrRef, breakMeterVersion = insta
   // Equipment numbers live on the INSTANCE (see model/loadout.js), so the key
   // has to include them — two Strikes can differ if one was drawn before a
   // mid-combat weapon swap and the other after.
-  const key = `${cardId}|${instanceOrRef.upgraded ? 1 : 0}|${profileId || ''}|${mods ? mods.join(',') : ''}|${instanceOrRef.damageSchool || ''}|${instanceOrRef.exposureBuildupPerHit ?? ''}|${sourceArmamentId}|${smithingLevel}|r${rank}|a${usesAbilityGrade ? base.abilityRank : "legacy"}|s${skillBonus}|b${passiveBlock}|m${breakMeterVersion || 0}|l${instanceOrRef.legacyAbility ? 1 : 0}`;
+  const key = `${cardId}|${instanceOrRef.upgraded ? 1 : 0}|${profileId || ''}|${mods ? mods.join(',') : ''}|${instanceOrRef.damageSchool || ''}|${instanceOrRef.exposureBuildupPerHit ?? ''}|${instanceOrRef.magicShare ?? ''}|${instanceOrRef.physicalDamageType || ''}|${sourceArmamentId}|${smithingLevel}|r${rank}|a${usesAbilityGrade ? base.abilityRank : "legacy"}|s${skillBonus}|b${passiveBlock}|m${breakMeterVersion || 0}|l${instanceOrRef.legacyAbility ? 1 : 0}`;
   const hit = cache.get(key);
   if (hit) return hit;
 
@@ -628,6 +630,8 @@ export function resolveCard(registries, instanceOrRef, breakMeterVersion = insta
       ...result,
       ...(typeof instanceOrRef.damageSchool === 'string' ? { damageSchool: instanceOrRef.damageSchool } : {}),
       ...(Number.isInteger(instanceOrRef.exposureBuildupPerHit) ? { exposureBuildupPerHit: instanceOrRef.exposureBuildupPerHit } : {}),
+      ...(Number.isFinite(instanceOrRef.magicShare) ? { magicShare: instanceOrRef.magicShare } : {}),
+      ...(typeof instanceOrRef.physicalDamageType === 'string' ? { physicalDamageType: instanceOrRef.physicalDamageType } : {}),
     });
   }
   // Smithing changes are exact item/tier content. No source id means there is
