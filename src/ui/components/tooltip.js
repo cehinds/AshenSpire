@@ -639,7 +639,9 @@ function wireTitles() {
     if (panels[0]?.contains(term)) { cancelNested(); showNested(term); return; }
     // Outside the panels the same two-tap rule holds: a click selects the
     // term, the next click explains it; a key press explains at once.
-    if (ev.type === 'click' && selectedControl !== term) {
+    // A tag symbol explains on one press (touch, mouse or Enter); other inspection terms keep the two-tap rule.
+    const oneTap = term.classList.contains('card-tag-symbol');
+    if (ev.type === 'click' && !oneTap && selectedControl !== term) {
       if (selectedControl) { clearControlSelection(); hideTooltip(); }
       selectedControl = term;
       term.classList.add('tooltip-selected');

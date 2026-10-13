@@ -194,4 +194,6 @@ test('a press on a tag symbol through the hand lane explains it and never reache
   assert.match(tooltip, /const symbolUnderLane = ev => \{[\s\S]*?closest\?\.\('\.hand-hit-lane'\)/);
   assert.match(tooltip, /for \(const type of \['pointerdown', 'pointerup', 'mousedown', 'mouseup'\]\)[\s\S]*?ev\.stopPropagation\(\)/);
   assert.match(tooltip, /ev\.stopPropagation\(\); ev\.preventDefault\(\);\s*sym\.dispatchEvent\(new MouseEvent\('click'/);
+  // One press explains a tag symbol: the symbol skips the select-then-explain step.
+  assert.match(tooltip, /const oneTap = term\.classList\.contains\('card-tag-symbol'\);\s*if \(ev\.type === 'click' && !oneTap && selectedControl !== term\)/);
 });
