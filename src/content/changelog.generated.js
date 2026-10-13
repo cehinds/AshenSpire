@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1883",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Switching combat views keeps your lane where the grid shows it",
+    "detail": "When a fight changes from the perspective view to Classic, your saved lane now moves to the Classic square the screen displays. Moving again or reloading the fight no longer jumps you back to a hidden perspective-only lane.",
+    "build": "0.7.1.1495",
+    "pullRequest": 1883,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1883"
+  },
+  {
     "id": "pr-1957",
     "date": "2026-10-13",
     "group": "2026-10-13",
