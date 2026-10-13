@@ -4,6 +4,7 @@ import { el, railItem, categoryNav } from '../kit/index.js';
 import { engravedIcon } from './engravedIcon.js';
 import { assetUrl } from '../assetmap.js';
 import { t } from '../strings.js';
+import { CREATION_FEAT_ART } from './creationFeatArt.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 
 const MATERIAL = 'assets/player-polish/materials/soot-leather-material.webp';
@@ -69,6 +70,33 @@ export function creationChoiceTile({ id = '', title = '', description = '', art 
 }
 
 export function creationFeatEmblem(featId) {
+  const art = CREATION_FEAT_ART[featId];
+  if (art) {
+    // The staged PNGs ship only with the source preview until the art release
+    // lands; a build without them falls back to the registered glyph emblem.
+    let fellBack = false;
+    const fallBack = () => {
+      if (fellBack) return;
+      fellBack = true;
+      const glyph = glyphFeatEmblem(featId);
+      emblem.className = glyph.className;
+      emblem.replaceChildren(...glyph.childNodes);
+    };
+    const canvas = el('span', { class: 'cc-native-feat-canvas' });
+    for (const layer of art.layers) {
+      const kind = layer.asset.startsWith('medallion-') ? layer.asset : layer.asset.startsWith('prop-') ? 'prop' : 'symbol';
+      const image = el('img', { src: assetUrl(layer.src), alt: '', draggable: 'false', dataset: { creationPart: kind, featLayer: layer.asset } });
+      Object.assign(image.style, { position: 'absolute', left: `${layer.x / art.canvas.width * 100}%`, top: `${layer.y / art.canvas.height * 100}%`, width: `${layer.width / art.canvas.width * 100}%`, height: `${layer.height / art.canvas.height * 100}%`, zIndex: String(layer.z), objectFit: layer.fit || 'contain', opacity: String(layer.opacity ?? 1), transformOrigin: '0 0', transform: `rotate(${layer.rotation || 0}deg) scale(${layer.scaleX ?? 1}, ${layer.scaleY ?? 1})` });
+      image.addEventListener('error', fallBack, { once: true });
+      canvas.append(image);
+    }
+    const emblem = part(el('span', { class: 'cc-feat-emblem cc-native-feat-emblem', 'aria-hidden': 'true', dataset: { feat: featId } }, canvas), UI.creationFeatEmblem, 'emblem');
+    return emblem;
+  }
+  return glyphFeatEmblem(featId);
+}
+
+function glyphFeatEmblem(featId) {
   const symbol = engravedIcon(FEAT_ICONS[featId] || 'progression');
   if (symbol) symbol.dataset.creationPart = 'symbol';
   return part(el('span', { class: 'cc-feat-emblem', 'aria-hidden': 'true', dataset: { feat: featId } }, [
