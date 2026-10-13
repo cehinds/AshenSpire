@@ -23,7 +23,7 @@ const root = fileURLToPath(new URL('..', import.meta.url));
 export const LIMIT_BYTES = 256 * 1024;
 
 // Evidence directories: where QA and review runs drop their output.
-const EVIDENCE_PREFIXES = ['docs/qa/', 'docs/evidence/', 'docs/art-evidence/', 'docs/preview/', 'docs/screenshots/'];
+const EVIDENCE_PREFIXES = ['docs/qa/', 'docs/art-evidence/', 'docs/preview/'];
 const EVIDENCE_SEGMENTS = ['/receipts/', '/evidence/'];
 
 export function isEvidenceJson(path) {
