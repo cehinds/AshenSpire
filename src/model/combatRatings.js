@@ -673,13 +673,34 @@ export function magicShareOf(profile, config = null) {
   const schoolShare = school ? damageTypeRules.schools?.[school]?.magicShare : undefined;
   if (Number.isFinite(schoolShare) && schoolShare < 1) return Math.max(0, schoolShare);
   if (spell && !school && MELEE_REACHES.has(profile?.reach) && physicalTypeOf(profile)) return meleeSpellMagicShare(config);
-  if (profile?.camp === 'physical' && profile.maneuver && (school || isMagicDamageType(type) || profile.riderSpell)) {
-    return techniqueMagicShare(config);
-  }
+  if (isTechniqueProfile(profile)) return techniqueMagicShare(config);
   if (school) return schoolMagicShare(school);
   const typed = damageTypeMagicShare(config, type);
   if (typed !== null) return typed;
   return spell ? 1 : 0;
+}
+
+/**
+ * isTechniqueProfile(profile) → true for a physical-camp maneuver that carries a
+ * magic school, a magic damage type (or a magic damage component) or a spell
+ * rider: the hits the Technique magic share splits.
+ */
+export function isTechniqueProfile(profile) {
+  if (profile?.camp !== 'physical' || !profile.maneuver) return false;
+  const magicComponent = (profile.damageComponents || []).some(component => isMagicDamageType(canonicalDamageType(component?.type)));
+  return !!(schoolOf(profile) || isMagicDamageType(canonicalDamageType(profile.damageType)) || magicComponent || profile.riderSpell);
+}
+
+/**
+ * techniqueNeedsWeaponType(carrier) → true when a technique has no physical
+ * damage type of its own (no authored physicalDamageType, no physical damage
+ * type or component), so its physical part takes the wielded weapon's type.
+ */
+export function techniqueNeedsWeaponType(carrier) {
+  const profile = carrier?.combatProfile;
+  if (!isTechniqueProfile(profile) || carrier.physicalDamageType || profile.physicalDamageType) return false;
+  if (isPhysicalDamageType(canonicalDamageType(profile.damageType))) return false;
+  return !(profile.damageComponents || []).some(component => isPhysicalDamageType(canonicalDamageType(component?.type)));
 }
 
 /**
