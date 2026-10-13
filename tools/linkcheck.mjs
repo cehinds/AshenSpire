@@ -76,6 +76,11 @@ const ROOT = process.argv.find(arg=>arg.startsWith('--root='))?.slice(7) || reso
 const batchStart=Number(process.argv.find(arg=>arg.startsWith('--batch-start='))?.split('=')[1]);
 const RAW = process.argv.includes('--raw');
 const SELFTEST = process.argv.includes('--selftest');
+// Modules this process has parsed (one per cache miss in make()). A batch reports
+// it as `parsed`, so a test can prove a shared module is parsed once per batch,
+// not once per entry that imports it: that re-parse is what made the self-test
+// take ~19 minutes on a CI runner (6 full passes, each ~190 s on Linux).
+const PARSED = { n: 0 };
 
 // The walk IS the denominator. Exclusions are named with reasons, because an
 // omission is not an answer.
@@ -134,6 +139,7 @@ async function linkGraph(entry, root, shared) {
   const make = (file) => {
     const key = resolve(file);
     if (cache.has(key)) return cache.get(key);
+    PARSED.n++;
     const m = new vm.SourceTextModule(readFileSync(key, 'utf8'), {
       identifier: pathToFileURL(key).href,
       context,
@@ -161,6 +167,11 @@ async function linkGraph(entry, root, shared) {
   };
   try {
     const m = make(entry);
+    // An entry an earlier entry of this batch already linked is in the shared cache
+    // as 'linked'. Its whole graph linked then, so it is known good. Calling link()
+    // again throws "Module has already been linked", which the batch read as a
+    // failure and re-linked from scratch: the re-parse this file was changed to avoid.
+    if (m.status === 'linked') return null;
     await m.link(linker);          // <- instantiation happens here, and stops here
     return null;
   } catch (e) {
@@ -293,7 +304,7 @@ function copyTree() {
 
 console.log(`linkcheck: every named import in the tree, resolved against a real export.\n`);
 if(Number.isFinite(batchStart)){
- console.log('BATCH_RESULT: '+JSON.stringify(await checkTree(ROOT)));process.exit(0);
+ console.log('BATCH_RESULT: '+JSON.stringify({...await checkTree(ROOT), parsed: PARSED.n}));process.exit(0);
 }
 
 if (SELFTEST) {
