@@ -466,7 +466,7 @@ export const weapons = [
     "attackProfile": "staffMagicAttack",
     "guardProfile": "staffGuard",
     "techniqueProfile": "staffTechnique",
-    "mods": "power.potency=+1",
+    "mods": "power.potency=+2",
     "unlock": "",
     "blurb": "Grey wood, warm at the grip.",
     "dropWeight": 10,
@@ -523,7 +523,7 @@ export const weapons = [
     "techniqueProfile": "staffTechnique",
     "mods": [
       "power.potency=+1",
-      "strike.blight=+2"
+      "strike.blight=+1"
     ],
     "unlock": "",
     "blurb": "Someone knelt for this once.",
