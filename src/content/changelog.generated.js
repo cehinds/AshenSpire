@@ -13,24 +13,14 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1931"
   },
   {
-    "id": "pr-1867",
+    "id": "pr-1950",
     "date": "2026-10-13",
     "group": "2026-10-13",
-    "summary": "The round-based combat engine is ported as a preview",
-    "detail": "Nothing changes in the game yet. The alternative round-based combat engine (src/engine/combatRounds) is in the codebase with its own tests and a specification section (§4.11), and it is not wired into combat.",
+    "summary": "The test branch's long checks pass again, and pricing a card is fast again",
+    "detail": "Development-process fix, with one engine speed-up. Previewing a card's cost or target no longer copies the whole fight when no rule could react to that card, which had made the balance check and simulations about three times slower after Oath began reacting to every card. The link check's self-test copies the Workbench files it needs, and the simulation-report test runs each identical simulation once.",
     "build": "0.7.1.1471",
-    "pullRequest": 1867,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1867"
-  },
-  {
-    "id": "pr-1838",
-    "date": "2026-10-13",
-    "group": "2026-10-13",
-    "summary": "The alternative combat rounds design is recorded",
-    "detail": "Development-process change only, nothing in the game changes. The design for timeline queues, initiative and merge modes is written up in docs/alternative-combat-rounds, with its own tests.",
-    "build": "0.7.1.1471",
-    "pullRequest": 1838,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1838"
+    "pullRequest": 1950,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1950"
   },
   {
     "id": "pr-1923",
