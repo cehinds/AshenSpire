@@ -110,3 +110,17 @@ function trace(classId,encounterId,seed,forceClone){
 test('actual fights preserve every decision and complete saved state versus the original eager detached cost path',()=>{
   for(const {id} of base.classes.all())for(const encounter of ['patrol','eliteWyrm','bossOmen'])for(const seed of [11,41])assert.deepEqual(trace(id,encounter,seed,false),trace(id,encounter,seed,true),`${id}/${encounter}/${seed}`);
 });
+test('the Oath class mount listens only for an oath card, so real fights price other cards on the fast path',()=>{
+  // oathKept is on every class mount and its cardPreparing trigger asks for an
+  // `oath` card. Treated as a listener for every card, it sent each price and
+  // target read through a full clone of the combat and its event log, which
+  // took tools/balance.mjs past the CI shard's 15-minute limit.
+  for(const {id} of base.classes.all()){
+    const run=createRunState({seed:1,classId:id,registries:base}),combat=createRunCombat({registries:base,run,rng:createRng(3),enemyIds:['wanderingSoldier']});
+    const mounted=Object.values(combat.propertyMounts.player||{}).filter(mount=>mount?.kind==='class');
+    assert.ok(mounted.some(mount=>mount.rules.some(rule=>rule.tag==='oathKept')),`${id}: the class mount carries the Oath rule`);
+    assert.equal(hasEventTriggers(combat,'cardPreparing'),true,`${id}: with no card named the Oath rule is a listener`);
+    assert.equal(hasEventTriggers(combat,'cardPreparing',{cardTags:['oath']}),true,`${id}: an oath card hears the Oath rule`);
+    assert.equal(hasEventTriggers(combat,'cardPreparing',{cardTags:['attack']}),false,`${id}: a card without the oath tag does not`);
+  }
+});
