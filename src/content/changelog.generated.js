@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-13",
     "summary": "The combat log names every source, and Evade and stance show in combat",
     "detail": "Every combat log line now says what caused it and whom it hit: a hit names the attack and shows its calculation (resistance or weakness, each layer absorbed before and after, HP dealt), each stagger-meter rise names its source, and Evade reads from the evader (\"Forsaken evaded Wyrm Lord's Tail Sweep: Evade roll 17 beat 16\"), with failed rolls logged too. A prepared Evade shows as an icon with its charges on the fighter, and the inspector's Active skills & stance lists the current stance and Evade. A failure while starting a play's animation can no longer lock End Turn and the hand.",
-    "build": "0.7.1.1469",
+    "build": "0.7.1.1471",
     "pullRequest": 1945,
     "url": "https://github.com/cehinds/AshenSpire/pull/1945"
+  },
+  {
+    "id": "pr-1950",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "The test branch's long checks pass again, and pricing a card is fast again",
+    "detail": "Development-process fix, with one engine speed-up. Previewing a card's cost or target no longer copies the whole fight when no rule could react to that card, which had made the balance check and simulations about three times slower after Oath began reacting to every card. The link check's self-test copies the Workbench files it needs, and the simulation-report test runs each identical simulation once.",
+    "build": "0.7.1.1471",
+    "pullRequest": 1950,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1950"
+  },
+  {
+    "id": "pr-1923",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Ornate feat emblems in character creation",
+    "detail": "The Feats step shows each feat as a layered, gilded medallion instead of a flat glyph. If the artwork cannot load, the tile falls back to the glyph.",
+    "build": "0.7.1.1471",
+    "pullRequest": 1923,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1923"
   },
   {
     "id": "pr-1935",
