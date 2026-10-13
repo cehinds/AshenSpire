@@ -151,7 +151,11 @@ jobs:
                 echo "Pushed the dev merge to $head for #$pr."
                 # The checks a pull request runs on its own merge commit. A GITHUB_TOKEN push
                 # starts none of them, so each is dispatched on the head branch here.
-                for wf in tests.yml receipts.yml dev-preview.yml quick-start.yml; do
+                # dev-preview is NOT dispatched: on a feature branch its strict clean-tree gate
+                # fails, because the rebuild re-digests buildordinal.json. The author's next push
+                # runs it, as it always has.
+                echo "::notice::#$pr: dev-preview is left to the author's next push to $head."
+                for wf in tests.yml receipts.yml quick-start.yml; do
                   if ! gh workflow run "$wf" --repo "$GITHUB_REPOSITORY" --ref "$head"; then
                     echo "::warning::#$pr: could not dispatch $wf on $head; run it by hand."
                   fi
