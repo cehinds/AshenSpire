@@ -8,6 +8,23 @@ it. Local only (127.0.0.1), no npm dependencies, no build step. Node 22+.
 
 ![Home](../docs/workbench/screenshots/01-home.jpg)
 
+## Published Workbench (GitHub Pages)
+
+The Workbench is also published at <https://cehinds.github.io/AshenSpire/workbench/>,
+so it can be opened without a checkout.
+
+- **What works there:** every studio reads a snapshot of `dev` taken when the
+  site was built. The game preview runs the game from source. Edits stay in your
+  browser; the top banner counts them, with **Download changes** and **Discard** (clears them after a confirmation). Library pages
+  open the published site's copies.
+- **What needs the local Workbench:** saving to the repository, builds and jobs,
+  Visual Review captures, and live reload. The page has no server, so none of
+  these run there.
+- **How it is built:** `node tools/workbench-static.mjs --out DIR [--base PATH] [--no-art]`,
+  run by `.github/workflows/pages-builds.yml` on each publish. `--base` sets the
+  path the site is served under (`/AshenSpire/workbench/` on Pages); `--no-art`
+  leaves out the light art pack.
+
 ## Open it
 
 - **Windows:** double-click **Start Workbench.cmd**. It starts the server (or
