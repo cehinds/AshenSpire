@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-13",
     "summary": "Cards read the same in every view, and read intents show their damage class",
     "detail": "A card's text is now one short form everywhere — combat hand, character creation, review, rewards, shop and deck — naming each effect by its tag and number: \"Inflict 9 Blunt damage, 4 Poise damage\", \"Inflict Weak 4, Paralysis 3\", \"Remove 1 Sleep, 1 Paralysis, 1 Dazed\", \"Gain 7 Ward\". Boosted numbers are green and reduced ones red. In combat the hand shows three lines and a selected card up to five. Card tag icons stay on the right edge even beside a Melee or Reach chip. An enemy intent you read successfully is tinted silver for a physical attack and blue for magic.",
-    "build": "0.7.1.1489",
+    "build": "0.7.1.1491",
     "pullRequest": 1957,
     "url": "https://github.com/cehinds/AshenSpire/pull/1957"
+  },
+  {
+    "id": "pr-1962",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Pull requests no longer wait for a per-PR owner approval; coding goes to Sonnet, simple tasks to Haiku",
+    "detail": "Development-process change only, nothing in the game changes. A pull request into dev now merges once another agent or session has reviewed it, its conflicts are resolved and the fast checks are green, and the session promotes dev to test itself; main stays with the owner. Sessions send the owner the preview and screenshots without waiting. Most coding tasks go to the new Sonnet ashen-coder agent, simple or mechanical ones to the Haiku ashen-worker, and Opus keeps planning and management.",
+    "build": "0.7.1.1491",
+    "pullRequest": 1962,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1962"
   },
   {
     "id": "pr-1961",
