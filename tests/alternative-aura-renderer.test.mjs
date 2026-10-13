@@ -4,7 +4,7 @@ import { createAlternativeAuraRenderer, alternativeAuraLayers } from '../src/ui/
 import { auraFilter } from '../src/ui/combatAura.js';
 import { COMBAT_POSE_STATES } from '../src/content/combatPoseStates.js';
 
-function fixture() {
+function fixture(options = {}) {
   const surfaces = [], draws = [], clears = [], reads = [];
   const context = owner => {
     const saved = [];
@@ -20,7 +20,7 @@ function fixture() {
     };
   };
   const target = context('visible');
-  const renderer = createAlternativeAuraRenderer({ createCanvas() {
+  const renderer = createAlternativeAuraRenderer({ ...options, createCanvas() {
     assert.equal(surfaces.length, 0, 'one work surface is reused for all artwork and aura combinations');
     const canvas = { width: 0, height: 0, getContext: () => context('work') }; surfaces.push(canvas); return canvas;
   } });
@@ -94,4 +94,26 @@ test('surface reuse and disposal prevent retained pixels or late allocation/pain
   const count = f.draws.length;
   assert.equal(f.renderer.draw(f.target, {}, 'drop-shadow(0 0 2px #aabbcc)', 128, 16), false);
   assert.equal(f.draws.length, count); assert.equal(f.surfaces.length, 1);
+});
+
+
+test('selected aerial Smash keeps the whole expanded aura surface without changing default dimensions',()=>{
+  const f=fixture({canvasHeight:625});
+  f.renderer.draw(f.target,{},'drop-shadow(0 0 2px #aabbcc)',-78,-95,768,768);
+  assert.equal(f.surfaces[0].width,768);
+  assert.equal(f.surfaces[0].height,625);
+  assert.deepEqual(f.clears[0].args,[0,0,768,625]);
+  assert.deepEqual(f.draws.at(-2).args.slice(1),[-78,-95,768,768],'source registration stays pixel exact on the larger surface');
+  assert.deepEqual(f.draws.at(-1).args,[f.surfaces[0],0,0]);
+  f.renderer.dispose();
+});
+
+test('the selected turning Sweep aura retains both horizontal margins at the original logical size',()=>{
+  const f=fixture({canvasWidth:932,canvasHeight:625});
+  f.renderer.draw(f.target,{},'drop-shadow(0 0 2px #aabbcc)',-53,-173,1024,1024);
+  assert.deepEqual([f.surfaces[0].width,f.surfaces[0].height],[932,625]);
+  assert.deepEqual(f.clears[0].args,[0,0,932,625]);
+  assert.deepEqual(f.draws.at(-2).args.slice(1),[-53,-173,1024,1024]);
+  assert.deepEqual(f.draws.at(-1).args,[f.surfaces[0],0,0]);
+  f.renderer.dispose();
 });

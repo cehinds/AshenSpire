@@ -5,6 +5,7 @@ function imageNode(href,fit){const img=document.createElement('img');img.src=ass
 function paint(node,visual){
   if(!node||!visual)return;
   node.querySelectorAll(':scope > [data-card-decoration]').forEach(n=>n.remove());
+  const badge=node.querySelector(':scope > .card-tag-count');
   const isSvg=node.tagName.toLowerCase()==='svg';
   if(visual.href){
     if(isSvg){const r=visual.imageRect||{x:0,y:0,w:360,h:540},img=document.createElementNS('http://www.w3.org/2000/svg','image');for(const [k,v] of Object.entries({href:assetUrl(visual.href),x:r.x,y:r.y,width:r.w,height:r.h,preserveAspectRatio:visual.fit==='fill'?'none':'xMidYMid meet'}))img.setAttribute(k,String(v));node.replaceChildren(img);}
@@ -14,6 +15,7 @@ function paint(node,visual){
     const svg=isSvg?node:document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox',visual.svg.viewBox);svg.setAttribute('aria-hidden','true');svg.setAttribute('fill',visual.svg.fill||'currentColor');svg.setAttribute('fill-rule','evenodd');for(const key of ['stroke','stroke-width','stroke-linecap','stroke-linejoin'])if(visual.svg[key])svg.setAttribute(key,visual.svg[key]);svg.innerHTML=visual.svg.body;
     if(!isSvg){Object.assign(svg.style,{width:'100%',height:'100%',display:'block'});node.replaceChildren(svg);}
   }
+  if(badge && badge.parentNode!==node)node.append(badge);
   Object.assign(node.style,visual.style||{});
   if(visual.visible===false)node.style.visibility='hidden';
   if(!visual.href)for(const d of visual.decorations||[]){const child=document.createElement('span');child.setAttribute('aria-hidden','true');child.dataset.cardDecoration='true';Object.assign(child.style,d.style);node.append(child);}

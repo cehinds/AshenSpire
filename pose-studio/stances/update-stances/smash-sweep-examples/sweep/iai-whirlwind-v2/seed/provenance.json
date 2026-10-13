@@ -1,0 +1,118 @@
+{
+  "generator": "image_gen.imagegen",
+  "active_raw": "raw-final-clean.png",
+  "active_normalized": "stance-final.png",
+  "active_normalized_sha256": "9979e65f7c61c446203d0a10f2a23e8e7ebcab86786d483eb3727bb528158405",
+  "raws": [
+    {
+      "path": "raw-deep-revision.png",
+      "sha256": "3f8e1e559c3fd4872ab4e56157a28dbc2acb46899a3644ac61aeaa5ec567f197",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "raw-final-clean.png",
+      "sha256": "b874cb9347258540e0fdd18f51ac9b720c522bce31346935ebc86d99c7567bb0",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "raw-inner-elbow-intermediate.png",
+      "sha256": "e86c6e39274169a910a81e200916fb57cf715cf35e729aac9237835b90a770cf",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "raw-palmup-level-elbow.png",
+      "sha256": "33feb9a0798b2e1633682f7ab3c760e0ad77996cd324c70a24335796159b2d4f",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "raw-underhand-margin.png",
+      "sha256": "514a15a0c7540ccc098de4ca2b29b61d4fbb8f0e5a34f0ffa7f65fa38a9ffdca",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "raw-underhand.png",
+      "sha256": "495f320a9ecf916c9d1dbc3dce9cd11c732ed6e123d03d67ee54e2692e32a0fb",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "raw.png",
+      "sha256": "0abfbead1c17e1b6dbc6f3c826aacccab469163ce1f31adf6a144ce62f24b12b",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    }
+  ],
+  "prompts": [
+    {
+      "path": "cleanup-unused-prompt.txt",
+      "sha256": "107156fc22346e45b210069c18e59da807f66ff81ecb3a9243ae65707c16f198"
+    },
+    {
+      "path": "deep-revision-prompt.txt",
+      "sha256": "6e585671acaa707f5bf0c677a3f81b4dfdfc567ef2a161d1b5454163f544ab0a"
+    },
+    {
+      "path": "final-clean-prompt.txt",
+      "sha256": "a29bc5d3d93ba37a4a24a847b9cbd9d9434d9bdd5fb8ce26760bf207e2143413"
+    },
+    {
+      "path": "inner-elbow-intermediate-prompt.txt",
+      "sha256": "9a768028abf5ad7cccf68f21f7388a38884559d7259b9b6c7dd0b76d0fc5e385"
+    },
+    {
+      "path": "palmup-level-elbow-prompt.txt",
+      "sha256": "aeebe683cd781384a46361d1fdec47b08756778d03a373b64af030abc02cd6e8"
+    },
+    {
+      "path": "prompt.txt",
+      "sha256": "ec3148ce75b3681120065739e9f531f1b9a0287eecb534dd026ee753d41bc48f"
+    },
+    {
+      "path": "underhand-margin-prompt.txt",
+      "sha256": "4be1ac05e0229dfbd2fd41c520789abd28e661a383474ed77d60c9db4255e783"
+    },
+    {
+      "path": "underhand-prompt.txt",
+      "sha256": "f0b8c9009449317978a664937683006a00e5dd1d04abdb682a485e95e38ff7b5"
+    }
+  ],
+  "normalization": {
+    "raw_size": [
+      1536,
+      1024
+    ],
+    "resized_size": [
+      614,
+      410
+    ],
+    "placement": [
+      65,
+      367
+    ],
+    "canvas": [
+      1024,
+      1024
+    ],
+    "method": "one uniform scale then transparent padding; no new painting"
+  },
+  "approval_scope": "User-directed low stance, palm up, thumb up/knuckles down, inside elbow, level flat blade; director accepted clean final seed; options only"
+}

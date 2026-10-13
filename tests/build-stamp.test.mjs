@@ -267,6 +267,39 @@ test('build-stamp.yml runs the whole stamp as one --stamp step, before anything 
   assert.doesNotMatch(WORKFLOW, /github\.event\.before|GITHUB_EVENT_BEFORE/, 'the base is the stamp base, never the event before');
 });
 
+test('build-stamp.yml refuses unordered restamped receipts before staging or dispatch', () => {
+  const guard = WORKFLOW.indexOf('node tools/about-changelog.mjs --check-order');
+  assert.ok(guard > WORKFLOW.indexOf('build-stamp.mjs --stamp --since-last-stamp'));
+  assert.ok(guard > WORKFLOW.indexOf('build-stamp.mjs --stamp --prs'));
+  assert.ok(guard < WORKFLOW.indexOf('git add --'));
+  const command = WORKFLOW.slice(guard).split('\n')[0];
+  assert.equal(command, 'node tools/about-changelog.mjs --check-order', 'strict guard, without pending exemptions or ignored failures');
+});
+
+test('the strict guard catches a same-date rise when a lower receipt\'s stamp is raised in place', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'build-stamp-order-'));
+  try {
+    const box = JSON.parse(readFileSync(join(ROOT, 'buildordinal.json'), 'utf8'));
+    const actual = readFileSync(join(ROOT, 'CHANGELOG.md'), 'utf8');
+    // Reproduce #1897's failure class: a receipt below an older build is
+    // raised to the current box while its original line position stays fixed.
+    // restamp() now moves a re-pointed receipt to the top of its date group,
+    // so the out-of-order fixture is built here by editing that one stamp in place.
+    const lines = actual.split('\n');
+    const at = lines.findIndex((l) => l.includes('[#1901]'));
+    assert.ok(at >= 0, 'the #1901 receipt is in CHANGELOG.md');
+    lines[at] = lines[at].replace(/0\.7\.1\.\d+/, `0.7.1.${box.ordinal}`);
+    const text = lines.join('\n');
+    assert.notEqual(text, actual, 'the #1901 stamp was raised');
+    assert.equal(text.split('\n').filter((l, i) => l !== actual.split('\n')[i]).length, 1, 'exactly one line changed');
+    writeFileSync(join(dir, 'CHANGELOG.md'), text);
+    writeFileSync(join(dir, 'buildordinal.json'), JSON.stringify(box));
+    const r = spawnSync(process.execPath, [join(ROOT, 'tools/about-changelog.mjs'), '--root', dir, '--check-order'], {encoding:'utf8', timeout:60000});
+    assert.equal(r.status, 1, r.stdout + r.stderr);
+    assert.match(r.stdout + r.stderr, /RED — .*build rises within/);
+  } finally { rmSync(dir, {recursive:true, force:true}); }
+});
+
 test('build-stamp.yml adds exactly the three derived files, never the built HTML or everything', () => {
   assert.match(WORKFLOW, /git add -- buildordinal\.json CHANGELOG\.md src\/content\/changelog\.generated\.js/);
   assert.doesNotMatch(WORKFLOW, /git add (-A|\.|--all)\b/);
