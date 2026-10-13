@@ -209,7 +209,10 @@ export function deepLinkOf(state = {}) {
 
 /** The URL of one art file on this Workbench's origin (the route is /asset-file/<game path>). */
 export function assetUrl(p) {
-  return `/asset-file/${text(p).split('/').map(encodeURIComponent).join('/')}`;
+  const path = text(p);
+  // A page can redirect art URLs (the published Workbench reads the light art from game/assets/).
+  if (typeof globalThis.ASHEN_ASSET_URL === 'function') return globalThis.ASHEN_ASSET_URL(path);
+  return `/asset-file/${path.split('/').map(encodeURIComponent).join('/')}`;
 }
 
 /**
