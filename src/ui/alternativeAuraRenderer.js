@@ -23,7 +23,7 @@ export function alternativeAuraLayers(filter) {
   return shadows.length ? { shadows, brightness: light } : null;
 }
 
-export function createAlternativeAuraRenderer({ createCanvas = () => document.createElement('canvas') } = {}) {
+export function createAlternativeAuraRenderer({ canvasWidth=768, canvasHeight=544, createCanvas = () => document.createElement('canvas') } = {}) {
   let surface = null, work = null, disposed = false;
   const parsed = new Map();
   function layers(filter) {
@@ -47,14 +47,14 @@ export function createAlternativeAuraRenderer({ createCanvas = () => document.cr
           context.filter = filter; context.drawImage(image, x, y, width, height);
         } else {
           if (!surface) {
-            surface = createCanvas(); surface.width = 768; surface.height = 544;
+            surface = createCanvas(); surface.width = canvasWidth; surface.height = canvasHeight;
             work = surface.getContext('2d');
             if (!work) throw new Error('Character aura requires a canvas context');
           }
-          work.clearRect(0, 0, 768, 544);
+          work.clearRect(0, 0, canvasWidth, canvasHeight);
           // Move the source wholly beyond the work surface while compensating
           // each shadow offset. Only the source-alpha shadow enters the stage.
-          const outside = 768 + width + Math.abs(x);
+          const outside = canvasWidth + width + Math.abs(x);
           for (const glow of plan.shadows) {
             work.save(); work.filter = 'none'; work.shadowColor = glow.color; work.shadowBlur = glow.blur;
             work.shadowOffsetX = glow.x - outside; work.shadowOffsetY = glow.y;

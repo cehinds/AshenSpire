@@ -1,0 +1,55 @@
+{
+  "schema": 1,
+  "id": "SW09",
+  "name": "Selected straight-arm iai two-direction unwind",
+  "selection": "User selected SW09 and requested straight near swordarm/more iai stance",
+  "status": "director-approved-art-for-production-adaptation",
+  "frame_size": [
+    1024,
+    1024
+  ],
+  "frame_count": 5,
+  "bookend_source": "seed/stance-final.png",
+  "bookend_sha256": "faf9d5f34285dc82b0b19426aafe6debe679bec33b2f45d095b0059c5b105ac1",
+  "bookends": "Slots1/5 exact approved new normalized seed PNG bytes",
+  "source_ground_y": 734,
+  "frames": [
+    {
+      "slot": 1,
+      "role": "selected-straight-arm-iai-stance",
+      "path": "SW09/frame-01.png",
+      "sha256": "faf9d5f34285dc82b0b19426aafe6debe679bec33b2f45d095b0059c5b105ac1"
+    },
+    {
+      "slot": 2,
+      "role": "rightward-preload",
+      "path": "SW09/frame-02.png",
+      "sha256": "259459c43d53d162dd6fe30132ebf6a1df00b3de62e8c3622b008dcaff875c7d"
+    },
+    {
+      "slot": 3,
+      "role": "leftward-turn-cut",
+      "path": "SW09/frame-03.png",
+      "sha256": "cc7af9a81181afce091957b100cf91f699f2e89fae8de4ba092224d20e768521"
+    },
+    {
+      "slot": 4,
+      "role": "low-rightward-unwind",
+      "path": "SW09/frame-04.png",
+      "sha256": "edea5b2d8ad25ef6cd46a6de4543171fe263e050907f391a2fc293b02109dc6d"
+    },
+    {
+      "slot": 5,
+      "role": "selected-straight-arm-iai-stance",
+      "path": "SW09/frame-05.png",
+      "sha256": "faf9d5f34285dc82b0b19426aafe6debe679bec33b2f45d095b0059c5b105ac1"
+    }
+  ],
+  "gif": "SW09/preview.gif",
+  "strip": "SW09/strip.png",
+  "contact": "SW09/strip-preview.jpg",
+  "provenance": "provenance.json",
+  "normalization": "SW09/normalization.json",
+  "history": "../iai-whirlwind-v2/manifest.json",
+  "runtime_assets_changed": false
+}

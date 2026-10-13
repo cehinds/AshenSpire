@@ -1,0 +1,52 @@
+{
+  "raw": "raw.png",
+  "raw_sha256": "2aa96de72c6cbc42a286cbcae54ecfaba736d2261d66bce51fadb533a847227c",
+  "source_sha256": "40f7c5f3a1d988ae99b0764050630f1a00028be50131bd13456db58b4d737865",
+  "frame_count": 5,
+  "frame_sha256": [
+    "40f7c5f3a1d988ae99b0764050630f1a00028be50131bd13456db58b4d737865",
+    "1f28243e30931fcfb7792db5fe942d94c0b11cc5fed9bf397cc3f0d813f676b2",
+    "34429066c9c1ca175f2618331b06a3798efa04df99bd716dfdceb8a4f952dea1",
+    "b340be9a506c2a4bbaa395d271c183a7eaac40250178c80727ac90ed88a5c2dd",
+    "40f7c5f3a1d988ae99b0764050630f1a00028be50131bd13456db58b4d737865"
+  ],
+  "method": "connected figure isolation, common body scale, anatomical head reference, sole baseline; no alpha bounds centering",
+  "transforms": [
+    {
+      "frame": 2,
+      "component": 4,
+      "scale": 0.9630606860158312,
+      "placement": [
+        96,
+        99
+      ],
+      "head_reference": 635.0,
+      "target_head": 355.0,
+      "sole_y": 467
+    },
+    {
+      "frame": 3,
+      "component": 2,
+      "scale": 0.9630606860158312,
+      "placement": [
+        117,
+        95
+      ],
+      "head_reference": 1040.0,
+      "target_head": 345.0,
+      "sole_y": 467
+    },
+    {
+      "frame": 4,
+      "component": 5,
+      "scale": 0.9630606860158312,
+      "placement": [
+        35,
+        107
+      ],
+      "head_reference": 1660.0,
+      "target_head": 335.0,
+      "sole_y": 467
+    }
+  ]
+}

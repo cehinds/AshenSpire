@@ -32,8 +32,14 @@ combat.rating.ward,,Ward rating,Ward rating reduces magical damage and weighs in
 combat.poise.shared,,Poise,"Poise resists physical attacks{resistance} and configured status effects. Both physical and magical hits that pass Block fill this bar. A full bar causes Stagger: {effect}.",Shared break meter
 combat.poise.actionLoss,,Actions,{amount} fewer Actions next turn,Actions lost after Stagger
 combat.poise.enemyLoss,,Move,lose the next move,Stagger cancels the next move
-combat.protection.block,,Block,Absorbs attack damage.,Block
-combat.protection.ward,,Arcane Ward,Block granted by magical guards. Absorbs attack damage after ordinary Block.,Arcane Ward
+combat.protection.block,,Block,Absorbs physical attack damage.,Block
+combat.protection.ward,,Arcane Ward,"Ward guards against magic. Full at the start of every fight, it absorbs each magic hit after Barrier (each hit still lets at least 1 damage through) and is spent by what it absorbs; a Ward break costs Stamina next turn. Block does not stop magic. It does not regenerate unless a card, feat, class feature or relic restores it.",Arcane Ward
+combat.card.splitDamage,,"{amount} damage ({physical} {physicalType}, {magic} {magicType})",,
+combat.card.splitBlock,,"{verb} {block} Block and {ward} Ward",,
+combat.card.magicPhysicalDamage,,"{magic} · {physical}",,
+combat.protection.poise,,Poise,"Poise guards against physical hits. Full at the start of every fight, it absorbs each physical hit after Block (each hit still lets at least 1 damage through) and is spent by what it absorbs. When it breaks, a player pays 1 Stamina next turn; an enemy is interrupted. It does not regenerate unless a card, feat, class feature or relic restores it.",Poise
+combat.protection.poiseValue,,Poise {value}/{max},"{value} of {max} Poise still stands. The gold trim on the HP bar shows it while any is left.",Poise {value}/{max}
+combat.protection.barrier,,Barrier,"Barrier is blue, the layer above Ward. Magic sources and cards that add Ward refill Ward first and the rest becomes Barrier; other sources add Barrier directly. Barrier soaks magic hits completely before Ward and lasts until the start of its owner's next turn.",Barrier
 combat.protection.poiseGuard,,Poise guard,Absorbs physical impact before the Poise bar fills. Expires at the start of your next turn.,Poise guard
 combat.protection.wardGuard,,Ward guard,Absorbs magical impact before the Ward bar fills. Expires at the start of your next turn.,Ward guard
 # ---- optional defensive reactions and public combat receipts --------------
@@ -57,13 +63,46 @@ combat.reaction.play,,Play,,
 combat.reaction.upcast,,Upcast {tier},,
 combat.reaction.sp,,{amount} SP,,
 combat.reaction.mp,,{amount} MP,,
+combat.reaction.stack,,On the stack,,
+combat.reaction.resolve,,Resolve,,
+combat.reaction.helpStack,,,"Choose another card to add on top, or Resolve to play the stack, last card first.",
 # on-character combat callouts (src/ui/fx.js callout): one word over the fighter
 combat.callout.staggered,,STAGGERED,,
 combat.callout.disrupted,,DISRUPTED,,
 combat.callout.countered,,COUNTERED,,
-combat.callout.evaded,,EVADED,,
+combat.callout.evaded,,MISSED,,
 combat.callout.critical,,CRITICAL,,
 combat.callout.guardBreak,,GUARD BREAK,,
+combat.callout.wardBreak,,WARD BREAK,,
+combat.callout.barrierBreak,,BREAK,,
+combat.callout.poiseBreak,,POSTURE BREAK,,
+combat.callout.blockBreak,,BREAK,,
+combat.callout.interrupted,,INTERRUPTED,,
+combat.callout.resisted,,RESISTED,,
+combat.callout.blocked,,BLOCKED,,
+combat.callout.immune,,IMMUNE,,
+combat.status.applied.venom,,POISONED,,
+combat.status.applied.burn,,BURNED,,
+combat.status.applied.bleed,,BLEEDING,,
+combat.status.applied.bleeding,,BLEEDING,,
+combat.status.applied.frost,,FROSTED,,
+combat.status.applied.frozen,,FROZEN,,
+combat.status.applied.chilled,,CHILLED,,
+combat.status.applied.paralysis,,PARALYZED,,
+combat.status.applied.sleep,,ASLEEP,,
+combat.status.applied.weak,,WEAKENED,,
+combat.status.applied.vulnerable,,VULNERABLE,,
+combat.status.applied.magicVulnerable,,VULNERABLE,,
+combat.status.applied.frail,,BRITTLED,,
+combat.status.applied.dazed,,DAZED,,
+combat.status.applied.offBalance,,UNBALANCED,,
+combat.status.applied.prone,,KNOCKED DOWN,,
+combat.status.applied.grounded,,GROUNDED,,
+combat.status.applied.insanity,,MADDENED,,
+combat.status.applied.madness,,MADDENED,,
+combat.status.applied.crimsonBlight,,BLIGHTED,,
+combat.status.applied.frostExposed,,EXPOSED,,
+combat.status.applied.insanityExposed,,EXPOSED,,
 # ---- the house vocabulary — the words every screen shares ------------------
 common.back,,Back,Return to the screen before this one.,Back
 common.continue,,Continue,Move on from this screen.,Continue
@@ -134,6 +173,7 @@ reward.card.chooseOne,,Choose one of {count}.,,
 reward.card.offered,,One card offered.,,
 reward.card.alreadyTaken,,Already taken,A card has already been taken from this reward.,
 card.meta.owned,,Owned: {count},Copies of this card already in your deck.,
+card.tag.tooltip,,,{name} — {blurb},
 # ---- possession sub-variants (WC2a1–WC2c3) — rows the item's data states ----
 possession.effects.package,,Granted card package,,
 possession.effects.modifiers,,Granted modifiers,,
@@ -969,6 +1009,7 @@ settings.row.shrinePathGlow,,Shrine path glow,"Light the way to the nearest shri
 settings.row.walkedFade,,Walked nodes,"How much the nodes you have already visited fade on the act map, so the way forward stands out from the trail behind you. Half mutes them to half saturation; Off keeps the trail as bright as the choice.",
 settings.row.accent,,Accent color,"Tint the interface — highlights, borders, focus ring, and glow.",
 settings.row.artQuality,,Art quality,"Auto loads lighter art on a narrow or phone-sized screen, with Data Saver on or on a device with little memory, and the best art this game carries otherwise. Light and High pick one. Local high-res uses full-resolution art from a folder on this device, either served beside the game or one you choose, and keeps the built-in art for anything it lacks. This device only.",
+settings.row.cardArtStyle,,Card artwork,Simple uses the new card artwork with elemental and status accents. Legacy keeps the original illustrations.,
 settings.row.uiScale,,UI size,Auto flexes the whole interface with your screen; S–XL asks for a fixed size and gets as much of it as fits.,
 settings.row.cardMotif,,Card motif,Colour cards by their class. Wash tints the card body; Accent puts your accent on the border and moves rarity to a corner pip; Band adds a class stripe. Off keeps every card the same frame.,
 settings.row.cardMotifStrength,,Motif strength,How strongly the class colour tints a card.,
@@ -1422,3 +1463,45 @@ creation.abilities.summary,,Starting ability,Starting ability,Starting ability
 "knowledge.save.retry","","Retry saving enemy knowledge","",""
 "knowledge.save.retained","","Enemy learning is retained and waiting to be saved.","",""
 "combat.intent.partial","","{stance} ?","",""
+
+card.tags.evade,,Evade,Evade or dodge an incoming action.,
+creation.category.attributes,,Attributes,,
+creation.category.keepsake,,Keepsake,,
+creation.category.feats,,Feats,,
+creation.category.spells,,Spells,,
+creation.section.attributes,,ATTRIBUTES,,
+creation.section.feats,,FEATS,,
+creation.section.spells,,SPELLS,,
+creation.feats.eyebrow,,CHARACTER TRAITS,,
+creation.feats.title,,Explore feats,,
+creation.feats.description,,Learn how permanent feats shape your journey.,,
+creation.feats.availability,,Earn feats as you level up. Browsing here does not grant a starting feat.,,
+creation.feats.detailLabel,,Feat details,,
+creation.feats.none,,No starting feats,,
+creation.spells.eyebrow,,STARTING MAGIC,,
+creation.spells.title,,Choose your spells,,
+creation.spells.description,,Choose your starting Rank {rank} spells before beginning the journey.,,
+creation.spells.unavailable,,This class has no starting spell choices.,,
+creation.review.edit,,Edit {category},,
+creation.continueTo,,Continue to {category},,
+creation.step.progress,,{index} of {count} · {category},,
+creation.nav.allSteps,,All steps,,
+creation.nav.allStepsLabel,,Open all character creation steps.,,
+creation.feats.group.character,,Character,,
+creation.feats.group.class,,Class,,
+creation.feats.group.skill,,Skills,,
+creation.feats.lockedRequirement,,Requires {track} level {required}. Current level: {current}.,,
+creation.feats.availableRequirement,,{track} level {required} requirement met. Current level: {current}.,,
+creation.feats.profileUnlocked,,Unlocked in profile.,,
+creation.feats.locked,,Level requirement not met,,
+creation.feats.available,,Level requirement met,,
+creation.feats.emptyGroup,,No feats in this group.,,
+creation.feats.noOffers,,No feat offers are currently earned on the {track} track.,,
+
+creation.feats.return,,Back to feats,,
+creation.feats.summary.fieldStudy,,More character XP.,,
+creation.feats.summary.weaponDrill,,More weapon XP.,,
+creation.feats.summary.armourPractice,,More armour XP.,,
+creation.feats.summary.classInsight,,More class XP.,,
+creation.feats.summary.spoilsInstinct,,More Cinders from victory.,,
+creation.feats.summary.vitalRenewal,,Recover HP after victory.,,

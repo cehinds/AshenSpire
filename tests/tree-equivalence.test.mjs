@@ -75,8 +75,12 @@ test('registered tags retain identity, approved tactical metadata changes are ex
   const tags = new Map(TAGS.map((t) => [t.id, t]));
   // SPEC 4.7 deliberately changes display labels and rider descriptions,
   // while preserving each damage ID, domain, colour and glyph. The historical
-  // fixture stays intact; every approved changed field is named here.
+  // fixture stays intact; every approved changed field is named here. The
+  // approved Spell presentation uses one outlined sparkle across its identities.
   const tacticalMetadata = {
+    'source:spell': { glyph: '✧' },
+    'camp:spell': { glyph: '✧' },
+    'maneuver:casting': { glyph: '✧' },
     'damage:slashing': { blurb: 'Applies 1 Bleed on a Health hit unless the card already prints a Bleed effect.' },
     'damage:piercing': { blurb: 'Bypasses up to 2 Guard; bypasses melee Counter.' },
     'damage:blunt': { blurb: 'Adds 2 Poise damage once per action against each target.' },
@@ -87,6 +91,10 @@ test('registered tags retain identity, approved tactical metadata changes are ex
     'damage:sacred': { label: 'Holy', blurb: 'Removes 1 hostile debuff from the attacker after a Health hit.' },
     'damage:decay': { label: 'Necrotic', blurb: 'Applies Blight on a Health hit (Crimson in classic combat; Necrotic in expanded combat) unless the card already prints a Crimson Blight effect.' },
   };
+  // Also check approved metadata for named tactical tags added after the fixture.
+  for (const [id, fields] of Object.entries(tacticalMetadata)) {
+    for (const [field, value] of Object.entries(fields)) assert.equal(tags.get(id)?.[field], value, `approved '${id}'.${field}`);
+  }
   for (const old of pre.tags) {
     const t = tags.get(old.id);
     assert.ok(t, `tag '${old.id}' is still registered`);
@@ -131,21 +139,24 @@ test('registered tags retain identity, approved tactical metadata changes are ex
   const PROGRESSION_RELICS = ('emberjaw-token cracked-war-anvil cinderbound-crown moonwell-lens nightglass-rosary fragment-of-the-third-sky whisperglass-die purse-of-borrowed-shadows ember-alms-bowl ossuary-prayer-wheel').split(' ').map(id => `progression-${id}`);
   assert.equal(PROGRESSION_FEATS.length, 50);
   assert.equal(PROGRESSION_RELICS.length, 10);
-  const NAMED = [...PHASE_5A_PROPERTIES, ...PHASE_5B_PROPERTIES, ...PHASE_7_PROPERTIES, ...PHASE_8_PROPERTIES, ...PHASE_10B_PROPERTIES, ...SPEC_14_PROPERTIES, ...SPEC_15_PROPERTIES, ...PROGRESSION_FEATS, ...PROGRESSION_RELICS];
+  const NAMED = [...PHASE_5A_PROPERTIES, ...PHASE_5B_PROPERTIES, ...PHASE_7_PROPERTIES, ...PHASE_8_PROPERTIES, ...PHASE_10B_PROPERTIES, ...SPEC_14_PROPERTIES, ...SPEC_15_PROPERTIES, ...PROGRESSION_FEATS, ...PROGRESSION_RELICS,
+    'oathKept']; // the Oath rule every class card carries (owner decision 11, 2026-10-12)
   const ABILITY_TAGS = ('searing-edge guarded-strike bloodstep hammerfall forgewake crimson-reprisal last-stand war-tempo wide-cleave ember-crown dreadweight oathscar wound-harvest cinder-orbit lunar-guard comet-mark rime-mirror constellation mana-weave gravity-snare nightglass eclipse-window warded-casting celestial-echo cold-memory astral-convergence ash-opener discard-weave crooked-guard exposed-flank sleight-hand tether-cut smoke-edge carrion-finish paired-strikes trapdoor clean-escape razor-debt mercy-ash blood-censer blight-seed funeral-guard ember-tithe bone-chorus requiem-brand pilgrim-shelter scarred-rite dawn-rite burden-bearer sepulchral-pact').split(' ').map(id => `ability:${id}`);
   assert.equal(ABILITY_TAGS.length, 50);
   const TACTICAL_TAGS = {
     camp: ['camp:physical', 'camp:spell'],
     maneuver: ['maneuver:attack', 'maneuver:defend', 'maneuver:counter', 'maneuver:sweep', 'maneuver:ranged', 'maneuver:smash', 'maneuver:casting'],
-    school: ['school:frost', 'school:fire', 'school:lightning', 'school:force', 'school:alteration', 'school:illusion', 'school:divine', 'school:decay'],
+    school: ['school:frost', 'school:fire', 'school:lightning', 'school:force', 'school:alteration', 'school:illusion', 'school:divine', 'school:decay', 'school:earth'], // Earth: owner decision 5, 2026-10-12
     counterMode: ['counter:melee', 'counter:ranged', 'counter:spell'],
     reach: ['reach:contact', 'reach:near', 'reach:far'],
-    trait: ['trait:adequateReach', 'trait:closing', 'trait:conductive', 'trait:grounded', 'trait:insulated', 'trait:mental', 'trait:projectile', 'trait:reveal', 'trait:shattering', 'trait:unavoidable', 'trait:unreflectable'],
+    trait: ['trait:adequateReach', 'trait:closing', 'trait:conductive', 'trait:counterstrike', 'trait:flux', 'trait:grounded', 'trait:impact', 'trait:insulated', 'trait:mental', 'trait:projectile', 'trait:reaction', 'trait:reveal', 'trait:shattering', 'trait:unavoidable', 'trait:unreflectable'],
   };
   for (const [domain, ids] of Object.entries(TACTICAL_TAGS)) {
     assert.deepEqual(TAGS.filter(tag => tag.domain === domain).map(tag => tag.id).sort(), [...ids].sort(), `${domain} holds exactly its approved tactical identities`);
   }
-  const tacticalIds = [...Object.values(TACTICAL_TAGS).flat(), 'targeting:single', 'targeting:area'];
+  // The damage types the owner added on 2026-10-12: Poison (decision 2), Psychic and Earth (decision 5).
+  const ADDED_DAMAGE_TYPES = ['damage:poison', 'damage:psychic', 'damage:earth'];
+  const tacticalIds = [...Object.values(TACTICAL_TAGS).flat(), 'targeting:single', 'targeting:area', ...ADDED_DAMAGE_TYPES];
   assert.deepEqual(TAGS.filter(t => t.id.startsWith('ability:')).map(t => t.id).sort(), [...ABILITY_TAGS].sort(), 'the fifty approved ability identities are exact');
   for (const id of ABILITY_TAGS) {
     const tag = tags.get(id);
@@ -176,8 +187,10 @@ test('every object states exactly one kind, the one its collection and type name
   // The original 513, forty cards, ten relics, fifty new class feats, and the
   // twenty existing mastery feats now participating in the kind registry.
   assert.equal(contentBundle.classSkillFeats.length, 70);
-  assert.equal(contentBundle.enemyMoves.length, 103, 'the scoped enemy move collection contains all 103 authored actions');
-  assert.equal(counted, 513 + 40 + 10 + 70 + 103 + 32, 'all 768 objects, including class feats and scoped enemy move kinds');
+  // Plus the two enemy reaction moves (gildedGuard, bindingRiposte; docs/combat-card-traits-contract.md).
+  assert.equal(contentBundle.enemyMoves.length, 105, 'the scoped enemy move collection contains all 105 authored actions');
+  // Plus the twelve Poison, Psychic and Earth cards (owner decisions 2 and 5, 2026-10-12).
+  assert.equal(counted, 513 + 40 + 10 + 70 + 105 + 32 + 12, 'all 782 objects, including class feats and scoped enemy move kinds');
 });
 
 test('a node carries no numbers: every variable resolves through a binding to a balance row, and the ladder reads highest scope first', () => {

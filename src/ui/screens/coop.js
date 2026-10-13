@@ -25,7 +25,7 @@ import { openUpcastChoice } from '../components/upcastChoice.js';
 import { wireCoopUpcastControl } from '../components/coopUpcastControl.js';
 import { controlGate } from '../../engine/combatStatusControl.js';
 import { openDiscardChoiceModal } from '../components/discardChoiceModal.js';
-import { openReactionChoiceModal } from '../components/reactionChoiceModal.js';
+import { openReactionChoiceModal, committedReactionStack, reactionStackEntryName, stackedCardIds } from '../components/reactionChoiceModal.js';
 import { combatEffectForEvent, decorateCombatEffects, combatEffectReceipt, presentationTargetIds } from '../../model/combatEffectEvents.js';
 import { statureFor } from '../components/stature.js';
 import { combatEffectAngle } from '../combatEffectDirection.js';
@@ -97,7 +97,7 @@ import { resourceBars } from '../components/resbars.js';
 import { meterRowSelectedOnly } from '../models/CombatantMeterModel.js';
 import { characterLevel } from '../../model/levelup.js';
 import { combatHealthRow } from '../components/combatHealth.js';
-import { blockPresentation } from '../../model/blockPresentation.js';
+import { protectionPresentation } from '../../model/blockPresentation.js';
 import { renderArcaneExposure } from '../components/arcaneExposure.js';
 import { mountMapBoard } from '../components/mapboard.js';
 import { combatBackdropHtml } from '../components/environmentArt.js';
@@ -1008,7 +1008,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     const hp = bars.querySelector('.as-meter[data-res="hp"]');
     if (hp) {
       const next = hp.nextSibling;
-      const health = combatHealthRow(hp, blockPresentation(ent));
+      const health = combatHealthRow(hp, protectionPresentation(ent));
       bars.insertBefore(health, next);
     }
     wrap.classList.add('as-meters', 'tight');
@@ -1023,7 +1023,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const protection = document.createElement('div'); protection.className = 'combat-expansion-protection';
       const stance = ent.combatStance?.maneuver;
       protection.textContent = [`Ward ${ent.persistentWard?.value || 0}/${ent.persistentWard?.max || 0}`,
-        `Barrier ${ent.barrier || 0}`, stance ? stance[0].toUpperCase() + stance.slice(1) : ''].filter(Boolean).join(' · ');
+        `${t('combat.protection.barrier')} ${ent.barrier || 0}`, stance ? stance[0].toUpperCase() + stance.slice(1) : ''].filter(Boolean).join(' · ');
       wrap.appendChild(protection);
     }
     if (isEnemy) {
@@ -1050,13 +1050,13 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         { label: 'MP', value: entity.mana, max: entity.maxMana },
           { label: 'Poise', value: entity.poiseMeter?.value, max: entity.poiseMeter?.max },
           { label: entity.combatExpansionVersion === 2 ? 'Ward rating' : t('combat.rating.ward'), value: entity.ratings?.ward },
-          ...(entity.combatExpansionVersion === 2 ? [{ label: 'Ward pool', value: entity.persistentWard?.value || 0, max: entity.persistentWard?.max || 0 }, { label: 'Barrier', value: entity.barrier || 0 }] : []),
+          ...(entity.combatExpansionVersion === 2 ? [{ label: 'Ward pool', value: entity.persistentWard?.value || 0, max: entity.persistentWard?.max || 0 }, { label: t('combat.protection.barrier'), value: entity.barrier || 0 }] : []),
         { label: t('combat.protection.block'), value: entity.block || 0 },
       ].filter(row => row.value != null);
       const abilities = activeCombatAbilities(registries, entity, false);
       const intent = def ? readEnemyIntent(entity, def) : null;
       const owner = snap.scene.enemyKnowledge?.owners?.[me];
-      const learning = def && owner ? projectEnemyKnowledge(def, owner.knowledge.enemies[def.id], { registries, combatMatchupRules: snap.scene.combatMatchupRules }) : null;
+      const learning = def && owner ? projectEnemyKnowledge(def, owner.knowledge.enemies[def.id], { registries, combatMatchupRules: snap.scene.combatMatchupRules, ratingsRules: registries.balance?.combatRatings || null }) : null;
       const moveCards = learning ? learning.moveCards : def ? enemyMoveCards(def, { enemy: entity, preview: intent, registries, combatMatchupRules: snap.scene.combatMatchupRules }) : null;
       // PREVIOUS ACTIONS, oldest first — the moves that RESOLVED, which is what
       // solo reads off `entity.performedMoves`. The snapshot now carries the
@@ -1137,13 +1137,16 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   let discardShell = null;
   function showPendingDiscard() {
     showPendingReaction();
-    const player = latestWireSnap?.scene?.players?.find(p => p.id === me);
+    const sc = latestWireSnap?.scene;
+    const player = sc?.players?.find(p => p.id === me);
     const pending = player?.pendingAbilityDiscard;
     if (!pending || pending.playerId !== me || discardShell || busy()) return;
     const owner = me;
+    // This viewer's stacked cards wait to resolve: they are not discard fodder (the engine refuses them).
+    const stackedIds = new Set((sc.reactionStack?.entries || []).filter((entry) => entry.ownerId === me).map((entry) => entry.cardInstanceId));
     discardShell = openDiscardChoiceModal({
       count: pending.count, cardName: registries.cards.get(pending.cardId).name,
-      cards: player.hand.map(card => ({ instanceId: card.instanceId, name: resolveCard(registries, card).name })),
+      cards: player.hand.filter((card) => !stackedIds.has(card.instanceId)).map(card => ({ instanceId: card.instanceId, name: resolveCard(registries, card).name })),
       onClosed: () => { discardShell = null; },
       onChoose: cardInstanceIds => { if (me === owner) send({ t: 'chooseDiscard', cardInstanceIds }); },
     });
@@ -1158,7 +1161,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     const ownerId = owner.id;
     reactionOfferId = owner.pendingReaction.id;
     if (me !== ownerId) { seatIdx = seats.indexOf(ownerId); me = ownerId; }
-    reactionShell = openReactionChoiceModal({ pending: owner.pendingReaction,
+    const stack = committedReactionStack(sc.reactionStack, owner.pendingReaction.groupKey)
+      .map((entry) => ({ name: reactionStackEntryName(entry, registries), cardInstanceId: entry.cardInstanceId }));
+    reactionShell = openReactionChoiceModal({ pending: owner.pendingReaction, stack,
       onClosed: () => { reactionShell = null; reactionOfferId = null; },
       onAnswer: intent => {
         if (!disposed && me === ownerId && latestWireSnap?.scene?.reactionWaiting?.id === intent.offerId)
@@ -1380,7 +1385,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (combatLayout) combatLayout.release();
     combatLayout = wireCombatLayout(app.querySelector('.combat'));
     combatTools?.release();
-    const updateTools = () => combatTools.update(combatToolsModel({ supported: sc.reactionRulesVersion === 1,
+    const updateTools = () => combatTools.update(combatToolsModel({ supported: sc.reactionRulesVersion >= 1,
       enabled: meP?.reactionsEnabled !== false, disabled: busy() || sc.phase !== 'player' || !!sc.reactionWaiting
         || !meP?.connected || !meP?.alive || !!meP?.pendingAbilityDiscard,
       ...combatToolsState, entries: sc.combatLog || [] }));
@@ -1445,6 +1450,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         } else el.addEventListener('click', play);
       },
     });
+    // Only this viewer's own stacked cards are hidden; another seat's rc1 is still playable here.
+    const stackedIds = stackedCardIds(sc.reactionStack, me);
     if (meP && meP.alive && meP.connected) {
       handStrip.render({
         cards: meP.hand.map((c) => {
@@ -1465,6 +1472,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
             def, name: def.name, affordable, reason,
             preview: costs.preview,
             selected: c.instanceId === armedFriendlyCard,
+            stacked: stackedIds.has(c.instanceId),
           };
         }),
       });
@@ -2160,6 +2168,19 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         if (event.type === 'damageDealt' && target) {
           target.hp = Math.max(0, target.hp - Math.max(0, event.amount - (event.blocked || 0)));
           if (event.blockRemaining !== undefined) target.block = event.blockRemaining;
+          // The defence layers move with each hit, so their badges do too.
+          if (event.barrierRemaining !== undefined) target.barrier = event.barrierRemaining;
+          if (event.wardRemaining !== undefined && target.persistentWard) target.persistentWard.value = event.wardRemaining;
+          if (event.poiseRemaining !== undefined && target.persistentPoise) target.persistentPoise.value = event.poiseRemaining;
+        }
+        if (event.type === 'barrierGained' && target && event.total !== undefined) target.barrier = event.total;
+        if ((event.type === 'persistentWardChanged' || event.type === 'combatWardStripped') && target?.persistentWard && Number.isFinite(event.value)) {
+          target.persistentWard.value = event.value;
+          if (Number.isFinite(event.max)) target.persistentWard.max = event.max;
+        }
+        if (event.type === 'persistentPoiseChanged' && target?.persistentPoise) {
+          target.persistentPoise.value = event.value;
+          if (Number.isFinite(event.max)) target.persistentPoise.max = event.max;
         }
         if (event.type === 'cardPlayed') {
           const owner = entityFor(event.sourcePlayerId || event.playerId);

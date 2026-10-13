@@ -385,14 +385,28 @@ export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
 export const CALLOUT_KINDS = {
   staggered: { string: 'combat.callout.staggered', tone: 'gold' },
   disrupted: { string: 'combat.callout.disrupted', tone: 'gold' },
-  countered: { string: 'combat.callout.countered', tone: 'gold' },
-  evaded: { string: 'combat.callout.evaded', tone: 'gold' },
+  countered: { string: 'combat.callout.countered', tone: 'red' },
+  evaded: { string: 'combat.callout.evaded', tone: 'white' },
   critical: { string: 'combat.callout.critical', tone: 'red' },
   guardBreak: { string: 'combat.callout.guardBreak', tone: 'red' },
+  wardBreak: { string: 'combat.callout.wardBreak', tone: 'ward' },
+  barrierBreak: { string: 'combat.callout.barrierBreak', tone: 'barrier' },
+  blockBreak: { string: 'combat.callout.blockBreak', tone: 'block' },
+  interrupted: { string: 'combat.callout.interrupted', tone: 'interrupt' },
+  poiseBreak: { string: 'combat.callout.poiseBreak', tone: 'gold' },
+  // Outcome words (owner, 2026-10-12): a hit that does no HP damage shows one of these instead of its numbers.
+  resisted: { string: 'combat.callout.resisted', tone: 'barrier' },
+  wardResisted: { string: 'combat.callout.resisted', tone: 'ward' },
+  blocked: { string: 'combat.callout.blocked', tone: 'block' },
+  immune: { string: 'combat.callout.immune', tone: 'immune' },
 };
 export const CALLOUT_MS = 900;
 export const CALLOUT_INSTANT_MS = 500;
-const CALLOUT_MAX = 2;
+// The words over one fighter (owner, 2026-10-12): at most three show at once, in three
+// lanes (lane 0 is the top). Words start one step apart in priority order; a fourth waits
+// for the earliest visible one to finish, and nothing is dropped.
+export const STACK_LANES = 3;
+export const STACK_STEP_MS = 150;
 // One slot's height, in layer px: a slot-1 callout sits this far above slot 0.
 const CALLOUT_SLOT_PX = 34;
 
@@ -420,51 +434,131 @@ function overheadFloor(layer, anchor, b) {
 const liveCallouts = (layer, forId) => [...(layer.children || [])]
   .filter((node) => node.dataset?.calloutFor === String(forId));
 
-/** Show callout `kind` over `anchor` (fighter `forId`) in `layer`; returns the element, or null. */
-export function callout(layer, anchor, forId, kind) {
-  const def = CALLOUT_KINDS[kind];
-  if (!layer || !anchor || !def || forId == null) return null;
-  const live = liveCallouts(layer, forId);
-  if (live.some((node) => node.dataset.calloutKind === kind)) return null;
-  const used = new Set(live.map((node) => Number(node.dataset.calloutSlot)));
-  let slot = [...Array(CALLOUT_MAX).keys()].find((s) => !used.has(s));
-  if (slot === undefined) {
-    const oldest = live[0];
-    slot = Number(oldest.dataset.calloutSlot) || 0;
-    oldest.remove();
+/**
+ * Priority of a word, highest first: STATUS > MISSED > IMMUNE > BREAKS (and the
+ * stagger/crit words that land with them) > BLOCKED > RESISTED. DAMAGE numbers are
+ * not words: they are one grouped row of floats, below every word.
+ */
+export function stackPriority(kind = '') {
+  if (String(kind).startsWith('status:')) return 6;
+  if (kind === 'evaded') return 5;
+  if (kind === 'immune') return 4;
+  if (kind === 'blocked') return 2;
+  if (kind === 'resisted' || kind === 'wardResisted') return 1;
+  return 3;
+}
+
+/**
+ * The pure schedule for one fighter's words (owner, 2026-10-12). `items` are [{ id, kind }]
+ * in arrival order. They start in priority order, one step apart; at most `lanes.length`
+ * show at once, so each later word starts when the earliest visible one has lived `lifeMs`.
+ * `lanes` are how long each lane is still busy, from now. Returns [{ id, start, lane }],
+ * start in ms from now, in priority order (ties keep arrival order).
+ */
+export function planWordQueue(items = [], { lanes = [0, 0, 0], stepMs = STACK_STEP_MS, lifeMs = CALLOUT_MS, after = null } = {}) {
+  const sorted = items.map((item, arrival) => ({ ...item, arrival, rank: stackPriority(item.kind) }))
+    .sort((a, b) => b.rank - a.rank || a.arrival - b.arrival);
+  const free = [...lanes];
+  const out = [];
+  // `after`: when the last word before this batch started (ms from now), or null.
+  let prev = after;
+  for (const item of sorted) {
+    let lane = 0;
+    for (let l = 1; l < free.length; l++) if (free[l] < free[lane]) lane = l;
+    let start = Math.max(0, free[lane]);
+    if (prev !== null) start = Math.max(start, prev + stepMs);
+    free[lane] = start + lifeMs;
+    prev = start;
+    out.push({ id: item.id, start, lane });
+  }
+  return out;
+}
+
+// Per layer, per fighter: the words still showing or waiting, with their lanes and times.
+const calloutQueues = new WeakMap();
+let calloutArrival = 0;
+function queueFor(layer, forId) {
+  let byFighter = calloutQueues.get(layer);
+  if (!byFighter) calloutQueues.set(layer, byFighter = new Map());
+  const key = String(forId);
+  if (!byFighter.has(key)) byFighter.set(key, { items: [] });
+  return byFighter.get(key);
+}
+
+/**
+ * Lay out one fighter's words: plan every word that has not started yet, then place each in its lane.
+ * `lifeMs` is the lifetime callout() selected (instant speed is shorter); lanes, starts and removal all use it.
+ */
+function layoutCallouts(layer, anchor, q, now, lifeMs = CALLOUT_MS) {
+  const active = q.items.filter((it) => it.start <= now);
+  const pending = q.items.filter((it) => it.start > now);
+  const lanes = [0, 1, 2].map((lane) => Math.max(0, ...active.filter((it) => it.lane === lane).map((it) => it.end - now)));
+  // The stagger counts from the last word that has started, never from one still waiting (it is re-planned).
+  const started = active.map((it) => it.start);
+  const after = started.length ? Math.max(...started) - now : null;
+  const plan = planWordQueue(pending.map((it) => ({ id: it.arrival, kind: it.kind })), { lanes, lifeMs, after });
+  for (const row of plan) {
+    const it = pending.find((p) => p.arrival === row.id);
+    it.start = now + row.start;
+    it.lane = row.lane;
+    it.end = it.start + lifeMs;
+    it.el.style.animationDelay = row.start > 0 ? `${row.start}ms` : '';
+    clearTimeout(it.timer);
+    it.timer = setTimeout(() => it.el.remove(), it.end - now);
   }
   const b = anchorLocalBox(layer, anchor);
+  const floor = overheadFloor(layer, anchor, b);
+  const base = floor == null ? b.top + 4 : Math.max(b.top + 4, floor + 2 + (q.items[0]?.el.offsetHeight || 30) + CALLOUT_RISE_PX);
+  const centre = b.left + b.width / 2;
+  for (const it of q.items) {
+    const el = it.el;
+    // Lane 0 is the top: its slot is the highest. Slot 0 sits nearest the head.
+    const slot = floor == null ? (STACK_LANES - 1 - it.lane) : it.lane;
+    el.dataset.calloutSlot = String(slot);
+    const width = el.offsetWidth || 0, height = el.offsetHeight || 30;
+    const bottom = base + (floor == null ? -1 : 1) * slot * CALLOUT_SLOT_PX;
+    let at = { left: centre - width / 2, top: bottom - height };
+    if (width) at = clampBox({ left: at.left, top: at.top, width, height }, anchorLocalBox(layer, layer), { pad: 6 });
+    el.style.left = `${at.left + width / 2}px`;
+    el.style.top = `${at.top + height}px`;
+  }
+}
+
+/** Show callout `kind` over `anchor` (fighter `forId`) in `layer`; returns the element, or null. */
+export function callout(layer, anchor, forId, kind) {
+  const isStatus = kind.startsWith('status:');
+  const statusId = isStatus ? kind.slice('status:'.length) : null;
+  const def = isStatus
+    ? (Object.prototype.hasOwnProperty.call(STATUS_WORDS, statusId) ? { string: `combat.status.applied.${statusId}`, tone: 'status', colour: STATUS_WORDS[statusId].colour } : null)
+    : CALLOUT_KINDS[kind];
+  if (!layer || !anchor || !def || forId == null) return null;
+  const now = Date.now();
+  const q = queueFor(layer, forId);
+  // Words that have finished leave the queue.
+  q.items = q.items.filter((it) => it.end > now || it.end === undefined);
+  if (q.items.some((it) => it.kind === kind) || liveCallouts(layer, forId).some((node) => node.dataset.calloutKind === kind)) return null;
   const el = document.createElement('div');
   el.className = `fx-callout ${def.tone}`;
   el.dataset.calloutFor = String(forId);
   el.dataset.calloutKind = kind;
-  el.dataset.calloutSlot = String(slot);
   el.setAttribute('aria-hidden', 'true');
   el.textContent = t(def.string);
+  if (def.colour) el.style.color = def.colour;
   const ms = getAnimSpeed() === 'instant' ? CALLOUT_INSTANT_MS : CALLOUT_MS;
   el.style.setProperty('--fx-callout-ms', `${ms}ms`);
-  // `left` is the centre (translate -50% in CSS); `top` is the callout's
-  // bottom edge (translate -100%). It sits just above the head, one slot
-  // higher each. A fighter whose overhead HUD (intent, HP plate) sits on its
-  // head — that HUD paints above the effects layer — gets the word just under
-  // the HUD instead, risen end and all, and its stack grows downward.
-  const centre = b.left + b.width / 2;
+  // Not started yet: the layout plans it (start Infinity until then).
+  const item = { el, kind, arrival: calloutArrival++, start: Infinity, end: undefined, lane: 0, timer: null };
+  q.items.push(item);
   layer.appendChild(el);
-  const width = el.offsetWidth || 0, height = el.offsetHeight || 30;
-  const floor = overheadFloor(layer, anchor, b);
-  const base = floor == null ? b.top + 4 : Math.max(b.top + 4, floor + 2 + height + CALLOUT_RISE_PX);
-  const bottom = base + (floor == null ? -1 : 1) * slot * CALLOUT_SLOT_PX;
-  let at = { left: centre - width / 2, top: bottom - height };
-  if (width) at = clampBox({ left: at.left, top: at.top, width, height }, anchorLocalBox(layer, layer), { pad: 6 });
-  el.style.left = `${at.left + width / 2}px`;
-  el.style.top = `${at.top + height}px`;
-  setTimeout(() => el.remove(), ms);
+  layoutCallouts(layer, anchor, q, now, ms);
   return el;
 }
 
 /** A click-skip ends every callout in the layer. */
 export function clearCallouts(layer) {
   for (const node of [...(layer?.children || [])]) if (node.dataset?.calloutFor !== undefined) node.remove();
+  // The waiting queue goes with the visible words.
+  if (layer) calloutQueues.delete(layer);
 }
 
 /**
@@ -476,10 +570,22 @@ export function guardHitFloatParts(event) {
   const amount = Math.max(0, Number(event && event.amount) || 0);
   const blocked = Math.min(amount, Math.max(0, Number(event && event.blocked) || 0));
   const residual = amount - blocked;
+  // What Barrier (blue) and Ward (purple) absorbed before the hit reached
+  // Block (blue) and Health (red), each its own unsigned number.
+  const barrier = Math.max(0, Number(event && event.barrierAbsorbed) || 0);
+  const ward = Math.max(0, Number(event && event.wardAbsorbed) || 0);
+  const poise = Math.max(0, Number(event && event.poiseAbsorbed) || 0);
+  // The Force part a Silenced target was immune to (the rest of the hit landed).
+  const forceImmune = Math.max(0, Number(event && event.forceImmune) || 0);
   return {
     amount,
     blocked,
     residual,
+    // A hit Barrier stopped outright reads RESISTED.
+    barrier: barrier > 0 ? { text: amount === 0 && ward === 0 ? `${barrier} RESISTED` : String(barrier), cls: 'barrier small' } : null,
+    ward: ward > 0 ? { text: String(ward), cls: 'ward small' } : null,
+    poise: poise > 0 ? { text: String(poise), cls: 'poise small' } : null,
+    immune: forceImmune > 0 ? { text: `${forceImmune} IMMUNE`, cls: 'immune small' } : null,
     guard: blocked > 0 ? { text: String(blocked), cls: 'blk small' } : null,
     damage: residual > 0 ? { text: `-${residual}`, cls: dmgClass(residual) } : null,
   };
@@ -1038,6 +1144,7 @@ export function playTimeline(events, ctx, done) {
       traceBeat('contact', what);
     };
     schedule(() => {
+      if(!finished&&!flushed)safe(()=>activeActorAnimation?.contact?.());
       // A beat with nothing to draw at impact still reaches its impact frame.
       if (actorEl && visualEvents.every(event => calloutOnly(event, receiptVisuals))) markContact('impact');
       let vi = 0;
@@ -1171,7 +1278,7 @@ export function playTimeline(events, ctx, done) {
         // Sequential waits out a plain CSS lunge too, so the reaction never
         // starts mid-swing.
         const recovery = actorAnimation
-          ? Math.max(0, actorAnimation.totalMs + heldMs - (Date.now() - actorStartedAt))
+          ? Math.max(0, actorAnimation.totalMs + heldMs - (Date.now() - actorStartedAt), Number(actorAnimation.remainingMs?.())||0)
           : sequential && actorEl ? Math.max(0, speed.lungeMs + heldMs - (Date.now() - actorStartedAt)) : 0;
         if (recovery > 0) schedule(after, recovery);
         else after();
@@ -1345,8 +1452,77 @@ function visualPartsFor(e, beatKind, opts) {
     const anchor = ctx.anchorFor(effect.targetId);
     if (anchor) playCombatEffect(ctx.layer, anchorLocalBox(ctx.layer, anchor), effect.kind, { size: 190 });
   };
+  // SPEC §7.4 (sequential): the Stagger wobble is the defender's reaction, not
+  // the impact frame, so its break sprite plays with that reaction and takes no
+  // contact step that would hold back the hit's first number.
+  if (opts?.sequential && e.type === 'enemyStaggered' && base?.reaction && !base.contact) {
+    const reaction = base.reaction;
+    return { ...base, reaction: (ctx) => { reaction(ctx); playEffect(ctx); } };
+  }
   const contact = base?.contact;
   return { ...base, contact: contact ? (ctx) => { contact(ctx); playEffect(ctx); } : playEffect };
+}
+
+/**
+ * The one outcome word for a hit that does NO HP damage (owner, 2026-10-12):
+ * RESISTED (Barrier took it whole and did not break; blue), BLOCKED (Block took
+ * it whole; silver), IMMUNE (the target is immune; pale grey), MISSED (evaded;
+ * the existing callout). Any HP damage keeps the per-layer floats, so null.
+ * `e` is a damageDealt-like payload, or an attackEvaded / statusImmune event.
+ */
+export function outcomeKindForEvent(e = {}) {
+  if (e.type === 'attackEvaded') return 'evaded';
+  if (e.type === 'combatAvoidanceResolved') return e.avoided ? 'evaded' : null;
+  if (e.type === 'statusImmune') return 'immune';
+  if (e.type !== 'damageDealt') return null;
+  if (e.immune && !(Number(e.amount) > 0)) return 'immune';
+  const parts = guardHitFloatParts(e);
+  if (parts.residual > 0) return null; // HP damage: the per-layer floats show it
+  if (parts.blocked > 0) return 'blocked';
+  // Nothing reached Block or Health: Barrier or Ward took the whole hit. A Barrier that broke
+  // keeps its BREAK callout and its number, as it did before.
+  if (parts.amount === 0 && Math.max(0, Number(e.barrierAbsorbed) || 0) > 0) return e.barrierRemaining === 0 ? null : 'resisted';
+  if (parts.amount === 0 && Math.max(0, Number(e.wardAbsorbed) || 0) > 0) return 'wardResisted';
+  return null;
+}
+
+// Hostile statuses that earn a past-tense word over the fighter they land on
+// (owner, 2026-10-12). Each colour is the status row's own tint in content/statuses.js
+// where it has one; the rest are the owner's fallbacks, listed in the commit message.
+export const STATUS_WORDS = {
+  venom: { colour: '#6fd36f' },
+  burn: { colour: 'var(--ember)' },
+  bleed: { colour: 'var(--ember)' },
+  bleeding: { colour: '#e0334a' },
+  frost: { colour: '#7fa8c9' },
+  frozen: { colour: '#9fe3ff' },
+  chilled: { colour: '#9fe3ff' },
+  paralysis: { colour: '#ffe14d' },
+  sleep: { colour: '#c7b3ff' },
+  weak: { colour: 'var(--muted)' },
+  vulnerable: { colour: 'var(--grace)' },
+  magicVulnerable: { colour: '#8b7cd6' },
+  frail: { colour: 'var(--muted)' },
+  dazed: { colour: '#ffe14d' },
+  offBalance: { colour: '#d9c9a3' },
+  prone: { colour: '#d9c9a3' },
+  grounded: { colour: '#d9c9a3' },
+  insanity: { colour: '#a06bd0' },
+  madness: { colour: '#a06bd0' },
+  crimsonBlight: { colour: 'var(--rot)' },
+  frostExposed: { colour: '#7fa8c9' },
+  insanityExposed: { colour: '#a06bd0' },
+};
+
+/**
+ * A statusApplied payload → { kind, targetId, word, colour } for a hostile status
+ * that was applied, or null (a buff, an unlisted status, or a zero-stack event).
+ */
+export function statusPopupFor(e = {}) {
+  if (e.type !== 'statusApplied' || !(e.stacks > 0) || e.targetId == null) return null;
+  if (!Object.prototype.hasOwnProperty.call(STATUS_WORDS, e.status)) return null;
+  const string = `combat.status.applied.${e.status}`;
+  return { kind: `status:${e.status}`, targetId: e.targetId, string, word: t(string), colour: STATUS_WORDS[e.status].colour };
 }
 
 /**
@@ -1355,15 +1531,26 @@ function visualPartsFor(e, beatKind, opts) {
  */
 export function calloutForEvent(e = {}) {
   let kind = null;
+  const popup = statusPopupFor(e);
+  if (popup) return { kind: popup.kind, targetId: popup.targetId };
   switch (e.type) {
-    case 'enemyStaggered':
+    case 'damageDealt': case 'statusImmune': kind = outcomeKindForEvent(e); break;
+    // A stagger a break caused shows that break's word and INTERRUPTED, not a second STAGGERED.
+    case 'enemyStaggered': if (!e.cause) kind = 'staggered'; break;
     case 'playerStaggered': kind = 'staggered'; break;
+    case 'enemyInterrupted': kind = 'interrupted'; break;
+    // A Smash's Block break is the GUARD BREAK callout (combatGuardBroken); it earns no BREAK word of its own.
+    case 'blockBroken': if (!e.smash) kind = 'blockBreak'; break;
     case 'ratingImpact': if (e.breaks > 0) kind = e.label === 'Disruption' ? 'disrupted' : 'staggered'; break;
     case 'combatCounterTriggered': kind = 'countered'; break; // over the attacker who got countered
     case 'attackEvaded': kind = 'evaded'; break;
-    case 'combatAvoidanceResolved': if (e.avoided && e.evade?.success) kind = 'evaded'; break;
+    // Any avoidance that stopped the hit is a miss: an evade, a distance roll, or a prevention charge.
+    case 'combatAvoidanceResolved': if (e.avoided) kind = 'evaded'; break;
     case 'critHit': kind = 'critical'; break;
     case 'combatGuardBroken': kind = 'guardBreak'; break;
+    case 'wardBroken': kind = 'wardBreak'; break;
+    case 'barrierBroken': kind = 'barrierBreak'; break;
+    case 'poiseBroken': kind = 'poiseBreak'; break;
     default: break;
   }
   return kind && e.targetId != null ? { kind, targetId: e.targetId } : null;
@@ -1372,7 +1559,9 @@ export function calloutForEvent(e = {}) {
 function withCallout(parts, e) {
   const said = calloutForEvent(e);
   if (!said) return parts;
-  return { ...parts, callout: (ctx) => callout(ctx.layer, ctx.anchorFor(said.targetId), said.targetId, said.kind) };
+  // The BLOCKED word carries its hit sound, so the sound and the word land together.
+  const sound = e.type === 'damageDealt' && said.kind === 'blocked';
+  return { ...parts, callout: (ctx) => { callout(ctx.layer, ctx.anchorFor(said.targetId), said.targetId, said.kind); if (sound) sfx.play('block'); } };
 }
 
 // An event whose only visual is its callout: it never takes a step of its own.
@@ -1394,6 +1583,16 @@ function visualFor(e, beatKind, opts) {
 
 // opts.sequential (SPEC §7.4, beatOrder 'sequential'): a hit's sound plays
 // with its number; only the spark and slash stay at the contact.
+// A break's visual: a shatter ring in the layer's tone, over the fighter it broke, with its sound.
+function breakBurst(e, tone, sound) {
+  return {
+    reaction: (ctx) => {
+      sfx.play(sound);
+      spawnFx(ctx.layer, ctx.anchorFor(e.targetId), `fx-shatter ${tone}`, 420);
+    },
+  };
+}
+
 function baseVisualParts(e, beatKind, { sequential = false } = {}) {
   switch (e.type) {
     case 'damageDealt': {
@@ -1401,6 +1600,7 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
       // only the HP residual as damage. Paired results sit side-by-side without
       // relying on random jitter, so phone and desktop read the same grammar.
       const parts = guardHitFloatParts(e);
+      const outcome = outcomeKindForEvent(e);
       const paired = !!(parts.guard && parts.damage);
       const heavy = parts.residual >= 15;
       const hitSounds = () => {
@@ -1410,7 +1610,8 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
       return {
         contact: (ctx) => {
           const anchor = ctx.anchorFor(e.targetId);
-          if (!sequential) hitSounds();
+          // A BLOCKED hit's sound comes with its word (withCallout); other outcome words have no hit sound.
+          if (!sequential && !outcome) hitSounds();
           if (parts.guard) spawnFx(ctx.layer, anchor, 'fx-spark', 320, '✦');
           if (!parts.damage) return; // fully guarded: no flinch, slash, or shake
           // Attack impacts slash at the contact.
@@ -1435,8 +1636,15 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
           shake(ctx.combatEl, shakePxFor(parts.residual));
         },
         numbers: (ctx) => {
-          if (sequential) hitSounds();
+          if (sequential && !outcome) hitSounds();
+          // An outcome word (RESISTED, BLOCKED, IMMUNE, MISSED) replaces the numbers of a hit that did no HP damage.
+          if (outcome) return;
           const anchor = ctx.anchorFor(e.targetId);
+          // Barrier and Ward stack above the Block / Health pair.
+          if (parts.barrier) floatNum(ctx.layer, anchor, parts.barrier.text, parts.barrier.cls, null, { x: -52, y: -34, jitter: false });
+          if (parts.ward) floatNum(ctx.layer, anchor, parts.ward.text, parts.ward.cls, null, { x: parts.barrier ? 0 : -26, y: -34, jitter: false });
+          if (parts.poise) floatNum(ctx.layer, anchor, parts.poise.text, parts.poise.cls, null, { x: 26, y: -34, jitter: false });
+          if (parts.immune) floatNum(ctx.layer, anchor, parts.immune.text, parts.immune.cls, null, { x: 0, y: -62, jitter: false });
           if (parts.guard) floatNum(ctx.layer, anchor, parts.guard.text, parts.guard.cls, null,
             { x: paired ? -26 : 0, jitter: false });
           if (parts.damage) floatNum(ctx.layer, anchor, parts.damage.text, parts.damage.cls, null,
@@ -1533,16 +1741,34 @@ function baseVisualParts(e, beatKind, { sequential = false } = {}) {
       };
       // A Poise / Ward guard (the Dodge Roll) took some of the impact.
       return e.guarded > 0
-        ? { numbers: (ctx) => floatNum(ctx.layer, ctx.anchorFor(e.targetId), `${e.guarded} ${e.meter === 'ward' ? 'WARD' : 'POISE'} GUARDED`, 'blk small') }
+        ? { numbers: (ctx) => floatNum(ctx.layer, ctx.anchorFor(e.targetId), `${e.guarded} ${e.meter === 'ward' ? 'WARD' : 'POISE'} GUARDED`, `${e.meter === 'ward' ? 'ward' : 'poise'} small`) }
         : null;
     case 'meterGuardGained':
       return e.amount > 0
-        ? { numbers: (ctx) => floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount} ${e.meter === 'ward' ? 'WARD' : 'POISE'}`, 'blk small') }
+        ? { numbers: (ctx) => floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount} ${e.meter === 'ward' ? 'WARD' : 'POISE'}`, `${e.meter === 'ward' ? 'ward' : 'poise'} small`) }
         : null;
+    // A miss (any avoidance that stopped the hit): a white streak over the fighter it missed, and a swish.
+    case 'combatAvoidanceResolved':
+    case 'attackEvaded':
+      if (e.type === 'combatAvoidanceResolved' && !e.avoided) return null;
+      return {
+        reaction: (ctx) => {
+          sfx.play('cardDraw');
+          spawnFx(ctx.layer, ctx.anchorFor(e.targetId), 'fx-miss-streak', 380);
+        },
+      };
+    // A Smash's Block break shows as GUARD BREAK alone: no burst and no sound for it here.
+    case 'blockBroken': return e.smash ? null : breakBurst(e, 'block', 'hit_heavy');
+    case 'barrierBroken': return breakBurst(e, 'barrier', 'block');
+    case 'wardBroken': return breakBurst(e, 'ward', 'procBurst');
+    case 'poiseBroken': return breakBurst(e, 'gold', 'hit_heavy');
+    case 'enemyInterrupted': return breakBurst(e, 'interrupt', 'stagger');
+    case 'playerStaggered': return breakBurst(e, 'gold', 'stagger');
     case 'enemyStaggered':
       return {
         reaction: (ctx) => {
-          sfx.play('stagger');
+          // A break's stagger plays the break's own sound (poiseBroken, enemyInterrupted), not a second one.
+          if (!e.cause) sfx.play('stagger');
           // The STAGGERED word is the on-character callout now, not a banner.
           const anchor = ctx.anchorFor(e.targetId);
           flash(anchor, 'wobble', 600); // poise broken: the whole figure teeters

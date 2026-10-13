@@ -14,7 +14,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { BOT_AUTHOR as BOT, WORKFLOW_PATH, isNullSha, landedAfterBase, landedInSubjects, landedSince, parseRange, pickStampBase, restamp } from '../tools/build-stamp.mjs';
+import { BOT_AUTHOR as BOT, WORKFLOW_PATH, converge, isNullSha, landedAfterBase, landedInSubjects, landedSince, parseRange, pickStampBase, restamp } from '../tools/build-stamp.mjs';
 
 // A throwaway repository whose first-parent line is the given commit subjects,
 // oldest first. Each entry is a subject; an empty commit carries it.
@@ -89,6 +89,90 @@ test('restamp leaves a receipt with no stamp after its link alone, and says so',
   const r = restamp(bare, ['20'], BOX);
   assert.equal(r.text, bare);
   assert.deepEqual(r.unstamped, ['20']);
+});
+
+// A re-pointed receipt keeps its date group newest build first. #1902 sat at the
+// bottom of 2026-10-12 with a stale stamp; re-pointing it to 0.7.1.1429 must lift it
+// above the older builds (#1900 at 1427, #1897 at 1425) and never past the heading.
+const ABOUT = fileURLToPath(new URL('../tools/about-changelog.mjs', import.meta.url));
+const receipt = (n, s) => `${link(n, s)}. Nothing changes in the game.`;
+const ORDER_BOX = { release: '0.7.1', ordinal: 1429 };
+// The checker pins the old within-date rises of the real history, so a fixture is
+// checked on top of the real file's 2026-10-11 group and older, as the selftest does.
+// Its builds stay below 1425, so the fixture's own group is the only one under test.
+const REAL = readFileSync(new URL('../CHANGELOG.md', import.meta.url), 'utf8');
+const HISTORY = REAL.slice(REAL.indexOf('## 2026-10-11'));
+const FIXTURE_HEAD = ['# Changelog', '', '## 2026-10-12', ''];
+// The receipts of the fixture's own date group, in file order (history excluded).
+const groupPrs = (text) => [...text.slice(0, text.indexOf('## 2026-10-11')).matchAll(/^- .*\/pull\/(\d+)\)/gm)].map((m) => m[1]);
+const checkOrderOf = (markdown, box) => {
+  const dir = mkdtempSync(join(tmpdir(), 'build-stamp-order-'));
+  try {
+    writeFileSync(join(dir, 'CHANGELOG.md'), markdown);
+    writeFileSync(join(dir, 'buildordinal.json'), JSON.stringify(box));
+    const r = spawnSync(process.execPath, [ABOUT, '--root', dir, '--check-order'], { encoding: 'utf8' });
+    return { status: r.status, out: `${r.stdout}${r.stderr}` };
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+};
+
+test('restamp moves a re-pointed receipt to the top of its date group, and the strict order check passes', () => {
+  const md = [...FIXTURE_HEAD, receipt(1900, '0.7.1.1427'), receipt(1897, '0.7.1.1425'), receipt(1902, '0.7.1.1400'), '', HISTORY].join('\n');
+  const r = restamp(md, ['1902'], ORDER_BOX);
+  assert.deepEqual(r.changed, [{ pr: '1902', from: '0.7.1.1400', to: '0.7.1.1429' }]);
+  assert.deepEqual(groupPrs(r.text), ['1902', '1900', '1897'], 'the receipt moved above #1900, inside its own date');
+  assert.deepEqual(r.text.split('\n').filter((l) => /^## /.test(l)), md.split('\n').filter((l) => /^## /.test(l)), 'no heading moved');
+  const checked = checkOrderOf(r.text, ORDER_BOX);
+  assert.equal(checked.status, 0, checked.out);
+});
+
+test('restamp leaves the order of a date group alone when the re-pointed receipt is already in place', () => {
+  const md = [...FIXTURE_HEAD, receipt(1900, '0.7.1.1429'), receipt(1902, '0.7.1.1400'), receipt(1897, '0.7.1.1425'), '', HISTORY].join('\n');
+  const r = restamp(md, ['1902'], ORDER_BOX);
+  assert.equal(r.text, md.replace(receipt(1902, '0.7.1.1400'), receipt(1902, '0.7.1.1429')), 'only the stamp changes; no line moves');
+  assert.deepEqual(groupPrs(r.text), ['1900', '1902', '1897']);
+  assert.equal(checkOrderOf(r.text, ORDER_BOX).status, 0);
+});
+
+test('restamp moves a receipt that already carries the box up within its date group when it sits below a lower build', () => {
+  // #1902 was stamped with the box by an earlier pass, but it landed under #1900 (1427): the
+  // group is out of order before restamp runs. The receipt must move up even though its stamp
+  // does not change.
+  const md = [...FIXTURE_HEAD, receipt(1900, '0.7.1.1427'), receipt(1902, '0.7.1.1429'), receipt(1897, '0.7.1.1425'), '', HISTORY].join('\n');
+  assert.notEqual(checkOrderOf(md, ORDER_BOX).status, 0, 'the fixture is out of order before restamp');
+  const r = restamp(md, ['1902'], ORDER_BOX);
+  assert.deepEqual(r.current, ['1902'], 'the stamp was already the box');
+  assert.deepEqual(r.changed, []);
+  assert.deepEqual(groupPrs(r.text), ['1902', '1900', '1897'], 'the receipt moved above #1900, inside its own date');
+  assert.equal(checkOrderOf(r.text, ORDER_BOX).status, 0, checkOrderOf(r.text, ORDER_BOX).out);
+});
+
+test('converge writes a reorder-only repair before the first write, and the result passes the order rule', () => {
+  // Every landed receipt already names the committed box, so no stamp changes; only the
+  // line moves. converge must count that as a change, write the text, and converge.
+  const text0 = [...FIXTURE_HEAD, receipt(1900, '0.7.1.1427'), receipt(1902, '0.7.1.1429'), ''].join('\n');
+  const state = { text: text0, writes: 0, about: 0 };
+  const io = {
+    build: () => ({ box: ORDER_BOX, bytes: '0.7.1.1429' }),
+    readBox: () => ORDER_BOX,
+    readChangelog: () => state.text,
+    writeChangelog(t) { state.text = t; state.writes += 1; },
+    // The real write refuses a receipt that cites a newer build than the group above it.
+    about() {
+      state.about += 1;
+      const stamps = [...state.text.matchAll(/\/pull\/\d+\), `0\.7\.1\.(\d+)`/g)].map((m) => Number(m[1]));
+      for (let i = 1; i < stamps.length; i += 1) {
+        if (stamps[i] > stamps[i - 1]) throw new Error('build runs backward: a receipt cites a newer build than the group above it');
+      }
+      return false;
+    },
+    verify: () => null,
+  };
+  const r = converge(io, ['1902'], { maxRounds: 3 });
+  assert.equal(r.status, 'converged', JSON.stringify(r));
+  assert.equal(state.writes, 1, 'the reordered text was written');
+  const whole = [state.text.trimEnd(), '', HISTORY].join('\n');
+  assert.deepEqual(groupPrs(whole), ['1902', '1900']);
+  assert.equal(checkOrderOf(whole, ORDER_BOX).status, 0, checkOrderOf(whole, ORDER_BOX).out);
 });
 
 test('landedInSubjects: merge commits anywhere, a squash suffix on the first-parent line only, each number once', () => {
@@ -181,6 +265,39 @@ test('build-stamp.yml runs the whole stamp as one --stamp step, before anything 
   assert.ok(at('node tools/build-stamp.mjs --stamp --prs') < at('git add --'));
   assert.match(WORKFLOW, /node tools\/build-stamp\.mjs --stamp --since-last-stamp/);
   assert.doesNotMatch(WORKFLOW, /github\.event\.before|GITHUB_EVENT_BEFORE/, 'the base is the stamp base, never the event before');
+});
+
+test('build-stamp.yml refuses unordered restamped receipts before staging or dispatch', () => {
+  const guard = WORKFLOW.indexOf('node tools/about-changelog.mjs --check-order');
+  assert.ok(guard > WORKFLOW.indexOf('build-stamp.mjs --stamp --since-last-stamp'));
+  assert.ok(guard > WORKFLOW.indexOf('build-stamp.mjs --stamp --prs'));
+  assert.ok(guard < WORKFLOW.indexOf('git add --'));
+  const command = WORKFLOW.slice(guard).split('\n')[0];
+  assert.equal(command, 'node tools/about-changelog.mjs --check-order', 'strict guard, without pending exemptions or ignored failures');
+});
+
+test('the strict guard catches a same-date rise when a lower receipt\'s stamp is raised in place', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'build-stamp-order-'));
+  try {
+    const box = JSON.parse(readFileSync(join(ROOT, 'buildordinal.json'), 'utf8'));
+    const actual = readFileSync(join(ROOT, 'CHANGELOG.md'), 'utf8');
+    // Reproduce #1897's failure class: a receipt below an older build is
+    // raised to the current box while its original line position stays fixed.
+    // restamp() now moves a re-pointed receipt to the top of its date group,
+    // so the out-of-order fixture is built here by editing that one stamp in place.
+    const lines = actual.split('\n');
+    const at = lines.findIndex((l) => l.includes('[#1901]'));
+    assert.ok(at >= 0, 'the #1901 receipt is in CHANGELOG.md');
+    lines[at] = lines[at].replace(/0\.7\.1\.\d+/, `0.7.1.${box.ordinal}`);
+    const text = lines.join('\n');
+    assert.notEqual(text, actual, 'the #1901 stamp was raised');
+    assert.equal(text.split('\n').filter((l, i) => l !== actual.split('\n')[i]).length, 1, 'exactly one line changed');
+    writeFileSync(join(dir, 'CHANGELOG.md'), text);
+    writeFileSync(join(dir, 'buildordinal.json'), JSON.stringify(box));
+    const r = spawnSync(process.execPath, [join(ROOT, 'tools/about-changelog.mjs'), '--root', dir, '--check-order'], {encoding:'utf8', timeout:60000});
+    assert.equal(r.status, 1, r.stdout + r.stderr);
+    assert.match(r.stdout + r.stderr, /RED — .*build rises within/);
+  } finally { rmSync(dir, {recursive:true, force:true}); }
 });
 
 test('build-stamp.yml adds exactly the three derived files, never the built HTML or everything', () => {

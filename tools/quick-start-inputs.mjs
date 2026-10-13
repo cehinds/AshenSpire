@@ -284,22 +284,32 @@ async function main() {
     await until(`!!document.querySelector('[data-title-action="review-new"]:not([disabled])')`, 'the new-slot decision door');
     await click('[data-title-action="review-new"]', 'Start in this slot');
     await until(`!!document.querySelector('#cz-classes .cz-class')`, 'the Class stage');
+    // The staged flow (Class -> Attributes -> Keepsake -> Equipment -> Feats ->
+    // Spells for casters -> Review). Each stage is the `.cz-railed` panel's
+    // data-creation-stage; Next (#cz-next) is the one real click that leaves a
+    // stage, and each stage is waited for by that attribute.
+    const onStage = (stage) => `document.querySelector('.cz-railed')?.dataset.creationStage === '${stage}'`;
     const openFace = async (key) => {
       await until(`!!document.querySelector('[data-face="${key}"]')`, `the ${key} fold`);
       if (!(await evalIn(`document.querySelector('[data-face="${key}"]')?.closest('details')?.open === true`))) await click(`[data-face="${key}"]`, `open the ${key} fold`);
     };
     await click('#cz-classes .cz-class', 'a class');
-    await click('#cz-next', 'Next (to Character)');
-    await until(`!!document.querySelector('#cz-statedit .cc-mode-select')`, 'the Character stage');
-    await openFace('primary');
+    await click('#cz-next', 'Next (to Attributes)');
+    await until(`${onStage('attributes')} && !!document.querySelector('#cz-statedit .cc-mode-select')`, 'the Attributes stage');
     await chooseStatMode('lean');
-    await openFace('keepsake');
+    await click('#cz-next', 'Next (to Keepsake)');
+    await until(onStage('keepsake'), 'the Keepsake stage');
     await click('#cz-keepsakes [data-keepsake-id]', 'a keepsake');
-    await click('#cz-next', 'Next (to Starting equip)');
-    await until(`document.querySelector('#cz-tab-equipment')?.getAttribute('aria-selected') === 'true'`, 'the Starting equip stage');
+    await click('#cz-next', 'Next (to Equipment)');
+    await until(onStage('equipment'), 'the Equipment stage');
     await openFace('armour');
     await click('#cz-armours .equip-chip .equipment-poker-card', 'an armour');
-    await click('#cz-armours .equip-chip .equipment-choose', 'Choose armour');
+    // The armour's own Choose button is spent only when the stage shows it
+    // (a card click may already have chosen the armour); the probe never
+    // clicks an element it cannot see.
+    if (await evalIn(`(() => { const b = document.querySelector('#cz-armours .equip-chip .equipment-choose'); if (!b) return false; const r = b.getBoundingClientRect(); return r.width > 0 && r.height > 0 && !b.disabled; })()`)) {
+      await click('#cz-armours .equip-chip .equipment-choose', 'Choose armour');
+    }
     for (let step = 0; step < 8; step += 1) {
       if (await evalIn(`document.querySelector('#cz-tab-review')?.getAttribute('aria-selected') === 'true'`)) break;
       if (await evalIn(`document.querySelector('[data-equipment-section="startingAbilities"]')?.closest('details')?.open === true`)) {

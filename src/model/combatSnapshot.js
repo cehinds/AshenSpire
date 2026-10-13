@@ -3,7 +3,7 @@ import { retiredAttackSlots } from './cardRemoval.js';
 import { handRulesProblems } from './handRules.js';
 import { recoveryRulesProblems } from './recoveryRules.js';
 import { combatRatingProblems, ratingIds } from './combatRatings.js';
-import { combatIntentRulesProblems, combatMatchupRulesProblems, combatCounterProblems } from './combatTacticsRules.js';
+import { combatIntentRulesProblems, combatMatchupRulesProblems, combatCounterProblems, combatTraitGuardProblems } from './combatTacticsRules.js';
 import { statusControlProblems } from './combatStatusState.js';
 import { combatEnemyKnowledgeProblems } from './enemyKnowledgeCombat.js';
 import { combatReactionProblems } from './combatReactionState.js';
@@ -42,6 +42,7 @@ function entityProblems(entity, path, { player = false } = {}) {
   if (!record(entity)) return [`${path} must be an object`];
   if (entity.reactionsEnabled !== undefined && typeof entity.reactionsEnabled !== 'boolean') problems.push(`${path}.reactionsEnabled must be boolean`);
   if (entity.combatCounter !== undefined) problems.push(...combatCounterProblems(entity.combatCounter, `${path}.combatCounter`));
+  if (entity.combatTraitGuard !== undefined) problems.push(...combatTraitGuardProblems(entity.combatTraitGuard, `${path}.combatTraitGuard`));
   if (entity.intentRevealed !== undefined && typeof entity.intentRevealed !== 'boolean') problems.push(`${path}.intentRevealed must be boolean`);
   if (entity.intentReads !== undefined && (!record(entity.intentReads) || Object.entries(entity.intentReads).some(([id, value]) => !nonEmptyString(id) || typeof value !== 'boolean'))) problems.push(`${path}.intentReads must map player ids to booleans`);
   if (entity.intent?.counterDefensePrimed !== undefined) {

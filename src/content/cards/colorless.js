@@ -185,6 +185,87 @@ export const colorlessCards = [
     },
   },
 
+  // ---- Psychic and Earth (owner decision #13: no class owns them) -------------
+  // Reward-pool membership is by class cardPool, and nothing weights a card per
+  // class, so these ride the expanded-combat colorless door: any class meets them.
+  {
+    id: 'mindSpike', name: 'Mind Spike', class: 'colorless', rarity: 'common', cost: 1, manaCost: 0, type: 'attack', minCombatExpansionVersion: 2,
+    flavor: "A needle of thought, set where the doubt already lives.\n\nThe Starwatch drilled its apprentices to name a stranger's fear before the stranger did. The best of them could do it across a courtyard, and the worst of them could not stop.\n\nThe lens room was always quiet after the drill.",
+    keywords: [], icon: '✧',
+    damageSchool: 'magic', attack: { source: 'spell', damageType: 'psychic' },
+    effects: [{ op: 'damage', target: 'enemy', amount: 5 }],
+    textTemplate: 'Deal {damage} damage. Psychic damage leaves the target Confused.',
+    upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 8 }] },
+  },
+  {
+    id: 'dissonance', name: 'Dissonance', class: 'colorless', rarity: 'uncommon', cost: 1, manaCost: 1, type: 'skill', minCombatExpansionVersion: 2,
+    flavor: "Two true notes, struck a hair apart.\n\nThe Observatory's choir was forbidden the interval, for it turned the listener's own voice against the throat. Cantors who sang it by accident forgot their next line for a week.\n\nThe choir book still lists it, struck through twice.",
+    keywords: [], icon: '♯',
+    effects: [
+      { op: 'applyStatus', target: 'enemy', status: 'confused', stacks: 2 },
+      { op: 'applyStatus', target: 'enemy', status: 'silenced', stacks: 1 },
+      { op: 'draw', amount: 1 },
+    ],
+    textTemplate: 'Apply {confused} Confused and {silenced} Silenced. Draw {draw} card.',
+    upgrade: { effects: [
+      { op: 'applyStatus', target: 'enemy', status: 'confused', stacks: 3 },
+      { op: 'applyStatus', target: 'enemy', status: 'silenced', stacks: 1 },
+      { op: 'draw', amount: 1 },
+    ] },
+  },
+  {
+    id: 'mindFracture', name: 'Mind Fracture', class: 'colorless', rarity: 'uncommon', cost: 2, manaCost: 1, type: 'attack', minCombatExpansionVersion: 2,
+    flavor: "A crack drawn through the self.\n\nThe Starwatch's examiners tested apprentices by asking which memory they would give up. The ones who answered quickly were sent to the lower lenses. The ones who hesitated were kept.\n\nNeither group was told what the examiners took.",
+    keywords: [], icon: '❖',
+    damageSchool: 'magic', attack: { source: 'spell', damageType: 'psychic' },
+    effects: [{ op: 'damage', target: 'enemy', amount: 8 }, { op: 'poiseDamage', target: 'enemy', amount: 6 }, { op: 'applyStatus', target: 'enemy', status: 'confused', stacks: 2 }],
+    textTemplate: 'Deal {damage} damage and {poiseDamage} Poise damage. Apply {confused} Confused.',
+    upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 12 }, { op: 'poiseDamage', target: 'enemy', amount: 6 }, { op: 'applyStatus', target: 'enemy', status: 'confused', stacks: 2 }] },
+  },
+  {
+    id: 'wakingNightmare', name: 'Waking Nightmare', class: 'colorless', rarity: 'rare', cost: 2, manaCost: 1, type: 'attack', minCombatExpansionVersion: 2,
+    flavor: 'The dream does not end when the eyes open.\n\nApprentices who slept at the long lens woke describing rooms the Observatory never built. The Astronomer logged them as visions. The cleaning staff logged them as tenants.\n\nBoth logs agree the rooms were occupied.',
+    keywords: [], icon: '☾',
+    damageSchool: 'magic', attack: { source: 'spell', damageType: 'psychic' },
+    effects: [{ op: 'damage', target: 'enemy', amount: 13 }, { op: 'applyStatus', target: 'enemy', status: 'confused', stacks: 3 }, { op: 'buildup', target: 'enemy', status: 'sleep', amount: 4, camp: 'spell', recoveryProfile: 'mental', chance: 50 }],
+    textTemplate: 'Deal {damage} damage. Apply {confused} Confused. May add {sleep} Sleep buildup.',
+    upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 17 }, { op: 'applyStatus', target: 'enemy', status: 'confused', stacks: 3 }, { op: 'buildup', target: 'enemy', status: 'sleep', amount: 4, camp: 'spell', recoveryProfile: 'mental', chance: 50 }] },
+  },
+  {
+    id: 'stoneSling', name: 'Stone Sling', class: 'colorless', rarity: 'common', cost: 1, manaCost: 0, type: 'attack', minCombatExpansionVersion: 2,
+    flavor: "A pebble from the broken stair, thrown with the whole wrist.\n\nThe Basalt Stair porters kept a sling in each apron to scatter the crows from the grain. The crows learned to leave. The Stair's other visitors were slower learners.\n\nThe porters have not been paid in years and still keep their slings oiled.",
+    keywords: [], icon: '●',
+    damageSchool: 'magic', attack: { source: 'spell', damageType: 'earth' },
+    effects: [{ op: 'damage', target: 'enemy', amount: 6 }],
+    textTemplate: 'Deal {damage} damage. Earth damage leaves the target Slowed.',
+    upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 9 }] },
+  },
+  {
+    id: 'rockfall', name: 'Rockfall', class: 'colorless', rarity: 'common', cost: 2, manaCost: 1, type: 'attack', minCombatExpansionVersion: 2,
+    flavor: "The ceiling remembers it was a hill.\n\nThe Chapel's masons propped their vaults with lime and trust. Where the trust ran out, the hill came back down in a single afternoon, and the masons wrote it up as maintenance.\n\nThe ledger shows no survivors in the maintenance column either.",
+    keywords: [], icon: '▲',
+    damageSchool: 'magic', attack: { source: 'spell', damageType: 'earth' },
+    effects: [{ op: 'damage', target: 'allEnemies', amount: 8 }],
+    textTemplate: 'Deal {damage} damage to ALL enemies. Earth damage leaves each target Slowed.',
+    upgrade: { effects: [{ op: 'damage', target: 'allEnemies', amount: 11 }] },
+  },
+  {
+    id: 'stoneskin', name: 'Stoneskin', class: 'colorless', rarity: 'uncommon', cost: 1, manaCost: 0, type: 'skill', minCombatExpansionVersion: 2,
+    flavor: 'The body takes the temper of the quarry.\n\nBastion masons rubbed grit into their forearms until the grit stayed. They said a wall that forgets to be a wall is only a heap, and a mason who forgets is the same.\n\nThe hardest of them could not be moved, and some of them could not move.',
+    keywords: [], icon: '◆',
+    effects: [{ op: 'block', target: 'self', amount: 6 }, { op: 'applyStatus', target: 'self', status: 'stoneskin', stacks: 1 }],
+    textTemplate: 'Gain {block} Block and {stoneskin} Stoneskin: your Block is not removed at the start of your next turn.',
+    upgrade: { effects: [{ op: 'block', target: 'self', amount: 9 }, { op: 'applyStatus', target: 'self', status: 'stoneskin', stacks: 1 }] },
+  },
+  {
+    id: 'entomb', name: 'Entomb', class: 'colorless', rarity: 'rare', cost: 2, manaCost: 1, type: 'attack', minCombatExpansionVersion: 2,
+    flavor: 'The ground closes over a held breath.\n\nBastion engineers sealed a breached gallery with the breachers still inside, and entered the act in the log as repair. The stone has been warm to the touch ever since.\n\nThe gallery is still being repaired.',
+    keywords: [], icon: '▣',
+    damageSchool: 'magic', attack: { source: 'spell', damageType: 'earth' },
+    effects: [{ op: 'damage', target: 'enemy', amount: 14 }, { op: 'applyStatus', target: 'enemy', status: 'entombed', stacks: 1 }],
+    textTemplate: 'Deal {damage} damage. Apply {entombed} Entombed: it skips its next turn.',
+    upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 18 }, { op: 'applyStatus', target: 'enemy', status: 'entombed', stacks: 1 }] },
+  },
   // ---- Statuses (the card kind) + curses (enemy/event injected) --------------
   {
     id: 'wound', name: 'Wound', class: 'colorless', rarity: 'special', cost: 0, type: 'status',
