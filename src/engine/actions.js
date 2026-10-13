@@ -263,7 +263,7 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
   if (hpLoss > 0) {
     if (ctx.ratingsRules && !carrier?.combatReaction) {
       const multiplier = Matchups.matchupPoiseMultiplier(ctx, source, target, carrier);
-      Ratings.applyRatingImpact(ctx, source, target, carrier, multiplier > 1 ? Math.floor(attackImpact(ctx, source, carrier) * multiplier) : null, { knowledgeMatchup: multiplier > 1 });
+      Ratings.applyRatingImpact(ctx, source, target, carrier, multiplier > 1 ? Math.floor(attackImpact(ctx, source, carrier) * multiplier) : null, { knowledgeMatchup: multiplier > 1, cause: 'hit' });
     }
     ctx.emit('hpLost', { ...seatOf(ctx, target), targetId: target.id, amount: hpLoss, cause: 'attack' });
     if (!usesSingleBreakMeter(ctx) && !carrier?.combatReaction) applyArcaneExposure(ctx, source, target, carrier);
@@ -638,14 +638,14 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
     else ctx.emit(type, payload);
   }
   if (hpLoss) ctx.emit('hpLost', { targetId: target.id, amount: hpLoss, cause: 'attack', ...seatOf(ctx, target) });
-  if (!carrier.combatReaction && !tactical.avoided && target.alive && ctx.ratingsRules) Ratings.applyRatingImpact(ctx, source, target, carrier);
+  if (!carrier.combatReaction && !tactical.avoided && target.alive && ctx.ratingsRules) Ratings.applyRatingImpact(ctx, source, target, carrier, null, { cause: 'hit' });
   // Independent pressure resolves even when all direct damage met protection.
   if (!carrier.combatReaction) for (const effect of Matchups.matchupRiderEffects(ctx, source, target, carrier, { amount, hpLoss })) {
     if (['applyStatus', 'buildup'].includes(effect.op)) {
       const pressure = Control.applyStatusPressure(ctx, target, effect.status, effect.amount ?? effect.stacks, source, { camp: effect.camp || profile.camp,
         actionKey: carrier.expansionGroup?.key || `${ctx.turn}:${carrier.instanceId || 'reaction'}` });
       Matchups.recordTacticalStatus(tactical, pressure);
-    } else if (effect.op === 'poiseDamage') dealPoiseDamage(ctx, target, effect.amount);
+    } else if (effect.op === 'poiseDamage') dealPoiseDamage(ctx, target, effect.amount, { cause: `rider:${effect.rider || type}` });
     // Holy's cleanse (target 'self' = the attacker) resolves as on the v1 path;
     // without this a v2 Holy hit cleansed nothing (SPEC §4.7).
     else if (effect.op === 'removeStatus') ctx.enqueue({ effect, source, owner: source, target, card: { ...carrier, combatReaction: true }, meta: { combatDamageRider: true } });
@@ -960,8 +960,9 @@ export function staggerPlayer(ctx, player) {
  * (staggerEnemy + balance.poise.onFill) or the player (staggerPlayer), and the
  * meter grows by balance.poise.growthMult either way.
  */
-export function dealPoiseDamage(ctx, entity, amount, { knowledgeMatchup = false } = {}) {
-  if (ctx.ratingsRules) return Ratings.applyRatingImpact(ctx, null, entity, { damageSchool: 'physical' }, amount, { knowledgeMatchup });
+export function dealPoiseDamage(ctx, entity, amount, { knowledgeMatchup = false, cause = null, source = null, cardId = null } = {}) {
+  // `source` and `cardId` only name who dealt it in the receipt (an explicit amount never reads the source).
+  if (ctx.ratingsRules) return Ratings.applyRatingImpact(ctx, source, entity, { damageSchool: 'physical' }, amount, { knowledgeMatchup, cause, cardId });
   if (!entity || !entity.alive || (entity.kind !== 'enemy' && entity.kind !== 'player')) return;
   if (!entity.poiseMeter || !(entity.poiseMeter.max > 0)) return;
   const isEnemy = entity.kind === 'enemy';
@@ -1282,7 +1283,7 @@ function runOpcode(ctx, action, eff) {
           const crit = plannedContacts ? 0 : rollCrit(ctx, action.source, attackTags);
           if (crit) carrier.critMultiplier = crit;
           applyAttackDamage(ctx, action.source, t, base, attackTags, carrier);
-          if (h === 0 && t === targets[0] && t.alive && action.meta?.abilityChargeBreak) dealPoiseDamage(ctx, t, action.meta.abilityChargeBreak);
+          if (h === 0 && t === targets[0] && t.alive && action.meta?.abilityChargeBreak) dealPoiseDamage(ctx, t, action.meta.abilityChargeBreak, { cause: 'charge:break' });
           // OUTSIDE the foundation ruleset (the shipped game creates its combats
           // without one), an enemy blow that draws blood rocks the player by
           // balance.poise.playerImpactPerHit — the one impact the shipped
@@ -1297,7 +1298,7 @@ function runOpcode(ctx, action, eff) {
           }
           if (ctx.foundation && !evaded && t.alive && !carrier.combatReaction && !(action.meta?.foundationAncestry?.length)) {
             const resistedImpact = Math.floor((impact[h] || 0) * (1 - (F.foundationProfile(ctx, t).impactResistance || 0)) * Matchups.matchupPoiseMultiplier(ctx, action.source, t, carrier));
-            dealPoiseDamage(ctx, t, resistedImpact);
+            dealPoiseDamage(ctx, t, resistedImpact, { cause: 'hit' });
             // The player's meter is real too (plan phase 8): the receipt is
             // emitted for every target, and the armour skill hooks read it.
             ctx.emit('impactDealt', { sourceId: action.source?.id, targetId: t.id, amount: resistedImpact, ...(t.poiseMeter ? { poiseMeter: { value: t.poiseMeter.value, max: t.poiseMeter.max } } : {}), ...(t.kind === 'player' && ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(t) } : {}) });
