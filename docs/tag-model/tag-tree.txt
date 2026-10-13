@@ -186,7 +186,7 @@ Meta
     Technique {Conditions for explicit technique bonuses.}
       Heavy [m]
       Precision [m] {Each stack adds +1 Accuracy (DECISIONS section 16, owner 2026-10-13); not a Piercing bypass (section 17).}
-      Pierce [m] {Piercing stacks ignore Block and Poise (physical) or Barrier and Ward (magical), 2 Block or Barrier per stack (DECISIONS section 17, owner 2026-10-13).}
+      Pierce [m] {Piercing stacks reduce Block and Poise (physical) or Barrier and Ward (magical) by 2 per stack (DECISIONS section 17, owner 2026-10-13).}
       Cleave [m]
       Flourish [m]
       Guile [m] {rogue trickery}
@@ -247,7 +247,7 @@ Meta
       Physical
         Slashing {→ Bleeding}
         Blunt {→ Poise damage}
-        Pierce {ignores Guard. Each stack ignores 2 Block, and Poise outright (DECISIONS section 17, owner 2026-10-13; Poise to confirm).}
+        Pierce {ignores Guard. Each stack reduces Block and Poise by 2 (DECISIONS section 17, owner 2026-10-13).}
         blade {Damage dealt with an edge.}
         blunt {Damage dealt with mass and impact.}
         piercing {Damage dealt with a point. Piercing rules: DECISIONS section 17 (owner 2026-10-13).}
