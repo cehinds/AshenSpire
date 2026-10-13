@@ -206,7 +206,7 @@ export const act2Enemies = [
       "strength": 3,
       "dexterity": 3,
       "constitution": 3,
-      "wisdom": 4,
+      "wisdom": 5,
       "intelligence": 4
     },
     "name": "Mirror Scribe",

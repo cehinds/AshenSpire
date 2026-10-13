@@ -134,6 +134,15 @@ test('enemy SP comes from stats: ENEMY_SP_ROW on the attributes, blight shifted,
   for (const def of registries.enemies.all()) assert.equal(Rounds.enemyPool(def), enemyPoolOf(def), def.id);
 });
 
+test('every enemy can afford its cheapest move: its pool covers the resolved (registry-tagged) move price', () => {
+  // A caster's moves pick up camp:spell tags in the registry, which the action-cost table prices at 2 SP; a pool
+  // below its cheapest move would leave the round planner one move it cannot validate (SPEC §4.6a).
+  for (const def of registries.enemies.all()) {
+    const cheapest = Math.min(...Object.values(def.moves).map((move) => Rounds.moveSp(move)));
+    assert.ok(cheapest <= enemyPoolOf(def), `${def.id}: cheapest move ${cheapest} SP, pool ${enemyPoolOf(def)} SP`);
+  }
+});
+
 test('every enemy lands in its SP band: minions 1-2, elites 2-3, bosses 3-4 (owner, 2026-10-13)', () => {
   const pools = new Map();
   for (const encounter of registries.encounters.all()) for (const id of encounter.enemies) {

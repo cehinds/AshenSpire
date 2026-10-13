@@ -41,7 +41,7 @@ export function moveSp(move) {
 export const enemyMoveSp = moveSp;
 
 // The enemy's SP pool per turn (SPEC §4.6a, owner 2026-10-12): stat-driven, the stamina row read on the enemy's
-// `attributes` plus its `equipmentSp` (model/actionCosts.js enemyPoolOf). An enemy with no authored stats has 3.
+// `attributes` plus its `equipmentSp` (model/actionCosts.js enemyPoolOf). An enemy with no authored stats has 1.
 export const enemyPool = (def) => enemyPoolOf(def);
 
 // One enemy's hidden queue. `pick(enemy, def, maxSp)` is the live weighted pick (enemyAI stream), offered only the

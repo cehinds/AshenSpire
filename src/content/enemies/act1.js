@@ -83,7 +83,7 @@ export const act1Enemies = [
   {
     id: 'graveWisp',
     // Stats for its SP pool (SPEC §4.6a, owner 2026-10-13).
-    attributes: { strength: 3, dexterity: 3, constitution: 3, wisdom: 4, intelligence: 4 },
+    attributes: { strength: 3, dexterity: 3, constitution: 3, wisdom: 5, intelligence: 4 },
     size: 'small',
     tint: 'var(--grace)',
     name: 'Grave Wisp',
@@ -182,7 +182,7 @@ export const act1Enemies = [
       "strength": 3,
       "dexterity": 3,
       "constitution": 3,
-      "wisdom": 4,
+      "wisdom": 5,
       "intelligence": 4
     },
     "name": "Lantern Moth",
@@ -226,7 +226,7 @@ export const act1Enemies = [
       "strength": 6,
       "dexterity": 3,
       "constitution": 3,
-      "wisdom": 2,
+      "wisdom": 5,
       "intelligence": 2
     },
     "name": "Briar Hermit",

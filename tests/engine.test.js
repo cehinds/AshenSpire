@@ -1877,8 +1877,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     dispatch(v, { type: 'endTurn' }); // firstMove spiralThrust: 20 dmg + 2 player Bleed
     const heals = logOf(v, 'healed').filter((e) => e.targetId === 'e1');
     assert(heals.length >= 1 && heals[0].amount === 2, 'healed 2 off her own hit');
-    // Two planned blade moves, each Bleeding 2 (the enemy's 2-SP pool, owner 2026-10-12).
-    eq(S.getStacks(v.player, 'bleed'), 4, 'her blade Bleeds the player once per planned move');
+    // Three planned blade moves, each Bleeding 2 (her 4-SP pool from stats, SPEC §4.6a, owner 2026-10-13).
+    eq(S.getStacks(v.player, 'bleed'), 6, 'her blade Bleeds the player once per planned move');
 
     // Player-side Bleed meter bursts exactly like an enemy's (SPEC §10 seam).
     S.applyStatus(v, v.player, 'bleed', 10); // 2 + 10 = 12 → fill (effects enqueued)
