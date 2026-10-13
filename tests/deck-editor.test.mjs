@@ -15,7 +15,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { contentBundle } from '../src/content/index.js';
-import { createRegistries } from '../src/model/registries.js';
+import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { locationServices, locationTags } from '../src/model/locations.js';
 import { deckEditorModel, deckEditorDoors, deckVariantKey, openDeckEdit, nextFilterPreset, deckEditorView } from '../src/ui/models/DeckEditorModel.js';
@@ -484,7 +484,7 @@ test('Reading Desk: inspector uses one native artwork image across card selectio
         const images = face.querySelectorAll('[data-component="art"] img');
         assert.equal(images.length, 1, tile.name);
         assert.ok(images[0].classList.contains('playing-card-art'));
-        assert.equal(images[0].getAttribute('data-card-art'), illustratedArtwork(tile.ref, face.dataset.cardId, { large: true }).kind);
+        assert.equal(images[0].getAttribute('data-card-art'), illustratedArtwork(tile.ref, face.dataset.cardId, { large: true, definition:resolveCard(REG,tile.ref), registries:REG }).kind);
         assert.equal(face.querySelector('.deck-editor-art'), null, 'no second Reading Desk artwork overlay');
       }
     } finally { editor.close(); }
@@ -526,6 +526,32 @@ test('Reading Desk: deck search and Cards mode preserve the run and Back returns
     assert.equal(editor.root.querySelector('.deck-editor').dataset.mobileView, 'collection', 'Back returns to the list');
     assert.deepEqual(editState(run), before);
     editor.close();
+  });
+});
+
+test('Reading Desk: thumbnail art follows the live style preference and retains legacy fallback', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  const { applyCardArtStyle } = await import('../src/ui/cardArtStyle.js');
+  withDom(dom => {
+    applyCardArtStyle({});
+    const run=freshRun(),before=editState(run);
+    const editor=mountDeckEditor(document.body,{registries:REG,run,search:true});
+    try {
+      const search=editor.root.querySelector('[data-focus-key="deck-search"]');
+      search.value='Gorefire';
+      search.dispatchEvent(new dom.Event('input'));
+      editor.root.querySelector('[data-focus-key="display:cards"]').click();
+      const well=()=>editor.root.querySelector('.deck-editor-row .deck-editor-art');
+      assert.equal(well().dataset.cardArt,'simple');
+      well().querySelector('img').dispatchEvent(new dom.Event('error'));
+      assert.equal(well().dataset.cardArt,'official');
+      assert.equal(well().querySelector('[data-card-art-layers]'),null);
+      applyCardArtStyle({cardArtStyle:'Legacy'});
+      assert.equal(well().dataset.cardArt,'official');
+      applyCardArtStyle({});
+      assert.equal(well().dataset.cardArt,'simple');
+      assert.deepEqual(editState(run),before);
+    } finally {editor.close();applyCardArtStyle({});}
   });
 });
 
@@ -1322,10 +1348,13 @@ test('DOM: range follows the expanded combat delivery; the mark follows the camp
     // A ranged maneuver's stance already reads Ranged, so it shows no separate range.
     assert.deepEqual(read('ricochet'), [undefined, 'physical'], 'a ranged maneuver shows no separate range');
     assert.equal(row('ricochet').querySelector('.deck-editor-stance')?.dataset.stance, 'ranged');
-    // Physical marks carry the Smash sigil; magical marks carry the Spell sigil.
+    // Physical marks carry the approved shield; magical marks carry the Spell sparkle.
     const mark = (cardId) => row(cardId).querySelector('.deck-editor-camp .combat-sigil')?.dataset.sigil;
-    assert.equal(mark('ricochet'), 'smash');
+    assert.equal(mark('ricochet'), 'physical');
     assert.equal(mark('cometFragment'), 'spell');
+    const spellMark = row('cometFragment').querySelector('.deck-editor-camp .combat-sigil');
+    assert.equal(spellMark.querySelectorAll('path').length, 1);
+    assert.equal(spellMark.querySelector('path').getAttribute('d'), 'm16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z');
     // Phase Ward carries reach:contact but attacks nothing: no range.
     assert.equal(read('phaseWard')[0], undefined, 'a card that attacks nothing shows no range');
     // A magical Power is a Power, with no Cantrip badge.

@@ -7,11 +7,25 @@ import { alternativeFormation, fitAlternativeSprites } from '../src/ui/models/Al
 import { combatFormation } from '../src/ui/models/CombatFormationModel.js';
 import { alternativeEnemyTargetGrid } from '../src/ui/models/AlternativeEnemyTargetGridModel.js';
 
-test('alternative labeled targets keep their original 88 pixel cells', () => {
+test('close alternative targets shrink uniformly and stay centred', () => {
   const targets = [{ id: 'a', x: 280, y: 190 }, { id: 'b', x: 350, y: 190 }];
   const slots = alternativeEnemyTargetGrid({ width: 650, height: 400, targets });
   assert.equal(slots.length, 2);
-  assert(slots.every(slot => slot.width === 88 && slot.height === 88));
+  const [a, b] = targets.map(target => slots.find(slot => slot.id === target.id));
+  assert.equal(a.width, a.height);
+  assert.equal(a.width, b.width, 'both boxes share one edge');
+  assert.ok(a.width < 88, `70px-apart foes shrink below 88px (got ${a.width})`);
+  for (const [slot, target] of [[a, targets[0]], [b, targets[1]]]) {
+    assert.ok(Math.abs(slot.left + slot.width / 2 - target.x) <= 0.5, `centre x ${slot.left + slot.width / 2} = ${target.x}`);
+  }
+  const overlap = (p, q) => p.left < q.left + q.width && p.left + p.width > q.left && p.top < q.top + q.height && p.top + p.height > q.top;
+  assert.ok(!overlap(a, b), 'boxes do not overlap');
+});
+
+test('a lone alternative target keeps its full 88 pixel cell', () => {
+  const [slot] = alternativeEnemyTargetGrid({ width: 650, height: 400, targets: [{ id: 'a', x: 280, y: 190 }] });
+  assert.equal(slot.width, 88);
+  assert.equal(slot.height, 88);
 });
 
 test('every body stands on its cell\'s foot anchor', () => {
