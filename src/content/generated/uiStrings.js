@@ -6296,6 +6296,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "settings.row.cardArtStyle",
+    "extends": "",
+    "short": "Card artwork",
+    "full": "Simple uses the new card artwork with elemental and status accents. Legacy keeps the original illustrations.",
+    "tip": ""
+  },
+  {
     "id": "settings.row.uiScale",
     "extends": "",
     "short": "UI size",
@@ -9415,6 +9422,13 @@ export const uiStrings = [
     "extends": "",
     "short": "{stance} ?",
     "full": "",
+    "tip": ""
+  },
+  {
+    "id": "card.tags.evade",
+    "extends": "",
+    "short": "Evade",
+    "full": "Evade or dodge an incoming action.",
     "tip": ""
   },
   {
