@@ -1038,6 +1038,7 @@ export function playTimeline(events, ctx, done) {
       traceBeat('contact', what);
     };
     schedule(() => {
+      if(!finished&&!flushed)safe(()=>activeActorAnimation?.contact?.());
       // A beat with nothing to draw at impact still reaches its impact frame.
       if (actorEl && visualEvents.every(event => calloutOnly(event, receiptVisuals))) markContact('impact');
       let vi = 0;
@@ -1171,7 +1172,7 @@ export function playTimeline(events, ctx, done) {
         // Sequential waits out a plain CSS lunge too, so the reaction never
         // starts mid-swing.
         const recovery = actorAnimation
-          ? Math.max(0, actorAnimation.totalMs + heldMs - (Date.now() - actorStartedAt))
+          ? Math.max(0, actorAnimation.totalMs + heldMs - (Date.now() - actorStartedAt), Number(actorAnimation.remainingMs?.())||0)
           : sequential && actorEl ? Math.max(0, speed.lungeMs + heldMs - (Date.now() - actorStartedAt)) : 0;
         if (recovery > 0) schedule(after, recovery);
         else after();
