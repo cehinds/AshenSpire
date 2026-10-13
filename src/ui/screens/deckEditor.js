@@ -42,6 +42,7 @@ import { playingCardArt, cardArtFallbacks } from '../cardArtwork.js';
 import { cardArtLayersHtml } from '../cardArtLayers.js';
 import { registerCardArtRefresh } from '../cardArtStyle.js';
 import { assetUrl } from '../assetmap.js';
+import { markArtPlaceholder } from '../artFallback.js';
 import { cardShapeCssProperties, cardLevelWidthCss } from '../models/CardSizeModel.js';
 import { keywordExplanations } from '../components/tooltipGlossary.js';
 import { deckCardAnimationPreview } from '../components/deckCardAnimationPreview.js';
@@ -207,6 +208,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       if(art)well.insertAdjacentHTML('beforeend',cardArtLayersHtml(art));
       const fallbacks=cardArtFallbacks(row.ref,art,{large});
       img.addEventListener('error',()=>{
+        markArtPlaceholder(well, paint);
         const next=fallbacks.shift();
         well.querySelectorAll('[data-card-art-layers]').forEach(node=>node.remove());
         if(!next){img.hidden=true;return;}

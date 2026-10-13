@@ -24,6 +24,7 @@ import { flasks } from '../../content/flasks.js';
 import { tagService } from '../../model/tagService.js';
 import { metadataFooter, artworkAnchor } from '../models/IdentityModel.js';
 import { cardArtFallbacks } from '../cardArtwork.js';
+import { markArtPlaceholder } from '../artFallback.js';
 import { registerCardArtRefresh } from '../cardArtStyle.js';
 import { assetUrl } from '../assetmap.js';
 import { t } from '../strings.js';
@@ -303,6 +304,7 @@ export function renderCard(registries, ref, opts = {}) {
       const fallbacks = cardArtFallbacks(ref, artwork, {large:at==='inspect',
         legacy:artwork?.kind==='simple'?illustratedArtwork(ref,model.id,{large:at==='inspect',equipmentArt:equipmentPainting,style:'Legacy'}):null});
       image.addEventListener('error',()=>{
+        markArtPlaceholder(el, () => paint(drawn));
         const next=fallbacks.shift();
         if(next){
           image.parentNode?.querySelectorAll('[data-card-art-layers]').forEach(node=>node.remove());
