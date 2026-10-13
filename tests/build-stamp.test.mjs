@@ -146,6 +146,22 @@ test('restamp moves a receipt that already carries the box up within its date gr
   assert.equal(checkOrderOf(r.text, ORDER_BOX).status, 0, checkOrderOf(r.text, ORDER_BOX).out);
 });
 
+test('restamp moves a landed receipt from an older date into the newest date group', () => {
+  const md = [
+    '# Changelog', '',
+    '## 2026-10-13', '', receipt(1930, '0.7.1.1463'), '',
+    '## 2026-10-12', '', receipt(1932, '0.7.1.1459'), receipt(1896, '0.7.1.1459'), '',
+    HISTORY,
+  ].join('\n');
+  const r = restamp(md, ['1932'], { release: '0.7.1', ordinal: 1465 });
+  const beforeYesterday = r.text.slice(0, r.text.indexOf('## 2026-10-12'));
+  assert.deepEqual([...beforeYesterday.matchAll(/\/pull\/(\d+)\)/g)].map((m) => m[1]), ['1932', '1930']);
+  assert.equal(r.text.match(/\/pull\/1932\)/g)?.length, 1, 'the moved receipt is not duplicated');
+  assert.match(r.text.slice(r.text.indexOf('## 2026-10-12')), /\/pull\/1896\)/);
+  assert.doesNotMatch(r.text.slice(r.text.indexOf('## 2026-10-12')), /\/pull\/1932\)/);
+  assert.equal(checkOrderOf(r.text, { release: '0.7.1', ordinal: 1465 }).status, 0);
+});
+
 test('converge writes a reorder-only repair before the first write, and the result passes the order rule', () => {
   // Every landed receipt already names the committed box, so no stamp changes; only the
   // line moves. converge must count that as a change, write the text, and converge.
@@ -281,13 +297,13 @@ test('the strict guard catches a same-date rise when a lower receipt\'s stamp is
   try {
     const box = JSON.parse(readFileSync(join(ROOT, 'buildordinal.json'), 'utf8'));
     const actual = readFileSync(join(ROOT, 'CHANGELOG.md'), 'utf8');
-    // Reproduce #1897's failure class: a receipt below an older build is
-    // raised to the current box while its original line position stays fixed.
+    // Reproduce #1897's failure class in the newest date group: a receipt below
+    // an older build is raised to the current box while its line stays fixed.
     // restamp() now moves a re-pointed receipt to the top of its date group,
     // so the out-of-order fixture is built here by editing that one stamp in place.
     const lines = actual.split('\n');
-    const at = lines.findIndex((l) => l.includes('[#1901]'));
-    assert.ok(at >= 0, 'the #1901 receipt is in CHANGELOG.md');
+    const at = lines.findIndex((l) => l.includes('[#1934]'));
+    assert.ok(at >= 0, 'the #1934 receipt is in CHANGELOG.md');
     lines[at] = lines[at].replace(/0\.7\.1\.\d+/, `0.7.1.${box.ordinal}`);
     const text = lines.join('\n');
     assert.notEqual(text, actual, 'the #1901 stamp was raised');

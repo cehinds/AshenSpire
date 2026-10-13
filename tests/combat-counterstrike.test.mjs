@@ -31,7 +31,7 @@ function play({ version = 2, stance = null, registries = counter } = {}) {
       deck: [{ cardId: 'strike', instanceId: 'c0', upgraded: false }, ...[1, 2, 3, 4, 5].map(i => ({ cardId: 'strike', instanceId: `d${i}`, upgraded: false }))] } });
   const enemy = combat.enemies[0];
   enemy.hp = 100; enemy.maxHp = 100; enemy.block = 0;
-  if (stance) enemy.combatStance = { maneuver: stance, camp: 'physical', reach: 'contact' };
+  if (stance) enemy.combatStance = { maneuver: stance, camp: 'physical', range: 'melee' };
   // Pin the hand to the played card so the draw count is measurable.
   combat.piles.hand = combat.piles.hand.filter(card => card.instanceId === 'c0');
   const handBefore = combat.piles.hand.length;
@@ -111,7 +111,7 @@ test('a Counterstrike Counter scales its own Block: 6 → 9 against Defend, unsc
       enemyIds: ['wanderingSoldier'], player: { classId: 'reaver', maxHp: 100, hp: 100, maxMana: 20, mana: 20,
         maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 0, deck: [] } });
     const enemy = combat.enemies[0];
-    enemy.combatStance = { maneuver: enemyStance, camp: 'physical', reach: 'contact' };
+    enemy.combatStance = { maneuver: enemyStance, camp: 'physical', range: 'melee' };
     const effects = [{ op: 'block', target: 'self', amount: 6 }];
     // arm: false keeps the Counter from arming, so only the played effects are prepared.
     return { combat, support: prepareTacticalCard(combat, combat.player, enemy, { ...carrier }, effects, {}, { arm: false }) };
@@ -131,7 +131,7 @@ test('a Counterstrike Counter played from the reaction stack vs an attacking ene
   const registries = createRegistries({ ...contentBundle,
     enemies: contentBundle.enemies.map(enemy => enemy.id === 'wanderingSoldier'
       ? { ...enemy, firstMove: 'slash', moves: { slash: { intent: 'attack', damage: 20, hits: 1, weight: 1,
-        tags: ['camp:physical', 'maneuver:attack', 'reach:contact', 'targeting:single'] } } } : enemy) });
+        tags: ['camp:physical', 'maneuver:attack', 'range:melee', 'targeting:single'] } } } : enemy) });
   const combat = createCombat({ registries, rng: createRng(701), combatExpansionVersion: 2, reactionRulesVersion: 2,
     enemyIds: ['wanderingSoldier'], player: { classId: 'reaver', maxHp: 100, hp: 100, maxMana: 20, mana: 20,
       maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 1,
@@ -160,7 +160,7 @@ test('a Counterstrike Counter without an authored payload records its damage bas
     enemyIds: ['wanderingSoldier'], player: { classId: 'reaver', maxHp: 100, hp: 100, maxMana: 20, mana: 20,
       maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 0, deck: [] } });
   const enemy = combat.enemies[0];
-  const carrier = { cardId: 'guardCounter', traitValues: CS, combatProfile: { maneuver: 'counter', camp: 'physical', reach: 'contact', targeting: 'single', counterMode: 'melee' } };
+  const carrier = { cardId: 'guardCounter', traitValues: CS, combatProfile: { maneuver: 'counter', camp: 'physical', range: 'melee', targeting: 'single', counterMode: 'melee' } };
   prepareTacticalCard(combat, combat.player, enemy, carrier, [{ op: 'damage', target: 'enemy', amount: 5 }], {}, { arm: true });
   assert.ok(combat.player.combatCounter, 'the Counter armed');
   const payload = combat.player.combatCounter.payload;

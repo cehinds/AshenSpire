@@ -1,5 +1,6 @@
 // Saved tactical tuning is authoritative for the rest of that fight.
 import { combatMatchups } from '../content/combatMatchups.js';
+import { RANGES } from './combatRanges.js';
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const text = value => typeof value === 'string' && value.length > 0;
 const nonNegative = value => Number.isFinite(value) && value >= 0;
@@ -70,7 +71,6 @@ export function combatCounterProblems(counter, path, version = 1) {
 }
 
 const CAMPS = ['physical', 'spell'];
-const REACHES = ['contact', 'near', 'far'];
 const TARGETING = ['single', 'area'];
 const MANEUVERS = ['attack', 'defend', 'counter', 'sweep', 'ranged', 'smash', 'casting'];
 const SCHOOLS = ['frost', 'fire', 'lightning', 'force', 'alteration', 'illusion', 'divine', 'decay', 'earth'];
@@ -84,10 +84,10 @@ function stringsProblems(value, path, allowed = null, required = false) {
 
 export function counterCoverageProblems(coverage, path = 'counterCoverage') {
   if (!record(coverage)) return [`${path} must be an object`];
-  const allowed = ['camps', 'schools', 'reaches', 'targeting', 'maneuvers', 'effects', 'requiredTraits', 'excludedTraits'];
+  const allowed = ['camps', 'schools', 'ranges', 'targeting', 'maneuvers', 'effects', 'requiredTraits', 'excludedTraits'];
   const problems = Object.keys(coverage).filter(key => !allowed.includes(key)).map(key => `${path}.${key} is unknown`);
   for (const [key, values, required] of [['camps', CAMPS, true], ['schools', SCHOOLS, false],
-    ['reaches', REACHES, true], ['targeting', TARGETING, true], ['maneuvers', MANEUVERS, false],
+    ['ranges', RANGES, true], ['targeting', TARGETING, true], ['maneuvers', MANEUVERS, false],
     ['effects', ['damage', 'status', 'support'], true], ['requiredTraits', null, false], ['excludedTraits', null, false]]) {
     problems.push(...stringsProblems(coverage[key], `${path}.${key}`, values, required));
   }
@@ -155,7 +155,7 @@ export function combatExpansionEntityProblems(entity, path = 'entity') {
   if (stance !== undefined) {
     if (!record(stance)) problems.push(`${path}.combatStance must be an object`);
     else {
-      for (const [key, allowed] of [['maneuver', MANEUVERS], ['camp', CAMPS], ['reach', REACHES]]) {
+      for (const [key, allowed] of [['maneuver', MANEUVERS], ['camp', CAMPS], ['range', RANGES]]) {
         if (!allowed.includes(stance[key])) problems.push(`${path}.combatStance.${key} is unsupported`);
       }
       if (stance.school !== undefined && !SCHOOLS.includes(stance.school)) problems.push(`${path}.combatStance.school is unsupported`);
@@ -194,11 +194,11 @@ export function combatExpansionMatchupRulesProblems(rules, path = 'combatExpansi
   numbers('smash', ['defendedMultiplier', 'guardBreakPoiseBonus']);
   numbers('defend', ['sweepMultiplier', 'turnStartProtection']);
   numbers('evade', ['die', 'baseDC']);
-  numbers('distance', ['nearChance', 'farChance', 'maximumBaseChance']);
+  numbers('distance', ['reachChance', 'rangedChance', 'maximumBaseChance']);
   if (rules.evade?.die !== 20) problems.push(`${path}.evade.die must be 20`);
   if (rules.counter?.maxReturnsPerCycle !== 1) problems.push(`${path}.counter.maxReturnsPerCycle must be 1`);
   if (rules.distance?.maximumBaseChance > 50) problems.push(`${path}.distance.maximumBaseChance cannot exceed 50`);
-  for (const [group, keys] of [['armorPenalty', ['light', 'medium', 'heavy']], ['areaDifficulty', REACHES]]) {
+  for (const [group, keys] of [['armorPenalty', ['light', 'medium', 'heavy']], ['areaDifficulty', RANGES]]) {
     for (const key of keys) if (!nonNegative(rules.evade?.[group]?.[key])) problems.push(`${path}.evade.${group}.${key} must be finite and non-negative`);
   }
   if (!record(rules.counter?.defaultCoverage)) problems.push(`${path}.counter.defaultCoverage must be an object`);
@@ -207,7 +207,7 @@ export function combatExpansionMatchupRulesProblems(rules, path = 'combatExpansi
   else for (const [school, match] of Object.entries(rules.counter.schoolMatchups)) {
     if (!SCHOOLS.includes(school) || !record(match)) { problems.push(`${path}.counter.schoolMatchups.${school} is unsupported`); continue; }
     for (const [key, values] of Object.entries(match)) {
-      if (!/^(strong|weak)(Schools|DamageTypes|Reaches|Targeting|Traits)$/.test(key)) problems.push(`${path}.counter.schoolMatchups.${school}.${key} is unknown`);
+      if (!/^(strong|weak)(Schools|DamageTypes|Ranges|Targeting|Traits)$/.test(key)) problems.push(`${path}.counter.schoolMatchups.${school}.${key} is unknown`);
       problems.push(...stringsProblems(values, `${path}.counter.schoolMatchups.${school}.${key}`));
     }
   }

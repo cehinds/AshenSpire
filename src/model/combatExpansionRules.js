@@ -3,6 +3,7 @@ import { combatStatusRules } from '../content/combatStatusRules.js';
 import { ASHEN_BLIGHT_RULES } from '../content/ashenBlight.js';
 import { combatExpansionEquipment } from '../content/combatExpansionEquipment.js';
 import { combatExpansionMatchupRulesProblems } from './combatTacticsRules.js';
+import { bringRangesForward } from './combatRanges.js';
 import { combatRules } from '../content/combatRules.js';
 
 const RESIST_CAP = Math.round(combatRules.resistanceCap * 100);
@@ -33,11 +34,21 @@ export function backfillCombatStatusRuleRows(holder) {
 }
 
 /**
- * Bring the one released pre-Necrotic-Blight v2 snapshot forward. This is a
- * narrow signature migration: other missing or altered frozen rules still
- * fail validation instead of being silently replaced with today's tuning.
+ * Bring a frozen v2 rules snapshot forward, in memory, by two narrow
+ * migrations; the saved file is rewritten only by the next normal save.
+ *  - The range rename (owner, 2026-10-12): contact/near/far and the keys named
+ *    for them read as melee/reach/ranged (combatRanges.js). Numbers are kept,
+ *    so play is identical.
+ *  - The one released pre-Necrotic-Blight snapshot, by its signature.
+ * Other missing or altered frozen rules still fail validation instead of
+ * being silently replaced with today's tuning. Returns true when either ran.
  */
 export function bringCombatExpansionRulesForward(value) {
+  const ranges = record(value) && bringRangesForward(value);
+  return bringNecroticBlightForward(value) || ranges;
+}
+
+function bringNecroticBlightForward(value) {
   const rider = value?.matchups?.damageRiders?.necrotic;
   const cleanses = value?.matchups?.cleanseStatuses;
   const statuses = value?.statuses?.statuses;

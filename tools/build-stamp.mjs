@@ -26,11 +26,13 @@
 //
 // WHAT IT WRITES. Only the stamp that follows a receipt's link:
 //   ([#N](https://github.com/cehinds/AshenSpire/pull/N), `X`)  ->  `X` = release.ordinal
-// and, when that stamp would break its date group's newest-build-first order, the
-// receipt's own line moves within that group (reorderReceipt). Nothing moves across
-// a date heading. Every other byte of CHANGELOG.md is left alone, and about-changelog.mjs
-// --write still owns the file's shape and the generated module. A pull request with no
-// receipt is a note, not a failure: receipts.mjs --check is what fails a gap.
+// and, when that stamp would break newest-build-first order, the receipt's own line
+// moves. A receipt from an older date group moves to the newest date group because the
+// receipt records when the change landed, not when its branch was opened. Inside the
+// newest group, reorderReceipt preserves ties and otherwise restores build order. Every
+// other byte of CHANGELOG.md is left alone, and about-changelog.mjs --write still owns
+// the file's shape and the generated module. A pull request with no receipt is a note,
+// not a failure: receipts.mjs --check is what fails a gap.
 //
 // THE GENERATED MODULE IS IN THE DIGEST. src/content/changelog.generated.js is
 // under src/**, so writing it moves the box, and a receipt stamped with the box
@@ -63,6 +65,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve as pathResolve } from 'node:path';
 import { landedPull, rangeSubjects } from './receipts.mjs';
 import { compareVersions, versionTuple } from './buildversion.mjs';
+import { mergeReceiptLines } from './pr-restamp.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const CHANGELOG = join(ROOT, 'CHANGELOG.md');
@@ -146,6 +149,25 @@ function reorderReceipt(text, pr, stamp) {
   return rest.join('\n');
 }
 
+// A branch may have written its receipt yesterday and land today. Raising that old
+// group's stamp above the newest group's builds makes the strict ordering gate fail,
+// and reorderReceipt intentionally cannot cross a heading. Move only that landed PR's
+// receipt to the newest date group; same-group receipts retain the established tie and
+// ordering rules above. Markdown snippets without date groups are kept unchanged for
+// the pure restamp API and its fixtures.
+function placeLandedReceipt(text, pr, stamp) {
+  const lines = text.split('\n');
+  const newest = lines.find((line) => /^## \d{4}-\d{2}-\d{2}$/.test(line));
+  if (!newest) return reorderReceipt(text, pr, stamp);
+  const hit = new RegExp(`/pull/${pr}\\),\\s*\`${stamp.replace(/\./g, '\\.')}\``);
+  const at = lines.findIndex((line) => line.startsWith('- ') && hit.test(line));
+  if (at < 0) return text;
+  let heading = at - 1;
+  while (heading >= 0 && !/^## \d{4}-\d{2}-\d{2}$/.test(lines[heading])) heading -= 1;
+  if (heading >= 0 && lines[heading] === newest) return reorderReceipt(text, pr, stamp);
+  return mergeReceiptLines(text, text, pr, stamp);
+}
+
 // THE PURE CORE. Re-points every receipt of each named pull request to `box`.
 // Matches the link's own number exactly: `/pull/18)` cannot match `/pull/1884)`,
 // because the closing parenthesis is part of the pattern.
@@ -175,12 +197,12 @@ export function restamp(changelogText, prs, box) {
     const froms = hits.map((h) => h[2]);
     if (froms.every((f) => f === stamp)) {
       // The stamp is already the box, but the line may still sit out of order in its group.
-      text = reorderReceipt(text, pr, stamp);
+      text = placeLandedReceipt(text, pr, stamp);
       current.push(pr);
       continue;
     }
     text = text.replace(re, (_, before, _old, after) => `${before}${stamp}${after}`);
-    text = reorderReceipt(text, pr, stamp);
+    text = placeLandedReceipt(text, pr, stamp);
     changed.push({ pr, from: froms[0], to: stamp });
   }
   return { text, changed, current, missing, unstamped };

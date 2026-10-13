@@ -1342,7 +1342,7 @@ test('DOM: range follows the expanded combat delivery; the mark follows the camp
     const editor = mountDeckEditor(document.body, { registries: REG, run, settings: {} });
     const row = (cardId) => [...editor.root.querySelectorAll('.deck-editor-tile')].find(t => t.dataset.key?.startsWith(`card:${cardId}~`));
     const read = (cardId) => { const r = row(cardId); return [r?.querySelector('.deck-editor-range')?.dataset.range, r?.querySelector('.deck-editor-camp')?.dataset.camp]; };
-    // A v2 spell takes its delivery as reach: a projectile reads Ranged, a melee blade Melee.
+    // A v2 spell takes its delivery as range: a projectile reads Ranged, a melee blade Melee.
     assert.deepEqual(read('cometFragment'), ['ranged', 'magical']);
     assert.deepEqual(read('starbladePhalanx'), ['melee', 'magical']);
     // A ranged maneuver's stance already reads Ranged, so it shows no separate range.
@@ -1355,12 +1355,30 @@ test('DOM: range follows the expanded combat delivery; the mark follows the camp
     const spellMark = row('cometFragment').querySelector('.deck-editor-camp .combat-sigil');
     assert.equal(spellMark.querySelectorAll('path').length, 1);
     assert.equal(spellMark.querySelector('path').getAttribute('d'), 'm16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z');
-    // Phase Ward carries reach:contact but attacks nothing: no range.
+    // Phase Ward carries range:melee but attacks nothing: no range.
     assert.equal(read('phaseWard')[0], undefined, 'a card that attacks nothing shows no range');
     // A magical Power is a Power, with no Cantrip badge.
     const stargazer = row('stargazerCard');
     assert.equal(stargazer?.querySelector('.deck-editor-stance')?.dataset.stance, 'power');
     assert.equal(stargazer.querySelector('.deck-editor-rank'), null);
+    editor.close();
+  });
+});
+
+test('DOM: the range chip reads Melee, Reach and Ranged from the card\'s own range (owner, 2026-10-12)', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  const run = createRunState({ seed: 0x5eed, classId: 'starseer', registries: REG, combatExpansionVersion: 2 });
+  for (const cardId of ['starbladePhalanx', 'rimeNeedle', 'cometFragment']) {
+    if (!run.deck.some(c => c.cardId === cardId)) run.sideboard.push({ instanceId: `probe-${cardId}`, cardId, upgraded: false });
+  }
+  withDom(() => {
+    const editor = mountDeckEditor(document.body, { registries: REG, run, settings: {} });
+    const chip = (cardId) => [...editor.root.querySelectorAll('.deck-editor-tile')]
+      .find(t => t.dataset.key?.startsWith(`card:${cardId}~`))?.querySelector('.deck-editor-range');
+    for (const [cardId, range, label] of [['starbladePhalanx', 'melee', 'Melee'], ['rimeNeedle', 'reach', 'Reach'], ['cometFragment', 'ranged', 'Ranged']]) {
+      assert.equal(chip(cardId)?.dataset.range, range, cardId);
+      assert.equal(chip(cardId)?.textContent, label, cardId);
+    }
     editor.close();
   });
 });

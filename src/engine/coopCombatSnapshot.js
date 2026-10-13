@@ -5,6 +5,7 @@ import { combatExpansionRulesProblems } from '../model/combatExpansionRules.js';
 import { combatEnemyKnowledgeProblems } from '../model/enemyKnowledgeCombat.js';
 import { combatReactionProblems } from '../model/combatReactionState.js';
 import { perceptionProblems } from '../model/perception.js';
+import { bringRangesForward } from '../model/combatRanges.js';
 
 // A reference table preserves queued ally/source references and Map identity.
 // Runtime callbacks, catalogue projections and RNG objects never enter the save.
@@ -68,6 +69,8 @@ export function decodeCoopCombatSnapshot(snapshot) {
     }
   });
   const combat = decode(snapshot.root);
+  // A fight saved before the range rename reads melee/reach/ranged (combatRanges.js).
+  bringRangesForward(combat);
   if (!(combat?.players instanceof Map) || !combat.players.size || !(combat.triggerState instanceof Map)
     || !Array.isArray(combat.enemies) || !Array.isArray(combat.queue) || !Array.isArray(combat.order)
     || !['player', 'enemy', 'ended', 'suspended'].includes(combat.phase) || ![null, 'victory', 'defeat'].includes(combat.result)

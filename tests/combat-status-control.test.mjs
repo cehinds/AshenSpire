@@ -112,7 +112,7 @@ test('waiting breaks one lock and guarantees a Resolve window without clearing b
   assert.equal(S.controlRestrictions(ctx, entity).locked, false);
   assert.equal(S.controlRestrictions(ctx, entity).counterDisabled, false);
   assert.equal(S.sleepRestoration(ctx, entity).hp, 0);
-  assert.equal(S.statusIncomingModifier(ctx, entity, { reach: 'contact' }).percent, 0);
+  assert.equal(S.statusIncomingModifier(ctx, entity, { range: 'melee' }).percent, 0);
   S.endControlTurn(ctx, entity);
   assert.equal(S.controlRestrictions(ctx, entity).locked, true);
 });
@@ -186,10 +186,10 @@ test('fractional explicit Ward pressure carries while restore bonuses/penalties 
 
 test('Sleep and Prone add received percentages; ranged Area ignores projectile exceptions by default', () => {
   const { ctx, entity } = setup(); applyStatus(ctx, entity, 'sleep', 3); applyStatus(ctx, entity, 'prone', 1);
-  assert.deepEqual(S.statusIncomingModifier(ctx, entity, { camp: 'physical', reach: 'contact', targeting: 'area' }), { percent: 55, evadeBonus: 0 });
-  assert.deepEqual(S.statusIncomingModifier(ctx, entity, { camp: 'physical', reach: 'far', targeting: 'single' }), { percent: 5, evadeBonus: 4 });
-  assert.deepEqual(S.statusIncomingModifier(ctx, entity, { camp: 'physical', reach: 'far', targeting: 'area' }), { percent: 30, evadeBonus: 0 });
-  assert.deepEqual(S.statusIncomingModifier(ctx, entity, { camp: 'physical', reach: 'near', targeting: 'area', projectile: true }), { percent: 5, evadeBonus: 2 });
+  assert.deepEqual(S.statusIncomingModifier(ctx, entity, { camp: 'physical', range: 'melee', targeting: 'area' }), { percent: 55, evadeBonus: 0 });
+  assert.deepEqual(S.statusIncomingModifier(ctx, entity, { camp: 'physical', range: 'ranged', targeting: 'single' }), { percent: 5, evadeBonus: 4 });
+  assert.deepEqual(S.statusIncomingModifier(ctx, entity, { camp: 'physical', range: 'ranged', targeting: 'area' }), { percent: 30, evadeBonus: 0 });
+  assert.deepEqual(S.statusIncomingModifier(ctx, entity, { camp: 'physical', range: 'reach', targeting: 'area', projectile: true }), { percent: 5, evadeBonus: 2 });
   assert.equal(S.recoveryControls(ctx, entity).find(row => row.status === 'prone').disabled, true);
 });
 
