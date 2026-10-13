@@ -54,9 +54,10 @@ open pull request into `dev` that now conflicts. It merges `dev` into the pull
 request's branch, takes `dev`'s box and generated module, re-stamps that pull
 request's receipt to the box, and pushes one merge commit when the receipt checks
 pass, then dispatches the pull request's checks by hand (a `GITHUB_TOKEN` push starts
-none). It asks a person, with one comment on the pull request, only when a conflict
-lies outside the three derived files or a check fails; the owner's review gate is
-unchanged (CONTRIBUTING rule 6).
+none). It resolves conflicts only in the three derived files, and it refuses (exit 3)
+a merge that changes the pull request's own diff against `dev`. It asks a person,
+with one comment on the pull request, for that refusal or a failed check; the owner's
+review gate is unchanged (CONTRIBUTING rule 6).
 
 **Which checks gate a pull request** (owner, 2026-10-11, the stage rules). Every
 check runs in one of four stages, and this table is the only list of them. Each

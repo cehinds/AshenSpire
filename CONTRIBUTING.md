@@ -116,9 +116,11 @@ review, into `dev`, then promoted to `test` (rule 6). The owner merges only to
    conflict.
 
    After each build stamp on `dev`, `pr-restamp.yml` does this for an open pull request
-   that conflicts only in the derived files: it merges `dev`, re-stamps the receipt, and
-   pushes that merge (`tools/pr-restamp.mjs`, owner, 2026-10-13). A conflict anywhere
-   else, or a failed check, is left to you; the bot posts one comment on the pull request.
+   that conflicts: it merges `dev`, moves the receipt to the newest date group and
+   re-stamps it to the box (`tools/pr-restamp.mjs`, owner, 2026-10-13). It resolves
+   conflicts only in the three derived files, and it pushes only when the pull request's
+   own diff against `dev` is unchanged by the merge. Anything else, or a failed check,
+   is left to you; the bot posts one comment on the pull request.
 4. **Keep it green.** A failing test or gate is yours to root-cause and fix;
    "flake" is not a diagnosis. Never skip or quarantine a test to get green.
    Stages (owner, 2026-10-11; DEVELOPER.md, *Which checks gate a pull request*
@@ -157,9 +159,11 @@ review, into `dev`, then promoted to `test` (rule 6). The owner merges only to
      push that only merges `dev` and regenerates the derived files (the
      receipt's ordinal, `buildordinal.json`, the generated changelog module)
      with no other file changed by the merge. `pr-restamp.yml` makes such a push for a
-     conflicting pull request after each build stamp (owner, 2026-10-13), and asks a
-     person instead when a conflict lies outside the derived files. A review agent, a bot, another
-     session, a PR comment or a passing check is never that approval.
+     conflicting pull request after each build stamp (owner, 2026-10-13). It keeps the
+     approval only because it resolves conflicts solely in the derived files and refuses
+     (exit 3) any merge that changes the pull request's own diff against `dev`; dev's
+     later commits enter the head as dev's content, not the pull request's. A review
+     agent, a bot, another session, a PR comment or a passing check is never that approval.
    - With the owner's go-ahead, merge the PR into `dev` yourself. Use a merge
      commit.
    - Wait for `architecture-sync` to settle: every push to `dev` starts a
