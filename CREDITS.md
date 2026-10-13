@@ -1,5 +1,18 @@
 # Credits & Asset Licenses
 
+## Card art library (2026-10-12)
+
+The 60 original paintings under `assets/cards/library/` were generated with
+OpenAI image generation under human direction: Physical and Magical Attack,
+Smash, Counter, Evade, Sweep and Defend, each in five color and aura variants.
+Each family retains one weapon or shield design. Physical Sweep uses the
+owner-selected Option 14; Counter depicts a shield and sword. The
+[source library and runtime provenance](https://github.com/cehinds/AshenSpire-art/tree/06170d86c6ba6baa24cd60dd516edf21180450f7/art/card-art-library-60)
+preserve PNG masters, prompts, revision history and source/runtime hashes.
+High exports and generated light twins are supplied by the art release pinned
+in `art-release.json`. Existing artwork remains available at its original IDs.
+No third-party artwork was downloaded and no third-party licence is claimed.
+
 ## HUD Component Studio authoring fixture (2026-10-10)
 
 The standalone [HUD Component Studio](tools/hud-component-studio/README.md) reuses existing game/review artwork without changing its bytes. Its [asset manifest](tools/hud-component-studio/assets.manifest.json) records source repository paths, the `hd-assets-v18` art release where applicable, and SHA-256 receipts. Original authorship and licence records remain those documented here. The four simple SVG UI shapes and editor code were authored with Codex under human direction; they are recorded separately from copied source art. The packaged IM Fell English and Libre Baskerville font files retain their original notices and SIL OFL 1.1 in [FONT-LICENSE.txt](tools/hud-component-studio/FONT-LICENSE.txt).
