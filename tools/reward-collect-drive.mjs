@@ -79,7 +79,7 @@ if (process.argv.includes('--selftest')) {
         // back to inert pixels.
         name: 'the chooser card NEW badge is not rendered',
         file: 'src/ui/screens/reward.js',
-        find: '        el.appendChild(badge);',
+        find: '        face.appendChild(badge);',
         replace: '        /* planted: the badge is built and never attached — data-new back to inert pixels */',
         expectRed: /FAIL\s+S5 chooser: an unseen card wears a visible NEW badge/,
       },

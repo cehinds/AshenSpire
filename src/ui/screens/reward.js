@@ -54,15 +54,15 @@ import { isProgressionReward, progressionRewardUnlocked } from '../../model/defe
 import { renderCard } from '../components/card.js';
 import { sigilRuleText } from '../../model/sigils.js';
 import { renderEquipmentInspection } from '../components/equipmentCard.js';
-import { renderCollectibleInspection } from '../components/collectibleCard.js';
+import { renderCollectibleCard, renderCollectibleInspection } from '../components/collectibleCard.js';
 import { esc, attachTooltip, showTooltipFor } from '../components/tooltip.js';
-import { relicText } from '../components/card.js';
+import { relicText, cardPlainText } from '../components/card.js';
 import { sfx } from '../sfx.js';
 import { isEngaged, focusFirst } from '../input.js';
 import { flaskIdentityHtml, flaskDetailLines } from '../components/flask.js';
 import { flaskSlotCap } from '../../model/gracerefill.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
-import { rewardPlan, rewardClaimStatus, resolveContinue, unseenIds, rewardNotes, CARD_CHOICE_KINDS, smithingStonesPaid, smithingStoneRowCopy } from '../../model/rewardplan.js';
+import { rewardPlan, rewardClaimStatus, resolveContinue, unownedRelicChoices, unseenIds, rewardNotes, CARD_CHOICE_KINDS, isRelicChoice, smithingStonesPaid, smithingStoneRowCopy } from '../../model/rewardplan.js';
 import { orderedXpRows, xpFillDurations } from '../../model/rewardXpPresentation.js';
 import { rewardProgress } from '../../model/rewardprogress.js';
 import { levelUpPlan, pendingLevelCount, applySkillAttribute } from '../../model/levelup.js';
@@ -152,6 +152,8 @@ export function mountRewards(app, {
     ...(smithingStonesPaid(rewards.smithingStoneReceipt) ? { smithingStone: 'taken' } : {}),
   }; // kind → 'taken'|'skipped' (absent = pending / implicitly left in manual mode)
   let chosenCardId = checkpoint?.chosenCardId || null;
+  // A boss victory's relic choice (SPEC §6): the one relic picked from the offer.
+  let chosenRelicId = checkpoint?.chosenRelicId || null;
   // The skill drafts' picks, keyed by ROW KEY (plan phase 4b): one offer may
   // carry several drafts, even for one track, so the card row's single
   // `chosenCardId` is not their record.
@@ -166,6 +168,7 @@ export function mountRewards(app, {
     if (checkpoint) {
       checkpoint.states = { ...states };
       checkpoint.chosenCardId = chosenCardId;
+      if (chosenRelicId || checkpoint.chosenRelicId !== undefined) checkpoint.chosenRelicId = chosenRelicId;
       checkpoint.chosenDraftCardIds = { ...chosenDraftCardIds };
       checkpoint.chosenDraftNodeIds = { ...chosenDraftNodeIds };
       if (Object.keys(chosenRankUps).length || checkpoint.chosenRankUps !== undefined) checkpoint.chosenRankUps = { ...chosenRankUps };
@@ -289,6 +292,17 @@ export function mountRewards(app, {
       return true;
     },
     relic(row) {
+      // A boss relic choice: the picked id must be one the offer named and the
+      // run does not already hold; anything else lands nothing.
+      if (isRelicChoice(row)) {
+        const id = row.chosenRelicId;
+        if (!row.relicIds.includes(id) || run.relics.includes(id)) return false;
+        run.relics.push(id);
+        syncFlaskGrowth(registries, run);
+        chosenRelicId = id;
+        recordSeen('relic', [id]);
+        return true;
+      }
       run.relics.push(row.relicId);
       syncFlaskGrowth(registries, run); // growth chain: a relic source binds the moment it is held
       recordSeen('relic', [row.relicId]);
@@ -311,9 +325,9 @@ export function mountRewards(app, {
     const raised = row.kind === 'skillRankUp' ? ownedInstance(row.instanceId) : null;
     // An attribute pick moves attributes and every derived pool: the whole run
     // is the record a refused save puts back.
-    const runBefore = row.kind === 'skillAttribute' || row.kind === 'skillFeat' || row.kind === 'classMilestone' || row.kind === 'skillDraft' ? structuredClone(run) : null;
-    const cardBefore = CARD_CHOICE_KINDS.includes(row.kind) || row.kind === 'classMilestone' || row.kind === 'classDraft' || row.kind === 'levelChoice' || row.kind === 'skillRankUp' || row.kind === 'skillAttribute' || row.kind === 'skillFeat' ? {
-      deck: [...run.deck], chosenCardId, chosenDraft: { ...chosenDraftCardIds }, chosenNode: { ...chosenDraftNodeIds },
+    const runBefore = row.kind === 'skillAttribute' || row.kind === 'skillFeat' || row.kind === 'classMilestone' || row.kind === 'skillDraft' || isRelicChoice(row) ? structuredClone(run) : null;
+    const cardBefore = CARD_CHOICE_KINDS.includes(row.kind) || isRelicChoice(row) || row.kind === 'classMilestone' || row.kind === 'classDraft' || row.kind === 'levelChoice' || row.kind === 'skillRankUp' || row.kind === 'skillAttribute' || row.kind === 'skillFeat' ? {
+      deck: [...run.deck], chosenCardId, chosenRelicId, chosenDraft: { ...chosenDraftCardIds }, chosenNode: { ...chosenDraftNodeIds },
       feats: [...(run.feats || [])],
       // A draft's take spends the ledger's queued draft; only a draft's rollback puts it back.
       skills: row.kind === 'skillDraft' || row.kind === 'classDraft' || row.kind === 'skillRankUp' ? structuredClone(run.skills || {}) : null,
@@ -332,6 +346,7 @@ export function mountRewards(app, {
       if (cardBefore) {
         run.deck.splice(0, run.deck.length, ...cardBefore.deck);
         chosenCardId = cardBefore.chosenCardId;
+        chosenRelicId = cardBefore.chosenRelicId;
         for (const key of Object.keys(chosenDraftCardIds)) delete chosenDraftCardIds[key];
         Object.assign(chosenDraftCardIds, cardBefore.chosenDraft);
         if (cardBefore.skills) run.skills = cardBefore.skills;
@@ -514,6 +529,14 @@ export function mountRewards(app, {
         };
       }
       case 'relic': {
+        // A boss relic choice (SPEC §6) names its pick once taken, and offers
+        // its count until then; a lone relicId row reads as it always has.
+        if (isRelicChoice(row)) {
+          const picked = state === 'taken' && chosenRelicId ? registries.relics.get(chosenRelicId) : null;
+          return { title: t('reward.kind.relic'), body: state === 'taken' && picked
+            ? `<b>${esc(picked.icon || '◆')} ${esc(picked.name)}</b>`
+            : t('reward.card.chooseOne', { count: row.relicIds.length }) };
+        }
         const def = registries.relics.get(row.relicId);
         return { title: t('reward.kind.relic'), body: `<b>${esc(def.icon || '◆')} ${esc(def.name)}</b> — ${esc(relicText(def, registries))}` };
       }
@@ -546,6 +569,12 @@ export function mountRewards(app, {
         : equipment.armour?.find(entry => entry.classId === classOrId && entry.id === armorId);
     }
     return { definition, name: definition?.name || definition?.label || id || '', text: row.rewardKind === 'feat' ? getFeatDescription(registries, definition) : definition?.description || definition?.textTemplate || definition?.text || '' };
+  }
+
+  // One boss relic option (SPEC §6): the relic's definition, name and text.
+  function relicOption(id) {
+    const definition = registries.relics?.get(id) || null;
+    return { definition, name: definition?.name || id, text: definition ? relicText(definition, registries) : '' };
   }
 
   function isNew(row) {
@@ -918,7 +947,10 @@ export function mountRewards(app, {
       // closed set); the auto pick advances the same stream, so a seeded run
       // resolves the same card every replay.
       const pickFn = rng ? (n) => rng.int('cardRewards', 0, n - 1) : () => 0;
-      const { take: offered } = resolveContinue({ rows: plan.rows.filter(row => !isProgressionReward(row)) }, states, mode, pickFn);
+      // A boss relic choice can name a relic this screen already gave the run
+      // (a class milestone claimed first): auto-collect picks only what is left.
+      const rows = unownedRelicChoices(plan.rows.filter(row => !isProgressionReward(row)), run.relics);
+      const { take: offered } = resolveContinue({ rows }, states, mode, pickFn);
       // Level cards belong to a level claim, never to auto-collect on Continue.
       const toTake = offered.filter((row) => !isProgressionReward(row));
       for (const row of toTake) {
@@ -985,13 +1017,13 @@ export function mountRewards(app, {
           return `<div class="tt-title">${esc(tTip(blocked))}</div>${esc(tFull(blocked))}`;
         }
         if (state === 'taken') return `<div class="tt-title">${esc(tTip('reward.state.taken'))}</div>`;
-        const offer = CARD_CHOICE_KINDS.includes(row.kind) || row.kind === 'classMilestone' || row.kind === 'classDraft' || row.kind === 'skillRankUp' || row.kind === 'skillAttribute' || row.kind === 'skillFeat' ? (row.choice ? 'reward.card.choose' : 'reward.card.take') : 'reward.take';
+        const offer = CARD_CHOICE_KINDS.includes(row.kind) || row.kind === 'classMilestone' || row.kind === 'classDraft' || row.kind === 'skillRankUp' || row.kind === 'skillAttribute' || row.kind === 'skillFeat' || isRelicChoice(row) ? (row.choice ? 'reward.card.choose' : 'reward.card.take') : 'reward.take';
         return `<div class="tt-title">${esc(tTip(offer))}</div>${esc(tFull(offer))}`;
       });
       if (state === 'taken' || state === 'blocked' || state === 'skipped') continue;
       el.addEventListener('click', (ev) => {
         if (skillClaimPending || !xpAnimationDone || refill) return;
-        if (CARD_CHOICE_KINDS.includes(row.kind) || row.kind === 'classMilestone' || row.kind === 'classDraft' || row.kind === 'levelChoice' || row.kind === 'skillRankUp' || row.kind === 'skillAttribute' || row.kind === 'skillFeat') return renderChooser(row);
+        if (CARD_CHOICE_KINDS.includes(row.kind) || row.kind === 'classMilestone' || row.kind === 'classDraft' || row.kind === 'levelChoice' || row.kind === 'skillRankUp' || row.kind === 'skillAttribute' || row.kind === 'skillFeat' || isRelicChoice(row)) return renderChooser(row);
         if (row.kind === 'flask' || row.kind === 'armament' || row.kind === 'relic') return renderDetail(row);
         take(row);
       });
@@ -1208,14 +1240,17 @@ export function mountRewards(app, {
     // at the rank it would rise to; its pick is an instance id.
     const isRankUp = row.kind === 'skillRankUp';
     const rankUpCards = isRankUp ? rankUpCandidates(registries, run, row.skillId) : [];
-    const ids = isMilestone ? row.choiceIds || row.options : isNodeRow ? row.nodeIds : isLevelChoice ? row.options.map((o) => `${o.kind}:${o.id}`) : isRankUp ? rankUpCards.map((inst) => inst.instanceId) : row.choiceIds || row.cardIds;
-    const pickField = isMilestone || isLevelChoice || row.choiceIds ? 'choiceId' : isNodeRow ? 'nodeId' : isRankUp ? 'instanceId' : 'cardId';
+    // A boss relic choice (SPEC §6) picks ONE of its relicIds; each option is
+    // a relic tile with the same inspection face the class relic option uses.
+    const isRelic = isRelicChoice(row);
+    const ids = isMilestone ? row.choiceIds || row.options : isRelic ? row.relicIds : isNodeRow ? row.nodeIds : isLevelChoice ? row.options.map((o) => `${o.kind}:${o.id}`) : isRankUp ? rankUpCards.map((inst) => inst.instanceId) : row.choiceIds || row.cardIds;
+    const pickField = isRelic ? 'chosenRelicId' : isMilestone || isLevelChoice || row.choiceIds ? 'choiceId' : isNodeRow ? 'nodeId' : isRankUp ? 'instanceId' : 'cardId';
     const backButton = button({ label: t('reward.chooser.back'), id: 'reward-back', className: 'subtle', attrs: { 'data-back': '' } });
     const confirmButton = button({
       label: t('reward.confirm'), weight: 'primary', id: 'reward-card-confirm', className: 'reward-confirm', disabled: true,
     });
     door({
-      eyebrow: row.kind === 'levelCard' || row.kind === 'levelChoice' ? '' : row.kind === 'skillDraft' || row.kind === 'classDraft' || isRankUp || row.kind === 'skillAttribute' || row.kind === 'skillFeat' ? rowBody(row).title : t('reward.card.eyebrow'),
+      eyebrow: row.kind === 'levelCard' || row.kind === 'levelChoice' ? '' : row.kind === 'skillDraft' || row.kind === 'classDraft' || isRelic || isRankUp || row.kind === 'skillAttribute' || row.kind === 'skillFeat' ? rowBody(row).title : t('reward.card.eyebrow'),
       title: isMilestone || row.source ? rowBody(row).title : row.kind === 'levelCard' || row.kind === 'levelChoice' ? t('reward.levelUp.action') : rewards.title || t('reward.title.victory'),
       body: el('div', { class: 'reward-row', role: 'radiogroup', 'aria-label': t('reward.card.aria') }),
       foot: modalFooter({ secondary: [backButton], primary: confirmButton, className: 'reward-foot reward-chooser-foot', size: 'medium' }),
@@ -1244,9 +1279,18 @@ export function mountRewards(app, {
       for (const candidate of strip.querySelectorAll('.reward-pick')) {
         const selected = candidate.dataset.pickId === cardId;
         // Both, always together (#997): the lift and the shared ring.
-        candidate.classList.toggle('reward-selected', selected);
+        // A column's text button wears the green trim only: `reward-selected`
+        // is the lift of the face above it, so one option reads as one lit card.
+        if (!candidate.classList.contains('reward-choice-button')) candidate.classList.toggle('reward-selected', selected);
         candidate.classList.toggle('is-chosen', selected);
         candidate.setAttribute('aria-checked', String(selected));
+      }
+      // The chosen relic's card face wears the same green trim as its button.
+      // A card face also takes the door's lift (`reward-selected`), as before.
+      for (const face of strip.querySelectorAll('.reward-choice-face')) {
+        const selected = face.dataset.pickId === cardId;
+        face.classList.toggle('reward-selected', selected);
+        face.classList.toggle('is-chosen', selected);
       }
       confirmButton.disabled = false;
       confirmReason();
@@ -1269,6 +1313,36 @@ export function mountRewards(app, {
           : renderCollectibleInspection(registries, option.definition, t('reward.kind.relic'), { interactive: false });
         tile.after(inspection);
       }
+    }
+    if (isRelic) {
+      strip.classList.add('reward-choice-grid');
+      strip.style.setProperty('--choice-count', String(ids.length));
+    }
+    for (const id of isRelic ? ids : []) {
+      const option = relicOption(id);
+      // One column per relic: the card face on top at glance (no inspection door,
+      // no lore), the text button under it as the accessible radio. Both select.
+      // The face binds no door of its own, so a tap on it only selects.
+      // A relic the run already holds (one gained earlier on this screen) is
+      // shown but cannot be picked: its face and button are disabled.
+      const owned = run.relics.includes(id);
+      const column = el('div', { class: `reward-choice-option${owned ? ' is-owned' : ''}`, dataset: { pickId: id } });
+      if (option.definition) {
+        const face = renderCollectibleCard(registries, option.definition, t('reward.kind.relic'), { interactive: false, inspection: false, level: 'glance' }).card;
+        face.classList.add('reward-choice-face');
+        face.dataset.pickId = id;
+        if (owned) face.classList.add('is-owned');
+        else face.addEventListener('click', () => selectCard(id));
+        column.appendChild(face);
+      }
+      const tile = el('button', { class: 'class-pick reward-node reward-pick reward-choice-button', type: 'button', role: 'radio', disabled: owned,
+        'aria-checked': String(id === selectedCardId), dataset: { pickId: id } }, [
+        el('div', { class: 'cp-body' }, [el('h3', { text: option.name }), el('p', { text: option.text })]),
+      ]);
+      tile.classList.toggle('is-chosen', id === selectedCardId);
+      if (!owned) tile.addEventListener('click', () => selectCard(id));
+      column.appendChild(tile);
+      strip.appendChild(column);
     }
     for (const option of isLevelChoice ? row.options : []) {
       const choiceId = `${option.kind}:${option.id}`;
@@ -1329,8 +1403,12 @@ export function mountRewards(app, {
       const skill = skillTracks(registries).find((track) => track.id === row.skillId);
       strip.appendChild(el('p', { class: 'reward-rank-none', text: t('reward.skillRankUp.none', { skill: (skill && skill.label) || row.skillId }) }));
     }
-    for (const choiceId of isNodeRow || isLevelChoice || isRankUp || (isMilestone && row.rewardKind !== 'cards') ? [] : ids) {
+    for (const choiceId of isNodeRow || isLevelChoice || isRankUp || isRelic || (isMilestone && row.rewardKind !== 'cards') ? [] : ids) {
       const cardId = (row.cardIds || row.options)[ids.indexOf(choiceId)];
+      // Card choices share the relic chooser's grid: one row of option columns,
+      // sized to the offer (kit.css reads --choice-count).
+      strip.classList.add('reward-choice-grid');
+      strip.style.setProperty('--choice-count', String(ids.length));
       // This face only selects; collection belongs to Confirm. Inspection must
       // not consume the touch tap before selection enables that button.
       // THE DOOR OFFERS THE VERB THE PLAYER CAME FOR. Opening a card here used
@@ -1344,22 +1422,24 @@ export function mountRewards(app, {
       // skill bonus and passive Block it would be stamped with (SPEC §13.4o).
       const skillBonus = skillBonusFor(registries, run, { cardId });
       const passiveBlock = passiveBlockFor(registries, run, { cardId });
-      const el = renderCard(registries, { cardId, ...grade, ...(skillBonus > 0 ? { skillBonus } : {}), ...(passiveBlock > 0 ? { passiveBlock } : {}) }, {
+      // One ref for the face and its text button, so both show the same rules.
+      const faceRef = { cardId, ...grade, ...(skillBonus > 0 ? { skillBonus } : {}), ...(passiveBlock > 0 ? { passiveBlock } : {}) };
+      const face = renderCard(registries, faceRef, {
         owned: ownedCopies(run, cardId),
         actionOwnsTouch: true,
         surface: 'reward',
         availability: { choose: taken() ? t('reward.card.alreadyTaken') : true },
         commands: { choose: () => { selectCard(choiceId); confirmButton.click(); } },
       });
-      el.dataset.cardId = cardId;
-      el.dataset.pickId = choiceId;
-      el.classList.add('reward-pick');
-      el.setAttribute('role', 'radio');
-      el.setAttribute('aria-checked', String(choiceId === selectedCardId));
+      face.dataset.cardId = cardId;
+      face.dataset.pickId = choiceId;
+      // The face is one half of its option column; the text button under it is
+      // the accessible radio (reward-pick). Both select; both take the chosen trim.
+      face.classList.add('reward-choice-face');
       // `reward-selected` is the door's own lift; `is-chosen` is the ring the
       // whole game now shares (kit.css). Both, always together.
-      el.classList.toggle('reward-selected', choiceId === selectedCardId);
-      el.classList.toggle('is-chosen', choiceId === selectedCardId);
+      face.classList.toggle('reward-selected', choiceId === selectedCardId);
+      face.classList.toggle('is-chosen', choiceId === selectedCardId);
       if (marks.cards.includes(cardId)) {
         // The marker is a RENDERED badge, not only a data attribute — Codex
         // 4989824448's third finding: `data-new` alone had no consumer in any
@@ -1367,14 +1447,28 @@ export function mountRewards(app, {
         // attribute stays as the machine-readable hook; the chip is what the
         // player sees. Positioned inside `.card` (its named container —
         // position: relative, ui.css) per Law 2.
-        el.dataset.new = '1';
+        face.dataset.new = '1';
         const badge = document.createElement('span');
         badge.className = 'chip reward-new card-badge-new';
         badge.textContent = t('reward.card.new');
-        el.appendChild(badge);
+        face.appendChild(badge);
       }
-      el.addEventListener('click', () => selectCard(choiceId));
-      strip.appendChild(el);
+      face.addEventListener('click', () => selectCard(choiceId));
+      // The text under the face: the card's name and its effect as plain text
+      // from the same template the face fills. The face's .ctext is drawn
+      // later, so it cannot be read here.
+      const effect = cardPlainText(registries, faceRef);
+      const tile = el('button', { class: 'class-pick reward-node reward-pick reward-choice-button', type: 'button', role: 'radio',
+        'aria-checked': String(choiceId === selectedCardId), dataset: { pickId: choiceId, cardId } }, [
+        el('div', { class: 'cp-body' }, [el('h3', { text: registries.cards.get(cardId)?.name || cardId }), el('p', { text: effect })]),
+      ]);
+      // The button wears the green trim only; `reward-selected` stays the
+      // card face's own lift, so one card reads as the one lit selection.
+      tile.classList.toggle('is-chosen', choiceId === selectedCardId);
+      tile.addEventListener('click', () => selectCard(choiceId));
+      const column = el('div', { class: 'reward-choice-option', dataset: { pickId: choiceId } });
+      column.append(face, tile);
+      strip.appendChild(column);
     }
     confirmButton.disabled = !selectedCardId;
     confirmReason();
