@@ -471,6 +471,7 @@ for (const [label, v] of NON_FINITE) {
     const specs = [
       { evadeBasePct: v }, { wis: v }, { level: v }, { intangibleCharges: v },
       { evasion: v }, { attrs: { DEX: v } }, { dex: v, evasionArmor: 'Leather' },
+      { dex: v, evasionArmor: 'Cloth' }, { dex: v }, { evasion: v, evasionArmor: 'Leather', dex: 1 },
     ];
     for (const extra of specs) {
       const c = makeCombatant({ id: 'goblin', hp: 10, sp: 3, ...extra }, { armor: TABLES.armor });
@@ -480,10 +481,25 @@ for (const [label, v] of NON_FINITE) {
       for (const [k, x] of Object.entries(c.attrs)) {
         assert.ok(typeof x !== 'number' || Number.isFinite(x), `attrs.${k} is finite for ${JSON.stringify(extra)}`);
       }
+      // Every spec here sets one non-finite number and no real DEX, so the exact evasion is the
+      // armour base with no DEX term: 0 for Cloth and Leather (evasion-armor.csv).
+      assert.equal(c.evasion, 0, `evasion is exactly 0 for ${JSON.stringify(extra)}`);
       assert.deepStrictEqual(JSON.parse(JSON.stringify(c)), c, `round-trip for ${JSON.stringify(extra)}`);
     }
   });
 }
+
+// A non-finite dex must count as 0 like every other number here (Codex P2 on PR #1871). It used to
+// reach evasionFor() raw, so Infinity read as the full DEX cap (Leather cap 6, Cloth cap 4).
+// Leather is base 0, so the exact evasion with 0 DEX is 0.
+test('a non-finite dex with Leather gives the Leather base (0), the same as dex 0', async () => {
+  const { makeCombatant } = await import('../src/engine/combatRounds/timeline.js');
+  for (const v of [Infinity, -Infinity, NaN]) {
+    const c = makeCombatant({ id: 'goblin', hp: 10, evasionArmor: 'Leather', dex: v }, { armor: TABLES.armor });
+    assert.equal(c.evasion, 0, `dex ${v} with Leather`);
+    assert.equal(c.evasion, makeCombatant({ id: 'goblin', hp: 10, evasionArmor: 'Leather', dex: 0 }, { armor: TABLES.armor }).evasion);
+  }
+});
 
 // Round hooks are checked before any rng draw (Codex finding on PR #1867). The caller's rng cannot be
 // rolled back, so a throw after a draw would leave it advanced and a retry would roll differently.
