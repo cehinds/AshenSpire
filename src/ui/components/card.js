@@ -11,6 +11,7 @@ import { configureTooltipGlossary, decorateKeywords } from './tooltipGlossary.js
 // computeTokenBindings. No math happens here.
 
 import { resolveCard, relicPropertyRules } from '../../model/registries.js';
+import { cardFaceDefinition, cardFaceRules } from '../../model/cardFaceDefinition.js';
 import { playingCardModel, playingCardClasses, staticCardTokens, combatCardType, combatCardDamageLabel } from '../../model/playingCard.js';
 import { cardFields, resolveCardLevel } from '../../model/cardFields.js';
 import { cardShape } from '../models/CardSizeModel.js';
@@ -143,16 +144,17 @@ function fillTemplate(def, tokens, baseTokens, damageSequences = []) {
  */
 export function renderCard(registries, ref, opts = {}) {
   configureTooltipGlossary(registries);
-  const def = opts.preview?.resolvedDefinition || opts.definition || resolveCard(registries, ref);
+  const def = opts.preview?.resolvedDefinition || opts.definition || cardFaceDefinition(registries, ref);
   // ONE PROJECTION, READ ONCE. Everything this function used to derive on its
   // way to innerHTML — the tag junction, the cost profile, the type row, the
   // class tint — is `model` now (src/model/playingCard.js). Drawing is what is
   // left. The output is byte-identical by construction: the model's bodies are
   // the ones that stood here.
-  const rawModel = playingCardModel(registries, ref, { preview: opts.preview || null });
+  const rawModel = playingCardModel(registries, ref, { preview: opts.preview || null, definition: def });
   const combatProfile = combatProfileFor(def);
   const combatTags = combatProfileTags(combatProfile, registries);
-  const expanded = opts.preview?.combatExpansionVersion === 2 || def.minCombatExpansionVersion === 2;
+  const expanded = opts.preview?.combatExpansionVersion === 2 || def.minCombatExpansionVersion === 2
+    || (!opts.preview && cardFaceRules().combatExpansionVersion === 2);
   const stanceLabel = combatProfile.maneuver && `${combatProfile.maneuver[0].toUpperCase()}${combatProfile.maneuver.slice(1)}`;
   const model = { ...rawModel, ...(expanded && stanceLabel ? { type: { ...rawModel.type, label: stanceLabel,
     subtype: combatProfile.camp === 'spell' ? 'Spell' : 'Martial' } } : {}),
@@ -549,7 +551,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
  * DOM, so it runs the same headless and in a browser.
  */
 export function cardPlainText(registries, ref) {
-  const def = resolveCard(registries, ref);
+  const def = cardFaceDefinition(registries, ref);
   // Plain string work only: no DOM, so it runs the same headless and in a
   // browser. Tags go first; &amp; is decoded last so "&amp;lt;" stays literal.
   return String(fillTemplate(def, staticTokens(def), null))
@@ -565,8 +567,8 @@ export function cardPlainText(registries, ref) {
  * same up/down coloring cards use in play). All numbers come from the defs.
  */
 export function upgradePreviewHtml(registries, ref) {
-  const base = resolveCard(registries, { ...ref, upgraded: false });
-  const upg = resolveCard(registries, { ...ref, upgraded: true });
+  const base = cardFaceDefinition(registries, { ...ref, upgraded: false });
+  const upg = cardFaceDefinition(registries, { ...ref, upgraded: true });
   const baseTokens = staticTokens(base);
   const upgTokens = { ...baseTokens, ...staticTokens(upg) };
   const baseText = fillTemplate(base, baseTokens, null);
@@ -612,8 +614,8 @@ function glossaryEntry(registries, kind, id) {
 /** W1h: the read-only reading a pile viewer shows beside its collection —
  *  the same body the card's own inspect door and tooltip use. */
 export function cardDetailHtml(registries, ref) {
-  const def = resolveCard(registries, ref);
-  return cardTooltip(registries, def, playingCardModel(registries, ref).tokens);
+  const def = cardFaceDefinition(registries, ref);
+  return cardTooltip(registries, def, playingCardModel(registries, ref, { definition: def }).tokens);
 }
 
 function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences = []) {

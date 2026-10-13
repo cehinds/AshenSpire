@@ -174,6 +174,7 @@ import { surfaceReport } from './ui/surfaces.js';
 // wrong" — the two boot checks below used to build that element by hand, and a
 // third hand-built copy is the defect this import exists to prevent.
 import { dlog, failureBanner } from './ui/debuglog.js';
+import { setCardFaceRunSource } from './model/cardFaceDefinition.js';
 // The command log's chrome, on the kit (debuglog.js is a leaf; see debugChrome.js).
 import { DEBUG_CHROME_READY } from './ui/components/debugChrome.js';
 import { applyLoreType } from './ui/models/LoreTypeModel.js';
@@ -1058,6 +1059,7 @@ const QUARANTINE_NOTICE =
 
 // ---- run state ----------------------------------------------------------------
 let run = null;
+setCardFaceRunSource(() => run);
 let rng = null;
 let activeSlot = 1; // which save slot the current run persists to (SPEC §3.12 + slots)
 let rewardDoneCount = 0; // shot/read receipt: each mounted reward callback increments once

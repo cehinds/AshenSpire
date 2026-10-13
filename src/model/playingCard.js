@@ -27,7 +27,7 @@
 // run object retained. Everything is read at call time and the result is deep
 // frozen, so a renderer cannot quietly make the model its scratch space.
 
-import { resolveCard } from './registries.js';
+import { cardFaceDefinition } from './cardFaceDefinition.js';
 import { tagService } from './tagService.js';
 import { computeTokenBindings, cardTokenEffects } from './validate.js';
 import { balance } from '../content/balance.js';
@@ -271,11 +271,13 @@ export function staticCardTokens(def) {
 }
 
 /**
- * playingCardModel(registries, ref, { preview }) → a frozen record.
+ * playingCardModel(registries, ref, { preview, definition }) → a frozen record.
  *
  * `ref` is `{ cardId, upgraded, instanceId? }` — the same shape `renderCard`
  * has always taken. `preview` is combat's live resolution when the card is in
- * a hand; without one the card reads its authored numbers.
+ * a hand; without one the card reads its authored numbers through the same
+ * combat projection (`cardFaceDefinition`), or the already projected
+ * `definition` the caller hands in.
  *
  * WHAT THE CALLER GETS, AND WHY EACH PIECE IS HERE RATHER THAN IN THE VIEW:
  *
@@ -302,8 +304,8 @@ export function staticCardTokens(def) {
  *   tokens     what fills the text template, and `base` to compare against so
  *              a raised number can be marked as raised.
  */
-export function playingCardModel(registries, ref, { preview = null } = {}) {
-  const def = preview?.resolvedDefinition || resolveCard(registries, ref);
+export function playingCardModel(registries, ref, { preview = null, definition = null } = {}) {
+  const def = preview?.resolvedDefinition || definition || cardFaceDefinition(registries, ref);
   const base = staticCardTokens(def);
 
   // Type presentation is authored data (balance.ui.cardTypes): corner radii
