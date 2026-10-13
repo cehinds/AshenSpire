@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-10-13
+
+- **Pull requests stay mergeable after each build stamp** ([#1937](https://github.com/cehinds/AshenSpire/pull/1937), `0.7.1.1457`). After every build stamp on dev, a bot merges dev into each open pull request that only conflicts in the build number and changelog files, moves its changelog entry to the current build, and reruns its checks. Pull requests with any other conflict get one comment asking a person to merge dev.
+
 ## 2026-10-12
 
 - **Boss victories offer a choice of boss relics** ([#1907](https://github.com/cehinds/AshenSpire/pull/1907), `0.7.1.1457`). Beating a boss now lays out up to three boss relics you do not own, and you keep the one you pick. With auto-collect on, Continue picks one at random, as it does for cards; with it off, an unpicked choice is left behind. Co-op boss rewards are unchanged.
