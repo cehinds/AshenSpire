@@ -275,6 +275,8 @@ export function renderCard(registries, ref, opts = {}) {
   // ONE TEXT FOR EVERY VIEW. The face lines are the shared model's output
   // (cardFaceText.js); weight-priced cards keep the authored text they name.
   const faceLines = def.weightClassPriced ? null : cardFaceLines(def, opts.preview || null, registries);
+  // The combat hand passes faceLineLimit: lines past it stay in the DOM, hidden until the card is selected.
+  const faceLineLimit = Number.isFinite(opts.faceLineLimit) ? opts.faceLineLimit : null;
   const paint = (at) => {
     const artwork = illustratedArtwork(ref, model.id, {large:at==='inspect',equipmentArt:equipmentPainting,
       definition:def,registries});
@@ -283,7 +285,7 @@ export function renderCard(registries, ref, opts = {}) {
       ? fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences).replace(/ Light:.*$/,'')+' Cost reflects your current weight.'
       : fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences);
     const rulesHtml = faceLines
-      ? compactCardRules(faceLines.map(line => `<span class="face-line" data-face-kind="${line.kind}">${line.html}</span>`).join(''))
+      ? compactCardRules(faceLines.map((line, i) => `<span class="face-line" data-face-kind="${line.kind}"${faceLineLimit !== null && i >= faceLineLimit ? ' data-face-extra="true"' : ''}>${line.html}</span>`).join(''))
       : compactCardRules(`${faceSummary ? esc(faceSummary)
         : `${fallbackDamageLabel ? `${esc(fallbackDamageLabel)}: ` : ''}${authoredRules}`}`);
     el.dataset.faceLines = faceLines ? String(faceLines.length) : '';
@@ -417,6 +419,14 @@ export function renderCard(registries, ref, opts = {}) {
  */
 const pendingFits = new Set();
 let fitFrame = 0;
+
+// The combat hand shows three face lines at rest and five when selected.
+export function setHandFaceBudget(el, selected) {
+  const rules = el?.querySelector?.('.ic-text[data-face-lines="true"]');
+  if (!rules) return;
+  rules.dataset.maxLines = selected ? '5' : '3';
+  scheduleCardFits([el]);
+}
 
 export function scheduleCardFits(cards) {
   for (const card of cards) pendingFits.add(card);
