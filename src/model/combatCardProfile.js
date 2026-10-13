@@ -59,6 +59,27 @@ export function combatProfileFor(carrier = {}) {
   return profile;
 }
 
+// Range (owner, 2026-10-11): Melee / Reach / Ranged, the card's own range
+// (src/model/combatRanges.js). An untagged spell attack takes its delivery
+// (projectile Ranged, melee Melee, else Reach) through the player card's
+// combat default. Ranged maneuvers show no separate range: their stance already
+// reads Ranged. A card that deals no damage shows no range, so a Counter that only
+// gains Poise (an evasion) reads no range either; a Counter whose reply deals
+// damage (hp or Ward) does.
+const ATTACKING = new Set(['attack', 'smash', 'sweep', 'ranged', 'counter']);
+const dealsDamage = (def) => (def.effects || []).some(effect => effect.op === 'damage')
+  || (def.counterPayload?.hp > 0 || def.counterPayload?.ward > 0);
+
+/** The range a combat definition shows: 'melee' | 'reach' | 'ranged', or null when it shows none. */
+export function combatCardRange(def = {}) {
+  const profile = combatProfileFor(def);
+  if (profile.maneuver === 'ranged') return null;
+  const attacking = ATTACKING.has(profile.maneuver) || (profile.camp === 'spell' && def.type === 'attack');
+  if (!attacking || !dealsDamage(def)) return null;
+  const range = profile.range || (profile.delivery === 'projectile' || profile.maneuver === 'ranged' ? 'reach' : 'melee');
+  return RANGES.includes(range) ? range : null;
+}
+
 /** Reaction rules v2: the Impact and Flux chips read "Impact 2" and "Flux 1". */
 export function numberedTraitRow(row, traitValues = null) {
   const values = traitValues || {};
