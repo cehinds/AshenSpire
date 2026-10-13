@@ -2492,6 +2492,49 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     } catch (e) {
       console.warn('[combat] post-dispatch render failed:', e && e.message);
     }
+    // The timeline's finish is the only thing that releases busy, so it runs
+    // once, and also when the timeline throws before it could start.
+    let playbackFinished = false;
+    const finishPlayback = () => {
+        if (playbackFinished) return;
+        playbackFinished = true;
+        try { applyVisualEvents(events); } catch (e) { console.warn('[combat] final visual apply failed:', e && e.message); }
+        disp = null;
+        heldTurnHand = null;
+        enemyPlayback = false;
+        busy = false;
+        render();
+        showPendingDiscard();
+        if (combat.result) {
+          // THE FIGHT IS OVER, AND SO IS THIS SCREEN'S MENU.
+          //
+          // The keydown handler already comes off here. The ☰ button did NOT,
+          // so for the handoff below (COMBAT_TIMING.fightEndDelayMs, currently 210 ms) — plus the victory beat main.js
+          // awaits after it (balance.ui.victoryBeat.ms, 600 ms, and the beat's
+          // overlay is `pointer-events: none`) — Save, Save & Quit, Load and
+          // Quit were all one tap away on a fight that had ALREADY ENDED.
+          //
+          // Save called commitCombatSnapshot on a combat whose `result` was
+          // 'victory': a checkpoint that resumes INTO a won fight, where no
+          // dispatch will ever reach the branch that calls onEnd — the run is
+          // stuck at a battlefield with nothing left to kill. Quit tore the run
+          // down while main.js's continuation was still suspended on the beat,
+          // so the spoils were then granted against a null run.
+          //
+          // There is nothing here a player can usefully ask the menu for: the
+          // only thing that happens next is the spoils door. Close it, disable
+          // it, and refuse the actions even if something re-opens it.
+          fightOver = true;
+          closeQuickNav();
+          if (menuBtn) { menuBtn.disabled = true; menuBtn.setAttribute('aria-disabled', 'true'); }
+          removeEventListener('keydown', keyHandler);
+          handStrip.teardown();
+          setTimeout(() => onEnd(combat.result, combat), COMBAT_TIMING.fightEndDelayMs);
+        } else {
+          focusHandDefault(); // land on the leftmost playable card for kb/pad
+        }
+    };
+    try {
     playTimeline(
       events,
       {
@@ -2532,44 +2575,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           showPileFeedback(events, false);
         },
       },
-      () => {
-        applyVisualEvents(events);
-        disp = null;
-        heldTurnHand = null;
-        enemyPlayback = false;
-        busy = false;
-        render();
-        showPendingDiscard();
-        if (combat.result) {
-          // THE FIGHT IS OVER, AND SO IS THIS SCREEN'S MENU.
-          //
-          // The keydown handler already comes off here. The ☰ button did NOT,
-          // so for the handoff below (COMBAT_TIMING.fightEndDelayMs, currently 210 ms) — plus the victory beat main.js
-          // awaits after it (balance.ui.victoryBeat.ms, 600 ms, and the beat's
-          // overlay is `pointer-events: none`) — Save, Save & Quit, Load and
-          // Quit were all one tap away on a fight that had ALREADY ENDED.
-          //
-          // Save called commitCombatSnapshot on a combat whose `result` was
-          // 'victory': a checkpoint that resumes INTO a won fight, where no
-          // dispatch will ever reach the branch that calls onEnd — the run is
-          // stuck at a battlefield with nothing left to kill. Quit tore the run
-          // down while main.js's continuation was still suspended on the beat,
-          // so the spoils were then granted against a null run.
-          //
-          // There is nothing here a player can usefully ask the menu for: the
-          // only thing that happens next is the spoils door. Close it, disable
-          // it, and refuse the actions even if something re-opens it.
-          fightOver = true;
-          closeQuickNav();
-          if (menuBtn) { menuBtn.disabled = true; menuBtn.setAttribute('aria-disabled', 'true'); }
-          removeEventListener('keydown', keyHandler);
-          handStrip.teardown();
-          setTimeout(() => onEnd(combat.result, combat), COMBAT_TIMING.fightEndDelayMs);
-        } else {
-          focusHandDefault(); // land on the leftmost playable card for kb/pad
-        }
-      }
+      finishPlayback
     );
+    } catch (e) {
+      console.warn('[combat] timeline failed to start:', e && e.message);
+      finishPlayback();
+    }
   }
 
   // Cosmetic animations never own combat timing or retain interactive clones.
