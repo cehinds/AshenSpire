@@ -135,3 +135,16 @@ test('a boosted split guard colours both its Block and Ward parts', () => {
   const [line] = cardFaceLines(def, { values: [{ op: 'block', value: 10 }] }, reg);
   assert.equal((line.html.match(/val up/g) || []).length, 2, line.html);
 });
+
+test('equal repeated hits that split name both parts and the hit count', () => {
+  assert.match(text('starShower')[0], /^Inflict \d+ \w+, \d+ \w+ damage ×3$/);
+});
+
+test('a charge-added buildup row from the live preview reaches the face, aligned with its value', () => {
+  const def = card('bashingBlow');
+  const chargedEffects = [def.effects[0], { op: 'buildup', target: 'enemy', status: 'frost', amount: 0 }, ...def.effects.slice(1)];
+  const values = [{ op: 'damage', value: 7, hits: 1 }, { op: 'buildup', value: 3 }, { op: 'poiseDamage', value: 4 }];
+  const all = cardFaceLines(def, { values, chargedEffects }, reg).map(line => line.html.replace(/<[^>]+>/g, ''));
+  assert.ok(all.some(line => /Frost 3/.test(line)), JSON.stringify(all));
+  assert.match(all[0], /4 Poise damage/);
+});

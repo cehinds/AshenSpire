@@ -2455,7 +2455,8 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
   });
 
   return {
-    resolvedDefinition: def, combatExpansionVersion: combat.combatExpansionVersion || 1,
+    // The effects the play will run, a charge's added rows included; `values` follow this list (the card face reads it).
+    resolvedDefinition: def, chargedEffects, combatExpansionVersion: combat.combatExpansionVersion || 1,
     cardId: inst.cardId,
     upgraded: inst.upgraded,
     name: def.name,

@@ -59,6 +59,8 @@ export function cardFaceLines(def, preview = null, registries = null) {
 }
 
 function buildLines(def, preview, registries) {
+  // A live preview prices the effects an active charge expands (an added buildup row); its values follow that list.
+  if (Array.isArray(preview?.chargedEffects) && preview.chargedEffects !== def.effects) def = { ...def, effects: preview.chargedEffects };
   if (def.comboHook) return null;
   // A Power's status is its mechanic's carrier ("Gain Goreblood 1" says nothing); its authored text explains it.
   if (def.type === 'power') return null;
@@ -133,13 +135,14 @@ function buildLines(def, preview, registries) {
         // The face names the hit's leading type only ("Lightning", not "Lightning · Piercing"); inspection keeps the full label.
         const type = combatCardDamageLabel(def, preview, registries, index).split(' · ')[0];
         const word = `${type ? `${esc(type)} ` : ''}damage`;
-        // A hit part magic and part physical names both parts, the physical first.
-        const split = !unequal && hits === 1 ? splitOf(def, p, n, ratings, live) : null;
+        // A hit part magic and part physical names both parts, the physical first; equal repeated hits split each hit.
+        const split = !unequal ? splitOf(def, p, n, ratings, live) : null;
         let text;
         if (split) {
           // Each part compares with the same split of the static base, so a boosted hit colours both parts.
           const baseSplit = typeof base === 'number' ? splitOf(def, p, base, ratings) : null;
-          text = `${typed(num(split.physical, baseSplit?.physical), typeWord(split.types.physical))}, ${typed(num(split.magic, baseSplit?.magic), typeWord(split.types.magic))} damage`;
+          text = `${typed(num(split.physical, baseSplit?.physical), typeWord(split.types.physical))}, ${typed(num(split.magic, baseSplit?.magic), typeWord(split.types.magic))} damage`
+            + (hits !== 1 ? ` ×${num(hits, typeof effect.hits === 'number' ? effect.hits : undefined)}` : '');
         } else if (unequal) {
           text = `${sequence.map(amount => num(amount, base)).join(' + ')} ${word} (${num(live.totalDamage, typeof base === 'number' ? base * sequence.length : undefined)} total across ${sequence.length} hits)`;
         } else {
