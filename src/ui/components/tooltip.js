@@ -671,7 +671,8 @@ function wireTitles() {
     sym.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: ev.clientX, clientY: ev.clientY }));
   }, true);
   document.addEventListener('pointerdown', ev => {
-    if (!panels.some(p => p?.contains(ev.target)) && !state[0].target?.contains(ev.target) && !selectedControl?.contains(ev.target)) {
+    // A press on a symbol through the hand lane is the symbol's own press: it keeps the selection.
+    if (!panels.some(p => p?.contains(ev.target)) && !state[0].target?.contains(ev.target) && !selectedControl?.contains(ev.target) && !symbolUnderLane(ev)) {
       clearControlSelection(); hideTooltip();
     }
   }, true);
