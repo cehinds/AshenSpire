@@ -549,6 +549,9 @@ export const balance = {
       },
     },
     cardChoices: 3,
+    // A solo boss victory offers this many boss relics to pick ONE from (1 or 0
+    // is a single relic, as before). Elite drops are unaffected.
+    bossRelicChoices: 3,
     // ×3 the first ladder (Constantine, 2026-09-04: "3x the amount for the
     // base") — cinders are granted on arrival at the reward door now, so the
     // faucet is the whole economy lever. The ladder and the shop were left
@@ -632,6 +635,7 @@ export const balance = {
     },
     [NOTE]: {
       cardChoices: 'How many cards a reward door lays out to choose from.',
+      bossRelicChoices: 'How many boss relics a boss victory lays out to pick one from (1 or 0: a single relic).',
       flaskDropBasePct: 'The chance a fight drops a flask charge, before the run\'s running adjustment.',
       flaskDropStepPct: 'How far that chance falls after a drop, and rises after a miss.',
     },

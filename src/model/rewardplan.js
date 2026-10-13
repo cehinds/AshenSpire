@@ -111,6 +111,28 @@ export const rowKey = (kind, row = {}) => (kind === 'skillDraft' && row.offerId 
 export const CARD_CHOICE_KINDS = Object.freeze(['card', 'levelCard', 'skillDraft']);
 
 /**
+ * A boss victory's relic choice (SPEC §6): a relic row carrying `relicIds`
+ * is one pick among them, held as the row's `chosenRelicId`. Auto-collect on
+ * Continue picks one at random from the unowned ids; with it off, it is left behind.
+ * A lone `relicId` row is not a choice.
+ */
+export const isRelicChoice = (row) => row.kind === 'relic' && Array.isArray(row.relicIds);
+
+/**
+ * unownedRelicChoices(rows, owned) → the rows with each boss relic choice
+ * narrowed to the ids the run does not already hold. A choice left with no
+ * unowned id is dropped: it lands nothing, so auto-collect never picks an
+ * owned relic (a relic gained earlier on the same screen can be in the offer).
+ */
+export function unownedRelicChoices(rows, owned = []) {
+  return rows.flatMap((row) => {
+    if (!isRelicChoice(row)) return [row];
+    const relicIds = row.relicIds.filter((id) => !owned.includes(id));
+    return relicIds.length ? [{ ...row, relicIds }] : [];
+  });
+}
+
+/**
  * The one-line notes the menu prints beside its rows, as tokens: today only
  * `cardMissed`, the card reward schedule's missed chance (SPEC §15.1: "No
  * card this time."). An offer written before the schedule carries none.
@@ -118,7 +140,7 @@ export const CARD_CHOICE_KINDS = Object.freeze(['card', 'levelCard', 'skillDraft
 export const rewardNotes = (rewards = {}) => (rewards && rewards.cardMissed === true ? ['cardMissed'] : []);
 
 /** The ids a choice row picks among: a card draft's cards, a class draft's nodes. */
-export const pickIds = (row) => (Array.isArray(row.choiceIds) ? row.choiceIds : row.kind === 'classMilestone' ? row.options || [] : Array.isArray(row.options)
+export const pickIds = (row) => (Array.isArray(row.choiceIds) ? row.choiceIds : Array.isArray(row.relicIds) ? row.relicIds : row.kind === 'classMilestone' ? row.options || [] : Array.isArray(row.options)
   ? row.options.map((option) => `${option.kind}:${option.id}`)
   : Array.isArray(row.nodeIds) ? row.nodeIds : row.cardIds || []);
 
@@ -253,8 +275,10 @@ const KINDS = {
     blocked: (r, facts) => (facts.armamentSlotsFree > 0 ? null : 'storage'),
   },
   relic: {
-    present: (r) => !!r.relicId,
-    row: (r) => ({ relicId: r.relicId }),
+    present: (r) => !!r.relicId || (Array.isArray(r.relicChoices) && r.relicChoices.length > 0),
+    // A boss victory's relic choice (relicChoices) is one row of several ids:
+    // pick ONE. A lone relicId keeps the single-relic shape.
+    row: (r) => (r.relicChoices?.length ? { relicIds: [...r.relicChoices], choice: true } : { relicId: r.relicId }),
     blocked: () => null,
   },
   // A dropped legendary sigil (SPEC §15.4): a take, carried unattuned.
@@ -349,10 +373,11 @@ export function resolveContinue(plan, states = {}, mode = 'auto', pick = () => 0
     if (state === 'taken') continue; // applied at tap time; nothing left to do
     if (row.blockedBy) { leave.push(row); continue; }
     if (mode === 'auto' && state !== 'skipped') {
-      if (CARD_CHOICE_KINDS.includes(row.kind) || row.kind === 'classDraft' || row.kind === 'levelChoice' || row.kind === 'classMilestone') {
+      if (CARD_CHOICE_KINDS.includes(row.kind) || row.kind === 'classDraft' || row.kind === 'levelChoice' || row.kind === 'classMilestone' || isRelicChoice(row)) {
         const ids = pickIds(row);
         const id = row.choice ? ids[pick(ids.length) % ids.length] : ids[0];
         take.push({ ...row, ...(row.kind === 'classDraft' ? { nodeId: id }
+          : isRelicChoice(row) ? { chosenRelicId: id }
           : row.kind === 'levelChoice' || row.kind === 'classMilestone' ? { choiceId: id } : row.choiceIds ? { cardId:row.cardIds[ids.indexOf(id)], choiceId:id } : { cardId: id }) });
       } else {
         take.push(row);
@@ -405,7 +430,7 @@ export function unseenIds(rewards = {}, possessions = {}) {
   const draftIds = [...(rewards.skillDrafts || []), ...(Array.isArray(rewards.levelCards) ? rewards.levelCards : [])].flatMap((d) => (d && d.cardIds) || []);
   return {
     cards: [...new Set([...(rewards.cardIds || []), ...draftIds])].filter((id) => !holds(possessions.cards, id)),
-    relics: rewards.relicId && !holds(possessions.relics, rewards.relicId) ? [rewards.relicId] : [],
+    relics: [...new Set([...(rewards.relicId ? [rewards.relicId] : []), ...(Array.isArray(rewards.relicChoices) ? rewards.relicChoices : [])])].filter((id) => !holds(possessions.relics, id)),
     flasks: rewards.flaskId && !holds(possessions.flasks, rewards.flaskId) ? [rewards.flaskId] : [],
     armaments: rewards.armamentId && !holds(possessions.armaments, rewards.armamentId) ? [rewards.armamentId] : [],
   };
