@@ -1,5 +1,7 @@
 import { botCardTargetId } from '../tools/simbot.mjs';
 import test from 'node:test';
+import { cardCostBudget, ownRestoreFunds } from '../src/model/actionCosts.js';
+import { applyAbilityGrade } from '../src/model/abilityGrades.js';
 import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
@@ -200,23 +202,32 @@ test('assembled content validates every normalized card, feat and relic rule', (
   assert.deepEqual(validation.errors, []);
 });
 
+
+// Each grade's Stamina and Mana are the cost formula's at that grade's rank (SPEC §4.3a, owner 2026-10-12). Replaced
+// rule: the authored actionCost (then the stance price plus the grade's delta) and Mana equal to the rank.
+const gradeCost = (card, profile) => cardCostBudget(applyAbilityGrade(card, profile.rank), { rank: profile.rank });
 test('every authored family grade completes a paid real play in the assembled engine', () => {
   for (const card of progressionCards) for (const profile of card.gradeProfiles) {
     const combat = fixture();
     const instance = { instanceId: 'graded-play', cardId: card.id, upgraded: false, abilityRank: profile.rank };
     combat.piles.hand.push(instance);
     const face = resolveCard(combat.registries, instance);
-    assert.equal(face.cost, profile.actionCost, `${card.name}/${profile.rank}`);
-    assert.equal(face.manaCost, profile.rank, `${card.name}/${profile.rank}`);
+    const priced = gradeCost(combat.registries.cards.get(card.id), profile);
+    assert.equal(face.cost, priced.sp, `${card.name}/${profile.rank}`);
+    assert.equal(face.manaCost || 0, priced.mp, `${card.name}/${profile.rank}`);
     const preview = previewCard(combat, instance.instanceId);
-    assert.equal(preview.manaCost, profile.rank);
+    // The preview is what the play charges: the price less the part its own restore pays (owner, 2026-10-13).
+    assert.equal(preview.manaCost, (face.manaCost || 0) - ownRestoreFunds(face).mana);
     dispatch(combat, { type: 'playCard', cardInstanceId: instance.instanceId, targetId: botCardTargetId(combat.registries, combat, instance, combat.enemies[0].id) });
     while (combat.pendingAbilityDiscard) {
       const ids = combat.piles.hand.slice(0, combat.pendingAbilityDiscard.count).map(c => c.instanceId);
       assert.doesNotThrow(() => dispatch(combat, { type: 'chooseDiscard', cardInstanceIds: ids }), `${card.name}/${profile.rank}, choosing ${JSON.stringify(ids)} from ${combat.piles.hand.length}`);
     }
     assert.equal(combat.eventLog.filter(e => e.type === 'cardResolved').length, 1, `${card.name}/${profile.rank}`);
-    assert.equal(combat.player.mana, 100 - profile.rank + (card.id === 'progression-wellspring-sigil' && profile.rank >= 2 ? 1 : 0));
+    // A restore pays its own part of the price and gives back the rest (owner, 2026-10-13: restores break even).
+    const funded = ownRestoreFunds(face).mana;
+    const restored = (face.effects || []).filter(e => e.op === 'restoreMana' && typeof e.amount === 'number').reduce((n, e) => n + e.amount, 0);
+    assert.equal(combat.player.mana, Math.min(combat.player.maxMana, 100 - ((face.manaCost || 0) - funded) + (restored - funded)), 'Mana restored stops at the maximum');
   }
 });
 

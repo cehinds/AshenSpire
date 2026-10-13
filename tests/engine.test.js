@@ -181,7 +181,8 @@ const TEST_ENEMIES = [
   // #61: tagged twin of tDummy — the resistance gate's positive arm.
   { id: 'tBeast', name: 'T Beast', hp: [30, 30], poiseMax: 99, moves: { wait: { intent: 'unknown', weight: 1 } } },
   { id: 'tGiant', name: 'T Giant', hp: [400, 400], poiseMax: 99, moves: { wait: { intent: 'unknown', weight: 1 } } },
-  { id: 'tHitter', name: 'T Hitter', hp: [50, 50], poiseMax: 99, moves: { hit: { intent: 'attack', damage: 10, weight: 1 } } },
+  // spPool 1: a one-blow test enemy (the per-enemy pool override, owner 2026-10-12); its checks count one blow a turn.
+  { id: 'tHitter', name: 'T Hitter', hp: [50, 50], poiseMax: 99, spPool: 1, moves: { hit: { intent: 'attack', damage: 10, weight: 1 } } },
   { id: 'tRegen', name: 'T Regen', hp: [50, 50], poiseMax: 99, moves: { regen: { intent: 'buff', weight: 1, effects: [{ op: 'heal', target: 'self', amount: 4 }] } } },
   { id: 'tAi', name: 'T AI', hp: [999, 999], poiseMax: 999, moves: { a: { intent: 'unknown', weight: 9999, maxConsecutive: 1 }, b: { intent: 'unknown', weight: 1 } } },
   {
@@ -203,7 +204,8 @@ function testBundle() {
   return withKindRows({
     ...contentBundle,
     tagging: [...contentBundle.tagging, ...TEST_TAGGING],
-    cards: [...contentBundle.cards, ...TEST_CARDS],
+    // Fixture cards pin their own costs: they opt out of the cost formula (costRule 'fixed', SPEC §4.3a).
+    cards: [...contentBundle.cards, ...TEST_CARDS.map((card) => ({ costRule: 'fixed', ...card }))],
     statuses: [...contentBundle.statuses, ...TEST_STATUSES],
     enemies: [...contentBundle.enemies, ...TEST_ENEMIES],
   });
@@ -521,7 +523,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(proc, 'procBurst emitted as its own event');
     eq(proc.amount, 8, '15% of 30 = 4.5 → min-clamped to 8');
     const hit = logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1' && e.isAttack).pop();
-    eq(hit.amount, 5, "triggering hit's damageDealt stays the card's own 5 — burst not folded in");
+    // The card's own damage: Gorefire Slash's 5, scaled when the cost formula prices it at 2 SP or more (SPEC §4.3a).
+    const ownDamage = REG.cards && resolveCard(REG, { cardId: 'gorefireSlash' }).effects.find((e) => e.op === 'damage').amount;
+    eq(hit.amount, ownDamage, "triggering hit's damageDealt stays the card's own damage — burst not folded in");
     const burst = logOf(c, 'hpLost').filter((e) => e.targetId === 'e1' && e.cause === 'proc:bleed').pop();
     assert(burst, "burst hpLost carries cause 'proc:bleed' — attributable in the damage record");
     eq(burst.amount, 8, 'burst hpLost is its own entry');
@@ -664,6 +668,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(tagIdsFor('starstonePebble').includes('starstone'), 'CSV index names Starstone Pebble as starstone');
     S.applyStatus(c, e1, 'frostExposed', 1);
     const pv = previewCard(c, c.piles.hand[0].instanceId, 'e1');
+    // starstonePebble costs 1 SP + 1 MP under the cost formula (SPEC §4.3a), so its 6 is not scaled.
     eq(pv.values.find((v) => v.op === 'damage').value, 8, 'preview derives starstone: 6 + ceil(6 × 0.25)');
     playFromHand(c, 'starstonePebble');
     eq(logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop().amount, 8, 'execution derives the same starstone hit');
@@ -679,6 +684,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(tagIdsFor('blightTouch').includes('blight'), 'CSV index names Blight Touch as blight');
     S.applyStatus(c, e1, 'insanityExposed', 1);
     const pv = previewCard(c, c.piles.hand[0].instanceId, 'e1');
+    // blightTouch costs 1 SP + 1 MP under the cost formula (SPEC §4.3a), so its 5 is not scaled.
     eq(pv.values.find((v) => v.op === 'damage').value, 7, 'preview derives blight: 5 + ceil(5 × 0.3)');
     playFromHand(c, 'blightTouch');
     eq(logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1').pop().amount, 7, 'execution derives the same blight hit');
@@ -1652,9 +1658,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // Ancestral Horn: Powers cost 1 less (preview AND execution).
     const h = makeCombat({ deck: ['unbreakable', 'strike', 'strike', 'strike', 'strike'], relicIds: ['ancestralHorn'] });
     const inst = h.piles.hand.find((x) => x.cardId === 'unbreakable');
-    eq(previewCard(h, inst.instanceId).cost, 1, 'preview shows reduced cost');
+    eq(previewCard(h, inst.instanceId).cost, 0, 'preview shows reduced cost (Unbreakable is a 1-SP block now, minus 1)');
     dispatch(h, { type: 'playCard', cardInstanceId: inst.instanceId });
-    eq(h.player.energy, 2, 'paid 1 instead of 2');
+    eq(h.player.energy, 3, 'paid 0 instead of 1 (the Horn takes the 1-SP block down to 0)');
 
     // Run-level event opcodes: addCardToDeck + startCombat + shrine math.
     const rn3 = createRunState({ seed: 2, classId: 'reaver', registries: REG });
@@ -1731,6 +1737,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       enemyIds: ['tGiant'],
     });
     eq(soloMagic.player.mana, Math.min(starRun.maxMana, REG.balance.powers.starstoneShard.restoreMana + REG.balance.powers.lodestarShard.restoreMana), 'Starstone combatStart recovery restores Mana through its trigger row — and the kit relic Lodestar Shard (plan phase 5a) more');
+    // Read before the play: Starstone Pebble pays 1 Mana under the cost formula (SPEC §4.3a).
+    const soloStartMana = soloMagic.player.mana;
     const soloSpell = soloMagic.piles.hand.find((card) => card.cardId === 'starstonePebble');
     const soloPreview = previewCard(soloMagic, soloSpell.instanceId, 'e1').values.find((value) => value.op === 'damage');
     // A2: Starstone Shard's magic damage is +2 (was +1).
@@ -1749,7 +1757,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       ],
       enemyIds: ['tGiant'],
     });
-    eq(coopMagic.players.get('p1').entity.mana, soloMagic.player.mana, 'co-op combatStart uses the same Mana recovery row — and Lodestar Shard\'s (plan phase 5a)');
+    eq(coopMagic.players.get('p1').entity.mana, soloStartMana, 'co-op combatStart uses the same Mana recovery row — and Lodestar Shard\'s (plan phase 5a)');
     const coopSpell = coopMagic.players.get('p1').piles.hand.find((card) => card.cardId === 'starstonePebble');
     const coopEvents = playCoopCard(coopMagic, 'p1', coopSpell.instanceId, 'e1').events;
     eq(coopEvents.filter((event) => event.type === 'damageDealt')[0].amount, 8,
@@ -1858,15 +1866,16 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     });
     assert(!badCost.ok && badCost.errors.some((e) => e.path === 'cards.gorefireSlash.manaCost'), 'negative manaCost cannot mint mana');
 
-    const spend = makeCombat({ deck: Array(5).fill('gorefireSlash'), enemies: ['tGiant'], mana: 2, maxMana: 2, stamina: 2 });
+    // A spell the cost formula prices at 1 MP (SPEC §4.3a). Gorefire Slash, the old fixture, is physical now: 0 MP.
+    const spend = makeCombat({ deck: Array(5).fill('starstonePebble'), enemies: ['tGiant'], mana: 2, maxMana: 2, stamina: 2 });
     const sig = spend.piles.hand[0];
     const pv = previewCard(spend, sig.instanceId);
     eq(pv.manaCost, 1, 'preview exposes the same mana cost execution charges');
     dispatch(spend, { type: 'playCard', cardInstanceId: sig.instanceId, targetId: 'e1' });
-    eq(spend.player.mana, 1, 'signature starter spends 1 mana');
+    eq(spend.player.mana, 1, 'a 1-MP spell spends 1 mana');
     assert(logOf(spend, 'manaSpent').some((e) => e.amount === 1), 'mana spend emits a receipt');
 
-    const empty = makeCombat({ deck: Array(5).fill('gorefireSlash'), enemies: ['tGiant'], mana: 0, maxMana: 3, stamina: 3 });
+    const empty = makeCombat({ deck: Array(5).fill('starstonePebble'), enemies: ['tGiant'], mana: 0, maxMana: 3, stamina: 3 });
     empty.player.mana = 0;
     const beforeHand = empty.piles.hand.length;
     let refused = '';
@@ -1949,7 +1958,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     dispatch(v, { type: 'endTurn' }); // firstMove spiralThrust: 20 dmg + 2 player Bleed
     const heals = logOf(v, 'healed').filter((e) => e.targetId === 'e1');
     assert(heals.length >= 1 && heals[0].amount === 2, 'healed 2 off her own hit');
-    eq(S.getStacks(v.player, 'bleed'), 2, 'her blade Bleeds the player');
+    // Three planned blade moves, each Bleeding 2 (her 4-SP pool from stats, SPEC §4.6a, owner 2026-10-13).
+    eq(S.getStacks(v.player, 'bleed'), 6, 'her blade Bleeds the player once per planned move');
 
     // Player-side Bleed meter bursts exactly like an enemy's (SPEC §10 seam).
     S.applyStatus(v, v.player, 'bleed', 10); // 2 + 10 = 12 → fill (effects enqueued)
@@ -9143,7 +9153,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(logOf(c2, 'relicTriggered').filter((e) => e.relicId === 'whetstonePouch').length, 1);
     // Waxen Seal: the first heal each combat heals more, once.
     const c3 = makeCombat({ deck: ['warmLitany', 'warmLitany', 'warmLitany', 'warmLitany', 'warmLitany'], relicIds: ['waxenSeal'], hp: 40 });
-    c3.player.maxStamina = 3; c3.player.stamina = 3;
+    c3.player.maxStamina = 3; c3.player.stamina = 3; c3.player.energyMax = 3; c3.player.energy = 3; // warmLitany: 1 SP + 1 MP (SPEC §4.3a)
     playFromHand(c3, 'warmLitany');
     eq(c3.player.hp, 40 + 3 + REG.balance.powers.waxenSeal.heal, 'Litany heals, and the seal heals more');
     playFromHand(c3, 'warmLitany');
@@ -9153,7 +9163,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // first real heal.
     const c3b = makeCombat({ deck: ['warmLitany', 'warmLitany', 'warmLitany', 'warmLitany', 'warmLitany'], relicIds: ['goldenSprout', 'waxenSeal'], hp: 78 });
     eq(logOf(c3b, 'relicTriggered').filter((e) => e.relicId === 'waxenSeal').length, 0, 'a zero heal does not spend the seal');
-    c3b.player.maxStamina = 3; c3b.player.stamina = 3; c3b.player.hp = 40;
+    c3b.player.maxStamina = 3; c3b.player.stamina = 3; c3b.player.energyMax = 3; c3b.player.energy = 3; c3b.player.hp = 40;
     playFromHand(c3b, 'warmLitany');
     eq(c3b.player.hp, 40 + 3 + REG.balance.powers.waxenSeal.heal, 'the first real heal does');
     // Co-op: a heal is the HEALED seat's — an ally healed by A fires the ally's
@@ -9177,11 +9187,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // Lodestar Shard: extra Mana at combat start.
     const c4 = makeCombat({ deck: ['strike'], relicIds: ['lodestarShard'], mana: 1, maxMana: 1 + REG.balance.powers.lodestarShard.restoreMana });
     eq(c4.player.mana, 1 + REG.balance.powers.lodestarShard.restoreMana, 'the shard restores Mana as the fight opens');
-    // Attune restores Mana and exhausts; upgraded it stays.
+    // Attune breaks even and exhausts; upgraded it stays.
+    // It costs the 1 Mana it restores and its restore pays it (SPEC §4.3a, owner 2026-10-13), so it casts from 0 Mana
+    // and leaves Mana where it was.
     const c5 = makeCombat({ deck: ['attune', { id: 'attune', up: true }, 'strike', 'strike', 'strike'], mana: 0, maxMana: 3 });
-    c5.player.maxStamina = 3; c5.player.stamina = 3;
-    playFromHand(c5, 'attune'); eq(c5.player.mana, 1); eq(c5.piles.exhaust.filter((c) => c.cardId === 'attune').length, 1, 'Attune exhausts');
-    playFromHand(c5, 'attune'); eq(c5.player.mana, 2); eq(c5.piles.exhaust.filter((c) => c.cardId === 'attune').length, 1, 'Attune+ does not');
+    c5.player.maxStamina = 5; c5.player.stamina = 5; c5.player.energyMax = 5; c5.player.energy = 5;
+    playFromHand(c5, 'attune'); eq(c5.player.mana, 0, 'Attune casts from 0 Mana and nets 0'); eq(c5.piles.exhaust.filter((c) => c.cardId === 'attune').length, 1, 'Attune exhausts');
+    playFromHand(c5, 'attune'); eq(c5.player.mana, 0, 'Attune+ nets 0 too'); eq(c5.piles.exhaust.filter((c) => c.cardId === 'attune').length, 1, 'Attune+ does not');
     // VALIDATION, by name.
     const said = (v) => v.errors.map((e) => `${e.path}: ${e.msg}`);
     const noGroup = validateContent({ ...testBundle(), tagging: testBundle().tagging.filter((r) => !(r.family === 'class' && r.objectId === 'reaver' && r.tagId === 'item:blade')) });

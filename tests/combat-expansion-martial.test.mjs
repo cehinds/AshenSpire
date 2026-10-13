@@ -13,7 +13,11 @@ import { applyStatusPressure } from '../src/engine/combatStatusControl.js';
 import { createCombat, previewCard } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 
-const registries = createRegistries(contentBundle);
+// These checks read the authored card numbers, so every card keeps its authored cost and numbers: it opts out of the
+// cost formula (costRule 'fixed', SPEC §4.3a), which tests/action-costs-*.test.mjs cover.
+const authoredCosts = (bundle) => ({ ...bundle, cards: bundle.cards.map((card) => ({ ...card, costRule: 'fixed' })) });
+
+const registries = createRegistries(authoredCosts(contentBundle));
 
 test('Sweeping Blow authors bodily Off Balance pressure without changing legacy cards or other Sweeps', () => {
   const original = resolveCard(registries, { cardId: 'sweepingBlow' }, 1);

@@ -191,7 +191,7 @@ export const starseerCards = [
     },
   },
   {
-    id: 'twinkling', name: 'Twinkling', class: 'starseer', rarity: 'common', cost: 0, type: 'skill',
+    id: 'twinkling', name: 'Twinkling', class: 'starseer', rarity: 'common', cost: 0, costRule: 'fixed', type: 'skill',
     flavor: "Light drawn from a varying star.\n\nThe Astronomer recorded its variation nightly for many years, and drew no conclusion, as was his rule. In the last spring before the Burning, he spent three nights upon it alone.\n\nThe charts of those nights are not in the series.",
     keywords: [], icon: '✨',
     effects: [
@@ -522,7 +522,7 @@ export const starseerCards = [
   // the pool to 36. All follow the same "check charge first, then GAIN_CHARGE
   // last" shape as the rest of the pool.
   {
-    id: 'shootingShard', name: 'Shooting Shard', class: 'starseer', rarity: 'common', cost: 0, type: 'attack',
+    id: 'shootingShard', name: 'Shooting Shard', class: 'starseer', rarity: 'common', cost: 0, costRule: 'fixed', type: 'attack',
     flavor: "Small fall, too faint for the charts.\n\nThe Starwatch left such falls unrecorded, a star too faint to mark the lens being unworthy of ink. The reach miners kept their own tally, scratched upon the walls of the lower galleries.\n\nTheir count runs far higher.",
     keywords: [], icon: '💫',
     effects: [
