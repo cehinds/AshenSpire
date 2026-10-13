@@ -8,9 +8,69 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-12",
     "summary": "Ward, Barrier and Poise now wear away, and every hit shows where it landed",
     "detail": "Magic hits meet Barrier, then Ward; physical hits meet Block, then Poise. Barrier and Block soak a hit completely, while Ward and Poise always let at least 1 damage through and are spent by what they absorb. Every fighter starts each fight with full Ward and Poise, and they only come back through a card, feat, class feature or relic. Ward added past full becomes Barrier until your next turn. Breaking an enemy's Ward or Poise interrupts its action; a break costs you 1 Stamina next turn. Each layer has its own colour on the health bar and in the hit numbers (Barrier blue, Ward purple, Block silver, Poise gold, Health red), with popups for MISSED, BREAK, WARD BREAK, POSTURE BREAK and INTERRUPTED, and the combat log lists each layer's share and the roll behind a miss. A creature resistant to a damage school takes three quarters of the hit.",
-    "build": "0.7.1.1435",
+    "build": "0.7.1.1445",
     "pullRequest": 1896,
     "url": "https://github.com/cehinds/AshenSpire/pull/1896"
+  },
+  {
+    "id": "pr-1914",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Poison, Psychic and Earth join the elements; weapons set their own damage type",
+    "detail": "Twelve new cards: four Rogue Poison cards (Asp Dart, Viper Strike, Septic Blade, Lethal Dose) and eight classless Psychic and Earth cards, which Herald and Starseer meet twice as often and can take as a starting spell. Five enemies resist a thematic element. Strike, Cheap Shot, Bloodhunter's Strike and Guard Counter deal your weapon's damage type; Ruinous Blow and Deathblow split Blunt and Force; Blood Tithe splits your weapon's type with Necrotic and Bleeds; Lethal Dose is a thrown vial with Precision that hits harder. Blight Bloom's text names its expanded-combat cap.",
+    "build": "0.7.1.1445",
+    "pullRequest": 1914,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1914"
+  },
+  {
+    "id": "pr-1916",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Build numbers in the changelog stay in order",
+    "detail": "Nothing changes in the game. When the build pipeline gives a merged change its final build number, it now also moves that entry so each day's list stays newest build first.",
+    "build": "0.7.1.1443",
+    "pullRequest": 1916,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1916"
+  },
+  {
+    "id": "pr-1917",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Saved enemy reactions are checked against their limit",
+    "detail": "Nothing changes in the game. New tests confirm that a save with too many enemy reactions on the stack, or one on a Counter's return hit, is refused when it loads.",
+    "build": "0.7.1.1443",
+    "pullRequest": 1917,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1917"
+  },
+  {
+    "id": "pr-1918",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "The enemy reaction code passes the architecture check",
+    "detail": "Nothing changes in the game. A setting in the enemy reaction code used a name the architecture check reserves for the browser, so it was renamed.",
+    "build": "0.7.1.1441",
+    "pullRequest": 1918,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1918"
+  },
+  {
+    "id": "pr-1915",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Character creation walks you through every step",
+    "detail": "Creating a character now goes Class, Attributes, Keepsake, Equipment, Feats, then Spells for classes that cast, then Review. The Feats step lets you browse every character, class and skill feat with the level it unlocks at; you start with none and earn them as you level. On a phone, tapping a feat opens its details right beneath it.",
+    "build": "0.7.1.1439",
+    "pullRequest": 1915,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1915"
+  },
+  {
+    "id": "pr-1913",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Every enemy break now staggers under combat ratings",
+    "detail": "With ratings on, a break of the Poise or Ward meter, by weapon or spell, and an Insanity break now apply Staggered as well as the skipped turn, so Executioner and other Staggered payoffs fire in normal runs. Spell breaks no longer add Magic Vulnerable on top; Staggered already raises damage of every type.",
+    "build": "0.7.1.1437",
+    "pullRequest": 1913,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1913"
   },
   {
     "id": "pr-1906",

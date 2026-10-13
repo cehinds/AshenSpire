@@ -1,0 +1,109 @@
+{
+  "version": 1,
+  "title": "Equipment Current Step",
+  "canvas": {
+    "width": 198,
+    "height": 48,
+    "background": "transparent"
+  },
+  "defaultState": "equipment",
+  "states": [
+    {
+      "id": "equipment",
+      "name": "Equipment"
+    }
+  ],
+  "assets": {},
+  "nodes": [
+    {
+      "id": "equipment-current-step",
+      "name": "Equipment Current Step",
+      "type": "group",
+      "parent": null,
+      "x": 0,
+      "y": 0,
+      "width": 198,
+      "height": 48,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "fill": "none"
+    },
+    {
+      "id": "equipment-current-step-background",
+      "name": "Equipment Current Step Background \u00b7 background",
+      "type": "rect",
+      "parent": "equipment-current-step",
+      "x": 0,
+      "y": 0,
+      "width": 198,
+      "height": 48,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "fill": "#163e2b",
+      "stroke": "none",
+      "strokeWidth": 1,
+      "radius": 4
+    },
+    {
+      "id": "equipment-current-step-label",
+      "name": "Equipment Current Step Label",
+      "type": "text",
+      "parent": "equipment-current-step",
+      "x": 12,
+      "y": 16,
+      "width": 174,
+      "height": 32,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "text": "4 of 7 \u00b7 Equipment",
+      "fontSize": 16,
+      "fontFamily": "Arial",
+      "fill": "#e7dec8"
+    },
+    {
+      "id": "equipment-current-step-background-trim",
+      "name": "Equipment Current Step Background \u00b7 independent trim",
+      "type": "rect",
+      "parent": "equipment-current-step",
+      "x": 0,
+      "y": 0,
+      "width": 198,
+      "height": 48,
+      "z": 1.1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "fill": "none",
+      "stroke": "#72ce94",
+      "strokeWidth": 1,
+      "radius": 4
+    }
+  ],
+  "metadata": {
+    "componentSource": "equipment-current-step",
+    "sourceState": "equipment",
+    "designOnly": true
+  }
+}

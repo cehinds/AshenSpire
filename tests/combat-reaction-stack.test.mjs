@@ -154,6 +154,51 @@ test('a saved pending offer is refused once its owner already holds the depth ca
   assert.throws(() => restore(atCap), /Reaction choice is past its seat limit/);
 });
 
+// A Gilded Knight's Gilded Guard answers a heavy Strike, so the saved stack holds one real enemy entry
+// with its committed plan (a Strike in hand keeps the seat's offer open while the entry is stacked).
+function enemyStackFixture() {
+  const heavy = { ...strikeDef, id: 'heavyStrike', name: 'Heavy Strike', effects: [{ op: 'damage', target: 'enemy', amount: 12 }] };
+  const registries = createRegistries({ ...contentBundle, cards: [...contentBundle.cards, heavy],
+    tagging: [...contentBundle.tagging, ...strikeTagging.map(row => ({ ...row, objectId: 'heavyStrike' })),
+      { family: 'card', scope: '', objectId: 'strike', tagId: 'trait:reaction' }] });
+  const combat = createCombat({ registries, rng: createRng(5), combatExpansionVersion: 2, reactionRulesVersion: 2, enemyIds: ['gildedKnight'],
+    player: { classId: 'reaver', maxHp: 100, hp: 100, maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 2,
+      deck: [{ cardId: 'heavyStrike', instanceId: 'r0', upgraded: false }, { cardId: 'strike', instanceId: 'r1', upgraded: false }] } });
+  combat.player.block = 100;
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'r0', targetId: combat.enemies[0].id });
+  return { combat, registries };
+}
+
+test('the enemy-total limit refuses a saved enemy entry on a Counter-return root', () => {
+  const { combat, registries } = enemyStackFixture();
+  assert.equal(combat.reactionStack.entries[0].side, 'enemy');
+  const saved = JSON.parse(JSON.stringify(serializeCombatSnapshot(combat)));
+  const restore = snapshot => restoreCombatSnapshot({ registries, rng: createRng(5), snapshot: JSON.parse(JSON.stringify(snapshot)) });
+  assert.equal(restore(saved).reactionStack.entries.filter(entry => entry.side === 'enemy').length, 1, 'control: a normal root keeps its enemy entry');
+  // Mark the root as a Counter-return: its enemy entries drop to zero, so the one saved entry exceeds the limit.
+  const counter = structuredClone(saved);
+  for (const action of counter.abilityQueue) {
+    if (action.meta?.expansionGroup?.key === counter.reactionStack.groupKey) action.meta.expansionGroup.counterReturn = { sourceId: combat.enemies[0].id };
+  }
+  assert.throws(() => restore(counter), /Reaction stack exceeds its per-seat limits/);
+});
+
+test('the enemy-total limit refuses maxDepth + 1 saved enemy entries, and maxDepth restores', () => {
+  const { combat, registries } = enemyStackFixture();
+  const saved = JSON.parse(JSON.stringify(serializeCombatSnapshot(combat)));
+  const restore = snapshot => restoreCombatSnapshot({ registries, rng: createRng(5), snapshot: JSON.parse(JSON.stringify(snapshot)) });
+  const { maxDepth } = saved.reactionRules.stack;
+  const withEnemies = count => {
+    const state = structuredClone(saved);
+    const [first] = state.reactionStack.entries;
+    state.reactionStack.entries = Array.from({ length: count }, () => structuredClone(first));
+    return state;
+  };
+  // Control: exactly maxDepth enemy entries on a normal root restore.
+  assert.equal(restore(withEnemies(maxDepth)).reactionStack.entries.filter(entry => entry.side === 'enemy').length, maxDepth);
+  assert.throws(() => restore(withEnemies(maxDepth + 1)), /Reaction stack exceeds its per-seat limits/);
+});
+
 test('an enemy-side stack entry whose enemy is down fizzles and runs nothing', () => {
   const { combat } = fixture({ cardIds: ['sweepingBlow', 'whirlingGuard'], enemyCount: 2 });
   dispatch(combat, { type: 'endTurn' });

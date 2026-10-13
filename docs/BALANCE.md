@@ -135,18 +135,18 @@ assume deck growth (§4 bands). These are a **floor** — real play does better.
 
 | Class | Encounter | Win % | Avg HP lost (of max) |
 |-------|-----------|------:|---------------------:|
-| Reaver | loneSoldier (normal) | 100 | 0.8 / 63 |
-| Reaver | patrol (normal) | 100 | 11.4 / 63 |
-| Reaver | packHunt (normal) | 100 | 12 / 63 |
-| Reaver | twinPatrol (normal) | 100 | 3.7 / 63 |
-| Reaver | bruiser (normal) | 99.7 | 10.7 / 63 |
-| Reaver | eliteWyrm (elite) | 98 | 26.9 / 63 |
-| Reaver | bossOmen (boss) | 100 | 22.9 / 63 |
-| Reaver | lanternFlight (normal) | 100 | 1.6 / 63 |
-| Reaver | briarRefuge (normal) | 100 | 3.2 / 63 |
-| Reaver | chainAmbush (normal) | 100 | 3.4 / 63 |
-| Reaver | bossBellKeeper (boss) | 99.7 | 27.5 / 63 |
-| Reaver | bossThornMatriarch (boss) | 100 | 34.5 / 63 |
+| Reaver | loneSoldier (normal) | 100 | 0.7 / 63 |
+| Reaver | patrol (normal) | 100 | 10.9 / 63 |
+| Reaver | packHunt (normal) | 100 | 11.5 / 63 |
+| Reaver | twinPatrol (normal) | 100 | 3.5 / 63 |
+| Reaver | bruiser (normal) | 100 | 10 / 63 |
+| Reaver | eliteWyrm (elite) | 98 | 26.1 / 63 |
+| Reaver | bossOmen (boss) | 100 | 22.8 / 63 |
+| Reaver | lanternFlight (normal) | 100 | 1.5 / 63 |
+| Reaver | briarRefuge (normal) | 100 | 3 / 63 |
+| Reaver | chainAmbush (normal) | 100 | 3.3 / 63 |
+| Reaver | bossBellKeeper (boss) | 100 | 27.3 / 63 |
+| Reaver | bossThornMatriarch (boss) | 100 | 34.2 / 63 |
 | Starseer | loneSoldier (normal) | 100 | 0.7 / 66 |
 | Starseer | patrol (normal) | 100 | 6.7 / 66 |
 | Starseer | packHunt (normal) | 100 | 8.5 / 66 |
@@ -160,16 +160,16 @@ assume deck growth (§4 bands). These are a **floor** — real play does better.
 | Starseer | bossBellKeeper (boss) | 99.3 | 31.3 / 66 |
 | Starseer | bossThornMatriarch (boss) | 99.3 | 29.1 / 66 |
 | Rogue | loneSoldier (normal) | 100 | 0.3 / 53 |
-| Rogue | patrol (normal) | 100 | 7.7 / 53 |
+| Rogue | patrol (normal) | 100 | 7.6 / 53 |
 | Rogue | packHunt (normal) | 99.7 | 10.3 / 53 |
 | Rogue | twinPatrol (normal) | 100 | 2.5 / 53 |
 | Rogue | bruiser (normal) | 99.3 | 8.2 / 53 |
 | Rogue | eliteWyrm (elite) | 93.3 | 26.4 / 53 |
-| Rogue | bossOmen (boss) | 85 | 30.3 / 53 |
+| Rogue | bossOmen (boss) | 85 | 30.4 / 53 |
 | Rogue | lanternFlight (normal) | 100 | 1.6 / 53 |
 | Rogue | briarRefuge (normal) | 100 | 1.1 / 53 |
 | Rogue | chainAmbush (normal) | 100 | 1.7 / 53 |
-| Rogue | bossBellKeeper (boss) | 89.3 | 31.2 / 53 |
+| Rogue | bossBellKeeper (boss) | 89.7 | 31.1 / 53 |
 | Rogue | bossThornMatriarch (boss) | 92.3 | 32.9 / 53 |
 | Herald | loneSoldier (normal) | 100 | 0.3 / 53 |
 | Herald | patrol (normal) | 100 | 2.7 / 53 |

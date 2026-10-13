@@ -4,7 +4,8 @@ import { counterstrikeAmount, counterstrikePct, hasStanceAdvantage, stanceManeuv
 import { evalPredicate } from './triggers.js';
 import { cardRatingBonus } from './combatRatings.js';
 import { armCombatCounter, matchupRules, combatExpansionEnabled, setCombatStance, prepareCombatEvade } from './combatMatchups.js';
-import { attackDescriptor } from '../model/attackTags.js';
+import { attackDescriptor, weaponDamageType, weaponDamageComponents, dominantDamageType } from '../model/attackTags.js';
+import { combatRules } from '../content/combatRules.js';
 import { equippedIn, slotHand } from '../model/loadout.js';
 import { enemyMoveDamage } from '../model/state.js';
 import { expansionCarrierTraits } from './combatExpansionEquipment.js';
@@ -25,7 +26,9 @@ export function tacticalCarrier(def, extra = {}, ctx = null, source = null) {
     combatRiderTargets: [] };
   if (combatExpansionEnabled(ctx) && extra.ratingId === undefined && def.ratingId !== undefined) carrier.ratingId = def.ratingId;
   carrier.combatProfile = { ...combatProfileFor(carrier), ...(def.combatProfile || {}), ...(extra.combatProfile || {}) };
-  if (!carrier.combatProfile.damageType && carrier.combatProfile.camp && ctx?.registries && source?.kind !== 'enemy' && !source?.enemyId) {
+  // A mixed card's weapon part is resolved like an untagged card's whole type.
+  const weaponPart = !!(carrier.attack?.weaponDamage && carrier.attack.components);
+  if ((!carrier.combatProfile.damageType || weaponPart) && carrier.combatProfile.camp && ctx?.registries && source?.kind !== 'enemy' && !source?.enemyId) {
     const attack = attackDescriptor(carrier);
     const kind = attack.source || (carrier.combatProfile.camp === 'spell' ? 'spell' : 'weapon');
     const pieces = ctx.registries.equipment?.armaments || [];
@@ -38,8 +41,25 @@ export function tacticalCarrier(def, extra = {}, ctx = null, source = null) {
         if (equipped && attackDescriptor(equipped).source === kind) { piece = equipped; break; }
       }
     }
-    const identity = piece && attackDescriptor(piece);
-    carrier.combatProfile.damageType = identity?.damageType || (kind === 'unarmed' ? 'blunt' : null);
+    // No piece of that kind in hand: a physical weapon card is thrown with bare hands
+    // and deals the unarmed profile's type (owner #19), as foundationSource does.
+    const rules = ctx.foundation?.rules || combatRules;
+    const unarmed = (ctx.registries.equipment?.basicCardProfiles || []).find(row => row.id === 'unarmedAttack');
+    // A magical face (a staff's Strike, lent with a magic school) is never a bare-handed blow.
+    const magical = carrier.combatProfile.camp === 'spell' || (carrier.damageSchool && carrier.damageSchool !== 'physical');
+    const bare = piece || !['weapon', 'unarmed'].includes(kind) || magical ? null
+      : (unarmed && attackDescriptor(unarmed).damageType) || rules.fallbackSource.damageType;
+    const family = piece ? rules.equipmentSources?.itemFamilies?.[piece.id] || rules.equipmentSources?.profileFamilies?.[piece.attackProfile]
+      : rules.fallbackSource.family;
+    const pieceType = (piece && attackDescriptor(piece).damageType) || bare;
+    if (weaponPart) {
+      // The resolved parts travel on the carrier, so every effect and the
+      // rules foundation read the same split as this profile.
+      const components = weaponDamageComponents(attack, family, pieceType);
+      carrier.attack = { ...carrier.attack, components };
+      carrier.combatProfile.damageComponents = components.map(({ type, weight }) => ({ type, weight }));
+      carrier.combatProfile.damageType = dominantDamageType(components);
+    } else carrier.combatProfile.damageType = weaponDamageType(attack, family, pieceType) || null;
   }
   return combatExpansionEnabled(ctx) ? expansionCarrierTraits(carrier, source) : carrier;
 }

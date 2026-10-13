@@ -16,6 +16,10 @@ export const combatRules = {
     arcane: { tag: 'damage:arcane', physical: false, magicShare: 0.5 },
     sacred: { tag: 'damage:sacred', physical: false, magicShare: 1 },
     decay: { tag: 'damage:decay', physical: false, magicShare: 1 },
+    poison: { tag: 'damage:poison', physical: false, magicShare: 1 },
+    psychic: { tag: 'damage:psychic', physical: false, magicShare: 1 },
+    // Earth is marked non-physical (physical: false) and its cards carry school:earth, an all-magic school.
+    earth: { tag: 'damage:earth', physical: false, magicShare: 1 },
   },
   // The magic share of a MAGIC SCHOOL (a school:<id> tag or a Spell's school).
   // Force splits (0.5): its physical part is the card's physical tag, else the

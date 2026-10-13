@@ -363,8 +363,27 @@ its `?shot=components` reference page. Art-bearing components receive their
 visual node or content row from the existing asset/content registries, so later
 custom art does not require a second card implementation.
 
+[Open the production component specimens](../index.html?shot=components).
+Each labeled folio has a direct `#folio-<component-id>` link, including
+[Class choice cards](../index.html?shot=components#folio-class-choice-card) and
+[Keepsake cards](../index.html?shot=components#folio-keepsake-choice).
+The interactive reference catalog's detail drawer links to the same specimens.
+
 | Component ID | Model / input | Renderer | Reuse |
 |---|---|---|---|
+| `creation-page-heading` | eyebrow, title, description, optional aside | `creationPageParts.creationPageHeading` | Every creation step + catalog |
+| `creation-panel` | semantic kind, heading, content nodes | `creationPageParts.creationPanel` | Creation panels + catalog; material, trim and live body are separate DOM parts |
+| `creation-choice-tile` | choice row, selected state, callback | `creationPageParts.creationChoiceTile` | Creation choices + catalog; native button with independent art and live copy |
+| `creation-part-material` | shipped soot-leather material | `creationPageParts.surfaceLayers` + `creationFeatEmblem` | Panel, tile and emblem decorative layers; shown in their production owner |
+| `creation-part-trim` | shipped frame or medallion trim | `creationPageParts.surfaceLayers` + `creationFeatEmblem` | Panel, tile and emblem decorative layers |
+| `creation-part-body` | ordinary live content nodes | `creationPageParts.creationPanel` + `creationChoiceTile` | Panel and tile bodies + catalog |
+| `creation-choice-art` | art node supplied by owner | `creationPageParts.creationChoiceTile` | Choice artwork, separate from text + catalog |
+| `creation-choice-copy` | title and description | `creationPageParts.creationChoiceTile` | Choice live text + catalog |
+| `creation-step-navigation` | ordered steps, current ID, callback | `creationPageParts.createCreationStepNavigation` + `kit.categoryNav` | Class → Attributes → Keepsake → Equipment → Feats → optional Spells → Review; desktop rail and phone selector + catalog |
+| `creation-feat-browser` | `CreationFeatBrowserModel.creationFeatBrowserGroups`, inspected ID, allowance | `creationPageParts.createCreationFeatBrowser` | Character, selected-class and skill groups; existing progression levels supply requirement/lock metadata. Locked feats remain inspectable. Inspection changes no run state and allowance 0 grants no birth feat |
+| `creation-feat-tile` | canonical feat row, track current/required levels, inspected state | `creationPageParts.createCreationFeatBrowser` + `creationChoiceTile` | Native feat inspection button with level requirement and lock badge + catalog |
+| `creation-feat-detail` | inspected canonical name, description and progression requirement | `creationPageParts.createCreationFeatBrowser` + `creationPanel` | Feat detail and lock status + catalog |
+| `creation-feat-emblem` | canonical feat ID | `creationPageParts.creationFeatEmblem` | Shared tile/detail emblem; separate material, trim and engraved symbol + catalog |
 | `character-disclosure` | disclosure entries | `disclosure.mountDisclosure` | Character Creation + catalog |
 | `class-preview-pane` | class preview presentation | `creationCards.classPreviewPane` + `classUnfold` | Class preview + catalog; compact contained sprite and icon beside class details. Native stat and relic buttons open shared modal details through `creationPreviewDetails`; stat definition and value precede the projected calculation at the bottom. |
 | `class-resource-grid` | `statProjection.derived[]` + hand resource rows | `creationCards.classResourceGrid` | Class preview + catalog; HP, SP, MP, opening Hand and Draw. Optional inspection callback renders native buttons with full accessible names. |
