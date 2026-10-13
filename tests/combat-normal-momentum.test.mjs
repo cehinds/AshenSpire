@@ -203,6 +203,21 @@ test('an enemy reaction move closes its exchange when it resolves: later damage 
   assert.equal(pending(c), -2, 'a later hit from that enemy in the same turn is credited on its own');
 });
 
+test('an enemy reaction move paused mid-resolution keeps its exchange open for the resume', () => {
+  const c = fakeCombat();
+  Object.assign(c.enemies[0], { alive: true, hp: 20 });
+  Object.assign(c.player, { alive: true, hp: 20 });
+  c.queue = [];
+  c.emit = (type, payload) => recordNormalExchange(c, type, payload);
+  const hit = () => recordNormalExchange(c, 'damageDealt', { isAttack: true, sourceId: 'e1', targetId: 'player', amount: 3, blocked: 0 });
+  const entry = { ownerId: 'e1', enemyId: ENEMY, moveId: 'slash', targetPlayerId: 'player', plan: { group: { kind: 'attack' }, actions: [] } };
+  // The first hit lands, then the drain pauses for the player's reaction before the second.
+  runEnemyPlan(c, entry, { drain: () => { hit(); c.pendingReaction = { id: 'pause' }; } });
+  assert.equal(c.normalPreview.state.enemyExchange?.sourceId, 'e1', 'the paused move keeps its exchange');
+  hit();
+  assert.equal(pending(c), -1, 'the hit after the resume is the same exchange: one credit');
+});
+
 test('the banner tab reads the stored momentum; a fight with the toggle off shows none', () => {
   const c = fakeCombat();
   c.normalPreview.state.momentum = { e1: 2 };
