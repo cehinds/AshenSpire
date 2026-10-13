@@ -22,7 +22,8 @@ const UNPHRASEABLE = Symbol('unphraseable');
 const fail = () => { throw UNPHRASEABLE; };
 
 // Conditional riders follow the statuses they extend, ahead of gains (owner: damage and status first).
-const LINE_ORDER = ['damage', 'status', 'condition', 'consume', 'gain', 'bonus', 'detail'];
+// An up-front HP payment leads: effects run in order and a lethal payment stops the rest.
+const LINE_ORDER = ['cost', 'damage', 'status', 'condition', 'consume', 'gain', 'bonus', 'detail'];
 // Play restrictions first. A keyword outside this list keeps the authored text.
 const KEYWORDS = ['unplayable', 'exhaust', 'retain', 'ethereal', 'innate'];
 const ENEMY_TARGETS = ['enemy', 'allEnemies', 'randomEnemy'];
@@ -199,7 +200,7 @@ function buildLines(def, preview, registries) {
       }
       case 'draw': return frag('bonus', `Draw ${num(n, base)}`);
       case 'discard': return frag('bonus', `${effect.choose ? 'Choose and discard' : 'Discard'} ${num(n, base)}${effect.random ? ' at random' : ''}`);
-      case 'loseHp': return frag('bonus', `${effect.offering ? 'Offer' : 'Pay'} ${num(n, base)} HP${effect.nonlethal ? ' (leave at least 1 HP)' : ''}`);
+      case 'loseHp': return frag(index === 0 && !effect.if ? 'cost' : 'bonus', `${effect.offering ? 'Offer' : 'Pay'} ${num(n, base)} HP${effect.nonlethal ? ' (leave at least 1 HP)' : ''}`);
       case 'retain': return frag('bonus', `Retain ${num(n, base)}`);
       case 'grantRollMode': return frag('bonus', `Next ${esc(effect.roll)}: ${effect.advantage ? 'Advantage' : 'Disadvantage'}`);
       case 'enterStance': return frag('bonus', effect.choose ? 'Choose a stance'
@@ -222,7 +223,8 @@ function buildLines(def, preview, registries) {
   const segmentsOf = (fragments, extraBonus = []) => {
     const of = cat => fragments.filter(f => f.cat === cat).map(f => f.text);
     const out = [];
-    const damage = of('damage'), status = of('status'), remove = of('remove'), consume = of('consume'), gain = of('gain'), bonus = [...of('bonus'), ...extraBonus];
+    const cost = of('cost'), damage = of('damage'), status = of('status'), remove = of('remove'), consume = of('consume'), gain = of('gain'), bonus = [...of('bonus'), ...extraBonus];
+    if (cost.length) out.push({ kind: 'cost', text: cost.join(', ') });
     if (damage.length) out.push({ kind: 'damage', text: `${damageVerb} ${damage.join(', ')}` });
     else if (counter && fragments === unconditional) out.push({ kind: 'damage', text: damageVerb.replace(/: return$/, '') });
     if (status.length) out.push({ kind: 'status', text: `Inflict ${status.join(', ')}` });
@@ -288,7 +290,7 @@ function buildLines(def, preview, registries) {
 
   if ((def.keywords || []).some(keyword => !KEYWORDS.includes(keyword))) return null;
   const keywords = KEYWORDS.filter(keyword => (def.keywords || []).includes(keyword)).map(keyword => keyword[0].toUpperCase() + keyword.slice(1));
-  const byKind = { damage: [], status: [], condition: [], consume: [], gain: [], bonus: [], detail: [] };
+  const byKind = { cost: [], damage: [], status: [], condition: [], consume: [], gain: [], bonus: [], detail: [] };
   for (const segment of segmentsOf(unconditional, keywords)) byKind[segment.kind].push(segment.text);
   for (const group of groups.values()) {
     // Only damage wakes a sleeper; a rider keyed on Sleep that deals none says so, as its authored text does.

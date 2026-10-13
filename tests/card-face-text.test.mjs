@@ -152,3 +152,8 @@ test('a charge-added buildup row from the live preview reaches the face, aligned
 test('a nested before-play status check says "before this card"', () => {
   assert.ok(text('progression-eclipse-lance').some(line => /^If .* before this card: /.test(line)), JSON.stringify(text('progression-eclipse-lance')));
 });
+
+test('an up-front HP payment leads the face, as it runs first', () => {
+  assert.match(text('bloodPact')[0], /^Pay \d+ HP/);
+  assert.match(text('flagellation')[0], /^Pay \d+ HP/);
+});
