@@ -376,10 +376,9 @@ export function spendSilencedStack(ctx, target) {
 
 export function prepareExpandedDefense(ctx, target, receipt, carrier) {
   if (receipt.defendedAmounts) return;
-  // Force contacts that meet a Silenced target's stacks: a hit among them is negated before any defence.
+  // Force hits that meet a Silenced target's stacks: their Force (Arcane) part is negated before any defence.
   receipt.silencedImmune = silencedForceContacts(ctx, target, receipt.profiles);
-  const hits = receipt.amounts.map((whole, index) => {
-    const amount = receipt.silencedImmune[index] ? 0 : whole;
+  const hits = receipt.amounts.map((amount, index) => {
     const profile = receipt.profiles[index];
     const share = contactMagicShare(ctx, profile);
     const split = share > 0 && share < 1;
@@ -411,6 +410,16 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
     pushTyped(index, true, hit.magic, hit.typeWeights.magic);
     pushTyped(index, false, hit.physical, hit.typeWeights.physical);
   });
+  // A Silenced creature is immune to Force (owner, 2026-10-13): only a Force hit's Arcane parts are
+  // negated; its other parts (Blunt and the rest) go on through Block, Poise and HP. A hit that is all
+  // Arcane is negated whole.
+  receipt.forceImmuneAmounts = hits.map(() => 0);
+  for (let p = parts.length - 1; p >= 0; p--) {
+    if (!receipt.silencedImmune[parts[p].index] || parts[p].type !== 'arcane') continue;
+    receipt.forceImmuneAmounts[parts[p].index] += parts[p].amount;
+    parts.splice(p, 1);
+  }
+  receipt.forceImmuneWhole = hits.map((hit, index) => receipt.silencedImmune[index] && !parts.some(part => part.index === index));
   const groups = new Map();
   parts.forEach((part, p) => {
     const key = `${part.camp}:${part.type}`;
@@ -533,8 +542,8 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
   if (carrier.critMultiplier > 1) ctx.emit('critHit', { sourceId: source?.id, targetId: target.id, ...critSeats(ctx, source, target), multiplier: carrier.critMultiplier, amount: raw });
   prepareExpandedDefense(ctx, target, tactical, carrier);
   const contactIndex = planned?.index || 0;
-  if (tactical.silencedImmune?.[contactIndex]) {
-    // A Silenced creature is immune to Force: the whole hit is negated, then it spends one stack.
+  if (tactical.forceImmuneWhole?.[contactIndex]) {
+    // A Silenced creature is immune to Force: a hit that is all Force is negated whole, then it spends one stack.
     const type = ctx.combatExpansionRules.matchups.damageAliases[profile.damageType] || profile.damageType;
     Matchups.recordTacticalContact(tactical, { hpLoss: 0, blocked: 0, wardResisted: 0 });
     ctx.emit('damageDealt', { sourceId: source?.id, targetId: target.id, amount: 0, blocked: 0, wardResisted: 0, resisted: raw,
@@ -611,11 +620,15 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
     ...(wardSpent ? { wardAbsorbed: wardSpent, wardRemaining: target.persistentWard?.value || 0 } : {}),
     ...(poiseAbsorbed ? { poiseAbsorbed, poiseRemaining: target.persistentPoise?.value || 0 } : {}),
     ...(immune && amount === 0 ? { immune: true } : {}),
+    // The Force (Arcane) part a Silenced target was immune to; the rest of the hit landed.
+    ...(tactical.forceImmuneAmounts?.[contactIndex] ? { forceImmune: tactical.forceImmuneAmounts[contactIndex] } : {}),
     damageType: type, blockRemaining: target.block || 0, barrierRemaining: target.barrier || 0,
     // The hit's typed parts before Barrier and Ward: magicAmount + physicalAmount is the hit.
     magicAmount: tactical.magicAmounts?.[contactIndex] || 0, physicalAmount: tactical.physicalAmounts?.[contactIndex] || 0,
     ...seatOf(ctx, target), ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source) } : {}),
     ...(carrier.instanceId ? { cardInstanceId: carrier.instanceId, sourceHand: carrier.sourceHand, grantedBy: carrier.grantedBy } : {}), isAttack: true });
+  // A hit with a Force part spends one Silenced stack once it has landed.
+  if (tactical.silencedImmune?.[contactIndex]) spendSilencedStack(ctx, target);
   // A Ward or Poise break interrupts an enemy: its prepared action is cancelled. emitBreak settles
   // whether it really did (a killing hit or a refused stagger does not) before the break is logged.
   for (const [type, payload] of breaks) {
