@@ -659,6 +659,20 @@ test('round setup rejects card keys that cannot survive JSON and reactions witho
   assert.throws(() => startRound(makeFight(specs, TABLES), { queues, rng: rng(1) }), /instanceId.*other than -0/);
 });
 
+test('an uncloneable queued card fails before initiative consumes rng', () => {
+  const fight = makeFight([
+    player({ hp: 30 }),
+    { id: 'goblin', hp: 14, sp: 3, attrs: { DEX: 3 }, level: 1 },
+  ], TABLES);
+  const bad = card('stab', 'attack', 'player', { extension: { callback() {} } });
+  const rngFn = counted(3);
+
+  assert.throws(() => startRound(fight, {
+    queues: { player: [], goblin: [bad] }, rng: rngFn,
+  }), (err) => err?.name === 'DataCloneError');
+  assert.equal(rngFn.calls, 0, 'queue snapshot validation happens before either initiative d4');
+});
+
 test('createRound isolates queued cards, exposed timelines and nested onReaction data', () => {
   const reaction = card('brace', 'guard', 'self', { instanceId: 'brace#1', tags: ['guard'] });
   const attack = card('stab', 'attack', 'player', {

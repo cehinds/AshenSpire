@@ -321,6 +321,14 @@ export function buildTimeline(queues, ctx = {}) {
   validateQueues(queues, combatants);
   validateHands(combatants);
 
+  // Snapshot every queued card before initiative consumes rng. Besides isolating nested caller
+  // data, this makes an uncloneable extension field fail while the injected rng is still at its
+  // original cursor, just like every other invalid queue field checked above.
+  const queueSnapshots = {};
+  for (const id of Object.keys(queues)) {
+    put(queueSnapshots, id, queues[id].map((card) => structuredClone(card)));
+  }
+
   // Lane order: player first, then the other combatants in key order.
   const laneIds = [
     'player',
@@ -335,7 +343,7 @@ export function buildTimeline(queues, ctx = {}) {
 
   let seq = 0;
   const lanes = laneIds.map((id) => {
-    const queue = get(queues, id, []);
+    const queue = get(queueSnapshots, id, []);
     const cards = Array.isArray(queue) ? queue : [];
     return cards.map((c, cardIndex) => {
       const preemptive = DEFENSIVE_KINDS.includes(c.kind);
@@ -349,7 +357,7 @@ export function buildTimeline(queues, ctx = {}) {
         cardId: c.id,
         target: c.target,
         preemptive,
-        card: { ...structuredClone(c), sp: cardSp(c) },
+        card: { ...c, sp: cardSp(c) },
         speed: {
           card: parts.card,
           buff: parts.buff,
