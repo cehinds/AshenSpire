@@ -131,17 +131,6 @@ test('pages: the newest run for the head SHA must itself be the success', () => 
   assert.ok(pages.includes(`[.workflow_runs[] | select(.head_sha == $sha)][0] | select(.conclusion == "success")`));
 });
 
-test('pages: the selftest step gets PAGES_DEV_SHA from the build-stamp run head sha, gated on head_branch dev', () => {
-  const step = pages.slice(pages.indexOf('- name: The generator\'s own drift plant is still caught'));
-  const block = step.slice(0, step.indexOf('- uses: actions/configure-pages'));
-  assert.ok(block.includes('--selftest'), 'the selftest step is not where this test looks');
-  assert.ok(
-    /PAGES_DEV_SHA:\s*\$\{\{\s*github\.event_name == 'workflow_run' && github\.event\.workflow_run\.head_branch == 'dev' && github\.event\.workflow_run\.head_sha \|\| ''\s*\}\}/.test(block),
-    'the selftest step must set PAGES_DEV_SHA from github.event.workflow_run.head_sha, gated on head_branch == dev',
-  );
-  assert.ok(!/run:.*PAGES_DEV_SHA|\$\{\{[^}]*head_sha[^}]*\}\}[^\n]*--selftest/.test(block), 'PAGES_DEV_SHA must reach the script via env, never interpolated into run');
-});
-
 test('pages: branch previews match feature, fix and chore prefixes in any case (Chore/X too)', () => {
   const wf = readFileSync(new URL('../.github/workflows/pages-builds.yml', import.meta.url), 'utf8');
   const filters = wf.match(/test\("\^\(feature\|fix\|chore\)\/"[^)]*\)/g) || [];
