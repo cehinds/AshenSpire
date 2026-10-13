@@ -84,7 +84,7 @@ test('a non-damage Force effect on a Silenced enemy spends 1 stack', () => {
   assert.equal(getStacks(enemy, 'silenced'), 1);
 });
 
-test('Ruinous Blow (Necrotic + Force) is a Force hit: a Silenced enemy is immune to it and spends a stack', () => {
+test('Ruinous Blow (Blunt + Force) is a Force hit: a Silenced enemy is immune to it and spends a stack', () => {
   const combat = createCombat({ registries, rng: createRng(5), combatExpansionVersion: 2, enemyIds: ['wanderingSoldier'],
     player: { classId: 'reaver', maxHp: 200, hp: 200, maxMana: 50, mana: 50, energyMax: 10, drawPerTurn: 5, relicIds: [],
       deck: [{ instanceId: 'c', cardId: 'ruinousBlow' }],
