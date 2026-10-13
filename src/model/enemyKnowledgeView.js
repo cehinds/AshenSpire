@@ -43,6 +43,7 @@ export function projectEnemyKnowledge(def, record, { target = enemyKnowledge.bes
       ...Object.entries(def.damageResistanceBySchool || {}).map(([school, amount]) => ({ label: `${words(school)} resistance`, value: String(amount) })),
       ...Object.entries(defenses?.flat || {}).map(([type, amount]) => ({ label: `${words(type)} flat resistance`, value: `${amount} point${amount === 1 ? '' : 's'}` })),
       ...Object.entries(defenses?.weak || {}).map(([type, amount]) => ({ label: `${words(type)} weakness`, value: `${amount}%` })),
+      ...Object.entries(defenses?.resist || {}).map(([type, amount]) => ({ label: `${words(type)} resistance`, value: `${amount}%` })),
     ].filter(Boolean) : null,
     traits: stage >= 2 ? [
       ...(def.traits || []).map(trait => typeof trait === 'string' ? { name: words(trait) } : { name: trait.name, detail: trait.detail || '' }),
