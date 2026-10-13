@@ -7,9 +7,10 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { alternativeFormation, fitAlternativeSprites } from '../src/ui/models/AlternativeFormationModel.js';
 import { combatFormation } from '../src/ui/models/CombatFormationModel.js';
-import { allocateCombatBands } from '../src/ui/models/CombatLayout.js';
+import { planCombatLayout } from './helpers/combat-layout-plan.mjs';
 
 const stageSource = readFileSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url), 'utf8');
+const layoutSource = readFileSync(new URL('../src/ui/components/combatLayout.js', import.meta.url), 'utf8');
 
 const gridFor = (width, height, narrow) => {
   const plan = alternativeFormation(combatFormation({ width, height, presentation: { perspectiveGrid: true, formationPreset: 'straight' },
@@ -24,19 +25,36 @@ test('the formation grid still follows the layout mode, as it did before the cha
   assert.match(stageSource, /alternativeFormation\(plan, fieldRect\.width, fieldRect\.height, document\.documentElement\.dataset\.layout === 'narrow'\)/);
 });
 
-test('combatant size follows the battlefield height: a taller field stands the figures taller in proportion', () => {
-  // Each figure's foot line sits at 75% of the field, as the grid's rows do, so only the field height limits it.
-  const actor = (id, side, height) => ({ id, side, slot: { id, artWidth: 400, depth: 1, ground: height * .75, x: 640 }, ratio: 1, multiplier: 1,
-    visibleWidth: 60, visibleHeight: 160, leading: 40, enemyId: 'x' });
-  const at = (height) => {
-    const actors = [actor('p', 'player', height), actor('a', 'enemy', height)];
-    return fitAlternativeSprites({ width: 1280, height, actors, narrow: false }).find(size => size.id === 'a').visibleHeight;
-  };
-  const ratio = at(440) / at(400);
-  assert.ok(Math.abs(ratio - 1.1) < .02, `enemy height ratio ${ratio} for a 10% taller field`);
+// The caller, not allocateCombatBands, decides the form factor's bands: combatLayout.js
+// must not hand formFactor to allocateCombatBands (it picks the footer art width only).
+test('combatLayout.js does not pass formFactor to allocateCombatBands', () => {
+  const call = layoutSource.match(/allocateCombatBands\(\{[^}]*\}/);
+  assert.ok(call, 'the allocateCombatBands call is in combatLayout.js');
+  assert.doesNotMatch(call[0], /\bformFactor\s*[,}:]/, call[0]);
 });
 
+// Driven through the real caller: a desktop 1920x1080 window must give the
+// battlefield (scene band) the phone's share, not the retired 50% desktop band.
 test('the desktop battlefield takes the phone scene band, above the retired 50% share', () => {
-  const bands = allocateCombatBands({ height: 1000 });
-  assert.ok(bands.battlefield / 1000 > .5, `battlefield share ${bands.battlefield / 1000}`);
+  const desktop = planCombatLayout({ formFactor: 'desktop', width: 1920, height: 1080 });
+  assert.ok(desktop.battlefield / 1080 > .5, `battlefield share ${desktop.battlefield / 1080}`);
+  const phone = planCombatLayout({ formFactor: 'mobile', width: 1920, height: 1080 });
+  assert.deepEqual([desktop.hud, desktop.hand], [phone.hud, phone.hand], 'the hud and hand are the phone\'s');
+});
+
+// Sprite height follows the battlefield the caller hands it. At 1920x1080 the
+// scene band is now the phone's ~55% share, so sprites stand taller than they did
+// on the retired 50% desktop band.
+test('desktop sprites stand taller in proportion to the larger scene band at 1920x1080', () => {
+  const actor = (id, side, height) => ({ id, side, slot: { id, artWidth: 400, depth: 1, ground: height * .75, x: 960 }, ratio: 1, multiplier: 1,
+    visibleWidth: 60, visibleHeight: 160, leading: 40, enemyId: 'x' });
+  const spriteHeight = (field) => {
+    const actors = [actor('p', 'player', field), actor('a', 'enemy', field)];
+    return fitAlternativeSprites({ width: 1920, height: field, actors, narrow: false }).find(size => size.id === 'a').visibleHeight;
+  };
+  const scene = planCombatLayout({ formFactor: 'desktop', width: 1920, height: 1080 }).battlefield;
+  const retiredHalf = 1080 * .5;
+  const ratio = spriteHeight(scene) / spriteHeight(retiredHalf);
+  assert.ok(scene > retiredHalf, `scene ${scene} against the retired 540`);
+  assert.ok(Math.abs(ratio - scene / retiredHalf) < .02, `sprite ratio ${ratio} for scene ratio ${scene / retiredHalf}`);
 });

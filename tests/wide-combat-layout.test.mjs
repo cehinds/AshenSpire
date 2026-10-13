@@ -4,8 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { allocateCombatBands } from '../src/ui/models/CombatLayout.js';
-import { footerArtHeight } from '../src/ui/models/FooterLayoutModel.js';
+import { planCombatLayout } from './helpers/combat-layout-plan.mjs';
 import { isWideFormFactor, WIDE_FORM_FACTORS } from '../src/ui/models/FormFactorModel.js';
 
 const near = (a, b) => Math.abs(a - b) < 1e-6;
@@ -21,16 +20,29 @@ test('only desktop and widescreen are wide form factors', () => {
 });
 
 // Widescreen, desktop, tablet and phone share one band plan at every window
-// height, so a wide window's battlefield and hand are the phone's proportions.
-for (const windowHeight of [720, 1080, 1440, 2160]) {
-  test(`widescreen band shares equal desktop and the phone's at a ${windowHeight}px window`, () => {
-    const zoom = windowHeight / 730, localHeight = 730, width = 1920 / zoom;
-    const plan = (formFactor) => allocateCombatBands({ width, height: localHeight, zoom, footerArtPx: footerArtHeight(width, zoom, formFactor) * zoom });
-    const desktopPlan = plan('desktop');
-    const widePlan = plan('widescreen');
-    assert.deepEqual({ ...widePlan }, { ...desktopPlan }, `widescreen plan at ${windowHeight}px`);
-    assert.ok(widePlan.footer * zoom <= desktopPlan.footer * zoom + .5);
-    assert.ok(near(widePlan.hand / localHeight, .30) || widePlan.hand * zoom <= 208 + 1e-6, `hand share at ${windowHeight}px`);
+// size. Each form factor reaches the plan through the real caller
+// (wireCombatLayout reading data-form-factor), so a wide window's bands are
+// the phone's, not a table of its own.
+const WINDOWS = [
+  { width: 1280, height: 720, zoom: 0.99 },
+  { width: 1920, height: 1080, zoom: 1.48 },
+  { width: 2560, height: 1440, zoom: 1.97 },
+  { width: 1920, height: 1080, zoom: 1 },
+];
+// The hud, hand and arrangement are the phone's. The footer band is the art
+// height at the form factor's art width (footerLayout), so the wide footer keeps
+// its own art; it must sit at the 92px physical floor the phone footer floors at.
+const SHARED = ['hud', 'hand', 'arrangement', 'supported'];
+for (const { width, height, zoom } of WINDOWS) {
+  test(`widescreen and desktop bands equal the phone's at ${width}x${height} (zoom ${zoom})`, () => {
+    const local = { width: width / zoom, height: height / zoom, zoom };
+    const phone = planCombatLayout({ formFactor: 'mobile', ...local });
+    for (const formFactor of ['desktop', 'widescreen']) {
+      const wide = planCombatLayout({ formFactor, ...local });
+      assert.deepEqual(SHARED.map(key => wide[key]), SHARED.map(key => phone[key]), `${formFactor} bands at ${width}x${height}`);
+      assert.ok(Math.abs(wide.footer * zoom - 92) < 1.5, `${formFactor} footer at ${width}x${height}: ${wide.footer * zoom}px`);
+      assert.ok(near(wide.hand / local.height, .30) || wide.hand * zoom <= 208 + 1e-6, `hand share at ${width}x${height}`);
+    }
   });
 }
 
