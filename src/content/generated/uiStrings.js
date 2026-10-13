@@ -9355,6 +9355,13 @@ export const uiStrings = [
     "tip": "Unpick this starting ability choice."
   },
   {
+    "id": "creation.abilities.elementCap",
+    "extends": "",
+    "short": "Only {max} element spell",
+    "full": "Only {max} element spell",
+    "tip": "You can take at most {max} element spell. Unpick it to choose this one."
+  },
+  {
     "id": "creation.abilities.chooseLabel",
     "extends": "",
     "short": "Learn ability {name}",

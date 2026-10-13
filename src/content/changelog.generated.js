@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-13",
     "summary": "End Turn no longer stalls in Alternative combat rounds when a queued card can't be played",
     "detail": "With the Alternative combat rounds setting on, a queued card such as a Counter, played after an earlier card in the same round had put you to Sleep or Staggered you, made End Turn do nothing. That card is now skipped and its Stamina and Mana refunded, and the round goes on.",
-    "build": "0.7.1.1487",
+    "build": "0.7.1.1489",
     "pullRequest": 1963,
     "url": "https://github.com/cehinds/AshenSpire/pull/1963"
+  },
+  {
+    "id": "pr-1961",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Starseer and Herald can no longer pick two element spells and get stuck on Spells",
+    "detail": "The starting spells allow only one element spell (Mind Spike, Mind Fracture, Stone Sling, Rockfall or Drowsing Mote), but the picker let you take two, then greyed Next with no way to see why. Once you hold one element spell the other four now grey out, and the progress line says only one is allowed.",
+    "build": "0.7.1.1489",
+    "pullRequest": 1961,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1961"
   },
   {
     "id": "pr-1956",
