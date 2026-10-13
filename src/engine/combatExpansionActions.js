@@ -74,12 +74,15 @@ export function enqueueExpandedAction(ctx, actions, { source, target, carrier } 
         const tags = Actions.attackTagsFor({ ...action, card: contactCarrier }, eff, ctx.registries);
         const crit = eff.op === 'damage' && !ctx._expansionPreview && !carrier?.combatReaction ? Actions.rollCrit(ctx, source, tags) : 0;
         if (crit) contactCarrier.critMultiplier = crit;
-        let amount = eff.op === 'damage' ? Actions.computeAttackDamage(prefix, shadow.source, projected, base
-          + (action.meta.abilityChargeDamageEffect || 0) + (h === 0 ? action.meta.abilityChargeDamage || 0 : 0),
-        tags, contactCarrier, { matchups: false, beforeDefense: true }) : 0;
+        const attackBase = base + (action.meta.abilityChargeDamageEffect || 0) + (h === 0 ? action.meta.abilityChargeDamage || 0 : 0);
+        let amount = eff.op === 'damage' ? Actions.computeAttackDamage(prefix, shadow.source, projected, attackBase,
+          tags, contactCarrier, { matchups: false, beforeDefense: true }) : 0;
         if (crit) amount = Math.floor(amount * crit);
+        // The card's own damage is the split base; its rating bonus is typed by the rating and added after the split.
+        const split = eff.op === 'damage' ? { splitBase: Math.max(0, Math.floor(base)),
+          ratingBonus: Actions.cardRatingDamage(prefix, shadow.source, contactCarrier, attackBase), ratingPart: Actions.ratingBonusPart(prefix, contactCarrier) } : {};
         const index = row.contacts.length;
-        row.contacts.push({ ...profile, amount, ...(eff.op !== 'damage' ? { effect: ['poiseDamage', 'wardDamage'].includes(eff.op) ? 'impact' : 'status', pressure: base } : {}) });
+        row.contacts.push({ ...profile, amount, ...split, ...(Number.isFinite(contactCarrier.magicShare) ? { magicShare: contactCarrier.magicShare } : {}), ...(contactCarrier.physicalDamageType ? { physicalDamageType: contactCarrier.physicalDamageType } : {}), ...(eff.op !== 'damage' ? { effect: ['poiseDamage', 'wardDamage'].includes(eff.op) ? 'impact' : 'status', pressure: base } : {}) });
         contacts.push({ key, index, id: entity.id, playerId: ctx.playerIdForEntity?.(entity), ...(crit ? { crit } : {}) });
       }
       action.meta.expansionContacts.push(contacts);
@@ -144,7 +147,7 @@ export function previewExpandedActions(ctx, actions, options) {
   const group = enqueueExpandedAction(local, copied, { ...options, source: entity(options.source), target: entity(options.target) });
   beginExpandedAction(local, group, entity(options.source));
   return copied.map(action => (action.meta.expansionContacts || []).flat().map(contact => ({ ...contact,
-    amount: group.targets[contact.key].receipt.defendedAmounts[contact.index] || 0,
+    amount: group.targets[contact.key].receipt.hpAmounts?.[contact.index] || 0,
     receipt: group.targets[contact.key].receipt })));
 }
 

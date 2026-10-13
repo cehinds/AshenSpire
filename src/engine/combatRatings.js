@@ -1,9 +1,10 @@
-import { ratingReceipt, ratingValue, sourceRatingValue, attackImpact, isMagicalAttack } from '../model/combatRatings.js';
+import { ratingReceipt, ratingValue, sourceRatingValue, attackImpact, isMagicalAttack, isMagicalHit } from '../model/combatRatings.js';
 import * as Properties from './properties.js';
 import { passiveMult, passiveSum } from '../model/registries.js';
 import { usesSingleBreakMeter, breakMeterIds } from '../model/breakMeter.js';
 import * as Matchups from './combatMatchups.js';
 import { creditKnowledgeImpact } from './enemyKnowledge.js';
+import { syncWardMaximum, syncPoiseMaximum } from './combatPools.js';
 
 export function refreshCombatRatings(ctx) {
   if (!ctx.ratingsRules) return;
@@ -28,16 +29,25 @@ export function refreshCombatRatings(ctx) {
     for (let n = 0; n < (prior?.growths || 0); n++) max = Math.ceil(max * ctx.ratingsRules.breaks.thresholdGrowth);
     ctx.player[key] = { ...prior, value: Math.min(prior?.value || 0, max - 1), max, growths: prior?.growths || 0 };
   }
+  // The live rating moved: every Ward and Poise pool follows it now, not at its next use.
+  if (ctx.combatExpansionVersion === 2) {
+    for (const entity of [ctx.player, ...(ctx.enemies || [])]) {
+      if (!entity) continue;
+      syncWardMaximum(ctx, entity);
+      syncPoiseMaximum(ctx, entity);
+    }
+  }
 }
 
 export function applyRatingImpact(ctx, source, target, carrier, explicitAmount = null, { triggerHit = true, knowledgeMatchup = false } = {}) {
   if (!ctx.ratingsRules || !target?.alive) return;
-  const magical = isMagicalAttack(ctx, carrier);
+  // The meter follows the hit's magic part: a hit with none (alteration, or a physical type on a spell) is Poise's.
+  const magical = isMagicalHit(ctx, carrier);
   const single = usesSingleBreakMeter(ctx);
   const meterName = magical && !single ? 'ward' : 'poise';
   const meter = target[meterName + 'Meter'];
   if (!meter || meter.max <= 0) return;
-  let amount = explicitAmount === null ? attackImpact(ctx, source, carrier) : Math.max(0, Math.floor(explicitAmount));
+  let amount = explicitAmount === null ? attackImpact(ctx, source, carrier, magical) : Math.max(0, Math.floor(explicitAmount));
   if (single && magical && explicitAmount === null) amount = foldedMagicImpact(ctx, source, target, carrier, amount);
   const label = magical && !single ? 'Disruption' : 'Stagger';
   const seats = ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source), targetPlayerId: ctx.playerIdForEntity(target) } : {};

@@ -334,8 +334,8 @@ export const rogueCards = [
   },
   {
     id: 'deathblow', name: 'Deathblow', class: 'rogue', rarity: 'rare', cost: 3, type: 'attack', keywords: [], icon: '☠',
-    // 40% Blunt, 60% Force (owner #23).
-    attack: { components: [{ type: 'blunt', weight: 40 }, { type: 'arcane', weight: 60 }] },
+    // 60% Blunt, 40% Necrotic (owner, 2026-10-13).
+    attack: { components: [{ type: 'blunt', weight: 60 }, { type: 'decay', weight: 40 }] },
     flavor: "Killing stroke of the frozen docks.\n\nStruck where the river keeps what the surgeons leave. The river does not thaw, the docks say, because it is full, and the Court built more bridges rather than ask why.\n\nBeneath the ice the Marrow Organist plays the funeral service. He has never reached its end.",
     effects: [
       { op: 'damage', target: 'enemy', amount: 24 },

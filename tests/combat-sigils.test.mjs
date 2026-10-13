@@ -142,7 +142,58 @@ test('five primary symbols prioritize category, damage and statuses without muta
   assert.equal(JSON.stringify(model.tags),before);
   const html=cardTagRailHtml(chosen);
   assert.equal((html.match(/class="card-tag-symbol"/g)||[]).length,chosen.length);
-  assert.doesNotMatch(html,/tabindex=|title=/);
+  // Each symbol is a tab stop that shows its own tooltip (data-tip); no native title.
+  assert.equal((html.match(/tabindex="0"/g)||[]).length,chosen.length);
+  assert.doesNotMatch(html,/ title=/);
   for(const tag of chosen)assert.ok(html.includes('aria-label="'+tag.label+(tag.count===undefined?'':' '+tag.count)+'"'));
   assert.equal(cardTagRailHtml([]),'');
+});
+
+test('Flux, Impact, Reaction and Counterstrike each get one symbol, Flux shares the Force glyph', async () => {
+  const { cardTagRailHtml: rail } = await import('../src/ui/components/cardTagSymbols.js');
+  const tag = (key, label) => ({ id: `trait:${key}`, label, blurb: label });
+  const html = rail([tag('flux', 'Flux 1'), tag('impact', 'Impact 2'), tag('reaction', 'Reaction'), tag('counterstrike', 'Counterstrike')]);
+  assert.equal((html.match(/class="card-tag-symbol"/g) || []).length, 4);
+  assert.ok(html.includes('aria-label="Flux 1"'));
+  assert.ok(html.includes('aria-label="Impact 2"'));
+  const force = html.split('data-tag-id="trait:flux"')[1].split('</span>')[0];
+  assert.ok(force.includes('<circle cx="16" cy="16" r="4"/>'), 'Flux shows the diamond with a centre dot');
+});
+
+test('the rail shows each trait once with its value, and a trait without a symbol stays off the rail', async () => {
+  const { cardSideTags: sides, cardTagRailHtml: rail } = await import('../src/ui/components/cardTagSymbols.js');
+  const model = { sigils: { action: 'attack' }, tags: [
+    { id: 'trait:flux', label: 'Flux 1', blurb: 'On hit: N Ward damage.' },
+    { id: 'trait:flux', label: 'Flux 1', blurb: 'On hit: N Ward damage.' },
+    { id: 'trait:impact', label: 'Impact 2', blurb: 'On hit: N Poise damage.' },
+    { id: 'trait:grounded', label: 'Grounded', blurb: 'Grounded.' },
+  ] };
+  const chosen = sides(model, { traitValues: { flux: 1, impact: 2 } }, null);
+  assert.equal(chosen.filter(t => t.id === 'trait:flux').length, 1);
+  assert.equal(chosen.find(t => t.id === 'trait:flux').count, 1);
+  assert.equal(chosen.find(t => t.id === 'trait:impact').count, 2);
+  assert.ok(!chosen.some(t => t.id === 'trait:grounded'), 'a trait without a symbol stays in the inspection list');
+  const html = rail(chosen);
+  assert.equal((html.match(/data-tag-id="trait:flux"/g) || []).length, 1);
+  assert.ok(html.includes('aria-label="Flux 1"'));
+  assert.ok(html.includes('<span class="card-tag-count" aria-hidden="true">1</span>'));
+});
+
+test('a selected tag symbol explains itself with its name, count and blurb from uiStrings', async () => {
+  const { cardTagRailHtml: rail } = await import('../src/ui/components/cardTagSymbols.js');
+  const html = rail([{ id: 'trait:flux', label: 'Flux', count: 1, blurb: 'On hit: N Ward damage, or double the Ward damage the card already deals.' }]);
+  assert.ok(html.includes('data-tip="Flux 1 — On hit: 1 Ward damage, or double the Ward damage the card already deals."'), html);
+  const tooltip = (await import('node:fs')).readFileSync(new URL('../src/ui/components/tooltip.js', import.meta.url), 'utf8');
+  assert.match(tooltip, /\.card-tag-symbol\[data-tip\]/, 'the shared explain handler takes tag symbols');
+});
+
+test('a press on a tag symbol through the hand lane explains it and never reaches the card', async () => {
+  const tooltip = (await import('node:fs')).readFileSync(new URL('../src/ui/components/tooltip.js', import.meta.url), 'utf8');
+  // The lane (.hand-hit-lane) covers the card. The existing explain listener (no new page listener)
+  // redirects that click to the symbol, stops it there, and re-dispatches it to the symbol.
+  assert.match(tooltip, /const symbolUnderLane = ev => \{[\s\S]*?closest\?\.\('\.hand-hit-lane'\)/);
+  assert.match(tooltip, /if \(ev\.type === 'click'\) \{\s*const sym = symbolUnderLane\(ev\);[\s\S]*?ev\.stopPropagation\(\); ev\.preventDefault\(\);\s*sym\.dispatchEvent\(new MouseEvent\('click'/);
+  // One press explains a tag symbol: the symbol skips the select-then-explain step.
+  assert.match(tooltip, /const oneTap = term\.classList\.contains\('card-tag-symbol'\);\s*if \(ev\.type === 'click' && !oneTap && selectedControl !== term\)/);
+  assert.doesNotMatch(tooltip, /for \(const type of \['pointerdown'/, 'no computed-type page listener');
 });
