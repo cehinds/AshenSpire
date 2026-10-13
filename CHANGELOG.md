@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-13
 
-- **Desktop combat uses the phone's proportions** ([#1934](https://github.com/cehinds/AshenSpire/pull/1934), `0.7.1.1457`). On desktop and widescreen the hand now takes 30% of the screen instead of 38%, so the battlefield is larger and enemies are drawn bigger. Hand cards scale with the hand like on a phone, and the horizon sits where it does on a phone. Phone and tablet layouts are unchanged.
+- **Desktop combat uses the phone's proportions** ([#1934](https://github.com/cehinds/AshenSpire/pull/1934), `0.7.1.1459`). On desktop and widescreen the hand now takes 30% of the screen instead of 38%, so the battlefield is larger and enemies are drawn bigger. Hand cards scale with the hand like on a phone, and the horizon sits where it does on a phone. Phone and tablet layouts are unchanged.
 
 ## 2026-10-12
 

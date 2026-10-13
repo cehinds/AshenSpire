@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-13",
     "summary": "Desktop combat uses the phone's proportions",
     "detail": "On desktop and widescreen the hand now takes 30% of the screen instead of 38%, so the battlefield is larger and enemies are drawn bigger. Hand cards scale with the hand like on a phone, and the horizon sits where it does on a phone. Phone and tablet layouts are unchanged.",
-    "build": "0.7.1.1457",
+    "build": "0.7.1.1459",
     "pullRequest": 1934,
     "url": "https://github.com/cehinds/AshenSpire/pull/1934"
   },
