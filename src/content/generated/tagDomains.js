@@ -159,8 +159,8 @@ export const tagDomains = [
     "blurb": "Authored combat identity shared by cards and enemy moves."
   },
   {
-    "id": "reach",
-    "label": "Reach",
+    "id": "range",
+    "label": "Range",
     "aside": false,
     "blurb": "Inspection details for combat techniques."
   },

@@ -4374,7 +4374,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "deathblow",
-    "tagId": "damage:arcane"
+    "tagId": "damage:decay"
   },
   {
     "family": "card",
@@ -19278,7 +19278,7 @@ export const tagging = [
     "family": "enemyMove",
     "scope": "gildedKnight",
     "objectId": "gildedGuard",
-    "tagId": "reach:contact"
+    "tagId": "range:melee"
   },
   {
     "family": "enemyMove",
@@ -19764,7 +19764,7 @@ export const tagging = [
     "family": "enemyMove",
     "scope": "courtDuelist",
     "objectId": "bindingRiposte",
-    "tagId": "reach:contact"
+    "tagId": "range:melee"
   },
   {
     "family": "enemyMove",
@@ -21516,7 +21516,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "frostCounter",
-    "tagId": "reach:near"
+    "tagId": "range:reach"
   },
   {
     "family": "card",
@@ -21570,7 +21570,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "fireCounter",
-    "tagId": "reach:near"
+    "tagId": "range:reach"
   },
   {
     "family": "card",
@@ -21624,7 +21624,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "lightningCounter",
-    "tagId": "reach:near"
+    "tagId": "range:reach"
   },
   {
     "family": "card",
@@ -21678,7 +21678,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "forceCounter",
-    "tagId": "reach:near"
+    "tagId": "range:reach"
   },
   {
     "family": "card",
@@ -21732,7 +21732,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "alterationCounter",
-    "tagId": "reach:near"
+    "tagId": "range:reach"
   },
   {
     "family": "card",
@@ -21786,7 +21786,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "illusionCounter",
-    "tagId": "reach:near"
+    "tagId": "range:reach"
   },
   {
     "family": "card",
@@ -21840,7 +21840,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "divineCounter",
-    "tagId": "reach:near"
+    "tagId": "range:reach"
   },
   {
     "family": "card",
@@ -21894,7 +21894,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "decayCounter",
-    "tagId": "reach:near"
+    "tagId": "range:reach"
   },
   {
     "family": "card",
@@ -21948,7 +21948,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "barrageCounter",
-    "tagId": "reach:near"
+    "tagId": "range:reach"
   },
   {
     "family": "card",
@@ -21996,7 +21996,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "rimeNeedle",
-    "tagId": "reach:near"
+    "tagId": "range:reach"
   },
   {
     "family": "card",
@@ -22044,7 +22044,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "emberDart",
-    "tagId": "reach:near"
+    "tagId": "range:reach"
   },
   {
     "family": "card",
@@ -22092,7 +22092,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "staticNeedle",
-    "tagId": "reach:near"
+    "tagId": "range:reach"
   },
   {
     "family": "card",
@@ -22140,7 +22140,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "forceNudge",
-    "tagId": "reach:near"
+    "tagId": "range:reach"
   },
   {
     "family": "card",
@@ -22188,7 +22188,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "drowsingMote",
-    "tagId": "reach:near"
+    "tagId": "range:reach"
   },
   {
     "family": "card",
@@ -22236,7 +22236,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "holySpark",
-    "tagId": "reach:near"
+    "tagId": "range:reach"
   },
   {
     "family": "card",
@@ -22284,7 +22284,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "rotMote",
-    "tagId": "reach:near"
+    "tagId": "range:reach"
   },
   {
     "family": "card",
@@ -22326,7 +22326,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "earthGrounding",
-    "tagId": "reach:contact"
+    "tagId": "range:melee"
   },
   {
     "family": "card",
@@ -22374,7 +22374,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "restfulDream",
-    "tagId": "reach:contact"
+    "tagId": "range:melee"
   },
   {
     "family": "card",
@@ -22416,7 +22416,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "sanctuaryCleanse",
-    "tagId": "reach:contact"
+    "tagId": "range:melee"
   },
   {
     "family": "card",
@@ -22452,7 +22452,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "blightedTransmute",
-    "tagId": "reach:contact"
+    "tagId": "range:melee"
   },
   {
     "family": "card",
@@ -22488,7 +22488,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "blightedSecondBloom",
-    "tagId": "reach:contact"
+    "tagId": "range:melee"
   },
   {
     "family": "card",
@@ -22524,7 +22524,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "blightedBlightward",
-    "tagId": "reach:contact"
+    "tagId": "range:melee"
   },
   {
     "family": "card",
@@ -22560,7 +22560,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "dreamHarvest",
-    "tagId": "reach:contact"
+    "tagId": "range:melee"
   },
   {
     "family": "card",
@@ -22596,7 +22596,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "lucidRecovery",
-    "tagId": "reach:contact"
+    "tagId": "range:melee"
   },
   {
     "family": "card",
@@ -22632,7 +22632,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "groundedResolve",
-    "tagId": "reach:contact"
+    "tagId": "range:melee"
   },
   {
     "family": "card",
@@ -22662,7 +22662,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "clearHead",
-    "tagId": "reach:contact"
+    "tagId": "range:melee"
   },
   {
     "family": "card",
@@ -22698,7 +22698,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "lowGuardRiposte",
-    "tagId": "reach:contact"
+    "tagId": "range:melee"
   },
   {
     "family": "card",
@@ -22734,7 +22734,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "crawlingShot",
-    "tagId": "reach:near"
+    "tagId": "range:reach"
   },
   {
     "family": "card",
@@ -22764,7 +22764,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "emberCovenant",
-    "tagId": "reach:contact"
+    "tagId": "range:melee"
   },
   {
     "family": "card",
@@ -22800,7 +22800,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "shatterOpportunity",
-    "tagId": "reach:contact"
+    "tagId": "range:melee"
   },
   {
     "family": "card",
@@ -22842,7 +22842,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "phaseWard",
-    "tagId": "reach:contact"
+    "tagId": "range:melee"
   },
   {
     "family": "card",
@@ -22884,7 +22884,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "illusionDecoy",
-    "tagId": "reach:contact"
+    "tagId": "range:melee"
   },
   {
     "family": "card",
@@ -23112,7 +23112,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "lethalDose",
-    "tagId": "reach:near"
+    "tagId": "range:reach"
   },
   {
     "family": "card",
@@ -23160,7 +23160,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "mindSpike",
-    "tagId": "reach:near"
+    "tagId": "range:reach"
   },
   {
     "family": "card",
@@ -23202,7 +23202,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "dissonance",
-    "tagId": "reach:contact"
+    "tagId": "range:melee"
   },
   {
     "family": "card",
@@ -23250,7 +23250,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "mindFracture",
-    "tagId": "reach:near"
+    "tagId": "range:reach"
   },
   {
     "family": "card",
@@ -23298,7 +23298,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "wakingNightmare",
-    "tagId": "reach:near"
+    "tagId": "range:reach"
   },
   {
     "family": "card",
@@ -23346,7 +23346,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "stoneSling",
-    "tagId": "reach:near"
+    "tagId": "range:reach"
   },
   {
     "family": "card",
@@ -23394,7 +23394,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "rockfall",
-    "tagId": "reach:near"
+    "tagId": "range:reach"
   },
   {
     "family": "card",
@@ -23460,7 +23460,7 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "entomb",
-    "tagId": "reach:near"
+    "tagId": "range:reach"
   },
   {
     "family": "card",

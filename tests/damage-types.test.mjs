@@ -32,7 +32,8 @@ function hit(damageType, enemyId = 'wanderingSoldier', combatExpansionVersion = 
 
 test('the closed damage-type list and both rider tables know poison, psychic and earth', () => {
   for (const type of ['poison', 'psychic', 'earth']) {
-    assert.deepEqual(combatRules.damageTypes[type], { tag: `damage:${type}`, physical: false }, type);
+    // Poison and Psychic are all magic; Earth routes physical (magicShare 0) but keeps physical: false for the foundation's armour.
+    assert.deepEqual(combatRules.damageTypes[type], { tag: `damage:${type}`, physical: false, magicShare: type === 'earth' ? 0 : 1 }, type);
     assert(combatMatchups.damageRiders[type], `v1 rider ${type}`);
     const rider = combatExpansionMatchups.damageRiders[type];
     assert(rider, `v2 rider ${type}`);

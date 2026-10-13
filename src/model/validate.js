@@ -1073,6 +1073,10 @@ function collectContentProblems(bundle, errors = []) {
           err(`equipment.armaments.${id}.${field}`, `must be an explicit non-negative integer, got ${JSON.stringify(value)}`);
         }
       }
+      // Every armament has one physical damage type: its Block-facing part of a hit (magic share < 1).
+      if (!['blunt', 'slashing', 'piercing'].includes(row?.physicalDamageType)) {
+        err(`equipment.armaments.${id}.physicalDamageType`, `must be blunt, slashing or piercing, got ${JSON.stringify(row?.physicalDamageType)}`);
+      }
       if (Number.isInteger(row?.weight) && row.weight !== row.poiseThreshold) {
         err(`equipment.armaments.${id}.weight`, `must equal authored poiseThreshold ${JSON.stringify(row.poiseThreshold)}`);
       }

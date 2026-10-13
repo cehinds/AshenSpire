@@ -32,7 +32,7 @@ import { loreLine } from './loreLine.js';
 import { cardChoice } from '../../model/cardChoices.js';
 import { engravedIconHtml, engravedGlyphId } from './engravedIcon.js';
 import { equipmentCardArt } from '../assets.js';
-import { combatProfileFor, combatProfileTags, numberedTraitRow, traitLine } from '../../model/combatCardProfile.js';
+import { combatCardRange, combatProfileFor, combatProfileTags, numberedTraitRow } from '../../model/combatCardProfile.js';
 import { ashenBlightCardLabel } from './ashenBlight.js';
 import { ACTION_SIGILS, SCHOOL_SIGILS, cardSigilIdentity } from '../../content/combatSigils.js';
 import { compactCardRules, sigilExplanationHtml } from './combatSigilView.js';
@@ -158,11 +158,11 @@ export function renderCard(registries, ref, opts = {}) {
     ...(expanded ? { faceType: combatCardType(def) } : {}),
     tags: [...rawModel.tags, ...combatTags.filter(tag => !rawModel.tags.some(existing => existing.id === tag.id))] };
   model.sideTags = cardSideTags(model, def, registries, opts.preview || null);
+  // The combat hand's range chip (opts.range), by the same rule the deck editor uses.
+  model.range = opts.range ? combatCardRange(def) : null;
   // Authored clauses carry family limits and charge/payment constraints that
   // the generic effect summary cannot express. Keep those complete on the face.
   const faceSummary = expanded ? combatCardSummary(def, opts.preview, registries) : null;
-  // Reaction rules v2 cards carry traitValues; the face names them first.
-  const traitRule = traitLine(def.traitValues);
   const fallbackDamageLabel = expanded && !faceSummary
     && (def.effects?.some(effect => effect.op === 'damage') || def.counterPayload?.hp)
     ? combatCardDamageLabel(def, opts.preview, registries) : '';
@@ -280,7 +280,7 @@ export function renderCard(registries, ref, opts = {}) {
       : fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences);
     el.innerHTML = illustratedCardHtml(model,{
       // The printed price is live; the full weight table stays in Information.
-      rules: compactCardRules(`${traitRule ? `${esc(traitRule)} ` : ''}${faceSummary ? esc(faceSummary)
+      rules: compactCardRules(`${faceSummary ? esc(faceSummary)
         : `${fallbackDamageLabel ? `${esc(fallbackDamageLabel)}: ` : ''}${authoredRules}`}`),
       painting:artwork?.path,
       equipmentArtwork:artwork?.equipment,
@@ -616,8 +616,8 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
   if (combatProfile.maneuver === 'counter') {
     if (def.counterCoverage) {
       const c = def.counterCoverage;
-      const names = { physical: 'Martial', spell: 'Spell', contact: 'Contact', near: 'Near', far: 'Far', single: 'Single', area: 'Area', damage: 'damage', status: 'status pressure' };
-      const coverage = [c.camps, c.reaches, c.targeting, c.effects].map(ids => (ids || []).map(id => names[id] || id).join(' + ')).filter(Boolean).join(' · ');
+      const names = { physical: 'Martial', spell: 'Spell', melee: t('deckEditor.range.melee'), reach: t('deckEditor.range.reach'), ranged: t('deckEditor.range.ranged'), single: 'Single', area: 'Area', damage: 'damage', status: 'status pressure' };
+      const coverage = [c.camps, c.ranges, c.targeting, c.effects].map(ids => (ids || []).map(id => names[id] || id).join(' + ')).filter(Boolean).join(' · ');
       html += `<div class="combat-rule-hint"><strong>Counter coverage:</strong> ${esc(coverage)}${c.schools ? ` · ${esc(c.schools.join(' + '))}` : ''}. Return once after all covered damage and status pressure is resisted. Evade and Invulnerability give no return. The prepared stance remains until another maneuver replaces it.</div>`;
     } else html += '<div class="combat-rule-hint">Prepare counter until next player turn. Listed damage and Poise damage become retaliation after full Guard or Ward absorption; card support effects resolve when played.</div>';
   }

@@ -28,25 +28,35 @@ function contact({camp='physical',damage=5,block=0,barrier=0,ward=0,flat=0,statu
   combat.player.persistentWard.value=ward;
   combat.enemies[0].ratings={ar:0,dr:0,pr:0,poise:0,ward:0};
   const before=combat.eventLog.length;
+  // A melee spell with a physical type splits (magicShareOf); the spell cases are all magic so Barrier and Ward meet the whole hit.
   applyAttackDamage(combat,combat.enemies[0],combat.player,damage,[],{
-    combatProfile:{camp,maneuver:'attack',damageType:'blunt',reach:'contact',targeting:'single'},
+    combatProfile:{camp,maneuver:'attack',damageType:'blunt',reach:'contact',targeting:'single',...(camp==='spell'?{magicShare:1}:{})},
     attack:{source:camp==='spell'?'spell':'weapon',damageType:'blunt'}});
   return {combat,events:combat.eventLog.slice(before)};
 }
 const reactions=events=>events.map(event=>selectedWeaponReactionFor(event,pilot)).filter(Boolean);
 
 test('real expanded Block, Barrier, Ward and typed reduction receipts earn protection only with zero HP loss',()=>{
-  for(const defense of [{block:5},{camp:'spell',barrier:5},{camp:'spell',ward:5},
-    {camp:'spell',ward:3,barrier:2},{flat:5}, {profiles:{player:{immunities:['blunt']}}}]) {
+  for(const defense of [{block:5},{camp:'spell',barrier:5},{camp:'spell',ward:3,barrier:5},
+    {flat:5}, {profiles:{player:{immunities:['blunt']}}}]) {
     const {combat,events}=contact(defense);
     assert.equal(combat.player.hp,100,JSON.stringify(defense));
     assert.deepEqual(reactions(events),['fully-defended'],JSON.stringify(defense));
     const before=structuredClone(events),rng=combat.rng.getCounters();
     reactions(events);assert.deepEqual(events,before);assert.deepEqual(combat.rng.getCounters(),rng);
   }
+  // Ward is a pool that lets at least 1 through each hit it meets, so a hit that reaches Ward always costs HP.
+  for(const defense of [{camp:'spell',ward:5},{camp:'spell',ward:3,barrier:2}]) {
+    const {combat,events}=contact(defense);
+    const receipt=events.find(event=>event.type==='damageDealt');
+    assert.deepEqual([receipt.amount,receipt.blocked,receipt.wardResisted],[1,0,4],JSON.stringify(defense));
+    assert.equal(combat.player.hp,99,JSON.stringify(defense));
+    assert.deepEqual(reactions(events),[],JSON.stringify(defense));
+  }
   const {combat,events}=contact({damage:10,camp:'spell',ward:8,barrier:1});
   const receipt=events.find(event=>event.type==='damageDealt');
-  assert.deepEqual([receipt.amount,receipt.blocked,receipt.wardResisted],[2,1,8]);
+  // blocked is Block alone; wardResisted is the magic part's Barrier (1) and Ward (8) absorption.
+  assert.deepEqual([receipt.amount,receipt.blocked,receipt.wardResisted],[1,0,9]);
   assert.equal(combat.player.hp,99);assert.deepEqual(reactions(events),[],'resistance never hides remaining HP damage');
   assert.deepEqual(reactions(contact({damage:0,block:10,ward:10}).events),[],'a zero attack earns no protection reaction');
 });

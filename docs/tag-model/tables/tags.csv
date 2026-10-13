@@ -721,13 +721,13 @@ lifecycle.recall.afterUse,afterUse,afterUse,lifecycle.recall,TagNode,,Returns to
 lifecycle.recall.afterTurnDraw,afterTurnDraw,afterTurnDraw,lifecycle.recall,TagNode,,Returns to your hand after your turn's draw.,,,,,,live-tag,,,lifecycle.recall.afterTurnDraw
 lifecycle.recall.afterCardPlay,afterCardPlay,afterCardPlay,lifecycle.recall,TagNode,,Returns to your hand after you play another card.,,,,,,live-tag,,,lifecycle.recall.afterCardPlay
 lifecycle.seal,seal,seal,lifecycle,TagNode,,Set aside in the Sealed zone when its seal condition is met.,,,,,,live-tag,,,lifecycle.seal
-reach,reach,Reach,,TagNode,,Inspection details for combat techniques.,,,,,,live-tag,,,reach
-reach.contact,contact,Contact,reach,TagNode,,At melee reach.,,,,,,live-tag,◇,9FC3E8,reach:contact
-reach.near,near,Near,reach,TagNode,,Normal ranged reach.,,,,,,live-tag,◇,9FC3E8,reach:near
-reach.far,far,Far,reach,TagNode,,Extended ranged reach.,,,,,,live-tag,◇,9FC3E8,reach:far
-counterMode,counterMode,Counter reach,,TagNode,,,,,,,,live-tag,,,counterMode
-meta.combat.stance.counter.melee-counter,melee-counter,Melee counter,meta.combat.stance.counter,TagNode,,"Replies to eligible melee Attack or Smash. Sweep, Force, Piercing and Ranged bypass this reaction.",,,,,,live-tag,◇,D7B36B,counter:melee
-meta.combat.stance.counter.spell-counter,spell-counter,Spell counter,meta.combat.stance.counter,TagNode,,"Intercepts incoming physical ranged moves or spells. Against physical ranged moves, strips Ward without Health retaliation. Against spellcasters, can retaliate against Health.",,,,,,live-tag,◇,D7B36B,counter:spell
+range,range,Range,,TagNode,,Inspection details for combat techniques.,,,,,,live-tag,,,range
+range.melee,range.melee,Melee,range,TagNode,,At melee range: within arm's length.,,,,,,live-tag,◇,9FC3E8,range:melee
+range.reach,reach,Reach,range,TagNode,,At reach: past arm's length but not yet ranged.,,,,,,live-tag,◇,9FC3E8,range:reach
+range.ranged,range.ranged,Ranged,range,TagNode,,At ranged distance.,,,,,,live-tag,◇,9FC3E8,range:ranged
+counterMode,counterMode,Counter reach,,TagNode,,Counter reach: which kind of incoming attack a counter can answer. Grouping node for the counter reach vocabulary.,,,,,,live-tag,,,counterMode
+counterMode.melee,counterMode.melee,Melee counter,counterMode,TagNode,,"Replies to eligible melee Attack or Smash. Sweep, Force, Piercing and Ranged bypass this reaction.",,,,,,live-tag,◇,D7B36B,counter:melee
+counterMode.spell,counterMode.spell,Spell counter,counterMode,TagNode,,"Intercepts incoming physical ranged moves or spells. Against physical ranged moves, strips Ward without Health retaliation. Against spellcasters, can retaliate against Health.",,,,,,live-tag,◇,D7B36B,counter:spell
 item,item,Item,,TagNode,,"What a piece of gear DOES beyond its numbers, and what a run pickup is.",,,,,,live-tag,,,item
 item.bound,item.bound,Bound,item,TagNode,,Carries its own cards — they arrive with the piece and are named in equipmentGrants.csv.,,,,,,live-tag,⛓,C9A227,bound
 itemType,itemType,Item type,,TagNode,,"What a piece of equipment IS, as the Armoury and the smith name it. Distinct from the card domain: a Blade item type and a Blade card school are different facts about the same sword.",,,,,,live-tag,,,itemType
