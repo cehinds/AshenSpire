@@ -125,9 +125,28 @@ async function treeBytes(dir) {
   return total;
 }
 
+// The machine paths the snapshot must not carry: the checkout, the temp state dir and the home
+// directory, each as it appears in JSON text (plain and forward-slash forms). Longest first, so
+// a path that contains another is removed whole. A root path ('/') is never a needle.
+function machinePathNeedles(stateDir) {
+  const found = new Set();
+  for (const p of [REPO, stateDir, os.homedir()]) {
+    if (!p || p === path.parse(p).root) continue;
+    for (const form of [p, p.replace(/\\/g, '/')]) found.add(JSON.stringify(form).slice(1, -1));
+  }
+  return [...found].sort((a, b) => b.length - a.length);
+}
+
+function scrubMachinePaths(json, needles) {
+  let text = json;
+  for (const needle of needles) text = text.split(needle).join('');
+  return text;
+}
+
 // Boots the Workbench on a free port and records what its read-only API answers.
 async function buildSnapshot(out, { base, previews }) {
   const stateDir = await fs.mkdtemp(path.join(os.tmpdir(), 'wbs-'));
+  const needles = machinePathNeedles(stateDir);
   let app = null;
   try {
     app = await createWorkbench({ root: REPO, port: 0, children: false, stateDir });
@@ -155,14 +174,17 @@ async function buildSnapshot(out, { base, previews }) {
       const res = await get(`files/read?path=${encodeURIComponent(file)}`);
       if (res.status !== 200) continue;
       index[file] = { hash: res.body.hash, kind: res.body.kind };
-      await writeOut(out, `static-api/files/${file}.json`, JSON.stringify(res.body));
+      await writeOut(out, `static-api/files/${file}.json`, scrubMachinePaths(JSON.stringify(res.body), needles));
       read += 1;
     }
 
     markSiteLinks(snap.library?.body, siteRootOf(base), new Set(previews));
     const git = snap.git?.body || {};
     const meta = { branch: git.branch || '', head: git.head || '', builtAt: new Date().toISOString() };
-    await writeOut(out, 'static-api/snapshot.json', JSON.stringify({ meta, snap, index }));
+    // The settings' environment is the build machine's: its values are not published.
+    const env = snap.settings?.body?.env;
+    if (env && typeof env === 'object') for (const k of Object.keys(env)) env[k] = '';
+    await writeOut(out, 'static-api/snapshot.json', scrubMachinePaths(JSON.stringify({ meta, snap, index }), needles));
     return read;
   } finally {
     if (app) await app.close();
