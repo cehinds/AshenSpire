@@ -312,6 +312,71 @@ Formula, relation and value keys follow the README conventions.
 - **Couldn't place:** none. The rows above cover every entry the game defines in
   these five families.
 
+## 15. Evade becomes a live maneuver; the reaction tag already shipped in #1905
+
+- **Date:** 2026-10-13 (owner).
+- **Ruling 1 (verbatim):**
+  > Evade becomes a live maneuver (`maneuver:evade`), its own stance. Evade adds dex + base +3 per stack of evade to evasion stat and adds 3 block.
+- **Ruling 2 (verbatim):**
+  > Evade and counter should have the reaction tag so can be played with some higher ranked sweeps strikes and blocks (like parry)
+  - Already implemented on `origin/dev` by PR #1905 (`feature/ReactionCounterImpactFlux`). Source of truth: `docs/combat-card-traits-contract.md`. Eligibility: line 87 (a hand card needs `trait:reaction`). Card picks, "Reaction": line 250 onward (every `maneuver:counter` card, every card with an `evade` payload, Sweeps, and Defends at T ≥ 4). Projection: `src/content/traitProjection.js:48`. Rules: SPEC §4.10.
+  - This branch is behind `dev` and does not have #1905. No candidate list is written here.
+- **Ruling 3 (verbatim):**
+  > Evade tag is unique in the sense that weight class affects efficacy
+- **Where it lands:** a separate PR after TagRefactor reaches `dev`. It is not on
+  this branch. `content/source/tagging.csv` is not changed by this decision.
+- **Open, owner to confirm:** the Evasion reading. Either Evasion += stacks × (DEX + 3),
+  or DEX + 3 × stacks.
+- **Open, owner to confirm:** how weight class scales Evade. Either a multiplier per
+  light, medium or heavy class, or reuse of the armour DEX cap. Not decided here.
+- **Cross-references for the weight-class question:**
+  - Evasion rating formula, `docs/tag-model/tables/formulas.csv` `evasion.rating`:
+    `armor.evasionBase` plus DEX capped by `armor.dexCap`. Per the owner note, the caps
+    are cloth 0/4, leather 0/6, studded 1/3, chain 1/2, scale 1/1, plated 1/0.
+  - Armour weight classes light, medium and heavy: `src/engine/skillXp.js:199-200`.
+    `attackEvaded` pays light in full and medium at half.
+  - Expansion proposal: `origin/dev:docs/combat-cards-expansion-proposal.md:122`,
+    "− armor penalty".
+
+### Cards and their maneuver (conflict to resolve before the PR)
+
+Thirteen Evade-family cards. Each is `maneuver:defend` in `content/source/tagging.csv`
+on `origin/dev`. The dev contract's Reaction list (line 252) also names some of them
+as `maneuver:counter`, and `traitProjection.js:21` excludes four from Counterstrike.
+These disagree. The owner must say which is the current maneuver before the move.
+
+| Card id | tagging.csv on dev | Named in contract as counter (line 252) |
+| --- | --- | --- |
+| dodgeRoll | maneuver:defend | yes |
+| evasiveGuard | maneuver:defend | yes |
+| quickstep | maneuver:defend | yes |
+| backstep | maneuver:defend | not named |
+| acrobaticsRogue | maneuver:defend | not named |
+| shadowstep | maneuver:defend | yes |
+| progression-nightstep | maneuver:defend | yes |
+| vanish | maneuver:defend | not named (named as a Defend at T ≥ 4) |
+| smokeBomb | maneuver:defend | not named (named as a Defend at T ≥ 4) |
+| misdirect | maneuver:defend | not named |
+| smokePellet | maneuver:defend | not named |
+| smokeVeil | maneuver:defend | not named |
+| pocketSand | maneuver:defend | not named |
+
+The "named" column checks the names in the contract excerpt only, not every list.
+
+### Combat effects of the move (when the PR lands)
+
+- `src/engine/combatMatchups.js:279`: stance Block and Barrier apply only when the
+  stance maneuver is `defend`. Evade cards lose that stance Block. Their own 3 Block
+  (ruling 1) replaces it.
+- `src/engine/combatMatchups.js:346-347`: the smash multiplier (`defendedMultiplier`)
+  and the sweep multiplier (`sweepMultiplier`) apply against a `defend` stance. Evade
+  no longer triggers either.
+- `src/engine/combatMatchups.js:399`: the smash status check reads a `defend` target
+  stance. An Evade target no longer counts as defended there.
+- The new stance also needs entries in the stance-to-maneuver sets
+  (`src/model/alternativeStance.js`, `src/model/combatCardProfile.js`,
+  `src/model/playingCard.js` `combatCardType`).
+
 ## Open: round-trip differences
 
 Every live node in `content/source/nodes.csv` (448) now maps to exactly one tag

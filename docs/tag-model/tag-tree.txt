@@ -283,7 +283,7 @@ Meta
           Shield {Shieldwall, Shield Guard, Shield Bastion, Set the Shield}
           Ward {Starstone Ward, Vesper Ward, Blightward, Frost Veil, Crystal Barrier}
           Endure {Last Stand, Iron Resolve, Unbreakable, Iron Vow, Penance}
-        Evade {about 15 cards, tagged Defend today}
+        Evade {about 15 cards, tagged Defend today. Efficacy scales by armour weight class (DECISIONS.md section 15)}
           Dodge {Dodge Roll, Evasive Guard, Backstep, Quickstep, Acrobatics}
           Vanish {Shadowstep, Vanish, Nightstep, Misdirect}
           Obscure {Smoke Bomb, Smoke Pellet, Smoke Veil, Pocket Sand}

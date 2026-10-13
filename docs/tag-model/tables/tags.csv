@@ -234,7 +234,7 @@ meta.combat.stance.defensive.block.guard,block.guard,Guard,meta.combat.stance.de
 meta.combat.stance.defensive.block.shield,block.shield,Shield,meta.combat.stance.defensive.block,Stance,,"Shieldwall, Shield Guard, Shield Bastion, Set the Shield",,,,,,game-concept,,,
 meta.combat.stance.defensive.block.ward,block.ward,Ward,meta.combat.stance.defensive.block,Stance,,"Starstone Ward, Vesper Ward, Blightward, Frost Veil, Crystal Barrier",,,,,,game-concept,,,
 meta.combat.stance.defensive.block.endure,endure,Endure,meta.combat.stance.defensive.block,Stance,,"Last Stand, Iron Resolve, Unbreakable, Iron Vow, Penance",,,,,,game-concept,,,
-meta.combat.stance.defensive.evade,evade,Evade,meta.combat.stance.defensive,Stance,,"about 15 cards, tagged Defend today",Avoid the next hit on a successful roll,,,,,game-concept,,,
+meta.combat.stance.defensive.evade,evade,Evade,meta.combat.stance.defensive,Stance,,"about 15 cards, tagged Defend today. Efficacy scales by armour weight class (DECISIONS.md section 15)",Avoid the next hit on a successful roll,,,,,game-concept,,,
 meta.combat.stance.defensive.evade.dodge,evade.dodge,Dodge,meta.combat.stance.defensive.evade,Stance,,"Dodge Roll, Evasive Guard, Backstep, Quickstep, Acrobatics",,,,,,game-concept,,,
 meta.combat.stance.defensive.evade.vanish,vanish,Vanish,meta.combat.stance.defensive.evade,Stance,,"Shadowstep, Vanish, Nightstep, Misdirect",,,,,,game-concept,,,
 meta.combat.stance.defensive.evade.obscure,obscure,Obscure,meta.combat.stance.defensive.evade,Stance,,"Smoke Bomb, Smoke Pellet, Smoke Veil, Pocket Sand",,,,,,game-concept,,,
