@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1921",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Every weapon has a default range",
+    "detail": "Nothing changes in play yet. Each weapon now states whether it fights at melee, reach or ranged distance, ready for the accuracy and range rules that follow.",
+    "build": "0.7.1.1437",
+    "pullRequest": 1921,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1921"
+  },
+  {
     "id": "pr-1915",
     "date": "2026-10-12",
     "group": "2026-10-12",

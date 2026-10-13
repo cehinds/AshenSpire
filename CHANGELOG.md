@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-10-13
+
+- **Every weapon has a default range** ([#1921](https://github.com/cehinds/AshenSpire/pull/1921), `0.7.1.1437`). Nothing changes in play yet. Each weapon now states whether it fights at melee, reach or ranged distance, ready for the accuracy and range rules that follow.
+
 ## 2026-10-12
 
 - **Character creation walks you through every step** ([#1915](https://github.com/cehinds/AshenSpire/pull/1915), `0.7.1.1437`). Creating a character now goes Class, Attributes, Keepsake, Equipment, Feats, then Spells for classes that cast, then Review. The Feats step lets you browse every character, class and skill feat with the level it unlocks at; you start with none and earn them as you level. On a phone, tapping a feat opens its details right beneath it.
