@@ -138,3 +138,14 @@ test('the school shares are data: force splits at half, alteration is all physic
   for (const school of ['lightning', 'fire', 'frost', 'divine', 'decay']) assert.equal(combatRules.schools[school].magicShare, 1, school);
   assert.equal(combatRules.schools.divine.magicType, 'sacred');
 });
+
+test('a two-hit split strike keeps both parts and the hit count: "Deal 5 damage (3 blunt, 2 arcane) ×2"', () => {
+  const scepterStrike = { id: 'scepterStrike', name: 'Scepter Strike', type: 'attack', cost: 1,
+    tags: ['camp:spell', 'maneuver:casting', 'damage:arcane'], magicShare: 0.4, physicalDamageType: 'blunt',
+    combatProfile: { camp: 'spell', maneuver: 'casting', damageType: 'arcane', school: 'force' },
+    effects: [{ op: 'damage', target: 'enemy', amount: 5, hits: 2 }] };
+  const text = combatCardSummary(scepterStrike);
+  assert.match(text, /Deal 5 damage \(3 blunt, 2 arcane\) ×2/);
+  assert.match(text, /blunt/);
+  assert.match(text, /arcane/);
+});

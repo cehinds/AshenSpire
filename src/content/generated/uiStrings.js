@@ -101,6 +101,13 @@ export const uiStrings = [
     "tip": "Ward guard"
   },
   {
+    "id": "combat.protection.wardBlock",
+    "extends": "",
+    "short": "Warded Block",
+    "full": "The part of this turn's Block raised by magic. It counts in the Ward badge, is spent after ordinary Block, and is gone at the start of your next turn.",
+    "tip": "Warded Block"
+  },
+  {
     "id": "combat.log.title",
     "extends": "",
     "short": "Combat log",
@@ -9346,6 +9353,13 @@ export const uiStrings = [
     "short": "Unpick ability",
     "full": "Unpick ability",
     "tip": "Unpick this starting ability choice."
+  },
+  {
+    "id": "creation.abilities.elementCap",
+    "extends": "",
+    "short": "Only {max} element spell",
+    "full": "Only {max} element spell",
+    "tip": "You can take at most {max} element spell. Unpick it to choose this one."
   },
   {
     "id": "creation.abilities.chooseLabel",
