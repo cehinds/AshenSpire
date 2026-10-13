@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-13",
     "summary": "New builds get their number again",
     "detail": "Development-process change only, nothing in the game changes. When a merged change's changelog line was filed under an earlier day, stamping the new build number now moves it to today's entries instead of failing, so the online dev build publishes again.",
-    "build": "0.7.1.1473",
+    "build": "0.7.1.1475",
     "pullRequest": 1948,
     "url": "https://github.com/cehinds/AshenSpire/pull/1948"
   },
