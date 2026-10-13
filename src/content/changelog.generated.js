@@ -23,6 +23,26 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1932"
   },
   {
+    "id": "pr-1940",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Old notes, screenshots and a retired prompt tool cleared out of the project",
+    "detail": "Development housekeeping only, nothing in the game changes. Archived design notes, old PR screenshots, the finished combat prototype's output, two outdated plans and the unused prompt library leave the repository.",
+    "build": "0.7.1.1465",
+    "pullRequest": 1940,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1940"
+  },
+  {
+    "id": "pr-1943",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "The Workbench opens from a link on the project site",
+    "detail": "Development-process change only, nothing in the game changes. The Workbench is now published at https://cehinds.github.io/AshenSpire/workbench/ with every studio, the game preview running from source, and the art. It shows a snapshot of dev; edits stay in your browser, and the banner at the top downloads or discards them. Saving to the project, builds and live reload still need the Workbench on your computer.",
+    "build": "0.7.1.1465",
+    "pullRequest": 1943,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1943"
+  },
+  {
     "id": "pr-1933",
     "date": "2026-10-13",
     "group": "2026-10-13",
