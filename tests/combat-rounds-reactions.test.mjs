@@ -484,3 +484,32 @@ test('a round reaction is offered, shown and paid at its prepared price', () => 
   assert.equal(cardPlayedEvent(c, 'rx-mana').manaSpent, 0, 'and pays no Mana');
   assert.equal(c.player.abilityRiders?.charges?.['feat:prep-discount'], undefined, 'the discount it prepared is spent by it');
 });
+
+// Codex P2 on PR #1953 (checked, not reproduced): a queued card that opens an enemy reaction window in the commit.
+// The Gilded Knight's Gilded Guard reacts to a player attack and hits the player. The window resolves inside the card's
+// play (the enemy decides by its own roll, and the player is offered nothing during the commit), so the card finishes
+// in its round: nothing is left pending, deferred or stacked across the turn boundary.
+test('an enemy reaction to a queued card resolves inside the commit: the card finishes in its round', () => {
+  // The shipped costs: the Gilded Guard needs 8 incoming, which the derived 2-SP attacks deal.
+  const shipped = createRegistries(contentBundle);
+  let checked = 0;
+  for (let seed = 1; seed <= 12; seed++) {
+    const run = createRunState({ seed, classId: 'reaver', registries: shipped, profileMeta: { settings: { [COMBAT_ROUNDS_KEY]: true } } });
+    const c = createRunCombat({ registries: shipped, rng: createRng(seed), run, enemyIds: ['gildedKnight'], settings: {} });
+    c.player.energy = 10; c.player.mana = 10;
+    c.combatRounds.enemyQueues[c.enemies[0].id] = [];
+    addToHand(c, 'guardCounter', 'rx-counter');
+    const attack = c.piles.hand.find((card) => card.cardId === 'bashingBlow' || card.cardId === 'gorefireSlash');
+    if (!attack) continue;
+    dispatch(c, { type: 'playCard', cardInstanceId: attack.instanceId, targetId: c.enemies[0].id });
+    const turn = c.turn;
+    dispatch(c, { type: 'endTurn' });
+    if (!c.eventLog.some((e) => e.type === 'combatEnemyReactionStacked')) continue;
+    checked++;
+    assert.ok(c.eventLog.some((e) => e.type === 'cardResolved' && e.cardInstanceId === attack.instanceId), `seed ${seed}: the card resolves`);
+    assert.equal(c.pendingReaction, undefined, `seed ${seed}: nothing waits on the player`);
+    assert.ok(!c.reactionStack && !c.reactionResume && !c.combatRounds.paused, `seed ${seed}: no stack, resume or round pause is left open`);
+    assert.equal(c.turn, turn + 1, `seed ${seed}: the turn ends`);
+  }
+  assert.ok(checked > 0, 'fixture: the knight reacts to a queued attack');
+});
