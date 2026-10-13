@@ -560,15 +560,25 @@ expansion `counter` group plus the `EVADES` set.
   `tables/values.csv` gains `precision.perStack` = 1 (proposed), and the sweep
   target count as a runtime input if `tools/check.mjs` needs it to resolve.
   Game code is not changed.
-- **Open questions for the owner:**
-  - Does `technique:precision` become this stack mechanic, or is precision-stack
-    a separate status? If it becomes the stack mechanic, the "presentation only"
-    description on `precision` and "no combat modifier" on `fx:precision` change.
-  - Are precision stacks a status that other cards can also grant, or a
-    Sweep-only computed bonus?
-  - Does the target count include allies hit, or only enemies?
-  - Do the stacks decay like Evade stacks (one per use, one per turn start), or
-    are they computed per attack?
+- **Owner answers (2026-10-13).** Each answer closes one question that this
+  section listed before the ruling was recorded.
+  1. **Precision and Piercing are separate tags.** Precision is the stack
+     mechanic in this section: each stack adds +1 Accuracy. Piercing is its own
+     mechanic, ruled in section 17: it ignores defender Block and Poise
+     (physical) or Barrier and Ward (magical). Precision no longer bypasses
+     anything. So `technique:precision` and `card.precision` become this
+     mechanic, and their "presentation only" and "effects are authored
+     separately" descriptions no longer hold. `fx:precision` ("no combat
+     modifier") is a visual tag and is not changed by this answer. The dev rule
+     that joins Precision to Piercing's bypass (`src/engine/combatMatchups.js`
+     lines 425 to 427 on `origin/dev`) must change to match section 17.
+  2. **Any card can grant precision stacks.** Precision is a status, like Evade
+     stacks. Sweep starts with 3 stacks, and each enemy beyond the first removes
+     one (3 − (targets − 1) = 4 − targets, the same table as above).
+  3. **Only enemies count toward Sweep's target count.** Allies hit by Sweep do
+     not count.
+  4. **Precision stacks are computed per attack and do not carry over.** There
+     is no decay.
 
 ## Open: round-trip differences
 
