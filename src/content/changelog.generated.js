@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1946",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Changelog entries stay in build order",
+    "detail": "Nothing changes in the game. The balance-report entry moved to the day it shipped, so the build stamp can number new builds again.",
+    "build": "0.7.1.1465",
+    "pullRequest": 1946,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1946"
+  },
+  {
     "id": "pr-1932",
     "date": "2026-10-13",
     "group": "2026-10-13",

@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-13
 
+- **Changelog entries stay in build order** ([#1946](https://github.com/cehinds/AshenSpire/pull/1946), `0.7.1.1465`). Nothing changes in the game. The balance-report entry moved to the day it shipped, so the build stamp can number new builds again.
 - **The balance report reads Gilded Knight correctly again** ([#1932](https://github.com/cehinds/AshenSpire/pull/1932), `0.7.1.1465`). Nothing changes in the game. Gilded Knight's damage per turn no longer reads as "not a number", because its guard reaction is no longer counted as an attack. The balance document is regenerated to match the current game.
 - **Every weapon has a default range, and hand cards show it** ([#1921](https://github.com/cehinds/AshenSpire/pull/1921), `0.7.1.1465`). Combat ranges are now called Melee, Reach and Ranged (formerly contact, near and far), and older saves still load. Each weapon states the range it fights at, and attack cards in the combat hand show a Melee, Reach or Ranged chip, by the same rule the deck editor uses.
 - **One press on a visible Inspect "i" opens it** ([#1930](https://github.com/cehinds/AshenSpire/pull/1930), `0.7.1.1463`). One click, tap or Enter on a fighter's Inspect "i" opens the inspector at once, even when the fighter was not selected first.
