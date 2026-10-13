@@ -1,5 +1,6 @@
 import { ACTION_SIGILS } from '../../content/combatSigils.js';
 import { esc } from './tooltip.js';
+import { tFull } from '../strings.js';
 
 const FORCE_SHAPE = '<path d="M16 2 30 16 16 30 2 16Zm0 6-8 8 8 8 8-8Z"/><circle cx="16" cy="16" r="4"/>';
 const SHAPES_BLUNT = '<path d="M5 2h22v12H5Zm8 14h6v15h-6Z"/>';
@@ -76,7 +77,14 @@ export function cardSideTags(model, def = {}, registries = null) {
   return [...selected.sort((a,b) => (a===skill?0:a.id==='camp:spell'?1:a===element?2:3) - (b===skill?0:b.id==='camp:spell'?1:b===element?2:3)), ...traits];
 }
 
+// The tooltip a symbol shows when selected: its name and blurb, from uiStrings.
+// A numbered trait's N in the blurb takes the card's value ("On hit: 1 Ward damage").
+function symbolTip(tag) {
+  const blurb = (tag.blurb || tag.label).replace(/\bN\b/g, tag.count ?? 'N');
+  return tFull('card.tag.tooltip', { name: tag.label, blurb });
+}
+
 export function cardTagRailHtml(tags) {
   if(!tags?.length)return '';
-  return `<div class="card-tag-rail" data-card-layer="7" aria-label="Primary card tags">${tags.map(tag => `<span class="card-tag-symbol" role="img" data-tag-id="${esc(tag.id)}" aria-label="${esc(tag.label)}${tag.repeat ? ` x${tag.count}` : ''}" aria-description="${esc(tag.blurb || tag.label)}"><svg viewBox="0 0 32 32" fill="currentColor" fill-rule="evenodd" aria-hidden="true" focusable="false">${shapeFor(tag)}</svg>${tag.count ? `<b class="card-tag-count" aria-hidden="true">${tag.count}</b>` : ''}</span>`).join('')}</div>`;
+  return `<div class="card-tag-rail" data-card-layer="7" aria-label="Primary card tags">${tags.map(tag => `<span class="card-tag-symbol" role="img" tabindex="0" data-tip="${esc(symbolTip(tag))}" data-tag-id="${esc(tag.id)}" aria-label="${esc(tag.label)}${tag.repeat ? ` x${tag.count}` : ''}" aria-description="${esc(tag.blurb || tag.label)}"><svg viewBox="0 0 32 32" fill="currentColor" fill-rule="evenodd" aria-hidden="true" focusable="false">${shapeFor(tag)}</svg>${tag.count ? `<b class="card-tag-count" aria-hidden="true">${tag.count}</b>` : ''}</span>`).join('')}</div>`;
 }

@@ -632,7 +632,7 @@ function wireTitles() {
   document.addEventListener('pointerover', adopt, true);
   document.addEventListener('focusin', adopt, true);
   const explain = ev => {
-    const term = ev.target?.closest?.('.tooltip-keyword[data-tip], .inspection-tag[data-tip], .as-tip [data-tip][role="button"]');
+    const term = ev.target?.closest?.('.tooltip-keyword[data-tip], .inspection-tag[data-tip], .card-tag-symbol[data-tip], .as-tip [data-tip][role="button"]');
     if (!term || panels[1]?.contains(term)) return;
     if (ev.type === 'keydown' && !['Enter', ' '].includes(ev.key)) return;
     ev.preventDefault(); ev.stopPropagation();

@@ -122,7 +122,9 @@ test('three primary symbols prioritize element, status and main skill without mu
   assert.equal(JSON.stringify(model.tags),before);
   const html=cardTagRailHtml(chosen);
   assert.equal((html.match(/class="card-tag-symbol"/g)||[]).length,chosen.length);
-  assert.doesNotMatch(html,/tabindex=|title=/);
+  // Each symbol is a tab stop that shows its own tooltip (data-tip); no native title.
+  assert.equal((html.match(/tabindex="0"/g)||[]).length,chosen.length);
+  assert.doesNotMatch(html,/ title=/);
   for(const tag of chosen)assert.ok(html.includes('aria-label="'+tag.label+'"'));
   assert.equal(cardTagRailHtml([]),'');
 });
@@ -159,4 +161,12 @@ test('the rail shows each trait once with its value, and a repeated tag once wit
   assert.ok(html.includes('aria-label="Flux 1"'));
   assert.ok(html.includes('<b class="card-tag-count" aria-hidden="true">1</b>'));
   assert.ok(html.includes('aria-label="Spark x2"'));
+});
+
+test('a selected tag symbol explains itself with its name, count and blurb from uiStrings', async () => {
+  const { cardTagRailHtml: rail } = await import('../src/ui/components/cardTagSymbols.js');
+  const html = rail([{ id: 'trait:flux', label: 'Flux 1', blurb: 'On hit: N Ward damage, or double the Ward damage the card already deals.', count: 1 }]);
+  assert.ok(html.includes('data-tip="Flux 1 — On hit: 1 Ward damage, or double the Ward damage the card already deals."'), html);
+  const tooltip = (await import('node:fs')).readFileSync(new URL('../src/ui/components/tooltip.js', import.meta.url), 'utf8');
+  assert.match(tooltip, /\.card-tag-symbol\[data-tip\]/, 'the shared explain handler takes tag symbols');
 });
