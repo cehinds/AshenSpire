@@ -1791,7 +1791,10 @@ function withPlayedCardStance(combat, intent, fn) {
 function refundQueuedCard(combat, rec) {
   const p = combat.player;
   p.energy += rec.paid.energy;
-  p.mana += rec.paid.mana;
+  // A refund at commit time can follow an effect that already restored Mana,
+  // so it fills up to the maximum and never past it (or below what is held).
+  const manaCap = Number.isFinite(p.maxMana) ? p.maxMana : Infinity;
+  p.mana = Math.max(p.mana, Math.min(p.mana + rec.paid.mana, manaCap));
   if (rec.paid.stamina > 0) p.counters.staminaSpentThisTurn = Math.max(0, (p.counters.staminaSpentThisTurn || 0) - rec.paid.stamina);
 }
 

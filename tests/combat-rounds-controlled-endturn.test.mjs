@@ -40,3 +40,22 @@ for (const [classId, counter] of [['reaver', 'guardCounter'], ['starseer', 'umbr
     assert.deepEqual(skip.refund && Object.keys(skip.refund).sort(), ['energy', 'mana', 'stamina'], 'and its SP and MP are refunded');
   });
 }
+
+test('a controlled-skip refund never lifts Mana above its maximum', () => {
+  // Codex P2 on #1963: an earlier live entry can restore Mana after the queue-time payment,
+  // so the refund of the refused card must respect maxMana.
+  const combat = fight('starseer', ['restfulDream', 'frostVeil']);
+  const dream = combat.piles.hand.find(c => c.cardId === 'restfulDream');
+  const ward = combat.piles.hand.find(c => c.cardId === 'frostVeil');
+  dispatch(combat, { type: 'playCard', cardInstanceId: dream.instanceId });
+  dispatch(combat, { type: 'playCard', cardInstanceId: ward.instanceId });
+  const paid = combat.combatRounds.playerQueue.find(r => r.instanceId === ward.instanceId)?.paid;
+  assert.ok(paid?.mana > 0, 'fixture: the queued card paid Mana');
+  combat.player.mana = combat.player.maxMana; // an earlier effect restored Mana in full
+  const seen = [];
+  combat.on?.('combatRoundCardSkipped', () => seen.push(combat.player.mana));
+  const { events } = dispatch(combat, { type: 'endTurn' });
+  assert.ok(events.some(e => e.type === 'combatRoundCardSkipped' && e.reason === 'controlled'));
+  assert.ok(combat.player.mana <= combat.player.maxMana, `Mana ${combat.player.mana} stays within ${combat.player.maxMana}`);
+  for (const m of seen) assert.ok(m <= combat.player.maxMana, `Mana ${m} at the skip stays within the maximum`);
+});
