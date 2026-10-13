@@ -102,8 +102,9 @@ worker/<topic>/<task> (local) ──► worker/<topic>/<task> (origin) ──►
 
 Workers succeed when each brief is a short recipe with the thinking already done.
 The orchestrator does the thinking in phases, and only the last phase is handed
-to Haiku as edits. Recorded from the FixModal session (2026-10-11), where every
-Haiku brief written this way landed first time.
+to a coder as edits: ordinary implementation briefs go to `ashen-coder` (Sonnet),
+and Haiku keeps only simple or mechanical work. Recorded from the FixModal session (2026-10-11), where every
+brief written this way landed first time.
 
 1. **Survey before you split.** When the cause is unknown, first send a read-only
    survey (`Explore`, Opus when the question spans subsystems) that returns
@@ -111,7 +112,7 @@ Haiku brief written this way landed first time.
 2. **Verify the key lines yourself.** Read the few lines the survey points at
    (the render call, the handler, the config value). A brief quotes only what the
    orchestrator has seen.
-3. **Measure before you tune.** For "slow" reports, the first Haiku task is a
+3. **Measure before you tune.** For "slow" reports, the first task is a
    probe that prints numbers (`MEASURE <name> median= max=`), with no `src/`
    edits. Fix tasks come in the next wave and carry a numeric target.
 4. **One owner per file per wave.** List each task's files. Two tasks that touch
@@ -120,12 +121,12 @@ Haiku brief written this way landed first time.
 5. **Write the brief as numbered steps**, each naming the function to change and
    the exact before/after shape: "replace `${modalHtml()}` with …", "call
    `renderModal()` instead of `render()` in these five functions". Hand over the
-   design decisions already made; leave Haiku only the mechanics.
+   design decisions already made; leave the coder only the mechanics (a Haiku worker, for a purely mechanical task).
 6. **Name the traps.** Pin the strings other tools match (selftest `find:`
    plants: "keep this line character for character"). Name pre-existing
    failures so they are not "fixed" or blamed (for example "the final UNKNOWN line
    predates this change; ignore it"). Name the files another worker owns.
-7. **Give an acceptance that Haiku can run.** Name the test commands and the
+7. **Give an acceptance the worker can run.** Name the test commands and the
    new test's assertions, and always add the repository-wide guards:
    `node tests/run-node.mjs --no-selftests --no-discovered` (core) and the
    discovered shard that holds the touched files. Named tests alone missed four
