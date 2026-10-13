@@ -253,9 +253,14 @@ export function consumeFoundationEvade(ctx, source, target, carrier) {
 export function candidateState(ctx) {
   const data = {};
   for (const [key, value] of Object.entries(ctx)) {
-    if (typeof value !== 'function' && key !== 'registries' && key !== 'rng') data[key] = value;
+    if (typeof value !== 'function' && key !== 'registries' && key !== 'rng' && key !== 'eventLog') data[key] = value;
   }
-  const candidate = { ...structuredClone(data), registries: ctx.registries, rng: createRng(ctx.rng.seed, ctx.rng.getCounters()), _emitEvent: ctx._emitEvent };
+  // The event log only grows, and every preview copies the whole combat, so a
+  // deep copy made each preview cost O(fight length). Copy the array shallowly:
+  // the candidate gets its own array, and the event objects are never edited.
+  const { eventLog } = ctx;
+  const candidate = { ...structuredClone(data), eventLog: Array.isArray(eventLog) ? eventLog.slice() : structuredClone(eventLog),
+    registries: ctx.registries, rng: createRng(ctx.rng.seed, ctx.rng.getCounters()), _emitEvent: ctx._emitEvent };
   // Catalogue accessors are immutable context, never serializable combat data.
   if (ctx.registriesForPlayer) candidate.registriesForPlayer = ctx.registriesForPlayer;
   if (ctx.registerPlayerRegistries) candidate.registerPlayerRegistries = ctx.registerPlayerRegistries;
