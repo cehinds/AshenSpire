@@ -14,7 +14,7 @@ import { dispatch } from '../src/engine/combat.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { MOMENTUM_KEY, COMBAT_ROUNDS_KEY, MULTI_ACTION_KEY } from '../src/model/combatRounds.js';
 import { parseStanceAdvantage } from '../src/engine/combatRounds/resolver.js';
-import { decayNormalMomentum, displayedMomentum, enemyIntentStance, momentumOn, recordNormalExchange, settleNormalMomentum } from '../src/engine/normalPreview.js';
+import { decayNormalMomentum, displayedMomentum, enemyIntentStance, momentumOn, recordNormalExchange, settleNormalMomentum, withCardExchange } from '../src/engine/normalPreview.js';
 import { momentumTab } from '../src/ui/models/CombatRoundsScreenModel.js';
 import { cardKind } from '../src/model/tree.js';
 import { resolveCard } from '../src/model/registries.js';
@@ -155,6 +155,33 @@ test('a played fight: a landed attack credits its enemy by gain plus the stance 
   assert.deepEqual(c.normalPreview.state.pending, {}, 'the round scratch settles at the end of the enemy phase');
   const after = c.normalPreview.state.momentum[enemy.id];
   assert.ok(Number.isInteger(after) && after >= -3 && after <= 3, `settled momentum ${after} is within the cap`);
+});
+
+// PR #1953 review (Codex P2): an exchange is one played card against its target, or one enemy move, however many
+// hits it lands, as a rounds timeline entry is (timeline.js resolveExchange shares one credited list per entry).
+test('a multi-hit card is one exchange: its hits credit the player once per target', () => {
+  const c = fakeCombat();
+  c.enemies.push({ id: 'e2', enemyId: ENEMY, intent: null });
+  const hit = (targetId) => recordNormalExchange(c, 'damageDealt', { isAttack: true, sourceId: 'player', targetId, amount: 3, blocked: 0 });
+  withCardExchange(c, 'attack', () => { hit('e1'); hit('e1'); hit('e1'); hit('e2'); hit('e2'); });
+  assert.equal(pending(c), 1, 'three hits on e1: one credit');
+  assert.equal(pending(c, 'e2'), 1, 'a second target is its own exchange: one credit');
+  assert.equal('cardExchange' in c.normalPreview.state, false, 'the scope closes with the card');
+  withCardExchange(c, 'attack', () => hit('e1'));
+  assert.equal(pending(c), 2, 'the next card is a new exchange');
+});
+
+test('a multi-hit enemy move is one exchange: its hits credit the enemy once', () => {
+  const c = fakeCombat();
+  const hit = () => recordNormalExchange(c, 'damageDealt', { isAttack: true, sourceId: 'e1', targetId: 'player', amount: 3, blocked: 0 });
+  recordNormalExchange(c, 'enemyMoveStarted', { sourceId: 'e1', moveId: 'slash' });
+  hit(); hit(); hit();
+  assert.equal(pending(c), -1, 'three landed hits of one move: one credit');
+  recordNormalExchange(c, 'enemyMoveStarted', { sourceId: 'e1', moveId: 'slash' });
+  hit();
+  assert.equal(pending(c), -2, 'the next move is a new exchange');
+  settleNormalMomentum(c);
+  assert.equal('enemyExchange' in c.normalPreview.state, false, 'the enemy phase end closes the scope');
 });
 
 test('the banner tab reads the stored momentum; a fight with the toggle off shows none', () => {

@@ -45,7 +45,7 @@ import { persistentWardMaximum, persistentPoiseMaximum } from '../model/combatRa
 import * as F from './combatRules.js';
 import * as Reactions from './combatReactions.js';
 import * as Rounds from './combatRoundsAdapter.js';
-import { decayNormalMomentum, settleNormalMomentum, multiActionOn } from './normalPreview.js';
+import { decayNormalMomentum, settleNormalMomentum, multiActionOn, withCardExchange } from './normalPreview.js';
 import { clearEnemyReactionRolls } from './enemyReactions.js';
 import { emitEvent, fireOwnerHooks, findEntity, hasEventTriggers } from './triggers.js';
 import { attachSkillXp } from './skillXp.js';
@@ -1742,12 +1742,8 @@ function withPlayedCardStance(combat, intent, fn) {
   // A card that cannot be aimed is refused by the play itself; its stance is only a reading, so it falls back.
   let view = null;
   try { view = cardTimelineViewFor(combat, intent.cardInstanceId, intent.targetId ?? null); } catch { view = null; }
-  combat.normalPreview.state.playerStance = view?.stance ?? 'attack';
-  try {
-    return fn();
-  } finally {
-    delete combat.normalPreview.state.playerStance;
-  }
+  // The card is one exchange per target, however many hits it lands (SPEC §4.11, as a round's timeline entry).
+  return withCardExchange(combat, view?.stance ?? 'attack', fn);
 }
 
 // Pays a queued card's SP and MP back: the unqueue refund, and the refund of a card that never resolved.
