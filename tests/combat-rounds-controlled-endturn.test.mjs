@@ -59,3 +59,20 @@ test('a controlled-skip refund never lifts Mana above its maximum', () => {
   assert.ok(combat.player.mana <= combat.player.maxMana, `Mana ${combat.player.mana} stays within ${combat.player.maxMana}`);
   for (const m of seen) assert.ok(m <= combat.player.maxMana, `Mana ${m} at the skip stays within the maximum`);
 });
+
+test('a queued attack whose roll missed while the player is controlled is still skipped and refunded', () => {
+  // Codex P2 on #1963: the timeline-miss branch ran before the control check, so a missed roll under
+  // Sleep consumed the card and its Mana while a landed one was refunded.
+  const combat = createCombat({
+    registries, rng: createRng(1), combatExpansionVersion: 2, reactionRulesVersion: 2,
+    combatRounds: combatRoundsFor({ [COMBAT_ROUNDS_KEY]: true, [MOMENTUM_KEY]: true, [MULTI_ACTION_KEY]: true }),
+    enemyIds: ['wanderingSoldier'],
+    player: { classId: 'starseer', maxHp: 400, hp: 400, maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 6, drawPerTurn: 5,
+      deck: ['restfulDream', 'starShower'].map((cardId, i) => ({ cardId, instanceId: `q${i}` })) },
+  });
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'q0' });
+  dispatch(combat, { type: 'playCard', cardInstanceId: 'q1', targetId: combat.enemies[0].id });
+  const { events } = dispatch(combat, { type: 'endTurn' });
+  const skip = events.find(e => e.type === 'combatRoundCardSkipped' && e.cardInstanceId === 'q1');
+  assert.equal(skip?.reason, 'controlled', 'the attack is skipped for control, not consumed as a miss');
+});

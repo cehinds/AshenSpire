@@ -1874,6 +1874,13 @@ function previewRoundOps(hand = []) {
     playCard: (c, intent, paid) => doPlayCard(c, intent, { prepaid: paid }),
     discardUnplayed: discardUnplayedCard,
     refund: refundQueuedCard,
+    // True when a control status would refuse this queued card now (the same gate doPlayCard runs).
+    controlled: (c, record) => {
+      const inst = c.piles.hand.find((h) => h.instanceId === record.instanceId);
+      if (!inst) return false;
+      const def = resolveCombatCard(c, inst, { upcastTier: record.upcastTier, upcastRanks: record.upcastRanks });
+      return !Control.controlGate(c, c.player, def).allowed;
+    },
     enemyMove: enemyMoveAt,
     drain: drainQueue,
     findEntity,

@@ -252,6 +252,7 @@ function enemySpec(enemy, def) {
 //   playCard(combat, intent, paid)  the live card effects, with no second payment
 //   discardUnplayed(combat, record)  a missed card leaves the hand and spends the charges it claimed
 //   refund(combat, record)          pays back a queued card's SP and MP (it never resolved)
+//   controlled(combat, record)      true when a control status would refuse the queued card now
 //   enemyMove(combat, enemy, moveId, { landed })  the live move (or its delayed charge); a miss runs only a charge
 //   drain(combat)                   drainQueue
 //   findEntity(combat, id)          the live lookup
@@ -429,6 +430,13 @@ function applyPlayerEntry(combat, entry, landed, ops) {
     return;
   }
   const player = combat.player;
+  // Control refuses the card whether or not its timeline roll landed, so a missed roll is skipped and
+  // refunded the same way a landed one is (below), not consumed as a miss.
+  if (player.alive && player.hp > 0 && ops.controlled?.(combat, record)) {
+    ops.refund(combat, record);
+    combat.emit('combatRoundCardSkipped', { cardInstanceId: record.instanceId, cardId: record.cardId, reason: 'controlled', refund: { ...record.paid } });
+    return;
+  }
   const target = record.targetId == null ? null : ops.findEntity(combat, record.targetId);
   const targetLive = !record.targetId || (target && target.alive && target.hp > 0);
   if (!landed || !player.alive || player.hp <= 0 || !targetLive) {
