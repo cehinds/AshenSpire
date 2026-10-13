@@ -135,6 +135,11 @@ export function makeCombatant(spec = {}, tables = {}) {
   // A non-finite attribute counts as 0, as the other numbers here do: JSON turns Infinity and NaN
   // into null, so a kept value would make a saved round differ from the live one.
   const attrs = Object.fromEntries(Object.entries(spec.attrs ?? {}).map(([k, x]) => [k, typeof x === 'number' && !Number.isFinite(x) ? 0 : x]));
+  // The evasion-cards table, when given, is a Map (makeFight). Anything else would silently drop the
+  // card bonuses, so it is rejected here, before evasionFor() reads it.
+  if (tables?.cards !== undefined && tables?.cards !== null && !(tables.cards instanceof Map)) {
+    throw new TypeError('tables.cards must be a Map from parseEvasionCards()');
+  }
   const evasion = evasionFor({
     evasionArmor: spec.evasionArmor,
     dex: spec.dex,
@@ -143,11 +148,6 @@ export function makeCombatant(spec = {}, tables = {}) {
     attrs,
     evasion: spec.evasion,
   }, tables);
-  // The evasion-cards table, when given, is a Map (makeFight). Anything else would silently drop the
-  // card bonuses, so it is rejected here.
-  if (tables?.cards !== undefined && tables?.cards !== null && !(tables.cards instanceof Map)) {
-    throw new TypeError('tables.cards must be a Map from parseEvasionCards()');
-  }
   const base = Number(spec.evadeBasePct ?? spec.evadePct ?? 0);
   const wis = Number(spec.wis ?? 0);
   const charges = Math.trunc(Number(spec.intangibleCharges ?? 0));

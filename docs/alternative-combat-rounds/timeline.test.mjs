@@ -65,6 +65,16 @@ test('makeCombatant validates side and id and reads DEX for evasion', () => {
   assert.equal(p.evasion, 0); // Cloth: min(DEX - 1, 4) = 0 at DEX 1
 });
 
+test('makeCombatant rejects a malformed evasion-cards table before reading it', () => {
+  // A table that is not a Map is refused with the TypeError, not with evasionFor's RangeError,
+  // and its has/get are never called (a custom table could run code during validation).
+  const tables = { cards: { has: () => false, get: () => undefined } };
+  assert.throws(
+    () => makeCombatant({ id: 'goblin', hp: 1, evasionCard: 'Cloak' }, tables),
+    (err) => err instanceof TypeError && /tables\.cards must be a Map/.test(err.message),
+  );
+});
+
 test('MERGE_MODES lists the three owner modes', () => {
   assert.deepEqual([...MERGE_MODES], ['speed', 'roundRobin', 'wholeQueue']);
 });
