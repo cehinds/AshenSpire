@@ -14,6 +14,8 @@ test('every damage type states its magic share: physical 0, magic 1, arcane the 
   assert.deepEqual(shares, {
     slashing: 0, piercing: 0, blunt: 0,
     fire: 1, frost: 1, lightning: 1, sacred: 1, decay: 1,
+    // #1914's elements are all physical: false, so all magic.
+    poison: 1, psychic: 1, earth: 1,
     arcane: 0.5,
   });
 });
@@ -35,7 +37,7 @@ test('each damage type magic share is an Advanced row, 0 to 1 in steps of 0.05, 
   const tuned = resolveCombatRatings({ 'gameConfig.combatRatings.damageTypes.arcane': 0.3 }, contentBundle);
   assert.equal(damageTypeMagicShare(tuned, 'arcane'), 0.3);
   assert.equal(damageTypeMagicShare(null, 'arcane'), 0.5, 'a config-less caller reads the content default');
-  assert.equal(damageTypeMagicShare(config, 'psychic'), null, 'a type the rules do not name has no share');
+  assert.equal(damageTypeMagicShare(config, 'void'), null, 'a type the rules do not name has no share');
 });
 
 test('the magic share Advanced row refuses a value outside 0 to 1', () => {

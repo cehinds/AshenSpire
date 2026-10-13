@@ -44,7 +44,8 @@ test('v2: a silenced player casting a spell card deals half, and preview equals 
     const enemy = combat.enemies[0];
     enemy.block = enemy.barrier = 0; enemy.hp = enemy.maxHp = 500;
     enemy.damageResistanceFlat = {}; enemy.damageWeaknessPercent = {}; enemy.damageResistPercent = {};
-    enemy.ratings = { ar: 0, dr: 0, pr: 0, poise: 100, ward: 0 };
+    // Poise 0: the Poise rating is a Poise pool in expanded combat (#1896), which would soak part of the hit.
+    enemy.ratings = { ar: 0, dr: 0, pr: 0, poise: 0, ward: 0 };
     delete enemy.combatCounter; delete enemy.combatEvade; delete enemy.combatStance;
     if (enemy.persistentWard) enemy.persistentWard.value = enemy.persistentWard.max = 0;
     if (silenced) combat.player.statuses.silenced = { stacks: 1, duration: 2 };
