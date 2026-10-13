@@ -47,7 +47,7 @@ import { featById } from './feats.js';
 import { combatSnapshotProblems } from './combatSnapshot.js';
 import { createAshenBlightState, ashenBlightProblems, effectiveAshenBlightAttributes, ashenBlightBonuses } from './ashenBlight.js';
 import { ensureExpandedStarterCoverage } from './combatExpansionStarter.js';
-import { createCombatExpansionRuleSnapshot, bringCombatExpansionRulesForward, combatExpansionRulesProblems } from './combatExpansionRules.js';
+import { createCombatExpansionRuleSnapshot, bringCombatExpansionRulesForward, combatExpansionRulesProblems, backfillCombatStatusRuleRows } from './combatExpansionRules.js';
 import { bringRangesForward } from './combatRanges.js';
 import { defaultSeatOrder, seatOrderProblems } from './seats.js';
 import { bringShopStockForward, shopStockProblems } from './shopKinds.js';
@@ -1701,6 +1701,8 @@ export function migrateRunSchema(run) {
     if (holder?.snapshot) bringRangesForward(holder.snapshot);
   }
   if (preShopKinds) bringShopStockForward(run);
+  // Status rows added to the shipped rule table after a v2 run began join its frozen copy.
+  if (run.combatExpansionVersion === 2) for (const holder of [run, run.combatPendingOutcome?.snapshot, run.combatEntered?.snapshot]) backfillCombatStatusRuleRows(holder);
   const problems = validateRunShape(run, { legacy, preLedger, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels, preSideboard, preRefinedStones, preShopKinds, preSigils, preConsumables, preTrainingPool, preAttunedSigils });
   if (preTrainingPool && (run.trainingPool === undefined || run.trainingPool === null)) run.trainingPool = 0;
   if (preAttunedSigils && (run.attunedSigils === undefined || run.attunedSigils === null)) run.attunedSigils = [];

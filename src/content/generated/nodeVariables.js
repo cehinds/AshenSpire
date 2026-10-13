@@ -338,6 +338,11 @@ export const nodeVariables = [
     "role": "skillXpMult"
   },
   {
+    "nodeId": "oathKept",
+    "variable": "block",
+    "role": "amount"
+  },
+  {
     "nodeId": "ashenGrip",
     "variable": "restoreStamina",
     "role": "amount"

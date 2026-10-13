@@ -47,13 +47,14 @@ test('bringRangesForward renames legacy keys and values in place and leaves othe
 
 // ---- an old frozen run, end to end ------------------------------------------
 import { readFileSync } from 'node:fs';
-import { createCombatExpansionRuleSnapshot, bringCombatExpansionRulesForward, combatExpansionRulesProblems } from '../src/model/combatExpansionRules.js';
+import { createCombatExpansionRuleSnapshot, bringCombatExpansionRulesForward, combatExpansionRulesProblems, backfillCombatStatusRuleRows } from '../src/model/combatExpansionRules.js';
 import { resolveAvoidance } from '../src/engine/combatAvoidance.js';
 import { combatProfileFor, combatProfileTags } from '../src/model/combatCardProfile.js';
 
 // The schema-23 capture was frozen before the rename; the fixture is never edited.
 const CORPUS = JSON.parse(readFileSync(new URL('./fixtures/run-save-schema-versions.json', import.meta.url), 'utf8'));
-const frozenBeforeRename = () => JSON.parse(CORPUS.versions['23'].bytes).combatExpansionRules;
+// Status rows added since that capture are backfilled exactly as the load door does.
+const frozenBeforeRename = () => backfillCombatStatusRuleRows(JSON.parse(CORPUS.versions['23'].bytes)).combatExpansionRules;
 
 test('a run frozen with contact/near/far rules loads, validates and normalizes to the current tables', () => {
   const old = frozenBeforeRename();
@@ -66,7 +67,8 @@ test('a run frozen with contact/near/far rules loads, validates and normalizes t
   assert.deepEqual(old.matchups.evade, now.matchups.evade);
   assert.deepEqual(old.matchups.distance, now.matchups.distance);
   assert.deepEqual(old.matchups.counter.defaultCoverage, now.matchups.counter.defaultCoverage);
-  assert.deepEqual(old.matchups.counter.schoolMatchups, now.matchups.counter.schoolMatchups);
+  // Frost is the school matchup keyed by range (strongRanges); later schools are not in the capture.
+  assert.deepEqual(old.matchups.counter.schoolMatchups.frost, now.matchups.counter.schoolMatchups.frost);
   assert.deepEqual(old.statuses.prone, now.statuses.prone);
 });
 

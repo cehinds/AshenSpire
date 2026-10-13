@@ -7,7 +7,7 @@ import { startingEquipmentPreview } from '../../model/startingEquipmentPreview.j
 import { creationFeatBrowserGroups } from '../models/CreationFeatBrowserModel.js';
 import { createCreationFeatBrowser, creationPageHeading, decorateCreationWorkspace } from '../components/creationPageParts.js';
 import { mountCreationPartSpecimens } from '../catalog/creationSpecimens.js';
-import { startingAbilityPlan, startingAbilityProblem } from '../../model/startingAbilities.js';
+import { startingAbilityPlan, startingAbilityProblem, startingAbilityRef } from '../../model/startingAbilities.js';
 import { paintedPresentation } from '../paintedOutfits.js';
 // Character creation: authored progressive pages backed by validated content.
 //
@@ -1054,7 +1054,7 @@ export function mountCustomize(app, {
     // Requirements can change while an earlier equipment fold is open.
     state.startingAbilityIds = creationAbilitySelection(state.startingAbilityIds, section);
     for (const card of section.choices) {
-      const face = renderCard(registries, { cardId: card.id, abilityRank: section.rank });
+      const face = renderCard(registries, startingAbilityRef(section, card.id));
       const choose = button({ label: t('creation.abilities.choose'), weight: 'secondary', className: 'cc-ability-choose' });
       choose.setAttribute('aria-label', t('creation.abilities.chooseLabel', { name: card.name }));
       const select = () => {
@@ -1491,7 +1491,7 @@ export function mountCustomize(app, {
       : null, empty: 'None' });
     const ability = startingAbilityPlan(registries, run, meta.settings || {});
     for (const cardId of state.startingAbilityIds) slots.push({ key: `ability:${cardId}`, label: t('creation.abilities.summary'),
-      node: renderCard(registries, { cardId, abilityRank: ability.rank }) });
+      node: renderCard(registries, startingAbilityRef(ability, cardId)) });
     const cards = el('div', { class: 'cc-summary-cards', role: 'list' }, slots.map((slot) => el('div', {
       class: `cc-summary-slot${slot.unmet ? ' unmet' : ''}`, role: 'listitem', dataset: { summarySlot: slot.key },
     }, [

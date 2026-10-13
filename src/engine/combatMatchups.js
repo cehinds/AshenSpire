@@ -82,6 +82,30 @@ export function clearCombatCounter(entity, ctx = null) {
   }
 }
 
+/**
+ * Technique riders keyed by the carrier's authored card tags (the list
+ * `cardTagIs` reads). A frozen table without `tagRiders` simply has none.
+ */
+export function tagRidersFor(cfg, carrier) {
+  const table = cfg?.tagRiders;
+  if (!table) return [];
+  const tags = carrier?.authoredTags || carrier?.tags || [];
+  return Object.keys(table).filter(tag => tags.includes(tag)).map(tag => table[tag]);
+}
+
+/** Damage-type and technique riders of one hit, in resolution order. */
+export function hitRiders(cfg, damageType, carrier) {
+  // A mixed-damage hit carries the rider of every type it deals (owner #23/#24).
+  const parts = (carrier?.combatProfile?.damageComponents || []).map(c => cfg?.damageAliases?.[c.type] || c.type);
+  return [...new Set([damageType, ...parts])].map(type => cfg?.damageRiders?.[type])
+    .concat(tagRidersFor(cfg, carrier)).filter(Boolean);
+}
+
+/** The larger guard bypass of the hit's riders; never their sum. */
+export function riderGuardBypass(riders) {
+  return Math.max(0, ...riders.map(rider => Number(rider.guardBypass) || 0));
+}
+
 /** Pure: both ordinary damage previews and live resolution call this once. */
 export function prepareMatchupHit(ctx, source, target, carrier, computedDamage) {
   if (combatExpansionEnabled(ctx)) {
@@ -101,7 +125,7 @@ export function prepareMatchupHit(ctx, source, target, carrier, computedDamage) 
   const damageType = cfg.damageAliases?.[profile?.damageType] || profile?.damageType;
   const targetKey = ctx.playerIdForEntity?.(target) || target?.id;
   const riderSpent = carrier?.combatRiderTargets?.includes(targetKey);
-  const bypass = profile && !carrier?.combatReaction && !riderSpent ? cfg.damageRiders?.[damageType]?.guardBypass || 0 : 0;
+  const bypass = profile && !carrier?.combatReaction && !riderSpent ? riderGuardBypass(hitRiders(cfg, damageType, carrier)) : 0;
   const amount = Math.max(0, Math.floor(raw * (smash ? cfg.smash.guardedMultiplier : 1) * (counter ? cfg.counter.incomingMultiplier : 1)));
   return { amount, profile, guardBefore, smash, counterEligible: counter,
     counter: counter ? structuredClone(target.combatCounter) : null,
@@ -193,24 +217,28 @@ export function matchupRiderEffects(ctx, source, target, carrier, { amount = 0, 
   if (seen?.includes(key)) return [];
   const cfg = combatExpansionEnabled(ctx) ? expansionMatchupRules(ctx) : matchupRules(ctx);
   const type = cfg.damageAliases?.[profile.damageType] || profile.damageType;
-  const rider = cfg.damageRiders?.[type];
-  if (!rider || (rider.requiresHpLoss && hpLoss <= 0)
-    || (!target.alive && !(rider.cleanse && source?.alive))) return [];
+  // The damage-type rider and any technique (tag) riders share one budget.
+  const riders = hitRiders(cfg, type, carrier).filter(rider => !(rider.requiresHpLoss && hpLoss <= 0)
+    && (target.alive || (rider.cleanse && source?.alive)));
+  if (!riders.length) return [];
   if (seen) seen.push(key);
-  const effects = [];
-  if (target.alive && rider.poise) effects.push({ op: 'poiseDamage', amount: rider.poise });
-  if (target.alive && rider.wardDrain) stripCombatWard(ctx, source, target, rider.wardDrain);
-  if (target.alive && rider.status && !carrier.appliedStatuses?.includes(rider.status) && ctx.registries?.statuses?.has(rider.status)) {
-    if (combatExpansionEnabled(ctx)) {
-      // A printed Crimson Blight replaces the automatic Necrotic Blight, as the card rider does.
-      const printed = carrier.appliedBuildupStatuses || [];
-      if (!printed.includes(rider.status) && !(rider.status === 'necroticBlight' && printed.includes('crimsonBlight'))) effects.push({ op: 'buildup', status: rider.status,
-        amount: rider.pressure, camp: profile.camp, recoveryProfile: rider.recoveryProfile });
-    } else effects.push({ op: 'applyStatus', status: rider.status, stacks: rider.stacks });
-  }
-  if (rider.cleanse && source?.alive) {
-    const status = cfg.cleanseStatuses.find(id => source.statuses?.[id] && ctx.registries?.statuses?.has(id));
-    if (status) effects.push({ op: 'removeStatus', target: 'self', status, amount: rider.cleanse });
+  const effects = [], statuses = new Set();
+  for (const rider of riders) {
+    if (target.alive && rider.poise) effects.push({ op: 'poiseDamage', amount: rider.poise });
+    if (target.alive && rider.wardDrain) stripCombatWard(ctx, source, target, rider.wardDrain);
+    if (target.alive && rider.status && !statuses.has(rider.status) && !carrier.appliedStatuses?.includes(rider.status) && ctx.registries?.statuses?.has(rider.status)) {
+      statuses.add(rider.status);
+      if (combatExpansionEnabled(ctx)) {
+        // A printed Crimson Blight replaces the automatic Necrotic Blight, as the card rider does.
+        const printed = carrier.appliedBuildupStatuses || [];
+        if (!printed.includes(rider.status) && !(rider.status === 'necroticBlight' && printed.includes('crimsonBlight'))) effects.push({ op: 'buildup', status: rider.status,
+          amount: rider.pressure, camp: profile.camp, recoveryProfile: rider.recoveryProfile });
+      } else effects.push({ op: 'applyStatus', status: rider.status, stacks: rider.stacks });
+    }
+    if (rider.cleanse && source?.alive) {
+      const status = cfg.cleanseStatuses.find(id => source.statuses?.[id] && ctx.registries?.statuses?.has(id));
+      if (status) effects.push({ op: 'removeStatus', target: 'self', status, amount: rider.cleanse });
+    }
   }
   return effects;
 }
@@ -394,8 +422,12 @@ export function previewTacticalAction(ctx, source, target, carrier, contacts = [
   const guardBefore = number(target?.block) - Math.min(number(target?.block), number(target?.wardBlock));
   const pierce = profiles.some((p, i) => p.camp === 'physical' && amounts[i] > 0
     && (cfg.damageAliases[p.damageType] === 'piercing' || p.damageType === 'piercing'));
+  // Technique riders (Precision) join Piercing's bypass: the larger, never the sum.
+  const physicalHit = profiles.some((p, i) => p.camp === 'physical' && amounts[i] > 0);
+  const bypass = riderGuardBypass([...(pierce && cfg.damageRiders.piercing ? [cfg.damageRiders.piercing] : []),
+    ...(physicalHit ? tagRidersFor(cfg, carrier) : [])]);
   return { version: 2, targetKey: targetKey(ctx, target), profile, profiles, amount, amounts, knowledgeBonus,
-    guardBefore, guardBypass: pierce && !carrier?.combatReaction ? Math.min(amount, guardBefore, cfg.damageRiders.piercing?.guardBypass || 0) : 0,
+    guardBefore, guardBypass: !carrier?.combatReaction ? Math.min(amount, guardBefore, bypass) : 0,
     smash: profiles.some(p => p.maneuver === 'smash') && target?.combatStance?.maneuver === 'defend',
     counterEligible: eligible, counter: eligible ? structuredClone(counter) : null, covered,
     counterDisabledAtStart: Boolean(control.counterDisabled), avoidance,

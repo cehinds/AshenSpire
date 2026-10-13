@@ -920,7 +920,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     playFromHand(c, 'enterBulwark');
     eq(c.player.stanceId, 'bulwark', 'stance switched (exclusive)');
     assert(logOf(c, 'stanceExited').some((e) => e.stance === 'gorefire'), 'exited event');
-    eq(c.player.block, 3, 'Bulwark onEnter +3 (its own play does not double-trigger)');
+    // Enter Gorefire is an Oath card played before any stance this fight, so it
+    // kept the Oath (+2 Block, owner decision 11); Enter Bulwark comes after a
+    // stance and grants only its own 3.
+    eq(c.player.block, 2 + 3, 'Oath 2 from Enter Gorefire + Bulwark onEnter 3 (its own play does not double-trigger)');
     dispatch(c, { type: 'endTurn' });
     const d = c.piles.hand.find((x) => x.cardId === 'defend' || x.cardId === 'enterGorefire');
     const before = c.player.block;
@@ -2214,7 +2217,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // obj.tags whatever table the row was authored in.
     eq(REG.classes.get('reaver').tags.join('|'), 'blade|guard|blood|item:blade', 'the Reaver carries its class tags — and, since plan phase 5a, the item type it favours');
     eq(REG.cards.get('strike').tags.join('|'), 'blade|source:weapon|delivery:melee|camp:physical|maneuver:attack', 'a card carries its tags on the def');
-    eq(objectTagIds('class', 'starseer').join('|'), 'starstone|ranged|favored|item:magic-focus', 'the table resolves by family and id (the leaning and its item type since plan phase 5a)');
+    eq(objectTagIds('class', 'starseer').join('|'), 'starstone|ranged|favored|oathKept|item:magic-focus', 'the table resolves by family and id (the leaning and its item type since plan phase 5a)');
     eq(tagIdsOf('card', { id: 'strike' }).join('|'), 'blade|source:weapon|delivery:melee|camp:physical|maneuver:attack', 'tagIdsOf resolves an unscoped family');
     eq(tagIdsOf('armament', REG.equipment.armaments.find((a) => a.id === 'straightSword')).join('|'),
       'item:blade|blade|basic|source:weapon|delivery:melee|damage:slashing', 'tagIdsOf resolves an armament, item type included');
@@ -9071,7 +9074,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(card.kind, 'class'); eq(card.zone, 'core'); eq(card.name, 'Reaver');
     eq(card.kit.abilityCardId, 'brace'); eq(card.kit.relicId, 'ashenGrip'); eq(card.kit.startingRelicId, 'forsakenMedallion');
     eq(card.kit.weaponKitId, 'reaverBaseline'); eq(card.kit.rightHand, 'straightSword'); eq(card.kit.leftHand, 'roundShield');
-    eq(card.favored.join(','), 'item:blade', 'the leaning is the item type the class names'); eq(card.propertyTags.join(','), 'favored');
+    eq(card.favored.join(','), 'item:blade', 'the leaning is the item type the class names'); eq(card.propertyTags.join(','), 'favored,oathKept');
     eq(card.schools.join(','), 'blade,guard,blood', 'the schools are the class-domain card tags, the item type apart');
     let threw = null; try { classCard(REG, 'nope'); } catch (e) { threw = e.message; }
     assert(/unknown class/i.test(threw || ''), 'an unknown class is refused by name');
@@ -9094,7 +9097,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const cb = seat(REG, fresh, 0x5a5a);
     const mounts = cb.propertyMounts[triggerOwnerKey(cb, cb.player)];
     assert(mounts['class:reaver'], 'the class card mounts as a carrier keyed class:<id>');
-    eq(mounts['class:reaver'].kind, 'class'); eq(mounts['class:reaver'].rules.map((r) => r.tag).join(','), 'favored');
+    eq(mounts['class:reaver'].kind, 'class'); eq(mounts['class:reaver'].rules.map((r) => r.tag).join(','), 'favored,oathKept');
     assert(mounts['class:reaver'].scopeTags.includes('item:blade') && !mounts['class:reaver'].scopeTags.includes('item:shield'), 'the mount keeps the card\'s own tags as its scope');
     const rows = REG.balance.skill.xp; const mult = REG.balance.skill.favoredXpMult;
     const foe = cb.enemies[0];
@@ -9103,7 +9106,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(cb.skillXp.player.xp['item:blade'], rows.perHit * mult, 'blade XP is favoured');
     eq(cb.skillXp.player.xp['item:shield'], rows.perHit, 'shield XP is not');
     // A class that carries no leaning mounts nothing and pays plain XP.
-    const plainReg = createRegistries({ ...contentBundle, tagging: contentBundle.tagging.filter((r) => !(r.family === 'class' && r.objectId === 'reaver' && r.tagId === 'favored')) });
+    // (Every class card also carries the Oath rule, oathKept; drop both to leave it bare.)
+    const plainReg = createRegistries({ ...contentBundle, tagging: contentBundle.tagging.filter((r) => !(r.family === 'class' && r.objectId === 'reaver' && ['favored', 'oathKept'].includes(r.tagId))) });
     const plain = seat(plainReg, createRunState({ seed: 0x5a5a, classId: 'reaver', registries: plainReg }), 0x5a5a);
     assert(!(plain.propertyMounts[triggerOwnerKey(plain, plain.player)] || {})['class:reaver'], 'no property, no mount');
     recordSkillXp(plain, { type: 'damageDealt', sourceId: 'player', targetId: plain.enemies[0].id, amount: 3, sourceHand: 'right' });
@@ -9267,8 +9271,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     run.coreTags = ['ironFooting'];
     const cb = createCombat({ registries: REG, rng: createRng(0x5b5b), player: { classId: 'reaver', attributes: run.attributes, skills: run.skills, coreTags: run.coreTags, maxHp: 78, hp: 78, mana: 2, maxMana: 2, energyMax: run.energyMax, drawPerTurn: run.drawPerTurn, deck: run.deck, loadout: run.loadout, relicIds: run.relics }, enemyIds: ['fellWarden'] });
     const mount = cb.propertyMounts[triggerOwnerKey(cb, cb.player)]['class:reaver'];
-    eq(mount.rules.map((r) => r.tag).join(','), 'favored,ironFooting', 'the picked node mounts beside the leaning');
-    eq(classCarrier(REG, 'reaver', 'player', ['ironFooting', 'attunedMind']).tagIds.join(','), 'favored,ironFooting', "the carrier confers the class's own tree only");
+    eq(mount.rules.map((r) => r.tag).join(','), 'favored,oathKept,ironFooting', 'the picked node mounts beside the leaning');
+    eq(classCarrier(REG, 'reaver', 'player', ['ironFooting', 'attunedMind']).tagIds.join(','), 'favored,oathKept,ironFooting', "the carrier confers the class's own tree only");
     const blockBefore = cb.player.block;
     cb.player.maxStamina = 3; cb.player.stamina = 3; // Brace costs a Stamina
     const braceInst = cb.piles.hand.find((x) => x.cardId === 'brace') || cb.piles.draw.find((x) => x.cardId === 'brace');
@@ -9277,14 +9281,14 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(cb.player.block - blockBefore >= 4 + REG.balance.classTree.ironFooting.block, 'Brace braces, and Iron Footing braces more');
     const stored = JSON.parse(JSON.stringify(serializeCombatSnapshot(cb))); eq(stored.coreTags.join(','), 'ironFooting', 'the snapshot carries the picks');
     const back2 = restoreCombatSnapshot({ registries: REG, rng: createRng(1), snapshot: stored });
-    eq(back2.propertyMounts[triggerOwnerKey(back2, back2.player)]['class:reaver'].rules.map((r) => r.tag).join(','), 'favored,ironFooting', 'a restored fight mounts the pick again');
+    eq(back2.propertyMounts[triggerOwnerKey(back2, back2.player)]['class:reaver'].rules.map((r) => r.tag).join(','), 'favored,oathKept,ironFooting', 'a restored fight mounts the pick again');
     const seatB = createRunState({ seed: 0x5b5c, classId: 'starseer', registries: REG });
     const party = createCoopCombat({ registries: REG, rng: createRng(2), players: [
       { id: 'A', classId: 'reaver', attributes: run.attributes, skills: {}, coreTags: ['bloodTempo'], maxHp: 78, hp: 78, maxMana: 2, mana: 2, energyMax: run.energyMax, drawPerTurn: run.drawPerTurn, deck: run.deck, loadout: run.loadout, relicIds: [] },
       { id: 'B', classId: 'starseer', attributes: seatB.attributes, skills: {}, coreTags: [], maxHp: 60, hp: 60, maxMana: 2, mana: 2, energyMax: seatB.energyMax, drawPerTurn: seatB.drawPerTurn, deck: seatB.deck, loadout: seatB.loadout, relicIds: [] },
     ], enemyIds: ['fellWarden'] });
-    eq(party.propertyMounts.A['class:reaver'].rules.map((r) => r.tag).join(','), 'favored,bloodTempo', "each seat's picks are its own");
-    eq(party.propertyMounts.B['class:starseer'].rules.map((r) => r.tag).join(','), 'favored');
+    eq(party.propertyMounts.A['class:reaver'].rules.map((r) => r.tag).join(','), 'favored,oathKept,bloodTempo', "each seat's picks are its own");
+    eq(party.propertyMounts.B['class:starseer'].rules.map((r) => r.tag).join(','), 'favored,oathKept');
     // THE CARD READS ITS PICKS: the subclass lends its name and glyph.
     eq(classCard(REG, 'reaver', ['ironFooting']).presentation.name, 'Reaver', 'a lower pick leaves the name');
     const sub = classCard(REG, 'reaver', ['ironFooting', 'warlord']);
@@ -9299,21 +9303,22 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // A HEAL THAT HEALS NOTHING and a Mana restore that restores nothing fire
     // no node (the review of #1192): Warmth, Seal of Plenty and Attuned Mind
     // gate on healPositive / manaPositive. The gates' fire counts are read, as
-    // test 87 reads them: the rule's actions wait on the queue.
+    // test 87 reads them: the rule's actions wait on the queue. Class trigger
+    // indices 0 and 1 are the Oath rule (oathKept) every class card carries.
     {
       const her = createRunState({ seed: 0x5b5c, classId: 'herald', registries: REG });
       const hc = createCombat({ registries: REG, rng: createRng(0x5b5c), player: { classId: 'herald', attributes: her.attributes, skills: her.skills, coreTags: ['warmth', 'sealOfPlenty'], maxHp: 70, hp: 70, mana: 2, maxMana: 2, energyMax: her.energyMax, drawPerTurn: her.drawPerTurn, deck: her.deck, loadout: her.loadout, relicIds: [] }, enemyIds: ['fellWarden'] });
       const fires = (c, key) => (c.triggerState.get(key) || {}).fires || 0;
       applyHeal(hc, hc.player, 5);
-      eq(fires(hc, 'property:player:class:herald:0'), 0, 'a heal at full HP wakes no Warmth'); eq(fires(hc, 'property:player:class:herald:1'), 0, 'and spends no Seal of Plenty');
+      eq(fires(hc, 'property:player:class:herald:2'), 0, 'a heal at full HP wakes no Warmth'); eq(fires(hc, 'property:player:class:herald:3'), 0, 'and spends no Seal of Plenty');
       hc.player.hp = 60; applyHeal(hc, hc.player, 5);
-      eq(fires(hc, 'property:player:class:herald:0'), 1, 'a heal that heals wakes Warmth'); eq(fires(hc, 'property:player:class:herald:1'), 1, 'and Seal of Plenty once');
+      eq(fires(hc, 'property:player:class:herald:2'), 1, 'a heal that heals wakes Warmth'); eq(fires(hc, 'property:player:class:herald:3'), 1, 'and Seal of Plenty once');
       const star = createRunState({ seed: 0x5b5d, classId: 'starseer', registries: REG });
       const sc = createCombat({ registries: REG, rng: createRng(0x5b5d), player: { classId: 'starseer', attributes: star.attributes, skills: star.skills, coreTags: ['attunedMind'], maxHp: 60, hp: 60, mana: 2, maxMana: 2, energyMax: star.energyMax, drawPerTurn: star.drawPerTurn, deck: star.deck, loadout: star.loadout, relicIds: [] }, enemyIds: ['fellWarden'] });
       sc.emit('manaRestored', { targetId: sc.player.id, amount: 0 });
-      eq(fires(sc, 'property:player:class:starseer:0'), 0, 'a restore at full Mana wakes no Attuned Mind');
+      eq(fires(sc, 'property:player:class:starseer:2'), 0, 'a restore at full Mana wakes no Attuned Mind');
       sc.emit('manaRestored', { targetId: sc.player.id, amount: 1 });
-      eq(fires(sc, 'property:player:class:starseer:0'), 1, 'a restore that restores does');
+      eq(fires(sc, 'property:player:class:starseer:2'), 1, 'a restore that restores does');
     }
     // THE MENU: a class draft is a keyed choice row of nodes, ahead of the skill draft; auto-collect picks a node.
     const plan = rewardPlan({ classDrafts: [{ classId: 'reaver', level: 1, nodeIds: ['ironFooting', 'bloodTempo'] }], skillDrafts: [{ skillId: 'item:blade', level: 1, cardIds: ['quickCut'] }] }, { flaskSlotsFree: 1 });

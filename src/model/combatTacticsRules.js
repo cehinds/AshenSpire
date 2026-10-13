@@ -29,7 +29,7 @@ export function combatMatchupRulesProblems(rules, path = 'combatMatchupRules') {
   const list = (value, at) => {
     if (!Array.isArray(value) || value.some(item => !text(item)) || new Set(value).size !== value.length) problems.push(`${at} must contain unique non-empty strings`);
   };
-  object(rules, path, ['counter', 'smash', 'attack', 'damageRiders', 'damageAliases', 'cleanseStatuses']);
+  object(rules, path, ['counter', 'smash', 'attack', 'damageRiders', 'tagRiders', 'damageAliases', 'cleanseStatuses']);
   const counterNumbers = ['incomingMultiplier', 'retaliationMultiplier', 'retaliationFlat', 'poiseMultiplier', 'guard', 'ward', 'defaultDamage'];
   if (object(rules.counter, `${path}.counter`, [...counterNumbers, 'meleeBypassDamageTypes', 'meleeIncomingManeuvers'])) {
     for (const key of counterNumbers) numeric(rules.counter[key], `${path}.counter.${key}`, !key.endsWith('Multiplier'));
@@ -42,9 +42,11 @@ export function combatMatchupRulesProblems(rules, path = 'combatMatchupRules') {
   }
   if (object(rules.attack, `${path}.attack`, ['preparedPoiseMultiplier'])) numeric(rules.attack.preparedPoiseMultiplier, `${path}.attack.preparedPoiseMultiplier`);
   if (!record(rules.damageRiders)) problems.push(`${path}.damageRiders must be an object`);
-  else for (const [type, rider] of Object.entries(rules.damageRiders)) {
-    const at = `${path}.damageRiders.${type}`;
-    if (!text(type)) problems.push(`${at} requires a damage type`);
+  // Technique riders (keyed by card tag) are optional: older frozen tables have none.
+  if (rules.tagRiders !== undefined && !record(rules.tagRiders)) problems.push(`${path}.tagRiders must be an object`);
+  for (const [group, label] of [['damageRiders', 'damage type'], ['tagRiders', 'card tag']]) if (record(rules[group])) for (const [type, rider] of Object.entries(rules[group])) {
+    const at = `${path}.${group}.${type}`;
+    if (!text(type)) problems.push(`${at} requires a ${label}`);
     if (!object(rider, at, ['status', 'stacks', 'requiresHpLoss', 'poise', 'guardBypass', 'wardDrain', 'cleanse'])) continue;
     for (const key of ['stacks', 'poise', 'guardBypass', 'wardDrain', 'cleanse']) if (rider[key] !== undefined) numeric(rider[key], `${at}.${key}`, true);
     if (rider.status !== undefined && !text(rider.status)) problems.push(`${at}.status must be a non-empty string`);
@@ -71,7 +73,7 @@ export function combatCounterProblems(counter, path, version = 1) {
 const CAMPS = ['physical', 'spell'];
 const TARGETING = ['single', 'area'];
 const MANEUVERS = ['attack', 'defend', 'counter', 'sweep', 'ranged', 'smash', 'casting'];
-const SCHOOLS = ['frost', 'fire', 'lightning', 'force', 'alteration', 'illusion', 'divine', 'decay'];
+const SCHOOLS = ['frost', 'fire', 'lightning', 'force', 'alteration', 'illusion', 'divine', 'decay', 'earth'];
 
 function stringsProblems(value, path, allowed = null, required = false) {
   if (value === undefined && !required) return [];
@@ -211,19 +213,21 @@ export function combatExpansionMatchupRulesProblems(rules, path = 'combatExpansi
   }
   // Normalize only the validator view. Version 2 authors gauge pressure; its
   // actual data never inherits version 1's direct active-stack applications.
-  const riders = {};
+  const normalized = { damageRiders: {}, tagRiders: {} };
   if (!record(rules.damageRiders)) problems.push(`${path}.damageRiders must be an object`);
-  else for (const [type, rider] of Object.entries(rules.damageRiders)) {
-    if (!record(rider)) { problems.push(`${path}.damageRiders.${type} must be an object`); continue; }
+  if (rules.tagRiders !== undefined && !record(rules.tagRiders)) problems.push(`${path}.tagRiders must be an object`);
+  for (const group of ['damageRiders', 'tagRiders']) if (record(rules[group])) for (const [type, rider] of Object.entries(rules[group])) {
+    if (!record(rider)) { problems.push(`${path}.${group}.${type} must be an object`); continue; }
     const { pressure, recoveryProfile, ...rest } = rider;
-    if (rider.status !== undefined && (!whole(pressure) || pressure === 0)) problems.push(`${path}.damageRiders.${type}.pressure must be a positive whole number`);
-    if (rider.status !== undefined && !['bodily', 'elemental', 'mental', 'curse'].includes(recoveryProfile)) problems.push(`${path}.damageRiders.${type}.recoveryProfile is unsupported`);
-    if (rider.stacks !== undefined) problems.push(`${path}.damageRiders.${type}.stacks must be authored as pressure`);
-    riders[type] = { ...rest, ...(rider.status ? { stacks: pressure } : {}) };
+    if (rider.status !== undefined && (!whole(pressure) || pressure === 0)) problems.push(`${path}.${group}.${type}.pressure must be a positive whole number`);
+    if (rider.status !== undefined && !['bodily', 'elemental', 'mental', 'curse'].includes(recoveryProfile)) problems.push(`${path}.${group}.${type}.recoveryProfile is unsupported`);
+    if (rider.stacks !== undefined) problems.push(`${path}.${group}.${type}.stacks must be authored as pressure`);
+    normalized[group][type] = { ...rest, ...(rider.status ? { stacks: pressure } : {}) };
   }
-  const riderRules = { ...combatMatchups,
-    damageRiders: riders, damageAliases: rules.damageAliases, cleanseStatuses: rules.cleanseStatuses };
-  problems.push(...combatMatchupRulesProblems(riderRules, path).filter(problem => /damageRiders|damageAliases|cleanseStatuses/.test(problem)));
+  const riderRules = { ...combatMatchups, damageRiders: normalized.damageRiders,
+    ...(rules.tagRiders !== undefined ? { tagRiders: normalized.tagRiders } : {}), damageAliases: rules.damageAliases, cleanseStatuses: rules.cleanseStatuses };
+  if (rules.tagRiders === undefined) delete riderRules.tagRiders;
+  problems.push(...combatMatchupRulesProblems(riderRules, path).filter(problem => /damageRiders|tagRiders|damageAliases|cleanseStatuses/.test(problem)));
   problems.push(...stringsProblems(rules.reactionLocks, `${path}.reactionLocks`));
   return problems;
 }

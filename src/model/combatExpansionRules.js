@@ -4,11 +4,33 @@ import { ASHEN_BLIGHT_RULES } from '../content/ashenBlight.js';
 import { combatExpansionEquipment } from '../content/combatExpansionEquipment.js';
 import { combatExpansionMatchupRulesProblems } from './combatTacticsRules.js';
 import { bringRangesForward } from './combatRanges.js';
+import { combatRules } from '../content/combatRules.js';
+
+const RESIST_CAP = Math.round(combatRules.resistanceCap * 100);
 
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 export function createCombatExpansionRuleSnapshot() {
   return structuredClone({ matchups: combatExpansionMatchups, statuses: combatStatusRules,
     ashenBlight: ASHEN_BLIGHT_RULES, equipment: combatExpansionEquipment });
+}
+
+// Status rule rows shipped after v2 runs were already saved (Psychic's Confused
+// and Earth's Slowed, owner decision 5). Only these are filled in.
+const STATUS_RULES_ADDED_SINCE_RELEASE = ['confused', 'slowed'];
+
+/**
+ * A save freezes the status rule table it started under, and the check below
+ * wants exactly today's rows. The named rows added since are filled in from the
+ * shipped table, additively: no carried row is touched, and any other missing
+ * row still fails validation. Necrotic Blight is left to
+ * bringCombatExpansionRulesForward, which also moves its rider, cleanse and
+ * resistance.
+ */
+export function backfillCombatStatusRuleRows(holder) {
+  const rows = holder?.combatExpansionRules?.statuses?.statuses;
+  if (!record(rows)) return holder;
+  for (const id of STATUS_RULES_ADDED_SINCE_RELEASE) if (!(id in rows)) rows[id] = structuredClone(combatStatusRules.statuses[id]);
+  return holder;
 }
 
 /**
@@ -83,9 +105,15 @@ export function combatExpansionRulesProblems(value, path = 'combatExpansionRules
       for (const [id, row] of Object.entries(rows)) {
         const at = `${path}.equipment.${group}.${id}`;
         if (!id || !record(row)) { problems.push(`${at} must be an authored equipment projection`); continue; }
-        for (const key of Object.keys(row)) if (!['armorClass', 'flat', 'weak', 'traits'].includes(key)) problems.push(`${at}.${key} is unknown`);
+        for (const key of Object.keys(row)) if (!['armorClass', 'flat', 'weak', 'resist', 'traits'].includes(key)) problems.push(`${at}.${key} is unknown`);
         if (row.armorClass !== undefined && !['light', 'medium', 'heavy'].includes(row.armorClass)) problems.push(`${at}.armorClass is unsupported`);
-        for (const key of ['flat', 'weak']) if (row[key] !== undefined) numberMap(row[key], `${at}.${key}`);
+        for (const key of ['flat', 'weak', 'resist']) if (row[key] !== undefined) numberMap(row[key], `${at}.${key}`);
+        // Elemental resist is a percent (tiers 25 and 50) capped like armour
+        // resistances; one row never both resists and is weak to a type.
+        if (record(row.resist)) for (const [type, amount] of Object.entries(row.resist)) {
+          if (Number.isFinite(amount) && amount > RESIST_CAP) problems.push(`${at}.resist.${type} cannot exceed ${RESIST_CAP}`);
+          if (record(row.weak) && row.weak[type] !== undefined) problems.push(`${at}.resist.${type} contradicts its weakness to the same type`);
+        }
         if (row.traits !== undefined) {
           if (!record(row.traits)) problems.push(`${at}.traits must be an object`);
           else for (const [name, trait] of Object.entries(row.traits)) {
