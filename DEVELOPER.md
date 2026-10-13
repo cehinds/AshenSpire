@@ -46,8 +46,13 @@ the build-stamp run on the `dev` tip to succeed, and for that tip to be the stam
 commit or a later docs-only bot commit, since `test`'s strict check would otherwise
 refuse the promotion. After a successful stamp push, build-stamp dispatches
 `dev-preview` for the stamped tip, so its `dev-standalone-<sha>` artifact is that
-commit's build. The Pages site's dev channel is not republished by the bot; see the
-comment in `build-stamp.yml`.
+commit's build. If all three dispatch tries fail, the run fails, but the stamp is
+already pushed: rerunning build-stamp redispatches the preview, with no manual
+`gh workflow run`, as long as the tip is still the stamp or the stamp with only the
+architecture-sync and readme-sync documentation commits above it
+(`build-stamp.mjs --stamp-is-current`). Any other commit above the stamp is not
+current, and that rerun dispatches nothing. The Pages site's dev channel
+is not republished by the bot; see the comment in `build-stamp.yml`.
 
 After each successful stamp, `pr-restamp.yml` runs `tools/pr-restamp.mjs` on every
 open pull request into `dev` that now conflicts. It merges `dev` into the pull
