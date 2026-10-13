@@ -1,8 +1,6 @@
-// Desktop and widescreen form factors (the wide-screen combat layout). Both are
-// "wide" for the band shares and the footer width: widescreen takes desktop's
-// shares and 450px footer art. Enemy placement follows the shared perspective
-// grid (SPEC: default perspective draws one uniform grid), so there is no
-// wide-only enemy placement to test here. Phones and tablets keep their bands.
+// Desktop and widescreen form factors (the wide-screen combat layout). Owner
+// (2026-10-13): their bands, hand, formation and horizon are the phone's, scaled
+// to the viewport. Only the footer art width and the desktop tool corners differ.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -10,6 +8,7 @@ import { allocateCombatBands } from '../src/ui/models/CombatLayout.js';
 import { footerArtHeight } from '../src/ui/models/FooterLayoutModel.js';
 import { isWideFormFactor, WIDE_FORM_FACTORS } from '../src/ui/models/FormFactorModel.js';
 
+const near = (a, b) => Math.abs(a - b) < 1e-6;
 const combatLayoutSource = readFileSync(new URL('../src/ui/components/combatLayout.js', import.meta.url), 'utf8');
 
 test('only desktop and widescreen are wide form factors', () => {
@@ -21,16 +20,17 @@ test('only desktop and widescreen are wide form factors', () => {
   assert.equal(isWideFormFactor(undefined), false);
 });
 
-// Widescreen takes the desktop band shares at every window height: the same
-// plan as desktop, so the footer is never taller than desktop's and the hand
-// keeps desktop's share.
+// Widescreen, desktop, tablet and phone share one band plan at every window
+// height, so a wide window's battlefield and hand are the phone's proportions.
 for (const windowHeight of [720, 1080, 1440, 2160]) {
-  test(`widescreen band shares equal desktop at a ${windowHeight}px window`, () => {
+  test(`widescreen band shares equal desktop and the phone's at a ${windowHeight}px window`, () => {
     const zoom = windowHeight / 730, localHeight = 730, width = 1920 / zoom;
-    const desktopPlan = allocateCombatBands({ width, height: localHeight, zoom, footerArtPx: footerArtHeight(width, zoom, 'desktop') * zoom, formFactor: 'desktop' });
-    const widePlan = allocateCombatBands({ width, height: localHeight, zoom, footerArtPx: footerArtHeight(width, zoom, 'widescreen') * zoom, formFactor: 'widescreen' });
+    const plan = (formFactor) => allocateCombatBands({ width, height: localHeight, zoom, footerArtPx: footerArtHeight(width, zoom, formFactor) * zoom });
+    const desktopPlan = plan('desktop');
+    const widePlan = plan('widescreen');
     assert.deepEqual({ ...widePlan }, { ...desktopPlan }, `widescreen plan at ${windowHeight}px`);
     assert.ok(widePlan.footer * zoom <= desktopPlan.footer * zoom + .5);
+    assert.ok(near(widePlan.hand / localHeight, .30) || widePlan.hand * zoom <= 208 + 1e-6, `hand share at ${windowHeight}px`);
   });
 }
 
