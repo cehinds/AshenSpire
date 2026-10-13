@@ -691,8 +691,10 @@ function enemyPhase(combat) {
         const def = combat.registries.enemies.get(enemy.enemyId);
         const moveId = enemy.pendingMove.moveId;
         const move = def.moves[moveId];
+        // Rounds mode: a charge whose hit roll missed resolves as that miss, applying nothing.
+        const missed = enemy.pendingMove.missed === true;
         enemy.pendingMove = null;
-        executeMovePayload(combat, enemy, move, moveId);
+        if (!missed) executeMovePayload(combat, enemy, move, moveId);
       }
       // else: still charging (delay.turns > 1) — the enemy does nothing.
     } else if (!preview && enemy.intent && enemy.intent.moveId) {
@@ -716,6 +718,9 @@ function enemyPhase(combat) {
     // Normal combat (SPEC §4.6, owner 2026-10-12): the rest of the enemy's planned pool plays in order after its head.
     // Each move leaves the plan before it runs, so a reaction pause resumes at the next planned move.
     while (!preview && enemy.alive && enemy.planDue && !enemy.pendingMove && enemy.plannedMoves?.length) {
+      // A stagger or Control lock that landed during this turn ends it: a staggered enemy plays none of its plan
+      // that turn (SPEC §4.6a), and keeps the rest of it (§4.11), as the turn-start stagger branch above does.
+      if (enemyHalted(combat, enemy)) { enemy.planDue = false; break; }
       const next = enemy.plannedMoves.shift();
       const def = combat.registries.enemies.get(enemy.enemyId);
       presentIntent(combat, enemy, def, next.moveId);
@@ -1786,9 +1791,22 @@ function discardUnplayedCard(combat, record) {
   }
 }
 
+// A staggered (skip flag or Staggered intent's flag) or Control-locked enemy acts no further this turn or round.
+function enemyHalted(combat, enemy) {
+  return Boolean(enemy.skipNextTurn || S.getFlag(combat, enemy, 'skipTurn') || Control.controlRestrictions(combat, enemy).locked);
+}
+
 // One queued enemy move, as the round commit runs it. A move that is skipped this round does nothing.
-function enemyMoveAt(combat, enemy, moveId) {
-  if (enemy.skipNextTurn || S.getFlag(combat, enemy, 'skipTurn') || Control.controlRestrictions(combat, enemy).locked) {
+// `landed` is the timeline's hit roll: a missed move does nothing, except a charging one, which still starts its
+// charge (the charge is the enemy's action) and carries the miss to the payload it resolves later.
+function enemyMoveAt(combat, enemy, moveId, { landed = true } = {}) {
+  // A charge started this round takes the enemy's round: its later entries do not play (SPEC §4.6a). A charge from
+  // an earlier round holds the enemy out of the queues, so a pendingMove here was started this round.
+  if (enemy.pendingMove) return;
+  const def = combat.registries.enemies.get(enemy.enemyId);
+  const move = expandedEnemyMove(enemy, def.moves[moveId], moveId, combat);
+  if (!landed && !move.delay) return;
+  if (enemyHalted(combat, enemy)) {
     // A stagger that landed before the enemy's first move spends its round: dropping the queue makes
     // enemyPhase take its clearing branch. One that landed after the enemy acted keeps its flag for the next turn.
     if (!Rounds.enemyActedThisRound(combat, enemy.id)) delete combat.combatRounds.enemyQueues[enemy.id];
@@ -1802,10 +1820,10 @@ function enemyMoveAt(combat, enemy, moveId) {
     return;
   }
   Rounds.markEnemyActed(combat, enemy.id);
-  const def = combat.registries.enemies.get(enemy.enemyId);
-  const move = expandedEnemyMove(enemy, def.moves[moveId], moveId, combat);
-  if (move.delay) startDelayedMove(combat, enemy, move, moveId);
-  else executeMovePayload(combat, enemy, move, moveId);
+  if (move.delay) {
+    startDelayedMove(combat, enemy, move, moveId);
+    if (!landed) enemy.pendingMove.missed = true;
+  } else executeMovePayload(combat, enemy, move, moveId);
 }
 
 // The live helpers the adapter's commit calls (combatRoundsAdapter.js never imports this file).

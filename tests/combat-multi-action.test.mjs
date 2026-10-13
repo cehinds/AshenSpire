@@ -9,6 +9,8 @@ import { createRunState } from '../src/model/state.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { createRng } from '../src/engine/rng.js';
 import { dispatch } from '../src/engine/combat.js';
+import { applyStatus } from '../src/engine/statuses.js';
+import { controlRestrictions } from '../src/engine/combatStatusControl.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { COMBAT_ROUNDS_KEY, MOMENTUM_KEY, MULTI_ACTION_KEY } from '../src/model/combatRounds.js';
 import * as Rounds from '../src/engine/combatRoundsAdapter.js';
@@ -157,4 +159,65 @@ test('rounds mode: follow-ups follow the rounds toggle, not the rounds queue bei
   const without = rounds(false);
   assert.equal(without.combatRounds.rules.followUps, false);
   assert.equal(followUpCount(decorate(without)), 0, 'toggle off: the rounds queue is still there, but no follow-ups show');
+});
+
+// --- PR #1953 review: a stagger or Control lock that lands mid-turn ends the plan for that turn ---------------
+
+// Ends the turn with `land(ctx, enemy)` run once, when the enemy's first move starts (a Counter, thorns or any other
+// mid-turn break would land there). Hooks the event bus every candidate copies, so it reaches the live enemy.
+// Returns the enemy's intent kind at the turn's end and the moves it started after the hook.
+function endTurnLandingMidTurn(c, land) {
+  const real = c._emitEvent;
+  let landed = false;
+  let after = null;
+  let intentAtEnd = null;
+  c._emitEvent = (ctx, type, payload) => {
+    const out = real(ctx, type, payload);
+    const enemy = ctx.enemies[0];
+    if (type === 'enemyMoveStarted' && payload.sourceId === enemy.id) {
+      if (landed) after.push(payload.moveId);
+      else { landed = true; after = []; land(ctx, enemy); }
+    }
+    if (type === 'enemyTurnEnd') intentAtEnd = enemy.intent?.kind ?? null;
+    return out;
+  };
+  try { endTurn(c); } finally { c._emitEvent = real; }
+  return { landed, after, intentAtEnd };
+}
+
+test('normal combat: a stagger that lands during the enemy\'s first move plays none of the rest of its plan that turn', () => {
+  const c = fight({});
+  const before = c.enemies[0].plannedMoves.map((p) => p.moveId);
+  assert.ok(before.length >= 1, 'fixture: the enemy has planned follow-ups');
+  const { landed, after, intentAtEnd } = endTurnLandingMidTurn(c, (ctx, enemy) => {
+    // What a Poise break does (combatRatings.js applyRatingImpact).
+    enemy.skipNextTurn = true;
+    enemy.pendingMove = null;
+    enemy.intent = { kind: 'staggered', moveId: null };
+  });
+  assert.equal(landed, true, 'fixture: the enemy started its first move');
+  assert.deepEqual(after, [], 'no follow-up starts after the stagger (SPEC §4.6a)');
+  assert.equal(intentAtEnd, 'staggered', 'the Staggered intent is not overwritten by a follow-up');
+  const enemy = c.enemies[0];
+  assert.deepEqual(enemy.plannedMoves.map((p) => p.moveId), before, 'the staggered enemy keeps its plan (SPEC §4.11)');
+  assert.equal(enemy.skipNextTurn, true, 'the stagger landed after it acted, so it carries to its next turn');
+  assert.equal(enemy.pendingMove, null, 'no follow-up started a charge');
+});
+
+test('normal combat: a Control lock that lands during the enemy\'s first move ends its plan for that turn', () => {
+  const c = fight({});
+  const before = c.enemies[0].plannedMoves.map((p) => p.moveId);
+  assert.ok(before.length >= 1, 'fixture: the enemy has planned follow-ups');
+  let locked = false;
+  const { landed, after } = endTurnLandingMidTurn(c, (ctx, enemy) => {
+    applyStatus(ctx, enemy, 'paralysis', 1, ctx.player);
+    locked = controlRestrictions(ctx, enemy).locked;
+  });
+  assert.equal(landed, true, 'fixture: the enemy started its first move');
+  assert.equal(locked, true, 'fixture: Paralysis locks the enemy');
+  assert.deepEqual(after, [], 'a locked enemy starts no follow-up');
+  // A held enemy keeps its plan (SPEC §4.11): the next roll's head is the first follow-up it did not play.
+  const enemy = c.enemies[0];
+  assert.equal(enemy.intent.moveId, before[0], 'its follow-ups were not spent: the next turn opens with the first one');
+  assert.deepEqual(enemy.plannedMoves.map((p) => p.moveId).slice(0, before.length - 1), before.slice(1), 'and the rest follow in order');
 });

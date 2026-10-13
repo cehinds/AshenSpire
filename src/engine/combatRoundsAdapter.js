@@ -231,7 +231,7 @@ function enemySpec(enemy, def) {
 //   playCard(combat, intent, paid)  the live card effects, with no second payment
 //   discardUnplayed(combat, record)  a missed card leaves the hand and spends the charges it claimed
 //   refund(combat, record)          pays back a queued card's SP and MP (it never resolved)
-//   enemyMove(combat, enemy, moveId)  the live move (or its delayed charge)
+//   enemyMove(combat, enemy, moveId, { landed })  the live move (or its delayed charge); a miss runs only a charge
 //   drain(combat)                   drainQueue
 //   findEntity(combat, id)          the live lookup
 //   reactionHand(combat)            the reaction candidates the player may play this commit (timeline records)
@@ -403,7 +403,7 @@ function applyPlayerEntry(combat, entry, landed, ops) {
   ops.drain(combat);
 }
 
-// The live move runs only for a landed attack. The live Counter is kept out of the move unless the timeline
+// The live move runs only for a landed attack (a charging move starts its charge either way, enemyMoveAt). The live Counter is kept out of the move unless the timeline
 // spent it on this attack (counterFired), and it is cleared after the move when the timeline spent it, so a
 // Counter the timeline did not fire never answers this attack live, and a spent one never answers another.
 function applyEnemyEntry(combat, entry, events, landed, ops) {
@@ -412,8 +412,9 @@ function applyEnemyEntry(combat, entry, events, landed, ops) {
   if (!fired) delete combat.player.combatCounter;
   try {
     const enemy = combat.enemies.find((e) => e.id === entry.actor);
-    if (!enemy || !landed || !enemy.alive || enemy.hp <= 0) return;
-    ops.enemyMove(combat, enemy, entry.cardId);
+    if (!enemy || !enemy.alive || enemy.hp <= 0) return;
+    // The live move decides what a miss does: nothing, except a charging move, whose charge starts regardless.
+    ops.enemyMove(combat, enemy, entry.cardId, { landed });
     ops.drain(combat);
   } finally {
     if (fired) delete combat.player.combatCounter;

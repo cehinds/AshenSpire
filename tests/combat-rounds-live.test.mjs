@@ -596,3 +596,41 @@ test('unqueueing with the preview off throws a clear error, not a TypeError', ()
     return true;
   });
 });
+
+// --- PR #1953 review: a delayed (charging) move in a round -------------------------------------------------------
+
+// The soldier with a 1-SP charging attack added (weight 0, so it is only ever queued by hand here).
+const CHARGE = 'heavyCharge';
+const chargeRegistries = createRegistries({ ...contentBundle, enemies: contentBundle.enemies.map((e) => (e.id === ENEMY
+  ? { ...e, moves: { ...e.moves, [CHARGE]: { intent: 'attack', damage: 12, weight: 0, sp: 1, delay: { turns: 1, whileCharging: { block: 5 } } } } }
+  : e)) });
+// A legacy fight whose enemy queues the charge and then a Slash this round.
+function chargeFight(u) {
+  const c = fixRoundRoll(fight({ reg: chargeRegistries, expansion: 1 }), u);
+  const enemy = liveEnemy(c);
+  c.combatRounds.enemyQueues[enemy.id] = [{ moveId: CHARGE, sp: 1 }, { moveId: 'slash', sp: 1 }];
+  return { c, enemy };
+}
+
+test('a charging move takes the enemy\'s round: its later queued moves do not play after the charge starts', () => {
+  const { c, enemy } = chargeFight(0.999);
+  const { events } = endTurnDeclining(c);
+  assert.equal(enemy.pendingMove?.moveId, CHARGE, 'the charge starts');
+  assert.ok(events.some((e) => e.type === 'blockGained' && e.targetId === enemy.id && e.amount === 5), 'its whileCharging block lands');
+  assert.ok(!events.some((e) => e.type === 'enemyMoveStarted' && e.sourceId === enemy.id && e.moveId === 'slash'), 'the Slash queued after it does not start');
+  assert.ok(!events.some((e) => e.type === 'damageDealt' && e.sourceId === enemy.id), 'nothing hits the player this round');
+  const second = endTurnDeclining(c);
+  assert.equal(enemy.pendingMove, null, 'the charge resolves on its turn');
+  assert.ok(second.events.some((e) => e.type === 'enemyMoveStarted' && e.sourceId === enemy.id && e.moveId === CHARGE), 'the landed charge plays its payload');
+});
+
+test('a charging attack whose hit roll misses still starts its charge; the miss applies when the payload resolves', () => {
+  const { c, enemy } = chargeFight(0);
+  const first = endTurnDeclining(c);
+  assert.equal(enemy.pendingMove?.moveId, CHARGE, 'the charge starts although the roll missed');
+  assert.ok(first.events.some((e) => e.type === 'blockGained' && e.targetId === enemy.id && e.amount === 5), 'the whileCharging block lands');
+  const second = endTurnDeclining(c);
+  assert.equal(enemy.pendingMove, null, 'the charge resolves on its turn');
+  assert.ok(!second.events.some((e) => e.type === 'enemyMoveStarted' && e.sourceId === enemy.id && e.moveId === CHARGE), 'the missed charge plays no payload');
+  assert.ok(!second.events.some((e) => e.type === 'damageDealt' && e.sourceId === enemy.id), 'and deals nothing');
+});
