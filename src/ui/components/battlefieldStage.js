@@ -9,13 +9,13 @@ import { fitIconTray } from './iconTray.js';
 import { combatSpriteRatio, fitCombatSprites, NARROW_MIN_HEIGHT_FRACTION } from '../models/CombatSpriteScaleModel.js';
 import { combatSpriteGeometry, currentSpriteArtBounds } from './combatSpriteGeometry.js';
 import { classicAppearance, displayAppearance } from '../displayAppearance.js';
-import { wireAlternativeBackdrop, fitAlternativeBackdrop, combatHorizonFloor } from '../alternativeArt.js';
+import { wireAlternativeBackdrop, fitAlternativeBackdrop } from '../alternativeArt.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
 import { targetOutline } from '../models/TargetLayerModel.js';
 import { fitSceneBackdrop } from './sceneBackdrop.js';
 import { battlefieldBackdropConfig } from '../models/SceneLayerModel.js';
 import { presentationConfig } from '../../model/advancedConfig.js';
-import { alternativeCombatComposition, combatComposition as classicCombatComposition, combatSceneryGround, combatStandingGround, stableHandAnchor, combatArtworkKey, stableCombatArtwork, DESKTOP_HORIZON_SHARE } from '../models/CombatCompositionModel.js';
+import { alternativeCombatComposition, combatComposition as classicCombatComposition, combatSceneryGround, combatStandingGround, stableHandAnchor, combatArtworkKey, stableCombatArtwork } from '../models/CombatCompositionModel.js';
 import { alternativeFormation, fitAlternativeSprites } from '../models/AlternativeFormationModel.js';
 import { perspectiveCellContains } from '../models/AlternativeFormationModel.js';
 import { playerDetailsPlacement } from '../models/PlayerDetailsPlacementModel.js';
@@ -613,12 +613,6 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
         handTop: handAnchor?.key === handLayoutKey ? handAnchor.top : null,
         handLeft: handAnchor?.key === handLayoutKey ? handAnchor.left : 0,
         solo: solo && window.innerHeight > 480,
-        desktop: document.documentElement.dataset.formFactor === 'desktop',
-        // Desktop keeps the horizon share on the field; the shared row stands on the
-        // standing-area floor the backdrop camera needs (physical px, like fieldRect).
-        horizonFloor: document.documentElement.dataset.formFactor === 'desktop'
-          ? combatHorizonFloor(combat, { width: combat.getBoundingClientRect().width / zoom, height: fieldRect.height / zoom, share: DESKTOP_HORIZON_SHARE }) * zoom
-          : undefined,
         sizes: classicAppearance()
           ? fitCombatSprites({ width: fieldRect.width, height: fieldRect.height, actors,
             minHeight: narrow ? fieldRect.height * NARROW_MIN_HEIGHT_FRACTION : 0 })
@@ -1062,7 +1056,7 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     if (!classicAppearance()) fitAlternativeBackdrop(combat, { width: rect.width / zoom, height: fieldRect.height / zoom,
       fieldTop, ground: combatSceneryGround(sizes, actors, plan.ground) / zoom,
       standGround: combatStandingGround(sizes, actors, plan.ground) / zoom, narrow,
-      horizonShare: document.documentElement.dataset.formFactor === 'desktop' ? DESKTOP_HORIZON_SHARE : undefined, coverFloor: true });
+      coverFloor: true });
     if (backdrop) fitSceneBackdrop(backdrop, {
       width: backdropWidth, height: rect.height / zoom, zoom,
       windowTop: 0, windowHeight: sceneHeight,
