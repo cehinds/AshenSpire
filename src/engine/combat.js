@@ -453,7 +453,20 @@ function drainQueue(combat) {
     if (Reactions.beforeReactionAction(combat, combat.queue[0], reactionHooks)) return;
     const action = combat.queue.shift();
     Reactions.startQueuedEnemy(combat, action);
-    A.executeAction(combat, action);
+    // A delayed Combat Rounds hit carries its spent Momentum scope on its own payload
+    // actions. Reactions inserted ahead of it carry no scope and therefore cannot borrow
+    // that multiplier; a pause is safe because the original actions keep the receipt.
+    const roundPoiseMultiplier = action.meta?.roundPoiseMultiplier;
+    const previousRoundPoiseMultiplier = combat.roundPoiseMultiplier;
+    if (roundPoiseMultiplier) combat.roundPoiseMultiplier = roundPoiseMultiplier;
+    try {
+      A.executeAction(combat, action);
+    } finally {
+      if (roundPoiseMultiplier) {
+        if (previousRoundPoiseMultiplier) combat.roundPoiseMultiplier = previousRoundPoiseMultiplier;
+        else delete combat.roundPoiseMultiplier;
+      }
+    }
     if (combat.pendingAbilityDiscard) return;
     endCheck(combat);
     if (combat.result) {
@@ -695,10 +708,7 @@ function enemyPhase(combat) {
         const missed = enemy.pendingMove.missed === true;
         const roundPoiseMultiplier = enemy.pendingMove.roundPoiseMultiplier;
         enemy.pendingMove = null;
-        if (!missed) {
-          if (roundPoiseMultiplier) cursor.roundPoiseMultiplier = roundPoiseMultiplier;
-          executeMovePayload(combat, enemy, move, moveId);
-        }
+        if (!missed) executeMovePayload(combat, enemy, move, moveId, { roundPoiseMultiplier });
       }
       // else: still charging (delay.turns > 1) — the enemy does nothing.
     } else if (!preview && enemy.intent && enemy.intent.moveId) {
@@ -715,13 +725,8 @@ function enemyPhase(combat) {
       }
     }
     }
-    // A delayed round hit resolves through the ordinary queue, possibly across a reaction pause. Reinstall the
-    // multiplier only while that move's queued payload drains; the cursor keeps it if the drain pauses.
-    if (cursor.roundPoiseMultiplier) combat.roundPoiseMultiplier = cursor.roundPoiseMultiplier;
     drainQueue(combat);
-    delete combat.roundPoiseMultiplier;
     if (Reactions.reactionPaused(combat)) return;
-    delete cursor.roundPoiseMultiplier;
     if (combat.result) return;
     // The move has resolved: its momentum exchange ends with it (normalPreview.js), so its owner-turn-end hooks and
     // anything after are their own exchanges.
@@ -801,7 +806,7 @@ function startDelayedMove(combat, enemy, move, moveId) {
 // one actor at a time (SPEC §7.4); content triggers may also key off it.
 // `roundEntry`: the move resolves a Combat Rounds timeline entry, whose reaction point was the round prompt (SPEC
 // §4.11), so its group is marked roundSettled and the live reaction window does not open for it again.
-function executeMovePayload(combat, enemy, move, moveId, { roundEntry = false } = {}) {
+function executeMovePayload(combat, enemy, move, moveId, { roundEntry = false, roundPoiseMultiplier = combat.roundPoiseMultiplier } = {}) {
   move = expandedEnemyMove(enemy, move, moveId, combat);
   // movesHistory records ROLLS (maxConsecutive reads it); a roll a stagger
   // cancels never happens. This is what did — the inspector's history.
@@ -812,6 +817,11 @@ function executeMovePayload(combat, enemy, move, moveId, { roundEntry = false } 
   }
   const carrier = enemyMoveCarrier(enemy, move, moveId, combat);
   const actions = enemyMoveActions(combat, enemy, move, moveId, carrier);
+  // Stamp only this move's own actions. The reaction stack may run other attacks before
+  // them, and those attacks must not inherit the delayed entry's Momentum overflow.
+  if (roundPoiseMultiplier) for (const action of actions) {
+    action.meta = { ...action.meta, roundPoiseMultiplier: { ...roundPoiseMultiplier } };
+  }
   const group = enqueueExpandedAction(combat, actions, { source: enemy, target: combat.player, carrier });
   if (Reactions.usesReactions(combat) && group) group.enemyMoveStart = start;
   if (roundEntry && group) group.roundSettled = true;
@@ -1800,7 +1810,10 @@ function withPlayedCardStance(combat, intent, fn) {
 function refundQueuedCard(combat, rec) {
   const p = combat.player;
   p.energy += rec.paid.energy;
-  p.mana += rec.paid.mana;
+  // A refund at commit time can follow an effect that already restored Mana,
+  // so it fills up to the maximum and never past it (or below what is held).
+  const manaCap = Number.isFinite(p.maxMana) ? p.maxMana : Infinity;
+  p.mana = Math.max(p.mana, Math.min(p.mana + rec.paid.mana, manaCap));
   if (rec.paid.stamina > 0) p.counters.staminaSpentThisTurn = Math.max(0, (p.counters.staminaSpentThisTurn || 0) - rec.paid.stamina);
 }
 
@@ -1881,6 +1894,13 @@ function previewRoundOps(hand = []) {
     playCard: (c, intent, paid) => doPlayCard(c, intent, { prepaid: paid }),
     discardUnplayed: discardUnplayedCard,
     refund: refundQueuedCard,
+    // True when a control status would refuse this queued card now (the same gate doPlayCard runs).
+    controlled: (c, record) => {
+      const inst = c.piles.hand.find((h) => h.instanceId === record.instanceId);
+      if (!inst) return false;
+      const def = resolveCombatCard(c, inst, { upcastTier: record.upcastTier, upcastRanks: record.upcastRanks });
+      return !Control.controlGate(c, c.player, def).allowed;
+    },
     enemyMove: enemyMoveAt,
     drain: drainQueue,
     findEntity,
@@ -2465,7 +2485,8 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
   });
 
   return {
-    resolvedDefinition: def, combatExpansionVersion: combat.combatExpansionVersion || 1,
+    // The effects the play will run, a charge's added rows included; `values` follow this list (the card face reads it).
+    resolvedDefinition: def, chargedEffects, combatExpansionVersion: combat.combatExpansionVersion || 1,
     cardId: inst.cardId,
     upgraded: inst.upgraded,
     name: def.name,

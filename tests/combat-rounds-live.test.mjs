@@ -3,6 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
@@ -819,4 +820,12 @@ test('an enemy a queued card kills mid-round takes no later timeline entry: its 
     return c.combatRounds.momentum[doomed.id] ?? 0;
   };
   assert.equal(momentumOf(true), momentumOf(false), 'the dead enemy\'s queued Slash credits nothing');
+});
+
+test('scopes the delayed Poise multiplier to payload actions, not reaction attacks', () => {
+  const source = readFileSync(new URL('../src/engine/combat.js', import.meta.url), 'utf8');
+  assert.match(source, /action\.meta\?\.roundPoiseMultiplier/, 'the queue reads scope from the action being executed');
+  assert.match(source, /action\.meta = \{ \.\.\.action\.meta, roundPoiseMultiplier:/, 'each delayed payload action carries the scope');
+  assert.match(source, /executeMovePayload\(combat, enemy, move, moveId, \{ roundPoiseMultiplier \}\)/, 'the delayed move passes its saved scope to its payload');
+  assert.doesNotMatch(source, /cursor\.roundPoiseMultiplier/, 'the whole reaction drain is never globally scoped');
 });

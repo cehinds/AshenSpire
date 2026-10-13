@@ -11,7 +11,10 @@ import { renderCard } from '../src/ui/components/card.js';
 import { cardRangeChipHtml } from '../src/ui/components/cardTagSymbols.js';
 import { t } from '../src/ui/strings.js';
 import { withModalDom as withDom } from './helpers/modal-dom.mjs';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
+const ROOT = resolve(import.meta.dirname, '..');
 const REG = createRegistries(contentBundle);
 const ref = (cardId) => ({ cardId, upgraded: false });
 // The combat definition the hand resolves: the v2 expansion applied to the authored card.
@@ -59,6 +62,16 @@ test('hand: a plain skill shows no chip, and a card without range:true shows non
     assert.equal(renderCardFor('warcry', { range: true }).querySelector('.card-range-chip'), null);
     assert.equal(renderCardFor('strike', {}).querySelector('.card-range-chip'), null);
   });
+});
+
+// The rail's icons hug its right edge on every card. A centred column would move
+// the symbols left whenever the wider range chip (Melee / Reach) is present.
+test('the tag rail aligns its icons to the right edge, so a range chip never shifts them', () => {
+  const css = readFileSync(resolve(ROOT, 'styles/illustrated-cards.css'), 'utf8').replace(/\r\n?/g, '\n');
+  const rule = css.match(/:root \.illustrated-card-face \.card-tag-rail \{[^}]*\}/)?.[0] ?? '';
+  assert.match(rule, /align-items:\s*flex-end/);
+  assert.doesNotMatch(rule, /align-items:\s*center/);
+  assert.match(rule, /right:\s*9%/);
 });
 
 // Renders one hand face. The combat definition is passed as the hand passes it

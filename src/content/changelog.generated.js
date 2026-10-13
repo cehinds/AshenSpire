@@ -1,4 +1,4 @@
-// GENERATED from /CHANGELOG.md by tools/about-changelog.mjs --write.
+// DERIVED — generated from CHANGELOG.md by tools/generate-changelog-data.mjs
 // Do not edit: the focused check refuses any drift from the authoritative Markdown.
 
 export const GENERATED_CHANGELOG = Object.freeze([
@@ -8,9 +8,39 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-13",
     "summary": "Delayed Combat Rounds attacks keep their doubled Poise damage",
     "detail": "When Momentum doubles an enemy attack that charges before landing, the later payload now keeps that multiplier through its delay and through any reaction pause, then clears it after the attack resolves.",
-    "build": "0.7.1.1489",
+    "build": "0.7.1.1495",
     "pullRequest": 1959,
     "url": "https://github.com/cehinds/AshenSpire/pull/1959"
+  },
+  {
+    "id": "pr-1957",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Cards read the same in every view, and read intents show their damage class",
+    "detail": "A card's text is now one short form everywhere — combat hand, character creation, review, rewards, shop and deck — naming each effect by its tag and number: \"Inflict 9 Blunt damage, 4 Poise damage\", \"Inflict Weak 4, Paralysis 3\", \"Remove 1 Sleep, 1 Paralysis, 1 Dazed\", \"Gain 7 Ward\". Boosted numbers are green and reduced ones red. In combat the hand shows three lines and a selected card up to five. Card tag icons stay on the right edge even beside a Melee or Reach chip. An enemy intent you read successfully is tinted silver for a physical attack and blue for magic.",
+    "build": "0.7.1.1495",
+    "pullRequest": 1957,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1957"
+  },
+  {
+    "id": "pr-1963",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "End Turn no longer stalls in Alternative combat rounds when a queued card can't be played",
+    "detail": "With the Alternative combat rounds setting on, a queued card such as a Counter, played after an earlier card in the same round had put you to Sleep or Staggered you, made End Turn do nothing. That card is now skipped and its Stamina and Mana refunded, and the round goes on.",
+    "build": "0.7.1.1493",
+    "pullRequest": 1963,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1963"
+  },
+  {
+    "id": "pr-1962",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Pull requests no longer wait for a per-PR owner approval; coding goes to Sonnet, simple tasks to Haiku",
+    "detail": "Development-process change only, nothing in the game changes. A pull request into dev now merges once another agent or session has reviewed it, its conflicts are resolved and the fast checks are green, and the session promotes dev to test itself; main stays with the owner. Sessions send the owner the preview and screenshots without waiting. Most coding tasks go to the new Sonnet ashen-coder agent, simple or mechanical ones to the Haiku ashen-worker, and Opus keeps planning and management.",
+    "build": "0.7.1.1491",
+    "pullRequest": 1962,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1962"
   },
   {
     "id": "pr-1961",
