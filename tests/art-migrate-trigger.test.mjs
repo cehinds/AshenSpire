@@ -150,3 +150,123 @@ test('pages: the dev-preview workflow_run trigger admits feature/, fix/, chore/ 
   assert.ok(globs.includes('dev'), 'dev is listed for the build-stamp completion');
   assert.ok(!globs.some(g => g !== 'dev' && re(g).test('dev')), 'no preview prefix may match dev');
 });
+
+// pages-builds publishes dev from the build-stamp run that follows the push, never from the push
+// itself. The guards are GitHub expressions, so each one is evaluated against the events it must
+// admit and refuse, not only matched as text. The translation covers the operators these guards use.
+const stampFile = readFileSync(join(ROOT, '.github/workflows/build-stamp.yml'), 'utf8');
+
+// The text of a job's `if:` (a single line, or a folded `>-` block whose lines are indented deeper).
+function jobIf(job) {
+  const lines = jobBlock(pages, job).split('\n');
+  const i = lines.findIndex((l) => l.startsWith('    if: '));
+  assert.ok(i >= 0, `job ${job} has an if`);
+  const first = lines[i].slice('    if: '.length);
+  if (first !== '>-') return first;
+  const body = [];
+  for (let j = i + 1; j < lines.length && lines[j].startsWith('      '); j += 1) body.push(lines[j].trim());
+  return body.join(' ');
+}
+
+// The `${{ }}` expression of an env var in the assemble job's steps (PUBLISH_REQUESTED, ART_REPO_TOKEN).
+function stepEnv(name) {
+  const m = jobBlock(pages, 'assemble').match(new RegExp(`^ +${name}: \\$\\{\\{ (.*) \\}\\}$`, 'm'));
+  assert.ok(m, `env ${name} exists`);
+  return m[1];
+}
+
+function evalGh(expr, ctx) {
+  const js = expr
+    .replace(/github\.event\.workflow_run\.(\w+)/g, 'ctx.wr.$1')
+    .replace(/github\.event_name/g, 'ctx.event')
+    .replace(/github\.ref_name/g, 'ctx.refName')
+    .replace(/github\.ref\b/g, 'ctx.ref')
+    .replace(/github\.(triggering_)?actor/g, 'ctx.actor')
+    .replace(/github\.repository_owner/g, 'ctx.owner')
+    .replace(/inputs\.publish/g, 'ctx.publish')
+    .replace(/startsWith\(/g, 'startsWith(')
+    .replace(/!=/g, '\u0001').replace(/==/g, '===').replace(/\u0001/g, '!==');
+  const startsWith = (a, b) => String(a ?? '').startsWith(b);
+  const full = { event: 'push', ref: 'refs/heads/main', refName: 'main', actor: 'owner', owner: 'owner', publish: '', wr: {}, ...ctx };
+  return new Function('ctx', 'startsWith', `return (${js});`)(full, startsWith);
+}
+
+const CASES = [
+  // [name, context, assemble, deploy, PUBLISH_REQUESTED]
+  ['build-stamp on dev succeeds: dev publishes', { event: 'workflow_run', wr: { name: 'build-stamp', head_branch: 'dev', conclusion: 'success' } }, true, true, true],
+  ['build-stamp on dev fails: nothing publishes', { event: 'workflow_run', wr: { name: 'build-stamp', head_branch: 'dev', conclusion: 'failure' } }, false, false, false],
+  ['build-stamp on dev is cancelled: nothing publishes', { event: 'workflow_run', wr: { name: 'build-stamp', head_branch: 'dev', conclusion: 'cancelled' } }, false, false, false],
+  ['dev preview on dev succeeds: skipped, it must not rebuild an unstamped head', { event: 'workflow_run', wr: { name: 'dev preview', head_branch: 'dev', conclusion: 'success' } }, false, false, false],
+  ['dev preview on dev fails: skipped', { event: 'workflow_run', wr: { name: 'dev preview', head_branch: 'dev', conclusion: 'failure' } }, false, false, false],
+  ['dev preview on feature/x succeeds: unchanged', { event: 'workflow_run', wr: { name: 'dev preview', head_branch: 'feature/x', conclusion: 'success' } }, true, true, true],
+  ['dev preview on fix/x fails: unchanged (stale build dropped later)', { event: 'workflow_run', wr: { name: 'dev preview', head_branch: 'fix/x', conclusion: 'failure' } }, true, true, true],
+  ['dev preview on chore/x fails: unchanged', { event: 'workflow_run', wr: { name: 'dev preview', head_branch: 'chore/x', conclusion: 'failure' } }, true, true, true],
+  ['dev preview on alternative/a/dev fails: success-only, unchanged', { event: 'workflow_run', wr: { name: 'dev preview', head_branch: 'alternative/a/dev', conclusion: 'failure' } }, false, false, false],
+  ['dev preview on alternative/a/dev succeeds: unchanged', { event: 'workflow_run', wr: { name: 'dev preview', head_branch: 'alternative/a/dev', conclusion: 'success' } }, true, true, true],
+  ['pull_request_target closed: unchanged', { event: 'pull_request_target', ref: 'refs/heads/dev', refName: 'dev' }, true, true, true],
+  ['push to release publishes: unchanged', { event: 'push', ref: 'refs/heads/release', refName: 'release' }, true, true, true],
+  ['push to test assembles, never deploys: unchanged', { event: 'push', ref: 'refs/heads/test', refName: 'test' }, true, false, false],
+];
+
+test('pages: pages-builds has no push trigger on dev; dev publishes only after build-stamp', () => {
+  const on = pages.slice(pages.indexOf('\non:'), pages.indexOf('\nconcurrency:'));
+  const push = on.match(/^  push:\n(?:    .*\n)*?    branches: \[(.*)\]/m);
+  assert.ok(push, 'the push trigger lists its branches');
+  const pushBranches = push[1].split(',').map((b) => b.trim());
+  assert.deepEqual(pushBranches, ['test', 'release', 'main'], 'push branches are test, release and main');
+  assert.ok(!pushBranches.includes('dev'), 'no push trigger names dev');
+});
+
+test('pages: pages-builds runs on build-stamp completing on dev, with the workflow name build-stamp.yml declares', () => {
+  const name = stampFile.match(/^name: (.+)$/m)?.[1]?.trim();
+  assert.equal(name, 'build-stamp');
+  const on = pages.slice(pages.indexOf('\non:'), pages.indexOf('\nconcurrency:'));
+  const wr = on.slice(on.indexOf('  workflow_run:'));
+  assert.match(wr, /^    workflows: \[build-stamp, dev preview\]$/m, 'workflow_run names build-stamp and dev preview');
+  assert.match(wr, /^    branches: \['dev', /m, 'the workflow_run branch list admits dev');
+  assert.match(wr, /^    types: \[completed\]$/m);
+});
+
+test('pages: each guard admits the build-stamp completion on dev only on success, and skips a dev-preview completion on dev', () => {
+  for (const job of ['assemble', 'deploy']) {
+    const expr = jobIf(job);
+    assert.match(expr, /github\.event\.workflow_run\.name == 'build-stamp'/, `${job} names build-stamp`);
+    assert.match(expr, /github\.event\.workflow_run\.head_branch == 'dev'/, `${job} requires head_branch dev for build-stamp`);
+    assert.match(expr, /github\.event\.workflow_run\.name == 'dev preview'\s*&&\s*github\.event\.workflow_run\.head_branch != 'dev'/, `${job} excludes dev preview on dev`);
+  }
+  for (const [name, ctx, assemble, deploy, publish] of CASES) {
+    if (ctx.event === 'push' || ctx.event === 'pull_request_target') continue;
+    assert.equal(evalGh(jobIf('assemble'), ctx), assemble, `assemble: ${name}`);
+    assert.equal(evalGh(jobIf('deploy'), ctx), deploy, `deploy: ${name}`);
+    assert.equal(evalGh(stepEnv('PUBLISH_REQUESTED'), ctx), publish, `PUBLISH_REQUESTED: ${name}`);
+  }
+});
+
+test('pages: the push and dispatch paths of the deploy guard are unchanged', () => {
+  for (const [name, ctx, , deploy] of CASES) {
+    if (ctx.event !== 'push' && ctx.event !== 'pull_request_target') continue;
+    assert.equal(evalGh(jobIf('deploy'), ctx), deploy, `deploy: ${name}`);
+  }
+  assert.equal(evalGh(jobIf('deploy'), { event: 'workflow_dispatch', publish: 'PUBLISH', actor: 'owner', owner: 'owner', triggeringActor: 'owner' }), true, 'the owner dispatch deploys');
+});
+
+test('pages: a dev-preview completion on dev gets its own concurrency group, so it cannot supersede a pending publication', () => {
+  const group = pages.match(/^  group: (\$\{\{ .* \}\})$/m)?.[1];
+  assert.ok(group, 'the concurrency group is an expression');
+  const expr = group.slice(3, -3);
+  const groupFor = ctx => evalGh(expr, ctx);
+  assert.equal(groupFor({ event: 'workflow_run', wr: { name: 'build-stamp', head_branch: 'dev', conclusion: 'success' } }), 'pages-builds');
+  assert.equal(groupFor({ event: 'workflow_run', wr: { name: 'dev preview', head_branch: 'dev', conclusion: 'success' } }), 'pages-builds-dev-preview-on-dev');
+  assert.equal(groupFor({ event: 'workflow_run', wr: { name: 'dev preview', head_branch: 'feature/x', conclusion: 'success' } }), 'pages-builds');
+  assert.equal(groupFor({ event: 'push', ref: 'refs/heads/release', refName: 'release' }), 'pages-builds');
+  assert.equal(groupFor({ event: 'pull_request_target' }), 'pages-builds');
+});
+
+test('pages: the build-stamp run that publishes dev gets the art token, as a dev push did', () => {
+  const token = stepEnv('ART_REPO_TOKEN');
+  assert.ok(token.includes("github.event.workflow_run.name == 'build-stamp' && github.event.workflow_run.head_branch == 'dev' && github.event.workflow_run.conclusion == 'success'"));
+});
+
+test('pages: the checkout of a workflow_run run is dev, so it builds the stamped commit', () => {
+  assert.match(pages, /ref: \$\{\{ \(github\.event_name == 'workflow_run' \|\| github\.event_name == 'pull_request_target'\) && 'dev' \|\| github\.ref \}\}/);
+});
