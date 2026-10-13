@@ -223,7 +223,7 @@ test('every authored family grade completes a paid real play in the assembled en
       assert.doesNotThrow(() => dispatch(combat, { type: 'chooseDiscard', cardInstanceIds: ids }), `${card.name}/${profile.rank}, choosing ${JSON.stringify(ids)} from ${combat.piles.hand.length}`);
     }
     assert.equal(combat.eventLog.filter(e => e.type === 'cardResolved').length, 1, `${card.name}/${profile.rank}`);
-    assert.equal(combat.player.mana, 100 - (face.manaCost || 0) + (card.id === 'progression-wellspring-sigil' && profile.rank >= 2 ? 1 : 0));
+    assert.equal(combat.player.mana, Math.min(combat.player.maxMana, 100 - (face.manaCost || 0) + (card.id === 'progression-wellspring-sigil' && profile.rank >= 2 ? 1 : 0)), 'Mana restored stops at the maximum');
   }
 });
 

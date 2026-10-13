@@ -7,16 +7,22 @@ disagree. Change a number there and here in the same commit.
 
 ## The formula
 
-Each resource is priced on its own side (the owner set this shape):
+Each resource is priced on its own side (the owner set this shape, and on
+2026-10-12 added the Mana-side rank, the restore offsets, Ethereal as a drawback
+and status stacks that count):
 
-- **S_sp** = damageWeight × physical damage + rankWeight × rank + Σ SP-side tag
-  weights + range weight + castingEffort (on a cast card) + SP-side statuses +
-  restoreWeight × Mana restored + drawback weights (negative).
-- **S_mp** = damageWeight × magical damage + Σ MP-side tag weights + MP-side
-  statuses + restoreWeight × Stamina restored.
-- **SP** = floor(S_sp / spDivisor), **MP** = floor(S_mp / mpDivisor). Each side
-  is floored at 0 first.
-- If both are 0, the larger side pays 1 (SP on a tie).
+- **S_sp** = damageWeight × physical damage steps + rankWeight × rank + Σ
+  SP-side tag weights + range weight + castingEffort (on a cast card) +
+  SP-side statuses × stacks + restoreWeight × Mana restored + drawback weights
+  (negative).
+- **S_mp** = damageWeight × magical damage steps + rankWeightMp × rank (on a
+  magical card) + Σ MP-side tag weights + MP-side statuses × stacks +
+  restoreWeight × Stamina restored.
+- **SP** = floor(S_sp / spDivisor) − Stamina the card restores, and **MP** =
+  floor(S_mp / mpDivisor) − Mana the card restores, each at least 0. So a card
+  that refills a pool never costs more of it than it gives back.
+- If both are 0, the larger side pays 1 (SP on a tie). A Mana-restoring card
+  pays SP, so a player with no Mana can always cast it (Attune, Ember Communion).
 
 A card is **magical** when it carries any MP-side tag below; its damage and
 the statuses it applies then count on the MP side. Damage is counted with its
@@ -34,62 +40,54 @@ multiplies its effect amounts by twoCostMultiplier (SPEC §4.3a).
 | Tunable | Value | Reason |
 |---|---|---|
 | `spDivisor` | 6 | D, the owner's ruling (2026-10-12: "use D as 6"). Not tuned. |
-| `mpDivisor` | 6 | P. A school (3) and the spell camp (3) make 6, so every spell pays at least 1 MP; strong spells pay 2. |
+| `mpDivisor` | 8 | P. Raised from 6: at 6, rank 1–3 spells at 1–2 MP (78%) and rank 1–2 cards (78%) miss 80%; at 8 they reach 82% and 82%. |
 | `damageWeight` | 1.5 | Points per damage step. Real card damage runs 2–40, far above the owner's example of 3; raw damage priced every big hit at 3–7 SP. |
 | `damageSteps` | 1, 3, 5, 8, 12 | The damage thresholds: 3 damage is 2 steps (3 points), a 6-damage strike 3 steps (4.5), anything from 12 up 5 steps (7.5). |
 | `rankWeight` | 1 | Points per rank above the base, SP side. Larger values push rank 1–2 cards to 3 SP. |
+| `rankWeightMp` | 4 | Points per rank on the MP side of a magical card: a cantrip stays at 0 MP and its rank 1–3 faces pay 1–2 MP. |
 | `castingEffortWeight` | 6 | SP-side points on every cast card: a spell costs 1 SP unless it carries a drawback. |
-| `restoreWeight` | 1 | Points per Mana restored (SP side) or Stamina restored (MP side). |
-| `twoCostMultiplier` | 1.8 | The owner's provisional 2-cost buff, applied at 2 SP or more. |
+| `restoreWeight` | 1 | Points per Mana restored (SP side) or Stamina restored (MP side). The restore also offsets the card's own price. |
+| `twoCostMultiplier` | 1.8 | The owner's 2-cost buff, applied at 2 SP or more (owner, 2026-10-12). |
 | `statusWeight` | 2 | The owner's floor for a status. |
-| `statusStackCap` | 1 | Stacks above this count as this many. At 2 or more, stacked bleed and charge cards jump a full SP. |
+| `statusStackCap` | none | Every stack counts (owner, 2026-10-12). A whole number caps the stacks a status is priced at. |
 
 ## Calibration
 
 Every priced card, resolved at owner ranks 0–3 (ability grades at grades 0–3,
 legacy cards at instance ranks 1–3), 880 faces in all. With D fixed at 6 the
 script searched P, damageWeight, eight damage step tables, rankWeight,
-castingEffortWeight, the stack cap and the weights of the smash and sweep,
-heavy, cleave, counter, ranged, physical and magical damage type, school, camp
-and weapon tags (coordinate descent from 250 random starts, then a hand scan of
-P and the school weight), keeping the owner's shape. Targets are the owner's
-words of 2026-10-12.
+rankWeightMp, castingEffortWeight, the status weight and the weights of the
+smash and sweep, heavy, cleave, counter, ranged, physical and magical damage
+type, school, camp and weapon tags (coordinate descent from 250 random starts),
+keeping the owner's shape. Targets are the owner's words of 2026-10-12.
 
 | Target | Measured as | Faces | Hit rate |
 |---|---|---|---|
-| Most basic cards cost 1 Stamina | rank 0, physical, not smash or sweep: 1 SP / 0 MP | 113 | 90.3% |
-| Most cantrips cost 1 Stamina | rank 0, magical: 1 SP, at most 1 MP | 134 | 78.4% |
-| (the same, Stamina only) | rank 0, magical: 1 SP / 0 MP | 134 | 0% |
-| Smashes and sweeps cost 2 | rank 0, smash or sweep: 2 SP | 19 | 73.7% |
-| Rank 1–2 cost 1 SP + 1 MP, or 2 SP, some only one | rank 1–2: 1/1, 2/0, 1/0 or 0/1 | 532 | 83.3% |
-| (of those, a total of 2) | rank 1–2: SP + MP = 2 | 532 | 49.8% |
-| Most rank 1–3 spells cost 1–2 Mana | rank 1–3, magical: 1–2 MP | 310 | 100% |
-| Many magic cards cost at least 1 SP; 0-SP magic still possible | magical: SP ≥ 1 | 444 | 96.6% |
+| Most basic cards cost 1 Stamina | rank 0, physical, not smash or sweep: 1 SP / 0 MP | 113 | 79.6% |
+| Most cantrips cost 1 Stamina | rank 0, magical: 1 SP / 0 MP | 134 | 77.6% |
+| (the same, allowing 1 MP) | rank 0, magical: 1 SP, at most 1 MP | 134 | 94.0% |
+| Smashes and sweeps cost 2 | rank 0, smash or sweep: 2 SP | 19 | 68.4% |
+| Rank 1–2 cost 1 SP + 1 MP, or 2 SP, some only one | rank 1–2: 1/1, 2/0, 1/0 or 0/1 | 532 | 81.6% |
+| (of those, a total of 2) | rank 1–2: SP + MP = 2 | 532 | 41.7% |
+| Most rank 1–3 spells cost 1–2 Mana | rank 1–3, magical: 1–2 MP | 310 | 82.3% |
+| Many magic cards cost at least 1 SP; 0-SP magic still possible | magical: SP ≥ 1 | 444 | 95.0% |
 | Higher SP usually means lower MP | not both SP ≥ 2 and MP ≥ 2 | 880 | 98.9% |
 
-Smashes and cantrips miss 80%. Five of the 19 rank-0 smashes and sweeps fall
-outside 2 SP whatever the weights: a light smash (Shield Bash, Bashing Blow)
-sums 10, short of 12, a heavy one (Ruinous Blow) passes 18, and Kick Off
-(Exhaust) and Shield Crash (formula damage) sum 6. A tag weight cannot pass 3,
-so the smash tag cannot close the gap alone.
-
-**The cantrip conflict.** Within the owner's shape the rank counts on the SP
-side only, so a spell's MP barely moves with rank: a legacy spell's S_mp is the
-same at every rank, and a grade's grows only with its effects. A cantrip at
-1 SP / 0 MP and the same spell at 1–2 MP from rank 1 cannot both hold. The
-shipped tunables choose the Mana side: every spell pays Mana, and a cantrip
-costs 1 SP + 1 MP (23 of them 2 MP). Counting the rank on the Mana side of a
-magical card reached 82% strict cantrips and 87% rank 1–3 spells in an earlier
-search (at D 4); that is a change to the shape, left to the owner.
+With the rank on the Mana side the cantrip conflict is gone: cantrips cost 1 SP
+/ 0 MP and their rank 1–3 faces pay Mana. Counting every status stack pushes
+the heaviest cards up: four smashes that apply a status or hit for 16 or more
+now reach 3 SP, and Kick Off (Exhaust) and Shield Crash (formula damage) stay
+at 1, so smashes miss 80%. Basics miss narrowly (79.6%): ranged attacks and
+Rogue cards that stack a status reach 2 SP.
 
 Distribution (SP/MP: faces):
 
 | Rank | Physical | Magical |
 |---|---|---|
-| 0 | 1/0: 106, 2/0: 24, 3/0: 2 | 1/1: 105, 1/2: 19, 0/1: 6, 0/2: 4 |
-| 1 | 1/0: 99, 2/0: 28, 3/0: 5 | 1/1: 102, 1/2: 28, 0/1: 2, 0/2: 2 |
-| 2 | 1/0: 78, 2/0: 44, 3/0: 10 | 1/1: 89, 1/2: 41, 2/2: 3, 0/1: 1 |
-| 3 | 2/0: 17, 1/0: 17, 3/0: 6 | 1/1: 20, 1/2: 15, 2/2: 7 |
+| 0 | 1/0: 92, 2/0: 31, 3/0: 8, 4/0: 1 | 1/0: 104, 1/1: 22, 0/1: 7, 1/2: 1 |
+| 1 | 1/0: 86, 2/0: 33, 3/0: 12, 4/0: 1 | 1/1: 79, 1/0: 41, 0/1: 7, 1/2: 5, 0/2: 1, 2/0: 1 |
+| 2 | 1/0: 70, 2/0: 42, 3/0: 17, 4/0: 3 | 1/1: 66, 1/2: 47, 2/1: 7, 0/1: 6, 2/2: 3, 1/0: 3, 1/3: 2 |
+| 3 | 1/0: 17, 2/0: 14, 3/0: 8, 4/0: 1 | 1/2: 18, 1/1: 11, 2/2: 4, 2/3: 3, 1/3: 3, 1/4: 1, 1/0: 1, 0/1: 1 |
 
 ## Tag weights
 
@@ -107,9 +105,9 @@ player's piles).
 
 | Tag | Weight | Side | Reason |
 |---|---|---|---|
-| `damage:slashing` | 0 | SP | A physical damage type; the damage steps price the hit, so 0. |
-| `damage:piercing` | 0 | SP | As slashing. |
-| `damage:blunt` | 0 | SP | As slashing. |
+| `damage:slashing` | 2 | SP | A physical damage type: 2, which lifts a light smash (Shield Bash, Bashing Blow) toward 2 SP. |
+| `damage:piercing` | 2 | SP | As slashing. |
+| `damage:blunt` | 2 | SP | As slashing. |
 | `damage:fire` | 0 | MP | Magical damage marks the card magical (its damage and statuses go to MP); the school already prices the element, so 0. |
 | `damage:frost` | 0 | MP | As fire. |
 | `damage:lightning` | 0 | MP | As fire. |
@@ -122,7 +120,7 @@ player's piles).
 | Tag | Weight | Side | Reason |
 |---|---|---|---|
 | `camp:physical` | 2 | SP | A physical action costs effort: 2 lifts a plain strike or guard to the edge of 1 SP. |
-| `camp:spell` | 3 | MP | A spell carries a Mana price of its own: 3, so with its school (3) every spell reaches 1 MP. |
+| `camp:spell` | 1 | MP | A spell carries a Mana price of its own: 1. With the school, magic damage steps and rank it reaches 1 MP at rank 1. |
 | `source:weapon` | 0 | SP | Where the action comes from, not how strong it is. |
 | `source:spell` | 0 | MP | Marks the card magical; no weight of its own. |
 | `source:unarmed` | 0 | SP | As source:weapon. |
@@ -133,7 +131,7 @@ player's piles).
 |---|---|---|---|
 | `maneuver:attack` | 0 | SP | The plain action: the base price, nothing on top. |
 | `maneuver:defend` | 0 | SP | The plain guard: the base price, nothing on top. |
-| `maneuver:ranged` | 1 | SP | A ranged shot: the range weight prices the reach; 1 for the aimed shot itself. |
+| `maneuver:ranged` | 0 | SP | A ranged shot: the range weight (3) already prices the reach, so 0. |
 | `maneuver:counter` | 0 | SP | A counter is priced by its reply damage and its technique; at 0 the elemental counters stay at 1 SP. |
 | `maneuver:smash` | 3 | SP | The owner wants smashes at 2 SP: the largest tag weight, 3. |
 | `maneuver:sweep` | 3 | SP | The owner wants sweeps at 2 SP: as smash, 3. |
@@ -158,14 +156,14 @@ player's piles).
 
 | Tag | Weight | Side | Reason |
 |---|---|---|---|
-| `school:fire` | 3 | MP | A school is the magic itself: 3, half the Mana price of a spell. |
-| `school:frost` | 3 | MP | As fire. |
-| `school:lightning` | 3 | MP | As fire. |
-| `school:force` | 3 | MP | As fire. |
-| `school:alteration` | 3 | MP | As fire. |
-| `school:illusion` | 3 | MP | As fire. |
-| `school:divine` | 3 | MP | As fire. |
-| `school:decay` | 3 | MP | As fire. |
+| `school:fire` | 1 | MP | A school is the magic itself: 1. Rank carries most of a spell's Mana now, so a cantrip stays at 0 MP. |
+| `school:frost` | 1 | MP | As fire. |
+| `school:lightning` | 1 | MP | As fire. |
+| `school:force` | 1 | MP | As fire. |
+| `school:alteration` | 1 | MP | As fire. |
+| `school:illusion` | 1 | MP | As fire. |
+| `school:divine` | 1 | MP | As fire. |
+| `school:decay` | 1 | MP | As fire. |
 
 ### Weapon and archetype chips
 
@@ -223,7 +221,6 @@ player's piles).
 |---|---|---|---|
 | `lifecycle.retain` | 1 | SP | Kept between turns: 1. |
 | `lifecycle.innate` | 1 | SP | Always in the opening hand: 1. |
-| `lifecycle.ethereal` | 0 | SP | Not in the owner's drawback list; left at 0 (open question). |
 | `lifecycle.recall` | 1 | SP | Returns to hand: 1. |
 | `lifecycle.recall.afterUse` | 1 | SP | As recall. |
 | `lifecycle.recall.afterTurnDraw` | 1 | SP | As recall. |
@@ -234,6 +231,7 @@ player's piles).
 
 | Tag | Weight | Side | Reason |
 |---|---|---|---|
+| `lifecycle.ethereal` | -1 | SP | Drawback (owner, 2026-10-12): an Ethereal card is lost if it is not played this turn. Proposed -1, as Exhaust. |
 | `lifecycle.exhaust` | -1 | SP | Drawback (owner): played once per fight. -1. |
 | `drawback:selfDeck` | -2 | SP | Drawback (owner): adds a curse or status to your own piles. -2. |
 | `drawback:hpCost` | -2 | SP | Drawback (owner): costs HP or another resource. -2. |
@@ -256,7 +254,7 @@ A card takes the largest range among its tags (owner: melee 1, reach 2, ranged 3
 
 ### Statuses
 
-Every status a card applies (applyStatus, or buildup as one stack) weighs 2 (owner: statuses weigh 2 or more), times its stacks up to the stack cap. It counts on the card's side: MP on a magical card, else SP.
+Every status a card applies (applyStatus, or buildup as one stack) weighs 2 (owner: statuses weigh 2 or more), times its stacks (owner, 2026-10-12: stacks count; there is no cap). It counts on the card's side: MP on a magical card, else SP.
 
 | Status | Weight | Side | Reason |
 |---|---|---|---|
@@ -325,190 +323,246 @@ Every status a card applies (applyStatus, or buildup as one stack) weighs 2 (own
 
 ## Outliers
 
-Every face that misses its target at the shipped tunables, with its sums. The
-rank is the owner rank (0 = base).
+Every face that misses its target at the shipped tunables, with its sums (S before the restore
+offsets). The rank is the owner rank (0 = base). The cantrip table lists rank-0 magic faces that are not
+1 SP with at most 1 MP; the strict 1 SP / 0 MP rate is in the calibration table.
 
 Why the main groups miss:
 
-- **Basics at 2 SP**: ranged attacks (range 3) and Rogue finishers whose damage
-  and status reach 12. Both are priced up by weights the owner set.
-- **Cantrips**: big rank-0 spells at 1/2 (Meteorite, Starfall Beam, the fire
-  rites), and blood spells whose HP cost leaves 0 SP (the owner's "0 SP magic
-  cards still possible").
+- **Basics at 2 SP or more**: ranged attacks (range 3) and Rogue cards that stack a status, priced up by
+  weights the owner set.
 - **Smashes**: see the calibration note above.
-- **Rank 1–2**: spells at 1 SP + 2 MP, and smashes, sweeps and long-range shots
-  climbing to 3 SP.
+- **Rank 1–2**: smashes, sweeps and long-range shots climbing to 3 SP, and big spells at 1 SP + 2 MP.
+- **Spells**: rank-1 spells whose Mana side is still under 8 (0 MP), and rank-3 fire and astral spells at
+  3–4 MP.
 - **Both sides 2 or more**: a few rank 2–3 fire and astral spells.
 
-### Basic cards at rank 0 that are not 1 SP / 0 MP (11)
+### Basic cards at rank 0 that are not 1 SP / 0 MP (23)
 
 | Card | Rank | SP/MP | S_sp | S_mp |
 |---|---|---|---|---|
-| impale | 0 | 2/0 | 12 | 0 |
+| gorefireSlash | 0 | 2/0 | 14.5 | 0 |
+| serratedBlade | 0 | 2/0 | 14.5 | 0 |
+| impale | 0 | 4/0 | 24 | 0 |
 | executioner | 0 | 2/0 | 13.5 | 0 |
+| goreslash | 0 | 2/0 | 12.5 | 0 |
 | ambush | 0 | 2/0 | 13.5 | 0 |
-| serratedShiv | 0 | 2/0 | 12.5 | 0 |
+| twinPrick | 0 | 2/0 | 12 | 0 |
+| serratedShiv | 0 | 3/0 | 22.5 | 0 |
+| garrote | 0 | 3/0 | 19 | 0 |
+| fanOfKnives | 0 | 2/0 | 12.5 | 0 |
 | coupDeGrace | 0 | 2/0 | 13.5 | 0 |
+| venomcoat | 0 | 2/0 | 12 | 0 |
 | assassinate | 0 | 2/0 | 12.5 | 0 |
+| toxicVolley | 0 | 2/0 | 17 | 0 |
+| executionWindow | 0 | 2/0 | 12 | 0 |
 | deathblow | 0 | 2/0 | 13.5 | 0 |
-| pinningShot | 0 | 2/0 | 13.5 | 0 |
-| aimedShot | 0 | 3/0 | 18.5 | 0 |
-| barbedArrow | 0 | 2/0 | 13.5 | 0 |
-| katanaDrawCut | 0 | 2/0 | 12 | 0 |
+| pinningShot | 0 | 2/0 | 14.5 | 0 |
+| arrowVolley | 0 | 2/0 | 12.5 | 0 |
+| aimedShot | 0 | 3/0 | 21.5 | 0 |
+| barbedArrow | 0 | 3/0 | 20.5 | 0 |
+| katanaDrawCut | 0 | 2/0 | 16 | 0 |
+| spikedReprisal | 0 | 2/0 | 12 | 0 |
+| rimeThrust | 0 | 2/0 | 16.5 | 0 |
 
-### Cantrips (rank-0 magic) that are not 1 SP with at most 1 MP (29)
+### Cantrips (rank-0 magic) that are not 1 SP with at most 1 MP (8)
 
 | Card | Rank | SP/MP | S_sp | S_mp |
 |---|---|---|---|---|
-| starstonePebble | 0 | 1/2 | 9 | 14 |
-| starSlicer | 0 | 1/2 | 7 | 15.5 |
-| starlance | 0 | 1/2 | 9 | 15.5 |
-| moonrendCut | 0 | 1/2 | 7 | 14 |
-| meteorite | 0 | 1/2 | 10 | 15.5 |
-| meteorSwarm | 0 | 1/2 | 10 | 14 |
-| astralCleave | 0 | 1/2 | 7 | 15.5 |
-| starstoneKris | 0 | 1/2 | 7 | 14 |
-| starfallBeam | 0 | 1/2 | 10 | 15.5 |
-| celestialLance | 0 | 1/2 | 9 | 15.5 |
-| starSpark | 0 | 1/2 | 9 | 14.5 |
-| pyreOfCharts | 0 | 1/2 | 9 | 14.5 |
-| kindledOmen | 0 | 1/2 | 7 | 12 |
-| cinderLance | 0 | 1/2 | 9 | 17.5 |
 | ashfallRite | 0 | 1/2 | 8 | 16 |
-| pyreLight | 0 | 1/2 | 8 | 15.5 |
-| flagellation | 0 | 0/2 | 5 | 12 |
-| cullTheWeak | 0 | 1/2 | 6 | 12 |
-| martyrBlood | 0 | 0/1 | 3 | 8 |
-| plagueBearer | 0 | 1/2 | 6 | 12.5 |
-| exsanguinate | 0 | 0/2 | 4 | 13.5 |
-| butterflyPlague | 0 | 0/1 | 4 | 8 |
-| bloodOfferingRite | 0 | 0/2 | 4 | 13.5 |
-| blightwardLash | 0 | 0/2 | 5 | 12.5 |
-| transmute | 0 | 0/1 | 5 | 8 |
-| sharedFlame | 0 | 0/1 | 5 | 6 |
-| ashOath | 0 | 0/1 | 5 | 10 |
-| vesperWard | 0 | 0/1 | 5 | 8 |
-| emberDart | 0 | 1/2 | 8 | 12.5 |
+| flagellation | 0 | 0/1 | 5 | 8 |
+| martyrBlood | 0 | 0/1 | 3 | 4 |
+| exsanguinate | 0 | 0/1 | 4 | 9.5 |
+| butterflyPlague | 0 | 0/1 | 4 | 14 |
+| bloodOfferingRite | 0 | 0/1 | 4 | 9.5 |
+| blightwardLash | 0 | 0/1 | 5 | 10.5 |
+| ashOath | 0 | 0/1 | 5 | 8 |
 
-### Smashes and sweeps at rank 0 that are not 2 SP (5)
+### Smashes and sweeps at rank 0 that are not 2 SP (6)
 
 | Card | Rank | SP/MP | S_sp | S_mp |
 |---|---|---|---|---|
-| shieldBash | 0 | 1/0 | 10 | 0 |
-| kickOff | 0 | 1/0 | 6.5 | 0 |
+| kickOff | 0 | 1/0 | 8.5 | 0 |
 | ruinousBlow | 0 | 3/0 | 18.5 | 0 |
-| shieldCrash | 0 | 1/0 | 6 | 0 |
-| bashingBlow | 0 | 1/0 | 10.5 | 0 |
+| shieldCrash | 0 | 1/0 | 8 | 0 |
+| greatswordSunderingHew | 0 | 3/0 | 18.5 | 0 |
+| colossusSmash | 0 | 3/0 | 21.5 | 0 |
+| kilnCleave | 0 | 3/0 | 22 | 0 |
 
-### Rank 1-2 cards outside 1/1, 2/0, 1/0 or 0/1 (89)
+### Rank 1-2 cards outside 1/1, 2/0, 1/0 or 0/1 (98)
 
 | Card | Rank | SP/MP | S_sp | S_mp |
 |---|---|---|---|---|
-| crimsonCleave | 2 | 3/0 | 19 | 0 |
+| crimsonCleave | 2 | 3/0 | 21 | 0 |
+| rend | 2 | 3/0 | 18.5 | 0 |
+| stomp | 2 | 3/0 | 19.5 | 0 |
+| impale | 1 | 4/0 | 25 | 0 |
+| impale | 2 | 4/0 | 26 | 0 |
 | ruinousBlow | 1 | 3/0 | 19.5 | 0 |
 | ruinousBlow | 2 | 3/0 | 20.5 | 0 |
 | poiseBreaker | 1 | 3/0 | 18 | 0 |
 | poiseBreaker | 2 | 3/0 | 19 | 0 |
-| sunderplate | 2 | 3/0 | 18 | 0 |
+| sunderplate | 2 | 3/0 | 22 | 0 |
+| hewingArc | 1 | 3/0 | 18.5 | 0 |
+| hewingArc | 2 | 3/0 | 19.5 | 0 |
 | sunderingChop | 1 | 3/0 | 18 | 0 |
 | sunderingChop | 2 | 3/0 | 19 | 0 |
-| starstonePebble | 1 | 1/2 | 10 | 14 |
-| starstonePebble | 2 | 1/2 | 11 | 14 |
-| starbladePhalanx | 2 | 1/2 | 11 | 14 |
-| starShower | 1 | 1/2 | 10 | 12 |
-| starShower | 2 | 1/2 | 11 | 15.5 |
-| starSlicer | 1 | 1/2 | 8 | 15.5 |
-| starSlicer | 2 | 1/2 | 9 | 15.5 |
-| starlance | 1 | 1/2 | 10 | 15.5 |
-| starlance | 2 | 1/2 | 11 | 15.5 |
-| frostNova | 2 | 1/2 | 8 | 15 |
-| starstoneArc | 2 | 1/2 | 11 | 14.5 |
-| moonrendCut | 1 | 1/2 | 8 | 14 |
-| moonrendCut | 2 | 1/2 | 9 | 14 |
-| meteorite | 1 | 1/2 | 11 | 15.5 |
-| meteorite | 2 | 2/2 | 12 | 15.5 |
-| meteorSwarm | 1 | 1/2 | 11 | 14 |
-| meteorSwarm | 2 | 2/2 | 12 | 14 |
-| gravityWell | 2 | 1/2 | 9 | 12 |
-| astralCleave | 1 | 1/2 | 8 | 15.5 |
-| astralCleave | 2 | 1/2 | 9 | 15.5 |
-| radiantSpray | 2 | 1/2 | 11 | 16 |
-| starstoneKris | 1 | 1/2 | 8 | 14 |
-| starstoneKris | 2 | 1/2 | 9 | 14 |
-| starfallBeam | 1 | 1/2 | 11 | 15.5 |
-| starfallBeam | 2 | 2/2 | 12 | 15.5 |
-| celestialLance | 1 | 1/2 | 10 | 15.5 |
-| celestialLance | 2 | 1/2 | 11 | 15.5 |
-| starSpark | 1 | 1/2 | 10 | 14.5 |
-| starSpark | 2 | 1/2 | 11 | 14.5 |
-| cinderSigil | 2 | 1/2 | 11 | 14.5 |
-| ashenMote | 2 | 1/2 | 11 | 14 |
-| pyreOfCharts | 1 | 1/2 | 10 | 14.5 |
-| pyreOfCharts | 2 | 1/2 | 11 | 14.5 |
-| kindledOmen | 1 | 1/2 | 8 | 12 |
-| kindledOmen | 2 | 1/2 | 9 | 12 |
-| cinderLance | 1 | 1/2 | 10 | 17.5 |
-| cinderLance | 2 | 1/2 | 11 | 17.5 |
-| ashfallRite | 1 | 1/2 | 9 | 16 |
-| ashfallRite | 2 | 1/2 | 10 | 16 |
-| pyreLight | 1 | 1/2 | 9 | 15.5 |
-| pyreLight | 2 | 1/2 | 10 | 15.5 |
-| blightTouch | 2 | 1/2 | 9 | 12.5 |
-| flagellation | 1 | 1/2 | 6 | 12 |
-| flagellation | 2 | 1/2 | 7 | 12 |
-| cullTheWeak | 1 | 1/2 | 7 | 12 |
-| cullTheWeak | 2 | 1/2 | 8 | 12 |
-| plagueBearer | 1 | 1/2 | 7 | 12.5 |
-| plagueBearer | 2 | 1/2 | 8 | 12.5 |
-| exsanguinate | 1 | 0/2 | 5 | 13.5 |
-| exsanguinate | 2 | 1/2 | 6 | 13.5 |
-| scourge | 2 | 1/2 | 10 | 12.5 |
-| desperateRite | 2 | 1/2 | 8 | 13.5 |
-| bloodOfferingRite | 1 | 0/2 | 5 | 13.5 |
-| bloodOfferingRite | 2 | 1/2 | 6 | 13.5 |
-| blightwardLash | 1 | 1/2 | 6 | 12.5 |
-| blightwardLash | 2 | 1/2 | 7 | 12.5 |
-| aimedShot | 1 | 3/0 | 19.5 | 0 |
-| aimedShot | 2 | 3/0 | 20.5 | 0 |
-| greatswordSunderingHew | 2 | 3/0 | 18.5 | 0 |
-| colossusSmash | 1 | 3/0 | 18.5 | 0 |
-| colossusSmash | 2 | 3/0 | 19.5 | 0 |
-| kilnCleave | 2 | 3/0 | 18 | 0 |
-| emberDart | 1 | 1/2 | 9 | 12.5 |
-| emberDart | 2 | 1/2 | 10 | 12.5 |
+| starstonePebble | 2 | 1/2 | 11 | 18 |
+| starbladePhalanx | 2 | 1/2 | 11 | 18 |
+| starShower | 2 | 1/2 | 11 | 19.5 |
+| frostVeil | 2 | 1/2 | 9 | 18 |
+| starSlicer | 2 | 1/2 | 9 | 19.5 |
+| starlance | 2 | 1/2 | 11 | 19.5 |
+| frostNova | 2 | 1/3 | 8 | 29 |
+| starstoneArc | 2 | 1/2 | 11 | 18.5 |
+| moonrendCut | 2 | 1/2 | 9 | 18 |
+| meteorite | 2 | 2/2 | 12 | 19.5 |
+| meteorSwarm | 2 | 2/2 | 12 | 18 |
+| gravityWell | 2 | 1/2 | 9 | 18 |
+| astralCleave | 2 | 1/2 | 9 | 19.5 |
+| radiantSpray | 2 | 1/2 | 11 | 20 |
+| starstoneKris | 2 | 1/2 | 9 | 18 |
+| starfallBeam | 2 | 2/2 | 12 | 19.5 |
+| celestialLance | 2 | 1/2 | 11 | 19.5 |
+| starSpark | 2 | 1/2 | 11 | 18.5 |
+| cinderSigil | 2 | 1/2 | 11 | 20.5 |
+| ashenMote | 2 | 1/2 | 11 | 18 |
+| pyreOfCharts | 1 | 1/2 | 10 | 16.5 |
+| pyreOfCharts | 2 | 1/2 | 11 | 20.5 |
+| ashCircle | 2 | 1/2 | 9 | 16 |
+| kindledOmen | 1 | 1/2 | 8 | 18 |
+| kindledOmen | 2 | 1/2 | 9 | 22 |
+| cinderLance | 1 | 1/2 | 10 | 19.5 |
+| cinderLance | 2 | 1/2 | 11 | 23.5 |
+| ashfallRite | 1 | 1/2 | 9 | 20 |
+| ashfallRite | 2 | 1/3 | 10 | 24 |
+| pyreLight | 2 | 1/2 | 10 | 19.5 |
+| blightTouch | 2 | 1/2 | 9 | 18.5 |
+| flagellation | 2 | 1/2 | 7 | 16 |
+| litany | 1 | 1/2 | 7 | 16 |
+| litany | 2 | 1/2 | 8 | 20 |
+| cullTheWeak | 2 | 1/2 | 8 | 16 |
+| gildedOath | 2 | 1/2 | 9 | 18 |
+| plagueBearer | 2 | 1/2 | 8 | 18.5 |
+| exsanguinate | 2 | 1/2 | 6 | 17.5 |
+| scourge | 2 | 1/2 | 10 | 18.5 |
+| butterflyPlague | 1 | 0/2 | 5 | 18 |
+| butterflyPlague | 2 | 1/2 | 6 | 22 |
+| witheringTouch | 2 | 1/2 | 9 | 19 |
+| desperateRite | 2 | 1/2 | 8 | 17.5 |
+| bloodOfferingRite | 2 | 1/2 | 6 | 17.5 |
+| blightwardLash | 2 | 1/2 | 7 | 18.5 |
+| serratedShiv | 1 | 3/0 | 23.5 | 0 |
+| serratedShiv | 2 | 4/0 | 24.5 | 0 |
+| garrote | 1 | 3/0 | 20 | 0 |
+| garrote | 2 | 3/0 | 21 | 0 |
+| toxicVolley | 1 | 3/0 | 18 | 0 |
+| toxicVolley | 2 | 3/0 | 19 | 0 |
+| aimedShot | 1 | 3/0 | 22.5 | 0 |
+| aimedShot | 2 | 3/0 | 23.5 | 0 |
+| barbedArrow | 1 | 3/0 | 21.5 | 0 |
+| barbedArrow | 2 | 3/0 | 22.5 | 0 |
+| katanaDrawCut | 2 | 3/0 | 18 | 0 |
+| greatswordSunderingHew | 1 | 3/0 | 19.5 | 0 |
+| greatswordSunderingHew | 2 | 3/0 | 20.5 | 0 |
+| colossusSmash | 1 | 3/0 | 22.5 | 0 |
+| colossusSmash | 2 | 3/0 | 23.5 | 0 |
+| ashOath | 2 | 1/2 | 7 | 16 |
+| rimeThrust | 2 | 3/0 | 18.5 | 0 |
+| kilnCleave | 1 | 3/0 | 23 | 0 |
+| kilnCleave | 2 | 4/0 | 24 | 0 |
+| lightningCounter | 2 | 2/1 | 12 | 11 |
+| forceCounter | 2 | 2/1 | 12 | 11 |
+| alterationCounter | 2 | 2/1 | 12 | 11 |
+| barrageCounter | 2 | 2/1 | 13 | 10 |
+| emberDart | 2 | 1/2 | 10 | 16.5 |
+| staticNeedle | 2 | 2/1 | 12 | 15 |
+| forceNudge | 2 | 2/1 | 12 | 13 |
+| earthGrounding | 2 | 2/1 | 12 | 12 |
 | progression-ashen-cleaver | 2 | 3/0 | 18 | 0 |
-| progression-cinder-orbit | 2 | 1/2 | 8 | 12 |
-| progression-comet-needle | 1 | 1/2 | 8 | 12 |
-| progression-comet-needle | 2 | 1/2 | 9 | 14 |
-| progression-falling-constellation | 2 | 1/2 | 8 | 12 |
-| progression-gravitic-knot | 1 | 1/2 | 7 | 12 |
-| progression-gravitic-knot | 2 | 1/2 | 8 | 14 |
-| progression-eclipse-lance | 1 | 1/2 | 8 | 12 |
-| progression-eclipse-lance | 2 | 1/2 | 9 | 13.5 |
-| progression-blood-censer | 2 | 1/2 | 6 | 12 |
-| progression-blight-litany | 2 | 1/2 | 8 | 12.5 |
-| progression-ember-tithe | 1 | 1/2 | 7 | 12 |
-| progression-ember-tithe | 2 | 1/2 | 6 | 14 |
-| progression-requiem-brand | 1 | 1/2 | 7 | 12 |
-| progression-requiem-brand | 2 | 1/2 | 8 | 15.5 |
-| progression-crown-of-scars | 1 | 1/2 | 7 | 12 |
-| progression-crown-of-scars | 2 | 1/2 | 6 | 13.5 |
+| progression-cinder-orbit | 2 | 1/2 | 8 | 16 |
+| progression-comet-needle | 2 | 1/2 | 9 | 18 |
+| progression-rime-mirror | 2 | 1/2 | 8 | 17 |
+| progression-falling-constellation | 2 | 1/2 | 8 | 16 |
+| progression-gravitic-knot | 2 | 1/2 | 8 | 18 |
+| progression-eclipse-lance | 2 | 1/2 | 9 | 17.5 |
+| progression-blood-censer | 2 | 1/2 | 6 | 16 |
+| progression-blight-litany | 2 | 1/2 | 8 | 20.5 |
+| progression-ember-tithe | 2 | 1/2 | 6 | 18 |
+| progression-requiem-brand | 2 | 1/2 | 8 | 19.5 |
+| progression-crown-of-scars | 2 | 1/2 | 6 | 17.5 |
 
-### Rank 1-3 spells outside 1-2 MP (0)
+### Rank 1-3 spells outside 1-2 MP (55)
 
-None.
+| Card | Rank | SP/MP | S_sp | S_mp |
+|---|---|---|---|---|
+| crystalBarrier | 1 | 1/0 | 8 | 6 |
+| scholarsInsight | 1 | 1/0 | 7 | 6 |
+| frostNova | 2 | 1/3 | 8 | 29 |
+| frostNova | 3 | 1/4 | 9 | 34.5 |
+| starstoneArc | 3 | 2/3 | 12 | 24 |
+| radiantSpray | 3 | 2/3 | 12 | 24 |
+| starPath | 1 | 1/0 | 7 | 6 |
+| attune | 1 | 1/0 | 8 | 6 |
+| attune | 2 | 1/0 | 9 | 10 |
+| cinderSigil | 3 | 2/3 | 12 | 26 |
+| emberVigil | 1 | 1/0 | 7 | 6 |
+| readTheAsh | 1 | 1/0 | 7 | 6 |
+| ashfallRite | 2 | 1/3 | 10 | 24 |
+| urgentHeal | 1 | 1/0 | 8 | 6 |
+| emberCommunion | 1 | 1/0 | 7 | 6 |
+| emberCommunion | 2 | 1/0 | 8 | 10 |
+| blightTouch | 3 | 1/3 | 10 | 24 |
+| penance | 1 | 1/0 | 8 | 6 |
+| transfusion | 1 | 1/0 | 8 | 6 |
+| blightward | 1 | 1/0 | 8 | 6 |
+| scourge | 3 | 1/3 | 11 | 24 |
+| reclamation | 1 | 1/0 | 7 | 6 |
+| secondBloom | 1 | 1/0 | 7 | 6 |
+| blightNova | 1 | 1/0 | 8 | 6 |
+| lastRites | 1 | 1/0 | 7 | 6 |
+| lastMercy | 1 | 1/0 | 8 | 6 |
+| warmLitany | 1 | 1/0 | 8 | 6 |
+| sharedFlame | 1 | 1/0 | 6 | 6 |
+| frostCounter | 1 | 1/0 | 9 | 7 |
+| fireCounter | 1 | 1/0 | 9 | 7 |
+| lightningCounter | 1 | 1/0 | 11 | 7 |
+| forceCounter | 1 | 1/0 | 11 | 7 |
+| alterationCounter | 1 | 1/0 | 11 | 7 |
+| illusionCounter | 1 | 1/0 | 9 | 7 |
+| divineCounter | 1 | 1/0 | 9 | 7 |
+| decayCounter | 1 | 1/0 | 9 | 7 |
+| barrageCounter | 1 | 2/0 | 12 | 6 |
+| sanctuaryCleanse | 1 | 1/0 | 8 | 6 |
+| dreamHarvest | 1 | 1/0 | 8 | 6 |
+| lucidRecovery | 1 | 1/0 | 8 | 6 |
+| emberCovenant | 1 | 1/0 | 7 | 6 |
+| shatterOpportunity | 1 | 1/0 | 7 | 6 |
+| progression-lunar-aegis | 1 | 1/0 | 7 | 6 |
+| progression-rime-mirror | 1 | 1/0 | 7 | 7 |
+| progression-wellspring-sigil | 1 | 1/0 | 7 | 6 |
+| progression-wellspring-sigil | 2 | 1/0 | 9 | 10 |
+| progression-wellspring-sigil | 3 | 1/0 | 10 | 14 |
+| progression-nightglass-reading | 1 | 1/0 | 7 | 6 |
+| progression-firmament-ward | 1 | 1/0 | 7 | 6 |
+| progression-ash-benediction | 1 | 1/0 | 7 | 6 |
+| progression-blight-litany | 3 | 1/3 | 9 | 26 |
+| progression-pallbearer-s-ward | 1 | 1/0 | 7 | 6 |
+| progression-ossuary-cant | 1 | 1/0 | 7 | 6 |
+| progression-pilgrim-s-shelter | 1 | 1/0 | 7 | 6 |
+| progression-dawn-after-ash | 1 | 1/0 | 7 | 6 |
 
 ### Cards at 2 SP or more and 2 MP or more (10)
 
 | Card | Rank | SP/MP | S_sp | S_mp |
 |---|---|---|---|---|
-| cometFragment | 3 | 2/2 | 12 | 12.5 |
-| starbladePhalanx | 3 | 2/2 | 12 | 14 |
-| starShower | 3 | 2/2 | 12 | 15.5 |
-| starstoneArc | 3 | 2/2 | 12 | 16 |
-| meteorite | 2 | 2/2 | 12 | 15.5 |
-| meteorSwarm | 2 | 2/2 | 12 | 14 |
-| radiantSpray | 3 | 2/2 | 12 | 16 |
-| starfallBeam | 2 | 2/2 | 12 | 15.5 |
-| cinderSigil | 3 | 2/2 | 12 | 16 |
-| ashenMote | 3 | 2/2 | 12 | 14 |
+| cometFragment | 3 | 2/2 | 12 | 20.5 |
+| starbladePhalanx | 3 | 2/2 | 12 | 22 |
+| starShower | 3 | 2/2 | 12 | 23.5 |
+| starstoneArc | 3 | 2/3 | 12 | 24 |
+| meteorite | 2 | 2/2 | 12 | 19.5 |
+| meteorSwarm | 2 | 2/2 | 12 | 18 |
+| radiantSpray | 3 | 2/3 | 12 | 24 |
+| starfallBeam | 2 | 2/2 | 12 | 19.5 |
+| cinderSigil | 3 | 2/3 | 12 | 26 |
+| ashenMote | 3 | 2/2 | 12 | 22 |

@@ -8,9 +8,10 @@
 // PLAYER CARDS (owner, 2026-10-12, SPEC §4.3a). Each resource is priced on its own side:
 //   S_sp = damageWeight × physical damage + rankWeight × rank + Σ SP-side tag weights × stacks + range weight
 //          + castingEffort (cast cards) + restoreWeight × Mana restored + drawback weights (negative)
-//   S_mp = damageWeight × magical damage + Σ MP-side tag weights × stacks + restoreWeight × Stamina restored
-//   SP = floor(S_sp / spDivisor), MP = floor(S_mp / mpDivisor); each side is floored at 0 before dividing.
-//   If both are 0, the larger side pays 1 (SP on a tie).
+//   S_mp = damageWeight × magical damage + rankWeightMp × rank (magical cards) + Σ MP-side tag weights × stacks
+//          + restoreWeight × Stamina restored
+//   SP = floor(S_sp / spDivisor) − Stamina restored, MP = floor(S_mp / mpDivisor) − Mana restored, each at least 0.
+//   If both are 0, the larger side pays 1 (SP on a tie); a Mana-restoring card pays SP.
 // Opt-outs keep the authored cost and numbers: costRule 'fixed', curses and statuses (by type), and X costs.
 //
 // ENEMIES (owner, 2026-10-12, SPEC §4.6a). An enemy's SP pool is its stats: the stamina row of content/derivedStats.js
@@ -20,10 +21,11 @@
 // ---- Player cards: the budget tunables -------------------------------------------------------------------------
 export const COST_BUDGET = Object.freeze({
   spDivisor: 6,           // D: S_sp points per Stamina (the owner's ruling, 2026-10-12: "use D as 6")
-  mpDivisor: 6,           // P: S_mp points per Mana (configurable apart from D; equal to it today)
+  mpDivisor: 8,           // P: S_mp points per Mana (raised from 6: at 6, rank 1-3 spells and rank 1-2 cards miss 80%)
   damageWeight: 1.5,      // points per damage step reached (damageSteps); raw damage would swamp the tags
   damageSteps: Object.freeze([1, 3, 5, 8, 12]), // damage thresholds (hits counted); empty = linear damage × damageWeight
   rankWeight: 1,          // points per rank above the base (a base card, rank 0, adds nothing); SP side
+  rankWeightMp: 4,        // points per rank on the MP side of a magical card (owner, 2026-10-12: rank counts on the Mana side too)
   castingEffortWeight: 6, // points on any cast card (camp:spell or maneuver:casting); SP side
   restoreWeight: 1,       // points per Mana restored (SP side) or Stamina restored (MP side)
   twoCostMultiplier: 1.8, // a card whose derived SP is 2 or more multiplies its effect amounts by this
@@ -33,9 +35,9 @@ export const COST_BUDGET = Object.freeze({
 // does not carry, or that this table does not list, adds nothing. Range tags are priced by RANGE_WEIGHTS instead.
 export const COST_TAGS = Object.freeze({
   // Damage types
-  'damage:slashing': { weight: 0, side: 'sp' },
-  'damage:piercing': { weight: 0, side: 'sp' },
-  'damage:blunt': { weight: 0, side: 'sp' },
+  'damage:slashing': { weight: 2, side: 'sp' },
+  'damage:piercing': { weight: 2, side: 'sp' },
+  'damage:blunt': { weight: 2, side: 'sp' },
   'damage:fire': { weight: 0, side: 'mp' },
   'damage:frost': { weight: 0, side: 'mp' },
   'damage:lightning': { weight: 0, side: 'mp' },
@@ -44,14 +46,14 @@ export const COST_TAGS = Object.freeze({
   'damage:decay': { weight: 0, side: 'mp' },
   // Camps and sources
   'camp:physical': { weight: 2, side: 'sp' },
-  'camp:spell': { weight: 3, side: 'mp' },
+  'camp:spell': { weight: 1, side: 'mp' },
   'source:weapon': { weight: 0, side: 'sp' },
   'source:spell': { weight: 0, side: 'mp' },
   'source:unarmed': { weight: 0, side: 'sp' },
   // Maneuvers
   'maneuver:attack': { weight: 0, side: 'sp' },
   'maneuver:defend': { weight: 0, side: 'sp' },
-  'maneuver:ranged': { weight: 1, side: 'sp' },
+  'maneuver:ranged': { weight: 0, side: 'sp' },
   'maneuver:counter': { weight: 0, side: 'sp' },
   'maneuver:smash': { weight: 3, side: 'sp' },
   'maneuver:sweep': { weight: 3, side: 'sp' },
@@ -68,14 +70,14 @@ export const COST_TAGS = Object.freeze({
   'targeting.randomEnemy': { weight: 1, side: 'sp' },
   'targeting.allEnemies': { weight: 2, side: 'sp' },
   // Magic schools
-  'school:fire': { weight: 3, side: 'mp' },
-  'school:frost': { weight: 3, side: 'mp' },
-  'school:lightning': { weight: 3, side: 'mp' },
-  'school:force': { weight: 3, side: 'mp' },
-  'school:alteration': { weight: 3, side: 'mp' },
-  'school:illusion': { weight: 3, side: 'mp' },
-  'school:divine': { weight: 3, side: 'mp' },
-  'school:decay': { weight: 3, side: 'mp' },
+  'school:fire': { weight: 1, side: 'mp' },
+  'school:frost': { weight: 1, side: 'mp' },
+  'school:lightning': { weight: 1, side: 'mp' },
+  'school:force': { weight: 1, side: 'mp' },
+  'school:alteration': { weight: 1, side: 'mp' },
+  'school:illusion': { weight: 1, side: 'mp' },
+  'school:divine': { weight: 1, side: 'mp' },
+  'school:decay': { weight: 1, side: 'mp' },
   // Weapon and theme chips (card domain)
   blade: { weight: 1, side: 'sp' },
   heavy: { weight: 2, side: 'sp' },
@@ -117,7 +119,7 @@ export const COST_TAGS = Object.freeze({
   // Keywords
   'lifecycle.retain': { weight: 1, side: 'sp' },
   'lifecycle.innate': { weight: 1, side: 'sp' },
-  'lifecycle.ethereal': { weight: 0, side: 'sp' },
+  'lifecycle.ethereal': { weight: -1, side: 'sp' },
   'lifecycle.recall': { weight: 1, side: 'sp' },
   'lifecycle.recall.afterUse': { weight: 1, side: 'sp' },
   'lifecycle.recall.afterTurnDraw': { weight: 1, side: 'sp' },
@@ -138,6 +140,8 @@ export const KEYWORD_TAGS = Object.freeze({
   innate: 'lifecycle.innate',
   ethereal: 'lifecycle.ethereal',
 });
+// Keyword tags that are drawbacks (owner, 2026-10-12): they may weigh below 0.
+export const DRAWBACK_KEYWORD_TAGS = Object.freeze(['lifecycle.exhaust', 'lifecycle.ethereal']);
 export const DRAWBACK_OPS = Object.freeze({
   loseHp: 'drawback:hpCost',       // an HP (or other resource) cost
   discard: 'drawback:discard',     // a discard the player pays
@@ -164,8 +168,8 @@ export const CAST_TAGS = Object.freeze(['camp:spell', 'maneuver:casting']);
 // 2 or more (owner). A status counts on the card's side: MP on a card with any MP-side tag, else SP.
 export const STATUS_WEIGHT = 2;
 export const STATUS_WEIGHTS = Object.freeze({});
-// Stacks above this count as this many (a long bleed is priced as a strong one, not a ruinous one).
-export const STATUS_STACK_CAP = 1;
+// Stacks above this count as this many; null counts every stack (owner, 2026-10-12: status stacks count).
+export const STATUS_STACK_CAP = null;
 
 // The effect ops that restore Stamina (priced on the MP side) and Mana (priced on the SP side).
 export const RESTORE_STAMINA_OPS = Object.freeze(['gainEnergy']);

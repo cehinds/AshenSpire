@@ -15,11 +15,10 @@ function fight({ upgraded = false, hp = 60, mana = 0 } = {}) {
 }
 const play = c => dispatch(c, { type: 'playCard', cardInstanceId: 'communion' });
 
-// Under the cost formula (SPEC §4.3a) Ember Communion is a 1 SP + 1 MP spell: its school and spell camp price 1 Mana, so
-// the Mana it restores pays its own Mana back and a dry Herald (0 Mana) cannot cast it. Replaced rule: a 1-SP card with no
-// Mana (then the stance table's 2-SP cast). The owner has the open question of whether restored Mana should offset it.
-test('a Herald with 1 Mana pays 1 SP + 1 MP, gets the Mana back with healing, then exhausts the base card', () => {
-  const c = fight({ mana: 1 }); const before = c.player.stamina;
+// Under the cost formula (SPEC §4.3a) the Mana Ember Communion restores offsets its own Mana price, and a Mana-restoring
+// card pays Stamina (owner, 2026-10-12): a dry Herald buys Mana with Stamina.
+test('a dry Herald buys Mana and healing with Stamina, then exhausts the base card', () => {
+  const c = fight(); const before = c.player.stamina;
   play(c);
   assert.equal(c.player.mana, 1);
   assert.equal(c.player.hp, 62);
@@ -28,17 +27,13 @@ test('a Herald with 1 Mana pays 1 SP + 1 MP, gets the Mana back with healing, th
   assert.equal(c.piles.discard.length, 0);
 });
 
-test('a dry Herald cannot cast it: the formula prices it at 1 Mana', () => {
-  assert.throws(() => play(fight()), /Not enough mana/);
-});
-
 test('the upgrade removes Exhaust without changing either recovery amount or cost', () => {
-  const c = fight({ upgraded: true, mana: 1 });
+  const c = fight({ upgraded: true });
   play(c);
   assert.equal(c.player.mana, 1); assert.equal(c.player.hp, 62);
   assert.equal(c.piles.exhaust.length, 0); assert.equal(c.piles.discard.length, 1);
   const def = resolveCard(reg, { cardId: 'emberCommunion', upgraded: true });
-  assert.equal(def.cost, 1); assert.equal(def.manaCost, 1);
+  assert.equal(def.cost, 1); assert.ok(!def.manaCost);
 });
 
 test('recovery respects the Mana and HP caps', () => {

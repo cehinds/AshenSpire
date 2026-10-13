@@ -74,6 +74,7 @@ test('the tunables table is the shipped budget', () => {
   for (const [name, value] of table) {
     const expected = shipped[name];
     if (Array.isArray(expected)) assert.deepEqual(value.split(',').map((v) => Number(v.trim())), [...expected], name);
+    else if (expected === null) assert.equal(value, 'none', `${name}: no cap prints as none`);
     else assert.equal(Number(value), expected, name);
   }
 });

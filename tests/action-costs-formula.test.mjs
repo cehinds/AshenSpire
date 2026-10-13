@@ -10,6 +10,7 @@ import { COST_BUDGET, COST_TAGS } from '../src/content/actionCosts.js';
 import { derivedStatRules } from '../src/content/derivedStats.js';
 import * as Rounds from '../src/engine/combatRoundsAdapter.js';
 import { createRunState } from '../src/model/state.js';
+import { dispatch } from '../src/engine/combat.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { createRng } from '../src/engine/rng.js';
 
@@ -96,12 +97,13 @@ test('the validator refuses a weight outside -3..3, a negative non-drawback, a b
   assert.throws(() => validateCostConfig(variant({ budget: { spDivisor: 0 } })), /spDivisor/);
   assert.throws(() => validateCostConfig({ ...COST_CONFIG, statusWeight: 1 }), /2\.\.3/);
   assert.throws(() => validateCostConfig(variant({ budget: { damageSteps: [5, 3] } })), /damageSteps/);
-  for (const [tag, row] of Object.entries(COST_TAGS)) if (row.weight < 0) assert.ok(tag === 'lifecycle.exhaust' || tag.startsWith('drawback:'), tag);
+  for (const [tag, row] of Object.entries(COST_TAGS)) if (row.weight < 0) assert.ok(['lifecycle.exhaust', 'lifecycle.ethereal'].includes(tag) || tag.startsWith('drawback:'), tag);
   assert.ok(Object.isFrozen(COST_BUDGET) && Object.isFrozen(COST_TAGS));
 });
 
 test('def.manaCost reaches the framework Mana cost, and a played spell spends it', () => {
-  const spell = resolveCard(registries, { cardId: 'blightTouch' });
+  // A rank-2 grade: rank weighs on the Mana side, so it pays Mana (a cantrip at grade 0 pays Stamina only).
+  const spell = resolveCard(registries, { cardId: 'cometFragment', abilityRank: 2 });
   assert.ok(spell.manaCost >= 1, 'fixture: a spell the formula prices with Mana');
   assert.equal(registries.framework.costProfile(spell).mana, spell.manaCost);
   assert.equal(registries.framework.costProfile(spell).stamina, spell.cost);
@@ -112,7 +114,7 @@ test('def.manaCost reaches the framework Mana cost, and a played spell spends it
   assert.equal(registries.framework.costProfile(graded).mana, cardCostBudget(applyAbilityGrade(registries.cards.get('cometFragment'), 3), { rank: 3 }).mp);
   // The rank is part of the cached face: each rank is priced on its own.
   assert.ok(resolveCard(registries, { cardId: 'cometFragment', abilityRank: 0 }) !== graded);
-  assert.equal(applyActionCosts(spell, spell).manaCost, spell.manaCost, 'pricing a priced face again changes nothing');
+  assert.equal(applyActionCosts(spell, spell, { rank: 2 }).manaCost, spell.manaCost, 'pricing a priced face again at its rank keeps its Mana');
 });
 
 test('enemy SP comes from stats: the stamina row on the enemy\'s attributes, plus equipment SP; 3 with none', () => {
@@ -133,4 +135,61 @@ test('enemy SP comes from stats: the stamina row on the enemy\'s attributes, plu
   const plan = [combat.enemies[0].intent.moveId, ...(combat.enemies[0].plannedMoves || []).map((m) => m.moveId)];
   const spent = plan.reduce((sum, id) => sum + Rounds.enemyMoveSp(registries.enemies.get('wanderingSoldier').moves[id]), 0);
   assert.ok(spent <= 3 && spent >= 2, `the soldier plans within its pool of 3: ${plan}`);
+});
+
+// Owner decisions of 2026-10-12, second pass: rank counts on the Mana side of a magic card too; restored Mana and
+// Stamina offset the card's own cost; Ethereal is a drawback; status stacks count (no cap by default).
+test('a magic card\'s rank weighs on its Mana side as well as its Stamina side; a physical card\'s only on Stamina', () => {
+  const spell = { id: 's', type: 'attack', cost: 1, effects: [{ op: 'damage', target: 'enemy', amount: 3 }], tags: ['camp:spell', 'school:fire'] };
+  const blade = { id: 'b', type: 'attack', cost: 1, effects: [{ op: 'damage', target: 'enemy', amount: 3 }], tags: ['camp:physical', 'blade'] };
+  const { rankWeight, rankWeightMp } = COST_BUDGET;
+  assert.equal(cardCostBudget(spell, { rank: 2 }).sMp - cardCostBudget(spell, { rank: 0 }).sMp, 2 * rankWeightMp);
+  assert.equal(cardCostBudget(spell, { rank: 2 }).sSp - cardCostBudget(spell, { rank: 0 }).sSp, 2 * rankWeight);
+  assert.equal(cardCostBudget(blade, { rank: 2 }).sMp, 0, 'a physical card has no Mana side to raise');
+  for (let rank = 1; rank <= 5; rank++) assert.ok(cardCostBudget(spell, { rank }).mp >= cardCostBudget(spell, { rank: rank - 1 }).mp, `rank ${rank}`);
+});
+
+test('restored Mana offsets the card\'s own Mana cost, and restored Stamina its own Stamina cost', () => {
+  for (const id of ['attune', 'emberCommunion']) {
+    const card = registries.cards.get(id);
+    const priced = cardCostBudget(card);
+    const restored = card.effects.filter((e) => e.op === 'restoreMana').reduce((sum, e) => sum + e.amount, 0);
+    assert.ok(restored > 0, `fixture: ${id} restores Mana`);
+    assert.equal(priced.mp, Math.max(0, priced.rawMp - restored), `${id}: Mana price less the Mana it restores`);
+    assert.ok((resolveCard(registries, { cardId: id }).manaCost || 0) - restored < 0, `${id} nets Mana`);
+  }
+  const surge = { id: 'surge', type: 'skill', cost: 1, effects: [{ op: 'gainEnergy', amount: 2 }, { op: 'damage', target: 'enemy', amount: 30 }], tags: ['camp:physical', 'maneuver:smash'] };
+  const out = cardCostBudget(surge);
+  assert.equal(out.sp, Math.max(1, out.rawSp - 2), 'its Stamina price less the 2 Stamina it restores (a priced card always costs something)');
+});
+
+test('a Herald with 0 Mana casts Ember Communion and Attune: a Mana-restoring card pays Stamina, never Mana it lacks', () => {
+  for (const [classId, cardId] of [['herald', 'emberCommunion'], ['starseer', 'attune']]) {
+    const run = createRunState({ seed: 3, classId, registries });
+    const combat = createRunCombat({ registries, rng: createRng(3), run, enemyIds: ['wanderingSoldier'], settings: {} });
+    combat.player.mana = 0;
+    combat.piles.hand.push({ instanceId: `dry-${cardId}`, cardId, upgraded: false });
+    assert.equal(resolveCard(registries, { cardId }).manaCost || 0, 0, `${cardId} costs no Mana`);
+    dispatch(combat, { type: 'playCard', cardInstanceId: `dry-${cardId}` });
+    assert.ok(combat.player.mana >= 1, `${cardId} restored Mana from 0`);
+  }
+});
+
+test('Ethereal is a drawback: it never raises a cost', () => {
+  assert.ok(COST_TAGS['lifecycle.ethereal'].weight < 0);
+  for (const card of registries.cards.all()) {
+    if (isCostOptOut(card) || Array.isArray(card.gradeProfiles)) continue;
+    const keywords = (card.keywords || []).filter((k) => k !== 'ethereal');
+    const plain = cardCostBudget({ ...card, keywords }), ethereal = cardCostBudget({ ...card, keywords: [...keywords, 'ethereal'] });
+    assert.ok(ethereal.sSp <= plain.sSp && ethereal.sp + ethereal.mp <= plain.sp + plain.mp, card.id);
+  }
+});
+
+test('status stacks count: with no cap (the default), every stack adds the status weight', () => {
+  assert.equal(COST_CONFIG.statusStackCap, null);
+  const bleed = (stacks) => cardCostBudget({ id: 'x', type: 'skill', cost: 1, effects: [{ op: 'applyStatus', target: 'enemy', status: 'bleed', stacks }], tags: ['camp:physical'] }).sSp;
+  assert.equal(bleed(5) - bleed(1), 4 * COST_CONFIG.statusWeight);
+  const capped = { ...COST_CONFIG, statusStackCap: 2 };
+  assert.equal(cardCostBudget({ id: 'x', type: 'skill', cost: 1, effects: [{ op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 5 }], tags: ['camp:physical'] }, { config: capped }).sSp, bleed(2), 'a configured cap still applies');
+  assert.throws(() => validateCostConfig({ ...COST_CONFIG, statusStackCap: 0 }), /stack cap/);
 });

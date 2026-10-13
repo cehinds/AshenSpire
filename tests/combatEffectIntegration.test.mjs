@@ -9,7 +9,11 @@ import {createSession} from '../tools/session.mjs';
 import {COMBAT_EFFECT_ART} from '../src/content/combatEffectArt.js';
 import {COMBAT_EFFECT_RULES} from '../src/content/combatEffectRules.js';
 import {applyAttackDamage} from '../src/engine/actions.js';
-const reg=createRegistries(contentBundle);
+
+// These checks read the authored card numbers, so every card keeps its authored cost and numbers: it opts out of the
+// cost formula (costRule 'fixed', SPEC §4.3a), which tests/action-costs-*.test.mjs cover.
+const authoredCosts = (bundle) => ({ ...bundle, cards: bundle.cards.map((card) => ({ ...card, costRule: 'fixed' })) });
+const reg=createRegistries(authoredCosts(contentBundle));
 const plan=(id,profileId,upgraded=false)=>{const card=resolveCard(reg,{cardId:id,profileId,upgraded});return combatEffectPlan({...card,cardTags:combatEffectTags(reg,card)});};
 test('action-only magic motifs use mundane variants; paid activations retain fantastical effects',()=>{
  const card={type:'attack',cost:1,manaCost:1,cardTags:['blood','blade'],effects:[{op:'damage',target:'enemy'}]};
@@ -92,10 +96,8 @@ test('every authored playable card and equipment profile resolves to existing ar
  assert.equal(new Set(COMBAT_EFFECT_RULES.map(r=>r.id)).size,COMBAT_EFFECT_RULES.length);
  for(const rule of COMBAT_EFFECT_RULES)assert.ok(COMBAT_EFFECT_ART[rule.kind],rule.id);
 });
-// Gorefire Slash spends no Mana under the cost formula (SPEC §4.3a), so its mundane blade attack reads as a slash; it was
-// a Mana-paying bloodSlash before.
 test('specific combinations beat generic schools and defensive tags',()=>{
- for(const [id,kind]of [['shieldBash','shieldBash'],['gorefireSlash','slash'],['riposte','riposte'],['guardCounter','riposte'],['crystalBarrier','barrier'],['enterBulwark','ward'],['starstoneArc','starbolt']])assert.equal(plan(id).kind,kind,id);
+ for(const [id,kind]of [['shieldBash','shieldBash'],['gorefireSlash','bloodSlash'],['riposte','riposte'],['guardCounter','riposte'],['crystalBarrier','barrier'],['enterBulwark','ward'],['starstoneArc','starbolt']])assert.equal(plan(id).kind,kind,id);
  assert.equal(plan('strike','shieldAttack').kind,'shieldBash');
  assert.equal(plan('defend','staffGuard').kind,'magicGuard');
  assert.equal(plan('defend','sceptreGuard').kind,'arcaneWard');

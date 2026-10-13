@@ -13,6 +13,7 @@ import {
   ACTION_COST_TABLE, CAST_TAGS, COST_BUDGET, COST_TAGS, DRAWBACK_OPS, KEYWORD_TAGS, RANGE_TAGS, RANGE_WEIGHTS,
   RESTORE_MANA_OPS, RESTORE_STAMINA_OPS, SCALED_EFFECT_OPS, STATUS_STACK_CAP, STATUS_WEIGHT, STATUS_WEIGHTS,
 } from '../content/actionCosts.js';
+import { DRAWBACK_KEYWORD_TAGS } from '../content/actionCosts.js';
 import { derivedStatRules } from '../content/derivedStats.js';
 import { statRowValue } from './derivedStats.js';
 import { stanceFor } from '../engine/combatRounds/stance.js';
@@ -20,7 +21,7 @@ import { stanceFor } from '../engine/combatRounds/stance.js';
 export const ACTION_STANCES = Object.freeze(['attack', 'block', 'smash', 'counter', 'cast', 'sweep']);
 export const COST_SIDES = Object.freeze(['sp', 'mp']);
 const FIXED_TYPES = Object.freeze(['status', 'curse']);
-const BUDGET_NUMBERS = Object.freeze(['spDivisor', 'mpDivisor', 'damageWeight', 'rankWeight', 'castingEffortWeight',
+const BUDGET_NUMBERS = Object.freeze(['spDivisor', 'mpDivisor', 'damageWeight', 'rankWeight', 'rankWeightMp', 'castingEffortWeight',
   'restoreWeight', 'twoCostMultiplier']);
 
 /** The shipped cost configuration, one object, so a test or a calibration can pass a variant through `config`. */
@@ -60,7 +61,7 @@ export function validateCostConfig(config = COST_CONFIG) {
   for (const [tag, row] of Object.entries(config.tags)) {
     const w = row?.weight;
     if (!Number.isInteger(w) || w < -3 || w > 3) throw new TypeError(`actionCosts: tag "${tag}" weighs ${w}; a tag weight is a whole number -3..3`);
-    if (w < 0 && !(tag === 'lifecycle.exhaust' || tag.startsWith('drawback:'))) throw new TypeError(`actionCosts: tag "${tag}" weighs ${w}; only drawbacks weigh less than 0`);
+    if (w < 0 && !(DRAWBACK_KEYWORD_TAGS.includes(tag) || tag.startsWith('drawback:'))) throw new TypeError(`actionCosts: tag "${tag}" weighs ${w}; only drawbacks weigh less than 0`);
     if (!COST_SIDES.includes(row.side)) throw new TypeError(`actionCosts: tag "${tag}" counts on side "${row.side}"; a side is sp or mp`);
   }
   for (const [range, w] of Object.entries(config.ranges)) {
@@ -73,7 +74,7 @@ export function validateCostConfig(config = COST_CONFIG) {
   if (steps !== undefined && !(Array.isArray(steps) && steps.every((t, i) => Number.isFinite(t) && t > 0 && (i === 0 || t > steps[i - 1])))) {
     throw new TypeError('actionCosts: budget "damageSteps" must be an ascending list of positive damage thresholds (or empty)');
   }
-  if (!(Number.isInteger(config.statusStackCap) && config.statusStackCap >= 1)) throw new TypeError('actionCosts: the status stack cap must be a whole number, 1 or more');
+  if (!(config.statusStackCap === null || (Number.isInteger(config.statusStackCap) && config.statusStackCap >= 1))) throw new TypeError('actionCosts: the status stack cap must be null (no cap) or a whole number, 1 or more');
   for (const key of BUDGET_NUMBERS) {
     if (!(Number.isFinite(config.budget[key]) && config.budget[key] > 0)) throw new TypeError(`actionCosts: budget "${key}" is ${config.budget[key]}; it must be a positive number`);
   }
@@ -131,7 +132,8 @@ export function cardCostBudget(def, { rank = 0, config = COST_CONFIG } = {}) {
     if (RESTORE_MANA_OPS.includes(e.op) && typeof e.amount === 'number') restoreMana += e.amount;
     if ((e.op === 'applyStatus' || e.op === 'buildup') && e.status) {
       const stacks = e.op === 'buildup' ? 1 : Math.max(0, count(e.stacks));
-      statusPoints += (config.statusWeights[e.status] ?? config.statusWeight) * Math.min(stacks, config.statusStackCap);
+      const capped = config.statusStackCap === null ? stacks : Math.min(stacks, config.statusStackCap);
+      statusPoints += (config.statusWeights[e.status] ?? config.statusWeight) * capped;
     }
   }
 
@@ -152,6 +154,7 @@ export function cardCostBudget(def, { rank = 0, config = COST_CONFIG } = {}) {
   const parts = Object.freeze({
     damage: damagePoints,
     rank: budget.rankWeight * Math.max(0, rank),
+    rankMp: magic ? budget.rankWeightMp * Math.max(0, rank) : 0,
     tagSp, tagMp, range,
     castingEffort: cast ? budget.castingEffortWeight : 0,
     status: statusPoints,
@@ -160,13 +163,19 @@ export function cardCostBudget(def, { rank = 0, config = COST_CONFIG } = {}) {
   });
   const sSp = Math.max(0, (magic ? 0 : damagePoints) + parts.rank + tagSp + range + parts.castingEffort
     + (magic ? 0 : statusPoints) + parts.restoreMana);
-  const sMp = Math.max(0, (magic ? damagePoints : 0) + tagMp + (magic ? statusPoints : 0) + parts.restoreStamina);
-  let sp = Math.floor(sSp / budget.spDivisor);
-  let mp = Math.floor(sMp / budget.mpDivisor);
+  const sMp = Math.max(0, (magic ? damagePoints : 0) + parts.rankMp + tagMp + (magic ? statusPoints : 0) + parts.restoreStamina);
+  // Restored Mana offsets the card's own Mana cost, and restored Stamina its own Stamina cost (owner, 2026-10-12), so a
+  // card that refills a pool never costs more of it than it gives back.
+  const rawSp = Math.floor(sSp / budget.spDivisor);
+  const rawMp = Math.floor(sMp / budget.mpDivisor);
+  let sp = Math.max(0, rawSp - restoreStamina);
+  let mp = Math.max(0, rawMp - restoreMana);
+  // Both 0: the larger side pays 1 (SP on a tie). A Mana-restoring card pays Stamina: it buys Mana with Stamina, so a
+  // player with no Mana can always cast it.
   if (sp === 0 && mp === 0) {
-    if (sMp > sSp) mp = 1; else sp = 1;
+    if (restoreMana > 0 || !(sMp > sSp)) sp = 1; else mp = 1;
   }
-  return { sp, mp, sSp, sMp, magic, cast, tags: allTags, parts };
+  return { sp, mp, sSp, sMp, rawSp, rawMp, magic, cast, tags: allTags, parts };
 }
 
 /** True when a card keeps its authored cost: costRule 'fixed', a curse or a status, or an X (non-number) cost. */

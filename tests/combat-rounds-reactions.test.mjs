@@ -76,7 +76,9 @@ import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/co
 import { COMBAT_ROUNDS_KEY, MOMENTUM_KEY } from '../src/model/combatRounds.js';
 import * as Rounds from '../src/engine/combatRoundsAdapter.js';
 
-const registries = createRegistries(contentBundle);
+// These checks read the authored card prices (a 1-Mana frostCounter): every card opts out of the cost formula
+// (costRule 'fixed', SPEC §4.3a), which tests/action-costs-*.test.mjs cover.
+const registries = createRegistries({ ...contentBundle, cards: contentBundle.cards.map((card) => ({ ...card, costRule: 'fixed' })) });
 const ENEMY = 'wanderingSoldier';
 const SEED = 5;
 

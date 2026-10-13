@@ -33,7 +33,7 @@ test('every shipped effect has six distinct painted frames',()=>{
 });
 
 test('defensive cards and equipment distinguish physical, magic, arcane and barrier effects',()=>{
- const reg=createRegistries(contentBundle);
+ const reg=createRegistries(authoredCosts(contentBundle));
  for(const [id,kind]of [['crystalBarrier','barrier'],['umbralWard','barrier'],['starstoneWard','arcaneWard'],['wardingStar','magicGuard'],['frostVeil','frostAura']]){
   const card=resolveCard(reg,{cardId:id});assert.equal(effect({...card,cardTags:combatEffectTags(reg,card)},card.class).kind,kind);
  }
@@ -90,6 +90,10 @@ test('effect directions preserve upright left art and aim between box centers',(
 });
 import { tagService } from '../src/model/tagService.js';
 import { resolveCard } from '../src/model/registries.js';
+
+// These checks read the authored card numbers, so every card keeps its authored cost and numbers: it opts out of the
+// cost formula (costRule 'fixed', SPEC §4.3a), which tests/action-costs-*.test.mjs cover.
+const authoredCosts = (bundle) => ({ ...bundle, cards: bundle.cards.map((card) => ({ ...card, costRule: 'fixed' })) });
 test('authored styles use deterministic effects and melee is target-local',()=>{
  for(const [tag,kind]of [['blade','slash'],['pierce','thrust'],['heavy','heavyImpact']]){const plan=effect({type:'attack',tags:[tag],effects:[{op:'damage',target:'enemy'}]});assert.equal(plan.kind,kind);}
  for(const tag of ['blade','pierce','heavy','blood','precision','flourish'])assert.equal(effect({type:'attack',tags:[tag],effects:[{op:'damage',target:'enemy'}]}).at,'target');
@@ -97,12 +101,12 @@ test('authored styles use deterministic effects and melee is target-local',()=>{
  assert.equal(effect({type:'attack',tags:['shield'],equipmentProfileId:'shieldAttack',effects:[{op:'damage',target:'enemy'}]}).kind,'shieldBash');
 });
 test('live named card styles select their authored effects',()=>{
- const reg=createRegistries(contentBundle);
+ const reg=createRegistries(authoredCosts(contentBundle));
  for(const [id,kind]of [['starstoneArc','starbolt'],['bloodPact','steelGlint']]){const card=resolveCard(reg,{cardId:id});assert.equal(effect({...card,cardTags:combatEffectTags(reg,card)}).kind,kind);}
 });
 
 test('expanded effects retain paid card motifs and action-only profile fallbacks without changing resource auras',()=>{
- const reg=createRegistries(contentBundle);
+ const reg=createRegistries(authoredCosts(contentBundle));
  for(const [id,kind]of [['twinPrick','crossSlash'],['bladeDanceRogue','whirlwind'],['sacredHarvest','lifeDrain'],['disorient','steelGlint']]){
   const card=resolveCard(reg,{cardId:id});assert.equal(effect({...card,cardTags:combatEffectTags(reg,card)},card.class).kind,kind,id);
  }
@@ -115,11 +119,9 @@ test('expanded effects retain paid card motifs and action-only profile fallbacks
 });
 
 test('an authored magic attack that spends nothing keeps its spell look (plan A2)',()=>{
- const reg=createRegistries(contentBundle);
- // Under the cost formula (SPEC §4.3a) these three spells pay 1 Mana, so they animate as resource casts; Shooting Shard,
- // a fixed 0-cost spell, is the magic attack that spends nothing. Replaced fixture: the three spent nothing before.
- for(const [id,activation] of [['shootingShard',/^mundane/],['starstonePebble',/^resource/],['cometFragment',/^resource/],['starSpark',/^resource/]]){
+ const reg=createRegistries(authoredCosts(contentBundle));
+ for(const id of ['starstonePebble','cometFragment','starSpark']){
   const card=resolveCard(reg,{cardId:id});const tagged={...card,cardTags:combatEffectTags(reg,card)};
-  assert.equal(effect(tagged,card.class).kind,'starbolt',id);assert.match(combatEffectPlan(tagged).activation,activation,id);
+  assert.equal(effect(tagged,card.class).kind,'starbolt',id);assert.match(combatEffectPlan(tagged).activation,/^mundane/,id);
  }
 });

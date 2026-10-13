@@ -12,9 +12,12 @@ import { resolveCombatRatings } from '../src/model/combatRatings.js';
 import { staggerPlayer } from '../src/engine/actions.js';
 import { grantAbilityCharge } from '../src/engine/abilityRiders.js';
 
+// This file tests matchup mechanics on the authored card numbers, so every card keeps its authored cost and numbers:
+// it opts out of the cost formula (costRule 'fixed', SPEC §4.3a), which tests/action-costs-*.test.mjs cover.
+const authoredCosts = (cards) => cards.map(card => ({ ...card, costRule: 'fixed' }));
 function registry({ enemyId = 'wanderingSoldier', moveId = 'slash', damage = 8, legacy = false } = {}) {
   const base = legacy ? legacyContentBundle : contentBundle;
-  return createRegistries({ ...base,
+  return createRegistries({ ...base, cards: authoredCosts(base.cards),
     enemies: base.enemies.map(enemy => enemy.id === enemyId ? { ...enemy, firstMove: moveId } : enemy),
     enemyMoves: base.enemyMoves.map(move => move.enemyId === enemyId && move.id === moveId ? { ...move, ...(move.damage != null ? { damage } : {}) } : move),
   });
@@ -81,11 +84,10 @@ test('live Smash gets guarded bonus and adds Poise only after actual Guard break
   enemy.block = 9;
   dispatch(c, { type: 'playCard', cardInstanceId: 'card1', targetId: enemy.id });
   const hit = c.eventLog.find(event => event.type === 'damageDealt' && event.sourceId === 'player');
-  // kilnCleave costs 2 SP under the cost formula (SPEC §4.3a): its 10 damage scales to 18 and its printed 3 Poise to 5.
-  assert.equal(hit.amount, 27);
+  assert.equal(hit.amount, 15);
   assert.equal(hit.blocked, 9);
-  assert.equal(enemy.hp, hp - 18, 'the 18 through the 9 Block');
-  assert.equal(enemy.poiseMeter.value, 8, 'printed 3 scaled to 5, plus actual-break 3');
+  assert.equal(enemy.hp, hp - 6);
+  assert.equal(enemy.poiseMeter.value, 6, 'printed3 plus actual-break3');
   assert.equal(getStacks(enemy, 'burn'), 4, 'printed Burn not duplicated by rider');
 });
 
@@ -127,7 +129,6 @@ for (const isCoop of [false, true]) test(`${isCoop ? 'co-op' : 'solo'} Counter p
   applyStatus(c, enemy, 'vulnerable', 1);
   const preview = isCoop ? previewCoopCard(c, 'p1', 'card1', enemy.id) : previewCard(c, 'card1', enemy.id);
   const damage = preview.values.find(value => value.op === 'damage');
-  // spikedReprisal costs 1 SP under the cost formula (SPEC §4.3a): its authored 4 damage.
   assert.equal(damage.value, 4);
   assert.equal(damage.perTarget[enemy.id], 4);
   assert.deepEqual(damage.hitDamages, [4]);
@@ -191,11 +192,10 @@ for (const isCoop of [false, true]) test(`${isCoop ? 'co-op' : 'solo'} Crimson R
   const c = isCoop ? coop('progression-crimson-reprisal') : solo('progression-crimson-reprisal');
   const actor = isCoop ? c.players.get('p1').entity : c.player;
   const preview = isCoop ? previewCoopCard(c, 'p1', 'card1') : previewCard(c, 'card1');
-  // Crimson Reprisal costs 2 SP under the cost formula (SPEC §4.3a): its 8 and 4 scale to 14 and 7.
-  assert.deepEqual(preview.values.filter(value => value.op === 'damage').map(value => value.value), [14, 7]);
+  assert.deepEqual(preview.values.filter(value => value.op === 'damage').map(value => value.value), [8, 4]);
   if (isCoop) playCard(c, 'p1', 'card1');
   else dispatch(c, { type: 'playCard', cardInstanceId: 'card1' });
-  assert.equal(actor.combatCounter.damage, 14, 'the inactive clause remains unarmed');
+  assert.equal(actor.combatCounter.damage, 8, 'the inactive clause remains unarmed');
 });
 
 for (const isCoop of [false, true]) for (const hasBlock of [false, true]) {

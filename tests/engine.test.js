@@ -204,7 +204,8 @@ function testBundle() {
   return withKindRows({
     ...contentBundle,
     tagging: [...contentBundle.tagging, ...TEST_TAGGING],
-    cards: [...contentBundle.cards, ...TEST_CARDS],
+    // Fixture cards pin their own costs: they opt out of the cost formula (costRule 'fixed', SPEC §4.3a).
+    cards: [...contentBundle.cards, ...TEST_CARDS.map((card) => ({ costRule: 'fixed', ...card }))],
     statuses: [...contentBundle.statuses, ...TEST_STATUSES],
     enemies: [...contentBundle.enemies, ...TEST_ENEMIES],
   });
@@ -522,7 +523,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(proc, 'procBurst emitted as its own event');
     eq(proc.amount, 8, '15% of 30 = 4.5 → min-clamped to 8');
     const hit = logOf(c, 'damageDealt').filter((e) => e.targetId === 'e1' && e.isAttack).pop();
-    eq(hit.amount, 5, "triggering hit's damageDealt stays the card's own 5 — burst not folded in");
+    // The card's own damage: Gorefire Slash's 5, scaled when the cost formula prices it at 2 SP or more (SPEC §4.3a).
+    const ownDamage = REG.cards && resolveCard(REG, { cardId: 'gorefireSlash' }).effects.find((e) => e.op === 'damage').amount;
+    eq(hit.amount, ownDamage, "triggering hit's damageDealt stays the card's own damage — burst not folded in");
     const burst = logOf(c, 'hpLost').filter((e) => e.targetId === 'e1' && e.cause === 'proc:bleed').pop();
     assert(burst, "burst hpLost carries cause 'proc:bleed' — attributable in the damage record");
     eq(burst.amount, 8, 'burst hpLost is its own entry');
@@ -1783,7 +1786,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(!badCost.ok && badCost.errors.some((e) => e.path === 'cards.gorefireSlash.manaCost'), 'negative manaCost cannot mint mana');
 
     // A spell the cost formula prices at 1 MP (SPEC §4.3a). Gorefire Slash, the old fixture, is physical now: 0 MP.
-    const spend = makeCombat({ deck: Array(5).fill('cometFragment'), enemies: ['tGiant'], mana: 2, maxMana: 2, stamina: 2 });
+    const spend = makeCombat({ deck: Array(5).fill('starstonePebble'), enemies: ['tGiant'], mana: 2, maxMana: 2, stamina: 2 });
     const sig = spend.piles.hand[0];
     const pv = previewCard(spend, sig.instanceId);
     eq(pv.manaCost, 1, 'preview exposes the same mana cost execution charges');
@@ -1791,7 +1794,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(spend.player.mana, 1, 'a 1-MP spell spends 1 mana');
     assert(logOf(spend, 'manaSpent').some((e) => e.amount === 1), 'mana spend emits a receipt');
 
-    const empty = makeCombat({ deck: Array(5).fill('cometFragment'), enemies: ['tGiant'], mana: 0, maxMana: 3, stamina: 3 });
+    const empty = makeCombat({ deck: Array(5).fill('starstonePebble'), enemies: ['tGiant'], mana: 0, maxMana: 3, stamina: 3 });
     empty.player.mana = 0;
     const beforeHand = empty.piles.hand.length;
     let refused = '';
@@ -9103,12 +9106,11 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const c4 = makeCombat({ deck: ['strike'], relicIds: ['lodestarShard'], mana: 1, maxMana: 1 + REG.balance.powers.lodestarShard.restoreMana });
     eq(c4.player.mana, 1 + REG.balance.powers.lodestarShard.restoreMana, 'the shard restores Mana as the fight opens');
     // Attune restores Mana and exhausts; upgraded it stays.
-    // Attune is a spell the cost formula prices at 1 SP + 1 MP (SPEC §4.3a), so it opens with 1 Mana and each cast nets 0
-    // (it restored +1 from 0 before; an open owner question).
-    const c5 = makeCombat({ deck: ['attune', { id: 'attune', up: true }, 'strike', 'strike', 'strike'], mana: 1, maxMana: 3 });
+    // The Mana Attune restores offsets its own Mana price (SPEC §4.3a, owner 2026-10-12), so it casts from 0 Mana.
+    const c5 = makeCombat({ deck: ['attune', { id: 'attune', up: true }, 'strike', 'strike', 'strike'], mana: 0, maxMana: 3 });
     c5.player.maxStamina = 5; c5.player.stamina = 5; c5.player.energyMax = 5; c5.player.energy = 5;
     playFromHand(c5, 'attune'); eq(c5.player.mana, 1); eq(c5.piles.exhaust.filter((c) => c.cardId === 'attune').length, 1, 'Attune exhausts');
-    playFromHand(c5, 'attune'); eq(c5.player.mana, 1); eq(c5.piles.exhaust.filter((c) => c.cardId === 'attune').length, 1, 'Attune+ does not');
+    playFromHand(c5, 'attune'); eq(c5.player.mana, 2); eq(c5.piles.exhaust.filter((c) => c.cardId === 'attune').length, 1, 'Attune+ does not');
     // VALIDATION, by name.
     const said = (v) => v.errors.map((e) => `${e.path}: ${e.msg}`);
     const noGroup = validateContent({ ...testBundle(), tagging: testBundle().tagging.filter((r) => !(r.family === 'class' && r.objectId === 'reaver' && r.tagId === 'item:blade')) });

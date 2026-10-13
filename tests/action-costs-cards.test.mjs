@@ -26,16 +26,18 @@ test('a plain attack and a plain block cost 1 SP and no Mana, whatever the autho
   }
 });
 
-test('a smash and a sweep cost 2 SP and scale their numbers; a spell pays Mana', () => {
-  for (const id of ['colossusSmash', 'sweepingBlow']) {
+test('a smash and a sweep cost 2 SP or more and scale their numbers; a ranked spell pays Mana', () => {
+  for (const id of ['bashingBlow', 'sweepingBlow', 'colossusSmash']) {
     const card = cardOf(id);
-    assert.equal(card.cost, 2, id);
+    assert.ok(card.cost >= 2, `${id} costs ${card.cost}`);
     assert.equal(card.manaCost || 0, 0, `${id} is physical`);
     assert.equal(amountOf(card, 'damage'), Math.round(amountOf(authoredOf(id), 'damage') * TWO_COST_EFFECT_MULTIPLIER), id);
   }
-  const spell = cardOf('blightTouch');
-  assert.ok(spell.manaCost >= 1, 'a spell pays Mana');
-  assert.ok(spell.cost >= 1, 'and its casting effort costs Stamina');
+  assert.equal(cardOf('bashingBlow').cost, 2, 'a light smash costs 2');
+  const cantrip = cardOf('blightTouch');
+  assert.deepEqual([cantrip.cost, cantrip.manaCost || 0], [1, 0], 'a cantrip costs 1 Stamina and no Mana');
+  const ranked = resolveCard(registries, { cardId: 'cometFragment', abilityRank: 2 });
+  assert.ok(ranked.manaCost >= 1 && ranked.cost >= 1, 'a rank-2 spell pays Mana, and its casting effort Stamina');
 });
 
 test('a cost-1 card keeps its base values, the weaker option', () => {
@@ -88,6 +90,6 @@ test('costRule is the only opt-out value content may write', () => {
 
 test('the derived step is one function, so every surface reads the same cost (the framework cost profile too)', () => {
   const def = cardOf('colossusSmash');
-  assert.equal(registries.framework.costProfile(def).action, 2);
+  assert.equal(registries.framework.costProfile(def).action, def.cost);
   assert.equal(registries.framework.costProfile(cardOf('strike')).action, 1);
 });
