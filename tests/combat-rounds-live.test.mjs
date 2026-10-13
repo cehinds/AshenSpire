@@ -742,3 +742,34 @@ test('the queue prices a card after its cardPreparing triggers, as cardPlayCosts
   assert.ok(c.eventLog.some((e) => e.type === 'cardPlayed' && e.cardInstanceId === found.id), 'the card resolves at the commit');
   assert.equal(c.player.abilityRiders?.charges?.['feat:prep-discount'], undefined, 'the discount the card prepared is spent by it, once');
 });
+
+// Review follow-up: a queued card's cardPreparing fires at the commit, before any later queued card. Pricing a later
+// card must count it as fired: with a once-a-turn preparing discount and two Mana cards queued, only the first is free.
+test('a once-per-turn preparing discount prices only the first of two queued Mana cards free', () => {
+  let found = null;
+  for (const classId of ['starseer', 'herald', 'reaver', 'rogue']) {
+    for (let seed = 1; seed <= 60 && !found; seed++) {
+      const c = fight({ classId, seed, expansion: 1 });
+      const mana = c.piles.hand.filter((x) => cardPlayCosts(c, x.instanceId).mana >= 1);
+      if (mana.length >= 2) found = { classId, seed, ids: mana.slice(0, 2).map((x) => x.instanceId) };
+    }
+    if (found) break;
+  }
+  assert.ok(found, 'fixture: two Mana cards in some opening hand');
+  const c = fixRoundRoll(fight({ classId: found.classId, seed: found.seed, expansion: 1 }), 0.999);
+  const full = found.ids.map((id) => cardPlayCosts(c, id).mana);
+  const discount = { op: 'grantCardCharge', target: 'self', key: 'feat:prep-once', manaDiscount: 9 };
+  c.propertyMounts[triggerOwnerKey(c, c.player)].prepOnce = { kind: 'feat', id: 'prep-once',
+    rules: [{ triggers: [{ on: 'cardPreparing', limitPerTurn: 1, if: { p: 'eventSourceIsOwner' }, do: [discount] }] }] };
+  c.player.mana = 20;
+  c.player.energy = 20;
+  const queue = (id) => {
+    const card = c.piles.hand.find((x) => x.instanceId === id);
+    const needsTarget = cardKind(resolveCard(registries, card)) === 'attack';
+    try { dispatch(c, { type: 'playCard', cardInstanceId: id, ...(needsTarget ? { targetId: liveEnemy(c).id } : {}) }); }
+    catch { dispatch(c, { type: 'playCard', cardInstanceId: id, targetId: liveEnemy(c).id }); }
+    return c.combatRounds.playerQueue.find((r) => r.instanceId === id).paid.mana;
+  };
+  assert.equal(queue(found.ids[0]), 0, 'the first queued card takes the once-a-turn discount');
+  assert.equal(queue(found.ids[1]), full[1], 'the second pays its full Mana: the trigger has fired for the first');
+});

@@ -1371,7 +1371,7 @@ function preparedPlayCosts(combat, inst, def, claimed, targetId) {
     && !combat.pendingAbilityDiscard && !combat._abilityAction && !combat._emitDepth
     && !combat._foundationTransaction && !combat._foundationAncestry?.length
     && !hasEventTriggers(combat, 'cardPreparing', { cardTags: def.cardTags || def.tags || [] })) return playCosts(combat, def, claimed);
-  return playCosts(preparingPreview(combat, inst, def, targetId), def, claimed);
+  return playCosts(preparingPreview(combat, inst, def, targetId, { afterQueued: true }), def, claimed);
 }
 
 // The ability kind a card plays with (SPEC §4.11 preview and live share it): its authored kind, else spell
@@ -1449,15 +1449,37 @@ export function cardNeedsEnemyTargetNow(combat, cardInstanceId) {
   return previewCard(combat, cardInstanceId).needsTarget;
 }
 
-function preparingPreview(combat, inst, def, targetId) {
+// `afterQueued` (pricing in the Combat Rounds preview): every card already queued this turn prepares first, in queue
+// order, and spends the charges its preparing granted that it matches, as it will at the commit before any card queued
+// after it. So a once-a-turn (limitPerTurn) preparing discount one queued card took is gone for the next (SPEC §4.11).
+// Charges the player already holds are not spent here: the queue's claims already share those out.
+function preparingPreview(combat, inst, def, targetId, { afterQueued = false } = {}) {
   const clone = F.candidateState(combat);
   if (clone.pendingAbilityDiscard) { clone.queue = []; return clone; }
+  if (afterQueued && clone.combatRounds) {
+    const held = new Set(Object.keys(combat.player.abilityRiders?.charges || {}));
+    for (const record of Rounds.queuedCards(clone)) {
+      if (record.instanceId === inst.instanceId) continue;
+      const queuedInst = clone.piles.hand.find((c) => c.instanceId === record.instanceId);
+      if (!queuedInst) continue;
+      const queuedDef = resolveCombatCard(clone, queuedInst, { upcastRanks: record.upcastRanks });
+      emitPreparing(clone, queuedInst, queuedDef, record.targetId);
+      const charges = R.matchingAbilityCharges(withoutClaims(clone.player, claimedCharges(clone, record.instanceId)),
+        { ...queuedDef, type: cardKind(queuedDef), authoredTags: queuedDef.cardTags || queuedDef.tags }, { enemyAvailable: clone.enemies.some((e) => e.alive) });
+      R.consumeAbilityCharges(clone.player, charges.keys.filter((key) => !held.has(key)));
+    }
+  }
+  emitPreparing(clone, inst, def, targetId);
+  return clone;
+}
+
+// One card's cardPreparing on a detached preview, drained.
+function emitPreparing(clone, inst, def, targetId) {
   if (clone.foundation) { clone.foundation.actionSerial++; clone.foundation.eventCount = 0; clone.foundation.rolls = {}; clone.foundation.counts = {}; }
   clone._buffer = null;
   const target = targetId ? findEntity(clone, targetId) : clone.enemies.find(e => e.alive);
   clone.emit('cardPreparing', { cardInstanceId: inst.instanceId, cardId: inst.cardId, cardType: cardKind(def), cardTags: def.cardTags || def.tags || [], abilityKind: abilityKindOf(def), sourceId: clone.player.id, targetId: target?.id || null, ...R.beforeAbilityPlay(clone, clone.player), cardTargetsAllEnemies: R.cardTargetsAllEnemies(def) });
   drainQueue(clone);
-  return clone;
 }
 
 /**
