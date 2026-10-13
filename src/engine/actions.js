@@ -967,6 +967,7 @@ export function dealPoiseDamage(ctx, entity, amount, { knowledgeMatchup = false,
   if (ctx.ratingsRules) return Ratings.applyRatingImpact(ctx, source, entity, { damageSchool: 'physical' }, amount, { knowledgeMatchup, cause, cardId });
   if (!entity || !entity.alive || (entity.kind !== 'enemy' && entity.kind !== 'player')) return;
   if (!entity.poiseMeter || !(entity.poiseMeter.max > 0)) return;
+  amount = Math.floor(amount * Ratings.roundPoiseMultiplier(ctx, entity));
   const isEnemy = entity.kind === 'enemy';
   // A Poise guard (gainPoise) takes the impact before the meter does.
   const n = Math.max(0, Math.floor(amount)) - Ratings.absorbMeterGuard(entity, 'poise', amount);

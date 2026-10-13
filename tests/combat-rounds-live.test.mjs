@@ -689,3 +689,27 @@ test('the timeline reads live attributes: DEX initiative moves the player\'s and
   };
   assert.equal(cardSpeed(6) - cardSpeed(0), 3, 'player Dexterity 6 adds floor(6 / 2) initiative over 0');
 });
+
+// Codex P2 on PR #1953 (SPEC §4.11: "the side's next landed hit carries doubled poise damage"): the timeline marks the
+// landed hit that spends a side's poiseDouble flag with poiseMultiplier 2; the live card or move must apply it. Bashing
+// Blow keeps its authored 4 Poise damage here (costRule 'fixed').
+const bashRegistries = createRegistries({ ...contentBundle, cards: contentBundle.cards.map((card) => (card.id === 'bashingBlow' ? { ...card, costRule: 'fixed' } : card)) });
+test('a momentum overflow doubles the Poise damage of the side\'s next landed hit, live', () => {
+  const poiseDealt = (doubled) => {
+    const c = fixRoundRoll(fight({ reg: bashRegistries, expansion: 1, momentum: true }), 0.999);
+    const enemy = liveEnemy(c);
+    c.combatRounds.enemyQueues[enemy.id] = [];
+    // A wide meter, so no break (the Reaver's relic adds Poise on a hit too) resets the reading.
+    enemy.poiseMeter.max = 100;
+    if (doubled) c.combatRounds.poiseDouble = { player: true };
+    c.piles.hand.push({ instanceId: 'bash', cardId: 'bashingBlow', upgraded: false });
+    dispatch(c, { type: 'playCard', cardInstanceId: 'bash', targetId: enemy.id });
+    const before = enemy.poiseMeter.value;
+    endTurnDeclining(c);
+    assert.equal(c.combatRounds.poiseDouble.player ?? false, false, 'the flag is spent');
+    return enemy.poiseMeter.value - before;
+  };
+  const plain = poiseDealt(false);
+  assert.ok(plain >= 4, `fixture: Bashing Blow deals its 4 Poise damage (${plain} with the relic)`);
+  assert.equal(poiseDealt(true), plain * 2, 'the flagged side\'s landed hit deals double, its riders included');
+});

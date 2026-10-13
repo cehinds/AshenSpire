@@ -366,11 +366,20 @@ function runRound(combat, ops) {
 }
 
 // Applies one resolved entry: a landed action runs its live effects, a missed one applies nothing.
+// A landed hit that spent its side's momentum overflow carries poiseMultiplier (SPEC §4.11): the live card or move
+// deals that multiple of its Poise damage to the hit's target (combatRatings.js roundPoiseMultiplier).
 function settleEntry(combat, entry, events, ops) {
   const hit = events.find((e) => e.type === 'hit');
   const landed = hit ? hit.hit === true : true;
-  if (entry.side === 'player') applyPlayerEntry(combat, entry, landed, ops);
-  else applyEnemyEntry(combat, entry, events, landed, ops);
+  const multiplier = landed && Number(hit?.poiseMultiplier) > 1 ? Number(hit.poiseMultiplier) : null;
+  // The timeline names the player 'player'; the live player keeps its own id.
+  if (multiplier) combat.roundPoiseMultiplier = { targetId: hit.target === 'player' ? combat.player.id : hit.target, multiplier };
+  try {
+    if (entry.side === 'player') applyPlayerEntry(combat, entry, landed, ops);
+    else applyEnemyEntry(combat, entry, events, landed, ops);
+  } finally {
+    delete combat.roundPoiseMultiplier;
+  }
 }
 
 // SPEC §4.11: a queued Counter is spent by the timeline on the attack it fires on, and only on an attack its live
