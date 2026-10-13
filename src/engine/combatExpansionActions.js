@@ -24,7 +24,7 @@ export function effectCarrier(carrier, effect) {
   merged.combatProfile.maneuver = effect.combatProfile?.maneuver || carrier?.combatProfile?.maneuver || merged.combatProfile.maneuver;
   return merged;
 }
-export function enqueueExpandedAction(ctx, actions, { source, target, carrier } = {}) {
+export function enqueueExpandedAction(ctx, actions, { source, target, carrier, completionMeta } = {}) {
   if (ctx.combatExpansionVersion !== 2 || (carrier?.combatReaction && !(ctx.reactionRulesVersion >= 1))) {
     for (const action of actions) ctx.enqueue(action);
     return null;
@@ -96,7 +96,7 @@ export function enqueueExpandedAction(ctx, actions, { source, target, carrier } 
   ctx.pendingExpansionActions = (ctx.pendingExpansionActions || 0) + 1;
   for (const action of actions) ctx.enqueue(action);
   ctx.enqueue({ effect: { op: 'completeCombatAction' }, source, owner: source, target, card: carrier,
-    meta: { expansionGroup: group } });
+    meta: { ...completionMeta, expansionGroup: group } });
   // A reaction offer check reads the planned contacts of the card it tries (enemy reactions).
   ctx._groupSink?.push(group);
   return group;

@@ -822,10 +822,14 @@ test('an enemy a queued card kills mid-round takes no later timeline entry: its 
   assert.equal(momentumOf(true), momentumOf(false), 'the dead enemy\'s queued Slash credits nothing');
 });
 
-test('scopes the delayed Poise multiplier to payload actions, not reaction attacks', () => {
+test('scopes the delayed Poise multiplier to payload completion, not reaction attacks', () => {
   const source = readFileSync(new URL('../src/engine/combat.js', import.meta.url), 'utf8');
+  const expansionSource = readFileSync(new URL('../src/engine/combatExpansionActions.js', import.meta.url), 'utf8');
   assert.match(source, /action\.meta\?\.roundPoiseMultiplier/, 'the queue reads scope from the action being executed');
   assert.match(source, /action\.meta = \{ \.\.\.action\.meta, roundPoiseMultiplier:/, 'each delayed payload action carries the scope');
+  assert.match(source, /completionMeta = roundPoiseMultiplier/, 'the payload carries its scope through completion');
+  assert.match(expansionSource, /meta: \{ \.\.\.completionMeta, expansionGroup: group \}/,
+    'guard-break and trait completion run under the delayed payload scope');
   assert.match(source, /executeMovePayload\(combat, enemy, move, moveId, \{ roundPoiseMultiplier \}\)/, 'the delayed move passes its saved scope to its payload');
   assert.doesNotMatch(source, /cursor\.roundPoiseMultiplier/, 'the whole reaction drain is never globally scoped');
 });

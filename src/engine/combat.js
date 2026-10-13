@@ -822,7 +822,14 @@ function executeMovePayload(combat, enemy, move, moveId, { roundEntry = false, r
   if (roundPoiseMultiplier) for (const action of actions) {
     action.meta = { ...action.meta, roundPoiseMultiplier: { ...roundPoiseMultiplier } };
   }
-  const group = enqueueExpandedAction(combat, actions, { source: enemy, target: combat.player, carrier });
+  // Completion applies guard-break and trait pressure after the payload actions. Keep the
+  // delayed round scope on that completion action too, without marking reaction-stack work.
+  const completionMeta = roundPoiseMultiplier
+    ? { roundPoiseMultiplier: { ...roundPoiseMultiplier } }
+    : undefined;
+  const group = enqueueExpandedAction(combat, actions, {
+    source: enemy, target: combat.player, carrier, completionMeta,
+  });
   if (Reactions.usesReactions(combat) && group) group.enemyMoveStart = start;
   if (roundEntry && group) group.roundSettled = true;
 }
