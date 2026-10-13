@@ -75,6 +75,7 @@ import { createRng } from '../src/engine/rng.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { COMBAT_ROUNDS_KEY, MOMENTUM_KEY } from '../src/model/combatRounds.js';
 import * as Rounds from '../src/engine/combatRoundsAdapter.js';
+import { triggerOwnerKey } from '../src/engine/triggers.js';
 
 // These checks read the authored card prices (a 1-Mana frostCounter): every card opts out of the cost formula
 // (costRule 'fixed', SPEC §4.3a), which tests/action-costs-*.test.mjs cover.
@@ -452,4 +453,34 @@ test('a paused round with no awaiting reaction still needs a contact plan in its
   // The same pause with no awaiting reaction in the round: the rule the round pause exempts no longer applies.
   const broken = { ...c, combatRounds: { ...c.combatRounds, round: { ...c.combatRounds.round, awaiting: null } } };
   assert.ok(combatReactionProblems(broken).some((p) => /contact plan/.test(p)), 'the check reports the pending choice without its round');
+});
+
+// Codex P2 on PR #1953: a round reaction is priced as a live play prices it, after its cardPreparing triggers. A
+// preparing Mana discount makes a Mana Counter free: it is offered at 0 Mana, shown free, and paid for free.
+function prepDiscountFight(cardId, mana) {
+  const c = fight();
+  addToHand(c, cardId, 'rx-mana');
+  c.propertyMounts[triggerOwnerKey(c, c.player)].prepDiscount = { kind: 'feat', id: 'prep-discount',
+    rules: [{ triggers: [{ on: 'cardPreparing', if: { p: 'eventSourceIsOwner' }, do: [{ op: 'grantCardCharge', target: 'self', key: 'feat:prep-discount', manaDiscount: 9 }] }] }] };
+  c.player.mana = mana;
+  return c;
+}
+test('a round reaction is offered, shown and paid at its prepared price', () => {
+  // A Mana Counter that covers the soldier's Slash when the player has the Mana for it.
+  const cardId = ['frostCounter', 'fireCounter', 'forceCounter', 'lightningCounter', 'umbralWard'].find((id) => {
+    const c = prepDiscountFight(id, 20);
+    dispatch(c, { type: 'endTurn' });
+    return c.pendingReaction?.options.some((o) => o.id === 'rx-mana');
+  });
+  assert.ok(cardId, 'fixture: a Mana Counter covers the Slash');
+  const c = prepDiscountFight(cardId, 0);
+  assert.equal(cardPlayCosts(c, 'rx-mana').mana, 0, 'fixture: the preview prices it free');
+  dispatch(c, { type: 'endTurn' });
+  const offered = c.pendingReaction?.options.find((o) => o.id === 'rx-mana');
+  assert.ok(offered, 'the prepared-free Counter is on offer at 0 Mana');
+  assert.equal(offered.manaCost, 0, 'the offer shows the prepared price');
+  dispatch(c, { type: 'chooseReaction', offerId: c.pendingReaction.id, optionId: 'rx-mana' });
+  assert.equal(playedCount(c, 'rx-mana'), 1, 'it is played');
+  assert.equal(cardPlayedEvent(c, 'rx-mana').manaSpent, 0, 'and pays no Mana');
+  assert.equal(c.player.abilityRiders?.charges?.['feat:prep-discount'], undefined, 'the discount it prepared is spent by it');
 });

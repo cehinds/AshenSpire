@@ -1360,7 +1360,9 @@ export function cardPlayCosts(combat, cardInstanceId, upcastRanks) {
 // A card's price as its play pays it: after its cardPreparing triggers (a preparing discount or surcharge), on a
 // detached preview when anything listens. cardPlayCosts and the Combat Rounds queue both price through here, so a
 // card the preview shows free queues free (SPEC §4.11). `targetId` aims the preview's preparing event.
-function preparedPlayCosts(combat, inst, def, claimed, targetId) {
+// `afterQueued` (default) counts the cards already queued as prepared first; a round reaction plays mid-round, before the
+// queued cards still waiting, so it prices without them.
+function preparedPlayCosts(combat, inst, def, claimed, targetId, { afterQueued = true } = {}) {
   // cardPreparing has no ledger side effect in recordAbilityEvent/skill XP.
   // With no listener or queued work it cannot change any input to playCosts.
   // Custom buses, paused/resolving actions and all hook sources keep the exact
@@ -1371,7 +1373,7 @@ function preparedPlayCosts(combat, inst, def, claimed, targetId) {
     && !combat.pendingAbilityDiscard && !combat._abilityAction && !combat._emitDepth
     && !combat._foundationTransaction && !combat._foundationAncestry?.length
     && !hasEventTriggers(combat, 'cardPreparing', { cardTags: def.cardTags || def.tags || [] })) return playCosts(combat, def, claimed);
-  return playCosts(preparingPreview(combat, inst, def, targetId, { afterQueued: true }), def, claimed);
+  return playCosts(preparingPreview(combat, inst, def, targetId, { afterQueued }), def, claimed);
 }
 
 // The ability kind a card plays with (SPEC §4.11 preview and live share it): its authored kind, else spell
@@ -1456,6 +1458,9 @@ export function cardNeedsEnemyTargetNow(combat, cardInstanceId) {
 function preparingPreview(combat, inst, def, targetId, { afterQueued = false } = {}) {
   const clone = F.candidateState(combat);
   if (clone.pendingAbilityDiscard) { clone.queue = []; return clone; }
+  // A reaction choice waiting on the live fight (a round reaction is priced while its offer is open) would hold the
+  // preview's trigger effects back (beforeReactionAction); the detached preview prices the card as it will play.
+  delete clone.pendingReaction;
   if (afterQueued && clone.combatRounds) {
     const held = new Set(Object.keys(combat.player.abilityRiders?.charges || {}));
     for (const record of Rounds.queuedCards(clone)) {
@@ -1900,10 +1905,17 @@ function roundReactionRefusal(combat, instanceId, entry = null) {
   if (def.cost === 'X' || combat.registries.framework.isUnplayable(def)) return `'${def.name ?? inst.cardId}' cannot be played as a reaction`;
   if (entry && !Reactions.counterCoversAttack(combat, def, enemyAttackProfile(combat, entry))) return `'${def.name ?? inst.cardId}' does not cover this attack`;
   if (!Control.controlGate(combat, p, def).allowed) return `'${def.name ?? inst.cardId}' can no longer be played as a reaction: recover from the active control statuses first`;
-  const costs = playCosts(combat, def, claimedCharges(combat, instanceId));
+  const costs = roundReactionCosts(combat, inst, def, entry);
   if (costs.energy > p.energy) return `Not enough Stamina to play '${def.name ?? inst.cardId}' as a reaction`;
   if (costs.mana > p.mana) return `Not enough Mana to play '${def.name ?? inst.cardId}' as a reaction`;
   return null;
+}
+
+// A round reaction's price, as its play pays it: after its cardPreparing triggers (Codex P2 on PR #1953), aimed at the
+// attacker when the card needs an enemy. The offer, its eligibility and the payment all read this.
+function roundReactionCosts(combat, inst, def, entry) {
+  const targetId = entry && needsEnemyTarget(def) ? entry.actor : undefined;
+  return preparedPlayCosts(combat, inst, def, claimedCharges(combat, inst.instanceId), targetId, { afterQueued: false });
 }
 
 // The combat profile of the enemy attack a reaction answers, read as its live contact reads it (reach and
@@ -1921,7 +1933,7 @@ function roundReactionOffer(combat, instanceId, entry = null) {
   const inst = combat.piles.hand.find(c => c.instanceId === instanceId);
   const def = resolveCombatCard(combat, inst);
   const kind = Rounds.playerKind({ isAttack: false, effects: def.effects ?? [], maneuver: maneuverOf(def) });
-  const costs = playCosts(combat, def, claimedCharges(combat, instanceId));
+  const costs = roundReactionCosts(combat, inst, def, entry);
   const tags = Array.isArray(def.cardTags ?? def.tags) ? [...(def.cardTags ?? def.tags)] : [];
   return {
     id: inst.cardId, instanceId: inst.instanceId, name: def.name ?? inst.cardId, kind,
@@ -1939,7 +1951,7 @@ function playRoundReaction(combat, instanceId, entry) {
   if (refusal) throw new Error(refusal);
   const inst = combat.piles.hand.find((c) => c.instanceId === instanceId);
   const def = resolveCombatCard(combat, inst);
-  const costs = playCosts(combat, def, claimedCharges(combat, instanceId));
+  const costs = roundReactionCosts(combat, inst, def, entry);
   p.energy -= costs.energy;
   if (costs.energy > 0) combat.emit('energySpent', { amount: costs.energy });
   p.mana -= costs.mana;
