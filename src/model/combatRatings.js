@@ -690,12 +690,17 @@ export function magicShareOf(profile, config = null) {
 }
 
 /**
- * isForceProfile(profile) → true for a Force contact: the force school (a
- * school:force tag or profile school, read as magicShareOf reads it) or a raw
- * 'force' damage type. Arcane damage from another school is not Force.
+ * isForceHit(profile) → true for a Force hit or carrier: the force school (a
+ * school:force tag or profile school, read as magicShareOf reads it), or any
+ * Arcane part: an Arcane (or 'force') damage type or damage component (owner,
+ * 2026-10-13: Arcane damage is Force). The one test Silenced's immunity, its
+ * stack removal and the preview read.
  */
-export function isForceProfile(profile) {
-  return schoolOf(profile) === 'force' || profile?.damageType === 'force';
+export function isForceHit(profile) {
+  if (!profile) return false;
+  const arcane = type => canonicalDamageType(type) === 'arcane';
+  return schoolOf(profile) === 'force' || arcane(profile.damageType)
+    || (profile.damageComponents || []).some(component => arcane(component?.type));
 }
 
 /**

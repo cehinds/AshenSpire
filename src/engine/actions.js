@@ -41,7 +41,7 @@ import { commitSmithing, smithingPlan } from '../model/smithing.js';
 import * as Properties from './properties.js';
 import * as Ratings from './combatRatings.js';
 import { isMagicalAttack, ratingDamageMultiplier, attackImpact, schoolResistanceMultiplier, persistentWardMaximum, persistentPoiseMaximum,
-  canonicalDamageType, magicShareOf, magicDamageTypeOf, splitDamageTypesOf, splitContactParts, componentPartsOf, isForceProfile } from '../model/combatRatings.js';
+  canonicalDamageType, magicShareOf, magicDamageTypeOf, splitDamageTypesOf, splitContactParts, componentPartsOf, isForceHit } from '../model/combatRatings.js';
 import { swapRunClass } from '../model/classSwap.js';
 import { applyGraceRefill } from './encounters.js';
 import { orderedReturn } from '../model/deckRules.js';
@@ -347,7 +347,7 @@ export function cardRatingDamage(ctx, source, carrier, base) {
 export function silencedForceContacts(ctx, target, profiles) {
   let left = ctx.combatExpansionVersion === 2 ? silencedStacks(target) : 0;
   return profiles.map(profile => {
-    if (!(left > 0) || !isForceProfile(profile)) return false;
+    if (!(left > 0) || !isForceHit(profile)) return false;
     left -= 1;
     return true;
   });

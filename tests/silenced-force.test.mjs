@@ -9,7 +9,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { getStacks } from '../src/engine/statuses.js';
-import { isForceProfile } from '../src/model/combatRatings.js';
+import { isForceHit } from '../src/model/combatRatings.js';
 
 const OVERRIDES = {
   // Star Shower (school:force): three 3-damage hits, nothing else.
@@ -33,11 +33,14 @@ function setup(cardId, stacks, version = 2) {
   return { combat, enemy };
 }
 
-test('the Force cards are the force school; arcane from another school is not Force', () => {
-  assert.equal(isForceProfile({ camp: 'spell', school: 'force', damageType: 'arcane' }), true);
-  assert.equal(isForceProfile({ camp: 'spell', tags: ['school:force'] }), true);
-  assert.equal(isForceProfile({ camp: 'physical', damageType: 'force' }), true);
-  assert.equal(isForceProfile({ camp: 'physical', damageType: 'arcane', damageComponents: [{ type: 'blunt', weight: 60 }, { type: 'arcane', weight: 40 }] }), false);
+test('a Force hit is the force school or any Arcane part', () => {
+  assert.equal(isForceHit({ camp: 'spell', school: 'force', damageType: 'arcane' }), true);
+  assert.equal(isForceHit({ camp: 'spell', tags: ['school:force'] }), true);
+  assert.equal(isForceHit({ camp: 'physical', damageType: 'force' }), true);
+  assert.equal(isForceHit({ camp: 'physical', damageType: 'blunt', damageComponents: [{ type: 'blunt', weight: 60 }, { type: 'arcane', weight: 40 }] }), true, 'Ruinous Blow: its Arcane part is Force');
+  assert.equal(isForceHit({ camp: 'spell', damageType: 'arcane' }), true, 'a sceptre arcane attack is Force');
+  assert.equal(isForceHit({ camp: 'physical', damageType: 'blunt' }), false);
+  assert.equal(isForceHit({ camp: 'spell', school: 'fire', damageType: 'fire' }), false);
 });
 
 test('a 3-hit Force card into 2 Silenced stacks: hits 1 and 2 are immune and spend 2 -> 1 -> 0, hit 3 lands', () => {
@@ -79,4 +82,20 @@ test('a non-damage Force effect on a Silenced enemy spends 1 stack', () => {
   const { combat, enemy } = setup('starstonePebble', 2);
   dispatch(combat, { type: 'playCard', cardInstanceId: 'c', targetId: enemy.id });
   assert.equal(getStacks(enemy, 'silenced'), 1);
+});
+
+test('Ruinous Blow (Blunt + Arcane) is a Force hit: a Silenced enemy is immune to it and spends a stack', () => {
+  const combat = createCombat({ registries, rng: createRng(5), combatExpansionVersion: 2, enemyIds: ['wanderingSoldier'],
+    player: { classId: 'reaver', maxHp: 200, hp: 200, maxMana: 50, mana: 50, energyMax: 10, drawPerTurn: 5, relicIds: [],
+      deck: [{ instanceId: 'c', cardId: 'ruinousBlow' }],
+      loadout: { sets: { rightHand: ['straightSword'], leftHand: [null], armor: ['default'] }, active: { rightHand: 0, leftHand: 0, armor: 0 } } } });
+  const enemy = combat.enemies[0];
+  enemy.hp = enemy.maxHp = 500; enemy.statuses.silenced = { stacks: 1, duration: 2 };
+  const before = enemy.hp;
+  const out = dispatch(combat, { type: 'playCard', cardInstanceId: 'c', targetId: enemy.id });
+  const hits = out.events.filter(e => e.type === 'damageDealt' && e.targetId === enemy.id);
+  assert.equal(hits[0].immune, true);
+  assert.equal(hits[0].amount, 0);
+  assert.equal(getStacks(enemy, 'silenced'), 0);
+  assert.equal(before - enemy.hp, hits.reduce((sum, e) => sum + e.amount, 0));
 });
