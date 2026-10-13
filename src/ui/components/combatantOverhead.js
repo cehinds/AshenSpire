@@ -29,7 +29,7 @@ export function combatantInfo(name, open) {
   node.setAttribute('aria-label', `Inspect ${name}`);
   node.setAttribute('aria-haspopup', 'dialog');
   attachTooltip(node, () => `<div class="tt-title">${esc(name)}</div>Inspect resources, skills, and active effects.`, {
-    selectionFirst: true, activate: open, intent: 'above', align: 'center',
+    selectionFirst: true, intent: 'above', align: 'center',
   });
   // One tap, click or keyboard activation opens inspection at once (owner, 2026-10-13).
   node.addEventListener('click', event => {
