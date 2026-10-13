@@ -5,6 +5,9 @@ const FORCE_SHAPE = '<path d="M16 2 30 16 16 30 2 16Zm0 6-8 8 8 8 8-8Z"/><circle
 const SHAPES_BLUNT = '<path d="M5 2h22v12H5Zm8 14h6v15h-6Z"/>';
 const COUNTER_SHAPE = ACTION_SIGILS.counter.shape; // the Counter action's reply glyph
 
+// Traits that have a symbol on the card rail; other traits stay in the inspection list.
+const SYMBOL_TRAITS = new Set(['flux', 'impact', 'reaction', 'counterstrike']);
+
 // Original solid silhouettes, matching the approved B footer treatment.
 const SHAPES = Object.freeze({
   ritual: '<path d="M16 2 31 28H1Zm0 7L7 25h18Z"/><circle cx="16" cy="19" r="4"/>',
@@ -49,16 +52,31 @@ export function cardSideTags(model, def = {}, registries = null) {
     || tags.find(tag => tag.id.startsWith('technique:'))
     || tags.find(tag => !tag.id.includes(':'));
   const selected = [], labels = new Set();
-  const add = tag => { if(tag && selected.length < 3 && !labels.has(tag.label.toLowerCase())) { selected.push(tag); labels.add(tag.label.toLowerCase()); } };
+  // One symbol per tag: a repeated tag shows once, with its count when it repeats.
+  const occurrences = new Map();
+  for(const tag of tags) occurrences.set(tag.id, (occurrences.get(tag.id) || 0) + 1);
+  const add = tag => { if(tag && selected.length < 3 && !labels.has(tag.label.toLowerCase()) && !selected.some(row => row.id === tag.id)) {
+    const repeats = occurrences.get(tag.id) || 1;
+    selected.push(repeats > 1 ? { ...tag, count: repeats, repeat: true } : tag); labels.add(tag.label.toLowerCase()); } };
   add(element); add(status); add(skill);
   add(tags.find(tag => tag.id === 'camp:spell'));
   add(tags.find(tag => tag.id.startsWith('school:')));
-  for(const tag of tags.filter(tag => !/^(source|reach|targeting|counter|camp|maneuver|delivery):/.test(tag.id)))add(tag);
+  for(const tag of tags.filter(tag => !/^(source|reach|targeting|counter|camp|maneuver|delivery|trait):/.test(tag.id)))add(tag);
+  // Traits with a symbol follow the primary tags. A numbered trait (Flux 1, Impact 2) shows its value.
+  const traits = [], traitIds = new Set();
+  for(const tag of tags.filter(tag => SYMBOL_TRAITS.has(tag.id.slice(6)) && tag.id.startsWith('trait:'))) {
+    if(traitIds.has(tag.id) || traits.length >= 3) continue;
+    traitIds.add(tag.id);
+    // The registry label is plain ("Flux"); the card's projected value makes it "Flux 1".
+    const value = Number(def.traitValues?.[tag.id.slice(6)]) || Number(tag.label.match(/(\d+)$/)?.[1]);
+    const label = value && !/\d$/.test(tag.label) ? `${tag.label} ${value}` : tag.label;
+    traits.push(value ? { ...tag, label, count: value } : tag);
+  }
   // Put identity first, then spell camp, followed by damage/school and status.
-  return selected.sort((a,b) => (a===skill?0:a.id==='camp:spell'?1:a===element?2:3) - (b===skill?0:b.id==='camp:spell'?1:b===element?2:3));
+  return [...selected.sort((a,b) => (a===skill?0:a.id==='camp:spell'?1:a===element?2:3) - (b===skill?0:b.id==='camp:spell'?1:b===element?2:3)), ...traits];
 }
 
 export function cardTagRailHtml(tags) {
   if(!tags?.length)return '';
-  return `<div class="card-tag-rail" data-card-layer="7" aria-label="Primary card tags">${tags.map(tag => `<span class="card-tag-symbol" role="img" data-tag-id="${esc(tag.id)}" aria-label="${esc(tag.label)}" aria-description="${esc(tag.blurb || tag.label)}"><svg viewBox="0 0 32 32" fill="currentColor" fill-rule="evenodd" aria-hidden="true" focusable="false">${shapeFor(tag)}</svg></span>`).join('')}</div>`;
+  return `<div class="card-tag-rail" data-card-layer="7" aria-label="Primary card tags">${tags.map(tag => `<span class="card-tag-symbol" role="img" data-tag-id="${esc(tag.id)}" aria-label="${esc(tag.label)}${tag.repeat ? ` x${tag.count}` : ''}" aria-description="${esc(tag.blurb || tag.label)}"><svg viewBox="0 0 32 32" fill="currentColor" fill-rule="evenodd" aria-hidden="true" focusable="false">${shapeFor(tag)}</svg>${tag.count ? `<b class="card-tag-count" aria-hidden="true">${tag.count}</b>` : ''}</span>`).join('')}</div>`;
 }

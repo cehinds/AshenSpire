@@ -137,3 +137,26 @@ test('Flux, Impact, Reaction and Counterstrike each get one symbol, Flux shares 
   const force = html.split('data-tag-id="trait:flux"')[1].split('</span>')[0];
   assert.ok(force.includes('<circle cx="16" cy="16" r="4"/>'), 'Flux shows the diamond with a centre dot');
 });
+
+test('the rail shows each trait once with its value, and a repeated tag once with its count', async () => {
+  const { cardSideTags: sides, cardTagRailHtml: rail } = await import('../src/ui/components/cardTagSymbols.js');
+  const model = { sigils: { action: 'attack' }, tags: [
+    { id: 'trait:flux', label: 'Flux 1', blurb: 'On hit: 1 Ward damage.' },
+    { id: 'trait:flux', label: 'Flux 1', blurb: 'On hit: 1 Ward damage.' },
+    { id: 'trait:impact', label: 'Impact 2', blurb: 'On hit: 2 Poise damage.' },
+    { id: 'trait:grounded', label: 'Grounded', blurb: 'Grounded.' },
+    { id: 'ability:spark', label: 'Spark', blurb: 'Spark.' },
+    { id: 'ability:spark', label: 'Spark', blurb: 'Spark.' },
+  ] };
+  const chosen = sides(model, {}, null);
+  assert.equal(chosen.filter(t => t.id === 'trait:flux').length, 1);
+  assert.equal(chosen.find(t => t.id === 'trait:flux').count, 1);
+  assert.equal(chosen.find(t => t.id === 'trait:impact').count, 2);
+  assert.ok(!chosen.some(t => t.id === 'trait:grounded'), 'a trait without a symbol stays in the inspection list');
+  assert.equal(chosen.find(t => t.id === 'ability:spark').count, 2);
+  const html = rail(chosen);
+  assert.equal((html.match(/data-tag-id="trait:flux"/g) || []).length, 1);
+  assert.ok(html.includes('aria-label="Flux 1"'));
+  assert.ok(html.includes('<b class="card-tag-count" aria-hidden="true">1</b>'));
+  assert.ok(html.includes('aria-label="Spark x2"'));
+});
