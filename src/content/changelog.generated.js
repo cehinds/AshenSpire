@@ -23,6 +23,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1932"
   },
   {
+    "id": "pr-1933",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Builds started from forked pull requests no longer receive the art repository's access key",
+    "detail": "Development-process change only, nothing in the game changes. A build workflow triggered by a fork's preview run now fetches the art without the project's private key.",
+    "build": "0.7.1.1465",
+    "pullRequest": 1933,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1933"
+  },
+  {
     "id": "pr-1941",
     "date": "2026-10-13",
     "group": "2026-10-13",
