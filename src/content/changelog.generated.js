@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-13",
     "summary": "Pull requests stay mergeable after each build stamp",
     "detail": "After every build stamp on dev, a bot merges dev into each open pull request that only conflicts in the build number and changelog files, moves its changelog entry to the current build, and reruns its checks. A receipt written on an earlier day now moves to the newest date when it lands, so a next-day merge cannot stop the stamp. Pull requests with any other conflict get one comment asking a person to merge dev.",
-    "build": "0.7.1.1471",
+    "build": "0.7.1.1473",
     "pullRequest": 1937,
     "url": "https://github.com/cehinds/AshenSpire/pull/1937"
   },
@@ -18,7 +18,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-13",
     "summary": "The test branch's long checks pass again, and pricing a card is fast again",
     "detail": "Development-process fix, with one engine speed-up. Previewing a card's cost or target no longer copies the whole fight when no rule could react to that card, which had made the balance check and simulations about three times slower after Oath began reacting to every card. The link check's self-test copies the Workbench files it needs, and the simulation-report test runs each identical simulation once.",
-    "build": "0.7.1.1471",
+    "build": "0.7.1.1473",
     "pullRequest": 1950,
     "url": "https://github.com/cehinds/AshenSpire/pull/1950"
   },
