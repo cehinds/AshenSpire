@@ -194,6 +194,8 @@ function install() {
   const origin = location.origin;
   const realFetch = window.fetch.bind(window);
   const storage = pickStorage();
+  // The Asset Gallery and Motion Studio read art through this (see assetUrl in modules/assets/model.mjs).
+  window.ASHEN_ASSET_URL = (p) => assetUrlFor(base, p);
   let setCount = () => {};
   const api = createStaticApi({ base, origin, fetchImpl: realFetch, storage, onChange: (n) => setCount(n) });
 
