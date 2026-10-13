@@ -28,6 +28,9 @@ name: build-stamp
 # since the LAST [build-stamp] commit on HEAD (build-stamp.mjs --since-last-stamp),
 # not just its own event's range. A later run covers what an earlier cancelled or
 # failed run missed. The retry loop below starts each try from the current origin tip.
+#
+# pages-builds follows this run on dev: its workflow_run publishes the site once this run
+# concludes success, so the site only ever rebuilds a head that carries the stamp.
 
 on:
   push:
