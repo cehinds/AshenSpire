@@ -413,6 +413,19 @@ test('magicShareOf precedence: a listed school below 1 decides at any reach; a m
   assert.equal(magicShareOf({ camp: 'physical', maneuver: 'smash', damageType: 'fire', reach: 'contact' }, config), 0.3, 'a fire-tagged technique takes the Technique share');
 });
 
+test('damage components define the split: magic weight over total, an explicit magicShare still wins, one component does not split', () => {
+  const config = resolveCombatRatings({}, contentBundle);
+  const ruinous = { camp: 'physical', maneuver: 'smash', school: 'force', damageType: 'blunt', reach: 'contact',
+    damageComponents: [{ type: 'blunt', weight: 60 }, { type: 'arcane', weight: 40 }] };
+  assert.equal(magicShareOf(ruinous, config), 0.4, 'Force (arcane, physical: false) is the magic share, ahead of the force school and the Technique share');
+  assert.deepEqual(splitDamageTypesOf(ruinous), { magic: 'arcane', physical: 'blunt' });
+  assert.equal(magicShareOf({ ...ruinous, damageComponents: [{ type: 'slashing', weight: 50 }, { type: 'necrotic', weight: 50 }] }, config), 0.5, 'an aliased magic type counts as magic');
+  assert.equal(magicShareOf({ ...ruinous, damageComponents: [{ type: 'fire', weight: 1 }, { type: 'decay', weight: 1 }] }, config), 1, 'all-magic components deal only magic');
+  assert.equal(magicShareOf({ ...ruinous, damageComponents: [{ type: 'blunt', weight: 1 }, { type: 'piercing', weight: 3 }] }, config), 0, 'all-physical components deal only physical');
+  assert.equal(magicShareOf({ ...ruinous, magicShare: 0.9 }, config), 0.9, 'an explicit magicShare outranks the components');
+  assert.equal(magicShareOf({ ...ruinous, damageComponents: [{ type: 'blunt', weight: 1 }] }, config), 0.5, 'a single component is no split list: the force school decides');
+});
+
 // The card face splits its amount the way the committed hit does: the card's own damage by its share,
 // then the rating bonus by its category. A real previewCard builds the face (no target, so the face is the card's own number).
 function faceOf(cards, cardId, ratingValue) {

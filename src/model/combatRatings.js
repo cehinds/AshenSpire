@@ -646,7 +646,10 @@ const MELEE_REACHES = new Set(['contact', 'melee']);
 /**
  * magicShareOf(profile, config) → the share of a hit that is magic (Barrier,
  * then Ward) rather than physical (Block, then Poise). Precedence (owner rules):
- *   1. the carrier's own magicShare;
+ *   1. the carrier's own magicShare; else its damage components, when it lists
+ *      more than one: the weight of its magic types over the whole weight (the
+ *      card says what it deals: magic and physical parts deal both, magic only
+ *      deals magic);
  *   2. a school whose listed share is below 1 decides at any reach: force splits
  *      (0.5), alteration is all physical (0);
  *   3. a melee spell (spell camp, contact or melee reach) with no magic school and
@@ -662,6 +665,8 @@ const MELEE_REACHES = new Set(['contact', 'melee']);
  */
 export function magicShareOf(profile, config = null) {
   if (Number.isFinite(profile?.magicShare)) return Math.min(1, Math.max(0, profile.magicShare));
+  const components = componentPartsOf(profile);
+  if (components) return components.magicShare;
   const spell = profile?.camp === 'spell';
   const school = schoolOf(profile);
   const type = canonicalDamageType(profile?.damageType);
@@ -675,6 +680,34 @@ export function magicShareOf(profile, config = null) {
   const typed = damageTypeMagicShare(config, type);
   if (typed !== null) return typed;
   return spell ? 1 : 0;
+}
+
+/**
+ * componentPartsOf(profile) → { magic, physical, magicShare } for a contact whose
+ * damageComponents list more than one entry, else null. Each part lists its
+ * component types ({ type, weight }, canonical names); a type the rules mark
+ * physical: false is magic, every other type physical. magicShare is the magic
+ * weight over the whole weight.
+ */
+export function componentPartsOf(profile) {
+  const list = profile?.damageComponents;
+  if (!Array.isArray(list) || list.length < 2) return null;
+  const magic = [], physical = [];
+  for (const component of list) {
+    const weight = Math.max(0, Number(component?.weight) || 0);
+    const type = canonicalDamageType(component?.type);
+    if (!type) continue;
+    (isMagicDamageType(type) ? magic : physical).push({ type, weight });
+  }
+  const sum = parts => parts.reduce((total, part) => total + part.weight, 0);
+  const total = sum(magic) + sum(physical);
+  if (!(total > 0)) return null;
+  return { magic, physical, magicShare: sum(magic) / total };
+}
+
+// The heaviest type of a part (first on a tie), or null for an empty part.
+function heaviestType(parts) {
+  return parts.reduce((best, part) => (!best || part.weight > best.weight ? part : best), null)?.type || null;
 }
 
 /** The Melee spell magic share: the Advanced row when the run has one, else the content default. */
@@ -726,6 +759,11 @@ export function magicDamageTypeOf(profile) {
 
 /** splitDamageTypesOf(profile) → the magic and physical damage types of a split hit. */
 export function splitDamageTypesOf(profile) {
+  const components = componentPartsOf(profile);
+  if (components) {
+    return { magic: heaviestType(components.magic) || magicDamageTypeOf(profile) || 'arcane',
+      physical: heaviestType(components.physical) || physicalTypeOf(profile) || 'blunt' };
+  }
   return { magic: magicDamageTypeOf(profile) || 'arcane', physical: physicalTypeOf(profile) || 'blunt' };
 }
 
