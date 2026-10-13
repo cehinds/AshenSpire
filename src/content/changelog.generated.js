@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-13",
     "summary": "New builds get their number again",
     "detail": "Development-process change only, nothing in the game changes. When a merged change's changelog line was filed under an earlier day, stamping the new build number now moves it to today's entries instead of failing, so the online dev build publishes again.",
-    "build": "0.7.1.1469",
+    "build": "0.7.1.1471",
     "pullRequest": 1948,
     "url": "https://github.com/cehinds/AshenSpire/pull/1948"
   },
@@ -18,7 +18,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-13",
     "summary": "Ornate feat emblems in character creation",
     "detail": "The Feats step shows each feat as a layered, gilded medallion instead of a flat glyph. If the artwork cannot load, the tile falls back to the glyph.",
-    "build": "0.7.1.1469",
+    "build": "0.7.1.1471",
     "pullRequest": 1923,
     "url": "https://github.com/cehinds/AshenSpire/pull/1923"
   },
