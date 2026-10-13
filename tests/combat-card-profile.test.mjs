@@ -73,7 +73,7 @@ test('counter faces describe deferred replies while keeping immediate support vi
   const counterCards = contentBundle.cards.filter(card => combatProfileFor(card).maneuver === 'counter');
   assert.ok(counterCards.length > 0);
   for (const card of counterCards) {
-    const preparation = /(?:Prepare (?:(?:Melee|Ranged|Spell)|a (?:frost|fire|lightning|force|alteration|illusion|divine|decay)) Counter|Counter Contact attacks for)/;
+    const preparation = /(?:Prepare (?:(?:Melee|Ranged|Spell)|a (?:frost|fire|lightning|force|alteration|illusion|divine|decay)) Counter|Counter Melee attacks for)/;
     assert.match(card.textTemplate, preparation, card.id);
     if (card.minCombatExpansionVersion === 2) {
       assert.ok(card.counterCoverage, `${card.id}: explicit coverage`);

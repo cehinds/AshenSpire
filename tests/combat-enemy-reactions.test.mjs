@@ -12,7 +12,7 @@ import { enemyReactionsActive, reactionMovesOf, incomingAgainst, decideEnemyReac
 
 // A soldier whose authored moves include reaction moves (never rolled as intents).
 const REACTION_MOVES = {
-  attackMove: { intent: 'attack', damage: 1, weight: 1, tags: ['camp:physical', 'maneuver:attack', 'reach:contact', 'targeting:single'] },
+  attackMove: { intent: 'attack', damage: 1, weight: 1, tags: ['camp:physical', 'maneuver:attack', 'range:melee', 'targeting:single'] },
   guardA: { intent: 'attack', damage: 3, block: 6, reaction: { on: ['playerAction'], minIncoming: 8 } },
   riposteB: { intent: 'attack', damage: 4, reaction: { on: ['playerReaction'], chance: 0.5 } },
   riposteC: { intent: 'attack', damage: 2, reaction: { on: ['playerReaction'], chance: 0 } },

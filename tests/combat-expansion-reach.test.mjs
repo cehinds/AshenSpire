@@ -4,41 +4,41 @@ import { contentBundle } from '../src/content/index.js';
 import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 
-// v2 spell reach follows the delivery tag unless an expansion row or the far list sets it.
+// v2 spell range follows the delivery tag unless an expansion row or the ranged list sets it.
 const registries = createRegistries(contentBundle);
 const expanded = cardId => applyCombatExpansionCard(resolveCard(registries, { cardId }));
 
-test('projectile spells reach far and melee spells reach contact under v2', () => {
-  assert.equal(expanded('cometFragment').reach, 'far');
-  assert.equal(expanded('starstonePebble').reach, 'far');
-  assert.equal(expanded('starlance').reach, 'far');
-  assert.equal(expanded('starbladePhalanx').reach, 'contact');
-  assert(expanded('cometFragment').tags.includes('reach:far'));
-  assert(expanded('starbladePhalanx').tags.includes('reach:contact'));
+test('projectile spells are ranged and melee spells are melee under v2', () => {
+  assert.equal(expanded('cometFragment').range, 'ranged');
+  assert.equal(expanded('starstonePebble').range, 'ranged');
+  assert.equal(expanded('starlance').range, 'ranged');
+  assert.equal(expanded('starbladePhalanx').range, 'melee');
+  assert(expanded('cometFragment').tags.includes('range:ranged'));
+  assert(expanded('starbladePhalanx').tags.includes('range:melee'));
 });
 
-test('area spells keep near reach with area targeting under v2', () => {
+test('area spells keep reach range with area targeting under v2', () => {
   for (const cardId of ['frostNova', 'supernova']) {
     const card = expanded(cardId);
-    assert.equal(card.reach, 'near', cardId);
+    assert.equal(card.range, 'reach', cardId);
     assert.equal(card.targeting, 'area', cardId);
   }
 });
 
-test('an equipment row reach wins over its projectile delivery tag', () => {
+test('an equipment row range wins over its projectile delivery tag', () => {
   const card = applyCombatExpansionCard(resolveCard(registries, { cardId: 'strike', profileId: 'staffMagicAttack' }));
-  assert.equal(card.reach, 'near');
+  assert.equal(card.range, 'reach');
   assert(card.tags.includes('delivery:projectile'));
-  assert(card.tags.includes('reach:near'));
+  assert(card.tags.includes('range:reach'));
 });
 
-test('an authored reach wins over the far list and the delivery tag under v2', () => {
-  // rimeNeedle is authored reach:near.
-  assert.equal(expanded('rimeNeedle').reach, 'near');
-  // A reach:contact tag beats cometFragment's far-list reach.
+test('an authored range wins over the ranged list and the delivery tag under v2', () => {
+  // rimeNeedle is authored range:reach.
+  assert.equal(expanded('rimeNeedle').range, 'reach');
+  // A range:melee tag beats cometFragment's ranged-list range.
   const base = resolveCard(registries, { cardId: 'cometFragment' });
-  const tagged = [...(base.cardTags || base.tags || []).filter(tag => !tag.startsWith('reach:')), 'reach:contact'];
-  assert.equal(applyCombatExpansionCard({ ...base, tags: tagged, cardTags: tagged }).reach, 'contact');
-  // An authored reach:near beats a projectile delivery and the far list.
-  assert.equal(applyCombatExpansionCard({ ...base, reach: 'near' }).reach, 'near');
+  const tagged = [...(base.cardTags || base.tags || []).filter(tag => !tag.startsWith('range:')), 'range:melee'];
+  assert.equal(applyCombatExpansionCard({ ...base, tags: tagged, cardTags: tagged }).range, 'melee');
+  // An authored range: 'reach' beats a projectile delivery and the ranged list.
+  assert.equal(applyCombatExpansionCard({ ...base, range: 'reach' }).range, 'reach');
 });
