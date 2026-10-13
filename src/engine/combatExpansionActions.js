@@ -209,7 +209,7 @@ export function applyTraitImpact(ctx, action, group) {
     if (!expansionTargetPresent(ctx, target) || !traitLanded(row, own)) continue;
     if (impact) {
       const amount = traitHitAmount(own.poiseDealt, impact);
-      Actions.dealPoiseDamage(ctx, target, amount);
+      Actions.dealPoiseDamage(ctx, target, amount, { cause: 'trait:impact', source: action.source, cardId: carrier.cardId });
       ctx.emit?.('combatImpactApplied', { cardId: carrier.cardId, sourceId: action.source?.id, targetId: target.id,
         ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(target) } : {}), amount, doubled: own.poiseDealt > 0 });
     }

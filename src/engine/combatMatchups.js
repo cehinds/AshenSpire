@@ -519,7 +519,7 @@ function completeTraitGuard(ctx, source, target, receipt) {
   if (!(receipt.amount > 0) || !(receipt.blocked + receipt.wardResisted > 0)) return;
   delete target.combatTraitGuard;
   if (!source.alive) return;
-  if (guard.poise > 0) dealPoiseDamage(ctx, source, guard.poise);
+  if (guard.poise > 0) dealPoiseDamage(ctx, source, guard.poise, { cause: 'trait:guard', source: target });
   if (guard.ward > 0) spendPersistentWard(ctx, source, guard.ward, { sourceId: target.id });
 }
 

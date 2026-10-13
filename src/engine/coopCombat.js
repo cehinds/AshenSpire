@@ -603,7 +603,7 @@ function startPlayerPhase(C) {
       recoverStatusesAtOwnerStart(C, e, { cycle: e.combatOwnerCycle });
       sleepRestoration(C, e);
       e.energy = Math.max(0, e.energy - consumeControlActionLoss(C, e));
-      if (tacticalProtection.block) A.gainBlock(C, e, tacticalProtection.block);
+      if (tacticalProtection.block) A.gainBlock(C, e, tacticalProtection.block, { logSource: 'defendStance' });
       if (tacticalProtection.barrier) C.enqueue({ effect: { op: 'gainBarrier', target: 'self', amount: tacticalProtection.barrier }, source: e, owner: e, target: e, meta: {} });
       drainQueue(C);
     }
@@ -1149,7 +1149,7 @@ function enemyPhase(C) {
     if (C.sharedExpansionVersion === 2) {
       recoverStatusesAtOwnerStart(C, enemy, { cycle: enemy.combatOwnerCycle }); sleepRestoration(C, enemy);
       if (controlRestrictions(C, enemy).locked) { if (!enemy.pendingMove) cancelKnowledgeAction(C, enemy); endControlTurn(C, enemy); continue; }
-      if (tacticalProtection.block) A.gainBlock(C, enemy, tacticalProtection.block);
+      if (tacticalProtection.block) A.gainBlock(C, enemy, tacticalProtection.block, { logSource: 'defendStance' });
       if (tacticalProtection.barrier) C.enqueue({ effect: { op: 'gainBarrier', target: 'self', amount: tacticalProtection.barrier }, source: enemy, owner: enemy, target: enemy, meta: {} });
       drainQueue(C);
     }
