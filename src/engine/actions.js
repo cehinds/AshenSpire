@@ -16,7 +16,8 @@
 // Damage math (SPEC §4.2, order contractual, floor ONCE at the end):
 //   dmg = base
 //   dmg += attacker per-stack 'attackDamageAdd' modifiers
-//   dmg *= attacker 'damageDealtMult' modifiers
+//   dmg *= attacker 'damageDealtMult' modifiers (and 'spellDamageDealtMult'
+//          when the carrier is spell-camp)
 //   dmg *= defender 'damageTakenMult' modifiers
 //   dmg = floor(dmg); below 0 → 0
 // The engine consults the generic status model only — never a named status.
@@ -47,6 +48,7 @@ import { reviveTokenFor, reviveHp, adjustCount } from '../model/consumables.js';
 import { reconcileWardBlock, wardBlockReceipt } from '../model/blockPresentation.js';
 import { allowAbilityOnce, grantAbilityCharge, recordAbilityOffering, requestAbilityDiscard } from './abilityRiders.js';
 import * as Matchups from './combatMatchups.js';
+import { typedDefenseAmount } from './combatExpansionEquipment.js';
 import { creditKnowledgeImpact } from './enemyKnowledge.js';
 
 import * as Expanded from './combatExpansionActions.js';
@@ -56,6 +58,21 @@ import * as Blight from './ashenBlight.js';
 // ---------------------------------------------------------------------------
 // Shared math (also used by combat.js previews — no duplicated math in the UI)
 // ---------------------------------------------------------------------------
+
+/**
+ * Silenced and its kin: `spellDamageDealtMult` scales only a spell-camp
+ * carrier's damage for its owner (authored profile camp; an unprofiled carrier
+ * falls back to the magical-attack reading). Physical damage is untouched.
+ */
+export function spellDamageDealtMultiplier(ctx, source, carrier) {
+  if (!source) return 1;
+  // Read the modifier first: with none active the hit's camp never matters.
+  const mult = statuses.getMult(ctx, source, 'spellDamageDealtMult');
+  if (mult === 1) return 1;
+  const profile = Matchups.combatProfileOf(carrier);
+  const spell = profile ? ['spell', 'spells', 'magic', 'magical'].includes(profile.camp) : !!carrier && isMagicalAttack(ctx, carrier);
+  return spell ? mult : 1;
+}
 
 /**
  * computeAttackDamage(ctx, source, target|null, base) → final integer damage.
@@ -75,7 +92,7 @@ export function computeAttackDamage(ctx, source, target, base, attackTags, carri
       : 0;
   }
   dmg += statuses.getAdd(ctx, source, 'attackDamageAdd');
-  dmg *= statuses.getMult(ctx, source, 'damageDealtMult');
+  dmg *= statuses.getMult(ctx, source, 'damageDealtMult') * spellDamageDealtMultiplier(ctx, source, carrier);
   if (target) dmg *= statuses.getMult(ctx, target, 'damageTakenMult');
   if (target && !beforeDefense) dmg *= ratingDamageMultiplier(ctx, target, isMagicalAttack(ctx, carrier));
   // Tag-scoped extra vulnerability (#61): statuses whose taggedVulnerability
@@ -264,13 +281,19 @@ export function restoreExpandedWard(ctx, entity, nominal, options = {}) {
 export function prepareExpandedDefense(ctx, target, receipt, carrier) {
   if (receipt.defendedAmounts) return;
   const sums = {}, indices = {};
+  const aliases = { pierce: 'piercing', slash: 'slashing', cold: 'frost', force: 'arcane', holy: 'sacred', necrotic: 'decay' };
   receipt.amounts.forEach((amount, index) => {
     const profile = receipt.profiles[index];
-    const aliases = { pierce: 'piercing', slash: 'slashing', cold: 'frost', force: 'arcane', holy: 'sacred', necrotic: 'decay' };
-    const type = aliases[profile.damageType] || profile.damageType || 'blunt';
-    const key = `${profile.camp}:${type}`;
-    sums[key] = (sums[key] || 0) + amount;
-    (indices[key] ||= []).push(index);
+    // A mixed hit meets each type's defense with its weighted share (owner #23/#24).
+    const parts = profile.damageComponents?.length > 1
+      ? allocateInteger(amount, profile.damageComponents.map(c => c.weight)).map((share, i) => [profile.damageComponents[i].type, share])
+      : [[profile.damageType, amount]];
+    for (const [partType, share] of parts) {
+      const type = aliases[partType] || partType || 'blunt';
+      const key = `${profile.camp}:${type}`;
+      sums[key] = (sums[key] || 0) + share;
+      (indices[key] ||= []).push([index, share]);
+    }
   });
   receipt.defendedAmounts = receipt.amounts.map(() => 0);
   for (const [key, total] of Object.entries(sums)) {
@@ -287,10 +310,9 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
       amount = Math.max(0, Math.floor(total * (camp === 'spell' ? 1 : ratingDamageMultiplier(ctx, target, false))
         * (Number.isFinite(resistance) ? Math.max(0, 1 - resistance / 100) : 1)));
     }
-    amount = Math.max(0, Math.ceil(amount * (1 + Math.max(0, target.damageWeaknessPercent?.[type] || 0) / 100))
-      - Math.max(0, target.damageResistanceFlat?.[type] || 0));
-    const shares = total > 0 ? allocateInteger(amount, indices[key].map(index => receipt.amounts[index])) : indices[key].map(() => 0);
-    indices[key].forEach((index, i) => { receipt.defendedAmounts[index] = shares[i]; });
+    amount = typedDefenseAmount(target, type, amount);
+    const shares = total > 0 ? allocateInteger(amount, indices[key].map(([, share]) => share)) : indices[key].map(() => 0);
+    indices[key].forEach(([index], i) => { receipt.defendedAmounts[index] += shares[i]; });
   }
   const magical = receipt.profiles.map((profile, index) => profile.camp === 'spell' ? index : -1).filter(index => index >= 0);
   const total = magical.reduce((sum, index) => sum + receipt.defendedAmounts[index], 0);
@@ -573,8 +595,10 @@ export function staggerEnemy(ctx, enemy) {
  * card rider gated on it). Both the poise bar filling (dealPoiseDamage) and a
  * direct proc stagger (the 'stagger' opcode, insanity's row) land here, so an
  * Insanity break is the same Stagger a full meter is. Meter growth stays with
- * the bar: the direct path neither consumes nor grows it (SPEC §4.4). Under
- * combat ratings a break is the skipped turn alone (no onFill), on both paths.
+ * the bar: the direct path neither consumes nor grows it (SPEC §4.4). Combat
+ * ratings change nothing here (owner, 2026-10-12): every enemy break is a full
+ * Stagger with onFill, and the rating meter's own breaks
+ * (combatRatings.applyRatingImpact), Poise or Ward, run the same onFill.
  */
 /**
  * growPoiseMeter(ctx, entity) — after a full Poise fill, the meter's max grows
@@ -597,11 +621,7 @@ export function growPoiseMeter(ctx, entity) {
 
 export function breakEnemy(ctx, enemy) {
   if (!staggerEnemy(ctx, enemy)) return false;
-  if (ctx.ratingsRules) return true;
-  const cfg = (ctx.registries.balance && ctx.registries.balance.poise) || {};
-  for (const eff of cfg.onFill || []) {
-    ctx.enqueue({ effect: eff, source: enemy, owner: enemy, target: enemy, meta: {} });
-  }
+  Ratings.enqueueStaggerOnFill(ctx, enemy);
   return true;
 }
 

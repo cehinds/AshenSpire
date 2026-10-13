@@ -255,10 +255,11 @@ Meta
         Fire {→ Burned}
         Frost {→ Frostbitten}
         Lightning {→ Paralyzed}
-        Earth
+        Earth {Applies 1 Slowed on a Health hit}
         Divine {cleanses}
         Necrotic {→ Blighted}
-        Psychic [n] {→ Confused}
+        Psychic {→ Confused}
+        Poison {→ Venom}
       Hybrid {Arcane damage. Builds Arcane Exposure on enemies that track it.}
         Force {Block or Barrier stops it}
     Stance
@@ -689,6 +690,7 @@ Property {What a holder CONFERS while it is held. Each property node has exactly
   Emberwick Charm {What Emberwick Charm does when the fight gives it its moment. Effects in nodeEffects.json: triggers on hpLost; ops gainEnergy.}
   Carrion Morsel {What Carrion Morsel does when the fight gives it its moment. Effects in nodeEffects.json: triggers on enemyDied; ops heal.}
   Gravetender's Bell {What Gravetender's Bell does when the fight gives it its moment. Effects in nodeEffects.json: triggers on enemyDied; ops draw.}
+  Oath Kept {While you have not entered a stance this fight, each Oath card you play grants Block. Every class card carries it; entering a stance breaks it for the rest of the fight.}
   Sentinel's Oath {What Sentinel's Oath does when the fight gives it its moment. Effects in nodeEffects.json: triggers on cardPlayed; ops applyStatus.}
   Forsaken Warflag {What Forsaken Warflag does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart; ops applyStatus.}
   Wrath Coil {What Wrath Coil does when the fight gives it its moment. Effects in nodeEffects.json: triggers on hpLost; ops damage.}

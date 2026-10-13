@@ -83,6 +83,7 @@ export const classes = [
       'bladeDanceRogue', 'garrote', 'fanOfKnives', 'setupRogue', 'acrobaticsRogue', 'disorient',
       'coupDeGrace', 'sap', 'shadowstep', 'afterimageCard', 'bloodletterRogue', 'venomcoat', 'misdirect',
       'aimedShot', 'barbedArrow',
+      'aspDart', 'viperStrike', 'septicBlade', 'lethalDose',
       'assassinate', 'thousandCutsRogue', 'deadlyTempoCard', 'opportunistCard', 'envenomCard',
       'toxicVolley', 'smokeBomb', 'executionWindow', 'perfectHeist', 'deathblow',
       'bindingParry', 'whirlingGuard',

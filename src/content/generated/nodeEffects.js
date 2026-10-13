@@ -1127,6 +1127,56 @@ export const nodeEffects = {
       }
     }
   },
+  "oathKept": {
+    "triggers": [
+      {
+        "on": "stanceEntered",
+        "if": {
+          "p": "eventSourceIsOwner"
+        },
+        "do": [
+          {
+            "op": "applyStatus",
+            "target": "owner",
+            "status": "stanceShifted",
+            "stacks": 1
+          }
+        ]
+      },
+      {
+        "on": "cardPreparing",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "cardTagIs",
+              "tag": "oath"
+            },
+            {
+              "p": "not",
+              "pred": {
+                "p": "hasStatus",
+                "of": "owner",
+                "status": "stanceShifted"
+              }
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "block",
+            "target": "owner",
+            "amount": {
+              "variable": "block"
+            }
+          }
+        ]
+      }
+    ]
+  },
   "ashenGrip": {
     "triggers": [
       {

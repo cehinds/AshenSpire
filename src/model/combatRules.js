@@ -37,7 +37,7 @@ export function validateCombatRules(rules, registries = null) {
 
 export function validateAttack(attack, rules = null) {
   if (!attack || typeof attack !== 'object' || Array.isArray(attack)) throw new Error('attack must be an object');
-  const fields = ['source', 'hand', 'damageType', 'components', 'impactBonus', 'impactFactor', 'penetration', 'hitWeights', 'dodgeable', 'buildup'];
+  const fields = ['source', 'hand', 'damageType', 'components', 'impactBonus', 'impactFactor', 'penetration', 'hitWeights', 'dodgeable', 'buildup', 'weaponDamage'];
   for (const key of Object.keys(attack)) if (!fields.includes(key)) throw new Error(`unknown attack field '${key}'`);
   if (attack.source && !['weapon', 'spell', 'unarmed'].includes(attack.source)) throw new Error('invalid attack source');
   if (attack.hand && !['mainHand', 'offHand'].includes(attack.hand)) throw new Error('invalid attack hand');
@@ -55,6 +55,18 @@ export function validateAttack(attack, rules = null) {
       assertNumber(c.weight, 'component.weight');
     }
     if (!attack.components.some((c) => c.weight > 0)) throw new Error('component weights must have a positive total');
+  }
+  // The weapon families/types a weapon-typed card keeps; any other deals types[0] (owner #19).
+  if (attack.weaponDamage !== undefined) {
+    const { families, types, ...rest } = attack.weaponDamage || {};
+    if (Object.keys(rest).length) throw new Error(`unknown attack.weaponDamage field '${Object.keys(rest)[0]}'`);
+    if (!Array.isArray(families) || !families.length || families.some((f) => typeof f !== 'string' || (rules && !(f in rules.impact.family)))) throw new Error('attack.weaponDamage.families must name known source families');
+    if (!Array.isArray(types) || !types.length || types.some((t) => typeof t !== 'string' || (rules && !rules.damageTypes[t]))) throw new Error('attack.weaponDamage.types must name known damage types');
+    if (attack.damageType) throw new Error('attack.weaponDamage cannot sit beside a fixed damageType');
+    // Beside components, exactly one component is the weapon's part (owner #24).
+    if (attack.components && attack.components.filter((c) => types.includes(c.type)).length !== 1) {
+      throw new Error('attack.weaponDamage beside components needs exactly one component of its types');
+    }
   }
   if (attack.hitWeights !== undefined) {
     if (!Array.isArray(attack.hitWeights) || !attack.hitWeights.length) throw new Error('hitWeights must be nonempty');

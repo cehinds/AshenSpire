@@ -23,6 +23,8 @@ export const combatStatusRules = {
     weak: { camp: 'physical', profile: 'bodily', activeStatus: 'weak', initialThreshold: 6, activeThreshold: 4, cap: 3, chanceRecovery: true },
     vulnerable: { camp: 'physical', profile: 'bodily', activeStatus: 'vulnerable', initialThreshold: 6, activeThreshold: 4, cap: 3, chanceRecovery: true },
     offBalance: { camp: 'physical', profile: 'bodily', activeStatus: 'offBalance', initialThreshold: 6, activeThreshold: 4, cap: 3, chanceRecovery: true },
+    confused: { camp: 'spell', profile: 'mental', activeStatus: 'confused', initialThreshold: 6, activeThreshold: 4, cap: 3, chanceRecovery: true },
+    slowed: { camp: 'spell', profile: 'elemental', activeStatus: 'slowed', initialThreshold: 6, activeThreshold: 4, cap: 3, chanceRecovery: true },
   },
   sleep: { status: 'sleep', hpPerStack: 2, hpCombatCap: 6, wardCombatCap: 1, damagePercentPerStack: 10 },
   prone: { status: 'prone', contactPercent: 25, rangedSinglePercent: -25, nearEvade: 2, farEvade: 4, standCost: 1 },
@@ -46,4 +48,17 @@ export const expansionStatuses = [
   { id: 'invulnerability', name: 'Invulnerability', icon: '◈', stackMode: 'add', decay: 'none', tooltip: 'Consume one stack to avoid the next direct damaging action, including all its hits. Status buildup still applies; no Counter return. Damage over time does not consume it.' },
   { id: 'decoy', name: 'Decoy', icon: '◇', stackMode: 'add', decay: 'none', tooltip: 'Consume one stack to avoid a Single Near/Far damaging action. Status buildup still applies. Sweep and Holy revelation clear it.' },
   { id: 'concealed', name: 'Concealed', icon: '◌', stackMode: 'refresh', decay: { duration: 2 }, tooltip: 'Concealment. Sweep and Holy revelation clear it.' },
+  // Psychic and Earth rider statuses (docs/design/elements-and-tag-mechanics.md 2.1, 2.2). Icons alias to
+  // the nearest existing engraved glyph in ui/components/engravedIcon.js until art lands.
+  { id: 'confused', name: 'Confused', icon: '❖', tint: '#a06bd0', stackMode: 'add', decay: 'perTurnEnd',
+    modifiers: { damageDealtMult: 0.9 },
+    hooks: [{ on: 'ownerTurnStart', if: { p: 'random', pct: 50 },
+      do: [{ op: 'poiseDamage', target: 'owner', amount: { f: 'mul', args: [3, { f: 'stacks', status: 'confused', of: 'owner' }] } }] }],
+    tooltip: 'Deals 10% less damage. At the start of its turn, 50% chance to take 3 Poise damage per stack. 1 stack expires each turn.' },
+  { id: 'slowed', name: 'Slowed', icon: '⌛', tint: '#8a7b5c', stackMode: 'add', decay: 'perTurnEnd',
+    modifiers: { damageDealtMult: 0.9, blockGainedMult: 0.75 },
+    tooltip: 'Deals 10% less damage and gains 25% less Block. 1 stack expires each turn.' },
+  { id: 'entombed', name: 'Entombed', icon: '▣', tint: '#9a8a6a', stackMode: 'refresh', decay: 'perTurnEnd',
+    modifiers: { skipTurn: true, damageTakenMult: 0.75 },
+    tooltip: 'Skips its next turn. Takes 25% less damage while entombed.' },
 ];

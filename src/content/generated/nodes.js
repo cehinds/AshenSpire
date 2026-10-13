@@ -931,7 +931,7 @@ export const nodes = [
     "parentId": "attackSource",
     "label": "Spell",
     "color": "9FC3E8",
-    "glyph": "◇",
+    "glyph": "✧",
     "visibility": "",
     "priority": "",
     "domain": "",
@@ -1093,6 +1093,42 @@ export const nodes = [
     "domain": "",
     "aside": "",
     "blurb": "Applies Blight on a Health hit (Crimson in classic combat; Necrotic in expanded combat) unless the card already prints a Crimson Blight effect."
+  },
+  {
+    "id": "damage:poison",
+    "parentId": "damageType",
+    "label": "Poison",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "Applies 1 Venom on a Health hit unless the card already prints a Venom effect. Not reduced by armour class; constructs halve its build-up."
+  },
+  {
+    "id": "damage:psychic",
+    "parentId": "damageType",
+    "label": "Psychic",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "Applies 1 Confused on a Health hit unless the card already prints a Confused effect. Not reduced by armour class."
+  },
+  {
+    "id": "damage:earth",
+    "parentId": "damageType",
+    "label": "Earth",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "Applies 1 Slowed on a Health hit unless the card already prints a Slowed effect. Not reduced by armour class; absorbed by Ward."
   },
   {
     "id": "technique:heavy",
@@ -1981,6 +2017,18 @@ export const nodes = [
     "domain": "",
     "aside": "",
     "blurb": "A class card's leaning: skill XP in the weapon groups the card also names (its item-type tags) is multiplied. Scoped by the carrier's own tags, never by a second table."
+  },
+  {
+    "id": "oathKept",
+    "parentId": "property",
+    "label": "Oath Kept",
+    "color": "C9A227",
+    "glyph": "✚",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "While you have not entered a stance this fight, each Oath card you play grants Block. Every class card carries it; entering a stance breaks it for the rest of the fight."
   },
   {
     "id": "ashenGrip",
@@ -4927,7 +4975,7 @@ export const nodes = [
     "parentId": "camp",
     "label": "Spell",
     "color": "9FC3E8",
-    "glyph": "✦",
+    "glyph": "✧",
     "visibility": "",
     "priority": "",
     "domain": "",
@@ -5103,6 +5151,18 @@ export const nodes = [
     "blurb": "Attrition and offerings: Crimson Blight, life transfer and pay-health combos."
   },
   {
+    "id": "school:earth",
+    "parentId": "school",
+    "label": "Earth",
+    "color": "8A7B5C",
+    "glyph": "⛰",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "Grounding and weight: Slowed and Entombed slow or stop enemy turns; Stoneskin keeps Block."
+  },
+  {
     "id": "counter:melee",
     "parentId": "counterMode",
     "label": "Melee counter",
@@ -5179,7 +5239,7 @@ export const nodes = [
     "parentId": "maneuver",
     "label": "Spell",
     "color": "9FC3E8",
-    "glyph": "◇",
+    "glyph": "✧",
     "visibility": "",
     "priority": "",
     "domain": "",

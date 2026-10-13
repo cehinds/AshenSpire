@@ -1,0 +1,109 @@
+{
+  "version": 1,
+  "title": "Feats Current Step",
+  "canvas": {
+    "width": 198,
+    "height": 48,
+    "background": "transparent"
+  },
+  "defaultState": "feats",
+  "states": [
+    {
+      "id": "feats",
+      "name": "Feats"
+    }
+  ],
+  "assets": {},
+  "nodes": [
+    {
+      "id": "feats-current-step",
+      "name": "Feats Current Step",
+      "type": "group",
+      "parent": null,
+      "x": 0,
+      "y": 0,
+      "width": 198,
+      "height": 48,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "fill": "none"
+    },
+    {
+      "id": "feats-current-step-background",
+      "name": "Feats Current Step Background \u00b7 background",
+      "type": "rect",
+      "parent": "feats-current-step",
+      "x": 0,
+      "y": 0,
+      "width": 198,
+      "height": 48,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "fill": "#163e2b",
+      "stroke": "none",
+      "strokeWidth": 1,
+      "radius": 4
+    },
+    {
+      "id": "feats-current-step-label",
+      "name": "Feats Current Step Label",
+      "type": "text",
+      "parent": "feats-current-step",
+      "x": 12,
+      "y": 16,
+      "width": 174,
+      "height": 32,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "text": "5 of 7 \u00b7 Feats",
+      "fontSize": 16,
+      "fontFamily": "Arial",
+      "fill": "#e7dec8"
+    },
+    {
+      "id": "feats-current-step-background-trim",
+      "name": "Feats Current Step Background \u00b7 independent trim",
+      "type": "rect",
+      "parent": "feats-current-step",
+      "x": 0,
+      "y": 0,
+      "width": 198,
+      "height": 48,
+      "z": 1.1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "fill": "none",
+      "stroke": "#72ce94",
+      "strokeWidth": 1,
+      "radius": 4
+    }
+  ],
+  "metadata": {
+    "componentSource": "feats-current-step",
+    "sourceState": "feats",
+    "designOnly": true
+  }
+}

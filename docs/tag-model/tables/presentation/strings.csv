@@ -2273,7 +2273,7 @@ hardcoded.acknowledgement_last_updated,· acknowledgement last updated,,hardcode
 hardcoded.couldn_t_save_the_file_here_the_text_above_is_the_whole_of_i,Couldn’t save the file here — the text above is the whole of it.,,hardcoded,src/ui/screens/about.js:145,hardcoded,src/ui/screens/about.js:145,about.couldnTSaveTheFileHere,content/source/uiStrings.csv
 hardcoded.ward,Ward,,hardcoded,src/ui/screens/combat.js:727,hardcoded,src/ui/screens/combat.js:727,combat.ward,content/source/uiStrings.csv
 hardcoded.click_or_tap_to_inspect_all_active_skills_and_effects,Click or tap to inspect all active skills and effects.,,hardcoded,src/ui/screens/combat.js:1374,hardcoded,src/ui/screens/combat.js:1374,combat.clickOrTapToInspectAll,content/source/uiStrings.csv
-hardcoded.evade,Evade,,hardcoded,src/ui/screens/combat.js:1437,hardcoded,src/ui/screens/combat.js:1437,combat.evade,content/source/uiStrings.csv
+hardcoded.evade,Evade,,hardcoded,src/ui/screens/combat.js:1437,hardcoded,src/ui/screens/combat.js:1437,card.tags.evade,content/source/uiStrings.csv
 hardcoded.block_expires_at_the_start_of_your_next_turn,Block expires at the start of your next turn.,,hardcoded,src/ui/screens/combat.js:2687,hardcoded,src/ui/screens/combat.js:2687,combat.blockExpiresAtTheStartOf,content/source/uiStrings.csv
 hardcoded.press,Press,,hardcoded,src/ui/screens/combat.js:2688,hardcoded,src/ui/screens/combat.js:2688,combat.press,content/source/uiStrings.csv
 hardcoded.or_hold_this,", or hold this.",,hardcoded,src/ui/screens/combat.js:2688,hardcoded,src/ui/screens/combat.js:2688,combat.orHoldThis,content/source/uiStrings.csv

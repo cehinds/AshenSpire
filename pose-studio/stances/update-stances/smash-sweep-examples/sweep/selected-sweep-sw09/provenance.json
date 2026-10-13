@@ -1,0 +1,87 @@
+{
+  "generator": "image_gen.imagegen",
+  "whole_strip_generation": true,
+  "old_selection_source": "../iai-whirlwind-v2/Sweep09/raw.png",
+  "seed_raw": "seed/raw-straight-arm.png",
+  "seed_raw_sha256": "e4834dc76a58f16e5f297a7b86e42cdb912ad3cbec49e32408103ec888412c9c",
+  "seed_normalization": {
+    "raw_dimensions": [
+      1536,
+      1024
+    ],
+    "resized": [
+      614,
+      410
+    ],
+    "placement": [
+      65,
+      359
+    ],
+    "canvas": [
+      1024,
+      1024
+    ],
+    "raw_front_boot_sole_y": 925,
+    "raw_rear_boot_sole_y": 941,
+    "normalized_front_sole_y": 729,
+    "normalized_rear_sole_y": 735,
+    "anatomical_ground_y": 734,
+    "notes": "Rear boot sole is lowest support contact; front boot sits6pxhigher due view depth. Alpha/cape fringe is not floor."
+  },
+  "actions_raws": [
+    {
+      "path": "SW09/raw-bent-actions-superseded.png",
+      "sha256": "04168f23b08d28467590d9da3f866fa345e3089f17d2aa71577acbb6bf373b88",
+      "size": [
+        2169,
+        725
+      ]
+    },
+    {
+      "path": "SW09/raw-overlap-superseded.png",
+      "sha256": "cdd255549b26984cfa69dc2ca68f71e0bd7b76c0ec502e96fa455eab82c76d27",
+      "size": [
+        2164,
+        727
+      ]
+    },
+    {
+      "path": "SW09/raw.png",
+      "sha256": "c86bc228bf38a662cdd23eebe6e018515fabd6d81f6f51a64b99eadc70fca331",
+      "size": [
+        2164,
+        727
+      ]
+    }
+  ],
+  "prompts": [
+    {
+      "path": "SW09/arm-repair-prompt.txt",
+      "sha256": "a1721fde0f236b318bbd1cc57f77fdd78c91671b74cf2bcac523a1d5d9763b7a"
+    },
+    {
+      "path": "SW09/initial-prompt.txt",
+      "sha256": "d42b0aca9bf909871d684b018eb3a1ca5fd9bc529448242df92ff596412f1da5"
+    },
+    {
+      "path": "SW09/spacing-repair-prompt.txt",
+      "sha256": "05d6bd46e7f178e1885a5e42b508823236d74de44a3b7d9443ff9aa7d197439b"
+    },
+    {
+      "path": "seed/prompt.txt",
+      "sha256": "2e478b6fae27b141f02449e627f99075680d1ce86cc6774c08e4232e6d67af3c"
+    }
+  ],
+  "grip": "Palm upward underhilt, thumb above, knuckles below; visible inner elbow; swordarm near straight through three cuts",
+  "motion": "Hips/shoulders and foot pivots create RIGHTpreload/LEFTturn/LOWRIGHTunwind, with surrounding generated physical slash arcs",
+  "normalization": "One sharedscale from approvedseed/rawidle anatomy, manuallyidentifiedhelmetx and boot support plane; no effectboundscentering, no mechanicalpainting",
+  "gif_slots": 5,
+  "gif_ms": [
+    350,
+    210,
+    180,
+    260,
+    350
+  ],
+  "history_preserved": true
+}

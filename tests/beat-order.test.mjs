@@ -183,3 +183,23 @@ test('a custom body clip keeps standard numbers but finishes before another reac
     assert.equal(trace.find(e=>e.what==='float:-1').at-first,ANIM_SPEEDS.normal.reactionMs,'numbers retain the contractual reaction delay');
   });
 });
+
+test('an identity-bound contact cue runs before hit-stop and also on an avoided or empty contact', (t) => {
+  drive(t,({trace,run,finish})=>{
+    run(playerHit(6),{animateActor:()=>({impactMs:100,totalMs:300,
+      contact:()=>trace.push({what:'ack',at:Date.now()}),
+      hold:()=>trace.push({what:'contact-hold',at:Date.now()}),
+      cancel:()=>trace.push({what:'settle',at:Date.now()}),
+    })});finish();
+    assert.equal(timeOf(trace,'ack'),100);
+    assert.ok(trace.findIndex(row=>row.what==='ack')<trace.findIndex(row=>row.what==='contact-hold'));
+  });
+});
+
+test('an opted-in actor acknowledges its contact even when no hit-stop or outcome is drawn', (t) => {
+  drive(t,({trace,run,finish})=>{
+    run([{type:'cardPlayed',cardType:'attack',cardId:'strike',cardInstanceId:'empty',targetId:'e1'}],{
+      animateActor:()=>({impactMs:100,totalMs:300,contact:()=>trace.push({what:'ack',at:Date.now()}),cancel(){}}),
+    });finish();assert.equal(timeOf(trace,'ack'),100);
+  });
+});

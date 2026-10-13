@@ -186,7 +186,7 @@ meta.combat.skill.spellcraft.fire.gorefire,fire.gorefire,Gorefire,meta.combat.sk
 meta.combat.skill.spellcraft.fire.ash,fire.ash,Ash,meta.combat.skill.spellcraft.fire,Skill,spellcraft.fire,Moved: re-homed in the proposal (tag-tree.txt [m]).,,,,,,live-tag,•,7A6F5A,ash
 meta.combat.skill.spellcraft.frost,spellcraft.frost,Frost,meta.combat.skill.spellcraft,Skill,spellcraft.frost,,,,,,,live-tag,❄,A6D8EF,school:frost
 meta.combat.skill.spellcraft.lightning,spellcraft.lightning,Lightning,meta.combat.skill.spellcraft,Skill,spellcraft.lightning,,,,,,,live-tag,ϟ,E8D46A,school:lightning
-meta.combat.skill.spellcraft.earth,spellcraft.earth,Earth,meta.combat.skill.spellcraft,Skill,spellcraft.earth,,,,,,,game-concept,,,
+meta.combat.skill.spellcraft.earth,spellcraft.earth,Earth,meta.combat.skill.spellcraft,Skill,spellcraft.earth,,,,,,,live-tag,⛰,8A7B5C,school:earth
 meta.combat.skill.spellcraft.force,spellcraft.force,Force,meta.combat.skill.spellcraft,Skill,spellcraft.force,,,,,,,live-tag,✦,B99DEC,school:force
 meta.combat.skill.spellcraft.force.starstone,force.starstone,Starstone,meta.combat.skill.spellcraft.force,Skill,spellcraft.force,Moved: re-homed in the proposal (tag-tree.txt [m]). astral force,,,,,astral,live-tag,✦,7FA8C9,starstone
 meta.combat.skill.spellcraft.divine,spellcraft.divine,Divine,meta.combat.skill.spellcraft,Skill,spellcraft.divine,,,,,,,live-tag,✚,F0D99A,school:divine
@@ -206,10 +206,11 @@ meta.combat.damage.magic,damage.magic,Magic,meta.combat.damage,DamageType,,,,,,,
 meta.combat.damage.magic.fire,magic.fire,Fire,meta.combat.damage.magic,DamageType,spellcraft.fire,→ Burned,On hit: apply [burned],burned,,,,live-tag,◇,9FC3E8,damage:fire
 meta.combat.damage.magic.frost,magic.frost,Frost,meta.combat.damage.magic,DamageType,spellcraft.frost,→ Frostbitten,On hit: apply [build-up.frost],,,,,live-tag,◇,9FC3E8,damage:frost
 meta.combat.damage.magic.lightning,magic.lightning,Lightning,meta.combat.damage.magic,DamageType,spellcraft.lightning,→ Paralyzed,On hit: apply [paralyzed]; breaks an ungrounded Counter,,,,,live-tag,◇,9FC3E8,damage:lightning
-meta.combat.damage.magic.earth,magic.earth,Earth,meta.combat.damage.magic,DamageType,spellcraft.earth,,,,,,,game-concept,,,
+meta.combat.damage.magic.earth,magic.earth,Earth,meta.combat.damage.magic,DamageType,spellcraft.earth,Applies 1 Slowed on a Health hit,On hit: apply [slowed],,,,,live-tag,◇,9FC3E8,damage:earth
 meta.combat.damage.magic.divine,magic.divine,Divine,meta.combat.damage.magic,DamageType,spellcraft.divine,cleanses,On hit: cleanse one debuff from the attacker,,,,,live-tag,◇,9FC3E8,damage:sacred
 meta.combat.damage.magic.necrotic,magic.necrotic,Necrotic,meta.combat.damage.magic,DamageType,spellcraft.necrotic,→ Blighted,On hit: apply [blighted],,,,,live-tag,◇,9FC3E8,damage:decay
-meta.combat.damage.magic.psychic,magic.psychic,Psychic,meta.combat.damage.magic,DamageType,spellcraft.psychic,→ Confused,On hit: apply [confused],,,,,new,,,
+meta.combat.damage.magic.psychic,magic.psychic,Psychic,meta.combat.damage.magic,DamageType,spellcraft.psychic,→ Confused,On hit: apply [confused],,,,,live-tag,◇,9FC3E8,damage:psychic
+meta.combat.damage.magic.poison,poison,Poison,meta.combat.damage.magic,DamageType,,→ Venom,On hit: apply [poisoned],,,,,live-tag,◇,9FC3E8,damage:poison
 meta.combat.damage.hybrid,hybrid,Hybrid,meta.combat.damage,DamageType,,Arcane damage. Builds Arcane Exposure on enemies that track it.,,,,,,live-tag,,,damage.arcane
 meta.combat.damage.hybrid.force,hybrid.force,Force,meta.combat.damage.hybrid,DamageType,spellcraft.force,Block or Barrier stops it,Drains 2 [defensive-stats.ward]; slips past melee Counter,,,,,live-tag,◇,9FC3E8,damage:arcane
 meta.combat.stance,combat.stance,Stance,meta.combat,Stance,,,,,,,,live-tag,,,maneuver
@@ -502,6 +503,7 @@ property.howlingStandard,howlingStandard,Howling Standard,property,TagNode,,What
 property.emberwickCharm,emberwickCharm,Emberwick Charm,property,TagNode,,What Emberwick Charm does when the fight gives it its moment. Effects in nodeEffects.json: triggers on hpLost; ops gainEnergy.,,,,,,live-tag,🕯,9A9A9A,emberwickCharm
 property.carrionMorsel,carrionMorsel,Carrion Morsel,property,TagNode,,What Carrion Morsel does when the fight gives it its moment. Effects in nodeEffects.json: triggers on enemyDied; ops heal.,,,,,,live-tag,🍖,9A9A9A,carrionMorsel
 property.gravetendersBell,gravetendersBell,Gravetender's Bell,property,TagNode,,What Gravetender's Bell does when the fight gives it its moment. Effects in nodeEffects.json: triggers on enemyDied; ops draw.,,,,,,live-tag,🔔,6E9C6E,gravetendersBell
+property.oathKept,oathKept,Oath Kept,property,TagNode,,"While you have not entered a stance this fight, each Oath card you play grants Block. Every class card carries it; entering a stance breaks it for the rest of the fight.",,,,,,live-tag,✚,C9A227,oathKept
 property.sentinelsOath,sentinelsOath,Sentinel's Oath,property,TagNode,,What Sentinel's Oath does when the fight gives it its moment. Effects in nodeEffects.json: triggers on cardPlayed; ops applyStatus.,,,,,,live-tag,🛡,6E9C6E,sentinelsOath
 property.forsakenWarflag,forsakenWarflag,Forsaken Warflag,property,TagNode,,What Forsaken Warflag does when the fight gives it its moment. Effects in nodeEffects.json: triggers on playerTurnStart; ops applyStatus.,,,,,,live-tag,🏴,B08CC9,forsakenWarflag
 property.wrathCoil,wrathCoil,Wrath Coil,property,TagNode,,What Wrath Coil does when the fight gives it its moment. Effects in nodeEffects.json: triggers on hpLost; ops damage.,,,,,,live-tag,⚡,B08CC9,wrathCoil

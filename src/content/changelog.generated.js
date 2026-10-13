@@ -3,6 +3,126 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1867",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "The round-based combat engine is ported as a preview",
+    "detail": "Nothing changes in the game yet. The alternative round-based combat engine (src/engine/combatRounds) is in the codebase with its own tests and a specification section (§4.11), and it is not wired into combat.",
+    "build": "0.7.1.1453",
+    "pullRequest": 1867,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1867"
+  },
+  {
+    "id": "pr-1838",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "The alternative combat rounds design is recorded",
+    "detail": "Development-process change only, nothing in the game changes. The design for timeline queues, initiative and merge modes is written up in docs/alternative-combat-rounds, with its own tests.",
+    "build": "0.7.1.1453",
+    "pullRequest": 1838,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1838"
+  },
+  {
+    "id": "pr-1926",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Character creation art loads, and the long test runs reach the end again",
+    "detail": "The leather backing behind character-creation panels now loads instead of failing silently. The automated full-run, map-camera and tutorial checks walk the new page-by-page character creation, and a full run no longer stalls on the map's Enter button while its tray is still sliding in.",
+    "build": "0.7.1.1453",
+    "pullRequest": 1926,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1926"
+  },
+  {
+    "id": "pr-1910",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Sweep and Smash now play the selected greatsword sequences",
+    "detail": "Default-armour Reaver with a sole greatsword now uses the corrected straight-arm low iai Sweep and the SM03 twisting aerial ground slam, returning to the prepared stance after each action. The selected impact pose stays available until its actual combat cue arrives, including cold starts. Attack keeps its separate six phases. Twenty labeled five-slot examples preserve the other review choices and their source history; other loadouts and co-op retain their existing presentation.",
+    "build": "0.7.1.1451",
+    "pullRequest": 1910,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1910"
+  },
+  {
+    "id": "pr-1912",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Combat target boxes centre on the enemy",
+    "detail": "The gold target box now sits on the enemy sprite instead of below small enemies. Intent, HP and armor above the enemy stay clickable.",
+    "build": "0.7.1.1449",
+    "pullRequest": 1912,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1912"
+  },
+  {
+    "id": "pr-1909",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Cards use the new simple artwork, with elemental and status accents",
+    "detail": "Existing attack, smash, counter, evade, sweep and defend cards use the approved artwork by default. Display settings can switch back to Legacy. Spells use an outlined diamond marker. Side icons put Magic or Physical first, then damage or effect type and up to three status effects, with stack counts where known and at most five icons. Magical cards compose colors, backgrounds and small effects from their element and status tags; no new playable cards are added.",
+    "build": "0.7.1.1447",
+    "pullRequest": 1909,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1909"
+  },
+  {
+    "id": "pr-1914",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Poison, Psychic and Earth join the elements; weapons set their own damage type",
+    "detail": "Twelve new cards: four Rogue Poison cards (Asp Dart, Viper Strike, Septic Blade, Lethal Dose) and eight classless Psychic and Earth cards, which Herald and Starseer meet twice as often and can take as a starting spell. Five enemies resist a thematic element. Strike, Cheap Shot, Bloodhunter's Strike and Guard Counter deal your weapon's damage type; Ruinous Blow and Deathblow split Blunt and Force; Blood Tithe splits your weapon's type with Necrotic and Bleeds; Lethal Dose is a thrown vial with Precision that hits harder. Blight Bloom's text names its expanded-combat cap.",
+    "build": "0.7.1.1445",
+    "pullRequest": 1914,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1914"
+  },
+  {
+    "id": "pr-1916",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Build numbers in the changelog stay in order",
+    "detail": "Nothing changes in the game. When the build pipeline gives a merged change its final build number, it now also moves that entry so each day's list stays newest build first.",
+    "build": "0.7.1.1443",
+    "pullRequest": 1916,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1916"
+  },
+  {
+    "id": "pr-1917",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Saved enemy reactions are checked against their limit",
+    "detail": "Nothing changes in the game. New tests confirm that a save with too many enemy reactions on the stack, or one on a Counter's return hit, is refused when it loads.",
+    "build": "0.7.1.1443",
+    "pullRequest": 1917,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1917"
+  },
+  {
+    "id": "pr-1918",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "The enemy reaction code passes the architecture check",
+    "detail": "Nothing changes in the game. A setting in the enemy reaction code used a name the architecture check reserves for the browser, so it was renamed.",
+    "build": "0.7.1.1441",
+    "pullRequest": 1918,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1918"
+  },
+  {
+    "id": "pr-1915",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Character creation walks you through every step",
+    "detail": "Creating a character now goes Class, Attributes, Keepsake, Equipment, Feats, then Spells for classes that cast, then Review. The Feats step lets you browse every character, class and skill feat with the level it unlocks at; you start with none and earn them as you level. On a phone, tapping a feat opens its details right beneath it.",
+    "build": "0.7.1.1439",
+    "pullRequest": 1915,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1915"
+  },
+  {
+    "id": "pr-1913",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Every enemy break now staggers under combat ratings",
+    "detail": "With ratings on, a break of the Poise or Ward meter, by weapon or spell, and an Insanity break now apply Staggered as well as the skipped turn, so Executioner and other Staggered payoffs fire in normal runs. Spell breaks no longer add Magic Vulnerable on top; Staggered already raises damage of every type.",
+    "build": "0.7.1.1437",
+    "pullRequest": 1913,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1913"
+  },
+  {
     "id": "pr-1906",
     "date": "2026-10-12",
     "group": "2026-10-12",
@@ -11,6 +131,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1435",
     "pullRequest": 1906,
     "url": "https://github.com/cehinds/AshenSpire/pull/1906"
+  },
+  {
+    "id": "pr-1905",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Chain reactions, and Counterstrike, Impact and Flux on cards",
+    "detail": "In new runs, cards tagged Reaction can be played during the enemy's turn, and several can be chained against one attack: the last one played resolves first. Counterstrike adds 50% to a card's numbers (75% when your stance beats the target's), Impact adds Poise damage on a hit or doubles the card's own, and Flux does the same for Ward. Burn and Crimson Blight now wear down Ward each turn. Saved runs keep their old rules.",
+    "build": "0.7.1.1433",
+    "pullRequest": 1905,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1905"
   },
   {
     "id": "pr-1893",
@@ -71,16 +201,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1425",
     "pullRequest": 1897,
     "url": "https://github.com/cehinds/AshenSpire/pull/1897"
-  },
-  {
-    "id": "pr-1905",
-    "date": "2026-10-12",
-    "group": "2026-10-12",
-    "summary": "Chain reactions, and Counterstrike, Impact and Flux on cards",
-    "detail": "In new runs, cards tagged Reaction can be played during the enemy's turn, and several can be chained against one attack: the last one played resolves first. Counterstrike adds 50% to a card's numbers (75% when your stance beats the target's), Impact adds Poise damage on a hit or doubles the card's own, and Flux does the same for Ward. Burn and Crimson Blight now wear down Ward each turn. Saved runs keep their old rules.",
-    "build": "0.7.1.1433",
-    "pullRequest": 1905,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1905"
   },
   {
     "id": "pr-1901",
