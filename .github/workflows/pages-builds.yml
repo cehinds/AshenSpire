@@ -144,7 +144,11 @@ on:
         default: ''
 
 concurrency:
-  group: pages-builds
+  # A completed dev preview on dev is skipped by every job, but it is still a queued run
+  # when it arrives. In `pages-builds` it would supersede a PENDING build-stamp publication
+  # (a newer arrival replaces a queued run even with cancel-in-progress: false), so it gets
+  # its own group. Every other event keeps `pages-builds`.
+  group: ${{ (github.event_name == 'workflow_run' && github.event.workflow_run.name == 'dev preview' && github.event.workflow_run.head_branch == 'dev') && 'pages-builds-dev-preview-on-dev' || 'pages-builds' }}
   # NO RUN CANCELS ANOTHER, BECAUSE "WILL THIS RUN PUBLISH?" CANNOT BE ANSWERED HERE.
   #
   # One group keeps publications serialised, which is right — two deploys to the
