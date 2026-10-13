@@ -44,6 +44,8 @@ export function cardFaceLines(def, preview = null, registries = null) {
 
 function buildLines(def, preview, registries) {
   if (def.comboHook) return null;
+  // A Power's status is its mechanic's carrier ("Gain Goreblood 1" says nothing); its authored text explains it.
+  if (def.type === 'power') return null;
   const { value, title, condition, profile: p, bindings, tokens } = cardSummaryContext(def, preview, registries);
   const ratings = registries?.balance?.combatRatings ?? null;
   const counter = p.maneuver === 'counter';
@@ -201,6 +203,9 @@ function buildLines(def, preview, registries) {
       if (at !== undefined) return `If ${predicate.of === 'allEnemies' ? 'an enemy has' : 'the target has'} ${num(at)}+ ${name}: `;
     }
     if (thresholdInside(predicate)) fail();
+    // "No Starstone Charge:" reads cleaner than "If not (you have Starstone Charge):".
+    if (predicate.p === 'not' && predicate.pred?.p === 'hasStatus' && predicate.pred.of === 'self'
+      && Object.keys(predicate.pred).every(key => ['p', 'of', 'status'].includes(key))) return `No ${esc(title(predicate.pred.status))}: `;
     const text = condition(predicate);
     if (!text) fail();
     return `If ${esc(text)}: `;

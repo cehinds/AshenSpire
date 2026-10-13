@@ -83,3 +83,12 @@ test('a boosted split hit colours both parts', () => {
   const [first] = cardFaceLines(def, { values }, reg);
   assert.equal((first.html.match(/val up/g) || []).length, 2, first.html);
 });
+
+test('a Power keeps its authored text: its status alone does not explain the mechanic', () => {
+  assert.equal(lines('rallyingStandard'), null);
+  assert.equal(lines('goreblood'), null);
+});
+
+test('a missing self status reads as "No <status>:"', () => {
+  assert.ok(text('starlance').some(line => /^No Starstone Charge: /.test(line)), JSON.stringify(text('starlance')));
+});
