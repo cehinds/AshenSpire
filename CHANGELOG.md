@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-10-13
+
+- **One press on a visible Inspect "i" opens it** ([#1930](https://github.com/cehinds/AshenSpire/pull/1930), `0.7.1.1451`). Tapping a fighter's "i" on a phone no longer only selects it first; one tap, click or Enter opens the inspector for enemies and the player, as it already does for cards.
+
 ## 2026-10-12
 
 - **Sweep and Smash now play the selected greatsword sequences** ([#1910](https://github.com/cehinds/AshenSpire/pull/1910), `0.7.1.1451`). Default-armour Reaver with a sole greatsword now uses the corrected straight-arm low iai Sweep and the SM03 twisting aerial ground slam, returning to the prepared stance after each action. The selected impact pose stays available until its actual combat cue arrives, including cold starts. Attack keeps its separate six phases. Twenty labeled five-slot examples preserve the other review choices and their source history; other loadouts and co-op retain their existing presentation.
