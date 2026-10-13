@@ -426,6 +426,30 @@ test('damage components define the split: magic weight over total, an explicit m
   assert.equal(magicShareOf({ ...ruinous, damageComponents: [{ type: 'blunt', weight: 1 }] }, config), 0.5, 'a single component is no split list: the force school decides');
 });
 
+// A hit that lists its components (#1914) routes each part by them: magic types meet Barrier and Ward,
+// physical types Block and Poise, and each component type meets its own typed defence with its weighted share.
+const mixed = { tags: ['camp:physical', 'maneuver:smash'], skipRatingBonus: true,
+  combatProfile: { camp: 'physical', maneuver: 'smash', damageType: 'slashing', reach: 'contact', targeting: 'single',
+    damageComponents: [{ type: 'slashing', weight: 50 }, { type: 'necrotic', weight: 25 }, { type: 'fire', weight: 25 }] } };
+
+test('a mixed-component hit of 8 is 4 magic (2 decay, 2 fire) and 4 slashing; a fire weakness doubles only the fire share', () => {
+  const r = strike(mixed, 8, { ward: 0, weakness: { fire: 100 } });
+  const d = hitOf(r);
+  assert.equal(d.magicAmount, 6, '2 decay + 2 fire doubled to 4');
+  assert.equal(d.physicalAmount, 4, 'the slashing half meets no fire weakness');
+  assert.equal(r.committed, 10);
+  assert.equal(r.preview, r.committed, 'preview equals commit');
+});
+
+test('a mixed-component hit meets Ward with its magic part and Block with its physical part', () => {
+  const r = strike(mixed, 8, { ward: 3, block: 10 });
+  const d = hitOf(r);
+  assert.equal(d.wardAbsorbed, 3, 'Ward takes from the 4 magic');
+  assert.equal(r.committed, 1, 'Block soaks the 4 slashing; 1 magic gets past Ward');
+  assert.equal(r.enemy.block, 6, 'Block soaked only the physical 4');
+  assert.equal(r.preview, r.committed, 'preview equals commit');
+});
+
 // The card face splits its amount the way the committed hit does: the card's own damage by its share,
 // then the rating bonus by its category. A real previewCard builds the face (no target, so the face is the card's own number).
 function faceOf(cards, cardId, ratingValue) {

@@ -41,7 +41,7 @@ import { commitSmithing, smithingPlan } from '../model/smithing.js';
 import * as Properties from './properties.js';
 import * as Ratings from './combatRatings.js';
 import { isMagicalAttack, ratingDamageMultiplier, attackImpact, schoolResistanceMultiplier, persistentWardMaximum, persistentPoiseMaximum,
-  canonicalDamageType, magicShareOf, magicDamageTypeOf, splitDamageTypesOf, splitContactParts } from '../model/combatRatings.js';
+  canonicalDamageType, magicShareOf, magicDamageTypeOf, splitDamageTypesOf, splitContactParts, componentPartsOf } from '../model/combatRatings.js';
 import { swapRunClass } from '../model/classSwap.js';
 import { applyGraceRefill } from './encounters.js';
 import { orderedReturn } from '../model/deckRules.js';
@@ -348,13 +348,26 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
     const legacy = canonicalDamageType(profile.damageType) || 'blunt';
     // A weapon's authored physical type types the physical part whether or not the hit splits.
     const physical = profile.physicalDamageType || legacy;
-    return { amount, split, magic: parts.magic, physical: parts.physical, types: split ? splitDamageTypesOf(profile) : { magic: magicDamageTypeOf(profile) || legacy, physical } };
+    const types = split ? splitDamageTypesOf(profile) : { magic: magicDamageTypeOf(profile) || legacy, physical };
+    // A hit that lists its damage components keeps them: each part spreads over its own component types by weight.
+    const components = componentPartsOf(profile);
+    return { amount, split, magic: parts.magic, physical: parts.physical, types,
+      typeWeights: { magic: components?.magic.length ? components.magic : [{ type: types.magic, weight: 1 }],
+        physical: components?.physical.length ? components.physical : [{ type: types.physical, weight: 1 }] } };
   });
   // Typed defence, once per (camp, type) group of parts.
   const parts = [];
+  const pushTyped = (index, magic, amount, weights) => {
+    if (!(amount > 0)) return;
+    const live = weights.filter(row => row.weight > 0);
+    const rows = live.length ? live : [{ type: weights[0].type, weight: 1 }];
+    allocateInteger(amount, rows.map(row => row.weight)).forEach((share, i) => {
+      if (share > 0) parts.push({ index, magic, camp: magic ? 'spell' : 'physical', type: rows[i].type, amount: share });
+    });
+  };
   hits.forEach((hit, index) => {
-    if (hit.magic > 0) parts.push({ index, magic: true, camp: 'spell', type: hit.types.magic, amount: hit.magic });
-    if (hit.physical > 0) parts.push({ index, magic: false, camp: 'physical', type: hit.types.physical, amount: hit.physical });
+    pushTyped(index, true, hit.magic, hit.typeWeights.magic);
+    pushTyped(index, false, hit.physical, hit.typeWeights.physical);
   });
   const groups = new Map();
   parts.forEach((part, p) => {
@@ -381,28 +394,29 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
     const shares = total > 0 ? allocateInteger(amount, members.map(p => parts[p].amount)) : members.map(() => 0);
     members.forEach((p, i) => { typed[p] = shares[i]; });
   }
-  const magicTyped = hits.map(() => 0), physicalTyped = hits.map(() => 0), magicParts = [];
+  const magicTyped = hits.map(() => 0), physicalTyped = hits.map(() => 0);
   parts.forEach((part, p) => {
-    if (part.magic) { magicTyped[part.index] = typed[p]; magicParts.push(p); } else physicalTyped[part.index] = typed[p];
+    if (part.magic) magicTyped[part.index] += typed[p]; else physicalTyped[part.index] += typed[p];
   });
+  const magicHits = hits.map((hit, index) => index).filter(index => hits[index].magic > 0);
   // Magic meets Barrier, then Ward, once per action. Barrier is consumed in hit order and soaks
   // fully. Ward's budget is shared over the magic parts and spent by what it absorbs.
   syncWardMaximum(ctx, target);
   let barrierLeft = Math.max(0, target.barrier || 0);
   const barrierSpent = hits.map(() => 0);
-  magicParts.forEach(p => {
-    const take = Math.min(barrierLeft, Math.max(0, typed[p]));
+  magicHits.forEach(index => {
+    const take = Math.min(barrierLeft, Math.max(0, magicTyped[index]));
     barrierLeft -= take;
-    barrierSpent[parts[p].index] = take;
+    barrierSpent[index] = take;
   });
-  const afterBarrier = magicParts.map(p => typed[p] - barrierSpent[parts[p].index]);
+  const afterBarrier = magicHits.map(index => magicTyped[index] - barrierSpent[index]);
   const wardTotal = afterBarrier.reduce((sum, weight) => sum + weight, 0);
   const wardBudget = Math.max(0, target.persistentWard?.value || 0);
   const ward = !(wardTotal > 0) || !(wardBudget > 0) ? afterBarrier.map(() => 0)
     : allocateInteger(Math.min(wardBudget, wardTotal), afterBarrier);
   const magicLeft = hits.map(() => 0), wardSpent = hits.map(() => 0);
-  magicParts.forEach((p, j) => {
-    const index = parts[p].index, after = afterBarrier[j], share = ward[j];
+  magicHits.forEach((index, j) => {
+    const after = afterBarrier[j], share = ward[j];
     // A pure hit lets at least 1 through Ward before Block, as it always has. A split hit's
     // at-least-1 is decided once Block and HP are known, below.
     const left = !hits[index].split && after > 0 && share > 0 ? Math.max(1, after - share) : after - share;
