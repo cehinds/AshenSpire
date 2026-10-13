@@ -451,13 +451,23 @@ Formula, relation and value keys follow the README conventions.
   The multi-attack rows show the hit-by-hit stack loss from the owner's example. The
   Reaver rows use the cap from ruling 10 and the feats from ruling 11, with DEX 7.
 
+- **Ruling 12 (owner answers, 2026-10-13). Stack consumption, trait guards, and Evade's matchups.**
+  - **Stack use (confirms ruling 11).** Any attack roll against you uses one stack, hit or
+    miss. A miss consumes a stack too.
+  - **Trait guards (Q8).** The Impact and Flux trait guards do NOT apply to Evade. They stay
+    on Defend and Counter cards.
+  - **Matchups (Q10).** Evade drops the Defend vulnerabilities: the defended smash and sweep
+    multipliers (`src/engine/combatMatchups.js:374-375` on dev) and the smash status check
+    (`:431`) no longer apply to an Evade target. This matches the rounds table, where Evade
+    beats attack, smash and sweep (`docs/alternative-combat-rounds/stance-advantage.csv`).
+
 ### Tuning list (open items left in section 15)
 
 - Feat raises to the Evade DEX cap: closed by ruling 11 (four feats approved,
   `docs/tag-model/proposals/evade-cap-feats.md`; not yet in game data, that is the Evade PR).
   The per-rank step is closed by ruling 10 (`evade.dexCap.rankStep` = 3).
 - Stack behaviour (gain, decay, Block, stance stacking): closed by ruling 11.
-- Open after ruling 11: whether a miss also consumes a stack (ruling 11 reading: yes).
+- Closed by ruling 12: a miss also consumes a stack. No open items remain in section 15.
 - The Evade stance bonus value is closed by ruling 10 (`evade.stanceBonus` = 3).
 - **Cross-references for the cap:**
   - Evasion rating formula, `docs/tag-model/tables/formulas.csv` `evasion.rating`:

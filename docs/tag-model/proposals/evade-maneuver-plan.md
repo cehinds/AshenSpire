@@ -85,7 +85,7 @@ tag. Regenerate the generated tag modules as DEVELOPER.md describes (`src/conten
 - **431 (smash status).** The smash status check reads `defend` on the target. An Evade
   target is no longer "defended" there.
 - **287 (trait guard).** The Impact and Flux trait guard is armed only by `defend`. Evade
-  gets no trait guard by default (ruling 9 keeps buckler traits separate). **Q8, open.**
+  gets no trait guard by default (ruling 9 keeps buckler traits separate). **Closed by ruling 12.**
 
 `counterCoverageMatches` (`combatMatchups.js:347`) and `counterCovered` / `eligible` in
 `src/engine/combatReactions.js:25-37` are the shared eligibility function. They stay as they
@@ -105,7 +105,7 @@ Engine pieces to add (one pure function, no DOM):
 - `evade.baseEvade` = 3; `evade.stanceBonus` = 3 while the Evade stance is active (ruling 10).
 - `evade.stacks`: Evade stacks in effect, with the owner's rules (ruling 11): each stack adds
   3 Evasion and 3 Block; each incoming attack roll consumes one stack (hit or miss, our reading,
-  open item Q11); one stack decays at the start of each owner turn. Block gained stays. The
+  ruling 12: a miss consumes a stack too); one stack decays at the start of each owner turn. Block gained stays. The
   engine state is a stack counter. Today's `entity.combatEvade.charges`
   (`combatMatchups.js:312`, `prepareCombatEvade`) is the nearest existing state; how it is stored
   is an engine detail, not an owner question.
@@ -241,11 +241,9 @@ Each step keeps `check.mjs` and compile lossless. The rounds files (section 7) a
 
 ## 13. Owner questions
 
-Answered on 2026-10-13 and recorded in DECISIONS §15 ruling 11; removed from this list:
-the feat approval (old Q9), the +3 Block stacking and rounds scaling (old Q1, Q2), the Poise
-reply (old Q3), the stance family (old Q4), the hit roll (old Q5), the stacks rules (old Q6),
-and the reaction rules version (old Q7). Ids of the open items are kept.
+No open owner questions remain. Every question has been answered and recorded in DECISIONS §15:
 
-- **Q8.** Do the Impact and Flux trait guards apply to Evade? (Default: no.)
-- **Q10.** Confirm that Evade no longer takes the defended smash and sweep multipliers (dev 374-375) and the smash status check (dev 431).
-- **Q11.** Does a miss also consume a stack? (Our reading, ruling 11: yes. "Use" means any incoming attack roll against you, hit or miss.)
+- Rulings 10 and 11 (2026-10-13): the feat approval, the +3 Block stacking and rounds scaling,
+  the Poise reply, the stance family, the hit roll, the stacks rules, the reaction rules version.
+- Ruling 12 (2026-10-13): the miss consumes a stack (old Q11); the Impact and Flux trait guards
+  do not apply to Evade (old Q8); Evade drops the Defend matchup vulnerabilities (old Q10).
