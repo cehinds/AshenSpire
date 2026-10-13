@@ -3,12 +3,32 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1930",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "One press on a visible Inspect \"i\" opens it",
+    "detail": "One click, tap or Enter on a fighter's Inspect \"i\" opens the inspector at once, even when the fighter was not selected first.",
+    "build": "0.7.1.1463",
+    "pullRequest": 1930,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1930"
+  },
+  {
+    "id": "pr-1934",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Desktop combat uses the phone's proportions",
+    "detail": "On desktop and widescreen the hand now takes 30% of the screen instead of 38%, so the battlefield is larger and enemies are drawn bigger. Hand cards scale with the hand like on a phone, and the horizon sits where it does on a phone. Phone and tablet layouts are unchanged.",
+    "build": "0.7.1.1463",
+    "pullRequest": 1934,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1934"
+  },
+  {
     "id": "pr-1883",
     "date": "2026-10-12",
     "group": "2026-10-12",
     "summary": "Switching combat views keeps your lane where the grid shows it",
     "detail": "When a fight changes from the perspective view to Classic, your saved lane now moves to the Classic square the screen displays. Moving again or reloading the fight no longer jumps you back to a hidden perspective-only lane.",
-    "build": "0.7.1.1457",
+    "build": "0.7.1.1463",
     "pullRequest": 1883,
     "url": "https://github.com/cehinds/AshenSpire/pull/1883"
   },
@@ -18,7 +38,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-12",
     "summary": "Ward, Barrier and Poise now wear away, every hit shows where it landed, and hits can be part magic, part physical",
     "detail": "Magic damage meets Barrier, then Ward; physical damage meets Block, then Poise. Barrier and Block soak a hit completely, while Ward and Poise always let at least 1 damage through, are spent by what they absorb, and no longer also shave damage by their rating. Every fighter starts each fight with full Ward and Poise, and they only come back through a card, feat, class feature or relic. Ward added past full becomes Barrier until your next turn. Breaking an enemy's Ward or Poise interrupts its action; a break costs you 1 Stamina next turn. A hit can now be part magic and part physical: staff and sceptre strikes and defends are 40% magic, Force is half arcane and half blunt, Alteration and Earth are physical, martial techniques with spell effects are 30% magic with the weapon's damage type, and a card that names several damage types splits by them. Silenced no longer weakens spells; each stack makes spells cost 1 more Stamina, the Silenced creature is immune to the Arcane part of a hit, and each Force hit or effect on it removes a stack. Each layer has its own colour on the health bar and in the hit numbers (Barrier blue, Ward purple, Block silver, Poise gold, Health red), with popups for MISSED, BREAK, WARD BREAK, POSTURE BREAK, INTERRUPTED and IMMUNE, and the combat log lists each layer's share and the roll behind a miss. A creature resistant to a damage school takes three quarters of the hit.",
-    "build": "0.7.1.1457",
+    "build": "0.7.1.1459",
     "pullRequest": 1896,
     "url": "https://github.com/cehinds/AshenSpire/pull/1896"
   },
