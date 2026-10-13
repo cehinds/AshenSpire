@@ -13,6 +13,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1940"
   },
   {
+    "id": "pr-1921",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Every weapon has a default range, and hand cards show it",
+    "detail": "Combat ranges are now called Melee, Reach and Ranged (formerly contact, near and far), and older saves still load. Each weapon states the range it fights at, and attack cards in the combat hand show a Melee, Reach or Ranged chip, by the same rule the deck editor uses.",
+    "build": "0.7.1.1465",
+    "pullRequest": 1921,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1921"
+  },
+  {
     "id": "pr-1930",
     "date": "2026-10-13",
     "group": "2026-10-13",
@@ -31,6 +41,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1463",
     "pullRequest": 1934,
     "url": "https://github.com/cehinds/AshenSpire/pull/1934"
+  },
+  {
+    "id": "pr-1932",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "The balance report reads Gilded Knight correctly again",
+    "detail": "Nothing changes in the game. Gilded Knight's damage per turn no longer reads as \"not a number\", because its guard reaction is no longer counted as an attack. The balance document is regenerated to match the current game.",
+    "build": "0.7.1.1459",
+    "pullRequest": 1932,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1932"
   },
   {
     "id": "pr-1896",
