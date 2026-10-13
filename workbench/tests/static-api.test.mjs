@@ -2,7 +2,7 @@
 // in node: a fake fetch serves an in-memory snapshot and a Map stands in for localStorage.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createStaticApi, changedFiles, discardChanges, LOCAL } from '../static/static-api.mjs';
+import { createStaticApi, changedFiles, discardChanges, assetUrlFor, LOCAL } from '../static/static-api.mjs';
 
 const BASE = '/AshenSpire/workbench/';
 const ORIGIN = 'https://example.test';
@@ -222,4 +222,11 @@ test('importing the module in node does not touch window or document', async () 
   const mod = await import('../static/static-api.mjs');
   assert.equal(typeof mod.createStaticApi, 'function');
   assert.equal(typeof globalThis.window, 'undefined');
+});
+
+test('assetUrlFor: light art reads game/assets/, other art asset-file/, each segment encoded', () => {
+  assert.equal(assetUrlFor(BASE, 'assets-mobile/poses/idle 01.webp'), BASE + 'game/assets/poses/idle%2001.webp');
+  assert.equal(assetUrlFor(BASE, 'assets-display/icons/sword #2.png'), BASE + 'asset-file/assets-display/icons/sword%20%232.png');
+  assert.equal(assetUrlFor(BASE, 'assets-mobile/a.webp'), BASE + 'game/assets/a.webp');
+  assert.equal(assetUrlFor(BASE, 'src/x.png'), BASE + 'asset-file/src/x.png');
 });

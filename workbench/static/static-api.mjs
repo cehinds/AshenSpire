@@ -106,6 +106,18 @@ export function createStaticApi({ base, origin, fetchImpl, storage, onChange }) 
   return { handle, snapshot };
 }
 
+/**
+ * Where an art file's URL points on the published site. The light art (assets-mobile/) is
+ * published once, at game/assets/, so the Asset Gallery and Motion Studio read it from there;
+ * every other game path is under asset-file/. Each path segment is encoded.
+ */
+export function assetUrlFor(base, path) {
+  const enc = (s) => s.split('/').map(encodeURIComponent).join('/');
+  const light = 'assets-mobile/';
+  if (path.startsWith(light)) return base + 'game/assets/' + enc(path.slice(light.length));
+  return base + 'asset-file/' + enc(path);
+}
+
 /** The user's saved edits: { [path]: text }. */
 export function changedFiles(storage, base) {
   return Object.fromEntries(Object.entries(readOverlay(storage, base)).map(([path, o]) => [path, o.text]));
