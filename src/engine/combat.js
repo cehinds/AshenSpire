@@ -458,11 +458,21 @@ function drainQueue(combat) {
     // that multiplier; a pause is safe because the original actions keep the receipt.
     const roundPoiseMultiplier = action.meta?.roundPoiseMultiplier;
     const previousRoundPoiseMultiplier = combat.roundPoiseMultiplier;
-    if (roundPoiseMultiplier) combat.roundPoiseMultiplier = roundPoiseMultiplier;
+    const previousEnqueue = combat.enqueue;
+    if (roundPoiseMultiplier) {
+      combat.roundPoiseMultiplier = roundPoiseMultiplier;
+      // Trigger and phase riders are descendants of this payload. Carry the receipt
+      // onto them while this action runs; reaction-stack actions execute outside it.
+      combat.enqueue = queued => previousEnqueue({
+        ...queued,
+        meta: { ...queued.meta, roundPoiseMultiplier: { ...roundPoiseMultiplier } },
+      });
+    }
     try {
       A.executeAction(combat, action);
     } finally {
       if (roundPoiseMultiplier) {
+        combat.enqueue = previousEnqueue;
         if (previousRoundPoiseMultiplier) combat.roundPoiseMultiplier = previousRoundPoiseMultiplier;
         else delete combat.roundPoiseMultiplier;
       }

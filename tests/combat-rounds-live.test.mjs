@@ -668,6 +668,30 @@ test('a delayed round hit keeps its Poise multiplier until the payload lands', (
   assert.equal(poiseDealt(true), plain * 2, 'the delayed hit and its Poise rider are both doubled');
 });
 
+const delayedTriggerPoiseRegistries = createRegistries({ ...contentBundle, enemies: contentBundle.enemies.map((e) => (e.id === ENEMY
+  ? { ...e, moves: { ...e.moves, [CHARGE]: { intent: 'attack', damage: 12, weight: 0, sp: 1,
+    delay: { turns: 1, whileCharging: { block: 5 } } } },
+  phases: [...(e.phases || []), { on: 'damageDealt', once: false, if: { p: 'eventSourceIsOwner' },
+    do: [{ op: 'poiseDamage', target: 'player', amount: 4 }] }] }
+  : e)) });
+
+test('a delayed round hit carries its Poise multiplier onto trigger-enqueued riders', () => {
+  const poiseDealt = (doubled) => {
+    const c = fixRoundRoll(fight({ reg: delayedTriggerPoiseRegistries, expansion: 1, momentum: true }), 0.999);
+    const enemy = liveEnemy(c);
+    c.combatRounds.enemyQueues[enemy.id] = [{ moveId: CHARGE, sp: 1 }];
+    c.player.poiseMeter.max = 100;
+    if (doubled) c.combatRounds.poiseDouble = { [enemy.id]: true };
+    endTurnDeclining(c);
+    const before = c.player.poiseMeter.value;
+    endTurnDeclining(c);
+    return c.player.poiseMeter.value - before;
+  };
+  const plain = poiseDealt(false);
+  assert.equal(plain, 6, 'fixture: the delayed hit adds 2 Poise and its damage trigger adds 4');
+  assert.equal(poiseDealt(true), plain * 2, 'the hit and its trigger-enqueued Poise rider are both doubled');
+});
+
 // Review follow-up: the timeline has no delay handling, so the round's queue itself ends at a charge. Otherwise the
 // timeline resolved a Slash the live round skipped: it credited that Slash's momentum, and a queued Counter fired on it.
 // The soldier opens with the charge, and Slash is its only weighted move, so before the fix the queue was charge, Slash.
