@@ -2958,6 +2958,7 @@ body.pad-mode .as-keycap.float { display: none; }
   cursor: pointer;
 }
 .icon-tray .as-pip:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.icon-tray .as-pip > .tag-symbol-art { width: 64%; height: 64%; }
 .icon-tray .as-pip[aria-disabled="true"] > :not(.as-pill) { opacity: 0.5; filter: grayscale(0.6); }
 /* A painted face (a flask) sits in the round well the way a glyph does. */
 .icon-tray .as-pip > .flask-identity { display: grid; place-items: center; width: 78%; height: 78%; }
