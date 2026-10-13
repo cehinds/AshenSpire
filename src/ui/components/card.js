@@ -521,6 +521,22 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
 }
 
 /**
+ * cardPlainText(registries, ref) → the card's effect text as a plain string:
+ * the same template the face fills, with tags stripped. Pure string work, no
+ * DOM, so it runs the same headless and in a browser.
+ */
+export function cardPlainText(registries, ref) {
+  const def = resolveCard(registries, ref);
+  // Plain string work only: no DOM, so it runs the same headless and in a
+  // browser. Tags go first; &amp; is decoded last so "&amp;lt;" stays literal.
+  return String(fillTemplate(def, staticTokens(def), null))
+    .replace(/<[^>]+>/g, '')
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    .replace(/&amp;/g, '&')
+    .replace(/\s+/g, ' ').trim();
+}
+
+/**
  * Tooltip HTML previewing what a card becomes when Smithed: current text in
  * muted, upgraded text below with changed values highlighted green/red (the
  * same up/down coloring cards use in play). All numbers come from the defs.

@@ -170,6 +170,9 @@ function pendingRewardReferenceProblems(pending, registries) {
     }
   }
   if (rewards.relicId && !registries.relics.has(rewards.relicId)) problems.push(`relic '${rewards.relicId}' is unknown`);
+  for (const relicId of Array.isArray(rewards.relicChoices) ? rewards.relicChoices : []) {
+    if (!registries.relics.has(relicId)) problems.push(`relic '${relicId}' is unknown`);
+  }
   // SPEC §15.4: a dropped legendary sigil (its rarity is sigilRarityProblems').
   if (rewards.sigilId && !registries.sigils.has(rewards.sigilId)) problems.push(`sigil '${rewards.sigilId}' is unknown`);
   if (rewards.flaskId && !registries.flasks.has(rewards.flaskId)) problems.push(`flask '${rewards.flaskId}' is unknown`);
