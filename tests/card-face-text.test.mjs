@@ -30,7 +30,7 @@ test('a conditional card groups its effects under the status that gates them', (
 });
 
 test('an area damage card names its area on the damage line', () => {
-  const [first] = text('rockfall');
+  const [first] = text('cleavingBlow');
   assert.match(first, /to all enemies$/);
 });
 
@@ -82,6 +82,19 @@ test('a boosted split hit colours both parts', () => {
   const values = []; values[index] = { op: 'damage', value: def.effects[index].amount * 3, hits: 1 };
   const [first] = cardFaceLines(def, { values }, reg);
   assert.equal((first.html.match(/val up/g) || []).length, 2, first.html);
+});
+
+test('an unequal formula-hit total compares with per-hit base times the resolved hit count', () => {
+  const def = { id: 'formulaHits', type: 'attack', combatProfile: { camp: 'physical', damageType: 'slashing' },
+    effects: [{ op: 'damage', target: 'enemy', amount: 6, hits: { f: 'someFormula' } }] };
+  const [first] = cardFaceLines(def, { values: [{ op: 'damage', value: 6, hits: 3,
+    hitDamages: [1, 6, 6], totalDamage: 13 }] }, reg);
+  assert.equal((first.html.match(/val down/g) || []).length, 2, first.html);
+  assert.match(first.html, />13<\/span> total across 3 hits/);
+});
+
+test('cards whose automatic damage rider is only in authored rules keep that text', () => {
+  for (const id of ['aspDart', 'mindSpike', 'stoneSling', 'rockfall']) assert.equal(lines(id), null, id);
 });
 
 test('a Power keeps its authored text: its status alone does not explain the mechanic', () => {

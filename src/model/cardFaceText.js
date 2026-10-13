@@ -29,6 +29,10 @@ const ENEMY_TARGETS = ['enemy', 'allEnemies', 'randomEnemy'];
 const STATUS_NEVER_PHRASED = ['invulnerability', 'decoy', 'grounded', 'sleep'];
 // Statuses whose name is not their effect: the face adds the status's own tooltip line.
 const MECHANIC_STATUSES = ['concealed', 'bulwarkEcho', 'stoneskin', 'entombed'];
+// These cards promise an automatic damage-type rider in their authored rules.
+// The rider is applied by combatMatchups rather than appearing in `effects`, so
+// a generated face cannot describe the whole card without silently dropping it.
+const AUTHORED_DAMAGE_RIDER_CARDS = ['aspDart', 'mindSpike', 'stoneSling', 'rockfall'];
 
 
 const canonical = value => JSON.stringify(value, (key, item) => item && typeof item === 'object' && !Array.isArray(item)
@@ -58,6 +62,7 @@ function buildLines(def, preview, registries) {
   if (def.comboHook) return null;
   // A Power's status is its mechanic's carrier ("Gain Goreblood 1" says nothing); its authored text explains it.
   if (def.type === 'power') return null;
+  if (AUTHORED_DAMAGE_RIDER_CARDS.includes(def.id)) return null;
   // A curse's hand trigger and an Ashen Blight price live only in the authored text.
   if (def.onTurnEndInHand?.length || def.ashenBlightCost) return null;
   const { value, title, condition, profile: p, bindings, tokens } = cardSummaryContext(def, preview, registries);
@@ -126,7 +131,7 @@ function buildLines(def, preview, registries) {
           const baseSplit = typeof base === 'number' ? splitOf(def, p, base, ratings) : null;
           text = `${typed(num(split.physical, baseSplit?.physical), typeWord(split.types.physical))}, ${typed(num(split.magic, baseSplit?.magic), typeWord(split.types.magic))} damage`;
         } else if (unequal) {
-          text = `${sequence.map(amount => num(amount, base)).join(' + ')} ${word} (${num(live.totalDamage, typeof base === 'number' && typeof effect.hits === 'number' ? base * effect.hits : undefined)} total across ${sequence.length} hits)`;
+          text = `${sequence.map(amount => num(amount, base)).join(' + ')} ${word} (${num(live.totalDamage, typeof base === 'number' ? base * sequence.length : undefined)} total across ${sequence.length} hits)`;
         } else {
           text = `${num(n, base)} ${word}${hits !== 1 ? ` ×${num(hits, typeof effect.hits === 'number' ? effect.hits : undefined)}` : ''}`;
         }
