@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-13",
     "summary": "The combat log names every source, and Evade and stance show in combat",
     "detail": "Every combat log line now says what caused it and whom it hit: a hit names the attack and shows its calculation (resistance or weakness, each layer absorbed before and after, HP dealt), each stagger-meter rise names its source, and Evade reads from the evader (\"Forsaken evaded Wyrm Lord's Tail Sweep: Evade roll 17 beat 16\"), with failed rolls logged too. A prepared Evade shows as an icon with its charges on the fighter, and the inspector's Active skills & stance lists the current stance and Evade. A failure while starting a play's animation can no longer lock End Turn and the hand.",
-    "build": "0.7.1.1477",
+    "build": "0.7.1.1479",
     "pullRequest": 1945,
     "url": "https://github.com/cehinds/AshenSpire/pull/1945"
   },
