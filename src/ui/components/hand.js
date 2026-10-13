@@ -51,7 +51,7 @@ import { mountHandInspectionOverlay } from './handInspectionOverlay.js';
 // on flip; the same warning rides handAxis.js.
 
 import { reducedMotionRequested } from '../motion.js';
-import { renderCard } from './card.js';
+import { renderCard, setHandFaceBudget } from './card.js';
 import { armInspect } from '../../framework/optionDecision.js';
 import { stickTooltip } from './tooltip.js';
 import { applyHandExemption } from '../handAxis.js';
@@ -294,6 +294,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       if (record && record.signature !== signature) { record.release?.(); record.el.remove(); renderedCards.delete(id); record = null; }
       if (record) {
         record.el.classList.toggle('selected', !!entry.selected);
+        setHandFaceBudget(record.el, !!entry.selected);
         record.el.classList.toggle('is-stacked', !!entry.stacked);
         if (handEl.children[i] !== record.el) handEl.insertBefore(record.el, handEl.children[i] || null);
         return;
@@ -310,7 +311,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // which is why tests/hand-forwards-surface.test.mjs now exists.
       const el = renderCard(registries, entry.inst,
         { preview: entry.preview, affordable: entry.affordable, actionOwnsTouch: true, range: true,
-          surface: entry.surface, availability: entry.availability, commands: entry.commands });
+          surface: entry.surface, availability: entry.availability, commands: entry.commands, faceLineLimit: 3 });
       const spread = Math.min(6, n) * 1.2;
       // THE FAN HANGS UPWARD FROM ITS DEEPEST CARD, NOT DOWNWARD FROM ITS
       // CENTRE. Same arc, same step, same look — translated so the LOWEST card
@@ -351,6 +352,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
         });
       }
       if (entry.selected) el.classList.add('selected');
+      setHandFaceBudget(el, !!entry.selected);
       // Already committed to an open reaction stack: muted until it resolves.
       if (entry.stacked) el.classList.add('is-stacked');
       // The spelled-out unavailability reason is VIEWER data (co-op supplies

@@ -9,28 +9,31 @@ export function combatIntentPresentation(intent = {}) {
   // Knowledge reads contain only an observer's broad clue, never private stance.
   if (intent.hidden && intent.knowledgeRead) {
     if (intent.knowledgeRead !== 'clue' || !['Attack?', 'Magic?', 'Preparing?'].includes(intent.label)) {
-      return { visibility: 'unknown', title: '?', parts: [], stance: 'unknown' };
+      return { visibility: 'unknown', title: '?', parts: [], stance: 'unknown', damageClass: null };
     }
     const attacking = intent.label === 'Attack?';
+    const magic = intent.label === 'Magic?';
     return { visibility: 'partial', title: partialTitle(attacking ? 'attacking' : 'preparing'),
-      stance: attacking ? 'attacking' : 'preparing', parts: [{ icon: attacking ? 'attack' : 'prepare', value: null }] };
+      stance: attacking ? 'attacking' : 'preparing', parts: [{ icon: attacking ? 'attack' : magic ? 'cast' : 'prepare', value: null }],
+      damageClass: attacking ? 'physical' : magic ? 'magic' : null };
   }
   const stance = combatIntentStance(intent);
   const partial = intent.hidden === true;
   const unknown = !partial && (!intent.kind || intent.kind === 'unknown' || intent.moveId === null) && intent.kind !== 'staggered';
   if (unknown || (partial && !intent.stance && !intent.profile?.camp && !intent.profile?.maneuver)) {
-    return { visibility: 'unknown', title: '?', parts: [], stance: 'unknown' };
+    return { visibility: 'unknown', title: '?', parts: [], stance: 'unknown', damageClass: null };
   }
   if (partial) {
     const family = ['attacking', 'smashing', 'sweeping', 'ranged'].includes(stance) ? 'attacking'
       : ['defending', 'countering'].includes(stance) ? 'defending' : 'preparing';
     return { visibility: 'partial', title: partialTitle(family), stance: family,
-      parts: [{ icon: family === 'attacking' ? 'attack' : family === 'defending' ? 'defend' : 'prepare', value: null }] };
+      parts: [{ icon: family === 'attacking' ? 'attack' : family === 'defending' ? 'defend' : 'prepare', value: null }],
+      damageClass: damageClassOf(intent, family) };
   }
   // Interrupted turns retain their status in the tooltip; their badge simply
   // reports that the enemy is preparing, rather than claiming an attack.
   if (intent.kind === 'staggered') return { visibility: 'partial', title: partialTitle('preparing'), stance: 'preparing',
-    parts: [{ icon: 'prepare', value: null }] };
+    parts: [{ icon: 'prepare', value: null }], damageClass: null };
   const family = intent.kind === 'buff' ? 'buffing' : ['ranged', 'sweeping'].includes(stance) ? 'attacking'
     : stance === 'preparing' ? (intent.kind === 'buff' ? 'buffing' : 'casting') : stance;
   const damage = intent.damage != null ? intentBadge(intent).label : null;
@@ -43,8 +46,16 @@ export function combatIntentPresentation(intent = {}) {
     : family === 'smashing' ? [part('smash', damage)]
     : family === 'attacking' ? [part('attack', damage)]
     : [part(family === 'buffing' ? 'buff' : 'cast')];
-  return { visibility: 'known', title: capitalize(family), stance: family, parts };
+  return { visibility: 'known', title: capitalize(family), stance: family, parts, damageClass: damageClassOf(intent, family) };
 }
 
 const capitalize = value => value.charAt(0).toUpperCase() + value.slice(1);
 const partialTitle = stance => t('combat.intent.partial', { stance: capitalize(stance) });
+const SPELL_CAMPS = Object.freeze(['spell', 'spells', 'magic']);
+// Tint class from projected fields only: a spell camp is magic; otherwise an
+// attacking or smashing family is physical. Defend, counter, buff and cast
+// without a spell camp carry no damage class.
+function damageClassOf(intent, family) {
+  if (SPELL_CAMPS.includes(intent.profile?.camp)) return 'magic';
+  return ['attacking', 'smashing'].includes(family) ? 'physical' : null;
+}

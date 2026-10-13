@@ -49,6 +49,7 @@ export function combatantIntent(intent, content, registries = null, { onTarget =
   node.dataset.intentVisibility = badge.visibility;
   node.dataset.stance = badge.stance;
   node.dataset.intentHidden = String(!!intent?.hidden);
+  if (badge.damageClass) node.dataset.damageClass = badge.damageClass;
   const compact = document.createElement('span');
   compact.className = 'intent-compact';
   if (badge.parts[0]) compact.append(intentIcon(badge.parts[0].icon));
