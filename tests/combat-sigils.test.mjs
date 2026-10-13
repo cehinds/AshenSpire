@@ -62,6 +62,25 @@ test('card footer icons and corresponding intents use the same approved geometry
   }
 });
 
+test('Spell identity uses the outlined four-point diamond while Fire, Burn and Gorefire retain flames', () => {
+  const diamond = '<path d="m16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z"/>';
+  assert.equal(ACTION_SIGILS.spell.shape, diamond);
+  assert.ok(cardSigilsHtml({ action: 'spell' }).includes(diamond));
+  for (const id of ['camp:spell', 'source:spell']) {
+    assert.ok(cardTagRailHtml([{ id, label: 'Spell' }]).includes(diamond));
+  }
+  for (const id of ['school:fire', 'damage:fire', 'status:burn', 'gorefire']) {
+    const html = cardTagRailHtml([{ id, label: 'Fire' }]);
+    assert.ok(html.includes('M18 1c4 9-5 11-1 16'), id);
+    assert.ok(!html.includes(diamond), id);
+  }
+  assert.ok(SCHOOL_SIGILS.fire.shape.includes('M17 3c3 8'));
+  for (const id of ['camp:spell', 'source:spell', 'maneuver:casting']) {
+    assert.equal(contentBundle.tags.find(tag => tag.id === id).glyph, '✧');
+  }
+  assert.equal(contentBundle.tags.find(tag => tag.id === 'school:fire').glyph, '🔥');
+});
+
 test('short damage wording retains numbers, types, timing, targets and conditions', () => {
   const original = 'Deal <span class="val">9</span> Piercing damage to all enemies.\nGain 4 Guard until next turn. If Guard breaks, deal 3 Cold damage.';
   assert.equal(compactCardRules(original), '<span class="val">9</span> Piercing damage to all enemies. Gain 4 Guard until next turn. If Guard breaks, deal 3 Cold damage.');
@@ -105,27 +124,28 @@ test('long rank effects keep their Starstone condition, values and draw limit', 
   assert.equal(compactCardRules('If you have starstoneCharge: Deal 4 damage to every living enemy. Apply <span class="val">1</span> starstoneCharge to yourself. Draw <span class="val">1</span> card(s), once per turn from this family.'), 'With Starstone: 4 damage to all enemies. Gain <span class="val">1</span> Starstone. Draw <span class="val">1</span>, once per turn per family.');
 });
 
-test('Ritual Ward keeps Defend below and Ritual, Spell, Divine on the right', () => {
+test('Ritual Ward keeps Defend below and category followed by effect type on the right', () => {
   const reg=createRegistries(contentBundle),ref={cardId:'defend',profileId:'sceptreGuard'};
   const model=playingCardModel(reg,ref),def=resolveCard(reg,ref);
   assert.equal(model.sigils.action,'defend');
-  assert.deepEqual(cardSideTags(model,def,reg).map(t=>t.label),['Ritual','Spell','Divine']);
+  assert.deepEqual(cardSideTags(model,def,reg).map(t=>t.label),['Spell','Divine']);
 });
 
-test('three primary symbols prioritize element, status and main skill without mutating full tags', () => {
+test('five primary symbols prioritize category, damage and statuses without mutating full tags', () => {
   const reg=createRegistries(contentBundle),ref={cardId:'gorefireSlash'};
   const model=playingCardModel(reg,ref),def=resolveCard(reg,ref),before=JSON.stringify(model.tags);
   const chosen=cardSideTags(model,def,reg);
   assert.ok(chosen.some(t=>t.id==='status:bleed'));
-  assert.ok(chosen.length<=3);
-  assert.ok(chosen.every(t=>t.label.toLowerCase()!==model.sigils.action));
+  assert.ok(chosen.length<=5);
+  assert.match(chosen[0].id,/^camp:/);
+  assert.ok(chosen.every(t=>/^(camp|damage|school|status):/.test(t.id)));
   assert.equal(JSON.stringify(model.tags),before);
   const html=cardTagRailHtml(chosen);
   assert.equal((html.match(/class="card-tag-symbol"/g)||[]).length,chosen.length);
   // Each symbol is a tab stop that shows its own tooltip (data-tip); no native title.
   assert.equal((html.match(/tabindex="0"/g)||[]).length,chosen.length);
   assert.doesNotMatch(html,/ title=/);
-  for(const tag of chosen)assert.ok(html.includes('aria-label="'+tag.label+'"'));
+  for(const tag of chosen)assert.ok(html.includes('aria-label="'+tag.label+(tag.count===undefined?'':' '+tag.count)+'"'));
   assert.equal(cardTagRailHtml([]),'');
 });
 
@@ -140,32 +160,28 @@ test('Flux, Impact, Reaction and Counterstrike each get one symbol, Flux shares 
   assert.ok(force.includes('<circle cx="16" cy="16" r="4"/>'), 'Flux shows the diamond with a centre dot');
 });
 
-test('the rail shows each trait once with its value, and a repeated tag once with its count', async () => {
+test('the rail shows each trait once with its value, and a trait without a symbol stays off the rail', async () => {
   const { cardSideTags: sides, cardTagRailHtml: rail } = await import('../src/ui/components/cardTagSymbols.js');
   const model = { sigils: { action: 'attack' }, tags: [
-    { id: 'trait:flux', label: 'Flux 1', blurb: 'On hit: 1 Ward damage.' },
-    { id: 'trait:flux', label: 'Flux 1', blurb: 'On hit: 1 Ward damage.' },
-    { id: 'trait:impact', label: 'Impact 2', blurb: 'On hit: 2 Poise damage.' },
+    { id: 'trait:flux', label: 'Flux 1', blurb: 'On hit: N Ward damage.' },
+    { id: 'trait:flux', label: 'Flux 1', blurb: 'On hit: N Ward damage.' },
+    { id: 'trait:impact', label: 'Impact 2', blurb: 'On hit: N Poise damage.' },
     { id: 'trait:grounded', label: 'Grounded', blurb: 'Grounded.' },
-    { id: 'ability:spark', label: 'Spark', blurb: 'Spark.' },
-    { id: 'ability:spark', label: 'Spark', blurb: 'Spark.' },
   ] };
-  const chosen = sides(model, {}, null);
+  const chosen = sides(model, { traitValues: { flux: 1, impact: 2 } }, null);
   assert.equal(chosen.filter(t => t.id === 'trait:flux').length, 1);
   assert.equal(chosen.find(t => t.id === 'trait:flux').count, 1);
   assert.equal(chosen.find(t => t.id === 'trait:impact').count, 2);
   assert.ok(!chosen.some(t => t.id === 'trait:grounded'), 'a trait without a symbol stays in the inspection list');
-  assert.equal(chosen.find(t => t.id === 'ability:spark').count, 2);
   const html = rail(chosen);
   assert.equal((html.match(/data-tag-id="trait:flux"/g) || []).length, 1);
   assert.ok(html.includes('aria-label="Flux 1"'));
-  assert.ok(html.includes('<b class="card-tag-count" aria-hidden="true">1</b>'));
-  assert.ok(html.includes('aria-label="Spark x2"'));
+  assert.ok(html.includes('<span class="card-tag-count" aria-hidden="true">1</span>'));
 });
 
 test('a selected tag symbol explains itself with its name, count and blurb from uiStrings', async () => {
   const { cardTagRailHtml: rail } = await import('../src/ui/components/cardTagSymbols.js');
-  const html = rail([{ id: 'trait:flux', label: 'Flux 1', blurb: 'On hit: N Ward damage, or double the Ward damage the card already deals.', count: 1 }]);
+  const html = rail([{ id: 'trait:flux', label: 'Flux', count: 1, blurb: 'On hit: N Ward damage, or double the Ward damage the card already deals.' }]);
   assert.ok(html.includes('data-tip="Flux 1 — On hit: 1 Ward damage, or double the Ward damage the card already deals."'), html);
   const tooltip = (await import('node:fs')).readFileSync(new URL('../src/ui/components/tooltip.js', import.meta.url), 'utf8');
   assert.match(tooltip, /\.card-tag-symbol\[data-tip\]/, 'the shared explain handler takes tag symbols');

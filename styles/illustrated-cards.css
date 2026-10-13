@@ -58,9 +58,9 @@
 }
 :root .card-tag-rail .card-tag-symbol {display:flex;width:8cqw;height:8cqw;flex:none;filter:drop-shadow(0 0 .65cqw #000) drop-shadow(0 0 1.1cqw #000) drop-shadow(0 .7cqw .7cqw #000);}
 :root .card-tag-symbol svg {display:block;width:100%;height:100%;}
-:root .card-tag-symbol {position:relative;pointer-events:auto;cursor:pointer;}
-/* The count sits at the symbol's bottom-right: a flux value or a repeated tag. */
-:root .card-tag-symbol .card-tag-count {position:absolute;right:-1cqw;bottom:-1.2cqw;min-width:3.4cqw;height:3.4cqw;padding:0 .6cqw;border-radius:2cqw;box-sizing:border-box;background:#1b150d;border:.3cqw solid #e8bd78;color:#f3e8c9;font:700 2.4cqw/3cqw Georgia,serif;text-align:center;filter:none;}
+:root .card-tag-symbol {pointer-events:auto;cursor:pointer;}
+:root .card-tag-rail .card-tag-symbol {position:relative;}
+:root .card-tag-count {position:absolute;right:-.8cqw;bottom:-.5cqw;min-width:3cqw;padding:0 .35cqw;border-radius:1cqw;background:#16110e;color:#fff0cc;font:700 3.4cqw/1.15 Georgia,serif;text-align:center;text-shadow:0 1px 1px #000;}
 :root .illustrated-card-face[data-rules-dense='true'] .card-tag-rail {top:13.9%;gap:.5cqw;}
 :root .illustrated-card-face[data-rules-dense='true'] .card-tag-symbol {width:7cqw;height:7cqw;}
 :root .card.illustrated-card .card-rank {

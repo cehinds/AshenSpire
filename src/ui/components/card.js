@@ -23,7 +23,9 @@ import { balance } from '../../content/balance.js';
 import { flasks } from '../../content/flasks.js';
 import { tagService } from '../../model/tagService.js';
 import { metadataFooter, artworkAnchor } from '../models/IdentityModel.js';
-import { defaultCardArtFallbacks } from '../cardArtwork.js';
+import { cardArtFallbacks } from '../cardArtwork.js';
+import { markArtPlaceholder } from '../artFallback.js';
+import { registerCardArtRefresh } from '../cardArtStyle.js';
 import { assetUrl } from '../assetmap.js';
 import { t } from '../strings.js';
 import { loreLine } from './loreLine.js';
@@ -155,7 +157,7 @@ export function renderCard(registries, ref, opts = {}) {
     subtype: combatProfile.camp === 'spell' ? 'Spell' : 'Martial' } } : {}),
     ...(expanded ? { faceType: combatCardType(def) } : {}),
     tags: [...rawModel.tags, ...combatTags.filter(tag => !rawModel.tags.some(existing => existing.id === tag.id))] };
-  model.sideTags = cardSideTags(model, def, registries);
+  model.sideTags = cardSideTags(model, def, registries, opts.preview || null);
   // Authored clauses carry family limits and charge/payment constraints that
   // the generic effect summary cannot express. Keep those complete on the face.
   const faceSummary = expanded ? combatCardSummary(def, opts.preview, registries) : null;
@@ -268,7 +270,8 @@ export function renderCard(registries, ref, opts = {}) {
   });
   let drawn = levelNow();
   const paint = (at) => {
-    const artwork = illustratedArtwork(ref, model.id, {large:at==='inspect',equipmentArt:equipmentPainting});
+    const artwork = illustratedArtwork(ref, model.id, {large:at==='inspect',equipmentArt:equipmentPainting,
+      definition:def,registries});
     const kept = el.children?[...el.children].filter(node=>node?.dataset?.cardPainted!=='1'):[];
     const authoredRules = def.weightClassPriced
       ? fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences).replace(/ Light:.*$/,'')+' Cost reflects your current weight.'
@@ -281,6 +284,7 @@ export function renderCard(registries, ref, opts = {}) {
       equipmentArtwork:artwork?.equipment,
       artworkKind:artwork?.kind,
       artworkPosition:artwork?.position,
+      artworkComposition:artwork,
       glyph:engravedIconHtml(engravedGlyphId(model.icon))||esc(model.icon),
     });
     applyCardAppearance(el.querySelector('.illustrated-card-face'));
@@ -295,12 +299,25 @@ export function renderCard(registries, ref, opts = {}) {
     const image = el.querySelector?.('.playing-card-art');
     if(image){
       image.dataset.cardArt = artwork?.kind || 'illustrated';
-      const fallbacks = defaultCardArtFallbacks(ref).filter(path=>path!==artwork?.path);
-      image.addEventListener('error',()=>{const next=fallbacks.shift();if(next){image.dataset.cardArt='outline';image.style.objectFit='contain';image.style.objectPosition='center';image.src=assetUrl(next);}});
+      const fallbacks = cardArtFallbacks(ref, artwork, {large:at==='inspect',
+        legacy:artwork?.kind==='simple'?illustratedArtwork(ref,model.id,{large:at==='inspect',equipmentArt:equipmentPainting,style:'Legacy'}):null});
+      image.addEventListener('error',()=>{
+        markArtPlaceholder(el, () => paint(drawn));
+        const next=fallbacks.shift();
+        if(next){
+          image.parentNode?.querySelectorAll('[data-card-art-layers]').forEach(node=>node.remove());
+          image.dataset.cardArt=next.kind;
+          image.style.filter='';
+          image.style.objectFit=next.fit||(next.extended?'cover':'contain');
+          image.style.objectPosition=next.position||'center';
+          image.src=assetUrl(next.path);
+        }
+      });
     }
 
   };
   paint(drawn);
+  registerCardArtRefresh(el, () => paint(drawn));
 
   // #61 M5: a matched tag-scoped vulnerability lights the card's boosted
   // number in the status row's own tint — "these cards just lit up" instead
