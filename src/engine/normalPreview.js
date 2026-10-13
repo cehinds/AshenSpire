@@ -118,6 +118,17 @@ function exchange(combat, key, winner, winStance, foeStance, credited = []) {
 }
 
 /**
+ * closeEnemyExchange(combat, sourceId): ends the exchange an enemy move opened, once that move has resolved, so later
+ * damage from the enemy (thorns, a damage trigger, its next move) is credited as its own exchange. `sourceId` limits
+ * it to that enemy's exchange; omitted, any open one closes.
+ */
+export function closeEnemyExchange(combat, sourceId = null) {
+  const st = combat?.normalPreview?.state;
+  if (!st?.enemyExchange) return;
+  if (sourceId == null || st.enemyExchange.sourceId === sourceId) delete st.enemyExchange;
+}
+
+/**
  * withCardExchange(combat, stance, fn): runs a played card's resolution as one exchange per target. `stance` is the
  * card's timeline stance, which its landed attacks are credited with. Both are cleared afterwards; nothing saves them.
  */
@@ -144,7 +155,7 @@ export function recordNormalExchange(combat, type, event = {}) {
   const st = stateOf(combat);
   const playerStance = st.playerStance ?? 'attack';
   if (type === 'enemyMoveStarted') {
-    // Each enemy move opens its own exchange; the enemy phase end closes the last one.
+    // Each enemy move opens its own exchange; closeEnemyExchange ends it when the move has resolved.
     if (sideOf(combat, event.sourceId) === 'enemy') st.enemyExchange = { sourceId: event.sourceId, credited: [] };
     return;
   }

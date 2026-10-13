@@ -45,7 +45,7 @@ import { persistentWardMaximum, persistentPoiseMaximum } from '../model/combatRa
 import * as F from './combatRules.js';
 import * as Reactions from './combatReactions.js';
 import * as Rounds from './combatRoundsAdapter.js';
-import { decayNormalMomentum, settleNormalMomentum, multiActionOn, withCardExchange } from './normalPreview.js';
+import { decayNormalMomentum, settleNormalMomentum, multiActionOn, withCardExchange, closeEnemyExchange } from './normalPreview.js';
 import { clearEnemyReactionRolls } from './enemyReactions.js';
 import { emitEvent, fireOwnerHooks, findEntity, hasEventTriggers } from './triggers.js';
 import { attachSkillXp } from './skillXp.js';
@@ -714,6 +714,9 @@ function enemyPhase(combat) {
     drainQueue(combat);
     if (Reactions.reactionPaused(combat)) return;
     if (combat.result) return;
+    // The move has resolved: its momentum exchange ends with it (normalPreview.js), so its owner-turn-end hooks and
+    // anything after are their own exchanges.
+    closeEnemyExchange(combat, enemy.id);
 
     // Normal combat (SPEC §4.6, owner 2026-10-12): the rest of the enemy's planned pool plays in order after its head.
     // Each move leaves the plan before it runs, so a reaction pause resumes at the next planned move.
@@ -734,6 +737,7 @@ function enemyPhase(combat) {
       drainQueue(combat);
       if (Reactions.reactionPaused(combat)) return;
       if (combat.result) return;
+      closeEnemyExchange(combat, enemy.id);
     }
     if (enemy.plannedMoves?.length === 0) enemy.planDue = false;
 

@@ -5,6 +5,7 @@
 // (engine/combatReactions.js) reaches it.
 import { controlRestrictions } from './combatStatusControl.js';
 import { enqueueExpandedAction } from './combatExpansionActions.js';
+import { closeEnemyExchange } from './normalPreview.js';
 
 // Version 2 with the flag. Absent (or a version-1 snapshot) means no enemy reactions.
 export const enemyReactionsActive = ctx => ctx.reactionRulesVersion === 2 && ctx.reactionRules?.enemyReactions === true;
@@ -168,6 +169,8 @@ export function runEnemyPlan(ctx, entry, hooks) {
     ctx.pendingExpansionActions = (ctx.pendingExpansionActions || 0) + 1;
     for (const action of relinkEnemyPlan(ctx, entry.plan)) ctx.queue.push(action);
     hooks.drain(ctx);
+    // The reaction move has resolved: its normal-combat momentum exchange ends with it (SPEC §4.11).
+    closeEnemyExchange(ctx, entry.ownerId);
   } finally {
     if (wasPlaying) ctx._reactionPlaying = wasPlaying; else delete ctx._reactionPlaying;
     const left = ctx.queue;

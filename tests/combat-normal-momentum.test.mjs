@@ -15,6 +15,7 @@ import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/co
 import { MOMENTUM_KEY, COMBAT_ROUNDS_KEY, MULTI_ACTION_KEY } from '../src/model/combatRounds.js';
 import { parseStanceAdvantage } from '../src/engine/combatRounds/resolver.js';
 import { decayNormalMomentum, displayedMomentum, enemyIntentStance, momentumOn, recordNormalExchange, settleNormalMomentum, withCardExchange } from '../src/engine/normalPreview.js';
+import { runEnemyPlan } from '../src/engine/enemyReactions.js';
 import { momentumTab } from '../src/ui/models/CombatRoundsScreenModel.js';
 import { cardKind } from '../src/model/tree.js';
 import { resolveCard } from '../src/model/registries.js';
@@ -182,6 +183,24 @@ test('a multi-hit enemy move is one exchange: its hits credit the enemy once', (
   assert.equal(pending(c), -2, 'the next move is a new exchange');
   settleNormalMomentum(c);
   assert.equal('enemyExchange' in c.normalPreview.state, false, 'the enemy phase end closes the scope');
+});
+
+// Review follow-up: an enemy reaction move (played inside the player's turn) is one exchange that closes when the move
+// has resolved, so later damage from that enemy in the same turn (thorns, a damage trigger) is credited on its own.
+test('an enemy reaction move closes its exchange when it resolves: later damage from that enemy is its own exchange', () => {
+  const c = fakeCombat();
+  Object.assign(c.enemies[0], { alive: true, hp: 20 });
+  Object.assign(c.player, { alive: true, hp: 20 });
+  c.queue = [];
+  c.emit = (type, payload) => recordNormalExchange(c, type, payload);
+  const hit = () => recordNormalExchange(c, 'damageDealt', { isAttack: true, sourceId: 'e1', targetId: 'player', amount: 3, blocked: 0 });
+  const entry = { ownerId: 'e1', enemyId: ENEMY, moveId: 'slash', targetPlayerId: 'player', plan: { group: { kind: 'attack' }, actions: [] } };
+  // The move's own two hits resolve inside its drain.
+  assert.equal(runEnemyPlan(c, entry, { drain: () => { hit(); hit(); } }), null, 'fixture: the reaction plays');
+  assert.equal(pending(c), -1, 'the reaction move\'s two hits: one credit');
+  assert.equal('enemyExchange' in c.normalPreview.state, false, 'the exchange closes with the move');
+  hit();
+  assert.equal(pending(c), -2, 'a later hit from that enemy in the same turn is credited on its own');
 });
 
 test('the banner tab reads the stored momentum; a fight with the toggle off shows none', () => {
