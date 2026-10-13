@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-13",
     "summary": "Combat Rounds preview data now stays isolated and save-safe",
     "detail": "Reaction offers and public timelines no longer share mutable card data with round state, non-finite damage is normalized consistently, and invalid card identifiers are rejected before a paused round can become unrecoverable.",
-    "build": "0.7.1.1471",
+    "build": "0.7.1.1473",
     "pullRequest": 1899,
     "url": "https://github.com/cehinds/AshenSpire/pull/1899"
   },
@@ -18,7 +18,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-13",
     "summary": "The test branch's long checks pass again, and pricing a card is fast again",
     "detail": "Development-process fix, with one engine speed-up. Previewing a card's cost or target no longer copies the whole fight when no rule could react to that card, which had made the balance check and simulations about three times slower after Oath began reacting to every card. The link check's self-test copies the Workbench files it needs, and the simulation-report test runs each identical simulation once.",
-    "build": "0.7.1.1471",
+    "build": "0.7.1.1473",
     "pullRequest": 1950,
     "url": "https://github.com/cehinds/AshenSpire/pull/1950"
   },
