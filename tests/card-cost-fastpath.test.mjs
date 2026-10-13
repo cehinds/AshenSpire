@@ -21,6 +21,12 @@ function fixture(coop=false){
   const player={id:'a',classId:'herald',hp:80,maxHp:80,mana:10,maxMana:10,stamina:10,maxStamina:10,energyMax:10,drawPerTurn:1,relicIds:[],deck:[{instanceId:'probe',cardId:'stigmataCard',upgraded:false}]};
   return coop?createCoopCombat({registries,rng:createRng(11),players:[player,{...player,id:'b'}],enemyIds:['wanderingSoldier']}):createCombat({registries,rng:createRng(11),player,enemyIds:['wanderingSoldier']});
 }
+// Every class mount carries the Oath rule, which listens to cardPreparing. The
+// no-listener fast path is about a bus nobody listens on, so drop class mounts.
+function withoutClassMounts(combat){
+  for(const mounts of Object.values(combat.propertyMounts||{}))for(const [id,mount] of Object.entries(mounts))if(mount?.kind==='class')delete mounts[id];
+  return combat;
+}
 function clonePrice(combat,id){
   const saved=combat._emitEvent;
   combat._emitEvent=(...args)=>saved(...args); // Same bus; unknown identity forces the original detached path.
@@ -40,7 +46,7 @@ function assertPureEqual(combat){
 
 test('no-listener pricing retains live charge discounts and passive costs with exact clone parity',()=>{
   for(const coop of [false,true]){
-    const combat=fixture(coop),key=coop?combat.playerKey:'player';
+    const combat=withoutClassMounts(fixture(coop)),key=coop?combat.playerKey:'player';
     combat.propertyMounts[key] ||= {};
     combat.propertyMounts[key].probe={...mount([]),rules:[{tag:'probe',passives:{powerCostReduction:1}}]};
     grantAbilityCharge(combat.player,charge);

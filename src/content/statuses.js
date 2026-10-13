@@ -216,6 +216,7 @@ export const statuses = [
   },
   {
     id: 'crimsonBlight',
+    fluxPerTurn: 1,
     tint: 'var(--rot)',
     name: 'Crimson Blight',
     icon: '❀',
@@ -268,6 +269,7 @@ export const statuses = [
   // they are the ones armaments reach for (content/source/equipMods.csv does).
   {
     id: 'burn',
+    fluxPerTurn: 1,
     tint: 'var(--ember)',
     name: 'Burn',
     icon: '🔥',
@@ -880,6 +882,41 @@ export const statuses = [
     instancePresentation: { valueToken: 'percent', durationToken: 'turns' },
     schoolDamageVulnerability: { school: 'magic' },
     tooltip: 'Magic-school HP damage is increased while this lasts.',
+  },
+  {
+    // Fight-long marker for the Oath rule (oathKept): set when its owner
+    // enters a stance, it never decays, so Oath stays broken for the fight.
+    id: 'stanceShifted',
+    name: 'Stance Shifted',
+    icon: '⇄',
+    stackMode: 'unique',
+    decay: 'none',
+    tooltip: 'You have entered a stance this fight: Oath cards no longer grant Block.',
+  },
+  {
+    // Psychic family (design elements-and-tag-mechanics §2.1). Spell-camp
+    // damage only; physical moves are untouched.
+    id: 'silenced',
+    name: 'Silenced',
+    icon: '◌',
+    tint: '#8b7cd6',
+    stackMode: 'refresh',
+    decay: { duration: 2 }, // PROVISIONAL
+    modifiers: { spellDamageDealtMult: 0.5 },
+    tooltip: 'Spell-camp moves deal 50% less damage for 2 turns.',
+  },
+  {
+    // Earth family (design elements-and-tag-mechanics 2.2). Applied by the
+    // Stoneskin card. Ticks down at the owner's turn end, so two ticks carry its
+    // Block through exactly one turn start.
+    id: 'stoneskin',
+    name: 'Stoneskin',
+    icon: '◆',
+    tint: '#8a7b5c',
+    stackMode: 'unique',
+    decay: { duration: 2 }, // PROVISIONAL
+    modifiers: { retainBlock: true },
+    tooltip: 'Your Block is not removed at the start of your next turn.',
   },
   ...expansionStatuses,
 ];

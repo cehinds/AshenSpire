@@ -1,6 +1,6 @@
 // Presentation only: active buffs color the silhouette; buildup is not a debuff.
 export const ENEMY_STATE_POSES = ['buff', 'wounded', 'afflicted', 'projectile', 'guard', 'guardHit', 'hurt'];
-const negative = new Set(['weak', 'vulnerable', 'frail', 'frostExposed', 'insanityExposed', 'crimsonBlight', 'necroticBlight', 'burn', 'madness', 'staggered', 'venom', 'magicVulnerable']);
+const negative = new Set(['weak', 'vulnerable', 'frail', 'frostExposed', 'insanityExposed', 'crimsonBlight', 'necroticBlight', 'burn', 'madness', 'staggered', 'venom', 'magicVulnerable', 'silenced']);
 const themes = {
   strength: ['strength', 'rallyingStandard', 'rallyingStandardUp', 'prepared', 'deadlyTempo', 'opportunist', 'glassCannon', 'zealotry'],
   defense: ['dexterity', 'unbreakable', 'unbreakableUp', 'ironVow', 'bulwarkEcho', 'moonlitShield', 'astralArmor'],
