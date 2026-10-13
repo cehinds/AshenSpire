@@ -1,0 +1,186 @@
+name: pr-restamp
+
+# KEEPS OPEN PULL REQUESTS MERGEABLE WHEN THE BUILD STAMP MOVES dev (owner, 2026-10-13).
+#
+# Every push to dev makes build-stamp.yml commit `build: stamp <release>.<ordinal>
+# [build-stamp]`, rewriting CHANGELOG.md, src/content/changelog.generated.js and
+# buildordinal.json. An open pull request that carries a receipt then conflicts in
+# those derived files, and could not merge until someone merged dev into it and
+# re-stamped its receipt by hand. This workflow does that merge for every open pull
+# request into dev that now conflicts, with tools/pr-restamp.mjs, after each stamp.
+#
+# WHAT IT PUSHES, AND WHY THAT IS NOT A NEW REVIEW. The commit is the merge of
+# origin/dev into the pull request's head, with the derived files resolved: dev's box
+# and generated module, the receipt re-stamped to dev's box. CONTRIBUTING rule 6 keeps
+# an owner's approval through a push that only merges dev and regenerates the derived
+# files; the tool refuses (exit 3) any conflict outside those files, so a pull request
+# that needs more than that goes to a person instead of being pushed.
+#
+# A PUSH MADE WITH GITHUB_TOKEN STARTS NO PULL REQUEST WORKFLOW, so after each push
+# this job dispatches tests, receipts, dev-preview and quick-start on the head branch
+# by hand. Those runs are the checks the merge commit needs; they are not a PR comment.
+#
+# A PERSON IS ASKED, ONCE. When a conflict is outside the derived files (exit 3) or a
+# check fails after the merge (exit 4), the job posts one comment on the pull request,
+# marked <!-- pr-restamp -->, and edits that comment on later stamps rather than adding
+# another. The job does not fail for those; it fails only for an unexpected error, and
+# then after every other pull request has been handled.
+#
+# Only a build-stamp run that concluded success triggers this, so a failed stamp does
+# not move any pull request. A pushed dev also runs the stamp first, so this always
+# sees the stamped tip. workflow_dispatch takes an optional comma list of pull request
+# numbers (`prs`); empty means every open pull request into dev.
+#
+# One group, not cancelled: a running pass finishes, and the next stamp's pass sees
+# whatever it left behind, because each pass re-reads the open pull requests.
+
+on:
+  workflow_run:
+    workflows: [build-stamp]
+    types: [completed]
+    branches: [dev]
+  workflow_dispatch:
+    inputs:
+      prs:
+        description: 'Comma-separated pull request numbers to re-stamp (empty: every open pull request into dev)'
+        required: false
+        default: ''
+
+concurrency:
+  group: pr-restamp
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+jobs:
+  restamp:
+    if: "github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'"
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PRS_INPUT: ${{ github.event.inputs.prs }}
+    steps:
+      - name: Check out dev with its history
+        uses: actions/checkout@v5
+        with:
+          ref: refs/heads/dev
+          fetch-depth: 0
+          lfs: false
+
+      - name: Set up Node
+        uses: ./.github/actions/setup-node
+
+      - name: Re-stamp each open pull request that conflicts with dev
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch -q origin "+refs/heads/dev:refs/remotes/origin/dev"
+
+          # One record per open pull request into dev. A cross-repository head is a fork's
+          # branch: this job cannot push to it, so it is skipped.
+          gh pr list --repo "$GITHUB_REPOSITORY" --base dev --state open --limit 200 \
+            --json number,headRefName,isCrossRepository,mergeable \
+            --jq '.[] | select(.isCrossRepository | not) | [.number, .headRefName, .mergeable] | @tsv' \
+            > "$RUNNER_TEMP/prs.tsv"
+
+          wanted=",${PRS_INPUT// /},"
+          failed=0
+
+          # Posts or edits the one pr-restamp comment on pull request $1 with the text in file $2.
+          comment_on() {
+            local pr="$1" body="$2" id
+            id="$(gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$pr/comments" \
+              --jq '.[] | select(.body | contains("<!-- pr-restamp -->")) | .id' | head -n 1)"
+            if [ -n "$id" ]; then
+              gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" -F "body=@$body" >/dev/null
+            else
+              gh api -X POST "repos/$GITHUB_REPOSITORY/issues/$pr/comments" -F "body=@$body" >/dev/null
+            fi
+          }
+
+          while IFS=$'\t' read -r pr head mergeable; do
+            if [ -n "$PRS_INPUT" ] && [[ "$wanted" != *",$pr,"* ]]; then
+              continue
+            fi
+            # Only a pull request GitHub reports as conflicting is touched. A clean one is
+            # mergeable as it stands, and a merge of dev into it is the owner's call.
+            if [ "$mergeable" != "CONFLICTING" ]; then
+              echo "#$pr is $mergeable; nothing to re-stamp."
+              continue
+            fi
+            echo "::group::#$pr ($head)"
+            out="$RUNNER_TEMP/restamp-$pr.txt"
+            body="$RUNNER_TEMP/restamp-$pr-comment.md"
+            if ! { git fetch -q origin "+refs/heads/$head:refs/remotes/origin/$head" \
+                && git checkout -q -B pr "origin/$head"; } > "$out" 2>&1; then
+              cat "$out"
+              echo "::endgroup::"
+              echo "::error::#$pr: could not check out $head."
+              failed=1
+              continue
+            fi
+            before="$(git rev-parse HEAD)"
+            set +e
+            node tools/pr-restamp.mjs --pr "$pr" --base origin/dev > "$out" 2>&1
+            status=$?
+            set -e
+            cat "$out"
+            echo "::endgroup::"
+
+            case "$status" in
+              0)
+                after="$(git rev-parse HEAD)"
+                if [ "$after" = "$before" ]; then
+                  echo "#$pr already carries dev; nothing pushed."
+                  continue
+                fi
+                if ! git push -q origin "HEAD:refs/heads/$head"; then
+                  # A rejected push (the branch moved meanwhile) is retried at the next stamp.
+                  echo "::notice::#$pr: push to $head rejected; it is retried at the next build stamp."
+                  continue
+                fi
+                echo "Pushed the dev merge to $head for #$pr."
+                # The checks a pull request runs on its own merge commit. A GITHUB_TOKEN push
+                # starts none of them, so each is dispatched on the head branch here.
+                for wf in tests.yml receipts.yml dev-preview.yml quick-start.yml; do
+                  if ! gh workflow run "$wf" --repo "$GITHUB_REPOSITORY" --ref "$head"; then
+                    echo "::warning::#$pr: could not dispatch $wf on $head; run it by hand."
+                  fi
+                done
+                ;;
+              3)
+                {
+                  echo "<!-- pr-restamp -->"
+                  echo "**The build stamp moved \`dev\`, and this pull request conflicts in files the bot does not resolve.** A person must merge \`dev\` into this branch."
+                  echo
+                  echo '```'
+                  grep 'needs a person' "$out" || cat "$out"
+                  echo '```'
+                  echo
+                  echo "The bot resolves only \`CHANGELOG.md\`, \`buildordinal.json\` and \`src/content/changelog.generated.js\`. Merge \`dev\` in and resolve the rest yourself; the receipt is re-stamped by \`pr-restamp\` on the next stamp."
+                } > "$body"
+                comment_on "$pr" "$body" || { echo "::warning::#$pr: could not post the comment."; }
+                ;;
+              4)
+                {
+                  echo "<!-- pr-restamp -->"
+                  echo "**The build stamp moved \`dev\` and the bot could not re-stamp this pull request.** Nothing was pushed; the merge was aborted."
+                  echo
+                  echo '```'
+                  cat "$out"
+                  echo '```'
+                } > "$body"
+                comment_on "$pr" "$body" || { echo "::warning::#$pr: could not post the comment."; }
+                ;;
+              *)
+                echo "::error::#$pr: pr-restamp failed unexpectedly (exit $status)."
+                failed=1
+                ;;
+            esac
+          done < "$RUNNER_TEMP/prs.tsv"
+
+          exit "$failed"
