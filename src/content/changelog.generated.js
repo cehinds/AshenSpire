@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-13",
     "summary": "Pull requests stay mergeable after each build stamp",
     "detail": "After every build stamp on dev, a bot merges dev into each open pull request that only conflicts in the build number and changelog files, moves its changelog entry to the current build, and reruns its checks. Pull requests with any other conflict get one comment asking a person to merge dev.",
-    "build": "0.7.1.1495",
+    "build": "0.7.1.1499",
     "pullRequest": 1937,
     "url": "https://github.com/cehinds/AshenSpire/pull/1937"
+  },
+  {
+    "id": "pr-1899",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Combat Rounds preview data now stays isolated and save-safe",
+    "detail": "Reaction offers and public timelines no longer share mutable card data with round state, non-finite damage is normalized consistently, and invalid card identifiers are rejected before a paused round can become unrecoverable.",
+    "build": "0.7.1.1499",
+    "pullRequest": 1899,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1899"
+  },
+  {
+    "id": "pr-1883",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Switching combat views keeps your lane where the grid shows it",
+    "detail": "When a fight changes from the perspective view to Classic, your saved lane now moves to the Classic square the screen displays. Moving again or reloading the fight no longer jumps you back to a hidden perspective-only lane.",
+    "build": "0.7.1.1497",
+    "pullRequest": 1883,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1883"
   },
   {
     "id": "pr-1957",

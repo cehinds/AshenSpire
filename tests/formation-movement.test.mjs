@@ -6,7 +6,7 @@ import { createRunState } from '../src/model/state.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
-import { formationMovePlan } from '../src/model/formationMovement.js';
+import { formationMovePlan, normalizeClassicPlayerFormationCell } from '../src/model/formationMovement.js';
 const settings = { 'gameConfig.presentation.movementEnabled': true };
 function fixture() {
   const registries = createRegistries(contentBundle);
@@ -30,6 +30,21 @@ test('the player spawns on the shipped grid\'s last row', () => {
   assert.equal(spawn, 'C1');
   // Classic keeps its own two-row grid.
   assert.equal(formationMovePlan(fixture(), 'A1', { ...settings, classicAppearance: true }).current, 'B1');
+});
+test('switching a saved perspective-only lane to Classic persists its displayed cell', () => {
+  const combat = fixture();
+  combat.player.formationCell = 'C1';
+  const classic = { ...settings, classicAppearance: true };
+  assert.equal(normalizeClassicPlayerFormationCell(combat, classic), true);
+  assert.equal(combat.player.formationCell, 'B1');
+  const restored = restoreCombatSnapshot({ registries: combat.registries, rng: createRng(896), snapshot: serializeCombatSnapshot(combat) });
+  assert.equal(restored.player.formationCell, 'B1');
+  assert.equal(formationMovePlan(restored, 'A1', classic).current, 'B1');
+  assert.equal(normalizeClassicPlayerFormationCell(restored, classic), false, 'normalization is idempotent');
+
+  const unplaced = fixture();
+  assert.equal(normalizeClassicPlayerFormationCell(unplaced, classic), false);
+  assert.equal(unplaced.player.formationCell, undefined, 'an implicit spawn remains appearance-specific');
 });
 test('disabled, unaffordable, invalid, occupied and out-of-turn moves do not mutate state', () => {
   assert.throws(() => dispatch(fixture(), { type: 'moveCharacter', cell: spawn, settings }), /Already at that position/);
