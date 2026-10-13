@@ -271,9 +271,10 @@ export function rangeSubjects(since, { cwd = ROOT, limit = 40 } = {}) {
     .map(({ hash, subject }) => ({ subject, firstParent: firstParent.has(hash) }));
   if (since) {
     const spec = `${since}..HEAD`;
-    const all = commits(['--topo-order', '--format=%H%x00%s', spec]);
-    const selected = new Set(all.map(({ hash }) => hash));
+    // Only real landings: every merge commit, plus every first-parent commit (where a
+    // squash lands). A side-branch commit merely titled like a merge is not one.
     const firstParent = new Set(lines(['--first-parent', '--format=%H', spec]));
+    const selected = new Set([...lines(['--merges', '--format=%H', spec]), ...firstParent]);
     return inLandingOrder(selected, firstParent, spec);
   }
   // THE FALLBACK WINDOW HAS ONE BOUNDARY, not one per walk. Capping each walk at

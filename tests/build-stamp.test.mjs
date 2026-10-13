@@ -424,7 +424,8 @@ test('the base is the introduction: the introducing merge counts, the merges bef
 
 test('mixed merge and squash landings keep their shared newest-first chronology', () => {
   const r = repoWithPipeline([]);
-  const git = (...args) => execFileSync('git', args, { cwd: r.dir, encoding: 'utf8' }).trim();
+  const env = { ...process.env, GIT_AUTHOR_NAME: 'dev', GIT_AUTHOR_EMAIL: 't@example.invalid', GIT_COMMITTER_NAME: 'dev', GIT_COMMITTER_EMAIL: 't@example.invalid' };
+  const git = (...args) => execFileSync('git', args, { cwd: r.dir, encoding: 'utf8', env }).trim();
   try {
     git('checkout', '-q', '-b', 'older-merge');
     git('commit', '-q', '--allow-empty', '-m', 'older branch work');
@@ -433,6 +434,19 @@ test('mixed merge and squash landings keep their shared newest-first chronology'
     git('commit', '-q', '--allow-empty', '-m', 'Newer squash landing (#1901)');
 
     assert.deepEqual(landedSince({ cwd: r.dir }), ['1901', '1900', '1895']);
+  } finally { r.cleanup(); }
+});
+
+test('a side-branch commit titled like a merge is not a landing', () => {
+  const r = repoWithPipeline([]);
+  const env = { ...process.env, GIT_AUTHOR_NAME: 'dev', GIT_AUTHOR_EMAIL: 't@example.invalid', GIT_COMMITTER_NAME: 'dev', GIT_COMMITTER_EMAIL: 't@example.invalid' };
+  const git = (...args) => execFileSync('git', args, { cwd: r.dir, encoding: 'utf8', env }).trim();
+  try {
+    git('checkout', '-q', '-b', 'feature');
+    git('commit', '-q', '--allow-empty', '-m', 'Merge pull request #999 from x/cherry-picked');
+    git('checkout', '-q', 'main');
+    git('merge', '-q', '--no-ff', 'feature', '-m', 'Merge pull request #1900 from a/feature');
+    assert.deepEqual(landedSince({ cwd: r.dir }), ['1900', '1895']);
   } finally { r.cleanup(); }
 });
 
