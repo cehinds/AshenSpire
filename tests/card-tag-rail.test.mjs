@@ -105,3 +105,16 @@ test('numeric badges survive authored symbol replacement and unsafe counts are o
   const html=cardTagRailHtml([{id:'status:bleed',label:'<script>',count:'<img onerror=x>'}]);
   assert.ok(!html.includes('card-tag-count'));assert.ok(!html.includes('<script>'));assert.ok(!html.includes('<img'));
 });
+test('boolean traits show no count while numeric traits keep their value',()=>{
+  const tags={tags:[{id:'trait:counterstrike',label:'Counterstrike'},{id:'trait:flux',label:'Flux'}]};
+  const rows=cardSideTags(tags,{traitValues:{counterstrike:true,flux:2}},reg);
+  const counter=rows.find(row=>row.id==='trait:counterstrike');
+  const flux=rows.find(row=>row.id==='trait:flux');
+  assert.equal(counter.count,undefined);
+  assert.equal(flux.count,2);
+  const counterHtml=cardTagRailHtml([counter]);
+  assert.ok(!counterHtml.includes('card-tag-count'));
+  assert.ok(!counterHtml.includes('Counterstrike 1'));
+  assert.match(counterHtml,/aria-label="Counterstrike"/);
+  assert.match(cardTagRailHtml([flux]),/aria-label="Flux 2"/);
+});
