@@ -1,6 +1,5 @@
 import { COMBAT_TOOLS_HEIGHT_PX, COMBAT_TOOLS_DESKTOP_HEIGHT_PX, handLayout, handGeometryKey, reconcileHandOrder, moveHandInstance } from '../models/HandLayout.js';
 import { mountHandInspectionOverlay } from './handInspectionOverlay.js';
-import { isWideFormFactor } from '../models/FormFactorModel.js';
 // src/ui/components/hand.js — THE hand strip. One renderer, two surfaces.
 //
 // Until 2026-08-15 the hand was rendered TWICE: combat.js's template (the
@@ -132,9 +131,6 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // combat root's mirror (combatLayout) can lag a debounced change.
       const formFactor = document.documentElement.dataset.formFactor || handEl.closest('.combat')?.dataset.formFactor || null;
       const desktop = formFactor === 'desktop';
-      // The fan (card cap, top anchoring) is the wide form factors' — desktop and
-      // widescreen. The tool row below keeps its own literal desktop check.
-      const wideFan = isWideFormFactor(formFactor);
       // The compact toolbar occupies a 30px compact row at the top of the hand.
       // Keep four physical pixels between that row and the resting card fan.
       // Desktop measures the live 36px tool row and keeps the same four physical
@@ -165,7 +161,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // On a phone the selected card's lift rises over the tool row (it paints
       // above the row), so no empty lift band separates the row from the fan.
       const plan = handLayout({ width: handEl.clientWidth, height: handEl.clientHeight - toolsHeight,
-        count: cards.length, rem, zoom, compact, controlsHeight, controlled, headroom: compact || wideFan ? toolsHeight : 0, desktop: wideFan });
+        count: cards.length, rem, zoom, compact, controlsHeight, controlled, headroom: compact ? toolsHeight : 0 });
       handEl.dataset.wireframeHand = 'true';
       handEl.style.setProperty('--hand-card-zoom', '1');
       handEl.style.setProperty('--hand-span', plan.span + 'px');
@@ -255,7 +251,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     const alive = () => document.body.contains(handEl);
     ro = new ResizeObserver(() => { if (alive()) scheduleHandLayout(); else ro.disconnect(); });
     mo = new MutationObserver(() => { if (alive()) scheduleHandLayout(); else mo.disconnect(); });
-    // data-form-factor re-lays the fan too: desktop anchors it differently.
+    // data-form-factor re-lays the hand too (the tool row reserve differs by form factor).
     mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-layout', 'data-form-factor'] });
     ro.observe(handEl);
   }

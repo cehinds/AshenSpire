@@ -38,21 +38,25 @@ test('a tablet spacious field frames its backdrop on the enemy ground as before'
   assert.ok(tall.every(fit => fit.sceneryGround === undefined));
 });
 
-// Owner (2026-10-12): desktop looks like the approved phone. Its camera frames
-// the near row, so the horizon and landmark stay in view, and its shared back
-// row stays on the floor, above the near row.
-test('a desktop field frames its backdrop on the near row and keeps the back row on its floor', () => {
-  const desktopWidth = 1280, height = 417;
-  const deskActors = ['p', 'a', 'b'].map((id, i) => ({ side: i ? 'enemy' : 'player',
+// Owner (2026-10-13): desktop and widescreen take the phone's placement, so
+// the desktop shared back row and its near-row camera (2026-10-12) are retired.
+// A desktop call now frames its camera exactly as a plain call does.
+test('a desktop field frames its backdrop on the enemy ground, as the phone does', () => {
+  const width = 1280, height = 417;
+  const actors = ['p', 'a', 'b'].map((id, i) => ({ side: i ? 'enemy' : 'player',
     visibleWidth: 60, leading: 40, slot: { id, ground: 360 } }));
-  const deskSizes = deskActors.map((a, i) => ({ id: a.slot.id, x: [260, 560, 900][i], visibleHeight: 200, scale: 1, multiplier: 1 }));
-  const fit = alternativeCombatComposition({ actors: deskActors, sizes: deskSizes, width: desktopWidth, height, handTop: height, desktop: true });
-  const nearRow = 360 - height * .07;
-  assert.ok(Math.abs(combatSceneryGround(fit, deskActors, 0) - nearRow) < 1e-9, 'camera frames the near row');
-  const standing = combatStandingGround(fit, deskActors, 0);
-  assert.ok(Math.abs(standing - fit[1].ground) < 1e-9, 'standing line is the shared back-row foot line');
-  assert.ok(standing >= height * .48 - 1e-9 && standing <= height * .8, 'back row stands on the floor, not in the sky');
-  assert.ok(standing < combatSceneryGround(fit, deskActors, 0) - 40, 'the horizon sits above the back row');
+  const sizes = actors.map((a, i) => ({ id: a.slot.id, x: [260, 560, 900][i], visibleHeight: 200, scale: 1, multiplier: 1 }));
+  const plain = alternativeCombatComposition({ actors, sizes, width, height, handTop: height });
+  assert.deepEqual(alternativeCombatComposition({ actors, sizes, width, height, handTop: height, desktop: true }), plain);
+  assert.equal(plain.some(fit => fit.sceneryGround !== undefined), false, 'no near-row camera on a spacious field');
+});
+// The desktop horizon share (2026-10-12) is retired: the camera follows the
+// enemy ground on every form factor, and the stage passes no horizon share or floor.
+test('the stage no longer frames a desktop camera on a horizon share or a standing-area floor', () => {
+  const stage = readFileSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(stage, /horizonShare|horizonFloor|combatHorizonFloor|DESKTOP_HORIZON_SHARE/);
+  const art = readFileSync(new URL('../src/ui/alternativeArt.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(art, /horizonCameraGround|desktopHorizonFloor|combatHorizonFloor|horizonShare/);
 });
 
 test('the backdrop never frames so low that the back-row feet leave its standing area', () => {
@@ -60,56 +64,4 @@ test('the backdrop never frames so low that the back-row feet leave its standing
   assert.match(art, /Math\.min\(ground, standGround \+ \(device\.groundAnchor - standingTop\) \* device\.height \* scale\)/);
   const stage = readFileSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url), 'utf8');
   assert.match(stage, /standGround: combatStandingGround\(sizes, actors, plan\.ground\) \/ zoom/);
-});
-
-// Owner (2026-10-12): the desktop camera frames the landmark's horizon in the
-// top band of the field, like the phone (about 13%), not above it.
-test('a desktop camera puts the landmark horizon a set share of the way down the field', async () => {
-  const { alternativeArtCatalog } = await import('../src/ui/alternativeArtCatalog.js');
-  const { horizonCameraGround, LANDMARK_HORIZON_SHARE } = await import('../src/ui/alternativeArt.js');
-  const device = alternativeArtCatalog.scenes['pale-marches-2'].devices.desktop;
-  const height = 347.5, width = 1200;
-  const scale = Math.max(width / device.width, height / device.height);
-  const ground = horizonCameraGround(device, { height, scale, share: .2 });
-  const landmark = device.layers.find(layer => /landmark/.test(layer.id));
-  const horizonCanvas = landmark.y + LANDMARK_HORIZON_SHARE * landmark.height;
-  // The canvas top sits at fieldTop + ground - groundAnchor * device.height * scale.
-  const horizonOnField = ground - device.groundAnchor * device.height * scale + horizonCanvas * scale;
-  assert.ok(Math.abs(horizonOnField - .2 * height) < 1e-9, `horizon at ${horizonOnField / height} of the field`);
-  assert.equal(horizonCameraGround({ layers: [], height: 1024, width: 1536, groundAnchor: .82 }, { height, scale, share: .2 }), undefined);
-});
-
-test('the stage frames the desktop camera on the horizon share and nothing else', () => {
-  const stage = readFileSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url), 'utf8');
-  assert.match(stage, /horizonShare: document\.documentElement\.dataset\.formFactor === 'desktop' \? DESKTOP_HORIZON_SHARE : undefined/);
-});
-
-// Codex P2 (2026-10-12): at 1280x720 the field is about 297px high. A shared
-// back row standing above the standing area lifted the camera, pushing the
-// horizon above the field. The standing-area floor keeps the clamp a no-op.
-test('at 1280x720 the desktop horizon stays 10-30% down, and the standing floor keeps the row on the floor', async () => {
-  const { alternativeArtCatalog } = await import('../src/ui/alternativeArtCatalog.js');
-  const { horizonCameraGround, desktopHorizonFloor, LANDMARK_HORIZON_SHARE } = await import('../src/ui/alternativeArt.js');
-  const device = alternativeArtCatalog.scenes['pale-marches-2'].devices.desktop;
-  const width = 1280, height = 297, share = .2;
-  const scale = Math.max(width / device.width, height / device.height);
-  const landmark = device.layers.find(layer => /landmark/.test(layer.id));
-  const horizonCanvas = landmark.y + LANDMARK_HORIZON_SHARE * landmark.height;
-  const horizonGround = horizonCameraGround(device, { height, scale, share });
-  const horizonOnField = frame => (frame - device.groundAnchor * device.height * scale + horizonCanvas * scale) / height;
-  assert.ok(horizonOnField(horizonGround) >= .1 && horizonOnField(horizonGround) <= .3, `horizon at ${horizonOnField(horizonGround)}`);
-  // The fitAlternativeBackdrop clamp: the camera may not frame below the standing area's top.
-  const standingTop = device.standingArea.y;
-  const clampLimit = (standing) => standing + (device.groundAnchor - standingTop) * device.height * scale;
-  const floor = desktopHorizonFloor(device, { width, height, share });
-  assert.ok(Math.abs(clampLimit(floor) - horizonGround) < 1e-9, 'the floor is exactly where the horizon framing stops being clamped');
-  // A back row at or below the floor leaves the horizon where the share puts it.
-  assert.ok(Math.min(horizonGround, clampLimit(floor + 10)) === horizonGround, 'a lower row no longer lifts the horizon');
-  assert.ok(horizonOnField(Math.min(horizonGround, clampLimit(180))) < .1, 'the old 180px row lifted the horizon off the top, as Codex measured');
-});
-
-test('the stage passes the standing-area floor to the desktop shared row only', () => {
-  const stage = readFileSync(new URL('../src/ui/components/battlefieldStage.js', import.meta.url), 'utf8');
-  assert.match(stage, /horizonFloor: document\.documentElement\.dataset\.formFactor === 'desktop'\s*\?\s*combatHorizonFloor\(combat,/);
-  assert.match(stage, /\* zoom\s*\n\s*: undefined,/, 'the floor is converted to physical px, like fieldRect');
 });
