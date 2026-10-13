@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-13
 
-- **Every weapon has a default range, and hand cards show it** ([#1921](https://github.com/cehinds/AshenSpire/pull/1921), `0.7.1.1457`). Combat ranges are now called Melee, Reach and Ranged (formerly contact, near and far), and older saves still load. Each weapon states the range it fights at, and attack cards in the combat hand show a Melee, Reach or Ranged chip, by the same rule the deck editor uses.
+- **Every weapon has a default range, and hand cards show it** ([#1921](https://github.com/cehinds/AshenSpire/pull/1921), `0.7.1.1459`). Combat ranges are now called Melee, Reach and Ranged (formerly contact, near and far), and older saves still load. Each weapon states the range it fights at, and attack cards in the combat hand show a Melee, Reach or Ranged chip, by the same rule the deck editor uses.
 
 ## 2026-10-12
 
