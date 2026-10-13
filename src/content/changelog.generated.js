@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-12",
     "summary": "Boss victories offer a choice of boss relics",
     "detail": "Beating a boss now lays out up to three boss relics you do not own, and you keep the one you pick. With auto-collect on, Continue picks one at random, as it does for cards; with it off, an unpicked choice is left behind. Co-op boss rewards are unchanged.",
-    "build": "0.7.1.1455",
+    "build": "0.7.1.1457",
     "pullRequest": 1907,
     "url": "https://github.com/cehinds/AshenSpire/pull/1907"
   },
