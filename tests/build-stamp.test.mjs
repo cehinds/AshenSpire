@@ -288,7 +288,14 @@ test('the strict guard catches a same-date rise when a lower receipt\'s stamp is
     const lines = actual.split('\n');
     const at = lines.findIndex((l) => l.includes('[#1901]'));
     assert.ok(at >= 0, 'the #1901 receipt is in CHANGELOG.md');
-    lines[at] = lines[at].replace(/0\.7\.1\.\d+/, `0.7.1.${box.ordinal}`);
+    // Raise it to the highest build its own date group cites, not to the box:
+    // once a newer date group cites a build below the box, the box would trip
+    // the cross-date "build runs backward" check first and mask the same-date
+    // rise this case is about.
+    let start = at; while (start > 0 && !lines[start - 1].startsWith('## ')) start--;
+    let end = at; while (end < lines.length && !lines[end].startsWith('## ')) end++;
+    const groupMax = Math.max(...lines.slice(start, end).flatMap((l) => [...l.matchAll(/`0\.7\.1\.(\d+)`/g)].map((m) => Number(m[1]))));
+    lines[at] = lines[at].replace(/0\.7\.1\.\d+/, `0.7.1.${groupMax}`);
     const text = lines.join('\n');
     assert.notEqual(text, actual, 'the #1901 stamp was raised');
     assert.equal(text.split('\n').filter((l, i) => l !== actual.split('\n')[i]).length, 1, 'exactly one line changed');
