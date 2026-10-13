@@ -242,10 +242,12 @@ meta.combat.stance.defensive.evade.obscure,obscure,Obscure,meta.combat.stance.de
 meta.combat.stance.counter,stance.counter,Counter,meta.combat.stance,Stance,,"20 cards, its own stance",Incoming ×0.5; returns damage,,,,technique.counter,live-tag,↩,C8A3D8,maneuver:counter
 meta.combat.stance.counter.parry,parry,Parry,meta.combat.stance.counter,Stance,,"Riposte, Rondel Parry, Binding Parry, Low Guard Riposte, Spiked Reprisal",,,,,,game-concept,,,
 meta.combat.stance.counter.school-counter,school-counter,School counter,meta.combat.stance.counter,Stance,,"one per spell school: Fire, Frost, Lightning, Force...",,,,,,game-concept,,,
+meta.combat.stance.counter.melee-counter,melee-counter,Melee counter,meta.combat.stance.counter,Stance,,"Replies to eligible melee Attack or Smash. Sweep, Force, Piercing and Ranged bypass this reaction.",,,,,,live-tag,◇,D7B36B,counter:melee
 meta.combat.stance.counter.ranged-counter,ranged-counter,Ranged counter,meta.combat.stance.counter,Stance,,"Nock and Wait, Barrage Counter",,,,,,live-tag,◇,D7B36B,counter:ranged
+meta.combat.stance.counter.spell-counter,spell-counter,Spell counter,meta.combat.stance.counter,Stance,,"Intercepts incoming physical ranged moves or spells. Against physical ranged moves, strips Ward without Health retaliation. Against spellcasters, can retaliate against Health.",,,,,,live-tag,◇,D7B36B,counter:spell
 meta.combat.stance.counter.ward-counter,ward-counter,Ward counter,meta.combat.stance.counter,Stance,,"Umbral Ward, Warding Star, Rime Mirror, Crimson Reprisal",,,,,,game-concept,,,
 meta.combat.delivery,delivery,Delivery,meta.combat,TagNode,,,,,,,,live-tag,,,delivery
-meta.combat.delivery.melee,melee,Melee,meta.combat.delivery,TagNode,,"Melee delivery; the default for the Attack, Smash and Sweep stances (owner decision 3, 2026-10-11)",,,,,,live-tag,◇,9FC3E8,delivery:melee
+meta.combat.delivery.melee,delivery.melee,Melee,meta.combat.delivery,TagNode,,"Melee delivery; the default for the Attack, Smash and Sweep stances (owner decision 3, 2026-10-11)",,,,,,live-tag,◇,9FC3E8,delivery:melee
 meta.combat.delivery.ranged,delivery.ranged,Ranged,meta.combat.delivery,TagNode,,"9 cards, was a stance",,,,,,live-tag,➶,AAC88A,maneuver:ranged
 meta.combat.delivery.ranged.shot,shot,Shot,meta.combat.delivery.ranged,TagNode,,"Aimed Shot, Barbed Arrow, Pinning Shot, Crawling Shot",,,,,,game-concept,,,
 meta.combat.delivery.ranged.volley,volley,Volley,meta.combat.delivery.ranged,TagNode,,"Arrow Volley, Toxic Volley, Fan of Knives, Ricochet",,,,,,game-concept,,,
@@ -726,8 +728,6 @@ range.melee,range.melee,Melee,range,TagNode,,At melee range: within arm's length
 range.reach,reach,Reach,range,TagNode,,At reach: past arm's length but not yet ranged.,,,,,,live-tag,◇,9FC3E8,range:reach
 range.ranged,range.ranged,Ranged,range,TagNode,,At ranged distance.,,,,,,live-tag,◇,9FC3E8,range:ranged
 counterMode,counterMode,Counter reach,,TagNode,,Counter reach: which kind of incoming attack a counter can answer. Grouping node for the counter reach vocabulary.,,,,,,live-tag,,,counterMode
-counterMode.melee,counterMode.melee,Melee counter,counterMode,TagNode,,"Replies to eligible melee Attack or Smash. Sweep, Force, Piercing and Ranged bypass this reaction.",,,,,,live-tag,◇,D7B36B,counter:melee
-counterMode.spell,counterMode.spell,Spell counter,counterMode,TagNode,,"Intercepts incoming physical ranged moves or spells. Against physical ranged moves, strips Ward without Health retaliation. Against spellcasters, can retaliate against Health.",,,,,,live-tag,◇,D7B36B,counter:spell
 item,item,Item,,TagNode,,"What a piece of gear DOES beyond its numbers, and what a run pickup is.",,,,,,live-tag,,,item
 item.bound,item.bound,Bound,item,TagNode,,Carries its own cards — they arrive with the piece and are named in equipmentGrants.csv.,,,,,,live-tag,⛓,C9A227,bound
 itemType,itemType,Item type,,TagNode,,"What a piece of equipment IS, as the Armoury and the smith name it. Distinct from the card domain: a Blade item type and a Blade card school are different facts about the same sword.",,,,,,live-tag,,,itemType
