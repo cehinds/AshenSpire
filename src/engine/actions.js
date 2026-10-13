@@ -297,7 +297,7 @@ function gainBarrierAmount(ctx, entity, amount, card = null, spell = isSpellCard
     return (granted.restored || 0) + (granted.missingRecovered || 0) + (granted.barrier || 0);
   }
   entity.barrier = (entity.barrier || 0) + amount;
-  ctx.emit('barrierGained', { targetId: entity.id, amount, total: entity.barrier, ...seatOf(ctx, entity) });
+  ctx.emit('barrierGained', { targetId: entity.id, amount, total: entity.barrier, ...(card?.logSource ? { source: card.logSource } : {}), ...seatOf(ctx, entity) });
   return amount;
 }
 
@@ -614,6 +614,8 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
   creditKnowledgeImpact(ctx, target, amount, tactical.knowledgeBonus > 0);
   Matchups.recordTacticalContact(tactical, { hpLoss, blocked, wardResisted: resisted });
   ctx.emit('damageDealt', { sourceId: source?.id, targetId: target.id, amount, blocked, wardResisted: ward,
+    // The hit as it arrived, before typed resistance or weakness: the log's starting figure.
+    ...(Number.isFinite(tactical.amounts?.[contactIndex]) ? { incoming: tactical.amounts[contactIndex] } : {}),
     // The whole protection before Block (typed reduction, immunity, Barrier, Ward), when it differs from the Ward figure.
     ...(resisted !== ward ? { resisted } : {}),
     ...(barrierSpent ? { barrierAbsorbed: barrierSpent } : {}),
@@ -783,6 +785,8 @@ function gainBlockAmount(ctx, entity, amount, card = null, wardProvenance = fals
   if (amt > 0 && card && wardProvenance) entity.wardBlock = (entity.wardBlock || 0) + amt;
   ctx.emit('blockGained', {
     targetId: entity.id, amount: amt,
+    // A guard no card raised names what did (a Defend stance's turn-start protection), for the log.
+    ...(card?.logSource ? { source: card.logSource } : {}),
     ...wardBlockReceipt(entity),
     ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(entity) } : {}),
     // The card that raised it, when one did (engine/skillXp.js pays its piece's

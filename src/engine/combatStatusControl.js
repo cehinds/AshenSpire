@@ -73,7 +73,7 @@ export function breakPersistentWard(ctx, entity, meta = {}) {
   const staminaLoss = entity.kind === 'player' ? cost : 0;
   if (staminaLoss) entity.pendingActionLoss = (entity.pendingActionLoss || 0) + staminaLoss;
   // An enemy's break is TENTATIVELY interrupting; emitBreak settles the flag from what the stagger does.
-  const payload = { targetId: entity.id, sourceId: meta.sourceId, staminaLoss, ...(entity.kind === 'enemy' ? { interrupted: true } : {}),
+  const payload = { targetId: entity.id, sourceId: meta.sourceId, ...(meta.statusId ? { statusId: meta.statusId } : {}), staminaLoss, ...(entity.kind === 'enemy' ? { interrupted: true } : {}),
     ...(ctx?.playerIdForEntity && entity.kind === 'player' ? { targetPlayerId: ctx.playerIdForEntity(entity) } : {}) };
   if (!meta.deferBreak) emitBreak(ctx, entity, 'wardBroken', payload, 'wardBreak');
   return payload;
