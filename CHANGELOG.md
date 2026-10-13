@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-13
 
+- **The tag model, its tools and workbench, and the Evade sigil land** ([#1931](https://github.com/cehinds/AshenSpire/pull/1931), `0.7.1.1455`). Development-process change only, nothing in the game changes. The tag model's tables, build, check and compile tools, and a table workbench for editing them, are in `docs/tag-model/`, with its owner rulings on Evade, Sweep precision and piercing stacks recorded in DECISIONS.md. The Evade action sigil now draws from the card-art template boot; no card uses it yet. Five lookup developer messages and 31 combat-test and debug-chrome strings move to `content/source/uiStrings.csv`, completing steps 9 and 10 of the strings migration.
+
 - **The round-based combat engine is ported as a preview** ([#1867](https://github.com/cehinds/AshenSpire/pull/1867), `0.7.1.1453`). Nothing changes in the game yet. The alternative round-based combat engine (`src/engine/combatRounds`) is in the codebase with its own tests and a specification section (§4.11), and it is not wired into combat.
 
 - **The alternative combat rounds design is recorded** ([#1838](https://github.com/cehinds/AshenSpire/pull/1838), `0.7.1.1453`). Development-process change only, nothing in the game changes. The design for timeline queues, initiative and merge modes is written up in `docs/alternative-combat-rounds`, with its own tests.
