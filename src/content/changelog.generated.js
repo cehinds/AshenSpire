@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-13",
     "summary": "Pull requests stay mergeable after each build stamp",
     "detail": "After every build stamp on dev, a bot merges dev into each open pull request that only conflicts in the build number and changelog files, moves its changelog entry to the current build, and reruns its checks. A receipt written on an earlier day now moves to the newest date when it lands, so a next-day merge cannot stop the stamp. Pull requests with any other conflict get one comment asking a person to merge dev.",
-    "build": "0.7.1.1469",
+    "build": "0.7.1.1471",
     "pullRequest": 1937,
     "url": "https://github.com/cehinds/AshenSpire/pull/1937"
+  },
+  {
+    "id": "pr-1923",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Ornate feat emblems in character creation",
+    "detail": "The Feats step shows each feat as a layered, gilded medallion instead of a flat glyph. If the artwork cannot load, the tile falls back to the glyph.",
+    "build": "0.7.1.1471",
+    "pullRequest": 1923,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1923"
   },
   {
     "id": "pr-1935",
