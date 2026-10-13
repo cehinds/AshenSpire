@@ -67,9 +67,11 @@ import * as Blight from './ashenBlight.js';
  * Silenced and its kin: `spellDamageDealtMult` scales only a spell-camp
  * carrier's damage for its owner (authored profile camp; an unprofiled carrier
  * falls back to the magical-attack reading). Physical damage is untouched.
+ * Legacy combat only: in expanded combat (v2) Silenced shrinks no damage; it
+ * raises spell costs and wards off Force instead (owner, 2026-10-13).
  */
 export function spellDamageDealtMultiplier(ctx, source, carrier) {
-  if (!source) return 1;
+  if (!source || ctx.combatExpansionVersion === 2) return 1;
   // Read the modifier first: with none active the hit's camp never matters.
   const mult = statuses.getMult(ctx, source, 'spellDamageDealtMult');
   if (mult === 1) return 1;

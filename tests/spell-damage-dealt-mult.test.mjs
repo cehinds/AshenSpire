@@ -34,7 +34,8 @@ test('a silenced attacker deals half spell-camp damage and full physical damage 
   assert.equal(computeAttackDamage(combat, enemy, null, 10, [], spell, { matchups: false }), 10);
 });
 
-test('v2: a silenced player casting a spell card deals half, and preview equals the hit', () => {
+// Expanded combat (owner, 2026-10-13): Silenced no longer shrinks damage; it raises spell costs instead.
+test('v2: a silenced player casting a spell card deals full damage, and preview equals the hit', () => {
   const registries = createRegistries({ ...contentBundle, cards: contentBundle.cards.map(card => card.id === 'starstonePebble'
     ? { ...card, effects: [{ op: 'damage', target: 'enemy', amount: 10 }], cost: 0, manaCost: 0, upgrade: undefined } : card) });
   const run = silenced => {
@@ -56,6 +57,6 @@ test('v2: a silenced player casting a spell card deals half, and preview equals 
   };
   const loud = run(false), quiet = run(true);
   assert.ok(loud.dealt > 0);
-  assert.equal(quiet.dealt, Math.floor(loud.dealt / 2));
+  assert.equal(quiet.dealt, loud.dealt, 'Silenced shrinks no damage in v2');
   assert.equal(quiet.shown, quiet.dealt);
 });
