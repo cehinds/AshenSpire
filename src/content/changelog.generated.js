@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-13",
     "summary": "Switching combat views keeps your lane where the grid shows it",
     "detail": "When a fight changes from the perspective view to Classic, your saved lane now moves to the Classic square the screen displays. Moving again or reloading the fight no longer jumps you back to a hidden perspective-only lane.",
-    "build": "0.7.1.1469",
+    "build": "0.7.1.1471",
     "pullRequest": 1883,
     "url": "https://github.com/cehinds/AshenSpire/pull/1883"
+  },
+  {
+    "id": "pr-1923",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Ornate feat emblems in character creation",
+    "detail": "The Feats step shows each feat as a layered, gilded medallion instead of a flat glyph. If the artwork cannot load, the tile falls back to the glyph.",
+    "build": "0.7.1.1471",
+    "pullRequest": 1923,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1923"
   },
   {
     "id": "pr-1935",
