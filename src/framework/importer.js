@@ -308,6 +308,7 @@ export function importLegacyContent(bundle, { canonicalTerms = [] } = {}) {
         mods: piece.mods,
         requirements: piece.requirements,
         poiseThreshold: piece.poiseThreshold,
+        physicalDamageType: piece.physicalDamageType,
         dropWeight: piece.dropWeight,
         unlock: piece.unlock,
         artKey: piece.artKey,
