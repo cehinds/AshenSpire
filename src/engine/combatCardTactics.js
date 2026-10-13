@@ -6,6 +6,7 @@ import { cardRatingBonus } from './combatRatings.js';
 import { armCombatCounter, matchupRules, combatExpansionEnabled, setCombatStance, prepareCombatEvade } from './combatMatchups.js';
 import { attackDescriptor, weaponDamageType, weaponDamageComponents, dominantDamageType } from '../model/attackTags.js';
 import { combatRules } from '../content/combatRules.js';
+import { canonicalDamageType, isPhysicalDamageType, techniqueNeedsWeaponType } from '../model/combatRatings.js';
 import { equippedIn, slotHand } from '../model/loadout.js';
 import { enemyMoveDamage } from '../model/state.js';
 import { expansionCarrierTraits } from './combatExpansionEquipment.js';
@@ -18,6 +19,8 @@ export function tacticalCarrier(def, extra = {}, ctx = null, source = null) {
   }
   const carrier = { ...metadata, ...extra, tags: def.cardTags ?? def.tags ?? extra.tags, attack: extra.attack ?? def.attack,
     damageSchool: extra.damageSchool ?? def.damageSchool,
+    ...(Number.isFinite(extra.magicShare ?? def.magicShare) ? { magicShare: extra.magicShare ?? def.magicShare } : {}),
+    ...(typeof (extra.physicalDamageType ?? def.physicalDamageType) === 'string' ? { physicalDamageType: extra.physicalDamageType ?? def.physicalDamageType } : {}),
     appliedStatuses: (def.effects || []).filter(effect => effect.op === 'applyStatus').map(effect => effect.status),
     appliedStatusEffects: (def.effects || []).filter(effect => effect.op === 'applyStatus'),
     appliedBuildupStatuses: (def.effects || []).filter(effect => effect.op === 'buildup').map(effect => effect.status),
@@ -29,16 +32,7 @@ export function tacticalCarrier(def, extra = {}, ctx = null, source = null) {
   if ((!carrier.combatProfile.damageType || weaponPart) && carrier.combatProfile.camp && ctx?.registries && source?.kind !== 'enemy' && !source?.enemyId) {
     const attack = attackDescriptor(carrier);
     const kind = attack.source || (carrier.combatProfile.camp === 'spell' ? 'spell' : 'weapon');
-    const pieces = ctx.registries.equipment?.armaments || [];
-    let piece = carrier.sourceArmamentId && pieces.find(row => row.id === carrier.sourceArmamentId);
-    if (!piece && ctx.loadout) {
-      const hand = { right: 'mainHand', left: 'offHand' }[carrier.sourceHand] || carrier.sourceHand || 'mainHand';
-      for (const slot of ctx.registries.equipment?.slots || []) {
-        if (slotHand(slot) !== (hand === 'offHand' ? 'left' : 'right')) continue;
-        const equipped = equippedIn(ctx.registries, ctx.loadout, source?.classId, slot.id);
-        if (equipped && attackDescriptor(equipped).source === kind) { piece = equipped; break; }
-      }
-    }
+    const piece = wieldedArmament(ctx, carrier, source, kind);
     // No piece of that kind in hand: a physical weapon card is thrown with bare hands
     // and deals the unarmed profile's type (owner #19), as foundationSource does.
     const rules = ctx.foundation?.rules || combatRules;
@@ -59,7 +53,29 @@ export function tacticalCarrier(def, extra = {}, ctx = null, source = null) {
       carrier.combatProfile.damageType = dominantDamageType(components);
     } else carrier.combatProfile.damageType = weaponDamageType(attack, family, pieceType) || null;
   }
+  // A technique's physical part (Poison, fire or another magic type on a physical maneuver) is the
+  // wielded weapon's blow (owner, 2026-10-13): its physical type, else bare-handed Blunt downstream.
+  if (ctx?.registries && source?.kind !== 'enemy' && !source?.enemyId && techniqueNeedsWeaponType(carrier)) {
+    const piece = wieldedArmament(ctx, carrier, source, 'weapon');
+    const type = canonicalDamageType(piece && attackDescriptor(piece).damageType);
+    if (isPhysicalDamageType(type)) carrier.physicalDamageType = type;
+  }
   return combatExpansionEnabled(ctx) ? expansionCarrierTraits(carrier, source) : carrier;
+}
+
+// The armament a card is dealt with: its lending piece, else the first piece of that kind in its hand.
+function wieldedArmament(ctx, carrier, source, kind) {
+  const pieces = ctx.registries.equipment?.armaments || [];
+  let piece = carrier.sourceArmamentId && pieces.find(row => row.id === carrier.sourceArmamentId);
+  if (!piece && ctx.loadout) {
+    const hand = { right: 'mainHand', left: 'offHand' }[carrier.sourceHand] || carrier.sourceHand || 'mainHand';
+    for (const slot of ctx.registries.equipment?.slots || []) {
+      if (slotHand(slot) !== (hand === 'offHand' ? 'left' : 'right')) continue;
+      const equipped = equippedIn(ctx.registries, ctx.loadout, source?.classId, slot.id);
+      if (equipped && attackDescriptor(equipped).source === kind) { piece = equipped; break; }
+    }
+  }
+  return piece || null;
 }
 
 function counterFormulaContext(ctx, source, target, meta) {
