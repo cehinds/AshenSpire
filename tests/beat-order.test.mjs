@@ -183,3 +183,12 @@ test('a custom body clip keeps standard numbers but finishes before another reac
     assert.equal(trace.find(e=>e.what==='float:-1').at-first,ANIM_SPEEDS.normal.reactionMs,'numbers retain the contractual reaction delay');
   });
 });
+
+test('a staggering hit: the Stagger sprite plays with the reaction, so the number keeps its plain-hit time', (t) => {
+  drive(t, ({ layer, trace, run, finish }) => {
+    run([...playerHit(4), { type: 'enemyStaggered', targetId: 'e1', cause: 'poiseBroken' }]);
+    finish();
+    assert.equal(layer.dataset.contact, '1', 'the stagger takes no contact step of its own (tools/click-impact-probe.mjs)');
+    assert.equal(timeOf(trace, 'float:-4'), TOTAL + ANIM_SPEEDS.normal.reactionMs, 'the first number lands as on a plain hit');
+  });
+});
