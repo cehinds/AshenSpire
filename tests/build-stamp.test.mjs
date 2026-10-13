@@ -143,6 +143,14 @@ test('restamp moves a re-pointed receipt out of an older date group into the top
     'the same re-point left in place is refused');
 });
 
+test('restamp counts a CRLF release heading as the newest date group', () => {
+  const md = ['# Changelog', '', '## 0.7.2 — 2026-10-13', '', receipt(1930, '0.7.1.1427'), '',
+    '## 2026-10-12', '', receipt(1902, '0.7.1.1400'), ''].join('\r\n');
+  const r = restamp(md, ['1902'], ORDER_BOX);
+  const top = r.text.slice(r.text.indexOf('## 0.7.2'), r.text.indexOf('## 2026-10-12'));
+  assert.deepEqual([...top.matchAll(/\/pull\/(\d+)\)/g)].map((m) => m[1]), ['1902', '1930'], 'it opens the release group');
+});
+
 test('restamp counts a release heading as the newest date group', () => {
   const md = ['# Changelog', '', '## 0.7.2 — 2026-10-13', '', receipt(1930, '0.7.1.1427'), '',
     '## 2026-10-12', '', receipt(1902, '0.7.1.1400'), '', HISTORY].join('\n');

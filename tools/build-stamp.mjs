@@ -118,7 +118,7 @@ function moveToNewestGroup(text, pr, stamp) {
   const at = lines.findIndex((l) => l.startsWith('- ') && hit.test(l));
   if (at < 0) return text;
   // A date group, or a release group (`## 1.0.0 — 2026-10-13`), as about-changelog reads them.
-  const isDate = (l) => /^## (?:\d{4}-\d{2}-\d{2}\b|\d+\.\d+\.\d+ — \d{4}-\d{2}-\d{2}$)/.test(l);
+  const isDate = (l) => /^## (?:\d{4}-\d{2}-\d{2}\b|\d+\.\d+\.\d+ — \d{4}-\d{2}-\d{2}\r?$)/.test(l);
   const newest = lines.findIndex(isDate);
   let own = at - 1;
   while (own >= 0 && !/^## /.test(lines[own])) own -= 1;
