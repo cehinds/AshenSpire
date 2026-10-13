@@ -322,6 +322,17 @@ export function resumeRound(combat, ops, pick) {
   return runRound(combat, ops);
 }
 
+// The round's combatants start with the fight's HP, and the live effects (not the timeline) change it during the round.
+// Before each entry the timeline reads the live HP, so a combatant the live play killed is skipped (timeline.js
+// enterEntry: 'defeated' / 'targetDefeated'): it offers no reaction, spends no Counter or charge and earns no momentum.
+function syncRoundHp(combat, round) {
+  const live = [['player', combat.player], ...combat.enemies.map((e) => [e.id, e])];
+  for (const [id, entity] of live) {
+    const c = round.cur.combatants[id];
+    if (c) c.hp = entity.alive ? Math.max(0, Number(entity.hp) || 0) : 0;
+  }
+}
+
 function roundHooks(combat, rules) {
   const tables = engineTables(rules);
   return { rng: () => combat.rng.float('combatRounds'), evadeTable: tables.evadeTable, stanceAdvantage: tables.stanceAdvantage };
@@ -334,6 +345,7 @@ function runRound(combat, ops) {
   const hooks = roundHooks(combat, cr.rules);
   while (round.idx < round.timeline.entries.length) {
     const entry = round.timeline.entries[round.idx];
+    syncRoundHp(combat, round);
     const step = withLiveCounterGate(combat, round, entry, ops, () => stepRound(round, hooks));
     if (step.awaitingReaction) {
       // Each pause re-checks the offer: a card that left hand, a closed control gate or a cost the player

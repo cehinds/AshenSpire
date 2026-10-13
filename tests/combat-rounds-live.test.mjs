@@ -773,3 +773,24 @@ test('a once-per-turn preparing discount prices only the first of two queued Man
   assert.equal(queue(found.ids[0]), 0, 'the first queued card takes the once-a-turn discount');
   assert.equal(queue(found.ids[1]), full[1], 'the second pays its full Mana: the trigger has fired for the first');
 });
+
+// Codex P2 on PR #1953: the round's own combatants keep the HP they started with. An enemy a live card kills while
+// another lives on must not act in the timeline after that: no exchange is credited for its queued attack.
+test('an enemy a queued card kills mid-round takes no later timeline entry: its attack is not credited', () => {
+  const momentumOf = (killedQueues) => {
+    const reg = registriesWithMoveSpeeds({ slash: -5, guard: -5, warcry: -5 });
+    const run = createRunState({ seed: SEED, classId: 'reaver', registries: reg, combatExpansionVersion: 1,
+      profileMeta: { settings: { [COMBAT_ROUNDS_KEY]: true, [MOMENTUM_KEY]: true } } });
+    const c = fixRoundRoll(createRunCombat({ registries: reg, rng: createRng(SEED), run, enemyIds: [ENEMY, ENEMY], settings: {} }), 0.999);
+    const [doomed, other] = c.enemies;
+    doomed.hp = 1;
+    c.combatRounds.enemyQueues[doomed.id] = killedQueues ? [{ moveId: 'slash', sp: 1 }] : [];
+    c.combatRounds.enemyQueues[other.id] = [];
+    dispatch(c, { type: 'playCard', cardInstanceId: attackCard(c).instanceId, targetId: doomed.id });
+    endTurnDeclining(c);
+    assert.equal(doomed.alive, false, 'fixture: the queued card kills it before its Slash');
+    assert.ok(other.alive, 'fixture: the other enemy lives, so the round goes on');
+    return c.combatRounds.momentum[doomed.id] ?? 0;
+  };
+  assert.equal(momentumOf(true), momentumOf(false), 'the dead enemy\'s queued Slash credits nothing');
+});
