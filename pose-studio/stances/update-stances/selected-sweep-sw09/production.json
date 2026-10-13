@@ -1,0 +1,294 @@
+{
+  "schemaVersion": 1,
+  "selectedOption": "SW09 Selected straight-arm iai two-direction unwind",
+  "sourceCommit": "6b7fac1ff",
+  "sourceManifestSha256": "1c4493c39d367ad085b08d5474eb973a759a7641a6ffbfeb25be88fbb284a539",
+  "sourceNormalizationSha256": "e3b57f1808bb870e855cd6ea87ca39acf4fe7b8c96f249e8ac5fc45e852542cd",
+  "productionParentCommit": "d51ce7cd09fef2b38b3839502624ddfda4067136",
+  "authorizedScope": "Owner-selected corrected straight-arm Sweep stance plus three action exports; no repaint",
+  "sequenceSlots": [
+    "new sweep stance",
+    "sweep-windup",
+    "sweep-contact",
+    "sweep-finish",
+    "same new sweep stance"
+  ],
+  "frameCount": 5,
+  "uniqueSourcePaintings": 4,
+  "exportedAssetPairs": 4,
+  "bookends": {
+    "sourcePath": "pose-studio/stances/update-stances/smash-sweep-examples/sweep/selected-sweep-sw09/seed/stance-final.png",
+    "sourceSha256": "faf9d5f34285dc82b0b19426aafe6debe679bec33b2f45d095b0059c5b105ac1",
+    "verified": "Normalized source slots01/05 identical PNG bytes; held sweep export exactly matches their decoded RGBA; no effects added to bookends"
+  },
+  "adaptation": {
+    "full": "Exact lossless WebP method6,1024square decodedRGBA unchanged from final approved source PNG",
+    "mobile": "Uniform whole1024canvas LANCZOS resampling to256square followed byexact losslessWebP; noframe crops/recentering",
+    "sharedProductionScale": 1,
+    "artistSharedActionScale": 1.7553191489361701,
+    "sourceAnatomicalAnchor": [
+      520,
+      734
+    ],
+    "sourceAnchorDescription": "Artist-confirmed pelvis projection between hip-joint plates above chainmail skirt; ground734 based boots, not effect/alpha bounds",
+    "targetStageAnchor": [
+      384,
+      464
+    ],
+    "derivedDrawOffset": [
+      -136,
+      -270
+    ],
+    "oneOffsetAllFrames": true,
+    "bodyRegistration": "Keep approved helmet/shoulder/body scale and pose shifts; never fit low crouch silhouette to old standing height",
+    "minimumCanvasPaddingLeft": 67,
+    "minimumCanvasPaddingRight": 65,
+    "effects": "Complete broad horizontal sword arcs/trails remain within source; runtime needs compensated left/right canvas margins"
+  },
+  "previousSweepAssetSha256": {
+    "assets-display/alternative/reaver-greatsword-pilot-sweep.webp": "40f7c5f3a1d988ae99b0764050630f1a00028be50131bd13456db58b4d737865",
+    "assets-display/alternative/reaver-greatsword-pilot-sweep-mobile.webp": "fdcf94d82cc892764f259ab85d82b767527afac34386029336c1a3671a79d24f"
+  },
+  "previousSweepHistoryCommit": "9b98070ec132ae841095fdde87a5a49d816d6923",
+  "frames": [
+    {
+      "key": "sweep",
+      "sourcePath": "pose-studio/stances/update-stances/smash-sweep-examples/sweep/selected-sweep-sw09/SW09/frame-01.png",
+      "sourceSha256": "faf9d5f34285dc82b0b19426aafe6debe679bec33b2f45d095b0059c5b105ac1",
+      "sourceDimensions": [
+        1024,
+        1024
+      ],
+      "decodedRgbaSha256": "c2643bfac9841388b883af7c1ea2549ea10dd012cf50ad65057069908c8b8552",
+      "full": {
+        "path": "assets-display/alternative/reaver-greatsword-pilot-sweep.webp",
+        "sha256": "81d348d0382b9a99c1f72d5d23dab4975bbe648b3db979d8f725fc250d02db7c",
+        "bytes": 192832,
+        "dimensions": [
+          1024,
+          1024
+        ]
+      },
+      "mobile": {
+        "path": "assets-display/alternative/reaver-greatsword-pilot-sweep-mobile.webp",
+        "sha256": "20fd757bf9a39e06e6ba03bc265bc272d4eebd2734e1d24655000936a57bd601",
+        "bytes": 16570,
+        "dimensions": [
+          256,
+          256
+        ],
+        "wholeCanvasScale": 0.25
+      },
+      "drawOffset": [
+        -136,
+        -270
+      ],
+      "logicalDrawSize": [
+        1024,
+        1024
+      ],
+      "sourceAlphaBounds": [
+        69,
+        389,
+        679,
+        759
+      ],
+      "stageAlphaBounds": [
+        -67,
+        119,
+        543,
+        489
+      ]
+    },
+    {
+      "key": "sweep-windup",
+      "sourcePath": "pose-studio/stances/update-stances/smash-sweep-examples/sweep/selected-sweep-sw09/SW09/frame-02.png",
+      "sourceSha256": "259459c43d53d162dd6fe30132ebf6a1df00b3de62e8c3622b008dcaff875c7d",
+      "sourceDimensions": [
+        1024,
+        1024
+      ],
+      "decodedRgbaSha256": "dd945b82cf09d4a9b10eff7e66e73e90f3162351a9fa87833c4b83fd9a3fbece",
+      "full": {
+        "path": "assets-display/alternative/reaver-greatsword-pilot-sweep-windup.webp",
+        "sha256": "e42ea1976a0a162c78098cb7a13010cc1b855d5baf6f4fe0fe90e42cc9991f4d",
+        "bytes": 231178,
+        "dimensions": [
+          1024,
+          1024
+        ]
+      },
+      "mobile": {
+        "path": "assets-display/alternative/reaver-greatsword-pilot-sweep-windup-mobile.webp",
+        "sha256": "b6eeb8ecb140678365100c3f1d162c17e9852716b037283cbfb209e90f39de9c",
+        "bytes": 22722,
+        "dimensions": [
+          256,
+          256
+        ],
+        "wholeCanvasScale": 0.25
+      },
+      "drawOffset": [
+        -136,
+        -270
+      ],
+      "logicalDrawSize": [
+        1024,
+        1024
+      ],
+      "sourceAlphaBounds": [
+        183,
+        374,
+        969,
+        743
+      ],
+      "stageAlphaBounds": [
+        47,
+        104,
+        833,
+        473
+      ]
+    },
+    {
+      "key": "sweep-contact",
+      "sourcePath": "pose-studio/stances/update-stances/smash-sweep-examples/sweep/selected-sweep-sw09/SW09/frame-03.png",
+      "sourceSha256": "cc7af9a81181afce091957b100cf91f699f2e89fae8de4ba092224d20e768521",
+      "sourceDimensions": [
+        1024,
+        1024
+      ],
+      "decodedRgbaSha256": "dec82fef9b26d7e3d195a8c1dc503522c65e10cd5147698eb6944cef3a8fbd43",
+      "full": {
+        "path": "assets-display/alternative/reaver-greatsword-pilot-sweep-contact.webp",
+        "sha256": "2f57d14e2f17a7366977829957514d0a97f64adf91cb24c26ede51a25e56bbb2",
+        "bytes": 226646,
+        "dimensions": [
+          1024,
+          1024
+        ]
+      },
+      "mobile": {
+        "path": "assets-display/alternative/reaver-greatsword-pilot-sweep-contact-mobile.webp",
+        "sha256": "92efd91d23e37086a3d5d7c3e58b58b35dd48d10779dae34fd39696736abfe5f",
+        "bytes": 22360,
+        "dimensions": [
+          256,
+          256
+        ],
+        "wholeCanvasScale": 0.25
+      },
+      "drawOffset": [
+        -136,
+        -270
+      ],
+      "logicalDrawSize": [
+        1024,
+        1024
+      ],
+      "sourceAlphaBounds": [
+        178,
+        397,
+        895,
+        741
+      ],
+      "stageAlphaBounds": [
+        42,
+        127,
+        759,
+        471
+      ]
+    },
+    {
+      "key": "sweep-finish",
+      "sourcePath": "pose-studio/stances/update-stances/smash-sweep-examples/sweep/selected-sweep-sw09/SW09/frame-04.png",
+      "sourceSha256": "edea5b2d8ad25ef6cd46a6de4543171fe263e050907f391a2fc293b02109dc6d",
+      "sourceDimensions": [
+        1024,
+        1024
+      ],
+      "decodedRgbaSha256": "f1c5db255d055cf113c09653d197e0a2010825160c9f0fe5818b22af808f4e39",
+      "full": {
+        "path": "assets-display/alternative/reaver-greatsword-pilot-sweep-finish.webp",
+        "sha256": "96a520910a6962ade28c268da0cc34fed5c747b309b6a60580a32ebdd58c429b",
+        "bytes": 205162,
+        "dimensions": [
+          1024,
+          1024
+        ]
+      },
+      "mobile": {
+        "path": "assets-display/alternative/reaver-greatsword-pilot-sweep-finish-mobile.webp",
+        "sha256": "266b7ccba64d2413bb02fd1f2770578f04149fcacb3b0a77f72230c2b8d24d37",
+        "bytes": 19994,
+        "dimensions": [
+          256,
+          256
+        ],
+        "wholeCanvasScale": 0.25
+      },
+      "drawOffset": [
+        -136,
+        -270
+      ],
+      "logicalDrawSize": [
+        1024,
+        1024
+      ],
+      "sourceAlphaBounds": [
+        198,
+        421,
+        847,
+        746
+      ],
+      "stageAlphaBounds": [
+        62,
+        151,
+        711,
+        476
+      ]
+    }
+  ],
+  "protectedOtherPilotAssetSha256": {
+    "assets-display/alternative/reaver-greatsword-pilot-counter-mobile.webp": "c02c34e2036a9f845d8c5644492cfb019190dfaad2385ca7169fe834035d5fcd",
+    "assets-display/alternative/reaver-greatsword-pilot-attack-4.webp": "71e8895ec8fcfa062965e20d67b49b74c7ebc4a89dc443dcf4ffd7bda7e40366",
+    "assets-display/alternative/reaver-greatsword-pilot-smash-takeoff-mobile.webp": "d9c9de71f491b36bd492148ffa427b520a4ba830c3c7fecb363e69897b14620d",
+    "assets-display/alternative/reaver-greatsword-pilot-attack-4-mobile.webp": "0d082922c4d86f04dd53befaa110b3889ebc2df71af747edbb4a07f916dce776",
+    "assets-display/alternative/reaver-greatsword-pilot-evade-1.webp": "eb3ea191823f185e726de9fd1d622ee693b77e3f6fec129223ac85482525af51",
+    "assets-display/alternative/reaver-greatsword-pilot-defend-mobile.webp": "eb068b95d18037b8201fc0b57c0717902c04145638a00fec319a39e2e2a246bc",
+    "assets-display/alternative/reaver-greatsword-pilot-impact-g-mobile.webp": "e957b1ab6634bad3a019ccfc02dd9d93ecd266eae4c91c0c3930f185fb6d5a91",
+    "assets-display/alternative/reaver-greatsword-pilot-evade-2-mobile.webp": "ce79cab75c8852bb78b1d7968543917091e25420025dc315cb3144d7c6aad4bc",
+    "assets-display/alternative/reaver-greatsword-pilot-evade-3.webp": "5afa126afe772c37faad04753d602e43a132652255ce75e26d6ab33bdecb09f6",
+    "assets-display/alternative/reaver-greatsword-pilot-smash-impact-mobile.webp": "914b99ad6d332d7674108dfec5587a4a66a8250ee651a19e062218d1e2831b81",
+    "assets-display/alternative/reaver-greatsword-pilot-guard-break-mobile.webp": "d9bc33e53b598710b46150efd22fdf9103ce48149a4c6cefecda58c65433f6d5",
+    "assets-display/alternative/reaver-greatsword-pilot-smash.webp": "9abfefe7258a3bfa2238e7c0516396c61baa5ca009a649b8408183b91fcdf6e2",
+    "assets-display/alternative/reaver-greatsword-pilot-impact-v-mobile.webp": "dd6544a91e6a1e9d8c9bfeba05026c23b56d6edaf2914ce095bab51507233227",
+    "assets-display/alternative/reaver-greatsword-pilot-impact-h.webp": "91425e5d5cdf1fcb52e84d14d49e8ea1501a2887a9bc5092a8d2536c4c97b7a9",
+    "assets-display/alternative/reaver-greatsword-pilot-evade-3-mobile.webp": "84d46dfa123f6d51df1a6885502b15e38d2418b0f87c229702ccdf96955891d8",
+    "assets-display/alternative/reaver-greatsword-pilot-guard-break.webp": "74957dcadbbdcc3565168c32edc43bacd08f0ade78519233c6bbc6c2d8032deb",
+    "assets-display/alternative/reaver-greatsword-pilot-smash-mobile.webp": "7d96cbc87ccb1159befa85a192f4cdf72cea0170f7dd00b34af26074ad70a182",
+    "assets-display/alternative/reaver-greatsword-pilot-smash-airborne.webp": "c4ac87cae60eba72c3ecfdb3b2ece7361d7134b22818f56362d353e0a86b0041",
+    "assets-display/alternative/reaver-greatsword-pilot-evade.webp": "eb500ae71c6dee7d71c8040cbf7971cc4b4bd643aedddd26f70442bd1c501f22",
+    "assets-display/alternative/reaver-greatsword-pilot-evade-2.webp": "ba2a1f889be43fefc0803d85604847edd694190b090161fd2683cdec347929a9",
+    "assets-display/alternative/reaver-greatsword-pilot-smash-impact.webp": "3962cbdeccb8dae3c2a93e4f84c60bf7172bdda56c26c42ad521d167e13ca945",
+    "assets-display/alternative/reaver-greatsword-pilot-impact-v.webp": "034649efb97e8fe63368c393ff1843217aac02a83d7bcb7676ad96edecbab593",
+    "assets-display/alternative/reaver-greatsword-pilot-smash-takeoff.webp": "3ea4253510405611871fecb84d896f251a16d0acfcf7fd3bf03875ab1a2be5ba",
+    "assets-display/alternative/reaver-greatsword-pilot-attack-2.webp": "186b0ef5763abf0de84c9795be6559c503e3cc598ac7008a5ee8200defe486a1",
+    "assets-display/alternative/reaver-greatsword-pilot-defend.webp": "69ff5522214d93cf6f91390e8ab37df20ceb88533df3b7918be47450c99aff43",
+    "assets-display/alternative/reaver-greatsword-pilot-evade-mobile.webp": "66385959b222ced764d1926e5426822533842e55f0d5585af48cd0cc3a3e5688",
+    "assets-display/alternative/reaver-greatsword-pilot-attack-3-mobile.webp": "271989dcccd688d66ff7d88858be7003d8247c812ee0d245429dce375d42127e",
+    "assets-display/alternative/reaver-greatsword-pilot-counter.webp": "667464ea845f0af44e2efad3c58c995661f810103c1a07ef39c65b2fdeca670e",
+    "assets-display/alternative/reaver-greatsword-pilot-impact-g.webp": "96b7d0dabbf60110d5e3f7a6c5225a231e1e70a6d8da156fa8e90234f7ab8e7e",
+    "assets-display/alternative/reaver-greatsword-pilot-smash-airborne-mobile.webp": "b37bf6f1f0358eb4acf23efc6d0404e4bd0e2a9485c05a55659fbd0fb9aa826b",
+    "assets-display/alternative/reaver-greatsword-pilot-evade-1-mobile.webp": "b45fb302e3854307a7047f5fef7ad83e92d9a9e8fc102296781b246f968e02f5",
+    "assets-display/alternative/reaver-greatsword-pilot-attack-2-mobile.webp": "32bd3bc1efce5f7816f34d94a1edc3c7e275d70b16c3578a54775711f33f020c",
+    "assets-display/alternative/reaver-greatsword-pilot-impact-h-mobile.webp": "cc9f77ee938bc3566c9354b329c918344324716b7c71ac1aab6a5b678f1f8d73",
+    "assets-display/alternative/reaver-greatsword-pilot-attack-3.webp": "fba5777cc513b41e7c714d635ff1231cb9282b6f9e070e255ceb89df8ab1a05d"
+  },
+  "verification": {
+    "fullDecodedRgbaSourceIdentical": true,
+    "mobileDecodedMatchesUniformDownsample": true,
+    "newHeldSeedBookendPixelIdentity": true,
+    "allUnrelatedPilotAssetsUnchanged": true
+  },
+  "runtimeRegistrationChangedByThisCommit": false
+}

@@ -9,6 +9,7 @@ import { mountInitialClassMastery } from './ui/components/classMastery.js';
 import { hasClassMastery, openRunClassMastery, registriesForClassMastery, adoptClassMasteryProfile, refreshRunClassMastery } from './model/classMasteryRun.js';
 import { mergeProgressionRewards, partitionProgressionRewards, unclaimedProgressionRewards } from './model/deferredProgression.js';
 import { applyArtQuality, onArtSourceChange, builtInArtArrived, ART_REDRAW_EVENT } from './ui/highResArt.js';
+import { applyCardArtStyle } from './ui/cardArtStyle.js';
 import { whenBuiltInArtReady, musicHold, bootLine, packsPinned, builtInArtStatus, builtInArtSettled } from './ui/assetPacks.js';
 import { applyArtTier, onTierArrived, requestedTier, retryBuiltInArt, onRetryProgress } from './ui/artTier.js';
 import { startBootArt, bootArtLine, bootArtRetried } from './ui/bootArt.js';
@@ -841,6 +842,7 @@ function applyCardSizeSettings(settings) {
 }
 
 function applyDisplaySettings(settings) {
+  applyCardArtStyle(settings);
   const appearanceChanged = applyDisplayAppearance(settings);
   // Art quality: lay a local high-res source over the built-in art, or clear
   // it. Asynchronous (a served hd/ folder is fetched); screens drawn after it
