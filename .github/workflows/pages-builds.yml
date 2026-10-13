@@ -121,12 +121,18 @@ name: pages-builds
 
 on:
   push:
-    branches: [dev, test, release, main]
+    # dev is not here: a push to dev publishes through the build-stamp run that
+    # follows it (workflow_run below), so the site only ever rebuilds a stamped head.
+    branches: [test, release, main]
   workflow_run:
+    # build-stamp completing on dev is the dev publication: its run checks out dev's
+    # current tip, the stamped commit. A completed dev preview on dev is listed too,
+    # so this stays one workflow_run key, but every job skips it (the WR clause in
+    # the deploy job's `if:`) and it has its own concurrency group.
     # Successful alternative previews republish through the default dev ref,
     # which is already admitted by the github-pages environment.
-    workflows: [dev preview]
-    branches: ['alternative/**/dev', 'alternative/**/test', '[Ff][Ee][Aa][Tt][Uu][Rr][Ee]/**', '[Ff][Ii][Xx]/**', '[Cc][Hh][Oo][Rr][Ee]/**']
+    workflows: [build-stamp, dev preview]
+    branches: [dev, 'alternative/**/dev', 'alternative/**/test', '[Ff][Ee][Aa][Tt][Uu][Rr][Ee]/**', '[Ff][Ii][Xx]/**', '[Cc][Hh][Oo][Rr][Ee]/**']
     types: [completed]
   # A closed PR (merged or not) republishes the site without its branch build. A
   # merge also pushes to dev, which republishes too; the close is what removes a

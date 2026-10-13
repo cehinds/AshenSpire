@@ -146,5 +146,7 @@ test('pages: the dev-preview workflow_run trigger admits feature/, fix/, chore/ 
   const re = g => new RegExp('^' + g.replace(/\*\*/g, '\u0000').replace(/\*/g, '[^/]*').replace(/\u0000/g, '.*') + '$');
   for (const branch of ['feature/a', 'Feature/a', 'FEATURE/a', 'fEature/a', 'fix/a', 'FIX/a', 'chore/a', 'Chore/FixCombatUi2', 'CHORE/a'])
     assert.ok(globs.some(g => re(g).test(branch)), `trigger would skip ${branch}`);
-  assert.ok(!globs.some(g => re(g).test('dev')), 'dev must not match a preview prefix');
+  // dev is listed for the build-stamp run only; no preview prefix may match the bare dev branch.
+  assert.ok(globs.includes('dev'), 'dev is listed for the build-stamp completion');
+  assert.ok(!globs.some(g => g !== 'dev' && re(g).test('dev')), 'no preview prefix may match dev');
 });
