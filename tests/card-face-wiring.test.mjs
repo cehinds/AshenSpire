@@ -64,12 +64,14 @@ test('with faceLineLimit 3 a card with more than three lines marks lines 4+ data
   });
 }));
 
-test('the hand drops detail lines; other views keep them', () => withKitDom(dom => {
+test('the hand hides detail lines until the card is selected; other views show them', () => withKitDom(dom => {
   const markup = trackInnerHtml(dom);
-  const kinds = opts => faceLinesOf(markup.get(renderCard(reg, { cardId: 'sanctuaryCleanse' }, { inspection: false, ...opts })))
-    .map(line => /data-face-kind="(\w+)"/.exec(line.attrs)[1]);
-  assert.ok(kinds({}).includes('detail'), 'a non-hand view keeps Usable through');
-  assert.ok(!kinds({ faceLineLimit: 3 }).includes('detail'), 'the hand leaves it to inspection');
+  const lines = opts => faceLinesOf(markup.get(renderCard(reg, { cardId: 'sanctuaryCleanse' }, { inspection: false, ...opts })));
+  const detail = list => list.filter(line => /data-face-kind="detail"/.test(line.attrs));
+  assert.ok(detail(lines({})).length && detail(lines({})).every(line => !/data-face-extra/.test(line.attrs)), 'a non-hand view shows Usable through');
+  const hand = detail(lines({ faceLineLimit: 3 }));
+  assert.ok(hand.length, 'the hand keeps the detail line for selection');
+  assert.ok(hand.every(line => /data-face-extra="true"/.test(line.attrs)), 'and hides it at rest');
 }));
 
 test('a hit that is magic with a physical tag names only its leading type on the face', () => withKitDom(dom => {
@@ -85,4 +87,11 @@ test('inspecting a hand card shows the full face, detail lines included', () => 
   const kinds = faceLinesOf(markup.get(renderCard(reg, { cardId: 'sanctuaryCleanse' }, { inspection: false, level: 'inspect' })))
     .map(line => /data-face-kind="(\w+)"/.exec(line.attrs)[1]);
   assert.ok(kinds.includes('detail'));
+}));
+
+test('a combat face the shared model refuses shows the authored rules, not the looser summary', () => withKitDom(dom => {
+  const markup = trackInnerHtml(dom);
+  const html = markup.get(renderCard(reg, { cardId: 'shieldGuardian' }, { inspection: false, preview: previewOf('shieldGuardian') }));
+  assert.doesNotMatch(html, /class="face-line"/);
+  assert.doesNotMatch(html, /Add 1 Enter: Bulwark to hand/);
 }));

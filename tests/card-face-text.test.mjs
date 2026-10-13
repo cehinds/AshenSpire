@@ -74,3 +74,12 @@ test('a stack threshold reaches the condition label', () => {
 test('Unplayable leads the keywords instead of being dropped', () => {
   assert.ok(text('dazed').some(line => /^Unplayable, Ethereal$/.test(line)), JSON.stringify(text('dazed')));
 });
+
+test('a boosted split hit colours both parts', () => {
+  const id = 'cometFragment';
+  assert.match(text(id)[0], /^Inflict \d+ \w+, \d+ \w+ damage/, 'Comet Fragment splits its hit');
+  const def = card(id), index = def.effects.findIndex(e => e.op === 'damage');
+  const values = []; values[index] = { op: 'damage', value: def.effects[index].amount * 3, hits: 1 };
+  const [first] = cardFaceLines(def, { values }, reg);
+  assert.equal((first.html.match(/val up/g) || []).length, 2, first.html);
+});

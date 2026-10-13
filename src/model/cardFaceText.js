@@ -102,7 +102,9 @@ function buildLines(def, preview, registries) {
         const split = !unequal && hits === 1 ? splitOf(def, p, n, ratings, live) : null;
         let text;
         if (split) {
-          text = `${typed(num(split.physical), typeWord(split.types.physical))}, ${typed(num(split.magic), typeWord(split.types.magic))} damage`;
+          // Each part compares with the same split of the static base, so a boosted hit colours both parts.
+          const baseSplit = typeof base === 'number' ? splitOf(def, p, base, ratings) : null;
+          text = `${typed(num(split.physical, baseSplit?.physical), typeWord(split.types.physical))}, ${typed(num(split.magic, baseSplit?.magic), typeWord(split.types.magic))} damage`;
         } else if (unequal) {
           text = `${sequence.map(amount => num(amount)).join(' + ')} ${word} (${num(live.totalDamage)} total across ${sequence.length} hits)`;
         } else {
