@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1954",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "The link check's self-test fits its time limit again",
+    "detail": "Development-process fix only, nothing in the game changes. The import link check now reuses modules it has already linked within each batch instead of re-reading them for every file, so a full pass runs about four times faster and its self-test finishes inside the Windows CI limit.",
+    "build": "0.7.1.1483",
+    "pullRequest": 1954,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1954"
+  },
+  {
     "id": "pr-1953",
     "date": "2026-10-13",
     "group": "2026-10-13",
