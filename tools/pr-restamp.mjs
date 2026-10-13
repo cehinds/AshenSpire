@@ -185,7 +185,8 @@ function main(argv) {
     console.error('pr-restamp: a merge is already in progress; refusing to start another');
     return 1;
   }
-  if (gitOk(['status', '--porcelain']).trim() !== '') {
+  // Untracked files do not block the merge: git refuses one it would overwrite.
+  if (gitOk(['status', '--porcelain', '--untracked-files=no']).trim() !== '') {
     console.error('pr-restamp: the working tree is not clean; refusing to merge into it');
     return 1;
   }
