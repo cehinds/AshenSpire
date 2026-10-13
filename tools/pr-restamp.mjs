@@ -37,7 +37,8 @@
 // text and re-inserting only this pull request's receipt lines cannot.
 //
 // Usage
-//   node tools/pr-restamp.mjs --pr <N> [--base origin/dev]   merge and re-stamp (in a PR checkout)
+//   node tools/pr-restamp.mjs --pr <N> [--base origin/dev] [--repo <dir>]
+//                                                             merge and re-stamp <dir> (default: this checkout)
 //   node tools/pr-restamp.mjs --selftest                     the planted cases of the pure core
 //
 // Exit codes
@@ -53,8 +54,13 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve as pathResolve } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const CHANGELOG = join(ROOT, 'CHANGELOG.md');
-const BUILDORDINAL = join(ROOT, 'buildordinal.json');
+// The checkout the merge runs in: the pull request's worktree, set by --repo. Its
+// CHANGELOG.md and buildordinal.json are the ones read and written, and every git
+// command runs there. The tool's own ROOT only supplies the script paths: a pull
+// request's branch is never run, so its tools/ copy cannot change what runs.
+let REPO = ROOT;
+const changelogPath = () => join(REPO, 'CHANGELOG.md');
+const buildordinalPath = () => join(REPO, 'buildordinal.json');
 const GENERATED = 'src/content/changelog.generated.js';
 
 // The only paths a merge of dev may conflict in and still be resolved here.
@@ -142,7 +148,7 @@ export function mergeReceiptLines(baseText, prText, n, stamp, today = utcToday()
 // ---- the CLI: git, the merge, the checks --------------------------------------
 
 function git(args) {
-  return spawnSync('git', args, { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  return spawnSync('git', args, { cwd: REPO, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
 }
 
 function gitOk(args) {
@@ -152,7 +158,7 @@ function gitOk(args) {
 }
 
 function node(args) {
-  return spawnSync(process.execPath, args, { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  return spawnSync(process.execPath, args, { cwd: REPO, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
 }
 
 function mergeInProgress() {
@@ -171,7 +177,7 @@ function unmergedPaths() {
 }
 
 function readBox() {
-  const box = JSON.parse(readFileSync(BUILDORDINAL, 'utf8'));
+  const box = JSON.parse(readFileSync(buildordinalPath(), 'utf8'));
   if (typeof box.release !== 'string' || !Number.isInteger(box.ordinal)) {
     throw new Error('buildordinal.json has no release and integer ordinal');
   }
@@ -182,6 +188,7 @@ function main(argv) {
   const flag = (f) => { const i = argv.indexOf(f); return i >= 0 ? argv[i + 1] : null; };
   const pr = flag('--pr');
   const base = flag('--base') || 'origin/dev';
+  REPO = pathResolve(flag('--repo') || ROOT);
   if (!pr || !/^\d+$/.test(pr)) {
     console.error('usage: node tools/pr-restamp.mjs --pr <N> [--base origin/dev] | --selftest');
     return 2;
@@ -238,15 +245,15 @@ function main(argv) {
     const prText = gitOk(['show', `${head}:CHANGELOG.md`]);
     const startText = unmerged.includes('CHANGELOG.md')
       ? gitOk(['show', `${baseSha}:CHANGELOG.md`])
-      : readFileSync(CHANGELOG, 'utf8');
-    writeFileSync(CHANGELOG, restampReceipts(mergeReceiptLines(startText, prText, pr, stamp), pr, stamp));
+      : readFileSync(changelogPath(), 'utf8');
+    writeFileSync(changelogPath(), restampReceipts(mergeReceiptLines(startText, prText, pr, stamp), pr, stamp));
 
     // e. the module follows the changelog, then the receipt and order checks must pass.
-    const write = node([join(ROOT, 'tools', 'about-changelog.mjs'), '--write']);
+    const write = node([join(ROOT, 'tools', 'about-changelog.mjs'), '--root', REPO, '--write']);
     if (write.status !== 0) return checkFailure('about-changelog --write', write);
-    const receipts = node([join(ROOT, 'tools', 'receipts.mjs'), '--check', '--pr', pr]);
+    const receipts = node([join(ROOT, 'tools', 'receipts.mjs'), '--check', '--pr', pr, '--root', REPO]);
     if (receipts.status !== 0) return checkFailure('receipts --check --pr', receipts);
-    const order = node([join(ROOT, 'tools', 'about-changelog.mjs'), '--check-order', '--pending', pr]);
+    const order = node([join(ROOT, 'tools', 'about-changelog.mjs'), '--root', REPO, '--check-order', '--pending', pr]);
     if (order.status !== 0) return checkFailure('about-changelog --check-order --pending', order);
 
     // Only the three derived files may move. Anything else the tools touched is a fault.
