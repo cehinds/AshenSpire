@@ -674,7 +674,9 @@ function wireTitles() {
     return null;
   };
   document.addEventListener('pointerdown', ev => {
-    // A press on a symbol through the hand lane is the symbol's own press: it keeps the selection.
+    // A press on a symbol through the hand lane is the symbol's own press: it keeps the selection,
+    // and it does not reach the hand, whose press handling would re-render the lane under the finger.
+    if (symbolUnderLane(ev)) ev.stopPropagation();
     if (!panels.some(p => p?.contains(ev.target)) && !state[0].target?.contains(ev.target) && !selectedControl?.contains(ev.target) && !symbolUnderLane(ev)) {
       clearControlSelection(); hideTooltip();
     }
