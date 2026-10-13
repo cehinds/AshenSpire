@@ -5,6 +5,7 @@ import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { combatProfileFor, combatProfileTags } from '../src/model/combatCardProfile.js';
 import { enemyMoveCards } from '../src/model/enemyMoveCards.js';
 import { playingCardModel } from '../src/model/playingCard.js';
+import { cardFaceDefinition } from '../src/model/cardFaceDefinition.js';
 import { renderCard, cardDetailHtml } from '../src/ui/components/card.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 
@@ -46,18 +47,21 @@ test('all 17 resolved equipment profiles show their sigils and retain tactical i
     const expected = identities[profile.id];
     const actual = combatProfileFor(def);
     assert.deepEqual([actual.camp, actual.maneuver, actual.school], expected, profile.id);
-    const card = renderCard(registries, ref, { inspection: false });
+    // Profile identity is read from the authored (unprojected) definition.
+    const card = renderCard(registries, ref, { inspection: false, definition: def });
     assert.deepEqual([card.dataset.combatCamp || null, card.dataset.combatManeuver || null,
       card.dataset.combatSchool || null], expected, `${profile.id} attributes`);
-    const model = playingCardModel(registries, ref), markup = markupFor(card);
+    const model = playingCardModel(registries, ref, { definition: def }), markup = markupFor(card);
     assert.ok(markup.includes(`data-primary-sigil="${model.sigils.action}"`), `${profile.id} primary sigil`);
     assert.match(markup, /class="card-type-name" data-card-layer="8">[^<]+<\/span>/);
-    const expectedLabels = expected.filter(Boolean).map(capitalized);
+    // The inspect body is the card combat plays, so its tags follow the projected profile.
+    const shown = combatProfileFor(cardFaceDefinition(registries, ref));
+    const expectedLabels = [shown.camp, shown.maneuver === 'casting' ? null : shown.maneuver, shown.school].filter(Boolean).map(capitalized);
     if (['staffMagicAttack', 'sceptreArcaneAttack'].includes(profile.id)) expectedLabels.push('Force');
     if (profile.id === 'bowTechnique') expectedLabels.push('Ranged'); // Authored legacy weapon tag; no attack maneuver.
     const detail = cardDetailHtml(registries, ref);
     for (const label of expectedLabels) assert.ok(detail.includes(`>${label}</span>`), `${profile.id} inspected ${label}`);
-    const damage = model.tags.filter(tag=>tag.id.startsWith('damage:')).map(tag=>tag.label);
+    const damage = playingCardModel(registries, ref).tags.filter(tag=>tag.id.startsWith('damage:')).map(tag=>tag.label);
     for (const label of damage) assert.ok(detail.includes(label), `${profile.id} inspected damage type`);
   }
 }));

@@ -98,7 +98,7 @@ test('every base, upgrade, authored rank and equipment profile uses the shared i
   for (const profile of reg.equipment.basicCardProfiles || []) refs.push({cardId:profile.role === 'defend' ? 'defend' : 'strike',profileId:profile.id});
   for (const ref of refs) for (const expanded of [false, true]) {
     const def = expanded ? applyCombatExpansionCard(resolveCard(reg, ref)) : resolveCard(reg, ref);
-    const model = playingCardModel(reg, ref, {preview: expanded ? {resolvedDefinition:def} : null});
+    const model = playingCardModel(reg, ref, {definition: def});
     assert.deepEqual(model.sigils, cardSigilIdentity(combatCardType(def), combatProfileFor(def)), JSON.stringify(ref));
     assert.ok(Object.isFrozen(model.sigils));
     actions.add(model.sigils.action); if(model.sigils.school)schools.add(model.sigils.school);
@@ -126,7 +126,7 @@ test('long rank effects keep their Starstone condition, values and draw limit', 
 
 test('Ritual Ward keeps Defend below and category followed by effect type on the right', () => {
   const reg=createRegistries(contentBundle),ref={cardId:'defend',profileId:'sceptreGuard'};
-  const model=playingCardModel(reg,ref),def=resolveCard(reg,ref);
+  const def=resolveCard(reg,ref),model=playingCardModel(reg,ref,{definition:def});
   assert.equal(model.sigils.action,'defend');
   assert.deepEqual(cardSideTags(model,def,reg).map(t=>t.label),['Spell','Divine']);
 });
