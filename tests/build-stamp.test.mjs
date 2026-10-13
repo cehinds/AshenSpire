@@ -125,6 +125,50 @@ test('restamp moves a re-pointed receipt to the top of its date group, and the s
   assert.equal(checked.status, 0, checked.out);
 });
 
+test('restamp moves a re-pointed receipt out of an older date group into the top of the newest one', () => {
+  // build-stamp run 28 on dev: #1932's receipt sat under 2026-10-12 when it was re-pointed to
+  // the box, out-running 2026-10-13's older stamps, and --write refused "build runs backward".
+  const md = ['# Changelog', '', '## 2026-10-13', '', receipt(1930, '0.7.1.1427'), receipt(1934, '0.7.1.1425'), '',
+    '## 2026-10-12', '', receipt(1902, '0.7.1.1400'), receipt(1897, '0.7.1.1399'), '', HISTORY].join('\n');
+  const r = restamp(md, ['1902'], ORDER_BOX);
+  assert.deepEqual(r.changed, [{ pr: '1902', from: '0.7.1.1400', to: '0.7.1.1429' }]);
+  const heads = r.text.split('\n').filter((l) => /^## /.test(l));
+  assert.deepEqual(heads, md.split('\n').filter((l) => /^## /.test(l)), 'no heading moved');
+  const newest = r.text.slice(r.text.indexOf('## 2026-10-13'), r.text.indexOf('## 2026-10-12'));
+  assert.deepEqual([...newest.matchAll(/\/pull\/(\d+)\)/g)].map((m) => m[1]), ['1902', '1930', '1934'], 'it opens the newest date');
+  assert.ok(!r.text.slice(r.text.indexOf('## 2026-10-12'), r.text.indexOf('## 2026-10-11')).includes('/pull/1902)'), 'it left 2026-10-12');
+  const checked = checkOrderOf(r.text, ORDER_BOX);
+  assert.equal(checked.status, 0, checked.out);
+  assert.notEqual(checkOrderOf(md.replace(receipt(1902, '0.7.1.1400'), receipt(1902, '0.7.1.1429')), ORDER_BOX).status, 0,
+    'the same re-point left in place is refused');
+});
+
+test('restamp keeps several moved receipts newest first in the newest date group', () => {
+  // Landed pull requests come newest first; each moved receipt goes below those already stamped.
+  const md = ['# Changelog', '', '## 2026-10-13', '', receipt(1930, '0.7.1.1427'), '',
+    '## 2026-10-12', '', receipt(1903, '0.7.1.1401'), receipt(1902, '0.7.1.1400'), '', HISTORY].join('\n');
+  const r = restamp(md, ['1903', '1902'], ORDER_BOX);
+  const top = r.text.slice(r.text.indexOf('## 2026-10-13'), r.text.indexOf('## 2026-10-12'));
+  assert.deepEqual([...top.matchAll(/\/pull\/(\d+)\)/g)].map((m) => m[1]), ['1903', '1902', '1930']);
+  assert.equal(checkOrderOf(r.text, ORDER_BOX).status, 0);
+});
+
+test('restamp counts a CRLF release heading as the newest date group', () => {
+  const md = ['# Changelog', '', '## 0.7.2 — 2026-10-13', '', receipt(1930, '0.7.1.1427'), '',
+    '## 2026-10-12', '', receipt(1902, '0.7.1.1400'), ''].join('\r\n');
+  const r = restamp(md, ['1902'], ORDER_BOX);
+  const top = r.text.slice(r.text.indexOf('## 0.7.2'), r.text.indexOf('## 2026-10-12'));
+  assert.deepEqual([...top.matchAll(/\/pull\/(\d+)\)/g)].map((m) => m[1]), ['1902', '1930'], 'it opens the release group');
+});
+
+test('restamp counts a release heading as the newest date group', () => {
+  const md = ['# Changelog', '', '## 0.7.2 — 2026-10-13', '', receipt(1930, '0.7.1.1427'), '',
+    '## 2026-10-12', '', receipt(1902, '0.7.1.1400'), '', HISTORY].join('\n');
+  const r = restamp(md, ['1902'], ORDER_BOX);
+  const top = r.text.slice(r.text.indexOf('## 0.7.2'), r.text.indexOf('## 2026-10-12'));
+  assert.deepEqual([...top.matchAll(/\/pull\/(\d+)\)/g)].map((m) => m[1]), ['1902', '1930'], 'it opens the release group');
+});
+
 test('restamp leaves the order of a date group alone when the re-pointed receipt is already in place', () => {
   const md = [...FIXTURE_HEAD, receipt(1900, '0.7.1.1429'), receipt(1902, '0.7.1.1400'), receipt(1897, '0.7.1.1425'), '', HISTORY].join('\n');
   const r = restamp(md, ['1902'], ORDER_BOX);
@@ -375,6 +419,34 @@ test('the base is the introduction: the introducing merge counts, the merges bef
   const r = repoWithPipeline(['Merge pull request #1900 from c/d', 'Add a thing (#1901)']);
   try {
     assert.deepEqual(landedSince({ cwd: r.dir }).sort(), ['1895', '1900', '1901']);
+  } finally { r.cleanup(); }
+});
+
+test('mixed merge and squash landings keep their shared newest-first chronology', () => {
+  const r = repoWithPipeline([]);
+  const env = { ...process.env, GIT_AUTHOR_NAME: 'dev', GIT_AUTHOR_EMAIL: 't@example.invalid', GIT_COMMITTER_NAME: 'dev', GIT_COMMITTER_EMAIL: 't@example.invalid' };
+  const git = (...args) => execFileSync('git', args, { cwd: r.dir, encoding: 'utf8', env }).trim();
+  try {
+    git('checkout', '-q', '-b', 'older-merge');
+    git('commit', '-q', '--allow-empty', '-m', 'older branch work');
+    git('checkout', '-q', 'main');
+    git('merge', '-q', '--no-ff', 'older-merge', '-m', 'Merge pull request #1900 from a/older-merge');
+    git('commit', '-q', '--allow-empty', '-m', 'Newer squash landing (#1901)');
+
+    assert.deepEqual(landedSince({ cwd: r.dir }), ['1901', '1900', '1895']);
+  } finally { r.cleanup(); }
+});
+
+test('a side-branch commit titled like a merge is not a landing', () => {
+  const r = repoWithPipeline([]);
+  const env = { ...process.env, GIT_AUTHOR_NAME: 'dev', GIT_AUTHOR_EMAIL: 't@example.invalid', GIT_COMMITTER_NAME: 'dev', GIT_COMMITTER_EMAIL: 't@example.invalid' };
+  const git = (...args) => execFileSync('git', args, { cwd: r.dir, encoding: 'utf8', env }).trim();
+  try {
+    git('checkout', '-q', '-b', 'feature');
+    git('commit', '-q', '--allow-empty', '-m', 'Merge pull request #999 from x/cherry-picked');
+    git('checkout', '-q', 'main');
+    git('merge', '-q', '--no-ff', 'feature', '-m', 'Merge pull request #1900 from a/feature');
+    assert.deepEqual(landedSince({ cwd: r.dir }), ['1900', '1895']);
   } finally { r.cleanup(); }
 });
 

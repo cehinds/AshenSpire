@@ -13,6 +13,36 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1931"
   },
   {
+    "id": "pr-1867",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "The round-based combat engine is ported as a preview",
+    "detail": "Nothing changes in the game yet. The alternative round-based combat engine (src/engine/combatRounds) is in the codebase with its own tests and a specification section (§4.11), and it is not wired into combat.",
+    "build": "0.7.1.1473",
+    "pullRequest": 1867,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1867"
+  },
+  {
+    "id": "pr-1838",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "The alternative combat rounds design is recorded",
+    "detail": "Development-process change only, nothing in the game changes. The design for timeline queues, initiative and merge modes is written up in docs/alternative-combat-rounds, with its own tests.",
+    "build": "0.7.1.1473",
+    "pullRequest": 1838,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1838"
+  },
+  {
+    "id": "pr-1948",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "New builds get their number again",
+    "detail": "Development-process change only, nothing in the game changes. When a merged change's changelog line was filed under an earlier day, stamping the new build number now moves it to today's entries instead of failing, so the online dev build publishes again.",
+    "build": "0.7.1.1473",
+    "pullRequest": 1948,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1948"
+  },
+  {
     "id": "pr-1950",
     "date": "2026-10-13",
     "group": "2026-10-13",
