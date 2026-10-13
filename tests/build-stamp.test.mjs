@@ -169,6 +169,14 @@ test('restamp counts a release heading as the newest date group', () => {
   assert.deepEqual([...top.matchAll(/\/pull\/(\d+)\)/g)].map((m) => m[1]), ['1902', '1930'], 'it opens the release group');
 });
 
+test('restamp counts a release heading with trailing whitespace as the newest date group', () => {
+  const md = ['# Changelog', '', '## 0.7.2 — 2026-10-13 \t', '', receipt(1930, '0.7.1.1427'), '',
+    '## 2026-10-12', '', receipt(1902, '0.7.1.1400'), '', HISTORY].join('\n');
+  const r = restamp(md, ['1902'], ORDER_BOX);
+  const top = r.text.slice(r.text.indexOf('## 0.7.2'), r.text.indexOf('## 2026-10-12'));
+  assert.deepEqual([...top.matchAll(/\/pull\/(\d+)\)/g)].map((m) => m[1]), ['1902', '1930'], 'it opens the release group');
+});
+
 test('restamp leaves the order of a date group alone when the re-pointed receipt is already in place', () => {
   const md = [...FIXTURE_HEAD, receipt(1900, '0.7.1.1429'), receipt(1902, '0.7.1.1400'), receipt(1897, '0.7.1.1425'), '', HISTORY].join('\n');
   const r = restamp(md, ['1902'], ORDER_BOX);
