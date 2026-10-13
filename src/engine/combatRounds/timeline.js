@@ -160,7 +160,8 @@ export function makeCombatant(spec = {}, tables = {}) {
     evasion,
     evadeBasePct: Number.isFinite(base) ? base : 0,
     intangibleCharges: Number.isFinite(charges) && charges > 0 ? charges : 0,
-    accuracyExtra: Number(spec.accuracy ?? 0) || 0,
+    // Non-finite accuracy counts as 0, like level, so a saved round (JSON turns Infinity into null) reads it the same.
+    accuracyExtra: Number.isFinite(Number(spec.accuracy ?? 0)) ? Number(spec.accuracy ?? 0) : 0,
     hand: Array.isArray(spec.hand) ? spec.hand.map((c) => ({ ...c })) : [],
     // The evasion-cards.csv table (owner, 2026-10-11): a played evade card whose name or id is
     // in it adds that bonus to the hit roll of the one attack it answers. Null when no table.
@@ -468,7 +469,9 @@ function resolveAttack(cur, entry, events, rng, options, reactionEvade = null, r
   const attacker = cur.combatants[entry.actor];
   const target = cur.combatants[entry.target];
   const card = entry.card;
-  const dmg = Math.max(0, Number(card.damage ?? 0) || 0);
+  // Non-finite damage counts as 0, so a saved round (JSON turns Infinity into null) resolves the same.
+  const rawDmg = Number(card.damage ?? 0);
+  const dmg = Number.isFinite(rawDmg) ? Math.max(0, rawDmg) : 0;
   // An evade card is spent on the next attack, whether or not that attack hits. A reaction
   // evade belongs to this attack and is used first; queued evades wait for later attacks. When any
   // reaction answers this attack, a queued evade is not spent on it (Codex review on PR #1838).
@@ -930,13 +933,26 @@ export function createRound(state, options = {}) {
   const started = beginRound(state, options);
   const entries = started.timeline.entries;
   // All the mutable round state lives in one frame, so atomically() can put it all back.
+  // Keep the resolution RNG cursor there too. The caller's injected RNG cannot generally be
+  // rewound, so values already drawn by a failed transaction stay in this private replay buffer;
+  // restoring rngIndex makes the retry consume those exact values before drawing anything new.
   const frame = {
     cur: started.cur,
     run: started.run,
     idx: 0,
     settled: false,
     pendingEvents: started.startEvents,
+    rngIndex: 0,
   };
+  const rngValues = [];
+  const replayableRng = () => {
+    const index = frame.rngIndex;
+    const value = index < rngValues.length ? rngValues[index] : options.rng();
+    if (index === rngValues.length) rngValues.push(value);
+    frame.rngIndex += 1;
+    return value;
+  };
+  const resolutionOptions = { ...options, rng: replayableRng };
   const snapshot = () => structuredClone(frame.cur);
 
   const next = () => atomically(frame, () => {
@@ -946,7 +962,7 @@ export function createRound(state, options = {}) {
     let entry = null;
     if (frame.idx < entries.length) {
       entry = entries[frame.idx];
-      applyEntry(frame.cur, entry, events, options, frame.run);
+      applyEntry(frame.cur, entry, events, resolutionOptions, frame.run);
       // The cursor moves only once this entry has resolved, so a throw leaves it on this entry.
       frame.idx += 1;
     }

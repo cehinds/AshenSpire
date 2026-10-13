@@ -488,8 +488,23 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     // how this whole file came to be needed.
     const mark = viewer.mark ? viewer.mark(n, { x: px(n), y: py(n), r }) : '';
     el.insertAdjacentHTML('beforeend', `${mapNodeInk({ type: shownType, x: px(n), y: py(n), radius: r, reachable: isReachable })}${mark || ''}`);
-    if (isReachable && viewer.onPick) el.addEventListener('click', () => viewer.onPick(n.id, { shownType, revealed }));
-    if (viewer.tooltip) attachTooltip(el, () => viewer.tooltip(n, { shownType, revealed, reachable: isReachable }));
+    if (isReachable && viewer.onPick) {
+      // `(pointer: coarse)` describes only the primary device and is wrong on
+      // hybrids. Keep the pointer that made this activation beside the node;
+      // PointerEvent-backed clicks carry it themselves, while pointerdown is
+      // the fallback for browsers that still deliver a plain click event.
+      let pickPointerType = 'mouse';
+      el.addEventListener('pointerdown', (ev) => { pickPointerType = ev.pointerType || 'mouse'; });
+      el.addEventListener('click', (ev) => {
+        const pointerType = ev.pointerType || pickPointerType;
+        pickPointerType = 'mouse';
+        viewer.onPick(n.id, { shownType, revealed }, { pointerType });
+      });
+    }
+    // A reachable node's tap is a SELECTION (the tray answers it), not an
+    // explanation. Unreachable nodes have no selection handler, so keep their
+    // second-tap explanation available to touch users without hover or focus.
+    if (viewer.tooltip) attachTooltip(el, () => viewer.tooltip(n, { shownType, revealed, reachable: isReachable }), { secondTap: !isReachable });
     g.appendChild(el);
   }
 
@@ -650,15 +665,33 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     if (!scroll.isConnected) return; // the player left the map while a commit was pending
     if (viewer.onViewStateChange) viewer.onViewStateChange(snapshot, { commit });
   }
-  // TWICE, ON PURPOSE, and this is the one non-obvious line in the change.
-  // Applying a content box can add or remove a CLASSIC scrollbar (this
-  // scrollport asks for `scrollbar-width: thin`, not overlay), and a scrollbar
-  // takes layout width — which is the very number the pads were computed from.
-  // One pass would centre against a viewport that no longer exists by the time
-  // it lands, off by the scrollbar, on desktop only, silently. The second pass
-  // reads the settled viewport; a third has nothing left to change, because the
-  // pad is linear in the viewport and a scrollbar is a two-state thing.
-  function sizeSvg() { apply(); apply(); }
+  // TWICE WHEN THE FIRST PASS MOVED THE VIEWPORT, and this is the one
+  // non-obvious line in the change. Applying a content box can add or remove a
+  // CLASSIC scrollbar (this scrollport asks for `scrollbar-width: thin`, not
+  // overlay), and a scrollbar takes layout width — which is the very number the
+  // pads were computed from. One pass would centre against a viewport that no
+  // longer exists by the time it lands, off by the scrollbar, on desktop only,
+  // silently. So the viewport is read before and after the first pass, and only
+  // a changed viewport earns the second. Without a change the second pass would
+  // write exactly what the first wrote: the inputs are the same, and the writes
+  // do not move the scroller. (W5a: the unconditional second pass cost a forced
+  // layout per tap, four per map tap across centring and the glide's land.)
+  //
+  // `sizedThisFrame` / `sizedAim` let a glide's landing skip a second solve that
+  // centerOnNode has just made in the same tick; see `land` in glideTo.
+  let sizedThisFrame = false;
+  let sizedAim = NaN;
+  function sizeSvg() {
+    const cw = scroll.clientWidth;
+    const ch = scroll.clientHeight;
+    apply();
+    if (scroll.clientWidth !== cw || scroll.clientHeight !== ch) apply();
+    sizedAim = aimX;
+    if (!sizedThisFrame && typeof requestAnimationFrame === 'function') {
+      sizedThisFrame = true;
+      requestAnimationFrame(() => { sizedThisFrame = false; });
+    }
+  }
   function apply() {
     // Before the first layout the viewport is 0 and there is no half-viewport to
     // grow by; the plain canvas is the honest fallback and the ResizeObserver
@@ -1145,7 +1178,11 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     const toLeft = Number.isFinite(target.left) ? target.left : 0;
     const land = () => {
       aimX = target.aimX;
-      sizeSvg();
+      // centerOnNode has just solved the viewBox in this same tick. The solve
+      // reads the aim only when the horizontal axis is not free (in two-axis
+      // mode the viewBox is the ink plus pad, whatever the aim), so only a moved
+      // aim on the fixed axis needs solving again.
+      if (!sizedThisFrame || (!freePan && sizedAim !== aimX)) sizeSvg();
       if (titleEl) titleEl.setAttribute('x', String(aimX));
       scroll.scrollLeft = toLeft;
       scroll.scrollTop = target.top;
@@ -1209,6 +1246,24 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
 
   // ⊙ — "Reset / center", and now it means it: back to the computed frame from
   // wherever the ladder, the wheel, the saved setting or an open tray left us.
+  // THE TRAY'S LOOK WITHOUT A MOVE. A pick the player can already see is left
+  // where the finger put it (map.js), but a later re-fit (#1142) must still
+  // keep that node in the band the tray leaves visible, so the look is
+  // recorded exactly as centerOnNode records it, and the camera stays put.
+  function holdLook(id, { inset = 0 } = {}) {
+    if (!byId[id]) return;
+    insetBottom = Math.max(0, inset);
+    look = { id, inset: insetBottom };
+  }
+  // Closing a tray that never moved the camera forgets its look without
+  // re-framing, so the view the player is looking at does not jump.
+  function releaseLook() {
+    insetBottom = 0;
+    look = null;
+    // A re-fit taken while the tray was open sized the board with the tray's
+    // inset; drop that padding so no empty strip stays below the map.
+    sizeSvg();
+  }
   function resetFraming({ glideMs = 0 } = {}) {
     insetBottom = 0;
     look = null;
@@ -1396,7 +1451,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
 
   return {
     scroll, svg: svgEl, counts: know.counts, know, columns, width, height,
-    recenter, resetFraming, centerOnNode, stepZoom, teardown,
+    recenter, resetFraming, centerOnNode, holdLook, releaseLook, stepZoom, teardown,
     readingOf: (id) => drawnReadings.get(id) || null,
     get zoom() { return zoom; },
   };

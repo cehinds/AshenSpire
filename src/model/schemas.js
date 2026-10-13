@@ -127,6 +127,8 @@ export const EVENTS = Object.freeze([
   'enemyTurnEnd',
   'enemyMoveStarted',
   'enemyActorTurnStarted', 'combatReactionOffered', 'combatReactionChosen',
+  // SPEC §4.10: why no reaction was offered; a Smash broke physical Guard.
+  'combatReactionUnavailable', 'combatGuardBroken',
   'cardDrawn',
   'cardPlayed',
   'cardPreparing',
@@ -623,7 +625,14 @@ const enemyMoveSchema = obj({
   damage: opt(int),
   hits: opt(int),
   block: opt(int),
-  weight: num,
+  // Required on a rolled move; absent on a reaction move, which is never rolled
+  // (validate.js enforces both). docs/combat-card-traits-contract.md, "Enemy reactions".
+  weight: opt(num),
+  reaction: opt(obj({
+    on: arr(en('playerAction', 'playerReaction')),
+    minIncoming: opt(int),
+    chance: opt(num),
+  })),
   maxConsecutive: opt(int),
   effects: opt(effects),
   locked: opt(bool),
@@ -784,6 +793,7 @@ export const SCHEMAS = Object.freeze({
     defensiveReaction: opt(bool),
     counterPayload: opt(any),
     evade: opt(any),
+    traitValues: opt(any),
     upcast: opt(any),
     usableWhile: opt(arr(str)),
     projectile: opt(bool),
@@ -894,6 +904,7 @@ export const SCHEMAS = Object.freeze({
     name: str,
     icon: opt(str),
     tint: opt(str), // status-pip accent CSS color (display; proc bars tint from this too)
+    fluxPerTurn: opt(int), // reaction rules v2: Ward damage at the owner's turn start (wired in src/engine/triggers.js)
     stackMode: en(...STACK_MODES),
     stacking: opt(obj({ mode: en('add', 'refresh', 'replace', 'strongest', 'independent', 'unique'), cap: int,
       duration: opt(int), clock: opt(en('ownerTurnStart', 'ownerTurnEnd')), refresh: opt(bool) })),

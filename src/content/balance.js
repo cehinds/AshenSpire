@@ -65,6 +65,7 @@ export const balanceWords = Object.freeze({
     bleed: 'how many stacks of Bleed it applies',
     venom: 'how many stacks of Venom it applies',
     crimsonBlight: 'how many stacks of Crimson Blight it applies',
+    necroticBlight: 'how many stacks of Necrotic Blight it applies',
     prepared: 'how many stacks of Prepared it grants',
     madness: 'how many stacks of Madness it costs you',
     frail: 'how many stacks of Frail it costs you',
@@ -126,6 +127,7 @@ const cardValueStatusMultipliers = {
   frostExposed: 1,
   insanityExposed: 1,
   crimsonBlight: 1,
+  necroticBlight: 1,
   burn: 1,
   regen: 1,
   madness: 1,
@@ -1390,6 +1392,20 @@ export const balance = {
       // --predicates` is the standing check that every wall has a gate on it, and
       // `--text S` is the standing check on what this number costs.
       gateBelowH: 465,
+      // THE HUD FORM FACTOR (docs/hud-layout-tokens.md). applyUiScale writes
+      // <html data-form-factor> from these, in the window's CSS px, so the
+      // combat HUD picks content/hud-layout/<form-factor>.json. First match
+      // wins: widescreen (w / h >= widescreenMinAspect, or w >=
+      // widescreenMinWidth), mobile (w <= mobileMaxWidth), tablet (w <=
+      // tabletMaxWidth), else desktop. It chooses styling only — never the
+      // layout mode, the zoom or the gate above.
+      formFactor: {
+        widescreenMinAspect: 2.0,
+        widescreenAspectMinWidth: 1600,
+        widescreenMinWidth: 2400,
+        mobileMaxWidth: 600,
+        tabletMaxWidth: 1100,
+      },
     },
     // Text size → root font-size %. Auto owns the browser stylesheet baseline;
     // M remains a legacy data alias for old saves and geometry tools. It scales

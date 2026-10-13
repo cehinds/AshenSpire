@@ -12,7 +12,7 @@ export const combatExpansionEquipment = {
     'starseer:astral': { armorClass: 'light', flat: { arcane: 1, frost: 1 }, traits: { buildupResistance: { dazed: 10 } } },
     'starseer:rimeweave': { armorClass: 'light', flat: { frost: 2 }, traits: { buildupResistance: { frost: 15 } } },
     'herald:default': { armorClass: 'medium', flat: { decay: 1 } },
-    'herald:ossuary': { armorClass: 'medium', flat: { decay: 1 }, traits: { buildupResistance: { crimsonBlight: 15 } } },
+    'herald:ossuary': { armorClass: 'medium', flat: { decay: 1 }, traits: { buildupResistance: { crimsonBlight: 15, necroticBlight: 15 } } },
     'herald:emberhabit': { armorClass: 'light', flat: { fire: 1 }, traits: { buildupResistance: { burn: 15 } } },
     'herald:pilgrim': { armorClass: 'medium', flat: { sacred: 1 }, traits: { recoveryBonus: { curse: 5 } } },
     'rogue:default': { armorClass: 'light', flat: { piercing: 1 } },

@@ -1,0 +1,49 @@
+/* workbench/modules/entities/render.css — the render page's own layout. Card faces
+   come from the game's stylesheets; this file only lays out the grid, the detail
+   stage and the worn figures. */
+html, body { margin: 0; min-height: 100%; background: #17130e; color: #eee0bf; }
+body.entity-render { overflow-x: hidden; }
+#stage { padding: 16px; box-sizing: border-box; }
+
+.ent-grid {
+  display: grid; gap: 16px; align-items: start;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+.ent-grid.density-compact { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.ent-grid.density-spacious { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; }
+.ent-grid.layout-list { grid-template-columns: minmax(0, 1fr); }
+.ent-grid.layout-list article { display: flex; align-items: center; gap: 16px; }
+.ent-grid article { min-width: 0; border-radius: 8px; outline-offset: 3px; cursor: pointer; }
+.ent-grid article:focus-visible { outline: 2px solid #f7e6a6; }
+.ent-grid article:hover { filter: brightness(1.08); }
+
+.ent-detail { display: flex; justify-content: center; padding: 8px 0 24px; }
+.ent-detail > * { max-width: 100%; }
+
+.ent-worn { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+.ent-worn figure { margin: 0; text-align: center; min-width: 0; position: relative; }
+.ent-worn figcaption { position: relative; z-index: 2; font: 13px system-ui, sans-serif; color: #d9bc72; margin-top: 4px; }
+
+.ent-inventory { display: grid; gap: 12px; max-width: 520px; }
+.ent-inventory .inventory-item-art { width: 5rem !important; height: 5rem !important; }
+
+.ent-data-card { width: 220px; padding: 14px; border: 1px solid #695531; border-radius: 8px; background: #221b13; font: 13px system-ui, sans-serif; }
+.ent-data-card h3 { margin: 2px 0; font: 600 17px Georgia, serif; color: #f2d881; }
+.ent-data-card dl { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; margin: 10px 0 0; }
+.ent-data-card dt { color: #a9977a; }
+.ent-data-card dd { margin: 0; word-break: break-word; }
+.ent-glyph { font-size: 28px; margin: 0; }
+
+.ent-tip { display: grid; gap: 10px; max-width: 360px; font: 14px system-ui, sans-serif; line-height: 1.45; }
+.ent-tip p { margin: 0; color: #d6c8a6; }
+.ent-json { margin: 0; padding: 14px; background: #100d09; border: 1px solid #695531; border-radius: 6px; font: 12px ui-monospace, Menlo, monospace; white-space: pre-wrap; word-break: break-word; overflow: auto; }
+.ent-html { max-width: 420px; font: 14px system-ui, sans-serif; }
+
+.ent-note { font: 14px system-ui, sans-serif; color: #c9b990; margin: 12px 0; }
+.ent-faint { font: 12px system-ui, sans-serif; color: #a9977a; margin: 2px 0; }
+
+@media (max-width: 600px) {
+  #stage { padding: 10px; }
+  .ent-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .ent-grid.density-spacious { grid-template-columns: minmax(0, 1fr); }
+}

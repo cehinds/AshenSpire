@@ -194,29 +194,31 @@ test('both workflow matrices execute all discovery shards and both selftest grou
     const discovery = job(workflow, discovered);
     assert.match(discovery, /timeout-minutes: 20/);
     assert.match(discovery, /fail-fast: false/);
-    // ci.yml runs every discovered file; tests.yml's shards leave the slow
-    // ones to its discovered-slow job, gated off pull requests like selftests.
-    if (file === 'ci.yml') assert.match(discovery, /--discovered-only --shard \$\{\{ matrix\.shard \}\}/);
-    else {
+    // ci.yml runs every discovered file, slow ones included, at test (stage split,
+    // 2026-10-11). tests.yml's shards leave the slow ones out and run on dev only;
+    // its discovered-slow, selftests and parse-gate jobs moved to ci.yml's test
+    // stage, so they must not come back here.
+    if (file === 'ci.yml') {
+      assert.match(discovery, /--discovered-only --shard \$\{\{ matrix\.shard \}\}/);
+      assert.doesNotMatch(discovery, /--no-slow|--slow-only/);
+    } else {
       assert.match(discovery, /--discovered-only --no-slow --shard \$\{\{ matrix\.shard \}\}/);
-      const slow = job(workflow, 'discovered-slow');
-      assert.match(slow, /timeout-minutes: 20/);
-      assert.match(slow, /--discovered-only --slow-only\n/);
-      assert.match(slow, /fetch-art/);
-      const gate = /\n {4}if: (.*)\n/.exec(slow)?.[1];
-      assert.ok(gate, 'discovered-slow has no job-level if:');
-      assert.equal(gate, /\n {4}if: (.*)\n/.exec(job(workflow, selftests))?.[1], 'discovered-slow runs exactly where selftests run');
+      for (const gone of ['discovered-slow', 'selftests', 'parse-gate']) {
+        assert.doesNotMatch(workflow, new RegExp(`^  ${gone}:\\r?$`, 'm'), `${gone} is in ci.yml's test stage, not tests.yml`);
+      }
     }
     const shards = [...discovery.matchAll(/['"](\d+\/\d+)['"]/g)].map(match => match[1]);
     assert.deepEqual(shards, ['0/4', '1/4', '2/4', '3/4']);
     assert.match(discovery, /fetch-art/);
     assert.match(discovery, /Pillow==11\.1\.0/);
     if (file === 'ci.yml') assert.match(discovery, /os: \[ubuntu-latest, windows-latest, macos-latest\]/);
-    const corpus = job(workflow, selftests);
-    assert.match(corpus, /timeout-minutes: 20/);
-    assert.match(corpus, /fail-fast: false/);
-    assert.match(corpus, /group: \['?link'?, '?other'?\]/);
-    assert.match(corpus, /--selftests-only --selftest-group \$\{\{ matrix\.group \}\}/);
+    if (file === 'ci.yml') {
+      const corpus = job(workflow, selftests);
+      assert.match(corpus, /timeout-minutes: 20/);
+      assert.match(corpus, /fail-fast: false/);
+      assert.match(corpus, /group: \['?link'?, '?other'?\]/);
+      assert.match(corpus, /--selftests-only --selftest-group \$\{\{ matrix\.group \}\}/);
+    }
     assert.match(job(workflow, core), /--no-selftests --no-discovered/);
     if (file === 'ci.yml') assert.match(job(workflow, 'boundary'), /needs: \[[^\]]*test-discovered[^\]]*test-selftests/);
   }

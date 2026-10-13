@@ -78,6 +78,8 @@ test('the actual tools geometry flush cancels its queued measure and publishes z
   const combatEl = {clientWidth:390/.83,getBoundingClientRect:()=>({width:390}),
     style:{setProperty:(key,value)=>properties.set(key,value)},querySelector:selector=>selector==='.hand'?hand:null,querySelectorAll:()=>[]};
   const api = runInNewContext(tools.slice(begin,end)+'\n({schedule,flushGeometry})', {
+    // HUD layout tokens at their defaults: span field, no offset (the old geometry).
+    combatToolsTokens:()=>({ span:'field', dy:0 }), cardBand:()=>null, TOOLS_MIN_WIDTH:240,
     root, combatEl, state:{size:'Small'}, panel:{style:{}}, innerHeight:650,
     window:{}, innerWidth:390, drag:null, snapHeights:()=>({Small:125}), VIEWPORT_ORIGIN:{},
     anchorLocalBox:(_host,rect,{zoom})=>({left:rect.left/zoom,top:rect.top/zoom,width:rect.width/zoom,height:rect.height/zoom}),

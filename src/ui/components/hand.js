@@ -1,5 +1,6 @@
-import { COMBAT_TOOLS_HEIGHT_PX, handLayout, handGeometryKey, reconcileHandOrder, moveHandInstance } from '../models/HandLayout.js';
+import { COMBAT_TOOLS_HEIGHT_PX, COMBAT_TOOLS_DESKTOP_HEIGHT_PX, handLayout, handGeometryKey, reconcileHandOrder, moveHandInstance } from '../models/HandLayout.js';
 import { mountHandInspectionOverlay } from './handInspectionOverlay.js';
+import { isWideFormFactor } from '../models/FormFactorModel.js';
 // src/ui/components/hand.js — THE hand strip. One renderer, two surfaces.
 //
 // Until 2026-08-15 the hand was rendered TWICE: combat.js's template (the
@@ -14,7 +15,7 @@ import { mountHandInspectionOverlay } from './handInspectionOverlay.js';
 // surface enters as parameters, never as a second template:
 //
 //   cards     — the viewer's list: { inst, preview?, affordable, reason?,
-//               name?, selected? }. Solo passes live previewCard numbers off
+//               name?, selected?, stacked? }. Solo passes live previewCard numbers off
 //               the paced snapshot; co-op passes the host snapshot's hand
 //               with a spelled-out unavailability reason (its player cannot
 //               hover the engine for one).
@@ -127,22 +128,44 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       const fontSize = getComputedStyle(document.documentElement).fontSize;
       const rem = Math.max(16 / zoom, parseFloat(fontSize) || 16);
       const compact = handEl.closest('.combat')?.dataset.compactCombat === 'true';
+      // The HUD form factor main.js writes to <html>. Read the live root first: the
+      // combat root's mirror (combatLayout) can lag a debounced change.
+      const formFactor = document.documentElement.dataset.formFactor || handEl.closest('.combat')?.dataset.formFactor || null;
+      const desktop = formFactor === 'desktop';
+      // The fan (card cap, top anchoring) is the wide form factors' — desktop and
+      // widescreen. The tool row below keeps its own literal desktop check.
+      const wideFan = isWideFormFactor(formFactor);
       // The compact toolbar occupies a 30px compact row at the top of the hand.
       // Keep four physical pixels between that row and the resting card fan.
-      const toolsHeight = COMBAT_TOOLS_HEIGHT_PX / zoom;
+      // Desktop measures the live 36px tool row and keeps the same four physical
+      // px beneath it; phone, tablet and widescreen keep the 34px constant.
+      const toolsRow = desktop ? handEl.closest('.combat')?.querySelector('.combat-tools') : null;
+      const measuredRow = toolsRow ? toolsRow.getBoundingClientRect().height : 0;
+      // Desktop keeps its tools in the screen corners (combatTools.js), so the
+      // fan reserves no tool row above the cards there. Read from the form
+      // factor, not the row's placement mark: a freshly rebuilt row has no
+      // mark until its queued measure runs, after this layout.
+      const cornerTools = desktop;
+      const toolsPhysical = !desktop ? COMBAT_TOOLS_HEIGHT_PX
+        : cornerTools ? 0 : measuredRow > 0 ? measuredRow + 4 : COMBAT_TOOLS_DESKTOP_HEIGHT_PX;
+      const toolsHeight = toolsPhysical / zoom;
       handEl.style.setProperty('--hand-controls-max-width', `${Math.max(0, handEl.clientWidth - 2 / zoom)}px`);
       // Measure the complete row, including the normally hidden native picker.
       // Hidden, inert clones reserve its space before a press selects a face;
       // selection must never resize the fan underneath that pointer.
       let controlsHeight = 0;
-      for (const card of cards) {
+      const controlled = [];
+      cards.forEach((card, index) => {
         const controls = card.querySelector('.card-upcast-controls');
-        if (!controls) continue;
+        if (!controls) return;
+        controlled.push(index);
         controlsHeight = Math.max(controlsHeight, measureHandUpcastHeight(controls,
           { zoom, width: Math.max(0, handEl.clientWidth - 2 / zoom), cache: upcastMeasurements }));
-      }
+      });
+      // On a phone the selected card's lift rises over the tool row (it paints
+      // above the row), so no empty lift band separates the row from the fan.
       const plan = handLayout({ width: handEl.clientWidth, height: handEl.clientHeight - toolsHeight,
-        count: cards.length, rem, zoom, compact, controlsHeight });
+        count: cards.length, rem, zoom, compact, controlsHeight, controlled, headroom: compact || wideFan ? toolsHeight : 0, desktop: wideFan });
       handEl.dataset.wireframeHand = 'true';
       handEl.style.setProperty('--hand-card-zoom', '1');
       handEl.style.setProperty('--hand-span', plan.span + 'px');
@@ -232,7 +255,8 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     const alive = () => document.body.contains(handEl);
     ro = new ResizeObserver(() => { if (alive()) scheduleHandLayout(); else ro.disconnect(); });
     mo = new MutationObserver(() => { if (alive()) scheduleHandLayout(); else mo.disconnect(); });
-    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-layout'] });
+    // data-form-factor re-lays the fan too: desktop anchors it differently.
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-layout', 'data-form-factor'] });
     ro.observe(handEl);
   }
 
@@ -274,6 +298,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       if (record && record.signature !== signature) { record.release?.(); record.el.remove(); renderedCards.delete(id); record = null; }
       if (record) {
         record.el.classList.toggle('selected', !!entry.selected);
+        record.el.classList.toggle('is-stacked', !!entry.stacked);
         if (handEl.children[i] !== record.el) handEl.insertBefore(record.el, handEl.children[i] || null);
         return;
       }
@@ -330,6 +355,8 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
         });
       }
       if (entry.selected) el.classList.add('selected');
+      // Already committed to an open reaction stack: muted until it resolves.
+      if (entry.stacked) el.classList.add('is-stacked');
       // The spelled-out unavailability reason is VIEWER data (co-op supplies
       // it; solo's player reads live previews and the hint bar instead). When
       // present it rides the card as a badge and as assistive text.

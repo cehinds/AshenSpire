@@ -311,9 +311,10 @@ test('empty custom combat identity retains local hit vulnerability tags in previ
   const c = solo('strike', registries);
   applyStatus(c, c.enemies[0], 'frostExposed', 1);
   const preview = previewCard(c, 'card1', c.enemies[0].id);
-  assert.equal(preview.values.find(row => row.op === 'damage').value, 12);
+  // 10 + ceil(10 × 0.25): the exposure bonus rounds up (owner, 2026-10-12).
+  assert.equal(preview.values.find(row => row.op === 'damage').value, 13);
   dispatch(c, { type: 'playCard', cardInstanceId: 'card1', targetId: c.enemies[0].id });
-  assert.equal(c.eventLog.find(event => event.type === 'damageDealt' && event.sourceId === 'player').amount, 12);
+  assert.equal(c.eventLog.find(event => event.type === 'damageDealt' && event.sourceId === 'player').amount, 13);
   assert.equal(getStacks(c.enemies[0], 'bleed'), 0, 'empty card identity does not inherit a tactical Slashing rider');
 });
 

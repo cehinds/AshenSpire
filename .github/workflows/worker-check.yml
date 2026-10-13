@@ -1,0 +1,40 @@
+# .github/workflows/worker-check.yml — a quick sanity check on worker pushes.
+#
+# Runs on every push to a `worker/**` branch, before the orchestrator merges
+# that work into its parent branch (docs/ai/AI-ROUTING.md). It is deliberately
+# small: the receipts self-test (the known-bad corpus the receipts gate is judged
+# by), about a tenth of a second. The full smoke gate runs on the pull request
+# into `dev`, and the higher-level suites run on push to `test`.
+#
+# NOT HERE: the bundler parse gate, `node tools/bundle.test.mjs`. It runs the
+# real bundler on temporary checkouts, needs the fetched art packs, and took
+# several minutes here (over the two-minute budget), so it stays with the tool
+# self-tests on push to `test` (DEVELOPER.md, *Which checks gate a pull request*).
+
+name: worker check
+
+on:
+  push:
+    branches: ['worker/**']
+
+concurrency:
+  group: worker-check-${{ github.ref_name }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  sanity:
+    name: worker sanity (receipts self-test)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          lfs: false # reads the source tree; no LFS object
+
+      - uses: ./.github/actions/setup-node
+
+      - name: Receipts self-test (tools/receipts.mjs --selftest)
+        run: node tools/receipts.mjs --selftest

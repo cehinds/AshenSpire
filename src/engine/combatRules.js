@@ -154,21 +154,28 @@ export function foundationDamage(ctx, source, target, base, carrier = null, atta
   if (!(totalWeight > 0)) throw new Error('attack components need positive weight');
   const attackerMultiplier = source ? S.getMult(ctx, source, 'damageDealtMult') : 1;
   let multiplier = target ? S.getMult(ctx, target, 'damageTakenMult') : 1;
+  let tagged = 1;
   let vulnerability = 0;
   for (const [id, inst] of Object.entries(target?.statuses || {})) {
     if ((inst.meter ? inst.meter.value : inst.stacks) <= 0) continue;
     const tv = ctx.registries.statuses.get(id).taggedVulnerability;
     if (tv && tv.tags.some((tag) => attackTags.includes(tag))) {
-      if (tv.stacking === 'multiplicative') multiplier *= tv.mult;
+      if (tv.stacking === 'multiplicative') tagged *= tv.mult;
       else vulnerability += tv.mult - 1;
     }
   }
-  multiplier = attackerMultiplier * Math.min(rules.vulnerabilityCap, multiplier * (1 + vulnerability));
+  // The tag-scoped share of the (capped) vulnerability travels apart, so its
+  // bonus rounds UP once per hit (owner, 2026-10-12, #12; resolveDamageComponents).
+  const plain = Math.min(rules.vulnerabilityCap, multiplier);
+  const withTags = Math.min(rules.vulnerabilityCap, multiplier * tagged * (1 + vulnerability));
+  const taggedBonus = plain > 0 ? withTags / plain : 1;
+  multiplier = attackerMultiplier * plain;
   const components = resolveDamageComponents(rules, {
     components: weights.map((c) => ({ type: c.type, amount: Math.max(0, base) * c.weight / totalWeight })),
     armor: beforeDefense ? 0 : defense.armor || 0, penetration: attack.penetration || 0,
     resistances: beforeDefense ? {} : groupedResistance(rules, defense.resistanceSources || [], defense.resistances || {}), immunities: beforeDefense ? [] : defense.immunities || [], multiplier,
     flatBonus: (source ? S.getAdd(ctx, source, 'attackDamageAdd') : 0) + (source?.damageBySchoolAdd?.[carrier?.damageSchool] || 0),
+    taggedBonus,
   });
   return { components, amount: components.reduce((sum, c) => sum + c.amount, 0), source: weapon, tags: attackTags };
 }
@@ -191,6 +198,11 @@ export function foundationCosts(ctx, def, weightClass, legacy) {
   const rules = ctx.foundation.rules.dodge;
   const weight = foundationProfile(ctx, ctx.player).weightClass || weightClass.id;
   return { ...legacy, action: rules.stamina[weight], mana: 0, stamina: rules.stamina[weight], variable: false };
+}
+
+/** A card-play refusal that names why, so a reaction trial can say it (SPEC §4.10). */
+export function playRefusal(message, reason, extra = {}) {
+  return Object.assign(new Error(message), { playRefusal: { reason, ...extra } });
 }
 
 export function assertFoundationPlayable(ctx, def, choice) {

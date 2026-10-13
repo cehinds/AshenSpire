@@ -59,7 +59,7 @@ test('a fully blocked field still reports the player proxy as obstructed',()=>{
 
 test('the actual stage pack and HUD retry use the same player proxy receipt and enemy attachment',()=>{
   const source=readFileSync(new URL('../src/ui/components/battlefieldStage.js',import.meta.url),'utf8');
-  const begin=source.indexOf('    const packTargets = () => '),end=source.indexOf('    settledTargets = targets;',begin);
+  const begin=source.indexOf('    const packTargets = () => '),end=source.indexOf('    settledTargetCores = targetCores;',begin);
   assert.ok(begin>=0&&end>begin);
   const fieldRect={left:10,top:90,width:1440,height:417.28125},boxes=[
     {hostRect:{left:484.54684,width:100,bottom:779.2808},footerWidth:0,frameRect:{},controls:[]},
@@ -84,7 +84,7 @@ test('the actual stage pack and HUD retry use the same player proxy receipt and 
 
 test('a fallen enemy frame is neither packed nor reserved as a retry core',()=>{
   const source=readFileSync(new URL('../src/ui/components/battlefieldStage.js',import.meta.url),'utf8');
-  const begin=source.indexOf('    const packTargets = () => '),end=source.indexOf('    settledTargets = targets;',begin);
+  const begin=source.indexOf('    const packTargets = () => '),end=source.indexOf('    settledTargetCores = targetCores;',begin);
   const fieldRect={left:0,top:0,width:600,height:400},ids=['player','alive','dead'];
   const boxes=ids.map((_id,i)=>({hostRect:{left:100+i*150,width:100,bottom:300},footerWidth:104,frameRect:{},controls:[]}));
   const placed=ids.map(id=>({frame:{dataset:{eid:id},classList:{contains:role=>role===(id==='player'?'player':'enemy')||(id==='dead'&&role==='dead')||(id==='alive'&&role==='context-selected')}}}));
@@ -99,7 +99,7 @@ test('a fallen enemy frame is neither packed nor reserved as a retry core',()=>{
 
 test('idle overhead HP and an artwork-owned player reserve no hidden footers',()=>{
   const source=readFileSync(new URL('../src/ui/components/battlefieldStage.js',import.meta.url),'utf8');
-  const begin=source.indexOf('    const packTargets = () => '),end=source.indexOf('    settledTargets = targets;',begin);
+  const begin=source.indexOf('    const packTargets = () => '),end=source.indexOf('    settledTargetCores = targetCores;',begin);
   const ids=['player','idle','selected'];
   const boxes=ids.map((_id,i)=>({hostRect:{left:30+i*90,width:80,bottom:225},footerWidth:88,frameRect:{},controls:[]}));
   const placed=ids.map(id=>({frame:{dataset:{eid:id},classList:{contains:role=>role===(id==='player'?'player':'enemy')||(id==='selected'||id==='player')&&role==='context-selected'}}}));

@@ -519,6 +519,8 @@ function bindChrome() {
   $('#stage-body').addEventListener('pointerdown', onPointerDown);
   $('#stage-body').addEventListener('dblclick', (e) => { const hit = e.target.dataset.hit || ''; if (hit.startsWith('box:')) { state.tab = 'selection'; renderRight(); const i = $('#right-body input[data-box-field="label"]'); if (i) { i.focus(); i.select(); } } });
   document.addEventListener('keydown', onKey);
+  // Framed by the Workbench, Ctrl+K and Ctrl+\ are its palette and preview toggle (workbench/app.mjs, onFrameMessage).
+  if (window.parent !== window) document.addEventListener('keydown', (e) => { const k = (e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey ? (e.key.toLowerCase() === 'k' ? 'k' : e.key === '\\' ? '\\' : '') : ''; if (k) { e.preventDefault(); window.parent.postMessage({ type: 'ashenspire-workbench-key', key: k }, '*'); } });
   window.addEventListener('beforeunload', persistDrafts);
 }
 
@@ -834,7 +836,7 @@ async function saveConfig() {
     for (const saved of result.files) { const f = fileOf(saved.rel); const sent = list.find((c) => c.rel === saved.rel); f.text = lf(sent.text); f.hash = saved.hash; }
     state.validation = null; persistDrafts();
     toast(`Saved ${result.files.length} file(s) (backup ${result.backup})`);
-    if (state.settings.save.compileAfterSave) await compile();
+    if (state.settings.save.compileAfterSave) await compile({ wait: true });
   } catch (e) {
     const lines = e.message.split('\n');
     state.validation = { errors: lines.length > 1 ? lines.slice(1) : [e.message], files: 0, for: changesKey(list) };
@@ -842,11 +844,13 @@ async function saveConfig() {
   }
   renderAll();
 }
-async function compile() {
+// After a save the compile waits (up to 2 min, server side) for a Workbench or
+// editor build holding the generated-files lock; "Compile now" is refused instead.
+async function compile({ wait = false } = {}) {
   try {
-    await api('compile', {});
-    state.compile = { status: 'running', output: '' }; renderRight();
-    for (let i = 0; i < 200; i++) { await new Promise((r) => setTimeout(r, 300)); state.compile = await api('compile'); if (state.compile.status !== 'running') break; }
+    const started = await api('compile', wait ? { wait: true } : {});
+    state.compile = { status: started.status || 'running', output: '' }; renderRight();
+    for (let i = 0; i < 800; i++) { await new Promise((r) => setTimeout(r, 300)); state.compile = await api('compile'); if (state.compile.status !== 'running' && state.compile.status !== 'waiting') break; }
     toast(`Compiler ${state.compile.status}`, state.compile.status === 'failed');
     if (state.mode === 'game') renderStage();
   } catch (e) { toast(e.message, true); }

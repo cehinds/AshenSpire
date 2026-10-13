@@ -154,7 +154,11 @@ if (DISCOVER) {
   // workers so concurrent local builds do not starve those existing deadlines;
   // discovery, assertions and subprocess timeouts remain unchanged.
   const workerArgs = process.platform === 'win32' ? ['--test-concurrency=4'] : [];
-  const result = spawnSync(process.execPath, ['--test', '--test-reporter=spec', ...workerArgs, ...files], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28 });
+  // A shard that hangs would otherwise be cut by the CI job's timeout with no output at all
+  // (spawnSync buffers it). Stop it first and print what it wrote, so the hung test is named.
+  const SHARD_LIMIT_MS = 15 * 60 * 1000;
+  const result = spawnSync(process.execPath, ['--test', '--test-reporter=spec', ...workerArgs, ...files], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28, timeout: SHARD_LIMIT_MS });
+  if (result.error?.code === 'ETIMEDOUT') console.log(`run-node: the test run passed ${SHARD_LIMIT_MS / 60000} minutes and was stopped; its output so far follows, and the last test named is where it hung.`);
   const out = `${result.stdout || ''}${result.stderr || ''}`;
   const count = (label) => Number(out.match(new RegExp(`^ℹ ${label} (\\d+)$`, 'm'))?.[1] ?? NaN);
   const ok = result.status === 0 && !stale.length && count('fail') === 0;
@@ -1202,6 +1206,18 @@ if (CORE) {
     console.log(`FAIL  generated UI config: ${error.stderr || error.stdout || error.message}`);
     zoomExtra++;
   }
+  // The fourth authored tree: content/hud-layout/<form-factor>.json compiles to
+  // styles/hud-layout.generated.css (docs/hud-layout-tokens.md). A hand edit to
+  // the stylesheet, or a JSON edit nobody compiled, is red here
+  // (tests/hud-layout-css.test.mjs holds the rules).
+  try {
+    execFileSync(process.execPath, ['tools/hud-layout-css.mjs', '--check'], { cwd: new URL('..', import.meta.url), encoding: 'utf8' });
+    console.log('PASS  generated HUD layout CSS is current with content/hud-layout (hud-layout-css --check)');
+    zoomPassed++;
+  } catch (error) {
+    console.log(`FAIL  generated HUD layout CSS: ${error.stderr || error.stdout || error.message}`);
+    zoomExtra++;
+  }
   // The tag tree's derived views — tags, domains, pairings, property rules and
   // src/framework/data/{properties,relations}.js (which bakes the default
   // balance bindings in) — are generated, and nothing at runtime checks them
@@ -1329,4 +1345,8 @@ console.log('          76 drives the shared confirmation component in a minimal 
 console.log('          the two controller call sites. It proves cancellation/commit semantics,');
 console.log('          focus containment/return, and native-prompt removal; it does not paint');
 console.log('          the dialog or prove responsive geometry in a real browser.');
-process.exit(failed + zoomExtra > 0 ? 1 : 0);
+// On macOS stdout to a pipe is asynchronous, and an immediate process.exit cut the
+// report off mid-stream (the failing test's name never reached the CI log). Exit
+// once the last write has been flushed; writes on one stream complete in order.
+process.exitCode = failed + zoomExtra > 0 ? 1 : 0;
+process.stdout.write('', () => process.exit(process.exitCode));

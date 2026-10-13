@@ -1,0 +1,43 @@
+// node --test workbench/tests/layout-modes.test.mjs — Layout Studio's mode list and
+// the deep link #mod=layout&mode=battlefield|sketch|book-recipes (parsed by the Workbench host).
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { parseHash, hashFor } from '../modules/host.mjs';
+import * as L from '../modules/layout/modes.mjs';
+
+test('the deep link opens battlefield and sketch, and unknown modes open UI config', () => {
+  const battlefield = parseHash('#mod=layout&mode=battlefield');
+  assert.equal(battlefield.mod, 'layout');
+  assert.equal(L.modeFor(battlefield.params.mode), 'battlefield');
+  assert.equal(L.modeFor(parseHash('#mod=layout&mode=sketch').params.mode), 'sketch');
+  assert.equal(L.modeFor(parseHash('#mod=layout').params.mode), 'config');
+  assert.equal(L.modeFor('zigzag'), 'config');
+  assert.equal(L.modeFor(undefined), 'config');
+});
+
+test('a mode not built yet opens UI config rather than an empty page', () => {
+  assert.equal(L.modeFor('deck'), 'deck', 'the built deck mode opens from the link');
+  assert.equal(L.modeFor('zz-not-a-mode'), 'config', 'an unknown mode opens UI config');
+  assert.deepEqual(L.comingNext(), [], 'every Layout Studio mode is built, so nothing is left under More');
+});
+
+test('the card layers link opens that mode', () => {
+  assert.equal(L.modeFor(parseHash('#mod=layout&mode=card-layers').params.mode), 'card-layers');
+  assert.equal(hashFor('layout', L.paramsFor('card-layers')), '#mod=layout&mode=card-layers');
+  assert.equal(L.MODES.find((m) => m.id === 'card-layers').built, true);
+});
+
+test('the book recipes link opens that mode', () => {
+  assert.equal(L.modeFor(parseHash('#mod=layout&mode=book-recipes').params.mode), 'book-recipes');
+  assert.equal(hashFor('layout', L.paramsFor('book-recipes')), '#mod=layout&mode=book-recipes');
+});
+
+test('the link for a mode round-trips through the host\'s hash helpers', () => {
+  assert.equal(hashFor('layout', L.paramsFor('battlefield')), '#mod=layout&mode=battlefield');
+  assert.equal(hashFor('layout', L.paramsFor('config')), '#mod=layout');
+  assert.equal(L.modeFor(parseHash(hashFor('layout', L.paramsFor('sketch'))).params.mode), 'sketch');
+  assert.equal(hashFor('layout', L.paramsFor('orb')), '#mod=layout&mode=orb');
+  assert.equal(hashFor('layout', L.paramsFor('deck')), '#mod=layout&mode=deck');
+  assert.equal(L.modeFor(parseHash('#mod=layout&mode=deck').params.mode), 'deck');
+  assert.equal(L.modeFor(parseHash('#mod=layout&mode=orb').params.mode), 'orb');
+});
