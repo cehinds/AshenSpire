@@ -616,6 +616,8 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
   ctx.emit('damageDealt', { sourceId: source?.id, targetId: target.id, amount, blocked, wardResisted: ward,
     // The hit as it arrived, before typed resistance or weakness: the log's starting figure.
     ...(Number.isFinite(tactical.amounts?.[contactIndex]) ? { incoming: tactical.amounts[contactIndex] } : {}),
+    // The blow before any status, matchup or critical modifier: the printed amount plus its rating bonus.
+    ...(Number.isFinite(split.splitBase) ? { base: split.splitBase + (Number(split.ratingBonus) || 0) } : {}),
     // The whole protection before Block (typed reduction, immunity, Barrier, Ward), when it differs from the Ward figure.
     ...(resisted !== ward ? { resisted } : {}),
     ...(barrierSpent ? { barrierAbsorbed: barrierSpent } : {}),
