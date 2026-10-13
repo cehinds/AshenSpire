@@ -278,7 +278,11 @@ async function newGameFromTitle(label) {
   const className = await ev(`document.querySelector('#cz-classes .cz-class').textContent.trim().replace(/^\\W+/, '').split(/(?=[A-Z][a-z]+ )/)[0]`);
   await press('#cz-classes .cz-class');
   await press('#cz-next');
-  await until(`!!document.querySelector('#cz-statedit .cc-mode-select')`, 'the Character stage');
+  // The staged flow (Class -> Attributes -> Keepsake -> Equipment -> Feats ->
+  // Spells for casters -> Review): each stage is the `.cz-railed` panel's
+  // data-creation-stage, and Next (#cz-next) leaves it.
+  const onStage = (stage) => `document.querySelector('.cz-railed')?.dataset.creationStage === '${stage}'`;
+  await until(`${onStage('attributes')} && !!document.querySelector('#cz-statedit .cc-mode-select')`, 'the Attributes stage');
   const openFace = async (key) => {
     await until(`!!document.querySelector('[data-face="${key}"]')`, `the ${key} fold`);
     if (!(await ev(`document.querySelector('[data-face="${key}"]')?.closest('details')?.open === true`))) await press(`[data-face="${key}"]`);
@@ -287,13 +291,18 @@ async function newGameFromTitle(label) {
   // Standard's mode id is `lean` (see map-camera-persistence.mjs).
   const mode = await ev(`(() => { const s = document.querySelector('#cz-statedit .cc-mode-select'); s.value = 'lean'; s.dispatchEvent(new Event('change', { bubbles: true })); return s.value; })()`);
   if (mode !== 'lean') throw new Error(`the stat mode select offers no Standard (lean); value=${JSON.stringify(mode)}`);
-  await openFace('keepsake');
+  await press('#cz-next');
+  await until(onStage('keepsake'), 'the Keepsake stage');
   await press('#cz-keepsakes [data-keepsake-id]');
   await press('#cz-next');
-  await until(`document.querySelector('#cz-tab-equipment')?.getAttribute('aria-selected') === 'true'`, 'the Starting equip stage');
+  await until(onStage('equipment'), 'the Equipment stage');
   await openFace('armour');
   await press('#cz-armours .equip-chip .equipment-poker-card');
-  await press('#cz-armours .equip-chip .equipment-choose');
+  // The armour's own Choose button is spent only when the stage shows it
+  // (a card click may already have chosen the armour).
+  if (await ev(`(() => { const b = document.querySelector('#cz-armours .equip-chip .equipment-choose'); if (!b) return false; const r = b.getBoundingClientRect(); return r.width > 0 && r.height > 0 && !b.disabled; })()`)) {
+    await press('#cz-armours .equip-chip .equipment-choose');
+  }
   let abilitySelections = 0;
   for (let i = 0; i < 8; i++) {
     if (await ev(`document.querySelector('#cz-tab-review')?.getAttribute('aria-selected') === 'true'`)) break;
