@@ -111,7 +111,8 @@ export function cardSideTags(model, def = {}, registries = null, preview = null)
     if (selected.length >= 5) break;
     traitIds.add(tag.id);
     const key = tag.id.slice(6);
-    const value = Number(def.traitValues?.[key]) || Number(tag.label.match(/(\d+)$/)?.[1]) || undefined;
+    const raw = def.traitValues?.[key];
+    const value = (typeof raw === 'number' && Number.isFinite(raw) ? raw : 0) || Number(tag.label.match(/(\d+)$/)?.[1]) || undefined;
     const base = tag.label.replace(/\s*\d+$/, '');
     selected.push({ ...tag, label: base, ...(value ? { count: value } : {}) });
   }
