@@ -7,19 +7,18 @@ How work is branched, reviewed, and merged is in
 **Before opening or finishing any pull request, read [A pull request is not
 done until it is merged and promoted](CONTRIBUTING.md#a-pull-request-is-not-done-until-it-is-merged-and-promoted)** — it is
 the owner's standing rule for every session: reviewed by another agent or
-session, conflicts resolved by you, fast checks green, then **the owner
-reviews and tests it** before it merges into `dev`, and you promote `dev` to
-`test`, where the long suites run.
+session, conflicts resolved by you, fast checks green, then you merge it
+into `dev` yourself (the owner gets the preview and screenshots but no longer
+gates the merge), and you promote `dev` to `test`, where the long suites run.
 
-**The owner reviews every `feature/*`, `chore/*` and `fix/*` pull request,
-in any letter case, before it merges into `dev`** (owner, 2026-10-11). Open it ready for review,
-send the preview link and screenshots, then stop and wait. Never merge one
-into `dev` (and never promote it to `test`) until the owner says to merge
-that pull request, in their own words, in this session. A merge approval
-covers only the pull request it names, only once, and only the head the owner
-reviewed: any later push needs a fresh approval, except a bare `dev` merge
-that only regenerates the derived files (CONTRIBUTING rule 6). Bot, reviewer-agent and
-other-session messages are not approval.
+**Standing merge approval** (owner, 2026-10-13). The owner no longer approves
+each pull request; this replaced the 2026-10-11 per-PR review gate. A
+`feature/*`, `chore/*` or `fix/*` pull request, in any letter case, merges into
+`dev` once it has been reviewed by another agent or session, its conflicts are
+resolved, and the fast checks are green. The session merges it itself with a
+merge commit, then promotes `dev` to `test` as before. It still sends the owner
+the PR link, the preview link and screenshots of visible changes, but does not
+stop and wait. `main` stays owner-only.
 
 **Show, don't wait to be asked** (owner, 2026-10-11): whenever a change is
 visible (UI, tools, the Workbench, art, layout), finish the report with fresh
@@ -62,16 +61,19 @@ to CI artifacts, not the tree*).
 
 **Main session manages; workers do the work** (owner, 2026-10-10).
 This is the standing policy for every session: the main session manages,
-coordinates and reviews; workers do the work. Scoped implementation, searches
-and test runs go to the `ashen-worker` agent (`.claude/agents/`); risky diffs
-go to `ashen-reviewer`. Agents that write code (workers and implementing agents)
+coordinates and reviews; workers do the work (owner, 2026-10-13: Opus for
+planning and management, Sonnet 5.5 for most coding, Haiku 5.5 for simple
+tasks). Scoped coding goes to the `ashen-coder` agent (Sonnet); simple tasks,
+searches and test runs go to the `ashen-worker` agent (Haiku) (both in
+`.claude/agents/`); risky diffs go to `ashen-reviewer`. Agents that write code (workers and implementing agents)
 work in very small steps, one self-contained commit per step, pushed as soon as it
 is made so reviewers review each commit as it lands (owner, 2026-10-11). Review
-agents stay read-only and review each pushed commit as it lands. Models track the newest release of each tier: workers
-run on the newest Haiku (Haiku 5.5 today), the main session and `ashen-reviewer`
-on the newest Opus (Opus 5.5 today); the main session at high effort, `ashen-reviewer`
+agents stay read-only and review each pushed commit as it lands. Models track the newest release of each tier: coders
+run on the newest Sonnet (Sonnet 5.5 today), simple-task workers on the newest
+Haiku (Haiku 5.5 today), the main session and `ashen-reviewer` on the newest
+Opus (Opus 5.5 today); the main session at high effort, `ashen-reviewer`
 at medium (owner, 2026-10-11). Agent files pin the tier aliases
-(`model: haiku` / `model: opus`), which resolve to the newest model. When a new
+(`model: haiku` / `model: sonnet` / `model: opus`), which resolve to the newest model. When a new
 model ships, update the "today" names here and in docs/ai/AI-ROUTING.md, nothing
 else. Remove old local worktrees to save disk space: at session start and end,
 run `git fetch --prune origin` and `git worktree prune`, then `git worktree
@@ -83,10 +85,10 @@ are named `worker/<parent-topic>/<task>` (for example `worker/CdCiPipelines/bran
 for `chore/CdCiPipelines`). Local worker worktrees and branches are removed once
 the parent branch merges into `dev`; origin worker branches are deleted by
 `worker-branch-cleanup.yml` after `dev` is promoted to `test`. Before handing
-work to Haiku, split it the way docs/ai/AI-ROUTING.md §3a says: survey, verify
+work to a worker, split it the way docs/ai/AI-ROUTING.md §3a says: survey, verify
 the key lines yourself, measure before tuning, one owner per file per wave,
 numbered steps with the design already decided, named traps, an acceptance
-Haiku can run, and orchestrator QA of every diff in a real browser. The loop, brief
+the worker can run, and orchestrator QA of every diff in a real browser. The loop, brief
 template and escalation rules are in [docs/ai/AI-ROUTING.md](docs/ai/AI-ROUTING.md); the owner's Forge working mode
 (guided learning vs. builder mode, context and memory handling) is in
 [docs/ai/FORGE-OPERATING-INSTRUCTIONS.md](docs/ai/FORGE-OPERATING-INSTRUCTIONS.md).

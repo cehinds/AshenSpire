@@ -15,7 +15,9 @@ export function fitIllustratedCards(cards) {
     for(const text of face.querySelectorAll('.ic-text[data-auto-fit="true"]')){
       const rules=text.dataset.cardBinding==='rules';
       const layer=text.parentElement;
-      const row={face,text,layer,scale,rules,lines:rules?Infinity:Number(text.dataset.maxLines)||1};
+      // Face lines fit inside their data-max-lines budget (5, or 3 at hand rest).
+      const faceLines=text.dataset.faceLines==='true';
+      const row={face,text,layer,scale,rules,lines:rules?(faceLines?Number(text.dataset.maxLines)||5:Infinity):Number(text.dataset.maxLines)||1};
       if(rules){
         row.rankInset=0;
         row.panel=face.querySelector('[data-component="panel"]');
