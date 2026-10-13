@@ -338,30 +338,23 @@ Formula, relation and value keys follow the README conventions.
   - Expansion proposal: `origin/dev:docs/combat-cards-expansion-proposal.md:122`,
     "− armor penalty".
 
-### Cards and their maneuver (conflict to resolve before the PR)
+### Cards and their maneuver (two layers, both true on dev)
 
-Thirteen Evade-family cards. Each is `maneuver:defend` in `content/source/tagging.csv`
-on `origin/dev`. The dev contract's Reaction list (line 252) also names some of them
-as `maneuver:counter`, and `traitProjection.js:21` excludes four from Counterstrike.
-These disagree. The owner must say which is the current maneuver before the move.
+The thirteen Evade-family cards carry two different maneuver statements on
+`origin/dev`, at two layers. Neither is a conflict:
 
-| Card id | tagging.csv on dev | Named in contract as counter (line 252) |
-| --- | --- | --- |
-| dodgeRoll | maneuver:defend | yes |
-| evasiveGuard | maneuver:defend | yes |
-| quickstep | maneuver:defend | yes |
-| backstep | maneuver:defend | not named |
-| acrobaticsRogue | maneuver:defend | not named |
-| shadowstep | maneuver:defend | yes |
-| progression-nightstep | maneuver:defend | yes |
-| vanish | maneuver:defend | not named (named as a Defend at T ≥ 4) |
-| smokeBomb | maneuver:defend | not named (named as a Defend at T ≥ 4) |
-| misdirect | maneuver:defend | not named |
-| smokePellet | maneuver:defend | not named |
-| smokeVeil | maneuver:defend | not named |
-| pocketSand | maneuver:defend | not named |
+- **Base layer.** `content/source/tagging.csv` tags each of the thirteen as
+  `maneuver:defend`.
+- **Combat expansion (v2) layer.** The expansion remaps the Evade cards at runtime.
+  `src/content/combatExpansionMartial.js:10` puts `evasiveGuard`, `dodgeRoll`,
+  `quickstep`, `backstep`, `acrobaticsRogue`, `shadowstep` and `progression-nightstep`
+  in the `counter` group. `src/content/combatExpansionMartial.js:30` defines the
+  `EVADES` set with the same seven ids. The other six (`vanish`, `smokeBomb`,
+  `misdirect`, `smokePellet`, `smokeVeil`, `pocketSand`) are not in the `counter`
+  group or `EVADES`.
 
-The "named" column checks the names in the contract excerpt only, not every list.
+The `maneuver:evade` PR has to change both layers: the `tagging.csv` base, and the
+expansion `counter` group plus the `EVADES` set.
 
 ### Combat effects of the move (when the PR lands)
 
