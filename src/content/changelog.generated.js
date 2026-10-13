@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-12",
     "summary": "Boss victories offer a choice of boss relics",
     "detail": "Beating a boss now lays out up to three boss relics you do not own, and you keep the one you pick. With auto-collect on, Continue picks one at random, as it does for cards; with it off, an unpicked choice is left behind. Co-op boss rewards are unchanged.",
-    "build": "0.7.1.1443",
+    "build": "0.7.1.1445",
     "pullRequest": 1907,
     "url": "https://github.com/cehinds/AshenSpire/pull/1907"
   },
@@ -18,7 +18,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-12",
     "summary": "Poison, Psychic and Earth join the elements; weapons set their own damage type",
     "detail": "Twelve new cards: four Rogue Poison cards (Asp Dart, Viper Strike, Septic Blade, Lethal Dose) and eight classless Psychic and Earth cards, which Herald and Starseer meet twice as often and can take as a starting spell. Five enemies resist a thematic element. Strike, Cheap Shot, Bloodhunter's Strike and Guard Counter deal your weapon's damage type; Ruinous Blow and Deathblow split Blunt and Force; Blood Tithe splits your weapon's type with Necrotic and Bleeds; Lethal Dose is a thrown vial with Precision that hits harder. Blight Bloom's text names its expanded-combat cap.",
-    "build": "0.7.1.1443",
+    "build": "0.7.1.1445",
     "pullRequest": 1914,
     "url": "https://github.com/cehinds/AshenSpire/pull/1914"
   },
