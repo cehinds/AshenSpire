@@ -209,10 +209,10 @@ test('Lethal Dose is thrown (projectile) at Reach, not Ranged, in v1 and v2', ()
   for (const [label, def] of [['v1', v1], ['v2', v2]]) {
     assert.ok(def.tags.includes('delivery:projectile'), `${label} delivery`);
     assert.ok(!def.tags.includes('delivery:melee'), `${label} no melee delivery`);
-    assert.ok(def.tags.includes('reach:near'), `${label} reach`);
+    assert.ok(def.tags.includes('range:reach'), `${label} range`);
     assert.ok(def.tags.includes('maneuver:attack') && !def.tags.includes('maneuver:ranged'), `${label} maneuver`);
     assert.ok(def.tags.includes('damage:poison'), `${label} damage`);
   }
-  assert.equal(v2.reach, 'near');
+  assert.equal(v2.range, 'reach');
   assert.equal(v2.projectile, true);
 });

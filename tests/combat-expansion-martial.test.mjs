@@ -74,7 +74,7 @@ test('explicit Martial overlay covers every shipped physical identity and never 
     assert.ok(combatExpansionMartialOverlay[def.id], def.id);
     const original = JSON.stringify(def), card = applyCombatExpansionMartial(def), profile = combatProfileFor(card);
     assert.equal(profile.camp, 'physical', def.id);
-    assert.ok(['contact', 'near', 'far'].includes(profile.reach), def.id);
+    assert.ok(['melee', 'reach', 'ranged'].includes(profile.range), def.id);
     assert.ok(['single', 'area'].includes(profile.targeting), def.id);
     assert.equal(JSON.stringify(def), original);
   }
@@ -82,7 +82,7 @@ test('explicit Martial overlay covers every shipped physical identity and never 
 
 test('a bow equipment projection keeps Ranged delivery and spell basics retain authored Spell camp', () => {
   const bow = applyCombatExpansionMartial(resolveCard(registries, { cardId: 'strike', profileId: 'bowPierceAttack' }));
-  assert.equal(combatProfileFor(bow).maneuver, 'ranged'); assert.equal(bow.reach, 'near');
+  assert.equal(combatProfileFor(bow).maneuver, 'ranged'); assert.equal(bow.range, 'reach');
   const spell = resolveCard(registries, { cardId: 'strike', profileId: 'staffMagicAttack' });
   assert.equal(applyCombatExpansionMartial(spell), spell);
 });
@@ -113,7 +113,7 @@ test('authored impact Counter is especially punishing only to its covered Smash 
     const f = fixture(), def = applyCombatExpansionMartial(resolveCard(registries, { cardId: 'riposte', abilityRank: 0 }, 2));
     const carrier = tacticalCarrier(def, { cardId: def.id });
     prepareTacticalCard(f.ctx, f.target, f.source, carrier, def.effects);
-    const incoming = { combatProfile: { camp: 'physical', maneuver, reach: 'contact', targeting: 'single' } };
+    const incoming = { combatProfile: { camp: 'physical', maneuver, range: 'melee', targeting: 'single' } };
     const receipt = beginTacticalAction(f.ctx, f.source, f.target, incoming, [{ amount: 8 }]);
     recordTacticalContact(receipt, { blocked: 4 });
     completeTacticalAction(f.ctx, f.source, f.target, incoming, receipt);
@@ -151,18 +151,18 @@ test('v2 typed riders author gauge buildup and suppress duplication of printed p
 
 test('equipment object traits preserve Grounded Counter and caster-only spell HP eligibility', () => {
   const f = fixture(); f.target.combatTraits = { grounded: true }; f.source.combatTraits = { caster: true };
-  const counter = { combatProfile: { camp: 'spell', maneuver: 'counter', reach: 'near', targeting: 'single' } };
+  const counter = { combatProfile: { camp: 'spell', maneuver: 'counter', range: 'reach', targeting: 'single' } };
   setCombatStance(f.ctx, f.target, counter); armCombatCounter(f.ctx, f.target, counter, { payload: { hp: 3 } });
-  const incoming = { combatProfile: { camp: 'spell', maneuver: 'casting', school: 'lightning', reach: 'near', targeting: 'single' } };
+  const incoming = { combatProfile: { camp: 'spell', maneuver: 'casting', school: 'lightning', range: 'reach', targeting: 'single' } };
   const receipt = beginTacticalAction(f.ctx, f.source, f.target, incoming, [{ amount: 3 }]);
   recordTacticalContact(receipt, { wardResisted: 3 }); completeTacticalAction(f.ctx, f.source, f.target, incoming, receipt);
   assert.deepEqual(f.queue.map(action => action.effect.amount), [3]);
 });
 
 test('status-only previews do not advertise damage avoidance or consume readiness', () => {
-  const f = fixture(); f.target.combatStance = { maneuver: 'ranged', reach: 'far' };
+  const f = fixture(); f.target.combatStance = { maneuver: 'ranged', range: 'ranged' };
   f.target.combatEvade = { charges: 1, bonus: 0 };
-  assert.equal(previewAvoidance(f.ctx, f.target, { reach: 'contact' }, 0).chance, 0);
+  assert.equal(previewAvoidance(f.ctx, f.target, { range: 'melee' }, 0).chance, 0);
   assert.equal(f.target.combatEvade.charges, 1);
 });
 
@@ -209,7 +209,7 @@ test('Prone combo impact is conditional on a successful Contact return, while co
       counterPayload: { hp: 0, poise: 3, ward: 0 }, effects: [] };
     const counter = tacticalCarrier(def);
     prepareTacticalCard(f.ctx, f.target, f.source, counter, []);
-    const incoming = { combatProfile: { camp: 'physical', maneuver: 'attack', reach: 'contact', targeting: 'single' } };
+    const incoming = { combatProfile: { camp: 'physical', maneuver: 'attack', range: 'melee', targeting: 'single' } };
     const receipt = beginTacticalAction(f.ctx, f.source, f.target, incoming, [{ amount: 8 }]);
     recordTacticalContact(receipt, { blocked: 4 });
     completeTacticalAction(f.ctx, f.source, f.target, incoming, receipt);

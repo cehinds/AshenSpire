@@ -16,7 +16,7 @@ import { payAshenBlight, chooseAshenBlightFeat } from '../src/engine/ashenBlight
 function fixture({ version = 1, cardIds = ['guardCounter', 'sweepingBlow'], enemyCount = 2 } = {}) {
   const registries = createRegistries({ ...contentBundle, enemies: contentBundle.enemies.map(enemy => enemy.id === 'wanderingSoldier'
     ? { ...enemy, firstMove: 'slash', moves: { slash: { intent: 'attack', damage: 1, hits: 2, weight: 1,
-      tags: ['camp:physical', 'maneuver:attack', 'reach:contact', 'targeting:single'] } } } : enemy) });
+      tags: ['camp:physical', 'maneuver:attack', 'range:melee', 'targeting:single'] } } } : enemy) });
   const combat = createCombat({ registries, rng: createRng(701), combatExpansionVersion: 2, reactionRulesVersion: version,
     enemyIds: Array(enemyCount).fill('wanderingSoldier'), player: { classId: 'reaver', maxHp: 100, hp: 100,
       maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: cardIds.length,
@@ -261,9 +261,9 @@ test('paid Counter reply to an automatic return terminates the chain', () => {
   const { combat } = fixture({ cardIds: ['guardCounter', 'strike'], enemyCount: 1 });
   const enemy = combat.enemies[0];
   enemy.block = 100;
-  enemy.combatStance = { camp: 'physical', maneuver: 'counter', reach: 'contact', targeting: 'single' };
+  enemy.combatStance = { camp: 'physical', maneuver: 'counter', range: 'melee', targeting: 'single' };
   armCombatCounter(combat, enemy, { moveId: 'returnCarrier',
-    tags: ['camp:physical', 'maneuver:counter', 'reach:contact', 'targeting:single'],
+    tags: ['camp:physical', 'maneuver:counter', 'range:melee', 'targeting:single'],
     combatProfile: { ...enemy.combatStance, damageType: 'blunt' } }, { payload: { hp: 1, poise: 0, ward: 0 } });
   dispatch(combat, { type: 'playCard', cardInstanceId: 'r1', targetId: enemy.id });
   const option = combat.pendingReaction.options.find(row => row.cardId === 'guardCounter');
@@ -290,9 +290,9 @@ test('nested paid Sweep discard resumes a player-phase Counter return exactly af
     owner.block = 100;
     const enemy = combat.enemies[0]; enemy.block = 100;
     enemy.ratings = { ar: 0, dr: 0, pr: 0, poise: 100, ward: 0 };
-    enemy.combatStance = { camp: 'physical', maneuver: 'counter', reach: 'contact', targeting: 'single' };
+    enemy.combatStance = { camp: 'physical', maneuver: 'counter', range: 'melee', targeting: 'single' };
     armCombatCounter(combat, enemy, { moveId: 'returnCarrier',
-      tags: ['camp:physical', 'maneuver:counter', 'reach:contact', 'targeting:single'],
+      tags: ['camp:physical', 'maneuver:counter', 'range:melee', 'targeting:single'],
       combatProfile: { ...enemy.combatStance, damageType: 'blunt' } }, { payload: { hp: 1, poise: 0, ward: 0 } });
     if (coop) playCard(combat, 'a', 'strike', enemy.id);
     else dispatch(combat, { type: 'playCard', cardInstanceId: 'strike', targetId: enemy.id });
@@ -357,7 +357,7 @@ test('terminal reaction victory and defeat retire continuation before durable co
   for (const coop of [false, true]) for (const result of ['victory', 'defeat']) {
     const registries = createRegistries({ ...contentBundle, enemies: contentBundle.enemies.map(enemy => enemy.id === 'wanderingSoldier'
       ? { ...enemy, firstMove: 'slash', moves: { slash: { intent: 'attack', damage: 100, hits: 1, weight: 1,
-        tags: ['camp:physical', 'maneuver:attack', 'reach:contact', 'targeting:single'] } } } : enemy) });
+        tags: ['camp:physical', 'maneuver:attack', 'range:melee', 'targeting:single'] } } } : enemy) });
     const player = { id: 'a', classId: 'reaver', hp: 100, maxHp: 100, mana: 20, maxMana: 20,
       stamina: 20, maxStamina: 20, energyMax: 20, drawPerTurn: 1, combatExpansionVersion: 2,
       deck: [{ cardId: 'guardCounter', instanceId: 'terminal-counter', upgraded: false }] };
@@ -408,7 +408,7 @@ test('a terminal Blight play saves ended combat under the new reaction rules', (
   const registries = createRegistries({ ...contentBundle, cards: contentBundle.cards.map(card => card.id === 'guardCounter'
     ? { ...card, ashenBlightCost: 12 } : card), enemies: contentBundle.enemies.map(enemy => enemy.id === 'wanderingSoldier'
     ? { ...enemy, firstMove: 'slash', moves: { slash: { intent: 'attack', damage: 1, hits: 1, weight: 1,
-      tags: ['camp:physical', 'maneuver:attack', 'reach:contact', 'targeting:single'] } } } : enemy) });
+      tags: ['camp:physical', 'maneuver:attack', 'range:melee', 'targeting:single'] } } } : enemy) });
   const combat = createCombat({ registries, rng: createRng(seed), enemyIds: ['wanderingSoldier'], combatExpansionVersion: 2,
     reactionRulesVersion: 1, player: { classId: 'reaver', hp: 100, maxHp: 100, mana: 20, maxMana: 20,
       stamina: 20, maxStamina: 20, energyMax: 20, drawPerTurn: 1,
@@ -433,17 +433,17 @@ test('saved contacts skip disconnected bodies without spending Block or Counter,
   for (const block of [0, 100]) for (const suspend of [false, true]) {
     const registries = createRegistries({ ...contentBundle, enemies: contentBundle.enemies.map(enemy => enemy.id === 'wanderingSoldier'
       ? { ...enemy, firstMove: 'slash', moves: { slash: { intent: 'attack', damage: 10, weight: 1,
-        tags: ['camp:physical', 'maneuver:attack', 'reach:contact', 'targeting:single'] } } } : enemy) });
+        tags: ['camp:physical', 'maneuver:attack', 'range:melee', 'targeting:single'] } } } : enemy) });
     const players = ['a', 'b'].map(id => ({ id, classId: 'reaver', maxHp: 100, hp: 100,
       maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 1,
       combatExpansionVersion: 2, deck: [{ cardId: 'guardCounter', instanceId: `${id}:counter`, upgraded: false }] }));
     const C = createCoopCombat({ registries, rng: createRng(709), players, enemyIds: ['wanderingSoldier'], reactionRulesVersion: 1 });
     const body = C.players.get('b').entity;
     body.block = block;
-    body.combatStance = { camp: 'physical', maneuver: 'counter', damageType: 'blunt', reach: 'contact', targeting: 'single' };
+    body.combatStance = { camp: 'physical', maneuver: 'counter', damageType: 'blunt', range: 'melee', targeting: 'single' };
     armCombatCounter(C, body, { cardId: 'guardCounter', instanceId: 'b:armed',
-      tags: ['camp:physical', 'maneuver:counter', 'reach:contact', 'targeting:single'],
-      combatProfile: { camp: 'physical', maneuver: 'counter', damageType: 'blunt', reach: 'contact', targeting: 'single' } },
+      tags: ['camp:physical', 'maneuver:counter', 'range:melee', 'targeting:single'],
+      combatProfile: { camp: 'physical', maneuver: 'counter', damageType: 'blunt', range: 'melee', targeting: 'single' } },
     { payload: { hp: 1, poise: 0, ward: 0 } });
     endTurn(C, 'a'); endTurn(C, 'b'); leaveCombat(C, 'b');
     // The already accepted End Turn still owns hand/SP cleanup. Incoming

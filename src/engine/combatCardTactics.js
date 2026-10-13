@@ -13,7 +13,7 @@ import { expansionCarrierTraits } from './combatExpansionEquipment.js';
 
 export function tacticalCarrier(def, extra = {}, ctx = null, source = null) {
   const metadata = {};
-  for (const key of ['reach', 'targeting', 'traits', 'projectile', 'counterCoverage', 'counterPayload',
+  for (const key of ['range', 'targeting', 'traits', 'projectile', 'counterCoverage', 'counterPayload',
     'evade', 'upcast', 'stanceTrigger', 'stanceExpiry', 'schoolEffect', 'caster', 'breakPoiseBonus', 'pronePoiseBonus', 'comboHook', 'traitValues']) {
     if (def[key] !== undefined) metadata[key] = structuredClone(def[key]);
   }
@@ -240,9 +240,9 @@ const ENEMY_PRESSURE = {
 export function expandedEnemyMove(enemy, move, moveId, ctx = null) {
   if (!combatExpansionEnabled(ctx)) return move;
   const profile = combatProfileFor({ ...move, enemyId: enemy.enemyId, moveId });
-  const reach = profile.reach || (profile.maneuver === 'ranged' || profile.camp === 'spell' ? 'near' : 'contact');
+  const range = profile.range || (profile.maneuver === 'ranged' || profile.camp === 'spell' ? 'reach' : 'melee');
   const targeting = profile.targeting || (profile.maneuver === 'sweep' ? 'area' : 'single');
-  const result = { ...move, reach, targeting,
+  const result = { ...move, range, targeting,
     ...(profile.maneuver === 'smash' ? { breakPoiseBonus: move.breakPoiseBonus ?? 3 } : {}),
     ...(!profile.maneuver ? { stanceTrigger: false } : {}),
     effects: (move.effects || []).map(effect => {
@@ -264,7 +264,7 @@ export function expandedEnemyMove(enemy, move, moveId, ctx = null) {
     whileCharging: expandedEnemyMove(enemy, { ...move.delay.whileCharging, tags: move.tags, cardTags: move.cardTags }, moveId, ctx) };
   if (profile.maneuver === 'counter' && !result.counterCoverage) {
     const ranged = profile.counterMode === 'ranged', spell = profile.camp === 'spell';
-    result.counterCoverage = { camps: [spell ? 'spell' : 'physical'], reaches: spell ? ['contact', 'near', 'far'] : ranged ? ['near', 'far'] : ['contact'],
+    result.counterCoverage = { camps: [spell ? 'spell' : 'physical'], ranges: spell ? ['melee', 'reach', 'ranged'] : ranged ? ['reach', 'ranged'] : ['melee'],
       targeting: ['single'], effects: spell ? ['damage', 'status'] : ['damage'], ...(!ranged && !spell ? { maneuvers: ['attack', 'smash'] } : {}) };
   }
   return result;
