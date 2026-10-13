@@ -6244,9 +6244,9 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 .cc-design-workspace input, .cc-design-workspace select, .cc-design-workspace .ls-label,
 .cc-design-workspace .as-optioncard .as-subtitle { font-size:var(--cc-body-font); }
 .cc-design-workspace .cc-ability-progress { font-size:var(--cc-body-font); color:var(--cc-copy-muted); }
-.cc-design-workspace .cc-equip-group[data-equipment-section="startingAbilities"] > .cc-card-selectors { grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr)); }
-.cc-design-workspace .cc-ability-choice > .card { width:100%; max-width:300px; }
-.cc-design-workspace .cc-ability-choose { max-width:300px; min-height:var(--cc-control-floor); font-size:var(--cc-body-font); }
+.cc-design-workspace .cc-equip-group[data-equipment-section="startingAbilities"] > .cc-card-selectors { grid-template-columns:repeat(auto-fill,minmax(min(100%,var(--card-w,14rem)),var(--card-w,14rem))); justify-content:start; align-content:start; }
+.cc-design-workspace .cc-ability-choice > .card { width:100%; max-width:var(--card-w,14rem); }
+.cc-design-workspace .cc-ability-choose { max-width:var(--card-w,14rem); min-height:var(--cc-control-floor); font-size:var(--cc-body-font); }
 .cc-design-workspace .cc-review { font-size:var(--cc-body-font); }
 .cc-design-workspace .cc-review .card { max-width:300px; }
 @media(max-width:960px) {
@@ -6265,9 +6265,9 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
  .cc-choice-title { font-size:max(22px,calc(22px / var(--ui-zoom,1))); }
  .cc-panel { padding:22px; }
  .cc-design-workspace .cz-scroll { padding:16px; }
- .cc-design-workspace .cc-equip-group[data-equipment-section="startingAbilities"] > .cc-card-selectors { grid-template-columns:minmax(0,1fr); }
+ .cc-design-workspace .cc-equip-group[data-equipment-section="startingAbilities"] > .cc-card-selectors { grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); justify-items:center; }
  .cc-design-workspace .cc-ability-choice { width:100%; }
- .cc-design-workspace .cc-ability-choice > .card { max-width:300px; }
+ .cc-design-workspace .cc-ability-choice > .card { max-width:var(--card-w,14rem); }
  /* Older equipment-fit rules hid its stage picker. The shared navigation
     must remain reachable on every page, including Equipment and Spells. */
  .customize.cc-design-workspace:has(#cz-equipment-panel) .as-railed[data-cat-nav="selector"] > .as-catnav-toggle,
@@ -6320,10 +6320,10 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 @media(max-width:600px) { .customize.cc-design-workspace .cz-railed[data-cat-nav="selector"] { display:grid!important; } }
 /* Spells is now its own page rather than an equipment fold. Match its real
    selector hook and keep card rules readable instead of the old tiny grid. */
-.cc-design-workspace #cz-spell-choices { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); justify-items:center; gap:48px 20px; padding:58px 6px 14px; }
+.cc-design-workspace #cz-spell-choices { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,var(--card-w,14rem)),var(--card-w,14rem))); justify-items:stretch; justify-content:start; align-content:start; gap:48px 20px; padding:58px 6px 14px; }
 .cc-design-workspace #cz-spell-choices > .cc-ability-choice { width:100%; }
-@media(max-width:600px) { .cc-design-workspace #cz-spell-choices { grid-template-columns:minmax(0,1fr); gap:48px; } }
-.cc-design-workspace #cz-spell-choices { grid-auto-flow:row; grid-auto-columns:minmax(0,1fr); overflow:visible; scroll-snap-type:none; }
+@media(max-width:600px) { .cc-design-workspace #cz-spell-choices { grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); justify-items:center; gap:48px; } }
+.cc-design-workspace #cz-spell-choices { grid-auto-flow:row; grid-auto-columns:auto; overflow:visible; scroll-snap-type:none; }
 .cc-design-workspace #cz-spell-choices > .cc-ability-choice { grid-column:auto; grid-row:auto; min-width:0; }
 .cc-design-workspace .cz-actions button[aria-disabled="true"] { background:var(--bg-raise,#1b1710); color:var(--cc-copy-muted); border-color:var(--line,#786443); animation:none; }
 
@@ -6393,3 +6393,10 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 /* Long class/skill summaries are teasers; the inspector always retains the
    complete authored benefit and every level requirement. */
 .cc-feat-browser .cc-choice-description { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; }
+/* Hotfix: the maneuver picker lives in the Equipment fold, whose pane is
+   overflow:hidden, so it is its own vertical scrollport (the flex column at
+   6147 loses to the generic equipment-section grid). */
+.customize .cc-equip-group[data-equipment-section="startingAbilities"] { display:flex; flex-direction:column; gap:8px; height:100%; min-height:0; }
+.customize .cc-equip-group[data-equipment-section="startingAbilities"] > .cc-card-selectors,
+.customize .cc-equip-group[data-equipment-section="startingAbilities"] > .cc-card-selectors[data-view] { flex:1 1 auto; min-height:0; grid-row:auto; grid-column:auto; grid-auto-flow:row; grid-auto-columns:auto; overflow-x:hidden; overflow-y:auto; scroll-snap-type:none; scrollbar-gutter:stable; }
+.customize .cc-equip-group[data-equipment-section="startingAbilities"] > :not(.cc-card-selectors) { flex:none; }
