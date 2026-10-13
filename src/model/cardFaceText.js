@@ -126,7 +126,7 @@ function buildLines(def, preview, registries) {
           const baseSplit = typeof base === 'number' ? splitOf(def, p, base, ratings) : null;
           text = `${typed(num(split.physical, baseSplit?.physical), typeWord(split.types.physical))}, ${typed(num(split.magic, baseSplit?.magic), typeWord(split.types.magic))} damage`;
         } else if (unequal) {
-          text = `${sequence.map(amount => num(amount)).join(' + ')} ${word} (${num(live.totalDamage)} total across ${sequence.length} hits)`;
+          text = `${sequence.map(amount => num(amount, base)).join(' + ')} ${word} (${num(live.totalDamage, typeof base === 'number' && typeof effect.hits === 'number' ? base * effect.hits : undefined)} total across ${sequence.length} hits)`;
         } else {
           text = `${num(n, base)} ${word}${hits !== 1 ? ` ×${num(hits, typeof effect.hits === 'number' ? effect.hits : undefined)}` : ''}`;
         }
@@ -236,7 +236,7 @@ function buildLines(def, preview, registries) {
     if (effect.oncePerTurn && fragments.length) fragments[fragments.length - 1].text += ' once per turn per family';
     if (effect.if) {
       const key = JSON.stringify(effect.if);
-      if (!groups.has(key)) groups.set(key, { prefix: prefixFor(effect.if), fragments: [] });
+      if (!groups.has(key)) groups.set(key, { prefix: prefixFor(effect.if), fragments: [], sleeping: JSON.stringify(effect.if).includes('"status":"sleep"') });
       groups.get(key).fragments.push(...fragments);
     } else unconditional.push(...fragments);
   }
@@ -264,7 +264,10 @@ function buildLines(def, preview, registries) {
   const byKind = { damage: [], status: [], gain: [], condition: [], bonus: [], detail: [] };
   for (const segment of segmentsOf(unconditional, keywords)) byKind[segment.kind].push(segment.text);
   for (const group of groups.values()) {
-    byKind.condition.push(group.prefix + segmentsOf(group.fragments).map(segment => segment.text).join('. '));
+    // Only damage wakes a sleeper; a rider keyed on Sleep that deals none says so, as its authored text does.
+    const wakes = group.fragments.some(f => f.cat === 'damage');
+    byKind.condition.push(group.prefix + segmentsOf(group.fragments).map(segment => segment.text).join('. ')
+      + (group.sleeping && !wakes ? ' (does not wake it)' : ''));
   }
   const byChance = new Map();
   for (const { name, chance } of chances) byChance.set(chance, [...new Set([...(byChance.get(chance) || []), name])]);

@@ -27,7 +27,7 @@ const flurry = renderCard(registries, { cardId: 'twinbladeFlurry' }, { tooltip: 
     values: [{ op: 'damage', value: 1, hits: 3, hitDamages: [1, 3, 3], totalDamage: 7 }],
     damageSequences: [{ amountToken: 'damage', hitsToken: 'hits', hitDamages: [1, 3, 3], totalDamage: 7 }] } }).innerHTML;
 // The face is the shared face text (cardFaceText.js): each number is its own .val span.
-assert.match(flurry, /<span class="val">1<\/span> \+ <span class="val">3<\/span> \+ <span class="val">3<\/span> Slashing damage \(<span class="val">7<\/span> total across 3 hits\)/);
+assert.match(flurry, /<span class="val down">1<\/span> \+ <span class="val">3<\/span> \+ <span class="val">3<\/span> Slashing damage \(<span class="val down">7<\/span> total across 3 hits\)/);
 assert.doesNotMatch(flurry, />1<\/span> damage <span class="val">3<\/span> times/);
 assert.match(render(undefined), /illustrated-card-face/);
 console.log('12 illustrated resource and tactical preview checks passed');

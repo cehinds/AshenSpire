@@ -104,3 +104,7 @@ test('mechanic statuses add their own line; curse triggers and Blight prices kee
   assert.equal(lines('guilt'), null);
   assert.equal(lines('blightedTransmute'), null);
 });
+
+test('a Sleep rider that deals no damage says it does not wake the sleeper', () => {
+  assert.ok(text('dreamHarvest').some(line => /\(does not wake it\)$/.test(line)), JSON.stringify(text('dreamHarvest')));
+});
