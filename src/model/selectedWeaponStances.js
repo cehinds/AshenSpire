@@ -50,12 +50,14 @@ export function selectedWeaponReactionFor(event, profile) {
     && event.prevention === 'invulnerability') return 'defend';
   if (event.type === 'damageDealt' && event.isAttack === true
     && event.sourceId && event.sourceId !== event.targetId) {
-    const { amount, blocked, wardResisted = 0 } = event;
+    // `resisted` is the whole protection before Block (typed reduction, immunity,
+    // Barrier, Ward); a receipt without it carries that figure as wardResisted.
+    const { amount, blocked, wardResisted = 0, resisted = wardResisted } = event;
     // Expanded amount is AFTER resistance/Ward, BEFORE Block/Barrier. Adding
-    // wardResisted reconstructs positive incoming damage, never the HP loss:
+    // the resisted figure reconstructs positive incoming damage, never the HP loss:
     // a partly resisted attack that still hurts must keep its normal hurt art.
-    if ([amount, blocked, wardResisted].every(value => Number.isFinite(value) && value >= 0)
-      && amount === blocked && amount + wardResisted > 0) return 'fully-defended';
+    if ([amount, blocked, resisted].every(value => Number.isFinite(value) && value >= 0)
+      && amount === blocked && amount + resisted > 0) return 'fully-defended';
   }
   return null;
 }
