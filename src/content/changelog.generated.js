@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-12",
     "summary": "Poison, Psychic and Earth join the elements; weapons set their own damage type",
     "detail": "Twelve new cards: four Rogue Poison cards (Asp Dart, Viper Strike, Septic Blade, Lethal Dose) and eight classless Psychic and Earth cards, which Herald and Starseer meet twice as often and can take as a starting spell. Five enemies resist a thematic element. Strike, Cheap Shot, Bloodhunter's Strike and Guard Counter deal your weapon's damage type; Ruinous Blow and Deathblow split Blunt and Force; Blood Tithe splits your weapon's type with Necrotic and Bleeds; Lethal Dose is a thrown vial with Precision that hits harder. Blight Bloom's text names its expanded-combat cap.",
-    "build": "0.7.1.1441",
+    "build": "0.7.1.1443",
     "pullRequest": 1914,
     "url": "https://github.com/cehinds/AshenSpire/pull/1914"
+  },
+  {
+    "id": "pr-1916",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Build numbers in the changelog stay in order",
+    "detail": "Nothing changes in the game. When the build pipeline gives a merged change its final build number, it now also moves that entry so each day's list stays newest build first.",
+    "build": "0.7.1.1443",
+    "pullRequest": 1916,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1916"
+  },
+  {
+    "id": "pr-1917",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Saved enemy reactions are checked against their limit",
+    "detail": "Nothing changes in the game. New tests confirm that a save with too many enemy reactions on the stack, or one on a Counter's return hit, is refused when it loads.",
+    "build": "0.7.1.1443",
+    "pullRequest": 1917,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1917"
   },
   {
     "id": "pr-1918",
@@ -63,16 +83,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1905"
   },
   {
-    "id": "pr-1917",
-    "date": "2026-10-12",
-    "group": "2026-10-12",
-    "summary": "Saved enemy reactions are checked against their limit",
-    "detail": "Nothing changes in the game. New tests confirm that a save with too many enemy reactions on the stack, or one on a Counter's return hit, is refused when it loads.",
-    "build": "0.7.1.1433",
-    "pullRequest": 1917,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1917"
-  },
-  {
     "id": "pr-1893",
     "date": "2026-10-12",
     "group": "2026-10-12",
@@ -101,16 +111,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.1431",
     "pullRequest": 1904,
     "url": "https://github.com/cehinds/AshenSpire/pull/1904"
-  },
-  {
-    "id": "pr-1916",
-    "date": "2026-10-12",
-    "group": "2026-10-12",
-    "summary": "Build numbers in the changelog stay in order",
-    "detail": "Nothing changes in the game. When the build pipeline gives a merged change its final build number, it now also moves that entry so each day's list stays newest build first.",
-    "build": "0.7.1.1431",
-    "pullRequest": 1916,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1916"
   },
   {
     "id": "pr-1902",
