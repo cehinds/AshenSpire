@@ -135,10 +135,10 @@ assume deck growth (§4 bands). These are a **floor** — real play does better.
 
 | Class | Encounter | Win % | Avg HP lost (of max) |
 |-------|-----------|------:|---------------------:|
-| Reaver | loneSoldier (normal) | 100 | 7.3 / 63 |
-| Reaver | patrol (normal) | 75 | 45.5 / 63 |
+| Reaver | loneSoldier (normal) | 100 | 7.1 / 63 |
+| Reaver | patrol (normal) | 74.7 | 45.2 / 63 |
 | Reaver | packHunt (normal) | 77.3 | 46 / 63 |
-| Reaver | twinPatrol (normal) | 73 | 41.1 / 63 |
+| Reaver | twinPatrol (normal) | 73 | 41 / 63 |
 | Reaver | bruiser (normal) | 61 | 47.6 / 63 |
 | Reaver | eliteWyrm (elite) | 28.3 | 59.4 / 63 |
 | Reaver | bossOmen (boss) | 30.7 | 58 / 63 |
