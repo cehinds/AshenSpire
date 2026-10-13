@@ -59,10 +59,10 @@ test('removing the art (state none) never closes the intake: it must stay open t
 test('pages: a failed or cancelled feature, fix or chore preview still runs assemble and deploy', () => {
   const prefix = "startsWith(github.event.workflow_run.head_branch, 'feature/') || startsWith(github.event.workflow_run.head_branch, 'fix/') || startsWith(github.event.workflow_run.head_branch, 'chore/')";
   const assemble = jobBlock(pages, 'assemble');
-  assert.ok(assemble.includes(`github.event.workflow_run.conclusion == 'success' || (${prefix})`), 'assemble admits branch previews on any conclusion');
+  assert.ok(assemble.includes(`(github.event.workflow_run.name == 'dev preview' && github.event.workflow_run.head_branch != 'dev' && (github.event.workflow_run.conclusion == 'success' || ${prefix}))`), 'assemble admits branch previews on any conclusion');
   const deploy = jobBlock(pages, 'deploy');
-  assert.ok(deploy.includes(`github.event.workflow_run.conclusion == 'success'\n          || (${prefix})`) || deploy.includes(`github.event.workflow_run.conclusion == 'success'`), 'deploy admits them');
-  assert.ok(pages.includes(`(github.event_name == 'workflow_run' && (github.event.workflow_run.conclusion == 'success' || (${prefix})))`), 'the Report step mirrors the deploy guard');
+  assert.ok(deploy.includes(`github.event.workflow_run.conclusion == 'success'\n              || startsWith(github.event.workflow_run.head_branch, 'feature/')`), 'deploy admits them');
+  assert.ok(pages.includes(`(github.event.workflow_run.name == 'dev preview' && github.event.workflow_run.head_branch != 'dev' && (github.event.workflow_run.conclusion == 'success' || ${prefix}))`), 'the Report step mirrors the deploy guard');
   // alternative/ previews keep the success-only rule: the workflow_run filter lists them, the guard does not admit them.
   assert.doesNotMatch(prefix, /alternative/);
 });
