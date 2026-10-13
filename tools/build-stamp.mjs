@@ -27,8 +27,9 @@
 // WHAT IT WRITES. Only the stamp that follows a receipt's link:
 //   ([#N](https://github.com/cehinds/AshenSpire/pull/N), `X`)  ->  `X` = release.ordinal
 // and, when that stamp would break its date group's newest-build-first order, the
-// receipt's own line moves within that group (reorderReceipt). Nothing moves across
-// a date heading. Every other byte of CHANGELOG.md is left alone, and about-changelog.mjs
+// receipt's own line moves within that group (reorderReceipt). The one move across a
+// date heading is a re-pointed receipt under an older date going to the top of the
+// newest group (moveToNewestGroup). Every other byte of CHANGELOG.md is left alone, and about-changelog.mjs
 // --write still owns the file's shape and the generated module. A pull request with no
 // receipt is a note, not a failure: receipts.mjs --check is what fails a gap.
 //
@@ -116,7 +117,8 @@ function moveToNewestGroup(text, pr, stamp) {
   const hit = new RegExp(`/pull/${pr}\\),\\s*\`${stamp.replace(/\./g, '\\.')}\``);
   const at = lines.findIndex((l) => l.startsWith('- ') && hit.test(l));
   if (at < 0) return text;
-  const isDate = (l) => /^## \d{4}-\d{2}-\d{2}\b/.test(l);
+  // A date group, or a release group (`## 1.0.0 — 2026-10-13`), as about-changelog reads them.
+  const isDate = (l) => /^## (?:\d{4}-\d{2}-\d{2}\b|\d+\.\d+\.\d+ — \d{4}-\d{2}-\d{2}$)/.test(l);
   const newest = lines.findIndex(isDate);
   let own = at - 1;
   while (own >= 0 && !/^## /.test(lines[own])) own -= 1;
