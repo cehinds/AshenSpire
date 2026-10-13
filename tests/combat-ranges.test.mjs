@@ -44,3 +44,63 @@ test('bringRangesForward renames legacy keys and values in place and leaves othe
   assert.deepEqual(Object.keys(saved.statuses.prone), ['status', 'meleePercent', 'rangedSinglePercent', 'reachEvade', 'rangedEvade', 'standCost']);
   assert.equal(bringRangesForward(saved), false, 'a current table is already forward');
 });
+
+// ---- an old frozen run, end to end ------------------------------------------
+import { readFileSync } from 'node:fs';
+import { createCombatExpansionRuleSnapshot, bringCombatExpansionRulesForward, combatExpansionRulesProblems } from '../src/model/combatExpansionRules.js';
+import { resolveAvoidance } from '../src/engine/combatAvoidance.js';
+import { combatProfileFor, combatProfileTags } from '../src/model/combatCardProfile.js';
+
+// The schema-23 capture was frozen before the rename; the fixture is never edited.
+const CORPUS = JSON.parse(readFileSync(new URL('./fixtures/run-save-schema-versions.json', import.meta.url), 'utf8'));
+const frozenBeforeRename = () => JSON.parse(CORPUS.versions['23'].bytes).combatExpansionRules;
+
+test('a run frozen with contact/near/far rules loads, validates and normalizes to the current tables', () => {
+  const old = frozenBeforeRename();
+  assert.deepEqual(old.matchups.evade.areaDifficulty, { contact: 0, near: 2, far: 4 }, 'the fixture still holds the old names');
+  assert.deepEqual(old.matchups.counter.defaultCoverage.ranged.reaches, ['near', 'far']);
+  assert.ok(combatExpansionRulesProblems(old).length > 0, 'unmigrated, the old names are refused');
+  assert.equal(bringCombatExpansionRulesForward(old), true);
+  assert.deepEqual(combatExpansionRulesProblems(old), []);
+  const now = createCombatExpansionRuleSnapshot();
+  assert.deepEqual(old.matchups.evade, now.matchups.evade);
+  assert.deepEqual(old.matchups.distance, now.matchups.distance);
+  assert.deepEqual(old.matchups.counter.defaultCoverage, now.matchups.counter.defaultCoverage);
+  assert.deepEqual(old.matchups.counter.schoolMatchups, now.matchups.counter.schoolMatchups);
+  assert.deepEqual(old.statuses.prone, now.statuses.prone);
+});
+
+test('an old frozen rules object plays the same avoidance result as the new one for one seed', () => {
+  const play = (rules, stance) => {
+    const dice = [17, 9, 3];
+    const rng = { int: (stream, min, max) => dice.shift() ?? min };
+    const target = { id: 'player', kind: 'player', alive: true, hp: 40, statuses: {}, combatStance: stance,
+      combatEvade: { charges: 1, bonus: 0, advantage: false, disadvantage: false, expiresOnOwnerCycle: 2 },
+      attributes: { dexterity: 2, wisdom: 3, intelligence: 4 }, armorClass: 'light' };
+    const ctx = { combatExpansionVersion: 2, combatExpansionRules: rules, rng, emit: () => {} };
+    const incoming = { camp: 'physical', maneuver: 'attack', range: 'melee', targeting: 'single' };
+    return [resolveAvoidance(ctx, { id: 'enemy' }, target, incoming, 9),
+      resolveAvoidance({ ...ctx, rng: { int: (s, min) => min } }, { id: 'enemy' }, target, { ...incoming, range: 'ranged', targeting: 'area' }, 6), target.combatEvade.charges];
+  };
+  const old = frozenBeforeRename();
+  const oldStance = { maneuver: 'ranged', camp: 'physical', reach: 'far' };
+  bringCombatExpansionRulesForward(old);
+  bringRangesForward(oldStance);
+  const current = play(createCombatExpansionRuleSnapshot(), { maneuver: 'ranged', camp: 'physical', range: 'ranged' });
+  assert.deepEqual(play(old, oldStance), current);
+  assert.equal(current[0].distance.chance, 35, 'a ranged stance still avoids melee at the ranged chance');
+});
+
+test('tags parse range:reach, read legacy reach:near the same way, and chip as range:x', () => {
+  const tagged = tags => combatProfileFor({ id: 'probe', cardTags: ['camp:physical', 'maneuver:attack', ...tags, 'targeting:single'] });
+  assert.equal(tagged(['range:reach']).range, 'reach');
+  assert.equal(tagged(['range:melee']).range, 'melee');
+  assert.equal(tagged(['range:ranged']).range, 'ranged');
+  assert.equal(tagged(['reach:near']).range, 'reach', 'a legacy tag is normalized');
+  assert.equal(tagged([]).range, undefined);
+  assert.throws(() => tagged(['range:reach', 'range:melee']), /conflicting range: tags/);
+  assert.throws(() => tagged(['range:far']), /unknown range: tag 'far'/);
+  const chip = combatProfileTags({ id: 'probe', cardTags: ['camp:physical', 'range:reach', 'targeting:single'] }).find(row => row.id.startsWith('range:'));
+  assert.equal(chip.id, 'range:reach');
+  assert.equal(chip.label, 'Reach');
+});
