@@ -321,7 +321,10 @@ jobs:
           # secret. The real fix is the owner's: delete the ART_REPO_TOKEN secret, or
           # move it into a GitHub Environment limited to dev, test, release and main
           # (docs/EXTERNAL-ASSETS-PLAN.md, step 11).
-          ART_REPO_TOKEN: ${{ contains(fromJSON('["refs/heads/dev","refs/heads/test","refs/heads/release","refs/heads/main"]'), github.ref) && secrets.ART_REPO_TOKEN || '' }}
+          # A workflow_run run takes github.ref from the default branch, so the ref gate
+          # alone admitted a run that a FORK pull request started. The same-repository
+          # clause below excludes fork-originated workflow_run runs.
+          ART_REPO_TOKEN: ${{ (github.event_name != 'workflow_run' || github.event.workflow_run.head_repository.full_name == github.repository) && contains(fromJSON('["refs/heads/dev","refs/heads/test","refs/heads/release","refs/heads/main"]'), github.ref) && secrets.ART_REPO_TOKEN || '' }}
         run: |
           set -euo pipefail
           if git cat-file -e origin/main:AshenSpire.html 2>/dev/null; then
@@ -473,6 +476,31 @@ jobs:
           if [ "$keep" -lt 1 ]; then keep=1; fi
           if [ "$keep" -gt 25 ]; then keep=25; fi
           node tools/verdict.mjs -- node tools/pages-site.mjs --out _site --keep "$keep" --build-missing "$RUNNER_TEMP/pages-rebuilds" --branch-previews "$RUNNER_TEMP/branch-previews" ${MAIN_BUILD_ARGS:-}
+      # THE WORKBENCH IS PUBLISHED AS A STATIC SITE, BUILT FROM THIS RUN'S CHECKOUT.
+      #
+      # It lives at /workbench/ beside the game builds. On the workflow_run publish
+      # path the checkout is dev (see the checkout step above), so the Workbench
+      # shown there is dev's. It answers its API from a snapshot
+      # (workbench/static/static-api.mjs) and keeps edits in the visitor's browser;
+      # nothing on the page writes to the repository.
+      #
+      # The art it copies (assets-mobile/ and assets-display/) is tracked in git and
+      # already in this checkout, so nothing is fetched here: a fetch only filled an
+      # unused cache and could stall the job past its timeout.
+      #
+      # It builds into $RUNNER_TEMP and is moved into _site only after the tool exits
+      # 0, so a failed build publishes nothing. timeout-minutes bounds a stall.
+      #
+      # The step may fail without stopping the site: continue-on-error keeps a
+      # Workbench failure to a warning in this run, and the game site still publishes.
+      - name: "Build the published Workbench at /workbench/ (from this checkout)"
+        continue-on-error: true
+        timeout-minutes: 10
+        run: |
+          set -euo pipefail
+          node tools/workbench-static.mjs --out "$RUNNER_TEMP/workbench" --base /AshenSpire/workbench/
+          mv "$RUNNER_TEMP/workbench" _site/workbench
+          echo "Workbench published at https://cehinds.github.io/AshenSpire/workbench/ from $(git rev-parse --short HEAD)" >> "$GITHUB_STEP_SUMMARY"
       - name: The generator's own drift plant is still caught
         run: node tools/verdict.mjs -- node tools/pages-site.mjs --selftest ${MAIN_BUILD_ARGS:-}
       - uses: actions/configure-pages@v5
