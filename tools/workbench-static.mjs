@@ -17,8 +17,9 @@
 // modules and the top level of pose-studio/) is mirrored to DIR/game/, so the
 // Workbench's game preview still loads. Unless --no-art is given, the light art
 // pack (assets-mobile/) goes to DIR/game/assets/, where serve.mjs would answer
-// /assets/ with the light twin. The Asset Gallery's images (assets-display/ and
-// assets-mobile/) go to DIR/asset-file/, where its asset-file/ URLs load them.
+// /assets/ with the light twin, and the Asset Gallery reads it from there. The
+// Asset Gallery's display art (assets-display/) goes to DIR/asset-file/assets-display/,
+// where its asset-file/ URLs load it. The light art is copied once.
 //
 // docs/design/ (large design rigs) is never read or copied. A missing optional
 // input (the static-api module, assets-mobile/) prints a warning and the build
@@ -224,12 +225,11 @@ async function main() {
     const light = path.join(REPO, 'assets-mobile');
     if (existsSync(light)) await copyTree(light, path.join(game, 'assets'));
     else warnings.push('assets-mobile/ is missing: game/assets/ was not written');
-    // The Asset Gallery loads its images from ${base}asset-file/<repo path>.
-    for (const dir of ['assets-display', 'assets-mobile']) {
-      const src = path.join(REPO, dir);
-      if (existsSync(src)) await copyTree(src, path.join(out, 'asset-file', dir));
-      else warnings.push(`${dir}/ is missing: asset-file/${dir}/ was not written`);
-    }
+    // The Asset Gallery loads its display art from ${base}asset-file/<repo path>. The light art is
+    // not copied again: the gallery reads it from game/assets/ (ASHEN_ASSET_URL in static-api.mjs).
+    const display = path.join(REPO, 'assets-display');
+    if (existsSync(display)) await copyTree(display, path.join(out, 'asset-file', 'assets-display'));
+    else warnings.push('assets-display/ is missing: asset-file/assets-display/ was not written');
   }
 
   const bytes = await treeBytes(out);
