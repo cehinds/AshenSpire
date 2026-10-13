@@ -79,6 +79,7 @@ function buildLines(def, preview, registries) {
     return ` (${num(effect.duration, effect.duration)} turns)`;
   };
 
+  const chances = [];
   // Each effect becomes fragments: `{ cat, text }`, cat in damage | status | remove | gain | bonus.
   const phraseEffect = (effect, index) => {
     const n = value(effect, index), base = baseOf(effect, index, 'amount');
@@ -120,7 +121,11 @@ function buildLines(def, preview, registries) {
       case 'restoreStamina':
       case 'gainEnergy': return frag('gain', `${num(n, base)} SP`);
       case 'heal': return frag('bonus', `Heal ${effect.target === 'ally' ? 'an ally for ' : ''}${num(n, base)} HP`);
-      case 'buildup': return frag('status', `${esc(title(effect.status))} ${num(n, base)}${area}`);
+      case 'buildup': {
+        // The face names the status and amount; a partial chance is kept for the detail line.
+        if (effect.chance !== undefined && effect.chance < 100) chances.push({ name: title(effect.status), chance: effect.chance });
+        return frag('status', `${esc(title(effect.status))} ${num(n, base)}${area}`);
+      }
       case 'applyStatus': {
         if (STATUS_NEVER_PHRASED.includes(effect.status)) fail();
         const stacks = value(effect, index, 'stacks'), stacksBase = baseOf(effect, index, 'stacks');
@@ -221,9 +226,13 @@ function buildLines(def, preview, registries) {
   for (const group of groups.values()) {
     byKind.condition.push(group.prefix + segmentsOf(group.fragments).map(segment => segment.text).join('. '));
   }
+  const byChance = new Map();
+  for (const { name, chance } of chances) byChance.set(chance, [...new Set([...(byChance.get(chance) || []), name])]);
+  for (const [chance, names] of byChance) byKind.detail.push(`${names.map(esc).join(', ')}: ${esc(chance)}% chance`);
   if (def.usableWhile?.length) byKind.detail.push(`Usable through ${def.usableWhile.map(id => esc(title(id))).join(', ')}`);
 
   const lines = [];
   for (const kind of LINE_ORDER) for (const html of byKind[kind]) if (html) lines.push({ kind, html });
-  return lines;
+  // Nothing phrased (a status or curse with no effects) keeps the authored text, as combatCardSummary does.
+  return lines.length ? lines : null;
 }

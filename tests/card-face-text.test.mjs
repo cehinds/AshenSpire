@@ -48,3 +48,14 @@ test('without a preview no number is marked up or down', () => {
 test('a card with an effect it cannot phrase returns null', () => {
   assert.equal(cardFaceLines({ type: 'attack', effects: [{ op: 'noSuchOp', target: 'enemy', amount: 1 }] }, null, reg), null);
 });
+
+test('a partial buildup chance keeps a detail line so the face never reads as certain', () => {
+  const all = lines('cinderSigil');
+  assert.ok(all, 'cinderSigil phrases');
+  const detail = all.filter(line => line.kind === 'detail').map(line => line.html.replace(/<[^>]+>/g, ''));
+  assert.ok(detail.some(line => /\d+% chance$/.test(line)), `chance detail line: ${JSON.stringify(detail)}`);
+});
+
+test('a card with nothing to phrase returns null so the authored text stays', () => {
+  assert.equal(cardFaceLines({ type: 'status', effects: [] }, null, reg), null);
+});
