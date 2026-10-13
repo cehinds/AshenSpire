@@ -53,7 +53,8 @@
 :root .card-sigil-band .combat-sigil-action {width:11.5cqw;height:11.5cqw;max-height:100%;pointer-events:none;}
 :root .card-sigil-band .card-type-name {font:700 7cqw/1 Georgia,serif;letter-spacing:.085em;text-transform:uppercase;white-space:nowrap;}
 :root .illustrated-card-face .card-tag-rail {
-  position:absolute;z-index:7;right:9%;top:16%;display:flex;flex-direction:column;align-items:center;gap:2cqw;
+  /* Above the hand's hit lane (z 20) so a tap on a symbol explains it and never plays the card. */
+  position:absolute;z-index:21;right:9%;top:16%;display:flex;flex-direction:column;align-items:center;gap:2cqw;
   color:#e8bd78;pointer-events:none;
 }
 :root .card-tag-rail .card-tag-symbol {display:flex;width:8cqw;height:8cqw;flex:none;filter:drop-shadow(0 0 .65cqw #000) drop-shadow(0 0 1.1cqw #000) drop-shadow(0 .7cqw .7cqw #000);}
