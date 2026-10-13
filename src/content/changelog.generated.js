@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-12",
     "summary": "Boss victories offer a choice of boss relics",
     "detail": "Beating a boss now lays out up to three boss relics you do not own, and you keep the one you pick. With auto-collect on, Continue picks one at random, as it does for cards; with it off, an unpicked choice is left behind. Co-op boss rewards are unchanged.",
-    "build": "0.7.1.1453",
+    "build": "0.7.1.1455",
     "pullRequest": 1907,
     "url": "https://github.com/cehinds/AshenSpire/pull/1907"
   },
@@ -18,7 +18,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-12",
     "summary": "The online dev build publishes after its build number is stamped",
     "detail": "Development-process change only, nothing in the game changes. The playable dev build on the project site no longer fails to publish while a new build waits for its number; it publishes once the number is stamped.",
-    "build": "0.7.1.1453",
+    "build": "0.7.1.1455",
     "pullRequest": 1928,
     "url": "https://github.com/cehinds/AshenSpire/pull/1928"
   },
