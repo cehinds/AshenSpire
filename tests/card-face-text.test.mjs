@@ -92,3 +92,15 @@ test('a Power keeps its authored text: its status alone does not explain the mec
 test('a missing self status reads as "No <status>:"', () => {
   assert.ok(text('starlance').some(line => /^No Starstone Charge: /.test(line)), JSON.stringify(text('starlance')));
 });
+
+test('a combat counter reads as prepared, naming its mode and Smash bonus', () => {
+  const x = id => (cardFaceLines(applyCombatExpansionCard(card(id)), null, reg) || []).map(line => line.html.replace(/<[^>]+>/g, ''));
+  assert.match(x('shieldBash')[0], /^Prepare Melee Counter: return \d+ Poise damage, \+\d+ Poise against Smash$/);
+  assert.match(x('nockAndWait')[0], /^Prepare Ranged Counter: return /);
+});
+
+test('mechanic statuses add their own line; curse triggers and Blight prices keep the authored text', () => {
+  assert.ok(text('stoneskin').some(line => /Block is not removed/.test(line)), JSON.stringify(text('stoneskin')));
+  assert.equal(lines('guilt'), null);
+  assert.equal(lines('blightedTransmute'), null);
+});

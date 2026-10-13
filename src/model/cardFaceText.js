@@ -16,6 +16,7 @@ import { cardSummaryContext, combatCardDamageLabel, splitOf } from './playingCar
 import { isSpellCard } from './combatCardProfile.js';
 import { tagService } from './tagService.js';
 import { resolve as resolveTags } from '../content/tags.js';
+import { combatExpansionMatchups } from '../content/combatMatchups.js';
 
 const UNPHRASEABLE = Symbol('unphraseable');
 const fail = () => { throw UNPHRASEABLE; };
@@ -26,6 +27,17 @@ const LINE_ORDER = ['damage', 'status', 'condition', 'gain', 'bonus', 'detail'];
 const KEYWORDS = ['unplayable', 'exhaust', 'retain', 'ethereal', 'innate'];
 const ENEMY_TARGETS = ['enemy', 'allEnemies', 'randomEnemy'];
 const STATUS_NEVER_PHRASED = ['invulnerability', 'decoy', 'grounded', 'sleep'];
+// Statuses whose name is not their effect: the face adds the status's own tooltip line.
+const MECHANIC_STATUSES = ['concealed', 'bulwarkEcho', 'stoneskin', 'entombed'];
+
+
+const canonical = value => JSON.stringify(value, (key, item) => item && typeof item === 'object' && !Array.isArray(item)
+  ? Object.fromEntries(Object.entries(item).sort(([a], [b]) => a.localeCompare(b))) : item);
+function counterModeOf(def, profile) {
+  const defaults = combatExpansionMatchups.counter.defaultCoverage;
+  if (!def.counterCoverage) return profile.counterMode || (profile.camp === 'spell' ? 'spell' : 'melee');
+  return Object.keys(defaults).find(mode => canonical(defaults[mode]) === canonical(def.counterCoverage)) || null;
+}
 
 function esc(value) {
   return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -46,10 +58,16 @@ function buildLines(def, preview, registries) {
   if (def.comboHook) return null;
   // A Power's status is its mechanic's carrier ("Gain Goreblood 1" says nothing); its authored text explains it.
   if (def.type === 'power') return null;
+  // A curse's hand trigger and an Ashen Blight price live only in the authored text.
+  if (def.onTurnEndInHand?.length || def.ashenBlightCost) return null;
   const { value, title, condition, profile: p, bindings, tokens } = cardSummaryContext(def, preview, registries);
   const ratings = registries?.balance?.combatRatings ?? null;
   const counter = p.maneuver === 'counter';
-  const damageVerb = counter ? 'Return' : 'Inflict';
+  // A counter is prepared, not dealt: name its mode ("Prepare Melee Counter: return …").
+  // Coverage is named by the mode whose default it equals; any other coverage keeps the authored text.
+  const counterMode = counter ? counterModeOf(def, p) : null;
+  if (counter && !counterMode) return null;
+  const damageVerb = counter ? `Prepare ${{ melee: 'Melee', ranged: 'Ranged', spell: 'Spell' }[counterMode]} Counter: return` : 'Inflict';
 
   // The static number an effect's field authored: its token's base, else the literal.
   const baseOf = (effect, index, field) => {
@@ -144,7 +162,7 @@ function buildLines(def, preview, registries) {
         else if (ENEMY_TARGETS.includes(effect.target)) out.push({ cat: 'status', text: `${name}${duration}${area}` });
         else if (effect.target === 'ally') out.push({ cat: 'bonus', text: `Apply ${name} to an ally${duration}` });
         else out.push({ cat: 'bonus', text: `Apply ${name}${duration}${area}` });
-        if (effect.status === 'concealed') {
+        if (MECHANIC_STATUSES.includes(effect.status)) {
           const explanation = registries?.statuses?.has(effect.status) && registries.statuses.get(effect.status).tooltip;
           if (!explanation) fail();
           out.push({ cat: 'bonus', text: esc(explanation.replace(/\.$/, '')) });
@@ -183,6 +201,7 @@ function buildLines(def, preview, registries) {
     const out = [];
     const damage = of('damage'), status = of('status'), remove = of('remove'), gain = of('gain'), bonus = [...of('bonus'), ...extraBonus];
     if (damage.length) out.push({ kind: 'damage', text: `${damageVerb} ${damage.join(', ')}` });
+    else if (counter && fragments === unconditional) out.push({ kind: 'damage', text: damageVerb.replace(/: return$/, '') });
     if (status.length) out.push({ kind: 'status', text: `Inflict ${status.join(', ')}` });
     if (remove.length) out.push({ kind: 'status', text: `Remove ${remove.join(', ')}` });
     if (gain.length) out.push({ kind: 'gain', text: `Gain ${gain.join(', ')}` });
@@ -234,6 +253,7 @@ function buildLines(def, preview, registries) {
       unconditional.push({ cat: 'damage', text: `${typed(num(amount, payload[key]), type)} ${label}` });
     }
   }
+  if (counter && def.counterPayload?.smashPoiseBonus) unconditional.push({ cat: 'damage', text: `+${num(def.counterPayload.smashPoiseBonus)} Poise against Smash` });
   if (def.pronePoiseBonus) unconditional.push({ cat: 'bonus', text: `+${num(def.pronePoiseBonus)} Poise while Prone` });
   if (def.evade) {
     unconditional.push({ cat: 'bonus', text: `${def.evade.whileStatus ? `While ${esc(title(def.evade.whileStatus))}: ` : ''}Prepare one Evade${def.evade.advantage ? ' with Advantage' : ''}` });
