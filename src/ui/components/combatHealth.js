@@ -50,7 +50,7 @@ export function combatHealthRow(hp, values, { tooltips = true, blockHelp = tFull
     markUiComponent(node, UI.blockBadge, badge.kind);
     if (tooltips) {
       node.tabIndex = 0;
-      attachTooltip(node, () => `<div class="tt-title">${esc(badge.label)} ${badge.value}${badge.barrier > 0 ? ` (${esc(t('combat.protection.barrier'))} ${badge.barrier})` : ''}</div>${esc(badge.kind === 'shield' ? blockHelp : wardHelp)}${badge.barrier > 0 ? `<br>${esc(tFull('combat.protection.barrier'))}` : ''}`);
+      attachTooltip(node, () => `<div class="tt-title">${esc(badge.label)} ${badge.value}${badge.barrier > 0 ? ` (${esc(t('combat.protection.barrier'))} ${badge.barrier})` : ''}</div>${esc(badge.kind === 'shield' ? blockHelp : wardHelp)}${badge.barrier > 0 ? `<br>${esc(tFull('combat.protection.barrier'))}` : ''}${badge.guard > 0 ? `<br>${esc(t('combat.protection.wardGuard'))} ${badge.guard}: ${esc(tFull('combat.protection.wardGuard'))}` : ''}`);
     }
     row.append(node);
   }
