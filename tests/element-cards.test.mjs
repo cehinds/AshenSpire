@@ -59,22 +59,24 @@ test('Septic Blade hits harder on a target already carrying 3 Venom', () => {
   assert(primed.hp - primed.enemy.hp > cold.hp - cold.enemy.hp);
 });
 
+// Lethal Dose is a physical-camp maneuver with a magic (Poison) type, so it splits by the Technique share
+// (0.3, #1896): the physical rest is bare-handed Blunt, and the soldier's 25% Blunt weakness lifts that part.
 test('Lethal Dose cashes the target\'s Venom out as damage and removes it', () => {
   const { enemy, hp } = play('lethalDose', { setup: (combat, target) => applyStatus(combat, target, 'venom', 3) });
-  assert.equal(hp - enemy.hp, 18, '6 + 4 per Venom stack, v2 caps Venom at 3');
+  assert.equal(hp - enemy.hp, 22, '6 + 4 per Venom stack (v2 caps Venom at 3) = 18: 5 Poison + 13 Blunt, 13 x 1.25 = 17');
   assert.equal(getStacks(enemy, 'venom'), 0);
 });
 
 test('Lethal Dose upgraded deals 8 + 5 per Venom stack', () => {
   // 23 damage would kill the default soldier before Venom is removed, so give the target room to survive the hit.
   const { enemy, hp } = play('lethalDose', { upgraded: true, setup: (combat, target) => { target.hp = 100; applyStatus(combat, target, 'venom', 3); } });
-  assert.equal(hp - enemy.hp, 23, '8 + 5 x 3 Venom');
+  assert.equal(hp - enemy.hp, 28, '8 + 5 x 3 Venom = 23: 6 Poison + 17 Blunt, 17 x 1.25 = 22');
   assert.equal(getStacks(enemy, 'venom'), 0);
 });
 
 test('Lethal Dose with no Venom still deals its 6 base damage', () => {
   const { enemy, hp } = play('lethalDose');
-  assert.equal(hp - enemy.hp, 6, 'base 6 with 0 Venom');
+  assert.equal(hp - enemy.hp, 8, 'base 6 with 0 Venom: 1 Poison + 5 Blunt, 5 x 1.25 = 7');
 });
 
 test('Psychic cards confuse; Dissonance also silences', () => {
