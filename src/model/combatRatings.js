@@ -690,6 +690,15 @@ export function magicShareOf(profile, config = null) {
 }
 
 /**
+ * isForceProfile(profile) → true for a Force contact: the force school (a
+ * school:force tag or profile school, read as magicShareOf reads it) or a raw
+ * 'force' damage type. Arcane damage from another school is not Force.
+ */
+export function isForceProfile(profile) {
+  return schoolOf(profile) === 'force' || profile?.damageType === 'force';
+}
+
+/**
  * isTechniqueProfile(profile) → true for a physical-camp maneuver that carries a
  * magic school, a magic damage type (or a magic damage component) or a spell
  * rider: the hits the Technique magic share splits.

@@ -33,6 +33,11 @@ export function isSpellCard(card) {
  * The one helper every SP pricing reads; spellCardCostSurcharge applies it to a card or move.
  */
 export function spellCostSurcharge(entity) {
+  return silencedStacks(entity);
+}
+
+/** silencedStacks(entity) → the Silenced stacks an entity carries (0 without the status). */
+export function silencedStacks(entity) {
   const stacks = Number(entity?.statuses?.silenced?.stacks);
   return Number.isFinite(stacks) && stacks > 0 ? Math.floor(stacks) : 0;
 }

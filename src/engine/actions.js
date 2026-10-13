@@ -41,7 +41,7 @@ import { commitSmithing, smithingPlan } from '../model/smithing.js';
 import * as Properties from './properties.js';
 import * as Ratings from './combatRatings.js';
 import { isMagicalAttack, ratingDamageMultiplier, attackImpact, schoolResistanceMultiplier, persistentWardMaximum, persistentPoiseMaximum,
-  canonicalDamageType, magicShareOf, magicDamageTypeOf, splitDamageTypesOf, splitContactParts, componentPartsOf } from '../model/combatRatings.js';
+  canonicalDamageType, magicShareOf, magicDamageTypeOf, splitDamageTypesOf, splitContactParts, componentPartsOf, isForceProfile } from '../model/combatRatings.js';
 import { swapRunClass } from '../model/classSwap.js';
 import { applyGraceRefill } from './encounters.js';
 import { orderedReturn } from '../model/deckRules.js';
@@ -54,7 +54,7 @@ import { creditKnowledgeImpact } from './enemyKnowledge.js';
 
 import * as Expanded from './combatExpansionActions.js';
 import * as Control from './combatStatusControl.js';
-import { isSpellCard } from '../model/combatCardProfile.js';
+import { isSpellCard, silencedStacks } from '../model/combatCardProfile.js';
 import { syncWardMaximum, syncPoiseMaximum } from './combatPools.js';
 export { syncWardMaximum, syncPoiseMaximum };
 import * as Blight from './ashenBlight.js';
@@ -337,9 +337,34 @@ export function cardRatingDamage(ctx, source, carrier, base) {
   return Math.max(0, Math.floor(Ratings.cardRatingBonus(ctx, source, carrier, 'damage', base) || 0));
 }
 
+/**
+ * silencedForceContacts(ctx, target, profiles) → per contact, whether it spends one of the
+ * target's Silenced stacks (expanded combat, owner 2026-10-13). A Silenced creature is immune
+ * to Force: each Force contact, in order, spends one stack; a Force HIT that spends one is
+ * negated whole, and a Force effect (status, impact) only spends it. Once the stacks run out,
+ * later contacts land normally.
+ */
+export function silencedForceContacts(ctx, target, profiles) {
+  let left = ctx.combatExpansionVersion === 2 ? silencedStacks(target) : 0;
+  return profiles.map(profile => {
+    if (!(left > 0) || !isForceProfile(profile)) return false;
+    left -= 1;
+    return true;
+  });
+}
+
+/** Spend one Silenced stack for a Force contact; the log shows it as consumed. */
+export function spendSilencedStack(ctx, target) {
+  if (silencedStacks(target) > 0) statuses.removeStatus(ctx, target, 'silenced', { amount: 1, reason: 'consumed' });
+}
+
 export function prepareExpandedDefense(ctx, target, receipt, carrier) {
   if (receipt.defendedAmounts) return;
-  const hits = receipt.amounts.map((amount, index) => {
+  // Force contacts that meet a Silenced target's stacks: a hit among them is negated before any defence.
+  receipt.silencedSpends = silencedForceContacts(ctx, target, receipt.profiles);
+  receipt.silencedImmune = receipt.silencedSpends.map((spends, index) => spends && !receipt.profiles[index].effect);
+  const hits = receipt.amounts.map((whole, index) => {
+    const amount = receipt.silencedImmune[index] ? 0 : whole;
     const profile = receipt.profiles[index];
     const share = contactMagicShare(ctx, profile);
     const split = share > 0 && share < 1;
@@ -493,6 +518,17 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
   if (carrier.critMultiplier > 1) ctx.emit('critHit', { sourceId: source?.id, targetId: target.id, ...critSeats(ctx, source, target), multiplier: carrier.critMultiplier, amount: raw });
   prepareExpandedDefense(ctx, target, tactical, carrier);
   const contactIndex = planned?.index || 0;
+  if (tactical.silencedImmune?.[contactIndex]) {
+    // A Silenced creature is immune to Force: the whole hit is negated, then it spends one stack.
+    const type = ctx.combatExpansionRules.matchups.damageAliases[profile.damageType] || profile.damageType;
+    Matchups.recordTacticalContact(tactical, { hpLoss: 0, blocked: 0, wardResisted: 0 });
+    ctx.emit('damageDealt', { sourceId: source?.id, targetId: target.id, amount: 0, blocked: 0, wardResisted: 0, resisted: raw,
+      immune: true, silencedImmune: true, damageType: type, blockRemaining: target.block || 0, barrierRemaining: target.barrier || 0,
+      magicAmount: 0, physicalAmount: 0, ...seatOf(ctx, target), ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source) } : {}),
+      ...(carrier.instanceId ? { cardInstanceId: carrier.instanceId, sourceHand: carrier.sourceHand, grantedBy: carrier.grantedBy } : {}), isAttack: true });
+    spendSilencedStack(ctx, target);
+    return 0;
+  }
   let amount = tactical.defendedAmounts[contactIndex] || 0;
   const spell = profile.camp === 'spell';
   // Matchup and control vulnerabilities precede typed defenses and Ward.
