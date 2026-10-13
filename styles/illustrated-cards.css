@@ -61,7 +61,7 @@
 :root .card-tag-symbol svg {display:block;width:100%;height:100%;}
 :root .card-tag-symbol {pointer-events:auto;cursor:pointer;}
 :root .card-tag-rail .card-tag-symbol {position:relative;z-index:21;}
-:root .card-tag-count {position:absolute;right:-.8cqw;bottom:-.5cqw;min-width:3cqw;padding:0 .35cqw;border-radius:1cqw;background:#16110e;color:#fff0cc;font:700 3.4cqw/1.15 Georgia,serif;text-align:center;text-shadow:0 1px 1px #000;}
+:root .card-tag-count {position:absolute;right:-1.6cqw;bottom:-1.6cqw;min-width:6cqw;height:6cqw;box-sizing:border-box;padding:0 .9cqw;border-radius:3cqw;border:.35cqw solid #e8bd78;background:#16110e;color:#fff0cc;font:700 5.2cqw/5.3cqw Georgia,serif;text-align:center;text-shadow:0 1px 1px #000;}
 :root .illustrated-card-face[data-rules-dense='true'] .card-tag-rail {top:13.9%;gap:.5cqw;}
 :root .illustrated-card-face[data-rules-dense='true'] .card-tag-symbol {width:7cqw;height:7cqw;}
 :root .card.illustrated-card .card-rank {
