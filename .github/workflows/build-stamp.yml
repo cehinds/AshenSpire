@@ -58,7 +58,7 @@ jobs:
   stamp:
     # Skip the bot's own stamp commit, and any push that is not a dev branch. A dispatch
     # always runs. The skip is by AUTHOR and SUBJECT PREFIX here, and build-stamp.mjs
-    # --is-stamp-head checks the exact subject: a human squash that merely mentions
+    # --stamp-is-current checks the exact subject: a human squash that merely mentions
     # [build-stamp] is not skipped, so its own pull request is stamped and counted.
     if: "github.ref_name != 'alternative/dev' && (github.ref_name == 'dev' || (startsWith(github.ref_name, 'alternative/') && endsWith(github.ref_name, '/dev'))) && (github.event_name == 'workflow_dispatch' || !(github.event.head_commit.author.name == 'github-actions[bot]' && startsWith(github.event.head_commit.message, 'build: stamp ') && contains(github.event.head_commit.message, '[build-stamp]')))"
     runs-on: ubuntu-latest
@@ -145,15 +145,19 @@ jobs:
             if git diff --cached --quiet; then
               echo "origin/$REF_NAME already carries the stamp for this build."
               # A RERUN OF A RUN WHOSE PUSH SUCCEEDED BUT WHOSE DISPATCH FAILED lands here:
-              # the stamp is already on the tip, so only the preview is left to do. An
-              # ordinary no-diff run (a docs-only push) is not a stamp commit and dispatches
-              # nothing. The exit status tells "not a stamp" (1) from a harness fault (2).
-              stamp_head=0
-              node tools/build-stamp.mjs --is-stamp-head || stamp_head=$?
-              if [ "$stamp_head" -eq 0 ]; then
+              # the stamp is already on the tip, so only the preview is left to do. The tip
+              # is often no longer the stamp itself: architecture-sync or readme-sync may have
+              # pushed a docs-only bot commit on top of it. --stamp-is-current accepts exactly
+              # that (the newest bot stamp, with only those two exact docs-sync subjects above
+              # it), so the rerun redispatches for it. Any other commit above the stamp, or
+              # a run with no stamp under it, is "not current" (1) and dispatches nothing. The
+              # exit status tells "not current" (1) from a harness fault (2).
+              stamp_current=0
+              node tools/build-stamp.mjs --stamp-is-current || stamp_current=$?
+              if [ "$stamp_current" -eq 0 ]; then
                 if ! dispatch_preview; then exit 1; fi
-              elif [ "$stamp_head" -ne 1 ]; then
-                echo "::error::build-stamp --is-stamp-head could not run."
+              elif [ "$stamp_current" -ne 1 ]; then
+                echo "::error::build-stamp --stamp-is-current could not run."
                 exit 1
               fi
               exit 0

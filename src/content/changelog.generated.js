@@ -8,9 +8,49 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-13",
     "summary": "The link check's self-test stops re-reading modules it has already linked",
     "detail": "Development-process fix only, nothing in the game changes. A module an earlier file in the same batch already linked is now skipped instead of being re-read from scratch, so the self-test finishes well inside the Windows CI limit. A new test pins that each module is parsed once per batch.",
-    "build": "0.7.1.1497",
+    "build": "0.7.1.1505",
     "pullRequest": 1968,
     "url": "https://github.com/cehinds/AshenSpire/pull/1968"
+  },
+  {
+    "id": "pr-1966",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Build numbers keep stamping in two more changelog layouts",
+    "detail": "Development-process change only, nothing in the game changes. A release heading with trailing spaces, or a blank line between entries that share a build, no longer puts a merged change's changelog line in the wrong place when the dev build is stamped.",
+    "build": "0.7.1.1505",
+    "pullRequest": 1966,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1966"
+  },
+  {
+    "id": "pr-1939",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "The build-number bot recovers a missed preview by itself",
+    "detail": "Nothing changes in the game. If the bot stamped a build but could not start its preview, re-running it now starts the preview even after a documentation update has landed on top.",
+    "build": "0.7.1.1503",
+    "pullRequest": 1939,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1939"
+  },
+  {
+    "id": "pr-1937",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Pull requests stay mergeable after each build stamp",
+    "detail": "After every build stamp on dev, a bot merges dev into each open pull request that only conflicts in the build number and changelog files, moves its changelog entry to the current build, and reruns its checks. Pull requests with any other conflict get one comment asking a person to merge dev.",
+    "build": "0.7.1.1501",
+    "pullRequest": 1937,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1937"
+  },
+  {
+    "id": "pr-1899",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Combat Rounds preview data now stays isolated and save-safe",
+    "detail": "Reaction offers and public timelines no longer share mutable card data with round state, non-finite damage is normalized consistently, and invalid card identifiers are rejected before a paused round can become unrecoverable.",
+    "build": "0.7.1.1499",
+    "pullRequest": 1899,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1899"
   },
   {
     "id": "pr-1883",
@@ -18,7 +58,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-13",
     "summary": "Switching combat views keeps your lane where the grid shows it",
     "detail": "When a fight changes from the perspective view to Classic, your saved lane now moves to the Classic square the screen displays. Moving again or reloading the fight no longer jumps you back to a hidden perspective-only lane.",
-    "build": "0.7.1.1495",
+    "build": "0.7.1.1497",
     "pullRequest": 1883,
     "url": "https://github.com/cehinds/AshenSpire/pull/1883"
   },

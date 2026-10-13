@@ -114,6 +114,14 @@ way: through review, into `dev`, then promoted to `test` (rule 6). The owner mer
    it is ignored on `dev`, and CI builds it and publishes it as the
    `dev-standalone-<commit>` workflow artifact. The owner never resolves a
    conflict.
+
+   After each build stamp on `dev`, `pr-restamp.yml` does this for an open pull request
+   that conflicts: it merges `dev`, moves the receipt to the newest date group and
+   re-stamps it to the box (`tools/pr-restamp.mjs`, owner, 2026-10-13). It resolves
+   conflicts only in the three derived files, and it pushes only when the set of
+   non-derived files the pull request changes against `dev` is the same set before and
+   after the merge. Anything else, or a failed check,
+   is left to you; the bot posts one comment on the pull request.
 4. **Keep it green.** A failing test or gate is yours to root-cause and fix;
    "flake" is not a diagnosis. Never skip or quarantine a test to get green.
    Stages (owner, 2026-10-11; DEVELOPER.md, *Which checks gate a pull request*
@@ -147,6 +155,11 @@ way: through review, into `dev`, then promoted to `test` (rule 6). The owner mer
      conflicts resolved, fast checks green). Send the owner the PR link, the
      preview link and fresh screenshots of anything visible, but do not stop
      and wait. `main` stays owner-only.
+     `pr-restamp.yml` may keep an open PR current after a build stamp when
+     conflicts are limited to the three derived files. It refuses (exit 3)
+     any update that adds to or drops from the set of non-derived files the PR
+     changes against `dev`; later `dev` commits enter the head as `dev`'s
+     content.
    - Once rules 1–4 hold, merge the PR into `dev` yourself. Use a merge
      commit.
    - Wait for `architecture-sync` to settle: every push to `dev` starts a
@@ -243,3 +256,4 @@ Full walkthroughs live in [DEVELOPER.md](DEVELOPER.md). Short version:
 - **Event:** add to `src/content/events.js` — text + choices, each choice a list of run-level effects.
 
 Then add the id to the relevant reward/encounter pool and, for anything with new mechanics, an assertion in `tests/engine.test.js`.
+

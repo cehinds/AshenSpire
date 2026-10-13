@@ -14,7 +14,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { BOT_AUTHOR as BOT, WORKFLOW_PATH, converge, isNullSha, landedAfterBase, landedInSubjects, landedSince, parseRange, pickStampBase, restamp } from '../tools/build-stamp.mjs';
+import { BOT_AUTHOR as BOT, WORKFLOW_PATH, converge, firstParentLine, isNullSha, landedAfterBase, landedInSubjects, landedSince, parseRange, pickStampBase, restamp, stampIsCurrent } from '../tools/build-stamp.mjs';
 
 // A throwaway repository whose first-parent line is the given commit subjects,
 // oldest first. Each entry is a subject; an empty commit carries it.
@@ -167,6 +167,23 @@ test('restamp counts a release heading as the newest date group', () => {
   const r = restamp(md, ['1902'], ORDER_BOX);
   const top = r.text.slice(r.text.indexOf('## 0.7.2'), r.text.indexOf('## 2026-10-12'));
   assert.deepEqual([...top.matchAll(/\/pull\/(\d+)\)/g)].map((m) => m[1]), ['1902', '1930'], 'it opens the release group');
+});
+
+test('restamp counts a release heading with trailing whitespace as the newest date group', () => {
+  const md = ['# Changelog', '', '## 0.7.2 — 2026-10-13 \t', '', receipt(1930, '0.7.1.1427'), '',
+    '## 2026-10-12', '', receipt(1902, '0.7.1.1400'), '', HISTORY].join('\n');
+  const r = restamp(md, ['1902'], ORDER_BOX);
+  const top = r.text.slice(r.text.indexOf('## 0.7.2'), r.text.indexOf('## 2026-10-12'));
+  assert.deepEqual([...top.matchAll(/\/pull\/(\d+)\)/g)].map((m) => m[1]), ['1902', '1930'], 'it opens the release group');
+});
+
+test('restamp keeps moved receipts newest first across a blank line between same-stamp receipts', () => {
+  const md = ['# Changelog', '', '## 2026-10-13', '', receipt(1905, '0.7.1.1429'), '', receipt(1904, '0.7.1.1429'), '',
+    receipt(1930, '0.7.1.1427'), '', '## 2026-10-12', '', receipt(1903, '0.7.1.1401'), '', HISTORY].join('\n');
+  const r = restamp(md, ['1903'], ORDER_BOX);
+  const top = r.text.slice(r.text.indexOf('## 2026-10-13'), r.text.indexOf('## 2026-10-12'));
+  assert.deepEqual([...top.matchAll(/\/pull\/(\d+)\)/g)].map((m) => m[1]), ['1905', '1904', '1903', '1930']);
+  assert.equal(checkOrderOf(r.text, ORDER_BOX).status, 0);
 });
 
 test('restamp leaves the order of a date group alone when the re-pointed receipt is already in place', () => {
@@ -488,12 +505,47 @@ test('build-stamp.yml dispatches dev-preview after a successful push, with retri
   const success = WORKFLOW.slice(push, exit0);
   assert.ok(push > 0 && success.includes('if ! dispatch_preview; then exit 1; fi'), 'the dispatch sits in the push-success branch');
 
-  // The no-diff branch: a stamp HEAD re-dispatches; an ordinary no-diff run does not.
+  // The no-diff branch: a current stamp (the stamp, or the stamp with only bot follow-ups
+  // above it) re-dispatches; an ordinary no-diff run does not.
   const nodiff = WORKFLOW.slice(WORKFLOW.indexOf('if git diff --cached --quiet; then'), WORKFLOW.indexOf('box="$(node -p'));
-  assert.match(nodiff, /node tools\/build-stamp\.mjs --is-stamp-head/);
-  assert.match(nodiff, /if \[ "\$stamp_head" -eq 0 \]; then\s+if ! dispatch_preview; then exit 1; fi/, 'only a stamp HEAD dispatches');
-  assert.match(nodiff, /elif \[ "\$stamp_head" -ne 1 \]/, 'a harness fault is not read as "not a stamp"');
+  assert.match(nodiff, /node tools\/build-stamp\.mjs --stamp-is-current/);
+  assert.doesNotMatch(nodiff, /--is-stamp-head/, 'the old check is no longer the workflow\'s decision');
+  assert.match(nodiff, /if \[ "\$stamp_current" -eq 0 \]; then\s+if ! dispatch_preview; then exit 1; fi/, 'only a current stamp dispatches');
+  assert.match(nodiff, /elif \[ "\$stamp_current" -ne 1 \]/, 'a harness fault is not read as "not current"');
   assert.ok(nodiff.indexOf('dispatch_preview') < nodiff.lastIndexOf('exit 0'), 'the dispatch comes before the no-diff exit 0');
+});
+
+// A REAL REPOSITORY, FOR THE RERUN CASE. A stamp push succeeded, its dispatch failed, and
+// architecture-sync pushed a docs-only bot commit above the stamp. The rerun's HEAD is that
+// docs commit, not the stamp, and it must still count as current so the preview is dispatched.
+test('a stamp with a docs-only bot commit above it is current, in a real repository', () => {
+  const r = repoWithPipeline([
+    { subject: 'build: stamp 0.7.1.1459 [build-stamp]', author: BOT },
+    { subject: 'docs: refresh current-dev architecture [architecture-sync]', author: BOT },
+  ]);
+  try {
+    assert.equal(stampIsCurrent(firstParentLine(r.dir)), true);
+  } finally { r.cleanup(); }
+});
+
+test('a stamp with an unnumbered bot merge above it is not current, in a real repository', () => {
+  const r = repoWithPipeline([
+    { subject: 'build: stamp 0.7.1.1459 [build-stamp]', author: BOT },
+    { subject: 'Sync promoted updates into alternative/art/dev', author: BOT },
+  ]);
+  try {
+    assert.equal(stampIsCurrent(firstParentLine(r.dir)), false);
+  } finally { r.cleanup(); }
+});
+
+test('a stamp with a human merge above it is not current, in a real repository', () => {
+  const r = repoWithPipeline([
+    { subject: 'build: stamp 0.7.1.1459 [build-stamp]', author: BOT },
+    'Merge pull request #1907 from c/d',
+  ]);
+  try {
+    assert.equal(stampIsCurrent(firstParentLine(r.dir)), false);
+  } finally { r.cleanup(); }
 });
 
 // THE STAMP IS THE BOT'S, EXACTLY. A human squash that mentions the marker is neither a base nor a skip.
