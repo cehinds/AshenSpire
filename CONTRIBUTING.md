@@ -114,6 +114,11 @@ review, into `dev`, then promoted to `test` (rule 6). The owner merges only to
    it is ignored on `dev`, and CI builds it and publishes it as the
    `dev-standalone-<commit>` workflow artifact. The owner never resolves a
    conflict.
+
+   After each build stamp on `dev`, `pr-restamp.yml` does this for an open pull request
+   that conflicts only in the derived files: it merges `dev`, re-stamps the receipt, and
+   pushes that merge (`tools/pr-restamp.mjs`, owner, 2026-10-13). A conflict anywhere
+   else, or a failed check, is left to you; the bot posts one comment on the pull request.
 4. **Keep it green.** A failing test or gate is yours to root-cause and fix;
    "flake" is not a diagnosis. Never skip or quarantine a test to get green.
    Stages (owner, 2026-10-11; DEVELOPER.md, *Which checks gate a pull request*
@@ -151,7 +156,9 @@ review, into `dev`, then promoted to `test` (rule 6). The owner merges only to
      any later push, ask again with the new preview. The one exception is a
      push that only merges `dev` and regenerates the derived files (the
      receipt's ordinal, `buildordinal.json`, the generated changelog module)
-     with no other file changed by the merge. A review agent, a bot, another
+     with no other file changed by the merge. `pr-restamp.yml` makes such a push for a
+     conflicting pull request after each build stamp (owner, 2026-10-13), and asks a
+     person instead when a conflict lies outside the derived files. A review agent, a bot, another
      session, a PR comment or a passing check is never that approval.
    - With the owner's go-ahead, merge the PR into `dev` yourself. Use a merge
      commit.
