@@ -164,6 +164,9 @@ const cardValueStatusMultipliers = {
   envenom: 1,
   glassCannon: 1,
   magicVulnerable: 1,
+  silenced: 1,
+  stanceShifted: 1,
+  stoneskin: 1,
 };
 
 const cardValueRule = () => ({
@@ -368,7 +371,7 @@ export const balance = {
     [NOTE]: {
       growthMult: 'How much a Poise threshold grows each time the meter fills, so the second stagger of a fight is dearer than the first. Only while combat ratings are off; with ratings on, Break threshold multiplier sets this.',
       playerImpactPerHit: 'Poise the player loses per enemy hit that lands, outside a ruleset that states its own weapon impact. Only while combat ratings are off; with ratings on, the impact rows set how much each hit fills the meter.',
-      'onFill.{i}.stacks': 'Stacks of {statusName} that {recipient} when its Poise meter fills. The player\'s own fill runs no row from this list — it reads Stagger · Player instead. Only while combat ratings are off; with ratings on, a break skips the enemy\'s next turn instead.',
+      'onFill.{i}.stacks': 'Stacks of {statusName} that {recipient} when its Poise meter fills. The player\'s own fill runs no row from this list — it reads Stagger · Player instead. With combat ratings on, every enemy break runs it too, Poise or Ward, beside the skipped turn.',
     },
   },
 
@@ -522,6 +525,17 @@ export const balance = {
     },
   },
 
+  // Technique tag mechanics (owner decision 11, 2026-10-12). Oath is a class
+  // property rule (oathKept, nodeEffects.json) bound to this number.
+  tagMechanics: {
+    oath: {
+      block: 2,
+      [NOTE]: {
+        block: 'Block each Oath card grants while you have not entered a stance this fight.',
+      },
+    },
+  },
+
   // ---- M2 run economy (SPEC §6) ---------------------------------------------
   rewards: {
     sourceBonuses: {
@@ -569,6 +583,24 @@ export const balance = {
       },
       [NOTE]: {
         '{classId}.{kind}.{rarity}': 'The {className}\'s own reward odds: how often {pool} offers {a rarity} card, weighed against the other rarities in its row.',
+      },
+    },
+    // Owner decision #13: Psychic and Earth cards belong to no class, but the
+    // Herald and Starseer meet them more naturally. Within a rarity, a card
+    // tagged damage:<element> for one of the class's elements weighs
+    // offerWeightMult times a plain card in that class's card rewards.
+    // startingChoice: the affinity classes may pick up to maxPicks of these
+    // element spells as one of their selectable starting spells at character
+    // creation (owner decision 13, 2026-10-12). Only classless attack cards whose
+    // attack.source is `source` and rarity is listed qualify; the picker is
+    // src/model/startingAbilities.js. Skills (Stoneskin, Dissonance) are not spells.
+    elementAffinity: {
+      classes: { herald: ['psychic', 'earth'], starseer: ['psychic', 'earth'] },
+      offerWeightMult: 2,
+      startingChoice: { maxPicks: 1, source: 'spell', rarities: ['common', 'uncommon'],
+        [NOTE]: { maxPicks: 'How many element spells (classless spell attacks of the listed rarities) an affinity class may take among its starting spells at character creation.' } },
+      [NOTE]: {
+        offerWeightMult: 'How many times likelier an affinity-element card is to be picked, within its rarity, in this class\'s card rewards.',
       },
     },
     // Decaying flask drop (StS potion rule): −step on drop, +step on miss.

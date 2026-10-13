@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "title": "Review Attributes Body",
+  "canvas": {
+    "width": 475,
+    "height": 30,
+    "background": "transparent"
+  },
+  "defaultState": "review",
+  "states": [
+    {
+      "id": "review",
+      "name": "Review"
+    }
+  ],
+  "assets": {},
+  "nodes": [
+    {
+      "id": "review-attributes-value",
+      "name": "Review Attributes Value",
+      "type": "text",
+      "parent": "review-attributes-body",
+      "x": 0,
+      "y": 0,
+      "width": 475,
+      "height": 30,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "text": "STR 1 \u00b7 DEX 1 \u00b7 CON 1 \u00b7 WIS 2 \u00b7 INT 3",
+      "fontSize": 15,
+      "fontFamily": "Arial",
+      "fill": "#e7dec8",
+      "lineHeight": 1.3
+    },
+    {
+      "id": "review-attributes-body",
+      "name": "Review Attributes Body",
+      "type": "group",
+      "parent": null,
+      "x": 0,
+      "y": 0,
+      "width": 475,
+      "height": 30,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "fill": "none"
+    }
+  ],
+  "metadata": {
+    "componentSource": "review-attributes-body",
+    "sourceState": "review",
+    "designOnly": true
+  }
+}

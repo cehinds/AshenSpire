@@ -21,6 +21,7 @@ import { playCardEffectLayers } from '../cardEffectLayers.js';
 // number displayed comes from previewCard / previewIntent — no math here.
 
 import { dispatch, previewCard, previewIntent, getEntity, cardChoicePlan } from '../../engine/combat.js';
+import { discardCandidates } from '../../engine/abilityRiders.js';
 import { combatLogEntries } from '../../model/combatLog.js';
 import { combatToolsModel, COMBAT_LOG_DEFAULT_SIZE } from '../models/CombatToolsModel.js';
 import { mountCombatTools, closeCombatFullLog } from '../components/combatTools.js';
@@ -30,7 +31,7 @@ import { knowledgePredictionModel } from '../../engine/enemyKnowledge.js';
 import { openCardChoiceModal } from '../components/cardChoiceModal.js';
 import { openUpcastChoice, upcastChoicePlan } from '../components/upcastChoice.js';
 import { openDiscardChoiceModal } from '../components/discardChoiceModal.js';
-import { openReactionChoiceModal } from '../components/reactionChoiceModal.js';
+import { openReactionChoiceModal, committedReactionStack, reactionStackEntryName, stackedCardIds } from '../components/reactionChoiceModal.js';
 import { combatIntentStance } from '../../model/combatIntentVisibility.js';
 import { assertFoundationPlayable } from '../../engine/combatRules.js';
 import { resolveCard } from '../../model/registries.js';
@@ -1146,7 +1147,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   function renderCombatTools() {
-    combatTools.update(combatToolsModel({ supported: combat.reactionRulesVersion === 1,
+    combatTools.update(combatToolsModel({ supported: combat.reactionRulesVersion >= 1,
       enabled: combat.player.reactionsEnabled !== false,
       disabled: busy || combat.phase !== 'player' || !!combat.pendingAbilityDiscard || !!combat.pendingReaction,
       ...combatToolsState, entries: combatLogEntries(combat.eventLog.slice(0, disp?.logLength ?? combat.eventLog.length),
@@ -1696,8 +1697,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     $('.hand').inert = busy || enemyPlayback || !!combat.pendingReaction || !!combat.result;
     $('.hand').setAttribute('aria-disabled', String(busy || enemyPlayback || !!combat.pendingReaction || !!combat.result));
     if (heldTurnHand) return; // Preserve the exact last hand face, fan and input focus during playback.
+    const stackedIds = stackedCardIds(combat.reactionStack);
     const key = JSON.stringify([handList, combat.player, combat.enemies, combat.loadout, combat.attributes,
-      combat.turn, combat.phase, combat.result, selected, selfArm, readSettings()]);
+      combat.turn, combat.phase, combat.result, selected, selfArm, [...stackedIds], readSettings()]);
     if (handRenderKey === key) { syncHandPager(handList); return; }
     handStrip.render({
       cards: handList.map((inst) => {
@@ -1714,6 +1716,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         }
         const affordable = !!pv && combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && combat.player.mana >= pv.manaCost && combat.player.stamina >= (pv.staminaCost || 0) && !isUnplayable(inst);
         return { inst, preview: pv, affordable, selected: inst.instanceId === selected || inst.instanceId === selfArm,
+          stacked: stackedIds.has(inst.instanceId),
           // The surface names itself and hands over its own commit; the
           // verb and its availability sentence come from the service.
           surface: 'combat',
@@ -2402,7 +2405,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function showPendingReaction() {
     const pending = combat.pendingReaction;
     if (!pending || reactionShell || busy || combat.pendingAbilityDiscard) return;
-    reactionShell = openReactionChoiceModal({ pending,
+    const stack = committedReactionStack(combat.reactionStack, pending.groupKey)
+      .map(entry => ({ name: reactionStackEntryName(entry, registries), cardInstanceId: entry.cardInstanceId }));
+    reactionShell = openReactionChoiceModal({ pending, stack,
       onClosed: () => { reactionShell = null; },
       onAnswer: intent => {
         if (!combatEl.isConnected || combat.pendingReaction?.id !== intent.offerId) return;
@@ -2421,7 +2426,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (!pending || discardShell) return;
     discardShell = openDiscardChoiceModal({
       count: pending.count, cardName: registries.cards.get(pending.cardId).name,
-      cards: combat.piles.hand.map(card => ({ instanceId: card.instanceId, name: resolveCard(registries, card).name })),
+      cards: discardCandidates(combat).map(card => ({ instanceId: card.instanceId, name: resolveCard(registries, card).name })),
       onClosed: () => { discardShell = null; },
       onChoose: cardInstanceIds => {
         disp = takeSnapshot();

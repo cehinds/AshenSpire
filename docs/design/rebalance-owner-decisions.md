@@ -25,3 +25,17 @@ Detail and rationale: `docs/design/elements-and-tag-mechanics.md`.
 16. Weapon attack cards get a fixed `damage:*` tag (owner override of the weapon-derived reading in SPEC §4.7; SPEC to be updated).
 17. Codex P2 findings on the unwired Combat Rounds preview (PR #1888) after `8086a5a` are answered and deferred to the wiring phase, not chased in the port.
 18. The fixed weapon `damage:*` tags apply to old (v1) saved runs as well as new (v2) runs.
+19. Weapon damage-type rules (owner, 2026-10-12, answering Codex on #1900):
+    - `strike`, `cheapShot`, `bloodhuntersStrike`, `guardCounter` deal the **equipped weapon's** damage type (no fixed tag).
+    - Weapon families: blades deal Slashing and/or Piercing; blunt weapons deal Blunt and/or Force; projectiles (throwing daggers, bows, javelins — only bows exist today) deal Piercing.
+    - `ruinousBlow`, `deathblow`: Blunt and/or Force.
+    - `bloodTithe`: Slashing or Piercing, following the equipped blade.
+    - Untagged weapon cards must resolve to the weapon family's type in v1 and v2 (today v2 falls back to Blunt).
+20. PR #1901 (link self-test fix) approved to merge once CI is green.
+21. The four Rogue poison cards (Asp Dart, Viper Strike, Septic Blade, Lethal Dose) stay in the classic (v1) card pools as well as v2 (already so; no code change).
+22. Lethal Dose becomes a thrown vial — "thrown but reach instead of ranged": `delivery:projectile` and `reach:near` (the reach other thrown or near cards use), keeping `maneuver:attack` (never `maneuver:ranged`); in v2 the overlay sets Reach and the projectile flag.
+23. Ruinous Blow and Deathblow deal Blunt + Force (`damage:arcane`) split 60:40 and 40:60. The pairing is the orchestrator's reversible assignment: Ruinous Blow 60 Blunt / 40 Force (the heavy blow leans physical), Deathblow 40 Blunt / 60 Force, authored as `attack.components`. In v1 and v2 a mixed hit is labelled by its heavier part, carries every part's rider, and (v2) meets each type's resist or weakness with that part's share.
+24. Blood Tithe with a piercing non-blade (spiked shield, bow): "piercing + necrotic and bleed status effect". Its damage is a weapon half plus a Necrotic (`damage:decay`) half, split 50/50 (an assumption): a blade keeps its slashing or piercing, a piercing non-blade gives piercing, any other piece or bare hands give slashing. It applies 2 Bleed on hit (3 upgraded; v2 projects 8 / 12 Bleed build-up), after its double-Bleed payoff reads the target.
+25. Lethal Dose gains Precision (`precision` and `technique:precision`, the tags deathblow carries). It then counts toward the Rogue shortbow starting hand, and it bypasses 4 Block like the other Precision cards (decision 11).
+26. Thrown Lethal Dose keeps the melee animation and stays counterable by melee Counter: no projectile animation or Counter exemption for Reach projectiles.
+27. Lethal Dose raised: 6 + 4×Venom (upgraded 8 + 5×), so the v2 cap gives 18 / 23.
