@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-13",
     "summary": "Combat rounds reject invalid hooks before drawing and keep non-finite stats finite",
     "detail": "Development preview fix only, nothing in the game changes unless the optional round engine is enabled. Invalid round hooks now fail before consuming randomness or changing state, and non-finite combatant numbers normalize to zero consistently in saved and unsaved rounds.",
-    "build": "0.7.1.1471",
+    "build": "0.7.1.1473",
     "pullRequest": 1871,
     "url": "https://github.com/cehinds/AshenSpire/pull/1871"
   },
@@ -18,7 +18,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-13",
     "summary": "The tag model, its tools and workbench, and the Evade sigil land",
     "detail": "Development-process change only, nothing in the game changes. The tag model's tables, build, check and compile tools, and a table workbench for editing them, are in docs/tag-model/, with its owner rulings on Evade, Sweep precision and piercing stacks recorded in DECISIONS.md. The Evade action sigil now draws from the card-art template boot; no card uses it yet. Five lookup developer messages and 31 combat-test and debug-chrome strings move to content/source/uiStrings.csv, completing steps 9 and 10 of the strings migration.",
-    "build": "0.7.1.1471",
+    "build": "0.7.1.1473",
     "pullRequest": 1931,
     "url": "https://github.com/cehinds/AshenSpire/pull/1931"
   },
@@ -28,7 +28,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-13",
     "summary": "The test branch's long checks pass again, and pricing a card is fast again",
     "detail": "Development-process fix, with one engine speed-up. Previewing a card's cost or target no longer copies the whole fight when no rule could react to that card, which had made the balance check and simulations about three times slower after Oath began reacting to every card. The link check's self-test copies the Workbench files it needs, and the simulation-report test runs each identical simulation once.",
-    "build": "0.7.1.1471",
+    "build": "0.7.1.1473",
     "pullRequest": 1950,
     "url": "https://github.com/cehinds/AshenSpire/pull/1950"
   },
