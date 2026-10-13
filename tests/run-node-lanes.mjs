@@ -86,3 +86,15 @@ export function selftestInGroup(group, tool) {
   if (group === 'other') return tool !== 'linkcheck';
   throw new Error('selftest group must be link or other');
 }
+
+// The summary counts for one shard. A shard stopped by its time limit never
+// prints node --test's "ℹ tests N" / "ℹ fail N" lines, so its counts are
+// unknown; say so instead of printing NaN.
+export function shardSummaryCounts({ out, timedOut, limitMinutes, files }) {
+  if (timedOut) return `${files} files, stopped after ${limitMinutes} minutes (timed out; no test summary)`;
+  const count = (label) => Number(out.match(new RegExp(`^ℹ ${label} (\\d+)$`, 'm'))?.[1] ?? NaN);
+  const tests = count('tests');
+  const failed = count('fail');
+  if (!Number.isFinite(tests) || !Number.isFinite(failed)) return `${files} files, counts unavailable`;
+  return `${files} files, ${tests} tests, ${failed} failed`;
+}

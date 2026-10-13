@@ -13,24 +13,24 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1931"
   },
   {
-    "id": "pr-1867",
+    "id": "pr-1941",
     "date": "2026-10-13",
     "group": "2026-10-13",
-    "summary": "The round-based combat engine is ported as a preview",
-    "detail": "Nothing changes in the game yet. The alternative round-based combat engine (src/engine/combatRounds) is in the codebase with its own tests and a specification section (§4.11), and it is not wired into combat.",
+    "summary": "Creation spell and maneuver cards fit, and combat input can't lock",
+    "detail": "In character creation the Spells step and the Combat Maneuvers picker show cards at the review page's size, and the maneuver list scrolls so every card can be reached and chosen. In combat, a failure while preparing a play's visuals no longer leaves End Turn and the hand unresponsive.",
     "build": "0.7.1.1465",
-    "pullRequest": 1867,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1867"
+    "pullRequest": 1941,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1941"
   },
   {
-    "id": "pr-1838",
+    "id": "pr-1927",
     "date": "2026-10-13",
     "group": "2026-10-13",
-    "summary": "The alternative combat rounds design is recorded",
-    "detail": "Development-process change only, nothing in the game changes. The design for timeline queues, initiative and merge modes is written up in docs/alternative-combat-rounds, with its own tests.",
+    "summary": "Test shards that run out of time say so",
+    "detail": "Nothing changes in the game. A test shard stopped by its 15-minute limit now reports that it was stopped, instead of printing NaN test counts.",
     "build": "0.7.1.1465",
-    "pullRequest": 1838,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1838"
+    "pullRequest": 1927,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1927"
   },
   {
     "id": "pr-1936",
