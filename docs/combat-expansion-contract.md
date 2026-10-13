@@ -3,7 +3,7 @@
 Owner authorization: implement the revised combat notes in one delivery and land them in regular and alternative dev/test (2026-10-07).
 
 - **Accepted rules**
-  - The complete rules in the revised combat notes (removed 2026-10-11; see git history) are the behavioral contract for expansion version 2.
+  - The complete rules in [the revised combat notes](combat-cards-expansion-proposal.md) are the behavioral contract for expansion version 2.
   - Values labelled Suggested become configurable initial defaults for this implementation, not omitted features.
   - This implementation contract overrides conflicting earlier proposal wording: prepared Counter mitigation and reply are one charge consumed by the first eligible committed incoming action, even when that action does not qualify for a return. Mitigation therefore applies to that action only, not the rest of the prepared window. Large authored buildup can complete multiple protected or active fills in one action, including Frozen, Sleep, and Paralysis; version 2 retires their earlier one-new-stack-per-action exception.
   - The concrete Reaver example takes precedence over the retired version-1 automatic Counter return multiplier and flat bonus: return exactly the authored reply after the attack action is fully absorbed.
