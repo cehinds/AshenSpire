@@ -13,6 +13,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1940"
   },
   {
+    "id": "pr-1927",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Test shards that run out of time say so",
+    "detail": "Nothing changes in the game. A test shard stopped by its 15-minute limit now reports that it was stopped, instead of printing NaN test counts.",
+    "build": "0.7.1.1465",
+    "pullRequest": 1927,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1927"
+  },
+  {
     "id": "pr-1936",
     "date": "2026-10-13",
     "group": "2026-10-13",
