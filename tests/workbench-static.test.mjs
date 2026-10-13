@@ -10,7 +10,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -66,6 +66,16 @@ describe('workbench static build', () => {
     assert.ok(!paths.some((p) => p.startsWith('docs/design/')), 'docs/design/ is never indexed');
   });
 
+  it('points the Library pages served at the site root to the published copy', () => {
+    const snapshot = JSON.parse(readFileSync(path.join(out, 'static-api', 'snapshot.json'), 'utf8'));
+    const entries = snapshot.snap.library.body.entries;
+    const external = entries.filter((e) => e.external === true);
+    assert.ok(external.some((e) => typeof e.url === 'string' && e.url.startsWith('/x/')), 'an entry opens the site copy under /x/');
+    for (const e of entries) {
+      if (typeof e.url === 'string') assert.equal(e.url.startsWith(BASE), false, `${e.id} does not point into the Workbench base`);
+    }
+  });
+
   it('stores each indexed file as JSON with its text', () => {
     const snapshot = JSON.parse(readFileSync(path.join(out, 'static-api', 'snapshot.json'), 'utf8'));
     const [first] = Object.keys(snapshot.index);
@@ -82,7 +92,22 @@ describe('workbench static build', () => {
     assert.ok(render.includes(`${BASE}game/workbench/modules/`));
   });
 
+  it('mirrors the root preview pages with their absolute paths moved under the base', () => {
+    const previews = readdirSync(path.join(out, 'game')).filter((f) => /-preview\.html$/.test(f));
+    assert.ok(previews.length >= 1, 'at least one *-preview.html is in game/');
+    for (const name of previews) {
+      const text = readFileSync(path.join(out, 'game', name), 'utf8');
+      assert.equal(/["'`(]\/styles\//.test(text), false, `${name} has no absolute /styles/ path`);
+      const source = readFileSync(path.join(REPO, name), 'utf8');
+      if (/["'`(]\/styles\//.test(source)) assert.ok(text.includes(`${BASE}game/styles/`), `${name} points styles under the base`);
+    }
+  });
+
   it('writes no game/assets when --no-art is given', () => {
     assert.equal(existsSync(path.join(out, 'game', 'assets')), false);
+  });
+
+  it('writes no asset-file/ when --no-art is given', () => {
+    assert.equal(existsSync(path.join(out, 'asset-file')), false);
   });
 });

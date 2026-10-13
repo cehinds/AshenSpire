@@ -17,7 +17,8 @@
 // modules and the top level of pose-studio/) is mirrored to DIR/game/, so the
 // Workbench's game preview still loads. Unless --no-art is given, the light art
 // pack (assets-mobile/) goes to DIR/game/assets/, where serve.mjs would answer
-// /assets/ with the light twin.
+// /assets/ with the light twin. The Asset Gallery's images (assets-display/ and
+// assets-mobile/) go to DIR/asset-file/, where its asset-file/ URLs load them.
 //
 // docs/design/ (large design rigs) is never read or copied. A missing optional
 // input (the static-api module, assets-mobile/) prints a warning and the build
@@ -34,7 +35,8 @@ const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DESIGN_PREFIX = 'docs/design/';
 const UI_NAMES = ['index.html', 'app.mjs', 'workbench.css', 'shared', 'ui', 'modules', 'lib'];
 const UI_REWRITE = /(["'`(])\/(api|shared|ui|modules|lib|static|export|asset-file|app\.mjs|workbench\.css)\b/g;
-const GAME_REWRITE = /(["'`(])\/workbench\//g;
+const GAME_REWRITE = /(["'`(])\/(workbench|styles|src|assets|pose-studio)\//g;
+const PREVIEW_PAGE = /^([\w.-]+-preview|tooltip-review[\w.-]*)\.html$/;
 const UI_TEXT = /\.(html|mjs|js|css)$/;
 const GAME_TEXT = /\.(html|mjs|js|css|json|svg)$/;
 const SNAPSHOT_DIRS = ['content', 'docs/tag-model', 'pose-studio/renewal', 'pose-studio/stances', 'workbench/workspace', 'ui-studio/workspace'];
@@ -84,6 +86,32 @@ async function copyTree(src, dst, { textRe = null, rewrite = null } = {}) {
   else await fs.copyFile(src, dst);
 }
 
+// The root preview pages (names only) that go to game/ and the Library opens from there.
+async function rootPreviewPages() {
+  return (await fs.readdir(REPO, { withFileTypes: true })).filter((e) => e.isFile() && PREVIEW_PAGE.test(e.name)).map((e) => e.name);
+}
+
+// The site root above the Workbench base: '/AshenSpire/' for '/AshenSpire/workbench/', '/' for '/'.
+function siteRootOf(base) {
+  const parts = base.split('/').filter(Boolean);
+  parts.pop();
+  return parts.length ? `/${parts.join('/')}/` : '/';
+}
+
+// The Library's pages that GitHub Pages serves at the site root (not mirrored into game/)
+// now open the published copy. Mutates the library body; returns how many entries changed.
+function markSiteLinks(library, siteRoot, mirrored) {
+  let changed = 0;
+  for (const entry of library?.entries || []) {
+    if (entry.servedBy === 'workbench-child' || entry.external || !entry.exists) continue;
+    if (typeof entry.path !== 'string' || mirrored.has(entry.path)) continue;
+    entry.external = true;
+    entry.url = siteRoot + entry.path.split('/').map(encodeURIComponent).join('/');
+    changed += 1;
+  }
+  return changed;
+}
+
 async function treeBytes(dir) {
   let total = 0;
   for (const entry of await fs.readdir(dir, { withFileTypes: true })) {
@@ -94,7 +122,7 @@ async function treeBytes(dir) {
 }
 
 // Boots the Workbench on a free port and records what its read-only API answers.
-async function buildSnapshot(out) {
+async function buildSnapshot(out, { base, previews }) {
   const stateDir = await fs.mkdtemp(path.join(os.tmpdir(), 'wbs-'));
   let app = null;
   try {
@@ -127,6 +155,7 @@ async function buildSnapshot(out) {
       read += 1;
     }
 
+    markSiteLinks(snap.library?.body, siteRootOf(base), new Set(previews));
     const git = snap.git?.body || {};
     const meta = { branch: git.branch || '', head: git.head || '', builtAt: new Date().toISOString() };
     await writeOut(out, 'static-api/snapshot.json', JSON.stringify({ meta, snap, index }));
@@ -144,7 +173,8 @@ async function main() {
   await fs.rm(out, { recursive: true, force: true });
   await fs.mkdir(out, { recursive: true });
 
-  const files = await buildSnapshot(out);
+  const previews = await rootPreviewPages();
+  const files = await buildSnapshot(out, { base, previews });
 
   // The UI, with its absolute paths moved under the base.
   const uiRewrite = { re: UI_REWRITE, to: `$1${base}$2` };
@@ -169,9 +199,11 @@ async function main() {
   }
 
   // The game runtime that tools/serve.mjs serves from the checkout.
-  const gameRewrite = { re: GAME_REWRITE, to: `$1${base}game/workbench/` };
+  const gameRewrite = { re: GAME_REWRITE, to: `$1${base}game/$2/` };
   const game = path.join(out, 'game');
   await copyTree(path.join(REPO, 'index.html'), path.join(game, 'index.html'), { textRe: GAME_TEXT, rewrite: gameRewrite });
+  // The root preview pages the Entity Browser and Library open from the game server.
+  for (const name of previews) await copyTree(path.join(REPO, name), path.join(game, name), { textRe: GAME_TEXT, rewrite: gameRewrite });
   for (const dir of ['src', 'styles']) await copyTree(path.join(REPO, dir), path.join(game, dir), { textRe: GAME_TEXT, rewrite: gameRewrite });
   await copyTree(path.join(REPO, 'workbench', 'modules'), path.join(game, 'workbench', 'modules'), { textRe: GAME_TEXT, rewrite: gameRewrite });
   for (const entry of await fs.readdir(path.join(REPO, 'pose-studio'), { withFileTypes: true })) {
@@ -183,6 +215,12 @@ async function main() {
     const light = path.join(REPO, 'assets-mobile');
     if (existsSync(light)) await copyTree(light, path.join(game, 'assets'));
     else warnings.push('assets-mobile/ is missing: game/assets/ was not written');
+    // The Asset Gallery loads its images from ${base}asset-file/<repo path>.
+    for (const dir of ['assets-display', 'assets-mobile']) {
+      const src = path.join(REPO, dir);
+      if (existsSync(src)) await copyTree(src, path.join(out, 'asset-file', dir));
+      else warnings.push(`${dir}/ is missing: asset-file/${dir}/ was not written`);
+    }
   }
 
   const bytes = await treeBytes(out);
