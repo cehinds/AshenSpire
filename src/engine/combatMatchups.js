@@ -3,6 +3,11 @@ import { combatMatchups, combatExpansionMatchups } from '../content/combatMatchu
 import * as Avoidance from './combatAvoidance.js';
 import { creditKnowledgeBenefit } from './enemyKnowledge.js';
 import { enqueueExpandedAction } from './combatExpansionActions.js';
+import { breakPersistentWard } from './combatStatusControl.js';
+import { counterstrikeAmount, counterstrikePct, stanceManeuverOf } from './combatCardTraitMath.js';
+import { dealPoiseDamage } from './actions.js';
+import { spendPersistentWard } from './combatStatusControl.js';
+import { cardRatingBonus } from './combatRatings.js';
 
 export function matchupRules(ctx) {
   return ctx?.combatMatchupRules || ctx?.registries?.balance?.combatMatchups || combatMatchups;
@@ -78,6 +83,30 @@ export function clearCombatCounter(entity, ctx = null) {
   }
 }
 
+/**
+ * Technique riders keyed by the carrier's authored card tags (the list
+ * `cardTagIs` reads). A frozen table without `tagRiders` simply has none.
+ */
+export function tagRidersFor(cfg, carrier) {
+  const table = cfg?.tagRiders;
+  if (!table) return [];
+  const tags = carrier?.authoredTags || carrier?.tags || [];
+  return Object.keys(table).filter(tag => tags.includes(tag)).map(tag => table[tag]);
+}
+
+/** Damage-type and technique riders of one hit, in resolution order. */
+export function hitRiders(cfg, damageType, carrier) {
+  // A mixed-damage hit carries the rider of every type it deals (owner #23/#24).
+  const parts = (carrier?.combatProfile?.damageComponents || []).map(c => cfg?.damageAliases?.[c.type] || c.type);
+  return [...new Set([damageType, ...parts])].map(type => cfg?.damageRiders?.[type])
+    .concat(tagRidersFor(cfg, carrier)).filter(Boolean);
+}
+
+/** The larger guard bypass of the hit's riders; never their sum. */
+export function riderGuardBypass(riders) {
+  return Math.max(0, ...riders.map(rider => Number(rider.guardBypass) || 0));
+}
+
 /** Pure: both ordinary damage previews and live resolution call this once. */
 export function prepareMatchupHit(ctx, source, target, carrier, computedDamage) {
   if (combatExpansionEnabled(ctx)) {
@@ -97,7 +126,7 @@ export function prepareMatchupHit(ctx, source, target, carrier, computedDamage) 
   const damageType = cfg.damageAliases?.[profile?.damageType] || profile?.damageType;
   const targetKey = ctx.playerIdForEntity?.(target) || target?.id;
   const riderSpent = carrier?.combatRiderTargets?.includes(targetKey);
-  const bypass = profile && !carrier?.combatReaction && !riderSpent ? cfg.damageRiders?.[damageType]?.guardBypass || 0 : 0;
+  const bypass = profile && !carrier?.combatReaction && !riderSpent ? riderGuardBypass(hitRiders(cfg, damageType, carrier)) : 0;
   const amount = Math.max(0, Math.floor(raw * (smash ? cfg.smash.guardedMultiplier : 1) * (counter ? cfg.counter.incomingMultiplier : 1)));
   return { amount, profile, guardBefore, smash, counterEligible: counter,
     counter: counter ? structuredClone(target.combatCounter) : null,
@@ -127,7 +156,9 @@ export function stripCombatWard(ctx, source, target, amount) {
     if (!ward) return 0;
     const stripped = Math.min(Math.max(0, ward.value), Math.max(0, Math.floor(amount)));
     ward.value -= stripped;
-    if (stripped) ctx.emit?.('combatWardStripped', { ...seats(ctx, source, target), sourceId: source?.id, sourceKind: source?.kind, targetId: target.id, amount: stripped });
+    // value and max carry the remaining Ward, so the paced reducers can move the badge as the hit does.
+    if (stripped) ctx.emit?.('combatWardStripped', { ...seats(ctx, source, target), sourceId: source?.id, sourceKind: source?.kind, targetId: target.id, amount: stripped, value: ward.value, max: ward.max });
+    if (stripped && ward.value === 0) breakPersistentWard(ctx, target, { sourceId: source?.id });
     return stripped;
   }
   let remaining = Math.max(0, Math.floor(amount));
@@ -189,22 +220,28 @@ export function matchupRiderEffects(ctx, source, target, carrier, { amount = 0, 
   if (seen?.includes(key)) return [];
   const cfg = combatExpansionEnabled(ctx) ? expansionMatchupRules(ctx) : matchupRules(ctx);
   const type = cfg.damageAliases?.[profile.damageType] || profile.damageType;
-  const rider = cfg.damageRiders?.[type];
-  if (!rider || (rider.requiresHpLoss && hpLoss <= 0)
-    || (!target.alive && !(rider.cleanse && source?.alive))) return [];
+  // The damage-type rider and any technique (tag) riders share one budget.
+  const riders = hitRiders(cfg, type, carrier).filter(rider => !(rider.requiresHpLoss && hpLoss <= 0)
+    && (target.alive || (rider.cleanse && source?.alive)));
+  if (!riders.length) return [];
   if (seen) seen.push(key);
-  const effects = [];
-  if (target.alive && rider.poise) effects.push({ op: 'poiseDamage', amount: rider.poise });
-  if (target.alive && rider.wardDrain) stripCombatWard(ctx, source, target, rider.wardDrain);
-  if (target.alive && rider.status && !carrier.appliedStatuses?.includes(rider.status) && ctx.registries?.statuses?.has(rider.status)) {
-    if (combatExpansionEnabled(ctx)) {
-      if (!carrier.appliedBuildupStatuses?.includes(rider.status)) effects.push({ op: 'buildup', status: rider.status,
-        amount: rider.pressure, camp: profile.camp, recoveryProfile: rider.recoveryProfile });
-    } else effects.push({ op: 'applyStatus', status: rider.status, stacks: rider.stacks });
-  }
-  if (rider.cleanse && source?.alive) {
-    const status = cfg.cleanseStatuses.find(id => source.statuses?.[id] && ctx.registries?.statuses?.has(id));
-    if (status) effects.push({ op: 'removeStatus', target: 'self', status, amount: rider.cleanse });
+  const effects = [], statuses = new Set();
+  for (const rider of riders) {
+    if (target.alive && rider.poise) effects.push({ op: 'poiseDamage', amount: rider.poise });
+    if (target.alive && rider.wardDrain) stripCombatWard(ctx, source, target, rider.wardDrain);
+    if (target.alive && rider.status && !statuses.has(rider.status) && !carrier.appliedStatuses?.includes(rider.status) && ctx.registries?.statuses?.has(rider.status)) {
+      statuses.add(rider.status);
+      if (combatExpansionEnabled(ctx)) {
+        // A printed Crimson Blight replaces the automatic Necrotic Blight, as the card rider does.
+        const printed = carrier.appliedBuildupStatuses || [];
+        if (!printed.includes(rider.status) && !(rider.status === 'necroticBlight' && printed.includes('crimsonBlight'))) effects.push({ op: 'buildup', status: rider.status,
+          amount: rider.pressure, camp: profile.camp, recoveryProfile: rider.recoveryProfile });
+      } else effects.push({ op: 'applyStatus', status: rider.status, stacks: rider.stacks });
+    }
+    if (rider.cleanse && source?.alive) {
+      const status = cfg.cleanseStatuses.find(id => source.statuses?.[id] && ctx.registries?.statuses?.has(id));
+      if (status) effects.push({ op: 'removeStatus', target: 'self', status, amount: rider.cleanse });
+    }
   }
   return effects;
 }
@@ -249,6 +286,12 @@ export function setCombatStance(ctx, entity, carrier) {
     reach: profile.reach, ...(profile.school ? { school: profile.school } : {}),
     ...(Number.isInteger(profile.stanceExpiry) ? { expiresOnOwnerCycle: (entity.combatOwnerCycle || 0) + profile.stanceExpiry } : {}),
   };
+  // Reaction rules version 2: a Defend card with Impact/Flux arms the trait guard (max-merged).
+  const trait = ctx.reactionRulesVersion === 2 && profile.maneuver === 'defend' ? carrier?.traitValues : null;
+  if (trait && (trait.impact > 0 || trait.flux > 0)) {
+    const armed = entity.combatTraitGuard || { poise: 0, ward: 0 };
+    entity.combatTraitGuard = { poise: Math.max(armed.poise, trait.impact || 0), ward: Math.max(armed.ward, trait.flux || 0) };
+  }
   ctx.emit?.('combatStanceChanged', { sourceId: entity.id,
     ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(entity) } : {}), ...entity.combatStance });
   return entity.combatStance;
@@ -260,6 +303,7 @@ export function startTacticalTurn(ctx, entity) {
   entity.combatOwnerCycle = (entity.combatOwnerCycle || 0) + 1;
   clearCombatCounter(entity, ctx);
   delete entity.combatEvade;
+  delete entity.combatTraitGuard;
   if (entity.combatStance?.expiresOnOwnerCycle != null
     && entity.combatOwnerCycle >= entity.combatStance.expiresOnOwnerCycle) delete entity.combatStance;
   const stance = entity.combatStance;
@@ -290,7 +334,9 @@ function armExpansionCounter(ctx, entity, carrier, options) {
     coverage: structuredClone(options.coverage || profile.counterCoverage || expansionMatchupRules(ctx).counter.defaultCoverage[mode]),
     payload: authored ? { hp: Math.floor(number(authored.hp)), poise: Math.floor(number(authored.poise)), ward: Math.floor(number(authored.ward)),
       ...(authored.smashPoiseBonus !== undefined ? { smashPoiseBonus: Math.floor(number(authored.smashPoiseBonus)) } : {}),
-      ...(authored.hpAgainstNonCaster !== undefined ? { hpAgainstNonCaster: authored.hpAgainstNonCaster } : {}) } : { hp: number(options.damage) + number(options.bonus),
+      ...(authored.hpAgainstNonCaster !== undefined ? { hpAgainstNonCaster: authored.hpAgainstNonCaster } : {}),
+      ...(authored.hpBase !== undefined ? { hpBase: Math.floor(number(authored.hpBase)), hpRating: Math.floor(number(authored.hpRating)) } : {}),
+      ...(authored.poiseBase !== undefined ? { poiseBase: Math.floor(number(authored.poiseBase)) } : {}) } : { hp: number(options.damage) + number(options.bonus),
       poise: number(options.poiseDamage), ward: number(options.wardDamage) },
     expiresOnOwnerCycle: (entity.combatOwnerCycle || 0) + 1,
     ...(profile.schoolEffect ? { schoolEffect: profile.schoolEffect } : {}),
@@ -379,8 +425,12 @@ export function previewTacticalAction(ctx, source, target, carrier, contacts = [
   const guardBefore = number(target?.block) - Math.min(number(target?.block), number(target?.wardBlock));
   const pierce = profiles.some((p, i) => p.camp === 'physical' && amounts[i] > 0
     && (cfg.damageAliases[p.damageType] === 'piercing' || p.damageType === 'piercing'));
+  // Technique riders (Precision) join Piercing's bypass: the larger, never the sum.
+  const physicalHit = profiles.some((p, i) => p.camp === 'physical' && amounts[i] > 0);
+  const bypass = riderGuardBypass([...(pierce && cfg.damageRiders.piercing ? [cfg.damageRiders.piercing] : []),
+    ...(physicalHit ? tagRidersFor(cfg, carrier) : [])]);
   return { version: 2, targetKey: targetKey(ctx, target), profile, profiles, amount, amounts, knowledgeBonus,
-    guardBefore, guardBypass: pierce && !carrier?.combatReaction ? Math.min(amount, guardBefore, cfg.damageRiders.piercing?.guardBypass || 0) : 0,
+    guardBefore, guardBypass: !carrier?.combatReaction ? Math.min(amount, guardBefore, bypass) : 0,
     smash: profiles.some(p => p.maneuver === 'smash') && target?.combatStance?.maneuver === 'defend',
     counterEligible: eligible, counter: eligible ? structuredClone(counter) : null, covered,
     counterDisabledAtStart: Boolean(control.counterDisabled), avoidance,
@@ -440,9 +490,18 @@ function schoolReturnMultiplier(ctx, counter, incoming) {
   return check('strong') ? cfg.schoolStrongMultiplier : 1;
 }
 
+/**
+ * THE ONE SMASH GUARD-BREAK TEST: a Smash that connects and leaves the target
+ * with no Block. GUARD BREAK (combatGuardBroken) and the Block's blockBroken
+ * both read it, so the Block break a Smash makes is shown as GUARD BREAK alone.
+ */
+export function isSmashGuardBreak(receipt, target) {
+  return !!receipt && receipt.smash === true && (receipt.connected ?? true) && number(receipt.guardBefore) > 0 && number(target?.block) <= 0;
+}
+
 /** A Smash that breaks the target's last Guard. Reported even when the hit killed the target. */
 export function completeGuardBreak(ctx, source, target, carrier, receipt) {
-  if (!(receipt.smash && receipt.connected && receipt.guardBefore > 0 && number(target?.block) <= 0)) return;
+  if (!isSmashGuardBreak(receipt, target)) return;
   const amount = carrier?.combatProfile?.breakPoiseBonus ?? expansionMatchupRules(ctx).smash.guardBreakPoiseBonus;
   // The break is reported even with no bonus, and even when this hit killed
   // the target: Guard broke all the same. A dead target takes no bonus Poise.
@@ -453,10 +512,22 @@ export function completeGuardBreak(ctx, source, target, carrier, receipt) {
   }
 }
 
+// Reaction rules version 2: a Defend guard answers the first enemy hit that Block, Barrier or Ward reduced.
+function completeTraitGuard(ctx, source, target, receipt) {
+  const guard = target?.combatTraitGuard;
+  if (!guard || ctx.reactionRulesVersion !== 2 || source?.kind !== 'enemy' || receipt.avoided) return;
+  if (!(receipt.amount > 0) || !(receipt.blocked + receipt.wardResisted > 0)) return;
+  delete target.combatTraitGuard;
+  if (!source.alive) return;
+  if (guard.poise > 0) dealPoiseDamage(ctx, source, guard.poise);
+  if (guard.ward > 0) spendPersistentWard(ctx, source, guard.ward, { sourceId: target.id });
+}
+
 /** Root finalizes only after all direct contacts, pressure, and impact. */
 export function completeTacticalAction(ctx, source, target, carrier, receipt, options = {}) {
   if (!receipt || receipt.completed) return [];
   receipt.completed = true;
+  completeTraitGuard(ctx, source, target, receipt);
   const queue = [];
   const enqueue = effect => {
     const action = { effect, source: target, owner: target, target: source,
@@ -464,7 +535,7 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
         reactionDepth: Math.max(receipt.counter.carrier.reactionDepth || 0, carrier?.reactionDepth || 0),
         ...(effect.op === 'wardDamage' ? { combatWardEdgeApplied: true } : {}) }, meta: { combatCounterReaction: true, enemyKnowledgeActionSerial: source.knowledgeAction?.serial } };
     queue.push(action);
-    if (ctx.reactionRulesVersion !== 1) ctx.enqueue?.(action);
+    if (!(ctx.reactionRulesVersion >= 1)) ctx.enqueue?.(action);
   };
   completeGuardBreak(ctx, source, target, carrier, receipt);
   const counter = receipt.counter;
@@ -476,9 +547,24 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
     || !target?.alive || !source?.alive || receipt.hpLoss > 0 || receipt.statusAccepted > 0 || !resistedPayload
     || target.combatCounterReturnedCycle === (target.combatOwnerCycle || 0)) return queue;
   target.combatCounterReturnedCycle = target.combatOwnerCycle || 0;
-  const payload = { hp: number(counter.payload.hp), poise: number(counter.payload.poise), ward: number(counter.payload.ward) };
+  // Reaction rules version 2: Counterstrike scales the authored payload first; SPEC §4.8's return formulas run after.
+  const trait = ctx.reactionRulesVersion === 2 ? counter.carrier?.traitValues || {} : {};
+  const strike = trait.counterstrike ? counterstrikePct(ctx, 'counter', stanceManeuverOf(source, receipt.profile?.maneuver)) : null;
+  const scale = value => strike === null ? value : counterstrikeAmount(value, strike);
+  const payload = { hp: scale(number(counter.payload.hp)), poise: scale(number(counter.payload.poise)), ward: scale(number(counter.payload.ward)) };
+  if (strike !== null && counter.payload.poiseBase !== undefined) {
+    const base = number(counter.payload.poiseBase);
+    payload.poise = scale(base) + Math.max(0, number(counter.payload.poise) - base);
+  }
+  if (strike !== null && counter.payload.hpBase !== undefined) {
+    // Scale the authored base, then derive the rating bonus from the scaled base; other bonuses carry over unscaled.
+    const base = number(counter.payload.hpBase), rating = number(counter.payload.hpRating);
+    const scaledBase = scale(base);
+    payload.hp = scaledBase + (rating > 0 ? cardRatingBonus(ctx, target, { ...counter.carrier, ratingId: undefined }, 'damage', scaledBase) : 0)
+      + Math.max(0, number(counter.payload.hp) - base - rating);
+  }
   if (receipt.profiles.some((profile, index) => receipt.covered[index] && profile.effect !== 'status' && profile.maneuver === 'smash')) {
-    payload.poise += number(counter.payload.smashPoiseBonus);
+    payload.poise += scale(number(counter.payload.smashPoiseBonus));
   }
   if (target.statuses?.prone?.stacks > 0 && receipt.profiles.some((profile, index) => receipt.covered[index] && profile.reach === 'contact')) {
     payload.poise += number(counter.carrier.combatProfile?.pronePoiseBonus);
@@ -496,12 +582,18 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
   const pierceWard = magical && counter.carrier.combatProfile?.damageType === 'piercing';
   const wardEdge = schoolEffect === 'ward' && schoolEdge !== 1 ? schoolEdge : pierceWard ? 1.25 : 1;
   payload.ward *= wardEdge;
+  // Impact and Flux double the final return, or give N when it has none. A Spell Counter
+  // against a physical projectile keeps SPEC §4.8's no-reply-Poise exclusion.
+  if (trait.impact > 0 && !(magical && receipt.profiles.some((profile, index) => receipt.covered[index] && physicalProjectile(profile)))) {
+    payload.poise = payload.poise > 0 ? 2 * payload.poise : trait.impact;
+  }
+  if (trait.flux > 0) payload.ward = payload.ward > 0 ? 2 * payload.ward : trait.flux;
   const event = { ...eventCarrier(target, counter.carrier), ...seats(ctx, target, source),
     sourceId: target.id, targetId: source.id, amount: payload.hp, poiseDamage: payload.poise, wardDamage: payload.ward, wardOnly: magical && payload.hp === 0 };
   if (payload.hp > 0) enqueue({ op: 'damage', amount: payload.hp });
   if (payload.poise > 0) enqueue({ op: 'poiseDamage', amount: payload.poise });
   if (payload.ward > 0) enqueue({ op: 'wardDamage', amount: payload.ward });
-  if (ctx.reactionRulesVersion === 1 && queue.length) {
+  if (ctx.reactionRulesVersion >= 1 && queue.length) {
     const group = enqueueExpandedAction(ctx, queue, { source: target, target: source, carrier: queue[0].card });
     if (group) group.counterReturn = event;
   } else ctx.emit?.('combatCounterTriggered', event);

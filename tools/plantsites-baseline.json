@@ -238,7 +238,7 @@
     },
     "tools/motion-probe.mjs": {
       "count": 24,
-      "digest": "f3e4a5d667a09e99"
+      "digest": "20844ad4c8ebaf7a"
     },
     "tools/music-toggle-parity.mjs": {
       "count": 16,
@@ -282,7 +282,7 @@
     },
     "tools/reward-collect-drive.mjs": {
       "count": 9,
-      "digest": "21894bc95a0694d9"
+      "digest": "8d3c8713e7ec1aee"
     },
     "tools/runcreation.mjs": {
       "count": 5,

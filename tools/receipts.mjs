@@ -234,7 +234,7 @@ function checkPull(prArg) {
     console.log('        build-stamp re-points it after merge');
     console.log(`  PASS  #${pull}'s receipt names a build of this release`);
     console.log('');
-    console.log('receipts: OK — 2 checks passed (1 note)');
+    console.log('receipts: OK — 2 checks passed');
     return 0;
   }
   console.log(`  PASS  #${pull}'s receipt is stamped \`${box.release}.${box.ordinal}\`, the committed box`);

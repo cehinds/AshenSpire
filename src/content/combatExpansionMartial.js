@@ -3,16 +3,18 @@ import { objectTagIds } from './tags.js';
 // Existing ids, rather than display names, own every changed Martial role.
 // This projection runs after equipment composition and only for version 2.
 const groups = {
-  attack: 'strike gorefireSlash serratedBlade rend twinbladeFlurry impale executioner stitchedArms bloodhuntersStrike goreslash flameToBlade bloodTithe ambush rogueShiv quickCut twinPrick hamstringRogue serratedShiv lowBlow cheapShot bladeDanceRogue garrote coupDeGrace sap assassinate thousandCutsRogue deathblow katanaDrawCut twinFang rimeThrust progression-ember-hew progression-furnace-advance progression-shiv-of-ash progression-needle-feint progression-back-alley-cut progression-wire-snare progression-carrion-cut progression-twinshade progression-last-laugh',
-  defend: 'defend technique ironResolve enterBulwark shieldwall wardingLunge unbreakable lastStand bracingStance ironVowCard brace setTheShield aegisOfEmbers smokePellet pocketSand smokeVeil vanish misdirect smokeBomb ironSkin quickGuard shieldGuardian guardianBulwark shieldBastion progression-cinder-guard progression-bloodstep progression-warbound-defiance progression-red-standard progression-crown-of-cinders progression-pocket-coil progression-silent-exchange',
+  attack: 'viperStrike septicBlade lethalDose strike gorefireSlash serratedBlade rend twinbladeFlurry impale executioner stitchedArms bloodhuntersStrike goreslash flameToBlade bloodTithe ambush rogueShiv quickCut twinPrick hamstringRogue serratedShiv lowBlow cheapShot bladeDanceRogue garrote coupDeGrace sap assassinate thousandCutsRogue deathblow katanaDrawCut twinFang rimeThrust progression-ember-hew progression-furnace-advance progression-shiv-of-ash progression-needle-feint progression-back-alley-cut progression-wire-snare progression-carrion-cut progression-twinshade progression-last-laugh',
+  defend: 'stoneskin defend technique ironResolve enterBulwark shieldwall wardingLunge unbreakable lastStand bracingStance ironVowCard brace setTheShield aegisOfEmbers smokePellet pocketSand smokeVeil vanish misdirect smokeBomb ironSkin quickGuard shieldGuardian guardianBulwark shieldBastion progression-cinder-guard progression-bloodstep progression-warbound-defiance progression-red-standard progression-crown-of-cinders progression-pocket-coil progression-silent-exchange',
   sweep: 'crimsonCleave cleavingBlow hewingArc whirlingGuard sweepingBlow progression-ashen-cleaver',
   smash: 'stomp kickOff ruinousBlow poiseBreaker sunderplate sunderingChop shieldCrash greatswordSunderingHew bashingBlow colossusSmash kilnCleave progression-breaker-s-toll',
   counter: 'shieldBash guardCounter riposte rondelParry bindingParry spikedReprisal progression-crimson-reprisal evasiveGuard dodgeRoll quickstep backstep acrobaticsRogue shadowstep progression-nightstep',
-  ranged: 'ricochet fanOfKnives toxicVolley pinningShot arrowVolley aimedShot barbedArrow',
+  ranged: 'aspDart ricochet fanOfKnives toxicVolley pinningShot arrowVolley aimedShot barbedArrow',
   support: 'enterGorefire rallyingStandard warSurgeon hemorrhage warcry goreblood warriorsVow sanguinePactCard feint pilfer setupRogue disorient afterimageCard bloodletterRogue venomcoat deadlyTempoCard opportunistCard envenomCard executionWindow perfectHeist prepare honedEdge fieldDressing blindingSand hamstring masterOfStrategy enfeeble wound dazed slimed guilt rallyingBanner',
 };
 export const combatExpansionMartialOverlay = Object.fromEntries(Object.entries(groups)
   .flatMap(([maneuver, ids]) => ids.split(' ').map(id => [id, { maneuver }])));
+// Lethal Dose is a thrown vial: a projectile at Reach, never a Ranged maneuver (owner #22).
+combatExpansionMartialOverlay.lethalDose = { maneuver: 'attack', reach: 'near', projectile: true };
 combatExpansionMartialOverlay.nockAndWait = { maneuver: 'counter', reach: 'near', counterMode: 'ranged' };
 // Defensive use still pays and resolves the card's printed effects.
 combatExpansionMartialOverlay.whirlingGuard.defensiveReaction = true;
@@ -102,7 +104,7 @@ export function applyCombatExpansionMartial(def) {
     }
   }
   if (role.maneuver === 'smash') card.breakPoiseBonus = 3;
-  if (role.maneuver === 'ranged') card.projectile = true;
+  if (role.maneuver === 'ranged' || row.projectile) card.projectile = true;
   if (role.maneuver === 'counter') {
     if (def.id === 'shieldBash') {
       card.effects.unshift({ op: 'block', target: 'self', amount: 5 });

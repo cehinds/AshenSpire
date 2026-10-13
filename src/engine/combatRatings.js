@@ -1,10 +1,10 @@
-import { ratingReceipt, ratingValue, sourceRatingValue, attackImpact, isMagicalAttack } from '../model/combatRatings.js';
+import { ratingReceipt, ratingValue, sourceRatingValue, attackImpact, isMagicalAttack, isMagicalHit } from '../model/combatRatings.js';
 import * as Properties from './properties.js';
 import { passiveMult, passiveSum } from '../model/registries.js';
 import { usesSingleBreakMeter, breakMeterIds } from '../model/breakMeter.js';
-import * as statuses from '../framework/statusSemantics.js';
 import * as Matchups from './combatMatchups.js';
 import { creditKnowledgeImpact } from './enemyKnowledge.js';
+import { syncWardMaximum, syncPoiseMaximum } from './combatPools.js';
 
 export function refreshCombatRatings(ctx) {
   if (!ctx.ratingsRules) return;
@@ -29,16 +29,25 @@ export function refreshCombatRatings(ctx) {
     for (let n = 0; n < (prior?.growths || 0); n++) max = Math.ceil(max * ctx.ratingsRules.breaks.thresholdGrowth);
     ctx.player[key] = { ...prior, value: Math.min(prior?.value || 0, max - 1), max, growths: prior?.growths || 0 };
   }
+  // The live rating moved: every Ward and Poise pool follows it now, not at its next use.
+  if (ctx.combatExpansionVersion === 2) {
+    for (const entity of [ctx.player, ...(ctx.enemies || [])]) {
+      if (!entity) continue;
+      syncWardMaximum(ctx, entity);
+      syncPoiseMaximum(ctx, entity);
+    }
+  }
 }
 
 export function applyRatingImpact(ctx, source, target, carrier, explicitAmount = null, { triggerHit = true, knowledgeMatchup = false } = {}) {
   if (!ctx.ratingsRules || !target?.alive) return;
-  const magical = isMagicalAttack(ctx, carrier);
+  // The meter follows the hit's magic part: a hit with none (alteration, or a physical type on a spell) is Poise's.
+  const magical = isMagicalHit(ctx, carrier);
   const single = usesSingleBreakMeter(ctx);
   const meterName = magical && !single ? 'ward' : 'poise';
   const meter = target[meterName + 'Meter'];
   if (!meter || meter.max <= 0) return;
-  let amount = explicitAmount === null ? attackImpact(ctx, source, carrier) : Math.max(0, Math.floor(explicitAmount));
+  let amount = explicitAmount === null ? attackImpact(ctx, source, carrier, magical) : Math.max(0, Math.floor(explicitAmount));
   if (single && magical && explicitAmount === null) amount = foldedMagicImpact(ctx, source, target, carrier, amount);
   const label = magical && !single ? 'Disruption' : 'Stagger';
   const seats = ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source), targetPlayerId: ctx.playerIdForEntity(target) } : {};
@@ -71,14 +80,31 @@ export function applyRatingImpact(ctx, source, target, carrier, explicitAmount =
     meter.growths = (meter.growths || 0) + 1;
     ctx.emit('meterFilled', { ...seats, targetId: target.id, meter: meterName, threshold: meter.max });
   }
-  if (single && magical && breaks > 0) {
-    if (triggerHit) ctx.emit('arcaneStagger', { ...seats, targetId: target.id, sourceId: source?.id ?? null,
+  // Every enemy break is a full Stagger (owner, 2026-10-12: "any break but
+  // vulnerable to any damage type"): Poise or Ward, physical or magical, the
+  // content's balance.poise.onFill (the `staggered` status) runs once per
+  // impact that breaks, however many thresholds it crossed. A magical break
+  // adds no school-only payoff on top: Staggered already covers every type.
+  if (target.kind === 'enemy' && breaks > 0) enqueueStaggerOnFill(ctx, target);
+  if (single && magical && breaks > 0 && triggerHit) {
+    ctx.emit('arcaneStagger', { ...seats, targetId: target.id, sourceId: source?.id ?? null,
       school: carrier?.damageSchool, threshold: thresholdBeforeGrowth });
-    applyMagicalStaggerPayoff(ctx, source, target);
   }
   ctx.emit('ratingImpact', { ...seats, targetId: target.id, sourceId: source?.id, meter: meterName, amount,
     ...(guarded ? { guarded, ...meterGuardReceipt(target, meterName) } : {}),
     value: meter.value, max: meter.max, breaks, label });
+}
+
+/**
+ * enqueueStaggerOnFill(ctx, enemy) — queue balance.poise.onFill's content
+ * effects (owner = the enemy) for an enemy break: the one home for what
+ * "Staggered" means, shared by the rating meter and breakEnemy.
+ */
+export function enqueueStaggerOnFill(ctx, enemy) {
+  const cfg = (ctx.registries.balance && ctx.registries.balance.poise) || {};
+  for (const eff of cfg.onFill || []) {
+    ctx.enqueue({ effect: eff, source: enemy, owner: enemy, target: enemy, meta: {} });
+  }
 }
 
 function foldedMagicImpact(ctx, source, target, carrier, baseImpact) {
@@ -95,15 +121,6 @@ function foldedMagicImpact(ctx, source, target, carrier, baseImpact) {
   if (buildup > 0) ctx.emit('arcaneImpact', { sourceId: source?.id, targetId: target.id, amount: Math.floor(buildup),
     ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source) } : {}) });
   return amount;
-}
-
-function applyMagicalStaggerPayoff(ctx, source, target) {
-  if (target.kind !== 'enemy') return;
-  const authored = ctx.registries.enemies.get(target.enemyId).arcaneExposure;
-  if (authored?.mode === 'immune') return;
-  const payoff = authored?.onBreak || ctx.registries.balance.exposure.defaultPayoff;
-  statuses.applyStatus(ctx, target, payoff.status, payoff.value, source);
-  if (target.statuses[payoff.status]) target.statuses[payoff.status].duration = payoff.duration;
 }
 
 /**

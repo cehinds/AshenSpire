@@ -311,9 +311,10 @@ test('empty custom combat identity retains local hit vulnerability tags in previ
   const c = solo('strike', registries);
   applyStatus(c, c.enemies[0], 'frostExposed', 1);
   const preview = previewCard(c, 'card1', c.enemies[0].id);
-  assert.equal(preview.values.find(row => row.op === 'damage').value, 12);
+  // 10 + ceil(10 × 0.25): the exposure bonus rounds up (owner, 2026-10-12).
+  assert.equal(preview.values.find(row => row.op === 'damage').value, 13);
   dispatch(c, { type: 'playCard', cardInstanceId: 'card1', targetId: c.enemies[0].id });
-  assert.equal(c.eventLog.find(event => event.type === 'damageDealt' && event.sourceId === 'player').amount, 12);
+  assert.equal(c.eventLog.find(event => event.type === 'damageDealt' && event.sourceId === 'player').amount, 13);
   assert.equal(getStacks(c.enemies[0], 'bleed'), 0, 'empty card identity does not inherit a tactical Slashing rider');
 });
 
@@ -354,7 +355,10 @@ test('Holy lethal hit cleanses its attacker before the card ends combat', () => 
 
 test('Deathblow shares one Slashing rider across its separately queued damage effects', () => {
   const registries = createRegistries({ ...legacyContentBundle,
-    tagging: [...legacyContentBundle.tagging, { family: 'card', scope: '', objectId: 'deathblow', tagId: 'damage:slashing' }],
+    // Deathblow ships Blunt + Force (owner #23); this fixture swaps in Slashing alone.
+    cards: legacyContentBundle.cards.map(card => card.id === 'deathblow' ? { ...card, attack: undefined } : card),
+    tagging: [...legacyContentBundle.tagging.filter(row => !(row.objectId === 'deathblow' && row.tagId.startsWith('damage:'))),
+      { family: 'card', scope: '', objectId: 'deathblow', tagId: 'damage:slashing' }],
   });
   for (const foundation of [false, true]) for (const coopMode of [false, true]) {
     const options = { registries, rng: createRng(50), enemyIds: ['wanderingSoldier'],

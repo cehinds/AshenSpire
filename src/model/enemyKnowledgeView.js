@@ -5,6 +5,7 @@ import { enemyMoveCards } from './enemyMoveCards.js';
 import { predictionCategory, broadIntentLabel } from './enemyIntentKnowledge.js';
 import { enemyKnowledge } from '../content/enemyKnowledge.js';
 import { combatExpansionEquipment } from '../content/combatExpansionEquipment.js';
+import { schoolResistanceMultiplier } from './combatRatings.js';
 const words = value => String(value || '').replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/[_-]/g, ' ').replace(/^./, char => char.toUpperCase());
 
 export function learnedEnemyMoveCards(def, stage, { registries = null, combatMatchupRules = null } = {}) {
@@ -25,7 +26,7 @@ export function learnedEnemyMoveCards(def, stage, { registries = null, combatMat
   return enemyMoveCards(catalog, { registries, combatMatchupRules });
 }
 
-export function projectEnemyKnowledge(def, record, { target = enemyKnowledge.bestiary.encountersToMaster, registries = null, combatMatchupRules = null, equipmentRules = combatExpansionEquipment } = {}) {
+export function projectEnemyKnowledge(def, record, { target = enemyKnowledge.bestiary.encountersToMaster, registries = null, combatMatchupRules = null, equipmentRules = combatExpansionEquipment, ratingsRules = null } = {}) {
   const progress = knowledgeProgress(record, target);
   const stage = progress.stage;
   const defenses = equipmentRules.enemies?.[def.id];
@@ -40,9 +41,10 @@ export function projectEnemyKnowledge(def, record, { target = enemyKnowledge.bes
       def.poiseMax != null && { label: 'Base Poise', value: String(def.poiseMax) },
       { label: 'Base Ward rating', value: String(def.poiseMax || 1) },
       { label: 'Base armor class', value: words(defenses?.armorClass || 'medium') },
-      ...Object.entries(def.damageResistanceBySchool || {}).map(([school, amount]) => ({ label: `${words(school)} resistance`, value: String(amount) })),
+      ...Object.keys(def.damageResistanceBySchool || {}).map(school => ({ label: `${words(school)} resistance`, value: `${Math.round((1 - schoolResistanceMultiplier({ ratingsRules }, def, school)) * 100)}%` })),
       ...Object.entries(defenses?.flat || {}).map(([type, amount]) => ({ label: `${words(type)} flat resistance`, value: `${amount} point${amount === 1 ? '' : 's'}` })),
       ...Object.entries(defenses?.weak || {}).map(([type, amount]) => ({ label: `${words(type)} weakness`, value: `${amount}%` })),
+      ...Object.entries(defenses?.resist || {}).map(([type, amount]) => ({ label: `${words(type)} resistance`, value: `${amount}%` })),
     ].filter(Boolean) : null,
     traits: stage >= 2 ? [
       ...(def.traits || []).map(trait => typeof trait === 'string' ? { name: words(trait) } : { name: trait.name, detail: trait.detail || '' }),

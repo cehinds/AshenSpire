@@ -15,6 +15,7 @@ import * as StatusHelpers from '../framework/statusSemantics.js';
 import * as Statuses from './statuses.js';
 import { abilityMetric, recordAbilityEvent, priorAbilityEntity } from './abilityRiders.js';
 import { recordKnowledgeEvent } from './enemyKnowledge.js';
+import { spendPersistentWard } from './combatStatusControl.js';
 import { dispatchCombatCombos } from './combatExpansionCombos.js';
 
 const MAX_EMIT_DEPTH = 64;
@@ -219,6 +220,13 @@ function allCombatants(ctx) {
 export function fireOwnerHooks(ctx, entity, hookName) {
   if (!entity.alive) return;
   Statuses.advanceStatusClock(ctx, entity, hookName);
+  // Reaction rules version 2: a status's fluxPerTurn is Ward damage to its owner at turn start.
+  if (hookName === 'ownerTurnStart' && ctx.reactionRulesVersion === 2) {
+    for (const statusId of Object.keys(entity.statuses)) {
+      const flux = ctx.registries.statuses.get(statusId)?.fluxPerTurn;
+      if (flux > 0 && entity.statuses[statusId]?.stacks > 0) spendPersistentWard(ctx, entity, flux, { sourceId: entity.id });
+    }
+  }
   const syntheticEvent = { type: hookName, ...Foundation.foundationEvent(ctx, hookName, { ownerId: entity.id }) };
   const oKey = ownerKeyFor(ctx, entity);
   for (const statusId of Object.keys(entity.statuses)) {

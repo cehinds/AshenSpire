@@ -48,9 +48,9 @@ export const starseerCards = [
     id: 'cometFragment', name: 'Comet Fragment', class: 'starseer', rarity: 'common', cost: 1, type: 'attack',
     flavor: "Sorcery of the Starwatch, the first permitted beyond the lens gallery.\n\nFragments came up the Basalt Stair in miners' sacks, sold by weight, and the Astronomer catalogued every one. Chart 41 records a fall. Chart 42 records a hearth.\n\nOf what lay between, the catalogue is silent.",
     keywords: [], icon: '☄',
-    effects: [{ op: 'damage', target: 'enemy', amount: 3 }, GAIN_CHARGE],
+    effects: [{ op: 'damage', target: 'enemy', amount: 4 }, GAIN_CHARGE],
     textTemplate: 'Deal {damage} damage.',
-    upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 5 }, GAIN_CHARGE] },
+    upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 6 }, GAIN_CHARGE] },
   },
   {
     id: 'starbladePhalanx', name: 'Starblade Phalanx', class: 'starseer', rarity: 'common', cost: 1, type: 'attack',
@@ -141,15 +141,15 @@ export const starseerCards = [
     flavor: "Starstone, split along its grain.\n\nThe stone parts cleanly along lines the lens-grinders could see and the miners could not. The grinders held that it had been worked before it fell. The Astronomer called this sentimental.\n\nHe kept a split fragment upon his desk, its grain turned to the window.",
     keywords: [], icon: '🌠',
     effects: [
-      { op: 'damage', target: 'enemy', amount: 4, hits: 2 },
-      { op: 'damage', target: 'enemy', amount: 4, if: CHARGED },
+      { op: 'damage', target: 'enemy', amount: 3, hits: 2 },
+      { op: 'damage', target: 'enemy', amount: 3, if: CHARGED },
       GAIN_CHARGE,
     ],
     textTemplate: 'Deal {damage} damage {hits} times. Starstone: one more hit of {damage.2}.',
     upgrade: {
       effects: [
-        { op: 'damage', target: 'enemy', amount: 5, hits: 2 },
-        { op: 'damage', target: 'enemy', amount: 5, if: CHARGED },
+        { op: 'damage', target: 'enemy', amount: 4, hits: 2 },
+        { op: 'damage', target: 'enemy', amount: 4, if: CHARGED },
         GAIN_CHARGE,
       ],
     },
@@ -493,15 +493,15 @@ export const starseerCards = [
     flavor: "Ward of shadow, after the eclipse.\n\nDuring the eclipse the Observatory cast no shadow, which the Starwatch recorded as a curiosity of the light. The apprentices upon the terrace cast shadows as ever.\n\nTheirs fell toward the Observatory, not away.",
     keywords: ['retain'], icon: '🌑',
     effects: [
-      { op: 'block', target: 'self', amount: 20, if: { p: 'not', pred: CHARGED } },
-      { op: 'block', target: 'self', amount: 30, if: CHARGED },
+      { op: 'block', target: 'self', amount: 16, if: { p: 'not', pred: CHARGED } },
+      { op: 'block', target: 'self', amount: 24, if: CHARGED },
       GAIN_CHARGE,
     ],
     textTemplate: 'Prepare Spell Counter. Gain {block} Block. Starstone: {block.2} instead.',
     upgrade: {
       effects: [
-        { op: 'block', target: 'self', amount: 26, if: { p: 'not', pred: CHARGED } },
-        { op: 'block', target: 'self', amount: 38, if: CHARGED },
+        { op: 'block', target: 'self', amount: 20, if: { p: 'not', pred: CHARGED } },
+        { op: 'block', target: 'self', amount: 30, if: CHARGED },
         GAIN_CHARGE,
       ],
     },
@@ -753,14 +753,14 @@ export const starseerCards = [
     flavor: "A ring of ash poured round the feet.\n\nThe apprentices drew one about the great lens each eclipse, to keep the dark from settling on the glass. On the last eclipse the ring was drawn, and the dark settled elsewhere.\n\nNobody inside the ring was harmed. Nobody outside it was found.",
     keywords: ['retain'], icon: '⭕',
     effects: [
-      { op: 'block', target: 'self', amount: 10 },
+      { op: 'block', target: 'self', amount: 8 },
       { op: 'applyStatus', target: 'allEnemies', status: 'weak', stacks: 2, if: CHARGED },
       GAIN_CHARGE,
     ],
     textTemplate: 'Gain {block} Block. Starstone: apply {weak} Weak to ALL enemies.',
     upgrade: {
       effects: [
-        { op: 'block', target: 'self', amount: 13 },
+        { op: 'block', target: 'self', amount: 11 },
         { op: 'applyStatus', target: 'allEnemies', status: 'weak', stacks: 2, if: CHARGED },
         GAIN_CHARGE,
       ],

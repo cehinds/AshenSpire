@@ -5,10 +5,11 @@
 > **KNOWN DEBT, stated once here rather than apologised for per section: this spec's in-game
 > vocabulary is still largely pre-scrub.** It says runes/Vagabond/Astrologer/Prophet/Erdtree
 > where the tree ships cinders/Reaver/Starseer/Herald/Goldbough. **`docs/IP-SCRUB.md` is the
-> authoritative old→new map** and every name in it is a shipped fact. **The rename act once
-> proposed here is dropped: the owner does not want it (owner decision, 2026-09-27).** Read the
-> old names through that map; do not rename them per section either, which would leave the spec
-> disagreeing with itself mid-document. The count of old names:
+> authoritative old→new map** and every name in it is a shipped fact. **The broad mechanical
+> rename act once proposed here is dropped: the owner does not want it (owner decision,
+> 2026-09-27).** Read historical prose through that map rather than sweeping it piecemeal. When
+> an audited section describes current shipped definitions, however, it uses the canonical names
+> consistently throughout that section and records the reconciliation in its audit. The count of old names:
 > `grep -cE "runes|Vagabond|Astrologer|Prophet|Erdtree|Scarlet Rot" SPEC.md`.
 
 A single-player roguelike deckbuilder for the browser. Mechanically faithful to Slay the Spire; thematically inspired by (but legally distinct from) Elden Ring. Companion documents: [PROMPT.md](PROMPT.md) (the brief this spec expands), and — once implementation starts — `DEVELOPER.md` (how to extend) and `CREDITS.md` (asset licenses).
@@ -23,16 +24,16 @@ Numbers in this spec are the **initial balance targets**. They will move during 
 |---|---|---|---|
 | top | Combat and equipment revision ([COMBAT-EQUIPMENT-RULES](docs/COMBAT-EQUIPMENT-RULES.md)) | **partly built** | Parts serve live play (the Dodge Roll in `src/framework/weight.js`, §12.1). The full framework cutover is not performed ([framework-cutover-report](docs/framework-cutover-report.md)); the three-build prototype gate and the 36→50 class pools are post-1.0 (D3). |
 | 1 | Product overview | **built** | 4 classes, 3 seats climbed as 3 tiers, profile and slots. |
-| 2 | Legal and asset constraints | **partly built** | Attribution: `tools/credits-check.mjs`, 40 checks, 33/33 asset directories (FINISH §10). Open: §2.4 asset indirection. 14 CSS `url(../assets/…)` backdrops (for example `styles/combat.css`, `styles/ui.css`) still bypass `assetUrl()` and its fallback (DEVELOPER.md, *high-res release*). |
-| 3 | Architecture, DSLs, procedural systems, saves, validation | **built** | Run schema 11 (`RUN_SCHEMA_VERSION` in `src/model/state.js`; `tests/save-migration.test.mjs`); `validateContent` 0 errors. |
+| 2 | Legal and asset constraints | **partly built** | Attribution: `tools/credits-check.mjs`, 40 checks, 33/33 asset directories (FINISH §10). Open: §2.4 asset indirection. 138 literal `url('../assets/…)` references in six `styles/` files (`grep -rc "url('../assets" styles`; for example `styles/combat.css`, `styles/ui.css`) still bypass `assetUrl()` and its fallback (DEVELOPER.md, *high-res release*). |
+| 3 | Architecture, DSLs, procedural systems, saves, validation | **built** | Run schema at `RUN_SCHEMA_VERSION` (`src/model/state.js`; `tests/save-migration.test.mjs`); `validateContent` 0 errors. |
 | 4 | Combat rules | **built** | §4.7 shared player/enemy tags, deferred Counters, typed riders and persisted stance reads ship in #1705, with solo/co-op engine and browser regressions. Ashen Blight remains a separate proposal. Warrior's Vow enters the chosen stance. |
-| 5 | Content | **built** | Warrior's Vow (§5.2) offers every stance of the player's class and enters the chosen one. 5.2–5.4 are the historical M1/M2 sets under pre-scrub names. Live counts: 195 cards (40 per class, 35 colorless), 63 relics, 25 events, 7 flasks, 33 enemies (20 regular, 10 boss, 3 elite). |
+| 5 | Content | **built** | Warrior's Vow (§5.2) offers every stance of the player's class and enters the chosen one. 5.2–5.4 are the historical M1/M2 sets reconciled to the canonical names and values of their current shipped definitions; older prose elsewhere remains readable through `docs/IP-SCRUB.md`. Live counts: 292 card definitions in the composed bundle (class reward pools after class-mastery composition: Reaver 53, Starseer 59, Rogue 57, Herald 49), 73 relics (63 base plus 10 class-mastery), 25 events, 7 flasks, 33 enemies (20 regular, 10 boss, 3 elite). |
 | 6 | Map generation | **built** | `engine/mapgen.js`, `tools/mapplan.mjs`. |
 | 7 | UI/UX, HUD, input, feedback, visual style | **partly built** | Screens, HUD, input and feedback ship. Open: §7.5 interface fonts are **TO BUILD** (Cinzel/Inter are named with system fallbacks and do not ship yet; they will load as pack files through the pack loader, EXTERNAL-ASSETS-PLAN step 3b, but wiring them is not yet a plan step; only the "AS Lore" copies ship), and the release proofs for contrast, reduced motion, target size and Back-everywhere (FINISH §5–§9). |
 | 8 | Testing | **built** | `tests/run-node.mjs`. |
 | 9 | Milestones M1–M4 | M1, M2 **built**; M3 **partly built**; M4 **partly built** | M3: 7 cards have no route in (`tools/contentreach.mjs`) and there is no balance gate (D1). M4: the feel, performance and asset-pass items are in FINISH §5, §7 and §10. |
 | 10 | Forward hooks | **seams built**, features **planned** | By design: v1 keeps them empty. |
-| 11 | Non-goals | — | LAN co-op, the narrow layout and audio have shipped (the section says so). |
+| 11 | Non-goals | — | The narrow layout and audio have shipped (the section says so). LAN co-op is built but **planned for a later release**, not part of the current release set (owner, 2026-10-12). |
 | 12 | Expansion (dodge, trader arts, HUD piles, branching bosses, roster, animation) | **built**, two items open | P6: 1–5 elites per seat averaging 3 (3 ship, one per seat). P8b: the Power resting stance (`resolveCombatPose` returns `idle`). |
 | 13 | Seats, zones, skill tracks, class card and tree, levels, recovery, Mana, attributes, quest board | **partly built** | Phase 0 of [proposal-seat-adventure](docs/proposal-seat-adventure.md); plan phases 1–10 of [plan-progression-and-property-system](docs/plan-progression-and-property-system.md), phase 2 only as 2a (2b, relic passives as property rules, is unscheduled). Open, as each subsection's *Not in this phase* line states: the smithing re-point (4b-ii, §13.4e); co-op offers no skill or class draft (§13.4e, §13.4g); no tree screen (§13.4g); four ability-card sentences are approximated (§13.4f); quest XP is unpaid and the co-op host has no quest board (§13.4n). **Post-1.0** (owner decision, 2026-09-27): 3b-ii (equipment rows joining the deck), the class-swap boss-reward door (§13.4h) and quest XP. The tower, city and later seat phases are **planned** in that proposal, with no SPEC section yet; companions are owned by §14.3, not the proposal's phase 5 (owner decision, 2026-09-27). |
 | — | World Journey, shared armour sets, legacy dungeons, the opening prologue, configurable stat pools | **built**, one boundary | `ui/screens/worldAtlas.js`, `legacyDungeon.js`, `prologue.js`; `src/content/derivedStats.js`. The stat-pool rules apply to the solo path only; the combat workshop and LAN paths keep their existing rules until given a rating context (that section's last line). |
@@ -68,8 +69,8 @@ on the prototype gate; both remain the contract for the work after 1.0, unchange
 
 | | |
 |---|---|
-| Title | **Ashen Spire** (`AshenSpire` — the bundle name; title screen `src/ui/screens/title.js:47`) |
-| Platform | Modern evergreen browsers. 1280×720 is the **layout reference** (§7.2), not a minimum: a narrow layout ships and is selected once by `main.js` writing `data-layout` (§11). |
+| Title | **Ashen Spire** (`AshenSpire` — the bundle name; page title `index.html:8`; title screen `src/ui/screens/title.js`) |
+| Platform | Modern evergreen browsers. 1280×800 is the **layout reference** (§7.2), not a minimum: a narrow layout ships and is selected once by `main.js` writing `data-layout` (§11). |
 | Tech | Vanilla ES-module JS, HTML, CSS. No framework, no build step |
 | Persistence | `localStorage`: three run slots, plus a **durable profile** (settings, unlocks, progress, last 20 results) with a verified-write mirror and a keyed archive drawer the player can open from **Profile on the title screen** (§3.12) |
 | Entry point | `index.html` served by `node tools/serve.mjs`, which serves the media. Opened from any static server, it still boots and plays; once EXTERNAL-ASSETS-PLAN step 13 moves the media trees to the art repository, such a page has placeholders (§2.4), synthesized audio, system fonts and the low-detail map. Only the built file opens by double-click: the source page loads ES modules, which a `file://` page cannot. |
@@ -90,7 +91,7 @@ These override everything else in the spec.
    - **Kenney.nl** (CC0) — UI nine-slices, buttons, panel borders.
    - **OpenGameArt.org** (filter CC0/CC-BY) — combat backgrounds, enemy portraits if suitable ones exist.
    - **Google Fonts** (OFL) — display serif (e.g. *Cinzel*) + body sans (e.g. *Inter*).
-4. Every image is referenced through `src/ui/assets.js` (an id → URL/inline-SVG map). Game code never hardcodes an asset path. Missing art falls back to a generated placeholder (colored rounded rect + icon glyph + name) so the game is fully playable with zero downloaded assets.
+4. Every image is referenced through `src/ui/assets.js` (an id → URL/inline-SVG map). Game code is meant never to hardcode an asset path; until §2.4 lands this is not yet true: the CSS backdrops in `styles/` and several UI modules (for example `src/ui/components/scenePainting.js`, `src/ui/components/engravedIcon.js`, `src/ui/cardArtwork.js`, `src/ui/defaultCardArtwork.js`) still build `assets/…` paths directly. Missing art falls back to a generated placeholder (colored rounded rect + icon glyph + name) so the game is fully playable with zero downloaded assets.
 5. Third-party **code** may be vendored only if MIT/BSD/Apache/CC0, kept in `src/vendor/`, attributed in `CREDITS.md`. Expected: none beyond possibly a PRNG snippet (mulberry32 is public domain).
 
 ### 2.1 The AI-use acknowledgement — one home, two surfaces
@@ -153,9 +154,9 @@ Design laws (contractual):
 1. **Schema-first.** Every entity type has a schema in `model/schemas.js`. All content is validated at boot (dev mode) and in tests — unknown fields, bad enums, and dangling id references fail loudly (§3.14).
 2. **The engine contains no entity-specific code.** There is no `if (status === 'bleed')` anywhere. The engine implements a closed set of primitives — effect opcodes (§3.4), formula ops (§3.5), trigger events + predicates (§3.6), and a generic status model (§3.7) — and *all* game behavior is content data composing those primitives. Adding a card, relic, status, stance, enemy, or event = adding data.
 3. **Procedural content stays procedural.** Map generation, encounter rolls, reward rolls, and enemy move selection are seeded algorithms (§3.8) — but every knob they consume lives in content data, never as code constants.
-4. **All tuning is data.** `content/balance.js` holds every global constant that is not a stat row (reward odds, rune ranges, prices, flask drop decay); every stat is a row of `content/derivedStats.js` (§3.5). A balance change is a one-file data diff.
-5. **Headless engine.** Nothing under `src/engine/` or `src/model/` references `document`, `window`, `localStorage`, or timers. A combat runs to completion from `tests/index.html` with no UI imports.
-6. **Budgeted escape hatch.** `content/scripts.js` is a registry of named custom behaviors for what the DSL can't express. Target <5% of content; every entry carries a comment justifying why the DSL couldn't do it. A script pattern appearing twice gets promoted to a DSL primitive (engine PR).
+4. **All tuning is data.** `src/content/balance.js` holds every global constant that is not a stat row (reward odds, cinder ranges, prices, flask drop decay); every stat is a row of `src/content/derivedStats.js` (§3.5). A balance change is a one-file data diff.
+5. **Headless engine.** Nothing under `src/engine/` references `document`, `window`, `localStorage`, or timers. Under `src/model/`, only `offlineDownload.js` sets timers (its request timeouts). A combat runs to completion from `tests/index.html` with no DOM; the suite it loads (`tests/engine.test.js`) also imports some UI presentation models and helpers, but never mounts a screen.
+6. **Budgeted escape hatch.** `src/content/scripts.js` is a registry of named custom behaviors for what the DSL can't express. Target <5% of content; every entry carries a comment justifying why the DSL couldn't do it. A script pattern appearing twice gets promoted to a DSL primitive (engine PR).
 
 ### 3.2 File tree — the layer contract, not an inventory
 
@@ -185,13 +186,15 @@ node tools/dirorder.mjs --selftest                             # the shape check
 | `src/net/` | LAN co-op client (§11). Absent behind the launcher → the feature hides itself. |
 | `content/source/` | The authoring spreadsheets (CSV) that compile into `src/content/generated/`. |
 | `tools/` | Node-run instruments and harnesses. The observed-red idiom (`--selftest` / `--mutate`) lives here and is wired in `.github/workflows/ci.yml`. |
-| `tests/` | `index.html` (browser runner) and `run-node.mjs` (headless). Assertions against model + engine only — no UI imports. |
+| `tests/` | `index.html` (browser runner) and `run-node.mjs` (headless). The core suite (`engine.test.js`) is headless and needs no DOM (it also asserts some UI presentation models and helpers); other `*.test.mjs` files may mount screens on a stub DOM (for example `card-rank.test.mjs`). |
 | `build/` · `dist/` | The bundles emitted by `tools/bundle.mjs` and their shipped copies. Today `build/`/`dist/` default to single-file bundles, and the web edition is already pack-shaped: `bundle.mjs --external-art` writes `build/web/` (the game file, its pinned pack indexes in `packs/` and object store in `objects/`), which Pages publishes (EXTERNAL-ASSETS-PLAN steps 3a, 6b). From step 8e that pack shape becomes the default `build/`/`dist/` output, beside the light single file under `download/` (inline, self-contained). Build artifacts; `node tools/verify-shipped.mjs` is what says they agree with source. |
 
 **The one rule that makes the table enforceable:** imports point *inward* — `ui` may import
 `engine`, `model` and `content`; `engine` may import `model` and `content`; `model` may import
-`content`; **`content` imports nothing.** A content file that imports from `engine` is the
-defect this layering exists to catch.
+`content`; **`content` never imports `ui`.** It may import `model/` schemas and helpers (and the
+`config/` and `framework/` data modules). The one exception is `src/content/prototypes/`, where
+`combatBuilds.js` imports `engine/combat.js` and `engine/rng.js`. A content file outside
+`prototypes/` that imports from `engine` is the defect this layering exists to catch.
 
 ### 3.3 Domain model, registries, and state
 
@@ -200,10 +203,10 @@ defect this layering exists to catch.
 | Entity | Key fields |
 |---|---|
 | Card | `id, class, rarity, cost (int \| 'X'), type, keywords[], effects[], textTemplate, upgrade` (partial override object) |
-| Relic | `id, rarity, textTemplate, triggers[], passives?` — passives are a closed key set the run systems consult, and it has **one home**: `PASSIVE_TYPES` in `src/model/schemas.js`, which the relic schema's `passives` node is BUILT FROM rather than restating (the two were separate hand-typed lists until A8, and only the schema enforced anything). Today: `runeGainMult, eliteExtraCardReward, flaskPowerMult, revealUnknown, restHealMult, restDenied, powerCostReduction, swapCostDelta, exposureBuildupMult` (Arcane Exposure buildup per hit ×, read for the hit's source). `restDenied` is `true` or a list of location tags (§13.4j): the one passive whose value is not a number or a flag. The passive readers (`passiveMult` / `passiveSum` / `passiveFlag`) also read the owner's **mounted property rules** (§3.6) when a combat caller passes them, so a property confers a passive exactly as an owned relic does |
+| Relic | `id, rarity, textTemplate, triggers[], passives?` — passives are a closed key set the run systems consult, and it has **one home**: `PASSIVE_TYPES` in `src/model/schemas.js`, which the relic schema's `passives` node is BUILT FROM rather than restating (the two were separate hand-typed lists until A8, and only the schema enforced anything). Today: every key of `PASSIVE_TYPES` (`src/model/schemas.js:317-348`), for example `runeGainMult`, `restDenied`, `swapCostDelta` and `exposureBuildupMult` (Arcane Exposure buildup per hit ×, read for the hit's source). `restDenied` is `true` or a list of location tags (§13.4j): the one passive whose value is not a number or a flag. The passive readers (`passiveMult` / `passiveSum` / `passiveFlag`) also read the owner's **mounted property rules** (§3.6) when a combat caller passes them, so a property confers a passive exactly as an owned relic does |
 | PropertyRule | `tag, requires[], excludes[], textTemplate, passives?, triggers?` — what one `property`-domain node confers, keyed by the node. A VIEW: derived by `tools/content-build.mjs` from the tag tree (below) — the node row, its `REQUIRES`/`CONFLICTS_WITH` edges in `nodeRelations.csv`, its sentence in `nodeTerms.csv`, its effects in `nodeEffects.json` with every `{variable}` replaced by the balance path its `default` binding names — and joined in `src/content/propertyRules.js`, which resolves those paths at load. Its `passives` node is built from the same `PASSIVE_TYPES` fields as the relic's. Exactly one rule per property node. **Every family may carry a property node**; what the mount path can hold is the engine's narrower list (`engine/properties.js` `MOUNTABLE_KINDS`). Property nodes are stamped onto a holder's `propertyTags`, never its `tags` |
 | Tag tree | `content/source/nodes.csv` — `id, parentId, label, color, glyph, visibility, priority, domain, aside, blurb`. THE one vocabulary: every tag any object carries is a node, and a node's parent is `parentId` and nothing else (an id's dotted spelling is an opaque key). Roots are domains; `domain` (the framework's enum word) and `aside` (a root whose tags never join a tag list — `presentation`, `classification`) are written on roots only. Companions: `nodeRelations.csv` (`sourceId, relation ∈ NODE_RELATIONS, targetId, precedence`), `familyNodes.csv` (family × subtree root — who may carry what), `nodeTerms.csv` (`playerTermId, tooltipTermId, template`), `nodeVariables.csv` (`nodeId, variable, role` — a node carries no numbers), `variableBindings.csv` (`scope ∈ VARIABLE_SCOPES, scopeId, nodeId, variable, balancePath` — what a variable reads, per scope; `instance › upgrade › class › default`), `nodeEffects.json` (`{ [nodeId]: { passives?, triggers? } }` naming variables). Derived from it: the five tag tables, the property rules, and `src/framework/data/{properties,relations}.js`. Every collection-backed object carries exactly one `classification.*` node, stamped as `kindIds` (§3.14) |
-| Status | `id, name, icon, stackMode, decay, meter?, modifiers?, hooks?` (§3.7) |
+| Status | `id, name, icon, stackMode, decay, proc?, meter?, modifiers?, hooks?` (§3.7; `meter?` is the legacy build-up form) |
 | Stance | `id, name, icon, onEnter?, modifiers?, hooks?` |
 | Keyword | `id, name, tooltip` (display only; semantics are engine primitives) |
 | Enemy | `id, name, hp: [min,max], poiseMax, moves{}, firstMove?, phases?[]` |
@@ -216,14 +219,14 @@ defect this layering exists to catch.
 
 - `registries.js` loads all content into typed, deep-frozen registries keyed by id. **Cross-references are by id only**; registry getters throw on unknown ids (caught by validation before runtime).
 - **Definitions vs instances:** state (`model/state.js`) stores instance data referencing definitions by id — a deck card is `{ instanceId, cardId, upgraded }`, an enemy is `{ instanceId, enemyId, hp, block, statuses{}, poiseMeter, movesHistory[] }`. Saves serialize instances + RNG counters only, **never definitions** — saves stay small and content patches apply to loaded runs (guarded by `contentVersion`, §3.12).
-- **Player intents are a closed set** (everything the UI may ask the engine to do): `playCard(cardInstanceId, targetId?)`, `endTurn()`, `useFlask(slot, targetId?)`, `discardFlask(slot)`, `chooseMapNode(nodeId)`, `chooseReward(choice)`, `restAction('rest'|'smith', cardId?)`, `shopAction(...)`, `eventChoice(index)`, `abandonRun()`.
+- **Player intents are a closed set** (everything the UI may ask the combat engine to do; the solo dispatch switch in `src/engine/combat.js:850-915`): `setReactions`, `chooseReaction`, `predictIntent`, `recoverControl`, `chooseBlightFeat`, `chooseDiscard`, `moveCharacter`, `playCard(cardInstanceId, targetId?)`, `endTurn()`, `useFlask(slot, targetId?)`, `swapArmament`, `changeEquipment`. The co-op engine mirrors `playCard`, `endTurn`, `useFlask`, `setReactions`, `chooseReaction`, `chooseDiscard`, `recoverControl` and `chooseBlightFeat` in `src/engine/coopCombat.js`. Run-level actions are not intents: each screen calls its own function in `src/engine/`, for example `restAt(visit)` in `src/engine/locations.js:121`.
 
 ### 3.4 Effect DSL (opcodes)
 
 An effect is an array of opcode objects; playing a card, triggering a relic, or resolving an event choice enqueues them onto the action queue (§3.9).
 
 ```js
-// Bloodflame Slash: "Deal 5 damage. Apply 3 Bleed."
+// Gorefire Slash: "Deal 5 damage. Apply 3 Bleed."
 effects: [
   { op: 'damage',      target: 'enemy', amount: 5 },
   { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 3 },
@@ -238,12 +241,12 @@ effects: [
 
 **Opcode list** (closed set; extending it is an engine PR):
 
-- Combat: `damage {hits?}`, `block`, `applyStatus`, `removeStatus`, `draw`, `discard {random?}`, `exhaust`, `addCard {card, pile, position}`, `gainEnergy`, `loseHp` (ignores block), `heal`, `shuffleDiscardIntoDraw`, `enterStance`, `poiseDamage`, `gainPoise` / `gainWard` (`amount` plus the card's Block rating bonus — DR on a physical skill, PR on a magical card — held as the target's Poise or Ward guard, which absorbs physical or magical impact before the matching meter fills and clears at the start of its owner's turn with Block; emits `meterGuardGained`), `dodgeRoll` (player only; no fields — the die, the Dexterity + Weight Class check, the difficulty and the temporary guard are the framework's `dodgeRoll` rule over `mechanics.json`; rolls on stream `misc`; success lands the guard as Block through the block door; emits `dodgeRolled`).
-- Run-level (events, shops, rewards reuse the same DSL): `addRunes`, `addCardToDeck {card}`, `removeCardFromDeck`, `upgradeCard {random?}`, `addRelic {random? | id}`, `addFlask`, `loseMaxHpPct`, `startCombat {encounterId}`, `swapClass {classId | random}` (§13.4h).
+- Combat: `damage {hits?}`, `block`, `applyStatus`, `removeStatus`, `draw`, `discard {random?}`, `exhaust`, `addCard {card, pile, position}`, `gainEnergy` (adds Stamina; the id is a retired alias), `restoreStamina`, `restoreMana`, `loseHp` (ignores block), `heal`, `shuffleDiscardIntoDraw`, `enterStance`, `poiseDamage`, `stagger`, `buildup`, `arcaneBuildup`, `gainBarrier`, `wardDamage`, `grantCardCharge`, `grantRollMode`, `retain`, `gainPoise` / `gainWard` (`amount` plus the card's Block rating bonus — DR on a physical skill, PR on a magical card — held as the target's Poise or Ward guard, which absorbs physical or magical impact before the matching meter fills and clears at the start of its owner's turn with Block; emits `meterGuardGained`), `dodgeRoll` (player only; no fields — the die, the Dexterity + Weight Class check, the difficulty and the temporary guard are the framework's `dodgeRoll` rule over `mechanics.json`; rolls on stream `misc`; success lands the guard as Block through the block door; emits `dodgeRolled`). Engine-internal: `completeCombatAction`, which `executeAction` runs to close an expanded combat action (`src/engine/actions.js`, `completeExpandedAction`). Content should not author it; validation still accepts it (it is in `COMBAT_OPCODES`, `src/model/schemas.js`), and an authored one does nothing because it carries no `expansionGroup`.
+- Run-level (events, shops, rewards reuse the same DSL): `addCinders` (renamed from `addRunes`; the old id is not accepted), `addCardToDeck {card}`, `removeCardFromDeck`, `upgradeCard {random?}`, `addRelic {random? | id}`, `addFlask`, `addFlaskCapacity`, `refillFlasks`, `loseMaxHpPct`, `startCombat {encounterId}`, `swapClass {classId | random}` (§13.4h).
 
 Common fields on any opcode: `target: self | enemy | allEnemies | randomEnemy` (cards with an `enemy` target require UI targeting), `amount: number | Formula` (§3.5), `if: Predicate` (§3.6) to gate the opcode, `repeat: n` for multi-hit.
 
-`removeStatus { status, amount? }` removes the named status from its targets. With no `amount`, remove the whole status and its application history. With `amount: number | Formula`, evaluate against each target, clamp the result nonnegative, and remove that many stacks (or that much buildup from a meter status). Preserve remaining magnitude/applications; remove the status when its magnitude reaches zero. An absent status is a no-op. For example, `{ op: 'removeStatus', target: 'self', status: 'weak', amount: 1 }` cleanses one Weak stack rather than every Weak application. Removal receipts report the quantity actually removed.
+`removeStatus { status, amount? }` removes the named status from its targets. With no `amount`, remove the whole status and its application history. With `amount: number | Formula`, evaluate against each target, clamp the result nonnegative, and remove that many stacks (or that much build-up from a status that carries `proc` or the legacy `meter`). Preserve remaining magnitude/applications; remove the status when its magnitude reaches zero. An absent status is a no-op. For example, `{ op: 'removeStatus', target: 'self', status: 'weak', amount: 1 }` cleanses one Weak stack rather than every Weak application. Removal receipts report the quantity actually removed.
 
 **Card rating values are cost-derived.** Before card definitions enter the
 registries, primary values are recalculated as:
@@ -288,7 +291,7 @@ Every dynamic number is a JSON formula object evaluated by `model/formulas.js`. 
 { f: 'add', args: [ 3, { f: 'stacks', status: 'strength', of: 'self' } ] }
 ```
 
-Op set (closed): `add`, `mul` (nestable), `percentMaxHp {of, pct, min?, max?}`, `missingHp {of, max?}`, `missingMana {of, max?}`, `stacks {status, of, per?}`, `energySpent {per}`, `blockOf {of}`, `hpOf {of}`, `cardsPlayedThisTurn {per}`. Every evaluation floors its final result (StS integer math). The **same evaluator** computes card-preview numbers for the UI (§3.13, §4.2).
+Op set (closed): `add`, `mul` (nestable), `percentMaxHp {of, pct, min?, max?}`, `missingHp {of, max?}`, `missingMana {of, max?}`, `stacks {status, of, per?}`, `energySpent {per}`, `blockOf {of}`, `hpOf {of}`, `cardsPlayedThisTurn {per}`, `traitBonus {base, pct}` (Counterstrike: `base + max(floor(base × pct), 1)` for a positive base; [combat-card-traits-contract.md](docs/combat-card-traits-contract.md)). Every evaluation floors its final result (StS integer math). The **same evaluator** computes card-preview numbers for the UI (§3.13, §4.2).
 
 **Approved configurable character defaults.** These are the shipped defaults, not engine
 constants. Every base, coefficient, divisor, rounding rule, reference maximum and flat-bonus
@@ -297,8 +300,8 @@ adding a second formula in UI or engine code. The run snapshots the resolved for
 birth, so later tuning applies to new runs and never silently re-stats an in-progress save.
 
 **One row, one formula, one editor (derived-stat ruleset 7, owner 2026-09-24).** Every stat a
-character has — HP, Mana, Stamina, Actions, the opening hand, the per-turn draw, the hand size,
-AR, DR, PR, Ward and Poise — is ONE row of `content/derivedStats.js`, in one shape:
+character has — HP, Mana, Stamina, the opening hand, the per-turn draw, the hand size,
+AR, DR, PR, Ward and Poise — is ONE row of `src/content/derivedStats.js`, in one shape:
 
 `{ base, strength, dexterity, constitution, wisdom, intelligence, perLevel, min?, max? }`
 
@@ -327,22 +330,22 @@ keep their snapshotted rules.
 |---|---|---|---|---|---|---|---|---|---|
 | HP (`hp`) | 51 | — | — | 1 | — | — | 2 | — | Owner's +1 main-bonus defaults (2026-10-06); stock pools including starting relics: Reaver 63, Starseer 66, Rogue and Herald 53. The run clamps max HP to ≥ 1. |
 | Mana (`mana`) | 1 | 0.125 | — | 0.25 | 0.5 | 0.125 | 0.2 | — | Budget 1; Wisdom leads. |
-| Stamina (`stamina`) | 3 | — | 0.25 | 0.25 | 0.2 | 0.2 | 0.1 | — | Pays card and combat costs; refills each turn. |
-| Actions / turn (`energy`) | 3 | 0.1 | 0.25 | — | 0.01 | 0.01 | 0.1 | — | DEX 0.2 → 0.25 (A3, FINISH D28, 2026-09-27): the first extra Action at DEX 4, the lean creation ceiling, so it is reachable at creation and three level-ups from DEX 1. Engine id stays `energy`. |
+| Stamina (`stamina`) | 3 | — | 0.25 | 0.25 | 0.2 | 0.2 | 0.1 | — | The one turn budget: pays card and combat costs and refills each turn. The HUD calls it Actions. |
+| Retired save row (`energy`) | 3 | 0.1 | 0.25 | — | 0.01 | 0.01 | 0.1 | — | Not a second pool: `energy` is an alias of `stamina` (`src/model/turnStamina.js`), and combat reads Stamina (`src/content/derivedStats.js`). Historical: DEX 0.2 → 0.25 (A3, FINISH D28, 2026-09-27), the first extra Action at DEX 4. |
 | Opening hand (`openingHand`) | 4 | — | — | — | — | 0.2 | — | 2–10 | Same default scaling as Draw / turn; configurable per-class overrides remain available. |
 | Draw / turn (`draw`) | 4 | — | — | — | — | 0.2 | — | 2–10 | Full draw each turn, counted from INT 4; retained cards only reduce this when capacity is reached. |
-| Hand size (`handSize`) | 15 | — | — | — | — | — | — | 1–15 | Flat absolute capacity by default, independently configurable. |
+| Hand size (`handSize`) | 7 | — | — | — | — | 0.2 above 4 | — | 1–20 | INT scales it like Draw: only points above 4 count (`attributeBaseline`), so +1 per five INT above 4. Independently configurable. |
 | AR (`ar`) | 0 | 1 | — | — | — | — | — | — | Read while combat ratings are on. |
 | DR (`dr`) | 0 | — | 1 | — | — | — | — | — | 〃 |
 | PR (`pr`) | 0 | — | — | — | — | 1 | — | — | 〃 |
 | Ward (`ward`) | 1 | — | — | — | 1 | — | — | — | 〃 |
 | Poise (`poise`) | 1 | — | — | 1 | — | — | — | — | ONE Poise: the rating with ratings on, the vessel with them off; armour and relics add. |
 
-| Output | Default formula | Meaning |
+| Output | Source | Meaning |
 |---|---|---|
-| Defense | `-6 + DEX` | The data-owned base value used by the basic guard/defense profile. |
-| Strike | `-6 + STR` | The data-owned base value used by the basic physical strike profile. |
-| Magic | `-6 + WIS` | The data-owned base value used by the basic magic profile. |
+| Defense | `baseValue` of the guard profiles, e.g. `unarmedGuard` = 1 (`ratingId` `dr`) | The data-owned base value used by the basic guard/defense profile. |
+| Strike | `baseValue` of the attack profiles, e.g. `unarmedAttack` = 3 (`ratingId` `ar`) | The data-owned base value used by the basic physical strike profile. |
+| Magic | `baseValue` of the magic profiles (`content/source/basicCardProfiles.csv`) | The data-owned base value used by the basic magic profile. |
 
 **Retired homes.** Ruleset 7 removed three second homes: the rating formula (`ratings.<id>` plus
 one global `multiplier`), the hand rules' single-stat counts (`{ base, statEnabled, stat,
@@ -392,13 +395,14 @@ Predicates (closed set, combinable): `{ p: 'inStance', stance }`, `{ p: 'hasStat
 
 ### 3.7 Status model — statuses are content, not code
 
-`content/statuses.js` defines every status over a generic model interpreted by `engine/statuses.js`. **Adding a status requires no engine change.** Schema:
+`src/content/statuses.js` defines every status over a generic model interpreted by `src/engine/statuses.js`. **Adding a status requires no engine change.** Schema:
 
 ```
 { id, name, icon,
   stackMode: 'add' | 'refresh' | 'unique',
   decay: 'none' | 'perTurnEnd' | { duration: n } | 'onConsume',
-  meter?: { max: n, growthMult: x, onFill: [effects] },   // build-up statuses
+  proc?: { threshold, burstPercent, burstMin, burstMax, poiseDamage?, effects?, stagger?, resistance? },   // build-up statuses: at threshold, burst, then reset to zero
+  meter?: { max, growthMult, onFill },                     // legacy build-up form, still accepted: on fill run onFill, emit meterFilled, grow the max by growthMult
   modifiers?: { damageDealtMult?, damageTakenMult?, blockGainedMult?,
                 attackDamageAdd?, blockAdd? },             // consulted by §4.2 math
   hooks?: [triggers §3.6] }                                // ownerTurnStart etc.
@@ -409,32 +413,33 @@ The Elden Ring layer, fully as data — no engine special cases:
 ```js
 bleed: {
   stackMode: 'add', decay: 'none',
-  meter: { max: 12, growthMult: 1.5,
-    onFill: [{ op: 'loseHp', target: 'owner',
-      amount: { f: 'percentMaxHp', of: 'owner', pct: 15, min: 8, max: 35 } }] },
+  proc: { threshold: 7, burstPercent: 15, burstMin: 8, burstMax: 35, poiseDamage: 3,
+    resistance: { status: 'bleedResist', tags: ['beast', 'humanoid'] } },
 },
-scarletRot: {
+crimsonBlight: {
   stackMode: 'add', decay: { duration: 3 },   // re-apply adds stacks + refreshes
   hooks: [{ on: 'ownerTurnStart',
     do: [{ op: 'loseHp', target: 'owner',
-      amount: { f: 'stacks', status: 'scarletRot', of: 'owner' } }] }],
+      amount: { f: 'stacks', status: 'crimsonBlight', of: 'owner' } }] }],
 },
 weak:       { stackMode: 'add', decay: 'perTurnEnd', modifiers: { damageDealtMult: 0.75 } },
 vulnerable: { stackMode: 'add', decay: 'perTurnEnd', modifiers: { damageTakenMult: 1.5 } },
-frostbite:  { stackMode: 'unique', decay: 'onConsume', /* +30% on next big hit: hook on damaged ≥10 */ },
+frost:      { stackMode: 'add', decay: 'none',
+  proc: { threshold: 10, burstPercent: 8, burstMin: 4, burstMax: 20,
+    effects: [ /* leaves the target Weak and Frost-Exposed */ ] } },
 ```
 
-Poise/Stagger uses the same meter model (owner-side meter fed by `poiseDamage`, `onFill` applies a `staggered` status whose modifiers/hooks implement the skipped turn and +50% window; `growthMult: 1.25`). Stances (`content/stances.js`) reuse `modifiers` + `hooks` + `onEnter` effects; exclusivity is handled by the `enterStance` primitive.
+Poise/Stagger uses its own break meter (`src/model/breakMeter.js`), fed by `poiseDamage`. Under legacy ratings a full meter applies the `staggered` status (skipped turn, ×1.5 damage taken); with ratings on (the default) a break applies no status (§4.4). After a break the threshold grows: with ratings on (the default) by `breaks.thresholdGrowth` (1.25) in the combat ratings rules (`applyRatingImpact`, `src/engine/combatRatings.js`); under legacy ratings by `balance.poise.growthMult` (1.25, `dealPoiseDamage`). Stances (`src/content/stances.js`) reuse `modifiers` + `hooks` + `onEnter` effects; exclusivity is handled by the `enterStance` primitive.
 
-**Engine-primitive exceptions:** card-zone/turn semantics that genuinely can't be data — **Exhaust, Ethereal, Innate, Retain, Unplayable, X-cost** — are fixed engine behaviors. `content/keywords.js` supplies only their display names and tooltip text.
+**Engine-primitive exceptions:** card-zone/turn semantics that genuinely can't be data — **Exhaust, Ethereal, Innate, Retain, Unplayable, X-cost** — are fixed engine behaviors. `src/content/keywords.js` supplies only their display names and tooltip text.
 
 ### 3.8 Procedural systems — kept procedural, parameterized by data
 
 | Generator | Algorithm (code, in `src/engine/`) | Knobs (data, in `src/content/`) |
 |---|---|---|
-| Act map | StS path-walk + typing constraints (§6), `mapgen.js` + `floorplan.js` | `mapconfig.js`: floors, columns, path count, type weights, `?`-node weights, per-floor rules **as anchors** |
-| Encounters | weighted roll with no-repeat window, `encounters.js` | `encounters/actN.js`: pools, weights, elite/boss lists |
-| Rewards | rarity rolls + pity/decay counters, `encounters.js` | `balance.js`: odds tables, rune ranges, flask-drop decay |
+| Act map | StS path-walk + typing constraints (§6), `src/engine/mapgen.js` + `src/model/floorplan.js` | `mapconfig.js`: floors, columns, path count, type weights, `?`-node weights, per-floor rules **as anchors** |
+| Encounters | weighted roll with no-repeat window, `encounters.js` | `encounters/<seat>.js` (marches, reach, weald): pools, weights, elite/boss lists |
+| Rewards | rarity odds in `model/rewardOdds.js`; flask decay in `encounters.js` | `balance.js`: odds tables, cinder ranges (`rewards.cinders`), flask-drop decay |
 | Enemy AI | weighted state machine + `maxConsecutive`, `combat.js` | each enemy's `moves` table |
 
 Every generator is a pure function of `(config, rngStream, runState)` → snapshot-testable with fixed seeds (§8).
@@ -447,7 +452,7 @@ Two closed vocabularies, both in `balance.equipment`, both derived rather than a
 |---|---|---|
 | what does a mid-fight equipment action cost | `swapCostRule` — one of `swapCostRules[].id` | **base → gear → floor 0.** Both prepared-set swaps and item replace/move/unequip actions use this price. `base: 'category'` prices by the destination piece's tags against `swapCostByCategory` (ordered, first match wins), falling through to `swapCost`; `base: 'default'` is `swapCost` for everything. `gear: true` adds the signed total of relic `swapCostDelta` passives and worn `self.swapCost` mods. The truth function is `swapCostFor()` in `model/loadout.js`; `engine/combat.js` charges it and emits `armamentSwapped` or `equipmentRearmed` with the number. |
 | may carried equipment change during combat | `allowChangesInCombat` | When true, the player-turn Armoury may replace, move, or unequip carried gear through the `changeEquipment` combat intent. The engine applies the price, updates resource maxima and Poise, reconciles equipment-granted cards, restamps every live pile, and persists the same loadout object. False closes both UI and mutation paths. |
-| which pieces need no finding | `basicTag` | A piece carrying that tag answers the **found** gate for free (`ownership()`). It has no opinion about the **earned** gate; a row carrying both is refused by name. `persistence` remains the only scope word — profile-wide (`both`, the shipped default) vs this-run-only (`perRun`). |
+| which pieces need no finding | `basicTag` | A piece carrying that tag answers the **found** gate for free (`ownership()`). It has no opinion about the **earned** gate; a row carrying both is refused by name. `persistence` remains the only scope word — the shipped default is `perRun` (this run only); any other value is profile-wide, and `unlocked` is also read (`model/loadout.js:820-821`). |
 
 **A weapon's category is its tags** — `heavy`, `flourish` — never a `swapCost` column, because a
 column would compel an author to restate what the tags already imply (Law 0 clause 1). The two
@@ -476,8 +481,8 @@ nowhere else**. The order is fixed:
 
 If equipment alone meets or exceeds the cap, no base cards are minted and the run begins
 with only its equipment cards. That is a **balance question for whoever authors the gear**,
-not a validation failure — `validateEquipment` says so as a warning, naming the class and
-the loadout, and refuses nothing.
+not a validation failure — `startingDeckWarnings()` reports it as a warning, naming the class and
+the loadout, and refuses nothing. `validateEquipment` returns problems only and does not show that warning.
 
 **After creation the cap does not apply.** Swapping to gear that lends fewer cards leaves a
 smaller deck; more, a larger one. There is no re-minting of base cards mid-run and no
@@ -533,7 +538,8 @@ its mounts, and **seat** a run-owned card in an emptied or open mount.
 - **Not in a Sealed or Draft run** (owner, 2026-10-02). A pool-built deck is never dealt the
   equipment's lent cards (`isPoolDeckRun`, `model/cardRemoval.js`), and extracting one would
   hand the run a free copy of what those modes exclude. `extractionRefusal` answers `poolDeck`
-  from the run's own Custom Climb rules every time, never from a stored field: `extractionPlan`
+  from the run's own Custom Climb rules, or from a stored `run.poolDeck === true` flag on a fight's
+  synthetic run (`isPoolDeckRun`): `extractionPlan`
   lists no candidate and carries that `refusal`, `commitExtraction` refuses it by name (a free
   grant too) before touching the run, and every smith door — the Shrine, a merchant's rolled
   smith, the blacksmith's `extractArt` — shows the service unavailable with the
@@ -581,8 +587,8 @@ fail-closed rather than normalized or replaced with Unarmed.
 #### Complete armament kits
 
 Every shipped hand-equipped armament authors a `weaponCardPackage.combatKit`:
-`{ attackProfileId, guardProfileId, artCardId }`. Weapons, shields, implements,
-and staves each lend one Strike, one Guard, and one signature Armament Art while
+`{ attackProfileId, guardProfileId, artCardId }`. Weapons, shields, and staves (sceptres
+are staves) each lend one Strike, one Guard, and one signature Armament Art while
 equipped. Armour, talismans, and consumables do not acquire this kit.
 
 These three item-owned cards are guaranteed before the starting filler budget
@@ -605,7 +611,8 @@ author the same card; optional non-kit arts retain the existing shared-art rule.
 Reconciliation preserves cards already in discard or exhaust. Unequipping
 removes item-owned contributions and re-equipping restores their stable IDs.
 
-New armed starting decks omit the redundant global technique grant. Fully
+New armed starting decks omit the redundant global technique grant
+(proved in `tests/framework.test.mjs`). Fully
 unarmed Strike/Guard/technique behavior remains unchanged.
 
 **Everyone has the Dodge Roll** (owner's rule, 2026-09-24, widening the
@@ -624,12 +631,12 @@ and show the exact contributed cards, including counts.
 
 Shield signature identities are Shield Bash (Round Shield), Riposte (Buckler),
 Guardian (Kite Shield), Bastion (Tower Shield), and Spiked Reprisal (Spiked Shield).
-Guardian costs 1 Energy, grants 5 Block, adds a temporary 1-Energy Enter: Bulwark
+Guardian costs 1 Stamina, grants 5 Block, adds a temporary 1-Stamina Enter: Bulwark
 skill to the hand, and Exhausts. The generated skill also Exhausts, is usable by
 every class, and enters the existing Bulwark stance. A full hand sends it to
 discard. It never enters the permanent run deck and disappears after combat.
-Bastion costs 1 Energy, grants 12 Block, applies 1 Weak to self, and Exhausts.
-Spiked Reprisal costs 1 Energy, grants 4 Block, deals 4 damage, and applies 2
+Bastion costs 1 Stamina, grants 12 Block, applies 1 Weak to self, and Exhausts.
+Spiked Reprisal costs 1 Stamina, grants 4 Block, deals 4 damage, and applies 2
 Bleed. Existing card effects supply the other authored armament Arts.
 
 ### 3.9 Action queue
@@ -640,7 +647,7 @@ Rule: **nothing mutates HP/block/piles/statuses except an executed action.** Tri
 
 ### 3.10 Event bus
 
-Events emitted by executed actions (closed list; the authoritative set is `EVENTS` in `src/model/schemas.js`, payloads in `docs/ENGINE-API.md`; an event marked † is specified ahead of its implementation and joins `EVENTS` when it lands). The core events are (not exhaustive; `EVENTS` is):
+Events emitted by executed actions (closed list; the authoritative set is `EVENTS` in `src/model/schemas.js`, payloads in `docs/ENGINE-API.md`; an event marked † is specified ahead of its implementation and joins `EVENTS` when it lands). `equipmentChanged` and `equipmentRearmed` are emitted outside `EVENTS`. The core events are (not exhaustive; `EVENTS` is):
 
 ```
 combatStart, combatEnd(victory)
@@ -650,7 +657,7 @@ damageDealt(source,target,amount,blocked,isAttack)
 blockGained, hpLost, healed
 statusApplied, statusExpired, meterFilled, stanceEntered, stanceExited
 enemySpawned, enemyDied, enemyStaggered
-energyGained, energySpent
+energyGained, energySpent   // legacy names: `energy` is the retired alias of Stamina, the one cost pool
 flaskUsed, relicTriggered(relicId)
 equipmentChanged(reason,beforeLoadoutSignature,afterLoadoutSignature,changedPositions)
 combatReactionOffered, combatReactionChosen
@@ -662,15 +669,15 @@ combatGuardBroken(targetId,sourceId,poise,sourcePlayerId?,targetPlayerId?)
 
 - `rng.js` implements **mulberry32**. A run seed (uint32, displayed base-35 like StS, e.g. `3LB6HXYD`) is rolled at run start or entered manually on the class-select screen.
 - **Named streams**, each independently derived from the seed + a stream salt + a monotonically increasing counter that is *saved with the run*:
-  `map`, `shuffle`, `cardRewards`, `relicRewards`, `flaskRewards`, `armaments`, `enemyAI`, `enemyHP`, `events`, `shop`, `misc`, `smith`, `combatProcs`, `seats` (the closed set is `STREAM_NAMES`, `src/engine/rng.js` — an unknown stream name throws). `seats` is drawn exactly once, at run creation, for the seat order (§13); it exists so that order can be seeded without moving a single draw on any other stream.
+  `map`, `shuffle`, `cardRewards`, `relicRewards`, `flaskRewards`, `armaments`, `enemyAI`, `enemyHP`, `events`, `shop`, `misc`, `smith`, `combatProcs`, `seats`, `rewardRolls`, `shopOffers`, `sigils`, `enemyIntentVisibility`, `combatAvoidance`, `statusRecovery`, `statusPressure`, `ashenBlight`, `enemyIntentClue` (the closed set is `STREAM_NAMES`, `src/engine/rng.js` — an unknown stream name throws). `seats` gets one shuffle call at run creation, for the seat order (§13), which makes n−1 counter steps on that stream; it exists so that order can be seeded without moving a single draw on any other stream.
 - Consequence (StS-faithful): re-fighting the same combat after reload produces the same shuffles; choosing a different path doesn't change what a later card reward would have been on another stream.
 
 ### 3.12 Save format, and the durable profile
 
 **Two schemas, one home each — this is the contract, and the values are not restated here.**
 `RUN_SCHEMA_VERSION` lives in `src/model/state.js`; `META_SCHEMA_VERSION` lives in
-`src/engine/save.js`. Neither number appears anywhere else, and a second copy of either is a
-defect.
+`src/engine/save.js`. Neither number is restated as a current value anywhere else, and a second copy of
+either is a defect; the dated bumps below are history.
 
 **The run.** Key `sote_run_v1`, **three slots, one run each** (`SLOTS`, `save.js`). The
 persisted field list is **declared as data** — `RUN_SHAPE` in `model/state.js`, with
@@ -684,8 +691,9 @@ id only (§3.3).
   **Save and Quit** during a fully resolved combat replaces that checkpoint with a versioned
   `CombatSnapshotService` record of the exact committed turn: phase, resources, hand and all
   piles, enemies and intents, statuses, triggers, equipment state, and event log. Loading that
-  record restores it without replaying combat start, draws, or enemy rolls. A live action queue
-  or event buffer is not a committed boundary and refuses the save. Older `combatEntered`
+  record restores it without replaying combat start, draws, or enemy rolls. A live event buffer, or an
+  action queue that no pending reaction or ability discard holds, is not a committed
+  boundary and refuses the save. Older `combatEntered`
   records without a snapshot remain compatible and restart the encounter deterministically.
 - An unknown older-or-invalid `schemaVersion`, a parseable-but-malformed shape, or a `contentVersion` mismatch
   with a dangling id → the save is **refused and archived**, never silently repaired. A run
@@ -748,7 +756,7 @@ five durability properties (#66/#67), each of which is a claim a command can fal
    filename. While in that state the profile is **quarantined**: the next ordinary settings
    write cannot overwrite the original bytes, which are the evidence of every other failure.
 5. **The drawer has a handle.** `listArchives()` / `getArchive()` / `exportArchive()` /
-   `replacePrimaryWith()` are reachable by the player from **Profile on the title screen**
+   `restoreProfile(id)` are reachable by the player from **Profile on the title screen**
    (`ui/screens/profileArchive.js`): inspect, export to a file, or promote an archive back to
    primary — which archives the outgoing one and clears the quarantine. An archive nothing can
    open is a promise, not a feature.
@@ -759,11 +767,11 @@ notices (`drawerNotices()`) are how the screen reports what it had to do to itse
 
 ### 3.13 Card text templating
 
-Card and relic `textTemplate`s carry tokens: `"Deal {damage}. Apply {bleed} Bleed."` Tokens bind to opcode values by op/status name (disambiguated by index when repeated: `{damage.2}`). The UI fills tokens via the **same formula evaluator and damage preview the engine executes** (§3.5, §4.2) — so a Strike in hand shows 9 when you have +3 Strength and shows it struck through to 6 when Weak. A validation rule (§3.14) rejects any template token that doesn't bind, and any player-visible numeric effect lacking a token.
+Card and relic `textTemplate`s carry tokens: `"Deal {damage}. Apply {bleed} Bleed."` Tokens bind to opcode values by op/status name (disambiguated by occurrence ordinal: the first is bare, the second is `{damage.2}`). The UI fills tokens via the **same formula evaluator and damage preview the engine executes** (§3.5, §4.2) — so a Strike in hand shows 9 when you have +3 Strength and shows it struck through to 6 when Weak. A validation rule (§3.14) rejects any template token that doesn't bind, and any player-visible numeric effect lacking a token.
 
 ### 3.14 Content validation
 
-`model/validate.js` runs at boot in dev mode and from the test page. It checks, across ALL registries:
+`model/validate.js` runs at every boot (`src/main.js:182`) and from the test page. It checks, across ALL registries:
 
 1. Every content object conforms to its schema (fields, types, enums).
 2. Every id cross-reference resolves (cards in pools/decks, statuses in effects, encounters on maps, moves in `unlockMoves`, …).
@@ -776,9 +784,8 @@ Card and relic `textTemplate`s carry tokens: `"Deal {damage}. Apply {bleed} Blee
    **naming the entry**, per Law 1 clause 5.
 7. Property rules (§3.3 PropertyRule): every `property` tag has exactly one rule; a rule's tag is
    a property tag; `requires`/`excludes` name property tags; `requires` has no cycle; a sidecar
-   `{ "balance": "path" }` names a real balance number; and `property` is paired with, or
-   written on, carrier families only — a card-family pairing or tagging row fails with
-   *cards never carry properties*. Each refusal names its row (`tests/engine.test.js` test 80).
+   `{ "balance": "path" }` names a real balance number; and any family may carry a
+   `property` tag. Each refusal names its row (`tests/engine.test.js` test 80).
 
 **Law 1 clause 6 — the content smoke — is built and runnable** (#64). Validation only covers
 failures *downstream of itself*, so the standing check is over observable outcome, in the
@@ -798,7 +805,9 @@ go red is `unknown`, not green.
 ## 4. Combat rules (Slay-the-Spire-faithful)
 
 **Reward-card cost tuning (2026-09-19).** Resource costs remain explicit card
-data, paid together with Actions; rarity does not roll a cost at play time.
+data: a Stamina cost, paid from the one turn pool (Actions is how the HUD shows
+it; `energy` is a retired alias of `stamina`), and an optional Mana cost; rarity
+does not roll a cost at play time.
 Across the union of class reward pools, Common/Uncommon/Rare cards target
 30/50/70 percent with a Stamina cost, including 15/30/50 percent with both
 Stamina and Mana, rounded to whole cards. Starter and equipment-only cards
@@ -809,7 +818,8 @@ scope and verification.
 
 **Pools between fights (2026-09-24, plan A2).** Every fight opens with Stamina
 at its maximum (`mechanics.stamina.combatStartRefill: "full"`; `"carry"` keeps
-the old rule); a restored fight keeps the Stamina it was saved with. HP and
+the old rule, but it has no effect on the Stamina a fight opens with: every player turn start refills Stamina to its
+maximum less any Stagger loss, in `src/engine/combat.js`'s player turn start); a restored fight keeps the Stamina it was saved with. HP and
 Mana carry from one fight to the next, and only rests, flasks and effects
 restore them. The refill also clears the Stamina deficit an equipment swap
 carried, so the next swap cannot take the refilled points back. Rules text:
@@ -825,9 +835,9 @@ Stamina/Mana spent or no HP lost, the enemies' turn included; 0 = every turn)
 and **only every N rounds**; **after a won fight** (percent of the maximum,
 applied after the fight's pools are written back); and **at every Rest**
 (percent of the maximum on top of the place's own tags, §13.4j, included in the
-Rest preview). The defaults are the rules above — Stamina recovers
-`mechanics.stamina.idleRecoveryPerTurn` after an idle turn, nothing else
-recovers — and a fight built at the defaults carries no recovery state, so its
+Rest preview). The defaults are the rules above — Stamina gets no idle recovery (the turn-start
+refill in §4.1 already restores it, so `mechanics.stamina.idleRecoveryPerTurn` is
+not applied), and nothing else recovers — and a fight built at the defaults carries no recovery state, so its
 behaviour and its save are unchanged. A fight built under changed rules
 snapshots them with the idle streaks (`combat.recovery`); a restored fight keeps
 them. Co-op seats and the foundation ruleset keep their own recovery rules.
@@ -886,9 +896,9 @@ their snapshotted rules. The numbered legacy sequence below is an illustrative
 baseline; saved stat rows and hand options override its draw and cleanup defaults.
 
 1. **Combat start:** shuffle deck into draw pile; `Innate` cards go to top. `combatStart` triggers fire.
-2. **Player turn start:** lose all block (unless modified), set energy to 3 (base), draw 5, `playerTurnStart` triggers.
-3. **Player acts:** play any affordable cards, use flasks, inspect piles. Max hand size is the Hand size row (§3.5; the retired fallback of 5 in a pre-ruleset-7 co-op seat) — excess drawn cards go to discard with a "hand full" toast (StS behavior).
-4. **Player turn end:** `playerTurnEnd` triggers; discard hand except `Retain` cards; `Ethereal` cards in hand exhaust instead. Unspent energy is lost.
+2. **Player turn start:** lose all block (unless modified), set Stamina to its maximum (Stamina row, less any Stagger loss), draw the Draw / turn row (the Opening hand row on turn 1), `playerTurnStart` triggers.
+3. **Player acts:** play any affordable cards, use flasks, inspect piles. Max hand size is the Hand size row (§3.5; the retired fallback of 5 in a pre-ruleset-7 co-op seat) — with the default hand rules a draw stops at that size without consuming the draw pile; only a fight without hand rules sends excess drawn cards to discard with a "hand full" toast (StS behavior).
+4. **Player turn end:** `playerTurnEnd` triggers; return unplayed cards except `Retain` cards (by default they shuffle into the draw pile, `shuffleHand: true`; the legacy baseline discards them); `Ethereal` cards in hand exhaust instead. Unspent Stamina is lost.
 5. **Enemy turn:** each living enemy, in row order, executes its telegraphed intent; enemies lose their block at the start of *their* turn.
 6. New intents are rolled (stream `enemyAI`), display updates, back to 2.
 7. **End:** all enemies dead → victory (rewards); player HP ≤ 0 → death screen.
@@ -899,14 +909,23 @@ For an attack dealing `base` damage:
 
 ```
 dmg = base
+dmg = dmg + card rating bonus                    // ratings (§13.4l) run first
+dmg = dmg + school damage add                    // player cards with a damage school
 dmg = dmg + attacker.Strength                    // may go below base
 dmg = dmg * (attacker has Weak      ? 0.75 : 1)
 dmg = dmg * (defender has Vulnerable? 1.5  : 1)
-dmg = dmg * (defender is Staggered  ? 1.5  : 1)
-dmg = floor(dmg); if dmg < 0 → 0
+dmg = dmg * (defender is Staggered  ? 1.5  : 1)  // legacy ratings only (see below)
+dmg = dmg * defender's Poise or Ward resistance  // ratings on; Ward for magical hits
+dmg = dmg * (school resistance, then school vulnerability)
+dmg = floor(dmg) + ceil(dmg × (tagged − 1))      // tag-scoped vulnerability, §3.7 (taggedBonusFloor); plain floor(dmg) when no tag applies
+if dmg < 0 → 0
 ```
 
-(The multipliers/adders come from status `modifiers` (§3.7); the engine consults the status model, not named statuses.) Multi-hit attacks compute per hit. Damage consumes block first; remainder hits HP. `loseHp` (Rot ticks, Bleed bursts, Madness) ignores Strength/Weak/Vulnerable/Stagger *and block*. Block from a card: `base + Dexterity`, `× 0.75` if Frail, floored.
+The tactical matchup multipliers (§4.7) run after the floor. Staggered's ×1.5 is
+the `staggered` status's `damageTakenMult`, and it applies only under legacy
+ratings; with ratings on (the default), a break applies no status (see §4.4).
+
+(The multipliers/adders come from status `modifiers` (§3.7); the engine consults the status model, not named statuses. The order is `computeAttackDamage` in `src/engine/actions.js`.) Multi-hit attacks compute per hit. Damage consumes block first; remainder hits HP. `loseHp` (Rot ticks, Bleed bursts, Madness) ignores Strength/Weak/Vulnerable/Stagger *and block*. Block from a card: `base + Dexterity`, `× 0.75` if Frail, floored.
 
 The combat health row shows ordinary Block as a blue shield beside HP. While
 that shield is positive, HP is blue; breaking it restores the normal red (or
@@ -923,12 +942,12 @@ snapshots carry the provenance with their damage and guard receipts.
 Narrow health lanes display current HP alone to prevent number collisions;
 the complete current/maximum value remains in the accessible label and tooltip.
 
-**Card preview numbers in the UI are computed by the same engine function** (`previewDamage(card, source, target)`); no duplicated math in the UI (§3.13).
+**Card preview numbers in the UI are computed by the same engine function** (`previewCard(combat, cardInstanceId, targetId)`, which calls `computeAttackDamage`); no duplicated math in the UI (§3.13).
 
 ### 4.3 Card rules
 
 - Types: **Attack, Skill, Power, Curse, Status**. Powers are removed from play when played (not exhausted — they don't hit the exhaust pile). Curses/Statuses are unplayable unless stated.
-- Keywords (exact StS semantics; engine primitives per §3.7): **Exhaust** (removed for the combat after play), **Ethereal** (exhausts if in hand at end of turn), **Innate** (starts on top of draw pile), **Retain** (not discarded at end of turn), **Unplayable**, **X-cost** (consumes all energy; effect scales via `{f:'energySpent'}`).
+- Keywords (exact StS semantics; engine primitives per §3.7): **Exhaust** (removed for the combat after play), **Ethereal** (exhausts if in hand at end of turn), **Innate** (starts on top of draw pile), **Retain** (not discarded at end of turn), **Unplayable**, **X-cost** (consumes all Stamina; effect scales via `{f:'energySpent'}`).
 - Upgrades: every non-curse card has exactly one authored upgrade (`name+`), a partial override object on the card def (numbers, cost, keywords — a present `keywords` list replaces the base list, so upgrades can remove Exhaust). Ordinary cards retain a permanent per-copy run upgrade. Equipment-sourced basic cards instead resolve that authored upgrade from their source armament's run-owned Smithing tier, so every current and future copy from the same armament changes together.
 - Smithing: a run owns `smithingStones`, an `armamentLevels` map, and idempotent reward claims. The shipped tier cap is 1 and promoting an armament to tier 1 costs 1 Smithing Stone. Elite and boss victories award 1 Stone; normal and treasure reward pools award 0. Legacy equipment-card upgrade flags migrate to the corresponding source armament tier without granting Stones.
 - Empty draw pile + draw needed → discard pile is shuffled (stream `shuffle`) into draw first.
@@ -958,7 +977,11 @@ the resist row, duration in its decay, gate in the proc row). Declared per row:
 `threshold, burstPercent (of target max HP), burstMin/burstMax, poiseDamage (per proc),
 stagger (direct), effects, resistance {status, tags}`. Schema + validator enforce every
 knob (`model/schemas.js`, `model/validate.js`); tag-scoped extra vulnerability composes
-by a declared `stacking` rule (closed enum: additive | multiplicative).
+by a declared `stacking` rule (closed enum: additive | multiplicative). **Its bonus rounds
+up** (owner, 2026-10-12): the hit's damage without the exposure floors as usual, and the
+exposure's share of it is added rounded up (`taggedBonusFloor`, `model/combatRules.js`), so a
+base-3 tagged card still gains a point; preview and hit share the one derivation. Every other
+multiplier, plain Vulnerable included, keeps its floor.
 
 **The numbers are deliberately NOT restated in this spec.** Every knob above is marked
 PROVISIONAL in its own row and is expected to move — Bleed's threshold was picked against the
@@ -975,21 +998,28 @@ node -e "import('./src/content/statuses.js').then(m=>m.statuses.filter(s=>s.proc
 |---|---|
 | **Bleed (threshold-proc)** | The build-up the Reaver's kit is written around; fleshy targets (beast/humanoid) gain a bleed-resist status after a burst. Adds Poise damage per proc. |
 | **Frost (threshold-proc)** | Deliberately the smallest burst of the three; the proc leaves **Weak** plus a tag-scoped exposure that raises `starstone`-tagged damage. |
-| **Insanity (threshold-proc)** | The largest burst and the hardest to fill; adds Poise damage **and a direct Stagger** that bypasses the meter, and leaves an exposure on `ritual`/`blight`-tagged damage. **Not** the player-side Madness below — two words, two mechanics, on purpose. |
+| **Insanity (threshold-proc)** | The largest burst and the hardest to fill; adds Poise damage **and a direct Stagger** that bypasses the meter (neither fills nor grows it) but is otherwise the same Stagger a full meter is — the skipped turn and the `staggered` status, so every Staggered-gated rider fires (owner, 2026-10-12) — and leaves an exposure on `ritual`/`blight`-tagged damage. **Not** the player-side Madness below — two words, two mechanics, on purpose. |
 | **Crimson Blight** *(`crimsonBlight`; "Scarlet Rot" pre-scrub)* | DoT on enemy: take N `loseHp` at its turn start. Unlike StS Poison, stacks **do not tick down** — instead it has a duration of **3 of its turns**, then expires entirely. Re-applying adds stacks and refreshes duration. Ignores block. |
+| **Necrotic Blight** *(`necroticBlight`)* | The status the **Necrotic** damage type applies (§4.7), and nothing else. Same tick as Crimson Blight (N `loseHp` at its turn start, ignores block, stacks do not tick down), but it **lasts the whole fight** (decay `none`; owner, 2026-10-12) — only a cleanse removes it. All other Crimson Blight (enemy moves, Herald cards, relics, flasks, equipment mods) keeps the 3-turn duration above. Herald payoffs that read Blight stacks count both rows. |
+| **Venom** *(`venom`; renamed Poisoned by the TagRefactor)* | Damage over time: at its turn start the owner loses HP equal to its stacks (ignores Block); one stack expires each turn. Applied by Poison-typed hits (§4.7) and by `applyStatus`. |
+| **Confused** *(`confused`)* | On enemy: deals 10% less damage; at its turn start, 50% chance to take 3 Poise damage per stack. 1 stack expires each turn. Applied by Psychic hits (§4.7). |
+| **Slowed** *(`slowed`)* | On enemy: deals 10% less damage and gains 25% less Block. 1 stack expires each turn. Applied by Earth hits (§4.7). |
+| **Entombed** *(`entombed`)* | On enemy: skips its next turn and takes 25% less damage until it ends. Card-applied only; no damage type applies it. |
 | **Burn** *(`burn`)* | The third damage-over-time row, applied by `burn`-tagged effects and by equipment mods (`equipMods.csv`). |
+| **Silenced** *(`silenced`)* | On enemy: spell-camp moves deal 50% less damage for 2 turns. Its only modifier is `spellDamageDealtMult` (closed `MODIFIER_TYPES`), which scales the spell-camp damage its owner deals and leaves physical damage alone; preview and hit read the same multiplier |
 | ~~Frostbite~~ | **CUT — describes nothing.** No `frostbite` status ships; the frost identity is carried by the **Frost** threshold-proc row above and its `frostExposed` exposure. Falsify: `node -e "import('./src/content/statuses.js').then(m=>console.log(m.statuses.some(s=>s.id==='frostbite')))"` → `false`. |
-| **Madness** | On player (from enemies/curses): at turn start, lose 2 HP per stack but gain 1 energy per stack, then Madness clears. Risk/reward, mostly enemy-inflicted. |
-| **Poise / Stagger** | Every enemy has `poiseMax` (8–40 by enemy). `poiseDamage` fills the meter (shown under HP). When full: enemy becomes **Staggered** — its next turn is skipped (intent replaced by "Staggered"), it takes +50% attack damage until the end of the *player's* next turn, then meter empties and `poiseMax` ×1.25 (rounded up). Poise meter does not decay. **The player has one too** (§13.4k): its max is the one `poise` stat row (§3.5, §13.4l) + body armour + relics, impact fills it, and a fill applies `balance.stagger.player`'s statuses (2 Vulnerable, 2 Weak) and opens the next turn one action short. |
+| **Madness** | On player (from enemies/curses): at turn start, lose 2 HP per stack but gain 1 Stamina per stack, then Madness clears. Risk/reward, mostly enemy-inflicted. |
+| **Poise / Stagger** | Every enemy has an authored `poiseMax` (4–40 by enemy). Physical impact fills the Poise meter (shown under HP). When full: the enemy becomes **Staggered** — its next turn is skipped (intent replaced by "Staggered"), the meter keeps any overflow, and its threshold grows ×1.25 (rounded up). A direct Stagger (Insanity's proc) uses the same break path but neither consumes nor grows the meter. Every enemy break also applies the `staggered` status (+50% attack damage taken until the end of the *player's* next turn). With combat ratings on, that holds for the rating meter (Poise or Ward, physical or magical), the Insanity break and a status-gauge Poise break alike (owner, 2026-10-12; *Configurable stat pools, ratings, Poise and Ward*). Poise does not decay by default. **The player has one too** (§13.4k): its max is the one `poise` stat row (§3.5, §13.4l) + body armour + relics, impact fills it, and a fill opens the next turn one Stamina short. Under the legacy meter rules a fill also applies `balance.stagger.player`'s statuses (2 Vulnerable, 2 Weak). |
 
 All of the above — including the whole Elden Ring layer — are data objects in `content/statuses.js` over the generic status model (§3.7); none has engine-side special cases.
 
-### 4.5 Stances (Vagabond mechanic)
+### 4.5 Stances (Reaver mechanic)
 
 At most one stance active. Entering a stance exits the previous (`stanceExited` then `stanceEntered`). Stances are combat-scoped.
 
-- **Bloodflame Stance:** your attacks apply +2 Bleed. On entering: take 2 damage (ignores block).
+- **Gorefire Stance:** your attacks apply +2 Bleed. On entering: take 2 damage (ignores block).
 - **Bulwark Stance:** whenever you play a Skill, gain 2 Block. On entering: gain 3 Block.
+- **Brace:** damage taken ×0.75. On entering: gain 4 Block. Leaving it for another stance gives 1 Strength.
 
 Some cards read "If in [stance]: bonus" (predicate `inStance`). Stance icon shows beside the player's status row.
 
@@ -1021,16 +1051,16 @@ Enemy definition shape (content file):
 
 **Future expansion proposal:** [Combat expansion notes](docs/combat-cards-expansion-proposal.md) describe later candidate rules for persistent stances, Evade, Counter coverage, Ward/Poise resistance, recovery cards, Sleep/Prone, tag interactions, upcasting, and three Ashen Blight feat stages. This documentation reference does not change the existing §4.7 rules below; each runtime revision requires a separate accepted contract and implementation.
 
-**Contract status: planned.** This section must land in its own specification PR before the implementation PR. It extends ordinary action resolution for authored tactical profiles; it does not replace persistent class stances (§4.5), invent a new card type, or claim the full combat/equipment cutover is complete. Design examples and unimplemented suggestions live in [combat-cards-design](docs/combat-cards-design.md).
+**Contract status: implemented** (version-1 table; §4.8 carries version 2). It extends ordinary action resolution for authored tactical profiles; it does not replace persistent class stances (§4.5), invent a new card type, or claim the full combat/equipment cutover is complete. Design examples and unimplemented suggestions live in [combat-cards-design](docs/combat-cards-design.md).
 
 **Identity and authoring**
 
 - Cards and enemy moves share combat camps `physical` and `spell`. Physical maneuver vocabulary is `attack`, `defend`, `counter`, `sweep`, `ranged`, `smash`. Defensive or reactive spell cards may also carry `defend` or `counter`; utility cards may carry no maneuver.
-- Spell schools are `frost`, `fire`, `lightning`, `force`, `alteration`, `illusion`, `divine`, `decay`. School describes an authored ability family. It does not silently create a status, refund, draw or defensive effect; those remain printed effect recipes. Damage identity is independent: a physical weapon can inflict Cold, and an Alteration spell can inflict Piercing.
+- Spell schools are `frost`, `fire`, `lightning`, `force`, `alteration`, `illusion`, `divine`, `decay` and `earth`. `illusion` is the school of Psychic damage. School describes an authored ability family. It does not silently create a status, refund, draw or defensive effect; those remain printed effect recipes. Damage identity is independent: a physical weapon can inflict Cold, and an Alteration spell can inflict Piercing.
 - `content/source/nodes.csv`, `familyNodes.csv`, `tagFamilies.csv` and `tagging.csv` remain the only authored tag source. Namespaces `camp:*`, `maneuver:*`, `school:*` and `counter:*` prevent collisions with `classification.attack` and class stances. Each carrier has one camp, at most one maneuver and one school; a spell has one school. Counter reach is `melee`, `ranged` or `spell` and appears only on Counter carriers.
 - Enemy actions are family `enemyMove`, source `enemyMoves`, scoped by `enemyId`; their whole key is `(enemyId, moveId)`. Flattening the authored move tables for validation does not create a second move definition. Registered enemy moves receive their own joined tags; they never inherit creature identity as an attack profile.
-- Runtime `combatProfile` contains `{ camp, maneuver, school, damageType, counterMode }`. Unassigned values are `null`. Weapon-dependent cards resolve damage from equipped attack source and explicit components rather than inventing a fixed type from a card name. Active registry tags and equipment `cardTags`, including explicit empty arrays, are authoritative. Global shipped associations are not a fallback inside engine resolution for custom content. Under expanded combat (v2), a spell's reach follows its delivery (`delivery:projectile` far, `delivery:melee` contact, otherwise near) unless its expansion row or the far list sets it; legacy v1 runs are unchanged.
-- Stable damage IDs remain `blunt`, `piercing`, `slashing`, `frost`, `fire`, `lightning`, `arcane`, `sacred`, `decay`. Player-facing labels for the last four renamed categories are Cold (`frost`), Force (`arcane`), Holy (`sacred`) and Necrotic (`decay`). Accepted input aliases do not create duplicate tag identities or damage components.
+- Runtime `combatProfile` contains `{ camp, maneuver, school, damageType, counterMode }`. Unassigned values are `null`. Weapon attack cards carry a fixed `damage:*` tag in `tagging.csv` that sets their damage type (owner, 2026-10-12); the equipped weapon still supplies the attack source and identity otherwise. Active registry tags and equipment `cardTags`, including explicit empty arrays, are authoritative. Global shipped associations are not a fallback inside engine resolution for custom content. Under expanded combat (v2), a spell's reach follows its delivery (`delivery:projectile` far, `delivery:melee` contact, otherwise near) unless its expansion row or the far list sets it; legacy v1 runs are unchanged.
+- Stable damage IDs are `blunt`, `piercing`, `slashing`, `frost`, `fire`, `lightning`, `arcane`, `sacred`, `decay`, `poison`, `psychic` and `earth`. Player-facing labels for the renamed categories are Cold (`frost`), Force (`arcane`), Holy (`sacred`) and Necrotic (`decay`); a later rename task switches Cold to Frost. Accepted input aliases do not create duplicate tag identities or damage components.
 
 **Physical matchups and timing**
 
@@ -1066,14 +1096,21 @@ Riders resolve once per committed root action (player card or enemy move) and ta
 | Lightning | Apply 1 Weak, presented as Sap, after HP loss |
 | Force | Strip up to 2 Ward; bypass melee Counter. Ward drain never spills into HP or ordinary Guard |
 | Holy | After HP loss, cleanse one stack from the attacker's first eligible hostile status in configured priority order |
-| Necrotic | Apply 1 Crimson Blight after HP loss. This is combat status buildup, not persistent run corruption |
+| Poison | Apply 1 Venom after HP loss (v2: 4 Venom build-up). Poison damage is not reduced by armour class. Constructs halve Venom build-up; undead take it normally |
+| Psychic | Apply 1 Confused after HP loss. Psychic damage is not reduced by armour class |
+| Earth | Apply 1 Slowed after HP loss. Earth damage is not reduced by armour class and is absorbed by Ward |
+| Necrotic | Apply 1 Necrotic Blight after HP loss; unlike Crimson Blight (3 turns) it lasts the rest of the fight (§4.4), and Holy cleanses remove it. This is combat status buildup, not persistent run corruption |
+
+**Technique riders.** Card tags can carry a rider of their own (`tagRiders`, beside `damageRiders` in both the version-1 and version-2 tables), resolved with the damage riders (once per root action and target, sharing that budget, no reaction chaining; owner, 2026-10-12, applies in v1 and v2): **Precision** attacks bypass up to 4 Block (the larger of this and a Piercing bypass, never the sum); **Gorefire** attacks apply 1 Burn after HP loss (v2: 4 Burn build-up) unless the card prints Burn. A frozen table without `tagRiders` has no technique riders. **Oath** is not a hit rider: while the player has not entered a stance earlier **this fight** (owner, 2026-10-12, decision 11), playing an Oath card grants 2 Block (`balance.tagMechanics.oath.block`). It is data, not engine code: every class card carries the `oathKept` property rule, whose `stanceEntered` trigger sets the fight-long `stanceShifted` marker status (decay `none`) and whose `cardPreparing` trigger grants the Block while that marker is absent, so the card that enters the first stance still counts as kept. In co-op each seat keeps its own Oath.
+
+**Enemy elemental resist** (owner, 2026-10-12). Under version 2 an enemy row in `combatExpansionEquipment.enemies` may carry a `resist` map beside `weak`, in percent (tiers 25 minor and 50 major, capped at 75 like armour resistances). Every damage path (live hit, foundation components, preview; solo and co-op) applies one line per damage type: `amount = max(0, ceil(total × (1 + weak/100) × (1 − resist/100)) − flat)`. One row never both resists and is weak to the same type; the validator refuses it. A few enemies (about 10 to 15%) resist an element, so a mono-element deck is dented, never walled.
 
 All tactical numbers remain authored/configurable; their defaults above establish the initial balance. Existing status thresholds, resistances and decay remain unchanged. Existing damage, source, delivery and theme tags retain their separate identities.
 
 **Intent visibility and persistence**
 
 - Design assumption resolving the incomplete user sentence “base 70% chance to be”: **70% chance to conceal the exact selected action**, not 70% hit chance. Attacks retain existing accuracy/evade rules. For profiled moves, `hiddenChance = clamp(0.70 − Wisdom × 0.02 − Intelligence × 0.01, 0, 0.95)`. Reductions are percentage points. Configuration may override coefficients; Wisdom 10/Intelligence 5 gives 45% hidden.
-- Always show a stance: Attacking, Defending, Countering, Sweeping, Ranged, Smashing, Casting, Preparing or Staggered. Physical support actions use Preparing where no actual attack/defense maneuver exists. Hidden previews expose camp/maneuver and stance only; selected move ID, exact damage/hits, Block, delay payload and school/type details are omitted through an allowlist.
+- Always show a stance: Attack, Defend, Counter, Sweep, Ranged, Smash, Casting, Spell, Preparing or Staggered. Physical support actions use Preparing where no actual attack/defense maneuver exists. Hidden previews expose camp/maneuver and stance only; selected move ID, exact damage/hits, Block, delay payload and school/type details are omitted through an allowlist.
 - Visibility rolls once per newly selected intent on independent deterministic stream `enemyIntentVisibility`; inspecting or previewing never rerolls. Co-op records one read per living observer. Existing delayed intent retains its committed read until a new selection occurs.
 - Persist the committed Counter charge/carrier/lifetime and enemy visibility/read state with combat entities, plus the random-stream counters. Reload restores decisions; it does not grant another reaction or reveal roll.
 - The enemy move catalog may list its authored move set and base values even when the current selection is hidden, but it must not highlight which catalog entry is selected or show its live preview. A catalog is reference information, not a back door into concealed intent.
@@ -1105,6 +1142,15 @@ Another owned copy or a legal Replica pays for its own cast unless an authored
 family limit applies. Skills normally remain reusable; deck-added Status
 cards remain distinct from entity statuses and built-in recovery controls.
 These Power destinations do not change version-1 fights or saved snapshots.
+
+**Card traits (reaction rules version 2).** [docs/combat-card-traits-contract.md](docs/combat-card-traits-contract.md)
+defines four rank-scaled card traits, applied at runtime to new expanded runs:
+Reaction (playable during the opponent's turn), Counterstrike (+50% effectiveness,
++75% with stance advantage, each bonus at least 1), Impact N (N Poise on hit, or
+double the card's own Poise damage) and Flux N (the same for Ward). The contract
+holds the formulas, the stance-advantage table, tiers and card picks. Runs and
+snapshots on reaction rules version 1 carry no traits. This specification
+precedes the implementation.
 
 ### 4.9 Enemy knowledge, Perception and hidden-intent clues
 
@@ -1138,8 +1184,8 @@ Public actor-start revelation preserves original private prediction/learning
 receipts and cannot mark a cancelled action executed. Next planning intents
 refresh at player-turn start. The player mini HUD sits above visible artwork
 with a fixed 10 screen-pixel bottom-to-art-top gap, including selection growth.
-This specification precedes the runtime implementation and does not claim that
-the new reaction system has shipped.
+The reaction system has shipped (`src/engine/combatReactions.js`, reaction rules
+version 1).
 
 When a seat holds a Counter or defensive Sweep but no reaction is offered for
 an incoming root, the engine emits `combatReactionUnavailable` once per root and
@@ -1149,6 +1195,17 @@ seat, naming the first failing check (`switchOff`, `attackerStaggered`,
 disconnected seat get none. A Smash that breaks physical Guard emits
 `combatGuardBroken` once per break. Both are informational receipts and change
 no rule.
+
+**Reaction stack (reaction rules version 2).** New expanded runs snapshot
+reaction rules version 2. A seat may then answer one incoming root with several
+Reaction cards: each choice is pushed without payment and the seat is offered
+again until it passes, runs out of options or reaches the depth cap; the stack
+then resolves last played first, and the paused action last. An entry that can
+no longer be played fizzles (`combatReactionFizzled`) and pays nothing. Entries
+carry a side; opted-in enemy moves react too, on the player's turn and to
+player reactions. The rules are in
+[docs/combat-card-traits-contract.md](docs/combat-card-traits-contract.md);
+version 1 keeps one reaction per root.
 
 ### 4.11 Combat Rounds Preview
 
@@ -1208,8 +1265,9 @@ no rule.
 
 ### 5.1 Classes, creation presets, and levels
 
-**New default creation mode.** Add a new stable mode id, `tuned`, and make it the default for
-new runs. Its configurable fixed total is 53 across STR / DEX / CON / WIS / INT; the mode row
+**New creation mode.** Add a new stable mode id, `tuned`. It is not offered at creation and
+is not the default: new runs default to `lean`, labelled Standard (`src/content/attributes.js:190`;
+`content/source/characterCreation.json:3`). Its configurable fixed total is 53 across STR / DEX / CON / WIS / INT; the mode row
 owns its total and allocation bounds. This is a new mode, not a mutation or rename of
 `standard` or `pointbuy`, because saved runs persist the mode id and both older modes must
 continue to validate exactly as authored.
@@ -1275,15 +1333,17 @@ warned when not the stock value.
 
 **Rogue full parity slice.** Rogue ships as a complete fourth class, not a selectable shell:
 
-- 47 authored Rogue cards (`src/content/cards/rogue.js`), all with upgrades and
-  validation-clean player text: exactly 43 in its ordinary reward pool (the class row's
-  `cardPool`), the signature card Ambush, the class ability card Prepare (§13.4f), and the
+- 61 authored Rogue cards (`src/content/cards/rogue.js`), all with upgrades and
+  validation-clean player text: exactly 57 in its ordinary reward pool (the class row's
+  `cardPool`: the 47 legacy cards, the original 43 plus the four poison cards, and the ten
+  expanded families), the signature card Ambush, the class ability card Prepare (§13.4f), and the
   two generated cards other Rogue cards add to the hand (Shiv, Smoke Pellet). A new Rogue
   starts with an 11-card deck, signature and ability card included (`balance.startingDeckSize`
   is the home of that number);
 - one class signature card and one starter relic, both reachable in a new Rogue run;
-- two starting equipment kits and four Rogue outfits/armour sets, including one free baseline
-  of each required kind and the same unlock/discovery rules as the existing classes;
+- two starting equipment kits and five Rogue-specific outfits/armour sets, plus the four `sharedSet` rows
+  every class can wear (`content/source/outfits.csv` has nine rows with `classId` `rogue`),
+  including one free baseline of each required kind and the same unlock/discovery rules as the existing classes;
 - five stage/tint class sprites plus the equipment/body/armament art needed for every authored
   Rogue kit and outfit, with ordinary missing-art refusal/fallback behavior;
 - class presets, flask allocation, rewards, draft/custom-run, history, co-op and compendium
@@ -1294,34 +1354,36 @@ resource vocabularies. A new opcode/predicate is allowed only when the approved 
 cannot be expressed by those primitives, and then it is a separately specified closed-set
 extension with validation and engine tests—not imperative per-card code.
 
-### 5.2 Vagabond card pool — M1 set (24 cards + upgrades)
+### 5.2 Reaver card pool — M1 set (24 cards + upgrades)
 
-Rarity: S = starter, C = common, U = uncommon, R = rare. Cost in energy. `+` column = upgrade delta.
+The base reward pool is 43 cards plus starters (`reaver` `cardPool`, `src/content/classes.js`); `composeProgressionContent` adds 10 class-mastery cards as they unlock (53 in all). This table is the M1 set.
+
+Rarity: S = starter, C = common, U = uncommon, R = rare. Cost in Stamina (engine id `energy` is an alias). `+` column = upgrade delta.
 
 | Card | R | Cost | Type | Text | Upgrade |
 |---|---|---|---|---|---|
 | Strike | S | 1 | Attack | Deal 6. | Deal 9 |
 | Defend | S | 1 | Skill | Gain 5 Block. | Gain 8 |
-| Bloodflame Slash | S | 1 | Attack | Deal 5. Apply 3 Bleed. | 5 dmg, 5 Bleed |
-| Crimson Cleave | C | 2 | Attack | Deal 8 to ALL enemies. Apply 2 Bleed to ALL. | 11 dmg |
-| Shield Bash | C | 1 | Attack | Deal 5. 4 Poise damage. | 8 dmg, 5 Poise |
-| Quickstep | C | 1 | Skill | Gain 6 Block. Draw 1. | 8 Block |
-| Guard Counter | C | 1 | Attack | Deal 4. If you have Block: deal 10 instead. | 6 / 14 |
+| Gorefire Slash | S | 1 + 1 Mana | Attack | Deal 5. Apply 3 Bleed. | 5 dmg, 5 Bleed |
+| Crimson Cleave | C | 2 | Attack | Deal 5 to the selected enemy. | none; rank-up (§13.4o) |
+| Shield Bash | C | 1 | Attack | Deal 3 to the selected enemy. | none; rank-up (§13.4o) |
+| Quickstep | C | 1 | Skill | Gain 4 Block. | none; rank-up (§13.4o) |
+| Guard Counter | C | 1 | Attack | Prepare Melee Counter. Prepare 3 base reply damage. | none; rank-up (§13.4o) |
 | Iron Resolve | C | 1 | Skill | Gain 5 Block. If in Bulwark Stance: gain 9 instead. | 7 / 12 |
 | Serrated Blade | C | 1 | Attack | Deal 7. If target has any Bleed: apply 3 Bleed. | 9 dmg, 4 Bleed |
-| Enter: Bloodflame | C | 1 | Skill | Enter Bloodflame Stance. Draw 1. | cost 0 |
-| Enter: Bulwark | C | 1 | Skill | Enter Bulwark Stance. Gain 3 Block. | +6 Block total |
-| Stomp | U | 2 | Attack | Deal 12. 8 Poise damage. | 16 dmg, 10 Poise |
+| Enter: Gorefire | C | 1 | Skill | Enter Gorefire Stance. Draw 1. | cost 0 |
+| Enter: Bulwark | C | 1 | Skill | Enter Bulwark Stance. | Gain 3 extra Block |
+| Stomp | U | 1 + 1 Mana | Attack | Deal 9 to the selected enemy. | none; rank-up (§13.4o) |
 | Rallying Standard | U | 1 | Power | At the start of your turn, gain 1 Strength. Take 1 damage. | no self-damage |
 | War Surgeon | U | 1 | Skill | Exhaust. Heal 2 HP for every 4 Bleed on all enemies. | every 3 |
 | Hemorrhage | U | 1 | Skill | Double the target's Bleed. Exhaust. | don't Exhaust |
-| Twinblade Flurry | U | 1 | Attack | Deal 3×3. Bloodflame applies per hit. | 4×3 |
-| Shieldwall | U | 2 | Skill | Gain 12 Block. If in Bulwark: Retain 4 of it next turn. | 16 Block |
-| Kick Off | U | 0 | Attack | Deal 4. 3 Poise damage. Exhaust. | 7 dmg, don't Exhaust |
+| Twinblade Flurry | U | 1 | Attack | Deal 3×3. Gorefire applies per hit. | 4×3 |
+| Shieldwall | U | 2 | Skill | Gain 12 Block. If in Bulwark: gain 4 Block next turn. | 16 Block |
+| Kick Off | U | 1 + 1 Mana | Attack | Deal 3 to the selected enemy. Exhaust. | none; rank-up (§13.4o) |
 | Executioner | R | 2 | Attack | Deal 10. If target is Staggered: deal 25 instead. | 14 / 32 |
 | Goreblood | R | 3 | Power | Poise thresholds no longer increase after filling. | cost 2 |
 | Unbreakable | R | 2 | Power | Block no longer expires at the start of your turn. (Cap 30.) | cap 40 |
-| Grafted Arms | R | 1 | Attack | X-cost: Deal 6 per energy spent, split randomly among enemies as 6-damage hits. | 8 per |
+| Stitched Arms | R | X | Attack | X-cost: Deal 6 per Stamina spent, split randomly among enemies as 6-damage hits. | 8 per |
 | Last Stand | R | 1 | Skill | Ethereal. Gain Block equal to missing HP (max 20). | max 30 |
 | Warrior's Vow | R | 0 | Skill | Innate. Enter a Stance of your choice. Exhaust. | draw 1 |
 
@@ -1329,46 +1391,46 @@ Colorless/curse/status M1 minimum: **Wound** (status, unplayable), **Dazed** (st
 
 ### 5.3 Enemy roster — Act 1 (M1)
 
-Basics (encounters roll from the weighted table in `content/encounters/weald.js` — the seat the act-1 rows became, SPEC §13.2):
+Basics (encounters roll from the weighted table in `src/content/encounters/weald.js` — the seat the act-1 rows became, SPEC §13.2):
 
 | Enemy | HP | Poise | Moves (weight) | Notes |
 |---|---|---|---|---|
 | Wandering Soldier | 22–26 | 10 | Slash 7 (45), Guard 6 Block (30), Warcry +2 Str (25, max1) | bread & butter |
-| Rot Hound | 12–15 | 6 | Bite 6 (60), Lunge 3×2 (40) | fast, fragile; spawns in pairs |
-| Demi-Brute | 30–34 | 16 | Club 9 (50), Bellow: apply 1 Frail (25), Brace 8 Block (25) | tanky |
+| Blight Hound | 12–15 | 6 | Bite 6 (60), Lunge 3×2 (40) | fast, fragile; spawns in pairs |
+| Husk Brute | 30–34 | 16 | Club 9 (50), Bellow: apply 1 Frail and add 1 Slimed (25), Brace 8 Block (25) | tanky |
 | Grave Wisp | 10–12 | 4 | Curse: shuffle 1 Dazed into draw (50), Drain 4 + heals self 4 (50) | kill first |
-| Pack encounter | — | — | 2× Rot Hound + 1 Grave Wisp | teaches targeting |
+| Pack encounter | — | — | 2× Blight Hound + 1 Grave Wisp | teaches targeting |
 
-Elite — **Crucible Aspirant** (HP 68–72, Poise 24): opener always Consecrate (+3 Strength); then Halberd Sweep 11 (50) / Tail Slam 7 + 1 Weak (30) / Golden Guard 12 Block + 4 HP heal (20, max1). Drops a relic.
+Elite — **Wyrm Aspirant** (HP 68–72, Poise 24): opener always Consecrate (+3 Strength); then Halberd Sweep 11 (50) / Tail Slam 7 + 1 Weak (30) / Golden Guard 12 Block + 4 HP heal (20, max1). Drops a relic.
 
-Boss — **The Watchful Omen** (Margit-inspired, HP 140, Poise 30):
-- **Phase 1 (>50% HP):** pattern cycle with a signature **delay** mechanic: move *Held Blade* shows "Attack 16 — Delayed"; on its turn it does nothing (gains 8 Block instead); the **following** turn it attacks for 16 regardless of newly rolled intents. Teaches intent-reading. Other moves: Cane Strike 9 (repeatable ×2), Hammer Toss 6×2.
-- **Phase 2 (≤50% HP, `phases` trigger, once):** roars — apply 1 Frail + 1 Weak to player, gains +2 Strength, unlocks *Twin Daggers 4×4*.
+Boss — **The Fell Warden** (Margit-inspired, HP 120, Poise 30):
+- **Phase 1 (>50% HP):** pattern cycle with a signature **delay** mechanic: move *Held Blade* shows "Attack 14 — Delayed"; on its turn it does nothing (gains 8 Block instead); the **following** turn it attacks for 14 regardless of newly rolled intents. Teaches intent-reading. Other moves: Cane Strike 8 (repeatable ×2), Hammer Toss 5×2.
+- **Phase 2 (≤50% HP, `phases` trigger, once):** roars — apply 1 Frail + 1 Weak to player, gains +2 Strength, unlocks *Twin Daggers 3×4*.
 - Staggering him cancels a Held Blade in progress (satisfying counterplay).
-- Reward: 75–90 runes, rare relic choice, card reward with rare upgrade odds boosted.
+- Reward: 225–270 cinders, a choice of boss relics (§6), card reward with rare upgrade odds boosted.
 
 (Act 2/3 rosters — including the Grafted-King-inspired phase boss and the final Malenia-inspired boss that heals for 3 per hit landed on you and inflicts Bleed on the *player* — are designed in M3; their signature mechanics are listed in §10 so engine hooks exist.)
 
-### 5.4 Relics (M2 set, 16)
+### 5.4 Relics (M2 set of 16; 73 ship in all: 63 in `src/content/relics.js` plus 10 class-mastery relics in `src/content/progression/relics.js`)
 
 | Relic | Rarity | Effect |
 |---|---|---|
-| Tarnished Medallion | starter | (class starter, see §5.1) |
-| Golden Seed | common | At combat start, heal 3 HP. |
+| Forsaken Medallion | starter | (class starter, see §5.1) |
+| Golden Sprout | common | At the start of each combat, heal 3 HP. While carried, the Crimson flask pool holds 1 more charge (once, not per combat; `balance.flaskGrowth`). |
 | Whetstone Fragment | common | Your first attack each combat deals +4. |
 | Kindling Charm | common | At the start of each combat, draw 1 extra card. |
-| Rune Pouch | common | Gain 25% more runes from combats. |
-| Beast Eye | common | Elites drop an extra card reward. |
+| Cinder Pouch | common | Gain 25% more Cinders from combats. |
+| Feral Eye | common | Elites offer an extra card reward choice. |
 | Cracked Tear | uncommon | Flasks are 50% stronger (rounded up). |
-| Stonesword Key | uncommon | Unknown (?) nodes are revealed on the map. |
-| Fell Omen Brand | uncommon | Whenever an enemy Staggers, draw 2. |
-| Bloodied Talisman | uncommon | Bleed bursts deal +25%. |
+| Sealstone Key | uncommon | Unknown (?) nodes are revealed on the map. |
+| Fell Warden Brand | uncommon | Whenever an enemy Staggers, draw 2. |
+| Bloodied Talisman | uncommon | Bleed bursts make the victim lose 5 extra HP. |
 | Grace Fragment | uncommon | Resting heals +15% more (shipped as Ember Fragment, §13.4j). |
 | Twinned Armor | uncommon | Every 10th card you play each combat: gain 6 Block. |
-| Erdtree Sapling | rare | At the start of your turn, if you have no Block: gain 4 Block. |
-| Dragon Heart | rare | +1 energy each turn. Shrines and chapels no longer offer Rest (shipped as Wyrm Heart, `restDenied: ['restHpPartial']`, §13.4j). |
+| Goldbough Sapling | rare | At the start of your turn, if you have no Block: gain 4 Block. |
+| Wyrm Heart | rare | +1 Stamina each turn. Shrines and chapels no longer offer Rest (`restDenied: ['restHpPartial']`, §13.4j). |
 | Ancestral Horn | rare | Powers cost 1 less. |
-| Ash of Remembrance | boss | **+1 energy each turn; at combat start, gain 1 Madness.** |
+| Ash of Remembrance | boss | **+1 Stamina each turn; at combat start, gain 1 Madness.** |
 
 Relic behavior uses the trigger DSL (§3.6) — the same declarative form as powers, statuses, and boss phases.
 
@@ -1436,21 +1498,21 @@ It remains history, not a second implementable mode.
 | Flask | Effect |
 |---|---|
 | Crimson Flask | Heal 25% max HP. |
-| Azure Flask | Restore 20 Mana. |
+| Azure Flask | Restore 1 Mana. |
 | Flask of Ferocity | Gain 2 Strength this combat. |
 | Flask of Stone | Gain 15 Block. |
-| Rot Coating | Apply 4 Scarlet Rot to target. |
-| Blood Grease | Your attacks apply +2 Bleed this turn. |
-| Wondrous Physick (rare) | Two random flask effects at once. |
+| Blight Coating | Apply 4 Crimson Blight to target. |
+| Blood Unction | Your attacks apply 2 extra Bleed per hit this turn. |
+| Wondrous Draught (rare) | Two random flask effects at once. |
 
 ### 5.6 Events — Unknown nodes (M2: 4 minimum, M3: 10)
 
-Unknown nodes roll on stream `events`: 55% event, 25% normal fight, 12% shrine, 8% treasure (M2 tuning, in `balance.js`). Every event is a real trade-off, StS-style. M2 launch set:
+Unknown nodes roll on stream `events`: 55% event, 25% normal fight, 12% shrine, 8% treasure (M2 tuning, in `src/content/mapconfig.js` as `mapConfigs[act].unknownWeights`). Every event is a real trade-off, StS-style. M2 launch set:
 
-1. **Erdtree Avatar** — *Offer a card* (remove 1 card from deck, take 6 damage) / *Pray* (heal 20% max HP, gain 1 Guilt curse) / *Leave*.
-2. **Abandoned Merchant Cart** — *Loot* (gain 60–90 runes, 50% chance: fight a Wandering Soldier ambush) / *Leave*.
-3. **Weeping Peninsula Pilgrim** — *Give 50 runes* (gain a random uncommon relic) / *Refuse* (nothing).
-4. **Ancient Rune Stone** — *Study* (upgrade a random card, lose 7% max HP) / *Smash* (gain 35 runes) / *Leave*.
+1. **Goldbough Avatar** — *Offer a card* (remove 1 card from deck, take 6 damage) / *Pray* (heal 20% max HP, gain 1 Guilt curse) / *Leave*.
+2. **Abandoned Merchant Cart** — *Loot* (gain 75 cinders, 50% chance: fight a Wandering Soldier ambush) / *Leave*.
+3. **Wayward Pilgrim** — *Give 50 cinders* (gain a random relic) / *Refuse* (nothing).
+4. **Ancient Cinder Stone** — *Study* (upgrade a random card, lose 7% max HP) / *Smash* (gain 35 cinders) / *Leave*.
 
 Event definition = data object: `{ id, name, art, text, choices: [{ label, requires?, effects, resultText }] }` where `effects` are run-level opcodes from the one effect DSL (§3.4).
 
@@ -1459,7 +1521,7 @@ Event definition = data object: `{ id, name, art, text, choices: [{ label, requi
 - **Choice-level** — `eventChoiceHistoryRequirements[eventId][index]` = `{ all?, any?, none? }` of `{ eventId, choiceId }` refs; `availableEventChoices` hides a choice whose requirement is unmet without reindexing the rest. Leave stays requirement-free so a branch can never trap.
 - **Event-level (quest steps)** — `eventHistoryRequirements[eventId]`, the same grammar; `engine/encounters.js resolveUnknownNode` admits a gated event to an Unknown node's pool only once the run's history satisfies it, and never as a repeat fallback. `buildActMap` carries `run.history` to map birth, so an act answers the acts before it; an ungated event behaves exactly as before.
 
-The first chain shipped: **Grave of the Nameless** (step one, ungated) → **The Keeper of the Nameless** (gated on any grave choice but Leave; the digger may repay or fight, the mourner is thanked) → **The Nameless at Rest** (gated on any keeper choice; the vigil, the rest, or a second looting answer the branch taken). `tools/quest-choice-contract.mjs` proves the gates, the ids and the engine door. A quest's named relic reward is authored `pool: 'quest'` (`RELIC_POOLS`, `model/schemas.js`): no generic pool — elite or boss drop, shop stock, an event's random relic — may hand it over first, so the choice that promises it always delivers, and validation refuses a quest-pool relic no event choice grants.
+The first chain shipped: **Grave of the Nameless** (step one, ungated) → **The Keeper of the Nameless** (gated on any grave choice but Leave; the digger may repay or fight, the mourner is thanked) → **The Second Cairn** (gated on any keeper choice; the vigil, the rest, or a second looting answer the branch taken). `tools/quest-choice-contract.mjs` proves the gates, the ids and the engine door. A quest's named relic reward is authored `pool: 'quest'` (`RELIC_POOLS`, `model/schemas.js`): no generic pool — elite or boss drop, shop stock, an event's random relic — may hand it over first, so the choice that promises it always delivers, and validation refuses a quest-pool relic no event choice grants.
 
 **Quest completion and dialogue (plan phase 10a, proposal §7.5).** A committed choice goes through one door, `engine/quests.js commitEventChoice`: the run effects, then the history row, then the completion check. A chain is a third sidecar, `questChains = { [questId]: { steps: [eventId], completes: [{ eventId, choiceId }] } }`; Grave of the Nameless ships as `nameless`, completed by any answer at the second cairn but Leave. Completion is `completeQuest`: it appends `{ kind: 'questCompleted', questId, source }` to the existing `run.history` at most once per quest per run (no `RUN_SHAPE` change) and emits the `questCompleted` event, which nothing else emits. An atlas quest's claimed reward completes through the same door with `source: 'atlas'`. Every chain step opens in the dialogue screen (W4c, WGQ0–WGQ8): the event text divides into beats on blank lines, the speaker named in `eventSpeakers` (a `content/source/speakers.csv` row: `id,name,portraitKey`; a missing portrait shows the name plate) stands right and the player left, and the event's choices are the responses on the last beat. Back, Continue, Skip speech and speech ending move only the beat; only a response commits, and binding responses keep the hold. Validation refuses by name a chain step or completion ref that does not resolve, a chain step without a speaker, an unknown speaker, and a Leave that completes a quest. One-off events keep the Event screen.
 
@@ -1470,7 +1532,7 @@ The first chain shipped: **Grave of the Nameless** (step one, ungated) → **The
 Faithful to StS's published algorithm, simplified where invisible to the player. Algorithm lives in `engine/mapgen.js`; every constant below comes from `content/mapconfig.js`:
 
 - Per act: **`floors` × `columns`** grid (shipped: 12 × 7). The **top floor is always a single Shrine** row and the Boss sits above it — typed by the generator before any rule runs, so the floors a rule can reach are **1..`floors`-1**. That band is called the **rollable band** and it is the denominator for every fraction below.
-- Generate **6 paths** bottom-to-top: each starts at a random column on floor 1 (first 2 paths must start at distinct columns); each step moves to column −1/0/+1 on the next floor; edges may merge but must not cross (swap targets when a crossing would occur — StS's rule).
+- Generate **6 paths** bottom-to-top: each starts at a random column on floor 1 (shipped `entries: 1` puts every path in one entrance column; the first 2 paths start at distinct columns only when `entries` is unset); each step moves to column −1/0/+1 on the next floor; edges may merge but must not cross (swap targets when a crossing would occur — StS's rule).
 - **Every floor a rule names is an ANCHOR, never an index.** An absolute floor number is a constant whose *meaning* moves when `floors` changes while the constant does not — measured: `9: 'treasure'` deletes the treasure rank entirely below 10 floors (**4.00 → 0.00 nodes per act, 24 seeds**), `noEliteOrShrineBefore: 6` (the single gate these two replaced) gated **36 % of a 15-floor act and 56 % of a 10-floor one**, and `15: 'shrine'` **never fired at any shipped act length** because floor 15 is not rollable. The closed set of anchor kinds lives in `model/floorplan.js` and a new kind is an engine change (Law 1):
 
   | anchor | resolves to |
@@ -1486,11 +1548,11 @@ Faithful to StS's published algorithm, simplified where invisible to the player.
 - **`minElites` counts nodes in the graph; it is not a reachability promise.** It was called `minReachableElites` and never measured reachability — a measurable fraction of starts can reach no Elite at the shipped shape, and the fraction **grows as the act shortens**. The numbers are deliberately not restated here: a sample restated in prose drifts (three homes carried three different samples within a day of each other). **`node tools/mapplan.mjs` measures and prints them on every run**; nothing gates on them, and making the generator honour it is an open design call.
 - **What a `?` node resolves to is `mapConfigs[act].unknownWeights`** — beside the geometry it describes, per act. It was `balance.unknownNode`, a flat global that could not vary per act while the map it belongs to does.
 - **Any claim about generated maps is a distribution, never a seed.** Node count's mean and range are **deliberately not restated here** — the previous edition of this sentence carried 59.2 over 50–69, which the 12-floor act made false the moment it landed, which is this rule proving itself two bullets after it was written. `tools/mapplan.mjs` prints them at the current shape on every run. Stops per run is exactly **`floors` + 1** at every shape measured — that one is a formula, not a sample, and a formula does not drift. A tool that generates one map and reports a number has said nothing — the same green a tool gives when it checked nothing. `tools/mapplan.mjs` prints mean and range for every figure and refuses to report at all if its own seeds did not vary.
-- Player sees the full act map; only nodes connected by an edge from the current node are clickable. With **Stonesword Key** relic, `?` nodes render their resolved type.
+- Player sees the full act map; only nodes connected by an edge from the current node are clickable. With **Sealstone Key** relic, `?` nodes render their resolved type.
 - **Map camera movement.** The map opens with the current decision framed and supports grab-dragging on both axes with mouse, touch, and pen. **Settings → Advanced → Interface → Two-axis map dragging** is on by default; turning it off restores vertical-only map travel and keeps the horizontal camera centred. Zoom reset recentres the current decision in either mode, and the saved run camera preserves both axes.
 - Acts 2/3 reuse the generator with different encounter tables and elite/boss pools (data only).
 
-Rewards after combat: runes (Monster 15–25, Elite 35–50, Boss 75–90) + card reward (choose 1 of 3: common 60% / uncommon 35% / rare 5%; Elite shifts to 45/40/15) + flask roll (§5.5). Elites additionally drop a relic; bosses drop a boss-relic choice of 3. Merchant prices: cards 45–160 runes by rarity, relics 140–300, flasks 50–80, card removal 75 (+25 per purchase). All numbers: `balance.js`.
+Rewards after combat: cinders (Monster 45–75, Elite 105–150, Boss 225–270) + a card reward at the §15.1 schedule (shipped: a 10% chance per won fight, `balance.rewards.cardRewards.chancePct`; choose 1 of 3 at the default odds common 60% / uncommon 35% / rare 5%, Elite 45/40/15, which a class's own reward weights may override) + flask roll (§5.5). Elites additionally drop a relic. A solo boss victory offers up to `balance.rewards.bossRelicChoices` (3) distinct unowned boss relics (`src/main.js`, `rollRelicChoices` on the `relicRewards` stream; one left gives a single `relicId`) and the player picks one; auto-collect picks one at random from the unowned options, and with auto-collect off an unpicked choice is left behind. Co-op bosses still grant one boss relic (`tools/session.mjs`). Merchant prices, in cinders (the old rune prices ×3): cards 135–480 by rarity, relics 420–900, flasks 150–240, card removal 225 (+75 per purchase). All numbers: `balance.js`.
 
 ---
 
@@ -1505,7 +1567,7 @@ Cold Boot ──► Startup Gate ──► Title ──► Class Select (+ seed 
 Death/Victory ──► run summary (seed, floor, runes, kills, deck) ──► Title
 ```
 
-Screen router in `main.js`; each screen module exports `mount(state, dispatch)` / `unmount()`. **A Shrine, a camp, an inn or a chapel is a location — a property carrier whose tag set says what it restores** (§13.4j): **arriving at a Shrine refills flasks automatically before the Rest/Smith choice is offered** (§5.5.1) because the Shrine carries `restFlasks`; the screen reports what it was handed and what the slots could not hold, and is silent when there is nothing to say.
+Screen router in `main.js`; each routed full-screen module exports a `mountX(app, opts)` function (`mountMap` in `src/ui/screens/map.js`), and a re-mount releases the previous mount's handlers; no screen exports `unmount()`. Overlay and panel modules expose open/render helpers instead (`openCharacterSheet` in `characterSheet.js`; the settings and profile-archive render/open APIs). **A Shrine, a camp, an inn or a chapel is a location — a property carrier whose tag set says what it restores** (§13.4j): **arriving at a Shrine refills flasks automatically before the Rest/Smith choice is offered** (§5.5.1) because the Shrine carries `restFlasks`; the screen reports what it was handed and what the slots could not hold, and is silent when there is nothing to say.
 
 Cold boot mounts the `startup-gate` component before the Title DOM exists. It contains only the
 Ashen Spire wordmark, decorative ash/embers, the input-family prompt, and the shared BUILD/source
@@ -1516,7 +1578,7 @@ and recovery notices outrank the gate. After reveal, focus lands on Title's firs
 slot action, and every later return to Title in that boot bypasses the gate. Reduced-motion mode
 keeps the same state and focus contract without meaningful animation.
 
-### 7.2 Shared run HUD and combat layout (1280×720 reference)
+### 7.2 Shared run HUD and combat layout (1280×800 reference)
 
 - **.NET-inspired application and Component Model contract.** Architecture follows Clean
   Architecture with an MVVM-shaped presentation layer. Domain Models own pure game state and rules;
@@ -1527,8 +1589,7 @@ keeps the same state and focus contract without meaningful animation.
   are reusable renderers; Behaviors bind interactions and lifecycle; and `main.js` trends toward a
   composition root. The existing paths migrate incrementally: `src/model/` is Domain,
   `src/ui/models/` and `src/ui/viewModels/` are Presentation models and projections,
-  `src/ui/screens/` is Views, and `src/ui/components/` plus `src/ui/behaviors/` are reusable
-  presentation implementation. Every reusable UI component receives an immutable Component
+  `src/ui/screens/` is Views, and `src/ui/components/` is reusable presentation implementation. Every reusable UI component receives an immutable Component
   Model that names its semantic component id and variant, owns only serializable presentation
   properties, declares named behaviors, and recursively composes child Component Models. Screen
   ViewModels compose those records; renderers translate them to DOM, and behavior adapters connect
@@ -1760,10 +1821,10 @@ keeps the same state and focus contract without meaningful animation.
   right trail progressively hides Source, then Seed, then Build before it may touch centred Cinders. There is no duplicate Act/Floor
   line beneath the character name. Neither screen hand-writes a second HUD.
 - **Primary and inventory geometry.** `vitals-panel` is one outer card containing the unchanged
-  HP/MP/SP stack. `quick-access-panel` is one outer square containing a 2×2 grid: Armoury/Menu,
-  then HP/Mana flasks. Its visible tiles are 18 px inside at least 44 px accessible hit areas.
-  The two panels have equal outer height and the flask row aligns with the bottom of SP within
-  one CSS pixel. `inventory-belt` places Relics beneath Vitals and utility Potions beneath Quick
+  HP/MP stack; Stamina is the Stamina orb (below). `quick-access-panel` is one outer square
+  holding the Armoury and Menu controls. Its visible tiles are 18 px inside at least 44 px
+  accessible hit areas. The two panels have equal outer height. The HP/Mana flasks are not in
+  this panel; they belong to the Potions projection. `inventory-belt` places Relics beneath Vitals and utility Potions beneath Quick
   Access on the same row. Utility potions form one right-anchored horizontal tray that grows or
   scrolls left. Relic and Potion trays share one vertically centred baseline and one data-owned
   narrow item gap (default 2 px); utility potion tiles remain the same size as relic tiles.
@@ -1783,10 +1844,10 @@ keeps the same state and focus contract without meaningful animation.
   MP 20, SP 20. A bar's fill remains `current / maximum`; its visual length compares that
   maximum with the data-owned reference and obeys the shared viewport cap. A character may
   exceed a reference—it lengthens only to the layout cap and never clamps gameplay state.
-- **Enemy row (upper right 60%):** up to 5 enemies; each shows sprite/placeholder, name, HP bar, **Poise meter** (thin amber bar under HP), **Bleed meter** (thin red bar, only when >0), status icon row, and **intent icon + number above the head**.
+- **Enemy row (upper right 60%):** up to 5 enemies today. **TO BUILD** (owner, 2026-10-12): the enemy cap becomes a setting, default 3. Each shows sprite/placeholder, name, HP bar, **Poise meter** (thin amber bar under HP), **threshold-proc bars** (up to two active proc statuses such as Bleed or Frost, each drawn with its status's own glyph and `tint`, only when >0; `src/ui/screens/combat.js`), status icon row, and **intent icon + number above the head**.
 - **Player zone (lower left):** stance icon, status row, Block shield badge overlapping HP.
-- **Hand:** bottom center, fanned, max 10; hover raises card ×1.5 with full text.
-- **Energy orb:** bottom left, `n/3`. **End Turn** button bottom right — pulses if energy remains and any card is playable; confirm-free.
+- **Hand:** bottom center, fanned, up to the derived `handSize` (base 7, max 20; `src/content/derivedStats.js`); hover raises card ×1.5 with full text.
+- **Stamina orb:** bottom left, current Stamina only (no maximum), with a Mana ring unless the `manaRing` setting is off (`src/ui/components/staminaOrb.js`). **End Turn** button bottom right — pulses if Stamina remains and any card is playable; confirm-free.
 - **Piles:** draw (bottom-left corner, count) / discard (bottom-right, count) / exhaust (small, appears once non-empty). Click opens a scrollable modal grid (draw pile view is order-shuffled for display, like StS).
 
 #### 7.2.1 Advanced game configuration
@@ -1798,15 +1859,16 @@ engine is discoverable there. A setting descriptor names the source path, label,
 type, domain, shipped default, reset behavior and application timing. The editor and runtime
 resolver consume that same descriptor; UI code must not retype a default, range, enum or formula.
 Adding an eligible descriptor therefore adds its control without another hand-authored settings
-row. A CI inventory compares eligible authored configuration paths with rendered descriptors and
-fails on an unexplained omission.
+row.
 
-The editor groups the complete inventory into stable nested sections:
+The editor groups the complete inventory into the shipped tabs, in this order (`ADVANCED_GROUPS`, `src/ui/screens/settings.js`): Opening, Progression, Combat, Stats, Recovery, Rewards, Shops, Deck, Equipment, World, Interface, Text, Battlefield, Wireframes, Export, Sync, Changelog and About. A retired tab id opens the first tab, except the merged `Ratings & Resistance` and `Hand & Draw` tabs, and a `Progression`, `Combat` or retired `Rules` tab left on a topic that moved, which open Stats (`MERGED_ADVANCED_GROUPS`, `MOVED_ADVANCED_TOPICS`). A release build shows only Deck, Interface, Text, Changelog and About (`RELEASE_ADVANCED_GROUP_IDS`); the other tabs appear in dev and test builds. Stored values are untouched either way.
 
-- **Progression:** starting level; experience/cinder gain multiplier; first level cost; cost
-  increase per purchase; optional maximum level; attribute points granted per level; and points
-  required for each derived-stat tier. The resolved level-price preview shows representative
-  purchases before a run starts.
+What the tabs hold, by area:
+
+- **Progression:** starting level; experience gain multiplier; the XP curve
+  (`balance.level.xp`); optional maximum level; attribute points granted per level; and points
+  required for each derived-stat tier. The level-pace preview (§15.2) shows the configured
+  curve before a run starts. Class defaults sit under this tab.
 - **Class defaults:** each registered class exposes its starting STR, DEX, CON, WIS and INT,
   starting resource/flask allocation, and other schema-valid starting values. Class controls are
   registry-derived, so adding a class cannot create an invisible default. Per-class values must
@@ -1859,11 +1921,6 @@ The editor groups the complete inventory into stable nested sections:
   presentation. Existing ordinary Display, Audio and Accessibility controls remain in their
   approachable homes and appear in Advanced only when needed as part of the complete searchable
   inventory; both surfaces resolve through one descriptor and one persisted value.
-- **Diagnostics:** development-only instrumentation and logs. Unsafe internals—content ids,
-  schema definitions, save-format versions, cryptographic/integrity values, file paths that are
-  not already an explicit user feature, and values whose mutation can only create invalid
-  state—are listed by the inventory check as excluded with a reason rather than exposed as dead
-  or dangerous controls.
 
 Search and section navigation remain available at every supported viewport and text size. Each
 row shows the shipped default, the currently resolved value, whether it affects the current run
@@ -1884,7 +1941,7 @@ by deriving the historical shipped defaults required by their version. Profile s
 only overrides, so changing a shipped default remains meaningful and Reset never writes a stale
 copy of that default.
 
-**Portable export.** Advanced Settings has one Export configuration action that serializes a
+**Portable export.** Advanced Settings has one Export configuration action, shown on debug pages only (`pageDebug()`, `src/ui/screens/settings.js`; owner, 2026-10-12), that serializes a
 versioned JSON document containing the schema/version marker, build/source information, explicit
 overrides and their resolved values. It never includes run saves, profile progress, unlocks,
 history, user file paths, or quarantine/archive data. Where the File System Access API is
@@ -1971,10 +2028,10 @@ together.
 
 - Floating damage/heal/block numbers; brief target flash on hit; a screen shake on **every** hit that costs its target HP, scaled by the HP it cost (after Block) and never over 4 px (owner, 2026-10-05: "Combat latency + juice"; the amplitude steps and their floors are a data row, defaulting to 1 px from 1 HP, 2 px from 6, 3 px from 10 and 4 px from 15, so the old rule, 4 px for hits of 15 or more, is the top step); and a **hit-stop**: on a hit that costs 6 HP or more, the attacker's impact frame and the target's recoil hold for 60 ms (a data row; 0 turns it off) before the swing recovers. Under the sequential beat order below, the hit-stop holds the attacker's impact frame alone; the target stays in its rest pose until its reaction starts. The hit-stop pauses only those two figures' animation, and a click skips it with the rest. **Beat order** (owner, 2026-10-11, presentation `beatOrder`, default `sequential`): an attack beat plays the attacker's stance, its attack clip and its return to stance first; then the target's reaction starts (hurt pose and flash, shake, evade, block or Stagger wobble); `reactionMs` after it starts (a data row, default 180 ms at Normal), the damage/guard/heal numbers fire with their sound and haptic, and then the HP, Poise and Block bars update. The numbers wait only for that `reactionMs`, never for a long fixed effect: the heavy hit flash and the Stagger wobble keep running underneath them. The contact spark and the attacker's hit-stop stay at the impact frame. `beatOrder: impact` keeps the earlier order, where the reaction, number, sound and haptic fire at impact. Counter return beats keep the impact order. The click-to-impact budget is measured to the contact effect (≤400 ms at Normal pacing), and on a plain single hit the first number lands ≤750 ms after the click. It sits inside the hit's own beat, so on a multi-hit attack it lengthens that hit's step, not the ≤80 ms queue interval between events. Animation speed Instant (and Reduced motion) drops the hit-stop; slow, normal and fast keep 60 ms, as they keep every fixed effect duration. Reduced motion drops the shake too, and the Screen shake setting drops the shake alone. **No animation blocks input, and a click always skips to end-state.** At the default animation speed, most effects run ≤300 ms and queued events play out at ≤80 ms intervals — but a few big-moment effects are hardcoded past that bound (heavy hit flash 380 ms, cast glyph 450 ms, Stagger wobble 600 ms) and the Animation speed setting (slow / normal / fast / instant) scales the *pacing* (beat, step, lunge), never those fixed effect durations. The Screen shake, Reduced motion, and Reduce flashes settings each suppress their effect entirely (`src/ui/fx.js`).
 - Bleed burst and Stagger get distinct, slightly bigger effects (they're the theme).
-- "YOU PERISHED" screen: dark fade, gold serif text, then stats card. Victory: "EMBER RESTORED". (Renamed from the pre-scrub strings in `95c3b87` — `docs/IP-SCRUB.md`.)
+- Defeat screen: dark fade, gold serif text, then stats card. Its title reads "Defeat" and its aria-label "You perished". Victory's title reads "Victory" and its aria-label "Ember restored" (`src/ui/screens/gameover.js:58-65`). (Renamed from the pre-scrub strings in `95c3b87` — `docs/IP-SCRUB.md`.)
 - Sound: shipped, and procedural. `sfx.js` is the hook bus — every feedback moment calls `sfx.play(id)` (card play, hit, stagger, death, buy, shrine, …) — and `main.js` wires its sink to `src/ui/audio.js`, a WebAudio engine that synthesizes every SFX and per-context music bed (title/map/combat/elite/boss/shop/rest/victory). What the sound *is* lives as content in two files, one home each: **`src/content/music.js`** (scales, per-context beds, `MUSIC_MANIFEST`) and **`src/content/sfx.js`** (`SFX_RECIPES` plus `SFX_MANIFEST`). A recipe is a list of layers in the engine's **two-word closed vocabulary, `tone` and `noise`** (schema `SFX_LAYER_SCHEMAS`, `model/schemas.js`), so retuning a sound is a table edit and never an engine edit, and a malformed layer fails validation **naming its recipe id**.
 
-  **Ids are composed, and resolution is one pure function with three steps** (`resolveRecipe`, `content/sfx.js`): **exact id → the FAMILY row** (the segment before the first `_`) **→ `default`**. So `procBurst_bleed` plays its own row, a proc with no row of its own falls to the `procBurst` family and still sounds like a burst, and anything unrecognised plays the required `default` — audible, never silent (Law 1 clause 5) — while **the fallback warns once per unknown id**, so an orphan is reported without becoming a per-frame noise. Authoring a new family is one row named for the segment before the underscore; **no engine change and no registration list.** *(Falsify: `node -e "import('./src/content/sfx.js').then(m=>console.log(m.resolveRecipe('procBurst_nosuch')))"` → matched `procBurst`, `fellBack: false`.)* Volumes/mute are settings, and the score **ships audible** (music default is non-zero; the testing mute is gone). A context's bed value is either a bed object or the exact word `'silence'` (one home: `MUSIC_SILENCE_WORD`, `src/model/schemas.js`) — deliberate quiet a human typed on purpose; the beds and scales ride the content bundle and `validateContent` rejects every quiet-shaped mistake by name (null, missing variants, `[]`, a zero gain, a wrong or miscased word), while an unknown context at runtime warns in the console naming itself and plays nothing — quiet-by-intent and quiet-by-bug are never the same shape. The only audio files that ship are the rendered tracks (listed in a music manifest; each is written as notes in a score module and rendered offline by `tools/score/render.mjs`, so the score's source is code). Today they are `music/*.mp3` with `music/manifest.json`, and the scores are `music/score/<id>.mjs`. From EXTERNAL-ASSETS-PLAN steps 9–13, the tracks and manifest are `music/…` ids in the art repository's `common` pack (`common/music/`), and the scores and their render tool are authored there under `art/music/`. The two override paths fail differently: a music folder with `manifest.json` — the Settings folder, or with that setting blank on a page served over http(s) the shipped tracks, read through the common pack's index in the web edition (EXTERNAL-ASSETS-PLAN step 3c) and from the `music/` beside the page in source and single-file builds (`SHIPPED_MUSIC_FOLDER`, `content/music.js`); a `file://` page cannot fetch them and keeps the synth — replaces a context's procedural bed and a missing/unplayable track **falls back to the synth bed**; `SFX_MANIFEST` (shipped empty, now in `content/sfx.js`) replaces a synth SFX id, but `audio.js` `sfx()` short-circuits on a manifest entry and a failed sample load is cached as a miss and plays **silence, not the synth**. `MUSIC_MANIFEST` is **still imported and never read** — a dormant slot, not a path, unchanged since the stage-1 sweep flagged it. Falsify: `grep -n "MUSIC_MANIFEST" src/ui/audio.js` → one import line, zero uses.
+  **Ids are composed, and resolution is one pure function with three steps** (`resolveRecipe`, `content/sfx.js`): **exact id → the FAMILY row** (the segment before the first `_`) **→ `default`**. So `procBurst_bleed` plays its own row, a proc with no row of its own falls to the `procBurst` family and still sounds like a burst, and anything unrecognised plays the required `default` — audible, never silent (Law 1 clause 5) — while **the fallback warns once per unknown id**, so an orphan is reported without becoming a per-frame noise. Authoring a new family is one row named for the segment before the underscore; **no engine change and no registration list.** *(Falsify: `node -e "import('./src/content/sfx.js').then(m=>console.log(m.resolveRecipe('procBurst_nosuch')))"` → matched `procBurst`, `fellBack: false`.)* Volumes/mute are settings, and the score **ships audible** (music default is non-zero; the testing mute is gone). A context's bed value is either a bed object or the exact word `'silence'` (one home: `MUSIC_SILENCE_WORD`, `src/model/schemas.js`) — deliberate quiet a human typed on purpose; the beds and scales ride the content bundle and `validateContent` rejects every quiet-shaped mistake by name (null, missing variants, `[]`, a zero gain, a wrong or miscased word), while an unknown context at runtime warns in the console naming itself and plays nothing — quiet-by-intent and quiet-by-bug are never the same shape. The only audio files that ship are the rendered tracks (listed in a music manifest; each is written as notes in a score module and rendered offline by `tools/score/render.mjs`, so the score's source is code). Today the tracks are build output: `music/*.mp3` and `music/manifest.json` are gitignored (`.gitignore`), and the scores are `music/score/<id>.mjs`. From EXTERNAL-ASSETS-PLAN steps 9–13, the tracks and manifest are `music/…` ids in the art repository's `common` pack (`common/music/`), and the scores and their render tool are authored there under `art/music/`. The two override paths fail differently: a music folder with `manifest.json` — the Settings folder, or with that setting blank on a page served over http(s) the shipped tracks, read through the common pack's index in the web edition (EXTERNAL-ASSETS-PLAN step 3c) and from the `music/` beside the page in source and single-file builds (`SHIPPED_MUSIC_FOLDER`, `content/music.js`); a `file://` page cannot fetch them and keeps the synth — replaces a context's procedural bed and a missing/unplayable track **falls back to the synth bed**; `SFX_MANIFEST` (shipped empty, now in `content/sfx.js`) replaces a synth SFX id, but `audio.js` `sfx()` short-circuits on a manifest entry and a failed sample load falls back to the synth for that id (`src/ui/audio.js:152-154`). `MUSIC_MANIFEST` is **still imported and never read** — a dormant slot, not a path, unchanged since the stage-1 sweep flagged it. Falsify: `grep -n "MUSIC_MANIFEST" src/ui/audio.js` → one import line, zero uses.
 
 ### 7.5 Visual style
 
@@ -2002,8 +2059,7 @@ together.
 ## 8. Testing
 
 **Two runners, one suite:** `tests/index.html` in a browser, `node tests/run-node.mjs`
-headless — both load `engine.test.js`. All assertions are against model + engine with **no UI
-imports**, so nothing in this file has seen a screen; the suite says so in its own boundary
+headless — both load `engine.test.js`. The suite is headless and needs no DOM: it asserts model and engine code plus some UI presentation models and helpers, and never mounts a screen; the suite says so in its own boundary
 block when it finishes.
 
 **The required-coverage list that used to live here is gone, and deliberately.** It named 17
@@ -2021,15 +2077,14 @@ grep -n "test('" tests/engine.test.js         # the index, derived
 
 **What this section states instead is the contract a test must meet, which cannot rot:**
 
-1. **Headless and UI-free.** A test that needs a DOM belongs in `tools/`, not here.
+1. **Headless.** The core suite (`engine.test.js`) needs no DOM. Other `tests/*.test.mjs` files may mount a screen on a stub DOM (`tests/card-rank.test.mjs`, `tests/blacksmith.test.mjs`); a test that needs a real browser belongs in `tools/`.
 2. **Both edges** — the empty/zero case and the cap/overflow case (Charter quality gate).
 3. **Content-driven mechanics are asserted through their data**, never against a number
    hard-coded in the test: a status test drives `content/statuses.js` rows, so retuning a knob
    moves the test with it instead of breaking it.
 4. **A check is trusted only after it has been watched to fail.** The observed-red idiom is
    `--selftest` (a known-bad corpus, every case must fail for its named reason) and `--mutate`
-   (reinstate the defect N ways, each must be caught), carried by the `tools/` instruments and
-   wired in `.github/workflows/ci.yml`.
+   (reinstate the defect N ways, each must be caught), carried by the `tools/` instruments. CI runs these gates for, among others, `tools/verify-shipped.mjs`, `tools/fullscreen-control.mjs`, `tools/dirorder.mjs` and `tools/credits-check.mjs` (`.github/workflows/ci.yml`); `tools/content-build.mjs` is not wired into CI.
 5. **Every release-gating instrument prints what it did NOT check, in its run output — not
    only in its header.** *(House law, adopted 2026-08-07 out of the instrument audit. It was
    triggered by three greens that lied in one week: a screenshot harness blind to five
@@ -2047,11 +2102,7 @@ spec rather than in tribal memory:
 | `tools/screenshot.mjs` | the **source tree** over a local server | the `?shot=` states that existed when it was written — **structurally blind** to any surface without one |
 | `tools/release-shots.mjs` | the **built bundle** (`dist/AshenSpire.html`), at both shapes | **two denominators, both printed.** (1) **Top-level states**, derived from `main.js`'s `?shot=` states, so a new state cannot be silently missed; five co-op states **excluded by name**. (2) **Navigable sub-surfaces** — the tabs and panels reachable *inside* a state — derived from the three homes that define them (`uiContent.js MENU_TABS`, `settings.js settingsCategories()`, `balance.equipment.views`), one generated shot per member, each carrying an **assertion** that the surface both selected and painted. Surfaces with no `?shot=` are reached by real clicks and seeded storage; an unaccounted state, a **home that derives zero members**, or a sub-surface shot with no assertion all **fail before the browser starts** |
 
-**There is no single home that defines the tabbed surfaces**, only three homes each defining
-its own members — so denominator 2 enumerates the three sets the harness was told about, and
-prints the sets it knows exist and does not enumerate (co-op's per-player seat tabs). Closing
-that hole is a change to the tree, not to the harness: one declarative surface table, in the
-content layer beside `MENU_TABS`, naming every navigable set and its members.
+**The tabbed surfaces are listed in one table, `src/ui/surfaces.js`, which holds no members.** Each row points at the home that defines its set (`uiContent.js MENU_TABS`, `settings.js settingsCategories()`, `balance.equipment.views`) and asks it at call time. Denominator 2 enumerates the three sets the harness was told about, and prints the sets it knows exist and does not enumerate (co-op's per-player seat tabs). A fifth set that no row names is still invisible to the table, and a source tree cannot show it.
 
 The artifact is **never modified** to reach a state — crisis states are produced by writing
 storage from outside and reloading, because a shot of a patched bundle is a shot of something
@@ -2062,7 +2113,7 @@ thing broke.
 promise: `node tools/verify-shipped.mjs` (the bundle matches source), `node tools/mapplan.mjs`
 (map distributions at the current shape), `node tools/content-build.mjs --selftest --mutate`
 (§3.14), `node tools/contrast-audit.mjs` (palette targets), `node tools/release-shots.mjs` (the release
-capture set — see above), `node tools/ai-disclosure.mjs --check` (§2.1),
+capture set — see above; it is run by hand before a release, and no CI job runs it), `node tools/ai-disclosure.mjs --check` (§2.1),
 `node tools/screenreach.mjs`, `tools/zoomplace.mjs`, `tools/mapreach.mjs`,
 `tools/sfx-loudness.mjs`.
 
@@ -2088,16 +2139,15 @@ Build: Reaver, Starseer, Herald and the full-parity Rogue slice (§5.1), Acts 2�
 **Accept when:** all 4 classes can complete 3-act runs; every class owns its complete card/equipment/art slice; every card/relic/event is reachable; no unbeatable-by-construction encounters (elite HP vs. average deck DPS sanity table included in the balance notes); `scripts.js` budget still < 5%.
 
 ### M4 — Polish
-Build: fx pass (floating numbers, shake, transitions), run-history screen, keyboard shortcuts, first-run tooltip overlay (≤4 callouts), sfx hook wiring, asset pass replacing placeholders (CREDITS.md complete), performance check (60 fps on a mid-range laptop; no per-frame allocations in fx loops).
+Build: fx pass (floating numbers, shake, transitions), run-history screen, keyboard shortcuts, first-run tooltip overlay (≤4 callouts), sfx hook wiring, asset pass replacing placeholders (CREDITS.md complete).
 **Accept when:** DEVELOPER.md documents the layer rules, state shape, every opcode/formula op/event/predicate, and "add a card/relic/status/enemy/event in <10 lines" walkthroughs — each verified by actually adding a throwaway example.
 
 ---
 
 ## 10. Forward hooks (build the seam now, not the feature)
 
-- **Ascension-style difficulty:** run state carries `modifiers: []` consulted by `balance.js` lookups (enemy HP ×, gold ×, starting curse). v1 always empty.
+- **Ascension-style difficulty:** ships as `run.custom.ascension` (`src/content/customMods.js`). The `modifiers: []` slot this section first named is unused.
 - **Act 2/3 signature mechanics needing engine support from M1:** enemy phase-change interrupts (Watchful Omen already exercises this), enemy self-heal on dealing damage (final boss — a status hook on `damageDealt`), enemy applying Bleed to the *player* (player-side meters already exist in the status model; player Bleed threshold 15).
-- **Wondrous Physick crafting** (combine two flasks at shrines): flask effects are already composable data; UI only.
 - **Daily seed / run sharing:** seeds are already displayed and enterable; nothing else needed in v1.
 - **Content packs / mods:** the data/model split makes a pack = one folder of content files passing validation; a pack loader is out of scope for v1 but requires no engine redesign.
 - **Second card pools per class ("Remembrance" variants):** class def already takes `cardPool: []`, so alternate pools are content-only.
@@ -2106,11 +2156,11 @@ Build: fx pass (floating numbers, shake, transitions), run-history screen, keybo
 
 Still non-goals: accounts, monetization, localization (strings live in content files, so l10n is possible later), a mod loader, Steam-style achievements, and audio bundled into the game file: the rendered score is loaded at runtime (pack files through the common index in the web edition, since EXTERNAL-ASSETS-PLAN step 3c; the `music/` folder beside the page in source and single-file builds), with the synth bed as its fallback, and SFX stay synthesized (§7.4; `SFX_MANIFEST` accepts real files).
 
-Three things this list once excluded have since shipped and are no longer non-goals: **multiplayer** (Forsaken Together LAN co-op — `docs/MULTIPLAYER.md`, `src/net/lan.js`, served by the launcher's own Node server; the feature hides itself when no launcher is behind the page, so a `file://`-opened dist stays single-player), a **narrow/mobile layout** (`data-layout`, `balance.ui.uiScale`), and **audio** (§7.4).
+Two things this list once excluded have since shipped and are no longer non-goals: a **narrow/mobile layout** (`data-layout`, `balance.ui.uiScale`), and **audio** (§7.4). **Multiplayer** (Forsaken Together LAN co-op — `docs/MULTIPLAYER.md`, `src/net/lan.js`, served by the launcher's own Node server; the feature hides itself when no launcher is behind the page, so a `file://`-opened dist stays single-player) is built but **planned for a later release**, not part of the current release set (owner, 2026-10-12).
 
 ## 12. Planned game expansion — proposed mechanics and acceptance
 
-**Status: shipped, per item.** This section was written in September 2026 as the proposed expansion; its items have since been delivered. Each subsection's shipped verdict, the artifact it describes, its named boundary, and the command that would falsify it are in [docs/SPEC-RECONCILE.md](docs/SPEC-RECONCILE.md) stage 3, which is the home of that status: this header does not restate it per item. The requirements below remain the contract; a later change to any of them is a spec change. The items still open are the elite count for 1.0 in §12.4 and the Power resting stance in §12.5 (stage 3 rows P6 and P8b). Two shipped items carry a named verification boundary (stage 3 rows P1 and P8).
+**Status: shipped, per item.** This section was written in September 2026 as the proposed expansion; its items have since been delivered. Each subsection's shipped verdict, the artifact it describes, its named boundary, and the command that would falsify it are in [docs/SPEC-RECONCILE.md](docs/SPEC-RECONCILE.md) stage 3, which is the home of that status: this header does not restate it per item. The requirements below remain the contract; a later change to any of them is a spec change. Two items are still open: the 1.0 elite target in §12.4 (stage 3 row P6) and the Power resting stance in §12.5 (stage 3 row P8b). Two shipped items carry a named verification boundary (stage 3 rows P1 and P8).
 
 ### 12.1 Dodge and action feedback
 
@@ -2146,7 +2196,7 @@ New maps support multiple terminal boss destinations within an act, with distinc
 
 Every offered path must reach a valid destination without unintended dead ends, unreachable rewards, or repeatable completion rewards. Preserve an accessible pre-boss rest on every terminal route. Persist generated topology, destination identity, and encounter selection. Legacy saves keep their existing topology and chosen boss behavior: an unentered legacy boss node without a stored boss identity maps explicitly to the original boss for that saved act, with no RNG draw during loading or migration. Loading must not regenerate a map, move the player, consume new RNG draws, or reinterpret an in-progress encounter; existing combat snapshots remain unchanged. Validate connectivity, pre-boss rest access, and deterministic reloads over a seed corpus and play through distinct terminal routes.
 
-The release target is **20 unique regular enemies and 10 unique bosses**. Elites do not count toward either total. The 1.0 target for elites is **one to five per seat, averaging three (±0.5)** (owner ruling D4, 2026-09-24; revised 2026-09-26), counted separately from the other two totals. Existing qualifying enemies may count; recolors and numerical variants alone do not. Each counted enemy has a stable ID, distinct identity and tactical role, authored card moveset, readable intents and counterplay, recognizable sprite, and appropriate animations. Each boss additionally has a signature encounter mechanic; phases are optional where they improve that mechanic.
+The release target is **20 unique regular enemies and 10 unique bosses**. Elites do not count toward either total. The 1.0 target for elites is **one to five per seat, averaging three (±0.5)** (owner ruling D4, 2026-09-24; revised 2026-09-26), counted separately from the other two totals; it is still open (`docs/FINISH.md`). Existing qualifying enemies may count; recolors and numerical variants alone do not. Each counted enemy has a stable ID, distinct identity and tactical role, authored card moveset, readable intents and counterplay, recognizable sprite, and appropriate animations. Each boss additionally has a signature encounter mechanic; phases are optional where they improve that mechanic.
 
 Enemy card movesets are a limited presentation and authoring extension over the existing seeded weighted move selector. Preserve repeat history, current intent, phase transitions, repeat limits, and delayed-action state. Issues #239/#241 describe related proposed action planning and persistence work, not an already shipped plan cursor. A later switch to ordered plans requires its own verified mechanics change. Do not introduce a separate parallel move picker or reroll an intent when rendering a card or loading a save.
 
@@ -2208,22 +2258,22 @@ A seat row is `{ id, regionId, name, baseTier }`. `validateContent` refuses a se
 ### 13.2 Content binds to the seat, never to the act number
 
 - **Encounters** carry `seat: ref('seats')` (schema `encounter.seat`, required). The `act` field is **retired**: the schema refuses it, and the three encounter files are re-homed as `content/encounters/{weald,marches,reach}.js` with their rows unchanged except for `act: n` → `seat: '<id>'` (act 1 → `weald`, 2 → `marches`, 3 → `reach`). `floorBand` and `targetBand` keep their meaning (floors within the act) and are unchanged.
-- **`rollEncounter(registries, rng, { pool, seat, exclude })`** filters by `seat`; an `act` argument is a thrown error, not a default. `buildActMap(registries, rng, seat, tier, mapShape, { history })` takes the seat for its boss pool and the tier for `mapConfigs[tier]` (geometry stays per tier, exactly the three identical `ACT_SHAPE`s it is today). `resolveUnknownNode` takes `tier` for `unknownWeights` and `seat` for nothing yet (events are seat-agnostic until Phase 3).
+- **`rollEncounter(registries, rng, { pool, seat, exclude })`** filters by `seat`; an `act` argument is a thrown error, not a default. `buildActMap(registries, rng, seat, tier, mapShape, { history })` takes the seat for its boss pool and the tier for `mapConfigs[tier]` (geometry stays per tier, exactly the three identical `ACT_SHAPE`s it is today). `resolveUnknownNode` takes `tier` for `unknownWeights` (events are seat-agnostic until Phase 3).
 - **Enemies** need no new field: an enemy is reachable only through its encounters. The Blighted Valkyrie's encounter (`a3_bossRotValkyrie`) is the one exception to the pool rule and is stated in §13.5.
 - **Boss destinations** (§12.4) are unchanged in mechanism: the pool is `encounters where pool === 'boss' && seat === run seat`, chosen at act birth on the `map` stream exactly as today. `LEGACY_ACT_BOSSES` stays keyed by act number and is consulted only for a legacy graph, whose run is migrated to the default order (§13.4), so act n still maps to the boss it always did.
 - **Combat scenery**: `regionForRun(run)` returns the seat's region — no seed hash, no rotation. `combatEnvironment` is otherwise unchanged (road / city / dungeon settings, saved scene selection). The `ashen-crown` region is **not** a seat: under this section it is the scenery of the **boss node of the tier-3 act**, whichever seat holds it (LORE §1: the Ashen Crown is the Spire's summit, reached by the causeway that opens from the last relit tower). `drowned-coast` stays a World Journey region only.
 - **HUD and map**: the act header and the map's act title read `Act <tier> · <seat name>` (`runHud.js`, `map.js`) from `SEATS`, not from a per-act string.
 
-*Falsify:* `grep -rn "act:" src/content/encounters/` → 0 hits; `grep -rn "\.act\b\|act = 1" src/engine/encounters.js src/engine/actmap.js` → 0 hits; `node -e "import('./src/content/index.js').then(m=>console.log(m.registries.encounters.all().every(e=>['weald','marches','reach'].includes(e.seat))))"` → `true`.
+*Falsify:* `grep -rnE "^\s*\{ id:.*\bact:" src/content/encounters/` → 0 hits; `grep -rn "\.act\b\|act = 1" src/engine/encounters.js src/engine/actmap.js` → 0 hits; `node -e "import('./src/content/index.js').then(m=>console.log(m.registries.encounters.all().every(e=>['weald','marches','reach'].includes(e.seat))))"` → `true`.
 
 ### 13.3 Tier scaling — the seat's numbers are authored at its baseline
 
 Every enemy's HP and every encounter's bands were authored assuming the seat's `baseTier` (the act it used to be). Climbing a seat at a different tier scales the roll, not the definition:
 
-- `balance.seatTiers = { 1: 1.0, 2: <m2>, 3: <m3> }` — one multiplier per tier, data. `hpMult` for a fight is `seatTiers[tier] / seatTiers[seat.baseTier]`, composed with the Custom Climb and Endless multipliers exactly where they compose today (`main.js` fight modifiers → `createCombat` `hpMult`), applied **after** the `enemyHP` roll, so the same seed rolls the same base.
+- `balance.seatTiers = { 1: 1.0, 2: 1.5, 3: 1.9 }` — one multiplier per tier, data (`src/content/balance.js:940-941`). `hpMult` for a fight is `seatTiers[tier] / seatTiers[seat.baseTier]`, composed with the Custom Climb and Endless multipliers exactly where they compose today (`main.js` fight modifiers → `createCombat` `hpMult`), applied **after** the `enemyHP` roll, so the same seed rolls the same base.
 - **A seat climbed at its baseline tier scales by exactly 1** — `seatTiers[n] / seatTiers[n]` — which is the byte-identity claim of §13.6.
 - **Bosses scale by the tier they are met at** (`balance.bossTiers = { 1: { hp, damage }, 2: …, 3: … }`, data; `bossTierScale` in `model/seats.js` is its one reader, used by `main.js` fight modifiers, `tools/session.mjs` and the sims). The seat order is drawn per run (§13.4), so a boss's difficulty cannot be authored into its roster row — the Marches boss is a run's first boss in a third of climbs. A `boss`-pool fight at tier T takes, in place of the seat ratio above, `ratio × bossTiers[T].hp` on HP and `ratio × bossTiers[T].damage` on every move's damage, where `ratio = seatTiers[T] / seatTiers[the encounter's own seat's baseTier]` — the causeway's null-seat boss (the Valkyrie) is authored at the final tier whichever seat holds it. Move damage reaches the engine as `createCombat`'s `enemyDamageMult`, stamped on each enemy entity (`damageMult`, rounded per hit, never below 1) so the intent, the hit, the move card and a saved fight agree. Other pools keep the seat ratio on HP alone. Shipped (#1284, A2): tier 1 `{ 0.8, 0.8 }`, tiers 2 and 3 `{ 2.2, 1.5 }`, tuned with `node tools/runsim.mjs <n> --seeded-seats` (the real per-run order; the tool's default is the fixed weald → marches → reach order, one climb in six).
-- Strength scaling per tier is **not** introduced here; Endless already owns per-loop Strength and a second knob on the same status is a balance decision for the tuning pass, not this contract. `<m2>` and `<m3>` are set in the delivering PR from the measured HP ratio of the shipped rosters (`tools/runsim.mjs` at 300 seeds prints per-tier win rate before and after) and are stated in `docs/BALANCE.md`.
+- Strength scaling per tier is **not** introduced here; Endless already owns per-loop Strength and a second knob on the same status is a balance decision for the tuning pass, not this contract. The tier 2 and tier 3 values (1.5 and 1.9) were set from the measured HP ratio of the shipped rosters (`tools/runsim.mjs` at 300 seeds prints per-tier win rate before and after).
 
 *Falsify:* `node tools/runsim.mjs --seeds 300` win rate per tier recorded in BALANCE.md (a report, not a pass band: owner ruling D1, 2026-09-26); `node -e "..."` computing `hpMult` for `(seat: 'reach', tier: 3)` → `1`.
 
@@ -2231,7 +2281,7 @@ Every enemy's HP and every encounter's bands were authored assuming the seat's `
 
 - **Run schemaVersion 6.** `run.seatOrder` is a persisted array of the three seat ids, each exactly once (`RUN_SHAPE` row `{ key: 'seatOrder', type: 'array' }`; `validateRunShape` refuses a missing, short, long, duplicated or unknown id). `run.seatId` is **not stored** — it is `seatOrder[contentAct - 1]`, derived where `contentAct()` already is.
 - **Migration** (`migrateRunSchema`): a run at schemaVersion ≤ 5 gains `seatOrder: ['weald', 'marches', 'reach']` — the order every existing save was already climbing — and nothing else moves. No RNG draw during migration (§12.4's rule, kept).
-- **Creation**: `createRunState` draws the order **once** on the `seats` stream: `rng.shuffle('seats', SEATS.map(s => s.id))`. The stream is new, so every existing stream's counters and draws are unchanged for every existing seed (§13.6).
+- **Creation**: `createRunState` sets the default order only. The run-start orchestrator (`src/main.js:1255`) draws the order **once** on the `seats` stream right after it: `drawSeatOrder(registries, rng, { firstSeat })` (`src/engine/actmap.js:119-124`), which shuffles the default order with `rng.shuffle('seats', …)`. The stream is new, so every existing stream's counters and draws are unchanged for every existing seed (§13.6).
 - **Custom Run** gains `firstSeat: <id> | null` on `run.custom`. When set, the drawn order is **rotated** until that seat is first (one draw either way, so pinning does not change what any later stream rolls). The Custom Run screen offers the three seats by display name; the setting rides on `run.custom` and is saved like the rest of it.
 - **Endless** loops the order: loop `k` climbs `seatOrder[(contentAct - 1) % 3]` at the tier `endlessActInfo` already computes; the Valkyrie rule in §13.5 applies to every third act.
 
@@ -2273,12 +2323,12 @@ Every enemy's HP and every encounter's bands were authored assuming the seat's `
 - **Residual XP presentation.** Each manual character or skill claim spends exactly one step. Its compact row resets to zero at the new displayed level, then green fills to the remaining XP and yellow covers it. A full row turns blue and offers the next Level action; a partial row keeps its progress. Repeat for each claim without paying XP again. The refill duration and short pause before opening the claimed level's reward are configurable; reduced motion settles immediately. Other claims are gated during the refill.
 - **The hooks are one listener on the event bus** (`engine/skillXp.js attachSkillXp`, wired in `createCombat` and `createCoopCombat`), and they read the registry, never an entity: `damageDealt`/`blockGained` by a card a piece lent (`sourceHand` or `grantedBy` on the event, which now carry the card) pays `perHit` to that piece's item type, and to `dualWield` while the grip is `dual`; `combatEnd` with victory pays `perWinEquipped` per held group, × `killMult` for the group whose hit killed; `impactDealt` to the wearer pays `1 / impactPerXp` per impact to `armour:heavy` (half to medium); `attackEvaded` by the wearer pays `evadeXp` to `armour:light` (half to medium); `arcaneExposureChanged` by the caster pays `1 / buildupPerXp` per buildup to the focus track. The receipt lives on the combat, keyed by owner (the seat id in co-op) and floored once (`skillXpReceipt`); the run's ledger is written once, by the run's owner — `main.js onCombatEnd`, `tools/session.mjs`'s write-back, `tools/runsim.mjs` — through `applySkillXp`. Combat never writes a run.
 - **Which piece lent the card** is read from the event alone: `sourceHand` for a weapon's attack and guard cards; otherwise `grantedBy`, in whichever spelling the loadout stamped it — the bare armament id of a kit, package or weapon-art card, or a namespaced `armament/<id>` / `armor/<class>/<id>` ref — normalised once by `cardMounts.ownerItemRef`. A run card, the empty hand's Dodge Roll and a card an armour piece lent have no group. The killing hit is the one that left the target at 0 HP (`damageDealt` fires before the death is marked). In co-op a `blockGained` carries `sourcePlayerId`, the seat that played the card, and the pay goes to that seat: a guard cast on an ally is the caster's shield work.
-- **Dormant sources, named.** `impactDealt` fires for enemies only (the player has no poise until phase 8) and `attackEvaded` only under a foundation ruleset, which no shipped door passes — so all three armour tracks are wired and dormant today; the focus track's buildup is live. The class track has no XP source until phase 5b.
+- **Dormant sources, named.** `impactDealt` fires for every target on the no-ratings and foundation paths (`src/engine/actions.js:914`, `:922`); the shipped ratings path emits `ratingImpact` instead (`src/engine/combatRatings.js:79`). `attackEvaded` fires only under a foundation ruleset, which no shipped door passes — so the armour tracks stay dormant in shipped solo; the focus track's buildup is live. The class track is paid at combat end by `awardClassXp` (`src/main.js:3095`).
 - **The fight keeps what it earned across a save.** The combat snapshot carries `skills` and `skillXp`; `restoreCombatSnapshot` puts both back (an older snapshot resumes with empty ones), hooks the listener again, and `combatSnapshotProblems` refuses a malformed receipt by name.
 - **The progression predicates read the ledger:** `skillLevelAtLeast` and `classLevelAtLeast` read `combat.skills`, the copy of `run.skills` the combat was handed (`player.skills`) — in co-op the OWNER's seat's copy, not the active seat's; a track never touched is level 0. A gate's `skill` must be a derived track id, refused by name otherwise (`validate.js`); the shipped Siphon gates on `item:magic-focus`.
 - **`tools/runsim.mjs --skill-levels`** prints the level each track reached, averaged per class.
 
-*Falsify:* `skillTracks` names `item:blade`, `armour:heavy`, `dualWield` and `class:rogue` and not `item:armor`; `xpToNext(registries, 'weapon', 3)` costs 535 XP with the owner defaults; a linear fixture at base 100 and scaler 1.3 costs 490; a reaver's seeded fight pays `item:blade` exactly `(hits + blocks by cards the sword lent) × perHit` (+ `perWinEquipped`, × `killMult` when the blade killed — the kill is read from the HP the hit left) and `item:shield` the same for the shield's cards, kit and art cards named by the bare piece id included, never `dualWield`, never a `class:` track, and the run's ledger is empty until `applySkillXp`; a rogue with a knife and a sword pays `dualWield` equal to the blade; a schema-7 save loads with `skills: {}`; a fight saved mid-way restores its receipt and ledger and keeps recording, a pre-ledger snapshot resumes with empty ones; a gate on `skill: focus` is refused by name; a co-op guard cast on an ally pays the caster's seat and a seat's gate reads its own ledger; `balance.skill.xp.growth: 0.5` is refused by name.
+*Falsify:* `skillTracks` names `item:blade`, `armour:heavy`, `dualWield` and `class:rogue` and not `item:armor`; `xpToNext(registries, 'weapon', 3)` costs 795 XP at the 2026-10-04 growth 1.995; a linear fixture at base 100 and scaler 1.3 costs 490; a reaver's seeded fight pays `item:blade` exactly `(hits + blocks by cards the sword lent) × perHit` (+ `perWinEquipped`, × `killMult` when the blade killed — the kill is read from the HP the hit left) and `item:shield` the same for the shield's cards, kit and art cards named by the bare piece id included, never `dualWield`, never a `class:` track, and the run's ledger is empty until `applySkillXp`; a rogue with a knife and a sword pays `dualWield` equal to the blade; a schema-7 save loads with `skills: {}`; a fight saved mid-way restores its receipt and ledger and keeps recording, a pre-ledger snapshot resumes with empty ones; a gate on `skill: focus` is refused by name; a co-op guard cast on an ally pays the caster's seat and a seat's gate reads its own ledger; `balance.skill.xp.growth: 0.5` is refused by name.
 
 ### 13.4e Skill drafts: the level buys a pick from the track's own schools (plan phase 4b)
 
@@ -2308,11 +2358,11 @@ Every enemy's HP and every encounter's bands were authored assuming the seat's `
 *(For runs after §13.4q ships, tiers open by class mastery, the player picks one node per open tier at run start and one more per class Level up; picks stay per run.)*
 
 - **The tree is a table** (`content/source/classTree.csv`: `classId, nodeId, tier`): the property nodes a class may pick as it levels, ten per class today (four at tier 1, four at tier 2, the subclass pair at tier 3; the proposal's "about twelve" is rows, not shape). A tier opens at the class level `balance.skill.class.tierAt` names (`[1, 3, 5]`); tier 1 modifies the ability card's loop, tier 2 the kit relic's, tier 3 is the subclass. What a node DOES is its property rule (`nodeEffects.json`, numbers through `balance.classTree.<node>`); what it SAYS is its term (`nodeTerms.csv`). `validate.js` refuses, by name: an unknown class, a node outside the property subtree, a tier the ladder has not got, a node in two classes, and two top-tier nodes of one class with no `CONFLICTS_WITH` row between them — the subclass is a choice, never a stack.
-- **The class track is paid by the run's owner** (`classTree.js awardClassXp`, called from `main.js onCombatEnd`, `tools/runsim.mjs`, `tools/session.mjs`): `balance.skill.class.xp.perWin` for a won fight, `bossKill` on top at a boss door, nothing for a loss; `perQuest` waits for phase 10a's `questCompleted` event. The combat does not know the door's pool, so the hook is not the bus listener's.
+- **The class track is paid by the run's owner** (`classTree.js awardClassXp`, called from `main.js onCombatEnd`, `tools/runsim.mjs`, `tools/session.mjs`): `balance.skill.class.xp.perWin` for a won fight, `bossKill` on top at a boss door, nothing for a loss; a completed quest pays `perQuest` into class mastery and the class skill at completion (`src/engine/quests.js:50-54`). The combat does not know the door's pool, so the hook is not the bus listener's.
 - **A class level queues a draft** (one-per-door replaced by §13.4o once built) like a skill level (`pendingDrafts` on `class:<id>`); the spoils door offers ONE per door (a second roll at the same door would read the same picks; the rest of the queue waits for the next fight) as a `classDraft` row (`REWARD_KIND_ORDER`: ahead of `skillDraft`; key `classDraft:<classId>:<ordinal>`), a choice among `draftSize` nodes rolled by `engine/encounters.js rollClassDraftIds` from `classTree.js classDraftPool` — the tiers open at the level, not yet picked, every `REQUIRES` picked, no `CONFLICTS_WITH` picked — on the `cardRewards` stream. While a draft is on the table the class-card offer is not rolled. The chooser renders a node tile (glyph, name, the rule's sentence with its numbers resolved through `nodeTokens`) under the same selection path as a card.
 - **The pick is the core card's own tagging row:** `run.coreTags` (schema 9; a save at ≤ 8 gains `[]` at the migration door; `validateRunShape` refuses a malformed or repeated pick by name), projected as `zones.coreTags`, written only by `pickClassNode` (refuses what the pool does not offer) at the reward door (`apply.classDraft`, which also spends the queued draft and records the pick in `pendingReward.chosenDraftNodeIds[row.key]`). `properties.js classCarrier` mounts the picked nodes that are the class's own tree's beside the class's authored `favored` (solo `combat.coreTags`, co-op the seat's `P.coreTags`, the snapshot carries `coreTags` and the restore re-mounts). `loadRun` reads the tree by the run's class (`classTree.js coreTagsTreeProblems`): a pick on the run or on a carried fight snapshot that is ANOTHER class's node, a pending class draft for another class, or a draft naming a node outside its class's tree — each refused by name, where the shape door could only count strings. A pick no tree holds (a content update renamed or dropped the node) is stale, not a tamper: the door drops it with a heal-ledger row (`staleCoreTags`), from the run and the snapshot alike, and the rest stay — as the skills ledger keeps a track no registry knows.
 - **The subclass lends the card its face:** `classCard(registries, classId, coreTags)` carries `picked`, `subclassId` (the picked top-tier node) and `presentation { name, glyph }` read off that node's row, the class's own otherwise. No `artKey` column was authored: the node row's label and glyph are the presentation, and a sprite key can join the row when there is art to key.
-- **Not in this phase:** quest XP (10a; post-1.0 by owner decision, 2026-09-27), a tree screen to pick from (the reward door is the tree's only door for picks; the read-only Character sheet, `character-sheet`, shows each tier's opening level and nodes), co-op class drafts (`tools/session.mjs` pays class XP and does not yet offer the pick).
+- **Not in this phase:** character XP for quests (`questLevelXp`; post-1.0 by owner decision, 2026-09-27), a tree screen to pick from (the reward door is the tree's only door for picks; the read-only Character sheet, `character-sheet`, shows each tier's opening level and nodes), co-op class drafts (`tools/session.mjs` pays class XP and does not yet offer the pick).
 
 *Falsify:* the reaver tree has ten nodes in three tiers (four, four, two), every class at least four nodes at tiers 1 and 2 and a subclass pair at tier 3; level 0 drafts nothing, tier 1 opens at its level, a picked node leaves the pool, one subclass excludes the other and leaves the lower tiers open; a roll is `draftSize` distinct reaver nodes and an empty pool draws nothing; a fresh run has picked nothing, a pick below its tier is refused, a tier-1 pick lands once and rides the save and the projection, a schema-8 save gains no picks; a lost fight pays no class XP, a win `perWin`, a boss `bossKill` on top; a picked node mounts beside `favored` in solo, per seat in co-op and again after a restore, and Iron Footing braces when Brace does; the subclass names the card; the menu keys the class draft ahead of the skill draft and auto-collect picks a node; the save door's and the tree's refusals by name (engine test 88, `tests/class-tree-breadth.test.mjs` for the breadth and a live fight for a node of each class; `tools/runsim.mjs` prints class tree picks per run).
 
@@ -2328,10 +2378,10 @@ Every enemy's HP and every encounter's bands were authored assuming the seat's `
 
 ### 13.4i The character level is earned: XP, the point ledger, the level's own term (plan phase 6)
 
-- **The ledger is the run's:** `run.level = { xp, level, unspentPoints }` (schema 10; a save at ≤ 9 arrives at the level its cinder purchases reached — `1 + levelUps` — with no XP toward the next and nothing waiting; `validateRunShape` refuses a malformed ledger by name), written only by `model/levelup.js`. `xpToNext(registries, level)` is the one curve shape (`balance.level.xp`); `awardLevelXp(registries, run, amount, { pointsPerLevel })` climbs as many steps as the XP buys, each granting the dial's points to `unspentPoints` (`balance.levelUp.maxLevels` caps the climb, XP past it stays); `applyLevelUp(registries, run, attributeId)` assigns ONE waiting point — the attribute moves, `levelUps`/`levelPoints` record the assignment for the load door's allocation check exactly as before, the pools re-derive from the run's own snapshot with the deficit carried (levelling is not a rest). `levelUpPlan` offers the waiting points and nothing else (`blockedBy`: `points` | `cap` | null); the shrine's Level-up card assigns them (`rest.js`), the town's level-up service once phase 7 places it. Cinders buy no level: no code path spends `run.cinders` on one.
+- **The ledger is the run's:** `run.level = { xp, level, unspentPoints }` (schema 10; a save at ≤ 9 arrives at the level its cinder purchases reached — `1 + levelUps` — with no XP toward the next and nothing waiting; `validateRunShape` refuses a malformed ledger by name), written only by `model/levelup.js`. `xpToNext(registries, level)` is the one curve shape (`balance.level.xp`); XP is banked by `bankLevelXp` (`src/model/levelup.js:156`), and a level is claimed only by `claimBankedLevel` (`src/model/levelup.js:170`) on the Level up press (§13.4o), which grants the dial's points to `unspentPoints` (`balance.levelUp.maxLevels` caps the claims, XP past it stays); `awardLevelXp` (`src/model/levelup.js:304`) climbs as many steps as the XP buys at once, and the solo game no longer calls it except in a QA fixture (`src/main.js:4137`); co-op members on the older progression rules (`tools/session.mjs`) and the simulator (`tools/simrun.mjs`) still award through it; `applyLevelUp(registries, run, attributeId)` assigns ONE waiting point — the attribute moves, `levelUps`/`levelPoints` record the assignment for the load door's allocation check exactly as before, the pools re-derive from the run's own snapshot with the deficit carried (levelling is not a rest). `levelUpPlan` offers the waiting points and nothing else (`blockedBy`: `points` | `cap` | null); the shrine's Level-up card assigns them (`rest.js`), the town's level-up service once phase 7 places it. Cinders buy no level: no code path spends `run.cinders` on one.
 
 - **Guided level rewards (owner, 2026-10-03; superseded IN PART by §13.4o, 2026-10-04 — the auto-claim and pausing go, every level now waits for the player's Level up press; the deferral and persistence rules below stand):** Accessibility → Pause XP for level-up rewards (`guidedLevelUp`, default on) banks earned character and skill XP, pauses at each level, opens its reward chooser with Back, and resumes surplus XP after that choice. Back stops automatic prompting for the current reward screen; Continue can leave without advancing levels or selecting progression rewards. Unclaimed progression offers retain their originally rolled choices and absolute `requiredLevel` in optional `run.deferredProgression` (`levelCards`, `levelChoices`, `skillDrafts`, `classDrafts`); they return at later victories and through Character → Level up & rewards outside combat. Existing saves may omit the field. Class-specific offers wait for their original class to be equipped; switching classes cannot discard them or place a mismatched class draft into an active reward checkpoint. Deferring cannot grant, reroll, duplicate or auto-collect a progression reward. Turning the guide off follows the existing manual-level preference. Reduced motion skips the fill animation without changing the sequence or persistence.
-- **The awards are the run's owner's** (`main.js onCombatEnd`, `tools/session.mjs` per seat — the seat's ledger rides its member view, and assigning the points in co-op waits with the co-op class draft (§13.4g): the session pays, the co-op shrine does not yet offer — and `tools/runsim.mjs`): `combatLevelXp(registries, { victory, pool, kills })` — `xp.combatWin` for a won fight and `xp.kill.<pool>` per enemy felled (a kill is a kill, won or lost; an unknown pool pays the normal rate); `questLevelXp` names `xp.quest` for phase 10a's completion door. His level-value dial (`levelUpValue`) is read where the level is reached, so the points a level grants are decided then and wait for the shrine.
+- **The awards are the run's owner's** (`main.js onCombatEnd`, `tools/session.mjs` per seat — the seat's ledger rides its member view, and assigning the points in co-op waits with the co-op class draft (§13.4g): the session pays, the co-op shrine does not yet offer — and `tools/runsim.mjs`): `combatLevelXp(registries, { victory, pool, kills })` — `xp.combatWin` for a won fight and `xp.kill.<pool>` per enemy felled (a kill is a kill, won or lost; an unknown pool pays the normal rate); `questLevelXp` names `xp.quest`; nothing calls it yet (character XP for quests is post-1.0). His level-value dial (`levelUpValue`) is read where the level is reached, so the points a level grants are decided then and wait for the shrine.
 - **The level's own term** rides the derived-stat rows (`content/derivedStats.js` `perLevel: { every, gain }`, optional per row, refused by name when malformed): `deriveStat` adds `floor((level − 1) / every) × gain` at the character level it is handed — HP +5, Mana +1 and Stamina +1 every five levels past the first, Hand +1 every ten, as shipped then (ruleset 6 restates the term as a decimal `perLevel`, and the owner's defaults of 2026-09-24 in §3.5 give HP 2 per level) — and every derivation of a run's pools (birth, the load door's integrity check, `reconcileRunLoadoutHp`, the stat projection) passes the run's level. The term is snapshotted with the row: a run born under it keeps it whatever the table says later, and a run born before it never gains it, so no old save is re-priced or refused.
 
 *Falsify:* a fresh run is level 1 with nothing waiting and the shrine offers nothing (refused by name); the base XP climbs one step, grants one point that waits, moves no stat and no cinder; the point assigned lands on its stat, leaves the ledger, records `levelUps`/`levelPoints`, and the pools follow the point with the deficit carried; the curve receipt reads 10, 10, 10, 10, 10, 10, 10, 10, 20, 20 and 120 to level 11 (100, 120, 130, 150, 170, 200, 230, 270, 310, 350 and 2,030 on the curve before 2026-09-24); the awards by pool and the loss's kills; the cap holds the level and keeps the XP; the dial at 1 and at 3 grants one and three points for the same XP; level 6 adds the HP/Mana/Stamina term and level 11 the Hand, the deficit carried; a run at level 11 loads with its bumped pools; a schema-9 save with three purchases loads at level 4 under its own term-less snapshot; the ladder's keys, a zero curve base, a falling growth, a missing kill rate and a zero cadence are refused by name (engine tests 60, 60b–60e, 90). `runsim --xp-levels` reports the levels per full run against the band.
@@ -2339,19 +2389,19 @@ Every enemy's HP and every encounter's bands were authored assuming the seat's `
 ### 13.4j Recovery is a location's property set: arrived, rested, and what a place carries (plan phase 7)
 
 - **A location is a property carrier** (`content/source/tagFamilies.csv` family `location`, paired with the `property` subtree and nothing else; no collection — its ids are the map's: a classic node type (`shrine`), `camp` (the Unknown node's rest outcome), an atlas rest service's type (`inn`, `chapel`) or one atlas node by id, refused otherwise by `model/locations.js locationTaggingProblems`). `engine/locations.js` is the window: `createLocationVisit({ run, registries, rng }, locationId, { healMult, refillCounts })` mounts the place's rules on the run-level context (`actions.js createRunContext`, the facade `executeRunEffects` always built — now one door for events, flasks and visits) under `location:<id>`; `arriveAt` emits **`arrived`**, `restAt` emits **`rested`** (both in `EVENTS`, run-level only), each re-reading the run into the facade first and writing the pools back after the queue drains; `previewRest` runs the same rules on a clone so the screen's line and the button read one answer (the atlas preview arrives on its clone first, as entry will, so a roll or a restore on `arrived` is spent before the rest is previewed) — on a copy of the streams, or on a stream seeded from the run when the caller holds none (the atlas preview), so a rolling rule renders and advances nothing the real rest reads; `createLocationVisit(…, { arrived: true })` rebuilds a saved visit as already arrived (the co-op host's restore), so an arrival rule runs once per stay and never again per host restart; the run context's own emissions (`healed`, `manaRestored`, …) ride the trigger bus, so a place's rules compose through their events as combat properties do; the relic denial is re-read off the run after arrival and before a rest (an arrival rule may hand the run the denying relic); a point resolved by its own tagging row is still titled by its rest service type (`locationServiceTypeId`); `leaveLocation` unmounts. `MOUNTABLE_KINDS` gains `location`. `resolveLocationId` picks a point's own row over its service type's over the node type's, so one row per type covers eleven inns and a node row can still override.
-- **What a place restores is the sum of its tags**, each a property node with one rule (`nodeEffects.json`, numbers in `balance.rest` through `variableBindings.csv`): `restHpSmall` / `restHpPartial` heal `rest.hpSmallPct` / `rest.hpPartialPct` of max on `rested` (25 / 35), `restHpFull` heals to full (`missingHp`); `restManaFlat` restores `rest.mana.flat`, `restManaFloor` restores TO `rest.mana.floorPct` of max or to full when already there (the `restoreMana` opcode's new `toFloorPct` selector — exactly one of `amount` | `toFloorPct`, refused otherwise), `restManaFull` restores to full (`missingMana`, a new formula op); `restMana` is the DEFAULT — the door resolves it to the tag `balance.rest.mana.mode` names (`flat` | `floorOrFull` | `full`, shipped `floorOrFull` at 50%), so a place that wants another amount carries the fixed tag instead; `restFlasks` fires the new run opcode `refillFlasks` on `arrived` — `applyGraceRefill`, a top-up, so a re-entry pours nothing twice, and the receipt rides the visit for the screen's refill line; `smith` and `levelUp` are services the screen offers (the smith's own services still come from `balance.smithing.services`), and `restFlasks` also opens the flask-reallocation fold — a place that pours nothing has no charges to move. A `?` node revealed as a shrine on the classic map opens the camp when entered (the reveal names the outcome's kind, the door names the place). Shipped sets (`tagging.csv`): **shrine** `restHpPartial, restMana, restFlasks, smith, levelUp`; **camp** `restHpSmall, restMana`; **inn** `restHpFull, restManaFull, restFlasks, levelUp` (and, since phase 10b, the `questBoard` service, §13.4n); **chapel** `restHpPartial, restMana, restFlasks, levelUp`. `balance.shrine.healPct` and `shrineHealAmount` are gone; the Rest screen (`rest.js`), the atlas service preview (`LocalServiceModel`), the co-op host (`tools/session.mjs`, each member's visit on that member's own streams, so a rolling rule's preview and Rest agree whatever order the party chooses in) and the simulators walk the visit.
+- **What a place restores is the sum of its tags**, each a property node with one rule (`nodeEffects.json`, numbers in `balance.rest` through `variableBindings.csv`): `restHpSmall` / `restHpPartial` heal `rest.hpSmallPct` / `rest.hpPartialPct` of max on `rested` (25 / 35), `restHpFull` heals to full (`missingHp`); `restManaFlat` restores `rest.mana.flat`, `restManaFloor` restores TO `rest.mana.floorPct` of max or to full when already there (the `restoreMana` opcode's new `toFloorPct` selector — exactly one of `amount` | `toFloorPct`, refused otherwise), `restManaFull` restores to full (`missingMana`, a new formula op); `restMana` is the DEFAULT — the door resolves it to the tag `balance.rest.mana.mode` names (`flat` | `floorOrFull` | `full`, shipped `floorOrFull` at 50%), so a place that wants another amount carries the fixed tag instead; `restFlasks` fires the new run opcode `refillFlasks` on `arrived` — `applyGraceRefill`, a top-up, so a re-entry pours nothing twice, and the receipt rides the visit for the screen's refill line; `smith` and `levelUp` are services the screen offers (the smith's own services still come from `balance.smithing.services`), and `restFlasks` also opens the flask-reallocation fold — a place that pours nothing has no charges to move. A `?` node revealed as a shrine on the classic map opens the camp when entered (the reveal names the outcome's kind, the door names the place). Shipped sets (`tagging.csv`): **shrine** `restHpPartial, restMana, restFlasks, smith, levelUp, deckEdit`; **camp** `restHpSmall, restMana`; **inn** `restHpFull, restManaFull, restFlasks, levelUp, deckEdit` (and, since phase 10b, the `questBoard` service, §13.4n); **chapel** `restHpPartial, restMana, restFlasks, levelUp, deckEdit`. `balance.shrine.healPct` and `shrineHealAmount` are gone; the Rest screen (`rest.js`), the atlas service preview (`LocalServiceModel`), the co-op host (`tools/session.mjs`, each member's visit on that member's own streams, so a rolling rule's preview and Rest agree whatever order the party chooses in) and the simulators walk the visit.
 - **The heal's multipliers ride the context**, never the rule: `ctx.healMult` (the custom mod's `lessHealingMult` × the run's **`restHealMult`** passive, was `shrineHealMult`) scales every heal the visit applies — floored once, after the multipliers (`formulas.js evaluateRaw`), so a percentage rest heals what the single-floor rule it replaces healed — and touches no Mana. In co-op the host's scene carries each member's preview and the relic that denies their Rest (`tools/session.mjs restView`), and the client disables the option with the reason. **`restDenied`** (was `shrineNoRest`) is `true` — no rest anywhere — or a list of location tags, denying only a place whose set holds one of them: the Wyrm Heart carries `['restHpPartial']`, so the Shrine's and the chapel's Rest are refused by relic name and the inn's bed and the camp's rough rest stay open; a filter naming a tag no location carries is refused at validation.
 - **The town budget:** `generateJourney(seed, profileId, atlas, { townsPerActMax })` counts the `city` nodes a route stops at per difficulty act (the start is where the run begins, not a stop) and rolls again over the cap; `main.js` passes `balance.atlas.townsPerActMax` (1). Every shipped city is act 1 and a route holds exactly one hub, so the shipped cap changes no seeded route; the tests and the tools, which pass none, are unchanged.
 
 *Falsify:* the shrine's set reads as authored and `restMana` resolves to `restManaFloor`; arriving refills the charges and heals nothing; the preview and the rest agree on 35% and the floor; Mana below the floor rises to it and Mana at the floor fills; leaving unmounts; the camp heals 25%, refills nothing, offers nothing; the inn heals to full and Mana to full; the flat mode resolves and restores its row; Ember Fragment ×1.15 and the mod ×0.5 scale the heal and leave Mana alone; the Wyrm Heart denies the shrine and the chapel by name and allows the inn and the camp, and an unfiltered `restDenied` denies every rest; a rest after a door between arrival and rest heals to the maximum the run holds now; the shipped town cap replays every route and a zero cap is refused by name; an id the map lacks, a bundle without a row for the shrine or the camp (the places the classic map opens unconditionally), an unknown mode, a percent off the scale, a negative cap, a `restoreMana` with neither or both selectors and a filter naming an uncarried tag are refused by name (engine test 91; local-map and world-atlas tests).
 
-### 13.4k Mana is the third cost line, a focus owns its break, and the player has a Poise meter (plan phase 8)
+### 13.4k Mana is the second cost line, a focus owns its break, and the player has a Poise meter (plan phase 8)
 
-- **Mana is never the first cost line.** A card that costs Mana costs at least `balance.mana.minActionCost` action and `minStaminaCost` stamina (1 / 1), base and upgrade alike — `validate.js` refuses a card under either floor BY NAME (`cards.<id>.staminaCost: '<name>' costs Mana, so it costs at least 1 stamina …`), an upgrade inheriting the base's lines where it leaves them unsaid. The re-cost this rule forced: the four signature arts cost 1 stamina beside their 1 Mana (A2 since took the Starseer's Starstone Pebble — with Comet Fragment, Starblade Phalanx, Starlance and Frost Nova — off both lines: they cost actions only, and their `cardExposure.csv` rows read the action-only 1) (the proposal's 2 / 2 waits for phase 9, whose Mana-equals-Wisdom pools can afford it — under the current tiers two classes start with one point of each); Comet Fragment costs an action; seven Mana powers whose upgrade was "costs 0" now drop the Mana line instead (an action floor leaves nothing else to drop). A Mana spell (one whose school builds Arcane Exposure) builds at least `balance.exposure.buildupPerManaSpell` (5) per hit, refused by name below it; every such row in `cardExposure.csv` reads 5; a spell with no Mana line keeps 1, whether it costs actions only or Stamina (A2's Blight Touch, which costs Stamina without Mana, reads 1).
+- **Mana is never the first cost line.** A card that costs Mana costs at least `balance.mana.minActionCost` (1) Stamina, base and upgrade alike; Actions and Stamina are one pool (`src/model/turnStamina.js`), so Mana is the second cost line and `minStaminaCost` is retired at 0. `validate.js` refuses a card under the action floor BY NAME (`cards.<id>.cost: '<name>' costs Mana, so it costs at least 1 action …`), an upgrade inheriting the base's lines where it leaves them unsaid. The re-cost this rule forced: the four signature arts cost 1 Stamina beside their 1 Mana (A2 since took the Starseer's Starstone Pebble — with Comet Fragment, Starblade Phalanx, Starlance and Frost Nova — off the Mana line: they cost Stamina only, and their `cardExposure.csv` rows read the Stamina-only 1) (the proposal's 2 / 2 waits for phase 9, whose Mana-equals-Wisdom pools can afford it — under the current tiers two classes start with one point of each); Comet Fragment costs 1 Stamina; seven Mana powers whose upgrade was "costs 0" now drop the Mana line instead (an action floor leaves nothing else to drop). A Mana spell (one whose school builds Arcane Exposure) builds at least `balance.exposure.buildupPerManaSpell` (5) per hit, refused by name below it; every such row in `cardExposure.csv` reads 5; a spell with no Mana line keeps 1 (A2's Blight Touch, which costs Stamina without Mana, reads 1).
 - **A focus owns what its break does** (§3.6's property mounts; *in §13.4p's scope these triggers move to `arcaneStagger`, a Stagger caused by the holder's magical hit*): beside the sceptres' `siphon` and the wand's `overcharge`, **`staggerBreak`** (the plain staves: Ash, Starstone, Wyrmhorn) deals `balance.exposure.staggerBreakPoise` (6) Poise damage to the foe whose Exposure the holder's own hit broke, and **`resonance`** (the Goldbough Branch) pours `balance.exposure.resonanceSpreadPct` (50) of the broken foe's threshold into every OTHER foe as buildup — the new opcode **`arcaneBuildup`** (`amount` | `pct`, exactly one) on the new target **`otherEnemies`** (every living enemy but the firing event's and the action's own target). The Blight Rod and the Gorefire Brand carry `overcharge`. Every focus is a `staff` kind, so the proposal's staff / wand / orb reading is by item, in `tagging.csv`. Buildup has one path to a meter, `addArcaneExposure` (a hit's and a pour's alike): immune and locked foes refuse by name, a fill resets and breaks.
-- **The player's Poise meter is real.** Its max is the one `poise` stat row (§3.5; with combat ratings on, the Poise rating, which reads the same row) + the worn body armour's `poiseThreshold` + relic `poiseThresholdAdd` (`playerPoiseThresholdReceipt`, `active: true`; a weapon's `poiseThreshold` is its weight, not the wearer's footing). Impact fills it — `dealPoiseDamage` takes the player as it takes an enemy, and `impactDealt` is emitted for every target so the armour skill hooks (§13.4d) hear it; outside the foundation ruleset (the shipped fight is created without one) an enemy blow that draws blood rocks the player by `balance.poise.playerImpactPerHit` (2), the ruleset's weapon impact replacing it wherever a ruleset is handed in. A restored fight re-derives the max from the receipt, never from the save. In co-op the receipts carry `targetPlayerId`. A fill Staggers the player: `balance.stagger.player` names the statuses applied and their stacks (`vulnerable` 2, `weak` 2, ordinary decay — the engine names no status) and the actions owed to the NEXT turn (`actionLoss` 1: the turn opens `energyMax − pendingActionLoss`, once); `meterFilled` and **`playerStaggered`** `{ targetId, actionLoss, statuses }` are emitted; the meter grows by `poise.growthMult` as an enemy's does. Since plan phase 9 the Constitution term is the derived `poise` row rather than a balance coefficient (§13.4l). Co-op stamps the same receipt per member.
+- **The player's Poise meter is real.** Its max is the one `poise` stat row (§3.5; with combat ratings on, the Poise rating, which reads the same row) + the worn body armour's `poiseThreshold` + relic `poiseThresholdAdd` (`playerPoiseThresholdReceipt`, `active: true`; a weapon's `poiseThreshold` is its weight, not the wearer's footing). Impact fills it — `dealPoiseDamage` takes the player as it takes an enemy, and `impactDealt` is emitted for every target on the no-ratings and foundation paths, so the armour skill hooks (§13.4d) hear it there; the shipped ratings path emits `ratingImpact` instead; outside the foundation ruleset (the shipped fight is created without one) an enemy blow that draws blood rocks the player by `balance.poise.playerImpactPerHit` (2), the ruleset's weapon impact replacing it wherever a ruleset is handed in. A restored fight re-derives the max from the receipt, never from the save. In co-op the receipts carry `targetPlayerId`. Under legacy ratings a fill Staggers the player: `balance.stagger.player` names the statuses applied and their stacks (`vulnerable` 2, `weak` 2, ordinary decay — the engine names no status) and the actions owed to the NEXT turn (`actionLoss` 1: the turn opens `energyMax − pendingActionLoss`, once); `meterFilled` and **`playerStaggered`** `{ targetId, actionLoss, statuses }` are emitted; the meter grows by `poise.growthMult` as an enemy's does. Since plan phase 9 the Constitution term is the derived `poise` row rather than a balance coefficient (§13.4l). Co-op stamps the same receipt per member.
 
-*Falsify:* a Mana card with no stamina line, no action line, or an upgrade that drops the action line under a Mana cost is refused by name, an X-cost Mana card passes, a negative floor and a missing `balance.mana` are refused, a stagger status the bundle lacks is refused, a Mana spell building 1 is refused, `arcaneBuildup` with neither or both selectors is refused; a self-aimed pour of the player's whole max applies 2 Vulnerable and 2 Weak, emits one `playerStaggered` naming one action, grows the meter ×1.25, opens the next turn one action short and the turn after whole; the receipt is Constitution × the row + body armour + relics and `createCombat` stamps it (engine test 92); a starseer's Ash Staff break batters the foe's Poise by 6 and refunds nothing, a Goldbough Branch break pours half the threshold into the other foe and none into the broken one (property-mount tests).
+*Falsify:* a Mana card with no action line, or an upgrade that drops the action line under a Mana cost, is refused by name, an X-cost Mana card passes, a negative floor and a missing `balance.mana` are refused, a stagger status the bundle lacks is refused, a Mana spell building 1 is refused, `arcaneBuildup` with neither or both selectors is refused; under legacy ratings, a self-aimed pour of the player's whole max applies 2 Vulnerable and 2 Weak, emits one `playerStaggered` naming one action, grows the meter ×1.25, opens the next turn one action short and the turn after whole; with ratings on (the shipped path, `Ratings.applyRatingImpact`), the same pour owes the next turn `poiseActionLoss`, emits `meterFilled` and `ratingImpact`, and applies no status and no `playerStaggered`; the receipt is Constitution × the row + body armour + relics and `createCombat` stamps it (engine test 92); a starseer's Ash Staff break batters the foe's Poise by 6 and refunds nothing, a Goldbough Branch break pours half the threshold into the other foe and none into the broken one (property-mount tests).
 
 ### 13.4l The attribute rebase: one creation scale, one derived ruleset, one equip gate (plan phase 9)
 
@@ -2386,7 +2436,7 @@ His words: *"I'd like the default stats to be low, with everyone having a total 
 - **What the board lists** (`ui/models/QuestBoardModel.js questBoardModel`): every atlas quest offered at a point of the town's local map (`node_quests`), in map order, each in the state `questAction` plans — `open` (accept), `accepted` (explore the marked road), `ready` (collect), `done` (collected) or `closed` (the road is not open in this journey) — and a **journal**: the run's `questCompleted` rows in completion order (event chains titled by their first step, atlas quests by their survey writing), and the quests under way — an event chain with an `eventChoice` row on one of its steps and no completion, and an atlas quest the journey holds as `accepted` (accepting writes no history row, so the journey is where that fact lives).
 - **Accepting and collecting are spoken.** An `open` or `ready` quest opens the dialogue screen (W4c) with the quest row's `speakerId`: an open quest speaks its survey description and offers *Accept the quest* / *Not now*; a ready one speaks the lore's report and offers *Collect N cinders* / *Not now*. The response commits through `engine/quests.js boardQuestResponse`, whose closed set is `accept`, `collect`, `leave`: `leave` changes nothing, and `accept` / `collect` go through `atlasQuestAction` — `questAction` and the 10a completion door — only when the quest's plan is that move, otherwise refused by name, so a quest rewards once across a reload. Neither the board nor the exchange is saved; a reload reopens the place the board was read from.
 - **The atlas's quest list opens the board where the town keeps one** (`model/locations.js questBoardPointAt` — the first local point whose resolved rest location carries `questBoard`; `restLocationAtPoint` is the one resolution `main.js` also uses for the rest door). There the warden's point reads each quest's state and offers *Quest board*, which opens the board from the map and returns to it; a town without a board keeps the inline Accept / Collect buttons.
-- **Not in this phase:** quest XP (`questLevelXp`, `perQuest`) is still unpaid — nothing listens to `questCompleted` yet, and it is post-1.0 (owner decision, 2026-09-27); the co-op host (`tools/session.mjs`) offers no board.
+- **Not in this phase:** a completed quest already pays `perQuest` into class mastery and the class skill at completion (`src/engine/quests.js:50-54`); character XP for quests (`questLevelXp`, `src/model/levelup.js:122`) is unwired and post-1.0 (owner decision, 2026-09-27); the co-op host (`tools/session.mjs`) offers no board.
 
 *Falsify:* the inn's set includes `questBoard` and the shrine's, chapel's and camp's do not; every town posting a quest opens its board at its inn; a town lists its quest `open` with its reward and speaker; accepting through the exchange moves it to `accepted` and completes nothing, a collect before the objective is refused by name, the report is spoken on return, and the collect pays `rewardCinders` once, writes one `questCompleted` row with `source: 'atlas'` and shows the quest `done` and in the journal; a second collect before or after a reload is refused and pays nothing; Leave changes nothing and an unknown response is refused by name; a Nameless step in history lists the chain as started and its completion moves it to completed (`tests/quest-board.test.mjs`; engine test 91).
 
@@ -2400,7 +2450,7 @@ Recorded before any code (owner rule: a mechanics change lands in SPEC first). E
 
 - **What this replaces, once built** (until then the cited rules stand as written):
   - §13.4i *Guided level rewards*: the auto-claim and pausing go; its deferral and persistence rules (`run.deferredProgression`, absolute `requiredLevel`, class-gated offers, no reroll or duplicate) stay and carry §13.4o's rows.
-  - §13.4e: the per-door cap (`draftsPerCombat`, "the rest wait for the next fight") goes — every claimed level opens its own modal; and the `upgradeAt` standing rule (every school card `upgraded: true` past a threshold) is replaced by card ranks.
+  - §13.4e: the per-door cap (`draftsPerCombat`, "the rest wait for the next fight") goes — every claimed level opens its own modal. (Not yet built: the cap is still live, `src/model/abilityOffers.js`.)
   - §13.4e "armour and class tracks have no schools": their every-level card draft uses the class pool under the skill's rarity gate (the October 3 fallback).
   - §13.4g "ONE per door" for class drafts goes; each class level's modal carries its tree-node pick.
   - *October 3 owner defaults*: a class level's guaranteed feat (`classFeatChancePct: 100`) becomes the every-2nd-level skill feat; the per-level card draft and technique roll fold into the table's every-level card.
@@ -2418,7 +2468,7 @@ Recorded before any code (owner rule: a mechanics change lands in SPEC first). E
 
   Everything stacks: a level with several entries grants all of them, and repeated bonuses add with no cap. A card that meets several tracks' schools takes the sum of their every-5th-level flats (owner ruling, 2026-10-05). Each feat can be taken once; different feats stack.
 - **Linked attributes** (`balance.skill.linkedAttributes`, data): Blade STR, DEX · Shield STR, DEX, CON, WIS · Magic focus DEX, CON, WIS, INT · the other tracks are authored with the content (C).
-- **Card ranks.** A card exists at ranks 1 to `balance.skill.rank.max` (10), never above its skill's level. A draft rolls each offered card's rank weighted toward the skill level (weight of rank *r* ∝ *r*). Each rank step follows its card type's pattern, overridable per card: odd ranks +1 primary number; even ranks one extra from the skill's pool (pools are content, C; for example Blade a bleed or crit tag, Shield Poise or Block, Magic Mana or a heal). The upgrade row raises **rank**, not rarity; rarity stays the gate for which cards are offered.
+- **Card ranks.** A card exists at ranks 1 to `balance.skill.rankMax` (10), never above its skill's level. A draft rolls each offered card's rank weighted toward the skill level (weight of rank *r* ∝ *r*). Each rank step follows its card type's pattern, overridable per card: odd ranks +1 primary number; even ranks one extra from the skill's pool (pools are content, C; for example Blade a bleed or crit tag, Shield Poise or Block, Magic Mana or a heal). The upgrade row raises **rank**, not rarity; rarity stays the gate for which cards are offered.
 - **Primary number.** Each card names one number in data (damage on an attack, Block on a defend, HP on a recovery card); the every-5th-level flat and the odd rank steps land on it, and the card face shows the result.
 - **Passive tag effects.** A reward may attach a tag to the character that changes every card carrying the skill's tags. Example: Shield +3 Block on each Shield card's Block, shown in the card's Block number. A passive that a table row grants again (not a feat) adds again.
 - **Critical hits** (new). Example feat, Blade level 2: Blade-tagged attacks crit with chance 0.05 + (0.1·DEX + 0.2·WIS + 0.1·INT) / 100, unrounded (the owner's first draft floored the sum to whole percents), capped at 0.5; a crit deals 1.5× damage. Proposed with the engine (B): chances from several sources add before the cap.
@@ -2448,14 +2498,14 @@ Recorded before any code (owner rule: a mechanics change lands in SPEC first). E
 - **Ward stays a rating, not a meter.** The Ward rating still reduces magical damage (Ward/(Ward+K)) and still weighs in status resistance, exactly as before. What leaves is the Ward *meter* and its bar. The Ward formula, its item and relic contributions and its settings rows are unchanged. A snapshot never carries `wardMeter`.
 - **Guards are one guard.** The Dodge Roll (§12.1) grants 3 Block and a **Poise guard** of 3 (each plus the DR bonus, as now); the separate Ward guard is retired, and the Poise guard absorbs any impact before the meter fills. `gainWard` stays a valid opcode for content and saves and, in scope, grants Poise guard.
 - **Arcane Exposure leaves as a meter.** No fighter carries an Arcane Exposure bar. A hit's added magical impact is one formula, floored once: `floor(exposureBuildupPerHit × schoolMult × target.buildupMultiplier × sourceExposureMult × foldScale)`, where the first four factors are today's buildup factors (`cardExposure.csv`, `balance.arcaneExposure`, the enemy's multiplier, `exposureBuildupMult` passives such as Overcharge and Prismatic Thorn) and `balance.exposure.foldScale` defaults to 0.5. It joins that hit's own magical impact before guards. A spell's explicit `poiseDamage` effect stays an authored impact effect and adds no buildup.
-- **The Arcane payoff moves onto a magical Stagger.** A Stagger whose filling hit was magical (its own impact or its added buildup) emits **`arcaneStagger`** `{ targetId, sourceId }` after `meterFilled`, once per hit however many thresholds the overflow crosses. An **enemy** that is not `immune` to Arcane Exposure then takes its payoff: its authored `arcaneExposure.onBreak` statuses, or `magicVulnerable` (25%, 2 turns) by default. That default reaches every enemy, where today only an enemy that authors `arcaneExposure` has one; `lockPolicy: whileMagicVulnerable` is dropped, since there is no buildup left to lock. The **player** takes no payoff: their magical Stagger is an ordinary Stagger. (This also settles the ratings section's "breaks do not additionally apply Weak or Vulnerable": in scope, a magical Stagger applies `magicVulnerable` to an enemy and nothing else.)
+- **The Arcane payoff moves onto a magical Stagger.** A Stagger whose filling hit was magical (its own impact or its added buildup) emits **`arcaneStagger`** `{ targetId, sourceId }` after `meterFilled`, once per hit however many thresholds the overflow crosses. An **enemy**'s payoff is the `staggered` status every break applies (owner, 2026-10-12: "any break but vulnerable to any damage type"); it takes no `magicVulnerable`, authored `arcaneExposure.onBreak` or the `exposure.defaultPayoff` row, since Staggered already raises damage of every type. `lockPolicy: whileMagicVulnerable` is dropped, since there is no buildup left to lock. The **player** takes no payoff: their magical Stagger is an ordinary Stagger.
 - **Every `arcaneBreak` trigger moves to `arcaneStagger`.** The focus properties (`siphon`, `overcharge`, `resonance`) and the Starseer class-tree node `arcaneDraw` fire on an `arcaneStagger` whose `sourceId` is their holder. `staggerBreak` (6 Poise damage after a break) has nothing left to do there; it becomes **+`balance.exposure.staggerBreakImpact` (2) magical impact on the holder's spell hits**, added before the floor above.
-- **`resonance` is pinned.** It pours its percentage of the broken foe's Poise threshold **as it stood before the break's growth** into every other living enemy as magical impact, spent on each target's Poise guard first. A Stagger the pour causes applies that target's payoff but is not the holder's hit: it emits no `arcaneStagger` with the holder as source, so it fires no focus trigger and cannot chain.
+- **`resonance` is pinned.** It pours its percentage of the broken foe's Poise threshold **as it stood before the break's growth** into every other living enemy as magical impact, spent on each target's Poise guard first. A Stagger the pour causes applies `staggered` to that target but is not the holder's hit: it emits no `arcaneStagger` with the holder as source, so it fires no focus trigger and cannot chain.
 - **The tag-scoped exposures are untouched.** `frostExposed` and `insanityExposed` are statuses left by the Frost and Insanity procs, not meters; they keep their rows.
 - **The screen shows one bar.** In scope, a combatant shows HP and one Poise bar. The Ward bar, the Arcane Exposure bar and the Disruption read-outs are not drawn in combat, co-op or the inspector; the Ward rating still shows wherever ratings show.
 - **Configurable, as every balance number is (D1).** `foldScale`, `staggerBreakImpact` and the default payoff are data rows; `foldScale` 0 makes buildup add nothing.
 
-*Falsify (once built):* in scope, a magical hit fills the target's Poise meter and no fighter carries a Ward or Arcane meter, while a fight without ratings or a run without `breakMeterVersion` keeps both; a Poise fill from a magical hit emits one `arcaneStagger` (one across a double-threshold overflow), applies `magicVulnerable` to a non-immune enemy and nothing to an immune one or to the player, and fires `siphon`, while one from a physical hit does neither; `resonance` pours the pre-growth threshold, is spent on guard, and a Stagger it causes fires no focus trigger; Dodge Roll grants Block and a Poise guard and no Ward guard; a Mana spell's hit adds `floor(5 × foldScale)` impact, Overcharge's multiplier inside the same floor, `staggerBreak`'s 2 likewise, and `foldScale` 0 adds nothing; an old-run snapshot with `wardMeter` and an Arcane meter restores with both and plays the older rules; a co-op fight follows the host's stamp; the combat HUD shows one break bar per fighter.
+*Falsify (once built):* in scope, a magical hit fills the target's Poise meter and no fighter carries a Ward or Arcane meter, while a fight without ratings or a run without `breakMeterVersion` keeps both; a Poise fill from a magical hit emits one `arcaneStagger` (one across a double-threshold overflow), applies `staggered` and no `magicVulnerable` to an enemy and neither to the player, and fires `siphon`, while one from a physical hit does neither; `resonance` pours the pre-growth threshold, is spent on guard, and a Stagger it causes fires no focus trigger; Dodge Roll grants Block and a Poise guard and no Ward guard; a Mana spell's hit adds `floor(5 × foldScale)` impact, Overcharge's multiplier inside the same floor, `staggerBreak`'s 2 likewise, and `foldScale` 0 adds nothing; an old-run snapshot with `wardMeter` and an Arcane meter restores with both and plays the older rules; a co-op fight follows the host's stamp; the combat HUD shows one break bar per fighter.
 
 ### 13.4q Class mastery: the class level lives on the profile, and each level unlocks one thing (owner, 2026-10-05)
 
@@ -2465,7 +2515,7 @@ Recorded before any code (owner rule: a mechanics change lands in SPEC first). E
 
 - **One class level per class, on the profile.** The durable profile (§3.12) gains `classMastery: { [classId]: { xp, level, unlockedRows: [] } }`. `xp` is the class's lifetime class XP; `level` is the highest level claimed. A run's class track (`run.skills['class:<id>']`) opens at the profile's level and the XP past it, fills in the run exactly as today (the post-fight bar under character level, the **Level up** door and modal, §13.4o), and writes to the profile **at every claim and at `finishRun`**: it adds the XP the run earned since its last write and raises `level` to the claimed level, never lowering either, so two slots running the same class add up instead of overwriting. A deleted slot (no `finishRun`) keeps what it already wrote. The character level and the skill tracks still start at 0 every run. Every run `finishRun` records banks (custom, Chaos and ascension runs included); dev and showcase scenes do not.
 - **The curve and the pay.** Mastery has its own rows: `balance.classMastery.xp` (default base 50, growth 1.25, round to 5, max level 20, about 17,000 XP in all) and its pay, `balance.classMastery.pay` (default 10 per fight won, 25 per elite, 50 per boss, 10 per completed quest). So a first run with a handful of wins usually claims level 1 and the next few runs about one level each, and later levels take several runs; `tools/runsim.mjs` reports mastery XP per run per class, and the PR that builds this section prints that table. These rows replace `balance.skill.class.xp` and the class `perWin`/`bossKill`/`perQuest` pay for runs in scope; §13.4o's "100k for all" stays the rule for the character and skill tracks. All of it is data (D1).
-- **Each level unlocks one thing, in a fixed rotation.** `balance.classMastery.cycle` is the order, by default **cards → armament → cards → relic → cards → feat → cards → weapon**, repeating: every odd level unlocks cards, and the even levels walk armament (2, 10, 18), relic (4, 12, 20), feat (6, 14) and weapon (8, 16). An **armament** is any armour set, shield or casting focus; a **weapon** is anything held to strike with that is not a shield or focus. A new data table, `content/source/classMastery.csv` (`classId, level, kind, ref`), names what each level unlocks. Refused by name: a row whose `kind` is not the cycle's kind for its level; a `ref` that does not exist; a card outside the class's `cardPool`; a `ref` listed by two classes (a weapon, armour or relic has no class column, so it belongs to the one class whose rows list it). One level may list several refs of its kind (a card bundle). A claimed level adds its rows to `unlockedRows`, and its modal lists them beside its other rows; an unlock claimed mid-run joins the run's pools at once.
+- **Each level unlocks one thing, in a fixed rotation.** Where `balance.progression` is on (the shipped build), §13.4r's cadence replaces this rotation and `classMastery.csv` is not checked against it. `balance.classMastery.cycle` is the order, by default **cards → armament → cards → relic → cards → feat → cards → weapon**, repeating: every odd level unlocks cards, and the even levels walk armament (2, 10, 18), relic (4, 12, 20), feat (6, 14) and weapon (8, 16). An **armament** is any armour set, shield or casting focus; a **weapon** is anything held to strike with that is not a shield or focus. A new data table, `content/source/classMastery.csv` (`classId, level, kind, ref`), names what each level unlocks. Refused by name: a row whose `kind` is not the cycle's kind for its level; a `ref` that does not exist; a card outside the class's `cardPool`; a `ref` listed by two classes (a weapon, armour or relic has no class column, so it belongs to the one class whose rows list it). One level may list several refs of its kind (a card bundle). A claimed level adds its rows to `unlockedRows`, and its modal lists them beside its other rows; an unlock claimed mid-run joins the run's pools at once.
   - **Cards.** A class's **core pool** is its `cardPool` minus every card a `cards` row lists. It is at least `balance.classMastery.corePoolShare` (0.6) of the pool, and every card the class's starting decks and kit name is core; both are refused by name otherwise. The gated rest is split across the ten card levels (1, 3, … 19) in bundles of ⌈gated / 10⌉, about two cards each: today's pools of 43, 49, 43 and 38 open on at least 26, 30, 26 and 23 cards.
   - **Armaments, weapons and relics.** A listed item is out of every roll in **any** run (rewards, drops, shops, the blacksmith and the master, §14–§15.3) until some profile class has unlocked its row; an item no row lists is available as today. An armour set that already has an `unlock` row in `outfits.csv` needs both. Starting equipment is never gated, and a starting kit that holds a gated piece is not offered at character creation until that piece is unlocked (so a weapon found by another class cannot open this one's kit early).
   - **Feats.** Classes gain feats of their own: `skillFeats` rows keyed `skillId: class:<id>`, at least `draftSize` (3) **core** class feats per class that the class feat door offers from the start, plus one gated feat per feat level (6 and 14), so 5 per class and 20 to author. The class feat door reads the class's core feats plus its unlocked ones; the six global feats in `feats.js` are unchanged.
@@ -2489,7 +2539,7 @@ This amendment takes precedence over the class rotation in §13.4q, the ability-
 - **Overlapping class milestones.** Cards occur at class levels 2, 4, 6, 8, 10, 12, 14, 16, 18 and 20; feats at 1, 4, 8, 12, 16 and 20; armory at 3, 6, 9, 12, 15 and 18; relics at 5, 8, 11, 14, 17 and 20; +1 class attribute choice at 5, 10, 15 and 20. Each milestone receives its guaranteed choice even if no new definition unlocks there. Multiple categories coexist at one level. A newly claimed class level gives a configurable flat 25 XP to each of its four favored skills, once. No reward or XP is replayed at run start, swap, reload or respec.
   - Reaver favors Combat Maneuvers, Blade, Shield and Heavy Armor; Starseer favors Spellcraft, Blade, Light Armor and Medium Armor; Rogue favors Combat Maneuvers, Blade, Dual Wield and Light Armor; Herald favors Spellcraft, Blade, Shield and Medium Armor. Other skills remain trainable.
   - Persistent mastery and the current mastery XP curve/pay remain. Per-run feat slots and attribute budgets use reached milestones, up to six slots and four points; selections are chosen anew for a new run. Class-tree choices keep their own earned budget. Combined reward doors preserve individually pending choices and replace conflicting old random class bonus rolls.
-- **One action resource.** Actions, Stamina and SP name one pool. Each card charges its action cost once, plus separately authored Mana or HP costs. Remove the earlier separate Stamina surcharge rather than adding it to Actions. Recovery, discounts, maximum capacity, eligibility, save validation and respec use the shared pool. Preserve the existing runtime action/Stamina binding where it already supplies that identity.
+- **One action resource.** Actions, Stamina and SP name one pool. Each card charges its action cost once, plus separately authored Mana or HP costs. The upcast surcharge (`def.upcastSurcharge`) is still paid: `resolvedCardPlayCosts` (`src/engine/combat.js` ~L1213) adds it to both the Stamina and the Mana cost, and this rule does not remove it. Recovery, discounts, maximum capacity, eligibility, save validation and respec use the shared pool. Preserve the existing runtime action/Stamina binding where it already supplies that identity.
 - **Ability identity and grades.** Magic cards are Spells; rank-zero Spells are Cantrips. Physical Mana-costing cards are Combat Maneuvers; weapon-bound components are Weapon Arts. Rank-zero physical actions are Techniques. Spellcraft broadens the existing Magic Focus skill while retaining a stable internal identity. Combat Maneuvers is its physical counterpart. Source identity, equipped carrier and armor/grip checks determine skill XP; matching a shared school tag alone is insufficient.
   - Six authored grade profiles, 0–5, replace the proposed 1–10 potency overlay for these families. Normal skill-level ceilings are rank 0 at level 1, then ranks 1–5 at levels 2, 4, 6, 8 and 10. Class-level family unlocks and skill-level grade ceilings remain separate. Legacy ranks and blacksmith tiers are not applied a second time to an ability profile.
   - Base grade costs are rank 0: 1–3 Actions, 0 Mana; rank 1: 1 Action, 1 Mana; rank 2: 1–2 Actions, 2 Mana; rank 3: 1–3 Actions, 3 Mana; rank 4: 1–4 Actions, 4 Mana; rank 5: 1–5 Actions, 5 Mana. A family authors an exact cost within its range. Grade effects increase damage, defense or utility and enable named riders; they are data, not per-card imperative code. Cantrips and Techniques retain weaker Action-only fallbacks.
@@ -2619,10 +2669,10 @@ Scene draw order is floor, background, actors, then interface.
 
 ## New-game opening presentation (2026-09-19)
 
-Solo new games may show a configurable six-scene prologue after creation and
+Solo new games may show a configurable prologue (five shipped scenes by default, plus four empty editor slots that stay switched off; `PROLOGUE_DEFAULTS.scenes` in `src/model/prologue.js`) after creation and
 starting draft, after map generation but before map mounting. Its text and
 presentation overrides are included in the existing advanced configuration
-snapshot/export. Optional `run.prologue` is `{version:1,status:'pending'|'complete',scene:0..5,reason?:'completed'|'skipped'}`.
+snapshot/export. Optional `run.prologue` is `{version:2,status:'pending'|'complete',scene:0 to `scenes.length` − 1,reason?:'completed'|'skipped'}`.
 Pending saves resume at the saved scene boundary; absent or completed state does
 not replay. Preview does not write this state. `settings.prologueSeen` is a
 profile playback preference, never part of gameplay RNG. Skip and Set forth
@@ -2635,7 +2685,7 @@ New runs snapshot the rating rules. Existing configuration snapshots without rat
 
 Advanced → Progression → Starting stats exposes, for each creation mode a player can pick (Standard and Assign points, each row labelled with its mode): the starting value every attribute opens at, the points available to assign on top of it, the total a character carries, the lowest a stat may be set to, the highest it may be raised to at creation, and whether points may be taken back off a stat. Setting the starting value decides the total (baseline × attributes + points available); leaving it alone lets the total drive and derives the baseline from it. Advanced → Progression → Equipment requirements exposes one row per authored item/attribute minimum plus one multiplier for the whole table; those minima are the floor under the total, because a class must still be able to hold the kit it starts in. Whole-number allocations, floors, ceilings and class presets scale to the chosen total, and the scaling stops there: no creation mode carries a conversion scale and no formula is normalized back to an authored unit scale. Every formula reads the attribute the character sheet shows, so a smaller pool buys smaller ratings, pools and hand sizes, and moving them is a retune of the coefficients rather than a factor behind them. Each HP and resource formula's base, per-attribute weights and growth per level are separately configurable under Advanced → Stats. Stat-driven hand sizes read the same unscaled attribute.
 
-Advanced → Stats owns the HP, Mana, Stamina, Actions, Draw and Poise conversions, the hand rules, and the AR, DR, PR, Poise and Ward formulas, each item's own ratings, relic bonuses, status bonuses and resistance weights, diminishing-return constants and caps, impact categories, attack overrides and break penalties. Every rating is `base + floor(global multiplier × rating multiplier × Σ floor(weight × attribute))`: each attribute's contribution is floored on its own, and the product of the two multipliers and that sum is floored again so a fractional multiplier still yields a whole rating, so a weight is the rate that attribute converts at and a 0.25 weight yields nothing until the attribute reaches 4. Default formulas (owner, 2026-09-24; `model/ratingFormula.js`), each weight a floored term of its own: AR = 0.75 STR + 0.5 DEX + 0.25 CON + 0.25 WIS + 0.25 INT; DR = 0.5 STR + 0.75 DEX + 0.25 CON + 0.35 WIS + 0.15 INT; PR = 0.25 DEX + 0.5 CON + 0.5 WIS + 0.75 INT; Poise = 1 + 1 CON + 0.5 STR + 0.2 WIS + 0.1 INT; Ward = 1 + 0.2 DEX + 0.3 CON + 1 WIS + 0.5 INT (before: AR=floor(STR/2), DR=floor(DEX/2), PR=floor(INT/2)+floor(WIS/2), Poise=1+CON+floor(STR/2), Ward=1+WIS+floor(INT/2)) — Poise and Ward open at a base of 1 because a vessel of nothing is not a vessel. Every formula exposes a base, attribute weights and a multiplier; a single global multiplier scales all five. Both multipliers default to 1. Equipped weapons and armour, relics, mounted properties and active status bonuses contribute additively. Physical weapon Attack Rating contributes AR; magical weapon Attack Rating contributes PR; item Defense Rating contributes DR (body armour's own DR is the optional `defenseRating` column of `outfits.csv`, blank as 0 — the Reaver's starting Wayfarer Plate authors 1 — and is not printed on the armour card); body-armour Poise contributes Poise. Every item's ratings are configurable as the item's OWN VALUES, not as bonuses on top of them: the settings row opens on the authored number and whatever stands there is the item's rating on the item card, in the Armoury and in combat, with attributes, relics, mounted properties and status bonuses added to it. A configured rating is written back to the column it came from (a weapon's Attack Rating by its attack profile's school, an item's Defense Rating, body armour's Poise threshold, which is also its weight); a rating no item column can hold — Ward, an armament's Poise, the off-school Attack Rating, and every rating body armour carries but its Poise — is carried by the run's rating rules and reaches combat without appearing on the card. Item ratings apply only while the ratings system is enabled, because body armour's Poise threshold is also its weight. Temporary status bonuses to Poise or Ward affect resistance, not the current break threshold.
+Advanced → Stats owns the HP, Mana, Stamina, Draw and Poise conversions, the hand rules, and the AR, DR, PR, Poise and Ward formulas, each item's own ratings, relic bonuses, status bonuses and resistance weights, diminishing-return constants and caps, impact categories, attack overrides and break penalties. Every rating is `base + floor(global multiplier × rating multiplier × Σ floor(weight × attribute))`: each attribute's contribution is floored on its own, and the product of the two multipliers and that sum is floored again so a fractional multiplier still yields a whole rating, so a weight is the rate that attribute converts at and a 0.25 weight yields nothing until the attribute reaches 4. Default formulas are ruleset 7 (`src/content/derivedStats.js:101-107`), each a floored term of its own: AR = STR; DR = DEX; PR = INT; Ward = 1 + WIS; Poise = 1 + CON. The owner's 2026-09-24 weights are the frozen formula for runs born before ruleset 7 (`src/model/statRows.js:37-44`): AR = 0.75 STR + 0.5 DEX + 0.25 CON + 0.25 WIS + 0.25 INT; DR = 0.5 STR + 0.75 DEX + 0.25 CON + 0.35 WIS + 0.15 INT; PR = 0.25 DEX + 0.5 CON + 0.5 WIS + 0.75 INT; Poise = 1 + 1 CON + 0.5 STR + 0.2 WIS + 0.1 INT; Ward = 1 + 0.2 DEX + 0.3 CON + 1 WIS + 0.5 INT (before: AR=floor(STR/2), DR=floor(DEX/2), PR=floor(INT/2)+floor(WIS/2), Poise=1+CON+floor(STR/2), Ward=1+WIS+floor(INT/2)) — Poise and Ward open at a base of 1 because a vessel of nothing is not a vessel. Every formula exposes a base, attribute weights and a multiplier; a single global multiplier scales all five. Both multipliers default to 1. Equipped weapons and armour, relics, mounted properties and active status bonuses contribute additively. Physical weapon Attack Rating contributes AR; magical weapon Attack Rating contributes PR; item Defense Rating contributes DR (body armour's own DR is the optional `defenseRating` column of `outfits.csv`, blank as 0 — the Reaver's starting Wayfarer Plate authors 1 — and is not printed on the armour card); body-armour Poise contributes Poise. Every item's ratings are configurable as the item's OWN VALUES, not as bonuses on top of them: the settings row opens on the authored number and whatever stands there is the item's rating on the item card, in the Armoury and in combat, with attributes, relics, mounted properties and status bonuses added to it. A configured rating is written back to the column it came from (a weapon's Attack Rating by its attack profile's school, an item's Defense Rating, body armour's Poise threshold, which is also its weight); a rating no item column can hold — Ward, an armament's Poise, the off-school Attack Rating, and every rating body armour carries but its Poise — is carried by the run's rating rules and reaches combat without appearing on the card. Item ratings apply only while the ratings system is enabled, because body armour's Poise threshold is also its weight. Temporary status bonuses to Poise or Ward affect resistance, not the current break threshold.
 
 Card damage is base plus AR for physical attacks or PR for magical attacks. Physical defensive skill Block receives DR; magical Block and healing receive PR. Magical power hooks retain their originating card so their damage, Block and healing receive PR. Resource generation, buff duration, card draw and action costs do not receive PR. Profile-level attribute scaling is disabled for these new runs to avoid adding the same attribute bonus twice. Existing authored card-specific modifiers remain applicable.
 
@@ -2643,7 +2693,7 @@ After additive bonuses, percentage modifiers apply. Physical damage is reduced b
 
 An attack that deals HP damage also deals impact. Physical impact fills Poise; magical impact fills Ward. *(Superseded in §13.4p's scope: both fill Poise, and Ward is a rating only.)* A physical hit that carries its source weapon (the Strike and package cards a weapon deals) is as heavy as the weapon: weight categories default to <=3:1, <=6:2, <=8:3, above8:4. Any other card hit, weapon arts included, uses the card's own Poise or Ward value (§3.4). An attack that carries no card value keeps the defaults: magic 1, unarmed physical 1, untyped enemy physical 2. Weapon thresholds, per-enemy physical impact, per-enemy-move physical/magic typing and per-card impact overrides are configurable. -1 inherits the category value; 0 explicitly disables impact. Fully blocked attacks cause no impact. Explicit authored poise-damage effects remain additional physical impact effects.
 
-*(In §13.4p's scope: one Poise guard, one break, no Disruption, and a magical Stagger applies `magicVulnerable` to an enemy.)* A Poise or Ward guard (the Dodge Roll's, §12.1) is spent on impact before the matching meter fills, as Block is spent before HP, and clears at the start of its owner's turn. Poise break is Stagger; Ward break is Disruption. Both default to losing one Action on the player's next turn; enemies lose their next move. The meter keeps overflow and grows its threshold by 25%, rounded upward. Breaks do not additionally apply Weak or Vulnerable under the new rules. Meter recovery defaults to 0 and is configurable per player turn.
+*(In §13.4p's scope: one Poise guard, one break, no Disruption, and a magical Stagger is Staggered like any other, with no `magicVulnerable`.)* A Poise or Ward guard (the Dodge Roll's, §12.1) is spent on impact before the matching meter fills, as Block is spent before HP, and clears at the start of its owner's turn. Poise break is Stagger; Ward break is Disruption. Both default to losing one Action on the player's next turn; enemies lose their next move. Every enemy break, Poise or Ward, also runs `balance.poise.onFill` (the `staggered` status, so every Staggered-gated rider such as Executioner fires), once per impact however many thresholds it crosses (owner, 2026-10-12: "on poise break yes"; "any break but vulnerable to any damage type"). The meter keeps overflow and grows its threshold by 25%, rounded upward. Breaks do not additionally apply Weak or Vulnerable under the new rules. Meter recovery defaults to 0 and is configurable per player turn.
 
 Status resistance reduces hostile buildup or incoming stacks, not duration or proc severity: effective rating = Poise*physicalWeight + Ward*magicalWeight. Applied amount = base*K/(K+effective rating), subject to the resistance cap. Fractional applications carry forward per target/status rather than making repeated small applications immune. Default profiles: Bleed and Venom 100% Poise; Insanity and Madness 100% Ward; Frost and Crimson Blight 50/50; Burn 25% Poise and 75% Ward. Other effects are unresisted until configured. Both weights may be positive and need not sum to one. Self-applied beneficial effects are unaffected.
 
@@ -2651,7 +2701,7 @@ The shipped solo combat path adopts these rules. The independent foundation/comb
 
 ## 14. The deck editor and the three shops (owner brief, 2026-09-26)
 
-**Status: partly built** (2026-09-27: step 1, this section, landed in #1331; step 2, deck rules, landed in #1343; step 3, the deck editor UI, in #1372; step 4, the shop-kind framework, in #1371; step 5, the market additions, in #1374 and #1377; step 6, the blacksmith, in #1390; step 7, the wise master, is in progress). This section lands before any of its code, in its own PR (CONTRIBUTING ground rule 1). The feature PRs follow in the order of §14.6, each ticking its `docs/FINISH.md` §14 line. Every number below that a player could want tuned is a **Settings row with a default read from content data**, never a screen or engine literal. The owner tunes balance later, so the defaults here are placeholders that the data files own, and the spec names the key, not a value it would have to keep in step.
+**Status: partly built** (2026-09-27: step 1, this section, landed in #1331; step 2, deck rules, landed in #1343; step 3, the deck editor UI, in #1372; step 4, the shop-kind framework, in #1371; step 5, the market additions, in #1374 and #1377; step 6, the blacksmith, in #1390; step 7, the wise master, in #1438). This section lands before any of its code, in its own PR (CONTRIBUTING ground rule 1). The feature PRs follow in the order of §14.6, each ticking its `docs/FINISH.md` §14 line. Every number below that a player could want tuned is a **Settings row with a default read from content data**, never a screen or engine literal. The owner tunes balance later, so the defaults here are placeholders that the data files own, and the spec names the key, not a value it would have to keep in step.
 
 **The four owner rules this section carries:**
 
@@ -2664,7 +2714,7 @@ The shipped solo combat path adopts these rules. The independent foundation/comb
 |---|---|---|
 | `sideboard` | `[]` | 2 |
 | `editMintCounter` | `0` | 2 |
-| `equipmentGuardSlotCount`, `removedGuardSlotIds` | derived from the deck's guard instances, and `[]` (only if the guard plan needs them) | 2 |
+| `equipmentGuardSlotCount`, `removedGuardSlotIds` | not added: the guard count is derived | 2 |
 | shop `stock.kind`, `stock.offerings` | `'market'`, and today's shelves as offerings (read at the load door, with no reroll) | 4 |
 | `consumables` | `{}` | 5 |
 | `sigils`, `sigilSlots` | `[]`, `{}` | 5 |
@@ -2693,7 +2743,7 @@ The shipped solo combat path adopts these rules. The independent foundation/comb
 - **Unlimited basics are matched by role, not by `cardId`.** On an equipped run a starting Strike is an attack-slot instance (`equipmentRole: 'attack'`, `equipmentAttackSlotId`) whose `cardId` is the weapon's face, and a Defend is a guard instance (`equipmentRole: 'guard'`); `stampDeck` re-derives both from the slot plan (§3.8 "no re-minting of base cards mid-run", §13.4b). The editor keeps that model instead of minting bare cards:
   - **Removing a basic retires its slot**, through the same retirement `removeDeckCard` uses (`removedAttackSlotIds`), and the instance is kept in `run.sideboard`.
   - **Adding a basic first un-retires** a retired slot (its sideboarded instance returns). When none is retired, it **grows the allocation**: `equipmentAttackSlotCount` rises by one and the next `stampDeck` stamps slot `attack:<count>` with the weapon's current face and modifiers, exactly as it stamps a born slot. So a basic is unlimited, but never a bare card outside the plan.
-  - **Guard basics** follow the same rule through a guard allocation. The step-2 PR adds `equipmentGuardSlotCount` and `removedGuardSlotIds`, mirroring the attack pair, if the guard plan has no slot allocation today, with the same schema rule as every other new field (table below).
+  - **Guard basics** have no allocation. The guard plan has no slot count today, so the step-2 PR adds no `equipmentGuardSlotCount` or `removedGuardSlotIds`: adding a Defend mints a `defend` guard instance with no slot, and the guard count is derived by the guard plan (`loadout.js`).
   - A run with no equipment (a pre-equipment save the load door heals, §3.12) has plain `strike` and `defend` instances. For those, `deckRules.unlimitedCardIds` (shipped `['strike', 'defend']`) names the unlimited ids, and adding one mints a plain instance, `instanceId` `edit:<n>`, where n is the run counter `run.editMintCounter`.
   - Every basic shows a count of ∞.
 - **Every other card is limited to the copies the run owns.** A run owns the instances in `run.deck` plus those in the new **`run.sideboard`**, a `CardInstance[]` holding owned cards that are out of the deck. This covers weapon arts bought or extracted, skill-draft cards (§13.4e, the "techniques" earned by levelling), class-tree cards, and reward cards. Removing one in the editor moves the instance, with its `upgraded`, `mods` and every other field, to `run.sideboard`. Adding one moves it back. The editor never mints or destroys a limited card. The collection tile reads "N owned · M in deck" and greys out when M = N.
@@ -2707,7 +2757,7 @@ The shipped solo combat path adopts these rules. The independent foundation/comb
 - **Adding requires compatible equipped tags.** Unlimited Strike/Defend basics and the universal tags in `deckRules.equipmentEligibility.universalTags` are always available. Other cards with equipment-associated card-school tags require a matching worn piece; explicit weapon identity tags (`weaponTags`, shipped blade/bow/ranged) take precedence over secondary shared tags, so a bow cannot unlock blade skills through pierce/flourish. Cards with no equipment-associated school are universal. Item-lent instances additionally require their exact active source mount and card identity, because the mount remains item-owned. Extraction or installation updates a sideboarded mount to its current card before that entry suppresses the equipment deal; stale tile identities cannot restore a different card. Ineligible owned cards remain visible in the collection with “Equipment not found”; all editor addition paths refuse them. Existing copy limits still apply.
 - **The shop's Remove service** (today's `removeDeckCard`) still destroys a card and does not sideboard it. That is the paid, permanent removal it has always been.
 
-**Size rules.** `effectiveMin = deckMinUnlimited ? 0 : deckMinSize` and `effectiveMax = deckMaxUnlimited ? ∞ : deckMaxSize`. `deckEditRefusal(run, settings, draft)` returns `''` when `effectiveMin ≤ draft.length ≤ effectiveMax`. Otherwise it returns one sentence that names the count and the bound it breaks, for example "Your deck has 8 cards; it needs at least 10." **Done** is disabled with that sentence shown as visible text beside it (FINISH §6), never only as a colour. **Cancel** restores every field an editor session can change, exactly as it was when the editor opened: the deck and the sideboard instance for instance, plus `equipmentAttackSlotCount`, `removedAttackSlotIds`, `editMintCounter`, and, when the step-2 guard plan adds them, `equipmentGuardSlotCount` and `removedGuardSlotIds`. This goes through `beginDeckEdit` and `cancelDeckEdit`, so a cancelled edit leaves no slot allocation that disagrees with the restored instances and uses up no mint number. The bounds are checked **only when the editor confirms**. A reward, a purchase or an equipment swap may leave the deck outside them, and the next editor visit then shows the refusal until the deck is brought back inside. The editor's rule is independent of the Armoury floor of §13.4b (`deckMinimum`), which still governs leaving the Armoury. The two are separate settings so the owner can compare them, and FINISH's Owner decisions list records whether to fold them together.
+**Size rules.** `effectiveMin = deckMinUnlimited ? 0 : deckMinSize` and `effectiveMax = deckMaxUnlimited ? ∞ : deckMaxSize`. `deckEditRefusal(count, settings)` returns `''` when `effectiveMin ≤ count ≤ effectiveMax`. Otherwise it returns one sentence that names the count and the bound it breaks, for example "Your deck has 8 cards; it needs at least 10." **Done** is disabled with that sentence shown as visible text beside it (FINISH §6), never only as a colour. **Cancel** restores every field an editor session can change, exactly as it was when the editor opened: the deck and the sideboard instance for instance, plus `equipmentAttackSlotCount`, `removedAttackSlotIds`, and `editMintCounter`. This goes through `beginDeckEdit` and `cancelDeckEdit`, so a cancelled edit leaves no slot allocation that disagrees with the restored instances and uses up no mint number. The bounds are checked **only when the editor confirms**. A reward, a purchase or an equipment swap may leave the deck outside them, and the next editor visit then shows the refusal until the deck is brought back inside. The editor's rule is independent of the Armoury floor of §13.4b (`deckMinimum`), which still governs leaving the Armoury. The two are separate settings so the owner can compare them, and FINISH's Owner decisions list records whether to fold them together.
 
 **Play in deck order.** While `playInDeckOrder` is off, the editor's deck list is one row per card variant (card id, upgrade and mods, plus the owner for a locked card) with a ×N count, and a row's － takes one copy. While it is on, the list is one row per instance and has a reorder handle. `run.deck`'s array order is the arrangement, so no new field is needed.
 - `createCombat` builds the draw pile in `run.deck` order in place of `rng.shuffle('shuffle', deck)`. The draw pile is drawn from the top, so the first card in the list is drawn first. Innate cards still go to the top, keeping their relative order.
@@ -2744,7 +2794,7 @@ The shipped solo combat path adopts these rules. The independent foundation/comb
 
 A shop has a **kind**, one of `market` (the usual shop), `blacksmith` and `master`. `shops.js` authors each kind as a list of **offerings**: `{ id, chance, weight, ...offering-specific stock and price keys }`. It also authors `guaranteedMinimum` per kind.
 
-**The visit roll uses a new stream, `shopOffers`** (added to `rng.js` beside `smith`, `armaments` and `seats`). The roll never draws on `shop`, so today's shelves keep every value they roll on a seed.
+**The visit roll uses a new stream, `shopOffers`** (added to `rng.js` after `rewardRolls`). The roll never draws on `shop`, so today's shelves keep every value they roll on a seed.
 - A visit rolls, once and in authored order, `chance` (0–100) for each **enabled** offering, on `shopOffers`.
 - `chance` is the odds of appearing **by the roll**. A chance of 100 rolls nothing, and 0 never comes up by the roll. A chance-0 offering is still eligible for the guarantee.
 - Only **disabled** offerings never appear.
@@ -2754,7 +2804,7 @@ A shop has a **kind**, one of `market` (the usual shop), `blacksmith` and `maste
 - **A non-conditional offering counts only while its stock is at least 1.** Its per-visit stock can live outside `shops.js` and be set to 0 (`balance.shop.cardStock`, `balance.shop.flaskStock`), so each non-conditional shelf names that count as **`stockKey`**, a bundle path such as `'balance.shop.cardStock'`, or an offering's own number as `'shops.<kind>.<offeringId>.<key>'`, resolved by offering id (§14.4). The minimum rule above counts only the enabled non-conditional offerings whose `stockKey` resolves to at least 1, or that name none. In the market that leaves `cards` and `flasks` alone, so with the shipped minimum of 2 both must stay enabled with a stock of at least 1. `validateContent`, Settings, a config import and a sync restore each refuse fewer by name, with its own sentence. So setting `cardStock` to 0 while cards is one of the offerings the minimum needs is refused, and the stock rows that break it are set aside with the kind. The guarantee can then always be met from offerings that have something to lay out.
 - **A non-conditional offering also needs a non-empty authored pool.** `validateContent` checks that the content can stock it at all: utility flasks through `utilityFlaskIds()` (every flask that is not a charge vessel), and cards through each class's shop card pool (its reward card pool plus the colourless shop cards). Content that fails is refused by name.
 - **The runtime backstop.** The stock builder treats any laid-out shelf that comes up empty, conditional or not, as omitted, and so is an unusable service, such as `remove` with no card it could take (a deck of one card, or of granted cards only). It refills the guarantee by weight with no further draw. An empty rail item never appears. **A blacksmith or master service is the exception** (coordinator ruling on #1378, extended to the master by §14.5): a stockless service whose usability depends on what the run holds now stays laid out once it rolls, and is judged live (§14.4, §14.5).
-- **Which kinds the rule binds.** The non-conditional minimum (the two bullets above) applies only to a kind whose screen is registered (`SHOP_KIND_SCREENS`: `market`, and `blacksmith` since step 6). A kind with no screen yet has provisional `conditional` and `stockKey` flags, and the rule does not refuse them; step 7 classifies the master's offerings (§14.5) and must satisfy the rule when it registers the master's screen. The plain enablement minimum above still binds every kind.
+- **Which kinds the rule binds.** The non-conditional minimum (the two bullets above) applies only to a kind whose screen is registered (`SHOP_KIND_SCREENS`: `market`, `blacksmith` since step 6, and `master` since step 7, #1438). A kind with no screen yet has provisional `conditional` and `stockKey` flags, and the rule does not refuse them; step 7 classified the master's offerings (§14.5) and registered its screen, so the rule now binds it. The plain enablement minimum above still binds every kind.
 - **The scope of the guarantee.** Validation guarantees that the *configuration* can meet the minimum. Run-state exhaustion (owned pools, a thin deck) is handled by the runtime backstop, which omits unusable shelves and refills from the rest, and the minimum then holds as far as usable offerings exist. The guarantee is evaluated when the visit's stock is built; a saved stock is never rerolled or refilled on a revisit (the no-reroll rule of this section). So a saved armour shelf left with no offer for the run's current class (the class changed since it was stocked) is hidden at display time, not shown and not backfilled, and on such a revisit the visit may lay out fewer than `guaranteedMinimum`: an accepted edge case.
 - The **stock** of each new offering (stones, sigils, books…) rolls on `shopOffers` after the offering roll. The stock of today's shelves still rolls on `shop` exactly as `buildShopStock` does now. The rolled offering list and each offering's stock persist on the visit exactly as `run.shopStock` and `serviceStates[pointId].stock` do today, so a reload neither rerolls a shelf nor restores sold stock (§12.2).
 
@@ -2795,6 +2845,7 @@ These offerings extend `buildShopStock`. The existing shelves become offerings w
 | `companions` | Temporary companions | yes (it never offers a companion already travelling with the run) | See **Companions**. The shelf draws up to `companions.stock` distinct companions on `shopOffers`. |
 
 **Sigils** are the brief's "runes". They are renamed because "runes" is already this spec's pre-scrub word for the currency (`addRunes`, `runeGainMult`); the currency is cinders. They are a new content collection, `src/content/sigils.js`: `{ id, name, rarity, blurb, cost }` (a legendary has no `cost`, §15.4). **A sigil's effect is a property rule, never authored on the row** (Codex on #1376; coordinator ruling): the property mount path resolves a carrier's rules from its tags (`carrierRules`), so inline `triggers` could never mount. Every sigil, legendary or not, takes its property the way §15.4 describes: a `family = sigil` row in `tagging.csv` naming a leaf under the `sigil` branch of `property` in `nodes.csv`; and, since `sigil` is a collection-backed family, `familyNodes.csv` rows `sigil,property` and `sigil,classification`, the leaf `classification.sigil`, and exactly one `classification.sigil` tagging row per sigil (`model/tree.js`); its rule (the same `{on, if?, do}` DSL relics use) in `nodeEffects.json`, and `stampTags` deriving the sigil's `propertyTags`. So nothing is added to the engine vocabulary. `validateContent` refuses, by name, a sigil authoring `triggers` or `modifiers` and a sigil that derives no property tag. The sigils §14.6 step 5a shipped still author inline `triggers`; the PR that first mounts a slotted sigil (step 6, §14.4) moves them to tagging rows and switches the check, and until then a bought sigil mounts nowhere, as today.
+- **The sigil shelf** draws up to its `stock` (shipped 2) distinct non-legendary sigils the run does not own, on `shopOffers`. Each is priced at `pricePct` percent of its own `cost` (`gameConfig.shops.market.sigils.pricePct`, shipped 100, which sells at the sigil's own price), rounded and at least 1.
 - A non-legendary sigil works only while it is **installed in a sigil slot** of an equipped armament, mounted as a carrier of kind `sigil` (§15.4 adds the kind to `MOUNTABLE_KINDS`).
 - Owned, uninstalled sigils live in **`run.sigils: string[]`**.
 - Slots live in **`run.sigilSlots: { [itemRef]: (sigilId|null)[] }`**, keyed like `itemMounts`.
@@ -2984,14 +3035,14 @@ These keys go in `balance.rewards.cardRewards`.
 |---|---|---|
 | `afterCombat.normal` / `.elite` / `.boss` | `true` | Whether a won fight of that pool offers a card row. |
 | `chancePct.normal` / `.elite` / `.boss` | `10` | The chance, 0–100, that an eligible fight offers the card row. 100 rolls nothing. |
-| `onLevelUp` | `false` | When the fight raised the character level (§13.4i), the spoils add a **level card** row. |
+| `onLevelUp` | `true` | When the fight raised the character level (§13.4i), the spoils add a **level card** row. |
 | `onLevelUpMaxPerFight` | `1` | How many level-card rows one fight can add, however many levels it gained. |
 
 - **Offer size.** It stays `rewards.cardChoices`, which already has a row. The Feral Eye relic still adds +1 at elites.
 - **Chance rolls.** They use a new stream, **`rewardRolls`**, appended to the end of `STREAM_NAMES`, so no existing stream moves. A roll that fails leaves no card row, and the menu says so in one line: "No card this time."
-- **Level card row.** Its cards come from the class reward pool at the door's own rarity odds, through `rollCardRewardIds` on `cardRewards`. It is a new `REWARD_KIND_ORDER` kind, `levelCard`, sitting after `card`. Its row key is `levelCard:<ordinal>` (`rowKey` gains the `levelCard` case), and it is taken and skipped like the card offer. Each level-card row's pick persists in `pendingReward.chosenDraftCardIds[<rowKey>]`, the row-keyed map the class drafts already use (not the single `chosenCardId`, which stays the `card` row's), so two or more level-card rows save and restore unambiguously; `validateRunShape` treats an absent map as `{}`, so a Taken level-card row with no pick is refused by name. A save written before this section has no level-card rows and needs no migration.
+- **Level card row.** Its cards come from the class reward pool at the door's own rarity odds, through `rollCardRewardIds` on `cardRewards`. It is a new `REWARD_KIND_ORDER` kind, `levelCard`, sitting after `card` and `levelChoice`. Its row key is `levelCard:<ordinal>` (`rowKey` gains the `levelCard` case), and it is taken and skipped like the card offer. Each level-card row's pick persists in `pendingReward.chosenDraftCardIds[<rowKey>]`, the row-keyed map the class drafts already use (not the single `chosenCardId`, which stays the `card` row's), so two or more level-card rows save and restore unambiguously; `validateRunShape` treats an absent map as `{}`, so a Taken level-card row with no pick is refused by name. A save written before this section has no level-card rows and needs no migration.
 - **October 3 owner defaults** (to be replaced where §13.4o says so, once built). Solo combat rolls its card independently of skill/class drafts. Every non-class skill level queues a guaranteed card draft; when its schools have no eligible cards, it uses the class pool with the skill's rarity gate. Existing per-door draft limits still queue excess drafts. `balance.rewards.sourceBonuses` supplies independent chances: `combatFeatChancePct: 5`, `classFeatChancePct: 100`, `classCardChancePct: 25`. Each class level keeps its class-tree upgrade as well as the guaranteed feat and separate technique-card roll. Bonuses are checkpointed in `levelChoices`/`levelCards` with `source: combat|class`; class rows carry `skillId` and `claimOrdinal` and unlock only after their class level is claimed. `classRewardLevels` records already issued class-level bonuses, including levels claimed outside combat. Character-level reward switches do not remove class technique cards. LAN's existing reward UI has no skill/class/feat drafts; this extension applies to the solo reward door.
-- **Consumers.** `main.js onCombatEnd`, `tools/session.mjs` (the co-op reward scene) and `tools/runsim.mjs` read the schedule through one model function, `cardRewardPlan(balance, { pool, levelsGained }, rng)` in `model/rewardplan.js`, so solo, co-op and the simulator share one rule. **Scope, stated:** co-op today reads the shipped balance for every `gameConfig.*` row (`tools/lan.mjs` builds its registries from `contentBundle`, with no host snapshot), so a LAN session plays the shipped schedule until the host's `advancedConfigSnapshot` is carried into the session. That carriage is its own follow-up for all `gameConfig` rows, not a §15 change.
+- **Consumers.** `main.js onCombatEnd`, `tools/session.mjs` (the co-op reward scene) and `tools/simrun.mjs` read the schedule through one model function, `cardRewardPlan(balance, { pool, levelsGained }, rng)` in `model/rewardplan.js`, so solo, co-op and the simulator share one rule. **Scope, stated:** co-op today reads the shipped balance for every `gameConfig.*` row (`tools/lan.mjs` builds its registries from `contentBundle`, with no host snapshot), so a LAN session plays the shipped schedule until the host's `advancedConfigSnapshot` is carried into the session. That carriage is its own follow-up for all `gameConfig` rows, not a §15 change.
 - A saved `pendingReward` written before this section reads as "card row as rolled".
 
 *Falsify:*
@@ -3003,7 +3054,7 @@ These keys go in `balance.rewards.cardRewards`.
 
 ### 15.2 Levelling pace you can see
 
-The historical September 24 exponential curve (`balance.level.xp` base 5, growth 1.15, roundTo 10) cost 10 XP per level up to level 9. Its historical awards paid 15 per win plus 5, 75 or 200 per normal, elite or boss kill: a three-kill normal fight (30 XP) was worth 3 levels, a one-kill elite fight (90 XP) 8 levels and a one-kill boss fight (215 XP) 13 levels. These are historical pace examples, not current defaults. The current owner curve (2026-10-02) is the base-100 ×1.75 exponential curve defined under **Level curve** and §13.4d (the October 1 linear curve before it); the preview calculates every pace example from the configured curve and awards. `gameConfig.progression.xpMultiplier` scales each award (`configuredContentBundle` already rounds the multiplied awards into the configured registries), and `levelUpValue` **replaces** `pointsPerLevel` as the points each level grants. Nothing on the Settings screen shows the result.
+The historical September 24 exponential curve (`balance.level.xp` base 5, growth 1.15, roundTo 10) cost 10 XP per level up to level 9. Its historical awards paid 15 per win plus 5, 75 or 200 per normal, elite or boss kill: a three-kill normal fight (30 XP) was worth 3 levels, a one-kill elite fight (90 XP) 8 levels and a one-kill boss fight (215 XP) 13 levels. These are historical pace examples, not current defaults. The current curve is the base-200 ×1.303 exponential curve of `balance.level.xp` (`src/content/balance.js`), set out in the §13.4o curve table (the October 1 linear curve came before it); the preview calculates every pace example from the configured curve and awards. `gameConfig.progression.xpMultiplier` scales each award (`configuredContentBundle` already rounds the multiplied awards into the configured registries), and `levelUpValue` **replaces** `pointsPerLevel` as the points each level grants. Nothing on the Settings screen shows the result.
 
 **Owner decision, named.** The September 24 base-5 curve explained the historical fast levelling. The October 1 curve contract supersedes those defaults. This preview feature itself changes no curve or award number; it shows the configured pace so either side can be retuned in Settings.
 

@@ -1,44 +1,44 @@
-# Selected stance delivery status
+# Selected stance delivery and runtime sequence status
 
-The five selected Reaver/greatsword pose exports and runtime integration are complete. Independent source reviews are approved, and the director approved the corrected guard-break comparison. Final built-game browser QA remains pending. [PR #1890](https://github.com/cehinds/AshenSpire/pull/1890) carries build **0.7.1.1412**; browser QA and the authorized merge remain pending.
+The original five Reaver/greatsword poses and PR #1890 runtime integration are complete. Independent source reviews are approved. That delivery’s final unpatched artifact is build **0.7.1.1417**, digest **b1ec8952f6**, from source commit [`e8efd0244`](https://github.com/cehinds/AshenSpire/commit/e8efd0244), which corrects reaction playback timing/readiness/defeat handling. [PR #1890](https://github.com/cehinds/AshenSpire/pull/1890) merged into Dev at [`5852a791b`](https://github.com/cehinds/AshenSpire/commit/5852a791b59024235c826249a0704bc8d0e034d6).
 
-| Target role | Selected source | Decision |
-| --- | --- | --- |
-| Sweep | Smash04 | Use and merge authorized |
-| Counter | Smash06 | Use and merge authorized |
-| Guard-break | Guard-break06 | Use and merge authorized |
-| Evade | Smash08 | Use and merge authorized |
-| Smash | Smash05 | Use and merge authorized |
-
-The additional image of guard-break03 supplies context only. It is not a sixth selection. Numeric family/option choices control the source mappings.
-
-Exact crop coordinates, unchanged source hashes and export provenance are in the [selection manifest](../../../pose-studio/stances/update-stances/selections.json). The reproducible [exporter](../../../tools/selected-weapon-profile-export.mjs) produced full/mobile WebPs under `assets-display/alternative/reaver-greatsword-pilot-*.webp`, the [selected Sprite Workshop project](../../../pose-studio/stances/selected-projects/reaver-greatsword-pilot.rig.json), and the `reaver-greatsword-pilot` registration in `src/content/alternativeSelectedStances.js`. This document does not duplicate crop coordinates or source hashes.
-
-| Delivery evidence | Status at this snapshot |
+| Role | Selected source |
 | --- | --- |
-| Generated pilot concepts | 20 |
-| Art-director reviewed concepts | 20 |
-| Selectable concepts | 19; guard-break04 requires revision |
-| User-selected role mappings | 5 |
-| Selected export manifest and cutouts | Complete: five full/mobile pose exports and selected project |
-| Runtime registration and routing | Complete; eligibility correction `44496130` included |
-| Independent source review | Approved: eligibility, canonical pure-Dodge and selected-profile mobile clamp |
-| Initial focused runtime/animation tests | 97 passed; initial implementation evidence |
-| Final selected-weapon tests | 5 passed, including the real starting-kit registry projection |
-| PR / receipt | #1890 / build 0.7.1.1412, digest `96f531f0e5` |
-| Pure-Dodge source checkpoint | 36 focused passes; independent correction review approved with 34 checks |
-| Actual reaction-hook bindings | 35 regression passes; missing animation-pace imports fixed by `c663cf2d4` |
-| Mobile-fit source review | Approved; 26 independent composition/selected-weapon/formation tests and all-five bounds checks passed |
-| Latest Dev grid behavior | 42 focused tests passed after #1884 merge |
-| Corrected guard-break export | Director-approved comparison; 2 export/source/hash registration tests passed after `ed4dbf3b5` |
-| Browser QA / solo gameplay validation | Pending; captures must use the current build |
-| Authorized merge | Requested by the user; pending |
-| Co-op | Paused |
+| Sweep | Smash04 |
+| Counter | Smash06 |
+| Guard-break | Guard-break06 |
+| Evade | Smash08 |
+| Smash | Smash05 |
 
-The runtime pilot requires default-armour Reaver with the sole actual greatsword in either active hand and the other hand empty. Correction `44496130` includes the real starter's single-weapon grip mode; eligibility is not mechanically restricted to mode `two`. The paintings visually use both hands. Sweep, Counter and Smash use selected holds; pure-dodge preparation/readiness can hold Evade. Correction `71d6f4595` uses the canonical `isPureDodge` marker even when expanded Dodge is typed Counter; mixed counters keep their Counter pose and the glyph/mechanics remain unchanged. Confirmed player-target guard-break and successful evasion show finite reactions, then restore the current action or newest held pose. Existing full attack and retaliation clips remain; five registered poses do not imply five new full animation sequences. The mobile fix uses one stable horizontal envelope across all five selected poses: the existing viewport clamp may move presentation X when needed, while body scale, floor Y and formation cells remain unchanged. Guard-break registration now maps the source-sheet knee/boot support line at y480 to exported floor y464, moving that painting down about 32.5 export pixels; source artwork is unchanged.
+Guard-break03 is contextual reference only, not a sixth selection. Exact crops and hashes remain in the [selection manifest](../../../pose-studio/stances/update-stances/selections.json); export provenance is maintained by the [selected-weapon exporter](../../../tools/selected-weapon-profile-export.mjs). The five full/mobile exports, Sprite Workshop project, and runtime registration are complete.
 
-The 97 initial focused passes and five final tests are separate validation scopes. The final tests are in `tests/selected-weapon-stances.test.mjs` and include actual starting-kit projection after the eligibility correction. The pure-Dodge correction has 36 focused passes and approved independent review. Later hook-binding, mobile-fit, grid and guard-break export checks above are overlapping focused scopes, not a summed test total. These source checks and comparison review do not establish final built-game browser acceptance.
+Runtime eligibility is default-armour Reaver with the sole actual greatsword in either active hand and the other hand empty. Painted holds use both hands. Pure Dodge prepares and holds Evade; mixed counters remain Counter. Guard-break and successful Evade use finite reactions and restore the newest held pose. The pilot does not add new full attack or retaliation sequences.
 
-The user's request authorizes delivery and merge without another approval question. “Pending” means evidence or merge completion remains outstanding, not that authorization is missing. The initial receipt at `06b073d14` used build 0.7.1.1406. After merging Dev `216845621` (#1876), the receipt and both high-art/light builds were regenerated to 0.7.1.1408 (`c192e3e401`). Earlier brief/matrix build references record the pre-refresh snapshot; this delivery record names the current build. The later pure-Dodge correction `71d6f4595`, merged at `6208dae3f`, is now rebuilt as 0.7.1.1410 (`08b5c57339`). The frozen source at `a6f8f7609` includes reaction imports, mobile edge clamping, the corrected knee/boot anchor and Dev #1884; high-art and light builds are now 0.7.1.1412 (`96f531f0e5`). Earlier source/build snapshots are historical. QA must capture this unpatched build. Documentation updates do not alter build inputs. The older [integration notes](integration-notes.md) describe the initial investigation; later Dev changes and the selected implementation must be assessed from the current source and implementation evidence.
+| Validation | Result |
+| --- | --- |
+| Independent runtime review | Approved, 34/34 checks |
+| Core suite | 150 passed, 0 failed |
+| Corrected source assertion | 10/10 |
+| Selected poses, mobile fit, unsupported-scope checks | Passed on 0.7.1.1415; art/layout are unchanged in 0.7.1.1417 |
+| Actual guard-break and successful-Evade receipts | Passed on final build 0.7.1.1417; no page errors |
+| Selected promotion heavy run | Run 38276157811 attempt 2 succeeded; diagnostic full-run rerun114962509344 passed7/7 with no console errors on test73f763cd. |
+| Final-head fast CI | Passed: core suite, all four discovered-test shards, preview, receipts, Workbench and Quick Start browser checks |
+| Evidence | [Final 1417 reaction QA](../../preview/update-stances-selected-20261012/1417/README.md) and [1415 held-pose/mobile QA](../../preview/update-stances-selected-20261012/1415/README.md) |
 
-After the selected delivery is merged, the authorized next pass is ten **new greatsword options each for Sweep, Counter and Evade**, thirty total. This separate pass has zero generated options in the present snapshot. Other weapons, additional class appearances, magic treatments and the full 600-option baseline remain planned.
+The 0.7.1.1417 change is limited to reaction playback, so the 0.7.1.1415 selected-pose and mobile screenshots remain representative. The browser checks use the actual starter loadout and authored cards. For the finite-reaction proof on 0.7.1.1417, a deterministic registered Colossus Smash supplies the incoming move, while the game engine emits the receipts; Guard-break and successful Evade restore their held poses, and no page errors occurred. The 57/57 focused source review covers reaction timing/readiness/defeat handling and identity/order fixtures. Mobile QA completed its geometry and scope assertions; its shell reported 11 benign Chromium vibration user-activation notices, with zero application exceptions or relevant errors. The selected scope remains default-armour Reaver with a sole greatsword; other weapons, classes, and armor appearances are not covered by this pilot.
+
+The user authorized delivery and merge without another approval request. The separate follow-up is ten new greatsword options each for Sweep, Counter, and Evade, thirty total. All thirty follow-up concepts are integrated and director-reviewed; all thirty are director-approved concept candidates. At the earlier concept-director pass, Sweep17, Counter15 and Evade20 used approved standalone replacements with the same option IDs. The owner subsequently chose original-board Counter15 for the sequence preview; that exact image overrides the replacement preference, which remains preserved as an unselected alternate. At that concept-review stage, the boards did not replace runtime art; the later approved source choices are implemented in PR #1897 below. [Follow-up review record](followup-art-review.md) tracks actual sources, flags and provenance. Co-op remains paused.
+
+
+## Approved runtime sequence update (PR #1897)
+
+The owner approved implementation and merge. Production exports and registration are complete in [sequence-production.json](../../../pose-studio/stances/update-stances/sequence-production.json), with exact hashes and preserved Smash05/Guard-break06 recorded in [export provenance](../../../pose-studio/stances/update-stances/sequence-production-provenance.json). Runtime source and production assets are integrated. Final independent compiled-browser validation is approved, and [PR #1897](https://github.com/cehinds/AshenSpire/pull/1897) merged into Dev at [`a2327fdd820331aed0cf0a3afc65a11ab0adaaee`](https://github.com/cehinds/AshenSpire/commit/a2327fdd820331aed0cf0a3afc65a11ab0adaaee) after green PR checks. [Runtime proof and final desktop/phone captures](runtime-qa/README.md) identify the tested candidates: final Counter build **0.7.1.1426 / 972390821c**, source **544714e66**, passed 22/22 assertions; the unchanged non-Counter cases passed 31/31 plus 6/6 reduced-motion checks on **0.7.1.1425 / ad3fb4fb84**, source **07751afbe**. The subsequent stamped Dev build and promotion are separate from these local proof identities.
+
+The profile remains solo default-armour Reaver holding the sole greatsword in either active hand with the other hand empty. Sweep18, original Counter15, Counter12 Defend/Immune, Smash05 and Evade15 are the current held sources. Attack/Smash play AT1–AT6; successful Evade plays EV1–EV3. Zero-health-loss Guard/Parry/Resisted uses D → V → G → H → C → D with holds 2–3–1–2–3–2. Guard-tag Counter adds S and AT1–AT6; Evasion-tag Counter uses EV1–EV3 followed by AT1–AT6 without an intermediate stance return. Engine receipts choose the qualifying reaction and consumed retaliation; each action restores its actual originating hold. Invulnerability, successful Evade and guard-break remain separate outcomes. Other loadouts and co-op are unchanged; co-op remains paused.
+
+The 350 ms unit belongs only to the [readable review GIFs](../../../pose-studio/stances/update-stances/sequence-review/README.md). Gameplay uses existing animation-speed timing with the approved phase ratios. A/B alternatives remain unselected. The requested new Sweep/Smash example art belongs to a separate review branch and is not included in this runtime PR. The user superseded the earlier jump/vault studies with low iai-inspired Sweep draws and surrounding whirlwind trails, plus heavy jumping ground-slam Smash sequences. All twenty revised five-slot examples are now director-approved and integrated into the separate gallery branch; old studies remain preserved as source history.
+
+
+## New Smash selection and revised Sweep review
+
+The owner selected **SM03 · Twisting aerial slam** from the [revised five-slot gallery](../../../pose-studio/stances/update-stances/smash-sweep-examples/README.md) for Smash. Its approved source is `smash/ground-slam-revision-2/SM03/`, with start stance → takeoff → airborne load → ground impact → the same starting stance. The Full/Lite production exports and runtime registration are now integrated in this branch from worker `c764c9662`, including production provenance `d51ce7cd0`; compiled desktop/phone gameplay validation is pending. The dedicated Smash clip uses takeoff, airborne load and ground impact while preserving the selected S hold and the separate six-phase Attack clip. The other nine Smash examples remain reference choices. All ten revised iai-inspired Sweep examples are integrated for review. The owner selected **SW09 · Two-direction unwind**, requesting a straight sword arm rather than the bent elbow and a clearer low iai held stance. The corrected source revision `6b7fac1ff` is now director-approved and active in the viewer at `sweep/selected-sweep-sw09/`; production export `725d752bf` and dedicated Sweep runtime `059154469` are now integrated. The selected corrected seed becomes the held Sweep; original SW09 and earlier W artwork remain preserved as source history. Combined compiled gameplay validation is pending. This later selection is separate from the already merged PR #1897 runtime proof above.

@@ -11,7 +11,7 @@ const SCHOOL_IDS = {
   divine: ['phoenixChart', 'urgentHeal', 'emberCommunion', 'penance', 'transfusion', 'blightward', 'sacredHarvest', 'thornHaloCard', 'communionCard', 'gildedOath', 'reclamation', 'secondBloom', 'lifeTitheCard', 'lastRites', 'zealotryCard', 'lastMercy', 'warmLitany', 'sharedFlame', 'ashOath', 'vesperWard', 'progression-ash-benediction', 'progression-pallbearer-s-ward', 'progression-pilgrim-s-shelter', 'progression-dawn-after-ash'],
   decay: ['bloodPact', 'blightTouch', 'flagellation', 'litany', 'graveOffering', 'bloodletting', 'contagion', 'cullTheWeak', 'martyrBlood', 'blightBloom', 'plagueBearer', 'exsanguinate', 'stigmataCard', 'scourge', 'butterflyPlague', 'crimsonRite', 'blightNova', 'bloodHarvest', 'painOffering', 'witheringTouch', 'desperateRite', 'emberTideCard', 'bloodOfferingRite', 'harbingerOfBlightCard', 'blightwardLash', 'progression-blood-censer', 'progression-blight-litany', 'progression-ember-tithe', 'progression-ossuary-cant', 'progression-requiem-brand', 'progression-crown-of-scars'],
 };
-const TYPE = { force: 'blunt', frost: 'frost', lightning: 'piercing', fire: 'fire', alteration: 'blunt', illusion: 'arcane', divine: 'sacred', decay: 'decay' };
+const TYPE = { force: 'blunt', frost: 'frost', lightning: 'piercing', fire: 'fire', alteration: 'blunt', illusion: 'psychic', divine: 'sacred', decay: 'decay' };
 export const combatExpansionCardOverlay = Object.fromEntries(Object.entries(SCHOOL_IDS).flatMap(([school, ids]) => ids.map(id => [id, { school, damageType: TYPE[school] }])));
 export const combatExpansionSpellProfiles = {
   staffMagicAttack: { school: 'force', damageType: 'blunt', maneuver: 'casting', reach: 'near' },
@@ -34,8 +34,8 @@ const UPCAST = {
   contagion: { pressurePerRank: 1 }, hex: { pressurePerRank: 1 },
 };
 const CHANCE_PRESSURE = new Set(['ashenMote', 'cinderSigil', 'starSpark', 'blightTouch', 'witheringTouch', 'hex']);
-const STATUS = { frost: 'frost', burn: 'burn', crimsonBlight: 'crimsonBlight', weak: 'weak', vulnerable: 'vulnerable', bleed: 'bleed', insanity: 'dazed' };
-const PROFILE = { frost: 'elemental', burn: 'elemental', crimsonBlight: 'curse', weak: 'mental', vulnerable: 'curse', bleed: 'bodily', insanity: 'mental' };
+const STATUS = { frost: 'frost', burn: 'burn', crimsonBlight: 'crimsonBlight', necroticBlight: 'necroticBlight', weak: 'weak', vulnerable: 'vulnerable', bleed: 'bleed', insanity: 'dazed' };
+const PROFILE = { frost: 'elemental', burn: 'elemental', crimsonBlight: 'curse', necroticBlight: 'curse', weak: 'mental', vulnerable: 'curse', bleed: 'bodily', insanity: 'mental' };
 function pressureValue(stacks, id) {
   // Frost's old units are retuned as units; other old stack grants become four
   // pressure units per stack instead of bypassing the new gauges/defenses.
@@ -101,8 +101,10 @@ export function applyCombatExpansionCard(def) {
     attack: { ...def.attack, source: 'spell', damageType: row.damageType }, effects: effectsFor(def.effects, row.school), textTemplate: barrierText(def.textTemplate) };
   if (def.upgrade) card.upgrade = { ...def.upgrade, ...(def.upgrade.effects ? { effects: effectsFor(def.upgrade.effects, row.school) } : {}), ...(def.upgrade.textTemplate ? { textTemplate: barrierText(def.upgrade.textTemplate) } : {}) };
   const damaging = card.effects.some(effect => effect.op === 'damage');
-  const rider = { frost: 'frost', fire: 'burn', lightning: 'paralysis', decay: 'crimsonBlight' }[row.school];
-  if (damaging && rider && !card.effects.some(effect => effect.op === 'buildup' && effect.status === rider)) {
+  const rider = { frost: 'frost', fire: 'burn', lightning: 'paralysis', decay: 'necroticBlight' }[row.school];
+  // A decay card that prints its own Blight (Crimson or Necrotic) keeps only what it prints: one Blight per hit.
+  const printsRider = effect => effect.op === 'buildup' && (effect.status === rider || (row.school === 'decay' && effect.status === 'crimsonBlight'));
+  if (damaging && rider && !card.effects.some(printsRider)) {
     const target = AREA.has(def.id) ? 'allEnemies' : 'enemy';
     card.effects.push({ op: 'buildup', target, status: rider, amount: row.school === 'fire' ? 4 : 3, camp: 'spell', recoveryProfile: PROFILE[rider] || 'elemental' });
     if (card.upgrade?.effects) card.upgrade.effects.push({ op: 'buildup', target, status: rider, amount: row.school === 'fire' ? 5 : 4, camp: 'spell', recoveryProfile: PROFILE[rider] || 'elemental' });
@@ -178,14 +180,14 @@ export const combatExpansionNewCards = [
     effects: [{ op: 'applyStatus', target: 'self', status: 'invulnerability', stacks: 1 }],
     textTemplate: 'Gain {invulnerability} Invulnerability: avoid the next direct damaging action. Status buildup still applies. Exhaust.' },
   { id: 'illusionDecoy', name: 'Illusion Decoy', class: 'colorless', rarity: 'uncommon', cost: 1, manaCost: 1, type: 'skill', keywords: [],
-    tags: ['camp:spell', 'school:illusion', 'damage:arcane', 'reach:contact', 'targeting:single'],
+    tags: ['camp:spell', 'school:illusion', 'damage:psychic', 'reach:contact', 'targeting:single'],
     effects: [{ op: 'applyStatus', target: 'self', status: 'decoy', stacks: 1 }],
     textTemplate: 'Gain {decoy} Decoy: avoid a Single Near/Far damaging action. Status buildup still applies; Sweep and Holy reveal it.' },
   { id: 'earthGrounding', name: 'Earth Grounding', class: 'colorless', rarity: 'common', cost: 1, manaCost: 0, type: 'skill', keywords: [],
     tags: ['camp:spell', 'school:alteration', 'damage:blunt', 'reach:contact', 'targeting:single', 'trait:grounded'],
     effects: [{ op: 'applyStatus', target: 'self', status: 'grounded', stacks: 1 }], textTemplate: 'Gain {grounded} Grounded for 2 turns and clear pending Paralysis pressure.' },
   { id: 'restfulDream', name: 'Restful Dream', class: 'colorless', rarity: 'uncommon', cost: 1, manaCost: 1, type: 'skill', keywords: [],
-    tags: ['camp:spell', 'school:illusion', 'damage:arcane', 'reach:contact', 'targeting:single'],
+    tags: ['camp:spell', 'school:illusion', 'damage:psychic', 'reach:contact', 'targeting:single'],
     effects: [{ op: 'applyStatus', target: 'self', status: 'sleep', stacks: 1 }], textTemplate: 'Gain {sleep} Sleep: lock ordinary cards and become vulnerable. Rest next turn within the combat healing and Ward caps.' },
   { id: 'sanctuaryCleanse', name: 'Sanctuary Cleanse', class: 'colorless', rarity: 'uncommon', cost: 1, manaCost: 1, type: 'skill', keywords: [],
     tags: ['camp:spell', 'school:divine', 'damage:sacred', 'reach:contact', 'targeting:single'], usableWhile: ['sleep', 'paralysis', 'dazed'],

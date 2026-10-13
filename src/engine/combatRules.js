@@ -7,7 +7,7 @@ import { createRng } from './rng.js';
 import { attachSkillXp } from './skillXp.js';
 import * as S from '../framework/statusSemantics.js';
 import { equippedIn, slotHand } from '../model/loadout.js';
-import { attackDescriptor, resolvedAttackTags } from '../model/attackTags.js';
+import { attackDescriptor, resolvedAttackTags, weaponDamageType, weaponDamageComponents } from '../model/attackTags.js';
 import { combatProfileFor } from '../model/combatCardProfile.js';
 import * as Control from './combatStatusControl.js';
 import { ashenBlightRestorationPercent } from './ashenBlight.js';
@@ -90,6 +90,12 @@ export function foundationProfile(ctx, entity) {
 
 export function foundationSource(ctx, entity, carrier = null) {
   if (carrier?.resolvedSource) return carrier.resolvedSource;
+  const source = equippedFoundationSource(ctx, entity, carrier);
+  const damageType = weaponDamageType(attackDescriptor(carrier || {}), source.family, source.damageType);
+  return damageType === source.damageType ? source : { ...source, damageType };
+}
+
+function equippedFoundationSource(ctx, entity, carrier) {
   const state = ctx.foundation;
   const profile = foundationProfile(ctx, entity);
   const attack = attackDescriptor(carrier || {});
@@ -137,6 +143,7 @@ export function foundationCarrier(ctx, entity, carrier = {}, effectAttack = null
   validateAttack(attack, ctx.foundation.rules);
   const source = structuredClone(foundationSource(ctx, entity, { ...carrier, attack }));
   if (source.sourceType === 'unarmed') attack.source = 'unarmed';
+  if (attack.weaponDamage && attack.components) attack.components = weaponDamageComponents(attack, source.family, source.damageType);
   const tags = resolvedAttackTags(carrier.tags || [], source, attack, ctx.foundation.rules.damageTypes);
   const typed = combatProfileFor({ ...carrier, attack, tags });
   return { ...carrier, attack, tags, resolvedSource: source,
@@ -148,27 +155,34 @@ export function foundationDamage(ctx, source, target, base, carrier = null, atta
   const weapon = foundationSource(ctx, source, carrier);
   const attack = attackDescriptor(carrier || {});
   const defense = foundationProfile(ctx, target);
-  const weights = attack.components || [{ type: attack.damageType || weapon.damageType, weight: 1 }];
+  const weights = weaponDamageComponents(attack, weapon.family, weapon.damageType) || [{ type: attack.damageType || weapon.damageType, weight: 1 }];
   attackTags = resolvedAttackTags(attackTags, weapon, attack, rules.damageTypes);
   const totalWeight = weights.reduce((sum, c) => sum + c.weight, 0);
   if (!(totalWeight > 0)) throw new Error('attack components need positive weight');
-  const attackerMultiplier = source ? S.getMult(ctx, source, 'damageDealtMult') : 1;
+  const attackerMultiplier = source ? S.getMult(ctx, source, 'damageDealtMult') * Actions.spellDamageDealtMultiplier(ctx, source, carrier) : 1;
   let multiplier = target ? S.getMult(ctx, target, 'damageTakenMult') : 1;
+  let tagged = 1;
   let vulnerability = 0;
   for (const [id, inst] of Object.entries(target?.statuses || {})) {
     if ((inst.meter ? inst.meter.value : inst.stacks) <= 0) continue;
     const tv = ctx.registries.statuses.get(id).taggedVulnerability;
     if (tv && tv.tags.some((tag) => attackTags.includes(tag))) {
-      if (tv.stacking === 'multiplicative') multiplier *= tv.mult;
+      if (tv.stacking === 'multiplicative') tagged *= tv.mult;
       else vulnerability += tv.mult - 1;
     }
   }
-  multiplier = attackerMultiplier * Math.min(rules.vulnerabilityCap, multiplier * (1 + vulnerability));
+  // The tag-scoped share of the (capped) vulnerability travels apart, so its
+  // bonus rounds UP once per hit (owner, 2026-10-12, #12; resolveDamageComponents).
+  const plain = Math.min(rules.vulnerabilityCap, multiplier);
+  const withTags = Math.min(rules.vulnerabilityCap, multiplier * tagged * (1 + vulnerability));
+  const taggedBonus = plain > 0 ? withTags / plain : 1;
+  multiplier = attackerMultiplier * plain;
   const components = resolveDamageComponents(rules, {
     components: weights.map((c) => ({ type: c.type, amount: Math.max(0, base) * c.weight / totalWeight })),
     armor: beforeDefense ? 0 : defense.armor || 0, penetration: attack.penetration || 0,
     resistances: beforeDefense ? {} : groupedResistance(rules, defense.resistanceSources || [], defense.resistances || {}), immunities: beforeDefense ? [] : defense.immunities || [], multiplier,
     flatBonus: (source ? S.getAdd(ctx, source, 'attackDamageAdd') : 0) + (source?.damageBySchoolAdd?.[carrier?.damageSchool] || 0),
+    taggedBonus,
   });
   return { components, amount: components.reduce((sum, c) => sum + c.amount, 0), source: weapon, tags: attackTags };
 }

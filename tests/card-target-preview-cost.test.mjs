@@ -28,6 +28,9 @@ function fixture(coop = false) {
     ? createCoopCombat({ registries, rng: createRng(91), players: [player('a'), player('b')], enemyIds: ['wanderingSoldier'] })
     : createCombat({ registries, rng: createRng(91), player: player('a'), enemyIds: ['wanderingSoldier'] });
   combat.enemies[0].hp = combat.enemies[0].maxHp = 1000;
+  // Every class mount carries the Oath rule, which listens to cardPreparing.
+  // These tests are about a bus nobody listens on, so drop class mounts.
+  for (const mounts of Object.values(combat.propertyMounts || {})) for (const [id, m] of Object.entries(mounts)) if (m?.kind === 'class') delete mounts[id];
   return combat;
 }
 function data(combat) {
