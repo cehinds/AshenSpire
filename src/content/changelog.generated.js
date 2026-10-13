@@ -33,6 +33,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1923"
   },
   {
+    "id": "pr-1935",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "The art pack now includes the ornate feat medallions",
+    "detail": "Nothing on screen changes yet. The game's art pack moves to its next release, which adds the gilded medallion layers the character-creation Feats step will use.",
+    "build": "0.7.1.1459",
+    "pullRequest": 1935,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1935"
+  },
+  {
     "id": "pr-1896",
     "date": "2026-10-12",
     "group": "2026-10-12",
