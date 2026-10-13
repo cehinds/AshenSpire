@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-13",
     "summary": "Pull requests no longer wait for a per-PR owner approval; coding goes to Sonnet, simple tasks to Haiku",
     "detail": "Development-process change only, nothing in the game changes. A pull request into dev now merges once another agent or session has reviewed it, its conflicts are resolved and the fast checks are green, and the session promotes dev to test itself; main stays with the owner. Sessions send the owner the preview and screenshots without waiting. Most coding tasks go to the new Sonnet ashen-coder agent, simple or mechanical ones to the Haiku ashen-worker, and Opus keeps planning and management.",
-    "build": "0.7.1.1487",
+    "build": "0.7.1.1489",
     "pullRequest": 1962,
     "url": "https://github.com/cehinds/AshenSpire/pull/1962"
   },
@@ -18,7 +18,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-13",
     "summary": "Starseer and Herald can no longer pick two element spells and get stuck on Spells",
     "detail": "The starting spells allow only one element spell (Mind Spike, Mind Fracture, Stone Sling, Rockfall or Drowsing Mote), but the picker let you take two, then greyed Next with no way to see why. Once you hold one element spell the other four now grey out, and the progress line says only one is allowed.",
-    "build": "0.7.1.1487",
+    "build": "0.7.1.1489",
     "pullRequest": 1961,
     "url": "https://github.com/cehinds/AshenSpire/pull/1961"
   },
