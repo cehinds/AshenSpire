@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-13",
     "summary": "The build-number bot recovers a missed preview by itself",
     "detail": "Nothing changes in the game. If the bot stamped a build but could not start its preview, re-running it now starts the preview even after a documentation update has landed on top.",
-    "build": "0.7.1.1501",
+    "build": "0.7.1.1503",
     "pullRequest": 1939,
     "url": "https://github.com/cehinds/AshenSpire/pull/1939"
   },
