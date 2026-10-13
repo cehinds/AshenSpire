@@ -5,7 +5,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { COST_BUDGET, COST_TAGS, RANGE_TAGS, RANGE_WEIGHTS, STATUS_STACK_CAP, STATUS_WEIGHT, STATUS_WEIGHTS } from '../src/content/actionCosts.js';
+import { MANEUVER_SP_FLOORS, SWEEP_UNSCALED_OPS, COST_BUDGET, COST_TAGS, RANGE_TAGS, RANGE_WEIGHTS, STATUS_STACK_CAP, STATUS_WEIGHT, STATUS_WEIGHTS } from '../src/content/actionCosts.js';
 import { statuses } from '../src/content/statuses.js';
 import { tagsAllowedFor } from '../src/content/tags.js';
 
@@ -83,4 +83,14 @@ test('every combat tag of the tag model is priced (a weight, or a range)', () =>
   const combat = tagsAllowedFor('card').filter((t) => COMBAT_DOMAINS.includes(t.domain) && !t.id.startsWith('ability:'));
   assert.ok(combat.length > 50, 'fixture: the tag model holds the combat tags');
   for (const tag of combat) assert.ok(COST_TAGS[tag.id] || RANGE_TAGS[tag.id], `${tag.domain} tag ${tag.id} has no cost weight`);
+});
+
+test('the smash and sweep table is the shipped maneuver floors and unscaled ops', () => {
+  const table = rows(section('Smashes and sweeps (owner, 2026-10-13)'));
+  assert.deepEqual(table.map(([tag]) => tag).sort(), Object.keys(MANEUVER_SP_FLOORS).sort());
+  for (const [tag, floor, unscaled] of table) {
+    assert.equal(Number(floor), MANEUVER_SP_FLOORS[tag], `${tag}: floor`);
+    const ops = tag === 'maneuver:sweep' ? [...SWEEP_UNSCALED_OPS] : [];
+    assert.equal(unscaled, ops.length ? ops.join(', ') : 'none', `${tag}: unscaled ops`);
+  }
 });

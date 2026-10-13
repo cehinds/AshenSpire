@@ -8,7 +8,7 @@ import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { evaluate } from '../src/model/formulas.js';
 import { applyActionCosts } from '../src/model/actionCosts.js';
 import { applyAbilityGrade } from '../src/model/abilityGrades.js';
-import { TWO_COST_EFFECT_MULTIPLIER, SCALED_EFFECT_OPS } from '../src/content/actionCosts.js';
+import { TWO_COST_EFFECT_MULTIPLIER, SCALED_EFFECT_OPS, COST_BUDGET } from '../src/content/actionCosts.js';
 
 // The action-cost step (SPEC §4.3a, owner 2026-10-12) is the one change allowed to a face's numbers: a face that
 // derives to 2 SP or more scales its effect amounts. The expectations below are the authored face after that step,
@@ -24,7 +24,8 @@ const expectedFaceEffects = (authored, upgraded) => {
   const cost = upgraded && authored.upgrade?.cost !== undefined ? authored.upgrade.cost : authored.cost;
   return applyActionCosts({ ...card, cost, effects }, card).effects;
 };
-const scaledFor = (face, n) => (face.cost >= 2 ? Math.round(n * TWO_COST_EFFECT_MULTIPLIER) : n);
+// A sweep's damage stays unscaled at 2 SP (owner, 2026-10-13: its area pays for it).
+const scaledFor = (face, n) => (face.cost >= 2 && !(face.tags || []).includes('maneuver:sweep') ? Math.round(n * TWO_COST_EFFECT_MULTIPLIER) : n);
 // The formula reads the authored cost (the step runs after it), so the formula sees the authored face.
 const authoredFaceFor = (authored, upgraded) => ({ ...authored, effects: upgraded ? authored.upgrade.effects ?? authored.effects : authored.effects,
   cost: upgraded && authored.upgrade?.cost !== undefined ? authored.upgrade.cost : authored.cost });
@@ -398,6 +399,9 @@ test('a card a staff package deals resolves through the magical formulas', () =>
   const authored = contentBundle.legacyProgression.cards.find((card) => card.id === 'stomp');
   const scaledAuthored = dealt.cost >= 2 ? authored.effects.map((effect) => (SCALED_EFFECT_OPS.includes(effect.op) && typeof effect.amount === 'number'
     ? Math.round(effect.amount * TWO_COST_EFFECT_MULTIPLIER) : effect.amount)) : authored.effects.map((effect) => effect.amount);
+  // Stomp is a smash: every smash adds smashPoiseBase to its Poise damage (owner, 2026-10-13).
+  const poiseAt = authored.effects.findIndex((effect) => effect.op === 'poiseDamage');
+  if (poiseAt >= 0) scaledAuthored[poiseAt] += COST_BUDGET.smashPoiseBase;
   assert.deepEqual(dealt.effects.map((effect) => effect.amount), scaledAuthored,
     'untouched defaults keep its numbers on the magical side, after the action-cost step');
   const tuned = createRegistries(configuredContentBundle(bundle, { 'gameConfig.balance.damage.potencyCards.globalMultiplier': 5 }));

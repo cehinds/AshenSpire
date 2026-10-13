@@ -11,7 +11,7 @@
 //   3. A derived SP of 2 or more scales the card's effect amounts (SCALED_EFFECT_OPS) by twoCostMultiplier.
 import {
   ACTION_COST_TABLE, CAST_TAGS, COST_BUDGET, COST_TAGS, DRAWBACK_OPS, KEYWORD_TAGS, RANGE_TAGS, RANGE_WEIGHTS,
-  RESTORE_MANA_OPS, RESTORE_STAMINA_OPS, SCALED_EFFECT_OPS, STATUS_STACK_CAP, STATUS_WEIGHT, STATUS_WEIGHTS,
+  RESTORE_MANA_OPS, RESTORE_STAMINA_OPS, SCALED_EFFECT_OPS, STATUS_STACK_CAP, MANEUVER_SP_FLOORS, SWEEP_UNSCALED_OPS, STATUS_WEIGHT, STATUS_WEIGHTS,
 } from '../content/actionCosts.js';
 import { DRAWBACK_KEYWORD_TAGS } from '../content/actionCosts.js';
 import { derivedStatRules } from '../content/derivedStats.js';
@@ -33,6 +33,8 @@ export const COST_CONFIG = Object.freeze({
   statusWeight: STATUS_WEIGHT,
   statusWeights: STATUS_WEIGHTS,
   statusStackCap: STATUS_STACK_CAP,
+  maneuverFloors: MANEUVER_SP_FLOORS,
+  sweepUnscaledOps: SWEEP_UNSCALED_OPS,
 });
 
 validateActionCostTable(ACTION_COST_TABLE);
@@ -70,6 +72,10 @@ export function validateCostConfig(config = COST_CONFIG) {
   for (const [status, w] of Object.entries({ '(default)': config.statusWeight, ...config.statusWeights })) {
     if (!Number.isInteger(w) || w < 2 || w > 3) throw new TypeError(`actionCosts: status "${status}" weighs ${w}; every status weighs 2..3`);
   }
+  for (const [tag, floor] of Object.entries(config.maneuverFloors)) {
+    if (!Number.isInteger(floor) || floor < 0) throw new TypeError(`actionCosts: the SP floor of "${tag}" is ${floor}; a floor is a whole number of SP, 0 or more`);
+  }
+  if (!(Number.isFinite(config.budget.smashPoiseBase) && config.budget.smashPoiseBase >= 0)) throw new TypeError('actionCosts: budget "smashPoiseBase" must be a number, 0 or more');
   const steps = config.budget.damageSteps;
   if (steps !== undefined && !(Array.isArray(steps) && steps.every((t, i) => Number.isFinite(t) && t > 0 && (i === 0 || t > steps[i - 1])))) {
     throw new TypeError('actionCosts: budget "damageSteps" must be an ascending list of positive damage thresholds (or empty)');
@@ -111,7 +117,7 @@ const count = (value) => (Number.isFinite(value) ? value : 1);
  * A card is magical when it carries any MP-side tag; its damage and statuses then count on the MP side.
  * `rank` is the card's rank above the base (a base card is 0). Returns { sp, mp, sSp, sMp, magic, cast, parts }.
  */
-export function cardCostBudget(def, { rank = 0, config = COST_CONFIG } = {}) {
+export function cardCostBudget(def, { rank = 0, config = COST_CONFIG, upgradeDelta = 0 } = {}) {
   const { budget, tags: weights } = config;
   const authoredTags = Array.isArray(def?.tags) ? def.tags : (Array.isArray(def?.cardTags) ? def.cardTags : []);
   const effects = Array.isArray(def?.effects) ? def.effects : [];
@@ -175,6 +181,10 @@ export function cardCostBudget(def, { rank = 0, config = COST_CONFIG } = {}) {
   if (sp === 0 && mp === 0) {
     if (restoreMana > 0 || !(sMp > sSp)) sp = 1; else mp = 1;
   }
+  // The maneuver floor (owner, 2026-10-13): a base (rank 0) smash or sweep costs at least its floor (2 SP). A higher rank
+  // has no floor, and an authored upgrade that lowers the cost lowers the floor by as much.
+  const floor = rank === 0 ? Math.max(0, ...allTags.map((t) => config.maneuverFloors[t] ?? 0)) - Math.max(0, upgradeDelta) : 0;
+  if (sp < floor) sp = floor;
   return { sp, mp, sSp, sMp, rawSp, rawMp, magic, cast, tags: allTags, parts };
 }
 
@@ -183,23 +193,58 @@ export function isCostOptOut(def) {
   return !def || typeof def !== 'object' || def.costRule === 'fixed' || FIXED_TYPES.includes(def.type) || typeof def.cost !== 'number';
 }
 
-function scaleEffect(effect, multiplier) {
-  if (!SCALED_EFFECT_OPS.includes(effect?.op) || typeof effect.amount !== 'number') return effect;
+function scaleEffect(effect, multiplier, unscaled = []) {
+  if (!SCALED_EFFECT_OPS.includes(effect?.op) || unscaled.includes(effect.op) || typeof effect.amount !== 'number') return effect;
   return Object.freeze({ ...effect, amount: Math.round(effect.amount * multiplier) });
+}
+
+/**
+ * The 2-SP effects (owner, 2026-10-12 and 2026-10-13): a card at 2 SP or more multiplies its effect amounts by
+ * twoCostMultiplier. A sweep pays for its area, so its damage stays normal (SWEEP_UNSCALED_OPS) while its other riders
+ * scale; a smash pays for its impact, so its damage and Poise damage scale.
+ */
+function twoCostEffects(effects, tags, config) {
+  const sweep = tags.includes('maneuver:sweep');
+  return effects.map((e) => scaleEffect(e, config.budget.twoCostMultiplier, sweep ? config.sweepUnscaledOps : []));
+}
+
+/**
+ * All smashes deal Poise damage (owner, 2026-10-13): a smash's Poise damage is smashPoiseBase plus its own (scaled at
+ * 2 SP or more). The base is added to its first Poise damage effect, or, with none, a Poise damage effect is added on
+ * its first damage target.
+ */
+function withSmashPoise(effects, tags, config) {
+  const base = config.budget.smashPoiseBase;
+  if (!tags.includes('maneuver:smash') || !(base > 0)) return effects;
+  const at = effects.findIndex((e) => e?.op === 'poiseDamage' && typeof e.amount === 'number');
+  if (at >= 0) return effects.map((e, i) => (i === at ? Object.freeze({ ...e, amount: e.amount + base }) : e));
+  const hit = effects.find((e) => e?.op === 'damage');
+  return [...effects, Object.freeze({ op: 'poiseDamage', target: hit?.target ?? 'enemy', amount: base })];
 }
 
 /**
  * Derives a resolved player card's SP (`cost`) and Mana (`manaCost`) and, at SP 2 or more, scales its effect amounts.
  * `rank` is the card's rank above the base. Returns `def` itself when the card opts out or nothing changes.
  */
-export function applyActionCosts(def, _authored = def, { rank = 0, config = COST_CONFIG } = {}) {
+export function applyActionCosts(def, authored = def, { rank = 0, config = COST_CONFIG } = {}) {
   if (isCostOptOut(def)) return def;
-  const { sp, mp } = cardCostBudget(def, { rank, config });
+  // An authored upgrade that lowers the cost lowers the maneuver floor by as much (owner, 2026-10-13).
+  // (An ability grade's own action cost is not an upgrade: grades are priced at their rank.)
+  const upgradeDelta = !Array.isArray(authored?.gradeProfiles) && typeof authored?.cost === 'number' && typeof def.cost === 'number' ? authored.cost - def.cost : 0;
+  const { sp, mp, tags } = cardCostBudget(def, { rank, config, upgradeDelta });
   const scaled = sp >= 2;
-  if (sp === def.cost && mp === (def.manaCost || 0) && !scaled) return def;
-  const effects = scaled && Array.isArray(def.effects)
-    ? Object.freeze(def.effects.map((e) => scaleEffect(e, config.budget.twoCostMultiplier))) : def.effects;
-  return Object.freeze({ ...def, cost: sp, manaCost: mp, ...(effects ? { effects } : {}) });
+  const smash = tags.includes('maneuver:smash') && config.budget.smashPoiseBase > 0;
+  if (sp === def.cost && mp === (def.manaCost || 0) && !scaled && !smash) return def;
+  let effects = def.effects;
+  if (Array.isArray(effects)) {
+    if (scaled) effects = twoCostEffects(effects, tags, config);
+    effects = Object.freeze(withSmashPoise(effects, tags, config));
+  }
+  // The face says the Poise damage every smash deals: a template that names none gains the sentence.
+  const poiseLine = smash && typeof def.textTemplate === 'string' && !def.textTemplate.includes('{poiseDamage}')
+    && effects?.some((e) => e?.op === 'poiseDamage');
+  const textTemplate = poiseLine ? `${def.textTemplate.trim()} Deal {poiseDamage} Poise damage.` : def.textTemplate;
+  return Object.freeze({ ...def, cost: sp, manaCost: mp, ...(effects ? { effects } : {}), ...(textTemplate !== undefined ? { textTemplate } : {}) });
 }
 
 /**

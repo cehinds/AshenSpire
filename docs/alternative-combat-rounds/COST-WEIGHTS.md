@@ -47,9 +47,38 @@ multiplies its effect amounts by twoCostMultiplier (SPEC §4.3a).
 | `rankWeightMp` | 4 | Points per rank on the MP side of a magical card: a cantrip stays at 0 MP and its rank 1–3 faces pay 1–2 MP. |
 | `castingEffortWeight` | 6 | SP-side points on every cast card: a spell costs 1 SP unless it carries a drawback. |
 | `restoreWeight` | 1 | Points per Mana restored (SP side) or Stamina restored (MP side). The restore also offsets the card's own price. |
-| `twoCostMultiplier` | 1.8 | The owner's 2-cost buff, applied at 2 SP or more (owner, 2026-10-12). |
+| `smashPoiseBase` | 3 | Poise damage every smash adds to its own (owner, 2026-10-13: "All smashes deal poise damage"). |
+| `twoCostMultiplier` | 1.8 | The owner's 2-cost buff, applied at 2 SP or more (owner, 2026-10-12). On a sweep it skips damage (below). |
 | `statusWeight` | 2 | The owner's floor for a status. |
 | `statusStackCap` | none | Every stack counts (owner, 2026-10-12). A whole number caps the stacks a status is priced at. |
+
+## Smashes and sweeps (owner, 2026-10-13)
+
+- **The floor.** "Some higher rank ones could cost 1 sp? But basic ones are 2sp": at rank 0 a card with one of these
+  tags costs at least its floor. A higher rank has no floor, and an authored upgrade that lowers the cost lowers the
+  floor by as much.
+- **What 2 SP buys.** "Be sure to add poise and base damage to account for the higher cost for smashes and AoE for
+  sweeps but normal damage": a smash at 2 SP or more scales its damage and Poise damage by twoCostMultiplier; a sweep
+  at 2 SP or more keeps its damage unscaled (the area pays for it) while its other riders (Block, buildup, Poise) scale.
+- **All smashes deal Poise damage** (owner, 2026-10-13): smashPoiseBase is added to a smash's own Poise damage, or
+  added as a Poise damage effect on its first damage target, at every rank and cost, and the card face names it.
+
+| Maneuver | Floor at rank 0 | Unscaled at 2 SP |
+|---|---|---|
+| `maneuver:smash` | 2 | none |
+| `maneuver:sweep` | 2 | damage |
+
+Rank-0 smashes and sweeps all cost 2 SP (13 and 6). At ranks 1–3 (legacy instance ranks 2–4, grades 1–3):
+
+| Rank | Smash | Sweep |
+|---|---|---|
+| 1 | 1 SP: 8, 2 SP: 4, 3 SP: 1 | 1 SP: 5, 2 SP: 1 |
+| 2 | 1 SP: 3, 2 SP: 8, 3 SP: 2 | 1 SP: 2, 2 SP: 3, 3 SP: 1 |
+| 3 | 1 SP: 1, 2 SP: 4, 3 SP: 1 | 2 SP: 1, 3 SP: 1 |
+
+At 1 SP from rank 1: Crimson Cleave, Shield Bash, Cleaving Blow, Poise Breaker, Sunderplate, Sundering Chop, Whirling
+Guard, Sweeping Blow, Breaker's Toll and Ashen Cleaver at rank 1; Kick Off at ranks 1–3; Shield Crash, Bashing Blow,
+Whirling Guard and Sweeping Blow at rank 2.
 
 ## Calibration
 
@@ -63,31 +92,30 @@ keeping the owner's shape. Targets are the owner's words of 2026-10-12.
 
 | Target | Measured as | Faces | Hit rate |
 |---|---|---|---|
-| Most basic cards cost 1 Stamina | rank 0, physical, not smash or sweep: 1 SP / 0 MP | 113 | 79.6% |
+| Most basic cards cost 1 Stamina | rank 0, physical, not smash or sweep: 1 SP / 0 MP | 113 | 80.5% |
 | Most cantrips cost 1 Stamina | rank 0, magical: 1 SP / 0 MP | 134 | 77.6% |
 | (the same, allowing 1 MP) | rank 0, magical: 1 SP, at most 1 MP | 134 | 94.0% |
-| Smashes and sweeps cost 2 | rank 0, smash or sweep: 2 SP | 19 | 68.4% |
-| Rank 1–2 cost 1 SP + 1 MP, or 2 SP, some only one | rank 1–2: 1/1, 2/0, 1/0 or 0/1 | 532 | 81.6% |
-| (of those, a total of 2) | rank 1–2: SP + MP = 2 | 532 | 41.7% |
+| Smashes and sweeps cost 2 | rank 0, smash or sweep: 2 SP | 19 | 100% |
+| Rank 1–2 cost 1 SP + 1 MP, or 2 SP, some only one | rank 1–2: 1/1, 2/0, 1/0 or 0/1 | 532 | 84.2% |
+| (of those, a total of 2) | rank 1–2: SP + MP = 2 | 532 | 41.5% |
 | Most rank 1–3 spells cost 1–2 Mana | rank 1–3, magical: 1–2 MP | 310 | 82.3% |
 | Many magic cards cost at least 1 SP; 0-SP magic still possible | magical: SP ≥ 1 | 444 | 95.0% |
 | Higher SP usually means lower MP | not both SP ≥ 2 and MP ≥ 2 | 880 | 98.9% |
 
 With the rank on the Mana side the cantrip conflict is gone: cantrips cost 1 SP
-/ 0 MP and their rank 1–3 faces pay Mana. Counting every status stack pushes
-the heaviest cards up: four smashes that apply a status or hit for 16 or more
-now reach 3 SP, and Kick Off (Exhaust) and Shield Crash (formula damage) stay
-at 1, so smashes miss 80%. Basics miss narrowly (79.6%): ranged attacks and
+/ 0 MP and their rank 1–3 faces pay Mana. The maneuver floor prices every base
+smash and sweep at 2, and with the smash, sweep and heavy tags at 0 the heaviest
+smashes no longer reach 3. Basics sit at the line (80.5%): ranged attacks and
 Rogue cards that stack a status reach 2 SP.
 
 Distribution (SP/MP: faces):
 
 | Rank | Physical | Magical |
 |---|---|---|
-| 0 | 1/0: 92, 2/0: 31, 3/0: 8, 4/0: 1 | 1/0: 104, 1/1: 22, 0/1: 7, 1/2: 1 |
-| 1 | 1/0: 86, 2/0: 33, 3/0: 12, 4/0: 1 | 1/1: 79, 1/0: 41, 0/1: 7, 1/2: 5, 0/2: 1, 2/0: 1 |
-| 2 | 1/0: 70, 2/0: 42, 3/0: 17, 4/0: 3 | 1/1: 66, 1/2: 47, 2/1: 7, 0/1: 6, 2/2: 3, 1/0: 3, 1/3: 2 |
-| 3 | 1/0: 17, 2/0: 14, 3/0: 8, 4/0: 1 | 1/2: 18, 1/1: 11, 2/2: 4, 2/3: 3, 1/3: 3, 1/4: 1, 1/0: 1, 0/1: 1 |
+| 0 | 1/0: 91, 2/0: 36, 3/0: 4, 4/0: 1 | 1/0: 104, 1/1: 22, 0/1: 7, 1/2: 1 |
+| 1 | 1/0: 97, 2/0: 28, 3/0: 6, 4/0: 1 | 1/1: 79, 1/0: 41, 0/1: 7, 1/2: 5, 0/2: 1, 2/0: 1 |
+| 2 | 1/0: 74, 2/0: 46, 3/0: 10, 4/0: 2 | 1/1: 66, 1/2: 47, 2/1: 7, 0/1: 6, 2/2: 3, 1/0: 3, 1/3: 2 |
+| 3 | 2/0: 18, 1/0: 18, 3/0: 4 | 1/2: 18, 1/1: 11, 2/2: 4, 2/3: 3, 1/3: 3, 1/4: 1, 1/0: 1, 0/1: 1 |
 
 ## Tag weights
 
@@ -133,8 +161,8 @@ player's piles).
 | `maneuver:defend` | 0 | SP | The plain guard: the base price, nothing on top. |
 | `maneuver:ranged` | 0 | SP | A ranged shot: the range weight (3) already prices the reach, so 0. |
 | `maneuver:counter` | 0 | SP | A counter is priced by its reply damage and its technique; at 0 the elemental counters stay at 1 SP. |
-| `maneuver:smash` | 3 | SP | The owner wants smashes at 2 SP: the largest tag weight, 3. |
-| `maneuver:sweep` | 3 | SP | The owner wants sweeps at 2 SP: as smash, 3. |
+| `maneuver:smash` | 0 | SP | A base smash costs 2 by its floor (owner, 2026-10-13); 0 here, so a higher-rank smash can come out at 1 SP and the heaviest stay at 2. |
+| `maneuver:sweep` | 0 | SP | As smash: the floor prices a base sweep at 2. |
 | `maneuver:casting` | 0 | MP | Marks a cast (the casting effort prices it); no weight of its own. |
 | `counter:melee` | 0 | SP | The counter maneuver already prices the counter. |
 | `counter:ranged` | 1 | SP | Answering a shot reaches further: 1. |
@@ -170,7 +198,7 @@ player's piles).
 | Tag | Weight | Side | Reason |
 |---|---|---|---|
 | `blade` | 1 | SP | An edged weapon: 1. |
-| `heavy` | 2 | SP | A heavy weapon: 2, so a heavy blow leans toward 2 SP. |
+| `heavy` | 0 | SP | A heavy weapon; the damage steps already price the heavy hit, so 0. |
 | `pierce` | 1 | SP | A piercing weapon: 1. |
 | `precision` | 1 | SP | A precise technique: 1. |
 | `guard` | 0 | SP | An archetype chip, not a power. |
@@ -193,7 +221,7 @@ player's piles).
 
 | Tag | Weight | Side | Reason |
 |---|---|---|---|
-| `technique:heavy` | 2 | SP | A committed heavy technique: 2, as heavy. |
+| `technique:heavy` | 0 | SP | As heavy, 0. |
 | `technique:cleave` | 1 | SP | A cleave reaches more than one foe: 1. |
 | `technique:precision` | 1 | SP | A precise technique: 1. |
 | `technique:counter` | 1 | SP | A countering technique: 1. |
@@ -324,27 +352,25 @@ Every status a card applies (applyStatus, or buildup as one stack) weighs 2 (own
 ## Outliers
 
 Every face that misses its target at the shipped tunables, with its sums (S before the restore
-offsets). The rank is the owner rank (0 = base). The cantrip table lists rank-0 magic faces that are not
-1 SP with at most 1 MP; the strict 1 SP / 0 MP rate is in the calibration table.
+offsets and the maneuver floor). The rank is the owner rank (0 = base). The cantrip table lists rank-0 magic faces
+that are not 1 SP with at most 1 MP; the strict 1 SP / 0 MP rate is in the calibration table.
 
 Why the main groups miss:
 
 - **Basics at 2 SP or more**: ranged attacks (range 3) and Rogue cards that stack a status, priced up by
   weights the owner set.
-- **Smashes**: see the calibration note above.
-- **Rank 1–2**: smashes, sweeps and long-range shots climbing to 3 SP, and big spells at 1 SP + 2 MP.
+- **Rank 1–2**: long-range shots and status-stacking cards climbing to 3 SP, and big spells at 1 SP + 2 MP.
 - **Spells**: rank-1 spells whose Mana side is still under 8 (0 MP), and rank-3 fire and astral spells at
   3–4 MP.
 - **Both sides 2 or more**: a few rank 2–3 fire and astral spells.
 
-### Basic cards at rank 0 that are not 1 SP / 0 MP (23)
+### Basic cards at rank 0 that are not 1 SP / 0 MP (22)
 
 | Card | Rank | SP/MP | S_sp | S_mp |
 |---|---|---|---|---|
 | gorefireSlash | 0 | 2/0 | 14.5 | 0 |
 | serratedBlade | 0 | 2/0 | 14.5 | 0 |
 | impale | 0 | 4/0 | 24 | 0 |
-| executioner | 0 | 2/0 | 13.5 | 0 |
 | goreslash | 0 | 2/0 | 12.5 | 0 |
 | ambush | 0 | 2/0 | 13.5 | 0 |
 | twinPrick | 0 | 2/0 | 12 | 0 |
@@ -378,35 +404,18 @@ Why the main groups miss:
 | blightwardLash | 0 | 0/1 | 5 | 10.5 |
 | ashOath | 0 | 0/1 | 5 | 8 |
 
-### Smashes and sweeps at rank 0 that are not 2 SP (6)
+### Smashes and sweeps at rank 0 that are not 2 SP (0)
+
+None.
+
+### Rank 1-2 cards outside 1/1, 2/0, 1/0 or 0/1 (84)
 
 | Card | Rank | SP/MP | S_sp | S_mp |
 |---|---|---|---|---|
-| kickOff | 0 | 1/0 | 8.5 | 0 |
-| ruinousBlow | 0 | 3/0 | 18.5 | 0 |
-| shieldCrash | 0 | 1/0 | 8 | 0 |
-| greatswordSunderingHew | 0 | 3/0 | 18.5 | 0 |
-| colossusSmash | 0 | 3/0 | 21.5 | 0 |
-| kilnCleave | 0 | 3/0 | 22 | 0 |
-
-### Rank 1-2 cards outside 1/1, 2/0, 1/0 or 0/1 (98)
-
-| Card | Rank | SP/MP | S_sp | S_mp |
-|---|---|---|---|---|
-| crimsonCleave | 2 | 3/0 | 21 | 0 |
+| crimsonCleave | 2 | 3/0 | 18 | 0 |
 | rend | 2 | 3/0 | 18.5 | 0 |
-| stomp | 2 | 3/0 | 19.5 | 0 |
 | impale | 1 | 4/0 | 25 | 0 |
 | impale | 2 | 4/0 | 26 | 0 |
-| ruinousBlow | 1 | 3/0 | 19.5 | 0 |
-| ruinousBlow | 2 | 3/0 | 20.5 | 0 |
-| poiseBreaker | 1 | 3/0 | 18 | 0 |
-| poiseBreaker | 2 | 3/0 | 19 | 0 |
-| sunderplate | 2 | 3/0 | 22 | 0 |
-| hewingArc | 1 | 3/0 | 18.5 | 0 |
-| hewingArc | 2 | 3/0 | 19.5 | 0 |
-| sunderingChop | 1 | 3/0 | 18 | 0 |
-| sunderingChop | 2 | 3/0 | 19 | 0 |
 | starstonePebble | 2 | 1/2 | 11 | 18 |
 | starbladePhalanx | 2 | 1/2 | 11 | 18 |
 | starShower | 2 | 1/2 | 11 | 19.5 |
@@ -463,14 +472,11 @@ Why the main groups miss:
 | barbedArrow | 1 | 3/0 | 21.5 | 0 |
 | barbedArrow | 2 | 3/0 | 22.5 | 0 |
 | katanaDrawCut | 2 | 3/0 | 18 | 0 |
-| greatswordSunderingHew | 1 | 3/0 | 19.5 | 0 |
-| greatswordSunderingHew | 2 | 3/0 | 20.5 | 0 |
-| colossusSmash | 1 | 3/0 | 22.5 | 0 |
-| colossusSmash | 2 | 3/0 | 23.5 | 0 |
+| colossusSmash | 2 | 3/0 | 18.5 | 0 |
 | ashOath | 2 | 1/2 | 7 | 16 |
 | rimeThrust | 2 | 3/0 | 18.5 | 0 |
-| kilnCleave | 1 | 3/0 | 23 | 0 |
-| kilnCleave | 2 | 4/0 | 24 | 0 |
+| kilnCleave | 1 | 3/0 | 18 | 0 |
+| kilnCleave | 2 | 3/0 | 19 | 0 |
 | lightningCounter | 2 | 2/1 | 12 | 11 |
 | forceCounter | 2 | 2/1 | 12 | 11 |
 | alterationCounter | 2 | 2/1 | 12 | 11 |
@@ -479,7 +485,6 @@ Why the main groups miss:
 | staticNeedle | 2 | 2/1 | 12 | 15 |
 | forceNudge | 2 | 2/1 | 12 | 13 |
 | earthGrounding | 2 | 2/1 | 12 | 12 |
-| progression-ashen-cleaver | 2 | 3/0 | 18 | 0 |
 | progression-cinder-orbit | 2 | 1/2 | 8 | 16 |
 | progression-comet-needle | 2 | 1/2 | 9 | 18 |
 | progression-rime-mirror | 2 | 1/2 | 8 | 17 |

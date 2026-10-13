@@ -10,10 +10,7 @@ import {COMBAT_EFFECT_ART} from '../src/content/combatEffectArt.js';
 import {COMBAT_EFFECT_RULES} from '../src/content/combatEffectRules.js';
 import {applyAttackDamage} from '../src/engine/actions.js';
 
-// These checks read the authored card numbers, so every card keeps its authored cost and numbers: it opts out of the
-// cost formula (costRule 'fixed', SPEC §4.3a), which tests/action-costs-*.test.mjs cover.
-const authoredCosts = (bundle) => ({ ...bundle, cards: bundle.cards.map((card) => ({ ...card, costRule: 'fixed' })) });
-const reg=createRegistries(authoredCosts(contentBundle));
+const reg=createRegistries(contentBundle);
 const plan=(id,profileId,upgraded=false)=>{const card=resolveCard(reg,{cardId:id,profileId,upgraded});return combatEffectPlan({...card,cardTags:combatEffectTags(reg,card)});};
 test('action-only magic motifs use mundane variants; paid activations retain fantastical effects',()=>{
  const card={type:'attack',cost:1,manaCost:1,cardTags:['blood','blade'],effects:[{op:'damage',target:'enemy'}]};
@@ -51,7 +48,8 @@ test('real co-op receipts retain the casting seat and a different friendly recip
  p.piles.hand.push({instanceId:'fx-hit',cardId:'gorefireSlash',upgraded:false},{instanceId:'fx-ally',cardId:'rallyingBanner',upgraded:false},{instanceId:'fx-status',cardId:'ashOath',upgraded:false});
  host.snapshot();assert.ok(host.combatPlay('p2','fx-hit','e1').ok);
  const hit=host.snapshot().scene.events.map(combatEffectReceipt);
- assert.equal(hit.find(e=>e.type==='cardPlayed').energySpent,1);
+ // Gorefire Slash's SP is the cost formula's (SPEC §4.3a).
+ assert.equal(hit.find(e=>e.type==='cardPlayed').energySpent,resolveCard(createRegistries(legacyContentBundle),{cardId:'gorefireSlash'}).cost);
  assert.deepEqual(combatEffectTargetIds(plan('gorefireSlash'),hit,'p2'),['e1']);
  assert.deepEqual(combatEffectTargetIds(plan('gorefireSlash'),hit,'p1'),[]);
  assert.ok(host.combatPlay('p2','fx-ally','p1').ok);
@@ -96,8 +94,9 @@ test('every authored playable card and equipment profile resolves to existing ar
  assert.equal(new Set(COMBAT_EFFECT_RULES.map(r=>r.id)).size,COMBAT_EFFECT_RULES.length);
  for(const rule of COMBAT_EFFECT_RULES)assert.ok(COMBAT_EFFECT_ART[rule.kind],rule.id);
 });
+// Gorefire Slash costs 2 SP and no Mana under the cost formula (SPEC §4.3a): a high mundane blade attack, a whirlwind.
 test('specific combinations beat generic schools and defensive tags',()=>{
- for(const [id,kind]of [['shieldBash','shieldBash'],['gorefireSlash','bloodSlash'],['riposte','riposte'],['guardCounter','riposte'],['crystalBarrier','barrier'],['enterBulwark','ward'],['starstoneArc','starbolt']])assert.equal(plan(id).kind,kind,id);
+ for(const [id,kind]of [['shieldBash','shieldBash'],['gorefireSlash','whirlwind'],['riposte','riposte'],['guardCounter','riposte'],['crystalBarrier','barrier'],['enterBulwark','ward'],['starstoneArc','starbolt']])assert.equal(plan(id).kind,kind,id);
  assert.equal(plan('strike','shieldAttack').kind,'shieldBash');
  assert.equal(plan('defend','staffGuard').kind,'magicGuard');
  assert.equal(plan('defend','sceptreGuard').kind,'arcaneWard');

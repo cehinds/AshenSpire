@@ -28,6 +28,7 @@ export const COST_BUDGET = Object.freeze({
   rankWeightMp: 4,        // points per rank on the MP side of a magical card (owner, 2026-10-12: rank counts on the Mana side too)
   castingEffortWeight: 6, // points on any cast card (camp:spell or maneuver:casting); SP side
   restoreWeight: 1,       // points per Mana restored (SP side) or Stamina restored (MP side)
+  smashPoiseBase: 3,      // Poise damage every smash adds to its own (owner, 2026-10-13: "All smashes deal poise damage")
   twoCostMultiplier: 1.8, // a card whose derived SP is 2 or more multiplies its effect amounts by this
 });
 
@@ -55,8 +56,8 @@ export const COST_TAGS = Object.freeze({
   'maneuver:defend': { weight: 0, side: 'sp' },
   'maneuver:ranged': { weight: 0, side: 'sp' },
   'maneuver:counter': { weight: 0, side: 'sp' },
-  'maneuver:smash': { weight: 3, side: 'sp' },
-  'maneuver:sweep': { weight: 3, side: 'sp' },
+  'maneuver:smash': { weight: 0, side: 'sp' },
+  'maneuver:sweep': { weight: 0, side: 'sp' },
   'maneuver:casting': { weight: 0, side: 'mp' },
   'counter:melee': { weight: 0, side: 'sp' },
   'counter:ranged': { weight: 1, side: 'sp' },
@@ -80,7 +81,7 @@ export const COST_TAGS = Object.freeze({
   'school:decay': { weight: 1, side: 'mp' },
   // Weapon and theme chips (card domain)
   blade: { weight: 1, side: 'sp' },
-  heavy: { weight: 2, side: 'sp' },
+  heavy: { weight: 0, side: 'sp' },
   pierce: { weight: 1, side: 'sp' },
   precision: { weight: 1, side: 'sp' },
   guard: { weight: 0, side: 'sp' },
@@ -99,7 +100,7 @@ export const COST_TAGS = Object.freeze({
   ritual: { weight: 0, side: 'sp' },
   blight: { weight: 0, side: 'sp' },
   // Techniques
-  'technique:heavy': { weight: 2, side: 'sp' },
+  'technique:heavy': { weight: 0, side: 'sp' },
   'technique:cleave': { weight: 1, side: 'sp' },
   'technique:precision': { weight: 1, side: 'sp' },
   'technique:counter': { weight: 1, side: 'sp' },
@@ -174,6 +175,15 @@ export const STATUS_STACK_CAP = null;
 // The effect ops that restore Stamina (priced on the MP side) and Mana (priced on the SP side).
 export const RESTORE_STAMINA_OPS = Object.freeze(['gainEnergy']);
 export const RESTORE_MANA_OPS = Object.freeze(['restoreMana']);
+
+// The maneuver floor (owner, 2026-10-13: "basic ones are 2sp"): at rank 0 a card with this tag costs at least this SP.
+// A higher rank has no floor ("some higher rank ones could cost 1 sp"); an authored upgrade that lowers the cost lowers
+// the floor by as much.
+export const MANEUVER_SP_FLOORS = Object.freeze({ 'maneuver:smash': 2, 'maneuver:sweep': 2 });
+
+// A sweep pays for its area, so these ops stay unscaled on a 2-SP sweep (owner, 2026-10-13: "AoE for sweeps but normal
+// damage"); its other riders (Block, buildup, Poise) scale.
+export const SWEEP_UNSCALED_OPS = Object.freeze(['damage']);
 
 // The effect ops whose `amount` scales on a 2-SP card. Costs, card counts (draw, discard, addCard), turns and
 // durations (applyStatus.duration), stack counts and hit counts are never scaled.

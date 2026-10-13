@@ -31,7 +31,9 @@ test('a smash and a sweep cost 2 SP or more and scale their numbers; a ranked sp
     const card = cardOf(id);
     assert.ok(card.cost >= 2, `${id} costs ${card.cost}`);
     assert.equal(card.manaCost || 0, 0, `${id} is physical`);
-    assert.equal(amountOf(card, 'damage'), Math.round(amountOf(authoredOf(id), 'damage') * TWO_COST_EFFECT_MULTIPLIER), id);
+    // A smash scales its damage; a sweep's damage stays normal (owner, 2026-10-13).
+    const sweep = (authoredOf(id).tags || []).includes('maneuver:sweep');
+    assert.equal(amountOf(card, 'damage'), sweep ? amountOf(authoredOf(id), 'damage') : Math.round(amountOf(authoredOf(id), 'damage') * TWO_COST_EFFECT_MULTIPLIER), id);
   }
   assert.equal(cardOf('bashingBlow').cost, 2, 'a light smash costs 2');
   const cantrip = cardOf('blightTouch');

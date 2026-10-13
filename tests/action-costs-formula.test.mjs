@@ -158,7 +158,7 @@ test('restored Mana offsets the card\'s own Mana cost, and restored Stamina its 
     assert.equal(priced.mp, Math.max(0, priced.rawMp - restored), `${id}: Mana price less the Mana it restores`);
     assert.ok((resolveCard(registries, { cardId: id }).manaCost || 0) - restored < 0, `${id} nets Mana`);
   }
-  const surge = { id: 'surge', type: 'skill', cost: 1, effects: [{ op: 'gainEnergy', amount: 2 }, { op: 'damage', target: 'enemy', amount: 30 }], tags: ['camp:physical', 'maneuver:smash'] };
+  const surge = { id: 'surge', type: 'skill', cost: 1, effects: [{ op: 'gainEnergy', amount: 2 }, { op: 'damage', target: 'enemy', amount: 30 }], tags: ['camp:physical', 'heavy'] };
   const out = cardCostBudget(surge);
   assert.equal(out.sp, Math.max(1, out.rawSp - 2), 'its Stamina price less the 2 Stamina it restores (a priced card always costs something)');
 });
@@ -192,4 +192,58 @@ test('status stacks count: with no cap (the default), every stack adds the statu
   const capped = { ...COST_CONFIG, statusStackCap: 2 };
   assert.equal(cardCostBudget({ id: 'x', type: 'skill', cost: 1, effects: [{ op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 5 }], tags: ['camp:physical'] }, { config: capped }).sSp, bleed(2), 'a configured cap still applies');
   assert.throws(() => validateCostConfig({ ...COST_CONFIG, statusStackCap: 0 }), /stack cap/);
+});
+
+// Owner decisions of 2026-10-13: "basic ones are 2sp" (a smash or sweep at rank 0 costs at least 2 SP; a higher rank has
+// no floor), "poise and base damage ... for smashes and AoE for sweeps but normal damage", "All smashes deal poise damage".
+const maneuverFaces = (tag) => registries.cards.all().filter((card) => !isCostOptOut(card) && (card.tags || []).includes(tag))
+  .flatMap((card) => (Array.isArray(card.gradeProfiles)
+    ? [0, 1, 2, 3].map((abilityRank) => ({ card, ref: { cardId: card.id, abilityRank }, rank: abilityRank }))
+    : [1, 2, 3, 4].map((r) => ({ card, ref: { cardId: card.id, rank: r }, rank: r - 1 }))));
+
+test('every base (rank 0) smash and sweep costs at least 2 SP; a higher rank has no floor', () => {
+  for (const tag of ['maneuver:smash', 'maneuver:sweep']) {
+    assert.equal(COST_CONFIG.maneuverFloors[tag], 2);
+    for (const { card, ref, rank } of maneuverFaces(tag)) {
+      if (rank !== 0) continue;
+      assert.ok(resolveCard(registries, ref).cost >= 2, `${card.id} at rank 0`);
+    }
+  }
+  const light = { id: 'l', type: 'attack', cost: 1, effects: [{ op: 'damage', target: 'enemy', amount: 2 }], tags: ['maneuver:smash'] };
+  assert.equal(cardCostBudget(light, { rank: 0 }).sp, 2, 'the floor lifts a light smash');
+  assert.equal(cardCostBudget(light, { rank: 1 }).sp, 1, 'no floor above rank 0');
+  assert.equal(applyActionCosts({ ...light, cost: 0 }, light, { rank: 0 }).cost, 1, 'an authored upgrade that lowers the cost lowers the floor');
+});
+
+test('all smashes deal Poise damage: smashPoiseBase plus their own, scaled at 2 SP; the face says it', () => {
+  const base = COST_BUDGET.smashPoiseBase;
+  assert.ok(base > 0);
+  const faces = maneuverFaces('maneuver:smash');
+  assert.ok(faces.length >= 30, 'fixture: every smash at ranks 0-3');
+  for (const { card, ref } of faces) {
+    const def = resolveCard(registries, ref);
+    const poise = def.effects.filter((e) => e.op === 'poiseDamage' && typeof e.amount === 'number').reduce((sum, e) => sum + e.amount, 0);
+    assert.ok(poise >= base, `${card.id} ${JSON.stringify(ref)} deals ${poise} Poise`);
+    assert.match(def.textTemplate, /\{poiseDamage\}/, `${card.id}: the face names its Poise damage`);
+  }
+  const smash = { id: 's', type: 'attack', cost: 1, effects: [{ op: 'damage', target: 'enemy', amount: 40 }, { op: 'poiseDamage', target: 'enemy', amount: 5 }], tags: ['camp:physical', 'maneuver:smash'] };
+  const out = applyActionCosts(smash, smash);
+  assert.ok(out.cost >= 2);
+  assert.equal(out.effects.find((e) => e.op === 'damage').amount, Math.round(40 * COST_BUDGET.twoCostMultiplier), 'damage scales');
+  assert.equal(out.effects.find((e) => e.op === 'poiseDamage').amount, Math.round(5 * COST_BUDGET.twoCostMultiplier) + base, 'its own Poise scales, then the base adds');
+});
+
+test('a sweep pays for its area: its damage is unscaled at 2 SP, its other riders scale', () => {
+  const sweep = { id: 'w', type: 'attack', cost: 1, effects: [{ op: 'damage', target: 'allEnemies', amount: 6 }, { op: 'block', target: 'self', amount: 5 }], tags: ['camp:physical', 'maneuver:sweep'] };
+  const out = applyActionCosts(sweep, sweep);
+  assert.ok(out.cost >= 2, 'a base sweep costs 2');
+  assert.equal(out.effects.find((e) => e.op === 'damage').amount, 6, 'normal damage');
+  assert.equal(out.effects.find((e) => e.op === 'block').amount, Math.round(5 * COST_BUDGET.twoCostMultiplier), 'Block scales');
+  for (const { card, ref } of maneuverFaces('maneuver:sweep')) {
+    const def = resolveCard(registries, ref);
+    if (def.cost < 2) continue;
+    const authored = Array.isArray(card.gradeProfiles) ? applyAbilityGrade(card, ref.abilityRank) : card;
+    const dmg = (d) => d.effects.filter((e) => e.op === 'damage' && typeof e.amount === 'number').map((e) => e.amount);
+    if (ref.rank === undefined || ref.rank === 1) assert.deepEqual(dmg(def), dmg(authored), `${card.id} ${JSON.stringify(ref)}`);
+  }
 });
