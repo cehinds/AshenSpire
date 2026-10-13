@@ -3,6 +3,566 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1896",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Ward, Barrier and Poise now wear away, every hit shows where it landed, and hits can be part magic, part physical",
+    "detail": "Magic damage meets Barrier, then Ward; physical damage meets Block, then Poise. Barrier and Block soak a hit completely, while Ward and Poise always let at least 1 damage through, are spent by what they absorb, and no longer also shave damage by their rating. Every fighter starts each fight with full Ward and Poise, and they only come back through a card, feat, class feature or relic. Ward added past full becomes Barrier until your next turn. Breaking an enemy's Ward or Poise interrupts its action; a break costs you 1 Stamina next turn. A hit can now be part magic and part physical: staff and sceptre strikes and defends are 40% magic, Force is half arcane and half blunt, Alteration and Earth are physical, martial techniques with spell effects are 30% magic with the weapon's damage type, and a card that names several damage types splits by them. Silenced no longer weakens spells; each stack makes spells cost 1 more Stamina, the Silenced creature is immune to the Arcane part of a hit, and each Force hit or effect on it removes a stack. Each layer has its own colour on the health bar and in the hit numbers (Barrier blue, Ward purple, Block silver, Poise gold, Health red), with popups for MISSED, BREAK, WARD BREAK, POSTURE BREAK, INTERRUPTED and IMMUNE, and the combat log lists each layer's share and the roll behind a miss. A creature resistant to a damage school takes three quarters of the hit.",
+    "build": "0.7.1.1459",
+    "pullRequest": 1896,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1896"
+  },
+  {
+    "id": "pr-1907",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Boss victories offer a choice of boss relics",
+    "detail": "Beating a boss now lays out up to three boss relics you do not own, and you keep the one you pick. With auto-collect on, Continue picks one at random, as it does for cards; with it off, an unpicked choice is left behind. Co-op boss rewards are unchanged.",
+    "build": "0.7.1.1457",
+    "pullRequest": 1907,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1907"
+  },
+  {
+    "id": "pr-1928",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "The online dev build publishes after its build number is stamped",
+    "detail": "Development-process change only, nothing in the game changes. The playable dev build on the project site no longer fails to publish while a new build waits for its number; it publishes once the number is stamped.",
+    "build": "0.7.1.1455",
+    "pullRequest": 1928,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1928"
+  },
+  {
+    "id": "pr-1926",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Character creation art loads, and the long test runs reach the end again",
+    "detail": "The leather backing behind character-creation panels now loads instead of failing silently. The automated full-run, map-camera and tutorial checks walk the new page-by-page character creation, and a full run no longer stalls on the map's Enter button while its tray is still sliding in.",
+    "build": "0.7.1.1453",
+    "pullRequest": 1926,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1926"
+  },
+  {
+    "id": "pr-1910",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Sweep and Smash now play the selected greatsword sequences",
+    "detail": "Default-armour Reaver with a sole greatsword now uses the corrected straight-arm low iai Sweep and the SM03 twisting aerial ground slam, returning to the prepared stance after each action. The selected impact pose stays available until its actual combat cue arrives, including cold starts. Attack keeps its separate six phases. Twenty labeled five-slot examples preserve the other review choices and their source history; other loadouts and co-op retain their existing presentation.",
+    "build": "0.7.1.1451",
+    "pullRequest": 1910,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1910"
+  },
+  {
+    "id": "pr-1912",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Combat target boxes centre on the enemy",
+    "detail": "The gold target box now sits on the enemy sprite instead of below small enemies. Intent, HP and armor above the enemy stay clickable.",
+    "build": "0.7.1.1449",
+    "pullRequest": 1912,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1912"
+  },
+  {
+    "id": "pr-1909",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Cards use the new simple artwork, with elemental and status accents",
+    "detail": "Existing attack, smash, counter, evade, sweep and defend cards use the approved artwork by default. Display settings can switch back to Legacy. Spells use an outlined diamond marker. Side icons put Magic or Physical first, then damage or effect type and up to three status effects, with stack counts where known and at most five icons. Magical cards compose colors, backgrounds and small effects from their element and status tags; no new playable cards are added.",
+    "build": "0.7.1.1447",
+    "pullRequest": 1909,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1909"
+  },
+  {
+    "id": "pr-1914",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Poison, Psychic and Earth join the elements; weapons set their own damage type",
+    "detail": "Twelve new cards: four Rogue Poison cards (Asp Dart, Viper Strike, Septic Blade, Lethal Dose) and eight classless Psychic and Earth cards, which Herald and Starseer meet twice as often and can take as a starting spell. Five enemies resist a thematic element. Strike, Cheap Shot, Bloodhunter's Strike and Guard Counter deal your weapon's damage type; Ruinous Blow and Deathblow split Blunt and Force; Blood Tithe splits your weapon's type with Necrotic and Bleeds; Lethal Dose is a thrown vial with Precision that hits harder. Blight Bloom's text names its expanded-combat cap.",
+    "build": "0.7.1.1445",
+    "pullRequest": 1914,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1914"
+  },
+  {
+    "id": "pr-1916",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Build numbers in the changelog stay in order",
+    "detail": "Nothing changes in the game. When the build pipeline gives a merged change its final build number, it now also moves that entry so each day's list stays newest build first.",
+    "build": "0.7.1.1443",
+    "pullRequest": 1916,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1916"
+  },
+  {
+    "id": "pr-1917",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Saved enemy reactions are checked against their limit",
+    "detail": "Nothing changes in the game. New tests confirm that a save with too many enemy reactions on the stack, or one on a Counter's return hit, is refused when it loads.",
+    "build": "0.7.1.1443",
+    "pullRequest": 1917,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1917"
+  },
+  {
+    "id": "pr-1918",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "The enemy reaction code passes the architecture check",
+    "detail": "Nothing changes in the game. A setting in the enemy reaction code used a name the architecture check reserves for the browser, so it was renamed.",
+    "build": "0.7.1.1441",
+    "pullRequest": 1918,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1918"
+  },
+  {
+    "id": "pr-1915",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Character creation walks you through every step",
+    "detail": "Creating a character now goes Class, Attributes, Keepsake, Equipment, Feats, then Spells for classes that cast, then Review. The Feats step lets you browse every character, class and skill feat with the level it unlocks at; you start with none and earn them as you level. On a phone, tapping a feat opens its details right beneath it.",
+    "build": "0.7.1.1439",
+    "pullRequest": 1915,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1915"
+  },
+  {
+    "id": "pr-1913",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Every enemy break now staggers under combat ratings",
+    "detail": "With ratings on, a break of the Poise or Ward meter, by weapon or spell, and an Insanity break now apply Staggered as well as the skipped turn, so Executioner and other Staggered payoffs fire in normal runs. Spell breaks no longer add Magic Vulnerable on top; Staggered already raises damage of every type.",
+    "build": "0.7.1.1437",
+    "pullRequest": 1913,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1913"
+  },
+  {
+    "id": "pr-1906",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Enemies can react to your cards",
+    "detail": "In new runs, some enemies now answer what you play. A Gilded Knight may raise its guard just before a heavy hit lands, and a Court Duelist may strike back when you play a reaction, even a plain Block. Their reactions go on the same stack as yours and resolve last played first.",
+    "build": "0.7.1.1435",
+    "pullRequest": 1906,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1906"
+  },
+  {
+    "id": "pr-1905",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Chain reactions, and Counterstrike, Impact and Flux on cards",
+    "detail": "In new runs, cards tagged Reaction can be played during the enemy's turn, and several can be chained against one attack: the last one played resolves first. Counterstrike adds 50% to a card's numbers (75% when your stance beats the target's), Impact adds Poise damage on a hit or doubles the card's own, and Flux does the same for Ward. Burn and Crimson Blight now wear down Ward each turn. Saved runs keep their old rules.",
+    "build": "0.7.1.1433",
+    "pullRequest": 1905,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1905"
+  },
+  {
+    "id": "pr-1893",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "The design spec records the owner's audit decisions",
+    "detail": "Development-process change only, nothing in the game changes. The specification now describes a dozen more rules as the game plays them, and records four design decisions: bosses will offer a choice of three relics, the enemy cap will become a setting, the export button stays on debug pages, and LAN co-op is planned for a later release.",
+    "build": "0.7.1.1431",
+    "pullRequest": 1893,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1893"
+  },
+  {
+    "id": "pr-1863",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "The design spec matches the game again",
+    "detail": "Development-process change only, nothing in the game changes. The specification document was checked section by section against the game's code, and the audit is kept in docs/spec-audit/SPEC-AUDIT.md. The spec now describes what the game does: Actions and Stamina are one resource, the defaults are the ones the game ships, and rules that were never built are gone. The few points that need a design decision are listed in the audit.",
+    "build": "0.7.1.1431",
+    "pullRequest": 1863,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1863"
+  },
+  {
+    "id": "pr-1904",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Rules written for enemy reactions on the reaction stack",
+    "detail": "Nothing changes in the game yet. The specification now describes enemies that react to your cards: a Gilded Knight can guard before a heavy hit lands, and a Court Duelist can answer any reaction you play, a plain Block included.",
+    "build": "0.7.1.1431",
+    "pullRequest": 1904,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1904"
+  },
+  {
+    "id": "pr-1902",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Rules written for chained reactions and three new card traits",
+    "detail": "Nothing changes in the game yet. The specification now describes playing several Reaction cards against one enemy action, resolving last played first, and the Counterstrike, Impact and Flux card traits that will follow.",
+    "build": "0.7.1.1429",
+    "pullRequest": 1902,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1902"
+  },
+  {
+    "id": "pr-1900",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Cards rebalanced; Insanity now staggers; Necrotic Blight lasts the fight",
+    "detail": "Thirteen cards now match their rarity and cost. Blood Offering, Exsanguinate, Star Slicer, Umbral Ward, Iron Skin, Ash Circle, Vanish, Binding Parry and Draw Cut hit or guard for less. Comet Fragment, Bloodhunter's Strike and Shield Crash got stronger, and Sundering Hew now applies Vulnerable. Weapon attacks now have a fixed damage type: slashing cards apply Bleed. An Insanity break now Staggers, so Executioner and other Staggered bonuses apply. Necrotic damage applies Necrotic Blight, which lasts the whole fight; other Blight still fades after 3 turns. Holy hits now cleanse in new runs. Frost and Insanity exposures now boost even small tagged hits, and Feint applies Prepare at every rank.",
+    "build": "0.7.1.1427",
+    "pullRequest": 1900,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1900"
+  },
+  {
+    "id": "pr-1897",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "The approved Reaver greatsword sequences now play in solo combat",
+    "detail": "Attack and Smash use the six selected phases; Guard, Parry and Resisted share the weighted impact order, while Guard-tag and Evasion-tag counters follow their separate approved routes. Actual combat receipts choose reactions and retaliation, and actions restore the originating stance. Other loadouts and co-op retain their existing presentation. Labeled review animations and thirty additional stance concepts remain available separately.",
+    "build": "0.7.1.1425",
+    "pullRequest": 1897,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1897"
+  },
+  {
+    "id": "pr-1901",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "The link check's self-test covers the Combat Rounds docs",
+    "detail": "Nothing changes in the game. The link checker's self-test now copies the Combat Rounds docs folder, so a test that imports from it no longer marks the self-test untestable.",
+    "build": "0.7.1.1423",
+    "pullRequest": 1901,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1901"
+  },
+  {
+    "id": "pr-1895",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Development builds get their build number from a pipeline",
+    "detail": "Nothing changes in the game. Pull requests no longer commit a build number; after a merge lands, a bot rebuilds and stamps each receipt with the build it actually shipped in.",
+    "build": "0.7.1.1421",
+    "pullRequest": 1895,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1895"
+  },
+  {
+    "id": "pr-1888",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Combat Rounds preview is now in the codebase",
+    "detail": "The alternative round-based combat design and its rules engine are brought over as a preview with its own tests and SPEC section. Nothing in play changes: live combat does not use it yet.",
+    "build": "0.7.1.1419",
+    "pullRequest": 1888,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1888"
+  },
+  {
+    "id": "pr-1890",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Reaver greatsword combat stances now use selected artwork",
+    "detail": "A Reaver in the default armor carrying only a greatsword now shows selected poses for Sweep, Counter and Smash, holds its Evade pose when ready, and shows its Guard Break reaction when an enemy breaks its guard. These reactions use the five selected greatsword paintings.",
+    "build": "0.7.1.1417",
+    "pullRequest": 1890,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1890"
+  },
+  {
+    "id": "pr-1885",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "On desktop, the Combat log and Reaction sit in the bottom corners",
+    "detail": "The Combat log button now sits in the bottom-left corner and the Reaction toggle in the bottom-right, so the strip above your cards is gone and the hand sits lower on the screen with more room for the battlefield. Phone and tablet are unchanged.",
+    "build": "0.7.1.1406",
+    "pullRequest": 1885,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1885"
+  },
+  {
+    "id": "pr-1884",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Each fighter's readout sits above or below it, and the battlefield is narrower on wide screens",
+    "detail": "A front-row enemy's health and intent now hang just below its feet instead of drifting off to one side, so every readout stays with its own fighter. On wide screens the fighters stand closer to the middle, and the enemies' back row steps a little to the right so it stands clear of the front row. Switching back to the Classic look mid-fight keeps you in a row Classic has.",
+    "build": "0.7.1.1404",
+    "pullRequest": 1884,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1884"
+  },
+  {
+    "id": "pr-1876",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Spell range follows how a spell is delivered; new physical and magical marks in the deck editor",
+    "detail": "In expanded-combat runs a spell's range now follows its delivery: projectile spells such as Comet Fragment reach Ranged, bladed spells such as Starblade Phalanx (now a melee spell) strike at Melee, and the rest stay at Reach (runs from before expanded combat are unchanged). The deck editor shows the same range combat uses, marks physical cards with a silver Smash sigil and spells with a blue flame, and a Ranged card like Ricochet reads just \"Ranged\".",
+    "build": "0.7.1.1402",
+    "pullRequest": 1876,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1876"
+  },
+  {
+    "id": "pr-1886",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Picking a card shows its stance before you play it",
+    "detail": "Selecting a card in hand puts your fighter in that card's stance, and the stance mark above their head changes to match; click through your hand and both follow each card, and cancelling returns them to your last stance. Playing the card swings from that stance, and afterwards your fighter holds it — into the next turn too — until you play another card. The stances are attack, smash, sweep, defend, counter and prepare: spells and cards that are none of the others show prepare, and sweep now has its own mark. Smash holds each class's painted wind-up, and every swing now leaves from your stance and returns to it instead of snapping to a neutral pose. Co-op seats hold their stance across turns but do not show a preview while selecting.",
+    "build": "0.7.1.1401",
+    "pullRequest": 1886,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1886"
+  },
+  {
+    "id": "pr-1875",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Widescreen combat uses the desktop layout",
+    "detail": "On widescreen monitors the combat screen now uses the same band sizes as desktop: a taller hand with the larger desktop cards in a row under the Combat log and the compact 450px footer. Turning a tablet into a desktop-width window now redraws the battlefield for the new layout. Phone and tablet layouts are unchanged.",
+    "build": "0.7.1.1393",
+    "pullRequest": 1875,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1875"
+  },
+  {
+    "id": "pr-1881",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Co-op is set aside for now",
+    "detail": "The title menu no longer offers Forsaken Together while co-op is reworked. Nothing else changes, and solo play is untouched.",
+    "build": "0.7.1.1389",
+    "pullRequest": 1881,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1881"
+  },
+  {
+    "id": "pr-1870",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Combatants stand on an even grid, and any part of an enemy's square targets it",
+    "detail": "In the default view the battlefield is now one even grid of three lanes, leaning on a diagonal into the distance: enemies in a back row and a front row, your party in one row nearest you, with open ground between you and them. Each square has a shadow where its fighter's feet stand. Enemies fill the back row first (one in the middle, two on the outer lanes, three across), then the front row, up to six. You start in the left lane. Tapping anywhere in an occupied enemy square selects that enemy, or plays your readied card or flask on it. Moving now picks one of the three lanes in your row. The Classic look is unchanged.",
+    "build": "0.7.1.1387",
+    "pullRequest": 1870,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1870"
+  },
+  {
+    "id": "pr-1878",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Desktop combat looks like the phone",
+    "detail": "On desktop the hand is taller and its cards are much larger. They sit in a tight row just under the Combat log / Reaction row, and the footer is compact. Enemies stand together on one ground line, and the castle and trees of the horizon show along the top of the battlefield. The Combat log row, intent badges, stance mark and footer words are larger. Phone, tablet and widescreen layouts are unchanged.",
+    "build": "0.7.1.1363",
+    "pullRequest": 1878,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1878"
+  },
+  {
+    "id": "pr-1879",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Rest sites: grounded art, a clearer order, and a way back in",
+    "detail": "The traveler and campfire now sit on the shrine floor instead of floating, on desktop and phone. The choices read Rest, Level up, Upgrade, Flask, then the rest. After leaving a rest site, its node stays clickable on the map until you pick a new one, so you can go back for something you forgot; what you already took stays taken.",
+    "build": "0.7.1.1361",
+    "pullRequest": 1879,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1879"
+  },
+  {
+    "id": "pr-1868",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Deck editor: (i) centred under the art, grey Basic/Cantrip badge, vertical grip",
+    "detail": "The inspect (i) sits centred on the bottom edge of the card art, the rank badge sits higher and reads grey at rank 0 (Basic, Cantrip), and the phone grip is vertical again.",
+    "build": "0.7.1.1359",
+    "pullRequest": 1868,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1868"
+  },
+  {
+    "id": "pr-1872",
+    "date": "2026-10-12",
+    "group": "2026-10-12",
+    "summary": "Co-op: the blow that ends a fight reaches the combat log",
+    "detail": "When your attack killed the last enemy in co-op, the combat log and the Full log missed that turn's card, damage and death entries before the reward screen closed them. They now appear.",
+    "build": "0.7.1.1357",
+    "pullRequest": 1872,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1872"
+  },
+  {
+    "id": "pr-1849",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Attacks play in order, Inspect buttons only on the selected fighter, and the game says why a reaction wasn't offered",
+    "detail": "STAGGERED, COUNTERED, EVADED, CRITICAL and GUARD BREAK now rise over the fighter they happen to, and a short note above the Reaction switch says why a Counter or Sweep wasn't offered. The combat log now opens at its middle size, and its Full log button shows every entry of the fight on one full-screen page. An attack now plays the swing and the return to stance first, then the target's reaction, then the damage number, and only then does the health bar change. A fighter's Inspect \"i\" now shows only while that fighter is selected, and it appears already in its place instead of jumping there; a card's Inspect appears once, above the card. Your stance and status icons stay visible when your hero isn't selected. When an enemy attacks and you hold a Counter or Sweep the game can't offer, the combat log says why (for example, a Counter can't answer a Sweep, or you're short on SP), and a Smash that breaks Guard is logged. In co-op, the same callouts and the \"no reaction\" note now show too. On a phone the note sits above your HP bar instead of covering it, and Full log is a small gold text link in the log's header. In co-op your own attacks now play in that same order too, and floating numbers no longer vanish when the board redraws. On phones the hand cards are bigger and sit right under the Combat log / Reaction row while staying readable, enemies stand further back on short screens, your stance shows above your hero while it isn't selected, and co-op's Ward/Barrier readout is a small label shown only on the selected hero. The Draw, Discard and Potions art in the footer keeps its shape instead of being squashed flat, a Smash that breaks Guard and kills its target still shows GUARD BREAK, and in co-op the blow that ends a fight now plays on the battlefield before the reward screen. On short phones the backdrop keeps its horizon in view, enemies stand a little higher, and the Combat log / Reaction row and cards sit a little lower. Fighters and their badges have a stronger dark outline, floor shadows are as wide as the health bar, your hero always shows a stance mark above the head, and your hero's selection outline is blue.",
+    "build": "0.7.1.1355",
+    "pullRequest": 1849,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1849"
+  },
+  {
+    "id": "pr-1850",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Deck editor: one card list with − and ＋, and every card shows its stance",
+    "detail": "Removing a card no longer jumps to the search box (on phones it opened the keyboard). Search is off for now and each list has one compact title row. Every row in the card library now has − count ＋ buttons, and the inspected card offers both Add to deck and Remove from deck. Phones drop the Library / Inspect / Deck tabs for one list; inspecting opens over it and Back returns to it, and a Draw order view appears only when Play in deck order is on. Each card names its stance (Attack, Defend, Counter, Smash, Sweep or Ranged; otherwise Spell, Power, Consumable or Skill) and its range (Melee, Reach or Ranged), with its rank as a badge on the art (Cantrip or Basic at rank 0) and a physical or magical mark beside its costs. A selected card shows an (i) on its art; the (i), or pressing the art again, opens Inspect.",
+    "build": "0.7.1.1345",
+    "pullRequest": 1850,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1850"
+  },
+  {
+    "id": "pr-1861",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Every feature, chore and fix now waits for the owner's review before it reaches dev",
+    "detail": "Development-process change only, nothing in the game changes. Sessions open the pull request with a preview and screenshots, then wait; they merge into dev and promote to test only when the owner names that pull request.",
+    "build": "0.7.1.1315",
+    "pullRequest": 1861,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1861"
+  },
+  {
+    "id": "pr-1864",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Begin says so when a new run cannot start",
+    "detail": "If the game cannot save your profile when you press Begin or Quick start, a \"This run could not start\" banner now explains why. Before, the press simply did nothing.",
+    "build": "0.7.1.1313",
+    "pullRequest": 1864,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1864"
+  },
+  {
+    "id": "pr-1860",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Branch previews start a game again",
+    "detail": "On a branch preview page, pressing Begin after creating a character (or Quick start) did nothing. The preview plays the game in a locked-down frame that refuses browser storage and the cross-tab save lock, and every new run failed on that lock. The game already keeps saves in memory there, and memory saves no longer ask for the lock, so the run starts and the opening plays. In a normal browser, saves work as before.",
+    "build": "0.7.1.1308",
+    "pullRequest": 1860,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1860"
+  },
+  {
+    "id": "pr-1855",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "The Workbench tests pass on Windows and macOS too",
+    "detail": "Development-process change only, nothing in the game changes. Four tests added with the Workbench compared file paths written with forward slashes, so they failed on Windows, where the tools correctly use backslashes; they now build the expected paths the same way the tools do. On macOS the Workbench's file watcher no longer treats folder events, or the watched folder reported under its own name, as changed files, so a Mac no longer triggers stray reloads. The test runner now flushes its report before exiting, so a failing macOS test is named in the CI log.",
+    "build": "0.7.1.1306",
+    "pullRequest": 1855,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1855"
+  },
+  {
+    "id": "pr-1854",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Your discard pile reshuffles back in, and your hand size now grows",
+    "detail": "Holding cards at the end of a turn no longer stops the discard pile from coming back: when your draw pile can't cover the next turn's draw, the whole discard is shuffled in with your unplayed cards. Hand size now starts at 7 and grows with Intelligence (one more for every five points above 4, up to 20) instead of a flat 15. When the cards you keep already fill your hand, the end-of-turn discard lets you throw away as many as you like before you draw.",
+    "build": "0.7.1.1305",
+    "pullRequest": 1854,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1854"
+  },
+  {
+    "id": "pr-1857",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Generated game data is no longer rewritten when it hasn't changed",
+    "detail": "Development-process change only, nothing in the game changes. Two data builders rewrote their output on every run, so a test reading that data at the same moment could fail at random in CI; they now write only what changed.",
+    "build": "0.7.1.1303",
+    "pullRequest": 1857,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1857"
+  },
+  {
+    "id": "pr-1852",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Choosing equipment is a sortable table now",
+    "detail": "When you press Replace or Choose on a slot, the Armoury lists every item that fits as a row: portrait, name and kind, an Equipped here / Not equipped / held-elsewhere status, and Inspect plus Equip, Move here or Unequip. Sort by Item or Status, show the items that don't fit along with the reason, and Inspect opens the full card in place. A single sceptre held in your main hand now says so and offers Move here for the off hand.",
+    "build": "0.7.1.1302",
+    "pullRequest": 1852,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1852"
+  },
+  {
+    "id": "pr-1829",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "One Workbench for every authoring tool",
+    "detail": "For people building the game rather than playing it: one window now opens the content, interface and pose editors and every preview page, with the game running beside them and reloading when a file is saved. Game data can also be exported as JSON tables for Unity or Unreal. Nothing in the game itself changes.",
+    "build": "0.7.1.1299",
+    "pullRequest": 1829,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1829"
+  },
+  {
+    "id": "pr-1851",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Preview builds for every open branch now publish",
+    "detail": "Development-process change only, nothing in the game changes. A branch whose name starts with a capital letter, such as Chore/…, now gets its playable preview page like any other open branch, instead of a broken link.",
+    "build": "0.7.1.1298",
+    "pullRequest": 1851,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1851"
+  },
+  {
+    "id": "pr-1848",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Game rules updated for clearer combat feedback",
+    "detail": "Rules document change only, nothing in the game changes yet. The rules now say an attack plays the swing and the return to stance before the target reacts, and before numbers and health bars update. They also say the game will report why a reaction wasn't offered and when a Smash breaks Guard.",
+    "build": "0.7.1.1297",
+    "pullRequest": 1848,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1848"
+  },
+  {
+    "id": "pr-1846",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "A test now passes on Windows too",
+    "detail": "Development-process change only, nothing in the game changes. One source check compared file paths with forward slashes and failed on the Windows test runners at Test; it now reads paths the same way on every system.",
+    "build": "0.7.1.1296",
+    "pullRequest": 1846,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1846"
+  },
+  {
+    "id": "pr-1843",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Combat HUD reads better on every screen size, and its look is tunable from the HUD studio",
+    "detail": "On desktop and widescreen the Combat log and Reaction switch now sit just above your cards instead of at the far screen edges, and the top health bar no longer stretches across the whole screen (it also stops at 60% on tablets). On every screen, health and intent numbers sit on dark plates with a soft shadow, and the selected hero's panel uses the game's serif lettering with gold Poise and Ward labels and a green frame. The game now tells phones, tablets, desktops and ultra-wide screens apart (a sideways phone counts as a tablet), and each gets its own look from a file the HUD Component Studio exports.",
+    "build": "0.7.1.1295",
+    "pullRequest": 1843,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1843"
+  },
+  {
+    "id": "pr-1834",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Faster checks on every change; release builds the Windows installer",
+    "detail": "Development-process change only, nothing in the game changes. Pull requests now run a quick smoke check of about five minutes, the full test suites run when a build is promoted to Test, and Release runs the final polish checks and builds the Windows installer, whose download now follows the Release channel. Each open feature branch gets its own playable build, the README refreshes itself, and new high-resolution art moves to the art repository automatically.",
+    "build": "0.7.1.1293",
+    "pullRequest": 1834,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1834"
+  },
+  {
+    "id": "pr-1841",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Old QA screenshots cleared out of the project",
+    "detail": "Development housekeeping only, nothing in the game changes. About 237 MB of dated QA screenshots and run reports leave the repository; new QA runs go to CI artifacts, and the card layer editor and card preview pages the QA tools use now live under tools/.",
+    "build": "0.7.1.1292",
+    "pullRequest": 1841,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1841"
+  },
+  {
+    "id": "pr-1835",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Fights move faster at every pace",
+    "detail": "The pause between actions and the wait after the last hit are about 40% shorter, and a turn banner now clears before the next action starts, and the stagger between hits, attack lunges and impacts are up to 25% shorter, so Normal fights no longer drag. Normal is the new baseline; Slow and Fast scale from it, and Instant is unchanged. Hit timing stays readable: the wind-up and impact frames never lose more than a quarter of their time.",
+    "build": "0.7.1.1291",
+    "pullRequest": 1835,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1835"
+  },
+  {
+    "id": "pr-1830",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Menus and pop-ups no longer reset the screen, and map taps answer faster on phones",
+    "detail": "Choosing a slot, going back or deleting a save in the title's New Game window updates only that window: the title no longer redraws or replays its opening. Importing saves no longer reloads the page, and Settings keeps your place when it redraws. On the map, a tapped node stays under your finger, pressing a selected node again travels to it, and selecting a node takes about half as long.",
+    "build": "0.7.1.1289",
+    "pullRequest": 1830,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1830"
+  },
+  {
+    "id": "pr-1833",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Fighters visibly flinch when hit",
+    "detail": "When your hero takes damage they now play a short seven-frame hurt pose, flashing red on frames 2, 4 and 6 while they are knocked back a step. This replaces the brief rainbow flicker. Enemies recoil further and their red flash starts at the moment of impact. With Reduce flashes on, the hurt pose plays without the red.",
+    "build": "0.7.1.1287",
+    "pullRequest": 1833,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1833"
+  },
+  {
+    "id": "pr-1832",
+    "date": "2026-10-11",
+    "group": "2026-10-11",
+    "summary": "Worker branch rules documented; feature-branch playable builds announced",
+    "detail": "Development-process change only, nothing in the game changes. The contributor guides describe how worker branches flow into a feature branch and when they are cleaned up. The README names where each open feature, fix or chore branch's playable build will live; publishing those builds is still pending, so the link does not work yet.",
+    "build": "0.7.1.1283",
+    "pullRequest": 1832,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1832"
+  },
+  {
     "id": "pr-1831",
     "date": "2026-10-11",
     "group": "2026-10-11",

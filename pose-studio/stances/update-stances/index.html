@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Update Stances · Art review</title>
+  <link rel="stylesheet" href="review.css">
+  <script src="review.mjs" type="module"></script>
+</head>
+<body>
+  <a class="skip-link" href="#options">Skip to concepts</a>
+  <main>
+    <header class="masthead">
+      <a class="wordmark" href="../../../README.md">ASHENSPIRE <span>POSE STUDIO</span></a>
+      <span class="phase">ART EXPLORATION · 11 OCT 2026</span>
+    </header>
+    <section class="intro" aria-labelledby="title">
+      <p class="eyebrow">UPDATE STANCES / CHOICES AND FOLLOW-UP</p>
+      <h1 id="title">Weight. Balance. Impact.</h1>
+      <p class="lead">Five greatsword poses are chosen for Sweep, Counter, Guard-break, Evade and Smash.</p>
+      <div class="scope-note"><a href="sequence-review/index.html">Latest labeled sequence-order review</a> uses the newer image choices; gameplay wiring remains unchanged. The original five selected poses are delivered and merged in PR #1890. Runtime and gameplay evidence are tracked in <a href="../../../docs/design/update-stances/delivery-status.md">delivery status</a>. Reaver is the first appearance pilot; other classes remain planned.</div>
+    </section>
+    <section class="coverage" aria-label="Exploration coverage">
+      <div><strong id="ready-count">0</strong><span>concepts available</span><small>50 director-reviewed; original Guard-break04 needs revision</small></div>
+      <div><strong id="confirmed-count">5</strong><span>original delivered role selections</span><small>Historical PR #1890 choices</small></div>
+      <div><strong>30</strong><span>follow-up options requested</span><small>30 new concepts approved; three replacements</small></div>
+      <div class="coverage-detail"><span>Weapon groups</span><p>Sword + shield, greatsword, staff, bow, dagger, dual daggers, single sword, spear, halberd, unarmed.</p><small>Full scope is planned; the first review covers greatsword only.</small></div>
+    </section>
+    <section class="scope-note" aria-labelledby="confirmed-heading">
+      <h2 id="confirmed-heading">Original delivery source choices</h2>
+      <ul><li>Sweep: Smash04</li><li>Counter: Smash06</li><li>Guard-break: Guard-break06</li><li>Evade: Smash08</li><li>Smash: Smash05</li></ul>
+      <p>The extra image of Guard-break03 is context only. These five numeric choices are authoritative. Exact crops and source provenance are in the <a href="selections.json">selection manifest</a>.</p>
+      <p>The broader baseline remains 600 planned weapon-specific options: ten per weapon group per family. The separate thirty-option follow-up covers greatsword only.</p>
+      <p id="followup-summary" role="status" aria-live="polite">30 follow-up concepts generated and director-reviewed; three approved replacements retain their original IDs.</p>
+      <p>Names describe the actual paintings. Sweep17, Counter15 and Evade20 use separately approved replacement figures under their original option IDs; their old board depictions are superseded. See the <a href="../../../docs/design/update-stances/followup-art-review.md">director review record</a>; flagged grips remain unavailable for favorites.</p>
+    </section>
+    <div class="review-toolbar">
+      <div class="filters">
+        <label>Family<select id="family-filter"><option value="all">All families in this review</option><option value="smash">Smash stance</option><option value="guard-break">Guard break</option><option value="sweep">Sweep follow-up · 11–20</option><option value="counter">Counter follow-up · 11–20</option><option value="evade">Evade follow-up · 11–20</option></select></label>
+        <label>Weapon<select id="weapon-filter"><option value="all">All available weapons</option><option value="greatsword">Greatsword</option></select></label>
+        <label>Appearance<select id="class-filter"><option value="all">All available classes</option><option value="reaver">Reaver</option></select></label>
+      </div>
+      <div class="choice-tools"><button id="copy-choices" class="primary" type="button">Copy choices <span id="choice-count">0</span></button><button id="clear-choices" type="button">Clear favorites</button></div>
+    </div>
+    <p class="review-help">Original delivered roles stay labeled on their source cards. Browser favorites do not alter those choices. Original landscape sheets use three columns and two rows. Follow-up portrait sheets use two columns and three rows, with options 11–15 on A and 16–20 on B. Every sheet has five concepts in reading order and an empty bottom-right cell. Missing or unreviewed follow-up options cannot be favorited. Runtime delivery is tracked separately.</p>
+    <p id="review-status" role="status" aria-live="polite"></p>
+    <div id="options" tabindex="-1"></div>
+    <section id="copy-fallback" class="copy-fallback" hidden aria-label="Copy selected choices">
+      <label for="choices-text">Copy these choices</label><textarea id="choices-text" readonly rows="8"></textarea><button id="close-copy" type="button">Close</button>
+    </section>
+    <footer>
+      <span>Source sheets are preserved. Full-sheet presentation keeps feet, capes and weapon tips visible.</span>
+      <nav aria-label="Review references"><a href="../../../docs/design/update-stances/current-art.md">Current art inventory</a><a href="../../../docs/design/update-stances/references.md">Pose references</a><a href="../../../docs/design/update-stances/integration-notes.md">Integration notes</a></nav>
+      <p>All thirty follow-up concepts are generated and director-approved. Replacement favorites require their approved source images to load. These intact boards are concept comparisons, not new runtime sprites. Other weapons, class appearances, full sequences and magic coverage remain planned. Co-op development is paused.</p>
+    </footer>
+  </main>
+  <dialog id="sheet-dialog" aria-labelledby="sheet-title">
+    <div class="dialog-toolbar"><h2 id="sheet-title">Original source sheet</h2><button id="close-sheet" type="button" aria-label="Close source sheet">Close ×</button></div>
+    <div class="sheet-scroll"><img id="sheet-image" alt=""></div>
+    <p id="sheet-description"></p>
+    <a id="sheet-link" href="#" target="_blank" rel="noopener">Open original image</a>
+  </dialog>
+</body>
+</html>

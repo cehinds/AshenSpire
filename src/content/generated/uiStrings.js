@@ -34,15 +34,57 @@ export const uiStrings = [
     "id": "combat.protection.block",
     "extends": "",
     "short": "Block",
-    "full": "Absorbs attack damage.",
+    "full": "Absorbs physical attack damage.",
     "tip": "Block"
   },
   {
     "id": "combat.protection.ward",
     "extends": "",
     "short": "Arcane Ward",
-    "full": "Block granted by magical guards. Absorbs attack damage after ordinary Block.",
+    "full": "Ward guards against magic. Full at the start of every fight, it absorbs each magic hit after Barrier (each hit still lets at least 1 damage through) and is spent by what it absorbs; a Ward break costs Stamina next turn. Block does not stop magic. It does not regenerate unless a card, feat, class feature or relic restores it.",
     "tip": "Arcane Ward"
+  },
+  {
+    "id": "combat.card.splitDamage",
+    "extends": "",
+    "short": "{amount} damage ({physical} {physicalType}, {magic} {magicType})",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.card.splitBlock",
+    "extends": "",
+    "short": "{verb} {block} Block and {ward} Ward",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.card.magicPhysicalDamage",
+    "extends": "",
+    "short": "{magic} · {physical}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.protection.poise",
+    "extends": "",
+    "short": "Poise",
+    "full": "Poise guards against physical hits. Full at the start of every fight, it absorbs each physical hit after Block (each hit still lets at least 1 damage through) and is spent by what it absorbs. When it breaks, a player pays 1 Stamina next turn; an enemy is interrupted. It does not regenerate unless a card, feat, class feature or relic restores it.",
+    "tip": "Poise"
+  },
+  {
+    "id": "combat.protection.poiseValue",
+    "extends": "",
+    "short": "Poise {value}/{max}",
+    "full": "{value} of {max} Poise still stands. The gold trim on the HP bar shows it while any is left.",
+    "tip": "Poise {value}/{max}"
+  },
+  {
+    "id": "combat.protection.barrier",
+    "extends": "",
+    "short": "Barrier",
+    "full": "Barrier is blue, the layer above Ward. Magic sources and cards that add Ward refill Ward first and the rest becomes Barrier; other sources add Barrier directly. Barrier soaks magic hits completely before Ward and lasts until the start of its owner's next turn.",
+    "tip": "Barrier"
   },
   {
     "id": "combat.protection.poiseGuard",
@@ -97,6 +139,13 @@ export const uiStrings = [
     "id": "combat.log.actions",
     "extends": "",
     "short": "Actions by round",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.log.full",
+    "extends": "",
+    "short": "Full log",
     "full": "",
     "tip": ""
   },
@@ -188,6 +237,279 @@ export const uiStrings = [
     "id": "combat.reaction.mp",
     "extends": "",
     "short": "{amount} MP",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.reaction.stack",
+    "extends": "",
+    "short": "On the stack",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.reaction.resolve",
+    "extends": "",
+    "short": "Resolve",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.reaction.helpStack",
+    "extends": "",
+    "short": "",
+    "full": "Choose another card to add on top, or Resolve to play the stack, last card first.",
+    "tip": ""
+  },
+  {
+    "id": "combat.callout.staggered",
+    "extends": "",
+    "short": "STAGGERED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.callout.disrupted",
+    "extends": "",
+    "short": "DISRUPTED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.callout.countered",
+    "extends": "",
+    "short": "COUNTERED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.callout.evaded",
+    "extends": "",
+    "short": "MISSED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.callout.critical",
+    "extends": "",
+    "short": "CRITICAL",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.callout.guardBreak",
+    "extends": "",
+    "short": "GUARD BREAK",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.callout.wardBreak",
+    "extends": "",
+    "short": "WARD BREAK",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.callout.barrierBreak",
+    "extends": "",
+    "short": "BREAK",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.callout.poiseBreak",
+    "extends": "",
+    "short": "POSTURE BREAK",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.callout.blockBreak",
+    "extends": "",
+    "short": "BREAK",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.callout.interrupted",
+    "extends": "",
+    "short": "INTERRUPTED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.callout.resisted",
+    "extends": "",
+    "short": "RESISTED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.callout.blocked",
+    "extends": "",
+    "short": "BLOCKED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.callout.immune",
+    "extends": "",
+    "short": "IMMUNE",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.venom",
+    "extends": "",
+    "short": "POISONED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.burn",
+    "extends": "",
+    "short": "BURNED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.bleed",
+    "extends": "",
+    "short": "BLEEDING",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.bleeding",
+    "extends": "",
+    "short": "BLEEDING",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.frost",
+    "extends": "",
+    "short": "FROSTED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.frozen",
+    "extends": "",
+    "short": "FROZEN",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.chilled",
+    "extends": "",
+    "short": "CHILLED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.paralysis",
+    "extends": "",
+    "short": "PARALYZED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.sleep",
+    "extends": "",
+    "short": "ASLEEP",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.weak",
+    "extends": "",
+    "short": "WEAKENED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.vulnerable",
+    "extends": "",
+    "short": "VULNERABLE",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.magicVulnerable",
+    "extends": "",
+    "short": "VULNERABLE",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.frail",
+    "extends": "",
+    "short": "BRITTLED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.dazed",
+    "extends": "",
+    "short": "DAZED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.offBalance",
+    "extends": "",
+    "short": "UNBALANCED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.prone",
+    "extends": "",
+    "short": "KNOCKED DOWN",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.grounded",
+    "extends": "",
+    "short": "GROUNDED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.insanity",
+    "extends": "",
+    "short": "MADDENED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.madness",
+    "extends": "",
+    "short": "MADDENED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.crimsonBlight",
+    "extends": "",
+    "short": "BLIGHTED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.frostExposed",
+    "extends": "",
+    "short": "EXPOSED",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.status.applied.insanityExposed",
+    "extends": "",
+    "short": "EXPOSED",
     "full": "",
     "tip": ""
   },
@@ -665,6 +987,13 @@ export const uiStrings = [
     "extends": "",
     "short": "Owned: {count}",
     "full": "Copies of this card already in your deck.",
+    "tip": ""
+  },
+  {
+    "id": "card.tag.tooltip",
+    "extends": "",
+    "short": "",
+    "full": "{name} — {blurb}",
     "tip": ""
   },
   {
@@ -5225,6 +5554,20 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "deckEditor.stepperCount",
+    "extends": "",
+    "short": "{inDeck}/{owned}",
+    "full": "{inDeck} in deck of {owned} owned.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.stepperCount.unlimited",
+    "extends": "",
+    "short": "{inDeck}/∞",
+    "full": "{inDeck} in deck; unlimited copies.",
+    "tip": ""
+  },
+  {
     "id": "deckEditor.count",
     "extends": "",
     "short": "×{count}",
@@ -5257,6 +5600,132 @@ export const uiStrings = [
     "extends": "",
     "short": "－",
     "full": "Take {name} out of the deck.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.stance.attack",
+    "extends": "",
+    "short": "Attack",
+    "full": "Attack stance card.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.stance.defend",
+    "extends": "",
+    "short": "Defend",
+    "full": "Defend stance card.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.stance.counter",
+    "extends": "",
+    "short": "Counter",
+    "full": "Counter stance card.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.stance.smash",
+    "extends": "",
+    "short": "Smash",
+    "full": "Smash stance card.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.stance.sweep",
+    "extends": "",
+    "short": "Sweep",
+    "full": "Sweep stance card.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.stance.ranged",
+    "extends": "",
+    "short": "Ranged",
+    "full": "Ranged stance card.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.stance.spell",
+    "extends": "",
+    "short": "Spell",
+    "full": "Spell card.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.stance.skill",
+    "extends": "",
+    "short": "Skill",
+    "full": "Skill card.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.stance.power",
+    "extends": "",
+    "short": "Power",
+    "full": "Power card.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.stance.consumable",
+    "extends": "",
+    "short": "Consumable",
+    "full": "Consumable card.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.rank",
+    "extends": "",
+    "short": "Rank {rank}",
+    "full": "Card rank {rank}.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.rank.cantrip",
+    "extends": "",
+    "short": "Cantrip",
+    "full": "Rank 0 spell, a cantrip.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.rank.basic",
+    "extends": "",
+    "short": "Basic",
+    "full": "Rank 0 combat maneuver.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.range.melee",
+    "extends": "",
+    "short": "Melee",
+    "full": "Melee range: reaches the enemy in front.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.range.reach",
+    "extends": "",
+    "short": "Reach",
+    "full": "Reach range: reaches past the front enemy.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.range.ranged",
+    "extends": "",
+    "short": "Ranged",
+    "full": "Ranged: reaches any enemy.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.camp.physical",
+    "extends": "",
+    "short": "Physical",
+    "full": "Physical card.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.camp.magical",
+    "extends": "",
+    "short": "Magical",
+    "full": "Magical card.",
     "tip": ""
   },
   {
@@ -6083,6 +6552,13 @@ export const uiStrings = [
     "extends": "",
     "short": "Art quality",
     "full": "Auto loads lighter art on a narrow or phone-sized screen, with Data Saver on or on a device with little memory, and the best art this game carries otherwise. Light and High pick one. Local high-res uses full-resolution art from a folder on this device, either served beside the game or one you choose, and keeps the built-in art for anything it lacks. This device only.",
+    "tip": ""
+  },
+  {
+    "id": "settings.row.cardArtStyle",
+    "extends": "",
+    "short": "Card artwork",
+    "full": "Simple uses the new card artwork with elemental and status accents. Legacy keeps the original illustrations.",
     "tip": ""
   },
   {
@@ -7521,6 +7997,20 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "deckEditor.inspectIcon",
+    "extends": "",
+    "short": "i",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.drawOrder",
+    "extends": "",
+    "short": "Draw order",
+    "full": "Reorder the deck in the order it is drawn.",
+    "tip": ""
+  },
+  {
     "id": "deckEditor.equipmentNotFound",
     "extends": "",
     "short": "Equipment not found",
@@ -7797,6 +8287,125 @@ export const uiStrings = [
     "id": "armoury.action.equipTo",
     "extends": "",
     "short": "Equip to {slot}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.caption",
+    "extends": "",
+    "short": "Items for {slot}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.col.item",
+    "extends": "",
+    "short": "Item",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.col.status",
+    "extends": "",
+    "short": "Status",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.col.actions",
+    "extends": "",
+    "short": "Actions",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.status.here",
+    "extends": "",
+    "short": "Equipped here",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.status.free",
+    "extends": "",
+    "short": "Not equipped",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.status.elsewhere",
+    "extends": "",
+    "short": "{slot} {n}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.status.nofit",
+    "extends": "",
+    "short": "Doesn't fit",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.onlyCopy",
+    "extends": "",
+    "short": "Only copy: moving it empties {slot} {n}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.reason.kind",
+    "extends": "",
+    "short": "Doesn't fit {slot}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.reason.hand",
+    "extends": "",
+    "short": "Only fits the other hand",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.showAll",
+    "extends": "",
+    "short": "Show items that don't fit",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.fitsOnly",
+    "extends": "",
+    "short": "Hide items that don't fit",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.hide",
+    "extends": "",
+    "short": "Hide",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.act.equip",
+    "extends": "",
+    "short": "Equip",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.act.move",
+    "extends": "",
+    "short": "Move here",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.picker.act.unequip",
+    "extends": "",
+    "short": "Unequip",
     "full": "",
     "tip": ""
   },
@@ -9071,6 +9680,286 @@ export const uiStrings = [
     "id": "combat.intent.partial",
     "extends": "",
     "short": "{stance} ?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "card.tags.evade",
+    "extends": "",
+    "short": "Evade",
+    "full": "Evade or dodge an incoming action.",
+    "tip": ""
+  },
+  {
+    "id": "creation.category.attributes",
+    "extends": "",
+    "short": "Attributes",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.category.keepsake",
+    "extends": "",
+    "short": "Keepsake",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.category.feats",
+    "extends": "",
+    "short": "Feats",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.category.spells",
+    "extends": "",
+    "short": "Spells",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.section.attributes",
+    "extends": "",
+    "short": "ATTRIBUTES",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.section.feats",
+    "extends": "",
+    "short": "FEATS",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.section.spells",
+    "extends": "",
+    "short": "SPELLS",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.eyebrow",
+    "extends": "",
+    "short": "CHARACTER TRAITS",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.title",
+    "extends": "",
+    "short": "Explore feats",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.description",
+    "extends": "",
+    "short": "Learn how permanent feats shape your journey.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.availability",
+    "extends": "",
+    "short": "Earn feats as you level up. Browsing here does not grant a starting feat.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.detailLabel",
+    "extends": "",
+    "short": "Feat details",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.none",
+    "extends": "",
+    "short": "No starting feats",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.spells.eyebrow",
+    "extends": "",
+    "short": "STARTING MAGIC",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.spells.title",
+    "extends": "",
+    "short": "Choose your spells",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.spells.description",
+    "extends": "",
+    "short": "Choose your starting Rank {rank} spells before beginning the journey.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.spells.unavailable",
+    "extends": "",
+    "short": "This class has no starting spell choices.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.review.edit",
+    "extends": "",
+    "short": "Edit {category}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.continueTo",
+    "extends": "",
+    "short": "Continue to {category}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.step.progress",
+    "extends": "",
+    "short": "{index} of {count} · {category}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.nav.allSteps",
+    "extends": "",
+    "short": "All steps",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.nav.allStepsLabel",
+    "extends": "",
+    "short": "Open all character creation steps.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.group.character",
+    "extends": "",
+    "short": "Character",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.group.class",
+    "extends": "",
+    "short": "Class",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.group.skill",
+    "extends": "",
+    "short": "Skills",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.lockedRequirement",
+    "extends": "",
+    "short": "Requires {track} level {required}. Current level: {current}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.availableRequirement",
+    "extends": "",
+    "short": "{track} level {required} requirement met. Current level: {current}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.profileUnlocked",
+    "extends": "",
+    "short": "Unlocked in profile.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.locked",
+    "extends": "",
+    "short": "Level requirement not met",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.available",
+    "extends": "",
+    "short": "Level requirement met",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.emptyGroup",
+    "extends": "",
+    "short": "No feats in this group.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.noOffers",
+    "extends": "",
+    "short": "No feat offers are currently earned on the {track} track.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.return",
+    "extends": "",
+    "short": "Back to feats",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.summary.fieldStudy",
+    "extends": "",
+    "short": "More character XP.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.summary.weaponDrill",
+    "extends": "",
+    "short": "More weapon XP.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.summary.armourPractice",
+    "extends": "",
+    "short": "More armour XP.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.summary.classInsight",
+    "extends": "",
+    "short": "More class XP.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.summary.spoilsInstinct",
+    "extends": "",
+    "short": "More Cinders from victory.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.feats.summary.vitalRenewal",
+    "extends": "",
+    "short": "Recover HP after victory.",
     "full": "",
     "tip": ""
   }

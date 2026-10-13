@@ -7,6 +7,19 @@ How to run, test, and add content. The architecture contract lives in
 For how work is branched, reviewed, and merged, see
 [CONTRIBUTING.md](CONTRIBUTING.md).
 
+## Workbench — every authoring tool in one window
+
+`node workbench/server.mjs` (or **workbench/Start Workbench.cmd** on Windows,
+`workbench/start.sh` elsewhere) opens <http://127.0.0.1:4300>: the Content
+Editor, UI Studio and Pose & FX side by side with a live game preview that
+reloads (rebuilding content or config first) when content/, src/ or styles/
+change; a Library of every editor, viewer, exporter and QA page
+(`workbench/tools.json`); Engine Export; and Build & Checks (allowlisted
+builds and the tool tests, with logs and history). Ctrl+K searches everything.
+See [workbench/README.md](workbench/README.md). A new HTML tool page must be
+added to `workbench/tools.json`; `workbench/tests/registry.test.mjs` fails
+otherwise.
+
 ## Run & test
 
 **The built standalone HTML is not committed on `dev`** (since 2026-09-26).
@@ -21,42 +34,80 @@ downloaded. A `dev` clone needs no Git LFS. `tools/verify-shipped.mjs` fails if
 any of them is tracked again. Historical builds (and `release`/`main`, which
 still carry theirs) remain LFS pointers; readers of those verify content hashes.
 
-A pull request still commits the one derived fact the build writes,
-`buildordinal.json` (plus `src/content/changelog.generated.js`), and its receipt
-names that ordinal. CI rebuilds and requires the rebuild to change nothing
-committed, then runs `node tools/buildversion.mjs --check` against the fresh
-build, so the box and the receipt are still checked to agree.
+A pull request does not commit `buildordinal.json`. Its receipt is stamped with
+the box as it stands on its own branch. After a push to `dev`, the
+`build-stamp.yml` workflow rebuilds the merged tree, re-points the receipts of the
+pull requests that landed, regenerates `src/content/changelog.generated.js`, and
+commits those three files to `dev` as `build: stamp <release>.<ordinal>
+[build-stamp]`. On a pull request and on `dev`, `dev-preview.yml` tolerates a
+rebuild that changes only those two derived files; test, release and main still
+require the rebuild to change nothing. Promotion from `dev` to `test` waits for
+the build-stamp run on the `dev` tip to succeed, and for that tip to be the stamp
+commit or a later docs-only bot commit, since `test`'s strict check would otherwise
+refuse the promotion. After a successful stamp push, build-stamp dispatches
+`dev-preview` for the stamped tip, so its `dev-standalone-<sha>` artifact is that
+commit's build. The Pages site's dev channel is not republished by the bot; see the
+comment in `build-stamp.yml`.
 
-**Which checks gate a pull request** (owner, 2026-09-26: a PR into `dev` is gated
-by fast checks only, about five minutes or less; the heavy suites run when code
-is pushed to `test` and `release`). Nothing was removed: every check below still
-runs, unchanged, on every push to `test` and `release`, and any workflow can
-still be started by hand on any branch (Actions → *Run workflow*).
+**Which checks gate a pull request** (owner, 2026-10-11, the stage rules). Every
+check runs in one of four stages, and this table is the only list of them. Each
+row is one check; a job that a trigger does not start shows as *skipped* on that
+trigger, not as missing. The rows are read off each workflow's `on:` block and
+the job-level `if:` (`ci.yml` gates each job on its `stage` input for dispatch).
 
-| Check (workflow → job) | PR into `dev` | Push to `test` / `release` |
-|---|---|---|
-| `receipts.yml` → receipts | yes | — (runs on push to `dev`) |
-| `dev-preview.yml` → preview (build, standalone artifact, fast gates) | yes | yes (also `dev`, `main`) |
-| `tests.yml` → core suite | yes | yes (also on push to `dev`) |
-| `tests.yml` → discovered tests, four shards, without `SLOW_DISCOVERED` | yes | yes (also on push to `dev`) |
-| `tests.yml` → discovered tests (slow simulations: `SLOW_DISCOVERED` in `tests/run-node-lanes.mjs`) | no | yes |
-| `map-camera.yml` → map camera re-fit (`map-camera-persistence.mjs --check`, real browser) | yes | yes (also on push to `dev`) |
-| `map-camera.yml` → the full map-camera persistence drive (same job) | no | yes |
-| `coop-hud.yml` → co-op HUD top layout (`coop-hud-top.mjs`, real browser) | no | yes |
-| `quick-start.yml` → Title Quick start to the first card play within 6 inputs (`quick-start-inputs.mjs --only quick`, real browser), then click to impact ≤ 400 ms at Normal pacing (`click-impact-probe.mjs`, same job) | yes | yes (also on push to `dev`) |
-| `tutorial-reach.yml` → first-run tutorial reach, three shards (`tutorial-reach.mjs --only …`, real browser) | yes | yes (also on push to `dev`) |
-| `tests.yml` → tool self-tests, bundler parse gate | no | yes |
-| `ci.yml` → Fullscreen first through both Settings doors | no | yes |
-| `ci.yml` → what this green does NOT cover (boundary) | no | yes |
-| `ci.yml` → tests (ubuntu, windows, macOS) | no | yes |
-| `ci.yml` → shipped artifact is this source (3 OSes), the three runners built the same bytes | no | yes |
-| `ci.yml` → the checks that need a real browser | no | yes |
-| `ci.yml` → idle animation and reduced motion in a real browser (`motion-probe.mjs` and its `--selftest`) | no | yes |
-| `dev-preview.yml` → the reachability gates a phone would fail | no | yes (also `main`) |
-| `windows-installer.yml` → build, silent install with the high-res art, start, uninstall; uploads `windows-installer-<commit>`; a push also replaces the `installer-<branch>` prerelease ([desktop/windows/README.md](desktop/windows/README.md)) | only when the PR touches `desktop/` | yes (also `main`) |
+- **Worker push**: a push to `worker/**`, before the orchestrator merges that
+  worker branch into its parent (`docs/ai/AI-ROUTING.md`).
+- **PR → dev / push to dev**: the base smoke, about five minutes or less. A
+  pull request into `dev` is gated by these rows only.
+- **test**: a push to `test` (and `alternative/**/test`). The higher-level
+  functional suites run here, and `release` never re-runs them.
+- **release**: a push to `release`. The polish jobs run here.
 
-The workflows' own `on:` blocks and job `if:` conditions are the source of this
-table; a skipped job shows on the PR as *skipped*, not as missing.
+Any workflow can be started by hand on any branch (Actions → *Run workflow*).
+
+| Check (workflow → job) | Worker push | PR into `dev` / push to `dev` | test | release |
+|---|---|---|---|---|
+| `worker-check.yml` → sanity: receipts self-test (`tools/receipts.mjs --selftest`) | yes | — | — | — |
+| `receipts.yml` → receipts: selftest; a PR runs `--check --pr auto`, a push to `dev` the range to `origin/test` | — | yes | — | — |
+| `dev-preview.yml` → preview: build, standalone artifact, fast gates | — | yes | yes (the build runs again) | yes (the build runs again) |
+| `build-stamp.yml` → stamp: rebuild the merged tree, re-point the landed receipts, commit `buildordinal.json`, `CHANGELOG.md` and the generated module as `[build-stamp]`, then dispatch `dev-preview` for that commit | — | yes (push to `dev` only; not on a pull request) | — | — |
+| `tests.yml` → core: engine suite, each tool's verdict, CHANGELOG order (no browser) | — | yes | — | — |
+| `tests.yml` → discovered tests, four shards, `--no-slow` (`SLOW_DISCOVERED` in `tests/run-node-lanes.mjs`; this includes `tests/readme-sync.test.mjs`) | — | yes | — | — |
+| `quick-start.yml` → Quick start to the first card play within 6 inputs; click to contact ≤ 400 ms and click to first number ≤ 750 ms (medians) at Normal pacing (`tools/click-impact-probe.mjs`: contact is the effects layer's `data-contact` counter, which `src/ui/fx.js` bumps at each impact frame; the number is the first `.float-num` damage or guard float, which under the default `sequential` beat order follows the defender's reaction) | — | yes | yes | only when release differs from test |
+| `ci.yml` → stage decision (`stage`): a push to `test` is the functional stage; a push to `release` is polish, and also functional when its tree differs from `test` | — | — | yes | yes |
+| `ci.yml` → tests (ubuntu, windows, macOS): engine suite and tool verdicts | — | — | yes | yes, if the tree differs from `test` |
+| `ci.yml` → discovered tests, 3 OS, all shards (no `--no-slow`, so the slow files run too) | — | — | yes | yes, if the tree differs from `test` |
+| `ci.yml` → tool self-tests (3 OS, two groups) | — | — | yes | yes, if the tree differs from `test` |
+| `ci.yml` → bundler parse gate (`tools/bundle.test.mjs`) | — | — | yes | yes, if the tree differs from `test` |
+| `ci.yml` → the checks that need a real browser (`browser-guard`) | — | — | yes | yes, if the tree differs from `test` |
+| `ci.yml` → a whole run in a real browser: title to a new run, 0 console errors (`browser-full-run`) | — | — | yes | yes, if the tree differs from `test` |
+| `ci.yml` → every flask menu, and the flask-menu known-bads (sharded) | — | — | yes | yes, if the tree differs from `test` |
+| `ci.yml` → about-changelog known-bads (sharded) | — | — | yes | yes, if the tree differs from `test` |
+| `ci.yml` → startup gate known-bads (sharded) | — | — | yes | yes, if the tree differs from `test` |
+| `dev-preview.yml` → browser-gates: the reachability gates a phone would fail | — | — | yes | only when release differs from test |
+| `map-camera.yml` → re-fit (`map-camera-persistence.mjs --check`, real browser) | — | — | yes | only when release differs from test |
+| `map-camera.yml` → full map-camera persistence drive (same job, same push) | — | — | yes | only when release differs from test |
+| `coop-hud.yml` → co-op HUD top layout (`coop-hud-top.mjs`, real browser) | — | — | yes | only when release differs from test |
+| `tutorial-reach.yml` → first-run tutorial reach, three shards (`tutorial-reach.mjs --only …`) | — | — | yes | only when release differs from test |
+| `workbench.yml` → Workbench, editor, UI Studio and engine-export tests, a full engine export and the Workbench screenshots (real browser); uploads `engine-export-<commit>` and `workbench-screenshots-<commit>` ([workbench/README.md](workbench/README.md)) | — | a PR into `dev` only when it touches `workbench/`, `editor/`, `ui-studio/`, `pose-studio/`, `content/`, `src/content/`, `.github/actions/`, `tools/launch.mjs`, the engine exporter, the build-lock and build-step libraries or `docs/workbench/` (the full list is in the workflow; also a push to `feature/**`, `chore/**`, `Chore/**`, `fix/**` with the same paths). It also runs those tests on Windows and macOS, each test limited to 3 minutes. Path-filtered, so never make it a required check | — | — |
+| `ci.yml` → what this green does NOT cover (`boundary`, always runs) | — | — | yes | yes |
+| `ci.yml` → shipped artifact is this source (3 OS shards) and the three runners built the same bytes (`reproducible`, `reproducible-agree`) | — | — | — | yes |
+| `ci.yml` → Fullscreen first through both Settings doors (`display-first`) | — | — | — | yes |
+| `ci.yml` → the build stamp's ink and the cold boot in a real browser (`browser-guard-stamp`) | — | — | — | yes |
+| `ci.yml` → mobile and combat layout, all five layouts, hint strip and Armoury, and their known-bads (`browser-layout-*`, `browser-hintstrip-plants`) | — | — | — | yes |
+| `ci.yml` → idle animation and reduced motion in a real browser (`browser-motion`, sharded) | — | — | — | yes |
+| `windows-installer.yml` → build, silent install with the high-res art, start, uninstall; uploads `windows-installer-<commit>`; a push replaces the `installer-release` prerelease ([desktop/windows/README.md](desktop/windows/README.md)) (also push to `main`) | — | — | — | yes |
+| `pages-builds.yml` → assemble and prove the site (a push to `dev`, `test`, `release` or `main`) | — | yes (push to `dev`) | yes | yes |
+| `pages-builds.yml` → deploy to GitHub Pages (push to `dev` or `release`, or the owner's dispatch with `PUBLISH` for any branch the environment admits; `release` needs the owner's one-time `github-pages` deployment-branch addition, see the workflow header) | — | yes (push to `dev`) | — | — |
+| `pages-builds.yml` → per-branch build at `branches/<branch>/latest/` (`build.txt` as text, played by a sandboxed wrapper that keeps no progress) for each open same-repo `feature/*`, `fix/*`, `chore/*` PR into `dev` (after its `dev preview` run; a failed or cancelled preview removes the stale build, since only a successful run for the PR's current head is published; removed on close), plus a PR comment with the link | — | yes (PR into `dev`) | — | — |
+| `art-migrate.yml` → intake: a pull request that adds art stays red until the art leaves it (staged in `cehinds/AshenSpire-art`); runs on `pull_request_target`, so the workflow definition that holds the token is the base's, and a fork gets no token | — | yes (PR into `dev`) | — | — |
+| `art-migrate.yml` → pin bump: pushes `bot/art-pin-<tag>` and opens its pull request into `dev` with `ART_REPO_WRITE_TOKEN`, so CI runs on it (schedule every 6 h, dispatch, `art-release` event; not a gate) | — | — | — | — |
+| `alternative-sync.yml` → alternative sync (a PR runs it only when its paths change; hourly schedule) | — | yes (push or PR into `dev`) | — | — |
+| `architecture-sync.yml` → refreshes `docs/ARCHITECTURE-CURRENT-DEV.md` (not a gate) | — | yes (push to `dev`) | — | — |
+| `readme-sync.yml` → refreshes the README generated regions with `--write` (not a gate) | — | yes (push to `dev`) | — | — |
+| `sync-alternatives.yml` → syncs the alternative pairs and dispatches their checks (not a gate) | — | — | yes | — |
+| `worker-branch-cleanup.yml` → deletes origin `worker/**` branches merged into `test` (not a gate) | — | — | yes | — |
+| `restore-test-branch.yml` → recreates `test` from `release` when it is deleted (not a gate) | — | — | — | — |
 
 
 Settings: the header exposes **Reset to defaults** in both the title modal and
@@ -342,7 +393,7 @@ act map. Red on any `console.error`, uncaught exception or browser-logged
 error over the drive; the optional `assets/sfx/<id>.ogg` sample 404s
 (`src/ui/audio.js`) are set aside by name and counted (about 18–19 a run;
 the count varies with timing). `--check` prints the verdict lines only; CI runs
-it in `ci.yml`'s *the build stamp and the cold boot in a real browser* job.
+it in `ci.yml`'s *a whole run in a real browser* job (`browser-full-run`, test stage).
 About 4 minutes locally. `--selftest` (seconds, no browser; run by
 `tests/full-run-probe.test.mjs`) plants a `console.error`, an uncaught
 exception and non-sound 404s through the drive's own classifier and requires
@@ -447,13 +498,12 @@ registration. A file that must not be spawned there goes in its `NOT_SPAWNED`
 map with the reason. A file that spawns full simulation runs goes in
 `SLOW_DISCOVERED` (`tests/run-node-lanes.mjs`), also with its reason: the
 discovered shards on a pull request into `dev` pass `--no-slow`, and
-`tests.yml`'s `discovered-slow` job runs those files alone (`--slow-only`) on
-every push to `test` and `release`. `.github/workflows/tests.yml` runs the core
-suite, the four discovered shards, the slow files, the tools' self-tests and the
-bundler's parse-gate fixtures (`node tools/bundle.test.mjs`, several minutes) as
-separate Linux jobs; on a pull request into `dev` only the core suite and the
-discovered shards run, and all of them run on every push to `test` and
-`release` (see *Which checks gate a pull request* above).
+`ci.yml`'s `test-discovered` shards run those files, with no `--no-slow`, on
+every push to `test`. `.github/workflows/tests.yml` runs the core suite and the
+four discovered shards as Linux jobs on a pull request into `dev` and on a push
+to `dev`; the slow files, the tools' self-tests and the bundler's parse-gate
+fixtures (`node tools/bundle.test.mjs`, several minutes) run in `ci.yml` on a
+push to `test` (see *Which checks gate a pull request* above).
 
 Every browser tool launches Chromium through `tools/browser.mjs` (`CHROME`
 picks the binary). The wait for Chrome's DevTools endpoint is never shorter
@@ -490,8 +540,8 @@ and raise nothing; `isBenignPageNotice()` is the anchored classifier, and
 `node tools/launch.mjs --build-only` still writes the build tree into `build/`
 and `dist/` (the pack-shaped `AshenSpire.html` with its packs, and the light
 single file at `download/`) and the root alias, but only to your working tree:
-git ignores them. Commit the box it moves
-(`buildordinal.json`) and the regenerated changelog module, never the HTML.
+git ignores them. Do not commit the box it moves (`buildordinal.json`): the
+build-stamp workflow commits it on `dev` after a merge. Never commit the HTML.
 To play a build you did not make, download the `<branch>-standalone-<commit>`
 artifact from that commit's workflow run: every pull request into `dev` and
 every push to `dev`, `test`, `release` and `main` uploads one. A tool or test
@@ -655,18 +705,29 @@ receipt of its own is the author's to fix, before merge.
 The tool checks **coverage**, not truth: whether an entry exists naming each
 merged pull request. Whether the prose is accurate is not machine-checkable.
 The one stamp it does check is the `--pr` pull request's own: its receipt must
-carry exactly the release and ordinal of `buildordinal.json` in the tree being
-checked, the box that pull request ships (#1315 merged with `0.7.1.518` on a
-box of 519, and nothing caught it). Older receipts' ordinals belong to
+name a build of the release in `buildordinal.json`. A stamp of any build in the release, below or
+above the tree's box, passes with a note, since build-stamp re-points it after the
+merge; no stamp, prose, a malformed stamp or another release fails (#1315 merged
+with `0.7.1.518` on a box of 519, and nothing caught it). Older receipts' ordinals belong to
 `tools/about-changelog.mjs`, which owns the file's shape. If CHANGELOG.md ever
 yields no pull-request references at all, that is this tool's own syntax having
 moved out from under it, and it exits **2 (harness could not run)** rather than
 reporting every merge as unreceipted.
 
-Writing one is in the file's own header: a receipt for already-landed work names
-the ordinal **as committed at that merge**; a receipt shipping in its own pull
-request is written one ahead, then `node tools/about-changelog.mjs --write` and a
-rebuild converge the box to the receipt.
+Writing one is in the file's own header: a receipt names the ordinal of
+`buildordinal.json` as it stands on the pull request's branch, and build-stamp
+re-points it to the real build after the merge (`tools/build-stamp.mjs`). A
+receipt for already-landed work keeps the ordinal **as committed at that merge**,
+which build-stamp does not change except for the pull requests in the push it
+handles.
+
+**Pending receipts in the order check.** `tools/about-changelog.mjs --check-order`
+runs with `--pending auto` on a pull request into `dev` and on a push to `dev`
+(`tests.yml`). A pending receipt is one whose pull request is the event's own, or
+landed in the push, and whose stamp build-stamp has not yet re-pointed. Its shape is
+still checked, a bullet, a link and a well-formed stamp of this release, but it is
+left out of the order comparisons, and each one prints a NOTE. On `test`, `release`
+and `main` the order is strict.
 
 ## The four layers (dependencies point down only)
 
@@ -807,6 +868,36 @@ node tools/combat-save.mjs --selftest
 # after the one authorized artifact regeneration:
 node tools/combat-save.mjs --artifact --screenshots
 ```
+
+## HUD layout tokens (`content/hud-layout/<form-factor>.json`)
+
+The combat HUD's tunable look — text shadows, panel backing, details-panel type,
+the tools row's span and backing, the header HP cap, and small px offsets — is a
+fixed set of `--hud-*` custom properties, one JSON file per form factor
+(`mobile`, `tablet`, `desktop`, `widescreen`). The contract, the token table and
+the form-factor thresholds are in [docs/hud-layout-tokens.md](docs/hud-layout-tokens.md);
+the allowlist and validators are `tools/hud-layout-tokens.mjs`.
+
+```
+node tools/hud-layout-css.mjs --write   # validate the four files, write styles/hud-layout.generated.css
+node tools/hud-layout-css.mjs --check   # exit 1 when the committed stylesheet is stale (tests/run-node.mjs runs it)
+node tools/hud-layout-css.mjs --merge ~/Downloads/<ff>.json …   # merge studio exports into the content files, then regenerate
+```
+
+To take a studio change into the game: **Export CSS JSON** in the HUD Component
+Studio, then `node tools/hud-layout-css.mjs --merge ~/Downloads/<ff>.json …` (one
+or more exported files), then rebuild. `--merge` validates every file first and
+writes nothing if any is refused; an exported value wins, and tokens the export
+does not carry are kept.
+
+`tools/launch.mjs` runs `--write` before bundling. Edit the JSON (or export it
+from the HUD Component Studio and `--merge` it), never the generated stylesheet. A token left
+out of a file keeps its default, and the defaults reproduce the pre-pipeline
+look; tokens whose consumers used different literals default to `initial`, so
+each consumer's `var(--hud-…, <old literal>)` fallback applies. Length tokens
+are CSS lengths under the page's `--ui-zoom` (they are not divided by it).
+`<html data-form-factor>` is written by `applyUiScale` in `src/main.js` from
+`balance.ui.uiScale.formFactor`.
 
 ## Reword the interface (one file: `content/source/uiStrings.csv`)
 
@@ -1070,7 +1161,8 @@ and, after a reload, reads `seenTutorial` back from durable storage. Run it
 after any change to the tutorial, to `--ui-zoom`, or to the combat board's
 layout; it prints the boundary of what it did not cover. `--only` takes a comma
 list of cases (viewport names, `resize`, `first-run`); `tutorial-reach.yml`
-runs the whole sweep as three such shards on every pull request into `dev`.
+runs the whole sweep as three such shards on every push to `test` (and on
+dispatch), not on a pull request into `dev`.
 
 ## Character creation — the short form (D26)
 
@@ -1101,14 +1193,23 @@ itself; read them there.
 
 ### Character-creation component catalog
 
-Open `?shot=components` on a served checkout to see the Class, Character,
-Starting Equip, and Seed sections together as interactive reference specimens.
+Open `?shot=components` on a served checkout to see the Class, Attributes,
+Keepsake, Equipment, Feats, Spells, and Review sections as interactive reference specimens.
 The catalog moves the production panels into labeled folios; it does not keep a
 second copy of their markup or content. Select **Assign Points** to inspect its
 live dialog and refusal states. `node tools/character-creation-check.mjs`
 drives the player flow's stats step at desktop and 390×844 mobile sizes:
 Standard and Assign points for every class, with the Hand and Draw chips
 checked against the hand a solo fight deals. It does not visit the catalog.
+
+Every folio has a direct `#folio-<component-id>` link. The new page heading,
+panel, choice tile, material/trim/body layers, navigation, and canonical feat
+browser are mounted through `src/ui/catalog/creationSpecimens.js` using their
+production renderers. Feat inspection grants nothing with the current allowance
+of zero. `node tools/character-creation-components-qa.mjs --out /tmp/creation-components`
+captures each registered specimen at desktop and phone widths and checks DOM
+identity, layout fit, runtime errors, and interaction state. Add `--artifact`
+to check the frozen `build/download/AshenSpire.html` build after integration.
 
 ## Shared Load / Quit confirmation
 
@@ -1146,7 +1247,8 @@ the HTML; the score stays synthesized, as for any `file://` page.
 `node tools/external-play.mjs --file` opens it that way in Chromium.
 `node tools/launch.mjs --build-only` picks the flags for you (see *Run & test*).
 The files are local build output, ignored by git on `dev`: of the build's own
-outputs, commit only `buildordinal.json` (and the generated changelog module).
+outputs, a pull request commits none: `buildordinal.json` and the generated
+changelog module are written on `dev` by build-stamp after the merge.
 Generated content and config modules are committed as usual.
 
 The browser tools that drive a built page (`--dist`, `--standalone`,

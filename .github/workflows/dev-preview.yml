@@ -22,9 +22,9 @@ name: dev preview
 
 on:
   push:
-    branches: [dev, test, release, main, alternative/dev, 'alternative/**/dev', alternative/test, 'alternative/**/test']
+    branches: [dev, test, release, main, 'alternative/**/dev', 'alternative/**/test']
   pull_request:
-    branches: [dev, alternative/dev, 'alternative/**/dev']
+    branches: [dev, 'alternative/**/dev']
   workflow_dispatch:
 
 concurrency:
@@ -195,13 +195,36 @@ jobs:
         run: node tools/release-series.mjs --selftest
 
       # A clean tree after the build (first step of this job) is what used to be
-      # "the committed bundle is this source": if the rebuild had to bump
-      # buildordinal.json, the commit's receipt and its box disagree.
+      # "the committed bundle is this source". The build's own two outputs are the
+      # exception on PRs and on dev, because the build-stamp workflow owns them there:
+      # a pull request does not commit buildordinal.json (another merge moves it), and
+      # after a push to dev build-stamp rebuilds, re-points the landed receipts, and
+      # commits both the box and the generated changelog module (build-stamp.yml).
+      # A DISPATCH ON dev TAKES THE RELAXED BRANCH TOO. A dispatch names its ref, which is
+      # mutable: a merge can land between build-stamp's push and this run, and that newer
+      # tip is unstamped, so the strict check would go red on a commit that is correct.
+      # That merge's own push starts build-stamp, which re-dispatches this workflow for its
+      # stamp, so the artifact for the final tip still appears. The strict guarantee stays
+      # at test, where a promoted tree must already carry the box it ships.
       - name: The rebuild changed nothing committed
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
           set -euo pipefail
           git status --porcelain
-          test -z "$(git status --porcelain)"
+          case "$EVENT_NAME:$REF_NAME" in
+            pull_request:*|push:dev|push:alternative/dev|push:alternative/*/dev|workflow_dispatch:dev|workflow_dispatch:alternative/dev|workflow_dispatch:alternative/*/dev)
+              unexpected="$(git status --porcelain --untracked-files=all | cut -c4- | grep -Ev '^(buildordinal\.json|src/content/changelog\.generated\.js)$' || true)"
+              if [ -n "$unexpected" ]; then
+                echo "::error::The rebuild changed files other than the build's own outputs:"
+                echo "$unexpected"
+                exit 1
+              fi
+              echo "The rebuild changed only buildordinal.json and the generated changelog module, which build-stamp owns here." ;;
+            *)
+              test -z "$(git status --porcelain)" ;;
+          esac
 
       # #498: 28 plant sites had drifted and only one gate went red — the rest
       # stayed green while unable to fail. This cheap static detector (no
@@ -444,16 +467,50 @@ jobs:
   #   map-two-axis-pan          28s   (measured locally at #1229, not on a runner)
   # plus checkout and node setup. Against that: #720's regression sat undetected
   # across two promotions and cost three dispatched 3-OS matrices to find.
+  # THE RELEASE-ONLY-FIX CHECK. Only on a push to `release`: if its tree differs
+  # from origin/test (a fix landed on release directly), browser-gates below runs
+  # too, because external-play and pages-offline are driven nowhere else.
+  release-differs:
+    name: does release differ from test
+    if: github.event_name == 'push' && github.ref_name == 'release'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      differs: ${{ steps.decide.outputs.differs }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /.github/
+      - name: Compare release with test
+        id: decide
+        run: |
+          differs=true
+          if ! git fetch --no-tags --filter=blob:none origin test:refs/remotes/origin/test; then
+            echo "could not fetch origin/test; running browser-gates"
+          elif git diff --quiet origin/test HEAD; then
+            differs=false
+          fi
+          echo "differs=$differs" >> "$GITHUB_OUTPUT"
+          echo "release differs from test: $differs"
+
   browser-gates:
     name: the reachability gates a phone would fail
     # MOVED OFF dev, 2026-09-26, by the owner's ruling that a pull request into
-    # `dev` is gated by fast checks only (about five minutes or less). This job
-    # measured about 8 minutes, so it runs on every push to `test`, `release`
-    # and `main` and on any dispatch — not on a pull request into `dev` or a
-    # push to `dev`, where the `preview` job above still builds and uploads.
-    # Every step below is unchanged; the job-level `if:` reports it as skipped
-    # on a dev PR rather than absent.
-    if: (github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref_name != 'dev')) && !endsWith(github.ref_name, '/dev')
+    # `dev` is gated by fast checks only (about five minutes or less). Since
+    # 2026-10-11 (owner, stage split) it is FUNCTIONAL testing, so it runs on
+    # push to `test` (and alternative test refs) and on any dispatch — not on
+    # `main`, or on a `release` whose tree equals `test` (polish only there), and
+    # not on a pull request into `dev` or a push to `dev`, where the `preview`
+    # job above still builds and uploads. The steps that duplicate ci.yml's
+    # test-stage jobs (hand-side-probe, shotguard-probe) were removed from here;
+    # ci.yml's browser-guard runs the same commands at test.
+    # A push to `release` whose tree differs from `test` runs it too (release-differs above).
+    needs: [release-differs]
+    if: ${{ !cancelled() && (github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && (github.ref_name == 'test' || endsWith(github.ref_name, '/test'))) || needs.release-differs.outputs.differs == 'true') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -526,12 +583,9 @@ jobs:
           node tools/verdict.mjs -- node tools/external-play.mjs --dir build/web-nohigh --expect-tier light
           node tools/verdict.mjs -- node tools/external-play.mjs --file --dir build/web-nohigh --expect-tier light
 
-      - name: Hand-side placement reaches the correct rendered side
-        run: node tools/verdict.mjs -- node tools/hand-side-probe.mjs
-
-      - name: Storage gate holds, and a normal boot still saves
-        run: node tools/verdict.mjs -- node tools/shotguard-probe.mjs
-
+      # KEPT, though ci.yml also runs startup-gate: its main run lives in
+      # browser-guard-stamp, which is release-only since 2026-10-11, so this is
+      # the only run the test stage makes. Its known-bads run in browser-startup-plants.
       - name: Cold boot owns and consumes the first input before Title exists
         run: node tools/verdict.mjs -- node tools/startup-gate.mjs
 

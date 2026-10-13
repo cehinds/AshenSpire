@@ -6,7 +6,7 @@ import { serve } from './serve.mjs';
 import { launchBrowser } from './browser.mjs';
 import { ACTION_SIGILS, SCHOOL_SIGILS } from '../src/content/combatSigils.js';
 const {chromium}=await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
-const output=resolve(process.env.SIGIL_QA_OUT || 'docs/qa/combat-card-sigils');
+const output=resolve(process.env.SIGIL_QA_OUT || 'scratch/qa/combat-card-sigils');
 mkdirSync(output,{recursive:true});
 const server=await serve({root:process.cwd(),port:0,open:false});
 const launched=await launchBrowser({prefix:'sigil-',browser:process.env.CHROME,args:['--disable-background-mode']});

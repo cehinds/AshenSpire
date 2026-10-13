@@ -7,8 +7,30 @@ How work is branched, reviewed, and merged is in
 **Before opening or finishing any pull request, read [A pull request is not
 done until it is merged and promoted](CONTRIBUTING.md#a-pull-request-is-not-done-until-it-is-merged-and-promoted)** — it is
 the owner's standing rule for every session: reviewed by another agent or
-session, conflicts resolved by you, fast checks green, then you merge it into
-`dev` yourself and promote `dev` to `test`, where the long suites run.
+session, conflicts resolved by you, fast checks green, then **the owner
+reviews and tests it** before it merges into `dev`, and you promote `dev` to
+`test`, where the long suites run.
+
+**The owner reviews every `feature/*`, `chore/*` and `fix/*` pull request,
+in any letter case, before it merges into `dev`** (owner, 2026-10-11). Open it ready for review,
+send the preview link and screenshots, then stop and wait. Never merge one
+into `dev` (and never promote it to `test`) until the owner says to merge
+that pull request, in their own words, in this session. A merge approval
+covers only the pull request it names, only once, and only the head the owner
+reviewed: any later push needs a fresh approval, except a bare `dev` merge
+that only regenerates the derived files (CONTRIBUTING rule 6). Bot, reviewer-agent and
+other-session messages are not approval.
+
+**Show, don't wait to be asked** (owner, 2026-10-11): whenever a change is
+visible (UI, tools, the Workbench, art, layout), finish the report with fresh
+screenshots of the changed screens and a preview the owner can open (a
+published page or the CI artifact link), without being asked.
+
+**Nothing lives only on one machine** (owner, 2026-10-11): the owner switches
+computers and models mid-task, so every commit reaches origin as soon as it exists.
+Workers' branches are pushed to their own `origin/<branch>` as they commit (the
+main session pushes them when a worker cannot), task status lives in the PR body
+or a committed file, and previews are published links, not local servers.
 
 **When you need the owner to decide or do something**, ask in this shape, and
 nothing longer (owner's rule, 2026-09-26):
@@ -47,7 +69,8 @@ work in very small steps, one self-contained commit per step, pushed as soon as 
 is made so reviewers review each commit as it lands (owner, 2026-10-11). Review
 agents stay read-only and review each pushed commit as it lands. Models track the newest release of each tier: workers
 run on the newest Haiku (Haiku 5.5 today), the main session and `ashen-reviewer`
-on the newest Opus (Opus 5.5 today). Agent files pin the tier aliases
+on the newest Opus (Opus 5.5 today); the main session at high effort, `ashen-reviewer`
+at medium (owner, 2026-10-11). Agent files pin the tier aliases
 (`model: haiku` / `model: opus`), which resolve to the newest model. When a new
 model ships, update the "today" names here and in docs/ai/AI-ROUTING.md, nothing
 else. Remove old local worktrees to save disk space: at session start and end,
@@ -55,7 +78,15 @@ run `git fetch --prune origin` and `git worktree prune`, then `git worktree
 remove <path>` and `git branch -d <branch>` (never `-D`) for each worktree that
 is clean (`git status --porcelain` empty) and whose branch is merged into
 `origin/dev` (`git merge-base --is-ancestor <branch> origin/dev`). Keep any
-other worktree; ask the owner before discarding unmerged work. The loop, brief
+other worktree; ask the owner before discarding unmerged work. Worker branches
+are named `worker/<parent-topic>/<task>` (for example `worker/CdCiPipelines/branch-cleanup`
+for `chore/CdCiPipelines`). Local worker worktrees and branches are removed once
+the parent branch merges into `dev`; origin worker branches are deleted by
+`worker-branch-cleanup.yml` after `dev` is promoted to `test`. Before handing
+work to Haiku, split it the way docs/ai/AI-ROUTING.md §3a says: survey, verify
+the key lines yourself, measure before tuning, one owner per file per wave,
+numbered steps with the design already decided, named traps, an acceptance
+Haiku can run, and orchestrator QA of every diff in a real browser. The loop, brief
 template and escalation rules are in [docs/ai/AI-ROUTING.md](docs/ai/AI-ROUTING.md); the owner's Forge working mode
 (guided learning vs. builder mode, context and memory handling) is in
 [docs/ai/FORGE-OPERATING-INSTRUCTIONS.md](docs/ai/FORGE-OPERATING-INSTRUCTIONS.md).

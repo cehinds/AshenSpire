@@ -1,0 +1,232 @@
+// workbench/modules/layout/book-model.mjs — the pure model of Layout Studio's
+// "Book recipes" mode. No DOM, no fetch, no game imports: the Workbench origin cannot
+// import /src/*, so the game's catalogs (the choices each field takes) arrive as data
+// from the render page, and the tests pass the real ones from src/content/bookArt.js.
+//
+// The data the game reads is src/content/bookArtPresets.js: BOOK_ART_PRESETS maps
+// each skill book id to one recipe (cover, color, ink, symbol, treatment, trim). The
+// game's book renderer reads every field, so each one is editable here. The file is
+// not JSON (bare keys, single-quoted strings), so the model never re-serializes it: it
+// finds each value's place in the text and replaces only that value. Unchanged text
+// stays byte for byte, and an edit changes exactly the quoted value it touches.
+
+export const RECIPES_FILE = 'src/content/bookArtPresets.js';
+/** The render page's protocol: a page from another checkout with another number is not drawn. */
+export const BOOK_RENDER_PROTOCOL = 1;
+export const BOOK_RENDER_SOURCE = 'ashen-book-render';
+export const BOOK_MODULE_SOURCE = 'ashen-book-module';
+const HEADER = 'export const BOOK_ART_PRESETS = {';
+export const FIELDS = Object.freeze(['cover', 'color', 'ink', 'symbol', 'treatment', 'trim']);
+const CHOICE_FIELDS = Object.freeze(['cover', 'symbol', 'treatment', 'trim']);
+const HEX = /^#[0-9a-fA-F]{6}$/;
+export const TREATMENT_LABELS = Object.freeze({ solid: 'Raised relief', line: 'Aged relief', seal: 'Medallion' });
+
+// One recipe per line: `  id: { cover: 'classic', color: '#277348', … },` (the last one has no comma).
+const RECIPE_LINE = /^ {2}([A-Za-z]\w*): \{ ([^\n]*) \},?$/gm;
+const FIELD = /(\w+): '([^'\n]*)'/g;
+
+/**
+ * The catalog the game gives the Workbench: the choices each field takes and the books
+ * the game shows. Missing lists are empty, so an edit with no catalog is refused, not guessed.
+ */
+export function catalogOf(raw = {}) {
+  const list = (v) => (Array.isArray(v) ? v.filter((x) => typeof x === 'string') : []);
+  const books = Array.isArray(raw.books) ? raw.books.filter((b) => b && typeof b.id === 'string').map((b) => ({ id: b.id, name: String(b.name ?? b.id) })) : [];
+  return Object.freeze({
+    books,
+    cover: Object.freeze(list(raw.cover)),
+    symbol: Object.freeze(list(raw.symbol)),
+    treatment: Object.freeze(list(raw.treatment)),
+    trim: Object.freeze(list(raw.trim)),
+    palette: Object.freeze(list(raw.palette)),
+  });
+}
+
+/** Whether a catalog holds what editing needs: the four choice lists are present. */
+export const catalogReady = (catalog) => Boolean(catalog) && CHOICE_FIELDS.every((f) => catalog[f].length > 0);
+
+/** The game server's base URL from the Workbench tool list, or null while it is not up. */
+export function gameBaseOf(tools = []) {
+  const game = (Array.isArray(tools) ? tools : []).find((t) => t && t.id === 'game');
+  return game && game.status === 'up' && game.url ? String(game.url).replace(/\/?$/, '/') : null;
+}
+
+/** The game server's start time from the Workbench tool list: a restart gives a new one. */
+export function gameStartOf(tools = []) {
+  const game = (Array.isArray(tools) ? tools : []).find((t) => t && t.id === 'game');
+  return game && game.startedAt != null ? game.startedAt : null;
+}
+
+/**
+ * What the view does with the render page. 'setup': no game server is up. 'keep': the frame
+ * already shows this server's page and is ready. 'load': point the frame at the page (again).
+ * Mirrors the Motion and Entity Browser plans: a forced reload always loads, and a new start
+ * time on the same origin is a new server, so its frame is stale.
+ */
+export function connectPlan({ base = null, currentOrigin = null, ready = false, force = false, serverId = null, currentServerId = null } = {}) {
+  if (!base) return 'setup';
+  const origin = new URL(base).origin;
+  const sameServer = serverId == null || serverId === currentServerId;
+  return !force && ready && origin === currentOrigin && sameServer ? 'keep' : 'load';
+}
+
+/**
+ * The URL of the render page on the game server (the page imports the game's own renderer).
+ * A nonce changes the URL, so a reload of the same page is a real navigation.
+ */
+export function renderUrl(gameBase, { parentOrigin = '', nonce = 0 } = {}) {
+  const base = String(gameBase || '').replace(/\/?$/, '/');
+  const q = new URLSearchParams();
+  if (parentOrigin) q.set('po', parentOrigin);
+  if (nonce) q.set('r', String(nonce));
+  const query = q.toString();
+  return `${base}workbench/modules/layout/book-render.html${query ? `?${query}` : ''}`;
+}
+
+/**
+ * Parse the module text. Returns { data, slots, ids }: data is { id: { field: value } } and
+ * slots is { id: { field: { start, end } } }, the character span of each quoted value.
+ * Throws when the header is missing, so a file the model cannot read is never edited.
+ */
+export function parseRecipes(text) {
+  if (typeof text !== 'string' || !text.includes(HEADER)) throw Error(`${RECIPES_FILE}: BOOK_ART_PRESETS was not found`);
+  const data = {}, slots = {};
+  for (const line of text.matchAll(RECIPE_LINE)) {
+    const id = line[1];
+    const base = line.index + id.length + 6; // `  ${id}: { ` is id.length + 6 characters
+    data[id] = {};
+    slots[id] = {};
+    for (const f of line[2].matchAll(FIELD)) {
+      const end = base + f.index + f[0].length - 1; // the closing quote
+      const start = end - f[2].length;
+      data[id][f[1]] = f[2];
+      slots[id][f[1]] = { start, end, from: base + f.index }; // from: the key's first character
+    }
+  }
+  return { data, slots, ids: Object.keys(data) };
+}
+
+/** The recipe for one book with its field values, or null when the file has no such book. */
+export function recipeOf(parsed, id) {
+  return parsed.data[id] ? { ...parsed.data[id] } : null;
+}
+
+/**
+ * Problems with one recipe, worded as the game's own check words them (bookArt.js
+ * bookArtProblems). An empty list means the recipe is valid.
+ */
+export function recipeProblems(recipe, catalog) {
+  if (!recipe || typeof recipe !== 'object' || Array.isArray(recipe)) return ['Expected a book artwork recipe.'];
+  const errors = [];
+  for (const key of CHOICE_FIELDS) if (!catalog[key].includes(recipe[key])) errors.push(`Unknown ${key}: ${recipe[key]}`);
+  for (const key of ['color', 'ink']) if (!HEX.test(recipe[key])) errors.push(`${key} must be a six-digit hex color.`);
+  for (const key of Object.keys(recipe)) if (!FIELDS.includes(key)) errors.push(`Unknown artwork field: ${key}`);
+  return errors;
+}
+
+/**
+ * The problem with one value of one field, worded as recipeProblems words it. An empty list means
+ * the value is one the field may take: a catalog choice, or a six-digit hex colour for color and ink.
+ */
+export function fieldProblems(field, value, catalog) {
+  if (CHOICE_FIELDS.includes(field)) return catalog[field].includes(value) ? [] : [`Unknown ${field}: ${value}`];
+  return HEX.test(value) ? [] : [`${field} must be a six-digit hex color.`];
+}
+
+/** The values a field may take: the catalog's list for a choice, or any hex colour for color and ink. */
+export function choicesFor(field, catalog) {
+  return CHOICE_FIELDS.includes(field) ? [...catalog[field]] : null;
+}
+
+/**
+ * Set one field of one book. Returns the new text; the input is not changed. Throws for an
+ * unknown book or field, a value outside the field's choices, or a value that would break the
+ * quoted string, so only a valid edit ever reaches the file.
+ */
+/**
+ * One field of one recipe in the text: its quoted value is replaced, or a field the file lacks is
+ * added after the recipe's last field (or, for a recipe with no fields, at its start). Only the
+ * edited value or the added field changes.
+ */
+function withField(text, id, field, value) {
+  const parsed = parseRecipes(text);
+  const slot = parsed.slots[id][field];
+  if (slot) return text.slice(0, slot.start) + value + text.slice(slot.end);
+  const slots = Object.values(parsed.slots[id]);
+  if (!slots.length) {
+    const open = new RegExp(`^ {2}${id}: \\{ `, 'm').exec(text);
+    if (!open) throw Error(`${id} was not found in ${RECIPES_FILE}`);
+    const at = open.index + open[0].length;
+    return text.slice(0, at) + `${field}: '${value}'` + text.slice(at);
+  }
+  const last = slots.reduce((a, b) => (b.end > a.end ? b : a));
+  const at = last.end + 1;
+  return text.slice(0, at) + `, ${field}: '${value}'` + text.slice(at);
+}
+
+/** One field of one recipe removed from the text, with the separator that joins it to its neighbour. */
+function withoutField(text, id, field) {
+  const slots = parseRecipes(text).slots[id] || {};
+  const slot = slots[field];
+  if (!slot) return text;
+  const others = Object.values(slots).filter((s) => s !== slot);
+  const before = others.filter((s) => s.end < slot.from);
+  if (before.length) {
+    const prev = before.reduce((a, b) => (b.end > a.end ? b : a));
+    return text.slice(0, prev.end + 1) + text.slice(slot.end + 1);
+  }
+  const after = others.reduce((a, b) => (b.from < a.from ? b : a), others[0] || { from: slot.end + 1 });
+  return text.slice(0, slot.from) + text.slice(after.from);
+}
+
+/**
+ * Set one field of one book. Returns the new text; the input is not changed. Throws for an
+ * unknown book or field, a value outside the field's choices, or a value that would break the
+ * quoted string, so only a valid edit ever reaches the file. A field the file lacks is added,
+ * because the user chose its value.
+ */
+export function setRecipeField(text, id, field, value, catalog) {
+  if (!catalogReady(catalog)) throw Error('The game\'s book catalog is not loaded, so the edit is not checked');
+  const parsed = parseRecipes(text);
+  if (!parsed.data[id]) throw Error(`Unknown book: ${id}`);
+  if (!FIELDS.includes(field)) throw Error(`Unknown field: ${field}`);
+  const next = String(value);
+  if (/['\n\r\\]/.test(next)) throw Error(`${field} must not contain quotes, backslashes or line breaks`);
+  // The value is checked on its own: a recipe missing two fields can still have one of them set.
+  const problems = fieldProblems(field, next, catalog);
+  if (problems.length) throw Error(problems.join(' '));
+  if (next === parsed.data[id][field]) return text;
+  return withField(text, id, field, next);
+}
+
+/**
+ * Put one book's recipe back to the value it has in another copy of the file (the saved one).
+ * A field the saved copy lacks is removed again, and a field it has is set back. Only that
+ * book's fields change; every other byte stays as it is.
+ */
+export function revertRecipe(text, original, id) {
+  const from = parseRecipes(original);
+  if (!from.data[id]) return text;
+  let out = text;
+  for (const field of FIELDS) {
+    const want = from.data[id][field];
+    const has = parseRecipes(out).data[id]?.[field];
+    if (want === undefined) { if (has !== undefined) out = withoutField(out, id, field); continue; }
+    if (has !== want) out = withField(out, id, field, want);
+  }
+  return out;
+}
+
+/** The book ids whose recipe differs between two copies of the file. */
+export function changedBooks(text, original) {
+  if (text === original) return [];
+  const a = parseRecipes(original).data, b = parseRecipes(text).data;
+  return Object.keys(a).filter((id) => JSON.stringify(a[id]) !== JSON.stringify(b[id]));
+}
+
+/** Problems with the whole file before the server's own checks: every recipe must be valid. */
+export function fileProblems(text, catalog) {
+  let parsed;
+  try { parsed = parseRecipes(text); } catch (err) { return [err.message]; }
+  return parsed.ids.flatMap((id) => recipeProblems(parsed.data[id], catalog).map((p) => `${id}: ${p}`));
+}

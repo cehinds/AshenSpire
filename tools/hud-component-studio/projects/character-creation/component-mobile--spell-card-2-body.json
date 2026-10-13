@@ -1,0 +1,89 @@
+{
+  "version": 1,
+  "title": "Spell Card 2 Body",
+  "canvas": {
+    "width": 314,
+    "height": 89,
+    "background": "transparent"
+  },
+  "defaultState": "spells",
+  "states": [
+    {
+      "id": "spells",
+      "name": "Spells"
+    }
+  ],
+  "assets": {},
+  "nodes": [
+    {
+      "id": "spell-card-2-title",
+      "name": "Spell Card 2 Title",
+      "type": "text",
+      "parent": "spell-card-2-body",
+      "x": 0,
+      "y": 0,
+      "width": 314,
+      "height": 40,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "text": "Crystal Barrier",
+      "fontSize": 24,
+      "fontFamily": "Arial",
+      "fill": "#d7b45f",
+      "lineHeight": 1.3
+    },
+    {
+      "id": "spell-card-2-description",
+      "name": "Spell Card 2 Description",
+      "type": "text",
+      "parent": "spell-card-2-body",
+      "x": 0,
+      "y": 49,
+      "width": 314,
+      "height": 40,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "text": "Gain 4 Block.",
+      "fontSize": 17,
+      "fontFamily": "Arial",
+      "fill": "#e7dec8",
+      "lineHeight": 1.3
+    },
+    {
+      "id": "spell-card-2-body",
+      "name": "Spell Card 2 Body",
+      "type": "group",
+      "parent": null,
+      "x": 0,
+      "y": 0,
+      "width": 314,
+      "height": 89,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "fill": "none"
+    }
+  ],
+  "metadata": {
+    "componentSource": "spell-card-2-body",
+    "sourceState": "spells",
+    "designOnly": true
+  }
+}

@@ -344,7 +344,6 @@ body.reduced-motion :is(.ember,.title-glow) { animation:none; }
    services and consequences occupy the lower reading tray. */
 .rest-screen { position:relative; isolation:isolate; justify-content:flex-end; padding:12rem 3rem 3rem; }
 .rest-screen .polish-scene-painting { position:absolute; inset:0; width:100%; height:100%; max-height:none; z-index:-1; }
-.rest-screen .polish-scene-painting img { object-position:center 42%; }
 .rest-screen .rest-door { margin:0; width:100%; max-width:none; max-height:54%; min-height:0; flex:0 1 auto; }
 :root main:has(> .rest-screen) > .shared-hud { position:absolute; inset:0 0 auto; z-index:20; background:none; border:0; pointer-events:none; }
 main:has(> .rest-screen) > .shared-hud :is(.hud-info-row,.hud-vitals-panel,.hud-control-grid,.hud-bottom) { pointer-events:auto; }
@@ -357,7 +356,6 @@ main:has(> .rest-screen) > .shared-hud .hud-vitals-panel { max-width:28rem; padd
 :root[data-layout='narrow'] .rest-screen { padding:12rem 1rem 1rem; }
 :root[data-layout='narrow'] .rest-screen .rest-door { max-height:62%; }
 :root[data-layout='narrow'] .rest-screen .polish-scene-painting { position:absolute; aspect-ratio:auto; max-height:none; height:100%; }
-:root[data-layout='narrow'] .rest-screen .polish-scene-painting img { object-position:42% 32%; }
 :root[data-composition='short-wide'] .rest-screen .polish-scene-painting { display:block; }
 :root[data-composition='short-wide'] .rest-screen { padding:1rem; }
 :root[data-composition='short-wide'] .rest-screen .rest-door { max-height:100%; }
@@ -387,7 +385,13 @@ main:has(> .rest-screen) > .shared-hud .hud-vitals-panel { max-width:28rem; padd
 
 :root .combat[data-layout='formation'] > .hand-area { margin:0; padding:0; }
 :root .combat[data-layout='formation'] .environment-backdrop::before { background:linear-gradient(180deg,#08070610 25%,transparent calc(var(--scene-paint-bottom, 100%) - 16%),#17130f var(--scene-paint-bottom, 100%)); }
-:root .combat[data-layout='formation'] .combatant .sprite { --combatant-edge:drop-shadow(0 2px 2px #100b08a0); }
+/* Figures carry a dark outline (a tight edge plus a wider halo) so they stand
+   off the backdrop; the bottom drop keeps the feet grounded. */
+:root .combat[data-layout='formation'] .combatant .sprite { --combatant-edge:drop-shadow(0 0 2px #0a0806) drop-shadow(0 0 6px #0a080699) drop-shadow(0 2px 2px #100b08a0); }
+/* Small widgets only: intent badges, the player glyph and HP plates. The
+   combatant stack itself takes no filter (a large box repaints every frame). */
+:root .combat[data-layout='formation'] .combatant :is(.intent,.combatant-card > .meters,.combatant-mini-hud),
+:root .combat[data-layout='formation'] .player-action-intent { filter:drop-shadow(0 0 2px #0a0806) drop-shadow(0 0 5px #0a080699); }
 /* The turn ribbon sits flush under the HUD band on every layout: the stage
    (components/battlefieldStage.js) sets --turn-ribbon-top to the band's
    overhang into the field, and fits every figure and intent that shares the
@@ -446,6 +450,12 @@ body.reduced-motion .shop-workspace .shop-pane { animation:none; }
 /* Horizontal swipes scroll excess cards; vertical drags still aim a card. */
 :root .combat[data-layout='formation']:is(.coop,:not(.coop)) .hand[data-wireframe-hand='true'] .card { touch-action:pan-x; }
 /* Its complete controls stay below the selected face, above the footer. */
+:root[data-layout='narrow'] .combat[data-layout='formation'] .combat-tools {
+  /* Owner (2026-10-11): on a phone the Combat log / Reaction row sits a little
+     lower, nearer the cards. A margin keeps the docked top (the --hud-tools-dy
+     token only raises it) and the cards clear below it. */
+  margin-top:calc(8px / var(--ui-zoom,1));
+}
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > .card-upcast-controls {
  top:100%; bottom:auto; width:max-content; min-width:100%; max-width:var(--hand-controls-max-width,100%);
  right:auto; flex-wrap:wrap; box-sizing:border-box; font-size:calc(12px / var(--ui-zoom,1));
@@ -477,10 +487,18 @@ body.reduced-motion .shop-workspace .shop-pane { animation:none; }
 :root[data-composition='short-wide'] .rest-screen.choice-screen { padding:2rem 1rem 1rem; }
 :root[data-composition='short-wide'] .rest-screen.choice-screen .rest-door { flex-basis:88%; max-height:88%; }
 
-/* The chapel's foreground and recovery ledger share the live rest plan. */
-.rest-screen .polish-scene-painting > img:first-child { width:100%; height:100%; object-fit:cover; }
-.rest-screen .polish-scene-painting > .rest-traveler-foreground {
- position:absolute; left:6%; bottom:39%; width:49%; height:46%; object-fit:contain; object-position:center bottom;
+/* The chapel's foreground and recovery ledger share the live rest plan.
+   The backdrop and traveler sit on a square stage in the backdrop's own
+   coordinates (emulating object-fit:cover), so the foreground stays on the
+   painted floor at every viewport aspect. */
+.rest-screen .polish-scene-painting { container-type:size; --rest-focus-x:.5; --rest-focus-y:1; --rest-floor-y:70%; }
+.rest-screen .rest-scene-stage { position:absolute; aspect-ratio:1 / 1;
+ width:max(100cqw, 100cqh); height:max(100cqw, 100cqh);
+ left:calc((100cqw - max(100cqw, 100cqh)) * var(--rest-focus-x)); top:calc((100cqh - max(100cqw, 100cqh)) * var(--rest-focus-y)); }
+.rest-screen .rest-scene-stage > img:first-child { position:absolute; inset:0; width:100%; height:100%; object-fit:fill; }
+.rest-screen .rest-scene-stage > .rest-traveler-foreground {
+ position:absolute; left:15%; width:44%; height:auto; aspect-ratio:720 / 480; object-fit:contain;
+ bottom:calc(100% - var(--rest-floor-y) - 44% * 31 / 720 * 1);
  animation:playerSceneReveal 700ms ease-out; filter:drop-shadow(0 7px 12px #100a08a0); pointer-events:none;
 }
 .rest-recovery { margin-bottom:1.2rem; }
@@ -490,7 +508,16 @@ body.reduced-motion .shop-workspace .shop-pane { animation:none; }
 .rest-screen .choice-body-columns { grid-template-columns:minmax(0,1fr) minmax(0,1.6fr); }
 .rest-availability summary { cursor:pointer; padding:.5rem 0; color:var(--ink-dim); }
 .rest-screen .class-pick > .glyph .engraved-icon { width:30px; height:30px; color:var(--gold); }
-:root[data-layout='narrow'] .rest-screen .polish-scene-painting > .rest-traveler-foreground { left:4%; bottom:49%; width:92%; height:34%; }
+/* Narrow: the floor (--rest-floor-y, 70% of the stage) must land just above the
+   rest door (its top is near 47% of the frame), so the stage is sized from the
+   floor line. The 0.70 below is --rest-floor-y as a fraction; keep it in sync. */
+:root[data-layout='narrow'] .rest-screen .polish-scene-painting { --rest-focus-x:.42; --rest-floor-screen:.46; background:#17130f; }
+:root[data-layout='narrow'] .rest-screen .rest-scene-stage {
+ --rest-stage-size:max(100cqw, 100cqh * var(--rest-floor-screen) / .70);
+ width:var(--rest-stage-size); height:var(--rest-stage-size);
+ left:calc((100cqw - var(--rest-stage-size)) * var(--rest-focus-x));
+ top:calc(100cqh * var(--rest-floor-screen) - .70 * var(--rest-stage-size));
+}
 :root[data-layout='narrow'] .rest-screen .choice-body-columns { grid-template-columns:minmax(0,1fr); }
 :root[data-layout='narrow'] .rest-recovery { margin-bottom:0; }
 body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
@@ -570,6 +597,12 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
  filter:drop-shadow(-1px 0 0 #000) drop-shadow(1px 0 0 #000) drop-shadow(0 -1px 0 #000) drop-shadow(0 1px 0 #000);
 }
 :root .shared-hud .resbar { box-shadow:0 0 0 1px #000; }
+/* HUD layout tokens (docs/hud-layout-tokens.md): the combat header's HP value
+   shadow and the HP bar's cap. The fallback is the shadow it inherits above. */
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud .resunit[data-res='hp'] .m-value {
+ text-shadow:var(--hud-text-shadow, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000);
+}
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud .resunit[data-res='hp'] { max-width:var(--hud-header-hp-max-width); }
 :root :is(.shared-hud .hud-actions, .atlas-header-actions) > button { border:1px solid #000; }
 
 

@@ -3,10 +3,10 @@ import {mkdirSync,existsSync,readdirSync,copyFileSync,cpSync,symlinkSync,readFil
 import {resolve,join} from 'node:path';
 import {serve} from './serve.mjs';
 const {chromium}=await import(process.env.PLAYWRIGHT_MODULE||'playwright');
-const output=resolve(process.env.CARD_MASTER_OUT||'docs/qa/card-layers/master-evidence'),root=join(output,'workspace'),source=process.cwd();
+const output=resolve(process.env.CARD_MASTER_OUT||'scratch/qa/card-layers/master-evidence'),root=join(output,'workspace'),source=process.cwd();
 mkdirSync(join(root,'src'),{recursive:true});
 for(const entry of readdirSync(join(source,'src'),{withFileTypes:true})){const from=join(source,'src',entry.name),to=join(root,'src',entry.name);if(entry.name==='content')cpSync(from,to,{recursive:true});else if(!existsSync(to)){if(entry.isDirectory())symlinkSync(from,to,'junction');else copyFileSync(from,to);}}
-for(const name of ['docs','styles','.art-cache','assets-display'])if(!existsSync(join(root,name)))symlinkSync(join(source,name),join(root,name),'junction');
+for(const name of ['docs','tools','styles','.art-cache','assets-display'])if(!existsSync(join(root,name)))symlinkSync(join(source,name),join(root,name),'junction');
 for(const name of ['art-release.json','art-manifest.json','index.html'])copyFileSync(join(source,name),join(root,name));
 mkdirSync(join(root,'assets/card-components'),{recursive:true});
 const image='assets/card-components/qa-master.png';
@@ -15,7 +15,7 @@ const server=await serve({root,port:0,open:false,editorWrite:true,quiet:true}),b
 const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME});
 try{
  const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
- await page.goto(base+'docs/qa/card-layers/index.html#editor',{waitUntil:'domcontentloaded'});
+ await page.goto(base+'tools/card-layers/index.html#editor',{waitUntil:'domcontentloaded'});
  await page.locator('.edit-save').filter({hasText:'Connected to game JSON'}).waitFor({timeout:120000});
  await page.locator('[data-visual-part]').selectOption('action-icon');await page.locator('[data-visual-href]').fill(image);await page.locator('[data-visual-apply]').click();
  assert.equal(await page.locator('.edit-plane[data-edit-part="action-icon"] .combat-sigil-action img').count(),1,'PNG visible in draft');

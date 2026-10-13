@@ -52,7 +52,11 @@ try {
       });
       assert.equal(await page.locator('#combat-log button[data-log-size]').count(), 0, 'no inner size buttons');
       await log.tap(); await page.waitForTimeout(250);
-      const small = await snapshot(); assert(small.open && small.size === 'Small');
+      // The log opens at Medium (COMBAT_LOG_DEFAULT_SIZE). Drag it down to the
+      // Small floor, which is the geometry the rest of this script measures.
+      const initial = await snapshot(); assert(initial.open && initial.size === 'Medium', 'the log opens at Medium');
+      dragScale = Math.max(1, initial.rect.height / Math.max(24, Math.min(120, height - initial.tools.bottom - 8)));
+      const small = await drag(-initial.rect.height); assert(small.open && small.size === 'Small', 'a downward drag reaches Small');
       assert(Math.abs(small.hand.right - small.tools.right - 6) < 1, 'toolbar aligned to hand right');
       assert(Math.abs(small.tools.top - small.hand.top) < 1, 'toolbar occupies the reserved top row of the card band');
       const maxDelta = small.tools.top - 6 - small.menuBottom - 8 - small.rect.height;

@@ -29,12 +29,20 @@ import { el, button } from '../kit/index.js';
 import { bindModalDismiss, modalFooter, modalHead } from '../components/modalShell.js';
 import { markUiComponent, UI_COMPONENTS as UI } from '../components/uiComponents.js';
 import { actionLabel, focusElement, matchAction, setInputGate, setTabRing } from '../input.js';
-import { DECK_PANES, deckEditorModel, deckEditorView, nextFilterPreset, openDeckEdit } from '../models/DeckEditorModel.js';
+import { DECK_PANES, deckEditorModel, deckEditorView, deckVariantKey, nextFilterPreset, openDeckEdit } from '../models/DeckEditorModel.js';
 import { t, tFull } from '../strings.js';
 import { renderCard, staticTokens } from '../components/card.js';
 import { resolveCard } from '../../model/registries.js';
-import { playingCardArt } from '../cardArtwork.js';
+import { applyCombatExpansionCard } from '../../content/combatExpansionCards.js';
+import { applyCardTraits } from '../../content/traitProjection.js';
+import { combatProfileFor } from '../../model/combatCardProfile.js';
+import { cardCategorySigilHtml } from '../components/cardTagSymbols.js';
+import { playingCardModel } from '../../model/playingCard.js';
+import { playingCardArt, cardArtFallbacks } from '../cardArtwork.js';
+import { cardArtLayersHtml } from '../cardArtLayers.js';
+import { registerCardArtRefresh } from '../cardArtStyle.js';
 import { assetUrl } from '../assetmap.js';
+import { markArtPlaceholder } from '../artFallback.js';
 import { cardShapeCssProperties, cardLevelWidthCss } from '../models/CardSizeModel.js';
 import { keywordExplanations } from '../components/tooltipGlossary.js';
 import { deckCardAnimationPreview } from '../components/deckCardAnimationPreview.js';
@@ -63,7 +71,10 @@ const DRAG_HOLD_MS = 250;
 // its snapshot mid-edit, and cancelling the stale one would undo a confirm.
 let liveEditor = null;
 
-export function mountDeckEditor(host, { registries, run, settings = {}, onDone = null, onCancel = null, onNavigate = null, dragHoldMs = DRAG_HOLD_MS }) {
+// Text search is off for now (owner, 2026-10-11): the search inputs are not
+// rendered unless a mount passes `search: true`. The filter code stays so the
+// search comes back by flipping that one option.
+export function mountDeckEditor(host, { registries, run, settings = {}, onDone = null, onCancel = null, onNavigate = null, dragHoldMs = DRAG_HOLD_MS, search: searchEnabled = false }) {
   if (liveEditor && liveEditor.root.isConnected && !liveEditor.session.closed) return liveEditor;
   const session = openDeckEdit(registries, run, settings);
   let view = deckEditorView({});
@@ -135,7 +146,6 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     return el('header', { class: 'deck-editor-head' }, [
       el('div', {}, [
         el('h2', { id: 'deck-editor-title', class: 'deck-editor-title', text: t('deckEditor.readingDesk') }),
-        el('p', { class: 'deck-editor-subtitle', text: t('deckEditor.readingHint') }),
       ]),
       el('span', { class: 'deck-editor-class', text: registries.classes.get(run.class)?.name || run.class }),
       counter,
@@ -186,14 +196,31 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   }
 
   function artwork(row, large = false) {
-    const art = playingCardArt(row.ref, { large });
-    const img = el('img', {
-      class: `deck-editor-art${art?.kind === 'outline' ? ' outline' : ''}`,
-      src: art ? assetUrl(art.path) : '', alt: '', draggable: 'false',
-    });
-    if (art?.position) img.style.setProperty('object-position', art.position);
-    img.addEventListener('error', () => { img.hidden = true; });
-    return img;
+    const well = el('span', {class:'deck-editor-art', 'aria-hidden':'true'});
+    Object.assign(well.style, {position:'relative',overflow:'hidden',display:'block'});
+    const paint = () => {
+      const art = playingCardArt(row.ref, {large, definition:combatDef(row), registries});
+      well.dataset.cardArt=art?.kind||'outline';
+      const img = el('img', {src:art?assetUrl(art.path):'',alt:'',draggable:'false'});
+      Object.assign(img.style, {width:'100%',height:'100%',objectFit:art?.fit||(art?.kind==='outline'?'contain':'cover'),objectPosition:art?.position||'center',filter:art?.filter||''});
+      well.classList.toggle('outline', art?.kind==='outline');
+      well.replaceChildren(img);
+      if(art)well.insertAdjacentHTML('beforeend',cardArtLayersHtml(art));
+      const fallbacks=cardArtFallbacks(row.ref,art,{large});
+      img.addEventListener('error',()=>{
+        markArtPlaceholder(well, paint);
+        const next=fallbacks.shift();
+        well.querySelectorAll('[data-card-art-layers]').forEach(node=>node.remove());
+        if(!next){img.hidden=true;return;}
+        well.dataset.cardArt=next.kind;
+        well.classList.toggle('outline',next.kind==='outline');
+        Object.assign(img.style,{filter:'',objectFit:next.fit||(next.extended?'cover':'contain'),objectPosition:next.position||'center'});
+        img.src=assetUrl(next.path);
+      });
+    };
+    paint();
+    registerCardArtRefresh(well,paint);
+    return well;
   }
 
   const selectionKey = (row, source) => source === 'collection' ? row.key : row.groupKey;
@@ -208,9 +235,11 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       const inspect = node.closest('.deck-editor-item')?.querySelector('.deck-editor-inline-inspect');
       if (inspect) inspect.hidden = !on;
     }
+    trackInspect();
     const inspector = panel.querySelector('.deck-editor-inspector');
     if (open && inspector) { inspector.parentNode.insertBefore(inspectPane(), inspector); inspector.remove(); }
-    updateMobileTabs();
+    syncPanes();
+    syncInert();
     if (open && typeof matchMedia === 'function' && matchMedia('(max-width: 1000px)').matches) {
       focusNode(panel.querySelector('[data-focus-key="inspect-back"]'));
     }
@@ -220,10 +249,12 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     animationPreview?.dispose();
     animationPreview = null;
     const section = el('section', { class: 'deck-editor-inspector', 'aria-label': t('deckEditor.inspect') });
+    // Back returns to the list the card was opened from: the library, or the
+    // deck under Play in deck order.
     const back = chip(t('deckEditor.back'), false, () => {
-      mobileView = inspectOrigin;
+      mobileView = inspectOrigin === 'deck' && model.ordered ? 'deck' : 'collection';
       pane = mobileView;
-      focusKey = `mobile:${mobileView}`;
+      focusKey = selected ? `inspect:${inspectOrigin}:${selected.key}` : null;
       draw();
     }, 'inspect-back');
     back.classList.add('deck-editor-inspect-back');
@@ -234,7 +265,9 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     }
     const { row, source } = inspected || selected;
     const def = resolveCard(registries, row.ref);
-    const face = renderCard(registries, row.ref, { inspection: false, level: 'inspect' });
+    // Reaction rules version 2: the face shows the run's projected trait chips and trait line.
+    const face = renderCard(registries, row.ref, { inspection: false, level: 'inspect',
+      ...(run?.reactionRulesVersion === 2 ? { definition: combatDef(row) } : {}) });
     for (const [key, value] of Object.entries(cardShapeCssProperties())) face.style.setProperty(key, value);
     face.style.setProperty('--deck-inspect-width', cardLevelWidthCss('inspect'));
     face.querySelector('.card-costs')?.replaceChildren(rowCosts(row));
@@ -243,15 +276,31 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     // their band instead of stretching the whole card; keyboard users can
     // reach that reading without needing to open a second inspection door.
     face.querySelector('.cd-body')?.setAttribute('tabindex', '0');
-    const addAction = source === 'collection';
-    const allowed = addAction ? row.addable : row.removable;
-    const reason = addAction ? row.refusal : row.lockSentence;
-    const action = focusable(button({
-      label: t(addAction ? 'deckEditor.addSelected' : 'deckEditor.removeSelected'),
-      weight: 'primary', className: 'deck-editor-primary', disabled: !allowed,
+    // Both doors for one card (SPEC §14.1 UX). Add names the library tile
+    // that takes a copy: this row itself, or for a deck card the tile of its
+    // variant. Remove takes one copy: the tile's last deck copy, or this row.
+    const deckCard = source === 'deck' ? run.deck.find(card => card.instanceId === row.instanceId) : null;
+    const addTile = source === 'collection' ? row
+      : (deckCard ? model.collection.find(tile => tile.key === row.tileKey) : null) || null;
+    const addOn = !!addTile?.addable;
+    const removeOn = !!row.removable;
+    const removeId = source === 'collection' ? row.removeInstanceId : row.instanceId;
+    const addNode = focusable(button({
+      label: t('deckEditor.addSelected'), weight: 'primary', className: 'deck-editor-primary', disabled: !addOn,
       attrs: { 'aria-describedby': 'deck-editor-selected-reason' },
-    }), 'selected-action');
-    action.addEventListener('click', () => addAction ? add(row.key) : remove(row.instanceId));
+    }), 'selected-add');
+    addNode.addEventListener('click', () => { if (addOn) add(addTile.key); });
+    const removeNode = focusable(button({
+      label: t('deckEditor.removeSelected'), className: 'deck-editor-secondary', disabled: !removeOn,
+      attrs: { 'aria-describedby': 'deck-editor-selected-reason' },
+    }), 'selected-remove');
+    removeNode.addEventListener('click', () => { if (removeOn) remove(removeId); });
+    const reasons = [!addOn ? (addTile?.refusal || '') : '', !removeOn ? (row.lockSentence || '') : ''].filter(Boolean);
+    const base = row.countText || (source === 'deck' ? t(`deckEditor.source.${row.source}`) : '');
+    // The stance rides the selected-reason line, not the card's reading block
+    // (where the oversized card face covered it). It follows a refusal too, so
+    // the inspector always names the stance.
+    const reasonText = [reasons.length ? reasons.join(' ') : base, stanceName(row)].filter(Boolean).join(' · ');
     animationPreview = deckCardAnimationPreview({ registries, run, ref: row.ref, paused: animationPaused,
       onPaused: paused => { animationPaused = paused; } });
     section.append(
@@ -267,75 +316,190 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
         ])),
       ]),
       el('div', { class: 'deck-editor-selected-actions' }, [
-        el('p', { id: 'deck-editor-selected-reason', class: 'deck-editor-selected-reason', text: reason || (addAction ? row.countText : row.countText || t(`deckEditor.source.${row.source}`)) }),
-        action,
+        el('p', { id: 'deck-editor-selected-reason', class: 'deck-editor-selected-reason', text: reasonText }),
+        el('div', { class: 'deck-editor-selected-buttons' }, [addNode, removeNode]),
       ]),
     );
     return section;
   }
 
-  function updateMobileTabs() {
-    for (const node of panel.querySelectorAll('[data-mobile-tab]')) {
-      const on = node.dataset.mobileTab === mobileView;
-      node.setAttribute('aria-pressed', String(on));
-      node.classList.toggle('on', on);
+  // Under the phone inspector the list stays rendered but is not reachable:
+  // inert (out of the tab order and the focus cursor) and hidden from assistive
+  // tech. The inspector itself is never inert.
+  function syncInert() {
+    const phone = typeof matchMedia === 'function' && matchMedia('(max-width: 1000px)').matches;
+    const hide = mobileView === 'inspect' && phone;
+    for (const node of panel.querySelectorAll('[data-pane], .deck-editor-toolbar')) {
+      if (hide) { node.setAttribute('inert', ''); node.inert = true; node.setAttribute('aria-hidden', 'true'); }
+      else { node.removeAttribute('inert'); node.inert = false; node.removeAttribute('aria-hidden'); }
     }
+  }
+
+  function syncPanes() {
     const panes = panel.querySelector('.deck-editor-panes');
     if (panes) panes.dataset.active = pane;
   }
 
+  // A phone shows one list, the collection. The deck pane is reachable there
+  // only under Play in deck order, through one "Draw order" chip, so an
+  // ordered deck can still be reworked on a phone.
   function navigation() {
-    return el('nav', { class: 'deck-editor-mobile-tabs', 'aria-label': t('deckEditor.panes.switch') },
-      ['collection', 'inspect', 'deck'].map((id) => {
-        const node = chip(t(id === 'inspect' ? 'deckEditor.inspect' : `deckEditor.pane.${id}`), mobileView === id, () => {
-          if (id === 'inspect' && selected) {
-            const origin = pane;
-            select(selected.row, selected.source, true);
-            inspectOrigin = origin;
-            focusNode(panel.querySelector('[data-focus-key="inspect-back"]'));
-            return;
-          }
-          if (id === 'inspect') inspectOrigin = pane;
-          mobileView = id;
-          if (id !== 'inspect') pane = id;
-          panel.dataset.mobileView = id;
-          updateMobileTabs();
-          if (id === 'inspect') focusNode(panel.querySelector('[data-focus-key="inspect-back"]'));
-        }, `mobile:${id}`);
-        node.dataset.mobileTab = id;
-        return node;
-      }));
+    if (!model.ordered) return null;
+    const onDeck = mobileView === 'deck';
+    const node = chip(t('deckEditor.drawOrder'), onDeck, () => {
+      mobileView = onDeck ? 'collection' : 'deck';
+      pane = mobileView;
+      focusKey = 'mobile:draw-order';
+      draw();
+    }, 'mobile:draw-order');
+    return el('nav', { class: 'deck-editor-mobile-tabs', 'aria-label': t('deckEditor.panes.switch') }, [node]);
   }
 
   // `grouped` is a deck row standing for several copies; a collection tile's
   // own counts are its meta line, never a badge.
   const typeName = (row) => model.filters.type.find(entry => entry.id === row.type)?.label || row.type;
-  function rowCosts(row) {
+  function rowCosts(row, lead = []) {
     const pools = registries.framework.costProfile(resolveCard(registries, row.ref));
-    return el('span', { class: 'deck-editor-costs' }, deckEditorCosts(pools).map(({id, label, value, art}) =>
+    return el('span', { class: 'deck-editor-costs' }, [...lead, ...deckEditorCosts(pools).map(({id, label, value, art}) =>
       el('span', { class: `deck-editor-cost resource-${id}${art ? ' illustrated' : ''}`, title: `${label}: ${value}`,
         'aria-label': `${label}: ${value}` }, [
           ...(art ? [el('img', { class: 'deck-editor-resource-icon', src: assetUrl(art), alt: '', draggable: 'false' })] : []),
           el('small', { text: label }), el('span', { class: 'deck-editor-resource-value', text: String(value) }),
-        ])));
+        ]))]);
   }
+  // The card's stance (owner, 2026-10-11): its combat maneuver when it has one
+  // of the six; otherwise what the card is: Spell, Power, Consumable or Skill.
+  // Every card names one.
+  const MANEUVER_STANCES = ['attack', 'defend', 'counter', 'smash', 'sweep', 'ranged'];
+  // The definition combat resolves: under expanded combat (v2) a run's spell
+  // reach and targeting come from applyCombatExpansionCard, so the editor shows them.
+  // One draw resolves each row's definition once: the cache is keyed by the
+  // row's ref (what resolveCard reads) and cleared at the start of draw().
+  const combatDefCache = new Map();
+  const combatDef = (row) => {
+    const key = JSON.stringify(row.ref);
+    if (!combatDefCache.has(key)) {
+      const def = resolveCard(registries, row.ref);
+      // Reaction rules version 2 shows the card's trait tags; version 1 shows the card as before.
+      const expanded = run?.combatExpansionVersion === 2 ? applyCombatExpansionCard(def) : def;
+      combatDefCache.set(key, run?.combatExpansionVersion === 2 && run.reactionRulesVersion === 2 ? applyCardTraits(expanded, run.reactionRules) : expanded);
+    }
+    return combatDefCache.get(key);
+  };
+  const stanceKey = (row) => {
+    const def = combatDef(row);
+    const profile = combatProfileFor(def);
+    if (MANEUVER_STANCES.includes(profile.maneuver)) return profile.maneuver;
+    // Power and Consumable come before the spell camp: a magical Power is a Power.
+    if (def.type === 'power') return 'power';
+    if (def.type === 'consumable' || (def.kindIds || []).some(id => String(id).startsWith('classification.consumable'))) return 'consumable';
+    if (profile.camp === 'spell') return 'spell';
+    return 'skill';
+  };
+  const stanceName = (row) => t(`deckEditor.stance.${stanceKey(row)}`);
+  const stanceNode = (row) => {
+    const stance = stanceKey(row);
+    return el('span', { class: 'deck-editor-stance', dataset: { stance }, text: t(`deckEditor.stance.${stance}`) });
+  };
+  // The rank the card face prints (its ability rank, else its rank badge). Rank 0
+  // has a name: a spell's is Cantrip, a combat maneuver's is Basic.
+  const rankNode = (row) => {
+    const def = combatDef(row);
+    const card = playingCardModel(registries, row.ref);
+    // An unranked maneuver or spell (the starter Strike and Defend) is rank 0.
+    const ranked = card.abilityRank ?? (card.rankBadge ? Number(String(card.rankBadge).replace(/\D+/g, '')) : null);
+    const rank = Number.isInteger(ranked) ? ranked
+      : (MANEUVER_STANCES.includes(stanceKey(row)) || stanceKey(row) === 'spell' ? 0 : null);
+    if (!Number.isInteger(rank)) return null;
+    const text = rank > 0 ? t('deckEditor.rank', { rank })
+      : t(combatProfileFor(def).camp === 'spell' ? 'deckEditor.rank.cantrip' : 'deckEditor.rank.basic');
+    return el('span', { class: 'deck-editor-rank', dataset: { rank }, text });
+  };
+  // Range (owner, 2026-10-11): Melee / Reach / Ranged from the card's reach
+  // (contact / near / far). An untagged spell attack takes its delivery
+  // (projectile Ranged, melee Melee, else Reach) through the player card's
+  // combat default (combatCardProfile.js). Ranged maneuvers show no separate
+  // range: their stance already reads Ranged. A card that deals no damage shows no
+  // range, so a Counter that only gains Poise (an evasion) reads no range either;
+  // a Counter whose reply deals damage (hp or Ward) does.
+  const RANGE_BY_REACH = { contact: 'melee', near: 'reach', far: 'ranged' };
+  const ATTACKING = ['attack', 'smash', 'sweep', 'ranged', 'counter'];
+  const dealsDamage = (def) => (def.effects || []).some(effect => effect.op === 'damage')
+    || (def.counterPayload?.hp > 0 || def.counterPayload?.ward > 0);
+  const rangeNode = (row) => {
+    if (stanceKey(row) === 'ranged') return null;
+    const def = combatDef(row);
+    const profile = combatProfileFor(def);
+    const attacking = ATTACKING.includes(profile.maneuver) || (profile.camp === 'spell' && def.type === 'attack');
+    if (!attacking || !dealsDamage(def)) return null;
+    const reach = profile.reach || (profile.delivery === 'projectile' || profile.maneuver === 'ranged' ? 'near' : 'contact');
+    const range = RANGE_BY_REACH[reach];
+    return range ? el('span', { class: 'deck-editor-range', dataset: { range }, text: t(`deckEditor.range.${range}`) }) : null;
+  };
+  // Physical or magical, as an icon before the costs: the Physical shield in gold
+  // for physical cards, the outlined Spell sparkle in gold for magical ones.
+  const campNode = (row) => {
+    const camp = combatProfileFor(combatDef(row)).camp === 'spell' ? 'magical' : 'physical';
+    const node = el('span', { class: 'deck-editor-camp', dataset: { camp }, role: 'img', title: tFull(`deckEditor.camp.${camp}`), 'aria-label': t(`deckEditor.camp.${camp}`) });
+    node.innerHTML = cardCategorySigilHtml(camp === 'magical' ? 'spell' : 'physical');
+    return node;
+  };
+  const tileCosts = (row) => rowCosts(row, [campNode(row)]);
   const cardFace = (row, extra, grouped = false, illustrated = !grouped) => [
     illustrated ? artwork(row) : null,
     el('span', { class: 'deck-editor-grip', 'aria-hidden': 'true', text: '⠿' }),
-    rowCosts(row),
+    tileCosts(row),
+    rankNode(row),
     el('span', { class: 'deck-editor-heading' }, [
       el('span', { class: 'deck-editor-name', text: row.name }),
-      el('span', { class: 'deck-editor-type', dataset: { type: row.type }, text: typeName(row) }),
-    ]),
+      stanceNode(row),
+      rangeNode(row),
+    ].filter(Boolean)),
     row.equipmentEligible === false ? el('span', { class: 'deck-editor-meta', text: t('deckEditor.equipmentNotFound') }) : null,
     el('span', { class: 'deck-editor-row-rules', text: rulesFor(row) }),
     // Unordered, a deck row stands for every copy of its variant (SPEC §14.7).
     el('span', { class: 'deck-editor-count', title: extra, text: t('deckEditor.count', { count: grouped ? row.count : row.inDeck || 0 }) }),
   ].filter(Boolean);
 
+  // A selected card's art opens the inspector, as its (i) does (owner,
+  // 2026-10-11). The first press only selects: pointerdown records whether the
+  // card was already selected before focus selects it.
+  function artOpens(main, row, source) {
+    let armed = false;
+    main.addEventListener('pointerdown', (event) => {
+      armed = !!event.target?.closest?.('.deck-editor-art') && selected?.source === source && selected.key === selectionKey(row, source);
+    });
+    main.addEventListener('click', () => { const open = armed; armed = false; select(row, source, open); });
+  }
+
+  // The (i) sits bottom-centre on the art (owner, 2026-10-11), measured from the art's own
+  // box so it needs no reserved space in any layout. Rows without art keep the
+  // stylesheet's position.
+  let inspectObserver = null;
+  function placeInspect(node) {
+    const item = node?.closest?.('.deck-editor-item');
+    const main = item?.querySelector('.deck-editor-main');
+    const art = main?.querySelector('.deck-editor-art');
+    if (!art || !Number.isFinite(art.offsetWidth) || !art.offsetWidth) return;
+    const inset = 3;
+    node.classList.add('on-art');
+    node.style.left = `${main.offsetLeft + art.offsetLeft + (art.offsetWidth - node.offsetWidth) / 2}px`;
+    node.style.top = `${main.offsetTop + art.offsetTop + art.offsetHeight - node.offsetHeight - inset}px`;
+  }
+  function trackInspect() {
+    inspectObserver?.disconnect();
+    const node = [...panel.querySelectorAll('.deck-editor-inline-inspect')].find(n => !n.hidden);
+    if (!node) return;
+    placeInspect(node);
+    if (typeof ResizeObserver === 'function') {
+      inspectObserver = new ResizeObserver(() => placeInspect(node));
+      inspectObserver.observe(node.closest('.deck-editor-item'));
+    }
+  }
+
   function inlineInspect(row, source) {
     const active = selected?.source === source && selected.key === selectionKey(row, source);
-    const node = focusable(button({ label: t('deckEditor.inspectAction'), className: 'deck-editor-inline-inspect deck-editor-inspect',
+    const node = focusable(button({ label: t('deckEditor.inspectIcon'), className: 'deck-editor-inline-inspect deck-editor-inspect',
       attrs: { 'aria-label': t('deckEditor.inspectNamed', { name: row.name }) } }), `inspect:${source}:${selectionKey(row, source)}`);
     node.hidden = !active;
     node.addEventListener('click', () => select(row, source, true));
@@ -346,9 +510,23 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
 
 
 
+  // The stepper's copy count, computed once: in deck, and owned (a basic is
+  // unlimited; a kept set-aside tile owns its deck copies plus its sideboard copies).
+  // The visible text and the spoken label both read these same numbers.
+  function stepperCount(tile) {
+    const kept = tile.key.startsWith('kept:');
+    const inDeck = tile.inDeck;
+    const owned = kept ? tile.inDeck + tile.owned : tile.owned;
+    return { inDeck, owned, unlimited: !!tile.unlimited };
+  }
+  const stepperText = (count) => (count.unlimited ? t('deckEditor.stepperCount.unlimited', { inDeck: count.inDeck })
+    : t('deckEditor.stepperCount', { inDeck: count.inDeck, owned: count.owned }));
+  const stepperSpoken = (count) => (count.unlimited ? tFull('deckEditor.stepperCount.unlimited', { inDeck: count.inDeck })
+    : tFull('deckEditor.stepperCount', { inDeck: count.inDeck, owned: count.owned }));
+
   function collectionPane() {
-    const search = focusable(el('input', { type: 'search', class: 'deck-editor-search', placeholder: t('deckEditor.search'), 'aria-label': t('deckEditor.search'), value: query }), 'search');
-    search.addEventListener('input', () => {
+    const search = searchEnabled ? focusable(el('input', { type: 'search', class: 'deck-editor-search', placeholder: t('deckEditor.search'), 'aria-label': t('deckEditor.search'), value: query }), 'search') : null;
+    search?.addEventListener('input', () => {
       query = search.value;
       const caret = search.selectionStart;
       draw();
@@ -368,25 +546,38 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       main.dataset.selectionSource = 'collection';
       main.addEventListener('focus', () => select(tile, 'collection'));
       main.addEventListener('gpfocus', () => select(tile, 'collection'));
-      main.addEventListener('click', () => select(tile, 'collection'));
+      artOpens(main, tile, 'collection');
       const plus = focusable(el('button', {
         type: 'button', class: 'deck-editor-step', disabled: tile.equipmentEligible === false, dataset: { action: 'add', key: tile.key },
         'aria-label': tFull('deckEditor.add', { name: tile.name }), 'aria-disabled': tile.addable ? 'false' : 'true',
         text: t('deckEditor.add', { name: tile.name }),
       }), `tile-add:${tile.key}`);
-      plus.addEventListener('click', () => add(tile.key));
+      plus.addEventListener('click', () => { focusKey = plus.dataset.focusKey; add(tile.key); });
+      // The attribute stepper: － takes the tile's last deck copy, the count is
+      // how many copies the deck holds, ＋ adds one.
+      const minus = focusable(el('button', {
+        type: 'button', class: 'deck-editor-step', disabled: !tile.removable, dataset: { action: 'remove', key: tile.key },
+        'aria-label': tFull('deckEditor.remove', { name: tile.name }), 'aria-disabled': tile.removable ? 'false' : 'true',
+        text: t('deckEditor.remove', { name: tile.name }),
+      }), `tile-remove:${tile.key}`);
+      minus.addEventListener('click', () => { if (tile.removable) { focusKey = minus.dataset.focusKey; remove(tile.removeInstanceId); } });
       list.appendChild(el('div', {
         class: `deck-editor-item deck-editor-tile${tile.addable ? '' : ' spent'}${tile.equipmentEligible === false ? ' equipment-missing' : ''}`, role: 'listitem',
         dataset: { key: tile.key, source: tile.source, unlimited: tile.unlimited ? 'true' : 'false' },
-      }, [main, inlineInspect(tile, 'collection'), el('div', { class: 'deck-editor-actions' }, [plus])]));
+      }, [main, inlineInspect(tile, 'collection'), el('div', { class: 'deck-editor-actions' }, [
+        minus, (() => {
+          const count = stepperCount(tile);
+          return el('span', { class: 'deck-editor-stepper-count', text: stepperText(count), title: stepperSpoken(count), 'aria-label': stepperSpoken(count) });
+        })(), plus,
+      ])]));
     }
     if (!rows.length) list.appendChild(el('p', { class: 'deck-editor-empty', text: t('deckEditor.empty.collection') }));
-    const section = paneSection('collection', t('deckEditor.pane.collection'), list);
-    section.insertBefore(el('div', { class: 'deck-editor-searchbar' }, [search,
+    return paneSection('collection', t('deckEditor.pane.collection'), list, [
       chip(t('deckEditor.all'), libraryScope === 'all', () => { libraryScope = 'all'; draw(); }, 'scope:all'),
       chip(t('deckEditor.inDeck'), libraryScope === 'deck', () => { libraryScope = 'deck'; draw(); }, 'scope:deck'),
-    ]), list);
-    return section;
+      tools(),
+      search,
+    ]);
   }
 
   function deckPane() {
@@ -403,7 +594,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       main.dataset.selectionSource = 'deck';
       main.addEventListener('focus', () => select(row, 'deck'));
       main.addEventListener('gpfocus', () => select(row, 'deck'));
-      main.addEventListener('click', () => select(row, 'deck'));
+      artOpens(main, row, 'deck');
       const item = el('div', {
         class: `deck-editor-item deck-editor-row${row.locked ? ' locked' : ''}${held === row.instanceId ? ' held' : ''}`, role: 'listitem',
         dataset: { instanceId: row.instanceId, source: row.source },
@@ -449,9 +640,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       list.appendChild(details);
     }
     if (!rows.length) list.appendChild(el('p', { class: 'deck-editor-empty', text: t('deckEditor.empty.deck') }));
-    const section = paneSection('deck', `${t('deckEditor.pane.deck')} · ${model.counter.count}`, list);
-    const search = focusable(el('input', { type: 'search', class: 'deck-editor-search', placeholder: t('deckEditor.searchDeck'), 'aria-label': t('deckEditor.searchDeck'), value: deckQuery }), 'deck-search');
-    search.addEventListener('input', () => {
+    const search = searchEnabled ? focusable(el('input', { type: 'search', class: 'deck-editor-search', placeholder: t('deckEditor.searchDeck'), 'aria-label': t('deckEditor.searchDeck'), value: deckQuery }), 'deck-search') : null;
+    search?.addEventListener('input', () => {
       deckQuery = search.value;
       const caret = search.selectionStart;
       draw();
@@ -459,17 +649,21 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       next.focus();
       try { next.setSelectionRange(caret, caret); } catch { /* browser search input */ }
     });
-    section.insertBefore(el('div', { class: 'deck-editor-searchbar' }, [search,
+    const section = paneSection('deck', `${t('deckEditor.pane.deck')} · ${model.counter.count}`, list, [
       ...['list', 'cards'].map(id => chip(t(`deckEditor.display.${id}`), deckDisplay === id, () => { deckDisplay = id; draw(); }, `display:${id}`)),
-    ]), list);
+      search,
+    ]);
     section.appendChild(el('div', { class: 'deck-editor-dropwell', text: t('deckEditor.dropHere') }));
     return section;
   }
 
-  function paneSection(id, title, list) {
+  // The pane's title and its controls share one row (the bar): the title on
+  // the left, the chips after it. A search box, when text search is on, wraps
+  // onto the bar's own line.
+  function paneSection(id, title, list, controls = []) {
     const section = el('section', {
       class: `deck-editor-pane${pane === id ? ' active' : ''}`, dataset: { pane: id }, 'aria-label': title,
-    }, [el('h3', { class: 'deck-editor-pane-title', text: title }), list]);
+    }, [el('div', { class: 'deck-editor-pane-bar' }, [el('h3', { class: 'deck-editor-pane-title', text: title }), ...controls]), list]);
     return section;
   }
 
@@ -602,7 +796,9 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   }
 
   function draw() {
+    combatDefCache.clear();
     model = deckEditorModel({ registries, run, settings, view });
+    if (!model.ordered && mobileView === 'deck') mobileView = 'collection';
     const rows = selected?.source === 'deck' ? model.deck : model.collection;
     const current = selected && rows.find(row => selectionKey(row, selected.source) === selected.key);
     if (current) selected = { ...selected, row: current };
@@ -632,17 +828,45 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
         tab.dataset.modalTab === 'deck' ? 'Edit your deck' : `Save deck and open ${tab.textContent}`);
       panel.append(head);
     }
-    panel.append(header(), el('div', { class: 'deck-editor-toolbar' }, [navigation(), tools()]), el('div', { class: 'deck-editor-panes', dataset: { active: pane } }, [collectionPane(), inspectPane(), deckPane()]), footer());
+    // The toolbar row holds only the phone's Draw order chip; it is left out
+    // when there is nothing for it (the filters live on the collection's bar).
+    const nav = navigation();
+    panel.append(header(), ...(nav ? [el('div', { class: 'deck-editor-toolbar' }, [nav])] : []), el('div', { class: 'deck-editor-panes', dataset: { active: pane } }, [collectionPane(), inspectPane(), deckPane()]), footer());
+    syncInert();
     restoreFocus();
+    trackInspect();
+  }
+
+  // The first focus key in a pane that is not a text box. Focus never moves
+  // INTO a text input by fallback (a phone would open its keyboard): a text box
+  // keeps focus only when the focus key itself names it, and the search
+  // handlers re-focus it while typing.
+  function paneFocusable(name) {
+    return [...panel.querySelectorAll(`[data-pane="${name}"] [data-focus-key]`)]
+      .find(candidate => !['INPUT', 'TEXTAREA'].includes(candidate.tagName) && !candidate.closest?.('[inert]')) || null;
   }
 
   function restoreFocus() {
     if (!focusKey) return;
     const previous = panel.querySelector(`[data-focus-key="${cssEscape(focusKey)}"]`);
-    const node = previous && previous.closest?.('.deck-editor-group')?.open !== false ? previous
-      : panel.querySelector(`[data-pane="${pane}"] [data-focus-key]`);
+    let node = previous && previous.closest?.('.deck-editor-group')?.open !== false ? previous : paneFocusable(pane);
+    if (node?.closest?.('[inert]')) node = panel.querySelector('[data-focus-key="inspect-back"]') || paneFocusable(pane);
+    // A pressed ＋ or － whose copy ran out is disabled now: focus moves to its
+    // sibling in the same row, never to the search box.
+    if (isDisabled(node)) {
+      const sibling = siblingOf(node.dataset.focusKey);
+      node = sibling && !isDisabled(sibling) ? sibling : paneFocusable(pane);
+    }
     if (!node) return;
     focusNode(node);
+  }
+
+  const isDisabled = (node) => !!node && (node.disabled === true || node.hasAttribute?.('disabled') === true);
+  function siblingOf(key) {
+    const other = key?.startsWith('tile-remove:') ? `tile-add:${key.slice('tile-remove:'.length)}`
+      : key?.startsWith('tile-add:') ? `tile-remove:${key.slice('tile-add:'.length)}`
+        : key === 'selected-add' ? 'selected-remove' : key === 'selected-remove' ? 'selected-add' : null;
+    return other ? panel.querySelector(`[data-focus-key="${cssEscape(other)}"]`) : null;
   }
 
   function focusNode(node) {
@@ -714,15 +938,20 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     return false;
   }
 
+  // On a phone the deck pane is hidden unless the deck is ordered (the Draw
+  // order chip is then the only way to it), so pane switching does nothing
+  // there for an unordered deck.
   function switchPane(step) {
+    if (!model.ordered && typeof matchMedia === 'function' && matchMedia('(max-width: 1000px)').matches) return false;
     const at = DECK_PANES.indexOf(pane);
     pane = DECK_PANES[(at + step + DECK_PANES.length) % DECK_PANES.length];
     mobileView = pane;
     const first = [...panel.querySelectorAll(`[data-pane="${pane}"] .deck-editor-main`)]
       .find(node => node.closest?.('.deck-editor-group')?.open !== false)
-      || panel.querySelector(`[data-pane="${pane}"] [data-focus-key]`);
+      || paneFocusable(pane);
     focusKey = first ? first.dataset.focusKey : null;
     draw();
+    return true;
   }
 
   function cycleFilters() {
@@ -768,8 +997,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
         case PAD.b: doCancel(); return true;
         case PAD.x: { const row = focusedRow(); if (row && model.ordered) togglePick(row); return !!row; }
         case PAD.y: cycleFilters(); return true;
-        case PAD.lb: switchPane(-1); return true;
-        case PAD.rb: switchPane(1); return true;
+        case PAD.lb: return switchPane(-1);
+        case PAD.rb: return switchPane(1);
         case PAD.start: doDone(); return true;
         default: return false;
       }
@@ -791,6 +1020,12 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     if (key === '-' || key === '_' || key === 'Delete' || key === 'Backspace') {
       const row = focusedRow();
       if (row) { remove(row); return true; }
+      const node = focused();
+      // The tile's main, its ＋ and its － are one control group: － on any of
+      // them removes one copy, so the keyboard gets the same answer everywhere in the row.
+      const onTile = /^tile(-add|-remove)?:/.test(node?.dataset.focusKey || '');
+      const tile = onTile ? model.collection.find(candidate => candidate.key === node.dataset.key) : null;
+      if (tile?.removable) { focusKey = node.dataset.focusKey; remove(tile.removeInstanceId); return true; }
       return false;
     }
     if (key === 'Enter' || key === ' ') {
@@ -835,15 +1070,52 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   const releaseDismiss = bindModalDismiss({ veil: root, panel, close: () => doCancel() });
 
   function close() {
+    inspectObserver?.disconnect();
     animationPreview?.dispose();
     animationPreview = null;
     drop();
     removeEventListener('keydown', onKey);
+    if (phoneQuery) {
+      if (phoneQuery.removeEventListener) phoneQuery.removeEventListener('change', onPhoneChange);
+      else phoneQuery.removeListener?.(onPhoneChange);
+    }
     setTabRing(null);
     for (const sibling of madeInert.splice(0)) sibling.removeAttribute('inert');
     releaseDismiss({ restoreFocus: true });
     root.remove();
     if (liveEditor && liveEditor.root === root) liveEditor = null;
+  }
+
+  // A window that narrows to phone width while the deck pane stands leaves it:
+  // on a phone an unordered deck has no deck pane to stand in.
+  const phoneQuery = typeof matchMedia === 'function' ? matchMedia('(max-width: 1000px)') : null;
+  const onPhoneChange = (ev) => {
+    if (ev?.matches && !model.ordered) {
+      // An open inspection stays open; its Back goes to the library list.
+      if (mobileView === 'inspect') { pane = 'collection'; inspectOrigin = 'collection'; draw(); return; }
+      if (pane === 'deck') {
+        pane = 'collection';
+        mobileView = 'collection';
+        focusKey = null;
+        draw();
+        const node = paneFocusable('collection');
+        if (node) focusNode(node);
+        return;
+      }
+    }
+    // An ordered deck keeps both panes on a phone (Draw order shows the deck),
+    // so the visible view follows the pane that holds focus.
+    if (ev?.matches && model.ordered && mobileView !== 'inspect' && mobileView !== pane) {
+      mobileView = pane;
+      draw();
+      return;
+    }
+    // Widening back to desktop releases the panes too.
+    syncInert();
+  };
+  if (phoneQuery) {
+    if (phoneQuery.addEventListener) phoneQuery.addEventListener('change', onPhoneChange);
+    else phoneQuery.addListener?.(onPhoneChange);
   }
 
   draw();

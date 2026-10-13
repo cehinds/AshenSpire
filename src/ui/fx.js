@@ -15,8 +15,8 @@ import { dlog } from './debuglog.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './components/uiComponents.js';
 import { playPoseOn, stageFor } from './services/PoseAnimator.js';
 import { reducedMotionRequested } from './motion.js';
+import { t } from './strings.js';
 
-const STEP_MS = 80;
 
 // ---------------------------------------------------------------------------
 // Animation speed (settings-driven; 'instant' collapses paced playback to the
@@ -28,8 +28,8 @@ const STEP_MS = 80;
 // (model/equipmentAnimation.js animationTiming), so the hit, its number and its
 // sound arrive while the click is still fresh (FINISH §5: click to impact
 // ≤ 400 ms at Normal; tools/click-impact-probe.mjs measures it).
-import { ANIM_SPEEDS, setAnimSpeed, getAnimSpeed } from './animationPace.js';
-export { ANIM_SPEEDS, setAnimSpeed, getAnimSpeed };
+import { ANIM_SPEEDS, COMBAT_TIMING, setAnimSpeed, getAnimSpeed, turnBannerHoldMs, getBeatOrder, setBeatOrder } from './animationPace.js';
+export { ANIM_SPEEDS, setAnimSpeed, getAnimSpeed, getBeatOrder, setBeatOrder };
 
 let pending = [];
 let flushRequested = false;
@@ -375,6 +375,192 @@ export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
   return el;
 }
 
+// ---------------------------------------------------------------------------
+// On-character callouts (owner, 2026-10-11): one short word that rises from
+// above a fighter's head — STAGGERED, COUNTERED, EVADED, CRITICAL, GUARD BREAK.
+// Larger than a damage float and coloured per kind; the words are UI strings.
+// Two on one fighter stack (never overlap) and at most two show at once; the
+// same word already showing on that fighter is not repeated.
+// ---------------------------------------------------------------------------
+export const CALLOUT_KINDS = {
+  staggered: { string: 'combat.callout.staggered', tone: 'gold' },
+  disrupted: { string: 'combat.callout.disrupted', tone: 'gold' },
+  countered: { string: 'combat.callout.countered', tone: 'red' },
+  evaded: { string: 'combat.callout.evaded', tone: 'white' },
+  critical: { string: 'combat.callout.critical', tone: 'red' },
+  guardBreak: { string: 'combat.callout.guardBreak', tone: 'red' },
+  wardBreak: { string: 'combat.callout.wardBreak', tone: 'ward' },
+  barrierBreak: { string: 'combat.callout.barrierBreak', tone: 'barrier' },
+  blockBreak: { string: 'combat.callout.blockBreak', tone: 'block' },
+  interrupted: { string: 'combat.callout.interrupted', tone: 'interrupt' },
+  poiseBreak: { string: 'combat.callout.poiseBreak', tone: 'gold' },
+  // Outcome words (owner, 2026-10-12): a hit that does no HP damage shows one of these instead of its numbers.
+  resisted: { string: 'combat.callout.resisted', tone: 'barrier' },
+  wardResisted: { string: 'combat.callout.resisted', tone: 'ward' },
+  blocked: { string: 'combat.callout.blocked', tone: 'block' },
+  immune: { string: 'combat.callout.immune', tone: 'immune' },
+};
+export const CALLOUT_MS = 900;
+export const CALLOUT_INSTANT_MS = 500;
+// The words over one fighter (owner, 2026-10-12): at most three show at once, in three
+// lanes (lane 0 is the top). Words start one step apart in priority order; a fourth waits
+// for the earliest visible one to finish, and nothing is dropped.
+export const STACK_LANES = 3;
+export const STACK_STEP_MS = 150;
+// One slot's height, in layer px: a slot-1 callout sits this far above slot 0.
+const CALLOUT_SLOT_PX = 34;
+
+// How far the rise animation (combat.css callout-rise) lifts the word.
+const CALLOUT_RISE_PX = 26;
+// The fighter's overhead HUD pieces drawn over the top of its figure.
+const OVERHEAD_SELECTOR = '.combatant-leading, .overhead-control, .as-meters';
+
+/** The lowest bottom edge (layer space) of the HUD sitting over the figure's top, or null. */
+function overheadFloor(layer, anchor, b) {
+  const root = anchor.closest?.('.combatant');
+  if (!root?.querySelectorAll) return null;
+  let floor = null;
+  for (const node of root.querySelectorAll(OVERHEAD_SELECTOR)) {
+    if (anchor.contains?.(node)) continue;
+    const box = anchorLocalBox(layer, node);
+    if (!(box.width > 0 && box.height > 0)) continue;
+    const overlapsX = box.left < b.left + b.width && box.left + box.width > b.left;
+    const overHead = box.top + box.height >= b.top - 16 && box.top < b.top + b.height / 2;
+    if (overlapsX && overHead) floor = Math.max(floor ?? -Infinity, box.top + box.height);
+  }
+  return floor;
+}
+
+const liveCallouts = (layer, forId) => [...(layer.children || [])]
+  .filter((node) => node.dataset?.calloutFor === String(forId));
+
+/**
+ * Priority of a word, highest first: STATUS > MISSED > IMMUNE > BREAKS (and the
+ * stagger/crit words that land with them) > BLOCKED > RESISTED. DAMAGE numbers are
+ * not words: they are one grouped row of floats, below every word.
+ */
+export function stackPriority(kind = '') {
+  if (String(kind).startsWith('status:')) return 6;
+  if (kind === 'evaded') return 5;
+  if (kind === 'immune') return 4;
+  if (kind === 'blocked') return 2;
+  if (kind === 'resisted' || kind === 'wardResisted') return 1;
+  return 3;
+}
+
+/**
+ * The pure schedule for one fighter's words (owner, 2026-10-12). `items` are [{ id, kind }]
+ * in arrival order. They start in priority order, one step apart; at most `lanes.length`
+ * show at once, so each later word starts when the earliest visible one has lived `lifeMs`.
+ * `lanes` are how long each lane is still busy, from now. Returns [{ id, start, lane }],
+ * start in ms from now, in priority order (ties keep arrival order).
+ */
+export function planWordQueue(items = [], { lanes = [0, 0, 0], stepMs = STACK_STEP_MS, lifeMs = CALLOUT_MS, after = null } = {}) {
+  const sorted = items.map((item, arrival) => ({ ...item, arrival, rank: stackPriority(item.kind) }))
+    .sort((a, b) => b.rank - a.rank || a.arrival - b.arrival);
+  const free = [...lanes];
+  const out = [];
+  // `after`: when the last word before this batch started (ms from now), or null.
+  let prev = after;
+  for (const item of sorted) {
+    let lane = 0;
+    for (let l = 1; l < free.length; l++) if (free[l] < free[lane]) lane = l;
+    let start = Math.max(0, free[lane]);
+    if (prev !== null) start = Math.max(start, prev + stepMs);
+    free[lane] = start + lifeMs;
+    prev = start;
+    out.push({ id: item.id, start, lane });
+  }
+  return out;
+}
+
+// Per layer, per fighter: the words still showing or waiting, with their lanes and times.
+const calloutQueues = new WeakMap();
+let calloutArrival = 0;
+function queueFor(layer, forId) {
+  let byFighter = calloutQueues.get(layer);
+  if (!byFighter) calloutQueues.set(layer, byFighter = new Map());
+  const key = String(forId);
+  if (!byFighter.has(key)) byFighter.set(key, { items: [] });
+  return byFighter.get(key);
+}
+
+/**
+ * Lay out one fighter's words: plan every word that has not started yet, then place each in its lane.
+ * `lifeMs` is the lifetime callout() selected (instant speed is shorter); lanes, starts and removal all use it.
+ */
+function layoutCallouts(layer, anchor, q, now, lifeMs = CALLOUT_MS) {
+  const active = q.items.filter((it) => it.start <= now);
+  const pending = q.items.filter((it) => it.start > now);
+  const lanes = [0, 1, 2].map((lane) => Math.max(0, ...active.filter((it) => it.lane === lane).map((it) => it.end - now)));
+  // The stagger counts from the last word that has started, never from one still waiting (it is re-planned).
+  const started = active.map((it) => it.start);
+  const after = started.length ? Math.max(...started) - now : null;
+  const plan = planWordQueue(pending.map((it) => ({ id: it.arrival, kind: it.kind })), { lanes, lifeMs, after });
+  for (const row of plan) {
+    const it = pending.find((p) => p.arrival === row.id);
+    it.start = now + row.start;
+    it.lane = row.lane;
+    it.end = it.start + lifeMs;
+    it.el.style.animationDelay = row.start > 0 ? `${row.start}ms` : '';
+    clearTimeout(it.timer);
+    it.timer = setTimeout(() => it.el.remove(), it.end - now);
+  }
+  const b = anchorLocalBox(layer, anchor);
+  const floor = overheadFloor(layer, anchor, b);
+  const base = floor == null ? b.top + 4 : Math.max(b.top + 4, floor + 2 + (q.items[0]?.el.offsetHeight || 30) + CALLOUT_RISE_PX);
+  const centre = b.left + b.width / 2;
+  for (const it of q.items) {
+    const el = it.el;
+    // Lane 0 is the top: its slot is the highest. Slot 0 sits nearest the head.
+    const slot = floor == null ? (STACK_LANES - 1 - it.lane) : it.lane;
+    el.dataset.calloutSlot = String(slot);
+    const width = el.offsetWidth || 0, height = el.offsetHeight || 30;
+    const bottom = base + (floor == null ? -1 : 1) * slot * CALLOUT_SLOT_PX;
+    let at = { left: centre - width / 2, top: bottom - height };
+    if (width) at = clampBox({ left: at.left, top: at.top, width, height }, anchorLocalBox(layer, layer), { pad: 6 });
+    el.style.left = `${at.left + width / 2}px`;
+    el.style.top = `${at.top + height}px`;
+  }
+}
+
+/** Show callout `kind` over `anchor` (fighter `forId`) in `layer`; returns the element, or null. */
+export function callout(layer, anchor, forId, kind) {
+  const isStatus = kind.startsWith('status:');
+  const statusId = isStatus ? kind.slice('status:'.length) : null;
+  const def = isStatus
+    ? (Object.prototype.hasOwnProperty.call(STATUS_WORDS, statusId) ? { string: `combat.status.applied.${statusId}`, tone: 'status', colour: STATUS_WORDS[statusId].colour } : null)
+    : CALLOUT_KINDS[kind];
+  if (!layer || !anchor || !def || forId == null) return null;
+  const now = Date.now();
+  const q = queueFor(layer, forId);
+  // Words that have finished leave the queue.
+  q.items = q.items.filter((it) => it.end > now || it.end === undefined);
+  if (q.items.some((it) => it.kind === kind) || liveCallouts(layer, forId).some((node) => node.dataset.calloutKind === kind)) return null;
+  const el = document.createElement('div');
+  el.className = `fx-callout ${def.tone}`;
+  el.dataset.calloutFor = String(forId);
+  el.dataset.calloutKind = kind;
+  el.setAttribute('aria-hidden', 'true');
+  el.textContent = t(def.string);
+  if (def.colour) el.style.color = def.colour;
+  const ms = getAnimSpeed() === 'instant' ? CALLOUT_INSTANT_MS : CALLOUT_MS;
+  el.style.setProperty('--fx-callout-ms', `${ms}ms`);
+  // Not started yet: the layout plans it (start Infinity until then).
+  const item = { el, kind, arrival: calloutArrival++, start: Infinity, end: undefined, lane: 0, timer: null };
+  q.items.push(item);
+  layer.appendChild(el);
+  layoutCallouts(layer, anchor, q, now, ms);
+  return el;
+}
+
+/** A click-skip ends every callout in the layer. */
+export function clearCallouts(layer) {
+  for (const node of [...(layer?.children || [])]) if (node.dataset?.calloutFor !== undefined) node.remove();
+  // The waiting queue goes with the visible words.
+  if (layer) calloutQueues.delete(layer);
+}
+
 /**
  * One semantic split for every attack hit, shared by solo and co-op.
  * `amount` is the authoritative pre-block total; `blocked` is guard consumed.
@@ -384,10 +570,22 @@ export function guardHitFloatParts(event) {
   const amount = Math.max(0, Number(event && event.amount) || 0);
   const blocked = Math.min(amount, Math.max(0, Number(event && event.blocked) || 0));
   const residual = amount - blocked;
+  // What Barrier (blue) and Ward (purple) absorbed before the hit reached
+  // Block (blue) and Health (red), each its own unsigned number.
+  const barrier = Math.max(0, Number(event && event.barrierAbsorbed) || 0);
+  const ward = Math.max(0, Number(event && event.wardAbsorbed) || 0);
+  const poise = Math.max(0, Number(event && event.poiseAbsorbed) || 0);
+  // The Force part a Silenced target was immune to (the rest of the hit landed).
+  const forceImmune = Math.max(0, Number(event && event.forceImmune) || 0);
   return {
     amount,
     blocked,
     residual,
+    // A hit Barrier stopped outright reads RESISTED.
+    barrier: barrier > 0 ? { text: amount === 0 && ward === 0 ? `${barrier} RESISTED` : String(barrier), cls: 'barrier small' } : null,
+    ward: ward > 0 ? { text: String(ward), cls: 'ward small' } : null,
+    poise: poise > 0 ? { text: String(poise), cls: 'poise small' } : null,
+    immune: forceImmune > 0 ? { text: `${forceImmune} IMMUNE`, cls: 'immune small' } : null,
     guard: blocked > 0 ? { text: String(blocked), cls: 'blk small' } : null,
     damage: residual > 0 ? { text: `-${residual}`, cls: dmgClass(residual) } : null,
   };
@@ -415,13 +613,16 @@ function spawnFx(layer, anchor, cls, ms, text) {
   setTimeout(() => el.remove(), ms);
 }
 
-function banner(layer, text, cls = '') {
+// lifeMs, when given, is how long the banner shows and fades (the turn banner
+// passes its pace's hold, so it is gone before the next beat starts).
+export function banner(layer, text, cls = '', lifeMs = null) {
   if (!layer) return;
   const el = document.createElement('div');
   el.className = `fx-banner ${cls}`;
   el.textContent = text;
+  if (lifeMs > 0) el.style.setProperty('--fx-banner-ms', `${lifeMs}ms`);
   layer.appendChild(el);
-  setTimeout(() => el.remove(), 320);
+  setTimeout(() => el.remove(), lifeMs > 0 ? lifeMs : 320);
 }
 
 // Hit-stop (SPEC §7.4). `hitStop` is set by playTimeline only while the hit
@@ -450,7 +651,7 @@ function clearHeldFigures() {
   for (const [el, timer] of heldFigures) {
     clearTimeout(timer);
     el.classList.remove('hit-stop');
-    stageFor(el)?.settle?.();
+    stageFor(el)?.settle?.({ reaction: true });
   }
   heldFigures.clear();
 }
@@ -512,9 +713,10 @@ function flare(layer, anchor, color) {
 /**
  * animateEvents(events, ctx, done)
  *   ctx = { layer, combatEl, anchorFor(entityId) → element|null }
- * Events are staggered STEP_MS apart; clicking anywhere flushes instantly.
+ * Events are staggered COMBAT_TIMING.instantStepMs apart; clicking anywhere flushes instantly.
  */
 export function animateEvents(events, ctx, done) {
+  const receiptVisuals = { reactionForReceipt: ctx.reactionForReceipt };
   flushRequested = false;
   // Beat by beat, as the paced timeline cues them, so instant or
   // reduced-motion playback makes the same sounds as Normal pacing, in the
@@ -525,12 +727,20 @@ export function animateEvents(events, ctx, done) {
   const beatOf = new Map();
   beats.forEach((beat, b) => { for (const e of beat.events) if (!beatOf.has(e)) beatOf.set(e, b); });
   let cued = 0;
-  const cueThrough = (b) => { while (cued <= b && cued < beats.length) playBeatCues(beats[cued++].events); };
-  pending = events.filter((e) => visualFor(e) !== null);
-  const skip = () => {
+  const cueThrough = (b) => { while (cued <= b && cued < beats.length) playBeatCues(beats[cued++].events, { isLocalPlayer: ctx.isLocalPlayer }); };
+  pending = events.filter((e) => visualFor(e, undefined, receiptVisuals) !== null);
+  const skip = (event) => {
+    // A read-only control (the combat log, the Reaction switch) is not a skip, as in playTimeline.
+    // It stays registered until the walk ends (removed below), so a read-only click leaves it armed.
+    if (event?.target?.closest?.('[data-combat-read-only]')) return;
     flushRequested = true;
+    if (ctx.reactionForReceipt) for (const sprite of globalThis.document?.querySelectorAll?.('.combatant .sprite') || []) {
+      const stage = stageFor(sprite);
+      if (stage?.reactionPoses?.length) stage.endReaction?.();
+    }
+    clearCallouts(ctx.layer);
   };
-  addEventListener('pointerdown', skip, { once: true, capture: true });
+  addEventListener('pointerdown', skip, { capture: true });
 
   let i = 0;
   const step = () => {
@@ -544,11 +754,19 @@ export function animateEvents(events, ctx, done) {
       if (done) done();
       return;
     }
-    cueThrough(beatOf.has(pending[i]) ? beatOf.get(pending[i]) : -1);
-    const fn = visualFor(pending[i]);
-    if (fn) fn(ctx);
-    i++;
-    setTimeout(step, STEP_MS);
+    // A callout-only event (CRITICAL before its hit, say) plays in the same
+    // tick as its neighbour, so callouts add no step to the fast path.
+    // At most ONE ordinary event per tick: a callout between two hits must not
+    // pull the next hit into this tick (a crit multi-hit still steps per hit).
+    let hadRegular = false;
+    do {
+      if (!calloutOnly(pending[i], receiptVisuals)) hadRegular = true;
+      cueThrough(beatOf.has(pending[i]) ? beatOf.get(pending[i]) : -1);
+      const fn = visualFor(pending[i], undefined, receiptVisuals);
+      if (fn) fn(ctx);
+      i++;
+    } while (i < pending.length && (calloutOnly(pending[i], receiptVisuals) || (!hadRegular && calloutOnly(pending[i - 1], receiptVisuals))));
+    setTimeout(step, COMBAT_TIMING.instantStepMs);
   };
   step();
 }
@@ -627,6 +845,11 @@ export function groupBeats(events) {
  *     onBeatApplied(beat)  — apply this beat's events to the display state
  *                            (HP/block bars, hand, statuses) AFTER its visuals,
  *     onFlush()            — skip: jump display to true final state,
+ *     beatOrder?           — 'sequential' | 'impact'; defaults to the
+ *                            animationPace.js setting (getBeatOrder),
+ *     isLocalPlayer?(seatId) — co-op: the seats this screen plays; the damage and
+ *                            turn-start haptics buzz for those only. Absent
+ *                            (solo), every player receipt is local.
  *   }
  * Uses the module anim speed; 'instant' (or reducedMotion) falls back to
  * animateEvents' classic behavior (final state + fast floats).
@@ -634,11 +857,51 @@ export function groupBeats(events) {
 // Debug lifecycle counters (window.__fx) — cheap, used to diagnose stuck-busy
 // reports: every timeline must end in exactly one finish (done/watchdog/flush).
 const dbg = typeof window !== 'undefined' ? (window.__fx = { open: 0, finished: 0, watchdog: 0 }) : {};
+// Opt-in beat trace for browser QA: set window.__fx.trace = [] and each paced
+// beat step pushes [performance.now(), step, detail].
+const traceBeat = (step, detail) => {
+  if (Array.isArray(dbg.trace)) dbg.trace.push([globalThis.performance?.now?.() ?? Date.now(), step, detail]);
+};
+
+// Is this figure in its stance? 'out' — mid-action or in a pose other than its
+// rest; 'in'; or 'unknown' for a figure that cannot tell. The stage contracts
+// differ, so each is read through the fields it actually exposes:
+//   alternativeCardStage  presentation.action (an action is playing)
+//   paintedOutfits        presentation.pose / .rest / .transition
+//   enemyPoseStage        stage.pose / stage.rest getters
+//   expansion stages      settle() / play() only → 'unknown'
+export function stanceState(stage) {
+  if (!stage) return 'in';
+  const presentation = stage.presentation;
+  if (presentation && typeof presentation === 'object') {
+    if (Object.hasOwn(presentation, 'action')) return presentation.action ? 'out' : 'in';
+    if (presentation.transition) return 'out';
+    if (typeof presentation.pose === 'string' && typeof presentation.rest === 'string') {
+      return presentation.pose === presentation.rest ? 'in' : 'out';
+    }
+  }
+  if (typeof stage.pose === 'string') return stage.pose === (typeof stage.rest === 'string' ? stage.rest : 'idle') ? 'in' : 'out';
+  return 'unknown';
+}
 
 export function playTimeline(events, ctx, done) {
+  const receiptVisuals = { reactionForReceipt: ctx.reactionForReceipt };
   const speed = ANIM_SPEEDS[getAnimSpeed()];
   const reduced = reducedMotionRequested();
+  const beatOrder = ctx.beatOrder || getBeatOrder();
   if (!speed || reduced) {
+    // No added waits. 'sequential' still updates the bars after the
+    // reactions and numbers have shown; 'impact' updates them first.
+    if (beatOrder === 'sequential') {
+      animateEvents(events, ctx, () => {
+        try {
+          if (ctx.onFlush) ctx.onFlush();
+        } finally {
+          if (done) done();
+        }
+      });
+      return;
+    }
     if (ctx.onFlush) ctx.onFlush();
     animateEvents(events, ctx, done);
     return;
@@ -655,7 +918,7 @@ export function playTimeline(events, ctx, done) {
   const flushHaptics = () => {
     const rest = beats.slice(cued);
     cued = beats.length;
-    for (const [i, beat] of rest.entries()) playBeatHaptics(beat.events, { damageBuzz: !damageCued.has(cued - rest.length + i) });
+    for (const [i, beat] of rest.entries()) playBeatHaptics(beat.events, { isLocalPlayer: ctx.isLocalPlayer, damageBuzz: !damageCued.has(cued - rest.length + i) });
   };
   let flushed = false;
   let finished = false;
@@ -688,6 +951,9 @@ export function playTimeline(events, ctx, done) {
     removeEventListener('pointerdown', skip, { capture: true });
     flushed = true;
     clearHeldFigures();
+    clearCallouts(ctx.layer);
+    // An unheld hit reaction (no hit-stop) is not in heldFigures; a skip ends it too.
+    for (const sprite of globalThis.document?.querySelectorAll?.('.combatant .sprite') || []) stageFor(sprite)?.endReaction?.();
     clearCombatEffects(ctx.layer);
     cancelActorAnimation();
     clearTimeout(pendingTimer);
@@ -723,7 +989,13 @@ export function playTimeline(events, ctx, done) {
     ? Number(ctx.maxActorAnimationMs(speed)) || 0
     : Number(ctx.maxActorAnimationMs) || 0;
   const actorBudgetMs = Math.max(speed.lungeMs, customActorMs);
-  const budget = 2000 + beats.length * (speed.beatMs + actorBudgetMs + 4 * speed.stepMs);
+  // A sequential attack beat adds its stance lead and, per event, a reaction
+  // hold and a step after the swing.
+  const sequentialMs = beatOrder === 'sequential'
+    ? beats.filter((beat) => beat.kind === 'attack')
+      .reduce((ms, beat) => ms + speed.stanceLeadMs + beat.events.reduce((total,event)=>total + (Number(ctx.reactionTimingForReceipt?.(event,speed)) || speed.reactionMs) + speed.stepMs,0), 0)
+    : 0;
+  const budget = COMBAT_TIMING.watchdogBaseMs + sequentialMs + beats.length * (speed.beatMs + actorBudgetMs + 4 * speed.stepMs);
   const watchdog = setTimeout(() => {
     dbg.watchdog = (dbg.watchdog || 0) + 1;
     console.warn('[fx] watchdog forced timeline completion');
@@ -764,13 +1036,40 @@ export function playTimeline(events, ctx, done) {
 
     if (beat.banner) {
       cueBeat(beatIndex);
-      safe(() => playBeatCues(beat.events));
-      safe(() => { if (!ctx.layer.closest('.combat')?.querySelector('.turn-ribbon')) banner(ctx.layer, beat.banner, 'turn'); });
+      safe(() => playBeatCues(beat.events, { isLocalPlayer: ctx.isLocalPlayer }));
+      const hold = turnBannerHoldMs(speed);
+      safe(() => { if (!ctx.layer.closest('.combat')?.querySelector('.turn-ribbon')) banner(ctx.layer, beat.banner, 'turn', hold); });
       safe(() => ctx.onBeatApplied && ctx.onBeatApplied(beat));
-      schedule(nextBeat, Math.max(260, speed.beatMs));
+      schedule(nextBeat, hold);
       return;
     }
 
+    // An attack beat in the 'sequential' order (animationPace.js beatOrder):
+    // stance → swing → back to stance → the defender's reaction → numbers →
+    // bars. Counter beats and every other kind keep the 'impact' order.
+    const sequential = beatOrder === 'sequential' && beat.kind === 'attack';
+    const actorEl = beat.actorId ? ctx.anchorFor(beat.actorId) : null;
+    // Stance first: an attacker caught mid-pose (a hurt frame, an unfinished
+    // action) returns to its stance, and holds it a moment, before it swings.
+    let stanceLead = false;
+    if (sequential && actorEl) {
+      const stage = stageFor(actorEl);
+      const state = stanceState(stage);
+      if (state === 'out') {
+        safe(() => stage.settle());
+        traceBeat('stance');
+        stanceLead = speed.stanceLeadMs > 0;
+      } else if (state === 'unknown' && typeof stage.settle === 'function') {
+        // A stage that cannot report its pose still settles, but nothing waits for it.
+        safe(() => stage.settle());
+      }
+    }
+    const playBeat = () => {
+    if (finished) return;
+    if (flushed) {
+      nextBeat();
+      return;
+    }
     // 1) actor animation (lunge for attacks, glow-step otherwise)
     //
     // A figure drawn in the animated style also changes pose for the beat. Asking
@@ -778,11 +1077,11 @@ export function playTimeline(events, ctx, done) {
     // does not replay one frame and an actor with no frames cannot advance
     // anyone else's rotation. Anything else takes the guard frame, and
     // playPoseOn is a no-op for a figure with no frames at all.
-    const actorEl = beat.actorId ? ctx.anchorFor(beat.actorId) : null;
     let actorAnimation = null;
     if (actorEl && ctx.animateActor) {
       try {
         actorAnimation = ctx.animateActor(beat, actorEl, speed);
+        traceBeat('swing', actorAnimation && { impactMs: actorAnimation.impactMs, totalMs: actorAnimation.totalMs });
       } catch (e) {
         actorAnimation = null;
       }
@@ -808,27 +1107,46 @@ export function playTimeline(events, ctx, done) {
     // event's display update runs exactly once.
     const lead = new Set(beat.lead || []);
     for (const e of lead) {
-      const v = visualFor(e, beat.kind);
+      const v = visualFor(e, beat.kind, receiptVisuals);
       if (v) safe(() => v(ctx));
     }
     const leadApplied = lead.size > 0 && typeof ctx.onLeadApplied === 'function';
     if (leadApplied) safe(() => ctx.onLeadApplied({ ...beat, events: beat.lead }));
 
     // 2) after the wind-up, the beat's effect visuals + numbers, staggered
-    const visuals = beat.events.filter((e) => !lead.has(e)).map((e) => visualFor(e, beat.kind)).filter(Boolean);
+    // (sequential: only the contact parts here; reactions and numbers follow
+    // the recovery).
+    const rest = beat.events.filter((e) => !lead.has(e));
+    const partsOf = new Map(rest.map((e) => [e, visualPartsFor(e, beat.kind, { sequential, ...receiptVisuals })]));
+    const visualEvents = sequential
+      ? rest.filter((e) => partsOf.get(e)?.contact)
+      : rest.filter((e) => partsOf.get(e));
+    const visuals = sequential
+      ? visualEvents.map((e) => partsOf.get(e).contact)
+      : visualEvents.map((e) => visualFor(e, beat.kind, receiptVisuals));
     // Cast flourish: non-attack actors (skills, powers, buff moves) flare a
     // glyph as their wind-up — attacks get the slash arc on impact instead.
     if (actorEl && beat.kind !== 'attack' && beat.events.length) {
-      safe(() => spawnFx(ctx.layer, actorEl, 'fx-glyph', 450, '✦'));
+      safe(() => spawnFx(ctx.layer, actorEl, 'fx-glyph', COMBAT_TIMING.castGlyphMs, '✦'));
     }
     const windup = actorAnimation
       ? actorAnimation.impactMs
-      : (actorEl ? Math.round(speed.lungeMs * 0.55) : 0);
+      : (actorEl ? Math.round(speed.lungeMs * COMBAT_TIMING.windupFraction) : 0);
     // Every qualifying hit holds at its own visual, including multi-hit and
     // multi-target attacks. Recovery includes only the holds actually played.
     let heldMs = 0;
-    const visualEvents = beat.events.filter((e) => !lead.has(e) && visualFor(e, beat.kind));
+    const holdFor = (event) => ((beat.kind === 'attack' || beat.kind === 'counter') && event.type === 'damageDealt'
+      ? hitStopMsFor(guardHitFloatParts(event).residual || 0) : 0);
+    const markContact = (what) => {
+      // An observable contact marker (tools/click-impact-probe.mjs): the
+      // effects layer's data-contact counts the impact-frame moments played.
+      safe(() => { ctx.layer.dataset.contact = String((Number(ctx.layer.dataset.contact) || 0) + 1); });
+      traceBeat('contact', what);
+    };
     schedule(() => {
+      if(!finished&&!flushed)safe(()=>activeActorAnimation?.contact?.());
+      // A beat with nothing to draw at impact still reaches its impact frame.
+      if (actorEl && visualEvents.every(event => calloutOnly(event, receiptVisuals))) markContact('impact');
       let vi = 0;
       const stepV = () => {
         if (finished) return;
@@ -836,10 +1154,17 @@ export function playTimeline(events, ctx, done) {
           nextBeat();
           return;
         }
+        // A callout-only event (impact order: COUNTERED on a counter beat)
+        // shows at once and takes no step, so the hit after it is not delayed.
+        if (vi < visuals.length && calloutOnly(visualEvents[vi], receiptVisuals)) {
+          traceBeat('callout', visualEvents[vi].type);
+          safe(() => visuals[vi++](ctx));
+          stepV();
+          return;
+        }
         if (vi < visuals.length) {
           const event = visualEvents[vi];
-          const holdMs = (beat.kind === 'attack' || beat.kind === 'counter') && event.type === 'damageDealt'
-            ? hitStopMsFor(guardHitFloatParts(event).residual || 0) : 0;
+          const holdMs = holdFor(event);
           const held = holdMs > 0;
           const v = visuals[vi++];
           if (held) {
@@ -852,7 +1177,9 @@ export function playTimeline(events, ctx, done) {
             hitStop = holdMs;
           }
           safe(() => v(ctx));
-          if (!damageCued.has(beatIndex) && playerLostHp(event)) {
+          markContact(event.type);
+          // Sequential: the damage buzz waits for the number (below).
+          if (!sequential && !damageCued.has(beatIndex) && playerLostHp(event, ctx.isLocalPlayer)) {
             damageCued.add(beatIndex);
             safe(() => haptic.play('damageTaken'));
           }
@@ -860,24 +1187,107 @@ export function playTimeline(events, ctx, done) {
           schedule(stepV, speed.stepMs + (held ? holdMs : 0));
           return;
         }
+        let reactionEndAt = 0;
         const applyBeat = () => {
           cueBeat(beatIndex);
-          safe(() => playBeatCues(beat.events, { damageBuzz: !damageCued.has(beatIndex) }));
+          safe(() => playBeatCues(beat.events, { isLocalPlayer: ctx.isLocalPlayer, damageBuzz: !damageCued.has(beatIndex) }));
           // 3) HUD updates for this beat, 4) inter-beat breath. Painted actor
           // sequences retain their recovery frames before the render replaces
           // the sprite host; ordinary CSS lunges update immediately as before.
           cancelActorAnimation();
           safe(() => ctx.onBeatApplied && ctx.onBeatApplied(leadApplied ? { ...beat, events: beat.events.filter((e) => !lead.has(e)) } : beat));
-          schedule(nextBeat, speed.beatMs);
+          traceBeat('bars');
+          schedule(nextBeat, Math.max(speed.beatMs,reactionEndAt-Date.now()));
         };
+        // Sequential: once the attacker is back in its stance, each event's
+        // reaction plays, then (reactionMs later) its numbers, in event order;
+        // the bars follow the last number.
+        const reactions = sequential
+          ? rest.filter((e) => partsOf.get(e)?.reaction || partsOf.get(e)?.numbers || partsOf.get(e)?.callout)
+          : [];
+        const react = () => {
+          if (finished) return;
+          if (flushed) {
+            nextBeat();
+            return;
+          }
+          cancelActorAnimation();
+          traceBeat('settle');
+          let ri = 0;
+          const stepR = () => {
+            if (finished) return;
+            if (flushed) {
+              nextBeat();
+              return;
+            }
+            if (ri >= reactions.length) {
+              applyBeat();
+              return;
+            }
+            const event = reactions[ri++];
+            const parts = partsOf.get(event);
+            const numbers = () => {
+              if (finished) return;
+              if (flushed) {
+                nextBeat();
+                return;
+              }
+              traceBeat('numbers', event.type);
+              if (parts.numbers) safe(() => parts.numbers(ctx));
+              if (!damageCued.has(beatIndex) && playerLostHp(event, ctx.isLocalPlayer)) {
+                damageCued.add(beatIndex);
+                safe(() => haptic.play('damageTaken'));
+              }
+              // The bars follow in the next task, so the number is laid out
+              // and painted before the beat's re-render, not after it.
+              if (ri >= reactions.length) schedule(applyBeat, 0);
+              else schedule(stepR, Math.max(speed.stepMs,reactionEndAt-Date.now()));
+            };
+            // The callout shows with the reaction and waits for nothing.
+            const said = () => {
+              if (!parts.callout) return;
+              traceBeat('callout', event.type);
+              safe(() => parts.callout(ctx));
+            };
+            if (!parts.reaction && !parts.numbers) {
+              said();
+              stepR();
+              return;
+            }
+            if (!parts.reaction) {
+              said();
+              numbers();
+              return;
+            }
+            // The hit-stop held the attacker's impact frame alone; the target's
+            // reaction plays unheld (SPEC §7.4, sequential).
+            traceBeat('reaction', event.type);
+            safe(() => parts.reaction(ctx));
+            said();
+            reactionEndAt = Math.max(reactionEndAt,Date.now() + (Number(ctx.reactionTimingForReceipt?.(event,speed)) || speed.reactionMs));
+            if (!parts.numbers) {
+              if (ri >= reactions.length) schedule(applyBeat, speed.reactionMs);
+              else schedule(stepR, Math.max(speed.reactionMs,reactionEndAt-Date.now()));
+              return;
+            }
+            schedule(numbers, speed.reactionMs);
+          };
+          stepR();
+        };
+        const after = sequential ? react : applyBeat;
+        // Sequential waits out a plain CSS lunge too, so the reaction never
+        // starts mid-swing.
         const recovery = actorAnimation
-          ? Math.max(0, actorAnimation.totalMs + heldMs - (Date.now() - actorStartedAt))
-          : 0;
-        if (recovery > 0) schedule(applyBeat, recovery);
-        else applyBeat();
+          ? Math.max(0, actorAnimation.totalMs + heldMs - (Date.now() - actorStartedAt), Number(actorAnimation.remainingMs?.())||0)
+          : sequential && actorEl ? Math.max(0, speed.lungeMs + heldMs - (Date.now() - actorStartedAt)) : 0;
+        if (recovery > 0) schedule(after, recovery);
+        else after();
       };
       stepV();
     }, windup);
+    };
+    if (stanceLead) schedule(playBeat, speed.stanceLeadMs);
+    else playBeat();
   };
   nextBeat();
 }
@@ -1021,85 +1431,268 @@ export function playReceiptHaptics(events, { isLocalPlayer } = {}) {
   }
 }
 
-function visualFor(e, beatKind) {
-  const base=baseVisualFor(e,beatKind),effect=combatEffectForEvent(e);
-  if(!effect)return base;
-  return ctx=>{
-    base?.(ctx);
-    const anchor=ctx.anchorFor(effect.targetId);
-    if(anchor)playCombatEffect(ctx.layer,anchorLocalBox(ctx.layer,anchor),effect.kind,{size:190});
+// A visual in three parts, so the paced timeline can play an attack beat in
+// the owner's order (animationPace.js beatOrder): `contact` is the attacker's
+// side of the hit (its sound, spark, slash and effect sprite) at the swing's
+// impact frame; `reaction` is the defender's (hurt flash and pose, recoil,
+// shake, stagger wobble); `numbers` are the floats. Every part is optional.
+// visualFor plays all three at once, in that order, for every other path.
+// `callout` is the on-character word (callout above): it plays with the
+// reaction, and adds no wait of its own.
+function visualPartsFor(e, beatKind, opts) {
+  let base = withCallout(baseVisualParts(e, beatKind, opts), e);
+  const receiptReaction = opts?.reactionForReceipt?.(e);
+  if (receiptReaction) {
+    const original = base?.reaction;
+    base = { ...base, reaction: ctx => { original?.(ctx); receiptReaction(ctx); } };
+  }
+  const effect = combatEffectForEvent(e);
+  if (!effect) return base;
+  const playEffect = (ctx) => {
+    const anchor = ctx.anchorFor(effect.targetId);
+    if (anchor) playCombatEffect(ctx.layer, anchorLocalBox(ctx.layer, anchor), effect.kind, { size: 190 });
+  };
+  // SPEC §7.4 (sequential): the Stagger wobble is the defender's reaction, not
+  // the impact frame, so its break sprite plays with that reaction and takes no
+  // contact step that would hold back the hit's first number.
+  if (opts?.sequential && e.type === 'enemyStaggered' && base?.reaction && !base.contact) {
+    const reaction = base.reaction;
+    return { ...base, reaction: (ctx) => { reaction(ctx); playEffect(ctx); } };
+  }
+  const contact = base?.contact;
+  return { ...base, contact: contact ? (ctx) => { contact(ctx); playEffect(ctx); } : playEffect };
+}
+
+/**
+ * The one outcome word for a hit that does NO HP damage (owner, 2026-10-12):
+ * RESISTED (Barrier took it whole and did not break; blue), BLOCKED (Block took
+ * it whole; silver), IMMUNE (the target is immune; pale grey), MISSED (evaded;
+ * the existing callout). Any HP damage keeps the per-layer floats, so null.
+ * `e` is a damageDealt-like payload, or an attackEvaded / statusImmune event.
+ */
+export function outcomeKindForEvent(e = {}) {
+  if (e.type === 'attackEvaded') return 'evaded';
+  if (e.type === 'combatAvoidanceResolved') return e.avoided ? 'evaded' : null;
+  if (e.type === 'statusImmune') return 'immune';
+  if (e.type !== 'damageDealt') return null;
+  if (e.immune && !(Number(e.amount) > 0)) return 'immune';
+  const parts = guardHitFloatParts(e);
+  if (parts.residual > 0) return null; // HP damage: the per-layer floats show it
+  if (parts.blocked > 0) return 'blocked';
+  // Nothing reached Block or Health: Barrier or Ward took the whole hit. A Barrier that broke
+  // keeps its BREAK callout and its number, as it did before.
+  if (parts.amount === 0 && Math.max(0, Number(e.barrierAbsorbed) || 0) > 0) return e.barrierRemaining === 0 ? null : 'resisted';
+  if (parts.amount === 0 && Math.max(0, Number(e.wardAbsorbed) || 0) > 0) return 'wardResisted';
+  return null;
+}
+
+// Hostile statuses that earn a past-tense word over the fighter they land on
+// (owner, 2026-10-12). Each colour is the status row's own tint in content/statuses.js
+// where it has one; the rest are the owner's fallbacks, listed in the commit message.
+export const STATUS_WORDS = {
+  venom: { colour: '#6fd36f' },
+  burn: { colour: 'var(--ember)' },
+  bleed: { colour: 'var(--ember)' },
+  bleeding: { colour: '#e0334a' },
+  frost: { colour: '#7fa8c9' },
+  frozen: { colour: '#9fe3ff' },
+  chilled: { colour: '#9fe3ff' },
+  paralysis: { colour: '#ffe14d' },
+  sleep: { colour: '#c7b3ff' },
+  weak: { colour: 'var(--muted)' },
+  vulnerable: { colour: 'var(--grace)' },
+  magicVulnerable: { colour: '#8b7cd6' },
+  frail: { colour: 'var(--muted)' },
+  dazed: { colour: '#ffe14d' },
+  offBalance: { colour: '#d9c9a3' },
+  prone: { colour: '#d9c9a3' },
+  grounded: { colour: '#d9c9a3' },
+  insanity: { colour: '#a06bd0' },
+  madness: { colour: '#a06bd0' },
+  crimsonBlight: { colour: 'var(--rot)' },
+  frostExposed: { colour: '#7fa8c9' },
+  insanityExposed: { colour: '#a06bd0' },
+};
+
+/**
+ * A statusApplied payload → { kind, targetId, word, colour } for a hostile status
+ * that was applied, or null (a buff, an unlisted status, or a zero-stack event).
+ */
+export function statusPopupFor(e = {}) {
+  if (e.type !== 'statusApplied' || !(e.stacks > 0) || e.targetId == null) return null;
+  if (!Object.prototype.hasOwnProperty.call(STATUS_WORDS, e.status)) return null;
+  const string = `combat.status.applied.${e.status}`;
+  return { kind: `status:${e.status}`, targetId: e.targetId, string, word: t(string), colour: STATUS_WORDS[e.status].colour };
+}
+
+/**
+ * calloutForEvent(e) → { kind, targetId } | null — the word an event earns
+ * and the fighter it shows over (co-op screens pass seat ids as targetId).
+ */
+export function calloutForEvent(e = {}) {
+  let kind = null;
+  const popup = statusPopupFor(e);
+  if (popup) return { kind: popup.kind, targetId: popup.targetId };
+  switch (e.type) {
+    case 'damageDealt': case 'statusImmune': kind = outcomeKindForEvent(e); break;
+    // A stagger a break caused shows that break's word and INTERRUPTED, not a second STAGGERED.
+    case 'enemyStaggered': if (!e.cause) kind = 'staggered'; break;
+    case 'playerStaggered': kind = 'staggered'; break;
+    case 'enemyInterrupted': kind = 'interrupted'; break;
+    // A Smash's Block break is the GUARD BREAK callout (combatGuardBroken); it earns no BREAK word of its own.
+    case 'blockBroken': if (!e.smash) kind = 'blockBreak'; break;
+    case 'ratingImpact': if (e.breaks > 0) kind = e.label === 'Disruption' ? 'disrupted' : 'staggered'; break;
+    case 'combatCounterTriggered': kind = 'countered'; break; // over the attacker who got countered
+    case 'attackEvaded': kind = 'evaded'; break;
+    // Any avoidance that stopped the hit is a miss: an evade, a distance roll, or a prevention charge.
+    case 'combatAvoidanceResolved': if (e.avoided) kind = 'evaded'; break;
+    case 'critHit': kind = 'critical'; break;
+    case 'combatGuardBroken': kind = 'guardBreak'; break;
+    case 'wardBroken': kind = 'wardBreak'; break;
+    case 'barrierBroken': kind = 'barrierBreak'; break;
+    case 'poiseBroken': kind = 'poiseBreak'; break;
+    default: break;
+  }
+  return kind && e.targetId != null ? { kind, targetId: e.targetId } : null;
+}
+
+function withCallout(parts, e) {
+  const said = calloutForEvent(e);
+  if (!said) return parts;
+  // The BLOCKED word carries its hit sound, so the sound and the word land together.
+  const sound = e.type === 'damageDealt' && said.kind === 'blocked';
+  return { ...parts, callout: (ctx) => { callout(ctx.layer, ctx.anchorFor(said.targetId), said.targetId, said.kind); if (sound) sfx.play('block'); } };
+}
+
+// An event whose only visual is its callout: it never takes a step of its own.
+function calloutOnly(e, opts) {
+  const parts = visualPartsFor(e, undefined, opts);
+  return !!parts && Object.keys(parts).every((key) => key === 'callout' || !parts[key]);
+}
+
+function visualFor(e, beatKind, opts) {
+  const parts = visualPartsFor(e, beatKind, opts);
+  if (!parts) return null;
+  return (ctx) => {
+    parts.contact?.(ctx);
+    parts.reaction?.(ctx);
+    parts.callout?.(ctx);
+    parts.numbers?.(ctx);
   };
 }
 
-function baseVisualFor(e, beatKind) {
+// opts.sequential (SPEC §7.4, beatOrder 'sequential'): a hit's sound plays
+// with its number; only the spark and slash stay at the contact.
+// A break's visual: a shatter ring in the layer's tone, over the fighter it broke, with its sound.
+function breakBurst(e, tone, sound) {
+  return {
+    reaction: (ctx) => {
+      sfx.play(sound);
+      spawnFx(ctx.layer, ctx.anchorFor(e.targetId), `fx-shatter ${tone}`, 420);
+    },
+  };
+}
+
+function baseVisualParts(e, beatKind, { sequential = false } = {}) {
   switch (e.type) {
-    case 'damageDealt':
+    case 'damageDealt': {
       // One event owns both visible channels: unsigned guard consumed, then
       // only the HP residual as damage. Paired results sit side-by-side without
       // relying on random jitter, so phone and desktop read the same grammar.
-      return (ctx) => {
-        const parts = guardHitFloatParts(e);
-        const anchor = ctx.anchorFor(e.targetId);
-        const paired = !!(parts.guard && parts.damage);
-        if (parts.guard) {
-          if (!parts.damage && anchor?.closest('.enemy')) playPoseOn(anchor, 'guardHit', 220);
-          sfx.play('block');
-          spawnFx(ctx.layer, anchor, 'fx-spark', 320, '✦');
-          floatNum(ctx.layer, anchor, parts.guard.text, parts.guard.cls, null,
-            { x: paired ? -26 : 0, jitter: false });
-        }
-        if (!parts.damage) return; // fully guarded: no flinch, slash, or shake
-        playHitSound(e);
-        const heavy = parts.residual >= 15;
-        floatNum(ctx.layer, anchor, parts.damage.text, parts.damage.cls, null,
-          { x: paired ? 26 : 0, jitter: !paired });
-        // Attack impacts slash; the victim flashes + recoils (CSS); heavy hits
-        // recoil further (hit-heavy) and kick the screen.
-        if (beatKind === 'attack') spawnFx(ctx.layer, anchor, 'fx-slash', 300);
-        // A held hit (hit-stop) starts the recoil held and runs it that much
-        // longer, so the whole recoil still plays.
-        const held = hitStop;
-        flash(anchor, 'hitflash', heavy ? 380 : 220, held);
-        // An animated figure recoils in its own art as well as in CSS, and holds
-        // it as long as the flash it belongs to.
-        playPoseOn(anchor, 'hit', heavy ? 380 : 220);
-        if (held) stageFor(anchor)?.hold?.(held);
-        if (heavy) flash(anchor, 'hit-heavy', 380 + held);
-        hold(anchor, held);
-        // Every HP hit shakes, by the HP it cost (SPEC §7.4).
-        shake(ctx.combatEl, shakePxFor(parts.residual));
+      const parts = guardHitFloatParts(e);
+      const outcome = outcomeKindForEvent(e);
+      const paired = !!(parts.guard && parts.damage);
+      const heavy = parts.residual >= 15;
+      const hitSounds = () => {
+        if (parts.guard) sfx.play('block');
+        if (parts.damage) playHitSound(e);
       };
+      return {
+        contact: (ctx) => {
+          const anchor = ctx.anchorFor(e.targetId);
+          // A BLOCKED hit's sound comes with its word (withCallout); other outcome words have no hit sound.
+          if (!sequential && !outcome) hitSounds();
+          if (parts.guard) spawnFx(ctx.layer, anchor, 'fx-spark', 320, '✦');
+          if (!parts.damage) return; // fully guarded: no flinch, slash, or shake
+          // Attack impacts slash at the contact.
+          if (beatKind === 'attack') spawnFx(ctx.layer, anchor, 'fx-slash', 300);
+        },
+        reaction: (ctx) => {
+          const anchor = ctx.anchorFor(e.targetId);
+          if (parts.guard && !parts.damage && anchor?.closest('.enemy')) playPoseOn(anchor, 'guardHit', 220);
+          if (!parts.damage) return;
+          // The victim flashes + recoils (CSS); heavy hits recoil further
+          // (hit-heavy) and kick the screen. A held hit (hit-stop) starts the
+          // recoil held and runs it that much longer, so the whole recoil still plays.
+          const held = hitStop;
+          flash(anchor, 'hitflash', heavy ? 380 : 220, held);
+          // An animated figure recoils in its own art as well as in CSS, and holds
+          // it as long as the flash it belongs to.
+          playPoseOn(anchor, 'hit', heavy ? 380 : 220);
+          if (held) stageFor(anchor)?.hold?.(held);
+          if (heavy) flash(anchor, 'hit-heavy', 380 + held);
+          hold(anchor, held);
+          // Every HP hit shakes, by the HP it cost (SPEC §7.4).
+          shake(ctx.combatEl, shakePxFor(parts.residual));
+        },
+        numbers: (ctx) => {
+          if (sequential && !outcome) hitSounds();
+          // An outcome word (RESISTED, BLOCKED, IMMUNE, MISSED) replaces the numbers of a hit that did no HP damage.
+          if (outcome) return;
+          const anchor = ctx.anchorFor(e.targetId);
+          // Barrier and Ward stack above the Block / Health pair.
+          if (parts.barrier) floatNum(ctx.layer, anchor, parts.barrier.text, parts.barrier.cls, null, { x: -52, y: -34, jitter: false });
+          if (parts.ward) floatNum(ctx.layer, anchor, parts.ward.text, parts.ward.cls, null, { x: parts.barrier ? 0 : -26, y: -34, jitter: false });
+          if (parts.poise) floatNum(ctx.layer, anchor, parts.poise.text, parts.poise.cls, null, { x: 26, y: -34, jitter: false });
+          if (parts.immune) floatNum(ctx.layer, anchor, parts.immune.text, parts.immune.cls, null, { x: 0, y: -62, jitter: false });
+          if (parts.guard) floatNum(ctx.layer, anchor, parts.guard.text, parts.guard.cls, null,
+            { x: paired ? -26 : 0, jitter: false });
+          if (parts.damage) floatNum(ctx.layer, anchor, parts.damage.text, parts.damage.cls, null,
+            { x: paired ? 26 : 0, jitter: !paired });
+        },
+      };
+    }
     case 'blockGained':
       return e.amount > 0
-        ? (ctx) => {
-            sfx.play('block');
-            floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount}`, 'blk');
+        ? {
+            // Sequential order: the sound arrives with its number (SPEC §7.4).
+            reaction: () => { if (!sequential) sfx.play('block'); },
+            numbers: (ctx) => {
+              if (sequential) sfx.play('block');
+              floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount}`, 'blk');
+            },
           }
         : null;
-    case 'hpLost':
+    case 'hpLost': {
       // #61 M2a: a proc burst's number is ITS OWN float, in the row's tint,
       // with the row's glyph — separate from and after the hit that tipped it.
-      if (typeof e.cause === 'string' && e.cause.startsWith('proc:')) {
-        return (ctx) => {
-          const info = ctx.statusInfo && ctx.statusInfo(e.cause.slice(5));
+      const proc = typeof e.cause === 'string' && e.cause.startsWith('proc:');
+      if (!proc && e.cause !== 'effect') return null; // attack damage already shown by damageDealt
+      return {
+        reaction: (ctx) => {
           const anchor = ctx.anchorFor(e.targetId);
           if (e.amount > 0) { playPoseOn(anchor, 'hit', 300); flash(anchor, 'hitflash', 300); }
-          floatNum(ctx.layer, ctx.anchorFor(e.targetId), `${(info && info.icon) || ''} -${e.amount}`, 'burst', info && info.tint);
-        };
-      }
-      return e.cause === 'effect'
-        ? (ctx) => {
-            const anchor = ctx.anchorFor(e.targetId);
-            if (e.amount > 0) { playPoseOn(anchor, 'hit', 300); flash(anchor, 'hitflash', 300); }
-            floatNum(ctx.layer, anchor, `-${e.amount}`, 'burst');
-          }
-        : null; // attack damage already shown by damageDealt
+        },
+        numbers: proc
+          ? (ctx) => {
+              const info = ctx.statusInfo && ctx.statusInfo(e.cause.slice(5));
+              floatNum(ctx.layer, ctx.anchorFor(e.targetId), `${(info && info.icon) || ''} -${e.amount}`, 'burst', info && info.tint);
+            }
+          : (ctx) => floatNum(ctx.layer, ctx.anchorFor(e.targetId), `-${e.amount}`, 'burst'),
+      };
+    }
     case 'healed':
       return e.amount > 0
-        ? (ctx) => {
-            sfx.play('heal');
-            const anchor=ctx.anchorFor(e.targetId);if(anchor)playCombatEffect(ctx.layer,anchorLocalBox(ctx.layer,anchor),'heal');
-            floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount}`, 'heal');
+        ? {
+            reaction: (ctx) => {
+              if (!sequential) sfx.play('heal');
+              const anchor = ctx.anchorFor(e.targetId);
+              if (anchor) playCombatEffect(ctx.layer, anchorLocalBox(ctx.layer, anchor), 'heal');
+            },
+            numbers: (ctx) => {
+              if (sequential) sfx.play('heal');
+              floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount}`, 'heal');
+            },
           }
         : null;
     // #61 M2: the proc moment, three beats — banner + per-status SFX row here,
@@ -1108,75 +1701,106 @@ function baseVisualFor(e, beatKind) {
     // meterFilled banner generalized: any threshold row procs through this one
     // grammar, tint and name from its own data (M4).
     case 'procBurst':
-      return (ctx) => {
-        const info = ctx.statusInfo && ctx.statusInfo(e.status);
-        // Per-status SFX row by name — an unauthored id degrades to the sfx
-        // table's own default (audible, never silent), until the audio seat
-        // authors procBurst_<status> rows.
-        sfx.play(`procBurst_${e.status}`);
-        banner(ctx.layer, `${((info && info.name) || e.status).toUpperCase()} BURST`, 'blood');
-        // M2b: the drain is SEEN — the live bar transitions to empty before
-        // the re-render replaces it.
-        const anchor = ctx.anchorFor(e.targetId);
-        const card = anchor && anchor.closest ? anchor.closest('[data-eid]') : null;
-        const bar = card && card.querySelector(`.procbar[data-status="${e.status}"] .fill`);
-        if (bar) {
-          bar.style.transition = 'width 250ms ease-out';
-          bar.style.width = '0%';
-        }
+      return {
+        numbers: (ctx) => {
+          const info = ctx.statusInfo && ctx.statusInfo(e.status);
+          // Per-status SFX row by name — an unauthored id degrades to the sfx
+          // table's own default (audible, never silent), until the audio seat
+          // authors procBurst_<status> rows.
+          sfx.play(`procBurst_${e.status}`);
+          banner(ctx.layer, `${((info && info.name) || e.status).toUpperCase()} BURST`, 'blood');
+          // M2b: the drain is SEEN — the live bar transitions to empty before
+          // the re-render replaces it.
+          const anchor = ctx.anchorFor(e.targetId);
+          const card = anchor && anchor.closest ? anchor.closest('[data-eid]') : null;
+          const bar = card && card.querySelector(`.procbar[data-status="${e.status}"] .fill`);
+          if (bar) {
+            bar.style.transition = 'width 250ms ease-out';
+            bar.style.width = '0%';
+          }
+        },
       };
     // #61 M3: refusal has feedback — points blocked by an active resistance
     // answer with a gray tick, so a bleed card into resistance never reads as
     // the game eating the card.
     case 'procResisted':
-      return (ctx) => {
-        const info = ctx.statusInfo && ctx.statusInfo(e.status);
-        floatNum(ctx.layer, ctx.anchorFor(e.targetId), `${(info && info.icon) || ''} ${e.blocked} RESISTED`, 'blk small');
+      return {
+        numbers: (ctx) => {
+          const info = ctx.statusInfo && ctx.statusInfo(e.status);
+          floatNum(ctx.layer, ctx.anchorFor(e.targetId), `${(info && info.icon) || ''} ${e.blocked} RESISTED`, 'blk small');
+        },
       };
     case 'meterFilled':
       return null; // poise fills speak through enemyStaggered below
     case 'ratingImpact':
-      if (e.breaks) return (ctx) => {
-        banner(ctx.layer, e.label.toUpperCase());
-        flash(ctx.anchorFor(e.targetId), 'wobble', 600);
+      if (e.breaks) return {
+        // Its word (STAGGERED / DISRUPTED) is the on-character callout.
+        reaction: (ctx) => {
+          flash(ctx.anchorFor(e.targetId), 'wobble', 600);
+        },
       };
       // A Poise / Ward guard (the Dodge Roll) took some of the impact.
       return e.guarded > 0
-        ? (ctx) => floatNum(ctx.layer, ctx.anchorFor(e.targetId), `${e.guarded} ${e.meter === 'ward' ? 'WARD' : 'POISE'} GUARDED`, 'blk small')
+        ? { numbers: (ctx) => floatNum(ctx.layer, ctx.anchorFor(e.targetId), `${e.guarded} ${e.meter === 'ward' ? 'WARD' : 'POISE'} GUARDED`, `${e.meter === 'ward' ? 'ward' : 'poise'} small`) }
         : null;
     case 'meterGuardGained':
       return e.amount > 0
-        ? (ctx) => floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount} ${e.meter === 'ward' ? 'WARD' : 'POISE'}`, 'blk small')
+        ? { numbers: (ctx) => floatNum(ctx.layer, ctx.anchorFor(e.targetId), `+${e.amount} ${e.meter === 'ward' ? 'WARD' : 'POISE'}`, `${e.meter === 'ward' ? 'ward' : 'poise'} small`) }
         : null;
+    // A miss (any avoidance that stopped the hit): a white streak over the fighter it missed, and a swish.
+    case 'combatAvoidanceResolved':
+    case 'attackEvaded':
+      if (e.type === 'combatAvoidanceResolved' && !e.avoided) return null;
+      return {
+        reaction: (ctx) => {
+          sfx.play('cardDraw');
+          spawnFx(ctx.layer, ctx.anchorFor(e.targetId), 'fx-miss-streak', 380);
+        },
+      };
+    // A Smash's Block break shows as GUARD BREAK alone: no burst and no sound for it here.
+    case 'blockBroken': return e.smash ? null : breakBurst(e, 'block', 'hit_heavy');
+    case 'barrierBroken': return breakBurst(e, 'barrier', 'block');
+    case 'wardBroken': return breakBurst(e, 'ward', 'procBurst');
+    case 'poiseBroken': return breakBurst(e, 'gold', 'hit_heavy');
+    case 'enemyInterrupted': return breakBurst(e, 'interrupt', 'stagger');
+    case 'playerStaggered': return breakBurst(e, 'gold', 'stagger');
     case 'enemyStaggered':
-      return (ctx) => {
-        sfx.play('stagger');
-        banner(ctx.layer, 'STAGGERED');
-        const anchor = ctx.anchorFor(e.targetId);
-        flash(anchor, 'wobble', 600); // poise broken: the whole figure teeters
-        spawnFx(ctx.layer, anchor, 'fx-glyph', 450, '✦');
-        shake(ctx.combatEl);
+      return {
+        reaction: (ctx) => {
+          // A break's stagger plays the break's own sound (poiseBroken, enemyInterrupted), not a second one.
+          if (!e.cause) sfx.play('stagger');
+          // The STAGGERED word is the on-character callout now, not a banner.
+          const anchor = ctx.anchorFor(e.targetId);
+          flash(anchor, 'wobble', 600); // poise broken: the whole figure teeters
+          spawnFx(ctx.layer, anchor, 'fx-glyph', 450, '✦');
+          shake(ctx.combatEl);
+        },
       };
     case 'enemyDied':
-      return (ctx) => {
-        sfx.play('enemyDeath');
-        const anchor = ctx.anchorFor(e.targetId);
-        floatNum(ctx.layer, anchor, '✝', 'dmg heavy');
-        if (anchor) { anchor.classList.remove('hitflash', 'hit-heavy'); playPoseOn(anchor, 'defeated'); }
+      // After the killing blow's reaction and numbers: the cross and the fall.
+      return {
+        numbers: (ctx) => {
+          sfx.play('enemyDeath');
+          const anchor = ctx.anchorFor(e.targetId);
+          floatNum(ctx.layer, anchor, '✝', 'dmg heavy');
+          if (anchor) { anchor.classList.remove('hitflash', 'hit-heavy'); playPoseOn(anchor, 'defeated'); }
+        },
       };
     case 'stanceEntered':
-      return (ctx) => {
-        sfx.play('stance');
-      };
+      return { contact: () => sfx.play('stance') };
     case 'relicTriggered':
-      return (ctx) => {
-        sfx.play('relic');
-        if (ctx.relicAnchor) flash(ctx.relicAnchor(e.relicId), 'proc', 320);
+      return {
+        contact: (ctx) => {
+          sfx.play('relic');
+          if (ctx.relicAnchor) flash(ctx.relicAnchor(e.relicId), 'proc', 320);
+        },
       };
     case 'energySpent':
     case 'energyGained':
-      return (ctx) => {
-        if (ctx.orb) flash(ctx.orb(), 'pulse', 260);
+      return {
+        contact: (ctx) => {
+          if (ctx.orb) flash(ctx.orb(), 'pulse', 260);
+        },
       };
     default:
       return null;

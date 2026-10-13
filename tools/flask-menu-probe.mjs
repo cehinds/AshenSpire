@@ -140,8 +140,8 @@ if (process.argv.includes('--selftest')) {
       {
         name: 'the map stops remounting after a Potions action',
         file: 'src/ui/screens/map.js',
-        find: 'onChange: () => { onSave?.(); remount(); }',
-        replace: 'onChange: () => { onSave?.(); }',
+        find: 'onChange: () => { dropPendingSave(); onSave?.(); remount(); }',
+        replace: 'onChange: () => { dropPendingSave(); onSave?.(); }',
         args: ['--only', 'persistence'],
         expectRed: /FAIL persistence: the first Drink remounts the map/,
       },

@@ -4,6 +4,8 @@
 
 1. **[SPEC.md](SPEC.md) is the source of truth.** Formulas, orderings, and state shapes marked contractual there don't change in a feature PR — change the spec first, in its own PR, then implement.
 2. **No FromSoftware assets or proper nouns.** Every new asset gets a line in [CREDITS.md](CREDITS.md) with source URL + license (CC0 / CC-BY / OFL only), and enters through its established path. Since docs/EXTERNAL-ASSETS-PLAN.md step 13 every asset file — the art (`assets/…` ids, both tiers), sound effects (`assets/sfx/<id>.ogg`), the score's renders (`music/…`, loaded through `music/manifest.json`), the map tiles and the fonts (`assets/fonts/`, referenced from `styles/kit.css`) — enters through a PR to [`cehinds/AshenSpire-art`](https://github.com/cehinds/AshenSpire-art) and its release, then a PR here that bumps `art-release.json` and rewrites `art-manifest.json` (`node tools/art-manifest.mjs --write`). Game code names an asset by its id and resolves it through `assetUrl()` (`src/ui/assetmap.js`), or `SFX_MANIFEST` in `src/content/sfx.js` for a sound. The score's source, `music/score/*.mjs`, stays here.
+
+   **The automated path** (`.github/workflows/art-migrate.yml`, owner, 2026-10-11). A pull request into `dev` that adds or modifies art (the high tier under `assets/`, fonts, score renders `music/…`, `map-detail/`, `art/`; never the light tier `assets-mobile/`, which stays tracked here for now, owner 2026-10-11) is moved by its **intake** job: `tools/art-intake.mjs` stages those files in a branch of `cehinds/AshenSpire-art` and opens a pull request there, and this pull request's check stays red until the art has left it. When that art pull request merges, the art repository's release publishes `hd-assets-v<N>`, and the **pin-bump** job (every six hours) opens the `art-release.json` bump into `dev`. The pin-bump pull request is pushed and opened with `ART_REPO_WRITE_TOKEN` too (owner, 2026-10-11), so CI runs on it; without the secret it falls back to `GITHUB_TOKEN` and CI does not run. The intake runs on `pull_request_target`, not `pull_request`: the workflow definition that holds the token is the base's, so a pull request cannot edit it to reach the token, and a fork's run names no secret. The manual path above remains the fallback, for a pull request from a fork or a repository without the `ART_REPO_WRITE_TOKEN` secret.
 3. **Engine stays headless.** Nothing under `src/engine/` may reference `document`, `window`, `localStorage`, or timers. If a change can't be tested headlessly (`node tests/run-node.mjs`, or `tests/index.html` in a browser), it doesn't belong in the engine.
 4. **Content is data.** A new card, relic, **status**, enemy, or event is a data object in one `src/content/` file, validated against its schema (spec §3.14). If you find yourself writing imperative per-entity code, extend the effect/formula/trigger DSL instead (spec §3.4–3.7) — or, as a last resort, use the budgeted `scripts.js` escape hatch (<5% of content, justified in a comment).
 5. **Tests green before merge.** `node tests/run-node.mjs` exits 0 (DEVELOPER.md, *Run & test*; `tests/index.html` runs the engine suite in a browser). New mechanics ship with new assertions.
@@ -12,25 +14,27 @@
 
 How work is branched, reviewed, and merged is the [Branch model](#branch-model)
 below.
-Every session merges its own PRs into `dev` and promotes `dev` to `test`
-(rule 6 below, owner, 2026-09-26); only the owner merges to `release` or
-`main`, creates a release tag, or publishes a release.
+A session merges its own PRs into `dev` only after the owner has reviewed
+and tested them and said to merge (rule 6 below, owner, 2026-10-11), then
+promotes `dev` to `test`; only the owner merges to `release` or `main`,
+creates a release tag, or publishes a release.
 
 ## Branch model
 
 ```
-feature/* ──► dev ──► test ──► release ──► main
-                      (heavy CI runs on every push to test and release)
+worker/<topic>/<task> (local) ──► worker/<topic>/<task> (origin) ──► feature/* ──► dev ──► test ──► release ──► main
+                      (smoke on PR→dev, heavy suites at test, polish + Windows installer at release)
 ```
 
 | Branch | Rules |
 |---|---|
+| `worker/<parent-topic>/<task>` | One worker's task, cut from its parent branch (`worker/CdCiPipelines/branch-cleanup` for `chore/CdCiPipelines`) and pushed to origin. Only the orchestrator merges it into the parent. The local copy and worktree are removed once the parent merges into `dev`. The origin copy is deleted by `worker-branch-cleanup.yml` once `dev` is promoted to `test`. |
 | `main` | Always playable. Merge-only from `release`. Tag releases here (`v0.1.0` = M1, `v0.2.0` = M2, …). |
 | `release` | Staging. Promoted from `test` (owner only), through an `rc/<version>` branch pinned at the tested RC SHA (docs/RELEASE-CHECKLIST.md), when a milestone's acceptance criteria (spec §9) are met; only fixes land here before merging to `main`. |
-| `dev` | Default integration branch. All feature PRs target `dev`, and each session merges its own once the fast checks pass. |
+| `dev` | Default integration branch. All feature PRs target `dev`. A `feature/*`, `chore/*` or `fix/*` PR merges only after the owner has reviewed and tested it and told the session to merge it (rule 6). |
 | `alternative/dev`, `alternative/test` | Frozen historical branches (owner, 2026-10-09). Their approved combat perspective is now the default on regular `dev` and `test`. Bring all new work to `dev`; do not push, merge, sync or dispatch branch-writing jobs to either retired branch. Existing named variants retain their separate rules below. |
 | `test` | Where the heavy CI runs: every push to `test` runs the long suites. Sessions promote `dev` here with a `dev` → `test` PR they merge themselves (rule 6). Only `dev` promotions land here, and `release` is promoted from `test` (owner only, through a pinned `rc/<version>` branch). If `test` is ever deleted, `restore-test-branch.yml` recreates it from `release`, so a fix that landed only on `release` must be merged back into `dev` (a `release` → `dev` PR) before the next promotion; then every heavy run tests what `dev` holds; balance experiments go on their own `experiment/<topic>` branch cut from `dev` (cherry-pick winners back), never on `test`. Force-pushes allowed only on a `feature/*` branch only you have pushed to (a rebase onto `dev`); nowhere else. |
-| `feature/<topic>` | One unit of work, branched from `dev`. Prefix milestone work with it, e.g. `feature/m1-combat-slice`, `feature/m2-map-gen`. |
+| `feature/<topic>` | One unit of work, branched from `dev`. Prefix milestone work with it, e.g. `feature/m1-combat-slice`, `feature/m2-map-gen`. `fix/*` and `chore/*` branches follow the same rules. While a PR into `dev` is open, CI publishes the branch's build at `https://cehinds.github.io/AshenSpire/branches/<branch>/latest/` as a sandboxed preview: it runs in an iframe without same-origin access, and progress is not kept. The build is served as text, never as a page on the site. It is replaced on each push and removed when the PR merges or closes. |
 
 ## Commits & PRs
 
@@ -83,9 +87,10 @@ gallery still identifies that build; identical images do not need recapturing.
 
 ### A pull request is not done until it is merged and promoted
 
-Owner's rule, 2026-09-18 (merging handed to sessions 2026-09-26), for every
-session and agent working here. The session that opens a PR takes it all the
-way: into `dev`, then promoted to `test` (rule 6). The owner merges only to
+Owner's rule, 2026-09-18 (merging handed to sessions 2026-09-26; owner review
+before `dev` required again 2026-10-11), for every session and agent working
+here. The session that opens a PR takes it all the way: through the owner's
+review, into `dev`, then promoted to `test` (rule 6). The owner merges only to
 `release` and `main`.
 
 1. **Open it ready for review, never as a draft.** Say in the body what is
@@ -100,44 +105,73 @@ way: into `dev`, then promoted to `test` (rule 6). The owner merges only to
    files with the tooling, never by hand, in the order the CHANGELOG.md
    header gives. The *receipt* is the PR's CHANGELOG.md entry, which names
    the build it shipped in; the *box* is `buildordinal.json`, which the
-   rebuild writes. So: `node tools/launch.mjs --build-only`, re-point the
-   receipt to the box's ordinal plus one, `node tools/about-changelog.mjs
-   --write`, rebuild again — the box and the receipt now agree — and push.
-   Commit `buildordinal.json` and the generated changelog module, **never
-   the built HTML**: it is ignored on `dev`, CI builds it and publishes it as
-   the `dev-standalone-<commit>` workflow artifact, and CI fails the PR if its
-   own rebuild would move `buildordinal.json`. The owner never resolves a
+   build writes. Stamp the receipt with the box as it stands on your branch,
+   and do not commit `buildordinal.json`: another merge moves it, so a
+   matched stamp goes stale the moment a neighbour lands. After your merge,
+   the build-stamp workflow rebuilds `dev`, re-points your receipt to the
+   build it actually shipped in, and pushes that to `dev`. Commit the source,
+   the receipt and the generated changelog module, **never the built HTML**:
+   it is ignored on `dev`, and CI builds it and publishes it as the
+   `dev-standalone-<commit>` workflow artifact. The owner never resolves a
    conflict.
 4. **Keep it green.** A failing test or gate is yours to root-cause and fix;
    "flake" is not a diagnosis. Never skip or quarantine a test to get green.
-   A PR into `dev` is gated by the fast checks only (about five minutes or
-   less); the heavy suites — `tests.yml`'s slow simulation tests, self-tests and
-   parse gate, `ci.yml`'s
-   jobs (3-OS, real-browser and Fullscreen-first), and `dev-preview.yml`'s
-   reachability gates — run
-   on every push to `test` and `release` (owner, 2026-09-26). DEVELOPER.md
-   (*Which checks gate a pull request*) lists each check. To read a heavy suite
-   on your PR before promotion, dispatch that workflow on your branch by hand; a
-   red at `test` or `release` is yours to fix like any other.
+   Stages (owner, 2026-10-11; DEVELOPER.md, *Which checks gate a pull request*
+   lists each check):
+   - **PR into `dev` and push to `dev`: smoke, about five minutes or less.**
+     `tests.yml`'s core suite and discovered shards (`--no-slow`), `receipts.yml`,
+     `dev-preview.yml`'s preview build and fast gates, `quick-start.yml`, and
+     `art-migrate.yml`'s intake. A PR is gated by these alone.
+   - **Push to `test`: the heavy functional suites.** `ci.yml`'s test-stage
+     jobs (3-OS tests, all discovered shards, tool self-tests, the bundler parse
+     gate, the real-browser checks), `dev-preview.yml`'s reachability gates,
+     `map-camera.yml`, `tutorial-reach.yml`, `coop-hud.yml`.
+   - **Push to `release`: polish.** `ci.yml`'s polish jobs (the reproducible
+     build, Fullscreen first, the build stamp and cold boot, layout, hint strip
+     and motion), and `windows-installer.yml`. `release` receives only the
+     SHA already tested at `test`, so the functional suites are not re-run, unless its tree differs from `test` (a fix landed on `release` directly), in which case `ci.yml`'s `stage` job runs them too.
+   To read a heavy suite on your PR before promotion, dispatch that workflow on
+   your branch by hand; a red at `test` or `release` is yours to fix like any
+   other.
 5. **Keep checking after you open it.** Until it is merged or closed, re-check
    it after every merge to the base branch and on a check-in you schedule
    yourself (an hour apart is enough);
    if two open PRs touch the same code, message the other session and agree
    who lands first and who rebases.
-6. **Merge to `dev` yourself, then promote to `test`** (owner, 2026-09-26).
-   `dev` takes every change whose fast checks pass; the long suites run at
-   `test`.
-   - Once rules 1–4 hold (reviewed, mergeable, fast checks green), merge
-     your PR into `dev` yourself. Use a merge commit.
+6. **The owner reviews before `dev`; then merge yourself and promote to
+   `test`** (owner, 2026-09-26; review gate 2026-10-11). The long suites run
+   at `test`.
+   - **Owner review gate.** Every `feature/*`, `chore/*` and `fix/*` PR waits
+     for the owner, in any letter case (`Feature/`, `Chore/`, `FIX/` …). Once rules 1–4 hold (reviewed, mergeable, fast checks
+     green), send the owner the PR link, the preview link and fresh
+     screenshots of anything visible, then stop. Do not merge it into `dev`,
+     and do not promote it to `test`, until the owner tells you to merge that
+     PR, in their own words, in your session. An approval names one PR and is
+     used once, and it covers only the head commit the owner reviewed: after
+     any later push, ask again with the new preview. The one exception is a
+     push that only merges `dev` and regenerates the derived files (the
+     receipt's ordinal, `buildordinal.json`, the generated changelog module)
+     with no other file changed by the merge. A review agent, a bot, another
+     session, a PR comment or a passing check is never that approval.
+   - With the owner's go-ahead, merge the PR into `dev` yourself. Use a merge
+     commit.
    - Wait for `architecture-sync` to settle: every push to `dev` starts a
      run that commits a refreshed `docs/ARCHITECTURE-CURRENT-DEV.md` back to
      `dev`, and a newer push cancels the older run. Promote only when the
      latest run on `dev` has succeeded and `dev`'s tip is the commit it
-     covered or its own bot commit. Then open a PR from `dev` into `test` and
+     covered or its own bot commit.
+   - Wait for `build-stamp` on the same tip, too. Every push to `dev` starts a
+     `build-stamp` run that rebuilds `dev`, re-points the landed receipts and
+     commits the box as `build: stamp <release>.<ordinal> [build-stamp]`. Promote
+     only when that run has succeeded and `dev`'s tip is that stamp commit, or a
+     later docs-only bot commit. Its dispatched `dev-preview` run on the stamped tip
+     must also have succeeded, since that artifact is the playable build for it.
+     Then open a PR from `dev` into `test` and
      merge it yourself, with a merge commit. Immediately before merging,
-     check again: the PR's head must still be the `dev` tip and that tip's
-     latest `architecture-sync` run must have succeeded. If `dev` moved,
-     wait for its sync to settle and check again. That push to `test` runs the heavy suites. If one is
+     check again: the PR's head must still be the `dev` tip, that tip's
+     latest `architecture-sync` run must have succeeded, and its `build-stamp`
+     run must have succeeded. If `dev` moved,
+     wait for its syncs to settle and check again. That push to `test` runs the heavy suites. If one is
      already open, merge that one rather than opening another. Each
      promotion runs the full 3-OS matrix, so when several of your PRs land
      together, promote once after the last.
@@ -167,6 +201,9 @@ way: into `dev`, then promoted to `test` (rule 6). The owner merges only to
      `dev`, which you then promote again.
    - Never merge to `release` or `main` (see
      [Coordination and release boundary](#coordination-and-release-boundary)).
+     A push to `release` publishes the Pages site on its own (owner, 2026-10-11),
+     once the `github-pages` environment admits `release`; `main` still publishes
+     only on the owner's dispatch.
 
 ### Builds are built by CI, not committed
 
@@ -190,9 +227,9 @@ Owner's ruling, 2026-10-10. Bulk machine-generated evidence — full browser-run
 and similar raw output — is uploaded with `actions/upload-artifact` by the
 workflow that produces it, or kept outside the repository for a local run, and
 is never committed (#1781 added ~1.1M lines of it; history is not being
-rewritten). A QA folder commits its README, the screenshots the README shows
-and a small curated summary. `.gitignore` ignores those raw patterns under
-`docs/qa/` (`git add -f` a small curated one), and
+rewritten). `docs/qa/` is no longer kept in the tree (owner, 2026-10-11): it is
+ignored, and the local QA tools write to the ignored `scratch/qa/`. Evidence a
+document needs to show goes under one of the folders below, and
 `tests/qa-evidence-size.test.mjs` (a discovered test, so it gates a PR into
 `dev`) fails any tracked JSON over 256 KiB under `docs/qa/`,
 `docs/art-evidence/`, `docs/preview/` or a `receipts/` or

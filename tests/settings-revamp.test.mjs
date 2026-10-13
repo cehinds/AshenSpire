@@ -18,6 +18,11 @@ test('the channel is read from where the page was served or saved', () => {
   assert.equal(buildChannel(at('https://cehinds.github.io/AshenSpire/test/latest/mobile/'), 'standalone file'), 'test');
   assert.equal(buildChannel(at('https://cehinds.github.io/AshenSpire/main/12/'), 'standalone file'), 'main');
   assert.equal(buildChannel(at('https://cehinds.github.io/AshenSpire/release/3'), 'standalone file'), 'release');
+  assert.equal(buildChannel(at('https://cehinds.github.io/AshenSpire/branches/feature/x/latest/'), 'standalone file'), 'dev', 'a branch preview plays as dev');
+  assert.equal(buildChannel(at('https://cehinds.github.io/AshenSpire/branches/fix-thing/latest/index.html'), 'standalone file'), 'dev');
+  assert.equal(buildChannel(at('https://cehinds.github.io/AshenSpire/branches/feature/x/latest/download/AshenSpire-dev-0.7.1.9.html'), 'standalone file'), 'dev');
+  assert.equal(buildChannel(at('https://cehinds.github.io/AshenSpire/branches/main/latest/'), 'standalone file'), 'dev', 'a branch named main is still dev');
+  assert.equal(buildChannel(at('https://cehinds.github.io/AshenSpire/branches/dev/latest/'), 'standalone file'), 'dev');
   assert.equal(buildChannel(at('https://cehinds.github.io/AshenSpire/AshenSpire.html'), 'standalone file'), 'main', 'the site root is main’s tree');
   assert.equal(buildChannel(at('file:///sdcard/Download/AshenSpire-dev-0.7.1.449.html'), 'standalone file'), 'dev');
   assert.equal(buildChannel(at('file:///sdcard/Download/AshenSpire-mobile-test-0.7.1.2.html'), 'standalone file'), 'test');
@@ -26,6 +31,22 @@ test('the channel is read from where the page was served or saved', () => {
   assert.equal(buildChannel(at('http://localhost:8080/index.html'), 'UNPLACED'), 'dev');
   assert.equal(buildChannel(at('https://example.com/whatever.html'), 'source tree'), 'dev', 'the dev server is dev wherever it is');
   assert.equal(buildChannel(null), 'dev', 'no page (Node) is a developer’s seat');
+});
+
+test('a srcdoc branch preview is dev only when the wrapper stamps dev', () => {
+  const srcdoc = { href: 'about:srcdoc', pathname: 'srcdoc', hostname: '', protocol: 'about:' };
+  const saved = globalThis.__ASHEN_PREVIEW_CHANNEL__;
+  try {
+    delete globalThis.__ASHEN_PREVIEW_CHANNEL__;
+    assert.equal(buildChannel(srcdoc, 'standalone file'), 'main', 'no global keeps the existing answer');
+    globalThis.__ASHEN_PREVIEW_CHANNEL__ = 'main';
+    assert.equal(buildChannel(srcdoc, 'standalone file'), 'main', 'only dev is honoured');
+    globalThis.__ASHEN_PREVIEW_CHANNEL__ = 'dev';
+    assert.equal(buildChannel(srcdoc, 'standalone file'), 'dev');
+    assert.equal(buildChannel({ href: '', pathname: 'srcdoc', hostname: '', protocol: 'about:' }, 'standalone file'), 'dev', 'an about: protocol with the stamp');
+  } finally {
+    if (saved === undefined) delete globalThis.__ASHEN_PREVIEW_CHANNEL__; else globalThis.__ASHEN_PREVIEW_CHANNEL__ = saved;
+  }
 });
 
 test('debug is on by default on dev and test, never on main or release, and off on unknown until asked', () => {

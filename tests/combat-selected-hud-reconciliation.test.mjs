@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
+// HUD layout geometry tokens unset (getComputedStyle → {}): every offset is 0.
+import {hudGeometry,offsetPlacement} from '../src/ui/models/HudLayoutOffsetModel.js';
 import {combatPlayerInfoRect,combatPlayerActionRect,combatFrameTarget,combatTargetHudFootprints} from '../src/ui/components/battlefieldStage.js';
 import {COMBAT_TARGET_HIT_PX,combatTargetPackSize} from '../src/ui/models/CombatOverheadModel.js';
 
@@ -14,7 +16,7 @@ test('compact selected and idle panels reserve all seats actual22px Info and24px
     const viewport={left:0,top:0,right:320,bottom:650,width:320,height:650},options=[],doors=[];
     const players=[true,false].map((selected,index)=>{
       const sprite={index},art={left:40+index*160,right:100+index*160,top:190,bottom:300};
-      const inspect={size:22,style:{},getBoundingClientRect:()=>({width:0,height:0})};
+      const inspect={size:22,style:{},dataset:{},getBoundingClientRect:()=>({width:0,height:0})};
       const action={size:24,style:{},getBoundingClientRect:()=>({width:24,height:24})};
       const infoRect=combatPlayerInfoRect(inspect,art,viewport,zoom);
       doors.push(infoRect,combatPlayerActionRect(action,infoRect,art,zoom));
@@ -26,10 +28,10 @@ test('compact selected and idle panels reserve all seats actual22px Info and24px
     const combat={getBoundingClientRect:()=>viewport,querySelector:()=>null};
     const field={closest:()=>combat,getBoundingClientRect:()=>({left:0,top:80}),querySelectorAll:s=>s==='.combatant.player'?players:[]};
     const begin=source.indexOf('  function placePlayerHud('),end=source.indexOf('  function trackPlayerHud()',begin);
-    const sync=runInNewContext(source.slice(begin,end)+'\nplacePlayerHud',{
+    const sync=runInNewContext(source.slice(begin,end)+'\nplacePlayerHud',{hudGeometry,offsetPlacement,getComputedStyle:()=>({}),
       field,uiZoom:()=>zoom,visibleCombatPanelRect:()=>null,settledTargets:[],settledFooterSize:44,playerInfoRects:[],
       readRestingHand:()=>({clearanceTop:340}),currentSpriteArtBounds:s=>({left:40+s.index*160,right:100+s.index*160,top:190,bottom:300}),
-      combatPlayerInfoRect,combatPlayerActionRect,combatTargetHudFootprints,
+      combatPlayerInfoRect,combatPlayerActionRect,placePlayerIntentGlyph:()=>null,combatTargetHudFootprints,
       playerDetailsPlacement:input=>{options.push(input);return {left:110,top:230};},
       anchorLocalBox:(host,rect)=>({left:rect.left-host.left,top:rect.top-host.top}),
     });
@@ -43,7 +45,7 @@ test('compact selected and idle panels reserve all seats actual22px Info and24px
 });
 
 test('the actual footer pack keeps an unselected armed player and every enemy physical44 target',()=>{
-  const begin=source.indexOf('    const footerSize ='),end=source.indexOf('    settledTargets = targets;',begin);
+  const begin=source.indexOf('    const footerSize ='),end=source.indexOf('    settledTargetCores = targetCores;',begin);
   const fieldRect={left:0,top:90,width:1440,height:417.28125};
   const boxes=[{hostRect:{left:484.54684,width:100,bottom:779.2808},frameRect:{},footerWidth:0,footerHeight:7,controls:[]},
     {hostRect:{left:600,width:100,bottom:400},frameRect:{},footerWidth:104,footerHeight:24,controls:[]}];

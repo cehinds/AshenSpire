@@ -36,7 +36,6 @@ export function isEvidenceJson(path) {
 export const ALLOWED = new Map([
   ['docs/preview/hybrid-input-parity-manifest.json', 'read by tools/hybrid-input-parity.mjs (--verify-manifests)'],
   ['docs/preview/hybrid-input-parity-root-manifest.json', 'read by tools/hybrid-input-parity.mjs (--verify-manifests)'],
-  ['docs/qa/combat-art-runtime-2026-10-06/ground-contact.json', 'linked as the measurements from its README'],
 ]);
 
 export function oversized(entries, limit = LIMIT_BYTES, allowed = ALLOWED) {
