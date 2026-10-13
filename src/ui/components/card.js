@@ -273,8 +273,9 @@ export function renderCard(registries, ref, opts = {}) {
   });
   let drawn = levelNow();
   // ONE TEXT FOR EVERY VIEW. The face lines are the shared model's output
-  // (cardFaceText.js); weight-priced cards keep the authored text they name.
-  const faceLines = def.weightClassPriced ? null : cardFaceLines(def, opts.preview || null, registries);
+  // (cardFaceText.js); a weight-priced card adds its pricing note as a detail line.
+  const faceLines = cardFaceLines(def, opts.preview || null, registries);
+  if (faceLines && def.weightClassPriced) faceLines.push({ kind: 'detail', html: 'Cost reflects your current weight' });
   // The combat hand passes faceLineLimit: lines past it stay in the DOM, hidden until the card is selected.
   const faceLineLimit = Number.isFinite(opts.faceLineLimit) ? opts.faceLineLimit : null;
   const paint = (at) => {

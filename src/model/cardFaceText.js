@@ -4,7 +4,7 @@
 // reads (cardSummaryContext in playingCard.js), so a number on the face comes
 // from the same preview the engine executes (SPEC §3.13) and never from a
 // second formula. The output is data: `{ kind, html }` lines in display
-// priority (damage, status, gain, condition, bonus, detail). The view decides
+// priority (damage, status, condition, gain, bonus, detail). The view decides
 // where the lines go. `html` is escaped, and every number is
 // `<span class="val">n</span>`, gaining ` up` or ` down` when the live preview
 // has moved it from its static base. Without a preview no number is marked.
@@ -20,7 +20,8 @@ import { resolve as resolveTags } from '../content/tags.js';
 const UNPHRASEABLE = Symbol('unphraseable');
 const fail = () => { throw UNPHRASEABLE; };
 
-const LINE_ORDER = ['damage', 'status', 'gain', 'condition', 'bonus', 'detail'];
+// Conditional riders follow the statuses they extend, ahead of gains (owner: damage and status first).
+const LINE_ORDER = ['damage', 'status', 'condition', 'gain', 'bonus', 'detail'];
 const KEYWORDS = ['exhaust', 'retain', 'ethereal', 'innate'];
 const ENEMY_TARGETS = ['enemy', 'allEnemies', 'randomEnemy'];
 const STATUS_NEVER_PHRASED = ['invulnerability', 'decoy', 'grounded', 'sleep'];
