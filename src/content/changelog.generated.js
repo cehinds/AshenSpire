@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1947",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Behind the scenes: the build number is stamped again after the balance-report fix",
+    "detail": "Nothing you play changes. The balance-report fix's changelog entry was filed under the previous day, so the build stamp refused the order and no build number landed after it merged. The entry now sits under the day it merged.",
+    "build": "0.7.1.1465",
+    "pullRequest": 1947,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1947"
+  },
+  {
     "id": "pr-1932",
     "date": "2026-10-13",
     "group": "2026-10-13",
