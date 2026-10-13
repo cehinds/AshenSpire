@@ -249,13 +249,24 @@ export function consumeFoundationEvade(ctx, source, target, carrier) {
   return true;
 }
 
-/** Clone one graph, preserving references between players, piles and seats. */
-export function candidateState(ctx) {
+/** Clone one graph, preserving references between players, piles and seats.
+ *
+ * `detached` is for a candidate that is read and thrown away (a preview, a
+ * reaction option probe, a cost preflight) and is never committed back into
+ * `ctx`. Its event log starts empty instead of copying the fight's history:
+ * the log grows with every event of the fight (120 KB by turn 2), it was most
+ * of what each preview cloned, and a phone spent seconds per tap cloning it.
+ * Everything that reads a candidate's log reads only what it emitted itself
+ * (`eventLog.length` before and `slice(start)` after), so an empty start is
+ * the same answer. A transaction (foundationTransaction) keeps the full log:
+ * it replaces ctx's.
+ */
+export function candidateState(ctx, { detached = false } = {}) {
   const data = {};
   for (const [key, value] of Object.entries(ctx)) {
-    if (typeof value !== 'function' && key !== 'registries' && key !== 'rng') data[key] = value;
+    if (typeof value !== 'function' && key !== 'registries' && key !== 'rng' && !(detached && key === 'eventLog')) data[key] = value;
   }
-  const candidate = { ...structuredClone(data), registries: ctx.registries, rng: createRng(ctx.rng.seed, ctx.rng.getCounters()), _emitEvent: ctx._emitEvent };
+  const candidate = { ...structuredClone(data), ...(detached ? { eventLog: [] } : {}), registries: ctx.registries, rng: createRng(ctx.rng.seed, ctx.rng.getCounters()), _emitEvent: ctx._emitEvent };
   // Catalogue accessors are immutable context, never serializable combat data.
   if (ctx.registriesForPlayer) candidate.registriesForPlayer = ctx.registriesForPlayer;
   if (ctx.registerPlayerRegistries) candidate.registerPlayerRegistries = ctx.registerPlayerRegistries;

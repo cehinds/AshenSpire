@@ -639,7 +639,7 @@ export function cardChoicePlan(C, playerId, cardInstanceId) {
 }
 
 export function previewCoopCard(C, playerId, instanceId, targetId, upcastTier) {
-  const clone = F.candidateState(C);
+  const clone = F.candidateState(C, { detached: true });
   setActive(clone, clone.players.get(playerId));
   return soloPreviewCard(clone, instanceId, targetId, upcastTier);
 }
@@ -681,7 +681,7 @@ export function previewCoopIntent(C, playerId, enemyInstanceId) {
 // A bot previews the requested owner without rebinding the authoritative fight.
 export function cardNeedsEnemyTargetForPlayer(C, playerId, instanceId) {
   if (!C.players.has(playerId)) throw new Error(`Unknown player '${playerId}'`);
-  const candidate = F.candidateState(C);
+  const candidate = F.candidateState(C, { detached: true });
   setActive(candidate, candidate.players.get(playerId));
   return cardNeedsEnemyTargetNow(candidate, instanceId);
 }
@@ -803,7 +803,7 @@ function doPlayCard(C, { cardInstanceId, targetId, choice, upcastTier, selectedB
   const before = { ...R.beforeAbilityPlay(C, p), cardTargetsAllEnemies: R.cardTargetsAllEnemies(def) };
   A.preflightCardHp(C, def, p, target, before);
   if (!preflightOnly && C.combatExpansionVersion === 2) {
-    const candidate = F.candidateState(C);
+    const candidate = F.candidateState(C, { detached: true });
     const acceptedCost = doPlayCard(candidate, { cardInstanceId, targetId, choice, upcastTier, selectedBuildup, preflightOnly: true });
     const price = def.ashenBlightCost || 0;
     const payment = payAshenBlight(C, p, { amount: price, combatKey: C.combatKey,
