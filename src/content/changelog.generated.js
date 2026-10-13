@@ -8,9 +8,49 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-13",
     "summary": "The combat log names every source, and Evade and stance show in combat",
     "detail": "Every combat log line now says what caused it and whom it hit: a hit names the attack and shows its calculation (resistance or weakness, each layer absorbed before and after, HP dealt), each stagger-meter rise names its source, and Evade reads from the evader (\"Forsaken evaded Wyrm Lord's Tail Sweep: Evade roll 17 beat 16\"), with failed rolls logged too. A prepared Evade shows as an icon with its charges on the fighter, and the inspector's Active skills & stance lists the current stance and Evade. A failure while starting a play's animation can no longer lock End Turn and the hand.",
-    "build": "0.7.1.1473",
+    "build": "0.7.1.1475",
     "pullRequest": 1945,
     "url": "https://github.com/cehinds/AshenSpire/pull/1945"
+  },
+  {
+    "id": "pr-1931",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "The tag model, its tools and workbench, and the Evade sigil land",
+    "detail": "Development-process change only, nothing in the game changes. The tag model's tables, build, check and compile tools, and a table workbench for editing them, are in docs/tag-model/, with its owner rulings on Evade, Sweep precision and piercing stacks recorded in DECISIONS.md. The Evade action sigil now draws from the card-art template boot; no card uses it yet. Five lookup developer messages and 31 combat-test and debug-chrome strings move to content/source/uiStrings.csv, completing steps 9 and 10 of the strings migration.",
+    "build": "0.7.1.1475",
+    "pullRequest": 1931,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1931"
+  },
+  {
+    "id": "pr-1867",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "The round-based combat engine is ported as a preview",
+    "detail": "Nothing changes in the game yet. The alternative round-based combat engine (src/engine/combatRounds) is in the codebase with its own tests and a specification section (§4.11), and it is not wired into combat.",
+    "build": "0.7.1.1475",
+    "pullRequest": 1867,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1867"
+  },
+  {
+    "id": "pr-1838",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "The alternative combat rounds design is recorded",
+    "detail": "Development-process change only, nothing in the game changes. The design for timeline queues, initiative and merge modes is written up in docs/alternative-combat-rounds, with its own tests.",
+    "build": "0.7.1.1475",
+    "pullRequest": 1838,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1838"
+  },
+  {
+    "id": "pr-1948",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "New builds get their number again",
+    "detail": "Development-process change only, nothing in the game changes. When a merged change's changelog line was filed under an earlier day, stamping the new build number now moves it to today's entries instead of failing, so the online dev build publishes again.",
+    "build": "0.7.1.1475",
+    "pullRequest": 1948,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1948"
   },
   {
     "id": "pr-1950",

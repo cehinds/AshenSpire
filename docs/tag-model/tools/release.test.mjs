@@ -285,10 +285,7 @@ test('every kept table and column round-trips exactly, rows and values', async (
   }
 });
 
-// The presentation inventory is generated and not on every branch: skip when absent.
-const HAS_PRES = existsSync(join(here, '..', 'tables', 'presentation'));
-
-test('asset light paths are stored only where they differ from the derived mobile path', { skip: !HAS_PRES }, async () => {
+test('asset light paths are stored only where they differ from the derived mobile path', async () => {
   const M = await loadModule();
   const { header, rows } = csvOf(INPUTS.find(i => i.path === 'presentation/assets.csv').text);
   const col = M.TABLES['presentation.assets'].cols.find(c => c[0] === 'lightPath');
