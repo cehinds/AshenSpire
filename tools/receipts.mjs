@@ -256,14 +256,23 @@ function resolve(rev) {
 // against a scratch repository; check() always uses the defaults.
 export function rangeSubjects(since, { cwd = ROOT, limit = 40 } = {}) {
   const lines = (args) => git(['log', ...args], cwd).split('\n').filter(Boolean);
+  const commits = (args) => lines(args).map((line) => {
+    const i = line.indexOf('\0');
+    return { hash: line.slice(0, i), subject: line.slice(i + 1) };
+  });
+  // Git's topo order puts every commit carried by a landing before the older
+  // first-parent commits beneath that landing. That gives merge commits and
+  // squash commits one shared newest-first chronology; concatenating separate
+  // merge and first-parent walks loses that chronology.
+  const inLandingOrder = (selected, firstParent, rev) => commits(['--topo-order', '--format=%H%x00%s', rev])
+    .filter(({ hash }) => selected.has(hash))
+    .map(({ hash, subject }) => ({ subject, firstParent: firstParent.has(hash) }));
   if (since) {
     const spec = `${since}..HEAD`;
-    // Every merge commit in the range (the original reach), plus every commit on
-    // the first-parent line, which is where a squash merge lands.
-    return [
-      ...lines(['--merges', '--format=%s', spec]).map((subject) => ({ subject, firstParent: false })),
-      ...lines(['--first-parent', '--format=%s', spec]).map((subject) => ({ subject, firstParent: true })),
-    ];
+    const all = commits(['--topo-order', '--format=%H%x00%s', spec]);
+    const selected = new Set(all.map(({ hash }) => hash));
+    const firstParent = new Set(lines(['--first-parent', '--format=%H', spec]));
+    return inLandingOrder(selected, firstParent, spec);
   }
   // THE FALLBACK WINDOW HAS ONE BOUNDARY, not one per walk. Capping each walk at
   // 40 independently let the merge walk reach far older history than the
@@ -288,7 +297,7 @@ export function rangeSubjects(since, { cwd = ROOT, limit = 40 } = {}) {
     const i = l.indexOf(' ');
     return { hash: l.slice(0, i), subject: l.slice(i + 1) };
   });
-  const fp = (extra) => lines(['--first-parent', '--format=%s', ...extra]);
+  const fp = (extra) => commits(['--first-parent', '--format=%H%x00%s', ...extra]);
   let firstParent = fp([`--max-count=${limit}`, 'HEAD']);
   if (merges.length < limit) firstParent = fp(['HEAD']);
   else {
@@ -311,13 +320,12 @@ export function rangeSubjects(since, { cwd = ROOT, limit = 40 } = {}) {
       while (k < line.length && descendants.has(line[k].hash)) k += 1;
       reach = Math.max(reach, k);
     }
-    const toBoundary = line.slice(0, reach).map(({ subject }) => subject);
+    const toBoundary = line.slice(0, reach);
     if (toBoundary.length > firstParent.length) firstParent = toBoundary;
   }
-  return [
-    ...merges.map(({ subject }) => ({ subject, firstParent: false })),
-    ...firstParent.map((subject) => ({ subject, firstParent: true })),
-  ];
+  const selected = new Set([...merges, ...firstParent].map(({ hash }) => hash));
+  const firstParentHashes = new Set(firstParent.map(({ hash }) => hash));
+  return inLandingOrder(selected, firstParentHashes, 'HEAD');
 }
 
 function check(sinceArg) {

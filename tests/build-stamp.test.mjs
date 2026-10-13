@@ -422,6 +422,20 @@ test('the base is the introduction: the introducing merge counts, the merges bef
   } finally { r.cleanup(); }
 });
 
+test('mixed merge and squash landings keep their shared newest-first chronology', () => {
+  const r = repoWithPipeline([]);
+  const git = (...args) => execFileSync('git', args, { cwd: r.dir, encoding: 'utf8' }).trim();
+  try {
+    git('checkout', '-q', '-b', 'older-merge');
+    git('commit', '-q', '--allow-empty', '-m', 'older branch work');
+    git('checkout', '-q', 'main');
+    git('merge', '-q', '--no-ff', 'older-merge', '-m', 'Merge pull request #1900 from a/older-merge');
+    git('commit', '-q', '--allow-empty', '-m', 'Newer squash landing (#1901)');
+
+    assert.deepEqual(landedSince({ cwd: r.dir }), ['1901', '1900', '1895']);
+  } finally { r.cleanup(); }
+});
+
 test('a stamp commit after the introduction moves the base to the stamp', () => {
   const r = repoWithPipeline(['Merge pull request #1900 from c/d', { subject: 'build: stamp 0.7.1.1 [build-stamp]', author: BOT }, 'Merge pull request #1902 from e/f']);
   try {
