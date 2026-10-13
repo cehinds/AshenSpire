@@ -1369,3 +1369,21 @@ test('every CSV under tables/ and tables/presentation/ is edited by a workbench 
   assert.deepEqual(unmapped, [], 'CSV with no workbench table and not excluded');
   for (const f of EXCLUDED_CSV) assert.ok(found.includes(f) && !mapped.has(f), 'stale exclusion: ' + f);
 });
+
+test('the changed view keeps a copy of the loaded rows, and a copy of the last save that a save moves', async () => {
+  const db = makeFakeDb();
+  const W = makePage(db, T);
+  const objs = sample(3, 'c');
+  await putBlobTable(db, W.api, 't', objs);
+  W.api.subscribeTable('t');
+  await waitFor(() => W.page.loaded.has('t'));
+  const loaded = JSON.stringify(W.api.tstate.t.snapLoad.rows);
+  assert.equal(loaded, JSON.stringify(objs), 'load copies the head rows');
+  assert.equal(JSON.stringify(W.api.tstate.t.snapSave.rows), loaded, 'a load is also the last save');
+  W.page.state.data.t.rows[0].name = 'edited';
+  assert.equal(JSON.stringify(W.api.tstate.t.snapLoad.rows), loaded, 'a local edit does not move the copy');
+  editTable(W.page, [{ ...objs[0], name: 'edited' }, objs[1], objs[2]]);
+  await W.api.flush('t');
+  assert.equal(JSON.stringify(W.api.tstate.t.snapLoad.rows), loaded, 'a save does not move the loaded copy');
+  assert.equal(W.api.tstate.t.snapSave.rows[0].name, 'edited', 'the last-save copy holds what was written');
+});
