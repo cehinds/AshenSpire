@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-13",
     "summary": "Combat Rounds preview data now stays isolated and save-safe",
     "detail": "Reaction offers and public timelines no longer share mutable card data with round state, non-finite damage is normalized consistently, and invalid card identifiers are rejected before a paused round can become unrecoverable.",
-    "build": "0.7.1.1469",
+    "build": "0.7.1.1471",
     "pullRequest": 1899,
     "url": "https://github.com/cehinds/AshenSpire/pull/1899"
+  },
+  {
+    "id": "pr-1923",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Ornate feat emblems in character creation",
+    "detail": "The Feats step shows each feat as a layered, gilded medallion instead of a flat glyph. If the artwork cannot load, the tile falls back to the glyph.",
+    "build": "0.7.1.1471",
+    "pullRequest": 1923,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1923"
   },
   {
     "id": "pr-1935",
