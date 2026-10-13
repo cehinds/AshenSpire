@@ -41,10 +41,14 @@ export function illustratedCardHtml(model,{rules,painting,equipmentArtwork=false
   const costLayout=Number(model.costs.mana)>0?'staminaMana':'staminaOnly';
   const costLayers=doc.costLayouts?.[costLayout]?.layers||{};
   const portraitArt=artworkComposition?.fit==='cover'||painting?.startsWith('assets/cards/extended/');
+  // Face lines (cardFaceText.js) fit the rules layer to five lines; the hand
+  // shows three at rest through its own data-max-lines (card.js).
+  const faceRules=/class="face-line"/.test(rules);
   const layers=doc.layers.map(l=>({...l,...costLayers[l.id],...(portraitArt&&l.bind==='artwork'?{visible:true,fit:'cover',trim:null}: {})})).filter(l=>l.visible!==false).map(source=>{
     let l=equipmentArtwork&&source.bind==='artwork'?{...source,...doc.equipmentArtwork}:source;
     if(model.sigils&&l.bind==='rules')l={...l,autoFit:true,minFontSize:22,maxLines:null};
     else if(model.faceType&&l.bind==='rules')l={...l,autoFit:true,minFontSize:14,maxLines:12};
+    if(faceRules&&l.bind==='rules')l={...l,autoFit:true,maxLines:5};
     if(model.faceType&&l.bind==='tags')l={...l,fontSize:30,minFontSize:24,maxFontSize:30,fontWeight:'bold',maxLines:1,autoFit:true};
     if(model.sigils){
       // Raise the parchment as one piece, preserving its effect-text capacity.
@@ -70,7 +74,7 @@ export function illustratedCardHtml(model,{rules,painting,equipmentArtwork=false
     }else{
       const text=values[l.bind]??esc(l.text||'');
       const font=`font-family:${esc(l.font||'Georgia')};font-size:${(l.fontSize||20)/doc.width*100}cqw;font-weight:${esc(l.fontWeight||'normal')};text-align:${esc(l.align||'center')};color:${esc(l.color||'#eee')};`;
-      body=`<div class="ic-text" data-card-binding="${esc(l.bind||l.id)}" data-min-font="${l.minFontSize||l.fontSize||20}" data-max-font="${l.maxFontSize||l.fontSize||20}" data-auto-fit="${l.autoFit===true}" data-max-lines="${l.maxLines||1}" style="${font}${l.maxLines?`display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:${Math.max(1,Math.floor(l.maxLines))};height:auto;`: ''}${l.outline?`text-shadow:1px 1px 0 ${esc(l.outline)},-1px -1px 0 ${esc(l.outline)};`:''}">${text}</div>`;
+      body=`<div class="ic-text" data-card-binding="${esc(l.bind||l.id)}" data-min-font="${l.minFontSize||l.fontSize||20}" data-max-font="${l.maxFontSize||l.fontSize||20}" data-auto-fit="${l.autoFit===true}" data-max-lines="${l.maxLines||1}"${faceRules&&l.bind==='rules'?' data-face-lines="true"':''} style="${font}${l.maxLines?`display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:${Math.max(1,Math.floor(l.maxLines))};height:auto;`: ''}${l.outline?`text-shadow:1px 1px 0 ${esc(l.outline)},-1px -1px 0 ${esc(l.outline)};`:''}">${text}</div>`;
     }
     if(footer)return `<div class="ic-plane"><div class="ic-layer" data-component="${esc(l.id)}" style="${position}">${body}</div></div>`;
     if(interiors[l.id]){
