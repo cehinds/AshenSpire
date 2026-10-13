@@ -2446,7 +2446,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function afterDispatch(events) {
     try { events = decorateCombatEffects(events, registries, barrierVisuals); } catch (e) { console.warn('[combat] effect decoration failed:', e && e.message); }
     playbackEvents = events;
-    playbackCounterOrigins = selectedCounterOrigins(events);
+    try { playbackCounterOrigins = selectedCounterOrigins(events); } catch (e) { playbackCounterOrigins = new Set(); console.warn('[combat] counter origins failed:', e && e.message); }
     // Capture definitions while disp still holds consumed Powers and equipment
     // profile instances. Reduce the SAME events on paced and skipped paths.
     appliedVisualEvents = new Set();
