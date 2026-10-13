@@ -86,7 +86,8 @@ test('measure-classes --check compares fight decisions with runsim on fixed seed
 });
 
 test('a copy that skips the Azure charge is caught on decisions, not left to the win count', () => {
-  const r = measure('5', '--check', '--mutate=manaFlask');
+  // Ten seeds: with the harder tier-1 normals (owner, 2026-10-13) five runs per class die before a Mana flask matters.
+  const r = measure('10', '--check', '--mutate=manaFlask');
   assert.equal(r.status, 1, `the planted drift must fail --check\n${r.stdout}\n${r.stderr}`);
   assert.match(r.stdout, /decisions DRIFT — \d+ fights opened on the same state, [1-9]\d* decided differently/);
 });

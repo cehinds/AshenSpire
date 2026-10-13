@@ -135,11 +135,14 @@ test('13.6 claims 1 and 3: every existing seed\'s act map and HP roll are byte-i
     // JSON round-trip: the fixture dropped `undefined` fields the way any save does.
     assert.deepEqual(JSON.parse(JSON.stringify({ ...after, counters })), before, `seed ${seed} tier ${tier}`);
   }
+  // The HP rolls are read against the HP range the fixture's enemies shipped with: the Wandering Soldier's 22-26 was
+  // retuned to 31-36 (owner, 2026-10-13: harder tier-1 normals), which moves the rolled value and no draw.
+  const PRE_HP_REG = createRegistries({ ...contentBundle, enemies: contentBundle.enemies.map((e) => (e.id === 'wanderingSoldier' ? { ...e, hp: [22, 26] } : e)) });
   for (const [key, hp] of Object.entries(fixture.hp)) {
     const [seed, tier] = key.split(':').map(Number);
-    const enc = REG.encounters.all().find((e) => e.pool === 'normal' && e.seat === ORDER[tier - 1]);
-    const hpMult = seatTierHpMult(REG, ORDER[tier - 1], tier);
-    const c = createCombat({ registries: REG, rng: createRng(seed), player: { classId: 'reaver', maxHp: 80, hp: 80, energyMax: 3, drawPerTurn: 5, deck: [{ instanceId: 'x1', cardId: 'strike', upgraded: false }] }, enemyIds: enc.enemies, hpMult });
+    const enc = PRE_HP_REG.encounters.all().find((e) => e.pool === 'normal' && e.seat === ORDER[tier - 1]);
+    const hpMult = seatTierHpMult(PRE_HP_REG, ORDER[tier - 1], tier);
+    const c = createCombat({ registries: PRE_HP_REG, rng: createRng(seed), player: { classId: 'reaver', maxHp: 80, hp: 80, energyMax: 3, drawPerTurn: 5, deck: [{ instanceId: 'x1', cardId: 'strike', upgraded: false }] }, enemyIds: enc.enemies, hpMult });
     assert.deepEqual(c.enemies.map((e) => e.hp), hp, `seed ${seed} tier ${tier} HP`);
   }
 });

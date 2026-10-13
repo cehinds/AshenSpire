@@ -101,8 +101,9 @@ test('a preview-off save is byte-identical to the save before the preview saved 
   assert.ok(!all.includes('"combatRounds"'), 'no preview key is written');
   // Re-recorded for the cost formula and the 3-SP stat enemy pool (SPEC §4.3a, §4.6a; owner 2026-10-12): the saved
   // costs and the enemy's planned moves changed. The previous hash came from the replaced stance-table rule.
-  assert.equal(createHash('sha256').update(all).digest('hex'), '474602191053b50219c21903587f02de836947d5b6a42529aa666da0fc53a267');
-  assert.equal(all.length, 119555);
+  // Re-recorded again for the retuned Wandering Soldier (2 SP, HP 31-36, Slash 8; owner 2026-10-13: harder normals).
+  assert.equal(createHash('sha256').update(all).digest('hex'), 'af2f0ae5286fe3c5d72a3b13c14fb2f75dc752ad6cb936f7cf9cdbb9e6fc6793');
+  assert.equal(all.length, 120661);
 });
 
 test('a preview fight with queued cards saves and restores: queues and paid SP intact, End Turn works after restore', () => {

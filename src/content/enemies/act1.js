@@ -10,11 +10,11 @@ export const act1Enemies = [
   {
     id: 'wanderingSoldier',
     // Stats for its SP pool (SPEC §4.6a, owner 2026-10-13).
-    attributes: { strength: 6, dexterity: 3, constitution: 3, wisdom: 2, intelligence: 2 },
+    attributes: { strength: 6, dexterity: 4, constitution: 3, wisdom: 2, intelligence: 2 },
     equipmentPower: 0.2,
     size: 'medium',
     name: 'Wandering Soldier',
-    hp: [22, 26],
+    hp: [31, 36],
     poiseMax: 10,
     levelProfile: { min: 1, max: 4 },
     arcaneExposure: {
@@ -28,7 +28,7 @@ export const act1Enemies = [
     },
     art: '⚔',
     moves: {
-      slash: { intent: 'attack', damage: 7, weight: 45, maxConsecutive: 2 },
+      slash: { intent: 'attack', damage: 8, weight: 45, maxConsecutive: 2 },
       guard: { intent: 'block', block: 6, weight: 30, maxConsecutive: 1 },
       warcry: {
         intent: 'buff', weight: 25, maxConsecutive: 1,
@@ -39,12 +39,12 @@ export const act1Enemies = [
   {
     id: 'blightHound',
     // Stats for its SP pool (SPEC §4.6a, owner 2026-10-13).
-    attributes: { strength: 5, dexterity: 5, constitution: 1, wisdom: 3, intelligence: 3 },
+    attributes: { strength: 5, dexterity: 6, constitution: 1, wisdom: 3, intelligence: 3 },
     blighted: true,
     size: 'small',
     tint: 'var(--rot)',
     name: 'Blight Hound',
-    hp: [12, 15],
+    hp: [14, 18],
     poiseMax: 6,
     levelProfile: { min: 1, max: 3 },
     art: '🐕',
@@ -68,7 +68,7 @@ export const act1Enemies = [
     levelProfile: { min: 2, max: 5 },
     art: '🪨',
     moves: {
-      club: { intent: 'attack', damage: 9, weight: 50 },
+      club: { intent: 'attack', damage: 15, weight: 50 },
       bellow: {
         intent: 'debuff', weight: 25, maxConsecutive: 1,
         effects: [
@@ -87,7 +87,7 @@ export const act1Enemies = [
     size: 'small',
     tint: 'var(--grace)',
     name: 'Grave Wisp',
-    hp: [10, 12],
+    hp: [12, 14],
     poiseMax: 4,
     levelProfile: { min: 1, max: 4 },
     art: '👻',
@@ -97,7 +97,7 @@ export const act1Enemies = [
         effects: [{ op: 'addCard', card: 'dazed', pile: 'draw', position: 'random' }],
       },
       drain: {
-        intent: 'attack', damage: 4, weight: 50,
+        intent: 'attack', damage: 8, weight: 50,
         effects: [{ op: 'heal', target: 'self', amount: 4 }],
       },
     },
@@ -112,7 +112,7 @@ export const act1Enemies = [
     size: 'large',
     tint: 'var(--gold)',
     name: 'Wyrm Aspirant',
-    hp: [68, 72],
+    hp: [82, 86],
     poiseMax: 24,
     levelProfile: { min: 4, max: 6 },
     art: '🐲',
@@ -122,9 +122,9 @@ export const act1Enemies = [
         intent: 'buff', weight: 10, maxConsecutive: 1,
         effects: [{ op: 'applyStatus', target: 'self', status: 'strength', stacks: 3 }],
       },
-      halberdSweep: { intent: 'attack', damage: 11, weight: 50, maxConsecutive: 2 },
+      halberdSweep: { intent: 'attack', damage: 17, weight: 50, maxConsecutive: 2 },
       tailSlam: {
-        intent: 'attack', damage: 7, weight: 30,
+        intent: 'attack', damage: 11, weight: 30,
         effects: [{ op: 'applyStatus', target: 'player', status: 'weak', stacks: 1 }],
       },
       goldenGuard: {
@@ -188,8 +188,8 @@ export const act1Enemies = [
     "name": "Lantern Moth",
     "size": "small",
     "hp": [
-      14,
-      17
+      15,
+      19
     ],
     "poiseMax": 5,
     "levelProfile": {
@@ -214,7 +214,8 @@ export const act1Enemies = [
       },
       "wingSparks": {
         "intent": "attack",
-        "damage": 2,
+        "sp": 1,
+        "damage": 3,
         "weight": 65,
         "hits": 3
       }
@@ -232,8 +233,8 @@ export const act1Enemies = [
     "name": "Briar Hermit",
     "size": "medium",
     "hp": [
-      24,
-      28
+      48,
+      56
     ],
     "poiseMax": 9,
     "levelProfile": {
@@ -251,7 +252,8 @@ export const act1Enemies = [
       },
       "briarCast": {
         "intent": "attack",
-        "damage": 5,
+        "sp": 1,
+        "damage": 16,
         "weight": 45,
         "effects": [
           {
@@ -289,8 +291,8 @@ export const act1Enemies = [
     "name": "Chain Scavenger",
     "size": "medium",
     "hp": [
-      20,
-      24
+      28,
+      34
     ],
     "poiseMax": 8,
     "levelProfile": {
@@ -302,7 +304,7 @@ export const act1Enemies = [
     "moves": {
       "hookCast": {
         "intent": "attack",
-        "damage": 6,
+        "damage": 20,
         "weight": 60
       },
       "chainSnare": {
@@ -321,7 +323,7 @@ export const act1Enemies = [
       },
       "draggingBlow": {
         "intent": "attack",
-        "damage": 12,
+        "damage": 41,
         "weight": 20,
         "maxConsecutive": 1,
         "delay": {

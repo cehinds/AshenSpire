@@ -1059,7 +1059,8 @@ When the Combat Rounds Preview is on, see §4.11.
 - **Co-op is not wired to the pool.** Co-op set aside on dev (#1881): a co-op enemy still plans one move a turn, and its moves do not pay the table. Co-op cards pay the derived costs of §4.3a.
 - **Rounds mode** (§4.11) uses the same pool and prices: the enemy SP of its queues is the enemy's stat pool, and each queued move costs its SP.
 - **Enemy schema.** An enemy may carry `attributes` (whole numbers by attribute id), `equipmentSp` (a whole number) and `blighted` (true); a move may carry `sp` (a whole number, 0 or more).
-- **Shipped tier-1 bosses (owner target: greedy-bot wins of 10–25% for every class; SP 3–4 from stats).** The Fell Warden has SP 3 (Strength 9, Dexterity 4, Constitution 4, Wisdom 3, Intelligence 3) and moves Cane Strike 1, Hammer Toss 1, Held Blade 1, Twin Daggers 3; the Bell Keeper SP 4 (10/4/4/5/3) with every move at 1; the Thorn Matriarch SP 4 (6/4/3/5/5) with Root Crown 1, Thorn Needles 1, Entwining Roots 2. The band is not met for every class: the class spread at the Bell Keeper and the Thorn Matriarch (Herald highest, Rogue lowest) is wider than 15 points, and boss SP moves every class together.
+- **Shipped tier-1 bosses (owner target: greedy-bot wins of 10–25% for every class; SP 3–4 from stats).** The Fell Warden has SP 3 (Strength 9, Dexterity 4, Constitution 4, Wisdom 3, Intelligence 3) and moves Cane Strike 1, Hammer Toss 1, Held Blade 1, Twin Daggers 3; the Bell Keeper SP 4 (10/4/4/5/3) with every move at 1; the Thorn Matriarch SP 4 (6/4/3/5/5) with Root Crown 1, Thorn Needles 1, Entwining Roots 2. The band is not met for every class: the class spread at the Bell Keeper and the Thorn Matriarch (Herald highest, Rogue lowest) is wider than 15 points, and boss SP moves every class together. The owner accepted these boss numbers for now (2026-10-13): no further class levers, and the bosses stay as tuned.
+- **Tier-1 normals and elites (owner, 2026-10-13: "should be harder about 50 to 75 normies, 25 to 50 elites, 10 to 25 for bosses").** The target is a greedy-bot win rate of 50–75% per class at every tier-1 normal encounter and 25–50% at the elite. It is tuned through enemy data only: stats (SP within the minion 1–2 and elite 2–3 bands, HP, move damage), equipment and move SP. Every tier-1 minion now has SP 2. Where it falls short: the Lone Soldier stays near 100%, because the Wandering Soldier is shared with the Twin Patrol, which falls far below 50% at any Soldier strong enough to threaten alone. Some cells miss by the class spread, which is wider than the band (the Twin Patrol: Starseer and Herald about 45%, Reaver and Rogue about 75%). The Wyrm Aspirant's spread (Herald about 60%, Rogue under 10%) is wider than its 25-point band. `docs/BALANCE.md` §5 has the measured table.
 
 Shipped values and where they live: the stance table, the 1.8 multiplier and every card-cost tunable are in `content/actionCosts.js`; the stamina row is in `content/derivedStats.js`. The 1.8 multiplier is a **provisional default, owner to tune**.
 
@@ -1415,13 +1416,13 @@ Basics (encounters roll from the weighted table in `content/encounters/weald.js`
 
 | Enemy | HP | Poise | Moves (weight) | Notes |
 |---|---|---|---|---|
-| Wandering Soldier | 22–26 | 10 | Slash 7 (45), Guard 6 Block (30), Warcry +2 Str (25, max1) | bread & butter |
-| Rot Hound | 12–15 | 6 | Bite 6 (60), Lunge 3×2 (40) | fast, fragile; spawns in pairs |
-| Demi-Brute | 30–34 | 16 | Club 9 (50), Bellow: apply 1 Frail (25), Brace 8 Block (25) | tanky |
-| Grave Wisp | 10–12 | 4 | Curse: shuffle 1 Dazed into draw (50), Drain 4 + heals self 4 (50) | kill first |
+| Wandering Soldier | 31–36 | 10 | Slash 8 (45), Guard 6 Block (30), Warcry +2 Str (25, max1) | bread & butter |
+| Rot Hound | 14–18 | 6 | Bite 6 (60), Lunge 3×2 (40) | fast, fragile; spawns in pairs |
+| Demi-Brute | 30–34 | 16 | Club 15 (50), Bellow: apply 1 Frail (25), Brace 8 Block (25) | tanky |
+| Grave Wisp | 12–14 | 4 | Curse: shuffle 1 Dazed into draw (50), Drain 8 + heals self 4 (50) | kill first |
 | Pack encounter | — | — | 2× Rot Hound + 1 Grave Wisp | teaches targeting |
 
-Elite — **Crucible Aspirant** (HP 68–72, Poise 24): opener always Consecrate (+3 Strength); then Halberd Sweep 11 (50) / Tail Slam 7 + 1 Weak (30) / Golden Guard 12 Block + 4 HP heal (20, max1). Drops a relic.
+Elite — **Crucible Aspirant** (HP 82–86, Poise 24): opener always Consecrate (+3 Strength); then Halberd Sweep 17 (50) / Tail Slam 11 + 1 Weak (30) / Golden Guard 12 Block + 4 HP heal (20, max1). Drops a relic.
 
 Boss — **The Watchful Omen** (Margit-inspired, HP 140, Poise 30):
 - **Phase 1 (>50% HP):** pattern cycle with a signature **delay** mechanic: move *Held Blade* shows "Attack 16 — Delayed"; on its turn it does nothing (gains 8 Block instead); the **following** turn it attacks for 16 regardless of newly rolled intents. Teaches intent-reading. Other moves: Cane Strike 9 (repeatable ×2), Hammer Toss 6×2.

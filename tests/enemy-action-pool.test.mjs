@@ -1,6 +1,6 @@
 // Enemy action pool (owner decisions, 2026-10-12; SPEC §4.6a, §4.11): each enemy move costs its own `sp`, else SP from
 // the action-cost table by its stance; an enemy's per-turn pool is its stats (the stamina row on its attributes, plus
-// its equipment SP; 3 with no stats), it spends the pool until it is empty, a move it cannot afford is not picked, and
+// its equipment SP; 1 with no stats), it spends the pool until it is empty, a move it cannot afford is not picked, and
 // it always plays at least one move. Normal combat and the rounds preview share the pool.
 // Replaced rule: a flat pool of 2 (ENEMY_SP_POOL); the expectations that read 2 now read the stat pool, 3.
 import test from 'node:test';
@@ -61,7 +61,7 @@ test('a move costs SP from the table by its stance; an untagged move costs the 1
 });
 
 test('the enemy pool is its stats, and a fixture spPool overrides it', () => {
-  assert.equal(Rounds.enemyPool(base.enemies.get(ENEMY)), 1, 'the shipped soldier is a 1-SP minion');
+  assert.equal(Rounds.enemyPool(base.enemies.get(ENEMY)), 2, 'the shipped soldier is a 2-SP minion (Dexterity 4; owner 2026-10-13: harder normals)');
   assert.equal(Rounds.enemyPool(registriesWith().enemies.get(ENEMY)), POOL, 'the fixture soldier');
   assert.equal(Rounds.enemyPool({ attributes: { dexterity: 8, constitution: 8 } }), 1 + 2 + 2, 'dexterity and constitution weigh 0.25 each');
   assert.equal(Rounds.enemyPool({ attributes: { dexterity: 8 }, equipmentSp: 1 }), 1 + 2 + 1, 'equipment SP adds on top');

@@ -9105,12 +9105,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // Lodestar Shard: extra Mana at combat start.
     const c4 = makeCombat({ deck: ['strike'], relicIds: ['lodestarShard'], mana: 1, maxMana: 1 + REG.balance.powers.lodestarShard.restoreMana });
     eq(c4.player.mana, 1 + REG.balance.powers.lodestarShard.restoreMana, 'the shard restores Mana as the fight opens');
-    // Attune restores Mana and exhausts; upgraded it stays.
-    // The Mana Attune restores offsets its own Mana price (SPEC §4.3a, owner 2026-10-12), so it casts from 0 Mana.
+    // Attune breaks even and exhausts; upgraded it stays.
+    // It costs the 1 Mana it restores and its restore pays it (SPEC §4.3a, owner 2026-10-13), so it casts from 0 Mana
+    // and leaves Mana where it was.
     const c5 = makeCombat({ deck: ['attune', { id: 'attune', up: true }, 'strike', 'strike', 'strike'], mana: 0, maxMana: 3 });
     c5.player.maxStamina = 5; c5.player.stamina = 5; c5.player.energyMax = 5; c5.player.energy = 5;
-    playFromHand(c5, 'attune'); eq(c5.player.mana, 1); eq(c5.piles.exhaust.filter((c) => c.cardId === 'attune').length, 1, 'Attune exhausts');
-    playFromHand(c5, 'attune'); eq(c5.player.mana, 2); eq(c5.piles.exhaust.filter((c) => c.cardId === 'attune').length, 1, 'Attune+ does not');
+    playFromHand(c5, 'attune'); eq(c5.player.mana, 0, 'Attune casts from 0 Mana and nets 0'); eq(c5.piles.exhaust.filter((c) => c.cardId === 'attune').length, 1, 'Attune exhausts');
+    playFromHand(c5, 'attune'); eq(c5.player.mana, 0, 'Attune+ nets 0 too'); eq(c5.piles.exhaust.filter((c) => c.cardId === 'attune').length, 1, 'Attune+ does not');
     // VALIDATION, by name.
     const said = (v) => v.errors.map((e) => `${e.path}: ${e.msg}`);
     const noGroup = validateContent({ ...testBundle(), tagging: testBundle().tagging.filter((r) => !(r.family === 'class' && r.objectId === 'reaver' && r.tagId === 'item:blade')) });
