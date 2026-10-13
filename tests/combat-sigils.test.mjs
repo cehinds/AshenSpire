@@ -11,10 +11,10 @@ import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js
 import { INTENT_ICON_SHAPES } from '../src/ui/components/intentIcon.js';
 
 test('all requested identities have unique monochrome geometry', () => {
-  assert.deepEqual(Object.keys(ACTION_SIGILS), ['attack','defend','counter','sweep','ranged','smash','spell','power','skill','status']);
+  assert.deepEqual(Object.keys(ACTION_SIGILS), ['attack','defend','evade','counter','sweep','ranged','smash','spell','power','skill','status']);
   assert.deepEqual(Object.keys(SCHOOL_SIGILS), ['frost','fire','lightning','force','alteration','illusion','divine','decay']);
   const marks = [...Object.values(ACTION_SIGILS), ...Object.values(SCHOOL_SIGILS)];
-  assert.equal(new Set(marks.map(m => m.shape)).size, 18);
+  assert.equal(new Set(marks.map(m => m.shape)).size, 19);
   for (const m of marks) { assert.ok(m.label && m.help); assert.doesNotMatch(m.shape, /fill=|style=|#[0-9a-f]/i); }
 });
 

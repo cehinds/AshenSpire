@@ -1262,9 +1262,6 @@ test('(c) inserting one row at the top rewrites at most two blobs', async () => 
 // Column drift: every workbench table's default columns must contain the whole header
 // of its CSV in docs/tag-model/tables, so a column added to a CSV cannot go missing here.
 const CSV_DIR = path.join(HERE, '..', 'tables');
-// The presentation inventory is generated and not on every branch. Its tables are
-// checked only when the folder is present; the gameplay tables always are.
-const HAS_PRES = existsSync(path.join(CSV_DIR, 'presentation'));
 const CSV_FOR = {
   tags: 'tags.csv', objects: 'objects.csv', values: 'values.csv', formulas: 'formulas.csv',
   ranks: 'ranks.csv', relations: 'relations.csv', artSizes: 'assets.csv',
@@ -1290,7 +1287,6 @@ test('every workbench table has a CSV mapping, and every mapped CSV exists', () 
   const tables = workbenchTableDefaults();
   assert.deepEqual(Object.keys(CSV_FOR).sort(), Object.keys(tables).sort());
   for (const file of Object.values(CSV_FOR)) {
-    if (!HAS_PRES && file.startsWith('presentation/')) continue;
     assert.ok(existsSync(path.join(CSV_DIR, file)), 'missing CSV: ' + file);
   }
 });
@@ -1298,7 +1294,6 @@ test('every workbench table has a CSV mapping, and every mapped CSV exists', () 
 test('workbench default columns contain every column in the matching CSV header', () => {
   const tables = workbenchTableDefaults();
   for (const [table, file] of Object.entries(CSV_FOR)) {
-    if (!HAS_PRES && file.startsWith('presentation/')) continue;
     const { header } = readTable(path.join(CSV_DIR, file));
     const missing = header.filter((c) => !tables[table].columns.includes(c));
     assert.deepEqual(missing, [], table + ' (' + file + ') is missing CSV columns in the workbench');
@@ -1365,7 +1360,7 @@ const EXCLUDED_CSV = new Set([]);
 test('every CSV under tables/ and tables/presentation/ is edited by a workbench table or excluded', () => {
   const mapped = new Set(Object.values(CSV_FOR));
   const found = [];
-  for (const dir of HAS_PRES ? ['', 'presentation'] : ['']) {
+  for (const dir of ['', 'presentation']) {
     for (const f of readdirSync(path.join(CSV_DIR, dir))) {
       if (f.endsWith('.csv')) found.push(path.posix.join(dir, f));
     }
@@ -1373,4 +1368,22 @@ test('every CSV under tables/ and tables/presentation/ is edited by a workbench 
   const unmapped = found.filter((f) => !mapped.has(f) && !EXCLUDED_CSV.has(f));
   assert.deepEqual(unmapped, [], 'CSV with no workbench table and not excluded');
   for (const f of EXCLUDED_CSV) assert.ok(found.includes(f) && !mapped.has(f), 'stale exclusion: ' + f);
+});
+
+test('the changed view keeps a copy of the loaded rows, and a copy of the last save that a save moves', async () => {
+  const db = makeFakeDb();
+  const W = makePage(db, T);
+  const objs = sample(3, 'c');
+  await putBlobTable(db, W.api, 't', objs);
+  W.api.subscribeTable('t');
+  await waitFor(() => W.page.loaded.has('t'));
+  const loaded = JSON.stringify(W.api.tstate.t.snapLoad.rows);
+  assert.equal(loaded, JSON.stringify(objs), 'load copies the head rows');
+  assert.equal(JSON.stringify(W.api.tstate.t.snapSave.rows), loaded, 'a load is also the last save');
+  W.page.state.data.t.rows[0].name = 'edited';
+  assert.equal(JSON.stringify(W.api.tstate.t.snapLoad.rows), loaded, 'a local edit does not move the copy');
+  editTable(W.page, [{ ...objs[0], name: 'edited' }, objs[1], objs[2]]);
+  await W.api.flush('t');
+  assert.equal(JSON.stringify(W.api.tstate.t.snapLoad.rows), loaded, 'a save does not move the loaded copy');
+  assert.equal(W.api.tstate.t.snapSave.rows[0].name, 'edited', 'the last-save copy holds what was written');
 });

@@ -4,7 +4,7 @@
 // The test runs the build on a temporary copy of the repo, never the real tree.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, cpSync, mkdirSync, rmSync, writeFileSync, readFileSync, readdirSync, existsSync } from 'node:fs';
+import { mkdtempSync, cpSync, mkdirSync, rmSync, writeFileSync, readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
 import { execFileSync } from 'node:child_process';
@@ -12,10 +12,8 @@ import { fileURLToPath } from 'node:url';
 import { readTable, toCsv } from './csv.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
-// The presentation inventory is generated and not on every branch: skip when absent.
-const HAS_PRES = existsSync(join(ROOT, 'docs', 'tag-model', 'tables', 'presentation'));
 
-test('--inv keeps authored artBrief and priority on placeholder rows', { skip: !HAS_PRES }, () => {
+test('--inv keeps authored artBrief and priority on placeholder rows', () => {
   const tmp = mkdtempSync(join(tmpdir(), 'tag-inv-'));
   try {
     for (const d of ['src', 'content', 'styles', join('docs', 'tag-model')]) {
