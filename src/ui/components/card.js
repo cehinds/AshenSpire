@@ -32,7 +32,7 @@ import { loreLine } from './loreLine.js';
 import { cardChoice } from '../../model/cardChoices.js';
 import { engravedIconHtml, engravedGlyphId } from './engravedIcon.js';
 import { equipmentCardArt } from '../assets.js';
-import { combatProfileFor, combatProfileTags, numberedTraitRow, traitLine } from '../../model/combatCardProfile.js';
+import { combatProfileFor, combatProfileTags, numberedTraitRow } from '../../model/combatCardProfile.js';
 import { ashenBlightCardLabel } from './ashenBlight.js';
 import { ACTION_SIGILS, SCHOOL_SIGILS, cardSigilIdentity } from '../../content/combatSigils.js';
 import { compactCardRules, sigilExplanationHtml } from './combatSigilView.js';
@@ -161,8 +161,6 @@ export function renderCard(registries, ref, opts = {}) {
   // Authored clauses carry family limits and charge/payment constraints that
   // the generic effect summary cannot express. Keep those complete on the face.
   const faceSummary = expanded ? combatCardSummary(def, opts.preview, registries) : null;
-  // Reaction rules v2 cards carry traitValues; the face names them first.
-  const traitRule = traitLine(def.traitValues);
   const fallbackDamageLabel = expanded && !faceSummary
     && (def.effects?.some(effect => effect.op === 'damage') || def.counterPayload?.hp)
     ? combatCardDamageLabel(def, opts.preview, registries) : '';
@@ -280,7 +278,7 @@ export function renderCard(registries, ref, opts = {}) {
       : fillTemplate(def,model.tokens,model.baseTokens,model.damageSequences);
     el.innerHTML = illustratedCardHtml(model,{
       // The printed price is live; the full weight table stays in Information.
-      rules: compactCardRules(`${traitRule ? `${esc(traitRule)} ` : ''}${faceSummary ? esc(faceSummary)
+      rules: compactCardRules(`${faceSummary ? esc(faceSummary)
         : `${fallbackDamageLabel ? `${esc(fallbackDamageLabel)}: ` : ''}${authoredRules}`}`),
       painting:artwork?.path,
       equipmentArtwork:artwork?.equipment,
@@ -520,6 +518,22 @@ function fitCardFaces(cards) {
 if (typeof window !== 'undefined' && typeof document !== 'undefined') {
   window.addEventListener('resize', () => scheduleCardFits(document.querySelectorAll('.card')));
   document.fonts?.ready.then(() => scheduleCardFits(document.querySelectorAll('.card')));
+}
+
+/**
+ * cardPlainText(registries, ref) → the card's effect text as a plain string:
+ * the same template the face fills, with tags stripped. Pure string work, no
+ * DOM, so it runs the same headless and in a browser.
+ */
+export function cardPlainText(registries, ref) {
+  const def = resolveCard(registries, ref);
+  // Plain string work only: no DOM, so it runs the same headless and in a
+  // browser. Tags go first; &amp; is decoded last so "&amp;lt;" stays literal.
+  return String(fillTemplate(def, staticTokens(def), null))
+    .replace(/<[^>]+>/g, '')
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    .replace(/&amp;/g, '&')
+    .replace(/\s+/g, ' ').trim();
 }
 
 /**

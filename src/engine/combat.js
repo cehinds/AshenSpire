@@ -35,11 +35,13 @@ import { reconcileWardBlock } from '../model/blockPresentation.js';
 // Headless: no document/window/localStorage/timers.
 
 import * as A from './actions.js';
+import { spellCardCostSurcharge } from '../model/combatCardProfile.js';
 import * as R from './abilityRiders.js';
 import { turnDrawCount, endTurnCardFate, validateDiscardChoice, applyDiscardChoice, returnUnplayedCards } from './handRules.js';
 import { handRow, scaledCards } from '../model/handRules.js';
 import { LEGACY_HAND_MAX } from '../model/statRows.js';
 import { refreshCombatRatings, recoverRatingMeters, cardRatingBonus, clearMeterGuards } from './combatRatings.js';
+import { persistentWardMaximum, persistentPoiseMaximum } from '../model/combatRatings.js';
 import * as F from './combatRules.js';
 import * as Reactions from './combatReactions.js';
 import { clearEnemyReactionRolls } from './enemyReactions.js';
@@ -353,7 +355,8 @@ export function createCombat({
   }
   if (combatExpansionVersion === 2) {
     for (const entity of [combat.player, ...combat.enemies]) {
-      Control.initializePersistentWard(entity, entity.ratings?.ward || 0);
+      Control.initializePersistentWard(entity, persistentWardMaximum(combat, entity));
+      Control.initializePersistentPoise(entity, persistentPoiseMaximum(combat, entity));
       entity.barrier = 0;
     }
   }
@@ -375,6 +378,8 @@ export function createCombat({
     // or every card would come back to its bare-handed self at combat start.
     ...(c.mods && c.mods.length ? { mods: [...c.mods] } : {}),
     ...(typeof c.damageSchool === 'string' ? { damageSchool: c.damageSchool } : {}),
+    ...(Number.isFinite(c.magicShare) ? { magicShare: c.magicShare } : {}),
+    ...(typeof c.physicalDamageType === 'string' ? { physicalDamageType: c.physicalDamageType } : {}),
     ...(Number.isInteger(c.exposureBuildupPerHit) ? { exposureBuildupPerHit: c.exposureBuildupPerHit } : {}),
     ...(c.equipmentRole ? { equipmentRole: c.equipmentRole, profileId: c.profileId, profileReceipt: c.profileReceipt } : {}),
     ...(c.ratingId ? { ratingId: c.ratingId } : {}),
@@ -1232,7 +1237,9 @@ function effectiveCost(combat, def) {
 export function resolvedCardPlayCosts(combat, def) {
   const weightClass = playerWeightClass(combat).weightClass;
   const pools = F.foundationCosts(combat, def, weightClass, combat.registries.framework.costProfile(def, { weightClass }));
-  const stamina = (def.cost === 'X' ? combat.player.stamina : effectiveCost(combat, def)) + (def.upcastSurcharge || 0);
+  // Silenced (v2): each stack adds 1 SP to a spell-camp card. An X card already spends every point.
+  const silenced = combat.combatExpansionVersion === 2 && def.cost !== 'X' ? spellCardCostSurcharge(combat.player, def) : 0;
+  const stamina = (def.cost === 'X' ? combat.player.stamina : effectiveCost(combat, def)) + (def.upcastSurcharge || 0) + silenced;
   return { energy: stamina, mana: Math.max(0, pools.mana + (def.upcastSurcharge || 0) - R.matchingAbilityCharges(combat.player, { ...def, type: cardKind(def), authoredTags: def.cardTags || def.tags }).manaDiscount), stamina };
 }
 
@@ -1365,6 +1372,8 @@ function doPlayCard(combat, { cardInstanceId, targetId, choice, upcastTier, upca
     // Which piece lent this card, for the skill hooks (engine/skillXp.js).
     ...(inst.grantedBy ? { grantedBy: inst.grantedBy } : {}),
     damageSchool: inst.damageSchool ?? def.damageSchool,
+    ...(Number.isFinite(inst.magicShare ?? def.magicShare) ? { magicShare: inst.magicShare ?? def.magicShare } : {}),
+    ...(typeof (inst.physicalDamageType ?? def.physicalDamageType) === 'string' ? { physicalDamageType: inst.physicalDamageType ?? def.physicalDamageType } : {}),
     exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
     // The resolved face's Poise/Ward values: a staff's Strike resolves
     // magical and carries Ward, which the registry def cannot (attackImpact).
@@ -1624,6 +1633,8 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
       derivedTags: gripTags(gripOf(combat.registries, combat.loadout, combat.player.classId)),
       authoredTags: def.cardTags ?? (def.tags?.length ? def.tags : []),
       damageSchool: inst.damageSchool ?? def.damageSchool,
+      ...(Number.isFinite(inst.magicShare ?? def.magicShare) ? { magicShare: inst.magicShare ?? def.magicShare } : {}),
+      ...(typeof (inst.physicalDamageType ?? def.physicalDamageType) === 'string' ? { physicalDamageType: inst.physicalDamageType ?? def.physicalDamageType } : {}),
       exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
       ...(def.cardRatingValues ? { cardRatingValues: def.cardRatingValues } : {}),
     },
@@ -1745,6 +1756,12 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
         if (combat.combatExpansionVersion === 2 && !targetId && !isCounterReply) {
           const printedBase = evalPreview(combat, action, eff.amount, null) + (action.meta.abilityChargeDamage || 0) + (action.meta.abilityChargeDamageEffect || 0);
           entry.faceValue = A.computeAttackDamage(combat, p, null, printedBase, attackTags, carrier, { matchups: false, beforeDefense: true });
+          // The face splits its amount as the contacts do: the card's own damage, then its rating bonus by category.
+          entry.splitBase = Math.max(0, Math.floor(evalPreview(combat, action, eff.amount, null)));
+          entry.ratingBonus = A.cardRatingDamage(combat, p, carrier, printedBase);
+          entry.ratingPart = A.ratingBonusPart(combat, carrier);
+          // The physical type the carrier resolved (a lending weapon, or a technique's wielded weapon) names the face's physical part.
+          if (carrier.physicalDamageType) entry.physicalDamageType = carrier.physicalDamageType;
         }
         // #61 M5: when the aimed target's tag-scoped vulnerability matches
         // this hit's tags, name the matched row's tint so the hand can accent
