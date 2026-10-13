@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1968",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "The link check's self-test stops re-reading modules it has already linked",
+    "detail": "Development-process fix only, nothing in the game changes. A module an earlier file in the same batch already linked is now skipped instead of being re-read from scratch, so the self-test finishes well inside the Windows CI limit. A new test pins that each module is parsed once per batch.",
+    "build": "0.7.1.1497",
+    "pullRequest": 1968,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1968"
+  },
+  {
     "id": "pr-1883",
     "date": "2026-10-13",
     "group": "2026-10-13",
