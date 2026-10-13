@@ -1,6 +1,10 @@
 import { ACTION_SIGILS } from '../../content/combatSigils.js';
 import { esc } from './tooltip.js';
 
+const FORCE_SHAPE = '<path d="M16 2 30 16 16 30 2 16Zm0 6-8 8 8 8 8-8Z"/><circle cx="16" cy="16" r="4"/>';
+const SHAPES_BLUNT = '<path d="M5 2h22v12H5Zm8 14h6v15h-6Z"/>';
+const COUNTER_SHAPE = ACTION_SIGILS.counter.shape; // the Counter action's reply glyph
+
 // Original solid silhouettes, matching the approved B footer treatment.
 const SHAPES = Object.freeze({
   ritual: '<path d="M16 2 31 28H1Zm0 7L7 25h18Z"/><circle cx="16" cy="19" r="4"/>',
@@ -8,14 +12,19 @@ const SHAPES = Object.freeze({
   bleed: '<path d="M16 1C13 8 5 15 5 21a11 11 0 0 0 22 0C27 15 19 8 16 1ZM9 21h3c0 4 2 5 5 5v3c-5 0-8-3-8-8Z"/>',
   frost: '<path d="M14 1h4v8l6-5 3 3-8 7 10-1v4l-10 1 8 7-3 3-6-7v10h-4V21l-7 7-3-3 8-7-10-1v-4l10 1-8-7 3-3 7 5Z"/>',
   lightning: '<path d="M18 1 3 19h11l-2 12L30 12H18l4-11Z"/>',
-  force: '<path d="M16 2 30 16 16 30 2 16Zm0 6-8 8 8 8 8-8Z"/><circle cx="16" cy="16" r="4"/>',
+  force: FORCE_SHAPE,
+  // Flux (Ward) shares the diamond-and-dot glyph with Force; Impact reuses the blunt Poise hammer.
+  flux: FORCE_SHAPE,
+  impact: SHAPES_BLUNT,
+  reaction: '<path d="M16 4a12 12 0 1 0 12 12h-4a8 8 0 1 1-8-8Z"/>',
+  counterstrike: COUNTER_SHAPE,
   alteration: '<path d="m1 25 10-20 8 13 5-7 7 14ZM3 28h26v3H3Z"/>',
   illusion: '<path d="M1 16Q16-3 31 16 16 35 1 16Zm8 0a7 7 0 1 0 14 0 7 7 0 1 0-14 0Z"/><circle cx="16" cy="16" r="4"/>',
   divine: '<path d="m16 0 3 7 7-4-1 8 7 5-7 4 1 9-7-5-3 8-3-8-7 5 1-9-7-4 7-5-1-8 7 4Z"/>',
   decay: '<path d="M16 14C6 17 1 9 7 3l6 8ZM18 14l2-11c9 0 13 10 3 13ZM17 19l8 8c-5 8-17 5-15-5Z"/><circle cx="16" cy="16" r="4"/>',
   slashing: '<path d="M26 1h5C26 16 16 24 1 31l5-7C16 17 23 8 26 1Zm2 15 3 3-10 11-3-3Z"/>',
   piercing: '<path d="m28 1 3 3-9 16-4-4ZM15 13l10 10-3 3-10-10ZM4 25l10-10 4 4L8 29H4Z"/>',
-  blunt: '<path d="M5 2h22v12H5Zm8 14h6v15h-6Z"/>',
+  blunt: SHAPES_BLUNT,
   guard: '<path d="M16 2 29 7v10c0 7-13 14-13 14S3 24 3 17V7Zm-2 8v8H8v4h16v-4h-6v-8Z"/>',
   guile: '<path d="M2 7q14 8 28 0v12L19 30l-3-9-3 9L2 19Zm4 6v5l6 1v-4Zm20 0-6 2v4l6-1Z"/>',
 });

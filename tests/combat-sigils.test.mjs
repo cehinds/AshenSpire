@@ -126,3 +126,14 @@ test('three primary symbols prioritize element, status and main skill without mu
   for(const tag of chosen)assert.ok(html.includes('aria-label="'+tag.label+'"'));
   assert.equal(cardTagRailHtml([]),'');
 });
+
+test('Flux, Impact, Reaction and Counterstrike each get one symbol, Flux shares the Force glyph', async () => {
+  const { cardTagRailHtml: rail } = await import('../src/ui/components/cardTagSymbols.js');
+  const tag = (key, label) => ({ id: `trait:${key}`, label, blurb: label });
+  const html = rail([tag('flux', 'Flux 1'), tag('impact', 'Impact 2'), tag('reaction', 'Reaction'), tag('counterstrike', 'Counterstrike')]);
+  assert.equal((html.match(/class="card-tag-symbol"/g) || []).length, 4);
+  assert.ok(html.includes('aria-label="Flux 1"'));
+  assert.ok(html.includes('aria-label="Impact 2"'));
+  const force = html.split('data-tag-id="trait:flux"')[1].split('</span>')[0];
+  assert.ok(force.includes('<circle cx="16" cy="16" r="4"/>'), 'Flux shows the diamond with a centre dot');
+});
