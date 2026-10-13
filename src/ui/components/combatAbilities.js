@@ -1,5 +1,6 @@
 import { statusTooltipText, statusInstancePresentation } from '../uiContent.js';
 import { helpText } from '../../model/tooltipSettings.js';
+import { combatTacticsRows } from '../../model/combatTacticsDisplay.js';
 
 /** The live abilities shown by both battlefield badges and the inspector. */
 export function activeCombatAbilities(registries, entity, foundation = false) {
@@ -11,6 +12,8 @@ export function activeCombatAbilities(registries, entity, foundation = false) {
   }
   if (foundation && entity.evade > 0) rows.push({ id: 'evade', kind: 'evade', name: helpText('evadeTitle', { count: entity.evade }),
     detail: helpText('evade', { count: entity.evade, charges: helpText(entity.evade === 1 ? 'charge' : 'charges') }) });
+  // Expanded combat: the stance the last accepted play set, and a prepared Evade.
+  rows.push(...combatTacticsRows(entity));
   for (const [id, instance] of Object.entries(entity.statuses || {})) {
     if (!instance || !((instance.meter?.value ?? instance.stacks) > 0)) continue;
     const def = registries.frameworkTerms.withStatusWords(registries.statuses.get(id));
