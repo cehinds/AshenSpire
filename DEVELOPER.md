@@ -49,6 +49,15 @@ refuse the promotion. After a successful stamp push, build-stamp dispatches
 commit's build. The Pages site's dev channel is not republished by the bot; see the
 comment in `build-stamp.yml`.
 
+After each successful stamp, `pr-restamp.yml` runs `tools/pr-restamp.mjs` on every
+open pull request into `dev` that now conflicts. It merges `dev` into the pull
+request's branch, takes `dev`'s box and generated module, re-stamps that pull
+request's receipt to the box, and pushes one merge commit when the receipt checks
+pass, then dispatches the pull request's checks by hand (a `GITHUB_TOKEN` push starts
+none). It asks a person, with one comment on the pull request, only when a conflict
+lies outside the three derived files or a check fails; the owner's review gate is
+unchanged (CONTRIBUTING rule 6).
+
 **Which checks gate a pull request** (owner, 2026-10-11, the stage rules). Every
 check runs in one of four stages, and this table is the only list of them. Each
 row is one check; a job that a trigger does not start shows as *skipped* on that
@@ -71,6 +80,7 @@ Any workflow can be started by hand on any branch (Actions → *Run workflow*).
 | `receipts.yml` → receipts: selftest; a PR runs `--check --pr auto`, a push to `dev` the range to `origin/test` | — | yes | — | — |
 | `dev-preview.yml` → preview: build, standalone artifact, fast gates | — | yes | yes (the build runs again) | yes (the build runs again) |
 | `build-stamp.yml` → stamp: rebuild the merged tree, re-point the landed receipts, commit `buildordinal.json`, `CHANGELOG.md` and the generated module as `[build-stamp]`, then dispatch `dev-preview` for that commit | — | yes (push to `dev` only; not on a pull request) | — | — |
+| `pr-restamp.yml` → re-stamp: after a successful `build-stamp` on `dev`, merge `dev` into each conflicting open PR into `dev` with `tools/pr-restamp.mjs`, push that merge, dispatch its checks; or comment once when a person must merge | — | yes (after a stamp on `dev`; also dispatch) | — | — |
 | `tests.yml` → core: engine suite, each tool's verdict, CHANGELOG order (no browser) | — | yes | — | — |
 | `tests.yml` → discovered tests, four shards, `--no-slow` (`SLOW_DISCOVERED` in `tests/run-node-lanes.mjs`; this includes `tests/readme-sync.test.mjs`) | — | yes | — | — |
 | `quick-start.yml` → Quick start to the first card play within 6 inputs; click to contact ≤ 400 ms and click to first number ≤ 750 ms (medians) at Normal pacing (`tools/click-impact-probe.mjs`: contact is the effects layer's `data-contact` counter, which `src/ui/fx.js` bumps at each impact frame; the number is the first `.float-num` damage or guard float, which under the default `sequential` beat order follows the defender's reaction) | — | yes | yes | only when release differs from test |
