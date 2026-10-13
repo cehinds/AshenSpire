@@ -250,14 +250,24 @@ test('pages: the push and dispatch paths of the deploy guard are unchanged', () 
   assert.equal(evalGh(jobIf('deploy'), { event: 'workflow_dispatch', publish: 'PUBLISH', actor: 'owner', owner: 'owner', triggeringActor: 'owner' }), true, 'the owner dispatch deploys');
 });
 
-test('pages: a dev-preview completion on dev gets its own concurrency group, so it cannot supersede a pending publication', () => {
+test('pages: a workflow_run whose jobs skip gets its own concurrency group, so it cannot supersede a pending publication', () => {
   const group = pages.match(/^  group: (\$\{\{ .* \}\})$/m)?.[1];
   assert.ok(group, 'the concurrency group is an expression');
   const expr = group.slice(3, -3);
   const groupFor = ctx => evalGh(expr, ctx);
-  assert.equal(groupFor({ event: 'workflow_run', wr: { name: 'build-stamp', head_branch: 'dev', conclusion: 'success' } }), 'pages-builds');
-  assert.equal(groupFor({ event: 'workflow_run', wr: { name: 'dev preview', head_branch: 'dev', conclusion: 'success' } }), 'pages-builds-dev-preview-on-dev');
-  assert.equal(groupFor({ event: 'workflow_run', wr: { name: 'dev preview', head_branch: 'feature/x', conclusion: 'success' } }), 'pages-builds');
+  const run = (name, head_branch, conclusion) => ({ event: 'workflow_run', wr: { name, head_branch, conclusion } });
+  // Runs the publication: the same clause the jobs' `if:` use.
+  assert.equal(groupFor(run('build-stamp', 'dev', 'success')), 'pages-builds');
+  assert.equal(groupFor(run('dev preview', 'feature/x', 'success')), 'pages-builds');
+  assert.equal(groupFor(run('dev preview', 'feature/x', 'failure')), 'pages-builds');
+  assert.equal(groupFor(run('dev preview', 'alternative/a/dev', 'success')), 'pages-builds');
+  // Every job skips these, so they must not share the publication group.
+  assert.equal(groupFor(run('build-stamp', 'dev', 'failure')), 'pages-builds-skipped');
+  assert.equal(groupFor(run('build-stamp', 'dev', 'cancelled')), 'pages-builds-skipped');
+  assert.equal(groupFor(run('build-stamp', 'alternative/a/dev', 'success')), 'pages-builds-skipped');
+  assert.equal(groupFor(run('dev preview', 'dev', 'success')), 'pages-builds-skipped');
+  assert.equal(groupFor(run('dev preview', 'alternative/a/dev', 'failure')), 'pages-builds-skipped');
+  // Non-workflow_run events keep the publication group.
   assert.equal(groupFor({ event: 'push', ref: 'refs/heads/release', refName: 'release' }), 'pages-builds');
   assert.equal(groupFor({ event: 'pull_request_target' }), 'pages-builds');
 });

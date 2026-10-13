@@ -156,11 +156,12 @@ on:
         default: ''
 
 concurrency:
-  # A completed dev preview on dev is skipped by every job, but it is still a queued run
-  # when it arrives. In `pages-builds` it would supersede a PENDING build-stamp publication
-  # (a newer arrival replaces a queued run even with cancel-in-progress: false), so it gets
-  # its own group. Every other event keeps `pages-builds`.
-  group: ${{ (github.event_name == 'workflow_run' && github.event.workflow_run.name == 'dev preview' && github.event.workflow_run.head_branch == 'dev') && 'pages-builds-dev-preview-on-dev' || 'pages-builds' }}
+  # A workflow_run whose jobs all skip (the same clause the jobs' `if:` use is false) is still
+  # a queued run when it arrives. In `pages-builds` it would supersede a PENDING publication
+  # (a newer arrival replaces a queued run even with cancel-in-progress: false), so it goes to
+  # its own group, `pages-builds-skipped`. Only a workflow_run the jobs will run for, and every
+  # non-workflow_run event, use `pages-builds`.
+  group: ${{ (github.event_name != 'workflow_run' || (github.event.workflow_run.name == 'build-stamp' && github.event.workflow_run.head_branch == 'dev' && github.event.workflow_run.conclusion == 'success') || (github.event.workflow_run.name == 'dev preview' && github.event.workflow_run.head_branch != 'dev' && (github.event.workflow_run.conclusion == 'success' || startsWith(github.event.workflow_run.head_branch, 'feature/') || startsWith(github.event.workflow_run.head_branch, 'fix/') || startsWith(github.event.workflow_run.head_branch, 'chore/')))) && 'pages-builds' || 'pages-builds-skipped' }}
   # NO RUN CANCELS ANOTHER, BECAUSE "WILL THIS RUN PUBLISH?" CANNOT BE ANSWERED HERE.
   #
   # One group keeps publications serialised, which is right — two deploys to the
