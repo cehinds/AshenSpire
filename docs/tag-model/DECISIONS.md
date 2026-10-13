@@ -327,9 +327,8 @@ Formula, relation and value keys follow the README conventions.
   this branch. `content/source/tagging.csv` is not changed by this decision.
 - **Ruling 4 (verbatim):**
   > Armor cap on dex works with feats reducing this penalty
-  - Closes the weight-class question. Evade's weight-class effect reuses the armour
-    DEX cap from `evasion.rating` (cloth 0/4, leather 0/6, studded 1/3, chain 1/2,
-    scale 1/1, plated 1/0). There is no separate per-class multiplier.
+  - Superseded for the cap values by ruling 6 and the cap-source decision below.
+    There is no separate per-class multiplier.
   - Feats can reduce the penalty, which raises the effective DEX cap.
   - New open item for the Evade PR: which feats reduce the penalty, and by how much.
     No such feat exists in `content/source/nodes.csv` on dev, so the owner must name
@@ -338,16 +337,53 @@ Formula, relation and value keys follow the README conventions.
   > Base evasion x stacks + min( dex, amor dex cap) + other bonuses that add evasion such ass evasion stance
   - Resolves the stacks question: Evasion = baseEvade × stacks + min(DEX, armourDexCap) + other evasion bonuses (for example the evasion stance). baseEvade = 3, from ruling 1's "base +3 per stack".
   - Recorded as `evade.evasion` (proposed) in `docs/tag-model/tables/formulas.csv`, using `evade.baseEvade` (3) and `evade.stacks` (preview 0) in `values.csv`, both proposed. `evasion.rating` is not changed.
-  - Open for the owner, not resolved here. Differences from the approved `evasion.rating` (armorBase + min(max(DEX−1,0), cap) + shield + card bonus): (a) the DEX term here has no −1; (b) there is no armour base term; (c) the shield term is not listed, and the card bonus is used as "other bonuses". The stance bonus has no variable yet.
+  - The three differences from `evasion.rating` are closed by rulings 7 to 9 below.
 - **Ruling 6 (verbatim):**
   > Cloth is max dex, light is also max, light is uncapped top, medium is 5, and heavy is 2 by default higher ranks may reduce the penalty and allow more dex to be applied
   - Defaults for the Evade DEX cap by weight class: cloth uncapped, light uncapped, medium 5, heavy 2. Higher ranks raise the cap.
   - Supersedes the per-armour-type caps in `evasion.rating` (cloth 4, leather 6, studded 3, chain 2, scale 1, plated 0) for the Evade formula only. `evasion.rating` is not changed.
   - Recorded in `values.csv` as `evade.dexCap.cloth` (99, uncapped), `evade.dexCap.light` (99, uncapped), `evade.dexCap.medium` (5), `evade.dexCap.heavy` (2), and `evade.dexCap` (runtime input, preview 2). The lookup by weight class is not expressible in `expr`, so `evade.evasion` uses `[evade.dexCap]` and the description says it is selected at runtime.
-  - **Armour type to weight class mapping (not in the game data on dev).** The weight class is set by total equipped weight, not by armour type: `src/model/equipmentCombatProfile.js:85` takes the last `loadBands` entry whose minimum the weight meets, and `src/content/prototypes/combatEquipment.js:9` sets light from 0, medium from 10 and heavy from 18. The only armour-level weight tag is `wayfarerPlate` (plated), which is `weight.heavy` in `docs/tag-model/tables/objects.csv:5`. Cloth, leather, studded, chain and scale have no weight class in the data. Owner to map each armour type to light, medium or heavy.
-  - **Higher ranks (open).** The armour tracks are skills `armour:light`, `armour:medium` and `armour:heavy` (`src/model/skills.js:45`, `armourSkillId`; `src/content/balance.js:196`, `classSkills`). Skill ranks run to `rankMax: 10` (`src/content/balance.js:496`). Owner to say which ranks raise the cap, and by how much. The earlier open item, which feats raise the cap, is folded into this question.
-  - **Open, owner to confirm:** should `evasion.rating` adopt these weight-class caps too? Not changed here.
-- **Cross-references for the weight-class question:**
+  - **Cap source (owner, 2026-10-13): the total load band.** Use the existing weight
+    bands: `src/content/prototypes/combatEquipment.js:9` (light from 0, medium from 10,
+    heavy from 18), selected by `src/model/equipmentCombatProfile.js:85`. Cloth sits in
+    the light band, so it is uncapped. No per-armour-type mapping is needed.
+  - **What raises the cap (owner, 2026-10-13): both.** Armour skill ranks (`armour:light`,
+    `armour:medium`, `armour:heavy`, ranks 1 to 10; `src/model/skills.js:45`,
+    `src/content/balance.js:196`, `src/content/balance.js:496`) and feats both raise it.
+    The amount per rank and the feats are tuned in the Evade PR. This is the single open
+    item for the cap.
+  - **evasion.rating does not adopt these caps (owner, 2026-10-13).** The weight-class
+    caps apply to Evade only. `evasion.rating` keeps its per-armour caps. Closed.
+- **Ruling 7 (verbatim):**
+  > only if it has a tag for evasion.
+  - Armour base Evasion counts only when the armour carries an evasion tag. The Evade
+    formula takes `[armor.evasionBase]` (`docs/tag-model/tables/values.csv`, the
+    per-armour bases) as a term, which is 0 unless the armour has an evasion tag.
+  - Recorded as a term in `evade.evasion` (`docs/tag-model/tables/formulas.csv`, proposed).
+    No new values row is needed, because `armor.evasionBase` already exists.
+- **Ruling 8 (verbatim):**
+  > dex term min (dex, cap) (so a)
+  - Confirmed: the DEX term is `min(DEX, cap)`, with no −1. The `evade.evasion` expr
+    already matches. Closed.
+- **Ruling 9 (verbatim):**
+  > no but bukler should ahve a counter and evasion tag on it for bonuses for the buckler its self despite having lower base DR
+  - A generic shield bonus does not enter the Evade formula. Closed for the Evade PR.
+  - **Separate feature (owner, 2026-10-13).** The buckler's counter and evasion tags, and
+    their bonuses, are not part of the Evade PR and not part of this branch. Pick-up
+    notes: the buckler is defined at `content/source/weapons.csv:39`; its tags are at
+    `content/source/tagging.csv:226-228` (`item:shield`, `guard`, `flourish`), `:959`,
+    `:1097-1099` and `:1589`. Its combat expansion entry is at
+    `src/content/combatExpansionEquipment.js:35` (flat piercing 1, traits conductive).
+    Candidate tag ids for the pick-up: `counter:melee` (the counter family, as on
+    `guardCounter`) and `utility.evasion` (`content/source/nodes.csv:299`). Bonus amounts
+    are owner to set in that feature.
+
+### Tuning list (the only open items left in section 15)
+
+- Per-rank and feat raises to the Evade DEX cap (armour skill ranks 1 to 10 and feats),
+  in the Evade PR.
+- The Evade stance bonus value (the `other evasion bonuses` term; no variable yet).
+- **Cross-references for the cap:**
   - Evasion rating formula, `docs/tag-model/tables/formulas.csv` `evasion.rating`:
     `armor.evasionBase` plus DEX capped by `armor.dexCap`. Per the owner note, the caps
     are cloth 0/4, leather 0/6, studded 1/3, chain 1/2, scale 1/1, plated 1/0.

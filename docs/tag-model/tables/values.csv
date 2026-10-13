@@ -86,4 +86,4 @@ evade.dexCap.cloth,99,points,evasion,"Default DEX cap for Evade with cloth: unca
 evade.dexCap.light,99,points,evasion,"Default DEX cap for Evade with light armour: uncapped. 99 means uncapped (ruling 6). Proposed"
 evade.dexCap.medium,5,points,evasion,"Default DEX cap for Evade with medium armour (ruling 6). Higher ranks may raise it (open). Proposed"
 evade.dexCap.heavy,2,points,evasion,"Default DEX cap for Evade with heavy armour (ruling 6). Higher ranks may raise it (open). Proposed"
-evade.dexCap,2,points,evasion,"Runtime input: the DEX cap for the wearer weight class, looked up from evade.dexCap.cloth, light, medium or heavy. Preview 2 (heavy). Proposed"
+evade.dexCap,2,points,evasion,"Runtime input: the DEX cap for the wearer load band (light from 0, medium from 10, heavy from 18), looked up from evade.dexCap.light, medium or heavy; cloth is in the light band. Preview 2 (heavy). Proposed"
