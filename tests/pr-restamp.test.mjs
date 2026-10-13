@@ -5,7 +5,7 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mergeReceiptLines, restampReceipts } from '../tools/pr-restamp.mjs';
+import { mergeReceiptLines, restampReceipts, diffSetChange, nonDerived } from '../tools/pr-restamp.mjs';
 
 const PULL = 'https://github.com/cehinds/AshenSpire/pull/';
 const rc = (n, stamp) => `- **Title ${n}** ([#${n}](${PULL}${n}), \`${stamp}\`). Prose.`;
@@ -67,4 +67,14 @@ test('restampReceipts changes only #N, and pull/19 does not match pull/1907', ()
   const two = `${rc(1907, '0.7.1.1457')}\n${rc(1930, '0.7.1.1450')}`;
   assert.equal(restampReceipts(two, 1930, STAMP), `${rc(1907, '0.7.1.1457')}\n${rc(1930, STAMP)}`);
   assert.equal(restampReceipts(rc(1907, '0.7.1.1457'), 19, STAMP), rc(1907, '0.7.1.1457'));
+});
+
+test('the PR diff set check names a file the merge added or dropped', () => {
+  assert.deepEqual(diffSetChange(['a.js', 'b.js'], ['b.js', 'a.js']), { added: [], removed: [] });
+  assert.deepEqual(diffSetChange(['a.js'], ['a.js', 'dev-only.js']), { added: ['dev-only.js'], removed: [] });
+  assert.deepEqual(diffSetChange(['a.js', 'b.js'], ['a.js']), { added: [], removed: ['b.js'] });
+});
+
+test('derived files are not part of the PR diff set', () => {
+  assert.deepEqual(nonDerived(['CHANGELOG.md', 'buildordinal.json', 'src/content/changelog.generated.js', 'a.js']), ['a.js']);
 });

@@ -75,6 +75,23 @@ function isReceiptLine(line, n) {
 
 // Re-stamps every receipt of pull request n in `text`: the backticked stamp that
 // follows its link, ([#N](…/pull/N), `<stamp>`). Other pull requests are untouched.
+// The non-derived paths in a list of changed paths. The PR's own content is what
+// is left once the derived files are set aside.
+export function nonDerived(paths) {
+  return paths.filter((p) => p && !DERIVED.includes(p));
+}
+
+// Which paths were added to, or dropped from, a set of changed paths. An empty
+// result on both sides means the same files changed, before and after the merge.
+export function diffSetChange(before, after) {
+  const b = new Set(before);
+  const a = new Set(after);
+  return {
+    added: [...a].filter((p) => !b.has(p)).sort(),
+    removed: [...b].filter((p) => !a.has(p)).sort(),
+  };
+}
+
 export function restampReceipts(text, n, stamp) {
   const re = new RegExp(`(\\]\\(https://github\\.com/cehinds/AshenSpire/pull/${n}\\),\\s*\`)[^\`\\n]*(\`)`, 'g');
   return text.replace(re, (_, open, close) => `${open}${stamp}${close}`);
@@ -185,6 +202,8 @@ function main(argv) {
     return 1;
   }
 
+  // The PR's own non-derived change, before the merge: the set the merge must not alter.
+  const prBefore = nonDerived(gitOk(['diff', '--name-only', gitOk(['merge-base', head, baseSha]).trim(), head]).split('\n'));
   const merged = git(['merge', '--no-ff', '--no-commit', baseSha]);
   const unmerged = unmergedPaths();
   if (merged.status !== 0 && unmerged.length === 0) {
@@ -235,6 +254,19 @@ function main(argv) {
       abortTo(head);
       console.error('pr-restamp: a step changed a file outside the derived set; the merge was aborted');
       return 1;
+    }
+
+    // The PR's own diff against dev must be the one it had before the merge. A dev
+    // change merged into a file the PR did not touch is dev's, not the PR's, and does
+    // not show here; a file the PR changed that now equals dev's version does, and
+    // that is a person's call, not the bot's.
+    const prAfter = nonDerived(gitOk(['diff', '--name-only', baseSha]).split('\n'));
+    const change = diffSetChange(prBefore, prAfter);
+    if (change.added.length || change.removed.length) {
+      abortTo(head);
+      console.log(`pr-restamp: #${pr} needs a person — its diff against ${base} would change: ` +
+        `added [${change.added.join(', ')}] removed [${change.removed.join(', ')}]`);
+      return 3;
     }
 
     // f. the merge commit.
@@ -319,6 +351,15 @@ function selftest() {
   // 8. a PR text without a receipt for #N leaves the base unchanged.
   check('a PR text with no receipt for #N leaves the base unchanged',
     mergeReceiptLines(dev, '## 2026-10-13\n\nno receipt here\n', 1930, STAMP, '2026-10-13') === dev);
+
+  // 9. the PR's own non-derived set: unchanged, added to, or dropped from.
+  const same = diffSetChange(['a.js', 'b.js'], ['b.js', 'a.js']);
+  check('set check: the same files before and after pass', same.added.length === 0 && same.removed.length === 0);
+  const added = diffSetChange(['a.js'], ['a.js', 'dev-only.js']);
+  check('set check: a file added by the merge is named', added.added.join() === 'dev-only.js' && added.removed.length === 0);
+  const dropped = diffSetChange(['a.js', 'b.js'], ['a.js']);
+  check('set check: a PR file that now equals dev is named as dropped', dropped.removed.join() === 'b.js' && dropped.added.length === 0);
+  check('set check: derived files are not counted', nonDerived(['CHANGELOG.md', 'buildordinal.json', 'src/content/changelog.generated.js', 'a.js']).join() === 'a.js');
 
   console.log('');
   if (fails.length) { console.log(`pr-restamp --selftest: FAIL — ${fails.length} case(s)`); return 1; }
