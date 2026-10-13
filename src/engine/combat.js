@@ -1259,7 +1259,7 @@ export function cardPlayCosts(combat, cardInstanceId, upcastRanks) {
     && combat._emitEvent === emitEvent && Array.isArray(combat.queue) && combat.queue.length === 0
     && !combat.pendingAbilityDiscard && !combat._abilityAction && !combat._emitDepth
     && !combat._foundationTransaction && !combat._foundationAncestry?.length
-    && !hasEventTriggers(combat, 'cardPreparing')) return playCosts(combat, def);
+    && !hasEventTriggers(combat, 'cardPreparing', { cardTags: def.cardTags || def.tags || [] })) return playCosts(combat, def);
   return playCosts(preparingPreview(combat, inst, def), def);
 }
 
@@ -1278,7 +1278,7 @@ export function cardNeedsEnemyTargetNow(combat, cardInstanceId) {
     && combat.enemies?.some(enemy => enemy.alive && enemy.hp > 0)
     && combat._emitEvent === emitEvent && Array.isArray(combat.queue) && combat.queue.length === 0
     && !combat.pendingAbilityDiscard && !combat._abilityAction && !combat._emitDepth
-    && !combat._foundationAncestry?.length && !hasEventTriggers(combat, 'cardPreparing')) {
+    && !combat._foundationAncestry?.length && !hasEventTriggers(combat, 'cardPreparing', { cardTags: def.cardTags || def.tags || [] })) {
     const enemyAvailable = combat.enemies.some(enemy => enemy.alive);
     const charges = R.matchingAbilityCharges(combat.player, {
       ...def, type: cardKind(def), authoredTags: def.cardTags || def.tags,
