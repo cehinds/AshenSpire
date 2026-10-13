@@ -86,6 +86,32 @@ async function copyTree(src, dst, { textRe = null, rewrite = null } = {}) {
   else await fs.copyFile(src, dst);
 }
 
+// The root preview pages (names only) that go to game/ and the Library opens from there.
+async function rootPreviewPages() {
+  return (await fs.readdir(REPO, { withFileTypes: true })).filter((e) => e.isFile() && PREVIEW_PAGE.test(e.name)).map((e) => e.name);
+}
+
+// The site root above the Workbench base: '/AshenSpire/' for '/AshenSpire/workbench/', '/' for '/'.
+function siteRootOf(base) {
+  const parts = base.split('/').filter(Boolean);
+  parts.pop();
+  return parts.length ? `/${parts.join('/')}/` : '/';
+}
+
+// The Library's pages that GitHub Pages serves at the site root (not mirrored into game/)
+// now open the published copy. Mutates the library body; returns how many entries changed.
+function markSiteLinks(library, siteRoot, mirrored) {
+  let changed = 0;
+  for (const entry of library?.entries || []) {
+    if (entry.servedBy === 'workbench-child' || entry.external || !entry.exists) continue;
+    if (typeof entry.path !== 'string' || mirrored.has(entry.path)) continue;
+    entry.external = true;
+    entry.url = siteRoot + entry.path.split('/').map(encodeURIComponent).join('/');
+    changed += 1;
+  }
+  return changed;
+}
+
 async function treeBytes(dir) {
   let total = 0;
   for (const entry of await fs.readdir(dir, { withFileTypes: true })) {
@@ -96,7 +122,7 @@ async function treeBytes(dir) {
 }
 
 // Boots the Workbench on a free port and records what its read-only API answers.
-async function buildSnapshot(out) {
+async function buildSnapshot(out, { base, previews }) {
   const stateDir = await fs.mkdtemp(path.join(os.tmpdir(), 'wbs-'));
   let app = null;
   try {
@@ -129,6 +155,7 @@ async function buildSnapshot(out) {
       read += 1;
     }
 
+    markSiteLinks(snap.library?.body, siteRootOf(base), new Set(previews));
     const git = snap.git?.body || {};
     const meta = { branch: git.branch || '', head: git.head || '', builtAt: new Date().toISOString() };
     await writeOut(out, 'static-api/snapshot.json', JSON.stringify({ meta, snap, index }));
@@ -146,7 +173,8 @@ async function main() {
   await fs.rm(out, { recursive: true, force: true });
   await fs.mkdir(out, { recursive: true });
 
-  const files = await buildSnapshot(out);
+  const previews = await rootPreviewPages();
+  const files = await buildSnapshot(out, { base, previews });
 
   // The UI, with its absolute paths moved under the base.
   const uiRewrite = { re: UI_REWRITE, to: `$1${base}$2` };
@@ -175,11 +203,7 @@ async function main() {
   const game = path.join(out, 'game');
   await copyTree(path.join(REPO, 'index.html'), path.join(game, 'index.html'), { textRe: GAME_TEXT, rewrite: gameRewrite });
   // The root preview pages the Entity Browser and Library open from the game server.
-  for (const entry of await fs.readdir(REPO, { withFileTypes: true })) {
-    if (entry.isFile() && PREVIEW_PAGE.test(entry.name)) {
-      await copyTree(path.join(REPO, entry.name), path.join(game, entry.name), { textRe: GAME_TEXT, rewrite: gameRewrite });
-    }
-  }
+  for (const name of previews) await copyTree(path.join(REPO, name), path.join(game, name), { textRe: GAME_TEXT, rewrite: gameRewrite });
   for (const dir of ['src', 'styles']) await copyTree(path.join(REPO, dir), path.join(game, dir), { textRe: GAME_TEXT, rewrite: gameRewrite });
   await copyTree(path.join(REPO, 'workbench', 'modules'), path.join(game, 'workbench', 'modules'), { textRe: GAME_TEXT, rewrite: gameRewrite });
   for (const entry of await fs.readdir(path.join(REPO, 'pose-studio'), { withFileTypes: true })) {

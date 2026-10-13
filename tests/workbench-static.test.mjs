@@ -66,6 +66,16 @@ describe('workbench static build', () => {
     assert.ok(!paths.some((p) => p.startsWith('docs/design/')), 'docs/design/ is never indexed');
   });
 
+  it('points the Library pages served at the site root to the published copy', () => {
+    const snapshot = JSON.parse(readFileSync(path.join(out, 'static-api', 'snapshot.json'), 'utf8'));
+    const entries = snapshot.snap.library.body.entries;
+    const external = entries.filter((e) => e.external === true);
+    assert.ok(external.some((e) => typeof e.url === 'string' && e.url.startsWith('/x/')), 'an entry opens the site copy under /x/');
+    for (const e of entries) {
+      if (typeof e.url === 'string') assert.equal(e.url.startsWith(BASE), false, `${e.id} does not point into the Workbench base`);
+    }
+  });
+
   it('stores each indexed file as JSON with its text', () => {
     const snapshot = JSON.parse(readFileSync(path.join(out, 'static-api', 'snapshot.json'), 'utf8'));
     const [first] = Object.keys(snapshot.index);
