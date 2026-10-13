@@ -63,14 +63,15 @@ const DERIVED = ['CHANGELOG.md', GENERATED, 'buildordinal.json'];
 const DATE_HEADING = /^## (\d{4}-\d{2}-\d{2})$/;
 const PULL_URL = 'https://github.com/cehinds/AshenSpire/pull/';
 
-// The receipt link for pull request n. The closing paren makes it exact: pull/19
-// does not match pull/1907.
-function linkFor(n) {
-  return `](${PULL_URL}${n})`;
+// A receipt line is a bullet whose title is bold and whose stamp group follows the
+// link in the receipt shape: `- **Title** ([#N](…/pull/N), \`stamp\`)`. A line that
+// merely mentions #N's link in its prose is another pull request's, and is not touched.
+function receiptPrefix(n) {
+  return `([#${n}](${PULL_URL}${n}), \``;
 }
 
 function isReceiptLine(line, n) {
-  return line.startsWith('- ') && line.includes(linkFor(n));
+  return line.startsWith('- **') && line.includes(receiptPrefix(n));
 }
 
 // Re-stamps every receipt of pull request n in `text`: the backticked stamp that
@@ -93,8 +94,8 @@ export function diffSetChange(before, after) {
 }
 
 export function restampReceipts(text, n, stamp) {
-  const re = new RegExp(`(\\]\\(https://github\\.com/cehinds/AshenSpire/pull/${n}\\),\\s*\`)[^\`\\n]*(\`)`, 'g');
-  return text.replace(re, (_, open, close) => `${open}${stamp}${close}`);
+  const re = new RegExp(`(\\]\\(https://github\\.com/cehinds/AshenSpire/pull/${n}\\),\\s*\`)[^\`\\n]*(\`)`);
+  return text.split('\n').map((line) => (isReceiptLine(line, n) ? line.replace(re, (_, open, close) => `${open}${stamp}${close}`) : line)).join('\n');
 }
 
 // THE PURE CORE. `baseText` is the CHANGELOG.md the merge starts from (origin/dev's,
@@ -116,7 +117,7 @@ export function mergeReceiptLines(baseText, prText, n, stamp, today = utcToday()
   }
   if (moved.length === 0) return baseText;
 
-  const kept = baseText.split('\n').filter((l) => !l.includes(linkFor(n)));
+  const kept = baseText.split('\n').filter((l) => !isReceiptLine(l, n));
   let at = kept.findIndex((l) => DATE_HEADING.test(l.trimEnd()));
   const newest = at >= 0 ? DATE_HEADING.exec(kept[at].trimEnd())[1] : null;
   if (newest === null || newest < today) {
@@ -347,6 +348,12 @@ function selftest() {
   const r7 = restampReceipts(two, 1930, STAMP);
   check('restamp: only #N\'s stamp changes', r7 === `${rc(1907, '0.7.1.1457')}\n${rc(1930, STAMP)}`, r7);
   check('restamp: pull/19 does not match pull/1907', restampReceipts(rc(1907, '0.7.1.1457'), 19, STAMP) === rc(1907, '0.7.1.1457'));
+
+  // 8a. another PR's receipt whose prose links #N is not #N's line: untouched, not moved.
+  const prose = `- **Other** ([#1907](${PULL_URL}1907), \`0.7.1.1457\`). Builds on [#1930](${PULL_URL}1930), \`0.7.1.1400\`, see ${PULL_URL}1930) too.`;
+  const withProse = mergeReceiptLines(`# Changelog\n\n## 2026-10-12\n\n${prose}\n`, prText('2026-10-11', rc(1930, '0.7.1.1450')), 1930, STAMP, '2026-10-12');
+  check('prose linking #N in another receipt is left exactly as it was',
+    withProse.includes(prose) && restampReceipts(prose, 1930, STAMP) === prose);
 
   // 8. a PR text without a receipt for #N leaves the base unchanged.
   check('a PR text with no receipt for #N leaves the base unchanged',

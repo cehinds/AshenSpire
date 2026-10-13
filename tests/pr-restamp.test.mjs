@@ -78,3 +78,11 @@ test('the PR diff set check names a file the merge added or dropped', () => {
 test('derived files are not part of the PR diff set', () => {
   assert.deepEqual(nonDerived(['CHANGELOG.md', 'buildordinal.json', 'src/content/changelog.generated.js', 'a.js']), ['a.js']);
 });
+
+test("another pull request's receipt whose prose links #N is neither moved nor re-stamped", () => {
+  const prose = `- **Other** ([#1907](${PULL}1907), \`0.7.1.1457\`). Builds on [#1930](${PULL}1930), \`0.7.1.1400\`, see ${PULL}1930) too.`;
+  const base = `# Changelog\n\n## 2026-10-12\n\n${prose}\n`;
+  assert.equal(restampReceipts(prose, 1930, STAMP), prose);
+  const out = mergeReceiptLines(base, prText('2026-10-11', rc(1930, '0.7.1.1450')), 1930, STAMP, '2026-10-12');
+  assert.ok(out.includes(prose));
+});
