@@ -166,3 +166,17 @@ test('births that do not choose an element spell are unchanged', () => {
     assert.deepEqual(withOption.deck, without.deck, classId);
   }
 });
+
+test('the spell picker never offers a second element spell that Next would then refuse', () => {
+  // Regression: a Starseer could pick Rockfall and Drowsing Mote (two element
+  // spells, maxPicks 1); both satisfied the 2-pick count but startingAbilityProblem
+  // refused them, leaving Next greyed with no way to tell why.
+  const run = birth('starseer', { combatExpansionVersion: 2 });
+  const plan = startingAbilityPlan(registries, run);
+  assert.equal(plan.maxElementPicks, 1);
+  assert.ok(startingAbilityProblem(registries, run, ['rockfall', 'drowsingMote']));
+  const screen = readFileSync(new URL('../src/ui/screens/customize.js', import.meta.url), 'utf8');
+  assert.match(screen, /elementCapReached\(\)/);
+  assert.match(screen, /choose\.disabled = full \|\| elementCapped/);
+  assert.match(screen, /section\.elementIds\?\.includes\(card\.id\) && elementCapReached\(\)/);
+});
