@@ -165,7 +165,7 @@ const TARGETS = [
   { screen: 'combat', sel: '.topbar .hud-cinders .ck', label: 'Cinders (combat)' },
   { screen: 'combat', sel: '.topbar .hud-class .cv', label: 'hero name (combat)' },
   { screen: 'combat', sel: '.resbars .m-label', label: 'resource bar label (combat)' },
-  // Card text keywords and the hold cue (docs/plan-polish-review-2026-09.md §G:
+  // Card text keywords and the hold cue (the former polish review §G, removed 2026-10-11:
   // keyword red 4.1-4.3:1, "HOLD" 2.45:1). The showcase hand carries a Bleed
   // card; `.hold-hint` is --gold at 0.75 opacity (kit.css).
   { screen: 'combat', sel: '.hand .card .ctext .st-bleed', label: 'Bleed keyword (card text)' },

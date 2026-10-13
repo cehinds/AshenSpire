@@ -525,7 +525,9 @@ export default {
     function frameUrl(pose) {
       const cls = st.filter.classId || st.file?.project?.actor || '';
       const file = (st.index.frames[st.outfit || cls] || st.index.frames[cls] || {})[pose];
-      return file ? `/asset-file/${file}` : null;
+      // A page can redirect art URLs (see assetUrl in modules/assets/model.mjs); the default is unchanged.
+      if (!file) return null;
+      return typeof globalThis.ASHEN_ASSET_URL === 'function' ? globalThis.ASHEN_ASSET_URL(file) : `/asset-file/${file}`;
     }
     function ensureCanvas() {
       if (canvas) return canvas;
