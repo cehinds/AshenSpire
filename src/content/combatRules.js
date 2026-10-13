@@ -2,20 +2,48 @@
 // combats remain on their current rules until the run migration is activated.
 export const combatRules = {
   id: 'combat-foundations-v1',
+  // magicShare: the share of a hit of this type that is MAGIC (Barrier, then
+  // Ward) rather than PHYSICAL (Block). 0 is all physical, 1 all magic, and
+  // arcane (force) is the hybrid. A card or weapon may override it; the
+  // Advanced settings rows read these as their defaults (combatRatings.js).
   damageTypes: {
-    slashing: { tag: 'damage:slashing', physical: true },
-    piercing: { tag: 'damage:piercing', physical: true },
-    blunt: { tag: 'damage:blunt', physical: true },
-    fire: { tag: 'damage:fire', physical: false },
-    frost: { tag: 'damage:frost', physical: false },
-    lightning: { tag: 'damage:lightning', physical: false },
-    arcane: { tag: 'damage:arcane', physical: false },
-    sacred: { tag: 'damage:sacred', physical: false },
-    decay: { tag: 'damage:decay', physical: false },
-    poison: { tag: 'damage:poison', physical: false },
-    psychic: { tag: 'damage:psychic', physical: false },
-    earth: { tag: 'damage:earth', physical: false },
+    slashing: { tag: 'damage:slashing', physical: true, magicShare: 0 },
+    piercing: { tag: 'damage:piercing', physical: true, magicShare: 0 },
+    blunt: { tag: 'damage:blunt', physical: true, magicShare: 0 },
+    fire: { tag: 'damage:fire', physical: false, magicShare: 1 },
+    frost: { tag: 'damage:frost', physical: false, magicShare: 1 },
+    lightning: { tag: 'damage:lightning', physical: false, magicShare: 1 },
+    arcane: { tag: 'damage:arcane', physical: false, magicShare: 0.5 },
+    sacred: { tag: 'damage:sacred', physical: false, magicShare: 1 },
+    decay: { tag: 'damage:decay', physical: false, magicShare: 1 },
+    poison: { tag: 'damage:poison', physical: false, magicShare: 1 },
+    psychic: { tag: 'damage:psychic', physical: false, magicShare: 1 },
+    // Earth routes as PHYSICAL (owner, 2026-10-13): magicShare 0, so it meets Block, then Poise,
+    // and its typed defence stays 'earth'. `physical` is the rules foundation's armour flag
+    // (model/combatRules.js resolveDamageComponents) and stays false: armour does not cut earth.
+    earth: { tag: 'damage:earth', physical: false, magicShare: 0 },
   },
+  // The magic share of a MAGIC SCHOOL (a school:<id> tag or a Spell's school).
+  // Force splits (0.5): its physical part is the card's physical tag, else the
+  // physicalType. Alteration is a spell whose damage is all physical (0): it still
+  // carries the spell tags, but deals no magic damage. A school not listed here
+  // (illusion) is all magic of its damage type. magicType is the Ward/Barrier type
+  // the school's magic part deals.
+  schools: {
+    force: { magicShare: 0.5, magicType: 'arcane', physicalType: 'blunt' },
+    alteration: { magicShare: 0, magicType: 'arcane', physicalType: 'blunt' },
+    // Earth is a magic school whose damage is physical (owner, 2026-10-13), like alteration.
+    earth: { magicShare: 0, magicType: 'arcane', physicalType: 'earth' },
+    lightning: { magicShare: 1, magicType: 'lightning' },
+    fire: { magicShare: 1, magicType: 'fire' },
+    frost: { magicShare: 1, magicType: 'frost' },
+    divine: { magicShare: 1, magicType: 'sacred' },
+    decay: { magicShare: 1, magicType: 'decay' },
+  },
+  // Melee spell (reach contact or melee, with physical damage) and martial
+  // technique (a physical-camp maneuver with spell effects) splits. The shares
+  // are the magic part of the card's own damage; the rest is physical.
+  magicSplit: { meleeSpell: 0.7, technique: 0.3 },
   armor: { scale: 100, cap: 0.60 },
   resistanceCap: 0.75,
   vulnerabilityCap: 3,

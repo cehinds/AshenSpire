@@ -894,8 +894,10 @@ export const statuses = [
     tooltip: 'You have entered a stance this fight: Oath cards no longer grant Block.',
   },
   {
-    // Psychic family (design elements-and-tag-mechanics §2.1). Spell-camp
-    // damage only; physical moves are untouched.
+    // Psychic family (design elements-and-tag-mechanics §2.1). Expanded combat
+    // (owner, 2026-10-13): +1 SP per stack on spell-camp cards, and immunity to
+    // Force, each Force hit or effect spending a stack. The spellDamageDealtMult
+    // modifier is read by legacy combat only.
     id: 'silenced',
     name: 'Silenced',
     icon: '◌',
@@ -903,7 +905,7 @@ export const statuses = [
     stackMode: 'refresh',
     decay: { duration: 2 }, // PROVISIONAL
     modifiers: { spellDamageDealtMult: 0.5 },
-    tooltip: 'Spell-camp moves deal 50% less damage for 2 turns.',
+    tooltip: 'Spells cost 1 more Stamina per stack. Immune to Force: each Force hit or effect is stopped and removes 1 stack.',
   },
   {
     // Earth family (design elements-and-tag-mechanics 2.2). Applied by the

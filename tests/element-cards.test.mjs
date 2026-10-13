@@ -4,7 +4,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { createCombat, dispatch } from '../src/engine/combat.js';
+import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
+import { splitOf } from '../src/model/playingCard.js';
+import { combatProfileFor } from '../src/model/combatCardProfile.js';
 import { createRng } from '../src/engine/rng.js';
 import { applyStatus, getStacks } from '../src/engine/statuses.js';
 
@@ -15,11 +17,12 @@ const ROGUE = ['aspDart', 'viperStrike', 'septicBlade', 'lethalDose'];
 const SELF = ['stoneskin'];
 const CLASSLESS = ['mindSpike', 'dissonance', 'mindFracture', 'wakingNightmare', 'stoneSling', 'rockfall', 'stoneskin', 'entomb'];
 
-function play(cardId, { upgraded = false, enemyId = 'wanderingSoldier', setup, seed = 4107 } = {}) {
+function play(cardId, { upgraded = false, enemyId = 'wanderingSoldier', setup, seed = 4107, weapon } = {}) {
   const classId = ROGUE.includes(cardId) ? 'rogue' : 'reaver';
   const combat = createCombat({ registries, rng: createRng(seed), combatExpansionVersion: 2, enemyIds: [enemyId],
     player: { classId, maxHp: 100, hp: 100, maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1,
-      deck: [{ cardId, instanceId: 'p', upgraded }] } });
+      deck: [{ cardId, instanceId: 'p', upgraded }],
+      ...(weapon !== undefined ? { loadout: { sets: { rightHand: [weapon], leftHand: [null], armor: ['default'] }, active: { rightHand: 0, leftHand: 0, armor: 0 } } } : {}) } });
   const enemy = combat.enemies[0];
   enemy.block = enemy.barrier = 0;
   if (setup) setup(combat, enemy);
@@ -59,22 +62,27 @@ test('Septic Blade hits harder on a target already carrying 3 Venom', () => {
   assert(primed.hp - primed.enemy.hp > cold.hp - cold.enemy.hp);
 });
 
+// Lethal Dose is a physical-camp maneuver with a magic (Poison) type, so it splits by the Technique share
+// (0.3, #1896). The physical rest is the wielded weapon's type (owner, 2026-10-13): a dagger's Piercing, which
+// the soldier is not weak to. Bare-handed it is Blunt, and the soldier's 25% Blunt weakness lifts that part.
 test('Lethal Dose cashes the target\'s Venom out as damage and removes it', () => {
-  const { enemy, hp } = play('lethalDose', { setup: (combat, target) => applyStatus(combat, target, 'venom', 3) });
-  assert.equal(hp - enemy.hp, 18, '6 + 4 per Venom stack, v2 caps Venom at 3');
+  const { enemy, hp } = play('lethalDose', { weapon: 'dagger', setup: (combat, target) => applyStatus(combat, target, 'venom', 3) });
+  assert.equal(hp - enemy.hp, 18, '6 + 4 per Venom stack (v2 caps Venom at 3): 5 Poison + 13 Piercing');
   assert.equal(getStacks(enemy, 'venom'), 0);
 });
 
 test('Lethal Dose upgraded deals 8 + 5 per Venom stack', () => {
   // 23 damage would kill the default soldier before Venom is removed, so give the target room to survive the hit.
-  const { enemy, hp } = play('lethalDose', { upgraded: true, setup: (combat, target) => { target.hp = 100; applyStatus(combat, target, 'venom', 3); } });
-  assert.equal(hp - enemy.hp, 23, '8 + 5 x 3 Venom');
+  const { enemy, hp } = play('lethalDose', { upgraded: true, weapon: 'dagger', setup: (combat, target) => { target.hp = 100; applyStatus(combat, target, 'venom', 3); } });
+  assert.equal(hp - enemy.hp, 23, '8 + 5 x 3 Venom: 6 Poison + 17 Piercing');
   assert.equal(getStacks(enemy, 'venom'), 0);
 });
 
 test('Lethal Dose with no Venom still deals its 6 base damage', () => {
-  const { enemy, hp } = play('lethalDose');
-  assert.equal(hp - enemy.hp, 6, 'base 6 with 0 Venom');
+  const hp = ({ enemy, hp: before }) => before - enemy.hp;
+  assert.equal(hp(play('lethalDose', { weapon: 'dagger' })), 6, 'base 6 with 0 Venom: 1 Poison + 5 Piercing');
+  assert.equal(hp(play('lethalDose', { weapon: 'warhammer' })), 8, 'a warhammer blow is Blunt: 1 Poison + 5 Blunt, 5 x 1.25 = 7');
+  assert.equal(hp(play('lethalDose', { weapon: null })), 8, 'bare hands fall back to Blunt');
 });
 
 test('Psychic cards confuse; Dissonance also silences', () => {
@@ -111,4 +119,19 @@ test('upgraded faces play too', () => {
   for (const id of [...ROGUE, ...CLASSLESS]) {
     assert.doesNotThrow(() => play(id, { upgraded: true }), id);
   }
+});
+
+test('Lethal Dose face names the wielded weapon for its physical part, as the hit types it', () => {
+  const face = weapon => {
+    const combat = createCombat({ registries, rng: createRng(4107), combatExpansionVersion: 2, enemyIds: ['wanderingSoldier'],
+      player: { classId: 'rogue', maxHp: 100, hp: 100, maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1,
+        deck: [{ cardId: 'lethalDose', instanceId: 'p', upgraded: false }],
+        loadout: { sets: { rightHand: [weapon], leftHand: [null], armor: ['default'] }, active: { rightHand: 0, leftHand: 0, armor: 0 } } } });
+    const preview = previewCard(combat, 'p');
+    const value = preview.values.find(row => row.op === 'damage');
+    return splitOf(preview.resolvedDefinition, combatProfileFor(preview.resolvedDefinition), value.faceValue, null, value);
+  };
+  assert.deepEqual(face('dagger'), { magic: 1, physical: 5, types: { magic: 'poison', physical: 'piercing' } });
+  assert.deepEqual(face('warhammer').types.physical, 'blunt');
+  assert.deepEqual(face(null).types.physical, 'blunt', 'bare hands');
 });

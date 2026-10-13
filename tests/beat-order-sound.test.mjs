@@ -31,6 +31,7 @@ function drive(t, events, beatOrder) {
         const cls = String(node.className || '');
         if (/\bfx-(slash|spark)\b/.test(cls)) at('contact');
         if (/\bfloat-num\b/.test(cls)) at(`float:${node.textContent}`);
+        if (/\bfx-callout\b/.test(cls)) at(`word:${node.textContent}`);
         return append(node);
       };
       let completed = 0;
@@ -61,7 +62,8 @@ test('sequential: the hit sound and the damage buzz fire with the number, not at
 
 test('sequential: a guarded hit\'s block sound comes with its number', (t) => {
   const trace = drive(t, enemyHit(5, 5), 'sequential');
-  assert.equal(timeOf(trace, (w) => w === 'sound:block'), timeOf(trace, (w) => w === 'float:5'));
+  // A hit Block takes whole shows its word (BLOCKED) in place of the number; the sound comes with the word.
+  assert.equal(timeOf(trace, (w) => w === 'sound:block'), timeOf(trace, (w) => w === 'word:BLOCKED'));
   assert.equal(timeOf(trace, (w) => w === 'contact'), IMPACT, 'the spark stays at the contact');
 });
 
