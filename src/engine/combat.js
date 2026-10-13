@@ -693,8 +693,12 @@ function enemyPhase(combat) {
         const move = def.moves[moveId];
         // Rounds mode: a charge whose hit roll missed resolves as that miss, applying nothing.
         const missed = enemy.pendingMove.missed === true;
+        const roundPoiseMultiplier = enemy.pendingMove.roundPoiseMultiplier;
         enemy.pendingMove = null;
-        if (!missed) executeMovePayload(combat, enemy, move, moveId);
+        if (!missed) {
+          if (roundPoiseMultiplier) cursor.roundPoiseMultiplier = roundPoiseMultiplier;
+          executeMovePayload(combat, enemy, move, moveId);
+        }
       }
       // else: still charging (delay.turns > 1) — the enemy does nothing.
     } else if (!preview && enemy.intent && enemy.intent.moveId) {
@@ -711,8 +715,13 @@ function enemyPhase(combat) {
       }
     }
     }
+    // A delayed round hit resolves through the ordinary queue, possibly across a reaction pause. Reinstall the
+    // multiplier only while that move's queued payload drains; the cursor keeps it if the drain pauses.
+    if (cursor.roundPoiseMultiplier) combat.roundPoiseMultiplier = cursor.roundPoiseMultiplier;
     drainQueue(combat);
+    delete combat.roundPoiseMultiplier;
     if (Reactions.reactionPaused(combat)) return;
+    delete cursor.roundPoiseMultiplier;
     if (combat.result) return;
     // The move has resolved: its momentum exchange ends with it (normalPreview.js), so its owner-turn-end hooks and
     // anything after are their own exchanges.
@@ -1859,6 +1868,7 @@ function enemyMoveAt(combat, enemy, moveId, { landed = true } = {}) {
   Rounds.markEnemyActed(combat, enemy.id);
   if (move.delay) {
     startDelayedMove(combat, enemy, move, moveId);
+    if (combat.roundPoiseMultiplier) enemy.pendingMove.roundPoiseMultiplier = { ...combat.roundPoiseMultiplier };
     if (!landed) enemy.pendingMove.missed = true;
   } else executeMovePayload(combat, enemy, move, moveId, { roundEntry: true });
 }

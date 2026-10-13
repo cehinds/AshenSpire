@@ -641,6 +641,32 @@ test('a charging attack whose hit roll misses still starts its charge; the miss 
   assert.ok(!second.events.some((e) => e.type === 'damageDealt' && e.sourceId === enemy.id), 'and deals nothing');
 });
 
+// Exact-head review P2: the round settles a delayed entry when its charge starts, but its Poise damage lands on the
+// later turn. The spent momentum multiplier must travel with that pending move until its ordinary payload drains.
+const delayedPoiseRegistries = createRegistries({ ...contentBundle, enemies: contentBundle.enemies.map((e) => (e.id === ENEMY
+  ? { ...e, moves: { ...e.moves, [CHARGE]: { intent: 'attack', damage: 12, weight: 0, sp: 1,
+    effects: [{ op: 'poiseDamage', target: 'player', amount: 4 }], delay: { turns: 1, whileCharging: { block: 5 } } } } }
+  : e)) });
+
+test('a delayed round hit keeps its Poise multiplier until the payload lands', () => {
+  const poiseDealt = (doubled) => {
+    const c = fixRoundRoll(fight({ reg: delayedPoiseRegistries, expansion: 1, momentum: true }), 0.999);
+    const enemy = liveEnemy(c);
+    c.combatRounds.enemyQueues[enemy.id] = [{ moveId: CHARGE, sp: 1 }];
+    c.player.poiseMeter.max = 100;
+    if (doubled) c.combatRounds.poiseDouble = { [enemy.id]: true };
+    endTurnDeclining(c);
+    assert.equal(enemy.pendingMove?.moveId, CHARGE, 'the flagged landed entry starts its charge');
+    const before = c.player.poiseMeter.value;
+    endTurnDeclining(c);
+    assert.equal(enemy.pendingMove, null, 'the delayed payload lands on the following enemy turn');
+    return c.player.poiseMeter.value - before;
+  };
+  const plain = poiseDealt(false);
+  assert.equal(plain, 6, 'fixture: the hit adds 2 Poise and its rider adds 4');
+  assert.equal(poiseDealt(true), plain * 2, 'the delayed hit and its Poise rider are both doubled');
+});
+
 // Review follow-up: the timeline has no delay handling, so the round's queue itself ends at a charge. Otherwise the
 // timeline resolved a Slash the live round skipped: it credited that Slash's momentum, and a queued Counter fired on it.
 // The soldier opens with the charge, and Slash is its only weighted move, so before the fix the queue was charge, Slash.
