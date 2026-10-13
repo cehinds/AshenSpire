@@ -778,7 +778,7 @@ export function createSession({ registries, seedString, endless = false, restore
         || (e.type === 'hpLost' && e.cause !== 'attack'))
       .map((e) => ({
         eventIndex: c.eventLog.indexOf(e),
-        type: e.type, sourceId: e.sourceId, enemyId: e.enemyId, moveId: e.moveId,
+        type: e.type, sourceId: e.sourceId, enemyId: e.enemyId, moveId: e.moveId, preparing: e.preparing,
         sourcePlayerId: e.sourcePlayerId, targetPlayerId: e.targetPlayerId,
         energySpent: e.energySpent, manaSpent: e.manaSpent, staminaSpent: e.staminaSpent,
         cardId: e.cardId, cardType: e.cardType, cardInstanceId: e.cardInstanceId, profileId: e.profileId,

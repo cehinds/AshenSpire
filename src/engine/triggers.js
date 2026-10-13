@@ -37,6 +37,14 @@ export function emitEvent(ctx, type, payload = {}) {
     sourceId: action.source?.id, sourceKind: action.source?.kind, ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(action.source) } : {}),
     ...payload,
   };
+  // What caused an effect, for the combat log: the enemy move it belongs to,
+  // and the status, stance or property whose trigger enqueued it. Additive.
+  // A preparation action (charge-up, Counter priming) runs while the selected
+  // move may still be a hidden intent, so it says only `preparing` and never
+  // names the move (SPEC §Intent visibility).
+  if (action?.meta?.preparing) { if (payload.preparing === undefined) payload = { ...payload, preparing: true }; }
+  else if (action?.meta?.moveId && payload.moveId === undefined) payload = { ...payload, moveId: action.meta.moveId };
+  if (action?.meta?.triggeredBy && payload.triggeredBy === undefined) payload = { ...payload, triggeredBy: action.meta.triggeredBy };
   // Co-op player entities share id 'player'. Attribute the actual target in
   // the canonical bus so detached transactions and live enemy effects agree.
   // Solo receipts keep their existing shape.
@@ -138,9 +146,9 @@ function scanTriggers(ctx, event) {
   if (!player) return; // run-level contexts have no combat trigger sources
   const pKey = ownerKeyFor(ctx, player);
   const pending = [];
-  const schedule = (key, trigger, owner, after) => {
-    if (ctx.foundation) pending.push({ key, trigger, owner, after });
-    else { const fired = maybeFire(ctx, key, trigger, owner, event); if (fired) after?.(); }
+  const schedule = (key, trigger, owner, after, origin) => {
+    if (ctx.foundation) pending.push({ key, trigger, owner, after, origin });
+    else { const fired = maybeFire(ctx, key, trigger, owner, event, origin); if (fired) after?.(); }
   };
 
   // A heal names its seat (targetPlayerId), so every seat's mounts hear it
@@ -163,7 +171,7 @@ function scanTriggers(ctx, event) {
     const stance = ctx.registries.stances.get(player.stanceId);
     (stance.hooks || []).forEach((trig, i) => {
       if (trig.on !== event.type) return;
-      schedule(`stance:${pKey}:${player.stanceId}:${i}`, trig, player);
+      schedule(`stance:${pKey}:${player.stanceId}:${i}`, trig, player, undefined, { kind: 'stance', id: player.stanceId });
     });
   }
 
@@ -187,7 +195,7 @@ function scanTriggers(ctx, event) {
         for (const trig of rule.triggers || []) {
           const i = index++;
           if (trig.on !== event.type) continue;
-          schedule(`property:${pKey}:${sourceKey}:${i}`, trig, player, announce);
+          schedule(`property:${pKey}:${sourceKey}:${i}`, trig, player, announce, { kind: mounts[sourceKey].kind || 'property', id: mounts[sourceKey].id ?? sourceKey });
         }
       }
     }
@@ -202,13 +210,13 @@ function scanTriggers(ctx, event) {
       const def = ctx.registries.statuses.get(statusId);
       (def.hooks || []).forEach((trig, i) => {
         if (trig.on !== event.type) return;
-        schedule(`status:${ownerKeyFor(ctx, entity)}:${statusId}:${i}`, trig, entity);
+        schedule(`status:${ownerKeyFor(ctx, entity)}:${statusId}:${i}`, trig, entity, undefined, { kind: 'status', id: statusId });
       });
     }
   }
 
   pending.sort((a, b) => (a.trigger.priority || 0) - (b.trigger.priority || 0) || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
-  for (const row of pending) if (maybeFire(ctx, row.key, row.trigger, row.owner, event)) row.after?.();
+  for (const row of pending) if (maybeFire(ctx, row.key, row.trigger, row.owner, event, row.origin)) row.after?.();
 
   // Enemy phases hooked on bus events (hpBelowPct phases run via checkPhases).
   for (const enemy of ctx.enemies || []) {
@@ -238,7 +246,7 @@ export function fireOwnerHooks(ctx, entity, hookName) {
   if (hookName === 'ownerTurnStart' && ctx.reactionRulesVersion === 2) {
     for (const statusId of Object.keys(entity.statuses)) {
       const flux = ctx.registries.statuses.get(statusId)?.fluxPerTurn;
-      if (flux > 0 && entity.statuses[statusId]?.stacks > 0) spendPersistentWard(ctx, entity, flux, { sourceId: entity.id });
+      if (flux > 0 && entity.statuses[statusId]?.stacks > 0) spendPersistentWard(ctx, entity, flux, { sourceId: entity.id, cause: 'flux', statusId });
     }
   }
   const syntheticEvent = { type: hookName, ...Foundation.foundationEvent(ctx, hookName, { ownerId: entity.id }) };
@@ -247,21 +255,21 @@ export function fireOwnerHooks(ctx, entity, hookName) {
     const def = ctx.registries.statuses.get(statusId);
     (def.hooks || []).forEach((trig, i) => {
       if (trig.on !== hookName) return;
-      maybeFire(ctx, `status:${oKey}:${statusId}:${i}:${hookName}`, trig, entity, syntheticEvent);
+      maybeFire(ctx, `status:${oKey}:${statusId}:${i}:${hookName}`, trig, entity, syntheticEvent, { kind: 'status', id: statusId });
     });
   }
   if (entity.kind === 'player' && entity.stanceId) {
     const stance = ctx.registries.stances.get(entity.stanceId);
     (stance.hooks || []).forEach((trig, i) => {
       if (trig.on !== hookName) return;
-      maybeFire(ctx, `stance:${oKey}:${entity.stanceId}:${i}:${hookName}`, trig, entity, syntheticEvent);
+      maybeFire(ctx, `stance:${oKey}:${entity.stanceId}:${i}:${hookName}`, trig, entity, syntheticEvent, { kind: 'stance', id: entity.stanceId });
     });
   }
 }
 
 // Gate a trigger through once / limitPerTurn / if, then enqueue its effects.
 // Returns true if it fired.
-function maybeFire(ctx, key, trigger, owner, event) {
+function maybeFire(ctx, key, trigger, owner, event, origin = null) {
   let st = ctx.triggerState.get(key);
   if (!st) {
     st = { fires: 0, turn: -1, turnFires: 0 };
@@ -283,7 +291,7 @@ function maybeFire(ctx, key, trigger, owner, event) {
   const ratingCard = ctx.ratingsRules && key.startsWith('status:')
     ? Object.entries(owner.statuses || {}).find(([id]) => key.includes(`:${id}:`))?.[1]?.ratingCard : null;
   for (const eff of trigger.do || []) {
-    ctx.enqueue({ effect: eff, source: owner, owner, target, ...(ratingCard ? { card: ratingCard } : {}), meta: { event, ...(ctx.foundation ? { foundationAncestry: [...(event.ancestry || []), key] } : {}) } });
+    ctx.enqueue({ effect: eff, source: owner, owner, target, ...(ratingCard ? { card: ratingCard } : {}), meta: { event, ...(origin ? { triggeredBy: { ...origin, ownerId: owner?.id ?? null } } : {}), ...(ctx.foundation ? { foundationAncestry: [...(event.ancestry || []), key] } : {}) } });
   }
   return true;
 }

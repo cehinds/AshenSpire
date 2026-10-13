@@ -303,8 +303,8 @@ test('v1: a Smash that breaks Guard emits combatGuardBroken once, queued or sync
   assert.deepEqual(guardBroken(c.eventLog).map(({ targetId, sourceId, poise }) => ({ targetId, sourceId, poise })),
     [{ targetId: 'e1', sourceId: 'player', poise: 3 }]);
   // The bonus is nominal (Poise Guard may absorb it), so the log claims pressure, not damage taken.
-  assert.deepEqual(combatLogEntries(c.eventLog, { registries }).map(row => row.text).filter(text => text.startsWith('Guard broken')),
-    ['Guard broken! (+3 Poise pressure)']);
+  assert.deepEqual(combatLogEntries(c.eventLog, { registries }).map(row => row.text).filter(text => / Guard!/.test(text)),
+    ["Forsaken's attack broke Enemy's Guard! (+3 Poise pressure)"]);
 });
 
 test('v1: a lethal Smash still reports Guard broken without applying break Poise to the dead target', () => {
@@ -335,8 +335,8 @@ test('v1: a Smash with a zero break bonus still reports the Guard break, with no
   applyAttackDamage(c, c.player, enemy, 5, [], { combatProfile: { camp: 'physical', maneuver: 'smash', damageType: 'slashing', breakPoiseBonus: 0 },
     attack: { source: 'weapon', damageType: 'slashing' }, combatRiderTargets: [] });
   assert.deepEqual(guardBroken(c.eventLog).map(({ targetId, poise }) => ({ targetId, poise })), [{ targetId: 'e1', poise: 0 }]);
-  assert.deepEqual(combatLogEntries(c.eventLog, { registries }).map(row => row.text).filter(text => text.startsWith('Guard broken')),
-    ['Guard broken!']);
+  assert.deepEqual(combatLogEntries(c.eventLog, { registries }).map(row => row.text).filter(text => / Guard!/.test(text)),
+    ["Forsaken's attack broke Enemy's Guard!"]);
   assert.equal(enemy.poiseMeter?.value, poiseBefore, 'no bonus Poise was applied');
 });
 

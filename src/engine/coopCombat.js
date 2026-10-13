@@ -604,7 +604,7 @@ function startPlayerPhase(C) {
       recoverStatusesAtOwnerStart(C, e, { cycle: e.combatOwnerCycle });
       sleepRestoration(C, e);
       e.energy = Math.max(0, e.energy - consumeControlActionLoss(C, e));
-      if (tacticalProtection.block) A.gainBlock(C, e, tacticalProtection.block);
+      if (tacticalProtection.block) A.gainBlock(C, e, tacticalProtection.block, { logSource: 'defendStance' });
       if (tacticalProtection.barrier) C.enqueue({ effect: { op: 'gainBarrier', target: 'self', amount: tacticalProtection.barrier }, source: e, owner: e, target: e, meta: {} });
       drainQueue(C);
     }
@@ -1156,7 +1156,7 @@ function enemyPhase(C) {
     if (C.sharedExpansionVersion === 2) {
       recoverStatusesAtOwnerStart(C, enemy, { cycle: enemy.combatOwnerCycle }); sleepRestoration(C, enemy);
       if (controlRestrictions(C, enemy).locked) { if (!enemy.pendingMove) cancelKnowledgeAction(C, enemy); endControlTurn(C, enemy); continue; }
-      if (tacticalProtection.block) A.gainBlock(C, enemy, tacticalProtection.block);
+      if (tacticalProtection.block) A.gainBlock(C, enemy, tacticalProtection.block, { logSource: 'defendStance' });
       if (tacticalProtection.barrier) C.enqueue({ effect: { op: 'gainBarrier', target: 'self', amount: tacticalProtection.barrier }, source: enemy, owner: enemy, target: enemy, meta: {} });
       drainQueue(C);
     }
@@ -1182,11 +1182,11 @@ function enemyPhase(C) {
       if (move.delay) {
         const wc = move.delay.whileCharging || {};
         const carrier = enemyMoveCarrier(enemy, move, enemy.intent.moveId, C);
-        if (wc.block != null) { setActive(C, firstLiving(C)); C.enqueue({ effect: { op: 'block', target: 'self', amount: wc.block }, source: enemy, owner: enemy, target: enemy, card: carrier, meta: { moveId: enemy.intent.moveId } }); drainQueue(C); }
-        if (C.sharedExpansionVersion === 2) executeExpandedEnemyPayload(C, enemy, expandedEnemyMove(enemy, { ...wc, effects: wc.effects || [] }, enemy.intent.moveId, C), enemy.intent.moveId, carrier);
+        if (wc.block != null) { setActive(C, firstLiving(C)); C.enqueue({ effect: { op: 'block', target: 'self', amount: wc.block }, source: enemy, owner: enemy, target: enemy, card: carrier, meta: { moveId: enemy.intent.moveId, preparing: true } }); drainQueue(C); }
+        if (C.sharedExpansionVersion === 2) executeExpandedEnemyPayload(C, enemy, expandedEnemyMove(enemy, { ...wc, effects: wc.effects || [] }, enemy.intent.moveId, C), enemy.intent.moveId, carrier, null, { preparing: true });
         for (const eff of C.sharedExpansionVersion === 2 ? [] : wc.effects || []) {
           if (C.result || !enemy.alive) break;
-          applyEnemyEffect(C, enemy, eff, enemy.intent.moveId, carrier);
+          applyEnemyEffect(C, enemy, eff, enemy.intent.moveId, carrier, { preparing: true });
         }
         if (!C.result && enemy.alive) {
           enemy.pendingMove = { moveId: enemy.intent.moveId, resolveOnTurn: C.turn + (move.delay.turns != null ? move.delay.turns : 1) };
@@ -1251,7 +1251,7 @@ function executeMove(C, enemy, move, moveId) {
 // the row names no target (Dazed injectors; docs/FINISH.md, Owner decisions).
 const SEAT_PILE_OPS = new Set(['addCard', 'draw', 'discard', 'exhaust', 'shuffleDiscardIntoDraw']);
 
-function executeExpandedEnemyPayload(C, enemy, move, moveId, carrier, start = null) {
+function executeExpandedEnemyPayload(C, enemy, move, moveId, carrier, start = null, extraMeta = null) {
   if (Reactions.usesReactions(C)) {
     const actions = [];
     for (const P of livingPlayers(C)) {
@@ -1259,13 +1259,13 @@ function executeExpandedEnemyPayload(C, enemy, move, moveId, carrier, start = nu
       const effects = (move.effects || []).filter(effect => effect.target === 'player' || SEAT_PILE_OPS.has(effect.op));
       if (move.damage != null && carrier.combatProfile.maneuver !== 'counter') effects.unshift({ op: 'damage', target: 'player', amount: enemyMoveDamage(enemy, move), hits: move.hits ?? 1 });
       for (const effect of effects) actions.push({ effect: { ...effect, ...(effect.target === 'player' ? { target: undefined } : {}) },
-        source: enemy, owner: enemy, target: P.entity, card: carrier, meta: { moveId, activePlayerId: P.id } });
+        source: enemy, owner: enemy, target: P.entity, card: carrier, meta: { moveId, activePlayerId: P.id, ...extraMeta } });
     }
     setActive(C, firstLiving(C)); C.combatExpansionVersion = 2;
     const self = (move.effects || []).filter(effect => effect.target !== 'player' && !SEAT_PILE_OPS.has(effect.op));
     if (move.block != null && !(carrier.combatProfile.maneuver === 'counter' && enemyCounterDefensePrimed(enemy, moveId))) self.unshift({ op: 'block', target: 'self', amount: move.block });
     if (move.barrier != null && !(carrier.combatProfile.maneuver === 'counter' && enemyCounterDefensePrimed(enemy, moveId))) self.unshift({ op: 'gainBarrier', target: 'self', amount: move.barrier });
-    actions.unshift(...self.map(effect => ({ effect, source: enemy, owner: enemy, target: enemy, card: carrier, meta: { moveId } })));
+    actions.unshift(...self.map(effect => ({ effect, source: enemy, owner: enemy, target: enemy, card: carrier, meta: { moveId, ...extraMeta } })));
     const group = enqueueExpandedAction(C, actions, { source: enemy, target: firstLiving(C)?.entity, carrier });
     if (start && group) group.enemyMoveStart = start;
     drainQueue(C);
@@ -1276,7 +1276,7 @@ function executeExpandedEnemyPayload(C, enemy, move, moveId, carrier, start = nu
   const self = effects.filter(effect => effect.target !== 'player' && !SEAT_PILE_OPS.has(effect.op));
   if (move.block != null && !(carrier.combatProfile.maneuver === 'counter' && enemyCounterDefensePrimed(enemy, moveId))) self.unshift({ op: 'block', target: 'self', amount: move.block });
   if (move.barrier != null && !(carrier.combatProfile.maneuver === 'counter' && enemyCounterDefensePrimed(enemy, moveId))) self.unshift({ op: 'gainBarrier', target: 'self', amount: move.barrier });
-  for (const effect of self) C.enqueue({ effect, source: enemy, owner: enemy, target: enemy, card: carrier, meta: { moveId } });
+  for (const effect of self) C.enqueue({ effect, source: enemy, owner: enemy, target: enemy, card: carrier, meta: { moveId, ...extraMeta } });
   drainQueue(C);
   for (const P of livingPlayers(C)) {
     if (C.result || !enemy.alive) break;
@@ -1284,7 +1284,7 @@ function executeExpandedEnemyPayload(C, enemy, move, moveId, carrier, start = nu
     const targetEffects = effects.filter(effect => effect.target === 'player' || SEAT_PILE_OPS.has(effect.op));
     if (move.damage != null) targetEffects.unshift({ op: 'damage', target: 'player', amount: enemyMoveDamage(enemy, move), hits: move.hits ?? 1 });
     const actions = targetEffects.filter(effect => carrier.combatProfile.maneuver !== 'counter' || !['damage', 'poiseDamage'].includes(effect.op))
-      .map(effect => ({ effect, source: enemy, owner: enemy, target: P.entity, card: carrier, meta: { moveId } }));
+      .map(effect => ({ effect, source: enemy, owner: enemy, target: P.entity, card: carrier, meta: { moveId, ...extraMeta } }));
     enqueueExpandedAction(C, actions, { source: enemy, target: P.entity, carrier });
     drainQueue(C);
   }
@@ -1292,7 +1292,7 @@ function executeExpandedEnemyPayload(C, enemy, move, moveId, carrier, start = nu
 
 // Player-targeted effects (and seat-pile ops) fan out to every living seat;
 // self/enemy effects apply once.
-function applyEnemyEffect(C, enemy, eff, moveId, rootCarrier = null) {
+function applyEnemyEffect(C, enemy, eff, moveId, rootCarrier = null, extraMeta = null) {
   if (C.result || !enemy.alive) return;
   const move = C.registries.enemies.get(enemy.enemyId).moves[moveId];
   const carrier = rootCarrier || enemyMoveCarrier(enemy, move, moveId);
@@ -1300,12 +1300,12 @@ function applyEnemyEffect(C, enemy, eff, moveId, rootCarrier = null) {
     for (const P of livingPlayers(C)) {
       if (C.result || !enemy.alive) return;
       setActive(C, P);
-      C.enqueue({ effect: eff, source: enemy, owner: enemy, target: P.entity, card: carrier, meta: { moveId } });
+      C.enqueue({ effect: eff, source: enemy, owner: enemy, target: P.entity, card: carrier, meta: { moveId, ...extraMeta } });
       drainQueue(C);
     }
   } else {
     setActive(C, firstLiving(C));
-    C.enqueue({ effect: eff, source: enemy, owner: enemy, target: enemy, card: carrier, meta: { moveId } });
+    C.enqueue({ effect: eff, source: enemy, owner: enemy, target: enemy, card: carrier, meta: { moveId, ...extraMeta } });
     drainQueue(C);
   }
 }
