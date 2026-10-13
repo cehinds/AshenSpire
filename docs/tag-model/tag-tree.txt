@@ -860,10 +860,10 @@ lifecycle {Where a card goes after it is played or resolved: recalled to hand, s
     afterTurnDraw {Returns to your hand after your turn's draw.}
     afterCardPlay {Returns to your hand after you play another card.}
   seal {Set aside in the Sealed zone when its seal condition is met.}
-Reach {Inspection details for combat techniques.}
-  Contact {At melee reach.}
-  Near {Normal ranged reach.}
-  Far {Extended ranged reach.}
+Range {Inspection details for combat techniques.}
+  Melee {At melee range: within arm's length.}
+  Reach {At reach: past arm's length but not yet ranged.}
+  Ranged {At ranged distance.}
 Counter reach {Counter reach: which kind of incoming attack a counter can answer. Grouping node for the counter reach vocabulary.}
   Melee counter {Replies to eligible melee Attack or Smash. Sweep, Force, Piercing and Ranged bypass this reaction.}
   Spell counter {Intercepts incoming physical ranged moves or spells. Against physical ranged moves, strips Ward without Health retaliation. Against spellcasters, can retaliate against Health.}

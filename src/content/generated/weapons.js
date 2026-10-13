@@ -27,7 +27,8 @@ export const weapons = [
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "straightSwordInventory2026",
-    "physicalDamageType": "slashing"
+    "physicalDamageType": "slashing",
+    "range": "melee"
   },
   {
     "id": "greatsword",
@@ -57,7 +58,8 @@ export const weapons = [
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
-    "physicalDamageType": "slashing"
+    "physicalDamageType": "slashing",
+    "range": "melee"
   },
   {
     "id": "dagger",
@@ -84,7 +86,8 @@ export const weapons = [
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
-    "physicalDamageType": "piercing"
+    "physicalDamageType": "piercing",
+    "range": "melee"
   },
   {
     "id": "shortbow",
@@ -111,7 +114,8 @@ export const weapons = [
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
-    "physicalDamageType": "piercing"
+    "physicalDamageType": "piercing",
+    "range": "ranged"
   },
   {
     "id": "katana",
@@ -138,7 +142,8 @@ export const weapons = [
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
-    "physicalDamageType": "slashing"
+    "physicalDamageType": "slashing",
+    "range": "melee"
   },
   {
     "id": "halberd",
@@ -168,7 +173,8 @@ export const weapons = [
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
-    "physicalDamageType": "slashing"
+    "physicalDamageType": "slashing",
+    "range": "reach"
   },
   {
     "id": "warhammer",
@@ -195,7 +201,8 @@ export const weapons = [
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
-    "physicalDamageType": "blunt"
+    "physicalDamageType": "blunt",
+    "range": "melee"
   },
   {
     "id": "twinblade",
@@ -225,7 +232,8 @@ export const weapons = [
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
-    "physicalDamageType": "slashing"
+    "physicalDamageType": "slashing",
+    "range": "melee"
   },
   {
     "id": "battleaxe",
@@ -252,7 +260,8 @@ export const weapons = [
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
-    "physicalDamageType": "slashing"
+    "physicalDamageType": "slashing",
+    "range": "melee"
   },
   {
     "id": "buckler",
@@ -279,7 +288,8 @@ export const weapons = [
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
-    "physicalDamageType": "blunt"
+    "physicalDamageType": "blunt",
+    "range": "melee"
   },
   {
     "id": "kiteShield",
@@ -306,7 +316,8 @@ export const weapons = [
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "kiteShieldInventory2026",
-    "physicalDamageType": "blunt"
+    "physicalDamageType": "blunt",
+    "range": "melee"
   },
   {
     "id": "towerShield",
@@ -333,7 +344,8 @@ export const weapons = [
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
-    "physicalDamageType": "blunt"
+    "physicalDamageType": "blunt",
+    "range": "melee"
   },
   {
     "id": "roundShield",
@@ -360,7 +372,8 @@ export const weapons = [
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
-    "physicalDamageType": "blunt"
+    "physicalDamageType": "blunt",
+    "range": "melee"
   },
   {
     "id": "spikedShield",
@@ -387,7 +400,8 @@ export const weapons = [
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
-    "physicalDamageType": "piercing"
+    "physicalDamageType": "piercing",
+    "range": "melee"
   },
   {
     "id": "lantern",
@@ -414,7 +428,8 @@ export const weapons = [
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
-    "physicalDamageType": "blunt"
+    "physicalDamageType": "blunt",
+    "range": "melee"
   },
   {
     "id": "torch",
@@ -441,7 +456,8 @@ export const weapons = [
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
-    "physicalDamageType": "blunt"
+    "physicalDamageType": "blunt",
+    "range": "melee"
   },
   {
     "id": "parryDagger",
@@ -468,7 +484,8 @@ export const weapons = [
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
-    "physicalDamageType": "piercing"
+    "physicalDamageType": "piercing",
+    "range": "melee"
   },
   {
     "id": "ashStaff",
@@ -495,7 +512,8 @@ export const weapons = [
     "weaponArtManaCost": 1,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
-    "physicalDamageType": "blunt"
+    "physicalDamageType": "blunt",
+    "range": "reach"
   },
   {
     "id": "starstoneStaff",
@@ -525,7 +543,8 @@ export const weapons = [
     "weaponArtManaCost": 1,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
-    "physicalDamageType": "blunt"
+    "physicalDamageType": "blunt",
+    "range": "reach"
   },
   {
     "id": "boneSceptre",
@@ -555,7 +574,8 @@ export const weapons = [
     "weaponArtManaCost": 1,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
-    "physicalDamageType": "blunt"
+    "physicalDamageType": "blunt",
+    "range": "reach"
   },
   {
     "id": "emberlightSceptre",
@@ -582,7 +602,8 @@ export const weapons = [
     "weaponArtManaCost": 1,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
-    "physicalDamageType": "blunt"
+    "physicalDamageType": "blunt",
+    "range": "reach"
   },
   {
     "id": "goldboughBranch",
@@ -612,7 +633,8 @@ export const weapons = [
     "weaponArtManaCost": 1,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
-    "physicalDamageType": "blunt"
+    "physicalDamageType": "blunt",
+    "range": "reach"
   },
   {
     "id": "blightRod",
@@ -642,7 +664,8 @@ export const weapons = [
     "weaponArtManaCost": 1,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
-    "physicalDamageType": "blunt"
+    "physicalDamageType": "blunt",
+    "range": "reach"
   },
   {
     "id": "gorefireBrand",
@@ -672,7 +695,8 @@ export const weapons = [
     "weaponArtManaCost": 1,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
-    "physicalDamageType": "blunt"
+    "physicalDamageType": "blunt",
+    "range": "reach"
   },
   {
     "id": "wyrmhornStaff",
@@ -703,7 +727,8 @@ export const weapons = [
     "weaponArtManaCost": 1,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "",
-    "physicalDamageType": "blunt"
+    "physicalDamageType": "blunt",
+    "range": "reach"
   },
   {
     "id": "frostSpear",
@@ -730,7 +755,8 @@ export const weapons = [
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "halberd",
-    "physicalDamageType": "piercing"
+    "physicalDamageType": "piercing",
+    "range": "reach"
   },
   {
     "id": "cinderAxe",
@@ -760,7 +786,8 @@ export const weapons = [
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "battleaxe",
-    "physicalDamageType": "slashing"
+    "physicalDamageType": "slashing",
+    "range": "melee"
   },
   {
     "id": "duskChime",
@@ -790,6 +817,7 @@ export const weapons = [
     "weaponArtManaCost": 1,
     "uniqueSkillStaminaCost": 0,
     "inventoryArtKey": "boneSceptre",
-    "physicalDamageType": "blunt"
+    "physicalDamageType": "blunt",
+    "range": "reach"
   }
 ];
