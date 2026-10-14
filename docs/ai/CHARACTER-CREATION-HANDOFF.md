@@ -1,15 +1,21 @@
 # Character creation continuation handoff
 
-Updated 2026-10-14 for the local `worker/AddSubClasses/integration` assembly.
-The verified browser snapshot is source `47e273338`, build `0.7.1.1516`, source
-digest `6f221253cd`. The assembly subsequently reached `61fc43ab1` and merged
-current `origin/dev` at `b452125ee` (base build 1519); the next fresh build is
-pending as 1520. The source-47 captures below are evidence of that snapshot,
-not of the later Frost inspector correction or dev merge. Feature publication,
-the final discovered test suite and refreshed browser evidence remain pending.
+Updated 2026-10-14. Gameplay and UI code is verified at `530abc04b`, based on
+`origin/dev` `53e92b0da` (build 1519). The local assembly is
+`worker/AddSubClasses/integration`; origin workers are published before merging
+into `Feature/AddSubClasses`, then `Feature/updateCharacterCreation`.
+Final playable build is 0.7.1.1520 / digest `ef85447e6b`, built from
+`5423d7ce2b797c0fee0fe5a27d57612d85760a5b`. The delivery record below
+separates this artifact source from the later documentation-only delivery commit. Earlier 1516 and 1520/digest `5db99f0428` previews are
+historical snapshots and do not contain the final concise Class tiles.
 
 ## Implemented
 
+- [x] Compact Class tiles: canonical five-to-seven-word lore, short play style,
+  actual HP/SP/MP/AR/PR/DR/Poise/Ward/Evasion, equipped hands, relic and weapon art.
+  Neutral accurately names the absence of an active birth stance. List and Grid
+  use four desktop body lines and six phone lines, equal responsive heights,
+  contained portraits and a native relic detail target.
 - [x] Class → Attributes → Keepsake → Equipment → Feats → conditional Spells → Review.
 - [x] Feats remains a browse-only Character / Class / Skills progression browser:
   canonical locks and descriptions, **zero starting feat grants**.
@@ -88,7 +94,7 @@ and no `frostbite` status was restored.
 | Options, legality, draft recipes and identity | [identity model](../../src/model/subclasses.js), [deck recipes](../../src/model/subclassDeck.js), [class identity](../../src/model/classCard.js), [starting abilities](../../src/model/startingAbilities.js) |
 | Birth, grants, saves and progression | [run state](../../src/model/state.js), [loadout composer](../../src/model/loadout.js), [save door](../../src/engine/save.js), [class tree](../../src/model/classTree.js), [respec](../../src/model/classRespec.js) |
 | Source-scoped Cold/Frost behavior | [weapon infusion](../../src/model/weaponInfusion.js), [damage interpreter](../../src/engine/actions.js), `combatRules.js`, `combatCardTactics.js`, `combatExpansionActions.js` |
-| Production screens and reusable parts | [creation screen](../../src/ui/screens/customize.js), [lobby](../../src/ui/screens/lobby.js), [UI model](../../src/ui/models/CreationSubclassModel.js), [components](../../src/ui/components/creationSubclass.js), [UI notes](../subclass-creation-ui.md) |
+| Production screens and reusable parts | [creation screen](../../src/ui/screens/customize.js), [lobby](../../src/ui/screens/lobby.js), [UI model](../../src/ui/models/CreationSubclassModel.js), [Class summary](../../src/ui/models/CreationClassTileModel.js), [detached card preview](../../src/ui/models/CreationCardPreviewModel.js), [components](../../src/ui/components/creationSubclass.js), [UI notes](../subclass-creation-ui.md) |
 | Catalog and authoring sources | [component catalog](../component-catalog.html), `src/ui/catalog/creationSpecimens.js`, `styles/kit.css`, `content/source/uiStrings.csv`, `tools/hud-component-studio/projects/character-creation/` |
 
 The Studio scenes remain editable design/authoring material; changing them does
@@ -134,51 +140,94 @@ or standalone game; the Class pose is
 
 ## Verification and remaining work
 
-- [x] Root reported 151 passing focused core checks before the final dev merge.
-  Coverage includes eight eleven-card births, role semantics, visible hand
-  choices, selected spells/maneuvers, legacy identity and migration, restamps,
-  swaps, respec, invalid save references, solo/co-op combat and session restore.
-  This targeted result is not a full discovered-suite result.
-- [x] Focused ability, quick-start, class-tree, equipment-preview, respec and
-  co-op regressions passed during implementation. UI checks cover actual screen
-  mount, empty/partial picks and full stamped opening-card definitions rather
-  than only card IDs/counts.
-- [x] Built source `47e273338` as `0.7.1.1516`, digest `6f221253cd`; Chromium
-  Playwright/CDP captured 64 QA records across 23 component folios and all seven
-  creation pages at 1440×900 desktop and 390×844 phone widths. Touch/mouse
-  subclass changes, eleven-card inspection and focus return were recorded.
-- [x] The same standalone artifact's eight-choice matrix reports eleven cards
-  for every subclass and the required 5/1/1/4 source counts. Caster Spells is
-  visible for Starseer/Herald, including Monk; martial classes omit that step.
-- [x] Root reviewed the rendered compact desktop/phone class layout after the
-  measured zero-width inner-body fix. No further styling pass is scheduled.
-- [ ] Finish the final display-only Frost starting-card projection and inspector
-  acceptance. Thread the same disposable draft run/settings through the model
-  and inspector; actor-derived Cold/Frost must display without being persisted
-  onto birth refs. Root must record the accepted model/UI commit and tests here.
-- [ ] Record the final discovered-suite result against the completed assembly.
-  Earlier parallel lanes were stopped to free browser CPU; they do not establish
-  a full pass. Include the exact tested source, command, totals and any failures.
-- [ ] Build the final assembly (planned 1520), record its actual source/digest,
-  and recapture Frost card inspection after the projection fix and dev merge.
-  Source-47/build-1516 screenshots cannot certify these later changes.
-- [ ] Publish the assembled worker, feature branch and refreshed playable
-  preview through the agreed parent workflow; record exact refs, links and
-  durable evidence only after publication succeeds.
+- [x] Core engine/tool lane: **151 passed, zero failed**, source `f901b5467`:
+  `node tools/verdict.mjs -- node tests/run-node.mjs --no-selftests --no-discovered`.
+  This is separate from the discovered subclass acceptance tests.
+- [x] Fast discovery: **665 unique files / 6,456 Node tests**, no unresolved
+  failures. The certificate combines fifteen frozen-source proof shards, the
+  exact original 42-file shard replay at final code `530abc04b`, and five new
+  Class tests at `136ce67e0`. Runtime gameplay engine/model/data is unchanged
+  from the core snapshot; intervening changes are UI, copy ownership and its
+  reduced ledger. This is deliberately not a single-SHA full-suite claim.
+- [x] Original timing failures, timeout and unrecognized-verdict attempts remain
+  preserved. Full retries passed with the same assertions and deadlines;
+  the measured-count replay checks fresh Node output rather than inventing a
+  success line. The only code red was five copy sites newly owned by creation
+  strings; they now reuse those owners. The required copy budget decreased
+  `customRun.js` from 19 to 18, without increasing an allowance.
+- [x] Final named-import, zoom-unit and copy-budget gates passed. Class/copy/
+  catalog/native-detail acceptance passed **28/28**; Frost production-loader,
+  stamped-preview and actual-hit acceptance passed **26/26**. Mounted-feat
+  buildup keeps its original assertions; captured weapon identity remains frozen
+  while prepared status metadata refreshes.
+- [x] Native List/Grid browser verification covers all four Class selections at
+  1440×900, 1440×720 and 390×844: four/four/six body lines; equal selected heights
+  198/180/286.95 px; every child and portrait stays inside its border. Body type
+  is 16 physical pixels. Relic controls have a non-overlapping 44 px target,
+  touch opens the dialog, and close returns focus.
+- [x] Final standalone 1520/digest `ef85447e6b` verified all eight subclasses
+  with eleven cards and source counts 5/1/1/4. Only Starseer/Herald show Spells.
+  Actual Assign-points → Intelligence 3 → four Equipment folds → Feats → two
+  Spells → Review → Begin reaches Act I with no runtime errors. This screenshot
+  route uses memory storage; it is not a serialized-slot browser proof. Save and
+  co-op transport have separate automated acceptance coverage.
+- [x] Final build and refreshed artifact captures passed: 64 capture/interaction
+  records, plus the eight-subclass matrix and actual Begin flow. Final package
+  and compact Class delivery details are recorded below.
+- [x] Worker work is assembled for origin publication into `Feature/AddSubClasses`,
+  then `Feature/updateCharacterCreation`. Exact remotely verified commit/tree
+  receipts are saved in the origin-state record below.
+- [ ] Further visual/balance changes follow the owner's playtest feedback.
 
-Local source-47 evidence was recorded at
-`/workspace/scratch/subclass-preview/screenshots/results.json` and
-`/workspace/scratch/subclass-preview/screenshots/final-class-matrix.json`.
-These are ignored scratch records, not shipped files or durable release links.
-The page captures use rail navigation in a fresh creation preview and make no
-completed-playthrough claim. The harness itself reports that it did not run the
-full Node suite. Its optional music-manifest 404 uses the documented procedural
-score fallback.
+Fast checks follow the repository's `--no-slow` policy. Four slow files and tool
+self-tests belong to the heavy test/release lane and were not run in this local
+fast validation. No main/release merge or installer publication is claimed.
+
+## Evidence and delivery record
+
+- Fast certificate: `/workspace/scratch/subclass-validation/final-fast/final-certificate.json`.
+  Its adjacent logs/results preserve every attempt and identify each proof SHA.
+- Core: `/workspace/scratch/subclass-validation/final-core.result.json`.
+- Concise Class proof: `/workspace/scratch/subclass-preview/concise-class-review-157b/`
+  and `concise-class-grid-review-157b/`; combined gate receipt is
+  `concise-class-review-157b/final-gates.json`.
+- Historical 1520 captures: `/workspace/scratch/subclass-preview/screenshots-0.7.1.1520/`.
+- Final artifact stamp: `/workspace/scratch/subclass-preview/build-stamp.json`.
+  Version `0.7.1.1520`, digest `ef85447e6b`, artifact source `5423d7ce2`.
+- Final captures: `/workspace/scratch/subclass-preview/screenshots-0.7.1.1520-ef85447e6b/`.
+  `results.json` records 64 captures/interactions; `final-class-matrix.json`
+  checks all eight decks; `final-begin.json` records actual Begin into Act I.
+  The only expected network fallback is the optional music manifest (procedural score).
+- Final package launcher: `/workspace/scratch/subclass-preview/packages/0.7.1.1520-ef85447e6b/AshenSpire-subclass-preview-0.7.1.1520/START-HERE.html`.
+- ZIP: same parent directory, `AshenSpire-subclass-preview-0.7.1.1520.zip`
+  (119,383,939 bytes). Includes 76 captures, 27 component groups, the exact
+  standalone game and the design-only mouse layer editor.
+- Fresh compact Class captures: `class-reaver-desktop-1440x900.png` and
+  `class-reaver-mobile-390x844.png` in the final captures directory; all four
+  classes were rechecked against the standalone artifact at all three sizes.
+- Origin publication receipt: `/workspace/scratch/subclass-origin-state.json`.
+  Origin worker → `Feature/AddSubClasses` → `Feature/updateCharacterCreation`;
+  all three final trees must match the final local delivery tree. The earlier
+  unpublished local feature wrapper is preserved under
+  `backup/Feature-updateCharacterCreation-20261014`.
+- Artifact source stays `5423d7ce2`; the later delivery commit changes only this
+  handoff Markdown. Do not relabel the build as that later commit.
+
+All scratch evidence is local, ignored output, not a durable public release URL.
+The layer editor is an editable design library, separate from production code;
+mouse changes do not automatically patch the game.
+
+Default FrostMonarch's Ash Staff is a spell focus. Generic Bashing Blow has no
+lending armament and resolves as unarmed: both inspector and combat show 13
+Blunt with no inherited Cold/Frost. A resolved physical Sword source instead
+adds 2 Cold and 1 Frost after an HP-damaging contact. Sword/Staff acceptance is
+an explicit diagnostic fixture, not a legal starting Sword choice. Do not change
+source rules or equipment legality merely to force a preview bonus to appear.
 
 Useful focused shards: `tests/subclass-opening.test.mjs`,
-`tests/subclass-stamped-preview.test.mjs`,
-`tests/subclass-weapon-infusion.test.mjs`,
-`tests/creation-subclass-components.test.mjs`,
-`tests/creation-subclass-screen.test.mjs`, `tests/lobby-subclass-selection.test.mjs`.
-Browser harness: `node tools/character-creation-components-qa.mjs --out <directory>`.
+`tests/subclass-stamped-preview.test.mjs`, `tests/subclass-weapon-infusion.test.mjs`,
+`tests/creation-frost-inspector.test.mjs`, `tests/creation-class-tiles.test.mjs`,
+`tests/creation-subclass-components.test.mjs`, `tests/creation-subclass-screen.test.mjs`,
+`tests/lobby-subclass-selection.test.mjs`.
+Browser harness: `node tools/character-creation-components-qa.mjs --artifact --out <directory>`.
 Keep bulky generated evidence in ignored scratch output or CI artifacts.
