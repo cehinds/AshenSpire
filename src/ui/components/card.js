@@ -1,3 +1,4 @@
+import { stanceOf, stanceEntryBonuses, stanceRulesFor, stanceRatingBonus } from '../../model/stanceRules.js';
 import { cardSideTags } from './cardTagSymbols.js';
 import { illustratedCardHtml, illustratedArtwork, fitIllustratedCards } from './illustratedCard.js';
 import {applyCardAppearance} from './cardAppearance.js';
@@ -659,6 +660,24 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
   // card tooltip had the identical defect; it is one fix, not two.
   const combatProfile = combatProfileFor(def);
   html += sigilExplanationHtml(cardSigilIdentity(combatCardType(def), combatProfile));
+  if (def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2) {
+    const stance = stanceOf(def);
+    if (stance) {
+      const ctx = { registries, combatExpansionVersion: 2, stanceRules: registries.balance?.stanceRules };
+      const rules = stanceRulesFor(ctx), entry = stanceEntryBonuses(def, ctx);
+      const magical = stance.camp === 'spell';
+      const rated = { combatStance: stance };
+      const bonuses = ['ar', 'pr', 'dr', 'ward'].map(id => [id, stanceRatingBonus(ctx, rated, id)]);
+      const offense = bonuses.some(([id, amount]) => ['ar', 'pr'].includes(id) && amount > 0);
+      const active = bonuses.filter(([, amount]) => amount > 0).map(([id, amount]) => '+' + amount + ' ' + (id === 'ward' ? 'Ward rating' : id.toUpperCase()));
+      const grants = Object.entries(entry).filter(([, amount]) => amount > 0).map(([id, amount]) => '+' + amount + ' ' + ({ precision: 'Precision', evade: 'Evade', block: 'Block', barrier: 'Barrier' })[id]);
+      html += '<div class="combat-rule-hint"><strong>Stance:</strong> ' + esc(active.join(', ')) + ' while active; does not stack.'
+        + (grants.length ? ' On changing stance: ' + esc(grants.join(', ')) + '.' : '')
+        + ' Repeating the same stance grants no entry bonuses and costs ' + esc(rules.sameStanceDiscount) + ' less SP.'
+        + (stance.maneuver === 'defend' ? ' Every play restores ' + esc(rules.defenseRestore) + ' Poise and Ward; excess becomes Block and Barrier.' : '')
+        + (magical && offense ? ' Each existing status applied gains +' + esc(rules.spellStatusStacks) + ' stack.' : '') + '</div>';
+    }
+  }
   if (combatProfile.maneuver === 'counter') {
     if (def.counterCoverage) {
       const c = def.counterCoverage;

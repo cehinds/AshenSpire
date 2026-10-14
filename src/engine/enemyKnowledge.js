@@ -209,6 +209,9 @@ export function recordKnowledgeEvent(combat, event) {
   if (!combat.enemyKnowledge) return;
   // A reaction move is not the telegraphed intent; it leaves the pending knowledge action unresolved.
   if (event.type === 'enemyMoveStarted' && !event.reaction) resolveKnowledgeAction(combat, combat.enemies.find(row => row.id === event.sourceId));
+  if (event.type === 'attackMissed' && event.missReason === 'accuracy' && (event.evadeActive || event.evadeStacks > 0)) creditKnowledgeResponse(combat,
+    event.targetPlayerId || (combat.players instanceof Map ? null : combat.playerKey || 'player'), event.sourceId,
+    { committed: true, kind: 'evade', amount: 1, actionSerial: event.enemyActionSerial });
   if (event.type === 'attackEvaded') creditKnowledgeResponse(combat, event.targetPlayerId || (combat.players instanceof Map ? null : combat.playerKey || 'player'), event.sourceId,
     { committed: true, kind: 'evade', amount: 1, actionSerial: event.enemyActionSerial });
   if (event.type === 'combatAvoidanceResolved' && event.avoided && (event.evade?.success || event.prevention)) creditKnowledgeResponse(combat,

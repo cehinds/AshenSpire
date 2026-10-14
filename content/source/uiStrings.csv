@@ -1545,3 +1545,7 @@ creation.feats.summary.armourPractice,,More armour XP.,,
 creation.feats.summary.classInsight,,More class XP.,,
 creation.feats.summary.spoilsInstinct,,More Cinders from victory.,,
 creation.feats.summary.vitalRenewal,,Recover HP after victory.,,
+
+combat.callout.hit,,Hit,,
+combat.callout.evadeFailed,,Hit — Evade Failed,,
+combat.callout.missed,,Missed,,

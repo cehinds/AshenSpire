@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { loadAuditRuntime } from '../tools/combat-audit/runtime.mjs';
 import { makeAuditCombat } from '../tools/combat-audit/fixtures.mjs';
-import { assertImmediateContracts, auditCounterLifecycle, auditStateSnapshot } from '../tools/combat-audit/cards.mjs';
+import { assertImmediateContracts, auditCounterLifecycle, auditDeferredConditions, auditStateSnapshot } from '../tools/combat-audit/cards.mjs';
 test('positive authored effects require operation receipts even when card dispatch succeeds', () => {
   const card = { id: 'fixture', effects: [{ op: 'damage', amount: 6, target: 'enemy' }] };
   assert.throws(() => assertImmediateContracts(card, [{ type: 'cardPlayed', cardInstanceId: 'a' }], 'a'), /must emit damageDealt/);
@@ -36,4 +36,10 @@ for (const mode of ['native', 'bundled']) test(`${mode}: refusal state proof inc
   assert.notEqual(auditStateSnapshot(api, combat), before);
   combat.queue.push({ effect: { op: 'draw', amount: 1 }, source: combat.player });
   assert.throws(() => auditStateSnapshot(api, combat), /still resolving/);
+});
+
+for (const mode of ['native', 'bundled']) test(`${mode}: guarded and HP-loss predicates retain exact deferred reply payloads`, async () => {
+  const report = await auditDeferredConditions({ mode });
+  assert.equal(report.rows.length, 12);
+  assert.deepEqual(report.failures, []);
 });

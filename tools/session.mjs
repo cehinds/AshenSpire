@@ -775,7 +775,7 @@ export function createSession({ registries, seedString, endless = false, restore
     // full timeline protocol. The cursor advances with each snapshot build.
     const events = [...(live.opening || []), ...c.eventLog.slice(live.evCursor || 0)]
       .filter((e) => ['cardDrawn', 'deckShuffled', 'cardDiscarded', 'blockGained', 'dodgeRolled', 'procResisted', 'procBurst', 'statusApplied', 'statusExpired', 'enemyStaggered', 'stanceEntered', 'cardPlayed', 'playerTurnStart', 'enemyMoveStarted', 'enemyActorTurnStarted', 'combatCounterTriggered', 'impactDealt', 'damageDealt', 'healed', 'enemyDied', 'playerDowned', 'arcaneExposureChanged', 'arcaneExposureRefused', 'arcaneBreak',
-        'combatReactionUnavailable', 'critHit', 'combatGuardBroken', 'attackEvaded', 'combatAvoidanceResolved', 'playerStaggered', 'ratingImpact'].includes(e.type)
+        'combatReactionUnavailable', 'attackHit', 'attackMissed', 'critHit', 'combatGuardBroken', 'attackEvaded', 'combatAvoidanceResolved', 'playerStaggered', 'ratingImpact'].includes(e.type)
         || (e.type === 'hpLost' && e.cause !== 'attack'))
       .map((e) => ({
         eventIndex: c.eventLog.indexOf(e),
@@ -801,6 +801,9 @@ export function createSession({ registries, seedString, endless = false, restore
         ...(Array.isArray(e.cardIds) ? { cardIds: [...e.cardIds] } : {}),
         avoided: e.avoided, ...(e.evade && typeof e.evade === 'object' ? { evade: structuredClone(e.evade) } : {}),
         breaks: e.breaks, label: e.label, poise: e.poise,
+        ...(['attackHit', 'attackMissed'].includes(e.type) ? { hit: e.hit, missReason: e.missReason,
+          mode: e.mode, advantage: e.advantage, disadvantage: e.disadvantage,
+          evadeActive: e.evadeActive, bypass: e.bypass } : {}),
       }));
     // THE OPENING IS A MARKER, NOT A TURN NUMBER: only the scene that carries
     // the setup cues is the fight's opening (coop.js coopReceiptSounds), so a
@@ -872,6 +875,7 @@ export function createSession({ registries, seedString, endless = false, restore
         ...(P.entity.wardBlock !== undefined ? { wardBlock: P.entity.wardBlock } : {}),
         mana: P.entity.mana, maxMana: P.entity.maxMana,
         stamina: P.entity.stamina, maxStamina: P.entity.maxStamina,
+        level: P.level,
         attributeMode: P.attributeMode, attributes: { ...P.attributes },
         energy: P.entity.energy, energyMax: P.entity.energyMax,
         drawPerTurn: P.entity.drawPerTurn,

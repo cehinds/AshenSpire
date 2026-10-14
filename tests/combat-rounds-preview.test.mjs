@@ -106,8 +106,10 @@ test('a preview-off save is byte-identical to the save before the preview saved 
   // stream) and the re-priced cards change the text. The "no preview key" check above is what guards the off mode.
   // Re-recorded at the origin/dev merge 1ab0ff716 (#1945): the saved event log gains moveId on the enemy move's events
   // and triggeredBy on a relic's status; every other byte is the 18560cde5 save.
-  assert.equal(createHash('sha256').update(all).digest('hex'), '566d91635b6b177cefaa023662935de926da62ced426ba31aa356729e7061dee');
-  assert.equal(all.length, 130101);
+  // Re-recorded from ae2899cf CI for the stance continuation: ordinary fight
+  // saves now carry stance entry, Accuracy and round-start Evasion receipts.
+  // The exact SHA commits to every byte, including the saved text's length.
+  assert.equal(createHash('sha256').update(all).digest('hex'), '3838c6297bf49a523a78e4c35b805bf0b9a3e199e316a47243b8c268cef8a57a');
 });
 
 test('a preview fight with queued cards saves and restores: queues and paid SP intact, End Turn works after restore', () => {
