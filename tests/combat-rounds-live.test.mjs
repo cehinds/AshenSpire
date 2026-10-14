@@ -276,6 +276,7 @@ function ENEMY_ID_OF(c) {
 function scriptedLog(seed, classId = 'reaver', enemyIds = [ENEMY]) {
   const run = createRunState({ seed, classId, registries });
   const c = createRunCombat({ registries, rng: createRng(seed), run, enemyIds, settings: {} });
+  assert.equal('combatRounds' in c, false, 'the scripted baseline uses ordinary combat');
   const log = [];
   if (c.pendingReaction) log.push(['pending', c.pendingReaction.kind ?? 'x']);
   try { dispatch(c, { type: 'setReactions', enabled: false }); } catch (e) { log.push(['noreact', String(e.message)]); }
@@ -294,6 +295,8 @@ function scriptedLog(seed, classId = 'reaver', enemyIds = [ENEMY]) {
 
 test('with the preview off, a scripted fight event log is byte-identical to the recorded golden', () => {
   const all = [1, 2, 3].map((s) => scriptedLog(s)).join('\n');
+  assert.equal([1, 2, 3].map((s) => scriptedLog(s)).join('\n'), all,
+    'fresh fights reproduce the complete seeded event log byte for byte');
   // Re-recorded for the retuned Wandering Soldier (2 SP, HP 31-36, Slash 8; owner 2026-10-13: harder tier-1 normals).
   // Re-recorded at the origin/dev merge of 2026-10-13 (#1931, #1896 and the rest): dev's combat changes (reaction rules
   // version 2, split hits, Silenced, the damage-type tags the cost formula prices) change what the script plays.
@@ -301,8 +304,11 @@ test('with the preview off, a scripted fight event log is byte-identical to the 
   // log with keys added and nothing else changed: moveId on each enemy move's events, incoming and base on damageDealt,
   // source 'defendStance' on a stance block, triggeredBy on a triggered stagger. The PR #1953 review fixes (a mid-turn
   // stagger, a charge in a round, normal momentum per exchange) do not reach this preview-off script.
+  // Re-recorded for WardToBlock after merging dev 50017efe: ordinary combat now
+  // uses the revised defensive Reaction ranks and Counter return reach/Accuracy
+  // receipts. No preview state is introduced; the full seeded log repeats above.
   assert.deepEqual({ sha256: createHash('sha256').update(all).digest('hex'), length: all.length },
-    { sha256: 'b0e575b620cccace23b5bbb263eca69d8489014670dcad278b7809a9f5272e4a', length: 407839 });
+    { sha256: 'cedebae2268443855110f80b9f61543da6e5707a21fdbb947491bc814215a9b9', length: 408055 });
 });
 
 // Review finding 1: a queued card that an earlier queued card removed from hand never resolves.
