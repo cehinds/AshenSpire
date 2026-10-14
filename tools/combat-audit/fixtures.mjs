@@ -104,7 +104,7 @@ export function setAuditPredicate(combat, predicate, truth, target = combat.enem
       }
       return;
     case 'hpBelowPct':
-      for (const entity of entities) entity.hp = truth ? Math.max(1, Math.floor(entity.maxHp * p.pct / 100) - 1) : entity.maxHp;
+      for (const entity of entities) entity.hp = truth ? Math.max(1, Math.floor(entity.maxHp * p.pct / 100) - 1) : Math.min(entity.maxHp - 1, Math.floor(entity.maxHp * p.pct / 100) + 1);
       return;
     case 'inStance': combat.player.stanceId = truth ? p.stance : null; return;
     case 'firstCardThisTurn': combat.player.counters.cardsPlayedThisTurn = truth ? 0 : 1; return;

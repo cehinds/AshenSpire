@@ -3,7 +3,10 @@ import assert from 'node:assert/strict';
 import {spawnSync} from 'node:child_process';
 
 test('production export preserves shared registration, airborne height and exact stance bookends',()=>{
-  const result=spawnSync('python3',['-c',String.raw`
+  // CI adds the Pillow-enabled virtualenv to PATH. On Windows its executable
+  // is `python`; on Unix the same venv is reached through `python3`.
+  const python=process.env.PYTHON||(process.platform==='win32'?'python':'python3');
+  const result=spawnSync(python,['-c',String.raw`
 import importlib.util,tempfile,json
 from pathlib import Path
 from PIL import Image,ImageDraw
