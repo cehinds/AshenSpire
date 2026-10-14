@@ -9,6 +9,7 @@ export function makeAuditCombat(api, { classId, enemyIds, instance, seed = 701, 
     if (carrierId && !piece) throw new Error(`Unknown audit carrier '${carrierId}'`);
     for (const [attribute, need] of Object.entries(piece?.requirements?.attributes || {})) run.attributes[attribute] = Math.max(run.attributes[attribute] || 0, need);
     if (!api.applyEquipTransition(api.registries, run.loadout, 'rightHand', 0, carrierId)) throw new Error(`Cannot equip audit carrier '${carrierId}'`);
+    if (carrierId === null) api.applyEquipTransition(api.registries, run.loadout, 'leftHand', 0, null);
     api.stampDeck(api.registries, run);
     if (instance?.profileId) {
       const carrier = run.deck.find(c => c.profileId === instance.profileId);
