@@ -1,4 +1,5 @@
 import { enemyExpansion } from '../content/enemyExpansion.js';
+import { enemyStanceSprites } from '../content/enemyStanceSprites.js';
 import { assetUrl } from './assetmap.js';
 import { enemyPresentation, enemyAuraFilter } from './enemyStates.js';
 import { reducedMotionRequested } from './motion.js';
@@ -8,7 +9,8 @@ import { builtInFor } from './highResArt.js';
 
 const aliases = { guard: 'block', guardHit: 'block', projectile: 'rangedWeaponAttack', ranged: 'rangedWeaponAttack', buff: 'magicAttack', casting: 'magicAttack', magic: 'magicAttack', hurt: 'hit', afflicted: 'wounded', counter: 'counterattack', prone: 'defeated', sleep: 'defeated' };
 
-// Frames share one canvas and floor. Actions are selected only during playback.
+// Frames share one canvas and floor. The held body category is public even when
+// the move is concealed; action clips still run only during committed playback.
 export function enemyExpansionSprite(definition, entity = {}) {
   const art = enemyExpansion[definition.id];
   if (!art) return null;
@@ -66,12 +68,18 @@ export function enemyExpansionSprite(definition, entity = {}) {
   }
   function stop() { clearTimeout(timer); timer = null; generation++; }
   function settle() { stop(); draw(resolve(presentation.rest)); }
-  function setState(next) {
+  function setState(next = {}) {
     presentation = enemyPresentation(next);
+    const stances = enemyStanceSprites[definition.id];
+    const stance = stances && Object.hasOwn(stances, next.presentationStance) ? stances[next.presentationStance] : null;
+    if (presentation.rest !== 'defeated' && stance) presentation.rest = stance;
+    if (stance && presentation.rest !== 'defeated') root.dataset.stance = next.presentationStance;
+    else delete root.dataset.stance;
     root.style.filter = enemyAuraFilter(presentation.auraThemes);
     if (presentation.rest === 'defeated' || !timer) settle();
   }
-  for (const pose of art.poses) { const preload = new Image(); preload.src = assetUrl(path(pose)); }
+  const stancePoses = Object.values(enemyStanceSprites[definition.id] || {});
+  for (const pose of new Set([...art.poses, ...stancePoses])) { const preload = new Image(); preload.src = assetUrl(path(pose)); }
   const stage = {
     el: root, enemy: true, poses: [...art.poses, ...Object.keys(art.actions), ...Object.keys(aliases)],
     setState, settle,

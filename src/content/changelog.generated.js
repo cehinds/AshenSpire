@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-14",
     "summary": "Combat fades cover fighters, and player targets stay clear of Health",
     "detail": "Screen fades now cover idle and selected fighters while target selection, cards and the combat HUD remain above them. When the perspective view places the player behind the hand, its transparent 44px target moves clear of its own Health strip without changing the artwork, Health position or selected fighter size.",
-    "build": "0.7.1.1523",
+    "build": "0.7.1.1525",
     "pullRequest": 1978,
     "url": "https://github.com/cehinds/AshenSpire/pull/1978"
+  },
+  {
+    "id": "pr-1982",
+    "date": "2026-10-14",
+    "group": "2026-10-14",
+    "summary": "Every enemy shows its planned action stance",
+    "detail": "All 33 enemies hold a readable Smash, Attack, Counter, Sweep, Defend or Preparing pose while awaiting their action. The body cue remains visible when intent text is concealed; exact moves and damage stay hidden. Skill, Power and Spell share Preparing. New guarded Counter poses and grounded Hound wind-ups preserve the existing action animations, body scale and floor anchors, and return to the next planned stance after reactions.",
+    "build": "0.7.1.1525",
+    "pullRequest": 1982,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1982"
   },
   {
     "id": "pr-1983",
