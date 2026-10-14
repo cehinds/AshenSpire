@@ -188,7 +188,7 @@ export async function auditConditionalCards({ mode = 'native' } = {}) {
         const stableCompetitors = competitorIndices.every(i => otherPredicates[0][i] === otherPredicates[1][i]);
         const uniqueAmount = competitors.every(e => e.amount !== effect.amount);
         const amountContract = stableCompetitors && uniqueAmount && typeof effect.amount === 'number' && ['damage', 'block', 'heal'].includes(effect.op) && amountCounts[1] > amountCounts[0];
-        if (!stableCompetitors || (!uniqueAmount && competitors.length > 0)) report.uncovered.push({ key, condition: effect.if, reason: 'coeffects prevent independent effect-index attribution', otherPredicates });
+        if (!stableCompetitors) report.uncovered.push({ key, condition: effect.if, reason: 'coeffects prevent independent effect-index attribution', otherPredicates });
         else if (counts[1] <= counts[0] && !amountContract) report.uncovered.push({ key, condition: effect.if, counts, reason: 'state branch has no separable operation-count increase; needs amount or lifecycle contract' });
         else report.verified.push({ key, condition: effect.if, op: effect.op, contract: amountContract ? 'authored amount packet' : 'operation count', negative: amountContract ? amountCounts[0] : counts[0], positive: amountContract ? amountCounts[1] : counts[1] });
       } catch (error) {
