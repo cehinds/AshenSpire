@@ -86,6 +86,7 @@ for (const mode of ['native', 'bundled']) {
     assert.equal(report.encounters.missing.length, 0);
     assert.ok(report.encounters.rows.every(row => row.result === 'covered' && row.victory === 'victory' && row.victorySettled
       && row.targetProbes.length === row.enemyCount && row.targetProbes.every(probe => probe.cardId === 'crawlingShot' && probe.targetPlan
+        && probe.enemyStanceUnchangedBeforeDispatch
         && probe.paid && probe.energyPaid > 0 && probe.staminaPaid > 0 && probe.hitRange === 'reach' && probe.damage > 0
         && probe.hpAfter < probe.hpBefore && probe.died)));
   });
