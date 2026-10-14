@@ -191,6 +191,8 @@ test('a reaction that kills the attacker reports no alreadyAnswered for the canc
   const [option] = combat.pendingReaction.options;
   assert.ok(option, 'Whirling Guard is offered');
   combat.enemies[0].hp = 1;
+  // This lifecycle case needs a landed reaction; keep seed701's real draw.
+  combat.player.accuracy = 100; combat.enemies[0].evasion = 0;
   const events = dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId: option.id }).events;
   assert.ok(events.some(event => event.type === 'enemyDied'), 'the reaction killed the attacker');
   assert.deepEqual(unavailable(events), [], 'nothing claims the rest of a cancelled attack');

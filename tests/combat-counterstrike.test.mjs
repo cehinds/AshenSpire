@@ -57,13 +57,12 @@ test('an unbeaten Counterstrike attack deals what a 9-damage Attack deals agains
   assert.equal(events[0].advantaged, false);
 });
 
-test('a beaten Counterstrike attack scales first, then takes Attack vs Smash ×1.25', () => {
+test('Counterstrike retains its authored advantage without the removed Attack vs Smash multiplier', () => {
   // Attack beats Smash, so pct = 75%: 6 + floor(6 × 0.75) = 10 authored damage.
-  // Rating on the scaled amount: ceil(10 / 4) = 3, so 13. The Attack vs Smash multiplier
-  // (expansion matchup smashMultiplier 1.25) then gives ceil(13 × 1.25) = ceil(16.25) = 17.
+  // Rating on the scaled amount: ceil(10 / 4) = 3, so 13. Attack has no extra Smash multiplier.
   // It equals an unscaled 10-damage Attack against Smash.
   const scaled = play({ stance: 'smash' });
-  assert.equal(scaled.dealt, 17);
+  assert.equal(scaled.dealt, 13);
   assert.equal(scaled.dealt, play({ stance: 'smash', registries: authored(10) }).dealt);
   const [event] = scaled.combat.eventLog.filter(entry => entry.type === 'combatCounterstrikeApplied');
   assert.equal(event.cardId, 'strike');
@@ -71,8 +70,8 @@ test('a beaten Counterstrike attack scales first, then takes Attack vs Smash ×1
   assert.equal(event.advantaged, true);
 });
 
-test('the same beaten attack without Counterstrike deals 10 (ceil((6 + 2) × 1.25))', () => {
-  assert.equal(play({ stance: 'smash', registries: plain }).dealt, 10);
+test('the same attack without Counterstrike keeps its authored damage plus rating', () => {
+  assert.equal(play({ stance: 'smash', registries: plain }).dealt, 8);
 });
 
 test('authored damage 1 becomes 2 under Counterstrike (1 + max(floor(0.5), 1))', () => {

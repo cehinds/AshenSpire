@@ -1,3 +1,4 @@
+import { primeAccuracyRolls } from './accuracyFixture.mjs';
 // Poison, Psychic and Earth are real damage types (owner decisions #2, #5, #14).
 // Data-only: each type is a registry row plus a rider row in both matchup tables.
 import test from 'node:test';
@@ -23,6 +24,7 @@ function hit(damageType, enemyId = 'wanderingSoldier', combatExpansionVersion = 
   const combat = createCombat({ registries, rng: createRng(801), combatExpansionVersion, enemyIds: [enemyId],
     player: { classId: 'reaver', maxHp: 100, hp: 100, maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1,
       deck: [{ cardId: 'strike', instanceId: 'p', upgraded: false }] } });
+  primeAccuracyRolls(combat, { count: 2 });
   const enemy = combat.enemies[0];
   enemy.block = enemy.barrier = 0;
   const out = dispatch(combat, { type: 'playCard', cardInstanceId: 'p', targetId: enemy.id });

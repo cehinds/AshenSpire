@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
+import { stanceRatingBonus } from '../src/model/stanceRules.js';
 import { combatProfileFor } from '../src/model/combatCardProfile.js';
 import { applyCombatExpansionMartial, combatExpansionMartialOverlay } from '../src/content/combatExpansionMartial.js';
 import { tacticalCarrier, prepareTacticalCard, primeEnemyCounter } from '../src/engine/combatCardTactics.js';
@@ -72,7 +73,8 @@ const fixture = () => {
   target.counters = structuredClone(ctx.player.counters);
   Object.assign(ctx, { player: target, enemies: [source], ratingsRules: {}, queue,
     enqueue: action => queue.push(action), emit() {} });
-  ctx.rng.int = () => { throw new Error('Unexpected RNG'); };
+  // These cases isolate prepared payloads after a landed hit, so force a natural20.
+  ctx.rng.int = (stream, min, max) => { assert.equal(stream, 'combatAvoidance'); assert.equal(max, 20); return 20; };
   return { ctx, queue, target, source };
 };
 
@@ -101,9 +103,15 @@ test('Quickstep and Dodge print Block5 plus DR and return exactly3 plus AR witho
     const f = fixture(), def = applyCombatExpansionMartial(resolveCard(registries, { cardId: id, abilityRank: 0 }, 2));
     const carrier = tacticalCarrier(def, { cardId: id, type: def.type });
     const support = prepareTacticalCard(f.ctx, f.target, f.source, carrier, def.effects);
-    assert.equal(f.target.combatCounter.payload.hp, 7);
-    assert.equal(f.target.combatCounter.payload.poise, 0);
-    assert.equal(f.target.combatEvade.charges, 1);
+    assert.equal(def.counterPayload.hp, 3, 'the printed return keeps its authored base');
+    const activeAr = stanceRatingBonus(f.ctx, f.target, 'ar');
+    assert.equal(activeAr, 1, 'hybrid Evade retains the Counter offensive rating');
+    assert.equal(f.target.combatCounter.payload.hp, 3 + f.target.ratings.ar + activeAr);
+    assert.equal(f.target.combatCounter.payload.poise, 3, 'absent authored Poise receives the Counter fallback');
+    assert.equal(f.target.combatStance.maneuver, 'evade');
+    assert.equal(f.queue.filter(action => action.meta?.stanceEntry && action.effect.status === 'evade').length, 1);
+    assert.equal(f.queue.filter(action => action.meta?.stanceEntry && action.effect.status === 'precision').length, 1,
+      'hybrid Counter grants its offensive Precision once');
     assert.equal(support.find(effect => effect.op === 'block').amount, 5);
     assert.ok(!support.some(effect => ['damage', 'gainWard', 'dodgeRoll'].includes(effect.op)));
     assert.deepEqual(combatExpansionEntityProblems(f.target), []);
@@ -124,9 +132,9 @@ test('authored impact Counter is especially punishing only to its covered Smash 
     prepareTacticalCard(f.ctx, f.target, f.source, carrier, def.effects);
     const incoming = { combatProfile: { camp: 'physical', maneuver, range: 'melee', targeting: 'single' } };
     const receipt = beginTacticalAction(f.ctx, f.source, f.target, incoming, [{ amount: 8 }]);
-    recordTacticalContact(receipt, { blocked: 4 });
+    recordTacticalContact(receipt, { blocked: receipt.amount });
     completeTacticalAction(f.ctx, f.source, f.target, incoming, receipt);
-    assert.deepEqual(f.queue.filter(action => action.effect.op !== 'completeCombatAction').map(action => [action.effect.op, action.effect.amount]), [['poiseDamage', maneuver === 'smash' ? 6 : 4]]);
+    assert.deepEqual(f.queue.filter(action => action.effect.op !== 'completeCombatAction' && !action.meta?.stanceEntry && !action.meta?.stanceRestore).map(action => [action.effect.op, action.effect.amount]), [['poiseDamage', maneuver === 'smash' ? 6 : 4]]);
   }
 });
 
@@ -146,7 +154,7 @@ test('enemy partial Counter payload normalizes all lanes and uses the registered
   f.source.enemyId = 'fixture'; f.source.intent = { moveId: 'counter' };
   primeEnemyCounter(f.ctx, f.source, move, 'counter');
   assert.deepEqual(f.source.combatCounter.payload, { hp: 0, poise: 0, ward: 2 });
-  assert.equal(f.queue[0].effect.op, 'gainBarrier');
+  assert.equal(f.queue.find(action => !action.meta?.stanceEntry).effect.op, 'gainBarrier');
   assert.deepEqual(combatExpansionEntityProblems(f.source), []);
 });
 
@@ -165,7 +173,7 @@ test('equipment object traits preserve Grounded Counter and caster-only spell HP
   const incoming = { combatProfile: { camp: 'spell', maneuver: 'casting', school: 'lightning', range: 'reach', targeting: 'single' } };
   const receipt = beginTacticalAction(f.ctx, f.source, f.target, incoming, [{ amount: 3 }]);
   recordTacticalContact(receipt, { wardResisted: 3 }); completeTacticalAction(f.ctx, f.source, f.target, incoming, receipt);
-  assert.deepEqual(f.queue.filter(action => action.effect.op !== 'completeCombatAction').map(action => action.effect.amount), [3]);
+  assert.deepEqual(f.queue.filter(action => action.effect.op !== 'completeCombatAction' && !action.meta?.stanceEntry && !action.meta?.stanceRestore).map(action => action.effect.amount), [3]);
 });
 
 test('status-only previews do not advertise damage avoidance or consume readiness', () => {
@@ -220,12 +228,13 @@ test('Prone combo impact is conditional on a successful Contact return, while co
     prepareTacticalCard(f.ctx, f.target, f.source, counter, []);
     const incoming = { combatProfile: { camp: 'physical', maneuver: 'attack', range: 'melee', targeting: 'single' } };
     const receipt = beginTacticalAction(f.ctx, f.source, f.target, incoming, [{ amount: 8 }]);
-    recordTacticalContact(receipt, { blocked: 4 });
+    recordTacticalContact(receipt, { blocked: receipt.amount });
     completeTacticalAction(f.ctx, f.source, f.target, incoming, receipt);
-    assert.deepEqual(f.queue.filter(action => action.effect.op !== 'completeCombatAction').map(action => [action.effect.op, action.effect.amount]), [['poiseDamage', prone ? 5 : 3]]);
+    assert.deepEqual(f.queue.filter(action => action.effect.op !== 'completeCombatAction' && !action.meta?.stanceEntry && !action.meta?.stanceRestore).map(action => [action.effect.op, action.effect.amount]), [['poiseDamage', prone ? 5 : 3]]);
     const shot = tacticalCarrier({ tags: ['camp:physical', 'maneuver:ranged'],
       evade: { charges: 1, bonus: 0, advantage: true, whileStatus: 'prone' } });
     prepareTacticalCard(f.ctx, f.target, f.source, shot, []);
-    assert.equal(!!f.target.combatEvade?.charges, prone);
+    assert.equal(f.target.combatStance.maneuver, 'attack', 'auxiliary conditional Evade keeps the offensive stance');
+    assert.equal(f.queue.filter(action => action.meta?.stanceEntry && action.effect.status === 'evade').length, prone ? 1 : 0);
   }
 });

@@ -307,8 +307,12 @@ test('with the preview off, a scripted fight event log is byte-identical to the 
   // Re-recorded for WardToBlock after merging dev 50017efe: ordinary combat now
   // uses the revised defensive Reaction ranks and Counter return reach/Accuracy
   // receipts. No preview state is introduced; the full seeded log repeats above.
+  // Re-recorded from ae2899cf CI after universal Accuracy and stance entry/provenance changed the ordinary combat log.
+  // The independent fresh-fight repeat assertion above passed before accepting this new receipt.
+  // Re-recorded from 4f690ecc CI after explicit Evade-attempt receipts were added.
+  // The fresh three-seed replay assertion above passed before the generated hash was recorded.
   assert.deepEqual({ sha256: createHash('sha256').update(all).digest('hex'), length: all.length },
-    { sha256: 'cedebae2268443855110f80b9f61543da6e5707a21fdbb947491bc814215a9b9', length: 408055 });
+    { sha256: 'b2084a441168bc6b11cbb73a7e6d203fc290501e18a4e77b40673b534f5aa67c', length: 400878 });
 });
 
 // Review finding 1: a queued card that an earlier queued card removed from hand never resolves.

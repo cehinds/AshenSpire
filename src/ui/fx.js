@@ -383,6 +383,9 @@ export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
 // same word already showing on that fighter is not repeated.
 // ---------------------------------------------------------------------------
 export const CALLOUT_KINDS = {
+  hit: { string: 'combat.callout.hit', tone: 'white' },
+  evadeFailed: { string: 'combat.callout.evadeFailed', tone: 'white' },
+  missed: { string: 'combat.callout.missed', tone: 'white' },
   staggered: { string: 'combat.callout.staggered', tone: 'gold' },
   disrupted: { string: 'combat.callout.disrupted', tone: 'gold' },
   countered: { string: 'combat.callout.countered', tone: 'red' },
@@ -542,7 +545,7 @@ export function callout(layer, anchor, forId, kind) {
   el.dataset.calloutFor = String(forId);
   el.dataset.calloutKind = kind;
   el.setAttribute('aria-hidden', 'true');
-  el.textContent = t(def.string);
+  el.textContent = def.word || t(def.string);
   if (def.colour) el.style.color = def.colour;
   const ms = getAnimSpeed() === 'instant' ? CALLOUT_INSTANT_MS : CALLOUT_MS;
   el.style.setProperty('--fx-callout-ms', `${ms}ms`);
@@ -759,14 +762,16 @@ export function animateEvents(events, ctx, done) {
     // At most ONE ordinary event per tick: a callout between two hits must not
     // pull the next hit into this tick (a crit multi-hit still steps per hit).
     let hadRegular = false;
+    let outcomeLead = 0;
     do {
+      if (pending[i].type === 'attackHit') outcomeLead = STACK_STEP_MS * 2;
       if (!calloutOnly(pending[i], receiptVisuals)) hadRegular = true;
       cueThrough(beatOf.has(pending[i]) ? beatOf.get(pending[i]) : -1);
       const fn = visualFor(pending[i], undefined, receiptVisuals);
       if (fn) fn(ctx);
       i++;
     } while (i < pending.length && (calloutOnly(pending[i], receiptVisuals) || (!hadRegular && calloutOnly(pending[i - 1], receiptVisuals))));
-    setTimeout(step, COMBAT_TIMING.instantStepMs);
+    setTimeout(step, Math.max(COMBAT_TIMING.instantStepMs, outcomeLead));
   };
   step();
 }
@@ -1051,6 +1056,13 @@ export function playTimeline(events, ctx, done) {
     // bars. Counter beats and every other kind keep the 'impact' order.
     const sequential = beatOrder === 'sequential' && beat.kind === 'attack';
     const actorEl = beat.actorId ? ctx.anchorFor(beat.actorId) : null;
+    // Start the first accuracy word before stance entry, so its readable hold
+    // overlaps both stance entry and the swing instead of extending either.
+    // Later accuracy events keep their own per-hit ordering in the queues.
+    const accuracy = beat.events.find((e) => !(beat.lead || []).includes(e) && (e.type === 'attackHit' || e.type === 'damageDealt'));
+    const earlyHit = accuracy?.type === 'attackHit' ? accuracy : null;
+    const accuracyStartedAt = Date.now();
+    if (earlyHit) safe(() => visualFor(earlyHit, beat.kind, receiptVisuals)?.(ctx));
     // Stance first: an attacker caught mid-pose (a hurt frame, an unfinished
     // action) returns to its stance, and holds it a moment, before it swings.
     let stanceLead = false;
@@ -1118,7 +1130,7 @@ export function playTimeline(events, ctx, done) {
     // 2) after the wind-up, the beat's effect visuals + numbers, staggered
     // (sequential: only the contact parts here; reactions and numbers follow
     // the recovery).
-    const rest = beat.events.filter((e) => !lead.has(e));
+    const rest = beat.events.filter((e) => !lead.has(e) && e !== earlyHit);
     const partsOf = new Map(rest.map((e) => [e, visualPartsFor(e, beat.kind, { sequential, ...receiptVisuals })]));
     const visualEvents = sequential
       ? rest.filter((e) => partsOf.get(e)?.contact)
@@ -1186,7 +1198,7 @@ export function playTimeline(events, ctx, done) {
             safe(() => haptic.play('damageTaken'));
           }
           hitStop = 0;
-          schedule(stepV, speed.stepMs + (held ? holdMs : 0));
+          schedule(stepV, Math.max(speed.stepMs, event.type === 'attackHit' ? STACK_STEP_MS * 2 : 0) + (held ? holdMs : 0));
           return;
         }
         let reactionEndAt = 0;
@@ -1253,7 +1265,8 @@ export function playTimeline(events, ctx, done) {
             };
             if (!parts.reaction && !parts.numbers) {
               said();
-              stepR();
+              if (event.type === 'attackHit') schedule(stepR, STACK_STEP_MS * 2);
+              else stepR();
               return;
             }
             if (!parts.reaction) {
@@ -1286,7 +1299,7 @@ export function playTimeline(events, ctx, done) {
         else after();
       };
       stepV();
-    }, windup);
+    }, Math.max(windup, earlyHit ? STACK_STEP_MS * 2 - (Date.now() - accuracyStartedAt) : 0));
     };
     if (stanceLead) schedule(playBeat, speed.stanceLeadMs);
     else playBeat();
@@ -1536,6 +1549,8 @@ export function calloutForEvent(e = {}) {
   const popup = statusPopupFor(e);
   if (popup) return { kind: popup.kind, targetId: popup.targetId };
   switch (e.type) {
+    case 'attackHit': kind = e.evadeActive && !e.bypass ? 'evadeFailed' : 'hit'; break;
+    case 'attackMissed': kind = 'missed'; break;
     case 'damageDealt': case 'statusImmune': kind = outcomeKindForEvent(e); break;
     // A stagger a break caused shows that break's word and INTERRUPTED, not a second STAGGERED.
     case 'enemyStaggered': if (!e.cause) kind = 'staggered'; break;
@@ -1547,7 +1562,7 @@ export function calloutForEvent(e = {}) {
     case 'combatCounterTriggered': kind = 'countered'; break; // over the attacker who got countered
     case 'attackEvaded': kind = 'evaded'; break;
     // Any avoidance that stopped the hit is a miss: an evade, a distance roll, or a prevention charge.
-    case 'combatAvoidanceResolved': if (e.avoided) kind = 'evaded'; break;
+    case 'combatAvoidanceResolved': if (e.avoided && !e.hitCheck) kind = 'evaded'; break;
     case 'critHit': kind = 'critical'; break;
     case 'combatGuardBroken': kind = 'guardBreak'; break;
     case 'wardBroken': kind = 'wardBreak'; break;
@@ -1568,6 +1583,8 @@ function withCallout(parts, e) {
 
 // An event whose only visual is its callout: it never takes a step of its own.
 function calloutOnly(e, opts) {
+  // Accuracy has its own readable beat before damage or pressure begins.
+  if (e.type === 'attackHit' || e.type === 'attackMissed') return false;
   const parts = visualPartsFor(e, undefined, opts);
   return !!parts && Object.keys(parts).every((key) => key === 'callout' || !parts[key]);
 }

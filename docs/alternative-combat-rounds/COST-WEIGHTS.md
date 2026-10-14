@@ -222,6 +222,8 @@ player's piles).
 | `ash` | 0 | SP | An archetype chip. |
 | `basic` | 0 | SP | An archetype chip. |
 | `extractable` | 0 | SP | A loot marker. |
+| `target` | 0 | MP | Spell identity; its authored effects and range own the price. |
+| `hex` | 0 | MP | Spell identity; its authored effects and range own the price. |
 | `starstone` | 0 | SP | An archetype chip; its charge status is priced instead. |
 | `ritual` | 0 | SP | An archetype chip. |
 | `blight` | 0 | SP | An archetype chip; its status is priced instead. |
@@ -299,6 +301,8 @@ Every status a card applies (applyStatus, or buildup as one stack) weighs 2 (own
 
 | Status | Weight | Side | Reason |
 |---|---|---|---|
+| `precision` | 2 | card | The owner's floor for an authored status grant. |
+| `evade` | 2 | card | The owner's floor for an authored status grant. |
 | `strength` | 2 | card | The owner's floor for a status. |
 | `dexterity` | 2 | card | The owner's floor for a status. |
 | `weak` | 2 | card | The owner's floor for a status. |

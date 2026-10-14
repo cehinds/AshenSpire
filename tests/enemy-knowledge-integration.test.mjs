@@ -1,3 +1,4 @@
+import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -140,9 +141,10 @@ test('a committed successful evade against a multi-hit wholly unknown action cre
   dispatch(combat, { type: 'playCard', cardInstanceId: 'knowledge-counter' });
   assert.equal(combat.enemyKnowledge.owners.player.earnedXp, 0);
   const prepared = structuredClone(combat.player.combatEvade);
+  primeAccuracyRolls(combat, { die: 1 });
   dispatch(combat, { type: 'endTurn' });
   skipReactions(combat);
-  assert.ok(combat.eventLog.some(event => event.type === 'combatAvoidanceResolved' && event.evade?.success), JSON.stringify({ prepared, events: combat.eventLog.slice(-22) }));
+  assert.ok(combat.eventLog.some(event => event.type === 'attackMissed' && event.missReason === 'accuracy' && event.evadeStacks > 0), JSON.stringify({ prepared, events: combat.eventLog.slice(-22) }));
   assert.equal(combat.enemyKnowledge.owners.player.earnedXp, 1);
   const owner = combat.enemyKnowledge.owners.player;
   assert.equal(owner.pending.enemies[enemy.id].receipts[combat.enemyKnowledge.encounter.id].bonus, true);
