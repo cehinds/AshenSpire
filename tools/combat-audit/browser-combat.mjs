@@ -24,6 +24,7 @@ const cardFilter = arg('card');
 const classFilter = arg('class');
 const variantFilter = arg('variant');
 const pace = arg('pace') || 'fast';
+const curated = arg('curated') === 'true';
 const resumePath = arg('resume');
 const url = process.env.QA_BUILD_URL;
 const source = process.env.QA_SOURCE_URL || (url && new URL('./src/', url).href);
@@ -130,7 +131,8 @@ async function boot(context, classId) {
   });
   const settings = encodeURIComponent(JSON.stringify({ animSpeed: pace }));
   const kit = arg('main-hand') ? `&shotKit=1&shotMainHand=${encodeURIComponent(arg('main-hand'))}&shotOffHand=${encodeURIComponent(arg('off-hand') || '')}` : '';
-  await page.goto(`${url}?shot=combat&shotClass=${classId}&shotSeed=B&shotMaxHp=200&shotMaxMana=200&shotMaxStamina=200&shotMana=200&shotSettings=${settings}${kit}`, { waitUntil: 'domcontentloaded' });
+  const pools = curated ? '' : '&shotMaxHp=200&shotMaxMana=200&shotMaxStamina=200&shotMana=200';
+  await page.goto(`${url}?shot=combat&shotClass=${classId}&shotSeed=B${pools}&shotSettings=${settings}${kit}`, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('.end-turn:not([disabled])', { timeout: 30000 });
   await page.evaluate(() => { window.__auditBaseRun = structuredClone(window.__combatRunForShot); window.__auditBaseRng = window.__combat.rng.getCounters(); window.__auditRuntime = Object.fromEntries(Object.entries(window.__combat).filter(([, v]) => typeof v === 'function')); });
   return page;
@@ -146,8 +148,10 @@ async function fixture(page, row) {
       throw new Error('Previous case left pending state or animation; refusing fixture reset');
     for (const [key, fn] of Object.entries(window.__auditRuntime)) if (c[key] !== fn) throw new Error(`Runtime function changed: ${key}`);
     const run = structuredClone(window.__auditBaseRun);
-    run.maxHp = run.maxMana = run.maxStamina = 200; run.hp = 100; run.mana = run.stamina = 100;
-    run.ashenBlightBasePools = { maxHp: 200, maxMana: 200, maxStamina: 200 };
+    if (!row.curated) {
+      run.maxHp = run.maxMana = run.maxStamina = 200; run.hp = 100; run.mana = run.stamina = 100;
+      run.ashenBlightBasePools = { maxHp: 200, maxMana: 200, maxStamina: 200 };
+    }
     c.rng.restoreCounters(window.__auditBaseRng);
     if (row.relicId) run.relics = [...new Set([...run.relics, row.relicId])];
     const native = row.profileId ? run.deck.find(i => i.cardId === row.cardId && i.profileId === row.profileId) : null;
@@ -161,7 +165,7 @@ async function fixture(page, row) {
     window.__auditInstanceId = inst.instanceId;
     const enemies = row.enemyIds || ['wanderingSoldier', 'wanderingSoldier'];
     const encounter = c.registries.encounters.all().find(e => enemies.every(id => e.enemies.includes(id)));
-    const fresh = createRunCombat({ registries: c.registries, rng: c.rng, run, enemyIds: enemies, encounter, hpMult: row.victory ? 1 : 20,
+    const fresh = createRunCombat({ registries: c.registries, rng: c.rng, run, enemyIds: enemies, encounter, hpMult: row.victory || row.curated ? 1 : 20,
       enemyStatuses: row.enemyStatuses || [], playerStatuses: row.playerStatuses || [] });
     // The unchanged live commit callback owns this same run encounter. Mirror the
     // canonical fixture's accepted knowledge receipt into the host run, too.
@@ -176,9 +180,11 @@ async function fixture(page, row) {
     c.piles.hand = [inst, ...(prefix ? [prefix] : []), ...c.piles.hand.filter(i => i.instanceId !== inst.instanceId && i.instanceId !== prefix?.instanceId).slice(0, 2)];
     c.piles.draw = run.deck.filter(i => !c.piles.hand.some(h => h.instanceId === i.instanceId));
     c.piles.discard = []; c.piles.exhaust = [];
-    c.player.energy = row.deniedCost ? 0 : 20; c.player.energyMax = 20;
-    c.player.mana = row.deniedCost ? 0 : Math.floor(c.player.maxMana / 2); c.player.stamina = row.deniedCost ? 0 : Math.floor(c.player.maxStamina / 2);
-    c.player.hp = Math.ceil(c.player.maxHp / 2);
+    if (!row.curated) {
+      c.player.energy = row.deniedCost ? 0 : 20; c.player.energyMax = 20;
+      c.player.mana = row.deniedCost ? 0 : Math.floor(c.player.maxMana / 2); c.player.stamina = row.deniedCost ? 0 : Math.floor(c.player.maxStamina / 2);
+      c.player.hp = Math.ceil(c.player.maxHp / 2);
+    }
     // A repeat-enter refusal gets a separate expected-refusal case; initial stance cards can enter normally.
     const stance = c.registries.cards.get(inst.cardId).effects?.find(e => e.op === 'enterStance' && e.stance)?.stance;
     if (row.repeatStance) c.player.stanceId = stance;
@@ -274,6 +280,7 @@ async function play(page, device, row, before) {
       window.__auditSelectedOrigin = { at: performance.now(), missing: !stage, pose: stage?.pose, stance: stage?.stance, rest: stage?.rest, action: stage?.presentation?.action };
     });
   }
+  if (row.curated) await page.screenshot({ path: resolve(out, `${device}-${row.classId}-${row.cardId}-selected.png`) });
   if (before.refused || row.deniedCost) {
     assert.equal(await page.evaluate(() => window.__combat.eventLog.slice(window.__auditStart.eventCount).some(e => e.type === 'cardPlayed')), false);
     assert.equal(await page.locator('.end-turn').isEnabled(), true);
@@ -325,6 +332,10 @@ async function play(page, device, row, before) {
   }
   if (before.choice) await tap(page, page.locator('.card-choice [data-choice]:not([disabled])').first(), device);
   await page.waitForFunction(() => window.__combat.eventLog.slice(window.__auditStart.eventCount).some(e => e.type === 'cardPlayed' && e.cardInstanceId === window.__auditInstanceId), null, { timeout: 10000 });
+  if (row.curated) {
+    await page.waitForFunction(() => !!document.querySelector('.combatant.player .alternative-card-stage')?.__poseStage?.presentation?.action, null, { timeout: 5000 });
+    await page.screenshot({ path: resolve(out, `${device}-${row.classId}-${row.cardId}-paid-action.png`) });
+  }
   return { choices: await finishPending(page, device, row.chooseReaction), invalidTargetRecovered: !!row.invalidTarget };
 }
 
@@ -401,6 +412,7 @@ async function endTurnAndPlayNext(page, device, row) {
 }
 
 async function runCase(page, device, classId, row) {
+  row.classId = classId;
   row.instanceId = `audit-${report.cases.length}-${row.cardId}-${row.variant}`;
   activeCase = { device, classId, ...row };
   const entry = { ...activeCase, status: 'running' }; report.cases.push(entry);
@@ -493,6 +505,11 @@ async function runCase(page, device, classId, row) {
     assert.deepEqual(entry.after.unhandled, [], 'no unhandled rejection');
     assert.equal(report.errors.length, errorStart, 'no caught dispatch/animation/console failures');
     entry.status = entry.input.refusal ? 'expected-refusal' : 'passed';
+    if (row.curated) {
+      await page.screenshot({ path: resolve(out, `${device}-${classId}-${row.cardId}-held.png`) });
+      entry.gallery = { build, classId, device, cardId: row.cardId, canonicalPools: true, fixture: 'Canonical screenshot run pools and enemy HP; authored card added to a legal run deck, paid through real input.',
+        captures: ['selected', 'paid-action', 'held'].map(phase => resolve(out, `${device}-${classId}-${row.cardId}-${phase}.png`)) };
+    }
     const hash = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
     entry.parity = { actualState: hash(entry.after.actual), oracleState: hash({ player: entry.after.oracle.player, enemies: entry.after.oracle.enemies, piles: entry.after.oracle.piles, phase: entry.after.oracle.phase }),
       actualEffects: hash(entry.after.events), oracleEffects: hash(entry.after.oracle.events) };
@@ -521,7 +538,7 @@ try {
       for (const card of cards) {
         const variants = ['base', ...(card.upgraded ? ['upgraded'] : [])].filter(v => !variantFilter || variantFilter === v);
         for (const variant of variants) {
-          const row = { cardId: card.id, variant, category: 'card', figureTarget: card.id.length % 2 === 0,
+          const row = { cardId: card.id, variant, category: 'card', figureTarget: card.id.length % 2 === 0, curated,
             sampleAnimation: pace === 'normal' && variant === 'base' && ['strike','defend','starSpark','guardCounter','sweepingBlow','crimsonCleave','quickstep','bindingParry','ricochet','cometFragment','litany','bloodPact','bashingBlow','evasiveGuard','wardingStar','nockAndWait'].includes(card.id) };
           let baseEntry = completedCase(device, classId, row);
           if (!baseEntry && !await runCase(page, device, classId, row)) {
