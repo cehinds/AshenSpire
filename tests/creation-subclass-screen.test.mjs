@@ -94,3 +94,30 @@ for (const classId of ['reaver', 'starseer']) {
     assert.equal(app.querySelector('#cz-start').getAttribute('aria-disabled'), 'true');
   }));
 }
+
+test('native keyboard trait activation and reselection retain focus on the replacement canonical choice', () => creationDom(async (app, dom) => {
+  const { mountCustomize } = await import('../src/ui/screens/customize.js');
+  mountCustomize(app, { registries, defaultSeedString: 'GOLDBOUGH', onBack() {}, onStart() {} });
+  app.querySelector('#cz-tab-subclass').click();
+  await Promise.resolve();
+  const original = app.querySelector('[data-creation-trait]');
+  const id = original.dataset.creationTrait;
+  original.focus();
+  assert.equal(dom.document.activeElement, original);
+  // Native Enter/Space activation arrives as click; the fixture models the
+  // resulting activation and focus lifecycle without claiming trusted input.
+  original.click();
+  await Promise.resolve();
+  const selected = [...app.querySelectorAll('[data-creation-trait]')].find(choice => choice.dataset.creationTrait === id);
+  assert.notEqual(selected, original);
+  assert.equal(selected.getAttribute('aria-pressed'), 'true');
+  assert.equal(dom.document.activeElement, selected);
+  assert.ok(app.contains(dom.document.activeElement));
+  selected.click();
+  await Promise.resolve();
+  const reselectable = [...app.querySelectorAll('[data-creation-trait]')].find(choice => choice.dataset.creationTrait === id);
+  assert.notEqual(reselectable, selected);
+  assert.equal(reselectable.getAttribute('aria-pressed'), 'false');
+  assert.equal(dom.document.activeElement, reselectable);
+  assert.ok(app.contains(dom.document.activeElement));
+}));

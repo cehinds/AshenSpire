@@ -681,6 +681,16 @@ export function mountCustomize(app, {
       choice.addEventListener('click', () => {
         state.initialClassTreeChoices = picked ? scoped.chosen.slice(0, scoped.chosen.indexOf(id)) : [...scoped.chosen, id];
         renderSubclassTraits(); refreshAbilitySelection(); renderSpells(); renderCharacterPreview(); refreshFaces(); updateStartRefusal();
+        // Native keyboard activation redraws this button. Restore the canonical
+        // choice after every dependent renderer has finished replacing nodes.
+        queueMicrotask(() => {
+          if (!app.contains(host)) return;
+          const choices = [...host.querySelectorAll('[data-creation-trait]')];
+          const replacement = choices.find(choice => choice.dataset.creationTrait === id)
+            || choices.find(choice => choice.getAttribute('aria-pressed') !== 'true') || next;
+          focusElement(replacement);
+          replacement?.focus({ preventScroll: true });
+        });
       });
       host.append(choice);
     }
