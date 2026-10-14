@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-14",
     "summary": "Rogue, Starseer and Herald jump into their ground-slam Smash",
     "detail": "The selected dagger-and-buckler, ash-staff and bone-sceptre paintings now move from their held stance through takeoff, airborne load and ground impact before returning to that same stance. These paintings were authored with the class starter weapons and share the existing class-default presentation. Phone views preserve the complete weapons and effects, and delayed impact cues finish before the pose recovers. All card animations use the character’s default weapon art regardless of equipped weapons, while equipment keeps its actual stats, costs and effects. A four-class combat gallery shows 29 held views and 77 labeled animation/reaction groups, with existing fallback and legacy equipment differences identified.",
-    "build": "0.7.1.1517",
+    "build": "0.7.1.1519",
     "pullRequest": 1974,
     "url": "https://github.com/cehinds/AshenSpire/pull/1974"
+  },
+  {
+    "id": "pr-1977",
+    "date": "2026-10-14",
+    "group": "2026-10-14",
+    "summary": "Magic defense grants Block and Ward, and reactions show their limits",
+    "detail": "Defensive spells and non-Evade spell counters split their base protection between physical Block and Ward: 30:70 normally, 50:50 for Frost, and 70:30 for Force and Alteration. DR strengthens Block and PR strengthens Ward. Magic defense covers Melee, Reach and Ranged contacts; counter replies keep their own attack range and miss on failed accuracy or avoidance. Defense cards from rank 1 and Sweep cards from rank 2 have Reaction. Compact cards and inspection show their stance category, protection and counter rules consistently across the game.",
+    "build": "0.7.1.1519",
+    "pullRequest": 1977,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1977"
   },
   {
     "id": "pr-1976",

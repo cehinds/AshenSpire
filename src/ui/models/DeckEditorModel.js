@@ -21,6 +21,7 @@ import {
 } from '../../model/deckRules.js';
 import { isItemOwned } from '../../model/loadout.js';
 import { resolveCard } from '../../model/registries.js';
+import { cardClassification } from '../../model/cardClassification.js';
 import { deckRules } from '../../content/deckRules.js';
 import { has, t } from '../strings.js';
 
@@ -81,6 +82,7 @@ function describe(registries, card) {
     cost: def.cost,
     costBucket: costBucket(def.cost),
     type: def.type,
+    cardCategory: cardClassification(def).cardCategory,
     source: sourceOf(card, def),
     upgraded: !!card.upgraded,
   };

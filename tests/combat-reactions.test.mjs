@@ -376,9 +376,11 @@ test('terminal reaction victory and defeat retire continuation before durable co
     const player = { id: 'a', classId: 'reaver', hp: 100, maxHp: 100, mana: 20, maxMana: 20,
       stamina: 20, maxStamina: 20, energyMax: 20, drawPerTurn: 1, combatExpansionVersion: 2,
       deck: [{ cardId: 'guardCounter', instanceId: 'terminal-counter', upgraded: false }] };
-    const combat = coop ? createCoopCombat({ registries, rng: createRng(701), players: [player], enemyIds: ['wanderingSoldier'], reactionRulesVersion: 1 })
-      : createCombat({ registries, rng: createRng(701), player, enemyIds: ['wanderingSoldier'], combatExpansionVersion: 2, reactionRulesVersion: 1 });
+    const combat = coop ? createCoopCombat({ registries, rng: createRng(17), players: [player], enemyIds: ['wanderingSoldier'], reactionRulesVersion: 1 })
+      : createCombat({ registries, rng: createRng(17), player, enemyIds: ['wanderingSoldier'], combatExpansionVersion: 2, reactionRulesVersion: 1 });
     combat.foundation = createFoundation(combatRules);
+    // Seed 17 rolls a natural 20 on the first Counter Accuracy check. The
+    // real seeded stream survives transactional clones and exact restoration.
     const owner = coop ? combat.players.get('a').entity : combat.player;
     owner.block = result === 'victory' ? 10000 : 0;
     if (result === 'defeat') owner.hp = 1;
@@ -401,7 +403,8 @@ test('terminal reaction victory and defeat retire continuation before durable co
     assert.deepEqual(JSON.parse(JSON.stringify(save(combat))), before);
     assert.deepEqual(combat.rng.getCounters(), counters);
     refused = false; answerTerminal();
-    assert.equal(combat.phase, 'ended'); assert.equal(combat.result, result);
+    assert.equal(combat.phase, 'ended', JSON.stringify({ coop, result, hp: owner.hp,
+      enemyHp: combat.enemies[0].hp, events: combat.eventLog.slice(-24) })); assert.equal(combat.result, result);
     assert.ok(terminalSave, 'the durable callback can serialize the terminal candidate before adoption');
     for (const field of ['reactionCursor', 'pendingReaction', 'reactionResume', 'reactionHandCleanup']) assert.equal(combat[field], undefined);
     for (const seat of combat.players?.values() || []) assert.equal(seat.reactionHandCleanup, undefined);
@@ -409,7 +412,7 @@ test('terminal reaction victory and defeat retire continuation before durable co
     assert.equal(combat.eventLog.filter(event => event.type === 'combatEnd').length, 1);
     assert.equal(combat.eventLog.filter(event => event.type === 'enemyActorTurnStarted').length, 1);
     assert.equal(combat.eventLog.filter(event => event.type === 'cardPlayed').length, result === 'victory' ? 1 : 0);
-    const restoredRng = createRng(701, combat.rng.getCounters());
+    const restoredRng = createRng(17, combat.rng.getCounters());
     const restored = coop ? createCoopCombat({ registries, rng: restoredRng, players: [player], enemyIds: [], snapshot: terminalSave })
       : restoreCombatSnapshot({ registries, rng: restoredRng, snapshot: terminalSave });
     const comparable = state => coop ? decodeCoopCombatSnapshot(save(state)) : save(state);

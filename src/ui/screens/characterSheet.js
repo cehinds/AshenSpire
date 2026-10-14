@@ -159,7 +159,7 @@ export function openSkillInspection({ registries, run, track, opener }) {
   const cards = el('div', { class: 'progression-associated-cards' }, model.cards.map(card => renderCard(registries, { cardId: card.id, upgraded: false,
     ...(Number.isInteger(card.abilityRank) ? { abilityRank: card.abilityRank } : {}),
     ...(card.legacyAbility ? { legacyAbility: true } : {}),
-  })));
+  }, { rules: run })));
   let shell;
   const back = button({ label: t('common.back') });
   back.addEventListener('click', () => shell.close());

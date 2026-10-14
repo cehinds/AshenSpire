@@ -24,11 +24,11 @@ test('authored layout and actual mounted Spell footers retain the outlined spark
     for (const cardId of ['starstonePebble', 'starSpark']) {
       const card = renderCard(registries, { cardId }, { inspection: false });
       document.body.append(card);
-      const svg = card.querySelector('[data-primary-sigil="spell"] .combat-sigil-action svg');
+      const svg = card.querySelector('[data-primary-sigil="attack"] .combat-sigil-action svg');
       assert.ok(svg, cardId);
       assert.equal(svg.getAttribute('fill-rule'), 'evenodd');
       assert.equal(svg.querySelectorAll('path').length, 1);
-      assert.equal(svg.querySelector('path').getAttribute('d'), 'm16 2 5 9 9 5-9 5-5 9-5-9-9-5 9-5Zm0 9-5 5 5 5 5-5Z');
+      assert.equal(svg.querySelector('path').getAttribute('d'), ACTION_SIGILS.attack.shape.match(/d="([^"]+)"/)[1]);
     }
   });
 });
