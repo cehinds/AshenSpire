@@ -74,7 +74,7 @@ async function fixture(page, row) {
   return page.evaluate(async ({ source, row }) => {
     const [{ createRunCombat }, { resolveCombatCard }, { previewCard, cardChoicePlan }, { cardTargetPlan }, { assertFoundationPlayable }, { controlGate }] = await Promise.all([
       import(source + 'engine/runCombat.js'), import(source + 'engine/combatExpansion.js'), import(source + 'engine/combat.js'),
-      import(source + 'model/cardTargets.js'), import(source + 'engine/combatRules.js'), import(source + 'engine/controlStatuses.js')]);
+      import(source + 'model/cardTargets.js'), import(source + 'engine/combatRules.js'), import(source + 'engine/combatStatusControl.js')]);
     const c = window.__combat;
     if (c.pendingReaction || c.reactionResume || c.pendingAbilityDiscard || c.queue.length || document.querySelector('.hand')?.inert)
       throw new Error('Previous case left pending state or animation; refusing fixture reset');
@@ -94,13 +94,15 @@ async function fixture(page, row) {
     c.piles.hand = [inst, ...c.piles.hand.filter(i => i.instanceId !== inst.instanceId).slice(0, 2)];
     c.piles.draw = run.deck.filter(i => !c.piles.hand.some(h => h.instanceId === i.instanceId));
     c.piles.discard = []; c.piles.exhaust = [];
-    c.player.energy = row.deniedCost ? 0 : 200; c.player.energyMax = 200;
-    c.player.mana = row.deniedCost ? 0 : c.player.maxMana; c.player.stamina = row.deniedCost ? 0 : c.player.maxStamina;
+    c.player.energy = row.deniedCost ? 0 : 20; c.player.energyMax = 20;
+    c.player.mana = row.deniedCost ? 0 : Math.floor(c.player.maxMana / 2); c.player.stamina = row.deniedCost ? 0 : Math.floor(c.player.maxStamina / 2);
+    c.player.hp = Math.ceil(c.player.maxHp / 2);
     // A repeat-enter refusal gets a separate expected-refusal case; initial stance cards can enter normally.
     if (!row.repeatStance && c.registries.cards.get(inst.cardId).effects?.some(e => e.op === 'enterStance' && e.stance === c.player.stanceId)) c.player.stanceId = null;
     if (row.victory) { c.enemies = c.enemies.slice(0, 1); c.enemies[0].hp = 1; }
     const def = resolveCombatCard(c, inst, row.upcastTier ? { upcastTier: row.upcastTier } : {});
-    const preview = previewCard(c, inst.instanceId, undefined, row.upcastTier);
+    let preview = previewCard(c, inst.instanceId, undefined, row.upcastTier);
+    if (preview.costIsX && !row.deniedCost) { c.player.energy = 3; preview = previewCard(c, inst.instanceId, undefined, row.upcastTier); }
     let refused = c.registries.framework.isUnplayable(def) ? 'authored unplayable card' : null;
     if (!controlGate(c, c.player, def).allowed) refused = 'active control restriction';
     try { assertFoundationPlayable(c, def); } catch (error) { refused = error.message; }
@@ -186,7 +188,9 @@ async function runCase(page, device, classId, row) {
     assert.equal(paid.length, entry.input.refusal ? 0 : 1, 'one paid card receipt per play');
     if (!entry.input.refusal) {
       assert.notEqual(entry.after.pile, 'hand', 'played card leaves hand');
-      assert.equal(entry.after.player.energy, entry.before.player.energy - paid[0].energySpent, 'Actions paid once');
+      const sum = type => entry.after.events.filter(e => e.type === type).reduce((n, e) => n + (e.amount || 0), 0);
+      assert.equal(entry.after.player.energy, entry.before.player.energy - sum('energySpent') + sum('energyGained') + sum('energyRecovered'), 'Actions ledger balances');
+      assert.equal(entry.after.player.mana, entry.before.player.mana - sum('manaSpent') + sum('manaRestored') + sum('manaRecovered'), 'Mana ledger balances');
     }
     assert.equal(entry.after.pending, false, 'no pending state remains');
     assert.equal(entry.after.queue, 0, 'effect queue drained');
