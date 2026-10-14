@@ -240,7 +240,7 @@ function buildLines(def, preview, registries) {
   const segmentsOf = (fragments, extraBonus = []) => {
     const of = cat => fragments.filter(f => f.cat === cat).map(f => f.text);
     const out = [];
-    const cost = of('cost'), damage = of('damage'), status = of('status'), remove = of('remove'), consume = of('consume'), gain = of('gain'), bonus = [...of('bonus'), ...extraBonus];
+    const cost = of('cost'), damage = of('damage'), status = of('status'), remove = of('remove'), consume = of('consume'), gain = of('gain'), bonus = [...of('bonus'), ...extraBonus], defenseRestore = of('defenseRestore');
     if (cost.length) out.push({ kind: 'cost', text: cost.join(', ') });
     if (damage.length) out.push({ kind: 'damage', text: `${damageVerb} ${damage.join(', ')}` });
     else if (counter && fragments === unconditional && !def.evade) out.push({ kind: 'damage', text: def.defenseRulesVersion === 2 ? 'Prepare Counter' : damageVerb.replace(/: return$/, '') });
@@ -249,6 +249,7 @@ function buildLines(def, preview, registries) {
     if (consume.length) out.push({ kind: 'consume', text: `Remove ${consume.join(', ')}` });
     if (gain.length) out.push({ kind: 'gain', text: `Gain ${gain.join(', ')}` });
     if (bonus.length) out.push({ kind: 'bonus', text: bonus.join(', ') });
+    if (defenseRestore.length) out.push({ kind: 'bonus', text: defenseRestore.join(', ') });
     return out;
   };
 
@@ -309,7 +310,7 @@ function buildLines(def, preview, registries) {
     if (grants.length) unconditional.push({ cat: 'bonus', text: 'Entry: ' + grants.join(', ') });
     if (stanceOf(def)?.maneuver === 'defend') {
       const restore = num(stanceRulesFor(ctx).defenseRestore);
-      unconditional.push({ cat: 'bonus', text: 'Restore ' + restore + ' Poise/Ward' });
+      unconditional.push({ cat: 'defenseRestore', text: 'Restore ' + restore + ' Poise/Ward' });
     }
     if (def.evade?.whileStatus) {
       const conditionKey = `evade:${def.evade.whileStatus}`;

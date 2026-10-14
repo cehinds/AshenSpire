@@ -52,6 +52,16 @@ test('without a preview no number is marked up or down', () => {
   for (const line of lines('bashingBlow')) assert.doesNotMatch(line.html, /val (up|down)/);
 });
 
+test('a Defend card separates its per-play restore from its Entry bonus', () => {
+  const all = text('bracingStance');
+  const entry = all.find(line => line.startsWith('Entry: '));
+  const restore = all.find(line => line.startsWith('Restore '));
+  assert.ok(entry, JSON.stringify(all));
+  assert.ok(restore, JSON.stringify(all));
+  assert.doesNotMatch(entry, /Restore/);
+  assert.match(restore, /^Restore \d+ Poise\/Ward$/);
+});
+
 test('a conditional Evade is shown with version-two entry bonuses without duplication', () => {
   const all = text('crawlingShot');
   const evade = all.filter(line => /Prepare one Evade with Advantage/.test(line));
