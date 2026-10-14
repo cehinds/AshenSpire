@@ -22,7 +22,7 @@ const report = {
   head: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
   generatedAt: new Date().toISOString(),
   viewport: { width: 1440, height: 1000 },
-  fixtureBoundary: 'Customize, rewards, shop and combat use the application screenshot routes. Deck editor and level options use the production screen modules with a deterministic Reaver run; those two are mounted QA states, not player navigation recordings.',
+  fixtureBoundary: 'Character creation, rewards and combat use application screenshot routes. Deck editor and level-card options use production screen modules with deterministic Starseer state. Store opens the real Remove a card service; if the authored shot lacks an unlocked offer, mountShop uses deterministic stock and cinders. The QA deck adds real Frost Counter and Force Counter card instances so the changed faces are visible. These are QA states, not player navigation recordings.'
   views: {},
   failures: [],
   browserErrors: errors,
@@ -36,18 +36,24 @@ async function capture(name, stage, data) {
   await page.screenshot({ path: resolve(OUT, jpg), type: 'jpeg', quality: 80, fullPage: false });
   return { png, jpg, visibleText: await page.locator('body').innerText(), ...data };
 }
-async function inspector(cardSelector = '.card, .equipment-poker-card, .reward-choice-face') {
+async function inspector(cardSelector = '.card, .equipment-poker-card, .reward-choice-face', strategy = 'pointer') {
   const card = page.locator(cardSelector).filter({ visible: true }).first();
   await card.waitFor({ state: 'visible', timeout: 20000 });
-  // A real pointer action on the rendered face. The shared desktop card surface
-  // opens inspection from its art/name region; no DOM event is synthesized.
-  const box = await card.boundingBox();
-  assert.ok(box && box.width > 70 && box.height > 70, 'card face is visible and large enough to inspect');
-  await card.click({ position: { x: Math.min(70, box.width / 2), y: Math.min(90, box.height / 2) } });
-  await wait(120);
+  if (strategy === 'keyboard') {
+    // Combat cards can arm an action on pointer-up. Keyboard focus and the
+    // Information button open inspection without invoking the card action.
+    await card.focus();
+    await card.press('Tab');
+  } else {
+    const box = await card.boundingBox();
+    assert.ok(box && box.width > 70 && box.height > 70, 'card face is visible and large enough to inspect');
+    await card.click({ position: { x: Math.min(70, box.width / 2), y: Math.min(90, box.height / 2) } });
+  }
+  await wait(200);
   if (await page.locator('.card-inspection-modal').count() === 0) {
     const info = page.locator('.card-info-button:visible').first();
-    if (await info.count()) await info.click();
+    await info.waitFor({ state: 'visible', timeout: 4000 });
+    if (strategy === 'keyboard') await info.press('Enter'); else await info.click();
   }
   const detail = page.locator('.card-inspection-modal, .card-inspection-details, .deck-editor-inspector').filter({ visible: true }).first();
   await detail.waitFor({ state: 'visible', timeout: 10000 });
@@ -60,21 +66,23 @@ async function standardView(name, route, landmark, options = {}) {
   await wait(options.settle || 350);
   if (options.prepare) await options.prepare();
   const before = await capture(name, 'compact', { compactText: await textOf(options.compactSelector || '.card, .equipment-poker-card, .reward-choice-face') });
-  const inspection = await inspector(options.cardSelector);
+  const inspection = await inspector(options.cardSelector, options.strategy);
   const after = await capture(name, 'inspection', inspection);
   report.views[name] = { before, after };
 }
 try {
   await attempt('character-creation', async () => {
-    await standardView('character-creation', '/?shot=customize', '.customize', {
+    await standardView('character-creation', '/?shot=customize&shotClass=starseer', '.customize', {
       prepare: async () => {
-        const tab = page.locator('#cz-tab-equipment');
-        if (await tab.count()) await tab.click();
-        const fold = page.locator('#cz-equipment-fold summary').first();
-        if (await fold.count() && !(await page.locator('#cz-equipment-fold').evaluate(n => n.open))) await fold.click();
-        await page.locator('.equipment-poker-card, .card').first().waitFor({ state: 'visible', timeout: 20000 });
+        const classCard = page.locator('#cz-classes .cz-class[data-class="starseer"]');
+        if (await classCard.count()) await classCard.click();
+        const tab = page.locator('#cz-tab-spells');
+        await tab.waitFor({ state: 'visible', timeout: 15000 });
+        await tab.click();
+        await page.locator('#cz-spell-choices .cc-ability-choice[data-card-id="crystalBarrier"] .card, #cz-spell-choices .cc-ability-choice[data-card-id="frostVeil"] .card, #cz-spell-choices .cc-ability-choice[data-card-id="umbralWard"] .card, #cz-spell-choices .card').first().waitFor({ state: 'visible', timeout: 20000 });
       },
-      cardSelector: '.equipment-poker-card, .card',
+      cardSelector: '#cz-spell-choices .cc-ability-choice[data-card-id="crystalBarrier"] .card, #cz-spell-choices .cc-ability-choice[data-card-id="frostVeil"] .card, #cz-spell-choices .cc-ability-choice[data-card-id="umbralWard"] .card, #cz-spell-choices .card',
+      compactSelector: '#cz-spell-choices .card',
     });
 
   });
@@ -87,10 +95,12 @@ try {
     await page.evaluate(async () => {
       const { contentBundle } = await import('/src/content/index.js');
       const { createRegistries } = await import('/src/model/registries.js');
-      const { createRunState } = await import('/src/model/state.js');
+      const { createRunState, createCardInstance, createIdGen } = await import('/src/model/state.js');
       const { mountDeckEditor } = await import('/src/ui/screens/deckEditor.js');
       const registries = createRegistries(contentBundle);
       const run = createRunState({ seed: 7814, classId: 'starseer', registries });
+      const gen = createIdGen('ward-deck');
+      run.deck.push(createCardInstance('frostCounter', false, gen), createCardInstance('forceCounter', false, gen));
       window.__wardCardQa = { registries, run };
       mountDeckEditor(document.body, { registries, run, settings: { deckMinSize: 0 } });
     });
@@ -116,10 +126,45 @@ try {
   });
 
   await attempt('rewards', async () => {
-    await standardView('rewards', '/?shot=reward', '.reward-menu, .reward-door, .reward-screen', { cardSelector: '.card, .reward-choice-face' });
+    await standardView('rewards', '/?shot=reward&shotClass=starseer', '.reward-menu, .reward-door, .reward-screen', {
+      prepare: async () => {
+        await page.locator('.reward-kind[data-kind="card"]').waitFor({ state: 'visible', timeout: 15000 });
+        await page.locator('.reward-kind[data-kind="card"]').click();
+        await page.locator('.reward-row .reward-choice-face.card').first().waitFor({ state: 'visible', timeout: 15000 });
+      },
+      cardSelector: '.reward-row .reward-choice-face.card', compactSelector: '.reward-row .reward-choice-face.card',
+    });
   });
   await attempt('store', async () => {
-    await standardView('store', '/?shot=shop', '.shop, .shop-workspace, #shop-relics', { cardSelector: '.card, .shop-inspect-card' });
+    await standardView('store', '/?shot=shop&shotClass=starseer', '.shop, .shop-workspace, #shop-relics', {
+    prepare: async () => {
+      let remove = page.locator('#remove-opt');
+      if (!(await remove.isVisible().catch(() => false)) || await remove.evaluate(n => n.classList.contains('locked'))) {
+        await page.evaluate(async () => {
+          const { contentBundle } = await import('/src/content/index.js');
+          const { createRegistries } = await import('/src/model/registries.js');
+          const { createRunState, createCardInstance, createIdGen } = await import('/src/model/state.js');
+          const { createRng } = await import('/src/engine/rng.js');
+          const { buildShopStock } = await import('/src/engine/encounters.js');
+          const { mountShop } = await import('/src/ui/screens/shop.js');
+          const registries = createRegistries(contentBundle);
+          const run = createRunState({ seed: 7814, classId: 'starseer', registries });
+          run.cinders = 1000;
+          const gen = createIdGen('ward-shop');
+          run.deck.push(createCardInstance('frostCounter', false, gen), createCardInstance('forceCounter', false, gen));
+          run.shopStock = buildShopStock(registries, createRng(7814), run);
+          document.querySelector('#app').replaceChildren();
+          mountShop(document.querySelector('#app'), { registries, run, meta: { settings: {} }, onLeave() {}, onChanged() {} });
+        });
+        remove = page.locator('#remove-opt');
+      }
+      await remove.waitFor({ state: 'visible', timeout: 10000 });
+      await remove.click();
+      await page.locator('#remove-grid .card').filter({ hasText: 'Frost Counter' }).first().waitFor({ state: 'visible', timeout: 10000 });
+    },
+    cardSelector: '#remove-grid .card',
+    compactSelector: '#remove-grid .card',
+  });
   });
 
   await attempt('level-options', async () => {
@@ -131,6 +176,7 @@ try {
       const { contentBundle } = await import('/src/content/index.js');
       const { createRegistries } = await import('/src/model/registries.js');
       const { createRunState } = await import('/src/model/state.js');
+      const { claimBankedLevel } = await import('/src/model/levelup.js');
       const { mountRewards } = await import('/src/ui/screens/reward.js');
       const { mergeProgressionRewards } = await import('/src/model/deferredProgression.js');
       const { pendingRewardCheckpoint } = await import('/src/model/rewardSourcePolicy.js');
@@ -141,17 +187,14 @@ try {
       const offer = mergeProgressionRewards({}, {
         title: 'LEVEL OPTIONS QA',
         xpGains: { level: 555, tracks: {} },
-        levelChoices: [
-          { ordinal: 0, options: [{ kind: 'feat', id: 'fieldStudy' }, { kind: 'feat', id: 'weaponDrill' }] },
-          { ordinal: 1, options: [{ kind: 'feat', id: 'vitalRenewal' }] },
-        ],
+        levelCards: [{ ordinal: 0, requiredLevel: 2, cardIds: ['frostCounter', 'forceCounter'] }],
       }, run);
       const checkpoint = pendingRewardCheckpoint(offer, { source: 'elite', after: 'map' });
       checkpoint.expanded = true;
       document.body.replaceChildren();
       mountRewards(document.body, { registries, run, rewards: offer, checkpoint,
         saves: { loadMeta: () => ({ settings: { levelUpRefillSeconds: 0, levelUpRefillPauseMs: 0 } }) },
-        onClaimLevel: () => {}, onPersist: () => {}, onDone: () => {},
+        onClaimLevel: () => claimBankedLevel(registries, run), onPersist: () => {}, onDone: () => {},
       });
       window.__wardLevelQa = { registries, run, offer };
     });
@@ -170,7 +213,7 @@ try {
   });
 
   await attempt('combat', async () => {
-    await standardView('combat', '/?shot=combat', '.combat', { cardSelector: '.hand .card' });
+    await standardView('combat', '/?shot=combat&shotClass=starseer', '.combat', { cardSelector: '.hand .card', strategy: 'keyboard' });
   });
 
   report.browserErrors = errors;
