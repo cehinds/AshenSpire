@@ -117,7 +117,7 @@ test('starting-card inspection shows current Crystal Barrier Ward rules', () => 
     deck.querySelector('.cc-subclass-deck-card').click();
     const face = dom.document.querySelector('[data-ui-component="creation-starting-card-inspector"]');
     const text = face.inspectionMarkup.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ');
-    assert.match(text, /Gain\s+4\s+Ward/);
+    assert.match(text, /Gain\s+3\s+Block\s*,\s*1\s+Ward/);
     assert.doesNotMatch(text, /Gain\s+4\s+Block/);
     dom.document.querySelector('.modal-close').click();
   } finally { Object.defineProperty(proto, 'innerHTML', markup); }

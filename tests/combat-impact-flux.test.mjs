@@ -158,9 +158,11 @@ function counterReturn({ version = 2, traitValues, payload = { hp: 10, poise: 4,
   incomingBlock = 8, maneuver = 'counter', profile = PHYSICAL, coverage } = {}) {
   const f = fixture({ version });
   const { combat } = f;
+  // These assertions isolate authored return magnitudes after a successful hit.
+  combat.rng.int = () => 20;
   const enemy = f.enemies[0];
   const counter = { cardId: 'testCounter', instanceId: 'test-counter', type: 'skill',
-    combatProfile: { ...profile, maneuver, ...(mode === 'spell' ? { camp: 'spell', school: 'fire' } : {}) },
+    combatProfile: { ...profile, range: incoming.range, maneuver, ...(mode === 'spell' ? { camp: 'spell', school: 'fire' } : {}) },
     combatRiderTargets: [], ...(traitValues ? { traitValues } : {}) };
   setCombatStance(combat, combat.player, counter);
   armCombatCounter(combat, combat.player, counter, { payload, ...(mode ? { mode } : {}), ...(coverage ? { coverage } : {}) });

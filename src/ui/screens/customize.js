@@ -649,8 +649,10 @@ export function mountCustomize(app, {
     }
   }
   function renderStartingDeck() {
-    $('#cz-starting-deck-host').replaceChildren(createCreationStartingDeck({ registries,
-      refs: creationDraftStartingDeck(registries, previewRun(), state.startingAbilityIds, meta.settings || {}),
+    const run = previewRun();
+    const settings = meta.settings || {};
+    $('#cz-starting-deck-host').replaceChildren(createCreationStartingDeck({ registries, run, settings,
+      refs: creationDraftStartingDeck(registries, run, state.startingAbilityIds, settings),
     }));
   }
   function classAndSubclassSummary() {
@@ -1569,7 +1571,7 @@ export function mountCustomize(app, {
       face: { label: 'Show calculations', value: 'Card packages, requirements and poise' },
       reveal: { node: receiptBody },
     }], { structure: 'details' });
-    host.replaceChildren(cards, createCreationStartingDeck({ registries,
+    host.replaceChildren(cards, createCreationStartingDeck({ registries, run, settings: meta.settings || {},
       refs: creationDraftStartingDeck(registries, run, state.startingAbilityIds, meta.settings || {}),
     }), calculations);
   }

@@ -6,11 +6,11 @@ import { equippedIn, slotHand } from './loadout.js';
 
 export function effectiveWeaponSource(registries, entity, source) {
   const result = structuredClone(source);
-  if (!source || !entity || (entity.kind && entity.kind !== 'player') || entity.classUnequipped
-    || (source.sourceType || attackDescriptor(source).source || (source.family === 'focus' ? 'spell' : 'weapon')) !== 'weapon') return result;
+  if (!source || !entity || (entity.kind && entity.kind !== 'player') || entity.classUnequipped || entity.subclassId === undefined) return result;
   const id = effectiveSubclassId(registries, entity);
   const recipe = id && registries.subclasses?.has(id) && registries.subclasses.get(id).weaponInfusion;
   if (!recipe) return result;
+  if ((source.sourceType || attackDescriptor(source).source || (source.family === 'focus' ? 'spell' : 'weapon')) !== 'weapon') return result;
   result.tags = [...new Set([...(source.tags || []), ...(recipe.tags || [])])];
   result.weaponInfusion = structuredClone(recipe);
   return result;
@@ -24,6 +24,11 @@ export function weaponSourceFor(ctx, entity, carrier = {}) {
   if (!registries?.subclasses || !entity.subclassId) return null;
   const subclassId = entity.subclassId && effectiveSubclassId(registries, entity);
   if (!subclassId || !registries.subclasses?.get(subclassId)?.weaponInfusion) return null;
+  // Spell/focus and bare-hand faces have no weapon recipe. Their projected
+  // damage identity may differ from an equipment profile's authored tags;
+  // weapon resolution must not parse or reclassify those unrelated sources.
+  const taggedSource = (carrier.tags || carrier.cardTags || []).find(tag => tag.startsWith('source:'))?.slice(7);
+  if ((carrier.attack?.source && carrier.attack.source !== 'weapon') || (taggedSource && taggedSource !== 'weapon')) return null;
   const attack = attackDescriptor(carrier);
   if (!attack.source && !carrier.cardId && !carrier.sourceArmamentId && !carrier.weaponSource) return null;
   const kind = attack.source || (carrier.combatProfile?.camp === 'spell' ? 'spell' : 'weapon');

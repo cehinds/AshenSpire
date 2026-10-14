@@ -48,16 +48,18 @@ export function createCreationSubclassSelector({ options = [], selectedId = null
 }
 
 export function openCreationStartingCard(registries, card, opener, { rules = CREATION_CARD_RULES } = {}) {
-  const face = renderCard(registries, card.ref, { interactive: false, level: 'inspect', rules });
+  const face = renderCard(registries, card.ref, { interactive: false, level: 'inspect', preview: card.preview || null, rules });
   markUiComponent(face, UI.creationStartingCardInspector);
+  const sources = [...new Set((card.preview?.values || []).filter(value => value.sourceInfusion && value.sourceName).map(value => value.sourceName))];
   return openCardInspection({ title: card.definition.name, card: face, opener,
-    details: el('p', { text: t('creation.subclass.cardRole', { role: t(card.roleStringId) }) }),
+    details: el('p', { text: t('creation.subclass.cardRole', { role: t(card.roleStringId) })
+      + (sources.length ? ` Weapon source: ${sources.join(', ')}.` : '') }),
   });
 }
 
 /** Every copy is visible; inspection opens the existing full rules card. */
-export function createCreationStartingDeck({ registries, refs = [], rules = CREATION_CARD_RULES } = {}) {
-  const groups = creationStartingDeckModel(registries, refs, { rules });
+export function createCreationStartingDeck({ registries, refs = [], rules = CREATION_CARD_RULES, run = null, settings = {} } = {}) {
+  const groups = creationStartingDeckModel(registries, refs, { rules, run, settings });
   const node = creationPanel({ kind: 'starting-deck', title: t('creation.subclass.deckTitle', { count: refs.length }),
     subtitle: t('creation.subclass.deckBreakdown', Object.fromEntries(groups.map(group => [group.source, group.cards.length]))),
     className: 'cc-subclass-deck', children: groups.map(group => {

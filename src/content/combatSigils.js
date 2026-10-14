@@ -4,6 +4,9 @@ import { CARD_COMPONENTS } from './cardComponents.generated.js';
 const mark = (label, shape, help, solid = false) => Object.freeze({ label, shape, help, solid });
 export const ACTION_SIGILS = Object.freeze({
   attack: mark('Attack', '<path d="m3 2 7 3 15 18-3 3L6 10Zm26 0-7 3L7 23l3 3L26 10ZM3 22l7 7 2-2-7-7Zm19 5 2 2 7-7-2-2ZM2 29l2 2 4-4-2-2Zm22-2 4 4 2-2-4-4Z"/>', 'A direct attack.', true),
+  defense: mark('Defense', '<path d="M16 2 28 7v10c0 7-12 13-12 13S4 24 4 17V7Zm0 4v20c5-3 8-6 8-9V10Z"/>', 'Defensive stance: grant protection.', true),
+  stance: mark('Stance', '<path d="M5 28 16 3l11 25M10 18h12"/>', 'A combat stance: Attack, Smash, Sweep, Counter, Defense or Evade.'),
+  consumable: mark('Consumable', '<path d="M11 3h10v7l5 8v11H6V18l5-8ZM11 20h10"/>', 'A consumable item card.'),
   defend: mark('Defend', '<path d="M16 2 28 7v10c0 7-12 13-12 13S4 24 4 17V7Zm0 4v20c5-3 8-6 8-9V10Z"/>', 'Guard or other defensive support.', true),
   evade: mark('Evade', CARD_COMPONENTS.template.symbols.tags.evade.svg.body, 'Defensive stance: prepare one chance to avoid the next eligible direct damaging action.', true),
   counter: mark('Counter', '<path d="M15 2 26 6v3L7 28c-3-3-4-6-4-11V7Zm11 14v2c0 6-11 12-11 12l-4-2ZM28 2l2 1-1 6L12 26l-3-3ZM6 21l7 7-2 2-7-7ZM2 29l2 2 4-4-2-2Z"/>', 'Prepare a reply to a qualifying incoming action. Inspect for its conditions.', true),

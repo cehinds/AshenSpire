@@ -27,6 +27,8 @@
 // run object retained. Everything is read at call time and the result is deep
 // frozen, so a renderer cannot quietly make the model its scratch space.
 
+import { cardTagExplanation } from './cardTagExplanation.js';
+import { cardClassification } from './cardClassification.js';
 import { resolveCard } from './registries.js';
 import { applyCombatExpansionCard } from '../content/combatExpansionCards.js';
 import { applyCardTraits } from '../content/traitProjection.js';
@@ -34,6 +36,7 @@ import { tagService } from './tagService.js';
 import { computeTokenBindings, cardTokenEffects } from './validate.js';
 import { balance } from '../content/balance.js';
 import { combatProfileFor, isSpellCard } from './combatCardProfile.js';
+import { spellDefenseSplit } from './spellDefense.js';
 import { uiStrings } from '../content/generated/uiStrings.js';
 import { canonicalDamageType, isMagicDamageType, isPhysicalDamageType, magicDamageTypeOf, magicShareOf, splitContactParts, splitDamageTypesOf } from './combatRatings.js';
 import { cardSigilIdentity } from '../content/combatSigils.js';
@@ -103,15 +106,9 @@ export function combatCardDamageLabel(def, preview = null, registries = null, in
 }
 
 export function combatCardType(def) {
-  const p = combatProfileFor(def);
-  if (def.type === 'power') return 'Power';
-  if (['status', 'curse'].includes(def.type)) return 'Status';
-  if (def.type === 'skill' && !p.maneuver) return 'Skill';
-  if (p.maneuver === 'counter') return 'Counter';
-  if (p.maneuver === 'defend') return 'Defend';
-  if (p.camp === 'spell') return 'Spell';
-  return p.maneuver && p.maneuver !== 'casting' ? p.maneuver[0].toUpperCase() + p.maneuver.slice(1)
-    : def.type[0].toUpperCase() + def.type.slice(1);
+  const classification = cardClassification(def);
+  const type = classification.stanceType || (classification.cardCategory === 'curse' ? 'status' : classification.cardCategory);
+  return type[0].toUpperCase() + type.slice(1);
 }
 
 /**
@@ -127,6 +124,13 @@ export function cardSummaryContext(def, preview = null, registries = null) {
     const live = preview?.values?.[index];
     return preview?.tokens?.[token] ?? (live?.op === effect.op ? live.value : undefined)
       ?? tokens[token] ?? (typeof effect[field] === 'number' ? effect[field] : '?');
+  };
+  const defenseValue = (effect, index) => {
+    const live = preview?.values?.[index];
+    if (live?.defenseSplit) return live.defenseSplit;
+    const token = bindings.find(row => row.index === index && row.field === 'amount')?.token;
+    const block = preview?.tokens?.[token + '.block'], ward = preview?.tokens?.[token + '.ward'];
+    return Number.isFinite(block) && Number.isFinite(ward) ? { block, ward } : null;
   };
   const title = id => registries?.statuses?.has(id) ? registries.statuses.get(id).name : id[0].toUpperCase() + id.slice(1);
   const condition = pred => {
@@ -154,12 +158,12 @@ export function cardSummaryContext(def, preview = null, registries = null) {
     if (['all', 'any'].includes(pred.p)) { const parts = pred.preds.map(condition); return parts.every(Boolean) ? parts.join(pred.p === 'all' ? ' and ' : ' or ') : ''; }
     return '';
   };
-  return { value, title, condition, profile: combatProfileFor(def), bindings, tokens };
+  return { value, defenseValue, title, condition, profile: combatProfileFor(def), bindings, tokens };
 }
 
 /** Plain complete effect text. Numeric values come from the resolved preview. */
 export function combatCardSummary(def, preview = null, registries = null) {
-  const { value, title, condition, profile: p } = cardSummaryContext(def, preview, registries);
+  const { value, defenseValue, title, condition, profile: p } = cardSummaryContext(def, preview, registries);
   const ratings = registries?.balance?.combatRatings ?? null, parts = [];
   for (const [index, effect] of (def.effects || []).entries()) {
     const n = value(effect, index), area = effect.target === 'allEnemies' ? ' to all enemies'
@@ -186,12 +190,19 @@ export function combatCardSummary(def, preview = null, registries = null) {
       }
       case 'block': {
         const verb = effect.target === 'ally' ? 'Ally gains' : 'Gain';
-        const split = splitOf(def, p, n, ratings);
-        text = split ? uiText('combat.card.splitBlock', { verb, block: split.physical, ward: split.magic }) : `${verb} ${n} Block`;
+        const defense = def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2
+          ? (defenseValue(effect, index) || spellDefenseSplit({ ...def, combatProfile: p }, n)) : null;
+        const split = defense || splitOf(def, p, n, ratings);
+        text = split ? uiText('combat.card.splitBlock', { verb, block: defense ? defense.block : split.physical, ward: defense ? defense.ward : split.magic }) : `${verb} ${n} Block`;
         break;
       }
       // A Spell's gain refills Ward first and only the overflow is Barrier, so it reads Ward.
-      case 'gainBarrier': text = `Gain ${n} ${isSpellCard({ combatProfile: p, tags: def.tags }) ? 'Ward' : 'Barrier'}`; break;
+      case 'gainBarrier': {
+        const split = defenseValue(effect, index) || spellDefenseSplit({ ...def, combatProfile: p }, n);
+        text = split ? uiText('combat.card.splitBlock', { verb: effect.target === 'ally' ? 'Ally gains' : 'Gain', block: split.block, ward: split.ward })
+          : `Gain ${n} ${isSpellCard({ combatProfile: p, tags: def.tags }) ? 'Ward' : 'Barrier'}`;
+        break;
+      }
       case 'gainWard': text = `Restore ${n} Ward${effect.oncePerCombat ? ' once per combat' : ''}`; break;
       case 'gainPoise': text = `Gain ${n} Poise guard`; break;
       case 'buildup': text = `Add ${n} ${title(effect.status)} buildup${area}${effect.chance !== undefined && effect.chance < 100 ? ` (${effect.chance}%)` : ''}`; break;
@@ -337,7 +348,8 @@ export function playingCardModel(registries, ref, { preview = null, definition =
   // Type presentation is authored data (balance.ui.cardTypes): corner radii
   // carry the type (attack squarest → power roundest) and each type owns its
   // banner colour. A type with no row keeps the card drawable.
-  const typeRow = balance.ui.cardTypes[def.type] || null;
+  const classification = cardClassification(def);
+  const typeRow = balance.ui.cardTypes[classification.cardCategory] || balance.ui.cardTypes[def.type] || null;
 
   // The class motif hue is authored on the class (`cardTint`). Colourless
   // cards have no owning class and fall back to the neutral frame, which is
@@ -345,16 +357,17 @@ export function playingCardModel(registries, ref, { preview = null, definition =
   // looks like.
   const owner = registries.classes.has(def.class) ? registries.classes.get(def.class) : null;
 
-  // COSTS. A preview has already resolved its own numbers; without one the
-  // framework's cost profile is the authority. Both paths land in one record
+  // COSTS. A preview has already resolved its own numbers; self-funded restores
+  // supply the full display price separately from the net payment. Without a
+  // preview the framework's cost profile is the authority. Both paths land in one record
   // so the badge and the tooltip cannot drift, which they could before —
   // each computed its own.
   const profile = preview ? null : registries.framework.costProfile(def);
   const costs = freeze({
     variable: preview ? !!preview.costIsX : !!profile.variable,
-    action: preview ? preview.cost : profile.action,
-    mana: preview ? preview.manaCost : profile.mana,
-    stamina: preview ? (preview.staminaCost || 0) : (profile.stamina || 0),
+    action: preview ? (preview.displayCosts?.action ?? preview.cost) : profile.action,
+    mana: preview ? (preview.displayCosts?.mana ?? preview.manaCost) : profile.mana,
+    stamina: preview ? (preview.displayCosts?.stamina ?? preview.staminaCost ?? 0) : (profile.stamina || 0),
     ...(preview?.costIsEstimate ? { estimated: true } : {}),
   });
 
@@ -394,7 +407,7 @@ export function playingCardModel(registries, ref, { preview = null, definition =
       label: tag.label,
       glyph: tag.glyph,
       color: tag.color,
-      blurb: tag.blurb,
+      blurb: cardTagExplanation(def, tag),
       // An array rather than a Set: a model is serializable, and a Set is not.
       inheritedFrom: freeze([...(inheritedBy.get(tag.id) || [])]),
     })));
@@ -429,12 +442,16 @@ export function playingCardModel(registries, ref, { preview = null, definition =
     rankBadge,
     rankHelp,
     type: freeze({
-      id: def.type,
-      label: abilityLabel || (typeRow && typeRow.label) || def.type.toUpperCase(),
-      subtype: abilityLabel && weaponArt ? 'Weapon Art' : null,
+      id: classification.cardCategory,
+      label: classification.cardCategory.toUpperCase(),
+      subtype: classification.stanceType ? classification.stanceType[0].toUpperCase() + classification.stanceType.slice(1) : null,
+      abilityLabel,
+      weaponArt: weaponArt ? 'Weapon Art' : null,
       glyph: abilityLabel ? def.abilityKind === 'spell' ? '✦' : weaponArt ? '⚔' : '◆' : null,
       help: abilityLabel ? `${abilityLabel}${weaponArt ? ' · Weapon Art' : ''}. ${rankHelp}` : '',
     }),
+    ...classification,
+    legacyType: def.type,
     costs,
     tags,
     sigils: cardSigilIdentity(combatCardType(def), combatProfileFor(def)),
@@ -463,6 +480,6 @@ export function playingCardModel(registries, ref, { preview = null, definition =
  */
 export function playingCardClasses(model) {
   return `card as-card playing-poker-card rarity-${model.rarity}`
-    + ` cls-${model.classId} type-${model.type.id}${model.upgraded ? ' upgraded' : ''}`;
+    + ` cls-${model.classId} type-${model.type.id}${model.legacyType && model.legacyType !== model.type.id ? ` type-${model.legacyType}` : ''}${model.upgraded ? ' upgraded' : ''}`;
 }
 
