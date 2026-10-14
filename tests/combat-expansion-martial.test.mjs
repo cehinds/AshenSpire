@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
+import { stanceRatingBonus } from '../src/model/stanceRules.js';
 import { combatProfileFor } from '../src/model/combatCardProfile.js';
 import { applyCombatExpansionMartial, combatExpansionMartialOverlay } from '../src/content/combatExpansionMartial.js';
 import { tacticalCarrier, prepareTacticalCard, primeEnemyCounter } from '../src/engine/combatCardTactics.js';
@@ -102,10 +103,15 @@ test('Quickstep and Dodge print Block5 plus DR and return exactly3 plus AR witho
     const f = fixture(), def = applyCombatExpansionMartial(resolveCard(registries, { cardId: id, abilityRank: 0 }, 2));
     const carrier = tacticalCarrier(def, { cardId: id, type: def.type });
     const support = prepareTacticalCard(f.ctx, f.target, f.source, carrier, def.effects);
-    assert.equal(f.target.combatCounter.payload.hp, 7);
+    assert.equal(def.counterPayload.hp, 3, 'the printed return keeps its authored base');
+    const activeAr = stanceRatingBonus(f.ctx, f.target, 'ar');
+    assert.equal(activeAr, 1, 'hybrid Evade retains the Counter offensive rating');
+    assert.equal(f.target.combatCounter.payload.hp, 3 + f.target.ratings.ar + activeAr);
     assert.equal(f.target.combatCounter.payload.poise, 3, 'absent authored Poise receives the Counter fallback');
     assert.equal(f.target.combatStance.maneuver, 'evade');
     assert.equal(f.queue.filter(action => action.meta?.stanceEntry && action.effect.status === 'evade').length, 1);
+    assert.equal(f.queue.filter(action => action.meta?.stanceEntry && action.effect.status === 'precision').length, 1,
+      'hybrid Counter grants its offensive Precision once');
     assert.equal(support.find(effect => effect.op === 'block').amount, 5);
     assert.ok(!support.some(effect => ['damage', 'gainWard', 'dodgeRoll'].includes(effect.op)));
     assert.deepEqual(combatExpansionEntityProblems(f.target), []);
