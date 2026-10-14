@@ -66,11 +66,12 @@ export async function auditCards({ mode = 'native', allEnemies = false, allVaria
       assert.equal(receipts[0].energySpent, costs.energy, 'paid Actions agree with effective cost');
       assert.equal(receipts[0].manaSpent, costs.mana, 'paid Mana agrees with effective cost');
       assert.equal(receipts[0].staminaSpent, costs.stamina, 'paid Stamina agrees with effective cost');
-      if (!events.some(e => ['energyGained', 'manaRestored'].includes(e.type))) {
-        assert.equal(c.player.energy, beforePools.energy - receipts[0].energySpent, 'actual Actions paid');
-        assert.equal(c.player.mana, beforePools.mana - receipts[0].manaSpent, 'actual Mana paid');
-        report.resourceDeltaChecks++;
-      }
+      const restoredStamina = events.filter(e => e.type === 'energyGained' || e.type === 'staminaRecovered' && e.targetId === c.player.id).reduce((n, e) => n + e.amount, 0);
+      const restoredMana = events.filter(e => e.type === 'manaRestored' && e.targetId === c.player.id).reduce((n, e) => n + e.amount, 0);
+      assert.equal(c.player.energy, beforePools.energy - receipts[0].energySpent + restoredStamina, 'actual Actions payment/restoration ledger');
+      assert.equal(c.player.stamina, beforePools.energy - receipts[0].staminaSpent + restoredStamina, 'actual Stamina payment/restoration ledger');
+      assert.equal(c.player.mana, beforePools.mana - receipts[0].manaSpent + restoredMana, 'actual Mana payment/restoration ledger');
+      report.resourceDeltaChecks++;
       const contract = assertImmediateContracts(def, events, inst.instanceId);
       for (const op of contract.covered) report.contracts[op] = (report.contracts[op] || 0) + 1;
       for (const op of contract.uncovered) report.uncovered[op] = (report.uncovered[op] || 0) + 1;
@@ -117,6 +118,11 @@ function proveConditionalMutation(api, c, effect, chosen, inst, before, events, 
       const spent = events.filter(e => e.type === 'damageDealt' && e.targetId === id).reduce((n, e) => n + e.blocked, 0);
       assert.equal(entity.block, old.block + gained - spent, 'Block operation changes the target pool');
     }
+    if (effect.op === 'gainBarrier') {
+      const gained = events.filter(e => e.type === 'barrierGained' && e.targetId === id).reduce((n, e) => n + e.amount, 0);
+      const spent = events.filter(e => e.type === 'damageDealt' && e.targetId === id).reduce((n, e) => n + (e.barrierAbsorbed || 0), 0);
+      assert.equal(entity.barrier || 0, old.barrier + gained - spent, 'Barrier receipts commit an actual target pool change');
+    }
     if (effect.op === 'applyStatus' && packets.some(e => e.targetId === id)) {
       const changed = JSON.stringify(entity.statuses[effect.status]) !== JSON.stringify(old.statuses[effect.status]);
       const completed = events.some(e => ['statusRemoved', 'statusExpired', 'meterFilled'].includes(e.type) && e.targetId === id && e.status === effect.status);
@@ -148,17 +154,23 @@ export async function auditConditionalCards({ mode = 'native' } = {}) {
         report.uncovered.push({ key, condition: effect.if, reason: 'deferred or unsupported operation contract' }); continue;
       }
       try {
-        const counts = [], amountCounts = [];
+        const counts = [], amountCounts = [], otherPredicates = [];
         for (const truth of [false, true]) {
           const { combat: c } = makeAuditCombat(api, { classId: variant.classId, instance: variant.instance, relicIds: [] });
           const initialDef = api.resolveCombatCard(c, c.piles.hand[0]);
           const initialPlan = api.cardTargetPlan(initialDef, c.player.id, c.enemies, [{ ...c.player, connected: true }], { solo: true });
           const target = initialPlan.mode === 'enemy' ? c.enemies[0] : c.player;
+          // Healing must have room in both branches; HP predicates then set their exact side of the threshold.
+          if (effect.op === 'heal') for (const id of conditionalTargets(c, effect, target)) {
+            const entity = [c.player, ...c.enemies].find(e => e.id === id);
+            entity.hp = Math.floor(entity.maxHp * 0.6);
+          }
           setAuditPredicate(c, effect.if, truth, target);
+          otherPredicates.push(initialDef.effects.map((e, i) => i === index || !e.if ? null : api.evalPredicate(c, e.if, { owner: c.player, source: c.player, target })));
           assert.equal(api.evalPredicate(c, effect.if, { owner: c.player, source: c.player, target }), truth, 'fixture establishes predicate');
           const inst = c.piles.hand[0], def = api.resolveCombatCard(c, inst);
           const plan = api.cardTargetPlan(def, c.player.id, c.enemies, [{ ...c.player, connected: true }], { solo: true });
-          const before = { entities: Object.fromEntries([c.player, ...c.enemies].map(e => [e.id, { hp: e.hp, block: e.block, statuses: structuredClone(e.statuses) }])),
+          const before = { entities: Object.fromEntries([c.player, ...c.enemies].map(e => [e.id, { hp: e.hp, block: e.block, barrier: e.barrier || 0, statuses: structuredClone(e.statuses) }])),
             draw: c.piles.draw.map(i => i.instanceId), discard: c.piles.discard.map(i => i.instanceId) };
           const start = c.eventLog.length;
           api.dispatch(c, { type: 'playCard', cardInstanceId: inst.instanceId, targetId: plan.legalIds[0] });
@@ -171,8 +183,13 @@ export async function auditConditionalCards({ mode = 'native' } = {}) {
           counts.push(packets.length);
           amountCounts.push(packets.filter(e => (effect.op === 'damage' ? e.base : e.amount) === effect.amount).length);
         }
-        const amountContract = typeof effect.amount === 'number' && ['damage', 'block', 'heal'].includes(effect.op) && amountCounts[1] > amountCounts[0];
-        if (counts[1] <= counts[0] && !amountContract) report.uncovered.push({ key, condition: effect.if, counts, reason: 'state branch has no separable operation-count increase; needs amount or lifecycle contract' });
+        const competitors = definition.effects.filter((e, i) => i !== index && e.op === effect.op && (effect.op !== 'applyStatus' || e.status === effect.status));
+        const competitorIndices = definition.effects.flatMap((e, i) => i !== index && e.op === effect.op && (effect.op !== 'applyStatus' || e.status === effect.status) ? [i] : []);
+        const stableCompetitors = competitorIndices.every(i => otherPredicates[0][i] === otherPredicates[1][i]);
+        const uniqueAmount = competitors.every(e => e.amount !== effect.amount);
+        const amountContract = stableCompetitors && uniqueAmount && typeof effect.amount === 'number' && ['damage', 'block', 'heal'].includes(effect.op) && amountCounts[1] > amountCounts[0];
+        if (!stableCompetitors || (!uniqueAmount && competitors.length > 0)) report.uncovered.push({ key, condition: effect.if, reason: 'coeffects prevent independent effect-index attribution', otherPredicates });
+        else if (counts[1] <= counts[0] && !amountContract) report.uncovered.push({ key, condition: effect.if, counts, reason: 'state branch has no separable operation-count increase; needs amount or lifecycle contract' });
         else report.verified.push({ key, condition: effect.if, op: effect.op, contract: amountContract ? 'authored amount packet' : 'operation count', negative: amountContract ? amountCounts[0] : counts[0], positive: amountContract ? amountCounts[1] : counts[1] });
       } catch (error) {
         if (error.playRefusal?.reason === 'controlled') report.uncovered.push({ key, condition: effect.if, reason: 'positive capability state prevents ordinary play; needs recovery intent contract' });
@@ -205,7 +222,8 @@ export async function auditCounterLifecycle({ mode = 'native' } = {}) {
       // SPEC trait contract: stance advantage adds floor(3 × .75) = 2.
       assert.equal(returns.length, 1);
       assert.equal(returns[0].base, 5);
-      assert.equal(enemy.hp, hp - 5);
+      assert.equal(returns[0].amount, Math.ceil(5 * 1.5), 'Counter versus Attack uses the implemented 1.5 stance multiplier');
+      assert.equal(enemy.hp, hp - Math.ceil(5 * 1.5));
       assert.equal(consumed.length, 1);
     } else {
       assert.equal(returns.length, 0, 'no return when the attack leaks HP, does not match, or was declined');
