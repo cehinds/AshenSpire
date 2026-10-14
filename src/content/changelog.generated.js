@@ -6,8 +6,8 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "id": "pr-1978",
     "date": "2026-10-14",
     "group": "2026-10-14",
-    "summary": "Combat fades cover fighters, and player targets stay clear of Health",
-    "detail": "Screen fades now cover idle and selected fighters while target selection, cards and the combat HUD remain above them. When the perspective view places the player behind the hand, its transparent 44px target moves clear of its own Health strip without changing the artwork, Health position or selected fighter size. Formation tiles that cannot move the player now stay inert and leave the keyboard order; enabling movement restores usable tiles.",
+    "summary": "Inspect or play from an enemy hold, with clearer combat targets and fades",
+    "detail": "Holding an enemy interaction opens inspection directly when no card is selected. With a card selected, Inspect, Play, Back and Exit let you read the enemy or deliberately play a legal card; inspection and closing preserve your selection, while short taps retain their existing action. The same hold works through pointer, keyboard and controller interaction. Screen fades cover idle and selected fighters while target selection, cards and the combat HUD remain above them. Transparent targets avoid Health and neighbouring controls without changing fighter artwork or size. Formation tiles that cannot move the player stay out of keyboard navigation; enabling movement restores usable tiles.",
     "build": "0.7.1.1529",
     "pullRequest": 1978,
     "url": "https://github.com/cehinds/AshenSpire/pull/1978"
