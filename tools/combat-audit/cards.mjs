@@ -178,6 +178,13 @@ export async function auditCounterLifecycle({ mode = 'native' } = {}) {
   }
   return { mode, cases, failures: [] };
 }
+// Save service covers committed model state; add transient queue and RNG.
+// Derived preview caches are intentionally excluded: they are not gameplay state.
+export function auditStateSnapshot(api, c) {
+  return JSON.stringify({ model: api.serializeCombatSnapshot(c), rng: c.rng.getCounters(),
+    queue: c.queue.map(({ source, owner, target, ...action }) => ({ ...action, sourceId: source?.id, ownerId: owner?.id, targetId: target?.id })),
+    buffer: c._buffer, pendingExpansionActions: c.pendingExpansionActions });
+}
 export async function auditRefusals({ mode = 'native' } = {}) {
   const api = await loadAuditRuntime(mode), inventory = auditInventory(api.registries);
   const report = { mode, rejected: [], acceptedEmptyPools: [], failures: [] };
@@ -190,24 +197,44 @@ export async function auditRefusals({ mode = 'native' } = {}) {
       const plan = api.cardTargetPlan(def, c.player.id, c.enemies, [{ ...c.player, connected: true }], { solo: true });
       const targetId = scenario === 'wrong-side' ? plan.mode === 'enemy' ? c.player.id : c.enemies[0].id : plan.legalIds[0];
       const choice = api.cardChoicePlan(c, inst.instanceId)?.options.find(o => !o.active)?.id;
-      const before = JSON.stringify({ player: c.player, piles: c.piles, log: c.eventLog });
+      const costs = api.cardPlayCosts(c, inst.instanceId);
+      const target = targetId === c.player.id ? c.player : c.enemies.find(e => e.id === targetId);
+      const activeRestores = (def.effects || []).filter(e => ['gainEnergy', 'restoreStamina', 'restoreMana'].includes(e.op) &&
+        (!e.if || api.evalPredicate(c, e.if, { owner: c.player, source: c.player, target })));
+      const funded = { stamina: 0, mana: 0 };
+      for (const e of activeRestores) funded[e.op === 'restoreMana' ? 'mana' : 'stamina'] += Math.max(0, Number(e.funded) || 0);
+      const before = auditStateSnapshot(api, c);
+      const start = c.eventLog.length;
       let refusal;
       try { api.dispatch(c, { type: 'playCard', cardInstanceId: inst.instanceId, targetId, ...(choice ? { choice } : {}) }); }
       catch (error) { refusal = error; }
       if (refusal) {
         const reason = refusal.playRefusal?.reason || /^Invalid (enemy|friendly) target /.test(refusal.message) && 'wrong-side';
-        assert.ok(['unplayable', 'cost', 'wrong-side'].includes(reason), `unexpected refusal: ${refusal.message}`);
-        assert.equal(JSON.stringify({ player: c.player, piles: c.piles, log: c.eventLog }), before, 'rejected play is atomic');
+        const expected = api.registries.framework.isUnplayable(def) ? 'unplayable' : scenario === 'wrong-side' ? 'wrong-side' : 'cost';
+        assert.equal(reason, expected, `scenario-specific refusal: ${refusal.message}`);
+        assert.equal(auditStateSnapshot(api, c), before, 'rejected play is atomic across committed model, queue and RNG');
         report.rejected.push({ key, reason });
       } else {
         assert.equal(scenario, 'empty-pools', 'wrong-side target must never play');
-        const costs = api.cardPlayCosts(makeAuditCombat(api, { classId: variant.classId, instance: variant.instance, relicIds: [], scenario: 'empty-pools' }).combat, inst.instanceId);
-        const selfFunding = def.effects?.some(e => ['gainEnergy', 'restoreMana', 'restoreStamina'].includes(e.op));
-        assert.ok((costs.energy === 0 && costs.mana === 0) || selfFunding, 'positive unfunded resource price cannot play from empty pools');
+        for (const pool of ['energy', 'mana', 'stamina']) assert.equal(costs[pool], 0, `net ${pool} payment must be zero`);
         settleAuditChoices(api, c);
-        assert.ok(c.eventLog.some(e => e.type === 'cardPlayed' && e.cardInstanceId === inst.instanceId));
+        const events = c.eventLog.slice(start), receipts = events.filter(e => e.type === 'cardPlayed' && e.cardInstanceId === inst.instanceId);
+        assert.equal(receipts.length, 1);
+        for (const [pool, field] of [['energy', 'energySpent'], ['mana', 'manaSpent'], ['stamina', 'staminaSpent']]) assert.equal(receipts[0][field], costs[pool], `actual ${pool} payment`);
+        const stamina = events.filter(e => e.type === 'energyGained' || e.type === 'staminaRecovered' && e.targetId === c.player.id).reduce((n, e) => n + e.amount, 0);
+        const mana = events.filter(e => e.type === 'manaRestored' && e.targetId === c.player.id).reduce((n, e) => n + e.amount, 0);
+        assert.equal(c.player.energy, stamina - receipts[0].energySpent, 'Actions/restoration ledger');
+        assert.equal(c.player.stamina, stamina - receipts[0].staminaSpent, 'Stamina/restoration ledger (Actions alias Stamina)');
+        assert.equal(c.player.mana, mana - receipts[0].manaSpent, 'Mana/restoration ledger');
+        for (const [pool, ops] of [['stamina', ['gainEnergy', 'restoreStamina']], ['mana', ['restoreMana']]]) {
+          const effects = activeRestores.filter(e => ops.includes(e.op));
+          assert.ok(effects.every(e => typeof e.amount === 'number'), 'restoration requires a numeric authored outcome contract');
+          const expected = effects.reduce((n, e) => n + Math.max(0, e.amount - (e.funded || 0)), 0);
+          assert.equal(pool === 'mana' ? mana : stamina, expected, `authored active ${pool} restoration less funded price`);
+        }
         assert.equal(c.queue.length, 0);
-        report.acceptedEmptyPools.push({ key, reason: selfFunding ? 'authored restoration funds its own price' : 'zero effective resource price' });
+        report.acceptedEmptyPools.push({ key, reason: funded.stamina > 0 || funded.mana > 0 ? 'active resolved restore funds its price' : 'zero effective resource price',
+          paid: { stamina: receipts[0].staminaSpent, mana: receipts[0].manaSpent }, funded, restored: { stamina, mana } });
       }
     } catch (error) { report.failures.push({ key, message: error.message }); }
   }
