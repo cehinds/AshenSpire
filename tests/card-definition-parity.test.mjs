@@ -17,10 +17,9 @@ for (const cardId of ['crystalBarrier', 'starbladePhalanx', 'cinderSigil', 'stri
     assert.deepEqual(playingCardModel(registries, ref, { rules }), playingCardModel(registries, ref, { definition: def }));
   });
 }
-test('reward and deck descriptions use Ward while legacy runs retain Block', () => {
+test('reward and deck descriptions show split spell defense while legacy runs retain Block', () => {
   const ref = { cardId: 'crystalBarrier', abilityRank: 1 };
-  assert.match(cardPlainText(registries, ref, { rules }), /Gain 4 Ward/);
-  assert.doesNotMatch(cardPlainText(registries, ref, { rules }), /Block/);
+  assert.match(cardPlainText(registries, ref, { rules }), /Gain 3 Block, 1 Ward/);
   assert.match(cardPlainText(registries, ref, { rules: { combatExpansionVersion: 1 } }), /Block/);
   assert.deepEqual(playingCardDefinition(registries, ref), resolveCard(registries, ref));
 });

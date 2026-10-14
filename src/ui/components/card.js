@@ -37,6 +37,7 @@ import { ashenBlightCardLabel } from './ashenBlight.js';
 import { ACTION_SIGILS, SCHOOL_SIGILS, cardSigilIdentity } from '../../content/combatSigils.js';
 import { compactCardRules, sigilExplanationHtml } from './combatSigilView.js';
 import { cardFaceLines } from '../../model/cardFaceText.js';
+import { spellDefenseSplit } from '../../model/spellDefense.js';
 
 // WCI3: rarity at the start of the band, the owned count at the end, each only
 // when the surface can state it. No domain action ever belongs in this band.
@@ -104,6 +105,18 @@ export function relicText(def, registries = null) {
 function fillTemplate(def, tokens, baseTokens, damageSequences = []) {
   let template = def.textTemplate;
   const liveTokens = { ...tokens };
+  let comparedTokens = baseTokens;
+  // Complex cards retain authored clauses; their defensive amount still reads
+  // the same allocation as the compact face and combat execution.
+  template = template.replace(/\{(gainBarrier(?:\.\d+)?)\}(?: (?:temporary )?(?:Barrier|Ward))?/g, (match, token) => {
+    const split = spellDefenseSplit(def, liveTokens[token]);
+    if (!split) return match;
+    liveTokens[token + '.block'] = split.block;
+    liveTokens[token + '.ward'] = split.ward;
+    const baseSplit = baseTokens && spellDefenseSplit(def, baseTokens[token]);
+    if (baseSplit) comparedTokens = { ...comparedTokens, [token + '.block']: baseSplit.block, [token + '.ward']: baseSplit.ward };
+    return `{${token}.block} Block, {${token}.ward} Ward`;
+  });
   for (const sequence of damageSequences) {
     if (!sequence?.amountToken || !sequence?.hitsToken || !Array.isArray(sequence.hitDamages)
       || sequence.hitDamages.length < 2 || sequence.hitDamages.every(amount => amount === sequence.hitDamages[0])) continue;
@@ -119,9 +132,9 @@ function fillTemplate(def, tokens, baseTokens, damageSequences = []) {
     const v = liveTokens[tok];
     if (v == null) return m;
     let cls = 'val';
-    if (baseTokens && typeof v === 'number' && typeof baseTokens[tok] === 'number') {
-      if (v > baseTokens[tok]) cls += ' up';
-      else if (v < baseTokens[tok]) cls += ' down';
+    if (comparedTokens && typeof v === 'number' && typeof comparedTokens[tok] === 'number') {
+      if (v > comparedTokens[tok]) cls += ' up';
+      else if (v < comparedTokens[tok]) cls += ' down';
     }
     return `<span class="${cls}">${esc(v)}</span>`;
   });

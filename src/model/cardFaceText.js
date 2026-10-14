@@ -14,6 +14,7 @@
 
 import { cardSummaryContext, combatCardDamageLabel, splitOf } from './playingCard.js';
 import { isSpellCard } from './combatCardProfile.js';
+import { spellDefenseSplit } from './spellDefense.js';
 import { tagService } from './tagService.js';
 import { resolve as resolveTags } from '../content/tags.js';
 import { combatExpansionMatchups } from '../content/combatMatchups.js';
@@ -164,7 +165,14 @@ function buildLines(def, preview, registries) {
         return frag('gain', `${num(n, base)} Block`);
       }
       // A Spell's gain refills Ward first, so it reads Ward.
-      case 'gainBarrier': return frag('gain', `${num(n, base)} ${isSpellCard({ combatProfile: p, tags: def.tags }) ? 'Ward' : 'Barrier'}`);
+      case 'gainBarrier': {
+        const split = spellDefenseSplit({ ...def, combatProfile: p }, n);
+        if (split) {
+          const baseSplit = typeof base === 'number' ? spellDefenseSplit({ ...def, combatProfile: p }, base) : null;
+          return frag('gain', `${num(split.block, baseSplit?.block)} Block, ${num(split.ward, baseSplit?.ward)} Ward`);
+        }
+        return frag('gain', `${num(n, base)} ${isSpellCard({ combatProfile: p, tags: def.tags }) ? 'Ward' : 'Barrier'}`);
+      }
       case 'gainWard': return frag('gain', `${num(n, base)} Ward${effect.oncePerCombat ? ' once per combat' : ''}`);
       case 'gainPoise': return frag('gain', `${num(n, base)} Poise guard`);
       case 'restoreMana': return frag('gain', `${num(n, base)} Mana`);

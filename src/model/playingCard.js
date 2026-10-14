@@ -34,6 +34,7 @@ import { tagService } from './tagService.js';
 import { computeTokenBindings, cardTokenEffects } from './validate.js';
 import { balance } from '../content/balance.js';
 import { combatProfileFor, isSpellCard } from './combatCardProfile.js';
+import { spellDefenseSplit } from './spellDefense.js';
 import { uiStrings } from '../content/generated/uiStrings.js';
 import { canonicalDamageType, isMagicDamageType, isPhysicalDamageType, magicDamageTypeOf, magicShareOf, splitContactParts, splitDamageTypesOf } from './combatRatings.js';
 import { cardSigilIdentity } from '../content/combatSigils.js';
@@ -178,7 +179,12 @@ export function combatCardSummary(def, preview = null, registries = null) {
         break;
       }
       // A Spell's gain refills Ward first and only the overflow is Barrier, so it reads Ward.
-      case 'gainBarrier': text = `Gain ${n} ${isSpellCard({ combatProfile: p, tags: def.tags }) ? 'Ward' : 'Barrier'}`; break;
+      case 'gainBarrier': {
+        const split = spellDefenseSplit({ ...def, combatProfile: p }, n);
+        text = split ? uiText('combat.card.splitBlock', { verb: 'Gain', block: split.block, ward: split.ward })
+          : `Gain ${n} ${isSpellCard({ combatProfile: p, tags: def.tags }) ? 'Ward' : 'Barrier'}`;
+        break;
+      }
       case 'gainWard': text = `Restore ${n} Ward${effect.oncePerCombat ? ' once per combat' : ''}`; break;
       case 'gainPoise': text = `Gain ${n} Poise guard`; break;
       case 'buildup': text = `Add ${n} ${title(effect.status)} buildup${area}${effect.chance !== undefined && effect.chance < 100 ? ` (${effect.chance}%)` : ''}`; break;
