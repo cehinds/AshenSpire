@@ -33,7 +33,7 @@ Smash multiplies both HP damage and pressure by 1.5 against Defense, Spell, or a
 
 Counter multiplies HP damage and pressure by 1.5 against Attack, Smash, or an Evade attempt that fails. A physical Counter return uses the effective equipped weapon range unless the card explicitly overrides it. An out-of-range return misses.
 
-Sweep has -1 Precision and gains +1 Precision for each additional enemy targeted. It has a 2× damage bonus against Counter. A reactive Sweep against melee physical damage restores 3 Poise and 3 Ward, acts before the incoming action and can interrupt it through the existing interrupt rules. This does not make every Sweep eligible for every incoming attack.
+Sweep has -1 Precision and gains +1 Precision for each additional enemy targeted. It has a 2× damage bonus against Counter. A reactive Sweep against melee physical damage deals 3 additional Poise damage and 3 additional Ward damage, acts before the incoming action and can interrupt it through the existing interrupt rules. This does not make every Sweep eligible for every incoming attack.
 
 ## Evade and hit resolution
 
@@ -47,7 +47,7 @@ A miss prevents all damage to protection layers and HP. A failed Evade attempt p
 
 Every damage card and every card with a hostile targeted effect shows its exact hit-chance preview both on the fighter HUD and on the selected card. Gate those exact previews on the enemy's **first successful Perception**, respecting the existing observer-specific visibility boundary. A selector, hidden intent or an unearned knowledge state must not disclose the gated percentage. Live resolution and both previews use the same effective range, Precision, Evade, natural-20 and explicit-Target rules.
 
-The fighter HUD order is **Evade, Poise, Ward, Block, HP**. Evade uses the white wing icon and displays its rating; Poise is gold. Numbers are black with a 1 px outline. Percentages are green for advantage, red for disadvantage and white when neutral, consistently on the HUD and selected card.
+The fighter HUD order is **Evade, Poise, Ward, Block, HP**. Evade uses the white wing icon and displays its rating; Poise is gold. Numbers have a black 1 px outline. Percentages are green for advantage, red for disadvantage and white when neutral, consistently on the HUD and selected card.
 
 A landed attack whose target's active Evade stance or Evade reaction failed shows **Hit — Evade Failed** before its damage floater. An ordinary landed hit shows **Hit** before damage. Every miss shows **Missed**. A Target-bypass spell shows no failed-Evade label because it did not attempt Evade.
 

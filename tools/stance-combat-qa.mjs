@@ -173,6 +173,27 @@ async function assertChanceSurfaces(expectedMode) {
     hud.evaluate(node => ({ text: node.innerText.trim(), mode: node.dataset.rollMode })),
     card.evaluate(node => ({ text: node.innerText.trim(), mode: node.dataset.rollMode })),
   ]);
+  const cardOddsGeometry = await card.evaluate(node => {
+    const odds = node.closest('.card-hit-chances');
+    const selectedCard = odds?.closest('.card');
+    if (!odds || !selectedCard) return { ok: false, reason: 'odds panel is not inside the selected card' };
+    const rect = element => {
+      const box = element.getBoundingClientRect();
+      return { left: box.left, top: box.top, right: box.right, bottom: box.bottom, width: box.width, height: box.height };
+    };
+    return { ok: true, odds: rect(odds), selectedCard: rect(selectedCard), viewport: { width: innerWidth, height: innerHeight } };
+  });
+  assert.ok(cardOddsGeometry.ok, cardOddsGeometry.reason);
+  assert.ok(cardOddsGeometry.odds.width > 0 && cardOddsGeometry.odds.height > 0, 'selected-card odds panel has visible geometry');
+  assert.ok(cardOddsGeometry.odds.left >= 0 && cardOddsGeometry.odds.top >= 0
+    && cardOddsGeometry.odds.right <= cardOddsGeometry.viewport.width
+    && cardOddsGeometry.odds.bottom <= cardOddsGeometry.viewport.height,
+  'selected-card odds panel remains fully inside the viewport');
+  assert.ok(cardOddsGeometry.odds.left >= cardOddsGeometry.selectedCard.left
+    && cardOddsGeometry.odds.top >= cardOddsGeometry.selectedCard.top
+    && cardOddsGeometry.odds.right <= cardOddsGeometry.selectedCard.right
+    && cardOddsGeometry.odds.bottom <= cardOddsGeometry.selectedCard.bottom,
+  'selected-card odds panel remains fully inside the selected card');
   const percent = text => {
     const match = text.match(/([\d.]+)%/);
     assert.ok(match, 'percentage is visible: ' + text);
@@ -197,10 +218,24 @@ async function inspectCard(cardId, label) {
   if (cardId === 'crystalBarrier') {
     const rules = page.locator('.card-inspection-modal .ctext, .card-inspection-details .ctext').first();
     await rules.waitFor({ state: 'visible', timeout: 5000 });
-    const fit = await rules.evaluate(node => ({ scrollHeight: node.scrollHeight, clientHeight: node.clientHeight }));
+    const fit = await rules.evaluate(node => ({
+      scrollHeight: node.scrollHeight, clientHeight: node.clientHeight,
+      scrollWidth: node.scrollWidth, clientWidth: node.clientWidth,
+    }));
     assert.ok(fit.scrollHeight <= fit.clientHeight, 'Crystal Barrier text fits without vertical clipping');
+    assert.ok(fit.scrollWidth <= fit.clientWidth, 'Crystal Barrier text fits without horizontal clipping');
     const rulesPanel = page.locator('.card-inspection-modal .ic-layer[data-component="rules"]').first();
-    const lastFaceLine = rulesPanel.locator('.face-line').last();
+    const faceLines = rulesPanel.locator('.face-line');
+    const lineFits = await faceLines.evaluateAll(lines => lines.map(line => ({
+      text: line.innerText.trim(),
+      scrollWidth: line.scrollWidth,
+      clientWidth: line.clientWidth,
+    })));
+    assert.ok(lineFits.length > 0, 'Crystal Barrier inspection exposes rules face lines');
+    for (const line of lineFits) {
+      assert.ok(line.scrollWidth <= line.clientWidth, 'Crystal Barrier face line fits horizontally: ' + line.text);
+    }
+    const lastFaceLine = faceLines.last();
     await lastFaceLine.waitFor({ state: 'visible', timeout: 5000 });
     const visualGap = await lastFaceLine.evaluate(line => {
       const panel = line.closest('.ic-layer[data-component="rules"]');

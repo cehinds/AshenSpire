@@ -223,6 +223,11 @@ test('the blow that ends a fight is paced once, on the board, before its reward 
   const [last, ...rest] = host.live.combat.enemies.filter(enemy => enemy.alive);
   for (const enemy of rest) { enemy.hp = 0; enemy.alive = false; }
   last.hp = 1;
+  // Isolate a killing contact from the new protection pools: the contract here
+  // is final-scene receipt pacing, while damage/protection has its own tests.
+  last.block = 0; last.barrier = 0;
+  if (last.persistentPoise) last.persistentPoise.value = 0;
+  if (last.persistentWard) last.persistentWard.value = 0;
   // The pacing contract starts with a landed killing blow. Put this fixture
   // within melee reach and retain real RNG state with a natural20 next.
   if (last.combatStance) last.combatStance.range = 'melee';
@@ -231,7 +236,10 @@ test('the blow that ends a fight is paced once, on the board, before its reward 
   const probe = createRng(rng.seed, counters);
   while (probe.int('combatAvoidance', 1, 20) !== 20) counters.combatAvoidance = (counters.combatAvoidance || 0) + 1;
   rng.restoreCounters(counters);
-  const attack = board.players.find(player => player.id === 'p1').hand.find(card => registries.cards.get(card.cardId)?.type === 'attack');
+  // Use a direct damage card; an Attack-class Counter defers its payload and
+  // cannot serve as this test's immediate killing blow.
+  const attack = { cardId: 'strike', instanceId: 'ending-strike', upgraded: false };
+  host.live.combat.players.get('p1').piles.hand.push(attack);
   assert.equal(host.combatPlay('p1', attack.instanceId, last.id).ok, true);
   const scene = host.snapshot().scene;
   assert.notEqual(scene.kind, 'combat', 'the fight ended');

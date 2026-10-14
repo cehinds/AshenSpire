@@ -260,14 +260,16 @@ test('a click-skip ends the callouts', (t2) => {
   });
 });
 
-for (const mode of ['impact', 'sequential']) test('accuracy outcome leads damage in ' + mode + ' playback', t2 => {
-  drive(t2, ({ trace, run, finish }) => {
+for (const mode of ['impact', 'sequential', 'instant', 'reduced']) test('accuracy outcome leads damage in ' + mode + ' playback', t2 => {
+  drive(t2, ({ dom, trace, run, finish }) => {
+    if (mode === 'instant') setAnimSpeed('instant');
+    if (mode === 'reduced') dom.document.body.classList.add('reduced-motion');
     run(enemyAttack({ type: 'attackHit', sourceId: 'e1', targetId: 'player', evadeActive: true }, hit('e1', 'player')), { beatOrder: mode });
     finish();
     const outcome = timeOf(trace, 'callout:evadeFailed@player');
     const damage = timeOf(trace, 'float:-4');
     assert.ok(Number.isFinite(outcome) && Number.isFinite(damage), 'both production visuals execute');
     assert.ok(damage > outcome, 'the outcome has a visible lead before damage');
-    if (mode === 'impact') assert.ok(damage - outcome >= 300, 'outcome gets its readable lead');
+    assert.ok(damage - outcome >= 300, 'outcome gets its readable lead in every playback mode');
   });
 });

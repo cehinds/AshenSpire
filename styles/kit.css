@@ -6436,3 +6436,8 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 .combat .card-hit-chance { color: white; -webkit-text-stroke: 1px black; paint-order: stroke fill; white-space: nowrap; }
 .combat .card-hit-chance[data-roll-mode='advantage'] { color: #83df99; }
 .combat .card-hit-chance[data-roll-mode='disadvantage'] { color: #ff8179; }
+
+/* Odds stay inside the selected card's painted area, beyond hand clipping. */
+.combat .hand .card .card-hit-chances { top: 16%; bottom: auto; inset-inline: 6%; max-width: 88%; box-sizing: border-box; font-size: max(10px, 1.05rem); }
+.combat .card-hit-chance { max-width: 100%; white-space: normal; overflow-wrap: anywhere; text-align: center; }
+.expanded-combat-card .ic-text[data-card-binding="rules"] .face-line { display: block; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }

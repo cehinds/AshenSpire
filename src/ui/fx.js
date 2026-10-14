@@ -762,14 +762,16 @@ export function animateEvents(events, ctx, done) {
     // At most ONE ordinary event per tick: a callout between two hits must not
     // pull the next hit into this tick (a crit multi-hit still steps per hit).
     let hadRegular = false;
+    let outcomeLead = 0;
     do {
+      if (pending[i].type === 'attackHit') outcomeLead = STACK_STEP_MS * 2;
       if (!calloutOnly(pending[i], receiptVisuals)) hadRegular = true;
       cueThrough(beatOf.has(pending[i]) ? beatOf.get(pending[i]) : -1);
       const fn = visualFor(pending[i], undefined, receiptVisuals);
       if (fn) fn(ctx);
       i++;
     } while (i < pending.length && (calloutOnly(pending[i], receiptVisuals) || (!hadRegular && calloutOnly(pending[i - 1], receiptVisuals))));
-    setTimeout(step, COMBAT_TIMING.instantStepMs);
+    setTimeout(step, Math.max(COMBAT_TIMING.instantStepMs, outcomeLead));
   };
   step();
 }
@@ -1256,7 +1258,8 @@ export function playTimeline(events, ctx, done) {
             };
             if (!parts.reaction && !parts.numbers) {
               said();
-              stepR();
+              if (event.type === 'attackHit') schedule(stepR, STACK_STEP_MS * 2);
+              else stepR();
               return;
             }
             if (!parts.reaction) {

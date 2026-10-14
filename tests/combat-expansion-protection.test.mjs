@@ -34,6 +34,11 @@ test('Invulnerability spends one stack across three hits and suppresses the whol
 test('Decoy protects ranged Single delivery but Melee and Area actions connect',()=>{
  for(const [range,targeting,avoided]of[['ranged','single',true],['melee','single',false],['reach','area',false]]){
   const {combat,enemy}=make();enemy.statuses.decoy={stacks:2};const hp=enemy.hp;play(combat,enemy,{range,targeting,pressure:false});
-  assert.equal(enemy.hp===hp,avoided,range+'/'+targeting);assert.equal(enemy.statuses.decoy?.stacks,avoided?1:2,'bypassed Decoy stays until consumed or revealed');
+  assert.equal(enemy.hp===hp,avoided,range+'/'+targeting);
+  if(avoided){
+   assert.equal(combat.eventLog.find(event=>event.type==='combatAvoidanceResolved'&&event.prevention==='decoy')?.hitCheck,true,'the emitted Decoy receipt is marked as shared');
+   assert.equal(combat.eventLog.filter(event=>event.type==='attackMissed').length,1,'Decoy publishes one final miss');
+  }
+  assert.equal(enemy.statuses.decoy?.stacks,avoided?1:2,'bypassed Decoy stays until consumed or revealed');
  }
 });

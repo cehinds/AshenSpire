@@ -42,7 +42,9 @@ jobs:
         id: tests
         continue-on-error: true
         run: >-
-          node --test tests/stance-lifecycle.test.mjs tests/stance-hit.test.mjs tests/stance-hud.test.mjs
+          node --test tests/stance-lifecycle.test.mjs tests/stance-hit.test.mjs tests/stance-hud.test.mjs tests/stance-hostile-spell.test.mjs
+          tests/combat-callouts.test.mjs tests/selected-weapon-defense-receipts.test.mjs
+          tests/combat-expansion-protection.test.mjs
           tests/spell-defense.test.mjs
           tests/spell-defense-ranges.test.mjs tests/counter-return-range.test.mjs
           tests/card-classification.test.mjs tests/combat-reaction-stack.test.mjs

@@ -525,7 +525,7 @@ export function beginTacticalAction(ctx, source, target, carrier, contacts = [],
     ? { resolved: true, avoided: true, distance: null, evade: null, reason: counterAttack.missReason,
       chance: receipt.avoidance.chance }
     : Avoidance.resolveAvoidance(ctx, source, target, receipt.profile, receipt.avoidanceAmount ?? receipt.amount,
-      { evadeDisabled: control.evadeDisabled, evadeBonus: options.evadeBonus || 0 });
+      { evadeDisabled: control.evadeDisabled, evadeBonus: options.evadeBonus || 0, hitCheck: Boolean(counterAttack) });
   receipt.avoided = receipt.avoidance.avoided;
   if (receipt.counterEligible && !receipt.avoided) {
     target.combatCounter.charges = 0;
