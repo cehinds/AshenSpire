@@ -68,6 +68,13 @@ try {
       ['Settings', '#settings', '#set-close'],
     ]) {
       await measure(name, selector, done);
+      if (name === 'Settings') {
+        await measure('Settings Done and Save', '#set-close', '.set-export-body, body:not(:has(.settings-modal)) .title-screen');
+        if (await page.locator('.set-export-body').count()) {
+          await measure('Settings export Not now', '.modal-veil:has(.set-export-body) .as-btn:not(.primary)', 'body:not(:has(.modal-veil)) .title-screen');
+        }
+        await measure('Settings reopen', '#settings', '#set-close');
+      }
       const backSelector = name === 'Settings' ? '.settings-modal .modal-close' : '.title-modal-veil .title-modal-back, .screen:not(.title-screen) [data-back]';
       const back = page.locator(backSelector).first();
       if (!await back.count()) throw new Error(`No back control from ${name}`);
@@ -90,6 +97,18 @@ try {
     report.quitFallback = await page.locator('.farewell .subtitle').textContent();
     await page.screenshot({ path: `${out}/${phase}-${device}-quit.png` });
     await measure('Quit return to title', '#farewell-back', '.startup-gate');
+    if (!phone) {
+      const popupUrl = new URL(url); popupUrl.searchParams.set('shot', 'title');
+      const opened = page.waitForEvent('popup');
+      await page.evaluate((href) => window.open(href), popupUrl.href);
+      const popup = await opened;
+      await popup.waitForSelector('#quit-game');
+      if (phase === 'before') await popup.locator('.title-more summary').click();
+      const closed = popup.waitForEvent('close', { timeout: 3000 });
+      await popup.locator('#quit-game').click();
+      await closed;
+      report.scriptOpenedWindowClosed = true;
+    }
     await context.close();
     console.log(JSON.stringify(report));
   }
