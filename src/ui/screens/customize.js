@@ -724,8 +724,8 @@ export function mountCustomize(app, {
         track: row.trackLabel, required: row.requiredLevel, current: row.currentLevel,
       });
     featBrowser = createCreationFeatBrowser({ groups, allowance: 0, labels: {
-      eyebrow: t('creation.feats.eyebrow'), title: t('creation.feats.title'),
-      description: t('creation.feats.description'), availability: t('creation.feats.availability'),
+      title: t('creation.feats.title'),
+      availability: t('creation.feats.availability'),
       detailLabel: t('creation.feats.detailLabel'),
       groups: Object.fromEntries(['character', 'class', 'skill'].map(id => [id, t(`creation.feats.group.${id}`)])),
       locked: t('creation.feats.locked'), available: t('creation.feats.available'),
@@ -1169,6 +1169,11 @@ export function mountCustomize(app, {
         ? tTip('creation.abilities.elementCap', { max: section.maxElementPicks }) : null;
       capRefreshers.set(card.id, refusesWhen(choose, capReason, ''));
       const select = () => {
+        // Re-read the authoritative offer at activation: an inspector or old
+        // DOM node can outlive the attributes, armaments or class it rendered.
+        const current = startingAbilityPlan(registries, previewRun(), meta.settings || {});
+        if (current?.skillId !== section.skillId || current.rank !== section.rank
+          || !current.choices.some(choice => choice.id === card.id)) return;
         const picked = state.startingAbilityIds.includes(card.id);
         if (picked) state.startingAbilityIds = state.startingAbilityIds.filter(id => id !== card.id);
         else if (capReason()) return;
@@ -1197,13 +1202,13 @@ export function mountCustomize(app, {
   function renderSpells() {
     spellGateRefreshers = [];
     const plan = refreshAbilitySelection();
-    $('#cz-spells-heading').replaceChildren(creationPageHeading({ eyebrow: t('creation.spells.eyebrow'), title: t('creation.spells.title'), description: t('creation.spells.description', { rank: plan?.rank || 1 }) }));
+    $('#cz-spells-heading').replaceChildren(creationPageHeading({ title: t('creation.spells.title') }));
     const host = $('#cz-starting-spells');
     host.replaceChildren(plan?.skillId === 'item:magic-focus'
       ? renderStartingAbility(plan, { stage: 'spells' })
       : flavour(t('creation.spells.unavailable')));
     scheduleCardFits(host.querySelectorAll('.card'));
-    $('#cz-maneuvers-heading').replaceChildren(creationPageHeading({ title: t('creation.category.maneuvers'), description: t('creation.maneuvers.description') }));
+    $('#cz-maneuvers-heading').replaceChildren(creationPageHeading({ title: t('creation.category.maneuvers') }));
     const martial = $('#cz-starting-maneuvers');
     martial.replaceChildren(...(plan?.skillId === 'combatManeuvers' ? [renderStartingAbility(plan, { stage: 'maneuvers' })] : []));
     scheduleCardFits(martial.querySelectorAll('.card'));
@@ -1625,9 +1630,22 @@ export function mountCustomize(app, {
       face: { label: 'Show calculations', value: 'Card packages, requirements and poise' },
       reveal: { node: receiptBody },
     }], { structure: 'details' });
-    host.replaceChildren(cards, createCreationStartingDeck({ registries, run, settings: meta.settings || {},
+    const deck = createCreationStartingDeck({ registries, run, settings: meta.settings || {},
       refs: creationDraftStartingDeck(registries, run, state.startingAbilityIds, meta.settings || {}),
-    }), calculations);
+    });
+    let deckReceipt = deck;
+    if (host.id === 'cz-review-summary') {
+      // The loadout stays visible; the already inspectable deck is a native
+      // disclosure with its canonical count and source breakdown on the face.
+      deckReceipt = el('div', { class: 'cc-review-deck cz-disc' });
+      const heading = deck.querySelector('.cc-panel-heading');
+      mountDisclosure(deckReceipt, [{ key: 'review-starting-deck', kind: 'pick', disclosure: 'face',
+        face: { label: heading.querySelector('h3').textContent,
+          value: heading.querySelector('.as-subtitle')?.textContent || '' },
+        reveal: { node: deck },
+      }], { structure: 'details' });
+    }
+    host.replaceChildren(cards, deckReceipt, calculations);
   }
   function renderEquipmentSummary() {
     fillSummary();
