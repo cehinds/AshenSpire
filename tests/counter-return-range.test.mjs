@@ -2,10 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { createCombat } from '../src/engine/combat.js';
+import { createCombat, dispatch } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { resolveCombatRatings } from '../src/model/combatRatings.js';
 import { enqueueExpandedAction, previewExpandedActions } from '../src/engine/combatExpansionActions.js';
+import { beforeReactionAction } from '../src/engine/combatReactions.js';
 import { executeAction } from '../src/engine/actions.js';
 import { counterAttackPreview, counterBaseEvasion } from '../src/engine/counterReturn.js';
 import { counterEffectPreview } from '../src/engine/combatCardTactics.js';
@@ -119,7 +120,16 @@ test('spell Counter HP uses PR for both physical and magical types, while pressu
 
 test('queued return range and hit metadata survive snapshots; version-one actions keep their original path', () => {
   const ctx = fight(), carrier = returnCarrier();
-  enqueueExpandedAction(ctx, returnActions(ctx, carrier), { source: ctx.player, target: ctx.enemies[0], carrier });
+  ctx.piles.hand.push({ instanceId: 'snapshot-defense', cardId: 'crystalBarrier', abilityRank: 1 });
+  const enemy = ctx.enemies[0];
+  const actions = returnActions(ctx, carrier, 5).map(action => ({
+    ...action, source: enemy, owner: enemy, target: ctx.player,
+  }));
+  enqueueExpandedAction(ctx, actions, { source: enemy, target: ctx.player, carrier });
+  assert.equal(beforeReactionAction(ctx, ctx.queue[0], {
+    play: (candidate, play) => dispatch(candidate, { type: 'playCard', ...play }),
+  }), true, 'a real Reaction offer pauses the queued return');
+  assert.ok(ctx.pendingReaction);
   const saved = serializeCombatSnapshot(ctx);
   const restored = restoreCombatSnapshot({ registries, rng: createRng(5), snapshot: saved });
   assert.ok(restored.queue.some(action => action.card?.counterReturnAttack === true && action.card.counterRequiredRange === 'melee'));
