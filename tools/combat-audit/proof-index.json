@@ -1,0 +1,222 @@
+{
+  "schema": "combat-audit-proof-index-v1",
+  "productionCommit": "60e89f5ff8c4763552e62ebaf08830e26461b5b9",
+  "sourceDigest": "368140ce27",
+  "ordinal": 1530,
+  "htmlSha256": "1d63824ea3d6df48d2909b31b595e48d63e46e2d4322f74e868371b92792c319",
+  "artRelease": "hd-assets-v23",
+  "cardHarnessCommit": "500cefb9b",
+  "rawEvidenceDirectory": "scratch/full-combat-audit/final-current (untracked; publication artifacts may carry raw evidence)",
+  "proofs": [
+    {
+      "name": "variants-native",
+      "sha256": "62261729a3477a6a2eefaabcb1d51018ad2cda77d0325ccd5bbcfd1df09e9acf",
+      "loader": "native",
+      "failures": 0,
+      "intents": 3784,
+      "paidPlays": 3760,
+      "namedRefusals": 24,
+      "fixtureGaps": 0,
+      "resourceLedgers": 3760,
+      "contracts": 4
+    },
+    {
+      "name": "variants-bundled",
+      "sha256": "66be937dca0031479505a1bb7f8395490218bb2daddfd558f98536a4bb327c55",
+      "loader": "bundled",
+      "failures": 0,
+      "intents": 3784,
+      "paidPlays": 3760,
+      "namedRefusals": 24,
+      "fixtureGaps": 0,
+      "resourceLedgers": 3760,
+      "contracts": 4
+    },
+    {
+      "name": "refusals-native",
+      "sha256": "da23d3df4de02447f9a5e6176d318e74bf1f510f30fa03f022ef02ec27d1a028",
+      "loader": "native",
+      "failures": 0,
+      "namedRefusals": 1013,
+      "acceptedZeroNetPrice": 33
+    },
+    {
+      "name": "refusals-bundled",
+      "sha256": "116072a592b1d5daeea4a2fe710747bd7cce9f1c8e7b8c292be7b9f5cc1c8491",
+      "loader": "bundled",
+      "failures": 0,
+      "namedRefusals": 1013,
+      "acceptedZeroNetPrice": 33
+    },
+    {
+      "name": "conditions-native",
+      "sha256": "7aca34a0da4cc3f2108b5ccbc3d350401c9607a8dbe985c462dff7f30b655c2b",
+      "loader": "native",
+      "failures": 0,
+      "verifiedIndices": 156,
+      "uncoveredIndices": 106
+    },
+    {
+      "name": "conditions-bundled",
+      "sha256": "4ea06f7b732f2ef92c964e6282ea49aff790abeea3e7933d11f52080a76dbca3",
+      "loader": "bundled",
+      "failures": 0,
+      "verifiedIndices": 156,
+      "uncoveredIndices": 106
+    },
+    {
+      "name": "condition-helper-native",
+      "sha256": "a7ccf20e716feefa2aa7274cf08da3c98d27f06133dbf480041a38506753df97",
+      "loader": "native",
+      "failures": 0,
+      "contracts": 25
+    },
+    {
+      "name": "condition-helper-bundled",
+      "sha256": "7978e59ff9a32ff5ef85f06584e9d8efad3fa66cfb84bec085d2c77a8deab715",
+      "loader": "bundled",
+      "failures": 0,
+      "contracts": 25
+    },
+    {
+      "name": "deferred-native",
+      "sha256": "62630399fe7c4f5811d54cfaee0914eba12793bc78932eb53b934ca0b5ce356b",
+      "loader": "native",
+      "failures": 0,
+      "rows": 12
+    },
+    {
+      "name": "deferred-bundled",
+      "sha256": "f27dc36f553d61807f26141c41f72cc267124212d51399f0e24bac7a0cecd2db",
+      "loader": "bundled",
+      "failures": 0,
+      "rows": 12
+    },
+    {
+      "name": "effects-native",
+      "sha256": "945172ed5ba2c18f90a74402129a6c2c6010667b6fd54dbd117960b0a954aa86",
+      "loader": "native",
+      "positiveContracts": 35,
+      "fundedNeutralContracts": 2,
+      "authoredAbsentOps": [
+        "shuffleDiscardIntoDraw",
+        "retain",
+        "exhaust"
+      ]
+    },
+    {
+      "name": "effects-bundled",
+      "sha256": "072a4fce4f2575559b62a26774723c381ad0a523f7e1330848fe93e52c08f0d4",
+      "loader": "bundled",
+      "positiveContracts": 35,
+      "fundedNeutralContracts": 2,
+      "authoredAbsentOps": [
+        "shuffleDiscardIntoDraw",
+        "retain",
+        "exhaust"
+      ]
+    },
+    {
+      "name": "relic-enemy-native",
+      "sha256": "a1a4c49c9dc29ef1afe8afd0300bf62f332c0f4ee3e85a258e292e4368e40d84",
+      "loader": "native",
+      "counts": {
+        "relics": 73,
+        "relicPropertyCarriers": 62,
+        "relicRules": 68,
+        "relicBranchesCovered": 68,
+        "relicConditionalFalseControls": 33,
+        "relicGatedBranches": 25,
+        "relicGatedBranchesCovered": 25,
+        "relicPassives": 27,
+        "relicPassiveDeclarations": 31,
+        "relicPassiveEffects": 19,
+        "relicPassiveEffectsCovered": 19,
+        "relicPassiveNoOpDeclarations": 12,
+        "statuses": 71,
+        "statusesCovered": 71,
+        "statusModifierOutcomes": 20,
+        "statusModifierDeclarations": 20,
+        "statusProcBranches": 3,
+        "statusProcBranchesCovered": 3,
+        "statusSilencedConsumerPathsCovered": 3,
+        "statusModifierConsumerDeclarations": 20,
+        "statusModifierConsumerOutcomesCovered": 20,
+        "statusResistanceBranches": 3,
+        "statusResistanceBranchesCovered": 3,
+        "statusControlBranches": 4,
+        "statusControlBranchesCovered": 4,
+        "statusTaggedVulnerabilityBranches": 3,
+        "statusTaggedVulnerabilityCovered": 3,
+        "enemies": 33,
+        "enemyMoves": 103,
+        "enemyMovesCovered": 103,
+        "enemyReactionMoves": 2,
+        "enemyReactionScenariosCovered": 4,
+        "encounters": 35,
+        "classes": 4,
+        "encounterClassScenarios": 140,
+        "encounterClassCovered": 140
+      },
+      "harnessRevision": "0e716d059bfe358a30b138575d229914da78b46c"
+    },
+    {
+      "name": "relic-enemy-bundled",
+      "sha256": "ef0a8b5b609d3971e7a13f872d567e261459c2b0465dc8a517a9dda4cc1cd5bf",
+      "loader": "bundled",
+      "counts": {
+        "relics": 73,
+        "relicPropertyCarriers": 62,
+        "relicRules": 68,
+        "relicBranchesCovered": 68,
+        "relicConditionalFalseControls": 33,
+        "relicGatedBranches": 25,
+        "relicGatedBranchesCovered": 25,
+        "relicPassives": 27,
+        "relicPassiveDeclarations": 31,
+        "relicPassiveEffects": 19,
+        "relicPassiveEffectsCovered": 19,
+        "relicPassiveNoOpDeclarations": 12,
+        "statuses": 71,
+        "statusesCovered": 71,
+        "statusModifierOutcomes": 20,
+        "statusModifierDeclarations": 20,
+        "statusProcBranches": 3,
+        "statusProcBranchesCovered": 3,
+        "statusSilencedConsumerPathsCovered": 3,
+        "statusModifierConsumerDeclarations": 20,
+        "statusModifierConsumerOutcomesCovered": 20,
+        "statusResistanceBranches": 3,
+        "statusResistanceBranchesCovered": 3,
+        "statusControlBranches": 4,
+        "statusControlBranchesCovered": 4,
+        "statusTaggedVulnerabilityBranches": 3,
+        "statusTaggedVulnerabilityCovered": 3,
+        "enemies": 33,
+        "enemyMoves": 103,
+        "enemyMovesCovered": 103,
+        "enemyReactionMoves": 2,
+        "enemyReactionScenariosCovered": 4,
+        "encounters": 35,
+        "classes": 4,
+        "encounterClassScenarios": 140,
+        "encounterClassCovered": 140
+      },
+      "harnessRevision": "0e716d059bfe358a30b138575d229914da78b46c"
+    }
+  ],
+  "conditionalProofScope": {
+    "generalAttributedIndices": 156,
+    "generalUncoveredIndices": 106,
+    "literalAuthoredShapesProven": 37,
+    "projectedShapeProof": "frost/frostExposed becomes frozen/chilled",
+    "additionalProjectedShapesProven": 1,
+    "remainingSemanticFamilies": [
+      "notBulwark",
+      "targetStaggered",
+      "notTargetStaggered",
+      "notStarstoneCharge",
+      "notHpBelow50"
+    ]
+  }
+}
