@@ -1,3 +1,4 @@
+import { creationFlowCategories } from '../models/CreationWorkspaceModel.js';
 // Additional folios in the existing ?shot=components production catalog.
 // Every specimen is built by the same renderer used by the creation screen.
 import { el, pane } from '../kit/index.js';
@@ -20,10 +21,6 @@ import {
   createCreationFeatBrowser, createCreationStepNavigation, decorateCreationWorkspace,
 } from '../components/creationPageParts.js';
 import { linkCreationCatalogFolios } from './creationCatalogLinks.js';
-
-const STEP_ROWS = [
-  'class', 'attributes', 'keepsake', 'equipment', 'feats', 'spells', 'review',
-].map(id => ({ id, label: t(`creation.category.${id}`) }));
 
 function featBrowser(groups) {
   const requirement = (row, available = false) => row.unlockedByProfile ? t('creation.feats.profileUnlocked')
@@ -75,7 +72,8 @@ export function createCreationClassSpecimen({ registries, classId, run = null, s
 export function mountCreationPartSpecimens({ host, registries }) {
   const run = createRunState({ registries, classId: 'starseer', seed: 7 });
   const groups = creationFeatBrowserGroups(registries, run);
-  const navigation = createCreationStepNavigation({ steps: STEP_ROWS, currentId: 'class',
+  const steps = creationFlowCategories(registries, 'starseer').map(id => ({ id, label: t(`creation.category.${id}`) }));
+  const navigation = createCreationStepNavigation({ steps, currentId: 'class',
     labels: { title: t('creation.categories'), allSteps: t('creation.nav.allSteps'), currentStep: (step, index, total) => t('creation.step.progress', { index: index + 1, count: total, category: step.label }) },
     onSelect: id => navigation.update(id),
   });
