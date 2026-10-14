@@ -1,3 +1,4 @@
+import * as SubclassDeck from './subclassDeck.js';
 import { equipmentRoleSource, startingDeckRefs, stampDeck } from './loadout.js';
 import { ensureExpandedStarterCoverage } from './combatExpansionStarter.js';
 
@@ -7,11 +8,11 @@ export function startingEquipmentPreview(registries, baseRun, hands, slot) {
   for (const hand of ['leftHand', 'rightHand']) {
     run.loadout.sets[hand][run.loadout.active[hand] || 0] = hands[hand] || null;
   }
-  run.deck = startingDeckRefs(registries, run.loadout, run.class)
+  run.deck = (run.subclassId !== undefined ? SubclassDeck.subclassDeckPreview(registries, run) : startingDeckRefs(registries, run.loadout, run.class))
     .map((ref, index) => ({ ...ref, upgraded: false, instanceId: `creation-preview:${index}` }));
   run.equipmentAttackSlotCount = run.deck.filter(ref => ref.equipmentRole === 'attack').length;
   stampDeck(registries, run, null, { reconcileEquipmentPools: false });
-  ensureExpandedStarterCoverage(registries, run);
+  if (run.subclassId === undefined) ensureExpandedStarterCoverage(registries, run);
   const itemId = hands[slot] || null;
   const hand = slot === 'leftHand' ? 'left' : 'right';
   const groups = new Map();

@@ -84,7 +84,15 @@ export function validateSource(source, rules) {
   if (!(source.grip in rules.impact.grip)) throw new Error(`${source.id}: unknown grip '${source.grip}'`);
   if (!(source.damageType in rules.damageTypes)) throw new Error(`${source.id}: unknown damage type '${source.damageType}'`);
   if (source.tags !== undefined && (!Array.isArray(source.tags) || source.tags.some((tag) => typeof tag !== 'string'))) throw new Error(`${source.id}: tags must be strings`);
-  try { attackDescriptor({ tags: source.tags || [], attack: { source: source.sourceType, damageType: source.damageType } }); }
+  // A derived infusion adds typed components without changing the weapon's
+  // primary type. Its effective tags describe both parts of that source.
+  const components = source.weaponInfusion?.components;
+  for (const component of components || []) {
+    if (!(component.type in rules.damageTypes)) throw new Error(`${source.id}: unknown infusion damage type '${component.type}'`);
+    assertNumber(component.amount, `${source.id}.weaponInfusion.amount`);
+  }
+  try { attackDescriptor({ tags: source.tags || [], attack: { source: source.sourceType,
+    ...(components?.length ? { components: [{ type: source.damageType, weight: 1 }, ...components.map(part => ({ type: part.type, weight: part.amount }))] } : { damageType: source.damageType }) } }); }
   catch (error) { throw new Error(`${source.id}: ${error.message}`); }
   for (const effect of source.buildup || []) {
     if (typeof effect.status !== 'string') throw new Error(`${source.id}: buildup requires status`);

@@ -11,7 +11,7 @@ import { renderCard } from '../components/card.js';
 import { hideTooltip } from '../components/tooltip.js';
 import { pendingLevelCount } from '../../model/levelup.js';
 import { deferredProgressionCount, deferredOtherClassRewardCount } from '../../model/deferredProgression.js';
-import { t } from '../strings.js';
+import { t, tTip } from '../strings.js';
 
 const RARITY_WORDS = { common: 'Common', uncommon: 'Uncommon', rare: 'Rare' };
 
@@ -159,7 +159,7 @@ export function openSkillInspection({ registries, run, track, opener }) {
   const cards = el('div', { class: 'progression-associated-cards' }, model.cards.map(card => renderCard(registries, { cardId: card.id, upgraded: false,
     ...(Number.isInteger(card.abilityRank) ? { abilityRank: card.abilityRank } : {}),
     ...(card.legacyAbility ? { legacyAbility: true } : {}),
-  })));
+  }, { rules: run })));
   let shell;
   const back = button({ label: t('common.back') });
   back.addEventListener('click', () => shell.close());
@@ -179,7 +179,7 @@ export function openSkillInspection({ registries, run, track, opener }) {
 export function skillTrackButton(registries, run, track, progress) {
   const node = el('button', { type: 'button', class: 'progression-skill-button', 'aria-haspopup': 'dialog',
     'aria-label': `${track.label}, level ${track.level}. Open progression`, dataset: { skill: track.id } }, [
-    meter({ stack: true, tone: 'skill', label: `${track.kind === 'class' ? 'Class · ' : ''}${track.label} · Level ${track.level}`,
+    meter({ stack: true, tone: 'skill', label: `${track.kind === 'class' ? `${tTip('creation.subclass.source.class')} · ` : ''}${track.label} · Level ${track.level}`,
       value: progress.value, pct: progress.pct, cur: progress.capped ? null : progress.xp,
       max: progress.capped ? null : progress.xpToNext, ariaLabel: progress.sense }),
   ]);

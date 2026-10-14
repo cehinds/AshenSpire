@@ -14,6 +14,8 @@
 
 import { attachTooltip, esc } from './tooltip.js';
 import { t } from '../strings.js';
+import { creationClassTileCopy } from '../models/CreationClassTileModel.js';
+import { engravedIcon } from './engravedIcon.js';
 import { relicIcon } from '../assets.js';
 import { keepsakeArtAsset } from '../../content/keepsakeArt.js';
 import { assetUrl } from '../assetmap.js';
@@ -186,12 +188,13 @@ export function booleanSettingToggle(label, value, onChoose) {
 }
 
 /** A class: an OptionCard — Glyph, Title·S, prose, and a StatePill when it is still locked. */
-export function classChoiceCard(cls, { selected = false, locked = false, expanded = false, visual = null, onChoose = null, hint = null, mastery = null } = {}) {
+export function classChoiceCard(cls, { selected = false, locked = false, expanded = false, visual = null, onChoose = null, hint = null } = {}) {
   const preview = selected && expanded && !locked;
+  const copy = creationClassTileCopy(cls.id);
   const card = optionCard({
     name: cls.name,
-    description: cls.description,
-    meta: mastery || '',
+    description: copy.lore,
+    meta: copy.playstyle,
     // A locked card wears the unlock's own hint (plan phase 5c) or, for a
     // class not yet shipped, the milestone it arrives in.
     badge: locked && hint ? pill({ label: hint }) : locked && cls.milestone ? pill({ label: `Arrives in ${cls.milestone}` }) : null,
@@ -238,7 +241,7 @@ export function classPreviewPane({ cls, sprite = null, resources = null, relic =
  * the summary stats on the right. Appended inside the selected article;
  * its resources and relic may open detail modals without nested buttons.
  */
-export function classUnfold({ cls, sprite = null, resources = null, relic = null, visual = null, mastery = '', onRelicInspect = null }) {
+export function classUnfold({ cls, sprite = null, resources = null, relic = null, visual = null, onRelicInspect = null, summary = null }) {
   // The selected card is an article so these native detail buttons have no
   // interactive ancestor. Folded class choices remain ordinary buttons.
   if (sprite && sprite.tagName === 'IMG') sprite.alt = '';
@@ -246,19 +249,28 @@ export function classUnfold({ cls, sprite = null, resources = null, relic = null
   const relicFace = relic ? el(onRelicInspect ? 'button' : 'span', {
     class: `cc-unfold-relic${onRelicInspect ? ' cc-preview-detail-trigger' : ''}`,
     ...(onRelicInspect ? { type: 'button', 'aria-haspopup': 'dialog', 'aria-label': t('creation.preview.inspectRelic', { name: relic.name }) } : {}),
-  }, [el('span', { class: 'cc-unfold-relic-glyph', 'aria-hidden': 'true', text: relic.icon || '◆' }), el('span', { class: 'cc-unfold-relic-name', text: relic.name })]) : null;
+  }, [el('span', { class: 'cc-unfold-relic-glyph', 'aria-hidden': 'true' }, engravedIcon('relic')), el('span', { class: 'cc-unfold-relic-name', text: relic.name })]) : null;
   if (relicFace && onRelicInspect) relicFace.addEventListener('click', () => onRelicInspect(relic, relicFace));
-  const node = el('span', { class: 'cc-class-unfold', id: `cc-unfold-${cls.id}`, dataset: { class: cls.id } }, [
+  const heading = el('span', { class: 'cc-unfold-heading', text: cls.name });
+  if (summary) heading.append(el('span', { class: 'cc-unfold-stance', text: summary.stance,
+    'aria-label': t('creation.class.stance', { name: summary.stance }) }));
+  const gear = summary ? el('span', { class: 'cc-unfold-gear' }, [
+    el('span', { class: 'cc-unfold-armament', 'aria-label': t('creation.class.armament', { name: summary.armament }) }, [engravedIcon('sword'), summary.armament]),
+    relicFace,
+    summary.art ? el('span', { class: 'cc-unfold-weapon-art', 'aria-label': t('creation.class.art', { name: summary.art }) }, [engravedIcon('combat'), summary.art]) : null,
+  ]) : null;
+  const ratingLine = summary ? el('span', { class: 'cc-unfold-ratings', 'aria-label': t('creation.class.ratings') },
+    summary.ratings.map(rating => el('span', { class: 'cc-unfold-rating', dataset: { stat: rating.id },
+      text: t('creation.class.rating', { name: rating.name, value: rating.value }) }))) : resources;
+  const node = el('span', { class: `cc-class-unfold${summary ? ' cc-concise-class' : ''}`, id: `cc-unfold-${cls.id}`, dataset: { class: cls.id } }, [
     el('span', { class: 'cc-unfold-portrait' }, [
-      el('span', { class: 'cc-unfold-class-icon', 'aria-hidden': 'true' }, visualNode(visual)),
-      art,
+      el('span', { class: 'cc-unfold-class-icon', 'aria-hidden': 'true' }, visualNode(visual)), art,
     ]),
     el('span', { class: 'cc-unfold-summary' }, [
-      el('span', { class: 'cc-unfold-heading', text: cls.name }),
-      el('span', { class: 'cc-unfold-description', text: cls.description }),
-      mastery ? el('span', { class: 'cc-unfold-mastery', text: mastery }) : null,
-      resources,
-      relicFace,
+      heading,
+      el('span', { class: 'cc-unfold-description', text: summary?.lore || cls.description }),
+      summary ? el('span', { class: 'cc-unfold-playstyle', text: summary.playstyle }) : null,
+      ratingLine, gear || relicFace,
     ]),
   ]);
   return markUiComponent(node, UI.classPreviewPane);

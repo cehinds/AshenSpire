@@ -278,6 +278,8 @@ export function createRegistries(contentBundle) {
     creation.keepsakes = stamped.get('characterCreation.keepsakes');
   }
   registries.characterCreation = deepFreeze(creation);
+  registries.subclasses = makeRegistry('subclass', bundle.subclasses || []);
+  registries.subclassOpeningRules = deepFreeze({ ...(bundle.subclassOpeningRules || {}) });
   // One object, not a copied settings shadow. The run snapshots the resolved
   // result; authoring and validation still point at this exact content object.
   registries.derivedStatRules = deepFreeze(bundle.derivedStatRules || {});

@@ -1,3 +1,4 @@
+import { effectiveSubclassId } from './subclasses.js';
 // src/model/classCard.js — the class card, DERIVED (plan phase 5a, proposal §4).
 //
 // The character's core zone holds one card: the class. Its face is read off
@@ -22,7 +23,7 @@ export function favoredGroups(registries, classId) {
  * abilityCardId, relicId }, favored: [itemTypeId], schools: [cardSchool],
  * propertyTags: [propertyId] }
  */
-export function classCard(registries, classId, coreTags = []) {
+export function classCard(registries, classId, coreTags = [], openingSubclassId = undefined) {
   const def = registries.classes.get(classId);
   if (!def) throw new Error(`classCard: unknown class '${classId}'`);
   // The tree (plan phase 5b): the picked nodes ride as the card's own tags,
@@ -35,8 +36,9 @@ export function classCard(registries, classId, coreTags = []) {
   // class happens to have authored.
   const ladder = ((((registries || {}).balance || {}).skill || {}).class || {}).tierAt;
   const topTier = Array.isArray(ladder) && ladder.length ? ladder.length : Math.max(0, ...tree.map((row) => row.tier));
-  const subclassId = picked.find((id) => tree.some((row) => row.nodeId === id && row.tier === topTier && topTier > 0)) || null;
-  const subclass = subclassId ? (registries.nodes || []).find((n) => n && n.id === subclassId) : null;
+  const subclassId = effectiveSubclassId(registries, { class: classId, coreTags: picked, ...(openingSubclassId !== undefined ? { subclassId: openingSubclassId } : {}) });
+  const opening = openingSubclassId !== undefined && registries.subclasses?.has(subclassId) ? registries.subclasses.get(subclassId) : null;
+  const subclass = opening ? { ...opening, label: opening.name } : subclassId ? (registries.nodes || []).find((n) => n && n.id === subclassId) : null;
   const kits = ((registries.equipment || {}).startingKits) || [];
   const baseline = kits.find((row) => row.classId === classId && row.baseline === true) || null;
   const schools = new Set((Array.isArray(registries.nodes) ? registries.nodes : []).filter((n) => n.parentId === 'card').map((n) => n.id));
@@ -77,5 +79,5 @@ export function runClassIdentity(registries, run) {
   if (run?.classUnequipped) return { name: 'Classless', glyph: '◇' };
   const classId = run && run.class;
   if (!registries.classes || !registries.classes.has(classId)) return { name: String(classId || ''), glyph: null };
-  return classCard(registries, classId, (run && run.coreTags) || []).presentation;
+  return classCard(registries, classId, (run && run.coreTags) || [], run?.subclassId).presentation;
 }

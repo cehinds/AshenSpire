@@ -1545,3 +1545,57 @@ creation.feats.summary.armourPractice,,More armour XP.,,
 creation.feats.summary.classInsight,,More class XP.,,
 creation.feats.summary.spoilsInstinct,,More Cinders from victory.,,
 creation.feats.summary.vitalRenewal,,Recover HP after victory.,,
+
+# Starting subclass selection and engine-owned opening-deck receipt
+creation.subclass.title,,Starting subclass,Choose the approach that shapes your opening deck.,Starting subclass
+creation.subclass.hint,,Choose one path within your class.,Your subclass supplies five role cards. Equipment and starting abilities complete the deck.,Choose a starting subclass
+creation.subclass.choices,,Subclass choices,Choose one of the two starting subclasses for this class.,Subclass choices
+creation.subclass.reason,,Choose a subclass.,Choose a starting subclass for the selected class.,Choose a subclass
+creation.subclass.deckTitle,,Starting deck · {count} cards,Your starting deck contains {count} cards.,Starting deck
+creation.subclass.deckBreakdown,,{subclass} subclass + {class} class + {weaponArt} weapon art + {basic} basics,"{subclass} subclass cards, {class} class card, {weaponArt} weapon art, and {basic} basic cards.",Deck composition
+creation.subclass.cardRole,,Role: {role},This card occupies the {role} role in your starting deck.,Starting deck role
+creation.subclass.inspectCard,,Inspect {name} · {role},"Inspect the full rules for {name}, the {role} card.",Inspect starting card
+creation.subclass.review,,{className} · {subclassName},"{className}, starting as {subclassName}.",Class and subclass
+creation.subclass.catalog.selector,,Starting subclass selector,Two subclass choices with full selected description.,Starting subclass selector
+creation.subclass.catalog.tile,,Subclass choice tile,One interactive starting subclass choice.,Subclass choice tile
+creation.subclass.catalog.deck,,Starting deck preview,Every opening card with role and source breakdown.,Starting deck preview
+creation.subclass.catalog.group,,Deck source group,One group of opening cards from the same source.,Deck source group
+creation.subclass.catalog.card,,Starting card control,Open the complete rules for one starting card.,Starting card control
+creation.subclass.catalog.inspector,,Starting card inspector,The complete rules card used by the starting deck inspector.,Starting card inspector
+creation.subclass.source.subclass,,Subclass · {count},Subclass supplies {count} starting cards.,Subclass
+creation.subclass.source.class,,Class · {count},Class supplies {count} starting cards.,Class
+creation.subclass.source.weaponArt,,Weapon art · {count},Weapon art supplies {count} starting cards.,Weapon art
+creation.subclass.source.basic,,Basics · {count},Basics supplies {count} starting cards.,Basics
+creation.subclass.role.smash,,Smash,Smash,Smash
+creation.subclass.role.counter,,Counter,Counter,Counter
+creation.subclass.role.power,,Power,Power,Power
+creation.subclass.role.skill,,Skill,Skill,Skill
+creation.subclass.role.sweep,,Sweep,Sweep,Sweep
+creation.subclass.role.spell,,Spell,Spell,Spell
+creation.subclass.role.class,,Class,Class,Class
+creation.subclass.role.weaponArt,,Weapon art,Weapon art,Weapon art
+creation.subclass.role.strike,,Strike,Strike,Strike
+creation.subclass.role.defend,,Defend,Defend,Defend
+
+# Compact Class tile copy; canonical backstories: docs/LORE.md §5.
+creation.class.reaver.lore,,Bastion sellsword guarding the fallen gate.,Bastion sellsword guarding the fallen gate.,Bastion sellsword guarding the fallen gate.
+creation.class.rogue.lore,,Dock scavenger hunting a Court Surgeon.,Dock scavenger hunting a Court Surgeon.,Dock scavenger hunting a Court Surgeon.
+creation.class.starseer.lore,,Observatory apprentice seeking the Spire.,Observatory apprentice seeking the Spire.,Observatory apprentice seeking the Spire.
+creation.class.herald.lore,,"Furnace Chapel novice the fire spared.","Furnace Chapel novice the fire spared.","Furnace Chapel novice the fire spared."
+creation.class.reaver.style,,Physical melee · high physical defense,Physical melee · high physical defense,Physical melee · high physical defense
+creation.class.rogue.style,,Physical versatility · high evasion,Physical versatility · high evasion,Physical versatility · high evasion
+creation.class.starseer.style,,Ranged magic · high magical defense,Ranged magic · high magical defense,Ranged magic · high magical defense
+creation.class.herald.style,,Mixed damage · balanced defenses,Mixed damage · balanced defenses,Mixed damage · balanced defenses
+creation.class.neutral,,Neutral,Neutral,Neutral
+creation.class.stance,,Starting stance: {name},Starting stance: {name},Starting stance: {name}
+creation.class.armament,,Armament: {name},Armament: {name},Armament: {name}
+creation.class.relic,,Relic: {name},Relic: {name},Relic: {name}
+creation.class.art,,Weapon art: {name},Weapon art: {name},Weapon art: {name}
+creation.class.unarmed,,Bare hands,Bare hands,Bare hands
+creation.class.rating,,{name} {value},{name} {value},{name} {value}
+creation.class.ratings,,Starting ratings,Starting ratings,Starting ratings
+creation.class.stat.hp,,HP,HP,HP
+creation.class.stat.stamina,,SP,SP,SP
+creation.class.stat.mana,,MP,MP,MP
+creation.class.stat.evasion,,Evasion,Evasion,Evasion
+creation.class.unavailable,,—,—,—

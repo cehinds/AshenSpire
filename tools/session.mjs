@@ -1,3 +1,4 @@
+import { subclassSelectionProblem } from '../src/model/subclasses.js';
 import {rollPendingAbilityOffers} from '../src/model/abilityOffers.js';
 import {abilityDraftChoice} from '../src/model/abilityDraftReceipts.js';
 import {isAbilitySkill} from '../src/model/abilityGrades.js';
@@ -242,6 +243,8 @@ export function createSession({ registries, seedString, endless = false, restore
         }
         const legacyKit = md.run.schemaVersion === 1;
         migrateRunSchema(md.run);
+        const subclassProblem = subclassSelectionProblem(registries, md.run.startingKitSnapshot?.classId || md.run.class, md.run.subclassId);
+        if (subclassProblem) throw new Error(subclassProblem);
         const knowledgeProblems = [...enemyKnowledgeRunProblems(md.run, new Set(registries.enemies.ids())),
           ...enemyKnowledgeProblems(md.enemyKnowledge || emptyEnemyKnowledge(), new Set(registries.enemies.ids()))];
         if (knowledgeProblems.length) throw new Error(knowledgeProblems.join('; '));
@@ -340,13 +343,13 @@ export function createSession({ registries, seedString, endless = false, restore
     return endless ? Math.floor((session.actNumber - 1) / LAST_ACT) : 0;
   }
 
-  function addMember({ id, name, classId, tint, spriteStyle, attributeMode = undefined, attributes = undefined, startingKitId = undefined, discoveredArmaments = [], classMastery = undefined, playInDeckOrder = false, enemyKnowledge = emptyEnemyKnowledge() }) {
+  function addMember({ id, name, classId, subclassId = undefined, tint, spriteStyle, attributeMode = undefined, attributes = undefined, startingKitId = undefined, discoveredArmaments = [], classMastery = undefined, playInDeckOrder = false, enemyKnowledge = emptyEnemyKnowledge() }) {
     const index = order++;
     const entitlement = [...new Set(discoveredArmaments || [])];
     const profile = classMastery === undefined ? { discoveredArmaments: entitlement } : normalizeMasteryProfile({ discoveredArmaments: entitlement, classMastery });
     if (classMastery !== undefined && masteryProfileProblems(profile).length) throw new Error('co-op class mastery profile is malformed');
     if (enemyKnowledgeProblems(enemyKnowledge, new Set(registries.enemies.ids())).length) throw new Error('Co-op enemy knowledge profile is malformed');
-    const run = createRunState({ seed, classId, registries, attributeMode, attributes, derivedStatOptions, startingKitId, profileMeta: profile, combatExpansionVersion: memberCombatVersion, enemyKnowledgeVersion: knowledgeAuthority ? 1 : null });
+    const run = createRunState({ seed, classId, subclassId, registries, attributeMode, attributes, derivedStatOptions, startingKitId, profileMeta: profile, combatExpansionVersion: memberCombatVersion, enemyKnowledgeVersion: knowledgeAuthority ? 1 : null });
     if (knowledgeAuthority) openRunEnemyKnowledge(run, { receiptId: knowledgeAuthority.roomId, bankable: true });
     if (classMastery !== undefined || run.progressionRulesVersion===1) openRunClassMastery(registries, run, profile, { receiptId: `coop:${seed}:${id}`, bankable: false });
     // The party's order, not the default: a member's run rides the session's
@@ -587,6 +590,7 @@ export function createSession({ registries, seedString, endless = false, restore
     stampSkillBonuses(registriesForClassMastery(registries,m.run), m.run);
     return {
       id: m.id, name: m.name, classId: m.classId,
+      ...(m.run.subclassId !== undefined ? { subclassId: m.run.subclassId, subclassDeckVersion: m.run.subclassDeckVersion } : {}),
       combatExpansionVersion: m.run.combatExpansionVersion || 1,
       ...(m.run.ashenBlightBasePools ? { baseResourceMaxima: structuredClone(m.run.ashenBlightBasePools) } : {}),
       ...(m.run.ashenBlight ? { ashenBlight: structuredClone(m.run.ashenBlight) } : {}),

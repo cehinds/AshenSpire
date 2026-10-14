@@ -47,6 +47,7 @@ import { applyGraceRefill } from './encounters.js';
 import { orderedReturn } from '../model/deckRules.js';
 import { reviveTokenFor, reviveHp, adjustCount } from '../model/consumables.js';
 import { reconcileWardBlock, wardBlockReceipt } from '../model/blockPresentation.js';
+import { spellDefenseSplit } from '../model/spellDefense.js';
 import { allowAbilityOnce, grantAbilityCharge, recordAbilityOffering, requestAbilityDiscard } from './abilityRiders.js';
 import * as Matchups from './combatMatchups.js';
 import { typedDefenseAmount } from './combatExpansionEquipment.js';
@@ -58,6 +59,7 @@ import { isSpellCard, silencedStacks, combatProfileFor } from '../model/combatCa
 import { syncWardMaximum, syncPoiseMaximum } from './combatPools.js';
 export { syncWardMaximum, syncPoiseMaximum };
 import * as Blight from './ashenBlight.js';
+import { infusionForAttack, weaponSourceFor } from '../model/weaponInfusion.js';
 
 // ---------------------------------------------------------------------------
 // Shared math (also used by combat.js previews — no duplicated math in the UI)
@@ -84,20 +86,20 @@ export function spellDamageDealtMultiplier(ctx, source, carrier) {
  * computeAttackDamage(ctx, source, target|null, base) → final integer damage.
  * Pure (no mutation). Pass target = null to preview without defender mods.
  */
-export function computeAttackDamage(ctx, source, target, base, attackTags, carrier = null, { matchups = true, beforeDefense = false } = {}) {
+export function computeAttackDamage(ctx, source, target, base, attackTags, carrier = null, { matchups = true, beforeDefense = false, infusion = true, flatBonus = true } = {}) {
   const ratedBase = base + (carrier?.skipRatingBonus ? 0 : Ratings.cardRatingBonus(ctx, source, carrier, 'damage', base));
   if (ctx.foundation) {
-    const amount = F.foundationDamage(ctx, source, target, ratedBase, carrier, attackTags || [], { beforeDefense }).amount;
+    const amount = F.foundationDamage(ctx, source, target, ratedBase, carrier, attackTags || [], { beforeDefense, infusion, flatBonus }).amount;
     return matchups ? Matchups.prepareMatchupHit(ctx, source, target, carrier, amount).amount : amount;
   }
   let dmg = ratedBase;
   const school = carrier && carrier.damageSchool;
-  if (source && source.kind === 'player' && school) {
+  if (flatBonus && source && source.kind === 'player' && school) {
     dmg += source.damageBySchoolAdd && Number.isFinite(source.damageBySchoolAdd[school])
       ? source.damageBySchoolAdd[school]
       : 0;
   }
-  dmg += statuses.getAdd(ctx, source, 'attackDamageAdd');
+  if (flatBonus) dmg += statuses.getAdd(ctx, source, 'attackDamageAdd');
   dmg *= statuses.getMult(ctx, source, 'damageDealtMult') * spellDamageDealtMultiplier(ctx, source, carrier);
   if (target) dmg *= statuses.getMult(ctx, target, 'damageTakenMult');
   // Pools only in expanded combat (owner decision, 2026-10-12): no Poise or Ward rating cut. Legacy keeps it.
@@ -137,7 +139,19 @@ export function computeAttackDamage(ctx, source, target, base, attackTags, carri
   }
   dmg = taggedBonusFloor(dmg, tagged);
   dmg = dmg < 0 ? 0 : dmg;
+  if (infusion) dmg += infusionDamageComponents(ctx, source, target, carrier, { beforeDefense }).reduce((sum, row) => sum + row.amount, 0);
   return matchups ? Matchups.prepareMatchupHit(ctx, source, target, carrier, dmg).amount : dmg;
+}
+
+/** Flat source components take ordinary multipliers, never another rating/flat bonus. */
+export function infusionDamageComponents(ctx, source, target, carrier, { beforeDefense = true } = {}) {
+  const recipe = infusionForAttack(ctx, source, carrier);
+  return (recipe?.components || []).map(component => ({ type: component.type,
+    amount: computeAttackDamage({ ...ctx, foundation: null }, source, target, component.amount,
+      [...(recipe.tags || []), `damage:${component.type}`],
+      { ...carrier, skipRatingBonus: true, damageSchool: 'magic', attack: { source: 'weapon', damageType: component.type },
+        combatProfile: { ...carrier?.combatProfile, damageType: component.type } },
+      { matchups: false, beforeDefense, infusion: false, flatBonus: false }) }));
 }
 
 /**
@@ -283,6 +297,8 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
  */
 export function gainBarrier(ctx, entity, base, card = null) {
   if (!entity?.alive) return 0;
+  const split = computeSpellDefenseGain(ctx, entity, base, card);
+  if (split) return gainSpellDefenseAmount(ctx, entity, split, card);
   return gainBarrierAmount(ctx, entity, computeBlockGain(ctx, entity, base, card), card);
 }
 
@@ -380,11 +396,17 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
   receipt.silencedImmune = silencedForceContacts(ctx, target, receipt.profiles);
   const hits = receipt.amounts.map((amount, index) => {
     const profile = receipt.profiles[index];
+    const extra = profile.infusionComponents || [];
+    const extraTotal = extra.reduce((sum, component) => sum + component.amount, 0);
+    const shares = extraTotal > 0 ? allocateInteger(amount, [Math.max(0, (profile.amount || amount) - extraTotal), ...extra.map(component => component.amount)]) : [amount];
+    const infusionParts = extra.map((component, i) => ({ type: component.type, amount: shares[i + 1] || 0,
+      magic: contactMagicShare(ctx, { damageType: component.type }) > 0 }));
+    const ordinaryAmount = shares[0];
     const share = contactMagicShare(ctx, profile);
     const split = share > 0 && share < 1;
     // The split is the card's own damage (profile.splitBase, defaulting to the whole hit for a caller without one). Combat-time bonuses join after it.
     const primary = share >= 1 ? 'magic' : share <= 0 ? 'physical' : profile.camp === 'spell' ? 'magic' : 'physical';
-    const parts = splitContactParts({ amount, base: profile.splitBase ?? amount, ratingBonus: profile.ratingBonus || 0,
+    const parts = splitContactParts({ amount: ordinaryAmount, base: profile.splitBase ?? ordinaryAmount, ratingBonus: profile.ratingBonus || 0,
       ratingPart: profile.ratingPart ?? null, share, primary });
     const legacy = canonicalDamageType(profile.damageType) || 'blunt';
     // A weapon's authored physical type types the physical part whether or not the hit splits.
@@ -392,7 +414,10 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
     const types = split ? splitDamageTypesOf(profile) : { magic: magicDamageTypeOf(profile) || legacy, physical };
     // A hit that lists its damage components keeps them: each part spreads over its own component types by weight.
     const components = componentPartsOf(profile);
-    return { amount, split, magic: parts.magic, physical: parts.physical, types,
+    return { amount, split: split || (parts.physical > 0 && infusionParts.some(part => part.magic && part.amount > 0)),
+      magic: parts.magic + infusionParts.filter(part => part.magic).reduce((sum, part) => sum + part.amount, 0),
+      physical: parts.physical + infusionParts.filter(part => !part.magic).reduce((sum, part) => sum + part.amount, 0),
+      ordinaryParts: parts, infusionParts, types,
       typeWeights: { magic: components?.magic.length ? components.magic : [{ type: types.magic, weight: 1 }],
         physical: components?.physical.length ? components.physical : [{ type: types.physical, weight: 1 }] } };
   });
@@ -407,8 +432,9 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
     });
   };
   hits.forEach((hit, index) => {
-    pushTyped(index, true, hit.magic, hit.typeWeights.magic);
-    pushTyped(index, false, hit.physical, hit.typeWeights.physical);
+    pushTyped(index, true, hit.ordinaryParts.magic, hit.typeWeights.magic);
+    pushTyped(index, false, hit.ordinaryParts.physical, hit.typeWeights.physical);
+    for (const part of hit.infusionParts) pushTyped(index, part.magic, part.amount, [{ type: part.type, weight: 1 }]);
   });
   // A Silenced creature is immune to Force (owner, 2026-10-13): only a Force hit's Arcane parts are
   // negated; its other parts (Blunt and the rest) go on through Block, Poise and HP. A hit that is all
@@ -446,6 +472,7 @@ export function prepareExpandedDefense(ctx, target, receipt, carrier) {
     members.forEach((p, i) => { typed[p] = shares[i]; });
   }
   const magicTyped = hits.map(() => 0), physicalTyped = hits.map(() => 0);
+  receipt.typedComponents = hits.map((hit, index) => parts.flatMap((part, p) => part.index === index ? [{ type: part.type, amount: typed[p] }] : []));
   parts.forEach((part, p) => {
     if (part.magic) magicTyped[part.index] += typed[p]; else physicalTyped[part.index] += typed[p];
   });
@@ -535,7 +562,8 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
   const planned = carrier.expansionContact;
   const profile = { ...carrier.combatProfile, range: carrier.combatProfile?.range || 'melee', targeting: carrier.combatProfile?.targeting || 'single' };
   const raw = planned ? planned.receipt.amounts[planned.index] : Math.floor(computeAttackDamage(ctx, source, target, base, tags, carrier, { matchups: false, beforeDefense: true }) * (carrier.critMultiplier || 1));
-  const split = { splitBase: Math.max(0, Math.floor(base)), ratingBonus: cardRatingDamage(ctx, source, carrier, base), ratingPart: ratingBonusPart(ctx, carrier) };
+  const split = { splitBase: Math.max(0, Math.floor(base)), ratingBonus: cardRatingDamage(ctx, source, carrier, base), ratingPart: ratingBonusPart(ctx, carrier),
+    infusionComponents: infusionDamageComponents(ctx, source, target, carrier).map(row => ({ ...row, amount: Math.floor(row.amount * (carrier.critMultiplier || 1)) })) };
   const tactical = planned?.receipt || Matchups.beginTacticalAction(ctx, source, target, carrier, [{ ...profile, ...split, amount: raw }],
     { ...Control.statusIncomingModifier(ctx, target, profile), restrictions: Control.controlRestrictions(ctx, target) });
   if (tactical.avoided) return 0;
@@ -627,6 +655,9 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
     // The Force (Arcane) part a Silenced target was immune to; the rest of the hit landed.
     ...(tactical.forceImmuneAmounts?.[contactIndex] ? { forceImmune: tactical.forceImmuneAmounts[contactIndex] } : {}),
     damageType: type, blockRemaining: target.block || 0, barrierRemaining: target.barrier || 0,
+    ...(infusionForAttack(ctx, source, carrier) ? { components: tactical.typedComponents?.[contactIndex],
+      sourceInstanceId: weaponSourceFor(ctx, source, carrier)?.id,
+      tags: [...new Set([...(carrier.tags || []), ...(infusionForAttack(ctx, source, carrier)?.tags || [])])] } : {}),
     // The hit's typed parts before Barrier and Ward: magicAmount + physicalAmount is the hit.
     magicAmount: tactical.magicAmounts?.[contactIndex] || 0, physicalAmount: tactical.physicalAmounts?.[contactIndex] || 0,
     ...seatOf(ctx, target), ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source) } : {}),
@@ -713,14 +744,39 @@ export function addArcaneExposure(ctx, source, target, { school, attempted = nul
 
 /**
  * computeBlockGain(ctx, entity, base) → final integer block gain:
- * base + per-stack 'blockAdd' modifiers, × 'blockGainedMult' modifiers,
+ * base + the eligible rating bonus + per-stack 'blockAdd' modifiers,
+ * × 'blockGainedMult' modifiers (DR scales spell Block, PR scales spell Ward),
  * floored, min 0 (SPEC §4.2). Pure. Cap NOT applied here.
  */
 export function computeBlockGain(ctx, entity, base, card = null) {
+  const split = computeSpellDefenseGain(ctx, entity, base, card);
+  if (split) return split.block + split.ward;
   let amt = base + Ratings.cardRatingBonus(ctx, entity, card, 'block', base) + statuses.getAdd(ctx, entity, 'blockAdd');
   amt *= statuses.getMult(ctx, entity, 'blockGainedMult');
   amt = Math.floor(amt);
   return amt < 0 ? 0 : amt;
+}
+
+/**
+ * The exact parts both execution and live card previews consume. Split the
+ * base protection once, add DR only to Block and PR only to Ward, then apply
+ * guard modifiers while retaining the old once-floored total.
+ */
+export function computeSpellDefenseGain(ctx, entity, base, card = null) {
+  if (ctx.combatExpansionVersion !== 2 || !spellDefenseSplit(card, base)) return null;
+  const add = statuses.getAdd(ctx, entity, 'blockAdd');
+  const parts = spellDefenseSplit(card, base + add);
+  const bonus = Ratings.spellDefenseRatingBonuses(ctx, entity, card, base);
+  const nominalBlock = parts.block + bonus.block;
+  const nominalWard = parts.ward + bonus.ward;
+  const total = Math.max(0, Math.floor((base + add + bonus.block + bonus.ward)
+    * statuses.getMult(ctx, entity, 'blockGainedMult')));
+  if (!(total > 0)) return { block: 0, ward: 0 };
+  // A negative Block add may exceed the base, but must still reduce ratings.
+  // Allocate the final total over the remaining nominal portions in that case.
+  if (!(nominalBlock + nominalWard > 0)) return spellDefenseSplit(card, total);
+  const [block, ward] = allocateInteger(total, [nominalBlock, nominalWard]);
+  return { block, ward };
 }
 
 /**
@@ -757,9 +813,21 @@ export function gainMeterGuard(ctx, entity, meter, base, card = null) {
   return amt;
 }
 
+// Both protection opcodes share the spell-defense allocation. Rating and
+// status modifiers were computed on the total; neither portion reapplies them.
+function gainSpellDefenseAmount(ctx, entity, split, card) {
+  const block = split.block > 0 ? gainBlockAmount(ctx, entity, split.block, card, false) : 0;
+  const ward = split.ward > 0 ? gainBarrierAmount(ctx, entity, split.ward, card, true) : 0;
+  return block + ward;
+}
+
 /** gainBlock — mutating block gain with 'blockCap' modifier honored. */
 export function gainBlock(ctx, entity, base, card = null) {
   if (!entity.alive) return 0;
+  if (ctx.combatExpansionVersion === 2) {
+    const split = computeSpellDefenseGain(ctx, entity, base, card);
+    if (split) return gainSpellDefenseAmount(ctx, entity, split, card);
+  }
   if (ctx.combatExpansionVersion === 2 && card?.combatProfile) {
     const share = contactMagicShare(ctx, { ...card.combatProfile, ...(Number.isFinite(card.magicShare) ? { magicShare: card.magicShare } : {}) });
     // A whole magic guard is Barrier (refilling Ward first). A split guard gives its magic share that way and the rest as Block.
@@ -1286,6 +1354,16 @@ function runOpcode(ctx, action, eff) {
           const crit = plannedContacts ? 0 : rollCrit(ctx, action.source, attackTags);
           if (crit) carrier.critMultiplier = crit;
           applyAttackDamage(ctx, action.source, t, base, attackTags, carrier);
+          // Derived source pressure follows the same landed-HP gate as Cold's rider.
+          // Each contact owns its own recipe; another hand or seat contributes none.
+          if (!evaded && t.alive && t.hp < hpBefore) {
+            for (const buildup of infusionForAttack(ctx, action.source, carrier)?.buildup || []) {
+              if (ctx.combatExpansionVersion === 2) Control.applyStatusPressure(ctx, t, buildup.status, buildup.amount, action.source,
+                { camp: carrier.combatProfile?.camp || 'physical', recoveryProfile: buildup.recoveryProfile,
+                  actionKey: action.meta?.expansionGroup?.key || `${ctx.turn}:${carrier.instanceId || 'weapon'}` });
+              else statuses.applyStatus(ctx, t, buildup.status, buildup.amount, action.source);
+            }
+          }
           if (h === 0 && t === targets[0] && t.alive && action.meta?.abilityChargeBreak) dealPoiseDamage(ctx, t, action.meta.abilityChargeBreak, { cause: 'charge:break' });
           // OUTSIDE the foundation ruleset (the shipped game creates its combats
           // without one), an enemy blow that draws blood rocks the player by
@@ -1326,6 +1404,8 @@ function runOpcode(ctx, action, eff) {
     }
     case 'wardDamage': {
       for (const t of resolveTargets(ctx, action, eff.target)) {
+        const row = action.meta?.expansionGroup?.targets[ctx.playerIdForEntity?.(t) || t.id];
+        if (action.card?.counterReturnAttack && row?.receipt?.avoided) continue;
         const spent = Control.spendPersistentWard(ctx, t,
         evalNum(ctx, action, eff.amount, 0, t) * (!action.card?.combatWardEdgeApplied && action.card?.combatProfile?.camp === 'spell' && action.card?.combatProfile?.damageType === 'piercing' ? 1.25 : 1), { sourceId: action.source?.id });
         trackOwnPressure(ctx, action, t, 'wardDealt', spent.spent);
@@ -1559,6 +1639,8 @@ function runOpcode(ctx, action, eff) {
     }
     case 'poiseDamage': {
       for (const t of resolveTargets(ctx, action, eff.target)) {
+        const row = action.meta?.expansionGroup?.targets[ctx.playerIdForEntity?.(t) || t.id];
+        if (action.card?.counterReturnAttack && row?.receipt?.avoided) continue;
         const multiplier = Matchups.matchupPoiseMultiplier(ctx, action.source, t, action.card);
         const authored = evalNum(ctx, action, eff.amount, 0, t);
         const bonus = ctx.combatExpansionVersion === 2 ? Blight.ashenBlightMartialPoise(ctx, action.source,
@@ -1567,7 +1649,9 @@ function runOpcode(ctx, action, eff) {
         // Impact doubles only the Poise that passed the target's Poise guard.
         const guardBefore = Number.isFinite(t?.poiseGuard) ? Math.max(0, Math.floor(t.poiseGuard)) : 0;
         if (ctx.ratingsRules && action.meta?.combatCounterReaction) {
-          Ratings.applyRatingImpact(ctx, action.source, t, action.card, amount, { triggerHit: false });
+          // An explicit return Poise payload owns the Poise lane even on a spell Counter.
+          const impactCarrier = action.card?.counterReturnAttack ? { damageSchool: 'physical' } : action.card;
+          Ratings.applyRatingImpact(ctx, action.source, t, impactCarrier, amount, { triggerHit: false, cardId: action.card?.cardId });
         } else dealPoiseDamage(ctx, t, amount, { knowledgeMatchup: multiplier > 1 });
         const guardAfter = Number.isFinite(t?.poiseGuard) ? Math.max(0, Math.floor(t.poiseGuard)) : 0;
         trackOwnPressure(ctx, action, t, 'poiseDealt', Math.max(0, amount - (guardBefore - guardAfter)));

@@ -13,6 +13,7 @@ import * as Control from './combatStatusControl.js';
 import { ashenBlightRestorationPercent } from './ashenBlight.js';
 import * as Actions from './actions.js';
 import { effectiveAshenBlightAttributes } from '../model/ashenBlight.js';
+import { effectiveWeaponSource, weaponSourceFor } from '../model/weaponInfusion.js';
 
 export function rulesFingerprint(rules) {
   let hash = 2166136261;
@@ -42,7 +43,8 @@ export function validateFoundationSnapshot(saved) {
 }
 
 export function cardSourceSnapshots(ctx, def, source, card) {
-  if (!ctx.foundation) return null;
+  if (!ctx.foundation) return new Map((def.effects || []).filter(effect => effect.op === 'damage')
+    .map(effect => [effect, { ...card, weaponSource: weaponSourceFor(ctx, source, { ...card, ...(effect.attack ? { attack: effect.attack, weaponSource: null } : {}), ...(effect.tags ? { tags: effect.tags } : {}) }) }]));
   const snapshots = new Map((def.effects || []).filter((effect) => effect.op === 'damage')
     .map((effect) => [effect, foundationCarrier(ctx, source, card, effect.attack)]));
   // A Counter without printed damage still has an implicit retaliation. Capture
@@ -56,7 +58,14 @@ export function cardSourceSnapshots(ctx, def, source, card) {
 }
 
 export function cardActions(ctx, def, source, target, card, meta, sourceSnapshots = null) {
-  if (!ctx.foundation) return (def.effects || []).map((effect) => ({ effect, source, owner: source, target, card, meta }));
+  if (!ctx.foundation) return (def.effects || []).map((effect) => {
+    const captured = sourceSnapshots?.get(effect);
+    // Source capture precedes preparing hooks; final applications suppress
+    // native riders even when a feat added them after the weapon was captured.
+    const carrier = captured ? { ...captured, appliedStatusEffects: card.appliedStatusEffects,
+      appliedStatuses: card.appliedStatuses, appliedBuildupStatuses: card.appliedBuildupStatuses } : card;
+    return { effect, source, owner: source, target, card: carrier, meta };
+  });
   if (card.attack) validateAttack(card.attack, ctx.foundation.rules);
   const formulaContext = { entities: { self: source, owner: source, player: ctx.player, target, enemy: target, allEnemies: ctx.enemies.filter((e) => e.alive) }, energySpent: meta.energySpent, cardsPlayedThisTurn: meta.ordinalThisTurn };
   const rows = [];
@@ -89,6 +98,13 @@ export function foundationProfile(ctx, entity) {
 }
 
 export function foundationSource(ctx, entity, carrier = null) {
+  const source = rawFoundationSource(ctx, entity, carrier);
+  if (carrier?.resolvedSource) return source;
+  const registries = ctx.registriesForPlayer?.(ctx.playerIdForEntity?.(entity)) || ctx.registries;
+  return effectiveWeaponSource(registries, entity, source);
+}
+
+function rawFoundationSource(ctx, entity, carrier = null) {
   if (carrier?.resolvedSource) return carrier.resolvedSource;
   const source = equippedFoundationSource(ctx, entity, carrier);
   const damageType = weaponDamageType(attackDescriptor(carrier || {}), source.family, source.damageType);
@@ -150,7 +166,7 @@ export function foundationCarrier(ctx, entity, carrier = {}, effectAttack = null
     ...(carrier.combatProfile ? { combatProfile: { ...carrier.combatProfile, damageType: typed.damageType } } : {}) };
 }
 
-export function foundationDamage(ctx, source, target, base, carrier = null, attackTags = [], { beforeDefense = false } = {}) {
+export function foundationDamage(ctx, source, target, base, carrier = null, attackTags = [], { beforeDefense = false, infusion = true, flatBonus = true } = {}) {
   const rules = ctx.foundation.rules;
   const weapon = foundationSource(ctx, source, carrier);
   const attack = attackDescriptor(carrier || {});
@@ -177,11 +193,13 @@ export function foundationDamage(ctx, source, target, base, carrier = null, atta
   const withTags = Math.min(rules.vulnerabilityCap, multiplier * tagged * (1 + vulnerability));
   const taggedBonus = plain > 0 ? withTags / plain : 1;
   multiplier = attackerMultiplier * plain;
+  const bonus = flatBonus ? (source ? S.getAdd(ctx, source, 'attackDamageAdd') : 0) + (source?.damageBySchoolAdd?.[carrier?.damageSchool] || 0) : 0;
+  const extra = infusion ? weapon.weaponInfusion?.components || [] : [];
   const components = resolveDamageComponents(rules, {
-    components: weights.map((c) => ({ type: c.type, amount: Math.max(0, base) * c.weight / totalWeight })),
+    components: [...weights.map((c) => ({ type: c.type, amount: (extra.length ? Math.max(0, Math.max(0, base) + bonus) : Math.max(0, base)) * c.weight / totalWeight })), ...extra],
     armor: beforeDefense ? 0 : defense.armor || 0, penetration: attack.penetration || 0,
     resistances: beforeDefense ? {} : groupedResistance(rules, defense.resistanceSources || [], defense.resistances || {}), immunities: beforeDefense ? [] : defense.immunities || [], multiplier,
-    flatBonus: (source ? S.getAdd(ctx, source, 'attackDamageAdd') : 0) + (source?.damageBySchoolAdd?.[carrier?.damageSchool] || 0),
+    flatBonus: extra.length ? 0 : bonus,
     taggedBonus,
   });
   return { components, amount: components.reduce((sum, c) => sum + c.amount, 0), source: weapon, tags: attackTags };
@@ -249,13 +267,24 @@ export function consumeFoundationEvade(ctx, source, target, carrier) {
   return true;
 }
 
-/** Clone one graph, preserving references between players, piles and seats. */
-export function candidateState(ctx) {
+/** Clone one graph, preserving references between players, piles and seats.
+ *
+ * `detached` is for a candidate that is read and thrown away (a preview, a
+ * reaction option probe, a cost preflight) and is never committed back into
+ * `ctx`. Its event log starts empty instead of copying the fight's history:
+ * the log grows with every event of the fight (120 KB by turn 2), it was most
+ * of what each preview cloned, and a phone spent seconds per tap cloning it.
+ * Everything that reads a candidate's log reads only what it emitted itself
+ * (`eventLog.length` before and `slice(start)` after), so an empty start is
+ * the same answer. A transaction (foundationTransaction) keeps the full log:
+ * it replaces ctx's.
+ */
+export function candidateState(ctx, { detached = false } = {}) {
   const data = {};
   for (const [key, value] of Object.entries(ctx)) {
-    if (typeof value !== 'function' && key !== 'registries' && key !== 'rng') data[key] = value;
+    if (typeof value !== 'function' && key !== 'registries' && key !== 'rng' && !(detached && key === 'eventLog')) data[key] = value;
   }
-  const candidate = { ...structuredClone(data), registries: ctx.registries, rng: createRng(ctx.rng.seed, ctx.rng.getCounters()), _emitEvent: ctx._emitEvent };
+  const candidate = { ...structuredClone(data), ...(detached ? { eventLog: [] } : {}), registries: ctx.registries, rng: createRng(ctx.rng.seed, ctx.rng.getCounters()), _emitEvent: ctx._emitEvent };
   // Catalogue accessors are immutable context, never serializable combat data.
   if (ctx.registriesForPlayer) candidate.registriesForPlayer = ctx.registriesForPlayer;
   if (ctx.registerPlayerRegistries) candidate.registerPlayerRegistries = ctx.registerPlayerRegistries;

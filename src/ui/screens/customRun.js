@@ -22,7 +22,7 @@ import { sampleActShape } from '../../engine/mapgen.js';
 import { classGlyph } from '../assets.js';
 import { esc } from '../components/tooltip.js';
 // Every sentence this screen says is a row in content/source/uiStrings.csv.
-import { t, tFull } from '../strings.js';
+import { t, tFull, tTip } from '../strings.js';
 import { createRunState } from '../../model/state.js';
 import { refusesWhen } from '../components/refusal.js';
 import { attachSeedField } from '../components/seedfield.js';
@@ -201,7 +201,7 @@ export function mountCustomRun(app, { registries, defaultSeedString, onBack, onS
     section('Difficulty', 'Ascension', [ascRow, ascNote]),
     section('Rules', 'Difficulty rules', diffBox),
     section('Rules', 'Chaos', chaosBox),
-    section('Deck', 'Starting deck', deckBox),
+    section('Deck', tTip('creation.subclass.deckTitle'), deckBox),
     shapeable ? section('Advanced · debug', 'Run shape', shapeHost, { id: 'cr-shape-section' }) : null,
     section('Seed', 'Seed', seedRow),
     summary,
@@ -290,7 +290,7 @@ export function mountCustomRun(app, { registries, defaultSeedString, onBack, onS
   // ---- deck mode: a Segmented ----
   const deckSeg = segmented({
     options: DECK_MODES.map((m, i) => ({ label: m.label, value: m.id, pressed: i === 0, attrs: { dataset: { deck: m.id }, 'aria-label': `${m.label} — ${m.desc}` } })),
-    attrs: { role: 'group', 'aria-label': 'Starting deck' },
+    attrs: { role: 'group', 'aria-label': tTip('creation.subclass.deckTitle') },
   });
   const deckNote = flavour(DECK_MODES[0].desc, { id: 'cr-deck-note' });
   deckBox.appendChild(row({ tag: 'div', setting: true, labelNode: labelStack({ label: 'Deck mode' }), trail: deckSeg }));

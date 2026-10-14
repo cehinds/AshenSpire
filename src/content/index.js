@@ -11,6 +11,7 @@ import { progressionUnlocks } from './progression/unlocks.js';
 import { composeProgressionContent } from '../model/progressionContent.js';
 
 import { balance } from './balance.js';
+import { subclasses, subclassOpeningRules } from './subclasses.js';
 import { shops } from './shops.js';
 import { sigils } from './sigils.js';
 import { consumables } from './consumables.js';
@@ -83,6 +84,8 @@ const cards = authoredCards.map((card) => {
 });
 
 export const coreContentBundle = {
+  subclasses,
+  subclassOpeningRules,
   // Release series and candidate live here; tools/buildversion.mjs derives the
   // fourth component and resets it to zero whenever this release changes.
   // The owner moved current builds to the 0.6.x.x series on 2026-09-08.

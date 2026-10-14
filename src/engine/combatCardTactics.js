@@ -10,10 +10,11 @@ import { canonicalDamageType, isPhysicalDamageType, techniqueNeedsWeaponType } f
 import { equippedIn, slotHand } from '../model/loadout.js';
 import { enemyMoveDamage } from '../model/state.js';
 import { expansionCarrierTraits } from './combatExpansionEquipment.js';
+import { weaponSourceFor } from '../model/weaponInfusion.js';
 
 export function tacticalCarrier(def, extra = {}, ctx = null, source = null) {
   const metadata = {};
-  for (const key of ['range', 'targeting', 'traits', 'projectile', 'counterCoverage', 'counterPayload',
+  for (const key of ['range', 'defenseRange', 'targeting', 'traits', 'projectile', 'counterCoverage', 'counterPayload',
     'evade', 'upcast', 'stanceTrigger', 'stanceExpiry', 'schoolEffect', 'caster', 'breakPoiseBonus', 'pronePoiseBonus', 'comboHook', 'traitValues']) {
     if (def[key] !== undefined) metadata[key] = structuredClone(def[key]);
   }
@@ -59,6 +60,11 @@ export function tacticalCarrier(def, extra = {}, ctx = null, source = null) {
     const piece = wieldedArmament(ctx, carrier, source, 'weapon');
     const type = canonicalDamageType(piece && attackDescriptor(piece).damageType);
     if (isPhysicalDamageType(type)) carrier.physicalDamageType = type;
+  }
+  const weaponSource = ctx && weaponSourceFor(ctx, source, carrier);
+  if (weaponSource) {
+    carrier.weaponSource = weaponSource;
+    carrier.derivedTags = [...new Set([...(carrier.derivedTags || []), ...(weaponSource.weaponInfusion?.tags || [])])];
   }
   return combatExpansionEnabled(ctx) ? expansionCarrierTraits(carrier, source) : carrier;
 }

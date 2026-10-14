@@ -4,6 +4,7 @@ import * as Triggers from './triggers.js';
 import * as Actions from './actions.js';
 import * as Foundation from './combatRules.js';
 import { combatProfileFor } from '../model/combatCardProfile.js';
+import { attackDescriptor } from '../model/attackTags.js';
 import { mountCombatCombo } from './combatExpansionCombos.js';
 import * as Matchups from './combatMatchups.js';
 import * as Control from './combatStatusControl.js';
@@ -22,10 +23,16 @@ export function effectCarrier(carrier, effect) {
   if (effect.attack && !typed.damageComponents) delete merged.combatProfile.damageComponents;
   // The action stance belongs to the card; an effect can override its delivery/type.
   merged.combatProfile.maneuver = effect.combatProfile?.maneuver || carrier?.combatProfile?.maneuver || merged.combatProfile.maneuver;
+  const recipeTags = carrier?.weaponSource?.weaponInfusion?.tags || [];
+  const source = recipeTags.length && (attackDescriptor(merged).source || (merged.combatProfile.camp === 'spell' ? 'spell' : 'weapon'));
+  if (source && source !== 'weapon') {
+    merged.derivedTags = (merged.derivedTags || []).filter(tag => !recipeTags.includes(tag));
+    delete merged.weaponSource;
+  }
   return merged;
 }
 export function enqueueExpandedAction(ctx, actions, { source, target, carrier, completionMeta } = {}) {
-  if (ctx.combatExpansionVersion !== 2 || (carrier?.combatReaction && !(ctx.reactionRulesVersion >= 1))) {
+  if (ctx.combatExpansionVersion !== 2 || (carrier?.combatReaction && !(ctx.reactionRulesVersion >= 1) && !carrier?.counterReturnAttack)) {
     for (const action of actions) ctx.enqueue(action);
     return null;
   }
@@ -41,7 +48,7 @@ export function enqueueExpandedAction(ctx, actions, { source, target, carrier, c
   // Prefix evaluation uses detached entities so a live predicate sees earlier
   // grants/removals while beforePlay keeps its original immutable snapshot.
   // Prefix chance streams are detached; execution pays those same draws once.
-  const prefix = Foundation.candidateState(ctx);
+  const prefix = Foundation.candidateState(ctx, { detached: true });
   prefix.queue = []; prefix._buffer = null;
   prefix.emit = () => {}; prefix.enqueue = () => {};
   const prefixEntity = entity => entity && expansionEntity(prefix, { id: entity.id, playerId: ctx.playerIdForEntity?.(entity) });
@@ -80,7 +87,9 @@ export function enqueueExpandedAction(ctx, actions, { source, target, carrier, c
         if (crit) amount = Math.floor(amount * crit);
         // The card's own damage is the split base; its rating bonus is typed by the rating and added after the split.
         const split = eff.op === 'damage' ? { splitBase: Math.max(0, Math.floor(base)),
-          ratingBonus: Actions.cardRatingDamage(prefix, shadow.source, contactCarrier, attackBase), ratingPart: Actions.ratingBonusPart(prefix, contactCarrier) } : {};
+          ratingBonus: Actions.cardRatingDamage(prefix, shadow.source, contactCarrier, attackBase), ratingPart: Actions.ratingBonusPart(prefix, contactCarrier),
+          infusionComponents: Actions.infusionDamageComponents(prefix, shadow.source, projected, contactCarrier)
+            .map(row => ({ ...row, amount: Math.floor(row.amount * (crit || 1)) })) } : {};
         const index = row.contacts.length;
         row.contacts.push({ ...profile, amount, ...split, ...(Number.isFinite(contactCarrier.magicShare) ? { magicShare: contactCarrier.magicShare } : {}), ...(contactCarrier.physicalDamageType ? { physicalDamageType: contactCarrier.physicalDamageType } : {}), ...(eff.op !== 'damage' ? { effect: ['poiseDamage', 'wardDamage'].includes(eff.op) ? 'impact' : 'status', pressure: base } : {}) });
         contacts.push({ key, index, id: entity.id, playerId: ctx.playerIdForEntity?.(entity), ...(crit ? { crit } : {}) });
@@ -139,7 +148,7 @@ export function beginExpandedAction(ctx, group, source) {
 
 /** Same once-rounded typed/Ward budget as execution, without spending a roll. */
 export function previewExpandedActions(ctx, actions, options) {
-  const local = Foundation.candidateState(ctx);
+  const local = Foundation.candidateState(ctx, { detached: true });
   local._expansionPreview = true;
   local.queue = []; local.emit = () => {}; local.enqueue = () => {};
   const entity = original => original && expansionEntity(local, { id: original.id, playerId: ctx.playerIdForEntity?.(original) });
