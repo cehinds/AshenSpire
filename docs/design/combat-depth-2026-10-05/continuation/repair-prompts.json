@@ -1,0 +1,10 @@
+[
+  {
+    "id": "theNameless-padding",
+    "kind": "sprite",
+    "sourceId": "theNameless",
+    "reference": "sprites/theNameless-rear.png",
+    "resultFile": "sprites/theNameless-rear-padded.png",
+    "prompt": "Edit this rear-view Nameless sprite only to give its entire silhouette generous empty margins. Zoom OUT: reduce figure and sword to occupy central 75% of canvas width and 82% of height. Full straight sword tip must end clearly before right edge with at least 100 pixels of transparent space. Preserve same rear-right orientation, all equipment, ragged pale hood and cloak, dark leathers, proportions and detailed paint. Do not turn or redesign character. Actual transparent alpha everywhere outside figure, no background or glow, no floor, no labels. 1024x1536 portrait."
+  }
+]

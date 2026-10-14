@@ -33,7 +33,7 @@ import { engravedIcon } from './engravedIcon.js';
  * `tooltipExtra(bar)` may return extra tooltip HTML for a bar (the poise bar
  * wants Stagger's own text, which is content and not this file's to know).
  */
-export function resourceBars(plan, { surface, tooltipExtra, tooltips = true } = {}) {
+export function resourceBars(plan, { surface, tooltipExtra, tooltips = true, showLabels = false } = {}) {
   const which = surface || 'main';
   const wrap = meters([], { class: 'resbars', dataset: { surface: which } });
   if (which === 'main') {
@@ -47,7 +47,7 @@ export function resourceBars(plan, { surface, tooltipExtra, tooltips = true } = 
     }
   } else {
     wrap.classList.add('tight');
-    for (const bar of plan) wrap.appendChild(unit(bar, which, tooltipExtra, tooltips));
+    for (const bar of plan) wrap.appendChild(unit(bar, which, tooltipExtra, tooltips, showLabels));
   }
   return wrap;
 }
@@ -63,11 +63,11 @@ function groupByBand(plan) {
 }
 
 /** One meter: plate (name · cur/max) + well (the trough, at its data length). */
-function unit(bar, surface, tooltipExtra, tooltips) {
+function unit(bar, surface, tooltipExtra, tooltips, showLabels = false) {
   const skinny = bar.weight === 'skinny';
   const node = meter({
     id: bar.id,
-    label: surface === 'main' ? bar.name : '',
+    label: surface === 'main' || showLabels ? bar.name : '',
     value: `${bar.cur}/${bar.max}`,
     cur: bar.cur, max: bar.max,
     pct: bar.pct, lengthPct: bar.lengthPct,

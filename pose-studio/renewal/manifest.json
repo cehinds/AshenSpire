@@ -1,0 +1,624 @@
+{
+  "schemaVersion": 1,
+  "target": "alternative/dev",
+  "status": "authoring-preview",
+  "classes": [
+    "reaver",
+    "rogue",
+    "starseer",
+    "herald"
+  ],
+  "loadouts": [
+    {
+      "id": "sword",
+      "label": "Sword"
+    },
+    {
+      "id": "swordShield",
+      "label": "Sword + shield"
+    },
+    {
+      "id": "staff",
+      "label": "Staff"
+    },
+    {
+      "id": "unarmed",
+      "label": "Unarmed"
+    },
+    {
+      "id": "twinDaggers",
+      "label": "Twin daggers"
+    },
+    {
+      "id": "dagger",
+      "label": "One dagger"
+    },
+    {
+      "id": "halberd",
+      "label": "Halberd"
+    },
+    {
+      "id": "halberdShield",
+      "label": "Halberd + shield"
+    },
+    {
+      "id": "twinSwords",
+      "label": "Twin swords"
+    },
+    {
+      "id": "twoWeaponSwords",
+      "label": "Two-weapon sword fighting"
+    }
+  ],
+  "frames": {
+    "ready": {
+      "path": "frames/ready.webp",
+      "lite": "frames/ready.lite.webp",
+      "bounds": [
+        104,
+        114,
+        413,
+        465
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "windup": {
+      "path": "frames/windup.webp",
+      "lite": "frames/windup.lite.webp",
+      "bounds": [
+        86,
+        101,
+        360,
+        465
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "advance": {
+      "path": "frames/advance.webp",
+      "lite": "frames/advance.lite.webp",
+      "bounds": [
+        68,
+        138,
+        431,
+        465
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "contact": {
+      "path": "frames/contact.webp",
+      "lite": "frames/contact.lite.webp",
+      "bounds": [
+        76,
+        150,
+        483,
+        464
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "follow": {
+      "path": "frames/follow.webp",
+      "lite": "frames/follow.lite.webp",
+      "bounds": [
+        100,
+        141,
+        420,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "return": {
+      "path": "frames/return.webp",
+      "lite": "frames/return.lite.webp",
+      "bounds": [
+        105,
+        118,
+        412,
+        470
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "hurt": {
+      "path": "frames/hurt.webp",
+      "lite": "frames/hurt.lite.webp",
+      "bounds": [
+        87,
+        122,
+        413,
+        464
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "hurt-recover": {
+      "path": "frames/hurt-recover.webp",
+      "lite": "frames/hurt-recover.lite.webp",
+      "bounds": [
+        81,
+        119,
+        403,
+        467
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "down": {
+      "path": "frames/down.webp",
+      "lite": "frames/down.lite.webp",
+      "bounds": [
+        77,
+        209,
+        373,
+        462
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "power": {
+      "path": "frames/power.webp",
+      "lite": "frames/power.lite.webp",
+      "bounds": [
+        56,
+        107,
+        377,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "channel": {
+      "path": "frames/channel.webp",
+      "lite": "frames/channel.lite.webp",
+      "bounds": [
+        71,
+        107,
+        367,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "release": {
+      "path": "frames/release.webp",
+      "lite": "frames/release.lite.webp",
+      "bounds": [
+        65,
+        109,
+        406,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    }
+  },
+  "sequences": {
+    "attack": {
+      "label": "Sword attack",
+      "poses": [
+        "windup",
+        "advance",
+        "contact",
+        "follow",
+        "return"
+      ],
+      "durations": [
+        60,
+        55,
+        50,
+        45,
+        50
+      ],
+      "travel": [
+        0,
+        7,
+        18,
+        12,
+        0
+      ],
+      "effect": "slash",
+      "impact": 2,
+      "hold": false
+    },
+    "hurt": {
+      "label": "Hurt & recover",
+      "poses": [
+        "hurt",
+        "hurt-recover",
+        "ready"
+      ],
+      "durations": [
+        85,
+        85,
+        90
+      ],
+      "travel": [
+        -9,
+        -4,
+        0
+      ],
+      "effect": null,
+      "impact": 0,
+      "hold": false
+    },
+    "down": {
+      "label": "Down / defeated",
+      "poses": [
+        "hurt",
+        "down"
+      ],
+      "durations": [
+        80,
+        180
+      ],
+      "travel": [
+        -4,
+        0
+      ],
+      "effect": null,
+      "impact": 1,
+      "hold": true
+    },
+    "power": {
+      "label": "Basic power cast",
+      "poses": [
+        "power",
+        "power",
+        "channel",
+        "power",
+        "power"
+      ],
+      "durations": [
+        60,
+        55,
+        50,
+        45,
+        50
+      ],
+      "travel": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "effect": "ward",
+      "impact": 2,
+      "hold": false
+    },
+    "spell": {
+      "label": "Spell cast",
+      "poses": [
+        "power",
+        "channel",
+        "release",
+        "release",
+        "power"
+      ],
+      "durations": [
+        60,
+        55,
+        50,
+        45,
+        50
+      ],
+      "travel": [
+        0,
+        0,
+        2,
+        1,
+        0
+      ],
+      "effect": "starbolt",
+      "impact": 2,
+      "hold": false
+    }
+  },
+  "coverage": [
+    {
+      "classId": "reaver",
+      "armour": "default",
+      "loadout": "sword",
+      "status": "draft"
+    },
+    {
+      "classId": "reaver",
+      "armour": "default",
+      "loadout": "swordShield",
+      "status": "pending"
+    },
+    {
+      "classId": "reaver",
+      "armour": "default",
+      "loadout": "staff",
+      "status": "pending"
+    },
+    {
+      "classId": "reaver",
+      "armour": "default",
+      "loadout": "unarmed",
+      "status": "pending"
+    },
+    {
+      "classId": "reaver",
+      "armour": "default",
+      "loadout": "twinDaggers",
+      "status": "pending"
+    },
+    {
+      "classId": "reaver",
+      "armour": "default",
+      "loadout": "dagger",
+      "status": "pending"
+    },
+    {
+      "classId": "reaver",
+      "armour": "default",
+      "loadout": "halberd",
+      "status": "pending"
+    },
+    {
+      "classId": "reaver",
+      "armour": "default",
+      "loadout": "halberdShield",
+      "status": "pending"
+    },
+    {
+      "classId": "reaver",
+      "armour": "default",
+      "loadout": "twinSwords",
+      "status": "pending"
+    },
+    {
+      "classId": "reaver",
+      "armour": "default",
+      "loadout": "twoWeaponSwords",
+      "status": "pending"
+    },
+    {
+      "classId": "rogue",
+      "armour": "default",
+      "loadout": "sword",
+      "status": "pending"
+    },
+    {
+      "classId": "rogue",
+      "armour": "default",
+      "loadout": "swordShield",
+      "status": "pending"
+    },
+    {
+      "classId": "rogue",
+      "armour": "default",
+      "loadout": "staff",
+      "status": "pending"
+    },
+    {
+      "classId": "rogue",
+      "armour": "default",
+      "loadout": "unarmed",
+      "status": "pending"
+    },
+    {
+      "classId": "rogue",
+      "armour": "default",
+      "loadout": "twinDaggers",
+      "status": "draft"
+    },
+    {
+      "classId": "rogue",
+      "armour": "default",
+      "loadout": "dagger",
+      "status": "pending"
+    },
+    {
+      "classId": "rogue",
+      "armour": "default",
+      "loadout": "halberd",
+      "status": "pending"
+    },
+    {
+      "classId": "rogue",
+      "armour": "default",
+      "loadout": "halberdShield",
+      "status": "pending"
+    },
+    {
+      "classId": "rogue",
+      "armour": "default",
+      "loadout": "twinSwords",
+      "status": "pending"
+    },
+    {
+      "classId": "rogue",
+      "armour": "default",
+      "loadout": "twoWeaponSwords",
+      "status": "pending"
+    },
+    {
+      "classId": "starseer",
+      "armour": "default",
+      "loadout": "sword",
+      "status": "pending"
+    },
+    {
+      "classId": "starseer",
+      "armour": "default",
+      "loadout": "swordShield",
+      "status": "pending"
+    },
+    {
+      "classId": "starseer",
+      "armour": "default",
+      "loadout": "staff",
+      "status": "draft"
+    },
+    {
+      "classId": "starseer",
+      "armour": "default",
+      "loadout": "unarmed",
+      "status": "pending"
+    },
+    {
+      "classId": "starseer",
+      "armour": "default",
+      "loadout": "twinDaggers",
+      "status": "pending"
+    },
+    {
+      "classId": "starseer",
+      "armour": "default",
+      "loadout": "dagger",
+      "status": "pending"
+    },
+    {
+      "classId": "starseer",
+      "armour": "default",
+      "loadout": "halberd",
+      "status": "pending"
+    },
+    {
+      "classId": "starseer",
+      "armour": "default",
+      "loadout": "halberdShield",
+      "status": "pending"
+    },
+    {
+      "classId": "starseer",
+      "armour": "default",
+      "loadout": "twinSwords",
+      "status": "pending"
+    },
+    {
+      "classId": "starseer",
+      "armour": "default",
+      "loadout": "twoWeaponSwords",
+      "status": "pending"
+    },
+    {
+      "classId": "herald",
+      "armour": "default",
+      "loadout": "sword",
+      "status": "pending"
+    },
+    {
+      "classId": "herald",
+      "armour": "default",
+      "loadout": "swordShield",
+      "status": "draft"
+    },
+    {
+      "classId": "herald",
+      "armour": "default",
+      "loadout": "staff",
+      "status": "pending"
+    },
+    {
+      "classId": "herald",
+      "armour": "default",
+      "loadout": "unarmed",
+      "status": "pending"
+    },
+    {
+      "classId": "herald",
+      "armour": "default",
+      "loadout": "twinDaggers",
+      "status": "pending"
+    },
+    {
+      "classId": "herald",
+      "armour": "default",
+      "loadout": "dagger",
+      "status": "pending"
+    },
+    {
+      "classId": "herald",
+      "armour": "default",
+      "loadout": "halberd",
+      "status": "pending"
+    },
+    {
+      "classId": "herald",
+      "armour": "default",
+      "loadout": "halberdShield",
+      "status": "pending"
+    },
+    {
+      "classId": "herald",
+      "armour": "default",
+      "loadout": "twinSwords",
+      "status": "pending"
+    },
+    {
+      "classId": "herald",
+      "armour": "default",
+      "loadout": "twoWeaponSwords",
+      "status": "pending"
+    }
+  ],
+  "notes": [
+    "4 reference families drafted; remaining combinations are pending and never substituted.",
+    "Casting uses a sheathed sword; ready-to-sheath transition remains an art review item.",
+    "Twin swords and two-weapon sword fighting remain separate authoring entries pending distinct choreography.",
+    "Enemy and non-base-armour animation expansion follows this base-loadout pass.",
+    "No runtime bindings or gameplay equipment rules are changed by this study."
+  ],
+  "sourceHashes": {
+    "attack.png": "65e2785ff28b9d3092205bf37d29a7cc43444d0a74f8df0a2776e40319b1bd18",
+    "casts.png": "261fa5c9e5724d339fdc58a9631ce626eb994f124e1395a9b6ec5d77f101149f",
+    "reactions.png": "0b0d9a2a050cd14476e63933abb7e641f2522f14ca2a4088024021b96c2d9484"
+  },
+  "bytes": {
+    "webp": 566320,
+    "lite": 155614
+  },
+  "families": {
+    "reaver/sword": {
+      "rig": "reaver-sword.rig.json",
+      "folder": ""
+    },
+    "herald/swordShield": {
+      "manifest": "herald/manifest.json",
+      "rig": "herald/herald-swordShield.rig.json",
+      "folder": "herald/"
+    },
+    "rogue/twinDaggers": {
+      "manifest": "rogue/manifest.json",
+      "rig": "rogue/rogue-twinDaggers.rig.json",
+      "folder": "rogue/"
+    },
+    "starseer/staff": {
+      "manifest": "starseer/manifest.json",
+      "rig": "starseer/starseer-staff.rig.json",
+      "folder": "starseer/"
+    }
+  }
+}

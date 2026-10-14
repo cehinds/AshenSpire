@@ -874,6 +874,25 @@ test('every ART_REPO_TOKEN a workflow passes is gated on a protected ref', () =>
   assert.ok(lines >= 4, `the four fetching workflows pass the token (found ${lines})`);
 });
 
+test('every ART_REPO_TOKEN in a workflow_run workflow also requires a same-repository head', () => {
+  // A workflow_run run takes github.ref from the default branch, so the protected-ref
+  // gate alone lets a fork pull request's run reach the token. Each such line must
+  // carry the head-repository clause.
+  const dir = fileURLToPath(new URL('../.github/workflows/', import.meta.url));
+  const GUARD = "(github.event_name != 'workflow_run' || github.event.workflow_run.head_repository.full_name == github.repository) && contains(";
+  let checked = 0;
+  for (const name of readdirSync(dir).filter((n) => /\.ya?ml$/.test(n)).sort()) {
+    const text = readFileSync(join(dir, name), 'utf8');
+    if (!/^  workflow_run:/m.test(text)) continue;
+    text.split('\n').forEach((line, i) => {
+      if (/^\s*#/.test(line) || !line.includes('secrets.ART_REPO_TOKEN')) return;
+      checked += 1;
+      assert.ok(line.includes(GUARD), `${name}:${i + 1}: ART_REPO_TOKEN in a workflow_run workflow must require a same-repository head:\n${line.trim()}`);
+    });
+  }
+  assert.ok(checked >= 1, `pages-builds passes the token on workflow_run (found ${checked})`);
+});
+
 // Step 13 left three heavy browser jobs (flask-menu, its plants, motion) with
 // no fetch: they served a checkout whose art had gone, and the motion probe
 // went red on figures that 404 (dispatch run 37098149492). Every ci.yml job
@@ -907,6 +926,13 @@ function jobsRunningToolsBeforeFetch(yml) {
   for (const { name, lines } of jobs) {
     if (!lines.some((l) => !/^\s*#/.test(l) && /actions\/checkout@/.test(l))) continue;
     checked += 1;
+    // ONE EXEMPTION: a checkout that is sparse down to .github alone, in a job
+    // that runs no tool (ci.yml's `stage` decision: tree ids and git only). It
+    // has no tools/ or tests/ to run and no art to read. Any other checkout,
+    // tool or not, still needs the fetch.
+    const text = lines.filter((l) => !/^\s*#/.test(l)).join('\n');
+    const sparseGithubOnly = /sparse-checkout:\s*\|\s*\n\s*\/\.github\/\s*(\n|$)/.test(text) && !/sparse-checkout:\s*\|\s*\n\s*\/\.github\/\s*\n\s*\/(?!\.github)/.test(text);
+    if (sparseGithubOnly && !TOOL_CMD.test(text.replace(/\n/g, ' ').replace(/\\\s+/g, ' '))) continue;
     // NO YAML PARSING (#1524 review: seven rounds of Codex findings, each a
     // spelling a narrower parser missed — quoted keys, plain and folded
     // scalars, continuations, node options). Everything the job says before
@@ -952,6 +978,8 @@ test('known-bad: the art-fetch ordering guard sees inline and block-scalar tool 
     job('bad-block', `      - name: x\n        run: |\n          echo hi\n          node tools/a.mjs\n${fetch}`),
     job('bad-folded', `      - name: x\n        run: >-\n          set -e;\n          node tests/run-node.mjs\n${fetch}`),
     job('bad-no-fetch', '      - run: echo nothing\n'),
+    job('good-sparse-github-no-tool', '        with:\n          sparse-checkout: |\n            /.github/\n      - run: git diff --quiet origin/test HEAD\n'),
+    job('bad-sparse-github-with-tool', '        with:\n          sparse-checkout: |\n            /.github/\n      - run: node tools/a.mjs\n'),
     job('bad-node-flag', `      - run: node --test tests/a.test.mjs\n${fetch}`),
     job('bad-dot-path', `      - run: node ./tools/a.mjs\n${fetch}`),
     job('good-before-underscore', `${fetch}      - run: echo ok\n`),
@@ -970,6 +998,6 @@ test('known-bad: the art-fetch ordering guard sees inline and block-scalar tool 
     + `  bad-commented: # heavy\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v5\n      - run: node tools/a.mjs\n${fetch}`
     + `  "bad-quoted":\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v5\n      - run: node tools/a.mjs\n${fetch}`;
   const { checked, missing } = jobsRunningToolsBeforeFetch(yml);
-  assert.equal(checked, 23);
-  assert.deepEqual(missing, ['bad-inline', 'bad-block', 'bad-folded', 'bad-no-fetch', 'bad-node-flag', 'bad-dot-path', 'bad_underscore', 'bad-folded-split', 'bad-node-operand', 'bad-plain-multiline', 'bad-quoted-run', 'bad-cjs', 'bad-quoted-uses', 'bad-conditional-fetch', 'bad-flow-conditional-fetch', 'bad-windows-path', 'bad-continuation', 'bad-commented', 'bad-quoted']);
+  assert.equal(checked, 25);
+  assert.deepEqual(missing, ['bad-inline', 'bad-block', 'bad-folded', 'bad-no-fetch', 'bad-sparse-github-with-tool', 'bad-node-flag', 'bad-dot-path', 'bad_underscore', 'bad-folded-split', 'bad-node-operand', 'bad-plain-multiline', 'bad-quoted-run', 'bad-cjs', 'bad-quoted-uses', 'bad-conditional-fetch', 'bad-flow-conditional-fetch', 'bad-windows-path', 'bad-continuation', 'bad-commented', 'bad-quoted']);
 });

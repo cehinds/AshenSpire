@@ -1,0 +1,26 @@
+{
+  "id": "drowned-coast-far",
+  "region": "drowned-coast",
+  "kind": "far",
+  "reference": "../references/composition.png",
+  "transparent": false,
+  "prompt": "Highly detailed painterly dark fantasy, weathered realistic materials, matching the approved AshenSpire reference. Subtle ember accents, legible values. No characters, creatures, UI, cards, lettering or watermarks. Horizontal 1536x1024 registration canvas. Camera looks across a low battlefield from behind a near-left hero toward enemies on the right; distant horizon y=42%, vanishing point x=60% y=42%. ONE opaque distant background plate. Setting: stormbound grey sea with distant sea stacks and drowned Gothic spires, misty low horizon, desaturated slate teal and pewter cloud light. ONLY distant scenery and sky/vault, low contrast mist extends all the way to lower edge. No near landmarks, foreground objects, walkable ground, central arches or standing platform. Full bleed background.",
+  "resultFile": "scenes/shared/drowned-coast/far.png",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a112fc-0e64-7472-a495-aba14ffa5ab6\\exec-8baf0f06-4778-4a27-8e70-a6f376958fb5.png",
+  "generator": "built-in image_gen",
+  "size": [
+    1536,
+    1024
+  ],
+  "mode": "RGB",
+  "sha256": "3fe48897018eb25899ee55362bf809cd71d37124b39d00aad3605d58e4cf7693",
+  "alphaRange": null,
+  "transparentFraction": 0,
+  "visibleBounds": [
+    0,
+    0,
+    1536,
+    1024
+  ],
+  "alphaThreshold": 32
+}

@@ -99,14 +99,18 @@ export function cardTargetsAllEnemies(def) {
 // this grade has no application yet, add one after its primary effect. A pure
 // guard may therefore apply its charged buildup to the selected living enemy,
 // or the first living enemy when the play has no selection.
-export function abilityChargedEffects(effects, charges, enemyAvailable = true) {
+export function abilityChargedEffects(effects, charges, enemyAvailable = true, ctx = null) {
   if (!enemyAvailable) return effects;
-  const missing = [...new Set((charges.buildupBonuses || []).map(bonus => bonus.status))]
-    .filter(status => !effects.some(effect => effect.op === 'applyStatus' && effect.status === status));
+  const expanded = ctx?.combatExpansionVersion === 2;
+  const statusId = id => expanded && id === 'insanity' ? 'dazed' : id;
+  const missing = [...new Set((charges.buildupBonuses || []).map(bonus => statusId(bonus.status)))]
+    .filter(status => !effects.some(effect => (effect.op === 'applyStatus' || (expanded && effect.op === 'buildup')) && effect.status === status));
   if (!missing.length) return effects;
-  const primary = effects.findIndex(effect => ['damage', 'block', 'heal'].includes(effect.op));
+  const primary = effects.findIndex(effect => ['damage', 'block', 'heal', ...(expanded ? ['gainBarrier'] : [])].includes(effect.op));
   const index = primary < 0 ? effects.length : primary + 1;
-  return [...effects.slice(0, index), ...missing.map(status => ({ op: 'applyStatus', target: 'enemy', status, stacks: 0 })), ...effects.slice(index)];
+  return [...effects.slice(0, index), ...missing.map(status => expanded
+    ? { op: 'buildup', target: 'enemy', status, amount: 0 }
+    : { op: 'applyStatus', target: 'enemy', status, stacks: 0 }), ...effects.slice(index)];
 }
 
 export function consumeAbilityCharges(entity, keys) {
@@ -124,12 +128,13 @@ export function grantAbilityCharge(entity, effect) {
   if (effect.damageScope) charges[effect.key].damageScope = effect.damageScope;
 }
 
-export function attachAbilityCharges(action, charges, applied) {
+export function attachAbilityCharges(action, charges, applied, ctx = null) {
   const map = { damage: 'damage', block: 'block', heal: 'heal' };
+  if (ctx?.combatExpansionVersion === 2) map.gainBarrier = 'block';
   if (action.effect.op === 'damage' && charges.break && !applied.has('break')) { applied.add('break'); action.meta = { ...action.meta, abilityChargeBreak: charges.break }; }
   if (action.effect.op === 'damage' && charges.damageEffect && !applied.has('damageEffect')) { applied.add('damageEffect'); action.meta = { ...action.meta, abilityChargeDamageEffect: charges.damageEffect }; }
-  if (action.effect.op === 'applyStatus' && !applied.has(`buildup:${action.effect.status}`)) {
-    const amount = (charges.buildupBonuses || []).filter(bonus => bonus.status === action.effect.status).reduce((sum, bonus) => sum + bonus.amount, 0);
+  if ((action.effect.op === 'applyStatus' || (ctx?.combatExpansionVersion === 2 && action.effect.op === 'buildup')) && !applied.has(`buildup:${action.effect.status}`)) {
+    const amount = (charges.buildupBonuses || []).filter(bonus => (ctx?.combatExpansionVersion === 2 && bonus.status === 'insanity' ? 'dazed' : bonus.status) === action.effect.status).reduce((sum, bonus) => sum + bonus.amount, 0);
     if (amount) { applied.add(`buildup:${action.effect.status}`); action.meta = { ...action.meta, abilityChargeBuildup: amount }; }
   }
   const field = map[action.effect.op];
@@ -156,8 +161,22 @@ export function priorAbilityEntity(ctx, entity, meta) {
   return meta?.abilityEntities?.[abilityEntityKey(ctx, entity)] || entity;
 }
 
+// Cards this seat already committed to the reaction stack wait to resolve; they are not discard fodder.
+function stackedInstanceIds(ctx) {
+  const seat = ctx.playerKey || 'player';
+  return new Set((ctx.reactionStack?.entries || []).filter(entry => entry.side === 'player' && entry.ownerId === seat)
+    .map(entry => entry.play?.cardInstanceId));
+}
+
+// The hand cards the choosing seat may discard: its stacked cards wait to resolve, so they are excluded.
+export function discardCandidates(ctx) {
+  const stacked = stackedInstanceIds(ctx);
+  return ctx.piles.hand.filter(card => !stacked.has(card.instanceId));
+}
+
 export function requestAbilityDiscard(ctx, action, amount) {
-  const count = Math.min(Math.max(0, amount), ctx.piles.hand.length);
+  const stacked = stackedInstanceIds(ctx);
+  const count = Math.min(Math.max(0, amount), ctx.piles.hand.filter(c => !stacked.has(c.instanceId)).length);
   if (!count) return;
   if (!ctx.pendingAbilityPlay) throw new Error('Chosen discard requires a resolving card');
   ctx.pendingAbilityDiscard = { count, playerId: ctx.playerKey || null, cardId: ctx.pendingAbilityPlay.instance.cardId };
@@ -166,7 +185,8 @@ export function requestAbilityDiscard(ctx, action, amount) {
 export function chooseAbilityDiscard(ctx, ids) {
   const pending = ctx.pendingAbilityDiscard;
   if (!pending) throw new Error('No discard choice is pending');
-  if (!Array.isArray(ids) || ids.length !== pending.count || new Set(ids).size !== ids.length || ids.some(id => !ctx.piles.hand.some(c => c.instanceId === id))) throw new Error(`Choose exactly ${pending.count} distinct cards from your hand`);
+  const stacked = stackedInstanceIds(ctx);
+  if (!Array.isArray(ids) || ids.length !== pending.count || new Set(ids).size !== ids.length || ids.some(id => stacked.has(id) || !ctx.piles.hand.some(c => c.instanceId === id))) throw new Error(`Choose exactly ${pending.count} distinct cards from your hand`);
   for (const id of ids) {
     const index = ctx.piles.hand.findIndex(c => c.instanceId === id);
     const card = ctx.piles.hand.splice(index, 1)[0];

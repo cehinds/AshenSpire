@@ -1,0 +1,23 @@
+{
+  "tool": "image_gen",
+  "reference": "assets-alternative/herald-default.webp",
+  "rights": "First-party generated AshenSpire draft artwork.",
+  "prompts": [
+    {
+      "name": "heraldAttackPrompt",
+      "prompt": "Create a production animation sheet for this exact AshenSpire Herald wearing the same weathered burgundy hood, ragged long red-brown cloak, antique bronze trim, chainmail sleeves, leather belts, dark greaves and boots, rear three-quarter view facing right. Replace the reference's flail and lantern with basic equipment: ONE straight iron arming sword with plain crossguard held in RIGHT hand and ONE battered round wooden shield with iron rim and central bronze boss strapped to LEFT forearm. Keep these same two weapons throughout. SIX separate full-body poses in a strict 3-column 2-row grid of equal square cells, consistent scale and camera. Row-major: 1 ready guarded stance with sword angled forward; 2 wind-up sword drawn back, shield protects chest; 3 small forward step, sword beginning arc; 4 slash contact toward right, right arm extended but bent naturally, left hand firmly holding shield grip; 5 follow-through lower sword with cloak trailing; 6 return to ready balanced stance. Whole body, sword tips and shield fully inside every cell, generous 12 percent empty transparent margin. Accurate two arms, no extra weapons, no floating hands. Detailed realistic painted fantasy game sprites, muted palette matching reference. Genuine transparent background. No blood, scenery, ground shadow, action effects, aura, labels, dividers or text."
+    },
+    {
+      "name": "heraldReactionsPrompt",
+      "prompt": "Generate THREE full-body reaction sprites of the exact Herald shown in the reference sheet: burgundy hood, ragged red-brown cloak, antique bronze trim, chainmail, boots. Same rear three-quarter right-facing view. Same basic straight iron arming sword in RIGHT hand, round wood shield with metal rim strapped to LEFT arm. One wide horizontal row of THREE equal square cells, generous transparent gap and at least 15 percent transparent margin on all sides. Consistent body scale. Left: hurt, knees bent and shoulders recoil slightly back, sword lowered, shield retained on left arm. Middle: balanced hurt recovery, sword and shield return to guard. Right: defeated collapsed on right side, cloak on ground, sword lies beside right hand, shield remains on left forearm resting on body. Show full sword tips, all shield and cloak inside each cell. Anatomically clear two arms, two legs, no duplicated weapons. Realistic painted game sprite, genuine transparent background. No blood, glow, effects, scenery, ground, shadows, labels or dividing lines."
+    },
+    {
+      "name": "heraldCastsPrompt",
+      "prompt": "Create THREE full-body casting sprites of the exact Herald in this reference sheet. Preserve burgundy hood, tattered red-brown cloak with antique gold trim, chainmail sleeves, belts, boots, and same rear three-quarter right-facing camera. Basic round wooden shield with iron rim stays strapped to LEFT forearm in all three poses. The straight sword is SHEATHED at the right hip in EVERY pose, visible plain hilt only; the RIGHT hand is EMPTY for casting. Wide horizontal row of THREE equal square cells. Left: basic power, open right palm over chest, shield drawn in protectively. Middle: deliberate channel, empty right palm raised and cupped near shoulder, shield to side. Right: release, right open palm thrust toward target on right, shield held beside body. Actual correct hands and fingers, two arms only. Keep full body, shield, cloak tips and feet fully within each cell with generous 15 percent transparent margins. Consistent scale and floor, realistic painted fantasy game sprite finish. Genuine transparent background; no effects, glow, projectiles, aura, scenery, shadows, floor, labels or dividers."
+    },
+    {
+      "name": "heraldCastsRepairPrompt",
+      "prompt": "Correct this three-cell transparent Herald casting sheet. Keep first and third figures exactly as shown. Fix ONLY the center figure's hand/arm arrangement to match the other two: the near-side RIGHT arm (visible on the viewer's right side of the torso) must be the casting arm, with elbow bent and OPEN EMPTY RIGHT PALM extended forward to the right around chest height. The left arm remains lowered and holds the round shield in front of the body exactly like first figure. REMOVE the currently raised far-side arm/hand above the left shoulder, which is incorrect. Keep the same shield, sheathed sword, costume, head, feet, scale, rear three-quarter view, and three equal cells. No extra arms or hands. No effects or scenery; preserve genuine transparent background."
+    }
+  ]
+}

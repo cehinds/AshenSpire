@@ -1,9 +1,9 @@
 // src/ui/components/sceneBackdrop.js — WGS1, the environment plate of a W4
 // scene: WGS6 skyline behind, WGS7 floor at the bottom.
 //
-// One fitter for every W4 screen. Combat (battlefieldStage.js) passes its
-// battlefield, which is both the window the plate is fitted to and the box it
-// is drawn in. The quest dialogue passes its whole frame and the scene WINDOW
+// One fitter for every W4 screen. Combat (battlefieldStage.js) fits the plate
+// from the HUD's top to the battlefield's bottom, then continues behind the
+// hand. The quest dialogue passes its whole frame and the scene WINDOW
 // between its HUD and context bands: the plate is fitted to the window and
 // runs on behind the other bands (SceneLayerModel.sceneWindowLayers). The
 // model owns every number; this only writes the result.
@@ -23,7 +23,7 @@ const sceneById = (id) => [...LEGACY_SCENES, ...ENVIRONMENTS.flatMap(region => r
  * `backdrop` is the `.environment-backdrop` combatBackdropHtml() drew; width
  * and height are the box it is drawn in, in local (pre-zoom) px; zoom is the
  * UI zoom. windowTop/windowHeight name the scene window inside that box
- * (default: the whole box, as combat has it). `config` overrides
+ * (default: the whole box). `config` overrides
  * wireframeUi.scene (the dialogue's floor fraction). Crops the painted plate
  * so its ground line meets the floor band and its sky fills the rest. Feet and
  * portraits are not moved.

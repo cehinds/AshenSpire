@@ -278,7 +278,7 @@ if (process.argv.includes('--selftest')) {
         edits: [{
           file: 'styles/combat.css',
           find: '.fx-layer { position: absolute; inset: 0; pointer-events: none; z-index: 300; overflow: hidden; }',
-          replace: '.fx-layer { position: fixed; inset: 0; background: #000; pointer-events: none; z-index: 300; overflow: hidden; }',
+          replace: '.fx-layer { position: fixed; inset: 0; background: #000; pointer-events: none; z-index: 2147483647 !important; overflow: hidden; }',
         }],
         expectRed: /BAD\s+H3 .*painted over/,
       },
@@ -291,7 +291,7 @@ if (process.argv.includes('--selftest')) {
         edits: [{
           file: 'styles/combat.css',
           find: '.fx-layer { position: absolute; inset: 0; pointer-events: none; z-index: 300; overflow: hidden; }',
-          replace: '.fx-layer { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.9); pointer-events: none; z-index: 300; overflow: hidden; }',
+          replace: '.fx-layer { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.9); pointer-events: none; z-index: 2147483647 !important; overflow: hidden; }',
         }],
         expectRed: /BAD\s+H3 .*painted over/,
       },
@@ -333,7 +333,7 @@ if (process.argv.includes('--selftest')) {
         edits: [{
           file: 'styles/combat.css',
           find: '.fx-layer { position: absolute; inset: 0; pointer-events: none; z-index: 300; overflow: hidden; }',
-          replace: '.fx-layer { position: fixed; inset: auto 0 0 0; height: 3vh; background: #000; z-index: 300; overflow: hidden; }\n.combat .battlefield ~ .fx-layer, .combat .fx-layer { pointer-events: none !important; }',
+          replace: '.fx-layer { position: fixed; inset: auto 0 0 0; height: 3vh; background: #000; z-index: 2147483647 !important; overflow: hidden; }\n.combat .battlefield ~ .fx-layer, .combat .fx-layer { pointer-events: none !important; }',
         }],
         expectRed: /BAD\s+H3 .*painted over/,
       },
@@ -396,7 +396,7 @@ if (process.argv.includes('--selftest')) {
         edits: [{
           file: 'styles/combat.css',
           find: '.fx-layer { position: absolute; inset: 0; pointer-events: none; z-index: 300; overflow: hidden; }',
-          replace: '.fx-layer { position: fixed; inset: auto 0 0 0; height: 3vh; background: #000; pointer-events: none; z-index: 300; overflow: hidden; }',
+          replace: '.fx-layer { position: fixed; inset: auto 0 0 0; height: 3vh; background: #000; pointer-events: none; z-index: 2147483647 !important; overflow: hidden; }',
         }],
         expectRed: /BAD\s+H3 .*painted over/,
       },

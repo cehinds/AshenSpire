@@ -8,6 +8,7 @@ import { balanceNote, NEW_RUN_CLAUSE } from './balanceNotes.js';
 // settings are projected into a fresh bundle for a new run.
 
 import { handRulesRows, handRulesSettingsProblems } from './handRules.js';
+import { combatRoundsRows } from './combatRounds.js';
 import {
   startingStatRows, applyStartingStatConfig, kitAttributeMinimums, kitMinimum, derivedStatFloorProblems,
   startingStatPoolProblems, applyEquipmentRequirementConfig, bundleWithConfiguredEquipment,
@@ -101,6 +102,17 @@ const PERCENT = Object.freeze({ integer: true, step: 1, min: 0, max: 100 });
 const SIGNED_CARD_BONUS = /^damage\.[A-Za-z]+Cards\.cardBonuses\./;
 const SIGNED_BONUS = Object.freeze({ integer: true, step: 1, min: -999, max: 999 });
 const BALANCE_DOMAINS = Object.freeze({
+  ...Object.fromEntries(['baseExact', 'wisdomExact', 'intelligenceExact', 'levelExact', 'perceptionExact', 'minimumExact', 'maximumExact',
+    'baseClue', 'wisdomClue', 'intelligenceClue', 'levelClue', 'perceptionClue', 'minimumClue', 'maximumClue']
+    .map(key => [`enemyKnowledge.reads.${key}`, Object.freeze({ integer: false, step: 0.0005, min: 0, max: 1 })])),
+  'enemyKnowledge.perception.base': Object.freeze({ integer: true, step: 1, min: 1, max: 100 }),
+  'enemyKnowledge.perception.growth': Object.freeze({ integer: false, step: 0.001, min: 1, max: 10 }),
+  'enemyKnowledge.perception.roundTo': Object.freeze({ integer: true, step: 1, min: 1, max: 100 }),
+  'enemyKnowledge.perception.maxLevel': Object.freeze({ integer: true, step: 1, min: 1, max: 50 }),
+  'enemyKnowledge.perception.correctPredictionXp': Object.freeze({ integer: true, step: 1, min: 1, max: 100 }),
+  'enemyKnowledge.bestiary.encountersToMaster': Object.freeze({ integer: true, step: 1, min: 20, max: 50 }),
+  ...Object.fromEntries(['baseHiddenChance', 'wisdomReduction', 'intelligenceReduction', 'minimumHiddenChance', 'maximumHiddenChance']
+    .map(key => [`combatIntent.${key}`, Object.freeze({ integer: false, step: 0.01, min: 0, max: 1 })])),
   'rewards.sourceBonuses.combatFeatChancePct': PERCENT,
   'rewards.sourceBonuses.classFeatChancePct': PERCENT,
   'rewards.sourceBonuses.classCardChancePct': PERCENT,
@@ -969,7 +981,7 @@ function withGates(rows, bundle) {
 
 export function advancedConfigRows(bundle) {
   const generated = leafRows(materializeCardValueBonuses(bundle).balance || {}, [], [], bundle).filter((row) => !row.searchPath.startsWith('ui.') && !LEGACY_BALANCE_PATHS.has(row.searchPath));
-  return withGates([...combatRatingRows(bundle), ...startingStatRows(bundle), ...handRulesRows(), ...prologueRows(), ...progressionRows(bundle), ...explicitRows(bundle), ...presentationRows(), ...balanceOwnRows(bundle), ...shopConfigRows(bundle), ...consumableConfigRows(bundle), ...generated], bundle);
+  return withGates([...combatRatingRows(bundle), ...startingStatRows(bundle), ...handRulesRows(), ...combatRoundsRows(), ...prologueRows(), ...progressionRows(bundle), ...explicitRows(bundle), ...presentationRows(), ...balanceOwnRows(bundle), ...shopConfigRows(bundle), ...consumableConfigRows(bundle), ...generated], bundle);
 }
 
 /**
@@ -1167,7 +1179,8 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   configured.balance.combatRatings = resolveCombatRatings(settings, bundle);
   if (legacyRatings) configured.balance.combatRatings.enabled = false;
   if (!settingsOrSnapshot?.overrides || settingsOrSnapshot.classMasteryVersion === 1) configured.classMasteryVersion = 1;
-  if (configured.balance.combatRatings.enabled && (!settingsOrSnapshot?.overrides || settingsOrSnapshot.breakMeterVersion === 1)) configured.breakMeterVersion = 1;
+  if (settingsOrSnapshot?.breakMeterVersion === 2) configured.breakMeterVersion = 2;
+  else if (configured.balance.combatRatings.enabled && (!settingsOrSnapshot?.overrides || settingsOrSnapshot.breakMeterVersion === 1)) configured.breakMeterVersion = 1;
   // THE RATING ROWS ARE THE TABLE'S (ruleset 7). A reader with no run behind
   // it — creation, a headless fixture — reads these; a run reads its own
   // snapshot's through model/statRows.js ratingsConfigFor.

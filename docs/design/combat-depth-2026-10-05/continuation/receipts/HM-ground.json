@@ -1,0 +1,29 @@
+{
+  "id": "HM-ground",
+  "region": "HM",
+  "kind": "ground",
+  "reference": "../references/composition.png",
+  "transparent": true,
+  "prompt": "Highly detailed painterly dark fantasy, weathered realistic materials, matching the approved AshenSpire reference. Subtle ember accents, legible values. No characters, creatures, UI, cards, lettering or watermarks. Horizontal 1536x1024 registration canvas. Camera looks across a low battlefield from behind a near-left hero toward enemies on the right; distant horizon y=42%, vanishing point x=60% y=42%. ONE independent ground parallax layer. Setting materials: flat dark marble tiles with subtle silver reflections and thin rime, no actual mirrors or tall objects in standing area. Fully transparent empty upper 43 percent. Distant ground starts near y=46%, filling the entire lower half and bottom edge with opaque terrain, full width. Broad uninterrupted flat standing surface from x=12% through 90% and y=60%-82%. View looks gently down onto ground, not isometric and not a side platform. No architecture, sky, horizon background, trees or near framing. Not a floating island: opaque to bottom canvas edge. Actual transparent alpha outside only the specified objects, including holes.",
+  "resultFile": "scenes/shared/HM/ground.png",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a112fc-0e64-7472-a495-aba14ffa5ab6\\exec-b7e3dee3-eb47-4894-ab23-ce036d02e251.png",
+  "generator": "built-in image_gen",
+  "size": [
+    1536,
+    1024
+  ],
+  "mode": "RGBA",
+  "sha256": "cbd381a9cc9336ae5ee23ec5000b28d7738bd017085239659dc26299569a190b",
+  "alphaRange": [
+    0,
+    254
+  ],
+  "transparentFraction": 0.46148681640625,
+  "visibleBounds": [
+    0,
+    429,
+    1536,
+    1024
+  ],
+  "alphaThreshold": 32
+}

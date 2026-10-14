@@ -46,6 +46,19 @@ export function commitSettingsChoice(meta, build, { apply, load, save, restore }
   }
 }
 
+export async function commitSettingsChoiceAsync(meta, build, { apply, load, save, restore }) {
+  const before = structuredClone(meta);
+  try {
+    if ((await apply())?.ok === false) throw new Error('settings write refused');
+    if ((await save({ ...load(), settingsChoiceBuild: build }))?.ok === false) throw new Error('acknowledgement refused');
+    return { ok: true };
+  } catch {
+    try { await save(before); } catch { /* preserve live settings on failure */ }
+    restore(before);
+    return { ok: false };
+  }
+}
+
 /**
  * sameSetting(a, b) → true when two stored values are the same setting value:
  * numbers within 1e-9 (float noise such as 0.1 + 0.2), anything else by ===.

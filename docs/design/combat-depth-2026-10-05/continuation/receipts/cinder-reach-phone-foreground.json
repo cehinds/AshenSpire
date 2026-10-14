@@ -1,0 +1,30 @@
+{
+  "id": "cinder-reach-phone-foreground",
+  "kind": "foreground",
+  "phoneOnly": true,
+  "region": "cinder-reach",
+  "transparent": true,
+  "resultFile": "scenes/shared/cinder-reach/foreground-phone.png",
+  "prompt": "Create ONE separate PHONE PORTRAIT foreground framing layer for AshenSpire's cinder-reach combat scene. Portrait 1024x1536 canvas, actual transparent alpha. Detailed weathered painterly dark fantasy matching reference. ONLY black broken basalt columns and cooled slag rocks, one small banked ember lantern. Frame objects run continuously along extreme left and right edges from TOP to BOTTOM; they touch those outer edges intentionally. Keep objects narrow, occupying ONLY outermost 10% of each side plus low bottom CORNERS. Entire central 76% must be COMPLETELY TRANSPARENT from top to bottom, including bottom center. No scenery, sky, ground plane, backing, architecture in center, actors, text or UI. Compose specifically for tall phone stage, not a landscape crop. Restrained lantern glow only on physical surfaces, no colored halo. Neutral grey light and muted umber, small ember accents only.",
+  "reference": "../references/composition.png",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a112fc-0e64-7472-a495-aba14ffa5ab6\\exec-c1636786-bc60-4750-bd15-314e7d93b66d.png",
+  "generator": "built-in image_gen",
+  "size": [
+    1024,
+    1536
+  ],
+  "mode": "RGBA",
+  "sha256": "7188d9b22c0f9c580db084011b5afff6cc0c69a78a331ed5da647981297f1bad",
+  "alphaRange": [
+    0,
+    254
+  ],
+  "transparentFraction": 0.6814492543538412,
+  "visibleBounds": [
+    0,
+    0,
+    1024,
+    1536
+  ],
+  "alphaThreshold": 32
+}

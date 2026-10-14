@@ -1,0 +1,140 @@
+{
+  "compiledIdentity": {
+    "path": "build/download/AshenSpire.html",
+    "ordinal": "1124",
+    "source": "84f593f7fd"
+  },
+  "viewports": {
+    "desktop": {
+      "width": 1365,
+      "height": 1000
+    },
+    "phone": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  "timing": {
+    "seed": 1,
+    "plays": 5,
+    "motion": "Normal",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "budgetMs": 400,
+    "medianMs": 388,
+    "samplesMs": [
+      583,
+      410,
+      266,
+      138,
+      388
+    ],
+    "cards": [
+      "gorefireSlash",
+      "bashingBlow",
+      "shieldBash",
+      "dodgeRoll",
+      "strike"
+    ],
+    "exitCode": 0,
+    "gate": "median"
+  },
+  "solo": [
+    {
+      "shape": "desktop",
+      "escapeAtomic": true,
+      "paidCounterPreserved": true,
+      "spBefore": 6,
+      "spAfter": 5,
+      "manaBefore": 8,
+      "manaAfter": 8,
+      "handBefore": 8,
+      "handAfter": 7,
+      "block": 14,
+      "counterVersion": 2,
+      "counterCharges": 1,
+      "overflow": false,
+      "exitCode": 0
+    },
+    {
+      "shape": "phone",
+      "escapeAtomic": true,
+      "paidCounterPreserved": true,
+      "spBefore": 6,
+      "spAfter": 5,
+      "manaBefore": 8,
+      "manaAfter": 8,
+      "handBefore": 8,
+      "handAfter": 7,
+      "block": 14,
+      "counterVersion": 2,
+      "counterCharges": 1,
+      "overflow": false,
+      "exitCode": 0
+    }
+  ],
+  "coop": [
+    {
+      "shape": "desktop",
+      "seatOneIntent": {
+        "t": "playCard",
+        "cardInstanceId": "coop-qa-barrageCounter",
+        "targetId": "p1",
+        "upcastTier": 1,
+        "as": "p1"
+      },
+      "seatTwoIntent": {
+        "t": "playCard",
+        "cardInstanceId": "coop-qa-shieldBash",
+        "targetId": "p2",
+        "upcastTier": 2,
+        "as": "p2"
+      },
+      "overflow": false,
+      "exitCode": 0
+    },
+    {
+      "shape": "phone",
+      "seatOneIntent": {
+        "t": "playCard",
+        "cardInstanceId": "coop-qa-barrageCounter",
+        "targetId": "p1",
+        "upcastTier": 1,
+        "as": "p1"
+      },
+      "seatTwoIntent": {
+        "t": "playCard",
+        "cardInstanceId": "coop-qa-shieldBash",
+        "targetId": "p2",
+        "upcastTier": 2,
+        "as": "p2"
+      },
+      "overflow": false,
+      "exitCode": 0
+    }
+  ],
+  "retarget": {
+    "shape": "desktop",
+    "fixture": "Known rallyingBanner ID with custom QA definition: authored baseTier2, unlocked3/5; Tier5 adds immediate enemy Weak buildup. This is a generic contract fixture, not a shipped card.",
+    "baseTier": 2,
+    "selectedTier": 5,
+    "targetBefore": "player",
+    "targetAfter": "legal enemy",
+    "atomicBeforeNewTarget": true,
+    "spBefore": 10,
+    "manaBefore": 10,
+    "spAfter": 7,
+    "manaAfter": 7,
+    "printedBlock": 14,
+    "exitCode": 0
+  },
+  "errors": {
+    "solo": [],
+    "coop": [],
+    "retarget": []
+  },
+  "transportBoundary": "Actual compiled co-op client with engine-generated wire previews and canned two-seat transport. Records submitted intents; does not assert live host dispatch or two-browser networking.",
+  "presentationBoundary": "Co-op selected-card Upcast button opens a tier choice dialog; it is not an inline tier select."
+}

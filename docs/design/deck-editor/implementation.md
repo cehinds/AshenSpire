@@ -4,7 +4,7 @@ Recovered from **Show deck editor illustrations**
 (`01a0ffde-bdb8-75e1-b27a-29a23598427b`), originally designed in
 `01a0ee2d-2ae5-7110-90f7-fa014213546a`. The separate authoring editor has its own
 implementation at `6bba8aa`; this branch implements the design in the game's
-actual `mountDeckEditor` used by Map Quick Access, Armoury and eligible Rest sites.
+actual `mountDeckEditor` used by the Armoury and eligible Rest sites.
 
 ## Inventory and assets
 

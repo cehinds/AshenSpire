@@ -1,27 +1,28 @@
 // tests/run-node.mjs — Node test runner: `node tests/run-node.mjs`
 // Prints one line per test; exits 1 on any failure.
 //
-// TWO LANES, ONE FILE. With no flag this runs everything, as it always has.
-// CI runs the halves as two jobs so the fast one answers first:
-//   --no-selftests    the engine suite, every discovered *.test.mjs, and each
-//                     tool's verdict on the tree as it stands
-//   --selftests-only  only the `--selftest` corpora: "can this check still
-//                     fail?" They are the slow half (minutes, not seconds), and
-//                     weapon-card-packages writes a mutant module into src/
-//                     while it runs, so a concurrent run over the same tree
-//                     can read it — keep the two halves on separate checkouts.
-// The invocations stay in this file either way: tools/gatelist.mjs and
-// tools/testnumbers.mjs read it as the JS gate list.
+// No flags run the original whole corpus. CI may schedule the same work as:
+//   --no-selftests --no-discovered   engine and tool verdicts
+//   --discovered-only --shard i/n   deterministic shards of discovered tests
+//   --no-slow | --slow-only          with --discovered-only: leave out, or run
+//                                    only, SLOW_DISCOVERED (run-node-lanes.mjs)
+//   --selftests-only --selftest-group link|other   exhaustive corpus groups
+// Selftests that write mutants must run in a separate checkout from tree gates.
+// tools/gatelist.mjs and tools/testnumbers.mjs still read this invocation list.
 
 import { runTests } from './engine.test.js';
+import { parseRunNodeOptions, discoveryShardFiles, discoverySpeedFiles, SLOW_DISCOVERED, selftestInGroup, shardSummaryCounts } from './run-node-lanes.mjs';
 
-const argv = process.argv.slice(2);
-const CORE = !argv.includes('--selftests-only');
-const SELFTESTS = !argv.includes('--no-selftests');
-if (!CORE && !SELFTESTS) {
-  console.error('run-node: --no-selftests with --selftests-only runs nothing');
+let options;
+try {
+  options = parseRunNodeOptions(process.argv.slice(2));
+} catch (error) {
+  console.error(`run-node: ${error.message}`);
   process.exit(2);
 }
+const CORE = options.core;
+const SELFTESTS = options.selftests;
+const DISCOVER = options.discovered;
 
 // The art manifest is written by tools/equipment-blender.py and records the
 // fields the renderer ACTUALLY read. Loaded here rather than inside the test so
@@ -109,7 +110,7 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
 // red unseen. A new test file is now in the run the moment it exists. A file
 // that must not be spawned here is named in NOT_SPAWNED with its reason, and an
 // entry whose file has gone is itself a failure, so the list cannot rot quietly.
-if (CORE) {
+if (DISCOVER) {
   const { spawnSync } = await import('node:child_process');
   const { readdirSync, existsSync } = await import('node:fs');
   const { join, relative, sep } = await import('node:path');
@@ -138,12 +139,26 @@ if (CORE) {
   walk(root);
   found.sort();
   const stale = [...NOT_SPAWNED.keys()].filter(file => !existsSync(join(root, file)));
-  const files = found.filter(file => !NOT_SPAWNED.has(file));
+  let files;
+  try {
+    files = discoveryShardFiles(discoverySpeedFiles(found.filter(file => !NOT_SPAWNED.has(file)), options.slow), options.shard);
+  } catch (error) {
+    console.error(`run-node: ${error.message}`);
+    process.exit(2);
+  }
   // The spec reporter ends with a count and, on a failure, a "failing tests"
   // section. A red run prints the reporter's whole output: a file that dies
   // before registering a test (a syntax error, a missing import) shows its
   // exception ABOVE that section, and the section alone would drop the reason.
-  const result = spawnSync(process.execPath, ['--test', '--test-reporter=spec', ...files], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28 });
+  // Simulation files spawn their own CPU-heavy processes. Bound Windows file
+  // workers so concurrent local builds do not starve those existing deadlines;
+  // discovery, assertions and subprocess timeouts remain unchanged.
+  const workerArgs = process.platform === 'win32' ? ['--test-concurrency=4'] : [];
+  // A shard that hangs would otherwise be cut by the CI job's timeout with no output at all
+  // (spawnSync buffers it). Stop it first and print what it wrote, so the hung test is named.
+  const SHARD_LIMIT_MS = 15 * 60 * 1000;
+  const result = spawnSync(process.execPath, ['--test', '--test-reporter=spec', ...workerArgs, ...files], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28, timeout: SHARD_LIMIT_MS });
+  if (result.error?.code === 'ETIMEDOUT') console.log(`run-node: the test run passed ${SHARD_LIMIT_MS / 60000} minutes and was stopped; its output so far follows, and the last test named is where it hung.`);
   const out = `${result.stdout || ''}${result.stderr || ''}`;
   const count = (label) => Number(out.match(new RegExp(`^ℹ ${label} (\\d+)$`, 'm'))?.[1] ?? NaN);
   const ok = result.status === 0 && !stale.length && count('fail') === 0;
@@ -151,8 +166,11 @@ if (CORE) {
     console.log(out || String(result.error));
     for (const file of stale) console.log(`  NOT_SPAWNED names ${file}, which no longer exists — remove the entry`);
   }
-  console.log(`${ok ? 'PASS' : 'FAIL'}  every discovered test file passes — ${files.length} files, ${count('tests')} tests, ${count('fail')} failed` +
-    ` (${NOT_SPAWNED.size} run elsewhere, each with its reason in NOT_SPAWNED)`);
+  const counts = shardSummaryCounts({ out, timedOut: result.error?.code === 'ETIMEDOUT', limitMinutes: SHARD_LIMIT_MS / 60000, files: files.length });
+  console.log(`${ok ? 'PASS' : 'FAIL'}  every discovered test file passes — ${counts}` +
+    ` (${NOT_SPAWNED.size} run elsewhere, each with its reason in NOT_SPAWNED)` +
+    (options.slow === 'exclude' ? ` (${SLOW_DISCOVERED.size} slow files left to --slow-only)` : options.slow === 'only' ? ' [slow files only]' : '') +
+    (options.shard ? ` [shard ${options.shard.index}/${options.shard.count}]` : ''));
   if (ok) zoomPassed++;
   else zoomExtra++;
 }
@@ -179,7 +197,7 @@ if (CORE) {
     return { text: m[1], why: null };
   };
 
-  if (SELFTESTS) {
+  if (SELFTESTS && selftestInGroup(options.selftestGroup, 'zoomunits')) {
     const self = run(['--selftest']);
     const selfV = quote(self.out);
     console.log(
@@ -315,7 +333,7 @@ if (CORE) {
     }
   };
 
-  if (SELFTESTS) {
+  if (SELFTESTS && selftestInGroup(options.selftestGroup, 'surfaces')) {
     const surfSelf = runSurf(['--selftest']);
     const surfSelfV = quote(surfSelf.out);
     console.log(
@@ -401,7 +419,7 @@ if (CORE) {
     }
   };
 
-  if (SELFTESTS) {
+  if (SELFTESTS && selftestInGroup(options.selftestGroup, 'screen-census')) {
     const censSelf = runCensus(['--selftest']);
     const censSelfV = quote(censSelf.out);
     console.log(
@@ -449,7 +467,7 @@ if (CORE) {
     }
   };
 
-  if (SELFTESTS) {
+  if (SELFTESTS && selftestInGroup(options.selftestGroup, 'markhome')) {
     const markSelf = runMark(['--selftest']);
     const markSelfV = quote(markSelf.out);
     console.log(
@@ -508,7 +526,7 @@ if (CORE) {
     }
   };
 
-  if (SELFTESTS) {
+  if (SELFTESTS && selftestInGroup(options.selftestGroup, 'linkcheck')) {
     const linkSelf = runLink(['--selftest']);
     const linkSelfV = quote(linkSelf.out);
     console.log(
@@ -588,7 +606,7 @@ if (CORE) {
     }
   };
 
-  if (SELFTESTS) {
+  if (SELFTESTS && selftestInGroup(options.selftestGroup, 'statusreach')) {
     const reachSelf = runReach(['--selftest']);
     const reachSelfV = quote(reachSelf.out);
     console.log(
@@ -625,7 +643,7 @@ if (CORE) {
     else zoomPassed++;
   }
 
-  if (SELFTESTS) {
+  if (SELFTESTS && selftestInGroup(options.selftestGroup, 'closedsets')) {
     const setsSelf = runSets(['--selftest']);
     const setsSelfV = quote(setsSelf.out);
     console.log(
@@ -648,7 +666,7 @@ if (CORE) {
     else zoomPassed++;
   }
 
-  if (SELFTESTS) {
+  if (SELFTESTS && selftestInGroup(options.selftestGroup, 'gracerefill')) {
     const graceSelf = runGrace(['--selftest']);
     const graceSelfV = quote(graceSelf.out);
     console.log(
@@ -688,7 +706,7 @@ if (CORE) {
     }
   };
 
-  if (SELFTESTS) {
+  if (SELFTESTS && selftestInGroup(options.selftestGroup, 'onevocab')) {
     const vocabSelf = runVocab(['--selftest']);
     const vocabSelfV = quote(vocabSelf.out);
     console.log(
@@ -800,7 +818,7 @@ if (CORE) {
     }
   };
 
-  if (SELFTESTS) {
+  if (SELFTESTS && selftestInGroup(options.selftestGroup, 'gatelist')) {
     const gateSelf = runGate(['--selftest']);
     const gateSelfV = quote(gateSelf.out);
     console.log(
@@ -823,7 +841,7 @@ if (CORE) {
     else zoomPassed++;
   }
 
-  if (SELFTESTS) {
+  if (SELFTESTS && selftestInGroup(options.selftestGroup, 'testnumbers')) {
     const numsSelf = runNums(['--selftest']);
     const numsSelfV = quote(numsSelf.out);
     console.log(
@@ -886,7 +904,7 @@ if (CORE) {
     }
   };
 
-  if (SELFTESTS) {
+  if (SELFTESTS && selftestInGroup(options.selftestGroup, 'urlpath-conversions')) {
     const urlPathSelf = runUrlPath(['--selftest']);
     const urlPathSelfV = quote(urlPathSelf.out);
     console.log(
@@ -919,7 +937,7 @@ if (CORE) {
       return { out: `${error.stdout || ''}${error.stderr || ''}`, code: error.status ?? 1 };
     }
   };
-  if (SELFTESTS) {
+  if (SELFTESTS && selftestInGroup(options.selftestGroup, 'weapon-card-packages')) {
     const weaponSelf = runWeaponPackages(['--selftest']);
     const weaponSelfV = quote(weaponSelf.out);
     console.log(
@@ -953,7 +971,7 @@ if (CORE) {
       return { out: `${error.stdout || ''}${error.stderr || ''}`, code: error.status ?? 1 };
     }
   };
-  if (SELFTESTS) {
+  if (SELFTESTS && selftestInGroup(options.selftestGroup, 'ui-components')) {
     const uiSelf = runUiComponents(['--selftest']);
     const uiSelfV = quote(uiSelf.out);
     console.log(
@@ -987,7 +1005,7 @@ if (CORE) {
       return { out: `${error.stdout || ''}${error.stderr || ''}`, code: error.status ?? 1 };
     }
   };
-  if (SELFTESTS) {
+  if (SELFTESTS && selftestInGroup(options.selftestGroup, 'flask-action-contract')) {
     const flaskSelf = runFlaskActions(['--selftest']);
     const flaskSelfV = flaskSelf.out.match(/^SELFTEST (?:GREEN|RED)[^\n]*/m)?.[0] || '';
     const flaskSelfOk = flaskSelf.code === 0 && /^SELFTEST GREEN/.test(flaskSelfV);
@@ -1028,7 +1046,7 @@ if (CORE) {
       return { out: `${error.stdout || ''}${error.stderr || ''}`, code: error.status ?? 1 };
     }
   };
-  if (SELFTESTS) {
+  if (SELFTESTS && selftestInGroup(options.selftestGroup, 'uistrings')) {
     const copySelf = runUiStrings(['--selftest']);
     const copySelfV = copySelf.out.match(/^uistrings --selftest: (?:OK|RED)[^\n]*/m)?.[0] || '';
     const copySelfOk = copySelf.code === 0 && /: OK — /.test(copySelfV);
@@ -1132,7 +1150,7 @@ if (CORE) {
   const runCredits = (args) => execFileSync(process.execPath, ['tools/credits-check.mjs', ...args], { cwd: new URL('..', import.meta.url), encoding: 'utf8' });
   const lanes = [];
   if (CORE) lanes.push({ args: [], label: 'credits-check: every asset directory has a CREDITS row; README §Legal agrees with the AI disclosure' });
-  if (SELFTESTS) lanes.push({ args: ['--selftest'], label: 'credits-check --selftest: each rule still goes red on its plant' });
+  if (SELFTESTS && selftestInGroup(options.selftestGroup, 'credits-check')) lanes.push({ args: ['--selftest'], label: 'credits-check --selftest: each rule still goes red on its plant' });
   for (const lane of lanes) {
     try {
       const out = runCredits(lane.args).trim().split('\n').pop();
@@ -1151,23 +1169,27 @@ if (CORE) {
 // Seeds are runsim's fixed formula, so the run is the same every time; it takes
 // a few seconds. The selftest plants a throw inside a fight, a stalled fight and
 // a boss-less map cycle, and requires a clean fleet to repeat seed for seed.
-{
+if (CORE || (SELFTESTS && selftestInGroup(options.selftestGroup, 'runsim'))) {
   const { execFileSync } = await import('node:child_process');
+  const { RUNSIM_FLEET_TIMEOUT_MS, RUNSIM_SELFTEST_TIMEOUT_MS } = await import('../tools/runsim-selftest-policy.mjs');
   const runSim = (args) => {
     try {
-      return { out: execFileSync(process.execPath, ['tools/runsim.mjs', ...args], { cwd: new URL('..', import.meta.url), encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 120000 }), code: 0 };
+      const timeout = args.includes('--selftest') ? RUNSIM_SELFTEST_TIMEOUT_MS : RUNSIM_FLEET_TIMEOUT_MS;
+      return { out: execFileSync(process.execPath, ['tools/runsim.mjs', ...args], { cwd: new URL('..', import.meta.url), encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout }), code: 0 };
     } catch (e) {
-      return { out: `${e.stdout || ''}${e.stderr || ''}`, code: e.status ?? 1 };
+      return { out: `${e.stdout || ''}${e.stderr || ''}\nsubprocess: exit ${e.status ?? 'none'}, signal ${e.signal || 'none'}, error ${e.code || 'none'}\n`, code: e.status ?? 1 };
     }
   };
   const lanes = [];
   if (CORE) lanes.push({ args: ['5'], label: 'runsim 5: a headless full run for every class on fixed seeds, 0 crashes, 0 soft-locks' });
-  if (SELFTESTS) lanes.push({ args: ['--selftest'], label: 'runsim --selftest: a crash, a stalled fight and a boss-less map each still go red' });
+  if (SELFTESTS && selftestInGroup(options.selftestGroup, 'runsim')) lanes.push({ args: ['--selftest'], label: 'runsim --selftest: a crash, a stalled fight and a boss-less map each still go red' });
   for (const lane of lanes) {
     const r = runSim(lane.args);
     const result = (r.out.match(/^RESULT: (.*)$/m) || [])[1];
     const ok = r.code === 0 && result && !/^FAILED/.test(result);
-    console.log(`${ok ? 'PASS' : 'FAIL'}  ${lane.label} — ${result || `runsim ${lane.args.join(' ')} (exit ${r.code}): no RESULT line\n${r.out.slice(-800)}`}`);
+    const detail = result && r.code === 0 ? result
+      : `runsim ${lane.args.join(' ')} (exit ${r.code}): ${result || 'no RESULT line'}\n${r.out.slice(-800)}`;
+    console.log(`${ok ? 'PASS' : 'FAIL'}  ${lane.label} — ${detail}`);
     if (ok) zoomPassed++;
     else zoomExtra++;
   }
@@ -1183,6 +1205,18 @@ if (CORE) {
     zoomPassed++;
   } catch (error) {
     console.log(`FAIL  generated UI config: ${error.stderr || error.stdout || error.message}`);
+    zoomExtra++;
+  }
+  // The fourth authored tree: content/hud-layout/<form-factor>.json compiles to
+  // styles/hud-layout.generated.css (docs/hud-layout-tokens.md). A hand edit to
+  // the stylesheet, or a JSON edit nobody compiled, is red here
+  // (tests/hud-layout-css.test.mjs holds the rules).
+  try {
+    execFileSync(process.execPath, ['tools/hud-layout-css.mjs', '--check'], { cwd: new URL('..', import.meta.url), encoding: 'utf8' });
+    console.log('PASS  generated HUD layout CSS is current with content/hud-layout (hud-layout-css --check)');
+    zoomPassed++;
+  } catch (error) {
+    console.log(`FAIL  generated HUD layout CSS: ${error.stderr || error.stdout || error.message}`);
     zoomExtra++;
   }
   // The tag tree's derived views — tags, domains, pairings, property rules and
@@ -1312,4 +1346,8 @@ console.log('          76 drives the shared confirmation component in a minimal 
 console.log('          the two controller call sites. It proves cancellation/commit semantics,');
 console.log('          focus containment/return, and native-prompt removal; it does not paint');
 console.log('          the dialog or prove responsive geometry in a real browser.');
-process.exit(failed + zoomExtra > 0 ? 1 : 0);
+// On macOS stdout to a pipe is asynchronous, and an immediate process.exit cut the
+// report off mid-stream (the failing test's name never reached the CI log). Exit
+// once the last write has been flushed; writes on one stream complete in order.
+process.exitCode = failed + zoomExtra > 0 ? 1 : 0;
+process.stdout.write('', () => process.exit(process.exitCode));

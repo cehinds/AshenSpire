@@ -16,10 +16,16 @@ const base=createRegistries(contentBundle);
 const charge={op:'grantCardCharge',target:'self',key:'cost-probe',manaDiscount:2};
 const mount=triggers=>({kind:'feat',id:'cost-probe',instanceId:'cost-probe',rules:[{tag:'probe',triggers}]});
 function fixture(coop=false){
-  const def={...base.cards.get('stigmataCard'),cost:3,manaCost:4,effects:[{op:'block',target:'self',amount:1}],upgrade:{}};
+  const def={...base.cards.get('stigmataCard'),cost:3,costRule:'fixed',manaCost:4,effects:[{op:'block',target:'self',amount:1}],upgrade:{}};
   const registries={...base,cards:{...base.cards,get:id=>id==='stigmataCard'?def:base.cards.get(id)}};
   const player={id:'a',classId:'herald',hp:80,maxHp:80,mana:10,maxMana:10,stamina:10,maxStamina:10,energyMax:10,drawPerTurn:1,relicIds:[],deck:[{instanceId:'probe',cardId:'stigmataCard',upgraded:false}]};
   return coop?createCoopCombat({registries,rng:createRng(11),players:[player,{...player,id:'b'}],enemyIds:['wanderingSoldier']}):createCombat({registries,rng:createRng(11),player,enemyIds:['wanderingSoldier']});
+}
+// Every class mount carries the Oath rule, which listens to cardPreparing. The
+// no-listener fast path is about a bus nobody listens on, so drop class mounts.
+function withoutClassMounts(combat){
+  for(const mounts of Object.values(combat.propertyMounts||{}))for(const [id,mount] of Object.entries(mounts))if(mount?.kind==='class')delete mounts[id];
+  return combat;
 }
 function clonePrice(combat,id){
   const saved=combat._emitEvent;
@@ -40,7 +46,7 @@ function assertPureEqual(combat){
 
 test('no-listener pricing retains live charge discounts and passive costs with exact clone parity',()=>{
   for(const coop of [false,true]){
-    const combat=fixture(coop),key=coop?combat.playerKey:'player';
+    const combat=withoutClassMounts(fixture(coop)),key=coop?combat.playerKey:'player';
     combat.propertyMounts[key] ||= {};
     combat.propertyMounts[key].probe={...mount([]),rules:[{tag:'probe',passives:{powerCostReduction:1}}]};
     grantAbilityCharge(combat.player,charge);
@@ -92,6 +98,7 @@ function trace(classId,encounterId,seed,forceClone){
   if(forceClone)combat._emitEvent=(...args)=>emitEvent(...args);
   const decisions=[];let guard=0;
   while(!combat.result&&combat.turn<=150&&guard++<8000){
+    if(combat.pendingReaction){const offerId=combat.pendingReaction.id;decisions.push(['skipReaction',offerId]);dispatch(combat,{type:'chooseReaction',offerId,optionId:null});continue;}
     const refused=refusalsFor(combat),card=firstAffordableCard(base,combat,refused);
     if(!card){decisions.push(['endTurn']);dispatch(combat,{type:'endTurn'});continue;}
     const targetId=botCardTargetId(base,combat,card,combat.enemies.find(enemy=>enemy.alive)?.id),choice=cardChoicePlan(combat,card.instanceId)?.options[0]?.id;
@@ -102,4 +109,18 @@ function trace(classId,encounterId,seed,forceClone){
 }
 test('actual fights preserve every decision and complete saved state versus the original eager detached cost path',()=>{
   for(const {id} of base.classes.all())for(const encounter of ['patrol','eliteWyrm','bossOmen'])for(const seed of [11,41])assert.deepEqual(trace(id,encounter,seed,false),trace(id,encounter,seed,true),`${id}/${encounter}/${seed}`);
+});
+test('the Oath class mount listens only for an oath card, so real fights price other cards on the fast path',()=>{
+  // oathKept is on every class mount and its cardPreparing trigger asks for an
+  // `oath` card. Treated as a listener for every card, it sent each price and
+  // target read through a full clone of the combat and its event log, which
+  // took tools/balance.mjs past the CI shard's 15-minute limit.
+  for(const {id} of base.classes.all()){
+    const run=createRunState({seed:1,classId:id,registries:base}),combat=createRunCombat({registries:base,run,rng:createRng(3),enemyIds:['wanderingSoldier']});
+    const mounted=Object.values(combat.propertyMounts.player||{}).filter(mount=>mount?.kind==='class');
+    assert.ok(mounted.some(mount=>mount.rules.some(rule=>rule.tag==='oathKept')),`${id}: the class mount carries the Oath rule`);
+    assert.equal(hasEventTriggers(combat,'cardPreparing'),true,`${id}: with no card named the Oath rule is a listener`);
+    assert.equal(hasEventTriggers(combat,'cardPreparing',{cardTags:['oath']}),true,`${id}: an oath card hears the Oath rule`);
+    assert.equal(hasEventTriggers(combat,'cardPreparing',{cardTags:['attack']}),false,`${id}: a card without the oath tag does not`);
+  }
 });

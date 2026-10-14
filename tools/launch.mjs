@@ -10,7 +10,6 @@
 //
 // Invoked by run.bat (Windows) and run.sh (macOS/Linux), or: node tools/launch.mjs
 
-import { spawnSync } from 'node:child_process';
 import { mkdirSync, copyFileSync, existsSync, cpSync, readdirSync, rmSync } from 'node:fs';
 import { relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -25,6 +24,8 @@ import { serve } from './serve.mjs';
 // here since the launcher was written. A second implementation of a rule is a
 // second chance to disagree with it, and this one disagreed silently.
 import { buildVersion } from './buildversion.mjs';
+import { holdForCli } from './lib/build-lock.mjs';
+import { createStepRunner, stopStepsOnSignal } from './lib/build-steps.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 
@@ -90,21 +91,37 @@ const TIER = FULL_ART ? 'high' : 'light';
 // 0a. Compile presentation config (content/config/**.json → src/config/generated/ui.js).
 // Runs before the content build, whose stray-source sweep refuses a config file
 // the generated module was not compiled from.
+// The builds below write the generated trees: hold the shared lock until the
+// build is done (the builders run under it; tools/lib/build-lock.mjs).
+const releaseBuildLock = await holdForCli(ROOT, 'launch');
+// Each builder runs in its own process group under this hold; a signal stops the running group before the lock goes.
+const steps = createStepRunner();
+stopStepsOnSignal(steps);
 console.log('launch: compiling presentation config…');
-const uiConfig = spawnSync(process.execPath, [resolve(ROOT, 'tools/config-build.mjs')], { stdio: 'inherit' });
-if (uiConfig.status !== 0) {
+const uiConfig = await steps.run(resolve(ROOT, 'tools/config-build.mjs'));
+if (uiConfig.code !== 0) {
   console.error('launch: config build failed — fix content/config and retry.');
-  process.exit(uiConfig.status || 1);
+  process.exit(uiConfig.code || 1);
+}
+
+// 0b. Compile the HUD layout tokens (content/hud-layout/*.json →
+// styles/hud-layout.generated.css; docs/hud-layout-tokens.md). The bundler
+// inlines that stylesheet from index.html, so it must be current first.
+console.log('launch: compiling HUD layout tokens…');
+const hudLayout = await steps.run(resolve(ROOT, 'tools/hud-layout-css.mjs'), ['--write']);
+if (hudLayout.code !== 0) {
+  console.error('launch: HUD layout build failed — fix content/hud-layout and retry.');
+  process.exit(hudLayout.code || 1);
 }
 
 // 0. Compile authored content (content/source/*.csv|json → src/content/generated).
 // Runs first so a spreadsheet edit is picked up by the very next launch without
 // anyone remembering a separate command.
 console.log('launch: compiling authored content…');
-const content = spawnSync(process.execPath, [resolve(ROOT, 'tools/content-build.mjs')], { stdio: 'inherit' });
-if (content.status !== 0) {
+const content = await steps.run(resolve(ROOT, 'tools/content-build.mjs'));
+if (content.code !== 0) {
   console.error('launch: content build failed — fix content/source and retry.');
-  process.exit(content.status || 1);
+  process.exit(content.code || 1);
 }
 
 const buildDir = resolve(ROOT, 'build');
@@ -114,20 +131,20 @@ const distDir = resolve(ROOT, 'dist');
 // This run bumps the ordinal when the tree moved; the single file below reads
 // the same number.
 console.log(`launch: building the game (pack shape, ${TIER} art by default)…`);
-const build = spawnSync(process.execPath, [resolve(ROOT, 'tools/bundle.mjs'), ...TIER_FLAG], { stdio: 'inherit' });
-if (build.status !== 0) {
+const build = await steps.run(resolve(ROOT, 'tools/bundle.mjs'), TIER_FLAG);
+if (build.code !== 0) {
   console.error('launch: build failed — aborting.');
-  process.exit(build.status || 1);
+  process.exit(build.code || 1);
 }
 
 // 1b. The light single file into build/download/ — the same source and stamp,
 // every byte inside it (about 31 MB; held to no byte budget since step 8e). Its
 // art is the light pack's, which the bundler reads through tools/art-source.mjs.
 console.log('launch: building the light single file (download/)…');
-const single = spawnSync(process.execPath, [resolve(ROOT, 'tools/bundle.mjs'), '--single-file'], { stdio: 'inherit' });
-if (single.status !== 0) {
+const single = await steps.run(resolve(ROOT, 'tools/bundle.mjs'), ['--single-file']);
+if (single.code !== 0) {
   console.error('launch: light single-file build failed — aborting.');
-  process.exit(single.status || 1);
+  process.exit(single.code || 1);
 }
 
 // 1c. What an earlier launcher left that this build no longer makes. Each one,
@@ -192,6 +209,8 @@ if (args.includes('--build-only')) {
   console.log(`launch: OK — ${landed}/${aliases.length} current-build aliases refreshed.`);
   process.exit(0);
 }
+
+releaseBuildLock();
 
 // 3. Serve the live app and open the browser.
 const pi = args.indexOf('--port');

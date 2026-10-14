@@ -1,6 +1,6 @@
 import { rederivePools } from './levelup.js';
 import { syncFlaskGrowth } from './flaskgrowth.js';
-import { pendingClassMilestones, finishClassMilestone, expandedProgression, milestoneReceiptId } from './classMilestones.js';
+import { pendingClassMilestones, finishClassMilestone, expandedProgression, milestoneReceiptId, capRunClassGrants, classRewardBudget, runGrantsTaken, RUN_BUDGET_KINDS } from './classMilestones.js';
 import { abilityRankAt } from './abilityGrades.js';
 import { abilityOfferPool } from './abilityOffers.js';
 import { equipmentRequirementReceipt, carriedIds } from './loadout.js';
@@ -32,6 +32,7 @@ export function classMilestoneOptions(registries, run, kind, level, meta = {}) {
 export function rollClassMilestoneRewards(registries, rng, run, { banked = 0, meta = {} } = {}) {
   if (!expandedProgression(run) || run.classUnequipped) return [];
   const current = run.skills?.[`class:${run.class}`]?.level || 0;
+  capRunClassGrants(registries, run, run.class);
   const waiting = pendingClassMilestones(run);
   for (let level = current + 1; level <= current + banked; level++) for (const [kind, levels] of Object.entries(registries.balance.progression.cadence)) if (levels.includes(level)) waiting.push({ id: milestoneReceiptId(run.class,level,kind), kind, classId: run.class, level });
   run.classMilestoneOffers ||= {};
@@ -78,6 +79,7 @@ export function claimClassMilestoneReward(registries, run, receiptId, selection,
   const selectedId = offer?.options?.[index];
   if (!offer || index < 0 || offer.classId !== run.class || (run.skills?.[offer.skillId]?.level || 0) < offer.requiredLevel || !pendingClassMilestones(run).some(grant => grant.id === receiptId)) return false;
   if (!classMilestoneOptions(registries,run,offer.rewardKind,offer.level,meta).includes(selectedId)) return false;
+  if (RUN_BUDGET_KINDS.includes(offer.rewardKind) && runGrantsTaken(run,offer.rewardKind) >= (classRewardBudget(registries,run.skills?.[offer.skillId]?.level || 0)[offer.rewardKind] || 0)) return false;
   let instanceId = null;
   if (offer.rewardKind === 'armory') {
     if (!collectEquipment || collectEquipment(selectedId) === false) return false;

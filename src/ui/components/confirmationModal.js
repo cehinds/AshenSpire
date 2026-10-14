@@ -3,6 +3,7 @@
 
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { modalHead, modalFooter, el, prose, stampModalSize } from '../kit/index.js';
+import { registerModal } from '../modalState.js';
 
 let activeClose = null;
 export const CONFIRMATION_COMMIT_EVENT = 'ashenspire:confirmation-commit';
@@ -136,6 +137,9 @@ export function openConfirmationModal({
   veil.appendChild(dialog);
   document.body.appendChild(veil);
 
+  // The dialog leaves the modal state here, whichever way it closes. A retained
+  // input shield is a veil with no dialog, so it is not a modal any more.
+  const unregisterModal = registerModal('confirmation', dialog);
   let closed = false;
   const close = ({ restoreFocus = true, retainInputShield = false } = {}) => {
     if (closed) return;
@@ -147,6 +151,9 @@ export function openConfirmationModal({
     if (restoreFocus && returnFocusElement instanceof HTMLElement && returnFocusElement.isConnected) {
       returnFocusElement.focus({ preventScroll: true });
     }
+    // Last: releasing the last modal runs whenNoOverlay() waiters at once, and
+    // one of those may replace the element focus just returned to.
+    unregisterModal();
   };
   activeClose = close;
 
@@ -189,13 +196,20 @@ export function openConfirmationModal({
     window.dispatchEvent(new CustomEvent(CONFIRMATION_COMMIT_EVENT, {
       detail: { component, tone },
     }));
+    let awaitingDestination = false;
     try {
-      onConfirm?.();
+      const destination = onConfirm?.();
+      if (destination && typeof destination.then === 'function') {
+        awaitingDestination = true;
+        // Profile-backed starts may wait for another browser's storage lock.
+        // Keep the navigation shield until that accepted operation settles.
+        Promise.resolve(destination).then(shield.afterDestinationPaint, shield.afterDestinationPaint);
+      }
     } finally {
       // Destination callbacks synchronously replace the app surface today.
       // Two paints let its hit-test tree settle before the bounded shield timer
       // begins; a physical second click is swallowed and may release it sooner.
-      shield.afterDestinationPaint();
+      if (!awaitingDestination) shield.afterDestinationPaint();
     }
   });
   // A SCRIM CLICK CANCELS ONLY WHEN THE PRESS BEGAN ON THE SCRIM. With the

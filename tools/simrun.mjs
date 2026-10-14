@@ -157,7 +157,7 @@ export function createRunLoop(REG, config) {
   function simulateRun(classId, seed, ctx = null) {
     REG = sourceRegistries;
     const attributes = config.attributes ? config.attributes(classId) : undefined;
-    const run = createRunState({ seed, classId, registries: REG, attributes });
+    const run = createRunState({ seed, classId, registries: REG, attributes, combatExpansionVersion: config.combatExpansionVersion ?? 2 });
     if (config.classMastery) {
       openRunClassMastery(REG, run, {}, { receiptId: `sim:${classId}:${seed}`, bankable: false });
       REG = registriesForClassMastery(REG, run);

@@ -1,0 +1,31 @@
+{
+  "id": "drowned-coast-2-landmark",
+  "sceneId": "drowned-coast-2",
+  "name": "The Salt Causeway",
+  "region": "drowned-coast",
+  "kind": "landmark",
+  "reference": "../references/composition.png",
+  "transparent": true,
+  "resultFile": "scenes/drowned-coast-2/landmark.png",
+  "prompt": "Create one independent transparent MIDGROUND landmark layer for AshenSpire combat scene 'The Salt Causeway'. Subject: broken seawall and causeway towers in shallow tide, eroded stone rail and salt-crusted arch. Match supplied reference's painterly dark fantasy, tactile weathered stone, cloth and metal; restrained ember accents, no cartoony treatment. Low battlefield perspective viewed from behind a near-left hero looking toward enemies at right. Wide 1536x1024 registration canvas. Landmark architecture occupies upper-middle band, from x=18% to 83% and y=6% to 57%; BASE OF ALL STRUCTURES ends at y=58%. Entire lower 40% of canvas must be COMPLETELY EMPTY TRANSPARENT, to accept a separate walkable ground plate. Holes, windows and space around silhouettes must also be truly transparent. No sky, scenic background, distant mountains, ground plane, floor, actor, monster, UI, text, labels or watermark. This is ONE cutout landmark group, NOT a complete scene and NOT a grid. Preserve generous breathing space around structures except intentionally tall upper-frame vaults. Lighting upper-left, stormy slate teal grey.",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a112fc-0e64-7472-a495-aba14ffa5ab6\\exec-e8198cb1-948c-4ce5-a920-ceabed3aea27.png",
+  "generator": "built-in image_gen",
+  "size": [
+    1536,
+    1024
+  ],
+  "mode": "RGBA",
+  "sha256": "d1e3c24a675ad11e6b7d86a14279b449d01adc0e781fca3fa6d2276f6aa495a9",
+  "alphaRange": [
+    0,
+    254
+  ],
+  "transparentFraction": 0.6063925425211588,
+  "visibleBounds": [
+    5,
+    5,
+    1533,
+    655
+  ],
+  "alphaThreshold": 32
+}

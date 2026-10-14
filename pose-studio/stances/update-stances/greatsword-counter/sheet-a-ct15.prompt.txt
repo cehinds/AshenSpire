@@ -1,0 +1,10 @@
+Edit ONLY the BOTTOM LEFT character (CT15) in this five-pose transparent atlas. Keep all other four characters, scale, cell positions, costumes and weapons unchanged. Preserve1024x1536 portrait, bottom-right blank. Do not alter layout.
+
+CT15 currently appears ONE-HANDED. Fix it into an unmistakable TWO-HANDED low hanging defensive cover:
+- Both metal gauntlets must be separately visible IN FRONT of the lower abdomen, not hidden behind body or another cuff.
+- Use a clearly LONG hilt held approximately diagonally: pommel toward upper-left and crossguard toward lower-right. One gauntlet grips near pommel, second grips near crossguard, with an obvious short exposed hilt segment between the two. BOTH hands are below the crossguard, neither on blade.
+- Redraw BOTH arms: near shoulder/upper arm bends its elbow naturally and brings its forearm ahead to the forward grip; farther arm comes naturally forward around the front side of torso to the rear grip. Show enough of each armored forearm to make two arms and two gripping hands traceable. Do not merely add floating fingers or fuse the gauntlets.
+- Long greatsword blade still points diagonally DOWN RIGHT, held forward at WAIST height. Character remains tall, rear weighted, both boots entirely FLAT, rear-left camera facing RIGHT, same connected crimson cape and armor.
+- Keep the sword tip and whole silhouette inside bottom-left cell. No effects, impact, text or background.
+
+Change only CT15 anatomy/hilt. The other four figures are already accepted pose designs and must be preserved.

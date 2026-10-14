@@ -39,6 +39,7 @@ import { wireframeUi } from '../../content/wireframeUi.js';
 import { el, modalFooter, button, prose } from '../kit/index.js';
 import { runHudHtml, wireRunHud } from '../components/runHud.js';
 import { combatBackdropHtml } from '../components/environmentArt.js';
+import { onDisplayAppearanceChange } from '../displayAppearance.js';
 import { wireDialogueStage } from '../components/dialogueStage.js';
 import { enemySprite, playerSprite } from '../assets.js';
 import { reducedMotionRequested } from '../motion.js';
@@ -108,6 +109,7 @@ export function mountDialogue(app, options) {
   const plateLayer = (layer, wireframe) => {
     const wrap = el('div', { class: `dialogue-plate-layer dialogue-${layer}`, 'aria-hidden': 'true', dataset: { layer, wireframe } });
     wrap.innerHTML = combatBackdropHtml(run);
+    wrap.querySelector('.alternative-card-fade')?.remove();
     wrap.hidden = !layers[layer];
     return wrap;
   };
@@ -191,6 +193,13 @@ export function mountDialogue(app, options) {
     });
   }
   const stage = wireDialogueStage(root, { layout, parent, scene: wireframeUi.scene });
+  const releaseAppearance = onDisplayAppearanceChange(root, () => {
+    teardown();
+    clearTimeout(entranceTimer);
+    stage.release();
+    releaseAppearance();
+    mountDialogue(app, { ...options, dialogueState: state, entrancePlayed: true });
+  });
 
   function teardown() {
     // A hold owns a window-level Escape listener; drop every one before its
@@ -204,6 +213,7 @@ export function mountDialogue(app, options) {
     state = step.state;
     if (step.exit) {
       teardown();
+      releaseAppearance();
       clearTimeout(entranceTimer);
       stage.release();
       onDone();

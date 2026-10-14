@@ -15,6 +15,7 @@ import {
 import { closeUpPlacement } from '../models/PortraitCropModel.js';
 import { visibleArtBox } from './combatSpriteGeometry.js';
 import { fitSceneBackdrop } from './sceneBackdrop.js';
+import { fitAlternativeBackdrop } from '../alternativeArt.js';
 
 let releaseActive = null;
 
@@ -228,6 +229,12 @@ export function wireDialogueStage(root, { layout, parent, scene }) {
         width, height, zoom, windowTop: sceneTop, windowHeight: sceneHeight, config: sceneConfig,
       });
       if (layers) floorLine = layers.frame.floorLine;
+    }
+    for (const wrap of root.querySelectorAll(':scope > .dialogue-plate-layer')) {
+      if (wrap.querySelector('.alternative-backdrop')) fitAlternativeBackdrop(wrap, {
+        width, height: sceneHeight, fieldTop: sceneTop, ground: floorLine - sceneTop,
+        narrow: dialogueCompactHost(window.innerWidth, parent),
+      });
     }
     root.style.setProperty('--dialogue-floor-line', `${floorLine}px`);
     root.dataset.floorLine = String(floorLine);

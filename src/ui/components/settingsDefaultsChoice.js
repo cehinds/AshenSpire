@@ -3,9 +3,9 @@ import { t, tFull } from '../strings.js';
 
 // Escape, close and the local-settings button all preserve this device's values.
 export function openSettingsDefaultsChoice({ onDefaults, onLocal, returnFocusElement, failed = false }) {
-  const choose = (callback) => {
+  const choose = async (callback) => {
     let result;
-    try { result = callback(); } catch { result = { ok: false }; }
+    try { result = await callback(); } catch { result = { ok: false }; }
     if (result?.ok === false) queueMicrotask(() => openSettingsDefaultsChoice({ onDefaults, onLocal, returnFocusElement, failed: true }));
   };
   return openConfirmationModal({

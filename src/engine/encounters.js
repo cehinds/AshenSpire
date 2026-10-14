@@ -66,18 +66,48 @@ export function rollRuneReward(registries, rng, pool, relicIds) {
 // that judges a draw without making it uses the same odds; re-exported here,
 // where every caller already finds them.
 import { cardRewardRarityWeights } from '../model/rewardOdds.js';
+import { tagIdsFor } from '../content/tags.js';
 export { cardRewardRarityWeights };
+
+/**
+ * The class's element affinity (owner decision #13), or null: { elements,
+ * mult } when the class has elements and a multiplier above 1.
+ */
+function elementAffinityFor(registries, classId) {
+  const cfg = registries.balance.rewards.elementAffinity;
+  const elements = cfg && cfg.classes && cfg.classes[classId];
+  const mult = Number(cfg && cfg.offerWeightMult);
+  if (!elements || !elements.length || !(mult > 1)) return null;
+  return { elements: elements.map((el) => `damage:${el}`), mult };
+}
+
+/**
+ * One draw from the pool. With no affinity, or no affinity card among the
+ * options, this IS rng.pick (same single draw), so seeded streams are unchanged.
+ */
+function pickWithAffinity(rng, options, affinity) {
+  if (!affinity) return rng.pick('cardRewards', options);
+  const weights = options.map((id) => (tagIdsFor(id).some((t) => affinity.elements.includes(t)) ? affinity.mult : 1));
+  if (weights.every((w) => w === 1)) return rng.pick('cardRewards', options);
+  let roll = rng.float('cardRewards') * weights.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < options.length; i++) {
+    roll -= weights[i];
+    if (roll < 0) return options[i];
+  }
+  return options[options.length - 1];
+}
 
 /**
  * rollCardRewardIds(registries, rng, { classId, pool, relicIds }) → distinct
  * card ids (rarity-weighted per pool; elites offer +1 with Feral Eye).
  */
-export function rollCardRewardIds(registries, rng, { classId, pool, relicIds = [], flatRarity = false }) {
+export function rollCardRewardIds(registries, rng, { classId, pool, relicIds = [], flatRarity = false, combatExpansionVersion = 1 }) {
   const bal = registries.balance.rewards;
   let count = bal.cardChoices;
   if (pool === 'elite' && passiveFlag(registries, relicIds, 'eliteExtraCardReward')) count += 1;
 
-  const cardPool = registries.classes.get(classId).cardPool;
+  const cardPool = [...registries.classes.get(classId).cardPool,
+    ...(combatExpansionVersion === 2 ? registries.cards.all().filter(card => card.minCombatExpansionVersion === 2 && [classId, 'colorless'].includes(card.class)).map(card => card.id) : [])];
   // flatRarity (Custom Climb "Chaos Rewards") ignores the pool weighting and
   // gives every rarity equal odds — far more rares than normal.
   const weights = cardRewardRarityWeights(registries, { classId, pool, flatRarity });
@@ -90,6 +120,7 @@ export function rollCardRewardIds(registries, rng, { classId, pool, relicIds = [
   const total = rarities.reduce((a, r) => a + weights[r], 0);
   if (!total) return [];
 
+  const affinity = elementAffinityFor(registries, classId);
   const picks = [];
   let guard = 0;
   while (picks.length < count && guard++ < 100) {
@@ -104,7 +135,7 @@ export function rollCardRewardIds(registries, rng, { classId, pool, relicIds = [
     }
     const options = byRarity[rarity].filter((id) => !picks.includes(id));
     if (!options.length) continue;
-    picks.push(rng.pick('cardRewards', options));
+    picks.push(pickWithAffinity(rng, options, affinity));
   }
   return picks;
 }
@@ -141,9 +172,9 @@ export function rollCardRewardIds(registries, rng, { classId, pool, relicIds = [
  * so the shipped schedule writes exactly the bytes it wrote before.
  * Pure of the run: the caller hands in the level-ups the fight bought.
  */
-export function rollCombatCardOffer(registries, rng, { classId, pool, relicIds = [], flatRarity = false, draftWaiting = false, levelUps = 0 } = {}) {
+export function rollCombatCardOffer(registries, rng, { classId, pool, relicIds = [], flatRarity = false, draftWaiting = false, levelUps = 0, combatExpansionVersion = 1 } = {}) {
   const plan = cardRewardPlan(registries.balance, { pool, levelsGained: levelUps, draftWaiting }, rng);
-  const roll = () => rollCardRewardIds(registries, rng, { classId, pool, relicIds, flatRarity });
+  const roll = () => rollCardRewardIds(registries, rng, { classId, pool, relicIds, flatRarity, combatExpansionVersion });
   const cardIds = plan.offerCard ? roll() : [];
   const levelCards = [];
   for (let i = 0; i < plan.levelCards; i++) {
@@ -259,6 +290,23 @@ export function rollRelicReward(registries, rng, ownedIds, { rarities = ['common
 }
 
 /**
+ * rollRelicChoices(registries, rng, ownedIds, { rarities, count }) → relic ids.
+ * Up to `count` DISTINCT relics the run does not own, drawn one at a time with
+ * rollRelicReward on 'relicRewards' (each pick is excluded from the next). The
+ * list is shorter when the pool runs low, and [] when nothing is left to give.
+ * Used for a boss victory's choice of relics; elite drops still roll one.
+ */
+export function rollRelicChoices(registries, rng, ownedIds, { rarities = ['boss'], count = 3 } = {}) {
+  const picks = [];
+  while (picks.length < count) {
+    const id = rollRelicReward(registries, rng, [...ownedIds, ...picks], { rarities });
+    if (id === null) break;
+    picks.push(id);
+  }
+  return picks;
+}
+
+/**
  * rollArmamentDrop(registries, rng, { source, found, carried }) → id | null.
  *
  * Deterministic on stream 'armaments', like every other reward roll, so a seed
@@ -324,7 +372,7 @@ export function buildShopStock(registries, rng, run) {
   const bal = registries.balance.shop;
   const classId = run.class;
 
-  const cardIds = rollShopCards(registries, rng, classId, bal.cardStock);
+  const cardIds = rollShopCards(registries, rng, classId, bal.cardStock, run.combatExpansionVersion || 1);
   const cards = cardIds.map((id) => ({
     id,
     cost: rng.int('shop', ...bal.cardCost[registries.cards.get(id).rarity]),
@@ -372,11 +420,11 @@ export function buildShopStock(registries, rng, run) {
 // colorless is sold at Merchants, not offered in standard combat rewards).
 // The status/curse colorless are rarity 'special' and excluded here.
 const SHOP_RARITIES = ['common', 'uncommon', 'rare'];
-function rollShopCards(registries, rng, classId, count) {
+function rollShopCards(registries, rng, classId, count, combatExpansionVersion = 1) {
   const artIds = new Set(eligibleWeaponArts(registries));
   const colorless = registries.cards
     .all()
-    .filter((c) => c.class === 'colorless' && SHOP_RARITIES.includes(c.rarity) && !artIds.has(c.id))
+    .filter((c) => c.class === 'colorless' && SHOP_RARITIES.includes(c.rarity) && !artIds.has(c.id) && (c.minCombatExpansionVersion || 1) <= combatExpansionVersion)
     .map((c) => c.id);
   const pool = [...registries.classes.get(classId).cardPool, ...colorless];
   const out = [];

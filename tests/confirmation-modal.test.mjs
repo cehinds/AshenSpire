@@ -216,6 +216,21 @@ export async function runConfirmationModalContract() {
     await new Promise((resolveTick) => setTimeout(resolveTick, 32));
     check(!second.veil.isConnected, 'confirmation input shield did not release after the destination settled');
 
+    let settleStart;
+    const pendingStart = new Promise(resolveStart => { settleStart = resolveStart; });
+    const asynchronous = openConfirmationModal({ title: 'Replace saved run?', inputShieldMs: 8,
+      onConfirm: () => pendingStart });
+    asynchronous.confirmButton.dispatchEvent(fakeEvent('click'));
+    await new Promise(resolveTick => setTimeout(resolveTick, 32));
+    check(asynchronous.veil.isConnected && !asynchronous.dialog.isConnected,
+      'profile-backed confirmation released its navigation shield while the destination was pending');
+    const pendingKey = fakeEvent('keydown', { key: 'Escape' });
+    window.dispatchEvent(pendingKey);
+    check(pendingKey.defaultPrevented, 'pending profile-backed confirmation let navigation escape');
+    settleStart({ ok: false, reason: 'quota exceeded' });
+    await new Promise(resolveTick => setTimeout(resolveTick, 32));
+    check(!asynchronous.veil.isConnected, 'refused profile-backed confirmation retained its shield after settlement');
+
     const third = openConfirmationModal({
       title: 'Cancel from scrim',
       message: 'Nothing commits.',

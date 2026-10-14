@@ -1,0 +1,70 @@
+{
+  "id": "starseer-rimeweave",
+  "name": "Rimeweave Robes \u00b7 Starseer",
+  "family": "armor",
+  "classId": "starseer",
+  "outfitId": "rimeweave",
+  "source": "content/source/outfits.csv",
+  "artAlias": "starlit",
+  "facing": "away, rear three-quarter right",
+  "pose": "idle",
+  "prompt": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: A gaunt Observatory apprentice, shadowed hood, intricate layered scholar robes, weathered leather belts and chart scrolls, modest blue starstone on a long staff held vertically; human anatomy, no oversized wizard hat. Outfit: Rimeweave Robes. Lore: Cold threads hold the enemy at a distance. Material palette: plate #4A5E96, plateLt #93AEE2, leather #3A3226, under #242A40. Preserve this class identity and equipment. Face RIGHT toward enemies. Portrait 1024x1536, feet at 94 percent canvas height, center mass at 50 percent width.",
+  "file": "masters/starseer-rimeweave-rear.png",
+  "status": "generated",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a10ffd-7ed8-7ff3-b84a-467346a2abc4\\exec-c65748bb-b3ad-46c9-8928-d82a47e36c16.png",
+  "validation": {
+    "size": [
+      1024,
+      1536
+    ],
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      254
+    ],
+    "transparentFraction": 0.5222403208414713,
+    "visibleBounds": [
+      57,
+      7,
+      991,
+      1472
+    ],
+    "anchor": [
+      524.0,
+      1472
+    ],
+    "sha256": "baa94519df47d5a86b78038c5201da69a784563120399c069f0090f28fd97c1f"
+  },
+  "referenceImages": [
+    "masters/starseer-rimeweave.png"
+  ],
+  "promptUsed": "Edit target: the original hero armor sprite. Preserve this exact character, outfit, helmet or hood, colors, materials, weapon types, accessories and detailed gritty painted realism. Change ONLY the camera and idle orientation: rear three-quarter view, seen from BEHIND, body and head facing away toward screen upper-right, toward enemies to the hero's right. The back of the head, back armor and broad back of the cloak dominate. Do not show a front-facing chest or face. Retain readable weapon silhouettes beside the body. Full figure including boots, all cloth and weapon tips, with generous clear padding at every edge. One grounded idle combat pose, not walking. No floor, scene, UI, lettering, aura, halo or vignette. Actual transparent alpha background. No new equipment. Consistent realistic human proportions.\n",
+  "previousView": {
+    "file": "masters/starseer-rimeweave.png",
+    "validation": {
+      "size": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "alphaRange": [
+        0,
+        254
+      ],
+      "transparentFraction": 0.5499769846598307,
+      "visibleBounds": [
+        45,
+        10,
+        957,
+        1507
+      ],
+      "anchor": [
+        501.0,
+        1507
+      ],
+      "sha256": "189004680a618047cdddcf7b51e2a8b2e2e29d22ebb9bb3303ad92d4ba9f4e91"
+    },
+    "facing": "right",
+    "promptUsed": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: A gaunt Observatory apprentice, shadowed hood, intricate layered scholar robes, weathered leather belts and chart scrolls, modest blue starstone on a long staff held vertically; human anatomy, no oversized wizard hat. Outfit: Rimeweave Robes. Lore: Cold threads hold the enemy at a distance. Material palette: plate #4A5E96, plateLt #93AEE2, leather #3A3226, under #242A40. Preserve this class identity and equipment. Face RIGHT toward enemies. Portrait 1024x1536, feet at 94 percent canvas height, center mass at 50 percent width. Use the supplied single class sprite as the identity and pose reference. Preserve its anatomy, weapon configuration, framing and direction; change the armor materials and cloth palette to this named outfit. Output only ONE variant."
+  }
+}

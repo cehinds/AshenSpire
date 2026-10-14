@@ -1,0 +1,32 @@
+{
+  "id": "theNameless",
+  "prompt": "Edit target: The Nameless supplied sprite. Preserve the exact ragged pale linen hood/cloak, dark layered leather, boots and single straight sword. Change camera and pose orientation ONLY to rear three-quarter view from BEHIND facing away upper-right, broad back of cloak and back of hood dominant, no face or chest visible. Right hand naturally grips straight sword pointing down right with grip and blade collinear. Full body and weapon, all edges generously padded. Same highly detailed weathered painterly dark fantasy. Actual transparent alpha background including limb gaps. No ground, backdrop, halo, shadows, text or UI. Portrait 1024x1536.",
+  "kind": "sprite",
+  "sourceId": "theNameless",
+  "reference": "../masters/theNameless.png",
+  "resultFile": "sprites/theNameless-rear.png",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a112fc-0e64-7472-a495-aba14ffa5ab6\\exec-dec3e7c7-8ca9-4e38-8780-bbcf0dc183c0.png",
+  "generator": "built-in image_gen",
+  "size": [
+    1024,
+    1536
+  ],
+  "mode": "RGBA",
+  "sha256": "5dd594bcc5b1d5f9010e82fb7abadea4061fd301ecde969435b39b7ea220edbd",
+  "alphaRange": [
+    0,
+    254
+  ],
+  "transparentFraction": 0.5364424387613932,
+  "visibleBounds": [
+    25,
+    23,
+    1024,
+    1499
+  ],
+  "alphaThreshold": 32,
+  "anchor": [
+    524.5,
+    1499
+  ]
+}

@@ -1,9 +1,11 @@
+import { startingAbilityRefs } from './startingAbilities.js';
 import { coopProgressionProblems } from './coopProgression.js';
 import {abilityDraftClaimProblems} from './abilityDraftReceipts.js';
 import { classMilestoneProblems } from './classMilestones.js';
 import { classMasteryRunProblems } from './classMasteryRun.js';
 import { retiredAttackSlots } from './cardRemoval.js';
 import { advancedConfigSnapshot } from './advancedConfig.js';
+import { reactionRulesSnapshot, reactionRulesProblems } from '../content/combatCardTraits.js';
 // src/model/state.js — run/combat state factories + (de)serialization (SPEC §3.3, §3.12)
 //
 // State stores INSTANCE data referencing definitions by id only:
@@ -16,7 +18,7 @@ import { advancedConfigSnapshot } from './advancedConfig.js';
 // Headless: no document/window/localStorage/timers.
 
 import { bindTurnStamina } from './turnStamina.js';
-import { createLoadout, runMods, stampDeck, startingDeckRefs, orderStartingDeck, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRequirementReceipt, EQUIPMENT_POOL_FIELDS } from './loadout.js';
+import { createLoadout, runMods, stampDeck, startingDeckRefs, orderStartingDeck, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRequirementReceipt, reconcileGrantedCards, EQUIPMENT_POOL_FIELDS } from './loadout.js';
 import { chargeKindForFlask, createFlaskCharges, flaskCapacity } from './gracerefill.js';
 import { journeyProblems } from './worldAtlas.js';
 import { syncFlaskGrowth } from './flaskgrowth.js';
@@ -37,10 +39,16 @@ import { resolveRelicModifiers } from './relicModifiers.js';
 import { openLedger, closeLedger, note } from './healLedger.js';
 import { WORN_ZONE_SLOTS, WORN_SLOT_IDS, HAND_SLOT_IDS, projectZones } from './zones.js';
 import { skillsProblems } from './skills.js';
+import { snapshotEnemyKnowledgeRules } from './enemyKnowledgeRules.js';
+import { openRunEnemyKnowledge, enemyKnowledgeRunProblems } from './enemyKnowledgeRun.js';
 import { coreTagsProblems } from './classTree.js';
 import { classLibraryProblems } from './classLibraryState.js';
 import { featById } from './feats.js';
 import { combatSnapshotProblems } from './combatSnapshot.js';
+import { createAshenBlightState, ashenBlightProblems, effectiveAshenBlightAttributes, ashenBlightBonuses } from './ashenBlight.js';
+import { ensureExpandedStarterCoverage } from './combatExpansionStarter.js';
+import { createCombatExpansionRuleSnapshot, bringCombatExpansionRulesForward, combatExpansionRulesProblems, backfillCombatStatusRuleRows } from './combatExpansionRules.js';
+import { bringRangesForward } from './combatRanges.js';
 import { defaultSeatOrder, seatOrderProblems } from './seats.js';
 import { bringShopStockForward, shopStockProblems } from './shopKinds.js';
 import { boughtArmourProblems, consumablesProblems, companionsProblems } from './marketStock.js';
@@ -97,7 +105,14 @@ export const MAX_CARD_RANK = 99;
 // filled with [] at migrateRunSchema and its `sigils` are left untouched.
 // 21: optional durable mastery run receipt and owner unlock snapshot. Older
 // runs keep their previous class curve and pools; migration never opts them in.
-export const RUN_SCHEMA_VERSION = 22;
+// 23: new runs carry enemy knowledge rules and their exact learning receipts.
+// Migration preserves absence on historical runs.
+// 24 (SPEC §6): a pending reward may carry `relicChoices` (a boss victory's
+// up-to-three relics to pick ONE from) and its checkpoint `chosenRelicId`. The
+// bump is what makes an OLDER build refuse-and-keep such a save rather than
+// read it and drop the choice; a 23 save has no relic choices, so 23 → 24 is a
+// no-op at the migration door.
+export const RUN_SCHEMA_VERSION = 24;
 
 /** Deterministic instance-id generator ('p1', 'p2', ... for prefix 'p'). */
 export function createIdGen(prefix = 'i') {
@@ -127,6 +142,9 @@ export function createRunState({
   seed,
   classId,
   registries,
+  combatExpansionVersion = 2,
+  enemyKnowledgeVersion = 1,
+  reactionRulesVersion = combatExpansionVersion === 2 ? 2 : null,
   attributeMode = undefined,
   attributes: requestedAttributes = undefined,
   derivedStatOptions = {},
@@ -135,8 +153,12 @@ export function createRunState({
   startingHands = undefined,
   startingArmourId = undefined,
   startingRelicId = undefined,
+  startingAbilityIds = undefined,
   profileMeta = {},
 }) {
+  if (![1, 2].includes(combatExpansionVersion)) throw new Error('combatExpansionVersion must be 1 or 2');
+  if (![null, 1].includes(enemyKnowledgeVersion)) throw new Error('enemyKnowledgeVersion must be 1 or null');
+  if (![null, 1, 2].includes(reactionRulesVersion) || (reactionRulesVersion >= 1 && combatExpansionVersion !== 2)) throw new Error('Reaction rules require an expanded run');
   const classDef = registries.classes.get(classId);
   const selectedAttributeMode = attributeMode === undefined
     ? defaultCreationModeId(registries)
@@ -176,7 +198,10 @@ export function createRunState({
   const equipmentPoolBonuses = Object.fromEntries(EQUIPMENT_POOL_FIELDS.map((field) => [field, startingRunMods[field]]));
   const oldMaxHp = classDef.maxHp + equipmentPoolBonuses.maxHp;
   const run = {
-    advancedConfigSnapshot: advancedConfigSnapshot(profileMeta.settings || {}),
+    combatExpansionVersion,
+    ...([1, 2].includes(reactionRulesVersion) ? { reactionRulesVersion, ...(reactionRulesVersion === 2 ? { reactionRules: reactionRulesSnapshot() } : {}) } : {}),
+    ...(combatExpansionVersion === 2 ? { ashenBlight: createAshenBlightState(), combatExpansionRules: createCombatExpansionRuleSnapshot() } : {}),
+    advancedConfigSnapshot: { ...advancedConfigSnapshot(profileMeta.settings || {}), breakMeterVersion: combatExpansionVersion === 2 ? 2 : 1 },
     schemaVersion: RUN_SCHEMA_VERSION,
     contentVersion: registries.contentVersion,
     seed: seed >>> 0,
@@ -268,6 +293,10 @@ export function createRunState({
     history: [],
     modifiers: [], // ascension-style seam (SPEC §10); always empty in v1
   };
+  if (enemyKnowledgeVersion === 1) {
+    run.enemyKnowledgeRules = snapshotEnemyKnowledgeRules(registries);
+    openRunEnemyKnowledge(run);
+  }
   // The quota, from the deck that was just composed — before anything else can
   // touch it. Recorded even when it is zero, because zero is a quota.
   run.equipmentAttackSlotCount = run.deck.filter((card) => card && card.equipmentRole === 'attack').length;
@@ -303,15 +332,25 @@ export function createRunState({
     derivedStatOptions,
     preserveDeficits: false,
   });
-  stampDeck(registries, run);
+  // Starting choices must see package and weapon grants, because those cards
+  // count toward copy limits and distinct-family eligibility.
+  reconcileGrantedCards(registries, run);
   // Starter families keep their weak action-only face even when their reward
   // catalogue defaults to an advanced Mana-costing profile.
   if (run.progressionRulesVersion === 1) for (const inst of run.deck) if (registries.cards.get(inst.cardId).gradeProfiles) inst.abilityRank = 0;
+  for (const ref of startingAbilityRefs(registries, run, startingAbilityIds, profileMeta.settings || {})) {
+    run.deck.push({ ...createCardInstance(ref.cardId, false, idGen), ...ref });
+  }
+  // Stamp only after every opening card exists. Starting ability grades own
+  // their carrier fields too; adding them after this door left the initial
+  // instance on its legacy buildup until a later restamp changed its rules.
+  stampDeck(registries, run);
   // ORDERED ONCE, HERE. stampDeck has just reconciled the package grants and
   // weapon arts onto the deck, so this is the first moment the whole opening
   // deck exists — and "bound cards are dealt first, in sourceOrder" is a
   // statement about the deck a run BEGINS with, not about later arrivals.
   orderStartingDeck(registries, run);
+  ensureExpandedStarterCoverage(registries, run);
   // The growth chain binds from birth: a starting relic carrying a
   // balance.flaskGrowth row grows the maximum before the first node.
   syncFlaskGrowth(registries, run);
@@ -358,6 +397,8 @@ export function initializeRunDerivedStats(run, registries, {
   preserveDeficits = true,
 } = {}) {
   const modeProfiles = run.attributeModeSnapshot && run.attributeModeSnapshot.equipmentProfiles;
+  const effectiveAttributes = effectiveAshenBlightAttributes(run);
+  const blightStaminaPenalty = run.combatExpansionVersion === 2 ? ashenBlightBonuses(run).maxStaminaPenalty : 0;
   // THE CREATION SCALE NO LONGER TOUCHES A DERIVED ROW (owner, 2026-09-21).
   // A smaller starting pool used to multiply every `pointsPerTier` by the
   // ratio, which is the same as handing each formula an inflated attribute:
@@ -396,7 +437,7 @@ export function initializeRunDerivedStats(run, registries, {
         const persistedMax = run[maxField];
         const adjustment = maxField === 'maxHp' ? run.maxHpAdjustment : 0;
         if (!Number.isFinite(persistedMax) || !Number.isInteger(adjustment)) continue;
-        const derived = deriveStat(restoredExisting.rules, statFor[maxField], { attributes: run.attributes, classDef, level: characterLevelOf(run) }).value;
+        const derived = deriveStat(restoredExisting.rules, statFor[maxField], { attributes: effectiveAttributes, classDef, level: characterLevelOf(run) }).value;
         inferred[maxField] = persistedMax - derived - adjustment;
       }
     }
@@ -444,7 +485,7 @@ export function initializeRunDerivedStats(run, registries, {
   // D22 changes the base formula.
   if (run.maxHpAdjustment === undefined) {
     if (restoredExisting && Number.isFinite(run.maxHp)) {
-      const oldDerivedHp = deriveStat(restoredExisting.rules, 'hp', { attributes: run.attributes, classDef, level: characterLevelOf(run) }).value;
+      const oldDerivedHp = deriveStat(restoredExisting.rules, 'hp', { attributes: effectiveAttributes, classDef, level: characterLevelOf(run) }).value;
       run.maxHpAdjustment = run.maxHp - (oldDerivedHp + hpEquipmentBonus);
     } else run.maxHpAdjustment = 0;
     note(run, {
@@ -475,9 +516,10 @@ export function initializeRunDerivedStats(run, registries, {
       if (!Number.isInteger(value) || value < 0) {
         throw new Error(`Persisted ${key} must be a non-negative integer under its derived-stat snapshot`);
       }
+      const sharedStamina = run.combatExpansionVersion === 2 && key === 'energyMax';
       const equipmentBonus = key === 'maxMana' ? run.equipmentPoolBonuses.maxMana
-        : key === 'maxStamina' ? run.equipmentPoolBonuses.maxStamina : 0;
-      const expected = Math.max(0, deriveStat(restored.rules, statId, { attributes: run.attributes, classDef, level: characterLevelOf(run) }).value + equipmentBonus);
+        : key === 'maxStamina' || sharedStamina ? run.equipmentPoolBonuses.maxStamina : 0;
+      const expected = Math.max(0, deriveStat(restored.rules, sharedStamina ? 'stamina' : statId, { attributes: effectiveAttributes, classDef, level: characterLevelOf(run) }).value + equipmentBonus - (['maxStamina', 'energyMax'].includes(key) ? blightStaminaPenalty : 0));
       if (value !== expected) throw new Error(`Persisted ${key} ${value} contradicts derived-stat snapshot value ${expected}`);
     }
     // MAX-HP HOME 1 of 3 (the validating one). Same formula as home 2 below and
@@ -486,7 +528,7 @@ export function initializeRunDerivedStats(run, registries, {
     // collapse what you cannot watch drift. It states its number so a tool can
     // compare the three instead of trusting that they agree.
     const expectedMaxHp = Math.max(1,
-      deriveStat(restored.rules, 'hp', { attributes: run.attributes, classDef, level: characterLevelOf(run) }).value
+      deriveStat(restored.rules, 'hp', { attributes: effectiveAttributes, classDef, level: characterLevelOf(run) }).value
       + hpEquipmentBonus + run.maxHpAdjustment);
     note(run, {
       kind: 'compute',
@@ -537,7 +579,7 @@ export function initializeRunDerivedStats(run, registries, {
     Object.entries(hostRules.rules).map(([id, r]) => [id, ruleTierSize(r)]),
   );
   const relicModifierReceipt = resolveRelicModifiers(registries, run.relics, {
-    attributes: run.attributes,
+    attributes: effectiveAttributes,
     tierSizes,
   });
   const receipt = existingIsCurrent
@@ -548,11 +590,11 @@ export function initializeRunDerivedStats(run, registries, {
       relicModifierReceipt,
     });
   const rules = receipt.rules;
-  const hp = deriveStat(rules, 'hp', { attributes: run.attributes, classDef, level: characterLevelOf(run) });
-  const mana = deriveStat(rules, 'mana', { attributes: run.attributes, classDef, level: characterLevelOf(run) });
-  const stamina = deriveStat(rules, 'stamina', { attributes: run.attributes, classDef, level: characterLevelOf(run) });
-  const energy = deriveStat(rules, 'energy', { attributes: run.attributes, classDef, level: characterLevelOf(run) });
-  const draw = deriveStat(rules, 'draw', { attributes: run.attributes, classDef, level: characterLevelOf(run) });
+  const hp = deriveStat(rules, 'hp', { attributes: effectiveAttributes, classDef, level: characterLevelOf(run) });
+  const mana = deriveStat(rules, 'mana', { attributes: effectiveAttributes, classDef, level: characterLevelOf(run) });
+  const stamina = deriveStat(rules, 'stamina', { attributes: effectiveAttributes, classDef, level: characterLevelOf(run) });
+  const energy = deriveStat(rules, 'energy', { attributes: effectiveAttributes, classDef, level: characterLevelOf(run) });
+  const draw = deriveStat(rules, 'draw', { attributes: effectiveAttributes, classDef, level: characterLevelOf(run) });
 
   const oldHpMax = run.maxHp;
   const oldHp = run.hp;
@@ -573,8 +615,8 @@ export function initializeRunDerivedStats(run, registries, {
   });
   run.maxHp = derivedMaxHp;
   run.maxMana = Math.max(0, mana.value + run.equipmentPoolBonuses.maxMana);
-  run.maxStamina = Math.max(0, stamina.value + run.equipmentPoolBonuses.maxStamina);
-  run.energyMax = energy.value;
+  run.maxStamina = Math.max(0, stamina.value + run.equipmentPoolBonuses.maxStamina - blightStaminaPenalty);
+  run.energyMax = run.combatExpansionVersion === 2 ? run.maxStamina : energy.value;
   run.drawPerTurn = draw.value;
   run.damageBySchoolAdd = structuredClone(
     receipt.relicModifiers && receipt.relicModifiers.damageBySchoolAdd
@@ -765,6 +807,8 @@ export const RUN_SHAPE = [
   { key: 'savedAt', type: 'string', optional: true }, // ISO time of the last landed save (W1l–W1r)
   { key: 'mapNodeId', type: 'string', nullable: true },
   { key: 'mapGraph', type: 'object', nullable: true },
+  // Classic-map rest re-entry record (restRevisit.js); absent when none.
+  { key: 'restRevisit', type: 'object', optional: true, nullable: true },
   // Optional, backward-compatible presentation state. It is owned by the run
   // rather than Settings because the ladder and pan are live choices for this
   // climb; Settings only supplies the default when this field is absent.
@@ -906,6 +950,63 @@ export function levelProblems(level) {
 
 export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels, preRefinedStones = preSideboard, preShopKinds = preRefinedStones, preSigils = preShopKinds, preConsumables = preSigils, preTrainingPool = preConsumables, preAttunedSigils = preTrainingPool } = {}) {
   const problems = [];
+  if (run.combatExpansionVersion !== undefined && ![1, 2].includes(run.combatExpansionVersion)) problems.push('combatExpansionVersion must be 1 or 2 when present');
+  if (run.reactionRulesVersion !== undefined && (![1, 2].includes(run.reactionRulesVersion) || run.combatExpansionVersion !== 2)) problems.push('Reaction rules require an expanded run');
+  if (run.reactionRulesVersion === 2) problems.push(...reactionRulesProblems(run.reactionRules).map(problem => `reactionRules: ${problem}`));
+  else if (run.reactionRules !== undefined) problems.push('reactionRules require reaction rules version 2');
+  if (run.advancedConfigSnapshot?.breakMeterVersion !== undefined && ![1, 2].includes(run.advancedConfigSnapshot.breakMeterVersion)) problems.push('advancedConfigSnapshot.breakMeterVersion must be 1 or 2');
+  if (run.combatExpansionVersion === 2 && run.advancedConfigSnapshot?.breakMeterVersion !== 2) problems.push('Expanded runs require breakMeterVersion 2');
+  if (run.combatExpansionVersion === 2) problems.push(...ashenBlightProblems(run.ashenBlight), ...combatExpansionRulesProblems(run.combatExpansionRules));
+  else if (run.ashenBlight !== undefined || run.ashenBlightBasePools !== undefined || run.combatPendingOutcome !== undefined || run.combatExpansionRules !== undefined) problems.push('Ashen Blight fields require combatExpansionVersion 2');
+  if (run.ashenBlightBasePools !== undefined) {
+    const pools = run.ashenBlightBasePools;
+    if (!typeOk(pools, 'object')) problems.push('ashenBlightBasePools must be an object');
+    else for (const field of ['maxHp', 'maxMana', 'maxStamina']) {
+      if (!Number.isSafeInteger(pools[field]) || pools[field] < (field === 'maxHp' ? 1 : 0)) problems.push(`ashenBlightBasePools.${field} must be a valid unboosted maximum`);
+    }
+  }
+  const validateExpandedSnapshot = (snapshot, path, terminal = false) => {
+    if (run.combatExpansionVersion !== 2 || !typeOk(snapshot, 'object')) return;
+    if (snapshot.combatExpansionVersion !== 2) problems.push(`${path}.combatExpansionVersion must match the run`);
+    if (snapshot.reactionRulesVersion !== run.reactionRulesVersion) problems.push(`${path}.reactionRulesVersion must match the run`);
+    else if (run.reactionRulesVersion === 2 && JSON.stringify(snapshot.reactionRules) !== JSON.stringify(run.reactionRules)) problems.push(`${path}.reactionRules must match the run`);
+    problems.push(...ashenBlightProblems(snapshot.player?.ashenBlight, `${path}.player.ashenBlight`));
+    const saved = snapshot.player?.ashenBlight, prior = run.ashenBlight;
+    if (saved && prior && ['payments', 'entries'].some(field => Array.isArray(prior[field]) && Array.isArray(saved[field])
+      && prior[field].some((receipt, index) => JSON.stringify(receipt) !== JSON.stringify(saved[field][index])))) problems.push(`${path} cannot roll back accepted Ashen Blight receipts`);
+    if (terminal && JSON.stringify(saved) !== JSON.stringify(prior)) problems.push(`${path} terminal Ashen Blight must match the persisted run`);
+  };
+  const validateKnowledgeSnapshot = (snapshot, path) => {
+    if (!typeOk(snapshot, 'object')) return;
+    const knowledge = snapshot.enemyKnowledge;
+    if (!run.enemyKnowledgeRules) {
+      if (knowledge !== undefined) problems.push(`${path}.enemyKnowledge requires the run's knowledge rules`);
+      return;
+    }
+    if (!knowledge) {
+      problems.push(`${path}.enemyKnowledge must preserve the run's knowledge state`);
+      return;
+    }
+    if (JSON.stringify(knowledge.rules) !== JSON.stringify(run.enemyKnowledgeRules)) problems.push(`${path}.enemyKnowledge.rules must match the run`);
+    if (!run.enemyKnowledgeState?.currentEncounter || JSON.stringify(knowledge.encounter) !== JSON.stringify(run.enemyKnowledgeState.currentEncounter)) problems.push(`${path}.enemyKnowledge.encounter must match the run`);
+    if (knowledge.bankable !== run.enemyKnowledgeState?.bankable) problems.push(`${path}.enemyKnowledge.bankable must match the run`);
+    const definitions = [...new Set((Array.isArray(snapshot.enemies) ? snapshot.enemies : []).map(enemy => enemy?.enemyId).filter(id => typeof id === 'string'))].sort();
+    const receiptIds = Array.isArray(knowledge.encounter?.enemyIds) ? knowledge.encounter.enemyIds : [];
+    if (JSON.stringify(definitions) !== JSON.stringify([...receiptIds].sort())) problems.push(`${path}.enemyKnowledge.encounter must identify the combat's enemy definitions`);
+  };
+  if (run.combatPendingOutcome !== undefined) {
+    const pending = run.combatPendingOutcome;
+    if (!typeOk(pending, 'object')) problems.push('combatPendingOutcome must be an object');
+    else {
+      if (!['victory', 'defeat'].includes(pending.result)) problems.push('combatPendingOutcome.result must be victory or defeat');
+      for (const field of ['nodeId', 'encounterId']) if (typeof pending[field] !== 'string' || !pending[field]) problems.push(`combatPendingOutcome.${field} must identify its fight`);
+      for (const problem of combatSnapshotProblems(pending.snapshot)) problems.push(`combatPendingOutcome.snapshot.${problem}`);
+      if (pending.snapshot?.phase !== 'ended' || pending.snapshot?.result !== pending.result) problems.push('combatPendingOutcome.snapshot must contain the matching ended fight');
+      validateExpandedSnapshot(pending.snapshot, 'combatPendingOutcome.snapshot', true);
+      validateKnowledgeSnapshot(pending.snapshot, 'combatPendingOutcome.snapshot');
+      if (run.combatEntered !== null) problems.push('combatPendingOutcome cannot coexist with combatEntered');
+    }
+  }
   problems.push(...classMilestoneProblems(run));
   problems.push(...abilityDraftClaimProblems(run));
   if (run.classRewardLevels !== undefined) {
@@ -956,6 +1057,8 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   if (run.classMasteryState !== undefined) problems.push(...classMasteryRunProblems(run.classMasteryState));
   if (run.pendingFinish !== undefined && (typeof run.pendingFinish?.victory !== 'boolean' || typeof run.pendingFinish?.id !== 'string' || !run.pendingFinish.id)) problems.push('pendingFinish must hold a victory and completion ID');
   if (run.skills !== undefined) problems.push(...skillsProblems(run.skills));
+  problems.push(...enemyKnowledgeRunProblems(run));
+  if (!run.enemyKnowledgeRules && run.skills?.perception !== undefined) problems.push('Run Perception requires enemy knowledge rules');
   problems.push(...coopProgressionProblems(run));
   if (run.coreTags !== undefined) problems.push(...coreTagsProblems(run.coreTags));
   problems.push(...classLibraryProblems(run));
@@ -1021,6 +1124,8 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     if (entered.serviceEvent !== undefined && typeof entered.serviceEvent !== 'boolean') problems.push('combatEntered.serviceEvent must be true or false when present');
     if (entered.snapshot !== undefined) {
       for (const problem of combatSnapshotProblems(entered.snapshot)) problems.push(`combatEntered.snapshot.${problem}`);
+      validateExpandedSnapshot(entered.snapshot, 'combatEntered.snapshot');
+      validateKnowledgeSnapshot(entered.snapshot, 'combatEntered.snapshot');
     }
   }
   // A respec withdraws what the record names (FINISH D13a), so it may never
@@ -1325,6 +1430,25 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       if (pending.chosenCardId && pending.states?.card !== 'taken') {
         problems.push('pendingReward chosenCardId requires card Taken state');
       }
+      // A boss victory's relic choice (SPEC §6): `relicChoices` is the
+      // distinct relics offered, pick ONE; `chosenRelicId` is null or one of them.
+      if (pending.rewards?.relicChoices !== undefined) {
+        const ids = pending.rewards.relicChoices;
+        if (!Array.isArray(ids) || ids.some((id) => typeof id !== 'string' || !id) || new Set(ids).size !== ids.length) {
+          problems.push('pendingReward.rewards.relicChoices must be an array of distinct non-empty relic ids');
+        }
+      }
+      if (pending.chosenRelicId !== null && pending.chosenRelicId !== undefined
+          && (typeof pending.chosenRelicId !== 'string' || !pending.chosenRelicId)) {
+        problems.push('pendingReward.chosenRelicId must be null or a non-empty string');
+      }
+      const relicChoices = Array.isArray(pending.rewards?.relicChoices) ? pending.rewards.relicChoices : [];
+      if (pending.chosenRelicId && !relicChoices.includes(pending.chosenRelicId)) {
+        problems.push('pendingReward.chosenRelicId must belong to pendingReward.rewards.relicChoices');
+      }
+      if (pending.rewards?.relicChoices !== undefined && pending.states?.relic === 'taken' && !pending.chosenRelicId) {
+        problems.push('pendingReward relic Taken state requires chosenRelicId');
+      }
     }
   }
   // Deck entries are the ids the run is rebuilt from — the one nested shape
@@ -1584,10 +1708,26 @@ export function migrateRunSchema(run) {
   // needs the deck's own attack slots, so the load door does it once
   // (engine/save.js, the POOL-BUILT DECK block), reading this version from
   // migratedFromRunSchemaVersion. A Standard run has nothing to migrate.
-  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
-    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, ${RUN_SCHEMA_VERSION})`);
+  // v23 → v24: no relic choices could be written before (SPEC §6); nothing to fill.
+  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
+    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: ${Array.from({ length: RUN_SCHEMA_VERSION }, (_, index) => index + 1).join(', ')})`);
+  }
+  if (run.combatExpansionVersion === 2) {
+    bringCombatExpansionRulesForward(run.combatExpansionRules);
+    // A run saved in (or just after) a fight carries its own frozen copy in
+    // the combat snapshot; bring those forward by the same narrow migration.
+    for (const holder of [run.combatEntered, run.combatPendingOutcome]) {
+      if (holder?.snapshot?.combatExpansionVersion === 2) bringCombatExpansionRulesForward(holder.snapshot.combatExpansionRules);
+    }
+  }
+  // A saved fight's own stances, counters, carriers and tags read the range
+  // rename the same way (combatRanges.js), in memory only.
+  for (const holder of [run.combatEntered, run.combatPendingOutcome]) {
+    if (holder?.snapshot) bringRangesForward(holder.snapshot);
   }
   if (preShopKinds) bringShopStockForward(run);
+  // Status rows added to the shipped rule table after a v2 run began join its frozen copy.
+  if (run.combatExpansionVersion === 2) for (const holder of [run, run.combatPendingOutcome?.snapshot, run.combatEntered?.snapshot]) backfillCombatStatusRuleRows(holder);
   const problems = validateRunShape(run, { legacy, preLedger, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels, preSideboard, preRefinedStones, preShopKinds, preSigils, preConsumables, preTrainingPool, preAttunedSigils });
   if (preTrainingPool && (run.trainingPool === undefined || run.trainingPool === null)) run.trainingPool = 0;
   if (preAttunedSigils && (run.attunedSigils === undefined || run.attunedSigils === null)) run.attunedSigils = [];

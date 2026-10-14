@@ -1,0 +1,32 @@
+{
+  "id": "swordSaint",
+  "prompt": "Edit the supplied Sword Saint. Preserve elderly white hair tied back, weathered armor, red cloak and straight long sword. Show back of white-haired head, face hidden. Grip, pommel and blade collinear naturally held in right hand. Change ONLY orientation to rear three-quarter from BEHIND, back of head and back cloak facing camera, looking away upper-right. Full body idle. Subject occupies only central 80% of canvas leaving at least 8% truly empty transparent margin at EVERY edge including sword/spear tip and boots. Actual transparent alpha outside silhouette, no halo, backdrop, floor, shadow, UI or text. Detailed painterly dark fantasy, weathered materials, upper-left neutral light. Portrait 1024x1536.",
+  "kind": "sprite",
+  "sourceId": "swordSaint",
+  "reference": "../masters/swordSaint.png",
+  "resultFile": "sprites/swordSaint-rear.png",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a112fc-0e64-7472-a495-aba14ffa5ab6\\exec-85fbdd10-56f2-4c87-8d25-747d2ffe91f5.png",
+  "generator": "built-in image_gen",
+  "size": [
+    1024,
+    1536
+  ],
+  "mode": "RGBA",
+  "sha256": "0189bf8fab739b3905070e86fe508d66ea4392f653435db209a307ee5fc8c0c6",
+  "alphaRange": [
+    0,
+    254
+  ],
+  "transparentFraction": 0.6268234252929688,
+  "visibleBounds": [
+    59,
+    72,
+    1010,
+    1411
+  ],
+  "alphaThreshold": 32,
+  "anchor": [
+    534.5,
+    1411
+  ]
+}

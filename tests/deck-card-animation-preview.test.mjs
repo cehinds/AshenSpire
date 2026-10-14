@@ -3,7 +3,11 @@ import { test } from 'node:test';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
-import { animationClip } from '../src/model/equipmentAnimation.js';
+import { alternativeCardAnimations } from '../src/content/alternativeCardAnimations.js';
+import { playerAttackSequence } from '../src/model/playerAttackSprites.js';
+import { playerCounterSweepSprites } from '../src/content/playerCounterSweepSprites.js';
+import { durationFor } from '../src/model/alternativeCardAnimation.js';
+import { ANIM_SPEEDS } from '../src/ui/animationPace.js';
 import { deckCardAnimationPlan, deckCardAnimationPreview } from '../src/ui/components/deckCardAnimationPreview.js';
 import { rewardDom } from './helpers/reward-dom.mjs';
 
@@ -16,25 +20,39 @@ const equip = (run, right, left) => {
   }
 };
 
-test('preview routes actual equipped blade, shield, bow and spell cards without mutating the run', () => {
+test('all four classes preview the selected counter and sweep clips used by combat', () => {
+  for (const classId of ['reaver', 'starseer', 'herald', 'rogue']) {
+    const run = createRunState({ seed: 21, classId, registries });
+    const before = structuredClone(run);
+    for (const [cardId, action] of [['guardCounter', 'counter'], ['crimsonCleave', 'sweep']]) {
+      const playback = deckCardAnimationPlan(registries, run, { cardId });
+      const selected = playerCounterSweepSprites[classId].sequences[action];
+      assert.equal(playback.sequence, selected);
+      assert.equal(playback.frames.length, 4);
+      assert.equal(playback.frames.at(-1), 'ready');
+      assert.equal(playback.duration, durationFor(selected, ANIM_SPEEDS.normal));
+    }
+    assert.deepEqual(run, before);
+  }
+});
+
+test('preview routes card types through the same class defaults as combat without mutating the run', () => {
   const run = freshRun();
   for (const [right, left, ref, technique] of [
-    ['straightSword', 'roundShield', { cardId: 'strike', profileId: 'bladeAttack', sourceArmamentId: 'straightSword' }, 'bladeAttack'],
-    ['straightSword', 'roundShield', { cardId: 'strike', profileId: 'shieldAttack', sourceArmamentId: 'roundShield' }, 'shieldBash'],
-    ['straightSword', 'roundShield', { cardId: 'defend', profileId: 'shieldGuard', sourceArmamentId: 'roundShield' }, 'shieldGuard'],
-    ['shortbow', 'parryDagger', { cardId: 'strike', profileId: 'bowPierceAttack', sourceArmamentId: 'shortbow' }, 'bowAttack'],
-    ['shortbow', 'parryDagger', { cardId: 'strike', profileId: 'bowPierceAttack', sourceArmamentId: 'parryDagger' }, 'attack'],
-    ['greatsword', null, { cardId: 'starstonePebble' }, 'cast'],
+    ['straightSword', 'roundShield', { cardId: 'strike', profileId: 'bladeAttack', sourceArmamentId: 'straightSword' }, 'weapon:attack:sword-shield'],
+    ['straightSword', 'roundShield', { cardId: 'strike', profileId: 'shieldAttack', sourceArmamentId: 'roundShield' }, 'attack'],
+    ['straightSword', 'roundShield', { cardId: 'defend', profileId: 'shieldGuard', sourceArmamentId: 'roundShield' }, 'defend'],
+    ['shortbow', 'parryDagger', { cardId: 'strike', profileId: 'bowPierceAttack', sourceArmamentId: 'shortbow' }, 'weapon:ranged:bow'],
+    ['shortbow', 'parryDagger', { cardId: 'strike', profileId: 'bowPierceAttack', sourceArmamentId: 'parryDagger' }, 'ranged'],
+    ['greatsword', null, { cardId: 'starstonePebble' }, 'weapon:spell:staff-casting'],
   ]) {
     equip(run, right, left);
     const before = structuredClone(run);
     const playback = deckCardAnimationPlan(registries, run, ref);
     assert.equal(playback.plan.technique, technique);
-    const clip = animationClip(playback.animation, technique);
-    if (clip) {
-      assert.deepEqual(playback.frames, clip.frames, 'authored frame order is preserved');
-      assert.equal(playback.frameMs, clip.frameMs);
-    }
+    const sequence=playerAttackSequence('reaver',technique) || alternativeCardAnimations.classes.reaver.sequences[technique];
+    assert.deepEqual(playback.frames, sequence.poses);
+    assert.equal(playback.duration, durationFor(sequence,ANIM_SPEEDS.normal));
     assert.deepEqual(run, before);
   }
 });
@@ -103,9 +121,12 @@ function withPreview(options, check) {
 
 test('desktop preview loops authored frames and Pause/Play preserves the exact frame and fractional time', () => {
   withPreview({}, ({ plan, stages, raf, button, pauses, step }) => {
-    const stage = stages[0], dt = plan.frameMs;
+    const stage = stages[0];
+    const total=plan.sequence.durations.reduce((a,b)=>a+b,0);
+    const lengths=plan.sequence.durations.map(ms=>ms/total*plan.duration);
+    const middle=lengths[0]+lengths[1]+lengths[2]/2;
     assert.equal(stage.painted.at(-1), plan.frames[0]);
-    step(1000); step(1000 + dt * 2.5);
+    step(1000); step(1000 + middle);
     assert.equal(stage.painted.at(-1), plan.frames[2]);
     const count = stage.painted.length;
     button.click();
@@ -114,9 +135,9 @@ test('desktop preview loops authored frames and Pause/Play preserves the exact f
     assert.equal(stage.painted.length, count);
     button.click(); step(30000);
     assert.equal(stage.painted.length, count, 'resume does not jump due to paused wall time');
-    step(30000 + dt * .6);
+    step(30000 + lengths[2]/2 + lengths[3]/2);
     assert.equal(stage.painted.at(-1), plan.frames[3]);
-    step(30000 + dt * (plan.frames.length - 1.4));
+    step(30000 + plan.duration-middle+lengths[0]+lengths[1]/2);
     assert.equal(stage.painted.at(-1), plan.frames[1], 'sequence wraps without changing its order');
     assert.deepEqual(pauses, [true, false]);
   });
@@ -183,7 +204,7 @@ test('visibility resume preserves an explicit Pause and disposal prevents future
   });
 });
 
-test('reduced motion starts paused; a one-frame card paints its authored pose without a loop', () => {
+test('reduced motion starts paused; defend cards have the authored guard sequence', () => {
   withPreview({ reduced: true }, ({ raf, stages, button }) => {
     assert.equal(raf.size, 0);
     assert.equal(stages[0].painted.length, 1);
@@ -191,10 +212,11 @@ test('reduced motion starts paused; a one-frame card paints its authored pose wi
     assert.equal(raf.size, 1, 'explicit Play opts into motion');
   });
   withPreview({ ref: { cardId: 'dodgeRoll' } }, ({ plan, stages, button, raf }) => {
-    assert.equal(plan.frames.length, 1);
-    assert.deepEqual(stages[0].painted, plan.frames);
-    assert.equal(button.disabled, true);
-    assert.equal(raf.size, 0);
+    assert.equal(plan.plan.technique, 'defend');
+    assert.equal(plan.frames.length, 5);
+    assert.deepEqual(stages[0].painted, [plan.frames[0]]);
+    assert.equal(button.disabled, false);
+    assert.equal(raf.size, 1);
   });
   withPreview({ unavailable: true }, ({ preview, button, raf }) => {
     assert.equal(preview.root.querySelector('.deck-editor-animation-stage').hidden, true);

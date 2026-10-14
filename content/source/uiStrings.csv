@@ -32,10 +32,78 @@ combat.rating.ward,,Ward rating,Ward rating reduces magical damage and weighs in
 combat.poise.shared,,Poise,"Poise resists physical attacks{resistance} and configured status effects. Both physical and magical hits that pass Block fill this bar. A full bar causes Stagger: {effect}.",Shared break meter
 combat.poise.actionLoss,,Actions,{amount} fewer Actions next turn,Actions lost after Stagger
 combat.poise.enemyLoss,,Move,lose the next move,Stagger cancels the next move
-combat.protection.block,,Block,Absorbs attack damage.,Block
-combat.protection.ward,,Arcane Ward,Block granted by magical guards. Absorbs attack damage after ordinary Block.,Arcane Ward
+combat.protection.block,,Block,Absorbs physical attack damage.,Block
+combat.protection.ward,,Arcane Ward,"Ward guards against magic. Full at the start of every fight, it absorbs each magic hit after Barrier (each hit still lets at least 1 damage through) and is spent by what it absorbs; a Ward break costs Stamina next turn. Block does not stop magic. It does not regenerate unless a card, feat, class feature or relic restores it.",Arcane Ward
+combat.card.splitDamage,,"{amount} damage ({physical} {physicalType}, {magic} {magicType})",,
+combat.card.splitBlock,,"{verb} {block} Block and {ward} Ward",,
+combat.card.magicPhysicalDamage,,"{magic} · {physical}",,
+combat.protection.poise,,Poise,"Poise guards against physical hits. Full at the start of every fight, it absorbs each physical hit after Block (each hit still lets at least 1 damage through) and is spent by what it absorbs. When it breaks, a player pays 1 Stamina next turn; an enemy is interrupted. It does not regenerate unless a card, feat, class feature or relic restores it.",Poise
+combat.protection.poiseValue,,Poise {value}/{max},"{value} of {max} Poise still stands. The gold trim on the HP bar shows it while any is left.",Poise {value}/{max}
+combat.protection.barrier,,Barrier,"Barrier is blue, the layer above Ward. Magic sources and cards that add Ward refill Ward first and the rest becomes Barrier; other sources add Barrier directly. Barrier soaks magic hits completely before Ward and lasts until the start of its owner's next turn.",Barrier
 combat.protection.poiseGuard,,Poise guard,Absorbs physical impact before the Poise bar fills. Expires at the start of your next turn.,Poise guard
 combat.protection.wardGuard,,Ward guard,Absorbs magical impact before the Ward bar fills. Expires at the start of your next turn.,Ward guard
+combat.protection.wardBlock,,Warded Block,"The part of this turn's Block raised by magic. It counts in the Ward badge, is spent after ordinary Block, and is gone at the start of your next turn.",Warded Block
+# ---- optional defensive reactions and public combat receipts --------------
+combat.log.title,,Combat log,,
+combat.log.sizeLabel,,Log size,,
+combat.log.size.small,,Small,,
+combat.log.size.medium,,Medium,,
+combat.log.size.large,,Large,,
+combat.log.actions,,Actions by round,,
+combat.log.full,,Full log,,
+combat.log.round,,Round {round},,
+combat.log.empty,,,Actions will appear here as the round unfolds.,
+combat.reactions.label,,Reaction,,
+combat.reactions.enabled,,enabled,,
+combat.reactions.disabled,,disabled,,
+combat.reactions.state,,Reaction {state},,
+combat.reaction.title,,Respond to the incoming action,,
+combat.reaction.eyebrow,,Defensive reaction,,
+combat.reaction.help,,,Choose a card to play before this action resolves. Back skips this reaction.,
+combat.reaction.play,,Play,,
+combat.reaction.upcast,,Upcast {tier},,
+combat.reaction.sp,,{amount} SP,,
+combat.reaction.mp,,{amount} MP,,
+combat.reaction.stack,,On the stack,,
+combat.reaction.resolve,,Resolve,,
+combat.reaction.helpStack,,,"Choose another card to add on top, or Resolve to play the stack, last card first.",
+# on-character combat callouts (src/ui/fx.js callout): one word over the fighter
+combat.callout.staggered,,STAGGERED,,
+combat.callout.disrupted,,DISRUPTED,,
+combat.callout.countered,,COUNTERED,,
+combat.callout.evaded,,MISSED,,
+combat.callout.critical,,CRITICAL,,
+combat.callout.guardBreak,,GUARD BREAK,,
+combat.callout.wardBreak,,WARD BREAK,,
+combat.callout.barrierBreak,,BREAK,,
+combat.callout.poiseBreak,,POSTURE BREAK,,
+combat.callout.blockBreak,,BREAK,,
+combat.callout.interrupted,,INTERRUPTED,,
+combat.callout.resisted,,RESISTED,,
+combat.callout.blocked,,BLOCKED,,
+combat.callout.immune,,IMMUNE,,
+combat.status.applied.venom,,POISONED,,
+combat.status.applied.burn,,BURNED,,
+combat.status.applied.bleed,,BLEEDING,,
+combat.status.applied.bleeding,,BLEEDING,,
+combat.status.applied.frost,,FROSTED,,
+combat.status.applied.frozen,,FROZEN,,
+combat.status.applied.chilled,,CHILLED,,
+combat.status.applied.paralysis,,PARALYZED,,
+combat.status.applied.sleep,,ASLEEP,,
+combat.status.applied.weak,,WEAKENED,,
+combat.status.applied.vulnerable,,VULNERABLE,,
+combat.status.applied.magicVulnerable,,VULNERABLE,,
+combat.status.applied.frail,,BRITTLED,,
+combat.status.applied.dazed,,DAZED,,
+combat.status.applied.offBalance,,UNBALANCED,,
+combat.status.applied.prone,,KNOCKED DOWN,,
+combat.status.applied.grounded,,GROUNDED,,
+combat.status.applied.insanity,,MADDENED,,
+combat.status.applied.madness,,MADDENED,,
+combat.status.applied.crimsonBlight,,BLIGHTED,,
+combat.status.applied.frostExposed,,EXPOSED,,
+combat.status.applied.insanityExposed,,EXPOSED,,
 # ---- the house vocabulary — the words every screen shares ------------------
 common.back,,Back,Return to the screen before this one.,Back
 common.continue,,Continue,Move on from this screen.,Continue
@@ -106,6 +174,7 @@ reward.card.chooseOne,,Choose one of {count}.,,
 reward.card.offered,,One card offered.,,
 reward.card.alreadyTaken,,Already taken,A card has already been taken from this reward.,
 card.meta.owned,,Owned: {count},Copies of this card already in your deck.,
+card.tag.tooltip,,,{name} — {blurb},
 # ---- possession sub-variants (WC2a1–WC2c3) — rows the item's data states ----
 possession.effects.package,,Granted card package,,
 possession.effects.modifiers,,Granted modifiers,,
@@ -792,11 +861,31 @@ deckEditor.sort.type,,Type,,
 deckEditor.sort.source,,Source,,
 deckEditor.tile.owned,,{owned} owned · {inDeck} in deck,,
 deckEditor.tile.basic,,∞ · {inDeck} in deck,,
+deckEditor.stepperCount,,{inDeck}/{owned},{inDeck} in deck of {owned} owned.,
+deckEditor.stepperCount.unlimited,,{inDeck}/∞,{inDeck} in deck; unlimited copies.,
 deckEditor.count,,×{count},{count} copies in the deck.,
 deckEditor.tile.kept,,{count} set aside,,
 deckEditor.tile.keptUpgraded,,{count} set aside · upgraded,,
 deckEditor.add,,＋,Add {name} to the deck.,
 deckEditor.remove,,－,Take {name} out of the deck.,
+deckEditor.stance.attack,,Attack,Attack stance card.,
+deckEditor.stance.defend,,Defend,Defend stance card.,
+deckEditor.stance.counter,,Counter,Counter stance card.,
+deckEditor.stance.smash,,Smash,Smash stance card.,
+deckEditor.stance.sweep,,Sweep,Sweep stance card.,
+deckEditor.stance.ranged,,Ranged,Ranged stance card.,
+deckEditor.stance.spell,,Spell,Spell card.,
+deckEditor.stance.skill,,Skill,Skill card.,
+deckEditor.stance.power,,Power,Power card.,
+deckEditor.stance.consumable,,Consumable,Consumable card.,
+deckEditor.rank,,Rank {rank},Card rank {rank}.,
+deckEditor.rank.cantrip,,Cantrip,"Rank 0 spell, a cantrip.",
+deckEditor.rank.basic,,Basic,Rank 0 combat maneuver.,
+deckEditor.range.melee,,Melee,Melee range: reaches the enemy in front.,
+deckEditor.range.reach,,Reach,Reach range: reaches past the front enemy.,
+deckEditor.range.ranged,,Ranged,Ranged: reaches any enemy.,
+deckEditor.camp.physical,,Physical,Physical card.,
+deckEditor.camp.magical,,Magical,Magical card.,
 deckEditor.up,,▲,Move {name} one place earlier in the deck.,
 deckEditor.down,,▼,Move {name} one place later in the deck.,
 deckEditor.pickUp,,Move,"Pick up {name}, then place it with the arrows.",
@@ -882,6 +971,7 @@ settings.defaults.local,,Keep local settings,,
 settings.defaults.use,,Use defaults,,
 settings.defaults.failed,,Your settings could not be saved. Your previous settings are still in use. Please try again.,,
 settings.row.useSprites,,Character sprites,Show a drawn class figure in combat instead of your chosen sigil.,
+settings.row.classicAppearance,,Classic appearance,Use the previous character art and battlefield layout. Turn off for the layered appearance. This choice changes visuals only.,
 settings.row.animSpeed,,Combat pacing,Auto uses Fast with Lite rendering and Normal with Full. Choose a pace to override it.,
 settings.row.performanceMode,,Rendering quality,"Auto uses lighter effects on touch devices. Lite keeps targeting and hit feedback, reduces decorative effects, and uses fast combat pacing when pacing is Auto.",
 settings.row.titleCityHold,,Lit city pause,Pause with the city fully lit before fading to the menu. Reduced motion skips this pause.,
@@ -920,6 +1010,7 @@ settings.row.shrinePathGlow,,Shrine path glow,"Light the way to the nearest shri
 settings.row.walkedFade,,Walked nodes,"How much the nodes you have already visited fade on the act map, so the way forward stands out from the trail behind you. Half mutes them to half saturation; Off keeps the trail as bright as the choice.",
 settings.row.accent,,Accent color,"Tint the interface — highlights, borders, focus ring, and glow.",
 settings.row.artQuality,,Art quality,"Auto loads lighter art on a narrow or phone-sized screen, with Data Saver on or on a device with little memory, and the best art this game carries otherwise. Light and High pick one. Local high-res uses full-resolution art from a folder on this device, either served beside the game or one you choose, and keeps the built-in art for anything it lacks. This device only.",
+settings.row.cardArtStyle,,Card artwork,Simple uses the new card artwork with elemental and status accents. Legacy keeps the original illustrations.,
 settings.row.uiScale,,UI size,Auto flexes the whole interface with your screen; S–XL asks for a fixed size and gets as much of it as fits.,
 settings.row.cardMotif,,Card motif,Colour cards by their class. Wash tints the card body; Accent puts your accent on the border and moves rarity to a corner pip; Band adds a class stripe. Off keeps every card the same frame.,
 settings.row.cardMotifStrength,,Motif strength,How strongly the class colour tints a card.,
@@ -969,13 +1060,14 @@ settings.row.cardWidth_inspect,,Reading card width,How wide a card is in the win
 settings.row.cardSizeExport,,Export card sizes,"Copies the tuned sizes as a JSON fragment shaped like content/config/ui/components/card.json itself — merge it in at the FILE ROOT, where it replaces sizing.levels. It carries only the widths, so ratio, bands and behavior are left alone.",
 settings.row.levelUpValue,,Level-up value,"How many stat points one level grants — type any whole number from 1 to 20. Takes effect on the next level you reach, in any run, including one already in progress; the points wait at the shrine until you assign them.",
 settings.row.deckEditing,,Deck editing,"Add, remove and arrange your cards between fights. Off: the deck changes only through rewards, the merchant and the Armoury.",
-settings.row.deckEditingWhere,,Where you can edit,"Free opens the editor from the map and the Armoury at any moment out of combat. Rest sites only offers it at a Shrine, an inn or a chapel.",
+settings.row.deckEditingWhere,,Where you can edit,"Free opens the editor from the Armoury at any moment out of combat. Rest sites only offers it at a Shrine, an inn or a chapel.",
 settings.row.deckMinUnlimited,,No minimum deck size,"Let the editor confirm a deck of any size, however small.",
 settings.row.deckMinSize,,Minimum deck size,The fewest cards the editor lets you confirm. Rewards and purchases can still move the deck outside it; the editor then asks you to bring it back.,
 settings.row.deckMaxUnlimited,,No maximum deck size,"Let the editor confirm a deck of any size, however large.",
 settings.row.deckMaxSize,,Maximum deck size,The most cards the editor lets you confirm. It may not sit below the minimum.,
 settings.row.classSpellPowerCopies,,Copies of a class spell or Power,How many copies of one of your class’s own spells or Powers the editor lets your deck hold. Strike and Defend stay unlimited; weapon arts and techniques stay limited to the copies you own.,
 settings.row.playInDeckOrder,,Play in deck order,"Your draw pile is not shuffled: you draw your cards in the order you arranged them, and a spent pile returns in that order. Card effects that shuffle still shuffle. Applies from the next fight.",
+settings.row.combatRoundsPreview,,Combat rounds preview,"Runs real fights on the speed-ordered combat rounds preview. Off by default. Read at New Run and fixed for that run; a fight already under way keeps the rules it started with. Dev and test builds only.",
 settings.row.promptSettingsExport,,Offer export when done,Ask to export a configuration file after Done and Save.,
 settings.row.gameConfigExport,,Export game configuration,Save every non-default game configuration value. Desktop opens Save As when available; mobile downloads the JSON locally.,
 settings.row.gameConfigImport,,Load game configuration,Choose an exported settings JSON file. Included values replace your current settings; other settings and saved runs are untouched. Presentation changes apply immediately; starting stats and balance apply to new runs.,
@@ -1127,6 +1219,8 @@ deckEditor.animation.unavailable,,No animation available for this card.,,
 deckEditor.art.alternative,,Alternative artwork,,
 deckEditor.art.basicOnly,,Basic artwork is available. Alternative artwork has not been added yet.,,
 deckEditor.inspectAction,,Inspect,,
+deckEditor.inspectIcon,,i,,
+deckEditor.drawOrder,,Draw order,Reorder the deck in the order it is drawn.,
 deckEditor.equipmentNotFound,,Equipment not found,This card's equipment is no longer in your loadout.,
 deckEditor.refuse.equipment,deckEditor.equipmentNotFound,,,
 book.read.classSummary,,Gain {xp} class XP. Each reading has a {card}% chance of a combat card and a separate {feat}% chance of a feat. Cancel keeps the book.,,
@@ -1168,6 +1262,23 @@ armoury.change.combatUnavailable,,Combat equipment changes are unavailable on th
 armoury.action.unequipFrom,,Unequip from {slot},,
 armoury.action.moveTo,,Move to {slot},,
 armoury.action.equipTo,,Equip to {slot},,
+armoury.picker.caption,,Items for {slot},,
+armoury.picker.col.item,,Item,,
+armoury.picker.col.status,,Status,,
+armoury.picker.col.actions,,Actions,,
+armoury.picker.status.here,,Equipped here,,
+armoury.picker.status.free,,Not equipped,,
+armoury.picker.status.elsewhere,,{slot} {n},,
+armoury.picker.status.nofit,,Doesn't fit,,
+armoury.picker.onlyCopy,,Only copy: moving it empties {slot} {n},,
+armoury.picker.reason.kind,,Doesn't fit {slot},,
+armoury.picker.reason.hand,,Only fits the other hand,,
+armoury.picker.showAll,,Show items that don't fit,,
+armoury.picker.fitsOnly,,Hide items that don't fit,,
+armoury.picker.hide,,Hide,,
+armoury.picker.act.equip,,Equip,,
+armoury.picker.act.move,,Move here,,
+armoury.picker.act.unequip,,Unequip,,
 characterSheet.open,,Character sheet,"Every character and skill level, and what each one grants.",
 characterSheet.close,,Close character sheet,,
 characterSheet.tab.character,,Character levels,,
@@ -1297,3 +1408,140 @@ progression.feat.emptyHint,,Choose feats from character and skill level rewards.
 combat.enemyTarget.choose,,,Choose an enemy target,
 combat.enemyTarget.health,,,{hp}/{maxHp} HP,
 combat.enemyTarget.label,,,"Target {number}: {name}, {hp} of {maxHp} HP",
+
+creation.abilities.maneuvers,,COMBAT MANEUVER,COMBAT MANEUVER,Choose one Rank 1 combat maneuver after armaments.
+creation.abilities.spells,,STARTING SPELLS,STARTING SPELLS,Choose two distinct Rank 1 spells after armaments.
+creation.abilities.progress,,{chosen}/{count} chosen · Rank {rank},{chosen}/{count} chosen · Rank {rank},{chosen}/{count} chosen · Rank {rank}
+creation.abilities.choose,,Learn ability,Learn ability,Learn this starting ability.
+creation.abilities.remove,,Unpick ability,Unpick ability,Unpick this starting ability choice.
+creation.abilities.elementCap,,Only {max} element spell,Only {max} element spell,You can take at most {max} element spell. Unpick it to choose this one.
+creation.abilities.chooseLabel,,Learn ability {name},Learn ability {name},Learn ability {name}
+creation.abilities.summary,,Starting ability,Starting ability,Starting ability
+
+# Enemy knowledge and run Perception
+"knowledge.bestiary","","Bestiary","",""
+"knowledge.stages","","Five knowledge stages","",""
+"knowledge.stage","","{stage}. {label} — {status}","",""
+"knowledge.learned","","Learned","",""
+"knowledge.unlock","","Unlocks at {points} points","",""
+"knowledge.progress","","{label} · {points} / {target}","",""
+"knowledge.lifetime","","Lifetime enemy knowledge grows through real encounters and successful tactical responses.","",""
+"knowledge.next","","Next: {label} at {points} points.","",""
+"knowledge.mastered","","Mastered. Hidden current actions still require an intent read.","",""
+"knowledge.perception","","Run Perception: level {level}. Perception improves intent reads and starts fresh on each new run.","",""
+"knowledge.resources","","Base resources and defenses","",""
+"knowledge.resources.locked","","Locked · Studied at {points} points.","",""
+"knowledge.resources.empty","","No base resource facts recorded.","",""
+"knowledge.moves","","Known moves","",""
+"knowledge.moves.locked","","Locked · Familiar at {points} points.","",""
+"knowledge.effects.locked","","Base effects and counterplay unlock at {points} points.","",""
+"knowledge.rules.locked","","Repeat, phase and delay rules unlock at {points} points.","",""
+"knowledge.lore","","Lore and role","",""
+"knowledge.lore.locked","","Locked · Meet this enemy in a real encounter.","",""
+"knowledge.lore.empty","","No lore recorded.","",""
+"knowledge.prediction","","Prediction","",""
+"knowledge.prediction.status","","Prediction: {prediction}. {status}","",""
+"knowledge.prediction.correct","","Correct.","",""
+"knowledge.prediction.incorrect","","Incorrect.","",""
+"knowledge.prediction.cancelled","","Action cancelled.","",""
+"knowledge.prediction.awaiting","","Awaiting the action.","",""
+"knowledge.prediction.choose","","Choose the actual action you expect. XP is earned only after a correct prediction resolves.","",""
+"knowledge.prediction.feedback","","Action {serial}: {prediction} — {outcome}.","",""
+"knowledge.prediction.feedback.cancelled","","cancelled; no prediction XP","",""
+"knowledge.prediction.feedback.correct","","correct","",""
+"knowledge.prediction.feedback.incorrect","","incorrect","",""
+"knowledge.prediction.action","","Predicted enemy action","",""
+"knowledge.prediction.commit","","Predict action","",""
+"knowledge.prediction.sent","","Prediction sent. Waiting for the host.","",""
+"knowledge.prediction.failed","","Prediction could not be accepted.","",""
+"knowledge.prediction.help","","Spell means ready magic; Casting means charging; Preparing means other support.","",""
+"knowledge.prediction.expected","","Expected action","",""
+"knowledge.details","","Enemy knowledge details","",""
+"knowledge.encountered","","Encountered enemies","",""
+"knowledge.heading","","Lifetime enemy knowledge","",""
+"knowledge.close","","Close Bestiary","",""
+"knowledge.empty.help","","Meet an enemy in a real encounter to begin learning about it.","",""
+"knowledge.empty","","No enemies encountered yet.","",""
+"knowledge.save.pending","","Enemy learning remains pending.","",""
+"knowledge.save.retry","","Retry saving enemy knowledge","",""
+"knowledge.save.retained","","Enemy learning is retained and waiting to be saved.","",""
+"combat.intent.partial","","{stance} ?","",""
+# ---- the lookup's own developer messages (src/ui/strings.js). Read without calling resolve(), so an unknown id cannot recurse.
+"strings.error.noId","","uiStrings: a row has no id","",""
+"strings.error.duplicateId","","uiStrings: duplicate id '{id}'","",""
+"strings.error.unknownId","","uiStrings: unknown id '{id}'","",""
+"strings.error.extendsCycle","","uiStrings: extends cycle {chain}","",""
+"strings.error.noForm","","uiStrings: '{id}' has no {form} form","",""
+# ---- the combat test build and its debug log chrome (screens/combatTest.js, components/debugChrome.js). The copy button reads common.copied, the one common.* row this block uses.
+combatTest.build.legend,,Your build,,
+combatTest.equipment.bloodRune,,Blood Rune,,
+combatTest.equipment.buildDefault,,Build default,,
+combatTest.equipment.grip,,Grip,,
+combatTest.equipment.legend,,Try different equipment,,
+combatTest.grip.oneHanded,,One handed,,
+combatTest.grip.twoHanded,,Two handed,,
+combatTest.help.keepDodge,,Keep Dodge Roll in hand or spend stamina to Evade the next hit this turn. It costs no actions.,,
+combatTest.help.select,,"Select a card, then its target. Select a self-targeted card and confirm it on your character. Press E to end your turn.",,
+combatTest.help.staminaRecovers,,Stamina recovers each turn. Mana does not. The route carries all three pools between fights.,,
+combatTest.help.summary,,What to try,,
+combatTest.info.fight,,· Fight {n} of {total},,
+combatTest.info.locked,,"Equipment is locked for this route. Change armor, grip, or the rune in build selection to compare. Select a card, then confirm its target. Hold a card to inspect it. E ends your turn.",,
+combatTest.info.returnToBuild,,Return to build selection,,
+combatTest.info.title,,Combat test build,,
+combatTest.options.challenge,,Challenge,,
+combatTest.options.enemyStrength,,Enemy strength,,
+combatTest.options.threeFightRoute,,Three-fight route,,
+combatTest.pressure.hard,,Hard — double damage,,
+combatTest.pressure.practice,,Practice — half damage,,
+combatTest.pressure.standard,,Standard,,
+combatTest.result.chooseABuild,,Choose a build,,
+combatTest.result.eyebrow,,ASHENSPIRE · TEST RUN,,
+combatTest.rune.install,,Install · +{amount} Bleed per contact,,
+combatTest.setup.begin,,Begin test run,,
+combatTest.setup.documentTitle,,AshenSpire {version} — Combat test build,,
+combatTest.setup.eyebrow,,ASHENSPIRE {version} · TEST BUILD,,
+combatTest.setup.heading,,Choose your way through.,,
+combatTest.setup.lead,,"Play the new combat rules on the game's battlefield. Break Poise with a heavy weapon, build Bleed with quick hits, or save rare mana for a decisive spell.",,
+debugChrome.refresh,,Refresh,,
+
+card.tags.evade,,Evade,Evade or dodge an incoming action.,
+creation.category.attributes,,Attributes,,
+creation.category.keepsake,,Keepsake,,
+creation.category.feats,,Feats,,
+creation.category.spells,,Spells,,
+creation.section.attributes,,ATTRIBUTES,,
+creation.section.feats,,FEATS,,
+creation.section.spells,,SPELLS,,
+creation.feats.eyebrow,,CHARACTER TRAITS,,
+creation.feats.title,,Explore feats,,
+creation.feats.description,,Learn how permanent feats shape your journey.,,
+creation.feats.availability,,Earn feats as you level up. Browsing here does not grant a starting feat.,,
+creation.feats.detailLabel,,Feat details,,
+creation.feats.none,,No starting feats,,
+creation.spells.eyebrow,,STARTING MAGIC,,
+creation.spells.title,,Choose your spells,,
+creation.spells.description,,Choose your starting Rank {rank} spells before beginning the journey.,,
+creation.spells.unavailable,,This class has no starting spell choices.,,
+creation.review.edit,,Edit {category},,
+creation.continueTo,,Continue to {category},,
+creation.step.progress,,{index} of {count} · {category},,
+creation.nav.allSteps,,All steps,,
+creation.nav.allStepsLabel,,Open all character creation steps.,,
+creation.feats.group.character,,Character,,
+creation.feats.group.class,,Class,,
+creation.feats.group.skill,,Skills,,
+creation.feats.lockedRequirement,,Requires {track} level {required}. Current level: {current}.,,
+creation.feats.availableRequirement,,{track} level {required} requirement met. Current level: {current}.,,
+creation.feats.profileUnlocked,,Unlocked in profile.,,
+creation.feats.locked,,Level requirement not met,,
+creation.feats.available,,Level requirement met,,
+creation.feats.emptyGroup,,No feats in this group.,,
+creation.feats.noOffers,,No feat offers are currently earned on the {track} track.,,
+
+creation.feats.return,,Back to feats,,
+creation.feats.summary.fieldStudy,,More character XP.,,
+creation.feats.summary.weaponDrill,,More weapon XP.,,
+creation.feats.summary.armourPractice,,More armour XP.,,
+creation.feats.summary.classInsight,,More class XP.,,
+creation.feats.summary.spoilsInstinct,,More Cinders from victory.,,
+creation.feats.summary.vitalRenewal,,Recover HP after victory.,,

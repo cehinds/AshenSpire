@@ -1,0 +1,20 @@
+const fs=require('node:fs'),path=require('node:path');
+const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'D:/repos/TheAshenedSpire/node_modules/playwright');
+const root=__dirname;
+(async()=>{const browser=await chromium.launch({headless:true});try{
+const page=await browser.newPage({viewport:{width:1600,height:1000}});const errors=[];page.on('pageerror',e=>errors.push(e.message));
+await page.goto('http://127.0.0.1:4189/docs/design/combat-depth-2026-10-05/game-preview.html',{waitUntil:'domcontentloaded',timeout:60000});
+await page.locator('#loading').waitFor({state:'hidden',timeout:60000}).catch(async e=>{console.error(JSON.stringify({errors,frames:await Promise.all(page.frames().map(async f=>({url:f.url(),state:await f.evaluate(()=>({ready:document.readyState,cards:document.querySelectorAll('.hand .card').length,text:document.body.innerText.slice(0,1000),style:!!document.getElementById('art-preview-style')}))})))}));throw e});
+await page.locator('#stage img').evaluateAll(imgs=>Promise.all(imgs.map(i=>i.decode())));
+const game=page.frames().find(f=>f.url().includes('index.html?shot=combat'));
+const measure=()=>Object.fromEntries(['.topbar','.hand-area','.hand'].map(s=>{const e=document.querySelector(s),r=e.getBoundingClientRect();return[s,{x:r.x,y:r.y,width:r.width,height:r.height,text:e.innerText}]}));
+const overlay=await game.evaluate(measure);
+await page.screenshot({path:path.join(root,'review/current-ui-proposed-art.png')});
+await page.setViewportSize({width:390,height:844});await page.waitForTimeout(400);await page.screenshot({path:path.join(root,'review/current-ui-phone.png')});
+const source=await browser.newPage({viewport:{width:1600,height:1000}});
+await source.goto('http://127.0.0.1:4189/index.html?shot=combat',{waitUntil:'domcontentloaded',timeout:60000});await source.locator('.hand .card').first().waitFor({timeout:60000});await source.waitForTimeout(700);
+const baseline=await source.evaluate(measure);
+const comparisons=Object.keys(baseline).map(key=>({key,textUnchanged:baseline[key].text===overlay[key].text,maxRectDifference:Math.max(...['x','y','width','height'].map(p=>Math.abs(baseline[key][p]-overlay[key][p])))}));
+const report={errors,comparisons,previewOnly:true,currentUiComesFrom:'Unmodified game rendered inside same-origin iframe; pointer interaction disabled for visual review',sourceAssetLimitation:'Current checkout server uses tracked light art; common/high release packs are not fetched.'};
+fs.writeFileSync(path.join(root,'review/current-ui-report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));if(errors.length||comparisons.some(c=>!c.textUnchanged||c.maxRectDifference>1))process.exitCode=1;
+}finally{await browser.close()}})().catch(e=>{console.error(e);process.exitCode=1});

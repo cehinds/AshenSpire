@@ -1,0 +1,1507 @@
+{
+  "passed": true,
+  "sourceRevision": "c448cb31c1459581e22642136a224256d4fd3c25",
+  "counts": {
+    "canonicalRecords": 35,
+    "namedArmors": 19,
+    "matrixCells": 76,
+    "supportedAppearances": 31,
+    "unsupportedCombinations": 45,
+    "uniqueMasters": 31,
+    "missing": 0
+  },
+  "checkCount": 365,
+  "errors": [],
+  "warnings": [
+    "reaver-default: approved source has a tight margin; retained exactly, preview provides external clearance.",
+    "reaver-vigil: approved source has a tight margin; retained exactly, preview provides external clearance.",
+    "reaver-oathsworn: approved source has a tight margin; retained exactly, preview provides external clearance.",
+    "reaver-warden: approved source has a tight margin; retained exactly, preview provides external clearance.",
+    "starseer-default: approved source has a tight margin; retained exactly, preview provides external clearance.",
+    "starseer-eclipse: approved source has a tight margin; retained exactly, preview provides external clearance.",
+    "starseer-starlit: approved source has a tight margin; retained exactly, preview provides external clearance.",
+    "starseer-astral: approved source has a tight margin; retained exactly, preview provides external clearance.",
+    "herald-default: approved source has a tight margin; retained exactly, preview provides external clearance.",
+    "herald-ossuary: approved source has a tight margin; retained exactly, preview provides external clearance.",
+    "herald-emberhabit: approved source has a tight margin; retained exactly, preview provides external clearance.",
+    "herald-pilgrim: approved source has a tight margin; retained exactly, preview provides external clearance.",
+    "rogue-default: approved source has a tight margin; retained exactly, preview provides external clearance.",
+    "rogue-nightveil: approved source has a tight margin; retained exactly, preview provides external clearance.",
+    "rogue-duelist: approved source has a tight margin; retained exactly, preview provides external clearance.",
+    "rogue-shadow: approved source has a tight margin; retained exactly, preview provides external clearance.",
+    "reaver-bastion: approved source has a tight margin; retained exactly, preview provides external clearance.",
+    "starseer-rimeweave: approved source has a tight margin; retained exactly, preview provides external clearance.",
+    "rogue-waywatcher: approved source has a tight margin; retained exactly, preview provides external clearance.",
+    "reaver-wayfarerPlate: approved source has a tight margin; retained exactly, preview provides external clearance.",
+    "starseer-nightweave: approved source has a tight margin; retained exactly, preview provides external clearance.",
+    "herald-riteVestments: approved source has a tight margin; retained exactly, preview provides external clearance.",
+    "rogue-gutterLeathers: approved source has a tight margin; retained exactly, preview provides external clearance."
+  ],
+  "checks": [
+    {
+      "check": "Every canonical armor record represented exactly",
+      "passed": true
+    },
+    {
+      "check": "35 unique canonical records",
+      "passed": true
+    },
+    {
+      "check": "76 matrix cells; 31 supported appearances",
+      "passed": true
+    },
+    {
+      "check": "Matrix cells unique",
+      "passed": true
+    },
+    {
+      "check": "Unsupported cells never claim artwork coverage",
+      "passed": true
+    },
+    {
+      "check": "content/source/outfits.csv snapshot hash",
+      "passed": true
+    },
+    {
+      "check": "content/source/equipmentRequirements.csv snapshot hash",
+      "passed": true
+    },
+    {
+      "check": "content/source/equipSlots.csv snapshot hash",
+      "passed": true
+    },
+    {
+      "check": "content/source/weapons.csv snapshot hash",
+      "passed": true
+    },
+    {
+      "check": "content/source/itemUpgradeChanges.csv snapshot hash",
+      "passed": true
+    },
+    {
+      "check": "src/content/classes.js snapshot hash",
+      "passed": true
+    },
+    {
+      "check": "src/content/equipment.js snapshot hash",
+      "passed": true
+    },
+    {
+      "check": "src/content/generated/outfits.js snapshot hash",
+      "passed": true
+    },
+    {
+      "check": "src/content/sharedOutfitArt.js snapshot hash",
+      "passed": true
+    },
+    {
+      "check": "src/model/paintedOutfitArt.js snapshot hash",
+      "passed": true
+    },
+    {
+      "check": "src/model/loadout.js snapshot hash",
+      "passed": true
+    },
+    {
+      "check": "tests/shared-armor.test.mjs snapshot hash",
+      "passed": true
+    },
+    {
+      "check": "docs/LORE.md snapshot hash",
+      "passed": true
+    },
+    {
+      "check": "reaver-default file exists",
+      "passed": true
+    },
+    {
+      "check": "reaver-default real alpha",
+      "passed": true
+    },
+    {
+      "check": "reaver-default catalog SHA256",
+      "passed": true
+    },
+    {
+      "check": "reaver-default measured visible bounds",
+      "passed": true
+    },
+    {
+      "check": "reaver-default no alpha>32 clipping at canvas edge",
+      "passed": true
+    },
+    {
+      "check": "reaver-default measured idle anchor",
+      "passed": true
+    },
+    {
+      "check": "reaver-default unchanged approved master",
+      "passed": true
+    },
+    {
+      "check": "reaver-vigil file exists",
+      "passed": true
+    },
+    {
+      "check": "reaver-vigil real alpha",
+      "passed": true
+    },
+    {
+      "check": "reaver-vigil catalog SHA256",
+      "passed": true
+    },
+    {
+      "check": "reaver-vigil measured visible bounds",
+      "passed": true
+    },
+    {
+      "check": "reaver-vigil no alpha>32 clipping at canvas edge",
+      "passed": true
+    },
+    {
+      "check": "reaver-vigil measured idle anchor",
+      "passed": true
+    },
+    {
+      "check": "reaver-vigil unchanged approved master",
+      "passed": true
+    },
+    {
+      "check": "reaver-oathsworn file exists",
+      "passed": true
+    },
+    {
+      "check": "reaver-oathsworn real alpha",
+      "passed": true
+    },
+    {
+      "check": "reaver-oathsworn catalog SHA256",
+      "passed": true
+    },
+    {
+      "check": "reaver-oathsworn measured visible bounds",
+      "passed": true
+    },
+    {
+      "check": "reaver-oathsworn no alpha>32 clipping at canvas edge",
+      "passed": true
+    },
+    {
+      "check": "reaver-oathsworn measured idle anchor",
+      "passed": true
+    },
+    {
+      "check": "reaver-oathsworn unchanged approved master",
+      "passed": true
+    },
+    {
+      "check": "reaver-warden file exists",
+      "passed": true
+    },
+    {
+      "check": "reaver-warden real alpha",
+      "passed": true
+    },
+    {
+      "check": "reaver-warden catalog SHA256",
+      "passed": true
+    },
+    {
+      "check": "reaver-warden measured visible bounds",
+      "passed": true
+    },
+    {
+      "check": "reaver-warden no alpha>32 clipping at canvas edge",
+      "passed": true
+    },
+    {
+      "check": "reaver-warden measured idle anchor",
+      "passed": true
+    },
+    {
+      "check": "reaver-warden unchanged approved master",
+      "passed": true
+    },
+    {
+      "check": "starseer-default file exists",
+      "passed": true
+    },
+    {
+      "check": "starseer-default real alpha",
+      "passed": true
+    },
+    {
+      "check": "starseer-default catalog SHA256",
+      "passed": true
+    },
+    {
+      "check": "starseer-default measured visible bounds",
+      "passed": true
+    },
+    {
+      "check": "starseer-default no alpha>32 clipping at canvas edge",
+      "passed": true
+    },
+    {
+      "check": "starseer-default measured idle anchor",
+      "passed": true
+    },
+    {
+      "check": "starseer-default unchanged approved master",
+      "passed": true
+    },
+    {
+      "check": "starseer-eclipse file exists",
+      "passed": true
+    },
+    {
+      "check": "starseer-eclipse real alpha",
+      "passed": true
+    },
+    {
+      "check": "starseer-eclipse catalog SHA256",
+      "passed": true
+    },
+    {
+      "check": "starseer-eclipse measured visible bounds",
+      "passed": true
+    },
+    {
+      "check": "starseer-eclipse no alpha>32 clipping at canvas edge",
+      "passed": true
+    },
+    {
+      "check": "starseer-eclipse measured idle anchor",
+      "passed": true
+    },
+    {
+      "check": "starseer-eclipse unchanged approved master",
+      "passed": true
+    },
+    {
+      "check": "starseer-starlit file exists",
+      "passed": true
+    },
+    {
+      "check": "starseer-starlit real alpha",
+      "passed": true
+    },
+    {
+      "check": "starseer-starlit catalog SHA256",
+      "passed": true
+    },
+    {
+      "check": "starseer-starlit measured visible bounds",
+      "passed": true
+    },
+    {
+      "check": "starseer-starlit no alpha>32 clipping at canvas edge",
+      "passed": true
+    },
+    {
+      "check": "starseer-starlit measured idle anchor",
+      "passed": true
+    },
+    {
+      "check": "starseer-starlit unchanged approved master",
+      "passed": true
+    },
+    {
+      "check": "starseer-astral file exists",
+      "passed": true
+    },
+    {
+      "check": "starseer-astral real alpha",
+      "passed": true
+    },
+    {
+      "check": "starseer-astral catalog SHA256",
+      "passed": true
+    },
+    {
+      "check": "starseer-astral measured visible bounds",
+      "passed": true
+    },
+    {
+      "check": "starseer-astral no alpha>32 clipping at canvas edge",
+      "passed": true
+    },
+    {
+      "check": "starseer-astral measured idle anchor",
+      "passed": true
+    },
+    {
+      "check": "starseer-astral unchanged approved master",
+      "passed": true
+    },
+    {
+      "check": "herald-default file exists",
+      "passed": true
+    },
+    {
+      "check": "herald-default real alpha",
+      "passed": true
+    },
+    {
+      "check": "herald-default catalog SHA256",
+      "passed": true
+    },
+    {
+      "check": "herald-default measured visible bounds",
+      "passed": true
+    },
+    {
+      "check": "herald-default no alpha>32 clipping at canvas edge",
+      "passed": true
+    },
+    {
+      "check": "herald-default measured idle anchor",
+      "passed": true
+    },
+    {
+      "check": "herald-default unchanged approved master",
+      "passed": true
+    },
+    {
+      "check": "herald-ossuary file exists",
+      "passed": true
+    },
+    {
+      "check": "herald-ossuary real alpha",
+      "passed": true
+    },
+    {
+      "check": "herald-ossuary catalog SHA256",
+      "passed": true
+    },
+    {
+      "check": "herald-ossuary measured visible bounds",
+      "passed": true
+    },
+    {
+      "check": "herald-ossuary no alpha>32 clipping at canvas edge",
+      "passed": true
+    },
+    {
+      "check": "herald-ossuary measured idle anchor",
+      "passed": true
+    },
+    {
+      "check": "herald-ossuary unchanged approved master",
+      "passed": true
+    },
+    {
+      "check": "herald-emberhabit file exists",
+      "passed": true
+    },
+    {
+      "check": "herald-emberhabit real alpha",
+      "passed": true
+    },
+    {
+      "check": "herald-emberhabit catalog SHA256",
+      "passed": true
+    },
+    {
+      "check": "herald-emberhabit measured visible bounds",
+      "passed": true
+    },
+    {
+      "check": "herald-emberhabit no alpha>32 clipping at canvas edge",
+      "passed": true
+    },
+    {
+      "check": "herald-emberhabit measured idle anchor",
+      "passed": true
+    },
+    {
+      "check": "herald-emberhabit unchanged approved master",
+      "passed": true
+    },
+    {
+      "check": "herald-pilgrim file exists",
+      "passed": true
+    },
+    {
+      "check": "herald-pilgrim real alpha",
+      "passed": true
+    },
+    {
+      "check": "herald-pilgrim catalog SHA256",
+      "passed": true
+    },
+    {
+      "check": "herald-pilgrim measured visible bounds",
+      "passed": true
+    },
+    {
+      "check": "herald-pilgrim no alpha>32 clipping at canvas edge",
+      "passed": true
+    },
+    {
+      "check": "herald-pilgrim measured idle anchor",
+      "passed": true
+    },
+    {
+      "check": "herald-pilgrim unchanged approved master",
+      "passed": true
+    },
+    {
+      "check": "rogue-default file exists",
+      "passed": true
+    },
+    {
+      "check": "rogue-default real alpha",
+      "passed": true
+    },
+    {
+      "check": "rogue-default catalog SHA256",
+      "passed": true
+    },
+    {
+      "check": "rogue-default measured visible bounds",
+      "passed": true
+    },
+    {
+      "check": "rogue-default no alpha>32 clipping at canvas edge",
+      "passed": true
+    },
+    {
+      "check": "rogue-default measured idle anchor",
+      "passed": true
+    },
+    {
+      "check": "rogue-default unchanged approved master",
+      "passed": true
+    },
+    {
+      "check": "rogue-nightveil file exists",
+      "passed": true
+    },
+    {
+      "check": "rogue-nightveil real alpha",
+      "passed": true
+    },
+    {
+      "check": "rogue-nightveil catalog SHA256",
+      "passed": true
+    },
+    {
+      "check": "rogue-nightveil measured visible bounds",
+      "passed": true
+    },
+    {
+      "check": "rogue-nightveil no alpha>32 clipping at canvas edge",
+      "passed": true
+    },
+    {
+      "check": "rogue-nightveil measured idle anchor",
+      "passed": true
+    },
+    {
+      "check": "rogue-nightveil unchanged approved master",
+      "passed": true
+    },
+    {
+      "check": "rogue-duelist file exists",
+      "passed": true
+    },
+    {
+      "check": "rogue-duelist real alpha",
+      "passed": true
+    },
+    {
+      "check": "rogue-duelist catalog SHA256",
+      "passed": true
+    },
+    {
+      "check": "rogue-duelist measured visible bounds",
+      "passed": true
+    },
+    {
+      "check": "rogue-duelist no alpha>32 clipping at canvas edge",
+      "passed": true
+    },
+    {
+      "check": "rogue-duelist measured idle anchor",
+      "passed": true
+    },
+    {
+      "check": "rogue-duelist unchanged approved master",
+      "passed": true
+    },
+    {
+      "check": "rogue-shadow file exists",
+      "passed": true
+    },
+    {
+      "check": "rogue-shadow real alpha",
+      "passed": true
+    },
+    {
+      "check": "rogue-shadow catalog SHA256",
+      "passed": true
+    },
+    {
+      "check": "rogue-shadow measured visible bounds",
+      "passed": true
+    },
+    {
+      "check": "rogue-shadow no alpha>32 clipping at canvas edge",
+      "passed": true
+    },
+    {
+      "check": "rogue-shadow measured idle anchor",
+      "passed": true
+    },
+    {
+      "check": "rogue-shadow unchanged approved master",
+      "passed": true
+    },
+    {
+      "check": "reaver-bastion file exists",
+      "passed": true
+    },
+    {
+      "check": "reaver-bastion real alpha",
+      "passed": true
+    },
+    {
+      "check": "reaver-bastion catalog SHA256",
+      "passed": true
+    },
+    {
+      "check": "reaver-bastion measured visible bounds",
+      "passed": true
+    },
+    {
+      "check": "reaver-bastion no alpha>32 clipping at canvas edge",
+      "passed": true
+    },
+    {
+      "check": "reaver-bastion measured idle anchor",
+      "passed": true
+    },
+    {
+      "check": "reaver-bastion unchanged approved master",
+      "passed": true
+    },
+    {
+      "check": "starseer-rimeweave file exists",
+      "passed": true
+    },
+    {
+      "check": "starseer-rimeweave real alpha",
+      "passed": true
+    },
+    {
+      "check": "starseer-rimeweave catalog SHA256",
+      "passed": true
+    },
+    {
+      "check": "starseer-rimeweave measured visible bounds",
+      "passed": true
+    },
+    {
+      "check": "starseer-rimeweave no alpha>32 clipping at canvas edge",
+      "passed": true
+    },
+    {
+      "check": "starseer-rimeweave measured idle anchor",
+      "passed": true
+    },
+    {
+      "check": "starseer-rimeweave unchanged approved master",
+      "passed": true
+    },
+    {
+      "check": "rogue-waywatcher file exists",
+      "passed": true
+    },
+    {
+      "check": "rogue-waywatcher real alpha",
+      "passed": true
+    },
+    {
+      "check": "rogue-waywatcher catalog SHA256",
+      "passed": true
+    },
+    {
+      "check": "rogue-waywatcher measured visible bounds",
+      "passed": true
+    },
+    {
+      "check": "rogue-waywatcher no alpha>32 clipping at canvas edge",
+      "passed": true
+    },
+    {
+      "check": "rogue-waywatcher measured idle anchor",
+      "passed": true
+    },
+    {
+      "check": "rogue-waywatcher unchanged approved master",
+      "passed": true
+    },
+    {
+      "check": "reaver-wayfarerPlate file exists",
+      "passed": true
+    },
+    {
+      "check": "reaver-wayfarerPlate real alpha",
+      "passed": true
+    },
+    {
+      "check": "reaver-wayfarerPlate catalog SHA256",
+      "passed": true
+    },
+    {
+      "check": "reaver-wayfarerPlate measured visible bounds",
+      "passed": true
+    },
+    {
+      "check": "reaver-wayfarerPlate no alpha>32 clipping at canvas edge",
+      "passed": true
+    },
+    {
+      "check": "reaver-wayfarerPlate measured idle anchor",
+      "passed": true
+    },
+    {
+      "check": "reaver-wayfarerPlate unchanged approved master",
+      "passed": true
+    },
+    {
+      "check": "starseer-wayfarerPlate file exists",
+      "passed": true
+    },
+    {
+      "check": "starseer-wayfarerPlate real alpha",
+      "passed": true
+    },
+    {
+      "check": "starseer-wayfarerPlate catalog SHA256",
+      "passed": true
+    },
+    {
+      "check": "starseer-wayfarerPlate measured visible bounds",
+      "passed": true
+    },
+    {
+      "check": "starseer-wayfarerPlate no alpha>32 clipping at canvas edge",
+      "passed": true
+    },
+    {
+      "check": "starseer-wayfarerPlate measured idle anchor",
+      "passed": true
+    },
+    {
+      "check": "starseer-wayfarerPlate unchanged generator bytes",
+      "passed": true
+    },
+    {
+      "check": "starseer-wayfarerPlate at least 64 px clearance every side",
+      "passed": true
+    },
+    {
+      "check": "herald-wayfarerPlate file exists",
+      "passed": true
+    },
+    {
+      "check": "herald-wayfarerPlate real alpha",
+      "passed": true
+    },
+    {
+      "check": "herald-wayfarerPlate catalog SHA256",
+      "passed": true
+    },
+    {
+      "check": "herald-wayfarerPlate measured visible bounds",
+      "passed": true
+    },
+    {
+      "check": "herald-wayfarerPlate no alpha>32 clipping at canvas edge",
+      "passed": true
+    },
+    {
+      "check": "herald-wayfarerPlate measured idle anchor",
+      "passed": true
+    },
+    {
+      "check": "herald-wayfarerPlate unchanged generator bytes",
+      "passed": true
+    },
+    {
+      "check": "herald-wayfarerPlate at least 64 px clearance every side",
+      "passed": true
+    },
+    {
+      "check": "rogue-wayfarerPlate file exists",
+      "passed": true
+    },
+    {
+      "check": "rogue-wayfarerPlate real alpha",
+      "passed": true
+    },
+    {
+      "check": "rogue-wayfarerPlate catalog SHA256",
+      "passed": true
+    },
+    {
+      "check": "rogue-wayfarerPlate measured visible bounds",
+      "passed": true
+    },
+    {
+      "check": "rogue-wayfarerPlate no alpha>32 clipping at canvas edge",
+      "passed": true
+    },
+    {
+      "check": "rogue-wayfarerPlate measured idle anchor",
+      "passed": true
+    },
+    {
+      "check": "rogue-wayfarerPlate unchanged generator bytes",
+      "passed": true
+    },
+    {
+      "check": "rogue-wayfarerPlate at least 64 px clearance every side",
+      "passed": true
+    },
+    {
+      "check": "reaver-nightweave file exists",
+      "passed": true
+    },
+    {
+      "check": "reaver-nightweave real alpha",
+      "passed": true
+    },
+    {
+      "check": "reaver-nightweave catalog SHA256",
+      "passed": true
+    },
+    {
+      "check": "reaver-nightweave measured visible bounds",
+      "passed": true
+    },
+    {
+      "check": "reaver-nightweave no alpha>32 clipping at canvas edge",
+      "passed": true
+    },
+    {
+      "check": "reaver-nightweave measured idle anchor",
+      "passed": true
+    },
+    {
+      "check": "reaver-nightweave unchanged generator bytes",
+      "passed": true
+    },
+    {
+      "check": "reaver-nightweave at least 64 px clearance every side",
+      "passed": true
+    },
+    {
+      "check": "starseer-nightweave file exists",
+      "passed": true
+    },
+    {
+      "check": "starseer-nightweave real alpha",
+      "passed": true
+    },
+    {
+      "check": "starseer-nightweave catalog SHA256",
+      "passed": true
+    },
+    {
+      "check": "starseer-nightweave measured visible bounds",
+      "passed": true
+    },
+    {
+      "check": "starseer-nightweave no alpha>32 clipping at canvas edge",
+      "passed": true
+    },
+    {
+      "check": "starseer-nightweave measured idle anchor",
+      "passed": true
+    },
+    {
+      "check": "starseer-nightweave unchanged approved master",
+      "passed": true
+    },
+    {
+      "check": "herald-nightweave file exists",
+      "passed": true
+    },
+    {
+      "check": "herald-nightweave real alpha",
+      "passed": true
+    },
+    {
+      "check": "herald-nightweave catalog SHA256",
+      "passed": true
+    },
+    {
+      "check": "herald-nightweave measured visible bounds",
+      "passed": true
+    },
+    {
+      "check": "herald-nightweave no alpha>32 clipping at canvas edge",
+      "passed": true
+    },
+    {
+      "check": "herald-nightweave measured idle anchor",
+      "passed": true
+    },
+    {
+      "check": "herald-nightweave unchanged generator bytes",
+      "passed": true
+    },
+    {
+      "check": "herald-nightweave at least 64 px clearance every side",
+      "passed": true
+    },
+    {
+      "check": "rogue-nightweave file exists",
+      "passed": true
+    },
+    {
+      "check": "rogue-nightweave real alpha",
+      "passed": true
+    },
+    {
+      "check": "rogue-nightweave catalog SHA256",
+      "passed": true
+    },
+    {
+      "check": "rogue-nightweave measured visible bounds",
+      "passed": true
+    },
+    {
+      "check": "rogue-nightweave no alpha>32 clipping at canvas edge",
+      "passed": true
+    },
+    {
+      "check": "rogue-nightweave measured idle anchor",
+      "passed": true
+    },
+    {
+      "check": "rogue-nightweave unchanged generator bytes",
+      "passed": true
+    },
+    {
+      "check": "rogue-nightweave at least 64 px clearance every side",
+      "passed": true
+    },
+    {
+      "check": "reaver-riteVestments file exists",
+      "passed": true
+    },
+    {
+      "check": "reaver-riteVestments real alpha",
+      "passed": true
+    },
+    {
+      "check": "reaver-riteVestments catalog SHA256",
+      "passed": true
+    },
+    {
+      "check": "reaver-riteVestments measured visible bounds",
+      "passed": true
+    },
+    {
+      "check": "reaver-riteVestments no alpha>32 clipping at canvas edge",
+      "passed": true
+    },
+    {
+      "check": "reaver-riteVestments measured idle anchor",
+      "passed": true
+    },
+    {
+      "check": "reaver-riteVestments unchanged generator bytes",
+      "passed": true
+    },
+    {
+      "check": "reaver-riteVestments at least 64 px clearance every side",
+      "passed": true
+    },
+    {
+      "check": "starseer-riteVestments file exists",
+      "passed": true
+    },
+    {
+      "check": "starseer-riteVestments real alpha",
+      "passed": true
+    },
+    {
+      "check": "starseer-riteVestments catalog SHA256",
+      "passed": true
+    },
+    {
+      "check": "starseer-riteVestments measured visible bounds",
+      "passed": true
+    },
+    {
+      "check": "starseer-riteVestments no alpha>32 clipping at canvas edge",
+      "passed": true
+    },
+    {
+      "check": "starseer-riteVestments measured idle anchor",
+      "passed": true
+    },
+    {
+      "check": "starseer-riteVestments unchanged generator bytes",
+      "passed": true
+    },
+    {
+      "check": "starseer-riteVestments at least 64 px clearance every side",
+      "passed": true
+    },
+    {
+      "check": "herald-riteVestments file exists",
+      "passed": true
+    },
+    {
+      "check": "herald-riteVestments real alpha",
+      "passed": true
+    },
+    {
+      "check": "herald-riteVestments catalog SHA256",
+      "passed": true
+    },
+    {
+      "check": "herald-riteVestments measured visible bounds",
+      "passed": true
+    },
+    {
+      "check": "herald-riteVestments no alpha>32 clipping at canvas edge",
+      "passed": true
+    },
+    {
+      "check": "herald-riteVestments measured idle anchor",
+      "passed": true
+    },
+    {
+      "check": "herald-riteVestments unchanged approved master",
+      "passed": true
+    },
+    {
+      "check": "rogue-riteVestments file exists",
+      "passed": true
+    },
+    {
+      "check": "rogue-riteVestments real alpha",
+      "passed": true
+    },
+    {
+      "check": "rogue-riteVestments catalog SHA256",
+      "passed": true
+    },
+    {
+      "check": "rogue-riteVestments measured visible bounds",
+      "passed": true
+    },
+    {
+      "check": "rogue-riteVestments no alpha>32 clipping at canvas edge",
+      "passed": true
+    },
+    {
+      "check": "rogue-riteVestments measured idle anchor",
+      "passed": true
+    },
+    {
+      "check": "rogue-riteVestments unchanged generator bytes",
+      "passed": true
+    },
+    {
+      "check": "rogue-riteVestments at least 64 px clearance every side",
+      "passed": true
+    },
+    {
+      "check": "reaver-gutterLeathers file exists",
+      "passed": true
+    },
+    {
+      "check": "reaver-gutterLeathers real alpha",
+      "passed": true
+    },
+    {
+      "check": "reaver-gutterLeathers catalog SHA256",
+      "passed": true
+    },
+    {
+      "check": "reaver-gutterLeathers measured visible bounds",
+      "passed": true
+    },
+    {
+      "check": "reaver-gutterLeathers no alpha>32 clipping at canvas edge",
+      "passed": true
+    },
+    {
+      "check": "reaver-gutterLeathers measured idle anchor",
+      "passed": true
+    },
+    {
+      "check": "reaver-gutterLeathers unchanged generator bytes",
+      "passed": true
+    },
+    {
+      "check": "reaver-gutterLeathers at least 64 px clearance every side",
+      "passed": true
+    },
+    {
+      "check": "starseer-gutterLeathers file exists",
+      "passed": true
+    },
+    {
+      "check": "starseer-gutterLeathers real alpha",
+      "passed": true
+    },
+    {
+      "check": "starseer-gutterLeathers catalog SHA256",
+      "passed": true
+    },
+    {
+      "check": "starseer-gutterLeathers measured visible bounds",
+      "passed": true
+    },
+    {
+      "check": "starseer-gutterLeathers no alpha>32 clipping at canvas edge",
+      "passed": true
+    },
+    {
+      "check": "starseer-gutterLeathers measured idle anchor",
+      "passed": true
+    },
+    {
+      "check": "starseer-gutterLeathers unchanged generator bytes",
+      "passed": true
+    },
+    {
+      "check": "starseer-gutterLeathers at least 64 px clearance every side",
+      "passed": true
+    },
+    {
+      "check": "herald-gutterLeathers file exists",
+      "passed": true
+    },
+    {
+      "check": "herald-gutterLeathers real alpha",
+      "passed": true
+    },
+    {
+      "check": "herald-gutterLeathers catalog SHA256",
+      "passed": true
+    },
+    {
+      "check": "herald-gutterLeathers measured visible bounds",
+      "passed": true
+    },
+    {
+      "check": "herald-gutterLeathers no alpha>32 clipping at canvas edge",
+      "passed": true
+    },
+    {
+      "check": "herald-gutterLeathers measured idle anchor",
+      "passed": true
+    },
+    {
+      "check": "herald-gutterLeathers unchanged generator bytes",
+      "passed": true
+    },
+    {
+      "check": "herald-gutterLeathers at least 64 px clearance every side",
+      "passed": true
+    },
+    {
+      "check": "rogue-gutterLeathers file exists",
+      "passed": true
+    },
+    {
+      "check": "rogue-gutterLeathers real alpha",
+      "passed": true
+    },
+    {
+      "check": "rogue-gutterLeathers catalog SHA256",
+      "passed": true
+    },
+    {
+      "check": "rogue-gutterLeathers measured visible bounds",
+      "passed": true
+    },
+    {
+      "check": "rogue-gutterLeathers no alpha>32 clipping at canvas edge",
+      "passed": true
+    },
+    {
+      "check": "rogue-gutterLeathers measured idle anchor",
+      "passed": true
+    },
+    {
+      "check": "rogue-gutterLeathers unchanged approved master",
+      "passed": true
+    },
+    {
+      "check": "31 unique appearance masters",
+      "passed": true
+    },
+    {
+      "check": "No cross-wearer duplicate PNG aliases",
+      "passed": true
+    },
+    {
+      "check": "reaver-default desktop composition",
+      "passed": true
+    },
+    {
+      "check": "reaver-default phone composition",
+      "passed": true
+    },
+    {
+      "check": "reaver-vigil desktop composition",
+      "passed": true
+    },
+    {
+      "check": "reaver-vigil phone composition",
+      "passed": true
+    },
+    {
+      "check": "reaver-oathsworn desktop composition",
+      "passed": true
+    },
+    {
+      "check": "reaver-oathsworn phone composition",
+      "passed": true
+    },
+    {
+      "check": "reaver-warden desktop composition",
+      "passed": true
+    },
+    {
+      "check": "reaver-warden phone composition",
+      "passed": true
+    },
+    {
+      "check": "starseer-default desktop composition",
+      "passed": true
+    },
+    {
+      "check": "starseer-default phone composition",
+      "passed": true
+    },
+    {
+      "check": "starseer-eclipse desktop composition",
+      "passed": true
+    },
+    {
+      "check": "starseer-eclipse phone composition",
+      "passed": true
+    },
+    {
+      "check": "starseer-starlit desktop composition",
+      "passed": true
+    },
+    {
+      "check": "starseer-starlit phone composition",
+      "passed": true
+    },
+    {
+      "check": "starseer-astral desktop composition",
+      "passed": true
+    },
+    {
+      "check": "starseer-astral phone composition",
+      "passed": true
+    },
+    {
+      "check": "herald-default desktop composition",
+      "passed": true
+    },
+    {
+      "check": "herald-default phone composition",
+      "passed": true
+    },
+    {
+      "check": "herald-ossuary desktop composition",
+      "passed": true
+    },
+    {
+      "check": "herald-ossuary phone composition",
+      "passed": true
+    },
+    {
+      "check": "herald-emberhabit desktop composition",
+      "passed": true
+    },
+    {
+      "check": "herald-emberhabit phone composition",
+      "passed": true
+    },
+    {
+      "check": "herald-pilgrim desktop composition",
+      "passed": true
+    },
+    {
+      "check": "herald-pilgrim phone composition",
+      "passed": true
+    },
+    {
+      "check": "rogue-default desktop composition",
+      "passed": true
+    },
+    {
+      "check": "rogue-default phone composition",
+      "passed": true
+    },
+    {
+      "check": "rogue-nightveil desktop composition",
+      "passed": true
+    },
+    {
+      "check": "rogue-nightveil phone composition",
+      "passed": true
+    },
+    {
+      "check": "rogue-duelist desktop composition",
+      "passed": true
+    },
+    {
+      "check": "rogue-duelist phone composition",
+      "passed": true
+    },
+    {
+      "check": "rogue-shadow desktop composition",
+      "passed": true
+    },
+    {
+      "check": "rogue-shadow phone composition",
+      "passed": true
+    },
+    {
+      "check": "reaver-bastion desktop composition",
+      "passed": true
+    },
+    {
+      "check": "reaver-bastion phone composition",
+      "passed": true
+    },
+    {
+      "check": "starseer-rimeweave desktop composition",
+      "passed": true
+    },
+    {
+      "check": "starseer-rimeweave phone composition",
+      "passed": true
+    },
+    {
+      "check": "rogue-waywatcher desktop composition",
+      "passed": true
+    },
+    {
+      "check": "rogue-waywatcher phone composition",
+      "passed": true
+    },
+    {
+      "check": "starseer-wayfarerPlate desktop composition",
+      "passed": true
+    },
+    {
+      "check": "starseer-wayfarerPlate phone composition",
+      "passed": true
+    },
+    {
+      "check": "herald-wayfarerPlate desktop composition",
+      "passed": true
+    },
+    {
+      "check": "herald-wayfarerPlate phone composition",
+      "passed": true
+    },
+    {
+      "check": "rogue-wayfarerPlate desktop composition",
+      "passed": true
+    },
+    {
+      "check": "rogue-wayfarerPlate phone composition",
+      "passed": true
+    },
+    {
+      "check": "reaver-nightweave desktop composition",
+      "passed": true
+    },
+    {
+      "check": "reaver-nightweave phone composition",
+      "passed": true
+    },
+    {
+      "check": "herald-nightweave desktop composition",
+      "passed": true
+    },
+    {
+      "check": "herald-nightweave phone composition",
+      "passed": true
+    },
+    {
+      "check": "rogue-nightweave desktop composition",
+      "passed": true
+    },
+    {
+      "check": "rogue-nightweave phone composition",
+      "passed": true
+    },
+    {
+      "check": "reaver-riteVestments desktop composition",
+      "passed": true
+    },
+    {
+      "check": "reaver-riteVestments phone composition",
+      "passed": true
+    },
+    {
+      "check": "starseer-riteVestments desktop composition",
+      "passed": true
+    },
+    {
+      "check": "starseer-riteVestments phone composition",
+      "passed": true
+    },
+    {
+      "check": "rogue-riteVestments desktop composition",
+      "passed": true
+    },
+    {
+      "check": "rogue-riteVestments phone composition",
+      "passed": true
+    },
+    {
+      "check": "reaver-gutterLeathers desktop composition",
+      "passed": true
+    },
+    {
+      "check": "reaver-gutterLeathers phone composition",
+      "passed": true
+    },
+    {
+      "check": "starseer-gutterLeathers desktop composition",
+      "passed": true
+    },
+    {
+      "check": "starseer-gutterLeathers phone composition",
+      "passed": true
+    },
+    {
+      "check": "herald-gutterLeathers desktop composition",
+      "passed": true
+    },
+    {
+      "check": "herald-gutterLeathers phone composition",
+      "passed": true
+    },
+    {
+      "check": "reaver-nightweave reference hash references/exec-353150bd-e088-495c-9399-c051d728e328.png",
+      "passed": true
+    },
+    {
+      "check": "reaver-riteVestments reference hash references/exec-409d6347-1164-4c1e-af8d-00913f7b97e7.png",
+      "passed": true
+    },
+    {
+      "check": "reaver-gutterLeathers reference hash references/exec-9790df6e-e7fb-49f3-8ce9-87ad8e4d5122.png",
+      "passed": true
+    },
+    {
+      "check": "starseer-wayfarerPlate reference hash references/starseer-default-rear.png",
+      "passed": true
+    },
+    {
+      "check": "starseer-wayfarerPlate reference hash references/reaver-default-rear.png",
+      "passed": true
+    },
+    {
+      "check": "starseer-riteVestments reference hash references/starseer-default-rear.png",
+      "passed": true
+    },
+    {
+      "check": "starseer-riteVestments reference hash references/herald-default-rear.png",
+      "passed": true
+    },
+    {
+      "check": "starseer-gutterLeathers reference hash references/starseer-default-rear.png",
+      "passed": true
+    },
+    {
+      "check": "starseer-gutterLeathers reference hash references/rogue-default-rear.png",
+      "passed": true
+    },
+    {
+      "check": "herald-wayfarerPlate reference hash references/herald-default-rear.png",
+      "passed": true
+    },
+    {
+      "check": "herald-wayfarerPlate reference hash references/reaver-default-rear.png",
+      "passed": true
+    },
+    {
+      "check": "herald-nightweave reference hash references/herald-default-rear.png",
+      "passed": true
+    },
+    {
+      "check": "herald-nightweave reference hash references/starseer-default-rear.png",
+      "passed": true
+    },
+    {
+      "check": "herald-gutterLeathers reference hash references/herald-default-rear.png",
+      "passed": true
+    },
+    {
+      "check": "herald-gutterLeathers reference hash references/rogue-default-rear.png",
+      "passed": true
+    },
+    {
+      "check": "rogue-wayfarerPlate reference hash references/rogue-default-rear.png",
+      "passed": true
+    },
+    {
+      "check": "rogue-wayfarerPlate reference hash references/reaver-default-rear.png",
+      "passed": true
+    },
+    {
+      "check": "rogue-nightweave reference hash references/rogue-default-rear.png",
+      "passed": true
+    },
+    {
+      "check": "rogue-nightweave reference hash references/starseer-default-rear.png",
+      "passed": true
+    },
+    {
+      "check": "rogue-riteVestments reference hash references/rogue-default-rear.png",
+      "passed": true
+    },
+    {
+      "check": "rogue-riteVestments reference hash references/herald-default-rear.png",
+      "passed": true
+    },
+    {
+      "check": "Review scene layer references/scene/ashen-crown-far.png",
+      "passed": true
+    },
+    {
+      "check": "Review scene layer references/scene/ashen-crown-1-landmark.png",
+      "passed": true
+    },
+    {
+      "check": "Review scene layer references/scene/ashen-crown-ground.png",
+      "passed": true
+    },
+    {
+      "check": "Review scene layer references/scene/ashen-crown-foreground.png",
+      "passed": true
+    },
+    {
+      "check": "Review scene layer references/scene/ashen-crown-phone-foreground.png",
+      "passed": true
+    }
+  ],
+  "auditSourceCheckout": false,
+  "limits": [
+    "Visual review recorded separately; hashes do not prove visual quality.",
+    "No game runtime, CI, animation, or physical-device acceptance claimed."
+  ]
+}

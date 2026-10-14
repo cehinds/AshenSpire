@@ -10,7 +10,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { SHAKE_STEPS, SHAKE_MAX_PX, HIT_STOP, shakePxFor, hitStopMsFor, combatFeelIssues } from '../src/content/combatFeel.js';
-import { ANIM_SPEEDS, playTimeline, setAnimSpeed } from '../src/ui/fx.js';
+import { ANIM_SPEEDS, playTimeline, setAnimSpeed, setBeatOrder } from '../src/ui/fx.js';
 import { registerStage } from '../src/ui/services/PoseAnimator.js';
 import { playReaverAttack } from '../src/ui/reaverAttack.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
@@ -73,6 +73,31 @@ test('fx shakes every HP hit by its HP and holds the figures on paced playback o
   assert.doesNotMatch(fast, /hit-stop|hitStopMsFor/, 'the instant path never holds');
 });
 
+test('rear reactions tint and knock back in the canvas, not through CSS filters', () => {
+  const css = src('styles/combat.css');
+  const rear = css.match(/\.player \.sprite\.hitflash > \.alternative-card-stage:not\(\[data-still\]\)[^{]*\{[^}]*\}/)?.[0] || '';
+  assert.match(rear, /animation-name: none;/, 'the rear root takes no hit animation');
+  assert.doesNotMatch(css, /rear-reaction-flash/, 'the old interpolated rear tint is gone');
+  assert.doesNotMatch(rear, /hue-rotate|filter|translate/);
+  // A stagger keeps a visible, stepped (never interpolated) tint and no transform.
+  assert.match(css, /\.player \.sprite\.wobble:not\(\.hitflash\) > \.alternative-card-stage:first-child,[^{]*\.player \.sprite\.hitflash > \.alternative-card-stage\[data-still\]:first-child[^{]*\{\s*animation-name: rear-stagger-flash;/, 'a still (Rendered) stage keeps a stepped CSS hit tint');
+  const stagger = css.match(/@keyframes rear-stagger-flash \{[\s\S]*?\n\}/)?.[0] || '';
+  assert.match(stagger, /0%, 44\.99% \{ filter: sepia\(1\)/);
+  assert.doesNotMatch(stagger, /transform/);
+  // A click-skip ends every hit reaction, held by hit-stop or not.
+  const fx = src('src/ui/fx.js');
+  assert.match(fx, /stageFor\(sprite\)\?\.endReaction\?\.\(\)/);
+});
+
+test('enemy hits knock back 22px held through the peak and tint from impact', () => {
+  const css = src('styles/combat.css');
+  const enemy = css.match(/@keyframes hit-enemy \{[\s\S]*?\n\}/)?.[0] || '';
+  assert.match(enemy, /translateX\(22px\)/);
+  assert.match(enemy, /20%, 45% \{ transform: translateX\(22px\); \}/);
+  assert.match(enemy, /0%, 44\.99% \{ filter: sepia\(1\) saturate\(8\) hue-rotate\(315deg\); \}/, 'the tint starts at impact');
+  assert.match(css, /@keyframes hit-enemy-heavy \{[\s\S]*?translateX\(34px\)/);
+});
+
 test('the CSS pauses a held figure and scales the shake by --shake-px', () => {
   const css = src('styles/combat.css');
   assert.match(css, /^\.hit-stop \{ animation-play-state: paused !important; \}$/m);
@@ -108,9 +133,9 @@ function drive(t, fn) {
       animateActor: () => ({ impactMs: 100, totalMs: 800,
         hold: (ms) => holds.push(['actor', ms, Date.now()]), cancel() {} }),
       onFlush: () => flushes++, onBeatApplied() {} };
-    const events = (amounts) => [{ type: 'enemyMoveStarted', sourceId: 'enemy', kind: 'attack' },
+    const events = (amounts, opener) => [opener || { type: 'enemyMoveStarted', sourceId: 'enemy', kind: 'attack' },
       ...amounts.map((amount) => ({ type: 'damageDealt', sourceId: 'enemy', targetId: 'player', amount }))];
-    const start = (amounts) => playTimeline(events(amounts), ctx, () => completed++);
+    const start = (amounts, opener) => playTimeline(events(amounts, opener), ctx, () => completed++);
     const fire = (name) => { for (const cb of [...(listeners.get(name) || [])]) cb(); };
     try { fn({ dom, actor, target, combatEl, holds, reactions, buzzes, start, fire,
       tick: (ms) => t.mock.timers.tick(ms), stats: () => ({ flushes, completed, settled }) }); }
@@ -118,32 +143,71 @@ function drive(t, fn) {
   });
 }
 
-test('each qualifying multi-hit impact holds both figures, and buzzes at first impact once', (t) => {
+// Sequential beat order (animationPace.js, owner 2026-10-11; SPEC §7.4): the
+// hit-stop holds the attacker's impact frame alone; the target's recoil plays
+// unheld after the swing has settled (impactMs 100, totalMs 800 + both holds).
+test('each qualifying multi-hit impact holds the attacker, and buzzes once, with the first number', (t) => {
   drive(t, ({ start, tick, holds, buzzes, reactions }) => {
     start([6, 10]); tick(100);
-    assert.deepEqual(holds, [['actor', 60, 10100], ['target', 60, 10100]]);
-    assert.deepEqual(reactions, [['hit', 220]], 'target playback keeps its base duration');
-    assert.deepEqual(buzzes, [['damageTaken', 10100]], 'buzz arrives before recovery');
-    tick(150);
-    assert.deepEqual(holds.slice(2), [['actor', 60, 10250], ['target', 60, 10250]]);
+    assert.deepEqual(holds, [['actor', 60, 10100]], 'the attacker holds at impact');
+    assert.deepEqual(reactions, [], 'the target has not reacted mid-swing');
+    // SPEC §7.4 (sequential): the number fires with its sound and haptic, reactionMs after the reaction.
+    assert.deepEqual(buzzes, [], 'no buzz at the contact');
+    tick(128);
+    assert.deepEqual(holds.slice(1), [['actor', 60, 10228]], 'the second hit holds the attacker after its step and the first hold');
+    tick(128); tick(564);
+    assert.deepEqual(reactions, [['hit', 220]], 'the target reacts once the swing (800 + 120 ms) is over, at its base duration');
+    assert.deepEqual(buzzes, [], 'nor at the reaction');
+    tick(ANIM_SPEEDS.normal.reactionMs);
+    assert.deepEqual(buzzes, [['damageTaken', 10920 + ANIM_SPEEDS.normal.reactionMs]], 'the buzz comes with the first number');
     for (let i = 0; i < 100; i++) tick(20);
+    assert.equal(reactions.length, 2, 'the second hit reacts too');
+    assert.ok(holds.every(([who]) => who === 'actor'), 'the target is never held');
     assert.equal(buzzes.length, 1, 'recovery does not buzz twice');
   });
 });
 
-test('a click during hit-stop clears both held figures and flushes once without a second buzz', (t) => {
+test('beatOrder impact holds both figures at impact, as before', (t) => {
+  setBeatOrder('impact');
+  try {
+    drive(t, ({ start, tick, holds, reactions }) => {
+      start([6]); tick(100);
+      assert.deepEqual(holds, [['actor', 60, 10100], ['target', 60, 10100]]);
+      assert.deepEqual(reactions, [['hit', 220]]);
+      for (let i = 0; i < 100; i++) tick(20);
+    });
+  } finally { setBeatOrder('sequential'); }
+});
+
+test('a click during hit-stop clears the held attacker and flushes once without a second buzz', (t) => {
   drive(t, ({ start, tick, actor, target, fire, stats, buzzes }) => {
     start([6]); tick(100);
-    assert.ok(actor.classList.contains('hit-stop'));
-    assert.ok(target.classList.contains('hit-stop'));
+    assert.ok(actor.classList.contains('hit-stop'), 'the attacker holds at impact');
+    assert.ok(!target.classList.contains('hit-stop'), 'the target is not held at impact (sequential)');
     fire('pointerdown');
     assert.ok(!actor.classList.contains('hit-stop'));
     assert.ok(!target.classList.contains('hit-stop'));
-    assert.equal(stats().settled, 1);
+    assert.equal(stats().settled, 0, "sequential: the target was never held at impact, so the skip has no recoil to release");
     fire('pointerup'); tick(1);
     assert.equal(stats().flushes, 1);
     assert.equal(stats().completed, 1);
     assert.equal(buzzes.length, 1);
+  });
+});
+
+test('a counter beat holds on an HP hit of 6 or more, like an attack beat (SPEC §7.4)', (t) => {
+  drive(t, ({ start, tick, holds }) => {
+    start([6], { type: 'combatCounterTriggered', sourceId: 'enemy', targetId: 'player' }); tick(100);
+    assert.deepEqual(holds, [['actor', 60, 10100], ['target', 60, 10100]], 'a counter hit of 6 HP holds both figures');
+    for (let i = 0; i < 100; i++) tick(20);
+  });
+});
+
+test('a counter beat does not hold on an HP hit under 6', (t) => {
+  drive(t, ({ start, tick, holds }) => {
+    start([5], { type: 'combatCounterTriggered', sourceId: 'enemy', targetId: 'player' }); tick(100);
+    assert.equal(holds.length, 0, 'a counter hit of 5 HP does not hold');
+    for (let i = 0; i < 100; i++) tick(20);
   });
 });
 
@@ -153,7 +217,8 @@ for (const mode of ['instant', 'reduced-motion', 'no-shake']) {
       if (mode === 'instant') setAnimSpeed('instant');
       else dom.document.body.classList.add(mode);
       start([6]); tick(100);
-      assert.equal(holds.length, mode === 'no-shake' ? 2 : 0);
+      // Sequential: only the attacker holds at impact; the target holds at its reaction.
+      assert.equal(holds.length, mode === 'no-shake' ? 1 : 0);
       assert.equal(combatEl.classList.contains('shake'), mode === 'instant');
       for (let i = 0; i < 100; i++) tick(20);
     });

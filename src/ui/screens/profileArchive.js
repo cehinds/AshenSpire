@@ -177,8 +177,8 @@ export function renderProfileSection(container, { saves, onRestored }) {
       card.appendChild(box);
       cancel.addEventListener('click', () => box.remove());
       cancel.focus();
-      go.addEventListener('click', () => {
-        const res = saves.restoreProfile(a.id);
+      go.addEventListener('click', async () => {
+        const res = await saves.restoreProfile(a.id);
         if (res.ok) {
           // Re-render FIRST, then speak into the node that survives it. Saying
           // it first wrote the message into an element the re-render replaced,

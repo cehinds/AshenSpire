@@ -128,12 +128,54 @@ const FONTS_FN = '__ashenFonts';
  * `source` is 'trees' (this repository), 'cache' (the fetched release) or
  * 'auto' (each pack's verified cache, else its tree: tools/art-source.mjs).
  */
+export function withAlternativeArt(manifest, root = ROOT) {
+  const catalogFile = resolve(root, 'src/ui/alternativeArtCatalog.js');
+  if (!existsSync(catalogFile)) return manifest;
+  const match = readFileSync(catalogFile, 'utf8').match(/^export const alternativeArtCatalog = (.+);\r?$/m);
+  if (!match) throw new Error('Alternative art catalog must be generated before packing');
+  const catalog = JSON.parse(match[1]);
+  catalog.filePaths ||= {};
+  const actionsFile = resolve(root, 'src/content/alternativeCardAnimations.js');
+  if (existsSync(actionsFile)) {
+    const actions = readFileSync(actionsFile, 'utf8').match(/^export const alternativeCardAnimations = (.+);\r?$/m);
+    if (!actions) throw new Error('Alternative card actions must be generated before packing');
+    const actionCatalog = JSON.parse(actions[1]);
+    for (const [file, hash] of Object.entries(actionCatalog.hashes)) {
+      if (Object.hasOwn(catalog.hashes, file)) throw new Error(`Duplicate alternative art: ${file}`);
+      catalog.hashes[file] = hash;
+      if (actionCatalog.filePaths?.[file]) catalog.filePaths[file] = actionCatalog.filePaths[file];
+    }
+  }
+  const stancesFile = resolve(root, 'src/content/alternativeSelectedStances.js');
+  if (existsSync(stancesFile)) {
+    const stances = readFileSync(stancesFile, 'utf8').match(/^export const alternativeSelectedStances = (.+);\r?$/m);
+    if (!stances) throw new Error('Selected stances must be exported before packing');
+    const stancesCatalog = JSON.parse(stances[1]);
+    for (const [file, hash] of Object.entries(stancesCatalog.hashes)) {
+      if (Object.hasOwn(catalog.hashes, file)) throw new Error(`Duplicate alternative art: ${file}`);
+      catalog.hashes[file] = hash;
+      if (stancesCatalog.filePaths?.[file]) catalog.filePaths[file] = stancesCatalog.filePaths[file];
+    }
+  }
+  const assets = { ...manifest.assets };
+  for (const [file, expected] of Object.entries(catalog.hashes)) {
+    if (!/^(?:stances\/[a-z]+\/)?[a-zA-Z0-9-]+\.webp$/.test(file)) throw new Error(`Invalid alternative art filename: ${file}`);
+    const id = catalog.filePaths[file] || `assets-display/alternative/${file}`;
+    if (!/^assets-display\/(alternative|shared)\/(?:stances\/[a-z]+\/)?[a-zA-Z0-9-]+\.webp$/.test(id) || !id.endsWith('/' + file)) throw new Error(`Invalid display art path: ${id}`);
+    const bytes = readFileSync(resolve(root, id));
+    if (sha256(bytes) !== expected) throw new Error(`Alternative art changed: ${file}; regenerate its catalog`);
+    if (assets[id]) throw new Error(`Alternative art ID collides with a pinned pack: ${id}`);
+    assets[id] = { common: { path:id, sha256:expected, bytes:bytes.length } };
+  }
+  return { ...manifest, assets };
+}
+
 export function planPacks(root = ROOT, packs = PACKS, { source: from = 'auto' } = {}) {
   const problems = [];
   if (!SOURCES.includes(from)) return { packs: {}, fonts: null, problems: [`unknown source ${JSON.stringify(from)} (one of ${SOURCES.join(', ')})`] };
   const manifestFile = resolve(root, MANIFEST_PATH);
   if (!existsSync(manifestFile)) return { packs: {}, fonts: null, problems: [`${MANIFEST_PATH} is missing — node tools/art-manifest.mjs --write`] };
-  const manifest = JSON.parse(readFileSync(manifestFile, 'utf8'));
+  const manifest = withAlternativeArt(JSON.parse(readFileSync(manifestFile, 'utf8')), root);
   if (manifest.schema !== 2) problems.push(`${MANIFEST_PATH} is schema ${manifest.schema}; the pack format needs schema 2 (node tools/art-manifest.mjs --write)`);
   let sources = null;
   const treeSources = () => (sources = sources || new Map(commonSources(root).map((c) => [c.id, c.source])));
@@ -159,7 +201,9 @@ export function planPacks(root = ROOT, packs = PACKS, { source: from = 'auto' } 
       const mime = mimeOf(id);
       if (!mime) { problems.push(`${id}: no mime for ${extname(id) || 'a file without an extension'} — the pack cannot carry it`); continue; }
       let source;
-      if (cacheDir) {
+      if (id.startsWith('assets-display/')) {
+        source = resolve(root, rec.path);
+      } else if (cacheDir) {
         source = resolve(cacheDir, rec.path);
         if (!source.startsWith(cacheDir + sep)) { problems.push(`${id}: its ${pack} path ${rec.path} escapes the cache`); continue; }
       } else source = common ? treeSources().get(id) : resolve(root, rec.path);
@@ -486,7 +530,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const packs = packArg ? packArg.split(',').filter(Boolean) : PACKS;
   try {
     if (args.includes('--check')) {
-      const manifest = JSON.parse(readFileSync(resolve(ROOT, MANIFEST_PATH), 'utf8'));
+      const manifest = withAlternativeArt(JSON.parse(readFileSync(resolve(ROOT, MANIFEST_PATH), 'utf8')));
       const problems = verifyPacks(out, { manifest, packs });
       if (problems.length) {
         console.error(`asset-pack: FAIL — ${problems.length} problem(s) in ${posix(relative(process.cwd(), out)) || '.'}:`);

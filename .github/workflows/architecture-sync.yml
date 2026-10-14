@@ -5,9 +5,12 @@ on:
     branches: [dev, alternative/dev, 'alternative/**/dev']
   workflow_dispatch:
 
+# Own group, per workflow and target ref. A shared group would let one pending run replace the
+# other (GitHub keeps one pending run per group). The regenerate-and-retry push loop
+# below handles the race with readme-sync.yml instead.
 concurrency:
   group: architecture-sync-${{ github.ref_name }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 # The routine commits only the generated current-dev inventory. The core
 # architecture contracts are intentionally outside its write set.
@@ -16,7 +19,7 @@ permissions:
 
 jobs:
   refresh:
-    if: (github.ref_name == 'dev' || (startsWith(github.ref_name, 'alternative/') && endsWith(github.ref_name, '/dev'))) && (github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[architecture-sync]'))
+    if: github.ref_name != 'alternative/dev' && (github.ref_name == 'dev' || (startsWith(github.ref_name, 'alternative/') && endsWith(github.ref_name, '/dev'))) && (github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[architecture-sync]'))
     runs-on: ubuntu-latest
     steps:
       - name: Check out the merged dev tree
@@ -31,20 +34,45 @@ jobs:
           ARCHITECTURE_SOURCE_REF: ${{ github.ref_name }}
         run: node tools/update-architecture.mjs --verify
 
-      - name: Commit only the generated current-dev snapshot
+      - name: Regenerate the snapshot from the current origin tip, commit it, and push it behind the branch
+        # A plain push is rejected when readme-sync pushed first, and a GITHUB_TOKEN
+        # push does not retrigger workflows. Every try therefore starts from the
+        # current origin/$REF_NAME (this run also serves alternative/*/dev), resets
+        # to it, regenerates the snapshot there and commits only if it changed. The
+        # snapshot names the commit it is generated from, which is then the commit
+        # it sits on, so a snapshot made before a rebase is never replayed with a
+        # stale SHA. Up to four tries (three retries), with 2, 4 and 8 seconds of backoff.
         shell: bash
+        env:
+          REF_NAME: ${{ github.ref_name }}
         run: |
-          if git diff --quiet -- docs/ARCHITECTURE-CURRENT-DEV.md; then
-            echo "Architecture snapshot already current."
-            exit 0
-          fi
-          if ! git diff --quiet -- docs/ARCHITECTURE-MAP.md docs/COMPONENT-MODEL-ARCHITECTURE.md; then
-            echo "Core architecture contracts changed during the refresh; refusing automatic update."
-            exit 1
-          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -- docs/ARCHITECTURE-CURRENT-DEV.md
-          git diff --cached --name-only
-          git commit -m "docs: refresh current-dev architecture [architecture-sync]"
-          git push origin "HEAD:$GITHUB_REF_NAME"
+
+          delays=(2 4 8)
+          for attempt in 1 2 3 4; do
+            git fetch -q origin "+refs/heads/$REF_NAME:refs/remotes/origin/$REF_NAME"
+            git reset -q --hard "origin/$REF_NAME"
+            # The snapshot covers the commit it is generated from: the current origin tip.
+            ARCHITECTURE_SOURCE_SHA="$(git rev-parse HEAD)" ARCHITECTURE_SOURCE_REF="$REF_NAME" node tools/update-architecture.mjs --verify
+            if ! git diff --quiet -- docs/ARCHITECTURE-MAP.md docs/COMPONENT-MODEL-ARCHITECTURE.md; then
+              echo "Core architecture contracts changed during the refresh; refusing automatic update."
+              exit 1
+            fi
+            if git diff --quiet -- docs/ARCHITECTURE-CURRENT-DEV.md; then
+              echo "origin/$REF_NAME already carries the current snapshot."
+              exit 0
+            fi
+            git add -- docs/ARCHITECTURE-CURRENT-DEV.md
+            git commit -q -m "docs: refresh current-dev architecture [architecture-sync]"
+            if git push -q origin "HEAD:$REF_NAME"; then
+              echo "Pushed architecture snapshot to $REF_NAME (attempt $attempt)."
+              exit 0
+            fi
+            echo "Push to $REF_NAME rejected (attempt $attempt)."
+            if [ "$attempt" -lt 4 ]; then
+              sleep "${delays[$((attempt - 1))]}"
+            fi
+          done
+          echo "::error::Architecture snapshot could not be pushed to $REF_NAME after 4 attempts."
+          exit 1

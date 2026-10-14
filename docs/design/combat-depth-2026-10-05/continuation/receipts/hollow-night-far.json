@@ -1,0 +1,25 @@
+{
+  "id": "hollow-night-far",
+  "kind": "far",
+  "transparent": false,
+  "resultFile": "scenes/shared/hollow-weald/night-far.png",
+  "prompt": "Create one opaque distant background plate for the moonlit Hollow Weald in AshenSpire. Low distant dead forest and Gothic silhouettes across a misty valley, dim blue-grey full moon peeking through clouds upper right, slate night sky, subtle cool mist fills lower half. Detailed painterly dark fantasy, weathered realism. ONLY distant sky, remote forest and valley mist. No near trees, bridge, chapel, landmark, walkable ground, lantern, person, monster, UI or text. Full bleed wide 1536x1024. Neutral moonlight, faint muted umber remnants in distant foliage; no orange sunset.",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a112fc-0e64-7472-a495-aba14ffa5ab6\\exec-f3f2d67f-50a5-4f20-80a3-fd308c63e1f8.png",
+  "generator": "built-in image_gen",
+  "size": [
+    1536,
+    1024
+  ],
+  "mode": "RGB",
+  "sha256": "88a8be2b56fa28548e03f522d2640e05f85568e702d133377fe221ca897817c8",
+  "alphaRange": null,
+  "transparentFraction": 0,
+  "visibleBounds": [
+    0,
+    0,
+    1536,
+    1024
+  ],
+  "alphaThreshold": 32,
+  "reference": "../references/composition.png"
+}

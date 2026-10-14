@@ -1,0 +1,84 @@
+{
+  "channel": "release",
+  "version": "0.7.1.1060",
+  "commit": "0de2379c95a2eea974b8dbd75d830d3eb03e6583",
+  "url": "https://cehinds.github.io/AshenSpire/release/1060/",
+  "capturedAt": "2026-10-08T03:20:10.699Z",
+  "shots": [
+    {
+      "file": "creation.png",
+      "state": "customize",
+      "url": "https://cehinds.github.io/AshenSpire/release/1060/?shot=customize",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "sha256": "29b95a3d0f3b0fc7be275715c4342516e6eedbe8d4f1c5ce0e792a8fa3856550",
+      "page": {
+        "title": "Ashen Spire",
+        "text": " Moonward Scholar, Comet Reader\n🗡\nRogue\nSets up a clean opening, then turns speed, poison, and opportunism into decisive strikes before the enemy can recover.\nMastery 0 · Next: Quiet Guard, Measured Point, Knife Work, First Knife, Pocket Method\n☀\nHerald\nSpends its own health to act, then heals it back. Spreads a rot that damages enemies over time. One pool for everything, so mistakes stack up fast.\nMastery 0 · Next: Rite Shelter, Blight Precision, Oath Edge, Ashen Mercy, Censer Keeper\nBack\nNext",
+        "images": 2
+      }
+    },
+    {
+      "file": "shop.png",
+      "state": "shop",
+      "url": "https://cehinds.github.io/AshenSpire/release/1060/?shot=shop",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "sha256": "a4923b7dff8abd85ba5a0175563c88900d1772e37957420f7b5ec2c5f38cbc71",
+      "page": {
+        "title": "Ashen Spire",
+        "text": "HP\n63/63\nMerchant\n999 cinders\n✕\nRELICS\n2 for sale\nInspect\nWhetstone Fragment\n\nYour first attack each combat deals 4 extra damage.\n\nBuy\n437 cinders\nInspect\nTwinned Armor\n\nEvery 10th card you play each combat: gain 6 Block.\n\nBuy\n611 cinders\nARMAMENTS\n3 for sale\nRELICS\n2 for sale\nFLASKS\n2 for sale\nSKILL BOOKS\n2 for sale\nSERVICES\n1 of 1 open\nSELL\n1 he will take\nLeave\nBuy · 437 cindersHOLD",
+        "images": 7
+      }
+    },
+    {
+      "file": "combat-phone.png",
+      "state": "combat",
+      "url": "https://cehinds.github.io/AshenSpire/release/1060/?shot=combat",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "sha256": "2b79d2b564f5b08d8d9ff5cf0922b4c6b6dfcd146c562a627a181a2e59c2d2d6",
+      "page": {
+        "title": "Ashen Spire",
+        "text": "HP\n63/63\nPlayer Turn\n63/63\n3×2\n16/16\n5\n19/19\nDodge Roll\nGain 4 Block and 4 Poise guard.\nCost reflects your current weight.\n1\n1\nGorefire Slash\nDeal 9 damage.\nApply 3 Bleed.\n1\n1\nBlade · Gorefire · Weapon · Melee · Blood\n2\nSlashing Strike\nDeal 9 damage.\n1\nBlade · Weapon · Melee\n3\nShield Strike\nDeal 4 damage.\n1\nGuard · Weapon · Melee\n4\n3\n3\nSP\n7 Draw\n7\nEnd Turn\nHOLD\nDiscard 0\nExhaust 0\nPotions",
+        "images": 28
+      }
+    },
+    {
+      "file": "map.png",
+      "state": "map",
+      "url": "https://cehinds.github.io/AshenSpire/release/1060/?shot=map&shotWalk=5",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "sha256": "90933bfce316b041b3bd76a4a251290371cbdd04698dc1b54898809edf72c8a8",
+      "page": {
+        "title": "Ashen Spire",
+        "text": "HP\n63/63\n♠\nACT I — THE PALE MARCHES\nENTRANCE\n⚔\n⚔\n?\n⚔\n♨\nBOSS\nACT I — THE PALE MARCHES\n⚔\n?\n⚔\n⚔\n⚔\n?\n⚔\n♨\n⚔\n⚖\n♨\n👁\n👁\n👁\n−\n⊙\n+\n?\nPotions\n\nChoose a lit node to see what waits there.\n\nBack\nEnter\nDDeck\nREquipment\nTStats\nMMenu",
+        "images": 4
+      }
+    },
+    {
+      "file": "combat.png",
+      "state": "combat",
+      "url": "https://cehinds.github.io/AshenSpire/release/1060/?shot=combat",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "sha256": "d4aad56c2b63d4905607f3298f4ea6c67cc6f24a519f9b44052180e6f72c78db",
+      "page": {
+        "title": "Ashen Spire",
+        "text": "HP\n63/63\nPlayer Turn\n63/63\n3×2\n16/16\n5\n19/19\nDodge Roll\nGain 4 Block and 4 Poise guard.\nCost reflects your current weight.\n1\n1\nGorefire Slash\nDeal 9 damage.\nApply 3 Bleed.\n1\n1\nBlade · Gorefire · Weapon · Melee · Blood\n2\nSlashing Strike\nDeal 9 damage.\n1\nBlade · Weapon · Melee\n3\nShield Strike\nDeal 4 damage.\n1\nGuard · Weapon · Melee\n4\n3\n3\nSP\n7\nDRAW\n7\nEnd Turn\nE\nHOLD\nDiscard 0\nExhaust 0\nPotions",
+        "images": 28
+      }
+    }
+  ]
+}

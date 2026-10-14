@@ -7,7 +7,12 @@ import { createRng } from './rng.js';
 import { attachSkillXp } from './skillXp.js';
 import * as S from '../framework/statusSemantics.js';
 import { equippedIn, slotHand } from '../model/loadout.js';
-import { attackDescriptor, resolvedAttackTags } from '../model/attackTags.js';
+import { attackDescriptor, resolvedAttackTags, weaponDamageType, weaponDamageComponents } from '../model/attackTags.js';
+import { combatProfileFor } from '../model/combatCardProfile.js';
+import * as Control from './combatStatusControl.js';
+import { ashenBlightRestorationPercent } from './ashenBlight.js';
+import * as Actions from './actions.js';
+import { effectiveAshenBlightAttributes } from '../model/ashenBlight.js';
 
 export function rulesFingerprint(rules) {
   let hash = 2166136261;
@@ -38,8 +43,16 @@ export function validateFoundationSnapshot(saved) {
 
 export function cardSourceSnapshots(ctx, def, source, card) {
   if (!ctx.foundation) return null;
-  return new Map((def.effects || []).filter((effect) => effect.op === 'damage')
+  const snapshots = new Map((def.effects || []).filter((effect) => effect.op === 'damage')
     .map((effect) => [effect, foundationCarrier(ctx, source, card, effect.attack)]));
+  // A Counter without printed damage still has an implicit retaliation. Capture
+  // its source at the same pre-hook boundary as authored damage effects. The
+  // null entry has no immediate effect; Counter preparation consumes the first
+  // captured carrier, while ordinary multi-source effects keep their own keys.
+  if (!snapshots.size && card.combatProfile?.maneuver === 'counter') {
+    snapshots.set(null, foundationCarrier(ctx, source, card));
+  }
+  return snapshots;
 }
 
 export function cardActions(ctx, def, source, target, card, meta, sourceSnapshots = null) {
@@ -59,7 +72,9 @@ export function cardActions(ctx, def, source, target, card, meta, sourceSnapshot
   return rows.map(({ effect, hits, snapshot }) => {
     // Live plays supply snapshots captured before payment. Standalone callers
     // capture here; later hits keep that source if a trigger changes equipment.
-    const carrier = hits > 0 ? snapshot || foundationCarrier(ctx, source, card, effect.attack) : card;
+    const resolved = hits > 0 ? snapshot || foundationCarrier(ctx, source, card, effect.attack) : card;
+    const carrier = hits > 0 ? { ...resolved, appliedStatusEffects: card.appliedStatusEffects,
+      appliedStatuses: card.appliedStatuses } : resolved;
     const action = { effect, source, owner: source, target, card: carrier, meta: { ...meta, foundationHitCount: total, foundationHitOffset: offset } };
     offset += hits; return action;
   });
@@ -75,11 +90,24 @@ export function foundationProfile(ctx, entity) {
 
 export function foundationSource(ctx, entity, carrier = null) {
   if (carrier?.resolvedSource) return carrier.resolvedSource;
+  const source = equippedFoundationSource(ctx, entity, carrier);
+  const damageType = weaponDamageType(attackDescriptor(carrier || {}), source.family, source.damageType);
+  return damageType === source.damageType ? source : { ...source, damageType };
+}
+
+function equippedFoundationSource(ctx, entity, carrier) {
   const state = ctx.foundation;
   const profile = foundationProfile(ctx, entity);
   const attack = attackDescriptor(carrier || {});
   if (attack.source === 'unarmed') return { ...state.rules.fallbackSource, sourceType: 'unarmed' };
   const kind = attack.source || 'weapon';
+  // Authored enemy moves are their own source; player hands never supply them.
+  if (entity?.kind === 'enemy' && carrier?.combatProfile?.camp && !profile.sources) {
+    return { ...state.rules.fallbackSource, id: `${entity.id}/${carrier.moveId || 'reaction'}`,
+      sourceType: kind, family: kind === 'spell' ? 'focus' : 'natural',
+      damageType: attack.damageType || carrier.combatProfile.damageType || state.rules.fallbackSource.damageType,
+      tags: [...(carrier.tags || [])] };
+  }
   const canonicalHand = (hand) => ({ right: 'mainHand', left: 'offHand' }[hand] || hand);
   const explicitHand = canonicalHand(attack.hand || carrier?.sourceHand);
   const hands = explicitHand ? [explicitHand] : [...new Set([profile.defaultSource || 'mainHand', 'mainHand', 'offHand'])];
@@ -115,36 +143,46 @@ export function foundationCarrier(ctx, entity, carrier = {}, effectAttack = null
   validateAttack(attack, ctx.foundation.rules);
   const source = structuredClone(foundationSource(ctx, entity, { ...carrier, attack }));
   if (source.sourceType === 'unarmed') attack.source = 'unarmed';
+  if (attack.weaponDamage && attack.components) attack.components = weaponDamageComponents(attack, source.family, source.damageType);
   const tags = resolvedAttackTags(carrier.tags || [], source, attack, ctx.foundation.rules.damageTypes);
-  return { ...carrier, attack, tags, resolvedSource: source };
+  const typed = combatProfileFor({ ...carrier, attack, tags });
+  return { ...carrier, attack, tags, resolvedSource: source,
+    ...(carrier.combatProfile ? { combatProfile: { ...carrier.combatProfile, damageType: typed.damageType } } : {}) };
 }
 
-export function foundationDamage(ctx, source, target, base, carrier = null, attackTags = []) {
+export function foundationDamage(ctx, source, target, base, carrier = null, attackTags = [], { beforeDefense = false } = {}) {
   const rules = ctx.foundation.rules;
   const weapon = foundationSource(ctx, source, carrier);
   const attack = attackDescriptor(carrier || {});
   const defense = foundationProfile(ctx, target);
-  const weights = attack.components || [{ type: attack.damageType || weapon.damageType, weight: 1 }];
+  const weights = weaponDamageComponents(attack, weapon.family, weapon.damageType) || [{ type: attack.damageType || weapon.damageType, weight: 1 }];
   attackTags = resolvedAttackTags(attackTags, weapon, attack, rules.damageTypes);
   const totalWeight = weights.reduce((sum, c) => sum + c.weight, 0);
   if (!(totalWeight > 0)) throw new Error('attack components need positive weight');
-  const attackerMultiplier = source ? S.getMult(ctx, source, 'damageDealtMult') : 1;
+  const attackerMultiplier = source ? S.getMult(ctx, source, 'damageDealtMult') * Actions.spellDamageDealtMultiplier(ctx, source, carrier) : 1;
   let multiplier = target ? S.getMult(ctx, target, 'damageTakenMult') : 1;
+  let tagged = 1;
   let vulnerability = 0;
   for (const [id, inst] of Object.entries(target?.statuses || {})) {
     if ((inst.meter ? inst.meter.value : inst.stacks) <= 0) continue;
     const tv = ctx.registries.statuses.get(id).taggedVulnerability;
     if (tv && tv.tags.some((tag) => attackTags.includes(tag))) {
-      if (tv.stacking === 'multiplicative') multiplier *= tv.mult;
+      if (tv.stacking === 'multiplicative') tagged *= tv.mult;
       else vulnerability += tv.mult - 1;
     }
   }
-  multiplier = attackerMultiplier * Math.min(rules.vulnerabilityCap, multiplier * (1 + vulnerability));
+  // The tag-scoped share of the (capped) vulnerability travels apart, so its
+  // bonus rounds UP once per hit (owner, 2026-10-12, #12; resolveDamageComponents).
+  const plain = Math.min(rules.vulnerabilityCap, multiplier);
+  const withTags = Math.min(rules.vulnerabilityCap, multiplier * tagged * (1 + vulnerability));
+  const taggedBonus = plain > 0 ? withTags / plain : 1;
+  multiplier = attackerMultiplier * plain;
   const components = resolveDamageComponents(rules, {
     components: weights.map((c) => ({ type: c.type, amount: Math.max(0, base) * c.weight / totalWeight })),
-    armor: defense.armor || 0, penetration: attack.penetration || 0,
-    resistances: groupedResistance(rules, defense.resistanceSources || [], defense.resistances || {}), immunities: defense.immunities || [], multiplier,
+    armor: beforeDefense ? 0 : defense.armor || 0, penetration: attack.penetration || 0,
+    resistances: beforeDefense ? {} : groupedResistance(rules, defense.resistanceSources || [], defense.resistances || {}), immunities: beforeDefense ? [] : defense.immunities || [], multiplier,
     flatBonus: (source ? S.getAdd(ctx, source, 'attackDamageAdd') : 0) + (source?.damageBySchoolAdd?.[carrier?.damageSchool] || 0),
+    taggedBonus,
   });
   return { components, amount: components.reduce((sum, c) => sum + c.amount, 0), source: weapon, tags: attackTags };
 }
@@ -167,6 +205,11 @@ export function foundationCosts(ctx, def, weightClass, legacy) {
   const rules = ctx.foundation.rules.dodge;
   const weight = foundationProfile(ctx, ctx.player).weightClass || weightClass.id;
   return { ...legacy, action: rules.stamina[weight], mana: 0, stamina: rules.stamina[weight], variable: false };
+}
+
+/** A card-play refusal that names why, so a reaction trial can say it (SPEC §4.10). */
+export function playRefusal(message, reason, extra = {}) {
+  return Object.assign(new Error(message), { playRefusal: { reason, ...extra } });
 }
 
 export function assertFoundationPlayable(ctx, def, choice) {
@@ -201,17 +244,29 @@ export function grantFoundationEvade(ctx, source) {
 export function consumeFoundationEvade(ctx, source, target, carrier) {
   if (!ctx.foundation || !target?.evade || carrier?.attack?.dodgeable === false) return false;
   target.evade--;
-  ctx.emit('attackEvaded', { sourceId: source?.id, targetId: target.id, targetPlayerId: ctx.playerIdForEntity?.(target), charges: target.evade });
+  ctx.emit('attackEvaded', { sourceId: source?.id, targetId: target.id, targetPlayerId: ctx.playerIdForEntity?.(target), charges: target.evade,
+    ...(source?.knowledgeAction ? { enemyActionSerial: source.knowledgeAction.serial } : {}) });
   return true;
 }
 
-/** Clone one graph, preserving references between players, piles and seats. */
-export function candidateState(ctx) {
+/** Clone one graph, preserving references between players, piles and seats.
+ *
+ * `detached` is for a candidate that is read and thrown away (a preview, a
+ * reaction option probe, a cost preflight) and is never committed back into
+ * `ctx`. Its event log starts empty instead of copying the fight's history:
+ * the log grows with every event of the fight (120 KB by turn 2), it was most
+ * of what each preview cloned, and a phone spent seconds per tap cloning it.
+ * Everything that reads a candidate's log reads only what it emitted itself
+ * (`eventLog.length` before and `slice(start)` after), so an empty start is
+ * the same answer. A transaction (foundationTransaction) keeps the full log:
+ * it replaces ctx's.
+ */
+export function candidateState(ctx, { detached = false } = {}) {
   const data = {};
   for (const [key, value] of Object.entries(ctx)) {
-    if (typeof value !== 'function' && key !== 'registries' && key !== 'rng') data[key] = value;
+    if (typeof value !== 'function' && key !== 'registries' && key !== 'rng' && !(detached && key === 'eventLog')) data[key] = value;
   }
-  const candidate = { ...structuredClone(data), registries: ctx.registries, rng: createRng(ctx.rng.seed, ctx.rng.getCounters()), _emitEvent: ctx._emitEvent };
+  const candidate = { ...structuredClone(data), ...(detached ? { eventLog: [] } : {}), registries: ctx.registries, rng: createRng(ctx.rng.seed, ctx.rng.getCounters()), _emitEvent: ctx._emitEvent };
   // Catalogue accessors are immutable context, never serializable combat data.
   if (ctx.registriesForPlayer) candidate.registriesForPlayer = ctx.registriesForPlayer;
   if (ctx.registerPlayerRegistries) candidate.registerPlayerRegistries = ctx.registerPlayerRegistries;
@@ -223,19 +278,41 @@ export function candidateState(ctx) {
   attachSkillXp(candidate);
   candidate.enqueue = (action) => candidate.queue.push(action);
   candidate.nextInstanceId = () => `gen${++candidate._idCounter}`;
+  if (candidate.combatExpansionVersion === 2 || candidate.sharedExpansionVersion === 2) {
+    candidate.combatControlRestrictions = entity => Control.controlRestrictions({ ...candidate, combatExpansionVersion: entity?.combatExpansionVersion || 1 }, entity);
+    candidate.restorationModifierPercent = (entity, kind) => ashenBlightRestorationPercent({ ...candidate, combatExpansionVersion: entity?.combatExpansionVersion || 1 }, entity, kind, String(entity?.combatOwnerCycle || 0));
+  }
   if (ctx.players) candidate.playerIdForEntity = (entity) => {
     for (const [id, seat] of candidate.players) if (seat.entity === entity) return id;
     return null;
+  };
+  if (ctx.players) candidate.drawCardsFor = (entity, amount) => {
+    const seat = candidate.players.get(candidate.playerIdForEntity(entity));
+    if (!seat) return Actions.drawCards(candidate, amount);
+    const fields = ['player', 'piles', 'playerKey', 'registries', 'attributes', 'allocatedAttributes', 'combatExpansionVersion',
+      'loadout', 'itemUpgradeLevels', 'skills', 'attributeMode', 'orderedDraw', 'handRules', 'handMax', 'classId', 'characterLevel', 'derivedStatRuleSnapshot'];
+    const previous = Object.fromEntries(fields.map(key => [key, candidate[key]]));
+    const previousRatings = candidate.ratingsRules?.ratings;
+    Object.assign(candidate, { player: seat.entity, piles: seat.piles, playerKey: seat.id,
+      registries: candidate.registriesForPlayer?.(seat.id) || candidate.registries,
+      attributes: effectiveAshenBlightAttributes(seat.entity, seat.allocatedAttributes || seat.attributes),
+      allocatedAttributes: seat.allocatedAttributes || seat.attributes, combatExpansionVersion: seat.entity.combatExpansionVersion || 1,
+      loadout: seat.loadout, itemUpgradeLevels: seat.itemUpgradeLevels, skills: seat.skills || {}, attributeMode: seat.attributeMode || null,
+      orderedDraw: seat.orderedDraw || null, handRules: seat.handRules, handMax: seat.handMax,
+      classId: seat.entity.classId, characterLevel: seat.level, derivedStatRuleSnapshot: seat.derivedStatRuleSnapshot });
+    if (seat.ratingRows && candidate.ratingsRules) candidate.ratingsRules.ratings = seat.ratingRows;
+    try { return Actions.drawCards(candidate, amount); }
+    finally { Object.assign(candidate, previous); if (candidate.ratingsRules) candidate.ratingsRules.ratings = previousRatings; }
   };
   return candidate;
 }
 
 /** Reject malformed/looping actions without consuming cards, pools or RNG. */
-export function foundationTransaction(ctx, execute) {
+export function foundationTransaction(ctx, execute, { advanceAction = true } = {}) {
   const candidate = candidateState(ctx);
   candidate._foundationTransaction = true;
-  if (candidate.foundation) {
-    candidate.foundation.actionSerial++;
+  if (candidate.foundation && advanceAction) {
+    candidate.foundation.actionSerial = Math.max(candidate.foundation.actionSerial, candidate.foundationNextSerial || 0) + 1;
     candidate.foundation.eventCount = 0;
     candidate.foundation.rolls = {}; candidate.foundation.counts = {};
   }
@@ -243,6 +320,11 @@ export function foundationTransaction(ctx, execute) {
   const result = execute(candidate);
   delete candidate._foundationTransaction;
   delete candidate._foundationAncestry;
+  // Hosts save the accepted candidate before any stable entity or RNG changes.
+  // This function is intentionally absent from detached previews.
+  if ((ctx.combatExpansionVersion === 2 || ctx.sharedExpansionVersion === 2) && typeof ctx.beforeCombatCommit === 'function') {
+    if (ctx.beforeCombatCommit(candidate)?.ok === false) throw new Error('Combat save was refused; the action was not committed');
+  }
   // Public combat entities and seats are stable handles. Commit the detached
   // values into those handles and reconnect paused actions to the same graph.
   const entities = new Map();
@@ -259,6 +341,7 @@ export function foundationTransaction(ctx, execute) {
       const old = ctx.players.get(id);
       if (!old) continue;
       next.entity = commitEntity(old.entity, next.entity);
+      for (const key of Object.keys(old)) if (!(key in next)) delete old[key];
       Object.assign(old, next);
       candidate.players.set(id, old);
     }
@@ -266,6 +349,7 @@ export function foundationTransaction(ctx, execute) {
   candidate.enemies = candidate.enemies.map((entity, i) => commitEntity(ctx.enemies[i], entity));
   if (candidate.players) candidate.player = entities.get(candidate.player) || candidate.player;
   for (const action of candidate.queue) for (const key of ['source', 'owner', 'target']) action[key] = entities.get(action[key]) || action[key];
+  for (const action of candidate.reactionResume?.queue || []) for (const key of ['source', 'owner', 'target']) action[key] = entities.get(action[key]) || action[key];
   // Keep the run's loadout object identity when committing an equipment change.
   if (!ctx.players && ctx.loadout && candidate.loadout) {
     for (const key of Object.keys(ctx.loadout)) delete ctx.loadout[key];

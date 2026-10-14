@@ -133,5 +133,41 @@ export const tagDomains = [
     "label": "internal",
     "aside": false,
     "blurb": ""
+  },
+  {
+    "id": "camp",
+    "label": "Combat camp",
+    "aside": false,
+    "blurb": "Authored combat identity shared by cards and enemy moves."
+  },
+  {
+    "id": "maneuver",
+    "label": "Combat maneuver",
+    "aside": false,
+    "blurb": "Authored combat identity shared by cards and enemy moves."
+  },
+  {
+    "id": "school",
+    "label": "Magic school",
+    "aside": false,
+    "blurb": "Authored combat identity shared by cards and enemy moves."
+  },
+  {
+    "id": "counterMode",
+    "label": "Counter reach",
+    "aside": false,
+    "blurb": "Authored combat identity shared by cards and enemy moves."
+  },
+  {
+    "id": "range",
+    "label": "Range",
+    "aside": false,
+    "blurb": "Inspection details for combat techniques."
+  },
+  {
+    "id": "trait",
+    "label": "Combat traits",
+    "aside": false,
+    "blurb": "Inspection details for combat techniques."
   }
 ];

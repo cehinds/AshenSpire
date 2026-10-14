@@ -28,7 +28,17 @@ export function formationLayoutConfig(values = {}) {
   return config;
 }
 
-export function formationDimensions(values = {}, actorsPerSide = 0) {
+// The default (alternative) perspective draws one uniform grid: enemies in a
+// back and a front rank across three lanes, the player's party in one rank of
+// the same lanes. Gameplay columns are depth (outer = back), rows are lanes.
+export const PERSPECTIVE_LANES = 3;
+
+// `partySize` matters only to the perspective: its party shares one rank, so
+// a four-player party needs four lanes.
+export function formationDimensions(values = {}, actorsPerSide = 0, partySize = 0) {
+  if (values.perspectiveGrid) {
+    return { columns: 2, rows: Math.min(6, Math.max(PERSPECTIVE_LANES, Math.ceil(actorsPerSide / 2), partySize)), perspective: true };
+  }
   const config = formationLayoutConfig(values);
   let columns = config.formationColumns, rows = config.formationRows;
   // A small saved layout must never stack or hide existing encounter actors.
@@ -37,11 +47,27 @@ export function formationDimensions(values = {}, actorsPerSide = 0) {
   return { columns, rows };
 }
 
-export function isFormationCell(cell, { columns, rows }, side = 'player') {
+export function isFormationCell(cell, { columns, rows, perspective = false }, side = 'player') {
   if (typeof cell !== 'string' || !/^[A-F][1-6]$/.test(cell)) return false;
   const column = Number(cell[1]);
+  // The perspective's player rank is the outer column only.
+  const playerColumns = perspective ? 1 : columns;
   return FORMATION_ROWS.indexOf(cell[0]) < rows && (side === 'player'
-    ? column >= 1 && column <= columns : column > columns && column <= columns * 2);
+    ? column >= 1 && column <= playerColumns : column > columns && column <= columns * 2);
+}
+
+// A saved player cell read on the given grid. The perspective keeps only the
+// outer column, so a cell saved in a front column (the Classic grid, or an
+// older save) stands in the same lane of the one player rank.
+export function playerFormationCell(cell, dimensions) {
+  if (isFormationCell(cell, dimensions)) return cell;
+  // Classic allows up to three player columns; each collapses into column 1.
+  if (dimensions.perspective && isFormationCell(cell, { columns: 3, rows: dimensions.rows }, 'player')) return `${cell[0]}1`;
+  // Back on Classic, a perspective lane past Classic's rows stands in its last row.
+  if (!dimensions.perspective && isFormationCell(cell, { columns: dimensions.columns, rows: 6 }, 'player')) {
+    return `${FORMATION_ROWS[Math.min(FORMATION_ROWS.indexOf(cell[0]), dimensions.rows - 1)]}${cell[1]}`;
+  }
+  return null;
 }
 
 export function formationSpawn(values, side, dimensions = formationDimensions(values)) {
@@ -50,6 +76,8 @@ export function formationSpawn(values, side, dimensions = formationDimensions(va
   const low = side === 'player' ? 1 : columns + 1;
   const high = side === 'player' ? columns : columns * 2;
   const raw = Number(values[`${side}SpawnColumn`] ?? (side === 'player' ? low : high));
-  const column = Math.min(high, Math.max(low, Number.isFinite(raw) ? raw : low));
+  // The perspective's player rank is the outer column only.
+  const column = dimensions.perspective && side === 'player' ? low
+    : Math.min(high, Math.max(low, Number.isFinite(raw) ? raw : low));
   return `${FORMATION_ROWS[row]}${column}`;
 }

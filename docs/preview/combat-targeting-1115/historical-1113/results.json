@@ -1,0 +1,44 @@
+{
+  "historical": true,
+  "compiledIdentity": {
+    "path": "build/download/AshenSpire.html",
+    "ordinal": "1113",
+    "source": "ffdc226b80"
+  },
+  "counter": [
+    {
+      "shape": "desktop",
+      "escapeAtomic": true,
+      "paidCounterPreserved": true,
+      "overflow": false,
+      "block": 14,
+      "charges": 1,
+      "hand": 7
+    },
+    {
+      "shape": "phone",
+      "escapeAtomic": true,
+      "paidCounterPreserved": true,
+      "overflow": false,
+      "block": 14,
+      "charges": 1,
+      "hand": 7
+    }
+  ],
+  "upcast": [
+    {
+      "retargetAtomic": true
+    },
+    {
+      "baseTier": 2,
+      "selectedTier": 5,
+      "energy": 7,
+      "mana": 7,
+      "block": 14
+    }
+  ],
+  "errors": {
+    "counter": [],
+    "upcast": []
+  }
+}

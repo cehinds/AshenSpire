@@ -1,0 +1,25 @@
+{
+  "id": "starwatch-far",
+  "kind": "far",
+  "transparent": false,
+  "resultFile": "scenes/shared/drowned-coast/starwatch-far.png",
+  "prompt": "Create one opaque distant background plate for Starwatch Terrace, AshenSpire, detailed dark fantasy painterly realism. Distant storm-dark sea with scattered stone sea stacks and tiny ruined spires at very low horizon y=47%, midnight blue star-filled sky with faint Milky Way and silver moonlight through thin clouds. Only distant sea and sky, subdued contrast. No near telescope, armillary, railing, floor, trees, characters or text. Wide 1536x1024, full bleed. Leave center open for separate transparent Gothic observatory architecture.",
+  "reference": "../references/composition.png",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a112fc-0e64-7472-a495-aba14ffa5ab6\\exec-04dd7ef8-98cb-4a48-ab96-18d985f6e142.png",
+  "generator": "built-in image_gen",
+  "size": [
+    1536,
+    1024
+  ],
+  "mode": "RGB",
+  "sha256": "743a138236b50e474c648c50dce1a7c5232d58e04e72a8b83b5601d35a223c31",
+  "alphaRange": null,
+  "transparentFraction": 0,
+  "visibleBounds": [
+    0,
+    0,
+    1536,
+    1024
+  ],
+  "alphaThreshold": 32
+}

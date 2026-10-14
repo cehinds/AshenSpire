@@ -1,0 +1,30 @@
+{
+  "id": "HM-phone-foreground",
+  "kind": "foreground",
+  "phoneOnly": true,
+  "region": "HM",
+  "transparent": true,
+  "resultFile": "scenes/shared/HM/foreground-phone.png",
+  "prompt": "Create ONE separate PHONE PORTRAIT foreground framing layer for AshenSpire's HM combat scene. Portrait 1024x1536 canvas, actual transparent alpha. Detailed weathered painterly dark fantasy matching reference. ONLY shattered tarnished silver mirror frames and frost-crusted pillars at extreme edges. Frame objects run continuously along extreme left and right edges from TOP to BOTTOM; they touch those outer edges intentionally. Keep objects narrow, occupying ONLY outermost 10% of each side plus low bottom CORNERS. Entire central 76% must be COMPLETELY TRANSPARENT from top to bottom, including bottom center. No scenery, sky, ground plane, backing, architecture in center, actors, text or UI. Compose specifically for tall phone stage, not a landscape crop. Restrained lantern glow only on physical surfaces, no colored halo. Cold silver-blue light and frost, absolutely no fire or lava cracks.",
+  "reference": "../references/composition.png",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a112fc-0e64-7472-a495-aba14ffa5ab6\\exec-da7291e6-bd52-494b-adcd-37f15b2d42ec.png",
+  "generator": "built-in image_gen",
+  "size": [
+    1024,
+    1536
+  ],
+  "mode": "RGBA",
+  "sha256": "bc5ab8c08eea842b54cfb88e1abaa94fdff0b0cdb3cfe25985a48db25d656d23",
+  "alphaRange": [
+    0,
+    254
+  ],
+  "transparentFraction": 0.6851984659830729,
+  "visibleBounds": [
+    0,
+    0,
+    1024,
+    1536
+  ],
+  "alphaThreshold": 32
+}

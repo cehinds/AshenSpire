@@ -76,12 +76,23 @@ const ROOT = process.argv.find(arg=>arg.startsWith('--root='))?.slice(7) || reso
 const batchStart=Number(process.argv.find(arg=>arg.startsWith('--batch-start='))?.split('=')[1]);
 const RAW = process.argv.includes('--raw');
 const SELFTEST = process.argv.includes('--selftest');
+// Modules this process has parsed (one per cache miss in make()). A batch reports
+// it as `parsed`, so a test can prove a shared module is parsed once per batch,
+// not once per entry that imports it: that re-parse is what made the self-test
+// take ~19 minutes on a CI runner (6 full passes, each ~190 s on Linux).
+const PARSED = { n: 0 };
 
 // The walk IS the denominator. Exclusions are named with reasons, because an
 // omission is not an answer.
 // The standalone studio is authored source too. Capture tooling imports its
 // server, so both the live census and isolated failure-plant copies need it.
 const ROOTS = ['src', 'tools', 'tests', 'pose-studio'];
+// Docs modules that tests import (tests/combat-rounds-round.test.mjs reads the
+// alternative-combat-rounds timeline). They are not walked as denominator, but
+// the self-test copy must carry them or the baseline links red with ENOENT.
+// workbench/ and editor/ likewise: tools/workbench-static.mjs imports
+// workbench/server.mjs, whose graph reaches editor/core.mjs (69dcc3d1b).
+const COPIED_EXTRA = ['docs/alternative-combat-rounds', 'workbench', 'editor'];
 const SKIP_DIRS = new Set([
   'node_modules',   // none in this tree, and not ours to link
   'build',          // generated bundle — linking a 2 MB single file says nothing
@@ -117,15 +128,18 @@ function walk(dir, out = []) {
  * body runs. That is the point — this tool has no side effects on the tree it
  * inspects and cannot be broken by a module that throws on load.
  */
-async function linkGraph(entry, root) {
-  const cache = new Map();
+async function linkGraph(entry, root, shared) {
   // ONE CONTEXT FOR THE WHOLE GRAPH. A context per module is rejected with
   // "Linked modules must use the same context" — which my first run reported
   // for 88 of 149 graphs, i.e. my instrument, not the tree. Again.
-  const context = vm.createContext({});
+  // A batch passes `shared` so its entries share one context and cache too
+  // (checkTree); a fresh graph gets its own, as before.
+  const cache = shared ? shared.cache : new Map();
+  const context = shared ? shared.context : vm.createContext({});
   const make = (file) => {
     const key = resolve(file);
     if (cache.has(key)) return cache.get(key);
+    PARSED.n++;
     const m = new vm.SourceTextModule(readFileSync(key, 'utf8'), {
       identifier: pathToFileURL(key).href,
       context,
@@ -153,6 +167,11 @@ async function linkGraph(entry, root) {
   };
   try {
     const m = make(entry);
+    // An entry an earlier entry of this batch already linked is in the shared cache
+    // as 'linked'. Its whole graph linked then, so it is known good. Calling link()
+    // again throws "Module has already been linked", which the batch read as a
+    // failure and re-linked from scratch: the re-parse this file was changed to avoid.
+    if (m.status === 'linked') return null;
     await m.link(linker);          // <- instantiation happens here, and stops here
     return null;
   } catch (e) {
@@ -177,8 +196,17 @@ async function checkTree(root) {
     }
     return {total:files.length,skipped,broken};
   }
+  // One context and cache for the batch: a module linked by an earlier entry is
+  // reused, not re-read and re-parsed. Only fully linked modules stay in the
+  // cache. A failing entry is re-linked in isolation, so its error text matches
+  // a standalone link.
+  const shared = { cache: new Map(), context: vm.createContext({}) };
   for (const f of files.slice(batchStart,batchStart+64)) {
-    const err = await linkGraph(f, root);
+    let err = await linkGraph(f, root, shared);
+    if (err) {
+      for (const [key, m] of shared.cache) if (m.status !== 'linked') shared.cache.delete(key);
+      err = await linkGraph(f, root);
+    }
     if (err) broken.push({ file: relative(root, f).split(sep).join('/'), err });
   }
   return { total: files.length, skipped, broken };
@@ -270,13 +298,13 @@ const PLANTS = [
 
 function copyTree() {
   const t = mkdtempSync(join(tmpdir(), 'linkcheck-'));
-  for (const d of ROOTS) if (existsSync(join(ROOT, d))) cpSync(join(ROOT, d), join(t, d), { recursive: true });
+  for (const d of [...ROOTS, ...COPIED_EXTRA]) if (existsSync(join(ROOT, d))) cpSync(join(ROOT, d), join(t, d), { recursive: true });
   return t;
 }
 
 console.log(`linkcheck: every named import in the tree, resolved against a real export.\n`);
 if(Number.isFinite(batchStart)){
- console.log('BATCH_RESULT: '+JSON.stringify(await checkTree(ROOT)));process.exit(0);
+ console.log('BATCH_RESULT: '+JSON.stringify({...await checkTree(ROOT), parsed: PARSED.n}));process.exit(0);
 }
 
 if (SELFTEST) {

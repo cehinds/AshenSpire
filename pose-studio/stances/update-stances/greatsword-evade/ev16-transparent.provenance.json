@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "family": "evade",
+  "actor": "reaver",
+  "weapon": "greatsword",
+  "optionId": "EV16",
+  "sequenceRole": "EV1 in EV16 -> edited EV11 -> EV13 -> starting stance",
+  "tool": "image_gen.imagegen",
+  "requestedOperation": "Background removal only",
+  "transparentBackgroundRequested": true,
+  "unchangedOriginal": "/workspace/generated_images/exec-24f6dd82-6ff9-45ca-84b5-376d923916be.png",
+  "output": "ev16-transparent.png",
+  "sha256": "b1445d2c0bd15b3630b65ca92bfb1f685e218aa97c19219908eb8663f22b1ca5",
+  "dimensions": [
+    1280,
+    1229
+  ],
+  "mode": "RGBA",
+  "createdUtc": "2026-10-12",
+  "reference": {
+    "path": "sheet-b.png",
+    "sha256": "1b94177b045816f325153be36fafa37fe96c6e708f1b0b9cc1ac99d1ee043c81",
+    "cell": "top-left Evade16",
+    "inputCrop": "/workspace/evade16-reference-crop.png",
+    "cropBoundsXYWH": [
+      10,
+      30,
+      510,
+      490
+    ],
+    "cropSha256": "ac39c7fd9f6dba6021177482fb11135eb8fc0c22b0d08448b9871d3215ac8aca",
+    "cropOperation": "Rectangular isolation only; no repaint or resizing"
+  },
+  "prompt": "ev16-transparent.prompt.txt",
+  "status": "director_accepted_derivative_for_sequence_preview_only_not_user_selected",
+  "actualObservations": [
+    "Rear-left view facing right, upright vertical two-hand guard, cape and broad stance preserved visually.",
+    "Haze removed; complete body and sword visible.",
+    "Tool enlarged and regenerated details despite background-only instruction; this is not pixel-identical segmentation.",
+    "Sword tip close to top edge but complete."
+  ],
+  "runtimeChanged": false,
+  "alphaExtrema": [
+    0,
+    255
+  ],
+  "directorReview": {
+    "decision": "accepted_for_sequence_preview_only",
+    "observations": [
+      "Pose, hand position and back perspective preserved visually",
+      "Full body and weapon complete"
+    ],
+    "limitations": [
+      "Imagegen redrew armor, cape and blade details; not pixel-exact background segmentation"
+    ]
+  }
+}

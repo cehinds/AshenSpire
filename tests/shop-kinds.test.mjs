@@ -288,12 +288,14 @@ test('FINISH: the classic merchant\'s existing shelves are byte-identical on 50 
   const addedSinceCapture = new Set(['hewingArc', 'sunderingChop', 'setTheShield', 'aegisOfEmbers', 'shieldCrash',
     'pinningShot', 'arrowVolley', 'nockAndWait', 'aimedShot', 'barbedArrow', 'bindingParry', 'whirlingGuard',
     'cinderSigil', 'ashenMote', 'emberVigil', 'readTheAsh', 'pyreOfCharts', 'ashCircle', 'kindledOmen', 'cinderLance',
-    'ashfallRite', 'phoenixChart', 'pyreLight', 'riteOfCinders', 'emberCommunion']);
+    'ashfallRite', 'phoenixChart', 'pyreLight', 'riteOfCinders', 'emberCommunion',
+    'aspDart', 'viperStrike', 'septicBlade', 'lethalDose', 'mindSpike', 'dissonance', 'mindFracture', 'wakingNightmare',
+    'stoneSling', 'rockfall', 'stoneskin', 'entomb']);
   const CAPTURE_REG = createRegistries({ ...legacyContentBundle,
     classes: legacyContentBundle.classes.map((c) => ({ ...c, cardPool: c.cardPool.filter((id) => !addedSinceCapture.has(id)) })) });
   for (const n of seeds) {
     const before = fixture.shelves[n];
-    const run = createRunState({ seed: before.runSeed, classId: before.classId, registries: CAPTURE_REG });
+    const run = createRunState({ seed: before.runSeed, classId: before.classId, registries: CAPTURE_REG, combatExpansionVersion: 1 });
     const rng = createRng(before.runSeed, { shop: before.shopCounterAtEntry });
     // main.js's merchant case, in its order: the stock, then the smith's roll.
     const stock = buildMerchantStock(CAPTURE_REG, rng, run);
@@ -311,9 +313,11 @@ test('FINISH: the classic merchant\'s existing shelves are byte-identical on 50 
     for (const key of Object.keys(stock)) assert.ok(key in before.stock || key === 'kind' || key === 'offerings' || MARKET_ADDITIONS.includes(key), `seed ${n}: stray stock key ${key}`);
     // Nothing new is drawn on any existing stream. Only the additions' own
     // rolls (§14.3, on shopOffers after the offering roll) draw on the new one.
-    // `sigils` (SPEC §15.4) was appended after the fixture; a shop draws nothing there.
-    const { shopOffers: _offers, sigils: _sigils, ...counters } = rng.getCounters();
+    // Sigils and intent visibility were appended after the fixture; shops use neither.
+    const { shopOffers: _offers, sigils: _sigils, enemyIntentVisibility: _intentReads, combatAvoidance: _avoidance, statusRecovery: _recovery, statusPressure: _pressure, ashenBlight: _blight, enemyIntentClue: _clue, enemyReaction: _reaction, ...counters } = rng.getCounters();
+    assert.deepEqual([_avoidance, _recovery, _pressure, _blight, _clue, _reaction], [0, 0, 0, 0, 0, 0]);
     assert.equal(_sigils, 0);
+    assert.equal(_intentReads, 0);
     assert.deepEqual(counters, before.counters, `seed ${n}: every existing stream`);
   }
 });
@@ -322,10 +326,11 @@ test('FINISH: the classic merchant\'s existing shelves are byte-identical on 50 
 // The rest of §14.2 that step 4 builds
 // ---------------------------------------------------------------------------
 
-test('shopOffers is appended to the END of STREAM_NAMES, so no existing stream moves', () => {
-  // §15.4's `sigils` was appended after it later (tests/legendary-sigils.test.mjs).
-  assert.equal(STREAM_NAMES.at(-2), 'shopOffers');
-  assert.equal(STREAM_NAMES.at(-3), 'rewardRolls');
+test('shopOffers retains its appended index after later stream additions', () => {
+  // Sigils and intent visibility append after it, preserving historical indices.
+  assert.equal(STREAM_NAMES.indexOf('shopOffers'), 15);
+  assert.equal(STREAM_NAMES.indexOf('rewardRolls'), 14);
+  assert.deepEqual(STREAM_NAMES.slice(15), ['shopOffers', 'sigils', 'enemyIntentVisibility', 'combatAvoidance', 'statusRecovery', 'statusPressure', 'ashenBlight', 'enemyIntentClue', 'enemyReaction', 'combatRounds']);
   assert.equal(STREAM_NAMES.indexOf('shop'), 9);
   // A save written before the stream existed restores it at 0.
   assert.equal(createRng(7, { shop: 3 }).getCounters().shopOffers, 0);

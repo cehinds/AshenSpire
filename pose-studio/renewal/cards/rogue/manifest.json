@@ -1,0 +1,569 @@
+{
+  "schemaVersion": 1,
+  "target": "alternative/dev",
+  "classId": "rogue",
+  "armour": "default",
+  "referenceWeapon": "Twin daggers \u00b7 bow",
+  "equipmentIndependent": true,
+  "selection": "card-profile",
+  "frames": {
+    "attack-load": {
+      "path": "cards/rogue/frames/attack-load.webp",
+      "lite": "cards/rogue/frames/attack-load-lite.webp",
+      "bounds": [
+        79,
+        166,
+        386,
+        462
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "attack-contact": {
+      "path": "cards/rogue/frames/attack-contact.webp",
+      "lite": "cards/rogue/frames/attack-contact-lite.webp",
+      "bounds": [
+        76,
+        163,
+        447,
+        462
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "ready": {
+      "path": "cards/rogue/frames/ready.webp",
+      "lite": "cards/rogue/frames/ready-lite.webp",
+      "bounds": [
+        109,
+        138,
+        376,
+        462
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "smash-load": {
+      "path": "cards/rogue/frames/smash-load.webp",
+      "lite": "cards/rogue/frames/smash-load-lite.webp",
+      "bounds": [
+        76,
+        83,
+        377,
+        462
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "smash-contact": {
+      "path": "cards/rogue/frames/smash-contact.webp",
+      "lite": "cards/rogue/frames/smash-contact-lite.webp",
+      "bounds": [
+        71,
+        209,
+        391,
+        462
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "smash-return": {
+      "path": "cards/rogue/frames/smash-return.webp",
+      "lite": "cards/rogue/frames/smash-return-lite.webp",
+      "bounds": [
+        87,
+        123,
+        367,
+        462
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "sweep-load": {
+      "path": "cards/rogue/frames/sweep-load.webp",
+      "lite": "cards/rogue/frames/sweep-load-lite.webp",
+      "bounds": [
+        74,
+        188,
+        391,
+        462
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "sweep-contact": {
+      "path": "cards/rogue/frames/sweep-contact.webp",
+      "lite": "cards/rogue/frames/sweep-contact-lite.webp",
+      "bounds": [
+        20,
+        195,
+        422,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "sweep-return": {
+      "path": "cards/rogue/frames/sweep-return.webp",
+      "lite": "cards/rogue/frames/sweep-return-lite.webp",
+      "bounds": [
+        95,
+        146,
+        368,
+        462
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "guard-rise": {
+      "path": "cards/rogue/frames/guard-rise.webp",
+      "lite": "cards/rogue/frames/guard-rise-lite.webp",
+      "bounds": [
+        83,
+        139,
+        370,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "guard-brace": {
+      "path": "cards/rogue/frames/guard-brace.webp",
+      "lite": "cards/rogue/frames/guard-brace-lite.webp",
+      "bounds": [
+        97,
+        140,
+        368,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "guard-return": {
+      "path": "cards/rogue/frames/guard-return.webp",
+      "lite": "cards/rogue/frames/guard-return-lite.webp",
+      "bounds": [
+        83,
+        139,
+        380,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "counter-load": {
+      "path": "cards/rogue/frames/counter-load.webp",
+      "lite": "cards/rogue/frames/counter-load-lite.webp",
+      "bounds": [
+        91,
+        170,
+        373,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "counter-parry": {
+      "path": "cards/rogue/frames/counter-parry.webp",
+      "lite": "cards/rogue/frames/counter-parry-lite.webp",
+      "bounds": [
+        76,
+        149,
+        402,
+        462
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "counter-contact": {
+      "path": "cards/rogue/frames/counter-contact.webp",
+      "lite": "cards/rogue/frames/counter-contact-lite.webp",
+      "bounds": [
+        76,
+        150,
+        425,
+        462
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "spell-load": {
+      "path": "cards/rogue/frames/spell-load.webp",
+      "lite": "cards/rogue/frames/spell-load-lite.webp",
+      "bounds": [
+        93,
+        137,
+        372,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "spell-release": {
+      "path": "cards/rogue/frames/spell-release.webp",
+      "lite": "cards/rogue/frames/spell-release-lite.webp",
+      "bounds": [
+        97,
+        127,
+        370,
+        462
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "spell-return": {
+      "path": "cards/rogue/frames/spell-return.webp",
+      "lite": "cards/rogue/frames/spell-return-lite.webp",
+      "bounds": [
+        96,
+        140,
+        369,
+        462
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "ranged-load": {
+      "path": "cards/rogue/frames/ranged-load.webp",
+      "lite": "cards/rogue/frames/ranged-load-lite.webp",
+      "bounds": [
+        100,
+        105,
+        407,
+        462
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "ranged-aim": {
+      "path": "cards/rogue/frames/ranged-aim.webp",
+      "lite": "cards/rogue/frames/ranged-aim-lite.webp",
+      "bounds": [
+        90,
+        104,
+        406,
+        462
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "ranged-release": {
+      "path": "cards/rogue/frames/ranged-release.webp",
+      "lite": "cards/rogue/frames/ranged-release-lite.webp",
+      "bounds": [
+        90,
+        104,
+        372,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "magic-load": {
+      "path": "cards/rogue/frames/magic-load.webp",
+      "lite": "cards/rogue/frames/magic-load-lite.webp",
+      "bounds": [
+        92,
+        153,
+        373,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "magic-release": {
+      "path": "cards/rogue/frames/magic-release.webp",
+      "lite": "cards/rogue/frames/magic-release-lite.webp",
+      "bounds": [
+        98,
+        153,
+        402,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "magic-return": {
+      "path": "cards/rogue/frames/magic-return.webp",
+      "lite": "cards/rogue/frames/magic-return-lite.webp",
+      "bounds": [
+        94,
+        150,
+        373,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    }
+  },
+  "sequences": {
+    "attack": {
+      "label": "Attack",
+      "poses": [
+        "ready",
+        "attack-load",
+        "attack-contact",
+        "attack-contact",
+        "ready"
+      ],
+      "durations": [
+        60,
+        55,
+        50,
+        45,
+        50
+      ],
+      "travel": [
+        0,
+        0,
+        80,
+        50,
+        0
+      ],
+      "effect": "slash",
+      "impact": 2,
+      "hold": false
+    },
+    "smash": {
+      "label": "Smash",
+      "poses": [
+        "ready",
+        "smash-load",
+        "smash-contact",
+        "smash-return",
+        "ready"
+      ],
+      "durations": [
+        60,
+        55,
+        50,
+        45,
+        50
+      ],
+      "travel": [
+        0,
+        -8,
+        60,
+        32,
+        0
+      ],
+      "effect": "impact",
+      "impact": 2,
+      "hold": false
+    },
+    "sweep": {
+      "label": "Sweep",
+      "poses": [
+        "ready",
+        "sweep-load",
+        "sweep-contact",
+        "sweep-return",
+        "ready"
+      ],
+      "durations": [
+        60,
+        55,
+        50,
+        45,
+        50
+      ],
+      "travel": [
+        0,
+        0,
+        55,
+        28,
+        0
+      ],
+      "effect": "slash",
+      "impact": 2,
+      "hold": false
+    },
+    "counter": {
+      "label": "Counter",
+      "poses": [
+        "ready",
+        "counter-load",
+        "counter-parry",
+        "counter-contact",
+        "ready"
+      ],
+      "durations": [
+        45,
+        40,
+        30,
+        95,
+        50
+      ],
+      "travel": [
+        0,
+        -12,
+        -8,
+        45,
+        0
+      ],
+      "effect": "parry",
+      "impact": 3,
+      "hold": false
+    },
+    "defend": {
+      "label": "Defend",
+      "poses": [
+        "ready",
+        "guard-rise",
+        "guard-brace",
+        "guard-return",
+        "ready"
+      ],
+      "durations": [
+        60,
+        55,
+        50,
+        45,
+        50
+      ],
+      "travel": [
+        0,
+        -3,
+        -6,
+        -3,
+        0
+      ],
+      "effect": "ward",
+      "impact": 2,
+      "hold": false
+    },
+    "spell": {
+      "label": "Spell",
+      "poses": [
+        "spell-return",
+        "spell-load",
+        "spell-release",
+        "spell-release",
+        "spell-return"
+      ],
+      "durations": [
+        60,
+        55,
+        50,
+        45,
+        50
+      ],
+      "travel": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "effect": "ward",
+      "impact": 2,
+      "hold": false
+    },
+    "ranged": {
+      "label": "Ranged \u00b7 bow",
+      "poses": [
+        "ranged-load",
+        "ranged-aim",
+        "ranged-release",
+        "ranged-release",
+        "ranged-load"
+      ],
+      "durations": [
+        60,
+        55,
+        50,
+        45,
+        50
+      ],
+      "travel": [
+        0,
+        0,
+        -4,
+        -2,
+        0
+      ],
+      "effect": "thrust",
+      "impact": 2,
+      "hold": false
+    },
+    "rangedMagic": {
+      "label": "Ranged \u00b7 magic",
+      "poses": [
+        "magic-return",
+        "magic-load",
+        "magic-release",
+        "magic-release",
+        "magic-return"
+      ],
+      "durations": [
+        60,
+        55,
+        50,
+        45,
+        50
+      ],
+      "travel": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "effect": "starbolt",
+      "impact": 2,
+      "hold": false
+    }
+  },
+  "bytes": {
+    "webp": 1012680,
+    "lite": 282766
+  }
+}

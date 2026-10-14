@@ -254,6 +254,18 @@ async function skipTutorial() {
 }
 const savedRun = () => ev(`(() => { try { const r = JSON.parse(localStorage.getItem('sote_run_v1') || 'null'); const g = r && (r.run || r.game || r); return g ? { seed: g.seedString, floor: g.floor, act: g.actNumber, hp: g.hp, maxHp: g.maxHp } : null; } catch { return null; } })()`);
 
+// The visible ability fold owns its gate. Read its semantic selection state
+// after each trusted press; never toggle a chosen ability or overfill a pool.
+const STARTING_ABILITY_FOLD = '#cz-equipment-fold details[open] [data-equipment-section="startingAbilities"]';
+const STARTING_ABILITY_SELECTION_LIMIT = 8;
+function startingAbilityChoice({ continueBlocked, choices = [] }, selections = 0) {
+  if (!continueBlocked) return null;
+  if (selections >= STARTING_ABILITY_SELECTION_LIMIT) throw new Error('starting ability selection limit reached while Continue is blocked');
+  const choice = choices.find(({ cardId, selected, disabled }) => cardId && !selected && !disabled);
+  if (!choice) throw new Error('no legal starting ability while Continue is blocked');
+  return choice.cardId;
+}
+
 // ---- TITLE → CLASS SELECT → BEGIN → the act map -----------------------------
 async function newGameFromTitle(label) {
   await until(`!!document.querySelector('.title-menu .slot-new')`, `the title's New Game door (${label})`);
@@ -266,7 +278,11 @@ async function newGameFromTitle(label) {
   const className = await ev(`document.querySelector('#cz-classes .cz-class').textContent.trim().replace(/^\\W+/, '').split(/(?=[A-Z][a-z]+ )/)[0]`);
   await press('#cz-classes .cz-class');
   await press('#cz-next');
-  await until(`!!document.querySelector('#cz-statedit .cc-mode-select')`, 'the Character stage');
+  // The staged flow (Class -> Attributes -> Keepsake -> Equipment -> Feats ->
+  // Spells for casters -> Review): each stage is the `.cz-railed` panel's
+  // data-creation-stage, and Next (#cz-next) leaves it.
+  const onStage = (stage) => `document.querySelector('.cz-railed')?.dataset.creationStage === '${stage}'`;
+  await until(`${onStage('attributes')} && !!document.querySelector('#cz-statedit .cc-mode-select')`, 'the Attributes stage');
   const openFace = async (key) => {
     await until(`!!document.querySelector('[data-face="${key}"]')`, `the ${key} fold`);
     if (!(await ev(`document.querySelector('[data-face="${key}"]')?.closest('details')?.open === true`))) await press(`[data-face="${key}"]`);
@@ -275,15 +291,43 @@ async function newGameFromTitle(label) {
   // Standard's mode id is `lean` (see map-camera-persistence.mjs).
   const mode = await ev(`(() => { const s = document.querySelector('#cz-statedit .cc-mode-select'); s.value = 'lean'; s.dispatchEvent(new Event('change', { bubbles: true })); return s.value; })()`);
   if (mode !== 'lean') throw new Error(`the stat mode select offers no Standard (lean); value=${JSON.stringify(mode)}`);
-  await openFace('keepsake');
+  await press('#cz-next');
+  await until(onStage('keepsake'), 'the Keepsake stage');
   await press('#cz-keepsakes [data-keepsake-id]');
   await press('#cz-next');
-  await until(`document.querySelector('#cz-tab-equipment')?.getAttribute('aria-selected') === 'true'`, 'the Starting equip stage');
+  await until(onStage('equipment'), 'the Equipment stage');
   await openFace('armour');
   await press('#cz-armours .equip-chip .equipment-poker-card');
-  await press('#cz-armours .equip-chip .equipment-choose');
+  // The armour's own Choose button is spent only when the stage shows it
+  // (a card click may already have chosen the armour).
+  if (await ev(`(() => { const b = document.querySelector('#cz-armours .equip-chip .equipment-choose'); if (!b) return false; const r = b.getBoundingClientRect(); return r.width > 0 && r.height > 0 && !b.disabled; })()`)) {
+    await press('#cz-armours .equip-chip .equipment-choose');
+  }
+  let abilitySelections = 0;
   for (let i = 0; i < 8; i++) {
     if (await ev(`document.querySelector('#cz-tab-review')?.getAttribute('aria-selected') === 'true'`)) break;
+    // Starting maneuvers/spells are required choices. Complete the open fold
+    // through its real Choose controls before asking its Continue to advance.
+    const abilityFold = STARTING_ABILITY_FOLD;
+    if (await has(abilityFold)) {
+      while (true) {
+        const snapshot = await ev(`(() => ({
+          continueBlocked: document.querySelector('#cz-next')?.getAttribute('aria-disabled') === 'true',
+          choices: [...document.querySelectorAll(${JSON.stringify(abilityFold + ' .cc-ability-choose')})].map(button => ({
+            cardId: button.closest('.cc-ability-choice')?.dataset.cardId,
+            selected: button.getAttribute('aria-pressed') === 'true', disabled: button.disabled,
+          })),
+        }))()`);
+        let cardId;
+        try { cardId = startingAbilityChoice(snapshot, abilitySelections); }
+        catch (error) { throw new Error(`${error.message}; screen ${JSON.stringify(await ev(SCREEN))}`); }
+        if (cardId === null) break;
+        const choice = `${abilityFold} .cc-ability-choice[data-card-id=${JSON.stringify(cardId)}] .cc-ability-choose`;
+        await press(choice);
+        abilitySelections++;
+        await until(`document.querySelector(${JSON.stringify(choice)})?.getAttribute('aria-pressed') === 'true'`, `the starting ability ${cardId} to be chosen`);
+      }
+    }
     await press('#cz-next');
   }
   await until(`document.querySelector('#cz-tab-review')?.getAttribute('aria-selected') === 'true'`, 'the Review stage');
@@ -312,6 +356,11 @@ async function enterNode(node) {
   await press(`.map-node[data-node="${node.id}"]`);
   // Select, then Enter once the tray has slid open (map.js W4b).
   await until(`document.querySelector('.map-tray')?.dataset.shown === 'true' && !document.querySelector('#map-enter')?.disabled`, `the tray's Enter for ${node.id}`, 5000);
+  // The tray is `shown` before its reveal has finished sliding (and the board
+  // glides onto the node under it): a press taken mid-slide lands on the tray
+  // row beneath the button and is dropped. Press once Enter has stopped moving.
+  await ev(`window.__enterRect = null`);
+  await until(`(() => { const b = document.querySelector('#map-enter'); if (!b) return false; const r = b.getBoundingClientRect(); const now = [r.x, r.y, r.width, r.height].join(); const same = window.__enterRect === now; window.__enterRect = now; return same; })()`, `the tray's Enter to stop moving for ${node.id}`, 5000);
   await wait(200);
   await press('#map-enter');
   // Entered: the map is gone, or a room (a treasure's spoils) is drawn over it.
@@ -332,7 +381,17 @@ async function endTurn() {
     await press('.end-turn', { hold: true, ms: 1000 });
     if (await ev(`(async () => { const end = Date.now() + 4000; while (Date.now() < end) { if (${moved}) return true; await new Promise((r) => setTimeout(r, 100)); } return false; })()`)) break;
   }
-  await until(`(${combatOver}) || (window.__combat.turn > ${turn} && ${COMBAT_READY})`, `turn ${turn + 1} or the fight's end`, 40000);
+  // The enemy turn can pause for an optional defensive reaction. Decline via
+  // the player's Back control, preserving payment and enemy-turn continuation.
+  const done=`(${combatOver}) || (window.__combat.turn > ${turn} && ${COMBAT_READY})`;
+  const deadline=Date.now()+40000;
+  while(Date.now()<deadline){
+    if(await ev(done))return;
+    const decline='.reaction-choice [data-control-role="exit"]';
+    if(await has(decline))await press(decline);
+    else await wait(100);
+  }
+  throw new Error(`timed out waiting for turn ${turn+1} or the fight's end; screen ${JSON.stringify(await ev(SCREEN))}`);
 }
 async function playFight() {
   let played = 0;
@@ -500,6 +559,52 @@ if (argv.includes('--selftest')) {
     const got = door.done || door.press || (door.wait ? 'wait' : null);
     plants.push([`door: ${name}`, want, null, got]);
   }
+  // Creation plants use the SAME choice planner as the actual DOM driver.
+  // Simulate the UI gate opening at one or two distinct selected abilities.
+  const creationChoices = (count) => {
+    const choices = ['first', 'second', 'third'].map(cardId => ({ cardId, selected: false, disabled: false }));
+    const picked = [];
+    for (let step = 0; step < 4; step++) {
+      const cardId = startingAbilityChoice({ continueBlocked: picked.length < count, choices });
+      if (cardId === null) return picked.join(',') + ':ready';
+      if (picked.includes(cardId)) return 'toggled a selected ability';
+      picked.push(cardId);
+      choices.find(choice => choice.cardId === cardId).selected = true;
+    }
+    return 'never completed';
+  };
+  plants.push(['creation: one required maneuver selects once then advances', 'first:ready', null, creationChoices(1)]);
+  plants.push(['creation: two required spells select distinct unchosen abilities', 'first,second:ready', null, creationChoices(2)]);
+  plants.push(['creation: selected and disabled abilities are skipped', 'legal', null, startingAbilityChoice({
+    continueBlocked: true, choices: [
+      { cardId: 'selected', selected: true, disabled: false },
+      { cardId: 'disabled', selected: false, disabled: true },
+      { cardId: 'legal', selected: false, disabled: false },
+    ],
+  })]);
+  plants.push(['creation: enabled Continue never selects an extra ability', null, null, startingAbilityChoice({
+    continueBlocked: false, choices: [{ cardId: 'extra', selected: false, disabled: false }],
+  })]);
+  let blockedCreation = 'accepted';
+  try { startingAbilityChoice({ continueBlocked: true, choices: [
+    { cardId: 'selected', selected: true, disabled: false },
+    { cardId: 'disabled', selected: false, disabled: true },
+  ] }); } catch (error) { blockedCreation = error.message; }
+  plants.push(['creation: a blocked gate without a legal choice fails', 'no legal starting ability while Continue is blocked', null, blockedCreation]);
+  let alternatingGate = 'accepted';
+  const alternatingChoices = ['first', 'second'].map(cardId => ({ cardId, selected: false, disabled: false }));
+  let alternatingSelections = 0;
+  try {
+    while (true) {
+      const cardId = startingAbilityChoice({ continueBlocked: true, choices: alternatingChoices }, alternatingSelections);
+      alternatingSelections++;
+      for (const choice of alternatingChoices) choice.selected = choice.cardId === cardId;
+    }
+  } catch (error) { alternatingGate = `${error.message}; selections ${alternatingSelections}`; }
+  plants.push(['creation: a blocked replacement pool stops at its selection bound',
+    'starting ability selection limit reached while Continue is blocked; selections 8', null, alternatingGate]);
+  plants.push(['creation: a ready gate at the selection limit still advances', null, null,
+    startingAbilityChoice({ continueBlocked: false }, STARTING_ABILITY_SELECTION_LIMIT)]);
   // CDP plants: a call the browser never answers is rejected by its bound; a
   // call pending when the socket drops is rejected at once, as is any later.
   const quiet = cdpCalls(() => {}, { timeoutMs: 50 });

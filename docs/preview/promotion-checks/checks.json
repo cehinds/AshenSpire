@@ -1,0 +1,68 @@
+[
+  {
+    "size": {
+      "width": 360,
+      "height": 640
+    },
+    "geometry": {
+      "wordmark": {
+        "top": 41,
+        "bottom": 76.875
+      },
+      "continue": {
+        "top": 109.453125,
+        "bottom": 168.4375
+      },
+      "centerClickable": true,
+      "menuScrollable": true,
+      "hostOverflow": "auto",
+      "noOverflow": true
+    },
+    "allControlsReachable": 9,
+    "errors": []
+  },
+  {
+    "size": {
+      "width": 390,
+      "height": 844
+    },
+    "geometry": {
+      "wordmark": {
+        "top": 45,
+        "bottom": 84.375
+      },
+      "continue": {
+        "top": 230.015625,
+        "bottom": 294.5625
+      },
+      "centerClickable": true,
+      "menuScrollable": false,
+      "hostOverflow": "auto",
+      "noOverflow": true
+    },
+    "allControlsReachable": 9,
+    "errors": []
+  },
+  {
+    "size": {
+      "width": 844,
+      "height": 390
+    },
+    "geometry": {
+      "wordmark": {
+        "top": 17.34375,
+        "bottom": 40.578125
+      },
+      "continue": {
+        "top": 70.09375,
+        "bottom": 122.21875
+      },
+      "centerClickable": true,
+      "menuScrollable": true,
+      "hostOverflow": "auto",
+      "noOverflow": true
+    },
+    "allControlsReachable": 9,
+    "errors": []
+  }
+]

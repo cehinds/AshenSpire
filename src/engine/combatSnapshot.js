@@ -12,7 +12,10 @@ import { stampPlayerPoiseMax } from '../model/state.js';
 import { playerPoiseThresholdReceipt } from '../model/statProjection.js';
 import { attachSkillXp } from './skillXp.js';
 import { refreshCombatRatings } from './combatRatings.js';
+import { controlRestrictions, backfillPersistentPoise } from './combatStatusControl.js';
+import { ashenBlightRestorationPercent } from './ashenBlight.js';
 import { COMBAT_SNAPSHOT_VERSION, assertCombatSnapshot } from '../model/combatSnapshot.js';
+import { bringRangesForward } from '../model/combatRanges.js';
 
 /**
  * A fight saved before plan phase 2 keyed its relic gates `relic:<owner>:<id>:<i>`;
@@ -40,13 +43,33 @@ function carryRelicGateKeys(entries) {
 /** Return the JSON-safe state of one fully committed combat turn. */
 export function serializeCombatSnapshot(combat) {
   if (!combat || typeof combat !== 'object') throw new Error('Cannot save a missing combat');
-  if (combat._buffer !== null || (combat.queue && combat.queue.length && !combat.pendingAbilityDiscard)) {
+  if (combat._buffer !== null || (combat.queue && combat.queue.length && !combat.pendingAbilityDiscard && !combat.pendingReaction)) {
     throw new Error('Combat is still resolving; wait for the action to finish before saving');
   }
   const snapshot = structuredClone({
     version: COMBAT_SNAPSHOT_VERSION,
+    ...(combat.combatExpansionVersion === 2 ? { combatExpansionVersion: 2, combatExpansionRules: combat.combatExpansionRules, combatKey: combat.combatKey,
+      expansionActionSerial: combat.expansionActionSerial || 0, pendingExpansionActions: combat.pendingExpansionActions || 0, allocatedAttributes: combat.allocatedAttributes } : {}),
+    ...(combat.combatMatchupRules ? { combatMatchupRules: combat.combatMatchupRules } : {}),
+    ...(combat.combatIntentRules ? { combatIntentRules: combat.combatIntentRules } : {}),
+    ...(combat.enemyKnowledge ? { enemyKnowledge: combat.enemyKnowledge } : {}),
+    // SPEC §4.11: the Combat Rounds Preview's whole round record (rules, queues, momentum, charges).
+    // Absent with the preview off, so an off-mode save has no new key.
+    ...(combat.combatRounds ? { combatRounds: combat.combatRounds } : {}),
+    // SPEC §4.11: the normal fight's momentum toggles and state. Absent when both toggles are off.
+    ...(combat.normalPreview ? { normalPreview: combat.normalPreview } : {}),
+    ...([1, 2].includes(combat.reactionRulesVersion) ? { reactionRulesVersion: combat.reactionRulesVersion,
+      ...(combat.foundationNextSerial !== undefined ? { foundationNextSerial: combat.foundationNextSerial } : {}),
+      ...(combat.reactionCursor ? { reactionCursor: combat.reactionCursor } : {}),
+      ...(combat.reactionHandCleanup ? { reactionHandCleanup: combat.reactionHandCleanup } : {}),
+      ...(combat.pendingReaction ? { pendingReaction: combat.pendingReaction } : {}),
+      ...(combat.reactionRulesVersion === 2 ? { reactionRules: combat.reactionRules } : {}),
+      ...(combat.reactionStack ? { reactionStack: combat.reactionStack } : {}),
+      ...(combat.enemyReactionRolls ? { enemyReactionRolls: combat.enemyReactionRolls } : {}),
+      ...(combat.reactionRootPlay ? { reactionRootPlay: combat.reactionRootPlay } : {}),
+      ...(combat.reactionResume ? { reactionResume: { ...combat.reactionResume, queue: combat.reactionResume.queue.map(({ source, owner, target, ...action }) => ({ ...action, sourceId: source?.id, ownerId: owner?.id, targetId: target?.id })) } } : {}) } : {}),
     ...(combat.ratingsRules ? { ratingsRules: combat.ratingsRules } : {}),
-    ...(combat.breakMeterVersion === 1 ? { breakMeterVersion: 1 } : {}),
+    ...([1, 2].includes(combat.breakMeterVersion) ? { breakMeterVersion: combat.breakMeterVersion } : {}),
     ...(combat.handRules ? { handRules: combat.handRules, pendingDiscardDraw: combat.pendingDiscardDraw || 0 } : {}),
     ...(combat.orderedDraw ? { orderedDraw: combat.orderedDraw } : {}),
     ...(combat.recovery ? { recovery: combat.recovery } : {}),
@@ -82,9 +105,8 @@ export function serializeCombatSnapshot(combat) {
     swapCostRule: combat.swapCostRule,
     swapsLeft: combat.swapsLeft,
     piles: combat.piles,
-    ...(combat.pendingAbilityDiscard ? {
-      pendingAbilityDiscard: combat.pendingAbilityDiscard,
-      pendingAbilityPlay: combat.pendingAbilityPlay,
+    ...(combat.pendingAbilityDiscard || combat.pendingReaction ? {
+      ...(combat.pendingAbilityDiscard ? { pendingAbilityDiscard: combat.pendingAbilityDiscard, pendingAbilityPlay: combat.pendingAbilityPlay } : {}),
       abilityQueue: combat.queue.map(({ source, owner, target, ...action }) => ({ ...action, sourceId: source?.id, ownerId: owner?.id, targetId: target?.id })),
     } : {}),
     eventLog: combat.eventLog,
@@ -133,14 +155,24 @@ function restoredPoolDeck(saved, fallback) {
 }
 
 export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttackSlotCount, fallbackRemovedAttackSlotIds, fallbackDerivedStatRuleSnapshot, fallbackAttributeMode, fallbackPoolDeck }) {
-  assertCombatSnapshot(snapshot);
+  // A fight saved before the range rename reads melee/reach/ranged (combatRanges.js);
+  // the caller's object is left as saved.
   const saved = structuredClone(snapshot);
+  bringRangesForward(saved);
+  assertCombatSnapshot(saved);
   if (saved.foundation) validateFoundationSnapshot(saved.foundation);
   const combat = {
     registries,
     rng,
+    ...(saved.combatExpansionVersion === 2 ? { combatExpansionVersion: 2, combatExpansionRules: saved.combatExpansionRules, combatKey: saved.combatKey,
+      expansionActionSerial: saved.expansionActionSerial || 0, pendingExpansionActions: saved.pendingExpansionActions || 0, allocatedAttributes: saved.allocatedAttributes } : {}),
+    ...(saved.combatMatchupRules ? { combatMatchupRules: saved.combatMatchupRules } : {}),
+    ...(saved.combatIntentRules ? { combatIntentRules: saved.combatIntentRules } : {}),
+    ...(saved.enemyKnowledge ? { enemyKnowledge: saved.enemyKnowledge } : {}),
+    ...(saved.combatRounds ? { combatRounds: saved.combatRounds } : {}),
+    ...(saved.normalPreview ? { normalPreview: saved.normalPreview } : {}),
     ...(saved.ratingsRules ? { ratingsRules: saved.ratingsRules } : {}),
-    ...(saved.breakMeterVersion === 1 ? { breakMeterVersion: 1 } : {}),
+    ...([1, 2].includes(saved.breakMeterVersion) ? { breakMeterVersion: saved.breakMeterVersion } : {}),
     // `ratingAttributeScale` IS NOT CARRIED BACK (owner, 2026-09-21). A fight
     // saved by an earlier build holds the creation-scale divisor its ratings
     // and hand sizes were read through; nothing divides an attribute any more,
@@ -221,11 +253,26 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   // raw emitter alone would record no XP for the rest of the restored fight.
   attachSkillXp(combat);
   combat.enqueue = (action) => combat.queue.push(action);
+  for (const key of ['reactionRulesVersion', 'reactionRules', 'reactionStack', 'foundationNextSerial', 'reactionCursor', 'reactionHandCleanup', 'pendingReaction', 'reactionResume', 'enemyReactionRolls', 'reactionRootPlay']) {
+    if (saved[key] !== undefined) combat[key] = saved[key];
+  }
   if (saved.abilityQueue) {
+    const groups = new Map();
+    for (const action of [...saved.abilityQueue, ...(saved.reactionResume?.queue || [])]) {
+      const group = action.meta?.expansionGroup;
+      if (!group) continue;
+      if (!groups.has(group.key)) groups.set(group.key, group);
+      action.meta.expansionGroup = groups.get(group.key);
+    }
     const entity = id => id === combat.player.id ? combat.player : combat.enemies.find(e => e.id === id);
     combat.queue = saved.abilityQueue.map(({ sourceId, ownerId, targetId, ...action }) => ({ ...action, source: entity(sourceId), owner: entity(ownerId), target: entity(targetId) || null }));
+    if (combat.reactionResume) combat.reactionResume.queue = combat.reactionResume.queue.map(({ sourceId, ownerId, targetId, ...action }) => ({ ...action, source: entity(sourceId), owner: entity(ownerId), target: entity(targetId) || null }));
   }
   combat.nextInstanceId = () => `gen${++combat._idCounter}`;
+  if (combat.combatExpansionVersion === 2) {
+    combat.combatControlRestrictions = entity => controlRestrictions(combat, entity);
+    combat.restorationModifierPercent = (entity, kind) => ashenBlightRestorationPercent(combat, entity, kind, String(entity.combatOwnerCycle || 0));
+  }
   // Property mounts are never saved (definitions are not persisted): they are
   // re-derived from the restored loadout and relics, exactly as createCombat
   // derives them.
@@ -249,6 +296,8 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
       ...(Number.isInteger(combat.characterLevel) ? { level: { level: combat.characterLevel } } : {}),
     }).value);
   }
+  // An older expanded save has Ward and no Poise: every combatant restores with a full Poise pool.
+  for (const entity of [combat.player, ...(combat.enemies || [])]) backfillPersistentPoise(combat, entity);
   return combat;
 }
 
@@ -268,6 +317,12 @@ export function commitCombatSnapshot({ run, combat, nodeId, encounterId }) {
   // longer does; this is the invariant itself, so no future caller can either.
   if (combat && combat.result) throw new Error(`Cannot save a combat that has already ended ('${combat.result}')`);
   const snapshot = serializeCombatSnapshot(combat);
+  if (combat.combatExpansionVersion === 2) {
+    run.ashenBlight = structuredClone(combat.player.ashenBlight);
+    run.ashenBlightBasePools = structuredClone(combat.player.baseResourceMaxima);
+    run.energyMax = combat.player.energyMax;
+    run.drawPerTurn = combat.player.drawPerTurn;
+  }
   run.loadout = structuredClone(combat.loadout);
   run.flasks = structuredClone(combat.player.flasks);
   run.flaskCharges = structuredClone(combat.player.flaskCharges);

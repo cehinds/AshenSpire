@@ -1,20 +1,152 @@
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { anchorLocalBox, uiZoom, VIEWPORT_ORIGIN } from '../fx.js';
 import { combatFormation } from '../models/CombatFormationModel.js';
-import { combatOverheadAnchors, combatOverheadRibbonShift, combatTargetAnchors } from '../models/CombatOverheadModel.js';
+import { isWideFormFactor } from '../models/FormFactorModel.js';
+import { COMBAT_TARGET_HIT_PX, combatOverheadAnchors, combatOverheadRibbonShift, combatTargetAnchors, combatTargetPackSize } from '../models/CombatOverheadModel.js';
 import { formationTileGeometry } from '../models/FormationGridModel.js';
-import { FORMATION_ROWS, formationDimensions, isFormationCell } from '../../model/formationLayout.js';
+import { FORMATION_ROWS, formationDimensions, playerFormationCell } from '../../model/formationLayout.js';
 import { fitIconTray } from './iconTray.js';
 import { combatSpriteRatio, fitCombatSprites, NARROW_MIN_HEIGHT_FRACTION } from '../models/CombatSpriteScaleModel.js';
-import { combatSpriteGeometry } from './combatSpriteGeometry.js';
+import { combatSpriteGeometry, currentSpriteArtBounds } from './combatSpriteGeometry.js';
+import { classicAppearance, displayAppearance } from '../displayAppearance.js';
+import { wireAlternativeBackdrop, fitAlternativeBackdrop } from '../alternativeArt.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
 import { targetOutline } from '../models/TargetLayerModel.js';
 import { fitSceneBackdrop } from './sceneBackdrop.js';
 import { battlefieldBackdropConfig } from '../models/SceneLayerModel.js';
 import { presentationConfig } from '../../model/advancedConfig.js';
+import { alternativeCombatComposition, combatComposition as classicCombatComposition, combatSceneryGround, combatStandingGround, stableHandAnchor, combatArtworkKey, stableCombatArtwork } from '../models/CombatCompositionModel.js';
+import { alternativeFormation, fitAlternativeSprites } from '../models/AlternativeFormationModel.js';
+import { perspectiveCellContains } from '../models/AlternativeFormationModel.js';
+import { playerDetailsPlacement } from '../models/PlayerDetailsPlacementModel.js';
+import { hudGeometry, offsetPlacement, offsetTargetPlate, targetPlateBox } from '../models/HudLayoutOffsetModel.js';
+import { restingHandEnvelope, handGeometryKey } from '../models/HandLayout.js';
+import { reducedMotionRequested } from '../motion.js';
+
+// Hidden panels can retain layout rectangles. Reserve controls that will paint
+// together at the layout boundary, including during its common screen fade.
+// Individually hidden children and intermediate ancestors remain excluded.
+export function visibleCombatPanelRect(node, field) {
+  if (!node) return null;
+  for (let current = node; current; current = current.parentElement) {
+    const style = getComputedStyle(current);
+    if (current.hidden || style.display === 'none' || ['hidden', 'collapse'].includes(style.visibility)
+      || (style.opacity === '0' && current !== field)) return null;
+    if (current === field) break;
+  }
+  const rect = node.getBoundingClientRect();
+  return rect.width > 0 && rect.height > 0 ? rect : null;
+}
+
+export function combatControlWidth(node, zoom) {
+  if (!node) return 0;
+  const width = node.getBoundingClientRect().width;
+  if (width > 0) return width;
+  // Unselected Info doors are display:none. Their authored border-box width
+  // still resolves in computed style, so selecting the actor need not repack it.
+  const style = getComputedStyle(node);
+  return Math.max(0, parseFloat(style.width) || 0, parseFloat(style.minWidth) || 0) * zoom;
+}
+
+export function combatPlayerInfoRect(node, art, viewport, zoom, floor = Infinity) {
+  if (!node) return null;
+  const width = combatControlWidth(node, zoom);
+  const height = node.getBoundingClientRect().height || width;
+  if (!(width > 0 && height > 0)) return null;
+  const left = (art.left + art.right) / 2 - width / 2;
+  // Art whose top sits low (a waist-overlap player) must not carry the door
+  // down under the resting hand or tools, which would take every tap on it.
+  const top = Math.max(viewport.top, Math.min(art.top - height - 4, floor - height - 4));
+  return { left, top, right: left + width, bottom: top + height, width, height };
+}
+
+// Owner (2026-10-11): the player's intent glyph (attack, smash, counter, defend,
+// sweep, spell) stays above the figure's head while the player is not selected,
+// so the stance reads at rest: centred over the art, below the HUD band. Selected,
+// the Inspect "i" takes that centre (combatPlayerInfoRect), so the glyph steps
+// just left of it (`avoid`, the visible Inspect rect), at the same height: the
+// smallest move that keeps it off the Inspect tap target, half the Inspect
+// width + a 4px gap + half the glyph width. Rightward if the left edge is short.
+export function placePlayerIntentGlyph(leading, { art, hudBottom, zoom = 1, avoid = null, viewport = null }) {
+  const node = leading.querySelector('.player-action-intent');
+  if (!node) return null;
+  const host = node.offsetParent || leading;
+  const { width, height } = node.getBoundingClientRect();
+  const floorTop = Number.isFinite(hudBottom) ? hudBottom + 2 : -Infinity;
+  const top = Math.max(floorTop, art.top - height - 4);
+  let centre = (art.left + art.right) / 2;
+  const overlaps = avoid && centre - width / 2 < avoid.right && centre + width / 2 > avoid.left
+    && top < avoid.bottom && top + height > avoid.top;
+  if (overlaps) {
+    const gap = 4;
+    const leftCentre = avoid.left - gap - width / 2;
+    centre = viewport && leftCentre - width / 2 < viewport.left ? avoid.right + gap + width / 2 : leftCentre;
+  }
+  const local = anchorLocalBox(host, { left: centre - width / 2, top, width, height }, { zoom });
+  node.style.left = `${local.left}px`;
+  node.style.top = `${local.top}px`;
+  node.dataset.placed = 'true';
+  return { centre, top, width, height };
+}
+
+// The selected-card action is independent of the reading panel, like Info.
+export function combatPlayerActionRect(node, infoRect, art, zoom, floor = Infinity) {
+  if (!node) return null;
+  const width = combatControlWidth(node, zoom);
+  const height = node.getBoundingClientRect().height || width;
+  if (!(width > 0 && height > 0)) return null;
+  const left = (art.left + art.right) / 2 - (infoRect?.width || 22) / 2 - 28;
+  const top = Math.min(art.top - 28, floor - height - 4);
+  return { left, top, right: left + width, bottom: top + height, width, height };
+}
+
+// A readable player panel can consume the only near-foot slot for another
+// actor. Retry its placement once with those actors' physical cores reserved;
+// retain the first layout unless the full footer pack actually improves.
+// `targetCores` is the caller's settled reservation: it is cleared in place when
+// the retry is refused, so the tracking pass never reapplies a rejected layout.
+export function packCombatTargetsWithHud({ pack, placeHud, targetCores }) {
+  const original = pack();
+  const blocked = targets => targets.filter(target => target.obstructed);
+  const ids = new Set(blocked(original).map(target => target.id));
+  if (!ids.size) return original;
+  placeHud(targetCores.filter(core => ids.has(core.id)));
+  const retry = pack();
+  if (blocked(retry).length < ids.size) return retry;
+  placeHud([]);
+  targetCores.length = 0;
+  return original;
+}
+
+export function combatTargetHudFootprints(targets, fieldRect, size) {
+  return targets.map(target => ({
+    left: fieldRect.left + target.x - target.width / 2,
+    right: fieldRect.left + target.x + target.width / 2,
+    top: fieldRect.top + target.y - size / 2,
+    bottom: fieldRect.top + target.y + size / 2,
+  }));
+}
+
+export function combatFrameTarget({ id, hostRect, fieldRect, footerSize, footerWidth, player }) {
+  const foot = hostRect.bottom - fieldRect.top + footerSize / 2;
+  // Waist-overlap artwork extends into the hand. The player's independent
+  // proxy stays in the field and can pack above real hand/action obstacles;
+  // enemy name/HP footers retain their owning body's bottom floor.
+  return { id, x: hostRect.left + hostRect.width / 2 - fieldRect.left,
+    y: player ? Math.min(foot, fieldRect.height - footerSize / 2) : foot,
+    minY: player ? footerSize / 2 : foot, width: Math.max(48, footerWidth) };
+}
+
+// getBoundingClientRect and the placement obstacles are already in physical
+// screen pixels. Match the CSS pseudo-element's 44px target without applying
+// UI zoom a second time: 22px mark + 18px above + 4px below.
+export function combatInspectTapBox({ left, top, width, height = width }) {
+  return { left: left - 11, right: left + width + 11,
+    top: top - 18, bottom: top + height + 4 };
+}
 
 let releaseActiveStage = null;
-export function wireBattlefieldStage(field, model) {
+export function wireBattlefieldStage(field, model, layoutState = {}) {
   if (releaseActiveStage) releaseActiveStage();
   if (!field) throw new Error('battlefieldStage requires a field host');
   if (!model || model.component !== UI.battlefieldStage) throw new Error('battlefieldStage requires its Component Model');
@@ -30,28 +162,301 @@ export function wireBattlefieldStage(field, model) {
   field.style.setProperty('--combatant-stage-center', `${model.tokens.centerPct}%`);
 
   let frameRequest = 0;
+  const loadedGeometry = layoutState.loadedGeometry ||= new Map();
+  let trackingRequest = 0;
+  let settledTargets = [], settledFooterSize = 44, settledTargetCores = [];
+  let playerInfoRects = [];
+  const labelMeasure = document.createElement('canvas').getContext('2d');
+  function fitLabels() {
+    if (!labelMeasure) return;
+    // The zoom is read once, before any label's font size is written: each
+    // uiZoom() is a computed-style read that flushes the pending style change,
+    // and this loop made three per label (a phone profile put the reads at
+    // about as much time as the fitting itself).
+    const zoom = uiZoom();
+    for (const label of field.querySelectorAll('.nm .ls-label, .intent-stance')) {
+      const box = label.closest('.nm, .intent');
+      const width = box.clientWidth - 8 / zoom;
+      if (width <= 0) continue;
+      const style = getComputedStyle(label);
+      const maximum = (label.closest('.player.context-selected') && window.innerWidth > 320 ? 12 : 11) / zoom;
+      labelMeasure.font = `${style.fontWeight} ${maximum}px ${style.fontFamily}`;
+      const measured = labelMeasure.measureText(label.textContent).width;
+      label.style.fontSize = `${Math.max(8 / zoom, maximum * Math.min(1, width / Math.max(1, measured)))}px`;
+    }
+  }
+  function readRestingHand() {
+    const hand = field.closest('.combat').querySelector('.hand');
+    if (!hand) return null;
+    const envelope = restingHandEnvelope({ rect: hand.getBoundingClientRect(), clientWidth: hand.clientWidth,
+      clientHeight: hand.clientHeight, fontSize: getComputedStyle(document.documentElement).fontSize,
+      geometry: hand.dataset.handGeometry, restLeft: parseFloat(hand.style.getPropertyValue('--hand-rest-left')),
+      restTop: parseFloat(hand.style.getPropertyValue('--hand-rest-top')),
+      clearanceTop: parseFloat(hand.style.getPropertyValue('--hand-clearance-top')) }, layoutState.restHandAnchor);
+    if (envelope?.validated) layoutState.restHandAnchor = envelope;
+    return envelope;
+  }
+  function placePlayerHud(reserveFirst = false, targetCores = [], tick = false) {
+    // A player's Inspect over the head must not hide an enemy's intent or
+    // Inspect. It takes the head's left, the field's left edge, or the head's
+    // right before accepting an overlap. Declared here so the placement source
+    // stays one self-contained unit.
+    const clearOfEnemyControls = (rect, art, viewport, zoom) => {
+      if (!rect) return rect;
+      const controls = [...field.querySelectorAll('.enemy .combatant-leading > .intent, .enemy .combatant-leading > .combatant-info')]
+        .map(node => visibleCombatPanelRect(node, field)).filter(Boolean);
+      // The 44 px tap pad counts: a neighbour's control must not sit under it.
+      const pad = 11 * zoom;
+      const hits = box => controls.some(c => box.left - pad < c.right && box.right + pad > c.left
+        && box.top - pad < c.bottom && box.bottom + pad > c.top);
+      if (!hits(rect)) return rect;
+      const gap = 4 * zoom;
+      // Head's left, the field's left edge, then the head's right; each on the
+      // head's row first, then one and two rows higher.
+      const lefts = [art.left - gap - rect.width, viewport.left + gap, art.right + gap];
+      const tops = [rect.top, rect.top - rect.height - gap, rect.top - 2 * (rect.height + gap)];
+      for (const top of tops) for (const left of lefts) {
+        const moved = { ...rect, left, right: left + rect.width, top, bottom: top + rect.height };
+        if (left >= viewport.left && moved.right <= viewport.right && top >= viewport.top && !hits(moved)) return moved;
+      }
+      return rect;
+    };
+    const zoom = uiZoom();
+    const combat = field.closest('.combat');
+    // HUD layout geometry tokens (docs/hud-layout-tokens.md), read once per pass.
+    const hudOffsets = hudGeometry(getComputedStyle(combat));
+    const panels = [...field.querySelectorAll(reserveFirst === true
+      ? '.enemy .intent, .enemy .combatant-info, .enemy .sprite, .turn-ribbon'
+      : '.enemy .intent, .enemy .combatant-info, .enemy .nm, .enemy .meters, .enemy .sprite, .turn-ribbon')]
+      .map(node => visibleCombatPanelRect(node, field)).filter(Boolean);
+    const toolsBox = visibleCombatPanelRect(combat?.querySelector('.combat-tools'), combat);
+    if (toolsBox) panels.push(toolsBox);
+    panels.push(...targetCores);
+    // Tracking reserves complete settled targets in the field's current coordinates.
+    if (reserveFirst !== true && settledTargets.length) panels.push(
+      ...combatTargetHudFootprints(settledTargets, field.getBoundingClientRect(), settledFooterSize));
+    const handTop = readRestingHand()?.clearanceTop;
+    const players = [...field.querySelectorAll('.combatant.player')].flatMap(player => {
+      const sprite = player.querySelector('.sprite'), leading = player.querySelector('.combatant-leading');
+      if (!sprite || !leading || !leading.querySelector('.combatant-mini-hud')) return [];
+      const art = currentSpriteArtBounds(sprite, placePlayerHud);
+      art.width = art.right - art.left;
+      const stack = player.querySelector('.combatant-stack').getBoundingClientRect();
+      const viewport = combat.getBoundingClientRect();
+      const panel = leading.getBoundingClientRect();
+      const inspect = leading.querySelector('.combatant-info');
+      const action = leading.querySelector('.player-action-intent');
+      const doorFloor = Math.min(toolsBox?.top ?? Infinity, handTop ?? Infinity);
+      // The Info door keeps its offset from the figure's stack, which only a
+      // layout refit moves. Idle bob and pose motion read the live artwork, so
+      // they never move the door; the frame tick (tick = true) follows the stack.
+      const offset = tick ? player.inspectOffset : null;
+      const infoRect = offset && inspect ? { left: stack.left + offset.x, top: stack.top + offset.y, width: offset.width,
+        height: offset.height, right: stack.left + offset.x + offset.width, bottom: stack.top + offset.y + offset.height }
+        : clearOfEnemyControls(combatPlayerInfoRect(inspect, art, viewport, zoom, doorFloor), art, viewport, zoom);
+      if (!tick) player.inspectOffset = infoRect ? { x: infoRect.left - stack.left, y: infoRect.top - stack.top,
+        width: infoRect.width, height: infoRect.height } : null;
+      const actionRect = combatPlayerActionRect(action, infoRect, art, zoom, doorFloor);
+      return [{ player, leading, art, stack, viewport, panel, inspect, action, infoRect, actionRect }];
+    });
+    // Reserve every seat's intended Info/action doors before placing any panel,
+    // including selectable doors that have not painted yet.
+    playerInfoRects = players.flatMap(({ infoRect, actionRect }) => [infoRect, actionRect]).filter(Boolean);
+    panels.push(...playerInfoRects);
+    for (const { player, leading, art, stack, viewport, panel, inspect, infoRect } of players) {
+      const expanded = player.classList.contains('context-selected');
+      const panelGap = expanded && viewport.width <= 320 ? 3 : 4;
+      const idleLeft = Math.max(viewport.left + 4, Math.min(art.left + (art.width - panel.width) / 2, viewport.right - panel.width - 4));
+      const idleTop = Math.min(art.bottom + 3, Math.min(toolsBox?.top ?? Infinity, handTop ?? Infinity) - panel.height - 4);
+      const handFloor = Math.min(toolsBox?.top ?? Infinity, handTop ?? Infinity);
+      const hudBottom = combat.querySelector('.combat-hud')?.getBoundingClientRect().bottom;
+      // The panel's previous spot without the token offset applied last pass,
+      // so a kept position never accumulates the offset frame after frame.
+      const applied = player.hudDetailsShift || { x: 0, y: 0 };
+      const placed = playerDetailsPlacement({
+        art: expanded ? { ...art, top: art.bottom - panel.height } : { ...art, right: idleLeft - 4, top: idleTop - 16 },
+        width: panel.width, height: panel.height, viewport, gap: panelGap,
+        handTop: handFloor,
+        previous: reserveFirst === true ? undefined : { left: panel.left - applied.x, top: panel.top - applied.y },
+        hudBottom, obstacles: panels });
+      // The details offset tokens, added after placement and clamped to the
+      // same field, header and hand edges; an offset onto another control is
+      // refused (HudLayoutOffsetModel). Both 0: `placed` exactly.
+      const shift = offsetPlacement({ rect: { left: placed.left, top: placed.top, width: panel.width, height: panel.height },
+        dx: hudOffsets.playerDetailsDx * zoom, dy: hudOffsets.playerDetailsDy * zoom,
+        bounds: { left: viewport.left + 4, right: viewport.right - 4, top: Number.isFinite(hudBottom) ? hudBottom : viewport.top,
+          bottom: Number.isFinite(handFloor) ? handFloor - 4 : viewport.bottom },
+        obstacles: panels });
+      const placement = shift.shifted ? { ...placed, left: shift.left, top: shift.top } : placed;
+      player.hudDetailsShift = { x: placement.left - placed.left, y: placement.top - placed.top };
+      panels.push({ ...placement, right: placement.left + panel.width, bottom: placement.top + panel.height });
+      const top = `${(placement.top - stack.top) / zoom}px`;
+      const left = `${(placement.left - stack.left) / zoom}px`;
+      if (leading.style.top !== top) leading.style.top = top;
+      if (leading.style.left !== left) leading.style.left = left;
+      leading.style.translate = 'none';
+      // Selected, the Inspect door is visible: the glyph keeps off it.
+      placePlayerIntentGlyph(leading, { art, hudBottom, zoom, avoid: expanded ? infoRect : null, viewport });
+      for (const [door, rect] of [[inspect, infoRect]]) {
+        if (!rect) continue;
+        const local = anchorLocalBox({ left: placement.left, top: placement.top, width: panel.width, height: panel.height }, rect, { zoom });
+        door.style.left = `${local.left}px`;
+        door.style.top = `${local.top}px`;
+        // The Info door stays visibility:hidden until its spot is written, so
+        // it never paints at a temporary position and then moves.
+        if (door === inspect) door.dataset.placed = 'true';
+      }
+      player.dataset.spriteArtTop = String(art.top);
+      player.dataset.playerHudGap = String(art.top - leading.getBoundingClientRect().bottom);
+    }
+  }
+  // Owner (2026-10-11): each combatant's floor shadow is as wide as its health
+  // bar. The bar is read at rest: a selected player's bar widens into the
+  // reading panel, so its last resting width holds and the shadow stays put.
+  // Sprite and bar are both scaled by any selection transform, so their ratio
+  // is the shadow's width as a share of the figure.
+  function syncFloorShadows() {
+    for (const frame of field.querySelectorAll('.combatant')) {
+      const sprite = frame.querySelector('.sprite'), bar = frame.querySelector('.combat-health-meter');
+      if (!sprite || !bar) continue;
+      if (!frame.classList.contains('context-selected')) {
+        const barWidth = bar.getBoundingClientRect().width;
+        if (barWidth > 0) frame.dataset.healthBarWidth = String(barWidth);
+      }
+      const barWidth = Number(frame.dataset.healthBarWidth), spriteWidth = sprite.getBoundingClientRect().width;
+      if (!(barWidth > 0 && spriteWidth > 0)) continue;
+      sprite.style.setProperty('--floor-shadow-width', `${(barWidth / spriteWidth * 100).toFixed(2)}%`);
+    }
+  }
+  // Every living enemy's Inspect hangs above its intent. The default spot is
+  // read after the refit; it moves to the intent's left or right only when the
+  // 44 px tap area above would sit under the HUD, the turn ribbon, or another
+  // combatant's control. Nothing here reserves room in the fitted envelope.
+  // Reads every box first, then writes only the sides that change, so a pass
+  // costs one layout read and no forced re-layout between enemies.
+  function placeEnemyInspect() {
+    const combat = field.closest('.combat');
+    const infos = [...field.querySelectorAll('.combatant.enemy:not(.dead) > .combatant-stack > .combatant-leading > .combatant-info')];
+    if (!infos.length || !combat) return;
+    const viewport = combat.getBoundingClientRect();
+    const hudBoxes = [...combat.ownerDocument.querySelectorAll('.topbar, .combat-hud, .turn-ribbon, .combat-tools')]
+      .map(node => visibleCombatPanelRect(node, combat)).filter(Boolean);
+    const overlaps = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+    const gap = 4;
+    // Other combatants' controls, excluding Inspect marks: those are placed by
+    // this pass and tracked from their planned boxes below.
+    const controls = [...field.querySelectorAll('.combatant-leading > .intent, .combatant-leading > .player-action-intent, .combatant.player .combatant-leading > .combatant-info, .combatant-mini-hud, .combatant-card > .nm, .combatant-card > .meters')]
+      .map(node => ({ node, rect: visibleCombatPanelRect(node, combat) })).filter(entry => entry.rect);
+    const measured = infos.map(info => ({ info, size: info.getBoundingClientRect().width,
+      anchor: info.parentElement, box: info.parentElement.getBoundingClientRect() }));
+    const planned = [], sides = [];
+    for (const { info, size, anchor, box } of measured) {
+      if (!(size > 0) || !(box.width > 0)) { sides.push(null); continue; }
+      // Each spot with its 44 px tap box. A side spot never reaches into the intent.
+      const centre = box.left + box.width / 2;
+      const spots = [
+        ['', { left: centre - size / 2, top: box.top - gap - size }],
+        ['left', { left: box.left - gap - size, top: box.top }],
+        ['right', { left: box.right + gap, top: box.top }],
+        // Beside the intent's top corners, for a back-row figure wedged between
+        // neighbouring intents, where the ribbon ends.
+        ['left-up', { left: box.left - gap - size, top: box.top - gap - size }],
+        ['right-up', { left: box.right + gap, top: box.top - gap - size }],
+        // One mark further out, past a turn ribbon that ends beside the intent.
+        ['right-far-up', { left: box.right + gap + size, top: box.top - gap - size }],
+        // Last resort, below the overhead on this enemy's own art: a tap that
+        // misses the mark still selects this same enemy.
+        ['below', { left: centre - size / 2, top: box.bottom + gap }],
+      ].map(([side, at]) => [side, at, combatInspectTapBox({ ...at, width: size })]);
+      // A readout hung below the feet keeps Inspect below or beside its
+      // intent: a spot above it would put the tap area over the fighter.
+      if (info.closest('.combatant')?.dataset.hudBelow) spots.splice(0, spots.length, ...['below', 'left', 'right'].map(side => spots.find(([s]) => s === side)));
+      // Our own intent is the anchor; every tap pad must clear everything else,
+      // including the Inspect marks already planned this pass.
+      const others = [...controls.filter(({ node }) => !(node.matches('.intent') && node.parentElement === anchor)).map(({ rect }) => rect),
+        ...planned];
+      const mark = at => ({ left: at.left, top: at.top, right: at.left + size, bottom: at.top + size });
+      // The painted 22 px mark must clear the HUD; its tap pad must clear the
+      // other combatants' controls.
+      const pick = spots.find(([, at, tap]) => tap.left >= viewport.left && tap.right <= viewport.right && tap.top >= viewport.top
+        && !hudBoxes.some(hud => overlaps(mark(at), hud)) && !others.some(rect => overlaps(tap, rect)));
+      // With every spot taken (a back-row figure wedged under the ribbon),
+      // keep the mark reachable on the figure's own art rather than hidden.
+      const chosen = pick || (hudBoxes.some(hud => overlaps(mark(spots[0][1]), hud)) ? spots.at(-1) : spots[0]);
+      planned.push(chosen[2]);
+      sides.push(chosen[0]);
+    }
+    measured.forEach(({ info }, i) => {
+      // Not displayed (unselected): its spot is no longer current, so the
+      // door must be placed again before it can show.
+      if (sides[i] == null) { delete info.dataset.placed; return; }
+      if (sides[i]) { if (info.dataset.inspectSide !== sides[i]) info.dataset.inspectSide = sides[i]; }
+      else if (info.hasAttribute('data-inspect-side')) info.removeAttribute('data-inspect-side');
+      info.dataset.placed = 'true';
+    });
+  }
+  let inspectTick = 0;
+  function trackPlayerHud() {
+    // Reduced motion has no idle or pose drift to follow. Do not turn the HUD
+    // into a script-driven animation by rewriting its settled coordinates.
+    if (reducedMotionRequested()) { trackingRequest = 0; return; }
+    // Keep the settled target cores reserved, or the HUD can snap back over the player target.
+    placePlayerHud(false, settledTargetCores, true);
+    // A neighbour's intent that moves between refits re-picks the spot about
+    // four times a second; the Inspect itself never follows the body's bob.
+    if (++inspectTick % 15 === 0) placeEnemyInspect();
+    // Idle breathing also moves the painted body. Keep the physical gap during
+    // those CSS transforms as well as explicit attack and movement poses.
+    trackingRequest = field.isConnected && field.querySelector('.combatant.player')
+      ? requestAnimationFrame(trackPlayerHud) : 0;
+  }
   const refresh = () => {
     cancelAnimationFrame(frameRequest);
     // Fit replacement DOM synchronously before it can paint at intrinsic width.
     if (!field.isConnected) return;
     const combat = field.closest('.combat');
+    if (wiredAppearance !== displayAppearance()) {
+      releaseBackdrop();
+      releaseBackdrop = wireAlternativeBackdrop(combat);
+      wiredAppearance = displayAppearance();
+    }
     combat.dataset.layout = 'formation';
     // No combatants yet (the wiring's own call, before the first render): there
     // is nothing to fit, so do not force a layout of the half-built screen.
     const frames = [...field.querySelectorAll('.combatant[data-ui-component="combatant-frame"]')];
     if (!frames.length) return;
-    const fieldRect = field.getBoundingClientRect();
-    const zoom = fieldRect.width / field.clientWidth || 1;
+    fitLabels();
+    const measuredField = field.getBoundingClientRect();
+    // CSS zoom can report float noise across equivalent DOM remounts. Snap the
+    // dimensions before deriving formation coordinates, not only its cache key.
+    const fieldRect = { top: measuredField.top, left: measuredField.left,
+      width: Math.round(measuredField.width * 64) / 64,
+      height: Math.round(measuredField.height * 64) / 64 };
+    const zoom = fieldRect.width / field.offsetWidth || 1;
     // WCO1 headroom: the HUD band's bottom edge, in the field's local px.
     const hudBand = combat.querySelector(':scope > .topbar');
+    const overheadGap = combat.dataset.compactCombat === 'true' ? 4 : 14;
+    // Owner (2026-10-12): a readout sits directly above or below its fighter,
+    // never beside it. On the perspective grid a front-rank enemy's readout
+    // goes below its feet; above its head stands the back rank's.
+    const hudBelow = actor => !classicAppearance() && actor.side === 'enemy' && actor.slot.rank === 1;
     const ceiling = hudBand ? Math.max(0, (hudBand.getBoundingClientRect().bottom - fieldRect.top) / zoom) : 0;
+    const vitality = hudBand?.querySelector('.resbars-host');
+    if (vitality) combat.style.setProperty('--combat-header-opaque-end',
+      `${Math.max(0, (vitality.getBoundingClientRect().bottom - hudBand.getBoundingClientRect().top) / zoom)}px`);
     // The turn ribbon hangs from the HUD band's bottom edge (player-polish.css
     // reads --turn-ribbon-top), so it never sits under a band taller than its
     // row. Its box, in the same screen px as the plan, is a second ceiling for
     // every figure whose art or overhead stack shares its columns (below).
     const ribbonEl = field.querySelector(':scope > .turn-ribbon');
+    // HUD layout geometry tokens (docs/hud-layout-tokens.md), read once per pass.
+    const hudOffsets = hudGeometry(getComputedStyle(combat));
     if (ribbonEl) {
-      field.style.setProperty('--turn-ribbon-top', `${ceiling}px`);
+      // The ribbon offset token is added below the band's edge and clamped:
+      // never up under the HUD band, never past the field's floor.
+      const ribbonDy = hudOffsets.turnRibbonDy
+        ? Math.max(0, Math.min(hudOffsets.turnRibbonDy, measuredField.height / zoom - ceiling - ribbonEl.offsetHeight)) : 0;
+      field.style.setProperty('--turn-ribbon-top', `${ceiling + ribbonDy}px`);
       // A ribbon that changes size (its text, a short screen's font) refits.
       resizeObserver.observe(ribbonEl);
     }
@@ -63,22 +468,28 @@ export function wireBattlefieldStage(field, model) {
     // as computed style when not handed it, and per tile and per combatant, each
     // after a style write, that was a style flush apiece (36 tiles).
     const pageZoom = uiZoom();
-    const presentation = { ...presentationConfig(), ...JSON.parse(document.documentElement.dataset.formationSettings || '{}') };
-    const dimensions = formationDimensions(presentation, Math.max(frames.filter(f => f.classList.contains('player')).length, frames.filter(f => f.classList.contains('enemy')).length));
-    if (isFormationCell(field.dataset.playerCell, dimensions)) {
-      presentation.playerSpawnRow = field.dataset.playerCell[0];
-      presentation.playerSpawnColumn = field.dataset.playerCell[1];
+    const presentation = { ...presentationConfig(), ...JSON.parse(document.documentElement.dataset.formationSettings || '{}'),
+      perspectiveGrid: !classicAppearance() };
+    const partySize = frames.filter(f => f.classList.contains('player')).length;
+    const dimensions = formationDimensions(presentation, Math.max(partySize, frames.filter(f => f.classList.contains('enemy')).length), partySize);
+    const playerCell = playerFormationCell(field.dataset.playerCell, dimensions);
+    if (playerCell) {
+      presentation.playerSpawnRow = playerCell[0];
+      presentation.playerSpawnColumn = playerCell[1];
     }
     const plan = combatFormation({ width: fieldRect.width, height: fieldRect.height,
       presentation,
       footerClearance: window.innerHeight <= 480 && window.innerWidth >= 600 ? 48 : 0,
       friends: frames.filter(f => f.classList.contains('player')).map(f => f.dataset.eid),
       enemies: frames.filter(f => f.classList.contains('enemy')).map(f => f.dataset.eid) });
+    if (!classicAppearance()) alternativeFormation(plan, fieldRect.width, fieldRect.height, document.documentElement.dataset.layout === 'narrow');
     const nameWidth = Math.min(...plan.slots.map(slot => slot.width));
     const grid = field.querySelector('.formation-grid');
     if (grid) {
       grid.dataset.shape = presentation.gridShape;
-      grid.style.zIndex = String(presentation.gridLayer === 'above' ? 2000 : Math.min(-1, ...plan.slots.map(slot => slot.layer - 1)));
+      grid.dataset.perspective = String(!classicAppearance());
+      grid.style.zIndex = presentation.gridLayer === 'above'
+        ? 'var(--combat-layer-selection)' : 'calc(var(--combat-layer-shadows) - 1)';
       grid.style.setProperty('--player-grid-color', presentation.playerGridColor);
       grid.style.setProperty('--enemy-grid-color', presentation.enemyGridColor);
       const occupied = new Set(plan.slots.map(slot => slot.cell));
@@ -88,11 +499,25 @@ export function wireBattlefieldStage(field, model) {
       for (const cell of plan.cells) {
         const tile = grid.querySelector(`[data-cell="${cell.cell}"]`);
         if (!tile) continue;
-        const geometry = formationTileGeometry(cell, plan, presentation);
-        const localTile = anchorLocalBox(VIEWPORT_ORIGIN, {
+        // A perspective cell is drawn whole, its shadow at the foot anchor.
+        const geometry = cell.box ? { width: cell.box.width, height: cell.box.height, transform: 'none' }
+          : formationTileGeometry(cell, plan, presentation);
+        const localTile = anchorLocalBox(VIEWPORT_ORIGIN, cell.box ?? {
           left: cell.x - geometry.width / 2, top: cell.ground,
           width: geometry.width, height: geometry.height,
         }, { zoom: pageZoom });
+        if (cell.box) {
+          tile.style.setProperty('--foot-y', `${(cell.ground - cell.box.top) / cell.box.height * 100}%`);
+          // Shear the rectangle about its centre into the cell's parallelogram;
+          // the shadow is sheared back so it stays a level ellipse.
+          const shear = Math.atan(cell.box.skew || 0);
+          tile.style.transform = `skewX(${-shear}rad)`;
+          tile.style.setProperty('--cell-unskew', `${shear}rad`);
+        } else {
+          tile.style.removeProperty('--foot-y');
+          tile.style.removeProperty('transform');
+          tile.style.removeProperty('--cell-unskew');
+        }
         tile.style.left = `${localTile.left}px`;
         tile.style.top = `${localTile.top}px`;
         tile.style.width = `${localTile.width}px`;
@@ -104,6 +529,7 @@ export function wireBattlefieldStage(field, model) {
         tile.dataset.anchorY = String(cell.ground);
       }
       field.formationPlan = { plan, width: fieldRect.width, height: fieldRect.height };
+      wireGridTargeting(field);
       field.dispatchEvent(new Event('formationlayoutchange'));
     }
     // Writes first, then reads: resetting each sprite's zoom immediately before
@@ -118,46 +544,99 @@ export function wireBattlefieldStage(field, model) {
     });
     const actors = slotFrames.map(({ slot, frame, sprite }) => {
       const stack = frame.querySelector('.combatant-stack');
-      const geometry = combatSpriteGeometry(sprite, schedule);
+      let geometry = combatSpriteGeometry(sprite, schedule);
+      // Reserve the tallest authored pose once. Following the current ink must
+      // not push the overhead into the ribbon or resize art during an attack.
+      if (frame.classList.contains('player')) {
+        const ratio = Number(sprite.querySelector('.painted-stage')?.dataset.maximumHeightRatio || 0);
+        geometry.visibleHeight = Math.max(geometry.visibleHeight, geometry.boxHeight * ratio);
+      }
       const enemyId = sprite.firstElementChild.dataset.enemyId;
       const ratio = combatSpriteRatio(frame.dataset.stature, enemyId);
       const leadingHost = frame.querySelector('.combatant-leading');
-      const leadingHeight = leadingHost ? leadingHost.getBoundingClientRect().height / zoom : 0;
+      const leadingHeight = !frame.classList.contains('player') ? (visibleCombatPanelRect(leadingHost, field)?.height || 0) / zoom : 0;
       // Inspect and intent stack vertically except on short landscape screens,
       // where their complete side-by-side union must stay inside the field.
       // Decorative shortcut keys do not enlarge the actionable control box.
-      const leadingRects = leadingHost ? [...leadingHost.querySelectorAll(':scope > .overhead-control')]
-        .map(control => control.getBoundingClientRect()).filter(rect => rect.width > 0 && rect.height > 0) : [];
-      const leadingWidth = leadingRects.length ? (Math.max(...leadingRects.map(rect => rect.right))
+      // An enemy's Inspect sits above its intent outside the fitted envelope
+      // (placeEnemyInspect), so it never widens or heightens the stack.
+      const leadingRects = leadingHost ? [...leadingHost.querySelectorAll(':scope > .overhead-control:not(.combatant-info), :scope > .combatant-mini-hud')]
+        .map(control => visibleCombatPanelRect(control, field)).filter(Boolean) : [];
+      const leadingWidth = leadingRects.length && !frame.classList.contains('player') ? (Math.max(...leadingRects.map(rect => rect.right))
         - Math.min(...leadingRects.map(rect => rect.left))) / zoom : 0;
       const multiplier = (presentation[`row${FORMATION_ROWS[slot.row]}Scale`] ?? 1) * (frame.classList.contains('player') ? presentation.playerSpriteScale : presentation.enemySpriteScale)
         * wireframeUi.formation.displayScale * (slot.characterScale || 1);
-      return { slot, side: frame.classList.contains('player') ? 'player' : 'enemy', frame, stack, sprite, ratio, multiplier, ...geometry, leadingHost,
+      const stage = sprite.querySelector('.pose-stage');
+      const art = [sprite.firstElementChild.className, stage?.dataset.poseClass, stage?.dataset.animationSet,
+        sprite.querySelector('.enemy-pose-idle, .painted-presentation')?.getAttribute('src')];
+      // A replacement image briefly has no intrinsic pixels. Reuse its last
+      // loaded measurement instead of replacing the encounter fit with a box.
+      const geometryKey = JSON.stringify([art, sprite.offsetWidth, sprite.offsetHeight]);
+      const image = sprite.querySelector('.enemy-pose-idle, .painted-presentation, .facing > img');
+      if (image && (!image.complete || !image.naturalWidth)) {
+        geometry = loadedGeometry.get(geometryKey) || geometry;
+      } else loadedGeometry.set(geometryKey, geometry);
+      return { slot, side: frame.classList.contains('player') ? 'player' : 'enemy', frame, stack, sprite, ratio, enemyId, multiplier, ...geometry, leadingHost,
+        art,
         // The overhead stack's own height (Inspect, when shown, over the
         // intent), in local px, for the headroom clamp below.
         leadingHeight, leadingWidth,
         // Reading controls do not change the unselected fitting envelope.
-        leading: Math.max(Math.min(66, fieldRect.height * .25), leadingHeight * zoom + ceiling * zoom + 14) };
+        leading: Math.max(Math.min(66, fieldRect.height * .25), leadingHeight * zoom + ceiling * zoom + overheadGap) };
     });
+    // A readout below the feet needs no headroom above the head.
+    for (const actor of actors) if (hudBelow(actor)) actor.leading = 6;
     const narrow = document.documentElement.dataset.layout === 'narrow';
+    const hand = combat.querySelector('.hand');
+    const handRect = hand?.getBoundingClientRect();
+    // Read the resting envelope, never a selected or horizontally panned card.
+    // Keep it across screen remounts until viewport geometry or text scale changes.
+    const handKey = handRect && hand.clientWidth > 0
+      ? handGeometryKey({ width: hand.clientWidth, height: hand.clientHeight, zoom: handRect.width / hand.clientWidth,
+        fontSize: getComputedStyle(document.documentElement).fontSize, left: handRect.left }) : null;
+    const handLeft = readRestingHand()?.left ?? fieldRect.left;
+    // Preserve the incoming remount cache's subpixel tolerance; raw geometry
+    // still validates the hand's authored resting envelope above.
+    const stableHandKey = handKey?.split(':').map(value => Number.isFinite(Number(value))
+      ? Math.round(Number(value) * 1000) / 1000 : value).join(':');
+    const handLayoutKey = [fieldRect.width, fieldRect.height, pageZoom].map(value => Math.round(value * 1000) / 1000).join(':') + ':' + stableHandKey;
+    const handAnchor = layoutState.handAnchor = stableHandAnchor(layoutState.handAnchor, handLayoutKey, {
+      left: handLeft - fieldRect.left, top: handRect ? handRect.top - fieldRect.top : null,
+    });
+    const solo = actors.filter(actor => actor.side === 'player').length === 1 && !combat.classList.contains('coop');
+    combat.dataset.composition = 'option-c';
+    combat.dataset.waistOverlap = String(solo && window.innerHeight > 480);
+    // Short landscape needs a lower foot line to reserve the full intent row.
+    if (classicAppearance() && window.innerHeight <= 480) for (const actor of actors) {
+      actor.slot = { ...actor.slot, fitGround: fieldRect.height - 24, ground: fieldRect.height - 24 };
+    }
     const fitFormation = () => {
-      const sizes = fitCombatSprites({ width: fieldRect.width, height: fieldRect.height, actors,
-        minHeight: narrow ? fieldRect.height * NARROW_MIN_HEIGHT_FRACTION : 0 });
+      // Classic and alternative compositions differ; choose per fit, not at import.
+      const combatComposition = classicAppearance() ? classicCombatComposition : alternativeCombatComposition;
+      const sizes = combatComposition({ width: fieldRect.width, height: fieldRect.height, actors,
+        perspectiveGrid: !classicAppearance(),
+        handTop: handAnchor?.key === handLayoutKey ? handAnchor.top : null,
+        handLeft: handAnchor?.key === handLayoutKey ? handAnchor.left : 0,
+        solo: solo && window.innerHeight > 480,
+        sizes: classicAppearance()
+          ? fitCombatSprites({ width: fieldRect.width, height: fieldRect.height, actors,
+            minHeight: narrow ? fieldRect.height * NARROW_MIN_HEIGHT_FRACTION : 0 })
+          : fitAlternativeSprites({ width: fieldRect.width, height: fieldRect.height, actors, narrow }) });
       const smallestEnemyHeight = Math.min(...actors.filter(a => a.side === 'enemy')
         .map(a => sizes.find(size => size.id === a.slot.id)?.visibleHeight ?? Infinity));
       const growthFor = (actor, fitted) => {
-        const requestedGrowth = actor.frame.classList.contains('context-selected') ? wireframeUi.formation.selectedGrowth[Math.min(2, actor.slot.row)] : 1;
+        const requestedGrowth = 1; // Reading selection never changes approved artwork geometry.
         return Math.min(requestedGrowth, Math.max(1,
           ((fitted.ground ?? actor.slot.ground) - actor.leading - 6) / fitted.visibleHeight),
           // Selection must not make the player tower over a foe already capped
           // by the available headroom on a short screen.
           actor.side === 'player' ? Math.max(1, smallestEnemyHeight / fitted.visibleHeight) : Infinity);
       };
-      const overheads = combatOverheadAnchors({ width: fieldRect.width, ribbon,
+      const overheads = combatOverheadAnchors({ width: fieldRect.width, ribbon, ribbonClearance: overheadGap,
         controls: actors.filter(actor => actor.leadingWidth > 0 && sizes.some(size => size.id === actor.slot.id)).map(actor => {
           const fitted = sizes.find(size => size.id === actor.slot.id);
-          const bottom = (fitted.ground ?? actor.slot.ground) - fitted.visibleHeight * growthFor(actor, fitted) - 14;
-          return { id: actor.slot.id, side: actor.side, row: actor.slot.row, x: actor.slot.x,
+          const bottom = (fitted.ground ?? actor.slot.ground) - fitted.visibleHeight * growthFor(actor, fitted) - overheadGap;
+          return { id: actor.slot.id, side: actor.side, row: actor.slot.row, x: fitted.x,
             width: actor.leadingWidth * zoom, top: bottom - actor.leadingHeight * zoom, bottom };
         }) });
       return { sizes, growthFor, overheads };
@@ -171,21 +650,77 @@ export function wireBattlefieldStage(field, model) {
     // its fighters to a ribbon none of them stands under.
     if (ribbon) {
       const crosses = (centre, width) => centre - width / 2 < ribbon.right && centre + width / 2 > ribbon.left;
-      const ribbonLeading = actor => actor.leadingHeight * zoom + ribbon.bottom + 14;
+      const ribbonLeading = actor => actor.leadingHeight * zoom + ribbon.bottom + overheadGap;
       for (let pass = 0; pass < actors.length; pass++) {
         const moved = actors.filter(actor => {
           const fitted = sizes.find(size => size.id === actor.slot.id);
           if (!fitted || ribbonLeading(actor) <= actor.leading) return false;
           const artWidth = fitted.visibleHeight * growthFor(actor, fitted) * actor.visibleWidth / actor.visibleHeight;
           const overheadX = overheads.find(overhead => overhead.id === actor.slot.id)?.x ?? fitted.x;
-          return crosses(fitted.x, artWidth) || crosses(overheadX, actor.leadingWidth * zoom);
+          return crosses(fitted.x, artWidth) || (!hudBelow(actor) && crosses(overheadX, actor.leadingWidth * zoom));
         });
         if (!moved.length) break;
         for (const actor of moved) actor.leading = ribbonLeading(actor);
         ({ sizes, growthFor, overheads } = fitFormation());
       }
     }
+    const artworkFit = layoutState.artworkFit = stableCombatArtwork(layoutState.artworkFit, combatArtworkKey({ width: fieldRect.width,
+      height: fieldRect.height, zoom: pageZoom, wide: isWideFormFactor(document.documentElement.dataset.formFactor), presentation, appearance: displayAppearance(), handAnchor, actors }), sizes);
+    sizes = artworkFit.sizes;
+    // Intent/Inspect controls still respond to their current text and selection,
+    // but their changing headroom cannot resize or move the settled artwork.
+    const overheadControls = actors.filter(actor => actor.leadingWidth > 0 && sizes.some(size => size.id === actor.slot.id)).map(actor => {
+      const fitted = sizes.find(size => size.id === actor.slot.id);
+      const ground = fitted.ground ?? actor.slot.ground;
+      if (hudBelow(actor)) {
+        const top = ground + overheadGap;
+        return { id: actor.slot.id, side: actor.side, row: 'below', x: fitted.x,
+          width: actor.leadingWidth * zoom, top, bottom: top + actor.leadingHeight * zoom };
+      }
+      const bottom = ground - fitted.visibleHeight - overheadGap;
+      return { id: actor.slot.id, side: actor.side, row: actor.slot.row, x: fitted.x,
+        width: actor.leadingWidth * zoom, top: bottom - actor.leadingHeight * zoom, bottom };
+    });
+    overheads = combatOverheadAnchors({ width: fieldRect.width, ribbon, ribbonClearance: overheadGap, controls: overheadControls });
     const placed = [];
+    const leadingWrites = [];
+    // Writes one readable overhead at its anchor. Called again once the
+    // player's settled art and controls are measured (see below).
+    const placeLeading = ({ actor, frame, leadingHost, id, x, ground, visibleHeight }, anchors) => {
+      const anchor = anchors.find(overhead => overhead.id === id);
+      if (hudBelow(actor)) {
+        // A front-rank enemy's readout hangs below its feet. Keep its preferred
+        // centre on the body, but honour the packer's bounded displacement when
+        // four or more perspective lanes make neighbouring readouts collide.
+        const overheadX = anchor?.x ?? x;
+        const overheadLocal = anchorLocalBox(VIEWPORT_ORIGIN,
+          { left: overheadX - x, top: 0, width: 0, height: 0 }, { zoom });
+        leadingHost.style.left = `${overheadLocal.left}px`;
+        const above = ground - visibleHeight - overheadGap - actor.leadingHeight * zoom;
+        leadingHost.style.translate = `0 ${(ground + overheadGap - above + (anchor?.offsetY ?? 0)) / zoom}px`;
+        if (anchor?.obstructed) frame.dataset.overheadObstructed = 'true';
+        else delete frame.dataset.overheadObstructed;
+        frame.dataset.hudBelow = 'true';
+        return;
+      }
+      delete frame.dataset.hudBelow;
+      const overheadX = anchor?.x ?? x;
+      const overheadLocal = anchorLocalBox(VIEWPORT_ORIGIN,
+        { left: overheadX - x, top: 0, width: 0, height: 0 }, { zoom });
+      leadingHost.style.left = `${overheadLocal.left}px`;
+      // Full-height artwork may reach its final ground before the fitter
+      // can reserve more ribbon headroom. Move only the readable controls,
+      // including a packed cross-row control, clear of the ribbon.
+      const overheadTop = ground - visibleHeight - overheadGap - actor.leadingHeight * zoom;
+      const overheadShift = anchor?.offsetY
+        ?? combatOverheadRibbonShift({ x: overheadX, width: actor.leadingWidth * zoom,
+          top: overheadTop, bottom: overheadTop + actor.leadingHeight * zoom, ribbon, clearance: overheadGap });
+      leadingHost.style.translate = actor.side === 'player' ? 'none' : `0 ${overheadShift / zoom}px`;
+      // An overhead with no clear slot stays at its anchor, reported, not hidden.
+      if (anchor?.obstructed) frame.dataset.overheadObstructed = 'true';
+      else delete frame.dataset.overheadObstructed;
+    };
+    const depthOrder = [...new Set(plan.slots.map(slot => slot.layer))].sort((a, b) => a - b);
     for (const actor of actors) {
       const { slot, frame, stack, sprite, boxHeight, footOffset, ratio, leadingHost, leadingHeight } = actor;
       // A stack that grows or shrinks (Inspect revealed, a new intent) refits.
@@ -197,6 +732,7 @@ export function wireBattlefieldStage(field, model) {
       // screen (CombatSpriteScaleModel); only the selection growth is added.
       const multiplier = fitted.multiplier / wireframeUi.formation.displayScale;
       const scale = fitted.scale * growth;
+      // Packing inspection/intent controls must never move the body underneath.
       const x = fitted.x;
       const ground = fitted.ground ?? slot.ground;
       const visibleHeight = fitted.visibleHeight * growth;
@@ -212,7 +748,8 @@ export function wireBattlefieldStage(field, model) {
       // Keep depth on the artwork. A z-index on the whole frame traps its
       // overhead buttons below a neighbouring frame's sprite on short phones.
       frame.style.zIndex = '';
-      sprite.style.zIndex = String(slot.layer + (growth > 1 ? wireframeUi.formation.focusPriority : 0));
+      // Depth stays within a role's plane: players always paint over enemies.
+      sprite.style.setProperty('--combat-depth', String(depthOrder.indexOf(slot.layer)));
       frame.dataset.formationRow = slot.formationRow;
       frame.dataset.formationDepth = String(slot.row);
       frame.dataset.formationCell = slot.cell;
@@ -226,23 +763,10 @@ export function wireBattlefieldStage(field, model) {
       // centre. Their intent/Inspect controls retain their distinct reserved
       // slots instead of following that inward art clamp. Measured collisions
       // also occur on short landscape screens; clear anchors stay unchanged.
-      const overheadX = overheads.find(overhead => overhead.id === slot.id)?.x ?? x;
-      const overheadLocal = anchorLocalBox(VIEWPORT_ORIGIN,
-        { left: overheadX - x, top: 0, width: 0, height: 0 }, { zoom });
-      if (leadingHost) {
-        leadingHost.style.left = `${overheadLocal.left}px`;
-        // Full-height artwork may reach its final ground before the fitter
-        // can reserve more ribbon headroom. Move only the readable controls,
-        // including a packed cross-row control, clear of the ribbon.
-        const overheadTop = ground - visibleHeight - 14 - actor.leadingHeight * zoom;
-        const overheadShift = overheads.find(overhead => overhead.id === slot.id)?.offsetY
-          ?? combatOverheadRibbonShift({ x: overheadX, width: actor.leadingWidth * zoom,
-            top: overheadTop, bottom: overheadTop + actor.leadingHeight * zoom, ribbon });
-        leadingHost.style.translate = `0 ${overheadShift / zoom}px`;
-      }
+      if (leadingHost) leadingWrites.push({ actor, frame, leadingHost, id: slot.id, x, ground, visibleHeight });
       // The fitter reserves the complete card and action stack. Keep this gap
       // fixed in screen pixels, independent of art resolution or sprite size.
-      frame.style.setProperty('--overhead-top', `${-14 / zoom}px`);
+      frame.style.setProperty('--overhead-top', `${-overheadGap / zoom}px`);
       frame.dataset.overheadClamped = 'false';
       frame.dataset.combatantScale = '1';
       frame.dataset.spriteRatio = String(ratio);
@@ -253,6 +777,7 @@ export function wireBattlefieldStage(field, model) {
       frame.classList.toggle('player-target-hitbox', frame.classList.contains('player'));
       placed.push({ frame, sprite, scale });
     }
+    for (const entry of leadingWrites) placeLeading(entry, overheads);
     // WCO2: the guard badge lives inside this zoomed host. Publish the zoom
     // and the visible artwork's box (local px, relative to the host) so the
     // badge can counter-zoom and anchor to the art rather than inheriting
@@ -264,47 +789,186 @@ export function wireBattlefieldStage(field, model) {
     // fight runs several refreshes before its first paint. What is written
     // below places only the absolutely positioned badge and the hit target's
     // ::after, never a box read here, so one layout serves every read.
+    // Position the player's visible reading widget from the final art before
+    // reserving target space. Its hit-testable health row and ability badges
+    // must not split the independent frame plate's complete tap area.
+    for (const frame of frames) fitIconTray(frame.querySelector('.statuses'), nameWidth);
+    settledTargets = [];
+    settledTargetCores = [];
+    placePlayerHud();
+    // Enemy overheads pack around the player's measured art and controls. An
+    // obstacle never blocks its own owner, and the fitted artwork does not move.
+    const playerObstacles = placed.filter(({ frame }) => frame.classList.contains('player')).flatMap(({ frame, sprite }) => {
+      const art = currentSpriteArtBounds(sprite, refresh);
+      const controls = [...frame.querySelectorAll('.combatant-leading, .combatant-info, .player-action-intent, .combatant-mini-hud')]
+        .map(node => visibleCombatPanelRect(node, field)).filter(Boolean);
+      return [art, ...controls].map(rect => ({ ownerId: frame.dataset.eid, left: rect.left - fieldRect.left,
+        right: rect.right - fieldRect.left, top: rect.top - fieldRect.top, bottom: rect.bottom - fieldRect.top }));
+    });
+    // Only a clash re-packs: a layout where no overhead reaches the player keeps
+    // the anchors above, so it is written exactly as before.
+    const repacked = combatOverheadAnchors({ width: fieldRect.width, height: fieldRect.height, ribbon,
+      ribbonClearance: overheadGap, controls: overheadControls, obstacles: playerObstacles });
+    if (repacked.some(anchor => { const before = overheads.find(overhead => overhead.id === anchor.id);
+      return anchor.x !== before?.x || (anchor.offsetY ?? 0) !== (before?.offsetY ?? 0) || !!anchor.obstructed !== !!before?.obstructed; })) {
+      overheads = repacked;
+      for (const entry of leadingWrites) placeLeading(entry, overheads);
+    }
     const boxes = placed.map(({ frame, sprite }) => ({
+      intentRect: frame.querySelector('.intent')?.getBoundingClientRect(),
       hostRect: sprite.getBoundingClientRect(),
+      // Waist-overlap moves the painted player below the field; its real
+      // 44px frame tap target must still receive a finite, in-field anchor.
       frameRect: frame.classList.contains('enemy-target-hitbox') || frame.classList.contains('player-target-hitbox') ? frame.getBoundingClientRect() : null,
       // The drawn frame, not its wrapper: an enemy's pose stage is narrower
       // than the frame it paints, which overhangs the host.
       artRect: (sprite.querySelector('.pose-stage, img, svg') || sprite.firstElementChild || sprite).getBoundingClientRect(),
       footerWidth: Math.max(0, ...[...frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')]
-        .map(footer => footer.getBoundingClientRect().width)),
-      controls: [...frame.querySelectorAll('.combatant-leading button')]
-        .map(control => control.getBoundingClientRect()).filter(rect => rect.width > 0 && rect.height > 0),
+        .map(footer => visibleCombatPanelRect(footer, field)?.width || 0)),
+      footerHeight: [...frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')]
+        .reduce((height, footer) => height + (visibleCombatPanelRect(footer, field)?.height || 0), 0),
+      footerTop: Math.min(...[...frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')]
+        .filter(footer => visibleCombatPanelRect(footer, field))
+        .map(footer => footer.getBoundingClientRect().top - (parseFloat(footer.style.translate.split(' ')[1]) || 0) * zoom)),
+      footerCenterX: [...frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')].filter(node => visibleCombatPanelRect(node, field))
+        .map(footer => { const rect = footer.getBoundingClientRect(); return rect.left + rect.width / 2 - (parseFloat(footer.style.translate) || 0) * zoom; })[0],
+      controls: [...frame.querySelectorAll('.combatant-leading button, .combatant-mini-hud')]
+        .map(control => visibleCombatPanelRect(control, field)).filter(Boolean),
     }));
-    const targets = combatTargetAnchors({ width: fieldRect.width, height: fieldRect.height,
-      obstacles: boxes.flatMap(box => box.controls.map(rect => ({
+    // Reserve the player's readable panel before packing enemy footers. The
+    // final HUD pass can then keep this slot without competing with a footer.
+    placePlayerHud(true);
+    const readFooterObstacles = () => {
+      const footerObstacles = [...combat.querySelectorAll('.combat-tools, .combat-action-row button, .combat-hud, .turn-ribbon, .player .combatant-leading, .player .combatant-info, .player .player-action-intent')]
+        .map(node => {
+          const rect = visibleCombatPanelRect(node, combat);
+          if (!rect) return null;
+          // Footer packing supplies two pixels; reserve eight more around the
+          // panel and its independently positioned Inspect control.
+          const playerControl = node.matches('.player .combatant-leading, .player .combatant-info');
+          const padding = playerControl ? 8 : 0;
+          return { left: rect.left - padding, right: rect.right + padding,
+            top: rect.top - padding, bottom: rect.bottom + padding, width: rect.width, height: rect.height };
+        }).filter(Boolean);
+      // A hidden but selectable Info door occupies this same art-centered
+      // footprint when exposed. It is no longer an overhang of the HUD panel.
+      for (const rect of playerInfoRects) footerObstacles.push({ ...rect,
+        left: rect.left - 8, right: rect.right + 8, top: rect.top - 8, bottom: rect.bottom + 8 });
+      const footerHandRect = combat.querySelector('.hand')?.getBoundingClientRect();
+      const handEnvelope = readRestingHand();
+      if (footerHandRect?.width > 0 && footerHandRect.height > 0) footerObstacles.push({
+        left: footerHandRect.left, right: footerHandRect.right, top: handEnvelope?.clearanceTop ?? footerHandRect.top, bottom: footerHandRect.bottom,
+      });
+      return footerObstacles;
+    };
+    // Space packed targets by the real hit-area height, never the compact
+    // footer alone, so neighbouring tap areas cannot overlap.
+    const footerSize = combatTargetPackSize(boxes.filter((box, index) => placed[index].frame.classList.contains('context-selected')).map(box=>box.footerHeight));
+    const packTargets = () => combatTargetAnchors({ width: fieldRect.width,
+      height: Math.max(fieldRect.height, combat.getBoundingClientRect().bottom-fieldRect.top-60),
+      // Crowded HUD/intent bands may leave no vertical slot. Only the plate
+      // and its visible footer may then shift by at most one physical target.
+      lockX: true, size: footerSize, maxShiftX: 44,
+      obstacles: [...readFooterObstacles(),
+        ...boxes.flatMap((box, index) => placed[index].frame.classList.contains('player') ? [] : box.controls)].map(rect => ({
         left: rect.left - fieldRect.left, right: rect.right - fieldRect.left,
         top: rect.top - fieldRect.top, bottom: rect.bottom - fieldRect.top,
-      }))),
-      targets: boxes.map((box, i) => ({ ...box, id: placed[i].frame.dataset.eid }))
-        .filter(box => box.frameRect).map(box => ({
-        id: box.id,
-        x: box.hostRect.left + box.hostRect.width / 2 - fieldRect.left,
-        y: box.hostRect.bottom - fieldRect.top,
-        width: box.footerWidth,
-      })) });
+      })),
+      // Idle enemies read above their bodies. Reserve below-body footers only
+      // when they paint, so hidden plates cannot displace the player's HUD.
+      targets: boxes.flatMap((box, i) => box.frameRect && !placed[i].frame.classList.contains('dead')
+        && (placed[i].frame.classList.contains('player') ? combat.dataset?.waistOverlap !== 'true'
+          : placed[i].frame.classList.contains('context-selected')) ? [combatFrameTarget({
+        ...box, id: placed[i].frame.dataset.eid, fieldRect, footerSize,
+        player: placed[i].frame.classList.contains('player'),
+      })] : []) });
+    // A fallen frame survives for its defeat pose but paints no target
+    // proxy, so it neither competes for footer space nor blocks the HUD.
+    const targetCores = boxes.flatMap((box, i) => {
+        if (placed[i].frame.classList.contains('dead') || (placed[i].frame.classList.contains('player')
+          ? combat.dataset?.waistOverlap === 'true' : !placed[i].frame.classList.contains('context-selected'))) return [];
+        const target = combatFrameTarget({ ...box, id: placed[i].frame.dataset.eid, fieldRect, footerSize,
+          player: placed[i].frame.classList.contains('player') });
+        const half = COMBAT_TARGET_HIT_PX / 2;
+        return [{ id: target.id, left: fieldRect.left + target.x - half, right: fieldRect.left + target.x + half,
+          top: fieldRect.top + target.y - half, bottom: fieldRect.top + target.y + half }];
+    });
+    const targets = packCombatTargetsWithHud({ pack: packTargets,
+      placeHud: cores => placePlayerHud(true, cores),
+      targetCores,
+    });
+    settledTargetCores = targetCores;
+    settledFooterSize = footerSize;
+    // The selected enemy nameplate's offset token moves its visible footer
+    // and its tap target together (offsetTargetPlate), clamped to the field.
+    // It is refused when the moved plate would cover anything packing avoids:
+    // the footer obstacles (HUD, ribbon, tools, hand, the player's panel),
+    // another fighter's controls, or another packed target. 0: as packed.
+    const plateOf = (target) => {
+      const index = placed.findIndex(({ frame }) => frame.dataset.eid === target.id);
+      const box = boxes[index] || {};
+      return targetPlateBox({ x: target.x, y: target.y, footerWidth: box.footerWidth, footerHeight: box.footerHeight,
+        footerSize, hitPx: COMBAT_TARGET_HIT_PX, fieldLeft: fieldRect.left, fieldTop: fieldRect.top });
+    };
+    const platedTargets = !hudOffsets.enemyNameplateDy ? targets : targets.map((target) => {
+      const index = placed.findIndex(({ frame }) => frame.dataset.eid === target.id);
+      const frame = placed[index]?.frame;
+      if (!frame?.classList.contains('enemy') || !frame.classList.contains('context-selected')) return target;
+      const toEdges = (rect) => ({ left: rect.left, right: rect.left + rect.width, top: rect.top, bottom: rect.top + rect.height });
+      const obstacles = [...readFooterObstacles(),
+        ...boxes.flatMap((box, i) => i === index || placed[i].frame.classList.contains('player') ? [] : box.controls),
+        ...targets.filter((other) => other.id !== target.id).map((other) => toEdges(plateOf(other)))];
+      return offsetTargetPlate({ target, plate: plateOf(target), dy: hudOffsets.enemyNameplateDy * zoom,
+        bounds: { left: -Infinity, right: Infinity, top: fieldRect.top, bottom: fieldRect.top + fieldRect.height }, obstacles });
+    });
+    settledTargets = platedTargets;
     placed.forEach(({ frame, sprite, scale }, i) => {
-      const { hostRect, frameRect, artRect } = boxes[i];
+      const { hostRect, frameRect, artRect, intentRect } = boxes[i];
+      frame.dataset.intentVisibility = frame.querySelector('.intent')?.dataset.intentVisibility || 'known';
+      if (intentRect) {
+        frame.style.setProperty('--enemy-hit-width', `${Math.max(COMBAT_TARGET_HIT_PX,boxes[i].footerWidth) / zoom}px`);
+        // Intent cards can be taller; the independent foot target keeps its
+        // physical 44px minimum so two aligned footer bands fit a short stage.
+        frame.style.setProperty('--enemy-hit-height', `${COMBAT_TARGET_HIT_PX / zoom}px`);
+      }
       if (frameRect) {
-        const target = targets.find(target => target.id === frame.dataset.eid);
+        const target = platedTargets.find(target => target.id === frame.dataset.eid) || combatFrameTarget({
+          ...boxes[i], id: frame.dataset.eid, fieldRect, footerSize, player: frame.classList.contains('player'),
+        });
         const local = anchorLocalBox(frameRect, { left: fieldRect.left + target.x,
-          top: fieldRect.top + target.y, width: 44, height: 44 }, { zoom });
+          top: fieldRect.top + target.y, width: COMBAT_TARGET_HIT_PX, height: COMBAT_TARGET_HIT_PX }, { zoom });
         frame.style.setProperty('--enemy-hit-x', `${local.left}px`);
         frame.style.setProperty('--enemy-hit-y', `${local.top}px`);
         frame.dataset.targetObstructed = String(!!target.obstructed);
+        // Each refresh reads the footer back through its own translate, so
+        // float error re-wrote it a few thousandths of a pixel apart on every
+        // settle. Round to a hundredth: a still footer then writes the same
+        // value, and reduced motion sees no script-driven drift.
+        const settledPx = value => Math.round(value * 100) / 100 || 0;
         const offset = anchorLocalBox(VIEWPORT_ORIGIN, {
-          left: fieldRect.left + target.x - hostRect.left - hostRect.width / 2,
-          top: fieldRect.top + target.y - hostRect.bottom, width: 0, height: 0 }, { zoom });
+          left: fieldRect.left + target.x - (boxes[i].footerCenterX ?? hostRect.left + hostRect.width / 2),
+          top: fieldRect.top + target.y - footerSize / 2 - (Number.isFinite(boxes[i].footerTop) ? boxes[i].footerTop : hostRect.bottom), width: 0, height: 0 }, { zoom });
         // Keep the visible name/health footer with its tap target. Packing
         // only the invisible target would leave no cue to the intended owner.
         for (const footer of frame.querySelectorAll('.combatant-card > :is(.nm,.meters)')) {
-          footer.style.translate = `${offset.left}px ${offset.top}px`;
+          footer.style.translate = `${settledPx(offset.left)}px ${settledPx(offset.top)}px`;
           footer.style.position = 'relative';
-          footer.style.zIndex = '900';
+          footer.style.zIndex = 'var(--combat-layer-selection)';
+          // A fallen footer reserves no space, so a living one may pack onto
+          // its spot. Hide it rather than paint a faded plate over that fighter.
+          footer.style.visibility = frame.classList.contains('dead') ? 'hidden' : '';
+        }
+        if (frame.classList.contains('enemy') && !frame.classList.contains('context-selected')) {
+          const meter = frame.querySelector('.combatant-card > .meters');
+          if (meter) {
+            const rect = meter.getBoundingClientRect();
+            const leading = frame.querySelector('.combatant-leading').getBoundingClientRect();
+            const idleOffset = anchorLocalBox(VIEWPORT_ORIGIN, {
+              left: leading.left + (leading.width - rect.width) / 2 - rect.left,
+              top: leading.bottom - rect.height - rect.top, width: 0, height: 0,
+            }, { zoom });
+            meter.style.translate = `${settledPx(offset.left + idleOffset.left)}px ${settledPx(offset.top + idleOffset.top)}px`;
+          }
         }
       }
       sprite.style.setProperty('--sprite-zoom', String(scale / zoom));
@@ -318,10 +982,127 @@ export function wireBattlefieldStage(field, model) {
       sprite.style.setProperty('--target-outline-width', `${outline.width}px`);
       sprite.style.setProperty('--target-outline-offset', `${outline.offset}px`);
     });
-    for (const frame of frames) fitIconTray(frame.querySelector('.statuses'), nameWidth);
+    // Owner (2026-10-12): an enemy's intent is centred on its HP bar's track
+    // and sits just above its badges and bar, never over them. The footer was
+    // packed above, so the overhead (intent and Inspect together) moves by the
+    // measured difference. Reads first, then writes: one layout serves all.
+    // Gap between the intent and the badge row, in layout px (anchorLocalBox
+    // measures in the frame's own layout space, so no zoom arithmetic here).
+    const INTENT_BAR_GAP = 5;
+    // A selected (targeted) enemy's HP bar sits below its figure, so its intent goes above the
+    // figure's head instead: centred on the bar, its bottom a few px above the painted art's top.
+    const INTENT_ART_GAP = 4;
+    // Owner (2026-10-12): a selected intent keeps at least this gap under the turn ribbon's
+    // bottom edge wherever the two overlap horizontally. It may then overlap the art's top.
+    // The gap is 4 visual px, so in local px it is 4 / --ui-zoom (a 390 px phone runs at 0.9).
+    const INTENT_RIBBON_GAP = 4 / uiZoom();
+    const turnRibbonEl = field.querySelector(':scope > .turn-ribbon');
+    const ribbonBox = turnRibbonEl ? anchorLocalBox(field, turnRibbonEl) : null;
+    const intentMoves = placed.map(({ frame, sprite }) => {
+      if (!frame.classList.contains('enemy') || frame.classList.contains('dead')) return null;
+      const leadingHost = frame.querySelector('.combatant-leading');
+      const intent = leadingHost?.querySelector(':scope > .intent');
+      const row = frame.querySelector('.combat-health-row');
+      const track = row?.querySelector('.combat-health-meter .m-track');
+      if (!leadingHost || !intent || !track) return null;
+      const intentBox = anchorLocalBox(frame, intent), trackBox = anchorLocalBox(frame, track);
+      const selected = frame.classList.contains('context-selected') && !!sprite;
+      let bottomLimit;
+      if (selected) {
+        const artTop = anchorLocalBox(frame, { left: 0, top: currentSpriteArtBounds(sprite, refresh).top, width: 0, height: 0 }).top;
+        bottomLimit = artTop - INTENT_ART_GAP;
+      } else {
+        const topOfRow = Math.min(anchorLocalBox(frame, row).top, ...[...row.querySelectorAll('.combat-health-badge')]
+          .map(badge => anchorLocalBox(frame, badge).top));
+        bottomLimit = topOfRow - INTENT_BAR_GAP;
+      }
+      const dx = (trackBox.left + trackBox.width / 2) - (intentBox.left + intentBox.width / 2);
+      let dy = bottomLimit - (intentBox.top + intentBox.height);
+      if (selected && ribbonBox && ribbonBox.width > 0 && ribbonBox.height > 0) {
+        // Both boxes are in the field's local px, so the shift needs no zoom arithmetic.
+        const intentFieldBox = anchorLocalBox(field, intent);
+        const intentLeft = intentFieldBox.left + dx;
+        const sharesColumns = intentLeft < ribbonBox.left + ribbonBox.width && intentLeft + intentFieldBox.width > ribbonBox.left;
+        const ribbonFloor = ribbonBox.top + ribbonBox.height + INTENT_RIBBON_GAP;
+        const intentTop = intentFieldBox.top + dy;
+        if (sharesColumns && intentTop < ribbonFloor) dy += ribbonFloor - intentTop;
+      }
+      return { leadingHost, dx, dy };
+    });
+    for (const move of intentMoves) {
+      if (!move || (Math.abs(move.dx) < 0.01 && Math.abs(move.dy) < 0.01)) continue;
+      const { leadingHost, dx, dy } = move;
+      // The host's current place in its own containing block, in layout px.
+      const hostBox = anchorLocalBox(leadingHost.offsetParent || leadingHost.parentElement, leadingHost);
+      const hostShiftY = parseFloat(leadingHost.style.translate.split(' ')[1]) || 0;
+      leadingHost.style.left = `${hostBox.left + dx}px`;
+      leadingHost.style.translate = `0 ${hostShiftY + dy}px`;
+    }
+    // Idle names do not reserve footer rows, but their independent tap cores
+    // still need separate space when two formation rows meet on a short field.
+    // Move only these transparent cores; keep art and readable plates fixed.
+    for (const { frame } of placed) {
+      frame.style.removeProperty('--enemy-core-x');
+      frame.style.removeProperty('--enemy-core-y');
+      delete frame.dataset.coreObstructed;
+    }
+    const idleCores = placed.filter(({frame}) => frame.matches('.enemy:not(.context-selected):not(.dead)'))
+      .map(({frame, sprite}) => {
+        const box = frame.getBoundingClientRect(), style = getComputedStyle(frame, '::before');
+        const art = sprite.getBoundingClientRect();
+        return { id: frame.dataset.eid, frame, box, art,
+          x: box.left + parseFloat(style.left) * zoom - fieldRect.left,
+          y: box.top + parseFloat(style.top) * zoom - fieldRect.top, width: 44 };
+      });
+    const actorArt = placed.map(({frame, sprite}) => {
+      const box = currentSpriteArtBounds(sprite, refresh);
+      return { ownerId:frame.dataset.eid, left:box.left-fieldRect.left,
+        right:box.right-fieldRect.left, top:box.top-fieldRect.top, bottom:box.bottom-fieldRect.top };
+    });
+    const stealsArtwork = core => actorArt.some(box => box.ownerId !== core.id
+      && core.x + 22 > box.left && core.x - 22 < box.right
+      && core.y + 22 > box.top && core.y - 22 < box.bottom);
+    // A context-selected enemy and the player keep their fitted cores. They are
+    // not repacked, but an idle core must leave them room rather than sit over
+    // them (the player's square takes self-cast cards).
+    const fixedCores = placed.filter(({frame}) => frame.matches('.enemy.context-selected:not(.dead), .player:not(.dead)'))
+      .map(({frame}) => {
+        const box = frame.getBoundingClientRect(), style = getComputedStyle(frame, '::before');
+        if (style.display === 'none' || style.pointerEvents === 'none') return null;
+        const x = box.left + parseFloat(style.left) * zoom - fieldRect.left;
+        const y = box.top + parseFloat(style.top) * zoom - fieldRect.top;
+        return Number.isFinite(x) && Number.isFinite(y)
+          ? { ownerId:frame.dataset.eid, x, y, left:x-22, right:x+22, top:y-22, bottom:y+22 } : null;
+      }).filter(Boolean);
+    const near = (a, b) => Math.abs(a.x-b.x) < 44 && Math.abs(a.y-b.y) < 44;
+    if (idleCores.some((core, i) => core.y > core.art.bottom - fieldRect.top || stealsArtwork(core) || fixedCores.some(fixed => near(core, fixed))
+      || idleCores.slice(i + 1).some(other => near(core, other)))) {
+      const boundary = Math.min(combat.querySelector('.combat-tools')?.getBoundingClientRect().top ?? Infinity,
+        readRestingHand()?.clearanceTop ?? Infinity, fieldRect.top + fieldRect.height);
+      const obstacles = [...combat.querySelectorAll('.combat-hud, .turn-ribbon, .combatant-leading, .combatant-info, .combatant-card > .meters, .combatant-card > .nm')]
+        .map(node => visibleCombatPanelRect(node, combat)).filter(Boolean)
+        .map(box => ({ left:box.left-fieldRect.left, right:box.right-fieldRect.left,
+          top:box.top-fieldRect.top, bottom:box.bottom-fieldRect.top }));
+      obstacles.push(...actorArt, ...fixedCores);
+      const cores = combatTargetAnchors({ width:fieldRect.width, height:boundary-fieldRect.top,
+        size:44, lockX:true, maxShiftX:44,
+        targets:idleCores.map(core => ({ ...core, x:core.art.width >= 44
+          ? core.art.left+core.art.width/2-fieldRect.left : core.x })), obstacles });
+      for (const core of cores) {
+        const { frame, box } = idleCores.find(source => source.id === core.id);
+        frame.style.setProperty('--enemy-core-x', `${(fieldRect.left+core.x-box.left)/zoom}px`);
+        frame.style.setProperty('--enemy-core-y', `${(fieldRect.top+core.y-box.top)/zoom}px`);
+        frame.dataset.coreObstructed = String(!!core.obstructed);
+      }
+    }
     const rect = combat.getBoundingClientRect();
-    // Keep the painting within its atlas cell, with the same ground line as
-    // the formation. Continuing behind cards must not move that line.
+    // Last layout write of the refit: the HUD, ribbon and intents are settled.
+    // The combat box above is unchanged by the Inspect marks.
+    placeEnemyInspect();
+    syncFloorShadows();
+    // Fit the sky from the top of the combat screen, including the HUD.
+    // Extending a field-only crop upward can expose empty space above the
+    // painting. Continuing behind cards must not move the ground line.
     const backdrop = combat.querySelector('.environment-backdrop');
     // Its width is read BEFORE the two variables below are written: they are
     // set on the fight's root, so a read after them restyled the whole screen
@@ -329,18 +1110,32 @@ export function wireBattlefieldStage(field, model) {
     const backdropWidth = backdrop ? backdrop.clientWidth : 0;
     combat.style.setProperty('--environment-top', '0px');
     combat.style.setProperty('--environment-height', `${rect.height / zoom}px`);
+    const fieldTop = (fieldRect.top - rect.top) / zoom;
+    // Continue real ground past the lowered footer fade, including on phones
+    // where the hand consumes much of the viewport. Keep the same horizon.
+    const sceneHeight = fieldTop + fieldRect.height / zoom;
+    if (!classicAppearance()) fitAlternativeBackdrop(combat, { width: rect.width / zoom, height: fieldRect.height / zoom,
+      fieldTop, ground: combatSceneryGround(sizes, actors, plan.ground) / zoom,
+      standGround: combatStandingGround(sizes, actors, plan.ground) / zoom, narrow,
+      coverFloor: true });
     if (backdrop) fitSceneBackdrop(backdrop, {
       width: backdropWidth, height: rect.height / zoom, zoom,
-      windowTop: (fieldRect.top - rect.top) / zoom, windowHeight: fieldRect.height / zoom,
-      config: battlefieldBackdropConfig({ height: fieldRect.height / zoom,
-        fieldTop: 0, fieldHeight: fieldRect.height / zoom,
+      windowTop: 0, windowHeight: sceneHeight,
+      config: battlefieldBackdropConfig({ height: sceneHeight, appearance: displayAppearance(),
+        fieldTop, fieldHeight: fieldRect.height / zoom,
         formation: { cells: plan.cells.map(cell => ({ ground: cell.ground / zoom })), rowSpacing: plan.rowSpacing / zoom } }),
     });
     field.dataset.groundY = String(fieldRect.top + plan.ground);
   };
   const schedule = () => { cancelAnimationFrame(frameRequest); frameRequest = requestAnimationFrame(refresh); };
   const combatHost = field.closest('.combat');
-  combatHost.addEventListener('combatantselectionchange', schedule);
+  let wiredAppearance = displayAppearance();
+  let releaseBackdrop = wireAlternativeBackdrop(combatHost);
+  // A selection change places the newly shown Info door in the same task that
+  // shows it, so the first paint already has its spot; the frame refit follows.
+  const selectionChanged = () => { refresh(); schedule(); };
+  combatHost.addEventListener('combatantselectionchange', selectionChanged);
+  combatHost.addEventListener('handlayoutchange', schedule);
   const resizeObserver = new ResizeObserver(schedule);
   resizeObserver.observe(field);
   // CSS zoom can move the rendered floor without changing the observed
@@ -353,18 +1148,48 @@ export function wireBattlefieldStage(field, model) {
     // the Scenes choice, not because another attribute happened to change in
     // the same breath.
     attributes: true,
-    attributeFilter: ['style', 'data-layout', 'data-short', 'data-composition', 'data-formation-settings',
+    // data-form-factor picks content/hud-layout/<ff>.json, whose geometry
+    // tokens this layout reads, so a form-factor change refits too.
+    attributeFilter: ['style', 'data-layout', 'data-short', 'data-composition', 'data-form-factor', 'data-formation-settings',
       'data-wireframe-scene-skyline', 'data-wireframe-scene-floor'],
   });
   window.addEventListener('resize', schedule);
+  const poseObserver = new MutationObserver(() => {
+    if (!reducedMotionRequested() && !trackingRequest) trackingRequest = requestAnimationFrame(trackPlayerHud);
+  });
+  poseObserver.observe(field, { subtree: true, attributes: true,
+    attributeFilter: ['src', 'data-pose', 'data-animating', 'class'] });
+  // Both accessibility inputs can change while a fight is on screen. Settle
+  // once after motion is disabled, and resume frame tracking only after it is
+  // enabled again; otherwise the HUD can retain the last idle-frame offset.
+  let reduced = reducedMotionRequested();
+  const reducedMedia = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : null;
+  const reconcileReducedMotion = () => {
+    const next = reducedMotionRequested();
+    if (next === reduced) return;
+    reduced = next;
+    cancelAnimationFrame(trackingRequest);
+    trackingRequest = 0;
+    schedule();
+    if (!next) trackingRequest = requestAnimationFrame(trackPlayerHud);
+  };
+  reducedMedia?.addEventListener('change', reconcileReducedMotion);
+  const reducedSettingObserver = new MutationObserver(reconcileReducedMotion);
+  reducedSettingObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
   const detachObserver = new MutationObserver(() => {
     if (!field.isConnected) release();
   });
   const release = () => {
-    combatHost.removeEventListener('combatantselectionchange', schedule);
+    releaseBackdrop();
+    combatHost.removeEventListener('combatantselectionchange', selectionChanged);
+    combatHost.removeEventListener('handlayoutchange', schedule);
     cancelAnimationFrame(frameRequest);
+    cancelAnimationFrame(trackingRequest);
     resizeObserver.disconnect();
     layoutObserver.disconnect();
+    poseObserver.disconnect();
+    reducedMedia?.removeEventListener('change', reconcileReducedMotion);
+    reducedSettingObserver.disconnect();
     window.removeEventListener('resize', schedule);
     document.fonts?.removeEventListener?.('loadingdone', fontsLoaded);
     detachObserver.disconnect();
@@ -384,4 +1209,58 @@ export function wireBattlefieldStage(field, model) {
   releaseActiveStage = release;
   refresh();
   return Object.freeze({ refresh, release });
+}
+
+// In the perspective grid the whole cell is the enemy's target: a press
+// anywhere in an occupied enemy cell acts as a press on that enemy (select it,
+// or play the armed card or flask on it). Bodies and controls keep their own
+// handlers; a vacant or disabled cell passes the press through unchanged.
+const gridTargetingFields = new WeakSet();
+function enemyFrameAtCell(field, x, y) {
+  const grid = field.querySelector('.formation-grid[data-perspective="true"]');
+  const plan = field.formationPlan?.plan;
+  if (!grid || !plan) return null;
+  const rect = field.getBoundingClientRect();
+  const occupied = new Set(plan.slots.filter(slot => slot.side === 'enemy').map(slot => slot.cell));
+  const cell = plan.cells.find(cell => cell.box && occupied.has(cell.cell)
+    && perspectiveCellContains(cell.box, x - rect.left, y - rect.top));
+  if (!cell) return null;
+  // Past the grid's capacity two enemies can share a cell; take a living one.
+  return [...field.querySelectorAll(`.combatant.enemy[data-formation-cell="${CSS.escape(cell.cell)}"]`)]
+    .find(frame => !frame.inert && !frame.classList.contains('dead')) ?? null;
+}
+function wireGridTargeting(field) {
+  if (gridTargetingFields.has(field)) return;
+  gridTargetingFields.add(field);
+  const passive = target => target.closest('.combatant, button:not(.formation-grid-cell), .hand, .card, .modal, input, a, [role="button"]');
+  field.addEventListener('click', event => {
+    if (passive(event.target)) return;
+    const frame = enemyFrameAtCell(field, event.clientX, event.clientY);
+    if (!frame) return;
+    event.stopPropagation();
+    event.preventDefault();
+    frame.click();
+  }, true);
+  let hovered = null;
+  field.addEventListener('pointermove', event => {
+    // Over a body or control, that element's own pointer events own the
+    // highlight: keep it on the same enemy, clear it from any other.
+    if (passive(event.target)) {
+      if (hovered && hovered !== event.target.closest('.combatant')) hovered.dispatchEvent(new PointerEvent('pointerleave'));
+      hovered = null;
+      field.classList.remove('grid-target-hover');
+      return;
+    }
+    const frame = enemyFrameAtCell(field, event.clientX, event.clientY);
+    if (frame === hovered) return;
+    hovered?.dispatchEvent(new PointerEvent('pointerleave'));
+    hovered = frame;
+    frame?.dispatchEvent(new PointerEvent('pointerenter'));
+    field.classList.toggle('grid-target-hover', !!frame);
+  });
+  field.addEventListener('pointerleave', () => {
+    hovered?.dispatchEvent(new PointerEvent('pointerleave'));
+    hovered = null;
+    field.classList.remove('grid-target-hover');
+  });
 }

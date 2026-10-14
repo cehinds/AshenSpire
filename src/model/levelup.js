@@ -29,6 +29,7 @@ import { note } from './healLedger.js';
 import { enemyCombatPower } from './combatPower.js';
 import { xpStepCost } from './xpCurve.js';
 import { linkedAttributes, spendAttributePick } from './skills.js';
+import { effectiveAshenBlightAttributes } from './ashenBlight.js';
 
 /** The authored tables, or the shape of them, so a bundle without them fails
  *  soft in tools rather than throwing on a missing key. Bad data is caught at
@@ -157,7 +158,10 @@ export function bankLevelXp(registries, run, amount) {
   if (!run.level || typeof run.level !== 'object') run.level = emptyLevel();
   const before = characterLevel(run);
   const gain = Number.isFinite(amount) ? Math.max(0, Math.floor(amount)) : 0;
-  const discarded = gain ? climbLevels(registries, { level: before, xp: run.level.xp, gain }).discarded : 0;
+  // The per-fight cap counts only the levels this fight's XP earns: the levels
+  // banked XP already pays for (pendingLevelCount) start the count after them.
+  const fightFrom = before + pendingLevelCount(registries, run);
+  const discarded = gain ? climbLevels(registries, { level: before, xp: run.level.xp, gain, fightFrom }).discarded : 0;
   if (gain) run.level.xp += gain - discarded;
   return { before, after: before, levelUps: 0, pendingLevelUps: pendingLevelCount(registries, run), points: 0, thresholds: 0, gained: gain, discarded };
 }
@@ -193,13 +197,18 @@ export function claimBankedLevel(registries, run, { pointsPerLevel = null, grant
  *     most one XP short of the next step and a progress bar never reads past
  *     full.
  * `capped` says a ceiling, not the XP, stopped the climb, and `cappedBy`
- * which: 'level' (maxLevels) or 'fight' (maxLevelsPerFight). `discarded` is
+ * which: 'level' (maxLevels) or 'fight' (maxLevelsPerFight). `fightFrom`
+ * (default `level`) is the level the allowance counts from, so levels the
+ * ledger already paid for before this award do not use it up. `discarded` is
  * the XP the per-fight cap threw away (0 otherwise). `awardLevelXp`
  * writes this to the run; `levelPace` reads it for the Levelling preview, so
  * the preview cannot describe a climb play does not make.
  */
-export function climbLevels(registries, { level = 1, xp = 0, gain = 0 } = {}) {
+export function climbLevels(registries, { level = 1, xp = 0, gain = 0, fightFrom = null } = {}) {
   const start = Number.isInteger(level) && level >= 1 ? level : 1;
+  // The level the per-award allowance counts from: `start` unless the caller
+  // says XP already banked pays for levels first (bankLevelXp).
+  const from = Number.isInteger(fightFrom) && fightFrom >= start ? fightFrom : start;
   const t = grantTable(registries);
   const ceiling = Number.isInteger(t.maxLevels) ? t.maxLevels : null;
   const perAward = perAwardCap(registries);
@@ -212,7 +221,7 @@ export function climbLevels(registries, { level = 1, xp = 0, gain = 0 } = {}) {
     // The per-award cap first: once this award has climbed its allowance the
     // rest is discarded, whichever ceiling would also stop it here — so a
     // capped award always leaves xp ≤ xpToNext − 1 (review, #1349).
-    if (perAward !== null && lv - start >= perAward) { cappedBy = 'fight'; discarded = bank - (cost - 1); bank = cost - 1; break; }
+    if (perAward !== null && lv - from >= perAward) { cappedBy = 'fight'; discarded = bank - (cost - 1); bank = cost - 1; break; }
     if (ceiling !== null && lv >= ceiling) { cappedBy = 'level'; break; }
     bank -= cost;
     lv += 1;
@@ -334,16 +343,20 @@ export function rederivePools(registries, run, why) {
   const classDef = registries.classes.get(run.class);
   const level = characterLevel(run);
   const before = { maxHp: run.maxHp, maxMana: run.maxMana, maxStamina: run.maxStamina };
+  const priorEnergy = run.energyMax;
+  const attributes = effectiveAshenBlightAttributes(run);
   let moved = 0;
   for (const [key, statId] of [['energyMax', 'energy'], ['drawPerTurn', 'draw']]) {
     if (run[key] === undefined) continue;
-    const next = deriveStat(rules, statId, { attributes: run.attributes, classDef, level }).value;
+    if (run.combatExpansionVersion === 2 && key === 'energyMax') continue;
+    const next = deriveStat(rules, statId, { attributes, classDef, level }).value;
     if (next !== run[key]) moved += 1;
     run[key] = next;
   }
   // Reconcile from the original equipped maxima exactly once. Writing bare
   // derived maxima first would make the equipment bonus look like a refill.
   reconcileRunLoadoutHp(registries, run);
+  if (run.combatExpansionVersion === 2 && priorEnergy !== run.energyMax) moved += 1;
   for (const key of Object.keys(before)) if (run[key] !== before[key]) moved += 1;
   return moved;
 }

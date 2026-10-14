@@ -1,0 +1,270 @@
+{
+  "schemaVersion": 1,
+  "target": "alternative/dev",
+  "status": "authoring-preview",
+  "classId": "starseer",
+  "armour": "default",
+  "referenceWeapon": "Staff",
+  "selection": "class-default",
+  "equipmentIndependent": true,
+  "frames": {
+    "ready": {
+      "path": "starseer/frames/ready.webp",
+      "lite": "starseer/frames/ready.lite.webp",
+      "bounds": [
+        121,
+        102,
+        348,
+        466
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "windup": {
+      "path": "starseer/frames/windup.webp",
+      "lite": "starseer/frames/windup.lite.webp",
+      "bounds": [
+        85,
+        27,
+        394,
+        464
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "advance": {
+      "path": "starseer/frames/advance.webp",
+      "lite": "starseer/frames/advance.lite.webp",
+      "bounds": [
+        103,
+        134,
+        415,
+        472
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "contact": {
+      "path": "starseer/frames/contact.webp",
+      "lite": "starseer/frames/contact.lite.webp",
+      "bounds": [
+        93,
+        156,
+        501,
+        465
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "follow": {
+      "path": "starseer/frames/follow.webp",
+      "lite": "starseer/frames/follow.lite.webp",
+      "bounds": [
+        98,
+        190,
+        439,
+        466
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "return": {
+      "path": "starseer/frames/return.webp",
+      "lite": "starseer/frames/return.lite.webp",
+      "bounds": [
+        113,
+        108,
+        347,
+        467
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "power": {
+      "path": "starseer/frames/power.webp",
+      "lite": "starseer/frames/power.lite.webp",
+      "bounds": [
+        129,
+        108,
+        357,
+        462
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "channel": {
+      "path": "starseer/frames/channel.webp",
+      "lite": "starseer/frames/channel.lite.webp",
+      "bounds": [
+        122,
+        130,
+        388,
+        462
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "release": {
+      "path": "starseer/frames/release.webp",
+      "lite": "starseer/frames/release.lite.webp",
+      "bounds": [
+        108,
+        117,
+        409,
+        462
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "guard-rise": {
+      "path": "starseer/frames/base-guard-rise.webp",
+      "lite": "starseer/frames/base-guard-rise.lite.webp",
+      "bounds": [
+        128,
+        73,
+        409,
+        464
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "guard-brace": {
+      "path": "starseer/frames/base-guard-brace.webp",
+      "lite": "starseer/frames/base-guard-brace.lite.webp",
+      "bounds": [
+        102,
+        88,
+        425,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "guard-return": {
+      "path": "starseer/frames/base-guard-return.webp",
+      "lite": "starseer/frames/base-guard-return.lite.webp",
+      "bounds": [
+        150,
+        89,
+        394,
+        464
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    }
+  },
+  "sequences": {
+    "attack": {
+      "label": "Base strike \u00b7 dash",
+      "poses": [
+        "windup",
+        "advance",
+        "contact",
+        "follow",
+        "return"
+      ],
+      "durations": [
+        60,
+        55,
+        50,
+        45,
+        50
+      ],
+      "travel": [
+        0,
+        0,
+        96,
+        96,
+        0
+      ],
+      "effect": "impact",
+      "impact": 2,
+      "hold": false
+    },
+    "defense": {
+      "label": "Base defense",
+      "poses": [
+        "ready",
+        "guard-rise",
+        "guard-brace",
+        "guard-return",
+        "ready"
+      ],
+      "durations": [
+        60,
+        55,
+        50,
+        45,
+        50
+      ],
+      "travel": [
+        0,
+        -3,
+        -6,
+        -3,
+        0
+      ],
+      "effect": "ward",
+      "impact": 2,
+      "hold": false
+    },
+    "power": {
+      "label": "Base power",
+      "poses": [
+        "ready",
+        "power",
+        "channel",
+        "release",
+        "ready"
+      ],
+      "durations": [
+        60,
+        55,
+        50,
+        45,
+        50
+      ],
+      "travel": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "effect": "ward",
+      "impact": 2,
+      "hold": false
+    }
+  },
+  "bytes": {
+    "webp": 470026,
+    "lite": 135550
+  },
+  "sourceHashes": {
+    "base-defense.png": "98af07b498e80da112c9fc94414ddf5968de8795ecd3a5a8e012f1535ecab829"
+  }
+}

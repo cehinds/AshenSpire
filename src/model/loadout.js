@@ -4,6 +4,7 @@ import {
   applyMountOverrides, extraMountInstances, itemMountEntries, mountKey, ownerItemRef,
 } from './cardMounts.js';
 import { deriveStat } from './derivedStats.js';
+import { effectiveAshenBlightAttributes, ashenBlightBonuses } from './ashenBlight.js';
 import { effectiveEquipmentRating, ratingIds } from './ratingFormula.js';
 import { ratingsConfigFor, LEGACY_RATING_FORMULA } from './statRows.js';
 import { startingKitProblems, armourIsStartingEligible } from './startingKits.js';
@@ -17,10 +18,11 @@ import { cumulativeRequirementDelta, resolveUpgradedEquipment } from './itemUpgr
 import { splitAuthoredWeaponArts } from '../framework/deck.js';
 import { projectZones, WORN_SLOT_IDS, HAND_SLOT_IDS } from './zones.js';
 import { stampSkillBonuses } from './skills.js';
+import { applyAbilityGrade } from './abilityGrades.js';
 
 const EQUIPMENT_PROFILE_SNAPSHOT_VERSION = 2;
 const EQUIPMENT_PROFILE_PATCH_FIELDS = Object.freeze(['baseValue', 'ratingId', 'cap']);
-const EQUIPMENT_PROFILE_CARRIER_FIELDS = Object.freeze(['damageSchool', 'exposureBuildupPerHit']);
+const EQUIPMENT_PROFILE_CARRIER_FIELDS = Object.freeze(['damageSchool', 'exposureBuildupPerHit', 'magicShare']);
 // src/model/loadout.js — what you carry, and what it does to your cards.
 //
 // The design rule (SPEC §3.1(2)) is that equipment may not add behaviour the
@@ -414,6 +416,7 @@ function collectEquipmentProblems(registries, problems = []) {
     if (!Number.isFinite(profile.baseValue) || profile.baseValue < 0) problems.push(`${profile.id}: baseValue must be finite and non-negative`);
     if (!ratingIds.includes(profile.ratingId)) problems.push(`${profile.id}: unknown ratingId '${profile.ratingId}'`);
     if (profile.cap !== '' && profile.cap != null && (!Number.isFinite(profile.cap) || profile.cap < 0)) problems.push(`${profile.id}: cap must be blank or a finite non-negative number`);
+    if (profile.magicShare !== '' && profile.magicShare != null && (!Number.isFinite(profile.magicShare) || profile.magicShare < 0 || profile.magicShare > 1)) problems.push(`${profile.id}: magicShare must be blank or a number from 0 to 1`);
     if (profile.compatibility !== `${profile.role}-v1`) problems.push(`${profile.id}: compatibility '${profile.compatibility}' must match role vocabulary '${profile.role}-v1'`);
     // The service owns what a family may carry, so this reads the same rule
     // the boot door reads rather than a second copy of it.
@@ -1018,7 +1021,7 @@ function profileById(registries, id) {
 function profileRule(profile) {
   return {
     ...Object.fromEntries(EQUIPMENT_PROFILE_PATCH_FIELDS.map((key) => [key, profile[key] === '' ? null : profile[key]])),
-    ...Object.fromEntries(EQUIPMENT_PROFILE_CARRIER_FIELDS.map((key) => [key, profile[key]])),
+    ...Object.fromEntries(EQUIPMENT_PROFILE_CARRIER_FIELDS.map((key) => [key, profile[key] === '' ? null : profile[key]])),
     compatibility: profile.compatibility,
   };
 }
@@ -1076,6 +1079,9 @@ export function restoreEquipmentProfileRuleSnapshot(snapshot, registries) {
     // exactly once during migration; every subsequent save owns the values.
     if (rule.damageSchool === undefined) rule.damageSchool = profile.damageSchool;
     if (rule.exposureBuildupPerHit === undefined) rule.exposureBuildupPerHit = profile.exposureBuildupPerHit;
+    // A blank magic share is the card's damage type default (null). Older snapshots adopt the live row once.
+    if (rule.magicShare === undefined) rule.magicShare = profile.magicShare === '' ? null : profile.magicShare;
+    if (rule.magicShare !== null && !(Number.isFinite(rule.magicShare) && rule.magicShare >= 0 && rule.magicShare <= 1)) throw new Error(`${profile.id}.magicShare must be null or 0..1`);
     if (!DAMAGE_SCHOOLS.includes(rule.damageSchool)) throw new Error(`${profile.id}.damageSchool '${rule.damageSchool}' is unknown`);
     if (!Number.isInteger(rule.exposureBuildupPerHit) || rule.exposureBuildupPerHit < 0) throw new Error(`${profile.id}.exposureBuildupPerHit must be a non-negative integer`);
     const legal = [...EQUIPMENT_PROFILE_PATCH_FIELDS, ...EQUIPMENT_PROFILE_CARRIER_FIELDS, 'compatibility'];
@@ -2811,8 +2817,11 @@ export function reconcileRunLoadoutHp(registries, run, { adoptEquipmentBonuses =
   // The character level rides the derivation (plan phase 6): the snapshot's
   // `perLevel` rows move with it, and a run whose snapshot has none reads 0.
   const level = run.level && Number.isInteger(run.level.level) && run.level.level >= 1 ? run.level.level : 1;
+  const expanded = run.combatExpansionVersion === 2;
+  const attributes = effectiveAshenBlightAttributes(run);
+  const staminaPenalty = expanded ? ashenBlightBonuses(run).maxStaminaPenalty : 0;
   const derived = deriveStat(run.derivedStatRuleSnapshot.rules, 'hp', {
-    attributes: run.attributes,
+    attributes,
     classDef,
     level,
   });
@@ -2821,14 +2830,19 @@ export function reconcileRunLoadoutHp(registries, run, { adoptEquipmentBonuses =
   applyPool('maxHp', 'hp', derived.value, equipmentBonus, nextMax, run.maxHpAdjustment);
   for (const [maxField, statId] of [['maxMana', 'mana'], ['maxStamina', 'stamina']]) {
     const poolDerived = deriveStat(run.derivedStatRuleSnapshot.rules, statId, {
-      attributes: run.attributes,
+      attributes,
       classDef,
       level,
     });
-    const poolMax = Math.max(0, poolDerived.value + bonuses[maxField]);
+    const poolMax = Math.max(0, poolDerived.value + bonuses[maxField] - (statId === 'stamina' ? staminaPenalty : 0));
     applyPool(maxField, statId, poolDerived.value, bonuses[maxField], poolMax);
   }
   run.equipmentPoolBonuses = { ...bonuses };
+  if (expanded) {
+    run.energyMax = run.maxStamina;
+    run.ashenBlightBasePools = Object.fromEntries([['maxHp', 'hp'], ['maxMana', 'mana'], ['maxStamina', 'stamina']].map(([field, stat]) => [field,
+      Math.max(field === 'maxHp' ? 1 : 0, deriveStat(run.derivedStatRuleSnapshot.rules, stat, { attributes: run.attributes, classDef, level }).value + bonuses[field] + (field === 'maxHp' ? run.maxHpAdjustment : 0))]));
+  }
   run.equipmentPoolDeficits = Object.fromEntries(
     EQUIPMENT_POOL_FIELDS.map((field) => [EQUIPMENT_POOL_CURRENT[field], results[field].deficit]),
   );
@@ -3025,7 +3039,8 @@ export function stampDeck(registries, run, cards, {
   // BEFORE the stamping loop (in place — list IS run.deck here) means a
   // newly composed instance is stamped like any other card below.
   if (cards == null) reconcileGrantedCards(registries, run);
-  const rolePlan = new Map(equipmentKitReceipt(registries, run.loadout, run.class, run.attributes, run.equipmentProfileRuleSnapshot, run).map((row) => [row.role, row]));
+  const effectiveAttributes = effectiveAshenBlightAttributes(run);
+  const rolePlan = new Map(equipmentKitReceipt(registries, run.loadout, run.class, effectiveAttributes, run.equipmentProfileRuleSnapshot, run).map((row) => [row.role, row]));
   let n = 0;
   for (const inst of list) {
     let row = inst.equipmentRole ? rolePlan.get(inst.equipmentRole) : null;
@@ -3036,7 +3051,7 @@ export function stampDeck(registries, run, cards, {
         ? (registries.equipment.armaments || []).find((candidate) => candidate.id === owner) || null
         : null;
       row = { role: inst.kitRole || 'attack', profile, piece };
-      row.receipt = roleAmountReceipt(registries, row, run.attributes, run.equipmentProfileRuleSnapshot, run);
+      row.receipt = roleAmountReceipt(registries, row, effectiveAttributes, run.equipmentProfileRuleSnapshot, run);
     }
     if (row && row.profile) {
       const prior = inst.profileId && run.equipmentProfileRuleSnapshot.profiles[inst.profileId];
@@ -3075,7 +3090,11 @@ export function stampDeck(registries, run, cards, {
       // Non-equipment cards are immutable host-stamped instances. Consult live
       // content only at the explicit new/legacy adoption door, never during a
       // later equipment swap re-stamp.
-      carrier = schoolAbsent ? registries.cards.get(inst.cardId) : inst;
+      // The first stamp reads the resolved instance face, including a chosen
+      // ability grade. Later stamps preserve the carrier already on the host
+      // instance instead of adopting live content changes.
+      const authored = registries.cards.get(inst.cardId);
+      carrier = schoolAbsent ? applyAbilityGrade(authored, inst.abilityRank) : inst;
     }
     const priorSchool = inst.damageSchool;
     const priorBuildup = inst.exposureBuildupPerHit;
@@ -3083,6 +3102,13 @@ export function stampDeck(registries, run, cards, {
     else delete inst.damageSchool;
     if (Number.isInteger(carrier.exposureBuildupPerHit)) inst.exposureBuildupPerHit = carrier.exposureBuildupPerHit;
     else delete inst.exposureBuildupPerHit;
+    // The magic share is the profile's; the physical damage type is the lending weapon's (armaments.csv physicalDamageType).
+    const priorShare = inst.magicShare;
+    const priorPhysical = inst.physicalDamageType;
+    if (Number.isFinite(carrier.magicShare)) inst.magicShare = carrier.magicShare;
+    else delete inst.magicShare;
+    if (row && row.piece && row.piece.physicalDamageType) inst.physicalDamageType = row.piece.physicalDamageType;
+    else delete inst.physicalDamageType;
     const mods = cardMods(registries, run.loadout, run.class, {
       attackSourceWeaponId: inst.kitRole === 'attack' ? inst.grantedBy : inst.equipmentRole === 'attack' ? (inst.weaponId || null) : undefined,
     });
@@ -3090,7 +3116,8 @@ export function stampDeck(registries, run, cards, {
       : row && row.role === 'guard' ? `block=${row.receipt.effectBase}` : null;
     const next = [...(amountMod ? [amountMod] : []), ...((row && row.profile.mods) || []), ...(mods.get(inst.cardId) || [])];
     const prev = inst.mods || [];
-    const carrierChanged = priorSchool !== inst.damageSchool || priorBuildup !== inst.exposureBuildupPerHit;
+    const carrierChanged = priorSchool !== inst.damageSchool || priorBuildup !== inst.exposureBuildupPerHit
+      || priorShare !== inst.magicShare || priorPhysical !== inst.physicalDamageType;
     if (!carrierChanged && next.length === prev.length && next.every((v, i) => v === prev[i])) continue;
     if (next.length) inst.mods = next;
     else delete inst.mods;

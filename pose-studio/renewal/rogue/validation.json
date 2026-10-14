@@ -1,0 +1,18 @@
+{
+  "status": "local-continuation-draft",
+  "classId": "rogue",
+  "loadout": "twinDaggers",
+  "poses": 12,
+  "actions": ["attack", "hurt", "down", "power", "spell"],
+  "checks": {
+    "poseStudioAndRenewalTestsPassed": 16,
+    "normalDurationMs": 260,
+    "fastDurationMs": 160,
+    "downHolds": true,
+    "redHitTint": "visually verified on figure alpha",
+    "workshopImportAndPlayback": "verified",
+    "browserConsoleErrors": 0
+  },
+  "remaining": ["Sheath/draw transitions", "Final cloak-edge review", "Separate body/weapon layers", "Runtime asset publishing and bindings"],
+  "screenshot": "preview-red-hit.jpg"
+}

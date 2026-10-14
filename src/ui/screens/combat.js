@@ -1,9 +1,12 @@
+import { enemyActionPose } from '../../model/enemyActionPose.js';
 import { ratingValue, ratingDamageMultiplier } from '../../model/combatRatings.js';
 import { openCollectibleInspection } from '../components/collectibleCard.js';
-import { combatantInfo, combatantIntent, selectCombatantInfo } from '../components/combatantOverhead.js';
+import { combatantInfo, combatantIntent, playerActionIntent, RESTING_PLAYER_ACTION, selectCombatantInfo } from '../components/combatantOverhead.js';
 import { combatBackdropHtml } from '../components/environmentArt.js';
+import { displayAppearance, onDisplayAppearanceChange } from '../displayAppearance.js';
+import { alternativeCompanionIcon } from '../alternativeArt.js';
 import { targetLayer } from '../models/TargetLayerModel.js';
-import { cardTargetPlan, forbiddenCardDrop } from '../../model/cardTargets.js';
+import { cardTargetPlan, forbiddenCardDrop, upcastNextStep } from '../../model/cardTargets.js';
 import { renderEnemyTargetPicker } from '../components/enemyTargetPicker.js';
 import { touchPoint, recordFlickPoint, flickVerdict, nearestFlickTarget } from '../models/TouchFlickModel.js';
 import { combatEffectAngle } from '../combatEffectDirection.js';
@@ -17,9 +20,22 @@ import { playCardEffectLayers } from '../cardEffectLayers.js';
 // Renders strictly from combat state; animates from dispatch events. Every
 // number displayed comes from previewCard / previewIntent — no math here.
 
-import { dispatch, previewCard, previewIntent, getEntity, cardChoicePlan } from '../../engine/combat.js';
+import { dispatch as engineDispatch, previewCard as enginePreviewCard, previewIntent, getEntity, cardChoicePlan } from '../../engine/combat.js';
+import { createPreviewMemo } from '../models/PreviewMemoModel.js';
+import { decorateCombatRoundsScreen } from '../components/combatRoundsScreen.js';
+import { targetedEnemyId } from '../models/CombatRoundsScreenModel.js';
+import { discardCandidates } from '../../engine/abilityRiders.js';
+import { combatLogEntries } from '../../model/combatLog.js';
+import { combatToolsModel, COMBAT_LOG_DEFAULT_SIZE } from '../models/CombatToolsModel.js';
+import { mountCombatTools, closeCombatFullLog } from '../components/combatTools.js';
+import { createReactionNote, latestReactionNote } from '../components/reactionNote.js';
+import { projectEnemyKnowledge } from '../../model/enemyKnowledgeView.js';
+import { knowledgePredictionModel } from '../../engine/enemyKnowledge.js';
 import { openCardChoiceModal } from '../components/cardChoiceModal.js';
+import { openUpcastChoice, upcastChoicePlan } from '../components/upcastChoice.js';
 import { openDiscardChoiceModal } from '../components/discardChoiceModal.js';
+import { openReactionChoiceModal, committedReactionStack, reactionStackEntryName, stackedCardIds } from '../components/reactionChoiceModal.js';
+import { combatIntentStance } from '../../model/combatIntentVisibility.js';
 import { assertFoundationPlayable } from '../../engine/combatRules.js';
 import { resolveCard } from '../../model/registries.js';
 import { runHandRules } from '../../model/handRules.js';
@@ -30,6 +46,7 @@ import { openPileModal, openSpentPileModal } from '../components/piles.js';
 import { resolveActionAnimation } from '../../model/actionAnimation.js';
 import { enemyMoveCards } from '../../model/enemyMoveCards.js';
 import { enemyMoveDamage } from '../../model/state.js';
+import { variableIntentDamage } from '../../model/intentDamage.js';
 import { ART_REDRAW_EVENT } from '../highResArt.js';
 import { tagService } from '../../model/tagService.js';
 import { reducedMotionRequested } from '../motion.js';
@@ -37,14 +54,21 @@ import { stageFor } from '../services/PoseAnimator.js';
 import { attachTooltip, hideTooltip, showTooltipFor, esc } from '../components/tooltip.js';
 import { combatantDetailBody, combatantInspectorLayout } from '../components/combatantInspector.js';
 import { activeCombatAbilities } from '../components/combatAbilities.js';
+import { combatStanceRow, preparedEvadeRow } from '../../model/combatTacticsDisplay.js';
+import { tagSymbolSvg } from '../components/cardTagSymbols.js';
 import { tooltipHelp } from '../../content/tooltipHelp.js';
 import { helpText, resolveTooltipSettings } from '../../model/tooltipSettings.js';
 import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
 import { relicText, renderCard } from '../components/card.js';
 import { enemySprite, playerSprite, spritesAreEnabled } from '../assets.js';
+import { createStanceLedger, kindForCard, stanceForCard } from '../../model/alternativeStance.js';
+import { selectedWeaponCounterOrigins, selectedWeaponSequence, selectedWeaponSequenceTiming } from '../../model/selectedWeaponSequences.js';
+import { selectedWeaponProfileFor, selectedWeaponStanceFor, selectedWeaponReactionFor, selectedWeaponCounterFor } from '../../model/selectedWeaponStances.js';
 import { animateEvents, playEventCues, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } from '../fx.js';
-import { figureSpec, equippedPieces } from '../../model/loadout.js';
+import { ANIM_SPEEDS, COMBAT_TIMING, getAnimSpeed } from '../animationPace.js';
+import { figureSpec, equippedPieces, gripOf } from '../../model/loadout.js';
 import { resourceAura } from '../combatAura.js';
+import { CARD_ACTION_CLASSES } from '../../model/alternativeCardAnimation.js';
 import { resolveCombatAnimation, combatRestAfterEvent } from '../../model/combatAnimation.js';
 import { resolveCombatPose, readinessAfterEvent, bloodRiteReaction } from '../../model/combatPose.js';
 import {
@@ -69,7 +93,7 @@ import { trackGesture } from '../gesture.js';
 import { finishCardDrag } from '../cardDragEnd.js';
 import { resourceBars } from '../components/resbars.js';
 import { combatHealthRow } from '../components/combatHealth.js';
-import { blockPresentation, reconcileWardBlock } from '../../model/blockPresentation.js';
+import { protectionPresentation, reconcileWardBlock } from '../../model/blockPresentation.js';
 import { renderArcaneExposure, arcaneExposureReceipt } from '../components/arcaneExposure.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { combatVitals } from '../models/StaminaOrbModel.js';
@@ -97,9 +121,14 @@ import { el, meter, meters, pill, labelStack, keycap, glyph, iconButton, button,
 import { clearSelection, onSelectionChange } from '../components/cardSelection.js';
 import { wireFormationMovement } from '../components/formationMovement.js';
 import { formationGridHtml } from '../components/formationGrid.js';
-import { formationMovePlan } from '../../model/formationMovement.js';
+import { formationMovePlan, normalizeClassicPlayerFormationCell } from '../../model/formationMovement.js';
 import { discardChoicePlan } from '../../engine/handRules.js';
 import { openHandDiscard } from '../components/handDiscard.js';
+import { resolveCombatCard } from '../../engine/combatExpansion.js';
+import { resolvePlayedCombatCard } from '../models/PlayedCombatCard.js';
+import { upcastOptions } from '../../model/upcasting.js';
+import { controlGate, recoveryControls } from '../../engine/combatStatusControl.js';
+import { ashenBlightBarHtml, openAshenBlightMilestone } from '../components/ashenBlight.js';
 
 // The event types that move the displayed hand between beats — the same four
 // applyBeatToDisp() reads. Kept beside that switch's contract, not typed twice.
@@ -122,6 +151,11 @@ export function cardHotkeyAction(key, { targeting = false, handSize = 0, livingE
 }
 
 export function mountCombat(app, { registries, run, combat, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, onLoad, onQuitWithoutSave, onArmoury, enemyAppearance = {}, quickControls = {}, readSettings = () => meta.settings || {}, opening = false }) {
+  // One preview per (card, target, ranks) until the fight next changes: see
+  // PreviewMemoModel. The fight changes only through dispatch and the Classic
+  // cell normalisation below.
+  const previewMemo = createPreviewMemo({ combat, preview: enginePreviewCard, dispatch: engineDispatch });
+  const { dispatch, previewCard } = previewMemo;
   // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
   // page-wide store, and nothing in production ever emptied it — so a card
   // whose `i` had been read kept its first beat for the life of the page, and
@@ -163,6 +197,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         // and the band's compact/expanded grip went on 2026-09-11; nothing in
         // the bag steers the HUD now, the parameter keeps the callers' shape.
         quickSettings: { settings: meta.settings || {} },
+        overlayHtml: '<div class="combat-blight-hud" aria-live="polite"></div>',
       }))}
       ${combatBackdropHtml(run, previewSceneId)}
       <div class="field" ${uiComponentAttrs(UI.battlefieldStage)}>
@@ -170,6 +205,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         <div class="turn-ribbon" role="status" aria-live="polite">Player Turn</div>
         <div class="player-zone"></div>
         <div class="enemy-row"></div>
+        <div class="combat-expansion-controls" aria-live="polite"></div>
       </div>
       <div class="hand-area">
         <div class="hand-overlay" ${uiComponentAttrs(UI.playerHandTray)} data-paging="false">
@@ -200,6 +236,19 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   const $ = (sel) => app.querySelector(sel);
   const combatEl = $('.combat');
+  const combatToolsState = { open: false, size: COMBAT_LOG_DEFAULT_SIZE, followLatest: true };
+  const combatTools = mountCombatTools(combatEl, { state: combatToolsState,
+    onViewChange: () => renderCombatTools(),
+    onToggle: enabled => {
+      try { dispatch(combat, { type: 'setReactions', enabled }); }
+      catch (error) { console.warn('[combat] reaction preference refused:', error.message); }
+      render();
+    },
+  });
+  // "No reaction: why", above the Reaction switch, for notes logged from now on.
+  const reactionNote = createReactionNote();
+  let reactionNoteSeen = combat.eventLog.length - 1;
+  let paintedAppearance = displayAppearance();
   const potionReveal = resolveTooltipSettings(meta.settings);
   const actionRow = $('.combat-action-row');
   setPotionRevealTiming(actionRow, potionReveal);
@@ -210,6 +259,16 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   const battlefieldStage = wireBattlefieldStage($('.field'), battlefieldStageModel(registries.balance.ui.combatantStage));
   const combatLayout = wireCombatLayout(combatEl);
   let playerRest = 'idle';
+  const heldStances = createStanceLedger();
+  // The player's last confirmed card kind: the at-rest intent glyph above the head.
+  const heldKinds = createStanceLedger(kindForCard);
+  const heldCards = createStanceLedger(card => card);
+  function selectedProfile() {
+    return selectedWeaponProfileFor({ classId: run.class, armourId: figureSpec(registries, run.loadout, run.class).armourId, grip: gripOf(registries, run.loadout, run.class) });
+  }
+  function playerStance(def) {
+    return selectedWeaponStanceFor({ profile: selectedProfile(), stance: def ? stanceForCard(def) : heldStances.get(), card: def || heldCards.get(), entity: dv(combat.player) });
+  }
   let readinessOrder = [];
   let visualPlans = new Map();
   const barrierVisuals = new Map();
@@ -218,13 +277,52 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     for (const event of events) {
       if (appliedVisualEvents.has(event)) continue;
       appliedVisualEvents.add(event);
+      heldStances.accept(event, visualPlans.get(event.cardInstanceId)?.stanceCard);
+      heldKinds.accept(event, visualPlans.get(event.cardInstanceId)?.stanceCard);
+      heldCards.accept(event, visualPlans.get(event.cardInstanceId)?.stanceCard);
       playerRest = combatRestAfterEvent(playerRest, event, 'player', visualPlans.get(event.cardInstanceId));
       readinessOrder = readinessAfterEvent(readinessOrder, event, 'player');
     }
   }
   if (typeof window !== 'undefined') window.__combat = combat; // debug handle
+  let playbackEvents = [], playbackCounterOrigins = new Set();
+  function selectedCounterOrigins(events) {
+    if(!selectedProfile())return new Set();
+    return selectedWeaponCounterOrigins(events,event=>{
+      if(event.sourceId!=='player' || !event.cardId)return false;
+      const card=resolvePlayedCombatCard(combat,event,event.cardInstance || {cardId:event.cardId});
+      const kind=selectedWeaponCounterFor(card,selectedProfile(),registries.cards.get(event.cardId));
+      return kind && stageFor(fxCtx.anchorFor(event.sourceId))?.poses?.includes(kind);
+    });
+  }
   const fxCtx = {
     layer: $('.fx-layer'),
+    reactionForReceipt: event => {
+      const kind = selectedWeaponReactionFor(event, selectedProfile());
+      if (playbackCounterOrigins.has(event) && ['fully-defended','evade'].includes(kind)) return null;
+      const stage = kind && stageFor(fxCtx.anchorFor(event.targetId));
+      // dispatch(endTurn) resolves the whole enemy batch before its receipts are
+      // played. Final model state therefore cannot suppress an earlier evade or
+      // guard break. Only the reaction emitted after the batch's lethal HP loss
+      // belongs to the defeated beat. Use the decorated playback batch: defense
+      // presentation may clone a receipt without changing its resolved outcome.
+      const eventIndex = playbackEvents.indexOf(event);
+      const lethalLossIndex = combat.player.alive === false
+        ? playbackEvents.findLastIndex(row => row.type === 'hpLost' && row.targetId === event.targetId)
+        : -1;
+      const defeatedBeat = kind === 'guard-break' && lethalLossIndex >= 0 && eventIndex > lethalLossIndex;
+      if (!kind || defeatedBeat || !stage?.reactionPoses?.includes(kind)) return null;
+      return () => {
+        const current=stageFor(fxCtx.anchorFor(event.targetId));
+        current?.reactPose?.(kind, current.reactionTiming?.(kind,ANIM_SPEEDS[getAnimSpeed()])?.totalMs || 280);
+      };
+    },
+    reactionTimingForReceipt: (event,speed) => {
+      const kind=selectedWeaponReactionFor(event,selectedProfile());
+      if(!kind || playbackCounterOrigins.has(event))return speed.reactionMs;
+      const stage=stageFor(fxCtx.anchorFor(event.targetId));
+      return stage?.reactionPoses?.includes(kind) ? stage.reactionTiming?.(kind,speed)?.totalMs || speed.reactionMs : speed.reactionMs;
+    },
     combatEl,
     anchorFor: (id) => app.querySelector(`[data-eid="${id}"] .sprite`) || app.querySelector(`[data-eid="${id}"]`),
     relicAnchor: (relicId) => app.querySelector(`[data-relic-id="${relicId}"]`),
@@ -233,21 +331,37 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // this accessor — one home, the status def itself, with the WORDS
     // resolved through the framework term overlay.
     statusInfo: (sid) => registries.frameworkTerms.withStatusWords(registries.statuses.get(sid)),
+    // playTimeline reads this before arming its watchdog, so it must not throw.
     maxActorAnimationMs: (speed) => {
-      const animation = equipmentAnimationForLoadout(registries, run.loadout, run.class);
-      return Math.max(reaverAttackTiming(speed).totalMs, ...Object.keys(animation?.references || {}).map(role => animationTiming(animation, role, speed)?.totalMs || 0));
+      try {
+        if (selectedProfile()) return selectedWeaponSequenceTiming(selectedWeaponSequence('counter-guard'),speed).totalMs;
+        if (CARD_ACTION_CLASSES.includes(run.class)) return speed.lungeMs;
+        const animation = equipmentAnimationForLoadout(registries, run.loadout, run.class);
+        return Math.max(reaverAttackTiming(speed).totalMs, ...Object.keys(animation?.references || {}).map(role => animationTiming(animation, role, speed)?.totalMs || 0));
+      } catch (e) {
+        console.warn('[combat] actor animation budget failed:', e && e.message);
+        return speed.lungeMs;
+      }
     },
     animateActor: (beat, actorEl, speed) => {
-      const played = beat.events.find(event => event.type === 'cardPlayed');
-      const moved = beat.events.find(event => event.type === 'enemyMoveStarted');
+      const returned = beat.events.find(event => event.type === 'combatCounterTriggered');
+      const played = returned?.sourceKind === 'player' ? { ...returned, cardType: 'attack' } : beat.events.find(event => event.type === 'cardPlayed');
+      const moved = returned?.sourceKind === 'enemy' ? { ...returned, kind: 'attack' } : beat.events.find(event => event.type === 'enemyMoveStarted');
       if (!played && !moved) return null;
       // The pre-dispatch hand snapshot retains Powers removed from every pile,
       // and the full instance carries equipment profile tags and upgrades.
       // Resolve it before falling back to a live pile or bare legacy receipt.
-      const playedInstance = played && (disp?.hand.find((card) => card.instanceId === played.cardInstanceId)
+      const playedInstance = played && (played.cardInstance || disp?.hand.find((card) => card.instanceId === played.cardInstanceId)
         || findInst(played.cardInstanceId) || { cardId: played.cardId });
-      const definition = played ? resolveCard(registries, playedInstance)
+      let definition = played ? resolvePlayedCombatCard(combat, played, playedInstance)
         : registries.enemies.get(moved.enemyId)?.moves?.[moved.moveId];
+      const selectedCounter = returned?.sourceKind === 'player' && definition
+        ? selectedWeaponCounterFor(definition,selectedProfile(),registries.cards.get(played.cardId)) : null;
+      if (returned && definition) {
+        const attackTags = (definition.cardTags || definition.tags || []).filter(tag => !tag.startsWith('kind:') && !tag.startsWith('maneuver:'));
+        attackTags.push('maneuver:attack');
+        definition = { ...definition, type: 'attack', kindIds: ['classification.attack'], cardTags: attackTags, tags: attackTags };
+      }
       const tags = played && definition
         ? (definition.cardTags?.length ? definition.cardTags : tagService(registries).tagsOf('card', definition))
         : definition?.tags || [];
@@ -259,21 +373,21 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         availablePoses: stage?.poses || [],
       });
       if (played && definition) {
-        const grouped = visualPlans.get(played.cardInstanceId) || resolveCombatAnimation({ ...definition, cardTags: tags, animationTags: combatEffectTags(registries, definition) }, equippedPieces(registries, run.loadout, run.class), { animation: equipmentAnimationForLoadout(registries, run.loadout, run.class), action: plan });
-        const pose = stage?.setRestPose ? grouped.technique : grouped.group === 'attack' ? 'attack1' : grouped.group === 'defend' ? 'guard' : 'idle';
+        const grouped = (!returned && visualPlans.get(played.cardInstanceId)) || resolveCombatAnimation({ ...definition, cardTags: tags, animationTags: combatEffectTags(registries, definition) }, equippedPieces(registries, run.loadout, run.class), { animation: equipmentAnimationForLoadout(registries, run.loadout, run.class), classId: run.class, appearance: displayAppearance(), combatExpansionVersion: combat.combatExpansionVersion, counterTriggered: !!returned, action: plan });
+        const pose = selectedCounter && stage?.poses?.includes(selectedCounter) ? selectedCounter : stage?.setRestPose ? grouped.technique : grouped.group === 'attack' ? 'attack1' : grouped.group === 'defend' ? 'guard' : 'idle';
         plan = { ...plan, ...grouped, pose, spriteEffect: combatEffectPlan({ ...definition, cardTags: combatEffectTags(registries,definition) },played), effectEvents: beat.events, targetId: played.targetId || beat.events.find(e=>e.type==='damageDealt')?.targetId };
         actorEl.dataset.actionGroup = grouped.group;
       }
       if (moved && stage?.enemy) {
-        const pose = moved.kind === 'attack' ? (['projectile', 'spell'].includes(plan.family) ? 'projectile' : 'attack')
-          : moved.kind === 'block' || plan.family === 'guard' ? 'guard' : 'buff';
+        const pose = enemyActionPose(moved.kind, plan);
         plan = { ...plan, pose };
       }
       actorEl.dataset.actionFamily = plan.family;
       actorEl.dataset.actionMotion = plan.motion;
       // The painted Reaver sequence remains the specialized attack renderer.
       // Other actors use existing CSS and only sprite poses they actually ship.
-      if (beat.actorId !== 'player' || beat.kind !== 'attack' || run.class !== 'reaver') {
+      if (beat.actorId !== 'player' || beat.kind !== 'attack' || run.class !== 'reaver'
+        || !['slash', 'thrust', 'strike'].includes(plan.family)) {
         return playFamilyAnimation(actorEl, stage, plan, speed, beat.actorId !== 'player' && beat.kind === 'attack');
       }
       const figure = figureSpec(registries, run.loadout, run.class);
@@ -309,17 +423,18 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       '--action-lift': `${-8 * reach}px`,
     };
     const original = Object.keys(overrides).map((name) => [name, actorEl.style.getPropertyValue(name), actorEl.style.getPropertyPriority(name)]);
+    let contactCue=null;
     if (totalMs) {
       actorEl.classList.remove(actionClass);
       void actorEl.offsetWidth;
       for (const [name, value] of Object.entries(overrides)) actorEl.style.setProperty(name, value);
-      actorEl.classList.add(actionClass);
+      if (!stage?.ownsMotion) actorEl.classList.add(actionClass);
       // A damaging spell still needs its enemy attack drawing; its motion
       // family remains a cast rather than being changed into a melee lunge.
       if (enemyAttack) actorEl.classList.add('enemy-attack-pose');
-      if (plan.pose) stage?.play(plan.pose, totalMs, plan.aura);
+      if (plan.pose) {stage?.play(plan.pose, totalMs, plan.aura);contactCue=stage?.contactCue?.();}
     }
-    return { totalMs, impactMs: authoredTiming?.impactMs ?? Math.round(totalMs * 0.55), hold: (ms) => { stage?.hold?.(ms); }, cancel: () => {
+    return { totalMs, contact:contactCue?.contact, remainingMs:contactCue?.remainingMs, impactMs: authoredTiming?.impactMs ?? Math.round(totalMs * COMBAT_TIMING.windupFraction), hold: (ms) => { stage?.hold?.(ms); }, cancel: () => {
       actorEl.classList.remove(actionClass);
       if (enemyAttack) actorEl.classList.remove('enemy-attack-pose');
       for (const [name, value, priority] of original) {
@@ -332,12 +447,46 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   let selected = null; // card instanceId in click-targeting mode
+  const upcastRanksByCard = new Map();
+  let upcastPreviewRefresh = false;
+  let expansionChoiceShell = null;
   let selectedFlask = null; // flask slot index awaiting a target
   let selfArm = null; // self/buff card armed for a confirm (keyboard/gamepad)
   let selectedCombatantId = null; // contextual reading selection; never combat targeting
   let heldTurnHand = null;
   let enemyPlayback = false;
   let busy = false; // animating / resolving
+  // Diagnostic only. When a tap is ignored because the screen is busy, the log
+  // line names every lock and how long busy has held: an input that "does
+  // nothing" on a slow phone is either a long wait (busyForMs climbs and ends)
+  // or a lock that never clears (busyForMs keeps growing, the next report
+  // shows it). Sampled every 250 ms; nothing reads it but the log.
+  let busyStamp = 0;
+  const busyWatch = setInterval(() => {
+    if (!combatEl.isConnected) { clearInterval(busyWatch); return; }
+    if (busy) busyStamp ||= performance.now(); else busyStamp = 0;
+  }, 250);
+  const lockReport = () => {
+    const busyForMs = busy && busyStamp ? Math.round(performance.now() - busyStamp) : 0;
+    return { busy, busyForMs, enemyPlayback, pendingReaction: combat.pendingReaction?.id || null, reactionModalOpen: !!reactionShell,
+      pendingDiscard: !!combat.pendingAbilityDiscard, phase: combat.phase, result: combat.result };
+  };
+  // One extra line once the lock has held for more than 3 s.
+  const logIgnored = (what, why) => {
+    dlog('ignored', what, why);
+    if (why.busyForMs > 3000) dlog('stuck', `${what} ignored: busy for ${why.busyForMs} ms`, why);
+  };
+  // The appearance may already be Classic before this screen mounts, so the
+  // change notification below is not guaranteed to fire for this combat.
+  normalizeClassicPlayerFormationCell(combat, readSettings());
+  previewMemo.invalidate();
+  onDisplayAppearanceChange(combatEl, () => {
+    // Classic must not merely paint an invalid perspective lane at its spawn:
+    // keep the combat state aligned with the cell that movement and saves use.
+    normalizeClassicPlayerFormationCell(combat, readSettings());
+    previewMemo.invalidate();
+    if (!busy) render();
+  });
   // The fight has resolved and this screen is handing off (see the
   // `combat.result` branch in the settle callback). Its menu is closed from
   // that moment: the run is mid-handoff and nothing the menu offers is sound.
@@ -375,7 +524,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     animateArrival: true,
     fitFan: true,
     registries,
-    wireCard: (el, entry) => entry.preview ? wireCardInput(el, entry.inst, entry.preview, entry.affordable) : null,
+    wireCard: (el, entry) => {
+      if (!entry.preview) return null;
+      const release = wireCardInput(el, entry.inst, entry.preview, entry.affordable);
+      wireUpcastControl(el, entry.inst, entry.preview);
+      return release;
+    },
   });
 
   // WGC11 lists the WGH8 contents: ONE projection (models/PotionContentsModel.js)
@@ -389,7 +543,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // entry key a Potions mini was tapped for; that entry opens folded out.
   // Found by action or key, not by list position.
   function openPotions(shortcut = null) {
-    const turnOpen = () => !busy && !combat.result && combat.phase === 'player';
+    const turnOpen = () => !busy && !combat.pendingReaction && !combat.result && combat.phase === 'player';
     openCombatPotions({
       rows: potionEntries(), opener: $('.combat-potions'), shortcut, arm,
       useReason: ({ options }) => options.remaining <= 0 ? 'No charges remaining' : !turnOpen() ? 'Wait for your turn' : '',
@@ -433,7 +587,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const inst = cardId && combat.piles.hand.find(card => card.instanceId === cardId);
     if (inst) {
       if (!inspectionPlayAction(cardId).enabled) return [];
-      const def = resolveCard(registries, inst);
+      const def = resolveCombatCard(combat, inst, { upcastRanks: upcastRanksByCard.get(inst.instanceId) });
       const hostile = cardTargets(inst.instanceId).mode === 'enemy';
       if (hostile) return combat.enemies.filter(enemy => enemy.alive).map(enemy => ({
         el: combatEl.querySelector(`.combatant.enemy[data-eid="${CSS.escape(enemy.id)}"]`), kind: 'enemy',
@@ -463,8 +617,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   combatEl.addEventListener('cardinspectionselect', event => {
     selectCombatant(null);
     const id = event.target.closest('.hand .card')?.dataset.instanceId;
-    if (id && id !== selected && id !== selfArm) {
+    if (id && id !== selected && id !== selfArm && (selected || selfArm || selectedFlask != null)) {
       selected = null; selectedFlask = null; selfArm = null;
+      // Inspecting another card disarms: the figure drops the armed card's preview
+      // (syncCardSelection would also strip the inspection highlight just lit).
+      syncPlayerPreview($('.combatant.player'), null, null);
     }
     refreshAim();
   });
@@ -504,7 +661,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // released until its observer runs — so an outgoing mount can be notified
     // once after its own DOM is gone. It has nothing left to re-dress.
     if (!combatEl.isConnected || app.querySelector('.combat') !== combatEl) return;
-    if (lit !== null || (!selected && !selfArm)) return;
+    if (upcastPreviewRefresh || lit !== null || (!selected && !selfArm)) return;
     selected = null;
     selfArm = null;
     // The stage, THEN the sync. `syncCardSelection` dresses what is already
@@ -521,7 +678,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // used to outlive the play or cancel that ended it.
   function cardTargets(instanceId) {
     const inst = findInst(instanceId);
-    return cardTargetPlan(inst ? { ...resolveCard(registries, inst), combatPreview: previewCard(combat, inst.instanceId) } : null, combat.player.id, combat.enemies,
+    return cardTargetPlan(inst ? { ...resolveCombatCard(combat, inst, { upcastRanks: upcastRanksByCard.get(inst.instanceId) }), combatPreview: previewCard(combat, inst.instanceId, undefined, upcastRanksByCard.get(inst.instanceId)) } : null, combat.player.id, combat.enemies,
       [{ id: combat.player.id, alive: combat.player.alive, connected: true }], { solo: true });
   }
 
@@ -575,15 +732,45 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       card.classList.toggle('selected', on);
       card.setAttribute('aria-pressed', String(on));
     });
+    // The preview's target outline follows the aimed card, which this sync is the one place that changes.
+    decorateRoundsScreen();
     const player = $('.combatant.player');
     player?.classList.toggle('armed', !!selfArm);
     if (player) { player.tabIndex = selfArm ? 0 : -1; player.setAttribute('aria-label', selfArm ? 'Play selected card on yourself' : 'Player information'); }
-    const def = active && resolveCard(registries, findInst(active));
+    const inst = active && findInst(active);
+    const def = inst && resolveCombatCard(combat, inst, { upcastRanks: upcastRanksByCard.get(inst.instanceId) });
     player?.classList.toggle('skill-selected', cardKind(def) === 'skill');
+    // The figure and its glyph preview the selected card; deselecting returns them to the held
+    // stance. While a play's receipt is pending (hand frozen), keep the preview: the held ledgers
+    // still name the stance before the play until its cardPlayed beat lands.
+    if (def || !$('.hand')?.inert) syncPlayerPreview(player, inst, def);
     applyTargetLayer();
     setHintMode(active ? 'targeting' : null);
     hideTooltip();
     refreshAim();
+  }
+
+  // The figure's glyph and stance: the armed card's, else the held ones.
+  function syncPlayerPreview(player, inst, def) {
+    syncPlayerActionIntent(player, inst, heldKinds.get());
+    stageFor(player?.querySelector('.sprite'))?.setStance?.(playerStance(def));
+  }
+
+  // An armed card's kind shows while it is armed; otherwise the last confirmed
+  // card's kind stays above the figure, and before any card is confirmed the
+  // neutral resting mark does, so the player's intent glyph is always shown.
+  function syncPlayerActionIntent(player, inst, held = null) {
+    const leading = player?.querySelector('.combatant-leading');
+    if (!leading) return;
+    leading.querySelector('.player-action-intent')?.remove();
+    const def = inst ? resolveCombatCard(combat, inst, { upcastRanks: upcastRanksByCard.get(inst.instanceId) }) : null;
+    const armed = def ? kindForCard(def) : null;
+    const action = playerActionIntent(armed ?? held ?? RESTING_PLAYER_ACTION, () => {
+      if (selfArm) playCard(selfArm, null);
+      else selectCombatant('player');
+    });
+    if (action) leading.append(action);
+    combatEl.dispatchEvent(new CustomEvent('combatantselectionchange'));
   }
 
   function armSelf(instanceId) {
@@ -634,7 +821,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function moveDetail(move, preview = null, entity = null) {
     const source = preview || { ...(move || {}), damage: enemyMoveDamage(entity, move) };
     const pieces = [];
-    if (source.damage != null) pieces.push(`${source.damage}${source.hits > 1 ? ` × ${source.hits}` : ''} damage`);
+    const sequence = variableIntentDamage(source);
+    if (source.damage != null) pieces.push(`${sequence ? `${sequence.text} (${sequence.totalDamage} total)` : `${source.damage}${source.hits > 1 ? ` × ${source.hits}` : ''}`} damage`);
     if (source.block != null) pieces.push(`${source.block} Block`);
     for (const effect of move?.effects || []) {
       if (effect.op === 'applyStatus') pieces.push(`applies ${words(effect.status)}`);
@@ -676,9 +864,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }
 
     const def = registries.enemies.get(entity.enemyId);
-    const intent = previewIntent(combat, entity.id);
+    const intent = disp?.ents[entity.id]?.intentPreview || previewIntent(combat, entity.id);
+    const learning = combat.enemyKnowledge ? projectEnemyKnowledge(def, combat.enemyKnowledge.owners.player?.knowledge.enemies[def.id], { registries, combatMatchupRules: combat.combatMatchupRules, ratingsRules: combat.ratingsRules }) : null;
     const currentMoveId = intent.moveId;
-    const skills = Object.entries(def.moves || {}).map(([moveId, move]) => ({
+    const skills = learning ? null : Object.entries(def.moves || {}).map(([moveId, move]) => ({
       name: words(moveId),
       detail: moveDetail(move, moveId === currentMoveId ? intent : null, entity),
       active: moveId === currentMoveId,
@@ -689,6 +878,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const past = entity.performedMoves || [];
     return {
       role: 'enemy',
+      ...(learning ? { learning, perception: combat.skills?.perception?.level || 0,
+        prediction: knowledgePredictionModel(combat, entity),
+        onPredict: (actionSerial, maneuver) => {
+          dispatch(combat, { type: 'predictIntent', enemyInstanceId: entity.id, actionSerial, maneuver });
+          return { accepted: true, prediction: maneuver };
+        } } : {}),
       name: def.name,
       subtitle: (def.tags || []).map(words).join(' · ') || 'Enemy',
       resources: inspectorResources([
@@ -699,19 +894,21 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         { label: t('combat.protection.block'), value: v.block || 0 },
       ], 'enemy', entity),
       intent: {
-        name: currentMoveId ? words(currentMoveId) : words(intent.kind || 'Unknown'),
-        detail: moveDetail(current, intent),
+        name: intent.hidden ? intent.label || '?' : currentMoveId ? words(currentMoveId) : words(intent.kind || 'Unknown'),
+        detail: intent.hidden ? 'Exact move, damage, and effects unread.' : moveDetail(current, intent),
+        hidden: intent.hidden, knowledgeRead: intent.knowledgeRead, stance: intent.stance, profile: intent.profile,
         active: true,
       },
       skillLabel: 'Move set',
-      moveCards: enemyMoveCards(def, { enemy: entity, preview: intent, registries }),
+      moveCards: learning ? learning.moveCards : enemyMoveCards(def, { enemy: entity, preview: intent, registries, combatMatchupRules: combat.combatMatchupRules }),
       skills,
-      statuses: statusDetails(entity),
+      // The stance an enemy's telegraph set reads only as far as its intent does.
+      statuses: [...[intent.hidden ? null : combatStanceRow(v), preparedEvadeRow(v)].filter(Boolean), ...statusDetails(entity)],
       entityId: entity.id,
       history: past.map((moveId) => ({ name: words(moveId), detail: moveDetail(def.moves?.[moveId], null, entity) })),
-      traits: (def.tags || []).map((tag) => ({ name: words(tag) })),
+      traits: learning ? learning.traits : (def.tags || []).map((tag) => ({ name: words(tag) })),
       // No authored lore exists for enemies yet; unknown, not none.
-      lore: null,
+      lore: learning ? learning.lore : null,
     };
   }
 
@@ -791,9 +988,16 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     return {
       id: e.id,
       kind: e.kind,
+      ...(e.kind === 'enemy' ? { intentPreview: previewIntent(combat, e.id) } : {}),
       hp: e.hp,
       mana: e.mana,
       block: e.block,
+      barrier: e.barrier || 0,
+      persistentWard: e.persistentWard ? { ...e.persistentWard } : null,
+      persistentPoise: e.persistentPoise ? { ...e.persistentPoise } : null,
+      combatStance: e.combatStance ? { ...e.combatStance } : null,
+      combatEvade: e.combatEvade ? { ...e.combatEvade } : null,
+      combatOwnerCycle: e.combatOwnerCycle,
       ...(e.wardBlock !== undefined ? { wardBlock: e.wardBlock } : {}),
       alive,
       statuses,
@@ -806,7 +1010,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function takeSnapshot() {
     const ents = { player: snapEnt(combat.player, true) };
     for (const e of combat.enemies) ents[e.id] = snapEnt(e, e.alive);
-    return { ents, hand: [...combat.piles.hand], arcaneEvents: [] };
+    return { ents, hand: [...combat.piles.hand], arcaneEvents: [], logLength: combat.eventLog.length };
   }
   function findInst(instanceId) {
     for (const pile of ['hand', 'draw', 'discard', 'exhaust']) {
@@ -818,8 +1022,38 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function applyBeatToDisp(beat) {
     if (!disp) return;
     for (const e of beat.events) {
+      const eventIndex = combat.eventLog.indexOf(e);
+      if (eventIndex >= 0) disp.logLength = Math.max(disp.logLength, eventIndex + 1);
       const t = e.targetId && disp.ents[e.targetId];
       switch (e.type) {
+        case 'combatCounterTriggered': {
+          const actor = disp.ents[e.sourceId];
+          if (actor && e.sourceKind === 'enemy') actor.intentPreview = { kind: 'attack', moveId: e.moveId,
+            damage: e.amount, hits: 1, counterDamage: e.amount, counterPoiseDamage: e.poiseDamage,
+            counterWardDamage: e.wardDamage, profile: e.combatProfile || {}, stance: 'countering', revealed: true, hidden: false };
+          break;
+        }
+        case 'enemyActorTurnStarted': {
+          const actor = disp.ents[e.sourceId];
+          if (actor) actor.intentPreview = { ...e.intent, profile: e.intent?.combatProfile || {},
+            stance: combatIntentStance(e.intent, e.intent?.combatProfile), revealed: true, hidden: false };
+          break;
+        }
+        case 'playerTurnStart':
+          // Unused Evade charges expire as the player's turn starts.
+          if (disp.ents.player) disp.ents.player.combatEvade = null;
+          for (const enemy of combat.enemies) if (disp.ents[enemy.id]) disp.ents[enemy.id].intentPreview = previewIntent(combat, enemy.id);
+          break;
+        case 'persistentWardChanged':
+        case 'combatWardStripped':
+          if (t?.persistentWard && Number.isFinite(e.value)) { t.persistentWard.value = e.value; if (Number.isFinite(e.max)) t.persistentWard.max = e.max; }
+          break;
+        case 'persistentPoiseChanged':
+          if (t?.persistentPoise) { t.persistentPoise.value = e.value; if (Number.isFinite(e.max)) t.persistentPoise.max = e.max; }
+          break;
+        case 'barrierGained':
+          if (t) t.barrier = e.total;
+          break;
         case 'arcaneExposureChanged':
           if (t && t.arcaneExposure) t.arcaneExposure.value = e.value;
           disp.arcaneEvents.push(e);
@@ -833,8 +1067,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           break;
         case 'damageDealt':
           if (t) {
-            t.block = Math.max(0, t.block - e.blocked);
+            t.block = e.blockRemaining ?? Math.max(0, t.block - e.blocked);
+            if (e.barrierRemaining !== undefined) t.barrier = e.barrierRemaining;
             if (e.wardBlockRemaining !== undefined) t.wardBlock = e.wardBlockRemaining;
+            if (e.poiseRemaining !== undefined && t.persistentPoise) t.persistentPoise.value = e.poiseRemaining;
+            if (e.wardRemaining !== undefined && t.persistentWard) t.persistentWard.value = e.wardRemaining;
             reconcileWardBlock(t);
           }
           break;
@@ -909,6 +1146,28 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         case 'stanceEntered':
           if (disp.ents.player) disp.ents.player.stanceId = e.stance;
           break;
+        // Expanded combat posture advances with its beat, not at playback end.
+        case 'combatStanceChanged': {
+          const actor = disp.ents[e.sourceId];
+          if (actor) {
+            const { maneuver, camp, reach, school, expiresOnOwnerCycle } = e;
+            actor.combatStance = { maneuver, camp, reach, ...(school ? { school } : {}),
+              ...(expiresOnOwnerCycle != null ? { expiresOnOwnerCycle } : {}) };
+          }
+          break;
+        }
+        case 'evadeGained': {
+          // Only the expansion's prepared Evade; the foundation Evade has its own row.
+          if (!e.combatEvade) break;
+          const actor = disp.ents[e.sourceId];
+          const live = e.sourceId === 'player' ? combat.player : combat.enemies.find(enemy => enemy.id === e.sourceId);
+          if (actor) actor.combatEvade = { ...(live?.combatEvade || {}), charges: e.charges,
+            expiresOnOwnerCycle: live?.combatEvade?.expiresOnOwnerCycle ?? (actor.combatOwnerCycle || 0) + 1 };
+          break;
+        }
+        case 'combatAvoidanceResolved':
+          if (t?.combatEvade && e.evade) t.combatEvade = { ...t.combatEvade, charges: Math.max(0, t.combatEvade.charges - 1) };
+          break;
         case 'statusExpired':
           if (t) delete t.statuses[e.status];
           break;
@@ -929,31 +1188,65 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   // ---------- rendering ----------
-  function renderCombatantStage() {
+  function renderCombatantStage({ fit = true } = {}) {
     $('.field').dataset.playerCell = combat.player.formationCell || '';
     hideTooltip();
     if (selected || selfArm || selectedFlask != null) selectedCombatantId = null;
     if (selectedCombatantId && selectedCombatantId !== 'player' && !combat.enemies.some((enemy) => enemy.id === selectedCombatantId && enemy.alive)) selectedCombatantId = null;
     renderPlayer();
     renderEnemies();
-    battlefieldStage.refresh();
-    formationMovement?.refresh();
+    if (fit) {
+      battlefieldStage.refresh();
+      formationMovement?.refresh();
+    }
   }
 
   function render() {
+    if (paintedAppearance !== displayAppearance()) {
+      combatEl.querySelectorAll(':scope > .backdrop, :scope > .alternative-card-fade').forEach(node => node.remove());
+      combatEl.insertAdjacentHTML('afterbegin', combatBackdropHtml(run, previewSceneId));
+      paintedAppearance = displayAppearance();
+    }
     renderTopbar();
     renderPotionTray();
-    renderCombatantStage();
-    renderHand();
+    renderCombatantStage({ fit: false });
     renderControls();
+    renderCombatTools();
+    renderHand();
+    // The tools occupy the incoming hand's top band without consuming width.
+    // Measure that authored hand before the single full-board HUD/target fit.
+    combatTools.flushGeometry();
+    battlefieldStage.refresh();
+    formationMovement?.refresh();
     applyTargetLayer();
     refreshAim(); // re-apply the target glow after the board rebuilds
+    decorateRoundsScreen();
     // Hint bar context: while aiming, show Confirm/Cancel instead of zone keys.
     setHintMode(selected || selectedFlask != null || selfArm ? 'targeting' : null);
+  }
+  // The Combat Rounds Preview's additions (SPEC §4.11). A no-op unless combat.combatRounds is set.
+  function decorateRoundsScreen() {
+    decorateCombatRoundsScreen(combatEl, combat, { armedCardId: selected || null, targetedId: targetedEnemyId(combat, lastTargetId) });
   }
   if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('shot')) {
     window.__renderCombatForShot = render;
     window.__combatRunForShot = run;
+  }
+
+  function renderCombatTools() {
+    combatTools.update(combatToolsModel({ supported: combat.reactionRulesVersion >= 1,
+      enabled: combat.player.reactionsEnabled !== false,
+      disabled: busy || combat.phase !== 'player' || !!combat.pendingAbilityDiscard || !!combat.pendingReaction,
+      ...combatToolsState, entries: combatLogEntries(combat.eventLog.slice(0, disp?.logLength ?? combat.eventLog.length),
+        { registries, players: [{ id: 'player', name: run.name || 'Forsaken' }], enemies: combat.enemies }) }));
+    renderReactionNote();
+  }
+
+  function renderReactionNote() {
+    reactionNote.attach(combatEl);
+    const note = latestReactionNote(combat.eventLog.slice(0, disp?.logLength ?? combat.eventLog.length), { after: reactionNoteSeen,
+      registries, players: [{ id: 'player', name: run.name || 'Forsaken' }], enemies: combat.enemies });
+    if (note) { reactionNoteSeen = note.index; reactionNote.show(note.text); }
   }
 
   function renderTopbar() {
@@ -961,6 +1254,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const pv = dv(p);
     const key = JSON.stringify([p, pv, readSettings()]);
     if (topbarRenderKey === key) return;
+    $('.combat-blight-hud').innerHTML = ashenBlightBarHtml(p, { compact: true });
     // THE MAIN HUD BAR STACK — HP, MP, SP, vertically. Which rows appear is
     // content/resources.js's business, not this screen's. Player Poise belongs
     // only on the combat character card's model surface; it is deliberately
@@ -1074,6 +1368,18 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     markUiComponent(row, UI.statusEffectTray, entity.kind);
     const armed = () => !!(selected || selectedFlask != null || selfArm);
     const plan = entity.kind === 'enemy' ? procDisplayPlan(entity) : { bars: [], pips: [] };
+    // Expanded combat: a prepared Evade (Dodge Roll, Quickstep) is a pip with
+    // its charge count, in the card rail's own Evade symbol.
+    const evade = preparedEvadeRow(dv(entity));
+    if (evade) {
+      const evadeTip = () => `<div class="tt-title">${esc(evade.name)}</div>${esc(evade.detail)}`;
+      const el = trayIcon({
+        art: tagSymbolSvg('effect:evade'), count: evade.charges, tone: 'var(--gold)',
+        label: evade.name, attrs: { class: 'status-icon combat-evade-icon' }, tip: evadeTip, yieldTap: armed,
+      });
+      el.setAttribute('data-status-id', 'combat-evade');
+      row.appendChild(el);
+    }
     for (const [sid, inst] of Object.entries(dv(entity).statuses || {})) {
       const def = registries.frameworkTerms.withStatusWords(registries.statuses.get(sid));
       const stacks = inst.meter ? inst.meter.value : inst.stacks;
@@ -1135,7 +1441,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         if (bar.id === 'poise' || bar.id === 'ward') {
           const magical = bar.id === 'ward';
           const loss = combat.ratingsRules.breaks[magical ? 'wardActionLoss' : 'poiseActionLoss'];
-          const percent = entity ? Math.round((1 - ratingDamageMultiplier(combat, entity, magical)) * 100) : null;
+          // Pools only in expanded combat (owner decision, 2026-10-12): the rating cut is gone, so no percent is stated.
+          const percent = entity && combat.combatExpansionVersion !== 2 ? Math.round((1 - ratingDamageMultiplier(combat, entity, magical)) * 100) : null;
           if (combat.breakMeterVersion === 1) return esc(tFull('combat.poise.shared', {
             resistance: percent === null ? '' : ` by ${percent}%`,
             effect: kind === 'player' ? tFull('combat.poise.actionLoss', { amount: loss }) : tFull('combat.poise.enemyLoss'),
@@ -1166,7 +1473,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // Resources the WCF2 stack could not fit stay readable in the inspector.
     const stackHidden = new Set(entity.kind === 'enemy' ? procDisplayPlan(entity).hidden : []);
     const plan = resourceBarPlan(registries, 'model', v, entity, resDomains).filter((bar) => !stackHidden.has(bar.id));
-    const bars = resourceBars(plan, { surface: 'model', tooltipExtra: poiseTip(entity.kind, entity), tooltips });
+    const bars = resourceBars(plan, { surface: 'model', tooltipExtra: poiseTip(entity.kind, entity), tooltips, showLabels: entity.kind === 'player' });
     for (const bar of plan) {
       const el = bars.querySelector(`[data-res="${bar.id}"]`);
       if (!el) continue;
@@ -1174,7 +1481,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (bar.id === 'hp') {
         markUiComponent(el, UI.healthStatusBar, entity.kind);
         const next = el.nextSibling;
-        const row = combatHealthRow(el, blockPresentation(v), { tooltips, blockHelp: helpText('block') });
+        const row = combatHealthRow(el, protectionPresentation(v), { tooltips, blockHelp: helpText('block') });
         bars.insertBefore(row, next);
       }
       if (bar.id === 'poise') markUiComponent(el, UI.poiseStatusBar, entity.kind);
@@ -1268,9 +1575,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const p = combat.player;
     const figure = figureSpec(registries, run.loadout, run.class);
     const animation = equipmentAnimationForLoadout(registries, run.loadout, run.class);
-    const artKey = JSON.stringify([run.class, run.customization, figure.armourId, animation?.setId, animation?.grip, spritesAreEnabled(), document.documentElement.dataset.performance]);
+    const artKey = JSON.stringify([run.class, run.customization, figure.armourId, selectedProfile(), animation?.setId, animation?.grip, spritesAreEnabled(), document.documentElement.dataset.performance, displayAppearance()]);
     const existing = artKey === playerArtKey ? zone.querySelector('.combatant.player') : null;
-    const renderKey = JSON.stringify([artKey, p, dv(p), run.attributes, run.loadout, selfArm, playerRest, readinessOrder, readSettings()]);
+    const renderKey = JSON.stringify([artKey, p, dv(p), run.attributes, run.loadout, selected, selfArm, playerRest, heldStances.get(), heldKinds.get(), readinessOrder, readSettings()]);
     if (existing && playerRenderKey === renderKey) return;
     if (!existing) { stageFor(zone)?.dispose?.(); zone.replaceChildren(); }
     playerArtKey = artKey;
@@ -1304,10 +1611,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const fightsLeft = ((run.companions || []).find((row) => row.id === id) || {}).combatsLeft || 1;
       const chip = pill({ label: t('combat.companion.left', { name: def.name, n: fightsLeft }), attrs: { class: 'companion-chip', dataset: { companion: id } } });
       chip.setAttribute('title', def.blurb);
+      const art = alternativeCompanionIcon(id);
+      if (art) chip.prepend(art);
       trailing.push(chip);
     }
     if (combat.foundation && p.evade > 0) {
-      const chip = pill({ label: `Evade ${p.evade}`, attrs: { class: 'foundation-evade' } });
+      const chip = pill({ label: `${t('card.tags.evade')} ${p.evade}`, attrs: { class: 'foundation-evade' } });
       bindAbilityBadge(chip, p, 'evade');
       trailing.push(chip);
     }
@@ -1316,8 +1625,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       entityId: 'player',
       leading: [combatantInfo(combatantSubject('player', p).name, opener => openCombatantDoor(combatantSubject('player', p), opener))],
       classNames: [selfArm ? 'armed' : '', selectedCombatantId === 'player' ? 'context-selected' : ''],
-      sprite: existing ? null : playerSprite(run.customization || {}, run.class, figure.armourId, { animation }),
-      name: markMeterRow(labelStack({ label: run.customization?.name || runClassIdentity(registries, run).name, attrs: { class: 'nm' } }), 'name'),
+      sprite: existing ? null : playerSprite(run.customization || {}, run.class, figure.armourId, { animation, view: 'combat', selectedWeaponProfile: selectedProfile() }),
+      name: markMeterRow(labelStack({ label: `${run.customization?.name || runClassIdentity(registries, run).name} · Lv ${characterLevel(run)}`, attrs: { class: 'nm' } }), 'name'),
       meters: meterBars(p),
       trailing,
     };
@@ -1345,7 +1654,19 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (selfArm) playCard(selfArm, null);
       else if (!selected && selectedFlask == null) selectCombatant('player');
     });
+    if (!existing) box.addEventListener('click', event => {
+      if (!selfArm || !event.target.closest('.combatant-mini-hud')) return;
+      // The ordinary frame click handler is registered on this same element.
+      // Consuming a HUD click must stop that sibling listener too, otherwise a
+      // choice card such as Warrior's Vow can open its modal twice.
+      event.preventDefault(); event.stopImmediatePropagation();
+      playCard(selfArm, null);
+    }, true);
     if (!existing) zone.appendChild(box);
+    const activeCard = findInst(selected || selfArm);
+    const activeDef = activeCard ? resolveCombatCard(combat, activeCard, { upcastRanks: upcastRanksByCard.get(activeCard.instanceId) }) : null;
+    syncPlayerActionIntent(box, activeCard, heldKinds.get());
+    stageFor(box)?.setStance?.(playerStance(activeDef));
     stageFor(box)?.setRestPose?.(resolveCombatPose(dv(p), playerRest, readinessOrder), { immediate: !existing });
     playerRenderKey = renderKey;
   }
@@ -1353,10 +1674,17 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // The intent is one StatePill in the fact's own tone, glyph first — the kit's
   // `pill.lg` (uiContent.js intentBadge picks the tone and the words).
   function intentEl(enemy) {
-    return combatantIntent(previewIntent(combat, enemy.id), () => {
+    return combatantIntent(disp?.ents[enemy.id]?.intentPreview || previewIntent(combat, enemy.id), () => {
       const intent = combatantSubject('enemy', enemy).intent;
       return `<div class="tt-title">Intent: ${esc(intent.name)}</div>${esc(intent.detail)}`;
-    });
+    }, registries, { onTarget: () => {
+      if (busy || !getEntity(combat, enemy.id)?.alive || selfArm) return false;
+      if (selected) { playCard(selected, enemy.id); return true; }
+      if (selectedFlask != null) { useFlask(selectedFlask, enemy.id); return true; }
+      selectCombatant(enemy.id);
+      // Unarmed taps still belong to the intent's selection-first tooltip.
+      return false;
+    } });
   }
 
   function renderEnemies() {
@@ -1371,7 +1699,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const living = combat.enemies.filter((e) => e.alive);
     for (const enemy of combat.enemies) {
       const def = registries.enemies.get(enemy.enemyId);
-      const artKey = JSON.stringify([def.id, enemyAppearance[def.id], document.documentElement.dataset.performance]);
+      const artKey = JSON.stringify([def.id, enemyAppearance[def.id], document.documentElement.dataset.performance, displayAppearance()]);
       let record = enemyFrames.get(enemy.id);
       if (record && record.key !== artKey) { stageFor(record.box)?.dispose?.(); record.box.remove(); record = null; }
       const renderKey = JSON.stringify([artKey, enemy, dv(enemy), combat.player, targeting, selectedCombatantId, living.map(e => e.id), disp ? disp.arcaneEvents : recentArcaneEvents, readSettings()]);
@@ -1388,9 +1716,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       // The nameplate is a LabelStack: the name, and under it what kind of
       // thing it is (its stature reads from the frame, so the hint is the tags).
       const nm = labelStack({ label: def.name, attrs: { class: 'nm' } });
-      // The name is the way into the full read on touch, where there is no `I`.
-      // It stops the frame's own click so tapping the name never plays a card
-      // or retargets — the door is a reading, not a move.
+      // With no card/flask selected, the name opens the full read directly;
+      // the separate side core selects the fighter's contextual explanation.
+      // During targeting both retain the existing card/flask commit behavior.
+      // (Sprite, intent and HP select; the name never only selects —
+      // docs/combat-target-pointer-behavior.md.)
+      // Stop bubbling so the name never invokes the frame's handler as well.
       if (enemy.alive) {
         nm.classList.add('nm-inspect');
         nm.setAttribute('role', 'button');
@@ -1402,7 +1733,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         if (!getEntity(combat, enemy.id)?.alive) return;
         if (selected) playCard(selected, enemy.id);
         else if (selectedFlask != null) useFlask(selectedFlask, enemy.id);
-        else openCombatantDoor(combatantSubject('enemy', enemy));
+        else openCombatantDoor(combatantSubject('enemy', enemy), nm);
       };
       nm.addEventListener('click', openThisRead);
       nm.addEventListener('keydown', (event) => {
@@ -1461,13 +1792,14 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   function renderHand() {
     const handList = heldTurnHand || (disp ? disp.hand : combat.piles.hand);
-    combatEl.dataset.turn = enemyPlayback ? 'enemy' : 'player';
-    $('.turn-ribbon').textContent = enemyPlayback ? 'Enemy Turn' : 'Player Turn';
-    $('.hand').inert = busy || enemyPlayback || !!combat.result;
-    $('.hand').setAttribute('aria-disabled', String(busy || enemyPlayback || !!combat.result));
+    combatEl.dataset.turn = enemyPlayback || combat.phase === 'enemy' ? 'enemy' : 'player';
+    $('.turn-ribbon').textContent = enemyPlayback || combat.phase === 'enemy' ? 'Enemy Turn' : 'Player Turn';
+    $('.hand').inert = busy || enemyPlayback || !!combat.pendingReaction || !!combat.result;
+    $('.hand').setAttribute('aria-disabled', String(busy || enemyPlayback || !!combat.pendingReaction || !!combat.result));
     if (heldTurnHand) return; // Preserve the exact last hand face, fan and input focus during playback.
+    const stackedIds = stackedCardIds(combat.reactionStack);
     const key = JSON.stringify([handList, combat.player, combat.enemies, combat.loadout, combat.attributes,
-      combat.turn, combat.phase, combat.result, selected, selfArm, readSettings()]);
+      combat.turn, combat.phase, combat.result, selected, selfArm, [...stackedIds], readSettings()]);
     if (handRenderKey === key) { syncHandPager(handList); return; }
     handStrip.render({
       cards: handList.map((inst) => {
@@ -1478,12 +1810,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         // wedge the timeline (this froze the game on the killing blow).
         let pv = null;
         try {
-          if (!heldTurnHand) pv = previewCard(combat, inst.instanceId);
+          if (!heldTurnHand) pv = previewCard(combat, inst.instanceId, undefined, upcastRanksByCard.get(inst.instanceId));
         } catch (e) {
           console.warn('[combat] hand card not previewable (stale snapshot):', inst.instanceId);
         }
         const affordable = !!pv && combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && combat.player.mana >= pv.manaCost && combat.player.stamina >= (pv.staminaCost || 0) && !isUnplayable(inst);
         return { inst, preview: pv, affordable, selected: inst.instanceId === selected || inst.instanceId === selfArm,
+          stacked: stackedIds.has(inst.instanceId),
           // The surface names itself and hands over its own commit; the
           // verb and its availability sentence come from the service.
           surface: 'combat',
@@ -1512,11 +1845,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (!combatEl.isConnected) return unavailable('This combat is no longer active.');
     if (combat.result) return unavailable('Combat has ended.');
     if (busy || combat.phase !== 'player') return unavailable('Wait for your turn.');
+    // A queued card (Combat Rounds Preview) is answered by its unqueue: a click takes it back and refunds it.
+    if (combat.combatRounds?.playerQueue?.some(record => record.instanceId === instanceId)) return { enabled: true, needsTarget: false, play: () => unqueueCard(instanceId) };
     const inst = combat.piles.hand.find(card => card.instanceId === instanceId);
     if (!inst) return unavailable('This card is no longer in your hand.');
     const reason = unplayableReason(inst);
     if (reason) return unavailable(reason);
-    const pv = previewCard(combat, instanceId);
+    const pv = previewCard(combat, instanceId, undefined, upcastRanksByCard.get(instanceId));
     if (combat.player.energy < (pv.costIsX ? 0 : pv.cost) || combat.player.mana < pv.manaCost || combat.player.stamina < (pv.staminaCost || 0)) {
       return unavailable('Not enough resources to play this card.');
     }
@@ -1580,7 +1915,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   function unplayableReason(inst) {
-    const def = resolveCard(registries, inst);
+    const def = resolveCombatCard(combat, inst);
+    if (!controlGate(combat, combat.player, def).allowed) return 'Recover your active control effects first.';
+    if (combat.player.ashenBlight?.milestones.some(row => row.path === null)) return 'Choose your Blight feat first.';
     if (registries.framework.isUnplayable(def)) return 'This card cannot be played.';
     try { assertFoundationPlayable(combat, def); } catch (error) { return error.message; }
     return '';
@@ -1595,9 +1932,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       // same numbers the badge shows and the engine charges, in all three
       // pools. A card the preview cannot resolve is not a playable card.
       let pv = null;
-      try { pv = previewCard(combat, inst.instanceId); } catch (e) { return false; }
+      try { pv = previewCard(combat, inst.instanceId, undefined, upcastRanksByCard.get(inst.instanceId)); } catch (e) { return false; }
       if (pv.needsTarget && !combat.enemies.some(enemy => enemy.alive)) return false;
-      const friendly = friendlyTargetPlan({ ...resolveCard(registries, inst), combatPreview: pv }, combat.player.id,
+      const friendly = friendlyTargetPlan({ ...resolveCombatCard(combat, inst, { upcastRanks: upcastRanksByCard.get(inst.instanceId) }), combatPreview: pv }, combat.player.id,
         [{ ...combat.player, connected: true }]);
       if (friendly.active && !friendly.legalIds.length) return false;
       return combat.player.energy >= (pv.costIsX ? 0 : pv.cost)
@@ -1607,7 +1944,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // No outer Energy gate: a Light dodge costs 0 Actions and 1 Stamina, so a
     // player at 0 Energy with Stamina left still holds a playable card, and
     // the per-card check above already prices every pool.
-    return anyPlayable;
+    return anyPlayable || combat.combatExpansionVersion === 2 && recoveryControls(combat, combat.player).some(row => !row.disabled && combat.player.energy >= row.costPerStack);
   }
 
   function renderControls() {
@@ -1624,9 +1961,55 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // reason a beat can live on a control its own screen repaints every frame
     // without any screen tracking the dressing.
     if (endTurnBeat) endTurnBeat.refresh();
-    $('.end-turn').disabled = busy || enemyPlayback || !!combat.result;
+    $('.end-turn').disabled = busy || enemyPlayback || !!combat.pendingReaction || combat.phase !== 'player' || !!combat.result;
     paintCombatActionCounts(actionRow, { energy: combat.player.energy, energyMax: combat.player.energyMax, mana: combat.player.mana, maxMana: combat.player.maxMana, settings: readSettings(), draw: combat.piles.draw.length, discard: combat.piles.discard.length, exhaust: combat.piles.exhaust.length });
+    const expandedHost = $('.combat-expansion-controls');
+    if (combat.combatExpansionVersion === 2) {
+      const pendingFeat = combat.player.ashenBlight?.milestones.some(row => row.path === null);
+      const recoveries = recoveryControls(combat, combat.player);
+      expandedHost.hidden = !pendingFeat && !recoveries.length;
+      expandedHost.innerHTML = `${pendingFeat ? '<button class="primary" data-blight-feat>Choose Blight feat</button>' : ''}${recoveries.length ? `<div class="combat-recovery-controls">${recoveries.map(row => `<button class="subtle" data-control-recovery="${esc(row.status)}" ${row.disabled || busy || enemyPlayback || combat.result || combat.player.energy < row.costPerStack ? 'disabled' : ''}>${row.status === 'prone' ? 'Stand up' : `Recover ${esc(registries.statuses.get(row.status).name)}`} · ${row.costPerStack} SP</button>`).join('')}</div>` : ''}`;
+      expandedHost.querySelector('[data-blight-feat]')?.addEventListener('click', () => {
+        if (busy || expansionChoiceShell || combat.result) return;
+        const pending = combat.player.ashenBlight.milestones.find(row => row.path === null);
+        expansionChoiceShell = openAshenBlightMilestone({ threshold: pending.threshold,
+          onClosed: () => { expansionChoiceShell = null; },
+          onChoose: selection => expansionIntent({ type: 'chooseBlightFeat', ...selection }) });
+      });
+      for (const node of expandedHost.querySelectorAll('[data-control-recovery]')) node.addEventListener('click', () => expansionIntent({ type: 'recoverControl', selections: [{ status: node.dataset.controlRecovery, stacks: 1 }] }));
+    } else { expandedHost.replaceChildren(); expandedHost.hidden = true; }
 
+  }
+
+  function expansionIntent(intent) {
+    if (busy || enemyPlayback || combat.result || combat.phase !== 'player') return false;
+    disp = takeSnapshot();
+    try { const out = dispatch(combat, intent); busy = true; afterDispatch(out.events); return true; }
+    catch (error) { disp = null; render(); return { ok: false, error: error.message }; }
+  }
+
+  function wireUpcastControl(card, inst, preview) {
+    if (combat.combatExpansionVersion !== 2 || !upcastOptions(preview.resolvedDefinition).length) return;
+    const baseTier = preview.resolvedDefinition.upcast.baseTier;
+    const selectedTier = upcastRanksByCard.get(inst.instanceId) ?? baseTier;
+    const controls = document.createElement('div'); controls.className = 'card-upcast-controls';
+    const toggle = document.createElement('button'); toggle.className = 'card-upcast'; toggle.textContent = selectedTier > baseTier ? `Upcast +${selectedTier - baseTier}` : 'Upcast';
+    toggle.setAttribute('aria-expanded', 'false'); toggle.disabled = busy || enemyPlayback || !!combat.result;
+    const picker = document.createElement('select'); picker.className = 'card-upcast-rank'; picker.hidden = true; picker.setAttribute('aria-label', `Upcast tier for ${preview.name}`);
+    picker.innerHTML = upcastChoicePlan(preview.resolvedDefinition).options.map(option => `<option value="${option.id}">${esc(option.name)}</option>`).join('');
+    picker.value = String(selectedTier);
+    for (const event of ['pointerdown', 'pointerup', 'click', 'keydown']) controls.addEventListener(event, e => e.stopPropagation());
+    toggle.addEventListener('click', () => { picker.hidden = !picker.hidden; toggle.setAttribute('aria-expanded', String(!picker.hidden)); if (!picker.hidden) picker.focus(); });
+    picker.addEventListener('change', () => {
+      upcastRanksByCard.set(inst.instanceId, Number(picker.value));
+      // Repainting the rank releases the prior inspection node. This is still
+      // the same selected play, so its targeting must survive that release.
+      upcastPreviewRefresh = true;
+      try { handRenderKey = null; renderHand(); }
+      finally { upcastPreviewRefresh = false; }
+      syncCardSelection();
+    });
+    controls.append(toggle, picker); card.appendChild(controls);
   }
 
   // ---------- input: click-to-target + drag (SPEC §7.3, both modes) ----------
@@ -1658,7 +2041,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // player — so it can never light a target the release would refuse. The
     // A-side (declared mode only: `self` lights, `mixed` never does) is the
     // shipped behaviour this replaces. Co-op keeps its own aiming.
-    const dragDef = resolveCard(registries, inst);
+    const dragDef = resolveCombatCard(combat, inst, { upcastRanks: upcastRanksByCard.get(inst.instanceId) });
     const friendlyLegal = friendlyTargetPlan(dragDef, combat.player.id, [
       { id: combat.player.id, alive: combat.player.alive, connected: true },
     ]).legalIds;
@@ -1871,10 +2254,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const select = () => {
       lastConfirmTap = 0;
       selectedFlask = null;
+      // A queued card (Combat Rounds Preview) is taken back by its tap, not armed again.
+      if (isRoundQueued(inst.instanceId)) { unqueueCard(inst.instanceId); return; }
       if (pv.needsTarget || dragTargetMode === 'all') { selected = inst.instanceId; selfArm = null; syncCardSelection(); }
       else armSelf(inst.instanceId);
     };
     const confirm = () => {
+      if (isRoundQueued(inst.instanceId)) { unqueueCard(inst.instanceId); return; }
       if (busy || !affordable || dragging) return;
       if (selected !== inst.instanceId && selfArm !== inst.instanceId) { select(); return; }
       if (!pv.needsTarget) playCard(inst.instanceId, null);
@@ -1887,6 +2273,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       }
     };
     const tap = () => {
+      // A queued card is taken back before the affordable check: `affordable` reads the energy left after queueing.
+      if (isRoundQueued(inst.instanceId)) { unqueueCard(inst.instanceId); return; }
       if (busy || dragging) return;
       if (!affordable) {
         const reasons = [];
@@ -1916,6 +2304,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       onHoldStart: () => { el.dispatchEvent(new CustomEvent('cardholdstart')); },
       onTap: tap, tapOnEarlyRelease: true, tapOnPointerRelease: true,
       onConfirm: () => {
+        if (isRoundQueued(inst.instanceId)) { unqueueCard(inst.instanceId); return; }
         if (!(holdMs(meta.settings || {}, registries.balance.ui.holdConfirm) > 0)) { tap(); return; }
         if (busy || !affordable || dragging) return;
         // Only a card that asks for ONE enemy waits for the choice. A card
@@ -1933,19 +2322,24 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   combatEl.addEventListener('click', event => {
-    if (event.target.closest('.combatant, button, .card, .as-tip, .modal, input')) return;
+    // Pointer capture can retarget a card's trailing touch click to its hand
+    // after pointerup lifts the selected card. That is still a card gesture.
+    if (event.target.closest('.combatant, button, .hand, .card, .as-tip, .modal, input, [data-combat-read-only]')) return;
     selected = null; selfArm = null; selectedFlask = null;
     syncCardSelection();
   });
 
   // Cancel targeting with right-click / Esc.
   combatEl.addEventListener('contextmenu', (ev) => {
+    if (ev.target.closest('[data-combat-read-only]')) return;
     if (selected || selectedFlask != null || selfArm) {
       ev.preventDefault();
       selected = null;
       selectedFlask = null;
       selfArm = null;
       render();
+      // Same as Esc: the one writer of selection presentation clears the card and the stance preview.
+      syncCardSelection();
     }
   });
   // Keyboard shortcuts (SPEC §7.3): Esc cancels targeting; 1–9 select/play the
@@ -1958,6 +2352,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       return;
     }
     if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
+    if (ev.target?.closest?.('[data-combat-read-only]')) return;
     const tag = (ev.target && ev.target.tagName) || '';
     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
     // ANY veil owns input while it stands — not the menu overlay alone. This
@@ -2066,7 +2461,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const visibleId = handCards[hotkey.index]?.dataset.instanceId;
       const inst = combat.piles.hand.find(card => card.instanceId === visibleId);
       if (!inst) return;
-      const pv = previewCard(combat, inst.instanceId);
+      const pv = previewCard(combat, inst.instanceId, undefined, upcastRanksByCard.get(inst.instanceId));
+      if (isRoundQueued(inst.instanceId)) { unqueueCard(inst.instanceId); return; }
       const affordable = combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && combat.player.mana >= pv.manaCost && combat.player.stamina >= (pv.staminaCost || 0) && !isUnplayable(inst);
       if (!affordable) return;
       const hostile = cardTargets(inst.instanceId).mode === 'enemy';
@@ -2090,7 +2486,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (combat.pendingAbilityDiscard) { showPendingDiscard(); return; }
     if (targetId && !getEntity(combat, targetId)?.alive) return;
     if (busy || combat.result) {
-      dlog('ignored', `useFlask slot=${slot}`, { busy, result: combat.result, phase: combat.phase });
+      logIgnored(`useFlask slot=${slot}`, lockReport());
       return;
     }
     selectedFlask = null;
@@ -2114,12 +2510,32 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   let discardShell = null;
+  let reactionShell = null;
+  function showPendingReaction() {
+    const pending = combat.pendingReaction;
+    if (!pending || reactionShell || busy || combat.pendingAbilityDiscard) return;
+    const stack = committedReactionStack(combat.reactionStack, pending.groupKey)
+      .map(entry => ({ name: reactionStackEntryName(entry, registries), cardInstanceId: entry.cardInstanceId }));
+    reactionShell = openReactionChoiceModal({ pending, stack,
+      onClosed: () => { reactionShell = null; },
+      onAnswer: intent => {
+        if (!combatEl.isConnected || combat.pendingReaction?.id !== intent.offerId) return;
+        disp = takeSnapshot();
+        try {
+          const out = dispatch(combat, { type: 'chooseReaction', ...intent });
+          enemyPlayback = combat.phase === 'enemy' || !!combat.reactionCursor;
+          busy = true; afterDispatch(out.events);
+        } catch (error) { disp = null; console.warn('[combat] reaction refused:', error.message); render(); showPendingReaction(); }
+      },
+    });
+  }
   function showPendingDiscard() {
+    if (!combat.pendingAbilityDiscard) { showPendingReaction(); return; }
     const pending = combat.pendingAbilityDiscard;
     if (!pending || discardShell) return;
     discardShell = openDiscardChoiceModal({
       count: pending.count, cardName: registries.cards.get(pending.cardId).name,
-      cards: combat.piles.hand.map(card => ({ instanceId: card.instanceId, name: resolveCard(registries, card).name })),
+      cards: discardCandidates(combat).map(card => ({ instanceId: card.instanceId, name: resolveCard(registries, card).name })),
       onClosed: () => { discardShell = null; },
       onChoose: cardInstanceIds => {
         disp = takeSnapshot();
@@ -2130,19 +2546,22 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   function afterDispatch(events) {
-    events = decorateCombatEffects(events, registries, barrierVisuals);
+    // Each step before playTimeline is guarded: busy is already true and only the timeline's finish releases it.
+    try { events = decorateCombatEffects(events, registries, barrierVisuals); } catch (e) { console.warn('[combat] effect decoration failed:', e && e.message); }
+    playbackEvents = events;
+    try { playbackCounterOrigins = selectedCounterOrigins(events); } catch (e) { playbackCounterOrigins = new Set(); console.warn('[combat] counter origins failed:', e && e.message); }
     // Capture definitions while disp still holds consumed Powers and equipment
     // profile instances. Reduce the SAME events on paced and skipped paths.
     appliedVisualEvents = new Set();
-    visualPlans = new Map(events.filter(e => e.type === 'cardPlayed').map(event => {
+    try { visualPlans = new Map(events.filter(e => e.type === 'cardPlayed').map(event => {
       const instance = disp?.hand.find(card => card.instanceId === event.cardInstanceId) || findInst(event.cardInstanceId) || { cardId: event.cardId };
-      const definition = resolveCard(registries, instance);
+      const definition = resolvePlayedCombatCard(combat, event, instance);
       const tags = definition.cardTags?.length ? definition.cardTags : tagService(registries).tagsOf('card', definition);
       const hpSpent = events.filter(e => e.type === 'hpLost' && e.targetId === combat.player.id && e.cause !== 'attack' && !String(e.cause).startsWith('proc:')).reduce((n,e)=>n+(e.amount||0),0);
       const action = resolveActionAnimation({ actorId: run.class, actionId: event.cardId, tags, type: event.cardType });
       const animation = equipmentAnimationForLoadout(registries, run.loadout, run.class);
-      return [event.cardInstanceId, { aura: resourceAura(definition, { ...event, hpSpent }), ...resolveCombatAnimation({ ...definition, cardTags: tags, animationTags: combatEffectTags(registries, definition), sourceArmamentId: instance.sourceArmamentId }, equippedPieces(registries, run.loadout, run.class), { animation, action }) }];
-    }));
+      return [event.cardInstanceId, { stanceCard: { ...definition, cardTags: tags }, aura: resourceAura(definition, { ...event, hpSpent }), ...resolveCombatAnimation({ ...definition, cardTags: tags, animationTags: combatEffectTags(registries, definition), sourceArmamentId: definition.sourceArmamentId || instance.sourceArmamentId }, equippedPieces(registries, run.loadout, run.class), { animation, classId: run.class, appearance: displayAppearance(), combatExpansionVersion: combat.combatExpansionVersion, action }) }];
+    })); } catch (e) { visualPlans = new Map(); console.warn('[combat] visual plan failed:', e && e.message); }
     // Nothing between here and playTimeline may prevent the timeline from
     // starting: busy is already true, and only the timeline's finish releases
     // it (and fires onEnd on victory/defeat). A render throw here once froze
@@ -2152,49 +2571,31 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         event.type === 'arcaneExposureChanged' || event.type === 'arcaneExposureRefused' || event.type === 'arcaneBreak'
       ));
       trackStats(events);
-      render(); // hand/energy react now; bars render from the pre-dispatch snapshot
+      // The displayed hand and fighters still belong to the pre-play snapshot.
+      // Freeze their input now, then repaint them at their own receipt beat.
+      // Rebuilding the unchanged board here put layout and card previews ahead
+      // of the first impact; the actual click handler took over 240 ms before
+      // the capped wind-up could even start in the compiled game.
+      combatEl.dataset.turn = enemyPlayback ? 'enemy' : 'player';
+      $('.turn-ribbon').textContent = enemyPlayback ? 'Enemy Turn' : 'Player Turn';
+      decorateRoundsScreen();
+      $('.hand').inert = true;
+      $('.hand').setAttribute('aria-disabled', 'true');
+      $('.end-turn').disabled = true;
+      $('.combat-expansion-controls').querySelectorAll('button').forEach(button => { button.disabled = true; });
+      renderCombatTools();
+      syncCardSelection();
+      formationMovement?.refresh();
     } catch (e) {
       console.warn('[combat] post-dispatch render failed:', e && e.message);
     }
-    playTimeline(
-      events,
-      {
-        ...fxCtx,
-        // The cost a card paid (fx.js groupBeats `lead`) shows as the swing
-        // starts: the snapshot and the top bar only, never the fighters'
-        // stage, which would cut the swing short.
-        onLeadApplied: (beat) => {
-          applyVisualEvents(beat.events);
-          applyBeatToDisp(beat);
-          renderTopbar();
-        },
-        onBeatApplied: (beat) => {
-          applyVisualEvents(beat.events);
-          applyBeatToDisp(beat);
-          renderTopbar();
-          renderCombatantStage();
-          for (const event of beat.events) {
-            const reaction = bloodRiteReaction(dv(combat.player), event, 'player');
-            if (reaction) stageFor($('.combatant.player'))?.react?.(reaction);
-          }
-          // The displayed hand (disp.hand) moves only on the four card events
-          // applyBeatToDisp handles; every other beat — a hit, a heal, a
-          // status — re-rendered every card in the hand for no change. The
-          // flush and the terminal callback still render the whole board.
-          if (beat.events.some((event) => HAND_BEAT_EVENTS.has(event.type))) renderHand();
-          renderControls();
-          showPileFeedback(beat.events);
-        },
-        onFlush: () => {
-          applyVisualEvents(events);
-          disp = null;
-          render();
-          clearCardFeedback();
-          showPileFeedback(events, false);
-        },
-      },
-      () => {
-        applyVisualEvents(events);
+    // The timeline's finish is the only thing that releases busy, so it runs
+    // once, and also when the timeline throws before it could start.
+    let playbackFinished = false;
+    const finishPlayback = () => {
+        if (playbackFinished) return;
+        playbackFinished = true;
+        try { applyVisualEvents(events); } catch (e) { console.warn('[combat] final visual apply failed:', e && e.message); }
         disp = null;
         heldTurnHand = null;
         enemyPlayback = false;
@@ -2205,7 +2606,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           // THE FIGHT IS OVER, AND SO IS THIS SCREEN'S MENU.
           //
           // The keydown handler already comes off here. The ☰ button did NOT,
-          // so for the 350 ms handoff below — plus the victory beat main.js
+          // so for the handoff below (COMBAT_TIMING.fightEndDelayMs, currently 210 ms) — plus the victory beat main.js
           // awaits after it (balance.ui.victoryBeat.ms, 600 ms, and the beat's
           // overlay is `pointer-events: none`) — Save, Save & Quit, Load and
           // Quit were all one tap away on a fight that had ALREADY ENDED.
@@ -2225,12 +2626,58 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           if (menuBtn) { menuBtn.disabled = true; menuBtn.setAttribute('aria-disabled', 'true'); }
           removeEventListener('keydown', keyHandler);
           handStrip.teardown();
-          setTimeout(() => onEnd(combat.result, combat), 350);
+          setTimeout(() => onEnd(combat.result, combat), COMBAT_TIMING.fightEndDelayMs);
         } else {
           focusHandDefault(); // land on the leftmost playable card for kb/pad
         }
-      }
+    };
+    try {
+    playTimeline(
+      events,
+      {
+        ...fxCtx,
+        // The cost a card paid (fx.js groupBeats `lead`) shows as the swing
+        // starts: the snapshot and the top bar only, never the fighters'
+        // stage, which would cut the swing short.
+        onLeadApplied: (beat) => {
+          applyVisualEvents(beat.events);
+          applyBeatToDisp(beat);
+          renderTopbar();
+          renderCombatTools();
+          paintCombatActionCounts(actionRow, { energy: combat.player.energy, energyMax: combat.player.energyMax, mana: combat.player.mana, maxMana: combat.player.maxMana, settings: readSettings(), draw: combat.piles.draw.length, discard: combat.piles.discard.length, exhaust: combat.piles.exhaust.length });
+        },
+        onBeatApplied: (beat) => {
+          applyVisualEvents(beat.events);
+          applyBeatToDisp(beat);
+          renderTopbar();
+          renderCombatantStage();
+          for (const event of beat.events) {
+            const reaction = bloodRiteReaction(dv(combat.player), event, 'player');
+            if (reaction) stageFor($('.combatant.player'))?.react?.(reaction);
+          }
+          // The displayed hand (disp.hand) moves only on the four card events
+          // applyBeatToDisp handles; every other beat — a hit, a heal, a
+          // status — re-rendered every card in the hand for no change. The
+          // flush and the terminal callback still render the whole board.
+          if (beat.events.some((event) => HAND_BEAT_EVENTS.has(event.type))) renderHand();
+          renderControls();
+          renderCombatTools();
+          showPileFeedback(beat.events);
+        },
+        onFlush: () => {
+          applyVisualEvents(events);
+          disp = null;
+          render();
+          clearCardFeedback();
+          showPileFeedback(events, false);
+        },
+      },
+      finishPlayback
     );
+    } catch (e) {
+      console.warn('[combat] timeline failed to start:', e && e.message);
+      finishPlayback();
+    }
   }
 
   // Cosmetic animations never own combat timing or retain interactive clones.
@@ -2301,14 +2748,54 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     animation.oncancel = remove;
   }
 
-  function playCard(instanceId, targetId, choice) {
+  function isRoundQueued(instanceId) {
+    return Boolean(combat.combatRounds?.playerQueue?.some(record => record.instanceId === instanceId));
+  }
+
+  // Takes a queued card back (SPEC §4.11): the engine refunds exactly what it paid.
+  function unqueueCard(instanceId) {
+    if (busy || combat.result || combat.phase !== 'player') return;
+    selected = null; selectedFlask = null; selfArm = null; clearAim(); hideTooltip();
+    try { dispatch(combat, { type: 'unqueueCard', cardInstanceId: instanceId }); }
+    catch (err) { console.warn('[combat] unqueue rejected:', err && err.message); }
+    handRenderKey = null;
+    render();
+  }
+
+  function playCard(instanceId, targetId, choice, chosenUpcastRanks = null) {
     if (combat.pendingAbilityDiscard) { showPendingDiscard(); return; }
+    if (combat.combatRounds?.playerQueue?.some(record => record.instanceId === instanceId)) { unqueueCard(instanceId); return; }
     if (targetId && !getEntity(combat, targetId)?.alive) return;
     if (targetId && !cardTargets(instanceId).legalIds.includes(targetId)) return;
     if (busy || combat.result) {
-      const why = { busy, result: combat.result, phase: combat.phase };
+      const why = lockReport();
       console.debug('[combat] playCard ignored:', JSON.stringify(why));
-      dlog('ignored', `playCard ${instanceId}`, why);
+      logIgnored(`playCard ${instanceId}`, why);
+      return;
+    }
+    const inst = combat.piles.hand.find(card => card.instanceId === instanceId);
+    if (!inst || unplayableReason(inst)) return;
+    const definition = resolveCombatCard(combat, inst);
+    const rank = chosenUpcastRanks ?? upcastRanksByCard.get(instanceId) ?? definition.upcast?.baseTier ?? 0;
+    if (chosenUpcastRanks === null && readSettings().askToUpcastAfterTarget && upcastOptions(definition).length) {
+      if (expansionChoiceShell) return;
+      if (targetId) lastTargetId = targetId;
+      expansionChoiceShell = openUpcastChoice({ definition, opener: combatEl.querySelector(`.hand .card[data-instance-id="${CSS.escape(instanceId)}"]`),
+        onClosed: () => { expansionChoiceShell = null; },
+        onChoose: selectedRank => {
+          upcastRanksByCard.set(instanceId, Number(selectedRank));
+          const plan = cardTargets(instanceId);
+          const previousTarget = targetId ?? (plan.mode === 'friendly' ? combat.player.id : null);
+          // An area card (allEnemies) has no single destination: play it now.
+          const step = upcastNextStep(plan, previewCard(combat, instanceId, undefined, Number(selectedRank)).needsTarget, previousTarget);
+          if (step === 'retarget') {
+            selected = plan.mode === 'enemy' ? instanceId : null;
+            selfArm = plan.mode === 'friendly' ? instanceId : null;
+            handRenderKey = null; renderHand(); syncCardSelection();
+            return;
+          }
+          playCard(instanceId, step === 'play' ? targetId : null, choice, Number(selectedRank));
+        } });
       return;
     }
     // A card that offers a choice (Warrior's Vow's stance, SPEC §5.2) asks it
@@ -2318,20 +2805,18 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (plan) {
         const inst = combat.piles.hand.find((c) => c.instanceId === instanceId);
         hideTooltip();
-        openCardChoiceModal({ plan, cardName: resolveCard(registries, inst).name, onChoose: (id) => playCard(instanceId, targetId, id) });
+        openCardChoiceModal({ plan, cardName: resolveCard(registries, inst).name, onChoose: (id) => playCard(instanceId, targetId, id, rank) });
         return;
       }
     }
-    if (targetId) lastTargetId = targetId; // remembered for the next card's aim
-    selected = null;
-    selectedFlask = null;
-    selfArm = null;
-    clearAim();
+    const finalPreview = previewCard(combat, instanceId, targetId, rank);
+    if (combat.player.energy < (finalPreview.costIsX ? 0 : finalPreview.cost) || combat.player.mana < finalPreview.manaCost || combat.player.stamina < (finalPreview.staminaCost || 0)) return;
+    if (targetId) lastTargetId = targetId;
     hideTooltip();
     disp = takeSnapshot();
     let out;
     try {
-      out = dispatch(combat, { type: 'playCard', cardInstanceId: instanceId, targetId: targetId || undefined, ...(choice != null ? { choice } : {}) });
+      out = dispatch(combat, { type: 'playCard', cardInstanceId: instanceId, targetId: targetId || undefined, upcastTier: rank, ...(choice != null ? { choice } : {}) });
     } catch (err) {
       console.warn("[combat] dispatch rejected:", err && err.message);
       dlog('rejected', `playCard ${instanceId}`, err && err.message);
@@ -2339,6 +2824,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       render(); // illegal input: show nothing, just resync (ENGINE-API §12)
       return;
     }
+    selected = null; selectedFlask = null; selfArm = null; clearAim(); upcastRanksByCard.delete(instanceId);
     dlog('dispatch', `playCard ${instanceId}${targetId ? ' -> ' + targetId : ''}`, { events: out.events.length, result: combat.result });
     flyCard(instanceId, targetId, out.events);
     sfx.play('cardPlay');
@@ -2359,9 +2845,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     onConfirm: () => {
     if (combat.pendingAbilityDiscard) { showPendingDiscard(); return; }
     if (busy || combat.result || combat.phase !== 'player') {
-      const why = { busy, result: combat.result, phase: combat.phase };
+      const why = lockReport();
       console.debug('[combat] endTurn ignored:', JSON.stringify(why));
-      dlog('ignored', 'endTurn', why);
+      logIgnored('endTurn', why);
       return;
     }
     const finish = (discardIds = []) => {
@@ -2586,6 +3072,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   if (document.body && typeof MutationObserver !== 'undefined') {
     const pagerVeilObserver = new MutationObserver(() => {
       if (!combatEl.isConnected || app.querySelector('.combat') !== combatEl) {
+        reactionShell?.dismiss();
         handStrip.teardown();
         stageFor(combatEl.querySelector('.player-zone'))?.dispose?.();
         for (const record of enemyFrames.values()) stageFor(record.box)?.dispose?.();
@@ -2594,8 +3081,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         battlefieldStage.release();
         formationMovement?.release();
         combatLayout.release();
+        closeCombatFullLog(combatToolsState);
+        combatTools.release();
+        reactionNote.clear();
         aimObserver?.disconnect();
         releaseSelectionWatch();
+        expansionChoiceShell?.close?.(); expansionChoiceShell = null;
         clearCardFeedback();
         pagerVeilObserver.disconnect();
         document.removeEventListener(ART_REDRAW_EVENT, redrawArt);
@@ -2669,5 +3160,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   // First-run guided callouts (SPEC §9 M4) — once per player, over a live board.
   if (showTutorial) mountTutorial(app, { onDone: () => onTutorialDone && onTutorialDone() });
+  showPendingDiscard();
 }
 import { equipmentAnimationForLoadout, animationTiming } from '../../model/equipmentAnimation.js';
+

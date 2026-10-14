@@ -47,6 +47,14 @@ export const COMBAT_OPCODES = Object.freeze([
   // before the matching meter fills, until the owner's next turn.
   'gainPoise',
   'gainWard',
+  // Refills Poise (the Poise twin of gainWard's restore); never a guard.
+  'restorePoise',
+  'gainBarrier',
+  'buildup',
+  'wardDamage',
+  'completeCombatAction',
+  'grantRollMode',
+  'retain',
   'dodgeRoll',
   'applyStatus',
   'removeStatus',
@@ -106,6 +114,10 @@ export const TARGETS = Object.freeze([
 
 // Event bus events emitted by executed actions (SPEC §3.10).
 export const EVENTS = Object.freeze([
+  'ashenBlightPaid', 'barrierGained', 'barrierBroken', 'wardBroken', 'poiseBroken', 'blockBroken', 'enemyInterrupted', 'controlRecovered', 'controlResolveScheduled', 'persistentWardChanged', 'persistentPoiseChanged', 'statusGaugeFilled', 'statusPoiseBreak', 'statusPressure', 'statusRecoveryRolled',
+  'combatAvoidanceResolved',
+  'combatCounterArmed', 'combatCounterConsumed', 'combatCounterTriggered',
+  'combatWardStripped', 'combatMatchupApplied', 'combatDamageRider',
   'evadeGained', 'attackEvaded', 'impactDealt', 'manaRecovered',
   // A skill feat's critical hit landed (SPEC §13.4o).
   'critHit',
@@ -116,6 +128,9 @@ export const EVENTS = Object.freeze([
   'enemyTurnStart',
   'enemyTurnEnd',
   'enemyMoveStarted',
+  'enemyActorTurnStarted', 'combatReactionOffered', 'combatReactionChosen',
+  // SPEC §4.10: why no reaction was offered; a Smash broke physical Guard.
+  'combatReactionUnavailable', 'combatGuardBroken',
   'cardDrawn',
   'cardPlayed',
   'cardPreparing',
@@ -369,6 +384,8 @@ const passiveFields = Object.freeze(Object.fromEntries(
 // disagree about what exists.
 export const MODIFIER_TYPES = Object.freeze({
   damageDealtMult: 'num',
+  // Scales only spell-camp damage its owner deals (Silenced, design §2.4).
+  spellDamageDealtMult: 'num',
   damageTakenMult: 'num',
   blockGainedMult: 'num',
   attackDamageAdd: 'num',
@@ -510,13 +527,20 @@ export const EFFECT_SPECS = Object.freeze({
   // `amount` plus the card's Block rating bonus (engine/actions.js
   // computeMeterGuardGain), held as entity.poiseGuard / entity.wardGuard.
   gainPoise: { allowed: [], required: ['amount'], refs: {} },
-  gainWard: { allowed: [], required: ['amount'], refs: {} },
+  gainWard: { allowed: ['oncePerCombat'], required: ['amount'], refs: {} },
+  restorePoise: { allowed: ['oncePerCombat'], required: ['amount'], refs: {} },
+  grantRollMode: { allowed: ['roll', 'advantage', 'disadvantage'], required: ['roll'], refs: {} },
+  retain: { allowed: [], required: ['amount'], refs: {} },
+  gainBarrier: { allowed: [], required: ['amount'], refs: {} },
+  wardDamage: { allowed: [], required: ['amount'], refs: {} },
+  completeCombatAction: { allowed: [], required: [], refs: {} },
+  buildup: { allowed: ['status', 'camp', 'recoveryProfile', 'traits', 'chance', 'advantage', 'disadvantage'], required: ['status', 'amount'], refs: { status: 'statuses' } },
   // The dodge roll (framework contract: Weight Class and Dodge Roll): a
   // target and nothing else — the check, the die and the guard are the
   // framework's, and the price is the Weight Class's.
   dodgeRoll: { allowed: [], required: [], refs: {} },
   applyStatus: { allowed: ['status', 'stacks'], required: ['status'], refs: { status: 'statuses' } },
-  removeStatus: { allowed: ['status'], required: ['status'], refs: { status: 'statuses' } },
+  removeStatus: { allowed: ['status', 'amount'], required: ['status'], refs: { status: 'statuses' } },
   grantCardCharge: { allowed: ['key', 'cardType', 'cardTag', 'abilityKind', 'damage', 'damageScope', 'manaDiscount', 'block', 'heal', 'break', 'buildup', 'buildupStatus'], required: ['key'], refs: { buildupStatus: 'statuses' } },
   draw: { allowed: [], required: ['amount'], refs: {} },
   discard: { allowed: ['random', 'choose'], required: [], refs: {} },
@@ -599,12 +623,23 @@ const modifiersSchema = obj(Object.fromEntries(
 ));
 
 const enemyMoveSchema = obj({
+  // The move's SP price (SPEC §4.6a): replaces the stance table's. A boss move's price is authored here.
+  sp: opt(int),
+  counterDamage: opt(int),
+  counterPoiseDamage: opt(int),
   damageSchool: opt(en(...DAMAGE_SCHOOLS)),
   intent: en(...INTENT_KINDS),
   damage: opt(int),
   hits: opt(int),
   block: opt(int),
-  weight: num,
+  // Required on a rolled move; absent on a reaction move, which is never rolled
+  // (validate.js enforces both). docs/combat-card-traits-contract.md, "Enemy reactions".
+  weight: opt(num),
+  reaction: opt(obj({
+    on: arr(en('playerAction', 'playerReaction')),
+    minIncoming: opt(int),
+    chance: opt(num),
+  })),
   maxConsecutive: opt(int),
   effects: opt(effects),
   locked: opt(bool),
@@ -708,6 +743,7 @@ export const SCHEMAS = Object.freeze({
     baseValue: num,
     ratingId: en('ar', 'dr', 'pr', 'poise', 'ward'),
     cap: union(num, str),
+    magicShare: union(num, str),
     flavor: str,
     mods: arr(str),
     compatibility: en('attack-v1', 'guard-v1', 'technique-v1'),
@@ -758,6 +794,28 @@ export const SCHEMAS = Object.freeze({
     retired: opt(mapOf(str)),
   }),
   card: obj({
+    minCombatExpansionVersion: opt(int),
+    // Action costs (owner decision, 2026-10-12): 'fixed' keeps a 0-cost card's authored cost and numbers (model/actionCosts.js).
+    costRule: opt(str),
+    corrupted: opt(bool),
+    ashenBlightCost: opt(int),
+    counterCoverage: opt(any),
+    defensiveReaction: opt(bool),
+    counterPayload: opt(any),
+    evade: opt(any),
+    traitValues: opt(any),
+    upcast: opt(any),
+    usableWhile: opt(arr(str)),
+    projectile: opt(bool),
+    pronePoiseBonus: opt(num),
+    comboHook: opt(any),
+    schoolEffect: opt(str),
+    breakPoiseBonus: opt(num),
+    range: opt(str),
+    targeting: opt(str),
+    traits: opt(arr(str)),
+    stanceTrigger: opt(any),
+    stanceExpiry: opt(any),
     id: str,
     name: str,
     class: str, // a class id or 'colorless' (checked in validate.js)
@@ -856,6 +914,7 @@ export const SCHEMAS = Object.freeze({
     name: str,
     icon: opt(str),
     tint: opt(str), // status-pip accent CSS color (display; proc bars tint from this too)
+    fluxPerTurn: opt(int), // reaction rules v2: Ward damage at the owner's turn start (wired in src/engine/triggers.js)
     stackMode: en(...STACK_MODES),
     stacking: opt(obj({ mode: en('add', 'refresh', 'replace', 'strongest', 'independent', 'unique'), cap: int,
       duration: opt(int), clock: opt(en('ownerTurnStart', 'ownerTurnEnd')), refresh: opt(bool) })),
@@ -955,6 +1014,10 @@ export const SCHEMAS = Object.freeze({
     poiseMax: int,
     levelProfile: levelBandSchema,
     equipmentPower: opt(num), // small additive XP weight for authored enemy gear
+    // The enemy's stats for its SP pool (SPEC §4.6a): the stamina row read on these attributes, plus equipment SP.
+    attributes: opt(mapOf(int)),
+    equipmentSp: opt(int),
+    blighted: opt(bool), // blight shifts its attributes (content/actionCosts.js ENEMY_BLIGHT_SHIFT)
     moves: mapOf(enemyMoveSchema),
     firstMove: opt(str), // checked against own moves in validate.js
     phases: opt(arr(enemyPhaseSchema)),

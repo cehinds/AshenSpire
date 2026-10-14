@@ -1,0 +1,37 @@
+{
+  "id": "fellWarden",
+  "name": "The Fell Warden",
+  "family": "enemy",
+  "act": 1,
+  "size": "large",
+  "source": "src/content/enemies/act1.js",
+  "facing": "left",
+  "pose": "idle",
+  "prompt": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: Ancient heavily armored gate warden, damaged leg, weight supported on a substantial iron war cane, tarnished green-black plate and old leaf-crested helm. The cane and uneven stance are essential. Face LEFT toward the player. Use a canvas that contains the complete silhouette, wide 1536x1024 for broad beasts and winged figures, portrait 1024x1536 for upright figures. Lowest foot at 94 percent height; no clipped horns, wings, tails or weapons.",
+  "file": "masters/fellWarden.png",
+  "status": "generated",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a10ffd-7ed8-7ff3-b84a-467346a2abc4\\exec-7c00048b-b51c-476f-a42e-da21b240e229.png",
+  "validation": {
+    "size": [
+      1536,
+      1024
+    ],
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      254
+    ],
+    "transparentFraction": 0.7495346069335938,
+    "visibleBounds": [
+      415,
+      2,
+      1144,
+      979
+    ],
+    "anchor": [
+      779.5,
+      979
+    ],
+    "sha256": "b9810c89a90dcc8b6d450f3560cdddb66ff8e3b23c428ff17caa05e849fa17f8"
+  }
+}

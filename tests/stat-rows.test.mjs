@@ -92,8 +92,9 @@ test('hand scaling remains preserved while ratings use their single primary bonu
     const draw = Math.min(10, 4 + Math.floor(Math.max(0, attrs.intelligence - 4) / 5));
     assert.equal(statRowCount(resolvedRuleRow(table, 'draw'), attrs), draw);
     assert.equal(statRowCount(resolvedRuleRow(table, 'openingHand'), attrs), draw);
-    assert.equal(statRowCount(resolvedRuleRow(table, 'handSize'), attrs), 15);
+    assert.equal(statRowCount(resolvedRuleRow(table, 'handSize'), attrs), Math.min(20, 7 + Math.floor(Math.max(0, attrs.intelligence - 4) / 5)));
   }
+  assert.equal(statRowCount(resolvedRuleRow(table, 'handSize'), at(14)), 9, 'hand size 7 + 2 at INT 14');
   for (const id of ['ar', 'dr', 'pr', 'ward']) {
     for (const attrs of [at(3), at(5), at(8), at(12)]) {
       assert.equal(statRowCount(resolvedRuleRow(table, id), attrs), attrs.strength + (id === 'ward' ? 1 : 0), `${id}`);
@@ -378,7 +379,7 @@ test("an old run's attribute cards name its own hand groups, not the live hand r
 const CLASS_HAND = { reaver: [3, 'strength'], rogue: [4, 'dexterity'], herald: [4, 'wisdom'], starseer: [5, 'intelligence'] };
 const hand1294 = (base, primary, { minimum = 4, maximum = 6 } = {}) => Math.min(maximum, Math.max(minimum, base + Math.floor(Math.max(0, primary - 1) / 2)));
 const ruleset6Run = (classId, registries, overrides = null) => {
-  const run = createRunState({ seed: 3, classId, registries });
+  const run = createRunState({ seed: 3, classId, registries, combatExpansionVersion: 1 });
   const rules = Object.fromEntries(Object.entries(run.derivedStatRuleSnapshot.rules.rules).filter(([id]) => !['openingHand', 'handSize', 'ar', 'dr', 'pr', 'ward'].includes(id)));
   run.derivedStatRuleSnapshot = { ...run.derivedStatRuleSnapshot, rulesetVersion: 6, rules: { ...run.derivedStatRuleSnapshot.rules, rulesetVersion: 6, rules } };
   if (overrides) run.advancedConfigSnapshot = { schemaVersion: 1, ratingsVersion: 1, overrides };

@@ -14,9 +14,25 @@ export function paintFooterOrb(orb, resource, urls) {
   canvas.innerHTML = footerStaminaLayers(footerLayout, resource).map(n => `<image data-orb-part="${esc(n.asset)}" href="${esc(urls[n.asset])}" x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" opacity="${n.opacity}" preserveAspectRatio="none"/>`).join('');
   return true;
 }
-function svg(nodes, b) {
-  return `<svg class="footer-art-face" viewBox="${b.x} ${b.y} ${b.w} ${b.h}" aria-hidden="true" focusable="false">${nodes.map(n => {
-    if (n.asset !== 'text') return footerAssets[n.asset] ? `<image data-footer-asset="${esc(n.asset)}" href="${esc(assetUrl(footerAssets[n.asset]))}" x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" opacity="${n.opacity}" preserveAspectRatio="none"/>` : '';
+// Piles and potions are artwork, not a stretched plate: each image keeps its
+// natural shape and letterboxes inside its authored box ('contain'). Their face
+// also takes the box's own aspect, so on a compact host, where the face is sized
+// by height, the root's stretch is a no-op and the art is not flattened.
+const FIT = { draw: 'contain', discard: 'contain', potions: 'contain' };
+function svg(nodes, b, fit = 'stretch') {
+  // Stretch to the control box, as the box's percentage sizing does; meet would
+  // letterbox the art inside a box that is itself stretched, so they drift apart.
+  const contain = fit === 'contain';
+  // Contained art bottom-aligns in its authored box, so its bottom edge is the
+  // box bottom. The viewBox also holds the blank strip where the desktop counts
+  // and label sit; --art-drop is that strip as a fraction of the face, so a
+  // compact face can drop onto its label and the art sits on it.
+  const image = contain ? 'xMidYMax meet' : 'none';
+  const artBottom = Math.max(...nodes.filter(n => n.asset !== 'text' && footerAssets[n.asset]).map(n => n.y + n.h));
+  const drop = contain ? Math.max(0, (b.y + b.h - artBottom) / b.h) : 0;
+  const style = contain ? ` style="aspect-ratio:${b.w} / ${b.h};--art-drop:${drop.toFixed(4)}"` : '';
+  return `<svg class="footer-art-face" data-art-fit="${fit}"${style} viewBox="${b.x} ${b.y} ${b.w} ${b.h}" preserveAspectRatio="none" aria-hidden="true" focusable="false">${nodes.map(n => {
+    if (n.asset !== 'text') return footerAssets[n.asset] ? `<image data-footer-asset="${esc(n.asset)}" href="${esc(assetUrl(footerAssets[n.asset]))}" x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" opacity="${n.opacity}" preserveAspectRatio="${image}"/>` : '';
     const align = n.textAlign || 'center', x = n.x + (align === 'right' ? n.w : align === 'center' ? n.w / 2 : 0);
     return `<text data-footer-text="${esc(n.id)}" data-footer-binding="${esc(n.binding || 'static')}" x="${x}" y="${n.y + n.h / 2}" text-anchor="${align === 'left' ? 'start' : align === 'right' ? 'end' : 'middle'}" dominant-baseline="central" font-family="${esc(footerFonts[n.fontFamily] || footerFonts.serif)}" font-size="${n.fontSize}" font-weight="${n.fontWeight || 400}" font-style="${esc(n.fontStyle || 'normal')}" fill="${esc(n.color)}" opacity="${n.opacity}" lengthAdjust="spacingAndGlyphs"></text>`;
   }).join('')}</svg>`;
@@ -40,7 +56,7 @@ export function installFooterArt(row) {
       control.insertAdjacentHTML('beforeend', `<span class="footer-sp-text">${svg(group.items.filter(n => n.asset === 'text'), box)}</span>`);
       continue;
     }
-    control.innerHTML = svg(group.items, box) + '<span class="footer-compact-label" aria-hidden="true"></span>';
+    control.innerHTML = svg(group.items, box, FIT[role]) + '<span class="footer-compact-label" aria-hidden="true"></span>';
     if (role === 'draw') control.insertAdjacentHTML('beforeend', '<span class="sp-v n sr-only"></span>');
   }
   row.insertAdjacentHTML('afterbegin', `<div class="footer-art-rails">${svg(plan.rails, b)}</div>`);
@@ -54,6 +70,7 @@ export function installFooterArt(row) {
 // that frame paints: a render from an event or a timer never shows a word
 // uncapped.
 const pendingCaps = new Map();
+const pendingCompactRows = new Set();
 let capFrame = 0;
 function capLongWords() {
   capFrame = 0;
@@ -64,11 +81,28 @@ function capLongWords() {
   // Marked only once measured: a word dropped here because it was detached is
   // measured again by the next paint that finds it.
   for (const [node] of list) node.dataset.measured = 'true';
+  const lines = [...pendingCompactRows].filter(row => row.isConnected && row.dataset.footerCompact === 'true')
+    .flatMap(row => [...row.querySelectorAll('.footer-compact-line')]);
+  pendingCompactRows.clear();
+  for (const line of lines) line.style.removeProperty('font-size');
+  const sizes = lines.map(line => ({ line, width: line.getBoundingClientRect().width,
+    available: line.parentElement.getBoundingClientRect().width,
+    font: parseFloat(getComputedStyle(line).fontSize) }));
+  for (const { line, width, available, font } of sizes) {
+    if (width > available && available > 0) line.style.fontSize = `${font * available / width}px`;
+  }
 }
 function scheduleCaps() {
-  if (!pendingCaps.size || capFrame) return;
+  if ((!pendingCaps.size && !pendingCompactRows.size) || capFrame) return;
   if (typeof requestAnimationFrame !== 'function') { capLongWords(); return; }
   capFrame = requestAnimationFrame(capLongWords);
+}
+// The layout adapter calls this after resizing; count changes use the same
+// batch. Measure complete lines so Discard/Exhaust never break inside a word.
+export function fitFooterCompactLabels(row) {
+  if (!row) return;
+  pendingCompactRows.add(row);
+  scheduleCaps();
 }
 export function paintFooterArt(row, values = {}) {
   if (!row?.dataset?.footerArt) return;
@@ -90,10 +124,20 @@ export function paintFooterArt(row, values = {}) {
   row.querySelector('.end-turn')?.setAttribute('aria-label', next.endTurnKey ? `${next.endTurn} (${next.endTurnKey})` : next.endTurn);
   row.querySelector('.combat-potions')?.setAttribute('aria-label', next.potions);
   // The authored face remains separate from these readable narrow-host labels.
-  for (const [role, text] of Object.entries({ draw: `${next.draw ?? 0} Draw`, end: next.endTurn, discard: `${t('combat.discard')} ${next.discard ?? 0}\n${t('combat.exhaust')} ${next.exhaust ?? 0}`, potions: next.potions })) {
+  // The key sits on its own line under the words, as the full label's key does.
+  for (const [role, text] of Object.entries({ draw: `${next.draw ?? 0} Draw`, end: next.endTurnKey ? `${next.endTurn}\n${next.endTurnKey}` : next.endTurn, discard: `${t('combat.discard')} ${next.discard ?? 0}\n${t('combat.exhaust')} ${next.exhaust ?? 0}`, potions: next.potions })) {
     const label = row.querySelector(`${selectors[role]} .footer-compact-label`);
-    if (label) label.textContent = text;
+    if (label && label.dataset.labelText !== text) {
+      label.replaceChildren(...text.split('\n').map(value => {
+        const line = document.createElement('span');
+        line.className = 'footer-compact-line';
+        line.textContent = value;
+        return line;
+      }));
+      label.dataset.labelText = text;
+    }
   }
+  fitFooterCompactLabels(row);
   // Refresh references after switching between light and high-resolution packs.
   for (const image of row.querySelectorAll('[data-footer-asset]')) image.setAttribute('href', assetUrl(footerAssets[image.dataset.footerAsset]));
 }

@@ -1,0 +1,29 @@
+{
+  "id": "pale-marches-ground",
+  "region": "pale-marches",
+  "kind": "ground",
+  "reference": "../references/composition.png",
+  "transparent": true,
+  "prompt": "Highly detailed painterly dark fantasy, weathered realistic materials, matching the approved AshenSpire reference. Subtle ember accents, legible values. No characters, creatures, UI, cards, lettering or watermarks. Horizontal 1536x1024 registration canvas. Camera looks across a low battlefield from behind a near-left hero toward enemies on the right; distant horizon y=42%, vanishing point x=60% y=42%. ONE independent ground parallax layer. Setting materials: dark slate paving with thin snow, flat frost and subtle cracked ice, no high snowdrifts in standing area. Fully transparent empty upper 43 percent. Distant ground starts near y=46%, filling the entire lower half and bottom edge with opaque terrain, full width. Broad uninterrupted flat standing surface from x=12% through 90% and y=60%-82%. View looks gently down onto ground, not isometric and not a side platform. No architecture, sky, horizon background, trees or near framing. Not a floating island: opaque to bottom canvas edge. Actual transparent alpha outside only the specified objects, including holes.",
+  "resultFile": "scenes/shared/pale-marches/ground.png",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a112fc-0e64-7472-a495-aba14ffa5ab6\\exec-13b420bd-9709-42a0-8925-a0c56465a688.png",
+  "generator": "built-in image_gen",
+  "size": [
+    1536,
+    1024
+  ],
+  "mode": "RGBA",
+  "sha256": "fe763ef105c560e03770e0d68704cdf6864e3c2f9ee6cfcf733a0fa34b333cb8",
+  "alphaRange": [
+    0,
+    254
+  ],
+  "transparentFraction": 0.4728832244873047,
+  "visibleBounds": [
+    0,
+    474,
+    1536,
+    1024
+  ],
+  "alphaThreshold": 32
+}

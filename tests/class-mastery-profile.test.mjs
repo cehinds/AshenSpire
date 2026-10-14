@@ -30,7 +30,7 @@ test('v2 migration preserves veteran access without manufacturing any class XP',
     assert.deepEqual(meta.classMastery[cls.id], { xp: 0, level: 0, unlockedRows: legacyRegistry.classMastery.filter(row => row.classId === cls.id).map(masteryRowId) });
   }
   assert.equal(saves.saveMeta(meta).ok, true);
-  assert.equal(JSON.parse(storage.getItem(META_KEY)).schemaVersion, 3);
+  assert.equal(JSON.parse(storage.getItem(META_KEY)).schemaVersion, META_SCHEMA_VERSION);
 });
 
 test('fresh and unfinished v2 profiles open at zero with all unlock rows locked', () => {

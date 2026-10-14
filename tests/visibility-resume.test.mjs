@@ -48,6 +48,8 @@ import { createRunCombat } from '../src/engine/runCombat.js';
 import { dispatch } from '../src/engine/combat.js';
 import { finishCardDrag } from '../src/ui/cardDragEnd.js';
 import { affordableCards } from '../tools/simbot.mjs';
+import { resolveCombatCard } from '../src/engine/combatExpansion.js';
+import { cardTargetPlan } from '../src/model/cardTargets.js';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const LIFECYCLE_EVENTS = ['visibilitychange', 'pagehide', 'pageshow', 'freeze', 'resume', 'blur', 'focus', 'beforeunload', 'unload'];
@@ -151,8 +153,9 @@ function midCombat() {
 // plays a card. So the ONLY thing between a backgrounded drag and a played
 // card is finishCardDrag's own cancelled check.
 function liveDragOps(combat, played) {
-  const cardId = combat.piles.hand[0]?.instanceId;
-  assert.ok(cardId, 'the hand still holds a card to drag');
+  const cardId = affordableCards(combat.registries, combat).find(card => cardTargetPlan(resolveCombatCard(combat, card), combat.player.id,
+    combat.enemies, [combat.player], { solo: true }).mode === 'enemy')?.instanceId;
+  assert.ok(cardId, 'the hand still holds an affordable enemy-targeted card to drag');
   return {
     teardown: () => true,
     overHand: () => false,
@@ -348,18 +351,26 @@ test('combat.js ends a card drag through finishCardDrag, so the unit above is th
 // `.onblur`), a computed event name or a computed key must be
 // [entry, why it cannot move run/combat state].
 const KNOWN = {
-  'src/main.js': ["'resize'", "'load'", "'resize'", '.__worldJourney', '.__uiScale', '.__equipCfg', '.__profile', '.__archives', '.__runstatus', '.__flasks', '.__spoils', '.__fxProbe', '.__coopSnapshotForShot', '.__coopSentForShot', '.__receiveCoopSnapshotForShot', '.__shotAgeSlot'],
+  'src/main.js': ["'resize'", "'load'", "'resize'", '.__worldJourney', '.__uiScale', '.__equipCfg', '.__profile', '.__archives', '.__runstatus', '.__startingAbilities', '.__flasks', '.__spoils', '.__fxProbe', '.__coopSnapshotForShot', '.__coopSentForShot', '.__receiveCoopSnapshotForShot', '.__shotAgeSlot'],
   'src/ui/assets.js': ["'animationstart'"],
   'src/ui/audio.js': [['ev', "one of 'pointerdown', 'pointerup', 'touchend', 'keydown' (the literal list beside it): unlocks/resumes the AudioContext and music only"]],
   'src/ui/components/armamentRadial.js': ["'pointerdown'", "'keydown'"],
   'src/ui/components/battlefieldStage.js': ["'resize'"],
   'src/ui/components/card.js': ["'resize'"],
   'src/ui/components/cardInspection.js': ["'resize'"],
+  'src/ui/components/combatTools.js': ["'resize'"],
   'src/ui/components/confirmationModal.js': [['type', "one of keyEvents = ['keydown', 'keyup']: swallows keys while the confirmation shield stands"], "'keydown'"],
   'src/ui/components/creationInfoLayer.js': ["'resize'"],
   'src/ui/components/dialogueStage.js': ["'resize'"],
   'src/ui/components/flask.js': ["'keydown'", "'click'"],
-  'src/ui/components/handInspectionOverlay.js': ["'resize'"],
+  'src/ui/components/handInspectionOverlay.js': [
+    ["'pointerup'", 'releases only the local pointer/reveal bookkeeping and defers visual card positioning until the native click settles; no combat action or run mutation (tests/hand-upcast-visibility.test.mjs)'],
+    ["'pointercancel'", 'cancels only the local pointer/reveal hold and schedules presentation geometry; never plays, reorders or pays a card (tests/hand-upcast-visibility.test.mjs)'],
+    ["'click'", 'settles only the deferred visual reveal after the existing native click has its owner; dispatches no game action (tests/hand-upcast-visibility.test.mjs)'],
+    ["'keydown'", 'releases a suppressed-click visual hold so keyboard focus remains reachable; does not consume or commit the key action (tests/hand-upcast-visibility.test.mjs)'],
+    ["'blur'", 'clears only local pointer and pending-click presentation bookkeeping; the scheduled reveal moves geometry, never run/combat state or a card action, and disposal removes the listener (tests/hand-upcast-visibility.test.mjs)'],
+    "'resize'",
+  ],
   'src/ui/components/deckCardAnimationPreview.js': [["'visibilitychange'", 'suspends/resumes only the decorative preview frame clock, preserving its frame and explicit Pause state; no run/combat mutation or action dispatch, and disposal removes the listener (tests/deck-card-animation-preview.test.mjs)']],
   'src/ui/components/hints.js': ["'pointerdown'", "'pointerup'", "'pointercancel'", "'pointerout'", "'gamepadconnected'", "'gamepaddisconnected'"],
   'src/ui/components/holdconfirm.js': ["'keydown'", "'keydown'"],
@@ -386,7 +397,9 @@ const KNOWN = {
   'src/ui/screens/customize.js': ["'pointermove'", "'pointerup'", "'keydown'"],
   'src/ui/screens/deckEditor.js': ["'keydown'"],
   'src/ui/screens/equipment.js': ["'pointermove'", "'pointerup'", "'pointercancel'", "'keydown'"],
-  'src/ui/screens/map.js': ["'click'", "'keydown'", "'resize'", ['type', "one of 'fullscreenchange', 'webkitfullscreenchange' (the literal loop): re-centres the map camera only"]],
+  'src/ui/screens/map.js': ["'click'", "'keydown'", "'resize'", ['type', "one of 'fullscreenchange', 'webkitfullscreenchange' (the literal loop): re-centres the map camera only"],
+    ["'pagehide'", "module-level, added once: flushes the map's queued camera-commit save early (flushPendingSave). That save is the one the map already makes 80 ms after a pan or pick, now run on idle; it writes the run as it stands, only while the map is on screen, and moves no run or combat state"],
+    ["'visibilitychange'", "module-level, added once: on hidden, the same early flush of the map's queued camera-commit save as pagehide; nothing on visible. It writes the run as it stands and moves no run or combat state"]],
   'src/ui/screens/profileNotice.js': ["'keydown'"],
   'src/ui/screens/prologue.js': [["'visibilitychange'", 'resets the opening slideshow frame clock (`last = 0`) only; the prologue runs before any run or fight exists'], ['ART_SOURCE_EVENT', "the constant 'ashen:art-source' (src/ui/highResArt.js), fired by the Art quality setting, not the page cycle: repaints the prologue character canvas from assetUrl() only"]],
   'src/ui/screens/settings.js': ["'resize'", "'fullscreenchange'", "'webkitfullscreenchange'", "'fullscreenerror'", "'webkitfullscreenerror'"],

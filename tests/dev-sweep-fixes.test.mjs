@@ -25,6 +25,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { createSession } from '../tools/session.mjs';
 import { commitCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { seatTiers, lastTier, encounterTier, enemyTier } from '../src/model/encounterTier.js';
+import { projectCombatantInspector } from '../src/ui/models/CombatantInspectorSections.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 // These files EXPLAIN the defect in their comments, naming the very expression
@@ -85,6 +86,9 @@ ok(!/\.act\s*\|\|\s*1/.test(balanceSrc),
 const host = createSession({ registries: reg, seedString: 'GUARD2' });
 for (const id of ['p1', 'p2']) host.addMember({ id, name: id, classId: 'reaver' });
 host.start();
+// This receipt verifies the historical performed-move snapshot contract. New
+// reaction behavior is exercised separately with resumable choice commands.
+for (const member of host.session.members.values()) delete member.run.reactionRulesVersion;
 const preFight = host.snapshot();
 ok(Array.isArray(preFight.seatOrder) && preFight.seatOrder.length === reg.seats.all().length,
   'the snapshot carries the drawn seat order');
@@ -125,8 +129,17 @@ ok(acted.every((e) => e.performedMoves.every((m) => typeof m === 'string' && m))
 const coopSrc = code('src/ui/screens/coop.js');
 ok(/const\s+history\s*=\s*def\s*&&\s*Array\.isArray\(entity\.performedMoves\)/.test(coopSrc),
   'coop.js builds the inspector\'s history from performedMoves');
-ok(/\{\s*moveCards\s*,\s*history\s*\}/.test(coopSrc),
+ok(/\{\s*moveCards\s*,\s*history\s*[,}]/.test(coopSrc),
   'the enemy subject carries that history, so the section reads `known`/`none` instead of `unknown`');
+const historySection = (enemy) => projectCombatantInspector({
+  name: enemy.defId || enemy.id,
+  history: enemy.performedMoves.map((moveId) => ({ name: moveId })),
+}).sections.find((section) => section.id === 'history');
+ok(opening.scene.enemies.every((enemy) => historySection(enemy).knowledge === 'none'),
+  'opening snapshot histories project as known empty, rather than unread');
+ok(acted.every((enemy) => historySection(enemy).knowledge === 'known'
+  && historySection(enemy).rows[0].label === enemy.performedMoves.at(-1)),
+  'performed snapshot moves project as known history, newest first');
 ok(/seatName\s*:\s*snap\.seatName\s*\|\|\s*null/.test(coopSrc),
   'coop.js passes the seat name through to the map board\'s act plate');
 

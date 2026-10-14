@@ -13,10 +13,11 @@ import { getStacks } from '../src/engine/statuses.js';
 
 const id = name => `progression-${name}`;
 const hit = [{ op: 'damage', target: 'enemy', amount: 3 }];
+// Fixture cards pin their own Stamina and Mana: costRule 'fixed' opts them out of the cost formula (SPEC §4.3a).
 function fixture(relic, cards = {}, coop = false) {
   const base = createRegistries(contentBundle);
   const definitions = new Map(Object.entries(cards).map(([key, card]) => [key, {
-    ...base.cards.get('defend'), id: key, name: key, cost: 1, manaCost: 0,
+    ...base.cards.get('defend'), id: key, name: key, costRule: 'fixed', cost: 1, manaCost: 0,
     gradeProfiles: undefined, abilityRank: undefined, legacyFace: undefined, upgrade: {},
     abilityFamily: key, abilityKind: 'maneuver', cardTags: ['blade'],
     kindIds: ['classification.attack'], effects: hit, ...card,

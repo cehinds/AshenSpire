@@ -459,6 +459,10 @@ artifacts/combat-foundations/
 # and nothing reads it from version control.
 build/components/
 
+# tools/engine-export.mjs — the engine-ready JSON export (docs/ENGINE-EXPORT.md).
+# Derived from the content tree on every run; ~11MB with the art manifests.
+build/engine-export/
+
 # build/web/ — the de-inlined build's home until docs/EXTERNAL-ASSETS-PLAN.md
 # step 8e made the pack shape build/ itself (tools/launch.mjs now removes a
 # left-over build/web/). Still ignored, so an older checkout's copy never shows.
@@ -581,3 +585,28 @@ build/windows-installer/
 /build/cards/
 /dist/cards/
 /build/**/cards/
+
+# Regenerable alternative combat art download.
+/docs/design/combat-depth-2026-10-05/ashenspire-combat-art.zip
+
+# Bulk QA evidence (owner, 2026-10-10): raw browser-run output — full results,
+# per-viewport geometry dumps and browser-health logs — is uploaded as a CI
+# workflow artifact, never committed. Commit the README, screenshots and a small
+# curated summary instead; tests/qa-evidence-size.test.mjs fails a tracked
+# evidence JSON over 256 KiB (CONTRIBUTING.md, "QA evidence goes to CI
+# artifacts"). Already-tracked files are unaffected; `git add -f` a small one.
+/docs/qa/**/results.json
+/docs/qa/**/*-results.json
+/docs/qa/**/*-geometry.json
+/docs/qa/**/browser-health.json
+
+# AshenSpire Workbench: per-machine job history and settings
+workbench/.state/
+
+# Cross-process lock on the generated trees (tools/lib/build-lock.mjs)
+/.build-lock
+/.build-lock.stale-*
+
+# docs/qa is not kept in the tree (owner decision, 2026-10-11): QA evidence goes
+# to CI artifacts, and the local QA tools write to scratch/qa/.
+/docs/qa/

@@ -1,0 +1,104 @@
+{
+  "generated_at_utc": "2026-10-12T16:29:36.261923+00:00",
+  "tool": "tools.image_gen__imagegen",
+  "exact_prompt": "sheet-b-repair-final.prompt.txt",
+  "prompt_sha256": "d47a378407e22833af3f0cd6293ac85eccc68beb45dfb37dc35fd40aeab04a2d",
+  "requested_dimensions": [
+    1024,
+    1536
+  ],
+  "actual_dimensions": [
+    1024,
+    1536
+  ],
+  "mode": "RGBA",
+  "alpha_extrema": [
+    0,
+    254
+  ],
+  "transparent_background": true,
+  "reference_images": [
+    {
+      "path": "pose-studio/stances/update-stances/greatsword-counter/sheet-b-repair-1.png",
+      "sha256": "995a379e54624fac51431e50c221cb51353165101a15a94e697710a899a52250",
+      "visually_inspected": true
+    }
+  ],
+  "original_tool_path": "/workspace/generated_images/exec-e76c3648-4976-44fb-a590-047f5d7376f7.png",
+  "output_identification": "Exact file path returned by this imagegen call; no newest-file glob or directory comparison",
+  "preserved_artifact": "sheet-b.png",
+  "raw_bytes_preserved": true,
+  "sha256": "ce4ee18063bc064c8598da4faac2c46364aef23d4b51d243a247bda270450cdc",
+  "concept_ids": [
+    "CT16",
+    "CT17",
+    "CT18",
+    "CT19",
+    "CT20"
+  ],
+  "layout": "2 columns x 3 rows, row-major; bottom-right empty",
+  "review_status": "director concept-approved CT16\u201320; not selected or runtime registered",
+  "observations": [
+    "CT17 hilt and both gripping hands moved forward/right of helmet",
+    "Other four pose designs retained; all silhouettes inside nominal cells",
+    "Body scale above requested210px; exact72px margin target not met"
+  ],
+  "alpha_cell_diagnostics": [
+    {
+      "cell": 1,
+      "alpha_gt_127_bbox_local": [
+        90,
+        143,
+        481,
+        487
+      ]
+    },
+    {
+      "cell": 2,
+      "alpha_gt_127_bbox_local": [
+        52,
+        171,
+        444,
+        491
+      ]
+    },
+    {
+      "cell": 3,
+      "alpha_gt_127_bbox_local": [
+        89,
+        122,
+        494,
+        426
+      ]
+    },
+    {
+      "cell": 4,
+      "alpha_gt_127_bbox_local": [
+        43,
+        123,
+        432,
+        429
+      ]
+    },
+    {
+      "cell": 5,
+      "alpha_gt_127_bbox_local": [
+        83,
+        52,
+        453,
+        424
+      ]
+    },
+    {
+      "cell": 6,
+      "alpha_gt_127_bbox_local": null
+    }
+  ],
+  "approved_concept_ids": [
+    "CT16",
+    "CT17",
+    "CT18",
+    "CT19",
+    "CT20"
+  ]
+}

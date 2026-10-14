@@ -94,7 +94,10 @@ export function mergeAlternative(repo, source, target, { regenerate = false } = 
 
 export function syncAlternatives(repo, { source = 'origin/test', push = false, regenerate = true } = {}) {
   const names = git(repo, 'for-each-ref', '--format=%(refname:strip=3)', 'refs/remotes/origin/alternative/').split('\n');
-  const pairs = alternativePairs(names);
+  // Root alternative/dev and alternative/test are retained historical channels,
+  // not synchronization targets after their consolidation into dev.
+  const pairs = alternativePairs(names).filter(({ dev, test }) =>
+    dev !== 'alternative/dev' || test !== 'alternative/test');
   const updates = [];
   // Construct every result before pushing anything. A failure leaves ALL refs alone.
   for (const { dev, test } of pairs) {
@@ -109,7 +112,7 @@ export function syncAlternatives(repo, { source = 'origin/test', push = false, r
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   try {
     const updates = syncAlternatives(process.cwd(), { source: process.env.PROMOTED_SHA || 'origin/test', push: process.argv.includes('--push') });
-    const report = updates.length ? updates.map(({ branch, sha }) => `- ${branch}: ${sha}`).join('\n') : '- No existing alternative dev/test pairs; nothing changed.';
+    const report = updates.length ? updates.map(({ branch, sha }) => `- ${branch}: ${sha}`).join('\n') : '- No eligible named alternative dev/test pairs; root alternative branches remain frozen.';
     console.log(report);
     if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `## Alternative synchronization\n\n${report}\n`);
     if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `branches=${JSON.stringify(updates.map(({ branch }) => branch))}\n`);

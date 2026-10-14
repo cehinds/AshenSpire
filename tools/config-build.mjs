@@ -32,6 +32,7 @@
 // are findable from either end.
 
 import { readFileSync, writeFileSync, readdirSync, existsSync, mkdirSync, statSync } from 'node:fs';
+import { holdForCli } from './lib/build-lock.mjs';
 import { resolve, dirname, join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
@@ -274,21 +275,24 @@ export function deckEditorCostProblems(rel, presentation) {
   return out;
 }
 
+/** One band table (sizing.bands): non-negative finite shares summing to 100. */
+function bandProblems(at, key, bands) {
+  const values = isObject(bands) ? Object.values(bands) : [];
+  if (!isObject(bands) || values.some((v) => typeof v !== 'number' || !Number.isFinite(v) || v < 0)) {
+    return [`${at}: sizing.${key} must map each band to a non-negative percent`];
+  }
+  const sum = values.reduce((a, b) => a + b, 0);
+  return Math.abs(sum - 100) > 1e-9 ? [`${at}: sizing.${key} sum to ${sum}, not 100`] : [];
+}
+
 /** The W4 scene contract. Every refusal names the file and the rule. */
 export function sceneProblems(rel, scene) {
   const out = [];
   const at = `${CONFIG_DIR}/${rel}`;
   const sizing = isObject(scene.sizing) ? scene.sizing : {};
-  if ('bands' in sizing) {
-    const bands = sizing.bands;
-    const values = isObject(bands) ? Object.values(bands) : [];
-    if (!isObject(bands) || values.some((v) => typeof v !== 'number' || !Number.isFinite(v) || v < 0)) {
-      out.push(`${at}: sizing.bands must map each band to a non-negative percent`);
-    } else {
-      const sum = values.reduce((a, b) => a + b, 0);
-      if (Math.abs(sum - 100) > 1e-9) out.push(`${at}: sizing.bands sum to ${sum}, not 100`);
-    }
-  }
+  if ('bands' in sizing) out.push(...bandProblems(at, 'bands', sizing.bands));
+  // Desktop and widescreen share the phone's bands (sizing.bands); a separate table is refused.
+  if ('desktopBands' in sizing) out.push(`${at}: sizing.desktopBands is retired; desktop and widescreen use sizing.bands`);
   if ('floorPercent' in sizing) {
     const p = sizing.floorPercent;
     if (typeof p !== 'number' || !(p >= 0 && p <= 100)) out.push(`${at}: sizing.floorPercent ${JSON.stringify(p)} is outside 0–100`);
@@ -355,7 +359,7 @@ export function generate({ config, sources }) {
     '  return value;',
     '};',
     '',
-    `export const uiConfig = deepFreeze(${JSON.stringify(config, null, 2)});`,
+    `export const uiConfig = deepFreeze(${JSON.stringify(config)});`,
     '',
   ].join('\n');
 }
@@ -402,6 +406,8 @@ export function configSourceErrors(contentRoot) {
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const check = process.argv.includes('--check');
+  // Writing takes the shared lock on the generated trees (tools/lib/build-lock.mjs).
+  if (!check) await holdForCli(ROOT, 'config-build');
   const entries = readConfigTree(resolve(ROOT, 'content'));
   if (!entries.length) {
     console.error(`config-build: no JSON under ${CONFIG_DIR}/`);
@@ -420,6 +426,10 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       console.error(`STALE: ${GENERATED} does not match ${CONFIG_DIR}/ — run node tools/config-build.mjs`);
       process.exit(1);
     }
+    console.log(`config-build: ${GENERATED} is current with ${entries.length} source file(s)`);
+  } else if ((existsSync(outPath) ? lf(readFileSync(outPath, 'utf8')) : null) === text) {
+    // Unchanged output is left alone, so a test importing it in a sibling
+    // process never reads it mid-rewrite (engine-export runs this build).
     console.log(`config-build: ${GENERATED} is current with ${entries.length} source file(s)`);
   } else {
     mkdirSync(dirname(outPath), { recursive: true });

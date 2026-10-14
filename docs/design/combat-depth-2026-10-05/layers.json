@@ -1,0 +1,30 @@
+[
+  {
+    "id": "far",
+    "prompt": "Create a single 2048x1152 wide background layer for the attached dark fantasy combat scene. Match its exact weathered painted realistic style and muted charcoal umber pale warm-grey sky. ONLY the far distance: cloudy ash sky, misty valley, distant Gothic fortress along upper right cliffs and faint dead treelines at horizon. Reconstruct the scenery behind the foreground objects. No near trees, no ruined central arch, no ground in lower foreground, no lanterns, no characters, no giant, no hound, no cards, no HUD, no text. Lower half continues into deep soft mist and distant shadowed valley so separate foreground and ground sprites can cover it. Wide unobstructed atmosphere, pale overcast glow behind castle, crisp distant architectural silhouette but low contrast. This is the opaque FAR background layer, full bleed.",
+    "source": "D:\\repos\\.codex\\generated_images\\01a10ffd-7ed8-7ff3-b84a-467346a2abc4\\exec-31a62783-3bda-42e1-9e4d-f8fd3ba264e9.png",
+    "file": "layers/far.png",
+    "depth": 0.15
+  },
+  {
+    "id": "ruins",
+    "prompt": "Create one independent MIDGROUND architectural layer for the attached scene, a production parallax asset with ACTUAL TRANSPARENT ALPHA. Wide landscape 2048x1152. ONLY the crumbling gothic chapel arch, ruined wall, two low stone buttresses and distant bare branches from center-left of reference, occupying the middle band from x=25% to 66% and y=2% to 65%. The arch is tall and open, with clear transparent sky visible THROUGH its doorway and rose window, ivy and worn carved stone, one small warm lantern on a post near the base. Fragmented low wall continues towards right edge at y=55%. Everything else TRANSPARENT: no sky, no castle, no mist backing, no ground plane, no near trees, no actors, no UI/text. Do NOT fill transparent areas with dark scenery. Detailed dark fantasy painted realism matching the reference, neutral gray light upper left, umber blackened stone, tiny amber lantern. Keep same eye-level perspective. Full canvas registration: arch at center-left, bottom edge of ruins near 65% height; nothing near bottom edge.",
+    "source": "D:\\repos\\.codex\\generated_images\\01a10ffd-7ed8-7ff3-b84a-467346a2abc4\\exec-6c514b42-d461-4760-88a9-a9b12661a5e0.png",
+    "file": "layers/ruins.png",
+    "depth": 0.4
+  },
+  {
+    "id": "ground",
+    "prompt": "Create ONE independent walkable GROUND LAYER for attached dark fantasy combat scene. Wide 2048x1152 registration canvas. Actual transparent alpha everywhere above ground. Ground surface begins at y=53% near distant center, gently rises to y=40% at outer left and right banks, fills entire bottom edge and both bottom corners fully. Muddy cobblestone forest path with reddish dead leaves, wet charcoal stones, ragged rooted earth banks, perspective vanishing toward x=55% y=45%. Broad open horizontal standing area across middle lower part, calm dark lower third for cards. Match reference weathered painted realism and umber stone palette. No trees extending upward, no architecture, no castle, no sky, no fog backdrop, no lanterns, no characters, no UI/text. The UPPER HALF is empty transparent negative space so separate sky and ruins show through. Bottom is fully opaque earth to canvas edge. This is a registered parallax layer, NOT a floating island, NOT a platform, no cutaway underside. Preserve the reference perspective and light direction.",
+    "source": "D:\\repos\\.codex\\generated_images\\01a10ffd-7ed8-7ff3-b84a-467346a2abc4\\exec-c0b43fff-07ef-40ea-8cff-cc0c74b204c5.png",
+    "file": "layers/ground.png",
+    "depth": 0.7
+  },
+  {
+    "id": "foreground",
+    "prompt": "Create ONE independent NEAR FOREGROUND framing layer for attached dark fantasy combat scene, actual transparent alpha. Wide 2048x1152 canvas. A huge gnarled dark tree trunk and exposed roots along extreme left edge (outer 16 percent), its heavy branch curls across upper left corner only, an old warm amber lantern hangs at x=10%, y=27%. At extreme right edge (outer 10 percent), a thinner twisted dead tree and dark rocks. Low leaf-and-rock silhouettes occupy just bottom corners, NEVER full bottom width. CENTER 70 PERCENT MUST BE COMPLETELY TRANSPARENT from top to bottom to reveal separate architecture, sky and combatant sprites. No central arch, no castle, no background ground, no sky, no people/creatures, no UI or text, no rectangle of dark fill. Very detailed weathered bark, moss, dead umber leaves, dark restrained painted realism like reference. Edge objects may extend beyond canvas outer edges intentionally. This is a transparent foreground frame layer, not a complete landscape.",
+    "source": "D:\\repos\\.codex\\generated_images\\01a10ffd-7ed8-7ff3-b84a-467346a2abc4\\exec-c6d7f5a5-afbf-41de-b597-8063bd537bad.png",
+    "file": "layers/foreground.png",
+    "depth": 1.1
+  }
+]

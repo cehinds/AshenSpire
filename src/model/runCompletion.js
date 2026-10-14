@@ -27,3 +27,25 @@ export function commitRunFinish(run, { victory, finishId, checkpoint, bank, comp
     return { ok: false, earned: [], error };
   }
 }
+
+const pendingCompletions = new WeakMap();
+export function commitRunFinishAsync(run, options) {
+  if (pendingCompletions.has(run)) return pendingCompletions.get(run);
+  const operation = finish(run, options).finally(() => pendingCompletions.delete(run));
+  pendingCompletions.set(run, operation);
+  return operation;
+}
+
+async function finish(run, { victory, finishId, checkpoint, bank, complete, clear }) {
+  run.pendingFinish ||= { victory, id: finishId };
+  try {
+    await checkpoint();
+    await bank();
+    const earned = await complete(run.pendingFinish);
+    await clear();
+    delete run.pendingFinish;
+    return { ok: true, earned };
+  } catch (error) {
+    return { ok: false, earned: [], error };
+  }
+}

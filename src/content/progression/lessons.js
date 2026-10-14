@@ -5,6 +5,7 @@ import { starseerCards } from '../cards/starseer.js';
 import { rogueCards } from '../cards/rogue.js';
 import { heraldCards } from '../cards/herald.js';
 import { recipeText } from './cardRecipeText.js';
+import { combatProfileFor } from '../../model/combatCardProfile.js';
 import { cardExposure } from '../generated/cardExposure.js';
 
 const originals = new Map([...reaverCards, ...starseerCards, ...rogueCards, ...heraldCards].map(c => [c.id, c]));
@@ -49,7 +50,7 @@ const recipes = [
   ['warcry', 'maneuver', 2, 1, 0, [1, 1, 1, 2, 2, 3]],
   ['sunderplate', 'maneuver', 2, 2, 0, [5, 7, 9, 12, 15, 19]],
   ['poiseBreaker', 'maneuver', 3, 2, 0, [6, 8, 11, 14, 17, 21]],
-  ['feint', 'maneuver', 1, 1, 1, [1, 1, 1, 2, 2, 3]],
+  ['feint', 'maneuver', 1, 1, 1, [1, 1, 1, 2, 2, 3], { alwaysRiders: true }],
   ['pocketSand', 'maneuver', 1, 1, 0, [2, 3, 4, 7, 10, 14]],
   ['lowBlow', 'maneuver', 1, 1, 0, [4, 5, 6, 9, 12, 16]],
   ['vanish', 'maneuver', 2, 1, 0, [4, 6, 8, 11, 14, 18]],
@@ -58,14 +59,16 @@ const recipes = [
 ];
 
 function lessonGrade(recipe, rank) {
-  const [id, abilityKind, , actionCost, primaryIndex, values] = recipe;
+  const [id, abilityKind, , actionCost, primaryIndex, values, options = {}] = recipe;
   const original = originals.get(id);
   const primary = structuredClone(original.effects[primaryIndex]);
   const field = primary.op === 'applyStatus' ? 'stacks' : 'amount';
   primary[field] = id === 'reclamation'
     ? { ...primary.amount, max: values[rank] }
     : values[rank];
-  const riderEffects = rank >= 2 ? original.effects.filter((_, i) => i !== primaryIndex).map(e => structuredClone(e)) : [];
+  // `alwaysRiders` (opt-in per recipe) keeps the non-primary effects at every
+  // rank; all other recipes keep the rank-2 rider threshold unchanged.
+  const riderEffects = rank >= 2 || options.alwaysRiders ? original.effects.filter((_, i) => i !== primaryIndex).map(e => structuredClone(e)) : [];
   // These two originals authored mutually-exclusive primary amounts. Grades
   // express the larger amount as a conditional BONUS rather than applying the
   // old 16-point replacement unchanged over a small cantrip.
@@ -82,7 +85,7 @@ function lessonGrade(recipe, rank) {
   const effects = [primary, ...riderEffects];
   if (rank >= 4) effects.push({ op: 'block', target: 'self', amount: 2, oncePerTurn: 'grade-block' });
   if (rank >= 5) effects.push({ op: 'draw', amount: 1, oncePerTurn: 'grade-draw' });
-  return { rank, actionCost: rank === 0 ? Math.max(1, Math.min(actionCost, 3)) : rank === 1 ? 1 : Math.min(rank, actionCost + (rank >= 4 ? 1 : 0)), manaCost: rank, effects, textTemplate: recipeText(effects),
+  return { rank, actionCost: rank === 0 ? Math.max(1, Math.min(actionCost, 3)) : rank === 1 ? 1 : Math.min(rank, actionCost + (rank >= 4 ? 1 : 0)), manaCost: rank, effects, textTemplate: recipeText(effects, combatProfileFor(id)),
     ...(original.effects.some(e => e.op === 'damage') ? { traits: { damageSchool: abilityKind === 'spell' ? 'magic' : 'physical', exposureBuildupPerHit: abilityKind === 'spell' ? (rank > 0 ? 5 : 1) : 0 } } : {}),
   };
 }

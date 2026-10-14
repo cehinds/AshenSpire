@@ -1,0 +1,68 @@
+{
+  "id": "swordSaint",
+  "name": "The Sword Saint",
+  "family": "speaker",
+  "source": "content/source/speakers.csv",
+  "facing": "away, rear three-quarter right",
+  "pose": "idle",
+  "prompt": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: Elderly master swordsman in austere layered weathered cloth and light steel guards, long worn sword held down, quiet controlled posture. Face RIGHT. Entire full body, portrait 1024x1536; use landscape for the hound. Feet at 94 percent canvas height.",
+  "file": "continuation/sprites/swordSaint-rear.png",
+  "status": "generated",
+  "referenceImages": [
+    "masters/swordSaint.png"
+  ],
+  "promptUsed": "Edit the supplied Sword Saint. Preserve elderly white hair tied back, weathered armor, red cloak and straight long sword. Show back of white-haired head, face hidden. Grip, pommel and blade collinear naturally held in right hand. Change ONLY orientation to rear three-quarter from BEHIND, back of head and back cloak facing camera, looking away upper-right. Full body idle. Subject occupies only central 80% of canvas leaving at least 8% truly empty transparent margin at EVERY edge including sword/spear tip and boots. Actual transparent alpha outside silhouette, no halo, backdrop, floor, shadow, UI or text. Detailed painterly dark fantasy, weathered materials, upper-left neutral light. Portrait 1024x1536.",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a112fc-0e64-7472-a495-aba14ffa5ab6\\exec-85fbdd10-56f2-4c87-8d25-747d2ffe91f5.png",
+  "validation": {
+    "size": [
+      1024,
+      1536
+    ],
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      254
+    ],
+    "transparentFraction": 0.6268234252929688,
+    "visibleBounds": [
+      59,
+      72,
+      1010,
+      1411
+    ],
+    "anchor": [
+      534.5,
+      1411
+    ],
+    "sha256": "0189bf8fab739b3905070e86fe508d66ea4392f653435db209a307ee5fc8c0c6",
+    "alphaThreshold": 32
+  },
+  "previousView": {
+    "file": "masters/swordSaint.png",
+    "validation": {
+      "size": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "alphaRange": [
+        0,
+        254
+      ],
+      "transparentFraction": 0.5592466990152994,
+      "visibleBounds": [
+        50,
+        44,
+        982,
+        1496
+      ],
+      "anchor": [
+        516.0,
+        1496
+      ],
+      "sha256": "dcb8ab14ed2a9c6421b727b67bf0ce29091d1c06f733ec91981a3d265e913a5d"
+    },
+    "facing": "right",
+    "promptUsed": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: Elderly master swordsman in austere layered weathered cloth and light steel guards, long worn sword held down, quiet controlled posture. Face RIGHT. Entire full body, portrait 1024x1536; use landscape for the hound. Feet at 94 percent canvas height."
+  }
+}

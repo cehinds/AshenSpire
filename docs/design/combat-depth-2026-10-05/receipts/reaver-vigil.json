@@ -1,0 +1,70 @@
+{
+  "id": "reaver-vigil",
+  "name": "Ashen Vigil \u00b7 Reaver",
+  "family": "armor",
+  "classId": "reaver",
+  "outfitId": "vigil",
+  "source": "content/source/outfits.csv",
+  "artAlias": null,
+  "facing": "away, rear three-quarter right",
+  "pose": "idle",
+  "prompt": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: A battle-worn sellsword, closed steel helmet, heavy layered plate and chainmail, ragged rust-red scarf and cloak, worn leather straps, sword lowered diagonally. Recognizable as the knight on the left of the supplied reference. Outfit: Ashen Vigil. Lore: Blackened at the court that broke. Material palette: plate #302B25, plateLt #4A433A, leather #241C16, under #1A1712. Preserve this class identity and equipment. Face RIGHT toward enemies. Portrait 1024x1536, feet at 94 percent canvas height, center mass at 50 percent width.",
+  "file": "masters/reaver-vigil-rear.png",
+  "status": "generated",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a10ffd-7ed8-7ff3-b84a-467346a2abc4\\exec-f96b16e3-c312-4ca3-afce-3929da43b92d.png",
+  "validation": {
+    "size": [
+      1024,
+      1536
+    ],
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      254
+    ],
+    "transparentFraction": 0.5991446177164713,
+    "visibleBounds": [
+      22,
+      50,
+      1010,
+      1419
+    ],
+    "anchor": [
+      516.0,
+      1419
+    ],
+    "sha256": "0ea2072827f114f3facc1bd74633b946f98401509ede6dd94e5a2317e9761590"
+  },
+  "referenceImages": [
+    "masters/reaver-vigil.png"
+  ],
+  "promptUsed": "Edit target: the original hero armor sprite. Preserve this exact character, outfit, helmet or hood, colors, materials, weapon types, accessories and detailed gritty painted realism. Change ONLY the camera and idle orientation: rear three-quarter view, seen from BEHIND, body and head facing away toward screen upper-right, toward enemies to the hero's right. The back of the head, back armor and broad back of the cloak dominate. Do not show a front-facing chest or face. Retain readable weapon silhouettes beside the body. Full figure including boots, all cloth and weapon tips, with generous clear padding at every edge. One grounded idle combat pose, not walking. No floor, scene, UI, lettering, aura, halo or vignette. Actual transparent alpha background. No new equipment. Consistent realistic human proportions.\n",
+  "previousView": {
+    "file": "masters/reaver-vigil.png",
+    "validation": {
+      "size": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "alphaRange": [
+        0,
+        254
+      ],
+      "transparentFraction": 0.5870081583658854,
+      "visibleBounds": [
+        52,
+        66,
+        999,
+        1451
+      ],
+      "anchor": [
+        525.5,
+        1451
+      ],
+      "sha256": "6dc1a2b6ff1bc07a7d1cafd90578becfc2d484201641adc971e828473e236a4b"
+    },
+    "facing": "right",
+    "promptUsed": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: A battle-worn sellsword, closed steel helmet, heavy layered plate and chainmail, ragged rust-red scarf and cloak, worn leather straps, sword lowered diagonally. Recognizable as the knight on the left of the supplied reference. Outfit: Ashen Vigil. Lore: Blackened at the court that broke. Material palette: plate #302B25, plateLt #4A433A, leather #241C16, under #1A1712. Preserve this class identity and equipment. Face RIGHT toward enemies. Portrait 1024x1536, feet at 94 percent canvas height, center mass at 50 percent width. Use the supplied single class sprite as the identity and pose reference. Preserve its anatomy, weapon configuration, framing and direction; change the armor materials and cloth palette to this named outfit. Output only ONE variant."
+  }
+}

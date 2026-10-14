@@ -1,0 +1,71 @@
+{
+  "id": "reaver-default",
+  "name": "Wayfarer Plate \u00b7 Reaver",
+  "family": "armor",
+  "classId": "reaver",
+  "outfitId": "default",
+  "source": "content/source/outfits.csv",
+  "artAlias": null,
+  "facing": "away, rear three-quarter right",
+  "pose": "idle",
+  "prompt": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: A battle-worn sellsword, closed steel helmet, heavy layered plate and chainmail, ragged rust-red scarf and cloak, worn leather straps, sword lowered diagonally. Recognizable as the knight on the left of the supplied reference. Outfit: Wayfarer Plate. Lore: The armour you were buried in. Material palette: plate #3E6157, plateLt #64907F, leather #4B3522, under #332A1E. Preserve this class identity and equipment. Face RIGHT toward enemies. Portrait 1024x1536, feet at 94 percent canvas height, center mass at 50 percent width.",
+  "file": "masters/reaver-default-rear.png",
+  "status": "generated",
+  "generatedSource": "D:/repos/.codex/generated_images/01a10ffd-7ed8-7ff3-b84a-467346a2abc4/exec-4b48ca7f-002e-4c49-a9c0-e05c8e072784.png",
+  "validation": {
+    "size": [
+      1024,
+      1536
+    ],
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      254
+    ],
+    "transparentFraction": 0.5911057790120443,
+    "visibleBounds": [
+      22,
+      69,
+      1018,
+      1427
+    ],
+    "anchor": [
+      520.0,
+      1427
+    ],
+    "sha256": "013f46c2d92303243da8527fcf9a15bd7c31f41e3add503e3fdd6ebc8f9950cd"
+  },
+  "referenceImages": [
+    "references/reaver-rear-before-sword-fix.png",
+    "references/rear-view-direction.png"
+  ],
+  "promptUsed": "Edit this fantasy rear-view knight sprite. Replace the entire sword and the gripping right hand with a physically correct straight longsword and natural grip. Current sword has bent axis; do NOT trace its wrong hilt. Reconstruct one straight sword from scratch: round pommel, leather grip, simple perpendicular crossguard, straight double-edged blade. Pommel, grip center and blade central fuller share a perfectly straight unbroken line. The hilt should be mostly concealed INSIDE the closed gauntlet, with only a small pommel visible just above hand; REMOVE the long protruding diagonal hilt to the left of his wrist. Place the small pommel directly along the backwards extension of blade, immediately above the fist, so there is no crooked handle outside. Blade points down and right. Keep the knight's back view, beautiful armor, red cloak and full-body composition identical. Transparent alpha background, generous padding, no effects.\n",
+  "previousView": {
+    "file": "references/reaver-rear-before-sword-fix.png",
+    "validation": {
+      "size": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "alphaRange": [
+        0,
+        254
+      ],
+      "transparentFraction": 0.5927410125732422,
+      "visibleBounds": [
+        23,
+        82,
+        1021,
+        1424
+      ],
+      "anchor": [
+        522.0,
+        1424
+      ],
+      "sha256": "ca8d278b3a517b874076590f063a6a1958ee167d333deea5eb8b4d7cd5c28baa"
+    },
+    "facing": "away, rear three-quarter right",
+    "promptUsed": "Edit target: the original hero armor sprite. Preserve this exact character, outfit, helmet or hood, colors, materials, weapon types, accessories and detailed gritty painted realism. Change ONLY the camera and idle orientation: rear three-quarter view, seen from BEHIND, body and head facing away toward screen upper-right, toward enemies to the hero's right. The back of the head, back armor and broad back of the cloak dominate. Do not show a front-facing chest or face. Retain readable weapon silhouettes beside the body. Full figure including boots, all cloth and weapon tips, with generous clear padding at every edge. One grounded idle combat pose, not walking. No floor, scene, UI, lettering, aura, halo or vignette. Actual transparent alpha background. No new equipment. Consistent realistic human proportions.\n"
+  }
+}

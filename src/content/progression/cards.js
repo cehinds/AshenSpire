@@ -3,6 +3,7 @@ import { cardFamilies } from './cardFamilies.js';
 import { recipeText } from './cardRecipeText.js';
 import { progressionCardLore } from './cardLore.js';
 import { abilityCardUpdates as lessonUpdates } from './lessons.js';
+import { combatProfileFor } from '../../model/combatCardProfile.js';
 export const abilityCardUpdates = lessonUpdates;
 
 const damage = (amount, target = 'enemy', extra = {}) => ({ op: 'damage', target, amount, ...extra });
@@ -55,8 +56,8 @@ const riders = {
   'blight-litany': () => [status('crimsonBlight', 3)],
   'pallbearer-s-ward': () => [draw(1, { if: lowHp() })],
   'ember-tithe': () => [offering(3), status('regen', 1, { target: 'self' })],
-  'ossuary-cant': () => [{ op: 'gainEnergy', amount: 1, if: has('crimsonBlight', 'allEnemies') }],
-  'requiem-brand': () => [status('weak', 1, { if: has('crimsonBlight') })],
+  'ossuary-cant': () => [{ op: 'gainEnergy', amount: 1, if: { p: 'any', preds: [has('crimsonBlight', 'allEnemies'), has('necroticBlight', 'allEnemies')] } }],
+  'requiem-brand': () => [status('weak', 1, { if: { p: 'any', preds: [has('crimsonBlight'), has('necroticBlight')] } })],
   'pilgrim-s-shelter': () => [{ op: 'heal', target: 'self', amount: 3, if: { p: 'turnMetric', metric: 'turnStartHpPct', atMost: 50 } }],
   'crown-of-scars': () => [offering(3), damage(5, 'enemy', { if: metric('offeringsPaid') })],
   'dawn-after-ash': () => [{ op: 'removeStatus', target: 'self', status: 'weak', amount: 1 }],
@@ -85,7 +86,7 @@ export function familyGrade(family, rank) {
   if (rank >= 4) effects.push(block(2, { oncePerTurn: 'grade-block' }));
   if (rank >= 5) effects.push(draw(1, { oncePerTurn: 'grade-draw' }));
   const magical = ['starseer', 'herald'].includes(family.classId);
-  return { rank, actionCost: family.actionCosts[rank], manaCost: rank, effects, textTemplate: recipeText(effects),
+  return { rank, actionCost: family.actionCosts[rank], manaCost: rank, effects, textTemplate: recipeText(effects, combatProfileFor(family.id)),
     ...(family.primary === 'damage' ? { traits: { damageSchool: magical ? 'magic' : 'physical', exposureBuildupPerHit: magical ? (rank > 0 ? 5 : 1) : 0 } } : {}),
   };
 }

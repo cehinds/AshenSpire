@@ -1,0 +1,28 @@
+{
+  "id": "glass-lake-ground",
+  "kind": "ground",
+  "transparent": true,
+  "resultFile": "scenes/shared/pale-marches/glass-lake-ground.png",
+  "prompt": "Create one transparent ground layer for The Glass Lake combat stage, painterly dark fantasy realistic. Wide 1536x1024 registered canvas. Entire upper 43% fully transparent. From y=47% down, one continuous flat frozen lake surface of blue-grey glassy thick ice with fine white fracture patterns and subtle silver reflections. Fills bottom edge and both bottom corners completely with opaque ice. Tiny snow crystals only at extreme side edges. Broad open uninterrupted standing area across lower half, gentle downward eye-level perspective toward vanishing point x=60% y=43%. No paving, rocks in middle, architecture, sky, mountains, trees, characters, flames, orange lava, labels or floor cutaway. Actual transparent alpha above ice. This is a ground-only parallax plate.",
+  "reference": "../references/composition.png",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a112fc-0e64-7472-a495-aba14ffa5ab6\\exec-60c00752-1161-44cf-9969-498bc4f5a4fc.png",
+  "generator": "built-in image_gen",
+  "size": [
+    1536,
+    1024
+  ],
+  "mode": "RGBA",
+  "sha256": "8ae2658b0a044a9c00c308a7797be5615c8c6a73b0f1b8fbc34e251961ed1421",
+  "alphaRange": [
+    0,
+    254
+  ],
+  "transparentFraction": 0.4511515299479167,
+  "visibleBounds": [
+    0,
+    456,
+    1536,
+    1024
+  ],
+  "alphaThreshold": 32
+}

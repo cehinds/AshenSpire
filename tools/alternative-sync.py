@@ -113,6 +113,15 @@ def main():
     parser.add_argument('--report', required=True)
     parser.add_argument('--verify', action='store_true')
     args = parser.parse_args()
+    # This CLI was the root alternative writer. Its former targets are frozen;
+    # pure prepare() remains available for preservation policy tests/review.
+    frozen_targets = {
+        prefix + branch
+        for prefix in ('', 'origin/', 'refs/heads/', 'refs/remotes/origin/')
+        for branch in ('alternative/dev', 'alternative/test')
+    }
+    if args.target in frozen_targets:
+        parser.error('Root alternative/dev and alternative/test are frozen after consolidation into dev; use a named alternative target.')
     policy = json.loads(Path(args.policy).read_text(encoding='utf-8'))
     if args.verify:
         report = json.loads(Path(args.report).read_text(encoding='utf-8'))

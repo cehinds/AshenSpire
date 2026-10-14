@@ -140,8 +140,8 @@ if (process.argv.includes('--selftest')) {
       {
         name: 'the map stops remounting after a Potions action',
         file: 'src/ui/screens/map.js',
-        find: 'onChange: () => { onSave?.(); remount(); }',
-        replace: 'onChange: () => { onSave?.(); }',
+        find: 'onChange: () => { dropPendingSave(); onSave?.(); remount(); }',
+        replace: 'onChange: () => { dropPendingSave(); onSave?.(); }',
         args: ['--only', 'persistence'],
         expectRed: /FAIL persistence: the first Drink remounts the map/,
       },
@@ -953,8 +953,10 @@ async function planProbe(cdp, base, check) {
   // THE RUN HUD's room rail, turned on through the config row it reads.
   const configPath = 'src/config/generated/ui.js';
   const configBody = readFileSync(resolve(ROOT, configPath), 'utf8');
-  const railOn = configBody.replace('"roomRail": false', '"roomRail": true');
-  if (railOn === configBody && !configBody.includes('"roomRail": true')) {
+  const roomRailOff = /("roomRail"\s*:\s*)false/;
+  const roomRailOn = /"roomRail"\s*:\s*true/;
+  const railOn = configBody.replace(roomRailOff, '$1true');
+  if (railOn === configBody && !roomRailOn.test(configBody)) {
     check('plan: run HUD, the room-rail config row is where this probe turns it on', false, `${configPath} has no "roomRail" row`);
     return;
   }

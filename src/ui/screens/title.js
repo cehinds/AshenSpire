@@ -9,6 +9,7 @@ import { buildStampHtml } from '../components/buildstamp.js';
 import { hudQuickSettingsHtml, wireHudQuickSettings } from '../components/hudQuickSettings.js';
 import { closeSaveSlotSelector, deleteSlotReview, openSaveSlotSelector, slotFacts, slotOption, slotDoor, slotDecisionDoor } from '../components/saveSlotSelector.js';
 import { el, html, titleMenu } from '../kit/index.js';
+import { uiConfig } from '../../config/generated/ui.js';
 import { t, tFull } from '../strings.js';
 import { hudQuickSettingsModel } from '../models/HudQuickSettingsModel.js';
 import { saveSlotSelectionModel } from '../models/SaveSlotSelectionModel.js';
@@ -17,6 +18,7 @@ import { focusElement } from '../input.js';
 import { offlinePlay } from '../../content/offlinePlay.js';
 import { assetUrl } from '../assetmap.js';
 import { engravedIconHtml } from '../components/engravedIcon.js';
+import { registerModal } from '../modalState.js';
 
 let releaseActiveTitleBack = null;
 
@@ -52,17 +54,25 @@ export function mountTitle(app, {
   onCustom,
   onLan,
   onCompendium,
+  onBestiary,
   reopen = null, // 'new' | 'load' — re-open that door after a remount (a delete returns to where it was)
   // Draws the built-in art's notice into the title root after every render
   // (step 5, src/ui/components/artLoadNotice.js); the composition root decides
   // whether there is one. The title's own redraws would otherwise drop it.
   artNotice = null,
 }) {
-  const occupied = slots.filter(({ summary }) => !!summary);
+  // A delete from this Title replaces the slot list in place (deleteSlot), so
+  // every read goes through currentSlots and occupied() rather than the mount's
+  // argument.
+  let currentSlots = slots;
+  const occupied = () => currentSlots.filter(({ summary }) => !!summary);
   let modal = null;
   let selectedSlot = null;
   let newReviewSlot = null; // the slot the New Game decision door is asking about
   let activatedSlot = null; // the slot the last tap landed on — a second tap on it opens the door
+  let releaseTitleModal = null; // modalState.js entry for the open New Game door
+  let registeredLayer = null; // the modal layer element that entry was registered against
+  let introPlayed = false; // the scene replays itself on the first render of this mount only
 
   // Only one title mount may own the global Cancel action. render() replaces
   // the title DOM in place, so this listener lives for the mount rather than
@@ -74,17 +84,19 @@ export function mountTitle(app, {
     titleBackAbort.abort();
     titleBackObserver?.disconnect();
     titleBackObserver = null;
+    releaseTitleModal?.();
+    releaseTitleModal = null;
     if (releaseActiveTitleBack === releaseTitleBack) releaseActiveTitleBack = null;
   };
   releaseActiveTitleBack = releaseTitleBack;
 
-  const selectionModel = (kind = modal) => saveSlotSelectionModel(slots, { kind, selectedSlot });
+  const selectionModel = (kind = modal) => saveSlotSelectionModel(currentSlots, { kind, selectedSlot });
 
   const modalSlotRows = (model) => model.children
     .filter((child) => child.component === UI.titleSaveSlot)
     .map(({ properties }) => {
       const { slot, selectable, selected } = properties;
-      const summary = slots.find((record) => record.slot === slot)?.summary || null;
+      const summary = currentSlots.find((record) => record.slot === slot)?.summary || null;
       return slotOption({ slot, summary, selected, selectable, deletable: !!(summary && onDelete) });
     });
 
@@ -94,7 +106,7 @@ export function mountTitle(app, {
   // divider its first ornament, the gem its second) so the tools that read
   // the page keep reading it.
   const menuHtml = () => {
-    const continueSlot = occupied[0]?.slot ?? null;
+    const continueSlot = occupied()[0]?.slot ?? null;
     const entry = (label, action, { id = '', className = '', disabled = false, reason = '' } = {}) => ({
       label,
       className: `title-menu-item ${className}`.trim(),
@@ -115,8 +127,11 @@ export function mountTitle(app, {
         ...(onHistory ? [entry('Run history', 'history', { id: 'run-history' })] : []),
         // #armaments remains the compatibility anchor for the existing watched probe.
         entry('Compendium', 'collection', { id: 'armaments' }),
+        ...(onBestiary ? [entry('Bestiary', 'bestiary', { id: 'bestiary' })] : []),
         entry('Settings', 'settings', { id: 'settings' }),
-        ...(onLan ? [entry('Forsaken Together', 'lan', { id: 'lan-play' })] : []),
+        // Co-op is parked (owner, 2026-10-12): content/config/ui/screens/title.json
+        // behavior.coopEnabled hides Forsaken Together until it returns.
+        ...(onLan && uiConfig.screens.title.behavior.coopEnabled ? [entry('Forsaken Together', 'lan', { id: 'lan-play' })] : []),
       ],
       attrs: { 'data-component': UI.titleBrandLockup },
     });
@@ -138,7 +153,7 @@ export function mountTitle(app, {
     // W3b: an available Continue is highlighted and its exact save sits beside
     // the menu (below it on narrow hosts); the wordmark above stays centred.
     // With no save this is W3a: the lone centred menu, no empty placeholder.
-    const saved = occupied[0];
+    const saved = occupied()[0];
     if (saved) {
       list.querySelector('.slot-continue')?.classList.add('is-highlighted');
       const resume = list.querySelector('.slot-continue');
@@ -173,7 +188,7 @@ export function mountTitle(app, {
   const modalHtml = () => {
     if (!modal) return '';
     if (newReviewSlot != null) {
-      const summary = slots.find((record) => record.slot === newReviewSlot)?.summary || null;
+      const summary = currentSlots.find((record) => record.slot === newReviewSlot)?.summary || null;
       return `<div class="modal-veil title-modal-veil" data-title-modal-scrim>${html(slotDecisionDoor({ kind: 'new', slot: newReviewSlot, summary }))}</div>`;
     }
     const model = selectionModel();
@@ -202,35 +217,35 @@ export function mountTitle(app, {
   const openModal = (kind) => {
     modal = kind;
     activatedSlot = null;
-    selectedSlot = saveSlotSelectionModel(slots, { kind }).properties.selectedSlot;
-    render();
+    selectedSlot = saveSlotSelectionModel(currentSlots, { kind }).properties.selectedSlot;
+    renderModal();
     focusModal(selectedSlot == null ? undefined : `[data-slot-pick="${selectedSlot}"]`);
   };
 
   const openLoadSelector = (launcher) => {
     openSaveSlotSelector({
       host: app,
-      slots,
+      slots: currentSlots,
       meta,
       registries,
       inlineReview: true,
       returnFocusElement: launcher,
       onRequestLoad: (slot) => onContinue(slot),
       onRequestNew: (slot) => onNew(slot),
-      onDelete: (slot) => onDelete(slot, 'load'),
+      onDelete: (slot) => deleteSlot(slot, 'load'),
     });
   };
 
   const openNewReview = (slot) => {
     if (slot == null) return;
     newReviewSlot = slot;
-    render();
+    renderModal();
     focusModal('[data-title-action="review-new"]');
   };
   const closeNewReview = () => {
     const slot = newReviewSlot;
     newReviewSlot = null;
-    render();
+    renderModal();
     focusModal(`[data-slot-pick="${slot}"]`);
   };
   const closeModal = () => {
@@ -238,9 +253,45 @@ export function mountTitle(app, {
     selectedSlot = null;
     newReviewSlot = null;
     activatedSlot = null;
-    render();
+    renderModal();
     focusTitleDefault(app, { showCursor: false });
   };
+
+  const wireTitleActions = (scope) => {
+    scope.querySelectorAll('[data-title-action]').forEach((button) => {
+      if (button.closest('[data-title-modal-layer]')) return; // wired by renderModal()
+      button.addEventListener('click', () => {
+        const action = button.dataset.titleAction;
+        if (action === 'continue') onContinue(occupied()[0].slot);
+        else if (action === 'quick-start') onQuickStart?.();
+        else if (action === 'load') openLoadSelector(button);
+        else if (action === 'new') openModal(action);
+        else if (action === 'collection' && onCompendium) onCompendium();
+        else if (action === 'bestiary') onBestiary?.();
+        else if (action === 'history') onHistory?.();
+        else if (action === 'profile') onProfile?.();
+        else if (action === 'custom') onCustom?.();
+        else if (action === 'lan') onLan?.();
+        else if (action === 'settings') onSettings();
+        else if (action === 'offline') onOffline?.();
+        else if (action === 'quit' && onQuit) onQuit();
+      });
+    });
+  };
+
+  // A slot deletion changes only the Continue/save preview in the menu. Swap
+  // that fragment and leave the title root, artwork, embers, quick settings and
+  // their animation state intact.
+  function renderMenu() {
+    const current = app.querySelector('.as-titlemenu');
+    if (!current) return;
+    const holder = document.createElement('div');
+    holder.innerHTML = menuHtml();
+    const next = holder.firstElementChild;
+    if (!next) return;
+    current.replaceWith(next);
+    wireTitleActions(next);
+  }
 
   const activateSlot = (slot) => {
     // Two taps: the first highlights, the second on the highlighted slot opens
@@ -249,8 +300,24 @@ export function mountTitle(app, {
     selectedSlot = slot;
     activatedSlot = slot;
     if (repeat) { openNewReview(slot); return; }
-    render();
+    renderModal();
     focusModal(`[data-slot-pick="${selectedSlot}"]`);
+  };
+
+  // A delete updates the Title in place: the host returns the fresh slot list,
+  // the mount keeps it, and only the affected menu and modal fragments redraw.
+  // The New door stays open; the load selector is reopened with fresh rows.
+  const deleteSlot = (slot, from) => {
+    const fresh = onDelete(slot, from);
+    if (!Array.isArray(fresh)) return;
+    currentSlots = fresh;
+    const stillThere = (value) => value != null && currentSlots.some((record) => record.slot === value);
+    if (!stillThere(activatedSlot)) activatedSlot = null;
+    if (modal && !stillThere(selectedSlot)) selectedSlot = saveSlotSelectionModel(currentSlots, { kind: modal }).properties.selectedSlot;
+    renderMenu();
+    renderModal();
+    if (modal) focusModal(selectedSlot == null ? undefined : `[data-slot-pick="${selectedSlot}"]`);
+    if (from === 'load') openLoadSelector(app.querySelector('[data-title-action="load"]'));
   };
 
   const wireDelete = (root) => {
@@ -259,14 +326,61 @@ export function mountTitle(app, {
     root.querySelectorAll('.title-slot-delete').forEach((button) => {
       const slot = +button.dataset.slotDelete;
       arm(button, 'deleteSave', {
-        ...deleteSlotReview(slot, slots.find((record) => record.slot === slot)?.summary || null),
-        onConfirm: () => onDelete(slot, 'new'),
+        ...deleteSlotReview(slot, currentSlots.find((record) => record.slot === slot)?.summary || null),
+        onConfirm: () => deleteSlot(slot, 'new'),
       });
       button.title = button.dataset.holdMs ? 'Hold to delete this run' : 'Delete this run';
     });
   };
 
+  // Redraws only the New Game modal layer. The modal's own handlers call this
+  // instead of render(), so a click inside the modal never rebuilds the Title
+  // screen (no intro replay, no new embers, no HUD re-wire).
+  function renderModal() {
+    const layer = app.querySelector('[data-title-modal-layer]');
+    if (!layer) return;
+    layer.innerHTML = modalHtml();
+    layer.querySelector('[data-title-modal-scrim]')?.addEventListener('click', (event) => {
+      if (event.target === event.currentTarget) closeModal();
+    });
+    layer.querySelectorAll('[data-slot-pick]').forEach((button) => {
+      button.addEventListener('click', () => {
+        activateSlot(+button.dataset.slotPick);
+      });
+    });
+    wireDelete(layer);
+    layer.querySelectorAll('[data-title-action]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const action = button.dataset.titleAction;
+        if (action === 'close-modal' || action === 'back') closeModal();
+        else if (action === 'modal-continue') openNewReview(selectionModel().properties.actionSlot);
+        else if (action === 'review-back') closeNewReview();
+        else if (action === 'review-new') {
+          if (newReviewSlot == null) return;
+          onNew(newReviewSlot);
+        }
+      });
+    });
+    // The New Game door is a registered modal while it is open. A render() builds
+    // a new layer element, so an entry made against the old one is replaced here.
+    // The new entry goes in before the old one is released, so the stack never
+    // reads empty in between.
+    if (modal && (!releaseTitleModal || registeredLayer !== layer)) {
+      const previous = releaseTitleModal;
+      releaseTitleModal = registerModal('title-new', layer);
+      registeredLayer = layer;
+      previous?.();
+    } else if (!modal && releaseTitleModal) {
+      releaseTitleModal();
+      releaseTitleModal = null;
+      registeredLayer = null;
+    }
+  }
+
   function render() {
+    // The modal layer is display:contents on purpose: `.title-screen > *` (ui.css)
+    // makes a direct child a z-index:1 stacking context, which would trap the
+    // modal veil under the menu panel.
     app.innerHTML = `
       <div class="screen title-screen">
         <div class="title-landscape" aria-hidden="true"></div>
@@ -277,7 +391,7 @@ export function mountTitle(app, {
         ${menuHtml()}
         ${buildStampHtml('title')}
         <button type="button" class="tower-preview-replay">Replay scene</button>
-        ${modalHtml()}
+        <div class="title-modal-layer" data-title-modal-layer style="display:contents">${modalHtml()}</div>
       </div>`;
 
     wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
@@ -288,7 +402,12 @@ export function mountTitle(app, {
       root.querySelector('.title-traveler')?.animate([{ opacity: 0, transform: 'translateX(-18px)' }, { opacity: 1, transform: 'translateX(0)' }], { duration: 1000, easing: 'ease-out' });
     };
     root.querySelector('.tower-preview-replay')?.addEventListener('click', replayScene);
-    replayScene();
+    // The scene plays on the first render of this mount only; the Replay button
+    // plays it on demand. A redraw after a delete must not replay it.
+    if (!introPlayed) {
+      introPlayed = true;
+      replayScene();
+    }
     root.addEventListener('keydown', (event) => {
       if (event.key === 'Escape' && modal) {
         event.preventDefault();
@@ -308,39 +427,8 @@ export function mountTitle(app, {
         }
       }
     });
-    root.querySelectorAll('[data-title-action]').forEach((button) => {
-      button.addEventListener('click', () => {
-        const action = button.dataset.titleAction;
-        if (action === 'continue') onContinue(occupied[0].slot);
-        else if (action === 'quick-start') onQuickStart?.();
-        else if (action === 'load') openLoadSelector(button);
-        else if (action === 'new') openModal(action);
-        else if (action === 'collection' && onCompendium) onCompendium();
-        else if (action === 'history') onHistory?.();
-        else if (action === 'profile') onProfile?.();
-        else if (action === 'custom') onCustom?.();
-        else if (action === 'lan') onLan?.();
-        else if (action === 'settings') onSettings();
-        else if (action === 'offline') onOffline?.();
-        else if (action === 'quit' && onQuit) onQuit();
-        else if (action === 'close-modal' || action === 'back') closeModal();
-        else if (action === 'modal-continue') openNewReview(selectionModel().properties.actionSlot);
-        else if (action === 'review-back') closeNewReview();
-        else if (action === 'review-new') {
-          if (newReviewSlot == null) return;
-          onNew(newReviewSlot);
-        }
-      });
-    });
-    root.querySelector('[data-title-modal-scrim]')?.addEventListener('click', (event) => {
-      if (event.target === event.currentTarget) closeModal();
-    });
-    root.querySelectorAll('[data-slot-pick]').forEach((button) => {
-      button.addEventListener('click', () => {
-        activateSlot(+button.dataset.slotPick);
-      });
-    });
-    wireDelete(root);
+    wireTitleActions(root);
+    renderModal();
     artNotice?.(root);
   }
 

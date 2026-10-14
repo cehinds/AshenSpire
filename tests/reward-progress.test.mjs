@@ -527,10 +527,14 @@ test('a door with no progression and no offer draws no side column at all', () =
 });
 
 
-test('no level claims itself: each waits for its press, and its popup lists only what that level unlocked', async () => {
+test('no level claims itself: each waits for its press, and its popup lists only what that level unlocked', async (t) => {
   const dom = rewardDom();
   const saved = Object.fromEntries(Object.keys(dom).map(key => [key, globalThis[key]]));
   Object.assign(globalThis, dom);
+  // Advance each production timer phase explicitly. A single wall-clock sleep
+  // can finish before a newly scheduled refill timer after an event-loop stall.
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const advance = async milliseconds => { t.mock.timers.tick(milliseconds); await Promise.resolve(); };
   try {
     const app = document.createElement('main'); document.body.append(app);
     const run = climber(); run.level = { level: 1, xp: 355, unspentPoints: 0 }; run.skills = {};
@@ -544,12 +548,11 @@ test('no level claims itself: each waits for its press, and its popup lists only
       saves: { loadMeta: () => ({ settings: { levelUpRefillSeconds: 0.02, levelUpRefillPauseMs: 0 } }) },
     });
     const door = app.querySelector('.reward-door');
-    await new Promise(resolve => setTimeout(resolve, 600));
+    await advance(600);
     assert.equal(run.level.level, 1, 'nothing is claimed without a press');
     assert.equal(app.querySelectorAll('.reward-level-up').length, 1);
     for (const [level, key] of [[2, 'levelChoice:0'], [3, 'levelChoice:1']]) {
-      const deadline = Date.now() + 2000;
-      while (!app.querySelector('.reward-level-up') && Date.now() < deadline) await new Promise(resolve => setTimeout(resolve, 10));
+      assert.ok(app.querySelector('.reward-level-up'), 'the prior refill has completed before the next manual claim');
       app.querySelector('.reward-level-up').click();
       assert.equal(run.level.level, level);
       assert.deepEqual(app.querySelectorAll('.reward-level-rewards .reward-kind').map(row => row.dataset.key), [key], 'the popup lists this level\'s reward only');
@@ -558,8 +561,14 @@ test('no level claims itself: each waits for its press, and its popup lists only
       app.querySelector('#reward-back').click();
       assert.ok(app.querySelector('#reward-level-continue'), 'Back from the chooser returns to the level popup');
       app.querySelector('#reward-level-continue').click();
+      assert.equal(app.querySelector('#reward-continue').disabled, true, 'Continue is gated during the nonzero refill');
+      await advance(0); // start the scheduled fill
+      assert.equal(app.querySelector('#reward-continue').disabled, true, 'starting the fill cannot unlock Continue');
+      await advance(20); // finish the authored 0.02-second fill
+      assert.equal(app.querySelector('#reward-continue').disabled, true, 'the fill still waits for its settle phase');
+      await advance(0); // finish the authored zero-delay settle phase
+      assert.equal(app.querySelector('#reward-continue').disabled, false, 'only a completed refill unlocks Continue');
     }
-    await new Promise(resolve => setTimeout(resolve, 200));
     assert.equal(run.level.xp, 75);
     assert.equal(app.querySelector('.reward-level-up'), null);
     for (const key of ['levelChoice:0', 'levelChoice:1']) {
@@ -568,7 +577,7 @@ test('no level claims itself: each waits for its press, and its popup lists only
     }
     assert.equal(app.querySelector('#reward-continue').disabled, false);
     app.remove();
-  } finally { Object.assign(globalThis, saved); }
+  } finally { t.mock.timers.reset(); Object.assign(globalThis, saved); }
 });
 
 test('each claim lifts the reward IT unlocked, not an older one still waiting', () => {
@@ -597,6 +606,37 @@ test('each claim lifts the reward IT unlocked, not an older one still waiting', 
     assert.ok(app.querySelector('.reward-kind.reward-level-offer[data-key="levelChoice:0"]'), 'the older reward is still lifted');
     app.remove();
   } finally { Object.assign(globalThis, saved); }
+});
+
+test('async skill banking holds reward actions and ignores completion after the mounted screen is replaced', async () => {
+  for (const leave of [false, true]) {
+    const dom = rewardDom(), saved = Object.fromEntries(Object.keys(dom).map(key => [key, globalThis[key]]));
+    Object.assign(globalThis, dom);
+    try {
+      const app = document.createElement('main'); document.body.append(app);
+      const run = climber(); run.skills = { 'item:blade': { level: 0, xp: 100, pendingDrafts: 0 } };
+      let settle, done = 0, writes = 0;
+      const rewards = { cardIds: ['rend', 'stomp'], xpGains: { level: 0, tracks: { 'item:blade': 100 } } };
+      const checkpoint = { rewards, states: {} };
+      mountRewards(app, { registries, run, rewards, checkpoint, onDone: () => done++, onPersist: () => { writes++; },
+        onClaimSkill: () => new Promise(resolve => { settle = resolve; }),
+        saves: { loadMeta: () => ({ settings: { levelUpRefillSeconds: 0 } }) } });
+      app.querySelector('.reward-level-up[data-track="item:blade"]').click();
+      assert.equal(app.querySelector('#reward-continue').disabled, true);
+      app.querySelector('#reward-continue').click();
+      assert.equal(done, 0);
+      const host = app.querySelector('.reward-claim-layout');
+      app.querySelector('.reward-kind[data-kind="card"]').click();
+      assert.equal(app.querySelector('.reward-claim-layout'), host, 'nonbutton rows cannot navigate during a pending claim');
+      if (leave) app.innerHTML = '<p id="replacement">New screen</p>';
+      settle(claimBankedSkillLevel(registries, run, 'item:blade'));
+      await Promise.resolve(); await Promise.resolve();
+      assert.equal(!!app.querySelector('#reward-level-continue'), !leave);
+      if (!leave) { assert.ok(writes > 0); assert.equal(checkpoint.skillClaims['item:blade'], 1); }
+      if (leave) assert.ok(app.querySelector('#replacement'));
+      app.remove();
+    } finally { Object.assign(globalThis, saved); }
+  }
 });
 
 test('all ready tracks carry Level up together; a later skill may be claimed first', () => {

@@ -16,6 +16,7 @@
 import { createCombat } from './combat.js';
 import { runHandRules } from '../model/handRules.js';
 import { playInDeckOrder } from '../model/deckRules.js';
+import { combatRoundsFor, normalPreviewFor } from '../model/combatRounds.js';
 import { recoveryRulesFor } from '../model/recoveryRules.js';
 import { ratingsConfigFor } from '../model/statRows.js';
 import { runMods, resolveSwapCostRule } from '../model/loadout.js';
@@ -24,6 +25,10 @@ import { staminaAtCombatStart, staminaDeficitAtCombatStart } from '../framework/
 import { settleFightConsumables, tickCompanions } from '../model/consumables.js';
 import { resolveEnemyLevel } from '../model/levels.js';
 import { stampSkillBonuses, critRulesFor } from '../model/skills.js';
+import { openKnowledgeEncounter } from '../model/enemyKnowledgeRun.js';
+import { emptyEnemyKnowledge, mergeEnemyKnowledge } from '../model/enemyKnowledgeProfile.js';
+import { reconcileCombatKnowledge } from './enemyKnowledge.js';
+import { effectiveAshenBlightAttributes } from '../model/ashenBlight.js';
 
 export function enemyLevelsForFight(registries, run, enemyIds, encounter = null) {
   return enemyIds.map((enemyId, index) => {
@@ -52,7 +57,10 @@ export function runCombatPlayer(run) {
   return {
     classId: run.class,
     ...(run.classUnequipped ? { classUnequipped: true } : {}),
-    attributes: run.attributes,
+    attributes: run.combatExpansionVersion === 2 ? effectiveAshenBlightAttributes(run) : run.attributes,
+    allocatedAttributes: run.attributes,
+    ashenBlight: run.ashenBlight,
+    baseResourceMaxima: run.ashenBlightBasePools,
     // The character level every stat row's `perLevel` reads (ruleset 7).
     level: Number.isInteger(run.level?.level) && run.level.level >= 1 ? run.level.level : 1,
     attributeMode: run.attributeMode, // the scale the dodge reads Dexterity on (plan A3)
@@ -111,11 +119,21 @@ export function runCombatPlayer(run) {
 export function createRunCombat({
   registries, rng, run, enemyIds, encounter = null, settings = {},
   hpMult = 1, enemyDamageMult = 1, enemyStatuses = [], playerStatuses = [], player = {},
+  enemyKnowledgeProfile = emptyEnemyKnowledge(),
 }) {
   // The every-5th-level skill bonus is derived (SPEC §13.4o): stamped fresh
   // here so the fight's copies carry the levels and hands it starts with.
   stampSkillBonuses(registries, run);
-  return createCombat({
+  const knowledgeRun = run.enemyKnowledgeState ? { ...run, enemyKnowledgeState: structuredClone(run.enemyKnowledgeState) } : null;
+  if (knowledgeRun) openKnowledgeEncounter(knowledgeRun, run.mapNodeId || 'combat', encounter?.id || enemyIds.join(','), enemyIds, enemyKnowledgeProfile);
+  const combat = createCombat({
+    ...(knowledgeRun ? { knowledge: { rules: run.enemyKnowledgeRules, encounter: knowledgeRun.enemyKnowledgeState.currentEncounter,
+      bankable: knowledgeRun.enemyKnowledgeState.bankable, profiles: { player: mergeEnemyKnowledge(knowledgeRun.enemyKnowledgeState.pending, enemyKnowledgeProfile) } } } : {}),
+    combatExpansionVersion: run.combatExpansionVersion || 1,
+    reactionRulesVersion: run.reactionRulesVersion || null,
+    reactionRules: run.reactionRules,
+    combatExpansionRules: run.combatExpansionRules,
+    combatKey: `${run.seed}/${run.actNumber}/${run.floor}/${run.mapNodeId || enemyIds.join(',')}`,
     // ONE ROW FORMAT, READ FROM THE RUN (ruleset 7). The rating rows and the
     // three hand rows are this run's own — its snapshot's (its class's opening
     // hand among them), or for a run born before ruleset 7 the retired homes it
@@ -129,6 +147,12 @@ export function createRunCombat({
     // Settings → Advanced → Recovery, read once here and snapshotted: null at
     // the defaults (model/recoveryRules.js).
     recoveryRules: recoveryRulesFor(settings),
+    // Combat Rounds Preview (SPEC §4.11): read from the run's FROZEN overrides,
+    // never the live settings, so a run keeps the preview it was born with.
+    // null (off) leaves the fight without a combatRounds field.
+    combatRounds: combatRoundsFor(run.advancedConfigSnapshot?.overrides),
+    // SPEC §4.11: the normal fight's momentum and multi-action toggles (null when both are off or rounds mode is on).
+    normalPreview: normalPreviewFor(run.advancedConfigSnapshot?.overrides),
     registries,
     rng,
     player: { ...runCombatPlayer(run), ...player },
@@ -147,10 +171,17 @@ export function createRunCombat({
     // has no equipment code, only statuses applied at combat start.
     playerStatuses: [...playerStatuses, ...runMods(registries, run.loadout, run.class).startStatuses],
   });
+  if (knowledgeRun) run.enemyKnowledgeState = knowledgeRun.enemyKnowledgeState;
+  return combat;
 }
 
 /** Write what a fight leaves behind back onto the run (live onCombatEnd's first half). */
 export function runCombatEnd(run, combat) {
+  reconcileCombatKnowledge(run, combat);
+  if (combat.combatExpansionVersion === 2) {
+    run.ashenBlight = structuredClone(combat.player.ashenBlight);
+    run.ashenBlightBasePools = structuredClone(combat.player.baseResourceMaxima);
+  }
   run.flasks = combat.player.flasks; // drunk flasks stay drunk
   run.flaskCharges = combat.player.flaskCharges ? { ...combat.player.flaskCharges } : run.flaskCharges;
   for (const field of ['hp', 'mana', 'stamina']) {

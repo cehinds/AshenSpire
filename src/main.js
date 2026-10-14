@@ -1,13 +1,15 @@
 import { rollPendingAbilityOffers } from './model/abilityOffers.js';
+import { openRestRecord, recordRestConsumed, markRestLeft, restRevisitNodeId, clearRestRevisitOnTravel } from './model/restRevisit.js';
 import { queueInitialProgression } from './model/initialProgression.js';
 import { isAbilitySkill } from './model/abilityGrades.js';
 import { expandedProgression } from './model/classMilestones.js';
 import { claimClassMilestoneReward, rollClassMilestoneRewards } from './model/classMilestoneOffers.js';
-import { completedRunMeta, commitRunFinish } from './model/runCompletion.js';
+import { completedRunMeta, commitRunFinishAsync } from './model/runCompletion.js';
 import { mountInitialClassMastery } from './ui/components/classMastery.js';
 import { hasClassMastery, openRunClassMastery, registriesForClassMastery, adoptClassMasteryProfile, refreshRunClassMastery } from './model/classMasteryRun.js';
 import { mergeProgressionRewards, partitionProgressionRewards, unclaimedProgressionRewards } from './model/deferredProgression.js';
 import { applyArtQuality, onArtSourceChange, builtInArtArrived, ART_REDRAW_EVENT } from './ui/highResArt.js';
+import { applyCardArtStyle } from './ui/cardArtStyle.js';
 import { whenBuiltInArtReady, musicHold, bootLine, packsPinned, builtInArtStatus, builtInArtSettled } from './ui/assetPacks.js';
 import { applyArtTier, onTierArrived, requestedTier, retryBuiltInArt, onRetryProgress } from './ui/artTier.js';
 import { startBootArt, bootArtLine, bootArtRetried } from './ui/bootArt.js';
@@ -24,6 +26,7 @@ import { LEGACY_DUNGEONS, dungeonForEncounter, dungeonDefinition, dungeonNode, d
 import { mountLegacyDungeon } from './ui/screens/legacyDungeon.js';
 import { mountDialogue } from './ui/screens/dialogue.js';
 import { applyHudVisibility } from './ui/models/HudVisibilityModel.js';
+import { formFactorFor } from './ui/models/FormFactorModel.js';
 import { applyWireframeChoices } from './ui/wireframeChoices.js';
 import { restampModalWireframes } from './ui/components/modalShell.js';
 import { restampWorkspaceFrames } from './ui/components/w1Workspace.js';
@@ -73,11 +76,16 @@ import { configuredRewardOffer as rewardOfferForSource, pendingRewardCheckpoint,
 import { rollSigilDrop } from './model/sigils.js';
 import { combatXpGains } from './model/rewardprogress.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from './engine/combatSnapshot.js';
+import { commitExpansionCandidate } from './engine/combatExpansionSave.js';
 import { buildActMap, bossEncounterForNode, drawSeatOrder } from './engine/actmap.js';
 import { seatAtTier, seatTierHpMult, bossTierScale } from './model/seats.js';
 import { createSaveManager, createMemoryStorage, META_KEY, META_BACKUP_KEY, SLOTS, runKey } from './engine/save.js';
+import { createBrowserSaveManager } from './engine/browserSave.js';
+import { openRunEnemyKnowledge } from './model/enemyKnowledgeRun.js';
+import { createRunStartOwner } from './model/runStart.js';
 import { createSaveTransfer } from './engine/saveTransfer.js';
 import { openOfflinePlay } from './ui/components/offlinePlay.js';
+import { modalOpen, onModalsClosed } from './ui/modalState.js';
 import {
   rollEncounter,
   rollRuneReward,
@@ -85,6 +93,7 @@ import {
   rollClassDraftIds,
   rollFlaskDrop,
   rollRelicReward,
+  rollRelicChoices,
   rollArmamentDrop,
 } from './engine/encounters.js';
 import { buildMarketStock, marketVisitStock, commitInnRest, buildBlacksmithStock, blacksmithVisitStock, buildMasterStock, masterVisitStock } from './engine/shopKinds.js';
@@ -102,7 +111,7 @@ import { openProfileArchive } from './ui/screens/profileArchive.js';
 import { mountCustomize } from './ui/screens/customize.js';
 import { mountCustomRun } from './ui/screens/customRun.js';
 import { mountDraft } from './ui/screens/draft.js';
-import { executeRunEffects, drawCards, discardFromHand } from './engine/actions.js';
+import { executeRunEffects, drawCards, discardFromHand, executeAction } from './engine/actions.js';
 import { mountMap } from './ui/screens/map.js';
 import { mountCombat } from './ui/screens/combat.js';
 import { mountCombatTest } from './ui/screens/combatTest.js';
@@ -116,12 +125,14 @@ import { mountGameOver } from './ui/screens/gameover.js';
 import { victoryBeat } from './ui/components/victoryBeat.js';
 import { mountHistory } from './ui/screens/history.js';
 import { mountCompendium } from './ui/screens/compendium.js';
+import { mountBestiary } from './ui/screens/bestiary.js';
 import { autoLoadProfile, autoLoadEnabled } from './ui/components/settingsSync.js';
-import { seedSettingsDefaults, seedAfterChange, SEED_KEY, needsSettingsChoice, keepLocalSettings, commitSettingsChoice } from './model/settingsDefaults.js';
+import { seedSettingsDefaults, seedAfterChange, SEED_KEY, needsSettingsChoice, keepLocalSettings, commitSettingsChoiceAsync } from './model/settingsDefaults.js';
 import { BUILD_VERSION } from './buildversion.js';
 import { openSettingsDefaultsChoice } from './ui/components/settingsDefaultsChoice.js';
 import { SETTINGS_DEFAULTS } from './content/settingsDefaults.js';
 import { pageDebug, promotionDebug } from './ui/buildChannel.js';
+import { applyDisplayAppearance, publishDisplayAppearanceChange } from './ui/displayAppearance.js';
 import { mountClassRespec } from './ui/components/classRespec.js';
 import { applyClassRespec, classRespecAvailability, resetClassTree } from './model/classRespec.js';
 import { openCharacterSheet } from './ui/screens/characterSheet.js';
@@ -295,7 +306,13 @@ if (shotState === 'crisis') {
   bootStorage.setItem(META_KEY, String(bootStorage.getItem(META_KEY)).slice(0, 24));
   bootStorage.removeItem(META_BACKUP_KEY);
 }
-const saves = createSaveManager(bootStorage);
+// The cross-tab profile lock guards a storage other tabs share. Memory storage
+// (blocked browser storage, e.g. the sandboxed branch preview, whose frame
+// also refuses the Web Locks API) belongs to this tab alone, so it needs none:
+// asking would make every run start fail.
+let persistentStorage = false;
+try { persistentStorage = bootStorage === window.localStorage; } catch { /* blocked browser storage */ }
+const saves = shotState ? createSaveManager(bootStorage) : createBrowserSaveManager(bootStorage, { locks: persistentStorage ? navigator.locks : null });
 
 // `?shotSettings=<json>` — display settings for a ?shot= boot, written into the
 // EPHEMERAL store above. Read only when shotState is truthy, so a normal boot
@@ -668,6 +685,15 @@ function applyUiScale(settings) {
   // cannot disagree. The stylesheets key off this and measure nothing (#24).
   document.documentElement.setAttribute('data-layout', narrow ? 'narrow' : 'wide');
   document.documentElement.setAttribute('data-composition', compact ? 'short-wide' : 'standard');
+  // The HUD form factor (docs/hud-layout-tokens.md) — which
+  // content/hud-layout/<form-factor>.json styles the combat HUD. Written here,
+  // beside data-layout, so styling has no decider of its own; it never picks
+  // the mode or the zoom above. It does change HUD geometry (the tools span
+  // and the px offset tokens), so the combat tools row and the battlefield
+  // stage observe this attribute and re-measure when it changes.
+  // Thresholds: balance.ui.uiScale.formFactor.
+  document.documentElement.setAttribute('data-form-factor',
+    formFactorFor(window.innerWidth, window.innerHeight, UI.uiScale.formFactor));
   // Publish the short/refusal value from that same decider for layout consumers too.
   // This is not another short-screen predicate: CSS reads the answer computed
   // above, just as it reads `data-layout`. In particular, combat may let its
@@ -817,6 +843,8 @@ function applyCardSizeSettings(settings) {
 }
 
 function applyDisplaySettings(settings) {
+  applyCardArtStyle(settings);
+  const appearanceChanged = applyDisplayAppearance(settings);
   // Art quality: lay a local high-res source over the built-in art, or clear
   // it. Asynchronous (a served hd/ folder is fetched); screens drawn after it
   // resolves use the new tier, and anything the source lacks stays built-in.
@@ -970,6 +998,10 @@ function applyDisplaySettings(settings) {
   restampModalWireframes(document);
   restampWorkspaceFrames(document);
   replanCategoryNavs();
+  if (appearanceChanged) {
+    clearPosePreloads();
+    publishDisplayAppearanceChange();
+  }
 }
 // A new high-res source (Art quality) must not be undercut by pose preloads,
 // which are keyed by pose, not URL, and would keep serving the old art.
@@ -1095,6 +1127,7 @@ function showLobby() {
       // solo map honoured their setting.
       mountCoop(app, {
         registries, conn, myId, myIds, meta: saves.loadMeta(),
+        bankEnemyKnowledge: saves.bankEnemyKnowledge ? value => saves.bankEnemyKnowledge(value) : null,
         onSettingsChange: persistSettingsChange,
         onLeave: () => showTitle(),
       });
@@ -1106,7 +1139,39 @@ function randomSeedString() {
   return seedToString((Math.random() * 0xffffffff) >>> 0);
 }
 
-function newRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, attributeMode, attributes, journeyProfile = null, slot = 1, skipOpening = false, quickStart = false }) {
+const runStartOwner = createRunStartOwner();
+function newRun(config) {
+  const asked = config.seedString || randomSeedString();
+  const why = seedProblem(asked);
+  if (why) {
+    failureBanner('run:seed', 'THIS SEED CANNOT START A RUN', ` · ${JSON.stringify(String(config.seedString))} — ${why}`);
+    console.error('[seed] refused at newRun:', { seedString: config.seedString, why });
+    return Promise.resolve({ ok: false, reason: why });
+  }
+  // Screenshot boot composes its fixture immediately after this call. Its
+  // memory profile is synchronous and must preserve that same-stack contract.
+  if (shotState) {
+    const profile = saves.ensureProfile();
+    if (!profile.ok) throw new Error(`Profile could not be saved: ${profile.reason}`);
+    return beginPreparedRun({ ...config, seedString: asked });
+  }
+  const surface = app.firstElementChild, previousRun = run;
+  return runStartOwner.start({
+    prepare: () => saves.ensureProfile(),
+    isCurrent: () => app.firstElementChild === surface && run === previousRun,
+    adopt: () => beginPreparedRun({ ...config, seedString: asked }),
+    onFailure: error => {
+      const message = `Profile could not be saved: ${error.message}`;
+      console.error('[run] start refused:', error);
+      // The command log keeps the reason even when the banner is folded into
+      // its overflow; keying by reason lets a new reason raise its own banner.
+      dlog('ERROR', `run start refused: ${error.message}`);
+      if (!showSettingsNotice(message, 'profile')) failureBanner(`run:start:${error.message}`, 'THIS RUN COULD NOT START', ` · ${error.message}`);
+    },
+  });
+}
+
+function beginPreparedRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes, journeyProfile = null, slot = 1, skipOpening = false, quickStart = false }) {
   resetArmouryTraySession();
   // THE CATCH THAT USED TO BE HERE IS GONE, and it is the whole point of the
   // change. It read:
@@ -1146,17 +1211,37 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
   // tooltip a lie. BEGIN THE CLIMB is where a character stops being a preview,
   // and it is one line above the run being made, so the write order is the ask.
   // A refused seed returns above and creates nothing.
-  saves.ensureProfile();
   activeSlot = slot;
   const seed = seedFromString(asked);
-  const configSnapshot = { ...advancedConfigSnapshot(saves.loadMeta().settings || {}) };
+  const legacyArcaneShot = shotState === 'combat' && shotParams.get('shotArcane') === 'matrix';
+  const shotCombatVersion = shotState === 'combat' ? shotParams.get('shotCombatVersion') : null;
+  if (shotCombatVersion !== null && !['1', '2'].includes(shotCombatVersion)) {
+    throw new Error('shotCombatVersion must be 1 or 2');
+  }
+  const combatExpansionVersion = legacyArcaneShot || shotCombatVersion === '1' ? 1 : 2;
+  const shotKnowledgeVersion = shotState === 'combat' ? shotParams.get('shotKnowledgeVersion') : null;
+  if (shotKnowledgeVersion !== null && !['0', '1'].includes(shotKnowledgeVersion)) {
+    throw new Error('shotKnowledgeVersion must be 0 or 1');
+  }
+  // Checkpoint fixtures can disable knowledge independently of combat rules.
+  // Normal runs and default expanded shots keep accepted knowledge durable.
+  const enemyKnowledgeVersion = shotKnowledgeVersion === null
+    ? legacyArcaneShot || shotCombatVersion === '1' ? null : 1
+    : shotKnowledgeVersion === '0' ? null : 1;
+  const shotReactionVersion = shotState === 'combat' ? shotParams.get('shotReactionVersion') : null;
+  if (shotReactionVersion !== null && !['0', '1', '2'].includes(shotReactionVersion)) throw new Error('shotReactionVersion must be 0, 1 or 2');
+  const reactionRulesVersion = shotReactionVersion === null
+    ? legacyArcaneShot || shotCombatVersion === '1' || shotKnowledgeVersion === '0' ? null : 2
+    : shotReactionVersion === '0' ? null : Number(shotReactionVersion);
+  const configSnapshot = { ...advancedConfigSnapshot(saves.loadMeta().settings || {}),
+    breakMeterVersion: combatExpansionVersion === 2 ? 2 : 1 };
   // The Arcane matrix is a legacy-run visual fixture. It deliberately carries
   // the old Exposure states; the pose must also carry their older rules.
-  if (shotState === 'combat' && shotParams.get('shotArcane') === 'matrix') delete configSnapshot.breakMeterVersion;
+  if (legacyArcaneShot) delete configSnapshot.breakMeterVersion;
   rebuildRegistries(configSnapshot);
   run = createRunState({
-    seed, classId, registries, startingKitId, startingHands, startingArmourId, startingRelicId, attributeMode, attributes,
-    profileMeta: saves.loadMeta(),
+    seed, classId, registries, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes,
+    profileMeta: saves.loadMeta(), combatExpansionVersion, enemyKnowledgeVersion, reactionRulesVersion,
   });
   run.advancedConfigSnapshot = configSnapshot;
   run.seedString = seedToString(seed);
@@ -1166,6 +1251,7 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
   if (quickStart) run.quickStart = true;
   if (!shotState) {
     openRunClassMastery(registries, run, saves.loadMeta(), { receiptId: crypto.randomUUID() });
+    openRunEnemyKnowledge(run, { receiptId: run.classMasteryState.receiptId, bankable: true });
     registries = registriesForClassMastery(registries, run);
   }
   run.stats = { fightsWon: 0, damageDealt: 0, damageTaken: 0 };
@@ -1325,7 +1411,9 @@ function refusedRunLanding(slot) {
 // hand until the second pass hands back a run. A refusal restores the
 // registries and calls `onRefused` — the title by default; the in-run Load
 // door passes its own, which keeps the run on screen (confirmSlotLoad).
+let terminalResume = null;
 function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } = {}) {
+  if (terminalResume) return terminalResume;
   const liveRegistries = registries;
   const refused = () => {
     if (registries !== liveRegistries) {
@@ -1376,7 +1464,13 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
   if (run.prologue?.version === 1) { migratePrologueState(run); persist(); }
   if (run.pendingFinish) {
     const victory = run.pendingFinish.victory;
-    return showFinishedRun(victory);
+    return resumeTerminal(() => showFinishedRun(victory));
+  }
+  if (run.combatPendingOutcome) {
+    const pending = run.combatPendingOutcome;
+    const ended = restoreCombatSnapshot({ registries, rng, snapshot: pending.snapshot });
+    const encounter = combatEncounterFor(registries, run, { nodeId: pending.nodeId, encounterId: pending.encounterId });
+    return resumeTerminal(() => onCombatEnd(pending.result, ended, encounter));
   }
   if (pendingPrologueScene(run) !== null) return showPrologue();
   if (run.pendingReward) {
@@ -1394,6 +1488,16 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
   } else {
     showMap();
   }
+}
+
+function resumeTerminal(operation) {
+  const previouslyInert = app.inert;
+  app.inert = true;
+  terminalResume = Promise.resolve().then(operation).finally(() => {
+    app.inert = previouslyInert;
+    terminalResume = null;
+  });
+  return terminalResume;
 }
 
 function saveSlotRecords() {
@@ -1665,13 +1769,18 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
       const empty = slots.find((s) => !s.summary);
       startRunInSlot({ ...quickStartRunConfig(registries), seedString: randomSeedString() }, empty ? empty.slot : 1);
     },
-    // A delete returns to the door it came from, with the slot now empty.
+    // The Title updates in place from the returned list (no remount). The
+    // snapshot below is this showTitle's own `slots`, which onQuickStart and
+    // onCustom read, so it is refreshed too.
     onDelete: (slot, from = null) => {
       saves.clearRun(slot);
-      showTitle({ reopen: from });
+      const fresh = saveSlotRecords();
+      slots.splice(0, slots.length, ...fresh);
+      return fresh;
     },
     onHistory: showHistory,
     onCompendium: showCompendium,
+    onBestiary: showBestiary,
     onProfile: showProfile,
     onSettings: showSettings,
     onOffline: showOfflinePlay,
@@ -1698,8 +1807,8 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
     }
   }
   if (settingsChoicePending) {
-    const choose = (apply) => {
-      const result = commitSettingsChoice(saves.loadMeta(), BUILD_VERSION, {
+    const choose = async (apply) => {
+      const result = await commitSettingsChoiceAsync(saves.loadMeta(), BUILD_VERSION, {
         apply,
         load: () => saves.loadMeta(),
         save: meta => saves.saveMeta(meta),
@@ -1715,14 +1824,14 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
         const changes = keepLocalSettings(activeSettings, promotionFor(SETTINGS_DEFAULTS, promotionDebug()));
         return persistSettingsChange(changes);
       }),
-      onDefaults: () => choose(() => {
-        let saved = true;
+      onDefaults: () => choose(async () => {
+        const writes = [];
         resetKeys(activeSettings, changes => {
           const result = persistSettingsChange(changes);
-          saved &&= result?.ok !== false;
+          writes.push(Promise.resolve(result));
           return result;
         }, allResettableKeys());
-        return { ok: saved };
+        return { ok: (await Promise.all(writes)).every(result => result?.ok !== false) };
       }),
     });
   }
@@ -1749,11 +1858,13 @@ function showProfile() {
   });
 }
 
-function persistSettingsChange(changed) {
+async function persistSettingsChange(changed) {
   if (!saves.profileStatus().quarantined) {
     activeMeta = saves.loadMeta();
     activeSettings = activeMeta.settings || (activeMeta.settings = {});
   }
+  const settingsBefore = structuredClone(activeSettings);
+  const runRulesBefore = run?.advancedConfigSnapshot ? structuredClone(run.advancedConfigSnapshot) : null;
   // A value the player moves off a promoted one is theirs from now on.
   const seed = seedAfterChange(activeSettings, changed);
   Object.assign(activeSettings, changed);
@@ -1777,7 +1888,21 @@ function persistSettingsChange(changed) {
   if (Object.keys(changed || {}).some((key) => STAT_ROWS_CHANGED_MEANING.test(key))) activeSettings[STAT_ROWS_MARKER] = STAT_ROWS_VERSION;
   if (seed) activeSettings[SEED_KEY] = seed;
   activeMeta.settings = activeSettings;
-  const res = saves.saveMeta(activeMeta);
+  const res = await saves.saveMeta(activeMeta);
+  if (res?.ok === false) {
+    activeSettings = settingsBefore;
+    activeMeta.settings = settingsBefore;
+    if (run && runRulesBefore) {
+      run.advancedConfigSnapshot = runRulesBefore;
+      rebuildRegistries(runRulesBefore, run);
+      if (xpCombat) xpCombat.registries = registries;
+      persist();
+    }
+    applyDisplaySettings(activeSettings);
+    refreshHudQuickSettings(app, activeSettings);
+    showSettingsNotice(QUARANTINE_NOTICE);
+    return res;
+  }
   applyDisplaySettings(activeSettings);
   refreshHudQuickSettings(app, activeSettings);
   remountMapIfShowing(changed);
@@ -1818,8 +1943,12 @@ const quickMenuControls = {
   },
 };
 
+// The Settings door showSettings opened, so an import, which replaces the profile
+// under it, can close it. Its toggles read the stale DOM otherwise.
+let settingsDoor = null;
+
 function showSettings() {
-  openSettings({
+  settingsDoor = openSettings({
     meta: activeMeta,
     previewAttributes: run?.attributes,
     previewLevel: run ? characterLevelOf(run) : null,
@@ -1829,8 +1958,34 @@ function showSettings() {
   });
 }
 
+// AFTER AN IMPORT, NO RELOAD. The restored profile is on disk; re-read it the way
+// boot does (persistSettingsChange's order) and redraw the title over the same page.
+// It goes through the Profile door's restore (onRestored in showProfile): the
+// stored profile is brought forward, then the same defaults choice as boot is
+// decided before any promoted value is seeded. With no choice pending the
+// promoted defaults are seeded; otherwise the imported values remain intact
+// for Keep local. applyRestoredSettings then re-applies display, UI scale, pad
+// and key bindings, drops a stale Undo, and fills activeSettings IN PLACE
+// (other owners hold that object).
+function refreshAfterImport() {
+  activeMeta = saves.loadMeta();
+  const settings = bringStoredProfileForward(activeMeta);
+  settingsChoicePending = saves.profileStatus().ok
+    && needsSettingsChoice(activeMeta, BUILD_VERSION, settingsRows(), promotionFor(SETTINGS_DEFAULTS, promotionDebug()).values);
+  if (!settingsChoicePending) seedPromotedDefaults(activeMeta, settings);
+  applyRestoredSettings(settings);
+  rebuildRegistries(activeSettings);
+  settingsChoiceChecked = true;
+  // The Settings door (opened from the title's Download & saves path) still shows the old profile.
+  settingsDoor?.close?.(); settingsDoor = null;
+  showTitle({ skipStartup: true });
+}
+
 function showOfflinePlay() {
-  openOfflinePlay({ transfer: createSaveTransfer(bootStorage, registries), assertImportAllowed: () => {
+  const transfer = createSaveTransfer(bootStorage, registries);
+  const ownedTransfer = { ...transfer, restore: text => saves.withProfile
+    ? saves.withProfile(() => transfer.restore(text)) : transfer.restore(text) };
+  openOfflinePlay({ transfer: ownedTransfer, onImported: refreshAfterImport, assertImportAllowed: () => {
     if (run) throw new Error('Return to the title screen before importing saves.');
     let persistent = false;
     try { persistent = bootStorage === window.localStorage; } catch { /* blocked browser storage */ }
@@ -1902,7 +2057,7 @@ function showCharacterSheet(opener, options = {}) {
 
 // ---- the deck editor (SPEC §14.1) --------------------------------------------
 // Which doors open it is the settings' answer (DeckEditorModel.deckEditorDoors):
-// under `free` the map's Quick Access and the Armoury, under `restOnly` the
+// under `free` the Armoury, under `restOnly` the
 // Rest screen of a place carrying `deckEdit`, and none with deck editing off.
 // Every door here is out of combat; the fight's Armoury gets none.
 function deckDoors(services = null) {
@@ -1934,6 +2089,10 @@ function showHistory() {
  * The Compendium — every armament the Spire keeps, most of it withheld.
  * A PROFILE surface: no run, no class, so `meta.found` is the whole of "yours".
  */
+function showBestiary() {
+  mountBestiary(app, { registries, meta: saves.loadMeta(), onBack: () => { showTitle(); document.getElementById('bestiary')?.focus(); } });
+}
+
 function showCompendium() {
   mountCompendium(app, { registries, meta: saves.loadMeta(), onBack: showTitle });
 }
@@ -2107,36 +2266,60 @@ function treasureSmithingReward() {
   return grantSmithingReward(registries, run, 'treasure', smithingRewardId(run, 'treasure'), rng);
 }
 
-function finishRun(victory) {
-  return commitRunFinish(run, {
+async function finishRun(victory) {
+  const finishedRun = run, finishedSlot = activeSlot, finishedRegistries = registries, finishedRng = rng;
+  const owned = () => run === finishedRun && activeSlot === finishedSlot;
+  const checkpoint = () => {
+    if (!owned()) throw new Error('The active run changed while completion was pending.');
+    if (!shotState) refreshRunClassMastery(finishedRun, saves.loadMeta(), finishedRegistries);
+    stampSkillBonuses(finishedRegistries, finishedRun);
+    saves.saveRun(finishedRun, finishedRng, finishedSlot);
+  };
+  const resultRecord = runResult(victory);
+  return commitRunFinishAsync(finishedRun, {
     victory,
-    finishId: run.classMasteryState?.receiptId || crypto.randomUUID(),
-    checkpoint: persist,
-    bank: () => {
-      if (!hasClassMastery(run)) return;
-      const bank = saves.bankClassMastery(run, registries);
+    finishId: finishedRun.classMasteryState?.receiptId || crypto.randomUUID(),
+    checkpoint,
+    bank: async () => {
+      const knowledge = saves.bankEnemyKnowledge ? await saves.bankEnemyKnowledge(finishedRun) : { ok: true };
+      if (!knowledge.ok) throw new Error(`Enemy learning was not saved: ${knowledge.reason}`);
+      checkpoint();
+      if (!hasClassMastery(finishedRun)) return;
+      const bank = await saves.bankClassMastery(finishedRun, finishedRegistries);
       if (!bank.ok) throw new Error(`Class mastery was not saved: ${bank.reason}`);
-      adoptClassMasteryProfile(run, bank.meta);
-      if (bank.warning) showSettingsNotice(bank.warning, 'profile');
+      adoptClassMasteryProfile(finishedRun, bank.meta);
+      checkpoint();
+      if (bank.warning && owned()) showSettingsNotice(bank.warning, 'profile');
     },
-    complete: (pending) => {
-      const result = { ...runResult(pending.victory), finishId: pending.id };
-      const completed = completedRunMeta(registries, saves.loadMeta(), result);
+    complete: (pending) => saves.withProfile ? saves.withProfile(writer => {
+      if (!owned()) throw new Error('The active run changed while completion was pending.');
+      const result = { ...resultRecord, victory: pending.victory, finishId: pending.id };
+      const completed = completedRunMeta(finishedRegistries, writer.loadMeta(), result);
+      const saved = writer.saveMeta(completed.meta);
+      if (!saved.ok) throw new Error(`Run results were not saved: ${saved.reason}`);
+      return completed.unlocked.map((id) => finishedRegistries.unlocks.find((u) => u.id === id)).filter(Boolean);
+    }) : (() => {
+      if (!owned()) throw new Error('The active run changed while completion was pending.');
+      const result = { ...resultRecord, victory: pending.victory, finishId: pending.id };
+      const completed = completedRunMeta(finishedRegistries, saves.loadMeta(), result);
       const saved = saves.saveMeta(completed.meta);
       if (!saved.ok) throw new Error(`Run results were not saved: ${saved.reason}`);
-      return completed.unlocked.map((id) => registries.unlocks.find((u) => u.id === id)).filter(Boolean);
-    },
+      return completed.unlocked.map((id) => finishedRegistries.unlocks.find((u) => u.id === id)).filter(Boolean);
+    })(),
     clear: () => {
-      saves.clearRun(activeSlot);
-      if (saves.hasRun(activeSlot)) throw new Error('The completed run could not be cleared from its slot.');
+      if (!owned()) throw new Error('The active run changed while completion was pending.');
+      saves.clearRun(finishedSlot);
+      if (saves.hasRun(finishedSlot)) throw new Error('The completed run could not be cleared from its slot.');
     },
   });
 }
 
-function showFinishedRun(victory) {
-  const result = finishRun(victory);
+async function showFinishedRun(victory) {
+  const finishedRun = run, finishedSlot = activeSlot, finishedRegistries = registries;
+  const result = await finishRun(victory);
+  if (run !== finishedRun || activeSlot !== finishedSlot) return result;
   const retry = () => showFinishedRun(victory);
-  mountGameOver(app, { registries, game: run, victory, earned: result.earned,
+  mountGameOver(app, { registries: finishedRegistries, game: finishedRun, victory, earned: result.earned,
     onTitle: showTitle, onHistory: showHistory, onRetry: result.ok ? null : retry });
   if (!result.ok) openSaveStatusReview({
     ...runIdentityParts(), savedAt: run.savedAt ?? null, error: result.error, onRetry: retry,
@@ -2242,13 +2425,26 @@ function showDraft() {
  * Potions action re-read the meta it was mounted with
  * (tools/flask-menu-probe.mjs, persistence).
  */
-const MAP_REMOUNT_KEYS = ['mapMode', 'mapZoom', 'mapFreePan'];
+const MAP_REMOUNT_KEYS = ['mapMode', 'mapZoom', 'mapFreePan', 'classicAppearance'];
 // Only where a flask surface reads it: the world atlas is a `.mapscreen` too but
 // has no Potions control, and a remount drops its selected destination
 // (#1474 review).
 const FLASK_REMOUNT_KEYS = ['useRestorativeFlasksOutsideCombat'];
+// A remount that lands while a modal is open (Settings over the map) waits for
+// the modal to close. One deferred remount is kept; later changes merge into it.
+let deferredMapRemount = null;
 function remountMapIfShowing(changed) {
   if (!run || !changed) return;
+  if (modalOpen()) {
+    if (deferredMapRemount) { Object.assign(deferredMapRemount, changed); return; }
+    const pending = { ...changed };
+    deferredMapRemount = pending;
+    onModalsClosed(() => {
+      if (deferredMapRemount === pending) deferredMapRemount = null;
+      remountMapIfShowing(pending);
+    });
+    return;
+  }
   const screen = app.querySelector('.mapscreen');
   if (!screen) return;
   const mapKey = MAP_REMOUNT_KEYS.some((k) => k in changed);
@@ -2282,7 +2478,6 @@ function showMap(opts) {
     },
     onTravel: enterWorldNode, onAction: worldLocationAction, onSave: persist,
     onMenu: showOverlay, onArmoury: showArmoury,
-    onEditDeck: deckDoors().quickAccess ? () => showDeckEditor(showMap) : null,
     onQuit: () => { persist(); showCollapsedTitle(); },
     inspectNodeId: run.journey.inspectNodeId || null,
   });
@@ -2291,12 +2486,13 @@ function showMap(opts) {
     run,
     meta: activeMeta,
     selectedId,
+    // A left classic rest site stays enterable until a new node is chosen.
+    revisitId: restRevisitNodeId(run),
     onPick: enterNode,
     onSettings: showSettings,
     onSettingsChange: persistSettingsChange,
     onMenu: showOverlay,
     onArmoury: showArmoury,
-    onEditDeck: deckDoors().quickAccess ? () => showDeckEditor(showMap) : null,
     onLoad: loadActiveSlot,
     onQuitWithoutSave: quitWithoutSaving,
     quickControls: quickMenuControls,
@@ -2472,8 +2668,11 @@ function finishWorldService() {
 }
 
 function enterNode(nodeId) {
-  sfx.play('nodeTravel');
+  // Re-entering the node the player stands on is not travel, so no travel sound.
+  if (nodeId !== run.mapNodeId) sfx.play('nodeTravel');
   const node = run.mapGraph.nodes[nodeId];
+  // Travelling to another node ends a left rest site's re-entry (restRevisit.js).
+  clearRestRevisitOnTravel(run, nodeId);
   run.mapNodeId = nodeId;
   if (!run.path.includes(nodeId)) run.path.push(nodeId);
   run.floor = node.floor;
@@ -2682,21 +2881,49 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
   const enc = combatEncounterFor(registries, run, run.combatEntered);
   audio.music(enc.pool === 'boss' ? 'boss' : enc.pool === 'elite' ? 'elite' : 'combat');
   const cm = combatMods(enc.pool, enc);
+  const entryRng = run.combatExpansionVersion === 2 && !savedSnapshot ? createRng(rng.seed, rng.getCounters()) : rng;
   const combat = savedSnapshot ? restoreCombatSnapshot({ registries, rng, snapshot: savedSnapshot, fallbackAttackSlotCount: run.equipmentAttackSlotCount, fallbackRemovedAttackSlotIds: run.removedAttackSlotIds, fallbackDerivedStatRuleSnapshot: run.derivedStatRuleSnapshot, fallbackAttributeMode: run.attributeMode, fallbackPoolDeck: isPoolDeckMode(run) }) : createRunCombat({
     registries,
-    rng,
+    rng: entryRng,
     run,
     settings: saves.loadMeta().settings || {},
+    enemyKnowledgeProfile: saves.loadMeta().enemyKnowledge,
     // The shot door's override, when parked (null otherwise — createCombat
     // then derives the threshold from the loadout receipt, the real path).
     player: shotPoiseMaxOverride != null ? { poiseMax: shotPoiseMaxOverride } : {},
-    enemyIds: enc.enemies,
+    enemyIds: shotState === 'combat' && shotParams.get('shotReaction') === 'counter' ? ['wanderingSoldier', 'wanderingSoldier'] : enc.enemies,
     encounter: enc,
     hpMult: cm.hpMult,
     enemyDamageMult: cm.damageMult,
     enemyStatuses: cm.enemyStatuses,
     playerStatuses: cm.playerStatuses,
   });
+  if (combat.combatExpansionVersion === 2) {
+    const durable = candidate => {
+      const committed = commitExpansionCandidate({ run, candidate, nodeId, encounterId,
+        saveCandidate: (next, committedRng) => saves.saveRun(next, committedRng, activeSlot) });
+      if (committed.ok && (committed.durable !== false || committed.knowledge) && run.enemyKnowledgeState && saves.bankEnemyKnowledge) {
+        const learningRun = run, learningSlot = activeSlot;
+        saves.bankEnemyKnowledge(learningRun).then(result => {
+          // The accepted action already saved the complete pending ledger.
+          // A failed profile bank keeps it intact; successful acknowledgments
+          // are checkpointed without reopening the encounter or rolling reads.
+          // No rng: the saved counters stay those of the combat checkpoint,
+          // which ordinary unsaved actions never move (SPEC §3.12).
+          if (run === learningRun) saves.saveRun(learningRun, null, learningSlot);
+          if (!result.ok) showSettingsNotice(`Enemy learning remains pending: ${result.reason}`, 'profile');
+        }).catch(error => showSettingsNotice(`Enemy learning remains pending: ${error.message}`, 'profile'));
+      }
+      return committed;
+    };
+    if (!savedSnapshot) {
+      durable(combat);
+      rng.restoreCounters(entryRng.getCounters());
+      combat.rng = rng;
+    }
+    combat.beforeCombatCommit = durable;
+    if (combat.result) return onCombatEnd(combat.result, combat, enc);
+  }
   // A restored combat owns the live loadout copy from its snapshot. Rejoin it
   // to the run so later swaps and the post-combat receipt share one object.
   xpCombat = combat;
@@ -2716,6 +2943,35 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
   // eight-card hand labelled ten — a silent shortfall here would quietly turn
   // every downstream sliver measurement into a fact about a different hand.
   if (shotState === 'combat' && shotParams.get('shotKit') === '1') drawArmamentKitPreview(combat);
+  if (shotState === 'combat' && shotParams.has('shotExpansion')) {
+    // Memory-only QA pose. Cards still play through the production interpreter.
+    const ids = ['emberDart', 'barrageCounter', 'rimeNeedle', 'drowsingMote', 'shieldBash', 'dodgeRoll', 'blightedTransmute', 'shatterOpportunity'];
+    combat.piles.draw.push(...combat.piles.hand);
+    combat.piles.hand = ids.map((cardId, index) => ({ cardId, instanceId: `expansion-shot-${index}`, upgraded: false }));
+    combat.player.energy = Math.max(combat.player.energy, 6);
+    combat.player.energyMax = Math.max(combat.player.energyMax, 6);
+    combat.player.maxStamina = combat.player.energyMax;
+    combat.player.mana = combat.player.maxMana = Math.max(combat.player.maxMana, 8);
+    const control = shotParams.get('shotExpansion');
+    if (['sleep', 'paralysis', 'dazed'].includes(control)) {
+      combat.enqueue({ effect: { op: 'applyStatus', target: 'self', status: control, stacks: 2 }, source: combat.player, owner: combat.player, target: combat.player });
+      while (combat.queue.length) executeAction(combat, combat.queue.shift());
+    }
+  }
+  if (shotState === 'combat' && shotParams.get('shotReaction') === 'counter') {
+    if (!(combat.reactionRulesVersion >= 1)) throw new Error('shotReaction=counter requires reaction rules');
+    // Memory-only validation pose; choices, payment and returns use production commands.
+    combat.piles.draw.push(...combat.piles.hand);
+    combat.piles.hand = ['guardCounter', 'sweepingBlow', 'strike'].map((cardId, index) => ({ cardId, instanceId: `reaction-shot-${index}`, upgraded: false }));
+    combat.player.energy = combat.player.energyMax = combat.player.maxStamina = 8;
+    combat.player.block = 40;
+    for (const enemy of combat.enemies) {
+      enemy.hp = enemy.maxHp = 100;
+      enemy.intent = { kind: 'attack', moveId: 'slash', damage: 7, hits: 1,
+        combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'slashing', range: 'melee', targeting: 'single' } };
+      enemy.intentRevealed = false;
+    }
+  }
   if (shotState === 'combat' && shotParams.has('shotHand')) {
     const wantHand = Number(shotParams.get('shotHand'));
     if (!Number.isInteger(wantHand) || wantHand < 1 || wantHand > combat.handMax) {
@@ -2816,6 +3072,20 @@ function victoryTitle(enc) {
 }
 
 async function onCombatEnd(result, combat, enc) {
+  const learningRun = run, learningSlot = activeSlot;
+  const owned = () => run === learningRun && activeSlot === learningSlot;
+  if (saves.bankEnemyKnowledge) {
+    const learning = await saves.bankEnemyKnowledge(learningRun);
+    if (!owned()) return;
+    if (!learning.ok) showSettingsNotice(`Enemy learning remains pending: ${learning.reason}`, 'profile');
+    persist();
+  }
+  // Keep the exact terminal replay receipt through every asynchronous bank
+  // and animation. Ordinary XP, room completion and the reward/finish receipt
+  // are then installed synchronously before the next durable checkpoint.
+  if (result === 'victory') await victoryBeat(app.querySelector('.combat'), { title: victoryTitle(enc), ms: registries.balance.ui.victoryBeat.ms });
+  if (!owned()) return;
+  delete run.combatPendingOutcome;
   if (xpCombat === combat) xpCombat = null;
   runCombatEnd(run, combat); // pools, flasks and deficits, as every simulator settles them
   const xpBefore = {
@@ -2883,8 +3153,6 @@ async function onCombatEnd(result, combat, enc) {
   // A breath between the last blow and the spoils (components/victoryBeat.js):
   // the combat screen is still mounted here, so the beat stands over it and
   // the door opens when it lifts. Reduced motion resolves at once.
-  await victoryBeat(app.querySelector('.combat'), { title: victoryTitle(enc), ms: registries.balance.ui.victoryBeat.ms });
-
   run.stats.fightsWon += 1;
   if (run.legacyDungeon) resolveDungeonNode(run);
   else if (victoryCompletesJourneyNode(run)) completeJourneyNode(run.journey);
@@ -2918,6 +3186,9 @@ async function onCombatEnd(result, combat, enc) {
     const drops = registries.balance.equipment.drops || {};
     const bossDrafts = settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillDrafts('boss', manualLevelUp) : [];
     const bossClassDrafts = settingOn(saves.loadMeta().settings, 'rewardBattleClassDrafts') ? rollClassDrafts(manualLevelUp) : [];
+    // A boss offers up to balance.rewards.bossRelicChoices relics to pick ONE
+    // from; one relic (or none) keeps the single relicId shape.
+    const bossRelics = rollRelicChoices(registries, rng, run.relics, { rarities: ['boss'], count: Math.max(1, registries.balance.rewards.bossRelicChoices ?? 3) });
     const bossRewards = {
       title: victoryTitle(enc),
       cinders: Math.floor(rollRuneReward(registries, rng, 'boss', run.relics) * featMultiplier(run, 'cinders')) + (bossArmament ? 0 : drops.consolationCinders || 0),
@@ -2927,7 +3198,7 @@ async function onCombatEnd(result, combat, enc) {
       skillAttributes: settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillAttributes(manualLevelUp) : [],
       skillFeats: settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillFeats(manualLevelUp) : [],
       ...rollCardRows('boss', levelsEarned),
-      relicId: rollRelicReward(registries, rng, run.relics, { rarities: ['boss'] }),
+      ...(bossRelics.length > 1 ? { relicChoices: bossRelics } : { relicId: bossRelics[0] ?? null }),
       ...sigilOffer('boss'),
       armamentId: bossArmament,
       smithingStoneReceipt,
@@ -2987,7 +3258,7 @@ async function onCombatEnd(result, combat, enc) {
  */
 function rollCardRows(pool, levelUps) {
   return rollCombatCardOffer(registries, rng, {
-    classId: run.class, pool, relicIds: run.relics, flatRarity: chaosRewardsOn(), draftWaiting: false,
+    classId: run.class, pool, relicIds: run.relics, flatRarity: chaosRewardsOn(), draftWaiting: false, combatExpansionVersion: run.combatExpansionVersion || 1,
     levelUps: settingOn(saves.loadMeta().settings, 'rewardLevelCards') ? levelUps : 0,
   }).rewards;
 }
@@ -3195,17 +3466,22 @@ function mountPendingReward(checkpoint = run.pendingReward, returnTo = null) {
       pointsPerLevel: resolveLevelUpValue(saves.loadMeta().settings),
       grantStats: settingOn(saves.loadMeta().settings, 'rewardLevelStatPoints'),
     }),
-    onClaimSkill: (skillId) => {
-      const before = hasClassMastery(run) && skillId.startsWith('class:') ? { skills: structuredClone(run.skills), classMasteryState: structuredClone(run.classMasteryState), classRewardLevels: { ...run.classRewardLevels }, ...(expandedProgression(run) ? {classMilestones:structuredClone(run.classMilestones || {})} : {}) } : null;
-      const claim = claimBankedSkillLevel(registries, run, skillId);
-      if (claim && before && run.classMasteryState.bankable) {
-        const bank = saves.bankClassMastery(run, registries);
+    onClaimSkill: async (skillId) => {
+      const claimRun = run, claimRegistries = registries;
+      const needsBank = hasClassMastery(claimRun) && skillId.startsWith('class:') && claimRun.classMasteryState.bankable;
+      const candidate = needsBank ? structuredClone(claimRun) : claimRun;
+      const claim = claimBankedSkillLevel(claimRegistries, candidate, skillId);
+      if (claim && needsBank) {
+        const bank = await saves.bankClassMastery(candidate, claimRegistries);
+        if (run !== claimRun || run.pendingReward !== checkpoint) return null;
         if (!bank.ok) {
-          Object.assign(run, before);
           showSettingsNotice(`Class level was not saved: ${bank.reason}`, 'profile');
           return null;
         }
-        adoptClassMasteryProfile(run, bank.meta);
+        adoptClassMasteryProfile(candidate, bank.meta);
+        for (const key of ['skills', 'classMasteryState', 'classRewardLevels', 'classMilestones']) {
+          if (Object.hasOwn(candidate, key)) claimRun[key] = candidate[key];
+        }
         if (bank.warning) showSettingsNotice(bank.warning, 'profile');
       }
       if (claim && skillId === classSkillId(run.class)) {
@@ -3329,7 +3605,15 @@ function showRest(openPanel = null, locationId = null) {
     dlog('ERROR', `settings.${b.key}: stored value ${JSON.stringify(b.stored)} is not one of the counts this row offers — using ${b.used}.`);
   }
   const worldRest = run.journey?.activeService;
-  const restState = run.legacyDungeon?.activeRest || (worldRest ? run.journey.serviceStates[worldRest.pointId] : null);
+  // The classic map's rest site keeps its own record (restRevisit.js), which
+  // stands in for the service state so a re-entry does not refill again.
+  const classicRest = !run.journey && !run.legacyDungeon;
+  const priorRevisit = run.restRevisit;
+  // The Multi-use setting is read once; a record opened now keeps it for the visit.
+  const multiUseSetting = run.journey ? false : settingOn(saves.loadMeta().settings, 'shrineMultiUse');
+  const record = classicRest ? openRestRecord(run, { multiUse: multiUseSetting }) : null;
+  if (record !== priorRevisit) persist();
+  const restState = run.legacyDungeon?.activeRest || (worldRest ? run.journey.serviceStates[worldRest.pointId] : null) || record;
   if (!openVisit || openVisit.locationId !== restLocationId || openVisit.ctx.run !== run) {
     openVisit = createLocationVisit({ run, registries, rng }, restLocationId, { healMult, refillCounts: counts, restBonus: restRecoveryBonus(saves.loadMeta().settings || {}) });
     // A resumed atlas visit arrived once already (the service state says so);
@@ -3345,6 +3629,19 @@ function showRest(openPanel = null, locationId = null) {
   }
   const visit = openVisit;
   const refill = visit.refill;
+  // The smith's services are rolled once per classic visit and kept on the
+  // record, so a re-entry shows the same offer. A plain copy saves as JSON.
+  let smithServices = null;
+  if (visit.services.smith) {
+    if (record) {
+      if (!record.smithServices) {
+        const roll = smithServicesAt(registries, 'shrine', rng);
+        record.smithServices = { ...roll, services: [...roll.services] };
+        persist();
+      }
+      smithServices = record.smithServices;
+    } else smithServices = smithServicesAt(registries, 'shrine', rng);
+  }
   mountRest(app, {
     registries,
     run,
@@ -3357,7 +3654,7 @@ function showRest(openPanel = null, locationId = null) {
     // Which smith services this place offers — the table's word, resolved
     // here so the screen reads one answer (a chance of 100 consumes no roll),
     // and only where the place carries the `smith` tag.
-    services: visit.services.smith ? smithServicesAt(registries, 'shrine', rng) : null,
+    services: smithServices,
     // The board is the atlas town's (plan phase 10b): offered where the place
     // carries `questBoard` and the run stands in a town, returning here.
     questBoard: visit.services.questBoard && worldRest ? (() => {
@@ -3368,6 +3665,9 @@ function showRest(openPanel = null, locationId = null) {
     // The deck editor under Rest sites only (SPEC §14.1): where the place
     // carries `deckEdit`; it closes back onto this visit.
     deckEditor: deckDoors(visit.services).rest ? { onOpen: () => showDeckEditor(() => showRest()) } : null,
+    // The classic rest site's re-entry record and its consumed-choice hook.
+    revisit: record,
+    onConsumed: (kind) => { if (record) { recordRestConsumed(run, kind); persist(); } },
     onReallocate: () => persist(),
     // An assigned point is permanent. It persists the moment it is assigned,
     // not when the player leaves the shrine, for the same reason the
@@ -3377,12 +3677,13 @@ function showRest(openPanel = null, locationId = null) {
     onLevelUp: () => persist(),
     // E13's toggle: with it on, Rest and Smith re-open the Shrine instead of
     // leaving it, and the screen carries its own LEAVE.
-    multiUse: run.journey ? false : settingOn(saves.loadMeta().settings, 'shrineMultiUse'),
+    multiUse: record && typeof record.multiUse === 'boolean' ? record.multiUse : multiUseSetting,
     onDone: () => {
       leaveLocation(visit);
       openVisit = null;
       if (run.legacyDungeon?.activeRest) resolveDungeonNode(run);
       else finishWorldService();
+      if (classicRest) markRestLeft(run);
       persist();
       showMap();
     },
@@ -3774,6 +4075,12 @@ if (shotState) {
   // NOT a player-facing surface: what a PLAYER should be told when their save
   // was repaired is wording, and wording is not this seat's to write.
   window.__runstatus = () => saves.runStatus();
+  // The creation probe reads both the live deck and the shot's memory save.
+  window.__startingAbilities = () => {
+    const saved = saves.loadRun(registries, activeSlot);
+    const cards = row => (row?.deck || []).filter(inst => inst.abilityRank === 1).map(inst => ({ cardId: inst.cardId, abilityRank: inst.abilityRank }));
+    return { live: cards(run), saved: cards(saved) };
+  };
   // THE FLASKS, read-only, same species: the live run's flask ledger and
   // carried potions beside the slot's saved copy, and the stored "Use flasks
   // outside combat" setting. tools/flask-menu-probe.mjs proves a map Potions
@@ -4285,7 +4592,8 @@ if (shotState === 'combat-test') {
         cardIds: [],
       } : { cardIds: registries.classes.get(run.class).cardPool.slice(0, 3) }),
       flaskId: 'crimsonFlask',
-      relicId: 'forsakenMedallion',
+      // `?shotReward=bossRelics` poses a boss victory's relic choice (SPEC §6).
+      ...(pose === 'bossRelics' ? { relicChoices: ['crownOfStitches', 'wardenHorn', 'ashOfRemembrance'] } : { relicId: 'forsakenMedallion' }),
       armamentId: 'greatsword',
       smithingStoneReceipt,
       // What the fight paid, authored like the rest of the pose.

@@ -38,3 +38,6 @@ location,,,Location,"Where a run stops: a classic node type (shrine), the Unknow
 companion,companions,,Companion,"A temporary ally bought at the market (SPEC §14.3). It travels with the run for a number of fights, and what it does is its property rows here, mounted at combat start (engine/properties.js)."
 sigil,sigils,,Sigil,"A sigil set into an armament's slot at the blacksmith (SPEC §14.3, §14.4). What it does is its property row here, mounted while its armament is equipped (engine/properties.js)."
 feat,classSkillFeats,,Class feat,A selected class feat confers mounted property rules.
+
+
+enemyMove,enemyMoves,enemyId,Enemy move,An authored enemy action; id is scoped by enemyId.

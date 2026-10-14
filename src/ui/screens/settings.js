@@ -21,6 +21,7 @@ import { offlinePlay } from '../../content/offlinePlay.js';
 import { openDebugLog } from '../debuglog.js';
 import { esc, attachTooltip } from '../components/tooltip.js';
 import { ART_QUALITY_KEY, ART_AUTO, ART_QUALITY_CHOICES, LEGACY_ART_QUALITY, wantsHighRes, artQualityStatus, pickHighResFolder, canPickFolder } from '../highResArt.js';
+import { CARD_ART_STYLE_KEY, CARD_ART_SIMPLE, CARD_ART_STYLE_CHOICES } from '../cardArtStyle.js';
 import { tierStatus, tierChoiceDisabled, retryOffered, retryBuiltInArt, retryRunning } from '../artTier.js';
 import { setTabRing, hasTabRing } from '../input.js';
 import { renderAboutSection, renderChangelogSection } from './about.js';
@@ -121,7 +122,9 @@ const ADVANCED_CONFIG_ROWS = advancedConfigRows(contentBundle).filter((row) => !
   .map((row) => (row.own ? { ...row, resolve: (settings) => ownOn(settings, row.own) } : row))
   // A Shops row (SPEC §14.2) wears its label and its kind's topic from
   // content/source/uiStrings.csv; the model names the row and its tokens.
-  .map((row) => (row.shopLabel ? { ...row, label: shopRowLabel(row.shopLabel), shopTopic: t(`settings.shops.topic.${row.shopTopic}`) } : row));
+  .map((row) => (row.shopLabel ? { ...row, label: shopRowLabel(row.shopLabel), shopTopic: t(`settings.shops.topic.${row.shopTopic}`) } : row))
+  // A row whose words are a uiStrings row (SPEC §4.11 Combat rounds preview) wears them: short label, full note.
+  .map((row) => (row.uiTextId ? { ...row, label: t(row.uiTextId), note: tFull(row.uiTextId) } : row));
 const INERT_CONFIG_ROWS = advancedConfigRows(contentBundle).filter((row) => row.inert);
 
 /**
@@ -321,6 +324,7 @@ function recoverySettingRows() {
 }
 
 const ROWS = [
+  { cat: 'Combat', key: 'askToUpcastAfterTarget', type: 'toggle', def: false, label: 'Ask to upcast after choosing a target', note: 'Off: use the Upcast button under an eligible selected card. On: choose a temporary rank before committing the play; Cancel spends nothing.' },
   ...tooltipSettingsRows(),
   { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: t('settings.row.fullscreen'),
     note: tFull('settings.row.fullscreen') },
@@ -518,6 +522,9 @@ const ROWS = [
     choices: ART_QUALITY_CHOICES, legacyChoices: LEGACY_ART_QUALITY, choiceDisabled: tierChoiceDisabled, describedBy: 'set-artQuality-tier',
     label: t('settings.row.artQuality'), applied: artQualityHtml,
     note: tFull('settings.row.artQuality') },
+  { cat: 'Display', key: CARD_ART_STYLE_KEY, type: 'choice', def: CARD_ART_SIMPLE,
+    choices: CARD_ART_STYLE_CHOICES, label: t('settings.row.cardArtStyle'),
+    note: tFull('settings.row.cardArtStyle') },
   { cat: 'Display', key: 'uiScale', type: 'choice', def: 'Auto',
     choices: ['Auto', 'S', 'M', 'L', 'XL'], label: t('settings.row.uiScale'), applied: appliedHtml,
     note: tFull('settings.row.uiScale') },
@@ -613,6 +620,8 @@ const ROWS = [
   { cat: 'Advanced', advancedGroup: 'Export', debugTopic: true, key: 'musicFolder', type: 'text', def: '', label: t('settings.row.musicFolder'),
     placeholder: t('settings.row.musicFolder.placeholder'),
     note: tFull('settings.row.musicFolder') },
+  { cat: 'Advanced', advancedGroup: 'Export', debugTopic: true, key: 'classicAppearance', def: false,
+    label: t('settings.row.classicAppearance'), note: tFull('settings.row.classicAppearance') },
 
   { cat: 'Accessibility', key: 'touchFlickPlay', def: UI_DEFAULTS.touchFlick.enabled, label: t('settings.row.touchFlickPlay'),
     note: tFull('settings.row.touchFlickPlay') },
@@ -1516,6 +1525,7 @@ export function resetKeys(settings, onChange, keys, label = 'Reset', { promoted 
     changed[SEED_KEY] = next;
   }
   const result = onChange(changed);
+  const settle = result => {
   if (result?.ok === false) {
     // Not saved, so not reset: put every value (and the seed record) back —
     // here and, through the same onChange, in the game and its live state.
@@ -1539,6 +1549,8 @@ export function resetKeys(settings, onChange, keys, label = 'Reset', { promoted 
     && JSON.stringify(Object.entries(changed[SEED_KEY] || {}).sort()) !== JSON.stringify(Object.entries(seedBefore || {}).sort());
   offerUndo(label, undo, seedMoved ? seedPatch(seedBefore, changed[SEED_KEY]) : null);
   return snapshot;
+  };
+  return result?.then ? result.then(settle, () => settle({ ok: false })) : settle(result);
 }
 
 /** allResettableKeys() → every stored key Reset all puts back, inert retired ones included. */
@@ -2700,6 +2712,71 @@ export function categoryHtml(cat, settings, saves, previewAttributes = null, pre
   return `<div class="set-card-list">${h.rows.map((r) => settingsRowHtml(settings, r)).join('')}</div>`;
 }
 
+// ---- keeping the player's place across a rebuild --------------------------
+// A rebuild replaces the nodes under a root, which drops every scroll offset
+// and the focused control along with them, so the menu jumped back to the top.
+// captureView() remembers both; restoreView() puts them back on the new nodes.
+// Nodes are matched by shape (tag, id, class list, and order among nodes with
+// that same shape) for scroll, and by a setting's own attribute (data-key,
+// data-member, id, ...) plus its order among its peers for focus. A key with
+// no match is skipped, because the rebuild may have removed that control.
+const VIEW_FOCUS_ATTRS = ['id', 'data-key', 'data-member', 'data-topic', 'data-advanced-group', 'data-general-select', 'data-general-topic', 'data-setting', 'name'];
+const VIEW_FOCUS_TIES = ['data-val', 'data-color', 'data-action', 'type'];
+function viewNodes(root) { return [...root.querySelectorAll('*')]; }
+function viewShapeMatches(node, shape) {
+  return node.tagName === shape.tag && (node.getAttribute('id') || '') === shape.id && (node.getAttribute('class') || '') === shape.cls;
+}
+function viewShapeOf(node, root) {
+  const shape = { tag: node.tagName, id: node.getAttribute('id') || '', cls: node.getAttribute('class') || '' };
+  shape.n = viewNodes(root).filter((other) => viewShapeMatches(other, shape)).indexOf(node);
+  return shape;
+}
+function viewFindShape(root, shape) {
+  if (shape.root) return root;
+  return viewNodes(root).filter((node) => viewShapeMatches(node, shape))[shape.n] || null;
+}
+function viewFocusPeers(root, key) {
+  return viewNodes(root).filter((node) => node.hasAttribute(key.attr)
+    && node.getAttribute(key.attr) === key.value
+    && node.tagName === key.tag
+    && VIEW_FOCUS_TIES.every((attr, i) => node.getAttribute(attr) === key.ties[i]));
+}
+export function captureView(root, { scroll = true } = {}) {
+  const view = { scroll: [], focus: null };
+  if (!root) return view;
+  if (scroll) {
+    if (root.scrollTop > 0) view.scroll.push({ shape: { root: true }, top: root.scrollTop });
+    for (const node of viewNodes(root)) {
+      if (node.scrollTop > 0) view.scroll.push({ shape: viewShapeOf(node, root), top: node.scrollTop });
+    }
+  }
+  const active = globalThis.document?.activeElement;
+  if (active && active !== root && root.contains(active)) {
+    const attr = VIEW_FOCUS_ATTRS.find((name) => active.hasAttribute(name));
+    if (attr) {
+      const key = { attr, value: active.getAttribute(attr), tag: active.tagName, ties: VIEW_FOCUS_TIES.map((name) => active.getAttribute(name)) };
+      key.n = viewFocusPeers(root, key).indexOf(active);
+      view.focus = key;
+    }
+  }
+  return view;
+}
+export function restoreView(root, view) {
+  if (!root || !view) return;
+  for (const { shape, top } of view.scroll || []) {
+    const node = viewFindShape(root, shape);
+    if (node) node.scrollTop = top;
+  }
+  if (!view.focus) return;
+  // Focus is only handed back when the rebuild dropped it (the focused node was
+  // replaced, so the page is back on body). Focus a caller moved on purpose stays.
+  const active = globalThis.document?.activeElement;
+  const lost = !active || active === globalThis.document?.body || active.isConnected === false;
+  if (!lost) return;
+  const target = viewFocusPeers(root, view.focus)[view.focus.n];
+  if (target && typeof target.focus === 'function') target.focus({ preventScroll: true });
+}
+
 /**
  * renderSettings(container, { settings, onChange, grouped })
  * Fills `container` with the settings controls and wires change events.
@@ -2795,6 +2872,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   } else {
     html = ROWS.filter((r) => !r.retired).map((r) => settingsRowHtml(settings, r)).join('');
   }
+  const view = captureView(container);
   container.innerHTML = html;
   container.setAttribute('data-settings-host', '');
   // ONE BAR, NOT TWO LOOSE BLOCKS. The modal hangs these tools in its head; the
@@ -2862,6 +2940,9 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     if (!panel) { renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId }); return; }
     const scroll = keepScroll ? panel.scrollTop : 0;
     const outer = keepScroll ? panel.parentElement?.scrollTop || 0 : 0;
+    // A tab switch starts at the top on purpose, so only a keepScroll repaint
+    // carries the scroll offsets over; focus is kept either way.
+    const view = captureView(container, { scroll: keepScroll });
     container.querySelector('.set-tabs > .set-advanced-head')?.remove();
     panel.innerHTML = categoryHtml(current, settings, saves, previewAttributes, previewLevel, previewClassId, searchQuery(), changedOnly());
     panel.setAttribute('aria-labelledby', `set-tab-${current}`);
@@ -2872,6 +2953,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     wire();
     panel.scrollTop = scroll;
     if (panel.parentElement) panel.parentElement.scrollTop = outer;
+    restoreView(container, view);
   }
   // ---- the Undo bar, the first-open tip, the Changed toggle --------------
   let undoTimer = null;
@@ -2883,7 +2965,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     bar.className = 'set-undo';
     bar.setAttribute('role', 'status');
     bar.innerHTML = `<span>${esc(offer.label)}</span><button type="button" class="as-btn" data-undo>Undo</button>`;
-    bar.querySelector('[data-undo]').onclick = () => {
+    bar.querySelector('[data-undo]').onclick = async () => {
       const restore = {};
       // The seed record too, even when the Undo does not carry it: the save
       // path may prune it for the keys this Undo moves.
@@ -2900,14 +2982,14 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         settings[SEED_KEY] = restore[SEED_KEY];
       }
       undoOffer = null;
-      if (onChange(restore)?.ok === false) {
+      if ((await onChange(restore))?.ok === false) {
         // Not saved, so not undone: put the state the Undo replaced back, here
         // and through onChange, so the live display and audio follow it — and
         // keep the offer, so the player can try again.
         for (const [key, value] of Object.entries(now)) {
           if (value === undefined) delete settings[key]; else settings[key] = value;
         }
-        onChange(now);
+        await onChange(now);
         undoOffer = offer;
       }
       repaintPanel({ keepScroll: true });
@@ -2965,12 +3047,12 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     repaintPanel();
   };
   const clearTuning = headerTools.querySelector('[data-clear-tuning]');
-  if (clearTuning) clearTuning.onclick = () => {
+  if (clearTuning) clearTuning.onclick = async () => {
     const keys = hiddenTuningKeys(settings);
     if (!keys.length) return;
     // Cleared, not reset: a promoted value for hidden tuning is not this
     // build's default either (promotionFor leaves it out at boot).
-    resetKeys(settings, onChange, keys, `Hidden tuning cleared (${keys.length})`, { promoted: {} });
+    await resetKeys(settings, onChange, keys, `Hidden tuning cleared (${keys.length})`, { promoted: {} });
     headerTools.querySelector('details').open = false;
     repaintPanel({ keepScroll: true });
   };
@@ -3226,8 +3308,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       const label = button.dataset.resetConfig === 'all' ? 'All settings reset' : filtering() ? 'Results reset' : 'Group reset';
       const fromMenu = !!button.closest('.set-options');
       headerTools.querySelector('details').open = false;
-      const run = () => {
-        resetKeys(settings, onChange, keys, label);
+      const run = async () => {
+        await resetKeys(settings, onChange, keys, label);
         renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
       };
       // The menu is closed by now, so Cancel returns focus to its ⋮ summary.
@@ -3290,11 +3372,11 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   // applies them the way the reset button already does — `undefined` unsets —
   // and re-renders, because the list, the counts and the per-scene topics are
   // all reading the same settings.
-  const applyPrologue = (changes, refocus = null) => {
+  const applyPrologue = async (changes, refocus = null) => {
     for (const [key, value] of Object.entries(changes)) {
       if (value === undefined) delete settings[key]; else settings[key] = value;
     }
-    if (onChange(changes)?.ok === false) { showSettingsNotice('Settings could not be saved.'); return; }
+    if ((await onChange(changes))?.ok === false) { showSettingsNotice('Settings could not be saved.'); return; }
     renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
     // A re-render replaces the button that was pressed, so reordering three
     // places from the keyboard meant hunting for the arrow again after each
@@ -3472,11 +3554,11 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   });
 
   container.querySelectorAll('[data-reset-key]').forEach((btn) => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const key = btn.dataset.resetKey;
       if (btn.closest('.set-row')?.querySelector('[data-key]:disabled')) return;
       typedRefusals.delete(key);
-      resetKeys(settings, onChange, [key], `${stripTags(rowByKey(key)?.label || key)} reset`);
+      await resetKeys(settings, onChange, [key], `${stripTags(rowByKey(key)?.label || key)} reset`);
       repaintPanel({ keepScroll: true });
       container.querySelector(`[data-row-key="${CSS.escape(key)}"] [data-key], [data-row-key="${CSS.escape(key)}"] .toggle`)?.focus({ preventScroll: true });
     });
@@ -3491,8 +3573,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   });
 
   container.querySelectorAll('[data-btn="resetAllSettings"]').forEach((btn) => {
-    btn.addEventListener('click', () => confirmResetAll(() => {
-      resetKeys(settings, onChange, allResettableKeys(), 'All settings reset');
+    btn.addEventListener('click', () => confirmResetAll(async () => {
+      await resetKeys(settings, onChange, allResettableKeys(), 'All settings reset');
       renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
       container.querySelector('[data-btn="resetAllSettings"]')?.focus({ preventScroll: true });
     }, btn));
@@ -3558,7 +3640,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         const saved = { ...changes, ...importOwnership(text, changes, settings, buildPromotion()) };
         const problem = promotionProblem(contentBundle, settings, saved);
         if (problem) throw new Error(`with this build's promoted defaults in place, ${problem} Nothing was imported.`);
-        const result = onChange(saved);
+        const result = await onChange(saved);
         if (result?.ok === false) throw new Error('Settings could not be saved.');
         Object.assign(settings, saved);
         dropUndoOffer(); // an imported configuration replaces what an Undo was taken from
@@ -3968,6 +4050,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     const step = (d) => selectCategory(stepCategory(cats, current, d));
     setTabRing({ prev: () => step(-1), next: () => step(1) });
   }
+  restoreView(container, view);
   return { nav };
 }
 
@@ -4082,7 +4165,7 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
       const saved = { ...changes, ...importOwnership(text, changes, settings, buildPromotion()) };
       const problem = promotionProblem(contentBundle, settings, saved);
       if (problem) throw new Error(`with this build's promoted defaults in place, ${problem} Nothing was imported.`);
-      if (onChange(saved)?.ok === false) throw new Error('Settings could not be saved.');
+      if ((await onChange(saved))?.ok === false) throw new Error('Settings could not be saved.');
       Object.assign(settings, saved);
       dropUndoOffer(); // an imported configuration replaces what an Undo was taken from
       rendered = renderSettings(door.body, { settings, onChange, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
@@ -4116,4 +4199,7 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
   });
   // The selected tab on a rail; the [Section ▾] selector on a compact host.
   (rendered?.nav?.start() || door.veil.querySelector('#set-close'))?.focus({ preventScroll: true });
+  // The shell's handle ({ close, ... }) so a caller that opened Settings can close it
+  // when an import replaces the profile under it (main.js refreshAfterImport).
+  return door;
 }

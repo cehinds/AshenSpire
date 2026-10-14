@@ -45,6 +45,9 @@ export function createEnemyPoseStage(host, facing, idle, id, entity) {
   return {
     dispose() { clearTimeout(timer); timer = null; },
     enemy: true, poses: ['idle', 'attack', ...ENEMY_STATE_POSES, 'defeated'], setState, settle,
+    /** The pose showing now, and the one it settles to (fx.js stance check). */
+    get pose() { return current; },
+    get rest() { return presentation.rest; },
     hold(ms) {
       if (!timer || !(ms > 0)) return false;
       clearTimeout(timer); due += ms;

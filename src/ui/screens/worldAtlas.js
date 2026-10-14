@@ -43,7 +43,6 @@ export function mountWorldAtlas(
     onSave,
     onMenu,
     onArmoury,
-    onEditDeck = null,
     onQuit,
     inspectNodeId = null,
     authoring = false,
@@ -77,7 +76,7 @@ export function mountWorldAtlas(
   // W4b bands: header, map scene, context (the selected place and the open
   // roads), then a Recenter / Enter footer. Only the scene's scrollport and the
   // context band scroll; the screen itself never does.
-  app.innerHTML = `<section class="mapscreen world-atlas-screen"><header class="atlas-header"><div class="atlas-title"><span class="atlas-eyebrow">WORLD JOURNEY · ${esc(p.displayName)}</span><h1>${esc(map.displayName)}</h1></div><span class="atlas-vitals">${run.hp} / ${run.maxHp} HP · ${run.cinders} cinders</span><div class="atlas-header-actions">${onEditDeck ? button(t("deckEditor.open"), "data-atlas-deck") : ""}${button("Armoury", "data-atlas-armoury")}${button("Menu", "data-atlas-menu")}${button("Save & quit", "data-atlas-quit")}</div></header>
+  app.innerHTML = `<section class="mapscreen world-atlas-screen"><header class="atlas-header"><div class="atlas-title"><span class="atlas-eyebrow">WORLD JOURNEY · ${esc(p.displayName)}</span><h1>${esc(map.displayName)}</h1></div><span class="atlas-vitals">${run.hp} / ${run.maxHp} HP · ${run.cinders} cinders</span><div class="atlas-header-actions">${button("Armoury", "data-atlas-armoury")}${button("Menu", "data-atlas-menu")}${button("Save & quit", "data-atlas-quit")}</div></header>
  <div class="atlas-scene"><div class="atlas-scrollport" tabindex="0" aria-label="World map; scroll to explore"><div class="atlas-world" style="--atlas-zoom:${j.view?.zoom || 1}"><svg class="atlas-terrain" viewBox="0 0 1000 1000" aria-hidden="true"><defs>${mapFogDefs('atlas')}<radialGradient id="atlas-reveal"><stop offset="60%" stop-color="white"/><stop offset="100%" stop-color="white" stop-opacity="0"/></radialGradient><mask id="atlas-fog" maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="1000" style="mask-type:alpha">${[...known].map((id) => `<circle cx="${pos[id].x * 1000}" cy="${pos[id].y * 1000}" r="${p.revealRadius * 1000}" fill="url(#atlas-reveal)"/>`).join("")}</mask></defs>
  <rect width="1000" height="1000" fill="url(#atlas-paper)"/><g class="map-detail-surface" ${authoring ? "" : 'mask="url(#atlas-fog)"'}><image href="${esc(art)}" width="1000" height="1000" preserveAspectRatio="none"/></g>
  <g class="atlas-roads">${journeyEdges(j)
@@ -120,7 +119,6 @@ export function mountWorldAtlas(
   app.querySelector(".atlas-footer").append(buttonRow({ size: "fill", buttons: [recenterButton, enterButton] }));
   app.querySelector("[data-atlas-menu]").onclick = onMenu;
   app.querySelector("[data-atlas-armoury]").onclick = onArmoury;
-  if (onEditDeck) app.querySelector("[data-atlas-deck]").onclick = () => onEditDeck();
   app.querySelector("[data-atlas-quit]").onclick = onQuit;
   for (const road of lockedJourneyRoads(j)) {
     const note = document.createElement("p");

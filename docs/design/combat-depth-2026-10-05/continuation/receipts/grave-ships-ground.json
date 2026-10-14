@@ -1,0 +1,28 @@
+{
+  "id": "grave-ships-ground",
+  "kind": "ground",
+  "transparent": true,
+  "resultFile": "scenes/shared/drowned-coast/grave-ships-ground.png",
+  "prompt": "Create one transparent ground-only parallax layer for Grave of Ships combat stage, painterly weathered dark fantasy realism. Wide 1536x1024 registered canvas. Upper 43% completely transparent. Lower half continuous flat dark wet sand with delicate ripples, scattered shells and subtle shallow tide sheen; a few seaweed strands and rotten planks confined to outer edges. Opaque sand fills entire bottom and corners, not a floating platform. Broad clear level standing area across center lower half. Gentle downward perspective toward x=60% y=43%. Cold storm-grey slate palette, no sunset or lava. No horizon scenery, ships, mast, sky, characters, labels, UI. Actual transparent alpha above sand.",
+  "reference": "../references/composition.png",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a112fc-0e64-7472-a495-aba14ffa5ab6\\exec-2bcd1e78-2782-48a1-8e00-bd1c469a89df.png",
+  "generator": "built-in image_gen",
+  "size": [
+    1536,
+    1024
+  ],
+  "mode": "RGBA",
+  "sha256": "8a92c93af0b5212f69539c109ace4a264a360b61a8dd8a1e5fd770bb0f1053cf",
+  "alphaRange": [
+    0,
+    254
+  ],
+  "transparentFraction": 0.4517110188802083,
+  "visibleBounds": [
+    0,
+    413,
+    1536,
+    1024
+  ],
+  "alphaThreshold": 32
+}

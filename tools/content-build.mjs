@@ -61,7 +61,10 @@ import { dirname, resolve, join, basename, extname, relative, sep } from 'node:p
 import { tmpdir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { configSourceErrors } from './config-build.mjs';
+import { FORM_FACTORS as HUD_FORM_FACTORS } from './hud-layout-tokens.mjs';
 import { manifestIds } from './art-source.mjs';
+import { holdForCli } from './lib/build-lock.mjs';
+import { RANGES as WEAPON_RANGES } from '../src/model/combatRanges.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = join(ROOT, 'content', 'source');
@@ -150,6 +153,17 @@ function emit(name, data, sourceFile) {
   );
 }
 
+// Every armament states its default range (content/source/weapons.csv). The
+// vocabulary (src/model/combatRanges.js) is closed so a typo fails the build by file and row, not at
+// runtime as a silent undefined.
+function checkWeaponRanges(rows, file) {
+  rows.forEach((row, n) => {
+    if (!WEAPON_RANGES.includes(row.range)) {
+      bthrow(`${file}: row ${n + 2} ('${row.id}') has range '${row.range ?? ''}' — every armament names one of ${WEAPON_RANGES.join('|')}`);
+    }
+  });
+}
+
 /**
  * compileDir(srcDir, outDir, { write }) → { results, stale, orphans }
  *
@@ -176,6 +190,7 @@ function compileDir(srcDir, outDir, { write } = {}) {
     else {
       try { data = JSON.parse(text); } catch (e) { bthrow(`${file}: ${e.message}`); }
     }
+    if (name === 'weapons') checkWeaponRanges(data, file);
     parsed.set(name, data);
     stale += place(outDir, name, emit(name, data, file), write, produced);
     results.push({ file, name, rows: Array.isArray(data) ? data.length : Object.keys(data).length });
@@ -461,12 +476,22 @@ function sweepStraySources(contentRoot) {
   // below by configSourceErrors: stray, by name, unless the generated module
   // src/config/generated/ui.js was compiled from exactly that file's bytes.
   const configDir = join(contentRoot, 'config');
+  // content/hud-layout/ is the FOURTH authored tree, owned by
+  // tools/hud-layout-css.mjs (its --check drift gate runs in tests/run-node.mjs;
+  // docs/hud-layout-tokens.md). That compiler reads exactly one file per form
+  // factor, so any other JSON there is stray, by name.
+  const hudLayoutDir = join(contentRoot, 'hud-layout');
   (function walk(dir) {
     if (!existsSync(dir)) return;
     for (const ent of readdirSync(dir, { withFileTypes: true }).sort((a, b) => (a.name < b.name ? -1 : 1))) {
       const abs = join(dir, ent.name);
       if (ent.isDirectory()) walk(abs);
       else if (/\.json$/i.test(ent.name) && abs.startsWith(configDir + sep)) continue;
+      else if (/\.json$/i.test(ent.name) && dir === hudLayoutDir) {
+        if (!HUD_FORM_FACTORS.includes(ent.name.replace(/\.json$/i, ''))) {
+          errors.push(`content/hud-layout/${ent.name}: STRAY SOURCE FILE — tools/hud-layout-css.mjs reads only ${HUD_FORM_FACTORS.map((name) => `${name}.json`).join(', ')}; this file compiles to nothing`);
+        }
+      }
       else if (/\.json$/i.test(ent.name) && dir === frameworkDir) {
         const mirror = join(frameworkGeneratedDir, ent.name.replace(/\.json$/i, '.js'));
         if (!existsSync(mirror)) {
@@ -840,6 +865,7 @@ async function selftest() {
       { id: 'K8', cell: 'S2 m3', what: 'CSV row with a dropped cell (the dropped comma, in table form) — file AND row named', file: 'bad.csv', text: 'a,b\n1,2\n3\n', expect: ['bad.csv', 'row 3'] },
       { id: 'K9', cell: 'S2 m3', what: 'malformed JSON (trailing comma) — file named, caught in the tool, upstream of any validator', file: 'bad.json', text: '{"a": 1,}\n', expect: ['bad.json'] },
       { id: 'K10', cell: 'S2 m2', what: 'duplicate CSV column — the pipeline\'s key-level check', file: 'dupe.csv', text: 'a,a\n1,2\n', expect: ["duplicate column 'a'"] },
+      { id: 'K-range', cell: 'S2 m3', what: 'armament with a range outside melee|reach|ranged — file, row and id named', file: 'weapons.csv', text: 'id,range\nspear,pointy\n', expect: ['weapons.csv', 'row 2', "'spear'", "range 'pointy'"] },
     ];
     for (const c of pipeCases) {
       const d = plant(c.file, c.text);
@@ -1104,6 +1130,8 @@ if (SELFTEST) {
 } else if (MUTATE) {
   await mutate();
 } else {
+  // Writing takes the shared lock on the generated trees (tools/lib/build-lock.mjs).
+  if (!CHECK) await holdForCli(ROOT, 'content-build');
   const { checkAtlasBuild } = await import('./world-atlas-data.mjs');
   await checkAtlasBuild();
   let r;

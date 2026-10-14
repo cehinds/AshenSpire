@@ -28,13 +28,14 @@ import { hasClassMastery, claimRunClassMastery, masteryProfileFor } from './clas
 import { classMastery } from '../content/generated/classMastery.js';
 import { masteryRowId } from './classMastery.js';
 import { skillFeats } from '../content/skillFeats.js';
+import { PERCEPTION_SKILL } from './perception.js';
 
 // The roles of an item-owned card (loadout.js ITEM_OWNED_ROLES; spelled here
 // because loadout.js would close an import cycle through validate.js).
 const ITEM_OWNED_ROLES = Object.freeze(['granted', 'weaponArt']);
 
 /** The kinds of track, and the balance row each reads its curve from. */
-export const SKILL_KINDS = Object.freeze(['weapon', 'armour', 'focus', 'ability', 'dual', 'class']);
+export const SKILL_KINDS = Object.freeze(['weapon', 'armour', 'focus', 'ability', 'dual', 'class', 'perception']);
 
 const FOCUS_ITEM_TYPE = 'item:magic-focus';
 const ARMOUR_ITEM_TYPE = 'item:armor';
@@ -50,7 +51,7 @@ export const classSkillId = (classId) => `class:${classId}`;
  * weapon groups as the tree lists them, the focus group, the armour classes
  * light to heavy, dual-wield, then the classes.
  */
-export function skillTracks(registries) {
+export function skillTracks(registries, { includePerception = false } = {}) {
   const nodes = Array.isArray(registries && registries.nodes) ? registries.nodes : [];
   const tracks = [];
   for (const node of nodes) {
@@ -67,16 +68,19 @@ export function skillTracks(registries) {
   const classes = registries && Array.isArray(registries.classes) ? registries.classes
     : registries && registries.classes && typeof registries.classes.all === 'function' ? registries.classes.all() : [];
   for (const cls of classes) tracks.push({ id: classSkillId(cls.id), kind: 'class', label: cls.name || cls.id });
+  if (includePerception) tracks.push({ id: PERCEPTION_SKILL, kind: 'perception', label: 'Perception' });
   return tracks;
 }
 
 /** The kind a track id belongs to, or null when no track has that id. */
 export function skillKindOf(registries, skillId) {
+  if (skillId === PERCEPTION_SKILL) return 'perception';
   const track = skillTracks(registries).find((t) => t.id === skillId);
   return track ? track.kind : null;
 }
 
 function curveFor(registries, kind) {
+  if (kind === 'perception') return registries.balance.enemyKnowledge.perception;
   const skill = (((registries || {}).balance || {}).skill) || {};
   const row = kind === 'class' ? (skill.class && skill.class.xp) : skill.xp;
   if (!row) throw new Error(`balance.skill${kind === 'class' ? '.class' : ''}.xp is not authored — the ${kind} curve has no numbers`);
@@ -137,6 +141,7 @@ export function skillLevel(run, skillId) {
  * for card ranks (SPEC §13.4o), which a level's rank-up raises one at a time.
  */
 export function awardSkillXp(registries, run, skillId, amount) {
+  if (skillId === PERCEPTION_SKILL) throw new Error('Perception XP requires an accepted enemy knowledge success');
   const kind = skillKindOf(registries, skillId);
   if (!kind) throw new Error(`awardSkillXp: '${skillId}' is not a skill track`);
   if (!run.skills || typeof run.skills !== 'object') run.skills = emptySkills();
@@ -166,6 +171,7 @@ export function awardSkillXp(registries, run, skillId, amount) {
 
 /** Count the levels already paid for by a track, without advancing its ledger. */
 export function pendingSkillLevelCount(registries, run, skillId) {
+  if (skillId === PERCEPTION_SKILL) return 0;
   const kind = skillKindOf(registries, skillId);
   const row = run && run.skills && run.skills[skillId];
   if (!kind || !row) return 0;
@@ -182,6 +188,7 @@ export function pendingSkillLevelCount(registries, run, skillId) {
 
 /** Pay XP now; the player's Level Up! action advances the skill later. */
 export function bankSkillXp(registries, run, skillId, amount) {
+  if (skillId === PERCEPTION_SKILL) throw new Error('Perception XP requires an accepted enemy knowledge success');
   const kind = skillKindOf(registries, skillId);
   if (!kind) throw new Error(`bankSkillXp: '${skillId}' is not a skill track`);
   if (!run.skills || typeof run.skills !== 'object') run.skills = emptySkills();
@@ -195,6 +202,7 @@ export function bankSkillXp(registries, run, skillId, amount) {
 
 /** Claim exactly one paid-for skill level, retaining excess XP and queuing its reward. */
 export function claimBankedSkillLevel(registries, run, skillId) {
+  if (skillId === PERCEPTION_SKILL) return null;
   const owner = run;
   if (hasClassMastery(run) && skillId.startsWith('class:')) run = { ...run, skills: structuredClone(run.skills), classMasteryState: structuredClone(run.classMasteryState), ...(expandedProgression(run) ? {classMilestones:structuredClone(run.classMilestones || {})} : {}) };
   const kind = skillKindOf(registries, skillId);

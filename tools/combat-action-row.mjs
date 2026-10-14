@@ -91,8 +91,8 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
     {
       name: 'End Turn and Draw trade tracks',
       file: 'styles/kit.css',
-      find: '  grid-template-columns: var(--footer-circle) var(--footer-pile-width) var(--footer-end-width) var(--footer-pile-width) var(--footer-circle);',
-      replace: '  grid-template-columns: var(--footer-circle) var(--footer-end-width) var(--footer-pile-width) var(--footer-pile-width) var(--footer-circle);',
+      find: '  grid-template-columns: var(--footer-circle) var(--footer-pile-width) var(--footer-end-width) var(--footer-spent-width) var(--footer-circle);',
+      replace: '  grid-template-columns: var(--footer-circle) var(--footer-end-width) var(--footer-pile-width) var(--footer-spent-width) var(--footer-circle);',
       expectRed: /combat-action-row: RED/,
     },
     {
@@ -359,7 +359,9 @@ async function main() {
       // (src/ui/components/combatLayout.js).
       const zoom=combat&&combat.clientWidth ? combat.getBoundingClientRect().width/combat.clientWidth : 1;
       const planVar=(name)=>owner?parseFloat(owner.style.getPropertyValue(name))*zoom:NaN;
-      const plan={gap:planVar('--footer-gap'),circle:planVar('--footer-circle'),pileWidth:planVar('--footer-pile-width'),pileHeight:planVar('--footer-pile-height'),endWidth:planVar('--footer-end-width')};
+      const plan={gap:planVar('--footer-gap'),circle:planVar('--footer-circle'),pileWidth:planVar('--footer-pile-width'),pileHeight:planVar('--footer-pile-height'),endWidth:planVar('--footer-end-width'),
+        // The Discard/Exhaust column has its own planned width (packCombatFooter spentWidth).
+        spentWidth:planVar('--footer-spent-width')||planVar('--footer-pile-width')};
       const selectors=${JSON.stringify(CONTROL_SELECTORS)};
       const controls=selectors.map((selector) => {
         const node=document.querySelector(selector);
@@ -464,11 +466,12 @@ async function main() {
           endOver:end.bottom<=Math.min(discard.top,potions.top)+0.5&&near(end.left,discard.left)&&near(end.right,potions.right),
           baseline:[draw,discard,potions].every((c)=>near(cy(c),cy(energy))),
         },
-        sizes:!all?null:{
+        // Piles fill the row unless the footer plans its own pile height (compact).
+        sizes:!all?null:((pileTall)=>({
           circles:near(energy.width,plan.circle)&&near(energy.height,plan.circle)&&near(potions.width,plan.circle)&&near(potions.height,plan.circle),
           endTurn:near(end.height,plan.circle)&&near(end.width,plan.endWidth),
-          piles:near(draw.width,plan.pileWidth)&&near(discard.width,plan.pileWidth)&&near(draw.height,rails?plan.circle:ownerBox.height)&&near(discard.height,rails?plan.circle:ownerBox.height),
-        },
+          piles:near(draw.width,plan.pileWidth)&&near(discard.width,plan.spentWidth)&&near(draw.height,rails?plan.circle:pileTall)&&near(discard.height,rails?plan.circle:pileTall),
+        }))(Number.isFinite(plan.pileHeight)&&plan.pileHeight>0?plan.pileHeight:ownerBox?.height),
         quickAccess:{
           count:quickAccess.filter(visible).length,
           allVisible:quickAccess.length===2&&quickAccess.every(visible),
@@ -515,7 +518,16 @@ async function main() {
           for (const state of STATES) {
             if (state === 'armed') {
               if (hand < 6) continue;
-              const attackIndex = await evaluate(`[...document.querySelectorAll('.hand .card')].findIndex((card)=>card.classList.contains('type-attack')&&card.getAttribute('aria-disabled')!=='true'&&!card.classList.contains('unaffordable'))`);
+              const attackIndex = await evaluate(`(async () => {
+                const { resolveCombatCard } = await import('/src/engine/combatExpansion.js');
+                const { hasImmediateHostileDamage } = await import('/tools/click-impact-card.mjs');
+                const combat = window.__combat;
+                return [...document.querySelectorAll('.hand .card')].findIndex(node => {
+                  if (node.getAttribute('aria-disabled') === 'true' || node.classList.contains('unaffordable')) return false;
+                  const inst = combat.piles.hand.find(card => card.instanceId === node.dataset.instanceId);
+                  return inst && hasImmediateHostileDamage(resolveCombatCard(combat, inst), { targeted: true });
+                });
+              })()`);
               let armed = false;
               if (attackIndex >= 0 && attackIndex < 9) {
                 const key = String(attackIndex + 1);
@@ -698,7 +710,7 @@ async function main() {
             const boxes=nodes.map(rect);
             const zoom=combat.clientWidth?combat.getBoundingClientRect().width/combat.clientWidth:1;
             const planVar=(name)=>parseFloat(row.style.getPropertyValue(name))*zoom;
-            const plan={circle:planVar('--footer-circle'),pileWidth:planVar('--footer-pile-width'),endWidth:planVar('--footer-end-width')};
+            const plan={circle:planVar('--footer-circle'),pileWidth:planVar('--footer-pile-width'),spentWidth:planVar('--footer-spent-width')||planVar('--footer-pile-width'),endWidth:planVar('--footer-end-width')};
             const near=(a,b)=>Number.isFinite(a)&&Number.isFinite(b)&&Math.abs(a-b)<=${PLAN_TOLERANCE_PX};
             const [energy,draw,end,spent,potions]=boxes;
             const cards=[...hand.querySelectorAll('.card')].map(rect);
@@ -714,7 +726,7 @@ async function main() {
               order, authored, geometry:row.dataset.footerGeometry||null, arrangement:combat.dataset.combatArrangement||null,
               strayFlasks:document.querySelectorAll('.combat .coop-flasks, .combat .coop-flask, .combat [data-coop-flask-slot]').length,
               plan, boxes,
-              planned:authored?authoredPlanned:getComputedStyle(row).display==='grid'&&near(energy.width,plan.circle)&&near(potions.width,plan.circle)&&near(draw.width,plan.pileWidth)&&near(spent.width,plan.pileWidth)&&near(end.width,plan.endWidth),
+              planned:authored?authoredPlanned:getComputedStyle(row).display==='grid'&&near(energy.width,plan.circle)&&near(potions.width,plan.circle)&&near(draw.width,plan.pileWidth)&&near(spent.width,plan.spentWidth)&&near(end.width,plan.endWidth),
               pairs, cardsClear:cards.every((card)=>boxes.every((box)=>!intersects(card,box))),
               onGlass:boxes.every((r)=>r.left>=-.25&&r.top>=-.25&&r.right<=innerWidth+.25&&r.bottom<=innerHeight+.25),
               smallest:Math.min(...boxes.map((r)=>Math.min(r.width,r.height))),

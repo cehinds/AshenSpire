@@ -9,11 +9,15 @@
 //
 // Headless: no document/window/localStorage/timers.
 
-import { foundationEvent, foundationTriggerAllowed } from './combatRules.js';
+import * as Foundation from './combatRules.js';
 import { TRIGGER_EVENTS } from '../model/schemas.js';
-import { getStacks } from '../framework/statusSemantics.js';
-import { advanceStatusClock } from './statuses.js';
+import * as StatusHelpers from '../framework/statusSemantics.js';
+import * as Statuses from './statuses.js';
 import { abilityMetric, recordAbilityEvent, priorAbilityEntity } from './abilityRiders.js';
+import { recordKnowledgeEvent } from './enemyKnowledge.js';
+import { spendPersistentWard } from './combatStatusControl.js';
+import { dispatchCombatCombos } from './combatExpansionCombos.js';
+import { recordNormalExchange } from './normalPreview.js';
 
 const MAX_EMIT_DEPTH = 64;
 const PLAYER_TARGET_EVENTS = new Set(['damageDealt', 'hpLost', 'healed', 'statusApplied', 'statusExpired']);
@@ -33,22 +37,34 @@ export function emitEvent(ctx, type, payload = {}) {
     sourceId: action.source?.id, sourceKind: action.source?.kind, ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(action.source) } : {}),
     ...payload,
   };
+  // What caused an effect, for the combat log: the enemy move it belongs to,
+  // and the status, stance or property whose trigger enqueued it. Additive.
+  // A preparation action (charge-up, Counter priming) runs while the selected
+  // move may still be a hidden intent, so it says only `preparing` and never
+  // names the move (SPEC §Intent visibility).
+  if (action?.meta?.preparing) { if (payload.preparing === undefined) payload = { ...payload, preparing: true }; }
+  else if (action?.meta?.moveId && payload.moveId === undefined) payload = { ...payload, moveId: action.meta.moveId };
+  if (action?.meta?.triggeredBy && payload.triggeredBy === undefined) payload = { ...payload, triggeredBy: action.meta.triggeredBy };
   // Co-op player entities share id 'player'. Attribute the actual target in
   // the canonical bus so detached transactions and live enemy effects agree.
   // Solo receipts keep their existing shape.
   if (ctx.players && payload.targetId === 'player' && PLAYER_TARGET_EVENTS.has(type)) {
     payload = { ...payload, playerId: payload.playerId ?? payload.targetPlayerId ?? ctx.playerKey };
   }
-  const event = { type, ...foundationEvent(ctx, type, payload) };
+  const event = { type, ...Foundation.foundationEvent(ctx, type, payload) };
   ctx.eventLog.push(event);
+  // SPEC §4.11: normal-combat momentum reads the attacks, evades and counters the bus carries (normalPreview.js).
+  if (ctx.normalPreview?.momentum === true) recordNormalExchange(ctx, type, event);
   recordAbilityEvent(ctx, type, event);
   if (ctx._buffer) ctx._buffer.push(event);
+  recordKnowledgeEvent(ctx, event);
   ctx._emitDepth = (ctx._emitDepth || 0) + 1;
   if (ctx._emitDepth > MAX_EMIT_DEPTH) {
     ctx._emitDepth = 0;
     throw new Error(`Trigger recursion exceeded ${MAX_EMIT_DEPTH} (event '${type}')`);
   }
   try {
+    dispatchCombatCombos(ctx, event);
     scanTriggers(ctx, event);
   } finally {
     ctx._emitDepth -= 1;
@@ -86,9 +102,20 @@ export function triggerOwnerKey(ctx, entity) {
 /** Conservative listener check: false means this bus cannot enqueue a reaction.
  * Check inactive seats too, so an unknown co-op routing situation takes the
  * ordinary event path. Malformed/custom sources also retain that path.
+ *
+ * `cardTags`, when given, is the exact cardTags list the event will carry (and
+ * it carries no derivedTags). A trigger whose `if` is a cardTagIs, or an `all`
+ * holding one, on a tag outside that list cannot pass evalPredicate, so it is
+ * not a listener for this event. The Oath rule (oathKept) is on every class
+ * mount and asks for an `oath` card on cardPreparing; without this every card
+ * price and target read cloned the whole combat, event log included.
  */
-export function hasEventTriggers(ctx, type) {
-  const listens = rows => rows == null ? false : !Array.isArray(rows) || rows.some(row => !row || typeof row !== 'object' || row.on === type);
+export function hasEventTriggers(ctx, type, { cardTags } = {}) {
+  const requiredTags = pred => !pred || typeof pred !== 'object' ? []
+    : pred.p === 'cardTagIs' && typeof pred.tag === 'string' ? [pred.tag]
+    : pred.p === 'all' && Array.isArray(pred.preds) ? pred.preds.flatMap(requiredTags) : [];
+  const excluded = row => Array.isArray(cardTags) && requiredTags(row.if).some(tag => !cardTags.includes(tag));
+  const listens = rows => rows == null ? false : !Array.isArray(rows) || rows.some(row => !row || typeof row !== 'object' || (row.on === type && !excluded(row)));
   try {
     if (ctx.players && !(ctx.players instanceof Map)) return true;
     const players = ctx.players ? [...ctx.players.values()].map(seat => seat.entity) : [ctx.player];
@@ -119,9 +146,9 @@ function scanTriggers(ctx, event) {
   if (!player) return; // run-level contexts have no combat trigger sources
   const pKey = ownerKeyFor(ctx, player);
   const pending = [];
-  const schedule = (key, trigger, owner, after) => {
-    if (ctx.foundation) pending.push({ key, trigger, owner, after });
-    else { const fired = maybeFire(ctx, key, trigger, owner, event); if (fired) after?.(); }
+  const schedule = (key, trigger, owner, after, origin) => {
+    if (ctx.foundation) pending.push({ key, trigger, owner, after, origin });
+    else { const fired = maybeFire(ctx, key, trigger, owner, event, origin); if (fired) after?.(); }
   };
 
   // A heal names its seat (targetPlayerId), so every seat's mounts hear it
@@ -144,7 +171,7 @@ function scanTriggers(ctx, event) {
     const stance = ctx.registries.stances.get(player.stanceId);
     (stance.hooks || []).forEach((trig, i) => {
       if (trig.on !== event.type) return;
-      schedule(`stance:${pKey}:${player.stanceId}:${i}`, trig, player);
+      schedule(`stance:${pKey}:${player.stanceId}:${i}`, trig, player, undefined, { kind: 'stance', id: player.stanceId });
     });
   }
 
@@ -168,7 +195,7 @@ function scanTriggers(ctx, event) {
         for (const trig of rule.triggers || []) {
           const i = index++;
           if (trig.on !== event.type) continue;
-          schedule(`property:${pKey}:${sourceKey}:${i}`, trig, player, announce);
+          schedule(`property:${pKey}:${sourceKey}:${i}`, trig, player, announce, { kind: mounts[sourceKey].kind || 'property', id: mounts[sourceKey].id ?? sourceKey });
         }
       }
     }
@@ -183,13 +210,13 @@ function scanTriggers(ctx, event) {
       const def = ctx.registries.statuses.get(statusId);
       (def.hooks || []).forEach((trig, i) => {
         if (trig.on !== event.type) return;
-        schedule(`status:${ownerKeyFor(ctx, entity)}:${statusId}:${i}`, trig, entity);
+        schedule(`status:${ownerKeyFor(ctx, entity)}:${statusId}:${i}`, trig, entity, undefined, { kind: 'status', id: statusId });
       });
     }
   }
 
   pending.sort((a, b) => (a.trigger.priority || 0) - (b.trigger.priority || 0) || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
-  for (const row of pending) if (maybeFire(ctx, row.key, row.trigger, row.owner, event)) row.after?.();
+  for (const row of pending) if (maybeFire(ctx, row.key, row.trigger, row.owner, event, row.origin)) row.after?.();
 
   // Enemy phases hooked on bus events (hpBelowPct phases run via checkPhases).
   for (const enemy of ctx.enemies || []) {
@@ -214,28 +241,35 @@ function allCombatants(ctx) {
  */
 export function fireOwnerHooks(ctx, entity, hookName) {
   if (!entity.alive) return;
-  advanceStatusClock(ctx, entity, hookName);
-  const syntheticEvent = { type: hookName, ...foundationEvent(ctx, hookName, { ownerId: entity.id }) };
+  Statuses.advanceStatusClock(ctx, entity, hookName);
+  // Reaction rules version 2: a status's fluxPerTurn is Ward damage to its owner at turn start.
+  if (hookName === 'ownerTurnStart' && ctx.reactionRulesVersion === 2) {
+    for (const statusId of Object.keys(entity.statuses)) {
+      const flux = ctx.registries.statuses.get(statusId)?.fluxPerTurn;
+      if (flux > 0 && entity.statuses[statusId]?.stacks > 0) spendPersistentWard(ctx, entity, flux, { sourceId: entity.id, cause: 'flux', statusId });
+    }
+  }
+  const syntheticEvent = { type: hookName, ...Foundation.foundationEvent(ctx, hookName, { ownerId: entity.id }) };
   const oKey = ownerKeyFor(ctx, entity);
   for (const statusId of Object.keys(entity.statuses)) {
     const def = ctx.registries.statuses.get(statusId);
     (def.hooks || []).forEach((trig, i) => {
       if (trig.on !== hookName) return;
-      maybeFire(ctx, `status:${oKey}:${statusId}:${i}:${hookName}`, trig, entity, syntheticEvent);
+      maybeFire(ctx, `status:${oKey}:${statusId}:${i}:${hookName}`, trig, entity, syntheticEvent, { kind: 'status', id: statusId });
     });
   }
   if (entity.kind === 'player' && entity.stanceId) {
     const stance = ctx.registries.stances.get(entity.stanceId);
     (stance.hooks || []).forEach((trig, i) => {
       if (trig.on !== hookName) return;
-      maybeFire(ctx, `stance:${oKey}:${entity.stanceId}:${i}:${hookName}`, trig, entity, syntheticEvent);
+      maybeFire(ctx, `stance:${oKey}:${entity.stanceId}:${i}:${hookName}`, trig, entity, syntheticEvent, { kind: 'stance', id: entity.stanceId });
     });
   }
 }
 
 // Gate a trigger through once / limitPerTurn / if, then enqueue its effects.
 // Returns true if it fired.
-function maybeFire(ctx, key, trigger, owner, event) {
+function maybeFire(ctx, key, trigger, owner, event, origin = null) {
   let st = ctx.triggerState.get(key);
   if (!st) {
     st = { fires: 0, turn: -1, turnFires: 0 };
@@ -251,13 +285,13 @@ function maybeFire(ctx, key, trigger, owner, event) {
   const target = resolveEventEntity(ctx, event);
   if (trigger.if && !evalPredicate(ctx, trigger.if, { owner, target, event })) return false;
 
-  if (!foundationTriggerAllowed(ctx, key, trigger, event)) return false;
+  if (!Foundation.foundationTriggerAllowed(ctx, key, trigger, event)) return false;
   st.fires += 1;
   st.turnFires += 1;
   const ratingCard = ctx.ratingsRules && key.startsWith('status:')
     ? Object.entries(owner.statuses || {}).find(([id]) => key.includes(`:${id}:`))?.[1]?.ratingCard : null;
   for (const eff of trigger.do || []) {
-    ctx.enqueue({ effect: eff, source: owner, owner, target, ...(ratingCard ? { card: ratingCard } : {}), meta: { event, ...(ctx.foundation ? { foundationAncestry: [...(event.ancestry || []), key] } : {}) } });
+    ctx.enqueue({ effect: eff, source: owner, owner, target, ...(ratingCard ? { card: ratingCard } : {}), meta: { event, ...(origin ? { triggeredBy: { ...origin, ownerId: owner?.id ?? null } } : {}), ...(ctx.foundation ? { foundationAncestry: [...(event.ancestry || []), key] } : {}) } });
   }
   return true;
 }
@@ -372,11 +406,11 @@ export function evalPredicate(ctx, pred, pctx = {}) {
     case 'inStance':
       return ctx.player.stanceId === pred.stance;
     case 'hasStatus': {
-      if (pred.of === 'allEnemies') return ctx.enemies.map(entity => pred.snapshot ? priorAbilityEntity(ctx, entity, pctx.meta || pctx.event) : entity).some(entity => entity.alive && getStacks(entity, pred.status) >= (pred.atLeast ?? 1));
+      if (pred.of === 'allEnemies') return ctx.enemies.map(entity => pred.snapshot ? priorAbilityEntity(ctx, entity, pctx.meta || pctx.event) : entity).some(entity => entity.alive && StatusHelpers.getStacks(entity, pred.status) >= (pred.atLeast ?? 1));
       const current = resolveOf(ctx, pctx, pred.of);
       const ent = pred.snapshot ? priorAbilityEntity(ctx, current, pctx.meta || pctx.event) : current;
       const atLeast = pred.atLeast != null ? pred.atLeast : 1;
-      return ent != null && getStacks(ent, pred.status) >= atLeast;
+      return ent != null && StatusHelpers.getStacks(ent, pred.status) >= atLeast;
     }
     case 'hasBlock': {
       const current = resolveOf(ctx, pctx, pred.of);

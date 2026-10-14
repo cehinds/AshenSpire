@@ -1,0 +1,37 @@
+{
+  "id": "mirrorScribe",
+  "name": "Mirror Scribe",
+  "family": "enemy",
+  "act": 2,
+  "size": "medium",
+  "source": "src/content/enemies/act2.js",
+  "facing": "left",
+  "pose": "idle",
+  "prompt": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: Slender masked scribe wrapped in faded court robes and shards of silvered mirror, holding an open metal-bound ledger and long quill, cold reflected highlights. Face LEFT toward the player. Use a canvas that contains the complete silhouette, wide 1536x1024 for broad beasts and winged figures, portrait 1024x1536 for upright figures. Lowest foot at 94 percent height; no clipped horns, wings, tails or weapons.",
+  "file": "masters/mirrorScribe.png",
+  "status": "generated",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a10ffd-7ed8-7ff3-b84a-467346a2abc4\\exec-9819c55b-7ec8-4870-acb7-87c7e5fcfb80.png",
+  "validation": {
+    "size": [
+      1536,
+      1024
+    ],
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      254
+    ],
+    "transparentFraction": 0.7863928476969401,
+    "visibleBounds": [
+      491,
+      11,
+      1052,
+      1012
+    ],
+    "anchor": [
+      771.5,
+      1012
+    ],
+    "sha256": "34572ab1fe6f07132d103f2e25a8097bb78abba265113a18d253fb724b7ec7c4"
+  }
+}

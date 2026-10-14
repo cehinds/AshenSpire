@@ -1,0 +1,27 @@
+{
+  "browser": "Chrome",
+  "url": "http://127.0.0.1:43187/",
+  "pageTitle": "AshenSpire · Class armor review",
+  "interactions": [
+    "Wearer filter: rogue (8 appearances)",
+    "Appearance: rogue-wayfarerPlate",
+    "View: checker -> phone",
+    "Reset: all classes, reaver-nightweave, desktop"
+  ],
+  "phone": {
+    "viewport": [
+      390,
+      844
+    ],
+    "innerWidth": 390,
+    "scrollWidth": 375,
+    "heroLoaded": true,
+    "heroSource": "review/rogue-wayfarerPlate-phone.jpg"
+  },
+  "consoleWarningsAndErrors": [],
+  "screenshots": [
+    "browser-desktop.png",
+    "browser-phone.png"
+  ],
+  "limits": "Focused art gallery interaction check; not gameplay or physical-device acceptance."
+}

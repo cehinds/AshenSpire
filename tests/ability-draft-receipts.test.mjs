@@ -15,7 +15,7 @@ import {rollGuaranteedSkillDraftIds} from '../src/engine/sourceRewardBonuses.js'
 
 const root=createRegistries(contentBundle),skillId='combatManeuvers';
 function fixture(){
-  const run=createRunState({registries:root,classId:'reaver',seed:3});openRunClassMastery(root,run,{}, {receiptId:'draft-ledger'});
+  const run=createRunState({registries:root,classId:'reaver',seed:3,enemyKnowledgeVersion:null});openRunClassMastery(root,run,{}, {receiptId:'draft-ledger'});
   const base=registriesForClassMastery(root,run);
   const ids=['quickstep','backstep','stomp'],defs=ids.map(id=>({...root.cards.get(id),abilityKind:'maneuver',abilityRank:0,abilityFamily:id,tags:['source:unarmed'],gradeProfiles:Array.from({length:6},(_,rank)=>({rank,actionCost:1,manaCost:0,effects:[{op:'block',target:'self',amount:rank+1}]}))}));
   const cards={all:()=>defs,get:id=>defs.find(card=>card.id===id),has:id=>ids.includes(id)};

@@ -7,8 +7,29 @@ How work is branched, reviewed, and merged is in
 **Before opening or finishing any pull request, read [A pull request is not
 done until it is merged and promoted](CONTRIBUTING.md#a-pull-request-is-not-done-until-it-is-merged-and-promoted)** — it is
 the owner's standing rule for every session: reviewed by another agent or
-session, conflicts resolved by you, fast checks green, then you merge it into
-`dev` yourself and promote `dev` to `test`, where the long suites run.
+session, conflicts resolved by you, fast checks green, then you merge it
+into `dev` yourself (the owner gets the preview and screenshots but no longer
+gates the merge), and you promote `dev` to `test`, where the long suites run.
+
+**Standing merge approval** (owner, 2026-10-13). The owner no longer approves
+each pull request; this replaced the 2026-10-11 per-PR review gate. A
+`feature/*`, `chore/*` or `fix/*` pull request, in any letter case, merges into
+`dev` once it has been reviewed by another agent or session, its conflicts are
+resolved, and the fast checks are green. The session merges it itself with a
+merge commit, then promotes `dev` to `test` as before. It still sends the owner
+the PR link, the preview link and screenshots of visible changes, but does not
+stop and wait. `main` stays owner-only.
+
+**Show, don't wait to be asked** (owner, 2026-10-11): whenever a change is
+visible (UI, tools, the Workbench, art, layout), finish the report with fresh
+screenshots of the changed screens and a preview the owner can open (a
+published page or the CI artifact link), without being asked.
+
+**Nothing lives only on one machine** (owner, 2026-10-11): the owner switches
+computers and models mid-task, so every commit reaches origin as soon as it exists.
+Workers' branches are pushed to their own `origin/<branch>` as they commit (the
+main session pushes them when a worker cannot), task status lives in the PR body
+or a committed file, and previews are published links, not local servers.
 
 **When you need the owner to decide or do something**, ask in this shape, and
 nothing longer (owner's rule, 2026-09-26):
@@ -33,8 +54,42 @@ CI builds and publishes it as a workflow artifact, and a pull request commits
 only `buildordinal.json` and the generated changelog module from its rebuild
 (DEVELOPER.md, *Run & test*).
 
-How AI work is routed between models, efforts, and subagents is in
-[docs/ai/AI-ROUTING.md](docs/ai/AI-ROUTING.md); the owner's Forge working mode
+Likewise never commit bulk QA evidence JSON (raw `results.json`, geometry dumps,
+browser-health logs); it goes to CI artifacts, and `tests/qa-evidence-size.test.mjs`
+fails a tracked evidence JSON over 256 KiB (CONTRIBUTING.md, *QA evidence goes
+to CI artifacts, not the tree*).
+
+**Main session manages; workers do the work** (owner, 2026-10-10).
+This is the standing policy for every session: the main session manages,
+coordinates and reviews; workers do the work (owner, 2026-10-13: Opus for
+planning and management, Sonnet 5.5 for most coding, Haiku 5.5 for simple
+tasks). Scoped coding goes to the `ashen-coder` agent (Sonnet); simple tasks,
+searches and test runs go to the `ashen-worker` agent (Haiku) (both in
+`.claude/agents/`); risky diffs go to `ashen-reviewer`. Agents that write code (workers and implementing agents)
+work in very small steps, one self-contained commit per step, pushed as soon as it
+is made so reviewers review each commit as it lands (owner, 2026-10-11). Review
+agents stay read-only and review each pushed commit as it lands. Models track the newest release of each tier: coders
+run on the newest Sonnet (Sonnet 5.5 today), simple-task workers on the newest
+Haiku (Haiku 5.5 today), the main session and `ashen-reviewer` on the newest
+Opus (Opus 5.5 today); the main session at high effort, `ashen-reviewer`
+at medium (owner, 2026-10-11). Agent files pin the tier aliases
+(`model: haiku` / `model: sonnet` / `model: opus`), which resolve to the newest model. When a new
+model ships, update the "today" names here and in docs/ai/AI-ROUTING.md, nothing
+else. Remove old local worktrees to save disk space: at session start and end,
+run `git fetch --prune origin` and `git worktree prune`, then `git worktree
+remove <path>` and `git branch -d <branch>` (never `-D`) for each worktree that
+is clean (`git status --porcelain` empty) and whose branch is merged into
+`origin/dev` (`git merge-base --is-ancestor <branch> origin/dev`). Keep any
+other worktree; ask the owner before discarding unmerged work. Worker branches
+are named `worker/<parent-topic>/<task>` (for example `worker/CdCiPipelines/branch-cleanup`
+for `chore/CdCiPipelines`). Local worker worktrees and branches are removed once
+the parent branch merges into `dev`; origin worker branches are deleted by
+`worker-branch-cleanup.yml` after `dev` is promoted to `test`. Before handing
+work to a worker, split it the way docs/ai/AI-ROUTING.md §3a says: survey, verify
+the key lines yourself, measure before tuning, one owner per file per wave,
+numbered steps with the design already decided, named traps, an acceptance
+the worker can run, and orchestrator QA of every diff in a real browser. The loop, brief
+template and escalation rules are in [docs/ai/AI-ROUTING.md](docs/ai/AI-ROUTING.md); the owner's Forge working mode
 (guided learning vs. builder mode, context and memory handling) is in
 [docs/ai/FORGE-OPERATING-INSTRUCTIONS.md](docs/ai/FORGE-OPERATING-INSTRUCTIONS.md).
 Both are advisory and never override SPEC.md, CONTRIBUTING.md, or DEVELOPER.md.

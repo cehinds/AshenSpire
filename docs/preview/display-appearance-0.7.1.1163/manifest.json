@@ -1,0 +1,30 @@
+{
+  "channel": "local development build",
+  "version": "0.7.1.1163",
+  "sourceCommit": "8c5c0ee58583330f619096bcee85c7bb042177af",
+  "sourceDigest": "9bf504e978",
+  "capturedUTC": "2026-10-09T03:19:31.009886+00:00",
+  "viewports": [
+    {
+      "width": 1440,
+      "height": 1000
+    },
+    {
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "browser": "Microsoft Edge headless, pointer input, emulated viewport",
+  "images": {
+    "desktop-alternative.png": "30f160db0f29f88613991d9b625abded8595395cf0439def57fa5e0cf78c175e",
+    "desktop-classic.png": "c28afc2265795265ec79897e0cfc1f550e281615f041c0b4748c5f310447e22b",
+    "desktop-setting.png": "2f23ba1e528146dba2c3b9903df5e49af4d4432c3a9cf984465d39d259976dbd",
+    "desktop-coop-alternative.png": "b1832db8f14f4da5a1c6fce32bb455fa79f542f34e127f40e4659ff9d4a73a80",
+    "desktop-coop-classic.png": "9687e75b4abced70923cf6c0d9220f96614b49f104d6b795b460f71bd31058be",
+    "phone-alternative.png": "d4e77458c29ab043bf890f04b2a75a8849fdaaeb23d6c88aa6b6218141ee2948",
+    "phone-classic.png": "42f48d19af2d71b508362b9db4999ba71374e44b8334b0b5d6d291a7ea526299",
+    "phone-setting.png": "0bd838726feab95ddcd27f9733543f4ae6fe2f511862cac151dfd614116b232c",
+    "phone-coop-alternative.png": "32b1fd0dea5f781f50ec5addd26bbda8ede3bcd1e538de6d33ab85a52d152ad5",
+    "phone-coop-classic.png": "f9774723c45fb77ee6b87cb2c4ac51eb17c35c82a0c0cc5bcd0e438dd4700ed3"
+  }
+}

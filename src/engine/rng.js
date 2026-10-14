@@ -49,7 +49,28 @@ export const STREAM_NAMES = Object.freeze([
   // every existing seed rolls exactly what it rolled before. A save written
   // before the stream existed starts it at 0.
   'sigils',
+  'enemyIntentVisibility',
+  'combatAvoidance',
+  'statusRecovery',
+  'statusPressure',
+  'ashenBlight',
+  'enemyIntentClue',
+  // Enemy reaction rolls (docs/combat-card-traits-contract.md, "Enemy reactions"):
+  // appended last so no stream above moves. An enemy with no reaction moves draws
+  // nothing here, so fights without them keep every counter unchanged. A save
+  // written before the stream existed starts it at 0.
+  'enemyReaction',
+  // The Combat Rounds Preview's own stream (SPEC §4.11): appended last so no
+  // stream above moves. Nothing draws on it while the preview is off, so its
+  // counter stays 0 and getCounters() omits it: an off-mode save has no new
+  // key and is byte-identical. A save written before the stream existed
+  // reads it as 0.
+  'combatRounds',
 ]);
+
+// Streams whose zero counter is left out of getCounters() (and so out of a
+// save). Their counter is restored as 0 when missing.
+const OMITTED_WHEN_ZERO = Object.freeze(['combatRounds']);
 
 const MULBERRY_INC = 0x6d2b79f5;
 
@@ -150,14 +171,18 @@ export function createRng(seed, counters = {}) {
       return rng.float(stream) * 100 < pct;
     },
     restoreCounters(counters) {
+      const value = (name) => (counters[name] === undefined && OMITTED_WHEN_ZERO.includes(name) ? 0 : counters[name]);
       for (const name of STREAM_NAMES) {
-        if (!Number.isInteger(counters[name]) || counters[name] < 0) throw new Error('Invalid RNG counter: ' + name);
+        if (!Number.isInteger(value(name)) || value(name) < 0) throw new Error('Invalid RNG counter: ' + name);
       }
-      for (const name of STREAM_NAMES) state[name] = counters[name] >>> 0;
+      for (const name of STREAM_NAMES) state[name] = value(name) >>> 0;
     },
     getCounters() {
       const out = {};
-      for (const name of STREAM_NAMES) out[name] = state[name];
+      for (const name of STREAM_NAMES) {
+        if (state[name] === 0 && OMITTED_WHEN_ZERO.includes(name)) continue;
+        out[name] = state[name];
+      }
       return out;
     },
   };

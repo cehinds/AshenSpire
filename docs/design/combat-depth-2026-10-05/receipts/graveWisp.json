@@ -1,0 +1,37 @@
+{
+  "id": "graveWisp",
+  "name": "Grave Wisp",
+  "family": "enemy",
+  "act": 1,
+  "size": "small",
+  "source": "src/content/enemies/act1.js",
+  "facing": "left",
+  "pose": "idle",
+  "prompt": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: Small hovering spirit made of pale funeral shrouds, a dim golden ember core, skull-like suggestion within tattered spectral cloth, restrained translucent wisps. Face LEFT toward the player. Use a canvas that contains the complete silhouette, wide 1536x1024 for broad beasts and winged figures, portrait 1024x1536 for upright figures. Lowest foot at 94 percent height; no clipped horns, wings, tails or weapons.",
+  "file": "masters/graveWisp.png",
+  "status": "generated",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a10ffd-7ed8-7ff3-b84a-467346a2abc4\\exec-07035a9a-94f6-41c1-aac5-aa73ea8b228a.png",
+  "validation": {
+    "size": [
+      1536,
+      1024
+    ],
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      254
+    ],
+    "transparentFraction": 0.7131131490071615,
+    "visibleBounds": [
+      311,
+      19,
+      1236,
+      995
+    ],
+    "anchor": [
+      773.5,
+      995
+    ],
+    "sha256": "9a1099c0e99856139a91edf38638de8d37fce21829c8bcf73277b1afb23d70e2"
+  }
+}

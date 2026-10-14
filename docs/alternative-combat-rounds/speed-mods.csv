@@ -1,0 +1,33 @@
+source_type,source,mod,status,note
+armor,heavy,-3,owner,
+armor,medium,-2,owner,
+armor,light,-1,owner,
+armor,clothing,0,owner,
+armor,magical-tier1,+1,owner,magical armor +1/+2/+3; tier-to-value mapping assumed 1 maps to +1; confirm
+armor,magical-tier2,+2,owner,magical armor +1/+2/+3; tier-to-value mapping assumed 2 maps to +2; confirm
+armor,magical-tier3,+3,owner,magical armor +1/+2/+3; tier-to-value mapping assumed 3 maps to +3; confirm
+weapon,dagger,+2,owner,
+weapon,straightSword,,TBD,placeholder; id from content/source/weapons.csv
+weapon,greatsword,,TBD,placeholder; id from content/source/weapons.csv
+weapon,shortbow,,TBD,placeholder; brief said bow; no bow id in weapons.csv; real id is shortbow (bowPierceAttack profile)
+weapon,roundShield,,TBD,placeholder; id from content/source/weapons.csv
+weapon,buckler,,TBD,placeholder; id from content/source/weapons.csv
+weapon,ashStaff,,TBD,placeholder; id from content/source/weapons.csv
+weapon,boneSceptre,,TBD,placeholder; id from content/source/weapons.csv
+range,melee,,TBD,placeholder
+range,reach,,TBD,placeholder
+range,ranged,,TBD,placeholder
+attackType,quick,,TBD,placeholder
+attackType,heavy,,TBD,placeholder
+attackType,telegraphed,,TBD,placeholder
+skill,rank,,TBD,placeholder; skill rank mod not specified
+initiative,initiative,,TBD,placeholder; initiative mod not specified
+card,strike,1,owner,base action speed (owner)
+card,counter,3,owner,base action speed (owner); no card id 'counter' in content/source; it is maneuver:counter in nodes.csv
+card,gorefireSlash,1|2|3,TBD,base action speed; pick one
+card,crimsonCleave,1|2|3,TBD,base action speed; pick one
+card,shieldBash,1|2|3,TBD,base action speed; pick one
+card,dodgeRoll,1|2|3,TBD,base action speed; pick one
+card,quickstep,1|2|3,TBD,base action speed; pick one
+card,backstep,1|2|3,TBD,base action speed; pick one
+card,shadowstep,1|2|3,TBD,base action speed; pick one

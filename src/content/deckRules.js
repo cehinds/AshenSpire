@@ -9,8 +9,8 @@ export const deckRules = Object.freeze({
     // The editor exists at all. Off: the deck changes only through rewards,
     // the merchant's removal and the Armoury, as before.
     deckEditing: true,
-    // 'free' — from the map's Quick Access and the Armoury at any moment out of
-    // combat; 'restOnly' — only at a place whose tags carry `deckEdit`.
+    // 'free' — from the Armoury at any moment out of combat; 'restOnly' — only
+    // at a place whose tags carry `deckEdit`.
     deckEditingWhere: 'free',
     deckMinSize: 10,
     deckMinUnlimited: false,

@@ -28,7 +28,7 @@ const REG = {
 
 function take(registries, key, build) {
   const [classId, seed] = key.split(':');
-  const run = createRunState({ seed: Number(seed), classId, registries });
+  const run = createRunState({ seed: Number(seed), classId, registries, combatExpansionVersion: 1 });
   run.seenEvents = run.seenEvents || [];
   const rng = createRng(Number(seed));
   return { stock: build(registries, rng, run), counters: rng.getCounters() };
@@ -50,9 +50,11 @@ for (const [name, [registries, build]] of Object.entries(CASES)) {
       const { stock, counters } = take(registries, key, build);
       assert.equal(JSON.stringify(stock), JSON.stringify(FIXTURE[name][key]), `${name} ${key}`);
       const kept = FIXTURE.counters[`${name}:${key}`];
-      // `sigils` (SPEC §15.4) was appended after the fixture; a shop draws nothing there.
-      const { sigils: drawnOnSigils = 0, ...existing } = counters;
+      // Sigils and intent visibility append after capture; shops use neither.
+      const { sigils: drawnOnSigils = 0, enemyIntentVisibility: intentReads = 0, combatAvoidance: avoidance = 0, statusRecovery: recovery = 0, statusPressure: pressure = 0, ashenBlight: blight = 0, enemyIntentClue: clue = 0, enemyReaction: reaction = 0, ...existing } = counters;
+      assert.deepEqual([avoidance, recovery, pressure, blight, clue, reaction], [0, 0, 0, 0, 0, 0], "legacy shops draw no expanded combat or knowledge streams");
       if (kept) assert.equal(drawnOnSigils, 0, `${name} ${key}: nothing drawn on sigils`);
+      if (kept) assert.equal(intentReads, 0, `${name} ${key}: nothing drawn on intent visibility`);
       if (kept) assert.deepEqual(existing, kept, `${name} ${key}: the streams drawn`);
     }
   });

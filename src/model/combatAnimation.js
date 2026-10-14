@@ -1,4 +1,6 @@
 import { cardKind } from './tree.js';
+import { cardActionPlan } from './alternativeCardAnimation.js';
+import { playerAttackPlan } from './playerAttackSprites.js';
 // Owner-approved player presentation groups. Enemy motion remains governed by
 // actionAnimations.js. These plans never change card effects or combat state.
 export const COMBAT_SEQUENCES = Object.freeze({
@@ -9,7 +11,14 @@ export const COMBAT_SEQUENCES = Object.freeze({
   shieldBash: ['shieldBash1', 'shieldBash2', 'shieldBash3'],
 });
 
-export function resolveCombatAnimation(card = {}, equipment = [], { animation } = {}) {
+export function resolveCombatAnimation(card = {}, equipment = [], { animation, classId, appearance = 'alternative', combatExpansionVersion, counterTriggered = false } = {}) {
+  const classDefault = appearance === 'alternative' ? cardActionPlan(card, classId) : null;
+  if (classDefault) {
+    const plan = playerAttackPlan(card, equipment, classId, classDefault);
+    if (counterTriggered) return { ...plan, technique: 'counter', rest: null };
+    // Both queued snapshots and paced beats receive preparation, never retaliation.
+    return plan.technique === 'counter' ? { ...plan, technique: 'counterPrepare' } : plan;
+  }
   // The card's kind tag decides the family of motion, not its `type` field.
   const kind = cardKind(card);
   const tags = new Set((card.cardTags || card.tags || []).map(tag => typeof tag === 'string' ? tag : tag.id));
@@ -19,6 +28,14 @@ export function resolveCombatAnimation(card = {}, equipment = [], { animation } 
   const bow = equipment.find(item => item.id === 'shortbow');
   const parry = equipment.some(item => item.id === 'parryDagger');
   const shieldIntent = visuals.has('fx:shield') || tags.has('shield') || card.equipmentProfileId === 'shieldGuard';
+  // Expanded maneuvers describe the paid action independently of its legacy
+  // Attack/Skill lifecycle kind. Preparing a Counter never swings a weapon.
+  if (combatExpansionVersion === 2 && tags.has('maneuver:counter')) {
+    if (tags.has('camp:spell')) return { group: 'cast', technique: 'cast', rest: 'cast', family: 'spell', motion: 'cast' };
+    const technique = shield && card.sourceArmamentId !== 'parryDagger' ? 'shieldGuard'
+      : parry ? 'parry' : 'guard';
+    return { group: 'defend', technique, rest: technique, family: 'guard', motion: 'brace' };
+  }
   if (kind === 'attack') {
     // Spell source is the card's attack identity, regardless of which focus or
     // physical weapon happens to be held. A selected set supplies its cast clip;
@@ -32,7 +49,8 @@ export function resolveCombatAnimation(card = {}, equipment = [], { animation } 
       && (tags.has('bow') || (card.sourceArmamentId === bow.id && tags.has('ranged')))
       && animation?.references?.bowAttack;
     const blade = !bash && !tags.has('ranged') && tags.has('blade') && animation?.references?.bladeAttack;
-    return { group: 'attack', technique: bash ? 'shieldBash' : bowShot ? 'bowAttack' : blade ? 'bladeAttack' : 'attack', rest: null, family: bowShot ? 'projectile' : 'strike', motion: bowShot ? 'release' : 'impact' };
+    const ranged = !bash && (bowShot || tags.has('ranged') || tags.has('reach:distance'));
+    return { group: 'attack', technique: bash ? 'shieldBash' : bowShot ? 'bowAttack' : blade ? 'bladeAttack' : 'attack', rest: null, family: ranged ? 'projectile' : 'strike', motion: ranged ? 'release' : 'impact' };
   }
   if (kind === 'power') return { group: 'cast', technique: 'power', rest: 'cast', family: 'spell', motion: 'cast' };
   if (kind === 'skill' && (tags.has('guard') || tags.has('block'))) {

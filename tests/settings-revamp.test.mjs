@@ -18,6 +18,11 @@ test('the channel is read from where the page was served or saved', () => {
   assert.equal(buildChannel(at('https://cehinds.github.io/AshenSpire/test/latest/mobile/'), 'standalone file'), 'test');
   assert.equal(buildChannel(at('https://cehinds.github.io/AshenSpire/main/12/'), 'standalone file'), 'main');
   assert.equal(buildChannel(at('https://cehinds.github.io/AshenSpire/release/3'), 'standalone file'), 'release');
+  assert.equal(buildChannel(at('https://cehinds.github.io/AshenSpire/branches/feature/x/latest/'), 'standalone file'), 'dev', 'a branch preview plays as dev');
+  assert.equal(buildChannel(at('https://cehinds.github.io/AshenSpire/branches/fix-thing/latest/index.html'), 'standalone file'), 'dev');
+  assert.equal(buildChannel(at('https://cehinds.github.io/AshenSpire/branches/feature/x/latest/download/AshenSpire-dev-0.7.1.9.html'), 'standalone file'), 'dev');
+  assert.equal(buildChannel(at('https://cehinds.github.io/AshenSpire/branches/main/latest/'), 'standalone file'), 'dev', 'a branch named main is still dev');
+  assert.equal(buildChannel(at('https://cehinds.github.io/AshenSpire/branches/dev/latest/'), 'standalone file'), 'dev');
   assert.equal(buildChannel(at('https://cehinds.github.io/AshenSpire/AshenSpire.html'), 'standalone file'), 'main', 'the site root is main’s tree');
   assert.equal(buildChannel(at('file:///sdcard/Download/AshenSpire-dev-0.7.1.449.html'), 'standalone file'), 'dev');
   assert.equal(buildChannel(at('file:///sdcard/Download/AshenSpire-mobile-test-0.7.1.2.html'), 'standalone file'), 'test');
@@ -26,6 +31,22 @@ test('the channel is read from where the page was served or saved', () => {
   assert.equal(buildChannel(at('http://localhost:8080/index.html'), 'UNPLACED'), 'dev');
   assert.equal(buildChannel(at('https://example.com/whatever.html'), 'source tree'), 'dev', 'the dev server is dev wherever it is');
   assert.equal(buildChannel(null), 'dev', 'no page (Node) is a developer’s seat');
+});
+
+test('a srcdoc branch preview is dev only when the wrapper stamps dev', () => {
+  const srcdoc = { href: 'about:srcdoc', pathname: 'srcdoc', hostname: '', protocol: 'about:' };
+  const saved = globalThis.__ASHEN_PREVIEW_CHANNEL__;
+  try {
+    delete globalThis.__ASHEN_PREVIEW_CHANNEL__;
+    assert.equal(buildChannel(srcdoc, 'standalone file'), 'main', 'no global keeps the existing answer');
+    globalThis.__ASHEN_PREVIEW_CHANNEL__ = 'main';
+    assert.equal(buildChannel(srcdoc, 'standalone file'), 'main', 'only dev is honoured');
+    globalThis.__ASHEN_PREVIEW_CHANNEL__ = 'dev';
+    assert.equal(buildChannel(srcdoc, 'standalone file'), 'dev');
+    assert.equal(buildChannel({ href: '', pathname: 'srcdoc', hostname: '', protocol: 'about:' }, 'standalone file'), 'dev', 'an about: protocol with the stamp');
+  } finally {
+    if (saved === undefined) delete globalThis.__ASHEN_PREVIEW_CHANNEL__; else globalThis.__ASHEN_PREVIEW_CHANNEL__ = saved;
+  }
 });
 
 test('debug is on by default on dev and test, never on main or release, and off on unknown until asked', () => {
@@ -69,7 +90,7 @@ test('Settings Sync loads with the promotion this build seeds, never the unfilte
   const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
   const render = sync.slice(sync.indexOf('export function renderSettingsSync('));
   assert.doesNotMatch(render, /\bPROMOTED\b(?!\s*\})/, 'the panel reads the promotion it was handed');
-  assert.match(sync, /applied = applyProfile\(settings, onChange, parsed, promoted\)/, 'auto-load passes it on');
+  assert.match(sync, /applied = await applyProfile\(settings, onChange, parsed, promoted\)/, 'auto-load awaits the owned write');
   assert.match(screen, /renderSettingsSync\(syncMount, \{ settings, onChange, rows: ROWS, promoted: buildPromotion\(\),/);
   assert.match(main, /stillWanted: \(\) => waiting,\n    promoted: promotionFor\(SETTINGS_DEFAULTS, promotionDebug\(\)\)\.values \}\)/, 'start-up auto-load passes the build promotion');
 });
@@ -539,6 +560,26 @@ test('a profile that cannot be saved is not left applied', async () => {
     'the old values go back through onChange too, so the live state follows');
 });
 
+test('async profile save refusals roll back settings before auto-load records success', async () => {
+  const { SYNC_STORAGE } = await import('../src/model/settingsSync.js');
+  const { applyProfile, autoLoadProfile } = await import('../src/ui/components/settingsSync.js');
+  const settings = { screenShake: false };
+  const before = structuredClone(settings);
+  await assert.rejects(applyProfile(settings, async () => ({ ok: false }), { changes: { screenShake: true }, cleared: [] }, {}), /could not be saved/);
+  assert.deepEqual(settings, before);
+  const store = new Map([[SYNC_STORAGE.auto, '1']]);
+  const previous = globalThis.localStorage;
+  globalThis.localStorage = { getItem: key => store.get(key) ?? null, setItem: (key, value) => store.set(key, value), removeItem: key => store.delete(key) };
+  try {
+    const rows = settingsRows(), text = profileText({ screenShake: true }, profileKeys(rows));
+    const fetch = async () => ({ status: 200, ok: true, json: async () => ({ content: toBase64(text), sha: 'uncommitted-profile' }) });
+    await assert.rejects(autoLoadProfile({ settings, onChange: async () => ({ ok: false }), rows, fetch, promoted: {} }), /could not be saved/);
+    assert.deepEqual(settings, before);
+    assert.equal(store.has(SYNC_STORAGE.lastSha), false);
+    assert.equal(store.has(SYNC_STORAGE.lastAt), false);
+  } finally { globalThis.localStorage = previous; }
+});
+
 test('navigate() reads its own cursor, and a refused token write is reported', async () => {
   const { readFileSync } = await import('node:fs');
   const input = readFileSync(new URL('../src/ui/input.js', import.meta.url), 'utf8');
@@ -725,7 +766,7 @@ test('a profile load hands omitted promoted keys back to the promotion', async (
 test('a refused Undo is rolled back; a restored profile is seeded like boot; a dotted name is refused', async () => {
   const { readFileSync } = await import('node:fs');
   const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
-  assert.match(screen, /const now = \{ \[SEED_KEY\]: settings\[SEED_KEY\] \};[\s\S]*?if \(onChange\(restore\)\?\.ok === false\) \{[\s\S]*?onChange\(now\);/, 'Undo puts the state it replaced back when the save is refused');
+  assert.match(screen, /const now = \{ \[SEED_KEY\]: settings\[SEED_KEY\] \};[\s\S]*?if \(\(await onChange\(restore\)\)\?\.ok === false\) \{[\s\S]*?await onChange\(now\);/, 'Undo puts the state it replaced back when the owned save is refused');
   const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
   assert.match(main, /onRestored: \(\) => \{[\s\S]*?seedPromotedDefaults\(meta, settings\);\s*applyRestoredSettings\(settings\);/, 'a restore runs the promotion step');
   assert.match(main, /if \(!settingsChoicePending\) \{\s*seedPromotedDefaults\(activeMeta, activeSettings\);/, 'boot uses the same seeding step after allowing a device with preferences to choose first');
@@ -759,7 +800,7 @@ test('a no-op load still records promotion ownership; the unrecorded warning sur
 test('a manual load that matches still saves promotion ownership before it is marked loaded', async () => {
   const { readFileSync } = await import('node:fs');
   const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
-  assert.match(panel, /if \(!diff\.length\) \{[\s\S]*?try \{ applyProfile\(settings, onChange, parsed, promoted\); \} catch \(error\) \{ status\(error\.message\); return; \}[\s\S]*?if \(!write\(SYNC_STORAGE\.lastSha/);
+  assert.match(panel, /if \(!diff\.length\) \{[\s\S]*?try \{ await applyProfile\(settings, onChange, parsed, promoted\); \} catch \(error\) \{ status\(error\.message\); return; \}[\s\S]*?if \(!write\(SYNC_STORAGE\.lastSha/);
 });
 
 test('a profile carries which values are promoted defaults, and a loading device takes that ownership over', async () => {

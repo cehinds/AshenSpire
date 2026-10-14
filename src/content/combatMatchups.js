@@ -1,0 +1,138 @@
+// Shared tactical numbers and tag riders; balance exposes these same objects.
+const NOTE = Symbol.for('ashenspire.balance.note');
+
+export const combatIntent = {
+  baseHiddenChance: 0.70,
+  wisdomReduction: 0.02,
+  intelligenceReduction: 0.01,
+  minimumHiddenChance: 0,
+  maximumHiddenChance: 0.95,
+  [NOTE]: {
+    baseHiddenChance: 'Chance an enemy hides its exact move while still showing its stance, before attribute reductions.',
+    wisdomReduction: 'Reduction in hidden intent chance for each point of Wisdom.',
+    intelligenceReduction: 'Reduction in hidden intent chance for each point of Intelligence.',
+    minimumHiddenChance: 'Lowest allowed chance an enemy hides its exact move after attribute reductions.',
+    maximumHiddenChance: 'Highest allowed chance an enemy hides its exact move after attribute reductions.',
+  },
+};
+
+export const combatMatchups = {
+  counter: {
+    incomingMultiplier: 0.5,
+    retaliationMultiplier: 1.5,
+    retaliationFlat: 5,
+    poiseMultiplier: 1.5,
+    guard: 4,
+    ward: 2,
+    defaultDamage: 6,
+    meleeBypassDamageTypes: ['force', 'piercing'],
+    meleeIncomingManeuvers: ['attack', 'smash'],
+    [NOTE]: {
+      incomingMultiplier: 'Multiplier applied to the next qualifying attack against a prepared Counter.',
+      retaliationMultiplier: 'Multiplier applied to listed Counter damage when the incoming attack is fully blocked.',
+      retaliationFlat: 'Flat damage added to a successful Counter retaliation after its listed damage multiplier.',
+      poiseMultiplier: 'Multiplier applied to explicitly listed Counter Poise damage on successful retaliation.',
+      guard: 'Ordinary Guard granted by a Counter card that has no printed Block effect.',
+      ward: 'Additional Ward granted when a Counter card or enemy move is prepared.',
+      defaultDamage: 'Listed retaliation damage for a Counter with no authored damage amount.',
+    },
+  },
+  smash: { guardedMultiplier: 1.5, guardBreakPoiseBonus: 3,
+    [NOTE]: { guardedMultiplier: 'Damage multiplier for Smash against a target holding ordinary Guard.', guardBreakPoiseBonus: 'Additional Poise damage when Smash actually removes the last ordinary Guard.' } },
+  attack: { preparedPoiseMultiplier: 1.5,
+    [NOTE]: { preparedPoiseMultiplier: 'Poise damage multiplier for physical Attack against a prepared Smash or spell.' } },
+  damageRiders: {
+    blunt: { poise: 2 },
+    piercing: { guardBypass: 2 },
+    slashing: { status: 'bleed', stacks: 1, requiresHpLoss: true },
+    cold: { status: 'frost', stacks: 1, requiresHpLoss: true },
+    fire: { status: 'burn', stacks: 1, requiresHpLoss: true },
+    lightning: { status: 'weak', stacks: 1, requiresHpLoss: true },
+    force: { wardDrain: 2 },
+    necrotic: { status: 'crimsonBlight', stacks: 1, requiresHpLoss: true },
+    holy: { cleanse: 1, requiresHpLoss: true },
+    poison: { status: 'venom', stacks: 1, requiresHpLoss: true },
+    psychic: { status: 'confused', stacks: 1, requiresHpLoss: true },
+    earth: { status: 'slowed', stacks: 1, requiresHpLoss: true },
+    [NOTE]: {
+      'blunt.poise': 'Additional Poise damage from the first blunt hit against each target in an action.',
+      'piercing.guardBypass': 'Ordinary Guard bypassed by the first piercing hit against each target in an action.',
+      'slashing.stacks': 'Bleed stacks applied by a slashing hit once per action and target.',
+      'cold.stacks': 'Frost stacks applied by a cold hit once per action and target.',
+      'fire.stacks': 'Burn stacks applied by a fire hit once per action and target.',
+      'lightning.stacks': 'Weak stacks applied by a lightning hit once per action and target.',
+      'force.wardDrain': 'Ward removed by a force hit once per action and target.',
+      'necrotic.stacks': 'Crimson Blight stacks applied by a necrotic hit once per action and target.',
+      'holy.cleanse': 'Harmful status stacks cleansed from the holy attacker once per action and target.',
+      'poison.stacks': 'Venom stacks applied by a poison hit once per action and target.',
+      'psychic.stacks': 'Confused stacks applied by a psychic hit once per action and target.',
+      'earth.stacks': 'Slowed stacks applied by an earth hit once per action and target.',
+      '{type}.requiresHpLoss': 'Requires actual HP loss before {type} damage applies its status or cleanse rider.',
+    },
+  },
+  damageAliases: { frost: 'cold', arcane: 'force', sacred: 'holy', decay: 'necrotic', pierce: 'piercing', bludgeoning: 'blunt' },
+  // Technique riders (owner decision 11, 2026-10-12): keyed by a carrier's
+  // authored card tag, resolved with the damage rider once per action and
+  // target. A guard bypass takes the larger of this and the damage type's.
+  tagRiders: {
+    precision: { guardBypass: 4 },
+    gorefire: { status: 'burn', stacks: 1, requiresHpLoss: true },
+    [NOTE]: {
+      'precision.guardBypass': 'Ordinary Guard a Precision-tagged attack bypasses once per action and target; the larger of this and a Piercing bypass applies, never the sum.',
+      'gorefire.stacks': 'Burn stacks a Gorefire-tagged attack applies once per action and target after HP loss, unless the card prints Burn.',
+      '{tag}.requiresHpLoss': 'Requires actual HP loss before the {tag} rider applies its status.',
+    },
+  },
+  cleanseStatuses: ['weak', 'frail', 'vulnerable', 'crimsonBlight', 'burn'],
+};
+
+// New runs carry this table separately; the version-1 table above is immutable
+// history for saves which were priced under the original tagged-card contract.
+export const combatExpansionMatchups = {
+  counter: { incomingMultiplier: 0.5, maxReturnsPerCycle: 1,
+    defaultCoverage: {
+      melee: { camps: ['physical'], ranges: ['melee'], targeting: ['single'], maneuvers: ['attack', 'smash'], effects: ['damage'] },
+      ranged: { camps: ['physical'], ranges: ['reach', 'ranged'], targeting: ['single'], effects: ['damage'] },
+      spell: { camps: ['spell'], ranges: ['melee', 'reach', 'ranged'], targeting: ['single'], effects: ['damage', 'status'] },
+    },
+    schoolStrongMultiplier: 1.25, schoolWeakMultiplier: 0.75,
+    schoolMatchups: {
+      fire: { strongSchools: ['frost'], weakDamageTypes: ['blunt'] },
+      frost: { strongRanges: ['melee'], weakSchools: ['fire'], weakTraits: ['shattering'] },
+      lightning: { strongTraits: ['conductive'], weakTraits: ['grounded'] },
+      force: { strongTraits: ['projectile'], weakTraits: ['mental', 'statusOnly'] },
+      alteration: {},
+      illusion: { strongTargeting: ['single'], weakTargeting: ['area'], weakTraits: ['reveal', 'mindless'] },
+      divine: { strongSchools: ['decay'], weakDamageTypes: ['blunt'] },
+      decay: { strongTraits: ['healing', 'protective'] },
+      earth: {},
+    },
+  },
+  attack: { smashMultiplier: 1.25, preparedPoiseMultiplier: 1.5 },
+  smash: { defendedMultiplier: 1.5, guardBreakPoiseBonus: 3 },
+  defend: { sweepMultiplier: 0.75, turnStartProtection: 1 },
+  evade: { die: 20, baseDC: 8, armorPenalty: { light: 1, medium: 2, heavy: 3 },
+    areaDifficulty: { melee: 0, reach: 2, ranged: 4 },
+  },
+  distance: { reachChance: 20, rangedChance: 35, maximumBaseChance: 50 },
+  reactionLocks: ['sleep', 'paralysis', 'dazed'],
+  damageAliases: { frost: 'cold', arcane: 'force', sacred: 'holy', decay: 'necrotic', pierce: 'piercing', bludgeoning: 'blunt' },
+  damageRiders: {
+    blunt: { poise: 2 }, piercing: { guardBypass: 2 },
+    slashing: { status: 'bleed', pressure: 4, recoveryProfile: 'bodily', requiresHpLoss: true },
+    cold: { status: 'frost', pressure: 3, recoveryProfile: 'elemental', requiresHpLoss: true },
+    fire: { status: 'burn', pressure: 4, recoveryProfile: 'elemental', requiresHpLoss: true },
+    lightning: { status: 'paralysis', pressure: 3, recoveryProfile: 'elemental', requiresHpLoss: true },
+    necrotic: { status: 'necroticBlight', pressure: 4, recoveryProfile: 'curse', requiresHpLoss: true },
+    holy: { cleanse: 1, requiresHpLoss: true },
+    poison: { status: 'venom', pressure: 4, recoveryProfile: 'bodily', requiresHpLoss: true },
+    psychic: { status: 'confused', pressure: 3, recoveryProfile: 'mental', requiresHpLoss: true },
+    earth: { status: 'slowed', pressure: 4, recoveryProfile: 'elemental', requiresHpLoss: true },
+  },
+  // Technique riders: the version-1 rows above, with status pressure for gauges.
+  tagRiders: {
+    precision: { guardBypass: 4 },
+    gorefire: { status: 'burn', pressure: 4, recoveryProfile: 'elemental', requiresHpLoss: true },
+  },
+  cleanseStatuses: ['weak', 'frail', 'vulnerable', 'crimsonBlight', 'necroticBlight', 'burn'],
+};

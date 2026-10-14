@@ -1,0 +1,190 @@
+{
+  "version": 1,
+  "title": "Spells Details",
+  "canvas": {
+    "width": 391,
+    "height": 526,
+    "background": "transparent"
+  },
+  "defaultState": "spells",
+  "states": [
+    {
+      "id": "spells",
+      "name": "Spells"
+    }
+  ],
+  "assets": {
+    "comet-fragment": {
+      "src": "assets/comet-fragment.png",
+      "width": 480,
+      "height": 720
+    },
+    "divider-ornate": {
+      "src": "assets/divider-ornate.png",
+      "width": 1440,
+      "height": 60
+    },
+    "panel-frame": {
+      "src": "assets/panel-frame.png",
+      "width": 1080,
+      "height": 720
+    },
+    "soot-material": {
+      "src": "assets/soot-material.png",
+      "width": 256,
+      "height": 256
+    }
+  },
+  "nodes": [
+    {
+      "id": "spells-details",
+      "name": "Spells Details",
+      "type": "group",
+      "parent": null,
+      "x": 0,
+      "y": 0,
+      "width": 391,
+      "height": 526,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "fill": "none"
+    },
+    {
+      "id": "spells-details-surface",
+      "name": "Reusable antique brass trim",
+      "type": "image",
+      "parent": "spells-details",
+      "x": 0,
+      "y": 0,
+      "width": 391,
+      "height": 526,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "asset": "panel-frame",
+      "fit": "stretch"
+    },
+    {
+      "id": "spells-detail-art",
+      "name": "Spells Detail Art",
+      "type": "image",
+      "parent": "spells-details",
+      "x": 87,
+      "y": 24,
+      "width": 215,
+      "height": 215,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "asset": "comet-fragment",
+      "fit": "contain"
+    },
+    {
+      "id": "spells-detail-name",
+      "name": "Spells Detail Name",
+      "type": "text",
+      "parent": "spells-details",
+      "x": 27,
+      "y": 264,
+      "width": 340,
+      "height": 40.599999999999994,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "text": "Comet Fragment",
+      "fontSize": 29,
+      "fontFamily": "Georgia",
+      "fill": "#d7b45f",
+      "lineHeight": 1.3
+    },
+    {
+      "id": "spells-detail-divider",
+      "name": "Spells Detail Divider",
+      "type": "image",
+      "parent": "spells-details",
+      "x": 40,
+      "y": 314,
+      "width": 310,
+      "height": 18,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "asset": "divider-ornate",
+      "fit": "stretch"
+    },
+    {
+      "id": "spells-detail-description",
+      "name": "Spells Detail Description",
+      "type": "text",
+      "parent": "spells-details",
+      "x": 27,
+      "y": 352,
+      "width": 337,
+      "height": 75.6,
+      "z": 1,
+      "visible": true,
+      "locked": false,
+      "opacity": 1,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "text": "Rank 1\n\n3 damage to target.",
+      "fontSize": 18,
+      "fontFamily": "Arial",
+      "fill": "#e7dec8",
+      "lineHeight": 1.3
+    },
+    {
+      "id": "spells-details-surface-background",
+      "name": "Reusable soot material background",
+      "type": "image",
+      "parent": "spells-details",
+      "x": 0,
+      "y": 0,
+      "width": 391,
+      "height": 526,
+      "z": 0,
+      "visible": true,
+      "locked": false,
+      "opacity": 0.45,
+      "rotation": 0,
+      "scaleX": 1,
+      "scaleY": 1,
+      "states": {},
+      "asset": "soot-material",
+      "fit": "stretch"
+    }
+  ],
+  "metadata": {
+    "componentSource": "spells-details",
+    "sourceState": "spells",
+    "designOnly": true
+  }
+}

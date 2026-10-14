@@ -1,0 +1,85 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { contentBundle } from '../src/content/index.js';
+import { createRegistries } from '../src/model/registries.js';
+import { createRunState } from '../src/model/state.js';
+import { createMemoryStorage, createSaveManager } from '../src/engine/save.js';
+import { createBrowserSaveManager } from '../src/engine/browserSave.js';
+import { createRng } from '../src/engine/rng.js';
+import { createRunCombat } from '../src/engine/runCombat.js';
+import { dispatch } from '../src/engine/combat.js';
+import { commitExpansionCandidate } from '../src/engine/combatExpansionSave.js';
+import { openRunEnemyKnowledge } from '../src/model/enemyKnowledgeRun.js';
+
+const source = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+const wrapper = source.match(/const durable = candidate => \{([\s\S]*?)\n    \};\n    if \(!savedSnapshot\)/)?.[1];
+assert.ok(wrapper, 'the production expanded combat save wrapper is present');
+const settle = () => new Promise(resolve => setImmediate(resolve));
+
+function fixture(knowledge) {
+  const registries = createRegistries(contentBundle), storage = createMemoryStorage();
+  assert.ok(createSaveManager(storage).ensureProfile().ok);
+  const facade = createBrowserSaveManager(storage);
+  let banks = 0;
+  const notices = [];
+  const saves = { ...facade, bankEnemyKnowledge: (...args) => {
+    banks++; return facade.bankEnemyKnowledge(...args);
+  } };
+  const run = createRunState({ registries, seed: 11, classId: 'reaver',
+    combatExpansionVersion: 2, enemyKnowledgeVersion: knowledge ? 1 : null });
+  if (!knowledge) { delete run.reactionRulesVersion; delete run.reactionRules; } // Historical unsaved-turn policy.
+  if (knowledge) openRunEnemyKnowledge(run, { bankable: true,
+    receiptId: '50000000-0000-4000-8000-000000000003' });
+  const rng = createRng(run.seed), nodeId = 'n1_4', encounterId = 'patrol';
+  run.combatEntered = { nodeId, encounterId };
+  const combat = createRunCombat({ registries, run, rng,
+    enemyIds: ['wanderingSoldier'], settings: { playInDeckOrder: true } });
+  const durable = new Function('run', 'rng', 'activeSlot', 'nodeId', 'encounterId',
+    'saves', 'commitExpansionCandidate', 'showSettingsNotice',
+    `return candidate => {${wrapper}}`)(run, rng, 1, nodeId, encounterId,
+    saves, commitExpansionCandidate, message => notices.push(message));
+  durable(combat); combat.beforeCombatCommit = durable;
+  return { registries, run, rng, combat, saves, notices, banks: () => banks };
+}
+
+test('production browser wrapper preserves historical expanded checkpoint and RNG after unsaved actions', async () => {
+  const f = fixture(false);
+  await settle();
+  const entry = f.saves.loadRun(f.registries);
+  dispatch(f.combat, { type: 'endTurn' });
+  await settle();
+  const loaded = f.saves.loadRun(f.registries);
+  assert.equal(f.combat.turn, 2);
+  assert.equal(loaded.combatEntered.snapshot.turn, 1);
+  assert.deepEqual(loaded.combatEntered.snapshot, entry.combatEntered.snapshot);
+  assert.deepEqual(loaded.streamCounters, entry.streamCounters);
+  assert.equal(f.banks(), 0);
+  assert.deepEqual(f.notices, []);
+});
+
+test('production browser wrapper banks opted-in learning without moving the entry checkpoint or its RNG', async () => {
+  const f = fixture(true);
+  await settle();
+  assert.equal(f.banks(), 1);
+  const entry = f.saves.loadRun(f.registries);
+  dispatch(f.combat, { type: 'endTurn' });
+  let choices = 0;
+  while (f.combat.pendingReaction) {
+    assert.ok(choices++ < 64, 'reaction answers remain bounded');
+    dispatch(f.combat, { type: 'chooseReaction', offerId: f.combat.pendingReaction.id, optionId: null });
+  }
+  await settle();
+  const loaded = f.saves.loadRun(f.registries);
+  assert.equal(f.combat.turn, 2);
+  // SPEC §3.12/§9 (owner ruling 2026-10-10): neither the turn change nor any
+  // reaction pause on the way replaces the checkpoint, and the asynchronous
+  // profile bank re-saves without stamping live RNG counters.
+  assert.equal(loaded.combatEntered.snapshot.turn, 1);
+  assert.ok(f.banks() >= 1, 'the opening checkpoint banked its learning');
+  assert.deepEqual(loaded.combatEntered.snapshot, entry.combatEntered.snapshot,
+    `the entry checkpoint survives ${choices} reaction pause(s)`);
+  assert.deepEqual(loaded.streamCounters, entry.streamCounters);
+  assert.deepEqual(loaded.skills.perception, f.run.skills.perception);
+  assert.deepEqual(f.notices, []);
+});

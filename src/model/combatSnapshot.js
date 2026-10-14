@@ -1,7 +1,13 @@
+import { combatExpansionRulesProblems } from './combatExpansionRules.js';
 import { retiredAttackSlots } from './cardRemoval.js';
 import { handRulesProblems } from './handRules.js';
 import { recoveryRulesProblems } from './recoveryRules.js';
 import { combatRatingProblems, ratingIds } from './combatRatings.js';
+import { combatIntentRulesProblems, combatMatchupRulesProblems, combatCounterProblems, combatTraitGuardProblems } from './combatTacticsRules.js';
+import { statusControlProblems } from './combatStatusState.js';
+import { combatEnemyKnowledgeProblems } from './enemyKnowledgeCombat.js';
+import { combatReactionProblems } from './combatReactionState.js';
+import { perceptionProblems } from './perception.js';
 // src/model/combatSnapshot.js — versioned, DOM-free exact-combat save shape.
 //
 // The snapshot is persisted inside run.combatEntered.snapshot. This module
@@ -34,6 +40,15 @@ function nonEmptyString(value) {
 function entityProblems(entity, path, { player = false } = {}) {
   const problems = [];
   if (!record(entity)) return [`${path} must be an object`];
+  if (entity.reactionsEnabled !== undefined && typeof entity.reactionsEnabled !== 'boolean') problems.push(`${path}.reactionsEnabled must be boolean`);
+  if (entity.combatCounter !== undefined) problems.push(...combatCounterProblems(entity.combatCounter, `${path}.combatCounter`));
+  if (entity.combatTraitGuard !== undefined) problems.push(...combatTraitGuardProblems(entity.combatTraitGuard, `${path}.combatTraitGuard`));
+  if (entity.intentRevealed !== undefined && typeof entity.intentRevealed !== 'boolean') problems.push(`${path}.intentRevealed must be boolean`);
+  if (entity.intentReads !== undefined && (!record(entity.intentReads) || Object.entries(entity.intentReads).some(([id, value]) => !nonEmptyString(id) || typeof value !== 'boolean'))) problems.push(`${path}.intentReads must map player ids to booleans`);
+  if (entity.intent?.counterDefensePrimed !== undefined) {
+    if (typeof entity.intent.counterDefensePrimed !== 'boolean') problems.push(`${path}.intent.counterDefensePrimed must be boolean`);
+    else if (entity.intent.counterDefensePrimed && (!nonEmptyString(entity.intent.moveId) || entity.intent.combatProfile?.maneuver !== 'counter')) problems.push(`${path}.intent.counterDefensePrimed requires the committed Counter move`);
+  }
   if (entity.abilityRiders !== undefined) {
     const state = entity.abilityRiders;
     if (!record(state)) problems.push(`${path}.abilityRiders must be an object`);
@@ -94,6 +109,8 @@ export function combatSnapshotProblems(snapshot) {
   if (!record(snapshot)) return ['snapshot must be an object'];
   const problems = [];
   if (snapshot.version !== COMBAT_SNAPSHOT_VERSION) problems.push(`version must be ${COMBAT_SNAPSHOT_VERSION}`);
+  if (snapshot.combatMatchupRules !== undefined) problems.push(...combatMatchupRulesProblems(snapshot.combatMatchupRules));
+  if (snapshot.combatIntentRules !== undefined) problems.push(...combatIntentRulesProblems(snapshot.combatIntentRules));
   if (!Number.isInteger(snapshot.turn) || snapshot.turn < 1) problems.push('turn must be a positive integer');
   try { retiredAttackSlots(snapshot.equipmentAttackSlotCount, snapshot.removedAttackSlotIds); } catch (error) { problems.push(error.message); }
   if (snapshot.sideboardedEquipmentCardIds !== undefined && (!Array.isArray(snapshot.sideboardedEquipmentCardIds) || snapshot.sideboardedEquipmentCardIds.some((id) => !nonEmptyString(id)) || new Set(snapshot.sideboardedEquipmentCardIds).size !== snapshot.sideboardedEquipmentCardIds.length)) problems.push('sideboardedEquipmentCardIds must contain unique non-empty instance ids');
@@ -140,8 +157,8 @@ export function combatSnapshotProblems(snapshot) {
     else for (const id of ratingIds) problems.push(...storedStatRowProblems(ratings[id], `Combat ratings: ${id}`));
   }
   if (snapshot.breakMeterVersion !== undefined) {
-    if (snapshot.breakMeterVersion !== 1 || !snapshot.ratingsRules?.enabled) problems.push('breakMeterVersion requires version 1 and enabled ratings');
-    for (const [path, entity] of [['player', snapshot.player], ...(Array.isArray(snapshot.enemies) ? snapshot.enemies : []).map((entity, i) => [`enemies[${i}]`, entity])]) {
+    if (![1, 2].includes(snapshot.breakMeterVersion) || (snapshot.breakMeterVersion === 1 && !snapshot.ratingsRules?.enabled)) problems.push('breakMeterVersion must be 1 with enabled ratings, or 2');
+    if (snapshot.breakMeterVersion === 1) for (const [path, entity] of [['player', snapshot.player], ...(Array.isArray(snapshot.enemies) ? snapshot.enemies : []).map((entity, i) => [`enemies[${i}]`, entity])]) {
       for (const field of ['wardMeter', 'arcaneExposure', 'wardGuard']) if (entity?.[field] !== undefined) problems.push(`${path}.${field} is retired by breakMeterVersion 1`);
     }
   }
@@ -166,7 +183,8 @@ export function combatSnapshotProblems(snapshot) {
     if (!record(snapshot.pendingAbilityPlay)) problems.push('pendingAbilityDiscard requires its paid card');
     else problems.push(...cardProblems(snapshot.pendingAbilityPlay.instance, 'pendingAbilityPlay.instance'));
     if (!Array.isArray(snapshot.abilityQueue) || snapshot.abilityQueue.some(action => !record(action) || !record(action.effect) || !nonEmptyString(action.effect.op))) problems.push('abilityQueue must contain queued effects');
-  } else if (snapshot.abilityQueue !== undefined || snapshot.pendingAbilityPlay !== undefined) problems.push('saved ability queue requires a pending discard choice');
+  } else if ((snapshot.abilityQueue !== undefined && !snapshot.pendingReaction) || snapshot.pendingAbilityPlay !== undefined) problems.push('saved ability queue requires a pending choice');
+  problems.push(...combatReactionProblems(snapshot));
   if (typeof snapshot.equipmentChanged !== 'boolean') problems.push('equipmentChanged must be boolean');
   // The skill ledger and receipt (plan phase 4a); absent on a snapshot written
   // before them, refused by name when present and malformed.
@@ -249,6 +267,13 @@ export function combatSnapshotProblems(snapshot) {
   problems.push(...entityProblems(snapshot.player, 'player', { player: true }));
   if (!Array.isArray(snapshot.enemies)) problems.push('enemies must be an array');
   else snapshot.enemies.forEach((enemy, index) => problems.push(...entityProblems(enemy, `enemies[${index}]`)));
+  if (Array.isArray(snapshot.enemies)) problems.push(...combatEnemyKnowledgeProblems(snapshot.enemyKnowledge, snapshot.enemies, { ownerIds: new Set(['player']) }));
+  if (snapshot.enemyKnowledge?.rules?.perception) problems.push(...perceptionProblems(snapshot.skills?.perception, snapshot.enemyKnowledge.rules.perception));
+  if (snapshot.combatExpansionVersion !== undefined && ![1, 2].includes(snapshot.combatExpansionVersion)) problems.push('combatExpansionVersion must be 1 or 2');
+  if (snapshot.combatExpansionVersion === 2) problems.push(...combatExpansionRulesProblems(snapshot.combatExpansionRules));
+  for (const [path, entity] of [['player', snapshot.player], ...(Array.isArray(snapshot.enemies) ? snapshot.enemies : []).map((enemy, i) => [`enemies[${i}]`, enemy])]) {
+    problems.push(...statusControlProblems(entity, path, { required: snapshot.combatExpansionVersion === 2, rules: snapshot.combatStatusRules || snapshot.combatExpansionRules?.statuses }));
+  }
 
   if (!record(snapshot.piles)) problems.push('piles must be an object');
   else {
@@ -318,6 +343,9 @@ export function combatSnapshotReferenceProblems(snapshot, registries) {
     has(registries.enemies, enemy?.enemyId, `enemies[${index}].enemyId`);
     for (const id of Object.keys(enemy?.statuses || {})) has(registries.statuses, id, `enemies[${index}].statuses`);
   }
+  if (snapshot.enemyKnowledge) problems.push(...combatEnemyKnowledgeProblems(snapshot.enemyKnowledge, snapshot.enemies || [], {
+    enemyIds: new Set(registries.enemies.ids()), ownerIds: new Set(['player']),
+  }));
   for (const pile of SNAPSHOT_PILES) {
     for (const card of snapshot.piles?.[pile] || []) has(registries.cards, card?.cardId, `piles.${pile}.cardId`);
   }

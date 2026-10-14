@@ -601,5 +601,95 @@ export const cardExposure = [
     "cardId": "progression-crown-of-scars",
     "damageSchool": "magic",
     "exposureBuildupPerHit": 5
+  },
+  {
+    "cardId": "rimeNeedle",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "emberDart",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "staticNeedle",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "forceNudge",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "drowsingMote",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "holySpark",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "rotMote",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "crawlingShot",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "aspDart",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "viperStrike",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "septicBlade",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "lethalDose",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "mindSpike",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "mindFracture",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  {
+    "cardId": "wakingNightmare",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  {
+    "cardId": "stoneSling",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "rockfall",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  {
+    "cardId": "entomb",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
   }
 ];

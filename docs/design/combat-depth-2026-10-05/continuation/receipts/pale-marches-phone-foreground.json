@@ -1,0 +1,30 @@
+{
+  "id": "pale-marches-phone-foreground",
+  "kind": "foreground",
+  "phoneOnly": true,
+  "region": "pale-marches",
+  "transparent": true,
+  "resultFile": "scenes/shared/pale-marches/foreground-phone.png",
+  "prompt": "Create ONE separate PHONE PORTRAIT foreground framing layer for AshenSpire's pale-marches combat scene. Portrait 1024x1536 canvas, actual transparent alpha. Detailed weathered painterly dark fantasy matching reference. ONLY jagged frost-coated stone and bare ice-encrusted branches, restrained silver-blue light. Frame objects run continuously along extreme left and right edges from TOP to BOTTOM; they touch those outer edges intentionally. Keep objects narrow, occupying ONLY outermost 10% of each side plus low bottom CORNERS. Entire central 76% must be COMPLETELY TRANSPARENT from top to bottom, including bottom center. No scenery, sky, ground plane, backing, architecture in center, actors, text or UI. Compose specifically for tall phone stage, not a landscape crop. Restrained lantern glow only on physical surfaces, no colored halo. Cold silver-blue light and frost, absolutely no fire or lava cracks.",
+  "reference": "../references/composition.png",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a112fc-0e64-7472-a495-aba14ffa5ab6\\exec-dea8cff4-1e4a-4d2a-a27c-8779819dd41d.png",
+  "generator": "built-in image_gen",
+  "size": [
+    1024,
+    1536
+  ],
+  "mode": "RGBA",
+  "sha256": "c2dfaef002af4ea5e3560ad2195c664e6d22b638558694f8d8284b9ea4ead806",
+  "alphaRange": [
+    0,
+    254
+  ],
+  "transparentFraction": 0.6777629852294922,
+  "visibleBounds": [
+    0,
+    0,
+    1024,
+    1536
+  ],
+  "alphaThreshold": 32
+}

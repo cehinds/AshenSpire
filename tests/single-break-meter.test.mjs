@@ -58,9 +58,9 @@ test('fully Blocked hits cause no impact; explicit Poise damage adds no magical 
   assert.equal(e.poiseMeter.value, 2); assert.equal(events(c, 'arcaneImpact').length, 0);
 });
 
-test('new run construction stamps fights; a persisted older run remains on its own rules', () => {
+test('version-1 run construction stamps fights; a persisted older run remains on its own rules', () => {
   const reg = createRegistries(configuredContentBundle(contentBundle, advancedConfigSnapshot()));
-  const run = createRunState({ registries: reg, classId: 'reaver', seed: 8 });
+  const run = createRunState({ registries: reg, classId: 'reaver', seed: 8, combatExpansionVersion: 1 });
   assert.equal(run.advancedConfigSnapshot.breakMeterVersion, 1);
   const current = createRunCombat({ registries: reg, run, rng: createRng(8), enemyIds: ['wanderingSoldier'] });
   assert.equal(current.breakMeterVersion, 1); assert.equal(current.player.wardMeter, undefined);
@@ -97,9 +97,10 @@ test('one magical hit crossing several thresholds emits one arcaneStagger after 
   assert.equal(events(c, 'arcaneStagger').length, 1);
   assert.equal(events(c, 'arcaneStagger')[0].threshold, 2);
   assert.ok(c.eventLog.findLastIndex(e => e.type === 'meterFilled') < c.eventLog.findIndex(e => e.type === 'arcaneStagger'));
-  assert.equal(e.statuses.magicVulnerable.stacks, 25); assert.equal(e.statuses.magicVulnerable.duration, 2);
+  assert.equal(e.statuses.magicVulnerable, undefined);
   while (c.queue.length) executeAction(c, c.queue.shift());
   assert.equal(c.player.mana, 1);
+  assert.ok(e.statuses.staggered, 'the magical break is a full Stagger');
 });
 
 test('physical Stagger, immune enemies and player Stagger do not take the magical payoff', () => {
@@ -115,11 +116,16 @@ test('physical Stagger, immune enemies and player Stagger do not take the magica
   assert.equal(c.player.pendingActionLoss, 2); assert.equal(c.player.statuses.magicVulnerable, undefined);
 });
 
-test('all enemies get the data default payoff and its overrides', () => {
-  const id = contentBundle.enemies.find(e => !e.arcaneExposure).id;
-  const c = fight({ enemyIds: [id], tune: b => { b.balance.exposure.defaultPayoff.value = 35; b.balance.exposure.defaultPayoff.duration = 3; } });
-  const e = c.enemies[0]; e.poiseMeter.max = 1; applyRatingImpact(c, c.player, e, magic, 1);
-  assert.equal(e.statuses.magicVulnerable.stacks, 35); assert.equal(e.statuses.magicVulnerable.duration, 3);
+// Owner, 2026-10-12 ("any break but vulnerable to any damage type"): a
+// magical Stagger is Staggered like any other break and takes no
+// magicVulnerable payoff, authored or default, even when the row is tuned.
+test('a magical Stagger applies Staggered, not the exposure payoff', () => {
+  const authored = contentBundle.enemies.find(e => e.arcaneExposure?.onBreak).id;
+  const plain = contentBundle.enemies.find(e => !e.arcaneExposure).id;
+  const c = fight({ enemyIds: [authored, plain], tune: b => { b.balance.exposure.defaultPayoff.value = 35; b.balance.exposure.defaultPayoff.duration = 3; } });
+  for (const e of c.enemies) { e.poiseMeter.max = 1; applyRatingImpact(c, c.player, e, magic, 1); }
+  while (c.queue.length) executeAction(c, c.queue.shift());
+  for (const e of c.enemies) { assert.equal(e.statuses.magicVulnerable, undefined); assert.ok(e.statuses.staggered); }
 });
 
 test('Overcharge is inside the one floor; Stagger Break adds impact; foldScale zero removes only buildup', () => {
@@ -140,7 +146,7 @@ test('Resonance uses the pre-growth threshold, spends guard and cannot chain or 
   applyRatingImpact(c, c.player, c.enemies[0], magic, 8);
   while (c.queue.length) executeAction(c, c.queue.shift());
   assert.equal(c.enemies[2].poiseGuard, 0); assert.equal(c.enemies[2].poiseMeter.value, 1);
-  assert.equal(c.enemies[1].statuses.magicVulnerable.stacks, 25);
+  assert.ok(c.enemies[1].statuses.staggered); assert.equal(c.enemies[1].statuses.magicVulnerable, undefined);
   assert.equal(events(c, 'arcaneStagger').length, 1); assert.equal(c.player.mana, 1);
 });
 
@@ -203,7 +209,7 @@ test('co-op Stagger triggers refund and draw only for the source, including an i
 
 test('the real co-op session sends Ward ratings and omits retired meters under the host stamp', () => {
   const reg = createRegistries(configuredContentBundle(contentBundle, advancedConfigSnapshot()));
-  const host = createSession({ registries: reg, seedString: 'BOSSTIER' });
+  const host = createSession({ registries: reg, seedString: 'BOSSTIER', combatExpansionVersion: 1 });
   host.addMember({ id: 'p1', name: 'p1', classId: 'reaver' }); host.start();
   assert.equal(host.serialize().advancedConfigSnapshot.breakMeterVersion, 1);
   // Keep this a current-run host fixture, including its required starting pick.

@@ -1,0 +1,16 @@
+{
+  "sprites": 59,
+  "armor": 19,
+  "enemies": 33,
+  "layers": 4,
+  "issues": [],
+  "checks": [
+    "canonical armor and enemy coverage",
+    "unique IDs",
+    "true alpha",
+    "PNG source hashes",
+    "dimensions and measured anchors",
+    "sprite clearance at all edges",
+    "transparent foreground layers"
+  ]
+}

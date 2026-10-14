@@ -173,7 +173,9 @@ const MAX_HP_COMPOSITION = [
       // RE-AIMED 2026-09-19 (plan phase 6): the derivation gained the run's
       // character level — the snapshot's `perLevel` term rides it — and the
       // three addends are otherwise UNCHANGED; a human read the diff.
-      "deriveStat(restored.rules, 'hp', { attributes: run.attributes, classDef, level: characterLevelOf(run) }).value",
+      // V2 projects earned Blight attributes without mutating allocation.
+      // The reviewed composition still has exactly these three addends.
+      "deriveStat(restored.rules, 'hp', { attributes: effectiveAttributes, classDef, level: characterLevelOf(run) }).value",
       'hpEquipmentBonus',
       'run.maxHpAdjustment',
     ],
@@ -844,8 +846,8 @@ if (SELFTEST) {
         // check's coverage.
         name: "the class domain goes empty at the registry — ONEANSWER's denominator dies",
         file: 'src/model/registries.js',
-        find: '    registries[type] = makeRegistry(TYPE_SINGULAR[type], collection(type, bundle[type]));',
-        replace: "    registries[type] = makeRegistry(TYPE_SINGULAR[type], type === 'classes' ? [] : collection(type, bundle[type]));",
+        find: '    registries[type] = makeRegistry(TYPE_SINGULAR[type], defs);',
+        replace: "    registries[type] = makeRegistry(TYPE_SINGULAR[type], type === 'classes' ? [] : defs);",
         expectRed: /ONEANSWER HAS NO CLASS DOMAIN/,
       },
       {

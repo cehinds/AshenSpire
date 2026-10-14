@@ -1,0 +1,199 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { rewardDom } from './helpers/reward-dom.mjs';
+import { createAlternativeCardStage } from '../src/ui/alternativeCardStage.js';
+import { setAnimSpeed } from '../src/ui/fx.js';
+import { applyDisplayAppearance } from '../src/ui/displayAppearance.js';
+import { resolveCombatAnimation } from '../src/model/combatAnimation.js';
+import { playerHurtFrames } from '../src/content/playerHurtFrames.js';
+
+test('Classic appearance leaves its upstream stage in charge without allocating an alternative canvas', () => {
+  try {
+    applyDisplayAppearance({ classicAppearance: true });
+    assert.equal(createAlternativeCardStage('reaver'), null);
+  } finally { applyDisplayAppearance({}); }
+});
+
+test('class stage owns travel, hit flashing, interruption, pause and disposal', async () => {
+  const dom=rewardDom(), raf=new Map(), paints=[], contexts=[], readbacks=[];
+  let time=1000, wallTime=1000, serial=0, reduced=false, failArt=false, materializeMs=0, deferArt=false;
+  const pendingArt=[];
+  const create=dom.document.createElement.bind(dom.document);
+  dom.document.createElement=tag=>{
+    const node=create(tag);
+    if(tag==='canvas')node.getContext=(kind,options)=>{contexts.push({node,kind,options});return {
+      clearRect(){},save(){},restore(){},
+      drawImage(...args){paints.push({args,alpha:this.globalAlpha,filter:this.filter});},
+      fillRect(){paints.push({fill:this.fillStyle,mode:this.globalCompositeOperation});},
+      getImageData(){readbacks.push(node);time+=materializeMs;wallTime+=materializeMs;return {data:new Uint8ClampedArray(4)};},
+    };};
+    return node;
+  };
+  const NativeDate=Date;
+  const globals={...dom, performance:{now:()=>time}, Date:class extends NativeDate {static now(){return wallTime;}},
+    Image:class {set src(value){this.url=value;const finish=()=>failArt?this.onerror?.():this.onload?.();if(deferArt)pendingArt.push(finish);else queueMicrotask(finish);}},
+    matchMedia:query=>({matches:query.includes('reduced-motion')&&reduced}),
+    requestAnimationFrame:fn=>{raf.set(++serial,fn);return serial;},
+    cancelAnimationFrame:id=>raf.delete(id),
+  };
+  const saved=Object.fromEntries(Object.keys(globals).map(key=>[key,globalThis[key]]));
+  Object.assign(globalThis,globals);
+  let stage;
+  const step=ms=>{time+=ms;wallTime+=ms;const callbacks=[...raf.values()];raf.clear();callbacks.forEach(fn=>fn(time));};
+  try {
+    setAnimSpeed('normal');
+    { const still=createAlternativeCardStage('reaver',{still:true});assert.equal(still.el.dataset.still,'','a still stage is marked for its CSS hit tint');assert.equal(still.play('hit'),false);still.dispose(); }
+    stage=createAlternativeCardStage('reaver');await stage.ready;
+    const visible=stage.el.querySelector('canvas');
+    assert.deepEqual(contexts.find(c=>c.node===visible),{node:visible,kind:'2d',options:{willReadFrequently:true}});
+    assert.equal(contexts[1].options,undefined,'the flash mask keeps its existing context backend');
+    assert.equal(stage.pose,'ready');assert.equal(raf.size,0);
+    assert.match(stage.currentArt.image.url,/reaver/);
+    assert.equal(stage.currentArt.left,128);
+    stage.setStance('offensive');assert.equal(stage.pose,'stance-offensive');
+    stage.play('attack',260);step(115);
+    stage.setStance('casting');assert.equal(stage.pose,'attack-contact','receipt selection must not interrupt the action');
+    step(145);assert.equal(stage.pose,'stance-casting');
+    assert.match(paints.at(-1).args[0].url,/stances\/reaver\/casting\.webp$/);
+    assert.equal(stage.currentArt.image,paints.at(-1).args[0],'HUD ink source follows the held pose');
+    stage.setRestPose('defeated');assert.equal(stage.pose,'defeated','death overrides selected art');
+    stage.setRestPose('idle');assert.equal(stage.pose,'stance-casting');
+    stage.setStance(null);stage.setRestPose('counter');assert.equal(stage.pose,'reaver.counter.stance','counter uses the selected preparation');
+    stage.setRestPose('idle');
+    const preparation=resolveCombatAnimation({cardTags:['camp:physical','maneuver:counter']},[],{classId:'reaver'});
+    stage.setRestPose(preparation.rest);stage.play(preparation.technique,260);step(100);
+    assert.equal(stage.pose,'reaver.counter.stance','preparation holds the selected stance without swinging');
+    assert.equal(stage.el.dataset.effect,'','preparation never emits the counter impact trail');
+    step(160);assert.equal(stage.pose,'reaver.counter.stance','confirmed preparation remains held after its beat');
+    stage.setRestPose('idle');
+    stage.play('attack',260,['stamina']);step(115);
+    assert.equal(stage.pose,'attack-contact');
+    assert.ok(paints.some(p=>p.args[0]?.url?.includes('attack-contact')&&p.args[1]===208&&p.args[2]===16),'the source figure advances 80 pixels at the authored floor anchor');
+    assert.deepEqual(paints.at(-1).args.slice(1,3),[0,0],'the materialized aura surface composites at the canvas origin');
+    assert.equal(stage.currentArt.left,208,'HUD ink source follows authored canvas travel');
+    stage.hold(60);step(50);assert.equal(stage.presentation.elapsed,115);
+    step(155);assert.equal(stage.pose,'ready');assert.equal(raf.size,0);
+    assert.equal(paints.at(-1).args[1],128,'unfiltered rest returns to the original floor anchor');
+    stage.play('hit');
+    assert.equal(raf.size,1,'an earlier hurt effect already owns a queued frame');
+    const beforeWarm=time;
+    materializeMs=400;
+    stage.play('counter',260,['stamina','mana']);
+    assert.equal(readbacks.at(-1),visible,'action preparation still materializes the visible stage');
+    assert.ok(time>beforeWarm,'the first aura is materialized before the action clock');
+    assert.equal(stage.presentation.elapsed,0,'cold aura work is outside the action clock');
+    const staleCallbacks=[...raf.values()];raf.clear();
+    materializeMs=0;staleCallbacks.forEach(fn=>fn(time-300));
+    assert.equal(stage.presentation.elapsed,0,'a pre-materialization RAF timestamp cannot move the fresh clock backwards');
+    materializeMs=0;step(50);
+    assert.equal(stage.pose,'reaver.counter.stance','queued hurt RAF does not skip Counter preparation after cold filter work');
+    assert.equal(stage.el.dataset.effect,'');
+    step(10);assert.equal(stage.pose,'reaver.counter.contact');
+    assert.equal(stage.el.dataset.effect,'reaver.counter.effect-1');
+    stage.setRestPose('defend');materializeMs=300;
+    const resume=()=>({rest:'defend',action:'counter',elapsed:60,duration:260,resources:['hp','mana','stamina'],savedAt:wallTime});
+    const beforeResumeReads=readbacks.length;
+    stage.setRestPose('defend',{resume:resume()});
+    assert.equal(readbacks.length,beforeResumeReads+1,'restoration also materializes before checking wall-clock expiry');
+    assert.equal(stage.presentation.action,undefined,'cold restore work does not extend a stale wall-clock action');
+    assert.equal(stage.pose,'guard-brace');
+    materializeMs=0;stage.setRestPose('defend',{resume:resume()});
+    assert.equal(stage.presentation.elapsed,60,'a valid restoration keeps its saved elapsed time');
+    step(30);assert.equal(stage.pose,'reaver.counter.contact');
+    stage.setRestPose('idle');
+    stage.play('smash');step(60);stage.setRestPose('defend');
+    assert.equal(stage.pose,'guard-brace','a rest change cancels the prior action');
+    step(300);assert.equal(stage.pose,'guard-brace');
+    stage.play('hit');step(50);
+    assert.ok(paints.some(p=>p.fill==='#ff2424'&&p.mode==='source-in'),'red mask follows sprite alpha on strobe frame 2');
+    step(200);assert.equal(raf.size,1,'the default reaction (280 ms minimum) is still running');
+    step(31);assert.equal(raf.size,0,'hit reaction terminates after its duration');
+    // Knock-back: the painted hurt body moves left mid-reaction from its registered origin and rests afterwards.
+    const hurtX=128+playerHurtFrames.reaver.dx;
+    stage.play('hit',220);step(66);
+    assert.match(stage.currentArt.image.url,/greatsword-outfits\/reaver\/HURT\.webp$/,'the clip paints the registered hurt pose');
+    assert.ok(paints.filter(p=>p.args?.[0]===stage.currentArt.image).at(-1).args[1]<hurtX-10,'the body is knocked left at the 30% peak');
+    assert.ok(stage.currentArt.left<hurtX-10,'HUD ink source follows the knock-back');
+    step(220);assert.equal(paints.filter(p=>p.args?.[0]===stage.currentArt.image).at(-1).args[1],128,'the knock-back returns to rest');
+    assert.equal(stage.currentArt.left,128);
+    // Hit-stop: a held reaction freezes at impact with its tint showing.
+    stage.play('hit',380);assert.equal(stage.hold(100),true,'a running reaction accepts a hold');
+    paints.length=0;step(50);assert.equal(paints.filter(p=>p.args?.[0]===stage.currentArt.image).at(-1).args[1],hurtX,'a held hit freezes the knock-back at impact');
+    assert.ok(!paints.some(p=>p.fill==='#ff2424'),'hit-stop freezes on untinted frame 1');
+    step(50);step(100);assert.ok(paints.filter(p=>p.args?.[0]===stage.currentArt.image).at(-1).args[1]<hurtX,'the knock-back resumes once the hold ends');
+    step(280);assert.equal(raf.size,0,'the held reaction ends after its own 380 ms of motion');
+    // Hurt clip: seven 40 ms frames of the hurt pose, red on frames 2, 4 and 6 only.
+    const clipFrames=(label,tinted=true)=>{
+      for(let i=0;i<7;i++){
+        stage.play('hit');paints.length=0;step(20+40*i);
+        assert.match(stage.currentArt.image.url,/HURT\.webp$/,label+' frame '+(i+1)+' paints the hurt pose');
+        assert.equal(paints.some(p=>p.fill==='#ff2424'),tinted&&[1,3,5].includes(i),label+' frame '+(i+1)+' red mask');
+        step(300-(20+40*i));
+      }
+    };
+    clipFrames('strobe');
+    stage.play('hit');step(300);assert.doesNotMatch(stage.currentArt.image.url,/HURT/,'the clip returns to the rest pose');
+    assert.equal(stage.currentArt.left,128);
+    document.body.classList.add('reduce-flashes');clipFrames('reduce-flashes',false);document.body.classList.remove('reduce-flashes');
+    // Reduce flashes drops the red tint but keeps the knock-back (SPEC §7.4).
+    document.body.classList.add('reduce-flashes');paints.length=0;
+    stage.play('hit',220);step(66);
+    assert.ok(!paints.some(p=>p.fill==='#ff2424'),'reduce-flashes paints no red mask');
+    assert.ok(stage.currentArt.left<hurtX-10,'reduce-flashes keeps the knock-back');
+    document.body.classList.remove('reduce-flashes');
+    // A click-skip settles the reaction and its hold at once.
+    stage.play('hit',220);step(30);stage.setRestPose('idle');step(36);
+    assert.ok(stage.currentArt.left<hurtX-10,'a routine re-render keeps the running hit reaction');
+    step(200);
+    stage.play('hit',380);stage.hold(100);stage.settle({reaction:true});
+    assert.equal(stage.currentArt.left,128,'a click-skip ends the knock-back');
+    step(16);assert.equal(raf.size,0,'a click-skip ends the hit reaction');
+    stage.play('hit',220);step(30);assert.equal(stage.endReaction(),true,'an unheld reaction can be ended');
+    assert.equal(stage.currentArt.left,128,'ending the reaction returns the body');assert.equal(stage.endReaction(),false);
+    stage.seek('sweep',70);assert.equal(stage.pose,'reaver.sweep.contact');assert.equal(raf.size,0);
+    assert.equal(stage.el.dataset.effect,'reaver.sweep.effect-1');
+    assert.ok(paints.at(-1).args[0].url.endsWith('/effect-1.webp'));
+    assert.ok(stage.currentArt.image.url.endsWith('/contact.webp'),'body footprint excludes the slash layer');
+    stage.seek('sweep',130);assert.equal(stage.el.dataset.effect,'reaver.sweep.effect-2');
+    stage.seek('sweep',200);assert.equal(stage.pose,'ready');assert.equal(stage.el.dataset.effect,'');
+    document.body.classList.add('reduce-flashes');stage.seek('sweep',70);assert.equal(stage.el.dataset.effect,'');
+    document.body.classList.remove('reduce-flashes');
+    const timing=stage.actionTiming('weapon:attack:greatsword',{lungeMs:260,impactCapMs:120});
+    assert.ok(timing.impactMs<=120.00001);
+    stage.seek('weapon:attack:greatsword',timing.impactMs+.01,timing.totalMs);
+    assert.equal(stage.pose,'reaver.greatsword.attack.strike');
+    assert.match(stage.currentArt.image.url,/player-attacks\/reaver\/greatsword\/strike/);
+    assert.equal(stage.currentArt.left,128,'painted weapon movement keeps the shared floor registration');
+    stage.setRestPose('idle');
+    stage.seek('weapon:spell:staff-casting',0,500);
+    assert.match(paints.at(-1).filter,/brightness\(/,'spell identity retains casting brightness');
+    stage.seek('weapon:attack:staff-casting',0,500);
+    assert.equal(paints.at(-1).filter,'none','physical staff attacks do not gain a spell aura');
+    stage.seek('weapon:rangedMagic:staff-casting',0,500);
+    assert.equal(paints.at(-1).filter,'none','ranged magic retains its existing separate aura behavior');
+    stage.setRestPose('idle');
+    reduced=true;stage.play('attack');assert.equal(stage.pose,'ready');assert.equal(stage.play('hit'),false);
+    stage.setStance('defensive');stage.play('defend');assert.equal(stage.pose,'stance-defensive','reduced motion retains the readable selected pose');
+    stage.setStance(null);
+    reduced=false;setAnimSpeed('instant');assert.equal(stage.play('hit'),true,'Instant keeps the fixed-duration hurt clip');stage.settle({reaction:true});step(16);
+    stage.play('attack',0);assert.equal(raf.size,0);
+    setAnimSpeed('normal');stage.play('attack');assert.equal(raf.size,1);
+    stage.dispose();assert.equal(raf.size,0);assert.equal(stage.play('attack'),false);
+    failArt=true;stage=createAlternativeCardStage('herald');
+    assert.equal(await stage.ready,false);
+    assert.ok(stage.el.hasAttribute('data-art-placeholder'));
+    assert.equal(stage.el.querySelector('span').hidden,false,'failed art retains a visible character marker');
+    failArt=false;await stage.el.ashenRestoreArt();
+    assert.equal(stage.el.hasAttribute('data-art-placeholder'),false);
+    assert.equal(stage.el.querySelector('span').hidden,true,'Retry restores the class art');
+    assert.equal(stage.pose,'ready');
+    stage.dispose();deferArt=true;stage=createAlternativeCardStage('rogue');
+    stage.dispose();const beforeLate=paints.length;
+    pendingArt.splice(0).forEach(finish=>finish());
+    assert.equal(await stage.ready,false,'a disposed stage ignores late artwork');
+    assert.equal(paints.length,beforeLate,'late image loads cannot repaint a disposed canvas');
+  } finally {
+    stage?.dispose();setAnimSpeed('normal');
+    for(const [key,value]of Object.entries(saved))if(value===undefined)delete globalThis[key];else globalThis[key]=value;
+  }
+});

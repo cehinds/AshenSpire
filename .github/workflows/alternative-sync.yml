@@ -34,7 +34,9 @@ jobs:
 
   sync:
     needs: policy-tests
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/dev'
+    # The root alternative was consolidated into dev. Keep its historical
+    # branches frozen; preservation policy tests still run above.
+    if: ${{ false }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -45,6 +47,7 @@ jobs:
         with:
           ref: dev
           fetch-depth: 0
+          filter: blob:none # retain ancestry without downloading historical artwork
           lfs: false
       - uses: ./.github/actions/setup-node
       - uses: actions/setup-python@v5
@@ -98,7 +101,8 @@ jobs:
           python docs/design/combat-depth-2026-10-05/pack.py
           if [ -f tools/alternative-art-build.py ]; then
             python tools/alternative-art-build.py
-            git add -- assets-alternative src/ui/alternativeArtCatalog.js
+            node tools/display-art-library.mjs --write
+            git add -- assets-display src/ui/alternativeArtCatalog.js
           fi
           node tools/about-changelog.mjs --write
           node tools/launch.mjs --build-only

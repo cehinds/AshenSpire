@@ -132,7 +132,7 @@ test('instant playback cues beat by beat, as paced playback does', () => {
   ];
   const cues = played(() => playEventCues(events));
   assert.deepEqual(cues, ['cardDiscard', 'cardDraw', 'turnStinger', 'cardDraw']);
-  assert.match(src('src/ui/fx.js'), /export function animateEvents[\s\S]{0,700}const beats = groupBeats\(events\);[\s\S]{0,400}playBeatCues\(beats\[cued\+\+\]\.events\)/,
+  assert.match(src('src/ui/fx.js'), /export function animateEvents[\s\S]{0,700}const beats = groupBeats\(events\);[\s\S]{0,400}playBeatCues\(beats\[cued\+\+\]\.events[,)]/,
     'animateEvents (instant / reduced motion) cues the same beats the paced timeline does');
 });
 
@@ -160,6 +160,8 @@ test('co-op: the session digest, through coop.js, plays the opening, hits, hurt 
   const host = createSession({ registries: reg, seedString: 'GUARD2' });
   for (const id of ['p1', 'p2']) host.addMember({ id, name: id, classId: 'reaver' });
   host.start();
+  // This receipt exercises the original one-command enemy-phase sound digest.
+  for (const member of host.session.members.values()) delete member.run.reactionRulesVersion;
   for (const id of ['p1', 'p2']) host.chooseNode(id, host.session.mapGraph.startIds[0]);
   let heard = 0;
   // 1) The fight's first scene carries the opening's cues.
@@ -245,6 +247,7 @@ test('co-op: the turn stinger plays once per shared turn, however many seats sta
   const host = createSession({ registries: reg, seedString: 'GUARD2' });
   for (const id of ['p1', 'p2', 'p3']) host.addMember({ id, name: id, classId: 'reaver' });
   host.start();
+  for (const member of host.session.members.values()) delete member.run.reactionRulesVersion;
   for (const id of ['p1', 'p2', 'p3']) host.chooseNode(id, host.session.mapGraph.startIds[0]);
   const stings = (cues) => cues.filter((id) => id === 'turnStinger').length;
   const opening = host.snapshot().scene;

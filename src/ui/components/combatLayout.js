@@ -1,7 +1,10 @@
 import { allocateCombatBands, packCombatFooter } from '../models/CombatLayout.js';
 import { footerArtHeight, footerArtWidth } from '../models/FooterLayoutModel.js';
+import { footerSizing } from '../../content/footerLayout.js';
+import { uiConfig } from '../../config/generated/ui.js';
 import { combatantMeterGeometry } from '../models/CombatantMeterModel.js';
 import { overlayGeometry, OVERLAY_ROLES } from '../models/CombatOverlayModel.js';
+import { fitFooterCompactLabels } from './footerArt.js';
 
 // Horizontal padding of a band host, in its local px. kit.css pads the hand
 // band by the device's safe-area insets (zero on hosts without a notch).
@@ -18,6 +21,7 @@ export function wireCombatLayout(combatEl) {
   const handArea = combatEl.querySelector(':scope > .hand-area');
   let frame = 0;
   let observer = null;
+  let formFactorObserver = null;
 
   function apply() {
     frame = 0;
@@ -27,7 +31,13 @@ export function wireCombatLayout(combatEl) {
     // The plan gets the width between the safe-area insets, so the rails and
     // the hand they wrap stay clear of a notch.
     const width = combatEl.clientWidth - inlinePadding(handArea);
-    const bands = allocateCombatBands({ width, height: combatEl.clientHeight, zoom, rem, footerArtPx: footerArtHeight(width, zoom) * zoom });
+    // The HUD form factor main.js writes to <html> (widescreen | mobile | tablet
+    // | desktop). The plan reads it; it is mirrored on the combat root for CSS.
+    const formFactor = document.documentElement.dataset.formFactor || null;
+    combatEl.dataset.formFactor = formFactor || '';
+    const compact = width * zoom <= uiConfig.scenes.w4a.sizing.compactCombat.maxWidthPx;
+    combatEl.dataset.compactCombat = String(compact);
+    const bands = allocateCombatBands({ width, height: combatEl.clientHeight, zoom, rem, compact, footerArtPx: footerArtHeight(width, zoom, formFactor) * zoom });
     // The W4 parent's bands (kit.css, shared with the quest dialogue): the
     // battlefield is the scene band, the grid's flexible row; the hand is the
     // context band.
@@ -60,7 +70,7 @@ export function wireCombatLayout(combatEl) {
       combatEl.style.setProperty('--wireframe-rail-gap', bands.rails.gap + 'px');
     }
     if (!row) return;
-    row.style.setProperty('--footer-art-width', footerArtWidth(width, zoom) + 'px');
+    row.style.setProperty('--footer-art-width', footerArtWidth(width, zoom, formFactor) + 'px');
     // Measure the band's host, not the row: the row's own width is what this
     // plan sets, and a pre-plan cap on it would otherwise feed back.
     const host = row.parentElement || combatEl;
@@ -68,10 +78,12 @@ export function wireCombatLayout(combatEl) {
     row.style.setProperty('--footer-gap', footer.gap + 'px');
     row.style.setProperty('--footer-circle', footer.diameter + 'px');
     row.style.setProperty('--footer-pile-width', footer.pileWidth + 'px');
+    row.style.setProperty('--footer-spent-width', footer.spentWidth + 'px');
     row.style.setProperty('--footer-pile-height', footer.pileHeight + 'px');
     row.style.setProperty('--footer-end-width', footer.endWidth + 'px');
     row.dataset.footerGeometry = footer.supported ? 'supported' : 'unsupported';
-    row.dataset.footerCompact = String(bands.arrangement === 'rails' || width * zoom < 680);
+    row.dataset.footerCompact = String(bands.arrangement === 'rails' || width * zoom < footerSizing.compactBelowPx);
+    fitFooterCompactLabels(row);
   }
 
   // ResizeObserver delivers during layout; defer writes to the next frame.
@@ -81,12 +93,21 @@ export function wireCombatLayout(combatEl) {
     frame = 0;
     observer?.disconnect();
     observer = null;
+    formFactorObserver?.disconnect();
+    formFactorObserver = null;
   }
   if (typeof ResizeObserver !== 'undefined') {
     observer = new ResizeObserver(schedule);
     observer.observe(combatEl);
     // Its content box narrows when the safe-area padding arrives or changes.
     if (handArea) observer.observe(handArea);
+  }
+  // main.js writes data-form-factor after its 150ms resize debounce, so a fight
+  // that stays mounted across the 1100px boundary can measure with the old
+  // form factor. Re-plan when the attribute changes.
+  if (typeof MutationObserver !== 'undefined') {
+    formFactorObserver = new MutationObserver(schedule);
+    formFactorObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-form-factor'] });
   }
   apply();
   return { apply, release };

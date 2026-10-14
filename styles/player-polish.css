@@ -5,6 +5,7 @@
   --polish-frame: url('../assets/player-polish/ui/components/panel-frame.svg');
   --polish-slot: url('../assets/player-polish/ui/components/item-slot.svg');
   --polish-slot-selected: url('../assets/player-polish/ui/components/item-slot-selected.svg');
+  --polish-card-material: linear-gradient(color-mix(in srgb, var(--bg) 88%, transparent), color-mix(in srgb, var(--bg) 88%, transparent));
 }
 .engraved-icon {
   display:inline-block; flex:0 0 auto; width:24px; height:24px;
@@ -78,7 +79,7 @@
    The frame is sliced, rather than stretching the illustration aperture. */
 .card, .equipment-poker-card {
   border-image:var(--polish-frame) 24 / 10px stretch;
-  background-image:linear-gradient(color-mix(in srgb, var(--bg) 88%, transparent), color-mix(in srgb, var(--bg) 88%, transparent)), url('../assets/player-polish/materials/soot-leather-material.webp');
+  background-image:var(--polish-card-material), url('../assets/player-polish/materials/soot-leather-material.webp');
   background-size:cover; background-repeat:no-repeat;
 }
 .card .cname { font-family:var(--font-display); color:var(--parchment); }
@@ -278,6 +279,13 @@ body.hi-contrast :is(.modal, .as-detailcard, .as-option, .card, .shop-frame, .as
 /* Keep the measured HUD clearance and native formation floor anchors. Only
    the opaque backing is removed; combatants must not stand behind HP. */
 :root .combat[data-layout='formation'] > .combat-hud.shared-hud { z-index:20; background:none; border:0; pointer-events:none; }
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud { align-self: start; margin: 0; top: 0; isolation: isolate; }
+.combat > .combat-hud::before {
+  content: ''; position: absolute; inset: 0 0 -22px; z-index: -1; pointer-events: none;
+  background-color: #201b15; background-size: cover;
+  mask-image: linear-gradient(#000 65%, transparent); -webkit-mask-image: linear-gradient(#000 65%, transparent);
+}
+.combat > .combat-hud :is(.hud-vitals-panel,.hud-identity,.hud-center,.hud-trail) { background: none; border-image: none; }
 .combat > .combat-hud .hud-info-row,
 .combat > .combat-hud .hud-vitals-panel,
 .combat > .combat-hud .hud-control-grid,
@@ -336,7 +344,6 @@ body.reduced-motion :is(.ember,.title-glow) { animation:none; }
    services and consequences occupy the lower reading tray. */
 .rest-screen { position:relative; isolation:isolate; justify-content:flex-end; padding:12rem 3rem 3rem; }
 .rest-screen .polish-scene-painting { position:absolute; inset:0; width:100%; height:100%; max-height:none; z-index:-1; }
-.rest-screen .polish-scene-painting img { object-position:center 42%; }
 .rest-screen .rest-door { margin:0; width:100%; max-width:none; max-height:54%; min-height:0; flex:0 1 auto; }
 :root main:has(> .rest-screen) > .shared-hud { position:absolute; inset:0 0 auto; z-index:20; background:none; border:0; pointer-events:none; }
 main:has(> .rest-screen) > .shared-hud :is(.hud-info-row,.hud-vitals-panel,.hud-control-grid,.hud-bottom) { pointer-events:auto; }
@@ -349,7 +356,6 @@ main:has(> .rest-screen) > .shared-hud .hud-vitals-panel { max-width:28rem; padd
 :root[data-layout='narrow'] .rest-screen { padding:12rem 1rem 1rem; }
 :root[data-layout='narrow'] .rest-screen .rest-door { max-height:62%; }
 :root[data-layout='narrow'] .rest-screen .polish-scene-painting { position:absolute; aspect-ratio:auto; max-height:none; height:100%; }
-:root[data-layout='narrow'] .rest-screen .polish-scene-painting img { object-position:42% 32%; }
 :root[data-composition='short-wide'] .rest-screen .polish-scene-painting { display:block; }
 :root[data-composition='short-wide'] .rest-screen { padding:1rem; }
 :root[data-composition='short-wide'] .rest-screen .rest-door { max-height:100%; }
@@ -379,7 +385,13 @@ main:has(> .rest-screen) > .shared-hud .hud-vitals-panel { max-width:28rem; padd
 
 :root .combat[data-layout='formation'] > .hand-area { margin:0; padding:0; }
 :root .combat[data-layout='formation'] .environment-backdrop::before { background:linear-gradient(180deg,#08070610 25%,transparent calc(var(--scene-paint-bottom, 100%) - 16%),#17130f var(--scene-paint-bottom, 100%)); }
-:root .combat[data-layout='formation'] .combatant .sprite { --combatant-edge:drop-shadow(0 2px 2px #100b08a0); }
+/* Figures carry a dark outline (a tight edge plus a wider halo) so they stand
+   off the backdrop; the bottom drop keeps the feet grounded. */
+:root .combat[data-layout='formation'] .combatant .sprite { --combatant-edge:drop-shadow(0 0 2px #0a0806) drop-shadow(0 0 6px #0a080699) drop-shadow(0 2px 2px #100b08a0); }
+/* Small widgets only: intent badges, the player glyph and HP plates. The
+   combatant stack itself takes no filter (a large box repaints every frame). */
+:root .combat[data-layout='formation'] .combatant :is(.intent,.combatant-card > .meters,.combatant-mini-hud),
+:root .combat[data-layout='formation'] .player-action-intent { filter:drop-shadow(0 0 2px #0a0806) drop-shadow(0 0 5px #0a080699); }
 /* The turn ribbon sits flush under the HUD band on every layout: the stage
    (components/battlefieldStage.js) sets --turn-ribbon-top to the band's
    overhang into the field, and fits every figure and intent that shares the
@@ -426,15 +438,47 @@ body.reduced-motion .shop-workspace .shop-pane { animation:none; }
 /* Dodge already reveals its full rules through normal card selection. */
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card[data-card-id='dodgeRoll'] > .card-more-button { display:none; }
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card[data-card-id='dodgeRoll'][data-truncated='true'] .cname { padding-left:0; }
-:root[data-layout='narrow'] .title-screen .as-titlemenu { position:static; }
+:root[data-layout='narrow'] .title-screen .as-titlemenu { position:static; max-height:calc(100% - 12rem); overflow:auto; }
 :root[data-layout='narrow'] .title-screen .tm-name { position:absolute; top:5rem; left:0; width:100%; margin:0; font-size:3.5rem; }
 :root[data-layout='narrow'] .title-screen .tm-sub { position:absolute; top:10rem; left:0; width:100%; }
 :root[data-layout='narrow'] .title-screen .as-titlemenu > .as-ornament:first-child { display:none; }
 :root[data-layout='narrow'] .title-screen .title-traveler { top:17%; height:28%; }
-:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .hand { overflow:visible; scrollbar-width:none; }
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .hand {
+ overflow-x:auto; overflow-y:hidden; scrollbar-width:none;
+ overscroll-behavior-x:contain;
+}
+/* Horizontal swipes scroll excess cards; vertical drags still aim a card. */
+:root .combat[data-layout='formation']:is(.coop,:not(.coop)) .hand[data-wireframe-hand='true'] .card { touch-action:pan-x; }
+/* Its complete controls stay below the selected face, above the footer. */
+:root[data-layout='narrow'] .combat[data-layout='formation'] .combat-tools {
+  /* Owner (2026-10-11): on a phone the Combat log / Reaction row sits a little
+     lower, nearer the cards. A margin keeps the docked top (the --hud-tools-dy
+     token only raises it) and the cards clear below it. */
+  margin-top:calc(8px / var(--ui-zoom,1));
+}
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > .card-upcast-controls {
+ top:100%; bottom:auto; width:max-content; min-width:100%; max-width:var(--hand-controls-max-width,100%);
+ right:auto; flex-wrap:wrap; box-sizing:border-box; font-size:calc(12px / var(--ui-zoom,1));
+}
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card-upcast-controls :is(button,select) { min-height:calc(44px / var(--ui-zoom,1)); min-width:calc(44px / var(--ui-zoom,1)); font-size:inherit; }
+/* The native arrow and complete "Base tier 0" label need more than a tap square. */
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card-upcast-controls select { min-width:calc(88px / var(--ui-zoom,1)); }
+/* Keep room for a readable face between two real44px pagers on compact
+   phones. Labels remain visible; the Reaction track wraps below its label. */
+@media (max-width:359px) {
+ :root .combat[data-layout='formation'] .combat-tools { --combat-tools-physical-width:112; }
+ :root .combat[data-layout='formation'] .combat-tools .reaction-switch { flex-wrap:wrap; justify-content:center; }
+}
 :root[data-layout='narrow'] .combat .turn-ribbon { font-size:1.2rem; }
-:root[data-layout='narrow'] .combat .combatant-leading .intent { font-size:calc(18px / var(--ui-zoom,1)) !important; min-width:calc(56px / var(--ui-zoom,1)); }
-:root[data-layout='narrow'] .combat .combatant-leading .intent .as-glyph { display:none; }
+:root .combat .combatant-leading .intent { width:calc(96px / var(--ui-zoom,1)); min-width:calc(96px / var(--ui-zoom,1)); max-width:none; }
+:root .combat[data-composition='option-c'] > .combat-hud.shared-hud { background: none; }
+:root .combat > .combat-hud::before,
+:root .combat .combatant-leading .intent,
+:root .combat[data-composition='option-c'] .enemy:is(.context-selected,.targetable,.hover-target)::after,
+:root .combat[data-composition='option-c'] .combat-action-row {
+  background-image: linear-gradient(#201b15b8, #100d09c9), url('../assets/player-polish/materials/soot-leather-material.webp');
+  background-size: cover;
+}
 :root .rest-screen.choice-screen { justify-content:flex-end; padding:12rem 3rem 2rem; }
 :root .rest-screen.choice-screen .rest-door { flex:0 1 48%; max-height:48%; background-color:#17130fd4; background-image:none; }
 :root .rest-screen.choice-screen .rest-door > :is(.modal-head,.modal-foot) { min-height:4.5rem; }
@@ -443,10 +487,18 @@ body.reduced-motion .shop-workspace .shop-pane { animation:none; }
 :root[data-composition='short-wide'] .rest-screen.choice-screen { padding:2rem 1rem 1rem; }
 :root[data-composition='short-wide'] .rest-screen.choice-screen .rest-door { flex-basis:88%; max-height:88%; }
 
-/* The chapel's foreground and recovery ledger share the live rest plan. */
-.rest-screen .polish-scene-painting > img:first-child { width:100%; height:100%; object-fit:cover; }
-.rest-screen .polish-scene-painting > .rest-traveler-foreground {
- position:absolute; left:6%; bottom:39%; width:49%; height:46%; object-fit:contain; object-position:center bottom;
+/* The chapel's foreground and recovery ledger share the live rest plan.
+   The backdrop and traveler sit on a square stage in the backdrop's own
+   coordinates (emulating object-fit:cover), so the foreground stays on the
+   painted floor at every viewport aspect. */
+.rest-screen .polish-scene-painting { container-type:size; --rest-focus-x:.5; --rest-focus-y:1; --rest-floor-y:70%; }
+.rest-screen .rest-scene-stage { position:absolute; aspect-ratio:1 / 1;
+ width:max(100cqw, 100cqh); height:max(100cqw, 100cqh);
+ left:calc((100cqw - max(100cqw, 100cqh)) * var(--rest-focus-x)); top:calc((100cqh - max(100cqw, 100cqh)) * var(--rest-focus-y)); }
+.rest-screen .rest-scene-stage > img:first-child { position:absolute; inset:0; width:100%; height:100%; object-fit:fill; }
+.rest-screen .rest-scene-stage > .rest-traveler-foreground {
+ position:absolute; left:15%; width:44%; height:auto; aspect-ratio:720 / 480; object-fit:contain;
+ bottom:calc(100% - var(--rest-floor-y) - 44% * 31 / 720 * 1);
  animation:playerSceneReveal 700ms ease-out; filter:drop-shadow(0 7px 12px #100a08a0); pointer-events:none;
 }
 .rest-recovery { margin-bottom:1.2rem; }
@@ -456,7 +508,16 @@ body.reduced-motion .shop-workspace .shop-pane { animation:none; }
 .rest-screen .choice-body-columns { grid-template-columns:minmax(0,1fr) minmax(0,1.6fr); }
 .rest-availability summary { cursor:pointer; padding:.5rem 0; color:var(--ink-dim); }
 .rest-screen .class-pick > .glyph .engraved-icon { width:30px; height:30px; color:var(--gold); }
-:root[data-layout='narrow'] .rest-screen .polish-scene-painting > .rest-traveler-foreground { left:4%; bottom:49%; width:92%; height:34%; }
+/* Narrow: the floor (--rest-floor-y, 70% of the stage) must land just above the
+   rest door (its top is near 47% of the frame), so the stage is sized from the
+   floor line. The 0.70 below is --rest-floor-y as a fraction; keep it in sync. */
+:root[data-layout='narrow'] .rest-screen .polish-scene-painting { --rest-focus-x:.42; --rest-floor-screen:.46; background:#17130f; }
+:root[data-layout='narrow'] .rest-screen .rest-scene-stage {
+ --rest-stage-size:max(100cqw, 100cqh * var(--rest-floor-screen) / .70);
+ width:var(--rest-stage-size); height:var(--rest-stage-size);
+ left:calc((100cqw - var(--rest-stage-size)) * var(--rest-focus-x));
+ top:calc(100cqh * var(--rest-floor-screen) - .70 * var(--rest-stage-size));
+}
 :root[data-layout='narrow'] .rest-screen .choice-body-columns { grid-template-columns:minmax(0,1fr); }
 :root[data-layout='narrow'] .rest-recovery { margin-bottom:0; }
 body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
@@ -484,8 +545,66 @@ body.reduced-motion .rest-screen .rest-traveler-foreground { animation:none; }
 
 :root :is(.combat,main:has(>.shop-workspace),main:has(>.rest-screen)) .shared-hud .hud-vitals-panel { background:none; }
 
+/* The card's dark leather backs Vitality, fading out at the turn ribbon.
+   Mask the complete material so its texture also becomes transparent. */
+:root[data-display-appearance='classic'] .combat > .shared-hud { isolation:isolate; }
+:root[data-display-appearance='classic'] .combat > .shared-hud::before {
+ content:''; position:absolute; inset:0; z-index:-1; pointer-events:none;
+ background-color:var(--bg);
+ background-size:cover; background-repeat:no-repeat;
+ mask-image:linear-gradient(to bottom, #000 0, #000 var(--combat-header-opaque-end, 35%), transparent 100%);
+ -webkit-mask-image:linear-gradient(to bottom, #000 0, #000 var(--combat-header-opaque-end, 35%), transparent 100%);
+}
+
 /* Enlarge the complete HP row while reserving its scaled height above relics. */
 :root .shared-hud .resbars-host { zoom:1.22; }
+
+/* Combat vitality occupies the available lane up to the quick-access tiles.
+   Its trough shows capacity; the shared meter retains the real current/max fill. */
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud > .hud-top {
+ grid-template-columns:minmax(0,1fr) auto;
+ grid-template-areas:'meters actions' 'rail actions';
+ column-gap:calc(12px / var(--ui-zoom,1));
+}
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud .hud-vitals-panel { width:100%; max-width:none; padding:0; }
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud .resbars-host { zoom:1; }
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud .resbars { display:flex; flex-direction:column; width:100%; }
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud .resline { width:100%; min-width:0; }
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud .resunit[data-res='hp'] {
+ flex-direction:column; align-items:stretch; gap:calc(4px / var(--ui-zoom,1));
+}
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud .resunit[data-res='hp'] .m-plate {
+ justify-content:flex-start; align-items:center; gap:calc(6px / var(--ui-zoom,1));
+}
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud .resunit[data-res='hp'] .m-label {
+ display:inline-flex; align-items:center; font-size:0; letter-spacing:0;
+}
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud .resunit[data-res='hp'] .m-label .engraved-icon {
+ width:calc(18px / var(--ui-zoom,1)); height:calc(18px / var(--ui-zoom,1)); font-size:calc(18px / var(--ui-zoom,1));
+}
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud .resunit[data-res='hp'] .m-value { font-size:calc(14px / var(--ui-zoom,1)); line-height:1; }
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud .resunit[data-res='hp'] .m-well { width:100%; flex:none; }
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud .resunit[data-res='hp'] .m-track {
+ width:100% !important; height:calc(3px / var(--ui-zoom,1)); border-radius:0;
+}
+
+/* Thin black edges keep floating header items legible over bright artwork. */
+:root :is(.shared-hud, .atlas-header) {
+ text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000;
+}
+:root .shared-hud :is(.hud-info-row, .resbars) { text-shadow:inherit; }
+:root .shared-hud :is(.illustrated-hud-icon, .icon-tray .as-pip, .resplate .engraved-icon) {
+ filter:drop-shadow(-1px 0 0 #000) drop-shadow(1px 0 0 #000) drop-shadow(0 -1px 0 #000) drop-shadow(0 1px 0 #000);
+}
+:root .shared-hud .resbar { box-shadow:0 0 0 1px #000; }
+/* HUD layout tokens (docs/hud-layout-tokens.md): the combat header's HP value
+   shadow and the HP bar's cap. The fallback is the shadow it inherits above. */
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud .resunit[data-res='hp'] .m-value {
+ text-shadow:var(--hud-text-shadow, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000);
+}
+:root .combat[data-layout='formation'] > .combat-hud.shared-hud .resunit[data-res='hp'] { max-width:var(--hud-header-hp-max-width); }
+:root :is(.shared-hud .hud-actions, .atlas-header-actions) > button { border:1px solid #000; }
+
 
 /* Approved merchant composition: four compact offers, category dock, footer.
    All dimensions below are local CSS pixels; UI zoom keeps tap targets physical. */

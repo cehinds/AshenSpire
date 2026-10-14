@@ -51,6 +51,7 @@
 //   node tools/coop-hud-top.mjs                 judge, exit 0 green / 1 red / 2 harness
 //   node tools/coop-hud-top.mjs --shots <dir>   also write coop-hud-top-<w>x<h>.png
 //                                               and solo-combat-<w>x<h>.png
+//   node tools/coop-hud-top.mjs --intent-privacy-only  seat-scoped inspector gate
 //   COOP_HUD_PORT=<n>                           serve on another port (default 8571)
 //
 // It serves the SOURCE tree by default (no build, no LFS).
@@ -519,6 +520,105 @@ async function seatSwitchProbe(cdp, sessionId, base) {
   return bad;
 }
 
+// Exact intent reads belong to a seat. A body-level inspector must leave with
+// that seat, including a controller seat switch, rather than keep its read.
+async function intentPrivacyProbe(cdp, sessionId, base, shotDir = null) {
+  const ev = async expression => (await cdp.send('Runtime.evaluate', {
+    expression, awaitPromise: true, returnByValue: true,
+  }, sessionId)).result?.value;
+  await cdp.send('Page.navigate', { url: `${base}?shot=coop&shotSeats=2` }, sessionId);
+  for (let t = 0; t < 90 && !(await ev('!!window.__receiveCoopSnapshotForShot')); t++) await wait(500);
+  if (!await ev('!!window.__receiveCoopSnapshotForShot')) return ['intent privacy: co-op fixture did not mount'];
+  await ev(`(() => {
+    const s = structuredClone(window.__coopSnapshotForShot), e = s.scene.enemies[0];
+    e.intentReads = { p1: true, p2: false };
+    e.intent = { kind: 'attack', moveId: 'bite', damage: 99, hits: 1,
+      combatProfile: { camp: 'physical', maneuver: 'attack', damageType: 'piercing' } };
+    window.__receiveCoopSnapshotForShot(s);
+  })()`);
+  await wait(300);
+  const open = `document.querySelector('.combatant[data-eid="e1"] .combatant-info')?.click()`;
+  await ev(open);
+  const before = await ev(`({ name: document.querySelector('.coop-seat-tabs [aria-selected="true"]')?.textContent,
+    open: !!document.querySelector('.combatant-door'), read: document.querySelector('.combatant-door')?.textContent.includes('99') })`);
+  if (!before?.open || !before?.read) return ['intent privacy: successful-read inspector did not show exact 99 damage'];
+  if (shotDir) {
+    await wait(350);
+    const { data } = await cdp.send('Page.captureScreenshot', { format: 'png' }, sessionId);
+    writeFileSync(resolve(shotDir, 'coop-intent-revealed.png'), Buffer.from(data, 'base64'));
+  }
+  await cdp.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 }, sessionId);
+  await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 }, sessionId);
+  const after = await ev(`({ name: document.querySelector('.coop-seat-tabs [aria-selected="true"]')?.textContent,
+    open: !!document.querySelector('.combatant-door') })`);
+  const bad = [];
+  if (before.name === after?.name) bad.push('intent privacy: Tab did not switch seat');
+  if (after?.open) bad.push('intent privacy: previous seat exact read stayed in mounted inspector');
+  await ev(open);
+  const hidden = await ev(`document.querySelector('.combatant-door')?.textContent || ''`);
+  if (!hidden.includes('Move hidden') || hidden.includes('99')) bad.push('intent privacy: failed-read inspector leaked exact live damage');
+  if (shotDir) {
+    await wait(350);
+    const { data } = await cdp.send('Page.captureScreenshot', { format: 'png' }, sessionId);
+    writeFileSync(resolve(shotDir, 'coop-intent-hidden.png'), Buffer.from(data, 'base64'));
+  }
+  await ev(`document.querySelector('#coop-leave')?.click()`);
+  if (await ev(`!!document.querySelector('.combatant-door')`)) bad.push('intent privacy: inspector survived co-op teardown');
+  console.log(`  ${bad.length ? '✗' : '✓'} intent privacy: read follows seat; old inspector closes on Tab and Leave`);
+  return bad;
+}
+
+async function counterPreparationProbe(cdp, sessionId, base, shotDir = null) {
+  const ev = async expression => (await cdp.send('Runtime.evaluate', {
+    expression, awaitPromise: true, returnByValue: true,
+  }, sessionId)).result?.value;
+  await cdp.send('Page.navigate', { url: `${base}?shot=coop&shotSeats=2` }, sessionId);
+  for (let t = 0; t < 90 && !(await ev('!!window.__receiveCoopSnapshotForShot')); t++) await wait(500);
+  if (!await ev('!!window.__receiveCoopSnapshotForShot')) return ['Counter preparation: co-op fixture did not mount'];
+  await ev(`(() => {
+    const s = structuredClone(window.__coopSnapshotForShot), p = s.scene.players[0];
+    p.hand = [{ instanceId: 'counter-preparation', cardId: 'guardCounter', upgraded: false }];
+    p.energy = p.stamina = p.mana = 99;
+    window.__receiveCoopSnapshotForShot(s);
+    window.__coopSentForShot.length = 0;
+  })()`);
+  await wait(300);
+  await cdp.send('Input.dispatchKeyEvent', { type: 'keyDown', key: '1', code: 'Digit1', windowsVirtualKeyCode: 49 }, sessionId);
+  await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: '1', code: 'Digit1', windowsVirtualKeyCode: 49 }, sessionId);
+  const target = await ev(`({ self: !!document.querySelector('.coop-seat[data-seat="p1"][data-friendly-target="self"]'),
+    enemy: !!document.querySelector('.combatant.enemy[data-friendly-target], .combatant.enemy.targetable') })`);
+  const bad = [];
+  const direct = await ev(`window.__coopSentForShot.filter(message => message.t === 'playCard')`);
+  if (target?.enemy || !(direct?.length === 1 && direct[0].as === 'p1'
+    && direct[0].cardInstanceId === 'counter-preparation' && direct[0].targetId == null)) {
+    bad.push(`Counter preparation: pure reaction expected one untargeted play, received ${JSON.stringify(direct)}`);
+  }
+  // A Counter with immediate self support still uses the ordinary friendly
+  // confirmation. Its later reply never becomes an enemy aiming requirement.
+  await ev(`(() => {
+    const s = structuredClone(window.__coopSnapshotForShot), p = s.scene.players[0];
+    p.hand = [{ instanceId: 'supported-counter', cardId: 'bindingParry', upgraded: false }];
+    p.energy = p.stamina = p.mana = 99;
+    window.__receiveCoopSnapshotForShot(s); window.__coopSentForShot.length = 0;
+  })()`);
+  await wait(300);
+  await cdp.send('Input.dispatchKeyEvent', { type: 'keyDown', key: '1', code: 'Digit1', windowsVirtualKeyCode: 49 }, sessionId);
+  await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: '1', code: 'Digit1', windowsVirtualKeyCode: 49 }, sessionId);
+  const self = await ev(`!!document.querySelector('.coop-seat[data-seat="p1"][data-friendly-target="self"]')`);
+  if (!self) bad.push('Counter preparation: support payload did not arm its self target');
+  if (shotDir) {
+    await wait(350);
+    const { data } = await cdp.send('Page.captureScreenshot', { format: 'png' }, sessionId);
+    writeFileSync(resolve(shotDir, 'coop-counter-preparation.png'), Buffer.from(data, 'base64'));
+  }
+  await ev(`document.querySelector('.coop-seat[data-seat="p1"][data-friendly-target="self"]')?.click()`);
+  const plays = await ev(`window.__coopSentForShot.filter(message => message.t === 'playCard')`);
+  if (!(plays?.length === 1 && plays[0].as === 'p1' && plays[0].cardInstanceId === 'supported-counter'
+    && plays[0].targetId === 'p1')) bad.push(`Counter preparation: expected one source-seat play, received ${JSON.stringify(plays)}`);
+  console.log(`  ${bad.length ? '✗' : '✓'} Counter preparation: shortcut prepares pure reaction; supported Counter confirms its source seat`);
+  return bad;
+}
+
 // THE STANCE CHOOSER OWNS THE COUCH KEYBOARD (#1449 review, Codex P1).
 // Warrior's Vow opens a body-level dialog before its play intent. Tab inside
 // it must move between the stance buttons, not switch the couch seat (which
@@ -722,6 +822,17 @@ async function main(args) {
   let clean = 0;
   try {
     await cdp.ready;
+    if (args.includes('--intent-privacy-only')) {
+      const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
+      const { sessionId } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
+      await cdp.send('Page.enable', {}, sessionId);
+      await cdp.send('Runtime.enable', {}, sessionId);
+      const bad = [...await intentPrivacyProbe(cdp, sessionId, base, shotDir),
+        ...await counterPreparationProbe(cdp, sessionId, base, shotDir)];
+      for (const failure of bad) console.error(failure);
+      await cdp.send('Target.closeTarget', { targetId });
+      return bad.length ? 1 : 0;
+    }
     const cases = VIEWPORTS.flatMap(vp => [true, false].map(manaRing => ({ ...vp, manaRing })));
     for (const [index, vp] of cases.entries()) {
       const label = `${vp.width}x${vp.height}-${vp.manaRing ? 'ring' : 'bars'}`;
@@ -764,6 +875,8 @@ async function main(args) {
       if (index === 0) {
         const seatBad = [...await orbProbe(cdp, sessionId, base),
           ...await seatSwitchProbe(cdp, sessionId, base),
+          ...await intentPrivacyProbe(cdp, sessionId, base, shotDir),
+          ...await counterPreparationProbe(cdp, sessionId, base, shotDir),
           ...await repeatOpenProbe(cdp, sessionId, base),
           ...await liveSnapshotProbe(cdp, sessionId, base),
           ...await vowChoiceProbe(cdp, sessionId, base)];

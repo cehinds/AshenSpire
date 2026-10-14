@@ -88,6 +88,9 @@
 //                 this door after R1-R5 were enumerated, and this tool did
 //                 exactly what its boundary promised — went red, loudly, on
 //                 `magicVulnerable` at dev = 86564e6 rather than guessing.
+//   R7  v2        production card/enemy overlays, positive buildup speakers
+//                 plus valid thresholds/grants, and typed damage riders with
+//                 an actual damaging carrier. Vocabulary alone is not reach.
 //
 // R5 IS THE WEAKEST EDGE IN THIS FILE AND IT IS A SUBSTRING MATCH — the same
 // technique this file's own header calls a trap. It is admissible only because
@@ -178,6 +181,11 @@
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
+import { combatStatusRules } from '../src/content/combatStatusRules.js';
+import { combatExpansionMatchups } from '../src/content/combatMatchups.js';
+import { combatProfileFor } from '../src/model/combatCardProfile.js';
+import { expandedEnemyMove } from '../src/engine/combatCardTactics.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -313,6 +321,39 @@ export function statusReach(bundle, opts = {}) {
     note(cfg.onBreak.status, `R6 exposure enemies:${row.id} via ${speakers.slice(0, 2).map((c) => c.id).join(', ')} (+${Math.max(0, speakers.length - 2)} more carriers)`);
   }
 
+  // R7: production v2 projections and positive buildup speakers. A threshold
+  // row alone is vocabulary; it needs a projected card/move or damage rider.
+  const expansionStatuses = opts.expansionStatusRules || combatStatusRules;
+  const expansionMatchups = opts.expansionMatchupRules || combatExpansionMatchups;
+  const positive = value => typeof value === 'number' ? Number.isFinite(value) && value > 0 : !!value && typeof value === 'object';
+  const pressure = (id, where) => {
+    const row = expansionStatuses.statuses?.[id];
+    if (!row || !(row.initialThreshold > 0) || !(row.activeThreshold > 0) || !(row.cap > 0)) return;
+    note(id, `R7 buildup ${where}`);
+    note(row.activeStatus, `R7 threshold ${id} via ${where}`);
+    for (const [extra, amount] of Object.entries(row.grants || {})) if (positive(amount)) note(extra, `R7 grant from ${id} via ${where}`);
+  };
+  const projected = (carrier, where) => {
+    for (const id of appliersIn(carrier)) note(id, `R7 projected ${where}`);
+    const walk = node => {
+      if (!node || typeof node !== 'object') return;
+      if (node.op === 'buildup' && node.chance !== 0 && positive(node.amount)) pressure(node.status, where);
+      for (const value of Object.values(node)) walk(value);
+    };
+    walk(carrier);
+    const profile = combatProfileFor(carrier);
+    const damaging = positive(carrier.damage) || [...(carrier.effects || []), ...(carrier.upgrade?.effects || [])]
+      .some(effect => effect.op === 'damage' && positive(effect.amount));
+    const type = expansionMatchups.damageAliases?.[profile.damageType] || profile.damageType;
+    const rider = profile.camp && damaging ? expansionMatchups.damageRiders?.[type] : null;
+    if (rider?.status && positive(rider.pressure)) pressure(rider.status, `${where} damage:${type}`);
+  };
+  for (const card of bundle.cards || []) projected(applyCombatExpansionCard(card), `cards:${card.id}`);
+  for (const enemy of bundle.enemies || []) for (const [moveId, move] of Object.entries(enemy.moves || {})) {
+    projected({ ...expandedEnemyMove({ enemyId: enemy.id }, move, moveId, { combatExpansionVersion: 2 }),
+      enemyId: enemy.id, moveId }, `enemies:${enemy.id}/${moveId}`);
+  }
+
   // ---- R5: code-side, closed and ratcheted (F4) ---------------------------
   for (const c of CODE_APPLIERS) {
     let src = null;
@@ -431,7 +472,7 @@ BOUNDARY — what a green from this tool does NOT mean:
     question (every number on that path is marked PROVISIONAL), not this
     tool's. Reach here means the arithmetic cannot floor to zero.
   · THE UPGRADE PATH IS WALKED, the equipment path is walked, the intent path
-    is walked — but any FUTURE way to apply a status that is none of R1–R6
+    is walked — but any FUTURE way to apply a status that is none of R1–R7
     reads as unreachable here, loudly, which is the right way round. R6 is
     what that clause looks like discharged: the exposure door landed after
     R1-R5 were enumerated, read as unreachable, loudly, and was then
@@ -463,7 +504,7 @@ function report(r, { json = false } = {}) {
   } else if (r.verdict === 'FAIL') {
     console.log(`RESULT: FAIL — ${r.unreached.length} of ${r.total} shipped statuses have no applier: ${r.unreached.join(', ')}.`);
   } else {
-    console.log(`RESULT: ${r.total}/${r.total} shipped statuses have at least one applier, by routes R1-R6.`);
+    console.log(`RESULT: ${r.total}/${r.total} shipped statuses have at least one applier, by routes R1-R7.`);
   }
   console.log(DOOR);
   console.log(BOUNDARY);
@@ -556,7 +597,7 @@ async function selftest(real) {
   b = clone(real);
   const strip = (id) => {
     const kill = (n) => {
-      if (Array.isArray(n)) { for (let i = n.length - 1; i >= 0; i--) { if (n[i] && n[i].op === APPLY_OP && n[i].status === id) n.splice(i, 1); else kill(n[i]); } return; }
+      if (Array.isArray(n)) { for (let i = n.length - 1; i >= 0; i--) { if (n[i] && [APPLY_OP, 'buildup'].includes(n[i].op) && n[i].status === id) n.splice(i, 1); else kill(n[i]); } return; }
       if (n === null || typeof n !== 'object') return;
       for (const v of Object.values(n)) kill(v);
     };
@@ -587,7 +628,11 @@ async function selftest(real) {
     kill(b.propertyRules);
   };
   strip('bleed');
-  r = statusReach(b, codeOk());
+  // The new damage-rider door is also a speaker. Strip it with the old
+  // content/property/equipment doors or this is no longer an all-appliers plant.
+  const strippedMatchups = clone(combatExpansionMatchups);
+  for (const [id, rider] of Object.entries(strippedMatchups.damageRiders)) if (rider.status === 'bleed') delete strippedMatchups.damageRiders[id];
+  r = statusReach(b, { ...codeOk(), expansionMatchupRules: strippedMatchups });
   expect('P3  bleed with every applier removed', r.unreached.includes('bleed'), true);
   expect('P3  ...and bleedResist falls with it (R3 is transitive)', r.unreached.includes('bleedResist'), true);
 
@@ -651,11 +696,29 @@ async function selftest(real) {
   r = statusReach(b, codeOk());
   expect('G2  an applier pointing at no row is REPORTED', r.dangling.includes('noSuchStatusAnywhere'), true);
 
+  // R7 needs a real positive, nonzero-chance speaker AND a usable threshold.
+  b = clone(real);
+  const expansionRules = clone(combatStatusRules);
+  for (const id of ['plantedPressure', 'plantedActive', 'plantedGrant']) b.statuses.push({ id, name: id, stackMode: 'add' });
+  expansionRules.statuses.plantedPressure = { activeStatus: 'plantedActive', initialThreshold: 6, activeThreshold: 4, cap: 3, grants: { plantedGrant: 1 } };
+  const projectedOpts = { ...codeOk(), expansionStatusRules: expansionRules };
+  expect('P11 threshold vocabulary without a speaker stays unreachable', statusReach(b, projectedOpts).unreached.includes('plantedActive'), true);
+  const speaker = { id: 'plantedPressureSpeaker', effects: [{ op: 'buildup', status: 'plantedPressure', amount: 0, chance: 50 }] };
+  b.cards.push(speaker);
+  expect('P12 zero buildup does not create a route', statusReach(b, projectedOpts).unreached.includes('plantedActive'), true);
+  speaker.effects[0].amount = 2; speaker.effects[0].chance = 0;
+  expect('P13 zero admission chance does not create a route', statusReach(b, projectedOpts).unreached.includes('plantedActive'), true);
+  speaker.effects[0].chance = 50;
+  r = statusReach(b, projectedOpts);
+  expect('G3 positive projected speaker reaches active and grant', !r.unreached.includes('plantedActive') && !r.unreached.includes('plantedGrant'), true);
+  expansionRules.statuses.plantedPressure.initialThreshold = 0;
+  expect('P14 unusable threshold severs its active grant', statusReach(b, projectedOpts).unreached.includes('plantedActive'), true);
+
   // The harness quotes this line verbatim (tests/run-node.mjs) rather than
   // recomposing numbers out of it — a recomposed verdict is a second home for
   // the verdict, and it drifts. So it ends in a full stop, on purpose.
   console.log(`\nRESULT: ${bad === 0 ? 'corpus held' : `CORPUS BROKE — ${bad} plant(s) did not behave`}`
-    + ` — 15 assertions over 12 planted mechanisms, 2 of them required to go GREEN.`);
+    + ` — 20 assertions over 17 planted mechanisms, 3 of them required to go GREEN.`);
   return bad === 0 ? 0 : 1;
 }
 

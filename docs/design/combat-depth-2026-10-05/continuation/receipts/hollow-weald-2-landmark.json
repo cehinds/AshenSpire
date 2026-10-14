@@ -1,0 +1,31 @@
+{
+  "id": "hollow-weald-2-landmark",
+  "sceneId": "hollow-weald-2",
+  "name": "Drowned Hamlet",
+  "region": "hollow-weald",
+  "kind": "landmark",
+  "reference": "../references/composition.png",
+  "transparent": true,
+  "resultFile": "scenes/hollow-weald-2/landmark.png",
+  "prompt": "Create one independent transparent MIDGROUND landmark layer for AshenSpire combat scene 'Drowned Hamlet'. Subject: abandoned half-timbered cottage silhouettes and broken village steeple on rotten waterside pilings. Match supplied reference's painterly dark fantasy, tactile weathered stone, cloth and metal; restrained ember accents, no cartoony treatment. Low battlefield perspective viewed from behind a near-left hero looking toward enemies at right. Wide 1536x1024 registration canvas. Landmark architecture occupies upper-middle band, from x=18% to 83% and y=6% to 57%; BASE OF ALL STRUCTURES ends at y=58%. Entire lower 40% of canvas must be COMPLETELY EMPTY TRANSPARENT, to accept a separate walkable ground plate. Holes, windows and space around silhouettes must also be truly transparent. No sky, scenic background, distant mountains, ground plane, floor, actor, monster, UI, text, labels or watermark. This is ONE cutout landmark group, NOT a complete scene and NOT a grid. Preserve generous breathing space around structures except intentionally tall upper-frame vaults. Lighting upper-left, neutral warm grey with muted umber.",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a112fc-0e64-7472-a495-aba14ffa5ab6\\exec-eaf9b537-2c0a-41c8-afe3-8029ffeb0d1b.png",
+  "generator": "built-in image_gen",
+  "size": [
+    1536,
+    1024
+  ],
+  "mode": "RGBA",
+  "sha256": "fed10f0d7b4b2d893bed86498c6297088bd99cb6ccc37a48367f194d0e81804b",
+  "alphaRange": [
+    0,
+    254
+  ],
+  "transparentFraction": 0.6357275644938151,
+  "visibleBounds": [
+    6,
+    4,
+    1489,
+    720
+  ],
+  "alphaThreshold": 32
+}

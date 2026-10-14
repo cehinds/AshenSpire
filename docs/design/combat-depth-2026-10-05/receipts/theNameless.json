@@ -1,0 +1,68 @@
+{
+  "id": "theNameless",
+  "name": "The Nameless",
+  "family": "speaker",
+  "source": "content/source/speakers.csv",
+  "facing": "away, rear three-quarter right",
+  "pose": "idle",
+  "prompt": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: Hooded anonymous Forsaken spirit, pale threadbare shroud over worn unmarked travel clothes, face lost in shadow, modest broken sword. Face RIGHT. Entire full body, portrait 1024x1536; use landscape for the hound. Feet at 94 percent canvas height.",
+  "file": "continuation/sprites/theNameless-rear-padded.png",
+  "status": "generated",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a112fc-0e64-7472-a495-aba14ffa5ab6\\exec-680b5f68-b149-4142-a912-fb0ee5325097.png",
+  "validation": {
+    "size": [
+      1024,
+      1536
+    ],
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      254
+    ],
+    "transparentFraction": 0.6793778737386068,
+    "visibleBounds": [
+      73,
+      136,
+      972,
+      1378
+    ],
+    "anchor": [
+      522.5,
+      1378
+    ],
+    "sha256": "29686a1d533aaafb68a46d28468b7d84e491009da68ca70a035fb8d519b571c1",
+    "alphaThreshold": 32
+  },
+  "referenceImages": [
+    "continuation/sprites/theNameless-rear.png"
+  ],
+  "promptUsed": "Edit this rear-view Nameless sprite only to give its entire silhouette generous empty margins. Zoom OUT: reduce figure and sword to occupy central 75% of canvas width and 82% of height. Full straight sword tip must end clearly before right edge with at least 100 pixels of transparent space. Preserve same rear-right orientation, all equipment, ragged pale hood and cloak, dark leathers, proportions and detailed paint. Do not turn or redesign character. Actual transparent alpha everywhere outside figure, no background or glow, no floor, no labels. 1024x1536 portrait.",
+  "previousView": {
+    "file": "masters/theNameless.png",
+    "validation": {
+      "size": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "alphaRange": [
+        0,
+        254
+      ],
+      "transparentFraction": 0.5592880249023438,
+      "visibleBounds": [
+        70,
+        45,
+        995,
+        1495
+      ],
+      "anchor": [
+        532.5,
+        1495
+      ],
+      "sha256": "fbff521cd60d0528f2629500dd5b56e57a3d9e0c967f93e1a0c461cd8bae55bd"
+    },
+    "facing": "right",
+    "promptUsed": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: Hooded anonymous Forsaken spirit, pale threadbare shroud over worn unmarked travel clothes, face lost in shadow, modest broken sword. Face RIGHT. Entire full body, portrait 1024x1536; use landscape for the hound. Feet at 94 percent canvas height."
+  }
+}

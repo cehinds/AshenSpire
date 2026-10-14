@@ -1,0 +1,4989 @@
+{
+  "schemaVersion": 1,
+  "target": "alternative/dev",
+  "status": "held-stance-authoring-and-integration-seam",
+  "stances": [
+    "offensive",
+    "defensive",
+    "casting"
+  ],
+  "counts": {
+    "canonicalPlayers": 35,
+    "canonicalEnemies": 33,
+    "newPlayerAppearances": 4,
+    "explicitEquivalences": 4,
+    "reusedEnemyAppearances": 33,
+    "unpaintedCanonicalCells": 27,
+    "availableStanceCells": 123,
+    "requiredStanceCells": 204
+  },
+  "coverage": [
+    {
+      "id": "reaver-default",
+      "classId": "reaver",
+      "armourId": "default",
+      "name": "Wayfarer Plate \u00b7 reaver",
+      "canonicalId": "armor/reaver/default",
+      "legacyAlias": "reaver-default",
+      "kind": "player",
+      "stanceSource": "reaver-default",
+      "status": "painted-draft",
+      "stances": {
+        "offensive": true,
+        "defensive": true,
+        "casting": true
+      }
+    },
+    {
+      "id": "reaver-vigil",
+      "classId": "reaver",
+      "armourId": "vigil",
+      "name": "Ashen Vigil \u00b7 reaver",
+      "canonicalId": "armor/reaver/vigil",
+      "legacyAlias": "reaver-vigil",
+      "kind": "player",
+      "stanceSource": null,
+      "status": "unpainted",
+      "stances": {
+        "offensive": false,
+        "defensive": false,
+        "casting": false
+      }
+    },
+    {
+      "id": "reaver-oathsworn",
+      "classId": "reaver",
+      "armourId": "oathsworn",
+      "name": "Gilded Oathsworn \u00b7 reaver",
+      "canonicalId": "armor/reaver/oathsworn",
+      "legacyAlias": "reaver-oathsworn",
+      "kind": "player",
+      "stanceSource": null,
+      "status": "unpainted",
+      "stances": {
+        "offensive": false,
+        "defensive": false,
+        "casting": false
+      }
+    },
+    {
+      "id": "reaver-warden",
+      "classId": "reaver",
+      "armourId": "warden",
+      "name": "Warden Mail \u00b7 reaver",
+      "canonicalId": "armor/reaver/warden",
+      "legacyAlias": "reaver-warden",
+      "kind": "player",
+      "stanceSource": null,
+      "status": "unpainted",
+      "stances": {
+        "offensive": false,
+        "defensive": false,
+        "casting": false
+      }
+    },
+    {
+      "id": "starseer-default",
+      "classId": "starseer",
+      "armourId": "default",
+      "name": "Nightweave \u00b7 starseer",
+      "canonicalId": "armor/starseer/default",
+      "legacyAlias": "starseer-default",
+      "kind": "player",
+      "stanceSource": "starseer-default",
+      "status": "painted-draft",
+      "stances": {
+        "offensive": true,
+        "defensive": true,
+        "casting": true
+      }
+    },
+    {
+      "id": "starseer-eclipse",
+      "classId": "starseer",
+      "armourId": "eclipse",
+      "name": "Eclipse Habit \u00b7 starseer",
+      "canonicalId": "armor/starseer/eclipse",
+      "legacyAlias": "starseer-eclipse",
+      "kind": "player",
+      "stanceSource": null,
+      "status": "unpainted",
+      "stances": {
+        "offensive": false,
+        "defensive": false,
+        "casting": false
+      }
+    },
+    {
+      "id": "starseer-starlit",
+      "classId": "starseer",
+      "armourId": "starlit",
+      "name": "Starlit Silks \u00b7 starseer",
+      "canonicalId": "armor/starseer/starlit",
+      "legacyAlias": "starseer-starlit",
+      "kind": "player",
+      "stanceSource": null,
+      "status": "unpainted",
+      "stances": {
+        "offensive": false,
+        "defensive": false,
+        "casting": false
+      }
+    },
+    {
+      "id": "starseer-astral",
+      "classId": "starseer",
+      "armourId": "astral",
+      "name": "Astral Vestment \u00b7 starseer",
+      "canonicalId": "armor/starseer/astral",
+      "legacyAlias": "starseer-astral",
+      "kind": "player",
+      "stanceSource": null,
+      "status": "unpainted",
+      "stances": {
+        "offensive": false,
+        "defensive": false,
+        "casting": false
+      }
+    },
+    {
+      "id": "herald-default",
+      "classId": "herald",
+      "armourId": "default",
+      "name": "Rite Vestments \u00b7 herald",
+      "canonicalId": "armor/herald/default",
+      "legacyAlias": "herald-default",
+      "kind": "player",
+      "stanceSource": "herald-default",
+      "status": "painted-draft",
+      "stances": {
+        "offensive": true,
+        "defensive": true,
+        "casting": true
+      }
+    },
+    {
+      "id": "herald-ossuary",
+      "classId": "herald",
+      "armourId": "ossuary",
+      "name": "Ossuary Weave \u00b7 herald",
+      "canonicalId": "armor/herald/ossuary",
+      "legacyAlias": "herald-ossuary",
+      "kind": "player",
+      "stanceSource": null,
+      "status": "unpainted",
+      "stances": {
+        "offensive": false,
+        "defensive": false,
+        "casting": false
+      }
+    },
+    {
+      "id": "herald-emberhabit",
+      "classId": "herald",
+      "armourId": "emberhabit",
+      "name": "Emberlight Habit \u00b7 herald",
+      "canonicalId": "armor/herald/emberhabit",
+      "legacyAlias": "herald-emberhabit",
+      "kind": "player",
+      "stanceSource": null,
+      "status": "unpainted",
+      "stances": {
+        "offensive": false,
+        "defensive": false,
+        "casting": false
+      }
+    },
+    {
+      "id": "herald-pilgrim",
+      "classId": "herald",
+      "armourId": "pilgrim",
+      "name": "Pilgrim Wrap \u00b7 herald",
+      "canonicalId": "armor/herald/pilgrim",
+      "legacyAlias": "herald-pilgrim",
+      "kind": "player",
+      "stanceSource": null,
+      "status": "unpainted",
+      "stances": {
+        "offensive": false,
+        "defensive": false,
+        "casting": false
+      }
+    },
+    {
+      "id": "rogue-default",
+      "classId": "rogue",
+      "armourId": "default",
+      "name": "Gutter Leathers \u00b7 rogue",
+      "canonicalId": "armor/rogue/default",
+      "legacyAlias": "rogue-default",
+      "kind": "player",
+      "stanceSource": "rogue-default",
+      "status": "painted-draft",
+      "stances": {
+        "offensive": true,
+        "defensive": true,
+        "casting": true
+      }
+    },
+    {
+      "id": "rogue-nightveil",
+      "classId": "rogue",
+      "armourId": "nightveil",
+      "name": "Nightveil Coat \u00b7 rogue",
+      "canonicalId": "armor/rogue/nightveil",
+      "legacyAlias": "rogue-nightveil",
+      "kind": "player",
+      "stanceSource": null,
+      "status": "unpainted",
+      "stances": {
+        "offensive": false,
+        "defensive": false,
+        "casting": false
+      }
+    },
+    {
+      "id": "rogue-duelist",
+      "classId": "rogue",
+      "armourId": "duelist",
+      "name": "Duelist Jerkin \u00b7 rogue",
+      "canonicalId": "armor/rogue/duelist",
+      "legacyAlias": "rogue-duelist",
+      "kind": "player",
+      "stanceSource": null,
+      "status": "unpainted",
+      "stances": {
+        "offensive": false,
+        "defensive": false,
+        "casting": false
+      }
+    },
+    {
+      "id": "rogue-shadow",
+      "classId": "rogue",
+      "armourId": "shadow",
+      "name": "Shadow Mantle \u00b7 rogue",
+      "canonicalId": "armor/rogue/shadow",
+      "legacyAlias": "rogue-shadow",
+      "kind": "player",
+      "stanceSource": null,
+      "status": "unpainted",
+      "stances": {
+        "offensive": false,
+        "defensive": false,
+        "casting": false
+      }
+    },
+    {
+      "id": "reaver-bastion",
+      "classId": "reaver",
+      "armourId": "bastion",
+      "name": "Bastion Harness \u00b7 reaver",
+      "canonicalId": "armor/reaver/bastion",
+      "legacyAlias": "reaver-warden",
+      "kind": "player",
+      "stanceSource": null,
+      "status": "unpainted",
+      "stances": {
+        "offensive": false,
+        "defensive": false,
+        "casting": false
+      }
+    },
+    {
+      "id": "starseer-rimeweave",
+      "classId": "starseer",
+      "armourId": "rimeweave",
+      "name": "Rimeweave Robes \u00b7 starseer",
+      "canonicalId": "armor/starseer/rimeweave",
+      "legacyAlias": "starseer-starlit",
+      "kind": "player",
+      "stanceSource": null,
+      "status": "unpainted",
+      "stances": {
+        "offensive": false,
+        "defensive": false,
+        "casting": false
+      }
+    },
+    {
+      "id": "rogue-waywatcher",
+      "classId": "rogue",
+      "armourId": "waywatcher",
+      "name": "Waywatcher Coat \u00b7 rogue",
+      "canonicalId": "armor/rogue/waywatcher",
+      "legacyAlias": "rogue-nightveil",
+      "kind": "player",
+      "stanceSource": null,
+      "status": "unpainted",
+      "stances": {
+        "offensive": false,
+        "defensive": false,
+        "casting": false
+      }
+    },
+    {
+      "id": "reaver-wayfarerPlate",
+      "classId": "reaver",
+      "armourId": "wayfarerPlate",
+      "name": "Wayfarer Plate \u00b7 reaver",
+      "canonicalId": "armor/reaver/wayfarerPlate",
+      "legacyAlias": "reaver-default",
+      "kind": "player",
+      "stanceSource": "reaver-default",
+      "status": "explicit-same-class-equivalence",
+      "stances": {
+        "offensive": true,
+        "defensive": true,
+        "casting": true
+      }
+    },
+    {
+      "id": "starseer-wayfarerPlate",
+      "classId": "starseer",
+      "armourId": "wayfarerPlate",
+      "name": "Wayfarer Plate \u00b7 starseer",
+      "canonicalId": "armor/starseer/wayfarerPlate",
+      "legacyAlias": "reaver-default",
+      "kind": "player",
+      "stanceSource": null,
+      "status": "unpainted",
+      "stances": {
+        "offensive": false,
+        "defensive": false,
+        "casting": false
+      }
+    },
+    {
+      "id": "herald-wayfarerPlate",
+      "classId": "herald",
+      "armourId": "wayfarerPlate",
+      "name": "Wayfarer Plate \u00b7 herald",
+      "canonicalId": "armor/herald/wayfarerPlate",
+      "legacyAlias": "reaver-default",
+      "kind": "player",
+      "stanceSource": null,
+      "status": "unpainted",
+      "stances": {
+        "offensive": false,
+        "defensive": false,
+        "casting": false
+      }
+    },
+    {
+      "id": "rogue-wayfarerPlate",
+      "classId": "rogue",
+      "armourId": "wayfarerPlate",
+      "name": "Wayfarer Plate \u00b7 rogue",
+      "canonicalId": "armor/rogue/wayfarerPlate",
+      "legacyAlias": "reaver-default",
+      "kind": "player",
+      "stanceSource": null,
+      "status": "unpainted",
+      "stances": {
+        "offensive": false,
+        "defensive": false,
+        "casting": false
+      }
+    },
+    {
+      "id": "reaver-nightweave",
+      "classId": "reaver",
+      "armourId": "nightweave",
+      "name": "Nightweave \u00b7 reaver",
+      "canonicalId": "armor/reaver/nightweave",
+      "legacyAlias": "starseer-default",
+      "kind": "player",
+      "stanceSource": null,
+      "status": "unpainted",
+      "stances": {
+        "offensive": false,
+        "defensive": false,
+        "casting": false
+      }
+    },
+    {
+      "id": "starseer-nightweave",
+      "classId": "starseer",
+      "armourId": "nightweave",
+      "name": "Nightweave \u00b7 starseer",
+      "canonicalId": "armor/starseer/nightweave",
+      "legacyAlias": "starseer-default",
+      "kind": "player",
+      "stanceSource": "starseer-default",
+      "status": "explicit-same-class-equivalence",
+      "stances": {
+        "offensive": true,
+        "defensive": true,
+        "casting": true
+      }
+    },
+    {
+      "id": "herald-nightweave",
+      "classId": "herald",
+      "armourId": "nightweave",
+      "name": "Nightweave \u00b7 herald",
+      "canonicalId": "armor/herald/nightweave",
+      "legacyAlias": "starseer-default",
+      "kind": "player",
+      "stanceSource": null,
+      "status": "unpainted",
+      "stances": {
+        "offensive": false,
+        "defensive": false,
+        "casting": false
+      }
+    },
+    {
+      "id": "rogue-nightweave",
+      "classId": "rogue",
+      "armourId": "nightweave",
+      "name": "Nightweave \u00b7 rogue",
+      "canonicalId": "armor/rogue/nightweave",
+      "legacyAlias": "starseer-default",
+      "kind": "player",
+      "stanceSource": null,
+      "status": "unpainted",
+      "stances": {
+        "offensive": false,
+        "defensive": false,
+        "casting": false
+      }
+    },
+    {
+      "id": "reaver-riteVestments",
+      "classId": "reaver",
+      "armourId": "riteVestments",
+      "name": "Rite Vestments \u00b7 reaver",
+      "canonicalId": "armor/reaver/riteVestments",
+      "legacyAlias": "herald-default",
+      "kind": "player",
+      "stanceSource": null,
+      "status": "unpainted",
+      "stances": {
+        "offensive": false,
+        "defensive": false,
+        "casting": false
+      }
+    },
+    {
+      "id": "starseer-riteVestments",
+      "classId": "starseer",
+      "armourId": "riteVestments",
+      "name": "Rite Vestments \u00b7 starseer",
+      "canonicalId": "armor/starseer/riteVestments",
+      "legacyAlias": "herald-default",
+      "kind": "player",
+      "stanceSource": null,
+      "status": "unpainted",
+      "stances": {
+        "offensive": false,
+        "defensive": false,
+        "casting": false
+      }
+    },
+    {
+      "id": "herald-riteVestments",
+      "classId": "herald",
+      "armourId": "riteVestments",
+      "name": "Rite Vestments \u00b7 herald",
+      "canonicalId": "armor/herald/riteVestments",
+      "legacyAlias": "herald-default",
+      "kind": "player",
+      "stanceSource": "herald-default",
+      "status": "explicit-same-class-equivalence",
+      "stances": {
+        "offensive": true,
+        "defensive": true,
+        "casting": true
+      }
+    },
+    {
+      "id": "rogue-riteVestments",
+      "classId": "rogue",
+      "armourId": "riteVestments",
+      "name": "Rite Vestments \u00b7 rogue",
+      "canonicalId": "armor/rogue/riteVestments",
+      "legacyAlias": "herald-default",
+      "kind": "player",
+      "stanceSource": null,
+      "status": "unpainted",
+      "stances": {
+        "offensive": false,
+        "defensive": false,
+        "casting": false
+      }
+    },
+    {
+      "id": "reaver-gutterLeathers",
+      "classId": "reaver",
+      "armourId": "gutterLeathers",
+      "name": "Gutter Leathers \u00b7 reaver",
+      "canonicalId": "armor/reaver/gutterLeathers",
+      "legacyAlias": "rogue-default",
+      "kind": "player",
+      "stanceSource": null,
+      "status": "unpainted",
+      "stances": {
+        "offensive": false,
+        "defensive": false,
+        "casting": false
+      }
+    },
+    {
+      "id": "starseer-gutterLeathers",
+      "classId": "starseer",
+      "armourId": "gutterLeathers",
+      "name": "Gutter Leathers \u00b7 starseer",
+      "canonicalId": "armor/starseer/gutterLeathers",
+      "legacyAlias": "rogue-default",
+      "kind": "player",
+      "stanceSource": null,
+      "status": "unpainted",
+      "stances": {
+        "offensive": false,
+        "defensive": false,
+        "casting": false
+      }
+    },
+    {
+      "id": "herald-gutterLeathers",
+      "classId": "herald",
+      "armourId": "gutterLeathers",
+      "name": "Gutter Leathers \u00b7 herald",
+      "canonicalId": "armor/herald/gutterLeathers",
+      "legacyAlias": "rogue-default",
+      "kind": "player",
+      "stanceSource": null,
+      "status": "unpainted",
+      "stances": {
+        "offensive": false,
+        "defensive": false,
+        "casting": false
+      }
+    },
+    {
+      "id": "rogue-gutterLeathers",
+      "classId": "rogue",
+      "armourId": "gutterLeathers",
+      "name": "Gutter Leathers \u00b7 rogue",
+      "canonicalId": "armor/rogue/gutterLeathers",
+      "legacyAlias": "rogue-default",
+      "kind": "player",
+      "stanceSource": "rogue-default",
+      "status": "explicit-same-class-equivalence",
+      "stances": {
+        "offensive": true,
+        "defensive": true,
+        "casting": true
+      }
+    },
+    {
+      "id": "wanderingSoldier",
+      "name": "Wandering Soldier",
+      "canonicalId": "enemy/wanderingSoldier",
+      "hasPoseSource": true,
+      "hasAlternativeIdle": true,
+      "kind": "enemy",
+      "status": "reused-painted-draft",
+      "stances": {
+        "offensive": true,
+        "defensive": true,
+        "casting": true
+      }
+    },
+    {
+      "id": "blightHound",
+      "name": "Blight Hound",
+      "canonicalId": "enemy/blightHound",
+      "hasPoseSource": true,
+      "hasAlternativeIdle": true,
+      "kind": "enemy",
+      "status": "reused-painted-draft",
+      "stances": {
+        "offensive": true,
+        "defensive": true,
+        "casting": true
+      }
+    },
+    {
+      "id": "huskBrute",
+      "name": "Husk Brute",
+      "canonicalId": "enemy/huskBrute",
+      "hasPoseSource": true,
+      "hasAlternativeIdle": true,
+      "kind": "enemy",
+      "status": "reused-painted-draft",
+      "stances": {
+        "offensive": true,
+        "defensive": true,
+        "casting": true
+      }
+    },
+    {
+      "id": "graveWisp",
+      "name": "Grave Wisp",
+      "canonicalId": "enemy/graveWisp",
+      "hasPoseSource": true,
+      "hasAlternativeIdle": true,
+      "kind": "enemy",
+      "status": "reused-painted-draft",
+      "stances": {
+        "offensive": true,
+        "defensive": true,
+        "casting": true
+      }
+    },
+    {
+      "id": "wyrmAspirant",
+      "name": "Wyrm Aspirant",
+      "canonicalId": "enemy/wyrmAspirant",
+      "hasPoseSource": true,
+      "hasAlternativeIdle": true,
+      "kind": "enemy",
+      "status": "reused-painted-draft",
+      "stances": {
+        "offensive": true,
+        "defensive": true,
+        "casting": true
+      }
+    },
+    {
+      "id": "fellWarden",
+      "name": "The Fell Warden",
+      "canonicalId": "enemy/fellWarden",
+      "hasPoseSource": true,
+      "hasAlternativeIdle": true,
+      "kind": "enemy",
+      "status": "reused-painted-draft",
+      "stances": {
+        "offensive": true,
+        "defensive": true,
+        "casting": true
+      }
+    },
+    {
+      "id": "lanternMoth",
+      "name": "Lantern Moth",
+      "canonicalId": "enemy/lanternMoth",
+      "hasPoseSource": true,
+      "hasAlternativeIdle": true,
+      "kind": "enemy",
+      "status": "reused-painted-draft",
+      "stances": {
+        "offensive": true,
+        "defensive": true,
+        "casting": true
+      }
+    },
+    {
+      "id": "briarHermit",
+      "name": "Briar Hermit",
+      "canonicalId": "enemy/briarHermit",
+      "hasPoseSource": true,
+      "hasAlternativeIdle": true,
+      "kind": "enemy",
+      "status": "reused-painted-draft",
+      "stances": {
+        "offensive": true,
+        "defensive": true,
+        "casting": true
+      }
+    },
+    {
+      "id": "chainScavenger",
+      "name": "Chain Scavenger",
+      "canonicalId": "enemy/chainScavenger",
+      "hasPoseSource": true,
+      "hasAlternativeIdle": true,
+      "kind": "enemy",
+      "status": "reused-painted-draft",
+      "stances": {
+        "offensive": true,
+        "defensive": true,
+        "casting": true
+      }
+    },
+    {
+      "id": "bellKeeper",
+      "name": "The Bell Keeper",
+      "canonicalId": "enemy/bellKeeper",
+      "hasPoseSource": true,
+      "hasAlternativeIdle": true,
+      "kind": "enemy",
+      "status": "reused-painted-draft",
+      "stances": {
+        "offensive": true,
+        "defensive": true,
+        "casting": true
+      }
+    },
+    {
+      "id": "thornMatriarch",
+      "name": "The Thorn Matriarch",
+      "canonicalId": "enemy/thornMatriarch",
+      "hasPoseSource": true,
+      "hasAlternativeIdle": true,
+      "kind": "enemy",
+      "status": "reused-painted-draft",
+      "stances": {
+        "offensive": true,
+        "defensive": true,
+        "casting": true
+      }
+    },
+    {
+      "id": "gildedKnight",
+      "name": "Gilded Knight",
+      "canonicalId": "enemy/gildedKnight",
+      "hasPoseSource": true,
+      "hasAlternativeIdle": true,
+      "kind": "enemy",
+      "status": "reused-painted-draft",
+      "stances": {
+        "offensive": true,
+        "defensive": true,
+        "casting": true
+      }
+    },
+    {
+      "id": "courtSurgeon",
+      "name": "Court Surgeon",
+      "canonicalId": "enemy/courtSurgeon",
+      "hasPoseSource": true,
+      "hasAlternativeIdle": true,
+      "kind": "enemy",
+      "status": "reused-painted-draft",
+      "stances": {
+        "offensive": true,
+        "defensive": true,
+        "casting": true
+      }
+    },
+    {
+      "id": "stitchedHound",
+      "name": "Stitched Hound",
+      "canonicalId": "enemy/stitchedHound",
+      "hasPoseSource": true,
+      "hasAlternativeIdle": true,
+      "kind": "enemy",
+      "status": "reused-painted-draft",
+      "stances": {
+        "offensive": true,
+        "defensive": true,
+        "casting": true
+      }
+    },
+    {
+      "id": "courtMarionette",
+      "name": "Court Marionette",
+      "canonicalId": "enemy/courtMarionette",
+      "hasPoseSource": true,
+      "hasAlternativeIdle": true,
+      "kind": "enemy",
+      "status": "reused-painted-draft",
+      "stances": {
+        "offensive": true,
+        "defensive": true,
+        "casting": true
+      }
+    },
+    {
+      "id": "livingArmor",
+      "name": "Living Armor",
+      "canonicalId": "enemy/livingArmor",
+      "hasPoseSource": true,
+      "hasAlternativeIdle": true,
+      "kind": "enemy",
+      "status": "reused-painted-draft",
+      "stances": {
+        "offensive": true,
+        "defensive": true,
+        "casting": true
+      }
+    },
+    {
+      "id": "courtDuelist",
+      "name": "Duelist of the Court",
+      "canonicalId": "enemy/courtDuelist",
+      "hasPoseSource": true,
+      "hasAlternativeIdle": true,
+      "kind": "enemy",
+      "status": "reused-painted-draft",
+      "stances": {
+        "offensive": true,
+        "defensive": true,
+        "casting": true
+      }
+    },
+    {
+      "id": "stitchedKing",
+      "name": "The Stitched King",
+      "canonicalId": "enemy/stitchedKing",
+      "hasPoseSource": true,
+      "hasAlternativeIdle": true,
+      "kind": "enemy",
+      "status": "reused-painted-draft",
+      "stances": {
+        "offensive": true,
+        "defensive": true,
+        "casting": true
+      }
+    },
+    {
+      "id": "mirrorScribe",
+      "name": "Mirror Scribe",
+      "canonicalId": "enemy/mirrorScribe",
+      "hasPoseSource": true,
+      "hasAlternativeIdle": true,
+      "kind": "enemy",
+      "status": "reused-painted-draft",
+      "stances": {
+        "offensive": true,
+        "defensive": true,
+        "casting": true
+      }
+    },
+    {
+      "id": "stitchCrab",
+      "name": "Stitch Crab",
+      "canonicalId": "enemy/stitchCrab",
+      "hasPoseSource": true,
+      "hasAlternativeIdle": true,
+      "kind": "enemy",
+      "status": "reused-painted-draft",
+      "stances": {
+        "offensive": true,
+        "defensive": true,
+        "casting": true
+      }
+    },
+    {
+      "id": "glassRegent",
+      "name": "The Glass Regent",
+      "canonicalId": "enemy/glassRegent",
+      "hasPoseSource": true,
+      "hasAlternativeIdle": true,
+      "kind": "enemy",
+      "status": "reused-painted-draft",
+      "stances": {
+        "offensive": true,
+        "defensive": true,
+        "casting": true
+      }
+    },
+    {
+      "id": "marrowOrganist",
+      "name": "The Marrow Organist",
+      "canonicalId": "enemy/marrowOrganist",
+      "hasPoseSource": true,
+      "hasAlternativeIdle": true,
+      "kind": "enemy",
+      "status": "reused-painted-draft",
+      "stances": {
+        "offensive": true,
+        "defensive": true,
+        "casting": true
+      }
+    },
+    {
+      "id": "ashRevenant",
+      "name": "Ash Revenant",
+      "canonicalId": "enemy/ashRevenant",
+      "hasPoseSource": true,
+      "hasAlternativeIdle": true,
+      "kind": "enemy",
+      "status": "reused-painted-draft",
+      "stances": {
+        "offensive": true,
+        "defensive": true,
+        "casting": true
+      }
+    },
+    {
+      "id": "emberStarvedPilgrim",
+      "name": "Ember-Starved Pilgrim",
+      "canonicalId": "enemy/emberStarvedPilgrim",
+      "hasPoseSource": true,
+      "hasAlternativeIdle": true,
+      "kind": "enemy",
+      "status": "reused-painted-draft",
+      "stances": {
+        "offensive": true,
+        "defensive": true,
+        "casting": true
+      }
+    },
+    {
+      "id": "valkyrieShade",
+      "name": "Valkyrie Shade",
+      "canonicalId": "enemy/valkyrieShade",
+      "hasPoseSource": true,
+      "hasAlternativeIdle": true,
+      "kind": "enemy",
+      "status": "reused-painted-draft",
+      "stances": {
+        "offensive": true,
+        "defensive": true,
+        "casting": true
+      }
+    },
+    {
+      "id": "charredColossus",
+      "name": "Charred Colossus",
+      "canonicalId": "enemy/charredColossus",
+      "hasPoseSource": true,
+      "hasAlternativeIdle": true,
+      "kind": "enemy",
+      "status": "reused-painted-draft",
+      "stances": {
+        "offensive": true,
+        "defensive": true,
+        "casting": true
+      }
+    },
+    {
+      "id": "wyrmLord",
+      "name": "Wyrm Lord",
+      "canonicalId": "enemy/wyrmLord",
+      "hasPoseSource": true,
+      "hasAlternativeIdle": true,
+      "kind": "enemy",
+      "status": "reused-painted-draft",
+      "stances": {
+        "offensive": true,
+        "defensive": true,
+        "casting": true
+      }
+    },
+    {
+      "id": "blightedValkyrie",
+      "name": "The Blighted Valkyrie",
+      "canonicalId": "enemy/blightedValkyrie",
+      "hasPoseSource": true,
+      "hasAlternativeIdle": true,
+      "kind": "enemy",
+      "status": "reused-painted-draft",
+      "stances": {
+        "offensive": true,
+        "defensive": true,
+        "casting": true
+      }
+    },
+    {
+      "id": "cinderMantis",
+      "name": "Cinder Mantis",
+      "canonicalId": "enemy/cinderMantis",
+      "hasPoseSource": true,
+      "hasAlternativeIdle": true,
+      "kind": "enemy",
+      "status": "reused-painted-draft",
+      "stances": {
+        "offensive": true,
+        "defensive": true,
+        "casting": true
+      }
+    },
+    {
+      "id": "eclipseCantor",
+      "name": "Eclipse Cantor",
+      "canonicalId": "enemy/eclipseCantor",
+      "hasPoseSource": true,
+      "hasAlternativeIdle": true,
+      "kind": "enemy",
+      "status": "reused-painted-draft",
+      "stances": {
+        "offensive": true,
+        "defensive": true,
+        "casting": true
+      }
+    },
+    {
+      "id": "furnaceSaint",
+      "name": "The Furnace Saint",
+      "canonicalId": "enemy/furnaceSaint",
+      "hasPoseSource": true,
+      "hasAlternativeIdle": true,
+      "kind": "enemy",
+      "status": "reused-painted-draft",
+      "stances": {
+        "offensive": true,
+        "defensive": true,
+        "casting": true
+      }
+    },
+    {
+      "id": "hollowAstronomer",
+      "name": "The Hollow Astronomer",
+      "canonicalId": "enemy/hollowAstronomer",
+      "hasPoseSource": true,
+      "hasAlternativeIdle": true,
+      "kind": "enemy",
+      "status": "reused-painted-draft",
+      "stances": {
+        "offensive": true,
+        "defensive": true,
+        "casting": true
+      }
+    },
+    {
+      "id": "ashheartDragon",
+      "name": "The Ashheart Dragon",
+      "canonicalId": "enemy/ashheartDragon",
+      "hasPoseSource": true,
+      "hasAlternativeIdle": true,
+      "kind": "enemy",
+      "status": "reused-painted-draft",
+      "stances": {
+        "offensive": true,
+        "defensive": true,
+        "casting": true
+      }
+    }
+  ],
+  "actors": {
+    "reaver-default": {
+      "kind": "player",
+      "status": "painted-draft",
+      "frames": {
+        "offensive": {
+          "path": "pose-studio/stances/frames/reaver-default/offensive.webp",
+          "lite": "pose-studio/stances/frames/reaver-default/offensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            108,
+            44,
+            404,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "55f5f9bfe5012ad5970a979e9ca6992fe29254392daa0aac42627a8f26c87dfb",
+          "liteSha256": "a9f9fb76297b037106f358d6380523ca6eccb6690fc7061619feb5bebd520e73"
+        },
+        "defensive": {
+          "path": "pose-studio/stances/frames/reaver-default/defensive.webp",
+          "lite": "pose-studio/stances/frames/reaver-default/defensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            126,
+            114,
+            387,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "08dcb989d8f7c14e3f1b8bbed363fe6e2117546d60ecf6d4acf8e2fef1c3969b",
+          "liteSha256": "214f9ba99adafe29d025dc2a7454aefb4514a2f73cd21a724dcd8dfdc5be1508"
+        },
+        "casting": {
+          "path": "pose-studio/stances/frames/reaver-default/casting.webp",
+          "lite": "pose-studio/stances/frames/reaver-default/casting.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            146,
+            137,
+            366,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "2dbae1de797abcb6a05e57430893d796aa50708809ab72d64687e6c9802e83a2",
+          "liteSha256": "827996e1424059d8312b4d8b979da80babf67a9639ec4487d928951809761a10"
+        }
+      },
+      "sources": [
+        {
+          "kind": "imagegen",
+          "path": "pose-studio/stances/source/reaver-default.png",
+          "sha256": "6882a0cb53db51e1c83ec467b52bcca6cb81561941a92d6739f032e0391ab0ee"
+        }
+      ],
+      "rig": "pose-studio/stances/projects/reaver-default/reaver-default.rig.json",
+      "poseStudioSupported": true
+    },
+    "rogue-default": {
+      "kind": "player",
+      "status": "painted-draft",
+      "frames": {
+        "offensive": {
+          "path": "pose-studio/stances/frames/rogue-default/offensive.webp",
+          "lite": "pose-studio/stances/frames/rogue-default/offensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            75,
+            107,
+            437,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "6286f0305e40b4d04f50c0c6180ad2b28fba3db1a1346303bfe18b4f1e2f34ce",
+          "liteSha256": "8b4b22c77e901ef1d70dd6be3cb57184432ecb7e43eed27c19f3106e61c99abe"
+        },
+        "defensive": {
+          "path": "pose-studio/stances/frames/rogue-default/defensive.webp",
+          "lite": "pose-studio/stances/frames/rogue-default/defensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            124,
+            150,
+            389,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "359081174fa23126a6a43973ff537fc44062a9bb5844d494743627fa62a42075",
+          "liteSha256": "2a7344fa6cd47caa65a390f1ae72e0413671a536286d17f24e676f5d6f0e8d74"
+        },
+        "casting": {
+          "path": "pose-studio/stances/frames/rogue-default/casting.webp",
+          "lite": "pose-studio/stances/frames/rogue-default/casting.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            128,
+            44,
+            383,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "e658a3e4584cbb919c5d4d236d1391553d326b7d0b6aa88c2fcbe44e053c07c7",
+          "liteSha256": "9e689569e4405cc4f42484942a6fa32d20d5cf724c16d4e577c69660d1c34ad5"
+        }
+      },
+      "sources": [
+        {
+          "kind": "imagegen",
+          "path": "pose-studio/stances/source/rogue-default.png",
+          "sha256": "de8e57287a4da5ed8b115edba8bd7ccd163d658430546be0a5ac8f94adf0fa8b"
+        }
+      ],
+      "rig": "pose-studio/stances/projects/rogue-default/rogue-default.rig.json",
+      "poseStudioSupported": true
+    },
+    "starseer-default": {
+      "kind": "player",
+      "status": "painted-draft",
+      "frames": {
+        "offensive": {
+          "path": "pose-studio/stances/frames/starseer-default/offensive.webp",
+          "lite": "pose-studio/stances/frames/starseer-default/offensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            124,
+            113,
+            387,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "03e0f4272a0eb0586a7fbb9f82683ef412bb31d309e6f6ac075158393e6052c7",
+          "liteSha256": "a98723cc001f34135603bbb3b97fac8d95aec0fd693db9a801821a42a93a0e5a"
+        },
+        "defensive": {
+          "path": "pose-studio/stances/frames/starseer-default/defensive.webp",
+          "lite": "pose-studio/stances/frames/starseer-default/defensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            106,
+            110,
+            405,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "d050948b51c138f8ee23d4d8a8eb86c531fb78b52f8c8bea26c9b007b4fb4666",
+          "liteSha256": "e73672506025c5ac3d9d83e53e1a9e3f674cc82c9a628c53a82353d5cc912202"
+        },
+        "casting": {
+          "path": "pose-studio/stances/frames/starseer-default/casting.webp",
+          "lite": "pose-studio/stances/frames/starseer-default/casting.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            145,
+            44,
+            375,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "22a440902e759f8158dc9fa3670bb762e7450152d40978e664f222575b15e6bd",
+          "liteSha256": "40982971ac12d955bd739f5fbbd10c49c25a26c4c1dfb7236910e3c7717bdfc5"
+        }
+      },
+      "sources": [
+        {
+          "kind": "imagegen",
+          "path": "pose-studio/stances/source/starseer-default.png",
+          "sha256": "17e95756be8223fdef5e5120256f003aa60ba84f2190618bc5a30d820b63bce8"
+        }
+      ],
+      "rig": "pose-studio/stances/projects/starseer-default/starseer-default.rig.json",
+      "poseStudioSupported": true
+    },
+    "herald-default": {
+      "kind": "player",
+      "status": "painted-draft",
+      "frames": {
+        "offensive": {
+          "path": "pose-studio/stances/frames/herald-default/offensive.webp",
+          "lite": "pose-studio/stances/frames/herald-default/offensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            121,
+            84,
+            391,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "b972bf20d3d070f3e15b59897ce495833be489fc1dda0942ac3e8ffa6724d01d",
+          "liteSha256": "1a8a7a99d9ef6b7787da4cfb178859d7b70fc95c79754ec786893f5fee56b9ff"
+        },
+        "defensive": {
+          "path": "pose-studio/stances/frames/herald-default/defensive.webp",
+          "lite": "pose-studio/stances/frames/herald-default/defensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            134,
+            108,
+            378,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "08bfb73c952f952671d822e03be2427bbdb7e6b9d109b73d0275507e05d6bfc4",
+          "liteSha256": "271f1f97117db8840a97ef280ca21a4e8e9ff992f03efa65e52a9b673ed90e35"
+        },
+        "casting": {
+          "path": "pose-studio/stances/frames/herald-default/casting.webp",
+          "lite": "pose-studio/stances/frames/herald-default/casting.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            132,
+            44,
+            380,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "9d5ad5e9d6c6fd5522fe964ce984df9228fcc333e23566bfbbf814d2bad17d1b",
+          "liteSha256": "5a3c8c27ea7fc008aec6128d880f44dd4ead06578817cc33889c4032e5408f38"
+        }
+      },
+      "sources": [
+        {
+          "kind": "imagegen",
+          "path": "pose-studio/stances/source/herald-default.png",
+          "sha256": "208693081face05eb3bfa4a9a2207378fb5af7c0c56b888e692a74586ea8f751"
+        }
+      ],
+      "rig": "pose-studio/stances/projects/herald-default/herald-default.rig.json",
+      "poseStudioSupported": true
+    },
+    "wanderingSoldier": {
+      "kind": "enemy",
+      "name": "Wandering Soldier",
+      "status": "reused-painted-draft",
+      "frames": {
+        "offensive": {
+          "path": "pose-studio/stances/frames/wanderingSoldier/offensive.webp",
+          "lite": "pose-studio/stances/frames/wanderingSoldier/offensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            47,
+            193,
+            466,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "f1ed5d0e9d97d27692bbfe41bcf183bc527365f150eb8a71edca53b0c07e931a",
+          "liteSha256": "187b467b954f65f3cff90a79d4e53dd16f5f67bb862ca436e57a5246e7ef5c4e"
+        },
+        "defensive": {
+          "path": "pose-studio/stances/frames/wanderingSoldier/defensive.webp",
+          "lite": "pose-studio/stances/frames/wanderingSoldier/defensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            100,
+            185,
+            414,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "f3404e089210cd8684bcd7f793c8bff3852d56c4bb7cb142e8a24c0f67934b1a",
+          "liteSha256": "c8c3a2c38b8d9a8d274e4c0f48510612b1a8f96d91c100541fcc642827bd5af2"
+        },
+        "casting": {
+          "path": "pose-studio/stances/frames/wanderingSoldier/casting.webp",
+          "lite": "pose-studio/stances/frames/wanderingSoldier/casting.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            118,
+            52,
+            395,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "8f652ec6a27c7c42fd411f9c69fe1b7100f30c7eaca78c41e1dd890e0fb35265",
+          "liteSha256": "cefd562b33ce42e76a9a3dfa7fc06c0acf1d2619ea320a180304e2be060d79e7"
+        }
+      },
+      "sources": [
+        {
+          "stance": "offensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-poses/wanderingSoldier_attack.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "3838738b4f5d5ab35401ee553ad11c797471d3262b56f91c7ed919fa50236e7a"
+        },
+        {
+          "stance": "defensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/wanderingSoldier_guard.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "4c009639efe2aa6ada2ad36f045b448b1b594d5e92cd5ef7c5c3acde1c132252"
+        },
+        {
+          "stance": "casting",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/wanderingSoldier_buff.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "945f8c09f7567ba9bdd21411f9aee26361e8186385eccc885af0090f6cf49a53"
+        }
+      ],
+      "rig": "pose-studio/stances/projects/wanderingSoldier/wanderingSoldier.rig.json",
+      "poseStudioSupported": false
+    },
+    "blightHound": {
+      "kind": "enemy",
+      "name": "Blight Hound",
+      "status": "reused-painted-draft",
+      "frames": {
+        "offensive": {
+          "path": "pose-studio/stances/frames/blightHound/offensive.webp",
+          "lite": "pose-studio/stances/frames/blightHound/offensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            47,
+            184,
+            466,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "6882d84552d6dfa86fac0392139a63edc70438b86460329374762f15787702cb",
+          "liteSha256": "9193e5028c7e1b9ca8b1904dbc3e8774d6f9956a9328b0f9edb8adb46775d282"
+        },
+        "defensive": {
+          "path": "pose-studio/stances/frames/blightHound/defensive.webp",
+          "lite": "pose-studio/stances/frames/blightHound/defensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            114,
+            236,
+            399,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "eb1816b3edfb208621629886c7b397da49360b2b2e9cf20b28995b98ffe45487",
+          "liteSha256": "ffaba2a5dc7be7b3a8faac690f06ed6369ee32e77419ba0f64dba2946f12e4ec"
+        },
+        "casting": {
+          "path": "pose-studio/stances/frames/blightHound/casting.webp",
+          "lite": "pose-studio/stances/frames/blightHound/casting.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            87,
+            175,
+            427,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "ff1f2b8f2af09d644acda16a891db6ee60eb7923a5976e26b3a828b91ce5a37c",
+          "liteSha256": "b91cc1aaff051fa844721c42c2078c9c04fe588a3a0ca9cfeb75089a4e2154a0"
+        }
+      },
+      "sources": [
+        {
+          "stance": "offensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-poses/blightHound_attack.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "ada3a4f5bcee6beea90513aa3e635732f55e239f44046d386eb08cfc0752df8f"
+        },
+        {
+          "stance": "defensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/blightHound_guard.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "8ddb20393ed4a06ef7a3a737a254b69c02140798468be506cf307e56fa01edbc"
+        },
+        {
+          "stance": "casting",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/blightHound_buff.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "b6fa7b30458b92e56d2b7c312a284aebe945c7902348c47d40b3e18dd2e8f9ff"
+        }
+      ],
+      "rig": "pose-studio/stances/projects/blightHound/blightHound.rig.json",
+      "poseStudioSupported": false
+    },
+    "huskBrute": {
+      "kind": "enemy",
+      "name": "Husk Brute",
+      "status": "reused-painted-draft",
+      "frames": {
+        "offensive": {
+          "path": "pose-studio/stances/frames/huskBrute/offensive.webp",
+          "lite": "pose-studio/stances/frames/huskBrute/offensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            59,
+            52,
+            455,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "d9ee8770e2fc03c30dc45b29c826cdc7d47f7039a318649012694516a847fddb",
+          "liteSha256": "37ca0fb986441969e05dd3e520394df3adcfcb82a192ecb534f416e54befff80"
+        },
+        "defensive": {
+          "path": "pose-studio/stances/frames/huskBrute/defensive.webp",
+          "lite": "pose-studio/stances/frames/huskBrute/defensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            124,
+            205,
+            390,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "d777d54cc111ce4ed48f271f8952e99bd733fc8f78fa4a519fd9a8d7ef73d36b",
+          "liteSha256": "b2997def57ccd945d5dc9e7f257ed3d5f32f77d77a12bc1efc6731f5f4c232a0"
+        },
+        "casting": {
+          "path": "pose-studio/stances/frames/huskBrute/casting.webp",
+          "lite": "pose-studio/stances/frames/huskBrute/casting.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            104,
+            111,
+            411,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "30c832c7f887cb40a63627aee2fb826e14a56b4810992156afddea4a6ac28024",
+          "liteSha256": "6fa51c84a010c541e67c561848396dca4cbaac2ae3306f1c299e858f2e60bc66"
+        }
+      },
+      "sources": [
+        {
+          "stance": "offensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-poses/huskBrute_attack.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "21e3784dfb76ae54bd41d2a5ac4d9ae2615438fc66819ad9af04bd951be0bc59"
+        },
+        {
+          "stance": "defensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/huskBrute_guard.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "2ca63b51919b4122806429962ceac2cbca02b0dac5f365b5f04454630e4681e0"
+        },
+        {
+          "stance": "casting",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/huskBrute_buff.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "4f16273777cff13956726e94fdec1261ea6af5de4d19b2f6a04848845616d728"
+        }
+      ],
+      "rig": "pose-studio/stances/projects/huskBrute/huskBrute.rig.json",
+      "poseStudioSupported": false
+    },
+    "graveWisp": {
+      "kind": "enemy",
+      "name": "Grave Wisp",
+      "status": "reused-painted-draft",
+      "frames": {
+        "offensive": {
+          "path": "pose-studio/stances/frames/graveWisp/offensive.webp",
+          "lite": "pose-studio/stances/frames/graveWisp/offensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            47,
+            112,
+            466,
+            465
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "0ac24ad7c5861586d475b52eda9c7228bcf651a7dd851b2cbc7160c26768f014",
+          "liteSha256": "195d812e718233f2bd0e9d49360982b78e75469a86f54ec47a8929e32b4c4d6f"
+        },
+        "defensive": {
+          "path": "pose-studio/stances/frames/graveWisp/defensive.webp",
+          "lite": "pose-studio/stances/frames/graveWisp/defensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            136,
+            179,
+            378,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "165ea7d0a0be2ccb60a2000c207fbd1996da01a3e75693aff596ba4ba6f931eb",
+          "liteSha256": "187ece32c859a16d64f73080fbbfa2e09372ae60de1804e1e6741d2233710e0a"
+        },
+        "casting": {
+          "path": "pose-studio/stances/frames/graveWisp/casting.webp",
+          "lite": "pose-studio/stances/frames/graveWisp/casting.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            112,
+            127,
+            401,
+            465
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "3e0c24ee5091a16f682a7b4284f734526b5b3711c94e64e9f5d8fed94e502a99",
+          "liteSha256": "de571f2cfbc9ae45366b8bce935d59380b645173318806838abd77ee140990b8"
+        }
+      },
+      "sources": [
+        {
+          "stance": "offensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-poses/graveWisp_attack.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "c10843ff9949feea6c7bb3382fadb967b90c76460298b5f4488383145ac2b092"
+        },
+        {
+          "stance": "defensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/graveWisp_guard.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "ef2af6498775db1b4b83010c1b58a49a1deba7f4d39e1b92b6bf60ae2ee18d0a"
+        },
+        {
+          "stance": "casting",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/graveWisp_buff.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "15d0929e37047ee4ee87c2b77b6398736fdf6aa801aaccfeb1a3e3dbca49e32e"
+        }
+      ],
+      "rig": "pose-studio/stances/projects/graveWisp/graveWisp.rig.json",
+      "poseStudioSupported": false
+    },
+    "wyrmAspirant": {
+      "kind": "enemy",
+      "name": "Wyrm Aspirant",
+      "status": "reused-painted-draft",
+      "frames": {
+        "offensive": {
+          "path": "pose-studio/stances/frames/wyrmAspirant/offensive.webp",
+          "lite": "pose-studio/stances/frames/wyrmAspirant/offensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            47,
+            95,
+            466,
+            465
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "06b5ed90b1aced8568ffcdf512b8c24099aba5dea7e0955b7ebf2464f96d6b38",
+          "liteSha256": "675ec5c7c20d93d138325446aaddc6f54b92501c78d4ea5e11e9c6f04d4fb0ba"
+        },
+        "defensive": {
+          "path": "pose-studio/stances/frames/wyrmAspirant/defensive.webp",
+          "lite": "pose-studio/stances/frames/wyrmAspirant/defensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            124,
+            159,
+            390,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "a128c15c890d87b20dbef3f325e317d76e6a4637ddc314c7d72d4b3c86768d30",
+          "liteSha256": "373719298a4861f9c82097b1f9ca9231aadf3f5683215952aedf8c33e1907872"
+        },
+        "casting": {
+          "path": "pose-studio/stances/frames/wyrmAspirant/casting.webp",
+          "lite": "pose-studio/stances/frames/wyrmAspirant/casting.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            128,
+            148,
+            385,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "5d39234caba546f36e4a9255b13950361c7501ba85ac2ecc3011ba48a25ba97f",
+          "liteSha256": "91578012181acaa227af7378eb618c39638050f5513a47fc1db0b89b4d0e90ea"
+        }
+      },
+      "sources": [
+        {
+          "stance": "offensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-poses/wyrmAspirant_attack.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "5623553fcdd32dd844a777e77f32884c190161d6412a4671df2d1e4858e4e26b"
+        },
+        {
+          "stance": "defensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/wyrmAspirant_guard.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "5df4b278760b2280d638e19abd76478a5fc5508244bad54b88d4597a43242680"
+        },
+        {
+          "stance": "casting",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/wyrmAspirant_buff.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "dccf1a8465461b6123e20ef84a587cd0422e77069b389843065a766ad10bbbad"
+        }
+      ],
+      "rig": "pose-studio/stances/projects/wyrmAspirant/wyrmAspirant.rig.json",
+      "poseStudioSupported": false
+    },
+    "fellWarden": {
+      "kind": "enemy",
+      "name": "The Fell Warden",
+      "status": "reused-painted-draft",
+      "frames": {
+        "offensive": {
+          "path": "pose-studio/stances/frames/fellWarden/offensive.webp",
+          "lite": "pose-studio/stances/frames/fellWarden/offensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            48,
+            155,
+            466,
+            465
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "826e187dedafa567e6f7e62916dc2142f6e6915c232116aef2bf2edc7b7d358f",
+          "liteSha256": "262588dc5d5a2c683c6142497fe94af75abec8cabe11329d296c51099f372c89"
+        },
+        "defensive": {
+          "path": "pose-studio/stances/frames/fellWarden/defensive.webp",
+          "lite": "pose-studio/stances/frames/fellWarden/defensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            129,
+            191,
+            385,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "fbfb79ef81b42b7eb6e06fdd863a8d85b944b478db14acb4dc9d205d773323dd",
+          "liteSha256": "6629ba864a60ce93f0bdaab424647737658503de00b7c7226fcf177e8ef95d75"
+        },
+        "casting": {
+          "path": "pose-studio/stances/frames/fellWarden/casting.webp",
+          "lite": "pose-studio/stances/frames/fellWarden/casting.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            116,
+            145,
+            399,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "27cc15d613d6330bf6bfde1aa4761449bbe2d89700be3607fda0d9d066fd53ac",
+          "liteSha256": "82ac81ca09a32e472e100f5a36c7744b9a8c5067fd17b646b9e559037ce9f195"
+        }
+      },
+      "sources": [
+        {
+          "stance": "offensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-poses/fellWarden_attack.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "de7f4266aeb6a5a636fcdf26952f9e4992d09ac5cde34f4d4cd681533264a0ee"
+        },
+        {
+          "stance": "defensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/fellWarden_guard.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "18133610ad5b7c7b1bce13102a45fc11932315a7da97abb5421b30735c81cf2c"
+        },
+        {
+          "stance": "casting",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/fellWarden_buff.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "4fd18cf15b6e130b53d5370646a1b40367793e4760ad5677a4d7f7fe9f21675d"
+        }
+      ],
+      "rig": "pose-studio/stances/projects/fellWarden/fellWarden.rig.json",
+      "poseStudioSupported": false
+    },
+    "lanternMoth": {
+      "kind": "enemy",
+      "name": "Lantern Moth",
+      "status": "reused-painted-draft",
+      "frames": {
+        "offensive": {
+          "path": "pose-studio/stances/frames/lanternMoth/offensive.webp",
+          "lite": "pose-studio/stances/frames/lanternMoth/offensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            48,
+            122,
+            466,
+            465
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "6f9d22387085b399a0eee08a03d5a90d1aa81a4da3c07ea7a98bc39d9180518e",
+          "liteSha256": "0d3ce5d600152a60c581695f5b5eaf3b478b9eef9ab497e7a3ffa9b1dfe0d7e2"
+        },
+        "defensive": {
+          "path": "pose-studio/stances/frames/lanternMoth/defensive.webp",
+          "lite": "pose-studio/stances/frames/lanternMoth/defensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            123,
+            181,
+            390,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "3e639d8df1f9a347aac0f710cfe93fdd6ea2c83146b011b0f9e5d6a5678388be",
+          "liteSha256": "f4d5ed94de9b2fd50d5d554ab95ac00e856e2c9433d7ff62f3a5bdd60e541e49"
+        },
+        "casting": {
+          "path": "pose-studio/stances/frames/lanternMoth/casting.webp",
+          "lite": "pose-studio/stances/frames/lanternMoth/casting.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            78,
+            106,
+            436,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "95a60831a5e58361c0d6f3ab475727848b470acd5605a4fb9e121ef8297320bd",
+          "liteSha256": "8fcecda94382c3316a98d4524a9c7a9288be3e93db6e5df98a20570ae7fffb8f"
+        }
+      },
+      "sources": [
+        {
+          "stance": "offensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-poses/lanternMoth_attack.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "1440c3eb2b9c49ea11b8bf24b8df767ffd3c945d5aff1ce7ab31ce19d38b517d"
+        },
+        {
+          "stance": "defensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/lanternMoth_guard.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "3458002caff7bff8ffc00c1a31d6fa6e69b2445c1e16f233a3cd3a9f1f866271"
+        },
+        {
+          "stance": "casting",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/lanternMoth_buff.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "9842fe3b0364643af7c38529aa368b7ac199a4ee0b7eeb388d473028c142664b"
+        }
+      ],
+      "rig": "pose-studio/stances/projects/lanternMoth/lanternMoth.rig.json",
+      "poseStudioSupported": false
+    },
+    "briarHermit": {
+      "kind": "enemy",
+      "name": "Briar Hermit",
+      "status": "reused-painted-draft",
+      "frames": {
+        "offensive": {
+          "path": "pose-studio/stances/frames/briarHermit/offensive.webp",
+          "lite": "pose-studio/stances/frames/briarHermit/offensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            47,
+            113,
+            466,
+            465
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "e0faf6784414a498a1d08258b4390249d5af602afbbd319cc4c6a76a85350423",
+          "liteSha256": "8543e35ea0c0ef8ab86b46b9b876c3041b3e2c3ea71ab0c51958b498419c41b5"
+        },
+        "defensive": {
+          "path": "pose-studio/stances/frames/briarHermit/defensive.webp",
+          "lite": "pose-studio/stances/frames/briarHermit/defensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            138,
+            175,
+            376,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "a0cf6acb32efea12a20ac2310bcb52d1b29f75c7ce9f5721b238572f15d709bf",
+          "liteSha256": "89d395d09d04afbcee2475db71b23be6a47141419bab5fbd76d23157dbe88299"
+        },
+        "casting": {
+          "path": "pose-studio/stances/frames/briarHermit/casting.webp",
+          "lite": "pose-studio/stances/frames/briarHermit/casting.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            111,
+            135,
+            402,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "adbbe21ccb8ae2581f083bcc4cd51f6b58bc2b0d21cac5b7a550cac4e3812c03",
+          "liteSha256": "3be7266221a619dd359359975bd80a66f73005bbd0005d5e4b680d36eef6cf70"
+        }
+      },
+      "sources": [
+        {
+          "stance": "offensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-poses/briarHermit_attack.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "42acb0cb85422ba8673cd914a7fe7b1d4eee567077ebf7d6c38c51996e77d9e0"
+        },
+        {
+          "stance": "defensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/briarHermit_guard.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "206d3f004cf243cf05db3936ea68b420bc488c42b2dc1762501eab27f400e92a"
+        },
+        {
+          "stance": "casting",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/briarHermit_buff.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "7fa523ec038e03aed2da807e25503c4befa73f028fc9e242c6cd1fdb06e13f6f"
+        }
+      ],
+      "rig": "pose-studio/stances/projects/briarHermit/briarHermit.rig.json",
+      "poseStudioSupported": false
+    },
+    "chainScavenger": {
+      "kind": "enemy",
+      "name": "Chain Scavenger",
+      "status": "reused-painted-draft",
+      "frames": {
+        "offensive": {
+          "path": "pose-studio/stances/frames/chainScavenger/offensive.webp",
+          "lite": "pose-studio/stances/frames/chainScavenger/offensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            47,
+            246,
+            466,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "6e754be33a6d95fcf371ca012ea14de53f13fb7643d1dac5deef5cfc689b5e6e",
+          "liteSha256": "8723b277cd5605f5fccfabf243b6af5fc92fdb172f70246b5061e0e5141e75d2"
+        },
+        "defensive": {
+          "path": "pose-studio/stances/frames/chainScavenger/defensive.webp",
+          "lite": "pose-studio/stances/frames/chainScavenger/defensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            153,
+            219,
+            360,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "f73548cfb2205bca350983d77497ab91ee66777c4cac527887ab59e5671be8bc",
+          "liteSha256": "fb1c9b46a88875b0cd5d1600ea66be786c98f1252266bced70bfcc41418c71ba"
+        },
+        "casting": {
+          "path": "pose-studio/stances/frames/chainScavenger/casting.webp",
+          "lite": "pose-studio/stances/frames/chainScavenger/casting.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            124,
+            123,
+            390,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "d2fe4b0f6388bda75638ef7998de071b73db9960beaf8fa91df3eaef2f2f5050",
+          "liteSha256": "3f06022fbd84558882ab1dbe2ca0d7dd7a1fc376750cc4881ecd54437db028b2"
+        }
+      },
+      "sources": [
+        {
+          "stance": "offensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-poses/chainScavenger_attack.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "baad8e51ca7682ffff46e19994563c3b2642aca9c3154fb0b12782e2713642ad"
+        },
+        {
+          "stance": "defensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/chainScavenger_guard.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "68f166799dd27f1e286938a95676d9554579a8f0e7a19ebfe97a4113f7a21622"
+        },
+        {
+          "stance": "casting",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/chainScavenger_buff.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "ee18dfe3ea63a7a3705dfe25bc186b278b3d736f6df855137c405ac6a4be1096"
+        }
+      ],
+      "rig": "pose-studio/stances/projects/chainScavenger/chainScavenger.rig.json",
+      "poseStudioSupported": false
+    },
+    "bellKeeper": {
+      "kind": "enemy",
+      "name": "The Bell Keeper",
+      "status": "reused-painted-draft",
+      "frames": {
+        "offensive": {
+          "path": "pose-studio/stances/frames/bellKeeper/offensive.webp",
+          "lite": "pose-studio/stances/frames/bellKeeper/offensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            47,
+            109,
+            466,
+            465
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "a3b8a5fffa5ea4430d16bc591f63c08b5bd57df273cbac0816f8d3a73164ce92",
+          "liteSha256": "b132429b857af0b71f7e0723c6a0e972439031396c41705658e3985f580786a9"
+        },
+        "defensive": {
+          "path": "pose-studio/stances/frames/bellKeeper/defensive.webp",
+          "lite": "pose-studio/stances/frames/bellKeeper/defensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            125,
+            204,
+            389,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "ea812dd0c799193b43eb8b577dd5d23700177d7af78f81d3f5768b36a88e4aeb",
+          "liteSha256": "f207f39f38a0ea78e2dd46baa837d8cab85d374a12fb9f14634b46c81ea031a4"
+        },
+        "casting": {
+          "path": "pose-studio/stances/frames/bellKeeper/casting.webp",
+          "lite": "pose-studio/stances/frames/bellKeeper/casting.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            92,
+            107,
+            421,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "474c25c659ba906bd742ffb9ee60a8cff2d1cbb46ce0b04ca6f60c1da61cfc8d",
+          "liteSha256": "90d9029fa38916b416b0fd74e99533bca7662098bcafe8ed41328464d8655082"
+        }
+      },
+      "sources": [
+        {
+          "stance": "offensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-poses/bellKeeper_attack.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "3447cb6a5ab47435194ea04627a1037a91d730fb65a3a0ca084f708fad8baef0"
+        },
+        {
+          "stance": "defensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/bellKeeper_guard.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "1e52181e3ae713062ffa9b767bee8fdb4deb5d89e23a6c6afa34a9cee5461fb5"
+        },
+        {
+          "stance": "casting",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/bellKeeper_buff.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "addf5f0654da73f962d1955a15193e683caff90b6ac8f4b8fbb1fe53a4e2e881"
+        }
+      ],
+      "rig": "pose-studio/stances/projects/bellKeeper/bellKeeper.rig.json",
+      "poseStudioSupported": false
+    },
+    "thornMatriarch": {
+      "kind": "enemy",
+      "name": "The Thorn Matriarch",
+      "status": "reused-painted-draft",
+      "frames": {
+        "offensive": {
+          "path": "pose-studio/stances/frames/thornMatriarch/offensive.webp",
+          "lite": "pose-studio/stances/frames/thornMatriarch/offensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            51,
+            52,
+            463,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "b3c6c4d907cbdfd8c63470cd0fd5fe3a00b1a9c45d253e66c70aca7e83839f22",
+          "liteSha256": "312752678e618601f291f817eadd55d65e22eb56fbfc720054699286fb65d1c7"
+        },
+        "defensive": {
+          "path": "pose-studio/stances/frames/thornMatriarch/defensive.webp",
+          "lite": "pose-studio/stances/frames/thornMatriarch/defensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            118,
+            193,
+            396,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "5960c79cf25b1c5d8ad49fe86d805d39a35467f5d394d43e13a9745765a34852",
+          "liteSha256": "5abb8c3af80f1682556ed9cab16bfdaa3a9398eda58b2ec2a0c0ec155d286486"
+        },
+        "casting": {
+          "path": "pose-studio/stances/frames/thornMatriarch/casting.webp",
+          "lite": "pose-studio/stances/frames/thornMatriarch/casting.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            119,
+            144,
+            394,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "d24eaf11d02bb135913f07934f0204ba69d9531df6575d38c1232b6fbaeb720c",
+          "liteSha256": "1a928e00ebb546cec5be353c98b6cc210a19fe871b76ec900d8608a67555f6db"
+        }
+      },
+      "sources": [
+        {
+          "stance": "offensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-poses/thornMatriarch_attack.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "ffa430ab4424d4256c3d5763854c661bf673ba68a07adc5b9bc65e344cd95650"
+        },
+        {
+          "stance": "defensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/thornMatriarch_guard.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "55ae711ae289cec4f0efc699b4efc4c13eeb733a842e5d32c9a33e100ee9b93f"
+        },
+        {
+          "stance": "casting",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/thornMatriarch_buff.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "de12ab4f05636126ea31cdfa81c5b5155bfc469683dfc8cef55da500e9c4ea16"
+        }
+      ],
+      "rig": "pose-studio/stances/projects/thornMatriarch/thornMatriarch.rig.json",
+      "poseStudioSupported": false
+    },
+    "gildedKnight": {
+      "kind": "enemy",
+      "name": "Gilded Knight",
+      "status": "reused-painted-draft",
+      "frames": {
+        "offensive": {
+          "path": "pose-studio/stances/frames/gildedKnight/offensive.webp",
+          "lite": "pose-studio/stances/frames/gildedKnight/offensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            48,
+            228,
+            466,
+            465
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "24fe74c18cbf5ade20b1a2750a6b99f4931932ad9bab3216eb483e7258d88cbd",
+          "liteSha256": "25c4c17ab7359a3a31b902b275a90ea7ed2cabf373d86c770b4ee76f9e466c4f"
+        },
+        "defensive": {
+          "path": "pose-studio/stances/frames/gildedKnight/defensive.webp",
+          "lite": "pose-studio/stances/frames/gildedKnight/defensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            134,
+            220,
+            379,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "832d2fce87650f594c3578b36608575dd7d632cddd0d288ff433a8b3101b2a18",
+          "liteSha256": "346e7acb8a625880d290cd84c5a147b4de965a620d2203b6726ad35ddfe7663d"
+        },
+        "casting": {
+          "path": "pose-studio/stances/frames/gildedKnight/casting.webp",
+          "lite": "pose-studio/stances/frames/gildedKnight/casting.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            135,
+            141,
+            378,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "a8ffd4ace69f70b6d1b5eb6511427b51a06e6c6523ee39056c016aba85ffc8aa",
+          "liteSha256": "9a9084466acda0c6b47b02abe2cf66f940d22cf4d4c670b72a905254e882fe03"
+        }
+      },
+      "sources": [
+        {
+          "stance": "offensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-poses/gildedKnight_attack.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "96adc306fb86dbc2bd1b9effa1ffe67c465da489212c59ef335b7829f908381a"
+        },
+        {
+          "stance": "defensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/gildedKnight_guard.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "13977324d81416242f35ef6a8dacb7687c14995a6fa8e46e610b16cdcd7d3ff6"
+        },
+        {
+          "stance": "casting",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/gildedKnight_buff.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "be287080a625d18c4874a9a37b65f3c62b96e74b142d89782be5e23e81d47cef"
+        }
+      ],
+      "rig": "pose-studio/stances/projects/gildedKnight/gildedKnight.rig.json",
+      "poseStudioSupported": false
+    },
+    "courtSurgeon": {
+      "kind": "enemy",
+      "name": "Court Surgeon",
+      "status": "reused-painted-draft",
+      "frames": {
+        "offensive": {
+          "path": "pose-studio/stances/frames/courtSurgeon/offensive.webp",
+          "lite": "pose-studio/stances/frames/courtSurgeon/offensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            47,
+            156,
+            466,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "dfb9c01ad98521785c6b1ce88d81655a8812ac853c6b049b06e1ca5c1d979eee",
+          "liteSha256": "b3179988e1fcd8328038f39cf6bbe4b3cbbadccc2b6db1a75e1d66f66323b400"
+        },
+        "defensive": {
+          "path": "pose-studio/stances/frames/courtSurgeon/defensive.webp",
+          "lite": "pose-studio/stances/frames/courtSurgeon/defensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            129,
+            213,
+            384,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "19061ca5935fe0c65d4b2b12f881b0fc7cb509fc46aea6f27315ef837d9afa4e",
+          "liteSha256": "61a8896690d7c42701e4b45c0aeafb78c7920c0d29972f71ca9d018530ca564d"
+        },
+        "casting": {
+          "path": "pose-studio/stances/frames/courtSurgeon/casting.webp",
+          "lite": "pose-studio/stances/frames/courtSurgeon/casting.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            120,
+            135,
+            393,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "d8093ed9d476f3bcff3dd25b985adad7557a9bcde292dd9659cf16b9a49c0cf5",
+          "liteSha256": "99658ff92ac4bd191ac5afe8d0fa1cd5c84837f8aacf996d30f177b1cb0a0a53"
+        }
+      },
+      "sources": [
+        {
+          "stance": "offensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-poses/courtSurgeon_attack.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "169d81932caf68d4607e3f588f5a4e015f2930831013f6b35167ea7a961e8f80"
+        },
+        {
+          "stance": "defensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/courtSurgeon_guard.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "77cc09b9288de24e40dde3d2b7b83f4b302bdd7b47854c3ac2de4e5c6f9e39d8"
+        },
+        {
+          "stance": "casting",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/courtSurgeon_buff.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "2e612e2e1871925709b86761d6ab624dee113184d6ca17f8fd1642985d5520a8"
+        }
+      ],
+      "rig": "pose-studio/stances/projects/courtSurgeon/courtSurgeon.rig.json",
+      "poseStudioSupported": false
+    },
+    "stitchedHound": {
+      "kind": "enemy",
+      "name": "Stitched Hound",
+      "status": "reused-painted-draft",
+      "frames": {
+        "offensive": {
+          "path": "pose-studio/stances/frames/stitchedHound/offensive.webp",
+          "lite": "pose-studio/stances/frames/stitchedHound/offensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            47,
+            181,
+            466,
+            465
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "92ce597cc7e1fca1ee1c3acaeffe9785791e1fa248570b61fb2840ac984a68a3",
+          "liteSha256": "898b48367d332995ddc353dc9fbb5104365bb003afd3d034a6bec7d7bb8522fe"
+        },
+        "defensive": {
+          "path": "pose-studio/stances/frames/stitchedHound/defensive.webp",
+          "lite": "pose-studio/stances/frames/stitchedHound/defensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            114,
+            239,
+            399,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "574e222b136ea16fa01dfbcff42fbd568fcdb0950c4f351c76f16528dee6aa14",
+          "liteSha256": "ae742a90d52d0288eb36adab33e09e66c45f09c65d3d092f1b9d6a91028eff80"
+        },
+        "casting": {
+          "path": "pose-studio/stances/frames/stitchedHound/casting.webp",
+          "lite": "pose-studio/stances/frames/stitchedHound/casting.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            98,
+            193,
+            415,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "5652d0f50babd9c0b7fa056cd2ea5a98a9708869b780ec982bebbdb6d3611cfa",
+          "liteSha256": "fbea1e8fb0984d8837e5f140939ede411ade4d2d8a37c1b3e803f34d1bfc612a"
+        }
+      },
+      "sources": [
+        {
+          "stance": "offensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-poses/stitchedHound_attack.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "4fe2af72e845d24853affac913c471f9b0cd93f69b57090cbf86111ae08a31c9"
+        },
+        {
+          "stance": "defensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/stitchedHound_guard.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "3251365845e98f093ba0f5860852e39524f0d511341f84667cd53165fc8e6aae"
+        },
+        {
+          "stance": "casting",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/stitchedHound_buff.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "3f8bf4883fa3c18667b6b874328c25a960475b6fba616632de4d8dc0dfa44ff2"
+        }
+      ],
+      "rig": "pose-studio/stances/projects/stitchedHound/stitchedHound.rig.json",
+      "poseStudioSupported": false
+    },
+    "courtMarionette": {
+      "kind": "enemy",
+      "name": "Court Marionette",
+      "status": "reused-painted-draft",
+      "frames": {
+        "offensive": {
+          "path": "pose-studio/stances/frames/courtMarionette/offensive.webp",
+          "lite": "pose-studio/stances/frames/courtMarionette/offensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            48,
+            112,
+            466,
+            465
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "e2088ea66393a2331b06936f47d301214160ff9a305415d0b81964685e55f650",
+          "liteSha256": "3f53d191b5df846fc460e157fd2d56d4f8e15377889afffce699d40717761727"
+        },
+        "defensive": {
+          "path": "pose-studio/stances/frames/courtMarionette/defensive.webp",
+          "lite": "pose-studio/stances/frames/courtMarionette/defensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            156,
+            130,
+            357,
+            465
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "d7aa34ae5eac81752e16679c3475a180d120b60ae0911514a49607c774cba03e",
+          "liteSha256": "f20f415be44b5c92239f1a8deb26cf85f630b29c8a1c6df92cc0fe1cdbb8f3ec"
+        },
+        "casting": {
+          "path": "pose-studio/stances/frames/courtMarionette/casting.webp",
+          "lite": "pose-studio/stances/frames/courtMarionette/casting.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            165,
+            82,
+            349,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "7e508ae6680e2575f010bee3cb95fbb2cba5ce04577af5196cee5af59616ff03",
+          "liteSha256": "bce55c35d234a9b62e08c69027ca5e65f75c99c0428f83c855c9668b537305a4"
+        }
+      },
+      "sources": [
+        {
+          "stance": "offensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-poses/courtMarionette_attack.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "9a4d66e233f7e3ac54506fd3a2e4d5bd1bf145cfefa8a72e9b28e55549f94bfe"
+        },
+        {
+          "stance": "defensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/courtMarionette_guard.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "dd4414c7bc618fb28ee58abd5848e41b0c050653104990972f0e8e2891d60482"
+        },
+        {
+          "stance": "casting",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/courtMarionette_buff.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "ceaf8b40eb659a58506dc1daba58a8cf2f3e626d03e272b280d04fa41db3d79a"
+        }
+      ],
+      "rig": "pose-studio/stances/projects/courtMarionette/courtMarionette.rig.json",
+      "poseStudioSupported": false
+    },
+    "livingArmor": {
+      "kind": "enemy",
+      "name": "Living Armor",
+      "status": "reused-painted-draft",
+      "frames": {
+        "offensive": {
+          "path": "pose-studio/stances/frames/livingArmor/offensive.webp",
+          "lite": "pose-studio/stances/frames/livingArmor/offensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            47,
+            92,
+            466,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "7ba850fdded8c8f20842e7bb55c238b5757f25e2cc2cc85128d6e867f8e1cb89",
+          "liteSha256": "fa401d9015fc91aafbe5b4b15e87b2c5aed6ee09a943b6cc90de2e8a5fc27dfc"
+        },
+        "defensive": {
+          "path": "pose-studio/stances/frames/livingArmor/defensive.webp",
+          "lite": "pose-studio/stances/frames/livingArmor/defensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            138,
+            161,
+            376,
+            465
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "9d365db5df18b54056b4373688ecbbfc3663f02c183d6600055f47fb2537c906",
+          "liteSha256": "79c4773de4820b79a872bff4f23473d4f5268a6554a6024eafcd2b290f797085"
+        },
+        "casting": {
+          "path": "pose-studio/stances/frames/livingArmor/casting.webp",
+          "lite": "pose-studio/stances/frames/livingArmor/casting.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            135,
+            103,
+            378,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "b9e19ccb146f8c8766f52c4c98432b44b3898157d54c3e2d3237fdfa672e0beb",
+          "liteSha256": "b6a744bde95690349cf35aa54cfcd9f16676092959cbe45dcd38ace7caabcb3f"
+        }
+      },
+      "sources": [
+        {
+          "stance": "offensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-poses/livingArmor_attack.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "5b1028079d2e3c7dbce822043c71192dedaf72d62f67dcad6d015b557f3ebc82"
+        },
+        {
+          "stance": "defensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/livingArmor_guard.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "1b67224a8b9623ccb76bb1cc4c087ae4696b799674905a146d43092d19d7db46"
+        },
+        {
+          "stance": "casting",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/livingArmor_buff.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "c1c3fd3589978f669dabd95e8e8e06e5ce1c2173b737677ca054c2af0a99fb15"
+        }
+      ],
+      "rig": "pose-studio/stances/projects/livingArmor/livingArmor.rig.json",
+      "poseStudioSupported": false
+    },
+    "courtDuelist": {
+      "kind": "enemy",
+      "name": "Duelist of the Court",
+      "status": "reused-painted-draft",
+      "frames": {
+        "offensive": {
+          "path": "pose-studio/stances/frames/courtDuelist/offensive.webp",
+          "lite": "pose-studio/stances/frames/courtDuelist/offensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            48,
+            195,
+            466,
+            465
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "09872dc53e5525896c501f78179ce07682b5c4d72497d9938412533ce130c302",
+          "liteSha256": "fcfd9b9f92a30485c62953dc22e7a9f88375cf878866a10a243b528684ec5c74"
+        },
+        "defensive": {
+          "path": "pose-studio/stances/frames/courtDuelist/defensive.webp",
+          "lite": "pose-studio/stances/frames/courtDuelist/defensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            131,
+            192,
+            383,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "98465c295dd4397850c24f4c9ad7be7c70c99fd4398647a0bab6cef247d9b226",
+          "liteSha256": "51dba9633ace1c019c1b8d270041bb77187be0bf42246575a6c09ecde9016c72"
+        },
+        "casting": {
+          "path": "pose-studio/stances/frames/courtDuelist/casting.webp",
+          "lite": "pose-studio/stances/frames/courtDuelist/casting.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            116,
+            172,
+            397,
+            465
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "dc3c993354baf2f36a6bf924c87f35bf0936941c9fe9292b94876813153cd5b1",
+          "liteSha256": "45931e0494198e8ded21dd304b859216ca17e82c9775c8ea5f1b15d328caa250"
+        }
+      },
+      "sources": [
+        {
+          "stance": "offensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-poses/courtDuelist_attack.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "388f7318dfecfd99cb6a9ce8f122be5549c9abb2c1a38d9c4bae19ecd48ff4b2"
+        },
+        {
+          "stance": "defensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/courtDuelist_guard.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "00d42cc91ab0fc12ef5055835290f1716f5f7f7411a91262a9162bf7a531cfe7"
+        },
+        {
+          "stance": "casting",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/courtDuelist_buff.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "87b2d085791716552bc6639864d8baa229a76cb49a0f869db3c314f8e6d74ef3"
+        }
+      ],
+      "rig": "pose-studio/stances/projects/courtDuelist/courtDuelist.rig.json",
+      "poseStudioSupported": false
+    },
+    "stitchedKing": {
+      "kind": "enemy",
+      "name": "The Stitched King",
+      "status": "reused-painted-draft",
+      "frames": {
+        "offensive": {
+          "path": "pose-studio/stances/frames/stitchedKing/offensive.webp",
+          "lite": "pose-studio/stances/frames/stitchedKing/offensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            47,
+            165,
+            466,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "0216f80f3de82edd23443059694855b371034d2402f05719d4973df411dad18d",
+          "liteSha256": "9af790bad7cf2465261c2bc13029b0568eef08456079888aa79e9385d99a7298"
+        },
+        "defensive": {
+          "path": "pose-studio/stances/frames/stitchedKing/defensive.webp",
+          "lite": "pose-studio/stances/frames/stitchedKing/defensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            138,
+            200,
+            374,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "a0d1f294b843a2989c3aa34d6b87df606b9434b47376812b53f19e58d8dbf8e6",
+          "liteSha256": "e6e6fb4a20e015aac5affbb7ac4e682dafef6603780af3e5c151705a28cdf48e"
+        },
+        "casting": {
+          "path": "pose-studio/stances/frames/stitchedKing/casting.webp",
+          "lite": "pose-studio/stances/frames/stitchedKing/casting.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            93,
+            148,
+            421,
+            465
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "6564aed2cd57d0074d8a7a8ec16cba6ff904621fed20e6a31881bb4008041f8d",
+          "liteSha256": "302951eb252ebf230a4eb96f73a3ddf0c56e7725186d2598d5b22e7218fc59b9"
+        }
+      },
+      "sources": [
+        {
+          "stance": "offensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-poses/stitchedKing_attack.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "4e007db7d0f489885011ea71a9b333ab63f7f276576fe4e7e6895a25a99ebd95"
+        },
+        {
+          "stance": "defensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/stitchedKing_guard.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "6c0a355dd2b21446d9109a2cfc8f2554ae3595721ccdcf5489442993ecc89f85"
+        },
+        {
+          "stance": "casting",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/stitchedKing_buff.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "d8ba379a4fd3a83483b642f11ca7d3f0ffa97a09a205a82f4f678d7362b90db0"
+        }
+      ],
+      "rig": "pose-studio/stances/projects/stitchedKing/stitchedKing.rig.json",
+      "poseStudioSupported": false
+    },
+    "mirrorScribe": {
+      "kind": "enemy",
+      "name": "Mirror Scribe",
+      "status": "reused-painted-draft",
+      "frames": {
+        "offensive": {
+          "path": "pose-studio/stances/frames/mirrorScribe/offensive.webp",
+          "lite": "pose-studio/stances/frames/mirrorScribe/offensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            48,
+            145,
+            466,
+            465
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "000f787f2d2d3eb8ebf645ca7d7dda9daac2eb680ff7e9c7d809e9509637a0d1",
+          "liteSha256": "e79c65019d45cba6f6f781aebf5fc9734699511a8faa015631cdf5dd95364f81"
+        },
+        "defensive": {
+          "path": "pose-studio/stances/frames/mirrorScribe/defensive.webp",
+          "lite": "pose-studio/stances/frames/mirrorScribe/defensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            119,
+            190,
+            395,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "1607db34010d84c94e7e7fb9117bd076d4357fb831da005e6865d5b5f0bee062",
+          "liteSha256": "48d55b02da64bbac58ab3b898f17a28eac3578730df7f5267a2f301d153578f1"
+        },
+        "casting": {
+          "path": "pose-studio/stances/frames/mirrorScribe/casting.webp",
+          "lite": "pose-studio/stances/frames/mirrorScribe/casting.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            103,
+            130,
+            411,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "177f6503e03ad058d310d894b3cfbe83d465507858264349c3863e5906939684",
+          "liteSha256": "12c7ee3dbd9b0bbdd329a2784da4ed5fe0325a56da6b46a7324bb557a6cf6000"
+        }
+      },
+      "sources": [
+        {
+          "stance": "offensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-poses/mirrorScribe_attack.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "526982d75e83850ff35cd590043ac3cb4fca6d17bf212929d36f8ef7c479b7e3"
+        },
+        {
+          "stance": "defensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/mirrorScribe_guard.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "f3e8a4fbb7309178ae0611832369e039c6a871e66102f70aed9c5596e9b5b7ff"
+        },
+        {
+          "stance": "casting",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/mirrorScribe_buff.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "9e7d314b278284d61f319cddc84a3e8e8135be0d4f7ed4c34b0c2e77b128b1c0"
+        }
+      ],
+      "rig": "pose-studio/stances/projects/mirrorScribe/mirrorScribe.rig.json",
+      "poseStudioSupported": false
+    },
+    "stitchCrab": {
+      "kind": "enemy",
+      "name": "Stitch Crab",
+      "status": "reused-painted-draft",
+      "frames": {
+        "offensive": {
+          "path": "pose-studio/stances/frames/stitchCrab/offensive.webp",
+          "lite": "pose-studio/stances/frames/stitchCrab/offensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            47,
+            73,
+            466,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "6913748308880fed64df1f642cb017e1e1544ea78e89e9c400fe34980efdd809",
+          "liteSha256": "b0bb4816533f4377561c86e913d834fe07995f4d2a2aca538499fb93881862e0"
+        },
+        "defensive": {
+          "path": "pose-studio/stances/frames/stitchCrab/defensive.webp",
+          "lite": "pose-studio/stances/frames/stitchCrab/defensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            108,
+            161,
+            405,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "6ba6791e14e3f48decf33fcaf63a6f89b92e581486bebbcb33354b80cfc35695",
+          "liteSha256": "4140ecf60de9d25a968755640c02b114fba4fa510ddfa2bbc5e084453027eee2"
+        },
+        "casting": {
+          "path": "pose-studio/stances/frames/stitchCrab/casting.webp",
+          "lite": "pose-studio/stances/frames/stitchCrab/casting.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            62,
+            85,
+            451,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "bde589b5675a581c354ded77c98226a1c00e18036d813b529a8c485602956d67",
+          "liteSha256": "73dc9bcc88884f644dbf0a6e22daf01454caa355b16bcc12b47cf17e880bf97d"
+        }
+      },
+      "sources": [
+        {
+          "stance": "offensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-poses/stitchCrab_attack.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "274a1a75221dc12479bd9f75af8bcd35b770790f84a7b09bde859c293f4c0b03"
+        },
+        {
+          "stance": "defensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/stitchCrab_guard.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "fc7d6d5fc99973ed69a70f2afdb0253e37150594e8d91d0fb3ff3616e1b574c0"
+        },
+        {
+          "stance": "casting",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/stitchCrab_buff.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "1c807afacd12fc39c7ab8ba65c9ba317e5c8f70b2eaba2880ac547c55285b5a1"
+        }
+      ],
+      "rig": "pose-studio/stances/projects/stitchCrab/stitchCrab.rig.json",
+      "poseStudioSupported": false
+    },
+    "glassRegent": {
+      "kind": "enemy",
+      "name": "The Glass Regent",
+      "status": "reused-painted-draft",
+      "frames": {
+        "offensive": {
+          "path": "pose-studio/stances/frames/glassRegent/offensive.webp",
+          "lite": "pose-studio/stances/frames/glassRegent/offensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            48,
+            259,
+            466,
+            465
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "91bb9ea768e9e885e79645dcfb1f16068a06cfe435b0a47d5c216a5a27c8d2e1",
+          "liteSha256": "34b38bca6ae39b68764b0c323663ddf4c76df48d1337f4896be5f99e30c91882"
+        },
+        "defensive": {
+          "path": "pose-studio/stances/frames/glassRegent/defensive.webp",
+          "lite": "pose-studio/stances/frames/glassRegent/defensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            126,
+            239,
+            387,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "c434b8f2c33412c9f185ed5c6b7d7c809ea12561c4dc9531866a28099ffe9888",
+          "liteSha256": "eda61c26759334684a4903e3d3a9be2e19c5ac9377839762cdbfe4f8b7a92a83"
+        },
+        "casting": {
+          "path": "pose-studio/stances/frames/glassRegent/casting.webp",
+          "lite": "pose-studio/stances/frames/glassRegent/casting.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            122,
+            187,
+            393,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "ca67409f5baca0565acf96bebce59fc49da7b46e4afef5a8535c649f0dbc72c2",
+          "liteSha256": "885447443801ef0769b5581964ed0bb2c16e9188ad5356430c9c9faf3fe6532f"
+        }
+      },
+      "sources": [
+        {
+          "stance": "offensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-poses/glassRegent_attack.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "40e560a4d02b743de7eca799b21664668dc925d39ae63effd0fe6d775960ea42"
+        },
+        {
+          "stance": "defensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/glassRegent_guard.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "3a7e6df138fb01856df07027aef0478e784476cdfec8eeb8449da71ef5b010c2"
+        },
+        {
+          "stance": "casting",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/glassRegent_buff.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "5b2ffe8ed7071d97d4b63bde92a6ea6da8f149e73ede680a7f77e4972098ceaa"
+        }
+      ],
+      "rig": "pose-studio/stances/projects/glassRegent/glassRegent.rig.json",
+      "poseStudioSupported": false
+    },
+    "marrowOrganist": {
+      "kind": "enemy",
+      "name": "The Marrow Organist",
+      "status": "reused-painted-draft",
+      "frames": {
+        "offensive": {
+          "path": "pose-studio/stances/frames/marrowOrganist/offensive.webp",
+          "lite": "pose-studio/stances/frames/marrowOrganist/offensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            47,
+            61,
+            466,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "86ced93e4a4b284c029b99bcb9f29095c866c2111f2d3bc6943e42ae41eabde1",
+          "liteSha256": "721b5c409e32f820a1b35c9e93b30897ddfdd2a1c4f6837a9c3ef5c721cd0a47"
+        },
+        "defensive": {
+          "path": "pose-studio/stances/frames/marrowOrganist/defensive.webp",
+          "lite": "pose-studio/stances/frames/marrowOrganist/defensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            128,
+            155,
+            385,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "a445ba64d631ac3129e097b1c3cee8ca55c411d98855a9d6e3a758c9f04f67c1",
+          "liteSha256": "1f7bac7aa05222f68631b236f84b7290465d76b8865b50d45b962b81403f4c46"
+        },
+        "casting": {
+          "path": "pose-studio/stances/frames/marrowOrganist/casting.webp",
+          "lite": "pose-studio/stances/frames/marrowOrganist/casting.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            124,
+            114,
+            390,
+            465
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "de699fdabff965abe78afc36afc7e94bfb1407fa70ea7adabef6d030f0faf0f3",
+          "liteSha256": "42e305e31365a5e001d69a4638a6b12dec7cdf920ed21b4be61474d09547d125"
+        }
+      },
+      "sources": [
+        {
+          "stance": "offensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-poses/marrowOrganist_attack.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "c590f2c9c001b78a6abfea9c523f2054de53f755c9a09a1fafe84fd8f2fa29e4"
+        },
+        {
+          "stance": "defensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/marrowOrganist_guard.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "81661444f0fb4de55d1d6a2c60e4e5a31f3d575972a141cfc384be0594bd904f"
+        },
+        {
+          "stance": "casting",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/marrowOrganist_buff.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "71d7b0bbeb72de628eca7b8ef0c0f1ab269089608d464cb924352dacb7863417"
+        }
+      ],
+      "rig": "pose-studio/stances/projects/marrowOrganist/marrowOrganist.rig.json",
+      "poseStudioSupported": false
+    },
+    "ashRevenant": {
+      "kind": "enemy",
+      "name": "Ash Revenant",
+      "status": "reused-painted-draft",
+      "frames": {
+        "offensive": {
+          "path": "pose-studio/stances/frames/ashRevenant/offensive.webp",
+          "lite": "pose-studio/stances/frames/ashRevenant/offensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            48,
+            147,
+            465,
+            465
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "d185cf69247a3f9307702270b99d3a6486367f174ff0fd31facc89855d002ae4",
+          "liteSha256": "723c99baf3b8f1fce1f3576f786feb3cd3044f9ba09efc35a195d9173f022e72"
+        },
+        "defensive": {
+          "path": "pose-studio/stances/frames/ashRevenant/defensive.webp",
+          "lite": "pose-studio/stances/frames/ashRevenant/defensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            134,
+            165,
+            381,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "279d8e173d19a80eee7afce4f0a429c32024cb6a1b3ee60e6d76246b714c9e5e",
+          "liteSha256": "3040c320aefa0d7aadd790c447c14b339faf26d3b1f04a42e61df2e5814c6a56"
+        },
+        "casting": {
+          "path": "pose-studio/stances/frames/ashRevenant/casting.webp",
+          "lite": "pose-studio/stances/frames/ashRevenant/casting.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            119,
+            91,
+            395,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "8466224a673be4178444ca3531eae1877be1fd1278b3351ad7720efa73c2e51f",
+          "liteSha256": "a2f357f03724be7ded74276d82bb7b3a8165eef2ef2faa26c848e266af0e3a71"
+        }
+      },
+      "sources": [
+        {
+          "stance": "offensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-poses/ashRevenant_attack.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "2a7b6c3c4fcfb0f653c2ad03bcc3af3cc4045bfe17176e81eac2631f7c67e624"
+        },
+        {
+          "stance": "defensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/ashRevenant_guard.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "36cc664ee7c70d80dd6396d36cdc6eeb297d0f803899e75f3e437bf767fcc92e"
+        },
+        {
+          "stance": "casting",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/ashRevenant_buff.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "06cc7dfe59111703d980c54bccb0a0acfc8c35bbcd7bdf92a8308a37ffb45b27"
+        }
+      ],
+      "rig": "pose-studio/stances/projects/ashRevenant/ashRevenant.rig.json",
+      "poseStudioSupported": false
+    },
+    "emberStarvedPilgrim": {
+      "kind": "enemy",
+      "name": "Ember-Starved Pilgrim",
+      "status": "reused-painted-draft",
+      "frames": {
+        "offensive": {
+          "path": "pose-studio/stances/frames/emberStarvedPilgrim/offensive.webp",
+          "lite": "pose-studio/stances/frames/emberStarvedPilgrim/offensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            47,
+            203,
+            466,
+            465
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "82a85cf74db666fb631ae82a420078bf7523f5f66f58d11ac28209eae9e8981a",
+          "liteSha256": "cbd158ccb723a1696ca7a86b45072c161959903d5f5b35c14b2dc07ea5f50756"
+        },
+        "defensive": {
+          "path": "pose-studio/stances/frames/emberStarvedPilgrim/defensive.webp",
+          "lite": "pose-studio/stances/frames/emberStarvedPilgrim/defensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            131,
+            157,
+            383,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "07432c8cdf579d29344ba461bbd1a81ed38e13351d0e1642368b2ea676670bc6",
+          "liteSha256": "962537d94445c595c394ba93deb27eafc067667956b2c41d329b458ba30544b1"
+        },
+        "casting": {
+          "path": "pose-studio/stances/frames/emberStarvedPilgrim/casting.webp",
+          "lite": "pose-studio/stances/frames/emberStarvedPilgrim/casting.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            135,
+            84,
+            379,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "36afae31933581e079b9cf031ad5d4e302f9dc31d62bf4076bba5152f8bb918e",
+          "liteSha256": "ecf042b5187cd2484114b1363672976866b940b80e1d52223345ce4ebf3be5ef"
+        }
+      },
+      "sources": [
+        {
+          "stance": "offensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-poses/emberStarvedPilgrim_attack.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "4c070b0af92854f729b850983cab036c4c7a5f673e360676367096693eeb0f4d"
+        },
+        {
+          "stance": "defensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/emberStarvedPilgrim_guard.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "e830573f2fa9ff5ef0600a539876319d6cc1b891143520d4c7fef2520acedd50"
+        },
+        {
+          "stance": "casting",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/emberStarvedPilgrim_buff.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "bd9cc9ed0aa30be62f4a3cf1f8421ad54928728f9fb59b4534b242b2a1b411e3"
+        }
+      ],
+      "rig": "pose-studio/stances/projects/emberStarvedPilgrim/emberStarvedPilgrim.rig.json",
+      "poseStudioSupported": false
+    },
+    "valkyrieShade": {
+      "kind": "enemy",
+      "name": "Valkyrie Shade",
+      "status": "reused-painted-draft",
+      "frames": {
+        "offensive": {
+          "path": "pose-studio/stances/frames/valkyrieShade/offensive.webp",
+          "lite": "pose-studio/stances/frames/valkyrieShade/offensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            48,
+            83,
+            465,
+            465
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "a3e46cafca923f1253e676ea7a58537dd9639f6bc9bda3d97552381642ebb181",
+          "liteSha256": "5901260014c7363a7804b8045295d8586b791099d7a7db891fb0997a93942393"
+        },
+        "defensive": {
+          "path": "pose-studio/stances/frames/valkyrieShade/defensive.webp",
+          "lite": "pose-studio/stances/frames/valkyrieShade/defensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            154,
+            172,
+            359,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "0c1633d627a040f3975168da440fd05b95b6573543f618df41505313732782aa",
+          "liteSha256": "0ea63e82b7a69a012ba814078b09d56a2ef1c3ced3cd3ece35d3b31882b0e0db"
+        },
+        "casting": {
+          "path": "pose-studio/stances/frames/valkyrieShade/casting.webp",
+          "lite": "pose-studio/stances/frames/valkyrieShade/casting.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            110,
+            147,
+            403,
+            465
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "3c9e1e2ab94befc466ce19c16e2d9323e5196ec1c5cbb923a1c874e8b735a072",
+          "liteSha256": "1ccfab708e14e0c1c539b6f112f31c8d09cbd49e1c3316c928be393f402fd4fe"
+        }
+      },
+      "sources": [
+        {
+          "stance": "offensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-poses/valkyrieShade_attack.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "f5cdab4ca00281140ee6edb9e1611a4a25beff8f6f2fdb3b0ba7a24e99b6c06d"
+        },
+        {
+          "stance": "defensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/valkyrieShade_guard.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "4ca112ab6f04e07fcd9dce5458961060af2678f9d45b36f2fa562078ac3f455a"
+        },
+        {
+          "stance": "casting",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/valkyrieShade_buff.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "4ef40fc9ade13508e35cadd8595eac283ef4bf650e62a74f9c8111a8f1fdca65"
+        }
+      ],
+      "rig": "pose-studio/stances/projects/valkyrieShade/valkyrieShade.rig.json",
+      "poseStudioSupported": false
+    },
+    "charredColossus": {
+      "kind": "enemy",
+      "name": "Charred Colossus",
+      "status": "reused-painted-draft",
+      "frames": {
+        "offensive": {
+          "path": "pose-studio/stances/frames/charredColossus/offensive.webp",
+          "lite": "pose-studio/stances/frames/charredColossus/offensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            47,
+            178,
+            466,
+            465
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "ebd5ffadfe1f8371f9f8471da6da1f063df4cfffeaa874de01baeb2376e43981",
+          "liteSha256": "b66f64003bba7ad4398ce740fa73bbf576b1d0c9855d432ca5aa5bdee130c0a7"
+        },
+        "defensive": {
+          "path": "pose-studio/stances/frames/charredColossus/defensive.webp",
+          "lite": "pose-studio/stances/frames/charredColossus/defensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            132,
+            181,
+            381,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "d241c44dd0d640bdd40f7e294c5b3dfd90ebb8ebacd76d02cd11645cff54795b",
+          "liteSha256": "32bd062a41e0702a0bc3eac7134bad2a84b4155bb8c44683e5d287242d74cef1"
+        },
+        "casting": {
+          "path": "pose-studio/stances/frames/charredColossus/casting.webp",
+          "lite": "pose-studio/stances/frames/charredColossus/casting.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            107,
+            142,
+            407,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "878f550877cfa246d25d612ac9fc9c525d30ab72c81a1a20c95e75b84e6ceb7d",
+          "liteSha256": "b580113d0fb3c6bbfc8a8811c64acdc4020d7e3337aa2adf6b9469a2fef16132"
+        }
+      },
+      "sources": [
+        {
+          "stance": "offensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-poses/charredColossus_attack.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "2edcd46ff21108455bfb22e6321612576931ea38f7d0593e3a0b1b7fabc46eb8"
+        },
+        {
+          "stance": "defensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/charredColossus_guard.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "1b5c4841cbeaea93ee1c6b5066be7d34827d8cdcfa3955af978efae171cc761e"
+        },
+        {
+          "stance": "casting",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/charredColossus_buff.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "c1f37ec0f6793eb736ba906f136b017725d4d508b34955a8f1b6e6ce79e44dda"
+        }
+      ],
+      "rig": "pose-studio/stances/projects/charredColossus/charredColossus.rig.json",
+      "poseStudioSupported": false
+    },
+    "wyrmLord": {
+      "kind": "enemy",
+      "name": "Wyrm Lord",
+      "status": "reused-painted-draft",
+      "frames": {
+        "offensive": {
+          "path": "pose-studio/stances/frames/wyrmLord/offensive.webp",
+          "lite": "pose-studio/stances/frames/wyrmLord/offensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            53,
+            52,
+            460,
+            465
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "7d4081da69a2bd428e4ae0668f4274ead933e442c0513999e1a095ebb15cb682",
+          "liteSha256": "e439f8ae226c69c0c43fdf0e7c86566d0e262d2cc75d7a35b7edc31a67517079"
+        },
+        "defensive": {
+          "path": "pose-studio/stances/frames/wyrmLord/defensive.webp",
+          "lite": "pose-studio/stances/frames/wyrmLord/defensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            122,
+            141,
+            391,
+            465
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "d630938bc0e02fb8e8ef66d59c39a49be9d772232cd519bc50ee3a2a3d8ba556",
+          "liteSha256": "e40002e3b22e097ba7e1ca9f09514cf935900208b4c92966e9591cafba055df4"
+        },
+        "casting": {
+          "path": "pose-studio/stances/frames/wyrmLord/casting.webp",
+          "lite": "pose-studio/stances/frames/wyrmLord/casting.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            78,
+            108,
+            435,
+            465
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "7dcbc16dd36e66568aee853225cb53cb4b4d38870619dcce7228a46f66112078",
+          "liteSha256": "55d2265a884e2080f01b6dce295fe1f576e89f233a11198c69147ee2e79775fc"
+        }
+      },
+      "sources": [
+        {
+          "stance": "offensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-poses/wyrmLord_attack.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "5c3f40d13829cfabc796bc9b4608f71b6be41255b394b0b94121336c1205430a"
+        },
+        {
+          "stance": "defensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/wyrmLord_guard.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "b252f425ae15814aecc3ea0802e929c8e9c7e72ac95c224311f415ea580e6e4d"
+        },
+        {
+          "stance": "casting",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/wyrmLord_buff.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "50063b2c040b4ff373ab048919cc0a53a6d9071b0e6c8b3679dbd60ad20643c2"
+        }
+      ],
+      "rig": "pose-studio/stances/projects/wyrmLord/wyrmLord.rig.json",
+      "poseStudioSupported": false
+    },
+    "blightedValkyrie": {
+      "kind": "enemy",
+      "name": "The Blighted Valkyrie",
+      "status": "reused-painted-draft",
+      "frames": {
+        "offensive": {
+          "path": "pose-studio/stances/frames/blightedValkyrie/offensive.webp",
+          "lite": "pose-studio/stances/frames/blightedValkyrie/offensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            48,
+            161,
+            466,
+            465
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "7b76bea2e83388c8a36206308f3bab0deb2f5ca7160874d90b9e7523bc4202be",
+          "liteSha256": "85dd554932d715c07b84cc0662141d9fe6ead7a5ba99ae58ffbe6873ff4b892e"
+        },
+        "defensive": {
+          "path": "pose-studio/stances/frames/blightedValkyrie/defensive.webp",
+          "lite": "pose-studio/stances/frames/blightedValkyrie/defensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            140,
+            208,
+            374,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "571731cf7bcaee68a03758fbf56606f77fea91ac8a075e82fed4678b2885820b",
+          "liteSha256": "438c858f4d26ed4dcc32f46b2b9325ec3f3f8ea9367c598ed3cc707f48c81cf7"
+        },
+        "casting": {
+          "path": "pose-studio/stances/frames/blightedValkyrie/casting.webp",
+          "lite": "pose-studio/stances/frames/blightedValkyrie/casting.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            100,
+            139,
+            414,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "7211ee855ef208dbcd0b9e1a343963e918a000b69ce6e02b5f6f10b46072aba4",
+          "liteSha256": "6dc2631b69a7b0b114a22dbac0fddc8c1525d93abb7abd55d14b742a6b943c88"
+        }
+      },
+      "sources": [
+        {
+          "stance": "offensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-poses/blightedValkyrie_attack.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "0dd699e5962b18a4642c3a7b9fee98f8dcec4dad68f5f4652e6fbcbad75e5a81"
+        },
+        {
+          "stance": "defensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/blightedValkyrie_guard.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "4648a549f6b837b2fafa0f4871b267bdbdb1b085700bf191f9580f29c60e2582"
+        },
+        {
+          "stance": "casting",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/blightedValkyrie_buff.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "1b52c7f85edb493003ba0b2a3f1025f81af1ab94c94cdf90f1af818c871a5502"
+        }
+      ],
+      "rig": "pose-studio/stances/projects/blightedValkyrie/blightedValkyrie.rig.json",
+      "poseStudioSupported": false
+    },
+    "cinderMantis": {
+      "kind": "enemy",
+      "name": "Cinder Mantis",
+      "status": "reused-painted-draft",
+      "frames": {
+        "offensive": {
+          "path": "pose-studio/stances/frames/cinderMantis/offensive.webp",
+          "lite": "pose-studio/stances/frames/cinderMantis/offensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            47,
+            129,
+            466,
+            465
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "83c04b11559de9137d840ee5c908e3c2db39e1ad07bec2d929bb71c5d21f8eae",
+          "liteSha256": "3b523f23bed442ded64c40a18fcef528be601c9da7681871eabd17a7e68e4b38"
+        },
+        "defensive": {
+          "path": "pose-studio/stances/frames/cinderMantis/defensive.webp",
+          "lite": "pose-studio/stances/frames/cinderMantis/defensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            136,
+            171,
+            377,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "dfa30bbf011370d184c90a31864990aebec71630b5262bdeff0554b97ad4467e",
+          "liteSha256": "1a2b31c44e8b0397bab9619b406f60936411de6d2b4b0ff36de523a3447441b3"
+        },
+        "casting": {
+          "path": "pose-studio/stances/frames/cinderMantis/casting.webp",
+          "lite": "pose-studio/stances/frames/cinderMantis/casting.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            84,
+            133,
+            430,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "d72530178aedcfe7336377313620db9d335e3c1e8c2d00842e7d17987ec9541c",
+          "liteSha256": "4d83a44a61d8682bccc0a0bd8d87f7986b779216f98c0c8614820e0f656d6071"
+        }
+      },
+      "sources": [
+        {
+          "stance": "offensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-poses/cinderMantis_attack.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "9284f04d7d26df8093c3859438a4698a9efbcebe375dc2e83298eb33c5efe157"
+        },
+        {
+          "stance": "defensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/cinderMantis_guard.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "f9423449b333e74f7d8dc67bd4ac1b12ba91a31046b60dcb02ac3973b56c5115"
+        },
+        {
+          "stance": "casting",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/cinderMantis_buff.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "6d9dd1fa85bb05501bc8b76ba4a58e5ee7081925cf6d2d06859dd5a177f8b3fb"
+        }
+      ],
+      "rig": "pose-studio/stances/projects/cinderMantis/cinderMantis.rig.json",
+      "poseStudioSupported": false
+    },
+    "eclipseCantor": {
+      "kind": "enemy",
+      "name": "Eclipse Cantor",
+      "status": "reused-painted-draft",
+      "frames": {
+        "offensive": {
+          "path": "pose-studio/stances/frames/eclipseCantor/offensive.webp",
+          "lite": "pose-studio/stances/frames/eclipseCantor/offensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            47,
+            101,
+            466,
+            465
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "128ba489d6e85fa038821725c9b2a66c7e65fa5b86ac0cb69e6af9fa05aafc81",
+          "liteSha256": "0b63729332d6b98e87d489adcacefe28ca419c5a1c7aff32f90e3114906d33d0"
+        },
+        "defensive": {
+          "path": "pose-studio/stances/frames/eclipseCantor/defensive.webp",
+          "lite": "pose-studio/stances/frames/eclipseCantor/defensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            124,
+            198,
+            389,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "a0d622173bfcb39ea925eab30a8c7dd4e8b1b4f3e519dafc653530379e30d7d3",
+          "liteSha256": "e557d29f0abc4763b086eab3588b1132d0e20c49326239d988c193fd21d760ce"
+        },
+        "casting": {
+          "path": "pose-studio/stances/frames/eclipseCantor/casting.webp",
+          "lite": "pose-studio/stances/frames/eclipseCantor/casting.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            107,
+            133,
+            407,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "d0b0645ba4ea06e347a36c13918b025de287acf1e196fc7b6bbe3cc45f117bed",
+          "liteSha256": "11d76d9c1d07e5adc564e89d585037e6832db2fce005d8e8fe4765d660a20a3f"
+        }
+      },
+      "sources": [
+        {
+          "stance": "offensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-poses/eclipseCantor_attack.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "e1247b31d5c9d0c2e9de97d6cd665b2f6f966394d7f372ab09da49eb54547e33"
+        },
+        {
+          "stance": "defensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/eclipseCantor_guard.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "8b37c362e4a1cd8c8c859e01984587ee0c7df18f36ed2d5ee9f4a1ebe00577ae"
+        },
+        {
+          "stance": "casting",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/eclipseCantor_buff.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "630df11618fac8b142c7ad878ae77ad97f53487a0e6192213f10506842b6a599"
+        }
+      ],
+      "rig": "pose-studio/stances/projects/eclipseCantor/eclipseCantor.rig.json",
+      "poseStudioSupported": false
+    },
+    "furnaceSaint": {
+      "kind": "enemy",
+      "name": "The Furnace Saint",
+      "status": "reused-painted-draft",
+      "frames": {
+        "offensive": {
+          "path": "pose-studio/stances/frames/furnaceSaint/offensive.webp",
+          "lite": "pose-studio/stances/frames/furnaceSaint/offensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            47,
+            96,
+            466,
+            465
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "424affc531426377642dfff734e61c9e1fa86fd38d220ce5046759826e563d79",
+          "liteSha256": "7aec4661c800254334bd220f5017613a350b37a27c4a7f5ae8135dce0613a60d"
+        },
+        "defensive": {
+          "path": "pose-studio/stances/frames/furnaceSaint/defensive.webp",
+          "lite": "pose-studio/stances/frames/furnaceSaint/defensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            125,
+            177,
+            389,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "b4be6f667e4a39d04dc8060b0ca4edb1de3eaab8251c1bacacf9146d68bdbaa0",
+          "liteSha256": "209a861b1032746d850f9cdeb5eaca9a222c9830f74608a7b85c9429ff5ede24"
+        },
+        "casting": {
+          "path": "pose-studio/stances/frames/furnaceSaint/casting.webp",
+          "lite": "pose-studio/stances/frames/furnaceSaint/casting.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            118,
+            159,
+            395,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "f5f4135bba51684a974f96ce85398a6631f3fdaaa058ecbac212ca830518419f",
+          "liteSha256": "967df6581013e3a0a044aeee2d92865d2d044ad35e99c7acc7f0a6a76119ad2f"
+        }
+      },
+      "sources": [
+        {
+          "stance": "offensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-poses/furnaceSaint_attack.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "08aa1bd3ed81a38f53c4f50a1bb3fa6d3815d238c8b3281de3bf76c31f86d37f"
+        },
+        {
+          "stance": "defensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/furnaceSaint_guard.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "c4c9f72983591e438e90875a2b285c7dff47cf98a2b8974db1670ed3d88aa7fe"
+        },
+        {
+          "stance": "casting",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/furnaceSaint_buff.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "cf403e5083529deda5917a9ad46355cddb6b736b53c99c719012c798b669d0f6"
+        }
+      ],
+      "rig": "pose-studio/stances/projects/furnaceSaint/furnaceSaint.rig.json",
+      "poseStudioSupported": false
+    },
+    "hollowAstronomer": {
+      "kind": "enemy",
+      "name": "The Hollow Astronomer",
+      "status": "reused-painted-draft",
+      "frames": {
+        "offensive": {
+          "path": "pose-studio/stances/frames/hollowAstronomer/offensive.webp",
+          "lite": "pose-studio/stances/frames/hollowAstronomer/offensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            48,
+            77,
+            466,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "6d59972b5bc09b05b7216412338422c7fda8aa683dadacc9b127396c2d56936c",
+          "liteSha256": "6b83413a5d45d0d269a3ce146fa1141464493556b3b8cdf07f6d68ec972c7c1f"
+        },
+        "defensive": {
+          "path": "pose-studio/stances/frames/hollowAstronomer/defensive.webp",
+          "lite": "pose-studio/stances/frames/hollowAstronomer/defensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            116,
+            169,
+            397,
+            465
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "783ed3041d0073658f2a42a800985b51dd6b164dd3c7a0cdcd3e784f20848d3a",
+          "liteSha256": "5aa87ba22062dcbc50d32eee8da71113eff9c9539f94c59cb71a432ce11980c7"
+        },
+        "casting": {
+          "path": "pose-studio/stances/frames/hollowAstronomer/casting.webp",
+          "lite": "pose-studio/stances/frames/hollowAstronomer/casting.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            80,
+            108,
+            435,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "0409c61723c964dc0627bcefd9fae78b3321b01fccaed930402014d4dc72f391",
+          "liteSha256": "2ef76e2698483df48b59e1ccb5188517c3b1e2b6e680f738c11ea7bf1f609906"
+        }
+      },
+      "sources": [
+        {
+          "stance": "offensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-poses/hollowAstronomer_attack.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "961d099949c7bccbb6ffa976f43622fb6a63c3afdd014f8aa3235dd8721d5e77"
+        },
+        {
+          "stance": "defensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/hollowAstronomer_guard.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "40939793c000cfd79c8181efa4d51af24bac59be5ff442cb9a33308880f78f16"
+        },
+        {
+          "stance": "casting",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/hollowAstronomer_buff.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "2565e33be695145219eb20ec82bb72ba2647f8ffd7df04aee1fc9499bb18a8be"
+        }
+      ],
+      "rig": "pose-studio/stances/projects/hollowAstronomer/hollowAstronomer.rig.json",
+      "poseStudioSupported": false
+    },
+    "ashheartDragon": {
+      "kind": "enemy",
+      "name": "The Ashheart Dragon",
+      "status": "reused-painted-draft",
+      "frames": {
+        "offensive": {
+          "path": "pose-studio/stances/frames/ashheartDragon/offensive.webp",
+          "lite": "pose-studio/stances/frames/ashheartDragon/offensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            47,
+            160,
+            466,
+            465
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "28f3425e2b29c168ee68629450e549382368bf12c89c78517d5d02415e27bf7e",
+          "liteSha256": "c05b2b828582c18b8a20ab8ca5ee38ab2e05964c77cf947547271db955cfbd0e"
+        },
+        "defensive": {
+          "path": "pose-studio/stances/frames/ashheartDragon/defensive.webp",
+          "lite": "pose-studio/stances/frames/ashheartDragon/defensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            104,
+            142,
+            411,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "f8b72558fe71b96e88d57fa23dbea6ed8897609be5676235060f6d96222a712d",
+          "liteSha256": "55bff482cd9662813e0e721713e1187cfdcc20df508634f9c3470dc488c85422"
+        },
+        "casting": {
+          "path": "pose-studio/stances/frames/ashheartDragon/casting.webp",
+          "lite": "pose-studio/stances/frames/ashheartDragon/casting.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            88,
+            114,
+            426,
+            466
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "362b5bc76ba1c165f2a61b242242bd790a00bde97990e82d55b5e8edb10b4f87",
+          "liteSha256": "cdb729c972a2b60dca85d34369ddc564b33bb78451be839298b89233e9d33fdb"
+        }
+      },
+      "sources": [
+        {
+          "stance": "offensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-poses/ashheartDragon_attack.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "79379e7a09aec915998a57dc89613f18c859e3c3be61959092532d3d7f4d9395"
+        },
+        {
+          "stance": "defensive",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/ashheartDragon_guard.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "438071e1f12c3256102ac18cfbb6400b70b17b3fc900a5e456c95ab8f0299dd4"
+        },
+        {
+          "stance": "casting",
+          "kind": "existing-painted-pose-reuse",
+          "assetId": "assets/enemy-states/ashheartDragon_buff.webp",
+          "sourceSize": [
+            384,
+            384
+          ],
+          "sha256": "2170a7caae1c2533b9f88a64efea7e987d38bc321113f39f328e4c88212db798"
+        }
+      ],
+      "rig": "pose-studio/stances/projects/ashheartDragon/ashheartDragon.rig.json",
+      "poseStudioSupported": false
+    },
+    "reaver-wayfarerPlate": {
+      "kind": "player",
+      "status": "explicit-same-class-equivalence",
+      "frames": {
+        "offensive": {
+          "path": "pose-studio/stances/frames/reaver-default/offensive.webp",
+          "lite": "pose-studio/stances/frames/reaver-default/offensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            108,
+            44,
+            404,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "55f5f9bfe5012ad5970a979e9ca6992fe29254392daa0aac42627a8f26c87dfb",
+          "liteSha256": "a9f9fb76297b037106f358d6380523ca6eccb6690fc7061619feb5bebd520e73"
+        },
+        "defensive": {
+          "path": "pose-studio/stances/frames/reaver-default/defensive.webp",
+          "lite": "pose-studio/stances/frames/reaver-default/defensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            126,
+            114,
+            387,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "08dcb989d8f7c14e3f1b8bbed363fe6e2117546d60ecf6d4acf8e2fef1c3969b",
+          "liteSha256": "214f9ba99adafe29d025dc2a7454aefb4514a2f73cd21a724dcd8dfdc5be1508"
+        },
+        "casting": {
+          "path": "pose-studio/stances/frames/reaver-default/casting.webp",
+          "lite": "pose-studio/stances/frames/reaver-default/casting.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            146,
+            137,
+            366,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "2dbae1de797abcb6a05e57430893d796aa50708809ab72d64687e6c9802e83a2",
+          "liteSha256": "827996e1424059d8312b4d8b979da80babf67a9639ec4487d928951809761a10"
+        }
+      },
+      "sources": [
+        {
+          "kind": "imagegen",
+          "path": "pose-studio/stances/source/reaver-default.png",
+          "sha256": "6882a0cb53db51e1c83ec467b52bcca6cb81561941a92d6739f032e0391ab0ee"
+        }
+      ],
+      "rig": "pose-studio/stances/projects/reaver-default/reaver-default.rig.json",
+      "poseStudioSupported": true,
+      "equivalentTo": "reaver-default"
+    },
+    "starseer-nightweave": {
+      "kind": "player",
+      "status": "explicit-same-class-equivalence",
+      "frames": {
+        "offensive": {
+          "path": "pose-studio/stances/frames/starseer-default/offensive.webp",
+          "lite": "pose-studio/stances/frames/starseer-default/offensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            124,
+            113,
+            387,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "03e0f4272a0eb0586a7fbb9f82683ef412bb31d309e6f6ac075158393e6052c7",
+          "liteSha256": "a98723cc001f34135603bbb3b97fac8d95aec0fd693db9a801821a42a93a0e5a"
+        },
+        "defensive": {
+          "path": "pose-studio/stances/frames/starseer-default/defensive.webp",
+          "lite": "pose-studio/stances/frames/starseer-default/defensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            106,
+            110,
+            405,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "d050948b51c138f8ee23d4d8a8eb86c531fb78b52f8c8bea26c9b007b4fb4666",
+          "liteSha256": "e73672506025c5ac3d9d83e53e1a9e3f674cc82c9a628c53a82353d5cc912202"
+        },
+        "casting": {
+          "path": "pose-studio/stances/frames/starseer-default/casting.webp",
+          "lite": "pose-studio/stances/frames/starseer-default/casting.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            145,
+            44,
+            375,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "22a440902e759f8158dc9fa3670bb762e7450152d40978e664f222575b15e6bd",
+          "liteSha256": "40982971ac12d955bd739f5fbbd10c49c25a26c4c1dfb7236910e3c7717bdfc5"
+        }
+      },
+      "sources": [
+        {
+          "kind": "imagegen",
+          "path": "pose-studio/stances/source/starseer-default.png",
+          "sha256": "17e95756be8223fdef5e5120256f003aa60ba84f2190618bc5a30d820b63bce8"
+        }
+      ],
+      "rig": "pose-studio/stances/projects/starseer-default/starseer-default.rig.json",
+      "poseStudioSupported": true,
+      "equivalentTo": "starseer-default"
+    },
+    "herald-riteVestments": {
+      "kind": "player",
+      "status": "explicit-same-class-equivalence",
+      "frames": {
+        "offensive": {
+          "path": "pose-studio/stances/frames/herald-default/offensive.webp",
+          "lite": "pose-studio/stances/frames/herald-default/offensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            121,
+            84,
+            391,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "b972bf20d3d070f3e15b59897ce495833be489fc1dda0942ac3e8ffa6724d01d",
+          "liteSha256": "1a8a7a99d9ef6b7787da4cfb178859d7b70fc95c79754ec786893f5fee56b9ff"
+        },
+        "defensive": {
+          "path": "pose-studio/stances/frames/herald-default/defensive.webp",
+          "lite": "pose-studio/stances/frames/herald-default/defensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            134,
+            108,
+            378,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "08bfb73c952f952671d822e03be2427bbdb7e6b9d109b73d0275507e05d6bfc4",
+          "liteSha256": "271f1f97117db8840a97ef280ca21a4e8e9ff992f03efa65e52a9b673ed90e35"
+        },
+        "casting": {
+          "path": "pose-studio/stances/frames/herald-default/casting.webp",
+          "lite": "pose-studio/stances/frames/herald-default/casting.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            132,
+            44,
+            380,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "9d5ad5e9d6c6fd5522fe964ce984df9228fcc333e23566bfbbf814d2bad17d1b",
+          "liteSha256": "5a3c8c27ea7fc008aec6128d880f44dd4ead06578817cc33889c4032e5408f38"
+        }
+      },
+      "sources": [
+        {
+          "kind": "imagegen",
+          "path": "pose-studio/stances/source/herald-default.png",
+          "sha256": "208693081face05eb3bfa4a9a2207378fb5af7c0c56b888e692a74586ea8f751"
+        }
+      ],
+      "rig": "pose-studio/stances/projects/herald-default/herald-default.rig.json",
+      "poseStudioSupported": true,
+      "equivalentTo": "herald-default"
+    },
+    "rogue-gutterLeathers": {
+      "kind": "player",
+      "status": "explicit-same-class-equivalence",
+      "frames": {
+        "offensive": {
+          "path": "pose-studio/stances/frames/rogue-default/offensive.webp",
+          "lite": "pose-studio/stances/frames/rogue-default/offensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            75,
+            107,
+            437,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "6286f0305e40b4d04f50c0c6180ad2b28fba3db1a1346303bfe18b4f1e2f34ce",
+          "liteSha256": "8b4b22c77e901ef1d70dd6be3cb57184432ecb7e43eed27c19f3106e61c99abe"
+        },
+        "defensive": {
+          "path": "pose-studio/stances/frames/rogue-default/defensive.webp",
+          "lite": "pose-studio/stances/frames/rogue-default/defensive.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            124,
+            150,
+            389,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "359081174fa23126a6a43973ff537fc44062a9bb5844d494743627fa62a42075",
+          "liteSha256": "2a7344fa6cd47caa65a390f1ae72e0413671a536286d17f24e676f5d6f0e8d74"
+        },
+        "casting": {
+          "path": "pose-studio/stances/frames/rogue-default/casting.webp",
+          "lite": "pose-studio/stances/frames/rogue-default/casting.lite.webp",
+          "size": [
+            512,
+            512
+          ],
+          "bounds": [
+            128,
+            44,
+            383,
+            464
+          ],
+          "anchor": [
+            256,
+            464
+          ],
+          "sha256": "e658a3e4584cbb919c5d4d236d1391553d326b7d0b6aa88c2fcbe44e053c07c7",
+          "liteSha256": "9e689569e4405cc4f42484942a6fa32d20d5cf724c16d4e577c69660d1c34ad5"
+        }
+      },
+      "sources": [
+        {
+          "kind": "imagegen",
+          "path": "pose-studio/stances/source/rogue-default.png",
+          "sha256": "de8e57287a4da5ed8b115edba8bd7ccd163d658430546be0a5ac8f94adf0fa8b"
+        }
+      ],
+      "rig": "pose-studio/stances/projects/rogue-default/rogue-default.rig.json",
+      "poseStudioSupported": true,
+      "equivalentTo": "rogue-default"
+    }
+  },
+  "notes": [
+    "No unpainted armour cell is substituted with a different class or default outfit.",
+    "Enemy attack/guard/buff paintings are held-pose adaptations, not newly repainted stances.",
+    "Enemy stance selection accepts only the observer public committed-intent projection.",
+    "Reduced motion and Instant retain the static readable stance. No action timing is changed."
+  ]
+}

@@ -168,7 +168,9 @@ function idOfUrl(url) {
   }
   // A URL from an earlier source names one alias; its group is recovered from
   // that id's inlined URI, so a folder that covers only another alias still wins.
-  const id = url.startsWith('assets/') ? url : urlToId.get(url) || null;
+  // A failed first load can leave a bare branch-owned ID on screen. The
+  // verified built-in map is authoritative for these additional namespaces.
+  const id = url.startsWith('assets/') || builtInSource()?.has(url) ? url : urlToId.get(url) || null;
   const aliases = inlineIds.get(url) || builtInIds.get(url)
     || (id && (inlineIds.get(ASSET_MAP[id]) || builtInIds.get(builtInSource()?.get(id))));
   if (!aliases || aliases.length < 2) return id || (aliases ? aliases[0] : null);
@@ -180,12 +182,41 @@ function idOfUrl(url) {
 const XLINK = 'http://www.w3.org/1999/xlink';
 function artAttr(el) {
   if (el.tagName === 'IMG') return 'src';
+  if (el.tagName === 'SOURCE') return 'srcset';
   if (el.hasAttribute('href')) return 'href';
   return el.hasAttributeNS?.(XLINK, 'href') ? 'xlink:href' : null;
 }
 function readArt(el, attr) { return attr === 'xlink:href' ? el.getAttributeNS(XLINK, 'href') : el.getAttribute(attr); }
 function writeArt(el, attr, url) {
   if (attr === 'xlink:href') el.setAttributeNS(XLINK, 'xlink:href', url); else el.setAttribute(attr, url);
+}
+
+// Keep responsive descriptors, separators and whitespace byte-for-byte. The
+// srcset URL token can contain commas (notably data URIs); only its trailing
+// commas delimit a candidate before whitespace, as in the browser grammar.
+function currentSrcset(was) {
+  const replacements = [];
+  let at = 0;
+  while (at < was.length) {
+    while (at < was.length && /[\s,]/.test(was[at])) at++;
+    const start = at;
+    while (at < was.length && !/\s/.test(was[at])) at++;
+    let end = at;
+    while (end > start && was[end - 1] === ',') end--;
+    const url = was.slice(start, end), id = idOfUrl(url);
+    const now = id ? assetUrl(id) : url;
+    if (now && now !== url) replacements.push({ start, end, now });
+    if (end < at) continue;
+    let depth = 0;
+    while (at < was.length) {
+      const char = was[at++];
+      if (char === '(') depth++;
+      else if (char === ')') depth = Math.max(0, depth - 1);
+      else if (char === ',' && depth === 0) break;
+    }
+  }
+  for (const { start, end, now } of replacements.reverse()) was = was.slice(0, start) + now + was.slice(end);
+  return was;
 }
 
 /**
@@ -198,17 +229,22 @@ export function currentArtUrl(url) {
   return id ? assetUrl(id) : url;
 }
 
-/** refreshMountedArt(root) → how many <img> / SVG <image> elements now point at a different tier. */
+/** refreshMountedArt(root) → how many images / responsive sources now point at a different tier. */
 export function refreshMountedArt(root = globalThis.document) {
   if (!root || typeof root.querySelectorAll !== 'function') return 0;
   let moved = 0;
   // Engravings inherit semantic colours through a mask. Their explicit asset
   // ids follow the same high/light resolver as mounted paintings.
   refreshEngravedIcons(root);
-  for (const el of root.querySelectorAll('img[src], image')) {
+  for (const el of root.querySelectorAll('img[src], image, source[srcset]')) {
     const attr = artAttr(el);
     if (!attr) continue;
     const was = readArt(el, attr);
+    if (attr === 'srcset') {
+      const now = currentSrcset(was || '');
+      if (now !== was) { writeArt(el, attr, now); moved += 1; }
+      continue;
+    }
     const id = idOfUrl(was);
     if (!id) continue;
     const now = assetUrl(id);

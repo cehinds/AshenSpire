@@ -109,6 +109,7 @@ export function applyProfile(settings, onChange, parsed, promoted = PROMOTED) {
   // Nothing visible moved and no ownership changed: nothing to save.
   if (!Object.keys(changed).length) return 0;
   const result = onChange(changed);
+  const settle = result => {
   if (result?.ok === false) {
     // Not saved, so not applied: put every value back as it was — here, and
     // through the same onChange, so the game's own settings and the live
@@ -127,6 +128,8 @@ export function applyProfile(settings, onChange, parsed, promoted = PROMOTED) {
     throw new Error('Settings could not be saved on this device.');
   }
   return diff.length;
+  };
+  return result?.then ? result.then(settle, () => settle({ ok: false })) : settle(result);
 }
 
 /**
@@ -158,7 +161,7 @@ export async function autoLoadProfile({ settings, onChange, rows, fetch = global
   const previous = read(SYNC_STORAGE.lastSha);
   if (!write(SYNC_STORAGE.lastSha, remote.sha || '')) return { applied: 0, reason: 'unrecorded' };
   let applied;
-  try { applied = applyProfile(settings, onChange, parsed, promoted); } catch (error) { write(SYNC_STORAGE.lastSha, previous); throw error; }
+  try { applied = await applyProfile(settings, onChange, parsed, promoted); } catch (error) { write(SYNC_STORAGE.lastSha, previous); throw error; }
   write(SYNC_STORAGE.lastAt, new Date().toISOString());
   return { applied, reason: 'loaded' };
 }
@@ -320,7 +323,7 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
         // Nothing visible moves, but a key the profile leaves out may still go
         // back to the promotion: save that ownership before calling it loaded.
         const seedBefore = settings[SEED_KEY];
-        try { applyProfile(settings, onChange, parsed, promoted); } catch (error) { status(error.message); return; }
+        try { await applyProfile(settings, onChange, parsed, promoted); } catch (error) { status(error.message); return; }
         const seedMoved = seedShape(seedBefore) !== seedShape(settings[SEED_KEY]);
         if (!write(SYNC_STORAGE.lastSha, remote.sha || '')) {
           if (seedMoved) { carriedStatus = UNNOTED; afterApply(0, { [SEED_KEY]: seedBefore }, true); }
@@ -345,13 +348,13 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
           ${parsed.warnings.length ? `<p class="set-note">${esc(parsed.warnings.join(' '))}</p>` : ''}
           <div class="set-sync-acts"><button type="button" class="as-btn" data-sync="apply">Apply</button><button type="button" class="as-btn" data-sync="cancel">${esc(t('common.cancel'))}</button></div>`
         : '<p>This device already matches the profile.</p>';
-      box.querySelector('[data-sync="apply"]')?.addEventListener('click', () => {
+      box.querySelector('[data-sync="apply"]')?.addEventListener('click', async () => {
         try {
           // What every key held before, so Settings can offer Undo.
           const before = Object.fromEntries(profileDiff(settings, pending.parsed, promoted).map(({ key, from }) => [key, from]));
           // …and which of them the promotion owned, so Undo hands those back too.
           before[SEED_KEY] = settings[SEED_KEY];
-          const moved = applyProfile(settings, onChange, pending.parsed, promoted);
+          const moved = await applyProfile(settings, onChange, pending.parsed, promoted);
           const seedMoved = seedShape(before[SEED_KEY]) !== seedShape(settings[SEED_KEY]);
           const noted = write(SYNC_STORAGE.lastSha, pending.sha || '');
           write(SYNC_STORAGE.lastAt, new Date().toISOString());

@@ -141,5 +141,12 @@ export const tagFamilies = [
     "scopeField": "",
     "label": "Class feat",
     "blurb": "A selected class feat confers mounted property rules."
+  },
+  {
+    "family": "enemyMove",
+    "source": "enemyMoves",
+    "scopeField": "enemyId",
+    "label": "Enemy move",
+    "blurb": "An authored enemy action; id is scoped by enemyId."
   }
 ];

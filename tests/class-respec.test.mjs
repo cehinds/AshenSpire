@@ -17,7 +17,7 @@ import {createRng} from '../src/engine/rng.js';
 
 const root=createRegistries(contentBundle);
 function built(level=12){
-  const run=createRunState({registries:root,classId:'reaver',seed:6});
+  const run=createRunState({registries:root,classId:'reaver',seed:6,enemyKnowledgeVersion:null});
   openRunClassMastery(root,run,{}, {receiptId:'respec'});
   const reg=registriesForClassMastery(root,run),rng=createRng(6);
   for(let at=1;at<=level;at++){

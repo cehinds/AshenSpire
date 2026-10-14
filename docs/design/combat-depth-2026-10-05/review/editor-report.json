@@ -1,0 +1,16 @@
+{
+  "errors": [],
+  "checks": [
+    "7 separate scene objects",
+    "drag snaps to 10px grid",
+    "locked scenery unchanged",
+    "undo movement",
+    "hero art selection",
+    "asset and depth JSON roundtrip",
+    "local save and reload",
+    "layer visibility toggle",
+    "parallax preview",
+    "JSON download and file import",
+    "current game HUD overlay"
+  ]
+}

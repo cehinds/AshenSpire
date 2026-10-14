@@ -1,28 +1,29 @@
-import { attachTooltip, hideTooltip, esc } from './tooltip.js';
-import { intentBadge } from '../uiContent.js';
-import { glyph } from '../kit/index.js';
+import { attachTooltip, clearControlSelection, hideTooltip, esc } from './tooltip.js';
+import { combatIntentPresentation } from '../models/CombatIntentModel.js';
+import { intentIcon } from './intentIcon.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
-import { selectionRevealDelayMs } from '../models/SelectionEffectModel.js';
-
-const inspectTimers = new WeakMap();
+import { combatProfileTags } from '../../model/combatCardProfile.js';
 
 // Reading selection is separate from an armed card or co-op's attack target.
 export function selectCombatantInfo(root, id) {
   hideTooltip();
+  let changed = false;
   for (const frame of root.querySelectorAll('.combatant')) {
     const selected = frame.dataset.eid === id;
-    const changed = frame.classList.contains('context-selected') !== selected;
+    if (frame.classList.contains('context-selected') !== selected) changed = true;
     frame.classList.toggle('context-selected', selected);
     frame.setAttribute('aria-pressed', String(selected));
-    if (changed || !selected) {
-      clearTimeout(inspectTimers.get(frame));
-      delete frame.dataset.inspectReady;
-      if (selected) inspectTimers.set(frame, setTimeout(() => {
-        if (frame.isConnected && frame.classList.contains('context-selected')) frame.dataset.inspectReady = 'true';
-      }, selectionRevealDelayMs()));
-    }
   }
-  root.dispatchEvent(new CustomEvent('combatantselectionchange'));
+  // Every card tap clears the reading selection first. When nothing was
+  // selected there is nothing for the battlefield to refit, and its refit (a
+  // forced layout of the whole stage) was a large share of a phone's tap.
+  if (!changed) return;
+  // The battlefield listens on its own `.combat`. A co-op root is that
+  // `.combat`'s parent, so dispatch on the board(s) inside root, not on root.
+  const boards = root.matches?.('.combat') ? [root] : [...root.querySelectorAll('.combat')];
+  for (const board of (boards.length ? boards : [root])) {
+    board.dispatchEvent(new CustomEvent('combatantselectionchange'));
+  }
 }
 
 export function combatantInfo(name, open) {
@@ -34,23 +35,85 @@ export function combatantInfo(name, open) {
   node.setAttribute('aria-label', `Inspect ${name}`);
   node.setAttribute('aria-haspopup', 'dialog');
   attachTooltip(node, () => `<div class="tt-title">${esc(name)}</div>Inspect resources, skills, and active effects.`, {
-    selectionFirst: true, activate: open, intent: 'above', align: 'center',
+    selectionFirst: true, intent: 'above', align: 'center',
   });
+  // One tap, click or keyboard activation opens inspection at once (owner, 2026-10-13).
+  node.addEventListener('click', event => {
+    event.preventDefault(); event.stopImmediatePropagation(); hideTooltip();
+    clearControlSelection(); open(node);
+  }, true);
   return node;
 }
 
-export function combatantIntent(intent, content) {
-  const badge = intentBadge(intent);
+export function combatantIntent(intent, content, registries = null, { onTarget = null } = {}) {
+  const badge = combatIntentPresentation(intent);
+  const stanceLabel = badge.title;
   const node = document.createElement('button');
   node.type = 'button';
-  node.className = `intent overhead-control ${badge.cls}${badge.dashed ? ' dashed' : ''}`;
+  node.className = `intent overhead-control${badge.visibility !== 'known' ? ' dashed' : ''}`;
   node.dataset.focusable = 'true';
-  if (badge.tone) node.dataset.tone = badge.tone;
-  node.setAttribute('aria-label', `Intent: ${intent?.kind || "unknown"} ${badge.label}`);
-  if (badge.glyph) node.append(glyph(badge.glyph, { class: 'ic' }));
-  const label = document.createElement('span');
-  label.textContent = badge.label; node.append(label);
-  markUiComponent(node, UI.intentIndicator, badge.cls);
-  attachTooltip(node, content, { selectionFirst: true, intent: 'above', align: 'center' });
+  node.dataset.intentVisibility = badge.visibility;
+  node.dataset.stance = badge.stance;
+  node.dataset.intentHidden = String(!!intent?.hidden);
+  if (badge.damageClass) node.dataset.damageClass = badge.damageClass;
+  const compact = document.createElement('span');
+  compact.className = 'intent-compact';
+  if (badge.parts[0]) compact.append(intentIcon(badge.parts[0].icon));
+  if (badge.visibility !== 'known') compact.append(document.createTextNode(' ?'));
+  node.append(compact);
+  node.setAttribute('aria-label', `${stanceLabel}. ${intent?.hidden ? 'Exact move and amounts hidden.' : badge.parts.map(part => `${part.icon}: ${part.value ?? ''}`).join('. ')}`);
+  {
+    const stanceNode = document.createElement('span');
+    stanceNode.className = 'intent-stance';
+    stanceNode.textContent = stanceLabel;
+    node.append(stanceNode);
+  }
+  if (badge.parts.length) {
+    const values = document.createElement('span');
+    values.className = 'intent-values';
+    for (const part of badge.parts) {
+      const group = document.createElement('span'); group.className = 'intent-value';
+      group.append(intentIcon(part.icon));
+      if (part.value != null) {
+        const value = document.createElement('span'); value.textContent = part.value; group.append(value);
+      }
+      values.append(group);
+    }
+    node.append(values);
+  }
+  markUiComponent(node, UI.intentIndicator, badge.visibility);
+  const tooltip = () => {
+    if (intent?.hidden) return `<div class="tt-title">Stance: ${esc(stanceLabel)}</div>Exact move, damage, and effects unread. Wisdom and Intelligence improve intent reads.`;
+    const body = typeof content === 'function' ? content() : content;
+    const tags = intent?.profile ? combatProfileTags(intent.profile, registries) : [];
+    const counter = badge.stance === 'countering' && intent.counterDamage != null
+      ? `<div>Base counter damage: ${esc(intent.counterDamage)} HP${intent.counterPoiseDamage > 0 ? `, ${esc(intent.counterPoiseDamage)} Poise` : ''}. The triggering attack and defenses determine the resolved damage.</div>` : '';
+    return `${body || ''}${counter}${tags.length ? `<div class="combat-rule-hint">${tags.map(tag => `${esc(tag.label)}: ${esc(tag.blurb)}`).join('<br>')}</div>` : ''}`;
+  };
+  attachTooltip(node, tooltip, { selectionFirst: true, intent: 'above', align: 'center' });
+  // A visible intent is also the owning enemy's target control. Resolve that
+  // action before the tooltip's selecting tap can consume it on touch.
+  if (onTarget) node.addEventListener('click', event => {
+    if (onTarget() === false) return;
+    event.preventDefault(); event.stopImmediatePropagation(); hideTooltip();
+  }, true);
+  return node;
+}
+
+// Owner (2026-10-11): the figure always shows an intent glyph. Before any card
+// is confirmed (fight start, each new player turn) it shows this neutral "ready"
+// mark: nothing is committed yet, so no action is claimed.
+export const RESTING_PLAYER_ACTION = Object.freeze({ maneuver: 'ready' });
+
+// Selected card previews use authored action identity, never card-name guesses.
+// Spells and untyped cards (no attack/smash/sweep/defend/counter maneuver) show the prepare sigil.
+export function playerActionIntent(profile, onTarget) {
+  if (!profile) return null;
+  const icon = ({ defend: 'defend', counter: 'counter', smash: 'smash', attack: 'attack', sweep: 'sweep', ranged: 'attack', casting: 'prepare', ready: 'prepare' })[profile.maneuver] || 'prepare';
+  const node = document.createElement('button');
+  node.type = 'button'; node.className = 'player-action-intent overhead-control';
+  node.setAttribute('aria-label', `Selected action: ${profile.maneuver || 'prepare'}`);
+  node.append(intentIcon(icon));
+  node.addEventListener('click', event => { event.stopPropagation(); onTarget(); });
   return node;
 }

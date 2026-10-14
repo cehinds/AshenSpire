@@ -583,7 +583,7 @@ export const tags = [
     "domain": "attackSource",
     "label": "Spell",
     "color": "9FC3E8",
-    "glyph": "◇",
+    "glyph": "✧",
     "visibility": "",
     "blurb": "Categorized Spell identity; effects are authored separately."
   },
@@ -630,7 +630,7 @@ export const tags = [
     "color": "9FC3E8",
     "glyph": "◇",
     "visibility": "",
-    "blurb": "Categorized Slashing identity; effects are authored separately."
+    "blurb": "Applies 1 Bleed on a Health hit unless the card already prints a Bleed effect."
   },
   {
     "id": "damage:piercing",
@@ -639,7 +639,7 @@ export const tags = [
     "color": "9FC3E8",
     "glyph": "◇",
     "visibility": "",
-    "blurb": "Categorized Piercing identity; effects are authored separately."
+    "blurb": "Bypasses up to 2 Guard; bypasses melee Counter."
   },
   {
     "id": "damage:blunt",
@@ -648,7 +648,7 @@ export const tags = [
     "color": "9FC3E8",
     "glyph": "◇",
     "visibility": "",
-    "blurb": "Categorized Blunt identity; effects are authored separately."
+    "blurb": "Adds 2 Poise damage once per action against each target."
   },
   {
     "id": "damage:fire",
@@ -657,16 +657,16 @@ export const tags = [
     "color": "9FC3E8",
     "glyph": "◇",
     "visibility": "",
-    "blurb": "Categorized Fire identity; effects are authored separately."
+    "blurb": "Applies 1 Burn on a Health hit unless the card already prints a Burn effect."
   },
   {
     "id": "damage:frost",
     "domain": "damageType",
-    "label": "Frost",
+    "label": "Cold",
     "color": "9FC3E8",
     "glyph": "◇",
     "visibility": "",
-    "blurb": "Categorized Frost identity; effects are authored separately."
+    "blurb": "Applies 1 Frost on a Health hit unless the card already prints a Frost effect."
   },
   {
     "id": "damage:lightning",
@@ -675,34 +675,61 @@ export const tags = [
     "color": "9FC3E8",
     "glyph": "◇",
     "visibility": "",
-    "blurb": "Categorized Lightning identity; effects are authored separately."
+    "blurb": "Applies 1 Weak (Sap) on a Health hit unless the card already prints a Weak effect."
   },
   {
     "id": "damage:arcane",
     "domain": "damageType",
-    "label": "Arcane",
+    "label": "Force",
     "color": "9FC3E8",
     "glyph": "◇",
     "visibility": "",
-    "blurb": "Categorized Arcane identity; effects are authored separately."
+    "blurb": "Strips 2 Ward once per action; bypasses melee Counter."
   },
   {
     "id": "damage:sacred",
     "domain": "damageType",
-    "label": "Sacred",
+    "label": "Holy",
     "color": "9FC3E8",
     "glyph": "◇",
     "visibility": "",
-    "blurb": "Categorized Sacred identity; effects are authored separately."
+    "blurb": "Removes 1 hostile debuff from the attacker after a Health hit."
   },
   {
     "id": "damage:decay",
     "domain": "damageType",
-    "label": "Decay",
+    "label": "Necrotic",
     "color": "9FC3E8",
     "glyph": "◇",
     "visibility": "",
-    "blurb": "Categorized Decay identity; effects are authored separately."
+    "blurb": "Applies Blight on a Health hit (Crimson in classic combat; Necrotic in expanded combat) unless the card already prints a Crimson Blight effect."
+  },
+  {
+    "id": "damage:poison",
+    "domain": "damageType",
+    "label": "Poison",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "Applies 1 Venom on a Health hit unless the card already prints a Venom effect. Not reduced by armour class; constructs halve its build-up."
+  },
+  {
+    "id": "damage:psychic",
+    "domain": "damageType",
+    "label": "Psychic",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "Applies 1 Confused on a Health hit unless the card already prints a Confused effect. Not reduced by armour class."
+  },
+  {
+    "id": "damage:earth",
+    "domain": "damageType",
+    "label": "Earth",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "Applies 1 Slowed on a Health hit unless the card already prints a Slowed effect. Not reduced by armour class; absorbed by Ward."
   },
   {
     "id": "technique:heavy",
@@ -1369,6 +1396,15 @@ export const tags = [
     "glyph": "✦",
     "visibility": "",
     "blurb": "A class card's leaning: skill XP in the weapon groups the card also names (its item-type tags) is multiplied. Scoped by the carrier's own tags, never by a second table."
+  },
+  {
+    "id": "oathKept",
+    "domain": "property",
+    "label": "Oath Kept",
+    "color": "C9A227",
+    "glyph": "✚",
+    "visibility": "",
+    "blurb": "While you have not entered a stance this fight, each Oath card you play grants Block. Every class card carries it; entering a stance breaks it for the rest of the fight."
   },
   {
     "id": "ashenGrip",
@@ -3448,5 +3484,383 @@ export const tags = [
     "glyph": "🛞",
     "visibility": "",
     "blurb": "What Ossuary Prayer Wheel confers when the fight gives it its moment."
+  },
+  {
+    "id": "camp:physical",
+    "domain": "camp",
+    "label": "Physical",
+    "color": "D7B36B",
+    "glyph": "⚔",
+    "visibility": "",
+    "blurb": "Selects physical Guard or magical Ward combat rules."
+  },
+  {
+    "id": "camp:spell",
+    "domain": "camp",
+    "label": "Spell",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "visibility": "",
+    "blurb": "Selects physical Guard or magical Ward combat rules."
+  },
+  {
+    "id": "maneuver:attack",
+    "domain": "maneuver",
+    "label": "Attack",
+    "color": "D7B36B",
+    "glyph": "⚔",
+    "visibility": "",
+    "blurb": "Fast strike. Gains extra Poise pressure against a prepared Smash or casting enemy."
+  },
+  {
+    "id": "maneuver:defend",
+    "domain": "maneuver",
+    "label": "Defend",
+    "color": "9FC3E8",
+    "glyph": "🛡",
+    "visibility": "",
+    "blurb": "Prepare defense. Physical cards protect Guard; defensive spell cards protect Ward. Smash breaks physical Guard."
+  },
+  {
+    "id": "maneuver:counter",
+    "domain": "maneuver",
+    "label": "Counter",
+    "color": "C8A3D8",
+    "glyph": "↩",
+    "visibility": "",
+    "blurb": "Prepare one reaction. Reduce damage from one eligible hit. A fully absorbed eligible hit triggers a stronger reply; Sweep, Force and Piercing bypass melee Counter."
+  },
+  {
+    "id": "maneuver:sweep",
+    "domain": "maneuver",
+    "label": "Sweep",
+    "color": "93C9BC",
+    "glyph": "🌀",
+    "visibility": "",
+    "blurb": "Windmill strike. Bypasses melee Counter; physical Guard and ranged attacks answer it."
+  },
+  {
+    "id": "maneuver:ranged",
+    "domain": "maneuver",
+    "label": "Ranged",
+    "color": "AAC88A",
+    "glyph": "➶",
+    "visibility": "",
+    "blurb": "Ranged delivery avoids melee replies. Ranged Counter, spell Counter and defensive Alteration answer it."
+  },
+  {
+    "id": "maneuver:smash",
+    "domain": "maneuver",
+    "label": "Smash",
+    "color": "DB9871",
+    "glyph": "⚒",
+    "visibility": "",
+    "blurb": "Heavy strike. Deals extra damage against physical Guard and extra Poise damage when Guard breaks. Fast Attack and Counter answer it."
+  },
+  {
+    "id": "school:frost",
+    "domain": "school",
+    "label": "Frost",
+    "color": "A6D8EF",
+    "glyph": "❄",
+    "visibility": "",
+    "blurb": "Cold control: Frost buildup rewards follow-up attacks and constrains enemy tempo."
+  },
+  {
+    "id": "school:fire",
+    "domain": "school",
+    "label": "Fire",
+    "color": "E47C43",
+    "glyph": "🔥",
+    "visibility": "",
+    "blurb": "Fire pressure: Burn buildup keeps pressure between turns."
+  },
+  {
+    "id": "school:lightning",
+    "domain": "school",
+    "label": "Lightning",
+    "color": "E8D46A",
+    "glyph": "ϟ",
+    "visibility": "",
+    "blurb": "Lightning disruption: Sap weakens direct attacks and enables spell follow-ups."
+  },
+  {
+    "id": "school:force",
+    "domain": "school",
+    "label": "Force",
+    "color": "B99DEC",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "Force pressure: strip Ward and bypass melee Counter."
+  },
+  {
+    "id": "school:alteration",
+    "domain": "school",
+    "label": "Alteration",
+    "color": "9BC8BE",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "Defensive and shaping magic: Ward, resource shaping and control. Answers ranged pressure."
+  },
+  {
+    "id": "school:illusion",
+    "domain": "school",
+    "label": "Illusion",
+    "color": "C59BD7",
+    "glyph": "◎",
+    "visibility": "",
+    "blurb": "Tempo and hand control: Weak, confusion, draw and energy tools."
+  },
+  {
+    "id": "school:divine",
+    "domain": "school",
+    "label": "Divine",
+    "color": "F0D99A",
+    "glyph": "✚",
+    "visibility": "",
+    "blurb": "Restoration and cleansing: heal, protect and remove hostile effects."
+  },
+  {
+    "id": "school:decay",
+    "domain": "school",
+    "label": "Decay",
+    "color": "A4BD72",
+    "glyph": "☣",
+    "visibility": "",
+    "blurb": "Attrition and offerings: Crimson Blight, life transfer and pay-health combos."
+  },
+  {
+    "id": "school:earth",
+    "domain": "school",
+    "label": "Earth",
+    "color": "8A7B5C",
+    "glyph": "⛰",
+    "visibility": "",
+    "blurb": "Grounding and weight: Slowed and Entombed slow or stop enemy turns; Stoneskin keeps Block."
+  },
+  {
+    "id": "counter:melee",
+    "domain": "counterMode",
+    "label": "Melee counter",
+    "color": "D7B36B",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "Replies to eligible melee Attack or Smash. Sweep, Force, Piercing and Ranged bypass this reaction."
+  },
+  {
+    "id": "counter:ranged",
+    "domain": "counterMode",
+    "label": "Ranged counter",
+    "color": "D7B36B",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "Replies only to incoming physical projectiles. Spells and melee moves do not trigger it."
+  },
+  {
+    "id": "counter:spell",
+    "domain": "counterMode",
+    "label": "Spell counter",
+    "color": "D7B36B",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "Intercepts incoming physical ranged moves or spells. Against physical ranged moves, strips Ward without Health retaliation. Against spellcasters, can retaliate against Health."
+  },
+  {
+    "id": "classification.enemyMove",
+    "domain": "classification",
+    "label": "enemyMove",
+    "color": "",
+    "glyph": "",
+    "visibility": "INTERNAL",
+    "blurb": "A scoped action in an enemy move table."
+  },
+  {
+    "id": "maneuver:casting",
+    "domain": "maneuver",
+    "label": "Spell",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "visibility": "",
+    "blurb": "A spell stance. Counter coverage depends on school and delivery."
+  },
+  {
+    "id": "range:melee",
+    "domain": "range",
+    "label": "Melee",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "At melee range: within arm's length."
+  },
+  {
+    "id": "range:reach",
+    "domain": "range",
+    "label": "Reach",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "At reach: past arm's length but not yet ranged."
+  },
+  {
+    "id": "range:ranged",
+    "domain": "range",
+    "label": "Ranged",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "At ranged distance."
+  },
+  {
+    "id": "targeting:single",
+    "domain": "targeting",
+    "label": "Single",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "One direct target."
+  },
+  {
+    "id": "targeting:area",
+    "domain": "targeting",
+    "label": "Area",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "An area action; most Counters do not cover it."
+  },
+  {
+    "id": "trait:adequateReach",
+    "domain": "trait",
+    "label": "Adequatereach",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "Adequatereach combat interaction."
+  },
+  {
+    "id": "trait:closing",
+    "domain": "trait",
+    "label": "Closing",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "Closing combat interaction."
+  },
+  {
+    "id": "trait:conductive",
+    "domain": "trait",
+    "label": "Conductive",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "Conductive combat interaction."
+  },
+  {
+    "id": "trait:counterstrike",
+    "domain": "trait",
+    "label": "Counterstrike",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "+50% effectiveness; +75% when the player's stance has advantage over the target's."
+  },
+  {
+    "id": "trait:flux",
+    "domain": "trait",
+    "label": "Flux",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "On hit: N Ward damage, or double the Ward damage the card already deals."
+  },
+  {
+    "id": "trait:grounded",
+    "domain": "trait",
+    "label": "Grounded",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "Grounded combat interaction."
+  },
+  {
+    "id": "trait:impact",
+    "domain": "trait",
+    "label": "Impact",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "On hit: N Poise damage, or double the Poise damage the card already deals."
+  },
+  {
+    "id": "trait:insulated",
+    "domain": "trait",
+    "label": "Insulated",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "Insulated combat interaction."
+  },
+  {
+    "id": "trait:mental",
+    "domain": "trait",
+    "label": "Mental",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "Mental combat interaction."
+  },
+  {
+    "id": "trait:projectile",
+    "domain": "trait",
+    "label": "Projectile",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "Projectile combat interaction."
+  },
+  {
+    "id": "trait:reaction",
+    "domain": "trait",
+    "label": "Reaction",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "Playable from hand during the opponent's turn, before the pending action resolves."
+  },
+  {
+    "id": "trait:reveal",
+    "domain": "trait",
+    "label": "Reveal",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "Reveal combat interaction."
+  },
+  {
+    "id": "trait:shattering",
+    "domain": "trait",
+    "label": "Shattering",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "Shattering combat interaction."
+  },
+  {
+    "id": "trait:unavoidable",
+    "domain": "trait",
+    "label": "Unavoidable",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "Unavoidable combat interaction."
+  },
+  {
+    "id": "trait:unreflectable",
+    "domain": "trait",
+    "label": "Unreflectable",
+    "color": "9FC3E8",
+    "glyph": "◇",
+    "visibility": "",
+    "blurb": "Unreflectable combat interaction."
   }
 ];

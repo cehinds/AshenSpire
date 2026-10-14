@@ -12,6 +12,8 @@
 // Headless: no document/window/localStorage/timers.
 
 import { handRulesDefaults } from '../content/handRules.js';
+import { combatIntentRulesProblems, combatMatchupRulesProblems } from './combatTacticsRules.js';
+import { enemyKnowledgeRuleProblems } from './enemyKnowledgeRules.js';
 import { deckRules as shippedDeckRules } from '../content/deckRules.js';
 import { shops as shippedShops } from '../content/shops.js';
 import { sigils as shippedSigils } from '../content/sigils.js';
@@ -81,6 +83,7 @@ import { STANCE_CHOICE_SELECTORS } from './cardChoices.js';
 // Ops whose value binds to a text-template token; token name = op name,
 // except applyStatus which binds under its status id (SPEC §3.13).
 export const TOKENIZABLE_OPS = Object.freeze([
+  'gainBarrier', 'buildup',
   'discard', 'removeStatus', 'grantCardCharge',
   'damage',
   'block',
@@ -101,6 +104,7 @@ export const TOKENIZABLE_OPS = Object.freeze([
 // Ops whose LITERAL numeric value MUST have a bound token in the template
 // (a player-visible number with no token is a validation error).
 export const REQUIRED_TOKEN_OPS = Object.freeze([
+  'gainBarrier', 'buildup',
   'damage',
   'block',
   'gainPoise',
@@ -124,6 +128,7 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'sigils', // SPEC §14.3: sigils, sold at the market into run.sigils (content/sigils.js)
   'consumables', // SPEC §14.3: skill books and revive tokens (content/consumables.js)
   'companions', // SPEC §14.3: temporary companions (content/companions.js)
+  'enemyMoves', // Scoped moves participate in the same canonical tag join.
   'mapConfigs',
   'scripts',
   'equipment',
@@ -291,7 +296,7 @@ export function computeTokenBindings(effects) {
       return;
     }
     const field = eff.op === 'applyStatus' ? 'stacks' : eff.op === 'loseMaxHpPct' ? 'pct' : 'amount';
-    const base = eff.op === 'applyStatus' ? eff.status : eff.op;
+    const base = ['applyStatus', 'buildup'].includes(eff.op) ? eff.status : eff.op;
     if (typeof base !== 'string') return; // malformed; schema pass reports it
     push(base, i, field, eff.op, typeof eff[field] === 'number');
     if (eff.op === 'damage' && eff.hits != null) {
@@ -363,7 +368,7 @@ function collectContentProblems(bundle, errors = []) {
   const err = (path, msg) => errors.push({ path, msg });
   const b = bundle || {};
   if (b.classMasteryVersion !== undefined && b.classMasteryVersion !== 1) err('classMasteryVersion', 'must be 1 when present');
-  if (b.breakMeterVersion !== undefined && b.breakMeterVersion !== 1) err('breakMeterVersion', 'must be 1 when present');
+  if (b.breakMeterVersion !== undefined && ![1, 2].includes(b.breakMeterVersion)) err('breakMeterVersion', 'must be 1 or 2 when present');
 
   // The `events` door belongs to tools/content-build.mjs (its K15 matrix): a
   // bundle carrying no events section at all is a BUILD fault, not a content
@@ -375,6 +380,10 @@ function collectContentProblems(bundle, errors = []) {
   // runs, and an events section that SHIPS is cross-referenced exactly as before.
   const eventsDoorOpen = b.events == null;
 
+  for (const problem of b.balance?.combatMatchups !== undefined ? combatMatchupRulesProblems(b.balance.combatMatchups, 'balance.combatMatchups') : []) err('balance.combatMatchups', problem);
+  for (const problem of b.balance?.combatIntent !== undefined ? combatIntentRulesProblems(b.balance.combatIntent, 'balance.combatIntent') : []) err('balance.combatIntent', problem);
+  for (const problem of enemyKnowledgeRuleProblems({ version: 1, ...b.balance?.enemyKnowledge },
+    new Set((Array.isArray(b.enemies) ? b.enemies : []).map(row => row?.id).filter(id => typeof id === 'string')))) err('balance.enemyKnowledge', problem);
   const schoolBuildup = b.balance && b.balance.arcaneExposure && b.balance.arcaneExposure.schoolBuildupMultipliers;
   if (!schoolBuildup || typeof schoolBuildup !== 'object' || Array.isArray(schoolBuildup)) {
     err('balance.arcaneExposure.schoolBuildupMultipliers', 'must be an explicit school map');
@@ -1063,6 +1072,10 @@ function collectContentProblems(bundle, errors = []) {
         if (!Number.isInteger(value) || value < 0) {
           err(`equipment.armaments.${id}.${field}`, `must be an explicit non-negative integer, got ${JSON.stringify(value)}`);
         }
+      }
+      // Every armament has one physical damage type: its Block-facing part of a hit (magic share < 1).
+      if (!['blunt', 'slashing', 'piercing'].includes(row?.physicalDamageType)) {
+        err(`equipment.armaments.${id}.physicalDamageType`, `must be blunt, slashing or piercing, got ${JSON.stringify(row?.physicalDamageType)}`);
       }
       if (Number.isInteger(row?.weight) && row.weight !== row.poiseThreshold) {
         err(`equipment.armaments.${id}.weight`, `must equal authored poiseThreshold ${JSON.stringify(row.poiseThreshold)}`);
@@ -2067,6 +2080,22 @@ function collectContentProblems(bundle, errors = []) {
     const moveIds = new Set(Object.keys(enemy.moves || {}));
     if (enemy.firstMove != null && !moveIds.has(enemy.firstMove)) {
       err(`${path}.firstMove`, `firstMove '${enemy.firstMove}' is not one of this enemy's moves`);
+    } else if (enemy.firstMove != null && enemy.moves[enemy.firstMove].reaction !== undefined) {
+      err(`${path}.firstMove`, `firstMove '${enemy.firstMove}' is a reaction move and is never rolled as an intent`);
+    }
+    // A reaction move is never rolled, so it carries no weight; every other move
+    // is rolled and needs one. `reaction` bounds mirror docs/combat-card-traits-contract.md.
+    for (const [moveId, move] of Object.entries(enemy.moves || {})) {
+      const movePath = `${path}.moves.${moveId}`;
+      if (move.reaction !== undefined) {
+        const { on, minIncoming, chance } = move.reaction;
+        if (!Array.isArray(on) || on.length === 0) err(`${movePath}.reaction.on`, 'reaction.on must be a non-empty list');
+        if (move.weight !== undefined) err(`${movePath}.weight`, 'a reaction move is never rolled and must not carry a weight');
+        if (minIncoming !== undefined && !(Number.isInteger(minIncoming) && minIncoming >= 0)) err(`${movePath}.reaction.minIncoming`, 'minIncoming must be an integer >= 0 (0: no incoming damage required)');
+        if (chance !== undefined && !(typeof chance === 'number' && chance >= 0 && chance <= 1)) err(`${movePath}.reaction.chance`, 'chance must be a number in [0, 1]');
+      } else if (typeof move.weight !== 'number' || Number.isNaN(move.weight)) {
+        err(`${movePath}.weight`, `Expected number, got ${describe(move.weight)}`);
+      }
     }
     for (const [pi, phase] of (enemy.phases || []).entries()) {
       for (const mv of phase.unlockMoves || []) {
@@ -2731,8 +2760,8 @@ export function validatePredicate(pred, path, vctx) {
 }
 
 const FORMULA_FIELDS = {
-  add: ['args'],
-  mul: ['args'],
+  add: ['args', 'min', 'max'], // evaluateRaw clamps any node; a graded sum (Reclamation) caps the total
+  mul: ['args', 'min', 'max'],
   percentMaxHp: ['of', 'pct', 'min', 'max'],
   missingHp: ['of', 'min', 'max'],
   missingMana: ['of', 'min', 'max'],
@@ -2741,6 +2770,7 @@ const FORMULA_FIELDS = {
   blockOf: ['of', 'min', 'max'],
   hpOf: ['of', 'min', 'max'],
   cardsPlayedThisTurn: ['per', 'min', 'max'],
+  traitBonus: ['base', 'pct', 'min', 'max'],
 };
 
 export function validateFormula(value, path, vctx) {
@@ -2776,6 +2806,11 @@ export function validateFormula(value, path, vctx) {
   }
   if (['percentMaxHp', 'missingHp', 'missingMana', 'blockOf', 'hpOf'].includes(value.f) && value.of === undefined) {
     err(`${path}.of`, `'${value.f}' requires 'of'`);
+  }
+  if (value.f === 'traitBonus') {
+    if (value.base === undefined) err(`${path}.base`, "'traitBonus' requires a base");
+    else validateFormula(value.base, `${path}.base`, vctx);
+    if (typeof value.pct !== 'number') err(`${path}.pct`, "'traitBonus' requires a numeric pct");
   }
   if (value.f === 'percentMaxHp' && typeof value.pct !== 'number') {
     err(`${path}.pct`, "'percentMaxHp' requires a numeric pct");

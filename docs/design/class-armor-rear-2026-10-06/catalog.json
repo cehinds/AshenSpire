@@ -1,0 +1,2046 @@
+{
+  "schemaVersion": 1,
+  "scope": "Art-only idle illustrations; no runtime integration",
+  "sourceRevision": "c448cb31c1459581e22642136a224256d4fd3c25",
+  "baselineCommit": "41ae95ae42cce66e56805cc35ae1903a92a4d5a5",
+  "classes": [
+    "reaver",
+    "starseer",
+    "herald",
+    "rogue"
+  ],
+  "entries": [
+    {
+      "id": "reaver-default",
+      "classId": "reaver",
+      "outfitId": "default",
+      "name": "Wayfarer Plate",
+      "canonicalId": "armor/reaver/default",
+      "masterId": "reaver-default",
+      "file": "masters/reaver-default.png",
+      "status": "available",
+      "facing": "rear three-quarter right; away toward upper right",
+      "pose": "idle",
+      "provenance": {
+        "kind": "approved-byte-reuse",
+        "sourceCommit": "41ae95ae42cce66e56805cc35ae1903a92a4d5a5",
+        "sourceFile": "masters/reaver-default-rear.png",
+        "originalMetadata": "sources/baseline-catalog.json",
+        "originalId": "reaver-default",
+        "reason": "Approved exact class/outfit appearance."
+      },
+      "requirements": {},
+      "unlock": "",
+      "legacyArtAlias": {
+        "classId": "",
+        "outfitId": ""
+      },
+      "validation": {
+        "size": [
+          1024,
+          1536
+        ],
+        "mode": "RGBA",
+        "sha256": "013f46c2d92303243da8527fcf9a15bd7c31f41e3add503e3fdd6ebc8f9950cd",
+        "alphaRange": [
+          0,
+          254
+        ],
+        "transparentFraction": 0.5911057790120443,
+        "visibleBounds": [
+          22,
+          69,
+          1018,
+          1427
+        ],
+        "clearMargins": [
+          22,
+          69,
+          6,
+          109
+        ],
+        "idleAnchor": [
+          520.0,
+          1427
+        ],
+        "anchorKind": "bottom-center of alpha >32; idle placement only"
+      }
+    },
+    {
+      "id": "reaver-vigil",
+      "classId": "reaver",
+      "outfitId": "vigil",
+      "name": "Ashen Vigil",
+      "canonicalId": "armor/reaver/vigil",
+      "masterId": "reaver-vigil",
+      "file": "masters/reaver-vigil.png",
+      "status": "available",
+      "facing": "rear three-quarter right; away toward upper right",
+      "pose": "idle",
+      "provenance": {
+        "kind": "approved-byte-reuse",
+        "sourceCommit": "41ae95ae42cce66e56805cc35ae1903a92a4d5a5",
+        "sourceFile": "masters/reaver-vigil-rear.png",
+        "originalMetadata": "sources/baseline-catalog.json",
+        "originalId": "reaver-vigil",
+        "reason": "Approved exact class/outfit appearance."
+      },
+      "requirements": {},
+      "unlock": "beatStitchedKing",
+      "legacyArtAlias": {
+        "classId": "",
+        "outfitId": ""
+      },
+      "validation": {
+        "size": [
+          1024,
+          1536
+        ],
+        "mode": "RGBA",
+        "sha256": "0ea2072827f114f3facc1bd74633b946f98401509ede6dd94e5a2317e9761590",
+        "alphaRange": [
+          0,
+          254
+        ],
+        "transparentFraction": 0.5991446177164713,
+        "visibleBounds": [
+          22,
+          50,
+          1010,
+          1419
+        ],
+        "clearMargins": [
+          22,
+          50,
+          14,
+          117
+        ],
+        "idleAnchor": [
+          516.0,
+          1419
+        ],
+        "anchorKind": "bottom-center of alpha >32; idle placement only"
+      }
+    },
+    {
+      "id": "reaver-oathsworn",
+      "classId": "reaver",
+      "outfitId": "oathsworn",
+      "name": "Gilded Oathsworn",
+      "canonicalId": "armor/reaver/oathsworn",
+      "masterId": "reaver-oathsworn",
+      "file": "masters/reaver-oathsworn.png",
+      "status": "available",
+      "facing": "rear three-quarter right; away toward upper right",
+      "pose": "idle",
+      "provenance": {
+        "kind": "approved-byte-reuse",
+        "sourceCommit": "41ae95ae42cce66e56805cc35ae1903a92a4d5a5",
+        "sourceFile": "masters/reaver-oathsworn-rear.png",
+        "originalMetadata": "sources/baseline-catalog.json",
+        "originalId": "reaver-oathsworn",
+        "reason": "Approved exact class/outfit appearance."
+      },
+      "requirements": {},
+      "unlock": "winAsReaver",
+      "legacyArtAlias": {
+        "classId": "",
+        "outfitId": ""
+      },
+      "validation": {
+        "size": [
+          1024,
+          1536
+        ],
+        "mode": "RGBA",
+        "sha256": "31b05698659e6c991445e8effab478d83fbce349478b12f59681f5589b08e849",
+        "alphaRange": [
+          0,
+          254
+        ],
+        "transparentFraction": 0.5799109141031901,
+        "visibleBounds": [
+          19,
+          40,
+          1017,
+          1459
+        ],
+        "clearMargins": [
+          19,
+          40,
+          7,
+          77
+        ],
+        "idleAnchor": [
+          518.0,
+          1459
+        ],
+        "anchorKind": "bottom-center of alpha >32; idle placement only"
+      }
+    },
+    {
+      "id": "reaver-warden",
+      "classId": "reaver",
+      "outfitId": "warden",
+      "name": "Warden Mail",
+      "canonicalId": "armor/reaver/warden",
+      "masterId": "reaver-warden",
+      "file": "masters/reaver-warden.png",
+      "status": "available",
+      "facing": "rear three-quarter right; away toward upper right",
+      "pose": "idle",
+      "provenance": {
+        "kind": "approved-byte-reuse",
+        "sourceCommit": "41ae95ae42cce66e56805cc35ae1903a92a4d5a5",
+        "sourceFile": "masters/reaver-warden-rear.png",
+        "originalMetadata": "sources/baseline-catalog.json",
+        "originalId": "reaver-warden",
+        "reason": "Approved exact class/outfit appearance."
+      },
+      "requirements": {},
+      "unlock": "reachAshenCrown",
+      "legacyArtAlias": {
+        "classId": "",
+        "outfitId": ""
+      },
+      "validation": {
+        "size": [
+          1024,
+          1536
+        ],
+        "mode": "RGBA",
+        "sha256": "6db203257872770d4efba36b304bc6ed2a895acfcba1c33e752fef3d4dfd4dce",
+        "alphaRange": [
+          0,
+          254
+        ],
+        "transparentFraction": 0.6173686981201172,
+        "visibleBounds": [
+          42,
+          78,
+          1008,
+          1415
+        ],
+        "clearMargins": [
+          42,
+          78,
+          16,
+          121
+        ],
+        "idleAnchor": [
+          525.0,
+          1415
+        ],
+        "anchorKind": "bottom-center of alpha >32; idle placement only"
+      }
+    },
+    {
+      "id": "starseer-default",
+      "classId": "starseer",
+      "outfitId": "default",
+      "name": "Nightweave",
+      "canonicalId": "armor/starseer/default",
+      "masterId": "starseer-default",
+      "file": "masters/starseer-default.png",
+      "status": "available",
+      "facing": "rear three-quarter right; away toward upper right",
+      "pose": "idle",
+      "provenance": {
+        "kind": "approved-byte-reuse",
+        "sourceCommit": "41ae95ae42cce66e56805cc35ae1903a92a4d5a5",
+        "sourceFile": "masters/starseer-default-rear.png",
+        "originalMetadata": "sources/baseline-catalog.json",
+        "originalId": "starseer-default",
+        "reason": "Approved exact class/outfit appearance."
+      },
+      "requirements": {},
+      "unlock": "",
+      "legacyArtAlias": {
+        "classId": "",
+        "outfitId": ""
+      },
+      "validation": {
+        "size": [
+          1024,
+          1536
+        ],
+        "mode": "RGBA",
+        "sha256": "71a6b602ac5a2b516b041cb5456d79409588a095c86bc2f6f1648f05661a3435",
+        "alphaRange": [
+          0,
+          254
+        ],
+        "transparentFraction": 0.5244661966959635,
+        "visibleBounds": [
+          53,
+          16,
+          973,
+          1483
+        ],
+        "clearMargins": [
+          53,
+          16,
+          51,
+          53
+        ],
+        "idleAnchor": [
+          513.0,
+          1483
+        ],
+        "anchorKind": "bottom-center of alpha >32; idle placement only"
+      }
+    },
+    {
+      "id": "starseer-eclipse",
+      "classId": "starseer",
+      "outfitId": "eclipse",
+      "name": "Eclipse Habit",
+      "canonicalId": "armor/starseer/eclipse",
+      "masterId": "starseer-eclipse",
+      "file": "masters/starseer-eclipse.png",
+      "status": "available",
+      "facing": "rear three-quarter right; away toward upper right",
+      "pose": "idle",
+      "provenance": {
+        "kind": "approved-byte-reuse",
+        "sourceCommit": "41ae95ae42cce66e56805cc35ae1903a92a4d5a5",
+        "sourceFile": "masters/starseer-eclipse-rear.png",
+        "originalMetadata": "sources/baseline-catalog.json",
+        "originalId": "starseer-eclipse",
+        "reason": "Approved exact class/outfit appearance."
+      },
+      "requirements": {},
+      "unlock": "winAsStarseer",
+      "legacyArtAlias": {
+        "classId": "",
+        "outfitId": ""
+      },
+      "validation": {
+        "size": [
+          1024,
+          1536
+        ],
+        "mode": "RGBA",
+        "sha256": "e3e27474f236279ad09732504f78769c5b53dbbabf6012b907caec0ef619d141",
+        "alphaRange": [
+          0,
+          254
+        ],
+        "transparentFraction": 0.4992942810058594,
+        "visibleBounds": [
+          45,
+          20,
+          1004,
+          1506
+        ],
+        "clearMargins": [
+          45,
+          20,
+          20,
+          30
+        ],
+        "idleAnchor": [
+          524.5,
+          1506
+        ],
+        "anchorKind": "bottom-center of alpha >32; idle placement only"
+      }
+    },
+    {
+      "id": "starseer-starlit",
+      "classId": "starseer",
+      "outfitId": "starlit",
+      "name": "Starlit Silks",
+      "canonicalId": "armor/starseer/starlit",
+      "masterId": "starseer-starlit",
+      "file": "masters/starseer-starlit.png",
+      "status": "available",
+      "facing": "rear three-quarter right; away toward upper right",
+      "pose": "idle",
+      "provenance": {
+        "kind": "approved-byte-reuse",
+        "sourceCommit": "41ae95ae42cce66e56805cc35ae1903a92a4d5a5",
+        "sourceFile": "masters/starseer-starlit-rear.png",
+        "originalMetadata": "sources/baseline-catalog.json",
+        "originalId": "starseer-starlit",
+        "reason": "Approved exact class/outfit appearance."
+      },
+      "requirements": {},
+      "unlock": "beatFellWarden",
+      "legacyArtAlias": {
+        "classId": "",
+        "outfitId": ""
+      },
+      "validation": {
+        "size": [
+          1024,
+          1536
+        ],
+        "mode": "RGBA",
+        "sha256": "df5c433da0aa083356035c50da83989b5ab9009fc6d957694faadd89444d72ae",
+        "alphaRange": [
+          0,
+          254
+        ],
+        "transparentFraction": 0.5200112660725912,
+        "visibleBounds": [
+          44,
+          12,
+          982,
+          1483
+        ],
+        "clearMargins": [
+          44,
+          12,
+          42,
+          53
+        ],
+        "idleAnchor": [
+          513.0,
+          1483
+        ],
+        "anchorKind": "bottom-center of alpha >32; idle placement only"
+      }
+    },
+    {
+      "id": "starseer-astral",
+      "classId": "starseer",
+      "outfitId": "astral",
+      "name": "Astral Vestment",
+      "canonicalId": "armor/starseer/astral",
+      "masterId": "starseer-astral",
+      "file": "masters/starseer-astral.png",
+      "status": "available",
+      "facing": "rear three-quarter right; away toward upper right",
+      "pose": "idle",
+      "provenance": {
+        "kind": "approved-byte-reuse",
+        "sourceCommit": "41ae95ae42cce66e56805cc35ae1903a92a4d5a5",
+        "sourceFile": "masters/starseer-astral-rear.png",
+        "originalMetadata": "sources/baseline-catalog.json",
+        "originalId": "starseer-astral",
+        "reason": "Approved exact class/outfit appearance."
+      },
+      "requirements": {},
+      "unlock": "winTwice",
+      "legacyArtAlias": {
+        "classId": "",
+        "outfitId": ""
+      },
+      "validation": {
+        "size": [
+          1024,
+          1536
+        ],
+        "mode": "RGBA",
+        "sha256": "f7a3232b48353379a69dcec117bdbf955f056f76099c5bb3065dc67e3e16c912",
+        "alphaRange": [
+          0,
+          254
+        ],
+        "transparentFraction": 0.4966875712076823,
+        "visibleBounds": [
+          31,
+          7,
+          1008,
+          1480
+        ],
+        "clearMargins": [
+          31,
+          7,
+          16,
+          56
+        ],
+        "idleAnchor": [
+          519.5,
+          1480
+        ],
+        "anchorKind": "bottom-center of alpha >32; idle placement only"
+      }
+    },
+    {
+      "id": "herald-default",
+      "classId": "herald",
+      "outfitId": "default",
+      "name": "Rite Vestments",
+      "canonicalId": "armor/herald/default",
+      "masterId": "herald-default",
+      "file": "masters/herald-default.png",
+      "status": "available",
+      "facing": "rear three-quarter right; away toward upper right",
+      "pose": "idle",
+      "provenance": {
+        "kind": "approved-byte-reuse",
+        "sourceCommit": "41ae95ae42cce66e56805cc35ae1903a92a4d5a5",
+        "sourceFile": "masters/herald-default-rear.png",
+        "originalMetadata": "sources/baseline-catalog.json",
+        "originalId": "herald-default",
+        "reason": "Approved exact class/outfit appearance."
+      },
+      "requirements": {},
+      "unlock": "",
+      "legacyArtAlias": {
+        "classId": "",
+        "outfitId": ""
+      },
+      "validation": {
+        "size": [
+          1024,
+          1536
+        ],
+        "mode": "RGBA",
+        "sha256": "69e3f8a014673794cebaa50a4519f8cd66e5a79602ba2e133fb4a70336b769ca",
+        "alphaRange": [
+          0,
+          254
+        ],
+        "transparentFraction": 0.5204480489095052,
+        "visibleBounds": [
+          75,
+          30,
+          1008,
+          1504
+        ],
+        "clearMargins": [
+          75,
+          30,
+          16,
+          32
+        ],
+        "idleAnchor": [
+          541.5,
+          1504
+        ],
+        "anchorKind": "bottom-center of alpha >32; idle placement only"
+      }
+    },
+    {
+      "id": "herald-ossuary",
+      "classId": "herald",
+      "outfitId": "ossuary",
+      "name": "Ossuary Weave",
+      "canonicalId": "armor/herald/ossuary",
+      "masterId": "herald-ossuary",
+      "file": "masters/herald-ossuary.png",
+      "status": "available",
+      "facing": "rear three-quarter right; away toward upper right",
+      "pose": "idle",
+      "provenance": {
+        "kind": "approved-byte-reuse",
+        "sourceCommit": "41ae95ae42cce66e56805cc35ae1903a92a4d5a5",
+        "sourceFile": "masters/herald-ossuary-rear.png",
+        "originalMetadata": "sources/baseline-catalog.json",
+        "originalId": "herald-ossuary",
+        "reason": "Approved exact class/outfit appearance."
+      },
+      "requirements": {},
+      "unlock": "beatBlightedValkyrie",
+      "legacyArtAlias": {
+        "classId": "",
+        "outfitId": ""
+      },
+      "validation": {
+        "size": [
+          1024,
+          1536
+        ],
+        "mode": "RGBA",
+        "sha256": "76b8e571ec7a222d3136c15128c156cb16803fd5f6c767ad65f7fade06dcba34",
+        "alphaRange": [
+          0,
+          254
+        ],
+        "transparentFraction": 0.5449536641438802,
+        "visibleBounds": [
+          53,
+          35,
+          995,
+          1482
+        ],
+        "clearMargins": [
+          53,
+          35,
+          29,
+          54
+        ],
+        "idleAnchor": [
+          524.0,
+          1482
+        ],
+        "anchorKind": "bottom-center of alpha >32; idle placement only"
+      }
+    },
+    {
+      "id": "herald-emberhabit",
+      "classId": "herald",
+      "outfitId": "emberhabit",
+      "name": "Emberlight Habit",
+      "canonicalId": "armor/herald/emberhabit",
+      "masterId": "herald-emberhabit",
+      "file": "masters/herald-emberhabit.png",
+      "status": "available",
+      "facing": "rear three-quarter right; away toward upper right",
+      "pose": "idle",
+      "provenance": {
+        "kind": "approved-byte-reuse",
+        "sourceCommit": "41ae95ae42cce66e56805cc35ae1903a92a4d5a5",
+        "sourceFile": "masters/herald-emberhabit-rear.png",
+        "originalMetadata": "sources/baseline-catalog.json",
+        "originalId": "herald-emberhabit",
+        "reason": "Approved exact class/outfit appearance."
+      },
+      "requirements": {},
+      "unlock": "beatKingAsHerald",
+      "legacyArtAlias": {
+        "classId": "",
+        "outfitId": ""
+      },
+      "validation": {
+        "size": [
+          1024,
+          1536
+        ],
+        "mode": "RGBA",
+        "sha256": "a1b7daca07f7470328d5da75056148706d063ae4449bd628e08bad3654c7bd2d",
+        "alphaRange": [
+          0,
+          254
+        ],
+        "transparentFraction": 0.5001888275146484,
+        "visibleBounds": [
+          66,
+          37,
+          1021,
+          1495
+        ],
+        "clearMargins": [
+          66,
+          37,
+          3,
+          41
+        ],
+        "idleAnchor": [
+          543.5,
+          1495
+        ],
+        "anchorKind": "bottom-center of alpha >32; idle placement only"
+      }
+    },
+    {
+      "id": "herald-pilgrim",
+      "classId": "herald",
+      "outfitId": "pilgrim",
+      "name": "Pilgrim Wrap",
+      "canonicalId": "armor/herald/pilgrim",
+      "masterId": "herald-pilgrim",
+      "file": "masters/herald-pilgrim.png",
+      "status": "available",
+      "facing": "rear three-quarter right; away toward upper right",
+      "pose": "idle",
+      "provenance": {
+        "kind": "approved-byte-reuse",
+        "sourceCommit": "41ae95ae42cce66e56805cc35ae1903a92a4d5a5",
+        "sourceFile": "masters/herald-pilgrim-rear.png",
+        "originalMetadata": "sources/baseline-catalog.json",
+        "originalId": "herald-pilgrim",
+        "reason": "Approved exact class/outfit appearance."
+      },
+      "requirements": {},
+      "unlock": "reachStitchedCourt",
+      "legacyArtAlias": {
+        "classId": "",
+        "outfitId": ""
+      },
+      "validation": {
+        "size": [
+          1024,
+          1536
+        ],
+        "mode": "RGBA",
+        "sha256": "34b41bffa58038d69b2078891d67ccd2c7f52a545f22803f5d5a9c711ff95bf4",
+        "alphaRange": [
+          0,
+          254
+        ],
+        "transparentFraction": 0.5209293365478516,
+        "visibleBounds": [
+          47,
+          32,
+          1015,
+          1498
+        ],
+        "clearMargins": [
+          47,
+          32,
+          9,
+          38
+        ],
+        "idleAnchor": [
+          531.0,
+          1498
+        ],
+        "anchorKind": "bottom-center of alpha >32; idle placement only"
+      }
+    },
+    {
+      "id": "rogue-default",
+      "classId": "rogue",
+      "outfitId": "default",
+      "name": "Gutter Leathers",
+      "canonicalId": "armor/rogue/default",
+      "masterId": "rogue-default",
+      "file": "masters/rogue-default.png",
+      "status": "available",
+      "facing": "rear three-quarter right; away toward upper right",
+      "pose": "idle",
+      "provenance": {
+        "kind": "approved-byte-reuse",
+        "sourceCommit": "41ae95ae42cce66e56805cc35ae1903a92a4d5a5",
+        "sourceFile": "masters/rogue-default-rear.png",
+        "originalMetadata": "sources/baseline-catalog.json",
+        "originalId": "rogue-default",
+        "reason": "Approved exact class/outfit appearance."
+      },
+      "requirements": {},
+      "unlock": "",
+      "legacyArtAlias": {
+        "classId": "",
+        "outfitId": ""
+      },
+      "validation": {
+        "size": [
+          1024,
+          1536
+        ],
+        "mode": "RGBA",
+        "sha256": "7db195f0621e2236ba12bcc14f927386af4daea551014b387f468e2ddc21a215",
+        "alphaRange": [
+          0,
+          254
+        ],
+        "transparentFraction": 0.6119842529296875,
+        "visibleBounds": [
+          52,
+          58,
+          996,
+          1461
+        ],
+        "clearMargins": [
+          52,
+          58,
+          28,
+          75
+        ],
+        "idleAnchor": [
+          524.0,
+          1461
+        ],
+        "anchorKind": "bottom-center of alpha >32; idle placement only"
+      }
+    },
+    {
+      "id": "rogue-nightveil",
+      "classId": "rogue",
+      "outfitId": "nightveil",
+      "name": "Nightveil Coat",
+      "canonicalId": "armor/rogue/nightveil",
+      "masterId": "rogue-nightveil",
+      "file": "masters/rogue-nightveil.png",
+      "status": "available",
+      "facing": "rear three-quarter right; away toward upper right",
+      "pose": "idle",
+      "provenance": {
+        "kind": "approved-byte-reuse",
+        "sourceCommit": "41ae95ae42cce66e56805cc35ae1903a92a4d5a5",
+        "sourceFile": "masters/rogue-nightveil-rear.png",
+        "originalMetadata": "sources/baseline-catalog.json",
+        "originalId": "rogue-nightveil",
+        "reason": "Approved exact class/outfit appearance."
+      },
+      "requirements": {},
+      "unlock": "rogueBeatWarden",
+      "legacyArtAlias": {
+        "classId": "",
+        "outfitId": ""
+      },
+      "validation": {
+        "size": [
+          1024,
+          1536
+        ],
+        "mode": "RGBA",
+        "sha256": "9bd7343290398f669bac9cedb7c86478fd9378d148797871867e699d5b8054ba",
+        "alphaRange": [
+          0,
+          254
+        ],
+        "transparentFraction": 0.5947341918945312,
+        "visibleBounds": [
+          24,
+          48,
+          1012,
+          1474
+        ],
+        "clearMargins": [
+          24,
+          48,
+          12,
+          62
+        ],
+        "idleAnchor": [
+          518.0,
+          1474
+        ],
+        "anchorKind": "bottom-center of alpha >32; idle placement only"
+      }
+    },
+    {
+      "id": "rogue-duelist",
+      "classId": "rogue",
+      "outfitId": "duelist",
+      "name": "Duelist Jerkin",
+      "canonicalId": "armor/rogue/duelist",
+      "masterId": "rogue-duelist",
+      "file": "masters/rogue-duelist.png",
+      "status": "available",
+      "facing": "rear three-quarter right; away toward upper right",
+      "pose": "idle",
+      "provenance": {
+        "kind": "approved-byte-reuse",
+        "sourceCommit": "41ae95ae42cce66e56805cc35ae1903a92a4d5a5",
+        "sourceFile": "masters/rogue-duelist-rear.png",
+        "originalMetadata": "sources/baseline-catalog.json",
+        "originalId": "rogue-duelist",
+        "reason": "Approved exact class/outfit appearance."
+      },
+      "requirements": {},
+      "unlock": "winAsRogue",
+      "legacyArtAlias": {
+        "classId": "",
+        "outfitId": ""
+      },
+      "validation": {
+        "size": [
+          1024,
+          1536
+        ],
+        "mode": "RGBA",
+        "sha256": "99b7aa0af1f86fdcc940201769c72cd625cf96d6f1fd05a51de3ad3e6e69c740",
+        "alphaRange": [
+          0,
+          254
+        ],
+        "transparentFraction": 0.6141770680745443,
+        "visibleBounds": [
+          90,
+          62,
+          999,
+          1451
+        ],
+        "clearMargins": [
+          90,
+          62,
+          25,
+          85
+        ],
+        "idleAnchor": [
+          544.5,
+          1451
+        ],
+        "anchorKind": "bottom-center of alpha >32; idle placement only"
+      }
+    },
+    {
+      "id": "rogue-shadow",
+      "classId": "rogue",
+      "outfitId": "shadow",
+      "name": "Shadow Mantle",
+      "canonicalId": "armor/rogue/shadow",
+      "masterId": "rogue-shadow",
+      "file": "masters/rogue-shadow.png",
+      "status": "available",
+      "facing": "rear three-quarter right; away toward upper right",
+      "pose": "idle",
+      "provenance": {
+        "kind": "approved-byte-reuse",
+        "sourceCommit": "41ae95ae42cce66e56805cc35ae1903a92a4d5a5",
+        "sourceFile": "masters/rogue-shadow-rear.png",
+        "originalMetadata": "sources/baseline-catalog.json",
+        "originalId": "rogue-shadow",
+        "reason": "Approved exact class/outfit appearance."
+      },
+      "requirements": {},
+      "unlock": "rogueReachCrown",
+      "legacyArtAlias": {
+        "classId": "",
+        "outfitId": ""
+      },
+      "validation": {
+        "size": [
+          1024,
+          1536
+        ],
+        "mode": "RGBA",
+        "sha256": "e1a83f561882bacdf2ed3425eaecadcea7b89949cac96c146609559a671471bd",
+        "alphaRange": [
+          0,
+          254
+        ],
+        "transparentFraction": 0.5785929361979166,
+        "visibleBounds": [
+          33,
+          20,
+          1016,
+          1487
+        ],
+        "clearMargins": [
+          33,
+          20,
+          8,
+          49
+        ],
+        "idleAnchor": [
+          524.5,
+          1487
+        ],
+        "anchorKind": "bottom-center of alpha >32; idle placement only"
+      }
+    },
+    {
+      "id": "reaver-bastion",
+      "classId": "reaver",
+      "outfitId": "bastion",
+      "name": "Bastion Harness",
+      "canonicalId": "armor/reaver/bastion",
+      "masterId": "reaver-bastion",
+      "file": "masters/reaver-bastion.png",
+      "status": "available",
+      "facing": "rear three-quarter right; away toward upper right",
+      "pose": "idle",
+      "provenance": {
+        "kind": "approved-byte-reuse",
+        "sourceCommit": "41ae95ae42cce66e56805cc35ae1903a92a4d5a5",
+        "sourceFile": "masters/reaver-bastion-rear.png",
+        "originalMetadata": "sources/baseline-catalog.json",
+        "originalId": "reaver-bastion",
+        "reason": "Approved exact class/outfit appearance."
+      },
+      "requirements": {},
+      "unlock": "reachStitchedCourt",
+      "legacyArtAlias": {
+        "classId": "",
+        "outfitId": "warden"
+      },
+      "validation": {
+        "size": [
+          1024,
+          1536
+        ],
+        "mode": "RGBA",
+        "sha256": "4dbe14232ad65ac9c0ea72246015496be001342550aaad348656188c20a185d9",
+        "alphaRange": [
+          0,
+          254
+        ],
+        "transparentFraction": 0.576941172281901,
+        "visibleBounds": [
+          26,
+          79,
+          1018,
+          1432
+        ],
+        "clearMargins": [
+          26,
+          79,
+          6,
+          104
+        ],
+        "idleAnchor": [
+          522.0,
+          1432
+        ],
+        "anchorKind": "bottom-center of alpha >32; idle placement only"
+      }
+    },
+    {
+      "id": "starseer-rimeweave",
+      "classId": "starseer",
+      "outfitId": "rimeweave",
+      "name": "Rimeweave Robes",
+      "canonicalId": "armor/starseer/rimeweave",
+      "masterId": "starseer-rimeweave",
+      "file": "masters/starseer-rimeweave.png",
+      "status": "available",
+      "facing": "rear three-quarter right; away toward upper right",
+      "pose": "idle",
+      "provenance": {
+        "kind": "approved-byte-reuse",
+        "sourceCommit": "41ae95ae42cce66e56805cc35ae1903a92a4d5a5",
+        "sourceFile": "masters/starseer-rimeweave-rear.png",
+        "originalMetadata": "sources/baseline-catalog.json",
+        "originalId": "starseer-rimeweave",
+        "reason": "Approved exact class/outfit appearance."
+      },
+      "requirements": {},
+      "unlock": "beatFellWarden",
+      "legacyArtAlias": {
+        "classId": "",
+        "outfitId": "starlit"
+      },
+      "validation": {
+        "size": [
+          1024,
+          1536
+        ],
+        "mode": "RGBA",
+        "sha256": "baa94519df47d5a86b78038c5201da69a784563120399c069f0090f28fd97c1f",
+        "alphaRange": [
+          0,
+          254
+        ],
+        "transparentFraction": 0.5222403208414713,
+        "visibleBounds": [
+          57,
+          7,
+          991,
+          1472
+        ],
+        "clearMargins": [
+          57,
+          7,
+          33,
+          64
+        ],
+        "idleAnchor": [
+          524.0,
+          1472
+        ],
+        "anchorKind": "bottom-center of alpha >32; idle placement only"
+      }
+    },
+    {
+      "id": "rogue-waywatcher",
+      "classId": "rogue",
+      "outfitId": "waywatcher",
+      "name": "Waywatcher Coat",
+      "canonicalId": "armor/rogue/waywatcher",
+      "masterId": "rogue-waywatcher",
+      "file": "masters/rogue-waywatcher.png",
+      "status": "available",
+      "facing": "rear three-quarter right; away toward upper right",
+      "pose": "idle",
+      "provenance": {
+        "kind": "approved-byte-reuse",
+        "sourceCommit": "41ae95ae42cce66e56805cc35ae1903a92a4d5a5",
+        "sourceFile": "masters/rogue-waywatcher-rear.png",
+        "originalMetadata": "sources/baseline-catalog.json",
+        "originalId": "rogue-waywatcher",
+        "reason": "Approved exact class/outfit appearance."
+      },
+      "requirements": {},
+      "unlock": "rogueBeatWarden",
+      "legacyArtAlias": {
+        "classId": "",
+        "outfitId": "nightveil"
+      },
+      "validation": {
+        "size": [
+          1024,
+          1536
+        ],
+        "mode": "RGBA",
+        "sha256": "d6c56261778dacb4a5703279be824be65f48b3f18ec3ceba757856f452ca9924",
+        "alphaRange": [
+          0,
+          254
+        ],
+        "transparentFraction": 0.6096146901448568,
+        "visibleBounds": [
+          27,
+          74,
+          1007,
+          1444
+        ],
+        "clearMargins": [
+          27,
+          74,
+          17,
+          92
+        ],
+        "idleAnchor": [
+          517.0,
+          1444
+        ],
+        "anchorKind": "bottom-center of alpha >32; idle placement only"
+      }
+    },
+    {
+      "id": "reaver-wayfarerPlate",
+      "classId": "reaver",
+      "outfitId": "wayfarerPlate",
+      "name": "Wayfarer Plate",
+      "canonicalId": "armor/reaver/wayfarerPlate",
+      "masterId": "reaver-default",
+      "file": "masters/reaver-default.png",
+      "status": "available",
+      "facing": "rear three-quarter right; away toward upper right",
+      "pose": "idle",
+      "provenance": {
+        "kind": "approved-byte-reuse",
+        "sourceCommit": "41ae95ae42cce66e56805cc35ae1903a92a4d5a5",
+        "sourceFile": "masters/reaver-default-rear.png",
+        "originalMetadata": "sources/baseline-catalog.json",
+        "originalId": "reaver-default",
+        "reason": "Same wearer, exact same named default armor and palette; shared gameplay bonuses do not alter appearance."
+      },
+      "requirements": {
+        "strength": 3
+      },
+      "unlock": "",
+      "legacyArtAlias": {
+        "classId": "reaver",
+        "outfitId": "default"
+      },
+      "validation": {
+        "size": [
+          1024,
+          1536
+        ],
+        "mode": "RGBA",
+        "sha256": "013f46c2d92303243da8527fcf9a15bd7c31f41e3add503e3fdd6ebc8f9950cd",
+        "alphaRange": [
+          0,
+          254
+        ],
+        "transparentFraction": 0.5911057790120443,
+        "visibleBounds": [
+          22,
+          69,
+          1018,
+          1427
+        ],
+        "clearMargins": [
+          22,
+          69,
+          6,
+          109
+        ],
+        "idleAnchor": [
+          520.0,
+          1427
+        ],
+        "anchorKind": "bottom-center of alpha >32; idle placement only"
+      }
+    },
+    {
+      "id": "starseer-wayfarerPlate",
+      "classId": "starseer",
+      "outfitId": "wayfarerPlate",
+      "name": "Wayfarer Plate",
+      "canonicalId": "armor/starseer/wayfarerPlate",
+      "masterId": "starseer-wayfarerPlate",
+      "file": "masters/starseer-wayfarerPlate.png",
+      "status": "available",
+      "facing": "rear three-quarter right; away toward upper right",
+      "pose": "idle",
+      "provenance": {
+        "kind": "new-wearer-specific",
+        "receiptId": "starseer-wayfarerPlate",
+        "reason": "Legacy other-class art alias is not appearance coverage."
+      },
+      "requirements": {
+        "strength": 3
+      },
+      "unlock": "",
+      "legacyArtAlias": {
+        "classId": "reaver",
+        "outfitId": "default"
+      },
+      "validation": {
+        "size": [
+          1024,
+          1536
+        ],
+        "mode": "RGBA",
+        "sha256": "fc728e6e747b8d7d1826dc1978deb3a243061ddedab823e28b967e160d4dafc2",
+        "alphaRange": [
+          0,
+          254
+        ],
+        "transparentFraction": 0.6870651245117188,
+        "visibleBounds": [
+          113,
+          185,
+          854,
+          1350
+        ],
+        "clearMargins": [
+          113,
+          185,
+          170,
+          186
+        ],
+        "idleAnchor": [
+          483.5,
+          1350
+        ],
+        "anchorKind": "bottom-center of alpha >32; idle placement only"
+      }
+    },
+    {
+      "id": "herald-wayfarerPlate",
+      "classId": "herald",
+      "outfitId": "wayfarerPlate",
+      "name": "Wayfarer Plate",
+      "canonicalId": "armor/herald/wayfarerPlate",
+      "masterId": "herald-wayfarerPlate",
+      "file": "masters/herald-wayfarerPlate.png",
+      "status": "available",
+      "facing": "rear three-quarter right; away toward upper right",
+      "pose": "idle",
+      "provenance": {
+        "kind": "new-wearer-specific",
+        "receiptId": "herald-wayfarerPlate",
+        "reason": "Legacy other-class art alias is not appearance coverage."
+      },
+      "requirements": {
+        "strength": 3
+      },
+      "unlock": "",
+      "legacyArtAlias": {
+        "classId": "reaver",
+        "outfitId": "default"
+      },
+      "validation": {
+        "size": [
+          1024,
+          1536
+        ],
+        "mode": "RGBA",
+        "sha256": "c506e03bedaa0b0afda022b7dfbf52022ec36b5583a5f4ed6c419e8c8640d8ba",
+        "alphaRange": [
+          0,
+          254
+        ],
+        "transparentFraction": 0.6710402170817057,
+        "visibleBounds": [
+          126,
+          181,
+          943,
+          1390
+        ],
+        "clearMargins": [
+          126,
+          181,
+          81,
+          146
+        ],
+        "idleAnchor": [
+          534.5,
+          1390
+        ],
+        "anchorKind": "bottom-center of alpha >32; idle placement only"
+      }
+    },
+    {
+      "id": "rogue-wayfarerPlate",
+      "classId": "rogue",
+      "outfitId": "wayfarerPlate",
+      "name": "Wayfarer Plate",
+      "canonicalId": "armor/rogue/wayfarerPlate",
+      "masterId": "rogue-wayfarerPlate",
+      "file": "masters/rogue-wayfarerPlate.png",
+      "status": "available",
+      "facing": "rear three-quarter right; away toward upper right",
+      "pose": "idle",
+      "provenance": {
+        "kind": "new-wearer-specific",
+        "receiptId": "rogue-wayfarerPlate",
+        "reason": "Legacy other-class art alias is not appearance coverage."
+      },
+      "requirements": {
+        "strength": 3
+      },
+      "unlock": "",
+      "legacyArtAlias": {
+        "classId": "reaver",
+        "outfitId": "default"
+      },
+      "validation": {
+        "size": [
+          1024,
+          1536
+        ],
+        "mode": "RGBA",
+        "sha256": "2fbf7a3782c8430af3ceaa20a7c962a6d46241f654df3a19efa60a3dd1e4704b",
+        "alphaRange": [
+          0,
+          254
+        ],
+        "transparentFraction": 0.732201894124349,
+        "visibleBounds": [
+          153,
+          208,
+          924,
+          1339
+        ],
+        "clearMargins": [
+          153,
+          208,
+          100,
+          197
+        ],
+        "idleAnchor": [
+          538.5,
+          1339
+        ],
+        "anchorKind": "bottom-center of alpha >32; idle placement only"
+      }
+    },
+    {
+      "id": "reaver-nightweave",
+      "classId": "reaver",
+      "outfitId": "nightweave",
+      "name": "Nightweave",
+      "canonicalId": "armor/reaver/nightweave",
+      "masterId": "reaver-nightweave",
+      "file": "masters/reaver-nightweave.png",
+      "status": "available",
+      "facing": "rear three-quarter right; away toward upper right",
+      "pose": "idle",
+      "provenance": {
+        "kind": "new-wearer-specific",
+        "receiptId": "reaver-nightweave",
+        "reason": "Legacy other-class art alias is not appearance coverage."
+      },
+      "requirements": {
+        "intelligence": 3
+      },
+      "unlock": "",
+      "legacyArtAlias": {
+        "classId": "starseer",
+        "outfitId": "default"
+      },
+      "validation": {
+        "size": [
+          1024,
+          1536
+        ],
+        "mode": "RGBA",
+        "sha256": "0490b47f220cc57ced54f8e0ab8b0eca9d4bb2ee69ea50796c16598507810f61",
+        "alphaRange": [
+          0,
+          254
+        ],
+        "transparentFraction": 0.7521654764811198,
+        "visibleBounds": [
+          170,
+          251,
+          899,
+          1265
+        ],
+        "clearMargins": [
+          170,
+          251,
+          125,
+          271
+        ],
+        "idleAnchor": [
+          534.5,
+          1265
+        ],
+        "anchorKind": "bottom-center of alpha >32; idle placement only"
+      }
+    },
+    {
+      "id": "starseer-nightweave",
+      "classId": "starseer",
+      "outfitId": "nightweave",
+      "name": "Nightweave",
+      "canonicalId": "armor/starseer/nightweave",
+      "masterId": "starseer-default",
+      "file": "masters/starseer-default.png",
+      "status": "available",
+      "facing": "rear three-quarter right; away toward upper right",
+      "pose": "idle",
+      "provenance": {
+        "kind": "approved-byte-reuse",
+        "sourceCommit": "41ae95ae42cce66e56805cc35ae1903a92a4d5a5",
+        "sourceFile": "masters/starseer-default-rear.png",
+        "originalMetadata": "sources/baseline-catalog.json",
+        "originalId": "starseer-default",
+        "reason": "Same wearer, exact same named default armor and palette; shared gameplay bonuses do not alter appearance."
+      },
+      "requirements": {
+        "intelligence": 3
+      },
+      "unlock": "",
+      "legacyArtAlias": {
+        "classId": "starseer",
+        "outfitId": "default"
+      },
+      "validation": {
+        "size": [
+          1024,
+          1536
+        ],
+        "mode": "RGBA",
+        "sha256": "71a6b602ac5a2b516b041cb5456d79409588a095c86bc2f6f1648f05661a3435",
+        "alphaRange": [
+          0,
+          254
+        ],
+        "transparentFraction": 0.5244661966959635,
+        "visibleBounds": [
+          53,
+          16,
+          973,
+          1483
+        ],
+        "clearMargins": [
+          53,
+          16,
+          51,
+          53
+        ],
+        "idleAnchor": [
+          513.0,
+          1483
+        ],
+        "anchorKind": "bottom-center of alpha >32; idle placement only"
+      }
+    },
+    {
+      "id": "herald-nightweave",
+      "classId": "herald",
+      "outfitId": "nightweave",
+      "name": "Nightweave",
+      "canonicalId": "armor/herald/nightweave",
+      "masterId": "herald-nightweave",
+      "file": "masters/herald-nightweave.png",
+      "status": "available",
+      "facing": "rear three-quarter right; away toward upper right",
+      "pose": "idle",
+      "provenance": {
+        "kind": "new-wearer-specific",
+        "receiptId": "herald-nightweave",
+        "reason": "Legacy other-class art alias is not appearance coverage."
+      },
+      "requirements": {
+        "intelligence": 3
+      },
+      "unlock": "",
+      "legacyArtAlias": {
+        "classId": "starseer",
+        "outfitId": "default"
+      },
+      "validation": {
+        "size": [
+          1024,
+          1536
+        ],
+        "mode": "RGBA",
+        "sha256": "5601f198397cfb960973b24114168a49587c978e26d9a928ef9aaf2fee4d1dd8",
+        "alphaRange": [
+          0,
+          254
+        ],
+        "transparentFraction": 0.6916961669921875,
+        "visibleBounds": [
+          150,
+          212,
+          920,
+          1364
+        ],
+        "clearMargins": [
+          150,
+          212,
+          104,
+          172
+        ],
+        "idleAnchor": [
+          535.0,
+          1364
+        ],
+        "anchorKind": "bottom-center of alpha >32; idle placement only"
+      }
+    },
+    {
+      "id": "rogue-nightweave",
+      "classId": "rogue",
+      "outfitId": "nightweave",
+      "name": "Nightweave",
+      "canonicalId": "armor/rogue/nightweave",
+      "masterId": "rogue-nightweave",
+      "file": "masters/rogue-nightweave.png",
+      "status": "available",
+      "facing": "rear three-quarter right; away toward upper right",
+      "pose": "idle",
+      "provenance": {
+        "kind": "new-wearer-specific",
+        "receiptId": "rogue-nightweave",
+        "reason": "Legacy other-class art alias is not appearance coverage."
+      },
+      "requirements": {
+        "intelligence": 3
+      },
+      "unlock": "",
+      "legacyArtAlias": {
+        "classId": "starseer",
+        "outfitId": "default"
+      },
+      "validation": {
+        "size": [
+          1024,
+          1536
+        ],
+        "mode": "RGBA",
+        "sha256": "4690459a0062af1ff4bfa795025670a54eb05d56fce109342bc4de64bc997a48",
+        "alphaRange": [
+          0,
+          254
+        ],
+        "transparentFraction": 0.7122046152750651,
+        "visibleBounds": [
+          104,
+          185,
+          924,
+          1363
+        ],
+        "clearMargins": [
+          104,
+          185,
+          100,
+          173
+        ],
+        "idleAnchor": [
+          514.0,
+          1363
+        ],
+        "anchorKind": "bottom-center of alpha >32; idle placement only"
+      }
+    },
+    {
+      "id": "reaver-riteVestments",
+      "classId": "reaver",
+      "outfitId": "riteVestments",
+      "name": "Rite Vestments",
+      "canonicalId": "armor/reaver/riteVestments",
+      "masterId": "reaver-riteVestments",
+      "file": "masters/reaver-riteVestments.png",
+      "status": "available",
+      "facing": "rear three-quarter right; away toward upper right",
+      "pose": "idle",
+      "provenance": {
+        "kind": "new-wearer-specific",
+        "receiptId": "reaver-riteVestments",
+        "reason": "Legacy other-class art alias is not appearance coverage."
+      },
+      "requirements": {
+        "wisdom": 3
+      },
+      "unlock": "",
+      "legacyArtAlias": {
+        "classId": "herald",
+        "outfitId": "default"
+      },
+      "validation": {
+        "size": [
+          1024,
+          1536
+        ],
+        "mode": "RGBA",
+        "sha256": "e1fe6f10b2a2741d55ce4783ad8781af63fefb857576d481693c77d2690df0c0",
+        "alphaRange": [
+          0,
+          254
+        ],
+        "transparentFraction": 0.7298552195231119,
+        "visibleBounds": [
+          145,
+          226,
+          931,
+          1292
+        ],
+        "clearMargins": [
+          145,
+          226,
+          93,
+          244
+        ],
+        "idleAnchor": [
+          538.0,
+          1292
+        ],
+        "anchorKind": "bottom-center of alpha >32; idle placement only"
+      }
+    },
+    {
+      "id": "starseer-riteVestments",
+      "classId": "starseer",
+      "outfitId": "riteVestments",
+      "name": "Rite Vestments",
+      "canonicalId": "armor/starseer/riteVestments",
+      "masterId": "starseer-riteVestments",
+      "file": "masters/starseer-riteVestments.png",
+      "status": "available",
+      "facing": "rear three-quarter right; away toward upper right",
+      "pose": "idle",
+      "provenance": {
+        "kind": "new-wearer-specific",
+        "receiptId": "starseer-riteVestments",
+        "reason": "Legacy other-class art alias is not appearance coverage."
+      },
+      "requirements": {
+        "wisdom": 3
+      },
+      "unlock": "",
+      "legacyArtAlias": {
+        "classId": "herald",
+        "outfitId": "default"
+      },
+      "validation": {
+        "size": [
+          1024,
+          1536
+        ],
+        "mode": "RGBA",
+        "sha256": "97c43831c1a8e91a01148c3517ee31b5ac60368ef824ed5dbeda83f8e52ccbaa",
+        "alphaRange": [
+          0,
+          254
+        ],
+        "transparentFraction": 0.6669603983561198,
+        "visibleBounds": [
+          144,
+          142,
+          859,
+          1381
+        ],
+        "clearMargins": [
+          144,
+          142,
+          165,
+          155
+        ],
+        "idleAnchor": [
+          501.5,
+          1381
+        ],
+        "anchorKind": "bottom-center of alpha >32; idle placement only"
+      }
+    },
+    {
+      "id": "herald-riteVestments",
+      "classId": "herald",
+      "outfitId": "riteVestments",
+      "name": "Rite Vestments",
+      "canonicalId": "armor/herald/riteVestments",
+      "masterId": "herald-default",
+      "file": "masters/herald-default.png",
+      "status": "available",
+      "facing": "rear three-quarter right; away toward upper right",
+      "pose": "idle",
+      "provenance": {
+        "kind": "approved-byte-reuse",
+        "sourceCommit": "41ae95ae42cce66e56805cc35ae1903a92a4d5a5",
+        "sourceFile": "masters/herald-default-rear.png",
+        "originalMetadata": "sources/baseline-catalog.json",
+        "originalId": "herald-default",
+        "reason": "Same wearer, exact same named default armor and palette; shared gameplay bonuses do not alter appearance."
+      },
+      "requirements": {
+        "wisdom": 3
+      },
+      "unlock": "",
+      "legacyArtAlias": {
+        "classId": "herald",
+        "outfitId": "default"
+      },
+      "validation": {
+        "size": [
+          1024,
+          1536
+        ],
+        "mode": "RGBA",
+        "sha256": "69e3f8a014673794cebaa50a4519f8cd66e5a79602ba2e133fb4a70336b769ca",
+        "alphaRange": [
+          0,
+          254
+        ],
+        "transparentFraction": 0.5204480489095052,
+        "visibleBounds": [
+          75,
+          30,
+          1008,
+          1504
+        ],
+        "clearMargins": [
+          75,
+          30,
+          16,
+          32
+        ],
+        "idleAnchor": [
+          541.5,
+          1504
+        ],
+        "anchorKind": "bottom-center of alpha >32; idle placement only"
+      }
+    },
+    {
+      "id": "rogue-riteVestments",
+      "classId": "rogue",
+      "outfitId": "riteVestments",
+      "name": "Rite Vestments",
+      "canonicalId": "armor/rogue/riteVestments",
+      "masterId": "rogue-riteVestments",
+      "file": "masters/rogue-riteVestments.png",
+      "status": "available",
+      "facing": "rear three-quarter right; away toward upper right",
+      "pose": "idle",
+      "provenance": {
+        "kind": "new-wearer-specific",
+        "receiptId": "rogue-riteVestments",
+        "reason": "Legacy other-class art alias is not appearance coverage."
+      },
+      "requirements": {
+        "wisdom": 3
+      },
+      "unlock": "",
+      "legacyArtAlias": {
+        "classId": "herald",
+        "outfitId": "default"
+      },
+      "validation": {
+        "size": [
+          1024,
+          1536
+        ],
+        "mode": "RGBA",
+        "sha256": "66641a1a5bcdf44f5f1fda6e34026e9002f4d573a5ac6efca03cb97ca33a4473",
+        "alphaRange": [
+          0,
+          254
+        ],
+        "transparentFraction": 0.7038930257161459,
+        "visibleBounds": [
+          95,
+          169,
+          936,
+          1360
+        ],
+        "clearMargins": [
+          95,
+          169,
+          88,
+          176
+        ],
+        "idleAnchor": [
+          515.5,
+          1360
+        ],
+        "anchorKind": "bottom-center of alpha >32; idle placement only"
+      }
+    },
+    {
+      "id": "reaver-gutterLeathers",
+      "classId": "reaver",
+      "outfitId": "gutterLeathers",
+      "name": "Gutter Leathers",
+      "canonicalId": "armor/reaver/gutterLeathers",
+      "masterId": "reaver-gutterLeathers",
+      "file": "masters/reaver-gutterLeathers.png",
+      "status": "available",
+      "facing": "rear three-quarter right; away toward upper right",
+      "pose": "idle",
+      "provenance": {
+        "kind": "new-wearer-specific",
+        "receiptId": "reaver-gutterLeathers",
+        "reason": "Legacy other-class art alias is not appearance coverage."
+      },
+      "requirements": {
+        "dexterity": 3
+      },
+      "unlock": "",
+      "legacyArtAlias": {
+        "classId": "rogue",
+        "outfitId": "default"
+      },
+      "validation": {
+        "size": [
+          1024,
+          1536
+        ],
+        "mode": "RGBA",
+        "sha256": "34d13d26da29985af4647bb7d4fc7da37c2feda4211a7337540b099e9ad555bd",
+        "alphaRange": [
+          0,
+          254
+        ],
+        "transparentFraction": 0.7765350341796875,
+        "visibleBounds": [
+          155,
+          266,
+          921,
+          1261
+        ],
+        "clearMargins": [
+          155,
+          266,
+          103,
+          275
+        ],
+        "idleAnchor": [
+          538.0,
+          1261
+        ],
+        "anchorKind": "bottom-center of alpha >32; idle placement only"
+      }
+    },
+    {
+      "id": "starseer-gutterLeathers",
+      "classId": "starseer",
+      "outfitId": "gutterLeathers",
+      "name": "Gutter Leathers",
+      "canonicalId": "armor/starseer/gutterLeathers",
+      "masterId": "starseer-gutterLeathers",
+      "file": "masters/starseer-gutterLeathers.png",
+      "status": "available",
+      "facing": "rear three-quarter right; away toward upper right",
+      "pose": "idle",
+      "provenance": {
+        "kind": "new-wearer-specific",
+        "receiptId": "starseer-gutterLeathers",
+        "reason": "Legacy other-class art alias is not appearance coverage."
+      },
+      "requirements": {
+        "dexterity": 3
+      },
+      "unlock": "",
+      "legacyArtAlias": {
+        "classId": "rogue",
+        "outfitId": "default"
+      },
+      "validation": {
+        "size": [
+          1024,
+          1536
+        ],
+        "mode": "RGBA",
+        "sha256": "34cbe9b28495c446fb422ed5be290dcb34edf9d5c617fab0869ce0592b0a202a",
+        "alphaRange": [
+          0,
+          254
+        ],
+        "transparentFraction": 0.7143421173095703,
+        "visibleBounds": [
+          140,
+          224,
+          844,
+          1382
+        ],
+        "clearMargins": [
+          140,
+          224,
+          180,
+          154
+        ],
+        "idleAnchor": [
+          492.0,
+          1382
+        ],
+        "anchorKind": "bottom-center of alpha >32; idle placement only"
+      }
+    },
+    {
+      "id": "herald-gutterLeathers",
+      "classId": "herald",
+      "outfitId": "gutterLeathers",
+      "name": "Gutter Leathers",
+      "canonicalId": "armor/herald/gutterLeathers",
+      "masterId": "herald-gutterLeathers",
+      "file": "masters/herald-gutterLeathers.png",
+      "status": "available",
+      "facing": "rear three-quarter right; away toward upper right",
+      "pose": "idle",
+      "provenance": {
+        "kind": "new-wearer-specific",
+        "receiptId": "herald-gutterLeathers",
+        "reason": "Legacy other-class art alias is not appearance coverage."
+      },
+      "requirements": {
+        "dexterity": 3
+      },
+      "unlock": "",
+      "legacyArtAlias": {
+        "classId": "rogue",
+        "outfitId": "default"
+      },
+      "validation": {
+        "size": [
+          1024,
+          1536
+        ],
+        "mode": "RGBA",
+        "sha256": "adec417fe22ab777db6ad458cdede18faa82e321e81311b28877d8a511a457b8",
+        "alphaRange": [
+          0,
+          254
+        ],
+        "transparentFraction": 0.6792068481445312,
+        "visibleBounds": [
+          146,
+          177,
+          948,
+          1364
+        ],
+        "clearMargins": [
+          146,
+          177,
+          76,
+          172
+        ],
+        "idleAnchor": [
+          547.0,
+          1364
+        ],
+        "anchorKind": "bottom-center of alpha >32; idle placement only"
+      }
+    },
+    {
+      "id": "rogue-gutterLeathers",
+      "classId": "rogue",
+      "outfitId": "gutterLeathers",
+      "name": "Gutter Leathers",
+      "canonicalId": "armor/rogue/gutterLeathers",
+      "masterId": "rogue-default",
+      "file": "masters/rogue-default.png",
+      "status": "available",
+      "facing": "rear three-quarter right; away toward upper right",
+      "pose": "idle",
+      "provenance": {
+        "kind": "approved-byte-reuse",
+        "sourceCommit": "41ae95ae42cce66e56805cc35ae1903a92a4d5a5",
+        "sourceFile": "masters/rogue-default-rear.png",
+        "originalMetadata": "sources/baseline-catalog.json",
+        "originalId": "rogue-default",
+        "reason": "Same wearer, exact same named default armor and palette; shared gameplay bonuses do not alter appearance."
+      },
+      "requirements": {
+        "dexterity": 3
+      },
+      "unlock": "",
+      "legacyArtAlias": {
+        "classId": "rogue",
+        "outfitId": "default"
+      },
+      "validation": {
+        "size": [
+          1024,
+          1536
+        ],
+        "mode": "RGBA",
+        "sha256": "7db195f0621e2236ba12bcc14f927386af4daea551014b387f468e2ddc21a215",
+        "alphaRange": [
+          0,
+          254
+        ],
+        "transparentFraction": 0.6119842529296875,
+        "visibleBounds": [
+          52,
+          58,
+          996,
+          1461
+        ],
+        "clearMargins": [
+          52,
+          58,
+          28,
+          75
+        ],
+        "idleAnchor": [
+          524.0,
+          1461
+        ],
+        "anchorKind": "bottom-center of alpha >32; idle placement only"
+      }
+    }
+  ],
+  "sources": [
+    {
+      "path": "content/source/outfits.csv",
+      "snapshot": "sources/outfits.csv",
+      "sha256": "0556ecd6ea2ef2272b39c1cfc2e52225af25444a4c63df6e343f8d61a4c48267"
+    },
+    {
+      "path": "content/source/equipmentRequirements.csv",
+      "snapshot": "sources/equipmentRequirements.csv",
+      "sha256": "08fe6aa7ea455298765deea924a81d563690ee23d969a416866932831e720e37"
+    },
+    {
+      "path": "content/source/equipSlots.csv",
+      "snapshot": "sources/equipSlots.csv",
+      "sha256": "08c0b5f5475f90ae8f7971649da51d0004fa69a7052f5dbb9248e3bfc227138d"
+    },
+    {
+      "path": "content/source/weapons.csv",
+      "snapshot": "sources/weapons.csv",
+      "sha256": "9dbb2246ba89a5fe01b17e5d759857b253319181d29d0f89ebef95699af7471a"
+    },
+    {
+      "path": "content/source/itemUpgradeChanges.csv",
+      "snapshot": "sources/itemUpgradeChanges.csv",
+      "sha256": "52e018cbfe0b9b9fce2a94022be5ffd96fb1cf7089b4cc6ee34ac3911494d3b8"
+    },
+    {
+      "path": "src/content/classes.js",
+      "snapshot": "sources/classes.js",
+      "sha256": "75a1130ce26342620ea7d8f51dfc780be0c8eb419a777b5ecbefa8ca87db8c20"
+    },
+    {
+      "path": "src/content/equipment.js",
+      "snapshot": "sources/equipment.js",
+      "sha256": "cdd79587f17d0c8711eda29ca44b5463c4d907d306bb3ff6b321b2a491d1ffa4"
+    },
+    {
+      "path": "src/content/generated/outfits.js",
+      "snapshot": "sources/outfits.js",
+      "sha256": "951af945db49f1b984894acbffec72d7b696d82ac13d0a7d2cacd424e2f39022"
+    },
+    {
+      "path": "src/content/sharedOutfitArt.js",
+      "snapshot": "sources/sharedOutfitArt.js",
+      "sha256": "08f62988e899dcf5bf1a0c72e509ee6a66322ff008c299deae6a4553aac7f9d5"
+    },
+    {
+      "path": "src/model/paintedOutfitArt.js",
+      "snapshot": "sources/paintedOutfitArt.js",
+      "sha256": "0c31c25c5be0ac6549b547fb8953591243f477132747f00ebbd0202fef017892"
+    },
+    {
+      "path": "src/model/loadout.js",
+      "snapshot": "sources/loadout.js",
+      "sha256": "cba10801dc0fb489dc92ef1062e003c3ec12f4a4cc26827ec815e7cc87206901"
+    },
+    {
+      "path": "tests/shared-armor.test.mjs",
+      "snapshot": "sources/shared-armor.test.snapshot.mjs",
+      "sha256": "12aad80f2e70e0d020faf9638c46fee235feea9c1ace5c39815c3655c3d93ae5"
+    },
+    {
+      "path": "docs/LORE.md",
+      "snapshot": "sources/LORE.md",
+      "sha256": "0b460ab8f7dd69b7e36303095504a1eaad70327ef0037b7be427e024f8a8a334"
+    }
+  ],
+  "counts": {
+    "canonicalRecords": 35,
+    "namedArmors": 19,
+    "matrixCells": 76,
+    "supportedAppearances": 31,
+    "unsupportedCombinations": 45,
+    "uniqueMasters": 31,
+    "missing": 0
+  }
+}

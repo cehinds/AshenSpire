@@ -12,6 +12,8 @@
 //
 // Headless: no document/window/localStorage/timers.
 
+import { counterstrikeAmount } from '../engine/combatCardTraitMath.js';
+
 export const FORMULA_OPS = Object.freeze([
   'add',
   'mul',
@@ -23,6 +25,7 @@ export const FORMULA_OPS = Object.freeze([
   'blockOf',
   'hpOf',
   'cardsPlayedThisTurn',
+  'traitBonus',
 ]);
 
 // Entity references usable in a formula's `of` field.
@@ -55,6 +58,73 @@ export function isFormula(v) {
  */
 export function evaluate(formula, ctx = {}) {
   return Math.floor(evaluateRaw(formula, ctx));
+}
+
+// Authored card faces have no actor or paid-action context. Prove the whole
+// tree constant before using the canonical evaluator; its runtime defaults
+// for energy and card counts are never evidence of a static zero.
+export function constantFormulaValue(formula) {
+  const constant = node => {
+    if (typeof node === 'number') return Number.isFinite(node);
+    return isFormula(node) && ['add', 'mul'].includes(node.f)
+      && Object.keys(node).every(key => ['f', 'args', 'min', 'max'].includes(key))
+      && ['min', 'max'].every(key => node[key] === undefined || Number.isFinite(node[key]))
+      && Array.isArray(node.args) && node.args.every(constant);
+  };
+  if (!constant(formula)) return undefined;
+  try {
+    const value = evaluate(formula);
+    return Number.isFinite(value) ? value : undefined;
+  } catch {
+    return undefined; // Finite literals can still overflow into a non-number.
+  }
+}
+
+/** State-dependent stack quantities on authored faces, without evaluating an actor. */
+export function describeFormula(formula) {
+  // A sum of describable stack counts (Herald payoffs read Crimson + Necrotic
+  // Blight together, SPEC §4.4) reads as its terms joined by "plus".
+  if (isFormula(formula) && formula.f === 'add') {
+    if (!Array.isArray(formula.args) || !formula.args.length
+        || Object.keys(formula).some(key => !['f', 'args', 'min', 'max'].includes(key))
+        || ['min', 'max'].some(key => formula[key] !== undefined && !Number.isFinite(formula[key]))) return undefined;
+    const parts = formula.args.map(describeFormula);
+    if (parts.some(part => part === undefined)) return undefined;
+    let text = parts.join(' plus ');
+    if (formula.min !== undefined) text += ` (minimum ${formula.min})`;
+    if (formula.max !== undefined) text += ` (maximum ${formula.max})`;
+    if (['min', 'max'].some(key => formula[key] !== undefined && !Number.isInteger(formula[key]))) text += ' (rounded down)';
+    return text;
+  }
+  // A constant 1/N share of a describable count — Reclamation's "1 per 2
+  // Blight", floored once on the sum (the evaluator's single final floor).
+  if (isFormula(formula) && formula.f === 'mul') {
+    if (!Array.isArray(formula.args) || formula.args.length !== 2
+        || Object.keys(formula).some(key => !['f', 'args', 'min', 'max'].includes(key))
+        || ['min', 'max'].some(key => formula[key] !== undefined && !Number.isFinite(formula[key]))) return undefined;
+    const [share, inner] = formula.args;
+    const per = typeof share === 'number' && share > 0 ? 1 / share : NaN;
+    const described = describeFormula(inner);
+    if (!Number.isInteger(per) || per < 2 || described === undefined) return undefined;
+    let text = `1 per ${per} of (${described}) (whole groups)`;
+    if (formula.min !== undefined) text += ` (minimum ${formula.min})`;
+    if (formula.max !== undefined) text += ` (maximum ${formula.max})`;
+    if (['min', 'max'].some(key => formula[key] !== undefined && !Number.isInteger(formula[key]))) text += ' (rounded down)';
+    return text;
+  }
+  if (!isFormula(formula) || formula.f !== 'stacks'
+      || Object.keys(formula).some(key => !['f', 'status', 'of', 'per', 'min', 'max'].includes(key))
+      || ['min', 'max'].some(key => formula[key] !== undefined && !Number.isFinite(formula[key]))) return undefined;
+  const location = { self: 'on you', owner: 'on the owner', target: 'on the target', enemy: 'on the enemy', player: 'on the player', allEnemies: 'across all enemies' };
+  if (!Object.hasOwn(location, formula.of) || typeof formula.status !== 'string' || !formula.status
+      || (formula.per !== undefined && (!Number.isFinite(formula.per) || formula.per <= 0))) return undefined;
+  const status = formula.status.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, c => c.toUpperCase());
+  let text = `${status} stacks ${location[formula.of]}`;
+  if (formula.per !== undefined) text = `1 per ${formula.per} ${text} (whole groups)`;
+  if (formula.min !== undefined) text += ` (minimum ${formula.min})`;
+  if (formula.max !== undefined) text += ` (maximum ${formula.max})`;
+  if (['min', 'max'].some(key => formula[key] !== undefined && !Number.isInteger(formula[key]))) text += ' (rounded down)';
+  return text;
 }
 
 /**
@@ -128,6 +198,12 @@ function evalNode(node, ctx) {
     case 'cardsPlayedThisTurn': {
       const n = ctx.cardsPlayedThisTurn != null ? ctx.cardsPlayedThisTurn : 0;
       v = n * (node.per != null ? node.per : 1);
+      break;
+    }
+    case 'traitBonus': {
+      // Counterstrike on a formula amount (docs/combat-card-traits-contract.md):
+      // the base is floored, then a + max(floor(a × pct), 1) for a > 0.
+      v = counterstrikeAmount(evaluate(node.base, ctx), numField(node, 'pct'));
       break;
     }
     default:

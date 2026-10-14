@@ -1,0 +1,37 @@
+{
+  "id": "gildedKnight",
+  "name": "Gilded Knight",
+  "family": "enemy",
+  "act": 2,
+  "size": "medium",
+  "source": "src/content/enemies/act2.js",
+  "facing": "left",
+  "pose": "idle",
+  "prompt": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: Undead royal knight in weathered gilt plate with verdigris seams and frost, thin crowned helmet, long straight sword and heraldic shield. Face LEFT toward the player. Use a canvas that contains the complete silhouette, wide 1536x1024 for broad beasts and winged figures, portrait 1024x1536 for upright figures. Lowest foot at 94 percent height; no clipped horns, wings, tails or weapons.",
+  "file": "masters/gildedKnight.png",
+  "status": "generated",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a10ffd-7ed8-7ff3-b84a-467346a2abc4\\exec-077990ae-2a4a-4325-9974-c38b55fce5da.png",
+  "validation": {
+    "size": [
+      1024,
+      1536
+    ],
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      254
+    ],
+    "transparentFraction": 0.5350748697916666,
+    "visibleBounds": [
+      17,
+      17,
+      1003,
+      1504
+    ],
+    "anchor": [
+      510.0,
+      1504
+    ],
+    "sha256": "831b5f1d444006b4d48dd2aca4ee33b4fd4239cc65d2fd7d5acf00d4dc3bf6ea"
+  }
+}

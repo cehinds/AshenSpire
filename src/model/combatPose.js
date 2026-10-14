@@ -23,7 +23,7 @@ export function resolveCombatPose(entity = {}, rest = 'idle', order = []) {
     const instance = statuses[id];
     if ((instance?.stacks ?? 0) > 0 && instance.duration !== 0 && readinessPose(id)) return readinessPose(id);
   }
-  return ['guard', 'shieldGuard', 'parry'].includes(rest) ? rest : 'idle';
+  return ['guard', 'shieldGuard', 'parry', 'counter', 'defend'].includes(rest) ? rest : 'idle';
 }
 
 export function bloodRiteReaction(entity, event, actorId) {

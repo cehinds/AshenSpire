@@ -1,0 +1,70 @@
+{
+  "id": "starseer-astral",
+  "name": "Astral Vestment \u00b7 Starseer",
+  "family": "armor",
+  "classId": "starseer",
+  "outfitId": "astral",
+  "source": "content/source/outfits.csv",
+  "artAlias": null,
+  "facing": "away, rear three-quarter right",
+  "pose": "idle",
+  "prompt": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: A gaunt Observatory apprentice, shadowed hood, intricate layered scholar robes, weathered leather belts and chart scrolls, modest blue starstone on a long staff held vertically; human anatomy, no oversized wizard hat. Outfit: Astral Vestment. Lore: Cut for someone taller than you. Material palette: plate #4E1747, plateLt #9327A0, leather #3A2E4A, under #241E33. Preserve this class identity and equipment. Face RIGHT toward enemies. Portrait 1024x1536, feet at 94 percent canvas height, center mass at 50 percent width.",
+  "file": "masters/starseer-astral-rear.png",
+  "status": "generated",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a10ffd-7ed8-7ff3-b84a-467346a2abc4\\exec-1756626d-b601-4640-a25a-d427679bd5e6.png",
+  "validation": {
+    "size": [
+      1024,
+      1536
+    ],
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      254
+    ],
+    "transparentFraction": 0.4966875712076823,
+    "visibleBounds": [
+      31,
+      7,
+      1008,
+      1480
+    ],
+    "anchor": [
+      519.5,
+      1480
+    ],
+    "sha256": "f7a3232b48353379a69dcec117bdbf955f056f76099c5bb3065dc67e3e16c912"
+  },
+  "referenceImages": [
+    "masters/starseer-astral.png"
+  ],
+  "promptUsed": "Edit target: the original hero armor sprite. Preserve this exact character, outfit, helmet or hood, colors, materials, weapon types, accessories and detailed gritty painted realism. Change ONLY the camera and idle orientation: rear three-quarter view, seen from BEHIND, body and head facing away toward screen upper-right, toward enemies to the hero's right. The back of the head, back armor and broad back of the cloak dominate. Do not show a front-facing chest or face. Retain readable weapon silhouettes beside the body. Full figure including boots, all cloth and weapon tips, with generous clear padding at every edge. One grounded idle combat pose, not walking. No floor, scene, UI, lettering, aura, halo or vignette. Actual transparent alpha background. No new equipment. Consistent realistic human proportions.\n",
+  "previousView": {
+    "file": "masters/starseer-astral.png",
+    "validation": {
+      "size": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "alphaRange": [
+        0,
+        254
+      ],
+      "transparentFraction": 0.5556437174479166,
+      "visibleBounds": [
+        44,
+        10,
+        956,
+        1506
+      ],
+      "anchor": [
+        500.0,
+        1506
+      ],
+      "sha256": "b4e4245ff37892981b7f82442f8d893fc53bd6814d7de60b84bcfa3535d45e96"
+    },
+    "facing": "right",
+    "promptUsed": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: A gaunt Observatory apprentice, shadowed hood, intricate layered scholar robes, weathered leather belts and chart scrolls, modest blue starstone on a long staff held vertically; human anatomy, no oversized wizard hat. Outfit: Astral Vestment. Lore: Cut for someone taller than you. Material palette: plate #4E1747, plateLt #9327A0, leather #3A2E4A, under #241E33. Preserve this class identity and equipment. Face RIGHT toward enemies. Portrait 1024x1536, feet at 94 percent canvas height, center mass at 50 percent width. Use the supplied single class sprite as the identity and pose reference. Preserve its anatomy, weapon configuration, framing and direction; change the armor materials and cloth palette to this named outfit. Output only ONE variant."
+  }
+}

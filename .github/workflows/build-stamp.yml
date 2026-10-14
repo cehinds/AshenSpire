@@ -1,0 +1,191 @@
+name: build-stamp
+
+# THE BUILD NUMBER IS PRODUCED HERE, AFTER A MERGE LANDS ON dev.
+#
+# A pull request no longer commits a bumped buildordinal.json or a receipt
+# matched to it: any other merge into dev moves the box, so a matched receipt
+# went stale the moment a neighbour landed (CONTRIBUTING.md, *Keep it mergeable*).
+# Instead, this workflow runs after each push to dev. It rebuilds the merged
+# tree (which writes the box), re-points the receipts of the pull requests that
+# landed in that push (tools/build-stamp.mjs), regenerates the changelog module,
+# and pushes the three files back to dev.
+#
+# THE STAMPED COMMIT GETS NO NEW dev CI. A push made with GITHUB_TOKEN does not
+# start other workflows, exactly as architecture-sync's commit does not. So the
+# bot's commit is not built by dev-preview or the smoke suite. That is accepted:
+# the commit only moves three derived files, all of them produced by a build
+# that ran in this workflow on the commit just before it.
+#
+# PROMOTION WAITS FOR THIS RUN. Promoting dev to test must not start until this
+# run has finished and its commit is on dev. test's ci.yml keeps the strict
+# clean-rebuild check ("The rebuild changed nothing committed"), so a promotion
+# that raced this run would be refused there, not silently shipped.
+#
+# One group per ref. cancel-in-progress is false, so a running stamp is never
+# killed; but GitHub keeps ONE pending run per group, so a newer push replaces a
+# queued one, and a run that fails stamps nothing. The guarantee is therefore not
+# "every push gets its own run", it is this: each run stamps everything landed
+# since the LAST [build-stamp] commit on HEAD (build-stamp.mjs --since-last-stamp),
+# not just its own event's range. A later run covers what an earlier cancelled or
+# failed run missed. The retry loop below starts each try from the current origin tip.
+#
+# pages-builds follows this run on dev: its workflow_run publishes the site once this run
+# concludes success, so the site only ever rebuilds a head that carries the stamp.
+
+on:
+  push:
+    branches: [dev, alternative/dev, 'alternative/**/dev']
+  workflow_dispatch:
+    inputs:
+      prs:
+        description: 'Comma-separated pull request numbers to re-point by hand (empty: the pushed range)'
+        required: false
+        default: ''
+
+concurrency:
+  group: build-stamp-${{ github.ref }}
+  cancel-in-progress: false
+
+# The routine commits only buildordinal.json, CHANGELOG.md and the generated
+# changelog module. A GITHUB_TOKEN push cannot retrigger workflows.
+permissions:
+  contents: write
+  # Dispatching dev-preview for the stamped tip (below). GITHUB_TOKEN may start a
+  # workflow_dispatch run, though it may not start a push-triggered one.
+  actions: write
+
+jobs:
+  stamp:
+    # Skip the bot's own stamp commit, and any push that is not a dev branch. A dispatch
+    # always runs. The skip is by AUTHOR and SUBJECT PREFIX here, and build-stamp.mjs
+    # --stamp-is-current checks the exact subject: a human squash that merely mentions
+    # [build-stamp] is not skipped, so its own pull request is stamped and counted.
+    if: "github.ref_name != 'alternative/dev' && (github.ref_name == 'dev' || (startsWith(github.ref_name, 'alternative/') && endsWith(github.ref_name, '/dev'))) && (github.event_name == 'workflow_dispatch' || !(github.event.head_commit.author.name == 'github-actions[bot]' && startsWith(github.event.head_commit.message, 'build: stamp ') && contains(github.event.head_commit.message, '[build-stamp]')))"
+    runs-on: ubuntu-latest
+    env:
+      # The art packs the build reads, as dev-preview's preview job fetches them.
+      # The digest does not depend on the art tier, so the light build is enough.
+      ART_PACKS: all
+      ASHEN_ART_SOURCE: cache
+    steps:
+      - name: Check out the merged dev tree with its history
+        uses: actions/checkout@v5
+        with:
+          # The range walk needs every commit between the push's before and after.
+          fetch-depth: 0
+          lfs: false
+
+      - name: Set up Node
+        uses: ./.github/actions/setup-node
+
+      - name: Fetch the art packs the build reads
+        uses: ./.github/actions/fetch-art
+        env:
+          # Same rule as dev-preview.yml: only a push to a protected branch passes the token.
+          ART_REPO_TOKEN: ${{ github.event_name != 'pull_request' && contains(fromJSON('["refs/heads/dev","refs/heads/test","refs/heads/release","refs/heads/main"]'), github.ref) && secrets.ART_REPO_TOKEN || '' }}
+        with:
+          packs: ${{ env.ART_PACKS }}
+
+      - name: Rebuild, re-point the landed receipts, regenerate the changelog, and push
+        # Four tries with 2, 4 and 8 seconds of backoff, as architecture-sync does. Each
+        # try starts from the current origin tip, so a push that landed meanwhile is
+        # rebuilt and stamped again rather than overwritten. The range is not taken from the
+        # event: it starts after the last [build-stamp] commit (or the stamp workflow's
+        # introduction), so a run that was cancelled or failed is covered by the next one.
+        shell: bash
+        env:
+          REF_NAME: ${{ github.ref_name }}
+          PRS: ${{ github.event.inputs.prs }}
+          # For the dev-preview dispatch after a successful push (gh workflow run).
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # dev-preview for the tip, with three tries (2 and 4 seconds of backoff). A
+          # failure after all three fails the job: the stamp is pushed, so a rerun takes
+          # the no-diff branch and dispatches again from there.
+          dispatch_preview() {
+            local try
+            for try in 1 2 3; do
+              if gh workflow run dev-preview.yml --repo "$GITHUB_REPOSITORY" --ref "$REF_NAME"; then
+                echo "Dispatched dev-preview on $REF_NAME (try $try)."
+                return 0
+              fi
+              echo "dev-preview dispatch failed (try $try)."
+              if [ "$try" -lt 3 ]; then sleep $((2 ** try)); fi
+            done
+            echo "::error::dev-preview could not be dispatched for $REF_NAME after 3 tries. Rerun this workflow to dispatch it."
+            return 1
+          }
+
+          delays=(2 4 8)
+          for attempt in 1 2 3 4; do
+            git fetch -q origin "+refs/heads/$REF_NAME:refs/remotes/origin/$REF_NAME"
+            git reset -q --hard "origin/$REF_NAME"
+            # THE WHOLE STAMP, AS ONE STEP. --stamp builds, re-points the landed receipts,
+            # regenerates the changelog module, and rebuilds until the box is a fixed point
+            # (the module is inside the build digest, so writing it moves the box). It
+            # exits 1 when no fixed point is reached in its round bound, and then nothing
+            # is pushed: `set -e` stops this step before the commit below.
+            # The base is the last [build-stamp] commit on HEAD, else the introduction's parent.
+            if [ -n "$PRS" ]; then
+              node tools/build-stamp.mjs --stamp --prs "$PRS"
+            else
+              node tools/build-stamp.mjs --stamp --since-last-stamp
+            fi
+
+            # Re-pointing one receipt can create a rise within its date group.
+            # Validate the complete stamped order before any commit or preview dispatch;
+            # no pending-PR exemption applies after the bot has stamped the tree.
+            node tools/about-changelog.mjs --check-order
+
+            # Only the three derived files, never the built HTML or anything else the build wrote.
+            git add -- buildordinal.json CHANGELOG.md src/content/changelog.generated.js
+            if git diff --cached --quiet; then
+              echo "origin/$REF_NAME already carries the stamp for this build."
+              # A RERUN OF A RUN WHOSE PUSH SUCCEEDED BUT WHOSE DISPATCH FAILED lands here:
+              # the stamp is already on the tip, so only the preview is left to do. The tip
+              # is often no longer the stamp itself: architecture-sync or readme-sync may have
+              # pushed a docs-only bot commit on top of it. --stamp-is-current accepts exactly
+              # that (the newest bot stamp, with only those two exact docs-sync subjects above
+              # it), so the rerun redispatches for it. Any other commit above the stamp, or
+              # a run with no stamp under it, is "not current" (1) and dispatches nothing. The
+              # exit status tells "not current" (1) from a harness fault (2).
+              stamp_current=0
+              node tools/build-stamp.mjs --stamp-is-current || stamp_current=$?
+              if [ "$stamp_current" -eq 0 ]; then
+                if ! dispatch_preview; then exit 1; fi
+              elif [ "$stamp_current" -ne 1 ]; then
+                echo "::error::build-stamp --stamp-is-current could not run."
+                exit 1
+              fi
+              exit 0
+            fi
+            box="$(node -p 'const b = require("./buildordinal.json"); b.release + "." + b.ordinal')"
+            git commit -q -m "build: stamp $box [build-stamp]"
+            if git push -q origin "HEAD:$REF_NAME"; then
+              echo "Pushed the build stamp $box to $REF_NAME (attempt $attempt)."
+              # THE STAMPED TIP NEEDS ITS OWN PREVIEW. A GITHUB_TOKEN push starts no
+              # push-triggered workflow, so dev-preview never builds this commit and
+              # its dev-standalone-<sha> artifact would describe the pre-stamp merge.
+              # A workflow_dispatch is allowed from GITHUB_TOKEN, so this builds the ref.
+              # A dispatch on dev takes dev-preview's relaxed clean-rebuild branch, as a dev
+              # push does: --ref names a mutable branch, so a merge landing after this push
+              # would otherwise go red on an unstamped tip. That merge's own build-stamp run
+              # re-dispatches for its stamp, so the final tip still gets its artifact.
+              # Only after a successful push, so a rejected push dispatches nothing.
+              if ! dispatch_preview; then exit 1; fi
+              # THE PAGES SITE IS NOT REPUBLISHED FROM THIS STEP, AND THAT IS DELIBERATE. The
+              # push above uses GITHUB_TOKEN, so it triggers nothing; pages-builds follows this
+              # run's own completion on dev and publishes the stamped tip once this run concludes
+              # success. The artifact above is the playable build for the stamped commit.
+              exit 0
+            fi
+            echo "Push to $REF_NAME rejected (attempt $attempt)."
+            if [ "$attempt" -lt 4 ]; then
+              sleep "${delays[$((attempt - 1))]}"
+            fi
+          done
+          echo "::error::The build stamp could not be pushed to $REF_NAME after 4 attempts."
+          exit 1

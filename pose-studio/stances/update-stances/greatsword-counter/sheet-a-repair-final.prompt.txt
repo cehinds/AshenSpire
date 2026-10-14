@@ -1,0 +1,7 @@
+Edit this five-pose atlas, transparent1024x1536, same rear-left Reaver facing RIGHT. Keep the existing five pose ideas and lower/wider middle-right crouch. Make these exact repairs:
+1. SHRINK all five entire figures, sword and cape together, by25% around their cell centers. Every silhouette MUST stay fully inside its own512 square cell. The middle-left horizontal sword tip must end BEFORE x480; the lower-left tip before x480. Both right-column figures must fit fully between x550 and x990. Huge empty gutters. Five isolated complete figures, bottom-right blank.
+2. Top-right, middle-right and bottom-left: show TWO DISTINCT metal gauntlets gripping SEPARATED points on the same long hilt, both BELOW the crossguard. Put a visible short gap between the two hands. Both forearms should be traceable to their shoulders, naturally bent. Do not hide the rear hand in a cuff or fuse hands.
+3. Middle-left: preserve the now visible separated grips with horizontal right blade; ensure both arms naturally reach forward/right.
+4. Middle-right: keep the much lower and wider flat-foot knee-bent stance, hilt at chest. Top-right remains tall with hilt at low hip.
+
+Both soles flat in all five. No attack, no VFX, text, ground or background. Preserve costume materials and sword proportions. Smaller figures and clear separated hands are essential.

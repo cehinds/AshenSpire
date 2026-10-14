@@ -1,0 +1,271 @@
+{
+  "schemaVersion": 1,
+  "target": "alternative/dev",
+  "status": "authoring-preview",
+  "classId": "herald",
+  "armour": "default",
+  "referenceWeapon": "Sword and shield",
+  "selection": "class-default",
+  "equipmentIndependent": true,
+  "frames": {
+    "ready": {
+      "path": "herald/frames/base-ready.webp",
+      "lite": "herald/frames/base-ready.lite.webp",
+      "bounds": [
+        98,
+        134,
+        436,
+        470
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "windup": {
+      "path": "herald/frames/windup.webp",
+      "lite": "herald/frames/windup.lite.webp",
+      "bounds": [
+        88,
+        130,
+        429,
+        465
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "advance": {
+      "path": "herald/frames/advance.webp",
+      "lite": "herald/frames/advance.lite.webp",
+      "bounds": [
+        106,
+        148,
+        432,
+        469
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "contact": {
+      "path": "herald/frames/contact.webp",
+      "lite": "herald/frames/contact.lite.webp",
+      "bounds": [
+        84,
+        153,
+        504,
+        463
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "follow": {
+      "path": "herald/frames/follow.webp",
+      "lite": "herald/frames/follow.lite.webp",
+      "bounds": [
+        83,
+        154,
+        420,
+        468
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "return": {
+      "path": "herald/frames/return.webp",
+      "lite": "herald/frames/return.lite.webp",
+      "bounds": [
+        119,
+        153,
+        429,
+        470
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "power": {
+      "path": "herald/frames/power.webp",
+      "lite": "herald/frames/power.lite.webp",
+      "bounds": [
+        99,
+        124,
+        387,
+        466
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "channel": {
+      "path": "herald/frames/channel.webp",
+      "lite": "herald/frames/channel.lite.webp",
+      "bounds": [
+        96,
+        124,
+        428,
+        467
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "release": {
+      "path": "herald/frames/release.webp",
+      "lite": "herald/frames/release.lite.webp",
+      "bounds": [
+        83,
+        131,
+        429,
+        466
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "guard-rise": {
+      "path": "herald/frames/base-guard-rise.webp",
+      "lite": "herald/frames/base-guard-rise.lite.webp",
+      "bounds": [
+        115,
+        130,
+        459,
+        464
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "guard-brace": {
+      "path": "herald/frames/base-guard-brace.webp",
+      "lite": "herald/frames/base-guard-brace.lite.webp",
+      "bounds": [
+        110,
+        151,
+        433,
+        462
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    },
+    "guard-return": {
+      "path": "herald/frames/base-guard-return.webp",
+      "lite": "herald/frames/base-guard-return.lite.webp",
+      "bounds": [
+        106,
+        135,
+        465,
+        464
+      ],
+      "anchor": [
+        256,
+        464
+      ]
+    }
+  },
+  "sequences": {
+    "attack": {
+      "label": "Base strike \u00b7 dash",
+      "poses": [
+        "windup",
+        "advance",
+        "contact",
+        "follow",
+        "return"
+      ],
+      "durations": [
+        60,
+        55,
+        50,
+        45,
+        50
+      ],
+      "travel": [
+        0,
+        0,
+        96,
+        96,
+        0
+      ],
+      "effect": "slash",
+      "impact": 2,
+      "hold": false
+    },
+    "defense": {
+      "label": "Base defense",
+      "poses": [
+        "ready",
+        "guard-rise",
+        "guard-brace",
+        "guard-return",
+        "ready"
+      ],
+      "durations": [
+        60,
+        55,
+        50,
+        45,
+        50
+      ],
+      "travel": [
+        0,
+        -3,
+        -6,
+        -3,
+        0
+      ],
+      "effect": "shieldBash",
+      "impact": 2,
+      "hold": false
+    },
+    "power": {
+      "label": "Base power",
+      "poses": [
+        "ready",
+        "power",
+        "channel",
+        "release",
+        "ready"
+      ],
+      "durations": [
+        60,
+        55,
+        50,
+        45,
+        50
+      ],
+      "travel": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "effect": "ward",
+      "impact": 2,
+      "hold": false
+    }
+  },
+  "bytes": {
+    "webp": 481592,
+    "lite": 134490
+  },
+  "sourceHashes": {
+    "attack-left-shield.png": "30b00f669f22cb8ce3ed32f2afd379eb9f12d350333f260c537a8f1871acdb72",
+    "base-defense.png": "23311c2a32698d41dc56626dc65400f62b8a8d41a0e2b125cb21527f7ae982b3"
+  }
+}

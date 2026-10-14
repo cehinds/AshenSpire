@@ -5,6 +5,27 @@
   "sizing": {
     "bands": { "hud": 10, "scene": 55, "context": 30, "footer": 5 },
     "floorPercent": 80,
+    "compactCombat": {
+      "maxWidthPx": 600,
+      "hudMinimumPx": 48,
+      "hudHeightFraction": 0.09,
+      "handMinimumPx": 176,
+      "handMaximumPx": 250,
+      "handHeightFraction": 0.31,
+      "footerPx": 92,
+      "minimumBattlefieldPx": 130,
+      "footerGapMaxPx": 4,
+      "footerDiameterMaxPx": 64,
+      "footerEndWidthMaxPx": 96,
+      "endWidthMinPx": 56,
+      "pileWidthPx": 50,
+      "spentWidthPx": 64,
+      "pileHeightPx": 60,
+      "cardMinWidthPx": 72,
+      "cardMaxWidthPx": 112,
+      "cardVisibleFraction": 0.9,
+      "cardSideGutterPx": 6
+    },
     "hand": {
       "minimumHeightPx": 208,
       "minWidthRem": 5,
@@ -42,7 +63,7 @@
     }
   },
   "positioning": {
-    "hand": { "selectedLiftRem": 1, "verticalInsetRem": 0.25, "fanAngleDegrees": 2.5, "arcRem": 0.6 },
+    "hand": { "selectedLiftRem": 1, "verticalInsetRem": 0.25, "fanAngleDegrees": 2.5, "arcRem": 0.6, "compactDropRem": 0.3 },
     "formation": {
       "insetRem": 1,
       "horizontalStepFraction": 0.05,

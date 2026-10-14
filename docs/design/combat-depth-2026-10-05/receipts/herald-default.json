@@ -1,0 +1,70 @@
+{
+  "id": "herald-default",
+  "name": "Rite Vestments \u00b7 Herald",
+  "family": "armor",
+  "classId": "herald",
+  "outfitId": "default",
+  "source": "content/source/outfits.csv",
+  "artAlias": null,
+  "facing": "away, rear three-quarter right",
+  "pose": "idle",
+  "prompt": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: A Furnace Chapel novice, scarred human face beneath a deep cowl, layered ritual cloth over modest mail, tarnished brass reliquary and censer, a worn ritual mace lowered. Austere pilgrim, gold and rot, not a crowned pope. Outfit: Rite Vestments. Lore: Plain cloth, plainly kept. Material palette: plate #2E1F1F, plateLt #3A2A2A, leather #4B3522, under #241413. Preserve this class identity and equipment. Face RIGHT toward enemies. Portrait 1024x1536, feet at 94 percent canvas height, center mass at 50 percent width.",
+  "file": "masters/herald-default-rear.png",
+  "status": "generated",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a10ffd-7ed8-7ff3-b84a-467346a2abc4\\exec-baa04861-4b68-4962-9789-341ceefae3a4.png",
+  "validation": {
+    "size": [
+      1024,
+      1536
+    ],
+    "mode": "RGBA",
+    "alphaRange": [
+      0,
+      254
+    ],
+    "transparentFraction": 0.5204480489095052,
+    "visibleBounds": [
+      75,
+      30,
+      1008,
+      1504
+    ],
+    "anchor": [
+      541.5,
+      1504
+    ],
+    "sha256": "69e3f8a014673794cebaa50a4519f8cd66e5a79602ba2e133fb4a70336b769ca"
+  },
+  "referenceImages": [
+    "masters/herald-default.png"
+  ],
+  "promptUsed": "Edit target: the original hero armor sprite. Preserve this exact character, outfit, helmet or hood, colors, materials, weapon types, accessories and detailed gritty painted realism. Change ONLY the camera and idle orientation: rear three-quarter view, seen from BEHIND, body and head facing away toward screen upper-right, toward enemies to the hero's right. The back of the head, back armor and broad back of the cloak dominate. Do not show a front-facing chest or face. Retain readable weapon silhouettes beside the body. Full figure including boots, all cloth and weapon tips, with generous clear padding at every edge. One grounded idle combat pose, not walking. No floor, scene, UI, lettering, aura, halo or vignette. Actual transparent alpha background. No new equipment. Consistent realistic human proportions.\n",
+  "previousView": {
+    "file": "masters/herald-default.png",
+    "validation": {
+      "size": [
+        1024,
+        1536
+      ],
+      "mode": "RGBA",
+      "alphaRange": [
+        0,
+        254
+      ],
+      "transparentFraction": 0.5409921010335287,
+      "visibleBounds": [
+        89,
+        48,
+        945,
+        1491
+      ],
+      "anchor": [
+        517.0,
+        1491
+      ],
+      "sha256": "eb29b0d074afbd701798e8a50593bef6ff9af5f628ca8e3d4205b605c2a1cc74"
+    },
+    "facing": "right",
+    "promptUsed": "Create ONE individual full-body idle combat sprite in the supplied reference style: highly detailed dark fantasy painted realism, tactile weathered metal, cloth and stone, muted charcoal/umber palette, restrained ember accents, neutral overcast light from upper left. Crisp readable silhouette. This is a game cutout, NOT a portrait, grid, collage or scene. Actual transparent alpha outside the body, including gaps between limbs. No colored backdrop, no glow halo outside the silhouette, no floor, no contact shadow, no text, no UI. Entire body and all equipment must fit with generous clear margins. Three-quarter side view. Subject: A Furnace Chapel novice, scarred human face beneath a deep cowl, layered ritual cloth over modest mail, tarnished brass reliquary and censer, a worn ritual mace lowered. Austere pilgrim, gold and rot, not a crowned pope. Outfit: Rite Vestments. Lore: Plain cloth, plainly kept. Material palette: plate #2E1F1F, plateLt #3A2A2A, leather #4B3522, under #241413. Preserve this class identity and equipment. Face RIGHT toward enemies. Portrait 1024x1536, feet at 94 percent canvas height, center mass at 50 percent width."
+  }
+}

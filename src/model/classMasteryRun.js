@@ -1,4 +1,4 @@
-import { expandedProgression, queueClassMilestone } from './classMilestones.js';
+import { expandedProgression, queueClassMilestone, capRunClassGrants } from './classMilestones.js';
 import { activateAbilitySkill } from './abilitySkillActivation.js';
 // SPEC §13.4q. A scoped projection keeps authored content complete while live
 // reward/shop readers see the run owner's current unlocks. Definitions remain
@@ -25,6 +25,9 @@ export function openClassMasteryTrack(registries, run, classId) {
       if (!receipt) continue;
       for (const kind of ['cards','armory','relic']) if (receipt.grants[kind]) receipt.grants[kind].state = 'spent';
     }
+    // Re-equipping a class re-checks its feat/attribute grants against the
+    // run's shared budget (SPEC §13.4r), which another class may have used.
+    capRunClassGrants(registries, run, classId);
     const ability = registries.balance.progression.classSkills[classId]?.find(id => ['item:magic-focus','combatManeuvers'].includes(id));
     if (ability) activateAbilitySkill(run, ability);
   }
@@ -71,8 +74,28 @@ export function claimRunClassMastery(registries, run) {
     classMasteryReceipts: result.meta.classMasteryReceipts };
 }
 
+// The mastery rows never change after the registries load, but the live combat
+// path asks about every armament and armour piece on each card resolution
+// (registriesForClassMastery's equipment getters), which scanned every row each
+// time: thousands of row scans per card tap (4305 per card selection and 12383
+// per enemy tap, measured on a phone-sized run), enough to stall a mid-range
+// phone for seconds. Group the rows by ref once per rows array instead.
+const rowsByRef = new WeakMap();
+function masteryRowsFor(rows, ref) {
+  let index = rowsByRef.get(rows);
+  if (!index || index.size !== rows.length) {
+    index = { size: rows.length, byRef: new Map() };
+    for (const row of rows) {
+      const list = index.byRef.get(row.ref);
+      if (list) list.push(row); else index.byRef.set(row.ref, [row]);
+    }
+    rowsByRef.set(rows, index);
+  }
+  return index.byRef.get(ref) || [];
+}
+
 export function masteryReferenceOpen(registries, meta, ref, kinds = null) {
-  const rows = (registries.classMastery || []).filter(row => row.ref === ref && (!kinds || kinds.includes(row.kind)));
+  const rows = masteryRowsFor(registries.classMastery || [], ref).filter(row => !kinds || kinds.includes(row.kind));
   return !rows.length || rows.some(row => (meta.classMastery?.[row.classId]?.unlockedRows || []).includes(masteryRowId(row)));
 }
 

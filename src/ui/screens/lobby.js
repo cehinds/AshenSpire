@@ -37,19 +37,27 @@ const TINT_KEY = 'sote_lan_tint';
 const sectionHead = (label, hint = '') => el('div', { class: 'set-section-head' }, [eyebrow(label), hint ? flavour(hint) : null]);
 const textInput = (attrs) => el('input', { type: 'text', spellcheck: 'false', autocomplete: 'off', ...attrs });
 
+// Browser storage can be refused: a sandboxed frame (the branch preview has no
+// allow-same-origin) throws SecurityError on the localStorage read itself. The
+// lobby's remembered name, tint and sprite style are conveniences, so a refused
+// read is absent and a refused write is a no-op — never an uncaught error.
+function readLocal(key) { try { return globalThis.localStorage?.getItem(key) ?? null; } catch { return null; } }
+function writeLocal(key, value) { try { globalThis.localStorage?.setItem(key, value); } catch { /* refused: nothing remembered */ } }
+
 export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBack, onStart }) {
   let conn = null;
   let hosting = false;
   let myId = null;
   let pollTimer = null;
   const state = {
-    name: localStorage.getItem(NAME_KEY) || 'Forsaken',
+    name: readLocal(NAME_KEY) || 'Forsaken',
     classId: registries.classes.all()[0].id,
     startingKitId: null,
     discoveredArmaments: [...new Set(meta.discoveredArmaments || [])],
     classMastery: structuredClone(meta.classMastery || {}),
-    tint: localStorage.getItem(TINT_KEY) || 'gold',
-    spriteStyle: localStorage.getItem('sote_lan_style') || DEFAULT_SPRITE_STYLE,
+    enemyKnowledge: structuredClone(meta.enemyKnowledge || { version: 1, enemies: {} }),
+    tint: readLocal(TINT_KEY) || 'gold',
+    spriteStyle: readLocal('sote_lan_style') || DEFAULT_SPRITE_STYLE,
     ready: false,
     seedString: defaultSeedString,
     players: [],
@@ -99,7 +107,7 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
     backBtn.addEventListener('click', () => back());
     nameInput.addEventListener('input', (e) => {
       state.name = e.target.value.trim() || 'Forsaken';
-      localStorage.setItem(NAME_KEY, state.name);
+      writeLocal(NAME_KEY, state.name);
     });
     hostBtn.addEventListener('click', host);
 
@@ -152,7 +160,7 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
       onMessage: (msg) => {
         if (msg.t === 'welcome') {
           myId = msg.id;
-          conn.send({ t: 'hello', name: state.name, classId: state.classId, startingKitId: state.startingKitId, discoveredArmaments: state.discoveredArmaments, classMastery: state.classMastery, tint: state.tint, spriteStyle: state.spriteStyle, hostKey,
+          conn.send({ t: 'hello', name: state.name, classId: state.classId, startingKitId: state.startingKitId, discoveredArmaments: state.discoveredArmaments, classMastery: state.classMastery, enemyKnowledge: state.enemyKnowledge, tint: state.tint, spriteStyle: state.spriteStyle, hostKey,
             // The seat draws by its owner's Play in deck order (SPEC §14.1).
             playInDeckOrder: playInDeckOrder(meta.settings || {}) });
         } else if (msg.t === 'roster') {
@@ -306,7 +314,7 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
       attachTooltip(dot, () => `<div class="tt-title">${esc(t.name)}</div>Colors your hero's accents for the whole party.`);
       dot.addEventListener('click', () => {
         state.tint = t.id;
-        localStorage.setItem(TINT_KEY, t.id);
+        writeLocal(TINT_KEY, t.id);
         conn.send({ t: 'pick', tint: t.id });
         tints.querySelectorAll('.tint-dot').forEach((d) => { d.classList.toggle('on', d === dot); d.setAttribute('aria-pressed', d === dot ? 'true' : 'false'); });
       });
@@ -320,7 +328,7 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
       attachTooltip(b, () => `<div class="tt-title">${esc(st.name)}</div>${st.id === 'rendered' ? 'The painted class figure.' : st.id === 'classic' ? 'The classic hand-drawn silhouette.' : 'Your sigil in a tinted panel.'}`);
       b.addEventListener('click', () => {
         state.spriteStyle = st.id;
-        localStorage.setItem('sote_lan_style', st.id);
+        writeLocal('sote_lan_style', st.id);
         conn.send({ t: 'pick', spriteStyle: st.id });
         styleSeg.querySelectorAll('.lb-style').forEach((x) => { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
       });

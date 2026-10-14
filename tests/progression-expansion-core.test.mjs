@@ -1,3 +1,5 @@
+import { cardCostBudget } from '../src/model/actionCosts.js';
+import { applyAbilityGrade as gradeFace } from '../src/model/abilityGrades.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -12,6 +14,8 @@ import { createRng } from '../src/engine/rng.js';
 import { recordSkillXp, skillXpReceipt } from '../src/engine/skillXp.js';
 import { rewardPlan, resolveContinue, pickIds } from '../src/model/rewardplan.js';
 import { composeProgressionContent } from '../src/model/progressionContent.js';
+import { equipClassCard } from '../src/model/classLibrary.js';
+import { learnClassCard } from '../src/model/classLibraryState.js';
 
 const source = createRegistries(contentBundle);
 function fresh(meta = {}) {
@@ -63,6 +67,36 @@ test('veteran allocations preserve budgets without replaying class-to-skill XP o
   assert.deepEqual(validateRunShape(run),[]);
 });
 
+test('a class swap shares the run feat and attribute budget instead of replaying veteran grants (#1676, #1658)',()=>{
+  const meta={classMastery:{reaver:{xp:100000,level:20,unlockedRows:[]},herald:{xp:100000,level:20,unlockedRows:[]}}};
+  const run=createRunState({registries:source,classId:'reaver',seed:71});
+  openRunClassMastery(source,run,meta,{receiptId:'swap-budget'});
+  let reg=registriesForClassMastery(source,run);
+  const rng=createRng(5);
+  const before={...run.attributes};
+  const take=kind=>rollClassMilestoneRewards(reg,rng,run,{meta}).filter(offer=>offer.rewardKind===kind)
+    .filter(offer=>(offer.choiceIds||offer.options).some(choice=>claimClassMilestoneReward(reg,run,offer.receiptId,choice,{meta}))).length;
+  const taken=kind=>Object.values(run.classMilestones).filter(row=>row.grants[kind]?.state==='taken').length;
+  assert.equal(take('attribute'),4);
+  assert.equal(run.skillAttributePoints,4);
+  learnClassCard(reg,run,'herald');
+  equipClassCard(reg,run,'herald');
+  reg=registriesForClassMastery(source,run);
+  assert.equal(pendingClassMilestones(run).filter(row=>row.kind==='attribute').length,0,'the run budget of four points is already used');
+  assert.equal(take('attribute'),0);
+  assert.equal(take('feat'),6,'feats the run has not taken stay available to the equipped class');
+  equipClassCard(reg,run,'reaver');
+  reg=registriesForClassMastery(source,run);
+  assert.equal(pendingClassMilestones(run).filter(row=>['feat','attribute'].includes(row.kind)).length,0,'swapping back replays nothing');
+  assert.equal(take('feat'),0);
+  assert.equal(run.skillAttributePoints,4);
+  assert.equal(Object.values(run.attributes).reduce((a,b)=>a+b,0)-Object.values(before).reduce((a,b)=>a+b,0),4);
+  assert.equal(taken('attribute'),4);
+  assert.equal(taken('feat'),6);
+  assert.deepEqual(validateRunShape(run),[]);
+  assert.deepEqual(validateRunShape(deserializeRun(serializeRun(run))),[]);
+});
+
 test('ability activation plus nine linear steps costs 2700 XP and queues ten lessons without legacy rank-ups',()=>{
   const {run,reg}=fresh();
   awardSkillXp(reg,run,'combatManeuvers',2700);
@@ -91,7 +125,11 @@ test('ability offers persist three current-grade families and one bounded INT op
 test('authored grades resolve their exact resource costs and values without an upgrade or rank overlay',()=>{
   const {reg:base}=fresh(),reg=lessons(base);
   const card=resolveCard(reg,{cardId:'cometFragment',abilityRank:4,rank:10,upgraded:true,skillBonus:99});
-  assert.equal(card.cost,3);assert.equal(card.manaCost,4);assert.equal(card.effects[0].amount,8);assert.equal(card.textTemplate,'Grade 4');
+  // The grade's Stamina and Mana are the cost formula's at grade 4 (SPEC §4.3a; authored 3 SP / 4 MP before), and a face
+  // at 2 SP or more carries the 1.8 multiplier on its authored 8.
+  const priced=cardCostBudget(gradeFace(reg.cards.get('cometFragment'),4),{rank:4});
+  assert.equal(card.cost,priced.sp);assert.equal(card.manaCost,priced.mp);
+  assert.equal(card.effects[0].amount,priced.sp>=2?Math.round(8*1.8):8);assert.equal(card.textTemplate,'Grade 4');
 });
 
 test('one resolved spell or maneuver pays its authored track, independent of shared school tags',()=>{

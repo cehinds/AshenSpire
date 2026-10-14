@@ -1,0 +1,30 @@
+{
+  "id": "BS-phone-foreground",
+  "kind": "foreground",
+  "phoneOnly": true,
+  "region": "BS",
+  "transparent": true,
+  "resultFile": "scenes/shared/BS/foreground-phone.png",
+  "prompt": "Create ONE separate PHONE PORTRAIT foreground framing layer for AshenSpire's BS combat scene. Portrait 1024x1536 canvas, actual transparent alpha. Detailed weathered painterly dark fantasy matching reference. ONLY gnarled thorny briar roots and chipped Gothic stone, small amber votive lantern. Frame objects run continuously along extreme left and right edges from TOP to BOTTOM; they touch those outer edges intentionally. Keep objects narrow, occupying ONLY outermost 10% of each side plus low bottom CORNERS. Entire central 76% must be COMPLETELY TRANSPARENT from top to bottom, including bottom center. No scenery, sky, ground plane, backing, architecture in center, actors, text or UI. Compose specifically for tall phone stage, not a landscape crop. Restrained lantern glow only on physical surfaces, no colored halo. Neutral grey light and muted umber, small ember accents only.",
+  "reference": "../references/composition.png",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a112fc-0e64-7472-a495-aba14ffa5ab6\\exec-17069f20-1a74-47d0-82a1-b65605743e30.png",
+  "generator": "built-in image_gen",
+  "size": [
+    1024,
+    1536
+  ],
+  "mode": "RGBA",
+  "sha256": "06a7828b5a1caaa9b1bad782d7eefea5f5eba40416839423eec00dd5e0b4934d",
+  "alphaRange": [
+    0,
+    254
+  ],
+  "transparentFraction": 0.6742839813232422,
+  "visibleBounds": [
+    0,
+    0,
+    1024,
+    1536
+  ],
+  "alphaThreshold": 32
+}

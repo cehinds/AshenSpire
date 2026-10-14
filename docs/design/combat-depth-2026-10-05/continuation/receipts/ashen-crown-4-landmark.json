@@ -1,0 +1,31 @@
+{
+  "id": "ashen-crown-4-landmark",
+  "sceneId": "ashen-crown-4",
+  "name": "Throne Undercroft",
+  "region": "ashen-crown",
+  "kind": "landmark",
+  "reference": "../references/composition.png",
+  "transparent": true,
+  "resultFile": "scenes/ashen-crown-4/landmark.png",
+  "prompt": "Create one independent transparent MIDGROUND landmark layer for AshenSpire combat scene 'Throne Undercroft'. Subject: vast dark Gothic undercroft arches and recessed ruined throne, stone rib vaults across upper frame, tiny amber sconces, opaque dark interior walls except open side arches. Match supplied reference's painterly dark fantasy, tactile weathered stone, cloth and metal; restrained ember accents, no cartoony treatment. Low battlefield perspective viewed from behind a near-left hero looking toward enemies at right. Wide 1536x1024 registration canvas. Landmark architecture occupies upper-middle band, from x=18% to 83% and y=6% to 57%; BASE OF ALL STRUCTURES ends at y=58%. Entire lower 40% of canvas must be COMPLETELY EMPTY TRANSPARENT, to accept a separate walkable ground plate. Holes, windows and space around silhouettes must also be truly transparent. No sky, scenic background, distant mountains, ground plane, floor, actor, monster, UI, text, labels or watermark. This is ONE cutout landmark group, NOT a complete scene and NOT a grid. Preserve generous breathing space around structures except intentionally tall upper-frame vaults. Lighting upper-left, neutral warm grey with muted umber.",
+  "generatedSource": "D:\\repos\\.codex\\generated_images\\01a112fc-0e64-7472-a495-aba14ffa5ab6\\exec-5c859d60-4161-4d8f-a66f-f0ab8d4015a2.png",
+  "generator": "built-in image_gen",
+  "size": [
+    1536,
+    1024
+  ],
+  "mode": "RGBA",
+  "sha256": "88a87ba80d84201334d5a49643a114417a04429d627af8d58aaede09bd4e7fdd",
+  "alphaRange": [
+    0,
+    254
+  ],
+  "transparentFraction": 0.5371780395507812,
+  "visibleBounds": [
+    3,
+    0,
+    1534,
+    627
+  ],
+  "alphaThreshold": 32
+}

@@ -1,0 +1,120 @@
+{
+  "compiledIdentity": {
+    "path": "build/download/AshenSpire.html",
+    "ordinal": "1115",
+    "source": "2d9127408f"
+  },
+  "viewports": {
+    "desktop": {
+      "width": 1365,
+      "height": 1000
+    },
+    "phone": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  "timing": {
+    "seed": 1,
+    "plays": 5,
+    "motion": "Normal",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "budgetMs": 400,
+    "medianMs": 379,
+    "samplesMs": [
+      547,
+      388,
+      281,
+      108,
+      379
+    ],
+    "cards": [
+      "gorefireSlash",
+      "bashingBlow",
+      "shieldBash",
+      "dodgeRoll",
+      "strike"
+    ],
+    "exitCode": 0,
+    "gate": "median"
+  },
+  "solo": [
+    {
+      "shape": "desktop",
+      "escapeAtomic": true,
+      "paidCounterPreserved": true,
+      "spBefore": 6,
+      "spAfter": 5,
+      "manaBefore": 8,
+      "manaAfter": 8,
+      "handBefore": 8,
+      "handAfter": 7,
+      "block": 14,
+      "counterVersion": 2,
+      "counterCharges": 1,
+      "overflow": false
+    },
+    {
+      "shape": "phone",
+      "escapeAtomic": true,
+      "paidCounterPreserved": true,
+      "spBefore": 6,
+      "spAfter": 5,
+      "manaBefore": 8,
+      "manaAfter": 8,
+      "handBefore": 8,
+      "handAfter": 7,
+      "block": 14,
+      "counterVersion": 2,
+      "counterCharges": 1,
+      "overflow": false
+    }
+  ],
+  "coop": [
+    {
+      "shape": "desktop",
+      "seatOneIntent": {
+        "t": "playCard",
+        "cardInstanceId": "coop-qa-barrageCounter",
+        "targetId": "p1",
+        "upcastTier": 1,
+        "as": "p1"
+      },
+      "seatTwoIntent": {
+        "t": "playCard",
+        "cardInstanceId": "coop-qa-shieldBash",
+        "targetId": "p2",
+        "upcastTier": 2,
+        "as": "p2"
+      },
+      "overflow": false
+    },
+    {
+      "shape": "phone",
+      "seatOneIntent": {
+        "t": "playCard",
+        "cardInstanceId": "coop-qa-barrageCounter",
+        "targetId": "p1",
+        "upcastTier": 1,
+        "as": "p1"
+      },
+      "seatTwoIntent": {
+        "t": "playCard",
+        "cardInstanceId": "coop-qa-shieldBash",
+        "targetId": "p2",
+        "upcastTier": 2,
+        "as": "p2"
+      },
+      "overflow": false
+    }
+  ],
+  "errors": {
+    "solo": [],
+    "coop": []
+  },
+  "transportBoundary": "Actual compiled co-op client with engine-generated wire previews and canned two-seat transport. Records submitted intents; does not assert live host dispatch or two-browser networking.",
+  "historical": "historical-1113 contains explicitly older 1113/ffdc226b80 proof for the custom base-tier-2 to tier-5 modal retarget fixture."
+}

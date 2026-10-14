@@ -7,6 +7,7 @@ import { applyAbilityGrade } from './abilityGrades.js';
 //
 // Headless: no document/window/localStorage/timers.
 
+import { applyActionCosts } from './actionCosts.js';
 import { REGISTRY_TYPES, PASSIVE_KEYS } from './schemas.js';
 import { tagIndex } from './tags.js';
 import { nodeTree } from './tree.js';
@@ -24,6 +25,7 @@ import { applyItemCardUpgradeRows, itemUpgradeRows, resolveUpgradedRelic } from 
 import { cardForSchool, projectAttackCardDamageBundle } from './attackCardDamage.js';
 import { sharedFrameworkBridge } from '../framework/bridge.js';
 import { createEntityTermOverlay } from '../framework/termOverlay.js';
+import { resolveEnemyMoveSources } from './enemyMoveSources.js';
 
 function applyBasicCardProfile(def, profile) {
   if (!profile) return def;
@@ -38,6 +40,7 @@ function applyBasicCardProfile(def, profile) {
     flavor: profile.flavor || def.flavor,
     damageSchool: profile.damageSchool,
     exposureBuildupPerHit: profile.exposureBuildupPerHit,
+    ...(Number.isFinite(profile.magicShare) ? { magicShare: profile.magicShare } : {}),
     cardTags: tags,
     effects,
     equipmentProfileId: profile.id,
@@ -201,7 +204,7 @@ function stampTags(bundle) {
 }
 
 export function createRegistries(contentBundle) {
-  const bundle = projectAttackCardDamageBundle(contentBundle || {});
+  const bundle = projectAttackCardDamageBundle(resolveEnemyMoveSources(contentBundle || {}));
   const registries = {};
 
   // The tag join, resolved once for every collection tagFamilies.csv names.
@@ -210,9 +213,22 @@ export function createRegistries(contentBundle) {
   const tagFamilies = [...(bundle.tagFamilies || [])];
   const stamped = stampTags(bundle);
   const collection = (source, fallback) => stamped.get(source) || fallback;
+  // Scoped move ids repeat across enemies, so this tagged collection remains
+  // a table; nested enemy moves and tagService both read the stamped rows.
+  registries.enemyMoves = deepFreeze(collection('enemyMoves', bundle.enemyMoves || []));
 
   for (const type of REGISTRY_TYPES) {
-    registries[type] = makeRegistry(TYPE_SINGULAR[type], collection(type, bundle[type]));
+    let defs = collection(type, bundle[type]);
+    if (type === 'enemies' && bundle.enemyMoves) {
+      const moves = collection('enemyMoves', bundle.enemyMoves);
+      const byEnemy = new Map();
+      for (const move of moves) {
+        if (!byEnemy.has(move.enemyId)) byEnemy.set(move.enemyId, new Map());
+        byEnemy.get(move.enemyId).set(move.id, move);
+      }
+      defs = (defs || []).map((enemy) => ({ ...enemy, moves: Object.fromEntries(Object.entries(enemy.moves || {}).map(([id, move]) => [id, byEnemy.get(enemy.id)?.get(id) || move])) }));
+    }
+    registries[type] = makeRegistry(TYPE_SINGULAR[type], defs);
   }
   // What each `property` tag confers, keyed by the tag (content/propertyRules.js).
   // Read only by the mount path; a getter throws on an unknown tag like every
@@ -233,7 +249,7 @@ export function createRegistries(contentBundle) {
 
   registries.balance = deepFreeze({ ...(bundle.balance || {}) });
   if (bundle.classMasteryVersion === 1) registries.classMasteryVersion = 1;
-  if (bundle.breakMeterVersion === 1) registries.breakMeterVersion = 1;
+  if ([1, 2].includes(bundle.breakMeterVersion)) registries.breakMeterVersion = bundle.breakMeterVersion;
   // The shop kinds and their offerings (SPEC §14.2), as configured for this
   // run; a bundle without them reads the shipped table.
   registries.shops = deepFreeze(cloneShops(bundle.shops || shippedShops));
@@ -556,7 +572,30 @@ const resolveCache = new WeakMap();
  *     full upgraded set — this is what lets an upgrade remove Exhaust)
  *   - `name` defaults to base name + '+'
  */
+// The action-cost step (owner decision, 2026-10-12; model/actionCosts.js) runs once per resolved card, after the
+// upgrade and before the equipment and status mods, so a mod's flat bonus lands on the derived number (not scaled).
+// Cached per input object, so every surface reads the same derived card.
+// Keyed by the input object and the rank, since one base face is priced at every rank it is played at.
+const actionCostCards = new WeakMap();
+function derivedActionCost(def, authored, rank = 0) {
+  if (!def || typeof def !== 'object') return def;
+  let byRank = actionCostCards.get(def);
+  if (!byRank) actionCostCards.set(def, (byRank = new Map()));
+  const hit = byRank.get(rank);
+  if (hit) return hit;
+  const derived = applyActionCosts(def, authored, { rank });
+  byRank.set(rank, derived);
+  return derived;
+}
+// The rank the cost formula reads (SPEC §4.3a): an authored ability grade is its own rank (0..5); a legacy instance
+// rank counts from 1, so its rank above the base is rank − 1.
+const costRankOf = (usesAbilityGrade, base, rank) => (usesAbilityGrade ? Math.max(0, Number(base.abilityRank) || 0) : Math.max(0, rank - 1));
+
 export function resolveCard(registries, instanceOrRef, breakMeterVersion = instanceOrRef.breakMeterVersion ?? registries.breakMeterVersion) {
+  return resolveCardAuthored(registries, instanceOrRef, breakMeterVersion);
+}
+
+function resolveCardAuthored(registries, instanceOrRef, breakMeterVersion = instanceOrRef.breakMeterVersion ?? registries.breakMeterVersion) {
   const cardId = instanceOrRef.cardId;
   const legacyCards = registries.legacyProgressionSource?.cards;
   const definition = instanceOrRef.legacyAbility && legacyCards?.has(cardId)
@@ -570,11 +609,12 @@ export function resolveCard(registries, instanceOrRef, breakMeterVersion = insta
   const smithingLevel = Number.isInteger(instanceOrRef.smithingLevel) ? instanceOrRef.smithingLevel : 0;
   const sourceArmamentId = instanceOrRef.sourceArmamentId || '';
   if (smithingLevel < 0) throw new Error(`smithingLevel must be a non-negative integer (got ${smithingLevel})`);
-  const hasCarrier = typeof instanceOrRef.damageSchool === 'string' || Number.isInteger(instanceOrRef.exposureBuildupPerHit);
+  const hasCarrier = typeof instanceOrRef.damageSchool === 'string' || Number.isInteger(instanceOrRef.exposureBuildupPerHit)
+    || Number.isFinite(instanceOrRef.magicShare) || typeof instanceOrRef.physicalDamageType === 'string';
   const rank = cardRank(instanceOrRef);
   const skillBonus = cardSkillBonus(instanceOrRef);
   const passiveBlock = cardPassiveBlock(instanceOrRef);
-  if (!instanceOrRef.upgraded && !(mods && mods.length) && !profileId && !hasCarrier && smithingLevel === 0 && rank === 1 && skillBonus === 0 && passiveBlock === 0) return base;
+  if (!instanceOrRef.upgraded && !(mods && mods.length) && !profileId && !hasCarrier && smithingLevel === 0 && rank === 1 && skillBonus === 0 && passiveBlock === 0) return derivedActionCost(base, definition, costRankOf(usesAbilityGrade, base, rank));
 
   let cache = resolveCache.get(registries);
   if (!cache) {
@@ -584,7 +624,7 @@ export function resolveCard(registries, instanceOrRef, breakMeterVersion = insta
   // Equipment numbers live on the INSTANCE (see model/loadout.js), so the key
   // has to include them — two Strikes can differ if one was drawn before a
   // mid-combat weapon swap and the other after.
-  const key = `${cardId}|${instanceOrRef.upgraded ? 1 : 0}|${profileId || ''}|${mods ? mods.join(',') : ''}|${instanceOrRef.damageSchool || ''}|${instanceOrRef.exposureBuildupPerHit ?? ''}|${sourceArmamentId}|${smithingLevel}|r${rank}|a${usesAbilityGrade ? base.abilityRank : "legacy"}|s${skillBonus}|b${passiveBlock}|m${breakMeterVersion || 0}|l${instanceOrRef.legacyAbility ? 1 : 0}`;
+  const key = `${cardId}|${instanceOrRef.upgraded ? 1 : 0}|${profileId || ''}|${mods ? mods.join(',') : ''}|${instanceOrRef.damageSchool || ''}|${instanceOrRef.exposureBuildupPerHit ?? ''}|${instanceOrRef.magicShare ?? ''}|${instanceOrRef.physicalDamageType || ''}|${sourceArmamentId}|${smithingLevel}|r${rank}|a${usesAbilityGrade ? base.abilityRank : "legacy"}|s${skillBonus}|b${passiveBlock}|m${breakMeterVersion || 0}|l${instanceOrRef.legacyAbility ? 1 : 0}`;
   const hit = cache.get(key);
   if (hit) return hit;
 
@@ -599,6 +639,7 @@ export function resolveCard(registries, instanceOrRef, breakMeterVersion = insta
   let result = usesAbilityGrade ? base : cardForSchool(base, school);
   if (result !== base) result = deepFreeze(result);
   if (instanceOrRef.upgraded && !usesAbilityGrade) result = mergeUpgrade(result);
+  result = derivedActionCost(result, definition, costRankOf(usesAbilityGrade, base, rank));
   if (profileId) result = applyBasicCardProfile(result, profile);
   if (mods && mods.length) {
     const eq = registries.equipment || {};
@@ -614,6 +655,8 @@ export function resolveCard(registries, instanceOrRef, breakMeterVersion = insta
       ...result,
       ...(typeof instanceOrRef.damageSchool === 'string' ? { damageSchool: instanceOrRef.damageSchool } : {}),
       ...(Number.isInteger(instanceOrRef.exposureBuildupPerHit) ? { exposureBuildupPerHit: instanceOrRef.exposureBuildupPerHit } : {}),
+      ...(Number.isFinite(instanceOrRef.magicShare) ? { magicShare: instanceOrRef.magicShare } : {}),
+      ...(typeof instanceOrRef.physicalDamageType === 'string' ? { physicalDamageType: instanceOrRef.physicalDamageType } : {}),
     });
   }
   // Smithing changes are exact item/tier content. No source id means there is
