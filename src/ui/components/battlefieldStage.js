@@ -1032,10 +1032,11 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
     for (const move of intentMoves) {
       if (!move || (Math.abs(move.dx) < 0.01 && Math.abs(move.dy) < 0.01)) continue;
       const { leadingHost, dx, dy } = move;
-      // The host's current place in its own containing block, in layout px.
-      const hostBox = anchorLocalBox(leadingHost.offsetParent || leadingHost.parentElement, leadingHost);
+      // placeLeading writes layout px. Painted bounds include the host's own
+      // transform, which must not be applied again through layout left.
+      const hostLeft = parseFloat(leadingHost.style.left) || 0;
       const hostShiftY = parseFloat(leadingHost.style.translate.split(' ')[1]) || 0;
-      leadingHost.style.left = `${hostBox.left + dx}px`;
+      leadingHost.style.left = `${hostLeft + dx}px`;
       leadingHost.style.translate = `0 ${hostShiftY + dy}px`;
     }
     // Idle names do not reserve footer rows, but their independent tap cores
@@ -1075,15 +1076,19 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
           ? { ownerId:frame.dataset.eid, x, y, left:x-22, right:x+22, top:y-22, bottom:y+22 } : null;
       }).filter(Boolean);
     const near = (a, b) => Math.abs(a.x-b.x) < 44 && Math.abs(a.y-b.y) < 44;
-    if (idleCores.some((core, i) => core.y > core.art.bottom - fieldRect.top || stealsArtwork(core) || fixedCores.some(fixed => near(core, fixed))
+    // Absolute glyphs and mini-HUD children can extend outside their leading
+    // host. Reserve their painted rectangles, including for the retry trigger.
+    const controlObstacles = [...combat.querySelectorAll('.combat-hud, .turn-ribbon, .combatant-leading, .combatant-info, .player-action-intent, .combatant-mini-hud, .combatant-card > .meters, .combatant-card > .nm')]
+      .map(node => visibleCombatPanelRect(node, combat)).filter(Boolean)
+      .map(box => ({ left:box.left-fieldRect.left, right:box.right-fieldRect.left,
+        top:box.top-fieldRect.top, bottom:box.bottom-fieldRect.top }));
+    const hitsControl = core => controlObstacles.some(box => core.x + 22 > box.left && core.x - 22 < box.right
+      && core.y + 22 > box.top && core.y - 22 < box.bottom);
+    if (idleCores.some((core, i) => core.y > core.art.bottom - fieldRect.top || stealsArtwork(core) || hitsControl(core) || fixedCores.some(fixed => near(core, fixed))
       || idleCores.slice(i + 1).some(other => near(core, other)))) {
       const boundary = Math.min(combat.querySelector('.combat-tools')?.getBoundingClientRect().top ?? Infinity,
         readRestingHand()?.clearanceTop ?? Infinity, fieldRect.top + fieldRect.height);
-      const obstacles = [...combat.querySelectorAll('.combat-hud, .turn-ribbon, .combatant-leading, .combatant-info, .combatant-card > .meters, .combatant-card > .nm')]
-        .map(node => visibleCombatPanelRect(node, combat)).filter(Boolean)
-        .map(box => ({ left:box.left-fieldRect.left, right:box.right-fieldRect.left,
-          top:box.top-fieldRect.top, bottom:box.bottom-fieldRect.top }));
-      obstacles.push(...actorArt, ...fixedCores);
+      const obstacles = [...controlObstacles, ...actorArt, ...fixedCores];
       const cores = combatTargetAnchors({ width:fieldRect.width, height:boundary-fieldRect.top,
         size:44, lockX:true, maxShiftX:44,
         targets:idleCores.map(core => ({ ...core, x:core.art.width >= 44

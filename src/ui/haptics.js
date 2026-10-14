@@ -58,14 +58,16 @@ export function createHaptics({ getSettings = () => ({}), patterns = HAPTIC_PATT
     const batch = queued;
     queued = [];
     const nav = globalThis.navigator;
-    if (!batch.length || !nav || typeof nav.vibrate !== 'function') return;
+    if (!batch.length || !nav || typeof nav.vibrate !== 'function' || nav.userActivation?.hasBeenActive === false) return;
     try { nav.vibrate(joinPatterns(batch)); } catch { /* a refused vibrate is silence */ }
   };
   return function cue(id) {
     if (!hapticsEnabled(getSettings())) return false;
     if (!Object.prototype.hasOwnProperty.call(patterns, id)) return false;
     const nav = globalThis.navigator;
-    if (!nav || typeof nav.vibrate !== 'function') return false;
+    // Browsers with sticky activation reject vibration before the first trusted
+    // gesture. Drop startup cues rather than queueing a refused device call.
+    if (!nav || typeof nav.vibrate !== 'function' || nav.userActivation?.hasBeenActive === false) return false;
     if (!queued.length) schedule(flush);
     queued.push(patterns[id]);
     return true;

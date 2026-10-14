@@ -388,9 +388,18 @@ const INTENT_OVERLAP = `(async () => {
         || playerMoved.left < fieldBox.left + 22 || playerMoved.right > fieldBox.right - 22)
       throw new Error('screenreach: moved small-player fixture has an invalid size or foot anchor');
   }
-  // Cover the canonical intent: production owns its overhead host alignment.
-  sprite.style.translate = ((a.left + a.width / 2 - grown.left - grown.width / 2) / spriteScale) + 'px '
-    + ((a.top - 8 - grown.top) / spriteScale) + 'px';
+  // Move the reading host into the clear central patch. The production refit
+  // aligns its separate HP track, while the host retains its own transform.
+  // The actor's artwork and foot stay put; no child-only translate is applied.
+  const intentHost = intent.closest('.combatant-leading');
+  const hostTransform = getComputedStyle(intentHost).transform;
+  const hostDx = fieldBox.left + fieldBox.width / 2 - a.left - a.width / 2;
+  const hostDy = fieldBox.top + fieldBox.height / 2 - grown.height / 2 + 8 - a.top;
+  intentHost.style.transform = 'translate(' + (hostDx / zoom) + 'px, ' + (hostDy / zoom) + 'px) '
+    + (hostTransform === 'none' ? '' : hostTransform);
+  const canonical = intent.getBoundingClientRect();
+  sprite.style.translate = ((canonical.left + canonical.width / 2 - grown.left - grown.width / 2) / spriteScale) + 'px '
+    + ((canonical.top - 8 - grown.top) / spriteScale) + 'px';
   const b = sprite.getBoundingClientRect(), frameBox = high.getBoundingClientRect();
   high.style.setProperty('--enemy-hit-x', ((b.left + b.width / 2 - frameBox.left) / zoom) + 'px');
   high.style.setProperty('--enemy-hit-y', ((b.bottom - frameBox.top) / zoom) + 'px');

@@ -99,3 +99,41 @@ test('the player\'s self-cast square is a fixed obstacle for idle-core packing',
   assert.ok(selectors.includes('.player:not(.dead)'), 'the living player square is never covered by a packed enemy core');
   assert.ok(selectors.includes('.enemy.context-selected:not(.dead)'));
 });
+
+function runWithControls(placed, controls, bounds = {left:0,top:0,width:390,height:283}) {
+  return runInNewContext(stageSource.slice(stageStart,stageEnd), {placed,zoom:1,refresh:()=>{},fieldRect:bounds,
+    getComputedStyle:frame=>({left:String(frame.x),top:String(frame.y)}),currentSpriteArtBounds:sprite=>sprite.art,
+    visibleCombatPanelRect:node=>node.rect,readRestingHand:()=>null,
+    combat:{querySelector:()=>null,querySelectorAll:selector=>controls.filter(node=>selector.split(',').map(part=>part.trim()).includes(node.selector))},
+    combatTargetAnchors});
+}
+
+test('captured1524 absolute player glyph triggers idle-core repair outside the leading host', () => {
+  const glyph={selector:'.player-action-intent',rect:{left:113.266,right:137.266,top:225.156,bottom:249.156}};
+  // The core straddles the glyph although its own centres mostly hit e2.
+  const placed=[actor('e2',{left:62.934,right:166.934,top:92.730,bottom:217.715},114.934,229.150,true)];
+  const artBefore=structuredClone(placed[0].sprite.art);
+  runWithControls(placed,[glyph]);
+  const frame=placed[0].frame,core={x:parseFloat(frame.properties['--enemy-core-x']),y:parseFloat(frame.properties['--enemy-core-y']),width:44};
+  assert.ok(Number.isFinite(core.x)&&Number.isFinite(core.y),'the captured obstructed square is actually repacked');
+  assert.equal(frame.dataset.coreObstructed,'false');
+  assert.equal(overlaps(core,glyph.rect),false,'the full44px square leaves the absolute glyph clear');
+  assert.deepEqual(placed[0].sprite.art,artBefore,'no artwork moves to create a test pass');
+});
+
+test('a lone absolute glyph collision triggers repair without any art, core or floor collision', () => {
+  const glyph={selector:'.player-action-intent',rect:{left:113.266,right:137.266,top:225.156,bottom:249.156}};
+  const placed=[actor('e2',{left:90,right:150,top:180,bottom:270},125,237,true)];
+  runWithControls(placed,[glyph]);
+  const frame=placed[0].frame,core={x:parseFloat(frame.properties['--enemy-core-x']),y:parseFloat(frame.properties['--enemy-core-y']),width:44};
+  assert.ok(Number.isFinite(core.x)&&Number.isFinite(core.y),'the control collision alone invokes packing');
+  assert.equal(frame.dataset.coreObstructed,'false');
+  assert.equal(overlaps(core,glyph.rect),false);
+});
+
+test('mini-HUD controls outside their parent are reserved and impossible space stays explicit', () => {
+  const hud={selector:'.combatant-mini-hud',rect:{left:0,right:160,top:0,bottom:120}};
+  const placed=[actor('e2',{left:70,right:90,top:20,bottom:80},80,60,true)];
+  runWithControls(placed,[hud],{left:0,top:0,width:160,height:120});
+  assert.equal(placed[0].frame.dataset.coreObstructed,'true','an unavailable square is never reported reachable');
+});

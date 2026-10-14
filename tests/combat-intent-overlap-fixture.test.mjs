@@ -61,3 +61,22 @@ test('captured equal-depth setup rejects the original strict-depth-only assumpti
     if (!intent || !sprite) throw new Error('screenreach: intent overlap fixture is missing its two enemies');`;
   assert.throws(() => fixture([200, 200, 200], {}, original), /missing its two enemies/);
 });
+
+test('actual fixture moves the complete reading host coherently and keeps uniform neighbouring art cover', () => {
+  const begin=source.indexOf('  const intentHost = intent.closest('),end=source.indexOf('  const b = sprite.getBoundingClientRect()',begin);
+  assert.ok(begin>0&&end>begin);
+  const zoom=.83,spriteScale=.1773,a={left:70.891,top:100.742,width:88,height:26};
+  const grown={left:170,top:100,width:104,height:125};
+  let dx=0,dy=0;
+  const style={set transform(value){const match=value.match(/^translate\(([^p]+)px, ([^p]+)px\) /);assert.ok(match);dx=Number(match[1])*zoom;dy=Number(match[2])*zoom;this.savedTransform=value;}};
+  const host={style},intent={closest:()=>host,getBoundingClientRect:()=>({...a,left:a.left+dx,top:a.top+dy})};
+  const sprite={style:{}};
+  runInNewContext(source.slice(begin,end),{intent,sprite,zoom,spriteScale,a,grown,
+    fieldBox:{left:0,top:73.578,width:390,height:282.953},getComputedStyle:()=>({transform:'matrix(1, 0, 0, 1, 0, -57.8313)'})});
+  assert.match(style.savedTransform,/matrix\(1, 0, 0, 1, 0, -57\.8313\)$/,'the complete authored host transform is retained');
+  const [tx,ty]=sprite.style.translate.split(' ').map(parseFloat),left=grown.left+tx*spriteScale,top=grown.top+ty*spriteScale;
+  const canonical=intent.getBoundingClientRect();
+  assert.ok(left<=canonical.left&&left+grown.width>=canonical.left+canonical.width);
+  assert.ok(top<=canonical.top&&top+grown.height>=canonical.top+canonical.height);
+  assert.equal(sprite.style.scale,undefined,'placement does not distort the grown uniform scale');
+});

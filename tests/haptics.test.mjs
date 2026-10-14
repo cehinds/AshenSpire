@@ -82,6 +82,30 @@ test('setting on (and unset, the default): each cue vibrates its pattern; unknow
   }
 });
 
+test('sticky activation drops startup cues and preserves haptics after a trusted gesture', () => {
+  const stub = stubNavigator();
+  try {
+    const activation = { hasBeenActive: false, isActive: false };
+    navigator.userActivation = activation;
+    const { cue, tick } = manualCue({});
+    assert.equal(cue('turnStart'), false);
+    tick();
+    assert.deepEqual(stub.calls, []);
+    activation.hasBeenActive = true;
+    assert.equal(cue('cardPlay'), true, 'sticky activation allows later cues even outside the gesture tick');
+    tick();
+    assert.deepEqual(stub.calls, [[...HAPTIC_PATTERNS.cardPlay]]);
+    assert.equal(cue('damageTaken'), true);
+    activation.hasBeenActive = false;
+    tick();
+    assert.equal(stub.calls.length, 1, 'flush checks the current device activation too');
+    activation.hasBeenActive = true;
+    assert.equal(cue('turnStart'), true);
+    tick();
+    assert.deepEqual(stub.calls[1], [...HAPTIC_PATTERNS.turnStart], 'dropped batches do not replay');
+  } finally { stub.restore(); }
+});
+
 test('cues in one tick are ONE vibrate call, played in order, so none truncates another', async () => {
   const stub = stubNavigator();
   try {
