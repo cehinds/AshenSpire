@@ -42,7 +42,9 @@ jobs:
           tests/card-classification.test.mjs tests/combat-reaction-stack.test.mjs
           tests/playing-card-model.test.mjs tests/ability-card-identity.test.mjs
           tests/combat-card-presentation.test.mjs tests/combat-sigils.test.mjs
-          tests/combat-expansion-tactics.test.mjs
+          tests/combat-expansion-tactics.test.mjs tests/card-surface-consistency.test.mjs
+      - name: Export exact compact and inspection card text
+        run: node tools/ward-to-block-card-text.mjs
       - name: Capture six production views and inspections
         id: capture
         continue-on-error: true
