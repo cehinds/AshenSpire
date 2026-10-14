@@ -429,6 +429,7 @@ async function runCase(page, device, classId, row) {
     if (row.deniedRecovery) entry.input = { ...entry.input, refusalEvidence: structuredClone(entry.input), refusal: null, recoveredAtNextTurn: true };
     if (row.sampleAnimation) await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     entry.after = await receipt(page);
+    if (row.category?.endsWith('counter-return')) assert.ok(entry.after.events.some(e => e.type === 'combatCounterTriggered' && e.cardInstanceId === row.instanceId), 'the real incoming action triggers this prepared Counter return');
     if (row.profileId) {
       assert.equal(entry.before.instance.profileId, row.profileId, 'played instance comes from canonical equipped profile');
       assert.equal(entry.after.stage?.animationSetId, `class-cards-${classId}`, 'equipped profile retains default class artwork');
