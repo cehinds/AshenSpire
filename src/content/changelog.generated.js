@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1976",
+    "date": "2026-10-14",
+    "group": "2026-10-14",
+    "summary": "Restore cards show their full price in combat",
+    "detail": "Attune and Ember Communion now show their full discounted Mana price on the card and in Information, matching rewards and deck views. Their own restore still pays that part: they remain playable at zero Mana and leave Mana unchanged. Stamina restores follow the same display rule, and a card cannot borrow a discount held by another queued card in Combat Rounds. Solo, co-op and older saved rules keep their payment behavior.",
+    "build": "0.7.1.1515",
+    "pullRequest": 1976,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1976"
+  },
+  {
     "id": "pr-1972",
     "date": "2026-10-14",
     "group": "2026-10-14",
