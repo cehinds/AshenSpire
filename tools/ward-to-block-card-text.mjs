@@ -42,7 +42,7 @@ export function wardToBlockCardText() {
       ratingsRules: resolveCombatRatings({}, contentBundle), enemyIds: ['wanderingSoldier'],
       player: { classId: 'starseer', maxHp: 100, hp: 100, maxMana: 30, mana: 30,
         maxStamina: 30, stamina: 30, energyMax: 30, drawPerTurn: 1,
-        deck: [{ cardId, instanceId: 'text-example', abilityRank: 1 }] } });
+        deck: [{ cardId, instanceId: 'text-example', ...(registries.cards.get(cardId).gradeProfiles ? { abilityRank: 1 } : {}) }] } });
     ctx.player.ratings = { ar: 0, dr: 3, pr: 3, ward: 30, poise: 30 };
     ctx.player.statuses = {};
     const ref = ctx.piles.hand.find(card => card.instanceId === 'text-example');
@@ -55,9 +55,23 @@ export function wardToBlockCardText() {
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const output = resolve(process.argv[2] || 'artifacts/ward-to-block/card-text.json');
+  const output = resolve(process.argv[2] || (process.env.WARD_CARD_QA_OUT ? resolve(process.env.WARD_CARD_QA_OUT, 'card-text.json') : 'artifacts/ward-to-block/card-text.json'));
   mkdirSync(resolve(output, '..'), { recursive: true });
   const data = wardToBlockCardText();
   writeFileSync(output, JSON.stringify(data, null, 2) + '\n');
-  console.log(JSON.stringify({ output, cards: data.cards.length, liveExamples: data.liveExamples.length }));
+  const markdown = ['# Updated card text', '', data.assumptions, '',
+    ...data.cards.flatMap(card => [
+      `## ${card.name} — ${JSON.stringify(card.ref)}`, '',
+      `**Identity:** ${card.cardCategory}${card.stanceType ? ' · ' + card.stanceType : ''}`, '',
+      '**Compact / in-hand:**', '', card.compact, '', '**Inspection:**', '', card.inspection, '',
+    ]),
+    '# Live examples: DR 3 and PR 3', '',
+    ...data.liveExamples.flatMap(card => [
+      `## ${card.ref.cardId}`, '', '**Compact / in-hand:**', '', card.compact, '',
+      '**Inspection:**', '', card.inspection, '',
+    ]),
+  ].join('\n');
+  const markdownOutput = output.replace(/\.json$/i, '') + '.md';
+  writeFileSync(markdownOutput, markdown + '\n');
+  console.log(JSON.stringify({ output, markdownOutput, cards: data.cards.length, liveExamples: data.liveExamples.length }));
 }
