@@ -276,6 +276,9 @@ test('actual delayed move retains its serial and read through charge, snapshot a
   const restored = restoreCombatSnapshot({ registries, rng: createRng(run.seed, rng.getCounters()), snapshot: serializeCombatSnapshot(combat) });
   assert.deepEqual(restored.enemies[0].knowledgeAction, original);
   dispatch(restored, { type: 'endTurn' });
+  assert.ok(restored.pendingReaction, 'the released hit pauses before earning prediction credit');
+  assert.equal(restored.enemyKnowledge.owners.player.earnedXp, 0);
+  skipReactions(restored);
   assert.equal(restored.enemyKnowledge.owners.player.earnedXp, 1);
   assert.equal(restored.enemyKnowledge.owners.player.feedback[0].actionSerial, original.serial);
   assert.equal(restored.enemyKnowledge.owners.player.feedback[0].correct, true);

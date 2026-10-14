@@ -11,10 +11,10 @@ import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js
 import { INTENT_ICON_SHAPES } from '../src/ui/components/intentIcon.js';
 
 test('all requested identities have unique monochrome geometry', () => {
-  assert.deepEqual(Object.keys(ACTION_SIGILS), ['attack','defend','evade','counter','sweep','ranged','smash','spell','power','skill','status']);
+  assert.deepEqual(Object.keys(ACTION_SIGILS), ['attack','defense','stance','consumable','defend','evade','counter','sweep','ranged','smash','spell','power','skill','status']);
   assert.deepEqual(Object.keys(SCHOOL_SIGILS), ['frost','fire','lightning','force','alteration','illusion','divine','decay']);
   const marks = [...Object.values(ACTION_SIGILS), ...Object.values(SCHOOL_SIGILS)];
-  assert.equal(new Set(marks.map(m => m.shape)).size, 19);
+  assert.equal(new Set(marks.map(m => m.shape)).size, 21);
   for (const m of marks) { assert.ok(m.label && m.help); assert.doesNotMatch(m.shape, /fill=|style=|#[0-9a-f]/i); }
 });
 
@@ -103,7 +103,7 @@ test('every base, upgrade, authored rank and equipment profile uses the shared i
     assert.ok(Object.isFrozen(model.sigils));
     actions.add(model.sigils.action); if(model.sigils.school)schools.add(model.sigils.school);
   }
-  assert.equal(actions.size, 10); assert.equal(schools.size, 8);
+  assert.deepEqual([...actions].sort(), ['attack','counter','defense','evade','power','skill','smash','status','sweep']); assert.equal(schools.size, 8);
 });
 
 test('approved solid footer symbols stay distinct and have a visible action name', () => {
@@ -127,7 +127,7 @@ test('long rank effects keep their Starstone condition, values and draw limit', 
 test('Ritual Ward keeps Defend below and category followed by effect type on the right', () => {
   const reg=createRegistries(contentBundle),ref={cardId:'defend',profileId:'sceptreGuard'};
   const model=playingCardModel(reg,ref),def=resolveCard(reg,ref);
-  assert.equal(model.sigils.action,'defend');
+  assert.equal(model.sigils.action,'defense');
   assert.deepEqual(cardSideTags(model,def,reg).map(t=>t.label),['Spell','Divine']);
 });
 

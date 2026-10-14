@@ -1688,6 +1688,8 @@ export const balance = {
     // label is display-only — the engine keys on the id (CARD_TYPES is frozen
     // and the Bulwark stance matches 'skill'), so renaming here is safe.
     cardTypes: {
+      stance: { label: 'STANCE', color: '#c9502e', radius: 3, art: 0 },
+      consumable: { label: 'CONSUMABLE', color: '#7fa8c9', radius: 10, art: 6 },
       attack: { label: 'ATTACK', color: '#c9502e', radius: 3, art: 0 },
       skill: { label: 'SKILL', color: '#7fa8c9', radius: 10, art: 6 },
       power: { label: 'POWER', color: '#c9a227', radius: 20, art: 16 },

@@ -66,8 +66,13 @@ const player = () => ({ id: 'player', kind: 'player', alive: true, hp: 50, block
   statuses: {}, ratings: { ar: 4, dr: 3, pr: 9 } });
 const fixture = () => {
   const queue = [], target = player(), source = { id: 'enemy', kind: 'enemy', alive: true, hp: 50, statuses: {} };
-  const ctx = { combatExpansionVersion: 2, player: target, enemies: [source], ratingsRules: {}, registries,
-    enqueue: action => queue.push(action), emit() {}, rng: { int() { throw new Error('Unexpected RNG'); } } };
+  const ctx = createCombat({ registries, rng: createRng(901), combatExpansionVersion: 2,
+    enemyIds: ['wanderingSoldier'], player: { classId: 'reaver', maxHp: 50, hp: 50,
+      maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1, deck: [] } });
+  target.counters = structuredClone(ctx.player.counters);
+  Object.assign(ctx, { player: target, enemies: [source], ratingsRules: {}, queue,
+    enqueue: action => queue.push(action), emit() {} });
+  ctx.rng.int = () => { throw new Error('Unexpected RNG'); };
   return { ctx, queue, target, source };
 };
 
@@ -121,7 +126,7 @@ test('authored impact Counter is especially punishing only to its covered Smash 
     const receipt = beginTacticalAction(f.ctx, f.source, f.target, incoming, [{ amount: 8 }]);
     recordTacticalContact(receipt, { blocked: 4 });
     completeTacticalAction(f.ctx, f.source, f.target, incoming, receipt);
-    assert.deepEqual(f.queue.map(action => [action.effect.op, action.effect.amount]), [['poiseDamage', maneuver === 'smash' ? 6 : 4]]);
+    assert.deepEqual(f.queue.filter(action => action.effect.op !== 'completeCombatAction').map(action => [action.effect.op, action.effect.amount]), [['poiseDamage', maneuver === 'smash' ? 6 : 4]]);
   }
 });
 
@@ -160,7 +165,7 @@ test('equipment object traits preserve Grounded Counter and caster-only spell HP
   const incoming = { combatProfile: { camp: 'spell', maneuver: 'casting', school: 'lightning', range: 'reach', targeting: 'single' } };
   const receipt = beginTacticalAction(f.ctx, f.source, f.target, incoming, [{ amount: 3 }]);
   recordTacticalContact(receipt, { wardResisted: 3 }); completeTacticalAction(f.ctx, f.source, f.target, incoming, receipt);
-  assert.deepEqual(f.queue.map(action => action.effect.amount), [3]);
+  assert.deepEqual(f.queue.filter(action => action.effect.op !== 'completeCombatAction').map(action => action.effect.amount), [3]);
 });
 
 test('status-only previews do not advertise damage avoidance or consume readiness', () => {
@@ -217,7 +222,7 @@ test('Prone combo impact is conditional on a successful Contact return, while co
     const receipt = beginTacticalAction(f.ctx, f.source, f.target, incoming, [{ amount: 8 }]);
     recordTacticalContact(receipt, { blocked: 4 });
     completeTacticalAction(f.ctx, f.source, f.target, incoming, receipt);
-    assert.deepEqual(f.queue.map(action => [action.effect.op, action.effect.amount]), [['poiseDamage', prone ? 5 : 3]]);
+    assert.deepEqual(f.queue.filter(action => action.effect.op !== 'completeCombatAction').map(action => [action.effect.op, action.effect.amount]), [['poiseDamage', prone ? 5 : 3]]);
     const shot = tacticalCarrier({ tags: ['camp:physical', 'maneuver:ranged'],
       evade: { charges: 1, bonus: 0, advantage: true, whileStatus: 'prone' } });
     prepareTacticalCard(f.ctx, f.target, f.source, shot, []);
