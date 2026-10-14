@@ -1,3 +1,4 @@
+import { stanceEntryBonuses, stanceRulesFor, stanceOf } from './stanceRules.js';
 // src/model/cardFaceText.js — the text a playing card's face says, as lines.
 //
 // ONE MODEL FOR EVERY CARD FACE. It reads the same context combatCardSummary
@@ -239,7 +240,7 @@ function buildLines(def, preview, registries) {
   const segmentsOf = (fragments, extraBonus = []) => {
     const of = cat => fragments.filter(f => f.cat === cat).map(f => f.text);
     const out = [];
-    const cost = of('cost'), damage = of('damage'), status = of('status'), remove = of('remove'), consume = of('consume'), gain = of('gain'), bonus = [...of('bonus'), ...extraBonus];
+    const cost = of('cost'), damage = of('damage'), status = of('status'), remove = of('remove'), consume = of('consume'), gain = of('gain'), bonus = [...of('bonus'), ...extraBonus], defenseRestore = of('defenseRestore');
     if (cost.length) out.push({ kind: 'cost', text: cost.join(', ') });
     if (damage.length) out.push({ kind: 'damage', text: `${damageVerb} ${damage.join(', ')}` });
     else if (counter && fragments === unconditional && !def.evade) out.push({ kind: 'damage', text: def.defenseRulesVersion === 2 ? 'Prepare Counter' : damageVerb.replace(/: return$/, '') });
@@ -247,7 +248,8 @@ function buildLines(def, preview, registries) {
     if (remove.length) out.push({ kind: 'status', text: `Remove ${remove.join(', ')}` });
     if (consume.length) out.push({ kind: 'consume', text: `Remove ${consume.join(', ')}` });
     if (gain.length) out.push({ kind: 'gain', text: `Gain ${gain.join(', ')}` });
-    if (bonus.length) out.push({ kind: 'bonus', text: bonus.join(', ') });
+    if (bonus.length) out.push({ kind: 'bonus', text: defenseRestore.length ? defenseRestore.join(', ') + '. ' + bonus.join(', ') : bonus.join(', ') });
+    else if (defenseRestore.length) out.push({ kind: 'bonus', text: defenseRestore.join(', ') });
     return out;
   };
 
@@ -301,7 +303,24 @@ function buildLines(def, preview, registries) {
   }
   if (counter && def.counterPayload?.smashPoiseBonus) unconditional.push({ cat: 'damage', text: `+${num(def.counterPayload.smashPoiseBonus)} Poise against Smash` });
   if (def.pronePoiseBonus) unconditional.push({ cat: 'bonus', text: `+${num(def.pronePoiseBonus)} Poise while Prone` });
-  if (def.evade) {
+  if (def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2) {
+    const ctx = { registries, combatExpansionVersion: 2, stanceRules: registries?.balance?.stanceRules };
+    const entry = stanceEntryBonuses(def, ctx);
+    const grants = Object.entries(entry).filter(([, amount]) => amount > 0).map(([id, amount]) => '+' + num(amount) + ' ' + ({ precision: 'Precision', evade: 'Evade', block: 'Block', barrier: 'Barrier' })[id]);
+    if (grants.length) unconditional.push({ cat: 'bonus', text: 'Entry: ' + grants.join(', ') });
+    if (stanceOf(def)?.maneuver === 'defend') {
+      const restore = num(stanceRulesFor(ctx).defenseRestore);
+      unconditional.push({ cat: 'defenseRestore', text: 'Restore ' + restore + ' Poise/Ward' });
+    }
+    if (def.evade?.whileStatus) {
+      const conditionKey = `evade:${def.evade.whileStatus}`;
+      groups.set(conditionKey, {
+        prefix: `While ${esc(title(def.evade.whileStatus))}: `,
+        fragments: [{ cat: 'bonus', text: `Prepare one Evade${def.evade.advantage ? ' with Advantage' : ''}` }],
+        sleeping: false,
+      });
+    }
+  } else if (def.evade) {
     unconditional.push({ cat: 'bonus', text: `${def.evade.whileStatus ? `While ${esc(title(def.evade.whileStatus))}: ` : ''}Prepare one Evade${def.evade.advantage ? ' with Advantage' : ''}` });
   }
 

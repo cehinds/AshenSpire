@@ -112,6 +112,8 @@ export const balanceWords = Object.freeze({
 
 
 const cardValueStatusMultipliers = {
+  precision: 1,
+  evade: 1,
   ...Object.fromEntries(expansionStatuses.map(status => [status.id, 1])),
   strength: 1,
   dexterity: 1,

@@ -75,7 +75,7 @@ export function distancePreview(ctx, entity, incomingProfile) {
 export function previewAvoidance(ctx, entity, profile, incomingDamage, options = {}) {
   const distance = distancePreview(ctx, entity, profile);
   const evade = evadeRollPreview(ctx, entity, profile, incomingDamage, options);
-  if (!(incomingDamage > 0)) {
+  if (ctx?.combatExpansionVersion === 2 || !(incomingDamage > 0)) {
     distance.eligible = evade.eligible = false;
     distance.baseChance = distance.chance = evade.baseChance = evade.chance = 0;
   }
@@ -90,7 +90,8 @@ export function previewAvoidance(ctx, entity, profile, incomingDamage, options =
 export function resolveAvoidance(ctx, source, target, profile, incomingDamage, options = {}, saved = null) {
   if (saved?.resolved) return saved;
   const preview = previewAvoidance(ctx, target, profile, incomingDamage, options);
-  const outcome = { resolved: true, avoided: false, distance: null, evade: null, chance: preview.chance };
+  const outcome = { resolved: true, avoided: false, distance: null, evade: null, chance: preview.chance,
+    ...(options.hitCheck ? { hitCheck: true } : {}) };
   if (preview.prevention) {
     Statuses.removeStatus(ctx, target, preview.prevention, { amount: 1, reason: 'consumed' });
     outcome.avoided = true;

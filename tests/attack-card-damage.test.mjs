@@ -402,9 +402,9 @@ test('a card a staff package deals resolves through the magical formulas', () =>
   const authored = contentBundle.legacyProgression.cards.find((card) => card.id === 'stomp');
   const scaledAuthored = dealt.cost >= 2 ? authored.effects.map((effect) => (SCALED_EFFECT_OPS.includes(effect.op) && typeof effect.amount === 'number'
     ? Math.round(effect.amount * TWO_COST_EFFECT_MULTIPLIER) : effect.amount)) : authored.effects.map((effect) => effect.amount);
-  // Stomp is a smash: every smash adds smashPoiseBase to its Poise damage (owner, 2026-10-13).
-  const poiseAt = authored.effects.findIndex((effect) => effect.op === 'poiseDamage');
-  if (poiseAt >= 0) scaledAuthored[poiseAt] += COST_BUDGET.smashPoiseBase;
+  // Stomp already authors Poise damage, so Smash preserves that scaled amount without another fallback.
+  assert.ok(authored.effects.some(effect => effect.op === 'poiseDamage'));
+  assert.equal(dealt.effects.filter(effect => effect.op === 'poiseDamage').length, 1);
   assert.deepEqual(dealt.effects.map((effect) => effect.amount), scaledAuthored,
     'untouched defaults keep its numbers on the magical side, after the action-cost step');
   const tuned = createRegistries(configuredContentBundle(bundle, { 'gameConfig.balance.damage.potencyCards.globalMultiplier': 5 }));

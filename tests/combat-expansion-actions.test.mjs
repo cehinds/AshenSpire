@@ -1,3 +1,4 @@
+import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
@@ -25,6 +26,7 @@ function fixture(effects = [{ op: 'damage', target: 'enemy', amount: 5, hits: 2 
     enemyIds: ['wanderingSoldier'], player: { classId: 'starseer', maxHp: 100, hp: 100,
       maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1,
       deck: [{ cardId: 'starstonePebble', instanceId: 'paired', upgraded: false }] } });
+  primeAccuracyRolls(combat, { count: 2 });
   const enemy = combat.enemies[0]; enemy.block = enemy.barrier = 0;
   enemy.damageResistanceFlat = {}; enemy.damageWeaknessPercent = {};
   enemy.ratings = { ar: 0, dr: 0, pr: 0, poise: 100, ward: 3 };

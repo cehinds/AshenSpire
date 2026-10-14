@@ -6405,3 +6405,39 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 .customize .cc-equip-group[data-equipment-section="startingAbilities"] > .cc-card-selectors,
 .customize .cc-equip-group[data-equipment-section="startingAbilities"] > .cc-card-selectors[data-view] { flex:1 1 auto; min-height:0; grid-row:auto; grid-column:auto; grid-auto-flow:row; grid-auto-columns:auto; overflow-x:hidden; overflow-y:auto; scroll-snap-type:none; scrollbar-gutter:stable; }
 .customize .cc-equip-group[data-equipment-section="startingAbilities"] > :not(.cc-card-selectors) { flex:none; }
+
+/* Defense order is shared by player, enemy and co-op health rows. */
+:root .combat .combatant .combat-health-evade { color: #fff; gap: .08em; }
+:root .combat .combatant .combat-health-evade::before { border-radius: 50%; background: #20242a; }
+:root .combat .combatant .combat-health-evade-icon { font-size: .8em; }
+:root .combat .combatant .combat-health-poise { color: var(--gold, #ffd34d); }
+:root .combat .combatant .combat-health-poise::before { border-radius: 35%; background: #493a12; border: 1px solid #ffd34d; }
+:root .combat .combatant .combat-health-badge-value { -webkit-text-stroke: 1px #000; paint-order: stroke fill; }
+:root .combat .combatant .combat-hit-chance { color: #fff; font-weight: 700; -webkit-text-stroke: 1px #000; paint-order: stroke fill; }
+:root .combat .combatant .combat-hit-chance[data-roll-mode='advantage'] { color: #83df99; }
+:root .combat .combatant .combat-hit-chance[data-roll-mode='disadvantage'] { color: #ff8179; }
+
+:root .combat .combatant .combat-health-evade-icon svg { width: .85em; height: .85em; display: block; }
+
+:root .combat .combatant .combat-health-meter .m-value,
+:root .combat .combatant .combat-health-meter .m-value::after { -webkit-text-stroke: 1px #000; paint-order: stroke fill; }
+
+/* Keep the Evade icon inside the same compact badge geometry as defenses. */
+:root .combat .combatant .combat-health-evade {
+  flex: 0 0 calc(22px / var(--ui-zoom, 1)); width: calc(22px / var(--ui-zoom, 1));
+  min-width: 0; max-width: calc(22px / var(--ui-zoom, 1)); height: calc(22px / var(--ui-zoom, 1));
+  aspect-ratio: 1; grid-template-columns: .8em 1fr; padding: 0 .15em; overflow: hidden;
+}
+:root .combat .combatant .combat-health-evade-icon { min-width: 0; width: .8em; height: .8em; }
+:root .combat .combatant .combat-health-evade-icon svg { width: 100%; height: 100%; max-width: 100%; }
+
+/* Selected-card odds share the engine preview and observer gate with the HUD. */
+.combat .hand .card .card-hit-chances { position: absolute; z-index: 8; inset-inline: 0; bottom: calc(100% + .35rem); display: flex; flex-wrap: wrap; justify-content: center; gap: .2rem .5rem; padding: .35rem; background: #15120fed; border: 1px solid #a58a4f; border-radius: .3rem; font: 700 1.1rem/1.2 var(--font-body); pointer-events: none; }
+.combat .card-hit-chance { color: white; -webkit-text-stroke: 1px black; paint-order: stroke fill; white-space: nowrap; }
+.combat .card-hit-chance[data-roll-mode='advantage'] { color: #83df99; }
+.combat .card-hit-chance[data-roll-mode='disadvantage'] { color: #ff8179; }
+
+/* Odds stay inside the selected card's painted area, beyond hand clipping. */
+.combat .hand .card .card-hit-chances { top: 16%; bottom: auto; inset-inline: 6%; max-width: 88%; box-sizing: border-box; font-size: max(10px, 1.05rem); }
+.combat .card-hit-chance { max-width: 100%; white-space: normal; overflow-wrap: anywhere; text-align: center; }
+.expanded-combat-card .ic-text[data-card-binding="rules"] .face-line { display: block; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }

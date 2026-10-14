@@ -1,3 +1,4 @@
+import { primeAccuracyRolls } from './accuracyFixture.mjs';
 // The twelve Rebalance element cards (poison, psychic, earth): each one plays in
 // an expanded run and puts its stated status where the card says it goes.
 import test from 'node:test';
@@ -23,6 +24,7 @@ function play(cardId, { upgraded = false, enemyId = 'wanderingSoldier', setup, s
     player: { classId, maxHp: 100, hp: 100, maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1,
       deck: [{ cardId, instanceId: 'p', upgraded }],
       ...(weapon !== undefined ? { loadout: { sets: { rightHand: [weapon], leftHand: [null], armor: ['default'] }, active: { rightHand: 0, leftHand: 0, armor: 0 } } } : {}) } });
+  primeAccuracyRolls(combat, { count: 2 });
   const enemy = combat.enemies[0];
   enemy.block = enemy.barrier = 0;
   if (setup) setup(combat, enemy);
@@ -103,7 +105,7 @@ test('Earth attacks slow; Entomb entombs', () => {
   }
   const entomb = play('entomb');
   assert(entomb.landed('entombed'));
-  assert.equal(getStacks(entomb.enemy, 'entombed'), 1);
+  assert.equal(getStacks(entomb.enemy, 'entombed'), 2, 'one authored Entombed stack plus one Spell stance stack');
 });
 
 test('Stoneskin gives Block that survives the next turn start', () => {

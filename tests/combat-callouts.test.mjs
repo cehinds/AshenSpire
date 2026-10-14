@@ -16,9 +16,12 @@ const callouts = (layer) => layer.children.filter((node) => node.dataset?.callou
 
 test('every callout kind has a localized word', () => {
   for (const [kind, def] of Object.entries(CALLOUT_KINDS)) {
-    assert.match(t(def.string), /^[A-Z ]+$/, `${kind} is a short uppercase word`);
+    assert.match(t(def.string), /^[A-Za-z —]+$/, `${kind} is a localized outcome phrase`);
   }
   assert.equal(t(CALLOUT_KINDS.guardBreak.string), 'GUARD BREAK');
+  assert.equal(t(CALLOUT_KINDS.hit.string), 'Hit');
+  assert.equal(t(CALLOUT_KINDS.evadeFailed.string), 'Hit — Evade Failed');
+  assert.equal(t(CALLOUT_KINDS.missed.string), 'Missed');
 });
 
 test('a callout names its fighter, shows three in lanes, queues the rest, and skips a repeat', (t2) => {
@@ -110,7 +113,7 @@ function drive(t2, fn) {
     let completed = 0;
     const run = (events, extra = {}) => playTimeline(events, { ...ctx, ...extra }, () => completed++);
     const finish = () => { for (let i = 0; i < 4000 && !completed; i++) t2.mock.timers.tick(1); assert.equal(completed, 1, 'the timeline completes'); };
-    try { fn({ dom, layer, trace, run, finish, tick: (ms) => t2.mock.timers.tick(ms) }); }
+    try { fn({ dom, layer, anchors, trace, run, finish, tick: (ms) => t2.mock.timers.tick(ms) }); }
     finally { setAnimSpeed('normal'); setBeatOrder('sequential'); dom.document.body.classList.remove('reduced-motion'); }
   });
 }
@@ -254,5 +257,41 @@ test('a click-skip ends the callouts', (t2) => {
     assert.equal(callouts(layer).length, 0, 'the skip removed it');
     globalThis.dispatchEvent(new dom.Event('pointerup'));
     finish();
+  });
+});
+
+for (const mode of ['impact', 'sequential', 'instant', 'reduced']) test('accuracy outcome leads damage in ' + mode + ' playback', t2 => {
+  drive(t2, ({ dom, trace, run, finish }) => {
+    if (mode === 'instant') setAnimSpeed('instant');
+    if (mode === 'reduced') dom.document.body.classList.add('reduced-motion');
+    run(enemyAttack({ type: 'attackHit', sourceId: 'e1', targetId: 'player', evadeActive: true }, hit('e1', 'player')), { beatOrder: mode });
+    finish();
+    const outcome = timeOf(trace, 'callout:evadeFailed@player');
+    const damage = timeOf(trace, 'float:-4');
+    assert.ok(Number.isFinite(outcome) && Number.isFinite(damage), 'both production visuals execute');
+    assert.ok(damage > outcome, 'the outcome has a visible lead before damage');
+    assert.ok(damage - outcome >= 300, 'outcome gets its readable lead in every playback mode');
+    assert.ok(damage <= 750, 'the readable outcome hold overlaps swing recovery within the first-number budget');
+  });
+});
+
+test('accuracy hold overlaps stance entry before the first sequential hit', t2 => {
+  drive(t2, ({ anchors, trace, run, finish }) => {
+    const stage = { pose: 'hit', rest: 'idle', settle() { this.pose = this.rest; }, hold() {} };
+    registerStage(anchors.e1, stage);
+    run(enemyAttack({ type: 'attackHit', sourceId: 'e1', targetId: 'player' }, hit('e1', 'player')), {
+      animateActor: () => {
+        trace.push({ what: 'swing-start', at: Date.now() });
+        return { impactMs: IMPACT, totalMs: TOTAL, hold() {}, cancel() {} };
+      },
+    });
+    finish();
+    const outcome = timeOf(trace, 'callout:hit@player');
+    const damage = timeOf(trace, 'float:-4');
+    assert.equal(outcome, 0, 'the accuracy word starts before stance entry');
+    assert.equal(timeOf(trace, 'swing-start'), ANIM_SPEEDS.normal.stanceLeadMs, 'stance entry still precedes the swing');
+    assert.ok(damage - outcome >= 300, 'the hit-only hold remains readable');
+    assert.ok(damage <= 650, 'stance entry shares the accuracy hold instead of adding a second wait');
+    assert.equal(trace.filter(e => e.what === 'callout:hit@player').length, 1, 'the accuracy word is shown once');
   });
 });

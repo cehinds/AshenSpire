@@ -251,7 +251,7 @@ test('every base (rank 0) smash and sweep costs at least 2 SP; a higher rank has
   assert.equal(applyActionCosts({ ...light, cost: 0 }, light, { rank: 0 }).cost, 1, 'an authored upgrade that lowers the cost lowers the floor');
 });
 
-test('all smashes deal Poise damage: smashPoiseBase plus their own, scaled at 2 SP; the face says it', () => {
+test('all smashes deal Poise damage: only absent authored Poise gains the fallback; the face says it', () => {
   const base = COST_BUDGET.smashPoiseBase;
   assert.ok(base > 0);
   const faces = maneuverFaces('maneuver:smash');
@@ -259,14 +259,18 @@ test('all smashes deal Poise damage: smashPoiseBase plus their own, scaled at 2 
   for (const { card, ref } of faces) {
     const def = resolveCard(registries, ref);
     const poise = def.effects.filter((e) => e.op === 'poiseDamage' && typeof e.amount === 'number').reduce((sum, e) => sum + e.amount, 0);
-    assert.ok(poise >= base, `${card.id} ${JSON.stringify(ref)} deals ${poise} Poise`);
+    assert.ok(poise > 0, `${card.id} ${JSON.stringify(ref)} retains positive authored or fallback Poise`);
     assert.match(def.textTemplate, /\{poiseDamage\}/, `${card.id}: the face names its Poise damage`);
   }
   const smash = { id: 's', type: 'attack', cost: 1, effects: [{ op: 'damage', target: 'enemy', amount: 40 }, { op: 'poiseDamage', target: 'enemy', amount: 5 }], tags: ['camp:physical', 'maneuver:smash'] };
   const out = applyActionCosts(smash, smash);
   assert.ok(out.cost >= 2);
   assert.equal(out.effects.find((e) => e.op === 'damage').amount, Math.round(40 * COST_BUDGET.twoCostMultiplier), 'damage scales');
-  assert.equal(out.effects.find((e) => e.op === 'poiseDamage').amount, Math.round(5 * COST_BUDGET.twoCostMultiplier) + base, 'its own Poise scales, then the base adds');
+  assert.equal(out.effects.find((e) => e.op === 'poiseDamage').amount, Math.round(5 * COST_BUDGET.twoCostMultiplier), 'its own Poise scales without another fallback');
+  const absent = { ...smash, effects: smash.effects.filter(effect => effect.op !== 'poiseDamage') };
+  const fallback = applyActionCosts(absent, absent);
+  assert.equal(fallback.effects.filter(effect => effect.op === 'poiseDamage').length, 1);
+  assert.equal(fallback.effects.find(effect => effect.op === 'poiseDamage').amount, base, 'absent Poise receives the fallback once');
 });
 
 test('a sweep pays for its area: its damage is unscaled at 2 SP, its other riders scale', () => {
