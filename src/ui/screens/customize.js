@@ -1787,7 +1787,7 @@ export function mountCustomize(app, {
     markUiComponent(disclosureHost, UI.characterDisclosure);
     disclosureSpecimen.open('sample-primary');
     const statHost = el('div', { class: 'as-stack tight cc-primary-stats cc-catalog-specimen' }, primaryStatCards(specimenAttributes));
-    const classChoiceHost = options([], { class: 'cc-catalog-specimen', dataset: { view: 'list' } });
+    const classChoiceHost = options([], { class: 'cc-choice-collection cc-catalog-specimen cc-class-row-specimen', dataset: { view: 'list' } });
     let specimenClassId = state.classId;
     const inspectSpecimenRelic = (relic, opener) => openCreationRelicDetail(relic, relicText(relic, registries), opener);
     const specimenSprite = (classId, armourId) => paintedPresentation(classId, armourId, 'stand');
