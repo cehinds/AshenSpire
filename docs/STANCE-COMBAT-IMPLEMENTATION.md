@@ -26,6 +26,8 @@ if nextStance is Defense:         // deliberate per-play exception
 resolve authored effects
 ```
 
+Queued cards price against a detached projection of the stance established by earlier queued cards. Removing a queued card refunds exactly its recorded payment; later quotes use the remaining queue.
+
 Physical offense and melee offensive magic gain active AR. Spell stance and magical Counter gain active PR. Counter also receives the applicable defensive bonus. Magic defensive protection splits by school; the active Ward rating is separate from the restored Ward pool.
 
 ## Resolving contact
@@ -76,6 +78,7 @@ The hit threshold is capped so Evasion cannot exceed 95% avoidance. The any-natu
 
 ```text
 if this observer's first Perception read succeeded:
+    project the selected card's stance entry on a detached actor
     show exact read-only hit probability from engine
     in both selected-card and persistent HUD previews
     color advantage green, disadvantage red, neutral white

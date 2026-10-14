@@ -653,8 +653,9 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
   if (!carrier.combatReaction) for (const effect of Matchups.matchupRiderEffects(ctx, source, target, carrier, { amount, hpLoss })) {
     if (['applyStatus', 'buildup'].includes(effect.op)) {
       const authored = effect.amount ?? effect.stacks;
-      const bonus = spellAuthoredStatusBonus(ctx, { source, card: carrier, meta: { expansionGroup: carrier.expansionGroup } }, authored);
-      const pressure = Control.applyStatusPressure(ctx, target, effect.status, authored + bonus, source, { camp: effect.camp || profile.camp,
+      // Automatic damage-type and technique riders keep their own content budget.
+      // Only queued authored applyStatus/buildup effects receive the Spell stance bonus.
+      const pressure = Control.applyStatusPressure(ctx, target, effect.status, authored, source, { camp: effect.camp || profile.camp,
         actionKey: carrier.expansionGroup?.key || `${ctx.turn}:${carrier.instanceId || 'reaction'}` });
       Matchups.recordTacticalStatus(tactical, pressure);
     } else if (effect.op === 'poiseDamage') dealPoiseDamage(ctx, target, effect.amount, { cause: `rider:${effect.rider || type}` });

@@ -873,6 +873,7 @@ export function createSession({ registries, seedString, endless = false, restore
         ...(P.entity.wardBlock !== undefined ? { wardBlock: P.entity.wardBlock } : {}),
         mana: P.entity.mana, maxMana: P.entity.maxMana,
         stamina: P.entity.stamina, maxStamina: P.entity.maxStamina,
+        level: P.level,
         attributeMode: P.attributeMode, attributes: { ...P.attributes },
         energy: P.entity.energy, energyMax: P.entity.energyMax,
         drawPerTurn: P.entity.drawPerTurn,

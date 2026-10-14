@@ -1,4 +1,5 @@
-import { effectiveEvasion, attackHitPreview } from '../../engine/stanceHit.js';
+import { coopCardHitPreview } from '../models/CoopHitPreviewModel.js';
+import { effectiveEvasion } from '../../engine/stanceHit.js';
 import { enemyActionPose } from '../../model/enemyActionPose.js';
 import {mountClassRespec,closeClassRespec,isClassRespecOpen,classRespecOptionName} from '../components/classRespec.js';
 import {abilityDraftChoice} from '../../model/abilityDraftReceipts.js';
@@ -1019,7 +1020,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const frame = app.querySelector('.combatant.enemy[data-eid="' + CSS.escape(enemy.id) + '"]');
       frame?.querySelector('.combat-hit-chance')?.remove();
       if (!frame || enemy.hp <= 0 || enemy.knowledgeAction?.reads?.[me]?.visibility !== 'exact') continue;
-      const preview = attackHitPreview({ ...sc, registries, combatExpansionVersion: 2 }, { ...actor, kind: 'player' }, { ...enemy, kind: 'enemy' }, carrier, { additionalTargets: carrier.effects?.some(effect => effect.target === 'allEnemies') ? Math.max(0, sc.enemies.filter(entry => entry.hp > 0).length - 1) : 0 });
+      const preview = coopCardHitPreview(sc, registries, actor, enemy, carrier, { selected: !!hostile });
       if (!Number.isFinite(preview?.hitChance)) continue;
       const badge = document.createElement('span');
       badge.className = 'combat-hit-chance';

@@ -1,9 +1,10 @@
+import { primeAccuracyRolls } from './accuracyFixture.mjs';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { attackHitPreview, resolveAttackHit, effectiveEvasion } from '../src/engine/stanceHit.js';
+import { attackHitPreview, previewCardAttackHit, resolveAttackHit, effectiveEvasion } from '../src/engine/stanceHit.js';
 import { contentBundle } from '../src/content/index.js';
-import { createCombat } from '../src/engine/combat.js';
+import { createCombat, dispatch, previewCardHit } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { resolveCombatRatings } from '../src/model/combatRatings.js';
 import { enqueueExpandedAction } from '../src/engine/combatExpansionActions.js';
@@ -160,4 +161,57 @@ test('a hostile status removal without damage still creates exactly one Accuracy
   assert.equal(Object.keys(group.targets).length, 1);
   while (ctx.queue.length) executeAction(ctx, ctx.queue.shift());
   assert.equal(draws, 1); assert.equal(target.statuses.strength.stacks, 3);
+});
+
+test('Cinder Sigil automatic fire Burn stays four while queued authored Burn gains the Spell bonus', () => {
+  for (const [authored, expected] of [[false, 4], [true, 5]]) {
+    const ctx = createCombat({ registries, rng: createRng(5), combatExpansionVersion: 2,
+      ratingsRules: resolveCombatRatings({}, contentBundle), enemyIds: ['wanderingSoldier'],
+      player: { classId: 'starseer', maxHp: 100, hp: 100, maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1, deck: [] } });
+    const target = ctx.enemies[0]; target.hp = target.maxHp = 500; target.block = target.barrier = 0;
+    target.ratings = { ar: 0, dr: 0, pr: 0, poise: 0, ward: 0 }; target.persistentWard = { max: 0, value: 0 }; target.combatTraits = {};
+    delete target.combatStance; target.statuses = {};
+    ctx.player.combatStance = { maneuver: 'casting', camp: 'spell' };
+    ctx.rng.int = () => 20;
+    const rules = ctx.combatExpansionRules.statuses;
+    ctx.combatStatusRules = { ...rules, statuses: { ...rules.statuses, burn: { ...rules.statuses.burn, initialThreshold: 1000 } } };
+    const carrier = { cardId: 'cinderSigil', type: 'attack', tags: ['camp:spell', 'maneuver:casting', 'school:fire', 'damage:fire'],
+      damageSchool: 'magic', appliedBuildupStatuses: authored ? ['burn'] : [], combatRiderTargets: [],
+      combatProfile: { camp: 'spell', maneuver: 'casting', school: 'fire', damageType: 'fire', range: 'reach' } };
+    const effects = [{ op: 'damage', target: 'enemy', amount: 10 }, ...(authored ? [{ op: 'buildup', target: 'enemy', status: 'burn', amount: 4, camp: 'spell' }] : [])];
+    enqueueExpandedAction(ctx, effects.map(effect => ({ effect, source: ctx.player, owner: ctx.player, target, card: carrier, meta: {} })), { source: ctx.player, target, carrier });
+    while (ctx.queue.length) executeAction(ctx, ctx.queue.shift());
+    const burn = ctx.eventLog.filter(event => event.type === 'statusPressure' && event.status === 'burn' && event.targetId === target.id);
+    assert.equal(burn.length, 1, 'the automatic rider and printed effect never double apply');
+    assert.equal(burn[0].acceptedBuildup, expected, authored ? 'authored Burn gets +1' : 'automatic fire Burn keeps its four-point budget');
+  }
+});
+
+test('selected-card hit preview includes entry Precision once and matches the played hit', () => {
+  const ctx = createCombat({ registries, rng: createRng(5), combatExpansionVersion: 2, reactionRulesVersion: 1,
+    ratingsRules: resolveCombatRatings({}, contentBundle), enemyIds: ['wanderingSoldier'],
+    player: { classId: 'reaver', maxHp: 100, hp: 100, maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1,
+      deck: [{ cardId: 'strike', instanceId: 'first', upgraded: false }] } });
+  ctx.player.combatStance = { maneuver: 'defend', camp: 'physical', range: 'melee' };
+  ctx.player.statuses.precision = { stacks: 2 };
+  const target = ctx.enemies[0]; target.hp = target.maxHp = 500; target.evasion = 0; delete target.combatStance;
+  for (const [instanceId, expectedPrecision] of [['first', 3], ['second', 3]]) {
+    if (instanceId === 'second') ctx.piles.hand.push({ cardId: 'strike', instanceId, upgraded: false });
+    primeAccuracyRolls(ctx);
+    const before = structuredClone({ source: ctx.player, target, counters: ctx.rng.getCounters() });
+    const preview = previewCardHit(ctx, instanceId, target.id);
+    assert.deepEqual({ source: ctx.player, target, counters: ctx.rng.getCounters() }, before, 'preview changes no combat state or RNG');
+    const out = dispatch(ctx, { type: 'playCard', cardInstanceId: instanceId, targetId: target.id });
+    const hit = out.events.find(event => event.type === 'attackHit' && event.targetId === target.id);
+    assert.ok(hit, 'the seeded natural twenty lands');
+    assert.equal(preview.accuracy, hit.accuracy, instanceId);
+    assert.equal(preview.hitChance, hit.hitChance, instanceId);
+    assert.equal(ctx.player.statuses.precision.stacks, expectedPrecision, 'same stance does not grant Precision again');
+  }
+});
+test('selected preview never adds entry Precision to an already committed Counter return', () => {
+  const f = fixture(); f.source.combatStance = { maneuver: 'defend', camp: 'physical' };
+  f.carrier.counterReturnAttack = true; f.carrier.combatProfile.maneuver = 'counter';
+  assert.deepEqual(previewCardAttackHit(f.ctx, f.source, f.target, f.carrier), attackHitPreview(f.ctx, f.source, f.target, f.carrier));
+  assert.deepEqual(f.source.statuses, {}); assert.equal(f.draws(), 0);
 });

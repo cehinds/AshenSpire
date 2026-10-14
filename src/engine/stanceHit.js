@@ -2,7 +2,7 @@
 import { attackAccuracy, counterBaseEvasion } from './counterReturn.js';
 import * as Statuses from './statuses.js';
 import { RANGES } from '../model/combatRanges.js';
-import { stanceRulesFor } from '../model/stanceRules.js';
+import { stanceRulesFor, stanceOf, sameStance, stanceEntryBonuses } from '../model/stanceRules.js';
 
 function hitMode(source, target, { evadeDisabled = false } = {}) {
   const advantage = !!(source?.accuracyAdvantage || (!evadeDisabled && (target?.evadeDisadvantage || target?.combatEvade?.disadvantage || target?.nextEvadeMode?.disadvantage)));
@@ -64,4 +64,22 @@ export function resolveAttackHit(ctx, source, target, carrier, options = {}) {
   if (!options.suppressOutcomeEvent) ctx.emit?.(hit ? 'attackHit' : 'attackMissed', { sourceId: source.id, targetId: target.id, cardId: carrier?.cardId, moveId: carrier?.moveId,
     ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source), targetPlayerId: ctx.playerIdForEntity(target) } : {}), ...result, label });
   return result;
+}
+
+/** Selected-card Accuracy after its accepted stance entry, without changing live state. */
+export function previewCardAttackHit(ctx, source, target, carrier, options = {}) {
+  if (ctx.combatExpansionVersion !== 2 || !source || carrier?.counterReturnAttack) return attackHitPreview(ctx, source, target, carrier, options);
+  const profile = { ...carrier?.combatProfile };
+  if (profile.evade?.whileStatus) profile.evadeEligible = source.statuses?.[profile.evade.whileStatus]?.stacks > 0;
+  const selected = { ...carrier, combatProfile: profile };
+  const next = stanceOf(selected, source);
+  if (!next) return attackHitPreview(ctx, source, target, carrier, options);
+  const grants = !sameStance(source, selected) ? stanceEntryBonuses(selected, ctx) : { precision: 0 };
+  const projected = { ...source, combatStance: next, statuses: { ...source.statuses } };
+  if (grants.precision > 0) projected.statuses.precision = { ...source.statuses?.precision, stacks: stacks(source, 'precision') + grants.precision };
+  const entity = value => value === projected ? source : value;
+  const local = { ...ctx, ...(ctx.player === source ? { player: projected } : {}),
+    ...(ctx.playerIdForEntity ? { playerIdForEntity: value => ctx.playerIdForEntity(entity(value)) } : {}),
+    ...(ctx.attributesForEntity ? { attributesForEntity: value => ctx.attributesForEntity(entity(value)) } : {}) };
+  return attackHitPreview(local, projected, target, selected, options);
 }

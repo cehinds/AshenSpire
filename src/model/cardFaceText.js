@@ -309,7 +309,7 @@ function buildLines(def, preview, registries) {
     if (grants.length) unconditional.push({ cat: 'bonus', text: 'Entry: ' + grants.join(', ') });
     if (stanceOf(def)?.maneuver === 'defend') {
       const restore = num(stanceRulesFor(ctx).defenseRestore);
-      unconditional.push({ cat: 'bonus', text: 'Restore ' + restore + ' Poise + ' + restore + ' Ward' });
+      unconditional.push({ cat: 'bonus', text: 'Restore ' + restore + ' Poise/Ward' });
     }
   } else if (def.evade) {
     unconditional.push({ cat: 'bonus', text: `${def.evade.whileStatus ? `While ${esc(title(def.evade.whileStatus))}: ` : ''}Prepare one Evade${def.evade.advantage ? ' with Advantage' : ''}` });
