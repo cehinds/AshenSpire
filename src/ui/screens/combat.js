@@ -1112,7 +1112,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     box.addEventListener('focus', () => { if (box.matches(':focus-visible')) selectCombatant(box.dataset.eid); });
     box.addEventListener('gpfocus', event => { if (event.target === box) selectCombatant(box.dataset.eid); });
     box.addEventListener('keydown', event => {
-      if (event.target !== box || !['Enter', ' '].includes(event.key)) return;
+      if (event.target !== box || event.defaultPrevented || event.repeat || !['Enter', ' '].includes(event.key)) return;
       event.preventDefault(); box.click();
     });
   }
