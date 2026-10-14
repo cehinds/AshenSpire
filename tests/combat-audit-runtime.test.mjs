@@ -17,6 +17,15 @@ for (const mode of ['native', 'bundled']) test(`${mode}: registry inventory and 
   assert.equal(staff.piles.hand[0].grantedBy, 'ashStaff');
   assert.equal(staff.piles.hand[0].profileReceipt.pieceId, 'ashStaff');
   assert.equal(staff.piles.hand[0].damageSchool, 'magic');
+  for (const profileId of inventory.profileIds) {
+    const variant = inventory.variants.find(v => v.classId === 'reaver' && v.instance.profileId === profileId);
+    const { combat, fixtureKind } = makeAuditCombat(api, { classId: 'reaver', carrierId: variant.carrierIds[0] || null, instance: variant.instance });
+    assert.equal(combat.piles.hand[0].profileId, profileId);
+    assert.ok(combat.piles.hand[0].profileReceipt);
+    assert.ok(['current-equipment-grant', 'saved-legacy-equipment-role'].includes(fixtureKind));
+    const ids = Object.values(combat.piles).filter(Array.isArray).flat().map(c => c.instanceId);
+    assert.equal(new Set(ids).size, ids.length, 'profile fixture retains unique card instances across piles');
+  }
   for (const classId of inventory.classes) {
     const { combat } = makeAuditCombat(api, { classId, instance: { cardId: 'strike' } });
     const emit = combat.emit;

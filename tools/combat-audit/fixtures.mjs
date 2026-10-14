@@ -4,6 +4,14 @@ export const AUDIT_SCENARIOS = Object.freeze(['baseline', 'wounded', 'charged', 
 export function makeAuditCombat(api, { classId, enemyIds, instance, seed = 701, scenario = 'baseline', cardInstances = [], relicIds, carrierId } = {}) {
   if (!AUDIT_SCENARIOS.includes(scenario)) throw new Error(`Unknown audit scenario '${scenario}'`);
   const run = api.createRunState({ registries: api.registries, classId, seed });
+  let fixtureKind = 'registered-card';
+  if (Number.isInteger(instance?.abilityRank) && instance.abilityRank > 0) {
+    const card = api.registries.cards.get(instance.cardId);
+    const skill = card.abilityKind === 'spell' ? 'item:magic-focus' : 'combatManeuvers';
+    const level = api.registries.balance.progression.ability.ranksAt[instance.abilityRank];
+    if (!Number.isInteger(level)) throw new Error(`No authored skill threshold for rank '${instance.abilityRank}'`);
+    run.skills[skill] = { ...(run.skills[skill] || { xp: 0, pendingDrafts: 0 }), level };
+  }
   if (carrierId !== undefined) {
     const piece = carrierId && api.registries.equipment.armaments.find(p => p.id === carrierId);
     if (carrierId && !piece) throw new Error(`Unknown audit carrier '${carrierId}'`);
@@ -11,8 +19,16 @@ export function makeAuditCombat(api, { classId, enemyIds, instance, seed = 701, 
     if (!api.applyEquipTransition(api.registries, run.loadout, 'rightHand', 0, carrierId)) throw new Error(`Cannot equip audit carrier '${carrierId}'`);
     api.stampDeck(api.registries, run);
     if (instance?.profileId) {
-      const carrier = run.deck.find(c => c.profileId === instance.profileId);
-      if (!carrier) throw new Error(`Carrier '${carrierId}' supplies no '${instance.profileId}' card`);
+      let carrier = run.deck.find(c => c.profileId === instance.profileId);
+      if (carrier) fixtureKind = 'current-equipment-grant';
+      else {
+        const profile = api.registries.equipment.basicCardProfiles.find(p => p.id === instance.profileId);
+        if (!profile) throw new Error(`Unknown audit profile '${instance.profileId}'`);
+        carrier = { ...instance, equipmentRole: profile.role === 'attack' ? 'granted' : profile.role, ...(profile.role === 'attack' ? { kitRole: 'attack' } : {}) };
+        api.stampDeck(api.registries, run, [carrier]);
+        if (carrier.profileId !== instance.profileId) throw new Error(`Carrier '${carrierId}' supplies no '${instance.profileId}' card`);
+        fixtureKind = 'saved-legacy-equipment-role';
+      }
       instance = { ...carrier, ...instance };
     }
   }
@@ -29,7 +45,7 @@ export function makeAuditCombat(api, { classId, enemyIds, instance, seed = 701, 
   if (cards.length) setAuditHand(combat, cards);
   for (const enemy of combat.enemies) enemy.hp = enemy.maxHp = 10000;
   applyAuditScenario(api, combat, scenario);
-  return { combat, run, scenario };
+  return { combat, run, scenario, fixtureKind };
 }
 export function settleAuditChoices(api, combat, { maxChoices = 30 } = {}) {
   const answered = [];
@@ -46,8 +62,11 @@ export function settleAuditChoices(api, combat, { maxChoices = 30 } = {}) {
 
 // DTO-only mutations: preserve dispatch, emit and every method on a live HTML combat.
 export function setAuditHand(combat, instances) {
-  combat.piles.draw = [...combat.piles.draw, ...combat.piles.hand];
-  combat.piles.hand = instances.map((c, i) => ({ ...c, instanceId: c.instanceId || `audit:${i}:${c.cardId}` }));
+  const next = instances.map((c, i) => ({ ...c, upgraded: c.upgraded ?? false, instanceId: c.instanceId || `audit:${i}:${c.cardId}` }));
+  const incoming = new Set(next.map(c => c.instanceId));
+  combat.piles.draw = [...combat.piles.draw, ...combat.piles.hand.filter(c => !incoming.has(c.instanceId))];
+  for (const [name, cards] of Object.entries(combat.piles)) if (name !== 'hand' && Array.isArray(cards)) combat.piles[name] = cards.filter(c => !incoming.has(c.instanceId));
+  combat.piles.hand = next;
   return combat.piles.hand;
 }
 export function applyAuditScenario(api, combat, scenario = 'baseline') {
