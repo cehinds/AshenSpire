@@ -39,12 +39,12 @@ test('all four classes preview the selected counter and sweep clips used by comb
 test('preview routes card types through the same class defaults as combat without mutating the run', () => {
   const run = freshRun();
   for (const [right, left, ref, technique] of [
-    ['straightSword', 'roundShield', { cardId: 'strike', profileId: 'bladeAttack', sourceArmamentId: 'straightSword' }, 'weapon:attack:sword-shield'],
+    ['straightSword', 'roundShield', { cardId: 'strike', profileId: 'bladeAttack', sourceArmamentId: 'straightSword' }, 'attack'],
     ['straightSword', 'roundShield', { cardId: 'strike', profileId: 'shieldAttack', sourceArmamentId: 'roundShield' }, 'attack'],
     ['straightSword', 'roundShield', { cardId: 'defend', profileId: 'shieldGuard', sourceArmamentId: 'roundShield' }, 'defend'],
-    ['shortbow', 'parryDagger', { cardId: 'strike', profileId: 'bowPierceAttack', sourceArmamentId: 'shortbow' }, 'weapon:ranged:bow'],
+    ['shortbow', 'parryDagger', { cardId: 'strike', profileId: 'bowPierceAttack', sourceArmamentId: 'shortbow' }, 'ranged'],
     ['shortbow', 'parryDagger', { cardId: 'strike', profileId: 'bowPierceAttack', sourceArmamentId: 'parryDagger' }, 'ranged'],
-    ['greatsword', null, { cardId: 'starstonePebble' }, 'weapon:spell:staff-casting'],
+    ['greatsword', null, { cardId: 'starstonePebble' }, 'spell'],
   ]) {
     equip(run, right, left);
     const before = structuredClone(run);

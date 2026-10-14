@@ -426,6 +426,15 @@ jobs:
           path: preview/
           retention-days: 14
 
+      - name: Upload the committed combat stance gallery
+        if: ${{ !cancelled() && hashFiles('pose-studio/stances/combat-stances-gallery/index.html') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: combat-stances-gallery-${{ github.sha }}
+          path: pose-studio/stances/combat-stances-gallery/
+          if-no-files-found: error
+          retention-days: 14
+
   # THE BROWSER GATES THAT NOTHING RAN ON `dev`, AND WHAT THAT COST.
   #
   # PROPOSED, not adopted — this job is the subject of its own pull request and

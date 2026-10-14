@@ -1,0 +1,47 @@
+{
+  "action": "reaction:guard-break",
+  "aliases": [],
+  "origin": "defensive",
+  "timing": {
+    "totalMs": 180,
+    "impactMs": 0
+  },
+  "registeredSequence": {
+    "poses": [
+      "pilot-guard-break"
+    ],
+    "durations": [
+      6
+    ],
+    "impact": 0,
+    "travel": [
+      0
+    ],
+    "hold": false,
+    "pilot": true,
+    "reaction": true
+  },
+  "reviewFrames": [
+    {
+      "pose": "stance-defensive",
+      "label": "Held origin defensive",
+      "weight": 1,
+      "atMs": 0
+    },
+    {
+      "pose": "pilot-guard-break",
+      "registeredFrameId": "pilot-guard-break",
+      "label": "pilot-guard-break \u00b7 weight 6",
+      "weight": 6,
+      "atMs": 652.1000000014901
+    },
+    {
+      "pose": "stance-defensive",
+      "label": "Held return defensive",
+      "weight": 1,
+      "atMs": 1400
+    }
+  ],
+  "capture": "Actual mounted combat stage canvas; review timing separate from Normal gameplay",
+  "sharedPhaseArtWith": []
+}

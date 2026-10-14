@@ -1,3 +1,4 @@
+import { DEFAULT_COMBAT_WEAPONS } from './combatWeaponPresentation.js';
 import { playerAttackSprites } from '../content/playerAttackSprites.js';
 import { combatProfileFor } from './combatCardProfile.js';
 
@@ -38,6 +39,7 @@ export function playerAttackSequence(classId, technique) {
 }
 
 export function playerAttackPlan(card, equipment, classId, plan) {
+  if (DEFAULT_COMBAT_WEAPONS) return plan;
   const family = playerAttackFamily(card, equipment, plan.technique);
   return family && playerAttackSprites[classId]?.[family] ? { ...plan, technique: `weapon:${plan.technique}:${family}` } : plan;
 }

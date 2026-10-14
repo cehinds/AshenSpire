@@ -190,7 +190,7 @@ test('every same-door variant plant still changes the current real source', asyn
   }
   assert.ok(corpus.extraCopy.includes('assets-display'), 'clean and planted copies must contain the same variant artwork');
   const blankCanvas = corpus.plants.find(plant=>plant.name === 'the class canvas paints no character pixels');
-  assert.equal(blankCanvas.find, '    auraRenderer.draw(ctx,source,filterFor(pose,playing?.sequence.action || playing?.action),left,top,width,height,{materialize});ctx.restore();');
+  assert.equal(blankCanvas.find, '    auraRenderer.draw(ctx,source,filterFor(pose,playing?.sequence.action || playing?.action),left,top,width,height,{materialize,reuse:!!classSmash&&playing?.action===\'smash\'&&!clipping&&!reacting});ctx.restore();');
   assert.equal(blankCanvas.replace, '    ctx.restore();', 'the plant removes character painting while preserving canvas state cleanup');
   for (const plant of corpus.plants) {
     for (const edit of plant.edits || [plant]) {

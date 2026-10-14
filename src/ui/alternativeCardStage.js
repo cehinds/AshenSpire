@@ -1,3 +1,6 @@
+import { DEFAULT_COMBAT_WEAPONS } from '../model/combatWeaponPresentation.js';
+import { classSmashSequence } from '../model/classSmashAnimations.js';
+import { classSmashAnimations } from '../content/classSmashAnimations.js';
 import { selectedWeaponSequence, selectedWeaponSequenceTiming } from '../model/selectedWeaponSequences.js';
 import { alternativeCardAnimations } from '../content/alternativeCardAnimations.js';
 import { playerCounterSweepSprites } from '../content/playerCounterSweepSprites.js';
@@ -32,14 +35,15 @@ function load(url) {
 }
 
 /** Base armour actions with explicitly selected reviewed weapon attacks. */
-export function createAlternativeCardStage(classId, { still = false, weaponProfile = null } = {}) {
+export function createAlternativeCardStage(classId, { still = false, weaponProfile = null, smashProfile = null } = {}) {
   if (classicAppearance()) return null;
   const base = alternativeCardAnimations.classes[classId];
   if (!base) return null;
   const selected = playerCounterSweepSprites[classId];
   const pilot = alternativeSelectedStances.weaponProfiles?.[weaponProfile];
   const pilotFrames = pilot?.classId === classId ? pilot.frames : null;
-  const attacks = Object.entries(playerAttackSprites[classId] || {});
+  const classSmash = smashProfile === classId ? classSmashAnimations.classes[classId] : null;
+  const attacks = DEFAULT_COMBAT_WEAPONS ? [] : Object.entries(playerAttackSprites[classId] || {});
   const family = { ...base,
     frames: { ...base.frames, ...selected.frames, ...Object.assign({}, ...attacks.map(([, entry]) => entry.frames)) },
     sequences: { ...base.sequences, ...selected.sequences,
@@ -62,11 +66,16 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
     }
     for(const key of Object.keys(family.sequences)) if(key==='weapon:attack:greatsword'&&family.sequences.attack?.pilot)family.sequences[key]=family.sequences.attack;
   }
+  if (classSmash) {
+    for (const [key, frame] of Object.entries(classSmash.frames)) family.frames['class-smash-'+key] = frame;
+    family.sequences.smash = classSmashSequence();
+  }
   // Smash holds the first painted frame of its own swing (owner, 2026-10-12),
   // the way counter and sweep hold theirs.
   const heldFrames = { ...alternativeSelectedStances.classes[classId]?.frames,
     ...Object.fromEntries(Object.entries(selected.stances).map(([action, pose]) => [action, selected.frames[pose]])),
     ...(family.frames['smash-load'] ? { smash: family.frames['smash-load'] } : {}),
+    ...(classSmash ? {smash:classSmash.frames.held} : {}),
     ...(pilotFrames ? { sweep: pilotFrames.sweep, counter: pilotFrames.counter, smash: pilotFrames.smash, evade: pilotFrames.evade, ...(pilotFrames.defend?{defend:pilotFrames.defend,defensive:pilotFrames.defend}:{}) } : {}) };
   const frames = { ...family.frames, ...Object.fromEntries(Object.entries(heldFrames).map(([stance, frame]) => ['stance-'+stance, frame])) };
   const el = document.createElement('div');
@@ -82,7 +91,7 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
   el.dataset.idleWidthRatio = String(width/190);
   // Selected poses share one canvas scale and floor. Reserve their full reach
   // for the viewport edge clamp without shrinking the readable idle body.
-  if (pilotFrames) el.dataset.maximumWidthRatio = String(Math.max(...Object.values(pilotFrames)
+  if (pilotFrames || classSmash) el.dataset.maximumWidthRatio = String(Math.max(...Object.values(pilotFrames || classSmash.frames)
     .map(frame => {const b=frame.stageBounds || frame.bounds,center=frame.stageBounds?384:256;return Math.max(center-b[0],b[2]-center)*2;}))/height);
   el.style.cssText = `position:relative;width:${width}px;height:190px;flex:none;overflow:visible;`;
   // Room to either side keeps the authored dash and aura inside the canvas.
@@ -174,7 +183,7 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
     const left=leftPadding+offset[0]+bodyX+place.dx, top=16+topPadding+offset[1]+place.dy, width=dimensions[0]*place.scale,height=dimensions[1]*place.scale;
     currentArt={canvas,image:source,left,top,width,height};
     ctx.save();
-    auraRenderer.draw(ctx,source,filterFor(pose,playing?.sequence.action || playing?.action),left,top,width,height,{materialize});ctx.restore();
+    auraRenderer.draw(ctx,source,filterFor(pose,playing?.sequence.action || playing?.action),left,top,width,height,{materialize,reuse:!!classSmash&&playing?.action==='smash'&&!clipping&&!reacting});ctx.restore();
     // Trails share body registration, but never enter its aura or hit mask.
     if(effect && !still && !reducedMotionRequested() && !document.body.classList.contains('reduce-flashes')) {
       const overlay=images.get(effect);
@@ -271,7 +280,7 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
     },
     actionTiming(action,speed=ANIM_SPEEDS.normal){
       const sequence=family.sequences[aliases[action]||action];if(!sequence)return null;
-      if(sequence.pilot)return selectedWeaponSequenceTiming(sequence,speed);
+      if(sequence.pilot || sequence.timingUnits)return selectedWeaponSequenceTiming(sequence,speed);
       const totalMs=durationFor(sequence,speed);
       return {totalMs,impactMs:sequence.durations.slice(0,sequence.impact).reduce((a,b)=>a+b,0)/sequence.durations.reduce((a,b)=>a+b,0)*totalMs};
     },
@@ -314,7 +323,7 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
       if(!(playing||flashAt!==null||bodyReaction)||!(ms>0))return false;
       // Contact is cued by the timeline timer; a delayed RAF may still show
       // the preceding wind-up. Paint the reviewed contact before hit-stop.
-      if(playing?.sequence.pilot&&!bodyReaction){
+      if((playing?.sequence.pilot || playing?.sequence.contactCue)&&!bodyReaction){
         const sequence=playing.sequence;
         const contact=sequence.durations.slice(0,sequence.impact).reduce((a,b)=>a+b,0)
           /sequence.durations.reduce((a,b)=>a+b,0)*playing.duration;
