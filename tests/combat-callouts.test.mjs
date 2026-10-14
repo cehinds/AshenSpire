@@ -113,7 +113,7 @@ function drive(t2, fn) {
     let completed = 0;
     const run = (events, extra = {}) => playTimeline(events, { ...ctx, ...extra }, () => completed++);
     const finish = () => { for (let i = 0; i < 4000 && !completed; i++) t2.mock.timers.tick(1); assert.equal(completed, 1, 'the timeline completes'); };
-    try { fn({ dom, layer, trace, run, finish, tick: (ms) => t2.mock.timers.tick(ms) }); }
+    try { fn({ dom, layer, anchors, trace, run, finish, tick: (ms) => t2.mock.timers.tick(ms) }); }
     finally { setAnimSpeed('normal'); setBeatOrder('sequential'); dom.document.body.classList.remove('reduced-motion'); }
   });
 }
@@ -272,5 +272,26 @@ for (const mode of ['impact', 'sequential', 'instant', 'reduced']) test('accurac
     assert.ok(damage > outcome, 'the outcome has a visible lead before damage');
     assert.ok(damage - outcome >= 300, 'outcome gets its readable lead in every playback mode');
     assert.ok(damage <= 750, 'the readable outcome hold overlaps swing recovery within the first-number budget');
+  });
+});
+
+test('accuracy hold overlaps stance entry before the first sequential hit', t2 => {
+  drive(t2, ({ anchors, trace, run, finish }) => {
+    const stage = { pose: 'hit', rest: 'idle', settle() { this.pose = this.rest; }, hold() {} };
+    registerStage(anchors.e1, stage);
+    run(enemyAttack({ type: 'attackHit', sourceId: 'e1', targetId: 'player' }, hit('e1', 'player')), {
+      animateActor: () => {
+        trace.push({ what: 'swing-start', at: Date.now() });
+        return { impactMs: IMPACT, totalMs: TOTAL, hold() {}, cancel() {} };
+      },
+    });
+    finish();
+    const outcome = timeOf(trace, 'callout:hit@player');
+    const damage = timeOf(trace, 'float:-4');
+    assert.equal(outcome, 0, 'the accuracy word starts before stance entry');
+    assert.equal(timeOf(trace, 'swing-start'), ANIM_SPEEDS.normal.stanceLeadMs, 'stance entry still precedes the swing');
+    assert.ok(damage - outcome >= 300, 'the hit-only hold remains readable');
+    assert.ok(damage <= 650, 'stance entry shares the accuracy hold instead of adding a second wait');
+    assert.equal(trace.filter(e => e.what === 'callout:hit@player').length, 1, 'the accuracy word is shown once');
   });
 });

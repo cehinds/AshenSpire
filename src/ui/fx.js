@@ -1056,6 +1056,13 @@ export function playTimeline(events, ctx, done) {
     // bars. Counter beats and every other kind keep the 'impact' order.
     const sequential = beatOrder === 'sequential' && beat.kind === 'attack';
     const actorEl = beat.actorId ? ctx.anchorFor(beat.actorId) : null;
+    // Start the first accuracy word before stance entry, so its readable hold
+    // overlaps both stance entry and the swing instead of extending either.
+    // Later accuracy events keep their own per-hit ordering in the queues.
+    const accuracy = beat.events.find((e) => !(beat.lead || []).includes(e) && (e.type === 'attackHit' || e.type === 'damageDealt'));
+    const earlyHit = accuracy?.type === 'attackHit' ? accuracy : null;
+    const accuracyStartedAt = Date.now();
+    if (earlyHit) safe(() => visualFor(earlyHit, beat.kind, receiptVisuals)?.(ctx));
     // Stance first: an attacker caught mid-pose (a hurt frame, an unfinished
     // action) returns to its stance, and holds it a moment, before it swings.
     let stanceLead = false;
@@ -1123,12 +1130,6 @@ export function playTimeline(events, ctx, done) {
     // 2) after the wind-up, the beat's effect visuals + numbers, staggered
     // (sequential: only the contact parts here; reactions and numbers follow
     // the recovery).
-    // The first accuracy word starts with the swing. Its readable hold overlaps
-    // the wind-up/recovery instead of adding 300ms after the swing has settled.
-    // Later accuracy events keep their own per-hit ordering in the queues.
-    const accuracy = beat.events.find((e) => !lead.has(e) && (e.type === 'attackHit' || e.type === 'damageDealt'));
-    const earlyHit = accuracy?.type === 'attackHit' ? accuracy : null;
-    if (earlyHit) safe(() => visualFor(earlyHit, beat.kind, receiptVisuals)?.(ctx));
     const rest = beat.events.filter((e) => !lead.has(e) && e !== earlyHit);
     const partsOf = new Map(rest.map((e) => [e, visualPartsFor(e, beat.kind, { sequential, ...receiptVisuals })]));
     const visualEvents = sequential
@@ -1298,7 +1299,7 @@ export function playTimeline(events, ctx, done) {
         else after();
       };
       stepV();
-    }, Math.max(windup, earlyHit ? STACK_STEP_MS * 2 : 0));
+    }, Math.max(windup, earlyHit ? STACK_STEP_MS * 2 - (Date.now() - accuracyStartedAt) : 0));
     };
     if (stanceLead) schedule(playBeat, speed.stanceLeadMs);
     else playBeat();
