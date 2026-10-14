@@ -1371,16 +1371,29 @@ function effectiveCost(combat, def) {
 // one pricing doPlayCard pays, exported so a bot can ask before it plays.
 // `claimed` (preview only) is the set of charge keys queued cards already hold: they are not offered again.
 export function resolvedCardPlayCosts(combat, def, claimed = null) {
+  return resolvedCardPriceReceipt(combat, def, claimed).paid;
+}
+
+// Restore cards show their full discounted price, although their own restore
+// funds part of the payment. Keep both amounts before payment clamps to zero.
+function resolvedCardPriceReceipt(combat, def, claimed = null) {
   const weightClass = playerWeightClass(combat).weightClass;
   const pools = F.foundationCosts(combat, def, weightClass, combat.registries.framework.costProfile(def, { weightClass }));
   // A break-even restore pays its own part of the price (owner, 2026-10-13; model/actionCosts.js ownRestoreFunds).
   const funds = ownRestoreFunds(def);
   // Silenced (v2): each stack adds 1 SP to a spell-camp card. An X card already spends every point.
   const silenced = combat.combatExpansionVersion === 2 && def.cost !== 'X' ? spellCardCostSurcharge(combat.player, def) : 0;
-  const stamina = def.cost === 'X' ? combat.player.stamina + (def.upcastSurcharge || 0)
-    : Math.max(0, effectiveCost(combat, def) + (def.upcastSurcharge || 0) + silenced - funds.stamina);
+  const fullStamina = def.cost === 'X' ? combat.player.stamina + (def.upcastSurcharge || 0)
+    : Math.max(0, effectiveCost(combat, def) + (def.upcastSurcharge || 0) + silenced);
   const player = withoutClaims(combat.player, claimed);
-  return { energy: stamina, mana: Math.max(0, pools.mana + (def.upcastSurcharge || 0) - funds.mana - R.matchingAbilityCharges(player, { ...def, type: cardKind(def), authoredTags: def.cardTags || def.tags }).manaDiscount), stamina };
+  const fullMana = Math.max(0, pools.mana + (def.upcastSurcharge || 0)
+    - R.matchingAbilityCharges(player, { ...def, type: cardKind(def), authoredTags: def.cardTags || def.tags }).manaDiscount);
+  const stamina = def.cost === 'X' ? fullStamina : Math.max(0, fullStamina - funds.stamina);
+  return {
+    paid: { energy: stamina, mana: Math.max(0, fullMana - funds.mana), stamina },
+    display: { action: fullStamina, mana: fullMana, stamina: fullStamina },
+    selfFunded: funds.stamina > 0 || funds.mana > 0,
+  };
 }
 
 function playCosts(combat, def, claimed = null) { return resolvedCardPlayCosts(combat, def, claimed); }
@@ -2259,7 +2272,13 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
   }
   const p = combat.player;
   const isX = def.cost === 'X';
-  const paidCosts = playCosts(combat, def);
+  const priceReceipt = resolvedCardPriceReceipt(combat, def);
+  const paidCosts = priceReceipt.paid;
+  // A queued card owns its discount charges. A restore's full display price
+  // cannot borrow them, even when its net payment would still be zero.
+  const displayClaims = priceReceipt.selfFunded ? claimedCharges(combat, inst.instanceId) : null;
+  const displayCosts = displayClaims?.size
+    ? resolvedCardPriceReceipt(combat, def, displayClaims).display : priceReceipt.display;
   const shownCost = combat.combatExpansionVersion === 2 ? paidCosts.energy : isX ? p.energy : effectiveCost(combat, def);
   const target = targetId != null ? findEntity(combat, targetId) : null;
   const living = combat.enemies.filter((e) => e.alive);
@@ -2430,11 +2449,17 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
         break;
       }
       case 'block': {
-        entry.value = A.computeBlockGain(combat, p, evalPreview(combat, action, eff.amount, primary) + (action.meta.abilityChargeBlock || 0), action.card);
+        const base = evalPreview(combat, action, eff.amount, primary) + (action.meta.abilityChargeBlock || 0);
+        entry.defenseSplit = A.computeSpellDefenseGain(combat, p, base, action.card);
+        entry.value = entry.defenseSplit ? entry.defenseSplit.block + entry.defenseSplit.ward
+          : A.computeBlockGain(combat, p, base, action.card);
         break;
       }
       case 'gainBarrier': {
-        entry.value = A.computeBlockGain(combat, p, evalPreview(combat, action, eff.amount, primary) + (action.meta.abilityChargeBlock || 0), action.card);
+        const base = evalPreview(combat, action, eff.amount, primary) + (action.meta.abilityChargeBlock || 0);
+        entry.defenseSplit = A.computeSpellDefenseGain(combat, p, base, action.card);
+        entry.value = entry.defenseSplit ? entry.defenseSplit.block + entry.defenseSplit.ward
+          : A.computeBlockGain(combat, p, base, action.card);
         break;
       }
       case 'gainPoise':
@@ -2488,6 +2513,10 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
       if (token) {
         entry.token = token;
         tokens[token] = entry.faceValue ?? entry.value;
+        if (entry.defenseSplit) {
+          tokens[`${token}.block`] = entry.defenseSplit.block;
+          tokens[`${token}.ward`] = entry.defenseSplit.ward;
+        }
         if (eff.op === 'damage' && entry.hitDamages?.length > 1
           && entry.hitDamages.some(amount => amount !== entry.hitDamages[0])) {
           const hitsToken = tokenByIndexField.get(`${authoredIndex}:hits`);
@@ -2511,7 +2540,8 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
     cost: shownCost,
     costIsX: isX,
     manaCost: paidCosts.mana,
-    // Expanded badges and affordability use the same complete receipt as pay.
+    ...(priceReceipt.selfFunded ? { displayCosts } : {}),
+    // Affordability keeps the net payment requirement, including restore funding.
     staminaCost: combat.combatExpansionVersion === 2 ? paidCosts.stamina : shownCost,
     needsTarget: needsEnemyTarget({ ...def, effects: chargedEffects }),
     values,

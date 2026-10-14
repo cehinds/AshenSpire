@@ -14,9 +14,9 @@ test('every ability family presents each authored rank and its canonical identit
     assert.equal(model.abilityRank, abilityRank);
     assert.equal(model.rankBadge, abilityRank>0?`Rank ${abilityRank}`:null);
     assert.ok(model.rankHelp.includes(`Rank ${abilityRank}`));
-    assert.equal(model.type.label, card.abilityKind === 'spell' ? abilityRank === 0 ? 'Cantrip' : 'Spell' : abilityRank === 0 ? 'Technique' : 'Combat Maneuver');
-    assert.equal(model.type.subtype, abilityRank > 0 && model.costs.mana > 0 && card.tags.includes('source:weapon') ? 'Weapon Art' : null);
-    assert.ok(model.type.glyph && model.type.help.includes(model.type.label));
+    assert.equal(model.type.abilityLabel, card.abilityKind === 'spell' ? abilityRank === 0 ? 'Cantrip' : 'Spell' : abilityRank === 0 ? 'Technique' : 'Combat Maneuver');
+    assert.equal(model.type.weaponArt, abilityRank > 0 && model.costs.mana > 0 && card.tags.includes('source:weapon') ? 'Weapon Art' : null);
+    assert.ok(model.type.glyph && model.type.help.includes(model.type.abilityLabel));
   }
 });
 

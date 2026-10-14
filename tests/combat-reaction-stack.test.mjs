@@ -14,7 +14,7 @@ import { combatReactionProblems } from '../src/model/combatReactionState.js';
 const strikeDef = contentBundle.cards.find(card => card.id === 'strike');
 const chooseStrike = { ...strikeDef, id: 'chooseStrike', name: 'Choose Strike', effects: [...strikeDef.effects, { op: 'discard', amount: 1, choose: true }] };
 const strikeTagging = contentBundle.tagging.filter(row => row.family === 'card' && row.objectId === 'strike');
-function fixture({ version = 2, cardIds = ['guardCounter', 'sweepingBlow'], enemyCount = 1 } = {}) {
+function fixture({ version = 2, cardIds = ['guardCounter', 'sweepingBlow'], enemyCount = 1, sweepRank = 2 } = {}) {
   const registries = createRegistries({ ...contentBundle,
     cards: [...contentBundle.cards, chooseStrike],
     tagging: [...contentBundle.tagging, { family: 'card', scope: '', objectId: 'strike', tagId: 'trait:reaction' },
@@ -26,7 +26,7 @@ function fixture({ version = 2, cardIds = ['guardCounter', 'sweepingBlow'], enem
   const combat = createCombat({ registries, rng: createRng(701), combatExpansionVersion: 2, reactionRulesVersion: version,
     enemyIds: Array(enemyCount).fill('wanderingSoldier'), player: { classId: 'reaver', maxHp: 100, hp: 100,
       maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: cardIds.length,
-      deck: cardIds.map((cardId, index) => ({ cardId, instanceId: `r${index}`, upgraded: false })) } });
+      deck: cardIds.map((cardId, index) => ({ cardId, instanceId: `r${index}`, upgraded: false, ...(['sweepingBlow', 'whirlingGuard'].includes(cardId) ? { rank: sweepRank } : {}) })) } });
   combat.player.block = 100;
   for (const enemy of combat.enemies) { enemy.intentRevealed = false; enemy.ratings = { ar: 0, dr: 0, pr: 0, poise: 0, ward: 0 }; }
   return { combat, registries };
@@ -232,7 +232,7 @@ test('co-op seats answer in order and the whole stack resolves last pushed first
   const { registries } = fixture();
   const players = ['a', 'b'].map(id => ({ id, classId: 'reaver', maxHp: 100, hp: 100,
     maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 2, combatExpansionVersion: 2,
-    deck: [{ cardId: 'sweepingBlow', instanceId: `${id}:sweep`, upgraded: false }, { cardId: 'whirlingGuard', instanceId: `${id}:guard`, upgraded: false }] }));
+    deck: [{ cardId: 'sweepingBlow', rank: 2, instanceId: `${id}:sweep`, upgraded: false }, { cardId: 'whirlingGuard', rank: 2, instanceId: `${id}:guard`, upgraded: false }] }));
   const C = createCoopCombat({ registries, rng: createRng(709), players, enemyIds: ['wanderingSoldier'], reactionRulesVersion: 2 });
   for (const P of C.players.values()) P.entity.block = 100;
   endTurn(C, 'a'); endTurn(C, 'b');
@@ -256,7 +256,7 @@ test('co-op instance ids are per seat: seat A stacking rc1 does not hide seat B 
   const { registries } = fixture();
   const players = ['a', 'b'].map(id => ({ id, classId: 'reaver', maxHp: 100, hp: 100,
     maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 1, combatExpansionVersion: 2,
-    deck: [{ cardId: 'sweepingBlow', instanceId: 'rc1', upgraded: false }] }));
+    deck: [{ cardId: 'sweepingBlow', rank: 2, instanceId: 'rc1', upgraded: false }] }));
   const C = createCoopCombat({ registries, rng: createRng(713), players, enemyIds: ['wanderingSoldier'], reactionRulesVersion: 2 });
   for (const P of C.players.values()) P.entity.block = 100;
   endTurn(C, 'a'); endTurn(C, 'b');
@@ -274,7 +274,7 @@ test('a co-op seat that disconnects after committing fizzles its entries and pay
   const { registries } = fixture();
   const players = ['a', 'b'].map(id => ({ id, classId: 'reaver', maxHp: 100, hp: 100,
     maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 2, combatExpansionVersion: 2,
-    deck: [{ cardId: 'sweepingBlow', instanceId: `${id}:sweep`, upgraded: false }, { cardId: 'whirlingGuard', instanceId: `${id}:guard`, upgraded: false }] }));
+    deck: [{ cardId: 'sweepingBlow', rank: 2, instanceId: `${id}:sweep`, upgraded: false }, { cardId: 'whirlingGuard', rank: 2, instanceId: `${id}:guard`, upgraded: false }] }));
   const C = createCoopCombat({ registries, rng: createRng(709), players, enemyIds: ['wanderingSoldier'], reactionRulesVersion: 2 });
   for (const P of C.players.values()) P.entity.block = 100;
   endTurn(C, 'a'); endTurn(C, 'b');
@@ -321,7 +321,7 @@ test('a co-op stack saved at a depth 1 offer resumes to the same state as an uns
   const { registries } = fixture();
   const players = ['a', 'b'].map(id => ({ id, classId: 'reaver', maxHp: 100, hp: 100,
     maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 2, combatExpansionVersion: 2,
-    deck: [{ cardId: 'sweepingBlow', instanceId: `${id}:sweep`, upgraded: false }, { cardId: 'whirlingGuard', instanceId: `${id}:guard`, upgraded: false }] }));
+    deck: [{ cardId: 'sweepingBlow', rank: 2, instanceId: `${id}:sweep`, upgraded: false }, { cardId: 'whirlingGuard', rank: 2, instanceId: `${id}:guard`, upgraded: false }] }));
   const C = createCoopCombat({ registries, rng: createRng(709), players, enemyIds: ['wanderingSoldier'], reactionRulesVersion: 2 });
   for (const P of C.players.values()) P.entity.block = 100;
   endTurn(C, 'a'); endTurn(C, 'b');
@@ -418,4 +418,33 @@ test('discard candidates leave out only the choosing seat\'s own stacked cards',
   assert.deepEqual(discardCandidates({ playerKey: 'b', piles: { hand }, reactionStack }).map(card => card.instanceId), ['x1', 'x2']);
   // Solo play has no playerKey; its entries are owned by 'player'.
   assert.deepEqual(discardCandidates({ piles: { hand }, reactionStack: { entries: [{ side: 'player', ownerId: 'player', play: { cardInstanceId: 'x2' } }] } }).map(card => card.instanceId), ['x1']);
+});
+
+test('rank-two Sweep resolves before the root; a lethal sweep interrupts and a nonlethal sweep resumes it', () => {
+  for (const lethal of [true, false]) {
+    const { combat } = fixture({ cardIds: ['sweepingBlow'] });
+    combat.player.block = 0;
+    combat.enemies[0].hp = lethal ? 1 : 500;
+    combat.enemies[0].maxHp = 500;
+    const hp = combat.player.hp;
+    dispatch(combat, { type: 'endTurn' });
+    assert.ok(combat.pendingReaction);
+    const out = answer(combat, pick(combat, 'r0'));
+    assert.ok(out.events.some(event => event.type === 'cardPlayed' && event.cardId === 'sweepingBlow'));
+    if (lethal) {
+      assert.equal(combat.enemies[0].alive, false);
+      assert.equal(combat.player.hp, hp, 'dead attacker never lands its paused root');
+    } else {
+      assert.equal(combat.enemies[0].alive, true);
+      assert.ok(combat.player.hp < hp, 'ordinary Sweep damage does not cancel the incoming root');
+    }
+  }
+});
+
+test('version-two Sweep offers require actual rank two even for old defensiveReaction cards', () => {
+  for (const cardId of ['sweepingBlow', 'whirlingGuard']) for (const rank of [1, 2]) {
+    const { combat } = fixture({ cardIds: [cardId], sweepRank: rank });
+    dispatch(combat, { type: 'endTurn' });
+    assert.equal(!!combat.pendingReaction?.options.some(option => option.cardId === cardId), rank >= 2, cardId + ' rank ' + rank);
+  }
 });

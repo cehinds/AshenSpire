@@ -85,7 +85,7 @@ export function combatProfileFor(carrier = {}) {
   if (traits.length) profile.traits = traits;
   // These are authored payloads, not guessed from a card's name or damage type.
   if (typeof carrier.reach === 'string' && carrier.range === undefined && RANGE.has(normalizeRange(carrier.reach))) profile.range = normalizeRange(carrier.reach);
-  for (const key of ['range', 'targeting', 'traits', 'projectile', 'counterCoverage', 'counterPayload',
+  for (const key of ['range', 'defenseRange', 'targeting', 'traits', 'projectile', 'counterCoverage', 'counterPayload',
     'evade', 'upcast', 'stanceTrigger', 'stanceExpiry', 'schoolEffect', 'caster', 'breakPoiseBonus', 'pronePoiseBonus', 'traitValues']) {
     if (carrier[key] !== undefined) profile[key] = structuredClone(carrier[key]);
   }
@@ -95,18 +95,17 @@ export function combatProfileFor(carrier = {}) {
 // Range (owner, 2026-10-11): Melee / Reach / Ranged, the card's own range
 // (src/model/combatRanges.js). An untagged spell attack takes its delivery
 // (projectile Ranged, melee Melee, else Reach) through the player card's
-// combat default. Ranged maneuvers show no separate range: their stance already
-// reads Ranged. A card that deals no damage shows no range, so a Counter that only
-// gains Poise (an evasion) reads no range either; a Counter whose reply deals
-// damage (hp or Ward) does.
+// combat default. Offense names its range separately from its stance subtype.
+// A card with no offensive payload shows no range. Version-two Counter replies
+// include HP, Ward and Poise damage; local Poise protection is not a return.
 const ATTACKING = new Set(['attack', 'smash', 'sweep', 'ranged', 'counter']);
 const dealsDamage = (def) => (def.effects || []).some(effect => effect.op === 'damage')
-  || (def.counterPayload?.hp > 0 || def.counterPayload?.ward > 0);
+  || (def.counterPayload?.hp > 0 || def.counterPayload?.ward > 0)
+  || (def.defenseRulesVersion === 2 && def.counterPayload?.poise > 0);
 
 /** The range a combat definition shows: 'melee' | 'reach' | 'ranged', or null when it shows none. */
 export function combatCardRange(def = {}) {
   const profile = combatProfileFor(def);
-  if (profile.maneuver === 'ranged') return null;
   const attacking = ATTACKING.has(profile.maneuver) || (profile.camp === 'spell' && def.type === 'attack');
   if (!attacking || !dealsDamage(def)) return null;
   const range = profile.range || (profile.delivery === 'projectile' || profile.maneuver === 'ranged' ? 'reach' : 'melee');

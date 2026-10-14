@@ -14,6 +14,7 @@
 
 import { cardSummaryContext, combatCardDamageLabel, splitOf } from './playingCard.js';
 import { isSpellCard } from './combatCardProfile.js';
+import { spellDefenseSplit } from './spellDefense.js';
 import { tagService } from './tagService.js';
 import { resolve as resolveTags } from '../content/tags.js';
 import { combatExpansionMatchups } from '../content/combatMatchups.js';
@@ -68,7 +69,7 @@ function buildLines(def, preview, registries) {
   if (AUTHORED_DAMAGE_RIDER_CARDS.includes(def.id)) return null;
   // A curse's hand trigger and an Ashen Blight price live only in the authored text.
   if (def.onTurnEndInHand?.length || def.ashenBlightCost) return null;
-  const { value, title, condition, profile: p, bindings, tokens } = cardSummaryContext(def, preview, registries);
+  const { value, defenseValue, title, condition, profile: p, bindings, tokens } = cardSummaryContext(def, preview, registries);
   const ratings = registries?.balance?.combatRatings ?? null;
   // A self status consumed after a payoff must read after the condition that uses it.
   // Walk nested predicates too, so the face never implies the prerequisite is removed first.
@@ -84,8 +85,8 @@ function buildLines(def, preview, registries) {
   // A counter is prepared, not dealt: name its mode ("Prepare Melee Counter: return …").
   // Coverage is named by the mode whose default it equals; any other coverage keeps the authored text.
   const counterMode = counter ? counterModeOf(def, p) : null;
-  if (counter && !counterMode) return null;
-  const damageVerb = counter ? `Prepare ${{ melee: 'Melee', ranged: 'Ranged', spell: 'Spell' }[counterMode]} Counter: return` : 'Inflict';
+  if (counter && !counterMode && def.defenseRulesVersion !== 2) return null;
+  const damageVerb = counter ? def.defenseRulesVersion === 2 ? 'Return' : `Prepare ${{ melee: 'Melee', ranged: 'Ranged', spell: 'Spell' }[counterMode]} Counter: return` : 'Inflict';
 
   // The static number an effect's field authored: its token's base, else the literal.
   const baseOf = (effect, index, field) => {
@@ -154,6 +155,13 @@ function buildLines(def, preview, registries) {
       case 'poiseDamage': return frag('damage', `${num(n, base)} Poise damage${area}`);
       case 'wardDamage': return frag('damage', `${num(n, base)} Ward damage${area}`);
       case 'block': {
+        const defense = def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2
+          ? (defenseValue(effect, index) || spellDefenseSplit({ ...def, combatProfile: p }, n)) : null;
+        if (defense) {
+          const baseSplit = typeof base === 'number' ? spellDefenseSplit({ ...def, combatProfile: p }, base) : null;
+          return frag(effect.target === 'ally' ? 'bonus' : 'gain',
+            `${effect.target === 'ally' ? 'Ally gains ' : ''}${num(defense.block, baseSplit?.block)} Block, ${num(defense.ward, baseSplit?.ward)} Ward`);
+        }
         if (effect.target === 'ally') return frag('bonus', `Ally gains ${num(n, base)} Block`);
         const split = splitOf(def, p, n, ratings);
         if (split) {
@@ -164,7 +172,14 @@ function buildLines(def, preview, registries) {
         return frag('gain', `${num(n, base)} Block`);
       }
       // A Spell's gain refills Ward first, so it reads Ward.
-      case 'gainBarrier': return frag('gain', `${num(n, base)} ${isSpellCard({ combatProfile: p, tags: def.tags }) ? 'Ward' : 'Barrier'}`);
+      case 'gainBarrier': {
+        const split = defenseValue(effect, index) || spellDefenseSplit({ ...def, combatProfile: p }, n);
+        if (split) {
+          const baseSplit = typeof base === 'number' ? spellDefenseSplit({ ...def, combatProfile: p }, base) : null;
+          return frag(effect.target === 'ally' ? 'bonus' : 'gain', `${effect.target === 'ally' ? 'Ally gains ' : ''}${num(split.block, baseSplit?.block)} Block, ${num(split.ward, baseSplit?.ward)} Ward`);
+        }
+        return frag('gain', `${num(n, base)} ${isSpellCard({ combatProfile: p, tags: def.tags }) ? 'Ward' : 'Barrier'}`);
+      }
       case 'gainWard': return frag('gain', `${num(n, base)} Ward${effect.oncePerCombat ? ' once per combat' : ''}`);
       case 'gainPoise': return frag('gain', `${num(n, base)} Poise guard`);
       case 'restoreMana': return frag('gain', `${num(n, base)} Mana`);
@@ -177,7 +192,8 @@ function buildLines(def, preview, registries) {
         return frag('status', `${esc(title(effect.status))} ${num(n, base)}${area}`);
       }
       case 'applyStatus': {
-        if (STATUS_NEVER_PHRASED.includes(effect.status)) fail();
+        if (STATUS_NEVER_PHRASED.includes(effect.status)
+          && !(counter && def.defenseRulesVersion === 2 && effect.status === 'grounded')) fail();
         const stacks = value(effect, index, 'stacks'), stacksBase = baseOf(effect, index, 'stacks');
         const name = `${esc(title(effect.status))} ${num(stacks, stacksBase)}`, duration = durationOf(effect);
         const out = [];
@@ -226,7 +242,7 @@ function buildLines(def, preview, registries) {
     const cost = of('cost'), damage = of('damage'), status = of('status'), remove = of('remove'), consume = of('consume'), gain = of('gain'), bonus = [...of('bonus'), ...extraBonus];
     if (cost.length) out.push({ kind: 'cost', text: cost.join(', ') });
     if (damage.length) out.push({ kind: 'damage', text: `${damageVerb} ${damage.join(', ')}` });
-    else if (counter && fragments === unconditional) out.push({ kind: 'damage', text: damageVerb.replace(/: return$/, '') });
+    else if (counter && fragments === unconditional && !def.evade) out.push({ kind: 'damage', text: def.defenseRulesVersion === 2 ? 'Prepare Counter' : damageVerb.replace(/: return$/, '') });
     if (status.length) out.push({ kind: 'status', text: `Inflict ${status.join(', ')}` });
     if (remove.length) out.push({ kind: 'status', text: `Remove ${remove.join(', ')}` });
     if (consume.length) out.push({ kind: 'consume', text: `Remove ${consume.join(', ')}` });
