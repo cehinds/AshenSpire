@@ -26,4 +26,4 @@ QA_OUTPUT=/tmp/starseer-spell-qa \
 node tools/starseer-spell-reactions-qa.mjs
 ```
 
-Preview: https://cehinds.github.io/AshenSpire/branches/fix/StarseerSpellReactions/latest/ (available while the PR is open). After merge, use the Dev/Test channel previews linked from the repository README.
+Verified CI standalone preview for the repaired runtime: [download artifact](https://github.com/cehinds/AshenSpire/actions/runs/38634501028/artifacts/11926724570), from the run associated with source head `7da4cbf01`. The artifact is an HTML download, not a verified hosted page. Current delivery status is tracked in [PR #1985](https://github.com/cehinds/AshenSpire/pull/1985).
