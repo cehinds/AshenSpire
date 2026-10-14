@@ -2,7 +2,8 @@
 // QA_BUILD_URL and QA_SOURCE_URL must identify the same committed build.
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readFileSync, readdirSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 import { launchBrowser } from '../browser.mjs';
 import { contentBundle } from '../../src/content/index.js';
@@ -39,13 +40,30 @@ if (!url || !source) throw new Error('QA_BUILD_URL must name the served compiled
 const html = await (await fetch(url)).text();
 const build = { source: html.match(/const SOURCE = '([a-f0-9]+)'/)?.[1], ordinal: html.match(/const ORDINAL = '(\d+)'/)?.[1] };
 assert.ok(build.source, 'compiled HTML loader and source receipt are required');
+assert.ok(process.env.QA_EXPECT_SOURCE && process.env.QA_EXPECT_ORDINAL, 'QA_EXPECT_SOURCE and QA_EXPECT_ORDINAL pin the immutable artifact');
+assert.equal(build.source, process.env.QA_EXPECT_SOURCE, 'compiled SOURCE identity');
+assert.equal(build.ordinal, process.env.QA_EXPECT_ORDINAL, 'compiled ORDINAL identity');
+const sourceFiles = [];
+function listSource(dir) { for (const e of readdirSync(dir, { withFileTypes: true })) {
+  const path = resolve(dir, e.name); if (e.isDirectory()) listSource(path); else if (e.name.endsWith('.js')) sourceFiles.push(path);
+} }
+const sourceRoot = resolve(new URL('../../src/', import.meta.url).pathname);
+listSource(sourceRoot);
+const sourceDigests = {};
+for (let i = 0; i < sourceFiles.length; i += 16) await Promise.all(sourceFiles.slice(i, i + 16).map(async path => {
+  const relative = path.slice(sourceRoot.length + 1), response = await fetch(source + relative);
+  assert.equal(response.ok, true, `source fixture module ${relative} served`);
+  const digest = data => createHash('sha256').update(data).digest('hex');
+  sourceDigests[relative] = digest(await response.text());
+  assert.equal(sourceDigests[relative], digest(readFileSync(path)), `immutable source fixture identity: ${relative}`);
+}));
 const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const owner = await launchBrowser({ browser: process.env.CHROME || '/usr/bin/chromium', prefix: 'ca-' });
 const browser = await chromium.connectOverCDP(owner.wsUrl);
-const report = { url, source, build, inventory, mode,
+const report = { url, source, build, sourceDigests, inventory, mode,
   fixture: 'Fresh createRunCombat from the screenshot run, canonical enemies/knowledge/moves, custom difficulty hpMult=20 and resource maxima 200. One registered card plus legal draw/discard fillers. Data fields only copied into the live fight; original runtime functions, listeners, dispatch, target resolver, renderer and timeline preserved. These are isolated fixtures, not earned playthroughs.',
   cases: [], errors: [], started: new Date().toISOString(), coverageLimits: [
-    'Browser card coverage checks authored input, paid receipts, pile transition, resource payment and resulting effect events/state; conditional trigger crossproducts are reported by the engine audit.',
+    'Source-engine oracle parity proves compiled input and effect resolution match canonical source. Independent intended-effect/conditional trigger contracts are reported by the engine audit.',
     'Relic/status registries are inventoried here; exhaustive relic/status activation belongs to the engine audit.',
   ] };
 let activeCase = null;
@@ -72,7 +90,7 @@ async function boot(context, classId) {
 
 async function fixture(page, row) {
   return page.evaluate(async ({ source, row }) => {
-    const [{ createRunCombat }, { resolveCombatCard }, { previewCard, cardChoicePlan }, { cardTargetPlan }, { assertFoundationPlayable }, { controlGate }] = await Promise.all([
+    const [{ createRunCombat }, { resolveCombatCard }, { previewCard, cardChoicePlan, dispatch }, { cardTargetPlan }, { assertFoundationPlayable, candidateState }, { controlGate }] = await Promise.all([
       import(source + 'engine/runCombat.js'), import(source + 'engine/combatExpansion.js'), import(source + 'engine/combat.js'),
       import(source + 'model/cardTargets.js'), import(source + 'engine/combatRules.js'), import(source + 'engine/combatStatusControl.js')]);
     const c = window.__combat;
@@ -108,6 +126,8 @@ async function fixture(page, row) {
     try { assertFoundationPlayable(c, def); } catch (error) { refused = error.message; }
     const choice = cardChoicePlan(c, inst.instanceId);
     const plan = cardTargetPlan({ ...def, combatPreview: preview }, c.player.id, c.enemies, [{ ...c.player, connected: true }], { solo: true });
+    window.__auditOracle = candidateState(c);
+    window.__auditOracleDispatch = dispatch;
     window.__renderCombatForShot();
     window.__auditStart = { hp: c.enemies.map(e => e.hp), player: { hp: c.player.hp, energy: c.player.energy, mana: c.player.mana, stamina: c.player.stamina }, eventCount: c.eventLog.length, at: performance.now() };
     return { ...window.__auditStart, refused, preview: { needsTarget: preview.needsTarget, cost: preview.cost, manaCost: preview.manaCost, staminaCost: preview.staminaCost }, choice, plan,
@@ -122,7 +142,9 @@ async function finishPending(page, device, chooseReaction = false) {
     const pending = await page.evaluate(() => ({ reaction: window.__combat.pendingReaction, discard: window.__combat.pendingAbilityDiscard, result: window.__combat.result }));
     if (pending.discard) {
       await page.waitForSelector('.discard-choice [data-discard-id]', { timeout: 5000 });
+      const ids = await page.locator('.discard-choice [data-discard-id]').evaluateAll(nodes => nodes.map(n => n.dataset.discardId));
       for (let n = 0; n < pending.discard.count; n++) await tap(page, page.locator('.discard-choice [data-discard-id]').nth(n), device);
+      await page.evaluate(cardInstanceIds => window.__auditOracleDispatch(window.__auditOracle, { type: 'chooseDiscard', cardInstanceIds }), ids.slice(0, pending.discard.count));
       await tap(page, page.locator('.discard-choice button').filter({ hasText: new RegExp(`^Discard ${pending.discard.count}$`) }), device);
       choices.push({ kind: 'discard', count: pending.discard.count });
     } else if (pending.reaction) {
@@ -131,8 +153,11 @@ async function finishPending(page, device, chooseReaction = false) {
         const option = page.locator('.reaction-choice [data-reaction-option]').first();
         await tap(page, option, device);
         choices.push({ kind: 'reactionPlayed', option: await option.getAttribute('data-reaction-option') });
-        await tap(page, page.locator('.reaction-choice button').filter({ hasText: /^Play$/ }), device);
+          const optionId = await option.getAttribute('data-reaction-option');
+          await page.evaluate(({ offerId, optionId }) => window.__auditOracleDispatch(window.__auditOracle, { type: 'chooseReaction', offerId, optionId }), { offerId: pending.reaction.id, optionId });
+          await tap(page, page.locator('.reaction-choice button').filter({ hasText: /^Play$/ }), device);
       } else {
+        await page.evaluate(offerId => window.__auditOracleDispatch(window.__auditOracle, { type: 'chooseReaction', offerId, optionId: null }), pending.reaction.id);
         await tap(page, page.locator('.reaction-choice button').filter({ hasText: /^(Resolve|Back)$/ }).first(), device);
         choices.push({ kind: 'reactionResolved', stack: !!await page.locator('.reaction-stack').count() });
       }
@@ -154,7 +179,23 @@ async function play(page, device, row, before) {
     assert.equal(await page.locator('.end-turn').isEnabled(), true);
     return { refusal: before.refused || 'insufficient resource fixture', choices: [] };
   }
-  if (before.plan.mode === 'enemy') await tap(page, page.locator('.enemy-target-button:not([disabled])').first(), device);
+  const intent = { type: 'playCard', cardInstanceId: 'audit-card', ...(before.plan.mode === 'enemy' ? { targetId: 'e1' } : {}),
+    ...(before.choice ? { choice: before.choice.options.find(o => !o.active).id } : {}), ...(row.upcastTier ? { upcastTier: row.upcastTier } : {}) };
+  await page.evaluate(intent => window.__auditOracleDispatch(window.__auditOracle, intent), intent);
+  if (before.plan.mode === 'enemy') {
+    if (row.figureTarget) {
+      const point = await page.evaluate(() => {
+        const frame = document.querySelector('.combatant.enemy[data-eid="e1"]'), sprite = frame.querySelector('.sprite'), b = sprite.getBoundingClientRect();
+        for (let yi = 1; yi < 10; yi++) for (let xi = 1; xi < 10; xi++) {
+          const x = b.left + b.width * xi / 10, y = b.top + b.height * yi / 10, hit = document.elementFromPoint(x, y);
+          if (hit?.closest('.combatant.enemy') === frame && !hit.closest('button')) return { x, y };
+        }
+        return null;
+      });
+      assert.ok(point, 'enemy figure has an accessible pointer target');
+      if (device === 'phone') await page.touchscreen.tap(point.x, point.y); else await page.mouse.click(point.x, point.y);
+    } else await tap(page, page.locator('.enemy-target-button:not([disabled])').first(), device);
+  }
   else {
     // Confirm by the actual card gesture (selection then double tap), also available with mouse.
     await tap(page, card, device); await tap(page, card, device);
@@ -172,7 +213,10 @@ async function receipt(page) {
       pending: !!(c.pendingReaction || c.reactionResume || c.pendingAbilityDiscard), queue: c.queue.length, phase: c.phase, turn: c.turn, result: c.result,
       unhandled: window.__auditUnhandled, longTasks: window.__auditLongTasks.filter(e => e.at >= window.__auditStart.at),
       latencyMs: performance.now() - window.__auditStart.at, aiming: document.querySelectorAll('.aiming').length,
-      runtimePreserved: Object.entries(window.__auditRuntime).every(([key, fn]) => c[key] === fn) };
+      runtimePreserved: Object.entries(window.__auditRuntime).every(([key, fn]) => c[key] === fn),
+      oracle: { events: window.__auditOracle.eventLog.slice(window.__auditStart.eventCount), player: window.__auditOracle.player,
+        enemies: window.__auditOracle.enemies, piles: window.__auditOracle.piles, phase: window.__auditOracle.phase },
+      actual: { player: c.player, enemies: c.enemies, piles: c.piles, phase: c.phase } };
   });
 }
 
@@ -191,6 +235,13 @@ async function runCase(page, device, classId, row) {
       const sum = type => entry.after.events.filter(e => e.type === type).reduce((n, e) => n + (e.amount || 0), 0);
       assert.equal(entry.after.player.energy, entry.before.player.energy - sum('energySpent') + sum('energyGained') + sum('energyRecovered'), 'Actions ledger balances');
       assert.equal(entry.after.player.mana, entry.before.player.mana - sum('manaSpent') + sum('manaRestored') + sum('manaRecovered'), 'Mana ledger balances');
+      assert.deepEqual(entry.after.events, entry.after.oracle.events, 'compiled damage/status/heal/draw/stance/effect receipts match canonical engine');
+      assert.deepEqual(entry.after.actual, { player: entry.after.oracle.player, enemies: entry.after.oracle.enemies, piles: entry.after.oracle.piles, phase: entry.after.oracle.phase }, 'effect state and resources match canonical engine');
+    } else {
+      assert.equal(entry.after.pile, 'hand', 'refused card stays in hand');
+      assert.deepEqual(entry.after.player, entry.before.player, 'refused resources unchanged');
+      assert.deepEqual(entry.after.events, [], 'refused input emits no effects');
+      assert.equal(await page.locator('.hand .card.selected,.hand .card.armed').count(), 0, 'refused card has no armed selection');
     }
     assert.equal(entry.after.pending, false, 'no pending state remains');
     assert.equal(entry.after.queue, 0, 'effect queue drained');
@@ -218,7 +269,7 @@ try {
       for (const card of cards) {
         const variants = ['base', ...(card.upgraded ? ['upgraded'] : [])].filter(v => !variantFilter || variantFilter === v);
         for (const variant of variants) {
-          if (!await runCase(page, device, classId, { cardId: card.id, variant })) {
+          if (!await runCase(page, device, classId, { cardId: card.id, variant, figureTarget: card.id.length % 2 === 0 })) {
             await page.close(); page = await boot(context, classId);
           }
         }
