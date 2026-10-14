@@ -67,3 +67,36 @@ export function applyAuditScenario(api, combat, scenario = 'baseline') {
   if (scenario === 'empty-pools') combat.player.energy = combat.player.stamina = combat.player.mana = 0;
   return combat;
 }
+
+// Capability states for positive/negative predicate branches; no dispatch methods change.
+export function setAuditPredicate(combat, predicate, truth, target = combat.enemies[0]) {
+  const p = predicate;
+  const entities = p.of === 'allEnemies' ? combat.enemies : [p.of === 'target' ? target : combat.player];
+  switch (p.p) {
+    case 'not': return setAuditPredicate(combat, p.pred, !truth, target);
+    case 'all': case 'any':
+      for (const child of p.preds) setAuditPredicate(combat, child, truth, target);
+      return;
+    case 'hasBlock': for (const entity of entities) entity.block = truth ? 20 : 0; return;
+    case 'hasStatus':
+      for (const entity of entities) {
+        if (truth) entity.statuses[p.status] = { stacks: p.atLeast || 1 };
+        else delete entity.statuses[p.status];
+      }
+      return;
+    case 'hpBelowPct':
+      for (const entity of entities) entity.hp = truth ? Math.max(1, Math.floor(entity.maxHp * p.pct / 100) - 1) : entity.maxHp;
+      return;
+    case 'inStance': combat.player.stanceId = truth ? p.stance : null; return;
+    case 'firstCardThisTurn': combat.player.counters.cardsPlayedThisTurn = truth ? 0 : 1; return;
+    case 'turnMetric': {
+      const state = combat.player.abilityRiders;
+      const value = truth ? p.atLeast ?? p.atMost ?? 1 : p.atLeast !== undefined ? Math.max(0, p.atLeast - 1) : p.atMost + 1;
+      if (p.metric === 'tagPlays') state.tagPlays[p.tag] = value;
+      else if (p.metric === 'distinctTagPlays') state.distinctTagPlays[p.tag] = Object.fromEntries(Array.from({ length: value }, (_, i) => [`audit:prior:${i}`, true]));
+      else state[p.metric] = value;
+      return;
+    }
+    default: throw new Error(`No audit predicate fixture for '${p.p}'`);
+  }
+}

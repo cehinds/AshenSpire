@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
 import { loadAuditRuntime } from './runtime.mjs';
 import { auditInventory } from './inventory.mjs';
-import { makeAuditCombat, settleAuditChoices, setAuditHand } from './fixtures.mjs';
+import { makeAuditCombat, settleAuditChoices, setAuditHand, setAuditPredicate } from './fixtures.mjs';
 
 // Independent authored-op contracts. Conditional/triggered operations are reported
 // uncovered until a fixture establishes their predicates; preview is not the oracle.
@@ -91,8 +91,51 @@ export async function auditCards({ mode = 'native', allEnemies = false, allVaria
   }
   return report;
 }
+export async function auditConditionalCards({ mode = 'native' } = {}) {
+  const api = await loadAuditRuntime(mode), inventory = auditInventory(api.registries);
+  const report = { mode, verified: [], uncovered: [], failures: [] };
+  const eventTypes = { damage: 'damageDealt', block: 'blockGained', heal: 'healed', applyStatus: 'statusApplied', draw: 'cardDrawn', gainBarrier: 'barrierGained' };
+  const seen = new Set();
+  for (const variant of inventory.variants.filter(v => !v.instance.upgraded && !v.instance.profileId && v.upcastTier === undefined)) {
+    const { combat: sample } = makeAuditCombat(api, { classId: variant.classId, instance: variant.instance, relicIds: [] });
+    const definition = api.resolveCombatCard(sample, sample.piles.hand[0]);
+    for (const [index, effect] of (definition.effects || []).entries()) {
+      if (!effect.if) continue;
+      const key = `${variant.key}/effect:${index}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const type = eventTypes[effect.op];
+      if (!type || (definition.cardTags || definition.tags || []).includes('maneuver:counter')) {
+        report.uncovered.push({ key, condition: effect.if, reason: 'deferred or unsupported operation contract' }); continue;
+      }
+      try {
+        const counts = [];
+        for (const truth of [false, true]) {
+          const { combat: c } = makeAuditCombat(api, { classId: variant.classId, instance: variant.instance, relicIds: [] });
+          setAuditPredicate(c, effect.if, truth);
+          const target = c.enemies[0];
+          assert.equal(api.evalPredicate(c, effect.if, { owner: c.player, source: c.player, target }), truth, 'fixture establishes predicate');
+          const inst = c.piles.hand[0], def = api.resolveCombatCard(c, inst);
+          const plan = api.cardTargetPlan(def, c.player.id, c.enemies, [c.player], { solo: true });
+          const start = c.eventLog.length;
+          api.dispatch(c, { type: 'playCard', cardInstanceId: inst.instanceId, targetId: plan.legalIds[0] });
+          settleAuditChoices(api, c);
+          counts.push(c.eventLog.slice(start).filter(e => e.type === type &&
+            (effect.op === 'draw' || e.cardInstanceId === inst.instanceId) &&
+            (effect.op !== 'applyStatus' || e.status === effect.status)).length);
+        }
+        if (counts[1] <= counts[0]) report.uncovered.push({ key, condition: effect.if, counts, reason: 'state branch has no separable operation-count increase; needs amount or lifecycle contract' });
+        else report.verified.push({ key, condition: effect.if, op: effect.op, negative: counts[0], positive: counts[1] });
+      } catch (error) {
+        if (error.playRefusal?.reason === 'controlled') report.uncovered.push({ key, condition: effect.if, reason: 'positive capability state prevents ordinary play; needs recovery intent contract' });
+        else report.failures.push({ key, condition: effect.if, message: error.message });
+      }
+    }
+  }
+  return report;
+}
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const report = await auditCards({ mode: process.argv.includes('--bundled') ? 'bundled' : 'native', allEnemies: process.argv.includes('--all-enemies'), allVariants: process.argv.includes('--all-variants') });
+  const report = process.argv.includes('--conditions') ? await auditConditionalCards({ mode: process.argv.includes('--bundled') ? 'bundled' : 'native' }) : await auditCards({ mode: process.argv.includes('--bundled') ? 'bundled' : 'native', allEnemies: process.argv.includes('--all-enemies'), allVariants: process.argv.includes('--all-variants') });
   console.log(JSON.stringify(report));
-  if (report.failures.length || report.fixtureGaps.length) process.exitCode = 1;
+  if (report.failures.length || (report.fixtureGaps?.length || 0)) process.exitCode = 1;
 }
