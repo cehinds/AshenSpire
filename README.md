@@ -1,5 +1,29 @@
 # AshenSpire
 
+<!-- feature-preview:start -->
+## Feature preview — compact character creation
+
+**[Download and try this feature build](https://github.com/cehinds/AshenSpire/actions/runs/38654072847/artifacts/11935887981)** · [Build run](https://github.com/cehinds/AshenSpire/actions/runs/38654072847) · [All 36 screenshots and wireframes](docs/preview/features/update-character-creation/README.md)
+
+Extract the build ZIP and open **AshenSpire.html**. GitHub sign-in is required for workflow artifact downloads; artifacts are kept for 14 days.
+
+- Tighter spacing and fonts; repeated subtitles removed.
+- Locked feats cannot be selected; spell choices recheck eligibility.
+- Compact Review with all eleven starting cards available to inspect.
+
+Captured **0.7.1.1520 / `1ad05d6483`**, source `eb5937f97c` — 2026-10-14.
+
+| Mobile · 390 × 844 | Tablet · 1024 × 768 |
+| --- | --- |
+| ![Mobile compact feats with locked requirements](docs/preview/features/update-character-creation/feats-mobile-390x844.png) | ![Tablet compact feats with locked requirements](docs/preview/features/update-character-creation/feats-tablet-1024x768.png) |
+| Desktop · 1440 × 900 | Widescreen · 1920 × 1080 |
+| ![Desktop compact feat choices](docs/preview/features/update-character-creation/feats-desktop-1440x900.png) | ![Widescreen compact feat choices](docs/preview/features/update-character-creation/feats-wide-1920x1080.png) |
+
+[Mobile gallery](docs/preview/features/update-character-creation/README.md#mobile) · [Desktop gallery](docs/preview/features/update-character-creation/README.md#desktop) · [Wide gallery](docs/preview/features/update-character-creation/README.md#wide) · [Tablet gallery](docs/preview/features/update-character-creation/README.md#tablet)
+
+**Feature branch only:** remove this section and its feature gallery before merging to `dev`. See [the delivery protocol](CONTRIBUTING.md#feature-branch-previews).
+<!-- feature-preview:end -->
+
 A browser roguelike: build a character, explore a seeded world, and fight with cards.
 
 > **AI-made game.** The original game code, design, writing, artwork and music
