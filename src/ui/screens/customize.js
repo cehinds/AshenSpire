@@ -653,7 +653,7 @@ export function mountCustomize(app, {
     state.subclassId = creationSubclassSelection(choices, state.subclassId);
     if (subclassSelector) subclassSelector.setOptions(choices, state.subclassId);
     else {
-      subclassSelector = createCreationSubclassSelector({ options: choices, selectedId: state.subclassId,
+      subclassSelector = createCreationSubclassSelector({ options: choices, selectedId: state.subclassId, descriptions: false,
         onChoose: id => {
           if (state.subclassId === id) return;
           state.subclassId = id;
@@ -673,7 +673,10 @@ export function mountCustomize(app, {
     const scoped = previewProjection();
     state.initialClassTreeChoices = scoped.chosen;
     const host = $('#cz-subclass-traits');
-    host.replaceChildren(el('h3', { text: t('creation.traits.title') }));
+    host.replaceChildren(el('header', { class: 'cc-inline-heading' }, [
+      el('h3', { text: t('creation.traits.title') }),
+      el('p', { text: scoped.run.classMasteryState.initialTreeTiers.length ? t('creation.traits.reason') : t('creation.traits.complete'), 'aria-live': 'polite' }),
+    ]));
     for (const id of [...scoped.chosen, ...scoped.choices]) {
       const node = registries.nodes.find(row => row.id === id);
       const picked = scoped.chosen.includes(id);
@@ -696,7 +699,6 @@ export function mountCustomize(app, {
       });
       host.append(choice);
     }
-    host.append(el('p', { text: scoped.run.classMasteryState.initialTreeTiers.length ? t('creation.traits.reason') : t('creation.traits.complete'), 'aria-live': 'polite' }));
   }
 
   function renderStartingDeck() {
@@ -1202,15 +1204,21 @@ export function mountCustomize(app, {
   function renderSpells() {
     spellGateRefreshers = [];
     const plan = refreshAbilitySelection();
-    $('#cz-spells-heading').replaceChildren(creationPageHeading({ title: t('creation.spells.title') }));
+    const spellsHeading = creationPageHeading({ title: t('creation.spells.title') });
+    $('#cz-spells-heading').replaceChildren(spellsHeading);
     const host = $('#cz-starting-spells');
     host.replaceChildren(plan?.skillId === 'item:magic-focus'
       ? renderStartingAbility(plan, { stage: 'spells' })
       : flavour(t('creation.spells.unavailable')));
+    const spellProgress = host.querySelector('.cc-ability-progress');
+    if (spellProgress) spellsHeading.append(spellProgress);
     scheduleCardFits(host.querySelectorAll('.card'));
-    $('#cz-maneuvers-heading').replaceChildren(creationPageHeading({ title: t('creation.category.maneuvers') }));
+    const maneuversHeading = creationPageHeading({ title: t('creation.category.maneuvers') });
+    $('#cz-maneuvers-heading').replaceChildren(maneuversHeading);
     const martial = $('#cz-starting-maneuvers');
     martial.replaceChildren(...(plan?.skillId === 'combatManeuvers' ? [renderStartingAbility(plan, { stage: 'maneuvers' })] : []));
+    const maneuverProgress = martial.querySelector('.cc-ability-progress');
+    if (maneuverProgress) maneuversHeading.append(maneuverProgress);
     scheduleCardFits(martial.querySelectorAll('.card'));
   }
 

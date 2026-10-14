@@ -9,12 +9,12 @@ import { creationSubclassSelection, creationStartingDeckModel, CREATION_CARD_RUL
 
 const SUBCLASS_ICONS = Object.freeze({ heavyKnight: 'shield', swordMaster: 'sword', battleMage: 'mana', frostMonarch: 'frost', ranger: 'target', assassin: 'dexterity', cleric: 'health', monk: 'poise' });
 
-export function createCreationSubclassSelector({ options = [], selectedId = null, onChoose = null } = {}) {
+export function createCreationSubclassSelector({ options = [], selectedId = null, onChoose = null, descriptions = true } = {}) {
   let selected = creationSubclassSelection(options, selectedId);
   const choices = el('div', { class: 'cc-subclass-choices', role: 'group', 'aria-label': t('creation.subclass.choices') });
   const detail = el('p', { class: 'cc-subclass-description', 'aria-live': 'polite' });
   const node = creationPanel({ kind: 'subclass-selector', title: t('creation.subclass.title'),
-    subtitle: t('creation.subclass.hint'), className: 'cc-subclass-selector', children: [choices, detail] });
+    subtitle: t('creation.subclass.hint'), className: 'cc-subclass-selector', children: [choices, descriptions ? detail : null] });
   markUiComponent(node, UI.creationSubclassSelector);
   function choose(id) {
     if (!options.some(row => row.id === id)) return;
@@ -33,9 +33,9 @@ export function createCreationSubclassSelector({ options = [], selectedId = null
     selected = creationSubclassSelection(options, nextId);
     choices.replaceChildren(...options.map(row => {
       const tile = creationChoiceTile({ id: row.id, title: row.name,
-        description: row.summary || row.description,
+        description: descriptions ? row.summary || row.description : '',
         art: engravedIcon(row.icon || SUBCLASS_ICONS[row.id] || engravedGlyphId(row.glyph) || 'progression'),
-        selected: row.id === selected, onChoose: choose, attrs: { dataset: { subclass: row.id } } });
+        selected: row.id === selected, onChoose: choose, attrs: { ...(!descriptions ? { title: row.description, 'aria-description': row.description } : {}), dataset: { subclass: row.id } } });
       markUiComponent(tile, UI.creationSubclassTile);
       tile.classList.add('cc-subclass-tile');
       return tile;
