@@ -393,7 +393,8 @@ async function runCase(page, device, classId, row) {
       assert.notEqual(entry.after.pile, 'hand', 'played card leaves hand');
       const sum = type => entry.after.events.filter(e => e.type === type).reduce((n, e) => n + (e.amount || 0), 0);
       if (!row.endTurn) {
-        assert.equal(entry.after.player.energy, entry.before.player.energy - sum('energySpent') + sum('energyGained') + sum('energyRecovered'), 'Actions ledger balances');
+        const recoverySpent = entry.after.events.filter(e => e.type === 'controlRecovered').reduce((n, e) => n + (e.cost || 0), 0);
+        assert.equal(entry.after.player.energy, entry.before.player.energy - sum('energySpent') - recoverySpent + sum('energyGained') + sum('energyRecovered') + sum('staminaRecovered'), 'Actions/Stamina alias ledger balances');
         assert.equal(entry.after.player.mana, entry.before.player.mana - sum('manaSpent') + sum('manaRestored') + sum('manaRecovered'), 'Mana ledger balances');
       }
       assert.deepEqual(entry.after.events, entry.after.oracle.events, 'compiled damage/status/heal/draw/stance/effect receipts match canonical engine');
