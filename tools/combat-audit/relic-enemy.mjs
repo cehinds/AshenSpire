@@ -77,6 +77,44 @@ export function eventPayload(trigger, combat) {
   return payload;
 }
 
+function hookEffectResults(combat, hook, owner, eventStart) {
+  const events = combat.eventLog.slice(eventStart).filter(event =>
+    event.triggeredBy?.kind === 'status' && event.triggeredBy.id === hook.statusId);
+  const enemy = combat.enemies[0];
+  const effects = hook.do || [];
+  const receiptTypes = { applyStatus: 'statusApplied', removeStatus: 'statusRemoved', loseHp: 'hpLost', heal: 'healed',
+    block: 'blockGained', gainEnergy: 'energyGained', draw: 'cardDrawn', damage: 'damageDealt', poiseDamage: 'persistentPoiseChanged' };
+  return effects.map(effect => {
+    const receipts = events.filter(event => event.type === receiptTypes[effect.op]);
+    let observed = false;
+    if (effect.op === 'applyStatus') {
+      const matching = receipts.filter(event => event.status === effect.status);
+      observed = matching.length > 0 && matching.every(event => {
+        const target = [combat.player, ...combat.enemies].find(entity => entity.id === event.targetId);
+        return !!target && api.getStacks(target, effect.status) > 0;
+      });
+    } else if (effect.op === 'removeStatus') {
+      observed = api.getStacks(owner, effect.status) === 0 && receipts.some(event => event.status === effect.status);
+    } else if (effect.op === 'block') {
+      observed = owner.block > (hook.before.ownerBlock || 0) && receipts.some(event => event.targetId === owner.id && event.amount > 0);
+    } else if (effect.op === 'damage') {
+      observed = receipts.some(event => event.targetId === enemy?.id && event.amount > 0);
+    } else if (effect.op === 'loseHp') {
+      observed = owner.hp < hook.before.ownerHp && receipts.some(event => event.targetId === owner.id && event.amount > 0);
+    } else if (effect.op === 'heal') {
+      observed = owner.hp > hook.before.ownerHp && receipts.some(event => event.targetId === owner.id && event.amount > 0);
+    } else if (effect.op === 'draw') {
+      observed = combat.piles.hand.length > hook.before.handCount && receipts.length > 0;
+    } else if (effect.op === 'gainEnergy') {
+      observed = receipts.some(event => event.amount > 0);
+    } else if (effect.op === 'poiseDamage') {
+      observed = (owner.poiseMeter?.value || 0) !== hook.before.ownerPoise &&
+        (receipts.some(event => event.type === 'persistentPoiseChanged' && event.targetId === owner.id) || owner.poiseMeter?.value > 0);
+    }
+    return { op: effect.op, status: effect.status || null, observed, receiptCount: receipts.length };
+  });
+}
+
 function falsePredicateCandidates(pred, payload, combat) {
   if (!pred) return [];
   if (pred.p === 'all') return pred.preds.flatMap(child => falsePredicateCandidates(child, payload, combat));
@@ -297,28 +335,40 @@ export function auditStatuses(registries) {
         ? api.getStacks(player, def.id) === stacksBeforeDecay - 1
         : !!afterOneDecay && afterOneDecay.duration === durationBeforeDecay - 1;
     let hook = 'none';
+    let hookEffectRows = [];
     if (def.hooks?.length) {
       const hookName = def.hooks[0].on;
       const ownerIsEnemy = def.hooks[0].do?.some(effect => effect.op === 'poiseDamage' && effect.target === 'owner');
       const fireHook = targetCombat => {
         const hookOwner = ownerIsEnemy ? targetCombat.enemies[0] : targetCombat.player;
-        const beforeState = structuredClone({ player: targetCombat.player, enemies: targetCombat.enemies.map(enemy => ({ hp: enemy.hp, block: enemy.block, statuses: enemy.statuses, poiseMeter: enemy.poiseMeter })), piles: targetCombat.piles });
-        const eventStart = targetCombat.eventLog.length;
-        if (hookName === 'ownerTurnStart' || hookName === 'ownerTurnEnd') api.fireOwnerHooks(targetCombat, hookOwner, hookName);
-        else {
-          const event = eventPayload(def.hooks[0], targetCombat);
+        const hook = def.hooks[0];
+        // Leave room in hand so authored draw effects can produce a cardDrawn
+        // receipt rather than being masked by the normal hand-size limit.
+        if (hook.do?.some(effect => effect.op === 'draw')) targetCombat.piles.hand.length = 0;
+        // Predicates and payload construction can mutate fixture state. Build
+        // all of that first, then snapshot immediately before dispatching the
+        // hook event so setup mutations cannot masquerade as hook outcomes.
+        const event = hookName === 'ownerTurnStart' || hookName === 'ownerTurnEnd' ? null : eventPayload(hook, targetCombat);
+        if (hookName && event) {
           if (hookName === 'statusApplied') { event.sourceId = hookOwner.id; event.targetId = hookOwner.id; }
           if (hookName === 'cardPlayed') { event.cardType = 'skill'; targetCombat.player.counters.cardsPlayedThisCombat = 3; }
           if (hookName === 'hpLost' || hookName === 'healed') event.targetId = hookOwner.id;
           if (hookName === 'damageDealt') { event.sourceId = targetCombat.player.id; event.targetId = targetCombat.enemies[0]?.id; }
           if (hookName === 'enemyDied' || hookName === 'enemyStaggered') { event.sourceId = targetCombat.player.id; event.targetId = targetCombat.enemies[0]?.id; }
           if (hookName === 'meterFilled') { event.status = 'bleed'; event.targetId = targetCombat.enemies[0]?.id; }
+        }
+        const before = { ownerHp: hookOwner.hp, ownerBlock: hookOwner.block || 0, ownerPoise: hookOwner.poiseMeter?.value || 0,
+          handCount: targetCombat.piles.hand.length, energy: targetCombat.energy };
+        const eventStart = targetCombat.eventLog.length;
+        if (hookName === 'ownerTurnStart' || hookName === 'ownerTurnEnd') api.fireOwnerHooks(targetCombat, hookOwner, hookName);
+        else {
+          event.statusId = def.id;
           targetCombat.emit(hookName, event);
         }
         drainAuditQueue(targetCombat);
-        const receipt = targetCombat.eventLog.slice(eventStart).some(event => event.triggeredBy?.kind === 'status' && event.triggeredBy.id === def.id);
-        const afterState = { player: targetCombat.player, enemies: targetCombat.enemies.map(enemy => ({ hp: enemy.hp, block: enemy.block, statuses: enemy.statuses, poiseMeter: enemy.poiseMeter })), piles: targetCombat.piles };
-        return receipt || JSON.stringify(beforeState) !== JSON.stringify(afterState);
+        const effectRows = hookEffectResults(targetCombat, { ...hook, statusId: def.id, before }, hookOwner, eventStart);
+        hookEffectRows = effectRows;
+        return effectRows.length > 0 && effectRows.every(row => row.observed);
       };
       hook = fireHook(combat) ? 'fired' : 'no-receipt';
       if (hook === 'no-receipt' && def.hooks[0].if?.p === 'random') {
@@ -368,18 +418,23 @@ export function auditStatuses(registries) {
       const probe = api.createCombat({ registries, rng: api.createRng(7307), enemyIds: ['wanderingSoldier'], player: playerFor('reaver') });
       const target = probe.enemies[0];
       api.applyStatus(probe, target, def.id, 1);
-      api.applyStatus(probe, target, def.resists.status, 1);
-      const meterBefore = api.getStatusInstance(target, def.resists.status)?.meter?.value;
+      const meterBefore = api.getStatusInstance(target, def.resists.status)?.meter?.value || 0;
       const receiptStart = probe.eventLog.length;
-      api.applyStatus(probe, target, def.resists.status, 1);
+      const incoming = 3;
+      api.applyStatus(probe, target, def.resists.status, incoming);
       const blocked = probe.eventLog.slice(receiptStart).find(event => event.type === 'procResisted' && event.status === def.resists.status);
-      return { status: def.resists.status, expectedPercent: def.resists.percent, meterBefore,
-        blocked: blocked?.blocked ?? 0, result: blocked?.blocked > 0 ? 'covered' : 'missing' };
+      const expectedBlocked = Math.ceil(incoming * def.resists.percent / 100);
+      const meterAfter = api.getStatusInstance(target, def.resists.status)?.meter?.value || 0;
+      const applied = api.getStacks(target, def.resists.status);
+      const result = blocked?.blocked === expectedBlocked && meterAfter - meterBefore === incoming - expectedBlocked
+        && applied === incoming - expectedBlocked ? 'covered' : 'missing';
+      return { status: def.resists.status, expectedPercent: def.resists.percent, incoming, expectedBlocked, meterBefore, meterAfter,
+        applied, blocked: blocked?.blocked ?? 0, result };
     })() : null;
     rows.push({ id: def.id, decay: decay === undefined ? 'missing' : decay, hook: def.hooks?.map(x => x.on) || [],
       hasModifier: Object.keys(def.modifiers || {}).length > 0, hasProc: !!def.proc, hasMeter: !!def.meter, hasResist: !!def.resists,
       hasTaggedVulnerability: !!def.taggedVulnerability, applied, appliedReceipt, decayVerified, hookResult: hook,
-      modifierOutcomes, modifierOutcomesCovered: modifierOutcomes.every(row => row.outcome), proc, resistance,
+      hookEffectRows, modifierOutcomes, modifierOutcomesCovered: modifierOutcomes.every(row => row.outcome), proc, resistance,
       result: applied && appliedReceipt && decayVerified && hook !== 'no-receipt' ? 'covered' : 'missing' });
     // Keep this local reference to ensure zero-stack/absent rows don't pass just
     // because their hook or decay was intentionally inert.
@@ -396,6 +451,141 @@ export function auditStatuses(registries) {
     authoredHooks: rows.filter(row => row.hook.length).length,
     hooksWithObservedOutcome: rows.filter(row => row.hook.length && row.hookResult !== 'no-receipt').length,
     unsupportedEffectPaths: rows.filter(row => row.hook.length && row.hookResult === 'no-receipt').map(row => row.id),
+    missing: rows.filter(row => row.result !== 'covered'), rows };
+}
+
+function auditSilencedConsumerPaths(registries) {
+  const spellCardId = 'cinderSigil';
+  const legacyDamage = withStatus => {
+    const combat = api.createCombat({ registries, rng: api.createRng(7311), enemyIds: ['wanderingSoldier'], player: playerFor('starseer') });
+    const enemy = combat.enemies[0]; enemy.hp = enemy.maxHp = 1000;
+    if (withStatus) api.applyStatus(combat, combat.player, 'silenced', 1);
+    setAuditHand(combat, [{ cardId: spellCardId, instanceId: `legacy-silenced:${withStatus}` }]);
+    api.dispatch(combat, { type: 'playCard', cardInstanceId: `legacy-silenced:${withStatus}`, targetId: enemy.id });
+    settleAuditChoices(api, combat);
+    return combat.eventLog.filter(event => event.type === 'damageDealt' && event.targetId === enemy.id).map(event => event.amount);
+  };
+  const legacyBaseline = legacyDamage(false), legacySilenced = legacyDamage(true);
+
+  const expanded = makeAuditCombat(api, { classId: 'starseer', enemyIds: ['wanderingSoldier'], seed: 7312 }).combat;
+  setAuditHand(expanded, [{ cardId: spellCardId, instanceId: 'expanded-silenced-cost' }]);
+  const costBaseline = api.cardPlayCosts(expanded, 'expanded-silenced-cost');
+  api.applyStatus(expanded, expanded.player, 'silenced', 1);
+  const costSilenced = api.cardPlayCosts(expanded, 'expanded-silenced-cost');
+
+  const force = makeAuditCombat(api, { classId: 'starseer', enemyIds: ['wanderingSoldier'], seed: 7313 }).combat;
+  const enemy = force.enemies[0]; enemy.hp = enemy.maxHp = 1000;
+  api.applyStatus(force, enemy, 'silenced', 1);
+  setAuditHand(force, [{ cardId: 'starstonePebble', instanceId: 'expanded-silenced-force' }]);
+  api.dispatch(force, { type: 'playCard', cardInstanceId: 'expanded-silenced-force', targetId: enemy.id });
+  settleAuditChoices(api, force);
+  const forceReceipts = force.eventLog.filter(event => event.type === 'damageDealt' && event.targetId === enemy.id);
+  const forceSpent = force.eventLog.some(event => event.type === 'statusRemoved' && event.targetId === enemy.id && event.status === 'silenced' && event.reason === 'consumed');
+  const forceWard = forceReceipts.some(event => event.forceImmune > 0);
+  const rows = [
+    { key: 'spellDamageDealtMult', mode: 'legacy spell consumer', cardId: spellCardId, baseline: legacyBaseline,
+      observed: legacySilenced, expected: legacyBaseline.map(amount => Math.ceil(amount * 0.5)),
+      result: legacyBaseline.length > 0 && legacySilenced.length === legacyBaseline.length
+        && legacySilenced.every((amount, index) => amount === Math.ceil(legacyBaseline[index] * 0.5)) ? 'covered' : 'missing' },
+    { key: 'spellDamageDealtMult', mode: 'expanded spell surcharge', cardId: spellCardId,
+      baseline: costBaseline, observed: costSilenced, expected: { ...costBaseline, energy: costBaseline.energy + 1, stamina: costBaseline.stamina + 1 },
+      result: costSilenced.energy === costBaseline.energy + 1 && costSilenced.stamina === costBaseline.stamina + 1
+        && costSilenced.mana === costBaseline.mana ? 'covered' : 'missing' },
+    { key: 'spellDamageDealtMult', mode: 'expanded Force ward', cardId: 'starstonePebble',
+      observed: forceReceipts.map(event => ({ amount: event.amount, forceImmune: event.forceImmune || 0 })), forceSpent, forceWard,
+      result: forceSpent && forceWard ? 'covered' : 'missing' },
+  ];
+  return { normativeContract: 'Legacy spellDamageDealtMultiplier is bypassed in combatExpansionVersion 2; v2 Silenced adds 1 stamina/action cost per stack to spell-camp cards and spends a stack to ward Force contacts (src/engine/actions.js, src/engine/combat.js, SPEC combat profile contract).',
+    rows, covered: rows.filter(row => row.result === 'covered').length };
+}
+
+function auditStatusModifierConsumers(registries, silencedProof) {
+  const rows = [];
+  const play = (statusId, cardId, targetStatus = false) => {
+    const execute = withStatus => {
+      const combat = makeAuditCombat(api, { classId: 'reaver', enemyIds: ['wanderingSoldier'], seed: 7314 }).combat;
+      const enemy = combat.enemies[0]; enemy.hp = enemy.maxHp = 10000; enemy.block = 0;
+      if (withStatus) api.applyStatus(combat, targetStatus ? enemy : combat.player, statusId, 1);
+      setAuditHand(combat, [{ cardId, instanceId: `modifier:${statusId}:${withStatus}` }]);
+      api.dispatch(combat, { type: 'playCard', cardInstanceId: `modifier:${statusId}:${withStatus}`, ...(cardId === 'strike' ? { targetId: enemy.id } : {}) });
+      settleAuditChoices(api, combat);
+      return cardId === 'strike'
+        ? combat.eventLog.filter(event => event.type === 'damageDealt' && event.targetId === enemy.id).map(event => event.incoming)
+        : combat.eventLog.filter(event => event.type === 'blockGained' && event.targetId === combat.player.id && event.source !== 'defendStance').map(event => event.amount);
+    };
+    return { baseline: execute(false), observed: execute(true) };
+  };
+  const addRow = (statusId, key, check) => rows.push({ statusId, key, ...check, result: check.ok ? 'covered' : 'missing' });
+  const scalar = (statusId, key, targetStatus = false) => {
+    const expectedValue = registries.statuses.get(statusId).modifiers[key];
+    const isTarget = key === 'damageTakenMult';
+    const action = play(statusId, 'strike', targetStatus || isTarget);
+    const baseline = action.baseline[0], observed = action.observed[0];
+    const multiplier = Number(expectedValue);
+    const expected = Math.floor(baseline * multiplier);
+    return { baseline, observed, expected, ok: Number.isFinite(baseline) && observed === expected };
+  };
+  for (const id of ['strength']) {
+    const row = scalar(id, 'attackDamageAdd');
+    const add = registries.statuses.get(id).modifiers.attackDamageAdd;
+    row.expected = row.baseline + add;
+    row.ok = row.observed === row.expected;
+    addRow(id, 'attackDamageAdd', row);
+  }
+  for (const id of ['weak', 'glassCannon', 'confused', 'slowed']) addRow(id, 'damageDealtMult', scalar(id, 'damageDealtMult'));
+  for (const id of ['vulnerable', 'staggered', 'glassCannon', 'entombed']) addRow(id, 'damageTakenMult', scalar(id, 'damageTakenMult', true));
+  for (const id of ['dexterity', 'frail', 'slowed']) {
+    const value = registries.statuses.get(id).modifiers[id === 'dexterity' ? 'blockAdd' : 'blockGainedMult'];
+    const action = play(id, 'defend');
+    const baseline = action.baseline[0], observed = action.observed[0];
+    const expected = id === 'dexterity' ? baseline + value : Math.floor(baseline * value);
+    addRow(id, id === 'dexterity' ? 'blockAdd' : 'blockGainedMult', { baseline, observed, expected, ok: observed === expected });
+  }
+  for (const id of ['unbreakable', 'unbreakableUp', 'stoneskin']) {
+    const execute = withStatus => {
+      const combat = makeAuditCombat(api, { classId: 'reaver', enemyIds: ['wanderingSoldier'], seed: 7315 }).combat;
+      combat.player.block = 7;
+      api.applyStatus(combat, combat.enemies[0], 'entombed', 1); // isolate the next player-turn cleanup from incoming damage
+      if (withStatus) api.applyStatus(combat, combat.player, id, 1);
+      api.dispatch(combat, { type: 'endTurn' }); settleAuditChoices(api, combat); drainAuditQueue(combat);
+      return combat.player.block;
+    };
+    const baseline = execute(false), observed = execute(true);
+    addRow(id, 'retainBlock', { baseline, observed, expected: 7, ok: baseline === 0 && observed === 7 });
+  }
+  for (const id of ['unbreakable', 'unbreakableUp']) {
+    const cap = registries.statuses.get(id).modifiers.blockCap;
+    const combat = makeAuditCombat(api, { classId: 'reaver', enemyIds: ['wanderingSoldier'], seed: 7316 }).combat;
+    combat.player.block = cap - 1;
+    api.applyStatus(combat, combat.player, id, 1);
+    setAuditHand(combat, [{ cardId: 'defend', instanceId: `modifier-cap:${id}` }]);
+    api.dispatch(combat, { type: 'playCard', cardInstanceId: `modifier-cap:${id}` }); settleAuditChoices(api, combat);
+    const observed = combat.player.block;
+    addRow(id, 'blockCap', { observed, expected: cap, ok: observed === cap });
+  }
+  const growth = withStatus => {
+    const combat = makeAuditCombat(api, { classId: 'reaver', enemyIds: ['wanderingSoldier'], seed: 7317 }).combat;
+    const enemy = combat.enemies[0], before = enemy.poiseMeter.max;
+    if (withStatus) api.applyStatus(combat, combat.player, 'goreblood', 1);
+    api.growPoiseMeter(combat, enemy);
+    return { before, observed: enemy.poiseMeter.max };
+  };
+  const growthBase = growth(false), growthStatus = growth(true);
+  addRow('goreblood', 'meterMaxGrowthDisabled', { baseline: growthBase.observed, observed: growthStatus.observed,
+    expected: growthBase.observed, ok: growthBase.observed > growthBase.before && growthStatus.observed === growthStatus.before });
+  const skip = withStatus => {
+    const combat = makeAuditCombat(api, { classId: 'reaver', enemyIds: ['wanderingSoldier'], seed: 7318 }).combat;
+    if (withStatus) api.applyStatus(combat, combat.enemies[0], 'entombed', 1);
+    api.dispatch(combat, { type: 'endTurn' }); settleAuditChoices(api, combat);
+    return combat.eventLog.some(event => event.type === 'enemyMoveStarted');
+  };
+  const skippedBaseline = skip(false), skippedStatus = skip(true);
+  addRow('entombed', 'skipTurn', { baseline: skippedBaseline, observed: skippedStatus, expected: false,
+    ok: skippedBaseline && !skippedStatus });
+  const silencedRow = silencedProof.rows.find(row => row.mode === 'legacy spell consumer');
+  addRow('silenced', 'spellDamageDealtMult', { baseline: silencedRow.baseline, observed: silencedRow.observed,
+    expected: silencedRow.expected, ok: silencedRow.result === 'covered' });
+  return { declarations: rows.length, covered: rows.filter(row => row.result === 'covered').length,
     missing: rows.filter(row => row.result !== 'covered'), rows };
 }
 
@@ -435,11 +625,15 @@ function auditTaggedVulnerabilities(registries) {
         setAuditHand(combat, [{ cardId: card.id, instanceId: `tagged:${status.id}:${tag}` }]);
         api.dispatch(combat, { type: 'playCard', cardInstanceId: `tagged:${status.id}:${tag}`, targetId: enemy.id });
         settleAuditChoices(api, combat);
-        return combat.eventLog.filter(event => event.type === 'damageDealt' && event.targetId === enemy.id).reduce((sum, event) => sum + event.amount, 0);
+        return combat.eventLog.filter(event => event.type === 'damageDealt' && event.targetId === enemy.id).map(event => ({
+          amount: event.amount, incoming: event.incoming, blocked: event.blocked || 0,
+        }));
       };
-      const baselineDamage = run(false), exposedDamage = run(true);
-      rows.push({ status: status.id, tag, cardId: card.id, baselineDamage, exposedDamage,
-        expectedMultiplier: status.taggedVulnerability.mult, result: exposedDamage > baselineDamage ? 'covered' : 'missing' });
+      const baseline = run(false), exposed = run(true), mult = status.taggedVulnerability.mult;
+      const outcomesMatch = baseline.length > 0 && exposed.length === baseline.length && baseline.every((hit, index) =>
+        exposed[index].incoming === Math.ceil(hit.incoming * mult) && exposed[index].blocked === 0);
+      rows.push({ status: status.id, tag, cardId: card.id, baseline, exposed,
+        expectedMultiplier: mult, result: outcomesMatch ? 'covered' : 'missing' });
     }
   }
   return { branches: rows.length, covered: rows.filter(row => row.result === 'covered').length, missing: rows.filter(row => row.result !== 'covered'), rows };
@@ -478,8 +672,14 @@ export function auditEnemyMoves() {
     for (const [moveId, move] of Object.entries(enemyDef.moves)) {
       if (move.reaction) continue;
       const registries = enemyMoveRegistry(base, enemyDef.id, moveId);
-      const combat = api.createCombat({ registries, rng: api.createRng(7303), enemyIds: [enemyDef.id], player: playerFor('reaver') });
+      const combat = api.createCombat({ registries, rng: api.createRng(7303), enemyIds: [enemyDef.id], player: playerFor('starseer') });
       try {
+        const actor = combat.enemies[0];
+        actor.hp = Math.max(1, actor.maxHp - 10); // give authored healing a visible prerequisite
+        actor.block = 0;
+        const cardCountsBefore = Object.fromEntries((move.effects || []).filter(effect => effect.op === 'addCard')
+          .map(effect => [effect.card, Object.values(combat.piles).flat().filter(instance => instance.cardId === effect.card).length]));
+        const eventStart = combat.eventLog.length;
         for (let turn = 0; turn < MAX_TURNS && !combat.result; turn++) {
           api.dispatch(combat, { type: 'endTurn' });
           passReactions(combat);
@@ -489,9 +689,55 @@ export function auditEnemyMoves() {
           || combat.eventLog.some(event => event.type === 'enemyMoveCharged' && event.moveId === moveId);
         const settled = !combat.pendingReaction && combat.queue.length === 0
           && (combat.phase === 'player' || (combat.phase === 'ended' && ['victory', 'defeat'].includes(combat.result)));
+        if (move.counterDamage && combat.phase === 'player' && !combat.result) {
+          const counterCard = `audit-counter-probe:${enemyDef.id}:${moveId}`;
+          const counterTestCard = move.tags?.includes('counter:spell') ? 'cinderSigil' : 'strike';
+          setAuditHand(combat, [{ cardId: counterTestCard, instanceId: counterCard }]);
+          api.dispatch(combat, { type: 'playCard', cardInstanceId: counterCard, targetId: actor.id });
+          settleAuditChoices(api, combat);
+        }
+        const moveEvents = combat.eventLog.slice(eventStart).filter(event => event.moveId === moveId);
+        const effectRows = [];
+        if (move.damage > 0) {
+          const contacts = moveEvents.filter(event => event.type === 'damageDealt' && event.targetId === combat.player.id && event.amount > 0);
+          effectRows.push({ op: 'damage', expectedContacts: move.hits || 1, observedContacts: contacts.length,
+            observed: contacts.length >= (move.hits || 1) });
+        }
+        if (move.block > 0) {
+          const counterArmed = moveEvents.some(event => event.type === 'combatCounterArmed' && event.moveId === moveId);
+          const counterResolved = combat.eventLog.some(event => event.type === 'combatCounterTriggered' && event.moveId === moveId && event.targetId === combat.player.id && event.amount > 0);
+          const counterConsumed = combat.eventLog.some(event => event.type === 'combatCounterConsumed' && event.moveId === moveId && event.targetId === combat.player.id);
+          const blockReceipt = combat.eventLog.some(event => event.type === 'blockGained' && event.moveId === moveId && event.targetId === actor.id && event.amount > 0);
+          effectRows.push({ op: 'block', counterArmed, counterResolved, counterConsumed, observed: blockReceipt || (move.counterDamage ? counterArmed && counterConsumed && actor.block > 0 : actor.block > 0) });
+        }
+        for (const effect of move.effects || []) {
+          let observed = false;
+          if (effect.op === 'applyStatus') {
+            const target = effect.target === 'player' ? combat.player : actor;
+            const appliedReceipts = combat.eventLog.slice(eventStart).filter(event => event.type === 'statusApplied' && event.status === effect.status
+              && event.targetId === target.id && event.stacks > 0);
+            const statusReceipt = appliedReceipts.length > 0;
+            const pressureReceipt = moveEvents.some(event => event.type === 'statusPressure' && event.status === effect.status && event.targetId === target.id && event.acceptedBuildup > 0)
+              || moveEvents.some(event => event.type === 'statusGaugeFilled' && event.status === effect.status && event.targetId === target.id && event.admitted === true);
+            observed = statusReceipt || pressureReceipt;
+          } else if (effect.op === 'heal') {
+            observed = moveEvents.some(event => event.type === 'healed' && event.targetId === actor.id && event.amount > 0)
+              && actor.hp > actor.maxHp - 10;
+          } else if (effect.op === 'block') {
+            observed = moveEvents.some(event => event.type === 'blockGained' && event.targetId === actor.id && event.amount > 0);
+          } else if (effect.op === 'addCard') {
+            const cardsAfter = Object.values(combat.piles).flat().filter(instance => instance.cardId === effect.card).length;
+            observed = cardsAfter > (cardCountsBefore[effect.card] || 0);
+          }
+          effectRows.push({ op: effect.op, status: effect.status || null, card: effect.card || null, observed });
+        }
+        if (!effectRows.length && move.delay) effectRows.push({ op: 'delayedMove', observed: moveEvents.some(event => event.type === 'enemyMoveCharged') });
+        if (!effectRows.length && !move.delay) effectRows.push({ op: 'moveReceipt', observed: moveEvents.some(event => event.type !== 'enemyMoveStarted') });
+        const outcomeVerified = effectRows.every(row => row.observed);
         moveRows.push({ enemyId: enemyDef.id, moveId, reaction: false, started, settled,
+          outcomeVerified, effectRows,
           state: { phase: combat.phase, turn: combat.turn, result: combat.result, pendingReaction: !!combat.pendingReaction, queue: combat.queue.length },
-          result: started && settled ? 'covered' : 'missing' });
+          result: started && settled && outcomeVerified ? 'covered' : 'missing' });
       } catch (error) {
         moveRows.push({ enemyId: enemyDef.id, moveId, reaction: false, started: false, settled: false, result: 'missing', error: error.message });
       }
@@ -515,16 +761,25 @@ function auditEnemyReactionMoves(base) {
     api.dispatch(combat, { type: 'playCard', cardInstanceId: instanceId, targetId: combat.enemies[0].id });
     settleAuditChoices(api, combat);
     const receipts = combat.eventLog.filter(event => event.type === 'enemyMoveStarted' && event.reaction && event.moveId === 'gildedGuard');
-    const matched = receipts.length === (expected ? 1 : 0) && !combat.pendingReaction && !combat.queue.length;
+    const reactionDamage = combat.eventLog.filter(event => event.type === 'damageDealt' && event.moveId === 'gildedGuard' && event.targetId === combat.player.id);
+    const reactionBlock = combat.eventLog.filter(event => event.type === 'blockGained' && event.moveId === 'gildedGuard' && event.targetId === combat.enemies[0].id);
+    const outcome = expected ? reactionDamage.some(event => event.amount > 0) && reactionBlock.some(event => event.amount > 0)
+      : reactionDamage.length === 0 && reactionBlock.length === 0;
+    const matched = receipts.length === (expected ? 1 : 0) && outcome && !combat.pendingReaction && !combat.queue.length;
     results.push({ enemyId: 'gildedKnight', moveId: 'gildedGuard', caseId, expected, observed: receipts.length > 0,
+      reactionDamage: reactionDamage.map(event => event.amount), reactionBlock: reactionBlock.map(event => event.amount), outcome,
       settled: !combat.pendingReaction && !combat.queue.length, result: matched ? 'covered' : 'missing' });
   }
   // Binding Riposte is a 50% response during the actual playerReaction window.
   // Search deterministic seeds so both outcomes are observed and answer every
   // legal Counter offer rather than leaving a prompt parked in the fixture.
   const originalRegistries = api.registries;
-  const enemies = base.enemies.all().map(enemy => enemy.id === 'courtDuelist' ? { ...enemy, firstMove: 'lunge' } : enemy);
-  api.registries = api.createRegistries({ ...api.contentBundle, enemies });
+  const duelist = base.enemies.get('courtDuelist');
+  const enemies = base.enemies.all().map(enemy => enemy.id === 'courtDuelist' ? { ...enemy, firstMove: 'lunge',
+    moves: { lunge: duelist.moves.lunge, bindingRiposte: duelist.moves.bindingRiposte } } : enemy);
+  const enemyMoves = api.contentBundle.enemyMoves.filter(row => row.enemyId !== 'courtDuelist')
+    .concat({ ...duelist.moves.lunge, id: 'lunge', enemyId: 'courtDuelist' }, { ...duelist.moves.bindingRiposte, id: 'bindingRiposte', enemyId: 'courtDuelist' });
+  api.registries = api.createRegistries({ ...api.contentBundle, enemies, enemyMoves });
   const seen = new Map();
   try {
     for (let seed = 1; seed <= 64 && seen.size < 2; seed++) {
@@ -535,15 +790,29 @@ function auditEnemyReactionMoves(base) {
       if (!offer) continue;
       const option = offer.options.find(row => row.play.cardInstanceId === 'audit-counter');
       if (!option) continue;
+      const counterBefore = combat.rng.getCounters().enemyReaction || 0;
       api.dispatch(combat, { type: 'chooseReaction', offerId: offer.id, optionId: option.id });
+      const counterAfter = combat.rng.getCounters().enemyReaction || 0;
+      const chanceRollDraws = counterAfter - counterBefore;
       settleAuditChoices(api, combat);
-      const observed = combat.eventLog.some(event => event.type === 'enemyMoveStarted' && event.reaction && event.moveId === 'bindingRiposte');
-      seen.set(observed, seed);
+      const stacked = combat.eventLog.filter(event => event.type === 'combatEnemyReactionStacked' && event.moveId === 'bindingRiposte');
+      const started = combat.eventLog.filter(event => event.type === 'enemyMoveStarted' && event.reaction && event.moveId === 'bindingRiposte');
+      const reactionDamage = combat.eventLog.filter(event => event.type === 'damageDealt' && event.moveId === 'bindingRiposte').map(event => event.amount);
+      const observed = stacked.length === 1 && started.length === 1 && reactionDamage.some(amount => amount > 0) ? true
+        : stacked.length === 0 && started.length === 0 && chanceRollDraws === 1 && reactionDamage.length === 0 ? false : null;
+      if (observed !== null) seen.set(observed, { seed, observed, chanceRollDraws, stacked: stacked.length, started: started.length,
+        settled: !combat.pendingReaction && combat.queue.length === 0,
+        reactionDamage });
     }
   } finally { api.registries = originalRegistries; }
-  for (const [expected, seed] of [[true, seen.get(true)], [false, seen.get(false)]]) {
+  for (const [expected, observation] of [[true, seen.get(true)], [false, seen.get(false)]]) {
     results.push({ enemyId: 'courtDuelist', moveId: 'bindingRiposte', caseId: expected ? 'chance-taken' : 'chance-declined', expected,
-      observed: expected, seed: seed ?? null, settled: seed != null, result: seed != null ? 'covered' : 'missing' });
+      observed: observation?.observed ?? null,
+      seed: observation?.seed ?? null, chanceRollDraws: observation?.chanceRollDraws || 0, stacked: observation?.stacked || 0,
+      started: observation?.started || 0, reactionDamage: observation?.reactionDamage || [], settled: !!observation?.settled,
+      result: observation?.settled && observation.chanceRollDraws === 1
+        && (expected ? observation.stacked === 1 && observation.started === 1 && observation.reactionDamage.some(amount => amount > 0)
+          : observation.stacked === 0 && observation.started === 0) ? 'covered' : 'missing' });
   }
   return results;
 }
@@ -603,6 +872,8 @@ export async function runRelicEnemyAudit(mode = 'native') {
   const registries = api.registries;
   const relics = auditRelics(registries);
   const statuses = auditStatuses(registries);
+  const silencedConsumerPaths = auditSilencedConsumerPaths(registries);
+  const statusModifierConsumers = auditStatusModifierConsumers(registries, silencedConsumerPaths);
   const statusControls = auditStatusControls(registries);
   const taggedVulnerabilities = auditTaggedVulnerabilities(registries);
   const enemies = auditEnemyMoves();
@@ -612,17 +883,20 @@ export async function runRelicEnemyAudit(mode = 'native') {
     relicPassives: relics.passiveIds, relicPassiveEffects: relics.passiveEffects, relicPassiveEffectsCovered: relics.passiveEffectsCovered,
     statuses: statuses.ids, statusesCovered: statuses.covered, statusModifierOutcomes: statuses.modifierOutcomesCovered,
     statusModifierDeclarations: statuses.modifierDeclarations, statusProcBranches: statuses.procBranches, statusProcBranchesCovered: statuses.procBranchesCovered,
+    statusSilencedConsumerPathsCovered: silencedConsumerPaths.covered,
+    statusModifierConsumerDeclarations: statusModifierConsumers.declarations,
+    statusModifierConsumerOutcomesCovered: statusModifierConsumers.covered,
     statusResistanceBranches: statuses.resistanceBranches, statusResistanceBranchesCovered: statuses.resistanceBranchesCovered,
     statusControlBranches: statusControls.branches, statusControlBranchesCovered: statusControls.covered,
     statusTaggedVulnerabilityBranches: taggedVulnerabilities.branches, statusTaggedVulnerabilityCovered: taggedVulnerabilities.covered,
     enemies: enemies.enemies, enemyMoves: enemies.moves, enemyMovesCovered: enemies.covered,
     enemyReactionMoves: enemies.reactionMoves, enemyReactionScenariosCovered: enemies.reactionCovered,
     encounters: encounters.encounters, classes: encounters.classes, encounterClassScenarios: encounters.scenarios, encounterClassCovered: encounters.covered },
-    relics, statuses, statusControls, taggedVulnerabilities, enemies, encounters };
+    relics, statuses, silencedConsumerPaths, statusModifierConsumers, statusControls, taggedVulnerabilities, enemies, encounters };
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const report = await runRelicEnemyAudit(process.argv[2] || 'native');
   console.log(JSON.stringify(report, null, 2));
-  if (report.relics.missing.length || report.relics.passiveMissing.length || report.statuses.missing.length || report.statusControls.missing.length || report.taggedVulnerabilities.missing.length || report.enemies.missing.length || report.enemies.reactionRows.some(row => row.result !== 'covered') || report.encounters.missing.length) process.exitCode = 1;
+  if (report.relics.missing.length || report.relics.passiveMissing.length || report.statuses.missing.length || report.silencedConsumerPaths.rows.some(row => row.result !== 'covered') || report.statusModifierConsumers.missing.length || report.statusControls.missing.length || report.taggedVulnerabilities.missing.length || report.enemies.missing.length || report.enemies.reactionRows.some(row => row.result !== 'covered') || report.encounters.missing.length) process.exitCode = 1;
 }
