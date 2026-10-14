@@ -30,9 +30,11 @@ Reduced motion and Instant retain a bounded static origin.
 ## Reproducible production
 
 `python tools/class-smash-export.py --check` verifies the production derivatives
-and generated `src/content/classSmashAnimations.js` registry. The four distinct
-paintings per class have Full 1024-square and Lite 512-square rasters; their
-logical draw dimensions are recorded separately. Each class uses a single
+and generated `src/content/classSmashAnimations.js` registry. The normalized source paintings remain 1024-square. Production removes only
+transparent padding with a small filtering margin, then uses a fixed half-size
+Full and quarter-size Lite raster factor. Actual cropped raster dimensions and
+logical draw sizes/offsets are recorded per frame; their source-to-world
+transform and foreground bounds remain identical to the uncropped registration. Each class uses a single
 measured anatomical scale and fixed world anchor, aligned to stage [384,464].
 Airborne frames are never individually resized or foot-aligned. Original PNG
 bookends are byte-identical, and the exporter rejects clipped alpha reach,

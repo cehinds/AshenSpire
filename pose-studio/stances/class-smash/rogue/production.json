@@ -13,6 +13,19 @@
     384,
     464
   ],
+  "sourceLogicalDrawSize": [
+    476.89142857142855,
+    476.89142857142855
+  ],
+  "sourceLogicalDrawOffset": [
+    145.55428571428573,
+    30.8857142857143
+  ],
+  "transparentCropMargin": 16,
+  "rasterDownsampleFactors": {
+    "full": 2,
+    "lite": 4
+  },
   "sourceBookends": {
     "first": "8384178d191cd7d3e3601742ee618860537b22a7303d6c24b58f25b41ffbc2b6",
     "last": "8384178d191cd7d3e3601742ee618860537b22a7303d6c24b58f25b41ffbc2b6",
@@ -22,21 +35,27 @@
     "held": {
       "path": "assets-display/alternative/class-smash-rogue-held.webp",
       "lite": "assets-display/alternative/class-smash-rogue-held-mobile.webp",
-      "sha256": "5dff2223f2e6b8621264bebb5f4ab91b6111044634a0b12f036207f2a1d56536",
-      "liteSha256": "964c60842db171f8b661a1ffe348e7d7831eacf2c73c602425734eb9575768ad",
+      "sha256": "d3588ad741536f17f5a7cd9522245cf15e0e40f907a1c9bb900fa72fbb0b9ef1",
+      "liteSha256": "1bd5b045170e59f54a59e69030e4d60ac32f57691ce3d5601190821b67bd88df",
       "size": [
-        476.89142857142855,
-        476.89142857142855
+        257.0742857142857,
+        391.2
       ],
       "drawOffset": [
-        145.55428571428573,
-        30.8857142857143
+        259.18857142857144,
+        84.90857142857143
       ],
       "bounds": [
         261,
         133,
         779,
         939
+      ],
+      "sourceCrop": [
+        244,
+        116,
+        796,
+        956
       ],
       "stageBounds": [
         267.10571428571427,
@@ -49,12 +68,12 @@
         464
       ],
       "rasterSize": [
-        1024,
-        1024
+        276,
+        420
       ],
       "mobileRasterSize": [
-        512,
-        512
+        138,
+        210
       ],
       "source": {
         "path": "pose-studio/stances/class-smash/rogue/01-held.png",
@@ -67,21 +86,27 @@
     "takeoff": {
       "path": "assets-display/alternative/class-smash-rogue-takeoff.webp",
       "lite": "assets-display/alternative/class-smash-rogue-takeoff-mobile.webp",
-      "sha256": "77c25f971a4a2d068125a9dc131caa148bfb9ba3cfe6b88d40677030acdaf338",
-      "liteSha256": "f1c3fe34c78d55c46a20aa142e058286b9ed2b1c93ad9b7c3a79b087891f2104",
+      "sha256": "2391f084f65b77ad948cfe26ddabd14f52980bc0016325dde9d9f3158090408d",
+      "liteSha256": "e305e61baac4f0218a83845eaf9baf14541c3b3e1340e9b80920149b0eea0494",
       "size": [
-        476.89142857142855,
-        476.89142857142855
+        262.66285714285715,
+        398.65142857142854
       ],
       "drawOffset": [
-        145.55428571428573,
-        30.8857142857143
+        253.60000000000002,
+        73.73142857142858
       ],
       "bounds": [
         250,
         110,
         779,
         932
+      ],
+      "sourceCrop": [
+        232,
+        92,
+        796,
+        948
       ],
       "stageBounds": [
         261.98285714285714,
@@ -94,12 +119,12 @@
         464
       ],
       "rasterSize": [
-        1024,
-        1024
+        282,
+        428
       ],
       "mobileRasterSize": [
-        512,
-        512
+        141,
+        214
       ],
       "source": {
         "path": "pose-studio/stances/class-smash/rogue/02-takeoff.png",
@@ -112,21 +137,27 @@
     "airborne": {
       "path": "assets-display/alternative/class-smash-rogue-airborne.webp",
       "lite": "assets-display/alternative/class-smash-rogue-airborne-mobile.webp",
-      "sha256": "f106a6523ffdbc80623e74db77bdf6c87f245e2e3bee0314409765620fa508c0",
-      "liteSha256": "dd5d5681136b64c51b875fe3229dd66cc318d9714c9416a312dbaff3876b4344",
+      "sha256": "239640730defbcf35a149950cff37bc99726ccc655684d0af025c6cf2be1646e",
+      "liteSha256": "81efd2879eb697ca1d082f0c887f3674357c184adec718838a6dabeedaba348b",
       "size": [
-        476.89142857142855,
-        476.89142857142855
+        255.21142857142857,
+        346.49142857142857
       ],
       "drawOffset": [
-        145.55428571428573,
-        30.8857142857143
+        257.3257142857143,
+        109.1257142857143
       ],
       "bounds": [
         257,
         186,
         771,
         894
+      ],
+      "sourceCrop": [
+        240,
+        168,
+        788,
+        912
       ],
       "stageBounds": [
         265.24285714285713,
@@ -139,12 +170,12 @@
         464
       ],
       "rasterSize": [
-        1024,
-        1024
+        274,
+        372
       ],
       "mobileRasterSize": [
-        512,
-        512
+        137,
+        186
       ],
       "source": {
         "path": "pose-studio/stances/class-smash/rogue/03-airborne.png",
@@ -157,21 +188,27 @@
     "impact": {
       "path": "assets-display/alternative/class-smash-rogue-impact.webp",
       "lite": "assets-display/alternative/class-smash-rogue-impact-mobile.webp",
-      "sha256": "5e4e884a39a912f59757581ed1651fe495afc6dd80c4c2d55fffb6c1b6220dac",
-      "liteSha256": "e4fc1564c7fe7bdeaab21db1e596241764dd7132f63e58fb25648a8d5b44fd55",
+      "sha256": "0c2b737bb7ab4971763e8d7cc2c46975abfc55da01c0e0fd44388da8b6f16930",
+      "liteSha256": "6d37677aaf7c3f4a43d55862a1322032fc07a11e028f0187177d10f567569d4c",
       "size": [
-        476.89142857142855,
-        476.89142857142855
+        298.0571428571428,
+        322.2742857142857
       ],
       "drawOffset": [
-        145.55428571428573,
-        30.8857142857143
+        231.2457142857143,
+        151.9714285714286
       ],
       "bounds": [
         203,
         279,
         807,
         934
+      ],
+      "sourceCrop": [
+        184,
+        260,
+        824,
+        952
       ],
       "stageBounds": [
         240.09428571428572,
@@ -184,12 +221,12 @@
         464
       ],
       "rasterSize": [
-        1024,
-        1024
+        320,
+        346
       ],
       "mobileRasterSize": [
-        512,
-        512
+        160,
+        173
       ],
       "source": {
         "path": "pose-studio/stances/class-smash/rogue/04-impact.png",

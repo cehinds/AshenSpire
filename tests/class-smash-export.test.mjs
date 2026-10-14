@@ -21,7 +21,13 @@ with tempfile.TemporaryDirectory() as tmp:
   image.save(folder/(name+'.png'))
  entry,outputs=m.prepare_class('rogue',root)
  frames=entry['frames'];held=frames['held'];air=frames['airborne']
- assert all(f['size']==held['size'] and f['drawOffset']==held['drawOffset'] for f in frames.values())
+ for f in frames.values():
+  crop=f['sourceCrop'];scale=324/600
+  assert f['size']==[(crop[2]-crop[0])*scale,(crop[3]-crop[1])*scale]
+  assert abs((f['drawOffset'][0]-crop[0]*scale)-(384-512*scale))<1e-9
+  assert abs((f['drawOffset'][1]-crop[1]*scale)-(464-900*scale))<1e-9
+  assert abs(f['stageBounds'][0]-(f['bounds'][0]*scale+384-512*scale))<1e-9
+  assert abs(f['stageBounds'][3]-(f['bounds'][3]*scale+464-900*scale))<1e-9
  assert abs(held['stageBounds'][3]-464)<1e-9
  assert air['stageBounds'][3]<held['stageBounds'][3]-70,'airborne feet must stay airborne'
  assert len([p for p in outputs if p.endswith('.webp')])==8
@@ -67,8 +73,11 @@ test('real class production registers verified assets with a shared world transf
     assert.deepEqual(Object.keys(entry.frames),['held','takeoff','airborne','impact']);
     for(const frame of Object.values(entry.frames)){
       assert.equal(hash(frame.path),frame.sha256);assert.equal(hash(frame.lite),frame.liteSha256);assert.equal(hash(frame.source.path),frame.source.sha256);
-      assert.deepEqual(frame.size,entry.frames.held.size);assert.deepEqual(frame.drawOffset,entry.frames.held.drawOffset);
-      assert.deepEqual(frame.stageAnchor,[384,464]);assert.deepEqual(frame.rasterSize,[1024,1024]);assert.deepEqual(frame.mobileRasterSize,[512,512]);
+      const crop=frame.sourceCrop,scale=production.sharedLogicalScale;
+      assert.deepEqual(frame.size,[(crop[2]-crop[0])*scale,(crop[3]-crop[1])*scale]);
+      for(const axis of [0,1])assert.ok(Math.abs(frame.drawOffset[axis]-crop[axis]*scale-production.sourceLogicalDrawOffset[axis])<1e-9);
+      assert.deepEqual(frame.stageBounds,frame.bounds.map((value,index)=>value*scale+production.sourceLogicalDrawOffset[index%2]));
+      assert.deepEqual(frame.stageAnchor,[384,464]);assert.deepEqual(frame.rasterSize,[(crop[2]-crop[0])/2,(crop[3]-crop[1])/2]);assert.deepEqual(frame.mobileRasterSize,[(crop[2]-crop[0])/4,(crop[3]-crop[1])/4]);
       assert.ok(frame.bounds.every(Number.isFinite));assert.ok(frame.stageBounds.every(Number.isFinite));
       for(const [key,x]of [['path','sha256'],['lite','liteSha256']]){
         const name=frame[key].replace('assets-display/alternative/','');assert.equal(classSmashAnimations.hashes[name],frame[x]);assert.equal(classSmashAnimations.filePaths[name],frame[key]);

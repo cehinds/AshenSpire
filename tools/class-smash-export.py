@@ -59,26 +59,36 @@ def prepare_class(actor, root=ROOT):
     frames, outputs = {}, {}
     for key, name, image in zip(KEYS, NAMES, images):
         bounds = list(image.getbbox())
+        # Strip only transparent padding. Grid-aligned crops give every tier
+        # the same fixed downsample factor; source/world registration is unchanged.
+        crop = [max(0,((bounds[0]-16)//4)*4),max(0,((bounds[1]-16)//4)*4),
+                min(1024,math.ceil((bounds[2]+16)/4)*4),min(1024,math.ceil((bounds[3]+16)/4)*4)]
+        cropped = image.crop(crop)
+        logical_size = [cropped.width*scale,cropped.height*scale]
+        logical_offset = [offset[0]+crop[0]*scale,offset[1]+crop[1]*scale]
         tier_data = {}
-        for tier, side, suffix in [('full',1024,''), ('lite',512,'-mobile')]:
+        for tier, factor, suffix in [('full',2,''), ('lite',4,'-mobile')]:
             path = 'assets-display/alternative/class-smash-'+actor+'-'+key+suffix+'.webp'
-            raster = image if side == 1024 else image.resize((side,side), Image.Resampling.LANCZOS)
+            dimensions = [cropped.width//factor,cropped.height//factor]
+            raster = cropped.resize(dimensions, Image.Resampling.LANCZOS)
             import io
             buffer = io.BytesIO()
             raster.save(buffer,format='WEBP',lossless=True,method=6)
             data=buffer.getvalue();outputs[path]=data
-            tier_data[tier]={'path':path,'sha256':sha(data),'dimensions':[side,side]}
+            tier_data[tier]={'path':path,'sha256':sha(data),'dimensions':dimensions}
         source_path = str((frame_folder / (name+'.png')).relative_to(root))
         frames[key]={'path':tier_data['full']['path'],'lite':tier_data['lite']['path'],
             'sha256':tier_data['full']['sha256'],'liteSha256':tier_data['lite']['sha256'],
-            'size':draw_size,'drawOffset':offset,'bounds':bounds,
+            'size':logical_size,'drawOffset':logical_offset,'bounds':bounds,'sourceCrop':crop,
             'stageBounds':[bounds[0]*scale+offset[0],bounds[1]*scale+offset[1],bounds[2]*scale+offset[0],bounds[3]*scale+offset[1]],
-            'stageAnchor':[384,464],'rasterSize':[1024,1024],'mobileRasterSize':[512,512],
+            'stageAnchor':[384,464],'rasterSize':tier_data['full']['dimensions'],'mobileRasterSize':tier_data['lite']['dimensions'],
             'source':{'path':source_path,'sha256':sha((root/source_path).read_bytes()),'width':1024,'height':1024},
             'provenance':str(source_provenance.relative_to(root))}
     production={'schemaVersion':1,'classId':actor,'sourceProvenance':str(source_provenance.relative_to(root)),
         'sourceProvenanceSha256':sha(source_provenance.read_bytes()),'sharedLogicalScale':scale,
         'groundAnchor':anchor,'bodyHeight':body_height,'logicalStageAnchor':[384,464],
+        'sourceLogicalDrawSize':draw_size,'sourceLogicalDrawOffset':offset,
+        'transparentCropMargin':16,'rasterDownsampleFactors':{'full':2,'lite':4},
         'sourceBookends':{'first':sha((frame_folder/'01-held.png').read_bytes()),'last':sha((frame_folder/'05-held.png').read_bytes()),'decodedRGBA':sha(images[0].tobytes())},
         'frames':frames}
     outputs[str((folder/'production.json').relative_to(root))]=(json.dumps(production,indent=2)+'\n').encode()
