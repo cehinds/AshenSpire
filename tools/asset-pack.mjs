@@ -157,6 +157,16 @@ export function withAlternativeArt(manifest, root = ROOT) {
       if (stancesCatalog.filePaths?.[file]) catalog.filePaths[file] = stancesCatalog.filePaths[file];
     }
   }
+  const smashFile = resolve(root, 'src/content/classSmashAnimations.js');
+  if (existsSync(smashFile)) {
+    const match = readFileSync(smashFile, 'utf8').match(/^export const classSmashAnimations = (.+);\r?$/m);
+    if (!match) throw new Error('Class Smash must be exported before packing');
+    const smash = JSON.parse(match[1]);
+    for (const [file, hash] of Object.entries(smash.hashes)) {
+      if (Object.hasOwn(catalog.hashes, file)) throw new Error(`Duplicate alternative art: ${file}`);
+      catalog.hashes[file] = hash;catalog.filePaths[file] = smash.filePaths[file];
+    }
+  }
   const assets = { ...manifest.assets };
   for (const [file, expected] of Object.entries(catalog.hashes)) {
     if (!/^(?:stances\/[a-z]+\/)?[a-zA-Z0-9-]+\.webp$/.test(file)) throw new Error(`Invalid alternative art filename: ${file}`);

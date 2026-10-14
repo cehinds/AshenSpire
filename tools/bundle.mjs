@@ -570,6 +570,14 @@ if (!EXTERNAL_ART && sources.has(alternativeId)) {
       if (stances.filePaths?.[file]) catalog.filePaths[file] = stances.filePaths[file];
     }
   }
+  const smashSource = sources.get('src/content/classSmashAnimations.js');
+  if (smashSource) {
+    const smash = JSON.parse(smashSource.match(/^export const classSmashAnimations = (.+);$/m)[1]);
+    for (const [file, hash] of Object.entries(smash.hashes)) {
+      if (Object.hasOwn(catalog.hashes, file)) fail(`Duplicate alternative art: ${file}`);
+      catalog.hashes[file] = hash;catalog.filePaths[file] = smash.filePaths[file];
+    }
+  }
   for (const [file, expectedHash] of Object.entries(catalog.hashes)) {
     if (!/^(?:stances\/[a-z]+\/)?[a-zA-Z0-9-]+\.webp$/.test(file)) fail(`Invalid alternative art filename: ${file}`);
     const path = catalog.filePaths[file] || `assets-display/alternative/${file}`;
