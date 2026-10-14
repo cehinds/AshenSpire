@@ -206,7 +206,9 @@ async function fixture(page, row) {
       } catch (error) { hash = String(error); }
       window.__auditFrameSamples.push({ at: performance.now(), hash, missing: !stage, pose: stage?.pose,
         art: stage?.currentArt, action: stage?.presentation?.action, stance: stage?.stance, rest: stage?.rest,
-        heldPose: stage?.stance && stage.poses.includes(`stance-${stage.stance}`) ? `stance-${stage.stance}` : null });
+        // The live setStance contract only exposes a non-null stance when its
+        // held frame exists; restPose resolves that value to stance-<id>.
+        heldPose: stage?.stance ? `stance-${stage.stance}` : null });
       if (window.__auditSampling) requestAnimationFrame(sample);
     };
     if (row.sampleAnimation) requestAnimationFrame(sample);
@@ -442,7 +444,7 @@ async function runCase(page, device, classId, row) {
     if (row.sampleAnimation) {
       const frames = entry.after.frames, actionFrames = frames.filter(f => f.action);
       const first = frames.find(f => f.at >= (entry.after.selectedOrigin?.at || 0) && f.action && f.heldPose);
-      const measured = entry.after.selectedOrigin?.pose === first?.heldPose ? entry.after.selectedOrigin : undefined;
+      const measured = first?.heldPose && entry.after.selectedOrigin?.pose === first.heldPose ? entry.after.selectedOrigin : undefined;
       const origin = measured || (first ? { at: first.at, pose: first.heldPose, stance: first.stance, method: 'expected-held-pose-from-live-stage-contract' } : undefined);
       const actions = [];
       let current = null;
