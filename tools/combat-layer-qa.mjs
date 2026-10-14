@@ -33,8 +33,20 @@ try {
       .every(img => img.complete && img.naturalWidth > 0), null, { timeout: 60000 });
     const layers = await page.evaluate(() => {
       const combat = document.querySelector('.combat');
-      const z = (selector, pseudo) => Number(getComputedStyle(document.querySelector(selector), pseudo).zIndex);
-      const sprites = [...document.querySelectorAll('.combatant .sprite')].flatMap(sprite => {
+      const z = (selector, pseudo) => {
+        const node = [...document.querySelectorAll(selector)].find(node => paints(node, pseudo));
+        return node ? Number(getComputedStyle(node, pseudo).zIndex) : null;
+      };
+      const paints = (node, pseudo) => {
+        for (let ancestor = node; ancestor; ancestor = ancestor.parentElement) {
+          const style = getComputedStyle(ancestor);
+          if (style.display === 'none' || style.visibility === 'hidden' || style.visibility === 'collapse') return false;
+        }
+        const style = getComputedStyle(node, pseudo);
+        return style.display !== 'none' && !['hidden', 'collapse'].includes(style.visibility)
+          && (!pseudo || !['none', 'normal'].includes(style.content));
+      };
+      const sprites = [...document.querySelectorAll('.combatant .sprite')].filter(sprite => paints(sprite)).flatMap(sprite => {
         const actor = sprite.closest('.combatant');
         const selected = actor.classList.contains('context-selected');
         const actual = Number(getComputedStyle(sprite).zIndex);
@@ -45,11 +57,27 @@ try {
           return [actual, Number(getComputedStyle(sprite).zIndex)];
         } finally { actor.classList.toggle('context-selected', selected); }
       });
-      const selectionSurfaces = [...document.querySelectorAll(
-        '.enemy-target-picker,.combatant-leading,.combatant :is(.nm,.meters,.statuses),.combatant-inspector-host,.formation-move-controls,.position-guides,.combat-expansion-controls,.coop-arm-host')]
-        .map(el => Number(getComputedStyle(el).zIndex));
+      const selectionSurfaces = [], hudSurfaces = [], selectionCategories = [];
+      for (const node of document.querySelectorAll(
+        '.enemy-target-picker,.combatant-leading,.combatant :is(.nm,.meters,.statuses),.combatant-inspector-host,.formation-move-controls,.position-guides,.combat-expansion-controls,.coop-arm-host')) {
+        if (!paints(node)) continue;
+        const playerHud = node.closest('.player .combatant-leading');
+        // The player's leading HUD owns a700 stacking context. Its children's
+        // local501 values do not put those children back into the ordinary plane.
+        if (playerHud) {
+          if (node === playerHud) hudSurfaces.push(Number(getComputedStyle(node).zIndex));
+          continue;
+        }
+        selectionSurfaces.push(Number(getComputedStyle(node).zIndex));
+        if (node.matches('.enemy .combatant-leading')) selectionCategories.push('enemy-leading');
+        if (node.matches('.enemy :is(.nm,.meters,.statuses)')) selectionCategories.push('enemy-reading');
+      }
       for (const actor of document.querySelectorAll('.combatant:is(.enemy-target-hitbox,.player-target-hitbox)')) {
-        for (const pseudo of ['::before', '::after']) selectionSurfaces.push(Number(getComputedStyle(actor, pseudo).zIndex));
+        for (const pseudo of ['::before', '::after']) {
+          if (!paints(actor, pseudo)) continue;
+          selectionSurfaces.push(Number(getComputedStyle(actor, pseudo).zIndex));
+          if (pseudo === '::before') selectionCategories.push('target-proxy');
+        }
       }
       const ancestors = [...document.querySelectorAll('.combatant .sprite,.combatant-leading')].flatMap(node => {
         const bad = [];
@@ -60,7 +88,7 @@ try {
         return bad;
       });
       return {
-        scenery: z('.backdrop'), sprites, selectionSurfaces,
+        scenery: z('.backdrop'), sprites, selectionSurfaces, hudSurfaces, selectionCategories,
         enemies: [...document.querySelectorAll('.enemy .sprite')].map(el => Number(getComputedStyle(el).zIndex)),
         player: z('.player .sprite'), fade: document.querySelector('.alternative-card-fade') ? z('.alternative-card-fade') : z('.combat', '::before'),
         selection: z('.enemy .combatant-leading'), cards: z('.hand-overlay, .hand-area > .hand'),
