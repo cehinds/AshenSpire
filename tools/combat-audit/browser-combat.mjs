@@ -110,6 +110,11 @@ const html = await (await fetch(url)).text();
 const htmlSha256 = createHash('sha256').update(html).digest('hex');
 if (process.env.QA_EXPECT_HTML_SHA256) assert.equal(htmlSha256, process.env.QA_EXPECT_HTML_SHA256, 'compiled HTML byte identity');
 const build = { source: html.match(/const SOURCE = '([a-f0-9]+)'/)?.[1], ordinal: html.match(/const ORDINAL = '(\d+)'/)?.[1] };
+const release = html.match(/const RELEASE = '([^']+)'/)?.[1];
+const artifact = { sha256: htmlSha256, bytes: Buffer.byteLength(html), edition: html.match(/const EDITION = '([^']+)'/)?.[1],
+  runPath: html.match(/const RUN_PATH = '([^']+)'/)?.[1], version: release && `${release}.${build.ordinal}` };
+for (const [env, field] of [['QA_EXPECT_EDITION', 'edition'], ['QA_EXPECT_RUN_PATH', 'runPath'], ['QA_EXPECT_VERSION', 'version']])
+  if (process.env[env]) assert.equal(artifact[field], process.env[env], `compiled ${field} identity`);
 assert.ok(build.source, 'compiled HTML loader and source receipt are required');
 assert.ok(process.env.QA_EXPECT_SOURCE && process.env.QA_EXPECT_ORDINAL, 'QA_EXPECT_SOURCE and QA_EXPECT_ORDINAL pin the immutable artifact');
 assert.equal(build.source, process.env.QA_EXPECT_SOURCE, 'compiled SOURCE identity');
@@ -143,7 +148,7 @@ if (previousReport) assertResumeIdentity(previousReport, { build, htmlSha256, so
 const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const owner = await launchBrowser({ browser: process.env.CHROME || '/usr/bin/chromium', prefix: 'ca-' });
 const browser = await chromium.connectOverCDP(owner.wsUrl);
-const report = previousReport || { url, source, sourceRoot, build, htmlSha256, sourceDigests, inventory, mode, pace, seed, host: { cpuCount: cpus().length, load: loadavg(), freeMemory: freemem(), samples: [] },
+const report = previousReport || { url, source, sourceRoot, build, artifact, htmlSha256, sourceDigests, inventory, mode, pace, seed, host: { cpuCount: cpus().length, load: loadavg(), freeMemory: freemem(), samples: [] },
   fixture: curated
     ? 'Fresh createRunCombat preserving the canonical screenshot run HP and pools, with canonical enemies/knowledge/moves and hpMult=1. Authored card appended to a legal run deck and paid through real input. Data-only isolated fixture; production runtime functions and listeners preserved.'
     : 'Fresh createRunCombat from the screenshot run, canonical enemies/knowledge/moves, custom difficulty hpMult=20 and resource maxima 200. One registered card plus legal draw/discard fillers. Data fields only copied into the live fight; original runtime functions, listeners, dispatch, target resolver, renderer and timeline preserved. These are isolated fixtures, not earned playthroughs.',
@@ -280,6 +285,8 @@ async function fixture(page, row) {
       } catch (error) { hash = String(error); }
       window.__auditFrameSamples.push({ at: performance.now(), hash, missing: !stage, pose: stage?.pose,
         art: stage?.currentArt, action: stage?.presentation?.action, stance: stage?.stance, rest: stage?.rest,
+        reactionPoses: stage?.reactionPoses,
+        spriteTransform: host?.closest('.sprite') ? getComputedStyle(host.closest('.sprite')).transform : null,
         // The live setStance contract only exposes a non-null stance when its
         // held frame exists; restPose resolves that value to stance-<id>.
         heldPose: stage?.stance ? `stance-${stage.stance}` : null });
@@ -419,7 +426,7 @@ async function receipt(page) {
         enemies: window.__auditOracle.enemies, piles: window.__auditOracle.piles, phase: window.__auditOracle.phase },
       actual: { player: c.player, enemies: c.enemies, piles: c.piles, phase: c.phase }, frames: window.__auditFrameSamples,
       selectedOrigin: window.__auditSelectedOrigin,
-      stage: stage ? { animationSetId: stage.animationSetId, pose: stage.pose, stance: stage.stance, rest: stage.rest, alternateWeaponPoses: stage.poses.filter(p => p.startsWith('weapon:')) } : null,
+      stage: stage ? { animationSetId: stage.animationSetId, pose: stage.pose, stance: stage.stance, rest: stage.rest, reactionPoses: stage.reactionPoses, alternateWeaponPoses: stage.poses.filter(p => p.startsWith('weapon:')) } : null,
       inputReceipts: window.__auditClickReceipts.filter(r => r.inputAt >= window.__auditStart.at) };
   });
 }
