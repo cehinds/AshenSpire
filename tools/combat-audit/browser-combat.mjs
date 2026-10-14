@@ -17,6 +17,9 @@ export function assertResumeIdentity(report, current) {
 export function isDirectInvocation(entrypoint, moduleUrl) {
   return !!entrypoint && resolve(entrypoint) === resolve(fileURLToPath(moduleUrl));
 }
+export function compiledRelease(html) {
+  return html.match(/const coreContentBundle = \{[\s\S]*?\n\s*version: '([^']+)'/)?.[1];
+}
 
 async function main() {
 const sourceRoot = resolve(process.env.QA_REFERENCE_SOURCE || fileURLToPath(new URL('../../src/', import.meta.url)));
@@ -111,7 +114,7 @@ const htmlSha256 = createHash('sha256').update(html).digest('hex');
 if (process.env.QA_EXPECT_HTML_SHA256) assert.equal(htmlSha256, process.env.QA_EXPECT_HTML_SHA256, 'compiled HTML byte identity');
 const build = { source: html.match(/const SOURCE = '([a-f0-9]+)'/)?.[1], ordinal: html.match(/const ORDINAL = '(\d+)'/)?.[1] };
 // RELEASE is contentBundle.version, not a literal in buildversion.js.
-const release = html.match(/const contentBundle = \{[\s\S]*?\n\s*version: '([^']+)'/)?.[1];
+const release = compiledRelease(html);
 const artifact = { sha256: htmlSha256, bytes: Buffer.byteLength(html), edition: html.match(/const EDITION = '([^']+)'/)?.[1],
   runPath: html.match(/const RUN_PATH = '([^']+)'/)?.[1], version: release && `${release}.${build.ordinal}` };
 for (const [env, field] of [['QA_EXPECT_EDITION', 'edition'], ['QA_EXPECT_RUN_PATH', 'runPath'], ['QA_EXPECT_VERSION', 'version']])

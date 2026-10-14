@@ -4,7 +4,7 @@ import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { test } from 'node:test';
-import { assertResumeIdentity, isDirectInvocation } from './browser-combat.mjs';
+import { assertResumeIdentity, isDirectInvocation, compiledRelease } from './browser-combat.mjs';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 
 function summarize(cases, inventory = { cards: [{ id: 'strike', classes: ['reaver'], upgraded: false }] }) {
@@ -64,4 +64,9 @@ test('direct invocation decodes filesystem paths rather than comparing URL pathn
   assert.equal(isDirectInvocation(path, pathToFileURL(path).href), true);
   assert.equal(isDirectInvocation(path + '.other', pathToFileURL(path).href), false);
   assert.equal(isDirectInvocation(undefined, pathToFileURL(path).href), false);
+});
+test('compiled release is read from core content rather than an assumed RELEASE literal', () => {
+  const html = "const RELEASE = contentBundle.version;\nconst coreContentBundle = {\n  // authored release\n  version: '0.7.1',\n};";
+  assert.equal(compiledRelease(html), '0.7.1');
+  assert.equal(compiledRelease('const RELEASE = contentBundle.version;'), undefined);
 });
