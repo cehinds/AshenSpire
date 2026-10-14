@@ -5659,15 +5659,15 @@ button[data-button-size] {
 .customize.cc-design-workspace :is(.as-pane, .as-option, .as-face) { border-image-source:none; border-radius:2px; box-shadow:none; }
 .customize.cc-design-workspace .cc-choice-collection[data-view="grid"] { grid-template-columns:repeat(2,minmax(0,1fr)); gap:calc(12px / var(--ui-zoom,1)); }
 /* Class choices always occupy a row. The shared OptionCard's existing
-   title, lore and meta become a centered heading above icon + two text rows. */
+   title, lore and meta become an aligned text column beside a vertically centered class icon. */
 .customize.cc-design-workspace :is(#cz-classes, .cc-class-row-specimen).cc-choice-collection { grid-template-columns:minmax(0,1fr); }
-.customize.cc-design-workspace :is(#cz-classes, .cc-class-row-specimen) > .cz-class:not(.unfolded) { display:grid; grid-template-columns:calc(32px / var(--ui-zoom,1)) minmax(0,1fr); grid-template-rows:auto auto auto; grid-column:1 / -1; align-items:center; text-align:start; column-gap:calc(12px / var(--ui-zoom,1)); row-gap:calc(4px / var(--ui-zoom,1)); box-sizing:border-box; width:100%; max-width:none; min-height:calc(112px / var(--ui-zoom,1)); padding:calc(10px / var(--ui-zoom,1)) calc(12px / var(--ui-zoom,1)); }
+.customize.cc-design-workspace :is(#cz-classes, .cc-class-row-specimen) > .cz-class:not(.unfolded) { display:grid; grid-template-columns:calc(64px / var(--ui-zoom,1)) minmax(0,1fr); grid-template-rows:auto auto auto; grid-column:1 / -1; align-items:center; text-align:start; column-gap:calc(12px / var(--ui-zoom,1)); row-gap:calc(4px / var(--ui-zoom,1)); box-sizing:border-box; width:100%; max-width:none; min-height:calc(112px / var(--ui-zoom,1)); padding:calc(10px / var(--ui-zoom,1)) calc(12px / var(--ui-zoom,1)); }
 .customize.cc-design-workspace :is(#cz-classes, .cc-class-row-specimen) > .cz-class:not(.unfolded) > .ob { display:contents; }
-.customize.cc-design-workspace :is(#cz-classes, .cc-class-row-specimen) > .cz-class:not(.unfolded) > .og { grid-column:1; grid-row:2; align-self:center; font-size:calc(32px / var(--ui-zoom,1)); line-height:1; }
-.customize.cc-design-workspace :is(#cz-classes, .cc-class-row-specimen) > .cz-class:not(.unfolded) > .og > * { width:calc(32px / var(--ui-zoom,1)); height:calc(32px / var(--ui-zoom,1)); object-fit:contain; }
-.customize.cc-design-workspace :is(#cz-classes, .cc-class-row-specimen) > .cz-class:not(.unfolded) .on { grid-column:1 / -1; grid-row:1; justify-content:center; white-space:normal; font-size:calc(18px / var(--ui-zoom,1)); }
-.customize.cc-design-workspace :is(#cz-classes, .cc-class-row-specimen) > .cz-class:not(.unfolded) .od { display:block; grid-column:2; grid-row:2; overflow:visible; font-size:calc(14px / var(--ui-zoom,1)); line-height:1.35; }
-.customize.cc-design-workspace :is(#cz-classes, .cc-class-row-specimen) > .cz-class:not(.unfolded) .om { grid-column:2; grid-row:3; font-size:calc(13px / var(--ui-zoom,1)); line-height:1.35; }
+.customize.cc-design-workspace :is(#cz-classes, .cc-class-row-specimen) > .cz-class:not(.unfolded) > .og { grid-column:1; grid-row:1 / 4; justify-self:center; align-self:center; font-size:calc(48px / var(--ui-zoom,1)); line-height:1; }
+.customize.cc-design-workspace :is(#cz-classes, .cc-class-row-specimen) > .cz-class:not(.unfolded) > .og > * { width:calc(48px / var(--ui-zoom,1)); height:calc(48px / var(--ui-zoom,1)); object-fit:contain; }
+.customize.cc-design-workspace :is(#cz-classes, .cc-class-row-specimen) > .cz-class:not(.unfolded) .on { grid-column:2; grid-row:1; justify-content:flex-start; white-space:normal; font-size:calc(24px / var(--ui-zoom,1)); }
+.customize.cc-design-workspace :is(#cz-classes, .cc-class-row-specimen) > .cz-class:not(.unfolded) .od { display:block; grid-column:2; grid-row:2; overflow:visible; font-size:calc(16px / var(--ui-zoom,1)); line-height:1.35; }
+.customize.cc-design-workspace :is(#cz-classes, .cc-class-row-specimen) > .cz-class:not(.unfolded) .om { grid-column:2; grid-row:3; font-size:calc(15px / var(--ui-zoom,1)); line-height:1.35; }
 .customize.cc-design-workspace :is(#cz-classes, .cc-class-row-specimen) > .cz-class:not(.unfolded)::after { display:none; }
 @media(max-width:600px) { .customize.cc-design-workspace .cc-choice-collection[data-view="grid"] { grid-template-columns:minmax(0,1fr); } }
 
@@ -6483,3 +6483,38 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 .customize .cc-equip-group[data-equipment-section="startingAbilities"] > .cc-card-selectors,
 .customize .cc-equip-group[data-equipment-section="startingAbilities"] > .cc-card-selectors[data-view] { flex:1 1 auto; min-height:0; grid-row:auto; grid-column:auto; grid-auto-flow:row; grid-auto-columns:auto; overflow-x:hidden; overflow-y:auto; scroll-snap-type:none; scrollbar-gutter:stable; }
 .customize .cc-equip-group[data-equipment-section="startingAbilities"] > :not(.cc-card-selectors) { flex:none; }
+
+/* Creation headings and navigation use physical sizes through the UI zoom.
+   Body copy, sprite sizing and the selected tile's four/six body rows stay compact. */
+.cc-class-icon { display:block; width:100%; height:100%; }
+.cc-class-icon[data-class-icon="reaver"] { color:#e47b72; }
+.cc-class-icon[data-class-icon="starseer"] { color:#b994ef; }
+.cc-class-icon[data-class-icon="rogue"] { color:#72c786; }
+.cc-class-icon[data-class-icon="herald"] { color:#dfba59; }
+.customize.cc-design-workspace .cz-railed[data-cat-nav="rail"] { grid-template-columns:calc(280px / var(--ui-zoom,1)) minmax(0,1fr); }
+.customize.cc-design-workspace .cz-tab { flex-direction:column; align-items:stretch; gap:calc(4px / var(--ui-zoom,1)); }
+.customize.cc-design-workspace .cz-tab > .rail-label { flex:none; white-space:nowrap; overflow:visible; text-overflow:clip; font-size:calc(20px / var(--ui-zoom,1)); }
+.customize.cc-design-workspace .cz-tab-value { flex:none; text-align:start; font-size:calc(13px / var(--ui-zoom,1)); }
+.customize.cc-design-workspace :is(.as-catnav-face, .cc-creation-current-step) { white-space:nowrap; font-size:calc(20px / var(--ui-zoom,1)); }
+.customize.cc-design-workspace .modal-head-id h2 { font-size:calc(28px / var(--ui-zoom,1)); line-height:1.2; white-space:nowrap; letter-spacing:0; }
+.cc-design-workspace :is(.cc-page-title, .cc-feat-detail-title), .cc-page-parts .cc-page-title { font-size:calc(32px / var(--ui-zoom,1)); }
+.cc-design-workspace :is(.as-title-m, .cz-stage > h3, #cz-subclass-traits > h3, .cc-equipment-header > b), .cc-page-parts .cc-panel-heading .as-title-m { font-size:calc(28px / var(--ui-zoom,1)); }
+.customize .cc-concise-class .cc-unfold-heading { font-size:calc(24px / var(--ui-zoom,1)); }
+.cc-design-workspace :is(.cc-view-option, .as-catnav-toggle), .cc-page-parts .cc-view-option { font-size:calc(20px / var(--ui-zoom,1)); }
+@media(max-width:600px) {
+ .customize.cc-design-workspace :is(#cz-classes, .cc-class-row-specimen) > .cz-class:not(.unfolded) { grid-template-columns:calc(48px / var(--ui-zoom,1)) minmax(0,1fr); column-gap:calc(10px / var(--ui-zoom,1)); }
+ .customize.cc-design-workspace :is(#cz-classes, .cc-class-row-specimen) > .cz-class:not(.unfolded) > .og > * { width:calc(40px / var(--ui-zoom,1)); height:calc(40px / var(--ui-zoom,1)); }
+ .customize.cc-design-workspace .as-railed.as-railed[data-cat-nav="selector"] { grid-template-columns:minmax(0,1fr); grid-template-rows:auto auto minmax(0,1fr); }
+ .customize.cc-design-workspace .as-railed[data-cat-nav="selector"] > .cc-creation-current-step { grid-column:1; grid-row:1; margin:10px var(--modal-inset) 0; font-size:calc(20px / var(--ui-zoom,1)); }
+ .customize.cc-design-workspace .as-railed[data-cat-nav="selector"] > .as-catnav-toggle { grid-column:1; grid-row:2; margin:8px var(--modal-inset) 10px; }
+ .customize.cc-design-workspace .as-railed[data-cat-nav="selector"] > .cz-pane { grid-row:3; }
+ .cc-design-workspace :is(.cc-page-title, .cc-feat-detail-title), .cc-page-parts .cc-page-title { font-size:calc(28px / var(--ui-zoom,1)); }
+ .customize.cc-design-workspace .modal-head-id h2 { font-size:calc(24px / var(--ui-zoom,1)); }
+}
+/* Phone creation keeps its complete title above the two toolbar groups. */
+@media(max-width:600px) {
+ .customize.cc-design-workspace .modal-head { display:grid; grid-template-columns:minmax(0,1fr) auto; grid-template-rows:auto auto; gap:calc(8px / var(--ui-zoom,1)); }
+ .customize.cc-design-workspace .modal-head > .modal-head-id { grid-column:1 / -1; grid-row:1; }
+ .customize.cc-design-workspace .modal-head > .cz-head-view-tools { grid-column:1; grid-row:2; justify-self:start; margin-inline-start:0; }
+ .customize.cc-design-workspace .modal-head > .modal-head-actions { grid-column:2; grid-row:2; justify-self:end; align-self:center; gap:calc(6px / var(--ui-zoom,1)); }
+}
