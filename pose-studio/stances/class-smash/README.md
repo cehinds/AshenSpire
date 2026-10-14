@@ -48,8 +48,11 @@ late, and stale acknowledgements cannot settle another action.
 
 ## Verification
 
-Focused source, production-hash and existing Reaver regression checks pass.
-Compiled desktop/phone gameplay validation and captures are in progress; this
-source record does not claim that an untested build has passed. The feature is
+[Compiled gameplay proof and captures](qa/README.md) pass on source
+`63b864b92`, build **0.7.1.1516 / 891d8a017a**: all fifteen controlled paid-play
+cases, complete warmed desktop/phone action phases, real cold contact/restoration,
+static motion modes and phone world envelopes. Twenty-four browser RGBA
+comparisons confirm cached and uncached paid auras are pixel-identical. Focused
+source/production/package and existing Reaver regression checks pass. The feature is
 being delivered on `Feature/OtherClassSmash`; the current continuation scope
 keeps Dev/test merges paused.

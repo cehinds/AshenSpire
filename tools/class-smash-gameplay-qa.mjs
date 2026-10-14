@@ -1,3 +1,4 @@
+import {optionalClassSmashAudioProbe,classSmashConsoleNotice} from './lib/class-smash-qa-notices.mjs';
 // Actual paid UI plays in the unpatched compiled game; Shot Kit sets the fixture.
 import {createRequire} from 'node:module';
 import {mkdirSync,writeFileSync} from 'node:fs';
@@ -12,7 +13,7 @@ const html=await (await fetch(url)).text();
 const build={ordinal:html.match(/const ORDINAL = '(\d+)'/)?.[1],digest:html.match(/const SOURCE = '([a-f0-9]+)'/)?.[1]};
 assert.ok(build.ordinal&&build.digest,'compiled candidate must be stamped');
 const owner=await launchBrowser({prefix:'class-smash-',browser:process.env.CHROME || '/usr/bin/chromium'});
-const browser=await chromium.connectOverCDP(owner.wsUrl),results=[],errors=[];
+const browser=await chromium.connectOverCDP(owner.wsUrl),results=[],errors=[],optionalAudioRequests=[],browserNotices=[];
 let checks=0;
 const ok=(value,label)=>{assert.ok(value,label);checks++;};
 const eq=(value,wanted,label)=>{assert.deepEqual(value,wanted,label);checks++;};
@@ -22,7 +23,11 @@ try{
   for(const mode of ['desktop','desktop-cold','phone','reduced','instant'].filter(mode=>!process.env.QA_MODES||process.env.QA_MODES.split(',').includes(mode))){
    const phone=mode==='phone',staticMode=['reduced','instant'].includes(mode);
    const context=await browser.newContext({viewport:phone?{width:390,height:844}:{width:1440,height:1000},isMobile:phone,hasTouch:phone,reducedMotion:mode==='reduced'?'reduce':'no-preference'});
-   const page=await context.newPage();page.on('pageerror',e=>errors.push({actor,mode,message:e.message}));page.on('console',m=>{if(m.type()==='error')errors.push({actor,mode,console:m.text()});});
+   const page=await context.newPage();page.on('pageerror',e=>errors.push({actor,mode,message:e.message}));
+   // audio.js warmSample intentionally marks these precise missing optional
+   // filename probes unavailable; their triggering cue uses the synchronous synth.
+   page.on('response',r=>{if(r.status()>=400){const row={actor,mode,url:r.url(),status:r.status()};if(optionalClassSmashAudioProbe(r.url(),r.status(),url))optionalAudioRequests.push(row);else errors.push(row);}});
+   page.on('console',m=>{if(m.type()==='error'){const category=classSmashConsoleNotice(m.text());if(category)browserNotices.push({actor,mode,category,message:m.text()});else errors.push({actor,mode,console:m.text()});}});
    const params=new URLSearchParams({shot:'combat',shotKit:'1',shotClass:actor,shotMainHand:right,shotOffHand:left,shotSeed:'B',shotSettings:JSON.stringify({animSpeed:mode==='instant'?'instant':'normal'})});
    await page.goto(url+'?'+params,{waitUntil:'domcontentloaded'});await page.waitForSelector('.end-turn:not([disabled])');
    const prepared=await page.evaluate(async()=>{
@@ -83,5 +88,5 @@ try{
    results.push({actor,mode,stress,readyBeforeTarget,...actual});await context.close();
   }
  }
- eq(errors,[],'no application exceptions');writeFileSync(resolve(out,'results.json'),JSON.stringify({build,checks,results,errors},null,2));console.log(JSON.stringify({build,checks,cases:results.length,errors,out}));
+ writeFileSync(resolve(out,'results.json'),JSON.stringify({build,checks,results,errors,optionalAudioRequests,browserNotices},null,2));eq(errors,[],'no application exceptions or unclassified resource errors');console.log(JSON.stringify({build,checks,cases:results.length,errors,optionalAudioProbes:optionalAudioRequests.length,browserNotices:browserNotices.length,out}));
 }finally{await browser.close();await owner.close();}
