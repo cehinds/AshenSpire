@@ -404,6 +404,7 @@ async function runCase(page, device, classId, row) {
       entry.input = { ...await play(page, device, row, { ...entry.before, refused: null }), refusalEvidence, recovered: true };
     }
     if (row.endTurn) entry.enemyTurn = await endTurnAndPlayNext(page, device, row);
+    if (row.deniedRecovery) entry.input = { ...entry.input, refusalEvidence: structuredClone(entry.input), refusal: null, recoveredAtNextTurn: true };
     if (row.sampleAnimation) await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     entry.after = await receipt(page);
     entry.audioNodes = page.__auditAudioNodes.slice(audioStart);
@@ -491,6 +492,7 @@ try {
       if (mode === 'negatives') {
         const rows = [
           { cardId: 'strike', deniedCost: true, category: 'insufficient-resources' },
+          { cardId: 'strike', deniedCost: true, deniedRecovery: true, endTurn: true, category: 'empty-resources-endturn-recovery' },
           { cardId: 'strike', activeControl: 'dazed', category: 'controlled' },
           { cardId: 'strike', activeControl: 'dazed', recoverControl: true, category: 'controlled-recovery' },
           { cardId: 'guardianBulwark', repeatStance: true, category: 'repeat-stance' },
