@@ -117,11 +117,11 @@ async function resolvedProfileFamilyCandidates(){
  for(const variant of inventory.variants.filter(v=>v.instance.profileId&&!v.instance.upgraded&&v.upcastTier===undefined&&(v.instance.abilityRank===undefined||v.instance.abilityRank===0))){
   const carrierId=variant.carrierIds[0];if(!carrierId)continue;
   try{
-   const {combat}=makeAuditCombat(api,{classId:variant.classId,instance:variant.instance,relicIds:[],carrierId});
+   const {combat,fixtureKind}=makeAuditCombat(api,{classId:variant.classId,instance:variant.instance,relicIds:[],carrierId});
    const def=api.resolveCombatCard(combat,combat.piles.hand[0]),tags=def.cardTags||def.tags||[];
    const isRanged=tags.includes('ranged')||tags.includes('maneuver:ranged'),isSpell=tags.includes('camp:spell')||tags.includes('maneuver:casting');
    const families=[...(isSpell?['spell']:[]),...(isRanged?['ranged']:[]),...(isSpell&&isRanged?['rangedMagic']:[])];
-   for(const family of families)result[variant.classId][family].push({cardId:variant.instance.cardId,profileId:variant.instance.profileId,carrierId,cardTags:tags});
+   for(const family of families)result[variant.classId][family].push({cardId:variant.instance.cardId,profileId:variant.instance.profileId,carrierId,fixtureKind,cardTags:tags});
   }catch(error){fixtureGaps.push({classId:variant.classId,cardId:variant.instance.cardId,profileId:variant.instance.profileId,carrierId,reason:error.message});}
  }
  for(const classId of classes)for(const family of Object.keys(result[classId]))result[classId][family]=[...new Map(result[classId][family].map(row=>[`${row.cardId}/${row.profileId}`,row])).values()];
