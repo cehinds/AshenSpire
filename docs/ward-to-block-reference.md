@@ -61,3 +61,5 @@ Playing during the player turn and playing as a Reaction use the same ratings, p
 Public categories are **Stance, Skill, Power and Consumable**. System Status/Curse cards remain separate compatibility categories. Legacy authored attack/skill kinds remain unchanged internally and in saved state; the shared model exposes `cardCategory`, `stanceType` and `stanceGroups`.
 
 Stance subtypes are Smash, Attack, Sweep, Counter, Defense and Evade. Attack/Smash are Offense; Defense/Evade are Defensive; Counter is both. Sweep is Offense and becomes Defensive at actual rank 2 (or when explicitly authored defensive-capable). Power/Consumable identity takes precedence over incidental maneuver tags. Spell is a camp/ability identity, not a primary card category; ability rank and Weapon Art labels remain available separately.
+
+Existing Consumables are inventory-count Skill Books and Revive Tokens (`kind: skillBook/revive`), plus framework consumable entities. The taxonomy recognizes these existing kinds; it does not add a new combat-card execution kind or migrate the card schema.

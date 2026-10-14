@@ -23,6 +23,8 @@ test('canonical category and stance subtype preserve authored execution kind', (
   assert.equal(cardClassification(card('counter', 1, { evade: { charges: 1 } })).stanceType, 'evade');
   for (const type of ['power', 'consumable', 'status', 'curse'])
     assert.deepEqual(cardClassification(card('casting', 1, { type })), { cardCategory: type, stanceType: null, stanceGroups: [] });
+  for (const kind of ['skillBook', 'revive', 'CONSUMABLE'])
+    assert.equal(cardClassification({ kind }).cardCategory, 'consumable');
   assert.equal(cardClassification(card('casting')).cardCategory, 'skill');
   assert.equal(cardClassification(card('casting', 1, { type: 'attack' })).stanceType, 'attack');
 });

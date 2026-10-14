@@ -6,6 +6,8 @@ export function actualCardRank(def) {
 
 // Derived public taxonomy. Authored type remains the engine/save-compatible kind.
 export function cardClassification(def) {
+  if (['skillBook', 'revive', 'CONSUMABLE'].includes(def.kind))
+    return { cardCategory: 'consumable', stanceType: null, stanceGroups: [] };
   if (['power', 'consumable', 'status', 'curse'].includes(def.type)) {
     return { cardCategory: def.type, stanceType: null, stanceGroups: [] };
   }
