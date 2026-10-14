@@ -188,3 +188,33 @@ test('combat wires the chooser labels, preservation guard and canonical enemy pl
   assert.match(source, /frame\.inert = !alive/);
   assert.match(source, /onExit: \(\) => \{[\s\S]*?finishEnemyHoldFlow\(instanceId, selfArmed\);/);
 });
+
+test('combatant frame Enter yields to captured holds and ignores repeats while Space keeps tap fallback', () => {
+  const source = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
+  const wiringAt = source.indexOf('function wireCombatantContext(box, subject)');
+  const handlerMatch = source.slice(wiringAt).match(/box\.addEventListener\('keydown', event => \{([\s\S]*?)\n\s{4}\}\);/);
+  assert.ok(handlerMatch, 'the real combatant keydown callback exists');
+  assert.match(handlerMatch[1], /event\.defaultPrevented \|\| event\.repeat/);
+
+  withKitDom((dom) => {
+    const box = dom.document.createElement('article');
+    let clicks = 0;
+    box.addEventListener('click', () => { clicks += 1; });
+    new Function('box', `box.addEventListener('keydown', event => {${handlerMatch[1]}\n});`)(box);
+    const key = (keyName, { prevented = false, repeat = false } = {}) => {
+      const event = new dom.Event('keydown', { bubbles: true, cancelable: true });
+      event.key = keyName;
+      event.repeat = repeat;
+      if (prevented) event.preventDefault();
+      box.dispatchEvent(event);
+    };
+    key('Enter', { prevented: true });
+    assert.equal(clicks, 0, 'capture-owned Enter cannot bypass the hold through box.click');
+    key('Enter', { repeat: true });
+    assert.equal(clicks, 0, 'native Enter repeat cannot create a second tap');
+    key('Enter');
+    assert.equal(clicks, 1, 'uncaptured Enter retains its compatibility tap path');
+    key(' ');
+    assert.equal(clicks, 2, 'Space retains its existing tap behavior');
+  });
+});
