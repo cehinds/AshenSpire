@@ -55,6 +55,10 @@ test('a discard chosen outside a reaction starts a new root action in solo and c
 test('a discard chosen while a reaction is paused stays inside the reaction action', () => {
   const results = [false, true].map(coop => {
     const { combat, enemy, play, discard } = setup(coop);
+    // The reaction-lifecycle fixture needs a landed root and return. Keep real
+    // seeded draws; their ordinary non-fumble threshold is deliberately trivial.
+    const owner = coop ? combat.players.get('a').entity : combat.player;
+    for (const actor of [owner, enemy]) { actor.accuracy = 100; actor.evasion = 0; }
     enemy.combatStance = { camp: 'physical', maneuver: 'counter', range: 'melee', targeting: 'single' };
     armCombatCounter(combat, enemy, { moveId: 'returnCarrier',
       tags: ['camp:physical', 'maneuver:counter', 'range:melee', 'targeting:single'],

@@ -1,3 +1,4 @@
+import { decayStanceRoundStart } from './combatMatchups.js';
 import { combatMatchups, combatIntent, combatExpansionMatchups } from '../content/combatMatchups.js';
 import { ownRestoreFunds } from '../model/actionCosts.js';
 import { combatStatusRules as defaultStatusRules } from '../content/combatStatusRules.js';
@@ -571,6 +572,7 @@ function finish(C, result) {
 // ---- player phase -----------------------------------------------------------
 function startPlayerPhase(C) {
   C.turn += 1;
+  decayStanceRoundStart(C);
   clearEnemyReactionRolls(C);
   C.phase = 'player';
   for (const P of livingPlayers(C)) {

@@ -528,8 +528,9 @@ export function answerReaction(ctx, ownerId, { offerId, optionId = null }, hooks
     ctx.foundation.eventCount = 0; ctx.foundation.rolls = {}; ctx.foundation.counts = {};
   }
   ctx._reactionPlaying = true;
+  ctx._reactionSourceId = group.sourceId;
   try { hooks.play(ctx, option.play); }
-  finally { delete ctx._reactionPlaying; }
+  finally { delete ctx._reactionPlaying; delete ctx._reactionSourceId; }
   if (ctx.player.combatCounter && option.play.cardInstanceId === ctx.player.combatCounter.carrier?.instanceId) {
     (group.manualCounterSerials ||= {})[ownerId] = ctx.player.combatCounter.serial;
   }

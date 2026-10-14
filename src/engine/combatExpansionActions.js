@@ -7,6 +7,7 @@ import { combatProfileFor } from '../model/combatCardProfile.js';
 import { mountCombatCombo } from './combatExpansionCombos.js';
 import * as Matchups from './combatMatchups.js';
 import * as Control from './combatStatusControl.js';
+import { allowAbilityOnce } from './abilityRiders.js';
 import { traitHitAmount } from './combatCardTraitMath.js';
 
 const keyOf = (ctx, entity) => ctx.playerIdForEntity?.(entity) || entity?.id;
@@ -22,6 +23,7 @@ export function effectCarrier(carrier, effect) {
   if (effect.attack && !typed.damageComponents) delete merged.combatProfile.damageComponents;
   // The action stance belongs to the card; an effect can override its delivery/type.
   merged.combatProfile.maneuver = effect.combatProfile?.maneuver || carrier?.combatProfile?.maneuver || merged.combatProfile.maneuver;
+  if (carrier?.counterReturnAttack) merged.combatProfile.counterReturnAttack = true;
   return merged;
 }
 export function enqueueExpandedAction(ctx, actions, { source, target, carrier, completionMeta } = {}) {
@@ -29,7 +31,7 @@ export function enqueueExpandedAction(ctx, actions, { source, target, carrier, c
     for (const action of actions) ctx.enqueue(action);
     return null;
   }
-  if (carrier?.combatReaction) {
+  if (carrier?.combatReaction && !carrier?.counterReturnAttack) {
     carrier = { ...carrier, combatProfile: { ...carrier.combatProfile, maneuver: 'attack' } };
     for (const action of actions) action.card = carrier;
   }
@@ -49,10 +51,18 @@ export function enqueueExpandedAction(ctx, actions, { source, target, carrier, c
   for (const action of actions) {
     action.meta = { ...action.meta, expansionGroup: group };
     const eff = action.effect;
-    const shadow = { ...action, source: prefixEntity(action.source), owner: prefixEntity(action.owner), target: prefixEntity(action.target), meta: { ...action.meta, expansionGroup: undefined } };
-    if (!['damage', 'buildup', 'applyStatus', ...(carrier?.combatReaction ? ['poiseDamage', 'wardDamage'] : [])].includes(eff.op)) {
+    const shadow = { ...action, source: prefixEntity(action.source), owner: prefixEntity(action.owner), target: prefixEntity(action.target), meta: { ...action.meta, expansionGroup: undefined, expansionAuthoredAction: true } };
+    const targeted = ['enemy', 'allEnemies', 'otherEnemies', 'randomEnemy', 'player'].includes(eff.target)
+      || ['removeStatus', 'loseHp', 'stagger'].includes(eff.op);
+    if (!targeted && !['damage', 'buildup', 'applyStatus', 'poiseDamage', 'wardDamage'].includes(eff.op)) {
       Actions.executeAction(prefix, shadow);
       continue;
+    }
+    if (eff.oncePerTurn) {
+      if (eff.if && !Triggers.evalPredicate(prefix, eff.if, shadow)) { action.meta.expansionContacts = []; action.meta.expansionTargets = []; continue; }
+      const accepted = allowAbilityOnce(shadow.owner || shadow.source || prefix.player, eff.oncePerTurn, action.card, action.meta?.abilityEffectIndex ?? eff.op);
+      if (!accepted) { action.meta.expansionContacts = []; action.meta.expansionTargets = []; continue; }
+      shadow.effect = { ...eff, oncePerTurn: undefined };
     }
     const repeat = Math.max(0, evaluate(eff.repeat ?? 1, Actions.formulaCtxFor(ctx, action, action.target)));
     const hits = eff.op === 'damage' ? Math.max(0, evaluate(eff.hits ?? 1, Actions.formulaCtxFor(ctx, action, action.target))) : 1;
@@ -125,7 +135,7 @@ export function beginExpandedAction(ctx, group, source) {
     if (!expansionTargetPresent(ctx, target)) continue;
     const profile = row.contacts[0] || group.carrier?.combatProfile || {};
     const serial = group.manualCounterSerials?.[row.playerId || 'player'];
-    const carrier = serial ? { ...group.carrier, manualCounterSerial: serial } : group.carrier;
+    const carrier = { ...group.carrier, additionalTargets: Math.max(0, Object.keys(group.targets).length - 1), ...(serial ? { manualCounterSerial: serial } : {}) };
     row.receipt = (ctx._expansionPreview ? Matchups.previewTacticalAction : Matchups.beginTacticalAction)(ctx, source, target, carrier, row.contacts,
       { ...Control.statusIncomingModifier(ctx, target, profile), contactModifiers: row.contacts.map(contact => Control.statusIncomingModifier(ctx, target, contact)), restrictions: Control.controlRestrictions(ctx, target) });
     row.interactions = { ...profile,

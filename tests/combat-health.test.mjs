@@ -37,11 +37,11 @@ test('Ward alone keeps its border while health returns to red', () => withKitDom
   assert.equal(row.children.length, 2);
 }));
 
-test('Poise has no badge: it trims the HP bar and its value is the bar label', () => withKitDom(() => {
+test('Poise has a numeric badge and retains the HP trim and accessible value', () => withKitDom(() => {
   const hp = meter({ id: 'hp', value: '64/80', cur: 64, max: 80, pct: 80, lengthPct: 72, inset: true });
   const row = combatHealthRow(hp, { defense: 0, ward: 0, poise: 7, poiseMax: 10 }, { tooltips: false });
-  assert.equal(row.querySelectorAll('.combat-health-badge').length, 0, 'no circle badge for Poise');
-  assert.equal(row.querySelector('.combat-health-poise'), null);
+  assert.equal(row.querySelectorAll('.combat-health-badge').length, 1, 'Poise has its gold numeric badge');
+  assert.equal(row.querySelector('.combat-health-poise .combat-health-badge-value').textContent, '7');
   assert.equal(hp.dataset.poised, 'true', 'the gold trim stays while Poise is above zero');
   assert.match(hp.querySelector('.m-value').getAttribute('aria-label'), /Poise 7\/10/);
   const none = combatHealthRow(meter({ id: 'hp', value: '64/80', cur: 64, max: 80, pct: 80, lengthPct: 72, inset: true }), { poise: 0, poiseMax: 10 }, { tooltips: false });

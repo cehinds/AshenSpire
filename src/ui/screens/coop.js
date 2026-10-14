@@ -1,3 +1,4 @@
+import { coopCardHitPreview, coopCombatantEvasion } from '../models/CoopHitPreviewModel.js';
 import { enemyActionPose } from '../../model/enemyActionPose.js';
 import { enemyStanceCategory } from '../../model/enemyStancePose.js';
 import {mountClassRespec,closeClassRespec,isClassRespecOpen,classRespecOptionName} from '../components/classRespec.js';
@@ -131,7 +132,7 @@ import {
 } from '../kit/index.js';
 
 import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
-import { clearSelection, litCard } from '../components/cardSelection.js';
+import { clearSelection, litCard, onSelectionChange } from '../components/cardSelection.js';
 import { smithingStoneNote } from '../../model/rewardplan.js';
 
 // LEVEL CARDS (SPEC §15.1) in the co-op spoils and the away-seat catch-up.
@@ -844,6 +845,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   function teardown() {
     releaseAppearance();
     disposed = true;
+    releaseHitChanceSelection();
     reactionShell?.dismiss();
     snap = null;
     closeCombatantDoor();
@@ -1000,6 +1002,44 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     }
     return row;
   }
+  function syncCoopHitChances() {
+    const sc = snap?.scene;
+    if (sc?.kind !== 'combat') return;
+    const actor = sc.players.find(player => player.id === me);
+    if (!actor || actor.combatExpansionVersion !== 2) return;
+    const selected = actor.hand?.find(card => card.instanceId === litCard());
+    const definition = selected && cardDef(selected);
+    const hostile = definition?.effects?.some(effect => ['enemy', 'allEnemies', 'randomEnemy'].includes(effect.target)) || definition?.counterPayload;
+    const carrier = hostile ? { ...definition, combatProfile: combatProfileFor(definition) } : { combatProfile: { maneuver: 'attack', camp: 'physical', range: 'melee' }, effects: [{ op: 'damage', target: 'enemy', amount: 0 }] };
+    app.querySelectorAll('.card-hit-chances').forEach(node => node.remove());
+    const selectedCard = hostile && app.querySelector('.hand .card[data-instance-id="' + CSS.escape(selected.instanceId) + '"]');
+    const cardOdds = document.createElement('div');
+    cardOdds.className = 'card-hit-chances';
+    cardOdds.setAttribute('aria-live', 'polite');
+    for (const enemy of sc.enemies) {
+      const frame = app.querySelector('.combatant.enemy[data-eid="' + CSS.escape(enemy.id) + '"]');
+      frame?.querySelector('.combat-hit-chance')?.remove();
+      if (!frame || enemy.hp <= 0 || enemy.knowledgeAction?.reads?.[me]?.visibility !== 'exact') continue;
+      const preview = coopCardHitPreview(sc, registries, actor, enemy, carrier, { selected: !!hostile, member: snap.party.find(member => member.id === actor.id) });
+      if (!Number.isFinite(preview?.hitChance)) continue;
+      const badge = document.createElement('span');
+      badge.className = 'combat-hit-chance';
+      badge.dataset.rollMode = preview.advantage ? 'advantage' : preview.disadvantage ? 'disadvantage' : 'neutral';
+      badge.textContent = Number(preview.hitChance.toFixed(2)) + '%';
+      badge.setAttribute('aria-label', 'Chance to hit ' + badge.textContent);
+      (frame.querySelector('.combatant-leading') || frame).append(badge);
+      if (selectedCard) {
+        const odds = badge.cloneNode(true);
+        odds.className = 'card-hit-chance';
+        odds.dataset.targetId = enemy.id;
+        odds.textContent = registries.enemies.get(enemy.enemyId).name + ' ' + badge.textContent;
+        cardOdds.append(odds);
+      }
+    }
+    if (selectedCard && cardOdds.children.length) selectedCard.append(cardOdds);
+  }
+  const releaseHitChanceSelection = onSelectionChange(() => syncCoopHitChances());
+
   function meterBars(ent, isEnemy, recentEvents = []) {
     const wrap = document.createElement('div');
     wrap.className = 'meters';
@@ -1009,7 +1049,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     const hp = bars.querySelector('.as-meter[data-res="hp"]');
     if (hp) {
       const next = hp.nextSibling;
-      const health = combatHealthRow(hp, protectionPresentation(ent));
+      const known = !isEnemy || ent.knowledgeAction?.reads?.[me]?.visibility === 'exact';
+      const health = combatHealthRow(hp, { ...protectionPresentation(ent), evasion: ent.combatExpansionVersion === 2 && known ? coopCombatantEvasion(snap.scene, registries, entity, isEnemy ? undefined : snap.party.find(member => member.id === ent.id)) : null });
       bars.insertBefore(health, next);
     }
     wrap.classList.add('as-meters', 'tight');
@@ -1480,6 +1521,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     } else {
       handStrip.render({ cards: [], emptyHtml: '<div class="coop-note">Spectating the fight…</div>' });
     }
+
+    syncCoopHitChances();
 
     // The arming prompt: a DetailCard saying what is in hand and what to do,
     // with the way out beside it.
