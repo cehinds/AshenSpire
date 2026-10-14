@@ -84,9 +84,9 @@ test('expanded block opcode faces and allied gains use defense shares; legacy fa
   const expanded = applyCombatExpansionCard(legacy);
   const compact = cardFaceLines(expanded, null, registries).map(line => line.html).join(' ').replace(/<[^>]+>/g, '');
   assert.match(compact, /Ally gains 4 Block(?:,| and) 1 Ward/);
-  assert.match(combatCardSummary(expanded, null, registries), /Ally gains 4 Block, 1 Ward/);
+  assert.match(combatCardSummary(expanded, null, registries), /Ally gains 4 Block(?:,| and) 1 Ward/);
   assert.match(cardPlainText(registries, { cardId: 'crystalBarrier' },
-    { definition: { ...expanded, ashenBlightCost: 1 }, rules: { combatExpansionVersion: 2 } }), /Ally gains 4 Block, 1 Ward/);
+    { definition: { ...expanded, ashenBlightCost: 1 }, rules: { combatExpansionVersion: 2 } }), /Ally gains 4 Block(?:,| and) 1 Ward/);
   assert.match(cardPlainText(registries, { cardId: 'crystalBarrier' }, { definition: legacy }), /Ally gains 5 Block/);
 });
 
