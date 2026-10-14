@@ -130,6 +130,7 @@ import { resolvePlayedCombatCard } from '../models/PlayedCombatCard.js';
 import { upcastOptions } from '../../model/upcasting.js';
 import { controlGate, recoveryControls } from '../../engine/combatStatusControl.js';
 import { ashenBlightBarHtml, openAshenBlightMilestone } from '../components/ashenBlight.js';
+import { canRestoreEnemyHoldCard, enemyHoldActionStep, enemyHoldPlayReason as resolveEnemyHoldPlayReason } from '../models/EnemyHoldActionModel.js';
 
 // The event types that move the displayed hand between beats — the same four
 // applyBeatToDisp() reads. Kept beside that switch's contract, not typed twice.
@@ -457,6 +458,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   let selectedFlask = null; // flask slot index awaiting a target
   let selfArm = null; // self/buff card armed for a confirm (keyboard/gamepad)
   let selectedCombatantId = null; // contextual reading selection; never combat targeting
+  let enemyHoldPreserveInstance = null;
+  let enemyHoldFlowSuperseded = false;
   let heldTurnHand = null;
   let enemyPlayback = false;
   let busy = false; // animating / resolving
@@ -665,7 +668,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // released until its observer runs — so an outgoing mount can be notified
     // once after its own DOM is gone. It has nothing left to re-dress.
     if (!combatEl.isConnected || app.querySelector('.combat') !== combatEl) return;
+    if (enemyHoldPreserveInstance && lit !== null && lit !== enemyHoldPreserveInstance) enemyHoldFlowSuperseded = true;
     if (upcastPreviewRefresh || lit !== null || (!selected && !selfArm)) return;
+    if (enemyHoldPreserveInstance && !enemyHoldFlowSuperseded
+      && (selected === enemyHoldPreserveInstance || selfArm === enemyHoldPreserveInstance)
+      && combat.piles.hand.some(card => card.instanceId === enemyHoldPreserveInstance)
+      && !isRoundQueued(enemyHoldPreserveInstance)) return;
     selected = null;
     selfArm = null;
     // The stage, THEN the sync. `syncCardSelection` dresses what is already
@@ -702,7 +710,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const alive = !!getEntity(combat, id)?.alive;
       const legal = armed && plan.legalIds.includes(id);
       frame.classList.toggle('targetable', legal && frame.classList.contains('enemy'));
-      frame.inert = !alive || (armed && !legal);
+      // Living enemies remain inspection surfaces even when the armed card
+      // cannot target them. Keep the player's existing target-only inert rule;
+      // enemy legality stays in the target plan and canonical playCard guards.
+      const enemyFrame = frame.classList.contains('enemy');
+      frame.inert = !alive || (!enemyFrame && armed && !legal);
       if (frame.inert) {
         frame.setAttribute('aria-disabled', 'true');
         frame.classList.remove('hover-target', 'gp-focus');
@@ -936,10 +948,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     return enemySprite(enemyAppearance[def.id] ? { ...def, id: enemyAppearance[def.id] } : def, { ...dv(enemy), maxHp: enemy.maxHp });
   }
 
-  function openCombatantDoor(subject, opener = document.activeElement) {
+  function openCombatantDoor(subject, opener = document.activeElement, { onBack = null, onExit = null } = {}) {
     if (!subject?.name) return;
     hideTooltip();
-    const done = button({ label: 'Close', role: 'exit', attrs: { 'data-focusable': 'true', title: helpText('close') } });
+    let returnToChooser = false;
+    const done = button({ label: onBack ? 'Back' : 'Close', role: onBack ? 'back' : 'exit', attrs: { 'data-focusable': 'true', title: onBack ? 'Return to actions' : helpText('close') } });
     const shell = openModal({
       size: 'lg',
       className: 'combatant-door',
@@ -951,8 +964,138 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       body: (host) => host.replaceChildren(combatantInspectorLayout(subject, { sprite: inspectorPreviewSprite(subject), previewFraction: wireframeUi.inspector.previewFraction })),
       primary: done,
       footSize: 'short',
+      onClose: () => { if (returnToChooser) onBack?.(); else onExit?.(); },
     });
-    done.addEventListener('click', shell.close);
+    done.addEventListener('click', () => { returnToChooser = Boolean(onBack); shell.close(); });
+  }
+
+  function restoreEnemyHoldCard(instanceId, selfArmed = false) {
+    if (!canRestoreEnemyHoldCard({
+      instanceId, superseded: enemyHoldFlowSuperseded, busy, combatEnded: !!combat.result, phase: combat.phase,
+      flaskSelected: selectedFlask != null, selectedInstanceId: selected, selfArmInstanceId: selfArm,
+      queued: isRoundQueued(instanceId), inHand: combat.piles.hand.some(card => card.instanceId === instanceId),
+    })) return;
+    if (selected === instanceId || selfArm === instanceId) return;
+    selected = selfArmed ? null : instanceId;
+    selfArm = selfArmed ? instanceId : null;
+    syncCardSelection();
+  }
+
+  function finishEnemyHoldFlow(instanceId, selfArmed = false) {
+    restoreEnemyHoldCard(instanceId, selfArmed);
+    if (enemyHoldPreserveInstance === instanceId) {
+      enemyHoldPreserveInstance = null;
+      enemyHoldFlowSuperseded = false;
+    }
+  }
+
+  function enemyHoldPlayReason(instanceId, enemyId) {
+    const enemy = getEntity(combat, enemyId);
+    const action = inspectionPlayAction(instanceId);
+    return resolveEnemyHoldPlayReason({
+      active: combatEl.isConnected, combatEnded: !!combat.result, busy, phase: combat.phase,
+      selectedInstanceId: selected || selfArm, instanceId, flaskSelected: selectedFlask != null,
+      queued: isRoundQueued(instanceId), pendingDiscard: !!combat.pendingAbilityDiscard,
+      enemyAlive: !!enemy?.alive, actionEnabled: action.enabled, actionReason: action.reason,
+      legalTarget: !!enemy?.alive && cardTargets(instanceId).legalIds.includes(enemyId),
+    });
+  }
+
+  function openEnemyHoldActions(enemyId, opener, instanceId) {
+    const enemy = getEntity(combat, enemyId);
+    if (!enemy?.alive) return;
+    const subject = combatantSubject('enemy', enemy);
+    if (!instanceId) {
+      const direct = enemyHoldActionStep('battle', 'hold', { hasCard: false });
+      if (direct.effect === 'inspect') openCombatantDoor(subject, opener);
+      return;
+    }
+    const started = enemyHoldActionStep('battle', 'hold', { hasCard: true });
+    let flowState = started.state;
+    enemyHoldPreserveInstance = instanceId;
+    const selfArmed = selected !== instanceId && selfArm === instanceId;
+    enemyHoldFlowSuperseded = (selected !== instanceId && selfArm !== instanceId) || selectedFlask != null;
+    const openChooser = () => {
+      enemyHoldPreserveInstance = instanceId;
+      const reason = enemyHoldPlayReason(instanceId, enemyId);
+      const selectedInst = combat.piles.hand.find(card => card.instanceId === instanceId);
+      const selectedName = selectedInst ? resolveCard(registries, selectedInst).name : 'selected card';
+      const inspect = button({ label: 'Inspect', role: 'secondary', attrs: { 'data-focusable': 'true' } });
+      const back = button({ label: 'Back', role: 'back', attrs: { 'data-focusable': 'true' } });
+      const exit = button({ label: 'Exit', role: 'exit', attrs: { 'data-focusable': 'true' } });
+      const play = button({ label: 'Play', role: 'primary', attrs: { 'data-focusable': 'true', ...(reason ? { disabled: true, title: reason } : {}) } });
+      let transitioningToInspector = false;
+      const shell = openModal({
+        size: 'md', className: 'enemy-hold-actions', opener, eyebrow: subject.subtitle || 'Enemy', title: subject.name,
+        closeLabel: `Close actions for ${subject.name}`,
+        note: reason ? `Play ${selectedName} unavailable: ${reason}` : `Inspect ${subject.name} or play ${selectedName} on it.`,
+        secondary: [back, exit, inspect], primary: play, footSize: 'fill',
+        onClose: () => {
+          if (!transitioningToInspector) {
+            flowState = enemyHoldActionStep(flowState, 'close').state;
+            finishEnemyHoldFlow(instanceId, selfArmed);
+          }
+        },
+      });
+      inspect.addEventListener('click', () => {
+        const transition = enemyHoldActionStep(flowState, 'inspect');
+        flowState = transition.state;
+        if (transition.effect !== 'inspect') return;
+        transitioningToInspector = true;
+        shell.close();
+        openCombatantDoor(subject, opener, {
+          onBack: () => {
+            const back = enemyHoldActionStep(flowState, 'back');
+            flowState = back.state;
+            if (back.effect === 'open-chooser') openChooser();
+          },
+          onExit: () => {
+            flowState = enemyHoldActionStep(flowState, 'close').state;
+            finishEnemyHoldFlow(instanceId, selfArmed);
+          },
+        });
+      });
+      const closeToBattle = actionType => {
+        const transition = enemyHoldActionStep(flowState, actionType);
+        flowState = transition.state;
+        if (transition.effect !== 'close-flow') return;
+        finishEnemyHoldFlow(instanceId, selfArmed);
+        shell.close();
+      };
+      back.addEventListener('click', () => closeToBattle('back'));
+      exit.addEventListener('click', () => closeToBattle('exit'));
+      play.addEventListener('click', () => {
+        const currentReason = enemyHoldPlayReason(instanceId, enemyId);
+        if (currentReason) {
+          enemyHoldActionStep(flowState, 'play', { playAllowed: false });
+          play.disabled = true;
+          play.title = currentReason;
+          return;
+        }
+        const transition = enemyHoldActionStep(flowState, 'play', { playAllowed: true });
+        flowState = transition.state;
+        if (transition.effect !== 'play') return;
+        shell.close();
+        playCard(instanceId, enemyId);
+      });
+    };
+    openChooser();
+  }
+
+  function enemyHoldSurface(event, box) {
+    const target = event?.target;
+    if (!target || target !== box && !box.querySelector('.sprite')?.contains(target)) return false;
+    const control = target.closest?.('button, a, input, select, textarea, [role="button"], .nm, .intent, .combatant-info, .meters, .meter, .statuses');
+    if (control && control !== box) return false;
+    return true;
+  }
+
+  function routeEnemyFrameTap(event, enemyId, box = event.currentTarget) {
+    if (!enemyHoldSurface(event, box) || !getEntity(combat, enemyId)?.alive) return;
+    event.stopImmediatePropagation?.();
+    if (selected) playCard(selected, enemyId);
+    else if (selectedFlask != null) useFlask(selectedFlask, enemyId);
+    else if (!selfArm) selectCombatant(enemyId);
   }
 
   // Attributes a render can change; a reused frame gets these again without
@@ -1573,6 +1716,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   let topbarRenderKey = null;
   let handRenderKey = null;
   const enemyFrames = new Map();
+  function disposeEnemyFrame(record) {
+    record?.holdDisarm?.();
+    stageFor(record?.box)?.dispose?.();
+    record?.box?.remove();
+  }
 
   function renderPlayer() {
     const zone = $('.player-zone');
@@ -1695,7 +1843,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const row = $('.enemy-row');
     const present = new Set(combat.enemies.map(enemy => enemy.id));
     for (const [id, record] of enemyFrames) if (!present.has(id)) {
-      stageFor(record.box)?.dispose?.(); record.box.remove(); enemyFrames.delete(id);
+      disposeEnemyFrame(record); enemyFrames.delete(id);
     }
     const targeting = selected || selectedFlask != null;
     // WGC4: one eligibility home; a defeated enemy is never highlighted.
@@ -1705,7 +1853,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const def = registries.enemies.get(enemy.enemyId);
       const artKey = JSON.stringify([def.id, enemyAppearance[def.id], document.documentElement.dataset.performance, displayAppearance()]);
       let record = enemyFrames.get(enemy.id);
-      if (record && record.key !== artKey) { stageFor(record.box)?.dispose?.(); record.box.remove(); record = null; }
+      if (record && record.key !== artKey) { disposeEnemyFrame(record); enemyFrames.delete(enemy.id); record = null; }
       const renderKey = JSON.stringify([artKey, enemy, dv(enemy), combat.player, targeting, selectedCombatantId, living.map(e => e.id), disp ? disp.arcaneEvents : recentArcaneEvents, readSettings()]);
       if (record?.renderKey === renderKey) continue;
       const leading = [];
@@ -1758,16 +1906,30 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const box = record ? updateCombatantFrame(record.box, slots) : combatantFrame(slots);
       stageFor(box)?.setState?.({ ...dv(enemy), maxHp: enemy.maxHp });
       box.dataset.stature = statureFor(registries, def.id);
+      let holdDisarm = record?.holdDisarm || null;
       if (!record) {
         wireCombatantContext(box, combatantSubject('enemy', enemy));
+        let heldCardInstanceId = null;
+        holdDisarm = armHold(box, {
+          id: 'combat-enemy-actions', showHint: false,
+          ms: () => holdMs(meta.settings || {}, registries.balance.ui.holdConfirm),
+          shouldBegin: origin => enemyHoldSurface(origin.ev, box),
+          stopImmediateClick: true,
+          tapOnEarlyRelease: true, tapOnPointerRelease: true,
+          onHoldStart: () => { heldCardInstanceId = selected || selfArm; },
+          onHoldEnd: state => { if (state !== 'done') heldCardInstanceId = null; },
+          onTap: event => routeEnemyFrameTap(event, enemy.id, box),
+          onConfirm: event => {
+            if (!enemyHoldSurface(event, box)) return;
+            const instanceId = heldCardInstanceId;
+            heldCardInstanceId = null;
+            if (holdMs(meta.settings || {}, registries.balance.ui.holdConfirm) > 0) openEnemyHoldActions(enemy.id, box, instanceId);
+            else routeEnemyFrameTap(event, enemy.id, box);
+          },
+        });
         box.addEventListener('click', (event) => {
           event.stopPropagation();
-          if (!getEntity(combat, enemy.id)?.alive) return;
-          if (selected) playCard(selected, enemy.id);
-          else if (selectedFlask != null) useFlask(selectedFlask, enemy.id);
-          else if (!selfArm) {
-            selectCombatant(enemy.id);
-          }
+          routeEnemyFrameTap(event, enemy.id);
         });
         box.addEventListener('pointerenter', () => getEntity(combat, enemy.id)?.alive && (selected || selectedFlask != null)
           && pendingTargetPlan().legalIds.includes(enemy.id) && box.classList.add('hover-target'));
@@ -1789,7 +1951,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         box.removeAttribute('aria-disabled');
       }
       if (!record) row.appendChild(box);
-      enemyFrames.set(enemy.id, { key: artKey, renderKey, box });
+      enemyFrames.set(enemy.id, { key: artKey, renderKey, box, holdDisarm });
     }
     applyTargetLayer();
   }
@@ -3079,7 +3241,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         reactionShell?.dismiss();
         handStrip.teardown();
         stageFor(combatEl.querySelector('.player-zone'))?.dispose?.();
-        for (const record of enemyFrames.values()) stageFor(record.box)?.dispose?.();
+        for (const record of enemyFrames.values()) disposeEnemyFrame(record);
         enemyFrames.clear();
         removeEventListener('keydown', keyHandler);
         battlefieldStage.release();
@@ -3121,7 +3283,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const active = document.activeElement;
     const holder = combatEl.contains(active) ? active.closest?.('[data-eid]') : null;
     const kept = holder ? { eid: holder.dataset.eid, name: !!active.closest('.nm-inspect') } : null;
-    for (const record of enemyFrames.values()) { stageFor(record.box)?.dispose?.(); record.box.remove(); }
+    for (const record of enemyFrames.values()) disposeEnemyFrame(record);
     enemyFrames.clear();
     playerArtKey = null;
     render();
