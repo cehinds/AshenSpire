@@ -64,14 +64,16 @@ export function wireFormationMovement(field, { readSettings, holdConfig, availab
   function refreshPass() {
     const enabled = config().movementEnabled;
     if (!enabled || !config().movementNeedsSelection || (selected && !usable(selected))) selected = null;
-    grid.setAttribute('aria-hidden', String(!enabled));
     for (const tile of tiles) {
       tile.disabled = !enabled || !usable(tile.dataset.cell);
+      tile.inert = tile.disabled;
       tile.tabIndex = tile.disabled ? -1 : 0;
       tile.setAttribute('aria-label', `Position ${tile.dataset.cell}${config().tileActivation === 'hold' ? '. Hold to move; release to review.' : ''}`);
       tile.setAttribute('aria-pressed', String(selected === tile.dataset.cell));
       tile.classList.toggle('formation-selected', selected === tile.dataset.cell);
     }
+    grid.inert = !enabled || tiles.every(tile => tile.disabled);
+    grid.setAttribute('aria-hidden', String(grid.inert));
     tray.hidden = !selected;
     confirm.disabled = !selected || !usable(selected);
     if (selected) confirm.textContent = `Move to ${selected}${plan(selected).cost ? ' · 1 action' : ' · free'}`;

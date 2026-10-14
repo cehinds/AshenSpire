@@ -362,7 +362,7 @@ const INTENT_OVERLAP = `(async () => {
   const intent = low.querySelector('.intent');
   const sprite = high.querySelector('.combatant-card > .sprite');
   const a = intent.getBoundingClientRect(), initial = sprite.getBoundingClientRect();
-  const intentScale = a.width / intent.offsetWidth, spriteScale = initial.width / sprite.offsetWidth;
+  const spriteScale = initial.width / sprite.offsetWidth;
   // Authored formations can make this neighbour narrower than an XL badge.
   // Grow only the fixture's artwork, retaining its normal stacking context.
   sprite.style.transformOrigin = 'center bottom';
@@ -388,15 +388,13 @@ const INTENT_OVERLAP = `(async () => {
         || playerMoved.left < fieldBox.left + 22 || playerMoved.right > fieldBox.right - 22)
       throw new Error('screenreach: moved small-player fixture has an invalid size or foot anchor');
   }
-  // Stage the pair in the clear centre so neither existing fighter's target
-  // becomes an accidental second obstruction in this controlled scene.
-  sprite.style.translate = ((fieldBox.left + fieldBox.width / 2 - grown.left - grown.width / 2) / spriteScale) + 'px '
-    + ((fieldBox.top + fieldBox.height / 2 - grown.top - grown.height / 2) / spriteScale) + 'px';
+  // Cover the canonical intent: production owns its overhead host alignment.
+  sprite.style.translate = ((a.left + a.width / 2 - grown.left - grown.width / 2) / spriteScale) + 'px '
+    + ((a.top - 8 - grown.top) / spriteScale) + 'px';
   const b = sprite.getBoundingClientRect(), frameBox = high.getBoundingClientRect();
   high.style.setProperty('--enemy-hit-x', ((b.left + b.width / 2 - frameBox.left) / zoom) + 'px');
   high.style.setProperty('--enemy-hit-y', ((b.bottom - frameBox.top) / zoom) + 'px');
-  intent.style.translate = ((b.left + b.width / 2 - a.left - a.width / 2) / intentScale) + 'px '
-    + ((b.top + 8 - a.top) / intentScale) + 'px';
+  // Keep the intent at its canonical production location through the refit.
   const moved = intent.getBoundingClientRect();
   if (b.left > moved.left || b.right < moved.right || b.top > moved.top || b.bottom < moved.bottom)
     throw new Error('screenreach: neighbouring sprite does not cover the intent fixture');
