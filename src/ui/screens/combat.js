@@ -1,6 +1,8 @@
 import { combatWeaponProfilesFor } from '../../model/combatWeaponPresentation.js';
 import { attackHitPreview, effectiveEvasion } from '../../engine/stanceHit.js';
 import { enemyActionPose } from '../../model/enemyActionPose.js';
+import { enemyStanceCategory } from '../../model/enemyStancePose.js';
+import { enemyMoveCarrier } from '../../engine/combatCardTactics.js';
 import { ratingValue, ratingDamageMultiplier } from '../../model/combatRatings.js';
 import { openCollectibleInspection } from '../components/collectibleCard.js';
 import { combatantInfo, combatantIntent, playerActionIntent, RESTING_PLAYER_ACTION, selectCombatantInfo } from '../components/combatantOverhead.js';
@@ -801,6 +803,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   let disp = null;
   let recentArcaneEvents = [];
   const dv = (ent) => (disp && disp.ents[ent.id]) || ent;
+  const enemySpriteState = enemy => ({ ...dv(enemy), maxHp: enemy.maxHp,
+    presentationStance: disp?.ents[enemy.id] ? disp.ents[enemy.id].presentationStance : enemyStanceCategory(enemy.intent) });
 
   const words = (value) => String(value || '')
     .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
@@ -935,7 +939,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const enemy = combat.enemies.find((e) => e.id === subject.entityId);
     if (!enemy) return null;
     const def = registries.enemies.get(enemy.enemyId);
-    return enemySprite(enemyAppearance[def.id] ? { ...def, id: enemyAppearance[def.id] } : def, { ...dv(enemy), maxHp: enemy.maxHp });
+    return enemySprite(enemyAppearance[def.id] ? { ...def, id: enemyAppearance[def.id] } : def, enemySpriteState(enemy));
   }
 
   function openCombatantDoor(subject, opener = document.activeElement) {
@@ -994,7 +998,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     return {
       id: e.id,
       kind: e.kind,
-      ...(e.kind === 'enemy' ? { intentPreview: previewIntent(combat, e.id) } : {}),
+      ...(e.kind === 'enemy' ? { intentPreview: previewIntent(combat, e.id), presentationStance: enemyStanceCategory(e.intent) } : {}),
       hp: e.hp,
       mana: e.mana,
       block: e.block,
@@ -1039,8 +1043,21 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
             counterWardDamage: e.wardDamage, profile: e.combatProfile || {}, stance: 'countering', revealed: true, hidden: false };
           break;
         }
+        case 'enemyMoveStarted': {
+          // Reactions return to the planned hold; pooled follow-ups replace it.
+          if (e.reaction) break;
+          const actor = disp.ents[e.sourceId];
+          const enemy = combat.enemies.find(row => row.id === e.sourceId);
+          const move = registries.enemies.get(e.enemyId || enemy?.enemyId)?.moves?.[e.moveId];
+          if (actor && enemy && move) actor.presentationStance = enemyStanceCategory({
+            kind: e.kind || move.intent,
+            combatProfile: enemyMoveCarrier(enemy, move, e.moveId, combat).combatProfile,
+          });
+          break;
+        }
         case 'enemyActorTurnStarted': {
           const actor = disp.ents[e.sourceId];
+          if (actor) actor.presentationStance = enemyStanceCategory(e.intent);
           if (actor) actor.intentPreview = { ...e.intent, profile: e.intent?.combatProfile || {},
             stance: combatIntentStance(e.intent, e.intent?.combatProfile), revealed: true, hidden: false };
           break;
@@ -1048,7 +1065,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         case 'playerTurnStart':
           // Unused Evade charges expire as the player's turn starts.
           if (disp.ents.player) disp.ents.player.combatEvade = null;
-          for (const enemy of combat.enemies) if (disp.ents[enemy.id]) disp.ents[enemy.id].intentPreview = previewIntent(combat, enemy.id);
+          for (const enemy of combat.enemies) if (disp.ents[enemy.id]) {
+            disp.ents[enemy.id].intentPreview = previewIntent(combat, enemy.id);
+            disp.ents[enemy.id].presentationStance = enemyStanceCategory(enemy.intent);
+          }
           break;
         case 'persistentWardChanged':
         case 'combatWardStripped':
@@ -1805,13 +1825,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         entityId: enemy.id,
         classNames: [dv(enemy).alive ? '' : 'dead', eligibleTargets.includes(enemy.id) ? 'targetable' : '', selectedCombatantId === enemy.id ? 'context-selected' : ''],
         leading,
-        sprite: record ? null : enemySprite(enemyAppearance[def.id] ? { ...def, id: enemyAppearance[def.id] } : def, { ...dv(enemy), maxHp: enemy.maxHp }),
+        sprite: record ? null : enemySprite(enemyAppearance[def.id] ? { ...def, id: enemyAppearance[def.id] } : def, enemySpriteState(enemy)),
         name: markMeterRow(nm, 'name'),
         meters: meterBars(enemy),
         trailing: [statusRow(enemy)],
       };
       const box = record ? updateCombatantFrame(record.box, slots) : combatantFrame(slots);
-      stageFor(box)?.setState?.({ ...dv(enemy), maxHp: enemy.maxHp });
+      stageFor(box)?.setState?.(enemySpriteState(enemy));
       box.dataset.stature = statureFor(registries, def.id);
       if (!record) {
         wireCombatantContext(box, combatantSubject('enemy', enemy));
