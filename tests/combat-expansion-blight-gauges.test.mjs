@@ -8,6 +8,7 @@ import { createRng } from '../src/engine/rng.js';
 import * as S from '../src/engine/statuses.js';
 import { recoverStatusesAtOwnerStart } from '../src/engine/combatStatusControl.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
+import { stanceRules } from '../src/content/stanceRules.js';
 
 const cards = new Map(contentBundle.cards.map(card => [card.id, card]));
 const buildupStatuses = effects => (effects || []).filter(effect => effect.op === 'buildup').map(effect => effect.status);
@@ -73,7 +74,10 @@ test('a damaging decay spell hit applies Necrotic Blight pressure once: the card
   assert.ok(events.some(event => event.type === 'attackHit' && event.targetId === enemy.id && event.inRange), 'the seeded attack actually connects at the target range');
   assert.ok(events.some(event => event.type === 'hpLost' && event.targetId === enemy.id), 'the hit cost HP, so the Necrotic rider was eligible');
   const pressure = events.filter(event => event.type === 'statusPressure' && event.targetId === enemy.id);
-  assert.deepEqual(pressure.map(event => [event.status, event.acceptedBuildup]), [['necroticBlight', 3]]);
+  assert.equal(c.player.combatStance.maneuver, 'casting', 'the non-melee spell enters Spell');
+  // The current contract strengthens the printed effect on first application.
+  // One pressure receipt still proves the automatic Necrotic rider was suppressed.
+  assert.deepEqual(pressure.map(event => [event.status, event.acceptedBuildup]), [['necroticBlight', 3 + stanceRules.spellStatusStacks]]);
 });
 
 test('passive recovery never removes Necrotic Blight; it still removes Crimson Blight', () => {
