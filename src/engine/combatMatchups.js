@@ -507,7 +507,7 @@ export function beginTacticalAction(ctx, source, target, carrier, contacts = [],
   const receipt = previewTacticalAction(ctx, source, target, carrier, contacts, options);
   receipt.begun = true;
   const control = restrictions(ctx, target, options);
-  const counterAttack = resolveAttackHit(ctx, source, target, carrier, { additionalTargets: options.additionalTargets ?? carrier?.additionalTargets ?? 0, evadeDisabled: control.evadeDisabled });
+  const counterAttack = resolveAttackHit(ctx, source, target, carrier, { additionalTargets: options.additionalTargets ?? carrier?.additionalTargets ?? 0, evadeDisabled: control.evadeDisabled, suppressOutcomeEvent: true });
   if (counterAttack) receipt.counterAttack = counterAttack;
   receipt.avoidance = counterAttack && !counterAttack.hit
     ? { resolved: true, avoided: true, distance: null, evade: null, reason: counterAttack.missReason,
@@ -522,6 +522,13 @@ export function beginTacticalAction(ctx, source, target, carrier, contacts = [],
   }
 
   receipt.connected = !receipt.avoided;
+  if (counterAttack) {
+    const hit = !receipt.avoided;
+    const label = hit && counterAttack.evadeActive && !counterAttack.bypass ? 'Hit — Evade Failed' : hit ? 'Hit' : 'Missed';
+    ctx.emit?.(hit ? 'attackHit' : 'attackMissed', { sourceId: source?.id, targetId: target?.id,
+      ...seats(ctx, source, target), ...counterAttack, hit, label });
+  }
+
   const groundedStatus = ctx.combatExpansionRules?.statuses?.interactions?.grounded || 'grounded';
   if (receipt.connected && receipt.profiles.some(p => p.school === 'lightning' || p.damageType === 'lightning')
     && !hasTrait(target, 'grounded') && !number(target?.statuses?.[groundedStatus]?.stacks)) {

@@ -3,12 +3,22 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1984",
+    "date": "2026-10-14",
+    "group": "2026-10-14",
+    "summary": "Stances, Evade and hit previews share their combat rules",
+    "detail": "Same-stance cards use the configured SP discount, stance ratings stay active without stacking, and Defense restores Poise and Ward with protection overflow. Smash, Counter and Sweep apply their matchup and range rules. Evade stacks, explicit Target bypasses and exact hit previews use the same hit calculation, while the combat HUD and hit labels show the result.",
+    "build": "0.7.1.1521",
+    "pullRequest": 1984,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1984"
+  },
+  {
     "id": "pr-1983",
     "date": "2026-10-14",
     "group": "2026-10-14",
     "summary": "Stance combat continuation is specified",
     "detail": "Records the next stance discounts, protection, maneuver matchups, Evade, hit previews and combat labels before their implementation. Nothing in play changes in this specification-only update.",
-    "build": "0.7.1.1519",
+    "build": "0.7.1.1521",
     "pullRequest": 1983,
     "url": "https://github.com/cehinds/AshenSpire/pull/1983"
   },
@@ -18,7 +28,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-14",
     "summary": "Rogue, Starseer and Herald jump into their ground-slam Smash",
     "detail": "The selected dagger-and-buckler, ash-staff and bone-sceptre paintings now move from their held stance through takeoff, airborne load and ground impact before returning to that same stance. These paintings were authored with the class starter weapons and share the existing class-default presentation. Phone views preserve the complete weapons and effects, and delayed impact cues finish before the pose recovers. All card animations use the character’s default weapon art regardless of equipped weapons, while equipment keeps its actual stats, costs and effects. A four-class combat gallery shows 29 held views and 77 labeled animation/reaction groups, with existing fallback and legacy equipment differences identified.",
-    "build": "0.7.1.1519",
+    "build": "0.7.1.1521",
     "pullRequest": 1974,
     "url": "https://github.com/cehinds/AshenSpire/pull/1974"
   },

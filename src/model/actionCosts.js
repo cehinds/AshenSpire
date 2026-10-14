@@ -223,7 +223,7 @@ function twoCostEffects(effects, tags, config) {
  */
 function withSmashPoise(effects, tags, config) {
   const base = config.budget.smashPoiseBase;
-  if (!tags.includes('maneuver:smash') || !(base > 0)) return effects;
+  if (!tags.includes('maneuver:smash') && !tags.includes('maneuver:counter') || !(base > 0)) return effects;
   if (effects.some(e => e?.op === 'poiseDamage')) return effects;
   const hit = effects.find((e) => e?.op === 'damage');
   return [...effects, Object.freeze({ op: 'poiseDamage', target: hit?.target ?? 'enemy', amount: base })];
@@ -240,7 +240,7 @@ export function applyActionCosts(def, authored = def, { rank = 0, config = COST_
   const upgradeDelta = !Array.isArray(authored?.gradeProfiles) && typeof authored?.cost === 'number' && typeof def.cost === 'number' ? authored.cost - def.cost : 0;
   const { sp, mp, funded, tags } = cardCostBudget(def, { rank, config, upgradeDelta });
   const scaled = sp - funded.sp >= 2;
-  const smash = tags.includes('maneuver:smash') && config.budget.smashPoiseBase > 0;
+  const smash = (tags.includes('maneuver:smash') || tags.includes('maneuver:counter')) && config.budget.smashPoiseBase > 0;
   const funds = funded.sp > 0 || funded.mp > 0;
   if (sp === def.cost && mp === (def.manaCost || 0) && !scaled && !smash && !funds) return def;
   let effects = def.effects;

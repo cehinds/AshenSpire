@@ -6,6 +6,8 @@ Normative owner decisions, 2026-10-14. **Planned, spec first:** this document do
 
 Price a card against the actor's **currently active stance**, before changing stance. A card that uses that same stance subtracts the configurable same-stance discount (default 1) from its SP price. The resulting SP floor is 1 for physical cards and 0 for magical cards. Apply this through the shared live/preview price calculation, including affordability and rounds queue payment; rejected plays and inert previews change nothing.
 
+Stance identity is the pair **(camp, maneuver)**: physical and magical Defense are different stances. Crossing that camp boundary changes stance, gives the new entry grant, replaces active ratings and does not earn the same-stance discount. School and effective range are refreshed from the card but are not identity fields; changing only either does not repeat an entry grant.
+
 Ratings are active only while their stance is active. They never accumulate from repeated cards or prior entries. An entry grant occurs only when the stance actually changes; another card in the same stance does not grant it again.
 
 | Stance | Active rating | Entry grant |
@@ -15,7 +17,7 @@ Ratings are active only while their stance is active. They never accumulate from
 | Physical Defense | +3 DR | 3 Block |
 | Magical Defense | +3 Ward rating | 3 protection, split as below |
 | Counter | Both its applicable offensive and defensive rating bonuses | Applicable offensive and defensive entry grants |
-| Evade | +3 Evade rating | 1 Evade stack |
+| Evade | Applicable defensive rating (+3 DR physically, +3 Ward rating magically) | Applicable defensive protection grant plus 1 Evade stack |
 
 A non-melee offensive magical card enters **Spell**, and adds 1 stack to **each existing status it successfully applies**; this does not create a new status or reward a resisted/failed application. Melee magic follows its authored maneuver instead. Defensive magic remains **Defense**, never Spell.
 
@@ -35,7 +37,7 @@ Sweep has -1 Precision and gains +1 Precision for each additional enemy targeted
 
 ## Evade and hit resolution
 
-An Evade stack adds +3 Evade rating. The active Evade stance's +3 rating is separate from the stacks; leaving the stance removes that active bonus but does not erase stacks. Avoidance is capped at 95%, and **any rolled natural 20 hits**, including either die in advantage/disadvantage mode. Exact hit previews enumerate all 20 single-die outcomes or all 400 ordered two-die outcomes with that override, rather than approximating the percentage.
+An Evade stack adds +3 Evade rating. Evade entry grants one such stack: there is no additional active +3 Evade-rating bonus. Evade is defensive and also receives the applicable active +3 DR or +3 Ward rating and its entry protection (3 Block physically, or the 3-point Block:Barrier split magically). Leaving Evade removes its active defensive rating but does not erase its Evade stacks. Avoidance is capped at 95%, and **any rolled natural 20 hits**, including either die in advantage/disadvantage mode. Exact hit previews enumerate all 20 single-die outcomes or all 400 ordered two-die outcomes with that override, rather than approximating the percentage.
 
 A missed eligible attack consumes 1 Evade stack. An out-of-range attack consumes none. A spell with an explicit **Target** bypass consumes none and bypasses Evade; having a target selector alone is not this bypass. Evade stacks decay by 1 per round through the existing round boundary, once per actor.
 

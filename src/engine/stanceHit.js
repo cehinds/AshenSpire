@@ -58,8 +58,8 @@ export function resolveAttackHit(ctx, source, target, carrier, options = {}) {
   if (dice.length) delete target.nextEvadeMode;
   const result = { ...preview, d20, dice, hit, ...(!hit ? { missReason: preview.inRange ? 'accuracy' : 'range' } : {}) };
   if (!hit && preview.inRange && !preview.bypass && preview.evadeStacks > 0) Statuses.removeStatus(ctx, target, 'evade', { amount: 1, reason: 'consumed' });
-  const label = hit ? preview.evadeActive ? 'Hit — Evade Failed' : 'Hit' : 'Missed';
-  ctx.emit?.(hit ? 'attackHit' : 'attackMissed', { sourceId: source.id, targetId: target.id, cardId: carrier?.cardId, moveId: carrier?.moveId,
+  const label = hit ? preview.evadeActive && !preview.bypass ? 'Hit — Evade Failed' : 'Hit' : 'Missed';
+  if (!options.suppressOutcomeEvent) ctx.emit?.(hit ? 'attackHit' : 'attackMissed', { sourceId: source.id, targetId: target.id, cardId: carrier?.cardId, moveId: carrier?.moveId,
     ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source), targetPlayerId: ctx.playerIdForEntity(target) } : {}), ...result, label });
   return result;
 }

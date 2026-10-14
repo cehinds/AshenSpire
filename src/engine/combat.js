@@ -2024,10 +2024,12 @@ function playRoundReaction(combat, instanceId, entry) {
   const attackerId = entry.actor;
   const targetId = needsEnemyTarget(def) ? attackerId : undefined;
   combat._reactionPlaying = true;
+  combat._reactionSourceId = attackerId;
   try {
     doPlayCard(combat, { cardInstanceId: instanceId, ...(targetId ? { targetId } : {}) }, { prepaid: { energy: costs.energy, mana: costs.mana, stamina: costs.stamina } });
   } finally {
     delete combat._reactionPlaying;
+    delete combat._reactionSourceId;
   }
   combat.emit('combatRoundReaction', { cardInstanceId: instanceId, cardId: inst.cardId, against: attackerId, sourceId: p.id });
   drainQueue(combat);

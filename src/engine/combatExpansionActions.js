@@ -7,6 +7,7 @@ import { combatProfileFor } from '../model/combatCardProfile.js';
 import { mountCombatCombo } from './combatExpansionCombos.js';
 import * as Matchups from './combatMatchups.js';
 import * as Control from './combatStatusControl.js';
+import { allowAbilityOnce } from './abilityRiders.js';
 import { traitHitAmount } from './combatCardTraitMath.js';
 
 const keyOf = (ctx, entity) => ctx.playerIdForEntity?.(entity) || entity?.id;
@@ -53,6 +54,11 @@ export function enqueueExpandedAction(ctx, actions, { source, target, carrier, c
     if (!['damage', 'buildup', 'applyStatus', 'poiseDamage', 'wardDamage'].includes(eff.op)) {
       Actions.executeAction(prefix, shadow);
       continue;
+    }
+    if (eff.oncePerTurn) {
+      const accepted = allowAbilityOnce(shadow.owner || shadow.source || prefix.player, eff.oncePerTurn, action.card, action.meta?.abilityEffectIndex ?? eff.op);
+      if (!accepted) { action.meta.expansionContacts = []; action.meta.expansionTargets = []; continue; }
+      shadow.effect = { ...eff, oncePerTurn: undefined };
     }
     const repeat = Math.max(0, evaluate(eff.repeat ?? 1, Actions.formulaCtxFor(ctx, action, action.target)));
     const hits = eff.op === 'damage' ? Math.max(0, evaluate(eff.hits ?? 1, Actions.formulaCtxFor(ctx, action, action.target))) : 1;
