@@ -11,7 +11,7 @@ import { configureTooltipGlossary, decorateKeywords } from './tooltipGlossary.js
 // computeTokenBindings. No math happens here.
 
 import { resolveCard, relicPropertyRules } from '../../model/registries.js';
-import { playingCardModel, playingCardClasses, staticCardTokens, combatCardType, combatCardDamageLabel } from '../../model/playingCard.js';
+import { playingCardModel, playingCardDefinition, playingCardClasses, staticCardTokens, combatCardType, combatCardDamageLabel } from '../../model/playingCard.js';
 import { cardFields, resolveCardLevel } from '../../model/cardFields.js';
 import { cardShape } from '../models/CardSizeModel.js';
 import { litCard } from './cardSelection.js';
@@ -139,17 +139,18 @@ function fillTemplate(def, tokens, baseTokens, damageSequences = []) {
  *            affordable? (bool; greys out when false),
  *            small?      (scale for reward/pile grids),
  *            tooltip?    (false suppresses the shared hover/focus tooltip),
- *            definition? (an already projected definition, e.g. the run's trait projection) }
+ *            definition? (an already projected definition, e.g. the run's trait projection),
+ *            rules?      (run rules for faces outside combat) }
  */
 export function renderCard(registries, ref, opts = {}) {
   configureTooltipGlossary(registries);
-  const def = opts.preview?.resolvedDefinition || opts.definition || resolveCard(registries, ref);
+  const def = playingCardDefinition(registries, ref, opts);
   // ONE PROJECTION, READ ONCE. Everything this function used to derive on its
   // way to innerHTML — the tag junction, the cost profile, the type row, the
   // class tint — is `model` now (src/model/playingCard.js). Drawing is what is
   // left. The output is byte-identical by construction: the model's bodies are
   // the ones that stood here.
-  const rawModel = playingCardModel(registries, ref, { preview: opts.preview || null });
+  const rawModel = playingCardModel(registries, ref, { preview: opts.preview || null, definition: def });
   const combatProfile = combatProfileFor(def);
   const combatTags = combatProfileTags(combatProfile, registries);
   const expanded = opts.preview?.combatExpansionVersion === 2 || def.minCombatExpansionVersion === 2;
@@ -548,11 +549,12 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
  * the same template the face fills, with tags stripped. Pure string work, no
  * DOM, so it runs the same headless and in a browser.
  */
-export function cardPlainText(registries, ref) {
-  const def = resolveCard(registries, ref);
+export function cardPlainText(registries, ref, opts = {}) {
+  const def = playingCardDefinition(registries, ref, opts);
+  const lines = opts.rules?.combatExpansionVersion === 2 ? cardFaceLines(def, null, registries) : null;
   // Plain string work only: no DOM, so it runs the same headless and in a
   // browser. Tags go first; &amp; is decoded last so "&amp;lt;" stays literal.
-  return String(fillTemplate(def, staticTokens(def), null))
+  return String(lines ? lines.map(line => line.html).join(' · ') : fillTemplate(def, staticTokens(def), null))
     .replace(/<[^>]+>/g, '')
     .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
     .replace(/&amp;/g, '&')
@@ -684,7 +686,8 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
     }
   }
   const service = tagService(registries);
-  const tags = def.cardTags != null ? service.resolve(def.cardTags) : service.tagsOf('card', def);
+  const tags = def.cardTags != null ? service.resolve(def.cardTags)
+    : def.traitValues && Array.isArray(def.tags) ? service.resolve(def.tags) : service.tagsOf('card', def);
   for (const tag of tags) { const row = numberedTraitRow(tag, def.traitValues); lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(row.blurb)}">${esc(row.label)}</span>`); }
   for (const tag of combatProfileTags(combatProfile, registries).filter(tag => !tags.some(existing => existing.id === tag.id))) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(tag.blurb)}">${esc(tag.label)}</span>`);
   if (lines.length) html += `<div class="inspection-tags">${[...new Set(lines)].join('')}</div>`;
