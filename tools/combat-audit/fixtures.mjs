@@ -1,9 +1,21 @@
 // Browser-safe fixture factory. Callers provide native or compiled API exports.
 // These are capability fixtures, not completed player runs or balance simulations.
 export const AUDIT_SCENARIOS = Object.freeze(['baseline', 'wounded', 'charged', 'protected', 'empty-pools']);
-export function makeAuditCombat(api, { classId, enemyIds, instance, seed = 701, scenario = 'baseline', cardInstances = [], relicIds } = {}) {
+export function makeAuditCombat(api, { classId, enemyIds, instance, seed = 701, scenario = 'baseline', cardInstances = [], relicIds, carrierId } = {}) {
   if (!AUDIT_SCENARIOS.includes(scenario)) throw new Error(`Unknown audit scenario '${scenario}'`);
   const run = api.createRunState({ registries: api.registries, classId, seed });
+  if (carrierId !== undefined) {
+    const piece = carrierId && api.registries.equipment.armaments.find(p => p.id === carrierId);
+    if (carrierId && !piece) throw new Error(`Unknown audit carrier '${carrierId}'`);
+    for (const [attribute, need] of Object.entries(piece?.requirements?.attributes || {})) run.attributes[attribute] = Math.max(run.attributes[attribute] || 0, need);
+    if (!api.applyEquipTransition(api.registries, run.loadout, 'rightHand', 0, carrierId)) throw new Error(`Cannot equip audit carrier '${carrierId}'`);
+    api.stampDeck(api.registries, run);
+    if (instance?.profileId) {
+      const carrier = run.deck.find(c => c.profileId === instance.profileId);
+      if (!carrier) throw new Error(`Carrier '${carrierId}' supplies no '${instance.profileId}' card`);
+      instance = { ...carrier, ...instance };
+    }
+  }
   // Capacity permits expensive/X/rank variants without overriding their prices.
   run.maxHp = run.hp = 10000; run.maxMana = run.mana = 50;
   run.maxStamina = run.stamina = 50; run.energyMax = 10;

@@ -14,7 +14,7 @@ export function auditInventory(registries) {
         for (const upcastTier of upcasts) {
           const instance = { cardId: card.id, upgraded, ...(abilityRank !== null ? { abilityRank } : {}), ...(profile ? { profileId: profile.id } : {}) };
           variants.push({ key: [classId, card.id, upgraded ? 'upgraded' : 'base', abilityRank ?? 'legacy', profile?.id || 'authored', upcastTier ?? 'base'].join('/'),
-            classId, instance, ...(upcastTier !== null ? { upcastTier } : {}), effects: [...new Set((card.effects || []).map(e => e.op))] });
+            classId, instance, carrierIds: profile ? (registries.equipment.armaments || []).filter(piece => [piece.attackProfile, piece.guardProfile, piece.techniqueProfile, piece.weaponCardPackage?.fillerAttackProfileId, piece.weaponCardPackage?.combatKit?.attackProfileId, piece.weaponCardPackage?.combatKit?.guardProfileId].includes(profile.id)).map(piece => piece.id) : [], ...(upcastTier !== null ? { upcastTier } : {}), effects: [...new Set((card.effects || []).map(e => e.op))] });
         }
       }
     }
