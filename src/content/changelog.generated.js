@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-14",
     "summary": "Combat fades cover fighters, and player targets stay clear of Health",
     "detail": "Screen fades now cover idle and selected fighters while target selection, cards and the combat HUD remain above them. When the perspective view places the player behind the hand, its transparent 44px target moves clear of its own Health strip without changing the artwork, Health position or selected fighter size.",
-    "build": "0.7.1.1525",
+    "build": "0.7.1.1527",
     "pullRequest": 1978,
     "url": "https://github.com/cehinds/AshenSpire/pull/1978"
+  },
+  {
+    "id": "pr-1985",
+    "date": "2026-10-14",
+    "group": "2026-10-14",
+    "summary": "Starseer spells resolve against Gilded Knight again",
+    "detail": "Targeting Gilded Knight with Staff Magic Strike or Star Spark no longer rejects the play in standalone HTML builds. Its guard reaction resolves, spell costs and damage commit, and the next spell remains usable. The shared reaction pause check now initializes without a circular import.",
+    "build": "0.7.1.1527",
+    "pullRequest": 1985,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1985"
   },
   {
     "id": "pr-1982",

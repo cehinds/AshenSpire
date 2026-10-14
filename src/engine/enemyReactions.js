@@ -6,7 +6,7 @@
 import { controlRestrictions } from './combatStatusControl.js';
 import { enqueueExpandedAction } from './combatExpansionActions.js';
 import { closeEnemyExchange } from './normalPreview.js';
-import { reactionPaused } from './combatReactions.js';
+import { reactionPaused } from './reactionState.js';
 
 // Version 2 with the flag. Absent (or a version-1 snapshot) means no enemy reactions.
 export const enemyReactionsActive = ctx => ctx.reactionRulesVersion === 2 && ctx.reactionRules?.enemyReactions === true;
