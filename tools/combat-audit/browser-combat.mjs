@@ -45,6 +45,47 @@ if (mode === 'inventory') {
   console.log(JSON.stringify({ ...Object.fromEntries(['cards', 'enemies', 'relics', 'statuses', 'stances'].map(k => [k, inventory[k].length])), legalClassCardPairs: inventory.legalClassCardPairs, out }));
   process.exit(0);
 }
+if (mode === 'summarize') {
+  const paths = (arg('reports') || '').split(',').filter(Boolean).map(path => resolve(path));
+  assert.ok(paths.length, 'summarize requires explicit authoritative --reports paths');
+  const inputs = paths.map(path => ({ path, report: JSON.parse(readFileSync(path, 'utf8')),
+    sha256: createHash('sha256').update(readFileSync(path)).digest('hex') }));
+  const latest = new Map(), history = [];
+  const key = row => [row.device, row.classId, row.category || 'card', row.cardId, row.variant].join('/');
+  for (const input of inputs) {
+    assert.ok(input.report.finished, `authoritative report must be complete: ${input.path}`);
+    assert.deepEqual(input.report.build, inputs[0].report.build, 'combined report artifact identity');
+    assert.deepEqual(input.report.sourceDigests, inputs[0].report.sourceDigests, 'combined source identity');
+    input.report.cases.forEach((row, index) => {
+      const record = { key: key(row), status: row.status, report: input.path, index,
+        reason: row.input?.refusal || row.before?.refused || row.error || null };
+      latest.set(record.key, record); history.push(record);
+    });
+  }
+  const required = new Set();
+  for (const input of inputs) for (const device of new Set(input.report.cases.map(row => row.device))) {
+    for (const card of input.report.inventory.cards) for (const classId of card.classes) {
+      required.add([device, classId, 'card', card.id, 'base'].join('/'));
+      if (card.upgraded) required.add([device, classId, 'card', card.id, 'upgraded'].join('/'));
+    }
+    for (const row of input.report.cases.filter(row => row.category === 'card' && row.variant === 'base'))
+      for (const tier of row.before?.upcastTiers || []) required.add([row.device, row.classId, 'card', row.cardId, `upcast-${tier}`].join('/'));
+  }
+  const failures = history.filter(row => row.status === 'failed').map(row => ({ ...row,
+    latest: latest.get(row.key), resolved: ['passed', 'expected-refusal'].includes(latest.get(row.key)?.status) }));
+  const result = { build: inputs[0].report.build, provenance: inputs.map(({ path, sha256, report }) => ({ path, sha256, attempts: report.cases.length, runs: report.runs || [{ pace: report.pace, started: report.started }] })),
+    counts: Object.fromEntries(['passed', 'expected-refusal', 'failed'].map(status => [status, [...latest.values()].filter(row => row.status === status).length])),
+    latestKeys: latest.size, requiredKeys: required.size, missingKeys: [...required].filter(key => !latest.has(key)),
+    runtimeErrors: inputs.flatMap(({ path, report }) => report.errors.map(error => ({ report: path, ...error }))),
+    historicalFailures: failures, cases: [...latest.values()],
+    limits: ['Compiled input/effect parity covers the pinned baseline; current integrated-build critical validation is reported separately.',
+      'Base and upgraded required keys come from authored inventory. Upcast keys use resolved default-profile tiers captured by the base-case preview.',
+      'Historical failed attempts remain linked to their latest same-key rerun. Expected unplayable refusals are counted separately from paid effects.'] };
+  writeFileSync(resolve(out, 'combined-manifest.json'), JSON.stringify(result, null, 2));
+  console.log(JSON.stringify({ ...result.counts, latestKeys: result.latestKeys, requiredKeys: result.requiredKeys, missing: result.missingKeys.length,
+    runtimeErrors: result.runtimeErrors.length, historicalFailures: failures.length, unresolvedHistory: failures.filter(row => !row.resolved).length, out }));
+  process.exit(result.counts.failed || result.missingKeys.length || result.runtimeErrors.length ? 1 : 0);
+}
 if (!url || !source) throw new Error('QA_BUILD_URL must name the served compiled standalone HTML');
 const html = await (await fetch(url)).text();
 const build = { source: html.match(/const SOURCE = '([a-f0-9]+)'/)?.[1], ordinal: html.match(/const ORDINAL = '(\d+)'/)?.[1] };
