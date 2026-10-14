@@ -36,8 +36,8 @@ const counterCovered = (ctx, def, row) => row.contacts.some(contact =>
   counterCoversAttack(ctx, def, contact, contact.effect || 'damage'));
 
 // Version 2: a `trait:reaction` card is eligible by tag (a Counter still needs coverage,
-// anything else a positive contact). Untagged cards keep the version 1 rule until the
-// trait projection tags them.
+// anything else a positive contact). Legacy Counter/Sweep fallback is version 1 only;
+// version 2 requires the projected Reaction trait.
 function eligible(ctx, def, row) {
   const tags = def.cardTags || def.tags || [];
   if (cardTraitsActive(ctx)) {
