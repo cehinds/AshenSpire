@@ -230,7 +230,7 @@ test('Decoy catches only one positive Single Reach/Ranged action, never Area, Me
     const receipt = beginTacticalAction(f.ctx, f.source, f.target, incoming, [{ amount }]);
     assert.equal(receipt.avoided, catches);
     assert.equal(!!f.target.statuses.decoy, !catches);
-    assert.deepEqual(f.rolls, []);
+    assert.equal(f.rolls.length, 1, 'one universal attack d20; prevention adds no second roll');
   }
 });
 

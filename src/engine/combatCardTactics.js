@@ -28,6 +28,7 @@ export function tacticalCarrier(def, extra = {}, ctx = null, source = null) {
     combatRiderTargets: [] };
   if (combatExpansionEnabled(ctx) && extra.ratingId === undefined && def.ratingId !== undefined) carrier.ratingId = def.ratingId;
   carrier.combatProfile = { ...combatProfileFor(carrier), ...(def.combatProfile || {}), ...(extra.combatProfile || {}) };
+  if (carrier.combatProfile.evade?.whileStatus && source) carrier.combatProfile.evadeEligible = source.statuses?.[carrier.combatProfile.evade.whileStatus]?.stacks > 0;
   // A mixed card's weapon part is resolved like an untagged card's whole type.
   const weaponPart = !!(carrier.attack?.weaponDamage && carrier.attack.components);
   if ((!carrier.combatProfile.damageType || weaponPart) && carrier.combatProfile.camp && ctx?.registries && source?.kind !== 'enemy' && !source?.enemyId) {

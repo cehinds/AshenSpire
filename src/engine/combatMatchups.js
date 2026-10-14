@@ -297,7 +297,8 @@ export function setCombatStance(ctx, entity, carrier) {
   if (!combatExpansionEnabled(ctx) || !entity) return null;
   const profile = normalizedProfile(carrier);
   if (!profile.maneuver || profile.stanceTrigger === false) return entity.combatStance || null;
-  const next = stanceOf({ combatProfile: profile });
+  if (profile.evade?.whileStatus) profile.evadeEligible = entity.statuses?.[profile.evade.whileStatus]?.stacks > 0;
+  const next = stanceOf({ combatProfile: profile }, entity);
   if (!next) return entity.combatStance || null;
   const changed = !sameStance(entity, { combatProfile: profile });
   // Range and school track the accepted card even when the stance identity stays the same.
@@ -683,12 +684,20 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
 
 /** One shared round boundary, rather than separate player/enemy owner-end clocks. */
 export function decayStanceRoundStart(ctx) {
-  if (!combatExpansionEnabled(ctx) || ctx.turn <= 1) return;
-  const players = ctx.players ? [...ctx.players.values()].map(seat => seat.entity) : [ctx.player];
-  for (const entity of [...players, ...(ctx.enemies || [])]) {
+  if ((ctx.sharedExpansionVersion ?? ctx.combatExpansionVersion) !== 2 || ctx.turn <= 1) return;
+  const rows = ctx.players
+    ? [...ctx.players.values()].filter(seat => seat.entity?.combatExpansionVersion === 2).map(seat => ({
+      entity: seat.entity, context: { ...ctx, player: seat.entity, combatExpansionVersion: 2,
+        registries: ctx.registriesForPlayer?.(seat.id) || ctx.registries,
+        ratingsRules: ctx.ratingsRules && seat.ratingRows ? { ...ctx.ratingsRules, ratings: seat.ratingRows } : ctx.ratingsRules },
+    }))
+    : [{ entity: ctx.player, context: ctx }];
+  rows.push(...(ctx.enemies || []).map(entity => ({ entity,
+    context: { ...ctx, combatExpansionVersion: ctx.sharedExpansionVersion ?? ctx.combatExpansionVersion } })));
+  for (const { entity, context } of rows) {
     if (!entity?.alive) continue;
-    for (const [status, amount] of Object.entries(stanceRulesFor(ctx).roundStartDecay || {})) {
-      if (entity.statuses?.[status]?.stacks > 0) removeStatus(ctx, entity, status, { amount, reason: 'roundStart' });
+    for (const [status, amount] of Object.entries(stanceRulesFor(context).roundStartDecay || {})) {
+      if (entity.statuses?.[status]?.stacks > 0) removeStatus(context, entity, status, { amount, reason: 'roundStart' });
     }
   }
 }

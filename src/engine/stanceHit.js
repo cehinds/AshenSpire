@@ -25,7 +25,7 @@ export function attackHitPreview(ctx, source, target, carrier, options = {}) {
   const tags = carrier?.authoredTags || carrier?.tags || [];
   const spell = ['spell', 'spells', 'magic', 'magical'].includes(profile.camp);
   // Explicit Target identity is different from an effect's target selector.
-  const bypass = spell && tags.some(tag => ['target', 'Target', 'target:target', 'delivery:target'].includes(tag));
+  const bypass = spell && tags.includes('target');
   const range = profile.range || 'melee';
   const requiredRange = carrier?.counterRequiredRange || target?.combatStance?.range || 'melee';
   const override = profile.rangeOverride === true || profile.adequateReach === true || profile.traits?.includes('adequateReach');

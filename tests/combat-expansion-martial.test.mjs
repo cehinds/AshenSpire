@@ -226,6 +226,7 @@ test('Prone combo impact is conditional on a successful Contact return, while co
     const shot = tacticalCarrier({ tags: ['camp:physical', 'maneuver:ranged'],
       evade: { charges: 1, bonus: 0, advantage: true, whileStatus: 'prone' } });
     prepareTacticalCard(f.ctx, f.target, f.source, shot, []);
-    assert.equal(!!f.target.combatEvade?.charges, prone);
+    assert.equal(f.target.combatStance.maneuver, prone ? 'evade' : 'attack');
+    assert.equal(f.queue.filter(action => action.meta?.stanceEntry && action.effect.status === 'evade').length, prone ? 1 : 0);
   }
 });

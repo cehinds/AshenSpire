@@ -2,7 +2,7 @@ import { stanceRules } from '../content/stanceRules.js';
 import { combatProfileFor } from './combatCardProfile.js';
 
 export function stanceRulesFor(ctx) { return { ...stanceRules, ...(ctx?.stanceRules || ctx?.registries?.balance?.stanceRules || {}) }; }
-export function stanceOf(carrier) {
+export function stanceOf(carrier, entity = null) {
   if (!carrier) return null;
   const profile = carrier.combatProfile || (carrier.camp ? carrier : combatProfileFor(carrier));
   if (profile.stanceTrigger === false || !profile.maneuver) return null;
@@ -10,14 +10,16 @@ export function stanceOf(carrier) {
   let maneuver = profile.maneuver;
   if (maneuver === 'defense' || maneuver === 'block') maneuver = 'defend';
   if (maneuver === 'spell' || maneuver === 'cast') maneuver = 'casting';
-  if (profile.evade || maneuver === 'evade') maneuver = 'evade';
+  const evade = profile.evade && profile.evadeEligible !== false
+    && (!profile.evade.whileStatus || profile.evadeEligible === true || entity?.statuses?.[profile.evade.whileStatus]?.stacks > 0);
+  if (evade || maneuver === 'evade') maneuver = 'evade';
   if (camp === 'spell' && !['defend', 'counter', 'evade'].includes(maneuver)
     && (profile.range || (profile.projectile || maneuver === 'ranged' ? 'ranged' : 'melee')) !== 'melee') maneuver = 'casting';
   if (maneuver === 'ranged') maneuver = 'attack';
   return { maneuver, camp, range: profile.range || 'melee', ...(profile.school ? { school: profile.school } : {}) };
 }
 export function sameStance(entity, carrier) {
-  const active = stanceOf(entity?.combatStance), next = stanceOf(carrier);
+  const active = stanceOf(entity?.combatStance), next = stanceOf(carrier, entity);
   return !!active && !!next && active.maneuver === next.maneuver && active.camp === next.camp;
 }
 export function stanceStaminaCost(base, entity, carrier, ctx = null) {
