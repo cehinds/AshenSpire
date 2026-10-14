@@ -1113,6 +1113,15 @@ function livingEnemies(ctx) {
  * target, then its source.
  */
 export function resolveTargets(ctx, action, targetSpec) {
+  const group = action.meta?.expansionGroup;
+  const generic = !['damage', 'applyStatus', 'buildup'].includes(action.effect?.op);
+  const refs = group?.begun && generic ? action.meta?.expansionTargets?.[action.meta?.expansionExecutionRepeat || 0] : null;
+  const targets = refs ? refs.map(ref => Expanded.expansionEntity(ctx, ref)).filter(entity => Expanded.expansionTargetPresent(ctx, entity))
+    : resolveRawTargets(ctx, action, targetSpec);
+  return targets.filter(entity => !group?.targets?.[ctx.playerIdForEntity?.(entity) || entity.id]?.receipt?.avoided);
+}
+
+function resolveRawTargets(ctx, action, targetSpec) {
   switch (targetSpec) {
     case undefined:
     case null:
@@ -1247,6 +1256,8 @@ export function executeAction(ctx, action) {
 
   // Budgeted escape hatch (SPEC §3.1(6)): { script: 'name', ...args }.
   if (typeof eff.script === 'string') {
+    if (action.target && action.target.kind !== action.source?.kind
+      && action.meta?.expansionGroup?.targets?.[ctx.playerIdForEntity?.(action.target) || action.target.id]?.receipt?.avoided) return;
     const fn = ctx.registries.scripts[eff.script];
     if (typeof fn !== 'function') throw new Error(`Unknown script '${eff.script}'`);
     fn(ctx, action);
@@ -1270,6 +1281,7 @@ export function executeAction(ctx, action) {
   ctx._abilityAction = action;
   try {
     for (let r = 0; r < repeat; r++) {
+      if (action.meta) action.meta.expansionExecutionRepeat = r;
       runOpcode(ctx, action, eff);
       spendSilencedForEffect(ctx, action, eff);
       if (ctx.result || ctx.pendingAbilityDiscard) return;

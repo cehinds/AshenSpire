@@ -383,9 +383,9 @@ export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
 // same word already showing on that fighter is not repeated.
 // ---------------------------------------------------------------------------
 export const CALLOUT_KINDS = {
-  hit: { word: 'Hit', tone: 'white' },
-  evadeFailed: { word: 'Hit — Evade Failed', tone: 'white' },
-  missed: { word: 'Missed', tone: 'white' },
+  hit: { string: 'combat.callout.hit', tone: 'white' },
+  evadeFailed: { string: 'combat.callout.evadeFailed', tone: 'white' },
+  missed: { string: 'combat.callout.missed', tone: 'white' },
   staggered: { string: 'combat.callout.staggered', tone: 'gold' },
   disrupted: { string: 'combat.callout.disrupted', tone: 'gold' },
   countered: { string: 'combat.callout.countered', tone: 'red' },

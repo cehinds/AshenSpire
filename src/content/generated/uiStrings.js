@@ -10228,5 +10228,26 @@ export const uiStrings = [
     "short": "Recover HP after victory.",
     "full": "",
     "tip": ""
+  },
+  {
+    "id": "combat.callout.hit",
+    "extends": "",
+    "short": "Hit",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.callout.evadeFailed",
+    "extends": "",
+    "short": "Hit — Evade Failed",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.callout.missed",
+    "extends": "",
+    "short": "Missed",
+    "full": "",
+    "tip": ""
   }
 ];

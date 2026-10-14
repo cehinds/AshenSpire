@@ -116,15 +116,18 @@ test('one Bashing Blow logs each stagger-meter impact with its own cause, and a 
       relicIds: ['forsakenMedallion'], attributes: { strength: 1, dexterity: 1, constitution: 1, wisdom: 1, intelligence: 1 },
       deck: Array.from({ length: 5 }, (_, i) => ({ instanceId: `s${i}`, cardId: 'bashingBlow', upgraded: false })) },
     enemyIds: ['valkyrieShade'] });
+  // This source-attribution test exercises a landed hit with real seeded draws.
+  c.player.accuracy = 100; c.enemies[0].evasion = 0;
   dispatch(c, { type: 'playCard', cardInstanceId: c.piles.hand[0].instanceId, targetId: c.enemies[0].id });
   const impacts = c.eventLog.filter(event => event.type === 'ratingImpact');
   assert.deepEqual(impacts.map(event => event.cause), ['hit', 'rider:blunt', 'poiseDamage', 'trait:impact', 'relic:forsakenMedallion']);
   const lines = combatLogEntries(c.eventLog, { registries, enemies: c.enemies }).map(row => row.text).filter(text => text.includes('stagger meter'));
   const relic = registries.relics.get('forsakenMedallion').name;
   // Bashing Blow is a smash, so its Poise damage is the cost formula's, not the authored 4 (SPEC §4.3a; owner 2026-10-13:
-  // "All smashes deal poise damage"): the 2-SP scale plus smashPoiseBase. The Impact trait repeats that amount.
+  // "All smashes deal poise damage"): the 2-SP scale applies to its authored Poise.
+  // The +3 fallback applies only when no Poise was authored. Impact repeats that amount.
   const poise = resolveCard(registries, { cardId: 'bashingBlow', upgraded: false }).effects.find(e => e.op === 'poiseDamage').amount;
-  assert.ok(poise > 4, 'fixture: the smash adds Poise damage to the authored 4');
+  assert.ok(poise > 4, 'fixture: the 2-SP scale increases the authored 4');
   assert.deepEqual(lines.map(text => text.replace(/ \(\d+\/\d+(, broke)?\)\.$/, '')), [
     "Valkyrie Shade's stagger meter took 1 from the hit (Forsaken's Bashing Blow)",
     "Valkyrie Shade's stagger meter took 2 from Blunt (Forsaken's Bashing Blow)",
@@ -145,7 +148,13 @@ test('engine events carry their cause: an enemy move stamps moveId, a status tic
     try { dispatch(c, { type: 'endTurn' }); } catch { break; }
   }
   const fromMove = c.eventLog.filter(event => ['blockGained', 'healed', 'statusApplied'].includes(event.type) && event.sourceId === 'e1');
-  assert.ok(fromMove.length > 0 && fromMove.every(event => event.moveId), 'every enemy move effect names its move');
+  assert.ok(fromMove.length > 0 && fromMove.every(event => event.moveId
+    || (event.preparing === true && event.triggeredBy?.kind === 'stance' && event.triggeredBy.ownerId === event.sourceId)),
+  'every enemy effect names its executed move or its safely concealed stance preparation');
+  const preparation = fromMove.filter(event => event.preparing);
+  assert.ok(preparation.length > 0, 'fixture includes new enemy stance entry effects');
+  assert.ok(preparation.every(event => event.moveId === undefined && event.cardId === undefined),
+    'stance preparation does not disclose the unexecuted move or card');
   const ticks = c.eventLog.filter(event => event.type === 'hpLost' && event.cause === 'effect');
   assert.ok(ticks.length > 0 && ticks.every(event => event.triggeredBy?.kind === 'status'), 'every status tick names its status');
   const lines = combatLogEntries(c.eventLog, { registries, enemies: c.enemies }).map(row => row.text);

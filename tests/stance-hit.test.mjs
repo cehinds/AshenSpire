@@ -82,11 +82,17 @@ test('one committed miss gates every contact and hostile pressure/status', () =>
   const before = { hp: target.hp, ward: target.persistentWard.value, poise: structuredClone(target.persistentPoise) };
   let draws = 0; ctx.rng.int = stream => { if (stream === 'combatAvoidance') draws++; return 1; };
   const carrier = { type: 'attack', tags: ['camp:physical', 'maneuver:attack', 'range:melee'], combatProfile: { camp: 'physical', maneuver: 'attack', range: 'melee' } };
-  const effects = [{ op: 'damage', amount: 5, hits: 3 }, { op: 'poiseDamage', amount: 4 }, { op: 'wardDamage', amount: 3 }, { op: 'applyStatus', status: 'weak', stacks: 2 }];
+  target.statuses.venom = { stacks: 3 };
+  const playerHp = ctx.player.hp;
+  const effects = [{ op: 'damage', amount: 5, hits: 3 }, { op: 'poiseDamage', amount: 4 }, { op: 'wardDamage', amount: 3 }, { op: 'applyStatus', status: 'weak', stacks: 2 },
+    { op: 'removeStatus', target: 'enemy', status: 'venom' }, { op: 'loseHp', target: 'self', amount: 2 }, { op: 'applyStatus', target: 'self', status: 'strength', stacks: 1 }];
   enqueueExpandedAction(ctx, effects.map(effect => ({ effect, source: ctx.player, owner: ctx.player, target, card: carrier, meta: {} })), { source: ctx.player, target, carrier });
   while (ctx.queue.length) executeAction(ctx, ctx.queue.shift());
   assert.equal(draws, 1); assert.equal(target.hp, before.hp); assert.equal(target.persistentWard.value, before.ward);
   assert.deepEqual(target.persistentPoise, before.poise); assert.equal(target.statuses.weak, undefined);
+  assert.equal(target.statuses.venom.stacks, 3, 'a miss cannot consume the target status');
+  assert.equal(ctx.player.hp, playerHp - 2, 'self costs remain committed');
+  assert.equal(ctx.player.statuses.strength.stacks, 1, 'self benefits remain committed');
 });
 test('Smash pressure planning excludes later oncePerTurn rejection without spending live budget', () => {
   const ctx = createCombat({ registries, rng: createRng(5), combatExpansionVersion: 2,
@@ -141,4 +147,17 @@ test('Spell status bonus follows configured authored payloads for Casting and ma
     assert.equal(ctx.player.statuses.strength.stacks, expected, `${camp} ${maneuver}`);
     assert.equal(ctx.player.statuses.weak, undefined, 'a zero authored status does not gain an invented application');
   }
+});
+
+test('a hostile status removal without damage still creates exactly one Accuracy decision', () => {
+  const ctx = createCombat({ registries, rng: createRng(5), combatExpansionVersion: 2,
+    ratingsRules: resolveCombatRatings({}, contentBundle), enemyIds: ['wanderingSoldier'],
+    player: { classId: 'starseer', maxHp: 100, hp: 100, maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1, deck: [] } });
+  const target = ctx.enemies[0]; target.statuses.strength = { stacks: 3 }; delete target.combatStance;
+  let draws = 0; ctx.rng.int = stream => { if (stream === 'combatAvoidance') draws++; return 1; };
+  const carrier = { type: 'skill', tags: ['camp:spell', 'maneuver:casting'], combatProfile: { camp: 'spell', maneuver: 'casting', range: 'reach' } };
+  const group = enqueueExpandedAction(ctx, [{ effect: { op: 'removeStatus', target: 'enemy', status: 'strength' }, source: ctx.player, owner: ctx.player, target, card: carrier, meta: {} }], { source: ctx.player, target, carrier });
+  assert.equal(Object.keys(group.targets).length, 1);
+  while (ctx.queue.length) executeAction(ctx, ctx.queue.shift());
+  assert.equal(draws, 1); assert.equal(target.statuses.strength.stacks, 3);
 });

@@ -16,9 +16,12 @@ const callouts = (layer) => layer.children.filter((node) => node.dataset?.callou
 
 test('every callout kind has a localized word', () => {
   for (const [kind, def] of Object.entries(CALLOUT_KINDS)) {
-    assert.match(t(def.string), /^[A-Z ]+$/, `${kind} is a short uppercase word`);
+    assert.match(t(def.string), /^[A-Za-z —]+$/, `${kind} is a localized outcome phrase`);
   }
   assert.equal(t(CALLOUT_KINDS.guardBreak.string), 'GUARD BREAK');
+  assert.equal(t(CALLOUT_KINDS.hit.string), 'Hit');
+  assert.equal(t(CALLOUT_KINDS.evadeFailed.string), 'Hit — Evade Failed');
+  assert.equal(t(CALLOUT_KINDS.missed.string), 'Missed');
 });
 
 test('a callout names its fighter, shows three in lanes, queues the rest, and skips a repeat', (t2) => {

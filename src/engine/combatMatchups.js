@@ -301,6 +301,8 @@ export function setCombatStance(ctx, entity, carrier) {
   const next = stanceOf({ combatProfile: profile }, entity);
   if (!next) return entity.combatStance || null;
   const changed = !sameStance(entity, { combatProfile: profile });
+  const provenance = { ...(entity.kind === 'enemy' ? { preparing: true } : {}),
+    triggeredBy: { kind: 'stance', id: entity.kind === 'enemy' ? 'combatStance' : next.maneuver, ownerId: entity.id } };
   // A fresh non-Counter card cannot retain an older hybrid Counter just because both are Evade.
   if (!changed && profile.maneuver !== 'counter') clearCombatCounter(entity, ctx);
   // Range and school track the accepted card even when the stance identity stays the same.
@@ -316,11 +318,11 @@ export function setCombatStance(ctx, entity, carrier) {
     const grants = stanceEntryBonuses({ combatProfile: profile }, ctx);
     for (const [op, amount] of [['block', grants.block], ['gainBarrier', grants.barrier]]) {
       if (amount > 0) ctx.enqueue({ effect: { op, target: 'self', amount }, source: entity, owner: entity, target: entity,
-        card: { ...carrier, skipRatingBonus: true }, meta: { stanceEntry: true } });
+        card: { ...carrier, skipRatingBonus: true }, meta: { ...provenance, stanceEntry: true } });
     }
     for (const [status, stacks] of [['precision', grants.precision], ['evade', grants.evade]]) {
       if (stacks > 0) ctx.enqueue({ effect: { op: 'applyStatus', target: 'self', status, stacks }, source: entity,
-        owner: entity, target: entity, card: carrier, meta: { stanceEntry: true } });
+        owner: entity, target: entity, card: carrier, meta: { ...provenance, stanceEntry: true } });
     }
   }
   // Defense restores on every accepted card, including an unchanged stance.
@@ -336,7 +338,7 @@ export function setCombatStance(ctx, entity, carrier) {
           ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(entity) } : {}) });
       }
       if (amount > restored) ctx.enqueue({ effect: { op: overflowOp, target: 'self', amount: amount - restored },
-        source: entity, owner: entity, target: entity, card: { ...carrier, skipRatingBonus: true }, meta: { stanceRestore: true } });
+        source: entity, owner: entity, target: entity, card: { ...carrier, skipRatingBonus: true }, meta: { ...provenance, stanceRestore: true } });
     }
   }
   // Reaction rules version 2: a Defend card with Impact/Flux arms the trait guard (max-merged).

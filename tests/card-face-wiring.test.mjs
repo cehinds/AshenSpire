@@ -44,7 +44,8 @@ test('a card without a preview renders face lines starting with Inflict', () => 
 
 test('the same card with a preview gives the same line text when the numbers are equal', () => withKitDom(dom => {
   const markup = trackInnerHtml(dom);
-  const plain = faceLinesOf(markup.get(renderCard(reg, { cardId: 'bashingBlow' }, { inspection: false })));
+  const plain = faceLinesOf(markup.get(renderCard(reg, { cardId: 'bashingBlow' },
+    { inspection: false, rules: { combatExpansionVersion: 2 }, definition: previewOf('bashingBlow').resolvedDefinition })));
   const previewed = faceLinesOf(markup.get(renderCard(reg, { cardId: 'bashingBlow' },
     { inspection: false, preview: previewOf('bashingBlow') })));
   assert.deepEqual(previewed.map(textOf), plain.map(textOf));

@@ -88,6 +88,7 @@ async function remount(cards, options = {}) {
     const run = window.__combatRunForShot || createRunState({ seed: 7814, classId: 'starseer', registries });
     if (!window.__stanceQaInitial) window.__stanceQaInitial = {
       playerStatuses: structuredClone(combat.player.statuses),
+      rngCounters: combat.rng.getCounters(),
       enemies: combat.enemies.map(enemy => ({
         hp: enemy.hp, maxHp: enemy.maxHp, alive: enemy.alive, block: enemy.block,
         statuses: structuredClone(enemy.statuses), combatStance: structuredClone(enemy.combatStance),
@@ -97,6 +98,7 @@ async function remount(cards, options = {}) {
     combat.phase = 'player';
     combat.player.alive = true;
     combat.player.statuses = structuredClone(window.__stanceQaInitial.playerStatuses);
+    combat.rng.restoreCounters(window.__stanceQaInitial.rngCounters);
     combat.piles.hand = cards.map((cardId, index) => ({ instanceId: 'stance-qa-' + sequence + '-' + index, cardId, upgraded: false }));
     for (const [index, enemy] of combat.enemies.entries()) {
       const initial = window.__stanceQaInitial.enemies[index];
@@ -145,7 +147,10 @@ async function remount(cards, options = {}) {
       combat.enemies[0].statuses = { ...combat.enemies[0].statuses, evade: { stacks: 1 } };
     }
     if (options.evade) combat.enemies[0].combatEvade = { charges: 1, bonus: 100, advantage: false, disadvantage: false, expiresOnOwnerCycle: 1 };
-    if (options.roll != null) combat.rng.int = stream => stream === 'combatAvoidance' ? options.roll : 20;
+    if (options.roll != null) {
+      const { primeAccuracyRolls } = await import('/tests/accuracyFixture.mjs');
+      primeAccuracyRolls(combat, { die: options.roll });
+    }
     if (typeof window.__renderCombatForShot === 'function') window.__renderCombatForShot();
     else mountCombat(document.querySelector('#app'), {
       registries, run, combat,
@@ -167,6 +172,12 @@ async function inspectCard(cardId, label) {
   await info.press('Enter');
   const detail = page.locator('.card-inspection-modal:visible, .card-inspection-details:visible, .deck-editor-inspector:visible').first();
   await waitStableVisible(detail);
+  if (cardId === 'crystalBarrier') {
+    const rules = page.locator('.card-inspection-modal .ctext, .card-inspection-details .ctext').first();
+    await rules.waitFor({ state: 'visible', timeout: 5000 });
+    const fit = await rules.evaluate(node => ({ scrollHeight: node.scrollHeight, clientHeight: node.clientHeight }));
+    assert.ok(fit.scrollHeight <= fit.clientHeight, 'Crystal Barrier text fits without vertical clipping');
+  }
   await capture(label, { width: 1440, height: 1000 });
   await page.keyboard.press('Escape').catch(() => {});
 }
@@ -174,7 +185,13 @@ async function inspectCard(cardId, label) {
 try {
   await boot({ width: 1440, height: 1000 });
   await remount([], { hud: true });
-  assert.ok(await page.locator('.combatant.player .combat-health-row').count(), 'player HP row rendered');
+  const hpRow = page.locator('.combatant.player .combat-health-row').first();
+  assert.ok(await hpRow.count(), 'player HP row rendered');
+  assert.doesNotMatch(await hpRow.innerText(), /\[object Object\]/, 'HP badges do not render object placeholders');
+  const evadeBadge = page.locator('.combatant.player .combat-health-row [data-defense-kind="evade"]').first();
+  assert.ok(await evadeBadge.locator('svg').count(), 'Evade badge uses its SVG icon');
+  const evadeBox = await evadeBadge.boundingBox();
+  assert.ok(evadeBox && evadeBox.width <= 26 && evadeBox.height <= 26, 'Evade badge icon fits the compact HUD row');
   for (const kind of ['evade', 'poise', 'ward', 'shield']) {
     assert.ok(await page.locator('.combatant.player .combat-health-row [data-defense-kind="' + kind + '"]').count(), 'player ' + kind + ' row rendered');
   }

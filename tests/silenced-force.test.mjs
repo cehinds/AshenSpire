@@ -1,3 +1,4 @@
+import { primeAccuracyRolls } from './accuracyFixture.mjs';
 // Silenced in expanded combat (owner, 2026-10-13): a Silenced creature is immune to Force. Each Force
 // hit has its Force (Arcane) part negated, the rest landing as usual, and spends one Silenced stack; a hit
 // that is all Force is negated whole. Once the stacks run out, later hits land. A Force effect that is not damage spends one stack per application. The
@@ -25,6 +26,7 @@ function setup(cardId, stacks, version = 2) {
   const combat = createCombat({ registries, rng: createRng(801), combatExpansionVersion: version, enemyIds: ['wanderingSoldier'],
     player: { classId: 'starseer', maxHp: 100, hp: 100, maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1,
       deck: [{ cardId, instanceId: 'c', upgraded: false }] } });
+  primeAccuracyRolls(combat, { count: 2 });
   const enemy = combat.enemies[0];
   enemy.block = enemy.barrier = 0; enemy.hp = enemy.maxHp = 200;
   enemy.damageResistanceFlat = {}; enemy.damageWeaknessPercent = {}; enemy.damageResistPercent = {};
@@ -104,6 +106,7 @@ test('Ruinous Blow (60 Blunt / 40 Force) into Silenced: the 60% Blunt lands, the
     player: { classId: 'reaver', maxHp: 200, hp: 200, maxMana: 50, mana: 50, energyMax: 10, drawPerTurn: 5, relicIds: [],
       deck: [{ instanceId: 'c', cardId: 'ruinousBlow' }],
       loadout: { sets: { rightHand: ['straightSword'], leftHand: [null], armor: ['default'] }, active: { rightHand: 0, leftHand: 0, armor: 0 } } } });
+  primeAccuracyRolls(combat, { count: 2 });
   const enemy = combat.enemies[0];
   enemy.hp = enemy.maxHp = 500; enemy.statuses.silenced = { stacks: 1, duration: 2 };
   const before = enemy.hp;
@@ -136,6 +139,7 @@ function forceSetup(cardId, { enemyStacks = 0, playerStacks = 0 } = {}) {
   const combat = createCombat({ registries: FORCE_OPS, rng: createRng(801), combatExpansionVersion: 2, enemyIds: ['wanderingSoldier'],
     player: { classId: 'starseer', maxHp: 100, hp: 100, maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1,
       deck: [{ cardId, instanceId: 'c', upgraded: false }, { cardId: 'strike', instanceId: 'd', upgraded: false }] } });
+  primeAccuracyRolls(combat, { count: 2 });
   const enemy = combat.enemies[0];
   enemy.hp = enemy.maxHp = 200; enemy.block = enemy.barrier = 0;
   if (enemyStacks) enemy.statuses.silenced = { stacks: enemyStacks, duration: 2 };

@@ -186,7 +186,7 @@ import { combatStatusRules } from '../src/content/combatStatusRules.js';
 import { combatExpansionMatchups } from '../src/content/combatMatchups.js';
 import { combatProfileFor } from '../src/model/combatCardProfile.js';
 import { applyCombatExpansionMartial } from '../src/content/combatExpansionMartial.js';
-import { stanceEntryBonuses } from '../src/model/stanceRules.js';
+import { stanceEntryBonuses, stanceRulesFor } from '../src/model/stanceRules.js';
 import { expandedEnemyMove } from '../src/engine/combatCardTactics.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -345,8 +345,12 @@ export function statusReach(bundle, opts = {}) {
     walk(carrier);
     const profile = { ...combatProfileFor(carrier), ...(carrier.combatProfile || {}) };
     // R8: mirror actual stance entry, requiring a shipped stance-bearing carrier and a positive configured grant.
-    const entry = stanceEntryBonuses({ ...carrier, combatProfile: profile }, { stanceRules: opts.stanceRules || bundle.balance?.stanceRules });
+    const stanceContext = { stanceRules: opts.stanceRules || bundle.balance?.stanceRules };
+    const entry = stanceEntryBonuses({ ...carrier, combatProfile: profile }, stanceContext);
     for (const status of ['precision', 'evade']) if (entry[status] > 0) note(status, `R8 stance entry ${where}`);
+    if (profile.camp === 'spell' && stanceRulesFor(stanceContext).spellStatusStacks > 0
+      && (carrier.effects || []).some(effect => ['applyStatus', 'buildup'].includes(effect.op)
+        && effect.chance !== 0 && positive(effect.stacks ?? effect.amount ?? 1))) note('precision', `R8 authored spell status ${where}`);
     const damaging = positive(carrier.damage) || [...(carrier.effects || []), ...(carrier.upgrade?.effects || [])]
       .some(effect => effect.op === 'damage' && positive(effect.amount));
     const type = expansionMatchups.damageAliases?.[profile.damageType] || profile.damageType;
