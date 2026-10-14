@@ -1,3 +1,4 @@
+import { combatWeaponProfilesFor } from '../../model/combatWeaponPresentation.js';
 import { enemyActionPose } from '../../model/enemyActionPose.js';
 import { enemyStanceCategory } from '../../model/enemyStancePose.js';
 import { ratingValue, ratingDamageMultiplier } from '../../model/combatRatings.js';
@@ -64,7 +65,7 @@ import { relicText, renderCard } from '../components/card.js';
 import { enemySprite, playerSprite, spritesAreEnabled } from '../assets.js';
 import { createStanceLedger, kindForCard, stanceForCard } from '../../model/alternativeStance.js';
 import { selectedWeaponCounterOrigins, selectedWeaponSequence, selectedWeaponSequenceTiming } from '../../model/selectedWeaponSequences.js';
-import { selectedWeaponProfileFor, selectedWeaponStanceFor, selectedWeaponReactionFor, selectedWeaponCounterFor } from '../../model/selectedWeaponStances.js';
+import { selectedWeaponStanceFor, selectedWeaponReactionFor, selectedWeaponCounterFor } from '../../model/selectedWeaponStances.js';
 import { animateEvents, playEventCues, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } from '../fx.js';
 import { ANIM_SPEEDS, COMBAT_TIMING, getAnimSpeed } from '../animationPace.js';
 import { figureSpec, equippedPieces, gripOf } from '../../model/loadout.js';
@@ -264,8 +265,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // The player's last confirmed card kind: the at-rest intent glyph above the head.
   const heldKinds = createStanceLedger(kindForCard);
   const heldCards = createStanceLedger(card => card);
+  function smashProfile() {
+    return combatWeaponProfilesFor({appearance:displayAppearance(), classId:run.class, armourId:figureSpec(registries,run.loadout,run.class).armourId, grip:gripOf(registries,run.loadout,run.class)}).smashProfile;
+  }
   function selectedProfile() {
-    return selectedWeaponProfileFor({ classId: run.class, armourId: figureSpec(registries, run.loadout, run.class).armourId, grip: gripOf(registries, run.loadout, run.class) });
+    return combatWeaponProfilesFor({ appearance: displayAppearance(), classId: run.class, armourId: figureSpec(registries, run.loadout, run.class).armourId, grip: gripOf(registries, run.loadout, run.class) }).weaponProfile;
   }
   function playerStance(def) {
     return selectedWeaponStanceFor({ profile: selectedProfile(), stance: def ? stanceForCard(def) : heldStances.get(), card: def || heldCards.get(), entity: dv(combat.player) });
@@ -337,7 +341,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       try {
         if (selectedProfile()) return selectedWeaponSequenceTiming(selectedWeaponSequence('counter-guard'),speed).totalMs;
         if (CARD_ACTION_CLASSES.includes(run.class)) return speed.lungeMs;
-        const animation = equipmentAnimationForLoadout(registries, run.loadout, run.class);
+        const animation = combatEquipmentAnimationForLoadout(registries, run.loadout, run.class);
         return Math.max(reaverAttackTiming(speed).totalMs, ...Object.keys(animation?.references || {}).map(role => animationTiming(animation, role, speed)?.totalMs || 0));
       } catch (e) {
         console.warn('[combat] actor animation budget failed:', e && e.message);
@@ -374,7 +378,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         availablePoses: stage?.poses || [],
       });
       if (played && definition) {
-        const grouped = (!returned && visualPlans.get(played.cardInstanceId)) || resolveCombatAnimation({ ...definition, cardTags: tags, animationTags: combatEffectTags(registries, definition) }, equippedPieces(registries, run.loadout, run.class), { animation: equipmentAnimationForLoadout(registries, run.loadout, run.class), classId: run.class, appearance: displayAppearance(), combatExpansionVersion: combat.combatExpansionVersion, counterTriggered: !!returned, action: plan });
+        const grouped = (!returned && visualPlans.get(played.cardInstanceId)) || resolveCombatAnimation({ ...definition, cardTags: tags, animationTags: combatEffectTags(registries, definition) }, equippedPieces(registries, run.loadout, run.class), { animation: combatEquipmentAnimationForLoadout(registries, run.loadout, run.class), classId: run.class, appearance: displayAppearance(), combatExpansionVersion: combat.combatExpansionVersion, counterTriggered: !!returned, action: plan });
         const pose = selectedCounter && stage?.poses?.includes(selectedCounter) ? selectedCounter : stage?.setRestPose ? grouped.technique : grouped.group === 'attack' ? 'attack1' : grouped.group === 'defend' ? 'guard' : 'idle';
         plan = { ...plan, ...grouped, pose, spriteEffect: combatEffectPlan({ ...definition, cardTags: combatEffectTags(registries,definition) },played), effectEvents: beat.events, targetId: played.targetId || beat.events.find(e=>e.type==='damageDealt')?.targetId };
         actorEl.dataset.actionGroup = grouped.group;
@@ -1581,8 +1585,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const zone = $('.player-zone');
     const p = combat.player;
     const figure = figureSpec(registries, run.loadout, run.class);
-    const animation = equipmentAnimationForLoadout(registries, run.loadout, run.class);
-    const artKey = JSON.stringify([run.class, run.customization, figure.armourId, selectedProfile(), animation?.setId, animation?.grip, spritesAreEnabled(), document.documentElement.dataset.performance, displayAppearance()]);
+    const animation = combatEquipmentAnimationForLoadout(registries, run.loadout, run.class);
+    const artKey = JSON.stringify([run.class, run.customization, figure.armourId, selectedProfile(), smashProfile(), animation?.setId, animation?.grip, spritesAreEnabled(), document.documentElement.dataset.performance, displayAppearance()]);
     const existing = artKey === playerArtKey ? zone.querySelector('.combatant.player') : null;
     const renderKey = JSON.stringify([artKey, p, dv(p), run.attributes, run.loadout, selected, selfArm, playerRest, heldStances.get(), heldKinds.get(), readinessOrder, readSettings()]);
     if (existing && playerRenderKey === renderKey) return;
@@ -1632,7 +1636,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       entityId: 'player',
       leading: [combatantInfo(combatantSubject('player', p).name, opener => openCombatantDoor(combatantSubject('player', p), opener))],
       classNames: [selfArm ? 'armed' : '', selectedCombatantId === 'player' ? 'context-selected' : ''],
-      sprite: existing ? null : playerSprite(run.customization || {}, run.class, figure.armourId, { animation, view: 'combat', selectedWeaponProfile: selectedProfile() }),
+      sprite: existing ? null : playerSprite(run.customization || {}, run.class, figure.armourId, { animation, view: 'combat', selectedWeaponProfile: selectedProfile(), classSmashProfile: smashProfile() }),
       name: markMeterRow(labelStack({ label: `${run.customization?.name || runClassIdentity(registries, run).name} · Lv ${characterLevel(run)}`, attrs: { class: 'nm' } }), 'name'),
       meters: meterBars(p),
       trailing,
@@ -2566,7 +2570,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const tags = definition.cardTags?.length ? definition.cardTags : tagService(registries).tagsOf('card', definition);
       const hpSpent = events.filter(e => e.type === 'hpLost' && e.targetId === combat.player.id && e.cause !== 'attack' && !String(e.cause).startsWith('proc:')).reduce((n,e)=>n+(e.amount||0),0);
       const action = resolveActionAnimation({ actorId: run.class, actionId: event.cardId, tags, type: event.cardType });
-      const animation = equipmentAnimationForLoadout(registries, run.loadout, run.class);
+      const animation = combatEquipmentAnimationForLoadout(registries, run.loadout, run.class);
       return [event.cardInstanceId, { stanceCard: { ...definition, cardTags: tags }, aura: resourceAura(definition, { ...event, hpSpent }), ...resolveCombatAnimation({ ...definition, cardTags: tags, animationTags: combatEffectTags(registries, definition), sourceArmamentId: definition.sourceArmamentId || instance.sourceArmamentId }, equippedPieces(registries, run.loadout, run.class), { animation, classId: run.class, appearance: displayAppearance(), combatExpansionVersion: combat.combatExpansionVersion, action }) }];
     })); } catch (e) { visualPlans = new Map(); console.warn('[combat] visual plan failed:', e && e.message); }
     // Nothing between here and playTimeline may prevent the timeline from
@@ -3169,5 +3173,5 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   if (showTutorial) mountTutorial(app, { onDone: () => onTutorialDone && onTutorialDone() });
   showPendingDiscard();
 }
-import { equipmentAnimationForLoadout, animationTiming } from '../../model/equipmentAnimation.js';
+import { equipmentAnimationForLoadout, combatEquipmentAnimationForLoadout, animationTiming } from '../../model/equipmentAnimation.js';
 

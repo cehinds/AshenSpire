@@ -1,0 +1,115 @@
+{
+  "status": "source approved; production export delegated to Sol",
+  "generator": "image_gen image edit full five-frame strip",
+  "promptFile": "source/revision-prompt.txt",
+  "registration": {
+    "frameSize": [
+      1024,
+      1024
+    ],
+    "groundAnchor": [
+      512,
+      900
+    ],
+    "bodyHeight": 494
+  },
+  "normalization": {
+    "sharedScale": 1.35,
+    "rawWorldGroundY": 714,
+    "slotRects": [
+      [
+        17,
+        260,
+        392,
+        714
+      ],
+      [
+        410,
+        240,
+        773,
+        719
+      ],
+      [
+        789,
+        105,
+        1148,
+        590
+      ],
+      [
+        1140,
+        399,
+        1631,
+        752
+      ],
+      [
+        1570,
+        260,
+        1965,
+        714
+      ]
+    ],
+    "method": "Connected-component ownership at alpha>32; nearest-main-component for detached islands; shared scale and world ground, horizontal centering only",
+    "alphaBounds": [
+      [
+        259,
+        287,
+        765,
+        900
+      ],
+      [
+        267,
+        260,
+        757,
+        907
+      ],
+      [
+        270,
+        78,
+        755,
+        733
+      ],
+      [
+        180,
+        475,
+        843,
+        952
+      ],
+      [
+        259,
+        287,
+        765,
+        900
+      ]
+    ],
+    "noAirborneFootLock": true,
+    "frame05ByteIdentical01": true,
+    "alphaCleanup": "Set alpha below 8/255 to zero; main component separation threshold32; preserve other alpha"
+  },
+  "hashes": {
+    "source/costume-seed.png": "b0b81ed09b59d8de14270710663fb43b4fea07b9eb2436e88278fddbabde6509",
+    "source/edit-canvas.png": "dcad0c967f476bc935d21a4350a922ef48b180438bfe52a7911a0d1ccf3f9e8c",
+    "source/raw-strip.png": "ab4d10fd033d90ac3123dd83fa28c3964bf457f126984429aa44d54ee25c2fa8",
+    "source/prompt.txt": "ed5cf41f4f736499dba8dbc79d7692b896c8bf10d209e539110894fceaee0e0b",
+    "frames/01-held.png": "1ec50550ef3547a0a3127e26003fac86c60e9ce1d73b846d319824fd88f36b13",
+    "frames/02-takeoff.png": "9b29e4124f686a91538c049646249e72c170270e71884819c67184d267feb70e",
+    "frames/03-airborne.png": "6ff7b03fc21973e844abe0424560df1ac6d6a6cfda8b56a967fb5d76c0a36d57",
+    "frames/04-impact.png": "caad10290e57eb3220df47b723972a8d741aabea09dd6a5c1fada5d7c5a53b41",
+    "frames/05-held.png": "1ec50550ef3547a0a3127e26003fac86c60e9ce1d73b846d319824fd88f36b13",
+    "source/revision-prompt.txt": "6cea8ba9b2b7fa04bceb67a17874444073143eba2cd4ede107d20d379206fd46",
+    "source/raw-v1.png": "2373ef562a5408167d44e946a186fef940b3fcfb903ab01dbc461645bca5440d",
+    "source/normalize.py": "d92266ba208b421a9bcffe38b683496c90d60425d4bf7ae8c5c63be458dbcaf0",
+    "source/revision1-prompt.txt": "cd2c00ecfb0ce298f8eb4d00326dc188940acfe03328190c0ffbd98385efccef",
+    "source/raw-v2-rejected.png": "d7d4221853a559824c8f698837fedaec0609f6604b7450e16497913b59834a50"
+  },
+  "alpha": {
+    "mode": "RGBA",
+    "rawRange": [
+      0,
+      255
+    ]
+  },
+  "seedOriginal": "pose-studio/renewal/herald/frames/ready.png",
+  "seedUse": "costume only; sword/shield replaced by right bone ritual mace and empty left hand",
+  "directorApproved": true,
+  "directorApproval": "Root art director approved corrected raw anatomy/motion on 2026-10-14; normalized preview no clipping, RGBA, exact held bookends"
+}
