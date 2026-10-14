@@ -29,8 +29,16 @@ export function mountCreationInfoLayer(root) {
     if (box.right <= gallery.left || box.left >= gallery.right || box.bottom <= pane.top || box.top >= pane.bottom || root.inert) { close(); return; }
     if (!control.matches(':popover-open')) control.showPopover();
     const size = control.getBoundingClientRect();
-    const left = Math.max(8, Math.min(innerWidth - size.width - 8, box.left + (box.width - size.width) / 2));
-    const top = Math.max(8, box.top - size.height - 8);
+    // Relic details already name the selected card below the compact shelf.
+    // Keep its same inspector beside that heading rather than reserving an
+    // otherwise empty band above the cards (or overlapping the page title).
+    const detailHeading = owner.closest('#cz-keepsake-panel')
+      ?.querySelector('.cc-equipment-details .cc-item-heading');
+    const headingBox = detailHeading?.getBoundingClientRect();
+    const left = Math.max(8, Math.min(innerWidth - size.width - 8, headingBox
+      ? headingBox.right - size.width : box.left + (box.width - size.width) / 2));
+    const top = Math.max(8, headingBox
+      ? headingBox.top + (headingBox.height - size.height) / 2 : box.top - size.height - 8);
     const position = anchorLocalBox(VIEWPORT_ORIGIN, { left, top, width: size.width, height: size.height });
     control.style.left = `${position.left}px`;
     control.style.top = `${position.top}px`;
