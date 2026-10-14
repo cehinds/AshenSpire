@@ -6,10 +6,14 @@ import { mkdirSync, writeFileSync, readFileSync, readdirSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { loadavg, freemem, cpus } from 'node:os';
 import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { launchBrowser } from '../browser.mjs';
-import { contentBundle } from '../../src/content/index.js';
-import { createRegistries } from '../../src/model/registries.js';
-import { SFX_MANIFEST, resolveRecipe } from '../../src/content/sfx.js';
+const sourceRoot = resolve(process.env.QA_REFERENCE_SOURCE || new URL('../../src/', import.meta.url).pathname);
+const [{ contentBundle }, { createRegistries }, { SFX_MANIFEST, resolveRecipe }] = await Promise.all([
+  import(pathToFileURL(resolve(sourceRoot, 'content/index.js')).href),
+  import(pathToFileURL(resolve(sourceRoot, 'model/registries.js')).href),
+  import(pathToFileURL(resolve(sourceRoot, 'content/sfx.js')).href),
+]);
 
 const registries = createRegistries(contentBundle);
 const classes = registries.classes.ids();
@@ -51,7 +55,6 @@ const sourceFiles = [];
 function listSource(dir) { for (const e of readdirSync(dir, { withFileTypes: true })) {
   const path = resolve(dir, e.name); if (e.isDirectory()) listSource(path); else if (e.name.endsWith('.js')) sourceFiles.push(path);
 } }
-const sourceRoot = resolve(new URL('../../src/', import.meta.url).pathname);
 listSource(sourceRoot);
 const sourceDigests = {};
 for (let i = 0; i < sourceFiles.length; i += 16) await Promise.all(sourceFiles.slice(i, i + 16).map(async path => {
@@ -75,7 +78,7 @@ for (let i = 0; i < sourceFiles.length; i += 16) await Promise.all(sourceFiles.s
 const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const owner = await launchBrowser({ browser: process.env.CHROME || '/usr/bin/chromium', prefix: 'ca-' });
 const browser = await chromium.connectOverCDP(owner.wsUrl);
-const report = resumePath ? JSON.parse(readFileSync(resolve(resumePath), 'utf8')) : { url, source, build, sourceDigests, inventory, mode, pace, host: { cpuCount: cpus().length, load: loadavg(), freeMemory: freemem(), samples: [] },
+const report = resumePath ? JSON.parse(readFileSync(resolve(resumePath), 'utf8')) : { url, source, sourceRoot, build, sourceDigests, inventory, mode, pace, host: { cpuCount: cpus().length, load: loadavg(), freeMemory: freemem(), samples: [] },
   fixture: 'Fresh createRunCombat from the screenshot run, canonical enemies/knowledge/moves, custom difficulty hpMult=20 and resource maxima 200. One registered card plus legal draw/discard fillers. Data fields only copied into the live fight; original runtime functions, listeners, dispatch, target resolver, renderer and timeline preserved. These are isolated fixtures, not earned playthroughs.',
   cases: [], errors: [], platformWarnings: [], networkFailures: [], animationDispatch: [], started: new Date().toISOString(), coverageLimits: [
     'Source-engine oracle parity proves compiled input and effect resolution match canonical source. Independent intended-effect/conditional trigger contracts are reported by the engine audit.',
