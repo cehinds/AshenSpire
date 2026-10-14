@@ -27,6 +27,7 @@
 // run object retained. Everything is read at call time and the result is deep
 // frozen, so a renderer cannot quietly make the model its scratch space.
 
+import { cardTagExplanation } from './cardTagExplanation.js';
 import { cardClassification } from './cardClassification.js';
 import { resolveCard } from './registries.js';
 import { applyCombatExpansionCard } from '../content/combatExpansionCards.js';
@@ -392,7 +393,7 @@ export function playingCardModel(registries, ref, { preview = null, definition =
       label: tag.label,
       glyph: tag.glyph,
       color: tag.color,
-      blurb: tag.blurb,
+      blurb: cardTagExplanation(def, tag),
       // An array rather than a Set: a model is serializable, and a Set is not.
       inheritedFrom: freeze([...(inheritedBy.get(tag.id) || [])]),
     })));
