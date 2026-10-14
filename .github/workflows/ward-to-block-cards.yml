@@ -6,6 +6,7 @@ on:
       - 'src/**'
       - 'tests/**'
       - 'tools/ward-to-block-cards-qa.mjs'
+      - 'tools/ward-to-block-card-text.mjs'
       - '.github/workflows/ward-to-block-cards.yml'
   workflow_dispatch:
 permissions:
@@ -43,6 +44,7 @@ jobs:
           tests/playing-card-model.test.mjs tests/ability-card-identity.test.mjs
           tests/combat-card-presentation.test.mjs tests/combat-sigils.test.mjs
           tests/combat-expansion-tactics.test.mjs tests/card-surface-consistency.test.mjs
+          tests/card-tag-explanation.test.mjs
       - name: Export exact compact and inspection card text
         id: text
         continue-on-error: true

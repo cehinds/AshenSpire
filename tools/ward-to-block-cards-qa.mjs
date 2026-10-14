@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Capture six production card surfaces before and after opening their real inspector.
-// Deterministic QA state is used only for the deck editor and level-choice surface.
+// Deterministic QA state is used for deck, reward, store and level-card production surfaces.
 import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
@@ -24,7 +24,7 @@ const report = {
   head: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
   generatedAt: new Date().toISOString(),
   viewport: { width: 1440, height: 1000 },
-  fixtureBoundary: 'Character creation, rewards and combat use application screenshot routes. Deck editor and level-card options use production screen modules with deterministic Starseer state. Store opens the real Remove a card service; if the authored shot lacks an unlocked offer, mountShop uses deterministic stock and cinders. The QA deck adds real Frost Counter and Force Counter card instances so the changed faces are visible. These are QA states, not player navigation recordings.',
+  fixtureBoundary: 'Character creation uses the application screenshot route; deck editor, reward card choices and level-card options use production screen modules with deterministic Starseer state; combat uses the application combat route with deterministic hand pose. Store opens the real Remove a card service; if the authored shot lacks an unlocked offer, mountShop uses deterministic stock and cinders. The QA deck adds real Frost Counter and Force Counter card instances so the changed faces are visible. These are QA states, not player navigation recordings.',
   views: {},
   failures: [],
   browserErrors: errors,
@@ -131,9 +131,27 @@ try {
   await attempt('rewards', async () => {
     await standardView('rewards', '/?shot=reward&shotClass=starseer', '.reward-menu, .reward-door, .reward-screen', {
       prepare: async () => {
+        // Mount the real reward screen with authored card instances so the QA
+        // surface always includes a changed defensive card, independent of RNG.
+        await page.evaluate(async () => {
+          const { contentBundle } = await import('/src/content/index.js');
+          const { createRegistries } = await import('/src/model/registries.js');
+          const { createRunState } = await import('/src/model/state.js');
+          const { createRng } = await import('/src/engine/rng.js');
+          const { mountRewards } = await import('/src/ui/screens/reward.js');
+          const registries = createRegistries(contentBundle);
+          const run = createRunState({ seed: 7814, classId: 'starseer', registries });
+          const rewards = { title: 'WARD CARD QA', cardIds: ['frostCounter', 'forceCounter'] };
+          document.body.replaceChildren();
+          mountRewards(document.body, {
+            registries, run, rewards, rng: createRng(7814),
+            saves: { loadMeta: () => ({ settings: {} }) },
+            onCollectArmament() {}, onPersist() {}, onDone() {},
+          });
+        });
         await page.locator('.reward-kind[data-kind="card"]').waitFor({ state: 'visible', timeout: 15000 });
         await page.locator('.reward-kind[data-kind="card"]').click();
-        await page.locator('.reward-row .reward-choice-face.card').first().waitFor({ state: 'visible', timeout: 15000 });
+        await page.locator('.reward-row .reward-choice-face.card:has-text("Frost Counter")').waitFor({ state: 'visible', timeout: 15000 });
       },
       cardSelector: '.reward-row .reward-choice-face.card:has-text("Frost Counter"), .reward-row .reward-choice-face.card:has-text("Crystal Barrier"), .reward-row .reward-choice-face.card:has-text("Frost Veil"), .reward-row .reward-choice-face.card:has-text("Force Counter")', compactSelector: '.reward-row .reward-choice-face.card:has-text("Frost Counter"), .reward-row .reward-choice-face.card:has-text("Crystal Barrier"), .reward-row .reward-choice-face.card:has-text("Frost Veil"), .reward-row .reward-choice-face.card:has-text("Force Counter")',
     });
@@ -219,7 +237,7 @@ try {
   });
 
   await attempt('combat', async () => {
-    await standardView('combat', '/?shot=combat&shotClass=starseer', '.combat', { cardSelector: '.hand .card:has-text("Frost Counter"), .hand .card:has-text("Force Counter"), .hand .card:has-text("Crystal Barrier"), .hand .card:has-text("Frost Veil")', strategy: 'keyboard' });
+    await standardView('combat', '/?shot=combat&shotClass=starseer&shotExpansion=ward', '.combat', { cardSelector: '.hand .card[data-card-id="barrageCounter"]', strategy: 'keyboard' });
   });
 
   report.browserErrors = errors;
