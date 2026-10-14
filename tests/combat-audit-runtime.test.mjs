@@ -2,12 +2,17 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { loadAuditRuntime } from '../tools/combat-audit/runtime.mjs';
 import { auditInventory } from '../tools/combat-audit/inventory.mjs';
-import { makeAuditCombat, setAuditHand, applyAuditScenario } from '../tools/combat-audit/fixtures.mjs';
+import { makeAuditCombat, setAuditHand, applyAuditScenario, setAuditPredicate } from '../tools/combat-audit/fixtures.mjs';
 for (const mode of ['native', 'bundled']) test(`${mode}: registry inventory and DTO fixtures retain live combat methods`, async () => {
   const api = await loadAuditRuntime(mode);
   const inventory = auditInventory(api.registries);
   assert.deepEqual(inventory.cardIds, api.registries.cards.all().map(c => c.id));
   assert.equal(new Set(inventory.variants.map(v => v.key)).size, inventory.variants.length);
+  for (const predicate of inventory.conditions) for (const truth of [false, true]) {
+    const { combat } = makeAuditCombat(api, { classId: 'reaver' });
+    setAuditPredicate(combat, predicate, truth);
+    assert.equal(api.evalPredicate(combat, predicate, { owner: combat.player, source: combat.player, target: combat.enemies[0] }), truth, JSON.stringify(predicate));
+  }
   const { combat: staff } = makeAuditCombat(api, { classId: 'starseer', carrierId: 'ashStaff', instance: { cardId: 'strike', profileId: 'staffMagicAttack' } });
   assert.equal(staff.piles.hand[0].grantedBy, 'ashStaff');
   assert.equal(staff.piles.hand[0].profileReceipt.pieceId, 'ashStaff');
