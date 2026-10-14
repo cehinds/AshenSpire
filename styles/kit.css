@@ -6625,3 +6625,25 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
    selected paragraph otherwise repeats that same description below the tiles. */
 .customize.cc-design-workspace .cc-subclass-tile .cc-choice-description { display:block; overflow:visible; -webkit-line-clamp:unset; }
 .customize.cc-design-workspace .cc-subclass-description { display:none; }
+
+/* Only the pages with stacked introductions need a condensed heading. The
+   live count remains the same node when moved beside the ability title. */
+.customize.cc-design-workspace :is(#cz-spells-heading,#cz-maneuvers-heading) .cc-page-heading,
+.customize.cc-design-workspace .cc-subclass-selector .cc-panel-heading,
+.customize.cc-design-workspace .cc-inline-heading { display:flex; flex-direction:row; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:calc(4px / var(--ui-zoom,1)) calc(12px / var(--ui-zoom,1)); margin:0 0 var(--cc-space); }
+.customize.cc-design-workspace :is(#cz-spells-heading,#cz-maneuvers-heading) .cc-page-title,
+.customize.cc-design-workspace .cc-subclass-selector .cc-panel-heading .as-title-m,
+.customize.cc-design-workspace .cc-inline-heading > :is(h3,p) { margin:0; }
+.customize.cc-design-workspace .cc-inline-heading > h3 { color:#d7b45f; font-size:calc(20px / var(--ui-zoom,1)); }
+.customize.cc-design-workspace .cc-inline-heading > p { color:var(--cc-copy-muted); font-size:var(--cc-body-font); line-height:1.3; }
+.customize.cc-design-workspace .cc-subclass-tile .cc-choice-title { font-size:calc(18px / var(--ui-zoom,1)); }
+.customize.cc-design-workspace :is(#cz-spells-panel,#cz-maneuvers-panel) .cc-ability-progress { flex:0 1 auto; text-align:right; line-height:1.3; }
+/* Relics are a compact shelf rather than Equipment's full-height split pane.
+   Its selected card keeps its native inspector target in the reserved band. */
+.customize.cc-design-workspace #cz-keepsake-panel .cc-equip-group[data-equipment-section] { height:auto; grid-template-rows:auto auto auto; align-content:start; }
+.customize.cc-design-workspace #cz-keepsake-panel .cc-card-selectors[data-view="grid"] { padding-top:calc(18px / var(--ui-zoom,1)); }
+.customize.cc-design-workspace #cz-keepsake-panel .cc-equipment-details { padding-top:0; }
+.customize.cc-design-workspace #cz-keepsake-panel .cc-equipment-details .cc-item-heading { min-height:var(--cc-control-floor); padding-inline-end:calc(52px / var(--ui-zoom,1)); box-sizing:border-box; }
+@media(max-width:600px) {
+ .customize.cc-design-workspace :is(#cz-spells-heading,#cz-maneuvers-heading) .cc-page-title { font-size:calc(22px / var(--ui-zoom,1)); }
+}

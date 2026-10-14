@@ -34,7 +34,7 @@ worker/<topic>/<task> (local) ──► worker/<topic>/<task> (origin) ──►
 | `dev` | Default integration branch. All feature PRs target `dev`. A `feature/*`, `chore/*` or `fix/*` PR merges once it is reviewed by another agent or session, conflicts are resolved and fast checks are green; the session merges it itself (rule 6, standing approval, owner, 2026-10-13). |
 | `alternative/dev`, `alternative/test` | Frozen historical branches (owner, 2026-10-09). Their approved combat perspective is now the default on regular `dev` and `test`. Bring all new work to `dev`; do not push, merge, sync or dispatch branch-writing jobs to either retired branch. Existing named variants retain their separate rules below. |
 | `test` | Where the heavy CI runs: every push to `test` runs the long suites. Sessions promote `dev` here with a `dev` → `test` PR they merge themselves (rule 6). Only `dev` promotions land here, and `release` is promoted from `test` (owner only, through a pinned `rc/<version>` branch). If `test` is ever deleted, `restore-test-branch.yml` recreates it from `release`, so a fix that landed only on `release` must be merged back into `dev` (a `release` → `dev` PR) before the next promotion; then every heavy run tests what `dev` holds; balance experiments go on their own `experiment/<topic>` branch cut from `dev` (cherry-pick winners back), never on `test`. Force-pushes allowed only on a `feature/*` branch only you have pushed to (a rebase onto `dev`); nowhere else. |
-| `feature/<topic>` | One unit of work, branched from `dev`. Prefix milestone work with it, e.g. `feature/m1-combat-slice`, `feature/m2-map-gen`. `fix/*` and `chore/*` branches follow the same rules. While a PR into `dev` is open, CI publishes the branch's build at `https://cehinds.github.io/AshenSpire/branches/<branch>/latest/` as a sandboxed preview: it runs in an iframe without same-origin access, and progress is not kept. The build is served as text, never as a page on the site. It is replaced on each push and removed when the PR merges or closes. |
+| `feature/<topic>` | One unit of work, branched from `dev`. Prefix milestone work with it, e.g. `feature/m1-combat-slice`, `feature/m2-map-gen`. `fix/*` and `chore/*` branches follow the same rules. After a successful feature build, CI publishes the current branch at `https://cehinds.github.io/AshenSpire/branches/<branch>/latest/` as a sandboxed preview: it runs in an iframe without same-origin access, and progress is not kept. The build is served as text, never as a page on the site. It is refreshed after successful code builds; stale previews are omitted. No open PR is required. |
 
 ## Commits & PRs
 
@@ -53,7 +53,7 @@ Keep this feature-specific evidence inside one removable block:
 <!-- feature-preview:start -->
 ## Feature preview — <feature name>
 
-[Try this feature build](<verified workflow artifact or hosted build URL>)
+[Play this feature build](<verified GitHub Pages build URL>)
 
 <Brief description connecting the change to the build and captures.>
 
@@ -63,20 +63,21 @@ Keep this feature-specific evidence inside one removable block:
 <!-- feature-preview:end -->
 ```
 
-Code pushes to `feature/**`, `Feature/**`, `fix/**` and `chore/**` run
-`.github/workflows/feature-preview.yml`. It builds that exact branch HEAD and
-uploads `feature-preview-<commit>` with the self-contained HTML, build stamp and
-play instructions. Link the successful run's artifact in the README; GitHub
-sign-in is required and downloads expire after 14 days. Refresh the link and
-captures when the feature changes. Documentation-only pushes keep the current
-code build; use a manual workflow dispatch to renew an expired build.
+Code pushes to feature/fix/chore branches (case-insensitive) run
+`.github/workflows/feature-preview.yml`, building the exact branch commit.
+After a successful build, GitHub Pages publishes a browser-playable preview at
+`https://cehinds.github.io/AshenSpire/branches/<branch>/latest/` using the exact
+branch spelling. An open PR is not required. Put this verified **Play** link
+first in the feature README; keep the successful run's artifact as an optional
+download backup. Verify the deployed game loads the change before presenting
+the link as working.
 
-A hosted preview is also available while a same-repository feature PR into
-`dev` is open. Use the exact branch spelling in
-`https://cehinds.github.io/AshenSpire/branches/<branch>/latest/`; a draft PR may
-publish it during review. Verify any hosted build loads the change before
-presenting that link as working. For a downloadable build, verify the run
-succeeded, its artifact is live, and its source matches the tested code.
+Pages serves feature builds inside a sandboxed frame; browser progress is not
+persistent. A successful build remains eligible after README, CONTRIBUTING or
+docs-only changes. Code changes require a fresh successful build; stale builds
+are removed on the next publication. Artifacts expire after 14 days, so renew
+an expired preview with a manual feature workflow dispatch. GitHub sign-in is
+required only for artifact downloads, not for playing the Pages preview.
 
 Capture and inspect real mobile, desktop, wide and tablet views of the change.
 Track their files in `docs/preview/features/<feature>/` (this feature uses
