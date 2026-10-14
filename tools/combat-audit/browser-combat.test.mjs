@@ -5,13 +5,13 @@ import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { test } from 'node:test';
 import { assertResumeIdentity, isDirectInvocation } from './browser-combat.mjs';
-import { pathToFileURL } from 'node:url';
+import { pathToFileURL, fileURLToPath } from 'node:url';
 
 function summarize(cases, inventory = { cards: [{ id: 'strike', classes: ['reaver'], upgraded: false }] }) {
   const dir = mkdtempSync(resolve(tmpdir(), 'combat-summary-'));
   const path = resolve(dir, 'report.json');
   writeFileSync(path, JSON.stringify({ finished: 'complete', build: { source: 'test', ordinal: '1' }, sourceDigests: {}, inventory, cases, errors: [] }));
-  const result = spawnSync(process.execPath, [new URL('./browser-combat.mjs', import.meta.url).pathname,
+  const result = spawnSync(process.execPath, [fileURLToPath(new URL('./browser-combat.mjs', import.meta.url)),
     '--mode=summarize', `--reports=${path}`], { encoding: 'utf8', env: { ...process.env, QA_OUTPUT: dir } });
   let manifest;
   try { manifest = JSON.parse(readFileSync(resolve(dir, 'combined-manifest.json'), 'utf8')); } catch { /* rejected before summary */ }

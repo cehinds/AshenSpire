@@ -19,7 +19,7 @@ export function isDirectInvocation(entrypoint, moduleUrl) {
 }
 
 async function main() {
-const sourceRoot = resolve(process.env.QA_REFERENCE_SOURCE || new URL('../../src/', import.meta.url).pathname);
+const sourceRoot = resolve(process.env.QA_REFERENCE_SOURCE || fileURLToPath(new URL('../../src/', import.meta.url)));
 const [{ contentBundle }, { createRegistries }, { SFX_MANIFEST, resolveRecipe }] = await Promise.all([
   import(pathToFileURL(resolve(sourceRoot, 'content/index.js')).href),
   import(pathToFileURL(resolve(sourceRoot, 'model/registries.js')).href),
