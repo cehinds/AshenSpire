@@ -369,7 +369,10 @@ function spendSilencedForEffect(ctx, action, eff) {
   if (ctx.combatExpansionVersion !== 2 || !action.card || ['damage', 'completeCombatAction'].includes(eff.op) || eff.target === 'randomEnemy') return;
   if (!isForceHit(action.card.combatProfile || combatProfileFor(action.card))) return;
   const targets = eff.target === undefined && OWNER_OPS.has(eff.op) ? [action.owner || action.source].filter(Boolean) : resolveTargets(ctx, action, eff.target);
-  for (const target of targets) spendSilencedStack(ctx, target);
+  for (const target of targets) {
+    if (action.meta?.expansionGroup?.targets[ctx.playerIdForEntity?.(target) || target.id]?.receipt?.avoided) continue;
+    spendSilencedStack(ctx, target);
+  }
 }
 
 /** Spend one Silenced stack for a Force contact; the log shows it as consumed. */
@@ -1198,6 +1201,26 @@ function evalRaw(ctx, action, value, dflt, target) {
  * dealt to a target, kept on its expansion group for Impact and Flux
  * (docs/combat-card-traits-contract.md, "Impact and Flux").
  */
+function splitSmashPressure(ctx, action, target, row) {
+  if (ctx.combatExpansionVersion !== 2 || action.card?.combatProfile?.maneuver !== 'smash'
+    || !['casting', 'spell'].includes(target.combatStance?.maneuver) || !row) return false;
+  const group = action.meta.expansionGroup;
+  const key = ctx.playerIdForEntity?.(target) || target.id;
+  const done = group.smashPressureApplied ||= [];
+  if (done.includes(key)) return true;
+  done.push(key);
+  const total = row.contacts.filter(contact => contact.effect === 'impact').reduce((n, contact) => n + Math.max(0, contact.pressure || 0), 0);
+  const amount = Math.ceil(total * Matchups.stancePressureMultiplier(ctx, action.source, target, action.card));
+  const [poise, ward] = allocateInteger(amount, [0.7, 0.3]);
+  if (poise > 0) {
+    const before = Math.max(0, target.poiseGuard || 0);
+    dealPoiseDamage(ctx, target, poise);
+    trackOwnPressure(ctx, action, target, 'poiseDealt', Math.max(0, poise - (before - Math.max(0, target.poiseGuard || 0))));
+  }
+  if (ward > 0) { const spent = Control.spendPersistentWard(ctx, target, ward, { sourceId: action.source?.id }); trackOwnPressure(ctx, action, target, 'wardDealt', spent.spent); }
+  return true;
+}
+
 function trackOwnPressure(ctx, action, target, meter, amount) {
   const group = action.meta?.expansionGroup;
   if (ctx.reactionRulesVersion !== 2 || !group || !target || !(amount > 0)) return;
@@ -1250,11 +1273,18 @@ export function executeAction(ctx, action) {
   } finally { if (previous) ctx._abilityAction = previous; else delete ctx._abilityAction; }
 }
 
+function spellAuthoredStatusBonus(ctx, action) {
+  if (ctx.combatExpansionVersion !== 2 || !action.card || !action.meta?.expansionGroup || action.meta?.stanceEntry) return 0;
+  const stance = action.source?.combatStance?.maneuver;
+  return ['casting', 'spell'].includes(stance) ? 1 : 0;
+}
+
 function plannedStatusTargets(ctx, action, eff) {
   const refs = action.meta?.expansionTargets?.[action.meta.statusTargetCursor || 0];
   if (!refs) return resolveTargets(ctx, action, eff.target);
   action.meta.statusTargetCursor = (action.meta.statusTargetCursor || 0) + 1;
-  return refs.map(ref => Expanded.expansionEntity(ctx, ref)).filter(entity => Expanded.expansionTargetPresent(ctx, entity));
+  return refs.map(ref => Expanded.expansionEntity(ctx, ref)).filter(entity => Expanded.expansionTargetPresent(ctx, entity)
+    && !action.meta?.expansionGroup?.targets[ctx.playerIdForEntity?.(entity) || entity.id]?.receipt?.avoided);
 }
 
 function runOpcode(ctx, action, eff) {
@@ -1367,9 +1397,10 @@ function runOpcode(ctx, action, eff) {
     case 'wardDamage': {
       for (const t of resolveTargets(ctx, action, eff.target)) {
         const row = action.meta?.expansionGroup?.targets[ctx.playerIdForEntity?.(t) || t.id];
-        if (action.card?.counterReturnAttack && row?.receipt?.avoided) continue;
+        if (row?.receipt?.avoided) continue;
+        if (splitSmashPressure(ctx, action, t, row)) continue;
         const spent = Control.spendPersistentWard(ctx, t,
-        evalNum(ctx, action, eff.amount, 0, t) * (!action.card?.combatWardEdgeApplied && action.card?.combatProfile?.camp === 'spell' && action.card?.combatProfile?.damageType === 'piercing' ? 1.25 : 1), { sourceId: action.source?.id });
+        evalNum(ctx, action, eff.amount, 0, t) * (ctx.combatExpansionVersion === 2 ? Matchups.stancePressureMultiplier(ctx, action.source, t, action.card) : 1) * (!action.card?.combatWardEdgeApplied && action.card?.combatProfile?.camp === 'spell' && action.card?.combatProfile?.damageType === 'piercing' ? 1.25 : 1), { sourceId: action.source?.id });
         trackOwnPressure(ctx, action, t, 'wardDealt', spent.spent);
         creditKnowledgeImpact(ctx, t, spent.spent);
       }
@@ -1382,7 +1413,7 @@ function runOpcode(ctx, action, eff) {
         const cinder = ctx.combatExpansionVersion === 2 && action.source ? Blight.ashenBlightSpellBuildup(ctx, action.source,
           { cycleKey: String(action.source.combatOwnerCycle || 0), school: action.card?.combatProfile?.school, buildups: [{ status: eff.status, amount: authored }] }) : null;
         const pressure = Control.applyStatusPressure(ctx, t, eff.status,
-          authored + (cinder?.amount || 0) + (action.meta?.abilityChargeBuildup || 0), action.source,
+          authored + spellAuthoredStatusBonus(ctx, action) + (cinder?.amount || 0) + (action.meta?.abilityChargeBuildup || 0), action.source,
           { camp: eff.camp || action.card?.combatProfile?.camp, actionKey: action.meta?.expansionGroup?.key || `${ctx.turn}:${action.card?.instanceId || 'effect'}`,
             recoveryProfile: eff.recoveryProfile, traits: eff.traits });
         const row = action.meta?.expansionGroup?.targets[ctx.playerIdForEntity?.(t) || t.id];
@@ -1438,7 +1469,7 @@ function runOpcode(ctx, action, eff) {
     }
     case 'applyStatus': {
       for (const t of plannedStatusTargets(ctx, action, eff)) {
-        const stacks = evalNum(ctx, action, eff.stacks, 1, t) + (action.meta?.abilityChargeBuildup || 0);
+        const stacks = evalNum(ctx, action, eff.stacks, 1, t) + spellAuthoredStatusBonus(ctx, action) + (action.meta?.abilityChargeBuildup || 0);
         statuses.applyStatus(ctx, t, eff.status, stacks, action.source);
         if (ctx.combatExpansionVersion === 2) {
           const row = action.meta?.expansionGroup?.targets[ctx.playerIdForEntity?.(t) || t.id];
@@ -1602,12 +1633,13 @@ function runOpcode(ctx, action, eff) {
     case 'poiseDamage': {
       for (const t of resolveTargets(ctx, action, eff.target)) {
         const row = action.meta?.expansionGroup?.targets[ctx.playerIdForEntity?.(t) || t.id];
-        if (action.card?.counterReturnAttack && row?.receipt?.avoided) continue;
+        if (row?.receipt?.avoided) continue;
+        if (splitSmashPressure(ctx, action, t, row)) continue;
         const multiplier = Matchups.matchupPoiseMultiplier(ctx, action.source, t, action.card);
         const authored = evalNum(ctx, action, eff.amount, 0, t);
         const bonus = ctx.combatExpansionVersion === 2 ? Blight.ashenBlightMartialPoise(ctx, action.source,
           { cycleKey: String(action.source?.combatOwnerCycle || 0), camp: action.card?.combatProfile?.camp, authoredPoise: authored }) : 0;
-        const amount = Math.floor((authored + bonus) * multiplier);
+        const amount = Math.ceil((authored + bonus) * multiplier * (ctx.combatExpansionVersion === 2 ? Matchups.stancePressureMultiplier(ctx, action.source, t, action.card) : 1));
         // Impact doubles only the Poise that passed the target's Poise guard.
         const guardBefore = Number.isFinite(t?.poiseGuard) ? Math.max(0, Math.floor(t.poiseGuard)) : 0;
         if (ctx.ratingsRules && action.meta?.combatCounterReaction) {

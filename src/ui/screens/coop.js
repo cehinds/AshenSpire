@@ -1,3 +1,4 @@
+import { effectiveEvasion, attackHitPreview } from '../../engine/stanceHit.js';
 import { enemyActionPose } from '../../model/enemyActionPose.js';
 import {mountClassRespec,closeClassRespec,isClassRespecOpen,classRespecOptionName} from '../components/classRespec.js';
 import {abilityDraftChoice} from '../../model/abilityDraftReceipts.js';
@@ -130,7 +131,7 @@ import {
 } from '../kit/index.js';
 
 import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
-import { clearSelection, litCard } from '../components/cardSelection.js';
+import { clearSelection, litCard, onSelectionChange } from '../components/cardSelection.js';
 import { smithingStoneNote } from '../../model/rewardplan.js';
 
 // LEVEL CARDS (SPEC §15.1) in the co-op spoils and the away-seat catch-up.
@@ -843,6 +844,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   function teardown() {
     releaseAppearance();
     disposed = true;
+    releaseHitChanceSelection();
     reactionShell?.dismiss();
     snap = null;
     closeCombatantDoor();
@@ -999,6 +1001,31 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     }
     return row;
   }
+  function syncCoopHitChances() {
+    const sc = snap?.scene;
+    if (sc?.kind !== 'combat') return;
+    const actor = sc.players.find(player => player.id === me);
+    if (!actor || actor.combatExpansionVersion !== 2) return;
+    const selected = actor.hand?.find(card => card.instanceId === litCard());
+    const definition = selected && cardDef(selected);
+    const hostile = definition?.effects?.some(effect => ['enemy', 'allEnemies', 'randomEnemy'].includes(effect.target)) || definition?.counterPayload;
+    const carrier = hostile ? definition : { combatProfile: { maneuver: 'attack', camp: 'physical', range: 'melee' }, effects: [{ op: 'damage', target: 'enemy', amount: 0 }] };
+    for (const enemy of sc.enemies) {
+      const frame = app.querySelector('.combatant.enemy[data-eid="' + CSS.escape(enemy.id) + '"]');
+      frame?.querySelector('.combat-hit-chance')?.remove();
+      if (!frame || enemy.hp <= 0 || enemy.knowledgeAction?.reads?.[me]?.visibility !== 'exact') continue;
+      const preview = attackHitPreview({ ...sc, registries, combatExpansionVersion: 2 }, actor, enemy, carrier, { additionalTargets: carrier.effects?.some(effect => effect.target === 'allEnemies') ? Math.max(0, sc.enemies.filter(entry => entry.hp > 0).length - 1) : 0 });
+      if (!Number.isFinite(preview?.hitChance)) continue;
+      const badge = document.createElement('span');
+      badge.className = 'combat-hit-chance';
+      badge.dataset.rollMode = preview.advantage ? 'advantage' : preview.disadvantage ? 'disadvantage' : 'neutral';
+      badge.textContent = Math.round(preview.hitChance) + '%';
+      badge.setAttribute('aria-label', 'Chance to hit ' + badge.textContent);
+      (frame.querySelector('.combatant-leading') || frame).append(badge);
+    }
+  }
+  const releaseHitChanceSelection = onSelectionChange(() => syncCoopHitChances());
+
   function meterBars(ent, isEnemy, recentEvents = []) {
     const wrap = document.createElement('div');
     wrap.className = 'meters';
@@ -1008,7 +1035,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     const hp = bars.querySelector('.as-meter[data-res="hp"]');
     if (hp) {
       const next = hp.nextSibling;
-      const health = combatHealthRow(hp, protectionPresentation(ent));
+      const known = !isEnemy || ent.knowledgeAction?.reads?.[me]?.visibility === 'exact';
+      const health = combatHealthRow(hp, { ...protectionPresentation(ent), evasion: ent.combatExpansionVersion === 2 && known ? effectiveEvasion({ ...snap.scene, registries }, ent) : null });
       bars.insertBefore(health, next);
     }
     wrap.classList.add('as-meters', 'tight');
@@ -1479,6 +1507,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     } else {
       handStrip.render({ cards: [], emptyHtml: '<div class="coop-note">Spectating the fight…</div>' });
     }
+
+    syncCoopHitChances();
 
     // The arming prompt: a DetailCard saying what is in hand and what to do,
     // with the way out beside it.

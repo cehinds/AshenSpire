@@ -20,12 +20,12 @@ function enemyDefinition(ctx, entity) {
   return entity?.enemyId && ctx.registries?.enemies?.has?.(entity.enemyId)
     ? ctx.registries.enemies.get(entity.enemyId) : null;
 }
-function attributesOf(ctx, entity) {
+export function attributesOf(ctx, entity) {
   const seat = seatOf(ctx, entity), enemy = enemyDefinition(ctx, entity);
   return ctx.attributesForEntity?.(entity) || entity?.attributes || seat?.attributes
     || (entity === ctx.player ? ctx.attributes : null) || (enemy ? enemyAttributesOf(enemy) : {});
 }
-function timelineAttrs(attrs) {
+export function timelineAttrs(attrs) {
   return Object.fromEntries(Object.entries(ATTR_KEYS).filter(([id]) => Number.isFinite(Number(attrs?.[id])))
     .map(([id, key]) => [key, Number(attrs[id])]));
 }
@@ -58,6 +58,12 @@ export function counterBaseEvasion(ctx, entity) {
   const evasionArmor = explicit || material || named || (armour || def ? cfg.armorClassMaterials[armorClass] : null) || 'Cloth';
   const buckler = pieces.some(piece => piece.kind === 'shield' && piece.id === 'buckler');
   return evasionFor({ attrs, evasionArmor, shield: buckler ? 'buckler' : undefined }, { armor });
+}
+
+export function attackAccuracy(ctx, source, carrier) {
+  const seat = seatOf(ctx, source);
+  const level = source?.level?.level ?? source?.level ?? seat?.characterLevel ?? (source === ctx.player ? ctx.characterLevel : 0);
+  return accuracyFor({ attrs: timelineAttrs(attributesOf(ctx, source)), level: finite(level), tags: carrier?.tags || [], accuracy: finite(source?.accuracy) });
 }
 
 export function counterAttackPreview(ctx, source, target, carrier) {

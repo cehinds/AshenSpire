@@ -1,3 +1,5 @@
+import { attackHitPreview } from './stanceHit.js';
+import { stanceStaminaCost } from '../model/stanceRules.js';
 import { combatMatchups, combatIntent, combatExpansionMatchups } from '../content/combatMatchups.js';
 import { combatStatusRules } from '../content/combatStatusRules.js';
 import { ASHEN_BLIGHT_RULES } from '../content/ashenBlight.js';
@@ -933,7 +935,6 @@ function rollIntents(combat, isFirstTurn = false) {
 function presentIntent(combat, enemy, def, moveId) {
   clearCombatCounter(enemy);
   enemy.intent = buildIntent(def.moves[moveId], moveId, enemy, combat);
-  setCombatStance(combat, enemy, enemyMoveCarrier(enemy, def.moves[moveId], moveId, combat));
   if (combat.enemyKnowledge) {
     rollEnemyKnowledge(combat, enemy, { charging: !!def.moves[moveId].delay });
     delete enemy.intentRevealed;
@@ -1384,7 +1385,7 @@ function resolvedCardPriceReceipt(combat, def, claimed = null) {
   // Silenced (v2): each stack adds 1 SP to a spell-camp card. An X card already spends every point.
   const silenced = combat.combatExpansionVersion === 2 && def.cost !== 'X' ? spellCardCostSurcharge(combat.player, def) : 0;
   const fullStamina = def.cost === 'X' ? combat.player.stamina + (def.upcastSurcharge || 0)
-    : Math.max(0, effectiveCost(combat, def) + (def.upcastSurcharge || 0) + silenced);
+    : Math.max(0, stanceStaminaCost(effectiveCost(combat, def), combat.player, def, combat) + (def.upcastSurcharge || 0) + silenced);
   const player = withoutClaims(combat.player, claimed);
   const fullMana = Math.max(0, pools.mana + (def.upcastSurcharge || 0)
     - R.matchingAbilityCharges(player, { ...def, type: cardKind(def), authoredTags: def.cardTags || def.tags }).manaDiscount);
@@ -2607,4 +2608,17 @@ export function previewIntent(combat, enemyInstanceId) {
     out.label = intent.kind === 'staggered' ? 'Staggered' : enemy.knowledgeAction?.category;
   }
   return out;
+}
+
+/** The card's hit preview uses the same carrier and d20 rule as execution. */
+export function previewCardHit(combat, cardInstanceId, targetId, upcastRanks) {
+  const inst = combat.piles.hand.find(card => card.instanceId === cardInstanceId);
+  const target = (combat.enemies || []).find(enemy => enemy.id === targetId);
+  if (!inst || !target) return null;
+  const def = resolveCombatCard(combat, inst, { upcastRanks });
+  const carrier = tacticalCarrier(def, { cardId: def.id, instanceId: inst.instanceId, type: def.type }, combat, combat.player);
+  const profile = carrier.combatProfile;
+  const additionalTargets = profile?.targeting === 'area'
+    ? Math.max(0, (combat.enemies || []).filter(enemy => enemy.alive).length - 1) : 0;
+  return attackHitPreview(combat, combat.player, target, carrier, { additionalTargets });
 }

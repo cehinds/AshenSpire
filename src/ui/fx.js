@@ -383,6 +383,9 @@ export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
 // same word already showing on that fighter is not repeated.
 // ---------------------------------------------------------------------------
 export const CALLOUT_KINDS = {
+  hit: { word: 'Hit', tone: 'white' },
+  evadeFailed: { word: 'Hit — Evade Failed', tone: 'white' },
+  missed: { word: 'Missed', tone: 'white' },
   staggered: { string: 'combat.callout.staggered', tone: 'gold' },
   disrupted: { string: 'combat.callout.disrupted', tone: 'gold' },
   countered: { string: 'combat.callout.countered', tone: 'red' },
@@ -542,7 +545,7 @@ export function callout(layer, anchor, forId, kind) {
   el.dataset.calloutFor = String(forId);
   el.dataset.calloutKind = kind;
   el.setAttribute('aria-hidden', 'true');
-  el.textContent = t(def.string);
+  el.textContent = def.word || t(def.string);
   if (def.colour) el.style.color = def.colour;
   const ms = getAnimSpeed() === 'instant' ? CALLOUT_INSTANT_MS : CALLOUT_MS;
   el.style.setProperty('--fx-callout-ms', `${ms}ms`);
@@ -1536,6 +1539,8 @@ export function calloutForEvent(e = {}) {
   const popup = statusPopupFor(e);
   if (popup) return { kind: popup.kind, targetId: popup.targetId };
   switch (e.type) {
+    case 'attackHit': kind = e.label === 'Hit — Evade Failed' ? 'evadeFailed' : 'hit'; break;
+    case 'attackMissed': kind = 'missed'; break;
     case 'damageDealt': case 'statusImmune': kind = outcomeKindForEvent(e); break;
     // A stagger a break caused shows that break's word and INTERRUPTED, not a second STAGGERED.
     case 'enemyStaggered': if (!e.cause) kind = 'staggered'; break;
@@ -1547,7 +1552,7 @@ export function calloutForEvent(e = {}) {
     case 'combatCounterTriggered': kind = 'countered'; break; // over the attacker who got countered
     case 'attackEvaded': kind = 'evaded'; break;
     // Any avoidance that stopped the hit is a miss: an evade, a distance roll, or a prevention charge.
-    case 'combatAvoidanceResolved': if (e.avoided) kind = 'evaded'; break;
+    case 'combatAvoidanceResolved': if (e.avoided && !e.hitCheck) kind = 'evaded'; break;
     case 'critHit': kind = 'critical'; break;
     case 'combatGuardBroken': kind = 'guardBreak'; break;
     case 'wardBroken': kind = 'wardBreak'; break;

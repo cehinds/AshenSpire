@@ -6405,3 +6405,16 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 .customize .cc-equip-group[data-equipment-section="startingAbilities"] > .cc-card-selectors,
 .customize .cc-equip-group[data-equipment-section="startingAbilities"] > .cc-card-selectors[data-view] { flex:1 1 auto; min-height:0; grid-row:auto; grid-column:auto; grid-auto-flow:row; grid-auto-columns:auto; overflow-x:hidden; overflow-y:auto; scroll-snap-type:none; scrollbar-gutter:stable; }
 .customize .cc-equip-group[data-equipment-section="startingAbilities"] > :not(.cc-card-selectors) { flex:none; }
+
+/* Defense order is shared by player, enemy and co-op health rows. */
+:root .combat .combatant .combat-health-evade { color: #fff; gap: .08em; }
+:root .combat .combatant .combat-health-evade::before { border-radius: 50%; background: #20242a; }
+:root .combat .combatant .combat-health-evade-icon { font-size: .8em; }
+:root .combat .combatant .combat-health-poise { color: var(--gold, #ffd34d); }
+:root .combat .combatant .combat-health-poise::before { border-radius: 35%; background: #493a12; border: 1px solid #ffd34d; }
+:root .combat .combatant .combat-health-badge-value { -webkit-text-stroke: 1px #000; paint-order: stroke fill; }
+:root .combat .combatant .combat-hit-chance { color: #fff; font-weight: 700; -webkit-text-stroke: 1px #000; paint-order: stroke fill; }
+:root .combat .combatant .combat-hit-chance[data-roll-mode='advantage'] { color: #83df99; }
+:root .combat .combatant .combat-hit-chance[data-roll-mode='disadvantage'] { color: #ff8179; }
+
+:root .combat .combatant .combat-health-evade-icon svg { width: .85em; height: .85em; display: block; }

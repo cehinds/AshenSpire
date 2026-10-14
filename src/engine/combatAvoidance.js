@@ -75,7 +75,7 @@ export function distancePreview(ctx, entity, incomingProfile) {
 export function previewAvoidance(ctx, entity, profile, incomingDamage, options = {}) {
   const distance = distancePreview(ctx, entity, profile);
   const evade = evadeRollPreview(ctx, entity, profile, incomingDamage, options);
-  if (!(incomingDamage > 0)) {
+  if (ctx?.combatExpansionVersion === 2 || !(incomingDamage > 0)) {
     distance.eligible = evade.eligible = false;
     distance.baseChance = distance.chance = evade.baseChance = evade.chance = 0;
   }

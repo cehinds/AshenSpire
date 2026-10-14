@@ -163,7 +163,7 @@ export function prepareTacticalCard(ctx, source, target, carrier, effects, meta 
   carrier.appliedBuildupStatuses = effects.filter(effect => effect.op === 'buildup').map(effect => effect.status);
   if (combatExpansionEnabled(ctx) && arm) {
     setCombatStance(ctx, source, carrier);
-    if (carrier.combatProfile?.evade) prepareCombatEvade(ctx, source, carrier.combatProfile.evade);
+    // Evade's entry stack is granted only by a real stance change.
   }
   if (carrier.combatProfile?.maneuver !== 'counter') return counterstrikeEffects(ctx, source, target, carrier, effects, arm);
   const rules = matchupRules(ctx).counter;
