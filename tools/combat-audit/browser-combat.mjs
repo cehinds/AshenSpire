@@ -126,7 +126,8 @@ async function boot(context, classId) {
     new PerformanceObserver(list => window.__auditLongTasks.push(...list.getEntries().map(e => ({ at: e.startTime, duration: e.duration })))).observe({ type: 'longtask', buffered: true });
   });
   const settings = encodeURIComponent(JSON.stringify({ animSpeed: pace }));
-  await page.goto(`${url}?shot=combat&shotClass=${classId}&shotSeed=B&shotMaxHp=200&shotMaxMana=200&shotMaxStamina=200&shotMana=200&shotSettings=${settings}`, { waitUntil: 'domcontentloaded' });
+  const kit = arg('main-hand') ? `&shotKit=1&shotMainHand=${encodeURIComponent(arg('main-hand'))}&shotOffHand=${encodeURIComponent(arg('off-hand') || '')}` : '';
+  await page.goto(`${url}?shot=combat&shotClass=${classId}&shotSeed=B&shotMaxHp=200&shotMaxMana=200&shotMaxStamina=200&shotMana=200&shotSettings=${settings}${kit}`, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('.end-turn:not([disabled])', { timeout: 30000 });
   await page.evaluate(() => { window.__auditBaseRun = structuredClone(window.__combatRunForShot); window.__auditBaseRng = window.__combat.rng.getCounters(); window.__auditRuntime = Object.fromEntries(Object.entries(window.__combat).filter(([, v]) => typeof v === 'function')); });
   return page;
@@ -146,7 +147,10 @@ async function fixture(page, row) {
     run.ashenBlightBasePools = { maxHp: 200, maxMana: 200, maxStamina: 200 };
     c.rng.restoreCounters(window.__auditBaseRng);
     if (row.relicId) run.relics = [...new Set([...run.relics, row.relicId])];
-    const inst = { cardId: row.cardId || 'strike', instanceId: row.instanceId, upgraded: row.variant === 'upgraded',
+    const native = row.profileId ? run.deck.find(i => i.cardId === row.cardId && i.profileId === row.profileId) : null;
+    if (row.profileId && !native) throw new Error(`No canonical equipped ${row.cardId}@${row.profileId} instance in the run deck`);
+    if (native) run.deck = run.deck.filter(i => i !== native);
+    const inst = { ...(native || {}), cardId: row.cardId || 'strike', instanceId: row.instanceId, upgraded: row.variant === 'upgraded',
       ...(row.school ? { damageSchool: row.school } : {}) };
     run.deck = [...run.deck, inst, ...Array.from({ length: 10 }, (_, i) => ({ cardId: i % 2 ? 'defend' : 'strike', instanceId: `audit-fill-${row.instanceId}-${i}`, upgraded: false }))];
     const prefix = row.prePlayCard ? { cardId: row.prePlayCard, instanceId: `${inst.instanceId}-prefix`, upgraded: false } : null;
@@ -411,9 +415,7 @@ async function runCase(page, device, classId, row) {
     }
     if (row.sampleAnimation) {
       const frames = entry.after.frames, actionFrames = frames.filter(f => f.action);
-      const firstAction = frames.findIndex(f => f.action);
-      const origin = entry.after.selectedOrigin?.pose?.startsWith('stance-') ? entry.after.selectedOrigin
-        : frames.slice(0, Math.max(0, firstAction)).findLast(f => f.pose?.startsWith('stance-'));
+      const origin = entry.after.selectedOrigin?.pose?.startsWith('stance-') ? entry.after.selectedOrigin : undefined;
       report.animationDispatch.push({ device, classId, cardId: row.cardId, receiptId: row.instanceId, dispatchType: 'paid-card', cardPlayed: entry.after.events.some(e => e.type === 'cardPlayed'),
         presentationKind: entry.after.events.some(e => e.type === 'combatCounterTriggered' && e.cardInstanceId === row.instanceId) ? 'counter-return'
           : entry.before.tags.includes('maneuver:counter') ? 'held-preparation' : 'finite-playback',
@@ -496,6 +498,10 @@ try {
           { cardId: 'strike', category: 'legal-after-refusals', figureTarget: true },
         ];
         for (const row of rows) if (!await runCase(page, device, classId, { ...row, variant: 'base' })) { await page.close(); page = await boot(context, classId); }
+      }
+      if (mode === 'profiles') {
+        assert.ok(arg('profile') && arg('main-hand'), 'profiles require canonical equipped --profile and --main-hand');
+        await runCase(page, device, classId, { cardId: 'strike', profileId: arg('profile'), category: 'equipment-profile', variant: `profile-${arg('profile')}`, figureTarget: true, sampleAnimation: pace === 'normal' });
       }
       if (mode === 'enemies' || mode === 'scenarios') {
         const rows = mode === 'enemies' ? inventory.enemies.filter(id => !arg('enemy') || arg('enemy').split(',').includes(id))
