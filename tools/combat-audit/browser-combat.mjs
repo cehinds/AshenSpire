@@ -210,7 +210,8 @@ async function fixture(page, row) {
     };
     if (row.sampleAnimation) requestAnimationFrame(sample);
     return { ...window.__auditStart, refused, preview: { needsTarget: preview.needsTarget, cost: preview.cost, manaCost: preview.manaCost, staminaCost: preview.staminaCost }, choice, plan,
-      effects: def.effects, tags: def.cardTags || def.tags, attack: def.attack, upcastTiers: def.upcast?.unlockedTiers || [], knowledge: !!c.enemyKnowledge, rng: c.rng.getCounters() };
+      effects: def.effects, tags: def.cardTags || def.tags, attack: def.attack, upcastTiers: def.upcast?.unlockedTiers || [], knowledge: !!c.enemyKnowledge, rng: c.rng.getCounters(),
+      instance: inst, loadout: c.loadout };
   }, { source, row });
 }
 
@@ -325,6 +326,7 @@ async function receipt(page) {
   return page.evaluate(() => {
     const c = window.__combat, events = c.eventLog.slice(window.__auditStart.eventCount);
     window.__auditSampling = false;
+    const stage = document.querySelector('.combatant.player .alternative-card-stage')?.__poseStage;
     return { hp: c.enemies.map(e => e.hp), player: { hp: c.player.hp, energy: c.player.energy, mana: c.player.mana, stamina: c.player.stamina },
       events, pile: ['hand', 'draw', 'discard', 'exhaust'].find(p => c.piles[p].some(i => i.instanceId === window.__auditInstanceId)) || 'consumedPower',
       pending: !!(c.pendingReaction || c.reactionResume || c.pendingAbilityDiscard), queue: c.queue.length, phase: c.phase, turn: c.turn, result: c.result,
@@ -335,6 +337,7 @@ async function receipt(page) {
         enemies: window.__auditOracle.enemies, piles: window.__auditOracle.piles, phase: window.__auditOracle.phase },
       actual: { player: c.player, enemies: c.enemies, piles: c.piles, phase: c.phase }, frames: window.__auditFrameSamples,
       selectedOrigin: window.__auditSelectedOrigin,
+      stage: stage ? { animationSetId: stage.animationSetId, pose: stage.pose, stance: stage.stance, rest: stage.rest, alternateWeaponPoses: stage.poses.filter(p => p.startsWith('weapon:')) } : null,
       inputReceipts: window.__auditClickReceipts.filter(r => r.inputAt >= window.__auditStart.at) };
   });
 }
@@ -423,6 +426,11 @@ async function runCase(page, device, classId, row) {
     if (row.deniedRecovery) entry.input = { ...entry.input, refusalEvidence: structuredClone(entry.input), refusal: null, recoveredAtNextTurn: true };
     if (row.sampleAnimation) await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     entry.after = await receipt(page);
+    if (row.profileId) {
+      assert.equal(entry.before.instance.profileId, row.profileId, 'played instance comes from canonical equipped profile');
+      assert.equal(entry.after.stage?.animationSetId, `class-cards-${classId}`, 'equipped profile retains default class artwork');
+      assert.deepEqual(entry.after.stage.alternateWeaponPoses, [], 'alternate weapon animation families stay disabled');
+    }
     entry.audioNodes = page.__auditAudioNodes.slice(audioStart);
     for (const failure of report.networkFailures.slice(networkStart)) {
       const match = new URL(failure.url).pathname.match(/^\/assets\/sfx\/([^/]+)\.ogg$/);
