@@ -12,8 +12,11 @@ requires/excludes rules. Fresh characters choose the first available trait;
 veteran profiles choose every available initial trait in sequence. Changing
 class or subclass clears the choices. The run payload carries optional
 `initialClassTreeChoices`; Begin validates all choices against the current
-profile before adopting the new run, applies them after opening mastery and
-before the opening sequence. Legacy callers and saved runs retain the pending
+profile before adopting the new run. Explicit creation opens mastery inside
+the detached birth constructor before validating ability selections and
+composing their canonical eleven-card recipe, then applies traits before
+the opening sequence. This lets veteran profiles start with the same
+mastery-gated abilities their picker offers. Legacy callers and saved runs retain the pending
 mastery-choice fallback on the map. Screenshot runs with explicit choices apply
 them too, using nonbanking mastery.
 

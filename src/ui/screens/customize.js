@@ -252,7 +252,7 @@ export function mountCustomize(app, {
     class: el('section', { id: 'cz-class-panel', class: 'as-pane flush cz-stage' }, split),
     subclass: el('section', { id: 'cz-subclass-panel', class: 'as-pane flush cz-stage' }, [
       el('div', { id: 'cz-subclass-selector-host' }),
-      el('div', { id: 'cz-subclass-traits' }),
+      el('div', { id: 'cz-subclass-traits', class: 'as-pane' }),
       el('div', { id: 'cz-starting-deck-host' }),
     ]),
     attributes: el('section', { id: 'cz-character-panel', class: 'as-pane flush cz-stage' }, [

@@ -1,4 +1,3 @@
-import { applyCreationTraits } from './model/creationTraits.js';
 import { rollPendingAbilityOffers } from './model/abilityOffers.js';
 import { openRestRecord, recordRestConsumed, markRestLeft, restRevisitNodeId, clearRestRevisitOnTravel } from './model/restRevisit.js';
 import { queueInitialProgression } from './model/initialProgression.js';
@@ -1240,17 +1239,24 @@ function beginPreparedRun({ classId, subclassId, seedString, customization, keep
   // the old Exposure states; the pose must also carry their older rules.
   if (legacyArcaneShot) delete configSnapshot.breakMeterVersion;
   const preparedRegistries = configuredRegistries(configSnapshot);
-  const preparedRun = createRunState({
-    seed, classId, subclassId, registries: preparedRegistries, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes,
-    profileMeta: saves.loadMeta(), combatExpansionVersion, enemyKnowledgeVersion, reactionRulesVersion,
-  });
+  let preparedRun;
+  try {
+    preparedRun = createRunState({
+      seed, classId, subclassId, registries: preparedRegistries, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes,
+      profileMeta: saves.loadMeta(), combatExpansionVersion, enemyKnowledgeVersion, reactionRulesVersion,
+      ...(initialClassTreeChoices !== undefined ? { initialClassMastery: {
+        receiptId: crypto.randomUUID(), bankable: !shotState, custom,
+        initialClassTreeChoices,
+      } } : {}),
+    });
+  } catch (error) {
+    if (initialClassTreeChoices === undefined) throw error;
+    failureBanner('run:creation', 'REVIEW YOUR STARTING CHOICES', ` · ${error.message}`);
+    return;
+  }
   preparedRun.custom = custom || { ascension: 0, mods: {}, deckMode: 'standard' };
-  if (!shotState || initialClassTreeChoices !== undefined) {
-    openRunClassMastery(preparedRegistries, preparedRun, saves.loadMeta(), { receiptId: crypto.randomUUID(), bankable: !shotState });
-    if (!applyCreationTraits(preparedRegistries, preparedRun, initialClassTreeChoices)) {
-      failureBanner('run:traits', 'CHOOSE YOUR SUBCLASS TRAITS', ' · Your class or profile changed. Return to Subclass and choose your traits again.');
-      return;
-    }
+  if (!shotState && initialClassTreeChoices === undefined) {
+    openRunClassMastery(preparedRegistries, preparedRun, saves.loadMeta(), { receiptId: crypto.randomUUID() });
   }
   resetArmouryTraySession();
   activeSlot = slot;
