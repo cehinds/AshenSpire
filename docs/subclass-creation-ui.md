@@ -12,7 +12,7 @@ visible. Changing the base class replaces stale subclass choices with that
 class's authored default. Changing the subclass rechecks hands and starting
 abilities, rebuilds their controls, and refreshes the opening deck.
 
-The deck preview renders the engine's `subclassDeckPreview` references, preserving
+The deck preview renders the engine's `stampedSubclassDeckPreview` references, preserving
 every copy and its `openingSource` and `openingRole`. The player can inspect each
 of the eleven cards through the standard full card inspection door. Its four
 source groups show five subclass cards, one class card, one weapon art, and four

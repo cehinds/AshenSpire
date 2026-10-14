@@ -5,7 +5,7 @@ import { engravedIcon, engravedGlyphId } from './engravedIcon.js';
 import { markUiComponent, UI_COMPONENTS as UI } from './uiComponents.js';
 import { renderCard } from './card.js';
 import { openCardInspection } from './cardInspection.js';
-import { creationSubclassSelection, creationStartingDeckModel } from '../models/CreationSubclassModel.js';
+import { creationSubclassSelection, creationStartingDeckModel, CREATION_CARD_RULES } from '../models/CreationSubclassModel.js';
 
 const SUBCLASS_ICONS = Object.freeze({ heavyKnight: 'shield', swordMaster: 'sword', battleMage: 'mana', frostMonarch: 'frost', ranger: 'target', assassin: 'dexterity', cleric: 'health', monk: 'poise' });
 
@@ -47,8 +47,8 @@ export function createCreationSubclassSelector({ options = [], selectedId = null
   return node;
 }
 
-export function openCreationStartingCard(registries, card, opener) {
-  const face = renderCard(registries, card.ref, { interactive: false, level: 'inspect' });
+export function openCreationStartingCard(registries, card, opener, { rules = CREATION_CARD_RULES } = {}) {
+  const face = renderCard(registries, card.ref, { interactive: false, level: 'inspect', rules });
   markUiComponent(face, UI.creationStartingCardInspector);
   return openCardInspection({ title: card.definition.name, card: face, opener,
     details: el('p', { text: t('creation.subclass.cardRole', { role: t(card.roleStringId) }) }),
@@ -56,8 +56,8 @@ export function openCreationStartingCard(registries, card, opener) {
 }
 
 /** Every copy is visible; inspection opens the existing full rules card. */
-export function createCreationStartingDeck({ registries, refs = [] } = {}) {
-  const groups = creationStartingDeckModel(registries, refs);
+export function createCreationStartingDeck({ registries, refs = [], rules = CREATION_CARD_RULES } = {}) {
+  const groups = creationStartingDeckModel(registries, refs, { rules });
   const node = creationPanel({ kind: 'starting-deck', title: t('creation.subclass.deckTitle', { count: refs.length }),
     subtitle: t('creation.subclass.deckBreakdown', Object.fromEntries(groups.map(group => [group.source, group.cards.length]))),
     className: 'cc-subclass-deck', children: groups.map(group => {
@@ -72,7 +72,7 @@ export function createCreationStartingDeck({ registries, refs = [] } = {}) {
             engravedIcon('info'),
           ]);
           markUiComponent(control, UI.creationStartingDeckCard);
-          control.addEventListener('click', () => openCreationStartingCard(registries, card, control));
+          control.addEventListener('click', () => openCreationStartingCard(registries, card, control, { rules }));
           return control;
         })),
       ]);

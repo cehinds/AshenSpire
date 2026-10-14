@@ -1,9 +1,10 @@
+import { subclassDeckPreview } from '../src/model/subclassDeck.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRunState, serializeRun, deserializeRun, validateRunShape } from '../src/model/state.js';
-import { subclassOptions, subclassSelectionProblem, effectiveSubclassId, subclassContentProblems, subclassDeckPreview } from '../src/model/subclasses.js';
+import { subclassOptions, subclassSelectionProblem, effectiveSubclassId, subclassContentProblems } from '../src/model/subclasses.js';
 import { startingAbilityPlan } from '../src/model/startingAbilities.js';
 import { stampDeck } from '../src/model/loadout.js';
 import { classDraftPool, pickClassNode } from '../src/model/classTree.js';

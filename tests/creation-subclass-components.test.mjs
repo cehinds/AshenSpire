@@ -1,13 +1,16 @@
+import { subclassDeckPreview } from '../src/model/subclassDeck.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
-import { subclassOptions, subclassDeckPreview } from '../src/model/subclasses.js';
+import { resolveCombatCard } from '../src/engine/combatExpansion.js';
+import { cardPlainText } from '../src/ui/components/card.js';
+import { subclassOptions } from '../src/model/subclasses.js';
 import { startingAbilityPlan } from '../src/model/startingAbilities.js';
 import { creationAbilitySelection, creationFlowCategories } from '../src/ui/models/CreationWorkspaceModel.js';
 import { createCreationSubclassSelector, createCreationStartingDeck } from '../src/ui/components/creationSubclass.js';
-import { creationSubclassSelection, creationStartingDeckModel, creationDraftStartingDeck } from '../src/ui/models/CreationSubclassModel.js';
+import { creationSubclassSelection, creationStartingDeckModel, creationDraftStartingDeck, CREATION_CARD_RULES } from '../src/ui/models/CreationSubclassModel.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 
 const registries = createRegistries(contentBundle);
@@ -97,6 +100,54 @@ test('draft preview handles no picks, one caster pick, and stale retained picks 
   assert.deepEqual(creationDraftStartingDeck(registries, run, stale), creationDraftStartingDeck(registries, run, []));
   assert.deepEqual(stale, ['not-an-eligible-ability'], 'preview never mutates point-buy Cancel state');
   assert.throws(() => createRunState({ registries, classId: 'starseer', subclassId: 'battleMage', seed: 42, startingAbilityIds: [chosen] }), /Choose 2/);
+});
+
+test('starting-card inspection shows current Crystal Barrier Ward rules', () => withKitDom(dom => {
+  dom.document.getSelection = () => null;
+  dom.document.documentElement = dom.document.body;
+  const proto = Object.getPrototypeOf(dom.document.body);
+  const markup = Object.getOwnPropertyDescriptor(proto, 'innerHTML');
+  Object.defineProperty(proto, 'innerHTML', { ...markup, set(value) { this.inspectionMarkup = value; markup.set.call(this, value); } });
+  try {
+    const ref = { cardId: 'crystalBarrier', abilityRank: 1, openingRole: 'Skill', openingSource: 'subclass' };
+    const model = creationStartingDeckModel(registries, [ref])[0].cards[0];
+    assert.deepEqual(model.definition, resolveCombatCard({ registries, ...CREATION_CARD_RULES }, ref));
+    const deck = createCreationStartingDeck({ registries, refs: [ref] });
+    dom.document.body.append(deck);
+    deck.querySelector('.cc-subclass-deck-card').click();
+    const face = dom.document.querySelector('[data-ui-component="creation-starting-card-inspector"]');
+    const text = face.inspectionMarkup.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ');
+    assert.match(text, /Gain\s+4\s+Ward/);
+    assert.doesNotMatch(text, /Gain\s+4\s+Block/);
+    dom.document.querySelector('.modal-close').click();
+  } finally { Object.defineProperty(proto, 'innerHTML', markup); }
+}));
+
+test('stamped preview definitions, costs, rules and sources match birth basics and chosen abilities without mutating the run', () => {
+  const sourceFields = ['mods', 'damageSchool', 'sourceArmamentId', 'sourceHand', 'weaponId', 'profileId', 'equipmentAttackSlotId', 'grantedBy', 'grantSource', 'abilityRank', 'exposureBuildupPerHit', 'magicShare', 'physicalDamageType'];
+  for (const subclass of registries.subclasses.all()) {
+    const config = { registries, classId: subclass.classId, subclassId: subclass.id, seed: 42 };
+    const base = createRunState(config);
+    const plan = startingAbilityPlan(registries, base);
+    const chosen = creationAbilitySelection(plan.choices.map(card => card.id), plan);
+    for (const ids of [undefined, chosen]) {
+      const run = createRunState({ ...config, startingAbilityIds: ids });
+      const before = structuredClone(run);
+      const preview = creationDraftStartingDeck(registries, run, ids || []);
+      assert.deepEqual(run, before, `${subclass.id}: disposable preview leaves the run unchanged`);
+      const cards = creationStartingDeckModel(registries, preview).flatMap(group => group.cards);
+      const actual = [...run.deck];
+      for (const card of cards) {
+        const at = actual.findIndex(ref => ref.cardId === card.ref.cardId && ref.equipmentAttackSlotId === card.ref.equipmentAttackSlotId && ref.openingRole === card.ref.openingRole && ref.openingSource === card.ref.openingSource);
+        assert.ok(at >= 0, `${subclass.id}: each preview copy has a birth counterpart`);
+        const [birth] = actual.splice(at, 1);
+        assert.deepEqual(card.definition, resolveCombatCard({ ...run, registries }, birth), `${subclass.id}: full definition and cost`);
+        assert.equal(cardPlainText(registries, card.ref, { rules: CREATION_CARD_RULES }), cardPlainText(registries, birth, { rules: CREATION_CARD_RULES }), `${subclass.id}: rules text and numbers`);
+        assert.deepEqual(Object.fromEntries(sourceFields.map(key => [key, card.ref[key]])), Object.fromEntries(sourceFields.map(key => [key, birth[key]])), `${subclass.id}: equipment source and stamped modifiers`);
+      }
+      assert.equal(actual.length, 0);
+    }
+  }
 });
 
 test('every visible starting card opens full inspection and returns focus', () => withKitDom(dom => {

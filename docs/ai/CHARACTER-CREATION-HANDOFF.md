@@ -75,7 +75,7 @@ and no `frostbite` status was restored.
 | Concern | Files |
 | --- | --- |
 | Authoritative rules and data | [SPEC](../../SPEC.md), [subclass definitions](../../src/content/subclasses.js) |
-| Options, legality, draft recipes and identity | [subclasses model](../../src/model/subclasses.js), [class identity](../../src/model/classCard.js), [starting abilities](../../src/model/startingAbilities.js) |
+| Options, legality, draft recipes and identity | [identity model](../../src/model/subclasses.js), [deck recipes](../../src/model/subclassDeck.js), [class identity](../../src/model/classCard.js), [starting abilities](../../src/model/startingAbilities.js) |
 | Birth, grants, saves and progression | [run state](../../src/model/state.js), [loadout composer](../../src/model/loadout.js), [save door](../../src/engine/save.js), [class tree](../../src/model/classTree.js), [respec](../../src/model/classRespec.js) |
 | Source-scoped Cold/Frost behavior | [weapon infusion](../../src/model/weaponInfusion.js), [damage interpreter](../../src/engine/actions.js), `combatRules.js`, `combatCardTactics.js`, `combatExpansionActions.js` |
 | Production screens and reusable parts | [creation screen](../../src/ui/screens/customize.js), [lobby](../../src/ui/screens/lobby.js), [UI model](../../src/ui/models/CreationSubclassModel.js), [components](../../src/ui/components/creationSubclass.js), [UI notes](../subclass-creation-ui.md) |

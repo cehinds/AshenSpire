@@ -1,4 +1,5 @@
-import { subclassSelectionProblem, subclassDeckPreview } from './subclasses.js';
+import { subclassSelectionProblem } from './subclasses.js';
+import * as SubclassDeck from './subclassDeck.js';
 import { startingAbilityRefs } from './startingAbilities.js';
 import { coopProgressionProblems } from './coopProgression.js';
 import {abilityDraftClaimProblems} from './abilityDraftReceipts.js';
@@ -340,7 +341,7 @@ export function createRunState({
   // Starting choices must see package and weapon grants, because those cards
   // count toward copy limits and distinct-family eligibility.
   if (subclassId !== undefined) {
-    run.deck = subclassDeckPreview(registries, run).map(ref => ({ ...createCardInstance(ref.cardId, false, idGen), ...ref }));
+    run.deck = SubclassDeck.subclassDeckPreview(registries, run).map(ref => ({ ...createCardInstance(ref.cardId, false, idGen), ...ref }));
     run.equipmentAttackSlotCount = run.deck.filter(ref => ref.equipmentRole === 'attack').length;
   }
   reconcileGrantedCards(registries, run);
@@ -349,7 +350,7 @@ export function createRunState({
   if (run.progressionRulesVersion === 1) for (const inst of run.deck) if (registries.cards.get(inst.cardId).gradeProfiles) inst.abilityRank = 0;
   const chosenAbilityRefs = startingAbilityRefs(registries, run, startingAbilityIds, profileMeta.settings || {});
   if (subclassId !== undefined && chosenAbilityRefs.length) {
-    run.deck = subclassDeckPreview(registries, run, { startingAbilityRefs: chosenAbilityRefs })
+    run.deck = SubclassDeck.subclassDeckPreview(registries, run, { startingAbilityRefs: chosenAbilityRefs })
       .map(ref => ({ ...createCardInstance(ref.cardId, false, idGen), ...ref }));
   } else for (const ref of chosenAbilityRefs) {
     run.deck.push({ ...createCardInstance(ref.cardId, false, idGen), ...ref });

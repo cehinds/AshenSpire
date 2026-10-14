@@ -1,6 +1,6 @@
 import { masteryClassSummary } from '../components/classMastery.js';
 import { subclassOptions, subclassSelectionProblem } from '../../model/subclasses.js';
-import { creationSubclassSelection, creationDraftStartingDeck } from '../models/CreationSubclassModel.js';
+import { creationSubclassSelection, creationDraftStartingDeck, CREATION_CARD_RULES } from '../models/CreationSubclassModel.js';
 import { createCreationSubclassSelector, createCreationStartingDeck } from '../components/creationSubclass.js';
 import { compactEquipmentDetails } from '../components/compactEquipmentDetails.js';
 import { renderCollectibleCard } from '../components/collectibleCard.js';
@@ -109,7 +109,7 @@ function showNode(node, on) {
 export function mountCustomize(app, {
   registries, meta = {}, defaultSeedString, onBack, onStart, onSettings = null, onQuit = null, catalog = false, shotPose = null, slot = null,
 }) {
-  const creationCardRules = { combatExpansionVersion: 2, reactionRulesVersion: 2, breakMeterVersion: 2 };
+  const creationCardRules = CREATION_CARD_RULES;
   const renderCard = (registries, ref, opts = {}) => renderCardFace(registries, ref, { ...opts, rules: creationCardRules });
   // A new screen must never inherit another card's selection or spent tap.
   clearSelection();

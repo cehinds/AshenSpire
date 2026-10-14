@@ -3,9 +3,11 @@
 import { el, pane } from '../kit/index.js';
 import { feats } from '../../content/feats.js';
 import { createRunState } from '../../model/state.js';
-import { subclassOptions, subclassDeckPreview } from '../../model/subclasses.js';
+import { subclassOptions } from '../../model/subclasses.js';
+import * as SubclassDeck from '../../model/subclassDeck.js';
 import { createCreationSubclassSelector, createCreationStartingDeck } from '../components/creationSubclass.js';
 import { renderCard } from '../components/card.js';
+import { CREATION_CARD_RULES } from '../models/CreationSubclassModel.js';
 import { UI_COMPONENTS as UI, markUiComponent } from '../components/uiComponents.js';
 import { creationFeatBrowserGroups } from '../models/CreationFeatBrowserModel.js';
 import { engravedIcon } from '../components/engravedIcon.js';
@@ -65,10 +67,10 @@ export function mountCreationPartSpecimens({ host, registries }) {
   const detail = featBrowser(groups).querySelector('[data-ui-component="creation-feat-detail"]');
   const subclassChoices = subclassOptions(registries, 'reaver');
   const subclassRun = createRunState({ registries, classId: 'reaver', subclassId: subclassChoices[0].id, seed: 7 });
-  const deckRefs = subclassDeckPreview(registries, subclassRun);
+  const deckRefs = SubclassDeck.stampedSubclassDeckPreview(registries, subclassRun);
   const subclassSelector = () => createCreationSubclassSelector({ options: subclassChoices, selectedId: subclassChoices[0].id });
   const startingDeck = () => createCreationStartingDeck({ registries, refs: deckRefs });
-  const inspector = renderCard(registries, deckRefs[0], { interactive: false, level: 'inspect' });
+  const inspector = renderCard(registries, deckRefs[0], { interactive: false, level: 'inspect', rules: CREATION_CARD_RULES });
   markUiComponent(inspector, UI.creationStartingCardInspector);
   const specimens = [
     ['creation-page-heading', 'Page heading', creationPageHeading({ eyebrow: t('creation.feats.eyebrow'), title: t('creation.title'), description: t('creation.feats.description') })],

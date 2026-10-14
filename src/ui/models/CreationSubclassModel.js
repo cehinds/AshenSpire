@@ -1,7 +1,9 @@
-import { resolveCard } from '../../model/registries.js';
-import { subclassDeckPreview } from '../../model/subclasses.js';
+import { playingCardDefinition } from '../../model/playingCard.js';
+import * as SubclassDeck from '../../model/subclassDeck.js';
 import { startingAbilityPlan, startingAbilityProblem } from '../../model/startingAbilities.js';
 import { creationAbilitySelection } from './CreationWorkspaceModel.js';
+
+export const CREATION_CARD_RULES = Object.freeze({ combatExpansionVersion: 2, reactionRulesVersion: 2, breakMeterVersion: 2 });
 
 /** Creation always makes an explicit choice; legacy runs remain unmodified. */
 export function creationSubclassSelection(options, selectedId) {
@@ -18,17 +20,17 @@ export function creationDraftStartingDeck(registries, run, cardIds = [], setting
   const invalid = eligible.length !== cardIds.length
     || eligible.filter(id => plan?.elementIds.includes(id)).length > (plan?.maxElementPicks || 0)
     || (plan && cardIds.length === plan.count && startingAbilityProblem(registries, run, cardIds, settings));
-  return subclassDeckPreview(registries, run, { startingAbilityIds: invalid ? [] : eligible, settings });
+  return SubclassDeck.stampedSubclassDeckPreview(registries, run, { startingAbilityIds: invalid ? [] : eligible, settings });
 }
 
 const ROLE_IDS = Object.freeze({ Smash: 'smash', Counter: 'counter', Power: 'power', Skill: 'skill', Sweep: 'sweep', Spell: 'spell', Class: 'class', 'Weapon Art': 'weaponArt', Strike: 'strike', Defend: 'defend' });
 
 /** Preserve each copy and the engine's authored source/role, including spell substitutions. */
-export function creationStartingDeckModel(registries, refs) {
+export function creationStartingDeckModel(registries, refs, { rules = CREATION_CARD_RULES } = {}) {
   return Object.freeze(CREATION_DECK_SOURCES.map(source => Object.freeze({
     source,
     cards: Object.freeze(refs.filter(ref => ref.openingSource === source).map((ref, index) => Object.freeze({
-      key: `${source}:${index}`, ref, definition: resolveCard(registries, ref),
+      key: `${source}:${index}`, ref, definition: playingCardDefinition(registries, ref, { rules }),
       roleStringId: `creation.subclass.role.${ROLE_IDS[ref.openingRole] || 'skill'}`,
     }))),
   })));
