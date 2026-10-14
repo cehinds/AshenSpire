@@ -1,3 +1,4 @@
+import { DEFAULT_COMBAT_WEAPONS } from '../model/combatWeaponPresentation.js';
 import { classSmashSequence } from '../model/classSmashAnimations.js';
 import { classSmashAnimations } from '../content/classSmashAnimations.js';
 import { selectedWeaponSequence, selectedWeaponSequenceTiming } from '../model/selectedWeaponSequences.js';
@@ -42,7 +43,7 @@ export function createAlternativeCardStage(classId, { still = false, weaponProfi
   const pilot = alternativeSelectedStances.weaponProfiles?.[weaponProfile];
   const pilotFrames = pilot?.classId === classId ? pilot.frames : null;
   const classSmash = smashProfile === classId ? classSmashAnimations.classes[classId] : null;
-  const attacks = Object.entries(playerAttackSprites[classId] || {});
+  const attacks = DEFAULT_COMBAT_WEAPONS ? [] : Object.entries(playerAttackSprites[classId] || {});
   const family = { ...base,
     frames: { ...base.frames, ...selected.frames, ...Object.assign({}, ...attacks.map(([, entry]) => entry.frames)) },
     sequences: { ...base.sequences, ...selected.sequences,

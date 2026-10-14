@@ -422,7 +422,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         const tags = definition.cardTags?.length ? definition.cardTags : tagService(registries).tagsOf('card', definition);
         heldStances.accept(event, { ...definition, cardTags: tags });
         const action = resolveActionAnimation({ actorId: member.classId, actionId: event.cardId, tags, type: event.cardType });
-        const animation = equipmentAnimationForLoadout(registries, member.loadout, member.classId);
+        const animation = combatEquipmentAnimationForLoadout(registries, member.loadout, member.classId);
         plan = resolveCombatAnimation({ ...definition, cardTags: tags, animationTags: combatEffectTags(registries, definition), sourceArmamentId: definition.sourceArmamentId || event.sourceArmamentId }, equippedPieces(registries, member.loadout, member.classId), { animation, classId: member.classId, appearance: displayAppearance(), combatExpansionVersion: scene.players.find(player => player.id === ownerId)?.combatExpansionVersion || 1, action });
         const hpSpent = (scene.events || []).filter(e => e.type === 'hpLost' && e.targetId === ownerId && e.cause !== 'attack' && !String(e.cause).startsWith('proc:')).reduce((n,e)=>n+(e.amount||0),0);
         plan.aura = resourceAura(definition, { ...event, hpSpent });
@@ -1285,7 +1285,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       if (p.alive) box.append(infoEl(p, m.name || p.id));
       const sprite = document.createElement('div');
       sprite.className = 'sprite';
-      sprite.appendChild(playerSprite({ tint: m.tint, glyph: m.glyph, spriteStyle: m.spriteStyle, figureId: `seat:${m.id}` }, m.classId, figureSpec(registries, m.loadout, m.classId).armourId, { animation: equipmentAnimationForLoadout(registries, m.loadout, m.classId), view: 'combat' }));
+      sprite.appendChild(playerSprite({ tint: m.tint, glyph: m.glyph, spriteStyle: m.spriteStyle, figureId: `seat:${m.id}` }, m.classId, figureSpec(registries, m.loadout, m.classId).armourId, { animation: combatEquipmentAnimationForLoadout(registries, m.loadout, m.classId), view: 'combat' }));
       const resume = posePresentations.get(p.id);
       stageFor(sprite)?.setStance?.(heldStances.get(p.id));
       stageFor(sprite)?.setRestPose?.(resolveCombatPose(p, combatRests.get(p.id), readinessOrders.get(p.id)), { resume, immediate: !resume });
@@ -2252,7 +2252,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
             def = { ...def, type: 'attack', kindIds: ['classification.attack'], cardTags: [...tags, 'maneuver:attack'] };
           }
           const plan = resolveCombatAnimation(def, equippedPieces(registries, member?.loadout, member?.classId),
-            { animation: equipmentAnimationForLoadout(registries, member?.loadout, member?.classId), classId: member?.classId,
+            { animation: combatEquipmentAnimationForLoadout(registries, member?.loadout, member?.classId), classId: member?.classId,
               appearance: displayAppearance(), combatExpansionVersion: next.scene.combatExpansionVersion, counterTriggered: !!returned });
           sprite.dataset.actionFamily = plan.family;
           sprite.dataset.actionMotion = plan.motion;
@@ -2499,4 +2499,4 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
 
   if (conn.open) send({ t: 'resync' });
 }
-import { equipmentAnimationForLoadout } from '../../model/equipmentAnimation.js';
+import { combatEquipmentAnimationForLoadout } from '../../model/equipmentAnimation.js';

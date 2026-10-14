@@ -2,6 +2,11 @@
 
 [Open the responsive gallery](index.html) · [Capture manifest](capture-manifest.json)
 
+**Current runtime policy:** card animations now use each character's default weapon
+art regardless of equipped hands. This gallery remains a frozen capture of the
+build below; alternate weapon-family clips are preserved here as archived
+references and are no longer selected or preloaded during combat.
+
 Build **0.7.1.1516**, digest **e8ab294493**, runtime source **2ca669b1c**. Captured at1440×1000, device scale1, using Playwright because the Browser plugin was unavailable.
 
 All four classes,29 held views and77 registered clip groups are included. Full combat screenshots are explicitly staged poses. Neutral previews capture native in-engine layers through the mounted stage`s real seek/play/reactPose APIs; they are reference clips, not paid card outcomes. Phase review timing is separate from live Normal sampling. Five-slot Smash clips and Reaver Sweep retain five total slots. Guarded reaction D→V→G→H→C→D retains weights2,3,1,2,3,2.
