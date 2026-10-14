@@ -1,0 +1,224 @@
+{
+  "baselineCommit": "c58cfef56",
+  "cases": {
+    "real-content": {
+      "materializeCardValueBonuses": {
+        "sha256": "1517a17aee89623cf55b77344651425e8d9ae4f63d2a98ad03873e7c5636fff6"
+      },
+      "projectAttackCardDamageBundle": {
+        "sha256": "1856afadeff897f000120559d48f3fa6cfa36c8bc209188670fdd765ec1c83e2"
+      },
+      "attackCardDamageConfigProblems": {
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      }
+    },
+    "duplicate-magic-tags-and-null-row": {
+      "materializeCardValueBonuses": {
+        "sha256": "6dfb686a072e39e665de2c7d3a376f38fba4d086a40aba99cb6ef88a70497a94"
+      },
+      "projectAttackCardDamageBundle": {
+        "sha256": "9ded2b21910436bb19cd8cbf243f2484a7268b275e66f7253eb35d7b5018513e"
+      },
+      "attackCardDamageConfigProblems": {
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      }
+    },
+    "same-object-tag-edits": {
+      "materializeCardValueBonuses": {
+        "sha256": "7e4f91cdabae14f66a23d41533c723006f6229fa12152bf9a69114c2de5ab4fa"
+      },
+      "projectAttackCardDamageBundle": {
+        "sha256": "713e70b92ee74d2a3f1b32b7639c8abb765012f4ff5c034572ee2871f57a3b03"
+      },
+      "attackCardDamageConfigProblems": {
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      }
+    },
+    "same-object-formula-edits": {
+      "materializeCardValueBonuses": {
+        "sha256": "65b9b4d10a743cbacd5c7efea0392f18bde4bed88525cb7b6932259a7c3b08dc"
+      },
+      "projectAttackCardDamageBundle": {
+        "sha256": "a7f0ed5ed80b5c6ea12d84a256f6a0e38c5e85437db7e84e8504d0ccd4658e3f"
+      },
+      "attackCardDamageConfigProblems": {
+        "sha256": "42edf0bd1389d0927871e2aacaad2b6f7e30a68c5c4fda222cd6c81d07f094a3"
+      }
+    },
+    "same-object-profile-edit": {
+      "materializeCardValueBonuses": {
+        "sha256": "cbd794e746b6f9aec7847e2f8c733a23ed020f8e154e3115d33102ff27541ade"
+      },
+      "projectAttackCardDamageBundle": {
+        "sha256": "f983ffedc611448ace29895eabe18eab7a3c8af5eeedc64c89f2e57b4f0e0b11"
+      },
+      "attackCardDamageConfigProblems": {
+        "sha256": "42edf0bd1389d0927871e2aacaad2b6f7e30a68c5c4fda222cd6c81d07f094a3"
+      }
+    },
+    "priority-card-profiles": {
+      "materializeCardValueBonuses": {
+        "sha256": "170eda7ae76dc1428cabac2daa6107244f63ec6ad53a77d70835eeff70871bda"
+      },
+      "projectAttackCardDamageBundle": {
+        "sha256": "bbb0473a73c213d13cb5926b5fe58b4e6c2ef28e1b9df67dd4ac7d6ab17bc7c1"
+      },
+      "attackCardDamageConfigProblems": {
+        "sha256": "42edf0bd1389d0927871e2aacaad2b6f7e30a68c5c4fda222cd6c81d07f094a3"
+      }
+    },
+    "formula-only-and-upgraded-face": {
+      "materializeCardValueBonuses": {
+        "sha256": "4aa9b23186b3a63bef5e277c5bcc67b3fffba854d6013eedca2a70544fc9d838"
+      },
+      "projectAttackCardDamageBundle": {
+        "sha256": "2551cba65087cd6ed07736ac1fca7cb608e1899cebfeffca5115bb1a894b1ef8"
+      },
+      "attackCardDamageConfigProblems": {
+        "sha256": "42edf0bd1389d0927871e2aacaad2b6f7e30a68c5c4fda222cd6c81d07f094a3"
+      }
+    },
+    "undefined-authored-tag": {
+      "materializeCardValueBonuses": {
+        "sha256": "8ce2c6ea39e2d64713dbecb830f083cb05e4b8c49fd826b94a45e69c45fc11a4"
+      },
+      "projectAttackCardDamageBundle": {
+        "sha256": "5478af59db37ec46803afa3ef85aa98d3301bb98e47e4ae862aed3496e70406a"
+      },
+      "attackCardDamageConfigProblems": {
+        "sha256": "42edf0bd1389d0927871e2aacaad2b6f7e30a68c5c4fda222cd6c81d07f094a3"
+      }
+    },
+    "malformed-value-containers-null": {
+      "materializeCardValueBonuses": {
+        "sha256": "7c669ea1091e284c3c98afd738224eeef32b389a8e28ee791d2cc09798a3ec78"
+      },
+      "projectAttackCardDamageBundle": {
+        "sha256": "f50cf69d846b3b16723014db51b320887da33c277ca34d9a9a7c0a3c287da2bd"
+      },
+      "attackCardDamageConfigProblems": {
+        "sha256": "e0dc891765545127cd36c5de6ccba2aebf9988443538948f91fbce9a7c43fc8f"
+      }
+    },
+    "malformed-value-containers-[]": {
+      "materializeCardValueBonuses": {
+        "sha256": "7c669ea1091e284c3c98afd738224eeef32b389a8e28ee791d2cc09798a3ec78"
+      },
+      "projectAttackCardDamageBundle": {
+        "sha256": "f50cf69d846b3b16723014db51b320887da33c277ca34d9a9a7c0a3c287da2bd"
+      },
+      "attackCardDamageConfigProblems": {
+        "sha256": "e0dc891765545127cd36c5de6ccba2aebf9988443538948f91fbce9a7c43fc8f"
+      }
+    },
+    "malformed-value-containers-3": {
+      "materializeCardValueBonuses": {
+        "sha256": "7c669ea1091e284c3c98afd738224eeef32b389a8e28ee791d2cc09798a3ec78"
+      },
+      "projectAttackCardDamageBundle": {
+        "sha256": "f50cf69d846b3b16723014db51b320887da33c277ca34d9a9a7c0a3c287da2bd"
+      },
+      "attackCardDamageConfigProblems": {
+        "sha256": "e0dc891765545127cd36c5de6ccba2aebf9988443538948f91fbce9a7c43fc8f"
+      }
+    },
+    "malformed-value-containers-\"bad\"": {
+      "materializeCardValueBonuses": {
+        "sha256": "b6382db0ad0dde7bc6180632ad1f2f321456a48d285c9a84b747b794cce0ad6d"
+      },
+      "projectAttackCardDamageBundle": {
+        "sha256": "da7dd093d36c4a3f9533af0870f0fcb7e6adbcba653e6bed6c39ea52ff79e443"
+      },
+      "attackCardDamageConfigProblems": {
+        "sha256": "e0dc891765545127cd36c5de6ccba2aebf9988443538948f91fbce9a7c43fc8f"
+      }
+    },
+    "missing-tagging": {
+      "materializeCardValueBonuses": {
+        "sha256": "6324989f10f94399d17b20f601aa4dc1ebba150ab75ed41bd8f33995381be4b3"
+      },
+      "projectAttackCardDamageBundle": {
+        "sha256": "32634587a8c4821ef8e7074e41cd7e341d6761d55032608e6e945333e30794d8"
+      },
+      "attackCardDamageConfigProblems": {
+        "sha256": "42edf0bd1389d0927871e2aacaad2b6f7e30a68c5c4fda222cd6c81d07f094a3"
+      }
+    },
+    "malformed-tagging": {
+      "materializeCardValueBonuses": {
+        "error": "(bundle.tagging || []).filter is not a function",
+        "type": "TypeError"
+      },
+      "projectAttackCardDamageBundle": {
+        "error": "(bundle.tagging || []).filter is not a function",
+        "type": "TypeError"
+      },
+      "attackCardDamageConfigProblems": {
+        "error": "(bundle.tagging || []).filter is not a function",
+        "type": "TypeError"
+      }
+    },
+    "malformed-profile-container": {
+      "materializeCardValueBonuses": {
+        "sha256": "9df3fbc5bb7a201b4e3a138cfae9e7739753660f869f4bebabf13519bdba9805"
+      },
+      "projectAttackCardDamageBundle": {
+        "sha256": "dea886a237bf7d42a26bbf943a2df0caa5a6f229b999a0022d7bce716e43b6cb"
+      },
+      "attackCardDamageConfigProblems": {
+        "sha256": "42edf0bd1389d0927871e2aacaad2b6f7e30a68c5c4fda222cd6c81d07f094a3"
+      }
+    },
+    "malformed-profile-row": {
+      "materializeCardValueBonuses": {
+        "error": "Cannot read properties of null (reading 'baseCardId')",
+        "type": "TypeError"
+      },
+      "projectAttackCardDamageBundle": {
+        "error": "Cannot read properties of null (reading 'baseCardId')",
+        "type": "TypeError"
+      },
+      "attackCardDamageConfigProblems": {
+        "error": "Cannot read properties of null (reading 'baseCardId')",
+        "type": "TypeError"
+      }
+    },
+    "empty-cards-with-malformed-tagging": {
+      "materializeCardValueBonuses": {
+        "sha256": "f4e4501e815a1b7a2cebe02bc988bcf7dce70d71156af14a47c9ea1ea8b5ce05"
+      },
+      "projectAttackCardDamageBundle": {
+        "sha256": "f4e4501e815a1b7a2cebe02bc988bcf7dce70d71156af14a47c9ea1ea8b5ce05"
+      },
+      "attackCardDamageConfigProblems": {
+        "sha256": "42edf0bd1389d0927871e2aacaad2b6f7e30a68c5c4fda222cd6c81d07f094a3"
+      }
+    },
+    "both-malformed-profile-and-tagging": {
+      "materializeCardValueBonuses": {
+        "error": "Cannot read properties of null (reading 'baseCardId')",
+        "type": "TypeError"
+      },
+      "projectAttackCardDamageBundle": {
+        "error": "Cannot read properties of null (reading 'baseCardId')",
+        "type": "TypeError"
+      },
+      "attackCardDamageConfigProblems": {
+        "error": "Cannot read properties of null (reading 'baseCardId')",
+        "type": "TypeError"
+      }
+    },
+    "missing-config": {
+      "materializeCardValueBonuses": {
+        "sha256": "6e77e46f52dfa349ab20251ef15e5e75827020b56851b7f2e7b1a28264e12450"
+      },
+      "projectAttackCardDamageBundle": {
+        "error": "balance.damage.attackCards is required",
+        "type": "Error"
+      },
+      "attackCardDamageConfigProblems": {
+        "sha256": "ec8b15926e6d57cf93d4d8c641547f45c413b8a79c0ad7c6dbbf1d8e28d0f56b"
+      }
+    }
+  }
+}
