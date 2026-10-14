@@ -271,5 +271,6 @@ for (const mode of ['impact', 'sequential', 'instant', 'reduced']) test('accurac
     assert.ok(Number.isFinite(outcome) && Number.isFinite(damage), 'both production visuals execute');
     assert.ok(damage > outcome, 'the outcome has a visible lead before damage');
     assert.ok(damage - outcome >= 300, 'outcome gets its readable lead in every playback mode');
+    assert.ok(damage <= 750, 'the readable outcome hold overlaps swing recovery within the first-number budget');
   });
 });

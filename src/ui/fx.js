@@ -1123,7 +1123,13 @@ export function playTimeline(events, ctx, done) {
     // 2) after the wind-up, the beat's effect visuals + numbers, staggered
     // (sequential: only the contact parts here; reactions and numbers follow
     // the recovery).
-    const rest = beat.events.filter((e) => !lead.has(e));
+    // The first accuracy word starts with the swing. Its readable hold overlaps
+    // the wind-up/recovery instead of adding 300ms after the swing has settled.
+    // Later accuracy events keep their own per-hit ordering in the queues.
+    const accuracy = beat.events.find((e) => !lead.has(e) && (e.type === 'attackHit' || e.type === 'damageDealt'));
+    const earlyHit = accuracy?.type === 'attackHit' ? accuracy : null;
+    if (earlyHit) safe(() => visualFor(earlyHit, beat.kind, receiptVisuals)?.(ctx));
+    const rest = beat.events.filter((e) => !lead.has(e) && e !== earlyHit);
     const partsOf = new Map(rest.map((e) => [e, visualPartsFor(e, beat.kind, { sequential, ...receiptVisuals })]));
     const visualEvents = sequential
       ? rest.filter((e) => partsOf.get(e)?.contact)
@@ -1292,7 +1298,7 @@ export function playTimeline(events, ctx, done) {
         else after();
       };
       stepV();
-    }, windup);
+    }, Math.max(windup, earlyHit ? STACK_STEP_MS * 2 : 0));
     };
     if (stanceLead) schedule(playBeat, speed.stanceLeadMs);
     else playBeat();
