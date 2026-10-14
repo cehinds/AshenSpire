@@ -12,6 +12,7 @@ import { counterBaseEvasion } from '../src/engine/counterReturn.js';
 import { creationClassTileSummary } from '../src/ui/models/CreationClassTileModel.js';
 import { createCreationClassSpecimen } from '../src/ui/catalog/creationSpecimens.js';
 import { classChoiceCard, classUnfold } from '../src/ui/components/creationCards.js';
+import { creationClassIcon } from '../src/ui/components/creationClassIcon.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 
 const registries = createRegistries({ ...contentBundle, balance: { ...contentBundle.balance, combatRatings: resolveCombatRatings({}, contentBundle) } });
@@ -92,4 +93,32 @@ test('catalog Class miniatures use each actual draft and the concise production 
     assert.equal(face.querySelector('.cc-unfold-mastery'), null);
     assert.deepEqual(run, before);
   }
+}));
+
+
+test('creation class marks use decorative SVG motifs without changing class copy or locked fallbacks', () => withKitDom(() => {
+  const motifs = { reaver: 'greatsword', starseer: 'spellbook', rogue: 'paired-daggers', herald: 'sun' };
+  for (const cls of registries.classes.all()) {
+    const run = birth(cls.id);
+    const summary = creationClassTileSummary(registries, run, statProjection(registries, run));
+    const folded = classChoiceCard(cls, { visual: 'old glyph' });
+    const unfolded = classUnfold({ cls, summary, visual: 'old glyph' });
+    for (const card of [folded, unfolded]) {
+      const icon = card.querySelector(`[data-class-icon="${cls.id}"]`);
+      assert.equal(icon.namespaceURI, 'http://www.w3.org/2000/svg');
+      assert.equal(icon.getAttribute('data-class-motif'), motifs[cls.id]);
+      assert.equal(icon.getAttribute('stroke'), 'currentColor');
+      assert.equal(icon.getAttribute('aria-hidden'), 'true');
+      assert.equal(icon.getAttribute('focusable'), 'false');
+      assert(icon.children.every(child => child.namespaceURI === icon.namespaceURI));
+      assert.doesNotMatch(card.textContent, /old glyph/);
+    }
+    assert.equal(folded.querySelector('.as-label-text').getAttribute('title'), cls.name);
+    assert.equal(folded.querySelector('.od').textContent, summary.lore);
+    assert.equal(folded.querySelector('.om').textContent, summary.playstyle);
+    assert.equal(unfolded.querySelector('.cc-unfold-description').textContent, summary.lore);
+    assert.equal(unfolded.querySelector('.cc-unfold-playstyle').textContent, summary.playstyle);
+  }
+  for (const id of ['not-shipped', '__proto__', 'constructor', 'toString']) assert.equal(creationClassIcon(id), null);
+  assert.equal(classUnfold({ cls: { id: 'not-shipped', name: 'Future', description: 'Later class' }, visual: 'fallback' }).querySelector('.cc-unfold-class-icon').children[0].textContent, 'fallback');
 }));

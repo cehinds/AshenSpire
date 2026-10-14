@@ -16,6 +16,7 @@ import { attachTooltip, esc } from './tooltip.js';
 import { t } from '../strings.js';
 import { creationClassTileCopy } from '../models/CreationClassTileModel.js';
 import { engravedIcon } from './engravedIcon.js';
+import { creationClassIcon } from './creationClassIcon.js';
 import { relicIcon } from '../assets.js';
 import { keepsakeArtAsset } from '../../content/keepsakeArt.js';
 import { assetUrl } from '../assetmap.js';
@@ -202,7 +203,7 @@ export function classChoiceCard(cls, { selected = false, locked = false, expande
     className: `class-pick cz-class${selected ? ' chosen' : ''}${locked ? ' locked' : ''}`,
     attrs: { dataset: { class: cls.id }, ...(preview ? { 'aria-label': t('creation.preview.selectedClass', { name: cls.name }), tabindex: '-1' } : {}) },
   });
-  card.prepend(el('span', { class: 'og', 'aria-hidden': 'true' }, visualNode(visual)));
+  card.prepend(el('span', { class: 'og', 'aria-hidden': 'true' }, creationClassIcon(cls.id) || visualNode(visual)));
   if (!locked && !preview && onChoose) card.addEventListener('click', onChoose);
   return markUiComponent(card, UI.classChoiceCard, locked ? 'locked' : 'available');
 }
@@ -264,7 +265,7 @@ export function classUnfold({ cls, sprite = null, resources = null, relic = null
       text: t('creation.class.rating', { name: rating.name, value: rating.value }) }))) : resources;
   const node = el('span', { class: `cc-class-unfold${summary ? ' cc-concise-class' : ''}`, id: `cc-unfold-${cls.id}`, dataset: { class: cls.id } }, [
     el('span', { class: 'cc-unfold-portrait' }, [
-      el('span', { class: 'cc-unfold-class-icon', 'aria-hidden': 'true' }, visualNode(visual)), art,
+      el('span', { class: 'cc-unfold-class-icon', 'aria-hidden': 'true' }, creationClassIcon(cls.id) || visualNode(visual)), art,
     ]),
     el('span', { class: 'cc-unfold-summary' }, [
       heading,
