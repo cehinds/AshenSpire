@@ -30,7 +30,7 @@ export function assertImmediateContracts(def, events, instanceId) {
 export async function auditCards({ mode = 'native', allEnemies = false, allVariants = false } = {}) {
   const api = await loadAuditRuntime(mode), inventory = auditInventory(api.registries);
   const report = { mode, inventory: { cards: inventory.cardIds.length, classes: inventory.classes.length, candidates: inventory.variants.length },
-    played: [], rejected: [], fixtureGaps: [], failures: [], contracts: {}, uncovered: {} };
+    resourceDeltaChecks: 0, played: [], rejected: [], fixtureGaps: [], failures: [], contracts: {}, uncovered: {} };
   // First sweep isolates authored base definitions. Grades, carriers and upcast
   // conditions are separate coverage and are deliberately not claimed here.
   const base = allVariants ? inventory.variants : inventory.variants.filter(v => !v.instance.upgraded && !v.instance.profileId && v.upcastTier === undefined &&
@@ -46,6 +46,7 @@ export async function auditCards({ mode = 'native', allEnemies = false, allVaria
       const choicePlan = api.cardChoicePlan(c, inst.instanceId);
       const choice = choicePlan?.options?.find(option => !option.active)?.id;
       const costs = api.cardPlayCosts(c, inst.instanceId, variant.upcastTier);
+      const beforePools = { energy: c.player.energy, mana: c.player.mana };
       const eventStart = c.eventLog.length;
       try { api.dispatch(c, { type: 'playCard', cardInstanceId: inst.instanceId, targetId, ...(choice ? { choice } : {}), ...(variant.upcastTier !== undefined ? { upcastTier: variant.upcastTier } : {}) }); }
       catch (error) {
@@ -65,6 +66,11 @@ export async function auditCards({ mode = 'native', allEnemies = false, allVaria
       assert.equal(receipts[0].energySpent, costs.energy, 'paid Actions agree with effective cost');
       assert.equal(receipts[0].manaSpent, costs.mana, 'paid Mana agrees with effective cost');
       assert.equal(receipts[0].staminaSpent, costs.stamina, 'paid Stamina agrees with effective cost');
+      if (!events.some(e => ['energyGained', 'manaRestored'].includes(e.type))) {
+        assert.equal(c.player.energy, beforePools.energy - receipts[0].energySpent, 'actual Actions paid');
+        assert.equal(c.player.mana, beforePools.mana - receipts[0].manaSpent, 'actual Mana paid');
+        report.resourceDeltaChecks++;
+      }
       const contract = assertImmediateContracts(def, events, inst.instanceId);
       for (const op of contract.covered) report.contracts[op] = (report.contracts[op] || 0) + 1;
       for (const op of contract.uncovered) report.uncovered[op] = (report.uncovered[op] || 0) + 1;

@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1990",
+    "date": "2026-10-14",
+    "group": "2026-10-14",
+    "summary": "Quit is the final main menu entry, and blocked browser exits explain what happened",
+    "detail": "Quit saves the run before leaving. When the browser refuses to close the tab, a visible message lets you return to the game. The combat audit now inventories cards from the registries and checks paid effects and next-turn recovery through native and compiled engines.",
+    "build": "0.7.1.1527",
+    "pullRequest": 1990,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1990"
+  },
+  {
     "id": "pr-1985",
     "date": "2026-10-14",
     "group": "2026-10-14",
