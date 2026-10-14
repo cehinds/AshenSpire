@@ -628,9 +628,10 @@ function glossaryEntry(registries, kind, id) {
 
 /** W1h: the read-only reading a pile viewer shows beside its collection —
  *  the same body the card's own inspect door and tooltip use. */
-export function cardDetailHtml(registries, ref) {
-  const def = resolveCard(registries, ref);
-  return cardTooltip(registries, def, playingCardModel(registries, ref).tokens);
+export function cardDetailHtml(registries, ref, opts = {}) {
+  const def = playingCardDefinition(registries, ref, opts);
+  const model = playingCardModel(registries, ref, { ...opts, definition: def });
+  return cardTooltip(registries, def, model.tokens, model.hasPreview ? model.costs : null, model.damageSequences);
 }
 
 function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences = []) {
@@ -644,8 +645,10 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
     + (pools.mana ? ` + ${esc(pools.mana)} ${word('mana')}` : '');
   // THE TITLE IS THE NAME AND NOTHING ELSE (kit §08): type and cost sit on the
   // meta line as the same tag and value atoms the card face uses.
+  const identity = playingCardModel(registries, { cardId: def.id }, { definition: def });
+  const typeText = [identity.type.label, identity.type.subtype, identity.type.abilityLabel, identity.type.weaponArt].filter(Boolean).join(' · ');
   let html = `<div class="tt-title">${esc(def.name)}</div>`
-    + `<div class="ti-meta"><span class="as-tag">${esc(def.type)}</span><span class="ti-cost">${costText}</span></div>`;
+    + `<div class="ti-meta"><span class="as-tag">${esc(typeText)}</span><span class="ti-cost">${costText}</span></div>`;
   if (pools.estimated) html += '<div class="combat-rule-hint">Estimated price; temporary discounts may lower it.</div>';
   // Card text here too — same function, same marks, same class. The in-play
   // card tooltip had the identical defect; it is one fix, not two.
@@ -658,6 +661,14 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
       const coverage = [c.camps, c.ranges, c.targeting, c.effects].map(ids => (ids || []).map(id => names[id] || id).join(' + ')).filter(Boolean).join(' · ');
       html += `<div class="combat-rule-hint"><strong>Counter coverage:</strong> ${esc(coverage)}${c.schools ? ` · ${esc(c.schools.join(' + '))}` : ''}. Return once after all covered damage and status pressure is resisted. Evade and Invulnerability give no return. The prepared stance remains until another maneuver replaces it.</div>`;
     } else html += '<div class="combat-rule-hint">Prepare counter until next player turn. Listed damage and Poise damage become retaliation after full Guard or Ward absorption; card support effects resolve when played.</div>';
+  }
+  if (identity.cardCategory === 'stance') {
+    html += `<div class="combat-rule-hint"><strong>Stance group:</strong> ${esc(identity.stanceGroups.map(group => group === 'offense' ? 'Offense' : 'Defensive').join(' + '))}.</div>`;
+    if (def.defenseRange) html += `<div class="combat-rule-hint"><strong>Defense range:</strong> ${esc(def.defenseRange)} (covers melee, reach and ranged when ranged).</div>`;
+    if (combatProfile.maneuver === 'counter' && def.defenseRulesVersion === 2)
+      html += `<div class="combat-rule-hint"><strong>Return range:</strong> ${esc(combatProfile.range || 'melee')}. Return misses out of range, on a failed Accuracy check against base Evasion, or when avoided; all return lanes miss together.</div>`;
+    if (combatProfile.maneuver === 'sweep' && (def.tags || def.cardTags || []).includes('trait:reaction'))
+      html += '<div class="combat-rule-hint">Reaction Sweep resolves before the incoming attack. Killing, staggering or controlling its attacker can interrupt it; otherwise the attack resumes.</div>';
   }
   html += `<div class="ctext">${fillTemplate(def, tokens, null, damageSequences)}</div>`;
   // Nested keyword + status tooltips (SPEC §7.3).

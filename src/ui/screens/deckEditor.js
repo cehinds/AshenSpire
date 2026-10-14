@@ -35,6 +35,7 @@ import { renderCard, cardPlainText } from '../components/card.js';
 import { resolveCard } from '../../model/registries.js';
 import { combatCardRange, combatProfileFor } from '../../model/combatCardProfile.js';
 import { cardCategorySigilHtml } from '../components/cardTagSymbols.js';
+import { cardClassification } from '../../model/cardClassification.js';
 import { playingCardModel, playingCardDefinition } from '../../model/playingCard.js';
 import { playingCardArt, cardArtFallbacks } from '../cardArtwork.js';
 import { cardArtLayersHtml } from '../cardArtLayers.js';
@@ -379,21 +380,17 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     }
     return combatDefCache.get(key);
   };
-  const stanceKey = (row) => {
-    const def = combatDef(row);
-    const profile = combatProfileFor(def);
-    if (MANEUVER_STANCES.includes(profile.maneuver)) return profile.maneuver;
-    // Power and Consumable come before the spell camp: a magical Power is a Power.
-    if (def.type === 'power') return 'power';
-    if (def.type === 'consumable' || (def.kindIds || []).some(id => String(id).startsWith('classification.consumable'))) return 'consumable';
-    if (profile.camp === 'spell') return 'spell';
-    return 'skill';
+  const stanceKey = row => {
+    const identity = cardClassification(combatDef(row));
+    return identity.stanceType || identity.cardCategory;
   };
-  const stanceName = (row) => t(`deckEditor.stance.${stanceKey(row)}`);
-  const stanceNode = (row) => {
-    const stance = stanceKey(row);
-    return el('span', { class: 'deck-editor-stance', dataset: { stance }, text: t(`deckEditor.stance.${stance}`) });
+  const stanceName = row => {
+    const identity = cardClassification(combatDef(row));
+    const title = value => value[0].toUpperCase() + value.slice(1);
+    return [title(identity.cardCategory), identity.stanceType && title(identity.stanceType)].filter(Boolean).join(' · ');
   };
+  const stanceNode = row => el('span', { class: 'deck-editor-stance',
+    dataset: { stance: stanceKey(row) }, text: stanceName(row) });
   // The rank the card face prints (its ability rank, else its rank badge). Rank 0
   // has a name: a spell's is Cantrip, a combat maneuver's is Basic.
   const rankNode = (row) => {
