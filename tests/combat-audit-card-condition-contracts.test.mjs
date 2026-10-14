@@ -1,6 +1,26 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { auditCardConditionContracts, CONDITION_CARD_IDS } from '../tools/combat-audit/card-condition-contracts.mjs';
+import { auditCardConditionContracts, CONDITION_CARD_IDS, expectedConditionalBuildup } from '../tools/combat-audit/card-condition-contracts.mjs';
+
+test('condition buildup oracle follows normative Spell bonus eligibility and configuration', () => {
+  const c = { combatExpansionVersion: 2, player: { combatStance: { maneuver: 'casting', camp: 'spell' } } };
+  const before = { statuses: { necroticBlight: { stacks: 1 } } };
+  const numeric = { amount: 4 };
+  assert.deepEqual(expectedConditionalBuildup(c, numeric, before), { authored: 4, spellStanceBonus: 1, total: 5 });
+  c.stanceRules = { spellStatusStacks: 2 };
+  assert.deepEqual(expectedConditionalBuildup(c, numeric, before), { authored: 4, spellStanceBonus: 2, total: 6 });
+  assert.equal(expectedConditionalBuildup(c, { amount: 0 }, before).total, 0, 'zero authored effect gains no invented application');
+  c.player.combatStance = { maneuver: 'defend', camp: 'spell' };
+  assert.equal(expectedConditionalBuildup(c, numeric, before).total, 4, 'magic Defense receives no Spell application bonus');
+  c.player.combatStance = { maneuver: 'attack', camp: 'physical' };
+  assert.equal(expectedConditionalBuildup(c, numeric, before).total, 4);
+  c.player.combatStance = { maneuver: 'casting', camp: 'spell' };
+  c.combatExpansionVersion = 1;
+  assert.equal(expectedConditionalBuildup(c, numeric, before).total, 4, 'legacy combat receives no expanded stance bonus');
+  c.combatExpansionVersion = 2;
+  const bloom = { status: 'necroticBlight', amount: { f: 'mul', args: [{ f: 'stacks', of: 'target', status: 'necroticBlight' }, 4] } };
+  assert.deepEqual(expectedConditionalBuildup(c, bloom, before), { authored: 4, spellStanceBonus: 2, total: 6 });
+});
 
 for (const mode of ['native', 'bundled']) test(`authored conditional outcomes and negative controls: ${mode}`, async () => {
   const report = await auditCardConditionContracts({ mode });
@@ -68,15 +88,26 @@ for (const mode of ['native', 'bundled']) test(`authored conditional outcomes an
     for (const branch of row.branches) {
       assert.equal(branch.after.statuses.weak?.stacks || 0, branch.truth ? 1 : 0,
         'Blight condition produces actual active Weak; negative gauge is unchanged');
+      assert.equal(branch.after.gauge, branch.truth ? 1 : 2, 'exact Weak remainder includes the successful Spell bonus');
+      assert.equal(branch.expectedBuildup.spellStanceBonus, branch.truth ? 1 : 0);
+      assert.equal(branch.after.stance.maneuver, 'casting');
     }
   }
   for (const row of report.contracts.filter(row => row.cardId === 'progression-wire-snare')) {
-    for (const branch of row.branches) assert.equal(branch.after.statuses.bleeding?.stacks || 0,
-      branch.truth ? 1 : 0, 'Weak or Vulnerable independently produces actual Bleeding');
+    for (const branch of row.branches) {
+      assert.equal(branch.after.statuses.bleeding?.stacks || 0,
+        branch.truth ? 1 : 0, 'Weak or Vulnerable independently produces actual Bleeding');
+      assert.equal(branch.expectedBuildup.spellStanceBonus, 0, 'physical Wire Snare gains no Spell bonus');
+      assert.equal(branch.after.gauge, branch.truth ? 5 : 0);
+      assert.equal(branch.after.stance.maneuver, 'attack');
+    }
   }
   for (const row of report.contracts.filter(row => row.cardId === 'blightBloom')) {
     const [negative, positive] = row.branches;
     assert.equal(positive.after.statuses.necroticBlight.stacks, 2, 'one active Necrotic Blight doubles to two');
     assert.equal(negative.after.statuses.necroticBlight, undefined);
+    assert.equal(positive.after.gauge, 1, 'exact Blight remainder includes one Spell stance unit');
+    assert.deepEqual(positive.expectedBuildup, { authored: 4, spellStanceBonus: 1, total: 5 });
+    assert.equal(positive.after.stance.maneuver, 'casting');
   }
 });
