@@ -2,17 +2,17 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { cardValueIndexCases } from './helpers/card-value-index-cases.mjs';
+import { cardValueIndexCases, cardValueOracleOutput } from './helpers/card-value-index-cases.mjs';
 import { contentBundle } from '../src/content/index.js';
 import * as model from '../src/model/attackCardDamage.js';
 // Recorded by invoking the unchanged model at c58cfef56 before indexing tags.
-// Each hash covers the entire serialized projection/configuration/problem list.
+// Each hash covers the serialized card definitions/damage configuration/problem list.
 const baseline = JSON.parse(readFileSync(new URL('./fixtures/card-value-tag-index-baseline.json', import.meta.url)));
 for (const [name, bundle] of cardValueIndexCases()) {
   for (const method of ['materializeCardValueBonuses', 'projectAttackCardDamageBundle', 'attackCardDamageConfigProblems']) {
     // Evaluate immediately: the generator intentionally edits one bundle in place.
     let observed;
-    try { observed = { sha256: createHash('sha256').update(JSON.stringify(model[method](bundle))).digest('hex') }; }
+    try { observed = { sha256: createHash('sha256').update(JSON.stringify(cardValueOracleOutput(method, model[method](bundle))) ?? 'undefined').digest('hex') }; }
     catch (error) { observed = { error: error.message, type: error.constructor.name }; }
     test(`${method} preserves the pre-index result for ${name}`, () => {
       assert.deepEqual(observed, baseline.cases[name][method]);

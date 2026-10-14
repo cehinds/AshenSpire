@@ -43,3 +43,10 @@ export function* cardValueIndexCases() {
   yield ['both-malformed-profile-and-tagging', { ...bundle, tagging: {}, equipment: { ...bundle.equipment, basicCardProfiles: [null] } }];
   yield ['missing-config', { ...bundle, balance: { ...bundle.balance, damage: null } }];
 }
+
+// Pin affected outputs, allowing unrelated relic/event/art content to evolve.
+export function cardValueOracleOutput(method, result) {
+  if (method === 'materializeCardValueBonuses') return result.balance?.damage;
+  if (method === 'projectAttackCardDamageBundle') return result.cards;
+  return result;
+}
