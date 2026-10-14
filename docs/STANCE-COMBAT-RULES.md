@@ -19,7 +19,7 @@ Ratings are active only while their stance is active. They never accumulate from
 | Counter | Both its applicable offensive and defensive rating bonuses | Applicable offensive and defensive entry grants |
 | Evade | Applicable defensive rating (+3 DR physically, +3 Ward rating magically) | Applicable defensive protection grant plus 1 Evade stack |
 
-A non-melee offensive magical card enters **Spell**, and adds 1 stack to **each existing status it successfully applies**; this does not create a new status or reward a resisted/failed application. Melee magic follows its authored maneuver instead. Defensive magic remains **Defense**, never Spell.
+A non-melee offensive magical card enters **Spell**, and adds 1 stack to **each status its existing authored effect successfully applies**. This strengthens the spell's existing effect and works on a target that did not already carry that status; it never invents an additional status effect or rewards a resisted/failed application. Melee magic follows its authored maneuver instead. Defensive magic remains **Defense**, never Spell.
 
 Magical Defense's 3 entry protection is Block:Barrier, default 30:70, Frost 50:50, Force or Alteration 70:30. Compute Block by rounding the Block share to a whole number; Barrier gets the exact remainder, so the two always sum to the grant. These entry grants use Barrier, not Ward, while the active magical defensive rating is Ward rating.
 
@@ -56,7 +56,7 @@ A landed attack whose target's active Evade stance or Evade reaction failed show
 - Price previews and paid SP agree before stance transition; physical/magical floors hold, including a same-stance zero-Mana spell and rounds queue/refund.
 - Repeated same-stance plays do not repeat entry grants or stack active ratings; Counter grants both sides and switching away removes only active bonuses.
 - Defense restores on every card; overflow routes to the matching Block/Barrier layer. Magic entry splits preserve totals at every configured grant.
-- Status bonuses occur only on successful existing-status applications; melee magic follows its maneuver and defensive magic remains Defense.
+- Status bonuses strengthen only successfully applied authored status effects, including first applications to a target; melee magic follows its maneuver and defensive magic remains Defense.
 - Each matchup applies only against its named stance; Smash's Spell pressure split leaves HP type unchanged, and authored Poise is not inflated by the fallback.
 - Weapon-range Counter returns and melee physical reactive Sweeps resolve identically live, in previews, in solo/co-op and across a paused reaction save.
 - Evade respects the cap, natural 20, explicit Target distinction, stack consumption exceptions and once-per-round decay. Every miss leaves protection and HP unchanged.

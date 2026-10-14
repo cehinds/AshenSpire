@@ -58,7 +58,7 @@ export function resolveAttackHit(ctx, source, target, carrier, options = {}) {
   if (dice.length && preview.mode !== 'normal') dice.push(typeof ctx.rng.int === 'function' ? ctx.rng.int('combatAvoidance', 1, 20) : 1 + Math.floor(ctx.rng.float('combatAvoidance') * 20));
   const hit = preview.inRange && (preview.bypass || diceHit(dice, preview.need, preview.mode));
   if (dice.length) delete target.nextEvadeMode;
-  const result = { ...preview, d20, dice, hit, ...(!hit ? { missReason: preview.inRange ? 'accuracy' : 'range' } : {}) };
+  const result = { ...preview, d20, dice, hit, ...(source?.knowledgeAction ? { enemyActionSerial: source.knowledgeAction.serial } : {}), ...(!hit ? { missReason: preview.inRange ? 'accuracy' : 'range' } : {}) };
   if (!hit && preview.inRange && !preview.bypass && preview.evadeStacks > 0) Statuses.removeStatus(ctx, target, 'evade', { amount: 1, reason: 'consumed' });
   const label = hit ? preview.evadeActive && !preview.bypass ? 'Hit — Evade Failed' : 'Hit' : 'Missed';
   if (!options.suppressOutcomeEvent) ctx.emit?.(hit ? 'attackHit' : 'attackMissed', { sourceId: source.id, targetId: target.id, cardId: carrier?.cardId, moveId: carrier?.moveId,

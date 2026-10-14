@@ -50,7 +50,8 @@ export function combatHealthRow(hp, values, { tooltips = true, blockHelp = tFull
       const icon = document.createElement('span');
       icon.className = 'combat-health-evade-icon';
       icon.setAttribute('aria-hidden', 'true');
-      icon.innerHTML = tagSymbolSvg('effect:evade');
+      const mark = tagSymbolSvg('effect:evade');
+      if (mark) icon.append(mark);
       node.append(icon);
     }
     node.append(value);

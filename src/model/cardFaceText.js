@@ -306,10 +306,10 @@ function buildLines(def, preview, registries) {
     const ctx = { registries, combatExpansionVersion: 2, stanceRules: registries?.balance?.stanceRules };
     const entry = stanceEntryBonuses(def, ctx);
     const grants = Object.entries(entry).filter(([, amount]) => amount > 0).map(([id, amount]) => '+' + num(amount) + ' ' + ({ precision: 'Precision', evade: 'Evade', block: 'Block', barrier: 'Barrier' })[id]);
-    if (grants.length) unconditional.push({ cat: 'bonus', text: 'On stance change: ' + grants.join(', ') });
+    if (grants.length) unconditional.push({ cat: 'bonus', text: 'Stance entry: ' + grants.join(', ') });
     if (stanceOf(def)?.maneuver === 'defend') {
       const restore = num(stanceRulesFor(ctx).defenseRestore);
-      unconditional.push({ cat: 'bonus', text: 'Every play: restore ' + restore + ' Poise and Ward; overflow to Block and Barrier' });
+      unconditional.push({ cat: 'bonus', text: 'Play: restore ' + restore + ' Poise/Ward (overflow)' });
     }
   } else if (def.evade) {
     unconditional.push({ cat: 'bonus', text: `${def.evade.whileStatus ? `While ${esc(title(def.evade.whileStatus))}: ` : ''}Prepare one Evade${def.evade.advantage ? ' with Advantage' : ''}` });

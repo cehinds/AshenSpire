@@ -25,6 +25,14 @@ function fixture({ version = 1, cardIds = ['guardCounter', 'sweepingBlow'], enem
   for (const enemy of combat.enemies) { enemy.intentRevealed = false; enemy.ratings = { ar: 0, dr: 0, pr: 0, poise: 100, ward: 0 }; }
   return { combat, registries };
 }
+// These lifecycle fixtures exercise landed contacts; preserve real seeded draws
+// and saved counters while putting their ordinary Accuracy threshold below every
+// non-fumble result. Dedicated stance-hit tests cover misses and natural ones.
+function landedContacts(combat) {
+  const actors = combat.players ? [...combat.players.values()].map(seat => seat.entity) : [combat.player];
+  for (const actor of [...actors, ...combat.enemies]) { actor.accuracy = 100; actor.evasion = 0; }
+}
+
 const answer = (combat, optionId = null) => dispatch(combat, { type: 'chooseReaction', offerId: combat.pendingReaction.id, optionId });
 
 test('incoming plans pause before hits, reveal only the actor, and decline resumes roster order once', () => {
@@ -100,7 +108,10 @@ test('reload preserves committed plan and all RNG streams through a paid reactio
   const restored = restoreCombatSnapshot({ registries, rng, snapshot });
   const option = combat.pendingReaction.options.find(row => row.cardId === 'guardCounter');
   assert.deepEqual(answer(combat, option.id), answer(restored, option.id));
-  assert.deepEqual(serializeCombatSnapshot(combat), serializeCombatSnapshot(restored));
+  // Compare the persisted JSON representation: absent optional event fields and
+  // undefined fields have identical save semantics after a JSON round trip.
+  const persisted = state => JSON.parse(JSON.stringify(serializeCombatSnapshot(state)));
+  assert.deepEqual(persisted(combat), persisted(restored));
   assert.deepEqual(combat.rng.getCounters(), restored.rng.getCounters());
 });
 
@@ -262,6 +273,7 @@ test('a saved offer with a changed price cannot silently charge the canonical co
 
 test('a defensive Sweep can cancel its attacker without executing its intent', () => {
   const { combat } = fixture();
+  landedContacts(combat);
   combat.enemies[0].hp = 1;
   dispatch(combat, { type: 'endTurn' });
   const option = combat.pendingReaction.options.find(row => row.cardId === 'sweepingBlow');
@@ -274,6 +286,7 @@ test('a defensive Sweep can cancel its attacker without executing its intent', (
 
 test('paid Counter reply to an automatic return terminates the chain', () => {
   const { combat } = fixture({ cardIds: ['guardCounter', 'strike'], enemyCount: 1 });
+  landedContacts(combat);
   const enemy = combat.enemies[0];
   enemy.block = 100;
   enemy.combatStance = { camp: 'physical', maneuver: 'counter', range: 'melee', targeting: 'single' };
@@ -300,6 +313,7 @@ test('nested paid Sweep discard resumes a player-phase Counter return exactly af
         { cardId: 'strike', instanceId: 'strike', upgraded: false }, { cardId: 'sweepingBlow', instanceId: 'sweep', upgraded: false }] };
     const combat = coop ? createCoopCombat({ registries, rng: createRng(701), players: [player], enemyIds: ['wanderingSoldier'], reactionRulesVersion: 1 })
       : createCombat({ registries, rng: createRng(701), player, enemyIds: ['wanderingSoldier'], combatExpansionVersion: 2, reactionRulesVersion: 1 });
+    landedContacts(combat);
     combat.foundation = createFoundation(combatRules);
     const owner = coop ? combat.players.get('a').entity : combat.player;
     owner.block = 100;

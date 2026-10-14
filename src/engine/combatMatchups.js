@@ -301,6 +301,8 @@ export function setCombatStance(ctx, entity, carrier) {
   const next = stanceOf({ combatProfile: profile }, entity);
   if (!next) return entity.combatStance || null;
   const changed = !sameStance(entity, { combatProfile: profile });
+  // A fresh non-Counter card cannot retain an older hybrid Counter just because both are Evade.
+  if (!changed && profile.maneuver !== 'counter') clearCombatCounter(entity, ctx);
   // Range and school track the accepted card even when the stance identity stays the same.
   const expiry = entity.combatStance?.expiresOnOwnerCycle;
   entity.combatStance = { ...next,
@@ -415,7 +417,9 @@ export function counterCoverageMatches(coverage, profile, effect = 'damage') {
 function preparedCounter(ctx, target, carrier, options) {
   const counter = target?.combatCounter;
   if (!counter?.charges || (carrier?.combatReaction && carrier.manualCounterSerial !== counter.serial) || restrictions(ctx, target, options).counterDisabled) return null;
-  if (target.combatStance?.maneuver !== 'counter') return null;
+  const stance = target.combatStance?.maneuver;
+  const authoredCounter = counter.carrier?.combatProfile?.maneuver === 'counter';
+  if (stance !== 'counter' && !(stance === 'evade' && authoredCounter)) return null;
   if ((target.combatOwnerCycle || 0) >= counter.expiresOnOwnerCycle) return null;
   return counter;
 }
@@ -427,7 +431,7 @@ export function stancePressureMultiplier(ctx, source, target, carrier) {
 }
 function stanceMultiplier(ctx, target, profile) {
   const stance = stanceOf(target?.combatStance);
-  const incoming = stanceOf({ combatProfile: profile });
+  const incoming = profile.maneuver === 'counter' ? { maneuver: 'counter' } : stanceOf({ combatProfile: profile });
   if (!stance || !incoming) return 1;
   const cfg = stanceRulesFor(ctx);
   if (incoming.maneuver === 'smash' && ['defend', 'casting', 'evade'].includes(stance.maneuver)) return cfg.smashMultiplier;

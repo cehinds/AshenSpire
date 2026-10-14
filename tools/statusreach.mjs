@@ -185,6 +185,8 @@ import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js
 import { combatStatusRules } from '../src/content/combatStatusRules.js';
 import { combatExpansionMatchups } from '../src/content/combatMatchups.js';
 import { combatProfileFor } from '../src/model/combatCardProfile.js';
+import { applyCombatExpansionMartial } from '../src/content/combatExpansionMartial.js';
+import { stanceEntryBonuses } from '../src/model/stanceRules.js';
 import { expandedEnemyMove } from '../src/engine/combatCardTactics.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -341,14 +343,17 @@ export function statusReach(bundle, opts = {}) {
       for (const value of Object.values(node)) walk(value);
     };
     walk(carrier);
-    const profile = combatProfileFor(carrier);
+    const profile = { ...combatProfileFor(carrier), ...(carrier.combatProfile || {}) };
+    // R8: mirror actual stance entry, requiring a shipped stance-bearing carrier and a positive configured grant.
+    const entry = stanceEntryBonuses({ ...carrier, combatProfile: profile }, { stanceRules: opts.stanceRules || bundle.balance?.stanceRules });
+    for (const status of ['precision', 'evade']) if (entry[status] > 0) note(status, `R8 stance entry ${where}`);
     const damaging = positive(carrier.damage) || [...(carrier.effects || []), ...(carrier.upgrade?.effects || [])]
       .some(effect => effect.op === 'damage' && positive(effect.amount));
     const type = expansionMatchups.damageAliases?.[profile.damageType] || profile.damageType;
     const rider = profile.camp && damaging ? expansionMatchups.damageRiders?.[type] : null;
     if (rider?.status && positive(rider.pressure)) pressure(rider.status, `${where} damage:${type}`);
   };
-  for (const card of bundle.cards || []) projected(applyCombatExpansionCard(card), `cards:${card.id}`);
+  for (const card of bundle.cards || []) projected(applyCombatExpansionMartial(applyCombatExpansionCard(card)), `cards:${card.id}`);
   for (const enemy of bundle.enemies || []) for (const [moveId, move] of Object.entries(enemy.moves || {})) {
     projected({ ...expandedEnemyMove({ enemyId: enemy.id }, move, moveId, { combatExpansionVersion: 2 }),
       enemyId: enemy.id, moveId }, `enemies:${enemy.id}/${moveId}`);

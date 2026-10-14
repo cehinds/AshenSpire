@@ -69,7 +69,7 @@ test('range and accuracy misses gate HP, Poise and Ward together without spendin
     assert.equal(target.hp, startHp); assert.equal(target.persistentWard.value, 30);
     assert.equal(target.poiseMeter.value, 0); assert.equal(target.combatEvade.charges, 1);
     assert.equal(draws, expectedDraws);
-    assert.ok(ctx.eventLog.some(event => event.type === 'combatCounterMissed' && event.reason === reason));
+    assert.ok(ctx.eventLog.some(event => event.type === 'attackMissed' && event.missReason === reason));
   }
 });
 

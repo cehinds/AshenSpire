@@ -651,7 +651,9 @@ function applyExpandedDamage(ctx, source, target, base, tags, carrier = {}) {
   // Independent pressure resolves even when all direct damage met protection.
   if (!carrier.combatReaction) for (const effect of Matchups.matchupRiderEffects(ctx, source, target, carrier, { amount, hpLoss })) {
     if (['applyStatus', 'buildup'].includes(effect.op)) {
-      const pressure = Control.applyStatusPressure(ctx, target, effect.status, effect.amount ?? effect.stacks, source, { camp: effect.camp || profile.camp,
+      const authored = effect.amount ?? effect.stacks;
+      const bonus = spellAuthoredStatusBonus(ctx, { source, card: carrier, meta: { expansionGroup: carrier.expansionGroup } }, authored);
+      const pressure = Control.applyStatusPressure(ctx, target, effect.status, authored + bonus, source, { camp: effect.camp || profile.camp,
         actionKey: carrier.expansionGroup?.key || `${ctx.turn}:${carrier.instanceId || 'reaction'}` });
       Matchups.recordTacticalStatus(tactical, pressure);
     } else if (effect.op === 'poiseDamage') dealPoiseDamage(ctx, target, effect.amount, { cause: `rider:${effect.rider || type}` });
@@ -1275,10 +1277,12 @@ export function executeAction(ctx, action) {
   } finally { if (previous) ctx._abilityAction = previous; else delete ctx._abilityAction; }
 }
 
-function spellAuthoredStatusBonus(ctx, action) {
-  if (ctx.combatExpansionVersion !== 2 || !action.card || !action.meta?.expansionGroup || action.meta?.stanceEntry) return 0;
-  const stance = action.source?.combatStance?.maneuver;
-  return ['casting', 'spell'].includes(stance) ? 1 : 0;
+function spellAuthoredStatusBonus(ctx, action, authored) {
+  if (ctx.combatExpansionVersion !== 2 || !action.card || (!action.meta?.expansionGroup && !action.meta?.expansionAuthoredAction) || action.meta?.stanceEntry || !(authored > 0)) return 0;
+  const stance = action.source?.combatStance;
+  const eligible = ['casting', 'spell'].includes(stance?.maneuver)
+    || stance?.maneuver === 'counter' && stance?.camp === 'spell';
+  return eligible ? stanceRulesFor(ctx).spellStatusStacks : 0;
 }
 
 function plannedStatusTargets(ctx, action, eff) {
@@ -1415,7 +1419,7 @@ function runOpcode(ctx, action, eff) {
         const cinder = ctx.combatExpansionVersion === 2 && action.source ? Blight.ashenBlightSpellBuildup(ctx, action.source,
           { cycleKey: String(action.source.combatOwnerCycle || 0), school: action.card?.combatProfile?.school, buildups: [{ status: eff.status, amount: authored }] }) : null;
         const pressure = Control.applyStatusPressure(ctx, t, eff.status,
-          authored + spellAuthoredStatusBonus(ctx, action) + (cinder?.amount || 0) + (action.meta?.abilityChargeBuildup || 0), action.source,
+          authored + spellAuthoredStatusBonus(ctx, action, authored) + (cinder?.amount || 0) + (action.meta?.abilityChargeBuildup || 0), action.source,
           { camp: eff.camp || action.card?.combatProfile?.camp, actionKey: action.meta?.expansionGroup?.key || `${ctx.turn}:${action.card?.instanceId || 'effect'}`,
             recoveryProfile: eff.recoveryProfile, traits: eff.traits });
         const row = action.meta?.expansionGroup?.targets[ctx.playerIdForEntity?.(t) || t.id];
@@ -1471,7 +1475,8 @@ function runOpcode(ctx, action, eff) {
     }
     case 'applyStatus': {
       for (const t of plannedStatusTargets(ctx, action, eff)) {
-        const stacks = evalNum(ctx, action, eff.stacks, 1, t) + spellAuthoredStatusBonus(ctx, action) + (action.meta?.abilityChargeBuildup || 0);
+        const authored = evalNum(ctx, action, eff.stacks, 1, t);
+        const stacks = authored + spellAuthoredStatusBonus(ctx, action, authored) + (action.meta?.abilityChargeBuildup || 0);
         statuses.applyStatus(ctx, t, eff.status, stacks, action.source);
         if (ctx.combatExpansionVersion === 2) {
           const row = action.meta?.expansionGroup?.targets[ctx.playerIdForEntity?.(t) || t.id];

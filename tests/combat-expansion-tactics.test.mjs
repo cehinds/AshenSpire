@@ -237,15 +237,15 @@ test('Decoy catches only one positive Single Reach/Ranged action, never Area, Me
 test('one successful return budget survives reprepare, finalize replay, and JSON restoration', () => {
   const f = fixture(); prepare(f); const incoming = carrier();
   const receipt = beginTacticalAction(f.ctx, f.source, f.target, incoming, [{ amount: 8 }]);
-  recordTacticalContact(receipt, { blocked: 4 }); completeTacticalAction(f.ctx, f.source, f.target, incoming, receipt);
+  recordTacticalContact(receipt, { blocked: receipt.amount }); completeTacticalAction(f.ctx, f.source, f.target, incoming, receipt);
   completeTacticalAction(f.ctx, f.source, f.target, incoming, receipt);
   f.target = JSON.parse(JSON.stringify(f.target)); prepare(f);
   const second = beginTacticalAction(f.ctx, f.source, f.target, incoming, [{ amount: 8 }]);
-  recordTacticalContact(second, { blocked: 4 }); completeTacticalAction(f.ctx, f.source, f.target, incoming, second);
+  recordTacticalContact(second, { blocked: second.amount }); completeTacticalAction(f.ctx, f.source, f.target, incoming, second);
   assert.equal(payloads(f).length, 1);
   startTacticalTurn(f.ctx, f.target); prepare(f);
   const third = beginTacticalAction(f.ctx, f.source, f.target, incoming, [{ amount: 8 }]);
-  recordTacticalContact(third, { blocked: 4 }); completeTacticalAction(f.ctx, f.source, f.target, incoming, third);
+  recordTacticalContact(third, { blocked: third.amount }); completeTacticalAction(f.ctx, f.source, f.target, incoming, third);
   assert.equal(payloads(f).length, 2);
 });
 
@@ -260,7 +260,7 @@ test('incapacitation snapshots suppress Counter/Evade; clearing it after impact 
 test('a same-action stagger clears pending Counter before full-action finalization', () => {
   const f = fixture(); prepare(f);
   const receipt = beginTacticalAction(f.ctx, f.source, f.target, carrier(), [{ amount: 8 }]);
-  recordTacticalContact(receipt, { blocked: 4 });
+  recordTacticalContact(receipt, { blocked: receipt.amount });
   setCombatStance(f.ctx, f.target, carrier('attack'));
   assert.deepEqual(completeTacticalAction(f.ctx, f.source, f.target, carrier(), receipt), []);
 });
@@ -280,7 +280,7 @@ test('one action-wide d20 controls multi-hit avoidance and replay spends no seco
     const receipt = beginTacticalAction(f.ctx, f.source, f.target, carrier(), [{ amount: 4 }, { amount: 4 }]);
     assert.equal(receipt.avoided, avoided);
     assert.equal(f.rolls.length, 1);
-    assert.equal(f.target.statuses.evade.stacks, 2, 'hits and misses do not spend evade stacks');
+    assert.equal(f.target.statuses.evade.stacks, avoided ? 1 : 2, 'an eligible miss spends exactly one stack; a hit spends none');
     beginTacticalAction(f.ctx, f.source, f.target, carrier(), [], { receipt });
     assert.equal(f.rolls.length, 1);
   }
@@ -299,7 +299,7 @@ test('Advantage chooses high d20 / low d100; Disadvantage reverses and both canc
 test('school edges modify only explicitly selected printed effect and weakness wins', () => {
   const f = fixture(); prepare(f, { school: 'fire', schoolEffect: 'poise' }, { payload: { hp: 7, poise: 8, ward: 4 } });
   const incoming = carrier('attack', { school: 'frost', damageType: 'blunt' });
-  const receipt = beginTacticalAction(f.ctx, f.source, f.target, incoming, [{ amount: 8 }]); recordTacticalContact(receipt, { blocked: 4 });
+  const receipt = beginTacticalAction(f.ctx, f.source, f.target, incoming, [{ amount: 8 }]); recordTacticalContact(receipt, { blocked: receipt.amount });
   completeTacticalAction(f.ctx, f.source, f.target, incoming, receipt);
   assert.deepEqual(payloads(f).map(action => action.effect.amount), [7, 6, 4]);
 });

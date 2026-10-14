@@ -6421,3 +6421,12 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 
 :root .combat .combatant .combat-health-meter .m-value,
 :root .combat .combatant .combat-health-meter .m-value::after { -webkit-text-stroke: 1px #000; paint-order: stroke fill; }
+
+/* Keep the Evade icon inside the same compact badge geometry as defenses. */
+:root .combat .combatant .combat-health-evade {
+  flex: 0 0 calc(22px / var(--ui-zoom, 1)); width: calc(22px / var(--ui-zoom, 1));
+  min-width: 0; max-width: calc(22px / var(--ui-zoom, 1)); height: calc(22px / var(--ui-zoom, 1));
+  aspect-ratio: 1; grid-template-columns: .8em 1fr; padding: 0 .15em; overflow: hidden;
+}
+:root .combat .combatant .combat-health-evade-icon { min-width: 0; width: .8em; height: .8em; }
+:root .combat .combatant .combat-health-evade-icon svg { width: 100%; height: 100%; max-width: 100%; }

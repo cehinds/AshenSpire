@@ -12,7 +12,7 @@ export function stanceOf(carrier, entity = null) {
   if (maneuver === 'spell' || maneuver === 'cast') maneuver = 'casting';
   const evade = profile.evade && profile.evadeEligible !== false
     && (!profile.evade.whileStatus || profile.evadeEligible === true || entity?.statuses?.[profile.evade.whileStatus]?.stacks > 0);
-  if (evade || maneuver === 'evade') maneuver = 'evade';
+  if ((evade && ['defend', 'counter'].includes(maneuver)) || maneuver === 'evade') maneuver = 'evade';
   if (camp === 'spell' && !['defend', 'counter', 'evade'].includes(maneuver)
     && (profile.range || (profile.projectile || maneuver === 'ranged' ? 'ranged' : 'melee')) !== 'melee') maneuver = 'casting';
   if (maneuver === 'ranged') maneuver = 'attack';
@@ -45,6 +45,9 @@ export function stanceEntryBonuses(carrier, ctx = null) {
   const amount = defensive ? cfg.entryProtection : 0;
   const share = cfg.schoolBlockShares?.[stance.school] ?? cfg.spellBlockShare;
   const block = stance.camp === 'spell' ? Math.round(amount * share) : amount;
-  return { precision: offensive ? cfg.offensivePrecision : 0, evade: stance.maneuver === 'evade' ? cfg.evadeStacks : 0,
+  const profile = carrier.combatProfile || carrier;
+  const auxiliaryEvade = profile.evade && profile.evadeEligible !== false
+    && (!profile.evade.whileStatus || profile.evadeEligible === true);
+  return { precision: offensive ? cfg.offensivePrecision : 0, evade: stance.maneuver === 'evade' || auxiliaryEvade ? cfg.evadeStacks : 0,
     block, barrier: amount - block };
 }

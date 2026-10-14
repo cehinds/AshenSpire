@@ -50,7 +50,7 @@ export function enqueueExpandedAction(ctx, actions, { source, target, carrier, c
   for (const action of actions) {
     action.meta = { ...action.meta, expansionGroup: group };
     const eff = action.effect;
-    const shadow = { ...action, source: prefixEntity(action.source), owner: prefixEntity(action.owner), target: prefixEntity(action.target), meta: { ...action.meta, expansionGroup: undefined } };
+    const shadow = { ...action, source: prefixEntity(action.source), owner: prefixEntity(action.owner), target: prefixEntity(action.target), meta: { ...action.meta, expansionGroup: undefined, expansionAuthoredAction: true } };
     if (!['damage', 'buildup', 'applyStatus', 'poiseDamage', 'wardDamage'].includes(eff.op)) {
       Actions.executeAction(prefix, shadow);
       continue;

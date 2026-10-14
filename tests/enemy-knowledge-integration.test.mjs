@@ -140,9 +140,11 @@ test('a committed successful evade against a multi-hit wholly unknown action cre
   dispatch(combat, { type: 'playCard', cardInstanceId: 'knowledge-counter' });
   assert.equal(combat.enemyKnowledge.owners.player.earnedXp, 0);
   const prepared = structuredClone(combat.player.combatEvade);
+  const drawInt = combat.rng.int.bind(combat.rng);
+  combat.rng.int = (stream, min, max) => { const value = drawInt(stream, min, max); return stream === 'combatAvoidance' ? 1 : value; };
   dispatch(combat, { type: 'endTurn' });
   skipReactions(combat);
-  assert.ok(combat.eventLog.some(event => event.type === 'combatAvoidanceResolved' && event.evade?.success), JSON.stringify({ prepared, events: combat.eventLog.slice(-22) }));
+  assert.ok(combat.eventLog.some(event => event.type === 'attackMissed' && event.missReason === 'accuracy' && event.evadeStacks > 0), JSON.stringify({ prepared, events: combat.eventLog.slice(-22) }));
   assert.equal(combat.enemyKnowledge.owners.player.earnedXp, 1);
   const owner = combat.enemyKnowledge.owners.player;
   assert.equal(owner.pending.enemies[enemy.id].receipts[combat.enemyKnowledge.encounter.id].bonus, true);

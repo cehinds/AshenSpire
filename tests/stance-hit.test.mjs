@@ -126,3 +126,19 @@ test('Target is authored and compiled for Hex only, without school inference', (
   assert.equal(f.events.at(-1).label, 'Hit');
   assert.equal(f.draws(), 0);
 });
+
+test('Spell status bonus follows configured authored payloads for Casting and magic Counter only', () => {
+  for (const [maneuver, camp, expected] of [['casting', 'spell', 5], ['counter', 'spell', 5], ['attack', 'spell', 3], ['defend', 'spell', 3], ['counter', 'physical', 3]]) {
+    const ctx = createCombat({ registries, rng: createRng(5), combatExpansionVersion: 2,
+      ratingsRules: resolveCombatRatings({}, contentBundle), enemyIds: ['wanderingSoldier'],
+      player: { classId: 'starseer', maxHp: 100, hp: 100, maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1, deck: [] } });
+    ctx.stanceRules = { spellStatusStacks: 2 };
+    ctx.player.combatStance = { maneuver, camp }; ctx.player.statuses = {};
+    const carrier = { type: 'skill', tags: [`camp:${camp}`, `maneuver:${maneuver}`], combatProfile: { camp, maneuver, range: 'reach' } };
+    const effects = [{ op: 'applyStatus', target: 'self', status: 'strength', stacks: 3 }, { op: 'applyStatus', target: 'self', status: 'weak', stacks: 0 }];
+    enqueueExpandedAction(ctx, effects.map(effect => ({ effect, source: ctx.player, owner: ctx.player, target: ctx.player, card: carrier, meta: {} })), { source: ctx.player, target: ctx.player, carrier });
+    while (ctx.queue.length) executeAction(ctx, ctx.queue.shift());
+    assert.equal(ctx.player.statuses.strength.stacks, expected, `${camp} ${maneuver}`);
+    assert.equal(ctx.player.statuses.weak, undefined, 'a zero authored status does not gain an invented application');
+  }
+});
