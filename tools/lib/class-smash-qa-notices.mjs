@@ -1,5 +1,5 @@
 // audio.js warmSample uses synth immediately and probes these optional filenames.
-const optionalIds = new Set(['holdTick','cardPlay','hit_heavy','hit_light','beat','holdCommit','relic']);
+const optionalIds = new Set(['holdTick','cardPlay','hit_heavy','hit_medium','hit_light','beat','holdCommit','relic']);
 export function optionalClassSmashAudioProbe(url, status, buildUrl) {
   if (status !== 404) return false;
   try {
