@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-14",
     "summary": "Combat fades cover fighters, and player targets stay clear of Health",
     "detail": "Screen fades now cover idle and selected fighters while target selection, cards and the combat HUD remain above them. When the perspective view places the player behind the hand, its transparent 44px target moves clear of its own Health strip without changing the artwork, Health position or selected fighter size.",
-    "build": "0.7.1.1519",
+    "build": "0.7.1.1521",
     "pullRequest": 1978,
     "url": "https://github.com/cehinds/AshenSpire/pull/1978"
+  },
+  {
+    "id": "pr-1974",
+    "date": "2026-10-14",
+    "group": "2026-10-14",
+    "summary": "Rogue, Starseer and Herald jump into their ground-slam Smash",
+    "detail": "The selected dagger-and-buckler, ash-staff and bone-sceptre paintings now move from their held stance through takeoff, airborne load and ground impact before returning to that same stance. These paintings were authored with the class starter weapons and share the existing class-default presentation. Phone views preserve the complete weapons and effects, and delayed impact cues finish before the pose recovers. All card animations use the character’s default weapon art regardless of equipped weapons, while equipment keeps its actual stats, costs and effects. A four-class combat gallery shows 29 held views and 77 labeled animation/reaction groups, with existing fallback and legacy equipment differences identified.",
+    "build": "0.7.1.1521",
+    "pullRequest": 1974,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1974"
   },
   {
     "id": "pr-1977",

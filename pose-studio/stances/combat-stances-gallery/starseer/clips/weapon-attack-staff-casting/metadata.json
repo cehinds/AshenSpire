@@ -1,0 +1,79 @@
+{
+  "action": "weapon:attack:staff-casting",
+  "aliases": [
+    "weapon:attack:staff-casting",
+    "weapon:spell:staff-casting",
+    "weapon:ranged:staff-casting",
+    "weapon:rangedMagic:staff-casting"
+  ],
+  "origin": "offensive",
+  "timing": {
+    "totalMs": 525,
+    "impactMs": 165
+  },
+  "registeredSequence": {
+    "poses": [
+      "starseer.staff-casting.attack.anticipation",
+      "starseer.staff-casting.attack.strike",
+      "starseer.staff-casting.attack.follow-through",
+      "starseer.staff-casting.attack.recovery"
+    ],
+    "durations": [
+      220,
+      100,
+      160,
+      220
+    ],
+    "impact": 1,
+    "travel": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "hold": false,
+    "action": "attack"
+  },
+  "reviewFrames": [
+    {
+      "pose": "stance-offensive",
+      "label": "origin stance-offensive",
+      "weight": 1
+    },
+    {
+      "pose": "starseer.staff-casting.attack.anticipation",
+      "registeredFrameId": "starseer.staff-casting.attack.anticipation",
+      "label": "1/4 starseer.staff-casting.attack.anticipation \u00b7 weight 220",
+      "weight": 220,
+      "timeMs": 82.5
+    },
+    {
+      "pose": "starseer.staff-casting.attack.strike",
+      "registeredFrameId": "starseer.staff-casting.attack.strike",
+      "label": "2/4 starseer.staff-casting.attack.strike \u00b7 weight 100",
+      "weight": 100,
+      "timeMs": 202.5
+    },
+    {
+      "pose": "starseer.staff-casting.attack.follow-through",
+      "registeredFrameId": "starseer.staff-casting.attack.follow-through",
+      "label": "3/4 starseer.staff-casting.attack.follow-through \u00b7 weight 160",
+      "weight": 160,
+      "timeMs": 300
+    },
+    {
+      "pose": "starseer.staff-casting.attack.recovery",
+      "registeredFrameId": "starseer.staff-casting.attack.recovery",
+      "label": "4/4 starseer.staff-casting.attack.recovery \u00b7 weight 220",
+      "weight": 220,
+      "timeMs": 442.5
+    },
+    {
+      "pose": "stance-offensive",
+      "label": "return Attack",
+      "weight": 1
+    }
+  ],
+  "capture": "Actual mounted combat stage canvas; review timing separate from Normal gameplay",
+  "sharedPhaseArtWith": []
+}

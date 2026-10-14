@@ -117,3 +117,27 @@ test('the selected turning Sweep aura retains both horizontal margins at the ori
   assert.deepEqual(f.draws.at(-1).args,[f.surfaces[0],0,0]);
   f.renderer.dispose();
 });
+
+test('opt-in fixed phase reuse preserves pixels, filter and materialization with four bounded entries',()=>{
+  const surfaces=[],draws=[];
+  const context=owner=>({save(){},restore(){},clearRect(){},drawImage(...args){draws.push({owner,args,filter:this.filter});},getImageData(){draws.push({owner,read:true});}});
+  const visible=context('visible');
+  const renderer=createAlternativeAuraRenderer({createCanvas(){const canvas={width:0,height:0,getContext:()=>context('surface'+surfaces.length)};surfaces.push(canvas);return canvas;}});
+  const filter=auraFilter('class-smash-impact','smash',['stamina'],true),image={};
+  renderer.draw(visible,image,filter,120.5,17,340.25,440,{reuse:true});
+  const before=draws.length;
+  renderer.draw(visible,image,filter,120.5,17,340.25,440,{reuse:true,materialize:true});
+  assert.deepEqual(draws.slice(before).map(row=>[row.owner,!!row.read]),[['visible',false],['visible',true]],'cached phase draws only the exact composed surface and retains the contact readback');
+  assert.equal(draws[before].args[0],surfaces[1]);
+  for(let i=0;i<4;i++)renderer.draw(visible,{},filter,120.5,17,340.25,440,{reuse:true});
+  assert.equal(surfaces[1].width,0,'oldest phase canvas is released when the four-entry budget is exceeded');
+  const bright=auraFilter('power2','idle',['stamina','mana'],true);
+  renderer.draw(visible,image,bright,125.75,9.5,340.25,440,{reuse:true});
+  const brightBefore=draws.length;
+  renderer.draw(visible,image,bright,125.75,9.5,340.25,440,{reuse:true});
+  assert.equal(draws.length,brightBefore+1,'same brightness/placement is reused without shadow work');
+  assert.equal(draws.at(-1).filter,'brightness(1.16)','cached brightness is applied exactly once');
+  renderer.draw(visible,image,bright,126.75,9.5,340.25,440,{reuse:true});
+  assert.ok(draws.length>brightBefore+2,'a changed placement cannot use stale cached geometry');
+  renderer.dispose();assert.ok(surfaces.every(surface=>surface.width===0&&surface.height===0));
+});

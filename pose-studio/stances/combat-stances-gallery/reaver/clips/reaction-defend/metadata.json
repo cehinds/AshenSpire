@@ -1,0 +1,35 @@
+{
+  "action": "reaction:defend",
+  "aliases": [],
+  "origin": "defensive",
+  "timing": {
+    "totalMs": 180,
+    "impactMs": 0
+  },
+  "registeredSequence": {
+    "poses": [
+      "pilot-defend"
+    ],
+    "durations": [
+      6
+    ],
+    "impact": 0,
+    "travel": [
+      0
+    ],
+    "hold": false,
+    "pilot": true,
+    "reaction": true
+  },
+  "reviewFrames": [
+    {
+      "pose": "pilot-defend",
+      "registeredFrameId": "pilot-defend",
+      "label": "pilot-defend \u00b7 weight 6",
+      "weight": 6,
+      "atMs": 646.7999999970198
+    }
+  ],
+  "capture": "Actual mounted combat stage canvas; review timing separate from Normal gameplay",
+  "sharedPhaseArtWith": []
+}

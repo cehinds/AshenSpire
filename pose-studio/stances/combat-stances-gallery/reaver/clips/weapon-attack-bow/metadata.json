@@ -1,0 +1,79 @@
+{
+  "action": "weapon:attack:bow",
+  "aliases": [
+    "weapon:attack:bow",
+    "weapon:spell:bow",
+    "weapon:ranged:bow",
+    "weapon:rangedMagic:bow"
+  ],
+  "origin": "offensive",
+  "timing": {
+    "totalMs": 486.46153846153845,
+    "impactMs": 185.99999999999997
+  },
+  "registeredSequence": {
+    "poses": [
+      "reaver.bow.attack.anticipation",
+      "reaver.bow.attack.strike",
+      "reaver.bow.attack.follow-through",
+      "reaver.bow.attack.recovery"
+    ],
+    "durations": [
+      260,
+      80,
+      120,
+      220
+    ],
+    "impact": 1,
+    "travel": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "hold": false,
+    "action": "attack"
+  },
+  "reviewFrames": [
+    {
+      "pose": "stance-offensive",
+      "label": "origin stance-offensive",
+      "weight": 1
+    },
+    {
+      "pose": "reaver.bow.attack.anticipation",
+      "registeredFrameId": "reaver.bow.attack.anticipation",
+      "label": "1/4 reaver.bow.attack.anticipation \u00b7 weight 260",
+      "weight": 260,
+      "timeMs": 92.99999999999999
+    },
+    {
+      "pose": "reaver.bow.attack.strike",
+      "registeredFrameId": "reaver.bow.attack.strike",
+      "label": "2/4 reaver.bow.attack.strike \u00b7 weight 80",
+      "weight": 80,
+      "timeMs": 214.6153846153846
+    },
+    {
+      "pose": "reaver.bow.attack.follow-through",
+      "registeredFrameId": "reaver.bow.attack.follow-through",
+      "label": "3/4 reaver.bow.attack.follow-through \u00b7 weight 120",
+      "weight": 120,
+      "timeMs": 286.15384615384613
+    },
+    {
+      "pose": "reaver.bow.attack.recovery",
+      "registeredFrameId": "reaver.bow.attack.recovery",
+      "label": "4/4 reaver.bow.attack.recovery \u00b7 weight 220",
+      "weight": 220,
+      "timeMs": 407.7692307692308
+    },
+    {
+      "pose": "stance-offensive",
+      "label": "return Attack",
+      "weight": 1
+    }
+  ],
+  "capture": "Actual mounted combat stage canvas; review timing separate from Normal gameplay",
+  "sharedPhaseArtWith": []
+}
