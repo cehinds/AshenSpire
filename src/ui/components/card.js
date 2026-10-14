@@ -170,10 +170,7 @@ export function renderCard(registries, ref, opts = {}) {
   const combatProfile = combatProfileFor(def);
   const combatTags = combatProfileTags(combatProfile, registries);
   const expanded = opts.preview?.combatExpansionVersion === 2 || def.minCombatExpansionVersion === 2;
-  const stanceLabel = combatProfile.maneuver && `${combatProfile.maneuver[0].toUpperCase()}${combatProfile.maneuver.slice(1)}`;
-  const model = { ...rawModel, ...(expanded && stanceLabel ? { type: { ...rawModel.type, label: stanceLabel,
-    subtype: combatProfile.camp === 'spell' ? 'Spell' : 'Martial' } } : {}),
-    ...(expanded ? { faceType: combatCardType(def) } : {}),
+  const model = { ...rawModel, ...(expanded ? { faceType: combatCardType(def) } : {}),
     tags: [...rawModel.tags, ...combatTags.filter(tag => !rawModel.tags.some(existing => existing.id === tag.id))] };
   model.sideTags = cardSideTags(model, def, registries, opts.preview || null);
   // The combat hand's range chip (opts.range), by the same rule the deck editor uses.
@@ -189,8 +186,10 @@ export function renderCard(registries, ref, opts = {}) {
     model.sigils.school && `${SCHOOL_SIGILS[model.sigils.school].label} school`,
     damageWords.length && `Damage: ${damageWords.join(', ')}`,
     ...model.sideTags.map(tag => tag.label),
-    model.abilityRank !== null && rawModel.type.label,
-    model.abilityRank !== null && rawModel.type.subtype,
+    rawModel.type.label,
+    rawModel.type.subtype,
+    rawModel.type.abilityLabel,
+    rawModel.type.weaponArt,
     model.abilityRank !== null ? `rank ${model.abilityRank}` : model.rankBadge?.toLowerCase(),
   ].filter(Boolean).join(', ') + (opts.inspectReadOnly && opts.inspection !== false ? '. Enter to inspect. On touch, tap then Information.' : '');
   const sourcePiece = ref.sourceArmamentId

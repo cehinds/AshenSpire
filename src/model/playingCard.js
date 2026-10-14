@@ -27,6 +27,7 @@
 // run object retained. Everything is read at call time and the result is deep
 // frozen, so a renderer cannot quietly make the model its scratch space.
 
+import { cardClassification } from './cardClassification.js';
 import { resolveCard } from './registries.js';
 import { applyCombatExpansionCard } from '../content/combatExpansionCards.js';
 import { applyCardTraits } from '../content/traitProjection.js';
@@ -95,15 +96,9 @@ export function combatCardDamageLabel(def, preview = null, registries = null, in
 }
 
 export function combatCardType(def) {
-  const p = combatProfileFor(def);
-  if (def.type === 'power') return 'Power';
-  if (['status', 'curse'].includes(def.type)) return 'Status';
-  if (def.type === 'skill' && !p.maneuver) return 'Skill';
-  if (p.maneuver === 'counter') return 'Counter';
-  if (p.maneuver === 'defend') return 'Defend';
-  if (p.camp === 'spell') return 'Spell';
-  return p.maneuver && p.maneuver !== 'casting' ? p.maneuver[0].toUpperCase() + p.maneuver.slice(1)
-    : def.type[0].toUpperCase() + def.type.slice(1);
+  const classification = cardClassification(def);
+  const type = classification.stanceType || (classification.cardCategory === 'curse' ? 'status' : classification.cardCategory);
+  return type[0].toUpperCase() + type.slice(1);
 }
 
 /**
@@ -332,7 +327,8 @@ export function playingCardModel(registries, ref, { preview = null, definition =
   // Type presentation is authored data (balance.ui.cardTypes): corner radii
   // carry the type (attack squarest → power roundest) and each type owns its
   // banner colour. A type with no row keeps the card drawable.
-  const typeRow = balance.ui.cardTypes[def.type] || null;
+  const classification = cardClassification(def);
+  const typeRow = balance.ui.cardTypes[classification.cardCategory] || balance.ui.cardTypes[def.type] || null;
 
   // The class motif hue is authored on the class (`cardTint`). Colourless
   // cards have no owning class and fall back to the neutral frame, which is
@@ -424,12 +420,16 @@ export function playingCardModel(registries, ref, { preview = null, definition =
     rankBadge,
     rankHelp,
     type: freeze({
-      id: def.type,
-      label: abilityLabel || (typeRow && typeRow.label) || def.type.toUpperCase(),
-      subtype: abilityLabel && weaponArt ? 'Weapon Art' : null,
+      id: classification.cardCategory,
+      label: classification.cardCategory.toUpperCase(),
+      subtype: classification.stanceType ? classification.stanceType[0].toUpperCase() + classification.stanceType.slice(1) : null,
+      abilityLabel,
+      weaponArt: weaponArt ? 'Weapon Art' : null,
       glyph: abilityLabel ? def.abilityKind === 'spell' ? '✦' : weaponArt ? '⚔' : '◆' : null,
       help: abilityLabel ? `${abilityLabel}${weaponArt ? ' · Weapon Art' : ''}. ${rankHelp}` : '',
     }),
+    ...classification,
+    legacyType: def.type,
     costs,
     tags,
     sigils: cardSigilIdentity(combatCardType(def), combatProfileFor(def)),
@@ -458,6 +458,6 @@ export function playingCardModel(registries, ref, { preview = null, definition =
  */
 export function playingCardClasses(model) {
   return `card as-card playing-poker-card rarity-${model.rarity}`
-    + ` cls-${model.classId} type-${model.type.id}${model.upgraded ? ' upgraded' : ''}`;
+    + ` cls-${model.classId} type-${model.type.id}${model.legacyType && model.legacyType !== model.type.id ? ` type-${model.legacyType}` : ''}${model.upgraded ? ' upgraded' : ''}`;
 }
 

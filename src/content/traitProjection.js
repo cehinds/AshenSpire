@@ -1,6 +1,7 @@
 // Reaction rules version 2: the card trait projection (docs/combat-card-traits-contract.md,
 // "Tags" and "Card picks"). A pure function of a card definition. It is applied
 // only when reaction rules version 2 is active; version 1 never sees these tags.
+import { actualCardRank } from '../model/cardClassification.js';
 import { combatProfileFor } from '../model/combatCardProfile.js';
 import { objectTagIds } from './tags.js';
 import { CARD_TRAIT_RULES } from './combatCardTraits.js';
@@ -13,8 +14,6 @@ export function cardTier(def) {
   return Math.min(5, Math.floor(rank / 2));
 }
 
-const SWEEP_ANY_TIER = new Set(['whirlingGuard', 'sweepingBlow']);
-const SWEEP_T3 = new Set(['crimsonCleave', 'progression-ashen-cleaver']);
 const COUNTER_NO_STRIKE = new Set(['dodgeRoll', 'evasiveGuard', 'backstep', 'acrobaticsRogue', 'nockAndWait', 'barrageCounter']);
 const SWEEP_STRIKE_T4 = new Set(['crimsonCleave', 'progression-ashen-cleaver']);
 const COUNTER_IMPACT_SPELL = new Set(['frostCounter', 'forceCounter', 'alterationCounter', 'illusionCounter',
@@ -43,8 +42,8 @@ function picks(def, profile, tier, rules) {
 
   // Reaction
   if (maneuver === 'counter' || def.evade != null) out.reaction = true;
-  if (maneuver === 'sweep' && (SWEEP_ANY_TIER.has(id) || (SWEEP_T3.has(id) && tier >= 3))) out.reaction = true;
-  const rank = Array.isArray(def.gradeProfiles) ? def.abilityRank ?? 0 : def.rank ?? 1;
+  const rank = actualCardRank(def);
+  if (maneuver === 'sweep' && rank >= 2) out.reaction = true;
   if (maneuver === 'defend' && rank >= 1) out.reaction = true;
 
   // Counterstrike

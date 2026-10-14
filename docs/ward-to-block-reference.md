@@ -14,7 +14,7 @@ Defense range defaults to **ranged**, covering melee, reach and ranged incoming 
 
 ## Spell counters
 
-All listed cards are skills with offensive range **reach** and defensive range **ranged**. Their default return HP is zero: PR does not invent HP damage or increase pressure. Authored pressure below precedes Counterstrike, Impact, Flux and matchup modifiers.
+All listed cards are **Stance — Counter** with offensive range **reach** and defensive range **ranged**. Their default return HP is zero: PR does not invent HP damage or increase pressure. Authored pressure below precedes Counterstrike, Impact, Flux and matchup modifiers.
 
 | Card | Incoming camp | Targeting | Authored HP / Poise / Ward |
 | --- | --- | --- | --- |
@@ -41,17 +41,23 @@ Base Evasion uses an explicit entity rating when available, otherwise armor/DEX 
 
 ## Reaction and Evade
 
-All Counter and Evade cards retain Reaction. Every Defend maneuver with actual rank at least 1 now has Reaction, regardless of card type; rank-zero Defend cards do not gain it. Graded cards use ability rank rather than display tier.
+All Counter and Evade cards retain Reaction. Every Defense stance with actual rank at least 1 has Reaction. Every Sweep stance with actual rank at least 2 has Reaction; lower ranks do not gain it. Sweeps resolve before the incoming root and may interrupt by killing, staggering or controlling its attacker. Ordinary Sweep damage resumes the root. Graded cards use ability rank rather than display tier.
 
 | Evade card | Type | Charges / bonus per play | Condition |
 | --- | --- | --- | --- |
-| Evasive Guard | Skill | 1 / +0 | None |
-| Dodge Roll | Skill | 1 / +0 | None |
-| Quickstep | Skill | 1 / +0 | None |
-| Backstep | Skill | 1 / +0 | None |
-| Acrobatics | Skill | 1 / +0 | None |
-| Shadowstep | Skill | 1 / +0 | None |
-| Nightstep | Skill | 1 / +0 | None |
-| Crawling Shot | Attack | 1 / +0, Advantage | Prone at play |
+| Evasive Guard | Stance — Evade | 1 / +0 | None |
+| Dodge Roll | Stance — Evade | 1 / +0 | None |
+| Quickstep | Stance — Evade | 1 / +0 | None |
+| Backstep | Stance — Evade | 1 / +0 | None |
+| Acrobatics | Stance — Evade | 1 / +0 | None |
+| Shadowstep | Stance — Evade | 1 / +0 | None |
+| Nightstep | Stance — Evade | 1 / +0 | None |
+| Crawling Shot | Stance — Evade | 1 / +0, Advantage | Prone at play |
 
 Playing during the player turn and playing as a Reaction use the same ratings, prepared charges, bonuses and expiration. This change does not add rank-based Evade charges or overhaul stacking. Prepared Evade uses the existing d20 attribute/armor check; Distance stance avoidance remains separate.
+
+## Card taxonomy
+
+Public categories are **Stance, Skill, Power and Consumable**. System Status/Curse cards remain separate compatibility categories. Legacy authored attack/skill kinds remain unchanged internally and in saved state; the shared model exposes `cardCategory`, `stanceType` and `stanceGroups`.
+
+Stance subtypes are Smash, Attack, Sweep, Counter, Defense and Evade. Attack/Smash are Offense; Defense/Evade are Defensive; Counter is both. Sweep is Offense and becomes Defensive at actual rank 2 (or when explicitly authored defensive-capable). Power/Consumable identity takes precedence over incidental maneuver tags. Spell is a camp/ability identity, not a primary card category; ability rank and Weapon Art labels remain available separately.
