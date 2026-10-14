@@ -122,9 +122,10 @@ async function fixture(page, row) {
     run.ashenBlightBasePools = { maxHp: 200, maxMana: 200, maxStamina: 200 };
     c.rng.restoreCounters(window.__auditBaseRng);
     if (row.relicId) run.relics = [...new Set([...run.relics, row.relicId])];
-    const inst = { cardId: row.cardId || 'strike', instanceId: 'audit-card', upgraded: row.variant === 'upgraded',
+    const inst = { cardId: row.cardId || 'strike', instanceId: row.instanceId, upgraded: row.variant === 'upgraded',
       ...(row.school ? { damageSchool: row.school } : {}) };
-    run.deck = [inst, ...Array.from({ length: 10 }, (_, i) => ({ cardId: i % 2 ? 'defend' : 'strike', instanceId: `audit-fill-${i}`, upgraded: false }))];
+    run.deck = [...run.deck, inst, ...Array.from({ length: 10 }, (_, i) => ({ cardId: i % 2 ? 'defend' : 'strike', instanceId: `audit-fill-${row.instanceId}-${i}`, upgraded: false }))];
+    window.__auditInstanceId = inst.instanceId;
     const enemies = row.enemyIds || ['wanderingSoldier', 'wanderingSoldier'];
     const encounter = c.registries.encounters.all().find(e => enemies.every(id => e.enemies.includes(id)));
     const fresh = createRunCombat({ registries: c.registries, rng: c.rng, run, enemyIds: enemies, encounter, hpMult: row.victory ? 1 : 20,
@@ -185,7 +186,10 @@ async function fixture(page, row) {
 async function finishPending(page, device, chooseReaction = false) {
   const choices = [];
   for (let i = 0; i < 18; i++) {
-    await page.waitForFunction(() => window.__combat.result || !document.querySelector('.hand')?.inert, null, { timeout: 30000 });
+    await page.waitForFunction(() => window.__combat.result
+      || window.__combat.pendingReaction && !!document.querySelector('.reaction-choice')
+      || window.__combat.pendingAbilityDiscard && !!document.querySelector('.discard-choice')
+      || document.querySelector('.end-turn')?.disabled === false, null, { timeout: 30000 });
     const pending = await page.evaluate(() => ({ reaction: window.__combat.pendingReaction, discard: window.__combat.pendingAbilityDiscard, result: window.__combat.result }));
     if (pending.discard) {
       await page.waitForSelector('.discard-choice [data-discard-id]', { timeout: 5000 });
@@ -214,13 +218,17 @@ async function finishPending(page, device, chooseReaction = false) {
 }
 
 async function play(page, device, row, before) {
-  const card = page.locator('.hand .card[data-instance-id="audit-card"]');
+  const card = page.locator(`.hand .card[data-instance-id="${row.instanceId}"]`);
   await card.waitFor({ state: 'visible' });
   if (row.upcastTier) {
     await tap(page, card.locator('.card-upcast'), device);
     await card.locator('.card-upcast-rank').selectOption(String(row.upcastTier));
   }
   await tap(page, card, device);
+  if (row.sampleAnimation) await page.evaluate(async () => {
+    await document.querySelector('.combatant.player .alternative-card-stage')?.__poseStage?.ready;
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  });
   if (before.refused || row.deniedCost) {
     assert.equal(await page.evaluate(() => window.__combat.eventLog.slice(window.__auditStart.eventCount).some(e => e.type === 'cardPlayed')), false);
     assert.equal(await page.locator('.end-turn').isEnabled(), true);
@@ -250,7 +258,7 @@ async function play(page, device, row, before) {
     assert.equal(await page.locator('.hand .card.selected,.hand .card.armed').count(), 0, 'wrong-side selection can be cancelled');
     await tap(page, card, device);
   }
-  const intent = { type: 'playCard', cardInstanceId: 'audit-card', ...(before.plan.mode === 'enemy' ? { targetId: 'e1' } : {}),
+  const intent = { type: 'playCard', cardInstanceId: row.instanceId, ...(before.plan.mode === 'enemy' ? { targetId: 'e1' } : {}),
     ...(before.choice ? { choice: before.choice.options.find(o => !o.active).id } : {}), ...(row.upcastTier ? { upcastTier: row.upcastTier } : {}) };
   await page.evaluate(intent => window.__auditOracleDispatch(window.__auditOracle, intent), intent);
   if (before.plan.mode === 'enemy') {
@@ -271,7 +279,7 @@ async function play(page, device, row, before) {
     await tap(page, page.locator('.combatant.player .player-action-intent'), device);
   }
   if (before.choice) await tap(page, page.locator('.card-choice [data-choice]:not([disabled])').first(), device);
-  await page.waitForFunction(() => window.__combat.eventLog.slice(window.__auditStart.eventCount).some(e => e.type === 'cardPlayed' && e.cardInstanceId === 'audit-card'), null, { timeout: 10000 });
+  await page.waitForFunction(() => window.__combat.eventLog.slice(window.__auditStart.eventCount).some(e => e.type === 'cardPlayed' && e.cardInstanceId === window.__auditInstanceId), null, { timeout: 10000 });
   return { choices: await finishPending(page, device, row.chooseReaction), invalidTargetRecovered: !!row.invalidTarget };
 }
 
@@ -280,7 +288,7 @@ async function receipt(page) {
     const c = window.__combat, events = c.eventLog.slice(window.__auditStart.eventCount);
     window.__auditSampling = false;
     return { hp: c.enemies.map(e => e.hp), player: { hp: c.player.hp, energy: c.player.energy, mana: c.player.mana, stamina: c.player.stamina },
-      events, pile: ['hand', 'draw', 'discard', 'exhaust'].find(p => c.piles[p].some(i => i.instanceId === 'audit-card')) || 'consumedPower',
+      events, pile: ['hand', 'draw', 'discard', 'exhaust'].find(p => c.piles[p].some(i => i.instanceId === window.__auditInstanceId)) || 'consumedPower',
       pending: !!(c.pendingReaction || c.reactionResume || c.pendingAbilityDiscard), queue: c.queue.length, phase: c.phase, turn: c.turn, result: c.result,
       unhandled: window.__auditUnhandled, longTasks: window.__auditLongTasks.filter(e => e.at >= window.__auditStart.at),
       latencyMs: performance.now() - window.__auditStart.at, aiming: document.querySelectorAll('.aiming').length,
@@ -328,6 +336,7 @@ async function endTurnAndPlayNext(page, device, row) {
 }
 
 async function runCase(page, device, classId, row) {
+  row.instanceId = `audit-${report.cases.length}-${row.cardId}-${row.variant}`;
   activeCase = { device, classId, ...row };
   const entry = { ...activeCase, status: 'running' }; report.cases.push(entry);
   const errorStart = report.errors.length;
@@ -336,6 +345,7 @@ async function runCase(page, device, classId, row) {
     entry.before = await fixture(page, row);
     entry.input = await play(page, device, row, entry.before);
     if (row.endTurn) entry.enemyTurn = await endTurnAndPlayNext(page, device, row);
+    if (row.sampleAnimation) await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     entry.after = await receipt(page);
     entry.audioNodes = page.__auditAudioNodes.slice(audioStart);
     for (const failure of report.networkFailures.slice(networkStart)) {
@@ -348,13 +358,13 @@ async function runCase(page, device, classId, row) {
       const frames = entry.after.frames, actionFrames = frames.filter(f => f.action);
       const firstAction = frames.findIndex(f => f.action);
       const origin = frames.slice(0, Math.max(0, firstAction)).findLast(f => f.pose?.startsWith('stance-'));
-      report.animationDispatch.push({ device, classId, cardId: row.cardId, receiptId: 'audit-card', dispatchType: 'paid-card', cardPlayed: entry.after.events.some(e => e.type === 'cardPlayed'),
+      report.animationDispatch.push({ device, classId, cardId: row.cardId, receiptId: row.instanceId, dispatchType: 'paid-card', cardPlayed: entry.after.events.some(e => e.type === 'cardPlayed'),
         presentationKind: entry.before.tags.includes('maneuver:counter') ? 'held-preparation' : 'finite-playback',
         frameChanged: new Set(actionFrames.map(f => f.hash).filter(h => typeof h === 'number')).size > 1, actionStarted: actionFrames.length > 0,
         actionCompleted: actionFrames.length > 0 && !frames.at(-1)?.action,
         returnedToOrigin: !!origin && origin.pose === frames.at(-1)?.pose, origin, tags: entry.before.tags, before: frames[0], after: frames.at(-1), frames });
     }
-    const paid = entry.after.events.filter(e => e.type === 'cardPlayed' && e.cardInstanceId === 'audit-card');
+    const paid = entry.after.events.filter(e => e.type === 'cardPlayed' && e.cardInstanceId === row.instanceId);
     assert.equal(paid.length, entry.input.refusal ? 0 : 1, 'one paid card receipt per play');
     if (!entry.input.refusal) {
       assert.notEqual(entry.after.pile, 'hand', 'played card leaves hand');
@@ -427,9 +437,27 @@ try {
           { cardId: 'strike', enemyStatuses: [{ status: 'invulnerability', stacks: 1 }], category: 'damage-without-health-loss' },
           { cardId: 'strike', enemyIds: ['wanderingSoldier'], category: 'victory-reward', victory: true },
         ];
-        for (const row of rows) {
+        for (const row of rows.filter(row => !arg('category') || arg('category').split(',').includes(row.category))) {
           if (!await runCase(page, device, classId, { ...row, variant: 'base', sampleAnimation: pace === 'normal', figureTarget: true })) { await page.close(); page = await boot(context, classId); }
-          else if (row.victory) { await page.waitForFunction(() => !document.querySelector('.combat'), null, { timeout: 20000 }); await page.screenshot({ path: resolve(out, `${device}-${classId}-victory-reward.png`) }); await page.close(); page = await boot(context, classId); }
+          else if (row.victory) {
+            const entry = report.cases.at(-1);
+            try {
+              assert.equal(entry.after.result, 'victory', 'the killing play wins the canonical encounter');
+              await page.waitForSelector('#reward-expand:not([disabled])', { timeout: 30000 });
+              const before = await page.evaluate(() => window.__spoils());
+              assert.ok(before.pendingReward && before.savedPendingReward, 'victory writes a durable reward receipt');
+              await tap(page, page.locator('#reward-expand'), device);
+              await page.waitForSelector('#reward-continue:not([disabled])', { timeout: 15000 });
+              await page.screenshot({ path: resolve(out, `${device}-${classId}-victory-reward.png`) });
+              await tap(page, page.locator('#reward-continue'), device);
+              await tap(page, page.locator('.confirmation-modal .confirmation-confirm'), device);
+              await page.waitForFunction(done => window.__spoils().done === done + 1 && !window.__spoils().pendingReward, before.done, { timeout: 15000 });
+              const after = await page.evaluate(() => window.__spoils());
+              assert.equal(after.savedPendingReward, null, 'reward completion clears persisted receipt');
+              entry.reward = { before, after };
+            } catch (error) { entry.status = 'failed'; entry.rewardError = error.stack; entry.rewardText = await page.locator('body').innerText(); }
+            checkpoint(); await page.close(); page = await boot(context, classId);
+          }
         }
       }
       await page.close();
