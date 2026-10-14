@@ -510,7 +510,10 @@ async function runCase(page, device, classId, row) {
     if (row.sampleAnimation) await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     entry.after = await receipt(page);
     if (row.category?.endsWith('counter-return')) assert.ok(entry.after.events.some(e => e.type === 'combatCounterTriggered' && e.cardInstanceId === row.instanceId), 'the real incoming action triggers this prepared Counter return');
-    if (row.successfulEvade) assert.ok(entry.after.events.some(e => e.type === 'attackMissed' && e.targetId === entry.after.actual.player.id && e.evadeAttempted && e.hit === false), 'the seeded incoming attack genuinely misses an active evade');
+    if (row.successfulEvade) {
+      assert.ok(entry.after.events.some(e => e.type === 'attackMissed' && e.targetId === entry.after.actual.player.id && e.evadeAttempted && e.hit === false), 'the seeded incoming attack genuinely misses an active evade');
+      assert.equal(entry.after.events.some(e => e.type === 'combatCounterTriggered' && e.cardInstanceId === row.instanceId), false, 'successful Evade does not automatically trigger Counter (accepted expansion contract)');
+    }
     if (row.reactionCard) {
       assert.ok(entry.input.choices.some(choice => choice.kind === 'reactionPlayed'), 'a genuine reaction option was selected and confirmed');
       assert.ok(entry.after.events.some(e => e.type === 'combatEnemyReactionStacked'), 'the authored NPC reaction opened the stack');
@@ -546,7 +549,8 @@ async function runCase(page, device, classId, row) {
       if (current) actions.push({ ...current, completed: false });
       for (const action of actions) { action.frameChanged = new Set(action.hashes).size > 1; delete action.hashes; }
       report.animationDispatch.push({ device, classId, cardId: row.cardId, receiptId: row.instanceId, dispatchType: 'paid-card', cardPlayed: entry.after.events.some(e => e.type === 'cardPlayed'),
-        presentationKind: entry.after.events.some(e => e.type === 'combatCounterTriggered' && e.cardInstanceId === row.instanceId) ? 'counter-return'
+        presentationKind: row.successfulEvade ? 'successful-evasion-no-counter'
+          : entry.after.events.some(e => e.type === 'combatCounterTriggered' && e.cardInstanceId === row.instanceId) ? 'counter-return'
           : entry.before.tags.includes('maneuver:counter') ? 'held-preparation' : 'finite-playback',
         frameChanged: new Set(actionFrames.map(f => f.hash).filter(h => typeof h === 'number')).size > 1, actionStarted: actionFrames.length > 0,
         actionCompleted: actionFrames.length > 0 && !frames.at(-1)?.action,
@@ -650,7 +654,7 @@ try {
           ...[
             { cardId: classId === 'reaver' ? 'guardCounter' : 'spikedReprisal', enemyIds: ['wanderingSoldier'], category: 'guard-counter-return', endTurn: true, prePlayCard: 'defend' },
             { cardId: 'dodgeRoll', enemyIds: ['wanderingSoldier'], category: 'evasion-counter-return', endTurn: true, prePlayCard: 'defend' },
-            { cardId: 'dodgeRoll', enemyIds: ['wanderingSoldier'], category: 'successful-evasion-counter-return', endTurn: true, prePlayCard: 'defend', successfulEvade: true },
+            { cardId: 'dodgeRoll', enemyIds: ['wanderingSoldier'], category: 'successful-evasion', endTurn: true, prePlayCard: 'defend', successfulEvade: true },
           ],
           { cardId: 'defend', enemyIds: ['wanderingSoldier'], category: 'defend-selected-origin', prePlayCard: 'strike' },
           ...(classId === 'herald' ? [{ cardId: 'bloodPact', category: 'spell-selected-origin', prePlayCard: 'strike' }] : []),
