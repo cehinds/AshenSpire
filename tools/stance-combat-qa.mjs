@@ -14,6 +14,8 @@ const server = await serve({ root: process.cwd(), port: 0, open: false });
 const base = 'http://127.0.0.1:' + server.server.address().port;
 const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
 const errors = [];
+const closingPages = new WeakSet();
+const teardownAborts = [];
 const views = {};
 const report = {
   head: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
@@ -23,6 +25,7 @@ const report = {
   views,
   failures: [],
   browserErrors: errors,
+  teardownAborts,
 };
 let page;
 let fixtureSeq = 0;
@@ -73,11 +76,32 @@ async function boot(viewport, query = '') {
   page = await browser.newPage({ viewport, deviceScaleFactor: 1, isMobile: viewport.width < 500, hasTouch: viewport.width < 500 });
   page.setDefaultTimeout(15000);
   page.on('pageerror', error => errors.push(error.message));
-  page.on('requestfailed', request => errors.push('request failed: ' + request.url() + ' ' + (request.failure()?.errorText || '')));
+  const observedPage = page;
+  page.on('requestfailed', request => {
+    const errorText = request.failure()?.errorText || '';
+    // Sprite frame preloads may still be in flight after document images decode.
+    // Only our explicit page teardown makes an aborted request expected; an
+    // aborted live-page request or any other network failure still fails QA.
+    if (closingPages.has(observedPage) && errorText === 'net::ERR_ABORTED') {
+      teardownAborts.push({ url: request.url(), errorText });
+      return;
+    }
+    errors.push('request failed: ' + request.url() + ' ' + errorText
+      + ' [fixture=' + fixtureSeq + ', pageClosing=' + closingPages.has(observedPage) + ', pageClosed=' + observedPage.isClosed() + ']');
+  });
   await page.goto(base + '/?shot=combat&shotClass=starseer&shotExpansion=ward' + query, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await page.locator('.combat').waitFor({ state: 'visible', timeout: 60000 });
   await page.locator('.combatant.player').waitFor({ state: 'visible', timeout: 30000 });
   await waitArt();
+}
+async function closePage(target) {
+  if (!target) return;
+  // Give outstanding sprite preloads a chance to finish while failures still
+  // count as live-page errors. A bounded wait also permits teardown of a page
+  // with a stalled connection; only its explicit abort is classified below.
+  await target.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
+  closingPages.add(target);
+  await target.close();
 }
 async function remount(cards, options = {}) {
   const sequence = ++fixtureSeq;
@@ -286,7 +310,7 @@ try {
   assert.equal(await page.locator('.card-hit-chances:visible').count(), 0, 'unknown enemy has no selected-card odds panel');
   await capture('selected-damage-unknown-enemy', { width: 1440, height: 1000 });
 
-  await page.close();
+  await closePage(page);
   await boot({ width: 390, height: 844 });
   assert.ok(await page.locator('.combatant.player .combat-health-row').count(), 'phone player HP row rendered');
   await capture('combat-hud-phone', { width: 390, height: 844 });
@@ -353,7 +377,7 @@ try {
   writeFileSync(resolve(OUT, 'report.json'), JSON.stringify(report, null, 2) + '\n');
   throw error;
 } finally {
-  await page?.close().catch(() => {});
+  await closePage(page).catch(() => {});
   await browser.close();
   server.server.closeAllConnections?.();
   await new Promise(resolveClose => server.server.close(resolveClose));
