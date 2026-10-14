@@ -12,8 +12,8 @@ test('compact and inspection use the same projected Counter definition and canon
   const detail = cardDetailHtml(registries, ref, { rules });
   assert.match(compact, /2 Block.*3 Ward/);
   assert.match(detail, /STANCE.*Counter/);
-  assert.match(detail, /Defense range:.*ranged/);
-  assert.match(detail, /Return range:.*reach/);
+  assert.match(detail, /Defense range:.*Ranged/);
+  assert.match(detail, /Return range:.*Reach/);
   assert.match(detail, /Accuracy.*base Evasion/);
   assert.match(detail, /Stance group:.*Offense.*Defensive/);
 });
@@ -22,4 +22,5 @@ test('inspection keeps exact live Block/Ward token parts instead of re-splitting
   const preview = { cost: 1, manaCost: 0, staminaCost: 0, tokens: { gainBarrier: 11, 'gainBarrier.block': 5, 'gainBarrier.ward': 6 } };
   const detail = cardDetailHtml(registries, ref, { rules, preview });
   assert.match(detail, /5.*Block.*6.*Ward/);
+  assert.match(cardPlainText(registries, ref, { rules, preview }), /5 Block.*6 Ward/);
 });

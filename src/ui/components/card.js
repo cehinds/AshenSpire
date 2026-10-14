@@ -566,10 +566,12 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
  */
 export function cardPlainText(registries, ref, opts = {}) {
   const def = playingCardDefinition(registries, ref, opts);
-  const lines = opts.rules?.combatExpansionVersion === 2 ? cardFaceLines(def, null, registries) : null;
+  const model = playingCardModel(registries, ref, { ...opts, definition: def });
+  const lines = opts.rules?.combatExpansionVersion === 2 || opts.preview?.combatExpansionVersion === 2
+    ? cardFaceLines(def, opts.preview || null, registries) : null;
   // Plain string work only: no DOM, so it runs the same headless and in a
   // browser. Tags go first; &amp; is decoded last so "&amp;lt;" stays literal.
-  return String(lines ? lines.map(line => line.html).join(' · ') : fillTemplate(def, staticTokens(def), null))
+  return String(lines ? lines.map(line => line.html).join(' · ') : fillTemplate(def, model.tokens, null, model.damageSequences))
     .replace(/<[^>]+>/g, '')
     .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
     .replace(/&amp;/g, '&')
@@ -662,11 +664,11 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
       html += `<div class="combat-rule-hint"><strong>Counter coverage:</strong> ${esc(coverage)}${c.schools ? ` · ${esc(c.schools.join(' + '))}` : ''}. Return once after all covered damage and status pressure is resisted. Evade and Invulnerability give no return. The prepared stance remains until another maneuver replaces it.</div>`;
     } else html += '<div class="combat-rule-hint">Prepare counter until next player turn. Listed damage and Poise damage become retaliation after full Guard or Ward absorption; card support effects resolve when played.</div>';
   }
+  if (def.defenseRange) html += `<div class="combat-rule-hint"><strong>Defense range:</strong> ${esc(def.defenseRange[0].toUpperCase() + def.defenseRange.slice(1))} · Covers ${esc(({ melee: 'Melee', reach: 'Melee + Reach', ranged: 'Melee + Reach + Ranged' })[def.defenseRange] || def.defenseRange)}.</div>`;
   if (identity.cardCategory === 'stance') {
     html += `<div class="combat-rule-hint"><strong>Stance group:</strong> ${esc(identity.stanceGroups.map(group => group === 'offense' ? 'Offense' : 'Defensive').join(' + '))}.</div>`;
-    if (def.defenseRange) html += `<div class="combat-rule-hint"><strong>Defense range:</strong> ${esc(def.defenseRange)} (covers melee, reach and ranged when ranged).</div>`;
     if (combatProfile.maneuver === 'counter' && def.defenseRulesVersion === 2)
-      html += `<div class="combat-rule-hint"><strong>Return range:</strong> ${esc(combatProfile.range || 'melee')}. Return misses out of range, on a failed Accuracy check against base Evasion, or when avoided; all return lanes miss together.</div>`;
+      html += `<div class="combat-rule-hint"><strong>Return range:</strong> ${esc((combatProfile.range || 'melee')[0].toUpperCase() + (combatProfile.range || 'melee').slice(1))}. Return misses out of range, on a failed Accuracy check against base Evasion, or when avoided. A miss deals no HP, Poise, or Ward damage.</div>`;
     if (combatProfile.maneuver === 'sweep' && (def.tags || def.cardTags || []).includes('trait:reaction'))
       html += '<div class="combat-rule-hint">Reaction Sweep resolves before the incoming attack. Killing, staggering or controlling its attacker can interrupt it; otherwise the attack resumes.</div>';
   }
