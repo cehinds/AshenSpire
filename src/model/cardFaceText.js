@@ -155,6 +155,13 @@ function buildLines(def, preview, registries) {
       case 'poiseDamage': return frag('damage', `${num(n, base)} Poise damage${area}`);
       case 'wardDamage': return frag('damage', `${num(n, base)} Ward damage${area}`);
       case 'block': {
+        const defense = def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2
+          ? spellDefenseSplit({ ...def, combatProfile: p }, n) : null;
+        if (defense) {
+          const baseSplit = typeof base === 'number' ? spellDefenseSplit({ ...def, combatProfile: p }, base) : null;
+          return frag(effect.target === 'ally' ? 'bonus' : 'gain',
+            `${effect.target === 'ally' ? 'Ally gains ' : ''}${num(defense.block, baseSplit?.block)} Block, ${num(defense.ward, baseSplit?.ward)} Ward`);
+        }
         if (effect.target === 'ally') return frag('bonus', `Ally gains ${num(n, base)} Block`);
         const split = splitOf(def, p, n, ratings);
         if (split) {
@@ -169,7 +176,7 @@ function buildLines(def, preview, registries) {
         const split = spellDefenseSplit({ ...def, combatProfile: p }, n);
         if (split) {
           const baseSplit = typeof base === 'number' ? spellDefenseSplit({ ...def, combatProfile: p }, base) : null;
-          return frag('gain', `${num(split.block, baseSplit?.block)} Block, ${num(split.ward, baseSplit?.ward)} Ward`);
+          return frag(effect.target === 'ally' ? 'bonus' : 'gain', `${effect.target === 'ally' ? 'Ally gains ' : ''}${num(split.block, baseSplit?.block)} Block, ${num(split.ward, baseSplit?.ward)} Ward`);
         }
         return frag('gain', `${num(n, base)} ${isSpellCard({ combatProfile: p, tags: def.tags }) ? 'Ward' : 'Barrier'}`);
       }

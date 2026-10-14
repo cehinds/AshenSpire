@@ -174,14 +174,16 @@ export function combatCardSummary(def, preview = null, registries = null) {
       }
       case 'block': {
         const verb = effect.target === 'ally' ? 'Ally gains' : 'Gain';
-        const split = splitOf(def, p, n, ratings);
-        text = split ? uiText('combat.card.splitBlock', { verb, block: split.physical, ward: split.magic }) : `${verb} ${n} Block`;
+        const defense = def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2
+          ? spellDefenseSplit({ ...def, combatProfile: p }, n) : null;
+        const split = defense || splitOf(def, p, n, ratings);
+        text = split ? uiText('combat.card.splitBlock', { verb, block: defense ? defense.block : split.physical, ward: defense ? defense.ward : split.magic }) : `${verb} ${n} Block`;
         break;
       }
       // A Spell's gain refills Ward first and only the overflow is Barrier, so it reads Ward.
       case 'gainBarrier': {
         const split = spellDefenseSplit({ ...def, combatProfile: p }, n);
-        text = split ? uiText('combat.card.splitBlock', { verb: 'Gain', block: split.block, ward: split.ward })
+        text = split ? uiText('combat.card.splitBlock', { verb: effect.target === 'ally' ? 'Ally gains' : 'Gain', block: split.block, ward: split.ward })
           : `Gain ${n} ${isSpellCard({ combatProfile: p, tags: def.tags }) ? 'Ward' : 'Barrier'}`;
         break;
       }

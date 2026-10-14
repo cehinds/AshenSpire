@@ -9,6 +9,8 @@ import { gainBarrier, gainBlock, computeBlockGain } from '../src/engine/actions.
 import { resolveCombatCard } from '../src/engine/combatExpansion.js';
 import { cardPlainText } from '../src/ui/components/card.js';
 import { cardFaceLines } from '../src/model/cardFaceText.js';
+import { combatCardSummary } from '../src/model/playingCard.js';
+import { applyCombatExpansionCard } from '../src/content/combatExpansionCards.js';
 
 const registries = createRegistries(contentBundle);
 const guard = school => ({ type: 'skill', skipRatingBonus: true,
@@ -70,4 +72,18 @@ test('upcast protection keeps its total and compact and authored faces show the 
     textTemplate: 'Gain {gainBarrier} temporary Barrier. Pay 10 Ashen Blight. Exhaust.' };
   assert.equal(cardFaceLines(complex, null, registries), null);
   assert.match(cardPlainText(registries, { cardId: 'crystalBarrier' }, { definition: complex, rules }), /Gain 5 Block, 13 Ward\. Pay 10 Ashen Blight\. Exhaust/);
+});
+
+test('expanded block opcode faces and allied gains use defense shares; legacy faces retain Block', () => {
+  const legacy = { id: 'custom-defense', name: 'Custom defense', type: 'skill',
+    tags: ['camp:spell', 'school:alteration', 'maneuver:defend'], magicShare: 1,
+    effects: [{ op: 'block', target: 'ally', amount: 5 }],
+    textTemplate: 'Ally gains {block} Block.' };
+  const expanded = applyCombatExpansionCard(legacy);
+  const compact = cardFaceLines(expanded, null, registries).map(line => line.html).join(' ').replace(/<[^>]+>/g, '');
+  assert.match(compact, /Ally gains 4 Block, 1 Ward/);
+  assert.match(combatCardSummary(expanded, null, registries), /Ally gains 4 Block, 1 Ward/);
+  assert.match(cardPlainText(registries, { cardId: 'crystalBarrier' },
+    { definition: { ...expanded, ashenBlightCost: 1 }, rules: { combatExpansionVersion: 2 } }), /Ally gains 4 Block, 1 Ward/);
+  assert.match(cardPlainText(registries, { cardId: 'crystalBarrier' }, { definition: legacy }), /Ally gains 5 Block/);
 });
