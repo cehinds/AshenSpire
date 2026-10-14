@@ -62,6 +62,8 @@ function entityProblems(entity, path, { player = false } = {}) {
   if (entity.kind !== (player ? 'player' : 'enemy')) problems.push(`${path}.kind must be '${player ? 'player' : 'enemy'}'`);
   const defKey = player ? 'classId' : 'enemyId';
   if (!nonEmptyString(entity[defKey])) problems.push(`${path}.${defKey} must be a non-empty string`);
+  if (entity.subclassId !== undefined && !nonEmptyString(entity.subclassId)) problems.push(`${path}.subclassId must be non-empty`);
+  if (entity.subclassDeckVersion !== undefined && entity.subclassDeckVersion !== 1) problems.push(`${path}.subclassDeckVersion must be 1`);
   if (entity.classUnequipped !== undefined && typeof entity.classUnequipped !== 'boolean') problems.push(`${path}.classUnequipped must be a boolean`);
   for (const key of ['hp', 'maxHp', 'block']) {
     if (!finite(entity[key])) problems.push(`${path}.${key} must be finite`);
@@ -328,6 +330,7 @@ export function combatSnapshotReferenceProblems(snapshot, registries) {
     else if (level > (itemUpgradeTiers(registries, itemRef).at(-1) || 0)) problems.push(`itemUpgradeLevels.${itemRef} exceeds its highest authored tier`);
   }
   has(registries.classes, snapshot.player?.classId, 'player.classId');
+  if (snapshot.player?.subclassId !== undefined && !registries.subclasses?.has(snapshot.player.subclassId)) problems.push(`player.subclassId '${snapshot.player.subclassId}' is unknown`);
   for (const id of snapshot.player?.relicIds || []) has(registries.relics, id, 'player.relicIds');
   // SPEC §15.4 (rarity at every door): an attuned id is a known LEGENDARY.
   for (const id of Array.isArray(snapshot.attunedSigils) ? snapshot.attunedSigils : []) {

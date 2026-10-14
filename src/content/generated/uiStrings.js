@@ -10228,5 +10228,208 @@ export const uiStrings = [
     "short": "Recover HP after victory.",
     "full": "",
     "tip": ""
+  },
+  {
+    "id": "creation.subclass.title",
+    "extends": "",
+    "short": "Starting subclass",
+    "full": "Choose the approach that shapes your opening deck.",
+    "tip": "Starting subclass"
+  },
+  {
+    "id": "creation.subclass.hint",
+    "extends": "",
+    "short": "Choose one path within your class.",
+    "full": "Your subclass supplies five role cards. Equipment and starting abilities complete the deck.",
+    "tip": "Choose a starting subclass"
+  },
+  {
+    "id": "creation.subclass.choices",
+    "extends": "",
+    "short": "Subclass choices",
+    "full": "Choose one of the two starting subclasses for this class.",
+    "tip": "Subclass choices"
+  },
+  {
+    "id": "creation.subclass.reason",
+    "extends": "",
+    "short": "Choose a subclass.",
+    "full": "Choose a starting subclass for the selected class.",
+    "tip": "Choose a subclass"
+  },
+  {
+    "id": "creation.subclass.deckTitle",
+    "extends": "",
+    "short": "Starting deck · {count} cards",
+    "full": "Your starting deck contains {count} cards.",
+    "tip": "Starting deck"
+  },
+  {
+    "id": "creation.subclass.deckBreakdown",
+    "extends": "",
+    "short": "{subclass} subclass + {class} class + {weaponArt} weapon art + {basic} basics",
+    "full": "{subclass} subclass cards, {class} class card, {weaponArt} weapon art, and {basic} basic cards.",
+    "tip": "Deck composition"
+  },
+  {
+    "id": "creation.subclass.cardRole",
+    "extends": "",
+    "short": "Role: {role}",
+    "full": "This card occupies the {role} role in your starting deck.",
+    "tip": "Starting deck role"
+  },
+  {
+    "id": "creation.subclass.inspectCard",
+    "extends": "",
+    "short": "Inspect {name} · {role}",
+    "full": "Inspect the full rules for {name}, the {role} card.",
+    "tip": "Inspect starting card"
+  },
+  {
+    "id": "creation.subclass.review",
+    "extends": "",
+    "short": "{className} · {subclassName}",
+    "full": "{className}, starting as {subclassName}.",
+    "tip": "Class and subclass"
+  },
+  {
+    "id": "creation.subclass.catalog.selector",
+    "extends": "",
+    "short": "Starting subclass selector",
+    "full": "Two subclass choices with full selected description.",
+    "tip": "Starting subclass selector"
+  },
+  {
+    "id": "creation.subclass.catalog.tile",
+    "extends": "",
+    "short": "Subclass choice tile",
+    "full": "One interactive starting subclass choice.",
+    "tip": "Subclass choice tile"
+  },
+  {
+    "id": "creation.subclass.catalog.deck",
+    "extends": "",
+    "short": "Starting deck preview",
+    "full": "Every opening card with role and source breakdown.",
+    "tip": "Starting deck preview"
+  },
+  {
+    "id": "creation.subclass.catalog.group",
+    "extends": "",
+    "short": "Deck source group",
+    "full": "One group of opening cards from the same source.",
+    "tip": "Deck source group"
+  },
+  {
+    "id": "creation.subclass.catalog.card",
+    "extends": "",
+    "short": "Starting card control",
+    "full": "Open the complete rules for one starting card.",
+    "tip": "Starting card control"
+  },
+  {
+    "id": "creation.subclass.catalog.inspector",
+    "extends": "",
+    "short": "Starting card inspector",
+    "full": "The complete rules card used by the starting deck inspector.",
+    "tip": "Starting card inspector"
+  },
+  {
+    "id": "creation.subclass.source.subclass",
+    "extends": "",
+    "short": "Subclass · {count}",
+    "full": "Subclass supplies {count} starting cards.",
+    "tip": "Subclass"
+  },
+  {
+    "id": "creation.subclass.source.class",
+    "extends": "",
+    "short": "Class · {count}",
+    "full": "Class supplies {count} starting cards.",
+    "tip": "Class"
+  },
+  {
+    "id": "creation.subclass.source.weaponArt",
+    "extends": "",
+    "short": "Weapon art · {count}",
+    "full": "Weapon art supplies {count} starting cards.",
+    "tip": "Weapon art"
+  },
+  {
+    "id": "creation.subclass.source.basic",
+    "extends": "",
+    "short": "Basics · {count}",
+    "full": "Basics supplies {count} starting cards.",
+    "tip": "Basics"
+  },
+  {
+    "id": "creation.subclass.role.smash",
+    "extends": "",
+    "short": "Smash",
+    "full": "Smash",
+    "tip": "Smash"
+  },
+  {
+    "id": "creation.subclass.role.counter",
+    "extends": "",
+    "short": "Counter",
+    "full": "Counter",
+    "tip": "Counter"
+  },
+  {
+    "id": "creation.subclass.role.power",
+    "extends": "",
+    "short": "Power",
+    "full": "Power",
+    "tip": "Power"
+  },
+  {
+    "id": "creation.subclass.role.skill",
+    "extends": "",
+    "short": "Skill",
+    "full": "Skill",
+    "tip": "Skill"
+  },
+  {
+    "id": "creation.subclass.role.sweep",
+    "extends": "",
+    "short": "Sweep",
+    "full": "Sweep",
+    "tip": "Sweep"
+  },
+  {
+    "id": "creation.subclass.role.spell",
+    "extends": "",
+    "short": "Spell",
+    "full": "Spell",
+    "tip": "Spell"
+  },
+  {
+    "id": "creation.subclass.role.class",
+    "extends": "",
+    "short": "Class",
+    "full": "Class",
+    "tip": "Class"
+  },
+  {
+    "id": "creation.subclass.role.weaponArt",
+    "extends": "",
+    "short": "Weapon art",
+    "full": "Weapon art",
+    "tip": "Weapon art"
+  },
+  {
+    "id": "creation.subclass.role.strike",
+    "extends": "",
+    "short": "Strike",
+    "full": "Strike",
+    "tip": "Strike"
+  },
+  {
+    "id": "creation.subclass.role.defend",
+    "extends": "",
+    "short": "Defend",
+    "full": "Defend",
+    "tip": "Defend"
   }
 ];

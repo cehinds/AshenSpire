@@ -113,9 +113,15 @@ export function withKitDom(fn) {
   };
   const saved = Object.fromEntries(Object.keys(win).map((key) => [key, globalThis[key]]));
   Object.assign(globalThis, win);
-  try { return fn(dom, win, listeners); } finally {
+  const restore = () => {
     for (const [key, value] of Object.entries(saved)) {
       if (value === undefined) delete globalThis[key]; else globalThis[key] = value;
     }
-  }
+  };
+  try {
+    const result = fn(dom, win, listeners);
+    if (result && typeof result.then === 'function') return Promise.resolve(result).finally(restore);
+    restore();
+    return result;
+  } catch (error) { restore(); throw error; }
 }

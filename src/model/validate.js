@@ -68,6 +68,7 @@ import { classMasteryProblems } from './classMasteryContent.js';
 import { armouryUiProblems } from './equipmentUi.js';
 import { eventChoiceRequirementProblems, validQuestId } from './quests.js';
 import { attackCardDamageConfigProblems } from './attackCardDamage.js';
+import { subclassContentProblems } from './subclasses.js';
 import { characterCreationProblems } from './characterCreation.js';
 import { enemyLevelProfileProblems, levelBandProblems, levelConfigProblems } from './levels.js';
 import {
@@ -160,6 +161,8 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'attributeRules',
   'derivedStatRules',
   'characterCreation',
+  'subclasses',
+  'subclassOpeningRules',
   'eventHistoryRequirements', // quest steps (E12): event-level history gates
   // Plan phase 10a: quest chains, who speaks each step, and the rows they name.
   'eventChoiceIds', // the durable choice ids a completion ref names
@@ -1307,6 +1310,7 @@ function collectContentProblems(bundle, errors = []) {
       armour: Array.isArray(equipment && equipment.armour) ? equipment.armour : [],
     },
   };
+  for (const problem of subclassContentProblems(dependencySafeBundle)) err('subclasses', problem);
   for (const problem of characterCreationProblems(dependencySafeBundle)) {
     const split = problem.indexOf(':');
     err(split >= 0 ? problem.slice(0, split) : 'characterCreation', split >= 0 ? problem.slice(split + 1).trim() : problem);

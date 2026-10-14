@@ -1,48 +1,114 @@
 # Character creation continuation handoff
 
-## Start here
+Updated 2026-10-14 against assembled source `d3f6204f9` on
+`Feature/updateCharacterCreation`. This replaces the earlier build-1322,
+pending-art and design-only subclass status. Final integration checks and fresh
+browser evidence are still being produced; do not treat this note as their result.
 
-- Continue `Feature/updateCharacterCreation` in `cehinds/AshenSpire`. The latest implementation/build commit merged to origin is `38c1243e2`; this handoff follows it.
-- Act as reviewer/coordinator. The user requested GPT-6.1 Sol implementers and Luna assistance; GPT-6 Luna was available, not GPT-6.1 Luna.
-- Keep communication brief and bulleted. Show real desktop/mobile screenshots and playable previews. The user rejected oversized controls, stretched cards, and verbose tile copy.
-- Workflow: local worker branch → matching origin worker branch → feature branch. Do not promote to dev/test/release/main without the appropriate explicit instruction. No release or PR was created in this pass.
+## Implemented
 
-## Implemented and pushed
+- [x] Class → Attributes → Keepsake → Equipment → Feats → conditional Spells → Review.
+- [x] Feats remains a browse-only Character / Class / Skills progression browser:
+  canonical locks and descriptions, **zero starting feat grants**.
+- [x] Reusable material, trim, symbol, artwork and text parts in the production
+  UI/catalog. The current art pin is `hd-assets-v21`; the earlier 403/pending-pin
+  handoff does not describe this source snapshot.
+- [x] Eight opening subclass identities, two per base class, selected on the Class
+  page with descriptions and an inspectable eleven-card preview. Review preserves
+  the choice and its Class edit returns to both selectors.
+- [x] New lobby UI explicitly selects a subclass for the connection owner and
+  each couch seat; hello/pick/local-seat transport validates and carries it.
+- [x] Draft deck previews support zero or partial ability choices and current
+  settings. Final Begin/run creation still requires complete legal choices.
+- [x] Exact opening composition, equipment-owned art reconciliation, compatible
+  loadout alternatives, save/restore, class swaps, respec and co-op carriage.
+- [x] FrostMonarch source-derived weapon infusion shared by preview, solo,
+  co-op and combat restore. No new binary card artwork was added.
 
-- Class → Attributes → Keepsake → Equipment → Feats → conditional Spells → Review.
-- Spells appears only for eligible caster classes/class spell tags. Martial maneuvers remain in Equipment.
-- Feats are browse-only: Character / Class / Skills groups, canonical progression locks, **zero starting grants**. The user has not chosen a starting-feat allowance.
-- Compact desktop Feats: two columns, six character feats visible, icon + title + short benefit + small lock. Full descriptions/current and required levels live in the inspector.
-- Mobile: one readable column; tap opens the inspector beneath the selected tile; Back to feats collapses it and restores focus. Desktop controls are smaller and footer Back/Next sit at opposite sides.
-- Source: `src/ui/components/creationPageParts.js`, `src/ui/models/CreationFeatBrowserModel.js`, `styles/kit.css`, and CSV-generated UI strings. Preserve reusable trim/material/symbol/text parts.
+| Base class | Opening choices | Existing top-tier progression paths |
+| --- | --- | --- |
+| Reaver | Heavy Knight / SwordMaster | Bulwark King / Warlord |
+| Starseer | BattleMage / FrostMonarch | Conduit / Reservoir |
+| Rogue | Ranger / Assassin | Shadow / Assassin |
+| Herald | Cleric / Monk | Saint / Martyr |
 
-## Next work: finish the reference artwork
+## Deck and identity contract
 
-1. Resolve write access to **cehinds/AshenSpire-art**. Its push returned HTTP 403; do not assume an art PR or release exists. The owner will push `8803331f` from the Codex task; until then it exists only there.
-2. Ready art-repository branch: `worker/updateCharacterCreation/feat-art`, local commit `8803331f2afc84efb60409f278410674e88596a7`, checkout `/workspace/scratch/character-feat-art-repo`. It contains six ornate composites, ten separate original PNG layers, light twins, generated manifest/provenance, and credits. Publish/review through the official art workflow; respect the owner-only release boundary in CONTRIBUTING.md.
-3. After the art release exists, update the game's release pin and regenerate its manifest using the official tools. Do not hand-edit derived manifests or weaken asset validation.
-4. **In progress:** `Feature/OrnateFeatArt` restores the ornate art code. It builds once the art release is pinned (`art-release.json`, `node tools/art-manifest.mjs --write`).
-5. Rebuild and verify desktop/mobile against the user's reference. Keep concise tiles and full details in inspection. Further visual refinement still needs user review; do not describe the current build as an exact artwork match.
+An explicit opening subclass deals **5 subclass + 1 class + 1 weapon art + 4
+basics = 11** playable instances. The five recipe roles are Smash, Counter,
+Power, Skill, and Sweep or Spell. The class slot deliberately uses the existing
+ability card; signatures remain reward content. The default basic split is two
+Strike-role and two Defend-role cards, with equipment providing their faces.
+The core class projection is not an additional playable card.
 
-The game origin also preserves `worker/updateCharacterCreation/feat-art` (`28bc1f439`), containing intake source assets/geometry. Production build 1322 deliberately retains registered glyph artwork. The ornate integration uses normal asset IDs and separate material/trim/symbol/prop image layers, and currently runs as a source authoring preview through `serve --editor-write`.
+Starting choices replace recipe slots instead of appending cards. BattleMage,
+FrostMonarch and Cleric retain two starting spell choices in Skill/Spell slots.
+Monk retains one chosen spell in Skill and keeps its Sweep. Martial choices
+replace a matching recipe role. Spell camp and recipe role are separate facts.
 
-## Preview and evidence
+The single default art belongs to its actual item, choosing main hand, offhand,
+then the existing unarmed fallback. Additional default equipment/package/global
+cards are suppressed for this composition, including at later restamps. Player
+installed mounts and independently earned cards remain owned; rewards may grow
+an existing run beyond eleven. Custom dealt pool decks keep their existing rule.
 
-- Portable launcher: `/workspace/scratch/character-creation-preview-v2/START-HERE.html`
-- ZIP: `/workspace/scratch/AshenSpire-character-creation-preview-v2.zip`
-- Build: **0.7.1.1322**, source digest **54158f23fb**. The package contains the game, component catalog, 48 built screenshots, editable concept artwork, and a separately labelled pending-art preview.
-- Original-art screenshots: `/workspace/scratch/creation-ornate-art-evidence/` (`feats-1440.png`, `feats-390.png`, `inspector-390.png`). These are actual source-preview captures, not the merged build.
-- Original concept/layer sources are committed under `tools/hud-component-studio/projects/character-creation/`; the standalone editor is also in `/workspace/scratch/character-creation-design/`.
-- Scratch artifacts may not survive a new environment. Git branches are the durable source; regenerate previews when necessary.
+`run.subclassId` is the explicit birth identity; `subclassDeckVersion: 1` retains
+its composition policy. Its name/effects apply only while its parent class is
+active and return when that class is equipped again. Existing XP, mastery and
+tier gates are retained; configurable `progressionNodeIds` restrict only the
+selected subclass's top-tier upgrade path. Old nodes and effects are unchanged.
 
-## Validation and limitations
+**An absent opening field remains absent.** Legacy saves and older LAN clients
+keep historical deck behavior and the earned tier-3 display fallback. Never
+infer a new opening choice from `coreTags`: historical Rogue `assassin` shares an
+ID spelling with the new opening Assassin but remains a legacy node. Respec
+mapping must be gated on the explicit opening field, not the earned fallback.
 
-- Current compact pass: **8 focused tests**, **48 fresh built captures**, real phone taps/navigation/inspection/return passed. ZIP CRC, local links, and copied game/editor hashes passed.
-- Earlier integrated flow: 108 focused tests passed. The full 520-file suite exceeded its 15-minute limit and is **incomplete**, not green. Do not repeat that claim as current full-suite success.
-- Ornate preview: 7 focused tests, loaded PNGs, desktop/mobile inspection and focus return passed. Native Enter automation did not open inspection; investigate global keyboard routing before claiming complete keyboard activation support.
-- Art repository: 20 tests, manifest, 7,313 twin checks, 17 known-bad checks, and reproducible pack checks passed. No release/pin update happened.
-- Browser plugin was unavailable; validation used existing Playwright/Chromium. Main harness: `tools/character-creation-components-qa.mjs`.
+FrostMonarch's configurable source recipe defaults to 2 extra Cold damage and
+1 Frost buildup per landed HP-damaging weapon contact. It uses the actual held
+weapon source and actor; pure spell casts and unarmed attacks do not acquire it.
+Registered `damage:frost` source tags do not rewrite the primary damage identity,
+and no `frostbite` status was restored.
 
-## Separate outstanding feature
+## Where to continue
 
-- `Feature/AddSubClasses` remains separate; subclass gameplay is not implemented by this pass. Preserve the requested 11-card starting deck, subclass five-card contribution, class card, unique weapon-art card, remaining basic strikes/defends, and subclass/tag-driven effects. Consult that branch's design handoff before implementing progression.
+| Concern | Files |
+| --- | --- |
+| Authoritative rules and data | [SPEC](../../SPEC.md), [subclass definitions](../../src/content/subclasses.js) |
+| Options, legality, draft recipes and identity | [subclasses model](../../src/model/subclasses.js), [class identity](../../src/model/classCard.js), [starting abilities](../../src/model/startingAbilities.js) |
+| Birth, grants, saves and progression | [run state](../../src/model/state.js), [loadout composer](../../src/model/loadout.js), [save door](../../src/engine/save.js), [class tree](../../src/model/classTree.js), [respec](../../src/model/classRespec.js) |
+| Source-scoped Cold/Frost behavior | [weapon infusion](../../src/model/weaponInfusion.js), [damage interpreter](../../src/engine/actions.js), `combatRules.js`, `combatCardTactics.js`, `combatExpansionActions.js` |
+| Production screens and reusable parts | [creation screen](../../src/ui/screens/customize.js), [lobby](../../src/ui/screens/lobby.js), [UI model](../../src/ui/models/CreationSubclassModel.js), [components](../../src/ui/components/creationSubclass.js), [UI notes](../subclass-creation-ui.md) |
+| Catalog and authoring sources | [component catalog](../component-catalog.html), `src/ui/catalog/creationSpecimens.js`, `styles/kit.css`, `content/source/uiStrings.csv`, `tools/hud-component-studio/projects/character-creation/` |
+
+The Studio scenes remain editable design/authoring material; changing them does
+not automatically change gameplay. Reuse the production components when refining
+screens. [Subclass UI notes](../subclass-creation-ui.md) list individual catalog
+folios and screenshot pose parameters.
+
+## Verification and remaining work
+
+- [x] Worker regression checks cover all eight eleven-card births, role semantics,
+  visible hand choices, selected spells/maneuvers, legacy identity and migration,
+  restamps, swaps, respec, invalid save references, actual solo/co-op combats and
+  co-op session/snapshot restoration. The core shard has 22 passing tests.
+- [x] Focused existing ability, quick-start, class-tree, equipment-preview, respec
+  and co-op regression suites passed during implementation. Frost and UI workers
+  have separate targeted acceptance shards.
+- [ ] Record root's final assembled fast-lane/build results. Those checks are in
+  progress; no full-suite or all-fast-lanes-green claim belongs here yet.
+- [ ] Record Luna's fresh desktop/mobile captures and actual touch, inspection,
+  focus-return and lobby results. New preview screenshots are not verified yet.
+- [ ] Finish visual sizing and trim against the user's reference: compact controls,
+  unstretched card faces, concise tile copy, readable mobile inspection and clean
+  material/trim layering. Review the actual rendered screens before calling the
+  artwork/layout match complete.
+- [ ] Publish/link a refreshed playable preview and durable evidence after those
+  checks. Old build-1322 scratch packages and captures are historical references,
+  not screenshots of this implementation.
+
+Useful focused shards: `tests/subclass-opening.test.mjs`,
+`tests/subclass-weapon-infusion.test.mjs`, `tests/creation-subclass-components.test.mjs`,
+`tests/creation-subclass-screen.test.mjs`, `tests/lobby-subclass-selection.test.mjs`.
+Browser harness: `node tools/character-creation-components-qa.mjs --out <directory>`.
+Keep bulky generated evidence in ignored scratch output or CI artifacts.

@@ -28,6 +28,8 @@
 // frozen, so a renderer cannot quietly make the model its scratch space.
 
 import { resolveCard } from './registries.js';
+import { applyCombatExpansionCard } from '../content/combatExpansionCards.js';
+import { applyCardTraits } from '../content/traitProjection.js';
 import { tagService } from './tagService.js';
 import { computeTokenBindings, cardTokenEffects } from './validate.js';
 import { balance } from '../content/balance.js';
@@ -56,6 +58,15 @@ function uiText(id, tokens) {
 export function splitOf(def, profile, amount, ratings = null, live = null) {
   const carrier = { ...profile, magicShare: def.magicShare, physicalDamageType: def.physicalDamageType ?? live?.physicalDamageType };
   const share = magicShareOf(carrier, ratings);
+  const extra = live?.infusionComponents || [];
+  const extraAmount = extra.reduce((sum, component) => sum + component.amount, 0);
+  if (extraAmount > 0 && Number.isFinite(amount)) {
+    const parts = splitContactParts({ amount: Math.max(0, amount - extraAmount), base: live?.splitBase ?? Math.max(0, amount - extraAmount),
+      ratingBonus: live?.ratingBonus ?? 0, ratingPart: live?.ratingPart ?? null, share, primary: profile.camp === 'spell' ? 'magic' : 'physical' });
+    const types = splitDamageTypesOf(carrier);
+    return { magic: parts.magic + extraAmount, physical: parts.physical,
+      types: { ...types, magic: [...new Set([...(parts.magic > 0 ? [types.magic] : []), ...extra.map(component => component.type)])].join('/') } };
+  }
   if (!(share > 0 && share < 1) || !Number.isFinite(amount)) return null;
   const parts = splitContactParts({ amount, base: live?.splitBase ?? amount, ratingBonus: live?.ratingBonus ?? 0,
     ratingPart: live?.ratingPart ?? null, share, primary: profile.camp === 'spell' ? 'magic' : 'physical' });
@@ -164,10 +175,14 @@ export function combatCardSummary(def, preview = null, registries = null) {
         const word = `${type ? `${type} ` : ''}damage`;
         // A hit part magic and part physical reads both parts, the physical first, and keeps its hit count.
         const split = !unequal ? splitOf(def, p, n, ratings, live) : null;
-        const damage = split ? uiText('combat.card.splitDamage', { amount: n, physical: split.physical, physicalType: split.types.physical, magic: split.magic, magicType: split.types.magic }) + (hits !== 1 ? ` ×${hits}` : '')
+        const label = id => live?.sourceInfusion && registries
+          ? id.split('/').map(type => tagService(registries).resolve([`damage:${type}`])[0]?.label || type).join('/') : id;
+        const damage = split ? uiText('combat.card.splitDamage', { amount: n, physical: split.physical, physicalType: label(split.types.physical), magic: split.magic, magicType: label(split.types.magic) }) + (hits !== 1 ? ` ×${hits}` : '')
           : unequal ? `${sequence.join(' + ')} ${word} (${live.totalDamage} total across ${sequence.length} hits)`
           : `${n} ${word}${hits !== 1 ? ` ×${hits}` : ''}`;
-        text = `${p.maneuver === 'counter' ? 'Return' : 'Deal'} ${damage}${area}`; break;
+        text = `${p.maneuver === 'counter' ? 'Return' : 'Deal'} ${damage}${area}`;
+        for (const pressure of live?.sourceInfusion?.buildup || []) text += `. Add ${pressure.amount} ${title(pressure.status)} buildup after each hit causes HP loss`;
+        break;
       }
       case 'block': {
         const verb = effect.target === 'ally' ? 'Ally gains' : 'Gain';
@@ -270,6 +285,18 @@ export function staticCardTokens(def) {
   return tokens;
 }
 
+/** Resolve the rules shared by non-combat faces; live previews remain authoritative. */
+export function playingCardDefinition(registries, ref, { preview = null, definition = null, rules = null } = {}) {
+  if (preview?.resolvedDefinition) return preview.resolvedDefinition;
+  if (definition) return definition;
+  const def = rules?.breakMeterVersion == null
+    ? resolveCard(registries, ref) : resolveCard(registries, ref, rules.breakMeterVersion);
+  if (rules?.combatExpansionVersion !== 2) return def;
+  const expanded = applyCombatExpansionCard(def);
+  return rules.reactionRulesVersion === 2 ? applyCardTraits(expanded, rules.reactionRules) : expanded;
+}
+
+
 /**
  * playingCardModel(registries, ref, { preview }) → a frozen record.
  *
@@ -302,8 +329,9 @@ export function staticCardTokens(def) {
  *   tokens     what fills the text template, and `base` to compare against so
  *              a raised number can be marked as raised.
  */
-export function playingCardModel(registries, ref, { preview = null } = {}) {
-  const def = preview?.resolvedDefinition || resolveCard(registries, ref);
+
+export function playingCardModel(registries, ref, { preview = null, definition = null, rules = null } = {}) {
+  const def = playingCardDefinition(registries, ref, { preview, definition, rules });
   const base = staticCardTokens(def);
 
   // Type presentation is authored data (balance.ui.cardTypes): corner radii
@@ -350,7 +378,9 @@ export function playingCardModel(registries, ref, { preview = null } = {}) {
     ? service.resolve([...new Set(liveTagRows.flatMap((row) => row.tags))])
     : def.cardTags != null
       ? service.resolve(def.cardTags)
-      : service.tagsOf('card', def);
+      : def.traitValues && Array.isArray(def.tags)
+        ? service.resolve(def.tags)
+        : service.tagsOf('card', def);
   // Keep legacy schools for compatibility, but do not print Blood/Heavy twice
   // when the categorized theme/technique is the same visible word.
   const categorized = new Set(

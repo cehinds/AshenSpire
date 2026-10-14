@@ -130,7 +130,7 @@ function optionsFor(ctx, row, group, hooks, refusal = null, seatId = null) {
     const aimed = cardTargetPlan(base, seat, ctx.enemies, players, { solo: !ctx.players }).mode === 'enemy';
     const aims = aimed ? [...new Set(answered.map(threat => threat.enemyId))] : [answered[0].enemyId];
     for (const aim of aims) for (const tier of [0, ...upcastOptions(base).map(option => option.ranks)]) for (const choice of choices) {
-      const candidate = candidateState(ctx);
+      const candidate = candidateState(ctx, { detached: true });
       candidate.queue = []; delete candidate.pendingReaction; delete candidate.reactionResume;
       candidate._reactionPlaying = true; candidate._buffer = null;
       candidate._reactionSourceId = aim;

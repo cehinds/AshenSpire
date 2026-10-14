@@ -1,3 +1,4 @@
+import { subclassAbilityRole } from './subclasses.js';
 import { deckCopyLimit } from './deckCopyLimit.js';
 import { abilityOfferPool } from './abilityOffers.js';
 
@@ -20,16 +21,20 @@ function elementStartingCards(registries, run, config, settings) {
 }
 
 export function startingAbilityPlan(registries, run, settings = {}) {
-  const config = registries.characterCreation.classes[run.class]?.startingAbility;
+  const authored = registries.characterCreation.classes[run.class]?.startingAbility;
+  const subclass = run.subclassId !== undefined ? registries.subclasses.get(run.subclassId) : null;
+  const config = authored && { ...authored, ...(subclass?.startingAbility ? { count: subclass.startingAbility.count } : {}) };
+  const candidate = subclass ? { ...run, deck: (run.deck || []).filter(card => card.openingSource !== 'subclass') } : run;
   if (!config) return null;
   const source = registries.masterySource || registries;
-  const ids = abilityOfferPool(registries, run, config.skillId, config.rank).filter(id =>
-    (run.deck || []).filter(inst => inst.cardId === id).length < deckCopyLimit(registries, id, settings, run.class));
-  const choices = [...new Map(ids.map(id => {
+  const ids = abilityOfferPool(registries, candidate, config.skillId, config.rank).filter(id =>
+    (candidate.deck || []).filter(inst => inst.cardId === id).length < deckCopyLimit(registries, id, settings, run.class));
+  const eligibleIds = subclass && config.skillId === 'combatManeuvers' ? ids.filter(id => subclass.roles.some(slot => slot.role === subclassAbilityRole(registries, id))) : ids;
+  const choices = [...new Map(eligibleIds.map(id => {
     const card = source.cards.get(id);
     return [card.abilityFamily || id, card];
   })).values()];
-  const elementChoices = elementStartingCards(registries, run, config, settings);
+  const elementChoices = elementStartingCards(registries, candidate, config, settings);
   const maxElementPicks = elementChoices.length ? registries.balance.rewards.elementAffinity.startingChoice.maxPicks : 0;
   return { ...config, id: 'startingAbilities', kind: 'ability', choices: [...choices, ...elementChoices],
     elementIds: elementChoices.map(card => card.id), maxElementPicks };

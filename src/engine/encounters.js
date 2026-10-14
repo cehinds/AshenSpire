@@ -247,9 +247,9 @@ export function rollSkillDraftIds(registries, rng, { classId, loadout, skillId, 
  * draftable nodes (model/classTree.js classDraftPool), `balance.skill.draftSize`
  * picks on the 'cardRewards' stream. An empty pool draws nothing.
  */
-export function rollClassDraftIds(registries, rng, { classId, coreTags = [], level = 0, size }) {
+export function rollClassDraftIds(registries, rng, { classId, coreTags = [], level = 0, size, subclassId = undefined }) {
   const count = Number.isInteger(size) ? size : (registries.balance.skill || {}).draftSize;
-  const pool = classDraftPool(registries, classId, coreTags, level);
+  const pool = classDraftPool(registries, classId, coreTags, level, subclassId);
   if (!pool.length || !(count > 0)) return [];
   const picks = [];
   while (picks.length < Math.min(count, pool.length)) {

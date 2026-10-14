@@ -13,7 +13,7 @@ test('catalog mounts all new registered production specimens with working inspec
   const registries = createRegistries(contentBundle);
   const catalog = mountCreationPartSpecimens({ host, registries });
   const folios = host.querySelectorAll('[data-catalog-component]');
-  assert.equal(folios.length, 13);
+  assert.equal(folios.length, 19);
   for (const folio of folios) {
     const id = folio.dataset.catalogComponent;
     assert.equal(folio.id, `folio-${id}`);

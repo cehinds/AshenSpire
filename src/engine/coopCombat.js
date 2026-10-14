@@ -167,6 +167,9 @@ export function createCoopCombat({ registries, rng, players, enemyIds, enemyLeve
     for (const seat of saved.players.values()) {
       const seatRegistries = C.registriesForPlayer?.(seat.id) || registries;
       if (!seatRegistries.classes.has(seat.entity.classId)) throw new Error('Saved co-op class is unavailable');
+      if (seat.entity.subclassId !== undefined && !seatRegistries.subclasses?.has(seat.entity.subclassId)) throw new Error('Saved co-op subclass is unavailable');
+      const member = players.find(player => player.id === seat.id);
+      if (member && (seat.entity.subclassId !== member.subclassId || seat.entity.subclassDeckVersion !== member.subclassDeckVersion)) throw new Error('Saved co-op subclass does not match its member');
       for (const pile of ['draw', 'hand', 'discard', 'exhaust']) for (const card of seat.piles[pile]) resolveCard(seatRegistries, card, saved.breakMeterVersion || 0);
     }
     for (const enemy of saved.enemies) if (!registries.enemies.has(enemy.enemyId)) throw new Error('Saved co-op enemy is unavailable');
@@ -259,7 +262,7 @@ function addPlayerState(C, p, { initial = false } = {}) {
   C.registerPlayerRegistries?.(p.id, p.registries);
   const registries = C.registriesForPlayer?.(p.id) || C.registries;
   const entity = createPlayerCombatEntity({
-    classId: p.classId, classUnequipped: p.classUnequipped === true, maxHp: p.maxHp, hp: p.hp != null ? p.hp : p.maxHp,
+    classId: p.classId, subclassId: p.subclassId, subclassDeckVersion: p.subclassDeckVersion, classUnequipped: p.classUnequipped === true, maxHp: p.maxHp, hp: p.hp != null ? p.hp : p.maxHp,
     maxMana: Number.isFinite(p.maxMana) ? p.maxMana : 0,
     mana: p.mana,
     maxStamina: p.maxStamina, stamina: p.stamina,
@@ -335,6 +338,7 @@ function addPlayerState(C, p, { initial = false } = {}) {
     derivedStatRuleSnapshot: p.derivedStatRuleSnapshot || null,
     name: p.name || p.id,
     classId: p.classId,
+    ...(p.subclassId !== undefined ? { subclassId: p.subclassId, subclassDeckVersion: p.subclassDeckVersion } : {}),
     attributeMode: p.attributeMode,
     allocatedAttributes: p.attributes ? { ...p.attributes } : undefined,
     attributes: p.attributes ? effectiveAshenBlightAttributes(entity, p.attributes) : undefined,
@@ -639,7 +643,7 @@ export function cardChoicePlan(C, playerId, cardInstanceId) {
 }
 
 export function previewCoopCard(C, playerId, instanceId, targetId, upcastTier) {
-  const clone = F.candidateState(C);
+  const clone = F.candidateState(C, { detached: true });
   setActive(clone, clone.players.get(playerId));
   return soloPreviewCard(clone, instanceId, targetId, upcastTier);
 }
@@ -681,7 +685,7 @@ export function previewCoopIntent(C, playerId, enemyInstanceId) {
 // A bot previews the requested owner without rebinding the authoritative fight.
 export function cardNeedsEnemyTargetForPlayer(C, playerId, instanceId) {
   if (!C.players.has(playerId)) throw new Error(`Unknown player '${playerId}'`);
-  const candidate = F.candidateState(C);
+  const candidate = F.candidateState(C, { detached: true });
   setActive(candidate, candidate.players.get(playerId));
   return cardNeedsEnemyTargetNow(candidate, instanceId);
 }
@@ -803,7 +807,7 @@ function doPlayCard(C, { cardInstanceId, targetId, choice, upcastTier, selectedB
   const before = { ...R.beforeAbilityPlay(C, p), cardTargetsAllEnemies: R.cardTargetsAllEnemies(def) };
   A.preflightCardHp(C, def, p, target, before);
   if (!preflightOnly && C.combatExpansionVersion === 2) {
-    const candidate = F.candidateState(C);
+    const candidate = F.candidateState(C, { detached: true });
     const acceptedCost = doPlayCard(candidate, { cardInstanceId, targetId, choice, upcastTier, selectedBuildup, preflightOnly: true });
     const price = def.ashenBlightCost || 0;
     const payment = payAshenBlight(C, p, { amount: price, combatKey: C.combatKey,

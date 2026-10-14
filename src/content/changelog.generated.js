@@ -3,6 +3,36 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1972",
+    "date": "2026-10-14",
+    "group": "2026-10-14",
+    "summary": "Quickstep reactions and Guard no longer freeze combat",
+    "detail": "Playing Quickstep as a reaction after a Defend card arms its Poise guard now resolves the enemy attack, and End Turn remains usable. An ordinary guarded End Turn and rated Counterstrike replies also resolve correctly in standalone builds. Five bundled-runtime checks cover the Guard paths in solo and co-op and the rated Counter return.",
+    "build": "0.7.1.1515",
+    "pullRequest": 1972,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1972"
+  },
+  {
+    "id": "pr-1971",
+    "date": "2026-10-14",
+    "group": "2026-10-14",
+    "summary": "Cards show the same rules before and during combat",
+    "detail": "Character creation, rewards and deck inspection now show the current combat effects, costs and traits: Crystal Barrier grants Ward in every view instead of promising Block outside combat. Reward captions and deck descriptions agree with their cards, while older saved runs keep their original rules.",
+    "build": "0.7.1.1513",
+    "pullRequest": 1971,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1971"
+  },
+  {
+    "id": "pr-1970",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Combat taps and End Turn are much faster on phones",
+    "detail": "On a slower phone, tapping a card or a target could hang for a second or more, and ending a turn with a Counter in hand could take several seconds before the reaction prompt appeared, so the game looked frozen. Card previews are no longer recalculated dozens of times per tap, and equipment lookups, the fight-log copy and the battlefield refit no longer repeat on every tap. Selecting a card is about twice as fast on a slow phone, and the reaction prompt appears sooner. If a busy screen ignores a tap, the debug log now says why.",
+    "build": "0.7.1.1511",
+    "pullRequest": 1970,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1970"
+  },
+  {
     "id": "pr-1968",
     "date": "2026-10-13",
     "group": "2026-10-13",

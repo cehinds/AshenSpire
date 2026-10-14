@@ -37,14 +37,17 @@ function rule(registries, nodeId) {
  * at `level` holding `coreTags` may draft, in table order: the tier open,
  * not yet picked, every REQUIRES picked, no CONFLICTS_WITH picked.
  */
-export function classDraftPool(registries, classId, coreTags = [], level = 0) {
+export function classDraftPool(registries, classId, coreTags = [], level = 0, subclassId = undefined) {
   const picked = new Set(coreTags || []);
+  const subclass = registries.subclasses?.has(subclassId) ? registries.subclasses.get(subclassId) : null;
+  const topTier = registries.balance?.skill?.class?.tierAt?.length || 3;
   // CONFLICTS_WITH is symmetric (nodeRelations.csv), but a rule's `excludes`
   // is derived from the rows the node is the SOURCE of; the pool reads the
   // relation both ways, so one subclass picked shuts the other whichever
   // row named the pair.
   const excludedByPicked = new Set([...picked].flatMap((id) => ((rule(registries, id) || {}).excludes) || []));
   return classTreeRows(registries, classId)
+    .filter(row => !subclass || subclass.classId !== classId || row.tier !== topTier || subclass.progressionNodeIds.includes(row.nodeId))
     .filter((row) => level >= tierOpensAt(registries, row.tier) && !picked.has(row.nodeId))
     .filter((row) => {
       const r = rule(registries, row.nodeId);
@@ -65,7 +68,7 @@ export function classDraftPool(registries, classId, coreTags = [], level = 0) {
 export function pickClassNode(registries, run, nodeId, { levelOverride = null } = {}) {
   if (!run || !run.class || run.classUnequipped) return false;
   const level = Number.isInteger(levelOverride) ? levelOverride : skillLevel(run, classSkillId(run.class));
-  if (!classDraftPool(registries, run.class, run.coreTags || [], level).includes(nodeId)) return false;
+  if (!classDraftPool(registries, run.class, run.coreTags || [], level, run.subclassId).includes(nodeId)) return false;
   if (!Array.isArray(run.coreTags)) run.coreTags = [];
   run.coreTags.push(nodeId);
   return true;
@@ -74,7 +77,7 @@ export function pickClassNode(registries, run, nodeId, { levelOverride = null } 
 export function initialClassTreeChoices(registries, run) {
   const tier = run?.classMasteryState?.initialTreeTiers?.[0];
   if (!tier) return [];
-  const candidates = new Set(classDraftPool(registries, run.class, run.coreTags, skillLevel(run, classSkillId(run.class))));
+  const candidates = new Set(classDraftPool(registries, run.class, run.coreTags, skillLevel(run, classSkillId(run.class)), run.subclassId));
   return classTreeRows(registries, run.class).filter(row => row.tier === tier && candidates.has(row.nodeId)).map(row => row.nodeId);
 }
 

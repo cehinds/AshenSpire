@@ -1,3 +1,4 @@
+import { subclassSelectionProblem } from '../src/model/subclasses.js';
 import { normalizeMasteryProfile, masteryProfileProblems } from '../src/model/classMasteryProfile.js';
 import { emptyEnemyKnowledge, enemyKnowledgeProblems } from '../src/model/enemyKnowledgeProfile.js';
 // tools/lan.mjs — zero-dependency LAN session layer ("Forsaken Together").
@@ -170,10 +171,10 @@ export function attachLan(server, { port, root }) {
   function roster() {
     const out = [];
     for (const pl of session.clients.values()) {
-      out.push({ id: pl.id, name: pl.name, classId: pl.classId, startingKitId: pl.startingKitId, tint: pl.tint, spriteStyle: pl.spriteStyle, ready: pl.ready, isHost: pl.isHost });
+      out.push({ id: pl.id, name: pl.name, classId: pl.classId, ...(pl.subclassId !== undefined ? { subclassId: pl.subclassId } : {}), startingKitId: pl.startingKitId, tint: pl.tint, spriteStyle: pl.spriteStyle, ready: pl.ready, isHost: pl.isHost });
       // Local (couch) players ride their owner's connection and are always ready.
       (pl.locals || []).forEach((lp, i) => out.push({
-        id: `${pl.id}L${i + 1}`, name: lp.name, classId: lp.classId, startingKitId: lp.startingKitId, tint: lp.tint,
+        id: `${pl.id}L${i + 1}`, name: lp.name, classId: lp.classId, ...(lp.subclassId !== undefined ? { subclassId: lp.subclassId } : {}), startingKitId: lp.startingKitId, tint: lp.tint,
         spriteStyle: lp.spriteStyle, ready: true, isHost: false, isLocal: true, ownerId: pl.id,
       }));
     }
@@ -209,9 +210,9 @@ export function attachLan(server, { port, root }) {
       knowledgeAuthority: { roomId: randomUUID(), privateSeed: randomBytes(4).readUInt32LE(0) } });
     const fallbackClass = REG.classes.all()[0].id;
     for (const cl of session.clients.values()) {
-      game.addMember({ id: cl.id, name: cl.name, classId: cl.classId || fallbackClass, startingKitId: cl.startingKitId, discoveredArmaments: cl.discoveredArmaments, classMastery: cl.classMastery, tint: cl.tint, spriteStyle: cl.spriteStyle, playInDeckOrder: cl.playInDeckOrder, enemyKnowledge: cl.enemyKnowledge });
+      game.addMember({ id: cl.id, name: cl.name, classId: cl.classId || fallbackClass, subclassId: cl.subclassId, startingKitId: cl.startingKitId, discoveredArmaments: cl.discoveredArmaments, classMastery: cl.classMastery, tint: cl.tint, spriteStyle: cl.spriteStyle, playInDeckOrder: cl.playInDeckOrder, enemyKnowledge: cl.enemyKnowledge });
       (cl.locals || []).forEach((lp, i) => game.addMember({
-        id: `${cl.id}L${i + 1}`, name: lp.name, classId: lp.classId || fallbackClass, startingKitId: lp.startingKitId, discoveredArmaments: lp.discoveredArmaments, classMastery: lp.classMastery, tint: lp.tint, spriteStyle: lp.spriteStyle,
+        id: `${cl.id}L${i + 1}`, name: lp.name, classId: lp.classId || fallbackClass, subclassId: lp.subclassId, startingKitId: lp.startingKitId, discoveredArmaments: lp.discoveredArmaments, classMastery: lp.classMastery, tint: lp.tint, spriteStyle: lp.spriteStyle,
         playInDeckOrder: cl.playInDeckOrder, enemyKnowledge: lp.enemyKnowledge || cl.enemyKnowledge,
       }));
     }
@@ -278,6 +279,7 @@ export function attachLan(server, { port, root }) {
     if (session.game && msg.t !== 'hello' && msg.t !== 'resume') { onGameIntent(pl, msg); return; }
     switch (msg.t) {
       case 'hello':
+        if (subclassSelectionProblem(REG, msg.classId || null, msg.subclassId)) { sock.write(wsEncode(JSON.stringify({ t: 'error', error: subclassSelectionProblem(REG, msg.classId || null, msg.subclassId) }))); return; }
         if (enemyKnowledgeProblems(msg.enemyKnowledge || emptyEnemyKnowledge(), new Set(REG.enemies.ids())).length) { sock.write(wsEncode(JSON.stringify({ t: 'error', error: 'Enemy knowledge profile is malformed' }))); return; }
         pl.enemyKnowledge = structuredClone(msg.enemyKnowledge || emptyEnemyKnowledge());
         pl.name = String(msg.name || 'Forsaken').slice(0, 18);
@@ -288,6 +290,7 @@ export function attachLan(server, { port, root }) {
           pl.classMastery = profile.classMastery;
         }
         pl.classId = msg.classId || null;
+        pl.subclassId = msg.subclassId;
         pl.startingKitId = msg.startingKitId || null;
         pl.playInDeckOrder = msg.playInDeckOrder === true;
         pl.discoveredArmaments = Array.isArray(msg.discoveredArmaments) ? [...new Set(msg.discoveredArmaments.filter((id) => typeof id === 'string'))] : [];
@@ -308,13 +311,16 @@ export function attachLan(server, { port, root }) {
         broadcast({ t: 'roster', players: roster(), seedString: session.seedString });
         break;
       case 'pick':
+        if (subclassSelectionProblem(REG, msg.classId || pl.classId, msg.subclassId !== undefined ? msg.subclassId : msg.classId && msg.classId !== pl.classId ? undefined : pl.subclassId)) { sock.write(wsEncode(JSON.stringify({ t: 'error', error: 'Choose a subclass belonging to this class.' }))); return; }
         if (msg.classMastery !== undefined) {
           const profile = normalizeMasteryProfile({ classMastery: msg.classMastery });
           const problems = masteryProfileProblems(profile);
           if (problems.length) { sock.write(wsEncode(JSON.stringify({ t: 'error', error: problems.join('; ') }))); return; }
           pl.classMastery = profile.classMastery;
         }
+        if (msg.classId && msg.classId !== pl.classId) pl.subclassId = undefined;
         if (msg.classId) pl.classId = msg.classId;
+        if (msg.subclassId !== undefined) pl.subclassId = msg.subclassId;
         if (msg.startingKitId !== undefined) pl.startingKitId = msg.startingKitId || null;
         if (Array.isArray(msg.discoveredArmaments)) pl.discoveredArmaments = [...new Set(msg.discoveredArmaments.filter((id) => typeof id === 'string'))];
         if (msg.tint) pl.tint = msg.tint;
@@ -327,9 +333,11 @@ export function attachLan(server, { port, root }) {
         break;
       case 'locals': {
         // Couch party: up to 3 local seats riding this connection (4 total).
+        if ((Array.isArray(msg.locals) ? msg.locals : []).slice(0, 3).some(lp => subclassSelectionProblem(REG, lp?.classId || null, lp?.subclassId))) { sock.write(wsEncode(JSON.stringify({ t: 'error', error: 'Choose a subclass belonging to each local class.' }))); return; }
         const sane = (Array.isArray(msg.locals) ? msg.locals : []).slice(0, 3).map((lp) => ({
           name: String((lp && lp.name) || 'Forsaken').slice(0, 18),
           classId: (lp && lp.classId) || null,
+          ...(lp?.subclassId !== undefined ? { subclassId: lp.subclassId } : {}),
           classMastery: lp?.classMastery && !masteryProfileProblems(normalizeMasteryProfile({ classMastery: lp.classMastery })).length ? structuredClone(lp.classMastery) : undefined,
           startingKitId: (lp && lp.startingKitId) || null,
           discoveredArmaments: Array.isArray(lp && lp.discoveredArmaments) ? [...new Set(lp.discoveredArmaments.filter((id) => typeof id === 'string'))] : [],

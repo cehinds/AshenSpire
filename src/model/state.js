@@ -1,3 +1,4 @@
+import { subclassSelectionProblem, subclassDeckPreview } from './subclasses.js';
 import { startingAbilityRefs } from './startingAbilities.js';
 import { coopProgressionProblems } from './coopProgression.js';
 import {abilityDraftClaimProblems} from './abilityDraftReceipts.js';
@@ -141,6 +142,7 @@ export function createDeck(cardIds, idGen = createIdGen('d')) {
 export function createRunState({
   seed,
   classId,
+  subclassId = undefined,
   registries,
   combatExpansionVersion = 2,
   enemyKnowledgeVersion = 1,
@@ -160,6 +162,8 @@ export function createRunState({
   if (![null, 1].includes(enemyKnowledgeVersion)) throw new Error('enemyKnowledgeVersion must be 1 or null');
   if (![null, 1, 2].includes(reactionRulesVersion) || (reactionRulesVersion >= 1 && combatExpansionVersion !== 2)) throw new Error('Reaction rules require an expanded run');
   const classDef = registries.classes.get(classId);
+  const subclassProblem = subclassSelectionProblem(registries, classId, subclassId);
+  if (subclassProblem) throw new Error(subclassProblem);
   const selectedAttributeMode = attributeMode === undefined
     ? defaultCreationModeId(registries)
     : attributeMode;
@@ -207,6 +211,7 @@ export function createRunState({
     seed: seed >>> 0,
     streamCounters: {},
     class: classId,
+    ...(subclassId !== undefined ? { subclassId, subclassDeckVersion: 1 } : {}),
     startingKitId: startingKit.id,
     startingKitSnapshot: startingKitSnapshot(startingKit),
     attributeMode: selectedAttributeMode,
@@ -258,7 +263,7 @@ export function createRunState({
     smithingStonesRefined: 0, // refined Smithing Stones (SPEC §15.3)
     itemUpgradeLevels: {},
     smithingRewardClaims: [],
-    deck: startingDeckRefs(registries, loadout, classId).map((ref) => ({ ...createCardInstance(ref.cardId, false, idGen), ...ref })),
+    deck: (subclassId !== undefined ? [] : startingDeckRefs(registries, loadout, classId)).map((ref) => ({ ...createCardInstance(ref.cardId, false, idGen), ...ref })),
     sideboard: [], // owned cards the deck editor took out of the deck (SPEC §14.1)
     // SPEC §14.3: owned sigils not installed anywhere, and the sigil slots cut
     // into items ({ [itemRef]: (sigilId|null)[] }, keyed like itemMounts).
@@ -334,11 +339,19 @@ export function createRunState({
   });
   // Starting choices must see package and weapon grants, because those cards
   // count toward copy limits and distinct-family eligibility.
+  if (subclassId !== undefined) {
+    run.deck = subclassDeckPreview(registries, run).map(ref => ({ ...createCardInstance(ref.cardId, false, idGen), ...ref }));
+    run.equipmentAttackSlotCount = run.deck.filter(ref => ref.equipmentRole === 'attack').length;
+  }
   reconcileGrantedCards(registries, run);
   // Starter families keep their weak action-only face even when their reward
   // catalogue defaults to an advanced Mana-costing profile.
   if (run.progressionRulesVersion === 1) for (const inst of run.deck) if (registries.cards.get(inst.cardId).gradeProfiles) inst.abilityRank = 0;
-  for (const ref of startingAbilityRefs(registries, run, startingAbilityIds, profileMeta.settings || {})) {
+  const chosenAbilityRefs = startingAbilityRefs(registries, run, startingAbilityIds, profileMeta.settings || {});
+  if (subclassId !== undefined && chosenAbilityRefs.length) {
+    run.deck = subclassDeckPreview(registries, run, { startingAbilityRefs: chosenAbilityRefs })
+      .map(ref => ({ ...createCardInstance(ref.cardId, false, idGen), ...ref }));
+  } else for (const ref of chosenAbilityRefs) {
     run.deck.push({ ...createCardInstance(ref.cardId, false, idGen), ...ref });
   }
   // Stamp only after every opening card exists. Starting ability grades own
@@ -350,7 +363,7 @@ export function createRunState({
   // deck exists — and "bound cards are dealt first, in sourceOrder" is a
   // statement about the deck a run BEGINS with, not about later arrivals.
   orderStartingDeck(registries, run);
-  ensureExpandedStarterCoverage(registries, run);
+  if (subclassId === undefined) ensureExpandedStarterCoverage(registries, run);
   // The growth chain binds from birth: a starting relic carrying a
   // balance.flaskGrowth row grows the maximum before the first node.
   syncFlaskGrowth(registries, run);
@@ -674,6 +687,8 @@ export const RUN_SHAPE = [
   { key: 'seed', type: 'number' },
   { key: 'streamCounters', type: 'object' },
   { key: 'class', type: 'string' },
+  { key: 'subclassId', type: 'string', optional: true },
+  { key: 'subclassDeckVersion', type: 'number', optional: true },
   { key: 'startingKitId', type: 'string' },
   { key: 'startingKitSnapshot', type: 'object' },
   // Optional as a pair only so pre-attribute saves can migrate as one block.
@@ -950,6 +965,9 @@ export function levelProblems(level) {
 
 export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels, preRefinedStones = preSideboard, preShopKinds = preRefinedStones, preSigils = preShopKinds, preConsumables = preSigils, preTrainingPool = preConsumables, preAttunedSigils = preTrainingPool } = {}) {
   const problems = [];
+  if (run.subclassId !== undefined && (typeof run.subclassId !== 'string' || !run.subclassId)) problems.push('subclassId must be a non-empty string');
+  if (run.subclassDeckVersion !== undefined && run.subclassDeckVersion !== 1) problems.push('subclassDeckVersion must be 1');
+  if (run.subclassId !== undefined && run.subclassDeckVersion !== 1) problems.push('Opening subclass requires subclassDeckVersion 1');
   if (run.combatExpansionVersion !== undefined && ![1, 2].includes(run.combatExpansionVersion)) problems.push('combatExpansionVersion must be 1 or 2 when present');
   if (run.reactionRulesVersion !== undefined && (![1, 2].includes(run.reactionRulesVersion) || run.combatExpansionVersion !== 2)) problems.push('Reaction rules require an expanded run');
   if (run.reactionRulesVersion === 2) problems.push(...reactionRulesProblems(run.reactionRules).map(problem => `reactionRules: ${problem}`));
@@ -968,6 +986,8 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   const validateExpandedSnapshot = (snapshot, path, terminal = false) => {
     if (run.combatExpansionVersion !== 2 || !typeOk(snapshot, 'object')) return;
     if (snapshot.combatExpansionVersion !== 2) problems.push(`${path}.combatExpansionVersion must match the run`);
+    if (snapshot.player?.subclassId !== run.subclassId) problems.push(`${path}.player.subclassId must match the run`);
+    if (snapshot.player?.subclassDeckVersion !== run.subclassDeckVersion) problems.push(`${path}.player.subclassDeckVersion must match the run`);
     if (snapshot.reactionRulesVersion !== run.reactionRulesVersion) problems.push(`${path}.reactionRulesVersion must match the run`);
     else if (run.reactionRulesVersion === 2 && JSON.stringify(snapshot.reactionRules) !== JSON.stringify(run.reactionRules)) problems.push(`${path}.reactionRules must match the run`);
     problems.push(...ashenBlightProblems(snapshot.player?.ashenBlight, `${path}.player.ashenBlight`));
@@ -1781,13 +1801,15 @@ export function deserializeRun(json) {
  * a zero-threshold player has no vessel, and the HUD's refusal path renders
  * it ABSENT rather than as an empty trough.
  */
-export function createPlayerCombatEntity({ classId, classUnequipped = false, maxHp, hp, maxMana, mana, maxStamina, stamina, relicIds = [], flasks = [], flaskCharges = null, energyMax, drawPerTurn, poiseMax = 0, damageBySchoolAdd = {}, itemUpgradeLevels = {}, critRules = null }) {
+export function createPlayerCombatEntity({ classId, subclassId = undefined, subclassDeckVersion = undefined, classUnequipped = false, maxHp, hp, maxMana, mana, maxStamina, stamina, relicIds = [], flasks = [], flaskCharges = null, energyMax, drawPerTurn, poiseMax = 0, damageBySchoolAdd = {}, itemUpgradeLevels = {}, critRules = null }) {
   if (!Number.isInteger(energyMax) || energyMax < 0) throw new Error('Player combat entity requires stamped non-negative integer energyMax');
   if (!Number.isInteger(drawPerTurn) || drawPerTurn < 0) throw new Error('Player combat entity requires stamped non-negative integer drawPerTurn');
   const entity = {
     id: 'player',
     kind: 'player',
     classId,
+    ...(subclassId !== undefined ? { subclassId } : {}),
+    ...(subclassDeckVersion !== undefined ? { subclassDeckVersion } : {}),
     ...(classUnequipped ? { classUnequipped: true } : {}),
     hp: hp != null ? hp : maxHp,
     maxHp,

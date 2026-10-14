@@ -3,6 +3,10 @@
 import { el, pane } from '../kit/index.js';
 import { feats } from '../../content/feats.js';
 import { createRunState } from '../../model/state.js';
+import { subclassOptions, subclassDeckPreview } from '../../model/subclasses.js';
+import { createCreationSubclassSelector, createCreationStartingDeck } from '../components/creationSubclass.js';
+import { renderCard } from '../components/card.js';
+import { UI_COMPONENTS as UI, markUiComponent } from '../components/uiComponents.js';
 import { creationFeatBrowserGroups } from '../models/CreationFeatBrowserModel.js';
 import { engravedIcon } from '../components/engravedIcon.js';
 import { t } from '../strings.js';
@@ -59,6 +63,13 @@ export function mountCreationPartSpecimens({ host, registries }) {
   navigation.classList.add('cz-railed');
   navigation.style.minHeight = '300px';
   const detail = featBrowser(groups).querySelector('[data-ui-component="creation-feat-detail"]');
+  const subclassChoices = subclassOptions(registries, 'reaver');
+  const subclassRun = createRunState({ registries, classId: 'reaver', subclassId: subclassChoices[0].id, seed: 7 });
+  const deckRefs = subclassDeckPreview(registries, subclassRun);
+  const subclassSelector = () => createCreationSubclassSelector({ options: subclassChoices, selectedId: subclassChoices[0].id });
+  const startingDeck = () => createCreationStartingDeck({ registries, refs: deckRefs });
+  const inspector = renderCard(registries, deckRefs[0], { interactive: false, level: 'inspect' });
+  markUiComponent(inspector, UI.creationStartingCardInspector);
   const specimens = [
     ['creation-page-heading', 'Page heading', creationPageHeading({ eyebrow: t('creation.feats.eyebrow'), title: t('creation.title'), description: t('creation.feats.description') })],
     ['creation-panel', 'Creation panel', panelSpecimen()],
@@ -73,6 +84,12 @@ export function mountCreationPartSpecimens({ host, registries }) {
     ['creation-feat-tile', 'One canonical feat tile, level requirement and detail', featBrowser([{ ...groups[0], rows: groups[0].rows.slice(0, 1) }])],
     ['creation-feat-detail', 'Canonical feat detail panel', detail],
     ['creation-feat-emblem', 'Canonical feat emblem', creationFeatEmblem(feats[0].id)],
+    ['creation-subclass-selector', t('creation.subclass.catalog.selector'), subclassSelector()],
+    ['creation-subclass-tile', t('creation.subclass.catalog.tile'), subclassSelector().querySelector('[data-ui-component="creation-subclass-tile"]')],
+    ['creation-starting-deck', t('creation.subclass.catalog.deck'), startingDeck()],
+    ['creation-starting-deck-group', t('creation.subclass.catalog.group'), startingDeck().querySelector('[data-ui-component="creation-starting-deck-group"]')],
+    ['creation-starting-deck-card', t('creation.subclass.catalog.card'), startingDeck().querySelector('[data-ui-component="creation-starting-deck-card"]')],
+    ['creation-starting-card-inspector', t('creation.subclass.catalog.inspector'), inspector],
   ];
   for (const [componentId, label, specimen] of specimens) {
     const headingId = `cc-catalog-${componentId}`;

@@ -7,11 +7,17 @@ import { combatProfileTags } from '../../model/combatCardProfile.js';
 // Reading selection is separate from an armed card or co-op's attack target.
 export function selectCombatantInfo(root, id) {
   hideTooltip();
+  let changed = false;
   for (const frame of root.querySelectorAll('.combatant')) {
     const selected = frame.dataset.eid === id;
+    if (frame.classList.contains('context-selected') !== selected) changed = true;
     frame.classList.toggle('context-selected', selected);
     frame.setAttribute('aria-pressed', String(selected));
   }
+  // Every card tap clears the reading selection first. When nothing was
+  // selected there is nothing for the battlefield to refit, and its refit (a
+  // forced layout of the whole stage) was a large share of a phone's tap.
+  if (!changed) return;
   // The battlefield listens on its own `.combat`. A co-op root is that
   // `.combat`'s parent, so dispatch on the board(s) inside root, not on root.
   const boards = root.matches?.('.combat') ? [root] : [...root.querySelectorAll('.combat')];

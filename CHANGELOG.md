@@ -32,8 +32,14 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-10-14
+
+- **Quickstep reactions and Guard no longer freeze combat** ([#1972](https://github.com/cehinds/AshenSpire/pull/1972), `0.7.1.1515`). Playing Quickstep as a reaction after a Defend card arms its Poise guard now resolves the enemy attack, and End Turn remains usable. An ordinary guarded End Turn and rated Counterstrike replies also resolve correctly in standalone builds. Five bundled-runtime checks cover the Guard paths in solo and co-op and the rated Counter return.
+- **Cards show the same rules before and during combat** ([#1971](https://github.com/cehinds/AshenSpire/pull/1971), `0.7.1.1513`). Character creation, rewards and deck inspection now show the current combat effects, costs and traits: Crystal Barrier grants Ward in every view instead of promising Block outside combat. Reward captions and deck descriptions agree with their cards, while older saved runs keep their original rules.
+
 ## 2026-10-13
 
+- **Combat taps and End Turn are much faster on phones** ([#1970](https://github.com/cehinds/AshenSpire/pull/1970), `0.7.1.1511`). On a slower phone, tapping a card or a target could hang for a second or more, and ending a turn with a Counter in hand could take several seconds before the reaction prompt appeared, so the game looked frozen. Card previews are no longer recalculated dozens of times per tap, and equipment lookups, the fight-log copy and the battlefield refit no longer repeat on every tap. Selecting a card is about twice as fast on a slow phone, and the reaction prompt appears sooner. If a busy screen ignores a tap, the debug log now says why.
 - **The link check's self-test stops re-reading modules it has already linked** ([#1968](https://github.com/cehinds/AshenSpire/pull/1968), `0.7.1.1509`). Development-process fix only, nothing in the game changes. A module an earlier file in the same batch already linked is now skipped instead of being re-read from scratch, so the self-test finishes well inside the Windows CI limit. A new test pins that each module is parsed once per batch.
 - **Delayed Combat Rounds attacks keep their doubled Poise damage** ([#1959](https://github.com/cehinds/AshenSpire/pull/1959), `0.7.1.1507`). When Momentum doubles an enemy attack that charges before landing, the later payload now keeps that multiplier through its delay and through any reaction pause, then clears it after the attack resolves.
 - **Build numbers keep stamping in two more changelog layouts** ([#1966](https://github.com/cehinds/AshenSpire/pull/1966), `0.7.1.1505`). Development-process change only, nothing in the game changes. A release heading with trailing spaces, or a blank line between entries that share a build, no longer puts a merged change's changelog line in the wrong place when the dev build is stamped.

@@ -6,7 +6,8 @@ import { createAshenBlightState, effectiveAshenBlightAttributes, ashenBlightBonu
 import { resolveCombatCard } from './combatExpansion.js';
 import * as Control from './combatStatusControl.js';
 import * as Blight from './ashenBlight.js';
-import { enqueueExpandedAction, previewExpandedActions } from './combatExpansionActions.js';
+import { enqueueExpandedAction, previewExpandedActions, effectCarrier } from './combatExpansionActions.js';
+import { weaponSourceFor } from '../model/weaponInfusion.js';
 import { combatExpansionEquipment } from '../content/combatExpansionEquipment.js';
 import { expandedEquipmentProjection, expandedEnemyProjection } from './combatExpansionEquipment.js';
 import { settleExpandedPools, refreshExpandedLoadout } from './combatExpansionProjection.js';
@@ -244,6 +245,8 @@ export function createCombat({
     drawPerTurn: player.drawPerTurn,
     player: createPlayerCombatEntity({
       classId: player.classId,
+      subclassId: player.subclassId,
+      subclassDeckVersion: player.subclassDeckVersion,
       ...(player.classUnequipped ? { classUnequipped: true } : {}),
       maxHp: player.maxHp,
       hp: player.hp,
@@ -1179,6 +1182,8 @@ function doSwapArmament(combat, { slotId, setIndex }) {
     deck: [],
     loadout: combat.loadout,
     class: p.classId,
+    subclassId: p.subclassId,
+    subclassDeckVersion: p.subclassDeckVersion,
     attributes: combat.combatExpansionVersion === 2 ? combat.allocatedAttributes : combat.attributes,
     ...(combat.combatExpansionVersion === 2 ? { combatExpansionVersion: 2, ashenBlight: p.ashenBlight } : {}),
     itemUpgradeLevels: combat.itemUpgradeLevels,
@@ -1308,6 +1313,8 @@ function doChangeEquipment(combat, { slotId, setIndex, pieceId = null }) {
     deck: [],
     loadout: combat.loadout,
     class: p.classId,
+    subclassId: p.subclassId,
+    subclassDeckVersion: p.subclassDeckVersion,
     attributes: combat.combatExpansionVersion === 2 ? combat.allocatedAttributes : combat.attributes,
     ...(combat.combatExpansionVersion === 2 ? { combatExpansionVersion: 2, ashenBlight: p.ashenBlight } : {}),
     itemUpgradeLevels: combat.itemUpgradeLevels,
@@ -1330,6 +1337,8 @@ function doChangeEquipment(combat, { slotId, setIndex, pieceId = null }) {
     loadout: combat.loadout,
     relics: p.relicIds || [],
     class: p.classId,
+    subclassId: p.subclassId,
+    subclassDeckVersion: p.subclassDeckVersion,
     itemUpgradeLevels: combat.itemUpgradeLevels || {},
     attributes: combat.attributes || null,
     derivedStatRuleSnapshot: combat.derivedStatRuleSnapshot || null,
@@ -1492,7 +1501,7 @@ export function cardNeedsEnemyTargetNow(combat, cardInstanceId) {
 // after it. So a once-a-turn (limitPerTurn) preparing discount one queued card took is gone for the next (SPEC §4.11).
 // Charges the player already holds are not spent here: the queue's claims already share those out.
 function preparingPreview(combat, inst, def, targetId, { afterQueued = false } = {}) {
-  const clone = F.candidateState(combat);
+  const clone = F.candidateState(combat, { detached: true });
   if (clone.pendingAbilityDiscard) { clone.queue = []; return clone; }
   // A reaction choice waiting on the live fight (a round reaction is priced while its offer is open) would hold the
   // preview's trigger effects back (beforeReactionAction); the detached preview prices the card as it will play.
@@ -2235,7 +2244,7 @@ export function getEntity(combat, id) {
  */
 export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
   if (combat.enemyKnowledge && !combat._knowledgePreview) {
-    const visible = F.candidateState(combat);
+    const visible = F.candidateState(combat, { detached: true });
     visible._knowledgePreview = true;
     for (const enemy of visible.enemies) if (!knowledgeIntentProjection(visible, enemy)?.exact) {
       enemy.intent = { kind: 'unknown', moveId: null };
@@ -2365,7 +2374,14 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
     switch (eff.op) {
       case 'damage': {
         let attackTags = A.attackTagsFor(action, eff, combat.registries);
-        const carrier = combat.foundation ? F.foundationCarrier(combat, p, action.card, eff.attack) : action.card;
+        const carrier = combat.foundation ? F.foundationCarrier(combat, p, action.card, eff.attack) : effectCarrier(action.card, eff);
+        const infusedSource = weaponSourceFor(combat, p, carrier);
+        if (infusedSource?.weaponInfusion) {
+          entry.sourceInstanceId = infusedSource.id;
+          entry.sourceName = infusedSource.name;
+          entry.sourceInfusion = structuredClone(infusedSource.weaponInfusion);
+          entry.inheritedTags = [...infusedSource.weaponInfusion.tags];
+        }
         if (combat.foundation) {
           entry.sourceInstanceId = carrier.resolvedSource.id;
           entry.sourceName = carrier.resolvedSource.name || combat.registries.equipment.armaments.find((piece) => piece.id === carrier.resolvedSource.itemId)?.name || 'Attack source';
@@ -2373,6 +2389,14 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
           entry.inheritedTags = carrier.tags.filter((tag) => !attackTags.includes(tag));
           entry.sourceBuildup = structuredClone(carrier.resolvedSource.buildup || []);
           attackTags = carrier.tags;
+        }
+        if (infusedSource?.weaponInfusion) {
+          // Display-only union: the primary attack descriptor keeps its own
+          // identity while source components name their additional types.
+          const types = carrier.combatProfile?.damageComponents?.map(component => component.type)
+            || [carrier.combatProfile?.damageType || infusedSource.damageType];
+          entry.tags = [...new Set([...(entry.tags || attackTags), ...types.filter(Boolean).map(type => `damage:${type}`), ...infusedSource.weaponInfusion.tags])];
+          entry.inheritedTags = [...new Set([...(entry.inheritedTags || []), ...infusedSource.weaponInfusion.tags])];
         }
         const isCounterReply = action.card.combatProfile?.maneuver === 'counter';
         entry.hits = isCounterReply
@@ -2410,6 +2434,7 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
           entry.splitBase = Math.max(0, Math.floor(evalPreview(combat, action, eff.amount, null)));
           entry.ratingBonus = A.cardRatingDamage(combat, p, carrier, printedBase);
           entry.ratingPart = A.ratingBonusPart(combat, carrier);
+          if (infusedSource?.weaponInfusion) entry.infusionComponents = A.infusionDamageComponents(combat, p, null, carrier);
           // The physical type the carrier resolved (a lending weapon, or a technique's wielded weapon) names the face's physical part.
           if (carrier.physicalDamageType) entry.physicalDamageType = carrier.physicalDamageType;
         }
