@@ -40,7 +40,8 @@ const counterCovered = (ctx, def, row) => row.contacts.some(contact =>
 // trait projection tags them.
 function eligible(ctx, def, row) {
   const tags = def.cardTags || def.tags || [];
-  if (cardTraitsActive(ctx) && tags.includes('trait:reaction')) {
+  if (cardTraitsActive(ctx)) {
+    if (!tags.includes('trait:reaction')) return false;
     return tags.includes('maneuver:counter') ? counterCovered(ctx, def, row) : row.contacts.some(positive);
   }
   if (tags.includes('maneuver:counter')) return counterCovered(ctx, def, row);
@@ -50,7 +51,7 @@ function eligible(ctx, def, row) {
 // A hand card that could answer some incoming root by its maneuver (SPEC §4.10).
 const candidateByManeuver = (ctx, def) => {
   const tags = def.cardTags || def.tags || [];
-  if (cardTraitsActive(ctx) && tags.includes('trait:reaction')) return true;
+  if (cardTraitsActive(ctx)) return tags.includes('trait:reaction');
   return tags.includes('maneuver:counter') || (tags.includes('maneuver:sweep') && def.defensiveReaction === true);
 };
 // The committed reaction stack of this incoming root (version 2 only).

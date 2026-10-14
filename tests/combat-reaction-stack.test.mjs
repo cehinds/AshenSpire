@@ -14,7 +14,7 @@ import { combatReactionProblems } from '../src/model/combatReactionState.js';
 const strikeDef = contentBundle.cards.find(card => card.id === 'strike');
 const chooseStrike = { ...strikeDef, id: 'chooseStrike', name: 'Choose Strike', effects: [...strikeDef.effects, { op: 'discard', amount: 1, choose: true }] };
 const strikeTagging = contentBundle.tagging.filter(row => row.family === 'card' && row.objectId === 'strike');
-function fixture({ version = 2, cardIds = ['guardCounter', 'sweepingBlow'], enemyCount = 1 } = {}) {
+function fixture({ version = 2, cardIds = ['guardCounter', 'sweepingBlow'], enemyCount = 1, sweepRank = 2 } = {}) {
   const registries = createRegistries({ ...contentBundle,
     cards: [...contentBundle.cards, chooseStrike],
     tagging: [...contentBundle.tagging, { family: 'card', scope: '', objectId: 'strike', tagId: 'trait:reaction' },
@@ -26,7 +26,7 @@ function fixture({ version = 2, cardIds = ['guardCounter', 'sweepingBlow'], enem
   const combat = createCombat({ registries, rng: createRng(701), combatExpansionVersion: 2, reactionRulesVersion: version,
     enemyIds: Array(enemyCount).fill('wanderingSoldier'), player: { classId: 'reaver', maxHp: 100, hp: 100,
       maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: cardIds.length,
-      deck: cardIds.map((cardId, index) => ({ cardId, instanceId: `r${index}`, upgraded: false, ...(['sweepingBlow', 'whirlingGuard'].includes(cardId) ? { rank: 2 } : {}) })) } });
+      deck: cardIds.map((cardId, index) => ({ cardId, instanceId: `r${index}`, upgraded: false, ...(['sweepingBlow', 'whirlingGuard'].includes(cardId) ? { rank: sweepRank } : {}) })) } });
   combat.player.block = 100;
   for (const enemy of combat.enemies) { enemy.intentRevealed = false; enemy.ratings = { ar: 0, dr: 0, pr: 0, poise: 0, ward: 0 }; }
   return { combat, registries };
@@ -438,5 +438,13 @@ test('rank-two Sweep resolves before the root; a lethal sweep interrupts and a n
       assert.equal(combat.enemies[0].alive, true);
       assert.ok(combat.player.hp < hp, 'ordinary Sweep damage does not cancel the incoming root');
     }
+  }
+});
+
+test('version-two Sweep offers require actual rank two even for old defensiveReaction cards', () => {
+  for (const cardId of ['sweepingBlow', 'whirlingGuard']) for (const rank of [1, 2]) {
+    const { combat } = fixture({ cardIds: [cardId], sweepRank: rank });
+    dispatch(combat, { type: 'endTurn' });
+    assert.equal(!!combat.pendingReaction?.options.some(option => option.cardId === cardId), rank >= 2, cardId + ' rank ' + rank);
   }
 });
