@@ -48,8 +48,9 @@ test('both guard opcodes split the modified total once, refill Ward and overflow
   }
   const combat = fixture(), player = combat.player;
   player.block = 0; player.barrier = 0; player.persistentWard = { max: 30, value: 0 };
-  const card = { ...guard('frost'), skipRatingBonus: false, ratingValue: 4 };
+  const card = { ...guard('frost'), cardId: 'frostCounter', skipRatingBonus: false, ratingValue: 4 };
   const total = computeBlockGain(combat, player, 5, card);
+  assert.equal(total, 9, 'the authored fallback rating contributes four points');
   assert.equal(gainBarrier(combat, player, 5, card), total);
   assert.equal(player.block + player.persistentWard.value + player.barrier, total, 'rating bonus is included once');
 });
