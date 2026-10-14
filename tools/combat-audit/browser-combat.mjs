@@ -36,6 +36,7 @@ const classFilter = arg('class');
 const variantFilter = arg('variant');
 const pace = arg('pace') || 'fast';
 const curated = arg('curated') === 'true';
+const seed = arg('seed') || 'B';
 const resumePath = arg('resume');
 const caseKey = row => [row.device, row.classId, row.category || 'card', row.cardId, row.variant,
   ...(row.category === 'enemy-turn' ? [row.enemyIds.join('+')] : [])].join('/');
@@ -142,7 +143,7 @@ if (previousReport) assertResumeIdentity(previousReport, { build, htmlSha256, so
 const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const owner = await launchBrowser({ browser: process.env.CHROME || '/usr/bin/chromium', prefix: 'ca-' });
 const browser = await chromium.connectOverCDP(owner.wsUrl);
-const report = previousReport || { url, source, sourceRoot, build, htmlSha256, sourceDigests, inventory, mode, pace, host: { cpuCount: cpus().length, load: loadavg(), freeMemory: freemem(), samples: [] },
+const report = previousReport || { url, source, sourceRoot, build, htmlSha256, sourceDigests, inventory, mode, pace, seed, host: { cpuCount: cpus().length, load: loadavg(), freeMemory: freemem(), samples: [] },
   fixture: curated
     ? 'Fresh createRunCombat preserving the canonical screenshot run HP and pools, with canonical enemies/knowledge/moves and hpMult=1. Authored card appended to a legal run deck and paid through real input. Data-only isolated fixture; production runtime functions and listeners preserved.'
     : 'Fresh createRunCombat from the screenshot run, canonical enemies/knowledge/moves, custom difficulty hpMult=20 and resource maxima 200. One registered card plus legal draw/discard fillers. Data fields only copied into the live fight; original runtime functions, listeners, dispatch, target resolver, renderer and timeline preserved. These are isolated fixtures, not earned playthroughs.',
@@ -194,7 +195,7 @@ async function boot(context, classId) {
   const settings = encodeURIComponent(JSON.stringify({ animSpeed: pace }));
   const kit = arg('main-hand') ? `&shotKit=1&shotMainHand=${encodeURIComponent(arg('main-hand'))}&shotOffHand=${encodeURIComponent(arg('off-hand') || '')}` : '';
   const pools = curated ? '' : '&shotMaxHp=200&shotMaxMana=200&shotMaxStamina=200&shotMana=200';
-  await page.goto(`${url}?shot=combat&shotClass=${classId}&shotSeed=B${pools}&shotSettings=${settings}${kit}`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${url}?shot=combat&shotClass=${classId}&shotSeed=${encodeURIComponent(seed)}${pools}&shotSettings=${settings}${kit}`, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('.end-turn:not([disabled])', { timeout: 30000 });
   await page.evaluate(() => { window.__auditBaseRun = structuredClone(window.__combatRunForShot); window.__auditBaseRng = window.__combat.rng.getCounters(); window.__auditRuntime = Object.fromEntries(Object.entries(window.__combat).filter(([, v]) => typeof v === 'function')); });
   return page;
@@ -509,6 +510,7 @@ async function runCase(page, device, classId, row) {
     if (row.sampleAnimation) await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     entry.after = await receipt(page);
     if (row.category?.endsWith('counter-return')) assert.ok(entry.after.events.some(e => e.type === 'combatCounterTriggered' && e.cardInstanceId === row.instanceId), 'the real incoming action triggers this prepared Counter return');
+    if (row.successfulEvade) assert.ok(entry.after.events.some(e => e.type === 'attackMissed' && e.targetId === entry.after.actual.player.id && e.evadeAttempted && e.hit === false), 'the seeded incoming attack genuinely misses an active evade');
     if (row.reactionCard) {
       assert.ok(entry.input.choices.some(choice => choice.kind === 'reactionPlayed'), 'a genuine reaction option was selected and confirmed');
       assert.ok(entry.after.events.some(e => e.type === 'combatEnemyReactionStacked'), 'the authored NPC reaction opened the stack');
@@ -608,7 +610,8 @@ try {
       for (const card of cards) {
         const variants = ['base', ...(card.upgraded ? ['upgraded'] : [])].filter(v => !variantFilter || variantFilter === v);
         for (const variant of variants) {
-          const row = { cardId: card.id, variant, category: 'card', figureTarget: card.id.length % 2 === 0, curated,
+          const row = { cardId: card.id, variant, category: arg('category') || 'card', figureTarget: card.id.length % 2 === 0, curated,
+            ...(arg('enemy') ? { enemyIds: arg('enemy').split(',') } : {}), endTurn: arg('end-turn') === 'true',
             sampleAnimation: pace === 'normal' && variant === 'base' && ['strike','defend','starSpark','guardCounter','sweepingBlow','crimsonCleave','quickstep','bindingParry','ricochet','cometFragment','litany','bloodPact','bashingBlow','evasiveGuard','wardingStar','nockAndWait','progression-falling-constellation'].includes(card.id) };
           let baseEntry = completedCase(device, classId, row);
           if (!baseEntry && !await runCase(page, device, classId, row)) {
@@ -647,6 +650,7 @@ try {
           ...[
             { cardId: classId === 'reaver' ? 'guardCounter' : 'spikedReprisal', enemyIds: ['wanderingSoldier'], category: 'guard-counter-return', endTurn: true, prePlayCard: 'defend' },
             { cardId: 'dodgeRoll', enemyIds: ['wanderingSoldier'], category: 'evasion-counter-return', endTurn: true, prePlayCard: 'defend' },
+            { cardId: 'dodgeRoll', enemyIds: ['wanderingSoldier'], category: 'successful-evasion-counter-return', endTurn: true, prePlayCard: 'defend', successfulEvade: true },
           ],
           { cardId: 'defend', enemyIds: ['wanderingSoldier'], category: 'defend-selected-origin', prePlayCard: 'strike' },
           ...(classId === 'herald' ? [{ cardId: 'bloodPact', category: 'spell-selected-origin', prePlayCard: 'strike' }] : []),
