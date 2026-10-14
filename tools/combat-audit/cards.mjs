@@ -41,7 +41,7 @@ export async function auditCards({ mode = 'native', allEnemies = false, allVaria
       const carrierId = variant.instance.profileId ? variant.carrierIds[0] || null : undefined;
       const { combat: c } = makeAuditCombat(api, { classId: variant.classId, enemyIds: [enemyId], instance: variant.instance, relicIds: [], carrierId });
       const inst = c.piles.hand[0], def = api.resolveCombatCard(c, inst, { upcastTier: variant.upcastTier });
-      const plan = api.cardTargetPlan(def, c.player.id, c.enemies, [c.player], { solo: true });
+      const plan = api.cardTargetPlan(def, c.player.id, c.enemies, [{ ...c.player, connected: true }], { solo: true });
       const targetId = plan.legalIds[0];
       const choicePlan = api.cardChoicePlan(c, inst.instanceId);
       const choice = choicePlan?.options?.find(option => !option.active)?.id;
@@ -109,23 +109,28 @@ export async function auditConditionalCards({ mode = 'native' } = {}) {
         report.uncovered.push({ key, condition: effect.if, reason: 'deferred or unsupported operation contract' }); continue;
       }
       try {
-        const counts = [];
+        const counts = [], amountCounts = [];
         for (const truth of [false, true]) {
           const { combat: c } = makeAuditCombat(api, { classId: variant.classId, instance: variant.instance, relicIds: [] });
-          setAuditPredicate(c, effect.if, truth);
-          const target = c.enemies[0];
+          const initialDef = api.resolveCombatCard(c, c.piles.hand[0]);
+          const initialPlan = api.cardTargetPlan(initialDef, c.player.id, c.enemies, [{ ...c.player, connected: true }], { solo: true });
+          const target = initialPlan.mode === 'enemy' ? c.enemies[0] : c.player;
+          setAuditPredicate(c, effect.if, truth, target);
           assert.equal(api.evalPredicate(c, effect.if, { owner: c.player, source: c.player, target }), truth, 'fixture establishes predicate');
           const inst = c.piles.hand[0], def = api.resolveCombatCard(c, inst);
-          const plan = api.cardTargetPlan(def, c.player.id, c.enemies, [c.player], { solo: true });
+          const plan = api.cardTargetPlan(def, c.player.id, c.enemies, [{ ...c.player, connected: true }], { solo: true });
           const start = c.eventLog.length;
           api.dispatch(c, { type: 'playCard', cardInstanceId: inst.instanceId, targetId: plan.legalIds[0] });
           settleAuditChoices(api, c);
-          counts.push(c.eventLog.slice(start).filter(e => e.type === type &&
+          const packets = c.eventLog.slice(start).filter(e => e.type === type &&
             (effect.op === 'draw' || e.cardInstanceId === inst.instanceId) &&
-            (effect.op !== 'applyStatus' || e.status === effect.status)).length);
+            (effect.op !== 'applyStatus' || e.status === effect.status));
+          counts.push(packets.length);
+          amountCounts.push(packets.filter(e => (effect.op === 'damage' ? e.base : e.amount) === effect.amount).length);
         }
-        if (counts[1] <= counts[0]) report.uncovered.push({ key, condition: effect.if, counts, reason: 'state branch has no separable operation-count increase; needs amount or lifecycle contract' });
-        else report.verified.push({ key, condition: effect.if, op: effect.op, negative: counts[0], positive: counts[1] });
+        const amountContract = typeof effect.amount === 'number' && ['damage', 'block', 'heal'].includes(effect.op) && amountCounts[1] > amountCounts[0];
+        if (counts[1] <= counts[0] && !amountContract) report.uncovered.push({ key, condition: effect.if, counts, reason: 'state branch has no separable operation-count increase; needs amount or lifecycle contract' });
+        else report.verified.push({ key, condition: effect.if, op: effect.op, contract: amountContract ? 'authored amount packet' : 'operation count', negative: amountContract ? amountCounts[0] : counts[0], positive: amountContract ? amountCounts[1] : counts[1] });
       } catch (error) {
         if (error.playRefusal?.reason === 'controlled') report.uncovered.push({ key, condition: effect.if, reason: 'positive capability state prevents ordinary play; needs recovery intent contract' });
         else report.failures.push({ key, condition: effect.if, message: error.message });
@@ -134,8 +139,47 @@ export async function auditConditionalCards({ mode = 'native' } = {}) {
   }
   return report;
 }
+export async function auditCounterLifecycle({ mode = 'native' } = {}) {
+  const api = await loadAuditRuntime(mode), cases = [];
+  for (const scenario of ['eligible-blocked', 'eligible-unblocked', 'ineligible-spell', 'declined']) {
+    const { combat: c } = makeAuditCombat(api, { classId: 'reaver', enemyIds: [scenario === 'ineligible-spell' ? 'mirrorScribe' : 'wanderingSoldier'],
+      instance: { cardId: 'guardCounter', abilityRank: 0 }, relicIds: [] });
+    const inst = c.piles.hand[0], enemy = c.enemies[0], hp = enemy.hp, turn = c.turn;
+    const initialEvents = c.eventLog.length;
+    if (scenario === 'eligible-blocked' || scenario === 'ineligible-spell') c.player.block = 10000;
+    if (scenario !== 'declined') {
+      api.dispatch(c, { type: 'playCard', cardInstanceId: inst.instanceId, targetId: c.player.id });
+      assert.equal(enemy.hp, hp, 'preparing a reply does not hit immediately');
+      assert.equal(c.player.combatCounter.payload.hp, 3, 'grade-zero authored reply payload is retained');
+    }
+    api.dispatch(c, { type: 'endTurn' });
+    if (scenario === 'declined') assert.ok(c.pendingReaction?.options.some(o => o.cardId === 'guardCounter'), 'real attack offers the held counter');
+    const choices = settleAuditChoices(api, c);
+    const events = c.eventLog.slice(initialEvents);
+    const returns = events.filter(e => e.type === 'damageDealt' && e.cardInstanceId === inst.instanceId);
+    const consumed = events.filter(e => e.type === 'combatCounterConsumed' && e.cardInstanceId === inst.instanceId);
+    if (scenario === 'eligible-blocked') {
+      // SPEC trait contract: stance advantage adds floor(3 × .75) = 2.
+      assert.equal(returns.length, 1);
+      assert.equal(returns[0].base, 5);
+      assert.equal(enemy.hp, hp - 5);
+      assert.equal(consumed.length, 1);
+    } else {
+      assert.equal(returns.length, 0, 'no return when the attack leaks HP, does not match, or was declined');
+      assert.equal(enemy.hp, hp);
+      assert.equal(consumed.length, scenario === 'eligible-unblocked' ? 1 : 0);
+    }
+    if (scenario === 'declined') assert.equal(events.filter(e => e.type === 'cardPlayed' && e.cardInstanceId === inst.instanceId).length, 0, 'declining pays no card');
+    assert.ok(c.turn > turn);
+    assert.equal(c.player.combatCounter, undefined, 'preparation expires on the next owner cycle');
+    assert.equal(c.queue.length, 0);
+    assert.equal(api.reactionPaused(c), false);
+    cases.push({ scenario, returns: returns.length, consumed: consumed.length, choices: choices.length });
+  }
+  return { mode, cases, failures: [] };
+}
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const report = process.argv.includes('--conditions') ? await auditConditionalCards({ mode: process.argv.includes('--bundled') ? 'bundled' : 'native' }) : await auditCards({ mode: process.argv.includes('--bundled') ? 'bundled' : 'native', allEnemies: process.argv.includes('--all-enemies'), allVariants: process.argv.includes('--all-variants') });
+  const report = process.argv.includes('--counter-lifecycle') ? await auditCounterLifecycle({ mode: process.argv.includes('--bundled') ? 'bundled' : 'native' }) : process.argv.includes('--conditions') ? await auditConditionalCards({ mode: process.argv.includes('--bundled') ? 'bundled' : 'native' }) : await auditCards({ mode: process.argv.includes('--bundled') ? 'bundled' : 'native', allEnemies: process.argv.includes('--all-enemies'), allVariants: process.argv.includes('--all-variants') });
   console.log(JSON.stringify(report));
   if (report.failures.length || (report.fixtureGaps?.length || 0)) process.exitCode = 1;
 }

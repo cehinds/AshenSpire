@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { assertImmediateContracts } from '../tools/combat-audit/cards.mjs';
+import { assertImmediateContracts, auditCounterLifecycle } from '../tools/combat-audit/cards.mjs';
 test('positive authored effects require operation receipts even when card dispatch succeeds', () => {
   const card = { id: 'fixture', effects: [{ op: 'damage', amount: 6, target: 'enemy' }] };
   assert.throws(() => assertImmediateContracts(card, [{ type: 'cardPlayed', cardInstanceId: 'a' }], 'a'), /must emit damageDealt/);
@@ -12,4 +12,10 @@ test('counter reply payload requires preparation rather than premature HP damage
   assert.throws(() => assertImmediateContracts(card, [], 'a'), /payload must arm/);
   assert.deepEqual(assertImmediateContracts(card, [{ type: 'combatCounterArmed', cardInstanceId: 'a' }], 'a'), {
     covered: ['counter-preparation'], uncovered: ['deferred-damage'] });
+});
+
+for (const mode of ['native', 'bundled']) test(`${mode}: real counter incoming, suppression, bypass and declined-reaction lifecycle`, async () => {
+  const report = await auditCounterLifecycle({ mode });
+  assert.equal(report.cases.length, 4);
+  assert.deepEqual(report.failures, []);
 });
