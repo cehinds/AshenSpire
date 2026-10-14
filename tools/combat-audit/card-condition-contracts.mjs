@@ -3,6 +3,7 @@ import { pathToFileURL } from 'node:url';
 import { loadAuditRuntime } from './runtime.mjs';
 import { auditInventory } from './inventory.mjs';
 import { makeAuditCombat, setAuditPredicate, setAuditHand, settleAuditChoices } from './fixtures.mjs';
+import { stanceRules } from '../../src/content/stanceRules.js';
 
 export const CONDITION_CARD_IDS = Object.freeze(['clearHead', 'progression-cinder-guard',
   'progression-wire-snare', 'blightBloom', 'progression-ossuary-cant', 'progression-requiem-brand']);
@@ -51,7 +52,8 @@ function play(api, c, instance, targetId) {
 }
 function state(c, target, effect) {
   return { dazed: stacks(c.player, 'dazed'), roll: structuredClone(c.player.nextEvadeMode || null),
-    block: c.player.block, charges: structuredClone(c.player.abilityRiders.charges),
+    block: c.player.block, stance: structuredClone(c.player.combatStance || null),
+    charges: structuredClone(c.player.abilityRiders.charges),
     energy: c.player.energy, stamina: c.player.stamina,
     statuses: structuredClone(target.statuses), gauge: effect.status ? gauge(target, effect.status) : null };
 }
@@ -77,6 +79,27 @@ function seed(api, c, effect, branch, target) {
   assert.equal(api.evalPredicate(c, effect.if, { source: c.player, owner: c.player, target }), branch.truth,
     `${branch.name}: capability state establishes authored predicate`);
 }
+// Normative rule: non-melee offensive magic enters Spell; each successful,
+// positive authored status effect gets the configured Spell status bonus.
+// Read content defaults and the actual stance DTO, never the pressure receipt
+// or the engine's status-bonus resolver, to predict the full state mutation.
+export function expectedConditionalBuildup(c, effect, before) {
+  let authored = effect.amount;
+  if (typeof authored !== 'number') {
+    assert.equal(authored.f, 'mul');
+    assert.equal(authored.args[0].f, 'stacks');
+    assert.equal(authored.args[0].status, effect.status);
+    assert.equal(authored.args[0].of, 'target');
+    assert.equal(typeof authored.args[1], 'number');
+    authored = (before.statuses[effect.status]?.stacks || 0) * authored.args[1];
+  }
+  const stance = c.player.combatStance;
+  const spellStance = ['casting', 'spell'].includes(stance?.maneuver)
+    || stance?.maneuver === 'counter' && stance?.camp === 'spell';
+  const rules = { ...stanceRules, ...(c.stanceRules || c.registries?.balance?.stanceRules || {}) };
+  const bonus = c.combatExpansionVersion === 2 && authored > 0 && spellStance ? rules.spellStatusStacks : 0;
+  return { authored, spellStanceBonus: bonus, total: authored + bonus };
+}
 function assertPressure(c, target, effect, before, own, truth) {
   const packets = own.filter(e => e.type === 'statusPressure' && e.status === effect.status);
   const rule = c.combatExpansionRules.statuses.statuses[effect.status];
@@ -92,8 +115,8 @@ function assertPressure(c, target, effect, before, own, truth) {
   // Independent conservation oracle: buildup becomes gauge units and/or active stacks.
   const added = stacks(target, rule.activeStatus) - initialStacks;
   const spent = added ? (initialStacks ? rule.activeThreshold : rule.initialThreshold) + (added - 1) * rule.activeThreshold : 0;
-  const expected = typeof effect.amount === 'number' ? effect.amount : initialStacks * 4;
-  assert.ok(expected > 0); assert.equal(gauge(target, effect.status) - before.gauge + spent, expected,
+  const expected = expectedConditionalBuildup(c, effect, before);
+  assert.ok(expected.total > 0); assert.equal(gauge(target, effect.status) - before.gauge + spent, expected.total,
     'authored buildup reaches actual gauge/stack state');
   assert.equal(packets[0].value, gauge(target, effect.status));
   assert.equal(packets[0].activeAdded, added);
@@ -180,6 +203,8 @@ export async function auditCardConditionContracts({ mode = 'native' } = {}) {
           beforePlaySnapshot: Object.fromEntries(Object.entries(paid.abilityEntities).map(([id, entity]) =>
             [id, { alive: entity.alive, block: entity.block, statuses: structuredClone(entity.statuses) }])),
           ...(followup ? { afterFollowup: state(c, target, effect) } : {}),
+          ...(effect.op === 'buildup' ? { expectedBuildup: branch.truth
+            ? expectedConditionalBuildup(c, effect, before) : { authored: 0, spellStanceBonus: 0, total: 0 } } : {}),
           paid: compactReceipt(paid), receipts, followup });
       }
       if (effect.op === 'grantCardCharge') {
