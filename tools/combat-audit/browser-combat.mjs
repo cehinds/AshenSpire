@@ -205,7 +205,8 @@ async function fixture(page, row) {
         let h = 2166136261; for (const byte of bytes) h = Math.imul(h ^ byte, 16777619); hash = h >>> 0;
       } catch (error) { hash = String(error); }
       window.__auditFrameSamples.push({ at: performance.now(), hash, missing: !stage, pose: stage?.pose,
-        art: stage?.currentArt, action: stage?.presentation?.action, stance: stage?.stance, rest: stage?.rest });
+        art: stage?.currentArt, action: stage?.presentation?.action, stance: stage?.stance, rest: stage?.rest,
+        heldPose: stage?.stance && stage.poses.includes(`stance-${stage.stance}`) ? `stance-${stage.stance}` : null });
       if (window.__auditSampling) requestAnimationFrame(sample);
     };
     if (row.sampleAnimation) requestAnimationFrame(sample);
@@ -440,13 +441,27 @@ async function runCase(page, device, classId, row) {
     }
     if (row.sampleAnimation) {
       const frames = entry.after.frames, actionFrames = frames.filter(f => f.action);
-      const origin = entry.after.selectedOrigin?.pose?.startsWith('stance-') ? entry.after.selectedOrigin : undefined;
+      const first = frames.find(f => f.at >= (entry.after.selectedOrigin?.at || 0) && f.action && f.heldPose);
+      const measured = entry.after.selectedOrigin?.pose === first?.heldPose ? entry.after.selectedOrigin : undefined;
+      const origin = measured || (first ? { at: first.at, pose: first.heldPose, stance: first.stance, method: 'expected-held-pose-from-live-stage-contract' } : undefined);
+      const actions = [];
+      let current = null;
+      for (const frame of frames.filter(f => f.at >= (entry.after.selectedOrigin?.at || 0))) {
+        if (frame.action !== current?.action) {
+          if (current) { current.completed = !frame.action; current.after = frame; current.returnedToOrigin = current.origin === frame.pose; actions.push(current); }
+          current = frame.action ? { action: frame.action, origin: frame.heldPose, first: frame, hashes: [] } : null;
+        }
+        if (current && typeof frame.hash === 'number') current.hashes.push(frame.hash);
+      }
+      if (current) actions.push({ ...current, completed: false });
+      for (const action of actions) { action.frameChanged = new Set(action.hashes).size > 1; delete action.hashes; }
       report.animationDispatch.push({ device, classId, cardId: row.cardId, receiptId: row.instanceId, dispatchType: 'paid-card', cardPlayed: entry.after.events.some(e => e.type === 'cardPlayed'),
         presentationKind: entry.after.events.some(e => e.type === 'combatCounterTriggered' && e.cardInstanceId === row.instanceId) ? 'counter-return'
           : entry.before.tags.includes('maneuver:counter') ? 'held-preparation' : 'finite-playback',
         frameChanged: new Set(actionFrames.map(f => f.hash).filter(h => typeof h === 'number')).size > 1, actionStarted: actionFrames.length > 0,
         actionCompleted: actionFrames.length > 0 && !frames.at(-1)?.action,
-        returnedToOrigin: !!origin && origin.pose === frames.at(-1)?.pose, origin, tags: entry.before.tags, before: frames[0], after: frames.at(-1), frames });
+        returnedToOrigin: !!origin && origin.pose === frames.at(-1)?.pose, origin, originMethod: measured ? 'measured-post-selection' : origin?.method,
+        selectedOrigin: entry.after.selectedOrigin, actions, tags: entry.before.tags, before: frames[0], after: frames.at(-1), frames });
     }
     const paid = entry.after.events.filter(e => e.type === 'cardPlayed' && e.cardInstanceId === row.instanceId);
     assert.equal(paid.length, entry.input.refusal ? 0 : 1, 'one paid card receipt per play');
