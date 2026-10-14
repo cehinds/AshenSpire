@@ -1,0 +1,203 @@
+{
+  "schemaVersion": 1,
+  "classId": "starseer",
+  "sourceProvenance": "pose-studio/stances/class-smash/starseer/provenance.json",
+  "sourceProvenanceSha256": "57cd5f1cce69be6c35326ef3aa07554a2e1fa98b8abeac8ddcc3249ca09e907b",
+  "sharedLogicalScale": 0.6802575107296137,
+  "groundAnchor": [
+    512,
+    880
+  ],
+  "bodyHeight": 466,
+  "logicalStageAnchor": [
+    384,
+    464
+  ],
+  "sourceBookends": {
+    "first": "bbdadcbcaf9575ed6481c455780b358724c66c76d5a9188c084362a30656b70f",
+    "last": "bbdadcbcaf9575ed6481c455780b358724c66c76d5a9188c084362a30656b70f",
+    "decodedRGBA": "593d08142ba67a081770c683082fa220486bfa7d63bc1b829336ea035c61838b"
+  },
+  "frames": {
+    "held": {
+      "path": "assets-display/alternative/class-smash-starseer-held.webp",
+      "lite": "assets-display/alternative/class-smash-starseer-held-mobile.webp",
+      "sha256": "2e9418bf4095539b042e29fc0187ff04e42acf7937ab8a0415472c7d52705483",
+      "liteSha256": "02a35daabff45e8690e85eeb47085cf577190860f3c70efc083c2381ab5b2147",
+      "size": [
+        696.5836909871244,
+        696.5836909871244
+      ],
+      "drawOffset": [
+        35.70815450643778,
+        -134.62660944206004
+      ],
+      "bounds": [
+        283,
+        174,
+        710,
+        972
+      ],
+      "stageBounds": [
+        228.22103004291847,
+        -16.261802575107254,
+        518.6909871244635,
+        526.5836909871244
+      ],
+      "stageAnchor": [
+        384,
+        464
+      ],
+      "rasterSize": [
+        1024,
+        1024
+      ],
+      "mobileRasterSize": [
+        512,
+        512
+      ],
+      "source": {
+        "path": "pose-studio/stances/class-smash/starseer/01-held.png",
+        "sha256": "bbdadcbcaf9575ed6481c455780b358724c66c76d5a9188c084362a30656b70f",
+        "width": 1024,
+        "height": 1024
+      },
+      "provenance": "pose-studio/stances/class-smash/starseer/provenance.json"
+    },
+    "takeoff": {
+      "path": "assets-display/alternative/class-smash-starseer-takeoff.webp",
+      "lite": "assets-display/alternative/class-smash-starseer-takeoff-mobile.webp",
+      "sha256": "f96a73aed7147d818c41eb00532f57718abcc2714855e7d6ae86ccf857bd9943",
+      "liteSha256": "c87735b257a751d3717be263d4dcacf09c3098bf1f82adf93654d10ede6b9279",
+      "size": [
+        696.5836909871244,
+        696.5836909871244
+      ],
+      "drawOffset": [
+        35.70815450643778,
+        -134.62660944206004
+      ],
+      "bounds": [
+        274,
+        174,
+        640,
+        937
+      ],
+      "stageBounds": [
+        222.09871244635193,
+        -16.261802575107254,
+        471.07296137339057,
+        502.77467811158806
+      ],
+      "stageAnchor": [
+        384,
+        464
+      ],
+      "rasterSize": [
+        1024,
+        1024
+      ],
+      "mobileRasterSize": [
+        512,
+        512
+      ],
+      "source": {
+        "path": "pose-studio/stances/class-smash/starseer/02-takeoff.png",
+        "sha256": "803b644f9cef9406c4b0e8b2bc59cab57d6433ee760fc6e5e289840442442fe4",
+        "width": 1024,
+        "height": 1024
+      },
+      "provenance": "pose-studio/stances/class-smash/starseer/provenance.json"
+    },
+    "airborne": {
+      "path": "assets-display/alternative/class-smash-starseer-airborne.webp",
+      "lite": "assets-display/alternative/class-smash-starseer-airborne-mobile.webp",
+      "sha256": "3b68db097886e379216e4f67c5ee602a921cdf1fa3580f832da8b5fca204f90f",
+      "liteSha256": "951b064329469a277d3148a6e15846a5d685697e7d8c1c03628d1426e5545885",
+      "size": [
+        696.5836909871244,
+        696.5836909871244
+      ],
+      "drawOffset": [
+        35.70815450643778,
+        -134.62660944206004
+      ],
+      "bounds": [
+        267,
+        143,
+        663,
+        957
+      ],
+      "stageBounds": [
+        217.33690987124464,
+        -37.34978540772528,
+        486.71888412017165,
+        516.3798283261802
+      ],
+      "stageAnchor": [
+        384,
+        464
+      ],
+      "rasterSize": [
+        1024,
+        1024
+      ],
+      "mobileRasterSize": [
+        512,
+        512
+      ],
+      "source": {
+        "path": "pose-studio/stances/class-smash/starseer/03-airborne.png",
+        "sha256": "62824f814c0cd16a0907f9f06e1b290d6ad61f6b40e30b5f13c8ced64735df70",
+        "width": 1024,
+        "height": 1024
+      },
+      "provenance": "pose-studio/stances/class-smash/starseer/provenance.json"
+    },
+    "impact": {
+      "path": "assets-display/alternative/class-smash-starseer-impact.webp",
+      "lite": "assets-display/alternative/class-smash-starseer-impact-mobile.webp",
+      "sha256": "05841aad12836675379aa7ada2cc314de93c5adab2a04f4f229dde395bcab160",
+      "liteSha256": "459de4b419e65a32815ed1d1c790bc6d1d8396f1a7dedf45f8e5cb3a01261177",
+      "size": [
+        696.5836909871244,
+        696.5836909871244
+      ],
+      "drawOffset": [
+        35.70815450643778,
+        -134.62660944206004
+      ],
+      "bounds": [
+        216,
+        181,
+        769,
+        918
+      ],
+      "stageBounds": [
+        182.64377682403435,
+        -11.499999999999957,
+        558.8261802575107,
+        489.84978540772534
+      ],
+      "stageAnchor": [
+        384,
+        464
+      ],
+      "rasterSize": [
+        1024,
+        1024
+      ],
+      "mobileRasterSize": [
+        512,
+        512
+      ],
+      "source": {
+        "path": "pose-studio/stances/class-smash/starseer/04-impact.png",
+        "sha256": "d278ef011c19344dc8a96923df8b618965b2b46c9c940849d5a8e1c5443225df",
+        "width": 1024,
+        "height": 1024
+      },
+      "provenance": "pose-studio/stances/class-smash/starseer/provenance.json"
+    }
+  }
+}

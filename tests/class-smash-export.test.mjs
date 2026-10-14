@@ -54,3 +54,27 @@ print('shared scale, world anchor, transparent derivatives and director gate pas
 `],{encoding:'utf8'});
   assert.equal(result.status,0,result.stderr);assert.match(result.stdout,/director gate passed/);
 });
+
+test('real class production registers verified assets with a shared world transform',async()=>{
+  const {readFileSync}=await import('node:fs');
+  const {createHash}=await import('node:crypto');
+  const {classSmashAnimations}=await import('../src/content/classSmashAnimations.js');
+  const hash=path=>createHash('sha256').update(readFileSync(new URL('../'+path,import.meta.url))).digest('hex');
+  for(const actor of ['rogue','starseer','herald']){
+    const entry=classSmashAnimations.classes[actor];assert.ok(entry,actor);
+    const production=JSON.parse(readFileSync(new URL('../'+entry.provenance,import.meta.url)));
+    assert.deepEqual(entry.frames,production.frames);
+    assert.deepEqual(Object.keys(entry.frames),['held','takeoff','airborne','impact']);
+    for(const frame of Object.values(entry.frames)){
+      assert.equal(hash(frame.path),frame.sha256);assert.equal(hash(frame.lite),frame.liteSha256);assert.equal(hash(frame.source.path),frame.source.sha256);
+      assert.deepEqual(frame.size,entry.frames.held.size);assert.deepEqual(frame.drawOffset,entry.frames.held.drawOffset);
+      assert.deepEqual(frame.stageAnchor,[384,464]);assert.deepEqual(frame.rasterSize,[1024,1024]);assert.deepEqual(frame.mobileRasterSize,[512,512]);
+      assert.ok(frame.bounds.every(Number.isFinite));assert.ok(frame.stageBounds.every(Number.isFinite));
+      for(const [key,x]of [['path','sha256'],['lite','liteSha256']]){
+        const name=frame[key].replace('assets-display/alternative/','');assert.equal(classSmashAnimations.hashes[name],frame[x]);assert.equal(classSmashAnimations.filePaths[name],frame[key]);
+      }
+    }
+    assert.equal(hash(production.sourceProvenance),production.sourceProvenanceSha256);
+    assert.equal(production.sourceBookends.first,production.sourceBookends.last,'byte-identical source bookends');
+  }
+});

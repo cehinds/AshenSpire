@@ -33,7 +33,7 @@ def prepare_class(actor, root=ROOT):
     provenance = json.loads(source_provenance.read_text())
     if provenance.get('directorApproved') is not True:
         raise ValueError(actor+': source requires directorApproved: true before export')
-    registration = provenance['registration']
+    registration = provenance.get('registration', provenance)
     anchor = registration['groundAnchor']
     # Anatomical hood/head-to-ground boot height of the held seed, excluding
     # raised hands/weapons, cape tails and effects; not the alpha bounding box.
@@ -42,7 +42,8 @@ def prepare_class(actor, root=ROOT):
         raise ValueError(actor+': groundAnchor must be a source pixel coordinate')
     if isinstance(body_height, bool) or not isinstance(body_height, (int, float)) or not math.isfinite(body_height) or not 0 < body_height <= 1024:
         raise ValueError(actor+': invalid shared bodyHeight')
-    images = [Image.open(folder / (name+'.png')).convert('RGBA') for name in NAMES]
+    frame_folder = folder if (folder/'01-held.png').exists() else folder/'frames'
+    images = [Image.open(frame_folder / (name+'.png')).convert('RGBA') for name in NAMES]
     for image in images:
         if image.size != (1024, 1024) or image.getchannel('A').getextrema()[0] != 0 or not image.getbbox():
             raise ValueError(actor+': all five sources must be nonempty transparent 1024-square frames')
@@ -67,7 +68,7 @@ def prepare_class(actor, root=ROOT):
             raster.save(buffer,format='WEBP',lossless=True,method=6)
             data=buffer.getvalue();outputs[path]=data
             tier_data[tier]={'path':path,'sha256':sha(data),'dimensions':[side,side]}
-        source_path = str((folder / (name+'.png')).relative_to(root))
+        source_path = str((frame_folder / (name+'.png')).relative_to(root))
         frames[key]={'path':tier_data['full']['path'],'lite':tier_data['lite']['path'],
             'sha256':tier_data['full']['sha256'],'liteSha256':tier_data['lite']['sha256'],
             'size':draw_size,'drawOffset':offset,'bounds':bounds,
@@ -78,7 +79,7 @@ def prepare_class(actor, root=ROOT):
     production={'schemaVersion':1,'classId':actor,'sourceProvenance':str(source_provenance.relative_to(root)),
         'sourceProvenanceSha256':sha(source_provenance.read_bytes()),'sharedLogicalScale':scale,
         'groundAnchor':anchor,'bodyHeight':body_height,'logicalStageAnchor':[384,464],
-        'sourceBookends':{'first':sha((folder/'01-held.png').read_bytes()),'last':sha((folder/'05-held.png').read_bytes()),'decodedRGBA':sha(images[0].tobytes())},
+        'sourceBookends':{'first':sha((frame_folder/'01-held.png').read_bytes()),'last':sha((frame_folder/'05-held.png').read_bytes()),'decodedRGBA':sha(images[0].tobytes())},
         'frames':frames}
     outputs[str((folder/'production.json').relative_to(root))]=(json.dumps(production,indent=2)+'\n').encode()
     return {'frames':frames,'provenance':str((folder/'production.json').relative_to(root))}, outputs
