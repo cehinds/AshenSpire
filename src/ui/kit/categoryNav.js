@@ -120,7 +120,7 @@ export function replanCategoryNavs() {
 
 export function categoryNav({
   items = [], ariaLabel = '', rail = null, railAttrs = {}, choose = null, label = null, face = null,
-  onChange = null, toggleClass = '', toggleId = '', config,
+  onChange = null, toggleClass = '', toggleId = '', config, renderFace = null,
 } = {}) {
   const list = rail || node('div', {
     ...railAttrs, class: ['as-rail', railAttrs.class].filter(Boolean).join(' '),
@@ -147,7 +147,8 @@ export function categoryNav({
   const sync = (text) => {
     const current = selected();
     const value = text ?? (current ? faceOf(current) : '');
-    faceNode.textContent = value;
+    if (renderFace) renderFace(faceNode, value, current);
+    else faceNode.textContent = value;
     toggle.setAttribute('aria-label', labelOf(value));
   };
 

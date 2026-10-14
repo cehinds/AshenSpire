@@ -1,3 +1,4 @@
+import { renderCreationStepFace } from '../components/creationPageParts.js';
 import { creationTraitPreview, creationTraitDescription } from '../../model/creationTraits.js';
 import { creationClassTileSummary } from '../models/CreationClassTileModel.js';
 import { subclassOptions, subclassSelectionProblem } from '../../model/subclasses.js';
@@ -290,6 +291,8 @@ export function mountCustomize(app, {
   const flow = el('div', { class: 'cz-flow cz-disc' }, catalog ? Object.values(stages) : []);
   const authoredCategories = creationCategories();
   let categories = creationFlowCategories(registries, state.classId);
+  let current = categories[0];
+  const categoryLabel = (id) => t(`creation.category.${id}`);
   for (const id of authoredCategories) {
     if (!stages[id]) throw new Error(`creation behavior.categories names '${id}', which is not a stage this screen draws (${Object.keys(stages).join(', ')})`);
   }
@@ -305,7 +308,6 @@ export function mountCustomize(app, {
   for (const item of railItems) showNode(item, categories.includes(item.dataset.member));
   const categoryNavItems = [...railItems];
   let categoryNavigation = null;
-  const currentStepIndicator = el('p', { id: 'cz-current-step', class: 'cc-creation-current-step', 'aria-live': 'polite' });
   const paneHost = el('div', { id: 'cz-pane', class: 'as-pane flush cz-pane', role: 'tabpanel' });
   const railed = el('div', { class: 'as-railed cz-railed', dataset: { classPreview: creationClassPreview() } }, [rail, paneHost]);
 
@@ -316,15 +318,14 @@ export function mountCustomize(app, {
     closeLabel: t('common.back'),
   });
   const close = head.querySelector('.modal-close');
-  // The view switches live in the head, where the width is free, and only the
-  // active category's shows (owner, 2026-09-19: no row spent on a toggle).
+  // View controls remain interactive catalog specimens; the live header
+  // reserves its single row for the title, portrait, menu and close.
   const classTools = el('div', { id: 'cz-class-view-toggle', class: 'cz-head-tool' });
   const equipmentTools = el('div', { id: 'cz-equipment-view-toggle', class: 'cz-head-tool' });
   const viewTools = el('div', { class: 'cz-head-tools cz-head-view-tools' }, [classTools, equipmentTools]);
   const headTools = el('div', { class: 'cz-head-tools' });
   if (catalog) { close.hidden = true; flow.prepend(viewTools); }
   else {
-    head.insertBefore(viewTools, head.querySelector('.modal-head-actions'));
     headTools.classList.add('cz-header-menu');
     headTools.setAttribute('popover', 'auto');
     const menu = el('button', { type: 'button', class: 'as-btn cz-menu-button', text: '\u2630', 'aria-label': t('creation.menu.title'), 'aria-haspopup': 'true', 'aria-expanded': 'false' });
@@ -488,6 +489,7 @@ export function mountCustomize(app, {
   });
 
   function renderViewToggles() {
+    if (!catalog) return;
     const toggle = viewModeToggle;
     $('#cz-class-view-toggle').replaceChildren(toggle(state.classChoiceView, (mode) => {
       state.classChoiceView = mode;
@@ -1922,13 +1924,13 @@ export function mountCustomize(app, {
     categoryNavigation = categoryNav({
       items: categoryNavItems, rail, ariaLabel: t('creation.categories'),
       choose: (id) => activate(id),
-      face: () => t('creation.nav.allSteps'),
-      label: () => t('creation.nav.allStepsLabel'),
+      face: item => categoryLabel(item.dataset.member),
+      label: () => t('creation.step.progress', { index: categories.indexOf(current) + 1, count: categories.length, category: categoryLabel(current) }),
+      renderFace: (face, name, item) => renderCreationStepFace(face, { name, index: categories.indexOf(item.dataset.member) + 1, count: categories.length }),
       toggleClass: 'cz-cat-select', toggleId: 'cz-cat-select',
       onChange: ({ mode, open }) => { railed.dataset.creationNav = mode; railed.toggleAttribute('data-nav-open', open); },
     });
     categoryNavigation.attach(railed);
-    railed.insertBefore(currentStepIndicator, categoryNavigation.toggle);
     // The model owns the authored column count at each pane width.
     const applyColumns = () => {
       const rootStyle = getComputedStyle(document.documentElement);
@@ -1962,8 +1964,6 @@ export function mountCustomize(app, {
   // lands the cursor on the next question; Begin takes over on Review.
   const activeEquipmentProblem = () => { const section = equipmentSectionViews.find(row => row.id === equipmentFold?.openKey); return !section?.nextId ? equipmentProblem() : section?.kind === 'ability' ? abilitiesProblem() : section?.kind === 'armour' ? armourProblem() : section?.kind === 'hand' ? handProblem(section.slot) : null; };
   const stageProblems = { class: classProblem, subclass: subclassProblem, maneuvers: abilitiesProblem, attributes: statsStepProblem, keepsake: keepsakeProblem, equipment: activeEquipmentProblem, feats: () => null, spells: spellsProblem, review: () => null };
-  let current = categories[0];
-  const categoryLabel = (id) => t(`creation.category.${id}`);
   refreshCreationNavigation = () => {
     categories = creationFlowCategories(registries, state.classId);
     for (const item of railItems) showNode(item, categories.includes(item.dataset.member));
@@ -1972,7 +1972,6 @@ export function mountCustomize(app, {
     categoryNavigation?.sync(); categoryNavigation?.plan();
   };
   function selectRailItem(member) {
-    currentStepIndicator.textContent = t('creation.step.progress', { index: categories.indexOf(member) + 1, count: categories.length, category: categoryLabel(member) });
     paneHost.setAttribute('aria-labelledby', `cz-tab-${member}`);
     for (const item of railItems) {
       const on = item.dataset.member === member;
@@ -1980,6 +1979,7 @@ export function mountCustomize(app, {
       item.setAttribute('aria-selected', String(on));
       if (on) item.setAttribute('aria-current', 'true'); else item.removeAttribute('aria-current');
     }
+    categoryNavigation?.sync();
   }
   function activate(id) {
     if (id === 'character') id = 'attributes';

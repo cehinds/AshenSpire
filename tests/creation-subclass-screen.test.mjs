@@ -121,3 +121,26 @@ test('native keyboard trait activation and reselection retain focus on the repla
   assert.equal(dom.document.activeElement, reselectable);
   assert.ok(app.contains(dom.document.activeElement));
 }));
+
+for (const [classId, abilityStep] of [['reaver', 'maneuvers'], ['starseer', 'spells']]) {
+  test(`actual ${classId} creation keeps one section/count selector and no header view controls`, () => creationDom(async app => {
+    const { mountCustomize } = await import('../src/ui/screens/customize.js');
+    mountCustomize(app, { registries, defaultSeedString: 'GOLDBOUGH', shotPose: { classId }, onBack() {}, onStart() {} });
+    const selector = app.querySelector('#cz-cat-select');
+    assert.ok(selector);
+    assert.equal(app.querySelector('#cz-current-step'), null);
+    assert.equal(app.querySelector('.modal-head .cz-head-view-tools'), null);
+    assert.equal(app.querySelector('#cz-class-view-toggle'), null);
+    assert.equal(app.querySelector('#cz-equipment-view-toggle'), null);
+    assert.equal(selector.getAttribute('aria-controls'), app.querySelector('.cz-rail').id);
+    for (const [step, count] of [['class', 1], ['subclass', 2], ['attributes', 3], ['feats', 4], [abilityStep, 5], ['equipment', 6], ['keepsake', 7], ['review', 8]]) {
+      app.querySelector(`#cz-tab-${step}`).click();
+      assert.equal(selector.querySelector('.cc-step-count').textContent, `${count} of 8`);
+      assert.equal(selector.querySelector('.cc-step-name').textContent, app.querySelector(`#cz-tab-${step} .rail-label`).textContent);
+      assert.match(selector.getAttribute('aria-label'), new RegExp(`${count} of 8`));
+      assert.equal(app.querySelector('.modal-head .cc-view-toggle'), null);
+    }
+    assert.equal(selector.children.at(-1).className, 'as-catnav-caret');
+    assert.equal(selector.querySelectorAll('.cc-step-count').length, 1);
+  }));
+}
