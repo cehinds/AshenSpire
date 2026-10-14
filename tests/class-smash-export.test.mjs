@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {spawnSync} from 'node:child_process';
 
 test('production export preserves shared registration, airborne height and exact stance bookends',()=>{
-  const result=spawnSync('python3',['-c',String.raw`
+  const result=spawnSync(process.env.ASHEN_PYTHON || 'python3',['-c',String.raw`
 import importlib.util,tempfile,json
 from pathlib import Path
 from PIL import Image,ImageDraw
