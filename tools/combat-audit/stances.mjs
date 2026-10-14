@@ -117,6 +117,14 @@ function readPlayedEvidence(path){
  const rows=data.animationDispatch||[];
  const actual=rows.filter(row=>row.dispatchType==='paid-card'&&row.cardPlayed===true);
  const classSummary=Object.fromEntries(classes.map(id=>[id,{rows:0,finitePlayback:0,heldPreparation:0,frameChanged:0,completed:0,measuredReturn:0,originSampleGaps:[],actions:[]} ]));
+ const actionTags={attack:['maneuver:attack'],smash:['maneuver:smash'],sweep:['maneuver:sweep'],counter:['maneuver:counter'],defend:['maneuver:defend'],spell:['camp:spell'],ranged:['ranged'],rangedMagic:['ranged+camp:spell']};
+ const inventoryRows=data.inventory?.cards||[];
+ const familyCandidates=Object.fromEntries(classes.map(classId=>[classId,Object.fromEntries(Object.entries(actionTags).map(([family,tags])=>{
+  const cardIds=inventoryRows.filter(card=>(card.classes||[card.class]).includes(classId)&&
+   (family==='rangedMagic'?card.tags?.includes('ranged')&&card.tags?.includes('camp:spell'):card.tags?.includes(tags[0]))).map(card=>card.id);
+  return [family,[...new Set(cardIds)].sort()];
+ }))]));
+ const actualFamilies=Object.fromEntries(classes.map(id=>[id,new Set()]));
  for(const row of actual){
   assert.ok(classes.includes(row.classId),`animation dispatch class ${row.classId}`);
   assert.ok(row.receiptId||row.cardId,`${row.classId} has receipt/card identity`);
@@ -128,13 +136,16 @@ function readPlayedEvidence(path){
   const summary=classSummary[row.classId];summary.rows++;if(row.frameChanged===true)summary.frameChanged++;summary.completed++;
   if(row.presentationKind==='held-preparation')summary.heldPreparation++;else summary.finitePlayback++;
   const actionNames=[...new Set((row.frames||[]).map(frame=>frame.action).filter(Boolean))];summary.actions.push(...actionNames);
+  const frames=(row.frames||[]).filter(frame=>frame.action);
+  for(const family of Object.keys(actionTags))if(frames.some(frame=>family==='counter'&&/^counter-(guard|evade)$/.test(frame.action)||frame.action===family))actualFamilies[row.classId].add(family);
   if(row.before?.pose){
    assert.ok(row.returnedToOrigin===true,`${row.classId}/${row.cardId} returns to the sampled held origin`);
    summary.measuredReturn++;
   } else summary.originSampleGaps.push({device:row.device,cardId:row.cardId,afterPose:row.after.pose,reason:'pre-action held origin was not sampled'});
  }
  for(const id of classes){assert.ok(classSummary[id].rows>0,`${id} has actual paid card animation evidence`);classSummary[id].actions=[...new Set(classSummary[id].actions)].sort();}
- return {dispatchRows:actual.length,classes:classSummary,rows:actual,provenance:'real paid card dispatch; event/render samples supplied by browser-combat',limits:'Frames are sampled during real playback, not frame-perfect timing. Rows without a pre-action pose are origin-sampling gaps and are not counted as return-stance passes.'};
+ const familyCoverage=Object.fromEntries(classes.map(id=>[id,Object.fromEntries(Object.keys(actionTags).map(family=>[family,{played:actualFamilies[id].has(family),candidateCards:familyCandidates[id][family],status:actualFamilies[id].has(family)?'actual-frame-action-observed':familyCandidates[id][family].length?'candidate-exists-but-no-paid-frame-observed':'no-authored-class-card-candidate'}]))]));
+ return {dispatchRows:actual.length,classes:classSummary,familyCandidates,familyCoverage,rows:actual,provenance:'real paid card dispatch; event/render samples supplied by browser-combat',limits:'Frames are sampled during real playback, not frame-perfect timing. Rows without a pre-action pose are origin-sampling gaps and are not counted as return-stance passes.'};
 }
 
 const args=process.argv.slice(2),arg=(name)=>{const i=args.indexOf(name);return i<0?undefined:args[i+1]};
