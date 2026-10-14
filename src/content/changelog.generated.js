@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-14",
     "summary": "Magic defense grants Block and Ward, and reactions show their limits",
     "detail": "Defensive spells and non-Evade spell counters split their base protection between physical Block and Ward: 30:70 normally, 50:50 for Frost, and 70:30 for Force and Alteration. DR strengthens Block and PR strengthens Ward. Magic defense covers Melee, Reach and Ranged contacts; counter replies keep their own attack range and miss on failed accuracy or avoidance. Defense cards from rank 1 and Sweep cards from rank 2 have Reaction. Compact cards and inspection show their stance category, protection and counter rules consistently across the game.",
-    "build": "0.7.1.1517",
+    "build": "0.7.1.1519",
     "pullRequest": 1977,
     "url": "https://github.com/cehinds/AshenSpire/pull/1977"
   },
