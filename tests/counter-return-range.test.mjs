@@ -88,6 +88,7 @@ test('a pressure-only return can be evaded; a successful hit spends its one accu
       assert.equal(target.persistentWard.value, 30); assert.equal(target.poiseMeter.value, 0);
     } else {
       assert.equal(target.persistentWard.value, 27); assert.equal(target.poiseMeter.value, 2);
+      assert.equal(target.wardMeter.value, 0, 'explicit Poise does not also damage the Ward break meter');
     }
   }
 });

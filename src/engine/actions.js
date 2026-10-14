@@ -1611,7 +1611,9 @@ function runOpcode(ctx, action, eff) {
         // Impact doubles only the Poise that passed the target's Poise guard.
         const guardBefore = Number.isFinite(t?.poiseGuard) ? Math.max(0, Math.floor(t.poiseGuard)) : 0;
         if (ctx.ratingsRules && action.meta?.combatCounterReaction) {
-          Ratings.applyRatingImpact(ctx, action.source, t, action.card, amount, { triggerHit: false });
+          // An explicit return Poise payload owns the Poise lane even on a spell Counter.
+          const impactCarrier = action.card?.counterReturnAttack ? { damageSchool: 'physical' } : action.card;
+          Ratings.applyRatingImpact(ctx, action.source, t, impactCarrier, amount, { triggerHit: false, cardId: action.card?.cardId });
         } else dealPoiseDamage(ctx, t, amount, { knowledgeMatchup: multiplier > 1 });
         const guardAfter = Number.isFinite(t?.poiseGuard) ? Math.max(0, Math.floor(t.poiseGuard)) : 0;
         trackOwnPressure(ctx, action, t, 'poiseDealt', Math.max(0, amount - (guardBefore - guardAfter)));

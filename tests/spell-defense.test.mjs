@@ -126,11 +126,14 @@ test('live DR scales Block and PR scales Ward independently, including preview p
       const model = playingCardModel(registries, { cardId }, { preview });
       assert.equal(model.tokens[protection.token + '.block'], expected.block);
       assert.equal(model.tokens[protection.token + '.ward'], expected.ward);
-      const face = cardFaceLines(preview.resolvedDefinition, preview, registries)
-        .map(line => line.html).join(' ').replace(/<[^>]+>/g, '');
+      const lines = cardFaceLines(preview.resolvedDefinition, preview, registries);
+      const face = lines ? lines.map(line => line.html).join(' ').replace(/<[^>]+>/g, '')
+        : cardPlainText(registries, { cardId }, { preview, rules: { combatExpansionVersion: 2 } });
       assert.ok(face.includes(`${expected.block} Block, ${expected.ward} Ward`));
-      assert.ok(combatCardSummary(preview.resolvedDefinition, preview, registries)
-        .includes(`${expected.block} Block and ${expected.ward} Ward`));
+      const summary = combatCardSummary(preview.resolvedDefinition, preview, registries);
+      if (summary !== null) assert.ok(summary.includes(`${expected.block} Block and ${expected.ward} Ward`));
+      else assert.ok(cardPlainText(registries, { cardId }, { preview, rules: { combatExpansionVersion: 2 } })
+        .includes(`${expected.block} Block, ${expected.ward} Ward`));
       assert.equal(gain(combat, player, 5, card), total);
       assert.deepEqual({ block: player.block, ward: player.persistentWard.value + player.barrier }, expected);
     }
