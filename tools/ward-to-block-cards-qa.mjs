@@ -24,7 +24,7 @@ const report = {
   head: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
   generatedAt: new Date().toISOString(),
   viewport: { width: 1440, height: 1000 },
-  fixtureBoundary: 'Character creation, rewards and combat use application screenshot routes. Deck editor and level-card options use production screen modules with deterministic Starseer state. Store opens the real Remove a card service; if the authored shot lacks an unlocked offer, mountShop uses deterministic stock and cinders. The QA deck adds real Frost Counter and Force Counter card instances so the changed faces are visible. These are QA states, not player navigation recordings.'
+  fixtureBoundary: 'Character creation, rewards and combat use application screenshot routes. Deck editor and level-card options use production screen modules with deterministic Starseer state. Store opens the real Remove a card service; if the authored shot lacks an unlocked offer, mountShop uses deterministic stock and cinders. The QA deck adds real Frost Counter and Force Counter card instances so the changed faces are visible. These are QA states, not player navigation recordings.',
   views: {},
   failures: [],
   browserErrors: errors,
@@ -81,10 +81,11 @@ try {
         const tab = page.locator('#cz-tab-spells');
         await tab.waitFor({ state: 'visible', timeout: 15000 });
         await tab.click();
-        await page.locator('#cz-spell-choices .cc-ability-choice[data-card-id="crystalBarrier"] .card, #cz-spell-choices .cc-ability-choice[data-card-id="frostVeil"] .card, #cz-spell-choices .cc-ability-choice[data-card-id="umbralWard"] .card, #cz-spell-choices .card').first().waitFor({ state: 'visible', timeout: 20000 });
+        const defensiveChoice = page.locator('#cz-spell-choices .cc-ability-choice[data-card-id="crystalBarrier"] .card, #cz-spell-choices .cc-ability-choice[data-card-id="frostVeil"] .card, #cz-spell-choices .cc-ability-choice[data-card-id="umbralWard"] .card').first();
+        await defensiveChoice.waitFor({ state: 'visible', timeout: 20000 });
       },
-      cardSelector: '#cz-spell-choices .cc-ability-choice[data-card-id="crystalBarrier"] .card, #cz-spell-choices .cc-ability-choice[data-card-id="frostVeil"] .card, #cz-spell-choices .cc-ability-choice[data-card-id="umbralWard"] .card, #cz-spell-choices .card',
-      compactSelector: '#cz-spell-choices .card',
+      cardSelector: '#cz-spell-choices .cc-ability-choice[data-card-id="crystalBarrier"] .card, #cz-spell-choices .cc-ability-choice[data-card-id="frostVeil"] .card, #cz-spell-choices .cc-ability-choice[data-card-id="umbralWard"] .card',
+      compactSelector: '#cz-spell-choices .cc-ability-choice[data-card-id="crystalBarrier"] .card, #cz-spell-choices .cc-ability-choice[data-card-id="frostVeil"] .card, #cz-spell-choices .cc-ability-choice[data-card-id="umbralWard"] .card',
     });
 
   });
@@ -108,8 +109,8 @@ try {
     });
     await page.locator('.deck-editor-veil').waitFor({ state: 'visible', timeout: 20000 });
     await wait(350);
-    const deckCompact = await capture('deck-editing', 'compact', { compactText: await textOf('.deck-editor') });
-    const deckCard = page.locator('.deck-editor-main:visible').first();
+    const deckCard = page.locator('.deck-editor-main:visible').filter({ hasText: 'Frost Counter' }).first();
+    const deckCompact = await capture('deck-editing', 'compact', { compactText: await deckCard.innerText().catch(() => '') });
     await deckCard.waitFor({ state: 'visible', timeout: 20000 });
     await deckCard.click();
     const inspectButton = page.locator('.deck-editor-inline-inspect:visible').first();
@@ -134,7 +135,7 @@ try {
         await page.locator('.reward-kind[data-kind="card"]').click();
         await page.locator('.reward-row .reward-choice-face.card').first().waitFor({ state: 'visible', timeout: 15000 });
       },
-      cardSelector: '.reward-row .reward-choice-face.card', compactSelector: '.reward-row .reward-choice-face.card',
+      cardSelector: '.reward-row .reward-choice-face.card:has-text("Frost Counter"), .reward-row .reward-choice-face.card:has-text("Crystal Barrier"), .reward-row .reward-choice-face.card:has-text("Frost Veil"), .reward-row .reward-choice-face.card:has-text("Force Counter")', compactSelector: '.reward-row .reward-choice-face.card:has-text("Frost Counter"), .reward-row .reward-choice-face.card:has-text("Crystal Barrier"), .reward-row .reward-choice-face.card:has-text("Frost Veil"), .reward-row .reward-choice-face.card:has-text("Force Counter")',
     });
   });
   await attempt('store', async () => {
@@ -164,8 +165,8 @@ try {
       await remove.click();
       await page.locator('#remove-grid .card').filter({ hasText: 'Frost Counter' }).first().waitFor({ state: 'visible', timeout: 10000 });
     },
-    cardSelector: '#remove-grid .card',
-    compactSelector: '#remove-grid .card',
+    cardSelector: '#remove-grid .card:has-text("Frost Counter")',
+    compactSelector: '#remove-grid .card:has-text("Frost Counter")',
   });
   });
 
@@ -206,9 +207,9 @@ try {
     const levelRow = page.locator('.reward-level-rewards .reward-kind[data-key="levelCard:0"]');
     await levelRow.waitFor({ state: 'visible', timeout: 10000 });
     await wait(300);
-    const levelBefore = await capture('level-options', 'compact', { compactText: await textOf('.reward-level-rewards') });
     await levelRow.click();
     await page.locator('.reward-row .reward-choice-face.card').first().waitFor({ state: 'visible', timeout: 15000 });
+    const levelBefore = await capture('level-options', 'compact', { compactText: await textOf('.reward-row .reward-choice-face.card') });
     const levelInspection = await inspector('.reward-row .reward-choice-face.card');
     report.views['level-options'] = {
       before: levelBefore,
@@ -218,7 +219,7 @@ try {
   });
 
   await attempt('combat', async () => {
-    await standardView('combat', '/?shot=combat&shotClass=starseer', '.combat', { cardSelector: '.hand .card', strategy: 'keyboard' });
+    await standardView('combat', '/?shot=combat&shotClass=starseer', '.combat', { cardSelector: '.hand .card:has-text("Frost Counter"), .hand .card:has-text("Force Counter"), .hand .card:has-text("Crystal Barrier"), .hand .card:has-text("Frost Veil")', strategy: 'keyboard' });
   });
 
   report.browserErrors = errors;
