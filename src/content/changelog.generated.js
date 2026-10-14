@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1983",
+    "date": "2026-10-14",
+    "group": "2026-10-14",
+    "summary": "Stance combat continuation is specified",
+    "detail": "Records the next stance discounts, protection, maneuver matchups, Evade, hit previews and combat labels before their implementation. Nothing in play changes in this specification-only update.",
+    "build": "0.7.1.1519",
+    "pullRequest": 1983,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1983"
+  },
+  {
     "id": "pr-1977",
     "date": "2026-10-14",
     "group": "2026-10-14",

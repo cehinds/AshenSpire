@@ -35,7 +35,7 @@ Sweep has -1 Precision and gains +1 Precision for each additional enemy targeted
 
 ## Evade and hit resolution
 
-An Evade stack adds +3 Evade rating. The active Evade stance's +3 rating is separate from the stacks; leaving the stance removes that active bonus but does not erase stacks. Avoidance is capped at 95%, and a natural 20 hits.
+An Evade stack adds +3 Evade rating. The active Evade stance's +3 rating is separate from the stacks; leaving the stance removes that active bonus but does not erase stacks. Avoidance is capped at 95%, and **any rolled natural 20 hits**, including either die in advantage/disadvantage mode. Exact hit previews enumerate all 20 single-die outcomes or all 400 ordered two-die outcomes with that override, rather than approximating the percentage.
 
 A missed eligible attack consumes 1 Evade stack. An out-of-range attack consumes none. A spell with an explicit **Target** bypass consumes none and bypasses Evade; having a target selector alone is not this bypass. Evade stacks decay by 1 per round through the existing round boundary, once per actor.
 
