@@ -1,3 +1,4 @@
+import { primeAccuracyRolls } from './accuracyFixture.mjs';
 // One hit, two parts: a magic part (Barrier, then Ward) and a physical part
 // (Block). Exact numbers from the damage-split brief.
 import test from 'node:test';
@@ -30,6 +31,8 @@ function fixture({ ward = 3, barrier = 0, block = 0, poise = 0, weakness = {}, f
   delete enemy.combatCounter; delete enemy.combatEvade; delete enemy.combatStance;
   enemy.persistentWard.max = 3; enemy.persistentWard.value = ward;
   if (silenced) enemy.statuses.silenced = { stacks: silenced, duration: 2 };
+  // Protection arithmetic is exercised after a real seeded landed Accuracy decision.
+  primeAccuracyRolls(combat);
   return { combat, enemy };
 }
 

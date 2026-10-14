@@ -1,5 +1,8 @@
 import { combatWeaponProfilesFor } from '../../model/combatWeaponPresentation.js';
+import { attackHitPreview, effectiveEvasion } from '../../engine/stanceHit.js';
 import { enemyActionPose } from '../../model/enemyActionPose.js';
+import { enemyStanceCategory } from '../../model/enemyStancePose.js';
+import { enemyMoveCarrier } from '../../engine/combatCardTactics.js';
 import { ratingValue, ratingDamageMultiplier } from '../../model/combatRatings.js';
 import { openCollectibleInspection } from '../components/collectibleCard.js';
 import { combatantInfo, combatantIntent, playerActionIntent, RESTING_PLAYER_ACTION, selectCombatantInfo } from '../components/combatantOverhead.js';
@@ -21,7 +24,7 @@ import { playCardEffectLayers } from '../cardEffectLayers.js';
 // Renders strictly from combat state; animates from dispatch events. Every
 // number displayed comes from previewCard / previewIntent — no math here.
 
-import { dispatch as engineDispatch, previewCard as enginePreviewCard, previewIntent, getEntity, cardChoicePlan } from '../../engine/combat.js';
+import { dispatch as engineDispatch, previewCard as enginePreviewCard, previewIntent, getEntity, cardChoicePlan, previewCardHit } from '../../engine/combat.js';
 import { createPreviewMemo } from '../models/PreviewMemoModel.js';
 import { decorateCombatRoundsScreen } from '../components/combatRoundsScreen.js';
 import { targetedEnemyId } from '../models/CombatRoundsScreenModel.js';
@@ -748,6 +751,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // stance. While a play's receipt is pending (hand frozen), keep the preview: the held ledgers
     // still name the stance before the play until its cardPlayed beat lands.
     if (def || !$('.hand')?.inert) syncPlayerPreview(player, inst, def);
+    syncHitChances();
     applyTargetLayer();
     setHintMode(active ? 'targeting' : null);
     hideTooltip();
@@ -799,6 +803,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   let disp = null;
   let recentArcaneEvents = [];
   const dv = (ent) => (disp && disp.ents[ent.id]) || ent;
+  const enemySpriteState = enemy => ({ ...dv(enemy), maxHp: enemy.maxHp,
+    presentationStance: disp?.ents[enemy.id] ? disp.ents[enemy.id].presentationStance : enemyStanceCategory(enemy.intent) });
 
   const words = (value) => String(value || '')
     .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
@@ -933,7 +939,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const enemy = combat.enemies.find((e) => e.id === subject.entityId);
     if (!enemy) return null;
     const def = registries.enemies.get(enemy.enemyId);
-    return enemySprite(enemyAppearance[def.id] ? { ...def, id: enemyAppearance[def.id] } : def, { ...dv(enemy), maxHp: enemy.maxHp });
+    return enemySprite(enemyAppearance[def.id] ? { ...def, id: enemyAppearance[def.id] } : def, enemySpriteState(enemy));
   }
 
   function openCombatantDoor(subject, opener = document.activeElement) {
@@ -992,7 +998,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     return {
       id: e.id,
       kind: e.kind,
-      ...(e.kind === 'enemy' ? { intentPreview: previewIntent(combat, e.id) } : {}),
+      ...(e.kind === 'enemy' ? { intentPreview: previewIntent(combat, e.id), presentationStance: enemyStanceCategory(e.intent) } : {}),
       hp: e.hp,
       mana: e.mana,
       block: e.block,
@@ -1037,8 +1043,21 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
             counterWardDamage: e.wardDamage, profile: e.combatProfile || {}, stance: 'countering', revealed: true, hidden: false };
           break;
         }
+        case 'enemyMoveStarted': {
+          // Reactions return to the planned hold; pooled follow-ups replace it.
+          if (e.reaction) break;
+          const actor = disp.ents[e.sourceId];
+          const enemy = combat.enemies.find(row => row.id === e.sourceId);
+          const move = registries.enemies.get(e.enemyId || enemy?.enemyId)?.moves?.[e.moveId];
+          if (actor && enemy && move) actor.presentationStance = enemyStanceCategory({
+            kind: e.kind || move.intent,
+            combatProfile: enemyMoveCarrier(enemy, move, e.moveId, combat).combatProfile,
+          });
+          break;
+        }
         case 'enemyActorTurnStarted': {
           const actor = disp.ents[e.sourceId];
+          if (actor) actor.presentationStance = enemyStanceCategory(e.intent);
           if (actor) actor.intentPreview = { ...e.intent, profile: e.intent?.combatProfile || {},
             stance: combatIntentStance(e.intent, e.intent?.combatProfile), revealed: true, hidden: false };
           break;
@@ -1046,7 +1065,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         case 'playerTurnStart':
           // Unused Evade charges expire as the player's turn starts.
           if (disp.ents.player) disp.ents.player.combatEvade = null;
-          for (const enemy of combat.enemies) if (disp.ents[enemy.id]) disp.ents[enemy.id].intentPreview = previewIntent(combat, enemy.id);
+          for (const enemy of combat.enemies) if (disp.ents[enemy.id]) {
+            disp.ents[enemy.id].intentPreview = previewIntent(combat, enemy.id);
+            disp.ents[enemy.id].presentationStance = enemyStanceCategory(enemy.intent);
+          }
           break;
         case 'persistentWardChanged':
         case 'combatWardStripped':
@@ -1464,6 +1486,59 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     };
   }
 
+  // The first Perception roll is the exact read. A clue alone reveals no odds.
+  function hitChanceKnown(enemy) {
+    const ownerId = combat.playerKey || 'player';
+    return enemy.knowledgeAction?.reads?.[ownerId]?.visibility === 'exact';
+  }
+
+  function hitChanceBadge(enemy) {
+    if (combat.combatExpansionVersion !== 2 || !enemy.alive || !hitChanceKnown(enemy)) return null;
+    let preview;
+    try {
+      const inst = selected && findInst(selected);
+      const carrier = inst && resolveCombatCard(combat, inst, { upcastRanks: upcastRanksByCard.get(selected) });
+      const hostile = carrier?.effects?.some(effect => ['enemy', 'allEnemies', 'randomEnemy'].includes(effect.target)) || carrier?.counterPayload;
+      preview = selected && hostile ? previewCardHit(combat, selected, enemy.id, upcastRanksByCard.get(selected))
+        : attackHitPreview(combat, combat.player, enemy, { combatProfile: { maneuver: 'attack', camp: 'physical', range: 'melee' }, effects: [{ op: 'damage', target: 'enemy', amount: 0 }] });
+    } catch { return null; }
+    if (!preview || !Number.isFinite(preview.hitChance)) return null;
+    const node = document.createElement('span');
+    node.className = 'combat-hit-chance';
+    node.dataset.rollMode = preview.advantage ? 'advantage' : preview.disadvantage ? 'disadvantage' : 'neutral';
+    node.textContent = Number(preview.hitChance.toFixed(2)) + '%';
+    node.setAttribute('aria-label', 'Chance to hit ' + node.textContent);
+    return node;
+  }
+
+  function syncHitChances() {
+    combatEl.querySelectorAll('.card-hit-chances').forEach(node => node.remove());
+    const inst = selected && findInst(selected);
+    const definition = inst && resolveCombatCard(combat, inst, { upcastRanks: upcastRanksByCard.get(selected) });
+    const hostile = definition?.effects?.some(effect => ['enemy', 'allEnemies', 'randomEnemy'].includes(effect.target)) || definition?.counterPayload;
+    const selectedCard = hostile && combatEl.querySelector('.hand .card[data-instance-id="' + CSS.escape(selected) + '"]');
+    const cardOdds = document.createElement('div');
+    cardOdds.className = 'card-hit-chances';
+    cardOdds.setAttribute('aria-live', 'polite');
+    for (const enemy of combat.enemies) {
+      const frame = enemyFrames.get(enemy.id)?.box;
+      if (!frame) continue;
+      frame.querySelector('.combat-hit-chance')?.remove();
+      const badge = hitChanceBadge(enemy);
+      if (badge) {
+        frame.querySelector('.combatant-leading')?.append(badge);
+        if (selectedCard) {
+          const odds = badge.cloneNode(true);
+          odds.className = 'card-hit-chance';
+          odds.dataset.targetId = enemy.id;
+          odds.textContent = registries.enemies.get(enemy.enemyId).name + ' ' + badge.textContent;
+          cardOdds.append(odds);
+        }
+      }
+    }
+    if (selectedCard && cardOdds.children.length) selectedCard.append(cardOdds);
+  }
+
   function meterBars(entity, { tooltips = true } = {}) {
     const v = dv(entity);
     const wrap = meters([], { class: 'meters tight' });
@@ -1485,7 +1560,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (bar.id === 'hp') {
         markUiComponent(el, UI.healthStatusBar, entity.kind);
         const next = el.nextSibling;
-        const row = combatHealthRow(el, protectionPresentation(v), { tooltips, blockHelp: helpText('block') });
+        const row = combatHealthRow(el, { ...protectionPresentation(v), evasion: combat.combatExpansionVersion === 2 && (entity.kind !== 'enemy' || hitChanceKnown(entity)) ? effectiveEvasion(combat, v) : null }, { tooltips, blockHelp: helpText('block') });
         bars.insertBefore(row, next);
       }
       if (bar.id === 'poise') markUiComponent(el, UI.poiseStatusBar, entity.kind);
@@ -1750,13 +1825,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         entityId: enemy.id,
         classNames: [dv(enemy).alive ? '' : 'dead', eligibleTargets.includes(enemy.id) ? 'targetable' : '', selectedCombatantId === enemy.id ? 'context-selected' : ''],
         leading,
-        sprite: record ? null : enemySprite(enemyAppearance[def.id] ? { ...def, id: enemyAppearance[def.id] } : def, { ...dv(enemy), maxHp: enemy.maxHp }),
+        sprite: record ? null : enemySprite(enemyAppearance[def.id] ? { ...def, id: enemyAppearance[def.id] } : def, enemySpriteState(enemy)),
         name: markMeterRow(nm, 'name'),
         meters: meterBars(enemy),
         trailing: [statusRow(enemy)],
       };
       const box = record ? updateCombatantFrame(record.box, slots) : combatantFrame(slots);
-      stageFor(box)?.setState?.({ ...dv(enemy), maxHp: enemy.maxHp });
+      stageFor(box)?.setState?.(enemySpriteState(enemy));
       box.dataset.stature = statureFor(registries, def.id);
       if (!record) {
         wireCombatantContext(box, combatantSubject('enemy', enemy));
@@ -1791,6 +1866,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (!record) row.appendChild(box);
       enemyFrames.set(enemy.id, { key: artKey, renderKey, box });
     }
+    syncHitChances();
     applyTargetLayer();
   }
 
@@ -1830,6 +1906,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     });
     syncHandPager(handList);
     handRenderKey = key;
+    syncHitChances();
   }
 
   /**

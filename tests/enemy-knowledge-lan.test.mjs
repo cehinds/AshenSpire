@@ -5,6 +5,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { createSession, restoreSession } from '../tools/session.mjs';
 import { projectLanSnapshot } from '../tools/lan-state.mjs';
 import { coopEnemyIntent } from '../src/ui/models/CoopIntentModel.js';
+import { enemyStanceCategory } from '../src/model/enemyStancePose.js';
 import { initialClassTreeChoices } from '../src/model/classTree.js';
 import { registriesForClassMastery } from '../src/model/classMasteryRun.js';
 const registries = createRegistries({ ...contentBundle, balance: { ...contentBundle.balance,
@@ -33,6 +34,8 @@ test('actual LAN authority persists private reads and exposes only owned learnin
   assert.equal(host.combatPredict('p1', enemy.id, serial, enemy.knowledgeAction.category).ok, true);
   const wire = projectLanSnapshot(host.snapshot(), ['p1']);
   const viewEnemy = wire.scene.enemies[0];
+  assert.equal(viewEnemy.presentationStance, enemyStanceCategory(host.live.combat.enemies[0].intent));
+  assert.equal(host.snapshot().scene.enemies[0].presentationStance, viewEnemy.presentationStance);
   assert.deepEqual(Object.keys(viewEnemy.knowledgeAction.reads), ['p1']);
   assert.equal(viewEnemy.knowledgeAction.category, undefined);
   assert.equal(viewEnemy.combatStance, undefined);

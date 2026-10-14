@@ -8,12 +8,13 @@ import { upcastOptions } from '../model/upcasting.js';
 import { controlRestrictions } from './combatStatusControl.js';
 import { cardTargetPlan } from '../model/cardTargets.js';
 import { fightReacts, incomingAgainst, openEnemyWindow, playerRootSeat, runEnemyPlan, seatGone } from './enemyReactions.js';
+import { reactionPaused } from './reactionState.js';
 
 // Reaction rules: 1 = one reaction per root; 2 = card traits plus the reaction stack.
 export const usesReactions = ctx => ctx.reactionRulesVersion >= 1;
 export const stackedReactions = ctx => ctx.reactionRulesVersion === 2;
 export const cardTraitsActive = ctx => ctx.reactionRulesVersion === 2;
-export const reactionPaused = ctx => !!(ctx.pendingReaction || ctx.reactionResume || ctx.pendingAbilityDiscard);
+export { reactionPaused };
 
 export function setReactionsEnabled(ctx, entity, enabled) {
   if (!usesReactions(ctx)) throw new Error('Optional reactions are unavailable in this saved combat');
@@ -527,8 +528,9 @@ export function answerReaction(ctx, ownerId, { offerId, optionId = null }, hooks
     ctx.foundation.eventCount = 0; ctx.foundation.rolls = {}; ctx.foundation.counts = {};
   }
   ctx._reactionPlaying = true;
+  ctx._reactionSourceId = group.sourceId;
   try { hooks.play(ctx, option.play); }
-  finally { delete ctx._reactionPlaying; }
+  finally { delete ctx._reactionPlaying; delete ctx._reactionSourceId; }
   if (ctx.player.combatCounter && option.play.cardInstanceId === ctx.player.combatCounter.carrier?.instanceId) {
     (group.manualCounterSerials ||= {})[ownerId] = ctx.player.combatCounter.serial;
   }

@@ -8,9 +8,39 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-14",
     "summary": "Combat fades cover fighters, and player targets stay clear of Health",
     "detail": "Screen fades now cover idle and selected fighters while target selection, cards and the combat HUD remain above them. When the perspective view places the player behind the hand, its transparent 44px target moves clear of its own Health strip without changing the artwork, Health position or selected fighter size. Formation tiles that cannot move the player now stay inert and leave the keyboard order; enabling movement restores usable tiles.",
-    "build": "0.7.1.1523",
+    "build": "0.7.1.1529",
     "pullRequest": 1978,
     "url": "https://github.com/cehinds/AshenSpire/pull/1978"
+  },
+  {
+    "id": "pr-1984",
+    "date": "2026-10-14",
+    "group": "2026-10-14",
+    "summary": "Stances, Evade and hit previews share their combat rules",
+    "detail": "Same-stance cards use the configured SP discount, stance ratings stay active without stacking, and Defense restores Poise and Ward with protection overflow. Smash, Counter and Sweep apply their matchup and range rules. Evade stacks, explicit Target bypasses and exact hit previews use the same hit calculation, while the combat HUD and hit labels show the result.",
+    "build": "0.7.1.1529",
+    "pullRequest": 1984,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1984"
+  },
+  {
+    "id": "pr-1985",
+    "date": "2026-10-14",
+    "group": "2026-10-14",
+    "summary": "Starseer spells resolve against Gilded Knight again",
+    "detail": "Targeting Gilded Knight with Staff Magic Strike or Star Spark no longer rejects the play in standalone HTML builds. Its guard reaction resolves, spell costs and damage commit, and the next spell remains usable. The shared reaction pause check now initializes without a circular import.",
+    "build": "0.7.1.1527",
+    "pullRequest": 1985,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1985"
+  },
+  {
+    "id": "pr-1982",
+    "date": "2026-10-14",
+    "group": "2026-10-14",
+    "summary": "Every enemy shows its planned action stance",
+    "detail": "All 33 enemies hold a readable Smash, Attack, Counter, Sweep, Defend or Preparing pose while awaiting their action. The body cue remains visible when intent text is concealed; exact moves and damage stay hidden. Skill, Power and Spell share Preparing. New guarded Counter poses and grounded Hound wind-ups preserve the existing action animations, body scale and floor anchors, and return to the next planned stance after reactions.",
+    "build": "0.7.1.1525",
+    "pullRequest": 1982,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1982"
   },
   {
     "id": "pr-1983",

@@ -23473,5 +23473,11 @@ export const tagging = [
     "scope": "",
     "objectId": "entomb",
     "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "hex",
+    "tagId": "target"
   }
 ];

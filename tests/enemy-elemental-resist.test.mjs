@@ -10,6 +10,7 @@ import { createCoopCombat, playCard, previewCoopCard } from '../src/engine/coopC
 import { createRng } from '../src/engine/rng.js';
 import { createCombatExpansionRuleSnapshot, combatExpansionRulesProblems } from '../src/model/combatExpansionRules.js';
 import { expandedEnemyProjection, typedDefenseAmount } from '../src/engine/combatExpansionEquipment.js';
+import { primeAccuracyRolls } from './accuracyFixture.mjs';
 
 // Starstone Pebble is a Force spell, which splits into arcane and blunt parts (#1896); magicShare 0 keeps
 // the probe one type (blunt), so a resist to that type meets the whole hit.
@@ -42,6 +43,7 @@ function hit(resist, coop) {
   const id = coop ? combat.players.get('a').piles.hand[0].instanceId : 'pebble';
   const preview = coop ? previewCoopCard(combat, 'a', id, enemy.id) : previewCard(combat, id, enemy.id);
   const before = enemy.hp;
+  primeAccuracyRolls(combat, { die: 20 });
   if (coop) playCard(combat, 'a', id, enemy.id); else dispatch(combat, { type: 'playCard', cardInstanceId: id, targetId: enemy.id });
   const event = combat.eventLog.find(row => row.type === 'damageDealt' && row.targetId === enemy.id);
   return { dealt: before - enemy.hp, shown: preview.values.find(row => row.op === 'damage').totalDamage, type: event?.damageType };
@@ -110,6 +112,7 @@ function fireHit(enemyId, { dropResist = false } = {}) {
   const enemy = fireCombat.enemies[0]; calm(enemy);
   const preview = previewCard(fireCombat, 'sigil', enemy.id);
   const before = enemy.hp;
+  primeAccuracyRolls(fireCombat, { die: 20 });
   dispatch(fireCombat, { type: 'playCard', cardInstanceId: 'sigil', targetId: enemy.id });
   const event = fireCombat.eventLog.find(row => row.type === 'damageDealt' && row.targetId === enemy.id);
   return { dealt: before - enemy.hp, shown: preview.values.find(row => row.op === 'damage').totalDamage, type: event?.damageType };

@@ -83,6 +83,9 @@ export const COST_TAGS = Object.freeze({
   'school:divine': { weight: 1, side: 'mp' },
   'school:decay': { weight: 1, side: 'mp' },
   'school:earth': { weight: 1, side: 'mp' },
+  // Spell identity chips: their authored effects and range own the price.
+  target: { weight: 0, side: 'mp' },
+  hex: { weight: 0, side: 'mp' },
   // Weapon and theme chips (card domain)
   blade: { weight: 1, side: 'sp' },
   heavy: { weight: 0, side: 'sp' },
