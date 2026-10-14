@@ -5659,6 +5659,7 @@ button[data-button-size] {
 .customize.cc-design-workspace :is(.as-pane, .as-option, .as-face) { border-image-source:none; border-radius:2px; box-shadow:none; }
 .customize.cc-design-workspace .cc-choice-collection[data-view="grid"] { grid-template-columns:repeat(2,minmax(0,1fr)); gap:calc(12px / var(--ui-zoom,1)); }
 .customize.cc-design-workspace .cc-choice-collection[data-view="grid"] > .cz-class:not(.unfolded) { flex-direction:column; align-items:center; text-align:center; gap:calc(8px / var(--ui-zoom,1)); padding:calc(12px / var(--ui-zoom,1)); }
+.customize #cz-classes[data-view="grid"] > .cz-class:not(.unfolded) > .ob { width:100%; align-self:stretch; min-width:0; flex:none; }
 .customize.cc-design-workspace .cc-choice-collection[data-view="grid"] > .cz-class:not(.unfolded) > .og { flex:none; font-size:calc(32px / var(--ui-zoom,1)); line-height:1; }
 .customize.cc-design-workspace .cc-choice-collection[data-view="grid"] > .cz-class:not(.unfolded) > .og > * { width:calc(32px / var(--ui-zoom,1)); height:calc(32px / var(--ui-zoom,1)); object-fit:contain; }
 .customize.cc-design-workspace .cc-choice-collection[data-view="grid"] > .cz-class:not(.unfolded) .on { justify-content:center; white-space:normal; font-size:calc(18px / var(--ui-zoom,1)); }
