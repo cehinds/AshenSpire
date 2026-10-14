@@ -69,7 +69,7 @@ function buildLines(def, preview, registries) {
   if (AUTHORED_DAMAGE_RIDER_CARDS.includes(def.id)) return null;
   // A curse's hand trigger and an Ashen Blight price live only in the authored text.
   if (def.onTurnEndInHand?.length || def.ashenBlightCost) return null;
-  const { value, title, condition, profile: p, bindings, tokens } = cardSummaryContext(def, preview, registries);
+  const { value, defense, title, condition, profile: p, bindings, tokens } = cardSummaryContext(def, preview, registries);
   const ratings = registries?.balance?.combatRatings ?? null;
   // A self status consumed after a payoff must read after the condition that uses it.
   // Walk nested predicates too, so the face never implies the prerequisite is removed first.
@@ -156,7 +156,7 @@ function buildLines(def, preview, registries) {
       case 'wardDamage': return frag('damage', `${num(n, base)} Ward damage${area}`);
       case 'block': {
         const defense = def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2
-          ? (preview?.values?.[index]?.defenseSplit || spellDefenseSplit({ ...def, combatProfile: p }, n)) : null;
+          ? (defense(effect, index) || spellDefenseSplit({ ...def, combatProfile: p }, n)) : null;
         if (defense) {
           const baseSplit = typeof base === 'number' ? spellDefenseSplit({ ...def, combatProfile: p }, base) : null;
           return frag(effect.target === 'ally' ? 'bonus' : 'gain',
@@ -173,7 +173,7 @@ function buildLines(def, preview, registries) {
       }
       // A Spell's gain refills Ward first, so it reads Ward.
       case 'gainBarrier': {
-        const split = preview?.values?.[index]?.defenseSplit || spellDefenseSplit({ ...def, combatProfile: p }, n);
+        const split = defense(effect, index) || spellDefenseSplit({ ...def, combatProfile: p }, n);
         if (split) {
           const baseSplit = typeof base === 'number' ? spellDefenseSplit({ ...def, combatProfile: p }, base) : null;
           return frag(effect.target === 'ally' ? 'bonus' : 'gain', `${effect.target === 'ally' ? 'Ally gains ' : ''}${num(split.block, baseSplit?.block)} Block, ${num(split.ward, baseSplit?.ward)} Ward`);

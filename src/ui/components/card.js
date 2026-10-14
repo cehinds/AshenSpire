@@ -566,7 +566,8 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
  */
 export function cardPlainText(registries, ref, opts = {}) {
   const def = playingCardDefinition(registries, ref, opts);
-  const model = playingCardModel(registries, ref, { ...opts, definition: def });
+  const model = opts.preview ? playingCardModel(registries, ref, { ...opts, definition: def })
+    : { tokens: staticTokens(def), damageSequences: [] };
   const lines = opts.rules?.combatExpansionVersion === 2 || opts.preview?.combatExpansionVersion === 2
     ? cardFaceLines(def, opts.preview || null, registries) : null;
   // Plain string work only: no DOM, so it runs the same headless and in a

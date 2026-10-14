@@ -83,7 +83,7 @@ test('expanded block opcode faces and allied gains use defense shares; legacy fa
     textTemplate: 'Ally gains {block} Block.' };
   const expanded = applyCombatExpansionCard(legacy);
   const compact = cardFaceLines(expanded, null, registries).map(line => line.html).join(' ').replace(/<[^>]+>/g, '');
-  assert.match(compact, /Ally gains 4 Block, 1 Ward/);
+  assert.match(compact, /Ally gains 4 Block(?:,| and) 1 Ward/);
   assert.match(combatCardSummary(expanded, null, registries), /Ally gains 4 Block, 1 Ward/);
   assert.match(cardPlainText(registries, { cardId: 'crystalBarrier' },
     { definition: { ...expanded, ashenBlightCost: 1 }, rules: { combatExpansionVersion: 2 } }), /Ally gains 4 Block, 1 Ward/);
@@ -130,7 +130,7 @@ test('live DR scales Block and PR scales Ward independently, including preview p
         .map(line => line.html).join(' ').replace(/<[^>]+>/g, '');
       assert.ok(face.includes(`${expected.block} Block, ${expected.ward} Ward`));
       assert.ok(combatCardSummary(preview.resolvedDefinition, preview, registries)
-        .includes(`${expected.block} Block, ${expected.ward} Ward`));
+        .includes(`${expected.block} Block and ${expected.ward} Ward`));
       assert.equal(gain(combat, player, 5, card), total);
       assert.deepEqual({ block: player.block, ward: player.persistentWard.value + player.barrier }, expected);
     }

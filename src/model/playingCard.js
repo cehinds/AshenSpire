@@ -115,6 +115,13 @@ export function cardSummaryContext(def, preview = null, registries = null) {
     return preview?.tokens?.[token] ?? (live?.op === effect.op ? live.value : undefined)
       ?? tokens[token] ?? (typeof effect[field] === 'number' ? effect[field] : '?');
   };
+  const defense = (effect, index) => {
+    const live = preview?.values?.[index];
+    if (live?.defenseSplit) return live.defenseSplit;
+    const token = bindings.find(row => row.index === index && row.field === 'amount')?.token;
+    const block = preview?.tokens?.[token + '.block'], ward = preview?.tokens?.[token + '.ward'];
+    return Number.isFinite(block) && Number.isFinite(ward) ? { block, ward } : null;
+  };
   const title = id => registries?.statuses?.has(id) ? registries.statuses.get(id).name : id[0].toUpperCase() + id.slice(1);
   const condition = pred => {
     if (!pred) return '';
@@ -141,12 +148,12 @@ export function cardSummaryContext(def, preview = null, registries = null) {
     if (['all', 'any'].includes(pred.p)) { const parts = pred.preds.map(condition); return parts.every(Boolean) ? parts.join(pred.p === 'all' ? ' and ' : ' or ') : ''; }
     return '';
   };
-  return { value, title, condition, profile: combatProfileFor(def), bindings, tokens };
+  return { value, defense, title, condition, profile: combatProfileFor(def), bindings, tokens };
 }
 
 /** Plain complete effect text. Numeric values come from the resolved preview. */
 export function combatCardSummary(def, preview = null, registries = null) {
-  const { value, title, condition, profile: p } = cardSummaryContext(def, preview, registries);
+  const { value, defense, title, condition, profile: p } = cardSummaryContext(def, preview, registries);
   const ratings = registries?.balance?.combatRatings ?? null, parts = [];
   for (const [index, effect] of (def.effects || []).entries()) {
     const n = value(effect, index), area = effect.target === 'allEnemies' ? ' to all enemies'
@@ -170,14 +177,14 @@ export function combatCardSummary(def, preview = null, registries = null) {
       case 'block': {
         const verb = effect.target === 'ally' ? 'Ally gains' : 'Gain';
         const defense = def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2
-          ? (preview?.values?.[index]?.defenseSplit || spellDefenseSplit({ ...def, combatProfile: p }, n)) : null;
+          ? (defense(effect, index) || spellDefenseSplit({ ...def, combatProfile: p }, n)) : null;
         const split = defense || splitOf(def, p, n, ratings);
         text = split ? uiText('combat.card.splitBlock', { verb, block: defense ? defense.block : split.physical, ward: defense ? defense.ward : split.magic }) : `${verb} ${n} Block`;
         break;
       }
       // A Spell's gain refills Ward first and only the overflow is Barrier, so it reads Ward.
       case 'gainBarrier': {
-        const split = preview?.values?.[index]?.defenseSplit || spellDefenseSplit({ ...def, combatProfile: p }, n);
+        const split = defense(effect, index) || spellDefenseSplit({ ...def, combatProfile: p }, n);
         text = split ? uiText('combat.card.splitBlock', { verb: effect.target === 'ally' ? 'Ally gains' : 'Gain', block: split.block, ward: split.ward })
           : `Gain ${n} ${isSpellCard({ combatProfile: p, tags: def.tags }) ? 'Ward' : 'Barrier'}`;
         break;

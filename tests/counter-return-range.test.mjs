@@ -22,6 +22,7 @@ function fight() {
   ctx.player.statuses = {};
   const target = ctx.enemies[0];
   target.evasion = 0; target.statuses = {};
+  target.ratings = { ...target.ratings, ward: 30, poise: 100 };
   target.persistentWard = { max: 30, value: 30 };
   target.poiseMeter = { value: 0, max: 100, growths: 0 };
   return ctx;
@@ -61,7 +62,7 @@ test('range and accuracy misses gate HP, Poise and Ward together without spendin
     const ctx = fight(), target = ctx.enemies[0], startHp = target.hp;
     target.combatEvade = { charges: 1, bonus: 100, advantage: false, disadvantage: false, expiresOnOwnerCycle: 1 };
     let draws = 0;
-    ctx.rng.int = stream => { if (stream === 'counterAccuracy') draws++; return die; };
+    ctx.rng.int = stream => { if (stream === 'combatAvoidance') draws++; return die; };
     const carrier = returnCarrier(range, requiredRange);
     enqueueExpandedAction(ctx, returnActions(ctx, carrier, hp), { source: ctx.player, target, carrier });
     drain(ctx);
@@ -77,11 +78,11 @@ test('a pressure-only return can be evaded; a successful hit spends its one accu
     const ctx = fight(), target = ctx.enemies[0];
     if (evade) target.combatEvade = { charges: 1, bonus: 100, advantage: false, disadvantage: false, expiresOnOwnerCycle: 1 };
     let accuracyDraws = 0;
-    ctx.rng.int = stream => { if (stream === 'counterAccuracy') accuracyDraws++; return 20; };
+    ctx.rng.int = stream => { if (stream === 'combatAvoidance') accuracyDraws++; return 20; };
     const carrier = returnCarrier();
     enqueueExpandedAction(ctx, returnActions(ctx, carrier), { source: ctx.player, target, carrier });
     drain(ctx);
-    assert.equal(accuracyDraws, 1);
+    assert.equal(accuracyDraws, evade ? 2 : 1, 'one Accuracy roll plus one Evade roll when prepared');
     if (evade) {
       assert.equal(target.combatEvade.charges, 0);
       assert.equal(target.persistentWard.value, 30); assert.equal(target.poiseMeter.value, 0);
@@ -100,6 +101,7 @@ test('base Evasion uses the target seat equipment, explicit ratings override it,
     players: new Map([['target-seat', { classId: 'rogue', attributes: { dexterity: 3 },
       loadout: { sets: { armor: ['default'], left: ['buckler'] }, active: {} } }]]),
     playerIdForEntity: entity => entity === target ? 'target-seat' : null };
+  scoped.attributesForEntity = entity => scoped.players.get(scoped.playerIdForEntity(entity))?.attributes || {};
   target.classId = 'rogue';
   assert.equal(counterBaseEvasion(scoped, target), 3, 'Leather DEX term two plus buckler one');
   target.combatEvade = { charges: 5, bonus: 100 };
@@ -120,7 +122,7 @@ test('spell Counter HP uses PR for both physical and magical types, while pressu
 
 test('queued return range and hit metadata survive snapshots; version-one actions keep their original path', () => {
   const ctx = fight(), carrier = returnCarrier();
-  ctx.piles.hand.push({ instanceId: 'snapshot-defense', cardId: 'crystalBarrier', abilityRank: 1 });
+  ctx.piles.hand.push({ instanceId: 'snapshot-defense', cardId: 'crystalBarrier', upgraded: false, abilityRank: 1 });
   const enemy = ctx.enemies[0];
   const actions = returnActions(ctx, carrier, 5).map(action => ({
     ...action, source: enemy, owner: enemy, target: ctx.player,

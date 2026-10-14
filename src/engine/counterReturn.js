@@ -84,8 +84,8 @@ export function resolveCounterAttack(ctx, source, target, carrier) {
   const preview = counterAttackPreview(ctx, source, target, carrier);
   if (!preview) return null;
   if (!preview.inRange) return { ...preview, hit: false, missReason: 'range' };
-  const d20 = typeof ctx.rng.int === 'function' ? ctx.rng.int('counterAccuracy', 1, 20)
-    : 1 + Math.floor(ctx.rng.float('counterAccuracy') * 20);
+  const d20 = typeof ctx.rng.int === 'function' ? ctx.rng.int('combatAvoidance', 1, 20)
+    : 1 + Math.floor(ctx.rng.float('combatAvoidance') * 20);
   const hit = hitRoll({ accuracy: preview.accuracy, evasion: preview.evasion }, d20).hit;
   return { ...preview, d20, hit, ...(!hit ? { missReason: 'accuracy' } : {}) };
 }

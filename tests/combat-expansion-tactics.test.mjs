@@ -26,6 +26,7 @@ function fixture(dice = [5]) {
   const ctx = createCombat({ registries, rng: createRng(5), combatExpansionVersion: 2,
     enemyIds: ['wanderingSoldier'], player: { classId: 'reaver', maxHp: 50, hp: 50,
       maxMana: 10, mana: 10, maxStamina: 10, stamina: 10, energyMax: 10, drawPerTurn: 1, deck: [] } });
+  target.counters = structuredClone(ctx.player.counters);
   Object.assign(ctx, { turn: 1, player: target, enemies: [source], queue,
     emit: (type, payload) => events.push({ type, ...payload }), enqueue: action => queue.push(action),
     combatControlRestrictions: entity => ({ counterDisabled: Boolean(entity.locked), evadeDisabled: Boolean(entity.locked) }),
