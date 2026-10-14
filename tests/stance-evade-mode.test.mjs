@@ -88,7 +88,10 @@ test('Clear Head waits through ordinary attacks until an actual Evade is availab
     enemyIds: ['wanderingSoldier'], player: { classId: 'rogue', maxHp: 100, hp: 100,
       maxMana: 20, mana: 20, maxStamina: 20, stamina: 20, energyMax: 20, drawPerTurn: 1,
       deck: [{ cardId: 'clearHead', instanceId: 'clear' }] } });
+  // Clear Head promises Advantage only when Dazed in its before-play snapshot.
+  ctx.player.statuses.dazed = { stacks: 1 };
   dispatch(ctx, { type: 'playCard', cardInstanceId: 'clear' });
+  assert.equal(ctx.player.statuses.dazed, undefined, 'the real Clear Head cleared its qualifying status');
   const actor = ctx.player, enemy = ctx.enemies[0];
   actor.evasion = 0; enemy.accuracy = 100;
   assert.deepEqual(actor.nextEvadeMode, { advantage: true, disadvantage: false });
