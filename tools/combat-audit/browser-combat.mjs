@@ -51,11 +51,16 @@ if (mode === 'summarize') {
   const inputs = paths.map(path => ({ path, report: JSON.parse(readFileSync(path, 'utf8')),
     sha256: createHash('sha256').update(readFileSync(path)).digest('hex') }));
   const latest = new Map(), history = [];
+  const expectedDevices = (arg('expected-devices') || 'desktop,phone').split(',');
+  assert.ok(expectedDevices.length && expectedDevices.every(device => ['desktop', 'phone'].includes(device)), 'expected devices must explicitly name desktop and/or phone');
   const key = row => [row.device, row.classId, row.category || 'card', row.cardId, row.variant].join('/');
   for (const input of inputs) {
     assert.ok(input.report.finished, `authoritative report must be complete: ${input.path}`);
+    assert.ok(input.report.cases?.length, `authoritative report must have nonempty cases: ${input.path}`);
+    assert.ok(input.report.inventory?.cards?.length && input.report.inventory.cards.every(card => card.classes?.length), `authoritative report must have nonempty authored inventory: ${input.path}`);
     assert.deepEqual(input.report.build, inputs[0].report.build, 'combined report artifact identity');
     assert.deepEqual(input.report.sourceDigests, inputs[0].report.sourceDigests, 'combined source identity');
+    assert.deepEqual(input.report.inventory, inputs[0].report.inventory, 'combined authored inventory identity');
     input.report.cases.forEach((row, index) => {
       const record = { key: key(row), status: row.status, report: input.path, index,
         reason: row.input?.refusal || row.before?.refused || row.error || null };
@@ -63,7 +68,7 @@ if (mode === 'summarize') {
     });
   }
   const required = new Set();
-  for (const input of inputs) for (const device of new Set(input.report.cases.map(row => row.device))) {
+  for (const input of inputs) for (const device of expectedDevices) {
     for (const card of input.report.inventory.cards) for (const classId of card.classes) {
       required.add([device, classId, 'card', card.id, 'base'].join('/'));
       if (card.upgraded) required.add([device, classId, 'card', card.id, 'upgraded'].join('/'));
@@ -75,7 +80,7 @@ if (mode === 'summarize') {
     latest: latest.get(row.key), resolved: ['passed', 'expected-refusal'].includes(latest.get(row.key)?.status) }));
   const result = { build: inputs[0].report.build, provenance: inputs.map(({ path, sha256, report }) => ({ path, sha256, attempts: report.cases.length, runs: report.runs || [{ pace: report.pace, started: report.started }] })),
     counts: Object.fromEntries(['passed', 'expected-refusal', 'failed'].map(status => [status, [...latest.values()].filter(row => row.status === status).length])),
-    latestKeys: latest.size, requiredKeys: required.size, missingKeys: [...required].filter(key => !latest.has(key)),
+    expectedDevices, latestKeys: latest.size, requiredKeys: required.size, missingKeys: [...required].filter(key => !latest.has(key)),
     runtimeErrors: inputs.flatMap(({ path, report }) => report.errors.map(error => ({ report: path, ...error }))),
     historicalFailures: failures, cases: [...latest.values()],
     limits: ['Compiled input/effect parity covers the pinned baseline; current integrated-build critical validation is reported separately.',
