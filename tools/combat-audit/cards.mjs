@@ -91,6 +91,45 @@ export async function auditCards({ mode = 'native', allEnemies = false, allVaria
   }
   return report;
 }
+function conditionalTargets(c, effect, chosen) {
+  if (effect.target === 'self' || effect.target === 'ally') return [c.player.id];
+  if (['allEnemies', 'randomEnemy'].includes(effect.target)) return c.enemies.filter(e => e.alive).map(e => e.id);
+  if (effect.target === 'otherEnemies') return c.enemies.filter(e => e.alive && e.id !== chosen.id).map(e => e.id);
+  return [chosen.id];
+}
+function proveConditionalMutation(api, c, effect, chosen, inst, before, events, packets) {
+  const targets = conditionalTargets(c, effect, chosen);
+  for (const packet of packets) if (effect.op !== 'draw') assert.ok(targets.includes(packet.targetId), 'effect receipt names its actual destination');
+  for (const id of targets) {
+    const entity = [c.player, ...c.enemies].find(e => e.id === id), old = before.entities[id];
+    const losses = events.filter(e => e.type === 'hpLost' && e.targetId === id).reduce((n, e) => n + e.amount, 0);
+    const heals = events.filter(e => e.type === 'healed' && e.targetId === id).reduce((n, e) => n + e.amount, 0);
+    assert.equal(entity.hp, old.hp - losses + heals, 'actual HP agrees with attributed effects and other HP events');
+    if (effect.op === 'damage') {
+      const damage = events.filter(e => e.type === 'damageDealt' && e.targetId === id && e.cardInstanceId === inst.instanceId && !e.triggeredBy)
+        .reduce((n, e) => n + Math.max(0, e.amount - e.blocked), 0);
+      const lost = events.filter(e => e.type === 'hpLost' && e.cause === 'attack' && e.targetId === id && e.cardInstanceId === inst.instanceId && !e.triggeredBy)
+        .reduce((n, e) => n + e.amount, 0);
+      assert.equal(lost, damage, 'damage packets commit their post-defense HP loss');
+    }
+    if (effect.op === 'block') {
+      const gained = events.filter(e => e.type === 'blockGained' && e.targetId === id).reduce((n, e) => n + e.amount, 0);
+      const spent = events.filter(e => e.type === 'damageDealt' && e.targetId === id).reduce((n, e) => n + e.blocked, 0);
+      assert.equal(entity.block, old.block + gained - spent, 'Block operation changes the target pool');
+    }
+    if (effect.op === 'applyStatus' && packets.some(e => e.targetId === id)) {
+      const changed = JSON.stringify(entity.statuses[effect.status]) !== JSON.stringify(old.statuses[effect.status]);
+      const completed = events.some(e => ['statusRemoved', 'statusExpired', 'meterFilled'].includes(e.type) && e.targetId === id && e.status === effect.status);
+      assert.ok(changed || completed, 'status operation changes target state or completes its lifecycle');
+    }
+  }
+  if (effect.op === 'draw') {
+    for (const packet of packets) {
+      assert.ok(before.draw.includes(packet.cardInstanceId) || before.discard.includes(packet.cardInstanceId), 'draw receipt came from the actual deck');
+      assert.ok(['hand', 'discard', 'exhaust'].some(p => c.piles[p].some(i => i.instanceId === packet.cardInstanceId)), 'drawn card actually leaves draw and enters a destination pile');
+    }
+  }
+}
 export async function auditConditionalCards({ mode = 'native' } = {}) {
   const api = await loadAuditRuntime(mode), inventory = auditInventory(api.registries);
   const report = { mode, verified: [], uncovered: [], failures: [] };
@@ -119,12 +158,16 @@ export async function auditConditionalCards({ mode = 'native' } = {}) {
           assert.equal(api.evalPredicate(c, effect.if, { owner: c.player, source: c.player, target }), truth, 'fixture establishes predicate');
           const inst = c.piles.hand[0], def = api.resolveCombatCard(c, inst);
           const plan = api.cardTargetPlan(def, c.player.id, c.enemies, [{ ...c.player, connected: true }], { solo: true });
+          const before = { entities: Object.fromEntries([c.player, ...c.enemies].map(e => [e.id, { hp: e.hp, block: e.block, statuses: structuredClone(e.statuses) }])),
+            draw: c.piles.draw.map(i => i.instanceId), discard: c.piles.discard.map(i => i.instanceId) };
           const start = c.eventLog.length;
           api.dispatch(c, { type: 'playCard', cardInstanceId: inst.instanceId, targetId: plan.legalIds[0] });
           settleAuditChoices(api, c);
-          const packets = c.eventLog.slice(start).filter(e => e.type === type &&
+          const events = c.eventLog.slice(start);
+          const packets = events.filter(e => e.type === type && !e.triggeredBy && e.sourceId === c.player.id &&
             (effect.op === 'draw' || e.cardInstanceId === inst.instanceId) &&
             (effect.op !== 'applyStatus' || e.status === effect.status));
+          proveConditionalMutation(api, c, effect, target, inst, before, events, packets);
           counts.push(packets.length);
           amountCounts.push(packets.filter(e => (effect.op === 'damage' ? e.base : e.amount) === effect.amount).length);
         }
@@ -177,6 +220,73 @@ export async function auditCounterLifecycle({ mode = 'native' } = {}) {
     cases.push({ scenario, returns: returns.length, consumed: consumed.length, choices: choices.length });
   }
   return { mode, cases, failures: [] };
+}
+export async function auditDeferredConditions({ mode = 'native' } = {}) {
+  const api = await loadAuditRuntime(mode), rows = [];
+  const instances = [
+    { cardId: 'guardCounter', legacyAbility: true, upgraded: false },
+    { cardId: 'guardCounter', legacyAbility: true, upgraded: true },
+    { cardId: 'guardCounter', abilityRank: 2, upgraded: false },
+    { cardId: 'guardCounter', abilityRank: 5, upgraded: false },
+    { cardId: 'progression-crimson-reprisal', abilityRank: 2, upgraded: false },
+    { cardId: 'progression-crimson-reprisal', abilityRank: 5, upgraded: false },
+  ];
+  for (const instance of instances) for (const truth of [false, true]) {
+    const { combat: c } = makeAuditCombat(api, { classId: 'reaver', enemyIds: ['wanderingSoldier'], instance, relicIds: [] });
+    const card = c.piles.hand[0], def = api.resolveCombatCard(c, card);
+    const crimson = instance.cardId === 'progression-crimson-reprisal';
+    const condition = crimson ? { p: 'turnMetric', metric: 'hpLostSinceTurnStart', atLeast: 1 } : { p: 'hasBlock', of: 'self' };
+    setAuditPredicate(c, condition, truth, c.player);
+    const damageEffects = def.effects.filter(e => e.op === (crimson ? 'poiseDamage' : 'damage'));
+    assert.ok(damageEffects.every(e => typeof e.amount === 'number'));
+    // Independent inputs: mutually exclusive legacy faces, or the unconditional
+    // primary plus an earned permanent-grade rider. No counter preview oracle.
+    const expected = instance.legacyAbility ? damageEffects[truth ? 1 : 0].amount
+      : damageEffects[0].amount + (truth ? damageEffects[1].amount : 0);
+    const pool = { stamina: c.player.stamina, mana: c.player.mana }, hp = c.enemies[0].hp, start = c.eventLog.length;
+    api.dispatch(c, { type: 'playCard', cardInstanceId: card.instanceId, targetId: c.player.id });
+    settleAuditChoices(api, c);
+    const prepared = c.player.combatCounter;
+    assert.equal(prepared.payload[crimson ? 'poise' : 'hp'], expected, 'predicate selects the exact retained payload');
+    assert.equal(c.enemies[0].hp, hp, 'preparation has no immediate HP hit');
+    const receipt = c.eventLog.slice(start).find(e => e.type === 'cardPlayed' && e.cardInstanceId === card.instanceId);
+    assert.ok(receipt);
+    assert.equal(c.player.stamina, pool.stamina - receipt.staminaSpent);
+    assert.equal(c.player.mana, pool.mana - receipt.manaSpent);
+    // Supply protection after preparation too: a false hasBlock gate may not
+    // become retroactively earned when protection arrives before the attacker.
+    c.player.block = 10000;
+    const nextTurn = c.turn;
+    api.dispatch(c, { type: 'endTurn' });
+    settleAuditChoices(api, c);
+    const events = c.eventLog.slice(start);
+    assert.ok(events.some(e => e.type === 'enemyMoveStarted' && e.enemyId === 'wanderingSoldier' && e.moveId === 'slash'));
+    const returned = events.filter(e => e.type === 'combatCounterTriggered' && e.cardInstanceId === card.instanceId);
+    assert.equal(returned.length, 1);
+    const scale = n => n > 0 ? n + Math.max(Math.floor(n * .75), 1) : n;
+    if (crimson) {
+      // Current authored counterPayload Poise is Counterstruck; permanent grade
+      // rider stays additive, then Impact doubles the retained total.
+      const primary = damageEffects[0].amount, extra = truth ? damageEffects[1].amount : 0;
+      assert.equal(returned[0].poiseDamage, (scale(primary) + extra) * 2);
+      assert.equal(returned[0].amount, 0);
+      assert.ok(events.some(e => e.type === 'meterFilled' && e.meter === 'poise' && e.targetId === c.enemies[0].id && e.cardInstanceId === card.instanceId));
+      assert.ok(api.getStacks(c.enemies[0], 'staggered') > 0, 'real reply commits the break/status outcome');
+    } else {
+      assert.equal(returned[0].amount, scale(expected));
+      const hits = events.filter(e => e.type === 'damageDealt' && e.cardInstanceId === card.instanceId);
+      assert.equal(hits.length, 1);
+      assert.equal(hits[0].base, scale(expected));
+      assert.equal(c.enemies[0].hp, hp - Math.max(0, hits[0].amount - hits[0].blocked));
+    }
+    assert.equal(c.player.combatCounter, undefined);
+    assert.equal(c.queue.length, 0);
+    assert.equal(api.reactionPaused(c), false);
+    assert.ok(c.turn > nextTurn);
+    rows.push({ instance, condition, truth, prepared: expected, returnHp: returned[0].amount, returnPoise: returned[0].poiseDamage,
+      ...(instance.legacyAbility ? { complementaryCondition: { p: 'not', pred: condition } } : {}) });
+  }
+  return { mode, rows, failures: [] };
 }
 // Save service covers committed model state; add transient queue and RNG.
 // Derived preview caches are intentionally excluded: they are not gameplay state.
@@ -241,7 +351,7 @@ export async function auditRefusals({ mode = 'native' } = {}) {
   return report;
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const report = process.argv.includes('--refusals') ? await auditRefusals({ mode: process.argv.includes('--bundled') ? 'bundled' : 'native' }) : process.argv.includes('--counter-lifecycle') ? await auditCounterLifecycle({ mode: process.argv.includes('--bundled') ? 'bundled' : 'native' }) : process.argv.includes('--conditions') ? await auditConditionalCards({ mode: process.argv.includes('--bundled') ? 'bundled' : 'native' }) : await auditCards({ mode: process.argv.includes('--bundled') ? 'bundled' : 'native', allEnemies: process.argv.includes('--all-enemies'), allVariants: process.argv.includes('--all-variants') });
+  const report = process.argv.includes('--deferred-conditions') ? await auditDeferredConditions({ mode: process.argv.includes('--bundled') ? 'bundled' : 'native' }) : process.argv.includes('--refusals') ? await auditRefusals({ mode: process.argv.includes('--bundled') ? 'bundled' : 'native' }) : process.argv.includes('--counter-lifecycle') ? await auditCounterLifecycle({ mode: process.argv.includes('--bundled') ? 'bundled' : 'native' }) : process.argv.includes('--conditions') ? await auditConditionalCards({ mode: process.argv.includes('--bundled') ? 'bundled' : 'native' }) : await auditCards({ mode: process.argv.includes('--bundled') ? 'bundled' : 'native', allEnemies: process.argv.includes('--all-enemies'), allVariants: process.argv.includes('--all-variants') });
   console.log(JSON.stringify(report));
   if (report.failures.length || (report.fixtureGaps?.length || 0)) process.exitCode = 1;
 }
