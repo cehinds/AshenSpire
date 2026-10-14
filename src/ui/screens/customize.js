@@ -1169,6 +1169,11 @@ export function mountCustomize(app, {
         ? tTip('creation.abilities.elementCap', { max: section.maxElementPicks }) : null;
       capRefreshers.set(card.id, refusesWhen(choose, capReason, ''));
       const select = () => {
+        // Re-read the authoritative offer at activation: an inspector or old
+        // DOM node can outlive the attributes, armaments or class it rendered.
+        const current = startingAbilityPlan(registries, previewRun(), meta.settings || {});
+        if (current?.skillId !== section.skillId || current.rank !== section.rank
+          || !current.choices.some(choice => choice.id === card.id)) return;
         const picked = state.startingAbilityIds.includes(card.id);
         if (picked) state.startingAbilityIds = state.startingAbilityIds.filter(id => id !== card.id);
         else if (capReason()) return;
