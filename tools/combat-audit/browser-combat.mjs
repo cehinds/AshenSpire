@@ -224,6 +224,8 @@ async function fixture(page, row) {
     run.deck = [...run.deck, inst, ...Array.from({ length: 10 }, (_, i) => ({ cardId: i % 2 ? 'defend' : 'strike', instanceId: `audit-fill-${row.instanceId}-${i}`, upgraded: false }))];
     const prefix = row.prePlayCard ? { cardId: row.prePlayCard, instanceId: `${inst.instanceId}-prefix`, upgraded: false } : null;
     if (prefix) run.deck.push(prefix);
+    const reaction = row.reactionCard ? { cardId: row.reactionCard, instanceId: `${inst.instanceId}-reaction`, upgraded: false } : null;
+    if (reaction) run.deck.push(reaction);
     window.__auditInstanceId = inst.instanceId;
     const enemies = row.enemyIds || ['wanderingSoldier', 'wanderingSoldier'];
     const encounter = c.registries.encounters.all().find(e => enemies.every(id => e.enemies.includes(id)));
@@ -239,7 +241,7 @@ async function fixture(page, row) {
     // Runtime closures retain the original fight identity. Only serializable data changes.
     for (const key of Object.keys(c)) if (typeof c[key] !== 'function' && key !== 'registries' && key !== 'rng') delete c[key];
     for (const [key, value] of Object.entries(fresh)) if (typeof value !== 'function' && key !== 'registries' && key !== 'rng') c[key] = value;
-    c.piles.hand = [inst, ...(prefix ? [prefix] : []), ...c.piles.hand.filter(i => i.instanceId !== inst.instanceId && i.instanceId !== prefix?.instanceId).slice(0, 2)];
+    c.piles.hand = [inst, ...(prefix ? [prefix] : []), ...(reaction ? [reaction] : []), ...c.piles.hand.filter(i => i.instanceId !== inst.instanceId && i.instanceId !== prefix?.instanceId && i.instanceId !== reaction?.instanceId).slice(0, 2)];
     c.piles.draw = run.deck.filter(i => !c.piles.hand.some(h => h.instanceId === i.instanceId));
     c.piles.discard = []; c.piles.exhaust = [];
     if (!row.curated) {
@@ -507,6 +509,12 @@ async function runCase(page, device, classId, row) {
     if (row.sampleAnimation) await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     entry.after = await receipt(page);
     if (row.category?.endsWith('counter-return')) assert.ok(entry.after.events.some(e => e.type === 'combatCounterTriggered' && e.cardInstanceId === row.instanceId), 'the real incoming action triggers this prepared Counter return');
+    if (row.reactionCard) {
+      assert.ok(entry.input.choices.some(choice => choice.kind === 'reactionPlayed'), 'a genuine reaction option was selected and confirmed');
+      assert.ok(entry.after.events.some(e => e.type === 'combatEnemyReactionStacked'), 'the authored NPC reaction opened the stack');
+      assert.ok(entry.after.events.some(e => e.type === 'combatReactionChosen' && e.cardInstanceId === `${row.instanceId}-reaction`), 'the visible choice committed the configured legal reaction card');
+      assert.ok(entry.after.events.some(e => e.type === 'cardPlayed' && e.cardInstanceId === `${row.instanceId}-reaction`), 'the chosen reaction actually paid and resolved');
+    }
     if (row.profileId) assert.equal(entry.before.instance.profileId, row.profileId, 'played instance comes from canonical equipped profile');
     if (row.profileId || row.curated) {
       assert.equal(entry.after.stage?.animationSetId, `class-cards-${classId}`, 'equipped profile retains default class artwork');
@@ -633,6 +641,7 @@ try {
         const rows = mode === 'enemies' ? inventory.enemies.filter(id => !arg('enemy') || arg('enemy').split(',').includes(id))
           .map(enemyId => ({ cardId: 'strike', enemyIds: [enemyId], category: 'enemy-turn', endTurn: true })) : [
           { cardId: 'strike', enemyIds: ['gildedKnight'], category: 'enemy-reaction', endTurn: true },
+          { cardId: 'bashingBlow', enemyIds: ['gildedKnight'], reactionCard: 'dodgeRoll', chooseReaction: true, category: 'reaction-choice-play' },
           { cardId: 'defend', enemyIds: ['wanderingSoldier'], category: 'guarded-enemy-turn', endTurn: true },
           { cardId: 'evasiveGuard', enemyIds: ['wanderingSoldier'], category: 'evade-enemy-turn', endTurn: true },
           ...[
