@@ -1,0 +1,79 @@
+{
+  "action": "weapon:attack:greatsword",
+  "aliases": [
+    "weapon:attack:greatsword",
+    "weapon:spell:greatsword",
+    "weapon:ranged:greatsword",
+    "weapon:rangedMagic:greatsword"
+  ],
+  "origin": "offensive",
+  "timing": {
+    "totalMs": 465,
+    "impactMs": 135
+  },
+  "registeredSequence": {
+    "poses": [
+      "rogue.greatsword.attack.anticipation",
+      "rogue.greatsword.attack.strike",
+      "rogue.greatsword.attack.follow-through",
+      "rogue.greatsword.attack.recovery"
+    ],
+    "durations": [
+      180,
+      90,
+      150,
+      200
+    ],
+    "impact": 1,
+    "travel": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "hold": false,
+    "action": "attack"
+  },
+  "reviewFrames": [
+    {
+      "pose": "stance-offensive",
+      "label": "origin stance-offensive",
+      "weight": 1
+    },
+    {
+      "pose": "rogue.greatsword.attack.anticipation",
+      "registeredFrameId": "rogue.greatsword.attack.anticipation",
+      "label": "1/4 rogue.greatsword.attack.anticipation \u00b7 weight 180",
+      "weight": 180,
+      "timeMs": 67.5
+    },
+    {
+      "pose": "rogue.greatsword.attack.strike",
+      "registeredFrameId": "rogue.greatsword.attack.strike",
+      "label": "2/4 rogue.greatsword.attack.strike \u00b7 weight 90",
+      "weight": 90,
+      "timeMs": 168.75
+    },
+    {
+      "pose": "rogue.greatsword.attack.follow-through",
+      "registeredFrameId": "rogue.greatsword.attack.follow-through",
+      "label": "3/4 rogue.greatsword.attack.follow-through \u00b7 weight 150",
+      "weight": 150,
+      "timeMs": 258.75
+    },
+    {
+      "pose": "rogue.greatsword.attack.recovery",
+      "registeredFrameId": "rogue.greatsword.attack.recovery",
+      "label": "4/4 rogue.greatsword.attack.recovery \u00b7 weight 200",
+      "weight": 200,
+      "timeMs": 390
+    },
+    {
+      "pose": "stance-offensive",
+      "label": "return Attack",
+      "weight": 1
+    }
+  ],
+  "capture": "Actual mounted combat stage canvas; review timing separate from Normal gameplay",
+  "sharedPhaseArtWith": []
+}

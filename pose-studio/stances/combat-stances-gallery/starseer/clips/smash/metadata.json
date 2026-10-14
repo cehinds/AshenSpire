@@ -1,0 +1,77 @@
+{
+  "action": "smash",
+  "aliases": [
+    "smash"
+  ],
+  "origin": "smash",
+  "timing": {
+    "totalMs": 195,
+    "impactMs": 117
+  },
+  "registeredSequence": {
+    "poses": [
+      "origin",
+      "class-smash-takeoff",
+      "class-smash-airborne",
+      "class-smash-impact",
+      "origin"
+    ],
+    "durations": [
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "impact": 3,
+    "travel": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "hold": false,
+    "timingUnits": 5,
+    "contactCue": true
+  },
+  "reviewFrames": [
+    {
+      "pose": "stance-smash",
+      "registeredFrameId": "origin",
+      "label": "1/5 origin \u00b7 weight 1",
+      "weight": 1,
+      "timeMs": 19.5
+    },
+    {
+      "pose": "class-smash-takeoff",
+      "registeredFrameId": "class-smash-takeoff",
+      "label": "2/5 class-smash-takeoff \u00b7 weight 1",
+      "weight": 1,
+      "timeMs": 58.5
+    },
+    {
+      "pose": "class-smash-airborne",
+      "registeredFrameId": "class-smash-airborne",
+      "label": "3/5 class-smash-airborne \u00b7 weight 1",
+      "weight": 1,
+      "timeMs": 97.5
+    },
+    {
+      "pose": "class-smash-impact",
+      "registeredFrameId": "class-smash-impact",
+      "label": "4/5 class-smash-impact \u00b7 weight 1",
+      "weight": 1,
+      "timeMs": 136.5
+    },
+    {
+      "pose": "stance-smash",
+      "registeredFrameId": "origin",
+      "label": "5/5 origin \u00b7 weight 1",
+      "weight": 1,
+      "timeMs": 175.5
+    }
+  ],
+  "capture": "Actual mounted combat stage canvas; review timing separate from Normal gameplay",
+  "sharedPhaseArtWith": []
+}
