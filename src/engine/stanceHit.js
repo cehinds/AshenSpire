@@ -30,7 +30,8 @@ export function attackHitPreview(ctx, source, target, carrier, options = {}) {
   const range = profile.range || 'melee';
   const requiredRange = carrier?.counterRequiredRange || target?.combatStance?.range || 'melee';
   const override = profile.rangeOverride === true || profile.adequateReach === true || profile.traits?.includes('adequateReach');
-  const inRange = bypass || override || (RANGES.includes(range) && RANGES.includes(requiredRange) && RANGES.indexOf(range) >= RANGES.indexOf(requiredRange));
+  // Target bypasses Evasion only; its spell still needs sufficient reach.
+  const inRange = override || (RANGES.includes(range) && RANGES.includes(requiredRange) && RANGES.indexOf(range) >= RANGES.indexOf(requiredRange));
   const precision = stacks(source, 'precision');
   const rules = stanceRulesFor(ctx);
   const sweep = profile.maneuver === 'sweep' ? rules.sweepPrecisionBase + rules.sweepPerAdditionalTarget * Math.max(0, options.additionalTargets ?? carrier?.additionalTargets ?? 0) : 0;

@@ -30,16 +30,25 @@ test('exact d20 preview reads no RNG; natural twenty caps stacked Evasion at 95%
   assert.equal(f.target.statuses.evade.stacks, 100);
   assert.equal(f.draws(), 1);
 });
-test('range miss and explicit Target spell bypass spend no die or Evasion', () => {
-  const f = fixture(1); f.target.combatStance = { range: 'ranged' }; f.target.statuses.evade = { stacks: 2 };
-  assert.equal(resolveAttackHit(f.ctx, f.source, f.target, f.carrier).missReason, 'range');
-  assert.equal(f.target.statuses.evade.stacks, 2); assert.equal(f.draws(), 0);
-  f.carrier.combatProfile.camp = 'spell'; f.carrier.tags = ['target']; f.target.combatStance.maneuver = 'evade';
-  assert.equal(resolveAttackHit(f.ctx, f.source, f.target, f.carrier).hit, true);
-  assert.equal(f.target.statuses.evade.stacks, 2); assert.equal(f.draws(), 0);
-  assert.equal(f.events.at(-1).label, 'Hit');
-  f.carrier.tags = ['targeting:single'];
-  assert.equal(attackHitPreview(f.ctx, f.source, f.target, f.carrier).bypass, false);
+test('Target bypasses Evasion only in range and spends no die or Evasion', () => {
+  for (const die of [1, 20]) {
+    const f = fixture(die); f.target.combatStance = { range: 'ranged' }; f.target.statuses.evade = { stacks: 2 };
+    assert.equal(resolveAttackHit(f.ctx, f.source, f.target, f.carrier).missReason, 'range');
+    assert.equal(f.target.statuses.evade.stacks, 2); assert.equal(f.draws(), 0);
+    f.carrier.combatProfile.camp = 'spell'; f.carrier.tags = ['target']; f.target.combatStance.maneuver = 'evade';
+    assert.equal(attackHitPreview(f.ctx, f.source, f.target, f.carrier).hitChance, 0);
+    const missed = resolveAttackHit(f.ctx, f.source, f.target, f.carrier);
+    assert.equal(missed.hit, false); assert.equal(missed.missReason, 'range');
+    assert.equal(f.events.at(-1).label, 'Missed');
+    assert.equal(f.target.statuses.evade.stacks, 2); assert.equal(f.draws(), 0);
+    f.carrier.combatProfile.range = 'ranged';
+    assert.equal(attackHitPreview(f.ctx, f.source, f.target, f.carrier).hitChance, 100);
+    assert.equal(resolveAttackHit(f.ctx, f.source, f.target, f.carrier).hit, true);
+    assert.equal(f.target.statuses.evade.stacks, 2); assert.equal(f.draws(), 0);
+    assert.equal(f.events.at(-1).label, 'Hit');
+    f.carrier.tags = ['targeting:single'];
+    assert.equal(attackHitPreview(f.ctx, f.source, f.target, f.carrier).bypass, false);
+  }
 });
 test('eligible miss consumes one Evasion and publishes outcome before damage', () => {
   const f = fixture(1); f.target.statuses.evade = { stacks: 2 };
@@ -126,7 +135,7 @@ test('Target is authored and compiled for Hex only, without school inference', (
   const hex = registries.cards.get('hex');
   assert.ok(hex.tags.includes('target'));
   const f = fixture(1); f.target.statuses.evade = { stacks: 10 };
-  f.target.combatStance = { maneuver: 'evade', range: 'ranged' };
+  f.target.combatStance = { maneuver: 'evade', range: 'reach' };
   const carrier = { ...hex, cardId: 'hex', combatProfile: { camp: 'spell', maneuver: 'casting', range: 'reach' } };
   assert.equal(resolveAttackHit(f.ctx, f.source, f.target, carrier).hit, true);
   assert.equal(f.target.statuses.evade.stacks, 10);

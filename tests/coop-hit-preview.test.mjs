@@ -11,10 +11,12 @@ import { primeAccuracyRolls } from './accuracyFixture.mjs';
 const registries=createRegistries(contentBundle);
 function comparison(level) {
   const combat=createCoopCombat({registries,rng:createRng(811),combatExpansionVersion:2,
-    players:[{id:'seatA',classId:'reaver',level,maxHp:100,hp:100,maxMana:20,mana:20,maxStamina:50,stamina:50,energyMax:10,drawPerTurn:1,
+    players:[{id:'seatA',classId:'reaver',combatExpansionVersion:2,level,maxHp:100,hp:100,maxMana:20,mana:20,maxStamina:50,stamina:50,energyMax:10,drawPerTurn:1,
       attributes:{strength:1,dexterity:1,constitution:1,intelligence:1,wisdom:1},
       deck:[{cardId:'strike',instanceId:'one'}]}],enemyIds:['wanderingSoldier']});
   const seat=combat.players.get('seatA'),enemy=combat.enemies[0];
+  assert.equal(seat.entity.combatExpansionVersion,2,'the actual acting seat uses expanded combat');
+  enemy.combatStance={maneuver:'attack',camp:'physical',range:'melee'};
   const instance=seat.piles.hand[0];
   const card=previewCoopCard(combat,seat.id,instance.instanceId,enemy.id).resolvedDefinition;
   // Hold the same stance so this isolates the level contribution from entry grants.
@@ -22,6 +24,7 @@ function comparison(level) {
   const actor=JSON.parse(JSON.stringify({...seat.entity,id:seat.id,level:seat.level,attributes:seat.attributes}));
   const scene=JSON.parse(JSON.stringify({combatExpansionVersion:2,enemies:combat.enemies,combatExpansionRules:combat.combatExpansionRules}));
   const predicted=coopCardHitPreview(scene,registries,actor,scene.enemies[0],card);
+  assert.equal(predicted.inRange,true,'the level comparison is an in-range attack');
   primeAccuracyRolls(combat,{die:20,count:2});
   const before=combat.eventLog.length;
   playCard(combat,seat.id,instance.instanceId,enemy.id);

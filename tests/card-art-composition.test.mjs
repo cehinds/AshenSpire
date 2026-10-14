@@ -136,6 +136,9 @@ test('rebalanced decay spells keep their distinct Blight identities with wisp ar
   assert.ok(flame.cardTags.includes('ritual'));
   assert.equal(simpleCardArt(flame, { registries }).element, 'fire');
   const utility = applyCombatExpansionCard(registries.cards.get('blightBloom'));
-  assert.equal(simpleCardArt(utility, { registries }), null);
+  const utilityArt = simpleCardArt(utility, { registries });
+  assert.equal(utilityArt.category, 'magical');
+  assert.equal(utilityArt.maneuver, 'attack');
+  assert.equal(utilityArt.element, 'necrotic');
   assert.deepEqual(cardArtStatuses(utility, utility.cardTags, registries).map(row => [row.id, row.motif]), [['crimsonBlight', 'wisps'], ['necroticBlight', 'wisps']]);
 });

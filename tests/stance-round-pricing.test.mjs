@@ -9,12 +9,22 @@ import { dispatch, cardPlayCosts } from '../src/engine/combat.js';
 import { COMBAT_ROUNDS_KEY } from '../src/model/combatRounds.js';
 
 function fixture(cards = ['stomp', 'stomp']) {
-  const registries = createRegistries({ ...contentBundle, cards: contentBundle.cards.map(card =>
-    ['stomp', 'strike'].includes(card.id) ? { ...card, costRule: 'fixed', cost: 2, manaCost: 0 } : card) });
+  // Use explicit fixed-price cards: shipped Stomp's progression grade owns its price.
+  const identities = { stomp: 'queueStompFixture', strike: 'queueAttackFixture' };
+  const fixtureCards = Object.entries(identities).map(([source, id]) => ({
+    id, name: source === 'stomp' ? '2-SP Stomp fixture' : '2-SP Attack fixture',
+    type: 'attack', class: 'colorless', rarity: 'common', cost: 2, manaCost: 0, costRule: 'fixed',
+    keywords: [], effects: [{ op: 'damage', target: 'enemy', amount: 1 }], textTemplate: 'Deal {damage} damage.',
+  }));
+  const tagging = Object.entries(identities).flatMap(([source, objectId]) =>
+    ['classification.attack', 'camp:physical', source === 'stomp' ? 'maneuver:smash' : 'maneuver:attack',
+      'range:melee', 'targeting:single'].map(tagId => ({ family: 'card', scope: '', objectId, tagId })));
+  const registries = createRegistries({ ...contentBundle,
+    cards: [...contentBundle.cards, ...fixtureCards], tagging: [...contentBundle.tagging, ...tagging] });
   const run = createRunState({ seed: 701, classId: 'reaver', registries, combatExpansionVersion: 2,
     profileMeta: { settings: { [COMBAT_ROUNDS_KEY]: true } } });
   const combat = createRunCombat({ registries, rng: createRng(701), run, enemyIds: ['wanderingSoldier'], settings: {} });
-  combat.piles.hand = cards.map((cardId, index) => ({ cardId, instanceId: `card${index}`, abilityRank: 0 }));
+  combat.piles.hand = cards.map((name, index) => ({ cardId: identities[name], instanceId: `card${index}` }));
   combat.player.energy = 6;
   combat.player.mana = 20;
   delete combat.player.combatStance;
