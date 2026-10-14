@@ -85,8 +85,8 @@ function buildLines(def, preview, registries) {
   // A counter is prepared, not dealt: name its mode ("Prepare Melee Counter: return …").
   // Coverage is named by the mode whose default it equals; any other coverage keeps the authored text.
   const counterMode = counter ? counterModeOf(def, p) : null;
-  if (counter && !counterMode) return null;
-  const damageVerb = counter ? `Prepare ${{ melee: 'Melee', ranged: 'Ranged', spell: 'Spell' }[counterMode]} Counter: return` : 'Inflict';
+  if (counter && !counterMode && def.defenseRulesVersion !== 2) return null;
+  const damageVerb = counter ? def.defenseRulesVersion === 2 ? 'Return' : `Prepare ${{ melee: 'Melee', ranged: 'Ranged', spell: 'Spell' }[counterMode]} Counter: return` : 'Inflict';
 
   // The static number an effect's field authored: its token's base, else the literal.
   const baseOf = (effect, index, field) => {
@@ -192,7 +192,8 @@ function buildLines(def, preview, registries) {
         return frag('status', `${esc(title(effect.status))} ${num(n, base)}${area}`);
       }
       case 'applyStatus': {
-        if (STATUS_NEVER_PHRASED.includes(effect.status)) fail();
+        if (STATUS_NEVER_PHRASED.includes(effect.status)
+          && !(counter && def.defenseRulesVersion === 2 && effect.status === 'grounded')) fail();
         const stacks = value(effect, index, 'stacks'), stacksBase = baseOf(effect, index, 'stacks');
         const name = `${esc(title(effect.status))} ${num(stacks, stacksBase)}`, duration = durationOf(effect);
         const out = [];
@@ -241,7 +242,7 @@ function buildLines(def, preview, registries) {
     const cost = of('cost'), damage = of('damage'), status = of('status'), remove = of('remove'), consume = of('consume'), gain = of('gain'), bonus = [...of('bonus'), ...extraBonus];
     if (cost.length) out.push({ kind: 'cost', text: cost.join(', ') });
     if (damage.length) out.push({ kind: 'damage', text: `${damageVerb} ${damage.join(', ')}` });
-    else if (counter && fragments === unconditional) out.push({ kind: 'damage', text: damageVerb.replace(/: return$/, '') });
+    else if (counter && fragments === unconditional && !def.evade) out.push({ kind: 'damage', text: def.defenseRulesVersion === 2 ? 'Prepare Counter' : damageVerb.replace(/: return$/, '') });
     if (status.length) out.push({ kind: 'status', text: `Inflict ${status.join(', ')}` });
     if (remove.length) out.push({ kind: 'status', text: `Remove ${remove.join(', ')}` });
     if (consume.length) out.push({ kind: 'consume', text: `Remove ${consume.join(', ')}` });

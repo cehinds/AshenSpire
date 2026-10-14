@@ -379,6 +379,13 @@ test('terminal reaction victory and defeat retire continuation before durable co
     const combat = coop ? createCoopCombat({ registries, rng: createRng(701), players: [player], enemyIds: ['wanderingSoldier'], reactionRulesVersion: 1 })
       : createCombat({ registries, rng: createRng(701), player, enemyIds: ['wanderingSoldier'], combatExpansionVersion: 2, reactionRulesVersion: 1 });
     combat.foundation = createFoundation(combatRules);
+    // This case exercises terminal continuation and durable rollback; Counter Accuracy
+    // has its own tests. Keep the real stream draw/counter but guarantee a landed return.
+    const seededInt = combat.rng.int.bind(combat.rng);
+    combat.rng.int = (stream, min, max) => {
+      const rolled = seededInt(stream, min, max);
+      return stream === 'combatAvoidance' && min === 1 && max === 20 ? 20 : rolled;
+    };
     const owner = coop ? combat.players.get('a').entity : combat.player;
     owner.block = result === 'victory' ? 10000 : 0;
     if (result === 'defeat') owner.hp = 1;

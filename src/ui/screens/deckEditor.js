@@ -31,7 +31,7 @@ import { markUiComponent, UI_COMPONENTS as UI } from '../components/uiComponents
 import { actionLabel, focusElement, matchAction, setInputGate, setTabRing } from '../input.js';
 import { DECK_PANES, deckEditorModel, deckEditorView, deckVariantKey, nextFilterPreset, openDeckEdit } from '../models/DeckEditorModel.js';
 import { t, tFull } from '../strings.js';
-import { renderCard, cardPlainText } from '../components/card.js';
+import { renderCard, cardPlainText, cardDetailHtml } from '../components/card.js';
 import { resolveCard } from '../../model/registries.js';
 import { combatCardRange, combatProfileFor } from '../../model/combatCardProfile.js';
 import { cardCategorySigilHtml } from '../components/cardTagSymbols.js';
@@ -300,6 +300,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     const reasonText = [reasons.length ? reasons.join(' ') : base, stanceName(row)].filter(Boolean).join(' · ');
     animationPreview = deckCardAnimationPreview({ registries, run, ref: row.ref, paused: animationPaused,
       onPaused: paused => { animationPaused = paused; } });
+    const details = el('div', { class: 'deck-editor-rules' });
+    details.innerHTML = cardDetailHtml(registries, row.ref, { rules: run, definition: combatDef(row) });
     section.append(
       el('div', { class: 'deck-editor-reading' }, [face,
         el('label', { class: 'deck-editor-art-toggle' }, [
@@ -308,6 +310,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
           el('small', { text: t('deckEditor.art.basicOnly') }),
         ]),
         animationPreview.root,
+        details,
         ...keywordExplanations(registries, rulesFor(row)).map(entry => el('div', { class: 'deck-editor-keyword' }, [
           el('strong', { text: entry.name }), el('p', { text: entry.explanation }),
         ])),
@@ -367,7 +370,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   // The card's stance (owner, 2026-10-11): its combat maneuver when it has one
   // of the six; otherwise what the card is: Spell, Power, Consumable or Skill.
   // Every card names one.
-  const MANEUVER_STANCES = ['attack', 'defend', 'counter', 'smash', 'sweep', 'ranged'];
+  const MANEUVER_STANCES = ['attack', 'defense', 'evade', 'counter', 'smash', 'sweep'];
   // The definition combat resolves: under expanded combat (v2) a run's spell
   // reach and targeting come from applyCombatExpansionCard, so the editor shows them.
   // One draw resolves each row's definition once: the cache is keyed by the

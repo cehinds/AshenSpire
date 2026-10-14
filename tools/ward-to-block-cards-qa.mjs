@@ -18,8 +18,17 @@ const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, de
 page.setDefaultTimeout(15000);
 page.setDefaultNavigationTimeout(60000);
 const errors = [];
+const ignoredExpectedFailures = [];
 page.on('pageerror', error => errors.push(error.message));
-page.on('requestfailed', request => errors.push(`request failed: ${request.url()} ${request.failure()?.errorText || ''}`));
+page.on('requestfailed', request => {
+  const reason = request.failure()?.errorText || '';
+  const url = new URL(request.url());
+  if (reason === 'net::ERR_ABORTED' && url.pathname === '/music/shop/shop.mp3') {
+    ignoredExpectedFailures.push({ url: request.url(), reason, note: 'Shop audio is aborted when the capture navigates away.' });
+  } else {
+    errors.push(`request failed: ${request.url()} ${reason}`);
+  }
+});
 const report = {
   head: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
   generatedAt: new Date().toISOString(),
@@ -28,6 +37,7 @@ const report = {
   views: {},
   failures: [],
   browserErrors: errors,
+  ignoredExpectedFailures,
 };
 const wait = ms => page.waitForTimeout(ms);
 const textOf = async selector => page.locator(selector).first().innerText().catch(() => '');
@@ -37,6 +47,13 @@ async function capture(name, stage, data) {
   await page.screenshot({ path: resolve(OUT, png), fullPage: false });
   await page.screenshot({ path: resolve(OUT, jpg), type: 'jpeg', quality: 80, fullPage: false });
   return { png, jpg, visibleText: await page.locator('body').innerText(), ...data };
+}
+async function captureDetails(name, selector = '.card-inspection-modal .ti-meta') {
+  const detail = page.locator(selector).filter({ visible: true }).first();
+  await detail.waitFor({ state: 'visible', timeout: 10000 });
+  await detail.evaluate(element => element.scrollIntoView({ block: 'start', behavior: 'instant' }));
+  await wait(200);
+  return capture(name, 'details', { inspectionText: await textOf('.card-inspection-details, .deck-editor-rules') });
 }
 async function inspector(cardSelector = '.card, .equipment-poker-card, .reward-choice-face', strategy = 'pointer') {
   const card = page.locator(cardSelector).filter({ visible: true }).first();
@@ -70,7 +87,8 @@ async function standardView(name, route, landmark, options = {}) {
   const before = await capture(name, 'compact', { compactText: await textOf(options.compactSelector || '.card, .equipment-poker-card, .reward-choice-face') });
   const inspection = await inspector(options.cardSelector, options.strategy);
   const after = await capture(name, 'inspection', inspection);
-  report.views[name] = { before, after };
+  const details = await captureDetails(name);
+  report.views[name] = { before, after, details };
 }
 try {
   await attempt('character-creation', async () => {
@@ -110,21 +128,20 @@ try {
     await page.locator('.deck-editor-veil').waitFor({ state: 'visible', timeout: 20000 });
     await wait(350);
     const deckCard = page.locator('.deck-editor-main:visible').filter({ hasText: 'Frost Counter' }).first();
-    const deckCompact = await capture('deck-editing', 'compact', { compactText: await deckCard.innerText().catch(() => '') });
     await deckCard.waitFor({ state: 'visible', timeout: 20000 });
     await deckCard.click();
+    const deckCompact = await capture('deck-editing', 'compact', { compactText: await deckCard.innerText().catch(() => '') });
     const inspectButton = page.locator('.deck-editor-inline-inspect:visible').first();
     await inspectButton.waitFor({ state: 'visible', timeout: 10000 });
     await inspectButton.click();
     const deckDetail = page.locator('.deck-editor-inspector:visible').first();
     await deckDetail.waitFor({ state: 'visible', timeout: 10000 });
-    report.views['deck-editing'] = {
-      before: deckCompact,
-      after: await capture('deck-editing', 'inspection', {
-        compactText: await deckCard.innerText().catch(() => ''),
-        inspectionText: await deckDetail.innerText(),
-      }),
-    };
+    const deckAfter = await capture('deck-editing', 'inspection', {
+      compactText: await deckCard.innerText().catch(() => ''),
+      inspectionText: await deckDetail.innerText(),
+    });
+    const deckDetails = await captureDetails('deck-editing', '.deck-editor-rules:visible, .deck-editor-rules .combat-rule-hint:visible');
+    report.views['deck-editing'] = { before: deckCompact, after: deckAfter, details: deckDetails };
 
   });
 
@@ -179,6 +196,9 @@ try {
         });
         remove = page.locator('#remove-opt');
       }
+      const servicesTab = page.locator('.shop-railitem[data-shop-category="services"]');
+      await servicesTab.waitFor({ state: 'visible', timeout: 10000 });
+      await servicesTab.click();
       await remove.waitFor({ state: 'visible', timeout: 10000 });
       await remove.click();
       await page.locator('#remove-grid .card').filter({ hasText: 'Frost Counter' }).first().waitFor({ state: 'visible', timeout: 10000 });
@@ -229,10 +249,9 @@ try {
     await page.locator('.reward-row .reward-choice-face.card').first().waitFor({ state: 'visible', timeout: 15000 });
     const levelBefore = await capture('level-options', 'compact', { compactText: await textOf('.reward-row .reward-choice-face.card') });
     const levelInspection = await inspector('.reward-row .reward-choice-face.card');
-    report.views['level-options'] = {
-      before: levelBefore,
-      after: await capture('level-options', 'inspection', levelInspection),
-    };
+    const levelAfter = await capture('level-options', 'inspection', levelInspection);
+    const levelDetails = await captureDetails('level-options');
+    report.views['level-options'] = { before: levelBefore, after: levelAfter, details: levelDetails };
 
   });
 
@@ -241,6 +260,8 @@ try {
   });
 
   report.browserErrors = errors;
+  report.ignoredExpectedFailures = ignoredExpectedFailures;
+  report.ignoredExpectedFailures = ignoredExpectedFailures;
   writeFileSync(resolve(OUT, 'report.json'), JSON.stringify(report, null, 2) + '\n');
   assert.equal(report.failures.length, 0, report.failures.map(f => f.name + ': ' + f.message).join('\n'));
   assert.equal(errors.length, 0, errors.join('\n'));

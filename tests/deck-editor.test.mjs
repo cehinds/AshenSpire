@@ -934,14 +934,14 @@ test('DOM: a known attack card shows its stance type on the row and in the inspe
       || [...editor.root.querySelectorAll('.deck-editor-row')].find(node => node.querySelector('.deck-editor-name')?.textContent === strike.name);
     const stance = row.querySelector('.deck-editor-stance');
     assert.ok(stance, 'the row carries a stance label');
-    assert.equal(stance.textContent, 'Attack');
+    assert.equal(stance.textContent, 'Stance · Attack');
     assert.equal(stance.dataset.stance, 'attack');
     row.querySelector('.deck-editor-main').click();
     row.querySelector('.deck-editor-inline-inspect').click();
     const reason = editor.root.querySelector('.deck-editor-inspector .deck-editor-selected-reason');
     // A refusal shown on the reason line (here the Strike is already in the
     // deck) leads the line, and the stance still follows it.
-    assert.equal(reason?.textContent, 'Every Shield Strike you own is already in the deck. · Attack', 'the refusal leads and the stance follows');
+    assert.equal(reason?.textContent, 'Every Shield Strike you own is already in the deck. · Stance · Attack', 'the refusal leads and the stance follows');
     assert.equal(editor.root.querySelector('.deck-editor-inspector .deck-editor-reading .deck-editor-stance'), null, 'no stance label over the card face');
     // A library tile with no refusal names the stance on the reason line.
     const clean = deckEditorModel({ registries: REG, run, settings: {} }).collection.find(tile => tile.addable && !tile.refusal && tile.equipmentEligible !== false);
@@ -1309,7 +1309,7 @@ test('DOM: an ordered deck on a phone shows one Draw order chip, and it toggles 
 
 test('DOM: every row names a stance and a rank; rank 0 reads Cantrip for magical cards and Basic for the rest', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
-  const stances = new Set(['attack', 'defend', 'counter', 'smash', 'sweep', 'ranged', 'spell', 'skill', 'power', 'consumable']);
+  const stances = new Set(['attack', 'defense', 'evade', 'counter', 'smash', 'sweep', 'skill', 'power', 'consumable']);
   for (const classId of ['rogue', 'starseer', 'reaver']) {
     withDom(() => {
       const run = createRunState({ seed: 0x5eed, classId, registries: REG, combatExpansionVersion: 1 });
@@ -1345,9 +1345,9 @@ test('DOM: range follows the expanded combat delivery; the mark follows the camp
     // A v2 spell takes its delivery as range: a projectile reads Ranged, a melee blade Melee.
     assert.deepEqual(read('cometFragment'), ['ranged', 'magical']);
     assert.deepEqual(read('starbladePhalanx'), ['melee', 'magical']);
-    // A ranged maneuver's stance already reads Ranged, so it shows no separate range.
-    assert.deepEqual(read('ricochet'), [undefined, 'physical'], 'a ranged maneuver shows no separate range');
-    assert.equal(row('ricochet').querySelector('.deck-editor-stance')?.dataset.stance, 'ranged');
+    // Canonical Attack identity leaves delivery range to the separate range chip.
+    assert.deepEqual(read('ricochet'), ['ranged', 'physical'], 'a ranged attack retains its range chip');
+    assert.equal(row('ricochet').querySelector('.deck-editor-stance')?.dataset.stance, 'attack');
     // Physical marks carry the approved shield; magical marks carry the Spell sparkle.
     const mark = (cardId) => row(cardId).querySelector('.deck-editor-camp .combat-sigil')?.dataset.sigil;
     assert.equal(mark('ricochet'), 'physical');

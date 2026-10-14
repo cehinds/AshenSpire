@@ -106,7 +106,6 @@ const dealsDamage = (def) => (def.effects || []).some(effect => effect.op === 'd
 /** The range a combat definition shows: 'melee' | 'reach' | 'ranged', or null when it shows none. */
 export function combatCardRange(def = {}) {
   const profile = combatProfileFor(def);
-  if (profile.maneuver === 'ranged') return null;
   const attacking = ATTACKING.has(profile.maneuver) || (profile.camp === 'spell' && def.type === 'attack');
   if (!attacking || !dealsDamage(def)) return null;
   const range = profile.range || (profile.delivery === 'projectile' || profile.maneuver === 'ranged' ? 'reach' : 'melee');

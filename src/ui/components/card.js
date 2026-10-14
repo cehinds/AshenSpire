@@ -170,7 +170,8 @@ export function renderCard(registries, ref, opts = {}) {
   const rawModel = playingCardModel(registries, ref, { preview: opts.preview || null, definition: def });
   const combatProfile = combatProfileFor(def);
   const combatTags = combatProfileTags(combatProfile, registries);
-  const expanded = opts.preview?.combatExpansionVersion === 2 || def.minCombatExpansionVersion === 2;
+  const expanded = opts.preview?.combatExpansionVersion === 2 || opts.rules?.combatExpansionVersion === 2
+    || def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2;
   const model = { ...rawModel, ...(expanded ? { faceType: combatCardType(def) } : {}),
     tags: [...rawModel.tags, ...combatTags.filter(tag => !rawModel.tags.some(existing => existing.id === tag.id))] };
   model.sideTags = cardSideTags(model, def, registries, opts.preview || null);
@@ -666,7 +667,7 @@ function cardTooltip(registries, def, tokens, liveCosts = null, damageSequences 
       html += `<div class="combat-rule-hint"><strong>Counter coverage:</strong> ${esc(coverage)}${c.schools ? ` · ${esc(c.schools.join(' + '))}` : ''}. Return once after all covered damage and status pressure is resisted. Evade and Invulnerability give no return. The prepared stance remains until another maneuver replaces it.</div>`;
     } else html += '<div class="combat-rule-hint">Prepare counter until next player turn. Listed damage and Poise damage become retaliation after full Guard or Ward absorption; card support effects resolve when played.</div>';
   }
-  if (def.defenseRange) html += `<div class="combat-rule-hint"><strong>Defense range:</strong> ${esc(def.defenseRange[0].toUpperCase() + def.defenseRange.slice(1))} · Covers ${esc(({ melee: 'Melee', reach: 'Melee + Reach', ranged: 'Melee + Reach + Ranged' })[def.defenseRange] || def.defenseRange)}.</div>`;
+  if (def.defenseRange) html += `<div class="combat-rule-hint"><strong>Defense range:</strong> ${esc(def.defenseRange[0].toUpperCase() + def.defenseRange.slice(1))} · Covers ${esc(['melee', 'reach', 'ranged'].slice(0, ['melee', 'reach', 'ranged'].indexOf(def.defenseRange) + 1).map(range => t('deckEditor.range.' + range)).join(' + '))}.</div>`;
   if (identity.cardCategory === 'stance') {
     html += `<div class="combat-rule-hint"><strong>Stance group:</strong> ${esc(identity.stanceGroups.map(group => group === 'offense' ? 'Offense' : 'Defensive').join(' + '))}.</div>`;
     if (combatProfile.maneuver === 'counter' && def.defenseRulesVersion === 2)

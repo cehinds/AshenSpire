@@ -44,6 +44,10 @@ jobs:
           tests/playing-card-model.test.mjs tests/ability-card-identity.test.mjs
           tests/combat-card-presentation.test.mjs tests/combat-sigils.test.mjs
           tests/combat-expansion-tactics.test.mjs tests/card-surface-consistency.test.mjs
+          tests/deck-editor.test.mjs tests/card-art-rendering.test.mjs tests/card-face-text.test.mjs
+          tests/combat-expansion-martial.test.mjs tests/combat-impact-flux.test.mjs
+          tests/enemy-knowledge-integration.test.mjs tests/combat-reactions.test.mjs
+          tests/combat-rounds-live.test.mjs
           tests/card-tag-explanation.test.mjs
       - name: Export exact compact and inspection card text
         id: text

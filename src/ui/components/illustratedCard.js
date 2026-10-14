@@ -37,7 +37,7 @@ const actionBaseFrame = `<svg class="card-base-action-frame" viewBox="0 0 360 54
 export function illustratedCardHtml(model,{rules,painting,equipmentArtwork=false,artworkKind='illustrated',artworkPosition=null,artworkComposition=null,glyph}){
   const doc=CARD_COMPONENTS.cards[model.id]||CARD_COMPONENTS.template;
   const clip=doc.clipPolygon?'polygon('+doc.clipPolygon.map(([x,y])=>`${x*100}% ${y*100}%`).join(',')+')':polygon;
-  const values={name:esc(model.name),rules,tags:esc([model.type.label, model.type.subtype, model.type.abilityLabel, model.type.weaponArt].filter(Boolean).join(' · ')),action:esc(model.costs.variable?'X':model.costs.action),mana:esc(model.costs.mana??0),stamina:esc(model.costs.variable?'X':model.costs.stamina??0)};
+  const values={name:esc(model.name),rules,tags:esc([model.type?.label, model.type?.subtype, model.type?.abilityLabel, model.type?.weaponArt].filter(Boolean).join(' · ')),action:esc(model.costs.variable?'X':model.costs.action),mana:esc(model.costs.mana??0),stamina:esc(model.costs.variable?'X':model.costs.stamina??0)};
   const costLayout=Number(model.costs.mana)>0?'staminaMana':'staminaOnly';
   const costLayers=doc.costLayouts?.[costLayout]?.layers||{};
   const portraitArt=artworkComposition?.fit==='cover'||painting?.startsWith('assets/cards/extended/');
