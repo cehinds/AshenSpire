@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-14",
     "summary": "Stances, Evade and hit previews share their combat rules",
     "detail": "Same-stance cards use the configured SP discount, stance ratings stay active without stacking, and Defense restores Poise and Ward with protection overflow. Smash, Counter and Sweep apply their matchup and range rules. Evade stacks, explicit Target bypasses and exact hit previews use the same hit calculation, while the combat HUD and hit labels show the result.",
-    "build": "0.7.1.1525",
+    "build": "0.7.1.1527",
     "pullRequest": 1984,
     "url": "https://github.com/cehinds/AshenSpire/pull/1984"
+  },
+  {
+    "id": "pr-1985",
+    "date": "2026-10-14",
+    "group": "2026-10-14",
+    "summary": "Starseer spells resolve against Gilded Knight again",
+    "detail": "Targeting Gilded Knight with Staff Magic Strike or Star Spark no longer rejects the play in standalone HTML builds. Its guard reaction resolves, spell costs and damage commit, and the next spell remains usable. The shared reaction pause check now initializes without a circular import.",
+    "build": "0.7.1.1527",
+    "pullRequest": 1985,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1985"
   },
   {
     "id": "pr-1982",
