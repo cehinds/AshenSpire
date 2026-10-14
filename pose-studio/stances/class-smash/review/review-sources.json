@@ -1,0 +1,65 @@
+{
+  "purpose": "Review-only composite; source frame files are not modified.",
+  "alignment": "Uniform whole-frame scale maps a held-pose anatomical estimate to 494 px in the source-space review canvas; each provenance groundAnchor maps to the same baseline. Airborne/VFX are preserved with no frame cropping. Estimates exclude raised weapons and are for comparative display only.",
+  "reviewTimingMsPerSlot": 350,
+  "nominalTimingMsPerSlot": 195,
+  "classes": [
+    {
+      "class": "Rogue",
+      "sourceProvenance": "class-smash-rogue/pose-studio/stances/class-smash/rogue/provenance.json",
+      "groundAnchor": [
+        512,
+        930
+      ],
+      "documentedBodyHeight": 700,
+      "reviewHeldPoseAnatomicalEstimate": 515,
+      "sourceFrameSha256": {
+        "01-held.png": "8384178d191cd7d3e3601742ee618860537b22a7303d6c24b58f25b41ffbc2b6",
+        "02-takeoff.png": "36a5a7075399fca0583c4c6fca2c591b75cf13dea224461a67bc4581398896d4",
+        "03-airborne.png": "67bbce96c89beaa819b84e6b2957395100d3902a5d1d7f7869ad9849b98fea0e",
+        "04-impact.png": "7bd3dae8afdf4b27d636612af480ebfd66b0e150a31d866e7158a9ae6e5d0cb9",
+        "05-held.png": "8384178d191cd7d3e3601742ee618860537b22a7303d6c24b58f25b41ffbc2b6"
+      },
+      "reviewScaleFactor": 0.959223,
+      "reviewDisplayBodyHeight": 494
+    },
+    {
+      "class": "Starseer",
+      "sourceProvenance": "class-smash-starseer/pose-studio/stances/class-smash/starseer/provenance.json",
+      "groundAnchor": [
+        512,
+        880
+      ],
+      "documentedBodyHeight": 466,
+      "reviewHeldPoseAnatomicalEstimate": 508,
+      "sourceFrameSha256": {
+        "01-held.png": "bbdadcbcaf9575ed6481c455780b358724c66c76d5a9188c084362a30656b70f",
+        "02-takeoff.png": "803b644f9cef9406c4b0e8b2bc59cab57d6433ee760fc6e5e289840442442fe4",
+        "03-airborne.png": "62824f814c0cd16a0907f9f06e1b290d6ad61f6b40e30b5f13c8ced64735df70",
+        "04-impact.png": "d278ef011c19344dc8a96923df8b618965b2b46c9c940849d5a8e1c5443225df",
+        "05-held.png": "bbdadcbcaf9575ed6481c455780b358724c66c76d5a9188c084362a30656b70f"
+      },
+      "reviewScaleFactor": 0.972441,
+      "reviewDisplayBodyHeight": 494
+    },
+    {
+      "class": "Herald",
+      "sourceProvenance": "class-smash-herald/pose-studio/stances/class-smash/herald/provenance.json",
+      "groundAnchor": [
+        512,
+        900
+      ],
+      "documentedBodyHeight": 494,
+      "reviewHeldPoseAnatomicalEstimate": 480,
+      "sourceFrameSha256": {
+        "01-held.png": "1ec50550ef3547a0a3127e26003fac86c60e9ce1d73b846d319824fd88f36b13",
+        "02-takeoff.png": "9b29e4124f686a91538c049646249e72c170270e71884819c67184d267feb70e",
+        "03-airborne.png": "6ff7b03fc21973e844abe0424560df1ac6d6a6cfda8b56a967fb5d76c0a36d57",
+        "04-impact.png": "caad10290e57eb3220df47b723972a8d741aabea09dd6a5c1fada5d7c5a53b41",
+        "05-held.png": "1ec50550ef3547a0a3127e26003fac86c60e9ce1d73b846d319824fd88f36b13"
+      },
+      "reviewScaleFactor": 1.029167,
+      "reviewDisplayBodyHeight": 494
+    }
+  ]
+}

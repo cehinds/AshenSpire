@@ -1,0 +1,53 @@
+# Starter-class jump and ground-slam Smash
+
+Director-approved Rogue, Starseer and Herald paintings extend the selected
+five-slot Smash motion: exact held stance → takeoff → airborne load → ground
+impact → the same exact held stance. Each complete sequence was generated as
+one strip, with recorded director corrections and a shared normalization scale.
+
+| Class | Authored runtime loadout | Approved source | Production record |
+| --- | --- | --- | --- |
+| Rogue | Default armour, right dagger and left buckler | [Source and prompt history](rogue/provenance.json) | [Full/Lite registration](rogue/production.json) |
+| Starseer | Default armour, right ash staff and empty left hand | [Source and prompt history](starseer/provenance.json) | [Full/Lite registration](starseer/production.json) |
+| Herald | Default armour, right bone sceptre and empty left hand | [Source and prompt history](herald/provenance.json) | [Full/Lite registration](herald/production.json) |
+
+The authored orientation is not mirrored onto different equipment. Other
+loadouts retain their existing Smash. Reaver retains selected SM03, its SW09
+Sweep and separate attack/counter/reaction phases. Classic appearance, other
+class actions and co-op remain outside this change; co-op continuation is paused.
+
+## Review artwork
+
+![Three approved five-slot Smash sequences](review/combined-review.gif)
+
+[Interactive review](review/index.html) · [All fifteen slots](review/contact-sheet.png)
+· [Review source hashes and alignment](review/review-sources.json).
+Review exposures are **350 ms per slot**, hard cuts without synthesized poses.
+Gameplay uses the existing Normal **195 ms** action beat, with actual effect
+contact at **117 ms**, no authored travel and exact originating hold restoration.
+Reduced motion and Instant retain a bounded static origin.
+
+## Reproducible production
+
+`python tools/class-smash-export.py --check` verifies the production derivatives
+and generated `src/content/classSmashAnimations.js` registry. The four distinct
+paintings per class have Full 1024-square and Lite 512-square rasters; their
+logical draw dimensions are recorded separately. Each class uses a single
+measured anatomical scale and fixed world anchor, aligned to stage [384,464].
+Airborne frames are never individually resized or foot-aligned. Original PNG
+bookends are byte-identical, and the exporter rejects clipped alpha reach,
+malformed dimensions or source art without explicit director acceptance.
+
+The production catalog is included in both portable inline builds and web asset
+packs. The solo screen opts in from actual current class, armour and hand IDs;
+no changes to mechanics, damage or effects are needed. The actual contact cue
+acknowledges the current action before recovery, even when a cold callback is
+late, and stale acknowledgements cannot settle another action.
+
+## Verification
+
+Focused source, production-hash and existing Reaver regression checks pass.
+Compiled desktop/phone gameplay validation and captures are in progress; this
+source record does not claim that an untested build has passed. The feature is
+being delivered on `Feature/OtherClassSmash`; the current continuation scope
+keeps Dev/test merges paused.

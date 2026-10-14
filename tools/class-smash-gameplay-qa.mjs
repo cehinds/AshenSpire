@@ -19,7 +19,7 @@ const eq=(value,wanted,label)=>{assert.deepEqual(value,wanted,label);checks++;};
 try{
  for(const [actor,right,left]of [['rogue','dagger','buckler'],['starseer','ashStaff',''],['herald','boneSceptre','']]){
   ok(classSmashAnimations.classes[actor],actor+' production registry present');
-  for(const mode of ['desktop-cold','phone','reduced','instant']){
+  for(const mode of ['desktop','desktop-cold','phone','reduced','instant']){
    const phone=mode==='phone',staticMode=['reduced','instant'].includes(mode);
    const context=await browser.newContext({viewport:phone?{width:390,height:844}:{width:1440,height:1000},isMobile:phone,hasTouch:phone,reducedMotion:mode==='reduced'?'reduce':'no-preference'});
    const page=await context.newPage();page.on('pageerror',e=>errors.push({actor,mode,message:e.message}));
@@ -56,7 +56,8 @@ try{
    ok(actual.title&&prepared.title===actual.title,actor+' '+mode+' page identity');eq(actual.paid.length,1,actor+' '+mode+' one paid card');eq(actual.pose,'stance-smash',actor+' '+mode+' held origin restored');eq(actual.overflow,false,actor+' '+mode+' no document overflow');
    if(staticMode)eq(actual.trace.some(row=>row.pose?.startsWith('class-smash-')),false,actor+' '+mode+' static origin');
    else{
-    let cursor=0;const expected=['class-smash-takeoff','class-smash-airborne','class-smash-impact'];for(const row of actual.trace)if(row.pose===expected[cursor])cursor++;eq(cursor,3,actor+' '+mode+' ordered painted action slots');
+    if(mode==='desktop-cold')ok(actual.trace.some(row=>row.pose==='class-smash-impact'),actor+' cold actual impact paints despite delayed callback');
+    else {let cursor=0;const expected=['class-smash-takeoff','class-smash-airborne','class-smash-impact'];for(const row of actual.trace)if(row.pose===expected[cursor])cursor++;eq(cursor,3,actor+' '+mode+' ordered painted action slots');}
     ok(actual.fx.some(row=>row[1]==='contact'),actor+' '+mode+' actual effect contact');
    }
    if(stress)eq(stress.already,false,actor+' cold workload began before actual contact');

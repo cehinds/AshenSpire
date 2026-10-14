@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Class Smash review</title>
+  <style>
+    :root { color-scheme: dark; font-family: system-ui, sans-serif; background: #101722; color: #eef3f8; }
+    body { margin: 0; padding: clamp(16px, 4vw, 40px); max-width: 1440px; margin-inline: auto; }
+    h1 { font-size: clamp(1.35rem, 3vw, 2rem); margin: 0 0 .35rem; }
+    p { color: #b8c5d4; margin: .25rem 0 1rem; }
+    .timing { font-size: .88rem; color: #93a7bc; }
+    .controls { display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; margin: 1rem 0; }
+    button { background: #26374a; border: 1px solid #415a73; border-radius: 6px; color: #f4f7fa; padding: .55rem .9rem; cursor: pointer; font: inherit; }
+    button:hover, button:focus-visible { background: #334c65; }
+    #slot { color: #b8c5d4; min-width: 12rem; }
+    .preview { width: 100%; height: auto; display: block; border-radius: 8px; background: #1b2331; }
+    h2 { font-size: 1.1rem; margin: 2rem 0 .6rem; }
+    .sheet { width: min(100%, 1240px); height: auto; display: block; border-radius: 8px; }
+    a { color: #8fc8f3; }
+  </style>
+</head>
+<body>
+  <h1>Class Smash review</h1>
+  <p>Rogue · Starseer · Herald</p>
+  <p class="timing">Review timing: 350 ms per slot. The nominal in-game timing is 195 ms per slot.</p>
+  <div class="controls" aria-label="Animation controls">
+    <button id="play" type="button">Play</button>
+    <button id="pause" type="button">Pause</button>
+    <button id="restart" type="button">Restart</button>
+    <span id="slot" aria-live="polite">01 · Stance</span>
+  </div>
+  <img id="preview" class="preview" src="phase-01.png" alt="Rogue, Starseer, and Herald in stance phase">
+  <h2>Contact sheet</h2>
+  <p>Rows show Rogue, Starseer, and Herald. Columns show the five shared motion phases.</p>
+  <img class="sheet" src="contact-sheet.png" alt="Three rows by five columns comparing the class Smash phases">
+  <p><a href="combined-review.gif">Open the looping five-slot GIF</a> · 350 ms per slot</p>
+  <script>
+    const phases = [
+      ["phase-01.png", "01 · Stance"],
+      ["phase-02.png", "02 · Takeoff"],
+      ["phase-03.png", "03 · Airborne"],
+      ["phase-04.png", "04 · Impact"],
+      ["phase-05.png", "05 · Stance"]
+    ];
+    const image = document.querySelector("#preview");
+    const label = document.querySelector("#slot");
+    let index = 0;
+    let timer = null;
+    function show(i) {
+      index = (i + phases.length) % phases.length;
+      image.src = phases[index][0];
+      image.alt = `Rogue, Starseer, and Herald in ${phases[index][1].split(" · ")[1].toLowerCase()} phase`;
+      label.textContent = phases[index][1];
+    }
+    document.querySelector("#play").addEventListener("click", () => {
+      if (timer === null) timer = window.setInterval(() => show(index + 1), 350);
+    });
+    document.querySelector("#pause").addEventListener("click", () => {
+      window.clearInterval(timer);
+      timer = null;
+    });
+    document.querySelector("#restart").addEventListener("click", () => {
+      window.clearInterval(timer);
+      timer = null;
+      show(0);
+    });
+  </script>
+</body>
+</html>
