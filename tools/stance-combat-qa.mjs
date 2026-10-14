@@ -103,6 +103,18 @@ async function closePage(target) {
   closingPages.add(target);
   await target.close();
 }
+async function waitActionSettled() {
+  // Early-callout captures intentionally precede the completed action. The
+  // first damage float is not completion: mountCombat keeps the hand locked
+  // until playTimeline finishes, and frame-swapping effects may still be live.
+  await page.waitForFunction(() => {
+    const hand = document.querySelector('.combat .hand');
+    return hand?.getAttribute('aria-disabled') === 'false';
+  }, null, { timeout: 15000 });
+  // Include detached warmEffectFrames image requests, which document.images
+  // and waitArt do not cover. Keep every request failure under the live audit.
+  await page.waitForLoadState('networkidle', { timeout: 15000 });
+}
 async function remount(cards, options = {}) {
   const sequence = ++fixtureSeq;
   await page.evaluate(async ({ cards, options, sequence }) => {
@@ -344,6 +356,24 @@ try {
   });
   assert.ok(chances[0] > chances[1] && chances[1] > chances[2], 'accuracy modes order hit chances advantage > neutral > disadvantage');
 
+  // Focus motes are a six-frame cast animation. Production warms them without
+  // awaiting decode and swaps the visible img.src on a timer, so a cold frame
+  // can be cancelled by the next frame even while the page remains live.
+  // These are screenshot fixtures: decode the actual configured art first,
+  // with no fallback or swallowed load failure, before capturing timed callouts.
+  report.predecodedEffectFrames = await page.evaluate(async () => {
+    const { combatEffectFrames } = await import('/src/ui/assets.js');
+    const { currentArtUrl } = await import('/src/ui/highResArt.js');
+    return Promise.all(combatEffectFrames('focusMotes').map(async frame => {
+      const image = new Image();
+      image.src = currentArtUrl(frame);
+      try { await image.decode(); }
+      catch (error) { throw new Error('QA effect frame failed to decode: ' + image.src + ': ' + error.message); }
+      if (!image.naturalWidth || !image.naturalHeight) throw new Error('QA effect frame has no pixels: ' + image.src);
+      return image.src;
+    }));
+  });
+
   // Capture event callouts while the real action is in progress. Hit reports
   // are captured on the first callout frame, before the later damage callout.
   for (const [name, options, kind, label] of [
@@ -367,6 +397,9 @@ try {
     } else {
       await capture(name, { width: 390, height: 844 }, false);
     }
+    // Settle only after the early frame was captured, before resetting the
+    // next fixture or checking the final network audit.
+    await waitActionSettled();
   }
   report.browserErrors = errors;
   writeFileSync(resolve(OUT, 'report.json'), JSON.stringify(report, null, 2) + '\n');
