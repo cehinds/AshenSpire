@@ -41,3 +41,27 @@ for (const def of registries.subclasses.all()) test(`main-initialized bundle cre
   stampDeck(registries, chosen);
   assert.equal(chosen.deck.length, 11);
 });
+
+const { creationTraitPreview } = require('src/model/creationTraits.js');
+const { masterySpentXp } = require('src/model/classMasteryProfile.js');
+for (const def of registries.subclasses.all()) test(`main-initialized bundle starts veteran ${def.name} with its offered mastery ability`, () => {
+  const level = 5;
+  const meta = { classMastery: { [def.classId]: { level, xp: masterySpentXp(registries, level), unlockedRows: [] } } };
+  const options = { registries, seed: 42, classId: def.classId, subclassId: def.id, profileMeta: meta };
+  const traitIds = [];
+  let projection = creationTraitPreview(registries, createRunState(options), meta, traitIds);
+  while (projection.run.classMasteryState.initialTreeTiers.length) {
+    assert.ok(projection.choices.length);
+    traitIds.push(projection.choices[0]);
+    projection = creationTraitPreview(registries, createRunState(options), meta, traitIds);
+  }
+  const plan = startingAbilityPlan(projection.registries, projection.run);
+  const gated = plan.choices.find(card => card.id.startsWith('progression-'));
+  assert.ok(gated);
+  const ids = [gated.id, ...plan.choices.filter(card => card.id !== gated.id && !plan.elementIds.includes(card.id)).map(card => card.id)].slice(0, plan.count);
+  const run = createRunState({ ...options, startingAbilityIds: ids,
+    initialClassMastery: { receiptId: `bundled-${def.id}`, bankable: false, initialClassTreeChoices: traitIds } });
+  assert.equal(run.deck.length, 11);
+  assert.ok(run.deck.some(card => card.cardId === gated.id));
+  assert.equal(run.classMasteryState.initialTreeTiers.length, 0);
+});

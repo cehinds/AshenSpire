@@ -1,3 +1,4 @@
+import { creationTraitPreview, creationTraitDescription } from '../../model/creationTraits.js';
 import { creationClassTileSummary } from '../models/CreationClassTileModel.js';
 import { subclassOptions, subclassSelectionProblem } from '../../model/subclasses.js';
 import { creationSubclassSelection, creationDraftStartingDeck, CREATION_CARD_RULES } from '../models/CreationSubclassModel.js';
@@ -61,7 +62,7 @@ import {
 } from '../components/creationCards.js';
 import {
   el, eyebrow, subtitle, flavour, hairline, artWell, options, row, labelStack,
-  button, buttonRow, modalHead, modalFooter, pane, statPair, railItem, categoryNav,
+  button, optionCard, buttonRow, modalHead, modalFooter, pane, statPair, railItem, categoryNav,
 } from '../kit/index.js';
 import {
   creationCategories, creationFlowCategories, creationHasSpells, creationAbilitySelection, creationStep, creationFooterPlan, creationRailItems, creationAttributeColumns, creationCssProperties, creationFitsChoices, creationClassPreview,
@@ -146,6 +147,7 @@ export function mountCustomize(app, {
     startingHands: { leftHand: null, rightHand: null },
     startingSlotChoices: {},
     startingAbilityIds: [],
+    initialClassTreeChoices: [],
     startingArmourId: null,
     startingRelicId: firstClass.startingRelic,
     attributeMode: defaults.attributeMode,
@@ -247,19 +249,25 @@ export function mountCustomize(app, {
   split.style.setProperty('--split-share', `${state.classPreviewPercent}%`);
 
   const stages = {
-    class: el('section', { id: 'cz-class-panel', class: 'as-pane flush cz-stage' }, [split,
+    class: el('section', { id: 'cz-class-panel', class: 'as-pane flush cz-stage' }, split),
+    subclass: el('section', { id: 'cz-subclass-panel', class: 'as-pane flush cz-stage' }, [
       el('div', { id: 'cz-subclass-selector-host' }),
+      el('div', { id: 'cz-subclass-traits', class: 'as-pane' }),
       el('div', { id: 'cz-starting-deck-host' }),
     ]),
     attributes: el('section', { id: 'cz-character-panel', class: 'as-pane flush cz-stage' }, [
       el('div', { class: 'as-splitbody cc-character-grid', dataset: { spriteSide: spriteSide } },
         spriteSide === 'left' ? [previewSide, statsSide] : [statsSide, previewSide]),
     ]),
-    keepsake: el('section', { id: 'cz-keepsake-panel', class: 'as-pane flush cz-stage' }, keepsakeGroup),
+    keepsake: el('section', { id: 'cz-keepsake-panel', class: 'as-pane flush cz-stage' }, [creationPageHeading({ title: t('creation.category.keepsake') }), el('div', { id: 'cz-relic-choices' }), keepsakeGroup]),
     feats: el('section', { id: 'cz-feats-panel', class: 'as-pane flush cz-stage' }, el('div', { id: 'cz-feat-browser-host' })),
     spells: el('section', { id: 'cz-spells-panel', class: 'as-pane flush cz-stage' }, [
       el('div', { id: 'cz-spells-heading' }),
       el('div', { id: 'cz-starting-spells', class: 'cc-equip-group', dataset: { creationPart: 'starting-spells' } }),
+    ]),
+    maneuvers: el('section', { id: 'cz-maneuvers-panel', class: 'as-pane flush cz-stage' }, [
+      el('div', { id: 'cz-maneuvers-heading' }),
+      el('div', { id: 'cz-starting-maneuvers', class: 'cc-equip-group' }),
     ]),
     equipment: el('section', { id: 'cz-equipment-panel', class: 'as-pane flush cz-stage' }, [
       el('div', { class: 'cc-equipment-header' }, [el('b', {}, 'Equipment'), el('select', { id: 'cz-equipment-section', 'aria-label': 'Equipment section' }), el('span', { id: 'cz-equipment-count' })]),
@@ -533,6 +541,7 @@ export function mountCustomize(app, {
   }
 
   function resetClassChoices() {
+    state.initialClassTreeChoices = [];
     state.subclassId = creationSubclassSelection(subclassOptions(registries, state.classId), state.subclassId);
     const kit = baseKit();
     state.startingKitId = kit.id;
@@ -552,8 +561,11 @@ export function mountCustomize(app, {
   // One reason per step, read by that step's Continue AND by Begin, so the
   // foot and the section can never disagree about what is missing.
   function classProblem() {
-    return !state.classChosen ? t('creation.reason.class')
-      : subclassSelectionProblem(registries, state.classId, state.subclassId) ? t('creation.subclass.reason') : null;
+    return !state.classChosen ? t('creation.reason.class') : null;
+  }
+  function subclassProblem() {
+    return subclassSelectionProblem(registries, state.classId, state.subclassId) ? t('creation.subclass.reason')
+      : previewRun().classMasteryState.initialTreeTiers.length ? t('creation.traits.reason') : null;
   }
   function modeProblem() { return state.attributeMode ? null : t('creation.reason.statMode'); }
   function keepsakeProblem() { return state.keepsakeId ? null : t('creation.reason.keepsake'); }
@@ -561,10 +573,13 @@ export function mountCustomize(app, {
   /** The stats step: the mode, then a complete and legal allocation. */
   function statsStepProblem() { return modeProblem() || allocationProblem(); }
   function characterProblem() { return statsStepProblem() || keepsakeProblem(); }
-  function abilitiesProblem() { return startingAbilityProblem(registries, previewRun(), state.startingAbilityIds, meta.settings || {}); }
-  function equipmentProblem() { return armourProblem() || handsProblem() || (startingAbilityPlan(registries, previewRun(), meta.settings || {})?.skillId === 'combatManeuvers' ? abilitiesProblem() : null); }
+  function abilitiesProblem() {
+    const problem = startingAbilityProblem(registries, previewRun(), state.startingAbilityIds, meta.settings || {});
+    return problem ? `${problem} ${t('creation.abilities.return', { category: t(creationHasSpells(registries, state.classId) ? 'creation.category.spells' : 'creation.category.maneuvers') })}` : null;
+  }
+  function equipmentProblem() { return armourProblem() || handsProblem(); }
   function spellsProblem() { return startingAbilityPlan(registries, previewRun(), meta.settings || {})?.skillId === 'item:magic-focus' ? abilitiesProblem() : null; }
-  function flowProblem() { return classProblem() || characterProblem() || equipmentProblem() || abilitiesProblem(); }
+  function flowProblem() { return classProblem() || subclassProblem() || characterProblem() || equipmentProblem() || abilitiesProblem(); }
   function refreshAbilitySelection() {
     const plan = startingAbilityPlan(registries, previewRun(), meta.settings || {});
     // A point-allocation draft is not committed: Cancel must retain the
@@ -606,7 +621,7 @@ export function mountCustomize(app, {
   function handProblem(slot) { return handsProblem({ [slot]: state.startingHands[slot] }); }
   function statsProblem() { return allocationProblem() || handsProblem(); }
 
-  function previewRun() {
+  function previewProjection() {
     // Validate the live allocation independently of weapon requirements.
     // An incomplete draft previews from its OWN mode's class preset — not
     // from some other mode's, which is what the retired `STANDARD` alias
@@ -617,7 +632,7 @@ export function mountCustomize(app, {
     const attributes = hasCompletePointBuy
       ? state.attributes
       : classAttributePreset(registries, state.classId, previewMode);
-    return createRunState({
+    const draft = createRunState({
       seed: 0, classId: state.classId, subclassId: state.subclassId, registries,
       startingKitId: state.startingKitId,
       startingHands: previewCompatibleHands(registries, state.startingHands, attributes),
@@ -627,7 +642,9 @@ export function mountCustomize(app, {
       ...(hasCompletePointBuy ? { attributes: { ...state.attributes } } : {}),
       profileMeta: meta,
     });
+    return creationTraitPreview(registries, draft, meta, state.initialClassTreeChoices);
   }
+  function previewRun() { return previewProjection().run; }
   let subclassSelector = null;
   function renderSubclassChoices() {
     const choices = subclassOptions(registries, state.classId);
@@ -638,6 +655,8 @@ export function mountCustomize(app, {
         onChoose: id => {
           if (state.subclassId === id) return;
           state.subclassId = id;
+          state.initialClassTreeChoices = [];
+          renderSubclassTraits();
           // Keep only equipment that remains legal, then recheck authored abilities.
           state.startingHands = previewCompatibleHands(registries, state.startingHands, effectiveAttributes());
           refreshAbilitySelection();
@@ -648,6 +667,36 @@ export function mountCustomize(app, {
       $('#cz-subclass-selector-host').replaceChildren(subclassSelector);
     }
   }
+  function renderSubclassTraits() {
+    const scoped = previewProjection();
+    state.initialClassTreeChoices = scoped.chosen;
+    const host = $('#cz-subclass-traits');
+    host.replaceChildren(el('h3', { text: t('creation.traits.title') }));
+    for (const id of [...scoped.chosen, ...scoped.choices]) {
+      const node = registries.nodes.find(row => row.id === id);
+      const picked = scoped.chosen.includes(id);
+      const choice = optionCard({ name: node?.label || id, description: creationTraitDescription(registries, id), selected: picked, className: 'cc-subclass-trait' });
+      choice.dataset.creationTrait = id;
+      choice.setAttribute('aria-pressed', String(picked));
+      choice.addEventListener('click', () => {
+        state.initialClassTreeChoices = picked ? scoped.chosen.slice(0, scoped.chosen.indexOf(id)) : [...scoped.chosen, id];
+        renderSubclassTraits(); refreshAbilitySelection(); renderSpells(); renderCharacterPreview(); refreshFaces(); updateStartRefusal();
+        // Native keyboard activation redraws this button. Restore the canonical
+        // choice after every dependent renderer has finished replacing nodes.
+        queueMicrotask(() => {
+          if (!app.contains(host)) return;
+          const choices = [...host.querySelectorAll('[data-creation-trait]')];
+          const replacement = choices.find(choice => choice.dataset.creationTrait === id)
+            || choices.find(choice => choice.getAttribute('aria-pressed') !== 'true') || next;
+          focusElement(replacement);
+          replacement?.focus({ preventScroll: true });
+        });
+      });
+      host.append(choice);
+    }
+    host.append(el('p', { text: scoped.run.classMasteryState.initialTreeTiers.length ? t('creation.traits.reason') : t('creation.traits.complete'), 'aria-live': 'polite' }));
+  }
+
   function renderStartingDeck() {
     const run = previewRun();
     const settings = meta.settings || {};
@@ -832,10 +881,10 @@ export function mountCustomize(app, {
     });
   }
 
-  /** Stats settled: fold Primary Stats, unfold Keepsake, put the cursor there. */
-  function advanceToKeepsake({ focus = true } = {}) {
-    if (!catalog) activate('keepsake');
-    if (focus) queueMicrotask(() => focusElement($('#cz-keepsakes .cz-keepsake')));
+  /** Stats settled: continue to Feats and keep the cursor in the new page. */
+  function advanceFromAttributes({ focus = true } = {}) {
+    if (!catalog) activate('feats');
+    if (focus) queueMicrotask(() => focusElement(paneHost.querySelector('button, input, select') || next));
   }
 
   // THE POINT-BUY IS A DOOR. Opened by the one door-opener (through the shared
@@ -965,7 +1014,7 @@ export function mountCustomize(app, {
         if (outcome === 'reopen') return;
         if (outcome === 'done') {
           renderCharacterPreview(); refreshFaces(); updateStartRefusal();
-          advanceToKeepsake({ focus: restore });
+          advanceFromAttributes({ focus: restore });
           return;
         }
         // CANCEL UNDOES THE WAY IN. Creation offers one mode since the
@@ -1062,7 +1111,7 @@ export function mountCustomize(app, {
     }
     for (const cls of LOCKED_CLASSES) cards.push(classChoiceCard(cls, { locked: true, visual: classGlyph(cls.id) }));
     classBox.replaceChildren(...cards);
-    renderSubclassChoices();
+    renderSubclassChoices(); renderSubclassTraits();
     renderViewToggles();
     // The cards are new nodes; in unfold mode the chosen one opens again.
     if (!catalog && state.classChosen && creationClassPreview() === 'unfold') renderClassPreview();
@@ -1084,7 +1133,7 @@ export function mountCustomize(app, {
   }
 
   function renderStartingAbility(section, { stage, next = null } = {}) {
-    const box = options([], { id: stage === 'spells' ? 'cz-spell-choices' : 'cz-startingAbilities', class: 'cc-card-selectors cc-choice-collection', dataset: { view: state.equipmentChoiceView } });
+    const box = options([], { id: stage === 'spells' ? 'cz-spell-choices' : stage === 'maneuvers' ? 'cz-maneuver-choices' : 'cz-startingAbilities', class: 'cc-card-selectors cc-choice-collection', dataset: { view: state.equipmentChoiceView } });
     const node = el('section', { class: 'cc-equip-group cc-starting-abilities', dataset: { abilityStep: stage, ...(stage === 'equipment' ? { equipmentSection: section.id } : {}) } }, box);
     const progress = el('p', { class: 'cc-ability-progress', 'aria-live': 'polite' });
     node.prepend(progress);
@@ -1152,17 +1201,15 @@ export function mountCustomize(app, {
       ? renderStartingAbility(plan, { stage: 'spells' })
       : flavour(t('creation.spells.unavailable')));
     scheduleCardFits(host.querySelectorAll('.card'));
+    $('#cz-maneuvers-heading').replaceChildren(creationPageHeading({ title: t('creation.category.maneuvers'), description: t('creation.maneuvers.description') }));
+    const martial = $('#cz-starting-maneuvers');
+    martial.replaceChildren(...(plan?.skillId === 'combatManeuvers' ? [renderStartingAbility(plan, { stage: 'maneuvers' })] : []));
+    scheduleCardFits(martial.querySelectorAll('.card'));
   }
 
   function renderEquipment(preferredOpenId = null) {
     equipmentSectionViews = creationEquipmentSectionViews(registries, state.classId, { armourChoices: armourChoices(), meta });
-    const ability = refreshAbilitySelection();
-    if (ability?.skillId === 'combatManeuvers') {
-      const sections = [...equipmentSectionViews];
-      const lastHand = sections.findLastIndex(section => section.kind === 'hand');
-      sections.splice(lastHand + 1, 0, { ...ability, label: t(ability.skillId === 'combatManeuvers' ? 'creation.abilities.maneuvers' : 'creation.abilities.spells') });
-      equipmentSectionViews = sections.map((section, index) => ({ ...section, nextId: sections[index + 1]?.id || null }));
-    }
+    refreshAbilitySelection();
     equipmentNodes = new Map();
     equipmentGateRefreshers = [];
     const refreshers = [];
@@ -1323,6 +1370,7 @@ export function mountCustomize(app, {
           else if (section.kind === 'armour') state.startingArmourId = piece.id;
           else if (section.kind === 'hand') state.startingHands = selectStartingHand(state.startingHands, section.slot, piece.id);
           else state.startingSlotChoices[section.id] = piece.id;
+          refreshAbilitySelection();
           for (const refresh of refreshers) refresh();
           focusChoice(piece); renderEquipmentSummary(); renderCharacterPreview(); refreshFaces(); updateStartRefusal();
         });
@@ -1340,6 +1388,7 @@ export function mountCustomize(app, {
           else if (section.kind === 'armour') state.startingArmourId = piece.id;
           else if (section.kind === 'hand') state.startingHands = selectStartingHand(state.startingHands, section.slot, piece.id);
           else state.startingSlotChoices[section.id] = piece.id;
+          refreshAbilitySelection();
           for (const refresh of refreshers) refresh();
           renderEquipmentSummary(); renderCharacterPreview(); refreshFaces(); updateStartRefusal(); advanceEquipment(section.id);
         });
@@ -1358,8 +1407,8 @@ export function mountCustomize(app, {
         if (chosen) focusChoice(chosen);
       };
       refreshers.push(refresh); refresh();
-      const next = equipmentSectionViews.find(row => row.id === section.nextId);
-      const nextLabel = next ? next.label.toLowerCase().replace(/\b\w/g, letter => letter.toUpperCase()) : t('creation.category.feats');
+      const next = equipmentSectionViews.find(row => row.id === section.nextId && row.kind !== 'relic');
+      const nextLabel = section.kind === 'relic' ? t('creation.category.review') : next ? next.label.toLowerCase().replace(/\b\w/g, letter => letter.toUpperCase()) : t('creation.category.keepsake');
       // Armour waits for a pick; a hand waits for a weapon the stats can
       // wield; the last section's button is plain — Begin is what goes green.
       const sectionProblem = () => !next ? equipmentProblem() : (section.kind === 'armour' ? armourProblem()
@@ -1369,11 +1418,14 @@ export function mountCustomize(app, {
       continueButton.addEventListener('click', () => {
         if (sectionProblem()) return;
         if (next) openEquipmentSection(next.id);
-        else advanceFrom('equipment');
+        else advanceFrom(section.kind === 'relic' ? 'keepsake' : 'equipment');
       });
       node.append(continueButton);
     }
 
+    const relicSection = equipmentSectionViews.find(section => section.kind === 'relic');
+    if (relicSection) $('#cz-relic-choices').replaceChildren(equipmentNodes.get(relicSection.id));
+    equipmentSectionViews = equipmentSectionViews.filter(section => section.kind !== 'relic').map((section, index, rows) => ({ ...section, nextId: rows[index + 1]?.id || null }));
     const equipmentFaces = new Map(equipmentSectionViews.map((section) => [
       section.id, selectionSectionFace(section.label, equipmentValue(section)),
     ]));
@@ -1675,6 +1727,8 @@ export function mountCustomize(app, {
   const selectedName = (id, rows, fallback = '—') => (rows.find((row) => row.id === id) || {}).name || fallback;
   const sectionRows = [
     { key: 'class', label: t('creation.section.class'), node: panels.class, value: () => (state.classChosen ? classAndSubclassSummary() : UNCHOSEN) },
+    { key: 'subclass', label: t('creation.category.subclass'), node: panels.subclass, value: classAndSubclassSummary },
+    { key: 'maneuvers', label: t('creation.category.maneuvers'), node: panels.maneuvers, value: () => state.startingAbilityIds.map(id => registries.cards.get(id).name).join(' / ') || UNCHOSEN },
     { key: 'attributes', label: t('creation.section.attributes'), node: panels.attributes, value: () => state.name || 'Forsaken' },
     { key: 'equipment', label: t('creation.section.equipment'), node: panels.equipment, value: () => {
       const arms = registries.equipment.armaments;
@@ -1894,7 +1948,9 @@ export function mountCustomize(app, {
       seatFace('primary', statBox.querySelector('.cc-mode-select'));
       return null; // seatFace seats the cursor itself
     },
+    subclass: () => $('#cz-subclass-selector-host button'),
     keepsake: () => $('#cz-keepsakes .cz-keepsake'),
+    maneuvers: () => $('#cz-maneuver-choices .cc-ability-choose'),
     spells: () => $('#cz-spell-choices .cc-ability-choose'),
     equipment: () => {
       openEquipmentSection(equipmentSectionViews[0]?.id);
@@ -1905,7 +1961,7 @@ export function mountCustomize(app, {
   // back otherwise; Next refuses with the current category's unmet step and
   // lands the cursor on the next question; Begin takes over on Review.
   const activeEquipmentProblem = () => { const section = equipmentSectionViews.find(row => row.id === equipmentFold?.openKey); return !section?.nextId ? equipmentProblem() : section?.kind === 'ability' ? abilitiesProblem() : section?.kind === 'armour' ? armourProblem() : section?.kind === 'hand' ? handProblem(section.slot) : null; };
-  const stageProblems = { class: classProblem, attributes: statsStepProblem, keepsake: keepsakeProblem, equipment: activeEquipmentProblem, feats: () => null, spells: spellsProblem, review: () => null };
+  const stageProblems = { class: classProblem, subclass: subclassProblem, maneuvers: abilitiesProblem, attributes: statsStepProblem, keepsake: keepsakeProblem, equipment: activeEquipmentProblem, feats: () => null, spells: spellsProblem, review: () => null };
   let current = categories[0];
   const categoryLabel = (id) => t(`creation.category.${id}`);
   refreshCreationNavigation = () => {
@@ -1935,7 +1991,8 @@ export function mountCustomize(app, {
     selectRailItem(member);
     if (id === 'attributes') characterFold.open('primary');
     if (id === 'equipment' && !equipmentFold?.openKey) openEquipmentSection(equipmentSectionViews[0]?.id);
-    if (id === 'spells') renderSpells();
+    if (id === 'spells' || id === 'maneuvers') renderSpells();
+    if (id === 'subclass') { renderSubclassChoices(); renderSubclassTraits(); }
     if (id === 'feats') renderFeats();
     const plan = creationFooterPlan({ categories, current: id });
     next.hidden = plan.primary !== 'next';
@@ -2003,10 +2060,10 @@ export function mountCustomize(app, {
     activate(categories[0]);
   }
   const primaryContinue = $('.cc-primary-continue');
-  gateRefreshers.push(refusesWhen(primaryContinue, statsStepProblem, 'On to the keepsake.'));
+  gateRefreshers.push(refusesWhen(primaryContinue, statsStepProblem, 'On to feats.'));
   primaryContinue.addEventListener('click', () => {
     if (statsStepProblem()) return;
-    advanceToKeepsake();
+    advanceFromAttributes();
   });
 
   nameInput.addEventListener('input', () => { state.name = nameInput.value.trim() || 'Forsaken'; refreshFaces(); });
@@ -2052,6 +2109,7 @@ export function mountCustomize(app, {
       startingKitId: state.startingKitId,
       startingHands: { ...state.startingHands },
       startingAbilityIds: [...state.startingAbilityIds],
+      initialClassTreeChoices: [...state.initialClassTreeChoices],
       startingArmourId: state.startingArmourId,
       startingRelicId: state.startingRelicId,
       attributeMode: state.attributeMode,

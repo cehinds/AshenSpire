@@ -1,9 +1,24 @@
 # Starting subclass creation UI
 
-The Class page chooses a base class and one of its two opening subclasses. It
-keeps the existing category order: Class, Attributes, Keepsake, Equipment,
-Feats, the conditional Spells page, and Review. Feats remains a progression
-browser and grants no feat at creation.
+The creation order is Class → Subclass → Attributes → Feats → Starting Spells
+(for casting classes) or Combat Maneuvers (for other classes) → Starting
+Equipment → Relic and Keepsake → Review. Class retains its canonical lore and
+playstyle. Subclass owns the selector, Subclass traits and eleven-card starting
+deck. Feats remains a progression browser and grants no feat at creation.
+
+Subclass traits project the owner's actual class mastery into a detached,
+nonbanking run. Each choice uses the canonical class-tree eligibility and
+requires/excludes rules. Fresh characters choose the first available trait;
+veteran profiles choose every available initial trait in sequence. Changing
+class or subclass clears the choices. The run payload carries optional
+`initialClassTreeChoices`; Begin validates all choices against the current
+profile before adopting the new run. Explicit creation opens mastery inside
+the detached birth constructor before validating ability selections and
+composing their canonical eleven-card recipe, then applies traits before
+the opening sequence. This lets veteran profiles start with the same
+mastery-gated abilities their picker offers. Legacy callers and saved runs retain the pending
+mastery-choice fallback on the map. Screenshot runs with explicit choices apply
+them too, using nonbanking mastery.
 
 Base Class tiles use `CreationClassTileModel` and the production `classUnfold`
 renderer. The body has four summary rows: 5–12 word canonical lore, short damage
@@ -30,7 +45,7 @@ of the eleven cards through the standard full card inspection door. Its four
 source groups show five subclass cards, one class card, one weapon art, and four
 basics. Chosen starting spells replace their recipe slots; they do not append
 extra cards. Review shows the class, subclass, and the same deck receipt, and its
-Class edit action returns to both selectors.
+Subclass edit action returns to its selector and traits.
 
 Draft previews accept zero picks or a partial starting-ability selection. They
 use the current settings for eligibility and copy limits. Temporarily invalid
