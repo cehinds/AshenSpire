@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1972",
+    "date": "2026-10-14",
+    "group": "2026-10-14",
+    "summary": "Quickstep reactions and Guard no longer freeze combat",
+    "detail": "Playing Quickstep as a reaction after a Defend card arms its Poise guard now resolves the enemy attack, and End Turn remains usable. An ordinary guarded End Turn and rated Counterstrike replies also resolve correctly in standalone builds. Five bundled-runtime checks cover the Guard paths in solo and co-op and the rated Counter return.",
+    "build": "0.7.1.1515",
+    "pullRequest": 1972,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1972"
+  },
+  {
+    "id": "pr-1971",
+    "date": "2026-10-14",
+    "group": "2026-10-14",
+    "summary": "Cards show the same rules before and during combat",
+    "detail": "Character creation, rewards and deck inspection now show the current combat effects, costs and traits: Crystal Barrier grants Ward in every view instead of promising Block outside combat. Reward captions and deck descriptions agree with their cards, while older saved runs keep their original rules.",
+    "build": "0.7.1.1513",
+    "pullRequest": 1971,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1971"
+  },
+  {
     "id": "pr-1970",
     "date": "2026-10-13",
     "group": "2026-10-13",

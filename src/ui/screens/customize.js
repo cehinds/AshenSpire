@@ -44,7 +44,7 @@ import {
 } from '../../model/characterCreation.js';
 import { pieceChip, setPieceChipChosen } from './equipment.js';
 import { ATLAS } from '../../model/worldAtlas.js';
-import { relicText, renderCard, scheduleCardFits } from '../components/card.js';
+import { relicText, renderCard as renderCardFace, scheduleCardFits } from '../components/card.js';
 import { bindCardInspection, openCardInspection } from '../components/cardInspection.js';
 import { renderStatAllocationCard } from '../components/statAllocationCard.js';
 import { renderEquipmentRequirements, renderPlayerPoise, renderRoleCopies } from '../components/equipmentReceipts.js';
@@ -106,6 +106,8 @@ function showNode(node, on) {
 export function mountCustomize(app, {
   registries, meta = {}, defaultSeedString, onBack, onStart, onSettings = null, onQuit = null, catalog = false, shotPose = null, slot = null,
 }) {
+  const creationCardRules = { combatExpansionVersion: 2, reactionRulesVersion: 2, breakMeterVersion: 2 };
+  const renderCard = (registries, ref, opts = {}) => renderCardFace(registries, ref, { ...opts, rules: creationCardRules });
   // A new screen must never inherit another card's selection or spent tap.
   clearSelection();
   // THE HAND A NEW CHARACTER IS PROMISED IS THE HAND ITS FIRST FIGHT DEALS

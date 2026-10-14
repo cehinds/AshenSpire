@@ -5,9 +5,10 @@ import { creditKnowledgeBenefit } from './enemyKnowledge.js';
 import { enqueueExpandedAction } from './combatExpansionActions.js';
 import { breakPersistentWard } from './combatStatusControl.js';
 import { counterstrikeAmount, counterstrikePct, stanceManeuverOf } from './combatCardTraitMath.js';
-import { dealPoiseDamage } from './actions.js';
+// Actions and Ratings import Matchups too; defer lookups until bundled cycles initialize.
+import * as Actions from './actions.js';
 import { spendPersistentWard } from './combatStatusControl.js';
-import { cardRatingBonus } from './combatRatings.js';
+import * as Ratings from './combatRatings.js';
 
 export function matchupRules(ctx) {
   return ctx?.combatMatchupRules || ctx?.registries?.balance?.combatMatchups || combatMatchups;
@@ -531,7 +532,7 @@ function completeTraitGuard(ctx, source, target, receipt) {
   if (!(receipt.amount > 0) || !(receipt.blocked + receipt.wardResisted > 0)) return;
   delete target.combatTraitGuard;
   if (!source.alive) return;
-  if (guard.poise > 0) dealPoiseDamage(ctx, source, guard.poise, { cause: 'trait:guard', source: target });
+  if (guard.poise > 0) Actions.dealPoiseDamage(ctx, source, guard.poise, { cause: 'trait:guard', source: target });
   if (guard.ward > 0) spendPersistentWard(ctx, source, guard.ward, { sourceId: target.id });
 }
 
@@ -572,7 +573,7 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
     // Scale the authored base, then derive the rating bonus from the scaled base; other bonuses carry over unscaled.
     const base = number(counter.payload.hpBase), rating = number(counter.payload.hpRating);
     const scaledBase = scale(base);
-    payload.hp = scaledBase + (rating > 0 ? cardRatingBonus(ctx, target, { ...counter.carrier, ratingId: undefined }, 'damage', scaledBase) : 0)
+    payload.hp = scaledBase + (rating > 0 ? Ratings.cardRatingBonus(ctx, target, { ...counter.carrier, ratingId: undefined }, 'damage', scaledBase) : 0)
       + Math.max(0, number(counter.payload.hp) - base - rating);
   }
   if (receipt.profiles.some((profile, index) => receipt.covered[index] && profile.effect !== 'status' && profile.maneuver === 'smash')) {
