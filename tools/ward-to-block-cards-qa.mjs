@@ -13,8 +13,10 @@ mkdirSync(OUT, { recursive: true });
 const root = process.cwd();
 const server = await serve({ root, port: 0, open: false });
 const base = `http://127.0.0.1:${server.server.address().port}`;
-const browser = await chromium.launch({ headless: true });
+const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
 const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: 1 });
+page.setDefaultTimeout(15000);
+page.setDefaultNavigationTimeout(60000);
 const errors = [];
 page.on('pageerror', error => errors.push(error.message));
 page.on('requestfailed', request => errors.push(`request failed: ${request.url()} ${request.failure()?.errorText || ''}`));
@@ -200,11 +202,14 @@ try {
     });
     await page.locator('.reward-level-up').waitFor({ state: 'visible', timeout: 20000 });
     await wait(300);
-    const levelBefore = await capture('level-options', 'compact', { compactText: await textOf('.reward-menu') });
     await page.locator('.reward-level-up').click();
-    await page.locator('.reward-door, .reward-level-rewards').first().waitFor({ state: 'visible', timeout: 10000 });
+    const levelRow = page.locator('.reward-level-rewards .reward-kind[data-key="levelCard:0"]');
+    await levelRow.waitFor({ state: 'visible', timeout: 10000 });
     await wait(300);
-    const levelInspection = await inspector('.reward-level-rewards .card, .reward-level-rewards .reward-level-offer, .reward-level-rewards [data-key]');
+    const levelBefore = await capture('level-options', 'compact', { compactText: await textOf('.reward-level-rewards') });
+    await levelRow.click();
+    await page.locator('.reward-row .reward-choice-face.card').first().waitFor({ state: 'visible', timeout: 15000 });
+    const levelInspection = await inspector('.reward-row .reward-choice-face.card');
     report.views['level-options'] = {
       before: levelBefore,
       after: await capture('level-options', 'inspection', levelInspection),
