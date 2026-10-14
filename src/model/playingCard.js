@@ -332,16 +332,17 @@ export function playingCardModel(registries, ref, { preview = null, definition =
   // looks like.
   const owner = registries.classes.has(def.class) ? registries.classes.get(def.class) : null;
 
-  // COSTS. A preview has already resolved its own numbers; without one the
-  // framework's cost profile is the authority. Both paths land in one record
+  // COSTS. A preview has already resolved its own numbers; self-funded restores
+  // supply the full display price separately from the net payment. Without a
+  // preview the framework's cost profile is the authority. Both paths land in one record
   // so the badge and the tooltip cannot drift, which they could before —
   // each computed its own.
   const profile = preview ? null : registries.framework.costProfile(def);
   const costs = freeze({
     variable: preview ? !!preview.costIsX : !!profile.variable,
-    action: preview ? preview.cost : profile.action,
-    mana: preview ? preview.manaCost : profile.mana,
-    stamina: preview ? (preview.staminaCost || 0) : (profile.stamina || 0),
+    action: preview ? (preview.displayCosts?.action ?? preview.cost) : profile.action,
+    mana: preview ? (preview.displayCosts?.mana ?? preview.manaCost) : profile.mana,
+    stamina: preview ? (preview.displayCosts?.stamina ?? preview.staminaCost ?? 0) : (profile.stamina || 0),
     ...(preview?.costIsEstimate ? { estimated: true } : {}),
   });
 
