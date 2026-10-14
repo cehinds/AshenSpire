@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
+import { combatCardRange } from '../src/model/combatCardProfile.js';
+import { playingCardDefinition } from '../src/model/playingCard.js';
 import { cardDetailHtml, cardPlainText } from '../src/ui/components/card.js';
 
 const registries = createRegistries(contentBundle);
@@ -23,4 +25,13 @@ test('inspection keeps exact live Block/Ward token parts instead of re-splitting
   const detail = cardDetailHtml(registries, ref, { rules, preview });
   assert.match(detail, /5.*Block.*6.*Ward/);
   assert.match(cardPlainText(registries, ref, { rules, preview }), /5 Block.*6 Ward/);
+});
+
+test('version-two Poise-only Counter returns show their offensive range', () => {
+  const force = playingCardDefinition(registries, { cardId: 'forceCounter' }, { rules });
+  assert.equal(force.counterPayload.hp, 0);
+  assert.equal(force.counterPayload.ward, 0);
+  assert.equal(combatCardRange(force), 'reach');
+  assert.equal(combatCardRange({ ...force, defenseRulesVersion: undefined }), null, 'legacy Poise-only presentation is unchanged');
+  assert.equal(combatCardRange({ ...force, counterPayload: { hp: 0, ward: 0, poise: 0 } }), null, 'protection without a reply has no offensive range');
 });

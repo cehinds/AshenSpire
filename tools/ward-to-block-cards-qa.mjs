@@ -48,6 +48,28 @@ async function capture(name, stage, data) {
   await page.screenshot({ path: resolve(OUT, jpg), type: 'jpeg', quality: 80, fullPage: false });
   return { png, jpg, visibleText: await page.locator('body').innerText(), ...data };
 }
+async function waitForStableVisible(locator) {
+  await locator.waitFor({ state: 'visible', timeout: 10000 });
+  // The modal's veil can still be fading after its own element is visible.
+  await locator.evaluate(async element => {
+    const animations = [];
+    for (let node = element; node; node = node.parentElement) animations.push(...node.getAnimations());
+    await Promise.all(animations
+      .filter(animation => animation.playState === 'running' && Number.isFinite(animation.effect?.getComputedTiming().endTime))
+      .map(animation => animation.finished.catch(() => {})));
+  });
+  const handle = await locator.elementHandle();
+  await page.waitForFunction(element => {
+    const rect = element.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return false;
+    for (let node = element; node; node = node.parentElement) {
+      const style = getComputedStyle(node);
+      if (style.visibility !== 'visible' || Number(style.opacity) < 0.98) return false;
+    }
+    return true;
+  }, handle, { timeout: 10000 });
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+}
 async function captureDetails(name, selector = '.card-inspection-modal .ti-meta') {
   const detail = page.locator(selector).filter({ visible: true }).first();
   await detail.waitFor({ state: 'visible', timeout: 10000 });
@@ -75,7 +97,7 @@ async function inspector(cardSelector = '.card, .equipment-poker-card, .reward-c
     if (strategy === 'keyboard') await info.press('Enter'); else await info.click();
   }
   const detail = page.locator('.card-inspection-modal, .card-inspection-details, .deck-editor-inspector').filter({ visible: true }).first();
-  await detail.waitFor({ state: 'visible', timeout: 10000 });
+  await waitForStableVisible(detail);
   return { compactText: await card.innerText().catch(() => ''), inspectionText: await detail.innerText() };
 }
 async function attempt(name, operation) { try { await operation(); } catch (error) { report.failures.push({ name, message: error.message, stack: error.stack }); console.error('CAPTURE FAILED ' + name + ': ' + error.message); } }
@@ -130,12 +152,13 @@ try {
     const deckCard = page.locator('.deck-editor-main:visible').filter({ hasText: 'Frost Counter' }).first();
     await deckCard.waitFor({ state: 'visible', timeout: 20000 });
     await deckCard.click();
-    const deckCompact = await capture('deck-editing', 'compact', { compactText: await deckCard.innerText().catch(() => '') });
+    await page.waitForFunction(element => element.getAttribute('aria-pressed') === 'true', await deckCard.elementHandle(), { timeout: 10000 });
     const inspectButton = page.locator('.deck-editor-inline-inspect:visible').first();
     await inspectButton.waitFor({ state: 'visible', timeout: 10000 });
     await inspectButton.click();
     const deckDetail = page.locator('.deck-editor-inspector:visible').first();
-    await deckDetail.waitFor({ state: 'visible', timeout: 10000 });
+    await waitForStableVisible(deckDetail);
+    const deckCompact = await capture('deck-editing', 'compact', { compactText: await deckCard.innerText().catch(() => '') });
     const deckAfter = await capture('deck-editing', 'inspection', {
       compactText: await deckCard.innerText().catch(() => ''),
       inspectionText: await deckDetail.innerText(),

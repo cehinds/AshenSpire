@@ -357,7 +357,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
 
   // `grouped` is a deck row standing for several copies; a collection tile's
   // own counts are its meta line, never a badge.
-  const typeName = (row) => model.filters.type.find(entry => entry.id === row.type)?.label || row.type;
+  const typeName = row => row.cardCategory[0].toUpperCase() + row.cardCategory.slice(1);
   function rowCosts(row, lead = []) {
     const pools = registries.framework.costProfile(resolveCard(registries, row.ref));
     return el('span', { class: 'deck-editor-costs' }, [...lead, ...deckEditorCosts(pools).map(({id, label, value, art}) =>
@@ -605,8 +605,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       actions.appendChild(minus);
       if (model.ordered) list.appendChild(item);
       else {
-        if (!groups.has(row.type)) groups.set(row.type, []);
-        groups.get(row.type).push({ row, item });
+        if (!groups.has(row.cardCategory)) groups.set(row.cardCategory, []);
+        groups.get(row.cardCategory).push({ row, item });
       }
     }
     for (const [type, entries] of groups) {

@@ -1575,3 +1575,32 @@ test('DOM: a Counter shows a range only when its reply deals damage (v2)', async
     editor.close();
   });
 });
+
+test('public deck group headings use canonical categories while raw filter kinds and saved refs remain intact', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  withDom(() => {
+    const run = createRunState({ seed: 0x5eed, classId: 'starseer', registries: REG, combatExpansionVersion: 2 });
+    run.deck.push({ instanceId: 'category-force', cardId: 'forceCounter', upgraded: false });
+    run.deck.push({ instanceId: 'category-frost', cardId: 'frostCounter', upgraded: false });
+    const saved = JSON.stringify(run.deck.filter(card => card.instanceId.startsWith('category-')));
+    const model = deckEditorModel({ registries: REG, run, settings: {} });
+    for (const cardId of ['forceCounter', 'frostCounter']) {
+      const row = model.deck.find(row => row.cardId === cardId);
+      assert.equal(row.type, 'skill', 'raw compatibility filter kind remains');
+      assert.equal(row.cardCategory, 'stance');
+    }
+    const editor = mountDeckEditor(document.body, { registries: REG, run, settings: {} });
+    const groups = editor.root.querySelectorAll('.deck-editor-group');
+    assert.ok([...groups].some(group => /^Stance ·/.test(group.querySelector('summary').textContent)));
+    for (const group of groups) {
+      const name = group.querySelector('summary').textContent.split(' ·')[0];
+      for (const row of group.querySelectorAll('.deck-editor-item')) {
+        const ref = run.deck.find(card => card.instanceId === row.dataset.instanceId);
+        if (ref?.cardId === 'forceCounter' || ref?.cardId === 'frostCounter') assert.equal(name, 'Stance');
+      }
+    }
+    assert.equal(JSON.stringify(run.deck.filter(card => card.instanceId.startsWith('category-'))), saved,
+      'presentation does not migrate saved Counter card references');
+    editor.close();
+  });
+});
