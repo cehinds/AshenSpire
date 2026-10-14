@@ -248,8 +248,8 @@ function buildLines(def, preview, registries) {
     if (remove.length) out.push({ kind: 'status', text: `Remove ${remove.join(', ')}` });
     if (consume.length) out.push({ kind: 'consume', text: `Remove ${consume.join(', ')}` });
     if (gain.length) out.push({ kind: 'gain', text: `Gain ${gain.join(', ')}` });
-    if (bonus.length) out.push({ kind: 'bonus', text: bonus.join(', ') });
-    if (defenseRestore.length) out.push({ kind: 'bonus', text: defenseRestore.join(', ') });
+    if (bonus.length) out.push({ kind: 'bonus', text: defenseRestore.length ? defenseRestore.join(', ') + '. ' + bonus.join(', ') : bonus.join(', ') });
+    else if (defenseRestore.length) out.push({ kind: 'bonus', text: defenseRestore.join(', ') });
     return out;
   };
 

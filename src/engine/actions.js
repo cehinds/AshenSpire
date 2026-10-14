@@ -1224,7 +1224,7 @@ function splitSmashPressure(ctx, action, target, row) {
   if (done.includes(key)) return true;
   done.push(key);
   const total = row.contacts.filter(contact => contact.effect === 'impact').reduce((n, contact) => n + Math.max(0, contact.pressure || 0), 0);
-  const amount = Math.ceil(total * Matchups.stancePressureMultiplier(ctx, action.source, target, action.card));
+  const amount = Math.ceil(total * Matchups.stancePressureMultiplier(ctx, action.source, target, action.card, row?.receipt?.counterAttack));
   const wardShare = stanceRulesFor(ctx).spellSmashWardShare;
   const [poise, ward] = allocateInteger(amount, [1 - wardShare, wardShare]);
   if (poise > 0) {
@@ -1429,7 +1429,7 @@ function runOpcode(ctx, action, eff) {
         if (row?.receipt?.avoided) continue;
         if (splitSmashPressure(ctx, action, t, row)) continue;
         const spent = Control.spendPersistentWard(ctx, t,
-        evalNum(ctx, action, eff.amount, 0, t) * (ctx.combatExpansionVersion === 2 ? Matchups.stancePressureMultiplier(ctx, action.source, t, action.card) : 1) * (!action.card?.combatWardEdgeApplied && action.card?.combatProfile?.camp === 'spell' && action.card?.combatProfile?.damageType === 'piercing' ? 1.25 : 1), { sourceId: action.source?.id });
+        evalNum(ctx, action, eff.amount, 0, t) * (ctx.combatExpansionVersion === 2 ? Matchups.stancePressureMultiplier(ctx, action.source, t, action.card, row?.receipt?.counterAttack) : 1) * (!action.card?.combatWardEdgeApplied && action.card?.combatProfile?.camp === 'spell' && action.card?.combatProfile?.damageType === 'piercing' ? 1.25 : 1), { sourceId: action.source?.id });
         trackOwnPressure(ctx, action, t, 'wardDealt', spent.spent);
         creditKnowledgeImpact(ctx, t, spent.spent);
       }
@@ -1669,7 +1669,7 @@ function runOpcode(ctx, action, eff) {
         const authored = evalNum(ctx, action, eff.amount, 0, t);
         const bonus = ctx.combatExpansionVersion === 2 ? Blight.ashenBlightMartialPoise(ctx, action.source,
           { cycleKey: String(action.source?.combatOwnerCycle || 0), camp: action.card?.combatProfile?.camp, authoredPoise: authored }) : 0;
-        const amount = Math.ceil((authored + bonus) * multiplier * (ctx.combatExpansionVersion === 2 ? Matchups.stancePressureMultiplier(ctx, action.source, t, action.card) : 1));
+        const amount = Math.ceil((authored + bonus) * multiplier * (ctx.combatExpansionVersion === 2 ? Matchups.stancePressureMultiplier(ctx, action.source, t, action.card, row?.receipt?.counterAttack) : 1));
         // Impact doubles only the Poise that passed the target's Poise guard.
         const guardBefore = Number.isFinite(t?.poiseGuard) ? Math.max(0, Math.floor(t.poiseGuard)) : 0;
         if (ctx.ratingsRules && action.meta?.combatCounterReaction) {

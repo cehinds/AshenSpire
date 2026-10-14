@@ -4,6 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { attackHitPreview, previewCardAttackHit, resolveAttackHit, effectiveEvasion } from '../src/engine/stanceHit.js';
 import { contentBundle } from '../src/content/index.js';
+import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { createCombat, dispatch, previewCardHit } from '../src/engine/combat.js';
 import { createRng } from '../src/engine/rng.js';
 import { resolveCombatRatings } from '../src/model/combatRatings.js';
@@ -57,7 +58,7 @@ test('eligible miss consumes one Evasion and publishes outcome before damage', (
   assert.equal(f.events.at(-1).type, 'attackMissed'); assert.equal(f.events.at(-1).label, 'Missed');
 });
 test('active Evade failures are identified; Sweep precision grows per extra target', () => {
-  const f = fixture(); f.target.combatStance = { maneuver: 'evade' };
+  const f = fixture(); f.target.combatStance = { maneuver: 'evade' }; f.target.statuses.evade = { stacks: 1 };
   resolveAttackHit(f.ctx, f.source, f.target, f.carrier);
   assert.equal(f.events.at(-1).label, 'Hit — Evade Failed');
   f.carrier.combatProfile.maneuver = 'sweep';
@@ -223,4 +224,84 @@ test('selected preview never adds entry Precision to an already committed Counte
   f.carrier.counterReturnAttack = true; f.carrier.combatProfile.maneuver = 'counter';
   assert.deepEqual(previewCardAttackHit(f.ctx, f.source, f.target, f.carrier), attackHitPreview(f.ctx, f.source, f.target, f.carrier));
   assert.deepEqual(f.source.statuses, {}); assert.equal(f.draws(), 0);
+});
+
+test('prepared v2 Evade charges contribute rating and authored bonus and consume once per shared check', () => {
+  for (const die of [1, 20]) {
+    const f = fixture(die);
+    f.target.combatEvade = JSON.parse(JSON.stringify({ charges: 2, bonus: 4, advantage: false, disadvantage: false, expiresOnOwnerCycle: 1 }));
+    const before = structuredClone(f.target);
+    const preview = attackHitPreview(f.ctx, f.source, f.target, f.carrier);
+    assert.equal(preview.evasion, 7, 'one prepared Evade adds three plus its authored four');
+    assert.equal(preview.need, 15);
+    assert.equal(preview.evadeAttempted, true);
+    assert.equal(f.draws(), 0);
+    assert.deepEqual(f.target, before, 'inspection never spends preparation');
+    const hit = resolveAttackHit(f.ctx, f.source, f.target, f.carrier);
+    assert.equal(hit.hit, die === 20);
+    assert.equal(hit.evasion, preview.evasion);
+    assert.equal(f.target.combatEvade.charges, 1, 'a committed hit or miss spends one charge');
+    assert.equal(f.draws(), 1);
+  }
+});
+test('unavailable prepared Evade cannot lend its bonus or roll mode', () => {
+  for (const prepared of [
+    { charges: 0, bonus: 4, advantage: true },
+    { charges: 1, bonus: 4, advantage: true, whileStatus: 'prone' },
+    { charges: 1, bonus: 4, advantage: true, expiresOnOwnerCycle: 0 },
+  ]) {
+    const f = fixture(); f.target.combatEvade = prepared;
+    const preview = attackHitPreview(f.ctx, f.source, f.target, f.carrier);
+    assert.equal(preview.evasion, 0); assert.equal(preview.mode, 'normal');
+    assert.equal(preview.evadeAttempted, false);
+    resolveAttackHit(f.ctx, f.source, f.target, f.carrier);
+    assert.deepEqual(f.target.combatEvade, prepared);
+  }
+});
+test('Target, range failure and control suppression preserve prepared charges and next-Evade mode', () => {
+  for (const reason of ['target', 'range', 'control']) {
+    const f = fixture();
+    f.target.combatEvade = { charges: 1, bonus: 4, advantage: true };
+    f.target.nextEvadeMode = { advantage: true };
+    const options = { evadeDisabled: reason === 'control' };
+    if (reason === 'target') { f.carrier.combatProfile.camp = 'spell'; f.carrier.tags = ['target']; }
+    if (reason === 'range') f.target.combatStance = { range: 'ranged' };
+    const hit = resolveAttackHit(f.ctx, f.source, f.target, f.carrier, options);
+    assert.equal(hit.evadeAttempted, false);
+    assert.equal(f.target.combatEvade.charges, 1);
+    assert.ok(f.target.nextEvadeMode);
+  }
+});
+test('expanded dodgeRoll opcode prepares an Evade used by the shared accuracy check', () => {
+  const f = fixture();
+  executeAction(f.ctx, { effect: { op: 'dodgeRoll', target: 'self' }, source: f.target, owner: f.target, target: f.target,
+    card: { combatProfile: { evade: { charges: 1, bonus: 2, advantage: true } } }, meta: {} });
+  assert.equal(f.target.combatEvade.charges, 1);
+  const hit = resolveAttackHit(f.ctx, f.source, f.target, f.carrier);
+  assert.equal(hit.evasion, 5);
+  assert.equal(hit.mode, 'disadvantage');
+  assert.equal(f.target.combatEvade.charges, 0);
+  assert.equal(f.draws(), 2);
+  assert.equal(attackHitPreview(f.ctx, f.source, f.target, f.carrier).mode, 'normal');
+});
+
+test('restoring a valid v2 snapshot retains a usable prepared Evade', () => {
+  const ctx = createCombat({ registries, rng: createRng(5), combatExpansionVersion: 2,
+    ratingsRules: resolveCombatRatings({}, contentBundle), enemyIds: ['wanderingSoldier'],
+    player: { classId: 'reaver', maxHp: 100, hp: 100, maxMana: 10, mana: 10, maxStamina: 10, stamina: 10,
+      energyMax: 10, drawPerTurn: 1, deck: [] } });
+  const enemy = ctx.enemies[0];
+  enemy.evasion = 0; enemy.statuses = {};
+  enemy.combatEvade = { charges: 1, bonus: 4, advantage: true, disadvantage: false, expiresOnOwnerCycle: (enemy.combatOwnerCycle || 0) + 1 };
+  const snapshot = serializeCombatSnapshot(ctx);
+  const loaded = restoreCombatSnapshot({ registries, rng: createRng(5, ctx.rng.getCounters()), snapshot });
+  const target = loaded.enemies[0];
+  const carrier = { combatProfile: { camp: 'physical', maneuver: 'attack', range: 'ranged' } };
+  const preview = attackHitPreview(loaded, loaded.player, target, carrier);
+  assert.equal(preview.evasion, 7);
+  assert.equal(preview.evadeAttempted, true);
+  assert.equal(preview.mode, 'disadvantage');
+  loaded.rng.int = () => 20;
+  assert.equal(resolveAttackHit(loaded, loaded.player, target, carrier).hit, true);
+  assert.equal(target.combatEvade.charges, 0);
 });

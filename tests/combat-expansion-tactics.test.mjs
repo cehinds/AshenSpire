@@ -206,7 +206,7 @@ test('active Grounded preserves Counter against fully blocked Lightning', () => 
   assert.equal(completeTacticalAction(f.ctx, f.source, f.target, incoming, receipt).length, 1);
 });
 
-test('guaranteed direct-action prevention consumes one Invulnerability, preserves Evade and admits independent pressure', () => {
+test('Invulnerability follows the shared Evade attempt and admits independent pressure', () => {
   const f = fixture(); prepare(f); prepareCombatEvade(f.ctx, f.target);
   f.target.statuses.invulnerability = { stacks: 2 };
   const incoming = carrier();
@@ -216,7 +216,9 @@ test('guaranteed direct-action prevention consumes one Invulnerability, preserve
   assert.equal(receipt.avoided, true); assert.equal(receipt.connected, false);
   assert.equal(receipt.avoidance.prevention, 'invulnerability');
   assert.equal(f.target.statuses.invulnerability.stacks, 1);
-  assert.equal(f.target.combatEvade.charges, 1); assert.equal(f.rolls.length, 1, 'one universal d20 roll, no distance or prepared-Evade roll');
+  assert.equal(receipt.counterAttack.evadeAttempted, true, 'the shared Accuracy check attempted prepared Evade before prevention');
+  assert.equal(f.target.combatEvade.charges, 0, 'the attempted charge is spent even when later Invulnerability prevents the landed action');
+  assert.equal(f.rolls.length, 1, 'one universal d20 roll, no distance or prepared-Evade roll');
   recordTacticalStatus(receipt, { acceptedBuildup: 4 });
   assert.equal(receipt.statusAccepted, 4);
   assert.deepEqual(completeTacticalAction(f.ctx, f.source, f.target, incoming, receipt), []);

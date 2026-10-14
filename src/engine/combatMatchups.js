@@ -435,18 +435,19 @@ function preparedCounter(ctx, target, carrier, options) {
 }
 
 /** One matchup matrix for HP, Poise and Ward; callers apply it only to landed contacts. */
-export function stancePressureMultiplier(ctx, source, target, carrier) {
+export function stancePressureMultiplier(ctx, source, target, carrier, hitReceipt = null) {
   if (!combatExpansionEnabled(ctx)) return 1;
-  return stanceMultiplier(ctx, target, normalizedProfile(carrier));
+  const hit = hitReceipt || attackHitPreview(ctx, source, target, carrier, { evadeDisabled: restrictions(ctx, target, {}).evadeDisabled });
+  return stanceMultiplier(ctx, target, normalizedProfile(carrier), hit);
 }
-function stanceMultiplier(ctx, target, profile) {
+function stanceMultiplier(ctx, target, profile, hit) {
   const stance = stanceOf(target?.combatStance);
   const incoming = profile.maneuver === 'counter' ? { maneuver: 'counter' } : stanceOf({ combatProfile: profile });
-  if (!stance || !incoming) return 1;
+  if (!incoming) return 1;
   const cfg = stanceRulesFor(ctx);
-  if (incoming.maneuver === 'smash' && ['defend', 'casting', 'evade'].includes(stance.maneuver)) return cfg.smashMultiplier;
-  if (incoming.maneuver === 'counter' && ['attack', 'smash', 'evade'].includes(stance.maneuver)) return cfg.counterMultiplier;
-  if (incoming.maneuver === 'sweep' && stance.maneuver === 'counter') return cfg.sweepCounterMultiplier;
+  if (incoming.maneuver === 'smash' && (['defend', 'casting'].includes(stance?.maneuver) || (stance?.maneuver === 'evade' && hit?.evadeAttempted))) return cfg.smashMultiplier;
+  if (incoming.maneuver === 'counter' && (['attack', 'smash'].includes(stance?.maneuver) || hit?.evadeAttempted)) return cfg.counterMultiplier;
+  if (incoming.maneuver === 'sweep' && stance?.maneuver === 'counter') return cfg.sweepCounterMultiplier;
   return 1;
 }
 
@@ -480,7 +481,8 @@ export function previewTacticalAction(ctx, source, target, carrier, contacts = [
   const covered = profiles.map((profile, index) => counterCoverageMatches(counter?.coverage, profile, profile.effect || 'damage')
     && (profile.effect === 'status' ? number(contacts[index].pressure ?? contacts[index].amount) > 0 : number(contacts[index].amount) > 0));
   const eligible = !!counter && covered.some(Boolean);
-  const multiplier = profiles.map(profile => stanceMultiplier(ctx, target, profile));
+  const counterAttack = attackHitPreview(ctx, source, target, carrier, { additionalTargets: options.additionalTargets ?? carrier?.additionalTargets ?? 0, evadeDisabled: control.evadeDisabled });
+  const multiplier = profiles.map(profile => stanceMultiplier(ctx, target, profile, counterAttack));
   const weighted = contacts.map((contact, index) => contact.effect === 'status' ? 0 : number(contact.amount) * multiplier[index]);
   const rawTotal = weighted.reduce((n, amount) => n + amount, 0);
   const statusPercent = Array.isArray(options.contactModifiers) && rawTotal > 0
@@ -491,7 +493,6 @@ export function previewTacticalAction(ctx, source, target, carrier, contacts = [
   const amount = Math.max(0, Math.ceil(stanceAmount * Math.max(0, 1 + statusPercent / 100) - 1e-9));
   const amounts = allocateTacticalDamage(amount, contacts.map(contact => contact.effect === 'status' ? 0 : number(contact.amount)));
   const profile = normalizedProfile(carrier);
-  const counterAttack = attackHitPreview(ctx, source, target, carrier, { additionalTargets: options.additionalTargets ?? carrier?.additionalTargets ?? 0, evadeDisabled: control.evadeDisabled });
   // Pressure-only Counters still threaten a target. Their Evade DC uses the
   // total return pressure when there is no HP damage, never HP plus pressure.
   const avoidanceAmount = counterAttack && !(amount > 0)

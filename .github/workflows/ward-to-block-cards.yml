@@ -42,7 +42,7 @@ jobs:
         id: tests
         continue-on-error: true
         run: >-
-          node --test tests/stance-lifecycle.test.mjs tests/stance-hit.test.mjs tests/stance-protection.test.mjs tests/stance-evade-mode.test.mjs tests/stance-hybrid-counter.test.mjs tests/stance-hud.test.mjs tests/stance-hostile-spell.test.mjs tests/stance-round-pricing.test.mjs tests/coop-hit-preview.test.mjs
+          node --test tests/stance-lifecycle.test.mjs tests/stance-hit.test.mjs tests/stance-protection.test.mjs tests/stance-evade-mode.test.mjs tests/stance-evade-matchup.test.mjs tests/stance-hybrid-counter.test.mjs tests/stance-hud.test.mjs tests/stance-hostile-spell.test.mjs tests/stance-round-pricing.test.mjs tests/coop-hit-preview.test.mjs
           tests/combat-callouts.test.mjs tests/selected-weapon-defense-receipts.test.mjs
           tests/combat-expansion-protection.test.mjs
           tests/spell-defense.test.mjs

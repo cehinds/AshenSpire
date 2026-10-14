@@ -68,11 +68,11 @@ Before resolving effects, Smash and Counter receive +3 Poise damage only if they
 | Attacker | Target stance | HP/Poise/Ward multiplier |
 | --- | --- | --- |
 | Smash | Defense, Spell, landed hit against Evade | 1.5× |
-| Counter | Attack, Smash, landed hit against Evade | 1.5× |
+| Counter | Attack, Smash, failed eligible Evade attempt | 1.5× |
 | Sweep | Counter | 2× |
 | Otherwise | Any | 1× |
 
-The hit threshold is capped so Evasion cannot exceed 95% avoidance. The any-natural-20 rule also applies when two dice are rolled. Preview enumerates the same 20 or 400 outcomes as resolution. Out-of-range and explicit Target bypass are resolved before rolling. Evasion decays by one at round start.
+The hit threshold is capped so Evasion cannot exceed 95% avoidance. The any-natural-20 rule also applies when two dice are rolled. Preview enumerates the same 20 or 400 outcomes as resolution. Out-of-range and explicit Target bypass are resolved before rolling. Evasion decays by one at round start. A prepared Evade retained in a version-two save or created by the dodgeRoll opcode contributes one Evade's rating plus its authored bonus; one charge is spent on an eligible committed check, including a hit. The committed hit receipt preserves Evade eligibility for HP and pressure after that charge is spent.
 
 ## Preview and rendering
 
