@@ -1492,7 +1492,7 @@ export function cardNeedsEnemyTargetNow(combat, cardInstanceId) {
 // after it. So a once-a-turn (limitPerTurn) preparing discount one queued card took is gone for the next (SPEC §4.11).
 // Charges the player already holds are not spent here: the queue's claims already share those out.
 function preparingPreview(combat, inst, def, targetId, { afterQueued = false } = {}) {
-  const clone = F.candidateState(combat);
+  const clone = F.candidateState(combat, { detached: true });
   if (clone.pendingAbilityDiscard) { clone.queue = []; return clone; }
   // A reaction choice waiting on the live fight (a round reaction is priced while its offer is open) would hold the
   // preview's trigger effects back (beforeReactionAction); the detached preview prices the card as it will play.
@@ -2235,7 +2235,7 @@ export function getEntity(combat, id) {
  */
 export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
   if (combat.enemyKnowledge && !combat._knowledgePreview) {
-    const visible = F.candidateState(combat);
+    const visible = F.candidateState(combat, { detached: true });
     visible._knowledgePreview = true;
     for (const enemy of visible.enemies) if (!knowledgeIntentProjection(visible, enemy)?.exact) {
       enemy.intent = { kind: 'unknown', moveId: null };

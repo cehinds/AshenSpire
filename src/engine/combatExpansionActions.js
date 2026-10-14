@@ -41,7 +41,7 @@ export function enqueueExpandedAction(ctx, actions, { source, target, carrier, c
   // Prefix evaluation uses detached entities so a live predicate sees earlier
   // grants/removals while beforePlay keeps its original immutable snapshot.
   // Prefix chance streams are detached; execution pays those same draws once.
-  const prefix = Foundation.candidateState(ctx);
+  const prefix = Foundation.candidateState(ctx, { detached: true });
   prefix.queue = []; prefix._buffer = null;
   prefix.emit = () => {}; prefix.enqueue = () => {};
   const prefixEntity = entity => entity && expansionEntity(prefix, { id: entity.id, playerId: ctx.playerIdForEntity?.(entity) });
@@ -139,7 +139,7 @@ export function beginExpandedAction(ctx, group, source) {
 
 /** Same once-rounded typed/Ward budget as execution, without spending a roll. */
 export function previewExpandedActions(ctx, actions, options) {
-  const local = Foundation.candidateState(ctx);
+  const local = Foundation.candidateState(ctx, { detached: true });
   local._expansionPreview = true;
   local.queue = []; local.emit = () => {}; local.enqueue = () => {};
   const entity = original => original && expansionEntity(local, { id: original.id, playerId: ctx.playerIdForEntity?.(original) });

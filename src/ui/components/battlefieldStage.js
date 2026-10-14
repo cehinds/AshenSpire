@@ -169,15 +169,20 @@ export function wireBattlefieldStage(field, model, layoutState = {}) {
   const labelMeasure = document.createElement('canvas').getContext('2d');
   function fitLabels() {
     if (!labelMeasure) return;
+    // The zoom is read once, before any label's font size is written: each
+    // uiZoom() is a computed-style read that flushes the pending style change,
+    // and this loop made three per label (a phone profile put the reads at
+    // about as much time as the fitting itself).
+    const zoom = uiZoom();
     for (const label of field.querySelectorAll('.nm .ls-label, .intent-stance')) {
       const box = label.closest('.nm, .intent');
-      const width = box.clientWidth - 8 / uiZoom();
+      const width = box.clientWidth - 8 / zoom;
       if (width <= 0) continue;
       const style = getComputedStyle(label);
-      const maximum = (label.closest('.player.context-selected') && window.innerWidth > 320 ? 12 : 11) / uiZoom();
+      const maximum = (label.closest('.player.context-selected') && window.innerWidth > 320 ? 12 : 11) / zoom;
       labelMeasure.font = `${style.fontWeight} ${maximum}px ${style.fontFamily}`;
       const measured = labelMeasure.measureText(label.textContent).width;
-      label.style.fontSize = `${Math.max(8 / uiZoom(), maximum * Math.min(1, width / Math.max(1, measured)))}px`;
+      label.style.fontSize = `${Math.max(8 / zoom, maximum * Math.min(1, width / Math.max(1, measured)))}px`;
     }
   }
   function readRestingHand() {
