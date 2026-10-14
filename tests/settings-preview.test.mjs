@@ -86,6 +86,43 @@ test('the fold saves through the pane\'s onChange', () => {
   assert.equal(changes.length, 1, 'an unchanged fold is not saved again');
 });
 
+test('a folded preview does no card preparation until opened, including its error fallback', () => {
+  let slotReads = 0;
+  let toggle;
+  const slot = { dataset: { settingsPreviewCard: SETTINGS_PREVIEW_CARD_ID }, firstChild: null,
+    set textContent(value) { this.message = value; this.firstChild = { textContent: value }; } };
+  const strip = { open: false, querySelector: () => { slotReads++; return slot; }, addEventListener: (_, handler) => { toggle = handler; } };
+  const settings = {};
+  const changes = [];
+  mountSettingsPreview({ querySelector: () => strip }, settings, (change) => changes.push(change));
+  assert.equal(slotReads, 0, 'folded strip does not even inspect the card slot');
+  strip.open = true;
+  toggle();
+  assert.equal(slotReads, 1);
+  // Node has no document. Card preparation is attempted only now and its
+  // existing graceful failure path reports that unavailable renderer.
+  assert.match(slot.message, /Card sample unavailable:/);
+  assert.deepEqual(changes, [{ settingsPreviewOpen: true }]);
+  strip.open = false;
+  toggle();
+  assert.equal(slotReads, 1, 'closing the strip does no card work');
+  strip.open = true;
+  toggle();
+  assert.equal(slotReads, 2);
+  assert.equal(slot.firstChild.textContent, slot.message, 'the filled slot is preserved on reopening');
+});
+
+test('a persisted open preview prepares its card immediately without changing its saved fold', () => {
+  let reads = 0;
+  const slot = { firstChild: { existingCard: true } };
+  const strip = { open: true, querySelector: () => { reads++; return slot; }, addEventListener() {} };
+  const changes = [];
+  mountSettingsPreview({ querySelector: () => strip }, { settingsPreviewOpen: true }, (change) => changes.push(change));
+  assert.equal(reads, 1);
+  assert.deepEqual(changes, []);
+  assert.equal(slot.firstChild.existingCard, true);
+});
+
 test('settings.js wires the strip in a few lines, and ui.css styles it under the settings host', () => {
   const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
   assert.match(screen, /settingsPreviewShown\(cat, selected\) \? settingsPreviewHtml\(settings\)/);
