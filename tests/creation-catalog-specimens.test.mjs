@@ -21,23 +21,20 @@ test('catalog mounts all new registered production specimens with working inspec
   }
   const browser = host.querySelector('#folio-creation-feat-browser .cc-feat-browser');
   const buttons = browser.querySelectorAll('.cc-feat-choices .cc-choice-tile');
-  assert.equal(buttons.length, feats.length, 'all canonical generic feats are inspectable');
+  assert.equal(buttons.length, feats.length, 'all canonical generic feats remain visible');
   buttons.at(-1).click();
-  assert.equal(browser.dataset.inspectedFeat, feats.at(-1).id);
+  assert.equal(browser.dataset.inspectedFeat, undefined);
   assert.equal(browser.dataset.birthFeatAllowance, '0');
-  assert.equal(browser.querySelector('.cc-feat-detail-title').textContent, feats.at(-1).name);
-  assert.equal(browser.querySelector('.cc-feat-detail-description').textContent, feats.at(-1).description);
-  assert.equal(buttons.at(-1).getAttribute('aria-pressed'), 'true');
-  assert.ok(buttons.at(-1).querySelector('.cc-feat-tile-status'), 'compact tile retains its progression status cue');
-  assert.equal(buttons.at(-1).querySelector('.cc-feat-level-requirement'), null, 'full level requirements belong to the inspector');
-  assert.equal(browser.querySelector('.cc-feat-detail').dataset.locked, 'true', 'locked birth feats remain inspectable');
-  assert.match(browser.querySelector('.cc-feat-detail .cc-feat-level-copy').textContent, /2/);
+  assert.ok(buttons.every(button => button.disabled));
+  assert.ok(buttons.every(button => button.getAttribute('aria-pressed') === 'false'));
+  assert.ok(buttons.at(-1).querySelector('.cc-feat-tile-requirement'), 'locked tiles show the real progression requirement');
+  assert.equal(browser.querySelector('.cc-feat-detail').hidden, true, 'no empty inspector occupies the locked-only page');
   for (const groupId of ['class', 'skill']) {
     browser.querySelector(`.cc-feat-group-filter[data-feat-group="${groupId}"]`).click();
     assert.equal(browser.dataset.featGroup, groupId);
     assert.ok(browser.querySelectorAll('.cc-feat-choices .cc-choice-tile').length > 0);
     assert.ok(browser.querySelector('.cc-feat-choices .cc-feat-tile-status'), `${groupId} has compact progression status`);
-    assert.ok(browser.querySelector('.cc-feat-detail .cc-feat-level-requirement'), `${groupId} inspector uses the real progression requirement`);
+    assert.ok(browser.querySelector('.cc-feat-choices .cc-feat-tile-requirement'), `${groupId} exposes the lock reason without selection`);
   }
   const tileFolio = host.querySelector('#folio-creation-choice-tile');
   tileFolio.querySelector('button').click();

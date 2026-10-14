@@ -43,6 +43,52 @@ worker/<topic>/<task> (local) ──► worker/<topic>/<task> (origin) ──►
 - UI changes also include the [component catalog](docs/component-catalog.html) in the PR/merge summary. Update the catalog and its visual miniature when a component ID, model, renderer, composition, or reuse surface changes.
 - Balance number changes cite the reasoning. There is no win-rate target (owner rulings D1 and D16 in docs/FINISH.md), and every balance number stays configurable.
 
+### Feature branch previews
+
+Every feature change must have a working test-build link and screenshots near
+the top of the feature branch's root README, directly after `# AshenSpire`.
+Keep this feature-specific evidence inside one removable block:
+
+```markdown
+<!-- feature-preview:start -->
+## Feature preview — <feature name>
+
+[Play this feature build](https://cehinds.github.io/AshenSpire/branches/<branch>/latest/)
+
+<Brief description connecting the change to the build and captures.>
+
+| Mobile | Desktop | Wide | Tablet |
+| --- | --- | --- | --- |
+| ![Mobile: describe change](docs/preview/features/<feature>/mobile.png) | ![Desktop: describe change](docs/preview/features/<feature>/desktop.png) | ![Wide: describe change](docs/preview/features/<feature>/wide.png) | ![Tablet: describe change](docs/preview/features/<feature>/tablet.png) |
+<!-- feature-preview:end -->
+```
+
+Use the exact branch spelling in the URL. An open PR into `dev` publishes the
+branch build; a draft PR is allowed when needed to publish a preview before
+review readiness. For `Feature/updateCharacterCreation`, the link is
+`https://cehinds.github.io/AshenSpire/branches/Feature/updateCharacterCreation/latest/`.
+Verify the hosted build actually loads the change before presenting the link as
+working. Refresh the block and captures when the feature changes.
+
+Capture and inspect real mobile, desktop, wide and tablet views of the change.
+Track their files in `docs/preview/features/<feature>/` (this feature uses
+`docs/preview/features/update-character-creation/`). Include a capture record
+there naming the feature, source commit, full hosted build version, capture
+date, viewport sizes and playable URL so the images are associated with the
+change. Explicitly stage only intended files with `git add -f -- <paths>`.
+The existing release screenshot gallery remains separate and must still be
+verified under [README screenshots](#readme-screenshots).
+
+Run `node tools/feature-preview.mjs --check` to validate marker pairing and
+placement; manually verify the link, four captures and capture record.
+**Before merging into `dev`, remove the feature block and its feature artifact
+folder.** Run `node tools/feature-preview.mjs --remove`, then remove only
+`docs/preview/features/<feature>/` for the completed feature. The helper refuses
+malformed or duplicate markers and strips only the marked block; release
+screenshots, AI disclosures and `readme-sync` blocks must remain intact. Keep
+this shared protocol and helper after promotion. This is mandatory merge
+cleanup, even when the feature's preview is useful during review.
+
 ### README screenshots
 
 Keep the README concise: play/download table, release screenshots, feature
@@ -93,8 +139,9 @@ session and agent working here. The session that opens a PR takes it all the
 way: through review, into `dev`, then promoted to `test` (rule 6). The owner merges only to
 `release` and `main`.
 
-1. **Open it ready for review, never as a draft.** Say in the body what is
-   unverified rather than hiding it behind draft status.
+1. **Open it ready for review.** A draft is allowed to publish the feature
+   preview described above; mark it ready once reviewable. Say in the body what
+   is unverified rather than hiding it behind draft status.
 2. **Have it reviewed before you call it done.** Spawn a review agent, or
    message another live session, with the PR number; verify each finding
    against the diff, fix what stands, push, and note the review's outcome in
