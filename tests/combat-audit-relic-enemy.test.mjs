@@ -1,10 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { runRelicEnemyAudit } from '../tools/combat-audit/relic-enemy.mjs';
+import { loadAuditRuntime } from '../tools/combat-audit/runtime.mjs';
 
 for (const mode of ['native', 'bundled']) {
   test(`relic, status, enemy and encounter audit has explicit coverage under ${mode} loading`, async () => {
+    const { registries } = await loadAuditRuntime(mode);
+    const statusCount = registries.statuses.all().length;
     const report = await runRelicEnemyAudit(mode);
+    assert.match(report.sourceRevision, /^[0-9a-f]{40}$/);
+    assert.equal(report.loader, mode);
     assert.deepEqual(report.counts, {
       relics: 73, relicPropertyCarriers: 62, relicRules: 68, relicBranchesCovered: 68,
       relicConditionalFalseControls: 33, relicGatedBranches: report.counts.relicGatedBranches,
@@ -17,7 +22,7 @@ for (const mode of ['native', 'bundled']) {
       statusModifierConsumerDeclarations: 20, statusModifierConsumerOutcomesCovered: 20,
       statusResistanceBranches: 3, statusResistanceBranchesCovered: 3, statusControlBranches: 4, statusControlBranchesCovered: 4,
       statusTaggedVulnerabilityBranches: 3, statusTaggedVulnerabilityCovered: 3,
-      statuses: 69, statusesCovered: 69, enemies: 33, enemyMoves: 103, enemyMovesCovered: 103,
+      statuses: statusCount, statusesCovered: statusCount, enemies: 33, enemyMoves: 103, enemyMovesCovered: 103,
       enemyReactionMoves: 2, enemyReactionScenariosCovered: 4, encounters: 35, classes: 4, encounterClassScenarios: 140, encounterClassCovered: 140,
     });
     assert.equal(report.relics.missing.length, 0);
@@ -50,7 +55,7 @@ for (const mode of ['native', 'bundled']) {
       'poiseThresholdAdd', 'powerCostReduction', 'powerCostReduction', 'restDenied', 'restHealMult', 'restHealMult',
       'restHealMult', 'revealUnknown', 'runeGainMult', 'runeGainMult', 'runeGainMult', 'runeGainMult',
     ]);
-    assert.equal(report.statuses.applyAndDecayCovered, 69);
+    assert.equal(report.statuses.applyAndDecayCovered, statusCount);
     assert.equal(report.statuses.modifierOutcomesCovered, report.statuses.modifierDeclarations);
     assert.equal(report.statuses.procBranchesCovered, 3);
     assert.equal(report.statuses.resistanceBranchesCovered, 3);
@@ -79,5 +84,9 @@ for (const mode of ['native', 'bundled']) {
     assert.ok(report.enemies.reactionRows.filter(row => row.moveId === 'bindingRiposte').every(row => row.reactionDamageTargetIds.every(id => id === 'player')));
     assert.equal(report.enemies.missing.length, 0);
     assert.equal(report.encounters.missing.length, 0);
+    assert.ok(report.encounters.rows.every(row => row.result === 'covered' && row.victory === 'victory' && row.victorySettled
+      && row.targetProbes.length === row.enemyCount && row.targetProbes.every(probe => probe.cardId === 'crawlingShot' && probe.targetPlan
+        && probe.paid && probe.energyPaid > 0 && probe.staminaPaid > 0 && probe.hitRange === 'reach' && probe.damage > 0
+        && probe.hpAfter < probe.hpBefore && probe.died)));
   });
 }
