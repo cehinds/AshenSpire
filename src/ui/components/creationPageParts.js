@@ -151,13 +151,14 @@ export function createCreationFeatBrowser({ feats = [], groups = null, selectedI
   function inspect(id, { notify = true } = {}) {
     const active = allRows().filter(entry => entry.group.id === currentGroup);
     const entry = active.find(value => value.key === id || value.row.id === id) || allRows().find(value => value.key === id || value.row.id === id);
-    if (!entry) return false;
+    if (!entry || entry.row.locked) return false;
     if (entry.group.id !== currentGroup) {
       currentGroup = entry.group.id;
       renderFilters();
       renderTiles();
     }
     const { row, key } = entry;
+    detail.hidden = false;
     inspectedKey = key;
     node.dataset.inspectedFeat = row.id;
     node.dataset.inspectedFeatKey = key;
@@ -201,8 +202,12 @@ export function createCreationFeatBrowser({ feats = [], groups = null, selectedI
       const tile = creationChoiceTile({ id: row.id, title: row.name,
         description: labels.shortDescriptions?.[row.id] || (FEAT_ICONS[row.id] ? t(`creation.feats.summary.${row.id}`) : String(row.description || '').split(/(?<=[.!?])\s/)[0]),
         art: creationFeatEmblem(row.id), onChoose: () => inspect(key),
-        attrs: { 'aria-controls': labels.detailId || null, dataset: { feat: row.id, featKey: key, featGroup: group.id, locked: String(!!row.locked) } },
+        attrs: { disabled: !!row.locked, 'aria-disabled': String(!!row.locked), 'aria-controls': labels.detailId || null, dataset: { feat: row.id, featKey: key, featGroup: group.id, locked: String(!!row.locked) } },
       });
+      if (row.locked) {
+        tile.disabled = true;
+        tile.querySelector('.cc-choice-copy').append(el('span', { class: 'cc-feat-tile-requirement', text: requirement(row) || labels.locked || '', dataset: { creationPart: 'lock-reason' } }));
+      }
       markUiComponent(tile, UI.creationFeatTile);
       tile.style.setProperty('--cc-choice-order', String(tiles.size * 2));
       if (row.requiredLevel !== undefined) {
@@ -232,12 +237,22 @@ export function createCreationFeatBrowser({ feats = [], groups = null, selectedI
           peer.setAttribute('aria-pressed', String(selected));
         }
         renderTiles();
-        const candidate = group.rows.find(row => keyOf(row, group) === inspectedKey) || group.rows[0];
+        const candidate = group.rows.find(row => !row.locked && keyOf(row, group) === inspectedKey) || group.rows.find(row => !row.locked);
         if (candidate) inspect(keyOf(candidate, group));
-        else { inspectedKey = null; detailBody.replaceChildren(); delete node.dataset.inspectedFeat; delete node.dataset.inspectedFeatKey; }
+        else clearInspection();
       });
       filters.append(button);
     }
+  }
+  function clearInspection() {
+    detail.hidden = true;
+    inspectedKey = null;
+    detailBody.replaceChildren();
+    delete detail.dataset.feat;
+    delete detail.dataset.locked;
+    delete node.dataset.inspectedFeat;
+    delete node.dataset.inspectedFeatKey;
+    node.dataset.detailOpen = 'false';
   }
   function setGroups(next, { selectedId: nextSelected = null } = {}) {
     const oldGroup = currentGroup, oldKey = inspectedKey;
@@ -246,12 +261,13 @@ export function createCreationFeatBrowser({ feats = [], groups = null, selectedI
     currentGroup = entries.some(group => group.id === oldGroup) ? oldGroup : entries[0]?.id || null;
     renderFilters();
     renderTiles();
+    node.dataset.featGroup = currentGroup;
     const group = entries.find(entry => entry.id === currentGroup);
     const candidate = nextSelected || oldKey;
     const currentRows = group?.rows || [];
-    const row = currentRows.find(row => keyOf(row, group) === candidate || row.id === candidate) || currentRows[0];
+    const row = currentRows.find(row => !row.locked && (keyOf(row, group) === candidate || row.id === candidate)) || currentRows.find(row => !row.locked);
     if (row) inspect(keyOf(row, group), { notify: false });
-    else { inspectedKey = null; detailBody.replaceChildren(); delete node.dataset.inspectedFeat; delete node.dataset.inspectedFeatKey; }
+    else clearInspection();
     return node;
   }
   if (labels.detailId) detail.id = labels.detailId;
@@ -263,7 +279,10 @@ export function createCreationFeatBrowser({ feats = [], groups = null, selectedI
     currentGroup = 'character';
     renderFilters();
     renderTiles();
-    inspect(selectedId || entries[0].rows[0]?.id, { notify: false });
+    node.dataset.featGroup = currentGroup;
+    const initial = entries[0].rows.find(row => !row.locked && row.id === selectedId) || entries[0].rows.find(row => !row.locked);
+    if (initial) inspect(initial.id, { notify: false });
+    else clearInspection();
   }
   return node;
 }

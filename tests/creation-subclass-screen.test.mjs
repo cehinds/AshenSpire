@@ -144,3 +144,29 @@ for (const [classId, abilityStep] of [['reaver', 'maneuvers'], ['starseer', 'spe
     assert.equal(selector.querySelectorAll('.cc-step-count').length, 1);
   }));
 }
+
+test('actual spell selector refuses a newly mastery-locked card through stale button and inspector while legal spells remain choosable', () => creationDom(async (app, dom) => {
+  const source = { ...createRegistries(contentBundle) };
+  const { mountCustomize } = await import('../src/ui/screens/customize.js');
+  mountCustomize(app, { registries: source, defaultSeedString: 'GOLDBOUGH', shotPose: { classId: 'starseer' }, onBack() {}, onStart() {} });
+  app.querySelector('#cz-tab-spells').click();
+  const choices = [...app.querySelectorAll('#cz-spell-choices .cc-ability-choice')];
+  const locked = choices.find(choice => !source.balance.progression.lessons['item:magic-focus'].includes(choice.dataset.cardId));
+  assert.ok(locked, 'fixture exercises a class offer subject to mastery');
+  const id = locked.dataset.cardId;
+  source.classMastery = source.classMastery.filter(row => row.ref !== id);
+  source.classMastery.push({ classId: 'starseer', kind: 'cards', ref: id, level: 99 });
+  const choose = locked.querySelector('.cc-ability-choose');
+  choose.click();
+  choose.dispatchEvent(new dom.Event('click'));
+  locked.querySelector('.card').dispatchEvent(new dom.Event('cardinspectionselect'));
+  assert.equal(choose.getAttribute('aria-pressed'), 'false');
+  assert.equal(locked.querySelector('.card').classList.contains('selected'), false);
+  const legal = choices.find(choice => source.balance.progression.lessons['item:magic-focus'].includes(choice.dataset.cardId));
+  legal.querySelector('.cc-ability-choose').click();
+  assert.equal(legal.querySelector('.cc-ability-choose').getAttribute('aria-pressed'), 'true');
+  assert.equal(choose.getAttribute('aria-pressed'), 'false');
+  app.querySelector('#cz-tab-feats').click();
+  app.querySelector('#cz-tab-spells').click();
+  assert.equal(app.querySelector(`#cz-spell-choices [data-card-id="${id}"]`), null, 'the authoritative refreshed pool omits mastery-locked spells');
+}));
