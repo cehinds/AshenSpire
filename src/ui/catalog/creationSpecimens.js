@@ -74,7 +74,7 @@ export function mountCreationPartSpecimens({ host, registries }) {
   const groups = creationFeatBrowserGroups(registries, run);
   const steps = creationFlowCategories(registries, 'starseer').map(id => ({ id, label: t(`creation.category.${id}`) }));
   const navigation = createCreationStepNavigation({ steps, currentId: 'class',
-    labels: { title: t('creation.categories'), allSteps: t('creation.nav.allSteps'), currentStep: (step, index, total) => t('creation.step.progress', { index: index + 1, count: total, category: step.label }) },
+    labels: { title: t('creation.categories'), currentStep: (step, index, total) => t('creation.step.progress', { index: index + 1, count: total, category: step.label }) },
     onSelect: id => navigation.update(id),
   });
   // A standalone navigation needs the vertical room the live page gives it.

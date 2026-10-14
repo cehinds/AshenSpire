@@ -6326,13 +6326,14 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
  .customize.cc-design-workspace .as-railed[data-cat-nav="selector"] > .as-catnav-toggle { display:flex!important; min-height:var(--cc-control-floor); }
  .cc-design-workspace .as-catnav-toggle .as-catnav-face { white-space:normal; font-size:var(--cc-body-font); }
 }
-/* The compact kit selector and its current-step status share one row. */
-.cc-design-workspace .cc-creation-current-step { display:none; }
-.customize.cc-design-workspace .as-railed.as-railed[data-cat-nav="selector"] { grid-template-columns:minmax(0,1.25fr) minmax(128px,1fr); grid-template-rows:auto minmax(0,1fr); gap:0 12px; }
-.customize.cc-design-workspace .as-railed[data-cat-nav="selector"] > .cc-creation-current-step { display:flex; align-items:center; grid-column:1; grid-row:1; min-height:var(--cc-control-floor); margin:10px 0 10px var(--modal-inset); padding:8px 12px; color:var(--cc-copy); background:#163e2b; border:1px solid var(--cc-emerald); border-radius:4px; font-size:var(--cc-body-font); line-height:1.35; visibility:visible; }
-.customize.cc-design-workspace .as-railed[data-cat-nav="selector"] > .as-catnav-toggle { grid-column:2; grid-row:1; margin:10px var(--modal-inset) 10px 0; min-height:var(--cc-control-floor); }
-.customize.cc-design-workspace .as-railed[data-cat-nav="selector"] > .cz-pane { grid-column:1 / -1; grid-row:2; }
-.customize.cc-design-workspace .as-railed[data-cat-nav="selector"][data-cat-open="true"] > .as-rail { grid-column:1 / -1; }
+/* Compact creation presents its current section and progress in one button. */
+.customize.cc-design-workspace .as-railed.as-railed[data-cat-nav="selector"] { grid-template-columns:minmax(0,1fr); grid-template-rows:auto minmax(0,1fr); gap:0; }
+.customize.cc-design-workspace .as-railed[data-cat-nav="selector"] > .as-catnav-toggle { grid-column:1; grid-row:1; margin:10px var(--modal-inset); min-height:var(--cc-control-floor); }
+.customize.cc-design-workspace .as-railed[data-cat-nav="selector"] > .cz-pane { grid-column:1; grid-row:2; }
+.customize.cc-design-workspace .as-railed[data-cat-nav="selector"][data-cat-open="true"] > .as-rail { grid-column:1; }
+:is(.cc-design-workspace, .cc-step-navigation) .as-catnav-face { display:flex; align-items:center; gap:calc(12px / var(--ui-zoom,1)); min-width:0; width:100%; }
+:is(.cc-design-workspace, .cc-step-navigation) .cc-step-name { flex:1 1 auto; white-space:nowrap; font-size:calc(20px / var(--ui-zoom,1)); }
+:is(.cc-design-workspace, .cc-step-navigation) .cc-step-count { flex:none; white-space:nowrap; color:var(--cc-copy-muted); font-size:calc(16px / var(--ui-zoom,1)); }
 .cc-design-workspace .cc-review-edit { min-width:var(--cc-control-floor); min-height:var(--cc-control-floor); }
 /* OptionCard image rules reserve a small illustration slot; decorative kit
    trim belongs to the complete surface and must never inherit that slot. */
@@ -6495,7 +6496,6 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 .customize.cc-design-workspace .cz-tab { flex-direction:column; align-items:stretch; gap:calc(4px / var(--ui-zoom,1)); }
 .customize.cc-design-workspace .cz-tab > .rail-label { flex:none; white-space:nowrap; overflow:visible; text-overflow:clip; font-size:calc(20px / var(--ui-zoom,1)); }
 .customize.cc-design-workspace .cz-tab-value { flex:none; text-align:start; font-size:calc(13px / var(--ui-zoom,1)); }
-.customize.cc-design-workspace :is(.as-catnav-face, .cc-creation-current-step) { white-space:nowrap; font-size:calc(20px / var(--ui-zoom,1)); }
 .customize.cc-design-workspace .modal-head-id h2 { font-size:calc(28px / var(--ui-zoom,1)); line-height:1.2; white-space:nowrap; letter-spacing:0; }
 .cc-design-workspace :is(.cc-page-title, .cc-feat-detail-title), .cc-page-parts .cc-page-title { font-size:calc(32px / var(--ui-zoom,1)); }
 .cc-design-workspace :is(.as-title-m, .cz-stage > h3, #cz-subclass-traits > h3, .cc-equipment-header > b), .cc-page-parts .cc-panel-heading .as-title-m { font-size:calc(28px / var(--ui-zoom,1)); }
@@ -6504,17 +6504,20 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
 @media(max-width:600px) {
  .customize.cc-design-workspace :is(#cz-classes, .cc-class-row-specimen) > .cz-class:not(.unfolded) { grid-template-columns:calc(48px / var(--ui-zoom,1)) minmax(0,1fr); column-gap:calc(10px / var(--ui-zoom,1)); }
  .customize.cc-design-workspace :is(#cz-classes, .cc-class-row-specimen) > .cz-class:not(.unfolded) > .og > * { width:calc(40px / var(--ui-zoom,1)); height:calc(40px / var(--ui-zoom,1)); }
- .customize.cc-design-workspace .as-railed.as-railed[data-cat-nav="selector"] { grid-template-columns:minmax(0,1fr); grid-template-rows:auto auto minmax(0,1fr); }
- .customize.cc-design-workspace .as-railed[data-cat-nav="selector"] > .cc-creation-current-step { grid-column:1; grid-row:1; margin:10px var(--modal-inset) 0; font-size:calc(20px / var(--ui-zoom,1)); }
- .customize.cc-design-workspace .as-railed[data-cat-nav="selector"] > .as-catnav-toggle { grid-column:1; grid-row:2; margin:8px var(--modal-inset) 10px; }
- .customize.cc-design-workspace .as-railed[data-cat-nav="selector"] > .cz-pane { grid-row:3; }
  .cc-design-workspace :is(.cc-page-title, .cc-feat-detail-title), .cc-page-parts .cc-page-title { font-size:calc(28px / var(--ui-zoom,1)); }
  .customize.cc-design-workspace .modal-head-id h2 { font-size:calc(24px / var(--ui-zoom,1)); }
 }
-/* Phone creation keeps its complete title above the two toolbar groups. */
+/* Removing view tools leaves one clear title/actions row on the phone. */
 @media(max-width:600px) {
- .customize.cc-design-workspace .modal-head { display:grid; grid-template-columns:minmax(0,1fr) auto; grid-template-rows:auto auto; gap:calc(8px / var(--ui-zoom,1)); }
- .customize.cc-design-workspace .modal-head > .modal-head-id { grid-column:1 / -1; grid-row:1; }
- .customize.cc-design-workspace .modal-head > .cz-head-view-tools { grid-column:1; grid-row:2; justify-self:start; margin-inline-start:0; }
- .customize.cc-design-workspace .modal-head > .modal-head-actions { grid-column:2; grid-row:2; justify-self:end; align-self:center; gap:calc(6px / var(--ui-zoom,1)); }
+ .customize.cc-design-workspace .modal-head { display:flex; align-items:center; gap:calc(8px / var(--ui-zoom,1)); }
+ .customize.cc-design-workspace .modal-head > .modal-head-actions { align-self:center; gap:calc(6px / var(--ui-zoom,1)); }
+}
+/* A tablet rail leaves less room for the same class summary than a wide
+   desktop. Reserve the six-line budget when the choice collection is narrow,
+   so wrapped ratings/gear and the native relic target remain inside every tile. */
+.customize.cc-design-workspace :is(#cz-classes, .cc-class-row-specimen) { container-type:inline-size; container-name:creation-class-choices; }
+@media(min-width:601px) {
+ @container creation-class-choices (max-width:800px) {
+  .customize .cz-class.unfolded:has(> .cc-concise-class) { height:calc(max(28vh,220px) / var(--ui-zoom,1)); }
+ }
 }

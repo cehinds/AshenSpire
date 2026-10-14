@@ -10097,6 +10097,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "creation.nav.stepCount",
+    "extends": "",
+    "short": "{index} of {count}",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "creation.nav.allSteps",
     "extends": "",
     "short": "All steps",
