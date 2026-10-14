@@ -47,6 +47,7 @@ import { applyGraceRefill } from './encounters.js';
 import { orderedReturn } from '../model/deckRules.js';
 import { reviveTokenFor, reviveHp, adjustCount } from '../model/consumables.js';
 import { reconcileWardBlock, wardBlockReceipt } from '../model/blockPresentation.js';
+import { spellDefenseSplit } from '../model/spellDefense.js';
 import { allowAbilityOnce, grantAbilityCharge, recordAbilityOffering, requestAbilityDiscard } from './abilityRiders.js';
 import * as Matchups from './combatMatchups.js';
 import { typedDefenseAmount } from './combatExpansionEquipment.js';
@@ -283,6 +284,8 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
  */
 export function gainBarrier(ctx, entity, base, card = null) {
   if (!entity?.alive) return 0;
+  const split = computeSpellDefenseGain(ctx, entity, base, card);
+  if (split) return gainSpellDefenseAmount(ctx, entity, split, card);
   return gainBarrierAmount(ctx, entity, computeBlockGain(ctx, entity, base, card), card);
 }
 
@@ -713,14 +716,39 @@ export function addArcaneExposure(ctx, source, target, { school, attempted = nul
 
 /**
  * computeBlockGain(ctx, entity, base) → final integer block gain:
- * base + per-stack 'blockAdd' modifiers, × 'blockGainedMult' modifiers,
+ * base + the eligible rating bonus + per-stack 'blockAdd' modifiers,
+ * × 'blockGainedMult' modifiers (DR scales spell Block, PR scales spell Ward),
  * floored, min 0 (SPEC §4.2). Pure. Cap NOT applied here.
  */
 export function computeBlockGain(ctx, entity, base, card = null) {
+  const split = computeSpellDefenseGain(ctx, entity, base, card);
+  if (split) return split.block + split.ward;
   let amt = base + Ratings.cardRatingBonus(ctx, entity, card, 'block', base) + statuses.getAdd(ctx, entity, 'blockAdd');
   amt *= statuses.getMult(ctx, entity, 'blockGainedMult');
   amt = Math.floor(amt);
   return amt < 0 ? 0 : amt;
+}
+
+/**
+ * The exact parts both execution and live card previews consume. Split the
+ * base protection once, add DR only to Block and PR only to Ward, then apply
+ * guard modifiers while retaining the old once-floored total.
+ */
+export function computeSpellDefenseGain(ctx, entity, base, card = null) {
+  if (ctx.combatExpansionVersion !== 2 || !spellDefenseSplit(card, base)) return null;
+  const add = statuses.getAdd(ctx, entity, 'blockAdd');
+  const parts = spellDefenseSplit(card, base + add);
+  const bonus = Ratings.spellDefenseRatingBonuses(ctx, entity, card, base);
+  const nominalBlock = parts.block + bonus.block;
+  const nominalWard = parts.ward + bonus.ward;
+  const total = Math.max(0, Math.floor((base + add + bonus.block + bonus.ward)
+    * statuses.getMult(ctx, entity, 'blockGainedMult')));
+  if (!(total > 0)) return { block: 0, ward: 0 };
+  // A negative Block add may exceed the base, but must still reduce ratings.
+  // Allocate the final total over the remaining nominal portions in that case.
+  if (!(nominalBlock + nominalWard > 0)) return spellDefenseSplit(card, total);
+  const [block, ward] = allocateInteger(total, [nominalBlock, nominalWard]);
+  return { block, ward };
 }
 
 /**
@@ -757,9 +785,21 @@ export function gainMeterGuard(ctx, entity, meter, base, card = null) {
   return amt;
 }
 
+// Both protection opcodes share the spell-defense allocation. Rating and
+// status modifiers were computed on the total; neither portion reapplies them.
+function gainSpellDefenseAmount(ctx, entity, split, card) {
+  const block = split.block > 0 ? gainBlockAmount(ctx, entity, split.block, card, false) : 0;
+  const ward = split.ward > 0 ? gainBarrierAmount(ctx, entity, split.ward, card, true) : 0;
+  return block + ward;
+}
+
 /** gainBlock — mutating block gain with 'blockCap' modifier honored. */
 export function gainBlock(ctx, entity, base, card = null) {
   if (!entity.alive) return 0;
+  if (ctx.combatExpansionVersion === 2) {
+    const split = computeSpellDefenseGain(ctx, entity, base, card);
+    if (split) return gainSpellDefenseAmount(ctx, entity, split, card);
+  }
   if (ctx.combatExpansionVersion === 2 && card?.combatProfile) {
     const share = contactMagicShare(ctx, { ...card.combatProfile, ...(Number.isFinite(card.magicShare) ? { magicShare: card.magicShare } : {}) });
     // A whole magic guard is Barrier (refilling Ward first). A split guard gives its magic share that way and the rest as Block.
@@ -1326,6 +1366,8 @@ function runOpcode(ctx, action, eff) {
     }
     case 'wardDamage': {
       for (const t of resolveTargets(ctx, action, eff.target)) {
+        const row = action.meta?.expansionGroup?.targets[ctx.playerIdForEntity?.(t) || t.id];
+        if (action.card?.counterReturnAttack && row?.receipt?.avoided) continue;
         const spent = Control.spendPersistentWard(ctx, t,
         evalNum(ctx, action, eff.amount, 0, t) * (!action.card?.combatWardEdgeApplied && action.card?.combatProfile?.camp === 'spell' && action.card?.combatProfile?.damageType === 'piercing' ? 1.25 : 1), { sourceId: action.source?.id });
         trackOwnPressure(ctx, action, t, 'wardDealt', spent.spent);
@@ -1559,6 +1601,8 @@ function runOpcode(ctx, action, eff) {
     }
     case 'poiseDamage': {
       for (const t of resolveTargets(ctx, action, eff.target)) {
+        const row = action.meta?.expansionGroup?.targets[ctx.playerIdForEntity?.(t) || t.id];
+        if (action.card?.counterReturnAttack && row?.receipt?.avoided) continue;
         const multiplier = Matchups.matchupPoiseMultiplier(ctx, action.source, t, action.card);
         const authored = evalNum(ctx, action, eff.amount, 0, t);
         const bonus = ctx.combatExpansionVersion === 2 ? Blight.ashenBlightMartialPoise(ctx, action.source,
@@ -1567,7 +1611,9 @@ function runOpcode(ctx, action, eff) {
         // Impact doubles only the Poise that passed the target's Poise guard.
         const guardBefore = Number.isFinite(t?.poiseGuard) ? Math.max(0, Math.floor(t.poiseGuard)) : 0;
         if (ctx.ratingsRules && action.meta?.combatCounterReaction) {
-          Ratings.applyRatingImpact(ctx, action.source, t, action.card, amount, { triggerHit: false });
+          // An explicit return Poise payload owns the Poise lane even on a spell Counter.
+          const impactCarrier = action.card?.counterReturnAttack ? { damageSchool: 'physical' } : action.card;
+          Ratings.applyRatingImpact(ctx, action.source, t, impactCarrier, amount, { triggerHit: false, cardId: action.card?.cardId });
         } else dealPoiseDamage(ctx, t, amount, { knowledgeMatchup: multiplier > 1 });
         const guardAfter = Number.isFinite(t?.poiseGuard) ? Math.max(0, Math.floor(t.poiseGuard)) : 0;
         trackOwnPressure(ctx, action, t, 'poiseDealt', Math.max(0, amount - (guardBefore - guardAfter)));

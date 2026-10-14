@@ -1,6 +1,8 @@
 // Tactical profiles share the ordinary action queue. No card IDs or UI state.
 import { combatMatchups, combatExpansionMatchups } from '../content/combatMatchups.js';
 import * as Avoidance from './combatAvoidance.js';
+import { counterAttackPreview, resolveCounterAttack } from './counterReturn.js';
+import { RANGES } from '../model/combatRanges.js';
 import { creditKnowledgeBenefit } from './enemyKnowledge.js';
 import { enqueueExpandedAction } from './combatExpansionActions.js';
 import { breakPersistentWard } from './combatStatusControl.js';
@@ -434,7 +436,15 @@ export function previewTacticalAction(ctx, source, target, carrier, contacts = [
   const amount = Math.max(0, Math.ceil(stanceAmount * Math.max(0, 1 + statusPercent / 100) - 1e-9));
   const amounts = allocateTacticalDamage(amount, contacts.map(contact => contact.effect === 'status' ? 0 : number(contact.amount)));
   const profile = normalizedProfile(carrier);
-  const avoidance = Avoidance.previewAvoidance(ctx, target, profile, amount, { evadeDisabled: control.evadeDisabled, evadeBonus: options.evadeBonus || 0 });
+  const counterAttack = counterAttackPreview(ctx, source, target, carrier);
+  // Pressure-only Counters still threaten a target. Their Evade DC uses the
+  // total return pressure when there is no HP damage, never HP plus pressure.
+  const avoidanceAmount = counterAttack && !(amount > 0)
+    ? contacts.reduce((sum, contact) => sum + (contact.effect === 'impact' ? number(contact.pressure) : 0), 0) : amount;
+  const avoidance = Avoidance.previewAvoidance(ctx, target, profile, avoidanceAmount,
+    { evadeDisabled: control.evadeDisabled, evadeBonus: options.evadeBonus || 0 });
+  if (counterAttack) avoidance.chance = 100 - counterAttack.hitChance
+    + counterAttack.hitChance * avoidance.chance / 100;
   const guardBefore = number(target?.block) - Math.min(number(target?.block), number(target?.wardBlock));
   const pierce = profiles.some((p, i) => p.camp === 'physical' && amounts[i] > 0
     && (cfg.damageAliases[p.damageType] === 'piercing' || p.damageType === 'piercing'));
@@ -447,6 +457,7 @@ export function previewTacticalAction(ctx, source, target, carrier, contacts = [
     smash: profiles.some(p => p.maneuver === 'smash') && target?.combatStance?.maneuver === 'defend',
     counterEligible: eligible, counter: eligible ? structuredClone(counter) : null, covered,
     counterDisabledAtStart: Boolean(control.counterDisabled), avoidance,
+    ...(counterAttack ? { counterAttack, avoidanceAmount } : {}),
     hpLoss: 0, blocked: 0, wardResisted: 0, statusAccepted: 0, statusResisted: 0,
     avoided: false, connected: false, completed: false };
 }
@@ -462,9 +473,22 @@ export function beginTacticalAction(ctx, source, target, carrier, contacts = [],
       sourceId: target.id, targetId: source?.id, serial: receipt.counter.serial });
   }
   const control = restrictions(ctx, target, options);
-  receipt.avoidance = Avoidance.resolveAvoidance(ctx, source, target, receipt.profile, receipt.amount,
-    { evadeDisabled: control.evadeDisabled, evadeBonus: options.evadeBonus || 0 });
+  const counterAttack = resolveCounterAttack(ctx, source, target, carrier);
+  if (counterAttack) receipt.counterAttack = counterAttack;
+  receipt.avoidance = counterAttack && !counterAttack.hit
+    ? { resolved: true, avoided: true, distance: null, evade: null, reason: counterAttack.missReason,
+      chance: receipt.avoidance.chance }
+    : Avoidance.resolveAvoidance(ctx, source, target, receipt.profile, receipt.avoidanceAmount ?? receipt.amount,
+      { evadeDisabled: control.evadeDisabled, evadeBonus: options.evadeBonus || 0 });
   receipt.avoided = receipt.avoidance.avoided;
+  if (counterAttack) {
+    ctx.emit?.('combatCounterAccuracyResolved', { sourceId: source?.id, targetId: target?.id,
+      ...seats(ctx, source, target), ...counterAttack });
+    if (receipt.avoided) ctx.emit?.('combatCounterMissed', { sourceId: source?.id, targetId: target?.id,
+      ...seats(ctx, source, target), range: counterAttack.range, requiredRange: counterAttack.requiredRange,
+      reason: counterAttack.missReason || receipt.avoidance.prevention
+        || (receipt.avoidance.distance?.success ? 'distance' : 'evade') });
+  }
   receipt.connected = receipt.amount > 0 && !receipt.avoided;
   const groundedStatus = ctx.combatExpansionRules?.statuses?.interactions?.grounded || 'grounded';
   if (receipt.connected && receipt.profiles.some(p => p.school === 'lightning' || p.damageType === 'lightning')
@@ -545,10 +569,14 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
   const enqueue = effect => {
     const action = { effect, source: target, owner: target, target: source,
       card: { ...receipt.counter.carrier, combatReaction: true, skipRatingBonus: true,
+        counterReturnAttack: true,
+        counterRequiredRange: receipt.profiles.filter((profile, index) => receipt.covered[index])
+          .reduce((range, profile) => RANGES.indexOf(profile.range) > RANGES.indexOf(range) ? profile.range : range,
+            receipt.profile?.range || 'melee'),
         reactionDepth: Math.max(receipt.counter.carrier.reactionDepth || 0, carrier?.reactionDepth || 0),
         ...(effect.op === 'wardDamage' ? { combatWardEdgeApplied: true } : {}) }, meta: { combatCounterReaction: true, enemyKnowledgeActionSerial: source.knowledgeAction?.serial } };
     queue.push(action);
-    if (!(ctx.reactionRulesVersion >= 1)) ctx.enqueue?.(action);
+    // Returns resolve as one action-wide attack even when optional reactions are off.
   };
   completeGuardBreak(ctx, source, target, carrier, receipt);
   const counter = receipt.counter;
@@ -606,7 +634,7 @@ export function completeTacticalAction(ctx, source, target, carrier, receipt, op
   if (payload.hp > 0) enqueue({ op: 'damage', amount: payload.hp });
   if (payload.poise > 0) enqueue({ op: 'poiseDamage', amount: payload.poise });
   if (payload.ward > 0) enqueue({ op: 'wardDamage', amount: payload.ward });
-  if (ctx.reactionRulesVersion >= 1 && queue.length) {
+  if (queue.length) {
     const group = enqueueExpandedAction(ctx, queue, { source: target, target: source, carrier: queue[0].card });
     if (group) group.counterReturn = event;
   } else ctx.emit?.('combatCounterTriggered', event);

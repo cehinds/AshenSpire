@@ -160,17 +160,17 @@ test('a physical-camp card whose damage type shares 1 hits Barrier and Ward, not
   assert.equal(r.preview, r.committed);
 });
 
-test('a scepter defend of 5 gives Barrier 2 and Block 3 on full Ward, and Ward 2 and Block 3 on empty Ward', () => {
+test('a default spell defend splits 5 into Ward 3 and Block 2 regardless of damage magicShare', () => {
   const guard = { tags: ['camp:spell', 'maneuver:defend'], skipRatingBonus: true, magicShare: 0.4, physicalDamageType: 'blunt',
     combatProfile: { camp: 'spell', maneuver: 'defend', damageType: 'arcane', reach: 'near', targeting: 'single' } };
-  for (const [ward, wardAfter, barrier] of [[3, 3, 2], [0, 2, 0]]) {
+  for (const [ward, wardAfter, barrier] of [[3, 3, 3], [0, 3, 0]]) {
     const { combat } = fixture({ ward: 0 });
     const player = combat.player;
     player.persistentWard = { max: 3, value: ward };
     player.barrier = 0; player.block = 0;
     const gained = gainBlock(combat, player, 5, guard);
     assert.equal(gained, 5, 'the guard lays down 5 in all');
-    assert.equal(player.block, 3, 'Block 3');
+    assert.equal(player.block, 2, 'Block 2');
     assert.equal(player.persistentWard.value, wardAfter, `Ward ${ward} becomes ${wardAfter}`);
     assert.equal(player.barrier, barrier, `Barrier ${barrier}`);
   }

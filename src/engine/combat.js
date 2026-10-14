@@ -2449,11 +2449,17 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
         break;
       }
       case 'block': {
-        entry.value = A.computeBlockGain(combat, p, evalPreview(combat, action, eff.amount, primary) + (action.meta.abilityChargeBlock || 0), action.card);
+        const base = evalPreview(combat, action, eff.amount, primary) + (action.meta.abilityChargeBlock || 0);
+        entry.defenseSplit = A.computeSpellDefenseGain(combat, p, base, action.card);
+        entry.value = entry.defenseSplit ? entry.defenseSplit.block + entry.defenseSplit.ward
+          : A.computeBlockGain(combat, p, base, action.card);
         break;
       }
       case 'gainBarrier': {
-        entry.value = A.computeBlockGain(combat, p, evalPreview(combat, action, eff.amount, primary) + (action.meta.abilityChargeBlock || 0), action.card);
+        const base = evalPreview(combat, action, eff.amount, primary) + (action.meta.abilityChargeBlock || 0);
+        entry.defenseSplit = A.computeSpellDefenseGain(combat, p, base, action.card);
+        entry.value = entry.defenseSplit ? entry.defenseSplit.block + entry.defenseSplit.ward
+          : A.computeBlockGain(combat, p, base, action.card);
         break;
       }
       case 'gainPoise':
@@ -2507,6 +2513,10 @@ export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
       if (token) {
         entry.token = token;
         tokens[token] = entry.faceValue ?? entry.value;
+        if (entry.defenseSplit) {
+          tokens[`${token}.block`] = entry.defenseSplit.block;
+          tokens[`${token}.ward`] = entry.defenseSplit.ward;
+        }
         if (eff.op === 'damage' && entry.hitDamages?.length > 1
           && entry.hitDamages.some(amount => amount !== entry.hitDamages[0])) {
           const hitsToken = tokenByIndexField.get(`${authoredIndex}:hits`);
