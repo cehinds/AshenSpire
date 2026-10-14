@@ -959,12 +959,16 @@ export function auditEncounterClassMatrix() {
       if (endTurnSettled && !combat.result) {
         const alive = combat.enemies.filter(enemy => enemy.alive);
         for (let i = 0; i < alive.length; i++) {
-          const enemy = alive[i]; enemy.hp = 1; enemy.block = 0;
+          const enemy = alive[i];
+          const enemyStanceBeforeFixture = structuredClone(enemy.combatStance ?? null);
+          enemy.hp = 1; enemy.block = 0;
           enemy.evasion = 0;
           const instanceId = `audit:${encounter.id}:${classId}:${i}`;
           const hpBefore = enemy.hp;
           primeNextD20Hit(combat);
           setAuditHand(combat, [{ cardId: 'crawlingShot', instanceId }]);
+          const enemyStanceAtDispatch = structuredClone(enemy.combatStance ?? null);
+          const enemyStanceUnchangedBeforeDispatch = JSON.stringify(enemyStanceBeforeFixture) === JSON.stringify(enemyStanceAtDispatch);
           const probeStart = combat.eventLog.length;
           api.dispatch(combat, { type: 'playCard', cardInstanceId: instanceId, targetId: enemy.id });
           settleAuditChoices(api, combat);
@@ -980,10 +984,11 @@ export function auditEncounterClassMatrix() {
           const paid = !!payment;
           if (!enemy.alive) targetDeaths++;
           targetProbes.push({ targetId: enemy.id, enemyId: enemy.enemyId, cardId: 'crawlingShot', targetPlan: !!targetPlan,
+            enemyStanceBeforeFixture, enemyStanceAtDispatch, enemyStanceUnchangedBeforeDispatch,
             paid, energyPaid: payment?.energySpent || 0, staminaPaid: payment?.staminaSpent || 0,
             hitRange: hitReceipt?.range || null, requiredRange: hitReceipt?.requiredRange || null,
             damage: damageReceipt?.amount || 0, hpBefore, hpAfter: enemy.hp, died: !enemy.alive });
-          if (!(paidTargetPlan && attackResolved && paid && enemy.hp < hpBefore)) throw new Error(`Encounter probe ${encounter.id}/${classId}/${enemy.id} lacked a paid, ranged target hit`);
+          if (!(paidTargetPlan && attackResolved && paid && enemy.hp < hpBefore && enemyStanceUnchangedBeforeDispatch)) throw new Error(`Encounter probe ${encounter.id}/${classId}/${enemy.id} lacked a paid ranged hit with its authored enemy stance intact`);
           if (combat.result) break;
         }
       }
