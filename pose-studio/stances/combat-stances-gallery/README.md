@@ -18,11 +18,107 @@ Reproduce with `tools/combat-stances-gallery.mjs`: provide QA_BUILD_URL, QA_EXPE
 
 ![Smash phase review](reaver/clips/smash/review.gif)
 
+<details>
+<summary>Reaver — in-game stance screenshots</summary>
+
+These full combat UI screenshots are staged pose reviews, not paid card outcomes.
+
+### Ready
+
+![Reaver Ready — staged in-game combat screenshot](reaver/ready-combat.jpg)
+
+### Offensive
+
+![Reaver Offensive — staged in-game combat screenshot](reaver/offensive-combat.jpg)
+
+### Defensive
+
+![Reaver Defensive — staged in-game combat screenshot](reaver/defensive-combat.jpg)
+
+### Casting
+
+![Reaver Casting — staged in-game combat screenshot](reaver/casting-combat.jpg)
+
+### Counter
+
+Existing source art: lower raster detail / style variation
+
+![Reaver Counter — staged in-game combat screenshot](reaver/counter-combat.jpg)
+
+### Sweep
+
+Existing source art: lower raster detail / style variation
+
+![Reaver Sweep — staged in-game combat screenshot](reaver/sweep-combat.jpg)
+
+### Smash
+
+Current starter kit depicted
+
+![Reaver Smash — staged in-game combat screenshot](reaver/smash-combat.jpg)
+
+### Evade
+
+![Reaver Evade — staged in-game combat screenshot](reaver/evade-combat.jpg)
+
+</details>
+
+
 ## Rogue
 
 ![Native in-engine held layers](rogue/held-contact-sheet.webp)
 
 ![Smash phase review](rogue/clips/smash/review.gif)
+
+<details>
+<summary>Rogue — in-game stance screenshots</summary>
+
+These full combat UI screenshots are staged pose reviews, not paid card outcomes.
+
+### Ready
+
+Legacy weapon depiction: paired daggers; buckler absent
+
+![Rogue Ready — staged in-game combat screenshot](rogue/ready-combat.jpg)
+
+### Offensive
+
+Legacy weapon depiction: paired daggers; buckler absent
+
+![Rogue Offensive — staged in-game combat screenshot](rogue/offensive-combat.jpg)
+
+### Defensive
+
+Legacy weapon depiction: paired daggers; buckler absent
+
+![Rogue Defensive — staged in-game combat screenshot](rogue/defensive-combat.jpg)
+
+### Casting
+
+Legacy weapon depiction: paired daggers; buckler absent
+
+![Rogue Casting — staged in-game combat screenshot](rogue/casting-combat.jpg)
+
+### Counter
+
+Legacy weapon depiction: paired daggers; buckler absent
+
+![Rogue Counter — staged in-game combat screenshot](rogue/counter-combat.jpg)
+
+### Sweep
+
+Legacy weapon depiction: paired daggers; buckler absent
+
+![Rogue Sweep — staged in-game combat screenshot](rogue/sweep-combat.jpg)
+
+### Smash
+
+Current starter kit depicted
+
+![Rogue Smash — staged in-game combat screenshot](rogue/smash-combat.jpg)
+
+</details>
+
 
 ## Starseer
 
@@ -30,11 +126,105 @@ Reproduce with `tools/combat-stances-gallery.mjs`: provide QA_BUILD_URL, QA_EXPE
 
 ![Smash phase review](starseer/clips/smash/review.gif)
 
+<details>
+<summary>Starseer — in-game stance screenshots</summary>
+
+These full combat UI screenshots are staged pose reviews, not paid card outcomes.
+
+### Ready
+
+![Starseer Ready — staged in-game combat screenshot](starseer/ready-combat.jpg)
+
+### Offensive
+
+![Starseer Offensive — staged in-game combat screenshot](starseer/offensive-combat.jpg)
+
+### Defensive
+
+![Starseer Defensive — staged in-game combat screenshot](starseer/defensive-combat.jpg)
+
+### Casting
+
+Legacy weapon depiction: staff and book
+
+![Starseer Casting — staged in-game combat screenshot](starseer/casting-combat.jpg)
+
+### Counter
+
+Existing source art: lower raster detail / style variation
+
+![Starseer Counter — staged in-game combat screenshot](starseer/counter-combat.jpg)
+
+### Sweep
+
+Existing source art: lower raster detail / style variation
+
+![Starseer Sweep — staged in-game combat screenshot](starseer/sweep-combat.jpg)
+
+### Smash
+
+Current starter kit depicted
+
+![Starseer Smash — staged in-game combat screenshot](starseer/smash-combat.jpg)
+
+</details>
+
+
 ## Herald
 
 ![Native in-engine held layers](herald/held-contact-sheet.webp)
 
 ![Smash phase review](herald/clips/smash/review.gif)
+
+<details>
+<summary>Herald — in-game stance screenshots</summary>
+
+These full combat UI screenshots are staged pose reviews, not paid card outcomes.
+
+### Ready
+
+Legacy weapon depiction: unarmed/book; bone sceptre absent
+
+![Herald Ready — staged in-game combat screenshot](herald/ready-combat.jpg)
+
+### Offensive
+
+Legacy weapon depiction: unarmed/book; bone sceptre absent
+
+![Herald Offensive — staged in-game combat screenshot](herald/offensive-combat.jpg)
+
+### Defensive
+
+Legacy weapon depiction: unarmed/book; bone sceptre absent
+
+![Herald Defensive — staged in-game combat screenshot](herald/defensive-combat.jpg)
+
+### Casting
+
+Legacy weapon depiction: unarmed/book; bone sceptre absent
+
+![Herald Casting — staged in-game combat screenshot](herald/casting-combat.jpg)
+
+### Counter
+
+Legacy weapon depiction: unarmed/book; bone sceptre absent
+
+![Herald Counter — staged in-game combat screenshot](herald/counter-combat.jpg)
+
+### Sweep
+
+Legacy weapon depiction: unarmed/book; bone sceptre absent
+
+![Herald Sweep — staged in-game combat screenshot](herald/sweep-combat.jpg)
+
+### Smash
+
+Current starter kit depicted
+
+![Herald Smash — staged in-game combat screenshot](herald/smash-combat.jpg)
+
+</details>
+
 
 ## All registered sequence previews
 
