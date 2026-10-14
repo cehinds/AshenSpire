@@ -1,4 +1,5 @@
 import { enemyActionPose } from '../../model/enemyActionPose.js';
+import { enemyStanceCategory } from '../../model/enemyStancePose.js';
 import {mountClassRespec,closeClassRespec,isClassRespecOpen,classRespecOptionName} from '../components/classRespec.js';
 import {abilityDraftChoice} from '../../model/abilityDraftReceipts.js';
 import {mountCoopProgressionDoor,gateCoopProgressionControls} from '../components/coopProgressionDoor.js';
@@ -1354,7 +1355,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       if (!dead) box.append(infoEl(e, def.name, def), intentEl(readEnemyIntent(e, def), () => activateEnemyTarget(e.id)));
       const sprite = document.createElement('div');
       sprite.className = 'sprite';
-      sprite.appendChild(enemySprite(def, e));
+      sprite.appendChild(enemySprite(def, { ...e, presentationStance: Object.hasOwn(e, 'presentationStance') ? e.presentationStance : enemyStanceCategory(e.intent) }));
       box.appendChild(sprite);
       const nm = document.createElement('div'); nm.className = 'nm'; nm.textContent = def.name; box.appendChild(nm);
       box.appendChild(meterBars(e, true, (sc.events || []).filter((event) => (
@@ -2200,6 +2201,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           if (enemy) {
             delete enemy.executingCounterIntent;
             enemy.actorIntentRevealed = true; enemy.intent = event.intent;
+            enemy.presentationStance = enemyStanceCategory(event.intent);
             const profile = event.intent?.combatProfile || {};
             enemy.intentPreviews = Object.fromEntries(seats.map(id => [id, { ...event.intent, profile,
               stance: combatIntentStance(event.intent, profile), hidden: false, revealed: true }]));

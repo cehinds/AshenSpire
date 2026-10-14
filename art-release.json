@@ -1,20 +1,20 @@
 {
   "schema": 2,
   "repo": "cehinds/AshenSpire-art",
-  "tag": "hd-assets-v22",
-  "zip": "hd-assets-v22.zip",
-  "sha256": "a9f01bc9d5d40e8a90c932640e491e828b46cd669c3df17cbe9ba9863bffbce8",
+  "tag": "hd-assets-v23",
+  "zip": "hd-assets-v23.zip",
+  "sha256": "9739aec653cf8f2db8aec26d2f40bb2315356330aecabba4279797c5b79a45fc",
   "packs": {
     "high": {
-      "zip": "hd-assets-v22.zip",
-      "sha256": "a9f01bc9d5d40e8a90c932640e491e828b46cd669c3df17cbe9ba9863bffbce8"
+      "zip": "hd-assets-v23.zip",
+      "sha256": "9739aec653cf8f2db8aec26d2f40bb2315356330aecabba4279797c5b79a45fc"
     },
     "light": {
-      "zip": "light-assets-v22.zip",
-      "sha256": "0a37ffd415ce680f509bd306dbf7379d6a82830cf0a9d8d30381a1759adef9cb"
+      "zip": "light-assets-v23.zip",
+      "sha256": "fcc45de4f47902ee40a3c1e4e18266217b0c965a405b0a9bc3d0d60e683780f0"
     },
     "common": {
-      "zip": "common-assets-v22.zip",
+      "zip": "common-assets-v23.zip",
       "sha256": "aac59d9e6f057d876033a823c4f6cc9e2616c01fca6797ec557fe4da58bc80e6"
     }
   }

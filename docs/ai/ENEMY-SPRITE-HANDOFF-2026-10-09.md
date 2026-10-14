@@ -63,6 +63,106 @@ viewer-facing chest and subdued charcoal/copper materials; this replaces the
 historical side-on idle concern below, while owner and physical-phone acceptance
 remain open.
 
+## Persistent stance continuation — October 14
+
+Persistent stance continuation (owner request, October 14): use the actual chosen
+plan's category for held body artwork whether intent is visible or concealed.
+The six visual categories are Smash, Attack, Counter, Sweep, Defend and Preparing.
+Skill, Power and Spell preparation share Preparing; the `prepared` status is not
+a stance. Solo paced snapshots and the co-op host/LAN boundary carry only a
+`presentationStance` enum independently of the intent UI. Exact move IDs, numbers,
+private knowledge and future rolls remain concealed. All 33 per-enemy six-family
+selections received coordinator visual review; physical-phone and owner artwork
+acceptance remain separate.
+
+The preliminary runtime passed 22 focused tests and 48 real browser rendering
+cases: solo and co-op, 1440×1000 and 390×650, each of six body categories with
+hidden and visible intent. Concealed labels remained `?` for every category;
+held category and loaded art were identical across visibility states, with no
+page or non-optional request errors. The co-op driver feeds the real mount with
+`projectLanSnapshot` output, including knowledge-enabled concealed reads; it is
+not a two-device network connection. Evidence:
+`D:/repos/.codex/outputs/enemy-hound-review-20261014/stance-browser.cjs` and
+`stances/report.json`. This proves runtime selection/concealment, not final
+stance artwork quality. That preliminary gallery and its pending counter cells
+are superseded by the published-asset gallery described below.
+
+The counter category now uses the additive asset ID
+`assets/enemy-poses/expansion/<enemyId>/stance-counter.webp`, distinct from all
+four committed counterattack frames. The catalog publishes explicit six-category
+asset IDs for every enemy, and the stage preloads these held assets separately
+from the existing 24-frame clip set. A manifest gate requires every held asset in
+both high and light tiers; it passes with the verified v23 release. The approved temporary
+Hound counter candidate passed idle → counter → defend → counter and hit-return
+checks at desktop and phone size, with unchanged 190px stage height and zero
+page errors. Review driver/results are in
+`D:/repos/.codex/outputs/enemy-hound-review-20261014/hound-counter-preview.cjs`
+and `hound-counter-v2/report.json`. The preliminary 48-case evidence above
+predates publication and is superseded by final release checks below.
+
+The five remaining families were visually reviewed against all 33 complete
+contact sheets. The catalog now records explicit per-enemy selections, including
+clean low-ready `counterattack-02` reuse for Bell Keeper and Stitched King Attack,
+and contained `magic-01` charge for 29 Preparing entries; Soldier, Briar Hermit,
+Living Armor and Eclipse Cantor retain their clear existing Preparing poses.
+Preparing remains one generic category shared by Skill, Power and Spell.
+Coordinator game-size review approved three additional grounded held assets:
+Stitched Hound `stance-smash` and `stance-sweep`, and Blight Hound `stance-smash`.
+Existing Hound attack-03 is airborne; Stitched Hound sweep alternatives face
+right, retain a motion trace, or turn away. Do not freeze those action frames as
+held cues. Together with 33 new Counters, the package adds 36 assets without
+overwriting any of the original 792 frames. Matrix and comparison evidence:
+`D:/repos/.codex/outputs/enemy-hound-review-20261014/reviewed-stance-selection.json`
+and `selection-comparisons/`. The matrix records 28 pre-existing source-edge
+warnings among selected old frames (zero export boundary pixels); these are
+not newly introduced clipping or an automated art acceptance receipt.
+
+### Published stance delivery — October 14
+
+Art PR #25 merged at `b9daa888a83b0cf430fc606e983673778dec1a2d` and release
+run #38626939206 published `hd-assets-v23`. The high/light/common ZIP digests
+were independently matched to GitHub release assets before integration. The
+pin and derived manifest include exactly 36 new IDs; no original pose IDs
+changed. Verified caches contain 7348 high, 7348 light and 146 common files.
+Only the 36 new compact twins were copied into retained `assets-mobile/` after
+checking each published light hash. The actual act1/act2/act3 roster assertion
+covers all 33 enemies and every six-family mapping in both published tiers.
+
+The focused package contains 74 checks across stance/model, original clips,
+Retry, sprite scale, LAN knowledge/privacy, co-op projection/UI, party reaction
+rules, manifest and retained compact hashes. Its first run passed 73/74; the
+sole stale expectation named Hound Preparing `preparing` rather than the
+reviewed `magic-01`. The assertion now follows the explicit catalog, and all
+six stance tests passed on rerun, including null intent, defeat, reduced motion,
+action return and plan changes. All other 68 checks passed in the package run.
+
+Published-asset browser QA passed all 48 solo/co-op × desktop/390×650 × six
+category × hidden/revealed cases. Hidden labels stayed `??`; every held asset
+loaded, with zero page and non-optional request errors. The real renderer gallery
+loaded all 198 cells without draft labels or counter placeholders. The real
+canonical `a2_kennel` fight advanced turn 1→2 and events 12→47 on both viewports;
+both Hounds settled to the actual next planned Attack stance (`attack-02`).
+The four known optional SFX 404s remain: playerHurt, deckShuffle, cardDraw,
+turnStinger. Co-op QA uses the real mount with projected snapshots, not a
+two-device network session. Phone dimensions are browser emulation.
+
+Final drivers and evidence are in
+`D:/repos/.codex/outputs/enemy-hound-review-20261014/`: `stance-browser.cjs`
+and `stances/report.json`, `stance-gallery-final.cjs` and
+`stance-gallery-final/report.json`, `combat-final.cjs` and `combat-final/combat.json`.
+
+Editable projects and contacts for all 33 are delivered under
+`D:/repos/.codex/outputs/enemy-persistent-stances-20261014/authoring`.
+All 33 portable projects passed Workshop schema/image/queue validation. Actual
+Workshop Open project and playback succeeded for Hound (including its three new
+held poses) and Wandering Soldier: six distinct rendered queue frames each,
+no missing artwork or page errors. The localhost editor resolves the historical
+Loading workshop blocker below. Chrome plugin file upload still needs a user
+extension permission, left unchanged; the bundled Playwright QA fallback loaded
+the same projects through the actual editor control. Screenshots and report:
+`workshop-qa/`, driver `workshop-import-qa.cjs` in the runtime evidence directory.
+Physical-phone testing and final owner artwork acceptance remain pending.
+
 ## Historical October 9–10 checkpoint
 
 Owner request: integrate the current package into the game on `dev`, merge what exists, and leave a handoff. Enemy direction is toward the viewer, angled slightly **screen-left**. The player's intended direction is screen-right; player artwork is outside this package.
@@ -79,7 +179,7 @@ Owner request: integrate the current package into the game on `dev`, merge what 
 
 ## Runtime and coverage boundary
 
-`src/ui/enemyExpansionStage.js` registers the shared stage for enemy sprites. Current HP, block and statuses select resting wounded, guard and afflicted art. Defeat remains terminal; reduced motion keeps a static pose. Committed action events select melee, physical ranged, spell and guard sequences through `src/model/enemyActionPose.js`; no future move or hidden-intent data is read.
+`src/ui/enemyExpansionStage.js` registers the shared stage for enemy sprites. In this historical implementation current HP, block and statuses selected resting wounded, guard and afflicted art. The October 14 continuation above adds the public held plan category, which takes priority over those resting status poses. Defeat remains terminal; reduced motion keeps a static pose. Committed action events still select melee, physical ranged, spell and guard sequences through `src/model/enemyActionPose.js`; held-category selection does not expose exact move data or alter committed action timing.
 
 Counterattack, sweep and preparing frames exist in the package. Their use depends on an explicit matching runtime call/family. Do not claim every enemy move now has a bespoke mapping. Status-effect art aliases wounded; guard-hit reuses block. Sleep/prone alias defeated when explicitly requested. Player sprite production remains separate.
 
