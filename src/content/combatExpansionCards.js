@@ -88,7 +88,11 @@ function rewriteTags(def, row, maneuver) {
 // Protection range is separate from the authored offensive range. Only the
 // incoming range filter widens; camp, targeting and trait restrictions stay.
 function withSpellDefenseRange(def) {
-  if (!spellDefenseSplit(def, 0)) return def;
+  const tags = def.cardTags || def.tags || [];
+  const defensiveRole = tags.some(tag => tag === 'maneuver:defend' || tag === 'maneuver:counter');
+  const grants = [...(def.effects || []), ...(def.upgrade?.effects || []), ...(def.comboHook?.effects || [])]
+    .some(effect => ['block', 'gainBarrier', 'gainWard'].includes(effect.op));
+  if (!spellDefenseSplit(def, 0) || (!defensiveRole && !grants)) return def;
   const defenseRange = def.defenseRange || 'ranged';
   const ranges = RANGES.slice(0, RANGES.indexOf(defenseRange) + 1);
   return { ...def, defenseRange,

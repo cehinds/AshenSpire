@@ -1366,6 +1366,8 @@ function runOpcode(ctx, action, eff) {
     }
     case 'wardDamage': {
       for (const t of resolveTargets(ctx, action, eff.target)) {
+        const row = action.meta?.expansionGroup?.targets[ctx.playerIdForEntity?.(t) || t.id];
+        if (action.card?.counterReturnAttack && row?.receipt?.avoided) continue;
         const spent = Control.spendPersistentWard(ctx, t,
         evalNum(ctx, action, eff.amount, 0, t) * (!action.card?.combatWardEdgeApplied && action.card?.combatProfile?.camp === 'spell' && action.card?.combatProfile?.damageType === 'piercing' ? 1.25 : 1), { sourceId: action.source?.id });
         trackOwnPressure(ctx, action, t, 'wardDealt', spent.spent);
@@ -1599,6 +1601,8 @@ function runOpcode(ctx, action, eff) {
     }
     case 'poiseDamage': {
       for (const t of resolveTargets(ctx, action, eff.target)) {
+        const row = action.meta?.expansionGroup?.targets[ctx.playerIdForEntity?.(t) || t.id];
+        if (action.card?.counterReturnAttack && row?.receipt?.avoided) continue;
         const multiplier = Matchups.matchupPoiseMultiplier(ctx, action.source, t, action.card);
         const authored = evalNum(ctx, action, eff.amount, 0, t);
         const bonus = ctx.combatExpansionVersion === 2 ? Blight.ashenBlightMartialPoise(ctx, action.source,
