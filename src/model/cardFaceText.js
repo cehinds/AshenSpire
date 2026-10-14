@@ -311,6 +311,14 @@ function buildLines(def, preview, registries) {
       const restore = num(stanceRulesFor(ctx).defenseRestore);
       unconditional.push({ cat: 'bonus', text: 'Restore ' + restore + ' Poise/Ward' });
     }
+    if (def.evade?.whileStatus) {
+      const conditionKey = `evade:${def.evade.whileStatus}`;
+      groups.set(conditionKey, {
+        prefix: `While ${esc(title(def.evade.whileStatus))}: `,
+        fragments: [{ cat: 'bonus', text: `Prepare one Evade${def.evade.advantage ? ' with Advantage' : ''}` }],
+        sleeping: false,
+      });
+    }
   } else if (def.evade) {
     unconditional.push({ cat: 'bonus', text: `${def.evade.whileStatus ? `While ${esc(title(def.evade.whileStatus))}: ` : ''}Prepare one Evade${def.evade.advantage ? ' with Advantage' : ''}` });
   }

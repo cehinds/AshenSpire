@@ -1,5 +1,4 @@
-import { coopCardHitPreview } from '../models/CoopHitPreviewModel.js';
-import { effectiveEvasion } from '../../engine/stanceHit.js';
+import { coopCardHitPreview, coopCombatantEvasion } from '../models/CoopHitPreviewModel.js';
 import { enemyActionPose } from '../../model/enemyActionPose.js';
 import { enemyStanceCategory } from '../../model/enemyStancePose.js';
 import {mountClassRespec,closeClassRespec,isClassRespecOpen,classRespecOptionName} from '../components/classRespec.js';
@@ -1021,7 +1020,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const frame = app.querySelector('.combatant.enemy[data-eid="' + CSS.escape(enemy.id) + '"]');
       frame?.querySelector('.combat-hit-chance')?.remove();
       if (!frame || enemy.hp <= 0 || enemy.knowledgeAction?.reads?.[me]?.visibility !== 'exact') continue;
-      const preview = coopCardHitPreview(sc, registries, actor, enemy, carrier, { selected: !!hostile });
+      const preview = coopCardHitPreview(sc, registries, actor, enemy, carrier, { selected: !!hostile, member: snap.party.find(member => member.id === actor.id) });
       if (!Number.isFinite(preview?.hitChance)) continue;
       const badge = document.createElement('span');
       badge.className = 'combat-hit-chance';
@@ -1051,7 +1050,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (hp) {
       const next = hp.nextSibling;
       const known = !isEnemy || ent.knowledgeAction?.reads?.[me]?.visibility === 'exact';
-      const health = combatHealthRow(hp, { ...protectionPresentation(ent), evasion: ent.combatExpansionVersion === 2 && known ? effectiveEvasion({ ...snap.scene, registries }, ent) : null });
+      const health = combatHealthRow(hp, { ...protectionPresentation(ent), evasion: ent.combatExpansionVersion === 2 && known ? coopCombatantEvasion(snap.scene, registries, entity, isEnemy ? undefined : snap.party.find(member => member.id === ent.id)) : null });
       bars.insertBefore(health, next);
     }
     wrap.classList.add('as-meters', 'tight');

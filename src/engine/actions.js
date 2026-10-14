@@ -1406,12 +1406,21 @@ function runOpcode(ctx, action, eff) {
     }
     case 'block': {
       for (const t of resolveTargets(ctx, action, eff.target)) {
-        gainBlock(ctx, t, evalNum(ctx, action, eff.amount, 0, t) + (action.meta?.abilityChargeBlock || 0), action.card);
+        const base = evalNum(ctx, action, eff.amount, 0, t);
+        // Stance entry and restoration already own their lane and exact budget.
+        if (ctx.combatExpansionVersion === 2 && (action.meta?.stanceEntry || action.meta?.stanceRestore)) {
+          gainBlockAmount(ctx, t, Math.max(0, Math.floor(base)), action.card, false);
+        } else gainBlock(ctx, t, base + (action.meta?.abilityChargeBlock || 0), action.card);
       }
       break;
     }
     case 'gainBarrier': {
-      for (const t of resolveTargets(ctx, action, eff.target)) gainBarrier(ctx, t, evalNum(ctx, action, eff.amount, 0, t) + (action.meta?.abilityChargeBlock || 0), action.card);
+      for (const t of resolveTargets(ctx, action, eff.target)) {
+        const base = evalNum(ctx, action, eff.amount, 0, t);
+        if (ctx.combatExpansionVersion === 2 && (action.meta?.stanceEntry || action.meta?.stanceRestore)) {
+          gainBarrierAmount(ctx, t, Math.max(0, Math.floor(base)), action.card, false);
+        } else gainBarrier(ctx, t, base + (action.meta?.abilityChargeBlock || 0), action.card);
+      }
       break;
     }
     case 'wardDamage': {

@@ -52,6 +52,13 @@ test('without a preview no number is marked up or down', () => {
   for (const line of lines('bashingBlow')) assert.doesNotMatch(line.html, /val (up|down)/);
 });
 
+test('a conditional Evade is shown with version-two entry bonuses without duplication', () => {
+  const all = text('crawlingShot');
+  const evade = all.filter(line => /Prepare one Evade with Advantage/.test(line));
+  assert.deepEqual(evade, ['While Prone: Prepare one Evade with Advantage']);
+  assert.ok(all.some(line => line.startsWith('Entry: ')), JSON.stringify(all));
+});
+
 test('a card with an effect it cannot phrase returns null', () => {
   assert.equal(cardFaceLines({ type: 'attack', effects: [{ op: 'noSuchOp', target: 'enemy', amount: 1 }] }, null, reg), null);
 });

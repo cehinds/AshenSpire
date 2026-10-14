@@ -5,7 +5,8 @@ import { createRegistries } from '../src/model/registries.js';
 import { stanceOf } from '../src/model/stanceRules.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCoopCombat, playCard, previewCoopCard } from '../src/engine/coopCombat.js';
-import { coopCardHitPreview } from '../src/ui/models/CoopHitPreviewModel.js';
+import { coopCardHitPreview, coopCombatantEvasion } from '../src/ui/models/CoopHitPreviewModel.js';
+import { effectiveEvasion } from '../src/engine/stanceHit.js';
 import { primeAccuracyRolls } from './accuracyFixture.mjs';
 
 const registries=createRegistries(contentBundle);
@@ -38,4 +39,34 @@ test('level ten co-op snapshot previews match actual host rolls and retain level
   const low=comparison(1),high=comparison(10);
   assert.ok(high.accuracy>low.accuracy,'level ten includes its earned Accuracy');
   assert.ok(high.hitChance>low.hitChance,'level scaling changes the displayed chance');
+});
+
+test('co-op HUD Evasion matches the host with plated armour and an active buckler', () => {
+  const slots = registries.equipment.slots;
+  const armourSlot = slots.find(slot => slot.kinds.includes('armor'));
+  const shieldSlot = slots.find(slot => slot.kinds.includes('shield'));
+  assert.ok(armourSlot && shieldSlot, 'the fixture uses authored equipment slots');
+  const loadout = { sets: Object.fromEntries(slots.map(slot => [slot.id, [null]])), active: {} };
+  loadout.sets[armourSlot.id] = ['default'];
+  loadout.sets[shieldSlot.id] = ['buckler'];
+  const combat = createCoopCombat({ registries, rng: createRng(812), combatExpansionVersion: 2,
+    players: [{ id: 'seatA', classId: 'reaver', combatExpansionVersion: 2, level: 10,
+      maxHp: 100, hp: 100, maxMana: 20, mana: 20, maxStamina: 50, stamina: 50,
+      energyMax: 10, drawPerTurn: 1, loadout,
+      attributes: { strength: 10, dexterity: 10, constitution: 10, intelligence: 10, wisdom: 10 },
+      deck: [{ cardId: 'strike', instanceId: 'one' }] }], enemyIds: ['wanderingSoldier'] });
+  const seat = combat.players.get('seatA');
+  seat.entity.statuses.evade = { stacks: 2 };
+  const row = JSON.parse(JSON.stringify({ ...seat.entity, id: seat.id, level: seat.level, attributes: seat.attributes }));
+  const member = JSON.parse(JSON.stringify({ id: seat.id, classId: seat.classId, loadout: seat.loadout, level: { level: 10 } }));
+  const scene = JSON.parse(JSON.stringify({ combatExpansionVersion: 2, combatExpansionRules: combat.combatExpansionRules }));
+  const host = { ...combat, playerIdForEntity: entity => entity === seat.entity ? seat.id : null };
+  assert.equal(coopCombatantEvasion(scene, registries, row, member), effectiveEvasion(host, seat.entity),
+    'the public HUD combines current combat state with the same equipment as the host');
+  const noShield = structuredClone(member);
+  noShield.loadout.sets[shieldSlot.id] = [null];
+  assert.notEqual(coopCombatantEvasion(scene, registries, row, noShield), coopCombatantEvasion(scene, registries, row, member),
+    'the displayed Evasion includes the active buckler');
+  assert.notEqual(coopCombatantEvasion(scene, registries, row), coopCombatantEvasion(scene, registries, row, noShield),
+    'plated armour does not silently use the Cloth fallback');
 });

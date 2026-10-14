@@ -16,7 +16,9 @@ export function stanceOf(carrier, entity = null) {
   if (camp === 'spell' && !['defend', 'counter', 'evade'].includes(maneuver)
     && (profile.range || (profile.projectile || maneuver === 'ranged' ? 'ranged' : 'melee')) !== 'melee') maneuver = 'casting';
   if (maneuver === 'ranged') maneuver = 'attack';
-  return { maneuver, camp, range: profile.range || 'melee', ...(profile.school ? { school: profile.school } : {}) };
+  // Evade remains the stance identity; retain authored Counter offense across snapshots.
+  const counterStance = maneuver === 'evade' && (profile.maneuver === 'counter' || profile.counterStance === true);
+  return { maneuver, camp, ...(counterStance ? { counterStance: true } : {}), range: profile.range || 'melee', ...(profile.school ? { school: profile.school } : {}) };
 }
 export function sameStance(entity, carrier) {
   const active = stanceOf(entity?.combatStance), next = stanceOf(carrier, entity);
@@ -31,16 +33,16 @@ export function stanceRatingBonus(ctx, entity, id) {
   if (ctx?.combatExpansionVersion !== 2) return 0;
   const stance = stanceOf(entity?.combatStance);
   if (!stance) return 0;
-  const cfg = stanceRulesFor(ctx), offensive = ['attack', 'smash', 'sweep', 'counter', 'casting'].includes(stance.maneuver);
+  const cfg = stanceRulesFor(ctx), offensive = stance.counterStance || ['attack', 'smash', 'sweep', 'counter', 'casting'].includes(stance.maneuver);
   const defensive = ['defend', 'counter', 'evade'].includes(stance.maneuver);
-  const offensiveId = stance.maneuver === 'casting' || (stance.maneuver === 'counter' && stance.camp === 'spell') ? 'pr' : 'ar';
+  const offensiveId = stance.maneuver === 'casting' || ((stance.maneuver === 'counter' || stance.counterStance) && stance.camp === 'spell') ? 'pr' : 'ar';
   return (offensive && id === offensiveId ? cfg.offensiveRating : 0)
     + (defensive && id === (stance.camp === 'spell' ? 'ward' : 'dr') ? cfg.defensiveRating : 0);
 }
 export function stanceEntryBonuses(carrier, ctx = null) {
   const stance = stanceOf(carrier);
   if (!stance) return { precision: 0, evade: 0, block: 0, barrier: 0 };
-  const cfg = stanceRulesFor(ctx), offensive = ['attack', 'smash', 'sweep', 'counter', 'casting'].includes(stance.maneuver);
+  const cfg = stanceRulesFor(ctx), offensive = stance.counterStance || ['attack', 'smash', 'sweep', 'counter', 'casting'].includes(stance.maneuver);
   const defensive = ['defend', 'counter', 'evade'].includes(stance.maneuver);
   const amount = defensive ? cfg.entryProtection : 0;
   const share = cfg.schoolBlockShares?.[stance.school] ?? cfg.spellBlockShare;

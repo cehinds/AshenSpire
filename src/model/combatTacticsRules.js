@@ -158,6 +158,7 @@ export function combatExpansionEntityProblems(entity, path = 'entity') {
       for (const [key, allowed] of [['maneuver', MANEUVERS], ['camp', CAMPS], ['range', RANGES]]) {
         if (!allowed.includes(stance[key])) problems.push(`${path}.combatStance.${key} is unsupported`);
       }
+      if (stance.counterStance !== undefined && (stance.counterStance !== true || stance.maneuver !== 'evade')) problems.push(`${path}.combatStance.counterStance requires true in Evade stance`);
       if (stance.school !== undefined && !SCHOOLS.includes(stance.school)) problems.push(`${path}.combatStance.school is unsupported`);
       if (stance.expiresOnOwnerCycle !== undefined && !whole(stance.expiresOnOwnerCycle)) problems.push(`${path}.combatStance.expiresOnOwnerCycle must be a non-negative whole number`);
     }
