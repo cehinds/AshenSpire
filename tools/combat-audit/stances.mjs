@@ -47,6 +47,18 @@ function assertStaticContracts(){
  assert.equal(selectedWeaponSequence('smash').poses.at(-1),'origin');
  assert.equal(selectedWeaponSequence('sweep').poses[0],'origin');
  assert.equal(selectedWeaponSequence('sweep').poses.at(-1),'origin');
+ const approved=alternativeSelectedStances.weaponProfiles?.[pilot]?.approvedSequences;
+ assert.ok(approved,'approved Reaver greatsword sequence contract is present');
+ assert.deepEqual(approved.impact.previewIds,['D','V','G','H','C','D']);
+ assert.deepEqual(approved.evade.previewIds,['EV1','EV2','EV3']);
+ assert.deepEqual(approved.counterGuard,{prelude:'impact',then:['S','attack','C']});
+ assert.deepEqual(approved.counterEvasion,{prelude:'evade',then:['attack','C'],intermediateStanceReturn:false});
+ const approvedSmash=alternativeSelectedStances.weaponProfiles[pilot].selectedSmash;
+ const approvedSweep=alternativeSelectedStances.weaponProfiles[pilot].selectedSweep;
+ assert.equal(approvedSmash.option,'SM03');
+ assert.deepEqual(approvedSmash.slots,['origin','smash-takeoff','smash-airborne','smash-impact','origin']);
+ assert.equal(approvedSweep.option,'SW09');
+ assert.deepEqual(approvedSweep.slots,['origin','sweep-windup','sweep-contact','sweep-finish','origin']);
  // Impact/recoil is available by selected art only to the approved Reaver
  // greatsword profile. Other classes route through the common UI hurt/guard FX.
  const examples={
@@ -64,7 +76,7 @@ function assertStaticContracts(){
   guardBreak:'guard-break',evade:'evade',invulnerableGuard:'defend',resistedOrBlocked:'fully-defended'
  });
  assert.ok(Object.values(reactionRows).every(row=>row.genericProfile===null));
- return {classRows,reactionRows,selectedWeapon:{fullyDefended:{poses:full.poses,durations:full.durations},guardBreak:{poses:guardBreak.poses,durations:guardBreak.durations},evade:{poses:evade.poses,durations:evade.durations},guardCounter:{poses:guardCounter.poses,durations:guardCounter.durations},evasionCounter:{poses:evadeCounter.poses,durations:evadeCounter.durations},smash:clone(selectedWeaponSequence('smash')),sweep:clone(selectedWeaponSequence('sweep'))}};
+ return {classRows,reactionRows,selectedWeapon:{fullyDefended:{poses:full.poses,durations:full.durations},guardBreak:{poses:guardBreak.poses,durations:guardBreak.durations},evade:{poses:evade.poses,durations:evade.durations},guardCounter:{poses:guardCounter.poses,durations:guardCounter.durations},evasionCounter:{poses:evadeCounter.poses,durations:evadeCounter.durations},smash:clone(selectedWeaponSequence('smash')),sweep:clone(selectedWeaponSequence('sweep')),approvedSequences:clone(approved),approvedSmash:clone(approvedSmash),approvedSweep:clone(approvedSweep)}};
 }
 
 function readGallery(path){
