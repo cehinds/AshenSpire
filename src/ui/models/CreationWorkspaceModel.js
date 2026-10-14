@@ -27,9 +27,9 @@ export function creationHasSpells(registries, classId) {
     || registries.characterCreation.classes[classId]?.startingAbility?.skillId === 'item:magic-focus';
 }
 
-/** The authored steps with only the conditional spell step removed for a noncaster. */
+/** The authored steps keep one starting-ability page: spells or combat maneuvers. */
 export function creationFlowCategories(registries, classId, config = CONFIG) {
-  return Object.freeze(creationCategories(config).filter(id => id !== 'spells' || creationHasSpells(registries, classId)));
+  return Object.freeze(creationCategories(config).filter(id => id !== (creationHasSpells(registries, classId) ? 'maneuvers' : 'spells')));
 }
 
 /** Keep legal, distinct ability families after a class, attribute or armament change. */

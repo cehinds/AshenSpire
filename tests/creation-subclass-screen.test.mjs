@@ -29,6 +29,7 @@ for (const [classId, subclassId] of [['reaver', 'heavyKnight'], ['starseer', 'ba
   test(`actual ${classId} creation mounts with empty ability picks and can change subclass`, () => creationDom(async app => {
     const { mountCustomize } = await import('../src/ui/screens/customize.js');
     mountCustomize(app, { registries, defaultSeedString: 'GOLDBOUGH', shotPose: { classId }, onBack() {}, onStart() {} });
+    app.querySelector('#cz-tab-subclass').click();
     assert.equal(app.querySelector('#cz-subclass-selector-host .cc-subclass-selector').dataset.subclass, subclassId);
     assert.equal(app.querySelectorAll('#cz-starting-deck-host .cc-subclass-deck-card').length, 11);
     const second = app.querySelectorAll('#cz-subclass-selector-host button[data-subclass]')[1];
@@ -49,6 +50,47 @@ test('actual caster screen previews first pick and removal before final required
   assert.equal(app.querySelector('#cz-start').getAttribute('aria-disabled'), 'true');
   choose.click();
   assert.equal(app.querySelector('#cz-start').getAttribute('aria-disabled'), 'true');
-  app.querySelector('#cz-tab-class').click();
+  app.querySelector('#cz-tab-subclass').click();
   assert.equal(app.querySelectorAll('#cz-starting-deck-host .cc-subclass-deck-card').length, 11);
 }));
+
+for (const classId of ['reaver', 'starseer']) {
+  test(`actual ${classId} pages collect traits, abilities and separated relics before Begin`, () => creationDom(async app => {
+    const { mountCustomize } = await import('../src/ui/screens/customize.js');
+    let payload;
+    const meta = {}; const original = structuredClone(meta);
+    mountCustomize(app, { registries, meta, defaultSeedString: 'GOLDBOUGH', shotPose: { classId }, onBack() {}, onStart(value) { payload = value; } });
+    assert.equal(app.querySelector('#cz-subclass-selector-host'), null, 'Class contains only the base class');
+    app.querySelector('#cz-next').click();
+    assert.ok(app.querySelector('#cz-subclass-panel'));
+    assert.ok(app.querySelector('#cz-subclass-traits h3').textContent.includes('Subclass traits'));
+    assert.equal(app.querySelector('#cz-next').getAttribute('aria-disabled'), 'true');
+    const trait = app.querySelector('[data-creation-trait]'); const id = trait.dataset.creationTrait;
+    trait.click();
+    assert.notEqual(app.querySelector('#cz-next').getAttribute('aria-disabled'), 'true');
+    app.querySelector('#cz-next').click(); assert.ok(app.querySelector('#cz-character-panel'));
+    app.querySelector('#cz-next').click(); assert.ok(app.querySelector('#cz-feats-panel'));
+    app.querySelector('#cz-next').click();
+    const casting = classId === 'starseer';
+    assert.ok(app.querySelector(casting ? '#cz-spells-panel' : '#cz-maneuvers-panel'));
+    const choices = app.querySelectorAll(casting ? '#cz-spell-choices .cc-ability-choose' : '#cz-maneuver-choices .cc-ability-choose');
+    for (const choice of choices) {
+      if (app.querySelector('#cz-next').getAttribute('aria-disabled') !== 'true') break;
+      choice.click();
+    }
+    assert.notEqual(app.querySelector('#cz-next').getAttribute('aria-disabled'), 'true');
+    app.querySelector('#cz-next').click(); assert.ok(app.querySelector('#cz-equipment-panel'));
+    assert.equal(app.querySelector('#cz-relics'), null, 'equipment contains no relic choices');
+    assert.equal(app.querySelector('#cz-maneuver-choices'), null, 'equipment contains no maneuver choices');
+    app.querySelector('#cz-tab-keepsake').click(); assert.ok(app.querySelector('#cz-relics'));
+    app.querySelector('#cz-next').click(); assert.ok(app.querySelector('#cz-review-summary'));
+    app.querySelector('#cz-start').click();
+    assert.ok(payload); assert.deepEqual(payload.initialClassTreeChoices, [id]);
+    assert.equal(payload.startingAbilityIds.length, casting ? 2 : 1);
+    assert.deepEqual(meta, original);
+    app.querySelector('#cz-tab-subclass').click();
+    app.querySelectorAll('#cz-subclass-selector-host button[data-subclass]')[1].click();
+    assert.equal(app.querySelectorAll('[data-creation-trait][aria-pressed="true"]').length, 0, 'subclass changes clear earlier traits');
+    assert.equal(app.querySelector('#cz-start').getAttribute('aria-disabled'), 'true');
+  }));
+}

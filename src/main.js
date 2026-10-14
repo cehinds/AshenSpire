@@ -1,3 +1,4 @@
+import { applyCreationTraits } from './model/creationTraits.js';
 import { rollPendingAbilityOffers } from './model/abilityOffers.js';
 import { openRestRecord, recordRestConsumed, markRestLeft, restRevisitNodeId, clearRestRevisitOnTravel } from './model/restRevisit.js';
 import { queueInitialProgression } from './model/initialProgression.js';
@@ -231,7 +232,7 @@ let xpCombat = null;
 configureTooltipGlossary(registries);
 setClassGlyphs(registries.classes.all()); // class sigils are data (class defs)
 
-function rebuildRegistries(configuration = {}, masteryRun = null) {
+function configuredRegistries(configuration = {}) {
   const configured = configuredContentBundle(contentBundle, configuration);
   const result = validateContent(configured);
   const structuralProblems = advancedConfigStructuralProblems(contentBundle, configuration?.overrides || configuration);
@@ -240,11 +241,13 @@ function rebuildRegistries(configuration = {}, masteryRun = null) {
     const message = `Game configuration unchanged: ${first} Authored defaults remain active until the values form a valid configuration.`;
     console.warn('[advanced-config]', message, result.errors, structuralProblems);
     if (typeof document !== 'undefined') showSettingsNotice(message, 'game-config');
-    registries = createRegistries(contentBundle);
-  } else {
-    registries = createRegistries(configured);
+    return createRegistries(contentBundle);
   }
-  registries = registriesForClassMastery(registries, masteryRun);
+  return createRegistries(configured);
+}
+
+function rebuildRegistries(configuration = {}, masteryRun = null) {
+  registries = registriesForClassMastery(configuredRegistries(configuration), masteryRun);
   configureTooltipGlossary(registries);
   setClassGlyphs(registries.classes.all());
   return registries;
@@ -1171,8 +1174,7 @@ function newRun(config) {
   });
 }
 
-function beginPreparedRun({ classId, subclassId, seedString, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes, journeyProfile = null, slot = 1, skipOpening = false, quickStart = false }) {
-  resetArmouryTraySession();
+function beginPreparedRun({ classId, subclassId, seedString, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, initialClassTreeChoices, attributeMode, attributes, journeyProfile = null, slot = 1, skipOpening = false, quickStart = false }) {
   // THE CATCH THAT USED TO BE HERE IS GONE, and it is the whole point of the
   // change. It read:
   //
@@ -1211,7 +1213,6 @@ function beginPreparedRun({ classId, subclassId, seedString, customization, keep
   // tooltip a lie. BEGIN THE CLIMB is where a character stops being a preview,
   // and it is one line above the run being made, so the write order is the ask.
   // A refused seed returns above and creates nothing.
-  activeSlot = slot;
   const seed = seedFromString(asked);
   const legacyArcaneShot = shotState === 'combat' && shotParams.get('shotArcane') === 'matrix';
   const shotCombatVersion = shotState === 'combat' ? shotParams.get('shotCombatVersion') : null;
@@ -1238,11 +1239,25 @@ function beginPreparedRun({ classId, subclassId, seedString, customization, keep
   // The Arcane matrix is a legacy-run visual fixture. It deliberately carries
   // the old Exposure states; the pose must also carry their older rules.
   if (legacyArcaneShot) delete configSnapshot.breakMeterVersion;
-  rebuildRegistries(configSnapshot);
-  run = createRunState({
-    seed, classId, subclassId, registries, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes,
+  const preparedRegistries = configuredRegistries(configSnapshot);
+  const preparedRun = createRunState({
+    seed, classId, subclassId, registries: preparedRegistries, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes,
     profileMeta: saves.loadMeta(), combatExpansionVersion, enemyKnowledgeVersion, reactionRulesVersion,
   });
+  preparedRun.custom = custom || { ascension: 0, mods: {}, deckMode: 'standard' };
+  if (!shotState || initialClassTreeChoices !== undefined) {
+    openRunClassMastery(preparedRegistries, preparedRun, saves.loadMeta(), { receiptId: crypto.randomUUID(), bankable: !shotState });
+    if (!applyCreationTraits(preparedRegistries, preparedRun, initialClassTreeChoices)) {
+      failureBanner('run:traits', 'CHOOSE YOUR SUBCLASS TRAITS', ' · Your class or profile changed. Return to Subclass and choose your traits again.');
+      return;
+    }
+  }
+  resetArmouryTraySession();
+  activeSlot = slot;
+  registries = preparedRegistries;
+  configureTooltipGlossary(registries);
+  setClassGlyphs(registries.classes.all());
+  run = preparedRun;
   run.advancedConfigSnapshot = configSnapshot;
   run.seedString = seedToString(seed);
   if (journeyProfile) run.journey = generateJourney(run.seedString, journeyProfile, ATLAS, { townsPerActMax: registries.balance.atlas.townsPerActMax });
@@ -1250,8 +1265,9 @@ function beginPreparedRun({ classId, subclassId, seedString, customization, keep
   run.custom = custom || { ascension: 0, mods: {}, deckMode: 'standard' };
   if (quickStart) run.quickStart = true;
   if (!shotState) {
-    openRunClassMastery(registries, run, saves.loadMeta(), { receiptId: crypto.randomUUID() });
     openRunEnemyKnowledge(run, { receiptId: run.classMasteryState.receiptId, bankable: true });
+    registries = registriesForClassMastery(registries, run);
+  } else if (initialClassTreeChoices !== undefined) {
     registries = registriesForClassMastery(registries, run);
   }
   run.stats = { fightsWon: 0, damageDealt: 0, damageTaken: 0 };
