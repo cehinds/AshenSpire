@@ -1,4 +1,5 @@
 import {rollPendingAbilityOffers} from '../src/model/abilityOffers.js';
+import { enemyStanceCategory } from '../src/model/enemyStancePose.js';
 import {abilityDraftChoice} from '../src/model/abilityDraftReceipts.js';
 import {isAbilitySkill} from '../src/model/abilityGrades.js';
 import {rollClassMilestoneRewards,claimClassMilestoneReward} from '../src/model/classMilestoneOffers.js';
@@ -831,6 +832,7 @@ export function createSession({ registries, seedString, endless = false, restore
       result: c.result,
       headcount: connectedMembers().length,
       enemies: c.enemies.map((e) => ({
+        presentationStance: enemyStanceCategory(e.intent),
         combatExpansionVersion: e.combatExpansionVersion || 1, combatStance: e.combatStance,
         persistentWard: e.persistentWard, barrier: e.barrier, statusControl: e.statusControl,
         id: e.id, enemyId: e.enemyId, hp: e.hp, maxHp: e.maxHp, block: e.block,
