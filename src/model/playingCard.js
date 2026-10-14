@@ -28,6 +28,8 @@
 // frozen, so a renderer cannot quietly make the model its scratch space.
 
 import { resolveCard } from './registries.js';
+import { applyCombatExpansionCard } from '../content/combatExpansionCards.js';
+import { applyCardTraits } from '../content/traitProjection.js';
 import { tagService } from './tagService.js';
 import { computeTokenBindings, cardTokenEffects } from './validate.js';
 import { balance } from '../content/balance.js';
@@ -270,6 +272,18 @@ export function staticCardTokens(def) {
   return tokens;
 }
 
+/** Resolve the rules shared by non-combat faces; live previews remain authoritative. */
+export function playingCardDefinition(registries, ref, { preview = null, definition = null, rules = null } = {}) {
+  if (preview?.resolvedDefinition) return preview.resolvedDefinition;
+  if (definition) return definition;
+  const def = rules?.breakMeterVersion == null
+    ? resolveCard(registries, ref) : resolveCard(registries, ref, rules.breakMeterVersion);
+  if (rules?.combatExpansionVersion !== 2) return def;
+  const expanded = applyCombatExpansionCard(def);
+  return rules.reactionRulesVersion === 2 ? applyCardTraits(expanded, rules.reactionRules) : expanded;
+}
+
+
 /**
  * playingCardModel(registries, ref, { preview }) → a frozen record.
  *
@@ -302,8 +316,9 @@ export function staticCardTokens(def) {
  *   tokens     what fills the text template, and `base` to compare against so
  *              a raised number can be marked as raised.
  */
-export function playingCardModel(registries, ref, { preview = null } = {}) {
-  const def = preview?.resolvedDefinition || resolveCard(registries, ref);
+
+export function playingCardModel(registries, ref, { preview = null, definition = null, rules = null } = {}) {
+  const def = playingCardDefinition(registries, ref, { preview, definition, rules });
   const base = staticCardTokens(def);
 
   // Type presentation is authored data (balance.ui.cardTypes): corner radii
@@ -350,7 +365,9 @@ export function playingCardModel(registries, ref, { preview = null } = {}) {
     ? service.resolve([...new Set(liveTagRows.flatMap((row) => row.tags))])
     : def.cardTags != null
       ? service.resolve(def.cardTags)
-      : service.tagsOf('card', def);
+      : def.traitValues && Array.isArray(def.tags)
+        ? service.resolve(def.tags)
+        : service.tagsOf('card', def);
   // Keep legacy schools for compatibility, but do not print Blood/Heavy twice
   // when the categorized theme/technique is the same visible word.
   const categorized = new Set(

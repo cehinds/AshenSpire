@@ -453,7 +453,30 @@ function drainQueue(combat) {
     if (Reactions.beforeReactionAction(combat, combat.queue[0], reactionHooks)) return;
     const action = combat.queue.shift();
     Reactions.startQueuedEnemy(combat, action);
-    A.executeAction(combat, action);
+    // A delayed Combat Rounds hit carries its spent Momentum scope on its own payload
+    // actions. Reactions inserted ahead of it carry no scope and therefore cannot borrow
+    // that multiplier; a pause is safe because the original actions keep the receipt.
+    const roundPoiseMultiplier = action.meta?.roundPoiseMultiplier;
+    const previousRoundPoiseMultiplier = combat.roundPoiseMultiplier;
+    const previousEnqueue = combat.enqueue;
+    if (roundPoiseMultiplier) {
+      combat.roundPoiseMultiplier = roundPoiseMultiplier;
+      // Trigger and phase riders are descendants of this payload. Carry the receipt
+      // onto them while this action runs; reaction-stack actions execute outside it.
+      combat.enqueue = queued => previousEnqueue({
+        ...queued,
+        meta: { ...queued.meta, roundPoiseMultiplier: { ...roundPoiseMultiplier } },
+      });
+    }
+    try {
+      A.executeAction(combat, action);
+    } finally {
+      if (roundPoiseMultiplier) {
+        combat.enqueue = previousEnqueue;
+        if (previousRoundPoiseMultiplier) combat.roundPoiseMultiplier = previousRoundPoiseMultiplier;
+        else delete combat.roundPoiseMultiplier;
+      }
+    }
     if (combat.pendingAbilityDiscard) return;
     endCheck(combat);
     if (combat.result) {
@@ -693,8 +716,9 @@ function enemyPhase(combat) {
         const move = def.moves[moveId];
         // Rounds mode: a charge whose hit roll missed resolves as that miss, applying nothing.
         const missed = enemy.pendingMove.missed === true;
+        const roundPoiseMultiplier = enemy.pendingMove.roundPoiseMultiplier;
         enemy.pendingMove = null;
-        if (!missed) executeMovePayload(combat, enemy, move, moveId);
+        if (!missed) executeMovePayload(combat, enemy, move, moveId, { roundPoiseMultiplier });
       }
       // else: still charging (delay.turns > 1) — the enemy does nothing.
     } else if (!preview && enemy.intent && enemy.intent.moveId) {
@@ -792,7 +816,7 @@ function startDelayedMove(combat, enemy, move, moveId) {
 // one actor at a time (SPEC §7.4); content triggers may also key off it.
 // `roundEntry`: the move resolves a Combat Rounds timeline entry, whose reaction point was the round prompt (SPEC
 // §4.11), so its group is marked roundSettled and the live reaction window does not open for it again.
-function executeMovePayload(combat, enemy, move, moveId, { roundEntry = false } = {}) {
+function executeMovePayload(combat, enemy, move, moveId, { roundEntry = false, roundPoiseMultiplier = combat.roundPoiseMultiplier } = {}) {
   move = expandedEnemyMove(enemy, move, moveId, combat);
   // movesHistory records ROLLS (maxConsecutive reads it); a roll a stagger
   // cancels never happens. This is what did — the inspector's history.
@@ -803,7 +827,19 @@ function executeMovePayload(combat, enemy, move, moveId, { roundEntry = false } 
   }
   const carrier = enemyMoveCarrier(enemy, move, moveId, combat);
   const actions = enemyMoveActions(combat, enemy, move, moveId, carrier);
-  const group = enqueueExpandedAction(combat, actions, { source: enemy, target: combat.player, carrier });
+  // Stamp only this move's own actions. The reaction stack may run other attacks before
+  // them, and those attacks must not inherit the delayed entry's Momentum overflow.
+  if (roundPoiseMultiplier) for (const action of actions) {
+    action.meta = { ...action.meta, roundPoiseMultiplier: { ...roundPoiseMultiplier } };
+  }
+  // Completion applies guard-break and trait pressure after the payload actions. Keep the
+  // delayed round scope on that completion action too, without marking reaction-stack work.
+  const completionMeta = roundPoiseMultiplier
+    ? { roundPoiseMultiplier: { ...roundPoiseMultiplier } }
+    : undefined;
+  const group = enqueueExpandedAction(combat, actions, {
+    source: enemy, target: combat.player, carrier, completionMeta,
+  });
   if (Reactions.usesReactions(combat) && group) group.enemyMoveStart = start;
   if (roundEntry && group) group.roundSettled = true;
 }
@@ -1456,7 +1492,7 @@ export function cardNeedsEnemyTargetNow(combat, cardInstanceId) {
 // after it. So a once-a-turn (limitPerTurn) preparing discount one queued card took is gone for the next (SPEC §4.11).
 // Charges the player already holds are not spent here: the queue's claims already share those out.
 function preparingPreview(combat, inst, def, targetId, { afterQueued = false } = {}) {
-  const clone = F.candidateState(combat);
+  const clone = F.candidateState(combat, { detached: true });
   if (clone.pendingAbilityDiscard) { clone.queue = []; return clone; }
   // A reaction choice waiting on the live fight (a round reaction is priced while its offer is open) would hold the
   // preview's trigger effects back (beforeReactionAction); the detached preview prices the card as it will play.
@@ -1862,6 +1898,7 @@ function enemyMoveAt(combat, enemy, moveId, { landed = true } = {}) {
   Rounds.markEnemyActed(combat, enemy.id);
   if (move.delay) {
     startDelayedMove(combat, enemy, move, moveId);
+    if (combat.roundPoiseMultiplier) enemy.pendingMove.roundPoiseMultiplier = { ...combat.roundPoiseMultiplier };
     if (!landed) enemy.pendingMove.missed = true;
   } else executeMovePayload(combat, enemy, move, moveId, { roundEntry: true });
 }
@@ -2198,7 +2235,7 @@ export function getEntity(combat, id) {
  */
 export function previewCard(combat, cardInstanceId, targetId, upcastRanks) {
   if (combat.enemyKnowledge && !combat._knowledgePreview) {
-    const visible = F.candidateState(combat);
+    const visible = F.candidateState(combat, { detached: true });
     visible._knowledgePreview = true;
     for (const enemy of visible.enemies) if (!knowledgeIntentProjection(visible, enemy)?.exact) {
       enemy.intent = { kind: 'unknown', moveId: null };

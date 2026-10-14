@@ -1383,6 +1383,7 @@ export function mountRewards(app, {
     for (const inst of rankUpCards) {
       const next = instanceRank(inst) + 1;
       const face = renderCard(registries, { ...inst, rank: next }, {
+        rules: run,
         owned: ownedCopies(run, inst.cardId),
         actionOwnsTouch: true,
         surface: 'reward',
@@ -1425,6 +1426,7 @@ export function mountRewards(app, {
       // One ref for the face and its text button, so both show the same rules.
       const faceRef = { cardId, ...grade, ...(skillBonus > 0 ? { skillBonus } : {}), ...(passiveBlock > 0 ? { passiveBlock } : {}) };
       const face = renderCard(registries, faceRef, {
+        rules: run,
         owned: ownedCopies(run, cardId),
         actionOwnsTouch: true,
         surface: 'reward',
@@ -1457,7 +1459,7 @@ export function mountRewards(app, {
       // The text under the face: the card's name and its effect as plain text
       // from the same template the face fills. The face's .ctext is drawn
       // later, so it cannot be read here.
-      const effect = cardPlainText(registries, faceRef);
+      const effect = cardPlainText(registries, faceRef, { rules: run });
       const tile = el('button', { class: 'class-pick reward-node reward-pick reward-choice-button', type: 'button', role: 'radio',
         'aria-checked': String(choiceId === selectedCardId), dataset: { pickId: choiceId, cardId } }, [
         el('div', { class: 'cp-body' }, [el('h3', { text: registries.cards.get(cardId)?.name || cardId }), el('p', { text: effect })]),

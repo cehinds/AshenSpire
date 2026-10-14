@@ -3,6 +3,46 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1971",
+    "date": "2026-10-14",
+    "group": "2026-10-14",
+    "summary": "Cards show the same rules before and during combat",
+    "detail": "Character creation, rewards and deck inspection now show the current combat effects, costs and traits: Crystal Barrier grants Ward in every view instead of promising Block outside combat. Reward captions and deck descriptions agree with their cards, while older saved runs keep their original rules.",
+    "build": "0.7.1.1513",
+    "pullRequest": 1971,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1971"
+  },
+  {
+    "id": "pr-1970",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Combat taps and End Turn are much faster on phones",
+    "detail": "On a slower phone, tapping a card or a target could hang for a second or more, and ending a turn with a Counter in hand could take several seconds before the reaction prompt appeared, so the game looked frozen. Card previews are no longer recalculated dozens of times per tap, and equipment lookups, the fight-log copy and the battlefield refit no longer repeat on every tap. Selecting a card is about twice as fast on a slow phone, and the reaction prompt appears sooner. If a busy screen ignores a tap, the debug log now says why.",
+    "build": "0.7.1.1511",
+    "pullRequest": 1970,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1970"
+  },
+  {
+    "id": "pr-1968",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "The link check's self-test stops re-reading modules it has already linked",
+    "detail": "Development-process fix only, nothing in the game changes. A module an earlier file in the same batch already linked is now skipped instead of being re-read from scratch, so the self-test finishes well inside the Windows CI limit. A new test pins that each module is parsed once per batch.",
+    "build": "0.7.1.1509",
+    "pullRequest": 1968,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1968"
+  },
+  {
+    "id": "pr-1959",
+    "date": "2026-10-13",
+    "group": "2026-10-13",
+    "summary": "Delayed Combat Rounds attacks keep their doubled Poise damage",
+    "detail": "When Momentum doubles an enemy attack that charges before landing, the later payload now keeps that multiplier through its delay and through any reaction pause, then clears it after the attack resolves.",
+    "build": "0.7.1.1507",
+    "pullRequest": 1959,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1959"
+  },
+  {
     "id": "pr-1966",
     "date": "2026-10-13",
     "group": "2026-10-13",
