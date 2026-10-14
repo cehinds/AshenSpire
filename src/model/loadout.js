@@ -2286,7 +2286,27 @@ function desiredGrantInstances(registries, run) {
       grantSource: grantSourceFor(settings, pieceFamily(piece) === 'armour' ? 'armor' : 'weapon'),
     }));
   }
+  if (run.subclassId !== undefined || run.subclassDeckVersion === 1) {
+    const selected = selectOpeningWeaponArt(registries, run, desired);
+    return desired.filter(card => card.instanceId === selected.instanceId || !!itemMountEntries(run, ownerItemRef(card))[card.instanceId]?.card)
+      .map(card => card.instanceId === selected.instanceId ? { ...card, openingRole: 'Weapon Art', openingSource: 'weaponArt' } : card);
+  }
   return desired;
+}
+
+function selectOpeningWeaponArt(registries, run, desired) {
+  for (const hand of ['right', 'left']) {
+    const source = handSource(registries, run.loadout, run.class, hand);
+    const art = desired.find(card => card.equipmentRole === 'weaponArt' && card.grantedBy === source.piece?.id);
+    if (art) return art;
+  }
+  const art = desired.find(card => card.equipmentRole === 'weaponArt' && card.grantedBy?.startsWith('unarmed:'));
+  if (!art) throw new Error('Opening subclass loadout has no legal weapon art.');
+  return art;
+}
+
+export function openingWeaponArtRef(registries, run) {
+  return selectOpeningWeaponArt(registries, run, desiredGrantInstances(registries, run));
 }
 
 // ---- the three minters, one spelling each --------------------------------

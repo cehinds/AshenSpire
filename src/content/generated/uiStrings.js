@@ -10228,5 +10228,355 @@ export const uiStrings = [
     "short": "Recover HP after victory.",
     "full": "",
     "tip": ""
+  },
+  {
+    "id": "creation.subclass.title",
+    "extends": "",
+    "short": "Starting subclass",
+    "full": "Choose the approach that shapes your opening deck.",
+    "tip": "Starting subclass"
+  },
+  {
+    "id": "creation.subclass.hint",
+    "extends": "",
+    "short": "Choose one path within your class.",
+    "full": "Your subclass supplies five role cards. Equipment and starting abilities complete the deck.",
+    "tip": "Choose a starting subclass"
+  },
+  {
+    "id": "creation.subclass.choices",
+    "extends": "",
+    "short": "Subclass choices",
+    "full": "Choose one of the two starting subclasses for this class.",
+    "tip": "Subclass choices"
+  },
+  {
+    "id": "creation.subclass.reason",
+    "extends": "",
+    "short": "Choose a subclass.",
+    "full": "Choose a starting subclass for the selected class.",
+    "tip": "Choose a subclass"
+  },
+  {
+    "id": "creation.subclass.deckTitle",
+    "extends": "",
+    "short": "Starting deck · {count} cards",
+    "full": "Your starting deck contains {count} cards.",
+    "tip": "Starting deck"
+  },
+  {
+    "id": "creation.subclass.deckBreakdown",
+    "extends": "",
+    "short": "{subclass} subclass + {class} class + {weaponArt} weapon art + {basic} basics",
+    "full": "{subclass} subclass cards, {class} class card, {weaponArt} weapon art, and {basic} basic cards.",
+    "tip": "Deck composition"
+  },
+  {
+    "id": "creation.subclass.cardRole",
+    "extends": "",
+    "short": "Role: {role}",
+    "full": "This card occupies the {role} role in your starting deck.",
+    "tip": "Starting deck role"
+  },
+  {
+    "id": "creation.subclass.inspectCard",
+    "extends": "",
+    "short": "Inspect {name} · {role}",
+    "full": "Inspect the full rules for {name}, the {role} card.",
+    "tip": "Inspect starting card"
+  },
+  {
+    "id": "creation.subclass.review",
+    "extends": "",
+    "short": "{className} · {subclassName}",
+    "full": "{className}, starting as {subclassName}.",
+    "tip": "Class and subclass"
+  },
+  {
+    "id": "creation.subclass.catalog.selector",
+    "extends": "",
+    "short": "Starting subclass selector",
+    "full": "Two subclass choices with full selected description.",
+    "tip": "Starting subclass selector"
+  },
+  {
+    "id": "creation.subclass.catalog.tile",
+    "extends": "",
+    "short": "Subclass choice tile",
+    "full": "One interactive starting subclass choice.",
+    "tip": "Subclass choice tile"
+  },
+  {
+    "id": "creation.subclass.catalog.deck",
+    "extends": "",
+    "short": "Starting deck preview",
+    "full": "Every opening card with role and source breakdown.",
+    "tip": "Starting deck preview"
+  },
+  {
+    "id": "creation.subclass.catalog.group",
+    "extends": "",
+    "short": "Deck source group",
+    "full": "One group of opening cards from the same source.",
+    "tip": "Deck source group"
+  },
+  {
+    "id": "creation.subclass.catalog.card",
+    "extends": "",
+    "short": "Starting card control",
+    "full": "Open the complete rules for one starting card.",
+    "tip": "Starting card control"
+  },
+  {
+    "id": "creation.subclass.catalog.inspector",
+    "extends": "",
+    "short": "Starting card inspector",
+    "full": "The complete rules card used by the starting deck inspector.",
+    "tip": "Starting card inspector"
+  },
+  {
+    "id": "creation.subclass.source.subclass",
+    "extends": "",
+    "short": "Subclass · {count}",
+    "full": "Subclass supplies {count} starting cards.",
+    "tip": "Subclass"
+  },
+  {
+    "id": "creation.subclass.source.class",
+    "extends": "",
+    "short": "Class · {count}",
+    "full": "Class supplies {count} starting cards.",
+    "tip": "Class"
+  },
+  {
+    "id": "creation.subclass.source.weaponArt",
+    "extends": "",
+    "short": "Weapon art · {count}",
+    "full": "Weapon art supplies {count} starting cards.",
+    "tip": "Weapon art"
+  },
+  {
+    "id": "creation.subclass.source.basic",
+    "extends": "",
+    "short": "Basics · {count}",
+    "full": "Basics supplies {count} starting cards.",
+    "tip": "Basics"
+  },
+  {
+    "id": "creation.subclass.role.smash",
+    "extends": "",
+    "short": "Smash",
+    "full": "Smash",
+    "tip": "Smash"
+  },
+  {
+    "id": "creation.subclass.role.counter",
+    "extends": "",
+    "short": "Counter",
+    "full": "Counter",
+    "tip": "Counter"
+  },
+  {
+    "id": "creation.subclass.role.power",
+    "extends": "",
+    "short": "Power",
+    "full": "Power",
+    "tip": "Power"
+  },
+  {
+    "id": "creation.subclass.role.skill",
+    "extends": "",
+    "short": "Skill",
+    "full": "Skill",
+    "tip": "Skill"
+  },
+  {
+    "id": "creation.subclass.role.sweep",
+    "extends": "",
+    "short": "Sweep",
+    "full": "Sweep",
+    "tip": "Sweep"
+  },
+  {
+    "id": "creation.subclass.role.spell",
+    "extends": "",
+    "short": "Spell",
+    "full": "Spell",
+    "tip": "Spell"
+  },
+  {
+    "id": "creation.subclass.role.class",
+    "extends": "",
+    "short": "Class",
+    "full": "Class",
+    "tip": "Class"
+  },
+  {
+    "id": "creation.subclass.role.weaponArt",
+    "extends": "",
+    "short": "Weapon art",
+    "full": "Weapon art",
+    "tip": "Weapon art"
+  },
+  {
+    "id": "creation.subclass.role.strike",
+    "extends": "",
+    "short": "Strike",
+    "full": "Strike",
+    "tip": "Strike"
+  },
+  {
+    "id": "creation.subclass.role.defend",
+    "extends": "",
+    "short": "Defend",
+    "full": "Defend",
+    "tip": "Defend"
+  },
+  {
+    "id": "creation.class.reaver.lore",
+    "extends": "",
+    "short": "Bastion sellsword guarding the fallen gate.",
+    "full": "Bastion sellsword guarding the fallen gate.",
+    "tip": "Bastion sellsword guarding the fallen gate."
+  },
+  {
+    "id": "creation.class.rogue.lore",
+    "extends": "",
+    "short": "Dock scavenger hunting a Court Surgeon.",
+    "full": "Dock scavenger hunting a Court Surgeon.",
+    "tip": "Dock scavenger hunting a Court Surgeon."
+  },
+  {
+    "id": "creation.class.starseer.lore",
+    "extends": "",
+    "short": "Observatory apprentice seeking the Spire.",
+    "full": "Observatory apprentice seeking the Spire.",
+    "tip": "Observatory apprentice seeking the Spire."
+  },
+  {
+    "id": "creation.class.herald.lore",
+    "extends": "",
+    "short": "Furnace Chapel novice the fire spared.",
+    "full": "Furnace Chapel novice the fire spared.",
+    "tip": "Furnace Chapel novice the fire spared."
+  },
+  {
+    "id": "creation.class.reaver.style",
+    "extends": "",
+    "short": "Physical melee · high physical defense",
+    "full": "Physical melee · high physical defense",
+    "tip": "Physical melee · high physical defense"
+  },
+  {
+    "id": "creation.class.rogue.style",
+    "extends": "",
+    "short": "Physical versatility · high evasion",
+    "full": "Physical versatility · high evasion",
+    "tip": "Physical versatility · high evasion"
+  },
+  {
+    "id": "creation.class.starseer.style",
+    "extends": "",
+    "short": "Ranged magic · high magical defense",
+    "full": "Ranged magic · high magical defense",
+    "tip": "Ranged magic · high magical defense"
+  },
+  {
+    "id": "creation.class.herald.style",
+    "extends": "",
+    "short": "Mixed damage · balanced defenses",
+    "full": "Mixed damage · balanced defenses",
+    "tip": "Mixed damage · balanced defenses"
+  },
+  {
+    "id": "creation.class.neutral",
+    "extends": "",
+    "short": "Neutral",
+    "full": "Neutral",
+    "tip": "Neutral"
+  },
+  {
+    "id": "creation.class.stance",
+    "extends": "",
+    "short": "Starting stance: {name}",
+    "full": "Starting stance: {name}",
+    "tip": "Starting stance: {name}"
+  },
+  {
+    "id": "creation.class.armament",
+    "extends": "",
+    "short": "Armament: {name}",
+    "full": "Armament: {name}",
+    "tip": "Armament: {name}"
+  },
+  {
+    "id": "creation.class.relic",
+    "extends": "",
+    "short": "Relic: {name}",
+    "full": "Relic: {name}",
+    "tip": "Relic: {name}"
+  },
+  {
+    "id": "creation.class.art",
+    "extends": "",
+    "short": "Weapon art: {name}",
+    "full": "Weapon art: {name}",
+    "tip": "Weapon art: {name}"
+  },
+  {
+    "id": "creation.class.unarmed",
+    "extends": "",
+    "short": "Bare hands",
+    "full": "Bare hands",
+    "tip": "Bare hands"
+  },
+  {
+    "id": "creation.class.rating",
+    "extends": "",
+    "short": "{name} {value}",
+    "full": "{name} {value}",
+    "tip": "{name} {value}"
+  },
+  {
+    "id": "creation.class.ratings",
+    "extends": "",
+    "short": "Starting ratings",
+    "full": "Starting ratings",
+    "tip": "Starting ratings"
+  },
+  {
+    "id": "creation.class.stat.hp",
+    "extends": "",
+    "short": "HP",
+    "full": "HP",
+    "tip": "HP"
+  },
+  {
+    "id": "creation.class.stat.stamina",
+    "extends": "",
+    "short": "SP",
+    "full": "SP",
+    "tip": "SP"
+  },
+  {
+    "id": "creation.class.stat.mana",
+    "extends": "",
+    "short": "MP",
+    "full": "MP",
+    "tip": "MP"
+  },
+  {
+    "id": "creation.class.stat.evasion",
+    "extends": "",
+    "short": "Evasion",
+    "full": "Evasion",
+    "tip": "Evasion"
+  },
+  {
+    "id": "creation.class.unavailable",
+    "extends": "",
+    "short": "—",
+    "full": "—",
+    "tip": "—"
   }
 ];

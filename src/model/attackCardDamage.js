@@ -57,10 +57,15 @@ export function cardIsMagical(face) {
   return (face?.manaCost || 0) > 0;
 }
 
-function authoredCardTags(bundle, cardId) {
-  return (bundle.tagging || [])
-    .filter((row) => row?.family === 'card' && row.objectId === cardId)
-    .map((row) => row.tagId);
+function authoredCardTagIndex(bundle) {
+  const tagsByCard = new Map();
+  for (const row of bundle.tagging || []) {
+    if (row?.family !== 'card') continue;
+    const tags = tagsByCard.get(row.objectId) || [];
+    tags.push(row.tagId);
+    tagsByCard.set(row.objectId, tags);
+  }
+  return tagsByCard;
 }
 
 function numericBaseline(effects, op) {
@@ -267,8 +272,9 @@ export function projectAttackCardDamageBundle(source = {}) {
   }
 
   const schools = profileSchools(materialized);
+  const tagsByCard = authoredCardTagIndex(materialized);
   const cards = (materialized.cards || []).map((card) => {
-    const tags = authoredCardTags(materialized, card.id);
+    const tags = tagsByCard.get(card.id) || [];
     return projectCard(card, configs, tags, alternateSchool(card, tags, schools));
   });
 
@@ -284,8 +290,9 @@ function eligibleCards(bundle, configName) {
   const has = (card, op) => [card.effects, card.upgrade?.effects]
     .some((effects) => (effects || []).some((effect) => effect.op === op && typeof effect.amount === 'number'));
   const schools = profileSchools(bundle);
+  const tagsByCard = authoredCardTagIndex(bundle);
   for (const card of bundle.cards || []) {
-    const tags = authoredCardTags(bundle, card.id);
+    const tags = tagsByCard.get(card.id) || [];
     const authored = cardIsMagical({ ...card, tags });
     const other = alternateSchool(card, tags, schools);
     const sides = other ? [authored, !authored] : [authored];

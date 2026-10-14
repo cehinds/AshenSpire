@@ -56,6 +56,7 @@ export function runCombatPlayer(run) {
     : run.equipmentPoolDeficits;
   return {
     classId: run.class,
+    ...(run.subclassId !== undefined ? { subclassId: run.subclassId, subclassDeckVersion: run.subclassDeckVersion } : {}),
     ...(run.classUnequipped ? { classUnequipped: true } : {}),
     attributes: run.combatExpansionVersion === 2 ? effectiveAshenBlightAttributes(run) : run.attributes,
     allocatedAttributes: run.attributes,

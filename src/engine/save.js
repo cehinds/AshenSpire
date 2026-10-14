@@ -1,3 +1,4 @@
+import { subclassSelectionProblem } from '../model/subclasses.js';
 import { migrateAbilityGrades } from '../model/abilityGrades.js';
 // src/engine/save.js — run persistence with schema + content versioning
 // (SPEC §3.12)
@@ -110,6 +111,8 @@ function hydrateMissingEquipmentProfiles(registries, snapshot) {
  */
 function classTreeReferenceProblems(run, registries) {
   const problems = coreTagsTreeProblems(registries, run.class, run.coreTags, 'coreTags');
+  const subclassProblem = subclassSelectionProblem(registries, run.startingKitSnapshot?.classId || run.class, run.subclassId);
+  if (subclassProblem) problems.push(subclassProblem);
   for (const [id, card] of Object.entries(run.classCards || {})) {
     if (!registries.classes.has(id)) problems.push(`classCards.${id} is an unknown class`);
     else problems.push(...coreTagsTreeProblems(registries, id, card.coreTags, `classCards.${id}.coreTags`));
@@ -235,7 +238,7 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
   // decides; the snapshot's flag was cross-checked against it at the door.
   const poolDeck = isPoolDeckMode(run);
   const lentBefore = poolDeck ? COMBAT_SNAPSHOT_PILE_ORDER.flatMap((pile) => snapshot.piles[pile]).filter(isItemOwned).map((c) => c.instanceId) : [];
-  reconcileGrantedCardsInCombat(registries, { class: classId, loadout: snapshot.loadout, itemMounts, sideboard: run.sideboard, sideboardedEquipmentCardIds: snapshot.sideboardedEquipmentCardIds, ...(poolDeck ? { poolDeck: true } : {}) }, snapshot.piles);
+  reconcileGrantedCardsInCombat(registries, { class: classId, subclassId: run.subclassId, subclassDeckVersion: run.subclassDeckVersion, loadout: snapshot.loadout, itemMounts, sideboard: run.sideboard, sideboardedEquipmentCardIds: snapshot.sideboardedEquipmentCardIds, ...(poolDeck ? { poolDeck: true } : {}) }, snapshot.piles);
   const lentAfter = new Set(COMBAT_SNAPSHOT_PILE_ORDER.flatMap((pile) => snapshot.piles[pile]).filter(isItemOwned).map((c) => c.instanceId));
   const swept = lentBefore.filter((id) => !lentAfter.has(id));
   if (swept.length) {
@@ -266,6 +269,8 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
   WeaponDeckCompositionService.applyEquippedWeaponCardPlan(plan, cards);
   stampDeck(registries, {
     class: classId,
+    subclassId: run.subclassId,
+    subclassDeckVersion: run.subclassDeckVersion,
     loadout: snapshot.loadout,
     attributes: snapshot.attributes || run.attributes,
     itemUpgradeLevels: runLevels,

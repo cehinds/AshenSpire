@@ -41,6 +41,8 @@ const componentIds = [
   'creation-part-material', 'creation-part-trim', 'creation-part-body',
   'creation-choice-art', 'creation-choice-copy', 'creation-step-navigation',
   'creation-feat-browser', 'creation-feat-tile', 'creation-feat-detail', 'creation-feat-emblem',
+  'creation-subclass-selector', 'creation-subclass-tile', 'creation-starting-deck',
+  'creation-starting-deck-group', 'creation-starting-deck-card', 'creation-starting-card-inspector',
   'class-choice-card', 'keepsake-choice', 'equipment-choice-card', 'primary-stat-card',
 ];
 mkdirSync(out, { recursive: true });
@@ -115,6 +117,21 @@ try {
     }
     if (width < 700) await attributes.tap(); else await attributes.click();
     assert.equal(await attributes.getAttribute('aria-current'), 'step');
+    const subclassSelector = page.locator('#folio-creation-subclass-selector .cc-subclass-selector');
+    const subclassChoice = subclassSelector.locator('button[data-subclass]').last();
+    if (width < 700) await subclassChoice.tap(); else await subclassChoice.click();
+    assert.equal(await subclassChoice.getAttribute('aria-pressed'), 'true', 'one activation chooses the subclass');
+    assert.equal(await subclassSelector.getAttribute('data-subclass'), await subclassChoice.getAttribute('data-subclass'));
+    const deck = page.locator('#folio-creation-starting-deck .cc-subclass-deck');
+    assert.equal(await deck.getAttribute('data-deck-count'), '11');
+    assert.equal(await deck.locator('.cc-subclass-deck-card').count(), 11);
+    const startingCard = deck.locator('.cc-subclass-deck-card').first();
+    if (width < 700) await startingCard.tap(); else await startingCard.click();
+    await page.locator('.card-inspection-modal [data-ui-component="creation-starting-card-inspector"]').waitFor();
+    const inspectorClose = page.locator('.card-inspection-modal .modal-close');
+    if (width < 700) await inspectorClose.tap(); else await inspectorClose.click();
+    assert.equal(await startingCard.evaluate(node => node === document.activeElement), true);
+    results.push({ width, height, interaction: width < 700 ? 'touch-tap' : 'mouse-click', subclassSelection: await subclassSelector.getAttribute('data-subclass'), startingDeckCopies: 11, startingCardInspection: true, focusReturned: true });
     for (const componentId of componentIds) {
       const folio = page.locator(`#folio-${componentId}`);
       await folio.scrollIntoViewIfNeeded();
@@ -154,6 +171,15 @@ try {
           .filter(node => !node.hidden && node.getClientRects().length)
           .every(node => { const rect = node.getBoundingClientRect(); return rect.left >= -1 && rect.right <= innerWidth + 1; });
       }), `${stage} rendered controls fit the ${width}px viewport`);
+      if (stage === 'class') {
+        const frostChoice = live.locator('#cz-subclass-selector-host button[data-subclass="frostMonarch"]');
+        if (width < 700) await frostChoice.tap(); else await frostChoice.click();
+        assert.equal(await frostChoice.getAttribute('aria-pressed'), 'true');
+        assert.equal(await live.locator('#cz-starting-deck-host .cc-subclass-deck-card').count(), 11);
+        const sourceCounts = await live.locator('#cz-starting-deck-host .cc-subclass-deck-group').evaluateAll(groups => groups.map(group => group.querySelectorAll('.cc-subclass-deck-card').length));
+        assert.deepEqual(sourceCounts, [5, 1, 1, 4]);
+        results.push({ stage, width, height, interaction: width < 700 ? 'touch-tap' : 'mouse-click', subclassSelection: 'frostMonarch', sourceCounts, startingDeckCopies: 11 });
+      }
       if (stage === 'feats') {
         const liveWeaponTile = live.locator('#cz-feats-panel [data-feat="weaponDrill"].cc-choice-tile');
         if (width < 700) await liveWeaponTile.tap(); else await liveWeaponTile.click();

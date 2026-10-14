@@ -26,6 +26,10 @@ import { refusesWhen } from '../components/refusal.js';
 import { attachSeedField } from '../components/seedfield.js';
 import { startingKitViews } from '../../model/startingKits.js';
 import { createRunState } from '../../model/state.js';
+import { subclassOptions } from '../../model/subclasses.js';
+import { creationSubclassSelection } from '../models/CreationSubclassModel.js';
+import { createCreationSubclassSelector } from '../components/creationSubclass.js';
+import { t } from '../strings.js';
 import {
   el, pane, row, labelStack, button, buttonRow, optionCard, options, pill, flavour, blocker, eyebrow,
   segmented, swatch, swatches, iconButton, hairline,
@@ -52,6 +56,7 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
   const state = {
     name: readLocal(NAME_KEY) || 'Forsaken',
     classId: registries.classes.all()[0].id,
+    subclassId: creationSubclassSelection(subclassOptions(registries, registries.classes.all()[0].id)),
     startingKitId: null,
     discoveredArmaments: [...new Set(meta.discoveredArmaments || [])],
     classMastery: structuredClone(meta.classMastery || {}),
@@ -160,7 +165,7 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
       onMessage: (msg) => {
         if (msg.t === 'welcome') {
           myId = msg.id;
-          conn.send({ t: 'hello', name: state.name, classId: state.classId, startingKitId: state.startingKitId, discoveredArmaments: state.discoveredArmaments, classMastery: state.classMastery, enemyKnowledge: state.enemyKnowledge, tint: state.tint, spriteStyle: state.spriteStyle, hostKey,
+          conn.send({ t: 'hello', name: state.name, classId: state.classId, subclassId: state.subclassId, startingKitId: state.startingKitId, discoveredArmaments: state.discoveredArmaments, classMastery: state.classMastery, enemyKnowledge: state.enemyKnowledge, tint: state.tint, spriteStyle: state.spriteStyle, hostKey,
             // The seat draws by its owner's Play in deck order (SPEC §14.1).
             playInDeckOrder: playInDeckOrder(meta.settings || {}) });
         } else if (msg.t === 'roster') {
@@ -201,6 +206,8 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
 
   /** One roster seat: Glyph (host flag) · tinted name · class · state pill. */
   function seatRow(p) {
+    const subclass = p.subclassId && subclassOptions(registries, p.classId).find(row => row.id === p.subclassId);
+    const className = p.classId ? registries.classes.get(p.classId).name : null;
     const seatState = p.isLocal ? { label: 'Local seat', on: true }
       : p.isHost ? { label: 'Host', on: true }
         : p.ready ? { label: 'Ready', on: true } : { label: 'Not ready', on: false };
@@ -211,7 +218,7 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
         el('span', { style: { color: tintCss(p.tint) }, text: p.name }),
         p.id === myId ? ' (you)' : '',
       ]),
-      status: p.classId ? registries.classes.get(p.classId).name : 'choosing…',
+      status: subclass ? t('creation.subclass.review', { className, subclassName: subclass.name }) : className || 'choosing…',
       trail: [pill(seatState)],
       className: 'slot occupied',
       attrs: { dataset: { seat: p.id } },
@@ -232,6 +239,13 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
     const allReady = others.every((p) => p.ready);
 
     const classes = el('div', { class: 'class-row', id: 'lb-classes' });
+    const subclasses = createCreationSubclassSelector({ options: subclassOptions(registries, state.classId), selectedId: state.subclassId,
+      onChoose: subclassId => {
+        state.subclassId = subclassId;
+        conn.send({ t: 'pick', classId: state.classId, subclassId, startingKitId: state.startingKitId });
+      },
+    });
+    subclasses.id = 'lb-subclasses';
     const kitBox = el('div', { id: 'lb-kits' });
     const tints = swatches([], { id: 'lb-tints', 'aria-label': 'Your accent' });
     const styles = el('div', { id: 'lb-styles' });
@@ -252,6 +266,7 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
         hairline(),
         sectionHead('Your class'),
         classes,
+        subclasses,
         row({ tag: 'div', setting: true, labelNode: labelStack({ label: 'Starting kit' }), trail: [kitBox] }),
         row({ tag: 'div', setting: true, labelNode: labelStack({ label: 'Accent', hint: 'Colours your hero for the whole party.' }), trail: [tints] }),
         row({ tag: 'div', setting: true, labelNode: labelStack({ label: 'Sprite' }), trail: [styles] }),
@@ -284,18 +299,21 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
 
     for (const cls of registries.classes.all()) {
       const card = classCard(cls, cls.id === state.classId);
-      // Derived HP from the run's own home (createRunState: class base +
-      // attribute tiers + baseline kit), never bare cls.maxHp — a component
-      // posing as a total (#175 rider; same fix as the customize chip and the
-      // Custom Climb chip). Baseline kit on purpose: this tooltip is the
-      // class's advert to a player who hasn't picked yet, and profileMeta is
-      // inert with no requested kit — meta passed anyway so the read stays
-      // honest if a kit ever rides this call.
-      attachTooltip(card, () => `<div class="tt-title">${esc(cls.name)}</div>${esc(cls.description || '')}<br>HP ${createRunState({ seed: 0, classId: cls.id, registries, profileMeta: meta }).maxHp} · ${registries.balance.startingDeckSize} cards`);
+      // The current pick advertises its chosen kit/subclass; other class cards
+      // advertise their authored defaults. HP and deck count share the run model.
+      attachTooltip(card, () => {
+        const chosen = cls.id === state.classId;
+        const preview = createRunState({ seed: 0, classId: cls.id,
+          subclassId: chosen ? state.subclassId : creationSubclassSelection(subclassOptions(registries, cls.id)),
+          startingKitId: chosen ? state.startingKitId : baselineKit(cls.id), registries, profileMeta: meta });
+        return `<div class="tt-title">${esc(cls.name)}</div>${esc(cls.description || '')}<br>HP ${preview.maxHp} · ${preview.deck.length} cards`;
+      });
       card.addEventListener('click', () => {
         state.classId = cls.id;
+        state.subclassId = creationSubclassSelection(subclassOptions(registries, cls.id));
         state.startingKitId = baselineKit(cls.id);
-        conn.send({ t: 'pick', classId: cls.id, startingKitId: state.startingKitId, discoveredArmaments: state.discoveredArmaments, classMastery: state.classMastery });
+        subclasses.setOptions(subclassOptions(registries, cls.id), state.subclassId);
+        conn.send({ t: 'pick', classId: cls.id, subclassId: state.subclassId, startingKitId: state.startingKitId, discoveredArmaments: state.discoveredArmaments, classMastery: state.classMastery });
       });
       classes.appendChild(card);
     }
@@ -356,6 +374,7 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
         classBtn.addEventListener('click', () => {
           const ci = classList.findIndex((c) => c.id === lp.classId);
           lp.classId = classList[(ci + 1) % classList.length].id;
+          lp.subclassId = creationSubclassSelection(subclassOptions(registries, lp.classId));
           lp.startingKitId = baselineKit(lp.classId);
           renderLocals(); sendLocals();
         });
@@ -372,6 +391,11 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
         });
         del.addEventListener('click', () => { state.locals.splice(i, 1); renderLocals(); sendLocals(); });
         localsBox.appendChild(seat);
+        const localChoices = createCreationSubclassSelector({ options: subclassOptions(registries, lp.classId), selectedId: lp.subclassId,
+          onChoose: subclassId => { lp.subclassId = subclassId; sendLocals(); },
+        });
+        localChoices.dataset.localSeat = String(i);
+        localsBox.appendChild(localChoices);
       });
     };
     renderLocals();
@@ -380,7 +404,7 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
       if (state.players.length >= 4 || state.locals.length >= 3) return;
       const n = state.locals.length + 2;
       const classId = classList[(n - 1) % classList.length].id;
-      state.locals.push({ name: `Player ${n}`, classId, startingKitId: baselineKit(classId), discoveredArmaments: state.discoveredArmaments, classMastery: state.classMastery, tint: PORTRAIT_TINTS[(n - 1) % PORTRAIT_TINTS.length].id, spriteStyle: DEFAULT_SPRITE_STYLE });
+      state.locals.push({ name: `Player ${n}`, classId, subclassId: creationSubclassSelection(subclassOptions(registries, classId)), startingKitId: baselineKit(classId), discoveredArmaments: state.discoveredArmaments, classMastery: state.classMastery, tint: PORTRAIT_TINTS[(n - 1) % PORTRAIT_TINTS.length].id, spriteStyle: DEFAULT_SPRITE_STYLE });
       renderLocals(); sendLocals();
     });
     leaveBtn.addEventListener('click', () => back());

@@ -3,6 +3,11 @@ import { classMilestoneOptions } from './classMilestoneOffers.js';
 import { classRewardGrants, classRewardPresent } from './classRewardProvenance.js';
 import { abilityOfferPool } from './abilityOffers.js';
 import { classTreeRows, tierOpensAt } from './classTree.js';
+
+function openingSubclass(registries, run) {
+  const def = run.subclassId !== undefined && registries.subclasses?.has(run.subclassId) ? registries.subclasses.get(run.subclassId) : null;
+  return def?.classId === run.class && !run.classUnequipped ? def : null;
+}
 import { carriedIds, equipmentRequirementReceipt, fitsSlot } from './loadout.js';
 import {mountRows} from './cardExtraction.js';
 import {cardMountRules,isExtraMountKey,mountKey} from './cardMounts.js';
@@ -146,7 +151,8 @@ export function previewClassRespec(registries,run,draft,{selections = draft.sele
   for (const slot of draft.slots) if(slot.kind==='attribute' && slot.state==='taken') candidate.attributes[slot.before.id]-=1;
   for (const slot of draft.slots) if(slot.kind==='attribute' && slot.state!=='spent' && selected[slot.receiptId]) candidate.attributes[selected[slot.receiptId].id]=(candidate.attributes[selected[slot.receiptId].id] || 0)+1;
   for (const [id,value] of Object.entries(candidate.attributes)) if(!Number.isSafeInteger(value)||value<1)problems.push(`${id} would fall below its minimum.`);
-  const tree=classTreeRows(source,run.class),picked=new Set(nodes);
+  const subclass = openingSubclass(source, run);
+  const tree=classTreeRows(source,run.class).filter(row => !subclass || row.tier !== source.balance.skill.class.tierAt.length || subclass.progressionNodeIds.includes(row.nodeId)),picked=new Set(nodes);
   if(!Array.isArray(nodes)||picked.size!==nodes.length||nodes.length>draft.treeBudget)problems.push('The class tree exceeds its earned point budget.');
   for(const id of nodes){const row=tree.find(row=>row.nodeId===id),rule=source.propertyRules.has(id)?source.propertyRules.get(id):null;
     if(!row||draft.level<tierOpensAt(registries,row.tier)||!rule||(rule.requires || []).some(required=>!picked.has(required))||(rule.excludes || []).some(excluded=>picked.has(excluded)))problems.push(`The completed tree does not permit ${id}.`);
@@ -247,7 +253,7 @@ export function classRespecView(registries,run,draft,input = {}) {
       if(slot.kind==='cards'&&slot.state==='taken'&&slot.before&&!options.some(choice=>choice.id===slot.before.id&&(choice.abilityRank??null)===(slot.before.abilityRank??null)))options.push({id:slot.before.id,abilityRank:slot.before.abilityRank??null,retainInSideboard:true});
       return [slot.receiptId,options];
     })),
-    treeOptions:classTreeRows(sourceOf(registries),run.class).filter(row=>draft.level>=tierOpensAt(registries,row.tier)).map(row=>({...row,label:registries.nodes.find(node=>node.id===row.nodeId)?.label || row.nodeId,description:registries.nodes.find(node=>node.id===row.nodeId)?.description || ''})),
+    treeOptions:classTreeRows(sourceOf(registries),run.class).filter(row => !openingSubclass(registries,run) || row.tier !== registries.balance.skill.class.tierAt.length || openingSubclass(registries,run).progressionNodeIds.includes(row.nodeId)).filter(row=>draft.level>=tierOpensAt(registries,row.tier)).map(row=>({...row,label:registries.nodes.find(node=>node.id===row.nodeId)?.label || row.nodeId,description:registries.nodes.find(node=>node.id===row.nodeId)?.description || ''})),
     preview:{ok:preview.ok,problems:preview.problems,changes:preview.changes || [],displaced:preview.displaced || [],transfers:preview.transfers || [],spent:preview.spent || [],cost:draft.cost}};
 }
 

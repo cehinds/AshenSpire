@@ -1,3 +1,4 @@
+import { subclassOptions } from './subclasses.js';
 // Pure character-creation configuration reads and validation.
 import { masteryReferenceOpen } from './classMasteryRun.js';
 
@@ -226,6 +227,7 @@ export function quickStartRunConfig(registries) {
   if (!cls) throw new Error(`characterCreation.quickStart.classId: unknown class '${row.classId}'`);
   return {
     classId: cls.id,
+    ...(subclassOptions(registries, cls.id).find(def => def.default) ? { subclassId: subclassOptions(registries, cls.id).find(def => def.default).id } : {}),
     keepsakeId: row.keepsakeId,
     attributeMode: row.attributeMode,
     startingRelicId: cls.startingRelic,

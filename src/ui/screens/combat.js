@@ -20,7 +20,8 @@ import { playCardEffectLayers } from '../cardEffectLayers.js';
 // Renders strictly from combat state; animates from dispatch events. Every
 // number displayed comes from previewCard / previewIntent — no math here.
 
-import { dispatch, previewCard, previewIntent, getEntity, cardChoicePlan } from '../../engine/combat.js';
+import { dispatch as engineDispatch, previewCard as enginePreviewCard, previewIntent, getEntity, cardChoicePlan } from '../../engine/combat.js';
+import { createPreviewMemo } from '../models/PreviewMemoModel.js';
 import { decorateCombatRoundsScreen } from '../components/combatRoundsScreen.js';
 import { targetedEnemyId } from '../models/CombatRoundsScreenModel.js';
 import { discardCandidates } from '../../engine/abilityRiders.js';
@@ -150,6 +151,11 @@ export function cardHotkeyAction(key, { targeting = false, handSize = 0, livingE
 }
 
 export function mountCombat(app, { registries, run, combat, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, onLoad, onQuitWithoutSave, onArmoury, enemyAppearance = {}, quickControls = {}, readSettings = () => meta.settings || {}, opening = false }) {
+  // One preview per (card, target, ranks) until the fight next changes: see
+  // PreviewMemoModel. The fight changes only through dispatch and the Classic
+  // cell normalisation below.
+  const previewMemo = createPreviewMemo({ combat, preview: enginePreviewCard, dispatch: engineDispatch });
+  const { dispatch, previewCard } = previewMemo;
   // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
   // page-wide store, and nothing in production ever emptied it — so a card
   // whose `i` had been read kept its first beat for the life of the page, and
@@ -450,13 +456,35 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   let heldTurnHand = null;
   let enemyPlayback = false;
   let busy = false; // animating / resolving
+  // Diagnostic only. When a tap is ignored because the screen is busy, the log
+  // line names every lock and how long busy has held: an input that "does
+  // nothing" on a slow phone is either a long wait (busyForMs climbs and ends)
+  // or a lock that never clears (busyForMs keeps growing, the next report
+  // shows it). Sampled every 250 ms; nothing reads it but the log.
+  let busyStamp = 0;
+  const busyWatch = setInterval(() => {
+    if (!combatEl.isConnected) { clearInterval(busyWatch); return; }
+    if (busy) busyStamp ||= performance.now(); else busyStamp = 0;
+  }, 250);
+  const lockReport = () => {
+    const busyForMs = busy && busyStamp ? Math.round(performance.now() - busyStamp) : 0;
+    return { busy, busyForMs, enemyPlayback, pendingReaction: combat.pendingReaction?.id || null, reactionModalOpen: !!reactionShell,
+      pendingDiscard: !!combat.pendingAbilityDiscard, phase: combat.phase, result: combat.result };
+  };
+  // One extra line once the lock has held for more than 3 s.
+  const logIgnored = (what, why) => {
+    dlog('ignored', what, why);
+    if (why.busyForMs > 3000) dlog('stuck', `${what} ignored: busy for ${why.busyForMs} ms`, why);
+  };
   // The appearance may already be Classic before this screen mounts, so the
   // change notification below is not guaranteed to fire for this combat.
   normalizeClassicPlayerFormationCell(combat, readSettings());
+  previewMemo.invalidate();
   onDisplayAppearanceChange(combatEl, () => {
     // Classic must not merely paint an invalid perspective lane at its spawn:
     // keep the combat state aligned with the cell that movement and saves use.
     normalizeClassicPlayerFormationCell(combat, readSettings());
+    previewMemo.invalidate();
     if (!busy) render();
   });
   // The fight has resolved and this screen is handing off (see the
@@ -2458,7 +2486,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (combat.pendingAbilityDiscard) { showPendingDiscard(); return; }
     if (targetId && !getEntity(combat, targetId)?.alive) return;
     if (busy || combat.result) {
-      dlog('ignored', `useFlask slot=${slot}`, { busy, result: combat.result, phase: combat.phase });
+      logIgnored(`useFlask slot=${slot}`, lockReport());
       return;
     }
     selectedFlask = null;
@@ -2740,9 +2768,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (targetId && !getEntity(combat, targetId)?.alive) return;
     if (targetId && !cardTargets(instanceId).legalIds.includes(targetId)) return;
     if (busy || combat.result) {
-      const why = { busy, result: combat.result, phase: combat.phase };
+      const why = lockReport();
       console.debug('[combat] playCard ignored:', JSON.stringify(why));
-      dlog('ignored', `playCard ${instanceId}`, why);
+      logIgnored(`playCard ${instanceId}`, why);
       return;
     }
     const inst = combat.piles.hand.find(card => card.instanceId === instanceId);
@@ -2817,9 +2845,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     onConfirm: () => {
     if (combat.pendingAbilityDiscard) { showPendingDiscard(); return; }
     if (busy || combat.result || combat.phase !== 'player') {
-      const why = { busy, result: combat.result, phase: combat.phase };
+      const why = lockReport();
       console.debug('[combat] endTurn ignored:', JSON.stringify(why));
-      dlog('ignored', 'endTurn', why);
+      logIgnored('endTurn', why);
       return;
     }
     const finish = (discardIds = []) => {
@@ -2852,8 +2880,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   });
   endTurnBeat.refresh();
 
-  const showDraw = () => openPileModal(registries, 'Draw pile', combat.piles.draw, { shuffleForDisplay: true });
-  const showSpent = () => openSpentPileModal(registries, combat.piles, $('.pile.spent'));
+  const showDraw = () => openPileModal(registries, 'Draw pile', combat.piles.draw, { shuffleForDisplay: true, rules: combat });
+  const showSpent = () => openSpentPileModal(registries, combat.piles, $('.pile.spent'), { rules: combat });
 
   $('.pile.draw').addEventListener('click', showDraw);
   $('.pile.spent').addEventListener('click', showSpent);

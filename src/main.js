@@ -1171,7 +1171,7 @@ function newRun(config) {
   });
 }
 
-function beginPreparedRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes, journeyProfile = null, slot = 1, skipOpening = false, quickStart = false }) {
+function beginPreparedRun({ classId, subclassId, seedString, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes, journeyProfile = null, slot = 1, skipOpening = false, quickStart = false }) {
   resetArmouryTraySession();
   // THE CATCH THAT USED TO BE HERE IS GONE, and it is the whole point of the
   // change. It read:
@@ -1240,7 +1240,7 @@ function beginPreparedRun({ classId, seedString, customization, keepsakeId, cust
   if (legacyArcaneShot) delete configSnapshot.breakMeterVersion;
   rebuildRegistries(configSnapshot);
   run = createRunState({
-    seed, classId, registries, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes,
+    seed, classId, subclassId, registries, startingKitId, startingHands, startingArmourId, startingRelicId, startingAbilityIds, attributeMode, attributes,
     profileMeta: saves.loadMeta(), combatExpansionVersion, enemyKnowledgeVersion, reactionRulesVersion,
   });
   run.advancedConfigSnapshot = configSnapshot;
@@ -2340,7 +2340,7 @@ function showCustomize(slot = 1, catalog = false) {
     // Unknown values are ignored rather than throwing: a capture list is not a
     // place to fail a boot, and the shot then simply shows the default.
     shotPose: shotState === 'customize'
-      ? { classId: shotParams.get('shotClass'), tint: shotParams.get('shotTint') }
+      ? { classId: shotParams.get('shotClass'), subclassId: shotParams.get('shotSubclass'), tint: shotParams.get('shotTint') }
       : null,
     onBack: showTitle,
     slot,
@@ -3276,7 +3276,7 @@ function rollLevelChoices(levelsEarned) {
     if (offerClassTree && !run.classUnequipped) {
       const masteryLevel = run.skills?.[classSkillId(run.class)]?.level || 0;
       const level = hasClassMastery(run) ? masteryLevel : Math.max(masteryLevel, firstRewardLevel + ordinal + 1);
-      options.push(...rollClassDraftIds(registries, rng, { classId: run.class, coreTags: run.coreTags, level })
+      options.push(...rollClassDraftIds(registries, rng, { classId: run.class, subclassId: run.subclassId, coreTags: run.coreTags, level })
         .map((id) => ({ kind: 'classNode', id })));
     }
     if (options.length) out.push({ ordinal, options });
@@ -3414,7 +3414,7 @@ function rollClassDrafts(includeBanked = false) {
   const banked = includeBanked ? pendingSkillLevelCount(registries, run, classSkillId(run.class)) : 0;
   if (!(row.pendingDrafts > 0 || banked > 0)) return [];
   const level = row.level + banked;
-  const nodeIds = rollClassDraftIds(registries, rng, { classId: run.class, coreTags: run.coreTags, level });
+  const nodeIds = rollClassDraftIds(registries, rng, { classId: run.class, subclassId: run.subclassId, coreTags: run.coreTags, level });
   return nodeIds.length ? [{ classId: run.class, level, nodeIds, claimOrdinal: row.pendingDrafts > 0 ? 0 : 1 }] : [];
 }
 

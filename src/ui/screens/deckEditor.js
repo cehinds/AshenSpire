@@ -31,13 +31,12 @@ import { markUiComponent, UI_COMPONENTS as UI } from '../components/uiComponents
 import { actionLabel, focusElement, matchAction, setInputGate, setTabRing } from '../input.js';
 import { DECK_PANES, deckEditorModel, deckEditorView, deckVariantKey, nextFilterPreset, openDeckEdit } from '../models/DeckEditorModel.js';
 import { t, tFull } from '../strings.js';
-import { renderCard, staticTokens } from '../components/card.js';
+import { renderCard, cardPlainText, cardDetailHtml } from '../components/card.js';
 import { resolveCard } from '../../model/registries.js';
-import { applyCombatExpansionCard } from '../../content/combatExpansionCards.js';
-import { applyCardTraits } from '../../content/traitProjection.js';
 import { combatCardRange, combatProfileFor } from '../../model/combatCardProfile.js';
 import { cardCategorySigilHtml } from '../components/cardTagSymbols.js';
-import { playingCardModel } from '../../model/playingCard.js';
+import { cardClassification } from '../../model/cardClassification.js';
+import { playingCardModel, playingCardDefinition } from '../../model/playingCard.js';
 import { playingCardArt, cardArtFallbacks } from '../cardArtwork.js';
 import { cardArtLayersHtml } from '../cardArtLayers.js';
 import { registerCardArtRefresh } from '../cardArtStyle.js';
@@ -190,9 +189,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   }
 
   function rulesFor(row) {
-    const def = resolveCard(registries, row.ref);
-    const tokens = staticTokens(def);
-    return String(def.textTemplate || '').replace(/\{([^}]+)\}/g, (match, key) => tokens[key] ?? match);
+    return cardPlainText(registries, row.ref, { rules: run });
   }
 
   function artwork(row, large = false) {
@@ -267,7 +264,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     const def = resolveCard(registries, row.ref);
     // Reaction rules version 2: the face shows the run's projected trait chips and trait line.
     const face = renderCard(registries, row.ref, { inspection: false, level: 'inspect',
-      ...(run?.reactionRulesVersion === 2 ? { definition: combatDef(row) } : {}) });
+      definition: combatDef(row) });
     for (const [key, value] of Object.entries(cardShapeCssProperties())) face.style.setProperty(key, value);
     face.style.setProperty('--deck-inspect-width', cardLevelWidthCss('inspect'));
     face.querySelector('.card-costs')?.replaceChildren(rowCosts(row));
@@ -303,6 +300,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     const reasonText = [reasons.length ? reasons.join(' ') : base, stanceName(row)].filter(Boolean).join(' · ');
     animationPreview = deckCardAnimationPreview({ registries, run, ref: row.ref, paused: animationPaused,
       onPaused: paused => { animationPaused = paused; } });
+    const details = el('div', { class: 'deck-editor-rules' });
+    details.innerHTML = cardDetailHtml(registries, row.ref, { rules: run, definition: combatDef(row) });
     section.append(
       el('div', { class: 'deck-editor-reading' }, [face,
         el('label', { class: 'deck-editor-art-toggle' }, [
@@ -311,6 +310,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
           el('small', { text: t('deckEditor.art.basicOnly') }),
         ]),
         animationPreview.root,
+        details,
         ...keywordExplanations(registries, rulesFor(row)).map(entry => el('div', { class: 'deck-editor-keyword' }, [
           el('strong', { text: entry.name }), el('p', { text: entry.explanation }),
         ])),
@@ -357,7 +357,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
 
   // `grouped` is a deck row standing for several copies; a collection tile's
   // own counts are its meta line, never a badge.
-  const typeName = (row) => model.filters.type.find(entry => entry.id === row.type)?.label || row.type;
+  const typeName = row => row.cardCategory[0].toUpperCase() + row.cardCategory.slice(1);
   function rowCosts(row, lead = []) {
     const pools = registries.framework.costProfile(resolveCard(registries, row.ref));
     return el('span', { class: 'deck-editor-costs' }, [...lead, ...deckEditorCosts(pools).map(({id, label, value, art}) =>
@@ -370,7 +370,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   // The card's stance (owner, 2026-10-11): its combat maneuver when it has one
   // of the six; otherwise what the card is: Spell, Power, Consumable or Skill.
   // Every card names one.
-  const MANEUVER_STANCES = ['attack', 'defend', 'counter', 'smash', 'sweep', 'ranged'];
+  const MANEUVER_STANCES = ['attack', 'defense', 'evade', 'counter', 'smash', 'sweep'];
   // The definition combat resolves: under expanded combat (v2) a run's spell
   // reach and targeting come from applyCombatExpansionCard, so the editor shows them.
   // One draw resolves each row's definition once: the cache is keyed by the
@@ -379,33 +379,26 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   const combatDef = (row) => {
     const key = JSON.stringify(row.ref);
     if (!combatDefCache.has(key)) {
-      const def = resolveCard(registries, row.ref);
-      // Reaction rules version 2 shows the card's trait tags; version 1 shows the card as before.
-      const expanded = run?.combatExpansionVersion === 2 ? applyCombatExpansionCard(def) : def;
-      combatDefCache.set(key, run?.combatExpansionVersion === 2 && run.reactionRulesVersion === 2 ? applyCardTraits(expanded, run.reactionRules) : expanded);
+      combatDefCache.set(key, playingCardDefinition(registries, row.ref, { rules: run }));
     }
     return combatDefCache.get(key);
   };
-  const stanceKey = (row) => {
-    const def = combatDef(row);
-    const profile = combatProfileFor(def);
-    if (MANEUVER_STANCES.includes(profile.maneuver)) return profile.maneuver;
-    // Power and Consumable come before the spell camp: a magical Power is a Power.
-    if (def.type === 'power') return 'power';
-    if (def.type === 'consumable' || (def.kindIds || []).some(id => String(id).startsWith('classification.consumable'))) return 'consumable';
-    if (profile.camp === 'spell') return 'spell';
-    return 'skill';
+  const stanceKey = row => {
+    const identity = cardClassification(combatDef(row));
+    return identity.stanceType || identity.cardCategory;
   };
-  const stanceName = (row) => t(`deckEditor.stance.${stanceKey(row)}`);
-  const stanceNode = (row) => {
-    const stance = stanceKey(row);
-    return el('span', { class: 'deck-editor-stance', dataset: { stance }, text: t(`deckEditor.stance.${stance}`) });
+  const stanceName = row => {
+    const identity = cardClassification(combatDef(row));
+    const title = value => value[0].toUpperCase() + value.slice(1);
+    return [title(identity.cardCategory), identity.stanceType && title(identity.stanceType)].filter(Boolean).join(' · ');
   };
+  const stanceNode = row => el('span', { class: 'deck-editor-stance',
+    dataset: { stance: stanceKey(row) }, text: stanceName(row) });
   // The rank the card face prints (its ability rank, else its rank badge). Rank 0
   // has a name: a spell's is Cantrip, a combat maneuver's is Basic.
   const rankNode = (row) => {
     const def = combatDef(row);
-    const card = playingCardModel(registries, row.ref);
+    const card = playingCardModel(registries, row.ref, { definition: def });
     // An unranked maneuver or spell (the starter Strike and Defend) is rank 0.
     const ranked = card.abilityRank ?? (card.rankBadge ? Number(String(card.rankBadge).replace(/\D+/g, '')) : null);
     const rank = Number.isInteger(ranked) ? ranked
@@ -612,8 +605,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       actions.appendChild(minus);
       if (model.ordered) list.appendChild(item);
       else {
-        if (!groups.has(row.type)) groups.set(row.type, []);
-        groups.get(row.type).push({ row, item });
+        if (!groups.has(row.cardCategory)) groups.set(row.cardCategory, []);
+        groups.get(row.cardCategory).push({ row, item });
       }
     }
     for (const [type, entries] of groups) {
