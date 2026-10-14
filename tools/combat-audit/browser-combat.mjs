@@ -18,6 +18,7 @@ const deviceFilter = arg('device');
 const cardFilter = arg('card');
 const classFilter = arg('class');
 const variantFilter = arg('variant');
+const pace = arg('pace') || 'fast';
 const url = process.env.QA_BUILD_URL;
 const source = process.env.QA_SOURCE_URL || (url && new URL('./src/', url).href);
 const out = resolve(process.env.QA_OUTPUT || '/workspace/scratch/full-combat-audit/browser');
@@ -72,7 +73,7 @@ for (let i = 0; i < sourceFiles.length; i += 16) await Promise.all(sourceFiles.s
 const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const owner = await launchBrowser({ browser: process.env.CHROME || '/usr/bin/chromium', prefix: 'ca-' });
 const browser = await chromium.connectOverCDP(owner.wsUrl);
-const report = { url, source, build, sourceDigests, inventory, mode,
+const report = { url, source, build, sourceDigests, inventory, mode, pace,
   fixture: 'Fresh createRunCombat from the screenshot run, canonical enemies/knowledge/moves, custom difficulty hpMult=20 and resource maxima 200. One registered card plus legal draw/discard fillers. Data fields only copied into the live fight; original runtime functions, listeners, dispatch, target resolver, renderer and timeline preserved. These are isolated fixtures, not earned playthroughs.',
   cases: [], errors: [], platformWarnings: [], networkFailures: [], animationDispatch: [], started: new Date().toISOString(), coverageLimits: [
     'Source-engine oracle parity proves compiled input and effect resolution match canonical source. Independent intended-effect/conditional trigger contracts are reported by the engine audit.',
@@ -100,7 +101,8 @@ async function boot(context, classId) {
     addEventListener('unhandledrejection', e => window.__auditUnhandled.push(String(e.reason?.stack || e.reason)));
     new PerformanceObserver(list => window.__auditLongTasks.push(...list.getEntries().map(e => ({ at: e.startTime, duration: e.duration })))).observe({ type: 'longtask', buffered: true });
   });
-  await page.goto(`${url}?shot=combat&shotClass=${classId}&shotSeed=B&shotMaxHp=200&shotMaxMana=200&shotMaxStamina=200&shotMana=200`, { waitUntil: 'domcontentloaded' });
+  const settings = encodeURIComponent(JSON.stringify({ animSpeed: pace }));
+  await page.goto(`${url}?shot=combat&shotClass=${classId}&shotSeed=B&shotMaxHp=200&shotMaxMana=200&shotMaxStamina=200&shotMana=200&shotSettings=${settings}`, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('.end-turn:not([disabled])', { timeout: 30000 });
   await page.evaluate(() => { window.__auditBaseRun = structuredClone(window.__combatRunForShot); window.__auditBaseRng = window.__combat.rng.getCounters(); window.__auditRuntime = Object.fromEntries(Object.entries(window.__combat).filter(([, v]) => typeof v === 'function')); });
   return page;
@@ -257,7 +259,7 @@ async function play(page, device, row, before) {
         const frame = document.querySelector('.combatant.enemy[data-eid="e1"]'), sprite = frame.querySelector('.sprite'), b = sprite.getBoundingClientRect();
         for (let yi = 1; yi < 10; yi++) for (let xi = 1; xi < 10; xi++) {
           const x = b.left + b.width * xi / 10, y = b.top + b.height * yi / 10, hit = document.elementFromPoint(x, y);
-          if (hit?.closest('.combatant.enemy') === frame && !hit.closest('button')) return { x, y };
+          if (hit?.closest('.combatant.enemy') === frame || hit?.closest('.enemy-target-button')?.dataset.eid === 'e1') return { x, y };
         }
         return null;
       });
@@ -266,8 +268,7 @@ async function play(page, device, row, before) {
     } else await tap(page, page.locator('.enemy-target-button:not([disabled])').first(), device);
   }
   else {
-    // Confirm by the actual card gesture (selection then double tap), also available with mouse.
-    await tap(page, card, device); await tap(page, card, device);
+    await tap(page, page.locator('.combatant.player .player-action-intent'), device);
   }
   if (before.choice) await tap(page, page.locator('.card-choice [data-choice]:not([disabled])').first(), device);
   await page.waitForFunction(() => window.__combat.eventLog.slice(window.__auditStart.eventCount).some(e => e.type === 'cardPlayed' && e.cardInstanceId === 'audit-card'), null, { timeout: 10000 });
@@ -290,6 +291,42 @@ async function receipt(page) {
   });
 }
 
+async function endTurnAndPlayNext(page, device, row) {
+  const plan = await page.evaluate(async source => (await import(source + 'engine/handRules.js')).discardChoicePlan(window.__combat), source);
+  const discardIds = plan.cards.slice(0, plan.minimum).map(c => c.instanceId);
+  await tap(page, page.locator('.end-turn'), device);
+  await tap(page, page.locator('.confirmation-modal .confirmation-confirm'), device);
+  if (plan.prompt) {
+    await page.waitForSelector('.hand-discard-modal');
+    for (const id of discardIds) await tap(page, page.locator(`.hand-discard-modal input[data-discard-id="${id}"]`), device);
+  }
+  await page.evaluate(discardIds => window.__auditOracleDispatch(window.__auditOracle, { type: 'endTurn', discardIds }), discardIds);
+  if (plan.prompt) await tap(page, page.locator('.hand-discard-confirm'), device);
+  const choices = await finishPending(page, device, row.chooseReaction);
+  await page.waitForSelector('.end-turn:not([disabled])', { timeout: 30000 });
+  assert.equal(await page.evaluate(() => window.__combat.turn), 2, 'enemy turn completes into player turn two');
+  assert.equal(await page.locator('.hand .card.selected,.hand .card.armed').count(), 0, 'end turn clears targeting');
+  const next = await page.evaluate(async source => {
+    const { previewCard, cardChoicePlan } = await import(source + 'engine/combat.js');
+    const { resolveCombatCard } = await import(source + 'engine/combatExpansion.js');
+    const c = window.__combat;
+    const inst = c.piles.hand.find(i => { const p = previewCard(c, i.instanceId); return !c.registries.framework.isUnplayable(resolveCombatCard(c, i)) && p.cost <= c.player.energy && p.manaCost <= c.player.mana; });
+    if (!inst) return null;
+    const p = previewCard(c, inst.instanceId), choice = cardChoicePlan(c, inst.instanceId);
+    return { instanceId: inst.instanceId, cardId: inst.cardId, needsTarget: p.needsTarget, choice: choice?.options.find(o => !o.active)?.id };
+  }, source);
+  assert.ok(next, 'a real affordable next-turn card is available');
+  const intent = { type: 'playCard', cardInstanceId: next.instanceId, ...(next.needsTarget ? { targetId: 'e1' } : {}), ...(next.choice ? { choice: next.choice } : {}) };
+  await page.evaluate(intent => window.__auditOracleDispatch(window.__auditOracle, intent), intent);
+  await tap(page, page.locator(`.hand .card[data-instance-id="${next.instanceId}"]`), device);
+  if (next.needsTarget) await tap(page, page.locator('.enemy-target-button:not([disabled])').first(), device);
+  else await tap(page, page.locator('.combatant.player .player-action-intent'), device);
+  if (next.choice) await tap(page, page.locator(`.card-choice [data-choice="${next.choice}"]`), device);
+  await page.waitForFunction(id => window.__combat.eventLog.some(e => e.type === 'cardPlayed' && e.cardInstanceId === id), next.instanceId, { timeout: 10000 });
+  choices.push(...await finishPending(page, device));
+  return { discardIds, choices, next };
+}
+
 async function runCase(page, device, classId, row) {
   activeCase = { device, classId, ...row };
   const entry = { ...activeCase, status: 'running' }; report.cases.push(entry);
@@ -298,28 +335,34 @@ async function runCase(page, device, classId, row) {
   try {
     entry.before = await fixture(page, row);
     entry.input = await play(page, device, row, entry.before);
+    if (row.endTurn) entry.enemyTurn = await endTurnAndPlayNext(page, device, row);
     entry.after = await receipt(page);
     entry.audioNodes = page.__auditAudioNodes.slice(audioStart);
     for (const failure of report.networkFailures.slice(networkStart)) {
       const match = new URL(failure.url).pathname.match(/^\/assets\/sfx\/([^/]+)\.ogg$/);
       if (match && !Object.hasOwn(SFX_MANIFEST, decodeURIComponent(match[1])) && resolveRecipe(decodeURIComponent(match[1])).recipe.length
-        && entry.audioNodes.some(n => ['OscillatorNode','AudioBufferSourceNode'].includes(n.node))) failure.classification = 'optional-cue-with-observed-synthesis';
+        && entry.audioNodes.some(n => ['Oscillator','AudioBufferSource'].includes(n.node))) failure.classification = 'optional-cue-with-observed-synthesis';
       else { failure.classification = 'unexpected-resource-failure'; report.errors.push({ case: activeCase, kind: 'network', message: failure.url }); }
     }
     if (row.sampleAnimation) {
       const frames = entry.after.frames, actionFrames = frames.filter(f => f.action);
+      const firstAction = frames.findIndex(f => f.action);
+      const origin = frames.slice(0, Math.max(0, firstAction)).findLast(f => f.pose?.startsWith('stance-'));
       report.animationDispatch.push({ device, classId, cardId: row.cardId, receiptId: 'audit-card', dispatchType: 'paid-card', cardPlayed: entry.after.events.some(e => e.type === 'cardPlayed'),
+        presentationKind: entry.before.tags.includes('maneuver:counter') ? 'held-preparation' : 'finite-playback',
         frameChanged: new Set(actionFrames.map(f => f.hash).filter(h => typeof h === 'number')).size > 1, actionStarted: actionFrames.length > 0,
         actionCompleted: actionFrames.length > 0 && !frames.at(-1)?.action,
-        returnedToOrigin: frames[0]?.pose === frames.at(-1)?.pose, before: frames[0], after: frames.at(-1), frames });
+        returnedToOrigin: !!origin && origin.pose === frames.at(-1)?.pose, origin, tags: entry.before.tags, before: frames[0], after: frames.at(-1), frames });
     }
     const paid = entry.after.events.filter(e => e.type === 'cardPlayed' && e.cardInstanceId === 'audit-card');
     assert.equal(paid.length, entry.input.refusal ? 0 : 1, 'one paid card receipt per play');
     if (!entry.input.refusal) {
       assert.notEqual(entry.after.pile, 'hand', 'played card leaves hand');
       const sum = type => entry.after.events.filter(e => e.type === type).reduce((n, e) => n + (e.amount || 0), 0);
-      assert.equal(entry.after.player.energy, entry.before.player.energy - sum('energySpent') + sum('energyGained') + sum('energyRecovered'), 'Actions ledger balances');
-      assert.equal(entry.after.player.mana, entry.before.player.mana - sum('manaSpent') + sum('manaRestored') + sum('manaRecovered'), 'Mana ledger balances');
+      if (!row.endTurn) {
+        assert.equal(entry.after.player.energy, entry.before.player.energy - sum('energySpent') + sum('energyGained') + sum('energyRecovered'), 'Actions ledger balances');
+        assert.equal(entry.after.player.mana, entry.before.player.mana - sum('manaSpent') + sum('manaRestored') + sum('manaRecovered'), 'Mana ledger balances');
+      }
       assert.deepEqual(entry.after.events, entry.after.oracle.events, 'compiled damage/status/heal/draw/stance/effect receipts match canonical engine');
       assert.deepEqual(entry.after.actual, { player: entry.after.oracle.player, enemies: entry.after.oracle.enemies, piles: entry.after.oracle.piles, phase: entry.after.oracle.phase }, 'effect state and resources match canonical engine');
     } else {
@@ -373,6 +416,21 @@ try {
           { cardId: 'strike', category: 'legal-after-refusals', figureTarget: true },
         ];
         for (const row of rows) if (!await runCase(page, device, classId, { ...row, variant: 'base' })) { await page.close(); page = await boot(context, classId); }
+      }
+      if (mode === 'enemies' || mode === 'scenarios') {
+        const rows = mode === 'enemies' ? inventory.enemies.filter(id => !arg('enemy') || arg('enemy').split(',').includes(id))
+          .map(enemyId => ({ cardId: 'strike', enemyIds: [enemyId], category: 'enemy-turn', endTurn: true })) : [
+          { cardId: 'strike', enemyIds: ['gildedKnight'], category: 'enemy-reaction', endTurn: true },
+          { cardId: 'defend', enemyIds: ['wanderingSoldier'], category: 'guarded-enemy-turn', endTurn: true },
+          { cardId: 'evasiveGuard', enemyIds: ['wanderingSoldier'], category: 'evade-enemy-turn', endTurn: true },
+          ...(classId === 'reaver' ? [{ cardId: 'guardCounter', enemyIds: ['wanderingSoldier'], category: 'guard-counter-return', endTurn: true }] : []),
+          { cardId: 'strike', enemyStatuses: [{ status: 'invulnerability', stacks: 1 }], category: 'damage-without-health-loss' },
+          { cardId: 'strike', enemyIds: ['wanderingSoldier'], category: 'victory-reward', victory: true },
+        ];
+        for (const row of rows) {
+          if (!await runCase(page, device, classId, { ...row, variant: 'base', sampleAnimation: pace === 'normal', figureTarget: true })) { await page.close(); page = await boot(context, classId); }
+          else if (row.victory) { await page.waitForFunction(() => !document.querySelector('.combat'), null, { timeout: 20000 }); await page.screenshot({ path: resolve(out, `${device}-${classId}-victory-reward.png`) }); await page.close(); page = await boot(context, classId); }
+        }
       }
       await page.close();
     }
