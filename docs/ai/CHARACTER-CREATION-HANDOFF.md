@@ -174,7 +174,7 @@ or standalone game; the Class pose is
 - [x] Final build and refreshed artifact captures passed: 64 capture/interaction
   records, plus the eight-subclass matrix and actual Begin flow. Final package
   and compact Class delivery details are recorded below.
-- [x] Worker work is assembled for origin publication into `Feature/AddSubClasses`,
+- [x] Worker work is published on origin and merged into `Feature/AddSubClasses`,
   then `Feature/updateCharacterCreation`. Exact remotely verified commit/tree
   receipts are saved in the origin-state record below.
 - [ ] Further visual/balance changes follow the owner's playtest feedback.
@@ -200,7 +200,7 @@ fast validation. No main/release merge or installer publication is claimed.
   The only expected network fallback is the optional music manifest (procedural score).
 - Final package launcher: `/workspace/scratch/subclass-preview/packages/0.7.1.1520-ef85447e6b/AshenSpire-subclass-preview-0.7.1.1520/START-HERE.html`.
 - ZIP: same parent directory, `AshenSpire-subclass-preview-0.7.1.1520.zip`
-  (119,383,939 bytes). Includes 76 captures, 27 component groups, the exact
+  (119,390,691 bytes). Includes 76 captures, 27 component groups, the exact
   standalone game and the design-only mouse layer editor.
 - Fresh compact Class captures: `class-reaver-desktop-1440x900.png` and
   `class-reaver-mobile-390x844.png` in the final captures directory; all four
