@@ -8,6 +8,14 @@ import { loadavg, freemem, cpus } from 'node:os';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { launchBrowser } from '../browser.mjs';
+export function assertResumeIdentity(report, current) {
+  assert.ok(report.htmlSha256, 'resumed report must pin compiled HTML bytes');
+  assert.equal(report.htmlSha256, current.htmlSha256, 'resumed compiled HTML byte identity');
+  assert.deepEqual(report.build, current.build, 'resumed artifact identity');
+  assert.deepEqual(report.sourceDigests, current.sourceDigests, 'resumed immutable source identity');
+}
+
+async function main() {
 const sourceRoot = resolve(process.env.QA_REFERENCE_SOURCE || new URL('../../src/', import.meta.url).pathname);
 const [{ contentBundle }, { createRegistries }, { SFX_MANIFEST, resolveRecipe }] = await Promise.all([
   import(pathToFileURL(resolve(sourceRoot, 'content/index.js')).href),
@@ -126,18 +134,18 @@ for (let i = 0; i < sourceFiles.length; i += 16) await Promise.all(sourceFiles.s
     assert.equal(digest(normalizeStamp(served)), digest(normalizeStamp(readFileSync(path, 'utf8'))), 'buildversion code identity excluding generated stamp fields');
   } else assert.equal(sourceDigests[relative], digest(readFileSync(path)), `immutable source fixture identity: ${relative}`);
 }));
+const previousReport = resumePath ? JSON.parse(readFileSync(resolve(resumePath), 'utf8')) : null;
+if (previousReport) assertResumeIdentity(previousReport, { build, htmlSha256, sourceDigests });
 const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const owner = await launchBrowser({ browser: process.env.CHROME || '/usr/bin/chromium', prefix: 'ca-' });
 const browser = await chromium.connectOverCDP(owner.wsUrl);
-const report = resumePath ? JSON.parse(readFileSync(resolve(resumePath), 'utf8')) : { url, source, sourceRoot, build, htmlSha256, sourceDigests, inventory, mode, pace, host: { cpuCount: cpus().length, load: loadavg(), freeMemory: freemem(), samples: [] },
+const report = previousReport || { url, source, sourceRoot, build, htmlSha256, sourceDigests, inventory, mode, pace, host: { cpuCount: cpus().length, load: loadavg(), freeMemory: freemem(), samples: [] },
   fixture: 'Fresh createRunCombat from the screenshot run, canonical enemies/knowledge/moves, custom difficulty hpMult=20 and resource maxima 200. One registered card plus legal draw/discard fillers. Data fields only copied into the live fight; original runtime functions, listeners, dispatch, target resolver, renderer and timeline preserved. These are isolated fixtures, not earned playthroughs.',
   cases: [], errors: [], platformWarnings: [], networkFailures: [], animationDispatch: [], started: new Date().toISOString(), coverageLimits: [
     'Source-engine oracle parity proves compiled input and effect resolution match canonical source. Independent intended-effect/conditional trigger contracts are reported by the engine audit.',
     'Relic/status registries are inventoried here; exhaustive relic/status activation belongs to the engine audit.',
   ] };
 if (resumePath) {
-  assert.deepEqual(report.build, build, 'resumed artifact identity');
-  assert.deepEqual(report.sourceDigests, sourceDigests, 'resumed immutable source identity');
   report.runs ||= [{ pace: report.pace, started: report.started }];
   report.runs.push({ pace, started: new Date().toISOString(), resumedFrom: resumePath });
   report.pace = pace; delete report.finished; delete report.counts;
@@ -666,3 +674,6 @@ try {
 }
 console.log(JSON.stringify({ counts: report.counts, out }));
 if (report.counts.failed) process.exitCode = 1;
+}
+
+if (resolve(process.argv[1] || '') === new URL(import.meta.url).pathname) await main();

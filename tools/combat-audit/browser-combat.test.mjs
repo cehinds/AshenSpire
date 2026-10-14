@@ -4,6 +4,7 @@ import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { test } from 'node:test';
+import { assertResumeIdentity } from './browser-combat.mjs';
 
 function summarize(cases, inventory = { cards: [{ id: 'strike', classes: ['reaver'], upgraded: false }] }) {
   const dir = mkdtempSync(resolve(tmpdir(), 'combat-summary-'));
@@ -42,4 +43,18 @@ test('historical failed reruns preserve provenance without inflating coverage', 
   assert.equal(result.manifest.historicalFailures[0].index, 0);
   assert.equal(result.manifest.historicalFailures[0].latest.index, 1);
   assert.equal(result.manifest.historicalFailures[0].resolved, true);
+});
+test('resume refuses changed HTML bytes even when source and ordinal match', () => {
+  const report = { htmlSha256: 'original', build: { source: 'same', ordinal: '1530' }, sourceDigests: { module: 'same' }, cases: [row('desktop')] };
+  assert.throws(() => assertResumeIdentity(report, { ...report, htmlSha256: 'changed' }), /compiled HTML byte identity/);
+  assert.equal(report.cases.length, 1, 'failed validation preserves the original history');
+  assert.doesNotThrow(() => assertResumeIdentity(report, report));
+  assert.throws(() => assertResumeIdentity({ ...report, htmlSha256: undefined }, report), /must pin compiled HTML bytes/);
+});
+test('distinct enemy rows keep distinct provenance keys', () => {
+  const enemy = id => ({ ...row('desktop'), category: 'enemy-turn', enemyIds: [id] });
+  const result = summarize([row('desktop'), row('phone'), enemy('wanderingSoldier'), enemy('gildedKnight')]);
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.manifest.latestKeys, 4);
+  assert.equal(result.manifest.cases.filter(item => item.key.includes('/enemy-turn/')).length, 2);
 });
