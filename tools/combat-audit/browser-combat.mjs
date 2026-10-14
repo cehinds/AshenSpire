@@ -191,6 +191,7 @@ async function fixture(page, row) {
     window.__renderCombatForShot();
     window.__auditStart = { hp: c.enemies.map(e => e.hp), player: { hp: c.player.hp, energy: c.player.energy, mana: c.player.mana, stamina: c.player.stamina }, eventCount: c.eventLog.length, at: performance.now() };
     window.__auditFrameSamples = []; window.__auditSampling = !!row.sampleAnimation;
+    window.__auditSelectedOrigin = null;
     const sample = () => {
       const host = document.querySelector('.combatant.player .alternative-card-stage'), stage = host?.__poseStage, canvas = host?.querySelector('canvas');
       let hash = null;
@@ -256,6 +257,10 @@ async function play(page, device, row, before) {
     await page.evaluate(async () => {
     await document.querySelector('.combatant.player .alternative-card-stage')?.__poseStage?.ready;
     await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    });
+    await page.evaluate(() => {
+      const stage = document.querySelector('.combatant.player .alternative-card-stage')?.__poseStage;
+      window.__auditSelectedOrigin = { at: performance.now(), missing: !stage, pose: stage?.pose, stance: stage?.stance, rest: stage?.rest, action: stage?.presentation?.action };
     });
   }
   if (before.refused || row.deniedCost) {
@@ -325,6 +330,7 @@ async function receipt(page) {
       oracle: { events: window.__auditOracle.eventLog.slice(window.__auditStart.eventCount), player: window.__auditOracle.player,
         enemies: window.__auditOracle.enemies, piles: window.__auditOracle.piles, phase: window.__auditOracle.phase },
       actual: { player: c.player, enemies: c.enemies, piles: c.piles, phase: c.phase }, frames: window.__auditFrameSamples,
+      selectedOrigin: window.__auditSelectedOrigin,
       inputReceipts: window.__auditClickReceipts.filter(r => r.inputAt >= window.__auditStart.at) };
   });
 }
@@ -376,9 +382,10 @@ async function runCase(page, device, classId, row) {
     entry.before = await fixture(page, row);
     if (row.prePlayCard) {
       const instanceId = `${row.instanceId}-prefix`;
-      await page.evaluate(instanceId => window.__auditOracleDispatch(window.__auditOracle, { type: 'playCard', cardInstanceId: instanceId }), instanceId);
+      const needsTarget = await page.evaluate(async ({ source, instanceId }) => (await import(source + 'engine/combat.js')).previewCard(window.__combat, instanceId).needsTarget, { source, instanceId });
+      await page.evaluate(({ instanceId, needsTarget }) => window.__auditOracleDispatch(window.__auditOracle, { type: 'playCard', cardInstanceId: instanceId, ...(needsTarget ? { targetId: 'e1' } : {}) }), { instanceId, needsTarget });
       await tap(page, page.locator(`.hand .card[data-instance-id="${instanceId}"]`), device);
-      await tap(page, page.locator('.combatant.player .player-action-intent'), device);
+      await tap(page, needsTarget ? page.locator('.enemy-target-button:not([disabled])').first() : page.locator('.combatant.player .player-action-intent'), device);
       await page.waitForFunction(id => window.__combat.eventLog.some(e => e.type === 'cardPlayed' && e.cardInstanceId === id), instanceId);
       await finishPending(page, device);
     }
@@ -405,7 +412,8 @@ async function runCase(page, device, classId, row) {
     if (row.sampleAnimation) {
       const frames = entry.after.frames, actionFrames = frames.filter(f => f.action);
       const firstAction = frames.findIndex(f => f.action);
-      const origin = frames.slice(0, Math.max(0, firstAction)).findLast(f => f.pose?.startsWith('stance-'));
+      const origin = entry.after.selectedOrigin?.pose?.startsWith('stance-') ? entry.after.selectedOrigin
+        : frames.slice(0, Math.max(0, firstAction)).findLast(f => f.pose?.startsWith('stance-'));
       report.animationDispatch.push({ device, classId, cardId: row.cardId, receiptId: row.instanceId, dispatchType: 'paid-card', cardPlayed: entry.after.events.some(e => e.type === 'cardPlayed'),
         presentationKind: entry.after.events.some(e => e.type === 'combatCounterTriggered' && e.cardInstanceId === row.instanceId) ? 'counter-return'
           : entry.before.tags.includes('maneuver:counter') ? 'held-preparation' : 'finite-playback',
@@ -495,10 +503,12 @@ try {
           { cardId: 'strike', enemyIds: ['gildedKnight'], category: 'enemy-reaction', endTurn: true },
           { cardId: 'defend', enemyIds: ['wanderingSoldier'], category: 'guarded-enemy-turn', endTurn: true },
           { cardId: 'evasiveGuard', enemyIds: ['wanderingSoldier'], category: 'evade-enemy-turn', endTurn: true },
-          ...(classId === 'reaver' ? [
-            { cardId: 'guardCounter', enemyIds: ['wanderingSoldier'], category: 'guard-counter-return', endTurn: true, prePlayCard: 'defend' },
+          ...[
+            { cardId: classId === 'reaver' ? 'guardCounter' : 'spikedReprisal', enemyIds: ['wanderingSoldier'], category: 'guard-counter-return', endTurn: true, prePlayCard: 'defend' },
             { cardId: 'dodgeRoll', enemyIds: ['wanderingSoldier'], category: 'evasion-counter-return', endTurn: true, prePlayCard: 'defend' },
-          ] : []),
+          ],
+          { cardId: 'defend', enemyIds: ['wanderingSoldier'], category: 'defend-selected-origin', prePlayCard: 'strike' },
+          ...(classId === 'herald' ? [{ cardId: 'bloodPact', category: 'spell-selected-origin', prePlayCard: 'strike' }] : []),
           { cardId: 'strike', enemyStatuses: [{ status: 'invulnerability', stacks: 1 }], category: 'damage-without-health-loss' },
           { cardId: 'strike', enemyIds: ['wanderingSoldier'], category: 'victory-reward', victory: true },
         ];
