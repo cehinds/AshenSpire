@@ -286,16 +286,28 @@ export function decorateCreationWorkspace(root) {
   return root;
 }
 
+/** The live flow and catalog share aligned section/count slots in one face. */
+export function renderCreationStepFace(face, { name, index, count }) {
+  face.replaceChildren(
+    el('span', { class: 'cc-step-name', text: name }),
+    el('span', { class: 'cc-step-count', text: t('creation.nav.stepCount', { index, count }) }),
+  );
+}
+
 /** The same kit navigation used by the live screen, available independently. */
 export function createCreationStepNavigation({ steps = [], currentId = null, onSelect = null, labels = {} } = {}) {
   const entries = Array.from(steps);
-  const items = entries.map(step => railItem({ label: step.label, current: step.id === currentId,
+  const initialId = currentId || entries[0]?.id;
+  const items = entries.map(step => railItem({ label: step.label, current: step.id === initialId,
     attrs: { dataset: { creationStep: step.id, member: step.id } },
   }));
   const host = part(el('div', { class: 'as-railed cc-page-parts cc-step-navigation' }), UI.creationStepNavigation, 'navigation');
-  const currentLabel = item => {
-    const index = items.indexOf(item), step = entries[index];
-    return labels.currentStep?.(step, index, entries.length) || `${index + 1} / ${entries.length} · ${step?.label || ''}`;
+  const currentLabel = item => entries[items.indexOf(item)]?.label || '';
+  const progressLabel = () => {
+    const index = items.findIndex(item => item.getAttribute('aria-selected') === 'true');
+    if (!entries[index]) return labels.title || '';
+    return labels.currentStep?.(entries[index], index, entries.length)
+      || t('creation.step.progress', { index: index + 1, count: entries.length, category: entries[index]?.label || '' });
   };
   const update = id => {
     for (const item of items) {
@@ -307,13 +319,14 @@ export function createCreationStepNavigation({ steps = [], currentId = null, onS
     nav.sync();
   };
   const nav = categoryNav({ items, ariaLabel: labels.title || '', face: currentLabel,
-    label: text => [labels.allSteps, text].filter(Boolean).join(' · '),
+    renderFace: (face, name, item) => renderCreationStepFace(face, { name, index: items.indexOf(item) + 1, count: entries.length }),
+    label: progressLabel,
     choose: id => { update(id); onSelect?.(id); },
   });
   nav.attach(host);
   host.update = update;
   host.destroy = () => nav.release();
   host.navigation = nav;
-  if (currentId || entries[0]) update(currentId || entries[0].id);
+  if (initialId) update(initialId);
   return host;
 }
