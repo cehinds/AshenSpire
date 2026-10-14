@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-14",
     "summary": "Stances, Evade and hit previews share their combat rules",
     "detail": "Same-stance cards use the configured SP discount, stance ratings stay active without stacking, and Defense restores Poise and Ward with protection overflow. Smash, Counter and Sweep apply their matchup and range rules. Evade stacks, explicit Target bypasses and exact hit previews use the same hit calculation, while the combat HUD and hit labels show the result.",
-    "build": "0.7.1.1527",
+    "build": "0.7.1.1529",
     "pullRequest": 1984,
     "url": "https://github.com/cehinds/AshenSpire/pull/1984"
   },
