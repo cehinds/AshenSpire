@@ -1,0 +1,40 @@
+name: validate Python interpreter fix
+on:
+  pull_request:
+    branches: [dev]
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          lfs: false
+      - uses: ./.github/actions/setup-node
+      - name: Install card artwork encoder for conversion tests
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            python -m venv "$RUNNER_TEMP/card-art-python"
+            encoder="$RUNNER_TEMP/card-art-python/Scripts"
+          else
+            python3 -m venv "$RUNNER_TEMP/card-art-python"
+            encoder="$RUNNER_TEMP/card-art-python/bin"
+          fi
+          "$encoder/python" -m pip install Pillow==11.1.0
+          echo "$encoder" >> "$GITHUB_PATH"
+          # Windows has python.exe in the venv, but python3 may resolve outside it.
+          echo "ASHEN_PYTHON=$("$encoder/python" -c 'import sys; print(sys.executable)')" >> "$GITHUB_ENV"
+      - name: Run production exporter assertions using pinned interpreter
+        run: node --test tests/class-smash-export.test.mjs
+      - name: Generate exact changelog projection
+        if: runner.os == 'Linux'
+        run: |
+          node tools/about-changelog.mjs --write
+          node -e "console.log('GENERATED_BASE64='+require('fs').readFileSync('src/content/changelog.generated.js').toString('base64'))"
