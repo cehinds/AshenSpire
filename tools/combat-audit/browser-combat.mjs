@@ -140,7 +140,9 @@ const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODUL
 const owner = await launchBrowser({ browser: process.env.CHROME || '/usr/bin/chromium', prefix: 'ca-' });
 const browser = await chromium.connectOverCDP(owner.wsUrl);
 const report = previousReport || { url, source, sourceRoot, build, htmlSha256, sourceDigests, inventory, mode, pace, host: { cpuCount: cpus().length, load: loadavg(), freeMemory: freemem(), samples: [] },
-  fixture: 'Fresh createRunCombat from the screenshot run, canonical enemies/knowledge/moves, custom difficulty hpMult=20 and resource maxima 200. One registered card plus legal draw/discard fillers. Data fields only copied into the live fight; original runtime functions, listeners, dispatch, target resolver, renderer and timeline preserved. These are isolated fixtures, not earned playthroughs.',
+  fixture: curated
+    ? 'Fresh createRunCombat preserving the canonical screenshot run HP and pools, with canonical enemies/knowledge/moves and hpMult=1. Authored card appended to a legal run deck and paid through real input. Data-only isolated fixture; production runtime functions and listeners preserved.'
+    : 'Fresh createRunCombat from the screenshot run, canonical enemies/knowledge/moves, custom difficulty hpMult=20 and resource maxima 200. One registered card plus legal draw/discard fillers. Data fields only copied into the live fight; original runtime functions, listeners, dispatch, target resolver, renderer and timeline preserved. These are isolated fixtures, not earned playthroughs.',
   cases: [], errors: [], platformWarnings: [], networkFailures: [], animationDispatch: [], started: new Date().toISOString(), coverageLimits: [
     'Source-engine oracle parity proves compiled input and effect resolution match canonical source. Independent intended-effect/conditional trigger contracts are reported by the engine audit.',
     'Relic/status registries are inventoried here; exhaustive relic/status activation belongs to the engine audit.',
@@ -502,8 +504,8 @@ async function runCase(page, device, classId, row) {
     if (row.sampleAnimation) await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     entry.after = await receipt(page);
     if (row.category?.endsWith('counter-return')) assert.ok(entry.after.events.some(e => e.type === 'combatCounterTriggered' && e.cardInstanceId === row.instanceId), 'the real incoming action triggers this prepared Counter return');
-    if (row.profileId) {
-      assert.equal(entry.before.instance.profileId, row.profileId, 'played instance comes from canonical equipped profile');
+    if (row.profileId) assert.equal(entry.before.instance.profileId, row.profileId, 'played instance comes from canonical equipped profile');
+    if (row.profileId || row.curated) {
       assert.equal(entry.after.stage?.animationSetId, `class-cards-${classId}`, 'equipped profile retains default class artwork');
       assert.deepEqual(entry.after.stage.alternateWeaponPoses, [], 'alternate weapon animation families stay disabled');
     }
