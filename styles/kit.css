@@ -6512,3 +6512,12 @@ button.progression-feat-card:is(:hover, :focus-visible) { border-color: var(--go
  .customize.cc-design-workspace .modal-head { display:flex; align-items:center; gap:calc(8px / var(--ui-zoom,1)); }
  .customize.cc-design-workspace .modal-head > .modal-head-actions { align-self:center; gap:calc(6px / var(--ui-zoom,1)); }
 }
+/* A tablet rail leaves less room for the same class summary than a wide
+   desktop. Reserve the six-line budget when the choice collection is narrow,
+   so wrapped ratings/gear and the native relic target remain inside every tile. */
+.customize.cc-design-workspace :is(#cz-classes, .cc-class-row-specimen) { container-type:inline-size; container-name:creation-class-choices; }
+@media(min-width:601px) {
+ @container creation-class-choices (max-width:800px) {
+  .customize .cz-class.unfolded:has(> .cc-concise-class) { height:calc(max(28vh,220px) / var(--ui-zoom,1)); }
+ }
+}
