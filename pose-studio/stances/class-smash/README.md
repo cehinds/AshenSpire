@@ -56,3 +56,14 @@ comparisons confirm cached and uncached paid auras are pixel-identical. Focused
 source/production/package and existing Reaver regression checks pass. The feature is
 being delivered on `Feature/OtherClassSmash`; the current continuation scope
 keeps Dev/test merges paused.
+
+## All four classes in combat
+
+The [combat stance gallery](../combat-stances-gallery/README.md) records all four
+canonical default-armour kits in the actual solo combat stage: 29 held views and
+77 labeled action/reaction groups. Its separate capture is build
+**0.7.1.1516 / e8ab294493**, source `2ca669b1c`, after the current Dev card-rule
+and bundled Guard/Counter fixes were integrated. The original `891d8a017a`
+Smash proof above remains a distinct frozen record. The gallery identifies
+existing fallback presentations and legacy held-pose gear differences from the
+current kits; it does not add paintings or extend co-op.
