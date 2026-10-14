@@ -4,6 +4,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { openCombatQa } from './rear-qa-runtime.mjs';
 import { pointerTargetExpression } from './pointer-target.mjs';
+import { assertCombatLayerOrder } from './combat-layer-contract.mjs';
 const { chromium } = createRequire(import.meta.url)('playwright');
 const base = process.env.COMBAT_QA_URL || 'http://localhost:8338/';
 const out = resolve(process.env.COMBAT_QA_OUT || '.codex/combat-layers');
@@ -33,6 +34,23 @@ try {
     const layers = await page.evaluate(() => {
       const combat = document.querySelector('.combat');
       const z = (selector, pseudo) => Number(getComputedStyle(document.querySelector(selector), pseudo).zIndex);
+      const sprites = [...document.querySelectorAll('.combatant .sprite')].flatMap(sprite => {
+        const actor = sprite.closest('.combatant');
+        const selected = actor.classList.contains('context-selected');
+        const actual = Number(getComputedStyle(sprite).zIndex);
+        // Sample the real selected cascade for every role, including co-op's
+        // other players. Restore synchronously; no gameplay event is dispatched.
+        try {
+          actor.classList.add('context-selected');
+          return [actual, Number(getComputedStyle(sprite).zIndex)];
+        } finally { actor.classList.toggle('context-selected', selected); }
+      });
+      const selectionSurfaces = [...document.querySelectorAll(
+        '.enemy-target-picker,.combatant-leading,.combatant :is(.nm,.meters,.statuses),.combatant-inspector-host,.formation-move-controls,.position-guides,.combat-expansion-controls,.coop-arm-host')]
+        .map(el => Number(getComputedStyle(el).zIndex));
+      for (const actor of document.querySelectorAll('.combatant:is(.enemy-target-hitbox,.player-target-hitbox)')) {
+        for (const pseudo of ['::before', '::after']) selectionSurfaces.push(Number(getComputedStyle(actor, pseudo).zIndex));
+      }
       const ancestors = [...document.querySelectorAll('.combatant .sprite,.combatant-leading')].flatMap(node => {
         const bad = [];
         for (let parent = node.parentElement; parent && parent !== combat; parent = parent.parentElement) {
@@ -42,7 +60,7 @@ try {
         return bad;
       });
       return {
-        scenery: z('.backdrop'),
+        scenery: z('.backdrop'), sprites, selectionSurfaces,
         enemies: [...document.querySelectorAll('.enemy .sprite')].map(el => Number(getComputedStyle(el).zIndex)),
         player: z('.player .sprite'), fade: document.querySelector('.alternative-card-fade') ? z('.alternative-card-fade') : z('.combat', '::before'),
         selection: z('.enemy .combatant-leading'), cards: z('.hand-overlay, .hand-area > .hand'),
@@ -61,13 +79,9 @@ try {
         overflow: document.documentElement.scrollWidth > innerWidth,
       };
     });
-    assert(layers.scenery < Math.min(...layers.enemies));
-    assert(layers.fade < Math.min(...layers.enemies));
-    assert(Math.max(...layers.enemies) < layers.player && layers.player < layers.selection);
-    assert(layers.selection < layers.cards);
+    assertCombatLayerOrder(layers);
     assert((layers.targetPlate === null || layers.targetPlate < layers.targetHealth) && layers.targetHealth < layers.selection,
       'target plate must stay behind its health and intent controls');
-    assert(layers.cards < layers.hud && layers.cards < layers.footer);
     assert.deepEqual(layers.ancestors, [], 'shared wrappers must not trap artwork or selection controls');
     assert.equal(layers.railsBackground, 'none', 'footer rails must not paint an opaque sheet over cards');
     assert(layers.shadowBoxes.length > 0 && layers.shadowBoxes.every(box => box.content !== 'none' && box.width > 0 && box.height > 0));
