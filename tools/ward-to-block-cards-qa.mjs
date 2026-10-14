@@ -205,6 +205,7 @@ try {
     },
     cardSelector: '#remove-grid .card:has-text("Frost Counter")',
     compactSelector: '#remove-grid .card:has-text("Frost Counter")',
+    strategy: 'keyboard',
   });
   });
 

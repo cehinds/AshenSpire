@@ -1346,7 +1346,7 @@ test('DOM: range follows the expanded combat delivery; the mark follows the camp
     assert.deepEqual(read('cometFragment'), ['ranged', 'magical']);
     assert.deepEqual(read('starbladePhalanx'), ['melee', 'magical']);
     // Canonical Attack identity leaves delivery range to the separate range chip.
-    assert.deepEqual(read('ricochet'), ['ranged', 'physical'], 'a ranged attack retains its range chip');
+    assert.deepEqual(read('ricochet'), ['reach', 'physical'], 'a ranged attack retains its authored Reach delivery');
     assert.equal(row('ricochet').querySelector('.deck-editor-stance')?.dataset.stance, 'attack');
     // Physical marks carry the approved shield; magical marks carry the Spell sparkle.
     const mark = (cardId) => row(cardId).querySelector('.deck-editor-camp .combat-sigil')?.dataset.sigil;

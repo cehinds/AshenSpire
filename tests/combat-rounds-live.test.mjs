@@ -301,8 +301,8 @@ test('with the preview off, a scripted fight event log is byte-identical to the 
   // log with keys added and nothing else changed: moveId on each enemy move's events, incoming and base on damageDealt,
   // source 'defendStance' on a stance block, triggeredBy on a triggered stagger. The PR #1953 review fixes (a mid-turn
   // stagger, a charge in a round, normal momentum per exchange) do not reach this preview-off script.
-  assert.equal(createHash('sha256').update(all).digest('hex'), 'b0e575b620cccace23b5bbb263eca69d8489014670dcad278b7809a9f5272e4a');
-  assert.equal(all.length, 407839);
+  assert.deepEqual({ sha256: createHash('sha256').update(all).digest('hex'), length: all.length },
+    { sha256: 'b0e575b620cccace23b5bbb263eca69d8489014670dcad278b7809a9f5272e4a', length: 407839 });
 });
 
 // Review finding 1: a queued card that an earlier queued card removed from hand never resolves.

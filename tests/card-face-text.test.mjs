@@ -162,7 +162,7 @@ test('a before-play HP check says "before this card"', () => {
   assert.ok(text('progression-carrion-cut').some(line => /HP is at most \d+% before this card: /.test(line)), JSON.stringify(text('progression-carrion-cut')));
 });
 
-test('custom spell Counter coverage uses compact return and protection lines, with Grounded retained', () => {
+test('custom spell Counter coverage uses compact return and protection lines', () => {
   for (const id of ['frostCounter', 'forceCounter', 'barrageCounter']) {
     const all = lines(id);
     assert.ok(all, id + ' uses compact lines');
@@ -170,6 +170,14 @@ test('custom spell Counter coverage uses compact return and protection lines, wi
     assert.match(wording, /Return/);
     assert.match(wording, /Block.*Ward/);
     assert.doesNotMatch(wording, /after all covered damage/);
-    if (id === 'forceCounter') assert.match(wording, /Grounded/);
+
   }
+});
+
+test('an authored Grounded effect on a version-two Counter retains its stacks and duration', () => {
+  const base = card('forceCounter');
+  const def = { ...base, effects: [...base.effects,
+    { op: 'applyStatus', target: 'self', status: 'grounded', stacks: 1, duration: 2 }] };
+  const wording = cardFaceLines(def, null, reg).map(line => line.html.replace(/<[^>]+>/g, '')).join(' | ');
+  assert.match(wording, /Grounded 1.*2 turns/);
 });
