@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-14
 
-- **Cards show the same rules before and during combat** ([#1971](https://github.com/cehinds/AshenSpire/pull/1971), `0.7.1.1511`). Character creation, rewards and deck inspection now show the current combat effects, costs and traits: Crystal Barrier grants Ward in every view instead of promising Block outside combat. Reward captions and deck descriptions agree with their cards, while older saved runs keep their original rules.
+- **Cards show the same rules before and during combat** ([#1971](https://github.com/cehinds/AshenSpire/pull/1971), `0.7.1.1513`). Character creation, rewards and deck inspection now show the current combat effects, costs and traits: Crystal Barrier grants Ward in every view instead of promising Block outside combat. Reward captions and deck descriptions agree with their cards, while older saved runs keep their original rules.
 
 ## 2026-10-13
 

@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-14",
     "summary": "Cards show the same rules before and during combat",
     "detail": "Character creation, rewards and deck inspection now show the current combat effects, costs and traits: Crystal Barrier grants Ward in every view instead of promising Block outside combat. Reward captions and deck descriptions agree with their cards, while older saved runs keep their original rules.",
-    "build": "0.7.1.1511",
+    "build": "0.7.1.1513",
     "pullRequest": 1971,
     "url": "https://github.com/cehinds/AshenSpire/pull/1971"
   },
