@@ -72,10 +72,11 @@ test('real expanded Block, Barrier, Ward and typed reduction receipts earn prote
 });
 
 test('real Invulnerability and successful Evade remain distinct from Decoy and status damage',()=>{
-  const immune=contact({statuses:{invulnerability:{stacks:1}},evade:{charges:1,bonus:100}});
+  const immune=contact({statuses:{invulnerability:{stacks:1}},evade:{charges:1,bonus:100},accuracyDie:20});
   assert.deepEqual(reactions(immune.events),['defend']);
   assert.equal(immune.events.some(event=>event.type==='damageDealt'),false);
-  assert.equal(immune.combat.player.combatEvade.charges,1,'immunity does not spend Evade');
+  assert.equal(immune.combat.player.combatEvade.charges,0,'a landed shared check spends prepared Evade before Invulnerability prevents damage');
+  assert.equal(immune.events.find(event=>event.type==='attackMissed')?.evadeAttempted,true);
   const evaded=contact({evade:{charges:1},statuses:{evade:{stacks:1}},accuracyDie:1});
   const miss=evaded.events.find(event=>event.type==='attackMissed');
   assert.equal(miss?.missReason,'accuracy');

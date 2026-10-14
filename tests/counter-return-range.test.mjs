@@ -55,7 +55,7 @@ test('counter offensive reach is independent of ranged protection, with preview 
   assert.deepEqual(ctx.rng.getCounters(), before);
 });
 
-test('range and accuracy misses gate HP, Poise and Ward together without spending prepared Evade', () => {
+test('range misses preserve prepared Evade; eligible accuracy misses spend it while gating all payload lanes', () => {
   for (const [range, requiredRange, die, expectedDraws, reason] of [
     ['melee', 'ranged', 20, 0, 'range'], ['ranged', 'melee', 1, 1, 'accuracy'],
   ]) for (const hp of [0, 5]) {
@@ -67,7 +67,7 @@ test('range and accuracy misses gate HP, Poise and Ward together without spendin
     enqueueExpandedAction(ctx, returnActions(ctx, carrier, hp), { source: ctx.player, target, carrier });
     drain(ctx);
     assert.equal(target.hp, startHp); assert.equal(target.persistentWard.value, 30);
-    assert.equal(target.poiseMeter.value, 0); assert.equal(target.combatEvade.charges, 1);
+    assert.equal(target.poiseMeter.value, 0); assert.equal(target.combatEvade.charges, reason === 'range' ? 1 : 0);
     assert.equal(draws, expectedDraws);
     assert.ok(ctx.eventLog.some(event => event.type === 'attackMissed' && event.missReason === reason));
   }
@@ -84,7 +84,7 @@ test('a pressure-only return shares one hit roll with Evasion; a natural twenty 
     drain(ctx);
     assert.equal(accuracyDraws, 1, 'one group Accuracy check includes Evasion without a second roll');
     if (evade) {
-      assert.equal(target.combatEvade.charges, 1);
+      assert.equal(target.combatEvade.charges, 0, 'the shared Accuracy attempt spends the prepared charge too');
       assert.equal(target.statuses.evade, undefined, 'one Evasion stack is consumed on an eligible miss');
       assert.equal(target.persistentWard.value, 30); assert.equal(target.poiseMeter.value, 0);
     } else {

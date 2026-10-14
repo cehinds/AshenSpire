@@ -23,7 +23,7 @@ const play = (combat,enemy,{range='reach',targeting='single',pressure=true}={}) 
 test('Invulnerability spends one stack across three hits and suppresses the whole hostile payload',()=>{
  const {combat,enemy}=make();enemy.statuses.invulnerability={stacks:2};enemy.combatEvade={charges:1,bonus:0};enemy.block=enemy.barrier=9;
  const hp=enemy.hp,before=combat.rng.getCounters();play(combat,enemy);
- assert.equal(enemy.hp,hp);assert.equal(enemy.statuses.invulnerability.stacks,1);assert.equal(enemy.combatEvade.charges,1);assert.equal(enemy.block,9);assert.equal(enemy.barrier,9);
+ assert.equal(enemy.hp,hp);assert.equal(enemy.statuses.invulnerability.stacks,1);assert.equal(enemy.combatEvade.charges,0,'one shared Evade attempt precedes Invulnerability');assert.equal(enemy.block,9);assert.equal(enemy.barrier,9);
  assert.equal(enemy.statuses.sleep,undefined,'the avoided action cannot apply its status payload');
  assert.equal(combat.eventLog.find(event=>event.type==='combatAvoidanceResolved')?.hitCheck,true,'legacy protection receipt is marked as part of the shared hit decision');
  assert.equal(combat.eventLog.filter(event=>event.type==='attackMissed').length,1,'one final action miss is published');
