@@ -284,10 +284,9 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
  */
 export function gainBarrier(ctx, entity, base, card = null) {
   if (!entity?.alive) return 0;
-  const amount = computeBlockGain(ctx, entity, base, card);
-  const split = ctx.combatExpansionVersion === 2 ? spellDefenseSplit(card, amount) : null;
+  const split = computeSpellDefenseGain(ctx, entity, base, card);
   if (split) return gainSpellDefenseAmount(ctx, entity, split, card);
-  return gainBarrierAmount(ctx, entity, amount, card);
+  return gainBarrierAmount(ctx, entity, computeBlockGain(ctx, entity, base, card), card);
 }
 
 // A SPELL refills Ward first; only the overflow becomes Barrier. Every other
@@ -718,17 +717,38 @@ export function addArcaneExposure(ctx, source, target, { school, attempted = nul
 /**
  * computeBlockGain(ctx, entity, base) → final integer block gain:
  * base + the eligible rating bonus + per-stack 'blockAdd' modifiers,
- * × 'blockGainedMult' modifiers (expanded split spell defenses add DR + PR),
+ * × 'blockGainedMult' modifiers (DR scales spell Block, PR scales spell Ward),
  * floored, min 0 (SPEC §4.2). Pure. Cap NOT applied here.
  */
 export function computeBlockGain(ctx, entity, base, card = null) {
-  const ratingBonus = ctx.combatExpansionVersion === 2 && spellDefenseSplit(card, base)
-    ? Ratings.spellDefenseRatingBonus(ctx, entity, card, base)
-    : Ratings.cardRatingBonus(ctx, entity, card, 'block', base);
-  let amt = base + ratingBonus + statuses.getAdd(ctx, entity, 'blockAdd');
+  const split = computeSpellDefenseGain(ctx, entity, base, card);
+  if (split) return split.block + split.ward;
+  let amt = base + Ratings.cardRatingBonus(ctx, entity, card, 'block', base) + statuses.getAdd(ctx, entity, 'blockAdd');
   amt *= statuses.getMult(ctx, entity, 'blockGainedMult');
   amt = Math.floor(amt);
   return amt < 0 ? 0 : amt;
+}
+
+/**
+ * The exact parts both execution and live card previews consume. Split the
+ * base protection once, add DR only to Block and PR only to Ward, then apply
+ * guard modifiers while retaining the old once-floored total.
+ */
+export function computeSpellDefenseGain(ctx, entity, base, card = null) {
+  if (ctx.combatExpansionVersion !== 2 || !spellDefenseSplit(card, base)) return null;
+  const add = statuses.getAdd(ctx, entity, 'blockAdd');
+  const parts = spellDefenseSplit(card, base + add);
+  const bonus = Ratings.spellDefenseRatingBonuses(ctx, entity, card, base);
+  const nominalBlock = parts.block + bonus.block;
+  const nominalWard = parts.ward + bonus.ward;
+  const total = Math.max(0, Math.floor((base + add + bonus.block + bonus.ward)
+    * statuses.getMult(ctx, entity, 'blockGainedMult')));
+  if (!(total > 0)) return { block: 0, ward: 0 };
+  // A negative Block add may exceed the base, but must still reduce ratings.
+  // Allocate the final total over the remaining nominal portions in that case.
+  if (!(nominalBlock + nominalWard > 0)) return spellDefenseSplit(card, total);
+  const [block, ward] = allocateInteger(total, [nominalBlock, nominalWard]);
+  return { block, ward };
 }
 
 /**
@@ -777,7 +797,7 @@ function gainSpellDefenseAmount(ctx, entity, split, card) {
 export function gainBlock(ctx, entity, base, card = null) {
   if (!entity.alive) return 0;
   if (ctx.combatExpansionVersion === 2) {
-    const split = spellDefenseSplit(card, computeBlockGain(ctx, entity, base, card));
+    const split = computeSpellDefenseGain(ctx, entity, base, card);
     if (split) return gainSpellDefenseAmount(ctx, entity, split, card);
   }
   if (ctx.combatExpansionVersion === 2 && card?.combatProfile) {

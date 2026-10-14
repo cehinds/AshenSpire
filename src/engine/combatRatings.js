@@ -1,5 +1,6 @@
 import { ratingReceipt, ratingValue, sourceRatingValue, attackImpact, isMagicalAttack, isMagicalHit } from '../model/combatRatings.js';
 import * as Properties from './properties.js';
+import { allocateInteger } from '../model/combatRules.js';
 import { passiveMult, passiveSum } from '../model/registries.js';
 import { usesSingleBreakMeter, breakMeterIds } from '../model/breakMeter.js';
 import * as Matchups from './combatMatchups.js';
@@ -191,18 +192,24 @@ export function cardRatingBonus(ctx, source, carrier, op, base = 0) {
 }
 
 /**
- * A split spell defense uses both physical Defense and magical Power.
- * Read both through the same source-scoping door and cap their combined bonus
- * once. A carrier without live ratings keeps its existing fallback bonus;
- * a single ratingValue does not imply a second Defense rating.
+ * Split spell defenses scale Block with Defense and Ward with Power.
+ * A shared total cap proportionally allocates the available rating bonus;
+ * source-scoped equipment and status ratings use their existing reader.
  */
-export function spellDefenseRatingBonus(ctx, source, carrier, base = 0) {
-  if (!source || !carrier?.cardId) return 0;
-  if (!ctx.ratingsRules || !source.ratings) return cardRatingBonus(ctx, source, carrier, 'block', base);
+export function spellDefenseRatingBonuses(ctx, source, carrier, base = 0) {
+  if (!source || !carrier?.cardId) return { block: 0, ward: 0 };
+  if (!ctx.ratingsRules || !source.ratings) {
+    const fallback = cardRatingBonus(ctx, source, carrier, 'block', base);
+    return carrier.ratingId === 'dr' ? { block: fallback, ward: 0 } : { block: 0, ward: fallback };
+  }
   const scoped = !!carrier.equipmentRole;
-  const amount = sourceRatingValue(ctx, source, 'dr', carrier.sourceArmamentId, scoped)
-    + sourceRatingValue(ctx, source, 'pr', carrier.sourceArmamentId, scoped);
-  return Number.isFinite(carrier.ratingCap)
-    ? Math.max(0, Math.min(amount, carrier.ratingCap - base))
-    : amount;
+  const dr = sourceRatingValue(ctx, source, 'dr', carrier.sourceArmamentId, scoped);
+  const pr = sourceRatingValue(ctx, source, 'pr', carrier.sourceArmamentId, scoped);
+  const sum = dr + pr;
+  if (!(sum > 0)) return { block: 0, ward: 0 };
+  const capped = Number.isFinite(carrier.ratingCap)
+    ? Math.max(0, Math.min(sum, carrier.ratingCap - base)) : sum;
+  if (capped >= sum) return { block: dr, ward: pr };
+  const [block, ward] = allocateInteger(capped, [dr, pr]);
+  return { block, ward };
 }

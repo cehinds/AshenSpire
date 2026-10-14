@@ -110,7 +110,9 @@ function fillTemplate(def, tokens, baseTokens, damageSequences = []) {
   // the same allocation as the compact face and combat execution.
   template = template.replace(/\{((?:gainBarrier|block)(?:\.\d+)?)\}(?: (?:temporary )?(?:Barrier|Ward|Block))?/g, (match, token) => {
     if (token.startsWith('block') && def.defenseRulesVersion !== 2 && def.minCombatExpansionVersion !== 2) return match;
-    const split = spellDefenseSplit(def, liveTokens[token]);
+    const liveBlock = liveTokens[token + '.block'], liveWard = liveTokens[token + '.ward'];
+    const split = Number.isFinite(liveBlock) && Number.isFinite(liveWard)
+      ? { block: liveBlock, ward: liveWard } : spellDefenseSplit(def, liveTokens[token]);
     if (!split) return match;
     liveTokens[token + '.block'] = split.block;
     liveTokens[token + '.ward'] = split.ward;

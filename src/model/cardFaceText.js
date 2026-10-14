@@ -156,7 +156,7 @@ function buildLines(def, preview, registries) {
       case 'wardDamage': return frag('damage', `${num(n, base)} Ward damage${area}`);
       case 'block': {
         const defense = def.defenseRulesVersion === 2 || def.minCombatExpansionVersion === 2
-          ? spellDefenseSplit({ ...def, combatProfile: p }, n) : null;
+          ? (preview?.values?.[index]?.defenseSplit || spellDefenseSplit({ ...def, combatProfile: p }, n)) : null;
         if (defense) {
           const baseSplit = typeof base === 'number' ? spellDefenseSplit({ ...def, combatProfile: p }, base) : null;
           return frag(effect.target === 'ally' ? 'bonus' : 'gain',
@@ -173,7 +173,7 @@ function buildLines(def, preview, registries) {
       }
       // A Spell's gain refills Ward first, so it reads Ward.
       case 'gainBarrier': {
-        const split = spellDefenseSplit({ ...def, combatProfile: p }, n);
+        const split = preview?.values?.[index]?.defenseSplit || spellDefenseSplit({ ...def, combatProfile: p }, n);
         if (split) {
           const baseSplit = typeof base === 'number' ? spellDefenseSplit({ ...def, combatProfile: p }, base) : null;
           return frag(effect.target === 'ally' ? 'bonus' : 'gain', `${effect.target === 'ally' ? 'Ally gains ' : ''}${num(split.block, baseSplit?.block)} Block, ${num(split.ward, baseSplit?.ward)} Ward`);
