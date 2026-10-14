@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-14",
     "summary": "Combat fades cover fighters, and player targets stay clear of Health",
     "detail": "Screen fades now cover idle and selected fighters while target selection, cards and the combat HUD remain above them. When the perspective view places the player behind the hand, its transparent 44px target moves clear of its own Health strip without changing the artwork, Health position or selected fighter size.",
-    "build": "0.7.1.1521",
+    "build": "0.7.1.1523",
     "pullRequest": 1978,
     "url": "https://github.com/cehinds/AshenSpire/pull/1978"
+  },
+  {
+    "id": "pr-1983",
+    "date": "2026-10-14",
+    "group": "2026-10-14",
+    "summary": "Stance combat continuation is specified",
+    "detail": "Records the next stance discounts, protection, maneuver matchups, Evade, hit previews and combat labels before their implementation. Nothing in play changes in this specification-only update.",
+    "build": "0.7.1.1523",
+    "pullRequest": 1983,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1983"
   },
   {
     "id": "pr-1974",
