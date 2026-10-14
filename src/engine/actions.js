@@ -47,6 +47,7 @@ import { applyGraceRefill } from './encounters.js';
 import { orderedReturn } from '../model/deckRules.js';
 import { reviveTokenFor, reviveHp, adjustCount } from '../model/consumables.js';
 import { reconcileWardBlock, wardBlockReceipt } from '../model/blockPresentation.js';
+import { spellDefenseSplit } from '../model/spellDefense.js';
 import { allowAbilityOnce, grantAbilityCharge, recordAbilityOffering, requestAbilityDiscard } from './abilityRiders.js';
 import * as Matchups from './combatMatchups.js';
 import { typedDefenseAmount } from './combatExpansionEquipment.js';
@@ -283,7 +284,10 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
  */
 export function gainBarrier(ctx, entity, base, card = null) {
   if (!entity?.alive) return 0;
-  return gainBarrierAmount(ctx, entity, computeBlockGain(ctx, entity, base, card), card);
+  const amount = computeBlockGain(ctx, entity, base, card);
+  const split = ctx.combatExpansionVersion === 2 ? spellDefenseSplit(card, amount) : null;
+  if (split) return gainSpellDefenseAmount(ctx, entity, split, card);
+  return gainBarrierAmount(ctx, entity, amount, card);
 }
 
 // A SPELL refills Ward first; only the overflow becomes Barrier. Every other
@@ -757,9 +761,21 @@ export function gainMeterGuard(ctx, entity, meter, base, card = null) {
   return amt;
 }
 
+// Both protection opcodes share the spell-defense allocation. Rating and
+// status modifiers were computed on the total; neither portion reapplies them.
+function gainSpellDefenseAmount(ctx, entity, split, card) {
+  const block = split.block > 0 ? gainBlockAmount(ctx, entity, split.block, card, false) : 0;
+  const ward = split.ward > 0 ? gainBarrierAmount(ctx, entity, split.ward, card, true) : 0;
+  return block + ward;
+}
+
 /** gainBlock — mutating block gain with 'blockCap' modifier honored. */
 export function gainBlock(ctx, entity, base, card = null) {
   if (!entity.alive) return 0;
+  if (ctx.combatExpansionVersion === 2) {
+    const split = spellDefenseSplit(card, computeBlockGain(ctx, entity, base, card));
+    if (split) return gainSpellDefenseAmount(ctx, entity, split, card);
+  }
   if (ctx.combatExpansionVersion === 2 && card?.combatProfile) {
     const share = contactMagicShare(ctx, { ...card.combatProfile, ...(Number.isFinite(card.magicShare) ? { magicShare: card.magicShare } : {}) });
     // A whole magic guard is Barrier (refilling Ward first). A split guard gives its magic share that way and the rest as Block.
