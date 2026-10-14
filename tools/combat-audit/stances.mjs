@@ -138,7 +138,10 @@ function readPlayedEvidence(path){
   const actionNames=[...new Set((row.frames||[]).map(frame=>frame.action).filter(Boolean))];summary.actions.push(...actionNames);
   const frames=(row.frames||[]).filter(frame=>frame.action);
   for(const family of Object.keys(actionTags))if(frames.some(frame=>family==='counter'&&/^counter-(guard|evade)$/.test(frame.action)||frame.action===family))actualFamilies[row.classId].add(family);
-  if(row.before?.pose){
+  if(row.presentationKind==='held-preparation'){
+   // A counter card intentionally leaves the actor in its new prepared pose;
+   // the prior stance is not the return target for this presentation kind.
+  } else if(row.before?.pose){
    assert.ok(row.returnedToOrigin===true,`${row.classId}/${row.cardId} returns to the sampled held origin`);
    summary.measuredReturn++;
   } else summary.originSampleGaps.push({device:row.device,cardId:row.cardId,afterPose:row.after.pose,reason:'pre-action held origin was not sampled'});
