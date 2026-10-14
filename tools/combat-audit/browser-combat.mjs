@@ -225,10 +225,13 @@ async function play(page, device, row, before) {
     await card.locator('.card-upcast-rank').selectOption(String(row.upcastTier));
   }
   await tap(page, card, device);
-  if (row.sampleAnimation) await page.evaluate(async () => {
+  if (row.sampleAnimation) {
+    await page.waitForFunction(() => !!document.querySelector('.combatant.player .alternative-card-stage')?.__poseStage, null, { timeout: 10000 });
+    await page.evaluate(async () => {
     await document.querySelector('.combatant.player .alternative-card-stage')?.__poseStage?.ready;
     await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-  });
+    });
+  }
   if (before.refused || row.deniedCost) {
     assert.equal(await page.evaluate(() => window.__combat.eventLog.slice(window.__auditStart.eventCount).some(e => e.type === 'cardPlayed')), false);
     assert.equal(await page.locator('.end-turn').isEnabled(), true);
@@ -344,6 +347,15 @@ async function runCase(page, device, classId, row) {
   try {
     entry.before = await fixture(page, row);
     entry.input = await play(page, device, row, entry.before);
+    if (row.recoverControl) {
+      const refusalEvidence = entry.input;
+      const intent = { type: 'recoverControl', selections: [{ status: row.activeControl, stacks: 1 }] };
+      await page.evaluate(intent => window.__auditOracleDispatch(window.__auditOracle, intent), intent);
+      await tap(page, page.locator(`[data-control-recovery="${row.activeControl}"]`), device);
+      await finishPending(page, device);
+      assert.equal(await page.evaluate(status => !!window.__combat.player.statuses[status]?.stacks, row.activeControl), false, 'real recovery control removes active lock');
+      entry.input = { ...await play(page, device, row, { ...entry.before, refused: null }), refusalEvidence, recovered: true };
+    }
     if (row.endTurn) entry.enemyTurn = await endTurnAndPlayNext(page, device, row);
     if (row.sampleAnimation) await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     entry.after = await receipt(page);
@@ -387,14 +399,21 @@ async function runCase(page, device, classId, row) {
     assert.deepEqual(entry.after.unhandled, [], 'no unhandled rejection');
     assert.equal(report.errors.length, errorStart, 'no caught dispatch/animation/console failures');
     entry.status = entry.input.refusal ? 'expected-refusal' : 'passed';
+    const hash = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
+    entry.parity = { actualState: hash(entry.after.actual), oracleState: hash({ player: entry.after.oracle.player, enemies: entry.after.oracle.enemies, piles: entry.after.oracle.piles, phase: entry.after.oracle.phase }),
+      actualEffects: hash(entry.after.events), oracleEffects: hash(entry.after.oracle.events) };
+    delete entry.after.oracle;
+    // Exact comparison above uses the full receipt. Large formula-context
+    // snapshots are redundant in raw successful evidence, so retain effect data.
+    for (const event of entry.after.events) { delete event.abilityEntities; delete event.abilityBefore; }
     if (['strike', 'defend', 'starSpark', 'guardCounter', 'warriorsVow', 'bindingParry', 'ricochet', 'bloodPact'].includes(row.cardId) && row.variant === 'base')
       await page.screenshot({ path: resolve(out, `${device}-${classId}-${row.cardId}.png`) });
   } catch (error) {
     entry.status = 'failed'; entry.error = error.stack;
     try { entry.failureState = await receipt(page); await page.screenshot({ path: resolve(out, `failure-${device}-${classId}-${row.cardId}-${row.variant}.png`) }); } catch { /* original error retained */ }
   }
-  console.log(JSON.stringify({ ...activeCase, status: entry.status, error: entry.error?.split('\n')[0], latencyMs: entry.after?.latencyMs }));
-  checkpoint();
+  if (entry.status === 'failed' || report.cases.length % 25 === 0 || mode !== 'cards') console.log(JSON.stringify({ cases: report.cases.length, ...activeCase, status: entry.status, error: entry.error?.split('\n')[0], latencyMs: entry.after?.latencyMs }));
+  if (report.cases.length % 10 === 0 || entry.status === 'failed' || mode !== 'cards') checkpoint();
   return entry.status !== 'failed';
 }
 
@@ -408,7 +427,7 @@ try {
         const variants = ['base', ...(card.upgraded ? ['upgraded'] : [])].filter(v => !variantFilter || variantFilter === v);
         for (const variant of variants) {
           const row = { cardId: card.id, variant, category: 'card', figureTarget: card.id.length % 2 === 0,
-            sampleAnimation: variant === 'base' && ['strike','defend','starSpark','guardCounter','sweepingBlow','crimsonCleave','quickstep','bindingParry','ricochet','cometFragment','litany','bloodPact'].includes(card.id) };
+            sampleAnimation: pace === 'normal' && variant === 'base' && ['strike','defend','starSpark','guardCounter','sweepingBlow','crimsonCleave','quickstep','bindingParry','ricochet','cometFragment','litany','bloodPact','bashingBlow','evasiveGuard','wardingStar','nockAndWait'].includes(card.id) };
           const entryIndex = report.cases.length;
           if (!await runCase(page, device, classId, row)) {
             await page.close(); page = await boot(context, classId);
@@ -421,6 +440,7 @@ try {
         const rows = [
           { cardId: 'strike', deniedCost: true, category: 'insufficient-resources' },
           { cardId: 'strike', activeControl: 'dazed', category: 'controlled' },
+          { cardId: 'strike', activeControl: 'dazed', recoverControl: true, category: 'controlled-recovery' },
           { cardId: 'guardianBulwark', repeatStance: true, category: 'repeat-stance' },
           { cardId: 'strike', invalidTarget: true, category: 'invalid-target-recovery' },
           { cardId: 'strike', category: 'legal-after-refusals', figureTarget: true },
